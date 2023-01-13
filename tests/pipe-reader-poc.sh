@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# OneCD's async FIFO pipe reader proof-of-concept. 2023-01-13b
+# OneCD's async FIFO pipe reader proof-of-concept. 2023-01-14
 
 # Have multiple background procs all send data to a single named pipe.
 # Then read from this pipe, and update the state of specific QPKG arrays according to details in data.
@@ -28,7 +28,7 @@ _Output_()
     SendProcStatus ok
     SendProcStatus exit
 
-    } >&$fd
+    }
 
 SendPackageChangeStateRequest()
     {
@@ -38,9 +38,9 @@ SendPackageChangeStateRequest()
 
     # $1 = action request
 
-    echo "package:[$package_name],state:[$1]"
+    echo "package:[$package_name],state:[$1],date:[$(date)]"
 
-    }
+    } >&$fd
 
 SendProcStatus()
     {
@@ -50,9 +50,9 @@ SendProcStatus()
 
     # $1 = status update
 
-    echo "package:[$package_name],status:[$1]"
+    echo "package:[$package_name],status:[$1],date:[$(date)]"
 
-    }
+    } >&$fd
 
 declare -i index=0
 declare -a packages=()
@@ -74,7 +74,7 @@ done
 eval "exec $fd<>$stream_pipe"
 
 # launch forks with delays in-between to simulate QPKG actions
-echo 'launch forks'
+echo "launch forks @ $(date)"
 packages+=(SABnzbd)
 _Output_ ${packages[${#packages[@]}-1]} 1.3 &
 
@@ -93,66 +93,79 @@ sleep 1
 packages+=(SortMyQPKGs)
 _Output_ ${packages[${#packages[@]}-1]} .7 &
 
-# echo 'sleep for a bit'
-# sleep 3
+echo 'sleep for a bit'
+sleep 3
 
 passes=0
 skips=0
 fails=0
 
-echo 'begin parsing pipe stream'
+echo "begin parsing pipe stream @ $(date)"
 
 while [[ ${#packages[@]} -gt 0 ]]; do
     read input
 
-    # extract 2 values from data: package name, and state or status
-    package_name="${input#*[}"; package_name=${package_name%%]*}
-    second_key="${input##*],}"; second_key=${second_key%:*}
-    second_value="${input##*[}"; second_value=${second_value%]*}
+    # extract 3 values from data: package name, state or status, and datetime
+#     package_key="${input%%:*}"
+    input="${input#*[}"
 
-    case $second_key in
+    package_name=${input%%]*}
+    input="${input#*,}"
+
+    state_status_key="${input%%:*}"
+    input="${input#*[}"
+
+    state_status_value=${input%%]*}
+    input="${input#*,}"
+
+#     datetime_key="${input%%:*}"
+    input="${input#*[}"
+
+    datetime_value=${input%%]*}
+
+    case $state_status_key in
         status)
-            case $second_value in
+            case $state_status_value in
                 ok)
                     # mark QPKG action as finished OK
-                    echo "marking $package_name action as $second_value"
+                    echo "marking $package_name action as $state_status_value @ $datetime_value"
                     ((passes++))
                     ;;
                 skipped)
                     # mark QPKG action as skipped
-                    echo "marking $package_name action as $second_value"
+                    echo "marking $package_name action as $state_status_value @ $datetime_value"
                     ((skips++))
                     ;;
                 failed)
                     # mark QPKG action as failed
-                    echo "marking $package_name action as $second_value"
+                    echo "marking $package_name action as $state_status_value @ $datetime_value"
                     ((fails++))
                     ;;
                 exit)
                     for index in "${!packages[@]}"; do
                         if [[ ${packages[index]} = "$package_name" ]]; then
-                            echo "$package_name is complete"
+                            echo "$package_name is complete @ $datetime_value"
                             unset 'packages[index]'
                             break
                         fi
                     done
                     ;;
                 *)
-                echo "unknown status: <$second_value>"
+                echo "unknown status: <$state_status_value>"
             esac
             ;;
         state)
-            case $second_value in
+            case $state_status_value in
                 installed)
                     # mark QPKG state as installed
-                    echo "marking $package_name state as $second_value"
+                    echo "marking $package_name state as $state_status_value @ $datetime_value"
                     ;;
                 started)
                     # mark QPKG state as started
-                    echo "marking $package_name state as $second_value"
+                    echo "marking $package_name state as $state_status_value @ $datetime_value"
                     ;;
                 *)
-                    echo "unknown state: <$second_value>"
+                    echo "unknown state: <$state_status_value>"
             esac
     esac
 done <&$fd
@@ -160,5 +173,5 @@ done <&$fd
 eval "exec $fd<&-"
 [[ -p $stream_pipe ]] && rm "$stream_pipe"
 
-echo "finished: $(date)"
+echo "finished @ $(date)"
 echo "totals=$passes, $skips, $fails"
