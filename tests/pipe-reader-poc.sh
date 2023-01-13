@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# OneCD's async FIFO pipe reader proof-of-concept. 2023-01-13
+# OneCD's async FIFO pipe reader proof-of-concept. 2023-01-13b
 
 # Have multiple background procs all send data to a single named pipe.
 # Then read from this pipe, and update the state of specific QPKG arrays according to details in data.
