@@ -24,7 +24,7 @@ _LaunchForks_()
 
     sleep 1
 
-    _QPKG.Action_ ${packages[3]} .7 &
+    _QPKG.Action_ ${packages[3]} 1.7 &
 
     sleep 1
 
@@ -36,7 +36,7 @@ _LaunchForks_()
 
     sleep 2
 
-    _QPKG.Action_ ${packages[6]} .8 &
+    _QPKG.Action_ ${packages[6]} 1.8 &
 
     }
 
@@ -52,12 +52,18 @@ _QPKG.Action_()
     [[ -z ${1:?package name null} ]] && exit
     export PACKAGE_NAME=$1
     local -i x=0
+    local fwvers=$(/sbin/getcfg System Version)
 
     # generate a few messages to test message stream
     for x in {1..8}; do
         SendPackageChangeStateRequest IsInstalled
         SendPackageChangeStateRequest IsStarted
-        sleep $2
+
+        if [[ ${fwvers//.} -ge 430 ]]; then
+            sleep "$2"
+        else    # older BusyBox `sleep` requires integers only, so discard decimal component
+            sleep "${2/.*/}"
+        fi
     done
 
     SendPackageChangeStateRequest IsBollocksed      # add something to be picked up as `unidentified`
