@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# OneCD's async FIFO pipe reader proof-of-concept. 2023-01-14
+# OneCD's async FIFO pipe reader proof-of-concept. 2023-01-15
 
 # Have multiple background procs all send data to a single named pipe.
 # Then read from this pipe, and update the state of specific QPKG arrays according to details in data.
@@ -11,7 +11,7 @@ _LaunchForks_()
     # * This function runs as a background process *
 
     # launch forks with delays in-between to simulate QPKG actions
-    echo "$(now): launch forks"
+    echo "$(Now): launch forks"
     _QPKG.Action_ ${packages[0]} 1.3 &
 
     sleep 2
@@ -76,7 +76,7 @@ SendPackageChangeStateRequest()
 
     # $1 = action request
 
-    echo "package:[$PACKAGE_NAME],state:[$1],date:[$(now)]"
+    echo "package $PACKAGE_NAME state $1 date $(NowInEpochSeconds)"
 
     } >&$fd_pipe
 
@@ -89,7 +89,7 @@ SendProcStatus()
 
     # $1 = status update
 
-    echo "package:[$PACKAGE_NAME],status:[$1],date:[$(now)]"
+    echo "package $PACKAGE_NAME status $1 date $(NowInEpochSeconds)"
 
     } >&$fd_pipe
 
@@ -109,14 +109,30 @@ FindNextFD()
 
     }
 
-now()
+Now()
     {
 
     date +%H:%M:%S
 
     }
 
-echo "$(now): started"
+NowInEpochSeconds()
+    {
+
+    date +%s
+
+    }
+
+ConvertEpochSecondsToTime()
+    {
+
+    # $1 = epoch seconds
+
+    date -d @${1:-0} +'%H:%M:%S'
+
+    }
+
+echo "$(Now): started"
 
 declare -a packages=()
 declare -i index=0
@@ -137,32 +153,14 @@ eval "exec $fd_pipe<>$message_pipe"
 
 _LaunchForks_ &
 sleep 1
-echo "$(now): sleep for a bit"
+echo "$(Now): sleep for a bit"
 sleep 5
 
-echo "$(now): begin processing message stream"
+echo "$(Now): begin processing message stream"
 echo '-----------------------------------------'
 
 while [[ ${#packages[@]} -gt 0 ]]; do
-    read input
-
-    # whittle-down $input to extract 3 values: package name, state or status, and datetime
-#     package_key="${input%%:*}"
-    input="${input#*[}"
-
-    package_name=${input%%]*}
-    input="${input#*,}"
-
-    state_status_key="${input%%:*}"
-    input="${input#*[}"
-
-    state_status_value=${input%%]*}
-    input="${input#*,}"
-
-#     datetime_key="${input%%:*}"
-    input="${input#*[}"
-
-    datetime_value=${input%%]*}
+    read package_key package_name state_status_key state_status_value datetime_key datetime_value
 
     case $state_status_key in
         state)
@@ -170,13 +168,13 @@ while [[ ${#packages[@]} -gt 0 ]]; do
             while true; do
                 for state in "${PACKAGE_STATES[@]}"; do
                     if [[ $state_status_value = "Is${state}" || $state_status_value = "IsNt${state}" ]]; then
-                        echo "$datetime_value: marking $package_name state as $state_status_value"
+                        echo "$(ConvertEpochSecondsToTime "$datetime_value"): marking $package_name state as $state_status_value"
 #                       NoteQpkgStateAs${state_status_value} "$package_name"
                         break 2
                     fi
                 done
 
-                echo "$datetime_value: ignoring unidentified $package_name state: '$state_status_value'"
+                echo "$(ConvertEpochSecondsToTime "$datetime_value"): ignoring unidentified $package_name state: '$state_status_value'"
                 break
             done
             ;;
@@ -184,30 +182,30 @@ while [[ ${#packages[@]} -gt 0 ]]; do
             case $state_status_value in
                 ok)
                     # mark QPKG action as finished OK
-                    echo "$datetime_value: marking $package_name action status as $state_status_value"
+                    echo "$(ConvertEpochSecondsToTime "$datetime_value"): marking $package_name action status as $state_status_value"
                     ((passes++))
                     ;;
                 skipped)
                     # mark QPKG action as skipped
-                    echo "$datetime_value: marking $package_name action status as $state_status_value"
+                    echo "$(ConvertEpochSecondsToTime "$datetime_value"): marking $package_name action status as $state_status_value"
                     ((skips++))
                     ;;
                 failed)
                     # mark QPKG action as failed
-                    echo "$datetime_value: marking $package_name action status as $state_status_value"
+                    echo "$(ConvertEpochSecondsToTime "$datetime_value"): marking $package_name action status as $state_status_value"
                     ((fails++))
                     ;;
                 exit)
                     for index in "${!packages[@]}"; do
                         if [[ ${packages[index]} = "$package_name" ]]; then
-                            echo "$datetime_value: $package_name action fork is exiting"
+                            echo "$(ConvertEpochSecondsToTime "$datetime_value"): $package_name action fork is exiting"
                             unset 'packages[index]'
                             break
                         fi
                     done
                     ;;
                 *)
-                    echo "$datetime_value: ignoring unidentified $package_name status: '$state_status_value'"
+                    echo "$(ConvertEpochSecondsToTime "$datetime_value"): ignoring unidentified $package_name status: '$state_status_value'"
             esac
     esac
 done <&$fd_pipe
@@ -216,5 +214,5 @@ eval "exec $fd_pipe<&-"
 [[ -p $message_pipe ]] && rm "$message_pipe"
 
 echo '-----------------------------------------'
-echo "$(now): finished"
+echo "$(Now): finished"
 echo "totals=$passes, $skips, $fails"
