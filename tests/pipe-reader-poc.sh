@@ -5,10 +5,45 @@
 # Have multiple background procs all send data to a single named pipe.
 # Then read from this pipe, and update the state of specific QPKG arrays according to details in data.
 
+_LaunchForks_()
+    {
+
+    # * This function runs as a background process *
+
+    # launch forks with delays in-between to simulate QPKG actions
+    echo "$(now): launch forks"
+    _QPKG.Action_ ${packages[0]} 1.3 &
+
+    sleep 2
+
+    _QPKG.Action_ ${packages[1]} 2 skipped &
+
+    sleep 4
+
+    _QPKG.Action_ ${packages[2]} 1.6 failed &
+
+    sleep 1
+
+    _QPKG.Action_ ${packages[3]} .7 &
+
+    sleep 1
+
+    _QPKG.Action_ ${packages[4]} 2 skipped &
+
+    sleep 3
+
+    _QPKG.Action_ ${packages[5]} 1.3 failed &
+
+    sleep 2
+
+    _QPKG.Action_ ${packages[6]} .8 &
+
+    }
+
 _QPKG.Action_()
     {
 
-    # * this function runs as a background process *
+    # * This function runs as a background process *
 
     # $1 = package name
     # $2 = sleep time in decimal seconds
@@ -43,7 +78,7 @@ SendPackageChangeStateRequest()
 
     echo "package:[$PACKAGE_NAME],state:[$1],date:[$(now)]"
 
-    } >&$fd
+    } >&$fd_pipe
 
 SendProcStatus()
     {
@@ -56,7 +91,23 @@ SendProcStatus()
 
     echo "package:[$PACKAGE_NAME],status:[$1],date:[$(now)]"
 
-    } >&$fd
+    } >&$fd_pipe
+
+FindNextFD()
+    {
+
+    # find next available file descriptor: https://stackoverflow.com/a/41603891
+
+    local -i fd=0
+
+    for fd in {10..100}; do
+        if [[ ! -e /proc/$$/fd/$fd ]]; then
+            echo "$fd"
+            return
+        fi
+    done
+
+    }
 
 now()
     {
@@ -67,55 +118,27 @@ now()
 
 echo "$(now): started"
 
-declare -i index=0
 declare -a packages=()
+declare -i index=0
+passes=0
+skips=0
+fails=0
 message_pipe=/tmp/messages.pipe
+packages=(SABnzbd NZBGet HideThatBanner SortMyQPKGs QDK OMedusa OTransmission)
+PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Started Upgradable)           # sorted
 
 [[ -p $message_pipe ]] && rm "$message_pipe"
 [[ ! -p $message_pipe ]] && mknod "$message_pipe" p
 
-# find next available FD: https://stackoverflow.com/a/41603891
-declare -i prospect=0
-declare -i fd=0
-for fd in {10..100}; do
-    [[ ! -e /proc/$$/fd/$fd ]] && break
-done
-
-[[ $fd -eq 0 ]] && echo 'unable to locate next available file descriptor' && exit
+fd_pipe=$(FindNextFD)
 
 # open a 2-way channel to this pipe, so it will receive data without blocking the sender
-eval "exec $fd<>$message_pipe"
+eval "exec $fd_pipe<>$message_pipe"
 
-# launch forks with delays in-between to simulate QPKG actions
-echo "$(now): launch forks"
-packages+=(SABnzbd)
-_QPKG.Action_ ${packages[${#packages[@]}-1]} 1.3 &
-
-sleep 2
-
-packages+=(NZBGet)
-_QPKG.Action_ ${packages[${#packages[@]}-1]} 2 skipped &
-
-sleep 4
-
-packages+=(HideThatBanner)
-_QPKG.Action_ ${packages[${#packages[@]}-1]} 1.6 failed &
-
+_LaunchForks_ &
 sleep 1
-
-packages+=(SortMyQPKGs)
-_QPKG.Action_ ${packages[${#packages[@]}-1]} .7 &
-
 echo "$(now): sleep for a bit"
-sleep 3
-
-passes=0
-skips=0
-fails=0
-
-PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Started Upgradable)           # sorted
-
-
+sleep 5
 
 echo "$(now): begin processing message stream"
 echo '-----------------------------------------'
@@ -187,9 +210,9 @@ while [[ ${#packages[@]} -gt 0 ]]; do
                     echo "$datetime_value: ignoring unidentified $package_name status: '$state_status_value'"
             esac
     esac
-done <&$fd
+done <&$fd_pipe
 
-eval "exec $fd<&-"
+eval "exec $fd_pipe<&-"
 [[ -p $message_pipe ]] && rm "$message_pipe"
 
 echo '-----------------------------------------'
