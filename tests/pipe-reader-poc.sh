@@ -5,8 +5,6 @@
 # Have multiple background procs all send data to a single named pipe.
 # Then read from this pipe, and update the state of specific QPKG arrays according to details in data.
 
-echo "started: $(date)"
-
 _Output_()
     {
 
@@ -16,7 +14,7 @@ _Output_()
     # $2 = sleep time in decimal seconds
 
     [[ -z ${1:?package name null} ]] && exit
-    export package_name=$1
+    export PACKAGE_NAME=$1
     local -i x=0
 
     for x in {1..8}; do
@@ -33,33 +31,44 @@ _Output_()
 SendPackageChangeStateRequest()
     {
 
-    # send a message back to receiver to change the state of this QPKG to $1
-    # this might be: `installed`, `enabled`, `started`, etc...
+    # Send a message into message stream to change the state of this QPKG to $1
+    # This might be: `installed`, `enabled`, `started`, etc...
+    # This function is only called from background functions
 
     # $1 = action request
 
-    echo "package:[$package_name],state:[$1],date:[$(date)]"
+    echo "package:[$PACKAGE_NAME],state:[$1],date:[$(now)]"
 
     } >&$fd
 
 SendProcStatus()
     {
 
-    # send a message back to receiver to change the status of this action
-    # this might be: `ok`, `skipped`, `failed`, `exit`
+    # Send a message into message stream to change the status of this action
+    # This might be: `ok`, `skipped`, `failed`, `exit`
+    # This function is only called from background functions
 
     # $1 = status update
 
-    echo "package:[$package_name],status:[$1],date:[$(date)]"
+    echo "package:[$PACKAGE_NAME],status:[$1],date:[$(now)]"
 
     } >&$fd
 
+now()
+    {
+
+    date +%H:%M:%S
+
+    }
+
+echo "$(now): started"
+
 declare -i index=0
 declare -a packages=()
-stream_pipe=test.pipe
+message_pipe=/tmp/messages.pipe
 
-[[ -p $stream_pipe ]] && rm "$stream_pipe"
-[[ ! -p $stream_pipe ]] && mknod "$stream_pipe" p
+[[ -p $message_pipe ]] && rm "$message_pipe"
+[[ ! -p $message_pipe ]] && mknod "$message_pipe" p
 
 # find next available FD: https://stackoverflow.com/a/41603891
 declare -i prospect=0
@@ -71,10 +80,10 @@ done
 [[ $fd -eq 0 ]] && echo 'unable to locate next available file descriptor' && exit
 
 # open a 2-way channel to this pipe, so it will receive data without blocking the sender
-eval "exec $fd<>$stream_pipe"
+eval "exec $fd<>$message_pipe"
 
 # launch forks with delays in-between to simulate QPKG actions
-echo "launch forks @ $(date)"
+echo "$(now): launch forks"
 packages+=(SABnzbd)
 _Output_ ${packages[${#packages[@]}-1]} 1.3 &
 
@@ -93,19 +102,20 @@ sleep 1
 packages+=(SortMyQPKGs)
 _Output_ ${packages[${#packages[@]}-1]} .7 &
 
-echo 'sleep for a bit'
-sleep 3
+echo "$(now): sleep for a bit"
+sleep 2
 
 passes=0
 skips=0
 fails=0
 
-echo "begin parsing pipe stream @ $(date)"
+echo "$(now): begin processing message stream"
+echo '-----------------------------------------'
 
 while [[ ${#packages[@]} -gt 0 ]]; do
     read input
 
-    # extract 3 values from data: package name, state or status, and datetime
+    # extract 3 values from message stream: package name, state or status, and datetime
 #     package_key="${input%%:*}"
     input="${input#*[}"
 
@@ -124,27 +134,41 @@ while [[ ${#packages[@]} -gt 0 ]]; do
     datetime_value=${input%%]*}
 
     case $state_status_key in
+        state)
+            case $state_status_value in
+                installed)
+                    # mark QPKG state as installed
+                    echo "$datetime_value: marking $package_name state as $state_status_value"
+                    ;;
+                started)
+                    # mark QPKG state as started
+                    echo "$datetime_value: marking $package_name state as $state_status_value"
+                    ;;
+                *)
+                    echo "unknown state: <$state_status_value>"
+            esac
+            ;;
         status)
             case $state_status_value in
                 ok)
                     # mark QPKG action as finished OK
-                    echo "marking $package_name action as $state_status_value @ $datetime_value"
+                    echo "$datetime_value: marking $package_name action as $state_status_value"
                     ((passes++))
                     ;;
                 skipped)
                     # mark QPKG action as skipped
-                    echo "marking $package_name action as $state_status_value @ $datetime_value"
+                    echo "$datetime_value: marking $package_name action as $state_status_value"
                     ((skips++))
                     ;;
                 failed)
                     # mark QPKG action as failed
-                    echo "marking $package_name action as $state_status_value @ $datetime_value"
+                    echo "$datetime_value: marking $package_name action as $state_status_value"
                     ((fails++))
                     ;;
                 exit)
                     for index in "${!packages[@]}"; do
                         if [[ ${packages[index]} = "$package_name" ]]; then
-                            echo "$package_name is complete @ $datetime_value"
+                            echo "$datetime_value: $package_name is complete"
                             unset 'packages[index]'
                             break
                         fi
@@ -153,25 +177,12 @@ while [[ ${#packages[@]} -gt 0 ]]; do
                 *)
                 echo "unknown status: <$state_status_value>"
             esac
-            ;;
-        state)
-            case $state_status_value in
-                installed)
-                    # mark QPKG state as installed
-                    echo "marking $package_name state as $state_status_value @ $datetime_value"
-                    ;;
-                started)
-                    # mark QPKG state as started
-                    echo "marking $package_name state as $state_status_value @ $datetime_value"
-                    ;;
-                *)
-                    echo "unknown state: <$state_status_value>"
-            esac
     esac
 done <&$fd
 
 eval "exec $fd<&-"
-[[ -p $stream_pipe ]] && rm "$stream_pipe"
+[[ -p $message_pipe ]] && rm "$message_pipe"
 
-echo "finished @ $(date)"
+echo '-----------------------------------------'
+echo "$(now): finished"
 echo "totals=$passes, $skips, $fails"
