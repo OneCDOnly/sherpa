@@ -11,7 +11,7 @@ _LaunchForks_()
     # * This function runs as a background process *
 
     # launch forks with delays in-between to simulate QPKG actions
-    echo "$(Now): launch forks"
+    echo "$(Now): launch ${#packages[@]} forks"
     _QPKG.Action_ ${packages[0]} 1.3 &
 
     sleep 2
@@ -52,7 +52,8 @@ _QPKG.Action_()
     [[ -z ${1:?package name null} ]] && exit
     export PACKAGE_NAME=$1
     local -i x=0
-    local fwvers=$(/sbin/getcfg System Version)
+    local fwvers=430
+    [[ -e /sbin/getcfg ]] && $(/sbin/getcfg System Version)
 
     # generate a few messages to test message stream
     for x in {1..8}; do
@@ -174,13 +175,13 @@ while [[ ${#packages[@]} -gt 0 ]]; do
             while true; do
                 for state in "${PACKAGE_STATES[@]}"; do
                     if [[ $state_status_value = "Is${state}" || $state_status_value = "IsNt${state}" ]]; then
-                        echo "$(ConvertEpochSecondsToTime "$datetime_value"): marking $package_name state as $state_status_value"
+                        echo "$(ConvertEpochSecondsToTime "$datetime_value"): mark $package_name state as $state_status_value"
 #                       NoteQpkgStateAs${state_status_value} "$package_name"
                         break 2
                     fi
                 done
 
-                echo "$(ConvertEpochSecondsToTime "$datetime_value"): ignoring unidentified $package_name state: '$state_status_value'"
+                echo "$(ConvertEpochSecondsToTime "$datetime_value"): ignore unidentified $package_name state: '$state_status_value'"
                 break
             done
             ;;
@@ -188,17 +189,17 @@ while [[ ${#packages[@]} -gt 0 ]]; do
             case $state_status_value in
                 ok)
                     # mark QPKG action as finished OK
-                    echo "$(ConvertEpochSecondsToTime "$datetime_value"): marking $package_name action status as $state_status_value"
+                    echo "$(ConvertEpochSecondsToTime "$datetime_value"): mark $package_name action status as $state_status_value"
                     ((passes++))
                     ;;
                 skipped)
                     # mark QPKG action as skipped
-                    echo "$(ConvertEpochSecondsToTime "$datetime_value"): marking $package_name action status as $state_status_value"
+                    echo "$(ConvertEpochSecondsToTime "$datetime_value"): mark $package_name action status as $state_status_value"
                     ((skips++))
                     ;;
                 failed)
                     # mark QPKG action as failed
-                    echo "$(ConvertEpochSecondsToTime "$datetime_value"): marking $package_name action status as $state_status_value"
+                    echo "$(ConvertEpochSecondsToTime "$datetime_value"): mark $package_name action status as $state_status_value"
                     ((fails++))
                     ;;
                 exit)
@@ -211,7 +212,7 @@ while [[ ${#packages[@]} -gt 0 ]]; do
                     done
                     ;;
                 *)
-                    echo "$(ConvertEpochSecondsToTime "$datetime_value"): ignoring unidentified $package_name status: '$state_status_value'"
+                    echo "$(ConvertEpochSecondsToTime "$datetime_value"): ignore unidentified $package_name status: '$state_status_value'"
             esac
     esac
 done <&$fd_pipe
