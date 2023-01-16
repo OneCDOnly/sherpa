@@ -226,6 +226,7 @@ done
 
 for state in "${PACKAGE_STATES_TRANSIENT[@]}"; do
     AddListObj QPKGs.Is${state}
+    AddListObj QPKGs.IsNt${state}
 done
 
 tar --create --gzip --numeric-owner --file="$MANAGER_ARCHIVE_PATHFILE" --directory="$WORK_PATH" "$MANAGER_FILE"
