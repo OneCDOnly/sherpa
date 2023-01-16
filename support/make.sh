@@ -11,11 +11,14 @@ WORK_PATH=$PWD/..
 # $MANAGEMENT_ACTIONS haven't been coded yet, so don't create objects for it
 #MANAGEMENT_ACTIONS=(Check List Paste Status)
 
-PACKAGE_SCOPES=(All CanBackup CanRestartToUpdate Dependent HasDependents Installable Standalone)		# sorted
-PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Reassigned Started Upgradable)	# sorted
-PACKAGE_STATES_TRANSIENT=(Starting Stopping Restarting) # unsorted
+# these words may be specified by the user when requesting actions, so each word can only be used once across all 4 of the following arrays
+PACKAGE_SCOPES=(All CanBackup CanRestartToUpdate Dependent HasDependents Installable Standalone Upgradable)		# sorted: 'Sc' & 'ScNt'
+PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Reassigned Reinstalled Started Upgraded)	# sorted: 'Is' & 'IsNt'
+PACKAGE_STATES_TRANSIENT=(Starting Stopping Restarting)															# unsorted: 'Is' & 'IsNt'
 PACKAGE_ACTIONS=(Download Rebuild Reassign Backup Stop Disable Uninstall Upgrade Reinstall Install Restore Clean Enable Start Restart)  # ordered
-PACKAGE_RESULTS=(Ok Unknown)    # unsorted
+
+# only used by sherpa QPKG service-script results parser
+PACKAGE_RESULTS=(Ok Unknown)
 
 MANAGER_FILE=sherpa.manager.sh
 MANAGER_ARCHIVE_FILE=${MANAGER_FILE%.*}.tar.gz
