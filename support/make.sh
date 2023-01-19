@@ -12,9 +12,9 @@ WORK_PATH=$PWD/..
 #MANAGEMENT_ACTIONS=(Check List Paste Status)
 
 # these words may be specified by the user when requesting actions, so each word can only be used once across all 4 of the following arrays
-PACKAGE_SCOPES=(All CanBackup CanRestartToUpdate Dependent HasDependents Installable Standalone Upgradable)		# sorted: 'Sc' & 'ScNt'
-PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Reassigned Reinstalled Started Upgraded)	# sorted: 'Is' & 'IsNt'
-PACKAGE_STATES_TRANSIENT=(Starting Stopping Restarting)															# unsorted: 'Is' & 'IsNt'
+PACKAGE_SCOPES=(All CanBackup CanRestartToUpdate Dependent HasDependents Installable Standalone Upgradable)     # sorted: 'Sc' & 'ScNt'
+PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Reassigned Reinstalled Restarted Started Upgraded)  # sorted: 'Is' & 'IsNt'
+PACKAGE_STATES_TRANSIENT=(Starting Stopping Restarting)                                                         # unsorted: 'Is' & 'IsNt'
 PACKAGE_ACTIONS=(Download Rebuild Reassign Backup Stop Disable Uninstall Upgrade Reinstall Install Restore Clean Enable Start Restart)  # ordered
 
 # only used by sherpa QPKG service-script results parser
@@ -177,17 +177,17 @@ done
 
 for scope in "${PACKAGE_SCOPES[@]}"; do
     for action in "${PACKAGE_ACTIONS[@]}"; do
-		[[ $action = Enable || $action = Disable ]] && continue	# don't need objects for these as `start` and `stop` do the same jobs
-		AddFlagObj QPKGs.Ac${action}.Sc${scope}
-		AddFlagObj QPKGs.Ac${action}.ScNt${scope}
+        [[ $action = Enable || $action = Disable ]] && continue # don't need objects for these as `start` and `stop` do the same jobs
+        AddFlagObj QPKGs.Ac${action}.Sc${scope}
+        AddFlagObj QPKGs.Ac${action}.ScNt${scope}
     done
 done
 
 for state in "${PACKAGE_STATES[@]}"; do
     for action in "${PACKAGE_ACTIONS[@]}"; do
-		[[ $action = Enable || $action = Disable ]] && continue	# don't need objects for these as `start` and `stop` do the same jobs
-		AddFlagObj QPKGs.Ac${action}.Is${state}
-		AddFlagObj QPKGs.Ac${action}.IsNt${state}
+        [[ $action = Enable || $action = Disable ]] && continue # don't need objects for these as `start` and `stop` do the same jobs
+        AddFlagObj QPKGs.Ac${action}.Is${state}
+        AddFlagObj QPKGs.Ac${action}.IsNt${state}
     done
 done
 
@@ -205,7 +205,7 @@ AddListObj Args.Unknown
 # done
 
 for action in "${PACKAGE_ACTIONS[@]}"; do
-	[[ $action = Enable || $action = Disable ]] && continue	# don't need objects for these as `start` and `stop` do the same jobs
+    [[ $action = Enable || $action = Disable ]] && continue # don't need objects for these as `start` and `stop` do the same jobs
 
     for prefix in To Ok Er Sk; do
         AddListObj QPKGs.Ac${prefix}${action}
@@ -219,8 +219,8 @@ for scope in "${PACKAGE_SCOPES[@]}"; do
 done
 
 for state in "${PACKAGE_STATES[@]}" "${PACKAGE_RESULTS[@]}"; do
-	AddListObj QPKGs.Is${state}
-	AddListObj QPKGs.IsNt${state}
+    AddListObj QPKGs.Is${state}
+    AddListObj QPKGs.IsNt${state}
 done
 
 for state in "${PACKAGE_STATES_TRANSIENT[@]}"; do
