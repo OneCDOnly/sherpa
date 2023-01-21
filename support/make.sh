@@ -137,7 +137,8 @@ AddFlagObj Self.LineSpace false false   # disable change logging for this object
 
 AddFlagObj Self.Debug.ToArchive
 AddFlagObj Self.Debug.ToScreen
-AddFlagObj Self.Debug.ToFile true       # set initial value to 'true' so debug info is recorded early-on
+# AddFlagObj Self.Debug.ToFile true       # set initial value to 'true' so debug info is recorded early-on
+AddFlagObj Self.Debug.ToFile
 
 for element in Loaded States.Built SkProc; do
     AddFlagObj QPKGs.$element
