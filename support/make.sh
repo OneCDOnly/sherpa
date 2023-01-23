@@ -12,7 +12,7 @@ WORK_PATH=$PWD/..
 #MANAGEMENT_ACTIONS=(Check List Paste Status)
 
 # these words may be specified by the user when requesting actions, so each word can only be used once across all 4 of the following arrays
-PACKAGE_SCOPES=(All CanBackup CanRestartToUpdate Dependent HasDependents Installable Standalone Upgradable)     # sorted: 'Sc' & 'ScNt'
+PACKAGE_GROUPS=(All CanBackup CanRestartToUpdate Dependent HasDependents Installable Standalone Upgradable)     # sorted: 'Sc' & 'ScNt'
 PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Reassigned Reinstalled Restarted Started Upgraded)  # sorted: 'Is' & 'IsNt'
 PACKAGE_STATES_TRANSIENT=(Starting Stopping Restarting)                                                         # unsorted: 'Is' & 'IsNt'
 PACKAGE_ACTIONS=(Download Rebuild Reassign Backup Stop Disable Uninstall Upgrade Reinstall Install Restore Clean Enable Start Restart)  # ordered
@@ -153,7 +153,7 @@ for element in Deps.Check Vers.View; do
     AddFlagObj Opts.$element
 done
 
-for element in Abbreviations Actions ActionsAll Backups Basic Options Packages Problems Repos Scopes Status Tips; do
+for element in Abbreviations Actions ActionsAll Backups Basic Groups Options Packages Problems Repos Status Tips; do
     AddFlagObj Opts.Help.$element
 done
 
@@ -162,9 +162,9 @@ for element in Last Tail; do
     AddFlagObj Opts.Log.$element.View
 done
 
-for scope in "${PACKAGE_SCOPES[@]}"; do
-    AddFlagObj QPKGs.List.Sc${scope}
-    AddFlagObj QPKGs.List.ScNt${scope}
+for group in "${PACKAGE_GROUPS[@]}"; do
+    AddFlagObj QPKGs.List.Sc${group}
+    AddFlagObj QPKGs.List.ScNt${group}
 done
 
 for state in "${PACKAGE_STATES[@]}"; do
@@ -176,11 +176,11 @@ for state in "${PACKAGE_STATES_TRANSIENT[@]}"; do
     AddFlagObj QPKGs.List.Is${state}
 done
 
-for scope in "${PACKAGE_SCOPES[@]}"; do
+for group in "${PACKAGE_GROUPS[@]}"; do
     for action in "${PACKAGE_ACTIONS[@]}"; do
         [[ $action = Enable || $action = Disable ]] && continue # don't need objects for these as `start` and `stop` do the same jobs
-        AddFlagObj QPKGs.Ac${action}.Sc${scope}
-        AddFlagObj QPKGs.Ac${action}.ScNt${scope}
+        AddFlagObj QPKGs.Ac${action}.Sc${group}
+        AddFlagObj QPKGs.Ac${action}.ScNt${group}
     done
 done
 
@@ -214,9 +214,9 @@ for action in "${PACKAGE_ACTIONS[@]}"; do
     done
 done
 
-for scope in "${PACKAGE_SCOPES[@]}"; do
-    AddListObj QPKGs.Sc${scope}
-    AddListObj QPKGs.ScNt${scope}
+for group in "${PACKAGE_GROUPS[@]}"; do
+    AddListObj QPKGs.Sc${group}
+    AddListObj QPKGs.ScNt${group}
 done
 
 for state in "${PACKAGE_STATES[@]}" "${PACKAGE_RESULTS[@]}"; do
