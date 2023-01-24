@@ -210,6 +210,13 @@ for action in "${PACKAGE_ACTIONS[@]}"; do
 
     for prefix in To Ok Er Sk; do
         AddListObj QPKGs.Ac${prefix}${action}
+    done
+done
+
+for action in "${PACKAGE_ACTIONS[@]}"; do
+    [[ $action = Enable || $action = Disable ]] && continue 	# don't need objects for these as `start` and `stop` do the same jobs
+    [[ $action = Backup || $action = Clean || $action = Reassign || $action = Rebuild ]] && continue	# unsupported by IPKs
+    for prefix in To Ok Er Sk; do
         AddListObj IPKs.Ac${prefix}${action}
     done
 done
