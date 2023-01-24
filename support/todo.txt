@@ -1,0 +1,22 @@
+* sherpa should list which packages were skipped or failed after action completes.
+
+* SortMyQPKGs backup should 'touch' the backup file when there's nothing to backup, to demonstrate that backup actually ran.
+
+* user should be able to specify "debug to disk" and/or "debug to screen".
+
+* sherpa running with a 'status' check during QTS startup on Laura. Why?
+
+* attempting to 'start' SAB when already started creates 'unknown' service script status.
+
+* attempting to 'restart' sherpa creates 'unknown' service script status.
+
+* Deluge-web: increase port check timeouts to 120 seconds
+
+* nzbToMedia service script
+	- when QPKG is disabled, still shows $link_path details.
+
+* remove message to 'enable' QPKG when attempting to 'stop' it while in a disabled state:
+
+	[~] # /etc/init.d/clamav.sh stop; echo $?
+	The 'ClamAV' QPKG is disabled. Please enable it first with: qpkg_service enable ClamAV
+	1
