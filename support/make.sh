@@ -164,11 +164,23 @@ done
 
 for group in "${PACKAGE_GROUPS[@]}"; do
     AddFlagObj QPKGs.List.Sc${group}
+
+    case $group in
+        All|CanBackup|CanRestartToUpdate|Dependent|HasDependents|Standalone)
+            continue
+    esac
+
     AddFlagObj QPKGs.List.ScNt${group}
 done
 
 for state in "${PACKAGE_STATES[@]}"; do
     AddFlagObj QPKGs.List.Is${state}
+
+    case $state in
+        Cleaned|Missing|Reassigned|Reinstalled|Restarted|Upgraded)
+            continue
+    esac
+
     AddFlagObj QPKGs.List.IsNt${state}
 done
 
@@ -178,16 +190,31 @@ done
 
 for group in "${PACKAGE_GROUPS[@]}"; do
     for action in "${PACKAGE_ACTIONS[@]}"; do
-        [[ $action = Enable || $action = Disable ]] && continue # don't need objects for these as `start` and `stop` do the same jobs
+        [[ $action = Enable || $action = Disable ]] && continue
         AddFlagObj QPKGs.Ac${action}.Sc${group}
+    done
+
+    case $group in
+        All|CanBackup|CanRestartToUpdate|Dependent|HasDependents|Standalone)
+            continue
+    esac
+
+    for action in "${PACKAGE_ACTIONS[@]}"; do
+        [[ $action = Enable || $action = Disable ]] && continue
         AddFlagObj QPKGs.Ac${action}.ScNt${group}
     done
 done
 
 for state in "${PACKAGE_STATES[@]}"; do
     for action in "${PACKAGE_ACTIONS[@]}"; do
-        [[ $action = Enable || $action = Disable ]] && continue # don't need objects for these as `start` and `stop` do the same jobs
+        [[ $action = Enable || $action = Disable ]] && continue
         AddFlagObj QPKGs.Ac${action}.Is${state}
+    done
+
+    [[ $state = Missing || $state = Reassigned ]] && continue
+
+    for action in "${PACKAGE_ACTIONS[@]}"; do
+        [[ $action = Enable || $action = Disable ]] && continue
         AddFlagObj QPKGs.Ac${action}.IsNt${state}
     done
 done
@@ -206,7 +233,10 @@ AddListObj Args.Unknown
 # done
 
 for action in "${PACKAGE_ACTIONS[@]}"; do
-    [[ $action = Enable || $action = Disable ]] && continue # don't need objects for these as `start` and `stop` do the same jobs
+    case $action in
+        Disable|Enable)
+            continue
+    esac
 
     for prefix in To Ok Er Sk; do
         AddListObj QPKGs.Ac${prefix}${action}
@@ -214,15 +244,24 @@ for action in "${PACKAGE_ACTIONS[@]}"; do
 done
 
 for action in "${PACKAGE_ACTIONS[@]}"; do
-    [[ $action = Enable || $action = Disable ]] && continue 	# don't need objects for these as `start` and `stop` do the same jobs
-    [[ $action = Backup || $action = Clean || $action = Reassign || $action = Rebuild ]] && continue	# unsupported by IPKs
-    for prefix in To Ok Er Sk; do
+    case $action in
+        Backup|Clean|Disable|Enable|Reassign|Rebuild|Restart|Restore)
+            continue
+    esac
+
+    for prefix in To Ok Er; do
         AddListObj IPKs.Ac${prefix}${action}
     done
 done
 
 for group in "${PACKAGE_GROUPS[@]}"; do
     AddListObj QPKGs.Sc${group}
+
+    case $group in
+        All|Dependent|HasDependents|Standalone)
+            continue
+    esac
+
     AddListObj QPKGs.ScNt${group}
 done
 
