@@ -1,5 +1,3 @@
-* sherpa should list which packages were skipped or failed after action completes.
-
 * SortMyQPKGs backup should 'touch' the backup file when there's nothing to backup, to demonstrate that backup actually ran.
 
 * user should be able to specify "debug to disk" and/or "debug to screen".
