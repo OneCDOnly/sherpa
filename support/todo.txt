@@ -1,16 +1,24 @@
-* SortMyQPKGs backup should 'touch' the backup file when there's nothing to backup, to demonstrate that backup actually ran.
+* add new actions for sherpa: 'skipped' and 'failed':
+	- these will list all QPKGs that were skipped or failed during the last sherpa session.
+	- show the related action that was attempted, and the reasons for the skips or failures.
+
+* SortMyQPKGs service script:
+	- 'backup' should 'touch' the backup file, even when there's nothing to backup, to demonstrate the backup actually ran.
 
 * user should be able to specify "debug to disk" and/or "debug to screen".
 
-* sherpa running with a 'status' check during QTS startup on Laura. Why?
+* sherpa being run with a 'status' check during QTS startup on Laura. Why?
 
-* attempting to 'start' SAB when already started creates 'unknown' service script status.
+* SABnzbd service script:
+	- attempting to 'start' when already started creates 'unknown' service script status.
 
-* attempting to 'restart' sherpa creates 'unknown' service script status.
+* sherpa service script:
+	- attempting to 'restart' creates 'unknown' service script status.
 
-* Deluge-web: increase port check timeouts to 120 seconds
+* Deluge-web service script:
+	- increase port check timeouts to 120 seconds, to better suit old ARMv5 CPUs.
 
-* nzbToMedia service script
+* nzbToMedia service script:
 	- when QPKG is disabled, still shows $link_path details.
 
 * remove message to 'enable' QPKG when attempting to 'stop' it while in a disabled state:
