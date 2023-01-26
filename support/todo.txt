@@ -1,5 +1,5 @@
-* add new actions for sherpa: 'skipped' and 'failed':
-	- these will list all QPKGs that were skipped or failed during the last sherpa session.
+* add new actions for sherpa: 'ok', 'skipped' and 'failed':
+	- these will list all QPKGs that completed fine, were skipped, or failed during the last sherpa session.
 	- show the related action that was attempted, and the reasons for the skips or failures.
 
 * SortMyQPKGs service script:

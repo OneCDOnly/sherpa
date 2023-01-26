@@ -153,7 +153,7 @@ for element in Deps.Check Vers.View; do
     AddFlagObj Opts.$element
 done
 
-for element in Abbreviations Actions ActionsAll Backups Basic Groups Options Packages Problems Repos Status Tips; do
+for element in Abbreviations Actions ActionsAll Backups Basic Failed Groups Ok Options Packages Problems Repos Skipped Status Tips; do
     AddFlagObj Opts.Help.$element
 done
 
@@ -238,7 +238,7 @@ for action in "${PACKAGE_ACTIONS[@]}"; do
             continue
     esac
 
-    for prefix in To Ok Er Sk; do
+    for prefix in To Ok Er Sk So Se; do
         AddListObj QPKGs.Ac${prefix}${action}
     done
 done
