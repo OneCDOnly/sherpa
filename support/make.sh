@@ -153,7 +153,7 @@ for element in Deps.Check Vers.View; do
     AddFlagObj Opts.$element
 done
 
-for element in Abbreviations Actions ActionsAll Backups Basic Failed Groups Ok Options Packages Problems Repos Skipped Status Tips; do
+for element in Abbreviations Actions ActionsAll Backups Basic Failed Groups Ok Options Packages Problems Repos Results Skipped Status Tips; do
     AddFlagObj Opts.Help.$element
 done
 
