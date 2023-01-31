@@ -2,12 +2,6 @@
 
 * sherpa being run with a 'status' check during QTS startup on Laura. Why?
 
-* SABnzbd service script:
-	- attempting to 'start' when already started creates 'unknown' service script status.
-
-* sherpa service script:
-	- attempting to 'restart' creates 'unknown' service script status.
-
 * Deluge-web service script:
 	- increase port check timeouts to 120 seconds, to better suit old ARMv5 CPUs.
 
