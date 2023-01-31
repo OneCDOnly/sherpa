@@ -22,3 +22,5 @@
 	[~] # /etc/init.d/clamav.sh stop; echo $?
 	The 'ClamAV' QPKG is disabled. Please enable it first with: qpkg_service enable ClamAV
 	1
+
+* add mini rolling CPU graph to progress display while installing QPKGs?
