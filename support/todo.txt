@@ -2,9 +2,6 @@
 
 * sherpa being run with a 'status' check during QTS startup on Laura. Why?
 
-* Deluge-web service script:
-	- increase port check timeouts to 120 seconds, to better suit old ARMv5 CPUs.
-
 * nzbToMedia service script:
 	- when QPKG is disabled, still shows $link_path details.
 
