@@ -1,6 +1,3 @@
-* SortMyQPKGs service script:
-	- 'backup' should 'touch' the backup file, even when there's nothing to backup, to demonstrate the backup actually ran.
-
 * user should be able to specify "debug to disk" and/or "debug to screen".
 
 * sherpa being run with a 'status' check during QTS startup on Laura. Why?
