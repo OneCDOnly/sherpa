@@ -1,3 +1,6 @@
+* suspect deluge-server and deluge-web can't be started at exactly the same time. deluge-web fails port check.
+	Maybe introduce a delay for deluge-web when starting via sherpa and also starting deluge-server?
+
 * user should be able to specify "debug to disk" and/or "debug to screen".
 
 * sherpa being run with a 'status' check during QTS startup on Laura. Why?
