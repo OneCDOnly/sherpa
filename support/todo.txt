@@ -2,9 +2,6 @@
 
 * sherpa being run with a 'status' check during QTS startup on Laura. Why?
 
-* nzbToMedia service script:
-	- when QPKG is disabled, still shows $link_path details.
-
 * remove message to 'enable' QPKG when attempting to 'stop' it while in a disabled state:
 
 	[~] # /etc/init.d/clamav.sh stop; echo $?
