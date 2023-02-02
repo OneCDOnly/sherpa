@@ -1,3 +1,5 @@
+* when showing action failed, message should suggest user check the service script log.
+
 * 'groups' means 'package groups', so display in help as-such.
 
 * showing previous results should also display datetime of session.
