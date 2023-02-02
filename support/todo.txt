@@ -1,3 +1,6 @@
+* create wiki page listing all available packages.
+	- and remove packages from readme and forum topic.
+
 * create separate package field for those that support service script logs.
 
 * 'groups' means 'package groups', so display in help as-such.
