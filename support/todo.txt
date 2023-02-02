@@ -1,3 +1,9 @@
+* 'groups' means 'package groups', so display in help as-such.
+
+* showing previous results should also display datetime of session.
+
+* include each QPKG maintainer in packages display.
+
 * add mini rolling CPU graph to progress display while installing QPKGs?
 	while true; do top -b -n 2 -d 0.2 -p 1621 | tail -1 | awk '{print $9}'; done
 
