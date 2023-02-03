@@ -1,3 +1,7 @@
+* ensure each venv upgrades it's own 'pip'.
+
+* must ensure each action fork is killed after it issues an 'exit' into the message pipe.
+
 * 'groups' means 'package groups', so display in help as-such.
 
 * add mini rolling CPU graph to progress display while installing QPKGs?
