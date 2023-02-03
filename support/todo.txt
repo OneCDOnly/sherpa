@@ -1,6 +1,3 @@
-* create wiki page listing all available packages.
-	- and remove packages from readme and forum topic.
-
 * 'groups' means 'package groups', so display in help as-such.
 
 * add mini rolling CPU graph to progress display while installing QPKGs?
