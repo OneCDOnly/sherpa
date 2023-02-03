@@ -1,3 +1,5 @@
+* readme should include a link to available applications wiki page.
+
 * ensure each venv upgrades its own 'pip'.
 
 * ensure each action fork is killed after it issues an 'exit' into the message pipe.
