@@ -9,7 +9,7 @@ A mini-package-manager for QNAP NAS.
 
 Package management via **sherpa** provides extra features like easy application backup and upgrading, service management, self-checking and repair, and operations may be automated via cron.
 
-<b>[Click here for available packages](https://github.com/OneCDOnly/sherpa/wiki/Packages-available)</b>
+<b>[Click here for available packages](https://github.com/OneCDOnly/sherpa/wiki/Packages)</b>
 
 ## Requirements
 
