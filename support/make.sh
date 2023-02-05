@@ -4,5 +4,5 @@
 ./build-objects.sh || exit
 ./build-archives.sh || exit
 
-echo 'these files have changed since the last commit:'
+echo -e '\nthese files have changed since the last commit:'
 git diff --name-only
