@@ -104,6 +104,7 @@ source=$(<packages.source)
 source=$(sed "s|<?today?>|$(date '+%y%m%d')|" <<< "$source")
 
 while read -r checksum_filename qpkg_filename package_name version arch md5; do
+    # fails. Need to match arch after matching name, then replace placeholder text indicated
     source=$(sed "/QPKG_NAME+=($package_name)/,/QPKG_NAME+=/ s/<?version?>/$version/" <<< "$source")
     source=$(sed "/QPKG_NAME+=($package_name)/,/QPKG_NAME+=/ s/<?package_name?>/$package_name/" <<< "$source")
     source=$(sed "/QPKG_NAME+=($package_name)/,/QPKG_NAME+=/ s/<?qpkg_filename?>/$qpkg_filename/" <<< "$source")

@@ -1,5 +1,3 @@
-* add QDK to packages page in wiki.
-
 * change sherpa QPKG icon to use transparency.
 	do the same to RunLast.
 
