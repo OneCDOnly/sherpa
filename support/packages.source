@@ -1,0 +1,70 @@
+PACKAGES_VER=<?today?>
+BASE_QPKG_CONFLICTS_WITH='TarMT'
+BASE_QPKG_WARNINGS='Qboost'
+ESSENTIAL_IPKS='ca-certificates coreutils-stty findutils gcc git git-http grep less nano sed setterm'
+ESSENTIAL_PIPS='wheel pip virtualenv'
+MIN_PYTHON_VER=3107             # keep this up-to-date with Entware Python3 version, so IPK upgrade notifier will work
+MIN_PERL_VER=5281               # keep this up-to-date with Entware Perl version, so IPK upgrade notifier will work
+
+# use pseudo-alpha-sorted name order (i.e. disregard character-case and leading 'O')
+
+# supported package details - parallel arrays
+QPKG_NAME=()                    # internal QPKG name
+QPKG_AUTHOR=()                  # the person/group responsible for maintaining this QPKG
+QPKG_APP_AUTHOR=()              # the person/group responsible for maintaining the internal application
+QPKG_ARCH=()                    # QPKG supports this architecture. Use 'all' if every arch is supported
+QPKG_MIN_RAM_KB=()              # QPKG requires at-least this much RAM installed in kiB. Use 'none' if there is no minimum
+QPKG_VERSION=()                 # QPKG version
+QPKG_URL=()                     # remote QPKG URL
+QPKG_MD5=()                     # remote QPKG MD5
+QPKG_DESC=()                    # QPKG description (applies to all packages with the same name)
+QPKG_NOTE=()                    # an additional note to be prominently displayed
+QPKG_ABBRVS=()                  # if set, this package is user-installable, and these abbreviations may be used to specify app
+QPKG_CONFLICTS_WITH=()          # abort if these QPKGs are installed
+QPKG_DEPENDS_ON=()              # require these QPKGs to be installed first. Use '' if package is standalone
+QPKG_DEPENDED_UPON=()           # true/false: this QPKG is depended-upon by other QPKGs
+QPKG_REQUIRES_IPKS=()           # require these IPKs to be installed first
+QPKG_CAN_BACKUP=()              # true/false: this QPKG service-script supports configuration 'backup' and 'restore' operations
+QPKG_CAN_RESTART_TO_UPDATE=()   # true/false: the internal appplication can be updated by restarting the QPKG
+QPKG_CAN_CLEAN=()               # true/false: the internal appplication can be cleaned and re-downloaded
+QPKG_CAN_LOG=()                 # true/false: the service script logs all operations
+
+QPKG_NAME+=(ClamAV)
+QPKG_AUTHOR+=(OneCD)
+QPKG_APP_AUTHOR+=('')
+QPKG_ARCH+=(all)
+QPKG_MIN_RAM_KB+=(1572864)
+QPKG_VERSION+=(<?version?>)
+QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/$PROJECT_BRANCH/QPKGs/<?package_name?>/build/<?qpkg_filename?>)
+QPKG_MD5+=(<?md5?>)
+QPKG_DESC+=('replacement for the QTS built-in ClamAV')
+QPKG_NOTE+=('(required minimum installed RAM: 1.5GiB)')
+QPKG_ABBRVS+=('av clam clamscan freshclam clamav')
+QPKG_CONFLICTS_WITH+=('')
+QPKG_DEPENDS_ON+=(Entware)
+QPKG_DEPENDED_UPON+=(false)
+QPKG_REQUIRES_IPKS+=('clamav freshclam')
+QPKG_CAN_BACKUP+=(false)
+QPKG_CAN_RESTART_TO_UPDATE+=(false)
+QPKG_CAN_CLEAN+=(false)
+QPKG_CAN_LOG+=(true)
+
+QPKG_NAME+=(Deluge-server)
+QPKG_AUTHOR+=(OneCD)
+QPKG_APP_AUTHOR+=('')
+QPKG_ARCH+=(all)
+QPKG_MIN_RAM_KB+=(none)
+QPKG_VERSION+=(<?version?>)
+QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/sherpa/$PROJECT_BRANCH/QPKGs/<?package_name?>/build/<?qpkg_filename?>)
+QPKG_MD5+=(<?md5?>)
+QPKG_DESC+=('Deluge BitTorrent daemon')
+QPKG_NOTE+=('')
+QPKG_ABBRVS+=('dl deluge del-server deluge-server')
+QPKG_CONFLICTS_WITH+=('Python3 QPython3 QPython39 QPython310')
+QPKG_DEPENDS_ON+=(Entware)
+QPKG_DEPENDED_UPON+=(false)
+QPKG_REQUIRES_IPKS+=('deluge jq python3-cryptography python3-pillow python3-pip')
+QPKG_CAN_BACKUP+=(true)
+QPKG_CAN_RESTART_TO_UPDATE+=(false)
+QPKG_CAN_CLEAN+=(false)
+QPKG_CAN_LOG+=(true)
