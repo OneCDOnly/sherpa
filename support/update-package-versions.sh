@@ -55,7 +55,7 @@ while read -r checksum_pathfilename; do
 
     IFS='_' read -r package_name checksum_version checksum_arch tailend <<< "${checksum_filename//.qpkg.md5/}"
 
-    if [[ $checksum_arch = std ]]; then     # an exception for Entware
+    if [[ $checksum_arch = std ]]; then     # make an exception for Entware
         checksum_version+=_$checksum_arch
         checksum_arch=''
         tailend=''
@@ -77,7 +77,7 @@ while read -r checksum_pathfilename; do
     checksum_md5=$(cut -d' ' -f1 < "$checksum_pathfilename")
 
     if [[ $match = true ]]; then
-        printf '%-36s %-14s %-10s %s\n' "$checksum_filename" "$checksum_version" "$(TranslateQPKGArch "$checksum_arch")" "$checksum_md5" >> /tmp/highest-version.lst
+        printf '%-36s %-20s %-14s %-10s %s\n' "$checksum_filename" "$package_name" "$checksum_version" "$(TranslateQPKGArch "$checksum_arch")" "$checksum_md5" >> /tmp/highest-version.lst
         previous_checksum_filename=$checksum_filename
         previous_package_name=$package_name
         previous_checksum_version=$checksum_version
@@ -91,8 +91,8 @@ echo 'sorting by package name ...'
 sort < /tmp/highest-version.lst > /tmp/final.lst
 rm -f /tmp/highest-version.lst
 
-echo -e '\n---------- highest package version found -----------'
-printf '%-36s %-14s %-10s %s\n' pathfilename version arch md5
+echo -e "\nfound $(wc -l /tmp/final.lst | cut -d' ' -f1) packages"
+echo '---------- highest package version found -----------'
+printf '%-36s %-20s %-14s %-10s %s\n' filename packagename version arch md5
 cat /tmp/final.lst
-
 # sed 's|<?version?>|230101|;s|<?md5?>|bc156789|' package.info
