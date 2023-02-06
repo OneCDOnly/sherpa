@@ -1,4 +1,7 @@
-* after removing entware, 'sed' and 'grep' fail. Need to reassign to QTS binaries before uninstalling Entware.
+* add checks to all service scripts to examine $EUID.
+	Maybe a way can be found to run each service script without superuser access?
+
+* after removing entware, 'sed' and 'grep' fail. Need to switch to QTS binaries before uninstalling Entware.
 
 * change sherpa QPKG icon to use transparency.
 	do the same to RunLast.
