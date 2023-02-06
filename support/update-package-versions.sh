@@ -110,7 +110,7 @@ echo "$source" > ~/scripts/nas/sherpa/packages
 source=$(<~/scripts/nas/sherpa/support/sherpa.manager.source)
 source=$(sed "s|<?year?>|$(date '+%Y')|" <<< "$source")
 source=$(sed "s|<?today?>|$(date '+%y%m%d')|" <<< "$source")
-source=$(sed "s|<?branch?>|$(<~/scripts/nas/sherpa/support/branch.txt)|" <<< "$source")
+source=$(sed "s|<?branch?>|$branch|" <<< "$source")
 
 echo "$source" > ~/scripts/nas/sherpa/sherpa.manager.sh
 
