@@ -1,4 +1,5 @@
 PACKAGES_VER=<?today?>
+<?dontedit?>
 BASE_QPKG_CONFLICTS_WITH='TarMT'
 BASE_QPKG_WARNINGS='Qboost'
 ESSENTIAL_IPKS='ca-certificates coreutils-stty findutils gcc git git-http grep less nano sed setterm'
