@@ -60,7 +60,6 @@ while read -r checksum_pathfilename; do
     IFS='_' read -r package_name version arch tailend <<< "${checksum_filename//.qpkg.md5/}"
 
     if [[ $arch = std ]]; then     # make an exception for Entware
-        version+=_$arch
         arch=''
         tailend=''
     fi
@@ -95,10 +94,9 @@ source=$(<~/scripts/nas/sherpa/support/packages.source)
 source=$(sed "s|<?today?>|$(date '+%y%m%d')|" <<< "$source")
 
 while read -r checksum_filename qpkg_filename package_name version arch md5; do
-    source=$(sed "/QPKG_NAME+=($package_name)/,/^$/{/QPKG_ARCH+=($arch)/,/version.*/s/<?version?>/$version/}" <<< "$source")
-    source=$(sed "/QPKG_NAME+=($package_name)/,/^$/{/QPKG_ARCH+=($arch)/,/version.*/s/<?package_name?>/$package_name/}" <<< "$source")
-    source=$(sed "/QPKG_NAME+=($package_name)/,/^$/{/QPKG_ARCH+=($arch)/,/version.*/s/<?qpkg_filename?>/$qpkg_filename/}" <<< "$source")
-    source=$(sed "/QPKG_NAME+=($package_name)/,/^$/{/QPKG_ARCH+=($arch)/,/version.*/s/<?md5?>/$md5/}" <<< "$source")
+    for attribute in version package_name qpkg_filename md5; do
+        source=$(sed "/QPKG_NAME+=($package_name)/,/^$/{/QPKG_ARCH+=($arch)/,/$attribute.*/s/<?$attribute?>/${!attribute}/}" <<< "$source")
+    done
 done <<< "$final"
 
 echo "$source" > ~/scripts/nas/sherpa/packages
