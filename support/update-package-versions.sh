@@ -85,13 +85,19 @@ while read -r checksum_pathfilename; do
         previous_arch=$arch
     fi
 done <<< "$sorted"
+
 echo 'done!'
 
 final=$(sort < /tmp/highest.lst)
 
+branch=$(<~/scripts/nas/sherpa/support/branch.txt)
+echo "configuring as branch: $branch"
+
 echo -n 'updating QPKG fields ... '
+
 source=$(<~/scripts/nas/sherpa/support/packages.source)
 source=$(sed "s|<?today?>|$(date '+%y%m%d')|" <<< "$source")
+source=$(sed "s|<?branch?>|$branch|" <<< "$source")
 
 while read -r checksum_filename qpkg_filename package_name version arch md5; do
     for attribute in version package_name qpkg_filename md5; do
@@ -100,5 +106,12 @@ while read -r checksum_filename qpkg_filename package_name version arch md5; do
 done <<< "$final"
 
 echo "$source" > ~/scripts/nas/sherpa/packages
+
+source=$(<~/scripts/nas/sherpa/support/sherpa.manager.source)
+source=$(sed "s|<?year?>|$(date '+%Y')|" <<< "$source")
+source=$(sed "s|<?today?>|$(date '+%y%m%d')|" <<< "$source")
+source=$(sed "s|<?branch?>|$(<~/scripts/nas/sherpa/support/branch.txt)|" <<< "$source")
+
+echo "$source" > ~/scripts/nas/sherpa/sherpa.manager.sh
 
 echo 'done!'
