@@ -1,3 +1,5 @@
+* after removing entware, 'sed' and 'grep' fail. Need to reassign to QTS binaries before uninstalling Entware.
+
 * change sherpa QPKG icon to use transparency.
 	do the same to RunLast.
 
