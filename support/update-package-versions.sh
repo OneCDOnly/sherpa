@@ -31,16 +31,15 @@ TranslateQPKGArch()
 
     }
 
-echo 'locating checksum files ...'
-find ~/scripts/nas -name '*.qpkg.md5' > /tmp/raw.md5s
+echo -n 'locating QPKG checksum files ... '
+raw=$(find ~/scripts/nas -name '*.qpkg.md5')
+echo 'done!'
 
-echo 'sorting file list in reverse ...'
-sort --version-sort --reverse < /tmp/raw.md5s > /tmp/sorted.md5s
-rm -f /tmp/raw.md5s
+sorted=$(sort --version-sort --reverse <<< "$raw")
 
-echo 'extracting highest version numbers ...'
-rm -f /tmp/highest-version.lst
+echo -n 'extracting highest QPKG version numbers ... '
 checksum_pathfilename=''
+qpkg_filename=''
 version=''
 arch=''
 md5=''
@@ -48,8 +47,10 @@ previous_checksum_filename=''
 previous_package_name=''
 previous_version=''
 previous_arch=''
-
 match=false
+highest=''
+
+rm -f /tmp/highest.lst
 
 while read -r checksum_pathfilename; do
     # need just filename
@@ -77,40 +78,29 @@ while read -r checksum_pathfilename; do
         match=false
     fi
 
-    md5=$(cut -d' ' -f1 < "$checksum_pathfilename")
-
     if [[ $match = true ]]; then
-        printf '%-36s %-30s %-20s %-12s %-6s %s\n' "$checksum_filename" "$qpkg_filename" "$package_name" "$version" "$(TranslateQPKGArch "$arch")" "$md5" >> /tmp/highest-version.lst
+        printf '%-36s %-30s %-20s %-12s %-6s %s\n' "$checksum_filename" "$qpkg_filename" "$package_name" "$version" "$(TranslateQPKGArch "$arch")" "$(cut -d' ' -f1 < "$checksum_pathfilename")" >> /tmp/highest.lst
         previous_checksum_filename=$checksum_filename
         previous_package_name=$package_name
         previous_version=$version
         previous_arch=$arch
     fi
-done < /tmp/sorted.md5s
+done <<< "$sorted"
+echo 'done!'
 
-rm -f /tmp/sorted.md5s
+final=$(sort < /tmp/highest.lst)
 
-echo 'sorting by package name ...'
-sort < /tmp/highest-version.lst > /tmp/final.lst
-rm -f /tmp/highest-version.lst
-
-# echo -e "\nfound $(wc -l /tmp/final.lst | cut -d' ' -f1) packages"
-# echo '---------- highest package version found -----------'
-# printf '%-36s %-30s %-20s %-12s %-6s %s\n' checksum_filename qpkg_filename package_name version arch md5
-# cat /tmp/final.lst
-
-echo 'updating package fields ...'
-source=$(<packages.source)
+echo -n 'updating QPKG fields ... '
+source=$(<~/scripts/nas/sherpa/support/packages.source)
 source=$(sed "s|<?today?>|$(date '+%y%m%d')|" <<< "$source")
 
 while read -r checksum_filename qpkg_filename package_name version arch md5; do
-    # fails. Need to match arch after matching name, then replace placeholder text indicated
-    source=$(sed "/QPKG_NAME+=($package_name)/,/QPKG_NAME+=/ s/<?version?>/$version/" <<< "$source")
-    source=$(sed "/QPKG_NAME+=($package_name)/,/QPKG_NAME+=/ s/<?package_name?>/$package_name/" <<< "$source")
-    source=$(sed "/QPKG_NAME+=($package_name)/,/QPKG_NAME+=/ s/<?qpkg_filename?>/$qpkg_filename/" <<< "$source")
-    source=$(sed "/QPKG_NAME+=($package_name)/,/QPKG_NAME+=/ s/<?md5?>/$md5/" <<< "$source")
-done < /tmp/final.lst
+    source=$(sed "/QPKG_NAME+=($package_name)/,/^$/{/QPKG_ARCH+=($arch)/,/version.*/s/<?version?>/$version/}" <<< "$source")
+    source=$(sed "/QPKG_NAME+=($package_name)/,/^$/{/QPKG_ARCH+=($arch)/,/version.*/s/<?package_name?>/$package_name/}" <<< "$source")
+    source=$(sed "/QPKG_NAME+=($package_name)/,/^$/{/QPKG_ARCH+=($arch)/,/version.*/s/<?qpkg_filename?>/$qpkg_filename/}" <<< "$source")
+    source=$(sed "/QPKG_NAME+=($package_name)/,/^$/{/QPKG_ARCH+=($arch)/,/version.*/s/<?md5?>/$md5/}" <<< "$source")
+done <<< "$final"
 
-echo "$source" > packages.final
+echo "$source" > ~/scripts/nas/sherpa/packages
 
-echo "done."
+echo 'done!'
