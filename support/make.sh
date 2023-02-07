@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-echo "branch: $(<$HOME/scripts/nas/sherpa/support/branch.txt)"
+echo "hardcoding this branch: $(<$HOME/scripts/nas/sherpa/support/branch.txt)"
 
 ./check-syntax.sh || exit
 ./build-objects.sh || exit
@@ -8,5 +8,5 @@ echo "branch: $(<$HOME/scripts/nas/sherpa/support/branch.txt)"
 ./build-manager.sh || exit
 ./build-archives.sh || exit
 
-echo -e '\nthese files have changed since the last commit:'
+echo -e '\nfiles changed since the last commit:'
 git diff --name-only
