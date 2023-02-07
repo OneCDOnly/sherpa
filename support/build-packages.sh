@@ -27,30 +27,29 @@ match=false
 TranslateQPKGArch()
     {
 
+	# translate arch from QPKG filename to sherpa
+
     case $1 in
         i686|x86)
-            echo x86
+            echo i86
             ;;
         x86_64)
-            echo x64
+            echo i64
             ;;
         arm-x19)
-            echo x19
+            echo a19
             ;;
         arm-x31)
-            echo x31
+            echo a31
             ;;
         arm-x41)
-            echo x41
+            echo a41
             ;;
         arm_64)
             echo a64
             ;;
-        all)
-            echo all
-            ;;
         *)
-            echo none
+            echo "$1"		# passthru
     esac
 
     }

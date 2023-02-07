@@ -4928,25 +4928,25 @@ GetQnapOS()
 GetQPKGArch()
     {
 
-    # Decide which package arch is suitable for this NAS
+    # translate arch from QTS to sherpa
 
     case $NAS_ARCH in
         x86_64)
-            [[ ${NAS_FIRMWARE_VER//.} -ge 430 ]] && echo x64 || echo x86
+            [[ ${NAS_FIRMWARE_VER//.} -ge 430 ]] && echo i64 || echo i86
             ;;
         i686|x86)
-            echo x86
+            echo i86
             ;;
         armv5tel)
-            echo x19
+            echo a19
             ;;
         armv7l)
             case $NAS_PLATFORM in
                 ARM_MS)
-                    echo x31
+                    echo a31
                     ;;
                 ARM_AL)
-                    echo x41
+                    echo a41
                     ;;
                 *)
                     echo none
