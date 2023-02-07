@@ -5053,52 +5053,6 @@ DisableDebugToArchiveAndFile()
 
     }
 
-_QPKG.Reassign_()
-    {
-
-    # * This function runs autonomously *
-
-    # input:
-    #   $1 = QPKG name
-
-    # output:
-    #   $? = none, this function executes in background
-
-    DebugForkFuncEn
-
-    PACKAGE_NAME=${1:?package name null}
-    local -i result_code=0
-    local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$REASSIGN_LOG_FILE
-    local package_store_id=$(QPKG.StoreID "$PACKAGE_NAME")
-
-    if ! QPKGs.IsInstalled.Exist "$PACKAGE_NAME"; then
-        SaveActionResultToLog "$PACKAGE_NAME" Reassignment skipped 'not installed'
-        MarkThisActionForkAsSkipped
-        DebugForkFuncEx 2
-    elif [[ $package_store_id = sherpa ]]; then
-        SaveActionResultToLog "$PACKAGE_NAME" Reassignment skipped-ok 'already assigned to sherpa'
-        MarkThisActionForkAsSkipped
-        DebugForkFuncEx 0
-    fi
-
-    DebugAsProc "reassigning $(FormatAsPackName "$PACKAGE_NAME")"
-    RunAndLog "$SETCFG_CMD $PACKAGE_NAME store '' -f /etc/config/qpkg.conf" "$LOG_PATHFILE" log:failure-only
-    result_code=$?
-
-    if [[ $result_code -eq 0 ]]; then
-        SaveActionResultToLog "$PACKAGE_NAME" Reassignment ok
-        SendPackageStateChange IsReassigned
-        MarkThisActionForkAsOk
-    else
-        SaveActionResultToLog "$PACKAGE_NAME" Reassign failed "$result_code"
-        result_code=1    # remap to 1
-        MarkThisActionForkAsFailed
-    fi
-
-    DebugForkFuncEx $result_code
-
-    }
-
 SaveActionResultToLog()
     {
 
@@ -5133,6 +5087,55 @@ SaveActionResultToLog()
     esac
 
     return 0
+
+    }
+
+_QPKG.Reassign_()
+    {
+
+    # * This function runs autonomously *
+
+    # input:
+    #   $1 = QPKG name
+
+    # output:
+    #   $? = none, this function executes in background
+
+    DebugForkFuncEn
+
+    PACKAGE_NAME=${1:?package name null}
+    local -i result_code=0
+    local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$REASSIGN_LOG_FILE
+    local package_store_id=$(QPKG.StoreID "$PACKAGE_NAME")
+
+    if ! QPKGs.IsInstalled.Exist "$PACKAGE_NAME"; then
+        SaveActionResultToLog "$PACKAGE_NAME" Reassign skipped 'not installed'
+        result_code=2
+    elif [[ $package_store_id = sherpa ]]; then
+        SaveActionResultToLog "$PACKAGE_NAME" Reassign skipped 'already assigned to sherpa'
+        result_code=2
+    fi
+
+    if [[ $result_code -gt 0 ]]; then
+        MarkThisActionForkAsSkipped
+        DebugForkFuncEx $result_code
+    fi
+
+    DebugAsProc "reassigning $(FormatAsPackName "$PACKAGE_NAME")"
+    RunAndLog "$SETCFG_CMD $PACKAGE_NAME store '' -f /etc/config/qpkg.conf" "$LOG_PATHFILE" log:failure-only
+    result_code=$?
+
+    if [[ $result_code -eq 0 ]]; then
+        SaveActionResultToLog "$PACKAGE_NAME" Reassign ok
+        SendPackageStateChange IsReassigned
+        MarkThisActionForkAsOk
+    else
+        SaveActionResultToLog "$PACKAGE_NAME" Reassign failed "$result_code"
+        result_code=1    # remap to 1
+        MarkThisActionForkAsFailed
+    fi
+
+    DebugForkFuncEx $result_code
 
     }
 
@@ -5187,11 +5190,11 @@ _QPKG.Download_()
 
         if [[ $result_code -eq 0 ]]; then
             if FileMatchesMD5 "$LOCAL_PATHFILE" "$REMOTE_MD5"; then
-                SaveActionResultToLog "$PACKAGE_NAME" Downloaded ok
+                SaveActionResultToLog "$PACKAGE_NAME" Download ok
                 SendPackageStateChange IsDownloaded
                 MarkThisActionForkAsOk
             else
-                SaveActionResultToLog "$PACKAGE_NAME" Downloaded failed "downloaded file $(FormatAsFileName "$LOCAL_PATHFILE") has incorrect checksum"
+                SaveActionResultToLog "$PACKAGE_NAME" Download failed "downloaded file $(FormatAsFileName "$LOCAL_PATHFILE") has incorrect checksum"
                 SendPackageStateChange IsNtDownloaded
                 result_code=1
                 MarkThisActionForkAsFailed
@@ -5235,7 +5238,7 @@ _QPKG.Install_()
         result_code=2
     fi
 
-    if [[ $result_code -eq 2 ]]; then
+    if [[ $result_code -gt 0 ]]; then
         MarkThisActionForkAsSkipped
         DebugForkFuncEx $result_code
     fi
@@ -5292,7 +5295,7 @@ _QPKG.Install_()
         fi
 
         local current_ver=$(QPKG.Local.Ver "$PACKAGE_NAME")
-        SaveActionResultToLog "$PACKAGE_NAME" Installed ok "version $current_ver"
+        SaveActionResultToLog "$PACKAGE_NAME" Install ok "version $current_ver"
 
         if [[ $PACKAGE_NAME = Entware ]]; then
             ModPathToEntware
@@ -5391,7 +5394,7 @@ _QPKG.Reinstall_()
         fi
 
         local current_ver=$(QPKG.Local.Ver "$PACKAGE_NAME")
-        SaveActionResultToLog "$PACKAGE_NAME" Reinstalled ok "version $current_ver"
+        SaveActionResultToLog "$PACKAGE_NAME" Reinstall ok "version $current_ver"
         result_code=0    # remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK)
         MarkThisActionForkAsOk
     else
@@ -5427,9 +5430,8 @@ _QPKG.Upgrade_()
         SaveActionResultToLog "$PACKAGE_NAME" Upgrade skipped 'not installed'
         result_code=2
     elif ! QPKGs.ScUpgradable.Exist "$PACKAGE_NAME"; then
-        SaveActionResultToLog "$PACKAGE_NAME" Upgrade skipped-ok 'no new package is available'
-        MarkThisActionForkAsSkippedOK
-        DebugForkFuncEx 0
+        SaveActionResultToLog "$PACKAGE_NAME" Upgrade skipped 'no new package is available'
+        result_code=2
     fi
 
     local package_store_id=$(QPKG.StoreID "$PACKAGE_NAME")
@@ -5439,7 +5441,7 @@ _QPKG.Upgrade_()
         result_code=2
     fi
 
-    if [[ $result_code -eq 2 ]]; then
+    if [[ $result_code -gt 0 ]]; then
         MarkThisActionForkAsSkipped
         DebugForkFuncEx $result_code
     fi
@@ -5487,9 +5489,9 @@ _QPKG.Upgrade_()
         local current_ver=$(QPKG.Local.Ver "$PACKAGE_NAME")
 
         if [[ $current_ver = "$prev_ver" ]]; then
-            SaveActionResultToLog "$PACKAGE_NAME" Upgraded ok "version $current_ver"
+            SaveActionResultToLog "$PACKAGE_NAME" Upgrade ok "version $current_ver"
         else
-            SaveActionResultToLog "$PACKAGE_NAME" Upgraded ok "from version $prev_ver to version $current_ver"
+            SaveActionResultToLog "$PACKAGE_NAME" Upgrade ok "from version $prev_ver to version $current_ver"
         fi
 
         result_code=0    # remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK)
@@ -5523,12 +5525,15 @@ _QPKG.Uninstall_()
 
     if QPKGs.IsNtInstalled.Exist "$PACKAGE_NAME"; then
         SaveActionResultToLog "$PACKAGE_NAME" Uninstall skipped 'not installed'
-        MarkThisActionForkAsSkipped
-        DebugForkFuncEx 2
+        result_code=2
     elif [[ $PACKAGE_NAME = sherpa ]]; then
-        SaveActionResultToLog "$PACKAGE_NAME" Uninstall skipped-ok "it's needed here! 😉"
-        MarkThisActionForkAsSkippedOK
-        DebugForkFuncEx 0
+        SaveActionResultToLog "$PACKAGE_NAME" Uninstall skipped "it's needed here! 😉"
+        result_code=2
+    fi
+
+    if [[ $result_code -gt 0 ]]; then
+        MarkThisActionForkAsSkipped
+        DebugForkFuncEx $result_code
     fi
 
     local -r QPKG_UNINSTALLER_PATHFILE=$(QPKG.InstallationPath "$PACKAGE_NAME")/.uninstall.sh
@@ -5622,7 +5627,7 @@ _QPKG.Restart_()
 
     if [[ $result_code -eq 0 ]]; then
         QPKG.LogServiceStatus "$PACKAGE_NAME"
-        SaveActionResultToLog "$PACKAGE_NAME" Restarted ok
+        SaveActionResultToLog "$PACKAGE_NAME" Restart ok
         SendPackageStateChange IsRestarted
         MarkThisActionForkAsOk
     else
@@ -5657,12 +5662,15 @@ _QPKG.Start_()
 
     if QPKGs.IsNtInstalled.Exist "$PACKAGE_NAME"; then
         SaveActionResultToLog "$PACKAGE_NAME" Start skipped 'not installed'
-        MarkThisActionForkAsSkipped
-        DebugForkFuncEx 2
+        result_code=2
     elif QPKGs.IsStarted.Exist "$PACKAGE_NAME"; then
         SaveActionResultToLog "$PACKAGE_NAME" Start skipped 'already started'
+        result_code=2
+    fi
+
+    if [[ $result_code -gt 0 ]]; then
         MarkThisActionForkAsSkipped
-        DebugForkFuncEx 0
+        DebugForkFuncEx $result_code
     fi
 
     QPKG.ClearServiceStatus "$PACKAGE_NAME"
@@ -5681,7 +5689,7 @@ _QPKG.Start_()
 
     if [[ $result_code -eq 0 ]]; then
         QPKG.LogServiceStatus "$PACKAGE_NAME"
-        SaveActionResultToLog "$PACKAGE_NAME" Started ok
+        SaveActionResultToLog "$PACKAGE_NAME" Start ok
 
         if [[ $PACKAGE_NAME = Entware ]]; then
             ModPathToEntware
@@ -5723,16 +5731,18 @@ _QPKG.Stop_()
 
     if QPKGs.IsNtInstalled.Exist "$PACKAGE_NAME"; then
         SaveActionResultToLog "$PACKAGE_NAME" Stop skipped 'not installed'
-        MarkThisActionForkAsSkipped
-        DebugForkFuncEx 2
+        result_code=2
     elif QPKGs.IsNtStarted.Exist "$PACKAGE_NAME"; then
         SaveActionResultToLog "$PACKAGE_NAME" Stop skipped 'already stopped'
-        MarkThisActionForkAsSkipped
-        DebugForkFuncEx 0
+        result_code=2
     elif [[ $PACKAGE_NAME = sherpa ]]; then
-        SaveActionResultToLog "$PACKAGE_NAME" Stop skipped-ok "it's needed here! 😉"
-        MarkThisActionForkAsSkippedOK
-        DebugForkFuncEx 0
+        SaveActionResultToLog "$PACKAGE_NAME" Stop skipped "it's needed here! 😉"
+        result_code=2
+    fi
+
+    if [[ $result_code -gt 0 ]]; then
+        MarkThisActionForkAsSkipped
+        DebugForkFuncEx $result_code
     fi
 
     QPKG.ClearServiceStatus "$PACKAGE_NAME"
@@ -5752,7 +5762,7 @@ _QPKG.Stop_()
 
     if [[ $result_code -eq 0 ]]; then
         QPKG.LogServiceStatus "$PACKAGE_NAME"
-        SaveActionResultToLog "$PACKAGE_NAME" Stopped ok
+        SaveActionResultToLog "$PACKAGE_NAME" Stop ok
 
         if [[ $PACKAGE_NAME = Entware ]]; then
             ModPathToEntware
@@ -5841,7 +5851,7 @@ _QPKG.Backup_()
         result_code=2
     fi
 
-    if [[ $result_code -eq 2 ]]; then
+    if [[ $result_code -gt 0 ]]; then
         MarkThisActionForkAsSkipped
         DebugForkFuncEx $result_code
     fi
@@ -5856,7 +5866,7 @@ _QPKG.Backup_()
 
     if [[ $result_code -eq 0 ]]; then
         QPKG.LogServiceStatus "$PACKAGE_NAME"
-        SaveActionResultToLog "$PACKAGE_NAME" Backed-up ok
+        SaveActionResultToLog "$PACKAGE_NAME" Backup ok
         SendPackageStateChange IsBackedUp
         MarkThisActionForkAsOk
     else
@@ -5895,7 +5905,7 @@ _QPKG.Restore_()
         result_code=2
     fi
 
-    if [[ $result_code -eq 2 ]]; then
+    if [[ $result_code -gt 0 ]]; then
         MarkThisActionForkAsSkipped
         DebugForkFuncEx $result_code
     fi
@@ -5910,7 +5920,7 @@ _QPKG.Restore_()
 
     if [[ $result_code -eq 0 ]]; then
         QPKG.LogServiceStatus "$PACKAGE_NAME"
-        SaveActionResultToLog "$PACKAGE_NAME" Restored ok
+        SaveActionResultToLog "$PACKAGE_NAME" Restore ok
         SendPackageStateChange IsRestored
         MarkThisActionForkAsOk
     else
@@ -5949,7 +5959,7 @@ _QPKG.Clean_()
         result_code=2
     fi
 
-    if [[ $result_code -eq 2 ]]; then
+    if [[ $result_code -gt 0 ]]; then
         MarkThisActionForkAsSkipped
         DebugForkFuncEx $result_code
     fi
@@ -5964,7 +5974,7 @@ _QPKG.Clean_()
 
     if [[ $result_code -eq 0 ]]; then
         QPKG.LogServiceStatus "$PACKAGE_NAME"
-        SaveActionResultToLog "$PACKAGE_NAME" Cleaned ok
+        SaveActionResultToLog "$PACKAGE_NAME" Clean ok
         SendPackageStateChange IsCleaned
         MarkThisActionForkAsOk
     else
