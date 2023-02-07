@@ -1,5 +1,5 @@
-PACKAGES_VER=<?today?>
-<?dontedit?>
+PACKAGES_VER='<?today?>'
+#*<?dontedit?>
 BASE_QPKG_CONFLICTS_WITH='TarMT'
 BASE_QPKG_WARNINGS='Qboost'
 ESSENTIAL_IPKS='ca-certificates coreutils-stty findutils gcc git git-http grep less nano sed setterm'
@@ -99,6 +99,7 @@ QPKG_VERSION+=(<?version?>)
 QPKG_URL+=(https://raw.githubusercontent.com/OneCDOnly/<?package_name?>/main/build/<?qpkg_filename?>)
 QPKG_MD5+=(<?md5?>)
 QPKG_DESC+=('a nice CLI disk-usage/free-space utility from @muesli')
+QPKG_NOTE+=('(arm64, x41, x86 & x86-64 NAS only)')
 QPKG_NOTE+=('')
 QPKG_ABBRVS+=('df duf')
 QPKG_CONFLICTS_WITH+=('')

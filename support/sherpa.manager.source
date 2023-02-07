@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-#<?dontedit?>
+#*<?dontedit?>
 
-# sherpa.manager.sh
-#   Copyright (C) 2017-<?year?> OneCD - one.cd.only@gmail.com
+#* sherpa.manager.sh
+#*  Copyright (C) 2017-<?year?> OneCD - one.cd.only@gmail.com
 
 #   So, blame OneCD if it all goes horribly wrong. ;)
 
@@ -10,8 +10,8 @@
 #   This is the management script for the sherpa mini-package-manager.
 #   It's automatically downloaded via the `sherpa.loader.sh` script in the `sherpa` QPKG no-more than once per 24 hours.
 
-# Project:
-#   https://git.io/sherpa
+#* Project:
+#*   https://git.io/sherpa
 
 # Forum:
 #   https://forum.qnap.com/viewtopic.php?f=320&t=132373
@@ -261,6 +261,7 @@ Self.Init()
             Self.Debug.ToScreen.Set
             Self.Debug.ToFile.Set
             Self.Debug.ToArchive.Set
+            ShowKeystrokes
             ShowCursor
             break
         fi
@@ -366,7 +367,6 @@ Self.LogEnv()
     DebugFirmwareOK platform "$NAS_PLATFORM"
     DebugUserspaceOK 'OS uptime' "$(GetUptime)"
     DebugUserspaceOK 'system load' "$(GetSysLoadAverages)"
-    DebugUserspaceOK '$USER' "$USER"
 
     if [[ $EUID -eq 0 ]]; then
         DebugUserspaceOK '$EUID' "$EUID"
@@ -374,7 +374,7 @@ Self.LogEnv()
         DebugUserspaceWarning '$EUID' "$EUID"
     fi
 
-    DebugUserspaceOK '$SUDO_UID' "${SUDO_UID:-undefined}"
+    DebugUserspaceOK '$SUDO_UID' "${SUDO_UID:-<undefined>}"
     DebugUserspaceOK 'time in shell' "$(GetTimeInShell)"
     DebugUserspaceOK '$BASH_VERSION' "$BASH_VERSION"
     DebugUserspaceOK 'default volume' "$(GetDefVol)"

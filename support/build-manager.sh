@@ -9,7 +9,12 @@ source=$(sed "s|<?dontedit?>|$dontedit|" <<< "$source")
 source=$(sed "s|<?year?>|$(date '+%Y')|" <<< "$source")
 source=$(sed "s|<?today?>|$(date '+%y%m%d')|" <<< "$source")
 source=$(sed "s|<?branch?>|$branch|" <<< "$source")
+source=$(sed "/^$/d" <<< "$source")
+source=$(sed -e '/^[[:space:]]*# /d;s/[[:space:]]#[[:space:]].*//' <<< "$source")
 
+[[ -e ~/scripts/nas/sherpa/sherpa.manager.sh ]] && chmod 666 ~/scripts/nas/sherpa/sherpa.manager.sh
 echo "$source" > ~/scripts/nas/sherpa/sherpa.manager.sh
+chmod 554 ~/scripts/nas/sherpa/sherpa.manager.sh
 
 echo 'done!'
+exit 0

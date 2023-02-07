@@ -19,6 +19,8 @@ WORK_PATH=$PWD/..
 OBJECTS_FILE=objects
 OBJECTS_PATHFILE=$WORK_PATH/$OBJECTS_FILE
 
+[[ -e $OBJECTS_PATHFILE ]] && chmod 666 "$OBJECTS_PATHFILE"
+
 AddFlagObj()
     {
 
@@ -278,6 +280,8 @@ for action in "${PACKAGE_ACTIONS[@]}"; do
         AddListObj IPKs.Ac${prefix}${action}
     done
 done
+
+chmod 444 "$OBJECTS_PATHFILE"
 
 echo 'done!'
 exit 0
