@@ -2431,13 +2431,13 @@ IPKs.Install()
 
     if QPKGs.AcInstall.ScAll.IsSet; then
         for index in "${!QPKG_NAME[@]}"; do
-            [[ ${QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${QPKG_ARCH[$index]} = all ]] || continue
+#             [[ ${QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${QPKG_ARCH[$index]} = all ]] || continue
             IPKs.AcToInstall.Add "${QPKG_REQUIRES_IPKS[$index]}"
         done
     else
         for index in "${!QPKG_NAME[@]}"; do
             if QPKGs.AcToInstall.Exist "${QPKG_NAME[$index]}" || QPKGs.IsInstalled.Exist "${QPKG_NAME[$index]}" || QPKGs.AcToReinstall.Exist "${QPKG_NAME[$index]}" || (QPKGs.AcToStart.Exist "${QPKG_NAME[$index]}" && (QPKGs.AcToInstall.Exist "${QPKG_NAME[$index]}" || QPKGs.IsInstalled.Exist "${QPKG_NAME[$index]}" || QPKGs.AcToReinstall.Exist "${QPKG_NAME[$index]}")); then
-                [[ ${QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${QPKG_ARCH[$index]} = all ]] || continue
+#                 [[ ${QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${QPKG_ARCH[$index]} = all ]] || continue
                 QPKG.MinRAM "${QPKG_NAME[$index]}" &>/dev/null || continue
                 IPKs.AcToInstall.Add "${QPKG_REQUIRES_IPKS[$index]}"
             fi
@@ -6165,18 +6165,13 @@ QPKG.Author()
     #   $1 = QPKG name
 
     # output:
-    #   stdout = package author
+    #   stdout = first package author found
     #   $? = 0 if found, !0 if not
 
     local -i index=0
-    local package=''
-    local prev=''
 
     for index in "${!QPKG_NAME[@]}"; do
-        package="${QPKG_NAME[$index]}"
-        [[ $package = "$prev" ]] && continue || prev=$package
-
-        if [[ $1 = "$package" ]]; then
+        if [[ ${QPKG_NAME[$index]} = "${1:?package name null}" ]]; then
             echo "${QPKG_AUTHOR[$index]}"
             return 0
         fi
@@ -6195,18 +6190,13 @@ QPKG.AppAuthor()
     #   $1 = QPKG name
 
     # output:
-    #   stdout = application author
+    #   stdout = first application author found
     #   $? = 0 if found, !0 if not
 
     local -i index=0
-    local package=''
-    local prev=''
 
     for index in "${!QPKG_NAME[@]}"; do
-        package="${QPKG_NAME[$index]}"
-        [[ $package = "$prev" ]] && continue || prev=$package
-
-        if [[ $1 = "$package" ]]; then
+        if [[ ${QPKG_NAME[$index]} = "${1:?package name null}" ]]; then
             echo "${QPKG_APP_AUTHOR[$index]}"
             return 0
         fi
@@ -6225,7 +6215,7 @@ QPKG.IsCanBackup()
     #   $1 = QPKG name
 
     # output:
-    #   $? = 0 if true, 1 if false
+    #   $? = 0 if true, 1 if false (first package found)
 
     local -i index=0
 
@@ -6252,7 +6242,7 @@ QPKG.IsCanRestartToUpdate()
     #   $1 = QPKG name
 
     # output:
-    #   $? = 0 if true, 1 if false
+    #   $? = 0 if true, 1 if false (first package found)
 
     local -i index=0
 
@@ -6279,7 +6269,7 @@ QPKG.IsCanClean()
     #   $1 = QPKG name
 
     # output:
-    #   $? = 0 if true, 1 if false
+    #   $? = 0 if true, 1 if false (first package found)
 
     local -i index=0
 
@@ -6306,7 +6296,7 @@ QPKG.IsCanLog()
     #   $1 = QPKG name
 
     # output:
-    #   $? = 0 if true, 1 if false
+    #   $? = 0 if true, 1 if false (first package found)
 
     local -i index=0
 
@@ -6333,7 +6323,7 @@ QPKG.IsDependent()
     #   $1 = QPKG name
 
     # output:
-    #   $? = 0 if true, 1 if false
+    #   $? = 0 if true, 1 if false (first package found)
 
     local -i index=0
 
@@ -6358,8 +6348,8 @@ QPKG.OriginalPath()
     #   $1 = QPKG name
 
     # output:
-    #   $? = 0 if successful, 1 if failed
     #   stdout = the original installation path of this QPKG (even if it was migrated to another volume)
+    #   $? = 0 if successful, 1 if failed
 
     local -i index=0
 
@@ -6383,8 +6373,8 @@ QPKG.Abbrvs()
     #   $1 = QPKG name
 
     # output:
+    #   stdout = first list of acceptable abbreviations that may be used to specify this package
     #   $? = 0 if successful, 1 if failed
-    #   stdout = list of acceptable abbreviations that may be used to specify this package
 
     local -i index=0
 
@@ -6406,8 +6396,8 @@ QPKG.MatchAbbrv()
     #   $1 = a potential package abbreviation supplied by user
 
     # output:
-    #   $? = 0 (matched) or 1 (unmatched)
     #   stdout = matched installable package name (empty if unmatched)
+    #   $? = 0 (matched) or 1 (unmatched)
 
     local -a abbs=()
     local -i package_index=0
@@ -6478,7 +6468,7 @@ QPKG.Desc()
     #   $1 = QPKG name
 
     # output:
-    #   stdout = QPKG description
+    #   stdout = first QPKG description found
     #   $? = 0 if successful, 1 if failed
 
     local -i index=0
@@ -6503,18 +6493,13 @@ QPKG.Note()
     #   $1 = QPKG name
 
     # output:
-    #   stdout = package note
+    #   stdout = first package note found
     #   $? = 0 if found, !0 if not
 
     local -i index=0
-    local package=''
-    local prev=''
 
     for index in "${!QPKG_NAME[@]}"; do
-        package="${QPKG_NAME[$index]}"
-        [[ $package = "$prev" ]] && continue || prev=$package
-
-        if [[ $1 = "$package" ]]; then
+        if [[ ${QPKG_NAME[$index]} = "${1:?package name null}" ]]; then
             echo "${QPKG_NOTE[$index]}"
             return 0
         fi
@@ -8033,7 +8018,6 @@ Packages.Load()
         readonly QPKG_ABBRVS
         readonly QPKG_CONFLICTS_WITH
         readonly QPKG_DEPENDS_ON
-        readonly QPKG_DEPENDED_UPON
         readonly QPKG_REQUIRES_IPKS
         readonly QPKG_CAN_BACKUP
         readonly QPKG_CAN_RESTART_TO_UPDATE
