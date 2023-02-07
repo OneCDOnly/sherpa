@@ -1,25 +1,24 @@
 * add checks to all service scripts to examine $EUID.
-	Maybe a way can be found to run each service script without superuser access?
+    Maybe a way can be found to run each service script without superuser access?
 
-* after removing entware, 'sed' and 'grep' fail. Need to switch to QTS binaries before uninstalling Entware.
+* after removing entware, 'sed' and 'grep' fail. Ensure changeover to QTS binaries works correctly.
 
 * change sherpa QPKG icon to use transparency.
-	do the same to RunLast.
+    do the same to RunLast.
 
 * ensure each venv upgrades its own 'pip'.
 
-* ensure each action fork is killed after it issues an 'exit' into the message pipe.
+* ensure each action fork is actually being killed after it issues an 'exit' into the message pipe.
 
-* add mini rolling CPU graph to progress display while installing QPKGs?
-	while true; do top -b -n 2 -d 0.2 -p 1621 | tail -1 | awk '{print $9}'; done
-	while true; do /usr/bin/top -b -n2 -d1 | grep 20744 | tail -1 | awk '{print $7}'; done
+* add mini rolling CPU utilitisation graph to progress display while installing QPKGs?
+    while true; do top -b -n 2 -d 0.2 -p 1621 | tail -1 | awk '{print $9}'; done
+    while true; do /usr/bin/top -b -n2 -d1 | grep 20744 | tail -1 | awk '{print $7}'; done
 
-* user should be able to specify "debug to disk" and/or "debug to screen".
+* user should be able to specify "debug to disk" and/or "debug to screen". 'debug-screen' should also enable 'debug-disk'.
 
-* sherpa being run with a 'status' check during QTS startup on Laura. Why?
+* sherpa is being run with a 'status' check during QTS startup on Laura. Why?
 
-* remove message to 'enable' QPKG when attempting to 'stop' it while in a disabled state:
-
-	[~] # /etc/init.d/clamav.sh stop; echo $?
-	The 'ClamAV' QPKG is disabled. Please enable it first with: qpkg_service enable ClamAV
-	1
+* remove hint to 'enable' QPKG when attempting to 'stop' it while in a disabled state:
+    [~] # /etc/init.d/clamav.sh stop; echo $?
+    The 'ClamAV' QPKG is disabled. Please enable it first with: qpkg_service enable ClamAV
+    1

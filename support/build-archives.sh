@@ -4,36 +4,28 @@
 
 echo -n 'building archives ... '
 
-WORK_PATH=$PWD/..
+working_path=$HOME/scripts/nas/sherpa
 
-MANAGER_FILE=sherpa.manager.sh
-MANAGER_ARCHIVE_FILE=${MANAGER_FILE%.*}.tar.gz
-MANAGER_ARCHIVE_PATHFILE=$WORK_PATH/$MANAGER_ARCHIVE_FILE
+objects_pathfile=$working_path/objects
+objects_archive_pathfile=$working_path/objects.tar.gz
 
-OBJECTS_FILE=objects
-OBJECTS_ARCHIVE_FILE=$OBJECTS_FILE.tar.gz
-OBJECTS_ARCHIVE_PATHFILE=$WORK_PATH/$OBJECTS_ARCHIVE_FILE
-OBJECTS_PATHFILE=$WORK_PATH/$OBJECTS_FILE
+packages_pathfile=$working_path/packages
+packages_archive_pathfile=$working_path/packages.tar.gz
 
-PACKAGES_FILE=packages
-PACKAGES_ARCHIVE_FILE=$PACKAGES_FILE.tar.gz
-PACKAGES_ARCHIVE_PATHFILE=$WORK_PATH/$PACKAGES_ARCHIVE_FILE
+manager_pathfile=$working_path/sherpa.manager.sh
+manager_archive_pathfile=$working_path/sherpa.manager.tar.gz
 
-[[ -e $MANAGER_ARCHIVE_PATHFILE ]] && chmod 666 "$MANAGER_ARCHIVE_PATHFILE"
-[[ -e $OBJECTS_ARCHIVE_PATHFILE ]] && chmod 666 "$OBJECTS_ARCHIVE_PATHFILE"
-[[ -e $PACKAGES_ARCHIVE_PATHFILE ]] && chmod 666 "$PACKAGES_ARCHIVE_PATHFILE"
+[[ -e $objects_archive_pathfile ]] && rm -f "$objects_archive_pathfile"
+[[ -e $packages_archive_pathfile ]] && rm -f "$packages_archive_pathfile"
+[[ -e $manager_archive_pathfile ]] && rm -f "$manager_archive_pathfile"
 
-[[ -e $MANAGER_ARCHIVE_PATHFILE ]] && rm $MANAGER_ARCHIVE_PATHFILE
-[[ -e $OBJECTS_ARCHIVE_PATHFILE ]] && rm $OBJECTS_ARCHIVE_PATHFILE
-[[ -e $PACKAGES_ARCHIVE_PATHFILE ]] && rm $PACKAGES_ARCHIVE_PATHFILE
+tar --create --gzip --numeric-owner --file="$objects_archive_pathfile" --directory=$working_path "$(basename "$objects_pathfile")"
+tar --create --gzip --numeric-owner --file="$packages_archive_pathfile" --directory=$working_path "$(basename "$packages_pathfile")"
+tar --create --gzip --numeric-owner --file="$manager_archive_pathfile" --directory=$working_path "$(basename "$manager_pathfile")"
 
-tar --create --gzip --numeric-owner --file="$MANAGER_ARCHIVE_PATHFILE" --directory="$WORK_PATH" "$MANAGER_FILE"
-tar --create --gzip --numeric-owner --file="$OBJECTS_ARCHIVE_PATHFILE" --directory="$WORK_PATH" "$OBJECTS_FILE"
-tar --create --gzip --numeric-owner --file="$PACKAGES_ARCHIVE_PATHFILE" --directory="$WORK_PATH" "$PACKAGES_FILE"
-
-chmod 444 "$MANAGER_ARCHIVE_PATHFILE"
-chmod 444 "$OBJECTS_ARCHIVE_PATHFILE"
-chmod 444 "$PACKAGES_ARCHIVE_PATHFILE"
+chmod 444 "$objects_archive_pathfile"
+chmod 444 "$packages_archive_pathfile"
+chmod 444 "$manager_archive_pathfile"
 
 echo 'done!'
 exit 0
