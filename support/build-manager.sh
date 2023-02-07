@@ -11,7 +11,7 @@ source=$(sed "s|<?today?>|$(date '+%y%m%d')|" <<< "$source")
 source=$(sed "s|<?branch?>|$branch|" <<< "$source")
 source=$(sed "/^$/d" <<< "$source")                                                     # remove empty lines
 source=$(sed -e '/^[[:space:]]*# /d;s/[[:space:]]#[[:space:]].*//' <<< "$source")       # remove comment lines and line comments
-source=$(sed -e 's/^[[:space:]]*//' <<< "$source")
+source=$(sed -e 's/^[[:space:]]*//' <<< "$source")                                      # remove leading whitespace
 
 [[ -e ~/scripts/nas/sherpa/sherpa.manager.sh ]] && chmod 666 ~/scripts/nas/sherpa/sherpa.manager.sh
 echo "$source" > ~/scripts/nas/sherpa/sherpa.manager.sh

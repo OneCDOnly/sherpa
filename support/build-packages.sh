@@ -54,8 +54,6 @@ sorted=$(sort --version-sort --reverse <<< "$raw")
 
 echo -n 'extracting highest QPKG version numbers ... '
 
-rm -f /tmp/highest.lst
-
 while read -r checksum_pathfilename; do
     # need just filename
     checksum_filename=$(basename "$checksum_pathfilename")
@@ -100,8 +98,6 @@ source=$(<~/scripts/nas/sherpa/support/packages.source)
 source=$(sed "s|<?dontedit?>|$dontedit|" <<< "$source")
 source=$(sed "s|<?today?>|$(date '+%y%m%d')|" <<< "$source")
 source=$(sed "s|<?branch?>|$branch|" <<< "$source")
-# source=$(sed "/^$/d" <<< "$source")
-# source=$(sed -e '/^[[:space:]]*# /d;s/[[:space:]]#[[:space:]].*//' <<< "$source")
 
 while read -r checksum_filename qpkg_filename package_name version arch md5; do
     for attribute in version package_name qpkg_filename md5; do
@@ -109,8 +105,12 @@ while read -r checksum_filename qpkg_filename package_name version arch md5; do
     done
 done <<< "$final"
 
+source=$(sed "/^$/d" <<< "$source")                                                     # remove empty lines
+source=$(sed -e '/^[[:space:]]*# /d;s/[[:space:]]#[[:space:]].*//' <<< "$source")       # remove comment lines and line comments
+
 [[ -e ~/scripts/nas/sherpa/packages ]] && chmod 666 ~/scripts/nas/sherpa/packages
 echo "$source" > ~/scripts/nas/sherpa/packages
 chmod 444 ~/scripts/nas/sherpa/packages
 
 echo 'done!'
+exit 0
