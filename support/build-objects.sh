@@ -126,7 +126,7 @@ echo $public_function_name'.Add()
     }
 
 [[ -e $objects_pathfile ]] && rm -f "$objects_pathfile"
-echo "OBJECTS_VER=$(date +%y%m%d)" > "$objects_pathfile"
+echo "OBJECTS_VER='<?today?>'" > "$objects_pathfile"
 echo "#*$dontedit_msg" >> "$objects_pathfile"
 
 # session flag objects ---------------------------------------------------------------------------------------------------------------------------------
@@ -298,6 +298,7 @@ for action in "${PACKAGE_ACTIONS[@]}"; do
 done
 
 buffer=$(<$objects_pathfile)
+buffer=$(sed "s|<?today?>|$(date '+%y%m%d')|" <<< "$buffer")
 buffer=$(sed "/^$/d" <<< "$buffer")                                                     # remove empty lines
 buffer=$(sed -e '/^[[:space:]]*# /d;s/[[:space:]]#[[:space:]].*//' <<< "$buffer")       # remove comment lines and line comments
 buffer=$(sed -e 's/^[[:space:]]*//' <<< "$buffer")                                      # remove leading whitespace
