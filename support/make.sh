@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-echo "branch: $(<~/scripts/nas/sherpa/support/branch.txt)"
+echo "branch: $(<$HOME/scripts/nas/sherpa/support/branch.txt)"
 
-./check.sh || exit
+./check-syntax.sh || exit
 ./build-objects.sh || exit
 ./build-packages.sh || exit
 ./build-manager.sh || exit

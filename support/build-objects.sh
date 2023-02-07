@@ -35,22 +35,28 @@ AddFlagObj()
     _placeholder_log_changes_flag_=_ob_${safe_function_name}_chfl_
 
 echo $public_function_name'.Init()
-{ '$_placeholder_flag_'='$state_default'
-'$_placeholder_log_changes_flag_'='$state_logmods' ;}
+    { '$_placeholder_flag_'='$state_default'
+    '$_placeholder_log_changes_flag_'='$state_logmods' ;}
+
 '$public_function_name'.IsNt()
-{ [[ $'$_placeholder_flag_' != '\'true\'' ]] ;}
+    { [[ $'$_placeholder_flag_' != '\'true\'' ]] ;}
+
 '$public_function_name'.IsSet()
-{ [[ $'$_placeholder_flag_' = '\'true\'' ]] ;}
+    { [[ $'$_placeholder_flag_' = '\'true\'' ]] ;}
+
 '$public_function_name'.Set()
-{ [[ $'$_placeholder_flag_' = '\'true\'' ]] && return
-'$_placeholder_flag_'=true
-[[ $'$_placeholder_log_changes_flag_' = '\'true\'' ]] && DebugVar '$_placeholder_flag_' ;}
+    { [[ $'$_placeholder_flag_' = '\'true\'' ]] && return
+    '$_placeholder_flag_'=true
+    [[ $'$_placeholder_log_changes_flag_' = '\'true\'' ]] && DebugVar '$_placeholder_flag_' ;}
+
 '$public_function_name'.UnSet()
-{ [[ $'$_placeholder_flag_' != '\'true\'' ]] && return
-'$_placeholder_flag_'=false
-[[ $'$_placeholder_log_changes_flag_' = '\'true\'' ]] && DebugVar '$_placeholder_flag_' ;}
+    { [[ $'$_placeholder_flag_' != '\'true\'' ]] && return
+    '$_placeholder_flag_'=false
+    [[ $'$_placeholder_log_changes_flag_' = '\'true\'' ]] && DebugVar '$_placeholder_flag_' ;}
+
 '$public_function_name'.NoLogMods()
-{ '$_placeholder_log_changes_flag_'=false ;}
+    { '$_placeholder_log_changes_flag_'=false ;}
+
 '$public_function_name'.Init' >> "$objects_pathfile"
 
     return 0
@@ -70,38 +76,49 @@ AddListObj()
     _placeholder_array_index_=_ob_${safe_function_name}_arin_
 
 echo $public_function_name'.Add()
-{ local ar=(${1:-}) it='\'\''; [[ ${#ar[@]} -eq 0 ]] && return
-for it in "${ar[@]:-}"; do
-! '$public_function_name'.Exist "$it" && '$_placeholder_array_'+=("$it")
-done ;}
+    { local ar=(${1:-}) it='\'\''; [[ ${#ar[@]} -eq 0 ]] && return
+    for it in "${ar[@]:-}"; do
+        ! '$public_function_name'.Exist "$it" && '$_placeholder_array_'+=("$it")
+    done ;}
+
 '$public_function_name'.Array()
-{ echo -n "${'$_placeholder_array_'[@]:-}" ;}
+    { echo -n "${'$_placeholder_array_'[@]:-}" ;}
+
 '$public_function_name'.Count()
-{ echo "${#'$_placeholder_array_'[@]}" ;}
+    { echo "${#'$_placeholder_array_'[@]}" ;}
+
 '$public_function_name'.Exist()
-{ local patt="\b${1:-}\b"; [[ " ${'$_placeholder_array_'[*]:-} " =~ $patt ]] ;}
+    { local patt="\b${1:-}\b"; [[ " ${'$_placeholder_array_'[*]:-} " =~ $patt ]] ;}
+
 '$public_function_name'.Init()
-{ '$_placeholder_size_'=0 '$_placeholder_array_'=() '$_placeholder_array_index_'=1 ;}
+    { '$_placeholder_size_'=0 '$_placeholder_array_'=() '$_placeholder_array_index_'=1 ;}
+
 '$public_function_name'.IsAny()
-{ [[ ${#'$_placeholder_array_'[@]} -gt 0 ]] ;}
+    { [[ ${#'$_placeholder_array_'[@]} -gt 0 ]] ;}
+
 '$public_function_name'.IsNone()
-{ [[ ${#'$_placeholder_array_'[@]} -eq 0 ]] ;}
+    { [[ ${#'$_placeholder_array_'[@]} -eq 0 ]] ;}
+
 '$public_function_name'.List()
-{ echo -n "${'$_placeholder_array_'[*]:-}" ;}
+    { echo -n "${'$_placeholder_array_'[*]:-}" ;}
+
 '$public_function_name'.ListCSV()
-{ echo -n "${'$_placeholder_array_'[*]:-}" | tr '\' \'' '\',\'' ;}
+    { echo -n "${'$_placeholder_array_'[*]:-}" | tr '\' \'' '\',\'' ;}
+
 '$public_function_name'.Remove()
-{ local agar=(${1:-}) tmar=() ag='\'\'' it='\'\'' m=false
-for it in "${'$_placeholder_array_'[@]:-}"; do m=false
-for ag in "${agar[@]+"${agar[@]}"}"; do if [[ $ag = "$it" ]]; then m=true; break; fi
-done
-[[ $m = false ]] && tmar+=("$it")
-done
-'$_placeholder_array_'=("${tmar[@]+"${tmar[@]}"}")
-[[ -z ${'$_placeholder_array_'[*]+"${'$_placeholder_array_'[@]}"} ]] && '$_placeholder_array_'=() ;}
+    { local agar=(${1:-}) tmar=() ag='\'\'' it='\'\'' m=false
+    for it in "${'$_placeholder_array_'[@]:-}"; do m=false
+        for ag in "${agar[@]+"${agar[@]}"}"; do if [[ $ag = "$it" ]]; then m=true; break; fi
+        done
+        [[ $m = false ]] && tmar+=("$it")
+    done
+    '$_placeholder_array_'=("${tmar[@]+"${tmar[@]}"}")
+    [[ -z ${'$_placeholder_array_'[*]+"${'$_placeholder_array_'[@]}"} ]] && '$_placeholder_array_'=() ;}
+
 '$public_function_name'.Size()
-{ if [[ -n ${1:-} && ${1:-} = "=" ]]; then '$_placeholder_size_'=$2; else echo -n "$'$_placeholder_size_'"
-fi ;}
+    { if [[ -n ${1:-} && ${1:-} = "=" ]]; then '$_placeholder_size_'=$2; else echo -n "$'$_placeholder_size_'"
+    fi ;}
+
 '$public_function_name'.Init' >> "$objects_pathfile"
 
     return 0
@@ -110,7 +127,7 @@ fi ;}
 
 [[ -e $objects_pathfile ]] && rm -f "$objects_pathfile"
 echo "OBJECTS_VER=$(date +%y%m%d)" > "$objects_pathfile"
-echo "#$dontedit_msg" >> "$objects_pathfile"
+echo "#*$dontedit_msg" >> "$objects_pathfile"
 
 # session flag objects ---------------------------------------------------------------------------------------------------------------------------------
 
@@ -280,6 +297,12 @@ for action in "${PACKAGE_ACTIONS[@]}"; do
     done
 done
 
+buffer=$(<$objects_pathfile)
+buffer=$(sed "/^$/d" <<< "$buffer")                                                     # remove empty lines
+buffer=$(sed -e '/^[[:space:]]*# /d;s/[[:space:]]#[[:space:]].*//' <<< "$buffer")       # remove comment lines and line comments
+buffer=$(sed -e 's/^[[:space:]]*//' <<< "$buffer")                                      # remove leading whitespace
+
+echo "$buffer" > "$objects_pathfile"
 chmod 444 "$objects_pathfile"
 
 echo 'done!'
