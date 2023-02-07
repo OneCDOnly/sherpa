@@ -100,8 +100,8 @@ source=$(<~/scripts/nas/sherpa/support/packages.source)
 source=$(sed "s|<?dontedit?>|$dontedit|" <<< "$source")
 source=$(sed "s|<?today?>|$(date '+%y%m%d')|" <<< "$source")
 source=$(sed "s|<?branch?>|$branch|" <<< "$source")
-source=$(sed "/^$/d" <<< "$source")
-source=$(sed -e '/^[[:space:]]*# /d;s/[[:space:]]#[[:space:]].*//' <<< "$source")
+# source=$(sed "/^$/d" <<< "$source")
+# source=$(sed -e '/^[[:space:]]*# /d;s/[[:space:]]#[[:space:]].*//' <<< "$source")
 
 while read -r checksum_filename qpkg_filename package_name version arch md5; do
     for attribute in version package_name qpkg_filename md5; do
