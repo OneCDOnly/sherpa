@@ -19,9 +19,9 @@ manager_archive_pathfile=$working_path/sherpa.manager.tar.gz
 [[ -e $packages_archive_pathfile ]] && rm -f "$packages_archive_pathfile"
 [[ -e $manager_archive_pathfile ]] && rm -f "$manager_archive_pathfile"
 
-tar --create --gzip --numeric-owner --file="$objects_archive_pathfile" --directory=$working_path "$(basename "$objects_pathfile")"
-tar --create --gzip --numeric-owner --file="$packages_archive_pathfile" --directory=$working_path "$(basename "$packages_pathfile")"
-tar --create --gzip --numeric-owner --file="$manager_archive_pathfile" --directory=$working_path "$(basename "$manager_pathfile")"
+tar --create --gzip --numeric-owner --file="$objects_archive_pathfile" --directory="$working_path" "$(basename "$objects_pathfile")"
+tar --create --gzip --numeric-owner --file="$packages_archive_pathfile" --directory="$working_path" "$(basename "$packages_pathfile")"
+tar --create --gzip --numeric-owner --file="$manager_archive_pathfile" --directory="$working_path" "$(basename "$manager_pathfile")"
 
 chmod 444 "$objects_archive_pathfile"
 chmod 444 "$packages_archive_pathfile"

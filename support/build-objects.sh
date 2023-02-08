@@ -27,7 +27,7 @@ AddFlagObj()
     # $3 = set 'log boolean changes' on init (optional) default is 'true'
 
     local public_function_name=${1:?no object name supplied}
-    local safe_function_name="$(tr 'A-Z' 'a-z' <<< "${public_function_name//[.-]/_}")"
+    local safe_function_name="$(tr '[:upper:]' '[:lower:]' <<< "${public_function_name//[.-]/_}")"
     local state_default=${2:-false}
     local state_logmods=${3:-true}
 
@@ -69,7 +69,7 @@ AddListObj()
     # $1 = object name to create
 
     local public_function_name=${1:?no object name supplied}
-    local safe_function_name="$(tr 'A-Z' 'a-z' <<< "${public_function_name//[.-]/_}")"
+    local safe_function_name="$(tr '[:upper:]' '[:lower:]' <<< "${public_function_name//[.-]/_}")"
 
     _placeholder_size_=_ob_${safe_function_name}_sz_
     _placeholder_array_=_ob_${safe_function_name}_ar_
@@ -164,29 +164,29 @@ for element in Last Tail; do
 done
 
 for group in "${PACKAGE_GROUPS[@]}"; do
-    AddFlagObj QPKGs.List.Sc${group}
+    AddFlagObj QPKGs.List.Sc"${group}"
 
     case $group in
         All|CanBackup|CanRestartToUpdate|Dependent|HasDependents|Standalone)
             continue    # ScNt flags are not required for these
     esac
 
-    AddFlagObj QPKGs.List.ScNt${group}
+    AddFlagObj QPKGs.List.ScNt"${group}"
 done
 
 for state in "${PACKAGE_STATES[@]}"; do
-    AddFlagObj QPKGs.List.Is${state}
+    AddFlagObj QPKGs.List.Is"${state}"
 
     case $state in
         Cleaned|Missing|Reassigned|Reinstalled|Restarted|Upgraded)
             continue    # IsNt flags are not required for these
     esac
 
-    AddFlagObj QPKGs.List.IsNt${state}
+    AddFlagObj QPKGs.List.IsNt"${state}"
 done
 
 for state in "${PACKAGE_STATES_TRANSIENT[@]}"; do
-    AddFlagObj QPKGs.List.Is${state}
+    AddFlagObj QPKGs.List.Is"${state}"
 done
 
 # package action flag objects --------------------------------------------------------------------------------------------------------------------------
@@ -198,7 +198,7 @@ for group in "${PACKAGE_GROUPS[@]}"; do
                 continue    # Ac flags are not required for these
         esac
 
-        AddFlagObj QPKGs.Ac${action}.Sc${group}
+        AddFlagObj QPKGs.Ac"${action}".Sc"${group}"
     done
 
     case $group in
@@ -212,7 +212,7 @@ for group in "${PACKAGE_GROUPS[@]}"; do
                 continue    # Ac flags are not required for these
         esac
 
-        AddFlagObj QPKGs.Ac${action}.ScNt${group}
+        AddFlagObj QPKGs.Ac"${action}".ScNt"${group}"
     done
 done
 
@@ -222,7 +222,7 @@ for state in "${PACKAGE_STATES[@]}"; do
             Disable|Enable)
                 continue    # Ac flags are not required for these
         esac
-        AddFlagObj QPKGs.Ac${action}.Is${state}
+        AddFlagObj QPKGs.Ac"${action}".Is"${state}"
     done
 
     case $state in
@@ -236,7 +236,7 @@ for state in "${PACKAGE_STATES[@]}"; do
                 continue    # Ac flags are not required for these
         esac
 
-        AddFlagObj QPKGs.Ac${action}.IsNt${state}
+        AddFlagObj QPKGs.Ac"${action}".IsNt"${state}"
     done
 done
 
@@ -255,24 +255,24 @@ AddListObj Args.Unknown
 # done
 
 for group in "${PACKAGE_GROUPS[@]}"; do
-    AddListObj QPKGs.Sc${group}
+    AddListObj QPKGs.Sc"${group}"
 
     case $group in
         All|Dependent|HasDependents|Standalone)
             continue    # ScNt lists are not required for these
     esac
 
-    AddListObj QPKGs.ScNt${group}
+    AddListObj QPKGs.ScNt"${group}"
 done
 
 for state in "${PACKAGE_STATES[@]}" "${PACKAGE_RESULTS[@]}"; do
-    AddListObj QPKGs.Is${state}
-    AddListObj QPKGs.IsNt${state}
+    AddListObj QPKGs.Is"${state}"
+    AddListObj QPKGs.IsNt"${state}"
 done
 
 for state in "${PACKAGE_STATES_TRANSIENT[@]}"; do
-    AddListObj QPKGs.Is${state}
-    AddListObj QPKGs.IsNt${state}
+    AddListObj QPKGs.Is"${state}"
+    AddListObj QPKGs.IsNt"${state}"
 done
 
 for action in "${PACKAGE_ACTIONS[@]}"; do
@@ -282,7 +282,7 @@ for action in "${PACKAGE_ACTIONS[@]}"; do
     esac
 
     for prefix in To Ok Er Sk So Se; do
-        AddListObj QPKGs.Ac${prefix}${action}
+        AddListObj QPKGs.Ac"${prefix}${action}"
     done
 done
 
@@ -293,11 +293,11 @@ for action in "${PACKAGE_ACTIONS[@]}"; do
     esac
 
     for prefix in To Ok Er; do
-        AddListObj IPKs.Ac${prefix}${action}
+        AddListObj IPKs.Ac"${prefix}${action}"
     done
 done
 
-buffer=$(<$objects_pathfile)
+buffer=$(<"$objects_pathfile")
 buffer=$(sed "s|<?today?>|$(date '+%y%m%d')|" <<< "$buffer")
 buffer=$(sed "/^$/d" <<< "$buffer")                                                     # remove empty lines
 buffer=$(sed -e '/^[[:space:]]*# /d;s/[[:space:]]#[[:space:]].*//' <<< "$buffer")       # remove comment lines and line comments
