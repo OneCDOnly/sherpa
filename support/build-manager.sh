@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-echo -n 'updating management fields ... '
+echo -n 'building management script ... '
 
 working_path=$HOME/scripts/nas/sherpa
 
@@ -23,5 +23,5 @@ buffer=$(sed -e 's/^[[:space:]]*//' <<< "$buffer")                              
 echo "$buffer" > "$target_pathfile"
 chmod 554 "$target_pathfile"
 
-echo 'done!'
+echo 'done'
 exit 0

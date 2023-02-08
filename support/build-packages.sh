@@ -59,7 +59,7 @@ TranslateQPKGArch()
 
 echo -n 'locating QPKG checksum files ... '
 raw=$(find $HOME/scripts/nas -name '*.qpkg.md5')
-echo 'done!'
+echo 'done'
 
 sorted=$(sort --version-sort --reverse <<< "$raw")
 
@@ -97,7 +97,7 @@ while read -r checksum_pathfilename; do
     fi
 done <<< "$sorted" > "$highest_package_versions_found_pathfile"
 
-echo 'done!'
+echo 'done'
 
 echo -n 'updating QPKG fields ... '
 
@@ -114,13 +114,18 @@ done <<< "$(sort "$highest_package_versions_found_pathfile")"
 buffer=$(sed "/^$/d" <<< "$buffer")                                                     # remove empty lines
 buffer=$(sed -e '/^[[:space:]]*# /d;s/[[:space:]]#[[:space:]].*//' <<< "$buffer")       # remove comment lines and line comments
 
+echo 'done'
+
+echo -n "building 'packages' ... "
+
 [[ -e $target_pathfile ]] && rm -f "$target_pathfile"
 echo "$buffer" > "$target_pathfile"
 chmod 444 "$target_pathfile"
+
+echo 'done'
 
 # sort for easier viewing
 printf '%-36s %-30s %-20s %-12s %-6s %s\n%s\n' checksum_filename qpkg_filename package_name version arch md5 "$(sort "$highest_package_versions_found_pathfile")" > "$highest_package_versions_found_sorted_pathfile"
 rm -f "$highest_package_versions_found_pathfile"
 
-echo 'done!'
 exit 0

@@ -18,7 +18,7 @@ for index in "${!filenames[@]}"; do
     echo -n "checking '${filenames[index]}' ... "
 
     if shellcheck --shell=bash --exclude="${exclusions[index]}" "$working_path"/${filenames[index]}; then
-        echo 'passed!'
+        echo 'passed'
     else
         echo 'failed!'
         exit 1

@@ -27,5 +27,5 @@ chmod 444 "$objects_archive_pathfile"
 chmod 444 "$packages_archive_pathfile"
 chmod 444 "$manager_archive_pathfile"
 
-echo 'done!'
+echo 'done'
 exit 0

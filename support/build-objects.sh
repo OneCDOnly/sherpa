@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-echo -n 'building objects ... '
+echo -n "building 'objects' ... "
 
 # $MANAGEMENT_ACTIONS haven't been coded yet, so don't create objects for it
 #MANAGEMENT_ACTIONS=(Check List Paste Status)
@@ -306,5 +306,5 @@ buffer=$(sed -e 's/^[[:space:]]*//' <<< "$buffer")                              
 echo "$buffer" > "$objects_pathfile"
 chmod 444 "$objects_pathfile"
 
-echo 'done!'
+echo 'done'
 exit 0
