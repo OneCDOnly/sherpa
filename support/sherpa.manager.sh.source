@@ -2868,7 +2868,7 @@ readonly HELP_PACKAGE_PATH_WIDTH=42
 readonly HELP_PACKAGE_REPO_WIDTH=40
 
 readonly HELP_COL_SPACER=' '
-readonly HELP_COL_MAIN_PREFIX='* '
+readonly HELP_COL_MAIN_PREFIX='• '
 readonly HELP_COL_OTHER_PREFIX='- '
 readonly HELP_COL_BLANK_PREFIX='  '
 
