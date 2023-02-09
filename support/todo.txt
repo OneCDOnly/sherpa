@@ -1,3 +1,5 @@
+* BASH completion?
+
 * include new integrated help screens for all actions like:
 	`sherpa paste help`, `sherpa install help`, `sherpa reassign help`
 

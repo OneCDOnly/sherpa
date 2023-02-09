@@ -818,8 +818,6 @@ Action.Proc()
     local -r ACTION_PAST=${7:?null}
     local original_colourful=$colourful
 
-    ShowAsProc "$ACTION_PRESENT $([[ $TIER != All ]] && Lowercase "$TIER ")${PACKAGE_TYPE}s"
-
     case $PACKAGE_TYPE in
         QPKG)
             if [[ $TIER = All ]]; then  # process all tiers
@@ -832,6 +830,8 @@ Action.Proc()
 
             total_count=${#target_packages[@]}
             DebugVar total_count
+
+            ShowAsProc "$ACTION_PRESENT $([[ $TIER != All ]] && Lowercase "$TIER ")${PACKAGE_TYPE}$(Pluralise "$total_count")"
 
             if [[ $total_count -eq 0 ]]; then
                 DebugInfo 'nothing to process'
@@ -947,6 +947,8 @@ Action.Proc()
             CloseActionMsgPipe
             ;;
         IPK|PIP)
+            ShowAsProc "$ACTION_PRESENT $([[ $TIER != All ]] && Lowercase "$TIER ")${PACKAGE_TYPE}s"
+
             InitForkCounts
             $targets_function       # only process these packages in groups, not individually
     esac

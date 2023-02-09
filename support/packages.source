@@ -221,7 +221,7 @@ QPKG_CAN_LOG+=(false)
 
 QPKG_NAME+=(inxi)
 QPKG_AUTHOR+=(OneCD)
-QPKG_APP_AUTHOR+=('')
+QPKG_APP_AUTHOR+=(smxi)
 QPKG_ARCH+=(all)
 QPKG_MIN_RAM_KB+=(none)
 QPKG_VERSION+=(<?version?>)
