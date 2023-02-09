@@ -23,6 +23,10 @@ tar --create --gzip --numeric-owner --file="$objects_archive_pathfile" --directo
 tar --create --gzip --numeric-owner --file="$packages_archive_pathfile" --directory="$working_path" "$(basename "$packages_pathfile")"
 tar --create --gzip --numeric-owner --file="$manager_archive_pathfile" --directory="$working_path" "$(basename "$manager_pathfile")"
 
+[[ -e $objects_pathfile ]] && rm -f "$objects_pathfile"
+[[ -e $packages_pathfile ]] && rm -f "$packages_pathfile"
+[[ -e $manager_pathfile ]] && rm -f "$manager_pathfile"
+
 chmod 444 "$objects_archive_pathfile"
 chmod 444 "$packages_archive_pathfile"
 chmod 444 "$manager_archive_pathfile"

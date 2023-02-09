@@ -1049,6 +1049,8 @@ Self.Results()
             Help.PackageAbbreviations.Show
         elif Opts.Help.Actions.IsSet; then
             Help.Actions.Show
+        elif [[ ${Opts_Help_Action_Reassign:-false} = true ]]; then
+            Help.Action.Reassign.Show
         elif Opts.Help.ActionsAll.IsSet; then
             Help.ActionsAll.Show
         elif Opts.Help.Backups.IsSet; then
@@ -1234,7 +1236,7 @@ ParseArgs()
         # stage 1
         if [[ -z $action ]]; then
             case $arg in
-                a|abs|action|actions|actions-all|alias|aliases|all-actions|b|backups|dependent|dependents|failed|groups|installable|installed|l|last|log|missing|not-installed|ok|option|options|p|package|packages|problems|r|repo|repos|results|skipped|standalone|standalones|started|stopped|tail|tips|updatable|updateable|upgradable|v|version|versions|whole)
+                a|abs|action|actions|actions-all|alias|aliases|all-actions|b|backups|dependent|dependents|failed|groups|installable|installed|l|last|log|missing|not-installed|ok|option|options|p|package|packages|problems|r|reassign|repo|repos|results|skipped|standalone|standalones|started|stopped|tail|tips|updatable|updateable|upgradable|v|version|versions|whole)
                     action=help_
                     arg_identified=true
                     group=''
@@ -1249,7 +1251,7 @@ ParseArgs()
         if [[ -n $action ]]; then
             case $arg in
             # these cases use only a single word or char to specify a single group
-                backedup|failed|installable|installed|missing|not-backedup|not-installed|ok|problems|results|skipped|started|stopped|tail|tips)
+                backedup|failed|help|installable|installed|missing|not-backedup|not-installed|ok|problems|results|skipped|started|stopped|tail|tips)
                     group=${arg}_
                     ;;
             # all cases below can use multiple words or chars to specify a single group
@@ -1454,6 +1456,9 @@ ParseArgs()
                     problems_)
                         Opts.Help.Problems.Set
                         ;;
+                    reassign_)
+                        Opts_Help_Action_Reassign=true
+                        ;;
                     repos_)
                         Opts.Help.Repos.Set
                         ;;
@@ -1571,6 +1576,10 @@ ParseArgs()
                         ;;
                     upgradable_)
                         QPKGs.AcReassign.IsUpgradable.Set
+                        group=''
+                        ;;
+                    help_)
+                        Opts_Help_Action_Reassign=true
                         group=''
                         ;;
                     *)
@@ -3241,7 +3250,7 @@ Help.Actions.Show()
     DisplayAsProjSynIndentExam 'enable then start these packages' "start $(FormatAsPackages)"
     DisplayAsProjSynIndentExam 'stop then disable these packages (disabling will prevent them starting on reboot)' "stop $(FormatAsPackages)"
     DisplayAsProjSynIndentExam 'restart these packages (this will upgrade internal applications where supported)' "restart $(FormatAsPackages)"
-    DisplayAsProjSynIndentExam "reassign these packages to the $(FormatAsTitle) repository" "reassign $(FormatAsPackages)"
+    Help.Action.Reassign.Show
     DisplayAsProjSynIndentExam 'clear local repository files from these packages' "clean $(FormatAsPackages)"
     DisplayAsProjSynIndentExam 'backup these application configurations to the backup location' "backup $(FormatAsPackages)"
     DisplayAsProjSynIndentExam 'restore these application configurations from the backup location' "restore $(FormatAsPackages)"
@@ -3254,6 +3263,13 @@ Help.Actions.Show()
     DisplayAsProjSynIndentExam '' 'install sabnzbd sickgear restart transmission uninstall lazy nzbget upgrade nzbtomedia'
 
     return 0
+
+    }
+
+Help.Action.Reassign.Show()
+    {
+
+    DisplayAsProjSynIndentExam "reassign packages to $(FormatAsTitle). This means $(FormatAsTitle) will now manage them. Use this action to separate QPKGs previously installed via an online respository from further management by that repository" "reassign $(FormatAsPackages)"
 
     }
 
