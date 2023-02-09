@@ -3246,10 +3246,14 @@ DisplayAsIndentPrefixActionResultDurationReason()
     # $4 = duration in milliseconds (optional)
     # $5 = reason message (optional)
 
-    if [[ -z ${5:-} ]]; then
-        printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%s%s %s in %s\n" "${1:-}" "$(Lowercase "${2:-}")" "${3:-}" "$(FormatMilliSecsToMinutesSecs "${4:-0}")"
+    local duration=''
+
+    [[ -n ${4:-} ]] && duration="$(FormatMilliSecsToMinutesSecs "$4")"
+
+    if [[ -n ${5:-} ]]; then
+        printf "%${ACTION_RESULT_INDENT}s%s%s %s%s\n%${ACTION_RESULT_INDENT}s${HELP_COL_BLANK_PREFIX}${HELP_COL_BLANK_PREFIX}%s\n" '' "${1:-}" "$(Lowercase "${2:-}")" "${3:-}" "$([[ -n $duration ]] && echo -n " in $duration")" '' "$5"
     else
-        printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%s%s %s in %s\n${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}${HELP_COL_BLANK_PREFIX}%s\n" "${1:-}" "$(Lowercase "${2:-}")" "${3:-}" "$(FormatMilliSecsToMinutesSecs "${4:-0}")" "$5"
+        printf "%${ACTION_RESULT_INDENT}s%s%s %s%s\n" '' "${1:-}" "$(Lowercase "${2:-}")" "${3:-}" "$([[ -n $duration ]] && echo -n " in $duration")"
     fi
 
     }
@@ -7717,7 +7721,11 @@ ShowAsActionLogDetail()
 
     case ${4:-} in
         skipped|skipped-failed)
-            DisplayAsIndentPrefixActionResultDurationReason '' "$3" "$2" '' "${6:-}"
+            if [[ -n "${6:-}" ]]; then
+                DisplayAsIndentPrefixActionResultDurationReason '' "$3" "$2" '' "Reason: $6"
+            else
+                DisplayAsIndentPrefixActionResultDurationReason '' "$3" "$2" '' "no reason was provided by $(FormatAsTitle)"
+            fi
             ;;
         failed)
             if [[ -n "${6:-}" ]]; then
