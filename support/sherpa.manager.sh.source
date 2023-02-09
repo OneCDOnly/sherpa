@@ -2984,7 +2984,7 @@ DisplayAsHelpTitlePackageNameAbs()
     {
 
     # $1 = package name title
-    # $2 = abreviations title
+    # $2 = abbreviations title
 
     Display
     printf "${HELP_COL_MAIN_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s${HELP_COL_SPACER}${HELP_COL_MAIN_PREFIX}%s\n" "$(Capitalise "${1:-}"):" "$(Capitalise "${2:-}"):"
@@ -2995,7 +2995,7 @@ DisplayAsHelpPackageNameAbs()
     {
 
     # $1 = package name
-    # $2 = abreviations
+    # $2 = abbreviations
 
     printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s${HELP_COL_SPACER}${HELP_COL_OTHER_PREFIX}%s\n" "${1:-}" "${2:-}"
 
@@ -3452,7 +3452,7 @@ Help.Packages.Show()
         done
     done
 
-    DisplayAsProjSynExam "abbreviations may also be used to specify $(FormatAsPackages). To list these" 'list abs'
+    DisplayAsProjSynExam "abbreviations and aliases may also be used to specify $(FormatAsPackages). To list these" 'list abs'
     DisplayAsProjSynIndentExam '' a
 
     return 0
@@ -3468,10 +3468,10 @@ Help.PackageAbbreviations.Show()
 
     DisableDebugToArchiveAndFile
     Help.Basic.Show
-    DisplayAsHelpTitle "$(FormatAsTitle) can recognise various abbreviations as $(FormatAsPackages)"
+    DisplayAsHelpTitle "$(FormatAsTitle) can recognise various abbreviations and aliases as $(FormatAsPackages)"
 
     for tier in Standalone Dependent; do
-        DisplayAsHelpTitlePackageNameAbs "$tier QPKGs" 'acceptable package name abreviations'
+        DisplayAsHelpTitlePackageNameAbs "$tier QPKGs" 'acceptable package name abbreviations and aliases'
 
         for package in $(QPKGs.Sc${tier}.Array); do
             abs=$(QPKG.Abbrvs "$package")
@@ -3520,7 +3520,7 @@ Help.Tips.Show()
     Help.Basic.Show
     DisplayAsHelpTitle 'helpful tips and shortcuts:'
     DisplayAsProjSynIndentExam "install all available $(FormatAsTitle) packages" 'install all'
-    DisplayAsProjSynIndentExam 'package abbreviations also work. To see these' 'list abs'
+    DisplayAsProjSynIndentExam 'package abbreviations and aliases also work. To see these' 'list abs'
     DisplayAsProjSynIndentExam '' a
     DisplayAsProjSynIndentExam 'restart all installed packages (upgrades internal applications where supported)' 'restart all'
     DisplayAsProjSynIndentExam 'list only packages that can be installed' 'list installable'
