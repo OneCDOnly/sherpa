@@ -1234,7 +1234,7 @@ ParseArgs()
         # stage 1
         if [[ -z $action ]]; then
             case $arg in
-                a|abs|action|actions|actions-all|all-actions|b|backups|dependent|dependents|failed|groups|installable|installed|l|last|log|missing|not-installed|ok|option|options|p|package|packages|problems|r|repo|repos|results|skipped|standalone|standalones|started|stopped|tail|tips|updatable|updateable|upgradable|v|version|versions|whole)
+                a|abs|action|actions|actions-all|alias|aliases|all-actions|b|backups|dependent|dependents|failed|groups|installable|installed|l|last|log|missing|not-installed|ok|option|options|p|package|packages|problems|r|repo|repos|results|skipped|standalone|standalones|started|stopped|tail|tips|updatable|updateable|upgradable|v|version|versions|whole)
                     action=help_
                     arg_identified=true
                     group=''
@@ -1253,7 +1253,7 @@ ParseArgs()
                     group=${arg}_
                     ;;
             # all cases below can use multiple words or chars to specify a single group
-                a|abs)
+                a|abs|alias|aliases)
                     group=abs_
                     ;;
                 actions-all|all-actions)
