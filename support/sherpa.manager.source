@@ -3237,6 +3237,23 @@ DisplayAsActionResultLastLine()
 
     }
 
+DisplayAsIndentPrefixActionResultDurationReason()
+    {
+
+    # $1 = prefix message (optional)
+    # $2 = action
+    # $3 = result message
+    # $4 = duration in milliseconds (optional)
+    # $5 = reason message (optional)
+
+    if [[ -z ${5:-} ]]; then
+        printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%s%s %s in %s\n" "${1:-}" "$(Lowercase "${2:-}")" "${3:-}" "$(FormatMilliSecsToMinutesSecs "${4:-0}")"
+    else
+        printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%s%s %s in %s\n${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}${HELP_COL_BLANK_PREFIX}%s\n" "${1:-}" "$(Lowercase "${2:-}")" "${3:-}" "$(FormatMilliSecsToMinutesSecs "${4:-0}")" "$5"
+    fi
+
+    }
+
 EraseThisLine()
     {
 
@@ -7700,27 +7717,22 @@ ShowAsActionLogDetail()
 
     case ${4:-} in
         skipped|skipped-failed)
-            echo -ne "\t$(Lowercase "${3:-}") ${2:-}"
-            [[ -n ${6:-} ]] && echo -ne ";\n\t\tReason: ${6:-}"
+            DisplayAsIndentPrefixActionResultDurationReason '' "$3" "$2" '' "${6:-}"
             ;;
         failed)
-            echo -ne "\tUnable to $(Lowercase "${3:-}") ${2:-}"
-            echo -ne " in $(FormatMilliSecsToMinutesSecs "$duration")"
-
-            if [[ -n ${6:-} ]]; then
+            if [[ -n "${6:-}" ]]; then
                 if QPKG.IsCanLog "$2"; then
-                    echo -ne ";\n\t\tFor more information, please check the service log: /etc/init.d/$($BASENAME_CMD "$(QPKG.ServicePathFile "$2")") log"
+                    DisplayAsIndentPrefixActionResultDurationReason 'Unable to ' "$3" "$2" "$5" "For more information, please check the service log: /etc/init.d/$($BASENAME_CMD "$(QPKG.ServicePathFile "$2")") log"
                 else
-                    echo -ne "; ${6:-}"
+                    DisplayAsIndentPrefixActionResultDurationReason 'Unable to ' "$3" "$2" "$5" "Reason: $6"
                 fi
+            else
+                DisplayAsIndentPrefixActionResultDurationReason 'Unable to ' "$3" "$2" "$5" 'no reason was provided by the service script'
             fi
             ;;
         *)
-            echo -ne "\t$(Lowercase "${3:-}") ${2:-}"
-            echo -ne " in $(FormatMilliSecsToMinutesSecs "$duration")"
+            DisplayAsIndentPrefixActionResultDurationReason '' "$3" "$2" "$5"
     esac
-
-    echo    # force a LF here
 
     }
 
