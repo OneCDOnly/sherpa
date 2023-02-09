@@ -4,32 +4,28 @@
 
 echo -n 'building archives ... '
 
-working_path=$HOME/scripts/nas/sherpa
+declare -a source_pathfiles
+declare -a target_pathfiles
+declare -i index=0
 
-objects_pathfile=$working_path/objects
-objects_archive_pathfile=$working_path/objects.tar.gz
+source_path=$HOME/scripts/nas/sherpa/support
+target_path=$HOME/scripts/nas/sherpa
 
-packages_pathfile=$working_path/packages
-packages_archive_pathfile=$working_path/packages.tar.gz
+source_pathfiles+=("$source_path"/objects)
+target_pathfiles+=("$target_path"/objects.tar.gz)
 
-manager_pathfile=$working_path/sherpa.manager.sh
-manager_archive_pathfile=$working_path/sherpa.manager.tar.gz
+source_pathfiles+=("$source_path"/packages)
+target_pathfiles+=("$target_path"/packages.tar.gz)
 
-[[ -e $objects_archive_pathfile ]] && rm -f "$objects_archive_pathfile"
-[[ -e $packages_archive_pathfile ]] && rm -f "$packages_archive_pathfile"
-[[ -e $manager_archive_pathfile ]] && rm -f "$manager_archive_pathfile"
+source_pathfiles+=("$source_path"/sherpa.manager.sh)
+target_pathfiles+=("$target_path"/sherpa.manager.tar.gz)
 
-tar --create --gzip --numeric-owner --file="$objects_archive_pathfile" --directory="$working_path" "$(basename "$objects_pathfile")"
-tar --create --gzip --numeric-owner --file="$packages_archive_pathfile" --directory="$working_path" "$(basename "$packages_pathfile")"
-tar --create --gzip --numeric-owner --file="$manager_archive_pathfile" --directory="$working_path" "$(basename "$manager_pathfile")"
-
-[[ -e $objects_pathfile ]] && rm -f "$objects_pathfile"
-[[ -e $packages_pathfile ]] && rm -f "$packages_pathfile"
-[[ -e $manager_pathfile ]] && rm -f "$manager_pathfile"
-
-chmod 444 "$objects_archive_pathfile"
-chmod 444 "$packages_archive_pathfile"
-chmod 444 "$manager_archive_pathfile"
+for index in "${!source_pathfiles[@]}"; do
+	[[ -e ${target_pathfiles[index]} ]] && rm -f "${target_pathfiles[index]}"
+	tar --create --gzip --numeric-owner --file="${target_pathfiles[index]}" --directory="$source_path" "$(basename "${source_pathfiles[index]}")"
+	[[ -e ${source_pathfiles[index]} ]] && rm -f "${source_pathfiles[index]}"
+	chmod 444 "${target_pathfiles[index]}"
+done
 
 echo 'done'
 exit 0

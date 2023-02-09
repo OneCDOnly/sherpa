@@ -1,3 +1,5 @@
+* reduce indentation in package action results display.
+
 * BASH completion?
 
 * include new integrated help screens for all actions like:
