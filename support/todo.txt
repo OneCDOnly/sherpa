@@ -1,4 +1,3 @@
-* sherpa debug log is not being written in 'debug' mode.
 * user should be able to specify "debug to disk" and/or "debug to screen". 'debug-screen' should also enable 'debug-disk'.
 
 * BASH completion?
@@ -9,7 +8,7 @@
 * add checks to all service scripts to examine $EUID.
     Maybe a way can be found to run each service script without superuser access?
 
-* after removing entware, 'sed' and 'grep' fail. Ensure changeover to QTS binaries works correctly.
+* after removing entware, 'sed' and 'grep' commands fail. Must ensure changeover to QTS binaries works correctly.
 
 * change sherpa QPKG icon to use transparency.
     do the same to RunLast.
