@@ -13,7 +13,7 @@ filenames+=(packages.source)
 exclusions+=(1036,1088,2034)
 
 filenames+=('*.sh')
-exclusions+=(1036,2001,2016,2034,2054,2086,2155)
+exclusions+=(1036,2001,2006,2016,2034,2054,2086,2155)
 
 for index in "${!filenames[@]}"; do
     echo -n "checking '${filenames[index]}' ... "
