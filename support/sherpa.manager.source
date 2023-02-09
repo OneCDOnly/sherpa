@@ -248,8 +248,8 @@ Self.Init()
     qpkgs_states_built=false
 
     self_debug_to_screen=false
-    self_debug_to_file=false
-    self_debug_to_archive=false
+    self_debug_to_file=true
+    self_debug_to_archive=true
     self_display_clean=false
     self_linespace_onscreen=false
     self_display_zero_qpkgs=true
