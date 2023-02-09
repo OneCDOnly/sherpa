@@ -55,7 +55,6 @@ Self.Init()
     DebugScriptFuncEn
 
     readonly MANAGER_FILE=sherpa.manager.sh
-    local -r SCRIPT_VER='<?today?>'
     msg_pipe_fd=null
     backup_stdin_fd=null
     UpdateColourisation
@@ -147,14 +146,14 @@ Self.Init()
     IsSysFileExist $UPTIME_CMD || return
     IsSysFileExist $WC_CMD || return
 
-    readonly PROJECT_PATH=$(QPKG.InstallationPath)
-    readonly WORK_PATH=$PROJECT_PATH/cache
-    readonly LOGS_PATH=$PROJECT_PATH/logs
+    readonly THIS_PACKAGE_PATH=$(QPKG.InstallationPath)
+    readonly WORK_PATH=$THIS_PACKAGE_PATH/cache
+    readonly LOGS_PATH=$THIS_PACKAGE_PATH/logs
     readonly QPKG_DL_PATH=$WORK_PATH/qpkgs.downloads
+    readonly QPKG_BU_PATH=$(GetDefVol)/.qpkg_config_backup
     readonly IPK_DL_PATH=$WORK_PATH/ipks.downloads
     readonly IPK_CACHE_PATH=$WORK_PATH/ipks
     readonly PIP_CACHE_PATH=$WORK_PATH/pips
-    readonly BACKUP_PATH=$(GetDefVol)/.qpkg_config_backup
     readonly ACTION_MSG_PIPE=/var/run/qpkg.messages.pipe
 
     local -r MANAGER_ARCHIVE_FILE=${MANAGER_FILE%.*}.tar.gz
@@ -180,7 +179,7 @@ Self.Init()
     readonly PREV_PIP_LIST=$WORK_PATH/pip.prev.list
 
     readonly SESS_ARCHIVE_PATHFILE=$LOGS_PATH/session.archive.log
-    sess_active_pathfile=$PROJECT_PATH/session.$$.active.log
+    sess_active_pathfile=$THIS_PACKAGE_PATH/session.$$.active.log
     readonly SESS_LAST_PATHFILE=$LOGS_PATH/session.last.log
     readonly SESS_TAIL_PATHFILE=$LOGS_PATH/session.tail.log
     readonly ACTIONS_LOG_PATHFILE=$LOGS_PATH/session.action.results.log
@@ -215,6 +214,7 @@ Self.Init()
         readonly "$(Uppercase "$action")"_LOG_FILE="$(Lowercase "$action")".log
     done
 
+    # default values
     opts_help_abbreviations=false
     opts_help_action_reassign=false
     opts_help_actions=false
@@ -251,7 +251,8 @@ Self.Init()
     self_debug_to_file=false
     self_debug_to_archive=false
     self_display_clean=false
-    self_linespace=false
+    self_linespace_onscreen=false
+    self_display_zero_qpkgs=true
 
     # KLUDGE: service scripts prior to 2022-12-08 would use these paths (by-default) to build/cache Python packages. This has been fixed, but still need to free-up this space to prevent out-of-space issues.
     [[ -d /root/.cache ]] && rm -rf /root/.cache
@@ -267,7 +268,7 @@ Self.Init()
     MakePath "$IPK_DL_PATH" 'IPK download' || return
     MakePath "$IPK_CACHE_PATH" 'IPK cache' || return
     MakePath "$PIP_CACHE_PATH" 'PIP cache' || return
-    MakePath "$BACKUP_PATH" 'QPKG backup' || return
+    MakePath "$QPKG_BU_PATH" 'QPKG backup' || return
 
     ArchivePriorSessLogs
 
@@ -305,7 +306,7 @@ Self.Init()
     done
 
     readonly THIS_PACKAGE_VER=$(QPKG.Local.Ver)
-    readonly MANAGER_SCRIPT_VER="${SCRIPT_VER}-<?branch?>"
+    readonly MANAGER_SCRIPT_VER="<?today?>-<?branch?>"
 
     DebugInfoMajSepr
     DebugScript started "$($DATE_CMD -d @"$SCRIPT_STARTSECONDS" | tr -s ' ')"
@@ -315,8 +316,6 @@ Self.Init()
     DebugInfo 'Markers: (**) detected, (II) information, (WW) warning, (EE) error, (LL) log file, (--) processing,'
     DebugInfo '(==) done, (>>) f entry, (<<) f exit, (vv) variable name & value, ($1) positional argument value'
     DebugInfoMinSepr
-
-    self_summary=true
 
     readonly NAS_FIRMWARE_VER=$(GetFirmwareVer)
     readonly NAS_FIRMWARE_BUILD=$(GetFirmwareBuild)
@@ -1161,7 +1160,7 @@ Self.Results()
     [[ $opts_help_skipped = true ]] && Actions.Results.Show skipped
     [[ $opts_help_failed = true ]] && Actions.Results.Show failed
     [[ $opts_help_showbackuploc = true ]] && Help.BackupLocation.Show
-    [[ $self_summary = true ]] && ShowSummary
+    [[ $self_display_zero_qpkgs = true ]] && ShowZeroQPKGs
     [[ $opts_help_suggestissue = true ]] && Help.Issue.Show
 
     DebugInfoMinSepr
@@ -1343,8 +1342,6 @@ ParseArgs()
                 arg_identified=true
             fi
         fi
-# echo "action: [$action]"
-# echo "group: [$group]"
 
         # identify options
         case $arg in
@@ -2953,7 +2950,7 @@ DisplayAsProjSynExam()
         printf "${HELP_COL_MAIN_PREFIX}%s:\n%${HELP_SYNTAX_INDENT}s${help_syntax_sudo_prefix}%s\n" "$(Capitalise "${1:-}")" '' "sherpa ${2:-}"
     fi
 
-    self_linespace=false
+    self_linespace_onscreen=false
 
     }
 
@@ -2973,7 +2970,7 @@ DisplayAsProjSynIndentExam()
         printf "\n%${HELP_DESC_INDENT}s%s:\n%${HELP_SYNTAX_INDENT}s${help_syntax_sudo_prefix}%s\n" '' "$(Capitalise "${1:-}")" '' "sherpa ${2:-}"
     fi
 
-    self_linespace=false
+    self_linespace_onscreen=false
 
     }
 
@@ -2993,7 +2990,7 @@ DisplayAsSynExam()
         printf "\n${HELP_COL_MAIN_PREFIX}%s:\n%${HELP_SYNTAX_INDENT}s${help_syntax_prefix}%s\n" "$(Capitalise "${1:-}")" '' "${2:-}"
     fi
 
-    self_linespace=false
+    self_linespace_onscreen=false
 
     }
 
@@ -3163,7 +3160,7 @@ DisplayAsHelpTitlePackageNameRepo()
     fi
 
     printf '\n'
-    self_linespace=false
+    self_linespace_onscreen=false
 
     }
 
@@ -3195,7 +3192,7 @@ DisplayAsHelpTitleFileNamePlusSomething()
 
     DisplayLineSpaceIfNoneAlready
     printf "${HELP_COL_MAIN_PREFIX}%-${HELP_FILE_NAME_WIDTH}s ${HELP_COL_MAIN_PREFIX}%s\n" "$(Capitalise "${1:-}"):" "$(Capitalise "${2:-}"):"
-    self_linespace=false
+    self_linespace_onscreen=false
 
     }
 
@@ -3206,7 +3203,7 @@ DisplayAsHelpTitle()
 
     DisplayLineSpaceIfNoneAlready
     printf "${HELP_COL_MAIN_PREFIX}%s\n" "$(Capitalise "${1:-}" | tr -s ' ')"
-    self_linespace=false
+    self_linespace_onscreen=false
 
     }
 
@@ -3218,7 +3215,7 @@ DisplayAsHelpTitleHighlighted()
     DisplayLineSpaceIfNoneAlready
     # shellcheck disable=2059
     printf "$(ColourTextBrightOrange "${HELP_COL_MAIN_PREFIX}%s\n")" "$(Capitalise "${1:-}")"
-    self_linespace=false
+    self_linespace_onscreen=false
 
     }
 
@@ -3255,7 +3252,7 @@ Display()
     {
 
     echo -e "${1:-}"
-    self_linespace=false
+    self_linespace_onscreen=false
 
     }
 
@@ -3344,7 +3341,7 @@ Help.ActionsAll.Show()
 Help.BackupLocation.Show()
     {
 
-    DisplayAsSynExam 'the backup location can be accessed by running' "cd $BACKUP_PATH"
+    DisplayAsSynExam 'the backup location can be accessed by running' "cd $QPKG_BU_PATH"
 
     return 0
 
@@ -3655,7 +3652,7 @@ Log.Last.Paste()
         else
             DebugInfoMinSepr
             DebugScript 'user abort'
-            self_summary=false
+            self_display_zero_qpkgs=false
             return 1
         fi
     else
@@ -3687,7 +3684,7 @@ Log.Tail.Paste()
         else
             DebugInfoMinSepr
             DebugScript 'user abort'
-            self_summary=false
+            self_display_zero_qpkgs=false
             return 1
         fi
     else
@@ -3734,7 +3731,7 @@ ArchivePriorSessLogs()
 
     local log_pathfile=''
 
-    for log_pathfile in "$PROJECT_PATH/session."*".active.log"; do
+    for log_pathfile in "$THIS_PACKAGE_PATH/session."*".active.log"; do
         if [[ -f $log_pathfile && $log_pathfile != "$sess_active_pathfile" ]]; then
             $CAT_CMD "$log_pathfile" >> "$SESS_ARCHIVE_PATHFILE"
             rm -f "$log_pathfile"
@@ -4337,7 +4334,7 @@ QPKGs.Backups.Show()
     local format=''
 
     DisableDebugToArchiveAndFile
-    DisplayAsHelpTitle "the location for $(FormatAsTitle) backups is: $BACKUP_PATH"
+    DisplayAsHelpTitle "the location for $(FormatAsTitle) backups is: $QPKG_BU_PATH"
 
     if [[ -e $GNU_FIND_CMD ]]; then
         DisplayAsHelpTitle "backups are listed oldest-first, and those $(ColourTextBrightRed 'in red') were last updated more than $highlight_older_than"
@@ -4354,13 +4351,13 @@ QPKGs.Backups.Show()
 
             # shellcheck disable=2059
             printf "$format" '' "$filename" "$($DATE_CMD -d @"$epochtime" +%c)"
-        done <<< "$($GNU_FIND_CMD "$BACKUP_PATH"/*.config.tar.gz -maxdepth 1 -printf '%C@ %f\n' 2>/dev/null | $SORT_CMD)"
+        done <<< "$($GNU_FIND_CMD "$QPKG_BU_PATH"/*.config.tar.gz -maxdepth 1 -printf '%C@ %f\n' 2>/dev/null | $SORT_CMD)"
 
     else
         DisplayAsHelpTitle 'backups are listed oldest-first'
         Display
 
-        (cd "$BACKUP_PATH" && ls -1 ./*.config.tar.gz 2>/dev/null)
+        (cd "$QPKG_BU_PATH" && ls -1 ./*.config.tar.gz 2>/dev/null)
     fi
 
     return 0
@@ -4405,7 +4402,7 @@ QPKGs.Repos.Show()
             fi
         done
 
-        Display; self_linespace=true
+        DisplayLineSpaceIfNoneAlready
     done
 
     QPKGs.Actions.List
@@ -4514,7 +4511,7 @@ QPKGs.Statuses.Show()
             fi
         done
 
-        Display; self_linespace=true
+        DisplayLineSpaceIfNoneAlready
     done
 
     QPKGs.Actions.List
@@ -5075,7 +5072,7 @@ Self.Error.IsNt()
 
     }
 
-ShowSummary()
+ShowZeroQPKGs()
     {
 
     local state=''
@@ -5331,11 +5328,11 @@ _QPKG.Install_()
 
     if [[ $PACKAGE_NAME = Entware ]] && ! QPKGs.IsInstalled.Exist Entware && QPKGs.AcToInstall.Exist Entware; then
         local -r OPT_PATH=/opt
-        local -r OPT_BACKUP_PATH=/opt.orig
+        local -r OPT_BU_PATH=/opt.orig
 
-        if [[ -d $OPT_PATH && ! -L $OPT_PATH && ! -e $OPT_BACKUP_PATH ]]; then
+        if [[ -d $OPT_PATH && ! -L $OPT_PATH && ! -e $OPT_BU_PATH ]]; then
             DebugAsProc 'backup original /opt'
-            mv "$OPT_PATH" "$OPT_BACKUP_PATH"
+            mv "$OPT_PATH" "$OPT_BU_PATH"
             DebugAsDone 'complete'
         fi
     fi
@@ -5376,9 +5373,9 @@ _QPKG.Install_()
             PatchEntwareService
 
             # shift all files from original [/opt] into new [/opt]
-            if [[ -L ${OPT_PATH:-} && -d ${OPT_BACKUP_PATH:-} ]]; then
+            if [[ -L ${OPT_PATH:-} && -d ${OPT_BU_PATH:-} ]]; then
                 DebugAsProc 'restoring original /opt'
-                mv "$OPT_BACKUP_PATH"/* "$OPT_PATH" && rm -rf "$OPT_BACKUP_PATH"
+                mv "$OPT_BU_PATH"/* "$OPT_PATH" && rm -rf "$OPT_BU_PATH"
                 DebugAsDone 'complete'
             fi
 
@@ -6235,7 +6232,7 @@ QPKG.IsBackupExist()
     # output:
     #   $? = 0 if true, 1 if false
 
-    [[ -e $BACKUP_PATH/${1:?package name null}.config.tar.gz ]]
+    [[ -e $QPKG_BU_PATH/${1:?package name null}.config.tar.gz ]]
 
     }
 
@@ -7029,11 +7026,11 @@ FormatAsResultAndStdout()
 DisplayLineSpaceIfNoneAlready()
     {
 
-    if [[ $self_linespace = false && $self_display_clean = false ]]; then
+    if [[ $self_linespace_onscreen = false && $self_display_clean = false ]]; then
         echo
-        self_linespace=true
+        self_linespace_onscreen=true
     else
-        self_linespace=false
+        self_linespace_onscreen=false
     fi
 
     }
