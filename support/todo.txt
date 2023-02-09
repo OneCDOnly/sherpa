@@ -1,3 +1,6 @@
+* sherpa debug log is not being written in 'debug' mode.
+* user should be able to specify "debug to disk" and/or "debug to screen". 'debug-screen' should also enable 'debug-disk'.
+
 * BASH completion?
 
 * include new integrated help screens for all actions like:
@@ -18,8 +21,6 @@
 * add mini rolling CPU utilitisation graph to progress display while installing QPKGs?
     while true; do top -b -n 2 -d 0.2 -p 1621 | tail -1 | awk '{print $9}'; done
     while true; do /usr/bin/top -b -n2 -d1 | grep 20744 | tail -1 | awk '{print $7}'; done
-
-* user should be able to specify "debug to disk" and/or "debug to screen". 'debug-screen' should also enable 'debug-disk'.
 
 * remove hint to 'enable' QPKG when attempting to 'stop' it while in a disabled state:
     [~] # /etc/init.d/clamav.sh stop; echo $?

@@ -1345,7 +1345,7 @@ ParseArgs()
 
         # identify options
         case $arg in
-            debug|verbose)
+            debug|dbug|verbose)
                 self_debug_to_screen=true
                 arg_identified=true
                 group_identified=true
@@ -7444,7 +7444,7 @@ AddFileToDebug()
 
     if [[ $self_debug_to_screen = true ]]; then      # prevent external log contents appearing onscreen again, because they've already been seen "live"
         original_screen_debug=true
-        self_debug_to_screen.UnSet
+        self_debug_to_screen=false
     fi
 
     DebugAsLog "$(FormatAsLogFilename "${1:?filename null}")"
