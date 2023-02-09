@@ -90,7 +90,7 @@ while read -r checksum_pathfilename; do
     fi
 
     if [[ $match = true ]]; then
-        printf '%-36s %-30s %-20s %-12s %-6s %s\n' "$checksum_filename" "$qpkg_filename" "$package_name" "$version" "$(TranslateQPKGArch "$arch")" "$(cut -d' ' -f1 < "$checksum_pathfilename")"
+        printf '%-36s %-32s %-20s %-12s %-6s %s\n' "$checksum_filename" "$qpkg_filename" "$package_name" "$version" "$(TranslateQPKGArch "$arch")" "$(cut -d' ' -f1 < "$checksum_pathfilename")"
         previous_package_name=$package_name
         previous_version=$version
         previous_arch=$arch
@@ -125,7 +125,7 @@ chmod 444 "$target_pathfile"
 echo 'done'
 
 # sort for easier viewing
-printf '%-36s %-30s %-20s %-12s %-6s %s\n%s\n' checksum_filename qpkg_filename package_name version arch md5 "$(sort "$highest_package_versions_found_pathfile")" > "$highest_package_versions_found_sorted_pathfile"
+printf '%-36s %-32s %-20s %-12s %-6s %s\n%s\n' checksum_filename qpkg_filename package_name version arch md5 "$(sort "$highest_package_versions_found_pathfile")" > "$highest_package_versions_found_sorted_pathfile"
 rm -f "$highest_package_versions_found_pathfile"
 
 exit 0
