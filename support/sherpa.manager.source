@@ -3268,7 +3268,7 @@ EraseThisLine()
 
     # reset cursor to start-of-line, erasing entire line
 
-    [[ $self_debug_to_screen = true ]] && return
+    [[ ${self_debug_to_screen:-false} = true ]] && return
 
     echo -en "\033[2K\r"
 
