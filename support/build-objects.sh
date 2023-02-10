@@ -129,12 +129,6 @@ echo $public_function_name'.Add()
 echo "OBJECTS_VER='<?today?>'" > "$objects_pathfile"
 echo "#*$dontedit_msg" >> "$objects_pathfile"
 
-# session flag objects ---------------------------------------------------------------------------------------------------------------------------------
-
-AddFlagObj IPKs.Upgrade
-AddFlagObj IPKs.Install
-AddFlagObj PIPs.Install
-
 # user option flag objects -----------------------------------------------------------------------------------------------------------------------------
 
 for group in "${PACKAGE_GROUPS[@]}"; do

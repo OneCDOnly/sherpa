@@ -215,6 +215,13 @@ Self.Init()
     done
 
     # default values
+    self_debug_to_screen=false
+    self_debug_to_file=true
+    self_debug_to_archive=true
+    self_display_clean=false
+    self_linespace_onscreen=false
+    self_display_zero_qpkgs=true
+
     opts_help_abbreviations=false
     opts_help_action_reassign=false
     opts_help_actions=false
@@ -247,12 +254,10 @@ Self.Init()
     qpkgs_skip_processing=false
     qpkgs_states_built=false
 
-    self_debug_to_screen=false
-    self_debug_to_file=true
-    self_debug_to_archive=true
-    self_display_clean=false
-    self_linespace_onscreen=false
-    self_display_zero_qpkgs=true
+    ipks_upgrade=false
+    ipks_install=false
+
+    pips_install=false
 
     # KLUDGE: service scripts prior to 2022-12-08 would use these paths (by-default) to build/cache Python packages. This has been fixed, but still need to free-up this space to prevent out-of-space issues.
     [[ -d /root/.cache ]] && rm -rf /root/.cache
@@ -555,9 +560,9 @@ Self.Validate()
 
     # Decide if IPKs and PIPs should be installed/upgraded
     if [[ $opts_deps_check = true ]] || QPKGs.AcToUpgrade.Exist Entware || QPKGs.AcToInstall.Exist Entware || QPKGs.AcToReinstall.Exist Entware; then
-        IPKs.Upgrade.Set
-        IPKs.Install.Set
-        PIPs.Install.Set
+        ipks_upgrade=true
+        ipks_install=true
+        pips_install=true
 
         if QPKG.IsInstalled Entware && QPKG.IsEnabled Entware; then
             if [[ -e $PYTHON3_CMD ]]; then
@@ -779,8 +784,8 @@ Actions.Proc()
                 ;;
             Addon)
                 for action in Install Reinstall Upgrade Start; do
-                    QPKGs.IsStarted.Exist Entware && IPKs.Upgrade.Set
-                    QPKGs.AcTo${action}.IsAny && IPKs.Install.Set
+                    QPKGs.IsStarted.Exist Entware && ipks_upgrade=true
+                    QPKGs.AcTo${action}.IsAny && ipks_install=true
                 done
 
                 if QPKGs.IsStarted.Exist Entware; then
@@ -788,7 +793,7 @@ Actions.Proc()
                     Action.Proc Upgrade $tier IPK '' upgrade upgrading upgraded || return
                     Action.Proc Install $tier IPK '' install installing installed || return
 
-                    PIPs.Install.Set
+                    pips_install=true
                     Action.Proc Install $tier PIP '' install installing installed || return
                 fi
         esac
@@ -2421,7 +2426,7 @@ IPKs.Upgrade()
 
     # upgrade all installed IPKs
 
-    IPKs.Upgrade.IsNt && return
+    [[ $ipks_upgrade = false ]] && return
     QPKGs.IsNtInstalled.Exist Entware && return
     QPKGs.IsNtStarted.Exist Entware && return
     UpdateEntwarePackageList
@@ -2466,7 +2471,7 @@ IPKs.Install()
 
     # install IPKs required to support QPKGs
 
-    IPKs.Install.IsNt && return
+    [[ $ipks_install = false ]] && return
     QPKGs.IsNtInstalled.Exist Entware && return
     QPKGs.IsNtStarted.Exist Entware && return
     UpdateEntwarePackageList
@@ -2528,7 +2533,7 @@ IPKs.Install()
 PIPs.Install()
     {
 
-    PIPs.Install.IsNt && return
+    [[ $pips_install = false ]] && return
     QPKGs.IsNtInstalled.Exist Entware && return
     QPKGs.IsNtStarted.Exist Entware && return
     ! $OPKG_CMD status python3-pip | $GREP_CMD -q "Status:.*installed" && return

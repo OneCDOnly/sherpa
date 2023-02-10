@@ -1,3 +1,5 @@
+* include result and duration of IPKs and PIPs install/upgrade in session results.
+
 * user should be able to specify "debug to disk" and/or "debug to screen". 'debug-screen' should also enable 'debug-disk'.
 
 * BASH completion?
