@@ -1,3 +1,5 @@
+* reduce file download checksum error to filename only. Path is not needed.
+
 * include result and duration of IPKs and PIPs install/upgrade in session results.
     [/share/Public] # ./sherpa.manager.source install trans start stopped
     sherpa <?today?>-<?branch?> • a mini-package-manager for QNAP NAS
