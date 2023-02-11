@@ -20,9 +20,9 @@ echo "$stable_branch" > "$HOME"/scripts/nas/sherpa/support/branch.txt
 ./make.sh || exit
 
 cd "$HOME"/scripts/nas/sherpa || exit
-git add . && git commit -m "scripted merge from \`$unstable_branch\`" && git push
+git add . && git commit -m 'update archives' && git push
 git checkout "$stable_branch"
-git merge "$unstable_branch" && git push
+git merge --no-ff -m "scripted merge from \`$unstable_branch\`" "$unstable_branch" && git push
 git checkout "$unstable_branch"
 cd "$HOME"/scripts/nas/sherpa/support || exit
 
