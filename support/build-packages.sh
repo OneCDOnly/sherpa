@@ -95,7 +95,7 @@ while read -r checksum_pathfilename; do
         previous_version=$version
         previous_arch=$arch
     fi
-done <<< "$sorted" > "$highest_package_versions_found_pathfile"
+done <<< "$sorted" | uniq > "$highest_package_versions_found_pathfile"
 
 echo 'done'
 
