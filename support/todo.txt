@@ -1,3 +1,7 @@
+* keep track of each package's action times and process the longest ones first next time?
+
+* autowidth help display columns?
+
 * reduce file download checksum error to filename only. Path is not needed.
 
 * include result and duration of IPKs and PIPs install/upgrade in session results.
