@@ -42,9 +42,6 @@
 
 * after removing entware, 'sed' and 'grep' commands fail for the remainder of that session. Must ensure changeover to QTS binaries works correctly.
 
-* change sherpa QPKG icon to use transparency.
-    do the same to RunLast.
-
 * ensure each service script 'venv' upgrades its own 'pip'.
 
 * ensure each action fork is actually being killed after it issues an 'exit' into the message pipe.
