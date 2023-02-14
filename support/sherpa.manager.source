@@ -75,6 +75,7 @@ Self.Init()
     readonly GNU_LESS_CMD=/opt/bin/less
     readonly GNU_SED_CMD=/opt/bin/sed
     readonly GNU_SETTERM_CMD=/opt/bin/setterm
+    readonly GNU_SQLITE_CMD=/opt/bin/sqlite3
     readonly GNU_STTY_CMD=/opt/bin/stty
     readonly PYTHON_CMD=/opt/bin/python
     readonly PYTHON3_CMD=/opt/bin/python3
@@ -803,6 +804,7 @@ Actions.Proc()
 
     if [[ ${self_debug_to_file:-false} = true ]]; then
         IPKs.Actions.List
+#         PIPs.Actions.List
         QPKGs.Actions.List
     fi
 
@@ -1003,10 +1005,10 @@ Action.Proc()
         ShowAsActionResult "$TIER" "$PACKAGE_TYPE" "$ok_count" "$total_count" "$ACTION_PAST"
     fi
 
-    case $PACKAGE_TYPE in
-        QPKG)
-            ShowAsActionResultDetail "$TARGET_ACTION"
-    esac
+#     case $PACKAGE_TYPE in
+#         QPKG)
+            ShowAsActionResultDetail "$TARGET_ACTION" "$PACKAGE_TYPE"
+#     esac
 
     EraseForkCountPaths
     DebugScriptFuncEx
@@ -1083,7 +1085,21 @@ Self.Results()
     {
 
     display_last_action_datetime=false
-    [[ $opts_deps_check = true ]] && ShowAsDone 'check OK'
+    local package=''
+
+    if [[ $opts_deps_check = true ]]; then
+        if [[ ${NAS_FIRMWARE_VER//.} -ge 435 ]]; then
+            ShowAsProc '"signing" all QPKGs'
+
+            for package in $(QPKGs.IsInstalled.Array); do
+                QPKG.Sign "$package"
+            done
+
+            ShowAsDone '"signed" all QPKGs'
+        fi
+
+        ShowAsDone 'check OK'
+    fi
 
     if Args.Unknown.IsNone; then
         if [[ $opts_help_abbreviations = true ]]; then
@@ -2456,9 +2472,11 @@ IPKs.Upgrade()
         if [[ $result_code -eq 0 ]]; then
             ok_count=$total_count           # assume they all passed
             NoteIPKAcAsOk "$(IPKs.AcToUpgrade.Array)" upgrade
+            SaveActionResultToLog IPK addon Upgrade ok "$result_code"
         else
             ShowAsFail "download & upgrade $total_count IPK$(Pluralise "$total_count") failed $(FormatAsExitcode "$result_code")"
             NoteIPKAcAsEr "$(IPKs.AcToUpgrade.Array)" upgrade
+            SaveActionResultToLog IPK addon Upgrade failed "$result_code"
         fi
     fi
 
@@ -2519,10 +2537,12 @@ IPKs.Install()
         if [[ $result_code -eq 0 ]]; then
             ok_count=$total_count           # assume they all passed
             NoteIPKAcAsOk "$(IPKs.AcToDownload.Array)" install
+            SaveActionResultToLog IPK addon Install ok "$result_code"
         else
             fail_count=$total_count         # assume they all failed
             ShowAsFail "download & install $total_count IPK$(Pluralise "$total_count") failed $(FormatAsExitcode "$result_code")"
             NoteIPKAcAsEr "$(IPKs.AcToDownload.Array)" install
+            SaveActionResultToLog IPK addon Install failed "$result_code"
         fi
     fi
 
@@ -2559,9 +2579,11 @@ PIPs.Install()
 
         if [[ $result_code -eq 0 ]]; then
             DebugAsDone "installed $desc"
+            SaveActionResultToLog PIP "$desc" Install ok "$result_code"
             ((ok_count++))
         else
             ShowAsFail "installed $desc failed $(FormatAsResult "$result_code")"
+            SaveActionResultToLog PIP "$desc" Install failed "$result_code"
             ((fail_count++))
         fi
 
@@ -3444,6 +3466,7 @@ Actions.Results.Show()
     local result=''
     local -i duration=0
     local reason=''
+    local package_type=''
     local found=false
 
     DisableDebugToArchiveAndFile
@@ -3451,7 +3474,7 @@ Actions.Results.Show()
     if [[ -e $ACTIONS_LOG_PATHFILE ]]; then
         local IFS='#'
 
-        while read -r datetime action package_name result duration reason; do
+        while read -r datetime action package_name result duration reason package_type; do
             if [[ $display_last_action_datetime = true ]]; then
                 DisplayAsHelpTitle "the following package actions were run: $($DATE_CMD -d @"$datetime")"
                 display_last_action_datetime=false
@@ -3469,7 +3492,7 @@ Actions.Results.Show()
                         [[ $found = false ]] && DisplayAsHelpTitle "these package actions $(ColourTextBrightRed failed):"
                 esac
 
-                ShowAsActionLogDetail "$datetime" "$package_name" "$action" "$result" "$duration" "$reason"
+                ShowAsActionLogDetail "$datetime" "$package_name" "$action" "$result" "$duration" "$reason" "$package_type"
                 found=true
             fi
         done < "$ACTIONS_LOG_PATHFILE"
@@ -4042,6 +4065,30 @@ IPKs.Actions.List()
 
         IPKs.AcOk${action}.IsAny && DebugIPKInfo "AcOk${action}" "($(IPKs.AcOk${action}.Count)) $(IPKs.AcOk${action}.ListCSV) "
         IPKs.AcEr${action}.IsAny && DebugIPKError "AcEr${action}" "($(IPKs.AcEr${action}.Count)) $(IPKs.AcEr${action}.ListCSV) "
+    done
+
+    DebugInfoMinSepr
+    DebugScriptFuncEx
+
+    }
+
+PIPs.Actions.List()
+    {
+
+    DebugScriptFuncEn
+
+    local action=''
+    local prefix=''
+    DebugInfoMinSepr
+
+    for action in "${PACKAGE_ACTIONS[@]}"; do
+        case $action in
+            Backup|Clean|Disable|Enable|Reassign|Rebuild|Restart|Restore|Start|Stop)
+                continue
+        esac
+
+        PIPs.AcOk${action}.IsAny && DebugPIPInfo "AcOk${action}" "($(PIPs.AcOk${action}.Count)) $(PIPs.AcOk${action}.ListCSV) "
+        PIPS.AcEr${action}.IsAny && DebugPIPError "AcEr${action}" "($(PIPs.AcEr${action}.Count)) $(PIPs.AcEr${action}.ListCSV) "
     done
 
     DebugInfoMinSepr
@@ -5152,13 +5199,15 @@ DisableDebugToArchiveAndFile()
 SaveActionResultToLog()
     {
 
-    # write datetime in seconds, package name, action, result, reason to actions logfile
+    # write package type, package name, datetime in seconds, action, result, reason to actions logfile
 
     # input:                        example:
-    #   $1 = QPKG name               `SABnzbd`
-    #   $2 = action                  `Download`, `Downloaded`
-    #   $3 = result                  `ok`, `skipped-ok`, `skipped`, `failed`
-    #   $4 = reason (optional)       "file already exists in local cache"
+
+    #  $1 = package type            `QPKG`, `IPK`, `PIP`
+    #  $2 = package or group name   `SABnzbd`, `essential`
+    #  $3 = action                  `Download`, `Downloaded`
+    #  $4 = result                  `ok`, `skipped-ok`, `skipped`, `failed`
+    #  $5 = reason (optional)       "file already exists in local cache"
 
     # calculate duration here
 
@@ -5166,20 +5215,20 @@ SaveActionResultToLog()
     local var_safe_name=${var_name//[.-]/_}
     local duration="$(CalcMilliDifference "${!var_safe_name}" "$($DATE_CMD +%s%N)")"
 
-    echo "$(/bin/date +%s)#${2:?action empty}#${1:?package name empty}#${3:?result empty}#$duration#${4:-}" >> "$ACTIONS_LOG_PATHFILE"
+    echo "$(/bin/date +%s)#${3:?action empty}#${2:?package name empty}#${4:?result empty}#$duration#${5:-}#${1:?package type empty}" >> "$ACTIONS_LOG_PATHFILE"
 
-    case $3 in
+    case $4 in
         ok)
-            DebugAsInfo "${4:-}"
+            DebugAsInfo "${5:-}"
             ;;
         skipped-ok)
-            DebugAsInfo "${4:?reason empty}"
+            DebugAsInfo "${5:?reason empty}"
             ;;
         skipped)
-            DebugAsWarn "${4:?reason empty}"
+            DebugAsWarn "${5:?reason empty}"
             ;;
         failed|skipped-error)
-            DebugAsError "${4:?reason empty}"
+            DebugAsError "${5:?reason empty}"
     esac
 
     return 0
@@ -5205,10 +5254,10 @@ _QPKG.Reassign_()
     local package_store_id=$(QPKG.StoreID "$PACKAGE_NAME")
 
     if ! QPKGs.IsInstalled.Exist "$PACKAGE_NAME"; then
-        SaveActionResultToLog "$PACKAGE_NAME" Reassign skipped 'not installed'
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Reassign skipped 'not installed'
         result_code=2
     elif [[ $package_store_id = sherpa ]]; then
-        SaveActionResultToLog "$PACKAGE_NAME" Reassign skipped 'already assigned to sherpa'
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Reassign skipped 'already assigned to sherpa'
         result_code=2
     fi
 
@@ -5222,11 +5271,11 @@ _QPKG.Reassign_()
     result_code=$?
 
     if [[ $result_code -eq 0 ]]; then
-        SaveActionResultToLog "$PACKAGE_NAME" Reassign ok
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Reassign ok
         SendPackageStateChange IsReassigned
         MarkThisActionForkAsOk
     else
-        SaveActionResultToLog "$PACKAGE_NAME" Reassign failed "$result_code"
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Reassign failed "$result_code"
         result_code=1    # remap to 1
         MarkThisActionForkAsFailed
     fi
@@ -5258,12 +5307,12 @@ _QPKG.Download_()
     local -r LOG_PATHFILE=$LOGS_PATH/$LOCAL_FILENAME.$DOWNLOAD_LOG_FILE
 
     if [[ -z $REMOTE_URL || -z $REMOTE_MD5 ]]; then
-        SaveActionResultToLog "$PACKAGE_NAME" Download skipped 'NAS is unsupported'
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Download skipped 'NAS is unsupported'
         MarkThisActionForkAsSkipped
         result_code=2
     elif [[ -f $LOCAL_PATHFILE ]]; then
         if FileMatchesMD5 "$LOCAL_PATHFILE" "$REMOTE_MD5"; then
-            SaveActionResultToLog "$PACKAGE_NAME" Download skipped-ok "existing file $(FormatAsFileName "$LOCAL_FILENAME") checksum correct"
+            SaveActionResultToLog QPKG "$PACKAGE_NAME" Download skipped-ok "existing file $(FormatAsFileName "$LOCAL_FILENAME") checksum correct"
             MarkThisActionForkAsSkippedOK
             DebugForkFuncEx 0
         else
@@ -5286,17 +5335,17 @@ _QPKG.Download_()
 
         if [[ $result_code -eq 0 ]]; then
             if FileMatchesMD5 "$LOCAL_PATHFILE" "$REMOTE_MD5"; then
-                SaveActionResultToLog "$PACKAGE_NAME" Download ok
+                SaveActionResultToLog QPKG "$PACKAGE_NAME" Download ok
                 SendPackageStateChange IsDownloaded
                 MarkThisActionForkAsOk
             else
-                SaveActionResultToLog "$PACKAGE_NAME" Download failed "downloaded file $(FormatAsFileName "$LOCAL_PATHFILE") has incorrect checksum"
+                SaveActionResultToLog QPKG "$PACKAGE_NAME" Download failed "downloaded file $(FormatAsFileName "$LOCAL_PATHFILE") has incorrect checksum"
                 SendPackageStateChange IsNtDownloaded
                 result_code=1
                 MarkThisActionForkAsFailed
             fi
         else
-            SaveActionResultToLog "$PACKAGE_NAME" Download failed "$result_code"
+            SaveActionResultToLog QPKG "$PACKAGE_NAME" Download failed "$result_code"
             result_code=1    # remap to 1 (last time I checked, 'curl' had 92 return codes)
             MarkThisActionForkAsFailed
         fi
@@ -5324,13 +5373,13 @@ _QPKG.Install_()
     local debug_cmd=''
 
     if QPKGs.IsInstalled.Exist "$PACKAGE_NAME"; then
-        SaveActionResultToLog "$PACKAGE_NAME" Install skipped 'already installed'
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Install skipped 'already installed'
         result_code=2
     elif ! QPKG.URL "$PACKAGE_NAME" &>/dev/null; then
-        SaveActionResultToLog "$PACKAGE_NAME" Install skipped 'NAS is unsupported'
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Install skipped 'NAS is unsupported'
         result_code=2
     elif ! QPKG.MinRAM "$PACKAGE_NAME" &>/dev/null; then
-        SaveActionResultToLog "$PACKAGE_NAME" Install skipped 'NAS has insufficient RAM'
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Install skipped 'NAS has insufficient RAM'
         result_code=2
     fi
 
@@ -5347,7 +5396,7 @@ _QPKG.Install_()
     fi
 
     if [[ -z $local_pathfile ]]; then
-        SaveActionResultToLog "$PACKAGE_NAME" Install skipped-error 'no local file found for processing: please report this issue'
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Install skipped-error 'no local file found for processing: please report this issue'
         MarkThisActionForkAsSkippedError
         DebugForkFuncEx 2
     fi
@@ -5391,7 +5440,7 @@ _QPKG.Install_()
         fi
 
         local current_ver=$(QPKG.Local.Ver "$PACKAGE_NAME")
-        SaveActionResultToLog "$PACKAGE_NAME" Install ok "version $current_ver"
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Install ok "version $current_ver"
 
         if [[ $PACKAGE_NAME = Entware ]]; then
             ModPathToEntware
@@ -5415,10 +5464,12 @@ _QPKG.Install_()
             DebugAsDone 'installed essential IPKs'
         fi
 
+        QPKG.Sign "$PACKAGE_NAME"
+
         result_code=0    # remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK)
         MarkThisActionForkAsOk
     else
-        SaveActionResultToLog "$PACKAGE_NAME" Install failed "$result_code"
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Install failed "$result_code"
         result_code=1    # remap to 1
         MarkThisActionForkAsFailed
     fi
@@ -5446,7 +5497,7 @@ _QPKG.Reinstall_()
     local debug_cmd=''
 
     if ! QPKGs.IsInstalled.Exist "$PACKAGE_NAME"; then
-        SaveActionResultToLog "$PACKAGE_NAME" Reinstall skipped "not installed, please use 'install' instead"
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Reinstall skipped "not installed, please use 'install' instead"
         MarkThisActionForkAsSkipped
         DebugForkFuncEx 2
     fi
@@ -5459,7 +5510,7 @@ _QPKG.Reinstall_()
     fi
 
     if [[ -z $local_pathfile ]]; then
-        SaveActionResultToLog "$PACKAGE_NAME" Reinstall skipped-error 'no local file found for processing, please report this issue'
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Reinstall skipped-error 'no local file found for processing, please report this issue'
         MarkThisActionForkAsSkippedError
         DebugForkFuncEx 2
     fi
@@ -5490,11 +5541,13 @@ _QPKG.Reinstall_()
         fi
 
         local current_ver=$(QPKG.Local.Ver "$PACKAGE_NAME")
-        SaveActionResultToLog "$PACKAGE_NAME" Reinstall ok "version $current_ver"
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Reinstall ok "version $current_ver"
+        QPKG.Sign "$PACKAGE_NAME"
+
         result_code=0    # remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK)
         MarkThisActionForkAsOk
     else
-        SaveActionResultToLog "$PACKAGE_NAME" Reinstall failed "$result_code"
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Reinstall failed "$result_code"
         result_code=1    # remap to 1
         MarkThisActionForkAsFailed
     fi
@@ -5523,17 +5576,17 @@ _QPKG.Upgrade_()
     local debug_cmd=''
 
     if ! QPKGs.IsInstalled.Exist "$PACKAGE_NAME"; then
-        SaveActionResultToLog "$PACKAGE_NAME" Upgrade skipped 'not installed'
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Upgrade skipped 'not installed'
         result_code=2
     elif ! QPKGs.ScUpgradable.Exist "$PACKAGE_NAME"; then
-        SaveActionResultToLog "$PACKAGE_NAME" Upgrade skipped 'no new package is available'
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Upgrade skipped 'no new package is available'
         result_code=2
     fi
 
     local package_store_id=$(QPKG.StoreID "$PACKAGE_NAME")
 
     if [[ $package_store_id != sherpa ]]; then
-        SaveActionResultToLog "$PACKAGE_NAME" Upgrade skipped "assigned to another repository, please 'reassign' it first"
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Upgrade skipped "assigned to another repository, please 'reassign' it first"
         result_code=2
     fi
 
@@ -5550,7 +5603,7 @@ _QPKG.Upgrade_()
     fi
 
     if [[ -z $local_pathfile ]]; then
-        SaveActionResultToLog "$PACKAGE_NAME" Upgrade skipped-error 'no local file found for processing, please report this issue'
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Upgrade skipped-error 'no local file found for processing, please report this issue'
         MarkThisActionForkAsSkippedError
         DebugForkFuncEx 2
     fi
@@ -5585,15 +5638,17 @@ _QPKG.Upgrade_()
         local current_ver=$(QPKG.Local.Ver "$PACKAGE_NAME")
 
         if [[ $current_ver = "$prev_ver" ]]; then
-            SaveActionResultToLog "$PACKAGE_NAME" Upgrade ok "version $current_ver"
+            SaveActionResultToLog QPKG "$PACKAGE_NAME" Upgrade ok "version $current_ver"
         else
-            SaveActionResultToLog "$PACKAGE_NAME" Upgrade ok "from version $prev_ver to version $current_ver"
+            SaveActionResultToLog QPKG "$PACKAGE_NAME" Upgrade ok "from version $prev_ver to version $current_ver"
         fi
+
+        QPKG.Sign "$PACKAGE_NAME"
 
         result_code=0    # remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK)
         MarkThisActionForkAsOk
     else
-        SaveActionResultToLog "$PACKAGE_NAME" Upgrade failed "$result_code"
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Upgrade failed "$result_code"
         result_code=1    # remap to 1
         MarkThisActionForkAsFailed
     fi
@@ -5620,10 +5675,10 @@ _QPKG.Uninstall_()
     local debug_cmd=''
 
     if QPKGs.IsNtInstalled.Exist "$PACKAGE_NAME"; then
-        SaveActionResultToLog "$PACKAGE_NAME" Uninstall skipped 'not installed'
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Uninstall skipped 'not installed'
         result_code=2
     elif [[ $PACKAGE_NAME = sherpa ]]; then
-        SaveActionResultToLog "$PACKAGE_NAME" Uninstall skipped "it's needed here! 😉"
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Uninstall skipped "it's needed here! 😉"
         result_code=2
     fi
 
@@ -5649,7 +5704,7 @@ _QPKG.Uninstall_()
         result_code=$?
 
         if [[ $result_code -eq 0 ]]; then
-            SaveActionResultToLog "$PACKAGE_NAME" Uninstall ok
+            SaveActionResultToLog QPKG "$PACKAGE_NAME" Uninstall ok
             /sbin/rmcfg "$PACKAGE_NAME" -f /etc/config/qpkg.conf
             DebugAsDone 'removed icon information from App Center'
 
@@ -5664,7 +5719,7 @@ _QPKG.Uninstall_()
             SendPackageStateChange IsNtEnabled
             MarkThisActionForkAsOk
         else
-            SaveActionResultToLog "$PACKAGE_NAME" Uninstall failed "$result_code"
+            SaveActionResultToLog QPKG "$PACKAGE_NAME" Uninstall failed "$result_code"
 
             if [[ $PACKAGE_NAME = Entware ]]; then
                 SendParentChangeEnv 'HideCursor'
@@ -5675,7 +5730,7 @@ _QPKG.Uninstall_()
         fi
     else
         # standard QPKG .uninstall.sh was not found, so can't continue with uninstallation (maybe force this instead with `rm -r` ?)
-        SaveActionResultToLog "$PACKAGE_NAME" Uninstall failed '.uninstall.sh script is missing'
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Uninstall failed '.uninstall.sh script is missing'
         MarkThisActionForkAsFailed
     fi
 
@@ -5702,7 +5757,7 @@ _QPKG.Restart_()
     local debug_cmd=''
 
     if QPKGs.IsNtInstalled.Exist "$PACKAGE_NAME"; then
-        SaveActionResultToLog "$PACKAGE_NAME" Restart skipped 'not installed'
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Restart skipped 'not installed'
         MarkThisActionForkAsSkipped
         DebugForkFuncEx 2
     fi
@@ -5723,11 +5778,11 @@ _QPKG.Restart_()
 
     if [[ $result_code -eq 0 ]]; then
         QPKG.LogServiceStatus "$PACKAGE_NAME"
-        SaveActionResultToLog "$PACKAGE_NAME" Restart ok
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Restart ok
         SendPackageStateChange IsRestarted
         MarkThisActionForkAsOk
     else
-        SaveActionResultToLog "$PACKAGE_NAME" Restart failed "$result_code"
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Restart failed "$result_code"
         SendPackageStateChange IsNtRestarted
         result_code=1    # remap to 1
         MarkThisActionForkAsFailed
@@ -5757,10 +5812,10 @@ _QPKG.Start_()
     local debug_cmd=''
 
     if QPKGs.IsNtInstalled.Exist "$PACKAGE_NAME"; then
-        SaveActionResultToLog "$PACKAGE_NAME" Start skipped 'not installed'
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Start skipped 'not installed'
         result_code=2
     elif QPKGs.IsStarted.Exist "$PACKAGE_NAME"; then
-        SaveActionResultToLog "$PACKAGE_NAME" Start skipped 'already started'
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Start skipped 'already started'
         result_code=2
     fi
 
@@ -5785,7 +5840,7 @@ _QPKG.Start_()
 
     if [[ $result_code -eq 0 ]]; then
         QPKG.LogServiceStatus "$PACKAGE_NAME"
-        SaveActionResultToLog "$PACKAGE_NAME" Start ok
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Start ok
 
         if [[ $PACKAGE_NAME = Entware ]]; then
             ModPathToEntware
@@ -5796,7 +5851,7 @@ _QPKG.Start_()
         SendPackageStateChange IsStarted
         MarkThisActionForkAsOk
     else
-        SaveActionResultToLog "$PACKAGE_NAME" Start failed "$result_code"
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Start failed "$result_code"
         SendPackageStateChange IsNtStarted
         result_code=1    # remap to 1
         MarkThisActionForkAsFailed
@@ -5826,13 +5881,13 @@ _QPKG.Stop_()
     local debug_cmd=''
 
     if QPKGs.IsNtInstalled.Exist "$PACKAGE_NAME"; then
-        SaveActionResultToLog "$PACKAGE_NAME" Stop skipped 'not installed'
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Stop skipped 'not installed'
         result_code=2
     elif QPKGs.IsNtStarted.Exist "$PACKAGE_NAME"; then
-        SaveActionResultToLog "$PACKAGE_NAME" Stop skipped 'already stopped'
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Stop skipped 'already stopped'
         result_code=2
     elif [[ $PACKAGE_NAME = sherpa ]]; then
-        SaveActionResultToLog "$PACKAGE_NAME" Stop skipped "it's needed here! 😉"
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Stop skipped "it's needed here! 😉"
         result_code=2
     fi
 
@@ -5858,7 +5913,7 @@ _QPKG.Stop_()
 
     if [[ $result_code -eq 0 ]]; then
         QPKG.LogServiceStatus "$PACKAGE_NAME"
-        SaveActionResultToLog "$PACKAGE_NAME" Stop ok
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Stop ok
 
         if [[ $PACKAGE_NAME = Entware ]]; then
             ModPathToEntware
@@ -5869,7 +5924,7 @@ _QPKG.Stop_()
         SendPackageStateChange IsNtStarted
         MarkThisActionForkAsOk
     else
-        SaveActionResultToLog "$PACKAGE_NAME" Stop failed "$result_code"
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Stop failed "$result_code"
         result_code=1    # remap to 1
         MarkThisActionForkAsFailed
     fi
@@ -5940,10 +5995,10 @@ _QPKG.Backup_()
     local debug_cmd=''
 
     if QPKGs.IsNtInstalled.Exist "$PACKAGE_NAME"; then
-        SaveActionResultToLog "$PACKAGE_NAME" Backup skipped 'not installed'
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Backup skipped 'not installed'
         result_code=2
     elif ! QPKG.IsCanBackup "$PACKAGE_NAME"; then
-        SaveActionResultToLog "$PACKAGE_NAME" Backup skipped 'does not support backup'
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Backup skipped 'does not support backup'
         result_code=2
     fi
 
@@ -5962,11 +6017,11 @@ _QPKG.Backup_()
 
     if [[ $result_code -eq 0 ]]; then
         QPKG.LogServiceStatus "$PACKAGE_NAME"
-        SaveActionResultToLog "$PACKAGE_NAME" Backup ok
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Backup ok
         SendPackageStateChange IsBackedUp
         MarkThisActionForkAsOk
     else
-        SaveActionResultToLog "$PACKAGE_NAME" Backup failed "$result_code"
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Backup failed "$result_code"
         result_code=1    # remap to 1
         MarkThisActionForkAsFailed
     fi
@@ -5994,10 +6049,10 @@ _QPKG.Restore_()
     local debug_cmd=''
 
     if QPKGs.IsNtInstalled.Exist "$PACKAGE_NAME"; then
-        SaveActionResultToLog "$PACKAGE_NAME" Restore skipped 'not installed'
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Restore skipped 'not installed'
         result_code=2
     elif ! QPKG.IsCanBackup "$PACKAGE_NAME"; then
-        SaveActionResultToLog "$PACKAGE_NAME" Restore skipped 'does not support restore'
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Restore skipped 'does not support restore'
         result_code=2
     fi
 
@@ -6016,11 +6071,11 @@ _QPKG.Restore_()
 
     if [[ $result_code -eq 0 ]]; then
         QPKG.LogServiceStatus "$PACKAGE_NAME"
-        SaveActionResultToLog "$PACKAGE_NAME" Restore ok
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Restore ok
         SendPackageStateChange IsRestored
         MarkThisActionForkAsOk
     else
-        SaveActionResultToLog "$PACKAGE_NAME" Restore failed "$result_code"
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Restore failed "$result_code"
         result_code=1    # remap to 1
         MarkThisActionForkAsFailed
     fi
@@ -6048,10 +6103,10 @@ _QPKG.Clean_()
     local debug_cmd=''
 
     if QPKGs.IsNtInstalled.Exist "$PACKAGE_NAME"; then
-        SaveActionResultToLog "$PACKAGE_NAME" Clean skipped 'not installed'
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Clean skipped 'not installed'
         result_code=2
     elif ! QPKG.IsCanClean "$PACKAGE_NAME"; then
-        SaveActionResultToLog "$PACKAGE_NAME" Clean skipped 'does not support cleaning'
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Clean skipped 'does not support cleaning'
         result_code=2
     fi
 
@@ -6070,11 +6125,11 @@ _QPKG.Clean_()
 
     if [[ $result_code -eq 0 ]]; then
         QPKG.LogServiceStatus "$PACKAGE_NAME"
-        SaveActionResultToLog "$PACKAGE_NAME" Clean ok
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Clean ok
         SendPackageStateChange IsCleaned
         MarkThisActionForkAsOk
     else
-        SaveActionResultToLog "$PACKAGE_NAME" Clean failed "$result_code"
+        SaveActionResultToLog QPKG "$PACKAGE_NAME" Clean failed "$result_code"
         result_code=1    # remap to 1
         MarkThisActionForkAsFailed
     fi
@@ -6766,6 +6821,108 @@ QPKG.IsStarted()
     #   $? = 0 (true) or 1 (false)
 
     QPKG.IsEnabled "${1:?package name null}"
+
+    }
+
+QPKG.Sign()
+    {
+
+    # Modify the QTS App Center certificate dB, and add an unsigned QPKG as-if it were signed. It adds a QNAP-generated certificate and digital signature to the certificate database for the unsigned QPKG.
+
+    # Running the code below makes the target QPKG effectively "signed", and allows user to install and run this QPKG with the 'Allow installation of applications without a valid digital signature' App Center option unticked.
+
+    # Should only be required for QTS 4.3.5-and-later firmwares.
+
+    # input:
+    #  $1 = QPKG name to "sign"
+
+    [[ -n $1 ]] || return
+    [[ -e $GNU_SQLITE_CMD ]] || return
+    [[ ${NAS_FIRMWARE_VER//.} -ge 435 ]] || return
+
+    local qpkg_name=$1
+    local cert_db_pathfile=/etc/config/nas_sign_qpkg.db
+
+    [[ -e $cert_db_pathfile ]] || return
+
+    local cert=''
+    local signature=''
+
+    # this certificate block is the same used by QNAP for their packages
+    read -r -d '' cert << EOB
+-----BEGIN CERTIFICATE-----
+MIIDvTCCAqWgAwIBAgIEXZBTBTANBgkqhkiG9w0BAQsFADCBgDELMAkGA1UEBhMC
+VFcxDzANBgNVBAgMBlRhaXdhbjEPMA0GA1UEBwwGVGFpcGVpMQ0wCwYDVQQKDARR
+TkFQMQwwCgYDVQQLDANOQVMxEDAOBgNVBAMMB1FOQVBfQ0ExIDAeBgkqhkiG9w0B
+CQEWEXNlY3VyaXR5QHFuYXAuY29tMB4XDTIyMDMxODA3MzU0NloXDTI1MDMxNzA3
+MzU0NlowgYExCzAJBgNVBAYTAlRXMQ8wDQYDVQQIDAZUYWl3YW4xDzANBgNVBAcM
+BlRhaXBlaTENMAsGA1UECgwEUU5BUDEMMAoGA1UECwwDTkFTMREwDwYDVQQDDAho
+ZWxwZGVzazEgMB4GCSqGSIb3DQEJARYRc2VjdXJpdHlAcW5hcC5jb20wggEiMA0G
+CSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDl87eNkgCLdO+SCjfhTjq07pWcn07G
+CRHvQlMpctIpkgVUGavLJKHcN/hc7ktmYcYROhCQpQ5QyLsqch2L18vCJI3MMkQi
+Wit+ioBrBqw2whjrV/MGqpc/jY/xlva1ziKaDcjLHjVIcmszV1n8bwp0ByU0l7/2
+pKNav47vLxtebbCSA4PKaxmHzhlts4xohymnb8PPIblGa6OQ5woVPHkDA3yLKtW8
+HnJESDKQTP8IQ48nc1zVuVGM2IBtHGzfEd+hwQDuOYQ/KZ1/quoiJhjPk0VeVAdJ
+hvmKLDNgmjqMI5o60aqZdJOU/A3+1pX2VclAtS8LcxlNq1GrhB2inMPVAgMBAAGj
+PDA6MDgGA1UdHwQxMC8wLaAroCmGJ2h0dHA6Ly9kb3dubG9hZC5xbmFwLmNvbS9j
+cmwvcXRzX3YxLmNybDANBgkqhkiG9w0BAQsFAAOCAQEACy5McJXchbghJB4VPgy5
+RQZd7EJlnaSIHhTfw7FQdT4AJ+CRJ1FqblmDMzEx3fzQf7tUqxwhGP2hzq2buM/p
+IcmeKf1fnpgtJROkH+6ZNY5cFGh6vpTYHY4MEeraSeV+tO1ZtWWPhyO35TweEN4J
+T3pNke+isDXkOfnvPBAF8VVJ8K+Dp2VcmAgfFXT9Bi38hpqYCpvM5oIIvKSFCxBL
+THzZvTTq6GM2HhJGYQyS4CANvHQ0JJCSrWZhdRkq9B0FyjKASa2m6kIROy3xRlp+
+2lVKPACMSGY+Au6ONRsstm3VJf/tnaz126tuMByZEQIHhhkzuFUSzpY/f7dvBfNN
+Yw==
+-----END CERTIFICATE-----
+EOB
+
+    # this digital signature block is the same used by QNAP for their packages
+    read -r -d '' signature << EOB
+MIME-Version: 1.0
+Content-Disposition: attachment; filename="smime.p7m"
+Content-Type: application/pkcs7-mime; smime-type=signed-data; name="smime.p7m"
+Content-Transfer-Encoding: base64
+MIIGrQYJKoZIhvcNAQcCoIIGnjCCBpoCAQExDTALBglghkgBZQMEAgEwIwYJKoZI
+hvcNAQcBoBYEFI1sdHRtKKMwJjva1u0bxmHUCl14oIIDwTCCA70wggKloAMCAQIC
+BF2QUwUwDQYJKoZIhvcNAQELBQAwgYAxCzAJBgNVBAYTAlRXMQ8wDQYDVQQIDAZU
+YWl3YW4xDzANBgNVBAcMBlRhaXBlaTENMAsGA1UECgwEUU5BUDEMMAoGA1UECwwD
+TkFTMRAwDgYDVQQDDAdRTkFQX0NBMSAwHgYJKoZIhvcNAQkBFhFzZWN1cml0eUBx
+bmFwLmNvbTAeFw0yMjAzMTgwNzM1NDZaFw0yNTAzMTcwNzM1NDZaMIGBMQswCQYD
+VQQGEwJUVzEPMA0GA1UECAwGVGFpd2FuMQ8wDQYDVQQHDAZUYWlwZWkxDTALBgNV
+BAoMBFFOQVAxDDAKBgNVBAsMA05BUzERMA8GA1UEAwwIaGVscGRlc2sxIDAeBgkq
+hkiG9w0BCQEWEXNlY3VyaXR5QHFuYXAuY29tMIIBIjANBgkqhkiG9w0BAQEFAAOC
+AQ8AMIIBCgKCAQEA5fO3jZIAi3Tvkgo34U46tO6VnJ9OxgkR70JTKXLSKZIFVBmr
+yySh3Df4XO5LZmHGEToQkKUOUMi7KnIdi9fLwiSNzDJEIlorfoqAawasNsIY61fz
+BqqXP42P8Zb2tc4img3Iyx41SHJrM1dZ/G8KdAclNJe/9qSjWr+O7y8bXm2wkgOD
+ymsZh84ZbbOMaIcpp2/DzyG5RmujkOcKFTx5AwN8iyrVvB5yREgykEz/CEOPJ3Nc
+1blRjNiAbRxs3xHfocEA7jmEPymdf6rqIiYYz5NFXlQHSYb5iiwzYJo6jCOaOtGq
+mXSTlPwN/taV9lXJQLUvC3MZTatRq4QdopzD1QIDAQABozwwOjA4BgNVHR8EMTAv
+MC2gK6AphidodHRwOi8vZG93bmxvYWQucW5hcC5jb20vY3JsL3F0c192MS5jcmww
+DQYJKoZIhvcNAQELBQADggEBAAsuTHCV3IW4ISQeFT4MuUUGXexCZZ2kiB4U38Ox
+UHU+ACfgkSdRam5ZgzMxMd380H+7VKscIRj9oc6tm7jP6SHJnin9X56YLSUTpB/u
+mTWOXBRoer6U2B2ODBHq2knlfrTtWbVlj4cjt+U8HhDeCU96TZHvorA15Dn57zwQ
+BfFVSfCvg6dlXJgIHxV0/QYt/IaamAqbzOaCCLykhQsQS0x82b006uhjNh4SRmEM
+kuAgDbx0NCSQkq1mYXUZKvQdBcoygEmtpupCETst8UZaftpVSjwAjEhmPgLujjUb
+LLZt1SX/7Z2s9durbjAcmRECB4YZM7hVEs6WP3+3bwXzTWMxggKaMIIClgIBATCB
+iTCBgDELMAkGA1UEBhMCVFcxDzANBgNVBAgMBlRhaXdhbjEPMA0GA1UEBwwGVGFp
+cGVpMQ0wCwYDVQQKDARRTkFQMQwwCgYDVQQLDANOQVMxEDAOBgNVBAMMB1FOQVBf
+Q0ExIDAeBgkqhkiG9w0BCQEWEXNlY3VyaXR5QHFuYXAuY29tAgRdkFMFMAsGCWCG
+SAFlAwQCAaCB5DAYBgkqhkiG9w0BCQMxCwYJKoZIhvcNAQcBMBwGCSqGSIb3DQEJ
+BTEPFw0yMjExMDEwOTM1MDZaMC8GCSqGSIb3DQEJBDEiBCDUId+wv/Fubjh/6sW7
+2WBlOrlpB6GxWdg5QrcZw+nTrzB5BgkqhkiG9w0BCQ8xbDBqMAsGCWCGSAFlAwQB
+KjALBglghkgBZQMEARYwCwYJYIZIAWUDBAECMAoGCCqGSIb3DQMHMA4GCCqGSIb3
+DQMCAgIAgDANBggqhkiG9w0DAgIBQDAHBgUrDgMCBzANBggqhkiG9w0DAgIBKDAN
+BgkqhkiG9w0BAQEFAASCAQCPzaasOmisLCpRvu3xm56bVtJr8FYtYrZRNxzsLPam
+RPHmBLsOlMK6KbXkUXv0Oh+FtDT+ahUiQctsAkzqvuz2SUM6p1hzpXkmWSUFKJe8
+hSscnTfwsgVMRXcw9YPsdkOu4K2tuA0VOlPUTMOKeGJflIzCilv2r/hdYjuExNnC
+FMMUBcacsLkAUK5nsHgIpMTBHhR1R0Zwg3iKU4gQIq3wnL5HFvTx6SaPdRkqs4VN
++SIX/jzL5WeYTO2sTvbaSIZvkS+dd2Iug588XeAaWJd4Uyg3+8ByTloYmKKmEmpp
+p8mnFMbEd+UeEkKj6gHxC0m0+Unzv5MBDVbdW0QH7RUm
+EOB
+
+    $GNU_SQLITE_CMD "$cert_db_pathfile" << EOB
+DELETE FROM Certificate WHERE QpkgName = '$qpkg_name';
+INSERT INTO Certificate (Type,QpkgName,Cert,DigitalSignature) VALUES ('qpkg','$qpkg_name','$cert','$signature');
+EOB
 
     }
 
@@ -7694,11 +7851,27 @@ ShowAsActionResult()
 ShowAsActionResultDetail()
     {
 
+    # input:
+    #  $1 = target action
+    #  $2 = package type
+
     local sk_msg=''
     local er_msg=''
 
-    [[ $(QPKGs.AcSk${1}.Count) -gt 0 || $(QPKGs.AcSe${1}.Count) -gt 0 ]] && sk_msg="$(ColourTextBrightOrange 'skipped:') $(QPKGs.AcSk${1}.ListCSV) $(QPKGs.AcSe${1}.ListCSV)"
-    [[ $(QPKGs.AcEr${1}.Count) -gt 0 ]] && er_msg="$(ColourTextBrightRed 'failed:') $(QPKGs.AcEr${1}.ListCSV)"
+    case $2 in
+        QPKG)
+            [[ $(QPKGs.AcSk${1}.Count) -gt 0 || $(QPKGs.AcSe${1}.Count) -gt 0 ]] && sk_msg="$(ColourTextBrightOrange 'skipped:') $(QPKGs.AcSk${1}.ListCSV) $(QPKGs.AcSe${1}.ListCSV)"
+            [[ $(QPKGs.AcEr${1}.Count) -gt 0 ]] && er_msg="$(ColourTextBrightRed 'failed:') $(QPKGs.AcEr${1}.ListCSV)"
+            ;;
+        IPK)
+
+
+            ;;
+        PIP)
+
+
+
+    esac
 
     if [[ -z $sk_msg && -z $er_msg ]]; then
         return
@@ -7718,11 +7891,12 @@ ShowAsActionLogDetail()
 
     # input:                            example:
     #   $1 = datetime in seconds
-    #   $2 = QPKG name                  `SABnzbd`
+    #   $2 = package or group name      `SABnzbd`, `essential`
     #   $3 = action                     `Download`, 'Downloaded'
     #   $4 = result                     `ok`, `skipped-ok`, `skipped`, `failed`
-    #   $5 = duration in milliseconds   `56`
+    #   $5 = duration in milliseconds
     #   $6 = reason (optional)          "file already exists in local cache"
+    #   $7 = package type               `QPKG`, `IPK`, `PIP`
 
     case ${4:-} in
         skipped|skipped-failed)
