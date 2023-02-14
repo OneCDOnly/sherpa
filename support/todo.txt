@@ -1,3 +1,11 @@
+* empty debug log line:
+	dbug: (==) exec complete
+	dbug: (<<) RunAndLog|0|1,763ms
+	dbug: (II) 'nzbToMedia' service action completed OK
+	dbug: (II)
+	dbug: (<<) _QPKG.Restart_|0|2,369ms
+	dbug: (==) forked _QPKG.Restart_ for SABnzbd
+
 * create a troubleshooting page for the wiki?
     This should include explains of various ops like clean and check, so users will have a better idea which op to run when things go wrong.
 
