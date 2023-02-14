@@ -66,7 +66,6 @@ sorted=$(sort --version-sort --reverse <<< "$raw")
 echo -n 'extracting highest QPKG version numbers ... '
 
 while read -r checksum_pathfilename; do
-    # need just filename
     checksum_filename=$(basename "$checksum_pathfilename")
     qpkg_filename="${checksum_filename//.md5/}"
 
