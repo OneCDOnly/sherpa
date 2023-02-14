@@ -1,6 +1,6 @@
 ISSUES
 
-* include result and duration of IPKs and PIPs install/upgrade in session results.
+* display corruption?
     [/share/Public] # ./sherpa.manager.source install trans start stopped
     sherpa <?today?>-<?branch?> • a mini-package-manager for QNAP NAS
 
@@ -26,17 +26,7 @@ ISSUES
         install Entware
             Reason: already installed
 
-* user should be able to specify "debug to disk" and/or "debug to screen". 'debug-screen' should also enable 'debug-disk'.
-
-* include new integrated help screens for all actions like:
-    `sherpa paste help`, `sherpa install help`, `sherpa reassign help`
-
-* add checks to all service scripts to examine $EUID.
-    Maybe a way can be found to run each service script without superuser access?
-
 * after removing entware, 'sed' and 'grep' commands fail for the remainder of that session. Must ensure changeover to QTS binaries works correctly.
-
-* ensure each service script 'venv' upgrades its own 'pip'.
 
 * ensure each action fork is actually being killed after it issues an 'exit' into the message pipe.
 
