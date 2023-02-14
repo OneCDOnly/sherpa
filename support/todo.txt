@@ -1,5 +1,3 @@
-* LazyLibrarian shutdown timesout at 120 seconds. I think something's wrong there.
-
 * empty debug log line:
 	dbug: (==) exec complete
 	dbug: (<<) RunAndLog|0|1,763ms
