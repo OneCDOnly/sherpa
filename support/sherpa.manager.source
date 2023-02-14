@@ -1085,7 +1085,21 @@ Self.Results()
     {
 
     display_last_action_datetime=false
-    [[ $opts_deps_check = true ]] && ShowAsDone 'check OK'
+    local package=''
+
+    if [[ $opts_deps_check = true ]]; then
+        if [[ ${NAS_FIRMWARE_VER//.} -ge 435 ]]; then
+            ShowAsProc '"signing" all QPKGs'
+
+            for package in $(QPKGs.IsInstalled.Array); do
+                QPKG.Sign "$package"
+            done
+
+            ShowAsDone '"signed" all QPKGs'
+        fi
+
+        ShowAsDone 'check OK'
+    fi
 
     if Args.Unknown.IsNone; then
         if [[ $opts_help_abbreviations = true ]]; then
@@ -5450,6 +5464,8 @@ _QPKG.Install_()
             DebugAsDone 'installed essential IPKs'
         fi
 
+        QPKG.Sign "$PACKAGE_NAME"
+
         result_code=0    # remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK)
         MarkThisActionForkAsOk
     else
@@ -5526,6 +5542,8 @@ _QPKG.Reinstall_()
 
         local current_ver=$(QPKG.Local.Ver "$PACKAGE_NAME")
         SaveActionResultToLog QPKG "$PACKAGE_NAME" Reinstall ok "version $current_ver"
+        QPKG.Sign "$PACKAGE_NAME"
+
         result_code=0    # remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK)
         MarkThisActionForkAsOk
     else
@@ -5624,6 +5642,8 @@ _QPKG.Upgrade_()
         else
             SaveActionResultToLog QPKG "$PACKAGE_NAME" Upgrade ok "from version $prev_ver to version $current_ver"
         fi
+
+        QPKG.Sign "$PACKAGE_NAME"
 
         result_code=0    # remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK)
         MarkThisActionForkAsOk
@@ -6801,6 +6821,108 @@ QPKG.IsStarted()
     #   $? = 0 (true) or 1 (false)
 
     QPKG.IsEnabled "${1:?package name null}"
+
+    }
+
+QPKG.Sign()
+    {
+
+    # Modify the QTS App Center certificate dB, and add an unsigned QPKG as-if it were signed. It adds a QNAP-generated certificate and digital signature to the certificate database for the unsigned QPKG.
+
+    # Running the code below makes the target QPKG effectively "signed", and allows user to install and run this QPKG with the 'Allow installation of applications without a valid digital signature' App Center option unticked.
+
+    # Should only be required for QTS 4.3.5-and-later firmwares.
+
+    # input:
+    #  $1 = QPKG name to "sign"
+
+    [[ -n $1 ]] || return
+    [[ -e $GNU_SQLITE_CMD ]] || return
+    [[ ${NAS_FIRMWARE_VER//.} -ge 435 ]] || return
+
+    local qpkg_name=$1
+    local cert_db_pathfile=/etc/config/nas_sign_qpkg.db
+
+    [[ -e $cert_db_pathfile ]] || return
+
+    local cert=''
+    local signature=''
+
+    # this certificate block is the same used by QNAP for their packages
+    read -r -d '' cert << EOB
+-----BEGIN CERTIFICATE-----
+MIIDvTCCAqWgAwIBAgIEXZBTBTANBgkqhkiG9w0BAQsFADCBgDELMAkGA1UEBhMC
+VFcxDzANBgNVBAgMBlRhaXdhbjEPMA0GA1UEBwwGVGFpcGVpMQ0wCwYDVQQKDARR
+TkFQMQwwCgYDVQQLDANOQVMxEDAOBgNVBAMMB1FOQVBfQ0ExIDAeBgkqhkiG9w0B
+CQEWEXNlY3VyaXR5QHFuYXAuY29tMB4XDTIyMDMxODA3MzU0NloXDTI1MDMxNzA3
+MzU0NlowgYExCzAJBgNVBAYTAlRXMQ8wDQYDVQQIDAZUYWl3YW4xDzANBgNVBAcM
+BlRhaXBlaTENMAsGA1UECgwEUU5BUDEMMAoGA1UECwwDTkFTMREwDwYDVQQDDAho
+ZWxwZGVzazEgMB4GCSqGSIb3DQEJARYRc2VjdXJpdHlAcW5hcC5jb20wggEiMA0G
+CSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDl87eNkgCLdO+SCjfhTjq07pWcn07G
+CRHvQlMpctIpkgVUGavLJKHcN/hc7ktmYcYROhCQpQ5QyLsqch2L18vCJI3MMkQi
+Wit+ioBrBqw2whjrV/MGqpc/jY/xlva1ziKaDcjLHjVIcmszV1n8bwp0ByU0l7/2
+pKNav47vLxtebbCSA4PKaxmHzhlts4xohymnb8PPIblGa6OQ5woVPHkDA3yLKtW8
+HnJESDKQTP8IQ48nc1zVuVGM2IBtHGzfEd+hwQDuOYQ/KZ1/quoiJhjPk0VeVAdJ
+hvmKLDNgmjqMI5o60aqZdJOU/A3+1pX2VclAtS8LcxlNq1GrhB2inMPVAgMBAAGj
+PDA6MDgGA1UdHwQxMC8wLaAroCmGJ2h0dHA6Ly9kb3dubG9hZC5xbmFwLmNvbS9j
+cmwvcXRzX3YxLmNybDANBgkqhkiG9w0BAQsFAAOCAQEACy5McJXchbghJB4VPgy5
+RQZd7EJlnaSIHhTfw7FQdT4AJ+CRJ1FqblmDMzEx3fzQf7tUqxwhGP2hzq2buM/p
+IcmeKf1fnpgtJROkH+6ZNY5cFGh6vpTYHY4MEeraSeV+tO1ZtWWPhyO35TweEN4J
+T3pNke+isDXkOfnvPBAF8VVJ8K+Dp2VcmAgfFXT9Bi38hpqYCpvM5oIIvKSFCxBL
+THzZvTTq6GM2HhJGYQyS4CANvHQ0JJCSrWZhdRkq9B0FyjKASa2m6kIROy3xRlp+
+2lVKPACMSGY+Au6ONRsstm3VJf/tnaz126tuMByZEQIHhhkzuFUSzpY/f7dvBfNN
+Yw==
+-----END CERTIFICATE-----
+EOB
+
+    # this digital signature block is the same used by QNAP for their packages
+    read -r -d '' signature << EOB
+MIME-Version: 1.0
+Content-Disposition: attachment; filename="smime.p7m"
+Content-Type: application/pkcs7-mime; smime-type=signed-data; name="smime.p7m"
+Content-Transfer-Encoding: base64
+MIIGrQYJKoZIhvcNAQcCoIIGnjCCBpoCAQExDTALBglghkgBZQMEAgEwIwYJKoZI
+hvcNAQcBoBYEFI1sdHRtKKMwJjva1u0bxmHUCl14oIIDwTCCA70wggKloAMCAQIC
+BF2QUwUwDQYJKoZIhvcNAQELBQAwgYAxCzAJBgNVBAYTAlRXMQ8wDQYDVQQIDAZU
+YWl3YW4xDzANBgNVBAcMBlRhaXBlaTENMAsGA1UECgwEUU5BUDEMMAoGA1UECwwD
+TkFTMRAwDgYDVQQDDAdRTkFQX0NBMSAwHgYJKoZIhvcNAQkBFhFzZWN1cml0eUBx
+bmFwLmNvbTAeFw0yMjAzMTgwNzM1NDZaFw0yNTAzMTcwNzM1NDZaMIGBMQswCQYD
+VQQGEwJUVzEPMA0GA1UECAwGVGFpd2FuMQ8wDQYDVQQHDAZUYWlwZWkxDTALBgNV
+BAoMBFFOQVAxDDAKBgNVBAsMA05BUzERMA8GA1UEAwwIaGVscGRlc2sxIDAeBgkq
+hkiG9w0BCQEWEXNlY3VyaXR5QHFuYXAuY29tMIIBIjANBgkqhkiG9w0BAQEFAAOC
+AQ8AMIIBCgKCAQEA5fO3jZIAi3Tvkgo34U46tO6VnJ9OxgkR70JTKXLSKZIFVBmr
+yySh3Df4XO5LZmHGEToQkKUOUMi7KnIdi9fLwiSNzDJEIlorfoqAawasNsIY61fz
+BqqXP42P8Zb2tc4img3Iyx41SHJrM1dZ/G8KdAclNJe/9qSjWr+O7y8bXm2wkgOD
+ymsZh84ZbbOMaIcpp2/DzyG5RmujkOcKFTx5AwN8iyrVvB5yREgykEz/CEOPJ3Nc
+1blRjNiAbRxs3xHfocEA7jmEPymdf6rqIiYYz5NFXlQHSYb5iiwzYJo6jCOaOtGq
+mXSTlPwN/taV9lXJQLUvC3MZTatRq4QdopzD1QIDAQABozwwOjA4BgNVHR8EMTAv
+MC2gK6AphidodHRwOi8vZG93bmxvYWQucW5hcC5jb20vY3JsL3F0c192MS5jcmww
+DQYJKoZIhvcNAQELBQADggEBAAsuTHCV3IW4ISQeFT4MuUUGXexCZZ2kiB4U38Ox
+UHU+ACfgkSdRam5ZgzMxMd380H+7VKscIRj9oc6tm7jP6SHJnin9X56YLSUTpB/u
+mTWOXBRoer6U2B2ODBHq2knlfrTtWbVlj4cjt+U8HhDeCU96TZHvorA15Dn57zwQ
+BfFVSfCvg6dlXJgIHxV0/QYt/IaamAqbzOaCCLykhQsQS0x82b006uhjNh4SRmEM
+kuAgDbx0NCSQkq1mYXUZKvQdBcoygEmtpupCETst8UZaftpVSjwAjEhmPgLujjUb
+LLZt1SX/7Z2s9durbjAcmRECB4YZM7hVEs6WP3+3bwXzTWMxggKaMIIClgIBATCB
+iTCBgDELMAkGA1UEBhMCVFcxDzANBgNVBAgMBlRhaXdhbjEPMA0GA1UEBwwGVGFp
+cGVpMQ0wCwYDVQQKDARRTkFQMQwwCgYDVQQLDANOQVMxEDAOBgNVBAMMB1FOQVBf
+Q0ExIDAeBgkqhkiG9w0BCQEWEXNlY3VyaXR5QHFuYXAuY29tAgRdkFMFMAsGCWCG
+SAFlAwQCAaCB5DAYBgkqhkiG9w0BCQMxCwYJKoZIhvcNAQcBMBwGCSqGSIb3DQEJ
+BTEPFw0yMjExMDEwOTM1MDZaMC8GCSqGSIb3DQEJBDEiBCDUId+wv/Fubjh/6sW7
+2WBlOrlpB6GxWdg5QrcZw+nTrzB5BgkqhkiG9w0BCQ8xbDBqMAsGCWCGSAFlAwQB
+KjALBglghkgBZQMEARYwCwYJYIZIAWUDBAECMAoGCCqGSIb3DQMHMA4GCCqGSIb3
+DQMCAgIAgDANBggqhkiG9w0DAgIBQDAHBgUrDgMCBzANBggqhkiG9w0DAgIBKDAN
+BgkqhkiG9w0BAQEFAASCAQCPzaasOmisLCpRvu3xm56bVtJr8FYtYrZRNxzsLPam
+RPHmBLsOlMK6KbXkUXv0Oh+FtDT+ahUiQctsAkzqvuz2SUM6p1hzpXkmWSUFKJe8
+hSscnTfwsgVMRXcw9YPsdkOu4K2tuA0VOlPUTMOKeGJflIzCilv2r/hdYjuExNnC
+FMMUBcacsLkAUK5nsHgIpMTBHhR1R0Zwg3iKU4gQIq3wnL5HFvTx6SaPdRkqs4VN
++SIX/jzL5WeYTO2sTvbaSIZvkS+dd2Iug588XeAaWJd4Uyg3+8ByTloYmKKmEmpp
+p8mnFMbEd+UeEkKj6gHxC0m0+Unzv5MBDVbdW0QH7RUm
+EOB
+
+    $GNU_SQLITE_CMD "$cert_db_pathfile" << EOB
+DELETE FROM Certificate WHERE QpkgName = '$qpkg_name';
+INSERT INTO Certificate (Type,QpkgName,Cert,DigitalSignature) VALUES ('qpkg','$qpkg_name','$cert','$signature');
+EOB
 
     }
 
@@ -8097,106 +8219,6 @@ FormatLongMinutesSecs()
     printf '%01dm:%02ds\n' "$((10#$m))" "$((10#$s))"
 
     } 2>/dev/null
-
-SignInstalledQPKGInQTS()
-    {
-
-    # Modify the QTS App Center certificate dB, and add an unsigned QPKG as-if it were signed. It adds a QNAP generated certificate and digital signature to the database for the unsigned QPKG.
-
-    # Running the code below makes the target QPKG effectively "signed", and allows user to install and run this QPKG with the 'Allow installation of applications without a valid digital signature' App Center option unticked.
-
-    # Should only be required for QTS 4.3.5-and-later firmwares.
-
-    # input:
-    #  $1 = QPKG name to "sign"
-
-    [[ -n $1 ]] || return
-    [[ -e $GNU_SQLITE_CMD ]] || return
-
-    local qpkg_name=$1
-    local cert_db_pathfile=/etc/config/nas_sign_qpkg.db
-
-    [[ -e $cert_db_pathfile ]] || return
-
-    local cert=''
-    local digital_signature=''
-
-    # this certificate block is the same used by QNAP for their packages
-    read -r -d '' cert << EOB
------BEGIN CERTIFICATE-----
-MIIDvTCCAqWgAwIBAgIEXZBTBTANBgkqhkiG9w0BAQsFADCBgDELMAkGA1UEBhMC
-VFcxDzANBgNVBAgMBlRhaXdhbjEPMA0GA1UEBwwGVGFpcGVpMQ0wCwYDVQQKDARR
-TkFQMQwwCgYDVQQLDANOQVMxEDAOBgNVBAMMB1FOQVBfQ0ExIDAeBgkqhkiG9w0B
-CQEWEXNlY3VyaXR5QHFuYXAuY29tMB4XDTIyMDMxODA3MzU0NloXDTI1MDMxNzA3
-MzU0NlowgYExCzAJBgNVBAYTAlRXMQ8wDQYDVQQIDAZUYWl3YW4xDzANBgNVBAcM
-BlRhaXBlaTENMAsGA1UECgwEUU5BUDEMMAoGA1UECwwDTkFTMREwDwYDVQQDDAho
-ZWxwZGVzazEgMB4GCSqGSIb3DQEJARYRc2VjdXJpdHlAcW5hcC5jb20wggEiMA0G
-CSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDl87eNkgCLdO+SCjfhTjq07pWcn07G
-CRHvQlMpctIpkgVUGavLJKHcN/hc7ktmYcYROhCQpQ5QyLsqch2L18vCJI3MMkQi
-Wit+ioBrBqw2whjrV/MGqpc/jY/xlva1ziKaDcjLHjVIcmszV1n8bwp0ByU0l7/2
-pKNav47vLxtebbCSA4PKaxmHzhlts4xohymnb8PPIblGa6OQ5woVPHkDA3yLKtW8
-HnJESDKQTP8IQ48nc1zVuVGM2IBtHGzfEd+hwQDuOYQ/KZ1/quoiJhjPk0VeVAdJ
-hvmKLDNgmjqMI5o60aqZdJOU/A3+1pX2VclAtS8LcxlNq1GrhB2inMPVAgMBAAGj
-PDA6MDgGA1UdHwQxMC8wLaAroCmGJ2h0dHA6Ly9kb3dubG9hZC5xbmFwLmNvbS9j
-cmwvcXRzX3YxLmNybDANBgkqhkiG9w0BAQsFAAOCAQEACy5McJXchbghJB4VPgy5
-RQZd7EJlnaSIHhTfw7FQdT4AJ+CRJ1FqblmDMzEx3fzQf7tUqxwhGP2hzq2buM/p
-IcmeKf1fnpgtJROkH+6ZNY5cFGh6vpTYHY4MEeraSeV+tO1ZtWWPhyO35TweEN4J
-T3pNke+isDXkOfnvPBAF8VVJ8K+Dp2VcmAgfFXT9Bi38hpqYCpvM5oIIvKSFCxBL
-THzZvTTq6GM2HhJGYQyS4CANvHQ0JJCSrWZhdRkq9B0FyjKASa2m6kIROy3xRlp+
-2lVKPACMSGY+Au6ONRsstm3VJf/tnaz126tuMByZEQIHhhkzuFUSzpY/f7dvBfNN
-Yw==
------END CERTIFICATE-----
-EOB
-
-    # this digital signature block is the same used by QNAP for their packages
-    read -r -d '' digital_signature << EOB
-MIME-Version: 1.0
-Content-Disposition: attachment; filename="smime.p7m"
-Content-Type: application/pkcs7-mime; smime-type=signed-data; name="smime.p7m"
-Content-Transfer-Encoding: base64
-MIIGrQYJKoZIhvcNAQcCoIIGnjCCBpoCAQExDTALBglghkgBZQMEAgEwIwYJKoZI
-hvcNAQcBoBYEFI1sdHRtKKMwJjva1u0bxmHUCl14oIIDwTCCA70wggKloAMCAQIC
-BF2QUwUwDQYJKoZIhvcNAQELBQAwgYAxCzAJBgNVBAYTAlRXMQ8wDQYDVQQIDAZU
-YWl3YW4xDzANBgNVBAcMBlRhaXBlaTENMAsGA1UECgwEUU5BUDEMMAoGA1UECwwD
-TkFTMRAwDgYDVQQDDAdRTkFQX0NBMSAwHgYJKoZIhvcNAQkBFhFzZWN1cml0eUBx
-bmFwLmNvbTAeFw0yMjAzMTgwNzM1NDZaFw0yNTAzMTcwNzM1NDZaMIGBMQswCQYD
-VQQGEwJUVzEPMA0GA1UECAwGVGFpd2FuMQ8wDQYDVQQHDAZUYWlwZWkxDTALBgNV
-BAoMBFFOQVAxDDAKBgNVBAsMA05BUzERMA8GA1UEAwwIaGVscGRlc2sxIDAeBgkq
-hkiG9w0BCQEWEXNlY3VyaXR5QHFuYXAuY29tMIIBIjANBgkqhkiG9w0BAQEFAAOC
-AQ8AMIIBCgKCAQEA5fO3jZIAi3Tvkgo34U46tO6VnJ9OxgkR70JTKXLSKZIFVBmr
-yySh3Df4XO5LZmHGEToQkKUOUMi7KnIdi9fLwiSNzDJEIlorfoqAawasNsIY61fz
-BqqXP42P8Zb2tc4img3Iyx41SHJrM1dZ/G8KdAclNJe/9qSjWr+O7y8bXm2wkgOD
-ymsZh84ZbbOMaIcpp2/DzyG5RmujkOcKFTx5AwN8iyrVvB5yREgykEz/CEOPJ3Nc
-1blRjNiAbRxs3xHfocEA7jmEPymdf6rqIiYYz5NFXlQHSYb5iiwzYJo6jCOaOtGq
-mXSTlPwN/taV9lXJQLUvC3MZTatRq4QdopzD1QIDAQABozwwOjA4BgNVHR8EMTAv
-MC2gK6AphidodHRwOi8vZG93bmxvYWQucW5hcC5jb20vY3JsL3F0c192MS5jcmww
-DQYJKoZIhvcNAQELBQADggEBAAsuTHCV3IW4ISQeFT4MuUUGXexCZZ2kiB4U38Ox
-UHU+ACfgkSdRam5ZgzMxMd380H+7VKscIRj9oc6tm7jP6SHJnin9X56YLSUTpB/u
-mTWOXBRoer6U2B2ODBHq2knlfrTtWbVlj4cjt+U8HhDeCU96TZHvorA15Dn57zwQ
-BfFVSfCvg6dlXJgIHxV0/QYt/IaamAqbzOaCCLykhQsQS0x82b006uhjNh4SRmEM
-kuAgDbx0NCSQkq1mYXUZKvQdBcoygEmtpupCETst8UZaftpVSjwAjEhmPgLujjUb
-LLZt1SX/7Z2s9durbjAcmRECB4YZM7hVEs6WP3+3bwXzTWMxggKaMIIClgIBATCB
-iTCBgDELMAkGA1UEBhMCVFcxDzANBgNVBAgMBlRhaXdhbjEPMA0GA1UEBwwGVGFp
-cGVpMQ0wCwYDVQQKDARRTkFQMQwwCgYDVQQLDANOQVMxEDAOBgNVBAMMB1FOQVBf
-Q0ExIDAeBgkqhkiG9w0BCQEWEXNlY3VyaXR5QHFuYXAuY29tAgRdkFMFMAsGCWCG
-SAFlAwQCAaCB5DAYBgkqhkiG9w0BCQMxCwYJKoZIhvcNAQcBMBwGCSqGSIb3DQEJ
-BTEPFw0yMjExMDEwOTM1MDZaMC8GCSqGSIb3DQEJBDEiBCDUId+wv/Fubjh/6sW7
-2WBlOrlpB6GxWdg5QrcZw+nTrzB5BgkqhkiG9w0BCQ8xbDBqMAsGCWCGSAFlAwQB
-KjALBglghkgBZQMEARYwCwYJYIZIAWUDBAECMAoGCCqGSIb3DQMHMA4GCCqGSIb3
-DQMCAgIAgDANBggqhkiG9w0DAgIBQDAHBgUrDgMCBzANBggqhkiG9w0DAgIBKDAN
-BgkqhkiG9w0BAQEFAASCAQCPzaasOmisLCpRvu3xm56bVtJr8FYtYrZRNxzsLPam
-RPHmBLsOlMK6KbXkUXv0Oh+FtDT+ahUiQctsAkzqvuz2SUM6p1hzpXkmWSUFKJe8
-hSscnTfwsgVMRXcw9YPsdkOu4K2tuA0VOlPUTMOKeGJflIzCilv2r/hdYjuExNnC
-FMMUBcacsLkAUK5nsHgIpMTBHhR1R0Zwg3iKU4gQIq3wnL5HFvTx6SaPdRkqs4VN
-+SIX/jzL5WeYTO2sTvbaSIZvkS+dd2Iug588XeAaWJd4Uyg3+8ByTloYmKKmEmpp
-p8mnFMbEd+UeEkKj6gHxC0m0+Unzv5MBDVbdW0QH7RUm
-EOB
-
-    $GNU_SQLITE_CMD "$cert_db_pathfile" << EOB
-INSERT INTO Certificate (type,QpkgName,Cert,DigitalSignature) VALUES ('qpkg','$qpkg_name','$cert','$digital_signature');
-EOB
-
-    }
 
 Objects.Load()
     {
