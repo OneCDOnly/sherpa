@@ -1,8 +1,18 @@
+* create a troubleshooting page for the wiki?
+    This should include explains of various ops like clean and check, so users will have a better idea which op to run when things go wrong.
+
+* update IPKs automatically?
+    Store a local checksum of the Entware package list. If this changes, assume it's been updated and all IPKs should be checked for upgrade status and upgraded. No-need to prompt user - just upgrade automatically.
+
+* see if *arr package can be supported
+
+* make Entware check for package updates early-on in background.
+
+* download QPKG updates in background when running sherpa for any reason?
+
 * keep track of each package's action times and process the longest ones first next time?
 
 * autowidth help display columns?
-
-* reduce file download checksum error to filename only. Path is not needed.
 
 * include result and duration of IPKs and PIPs install/upgrade in session results.
     [/share/Public] # ./sherpa.manager.source install trans start stopped
