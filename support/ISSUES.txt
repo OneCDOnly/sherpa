@@ -1,3 +1,5 @@
+ISSUES
+
 * empty debug log line:
 	dbug: (==) exec complete
 	dbug: (<<) RunAndLog|0|1,763ms
@@ -5,22 +7,6 @@
 	dbug: (II)
 	dbug: (<<) _QPKG.Restart_|0|2,369ms
 	dbug: (==) forked _QPKG.Restart_ for SABnzbd
-
-* create a troubleshooting page for the wiki?
-    This should include explains of various ops like clean and check, so users will have a better idea which op to run when things go wrong.
-
-* update IPKs automatically?
-    Store a local checksum of the Entware package list. If this changes, assume it's been updated and all IPKs should be checked for upgrade status and upgraded. No-need to prompt user - just upgrade automatically.
-
-* see if *arr package can be supported
-
-* make Entware check for package updates early-on in background.
-
-* download QPKG updates in background when running sherpa for any reason?
-
-* keep track of each package's action times and process the longest ones first next time?
-
-* autowidth help display columns?
 
 * include result and duration of IPKs and PIPs install/upgrade in session results.
     [/share/Public] # ./sherpa.manager.source install trans start stopped
@@ -50,8 +36,6 @@
 
 * user should be able to specify "debug to disk" and/or "debug to screen". 'debug-screen' should also enable 'debug-disk'.
 
-* BASH completion?
-
 * include new integrated help screens for all actions like:
     `sherpa paste help`, `sherpa install help`, `sherpa reassign help`
 
@@ -63,10 +47,6 @@
 * ensure each service script 'venv' upgrades its own 'pip'.
 
 * ensure each action fork is actually being killed after it issues an 'exit' into the message pipe.
-
-* add mini rolling CPU utilitisation graph to progress display while installing QPKGs?
-    while true; do top -b -n 2 -d 0.2 -p 1621 | tail -1 | awk '{print $9}'; done
-    while true; do /usr/bin/top -b -n2 -d1 | grep 20744 | tail -1 | awk '{print $7}'; done
 
 * remove hint to 'enable' QPKG when attempting to 'stop' it while in a disabled state:
     [~] # /etc/init.d/clamav.sh stop; echo $?
