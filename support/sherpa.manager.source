@@ -5215,7 +5215,7 @@ SaveActionResultToLog()
 
 	case $4 in
 		ok)
-			DebugAsInfo "${5:-}"
+			[[ -n ${5:-} ]] && DebugAsInfo "${5:-}"
 			;;
 		skipped-ok)
 			DebugAsInfo "${5:?reason empty}"
@@ -5771,7 +5771,6 @@ _QPKG.Restart_()
 		RunAndLog "${debug_cmd}${PACKAGE_INIT_PATHFILE} restart" "$LOG_PATHFILE" log:failure-only
 		result_code=$?
 	fi
-
 	if [[ $result_code -eq 0 ]]; then
 		QPKG.LogServiceStatus "$PACKAGE_NAME"
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" Restart ok
@@ -5783,7 +5782,6 @@ _QPKG.Restart_()
 		result_code=1	# remap to 1
 		MarkThisActionForkAsFailed
 	fi
-
 	QPKG.ClearAppCenterNotifier "$PACKAGE_NAME"
 	DebugForkFuncEx $result_code
 
