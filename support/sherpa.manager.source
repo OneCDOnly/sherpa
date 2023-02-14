@@ -5339,7 +5339,7 @@ _QPKG.Download_()
                 SendPackageStateChange IsDownloaded
                 MarkThisActionForkAsOk
             else
-                SaveActionResultToLog QPKG "$PACKAGE_NAME" Download failed "downloaded file $(FormatAsFileName "$LOCAL_PATHFILE") has incorrect checksum"
+                SaveActionResultToLog QPKG "$PACKAGE_NAME" Download failed "downloaded file $(FormatAsFileName "$LOCAL_FILENAME") has incorrect checksum"
                 SendPackageStateChange IsNtDownloaded
                 result_code=1
                 MarkThisActionForkAsFailed
