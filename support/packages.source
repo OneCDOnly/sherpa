@@ -18,7 +18,8 @@ QPKG_MIN_RAM_KB=()              # QPKG requires at-least this much RAM installed
 QPKG_VERSION=()                 # QPKG version
 QPKG_URL=()                     # remote QPKG URL
 QPKG_MD5=()                     # remote QPKG MD5
-QPKG_DESC=()                    # QPKG description (applies to all packages with the same name)
+# the following apply to all subsequent packages with the same name as the first
+QPKG_DESC=()                    # QPKG description
 QPKG_NOTE=()                    # an additional note to be prominently displayed
 QPKG_ABBRVS=()                  # if set, this package is user-installable, and these abbreviations may be used to specify app
 QPKG_CONFLICTS_WITH=()          # abort if these QPKGs are installed
