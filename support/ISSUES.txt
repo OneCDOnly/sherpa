@@ -1,0 +1,36 @@
+ISSUES
+
+* display corruption?
+    [/share/Public] # ./sherpa.manager.source install trans start stopped
+    sherpa <?today?>-<?branch?> • a mini-package-manager for QNAP NAS
+
+    done: downloaded 2 QPKGs
+    done: installed no standalone QPKGs
+        └─ skipped: Entware
+    done: installed 1 addon IPK
+        └─ skipped: Entware
+    proc: installing addon PIPs      └─ skipped: Entware
+    done: installed 1 dependent QPKG
+        └─ skipped: Entware
+    done: started 2 dependent QPKGs
+
+    • These package actions completed OK:
+        download OTransmission in 1 second
+        download Entware in 1 second
+        install addon in 5 seconds
+        install OTransmission in 9 seconds
+        start NZBGet in 2 seconds
+        start SABnzbd in 17 seconds
+
+    • These package actions were skipped:
+        install Entware
+            Reason: already installed
+
+* after removing entware, 'sed' and 'grep' commands fail for the remainder of that session. Must ensure changeover to QTS binaries works correctly.
+
+* ensure each action fork is actually being killed after it issues an 'exit' into the message pipe.
+
+* remove hint to 'enable' QPKG when attempting to 'stop' it while in a disabled state:
+    [~] # /etc/init.d/clamav.sh stop; echo $?
+    The 'ClamAV' QPKG is disabled. Please enable it first with: qpkg_service enable ClamAV
+    1

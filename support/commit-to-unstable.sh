@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 
-echo 'unstable' > "$HOME"/scripts/nas/sherpa/support/branch.txt
+work_path="$HOME"/scripts/nas/sherpa/support
+push_path="$HOME"/scripts/nas/sherpa
 
-cd "$HOME"/scripts/nas/sherpa || exit
+echo 'unstable' > "$work_path"/branch.txt
+
+cd "$push_path" || exit
 git add . && git commit && git push
-cd "$HOME"/scripts/nas/sherpa/support || exit
+cd "$work_path" || exit
 
 exit 0
