@@ -1081,19 +1081,9 @@ Self.Results()
 	{
 
 	display_last_action_datetime=false
-	local package=''
 
 	if [[ $opts_deps_check = true ]]; then
-		if [[ ${NAS_FIRMWARE_VER//.} -ge 435 ]]; then
-			ShowAsProc '"signing" all QPKGs'
-
-			for package in $(QPKGs.IsInstalled.Array); do
-				QPKG.Sign "$package"
-			done
-
-			ShowAsDone '"signed" all QPKGs'
-		fi
-
+		QPKGs.Sign
 		ShowAsDone 'check OK'
 	fi
 
@@ -4041,6 +4031,23 @@ QPKGs.Warnings.Check()
 	fi
 
 	return 0
+
+	}
+
+QPKGs.Sign()
+	{
+
+	local package=''
+
+	if [[ ${NAS_FIRMWARE_VER//.} -ge 435 ]]; then
+		ShowAsProc '"signing" all QPKGs'
+
+		for package in $(QPKGs.IsInstalled.Array); do
+			QPKG.Sign "$package"
+		done
+
+		ShowAsDone '"signed" all QPKGs'
+	fi
 
 	}
 
