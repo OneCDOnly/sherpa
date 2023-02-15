@@ -18,6 +18,7 @@ buffer=$(sed "s|<?branch?>|$branch|" <<< "$buffer")
 buffer=$(sed "/^$/d" <<< "$buffer")                                                     # remove empty lines
 buffer=$(sed -e '/^[[:space:]]*# /d;s/[[:space:]]#[[:space:]].*//' <<< "$buffer")       # remove comment lines and line comments
 buffer=$(sed -e 's/^[[:space:]]*//' <<< "$buffer")                                      # remove leading whitespace
+buffer=$(sed "s|Content-Transfer-Encoding: base64|Content-Transfer-Encoding: base64\n|" <<< "$buffer")	# need to add a newline after this string so signature block is accepted by QTS
 
 [[ -e $target_pathfile ]] && rm -f "$target_pathfile"
 echo "$buffer" > "$target_pathfile"

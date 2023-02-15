@@ -1,5 +1,3 @@
-IDEAS
-
 * user should be able to specify "debug to disk" and/or "debug to screen". 'debug-screen' should also enable 'debug-disk'.
 
 * add mini rolling CPU utilitisation graph to progress display while installing QPKGs?

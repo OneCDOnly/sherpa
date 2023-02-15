@@ -1,5 +1,3 @@
-ISSUES
-
 * display corruption?
     [/share/Public] # ./sherpa.manager.source install trans start stopped
     sherpa <?today?>-<?branch?> • a mini-package-manager for QNAP NAS
