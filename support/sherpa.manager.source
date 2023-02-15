@@ -5263,7 +5263,7 @@ _QPKG.Reassign_()
 	fi
 
 	DebugAsProc "reassigning $(FormatAsPackName "$PACKAGE_NAME")"
-	RunAndLog "$SETCFG_CMD $PACKAGE_NAME store '' -f /etc/config/qpkg.conf" "$LOG_PATHFILE" log:failure-only
+	RunAndLog "$SETCFG_CMD -e $PACKAGE_NAME store -f /etc/config/qpkg.conf" "$LOG_PATHFILE" log:failure-only
 	result_code=$?
 
 	if [[ $result_code -eq 0 ]]; then
@@ -6282,15 +6282,7 @@ QPKG.StoreID()
 	# output:
 	#   stdout = package store ID
 
-	local store=''
-
-	store=$($GETCFG_CMD "${1:?package name null}" store -d sherpa -f /etc/config/qpkg.conf)
-
-	# `getcfg` does not return a default value when specified key exists, but without a value assignment. :(
-	# So, need to manually assign a default value.
-	[[ -z $store ]] && store=sherpa
-
-	echo "$store"
+	$GETCFG_CMD "${1:?package name null}" store -d sherpa -f /etc/config/qpkg.conf
 
 	return 0
 
