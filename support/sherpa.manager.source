@@ -4463,6 +4463,8 @@ QPKGs.Repos.Show()
 
 				if [[ $package_store_id = sherpa ]]; then
 					package_repo_URL_formatted=$(ColourTextBrightGreen "$package_store_id")
+				elif [[ -z $package_store_id ]]; then
+					package_repo_URL_formatted=$(ColourTextBrightOrange unassigned)
 				else
 					package_repo_URL_formatted=$(ColourTextBrightOrange "$(GetRepoURLFromStoreID "$package_store_id")")
 				fi
