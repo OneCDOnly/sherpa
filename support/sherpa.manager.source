@@ -66,7 +66,7 @@ Self.Init()
 	trap RunOnEXIT EXIT
 	trap RunOnSIGINT INT
 
-	[[ ! -e /dev/fd ]] && ln -s /proc/self/fd /dev/fd	   # KLUDGE: `/dev/fd` isn't always created by QTS during startup
+	[[ ! -e /dev/fd ]] && ln -s /proc/self/fd /dev/fd		# KLUDGE: `/dev/fd` isn't always created by QTS during startup
 
 	# cherry-pick required Entware binaries
 	readonly OPKG_CMD=/opt/bin/opkg
@@ -140,7 +140,7 @@ Self.Init()
 	IsSysFileExist $DU_CMD || return
 	IsSysFileExist $HEAD_CMD || return
 	IsSysFileExist $READLINK_CMD || return
-	[[ ! -e $SORT_CMD ]] && ln -s /bin/busybox "$SORT_CMD"  # KLUDGE: `/usr/bin/sort` randomly disappears from QTS
+	[[ ! -e $SORT_CMD ]] && ln -s /bin/busybox "$SORT_CMD"		# KLUDGE: `/usr/bin/sort` randomly disappears from QTS
 	IsSysFileExist $TAIL_CMD || return
 	IsSysFileExist $TEE_CMD || return
 	IsSysFileExist $UNZIP_CMD || return
@@ -186,12 +186,12 @@ Self.Init()
 	readonly ACTIONS_LOG_PATHFILE=$LOGS_PATH/session.action.results.log
 
 #	 MANAGEMENT_ACTIONS=(Check List Paste Status)
-	PACKAGE_TIERS=(Standalone Addon Dependent)  # ordered
+	PACKAGE_TIERS=(Standalone Addon Dependent)	# ordered
 
 	# these words may be specified by the user when requesting actions, so each word can only be used once across all 4 of the following arrays
-	PACKAGE_GROUPS=(All CanBackup CanRestartToUpdate Dependent HasDependents Installable Standalone Upgradable)	 # sorted: `Sc` & `ScNt`
+	PACKAGE_GROUPS=(All CanBackup CanRestartToUpdate Dependent HasDependents Installable Standalone Upgradable)	# sorted: `Sc` & `ScNt`
 	PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Reassigned Reinstalled Restarted Started Upgraded)  # sorted: `Is` & `IsNt`
-	PACKAGE_STATES_TRANSIENT=(Starting Stopping Restarting)														 # unsorted: `Is` & `IsNt`
+	PACKAGE_STATES_TRANSIENT=(Starting Stopping Restarting)														# unsorted: `Is` & `IsNt`
 	PACKAGE_ACTIONS=(Download Rebuild Reassign Backup Stop Disable Uninstall Upgrade Reinstall Install Restore Clean Enable Start Restart)  # ordered
 
 	# only used by sherpa QPKG service-script results parser
@@ -714,7 +714,7 @@ Self.Validate()
 
 # QPKG action processing shall be conducted in this order:
 
-#   _. rebuild dependents		   (meta-action: `install` QPKG and `restore` config, but only if package has an existing backup file)
+#   _. rebuild dependents		(meta-action: `install` QPKG and `restore` config, but only if package has an existing backup file)
 
 #   1. reassign all
 #   2. download all
@@ -727,7 +727,7 @@ Self.Validate()
 #   8. reinstall standalones
 #   9. install standalones
 #  10. restore standalones
-#  11. clean standalones			(unsupported by all standalone QPKGs)
+#  11. clean standalones		(unsupported by all standalone QPKGs)
 #  12. enable/start standalones
 #  13. restart standalones
 
@@ -735,11 +735,12 @@ Self.Validate()
 #  15. reinstall dependents
 #  16. install dependents
 #  17. restore dependents
-#  18. clean dependents			 (supported by most dependent packages, but not all)
+#  18. clean dependents			(supported by most dependent packages, but not all)
 #  19. enable/start dependents
 #  20. restart dependents
 
-#  21. "live" status				(currently supported by most sherpa QPKGs, but no processing code yet exists in management script)
+#  21. "sign" all
+#  22. "live" status all		(currently supported by most sherpa QPKGs, but no processing code yet exists in management script)
 
 Actions.Proc()
 	{
@@ -759,7 +760,7 @@ Actions.Proc()
 
 	# -> package removal phase begins here <-
 
-	for ((tier_index=${#PACKAGE_TIERS[@]}-1; tier_index>=0; tier_index--)); do	 # process tiers in-reverse
+	for ((tier_index=${#PACKAGE_TIERS[@]}-1; tier_index>=0; tier_index--)); do		# process tiers in-reverse
 		tier=${PACKAGE_TIERS[$tier_index]}
 
 		case $tier in
@@ -812,7 +813,7 @@ Actions.Proc()
 		QPKGs.Actions.List
 	fi
 
-	[[ $self_debug_to_screen = true ]] && QPKGs.States.List rebuild	   # rebuild these after processing QPKGs to get current states
+	[[ $self_debug_to_screen = true ]] && QPKGs.States.List rebuild		# rebuild these after processing QPKGs to get current states
 	DebugScriptFuncEx
 
 	}
@@ -823,13 +824,13 @@ Action.Proc()
 	# run a single action on an entire tier of packages, asynchronously where possible
 
 	# input:
-	#   $1 = $TARGET_ACTION					 e.g. `Start`, `Restart` ...
-	#   $2 = $TIER							  e.g. `Standalone`, `Dependent`, `Addon`, `All`
-	#   $3 = $PACKAGE_TYPE					  e.g. `QPKG`, `IPK`, `PIP`
-	#   $4 = $TARGET_OBJECT_NAME (optional)	 e.g. `AcToStart`, `AcToStop` ...
-	#   $5 = $ACTION_INTRANSITIVE			   e.g. `start` ...
-	#   $6 = $ACTION_PRESENT					e.g. `starting` ...
-	#   $7 = $ACTION_PAST					   e.g. `started` ...
+	#   $1 = $TARGET_ACTION					e.g. `Start`, `Restart` ...
+	#   $2 = $TIER							e.g. `Standalone`, `Dependent`, `Addon`, `All`
+	#   $3 = $PACKAGE_TYPE					e.g. `QPKG`, `IPK`, `PIP`
+	#   $4 = $TARGET_OBJECT_NAME (optional)	e.g. `AcToStart`, `AcToStop` ...
+	#   $5 = $ACTION_INTRANSITIVE			e.g. `start` ...
+	#   $6 = $ACTION_PRESENT				e.g. `starting` ...
+	#   $7 = $ACTION_PAST					e.g. `started` ...
 
 	DebugScriptFuncEn
 
@@ -892,7 +893,7 @@ Action.Proc()
 			re=\\bEntware\\b		# BASH 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
 
 			if [[ $TARGET_ACTION = Uninstall && ${target_packages[*]} =~ $re ]]; then
-				ShowKeystrokes  # must enable this before removing Entware & GNU stty
+				ShowKeystrokes  	# must enable this before removing Entware & GNU stty
 				ShowCursor
 			fi
 
@@ -904,10 +905,10 @@ Action.Proc()
 				IFS='#' read -r msg1_key msg1_value msg2_key msg2_value
 
 				case $msg1_key in
-					env)		# change the state of the sherpa environment
+					env)			# change the state of the sherpa environment
 						eval "$msg1_value"	  # run this as executable
 						;;
-					change)	 # change the state of a single QPKG in the parent shell
+					change)	 		# change the state of a single QPKG in the parent shell
 						while true; do
 							for group in "${PACKAGE_GROUPS[@]}"; do
 								case $msg1_value in
@@ -941,34 +942,34 @@ Action.Proc()
 							break
 						done
 						;;
-					status)	 # update the status of a single action fork in the parent shell
+					status)	 		# update the status of a single action fork in the parent shell
 						case $msg1_value in
-							Ok)	 # completed OK (wonderful)
+							Ok)	 	# completed OK (wonderful)
 								QPKGs.AcTo${TARGET_ACTION}.Remove "$msg2_value"
 								QPKGs.AcOk${TARGET_ACTION}.Add "$msg2_value"
 								((ok_count++))
 								;;
-							So)	 # action was skipped, but this is normal (no-big-deal)
+							So)	 	# action was skipped, but this is normal (no-big-deal)
 								QPKGs.AcTo${TARGET_ACTION}.Remove "$msg2_value"
 								QPKGs.AcSo${TARGET_ACTION}.Add "$msg2_value"
 								((skip_ok_count++))
 								;;
-							Sk)	 # action was skipped (and there's a good reason for it)
+							Sk)	 	# action was skipped (and there's a good reason for it)
 								QPKGs.AcTo${TARGET_ACTION}.Remove "$msg2_value"
 								QPKGs.AcSk${TARGET_ACTION}.Add "$msg2_value"
 								((skip_count++))
 								;;
-							Se)	 # action was skipped due to error prior to action being tried (might be a big-deal)
+							Se)	 	# action was skipped due to error prior to action being tried (might be a big-deal)
 								QPKGs.AcTo${TARGET_ACTION}.Remove "$msg2_value"
 								QPKGs.AcSe${TARGET_ACTION}.Add "$msg2_value"
 								((skip_error_count++))
 								;;
-							Er)	 # action failed (uh-oh)
+							Er)	 	# action failed (uh-oh)
 								QPKGs.AcTo${TARGET_ACTION}.Remove "$msg2_value"
 								QPKGs.AcEr${TARGET_ACTION}.Add "$msg2_value"
 								((fail_count++))
 								;;
-							Ex)	 # action is about to exit
+							Ex)	 	# action is about to exit
 								for package_index in "${!target_packages[@]}"; do
 									if [[ ${target_packages[package_index]} = "$msg2_value" ]]; then
 										unset 'target_packages[package_index]'
@@ -1009,10 +1010,7 @@ Action.Proc()
 		ShowAsActionResult "$TIER" "$PACKAGE_TYPE" "$ok_count" "$total_count" "$ACTION_PAST"
 	fi
 
-#	 case $PACKAGE_TYPE in
-#		 QPKG)
-			ShowAsActionResultDetail "$TARGET_ACTION" "$PACKAGE_TYPE"
-#	 esac
+	ShowAsActionResultDetail "$TARGET_ACTION" "$PACKAGE_TYPE"
 
 	EraseForkCountPaths
 	DebugScriptFuncEx
@@ -1071,7 +1069,7 @@ AdjustMaxForks()
 		DebugInfo "limiting \$max_forks to $max_forks because debug mode is active"
 	else
 		case ${1:-} in
-			Clean)					  # don't make too-many calls to PyPI at the same time
+			Clean)					  	# don't make too-many calls to PyPI at the same time
 				max_forks=$(((max_forks+1)/2))
 				DebugInfo "limiting \$max_forks to $max_forks because '$(Lowercase "$1")' action was requested"
 				;;
@@ -1819,7 +1817,7 @@ ParseArgs()
 				;;
 			uninstall_)
 				case $group in
-					all_)   # this group is dangerous, so make `force` a requirement
+					all_)   		# this group is dangerous, so make `force` a requirement
 						if [[ $action_force = true ]]; then
 							QPKGs.AcUninstall.ScAll.Set
 							group=''
@@ -1831,7 +1829,7 @@ ParseArgs()
 						group=''
 						action_force=false
 						;;
-					installed_)   # this group is dangerous, so make `force` a requirement
+					installed_)		# this group is dangerous, so make `force` a requirement
 						if [[ $action_force = true ]]; then
 							QPKGs.AcUninstall.IsInstalled.Set
 							group=''
@@ -3457,8 +3455,6 @@ Actions.Results.Show()
 	local reason=''
 	local package_type=''
 	local found=false
-
-# 	DisableDebugToArchiveAndFile
 
 	if [[ -e $ACTIONS_LOG_PATHFILE ]]; then
 		local IFS='#'
@@ -5233,11 +5229,11 @@ SaveActionResultToLog()
 
 	# input:						example:
 
-	#  $1 = package type			`QPKG`, `IPK`, `PIP`
-	#  $2 = package or group name   `SABnzbd`, `essential`
-	#  $3 = action				  `Download`, `Downloaded`
-	#  $4 = result				  `ok`, `skipped-ok`, `skipped`, `failed`
-	#  $5 = reason (optional)	   "file already exists in local cache"
+	#   $1 = package type			`QPKG`, `IPK`, `PIP`
+	#   $2 = package or group name  `SABnzbd`, `essential`
+	#   $3 = action				  	`Download`, `Downloaded`
+	#   $4 = result				  	`ok`, `skipped-ok`, `skipped`, `failed`
+	#   $5 = reason (optional)	   	"file already exists in local cache"
 
 	# calculate duration here
 
@@ -5249,7 +5245,7 @@ SaveActionResultToLog()
 
 	case $4 in
 		ok)
-			[[ -n ${5:-} ]] && DebugAsInfo "${5:-}"
+			DebugAsInfo "${5:-}"
 			;;
 		skipped-ok)
 			DebugAsInfo "${5:?reason empty}"
@@ -7609,6 +7605,7 @@ DebugAsVar()
 DebugThis()
 	{
 
+	[[ -z ${1:-} ]] && return
 	[[ ${self_debug_to_screen:-false} = true ]] && ShowAsDebug "${1:-}"
 	WriteToLog dbug "${1:-}"
 
