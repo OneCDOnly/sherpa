@@ -250,15 +250,13 @@ Self.Init()
 	opts_deps_check=false
 	opts_vers_view=false
 
+	objects_loaded=false
 	qpkgs_loaded=false
 	qpkgs_skip_processing=false
 	qpkgs_states_built=false
-
 	ipks_upgrade=false
 	ipks_install=false
-
 	pips_install=false
-
 	re=''
 
 	# KLUDGE: service scripts prior to 2022-12-08 would use these paths (by-default) to build/cache Python packages. This has been fixed, but still need to free-up this space to prevent out-of-space issues.
@@ -8251,6 +8249,7 @@ Objects.Load()
 
 	# Ensure `objects` in the local work path is up-to-date, then source it
 
+	[[ $objects_loaded = true ]] && return
 	DebugScriptFuncEn
 
 	if [[ ! -e $PWD/dont.refresh.objects ]]; then
@@ -8271,7 +8270,7 @@ Objects.Load()
 	. "$OBJECTS_PATHFILE"
 
 	readonly OBJECTS_VER
-
+	objects_loaded=true
 	DebugScriptFuncEx
 
 	}
