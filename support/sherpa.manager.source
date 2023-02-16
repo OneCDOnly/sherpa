@@ -217,8 +217,7 @@ Self.Init()
 
 	# default values
 	self_debug_to_screen=false
-	self_debug_to_file=true
-	self_debug_to_archive=true
+	EnableDebugToArchiveAndFile
 	self_display_clean=false
 	self_linespace_onscreen=false
 	self_display_zero_qpkgs=true
@@ -260,6 +259,8 @@ Self.Init()
 
 	pips_install=false
 
+	re=''
+
 	# KLUDGE: service scripts prior to 2022-12-08 would use these paths (by-default) to build/cache Python packages. This has been fixed, but still need to free-up this space to prevent out-of-space issues.
 	[[ -d /root/.cache ]] && rm -rf /root/.cache
 	[[ -d /root/.local/share/virtualenv ]] && rm -rf /root/.local/share/virtualenv
@@ -278,7 +279,7 @@ Self.Init()
 
 	ArchivePriorSessLogs
 
-	local re=\\breset\\b		# BASH 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
+	re=\\breset\\b		# BASH 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
 
 	if [[ $USER_ARGS_RAW =~ $re ]]; then
 		ResetArchivedLogs
@@ -299,14 +300,16 @@ Self.Init()
 		readonly SESS_COLS=156
 	fi
 
-	for re in \\bdebug\\b \\bdbug\\b \\bverbose\\b; do
+	re=\\bverbose\\b
+
+	if [[ $USER_ARGS_RAW =~ $re ]]; then
+		Display >&2
+		EnableVerbose
+	fi
+
+	for re in \\bdebug\\b \\bdbug\\b; do
 		if [[ $USER_ARGS_RAW =~ $re ]]; then
-			Display >&2
-			self_debug_to_screen=true
-			self_debug_to_file=true
-			self_debug_to_archive=true
-			ShowKeystrokes
-			ShowCursor
+			EnableDebugToArchiveAndFile
 			break
 		fi
 	done
@@ -798,9 +801,14 @@ Actions.Proc()
 
 	EraseThisLine
 
+	if [[ $opts_deps_check = true ]]; then
+		QPKGs.Sign
+		ShowAsDone 'check OK'
+	fi
+
 	if [[ ${self_debug_to_file:-false} = true ]]; then
-		IPKs.Actions.List
 #		 PIPs.Actions.List
+		IPKs.Actions.List
 		QPKGs.Actions.List
 	fi
 
@@ -881,7 +889,7 @@ Action.Proc()
 			InitForkCounts
 			OpenActionMsgPipe
 
-			local re=\\bEntware\\b		# BASH 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
+			re=\\bEntware\\b		# BASH 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
 
 			if [[ $TARGET_ACTION = Uninstall && ${target_packages[*]} =~ $re ]]; then
 				ShowKeystrokes  # must enable this before removing Entware & GNU stty
@@ -1081,21 +1089,6 @@ Self.Results()
 	{
 
 	display_last_action_datetime=false
-	local package=''
-
-	if [[ $opts_deps_check = true ]]; then
-		if [[ ${NAS_FIRMWARE_VER//.} -ge 435 ]]; then
-			ShowAsProc '"signing" all QPKGs'
-
-			for package in $(QPKGs.IsInstalled.Array); do
-				QPKG.Sign "$package"
-			done
-
-			ShowAsDone '"signed" all QPKGs'
-		fi
-
-		ShowAsDone 'check OK'
-	fi
 
 	if Args.Unknown.IsNone; then
 		if [[ $opts_help_abbreviations = true ]]; then
@@ -1184,7 +1177,8 @@ Self.Results()
 	DebugScript finished "$($DATE_CMD)"
 	DebugScript 'elapsed time' "$(FormatSecsToHoursMinutesSecs "$(($($DATE_CMD +%s)-SCRIPT_STARTSECONDS))")"
 	DebugInfoMajSepr
-	[[ ${self_debug_to_archive:-false} = true ]] && ArchiveActiveSessLog
+
+	[[ $self_debug_to_archive = true ]] && ArchiveActiveSessLog
 	ResetActiveSessLog
 	EraseThisLine
 	DisplayLineSpaceIfNoneAlready   # final on-screen linespace
@@ -1363,7 +1357,6 @@ ParseArgs()
 		# identify options
 		case $arg in
 			debug|dbug|verbose)
-				self_debug_to_screen=true
 				arg_identified=true
 				group_identified=true
 				;;
@@ -3465,7 +3458,7 @@ Actions.Results.Show()
 	local package_type=''
 	local found=false
 
-	DisableDebugToArchiveAndFile
+# 	DisableDebugToArchiveAndFile
 
 	if [[ -e $ACTIONS_LOG_PATHFILE ]]; then
 		local IFS='#'
@@ -3521,8 +3514,8 @@ Help.Options.Show()
 	DisplayAsProjSynIndentExam '' s
 	DisplayAsProjSynIndentExam 'show package repositories' 'repos'
 	DisplayAsProjSynIndentExam '' r
-	DisplayAsProjSynIndentExam 'process one-or-more packages and show live debugging information' "$(FormatAsAction) $(FormatAsPackages) debug"
-	DisplayAsProjSynIndentExam '' "$(FormatAsAction) $(FormatAsPackages) verbose"
+	DisplayAsProjSynIndentExam 'show live debugging information, and record it to file' "$(FormatAsAction) $(FormatAsPackages) verbose"
+	DisplayAsProjSynIndentExam 'record debugging information to file only' "$(FormatAsAction) $(FormatAsPackages) debug"
 
 	return 0
 
@@ -3587,8 +3580,8 @@ Help.Problems.Show()
 	DisplayAsHelpTitle 'usage examples for dealing with problems:'
 	DisplayAsProjSynIndentExam 'show package statuses' 'status'
 	DisplayAsProjSynIndentExam '' s
-	DisplayAsProjSynIndentExam 'process one-or-more packages and show live debugging information' "$(FormatAsAction) $(FormatAsPackages) debug"
-	DisplayAsProjSynIndentExam '' "$(FormatAsAction) $(FormatAsPackages) verbose"
+	DisplayAsProjSynIndentExam 'show live debugging information, and record it to file' "$(FormatAsAction) $(FormatAsPackages) verbose"
+	DisplayAsProjSynIndentExam 'record debugging information to file only' "$(FormatAsAction) $(FormatAsPackages) debug"
 	DisplayAsProjSynIndentExam 'ensure all dependencies exist for installed packages' 'check'
 	DisplayAsProjSynIndentExam '' c
 	DisplayAsProjSynIndentExam 'clear local repository files from these packages' "clean $(FormatAsPackages)"
@@ -4041,6 +4034,27 @@ QPKGs.Warnings.Check()
 	fi
 
 	return 0
+
+	}
+
+QPKGs.Sign()
+	{
+
+	DebugScriptFuncEn
+
+	local package=''
+
+	if [[ ${NAS_FIRMWARE_VER//.} -ge 435 ]]; then
+		ShowAsProc '"signing" all QPKGs'
+
+		for package in $(QPKGs.IsInstalled.Array); do
+			QPKG.Sign "$package"
+		done
+
+		ShowAsDone '"signed" all QPKGs'
+	fi
+
+	DebugScriptFuncEx
 
 	}
 
@@ -5183,6 +5197,24 @@ ReleaseLockFile()
 	{
 
 	[[ -e ${LOCK_PATHFILE:?null} ]] && rm -f "$LOCK_PATHFILE"
+
+	}
+
+EnableVerbose()
+	{
+
+	self_debug_to_screen=true
+	ShowKeystrokes
+	ShowCursor
+	EnableDebugToArchiveAndFile
+
+	}
+
+EnableDebugToArchiveAndFile()
+	{
+
+	self_debug_to_archive=true
+	self_debug_to_file=true
 
 	}
 

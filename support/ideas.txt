@@ -18,7 +18,7 @@
 
 * keep track of each package's action times and process the longest ones first next time?
 
-* autowidth help display columns?
+* autowidth display columns?
 
 * BASH completion?
 
