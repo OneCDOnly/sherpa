@@ -4,12 +4,16 @@
 
 echo -n 'building archives ... '
 
+if [[ -e vars.source ]]; then
+	. ./vars.source
+else
+	echo "'vars.source' not found"
+	exit 1
+fi
+
 declare -a source_pathfiles
 declare -a target_pathfiles
 declare -i index=0
-
-source_path=$HOME/scripts/nas/sherpa/support
-target_path=$HOME/scripts/nas/sherpa
 
 source_pathfiles+=("$source_path"/objects)
 target_pathfiles+=("$target_path"/objects.tar.gz)

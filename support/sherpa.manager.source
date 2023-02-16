@@ -163,13 +163,13 @@ Self.Init()
 
 	local -r OBJECTS_FILE=objects
 	local -r OBJECTS_ARCHIVE_FILE=$OBJECTS_FILE.tar.gz
-	readonly OBJECTS_ARCHIVE_URL=https://raw.githubusercontent.com/OneCDOnly/sherpa/main/$OBJECTS_ARCHIVE_FILE
+	readonly OBJECTS_ARCHIVE_URL="<?cdn_sherpa_root_url?>/$OBJECTS_ARCHIVE_FILE"
 	readonly OBJECTS_ARCHIVE_PATHFILE=$WORK_PATH/$OBJECTS_ARCHIVE_FILE
 	readonly OBJECTS_PATHFILE=$WORK_PATH/$OBJECTS_FILE
 
 	local -r PACKAGES_FILE=packages
 	local -r PACKAGES_ARCHIVE_FILE=$PACKAGES_FILE.tar.gz
-	local -r PACKAGES_ARCHIVE_URL=https://raw.githubusercontent.com/OneCDOnly/sherpa/main/$PACKAGES_ARCHIVE_FILE
+	local -r PACKAGES_ARCHIVE_URL="<?cdn_sherpa_root_url?>/$PACKAGES_ARCHIVE_FILE"
 	readonly PACKAGES_ARCHIVE_PATHFILE=$WORK_PATH/$PACKAGES_ARCHIVE_FILE
 	readonly PACKAGES_PATHFILE=$WORK_PATH/$PACKAGES_FILE
 
