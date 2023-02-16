@@ -305,7 +305,6 @@ Self.Init()
 	if [[ $USER_ARGS_RAW =~ $re ]]; then
 		Display >&2
 		EnableVerbose
-		break
 	fi
 
 	for re in \\bdebug\\b \\bdbug\\b; do
