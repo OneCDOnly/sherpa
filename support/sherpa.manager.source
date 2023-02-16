@@ -4057,6 +4057,8 @@ QPKGs.Sign()
 IPKs.Actions.List()
 	{
 
+	[[ $self_debug_to_file = true ]] || return
+
 	DebugScriptFuncEn
 
 	local action=''
@@ -4081,6 +4083,8 @@ IPKs.Actions.List()
 PIPs.Actions.List()
 	{
 
+	[[ $self_debug_to_file = true ]] || return
+
 	DebugScriptFuncEn
 
 	local action=''
@@ -4104,6 +4108,8 @@ PIPs.Actions.List()
 
 QPKGs.Actions.List()
 	{
+
+	[[ $self_debug_to_file = true ]] || return
 
 	DebugScriptFuncEn
 
@@ -4496,6 +4502,8 @@ QPKGs.Repos.Show()
 QPKGs.Statuses.Show()
 	{
 
+	DebugScriptFuncEn
+
 	local tier=''
 	local -a package_status_notes=()
 	local -i index=0
@@ -4598,7 +4606,7 @@ QPKGs.Statuses.Show()
 	QPKGs.Actions.List
 	QPKGs.States.List
 
-	return 0
+	DebugScriptFuncEx
 
 	}
 
