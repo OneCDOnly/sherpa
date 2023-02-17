@@ -7,7 +7,7 @@ else
 	exit 1
 fi
 
-echo -n "ready to merge '$unstable_branch' branch into '$stable_branch' branch: proceed? "
+echo -en "ready to merge '$unstable_branch_msg' branch into '$stable_branch_msg' branch: proceed? "
 read -rn1 response
 echo
 
