@@ -2633,6 +2633,7 @@ _LaunchQPKGActionForks_()
 	for package in "${target_packages[@]}"; do
 		while [[ $fork_count -ge $max_forks ]]; do  # don't fork until an empty spot becomes available
 			UpdateForkProgress
+			$SLEEP_CMD 1
 		done
 
 		IncForkProgressIndex
