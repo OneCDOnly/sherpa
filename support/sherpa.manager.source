@@ -333,7 +333,7 @@ Self.Init()
 	readonly NAS_QPKG_ARCH=$(GetQPKGArch)
 	readonly ENTWARE_VER=$(GetEntwareType)
 	readonly CPU_CORES=$(GetCPUCores)
-	readonly CONCURRENCY=$CPU_CORES	 # maximum concurrent package actions to run. Should probably make this account for CPU speed too.
+	readonly CONCURRENCY=$CPU_CORES	 	# maximum concurrent package actions to run. Should probably make this account for CPU speed too.
 	readonly LOG_TAIL_LINES=5000		# note: a full download and install of everything generates a session log of around 1600 lines, but include a bunch of opkg updates and it can get much longer
 	prev_msg=' '
 	fork_pid=''
@@ -2741,23 +2741,18 @@ WriteMsgInPlace()
 	#   stdout = "$1" with all whitespace squeezed.
 	#   $prev_clean_msg = the message provided in $1, but with all whitespace squeezed, and with ANSI codes removed.
 
-	local -i length=0
-	local -i prev_length=0
 	local -i blanking_length=0
 	local squeezed_msg=$(tr -s ' ' <<< "${1:-}")
 	local clean_msg=$(StripANSI "$squeezed_msg")
 
 	if [[ $clean_msg != "$prev_clean_msg" ]]; then
-		length=${#clean_msg}
-		prev_length=${#prev_clean_msg}
-
-		if [[ $length -lt $prev_length ]]; then
-			blanking_length=$((length-prev_length))
+		if [[ ${#clean_msg} -lt ${#prev_clean_msg} ]]; then
+			blanking_length=$((${#clean_msg}-${#prev_clean_msg}))
 			# backspace to start of previous msg, print new msg, add additional spaces, then backspace to end of new msg
-			printf "%${prev_length}s" | tr ' ' '\b'; echo -en "$squeezed_msg"; printf "%${blanking_length}s"; printf "%${blanking_length}s" | tr ' ' '\b'
+			printf "%${#prev_clean_msg}s" | tr ' ' '\b'; echo -en "$squeezed_msg"; printf "%${blanking_length}s"; printf "%${blanking_length}s" | tr ' ' '\b'
 		else
 			# backspace to start of previous msg, print new msg
-			printf "%${prev_length}s" | tr ' ' '\b'; echo -en "$squeezed_msg"
+			printf "%${#prev_clean_msg}s" | tr ' ' '\b'; echo -en "$squeezed_msg"
 		fi
 
 		prev_clean_msg=$clean_msg
@@ -3933,7 +3928,7 @@ UpdateForkProgress()
 		msg+="$(ColourTextBrightGreen "$ok_count") OK"
 	fi
 
-	if [[ $skip_count -gt 0 || $skip_error_count -gt 0 ]]; then	 # don't include skipped packages that were OK
+	if [[ $skip_count -gt 0 || $skip_error_count -gt 0 ]]; then		# don't include skipped packages that were OK
 		[[ -n $msg ]] && msg+=': '
 		msg+="$(ColourTextBrightOrange "$((skip_count+skip_error_count))") skipped"
 	fi
@@ -4169,6 +4164,8 @@ QPKGs.States.List()
 	{
 
 	# $1 (optional passthrough) = `rebuild` - clear existing lists and rebuild them from scratch
+
+	[[ $self_debug_to_file = true ]] || return
 
 	DebugScriptFuncEn
 
@@ -4457,6 +4454,7 @@ QPKGs.Repos.Show()
 	local package_repo_URL_formatted=''
 	local maxcols=$(CalcMaxRepoColsToDisplay)
 
+	DisableDebugToArchiveAndFile
 	QPKGs.States.Build
 
 	for tier in Standalone Dependent; do
@@ -4511,6 +4509,7 @@ QPKGs.Statuses.Show()
 	local package_ver=''
 	local maxcols=$(CalcMaxStatusColsToDisplay)
 
+	DisableDebugToArchiveAndFile
 	QPKGs.States.Build
 
 	for tier in Standalone Dependent; do
@@ -4612,8 +4611,8 @@ QPKGs.IsBackedUp.Show()
 	{
 
 	local package=''
-	QPKGs.States.Build
 	DisableDebugToArchiveAndFile
+	QPKGs.States.Build
 
 	for package in $(QPKGs.IsBackedUp.Array); do
 		Display "$package"
