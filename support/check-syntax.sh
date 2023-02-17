@@ -3,7 +3,7 @@
 if [[ -e vars.source ]]; then
 	. ./vars.source
 else
-	echo "'vars.source' not found"
+	ColourTextBrightRed "'vars.source' not found\n"
 	exit 1
 fi
 
@@ -24,9 +24,9 @@ for index in "${!filenames[@]}"; do
 	echo -n "checking '${filenames[index]}' ... "
 
 	if shellcheck --shell=bash --exclude="${exclusions[index]}" "$source_path"/${filenames[index]}; then
-		echo 'passed'
+		ColourTextBrightGreen 'passed\n'
 	else
-		echo 'failed!'
+		ColourTextBrightRed 'failed\n'
 		exit 1
 	fi
 done

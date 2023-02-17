@@ -1,6 +1,32 @@
 #!/usr/bin/env bash
 
-echo "hardcoding with branch: $(<"$HOME"/scripts/nas/sherpa/support/branch.txt)"
+if [[ -e vars.source ]]; then
+	. ./vars.source
+else
+	ColourTextBrightRed "'vars.source' not found\n"
+	exit 1
+fi
+
+echo -en 'hardcoding with branch: '
+
+case $branch in
+	"$stable_branch")
+		ColourTextBrightOrange "$branch\n"
+		;;
+	*)
+		ColourTextBrightGreen "$branch\n"
+esac
+
+declare -a source_pathfiles
+declare -i index=0
+
+source_pathfiles+=("$source_path"/objects)
+source_pathfiles+=("$source_path"/packages)
+source_pathfiles+=("$source_path"/sherpa.manager.sh)
+
+for index in "${!source_pathfiles[@]}"; do
+	[[ -e ${source_pathfiles[index]} ]] && rm -f "${source_pathfiles[index]}"
+done
 
 ./check-syntax.sh || exit
 ./build-packages.sh || exit

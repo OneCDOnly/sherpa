@@ -5,7 +5,7 @@ echo -n "building 'objects' ... "
 if [[ -e vars.source ]]; then
 	. ./vars.source
 else
-	echo "'vars.source' not found"
+	ColourTextBrightRed "'vars.source' not found\n"
 	exit 1
 fi
 
@@ -276,7 +276,13 @@ buffer=$(sed 's/[[:space:]]*$//' <<< "$buffer")											# remove trailing whit
 buffer=$(sed "/^$/d" <<< "$buffer")														# remove empty lines
 
 echo "$buffer" > "$target_pathfile"
+
+if [[ ! -e $target_pathfile ]]; then
+	ColourTextBrightRed "'$target_pathfile' was not written to disk\n"
+	exit 1
+fi
+
 chmod 444 "$target_pathfile"
 
-echo 'done'
+ColourTextBrightGreen 'done\n'
 exit 0

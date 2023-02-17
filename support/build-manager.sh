@@ -5,7 +5,7 @@ echo -n 'building management script ... '
 if [[ -e vars.source ]]; then
 	. ./vars.source
 else
-	echo "'vars.source' not found"
+	ColourTextBrightRed "'vars.source' not found\n"
 	exit 1
 fi
 
@@ -28,7 +28,13 @@ buffer=$(sed "s|Content-Transfer-Encoding: base64|Content-Transfer-Encoding: bas
 
 [[ -e $target_pathfile ]] && rm -f "$target_pathfile"
 echo "$buffer" > "$target_pathfile"
+
+if [[ ! -e $target_pathfile ]]; then
+	ColourTextBrightRed "'$target_pathfile' was not written to disk\n"
+	exit 1
+fi
+
 chmod 554 "$target_pathfile"
 
-echo 'done'
+ColourTextBrightGreen 'done\n'
 exit 0
