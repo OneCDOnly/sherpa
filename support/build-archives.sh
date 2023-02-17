@@ -7,7 +7,7 @@ echo -n 'building archives ... '
 if [[ -e vars.source ]]; then
 	. ./vars.source
 else
-	echo "'vars.source' not found"
+	ColourTextBrightRed "'vars.source' not found\n"
 	exit 1
 fi
 
@@ -26,10 +26,22 @@ target_pathfiles+=("$target_path"/sherpa.manager.tar.gz)
 
 for index in "${!source_pathfiles[@]}"; do
 	[[ -e ${target_pathfiles[index]} ]] && rm -f "${target_pathfiles[index]}"
+
+	if [[ ! -e ${source_pathfiles[index]} ]]; then
+		ColourTextBrightRed "'${source_pathfiles[index]}' not found, "
+		continue
+	fi
+
 	tar --create --gzip --numeric-owner --file="${target_pathfiles[index]}" --directory="$source_path" "$(basename "${source_pathfiles[index]}")"
+
+	if [[ ! -s ${target_pathfiles[index]} ]]; then
+		ColourTextBrightRed "'${target_pathfiles[index]}' was not written\n"
+		exit 1
+	fi
+
 	[[ -e ${source_pathfiles[index]} ]] && rm -f "${source_pathfiles[index]}"
 	chmod 444 "${target_pathfiles[index]}"
 done
 
-echo 'done'
+ColourTextBrightGreen 'done\n'
 exit 0

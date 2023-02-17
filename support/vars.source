@@ -8,6 +8,117 @@ cdn_sherpa_root_url="$cdn_root_url/sherpa/main"
 cdn_sherpa_packages_url="$cdn_sherpa_root_url/QPKGs/<?package_name?>/build"
 cdn_other_packages_url="$cdn_root_url/<?package_name?>/main/build"
 
-branch=$(<"$source_path"/branch.txt)
+stable_branch=main
+unstable_branch=unstable
+branch_pathfile="$source_path"/branch.txt
+branch=$(<"$branch_pathfile")
 today=$(date '+%y%m%d')
 year=$(date '+%Y')
+colourful=true
+
+ColourTextBrightGreen()
+	{
+
+	if [[ $colourful = true ]]; then
+		echo -en '\033[1;32m'"$(ColourReset "${1:-}")"
+	else
+		echo -n "${1:-}"
+	fi
+
+	} 2>/dev/null
+
+ColourTextBrightYellow()
+	{
+
+	if [[ $colourful = true ]]; then
+		echo -en '\033[1;33m'"$(ColourReset "${1:-}")"
+	else
+		echo -n "${1:-}"
+	fi
+
+	} 2>/dev/null
+
+ColourTextBrightOrange()
+	{
+
+	if [[ $colourful = true ]]; then
+		echo -en '\033[1;38;5;214m'"$(ColourReset "${1:-}")"
+	else
+		echo -n "${1:-}"
+	fi
+
+	} 2>/dev/null
+
+ColourTextBrightOrangeBlink()
+	{
+
+	if [[ $colourful = true ]]; then
+		echo -en '\033[1;5;38;5;214m'"$(ColourReset "${1:-}")"
+	else
+		echo -n "${1:-}"
+	fi
+
+	} 2>/dev/null
+
+ColourTextBrightRed()
+	{
+
+	if [[ $colourful = true ]]; then
+		echo -en '\033[1;31m'"$(ColourReset "${1:-}")"
+	else
+		echo -n "${1:-}"
+	fi
+
+	} 2>/dev/null
+
+ColourTextBrightRedBlink()
+	{
+
+	if [[ $colourful = true ]]; then
+		echo -en '\033[1;5;31m'"$(ColourReset "${1:-}")"
+	else
+		echo -n "${1:-}"
+	fi
+
+	} 2>/dev/null
+
+ColourTextUnderlinedCyan()
+	{
+
+	if [[ $colourful = true ]]; then
+		echo -en '\033[4;36m'"$(ColourReset "${1:-}")"
+	else
+		echo -n "${1:-}"
+	fi
+
+	} 2>/dev/null
+
+ColourTextBlackOnCyan()
+	{
+
+	if [[ $colourful = true ]]; then
+		echo -en '\033[30;46m'"$(ColourReset "${1:-}")"
+	else
+		echo -n "${1:-}"
+	fi
+
+	} 2>/dev/null
+
+ColourTextBrightWhite()
+	{
+
+	if [[ $colourful = true ]]; then
+		echo -en '\033[1;97m'"$(ColourReset "${1:-}")"
+	else
+		echo -n "${1:-}"
+	fi
+
+	} 2>/dev/null
+
+ColourReset()
+	{
+
+	echo -en "${1:-}"'\033[0m'
+
+	} 2>/dev/null
+

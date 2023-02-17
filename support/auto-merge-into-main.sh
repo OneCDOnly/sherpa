@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 
-stable_branch=main
-unstable_branch=unstable
+if [[ -e vars.source ]]; then
+	. ./vars.source
+else
+	ColourTextBrightRed "'vars.source' not found\n"
+	exit 1
+fi
 
 echo -n "ready to merge '$unstable_branch' branch into '$stable_branch' branch: proceed? "
 read -rn1 response
@@ -15,7 +19,7 @@ case ${response:0:1} in
 		exit 0
 esac
 
-echo "$stable_branch" > "$HOME"/scripts/nas/sherpa/support/branch.txt
+echo "$stable_branch" > "$branch_pathfile"
 
 ./make.sh || exit
 
@@ -26,6 +30,6 @@ git merge --no-ff -m "merge from \`$unstable_branch\` into \`$stable_branch\`" "
 git checkout "$unstable_branch"
 cd "$HOME"/scripts/nas/sherpa/support || exit
 
-echo "$unstable_branch" > "$HOME"/scripts/nas/sherpa/support/branch.txt
+echo "$unstable_branch" > "$branch_pathfile"
 
 exit 0

@@ -1,12 +1,16 @@
 #!/usr/bin/env bash
 
-work_path="$HOME"/scripts/nas/sherpa/support
-push_path="$HOME"/scripts/nas/sherpa
+if [[ -e vars.source ]]; then
+	. ./vars.source
+else
+	ColourTextBrightRed "'vars.source' not found\n"
+	exit 1
+fi
 
-echo 'unstable' > "$work_path"/branch.txt
+echo "$unstable_branch" > "$branch_pathfile"
 
-cd "$push_path" || exit
+cd "$target_path" || exit
 git add . && git commit && git push
-cd "$work_path" || exit
+cd "$source_path" || exit
 
 exit 0
