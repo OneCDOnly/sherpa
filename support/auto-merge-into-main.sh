@@ -8,11 +8,11 @@ read -rn1 response
 echo
 
 case ${response:0:1} in
-    y|Y)
-        : # OK to continue
-        ;;
-    *)
-        exit 0
+	y|Y)
+		: # OK to continue
+		;;
+	*)
+		exit 0
 esac
 
 echo "$stable_branch" > "$HOME"/scripts/nas/sherpa/support/branch.txt
