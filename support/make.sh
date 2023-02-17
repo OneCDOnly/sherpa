@@ -7,15 +7,7 @@ else
 	exit 1
 fi
 
-echo -en 'hardcoding with branch: '
-
-case $branch in
-	"$stable_branch")
-		ColourTextBrightOrange "$branch\n"
-		;;
-	*)
-		ColourTextBrightGreen "$branch\n"
-esac
+echo -e "hardcoding with branch: $branch_msg"
 
 declare -a source_pathfiles
 declare -i index=0
