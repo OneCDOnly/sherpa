@@ -190,12 +190,12 @@ Self.Init()
 
 	# these words may be specified by the user when requesting actions, so each word can only be used once across all 4 of the following arrays
 	PACKAGE_GROUPS=(All CanBackup CanRestartToUpdate Dependent HasDependents Installable Standalone Upgradable)	# sorted: `Sc` & `ScNt`
-	PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Reassigned Reinstalled Restarted Started Upgraded)  # sorted: `Is` & `IsNt`
+	PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Reassigned Reinstalled Restarted Signed Started Upgraded)  # sorted: `Is` & `IsNt`
 	PACKAGE_STATES_TRANSIENT=(Starting Stopping Restarting)														# unsorted: `Is` & `IsNt`
-	PACKAGE_ACTIONS=(Download Rebuild Reassign Backup Stop Disable Uninstall Upgrade Reinstall Install Restore Clean Enable Start Restart)  # ordered
+	PACKAGE_ACTIONS=(Download Rebuild Reassign Backup Stop Disable Uninstall Upgrade Reinstall Install Restore Clean Enable Start Restart Sign)  # ordered
 
 	# only used by sherpa QPKG service-script results parser
-	PACKAGE_RESULTS=(Ok Unknown)
+	QPKG_RESULTS=(Ok Unknown)
 	ACTION_RESULTS=(failed ok skipped)
 
 #	 readonly MANAGEMENT_ACTIONS
@@ -206,7 +206,7 @@ Self.Init()
 	readonly PACKAGE_STATES_TRANSIENT
 	readonly PACKAGE_ACTIONS
 
-	readonly PACKAGE_RESULTS
+	readonly QPKG_RESULTS
 	readonly ACTION_RESULTS
 
 	local action=''
@@ -696,6 +696,7 @@ Self.Validate()
 
 	# Check all items
 	if [[ $opts_deps_check = true ]]; then
+		QPKGs.AcToSign.Add "$(QPKGs.IsInstalled.Array)"
 		QPKGs.NewVers.Show
 
 		for package in $(QPKGs.ScDependent.Array); do
@@ -798,10 +799,10 @@ Actions.Proc()
 		esac
 	done
 
+	Action.Proc Sign All QPKG AcToSign sign signing signed || return
 	EraseThisLine
 
 	if [[ $opts_deps_check = true ]]; then
-		QPKGs.Sign
 		ShowAsDone 'check OK'
 	fi
 
@@ -901,6 +902,11 @@ Action.Proc()
 			# read message pipe and process QPKGs and actions as-per requests contained within
 			while [[ ${#target_packages[@]} -gt 0 ]]; do
 				IFS='#' read -r msg1_key msg1_value msg2_key msg2_value
+
+				DebugVar msg1_key
+				DebugVar msg1_value
+				DebugVar msg2_key
+				DebugVar msg2_value
 
 				case $msg1_key in
 					env)			# change the state of the sherpa environment
@@ -1072,6 +1078,10 @@ AdjustMaxForks()
 				DebugInfo "limiting \$max_forks to $max_forks because '$(Lowercase "$1")' action was requested"
 				;;
 			Install|Reinstall|Upgrade)  # don't execute these actions async: QTS installer for each package eventually aborts (looks like QTS can only manage a single package at-a-time, because packages overwrite each other, and package source files end-up in the wrong install paths)
+				max_forks=1
+				DebugInfo "limiting \$max_forks to $max_forks because '$(Lowercase "$1")' action was requested"
+				;;
+			Sign)  						# precautionary: don't create multiple writes to the certificate database at the same time
 				max_forks=1
 				DebugInfo "limiting \$max_forks to $max_forks because '$(Lowercase "$1")' action was requested"
 		esac
@@ -2633,7 +2643,7 @@ _LaunchQPKGActionForks_()
 	for package in "${target_packages[@]}"; do
 		while [[ $fork_count -ge $max_forks ]]; do  # don't fork until an empty spot becomes available
 			UpdateForkProgress
-			$SLEEP_CMD 1
+			$SLEEP_CMD .1
 		done
 
 		IncForkProgressIndex
@@ -2647,7 +2657,7 @@ _LaunchQPKGActionForks_()
 
 	while [[ $fork_count -gt 0 ]]; do
 		UpdateForkProgress	  # update display while running forks complete
-		$SLEEP_CMD 1
+		$SLEEP_CMD .1
 	done
 
 	# all forks have exited
@@ -2725,7 +2735,7 @@ _MonitorDirSize_()
 		fi
 
 		WriteMsgInPlace "$progress_msg"
-		$SLEEP_CMD 1
+		$SLEEP_CMD .1
 	done
 
 	[[ -n $progress_msg ]] && WriteMsgInPlace 'done!'
@@ -2765,7 +2775,7 @@ KillActiveFork()
 	{
 
 	if [[ -n ${fork_pid:-} && ${fork_pid:-0} -gt 0 && -d /proc/$fork_pid ]]; then
-		$SLEEP_CMD 1
+		$SLEEP_CMD .1
 		kill -9 "$fork_pid" 2>/dev/null
 		wait 2>/dev/null
 	fi
@@ -3919,11 +3929,6 @@ UpdateForkProgress()
 
 	msg+="$(PercFrac "$ok_count" "$((skip_count+skip_ok_count+skip_error_count))" "$fail_count" "$total_count")"
 
-	if [[ $fork_count -gt 0 ]]; then
-		[[ -n $msg ]] && msg+=': '
-		msg+="$(ColourTextBrightYellow "$fork_count") in-progress"
-	fi
-
 	if [[ $ok_count -gt 0 ]]; then
 		[[ -n $msg ]] && msg+=': '
 		msg+="$(ColourTextBrightGreen "$ok_count") OK"
@@ -3937,6 +3942,11 @@ UpdateForkProgress()
 	if [[ $fail_count -gt 0 ]]; then
 		[[ -n $msg ]] && msg+=': '
 		msg+="$(ColourTextBrightRed "$fail_count") failed"
+	fi
+
+	if [[ $fork_count -gt 0 ]]; then
+		[[ -n $msg ]] && msg+=': '
+		msg+="$(ColourTextBrightYellow "$fork_count") in-progress"
 	fi
 
 	[[ -n $msg ]] && WriteMsgInPlace "$msg"
@@ -4027,27 +4037,6 @@ QPKGs.Warnings.Check()
 
 	}
 
-QPKGs.Sign()
-	{
-
-	DebugScriptFuncEn
-
-	local package=''
-
-	if [[ ${NAS_FIRMWARE_VER//.} -ge 435 ]]; then
-		ShowAsProc '"signing" all QPKGs'
-
-		for package in $(QPKGs.IsInstalled.Array); do
-			QPKG.Sign "$package"
-		done
-
-		ShowAsDone '"signed" all QPKGs'
-	fi
-
-	DebugScriptFuncEx
-
-	}
-
 IPKs.Actions.List()
 	{
 
@@ -4061,7 +4050,7 @@ IPKs.Actions.List()
 
 	for action in "${PACKAGE_ACTIONS[@]}"; do
 		case $action in
-			Backup|Clean|Disable|Enable|Reassign|Rebuild|Restart|Restore|Start|Stop)
+			Backup|Clean|Disable|Enable|Reassign|Rebuild|Restart|Restore|Start|Stop|Sign)
 				continue
 		esac
 
@@ -4176,7 +4165,7 @@ QPKGs.States.List()
 	QPKGs.States.Build "${1:-}"
 	DebugInfoMinSepr
 
-	for state in "${PACKAGE_STATES[@]}" "${PACKAGE_RESULTS[@]}"; do
+	for state in "${PACKAGE_STATES[@]}" "${QPKG_RESULTS[@]}"; do
 		for prefix in Is IsNt; do
 			if [[ $state = Installed ]]; then
 				continue
@@ -5496,8 +5485,7 @@ _QPKG.Install_()
 			DebugAsDone 'installed essential IPKs'
 		fi
 
-		QPKG.Sign "$PACKAGE_NAME"
-
+		SendParentChangeEnv "QPKGs.AcToSign.Add $PACKAGE_NAME"
 		result_code=0	# remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK)
 		MarkThisActionForkAsOk
 	else
@@ -5574,8 +5562,7 @@ _QPKG.Reinstall_()
 
 		local current_ver=$(QPKG.Local.Ver "$PACKAGE_NAME")
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" Reinstall ok "version $current_ver"
-		QPKG.Sign "$PACKAGE_NAME"
-
+		SendParentChangeEnv "QPKGs.AcToSign.Add $PACKAGE_NAME"
 		result_code=0	# remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK)
 		MarkThisActionForkAsOk
 	else
@@ -5675,8 +5662,7 @@ _QPKG.Upgrade_()
 			SaveActionResultToLog QPKG "$PACKAGE_NAME" Upgrade ok "from version $prev_ver to version $current_ver"
 		fi
 
-		QPKG.Sign "$PACKAGE_NAME"
-
+		SendParentChangeEnv "QPKGs.AcToSign.Add $PACKAGE_NAME"
 		result_code=0	# remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK)
 		MarkThisActionForkAsOk
 	else
@@ -6160,6 +6146,145 @@ _QPKG.Clean_()
 		MarkThisActionForkAsOk
 	else
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" Clean failed "$result_code"
+		result_code=1	# remap to 1
+		MarkThisActionForkAsFailed
+	fi
+
+	DebugForkFuncEx $result_code
+
+	}
+
+_QPKG.Sign_()
+	{
+
+	# * This function runs autonomously *
+
+	# Modify the QTS App Center certificate dB, and add an unsigned QPKG as-if it were signed. It adds a QNAP-generated certificate and digital signature to the certificate database for the unsigned QPKG.
+
+	# Running the code below makes the target QPKG effectively "signed", and allows user to install and run this QPKG with the 'Allow installation of applications without a valid digital signature' App Center option unticked.
+
+	# Should only be required for QTS 4.3.5-and-later firmwares.
+
+	# input:
+	#   $1 = QPKG name
+
+	# output:
+	#   $? = none, this function executes in background
+
+	DebugForkFuncEn
+
+	local -r PACKAGE_NAME=${1:?package name null}
+	local -i result_code=0
+	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$SIGN_LOG_FILE
+	local cert_db_pathfile=/etc/config/nas_sign_qpkg.db
+	local cert=''
+	local signature=''
+	local cmd=''
+
+	if [[ ${NAS_FIRMWARE_VER//.} -lt 435 ]]; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" Sign skipped 'not required'
+		result_code=2
+	elif ! QPKGs.IsInstalled.Exist "$PACKAGE_NAME"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" Sign skipped 'not installed'
+		result_code=2
+	elif [[ ! -e $GNU_SQLITE_CMD ]]; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" Sign skipped 'sqlite3 not installed'
+		result_code=2
+	elif [[ ! -e $cert_db_pathfile ]]; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" Sign skipped 'certificate database not found'
+		result_code=2
+	fi
+
+	if [[ $result_code -gt 0 ]]; then
+		MarkThisActionForkAsSkipped
+		DebugForkFuncEx $result_code
+	fi
+
+	DebugAsProc "signing $(FormatAsPackName "$PACKAGE_NAME")"
+
+	# this certificate block is the same used by QNAP for LicenseCenter
+	read -r -d '' cert << EOB
+-----BEGIN CERTIFICATE-----
+MIIDwzCCAqugAwIBAgIFALhDVuwwDQYJKoZIhvcNAQELBQAwgYAxCzAJBgNVBAYT
+AlRXMQ8wDQYDVQQIDAZUYWl3YW4xDzANBgNVBAcMBlRhaXBlaTENMAsGA1UECgwE
+UU5BUDEMMAoGA1UECwwDTkFTMRAwDgYDVQQDDAdRTkFQX0NBMSAwHgYJKoZIhvcN
+AQkBFhFzZWN1cml0eUBxbmFwLmNvbTAeFw0yMjAzMTgwNzM5MTRaFw0yNTAzMTcw
+NzM5MTRaMIGGMQswCQYDVQQGEwJUVzEPMA0GA1UECAwGVGFpd2FuMQ8wDQYDVQQH
+DAZUYWlwZWkxDTALBgNVBAoMBFFOQVAxDDAKBgNVBAsMA05BUzEWMBQGA1UEAwwN
+TGljZW5zZUNlbnRlcjEgMB4GCSqGSIb3DQEJARYRc2VjdXJpdHlAcW5hcC5jb20w
+ggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC/bAgbZryVvBXfpBHNUKQV
+sAkAfvDXjKnxa7lKHrRIcFcOnf+voUZcP1Ly9qWb782gB2eUHsUS1Xqj4CF/dUJf
+FEnOBrQUo9+Q9B3x4oTRpMdky7acP4dxAbt4T92swgaReQXAewy9s9//a52HIBca
+1dAA4JPwplqiZ/oh18GDCKxh84Iu9Gcu2J5e+VXEI/KUxCwKUd22aDTpv128MSoq
+dYexCerCJtQbgM3cwkkMiDnFpjrsta5iFpyrNKdLoBJ7YbY3d5Onkqy4DjE8hwR7
+0j7Qd+3xbMqv3FOCKeLLLn6N03IXHKP/big/MdXKY1dJQVA3/ks/knPH8mhcOM0d
+AgMBAAGjPDA6MDgGA1UdHwQxMC8wLaAroCmGJ2h0dHA6Ly9kb3dubG9hZC5xbmFw
+LmNvbS9jcmwvcXRzX3YxLmNybDANBgkqhkiG9w0BAQsFAAOCAQEAWlT1GDH6v8G3
+laIAs2/RdxhPgtKX4aL+fnTEFNF5V2yH0G4luyq5tHQw+VCHtDM6Z3GXWhciKPAR
+upbRcHq744JCFaUb6i8z1w1KVJDaQ38EVE5+JtpoPMrrnb+hKB/gGmi4PoMSpnvX
+VCxLbCbBnwi19o6t/MnPbz0shvUB2NDngnal6lYQFw/F8Sr6cSjV6GAY4TOZotdu
++gunwqQtYUycEVfNyiWVk/flgED8R8oxTPl9ZoDGen+OgjkZrvgynKnqPLHyxZSd
+hYSoWyWcZWkMCQ+69kOgJVvrRa7z9F9y30uAHXIUrsLV2d/dImVjApMHbZ60iALG
+AVIlas0e4g==
+-----END CERTIFICATE-----
+EOB
+
+	# this digital signature block is the same used by QNAP for LicenseCenter
+	read -r -d '' signature << EOB
+MIME-Version: 1.0
+Content-Disposition: attachment; filename="smime.p7m"
+Content-Type: application/pkcs7-mime; smime-type=signed-data; name="smime.p7m"
+Content-Transfer-Encoding: base64
+
+MIIGtAYJKoZIhvcNAQcCoIIGpTCCBqECAQExDTALBglghkgBZQMEAgEwIwYJKoZI
+hvcNAQcBoBYEFAkoseBaFir08zCz63r2YA82DXzxoIIDxzCCA8MwggKroAMCAQIC
+BQC4Q1bsMA0GCSqGSIb3DQEBCwUAMIGAMQswCQYDVQQGEwJUVzEPMA0GA1UECAwG
+VGFpd2FuMQ8wDQYDVQQHDAZUYWlwZWkxDTALBgNVBAoMBFFOQVAxDDAKBgNVBAsM
+A05BUzEQMA4GA1UEAwwHUU5BUF9DQTEgMB4GCSqGSIb3DQEJARYRc2VjdXJpdHlA
+cW5hcC5jb20wHhcNMjIwMzE4MDczOTE0WhcNMjUwMzE3MDczOTE0WjCBhjELMAkG
+A1UEBhMCVFcxDzANBgNVBAgMBlRhaXdhbjEPMA0GA1UEBwwGVGFpcGVpMQ0wCwYD
+VQQKDARRTkFQMQwwCgYDVQQLDANOQVMxFjAUBgNVBAMMDUxpY2Vuc2VDZW50ZXIx
+IDAeBgkqhkiG9w0BCQEWEXNlY3VyaXR5QHFuYXAuY29tMIIBIjANBgkqhkiG9w0B
+AQEFAAOCAQ8AMIIBCgKCAQEAv2wIG2a8lbwV36QRzVCkFbAJAH7w14yp8Wu5Sh60
+SHBXDp3/r6FGXD9S8valm+/NoAdnlB7FEtV6o+Ahf3VCXxRJzga0FKPfkPQd8eKE
+0aTHZMu2nD+HcQG7eE/drMIGkXkFwHsMvbPf/2udhyAXGtXQAOCT8KZaomf6IdfB
+gwisYfOCLvRnLtieXvlVxCPylMQsClHdtmg06b9dvDEqKnWHsQnqwibUG4DN3MJJ
+DIg5xaY67LWuYhacqzSnS6ASe2G2N3eTp5KsuA4xPIcEe9I+0Hft8WzKr9xTgini
+yy5+jdNyFxyj/24oPzHVymNXSUFQN/5LP5Jzx/JoXDjNHQIDAQABozwwOjA4BgNV
+HR8EMTAvMC2gK6AphidodHRwOi8vZG93bmxvYWQucW5hcC5jb20vY3JsL3F0c192
+MS5jcmwwDQYJKoZIhvcNAQELBQADggEBAFpU9Rgx+r/Bt5WiALNv0XcYT4LSl+Gi
+/n50xBTReVdsh9BuJbsqubR0MPlQh7QzOmdxl1oXIijwEbqW0XB6u+OCQhWlG+ov
+M9cNSlSQ2kN/BFROfibaaDzK652/oSgf4BpouD6DEqZ711QsS2wmwZ8ItfaOrfzJ
+z289LIb1AdjQ54J2pepWEBcPxfEq+nEo1ehgGOEzmaLXbvoLp8KkLWFMnBFXzcol
+lZP35YBA/EfKMUz5fWaAxnp/joI5Ga74Mpyp6jyx8sWUnYWEqFslnGVpDAkPuvZD
+oCVb60Wu8/Rfct9LgB1yFK7C1dnf3SJlYwKTB22etIgCxgFSJWrNHuIxggKbMIIC
+lwIBATCBijCBgDELMAkGA1UEBhMCVFcxDzANBgNVBAgMBlRhaXdhbjEPMA0GA1UE
+BwwGVGFpcGVpMQ0wCwYDVQQKDARRTkFQMQwwCgYDVQQLDANOQVMxEDAOBgNVBAMM
+B1FOQVBfQ0ExIDAeBgkqhkiG9w0BCQEWEXNlY3VyaXR5QHFuYXAuY29tAgUAuENW
+7DALBglghkgBZQMEAgGggeQwGAYJKoZIhvcNAQkDMQsGCSqGSIb3DQEHATAcBgkq
+hkiG9w0BCQUxDxcNMjIxMjAyMDMwOTE3WjAvBgkqhkiG9w0BCQQxIgQgvtdZSm+m
+c7QevdJma9Em5ycFr3I7Wo4aG40Vcx/mT5IweQYJKoZIhvcNAQkPMWwwajALBglg
+hkgBZQMEASowCwYJYIZIAWUDBAEWMAsGCWCGSAFlAwQBAjAKBggqhkiG9w0DBzAO
+BggqhkiG9w0DAgICAIAwDQYIKoZIhvcNAwICAUAwBwYFKw4DAgcwDQYIKoZIhvcN
+AwICASgwDQYJKoZIhvcNAQEBBQAEggEAuInAOUj+ebOkTqlqg3cf7v2FdKeCvZZn
+cunx1xRnHJRVAAvcH/UZ3t7RF6MV5NmEQdVN79NBZl0KU1x7K3zyvcXnkacNuHnI
+t+6neKKKkxJmB4hh4ljeYtx9a1RBgwH+PiYyH8+58S7+MF3MVhSH8jEiomgSbvsK
+BroOCFQDoYWk14K/VIXW1scmvpNvFNBWwm19pYwi977rF+lPWzMHx/0jVXspFSEd
+U48h9xKvPg6CsIlyfuKetHBjZZI6iSCvh2FZOWsD1/W2oGYkkY9Hdff24B34/res
+cKXk/K9/JFAONWBbXUpxtzpBCeVJlZS1wQgu4Q+Fr6imaBXJkiyiNg==
+EOB
+
+	cmd="DELETE FROM Certificate WHERE QpkgName = '$PACKAGE_NAME'; INSERT INTO Certificate (Type,QpkgName,Cert,DigitalSignature) VALUES ('qpkg','$PACKAGE_NAME','$cert','$signature');"
+
+	$GNU_SQLITE_CMD "$cert_db_pathfile" "$cmd"
+	result_code=$?
+
+	if [[ $result_code -eq 0 ]]; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" Sign ok
+		SendPackageStateChange IsSigned
+		MarkThisActionForkAsOk
+	else
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" Sign failed "$result_code"
 		result_code=1	# remap to 1
 		MarkThisActionForkAsFailed
 	fi
@@ -6846,109 +6971,6 @@ QPKG.IsStarted()
 
 	}
 
-QPKG.Sign()
-	{
-
-	# Modify the QTS App Center certificate dB, and add an unsigned QPKG as-if it were signed. It adds a QNAP-generated certificate and digital signature to the certificate database for the unsigned QPKG.
-
-	# Running the code below makes the target QPKG effectively "signed", and allows user to install and run this QPKG with the 'Allow installation of applications without a valid digital signature' App Center option unticked.
-
-	# Should only be required for QTS 4.3.5-and-later firmwares.
-
-	# input:
-	#  $1 = QPKG name to "sign"
-
-	[[ -n $1 ]] || return
-	[[ -e $GNU_SQLITE_CMD ]] || return
-	[[ ${NAS_FIRMWARE_VER//.} -ge 435 ]] || return
-
-	local qpkg_name=$1
-	local cert_db_pathfile=/etc/config/nas_sign_qpkg.db
-
-	[[ -e $cert_db_pathfile ]] || return
-
-	local cert=''
-	local signature=''
-
-	# this certificate block is the same used by QNAP for LicenseCenter
-	read -r -d '' cert << EOB
------BEGIN CERTIFICATE-----
-MIIDwzCCAqugAwIBAgIFALhDVuwwDQYJKoZIhvcNAQELBQAwgYAxCzAJBgNVBAYT
-AlRXMQ8wDQYDVQQIDAZUYWl3YW4xDzANBgNVBAcMBlRhaXBlaTENMAsGA1UECgwE
-UU5BUDEMMAoGA1UECwwDTkFTMRAwDgYDVQQDDAdRTkFQX0NBMSAwHgYJKoZIhvcN
-AQkBFhFzZWN1cml0eUBxbmFwLmNvbTAeFw0yMjAzMTgwNzM5MTRaFw0yNTAzMTcw
-NzM5MTRaMIGGMQswCQYDVQQGEwJUVzEPMA0GA1UECAwGVGFpd2FuMQ8wDQYDVQQH
-DAZUYWlwZWkxDTALBgNVBAoMBFFOQVAxDDAKBgNVBAsMA05BUzEWMBQGA1UEAwwN
-TGljZW5zZUNlbnRlcjEgMB4GCSqGSIb3DQEJARYRc2VjdXJpdHlAcW5hcC5jb20w
-ggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC/bAgbZryVvBXfpBHNUKQV
-sAkAfvDXjKnxa7lKHrRIcFcOnf+voUZcP1Ly9qWb782gB2eUHsUS1Xqj4CF/dUJf
-FEnOBrQUo9+Q9B3x4oTRpMdky7acP4dxAbt4T92swgaReQXAewy9s9//a52HIBca
-1dAA4JPwplqiZ/oh18GDCKxh84Iu9Gcu2J5e+VXEI/KUxCwKUd22aDTpv128MSoq
-dYexCerCJtQbgM3cwkkMiDnFpjrsta5iFpyrNKdLoBJ7YbY3d5Onkqy4DjE8hwR7
-0j7Qd+3xbMqv3FOCKeLLLn6N03IXHKP/big/MdXKY1dJQVA3/ks/knPH8mhcOM0d
-AgMBAAGjPDA6MDgGA1UdHwQxMC8wLaAroCmGJ2h0dHA6Ly9kb3dubG9hZC5xbmFw
-LmNvbS9jcmwvcXRzX3YxLmNybDANBgkqhkiG9w0BAQsFAAOCAQEAWlT1GDH6v8G3
-laIAs2/RdxhPgtKX4aL+fnTEFNF5V2yH0G4luyq5tHQw+VCHtDM6Z3GXWhciKPAR
-upbRcHq744JCFaUb6i8z1w1KVJDaQ38EVE5+JtpoPMrrnb+hKB/gGmi4PoMSpnvX
-VCxLbCbBnwi19o6t/MnPbz0shvUB2NDngnal6lYQFw/F8Sr6cSjV6GAY4TOZotdu
-+gunwqQtYUycEVfNyiWVk/flgED8R8oxTPl9ZoDGen+OgjkZrvgynKnqPLHyxZSd
-hYSoWyWcZWkMCQ+69kOgJVvrRa7z9F9y30uAHXIUrsLV2d/dImVjApMHbZ60iALG
-AVIlas0e4g==
------END CERTIFICATE-----
-EOB
-
-	# this digital signature block is the same used by QNAP for LicenseCenter
-	read -r -d '' signature << EOB
-MIME-Version: 1.0
-Content-Disposition: attachment; filename="smime.p7m"
-Content-Type: application/pkcs7-mime; smime-type=signed-data; name="smime.p7m"
-Content-Transfer-Encoding: base64
-
-MIIGtAYJKoZIhvcNAQcCoIIGpTCCBqECAQExDTALBglghkgBZQMEAgEwIwYJKoZI
-hvcNAQcBoBYEFAkoseBaFir08zCz63r2YA82DXzxoIIDxzCCA8MwggKroAMCAQIC
-BQC4Q1bsMA0GCSqGSIb3DQEBCwUAMIGAMQswCQYDVQQGEwJUVzEPMA0GA1UECAwG
-VGFpd2FuMQ8wDQYDVQQHDAZUYWlwZWkxDTALBgNVBAoMBFFOQVAxDDAKBgNVBAsM
-A05BUzEQMA4GA1UEAwwHUU5BUF9DQTEgMB4GCSqGSIb3DQEJARYRc2VjdXJpdHlA
-cW5hcC5jb20wHhcNMjIwMzE4MDczOTE0WhcNMjUwMzE3MDczOTE0WjCBhjELMAkG
-A1UEBhMCVFcxDzANBgNVBAgMBlRhaXdhbjEPMA0GA1UEBwwGVGFpcGVpMQ0wCwYD
-VQQKDARRTkFQMQwwCgYDVQQLDANOQVMxFjAUBgNVBAMMDUxpY2Vuc2VDZW50ZXIx
-IDAeBgkqhkiG9w0BCQEWEXNlY3VyaXR5QHFuYXAuY29tMIIBIjANBgkqhkiG9w0B
-AQEFAAOCAQ8AMIIBCgKCAQEAv2wIG2a8lbwV36QRzVCkFbAJAH7w14yp8Wu5Sh60
-SHBXDp3/r6FGXD9S8valm+/NoAdnlB7FEtV6o+Ahf3VCXxRJzga0FKPfkPQd8eKE
-0aTHZMu2nD+HcQG7eE/drMIGkXkFwHsMvbPf/2udhyAXGtXQAOCT8KZaomf6IdfB
-gwisYfOCLvRnLtieXvlVxCPylMQsClHdtmg06b9dvDEqKnWHsQnqwibUG4DN3MJJ
-DIg5xaY67LWuYhacqzSnS6ASe2G2N3eTp5KsuA4xPIcEe9I+0Hft8WzKr9xTgini
-yy5+jdNyFxyj/24oPzHVymNXSUFQN/5LP5Jzx/JoXDjNHQIDAQABozwwOjA4BgNV
-HR8EMTAvMC2gK6AphidodHRwOi8vZG93bmxvYWQucW5hcC5jb20vY3JsL3F0c192
-MS5jcmwwDQYJKoZIhvcNAQELBQADggEBAFpU9Rgx+r/Bt5WiALNv0XcYT4LSl+Gi
-/n50xBTReVdsh9BuJbsqubR0MPlQh7QzOmdxl1oXIijwEbqW0XB6u+OCQhWlG+ov
-M9cNSlSQ2kN/BFROfibaaDzK652/oSgf4BpouD6DEqZ711QsS2wmwZ8ItfaOrfzJ
-z289LIb1AdjQ54J2pepWEBcPxfEq+nEo1ehgGOEzmaLXbvoLp8KkLWFMnBFXzcol
-lZP35YBA/EfKMUz5fWaAxnp/joI5Ga74Mpyp6jyx8sWUnYWEqFslnGVpDAkPuvZD
-oCVb60Wu8/Rfct9LgB1yFK7C1dnf3SJlYwKTB22etIgCxgFSJWrNHuIxggKbMIIC
-lwIBATCBijCBgDELMAkGA1UEBhMCVFcxDzANBgNVBAgMBlRhaXdhbjEPMA0GA1UE
-BwwGVGFpcGVpMQ0wCwYDVQQKDARRTkFQMQwwCgYDVQQLDANOQVMxEDAOBgNVBAMM
-B1FOQVBfQ0ExIDAeBgkqhkiG9w0BCQEWEXNlY3VyaXR5QHFuYXAuY29tAgUAuENW
-7DALBglghkgBZQMEAgGggeQwGAYJKoZIhvcNAQkDMQsGCSqGSIb3DQEHATAcBgkq
-hkiG9w0BCQUxDxcNMjIxMjAyMDMwOTE3WjAvBgkqhkiG9w0BCQQxIgQgvtdZSm+m
-c7QevdJma9Em5ycFr3I7Wo4aG40Vcx/mT5IweQYJKoZIhvcNAQkPMWwwajALBglg
-hkgBZQMEASowCwYJYIZIAWUDBAEWMAsGCWCGSAFlAwQBAjAKBggqhkiG9w0DBzAO
-BggqhkiG9w0DAgICAIAwDQYIKoZIhvcNAwICAUAwBwYFKw4DAgcwDQYIKoZIhvcN
-AwICASgwDQYJKoZIhvcNAQEBBQAEggEAuInAOUj+ebOkTqlqg3cf7v2FdKeCvZZn
-cunx1xRnHJRVAAvcH/UZ3t7RF6MV5NmEQdVN79NBZl0KU1x7K3zyvcXnkacNuHnI
-t+6neKKKkxJmB4hh4ljeYtx9a1RBgwH+PiYyH8+58S7+MF3MVhSH8jEiomgSbvsK
-BroOCFQDoYWk14K/VIXW1scmvpNvFNBWwm19pYwi977rF+lPWzMHx/0jVXspFSEd
-U48h9xKvPg6CsIlyfuKetHBjZZI6iSCvh2FZOWsD1/W2oGYkkY9Hdff24B34/res
-cKXk/K9/JFAONWBbXUpxtzpBCeVJlZS1wQgu4Q+Fr6imaBXJkiyiNg==
-EOB
-
-	$GNU_SQLITE_CMD "$cert_db_pathfile" << EOB
-DELETE FROM Certificate WHERE QpkgName = '$qpkg_name';
-INSERT INTO Certificate (Type,QpkgName,Cert,DigitalSignature) VALUES ('qpkg','$qpkg_name','$cert','$signature');
-EOB
-
-	}
-
 QPKG.GetServiceStatus()
 	{
 
@@ -7555,6 +7577,7 @@ DebugAsFuncEx()
 DebugAsProc()
 	{
 
+	[[ -z ${1:-} ]] && return
 	DebugThis "(--) ${1:-}"
 
 	}
@@ -7562,6 +7585,7 @@ DebugAsProc()
 DebugAsDone()
 	{
 
+	[[ -z ${1:-} ]] && return
 	DebugThis "(==) ${1:-}"
 
 	}
@@ -7569,6 +7593,7 @@ DebugAsDone()
 DebugAsDetect()
 	{
 
+	[[ -z ${1:-} ]] && return
 	DebugThis "(**) ${1:-}"
 
 	}
@@ -7576,6 +7601,7 @@ DebugAsDetect()
 DebugAsInfo()
 	{
 
+	[[ -z ${1:-} ]] && return
 	DebugThis "(II) ${1:-}"
 
 	}
@@ -7583,6 +7609,7 @@ DebugAsInfo()
 DebugAsWarn()
 	{
 
+	[[ -z ${1:-} ]] && return
 	DebugThis "(WW) ${1:-}"
 
 	}
@@ -7590,6 +7617,7 @@ DebugAsWarn()
 DebugAsError()
 	{
 
+	[[ -z ${1:-} ]] && return
 	DebugThis "(EE) ${1:-}"
 
 	}
@@ -7597,6 +7625,7 @@ DebugAsError()
 DebugAsLog()
 	{
 
+	[[ -z ${1:-} ]] && return
 	DebugThis "(LL) ${1:-}"
 
 	}
@@ -7604,6 +7633,7 @@ DebugAsLog()
 DebugAsVar()
 	{
 
+	[[ -z ${1:-} ]] && return
 	DebugThis "(vv) ${1:-}"
 
 	}
@@ -7888,13 +7918,9 @@ ShowAsActionResultDetail()
 			[[ $(QPKGs.AcEr${1}.Count) -gt 0 ]] && er_msg="$(ColourTextBrightRed 'failed:') $(QPKGs.AcEr${1}.ListCSV)"
 			;;
 		IPK)
-
-
 			;;
 		PIP)
-
-
-
+			:
 	esac
 
 	if [[ -z $sk_msg && -z $er_msg ]]; then

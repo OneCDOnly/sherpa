@@ -16,12 +16,12 @@ target_pathfile="$source_path"/objects
 
 # these words may be specified by the user when requesting actions, so each word can only be used once across all 4 of the following arrays
 PACKAGE_GROUPS=(All CanBackup CanClean CanRestartToUpdate Dependent HasDependents Installable Standalone Upgradable)        # sorted: 'Sc' & 'ScNt'
-PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Reassigned Reinstalled Restarted Started Upgraded)    # sorted: 'Is' & 'IsNt'
+PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Reassigned Reinstalled Restarted Signed Started Upgraded)    # sorted: 'Is' & 'IsNt'
 PACKAGE_STATES_TRANSIENT=(Starting Stopping Restarting)                                                                     # unsorted: 'Is' & 'IsNt'
-PACKAGE_ACTIONS=(Download Rebuild Reassign Backup Stop Disable Uninstall Upgrade Reinstall Install Restore Clean Enable Start Restart)  # ordered
+PACKAGE_ACTIONS=(Download Rebuild Reassign Backup Stop Disable Uninstall Upgrade Reinstall Install Restore Clean Enable Start Restart Sign)  # ordered
 
 # only used by sherpa QPKG service-script results parser
-PACKAGE_RESULTS=(Ok Unknown)
+QPKG_RESULTS=(Ok Unknown)
 
 AddFlagObj()
 	{
@@ -237,7 +237,7 @@ for group in "${PACKAGE_GROUPS[@]}"; do
 	AddListObj QPKGs.ScNt"${group}"
 done
 
-for state in "${PACKAGE_STATES[@]}" "${PACKAGE_RESULTS[@]}"; do
+for state in "${PACKAGE_STATES[@]}" "${QPKG_RESULTS[@]}"; do
 	AddListObj QPKGs.Is"${state}"
 	AddListObj QPKGs.IsNt"${state}"
 done
@@ -260,7 +260,7 @@ done
 
 for action in "${PACKAGE_ACTIONS[@]}"; do
 	case $action in
-		Backup|Clean|Disable|Enable|Reassign|Rebuild|Restart|Restore)
+		Backup|Clean|Disable|Enable|Reassign|Rebuild|Restart|Restore|Sign)
 			continue    # Ac lists are not required for these
 	esac
 
