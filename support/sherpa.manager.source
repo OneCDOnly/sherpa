@@ -75,6 +75,7 @@ Self.Init()
 	readonly GNU_LESS_CMD=/opt/bin/less
 	readonly GNU_SED_CMD=/opt/bin/sed
 	readonly GNU_SETTERM_CMD=/opt/bin/setterm
+	readonly GNU_SLEEP_CMD=/opt/bin/sleep
 	readonly GNU_SQLITE_CMD=/opt/bin/sqlite3
 	readonly GNU_STTY_CMD=/opt/bin/stty
 	readonly PYTHON_CMD=/opt/bin/python
@@ -96,7 +97,7 @@ Self.Init()
 	readonly MKNOD_CMD=/bin/mknod
 	readonly SED_CMD=/bin/sed
 	readonly SH_CMD=/bin/sh
-	readonly SLEEP_CMD=/bin/sleep
+	readonly QTS_SLEEP_CMD=/bin/sleep
 	readonly TOUCH_CMD=/bin/touch
 	readonly UNAME_CMD=/bin/uname
 
@@ -127,7 +128,7 @@ Self.Init()
 	IsSysFileExist $MKNOD_CMD || return
 	IsSysFileExist $SED_CMD || return
 	IsSysFileExist $SH_CMD || return
-	IsSysFileExist $SLEEP_CMD || return
+	[[ ! -e $GNU_SLEEP_CMD ]] && { IsSysFileExist $QTS_SLEEP_CMD || return ;}
 	IsSysFileExist $TOUCH_CMD || return
 	IsSysFileExist $UNAME_CMD || return
 
@@ -323,6 +324,9 @@ Self.Init()
 		readonly SESS_ROWS=40
 		readonly SESS_COLS=156
 	fi
+
+	# test if QTS `sleep` can handle decimal seconds. Early QTS BusyBox versions cannot.
+	readonly DECIMAL_SECONDS_SUPPORTED=$($QTS_SLEEP_CMD .01 &>/dev/null && echo true || echo false)
 
 	re=\\bverbose\\b
 
@@ -2644,7 +2648,7 @@ _LaunchQPKGActionForks_()
 	for package in "${target_packages[@]}"; do
 		while [[ $fork_count -ge $max_forks ]]; do  # don't fork until an empty spot becomes available
 			UpdateForkProgress
-			$SLEEP_CMD .1
+			sleep '.1'
 		done
 
 		IncForkProgressIndex
@@ -2658,7 +2662,7 @@ _LaunchQPKGActionForks_()
 
 	while [[ $fork_count -gt 0 ]]; do
 		UpdateForkProgress	  # update display while running forks complete
-		$SLEEP_CMD .1
+		sleep '.1'
 	done
 
 	# all forks have exited
@@ -2736,7 +2740,7 @@ _MonitorDirSize_()
 		fi
 
 		WriteMsgInPlace "$progress_msg"
-		$SLEEP_CMD .1
+		sleep '.1'
 	done
 
 	[[ -n $progress_msg ]] && WriteMsgInPlace 'done!'
@@ -2776,7 +2780,7 @@ KillActiveFork()
 	{
 
 	if [[ -n ${fork_pid:-} && ${fork_pid:-0} -gt 0 && -d /proc/$fork_pid ]]; then
-		$SLEEP_CMD .1
+		sleep '.1'
 		kill -9 "$fork_pid" 2>/dev/null
 		wait 2>/dev/null
 	fi
@@ -7813,7 +7817,7 @@ ShowAsActionProgress()
 		ShowAsProcLong "$ACTION_PRESENT ${TOTAL_COUNT}${tier} ${PACKAGE_TYPE}$(Pluralise "$TOTAL_COUNT")" "$progress_msg"
 	fi
 
-	[[ $((OK_COUNT+SKIP_COUNT+FAIL_COUNT)) -ge $TOTAL_COUNT ]] && $SLEEP_CMD 1
+	[[ $((OK_COUNT+SKIP_COUNT+FAIL_COUNT)) -ge $TOTAL_COUNT ]] && sleep 1
 
 	return 0
 
@@ -8256,6 +8260,26 @@ FormatLongMinutesSecs()
 	printf '%01dm:%02ds\n' "$((10#$m))" "$((10#$s))"
 
 	} 2>/dev/null
+
+sleep()
+	{
+
+	# $1 = seconds to sleep (decimal or integer)
+
+	[[ -n ${1:-} ]] || return
+	[[ ${1//.} -gt 0 ]] || return
+
+	if [[ -e $GNU_SLEEP_CMD ]]; then
+		$GNU_SLEEP_CMD "$1"
+	elif [[ $DECIMAL_SECONDS_SUPPORTED = false ]]; then
+		$QTS_SLEEP_CMD "$((${1%.*}+1))"		# ensure decimal seconds are rounded up to next integer
+	else
+		$QTS_SLEEP_CMD "$1"
+	fi
+
+	return 0
+
+	}
 
 Objects.Load()
 	{
