@@ -728,33 +728,32 @@ Self.Validate()
 
 # QPKG action processing shall be conducted in this order:
 
-#   _. rebuild dependents		(meta-action: `install` QPKG and `restore` config, but only if package has an existing backup file)
+#   1. rebuild all				(meta-action: `install` QPKG and `restore` config, but only if package has an existing backup file)
+#   2. reassign all
+#   3. download all
+#   4. backup all
+#   5. stop & disable dependents
+#   6. stop & disable standalones
+#   7. uninstall all
 
-#   1. reassign all
-#   2. download all
-#   3. backup all
-#   4. stop/disable dependents
-#   5. stop/disable standalones
-#   6. uninstall all
+#   8. upgrade standalones
+#   9. reinstall standalones
+#  10. install standalones
+#  11. restore standalones
+#  12. clean standalones		(unsupported by all standalone QPKGs)
+#  13. enable & start standalones
+#  14. restart standalones
 
-#   7. upgrade standalones
-#   8. reinstall standalones
-#   9. install standalones
-#  10. restore standalones
-#  11. clean standalones		(unsupported by all standalone QPKGs)
-#  12. enable/start standalones
-#  13. restart standalones
+#  15. upgrade dependents
+#  16. reinstall dependents
+#  17. install dependents
+#  18. restore dependents
+#  19. clean dependents			(supported by most dependent packages, but not all)
+#  20. enable & start dependents
+#  21. restart dependents
 
-#  14. upgrade dependents
-#  15. reinstall dependents
-#  16. install dependents
-#  17. restore dependents
-#  18. clean dependents			(supported by most dependent packages, but not all)
-#  19. enable/start dependents
-#  20. restart dependents
-
-#  21. "sign" all
-#  22. "live" status all		(currently supported by most sherpa QPKGs, but no processing code yet exists in management script)
+#  22. "sign" all
+#  23. status all				(supported by most sherpa QPKGs, but no processing code yet exists in management script)
 
 Actions.Proc()
 	{
@@ -959,29 +958,25 @@ Action.Proc()
 					status)	 		# update the status of a single action fork in the parent shell
 						case $msg1_value in
 							Ok)	 	# completed OK (wonderful)
-								[[ $(type -t QPKGs.AcTo${TARGET_ACTION}.Init) = function ]] && QPKGs.AcTo${TARGET_ACTION}.Remove "$msg2_value"
-								[[ $(type -t QPKGs.AcOk${TARGET_ACTION}.Init) = function ]] && QPKGs.AcOk${TARGET_ACTION}.Add "$msg2_value"
 								((ok_count++))
 								;;
 							So)	 	# action was skipped, but this is normal (no-big-deal)
-								[[ $(type -t QPKGs.AcTo${TARGET_ACTION}.Init) = function ]] && QPKGs.AcTo${TARGET_ACTION}.Remove "$msg2_value"
-								[[ $(type -t QPKGs.AcSo${TARGET_ACTION}.Init) = function ]] && QPKGs.AcSo${TARGET_ACTION}.Add "$msg2_value"
 								((skip_ok_count++))
 								;;
 							Sk)	 	# action was skipped (and there's a good reason for it)
-								[[ $(type -t QPKGs.AcTo${TARGET_ACTION}.Init) = function ]] && QPKGs.AcTo${TARGET_ACTION}.Remove "$msg2_value"
-								[[ $(type -t QPKGs.AcSk${TARGET_ACTION}.Init) = function ]] && QPKGs.AcSk${TARGET_ACTION}.Add "$msg2_value"
 								((skip_count++))
 								;;
 							Se)	 	# action was skipped due to error prior to action being tried (might be a big-deal)
-								[[ $(type -t QPKGs.AcTo${TARGET_ACTION}.Init) = function ]] && QPKGs.AcTo${TARGET_ACTION}.Remove "$msg2_value"
-								[[ $(type -t QPKGs.AcSe${TARGET_ACTION}.Init) = function ]] && QPKGs.AcSe${TARGET_ACTION}.Add "$msg2_value"
 								((skip_error_count++))
 								;;
 							Er)	 	# action failed (uh-oh)
-								[[ $(type -t QPKGs.AcTo${TARGET_ACTION}.Init) = function ]] && QPKGs.AcTo${TARGET_ACTION}.Remove "$msg2_value"
-								[[ $(type -t QPKGs.AcEr${TARGET_ACTION}.Init) = function ]] && QPKGs.AcEr${TARGET_ACTION}.Add "$msg2_value"
 								((fail_count++))
+						esac
+
+						case $msg1_value in
+							Ok|So|Sk|Se|Er)
+								[[ $(type -t QPKGs.AcTo${TARGET_ACTION}.Init) = function ]] && QPKGs.AcTo${TARGET_ACTION}.Remove "$msg2_value"
+								[[ $(type -t QPKGs.Ac${msg1_value}${TARGET_ACTION}.Init) = function ]] && QPKGs.Ac${msg1_value}${TARGET_ACTION}.Add "$msg2_value"
 								;;
 							Ex)	 	# action is about to exit
 								for package_index in "${!target_packages[@]}"; do
@@ -1074,6 +1069,8 @@ CloseActionMsgPipe()
 
 AdjustMaxForks()
 	{
+
+	# $1 = action
 
 	max_forks=$CONCURRENCY
 
