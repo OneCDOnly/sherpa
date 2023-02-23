@@ -7,7 +7,7 @@ else
 	exit 1
 fi
 
-source_pathfile="$source_path"/sherpa.manager.sh
+source_pathfile="$source_path"/sherpa.manager.source
 target_func=''
 
 # shellcheck disable=SC2013

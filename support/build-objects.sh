@@ -14,11 +14,29 @@ target_pathfile="$source_path"/objects
 # $MANAGEMENT_ACTIONS haven't been coded yet, so don't create objects for it
 #MANAGEMENT_ACTIONS=(Check List Paste Status)
 
-# these words may be specified by the user when requesting actions, so each word can only be used once across all 4 of the following arrays
-PACKAGE_GROUPS=(All CanBackup CanClean CanRestartToUpdate Dependent HasDependents Installable Standalone Upgradable)        # sorted: 'Sc' & 'ScNt'
-PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Reassigned Reinstalled Restarted Signed Started Upgraded)    # sorted: 'Is' & 'IsNt'
-PACKAGE_STATES_TRANSIENT=(Starting Stopping Restarting)                                                                     # unsorted: 'Is' & 'IsNt'
-PACKAGE_ACTIONS=(Download Rebuild Reassign Backup Stop Disable Uninstall Upgrade Reinstall Install Restore Clean Enable Start Restart Sign)  # ordered
+# these words may be specified by the user
+# sorted
+USER_QPKG_Sc_GROUPS=(All CanBackup CanClean CanRestartToUpdate Dependent HasDependents Installable Standalone Upgradable)
+USER_QPKG_ScNt_GROUPS=(CanClean Installable Upgradable)
+USER_QPKG_Is_STATES=(BackedUp Installed Missing Started)
+USER_QPKG_IsNt_STATES=(BackedUp Installed Started)
+USER_QPKG_ACTIONS=(Backup Clean Install Reassign Rebuild Reinstall Restart Restore Start Stop Uninstall Upgrade)
+
+# these are used internally by sherpa
+# sorted
+IPK_STATES=(Downloaded Installed Reinstalled Upgraded)
+
+# sorted
+QPKG_Is_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Reassigned Reinstalled Restarted Signed Started Upgraded)
+QPKG_IsNt_STATES=(BackedUp Downloaded Enabled Installed Started)
+
+# unsorted
+QPKG_STATES_TRANSIENT=(Starting Stopping Restarting)
+
+# ordered
+PIP_ACTIONS=(Download Uninstall Upgrade Reinstall Install)
+IPK_ACTIONS=(Download Uninstall Upgrade Reinstall Install)
+QPKG_ACTIONS=(Download Rebuild Reassign Backup Stop Disable Uninstall Upgrade Reinstall Install Restore Clean Enable Start Restart Sign)
 
 # only used by sherpa QPKG service-script results parser
 QPKG_RESULTS=(Ok Unknown)
@@ -135,79 +153,44 @@ echo "#*$dontedit_msg" >> "$target_pathfile"
 
 # user option flag objects -----------------------------------------------------------------------------------------------------------------------------
 
-for group in "${PACKAGE_GROUPS[@]}"; do
+for group in "${USER_QPKG_Sc_GROUPS[@]}"; do
 	AddFlagObj QPKGs.List.Sc"${group}"
+done
 
-	case $group in
-		All|CanBackup|CanRestartToUpdate|Dependent|HasDependents|Standalone)
-			continue    # ScNt flags are not required for these
-	esac
-
+for group in "${USER_QPKG_ScNt_GROUPS[@]}"; do
 	AddFlagObj QPKGs.List.ScNt"${group}"
 done
 
-for state in "${PACKAGE_STATES[@]}"; do
+for state in "${USER_QPKG_Is_STATES[@]}" "${QPKG_STATES_TRANSIENT[@]}"; do
 	AddFlagObj QPKGs.List.Is"${state}"
-
-	case $state in
-		Cleaned|Missing|Reassigned|Reinstalled|Restarted|Upgraded)
-			continue    # IsNt flags are not required for these
-	esac
-
-	AddFlagObj QPKGs.List.IsNt"${state}"
 done
 
-for state in "${PACKAGE_STATES_TRANSIENT[@]}"; do
-	AddFlagObj QPKGs.List.Is"${state}"
+for state in "${USER_QPKG_IsNt_STATES[@]}"; do
+	AddFlagObj QPKGs.List.IsNt"${state}"
 done
 
 # package action flag objects --------------------------------------------------------------------------------------------------------------------------
 
-for group in "${PACKAGE_GROUPS[@]}"; do
-	for action in "${PACKAGE_ACTIONS[@]}"; do
-		case $action in
-			Disable|Enable)
-				continue    # Ac flags are not required for these
-		esac
-
+for group in "${USER_QPKG_Sc_GROUPS[@]}"; do
+	for action in "${USER_QPKG_ACTIONS[@]}"; do
 		AddFlagObj QPKGs.Ac"${action}".Sc"${group}"
 	done
+done
 
-	case $group in
-		All|CanBackup|CanRestartToUpdate|Dependent|HasDependents|Standalone)
-			continue    # ScNt flags are not required for these
-	esac
-
-	for action in "${PACKAGE_ACTIONS[@]}"; do
-		case $action in
-			Disable|Enable)
-				continue    # Ac flags are not required for these
-		esac
-
+for group in "${USER_QPKG_ScNt_GROUPS[@]}"; do
+	for action in "${USER_QPKG_ACTIONS[@]}"; do
 		AddFlagObj QPKGs.Ac"${action}".ScNt"${group}"
 	done
 done
 
-for state in "${PACKAGE_STATES[@]}"; do
-	for action in "${PACKAGE_ACTIONS[@]}"; do
-		case $action in
-			Disable|Enable)
-				continue    # Ac flags are not required for these
-		esac
+for state in "${USER_QPKG_Is_STATES[@]}"; do
+	for action in "${USER_QPKG_ACTIONS[@]}"; do
 		AddFlagObj QPKGs.Ac"${action}".Is"${state}"
 	done
+done
 
-	case $state in
-		Missing|Reassigned)
-			continue    # IsNt flags are not required for these
-	esac
-
-	for action in "${PACKAGE_ACTIONS[@]}"; do
-		case $action in
-			Disable|Enable)
-				continue    # Ac flags are not required for these
-		esac
-
+for state in "${USER_QPKG_IsNt_STATES[@]}"; do
+	for action in "${USER_QPKG_ACTIONS[@]}"; do
 		AddFlagObj QPKGs.Ac"${action}".IsNt"${state}"
 	done
 done
@@ -226,28 +209,23 @@ AddListObj Args.Unknown
 #     AddListObj Self.AcSk${action}       # action was skipped
 # done
 
-for group in "${PACKAGE_GROUPS[@]}"; do
+for group in "${USER_QPKG_Sc_GROUPS[@]}"; do
 	AddListObj QPKGs.Sc"${group}"
+done
 
-	case $group in
-		All|Dependent|HasDependents|Standalone)
-			continue    # ScNt lists are not required for these
-	esac
-
+for group in "${USER_QPKG_ScNt_GROUPS[@]}"; do
 	AddListObj QPKGs.ScNt"${group}"
 done
 
-for state in "${PACKAGE_STATES[@]}" "${QPKG_RESULTS[@]}"; do
+for state in "${QPKG_Is_STATES[@]}" "${QPKG_STATES_TRANSIENT[@]}" "${QPKG_RESULTS[@]}"; do
 	AddListObj QPKGs.Is"${state}"
+done
+
+for state in "${QPKG_IsNt_STATES[@]}" "${QPKG_STATES_TRANSIENT[@]}" "${QPKG_RESULTS[@]}"; do
 	AddListObj QPKGs.IsNt"${state}"
 done
 
-for state in "${PACKAGE_STATES_TRANSIENT[@]}"; do
-AddListObj QPKGs.Is"${state}"
-AddListObj QPKGs.IsNt"${state}"
-done
-
-for action in "${PACKAGE_ACTIONS[@]}"; do
+for action in "${QPKG_ACTIONS[@]}"; do
 	case $action in
 		Disable|Enable)
 			continue    # Ac lists are not required for these
@@ -258,12 +236,7 @@ for action in "${PACKAGE_ACTIONS[@]}"; do
 	done
 done
 
-for action in "${PACKAGE_ACTIONS[@]}"; do
-	case $action in
-		Backup|Clean|Disable|Enable|Reassign|Rebuild|Restart|Restore|Sign)
-			continue    # Ac lists are not required for these
-	esac
-
+for action in "${IPK_ACTIONS[@]}"; do
 	for prefix in To Ok Er; do
 		AddListObj IPKs.Ac"${prefix}${action}"
 	done
