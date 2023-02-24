@@ -56,8 +56,8 @@ Self.Init()
 	DebugScriptFuncEn
 
 	readonly MANAGER_FILE=sherpa.manager.sh
-	msg_pipe_fd=null
-	backup_stdin_fd=null
+	msg_pipe_fd=none
+	backup_stdin_fd=none
 	UpdateColourisation
 
 	IsQNAP || return
@@ -772,9 +772,9 @@ Actions.Proc()
 
 	[[ -e $ACTIONS_LOG_PATHFILE ]] && rm "$ACTIONS_LOG_PATHFILE"
 
-	Action.Proc Reassign All QPKG AcToReassign reassign reassigning reassigned || return
-	Action.Proc Download All QPKG AcToDownload download downloading downloaded || return
-	Action.Proc Backup All QPKG AcToBackup backup backing-up backed-up || return
+	Action.Proc Reassign All QPKG AcToReassign reassigning reassigned || return
+	Action.Proc Download All QPKG AcToDownload downloading downloaded || return
+	Action.Proc Backup All QPKG AcToBackup backing-up backed-up || return
 
 	# -> package removal phase begins here <-
 
@@ -783,8 +783,8 @@ Actions.Proc()
 
 		case $tier in
 			Standalone|Dependent)
-				Action.Proc Stop $tier QPKG AcToStop stop stopping stopped || return
-				Action.Proc Uninstall $tier QPKG AcToUninstall uninstall uninstalling uninstalled || return
+				Action.Proc Stop $tier QPKG AcToStop stopping stopped || return
+				Action.Proc Uninstall $tier QPKG AcToUninstall uninstalling uninstalled || return
 		esac
 	done
 
@@ -793,13 +793,13 @@ Actions.Proc()
 	for tier in "${PACKAGE_TIERS[@]}"; do
 		case $tier in
 			Standalone|Dependent)
-				Action.Proc Upgrade $tier QPKG AcToUpgrade upgrade upgrading upgraded || return
-				Action.Proc Reinstall $tier QPKG AcToReinstall reinstall reinstalling reinstalled || return
-				Action.Proc Install $tier QPKG AcToInstall install installing installed || return
-				Action.Proc Restore $tier QPKG AcToRestore restore restoring restored || return
-				Action.Proc Clean $tier QPKG AcToClean clean cleaning cleaned || return
-				Action.Proc Start $tier QPKG AcToStart start starting started || return
-				Action.Proc Restart $tier QPKG AcToRestart restart restarting restarted || return
+				Action.Proc Upgrade $tier QPKG AcToUpgrade upgrading upgraded || return
+				Action.Proc Reinstall $tier QPKG AcToReinstall reinstalling reinstalled || return
+				Action.Proc Install $tier QPKG AcToInstall installing installed || return
+				Action.Proc Restore $tier QPKG AcToRestore restoring restored || return
+				Action.Proc Clean $tier QPKG AcToClean cleaning cleaned || return
+				Action.Proc Start $tier QPKG AcToStart starting started || return
+				Action.Proc Restart $tier QPKG AcToRestart restarting restarted || return
 				;;
 			Addon)
 				for action in Install Reinstall Upgrade Start; do
@@ -809,16 +809,16 @@ Actions.Proc()
 
 				if QPKGs.IsStarted.Exist Entware; then
 					ModPathToEntware
-					Action.Proc Upgrade $tier IPK '' upgrade upgrading upgraded || return
-					Action.Proc Install $tier IPK '' install installing installed || return
+					Action.Proc Upgrade $tier IPK '' upgrading upgraded || return
+					Action.Proc Install $tier IPK '' installing installed || return
 
 					pips_install=true
-					Action.Proc Install $tier PIP '' install installing installed || return
+					Action.Proc Install $tier PIP '' installing installed || return
 				fi
 		esac
 	done
 
-	Action.Proc Sign All QPKG AcToSign sign signing signed || return
+	Action.Proc Sign All QPKG AcToSign signing signed || return
 	EraseThisLine
 
 	if [[ $opts_deps_check = true ]]; then
@@ -846,9 +846,8 @@ Action.Proc()
 	#   $2 = $TIER							e.g. `Standalone`, `Dependent`, `Addon`, `All`
 	#   $3 = $PACKAGE_TYPE					e.g. `QPKG`, `IPK`, `PIP`
 	#   $4 = $TARGET_OBJECT_NAME (optional)	e.g. `AcToStart`, `AcToStop` ...
-	#   $5 = $ACTION_INTRANSITIVE			e.g. `start` ...
-	#   $6 = $ACTION_PRESENT				e.g. `starting` ...
-	#   $7 = $ACTION_PAST					e.g. `started` ...
+	#   $5 = $ACTION_PRESENT				e.g. `starting` ...
+	#   $6 = $ACTION_PAST					e.g. `started` ...
 
 	DebugScriptFuncEn
 
@@ -866,9 +865,8 @@ Action.Proc()
 	local -a target_packages=()
 	local -r TIER=${2:?null}
 	local -r TARGET_OBJECT_NAME=${4:-}
-	local -r ACTION_INTRANSITIVE=${5:?null}
-	local -r ACTION_PRESENT=${6:?null}
-	local -r ACTION_PAST=${7:?null}
+	local -r ACTION_PRESENT=${5:?null}
+	local -r ACTION_PAST=${6:?null}
 	local original_colourful=$colourful
 
 	case $PACKAGE_TYPE in
@@ -907,12 +905,7 @@ Action.Proc()
 
 			# read message pipe and process QPKGs and actions as-per requests contained within
 			while [[ ${#target_packages[@]} -gt 0 ]]; do
-				IFS='#' read -r msg1_key msg1_value msg2_key msg2_value
-
-				DebugVar msg1_key
-				DebugVar msg1_value
-				DebugVar msg2_key
-				DebugVar msg2_value
+				ReadMsgFromActionPipe msg1_key msg1_value msg2_key msg2_value
 
 				case $msg1_key in
 					env)			# change the state of the sherpa environment
@@ -998,7 +991,7 @@ Action.Proc()
 					*)
 						DebugAsWarn "unidentified key in message queue: '$msg1_key'"
 				esac
-			done <&$msg_pipe_fd
+			done
 
 			[[ $ok_count -gt 0 ]] && opts_help_ok=true
 			[[ $skip_count -gt 0 || $skip_error_count -gt 0 ]] && opts_help_skipped=true
@@ -1015,7 +1008,7 @@ Action.Proc()
 			${PACKAGE_TYPE}s.${TARGET_ACTION}	   # only process these packages in groups, not individually
 	esac
 
-	# Need to show completed line in colour if colour was enabled earlier, as ANSI codes create a longer onscreen message due to extra characters used. Showing completed line without colour means part of previous onscreen message may not be blanked.
+	# show completed line in colour if colour was enabled earlier, as ANSI codes create a longer onscreen message (due to extra characters used). Showing completed line without colour means part of previous onscreen message may not be blanked.
 	if [[ $original_colourful = true && $colourful = false ]]; then
 		colourful=true
 		ShowAsActionResult "$TIER" "$PACKAGE_TYPE" "$ok_count" "$total_count" "$ACTION_PAST"
@@ -1050,7 +1043,7 @@ OpenActionMsgPipe()
 	DebugVar msg_pipe_fd
 
 	# open a 2-way channel to message pipe
-	[[ $msg_pipe_fd != null ]] && eval "exec $msg_pipe_fd<>$ACTION_MSG_PIPE"
+	[[ $msg_pipe_fd != none ]] && eval "exec $msg_pipe_fd<>$ACTION_MSG_PIPE"
 
 	}
 
@@ -1060,13 +1053,13 @@ CloseActionMsgPipe()
 	# restore original file descriptors, and remove message pipe
 
 	# restore stdin FD
-	[[ $backup_stdin_fd != null ]] && eval "exec 0>&$backup_stdin_fd"
+	[[ $backup_stdin_fd != none ]] && eval "exec 0>&$backup_stdin_fd"
 
 	# delete backup of stdin FD
-	[[ $backup_stdin_fd != null ]] && eval "exec $backup_stdin_fd>&-"
+	[[ $backup_stdin_fd != none ]] && eval "exec $backup_stdin_fd>&-"
 
 	# delete message pipe FD
-	[[ $msg_pipe_fd != null ]] && eval "exec $msg_pipe_fd>&-"
+	[[ $msg_pipe_fd != none ]] && eval "exec $msg_pipe_fd>&-"
 
 	[[ -p $ACTION_MSG_PIPE ]] && rm "$ACTION_MSG_PIPE"
 
@@ -2655,7 +2648,7 @@ _LaunchQPKGActionForks_()
 		IncForkProgressIndex
 		MarkThisActionForkAsStarted	# must create runfile here, as it takes too long to happen in background function
 		$target_function "$package" &
-		DebugAsDone "forked $target_function for $package"
+		DebugAsDone "forked $target_function() for $package"
 		UpdateForkProgress
 	done
 
@@ -4791,9 +4784,30 @@ WriteMsgToActionPipe()
 
 	# Send a message into message stream to update parent shell environment
 
-	[[ $msg_pipe_fd != null && -e /proc/$$/fd/$msg_pipe_fd ]] && echo "$1#$2#$3#$4" >&$msg_pipe_fd
+	[[ $msg_pipe_fd != none && -e /proc/$$/fd/$msg_pipe_fd ]] && echo "$1|$2|$3|$4" >&$msg_pipe_fd
 
 	}
+
+ReadMsgFromActionPipe()
+	{
+
+	local _msg1_key
+	local _msg1_value
+	local _msg2_key
+	local _msg2_value
+
+	IFS='|' read -r _msg1_key _msg1_value _msg2_key _msg2_value
+
+	DebugVar _msg1_key
+	DebugVar _msg1_value
+	DebugVar _msg2_key
+	DebugVar _msg2_value
+
+	eval "$1='$_msg1_key' $2='$_msg1_value' $3='$_msg2_key' $4='$_msg2_value'"
+
+	return 0
+
+	} <&$msg_pipe_fd
 
 FindNextFD()
 	{
@@ -7560,7 +7574,7 @@ FormatAsDuration()
 DebugAsFuncEn()
 	{
 
-	DebugThis "(>>) ${FUNCNAME[2]}"
+	DebugThis "(>>) ${FUNCNAME[2]}()"
 
 	}
 
