@@ -2733,7 +2733,7 @@ _MonitorDirSize_()
 		fi
 
 		WriteMsgInPlace "$progress_msg"
-		sleep .1
+		sleep 1
 	done
 
 	[[ -n $progress_msg ]] && WriteMsgInPlace 'done!'
