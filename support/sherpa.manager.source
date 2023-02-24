@@ -33,12 +33,13 @@
 #*   You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 
 # Project variable and function naming style-guide:
-#			  functions: CamelCase
-#  background functions: _CamelCaseWithLeadingAndTrailingUnderscores_
-#			  variables: lowercase_with_inline_underscores
-#	   "object" methods: Capitalised.CamelCase.With.Inline.Periods
-#	"object" properties: _lowercase_with_leading_and_inline_and_trailing_underscores_ (these should ONLY be managed via the object's methods)
-#			  constants: UPPERCASE_WITH_INLINE_UNDERSCORES (also set as readonly)
+#			  functions: 'CamelCase'
+#  background functions: '_CamelCaseWithLeadingAndTrailingUnderscores_'
+#  utility interceptors: (same as original)
+#			  variables: 'lowercase_with_inline_underscores'
+#	   "object" methods: 'Capitalised.CamelCase.With.Inline.Periods'
+#	"object" properties: '_lowercase_with_leading_and_inline_and_trailing_underscores_' (these should ONLY be managed via the object's methods)
+#			  constants: 'UPPERCASE_WITH_INLINE_UNDERSCORES' (also set as readonly)
 #				indents: 1 x tab
 
 # Notes:
@@ -55,8 +56,8 @@ Self.Init()
 	DebugScriptFuncEn
 
 	readonly MANAGER_FILE=sherpa.manager.sh
-	msg_pipe_fd=null
-	backup_stdin_fd=null
+	msg_pipe_fd=none
+	backup_stdin_fd=none
 	UpdateColourisation
 
 	IsQNAP || return
@@ -75,6 +76,7 @@ Self.Init()
 	readonly GNU_LESS_CMD=/opt/bin/less
 	readonly GNU_SED_CMD=/opt/bin/sed
 	readonly GNU_SETTERM_CMD=/opt/bin/setterm
+	readonly GNU_SLEEP_CMD=/opt/bin/sleep
 	readonly GNU_SQLITE_CMD=/opt/bin/sqlite3
 	readonly GNU_STTY_CMD=/opt/bin/stty
 	readonly PYTHON_CMD=/opt/bin/python
@@ -96,7 +98,7 @@ Self.Init()
 	readonly MKNOD_CMD=/bin/mknod
 	readonly SED_CMD=/bin/sed
 	readonly SH_CMD=/bin/sh
-	readonly SLEEP_CMD=/bin/sleep
+	readonly QTS_SLEEP_CMD=/bin/sleep
 	readonly TOUCH_CMD=/bin/touch
 	readonly UNAME_CMD=/bin/uname
 
@@ -127,7 +129,7 @@ Self.Init()
 	IsSysFileExist $MKNOD_CMD || return
 	IsSysFileExist $SED_CMD || return
 	IsSysFileExist $SH_CMD || return
-	IsSysFileExist $SLEEP_CMD || return
+	[[ ! -e $GNU_SLEEP_CMD ]] && { IsSysFileExist $QTS_SLEEP_CMD || return ;}
 	IsSysFileExist $TOUCH_CMD || return
 	IsSysFileExist $UNAME_CMD || return
 
@@ -185,29 +187,55 @@ Self.Init()
 	readonly SESS_TAIL_PATHFILE=$LOGS_PATH/session.tail.log
 	readonly ACTIONS_LOG_PATHFILE=$LOGS_PATH/session.action.results.log
 
+	# ordered
 #	 MANAGEMENT_ACTIONS=(Check List Paste Status)
-	PACKAGE_TIERS=(Standalone Addon Dependent)	# ordered
+	PACKAGE_TIERS=(Standalone Addon Dependent)
+	PACKAGE_TYPES=(QPKG IPK PIP)
 
-	# these words may be specified by the user when requesting actions, so each word can only be used once across all 4 of the following arrays
-	PACKAGE_GROUPS=(All CanBackup CanRestartToUpdate Dependent HasDependents Installable Standalone Upgradable)	# sorted: `Sc` & `ScNt`
-	PACKAGE_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Reassigned Reinstalled Restarted Started Upgraded)  # sorted: `Is` & `IsNt`
-	PACKAGE_STATES_TRANSIENT=(Starting Stopping Restarting)														# unsorted: `Is` & `IsNt`
-	PACKAGE_ACTIONS=(Download Rebuild Reassign Backup Stop Disable Uninstall Upgrade Reinstall Install Restore Clean Enable Start Restart)  # ordered
+	# sorted
+	QPKG_Is_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Reassigned Reinstalled Restarted Signed Started Upgraded)
+	QPKG_IsNt_STATES=(BackedUp Downloaded Enabled Installed Started)
+	QPKG_STATES_TRANSIENT=(Restarting Starting Stopping)
+
+	# selectable by the user
+	# sorted
+	USER_QPKG_Sc_GROUPS=(All CanBackup CanClean CanRestartToUpdate Dependent HasDependents Installable Standalone Upgradable)
+	USER_QPKG_ScNt_GROUPS=(CanClean Installable Upgradable)
+	USER_QPKG_Is_STATES=(BackedUp Installed Missing Started)
+	USER_QPKG_IsNt_STATES=(BackedUp Installed Started)
+	USER_QPKG_ACTIONS=(Backup Clean Install Reassign Rebuild Reinstall Restart Restore Start Stop Uninstall Upgrade)
 
 	# only used by sherpa QPKG service-script results parser
-	PACKAGE_RESULTS=(Ok Unknown)
+	QPKG_RESULTS=(Ok Unknown)
 	ACTION_RESULTS=(failed ok skipped)
+
+	# ordered
+	PACKAGE_ACTIONS=(Download Rebuild Reassign Backup Stop Disable Uninstall Upgrade Reinstall Install Restore Clean Enable Start Restart Sign)
+	QPKG_ACTIONS=(Download Rebuild Reassign Backup Stop Disable Uninstall Upgrade Reinstall Install Restore Clean Enable Start Restart Sign)
+	IPK_ACTIONS=(Download Uninstall Upgrade Reinstall Install)
+	PIP_ACTIONS=(Download Uninstall Upgrade Reinstall Install)
 
 #	 readonly MANAGEMENT_ACTIONS
 	readonly PACKAGE_TIERS
+	readonly PACKAGE_TYPES
 
-	readonly PACKAGE_GROUPS
-	readonly PACKAGE_STATES
-	readonly PACKAGE_STATES_TRANSIENT
-	readonly PACKAGE_ACTIONS
+	readonly QPKG_Is_STATES
+	readonly QPKG_IsNt_STATES
+	readonly QPKG_STATES_TRANSIENT
 
-	readonly PACKAGE_RESULTS
+	readonly USER_QPKG_Sc_GROUPS
+	readonly USER_QPKG_ScNt_GROUPS
+	readonly USER_QPKG_Is_STATES
+	readonly USER_QPKG_IsNt_STATES
+	readonly USER_QPKG_ACTIONS
+
+	readonly QPKG_RESULTS
 	readonly ACTION_RESULTS
+
+	readonly PACKAGE_ACTIONS
+	readonly QPKG_ACTIONS
+	readonly IPK_ACTIONS
+	readonly PIP_ACTIONS
 
 	local action=''
 
@@ -217,7 +245,6 @@ Self.Init()
 
 	# default values
 	self_debug_to_screen=false
-	EnableDebugToArchiveAndFile
 	self_display_clean=false
 	self_linespace_onscreen=false
 	self_display_zero_qpkgs=true
@@ -252,7 +279,7 @@ Self.Init()
 
 	objects_loaded=false
 	qpkgs_loaded=false
-	qpkgs_skip_processing=false
+	skip_qpkg_processing=false
 	qpkgs_states_built=false
 	ipks_upgrade=false
 	ipks_install=false
@@ -297,6 +324,9 @@ Self.Init()
 		readonly SESS_ROWS=40
 		readonly SESS_COLS=156
 	fi
+
+	# test if this QTS `sleep` can handle decimal seconds. Early QTS BusyBox versions cannot.
+	readonly DECIMAL_SECONDS_SUPPORTED=$($QTS_SLEEP_CMD .01 &>/dev/null && echo true || echo false)
 
 	re=\\bverbose\\b
 
@@ -351,7 +381,7 @@ Self.Init()
 	# SPEEDUP: don't build package lists if only showing basic help
 	if [[ -z $USER_ARGS_RAW ]]; then
 		opts_help_basic=true
-		qpkgs_skip_processing=true
+		skip_qpkg_processing=true
 		DisableDebugToArchiveAndFile
 	else
 		Packages.Load || return
@@ -366,7 +396,7 @@ Self.Init()
 	fi
 
 	if ! QPKGs.Conflicts.Check; then
-		qpkgs_skip_processing=true
+		skip_qpkg_processing=true
 		DebugScriptFuncEx 1; return
 	fi
 
@@ -387,7 +417,7 @@ Self.LogEnv()
 	{
 
 	Self.ArgSuggests.Show
-	[[ $qpkgs_skip_processing = true ]] && return
+	[[ $skip_qpkg_processing = true ]] && return
 	DebugScriptFuncEn
 	ShowAsProc environment
 
@@ -473,7 +503,7 @@ Self.IsAnythingToDo()
 
 	# Establish whether there's something to-do
 
-	[[ $qpkgs_skip_processing = true ]] && return
+	[[ $skip_qpkg_processing = true ]] && return
 
 	local action=''
 	local group=''
@@ -483,45 +513,34 @@ Self.IsAnythingToDo()
 	if [[ $opts_deps_check = true || $opts_help_status = true ]]; then
 		something_to_do=true
 	else
-		for action in "${PACKAGE_ACTIONS[@]}"; do
-			case $action in
-				Disable|Enable)
-					continue	# there are no Ac lists for these, so ignore them
-			esac
-
+		for action in "${USER_QPKG_ACTIONS[@]}"; do
 			if QPKGs.AcTo${action}.IsAny; then
 				something_to_do=true
 				break
 			fi
 
-			for group in "${PACKAGE_GROUPS[@]}"; do
+			for group in "${USER_QPKG_Sc_GROUPS[@]}"; do
 				if QPKGs.Ac${action}.Sc${group}.IsSet; then
 					something_to_do=true
 					break 2
 				fi
+			done
 
-				case $group in
-					All|CanBackup|CanRestartToUpdate|Dependent|HasDependents|Standalone)
-						continue	# there are no ScNt flags for these, so ignore them
-				esac
-
+			for group in "${USER_QPKG_ScNt_GROUPS[@]}"; do
 				if QPKGs.Ac${action}.ScNt${group}.IsSet; then
 					something_to_do=true
 					break 2
 				fi
 			done
 
-			for state in "${PACKAGE_STATES[@]}"; do
+			for state in "${USER_QPKG_Is_STATES[@]}"; do
 				if QPKGs.Ac${action}.Is${state}.IsSet; then
 					something_to_do=true
 					break 2
 				fi
+			done
 
-				case $state in
-					Missing|Reassigned)
-						continue	# there are no IsNt flags for these, so ignore them
-				esac
-
+			for state in "${USER_QPKG_IsNt_STATES[@]}"; do
 				if QPKGs.Ac${action}.IsNt${state}.IsSet; then
 					something_to_do=true
 					break 2
@@ -533,7 +552,7 @@ Self.IsAnythingToDo()
 	if [[ $something_to_do = false ]]; then
 		ShowAsError "I've nothing to-do (the supplied arguments were incomplete, or didn't make sense)"
 		opts_help_basic=true
-		qpkgs_skip_processing=true
+		skip_qpkg_processing=true
 		return 1
 	fi
 
@@ -547,7 +566,7 @@ Self.Validate()
 	# This function handles most of the high-level logic for package actions.
 	# If a package isn't being processed by the correct action, odds-are it's due to a logic error in this function.
 
-	[[ $qpkgs_skip_processing = true ]] && return
+	[[ $skip_qpkg_processing = true ]] && return
 	DebugScriptFuncEn
 	ShowAsProc arguments
 
@@ -696,6 +715,7 @@ Self.Validate()
 
 	# Check all items
 	if [[ $opts_deps_check = true ]]; then
+		QPKGs.AcToSign.Add "$(QPKGs.IsInstalled.Array)"
 		QPKGs.NewVers.Show
 
 		for package in $(QPKGs.ScDependent.Array); do
@@ -712,38 +732,37 @@ Self.Validate()
 
 # QPKG action processing shall be conducted in this order:
 
-#   _. rebuild dependents		(meta-action: `install` QPKG and `restore` config, but only if package has an existing backup file)
+#   1. rebuild all				(meta-action: `install` QPKG and `restore` config, but only if package has an existing backup file)
+#   2. reassign all
+#   3. download all
+#   4. backup all
+#   5. stop & disable dependents
+#   6. stop & disable standalones
+#   7. uninstall all
 
-#   1. reassign all
-#   2. download all
-#   3. backup all
-#   4. stop/disable dependents
-#   5. stop/disable standalones
-#   6. uninstall all
+#   8. upgrade standalones
+#   9. reinstall standalones
+#  10. install standalones
+#  11. restore standalones
+#  12. clean standalones		(unsupported by all standalone QPKGs)
+#  13. enable & start standalones
+#  14. restart standalones
 
-#   7. upgrade standalones
-#   8. reinstall standalones
-#   9. install standalones
-#  10. restore standalones
-#  11. clean standalones		(unsupported by all standalone QPKGs)
-#  12. enable/start standalones
-#  13. restart standalones
+#  15. upgrade dependents
+#  16. reinstall dependents
+#  17. install dependents
+#  18. restore dependents
+#  19. clean dependents			(supported by most dependent packages, but not all)
+#  20. enable & start dependents
+#  21. restart dependents
 
-#  14. upgrade dependents
-#  15. reinstall dependents
-#  16. install dependents
-#  17. restore dependents
-#  18. clean dependents			(supported by most dependent packages, but not all)
-#  19. enable/start dependents
-#  20. restart dependents
-
-#  21. "sign" all
-#  22. "live" status all		(currently supported by most sherpa QPKGs, but no processing code yet exists in management script)
+#  22. "sign" all
+#  23. status all				(supported by most sherpa QPKGs, but no processing code yet exists in management script)
 
 Actions.Proc()
 	{
 
-	[[ $qpkgs_skip_processing = true ]] && return
+	[[ $skip_qpkg_processing = true ]] && return
 	DebugScriptFuncEn
 
 	local tier=''
@@ -752,9 +771,9 @@ Actions.Proc()
 
 	[[ -e $ACTIONS_LOG_PATHFILE ]] && rm "$ACTIONS_LOG_PATHFILE"
 
-	Action.Proc Reassign All QPKG AcToReassign reassign reassigning reassigned || return
-	Action.Proc Download All QPKG AcToDownload download downloading downloaded || return
-	Action.Proc Backup All QPKG AcToBackup backup backing-up backed-up || return
+	Action.Proc Reassign All QPKG AcToReassign reassigning reassigned || return
+	Action.Proc Download All QPKG AcToDownload downloading downloaded || return
+	Action.Proc Backup All QPKG AcToBackup backing-up backed-up || return
 
 	# -> package removal phase begins here <-
 
@@ -763,8 +782,8 @@ Actions.Proc()
 
 		case $tier in
 			Standalone|Dependent)
-				Action.Proc Stop $tier QPKG AcToStop stop stopping stopped || return
-				Action.Proc Uninstall $tier QPKG AcToUninstall uninstall uninstalling uninstalled || return
+				Action.Proc Stop $tier QPKG AcToStop stopping stopped || return
+				Action.Proc Uninstall $tier QPKG AcToUninstall uninstalling uninstalled || return
 		esac
 	done
 
@@ -773,13 +792,13 @@ Actions.Proc()
 	for tier in "${PACKAGE_TIERS[@]}"; do
 		case $tier in
 			Standalone|Dependent)
-				Action.Proc Upgrade $tier QPKG AcToUpgrade upgrade upgrading upgraded || return
-				Action.Proc Reinstall $tier QPKG AcToReinstall reinstall reinstalling reinstalled || return
-				Action.Proc Install $tier QPKG AcToInstall install installing installed || return
-				Action.Proc Restore $tier QPKG AcToRestore restore restoring restored || return
-				Action.Proc Clean $tier QPKG AcToClean clean cleaning cleaned || return
-				Action.Proc Start $tier QPKG AcToStart start starting started || return
-				Action.Proc Restart $tier QPKG AcToRestart restart restarting restarted || return
+				Action.Proc Upgrade $tier QPKG AcToUpgrade upgrading upgraded || return
+				Action.Proc Reinstall $tier QPKG AcToReinstall reinstalling reinstalled || return
+				Action.Proc Install $tier QPKG AcToInstall installing installed || return
+				Action.Proc Restore $tier QPKG AcToRestore restoring restored || return
+				Action.Proc Clean $tier QPKG AcToClean cleaning cleaned || return
+				Action.Proc Start $tier QPKG AcToStart starting started || return
+				Action.Proc Restart $tier QPKG AcToRestart restarting restarted || return
 				;;
 			Addon)
 				for action in Install Reinstall Upgrade Start; do
@@ -789,19 +808,19 @@ Actions.Proc()
 
 				if QPKGs.IsStarted.Exist Entware; then
 					ModPathToEntware
-					Action.Proc Upgrade $tier IPK '' upgrade upgrading upgraded || return
-					Action.Proc Install $tier IPK '' install installing installed || return
+					Action.Proc Upgrade $tier IPK '' upgrading upgraded || return
+					Action.Proc Install $tier IPK '' installing installed || return
 
 					pips_install=true
-					Action.Proc Install $tier PIP '' install installing installed || return
+					Action.Proc Install $tier PIP '' installing installed || return
 				fi
 		esac
 	done
 
+	Action.Proc Sign All QPKG AcToSign signing signed || return
 	EraseThisLine
 
 	if [[ $opts_deps_check = true ]]; then
-		QPKGs.Sign
 		ShowAsDone 'check OK'
 	fi
 
@@ -826,27 +845,13 @@ Action.Proc()
 	#   $2 = $TIER							e.g. `Standalone`, `Dependent`, `Addon`, `All`
 	#   $3 = $PACKAGE_TYPE					e.g. `QPKG`, `IPK`, `PIP`
 	#   $4 = $TARGET_OBJECT_NAME (optional)	e.g. `AcToStart`, `AcToStop` ...
-	#   $5 = $ACTION_INTRANSITIVE			e.g. `start` ...
-	#   $6 = $ACTION_PRESENT				e.g. `starting` ...
-	#   $7 = $ACTION_PAST					e.g. `started` ...
+	#   $5 = $ACTION_PRESENT				e.g. `starting` ...
+	#   $6 = $ACTION_PAST					e.g. `started` ...
 
 	DebugScriptFuncEn
 
-	local target_function=''
-	local targets_function=''
 	local -r PACKAGE_TYPE=${3:?null}
 	local -r TARGET_ACTION=${1:?null}
-
-	case $PACKAGE_TYPE in
-		QPKG|IPK|PIP)
-			target_function=_${PACKAGE_TYPE}.${TARGET_ACTION}_
-			targets_function=${PACKAGE_TYPE}s.${TARGET_ACTION}
-			;;
-		*)
-			DebugAsError "unknown \$PACKAGE_TYPE: '$PACKAGE_TYPE'"
-			DebugScriptFuncEx 1; return
-	esac
-
 	total_count=0
 	local package=''
 	local state=''
@@ -859,9 +864,8 @@ Action.Proc()
 	local -a target_packages=()
 	local -r TIER=${2:?null}
 	local -r TARGET_OBJECT_NAME=${4:-}
-	local -r ACTION_INTRANSITIVE=${5:?null}
-	local -r ACTION_PRESENT=${6:?null}
-	local -r ACTION_PAST=${7:?null}
+	local -r ACTION_PRESENT=${5:?null}
+	local -r ACTION_PAST=${6:?null}
 	local original_colourful=$colourful
 
 	case $PACKAGE_TYPE in
@@ -891,16 +895,16 @@ Action.Proc()
 			re=\\bEntware\\b		# BASH 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
 
 			if [[ $TARGET_ACTION = Uninstall && ${target_packages[*]} =~ $re ]]; then
-				ShowKeystrokes  	# must enable this before removing Entware & GNU stty
+				ShowKeystrokes  	# enable this before removing Entware & GNU `stty`
 				ShowCursor
 			fi
 
-			_LaunchQPKGActionForks_ "$target_function" "${target_packages[@]}" &
+			_LaunchQPKGActionForks_ "_${PACKAGE_TYPE}.${TARGET_ACTION}_" "${target_packages[@]}" &
 			fork_pid=$!
 
 			# read message pipe and process QPKGs and actions as-per requests contained within
 			while [[ ${#target_packages[@]} -gt 0 ]]; do
-				IFS='#' read -r msg1_key msg1_value msg2_key msg2_value
+				ReadMsgFromActionPipe msg1_key msg1_value msg2_key msg2_value
 
 				case $msg1_key in
 					env)			# change the state of the sherpa environment
@@ -908,30 +912,38 @@ Action.Proc()
 						;;
 					change)	 		# change the state of a single QPKG in the parent shell
 						while true; do
-							for group in "${PACKAGE_GROUPS[@]}"; do
+							for group in "${USER_QPKG_Sc_GROUPS[@]}"; do
 								case $msg1_value in
 									"Sc${group}")
-										QPKGs.ScNt${group}.Remove "$msg2_value"
-										QPKGs.Sc${group}.Add "$msg2_value"
-										break 2
-										;;
-									"ScNt${group}")
-										QPKGs.Sc${group}.Remove "$msg2_value"
-										QPKGs.ScNt${group}.Add "$msg2_value"
+										[[ $(type -t QPKGs.ScNt${group}.Init) = function ]] && QPKGs.ScNt${group}.Remove "$msg2_value"
+										[[ $(type -t QPKGs.Sc${group}.Init) = function ]] && QPKGs.Sc${group}.Add "$msg2_value"
 										break 2
 								esac
 							done
 
-							for state in "${PACKAGE_STATES[@]}"; do
+							for group in "${USER_QPKG_ScNt_GROUPS[@]}"; do
+								case $msg1_value in
+									"ScNt${group}")
+										[[ $(type -t QPKGs.Sc${group}.Init) = function ]] && QPKGs.Sc${group}.Remove "$msg2_value"
+										[[ $(type -t QPKGs.ScNt${group}.Init) = function ]] && QPKGs.ScNt${group}.Add "$msg2_value"
+										break 2
+								esac
+							done
+
+							for state in "${QPKG_Is_STATES[@]}"; do
 								case $msg1_value in
 									"Is${state}")
-										QPKGs.IsNt${state}.Remove "$msg2_value"
-										QPKGs.Is${state}.Add "$msg2_value"
+										[[ $(type -t QPKGs.IsNt${state}.Init) = function ]] && QPKGs.IsNt${state}.Remove "$msg2_value"
+										[[ $(type -t QPKGs.Is${state}.Init) = function ]] && QPKGs.Is${state}.Add "$msg2_value"
 										break 2
-										;;
+								esac
+							done
+
+							for state in "${QPKG_IsNt_STATES[@]}"; do
+								case $msg1_value in
 									"IsNt${state}")
-										QPKGs.Is${state}.Remove "$msg2_value"
-										QPKGs.IsNt${state}.Add "$msg2_value"
+										[[ $(type -t QPKGs.Is${state}.Init) = function ]] && QPKGs.Is${state}.Remove "$msg2_value"
+										[[ $(type -t QPKGs.IsNt${state}.Init) = function ]] && QPKGs.IsNt${state}.Add "$msg2_value"
 										break 2
 								esac
 							done
@@ -943,29 +955,25 @@ Action.Proc()
 					status)	 		# update the status of a single action fork in the parent shell
 						case $msg1_value in
 							Ok)	 	# completed OK (wonderful)
-								QPKGs.AcTo${TARGET_ACTION}.Remove "$msg2_value"
-								QPKGs.AcOk${TARGET_ACTION}.Add "$msg2_value"
 								((ok_count++))
 								;;
 							So)	 	# action was skipped, but this is normal (no-big-deal)
-								QPKGs.AcTo${TARGET_ACTION}.Remove "$msg2_value"
-								QPKGs.AcSo${TARGET_ACTION}.Add "$msg2_value"
 								((skip_ok_count++))
 								;;
 							Sk)	 	# action was skipped (and there's a good reason for it)
-								QPKGs.AcTo${TARGET_ACTION}.Remove "$msg2_value"
-								QPKGs.AcSk${TARGET_ACTION}.Add "$msg2_value"
 								((skip_count++))
 								;;
 							Se)	 	# action was skipped due to error prior to action being tried (might be a big-deal)
-								QPKGs.AcTo${TARGET_ACTION}.Remove "$msg2_value"
-								QPKGs.AcSe${TARGET_ACTION}.Add "$msg2_value"
 								((skip_error_count++))
 								;;
 							Er)	 	# action failed (uh-oh)
-								QPKGs.AcTo${TARGET_ACTION}.Remove "$msg2_value"
-								QPKGs.AcEr${TARGET_ACTION}.Add "$msg2_value"
 								((fail_count++))
+						esac
+
+						case $msg1_value in
+							Ok|So|Sk|Se|Er)
+								[[ $(type -t QPKGs.AcTo${TARGET_ACTION}.Init) = function ]] && QPKGs.AcTo${TARGET_ACTION}.Remove "$msg2_value"
+								[[ $(type -t QPKGs.Ac${msg1_value}${TARGET_ACTION}.Init) = function ]] && QPKGs.Ac${msg1_value}${TARGET_ACTION}.Add "$msg2_value"
 								;;
 							Ex)	 	# action is about to exit
 								for package_index in "${!target_packages[@]}"; do
@@ -982,7 +990,7 @@ Action.Proc()
 					*)
 						DebugAsWarn "unidentified key in message queue: '$msg1_key'"
 				esac
-			done <&$msg_pipe_fd
+			done
 
 			[[ $ok_count -gt 0 ]] && opts_help_ok=true
 			[[ $skip_count -gt 0 || $skip_error_count -gt 0 ]] && opts_help_skipped=true
@@ -996,10 +1004,10 @@ Action.Proc()
 			ShowAsProc "$ACTION_PRESENT $([[ $TIER != All ]] && Lowercase "$TIER ")${PACKAGE_TYPE}s"
 
 			InitForkCounts
-			$targets_function	   # only process these packages in groups, not individually
+			${PACKAGE_TYPE}s.${TARGET_ACTION}	   # only process these packages in groups, not individually
 	esac
 
-	# Need to show completed line in colour if colour was enabled earlier, as ANSI codes create a longer onscreen message due to extra characters used. Showing completed line without colour means part of previous onscreen message may not be blanked.
+	# show completed line in colour if colour was enabled earlier, as ANSI codes create a longer onscreen message (due to extra characters used). Showing completed line without colour means part of previous onscreen message may not be blanked.
 	if [[ $original_colourful = true && $colourful = false ]]; then
 		colourful=true
 		ShowAsActionResult "$TIER" "$PACKAGE_TYPE" "$ok_count" "$total_count" "$ACTION_PAST"
@@ -1034,7 +1042,7 @@ OpenActionMsgPipe()
 	DebugVar msg_pipe_fd
 
 	# open a 2-way channel to message pipe
-	[[ $msg_pipe_fd != null ]] && eval "exec $msg_pipe_fd<>$ACTION_MSG_PIPE"
+	[[ $msg_pipe_fd != none ]] && eval "exec $msg_pipe_fd<>$ACTION_MSG_PIPE"
 
 	}
 
@@ -1044,13 +1052,13 @@ CloseActionMsgPipe()
 	# restore original file descriptors, and remove message pipe
 
 	# restore stdin FD
-	[[ $backup_stdin_fd != null ]] && eval "exec 0>&$backup_stdin_fd"
+	[[ $backup_stdin_fd != none ]] && eval "exec 0>&$backup_stdin_fd"
 
 	# delete backup of stdin FD
-	[[ $backup_stdin_fd != null ]] && eval "exec $backup_stdin_fd>&-"
+	[[ $backup_stdin_fd != none ]] && eval "exec $backup_stdin_fd>&-"
 
 	# delete message pipe FD
-	[[ $msg_pipe_fd != null ]] && eval "exec $msg_pipe_fd>&-"
+	[[ $msg_pipe_fd != none ]] && eval "exec $msg_pipe_fd>&-"
 
 	[[ -p $ACTION_MSG_PIPE ]] && rm "$ACTION_MSG_PIPE"
 
@@ -1058,6 +1066,8 @@ CloseActionMsgPipe()
 
 AdjustMaxForks()
 	{
+
+	# $1 = action
 
 	max_forks=$CONCURRENCY
 
@@ -1072,6 +1082,10 @@ AdjustMaxForks()
 				DebugInfo "limiting \$max_forks to $max_forks because '$(Lowercase "$1")' action was requested"
 				;;
 			Install|Reinstall|Upgrade)  # don't execute these actions async: QTS installer for each package eventually aborts (looks like QTS can only manage a single package at-a-time, because packages overwrite each other, and package source files end-up in the wrong install paths)
+				max_forks=1
+				DebugInfo "limiting \$max_forks to $max_forks because '$(Lowercase "$1")' action was requested"
+				;;
+			Sign)  						# precautionary: don't create multiple writes to the certificate database at the same time
 				max_forks=1
 				DebugInfo "limiting \$max_forks to $max_forks because '$(Lowercase "$1")' action was requested"
 		esac
@@ -1174,7 +1188,7 @@ Self.Results()
 	DebugScript 'elapsed time' "$(FormatSecsToHoursMinutesSecs "$(($($DATE_CMD +%s)-SCRIPT_STARTSECONDS))")"
 	DebugInfoMajSepr
 
-	[[ $self_debug_to_archive = true ]] && ArchiveActiveSessLog
+	[[ ${self_debug_to_archive:=false} = true ]] && ArchiveActiveSessLog
 	ResetActiveSessLog
 	EraseThisLine
 	DisplayLineSpaceIfNoneAlready   # final on-screen linespace
@@ -1214,7 +1228,7 @@ ParseArgs()
 				group=''
 				group_identified=false
 				self_display_clean=false
-				qpkgs_skip_processing=false
+				skip_qpkg_processing=false
 				;;
 			paste)
 				action=paste_
@@ -1222,7 +1236,7 @@ ParseArgs()
 				group=''
 				group_identified=false
 				self_display_clean=false
-				qpkgs_skip_processing=true
+				skip_qpkg_processing=true
 				;;
 		# all cases below can use multiple words or chars to specify a single action
 			add|install)
@@ -1231,7 +1245,7 @@ ParseArgs()
 				group=''
 				group_identified=false
 				self_display_clean=false
-				qpkgs_skip_processing=false
+				skip_qpkg_processing=false
 				;;
 			c|check)
 				action=check_
@@ -1239,7 +1253,7 @@ ParseArgs()
 				group=''
 				group_identified=false
 				self_display_clean=false
-				qpkgs_skip_processing=false
+				skip_qpkg_processing=false
 				;;
 			display|help|list|show|view)
 				action=help_
@@ -1247,7 +1261,7 @@ ParseArgs()
 				group=''
 				group_identified=false
 				self_display_clean=false
-				qpkgs_skip_processing=true
+				skip_qpkg_processing=true
 				;;
 			rm|remove|uninstall)
 				action=uninstall_
@@ -1255,7 +1269,7 @@ ParseArgs()
 				group=''
 				group_identified=false
 				self_display_clean=false
-				qpkgs_skip_processing=false
+				skip_qpkg_processing=false
 				;;
 			s|status|statuses)
 				action=status_
@@ -1263,7 +1277,7 @@ ParseArgs()
 				group=''
 				group_identified=false
 				self_display_clean=false
-				qpkgs_skip_processing=true
+				skip_qpkg_processing=true
 				;;
 			update|upgrade)
 				action=upgrade_
@@ -1271,7 +1285,7 @@ ParseArgs()
 				group=''
 				group_identified=false
 				self_display_clean=false
-				qpkgs_skip_processing=false
+				skip_qpkg_processing=false
 		esac
 
 		# identify group in two stages: stage 1 for when user didn't supply an action before group, stage 2 is after an action has been defined.
@@ -1284,7 +1298,7 @@ ParseArgs()
 					arg_identified=true
 					group=''
 					group_identified=false
-					qpkgs_skip_processing=true
+					skip_qpkg_processing=true
 			esac
 
 			DebugVar action
@@ -1538,7 +1552,7 @@ ParseArgs()
 						self_display_clean=true
 				esac
 
-				qpkgs_skip_processing=true
+				skip_qpkg_processing=true
 				;;
 			install_)
 				case $group in
@@ -1589,7 +1603,7 @@ ParseArgs()
 						opts_log_last_paste=true
 				esac
 
-				qpkgs_skip_processing=true
+				skip_qpkg_processing=true
 				;;
 			reassign_)
 				case $group in
@@ -1781,7 +1795,7 @@ ParseArgs()
 				;;
 			status_)
 				opts_help_status=true
-				qpkgs_skip_processing=true
+				skip_qpkg_processing=true
 				;;
 			stop_)
 				case $group in
@@ -1904,7 +1918,7 @@ ParseArgs()
 
 	if Args.Unknown.IsAny; then
 		opts_help_basic=true
-		qpkgs_skip_processing=true
+		skip_qpkg_processing=true
 		self_display_clean=false
 	fi
 
@@ -1982,11 +1996,9 @@ AllocGroupPacksToAcs()
 	local prospect=''
 	local found=false	   # group or state has been found
 
-	for action in "${PACKAGE_ACTIONS[@]}"; do
-		[[ $action = Enable || $action = Disable ]] && continue	 # no objects for these as `start` and `stop` do the same jobs
-
+	for action in "${USER_QPKG_ACTIONS[@]}"; do
 		# process group-based user-options
-		for group in "${PACKAGE_GROUPS[@]}"; do
+		for group in "${USER_QPKG_Sc_GROUPS[@]}"; do
 			found=false
 
 			if QPKGs.Ac${action}.Sc${group}.IsSet; then
@@ -2069,11 +2081,10 @@ AllocGroupPacksToAcs()
 					ShowAsWarn "unable to find any packages to $(Lowercase "$action")"
 				fi
 			fi
+		done
 
-			case $group in
-				All|CanBackup|CanRestartToUpdate|Dependent|HasDependents|Standalone|Missing|Reassigned)
-					continue
-			esac
+		for group in "${USER_QPKG_ScNt_GROUPS[@]}"; do
+			found=false
 
 			if QPKGs.Ac${action}.ScNt${group}.IsSet; then
 				if [[ $found = false ]]; then
@@ -2089,7 +2100,7 @@ AllocGroupPacksToAcs()
 		done
 
 		# process state-based user-options
-		for state in "${PACKAGE_STATES[@]}"; do
+		for state in "${USER_QPKG_Is_STATES[@]}"; do
 			found=false
 
 			if QPKGs.Ac${action}.Is${state}.IsSet; then
@@ -2122,12 +2133,9 @@ AllocGroupPacksToAcs()
 					ShowAsWarn "unable to find any packages to $(Lowercase "$action")"
 				fi
 			fi
+		done
 
-			case $state in
-				Missing|Reassigned)
-					continue
-			esac
-
+		for state in "${USER_QPKG_IsNt_STATES[@]}"; do
 			if QPKGs.Ac${action}.IsNt${state}.IsSet; then
 				case $action in
 					Backup|Clean|Install|Start|Uninstall)
@@ -2633,13 +2641,13 @@ _LaunchQPKGActionForks_()
 	for package in "${target_packages[@]}"; do
 		while [[ $fork_count -ge $max_forks ]]; do  # don't fork until an empty spot becomes available
 			UpdateForkProgress
-			$SLEEP_CMD 1
+			sleep .1
 		done
 
 		IncForkProgressIndex
 		MarkThisActionForkAsStarted	# must create runfile here, as it takes too long to happen in background function
 		$target_function "$package" &
-		DebugAsDone "forked $target_function for $package"
+		DebugAsDone "forked $target_function() for $package"
 		UpdateForkProgress
 	done
 
@@ -2647,7 +2655,7 @@ _LaunchQPKGActionForks_()
 
 	while [[ $fork_count -gt 0 ]]; do
 		UpdateForkProgress	  # update display while running forks complete
-		$SLEEP_CMD 1
+		sleep .1
 	done
 
 	# all forks have exited
@@ -2725,7 +2733,7 @@ _MonitorDirSize_()
 		fi
 
 		WriteMsgInPlace "$progress_msg"
-		$SLEEP_CMD 1
+		sleep .1
 	done
 
 	[[ -n $progress_msg ]] && WriteMsgInPlace 'done!'
@@ -2765,7 +2773,7 @@ KillActiveFork()
 	{
 
 	if [[ -n ${fork_pid:-} && ${fork_pid:-0} -gt 0 && -d /proc/$fork_pid ]]; then
-		$SLEEP_CMD 1
+		sleep .1
 		kill -9 "$fork_pid" 2>/dev/null
 		wait 2>/dev/null
 	fi
@@ -3451,7 +3459,7 @@ Actions.Results.Show()
 	local found=false
 
 	if [[ -e $ACTIONS_LOG_PATHFILE ]]; then
-		local IFS='#'
+		local IFS='|'
 
 		while read -r datetime action package_name result duration reason package_type; do
 			if [[ $display_last_action_datetime = true ]]; then
@@ -3748,7 +3756,7 @@ GetLogSessFinishLine()
 ArchiveActiveSessLog()
 	{
 
-	[[ -e $sess_active_pathfile ]] && $CAT_CMD "$sess_active_pathfile" >> "$SESS_ARCHIVE_PATHFILE"
+	[[ -n ${sess_active_pathfile:-} && -e $sess_active_pathfile ]] && $CAT_CMD "$sess_active_pathfile" >> "$SESS_ARCHIVE_PATHFILE"
 
 	}
 
@@ -3771,7 +3779,7 @@ ArchivePriorSessLogs()
 ResetActiveSessLog()
 	{
 
-	[[ -e $sess_active_pathfile ]] && rm -f "$sess_active_pathfile"
+	[[ -n ${sess_active_pathfile:-} && -e $sess_active_pathfile ]] && rm -f "$sess_active_pathfile"
 
 	}
 
@@ -3919,11 +3927,6 @@ UpdateForkProgress()
 
 	msg+="$(PercFrac "$ok_count" "$((skip_count+skip_ok_count+skip_error_count))" "$fail_count" "$total_count")"
 
-	if [[ $fork_count -gt 0 ]]; then
-		[[ -n $msg ]] && msg+=': '
-		msg+="$(ColourTextBrightYellow "$fork_count") in-progress"
-	fi
-
 	if [[ $ok_count -gt 0 ]]; then
 		[[ -n $msg ]] && msg+=': '
 		msg+="$(ColourTextBrightGreen "$ok_count") OK"
@@ -3937,6 +3940,11 @@ UpdateForkProgress()
 	if [[ $fail_count -gt 0 ]]; then
 		[[ -n $msg ]] && msg+=': '
 		msg+="$(ColourTextBrightRed "$fail_count") failed"
+	fi
+
+	if [[ $fork_count -gt 0 ]]; then
+		[[ -n $msg ]] && msg+=': '
+		msg+="$(ColourTextBrightYellow "$fork_count") in-progress"
 	fi
 
 	[[ -n $msg ]] && WriteMsgInPlace "$msg"
@@ -4027,27 +4035,6 @@ QPKGs.Warnings.Check()
 
 	}
 
-QPKGs.Sign()
-	{
-
-	DebugScriptFuncEn
-
-	local package=''
-
-	if [[ ${NAS_FIRMWARE_VER//.} -ge 435 ]]; then
-		ShowAsProc '"signing" all QPKGs'
-
-		for package in $(QPKGs.IsInstalled.Array); do
-			QPKG.Sign "$package"
-		done
-
-		ShowAsDone '"signed" all QPKGs'
-	fi
-
-	DebugScriptFuncEx
-
-	}
-
 IPKs.Actions.List()
 	{
 
@@ -4061,7 +4048,7 @@ IPKs.Actions.List()
 
 	for action in "${PACKAGE_ACTIONS[@]}"; do
 		case $action in
-			Backup|Clean|Disable|Enable|Reassign|Rebuild|Restart|Restore|Start|Stop)
+			Backup|Clean|Disable|Enable|Reassign|Rebuild|Restart|Restore|Start|Stop|Sign)
 				continue
 		esac
 
@@ -4176,31 +4163,31 @@ QPKGs.States.List()
 	QPKGs.States.Build "${1:-}"
 	DebugInfoMinSepr
 
-	for state in "${PACKAGE_STATES[@]}" "${PACKAGE_RESULTS[@]}"; do
-		for prefix in Is IsNt; do
-			if [[ $state = Installed ]]; then
-				continue
-			elif [[ $prefix = Is && $state = Enabled ]]; then
-				continue
-			elif [[ $prefix = IsNt && $state = Upgradable ]]; then
-				continue
-			elif [[ $prefix = IsNt && $state = Ok ]]; then
-				QPKGs.${prefix}${state}.IsAny && DebugQPKGError "${prefix}${state}" "($(QPKGs.${prefix}${state}.Count)) $(QPKGs.${prefix}${state}.ListCSV) "
-			elif [[ $prefix = IsNt && $state = BackedUp ]]; then
-				QPKGs.${prefix}${state}.IsAny && DebugQPKGWarning "${prefix}${state}" "($(QPKGs.${prefix}${state}.Count)) $(QPKGs.${prefix}${state}.ListCSV) "
-			elif [[ $prefix = Is && $state = Unknown ]]; then
-				QPKGs.${prefix}${state}.IsAny && DebugQPKGWarning "${prefix}${state}" "($(QPKGs.${prefix}${state}.Count)) $(QPKGs.${prefix}${state}.ListCSV) "
-			else
-				QPKGs.${prefix}${state}.IsAny && DebugQPKGInfo "${prefix}${state}" "($(QPKGs.${prefix}${state}.Count)) $(QPKGs.${prefix}${state}.ListCSV) "
-			fi
-		done
+	for state in "${USER_QPKG_Is_STATES[@]}" "${QPKG_RESULTS[@]}"; do
+		if [[ $state = Installed || $state = Enabled ]]; then
+			continue
+		elif [[ $state = Unknown ]]; then
+			QPKGs.Is${state}.IsAny && DebugQPKGWarning "Is${state}" "($(QPKGs.Is${state}.Count)) $(QPKGs.Is${state}.ListCSV) "
+		else
+			QPKGs.Is${state}.IsAny && DebugQPKGInfo "Is${state}" "($(QPKGs.Is${state}.Count)) $(QPKGs.Is${state}.ListCSV) "
+		fi
 	done
 
-	for state in "${PACKAGE_STATES_TRANSIENT[@]}"; do
+	for state in "${USER_QPKG_IsNt_STATES[@]}" "${QPKG_RESULTS[@]}"; do
+		if [[ $state = Installed || $state = Upgradable ]]; then
+			continue
+		elif [[ $state = Ok ]]; then
+			QPKGs.IsNt${state}.IsAny && DebugQPKGError "IsNt${state}" "($(QPKGs.IsNt${state}.Count)) $(QPKGs.IsNt${state}.ListCSV) "
+		elif [[ $state = BackedUp ]]; then
+			QPKGs.IsNt${state}.IsAny && DebugQPKGWarning "IsNt${state}" "($(QPKGs.IsNt${state}.Count)) $(QPKGs.IsNt${state}.ListCSV) "
+		else
+			QPKGs.IsNt${state}.IsAny && DebugQPKGInfo "IsNt${state}" "($(QPKGs.IsNt${state}.Count)) $(QPKGs.IsNt${state}.ListCSV) "
+		fi
+	done
+
+	for state in "${QPKG_STATES_TRANSIENT[@]}"; do
 		# shellcheck disable=2043
-		for prefix in Is; do
-			QPKGs.${prefix}${state}.IsAny && DebugQPKGInfo "${prefix}${state}" "($(QPKGs.${prefix}${state}.Count)) $(QPKGs.${prefix}${state}.ListCSV) "
-		done
+		QPKGs.Is${state}.IsAny && DebugQPKGInfo "Is${state}" "($(QPKGs.Is${state}.Count)) $(QPKGs.Is${state}.ListCSV) "
 	done
 
 	DebugInfoMinSepr
@@ -4251,8 +4238,11 @@ QPKGs.States.Build()
 	if [[ ${1:-} = rebuild ]]; then
 		DebugAsProc 'clearing existing state lists'
 
-		for state in "${PACKAGE_STATES[@]}" "${PACKAGE_STATES_TRANSIENT[@]}"; do
+		for state in "${USER_QPKG_Is_STATES[@]}" "${QPKG_STATES_TRANSIENT[@]}"; do
 			QPKGs.Is${state}.Init
+		done
+
+		for state in "${USER_QPKG_IsNt_STATES[@]}"; do
 			QPKGs.IsNt${state}.Init
 		done
 
@@ -4346,18 +4336,14 @@ QPKGs.States.Build()
 QPKGs.IsCanBackup.Build()
 	{
 
-	# Build a list of QPKGs that do and don't support `backup` and `restore` actions
+	# Build a list of QPKGs that support `backup` and `restore` actions
 
 	DebugScriptFuncEn
 
 	local package=''
 
 	for package in $(QPKGs.ScAll.Array); do
-		if QPKG.IsCanBackup "$package"; then
-			QPKGs.ScCanBackup.Add "$package"
-		else
-			QPKGs.ScNtCanBackup.Add "$package"
-		fi
+		QPKG.IsCanBackup "$package" && QPKGs.ScCanBackup.Add "$package"
 	done
 
 	DebugScriptFuncEx
@@ -4367,18 +4353,14 @@ QPKGs.IsCanBackup.Build()
 QPKGs.IsCanRestartToUpdate.Build()
 	{
 
-	# Build a list of QPKGs that do and don't support application updating on QPKG restart
+	# Build a list of QPKGs that support application updating on QPKG restart
 
 	DebugScriptFuncEn
 
 	local package=''
 
 	for package in $(QPKGs.ScAll.Array); do
-		if QPKG.IsCanRestartToUpdate "$package"; then
-			QPKGs.ScCanRestartToUpdate.Add "$package"
-		else
-			QPKGs.ScNtCanRestartToUpdate.Add "$package"
-		fi
+		QPKG.IsCanRestartToUpdate "$package" && QPKGs.ScCanRestartToUpdate.Add "$package"
 	done
 
 	DebugScriptFuncEx
@@ -4388,18 +4370,14 @@ QPKGs.IsCanRestartToUpdate.Build()
 QPKGs.IsCanClean.Build()
 	{
 
-	# Build a list of QPKGs that do and don't support `clean` actions
+	# Build a list of QPKGs that support `clean` actions
 
 	DebugScriptFuncEn
 
 	local package=''
 
 	for package in $(QPKGs.ScAll.Array); do
-		if QPKG.IsCanClean "$package"; then
-			QPKGs.ScCanClean.Add "$package"
-		else
-			QPKGs.ScNtCanClean.Add "$package"
-		fi
+		QPKG.IsCanClean "$package" && QPKGs.ScCanClean.Add "$package"
 	done
 
 	DebugScriptFuncEx
@@ -4805,9 +4783,30 @@ WriteMsgToActionPipe()
 
 	# Send a message into message stream to update parent shell environment
 
-	[[ $msg_pipe_fd != null && -e /proc/$$/fd/$msg_pipe_fd ]] && echo "$1#$2#$3#$4" >&$msg_pipe_fd
+	[[ $msg_pipe_fd != none && -e /proc/$$/fd/$msg_pipe_fd ]] && echo "$1|$2|$3|$4" >&$msg_pipe_fd
 
 	}
+
+ReadMsgFromActionPipe()
+	{
+
+	local _msg1_key
+	local _msg1_value
+	local _msg2_key
+	local _msg2_value
+
+	IFS='|' read -r _msg1_key _msg1_value _msg2_key _msg2_value
+
+	DebugVar _msg1_key
+	DebugVar _msg1_value
+	DebugVar _msg2_key
+	DebugVar _msg2_value
+
+	eval "$1='$_msg1_key' $2='$_msg1_value' $3='$_msg2_key' $4='$_msg2_value'"
+
+	return 0
+
+	} <&$msg_pipe_fd
 
 FindNextFD()
 	{
@@ -5138,7 +5137,7 @@ GetSudoUID()
 Self.Error.Set()
 	{
 
-	qpkgs_skip_processing=true
+	skip_qpkg_processing=true
 	Self.Error.IsSet && return
 	_script_error_flag_=true
 	DebugVar _script_error_flag_
@@ -5165,13 +5164,8 @@ ShowZeroQPKGs()
 	local state=''
 	local action=''
 
-	for state in "${PACKAGE_STATES[@]}"; do
-		for action in "${PACKAGE_ACTIONS[@]}"; do
-			case $action in
-				Disable|Enable)
-					continue		# no objects for these as `start` and `stop` do the same jobs
-			esac
-
+	for state in "${USER_QPKG_Is_STATES[@]}"; do
+		for action in "${USER_QPKG_ACTIONS[@]}"; do
 			QPKGs.Ac${action}.Is${state}.IsSet && QPKGs.AcOk${action}.IsNone && ShowAsWarn "no QPKGs were able to $(Lowercase "$action")"
 		done
 	done
@@ -5247,7 +5241,7 @@ SaveActionResultToLog()
 	local var_safe_name=${var_name//[.-]/_}
 	local duration="$(CalcMilliDifference "${!var_safe_name}" "$($DATE_CMD +%s%N)")"
 
-	echo "$(/bin/date +%s)#${3:?action empty}#${2:?package name empty}#${4:?result empty}#$duration#${5:-}#${1:?package type empty}" >> "$ACTIONS_LOG_PATHFILE"
+	echo "$(/bin/date +%s)|${3:?action empty}|${2:?package name empty}|${4:?result empty}|$duration|${5:-}|${1:?package type empty}" >> "$ACTIONS_LOG_PATHFILE"
 
 	case $4 in
 		ok)
@@ -5450,7 +5444,7 @@ _QPKG.Install_()
 
 	DebugAsProc "installing $(FormatAsPackName "$PACKAGE_NAME")"
 	[[ $self_debug_to_screen = true ]] && debug_cmd='DEBUG_QPKG=true '
-	[[ ${QPKGs_were_installed_name[*]:-} == *"$PACKAGE_NAME"* ]] && target_path="QINSTALL_PATH=$(QPKG.OriginalPath "$PACKAGE_NAME") "
+	[[ ${QPKGs_were_installed_name[*]:-} = *"$PACKAGE_NAME"* ]] && target_path="QINSTALL_PATH=$(QPKG.OriginalPath "$PACKAGE_NAME") "
 	RunAndLog "${debug_cmd}${target_path}${SH_CMD} $local_pathfile" "$LOG_PATHFILE" log:failure-only 10
 	result_code=$?
 
@@ -5496,8 +5490,7 @@ _QPKG.Install_()
 			DebugAsDone 'installed essential IPKs'
 		fi
 
-		QPKG.Sign "$PACKAGE_NAME"
-
+		SendParentChangeEnv "QPKGs.AcToSign.Add $PACKAGE_NAME"
 		result_code=0	# remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK)
 		MarkThisActionForkAsOk
 	else
@@ -5574,8 +5567,7 @@ _QPKG.Reinstall_()
 
 		local current_ver=$(QPKG.Local.Ver "$PACKAGE_NAME")
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" Reinstall ok "version $current_ver"
-		QPKG.Sign "$PACKAGE_NAME"
-
+		SendParentChangeEnv "QPKGs.AcToSign.Add $PACKAGE_NAME"
 		result_code=0	# remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK)
 		MarkThisActionForkAsOk
 	else
@@ -5675,8 +5667,7 @@ _QPKG.Upgrade_()
 			SaveActionResultToLog QPKG "$PACKAGE_NAME" Upgrade ok "from version $prev_ver to version $current_ver"
 		fi
 
-		QPKG.Sign "$PACKAGE_NAME"
-
+		SendParentChangeEnv "QPKGs.AcToSign.Add $PACKAGE_NAME"
 		result_code=0	# remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK)
 		MarkThisActionForkAsOk
 	else
@@ -6168,6 +6159,145 @@ _QPKG.Clean_()
 
 	}
 
+_QPKG.Sign_()
+	{
+
+	# * This function runs autonomously *
+
+	# Modify the QTS App Center certificate dB, and add an unsigned QPKG as-if it were signed. It adds a QNAP-generated certificate and digital signature to the certificate database for the unsigned QPKG.
+
+	# Running the code below makes the target QPKG effectively "signed", and allows user to install and run this QPKG with the 'Allow installation of applications without a valid digital signature' App Center option unticked.
+
+	# Should only be required for QTS 4.3.5-and-later firmwares.
+
+	# input:
+	#   $1 = QPKG name
+
+	# output:
+	#   $? = none, this function executes in background
+
+	DebugForkFuncEn
+
+	local -r PACKAGE_NAME=${1:?package name null}
+	local -i result_code=0
+	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$SIGN_LOG_FILE
+	local cert_db_pathfile=/etc/config/nas_sign_qpkg.db
+	local cert=''
+	local signature=''
+	local cmd=''
+
+	if [[ ${NAS_FIRMWARE_VER//.} -lt 435 ]]; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" Sign skipped 'not required'
+		result_code=2
+	elif ! QPKGs.IsInstalled.Exist "$PACKAGE_NAME"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" Sign skipped 'not installed'
+		result_code=2
+	elif [[ ! -e $GNU_SQLITE_CMD ]]; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" Sign skipped 'sqlite3 not installed'
+		result_code=2
+	elif [[ ! -e $cert_db_pathfile ]]; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" Sign skipped 'certificate database not found'
+		result_code=2
+	fi
+
+	if [[ $result_code -gt 0 ]]; then
+		MarkThisActionForkAsSkipped
+		DebugForkFuncEx $result_code
+	fi
+
+	DebugAsProc "signing $(FormatAsPackName "$PACKAGE_NAME")"
+
+	# this certificate block is the same used by QNAP for LicenseCenter
+	read -r -d '' cert << EOB
+-----BEGIN CERTIFICATE-----
+MIIDwzCCAqugAwIBAgIFALhDVuwwDQYJKoZIhvcNAQELBQAwgYAxCzAJBgNVBAYT
+AlRXMQ8wDQYDVQQIDAZUYWl3YW4xDzANBgNVBAcMBlRhaXBlaTENMAsGA1UECgwE
+UU5BUDEMMAoGA1UECwwDTkFTMRAwDgYDVQQDDAdRTkFQX0NBMSAwHgYJKoZIhvcN
+AQkBFhFzZWN1cml0eUBxbmFwLmNvbTAeFw0yMjAzMTgwNzM5MTRaFw0yNTAzMTcw
+NzM5MTRaMIGGMQswCQYDVQQGEwJUVzEPMA0GA1UECAwGVGFpd2FuMQ8wDQYDVQQH
+DAZUYWlwZWkxDTALBgNVBAoMBFFOQVAxDDAKBgNVBAsMA05BUzEWMBQGA1UEAwwN
+TGljZW5zZUNlbnRlcjEgMB4GCSqGSIb3DQEJARYRc2VjdXJpdHlAcW5hcC5jb20w
+ggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC/bAgbZryVvBXfpBHNUKQV
+sAkAfvDXjKnxa7lKHrRIcFcOnf+voUZcP1Ly9qWb782gB2eUHsUS1Xqj4CF/dUJf
+FEnOBrQUo9+Q9B3x4oTRpMdky7acP4dxAbt4T92swgaReQXAewy9s9//a52HIBca
+1dAA4JPwplqiZ/oh18GDCKxh84Iu9Gcu2J5e+VXEI/KUxCwKUd22aDTpv128MSoq
+dYexCerCJtQbgM3cwkkMiDnFpjrsta5iFpyrNKdLoBJ7YbY3d5Onkqy4DjE8hwR7
+0j7Qd+3xbMqv3FOCKeLLLn6N03IXHKP/big/MdXKY1dJQVA3/ks/knPH8mhcOM0d
+AgMBAAGjPDA6MDgGA1UdHwQxMC8wLaAroCmGJ2h0dHA6Ly9kb3dubG9hZC5xbmFw
+LmNvbS9jcmwvcXRzX3YxLmNybDANBgkqhkiG9w0BAQsFAAOCAQEAWlT1GDH6v8G3
+laIAs2/RdxhPgtKX4aL+fnTEFNF5V2yH0G4luyq5tHQw+VCHtDM6Z3GXWhciKPAR
+upbRcHq744JCFaUb6i8z1w1KVJDaQ38EVE5+JtpoPMrrnb+hKB/gGmi4PoMSpnvX
+VCxLbCbBnwi19o6t/MnPbz0shvUB2NDngnal6lYQFw/F8Sr6cSjV6GAY4TOZotdu
++gunwqQtYUycEVfNyiWVk/flgED8R8oxTPl9ZoDGen+OgjkZrvgynKnqPLHyxZSd
+hYSoWyWcZWkMCQ+69kOgJVvrRa7z9F9y30uAHXIUrsLV2d/dImVjApMHbZ60iALG
+AVIlas0e4g==
+-----END CERTIFICATE-----
+EOB
+
+	# this digital signature block is the same used by QNAP for LicenseCenter
+	read -r -d '' signature << EOB
+MIME-Version: 1.0
+Content-Disposition: attachment; filename="smime.p7m"
+Content-Type: application/pkcs7-mime; smime-type=signed-data; name="smime.p7m"
+Content-Transfer-Encoding: base64
+
+MIIGtAYJKoZIhvcNAQcCoIIGpTCCBqECAQExDTALBglghkgBZQMEAgEwIwYJKoZI
+hvcNAQcBoBYEFAkoseBaFir08zCz63r2YA82DXzxoIIDxzCCA8MwggKroAMCAQIC
+BQC4Q1bsMA0GCSqGSIb3DQEBCwUAMIGAMQswCQYDVQQGEwJUVzEPMA0GA1UECAwG
+VGFpd2FuMQ8wDQYDVQQHDAZUYWlwZWkxDTALBgNVBAoMBFFOQVAxDDAKBgNVBAsM
+A05BUzEQMA4GA1UEAwwHUU5BUF9DQTEgMB4GCSqGSIb3DQEJARYRc2VjdXJpdHlA
+cW5hcC5jb20wHhcNMjIwMzE4MDczOTE0WhcNMjUwMzE3MDczOTE0WjCBhjELMAkG
+A1UEBhMCVFcxDzANBgNVBAgMBlRhaXdhbjEPMA0GA1UEBwwGVGFpcGVpMQ0wCwYD
+VQQKDARRTkFQMQwwCgYDVQQLDANOQVMxFjAUBgNVBAMMDUxpY2Vuc2VDZW50ZXIx
+IDAeBgkqhkiG9w0BCQEWEXNlY3VyaXR5QHFuYXAuY29tMIIBIjANBgkqhkiG9w0B
+AQEFAAOCAQ8AMIIBCgKCAQEAv2wIG2a8lbwV36QRzVCkFbAJAH7w14yp8Wu5Sh60
+SHBXDp3/r6FGXD9S8valm+/NoAdnlB7FEtV6o+Ahf3VCXxRJzga0FKPfkPQd8eKE
+0aTHZMu2nD+HcQG7eE/drMIGkXkFwHsMvbPf/2udhyAXGtXQAOCT8KZaomf6IdfB
+gwisYfOCLvRnLtieXvlVxCPylMQsClHdtmg06b9dvDEqKnWHsQnqwibUG4DN3MJJ
+DIg5xaY67LWuYhacqzSnS6ASe2G2N3eTp5KsuA4xPIcEe9I+0Hft8WzKr9xTgini
+yy5+jdNyFxyj/24oPzHVymNXSUFQN/5LP5Jzx/JoXDjNHQIDAQABozwwOjA4BgNV
+HR8EMTAvMC2gK6AphidodHRwOi8vZG93bmxvYWQucW5hcC5jb20vY3JsL3F0c192
+MS5jcmwwDQYJKoZIhvcNAQELBQADggEBAFpU9Rgx+r/Bt5WiALNv0XcYT4LSl+Gi
+/n50xBTReVdsh9BuJbsqubR0MPlQh7QzOmdxl1oXIijwEbqW0XB6u+OCQhWlG+ov
+M9cNSlSQ2kN/BFROfibaaDzK652/oSgf4BpouD6DEqZ711QsS2wmwZ8ItfaOrfzJ
+z289LIb1AdjQ54J2pepWEBcPxfEq+nEo1ehgGOEzmaLXbvoLp8KkLWFMnBFXzcol
+lZP35YBA/EfKMUz5fWaAxnp/joI5Ga74Mpyp6jyx8sWUnYWEqFslnGVpDAkPuvZD
+oCVb60Wu8/Rfct9LgB1yFK7C1dnf3SJlYwKTB22etIgCxgFSJWrNHuIxggKbMIIC
+lwIBATCBijCBgDELMAkGA1UEBhMCVFcxDzANBgNVBAgMBlRhaXdhbjEPMA0GA1UE
+BwwGVGFpcGVpMQ0wCwYDVQQKDARRTkFQMQwwCgYDVQQLDANOQVMxEDAOBgNVBAMM
+B1FOQVBfQ0ExIDAeBgkqhkiG9w0BCQEWEXNlY3VyaXR5QHFuYXAuY29tAgUAuENW
+7DALBglghkgBZQMEAgGggeQwGAYJKoZIhvcNAQkDMQsGCSqGSIb3DQEHATAcBgkq
+hkiG9w0BCQUxDxcNMjIxMjAyMDMwOTE3WjAvBgkqhkiG9w0BCQQxIgQgvtdZSm+m
+c7QevdJma9Em5ycFr3I7Wo4aG40Vcx/mT5IweQYJKoZIhvcNAQkPMWwwajALBglg
+hkgBZQMEASowCwYJYIZIAWUDBAEWMAsGCWCGSAFlAwQBAjAKBggqhkiG9w0DBzAO
+BggqhkiG9w0DAgICAIAwDQYIKoZIhvcNAwICAUAwBwYFKw4DAgcwDQYIKoZIhvcN
+AwICASgwDQYJKoZIhvcNAQEBBQAEggEAuInAOUj+ebOkTqlqg3cf7v2FdKeCvZZn
+cunx1xRnHJRVAAvcH/UZ3t7RF6MV5NmEQdVN79NBZl0KU1x7K3zyvcXnkacNuHnI
+t+6neKKKkxJmB4hh4ljeYtx9a1RBgwH+PiYyH8+58S7+MF3MVhSH8jEiomgSbvsK
+BroOCFQDoYWk14K/VIXW1scmvpNvFNBWwm19pYwi977rF+lPWzMHx/0jVXspFSEd
+U48h9xKvPg6CsIlyfuKetHBjZZI6iSCvh2FZOWsD1/W2oGYkkY9Hdff24B34/res
+cKXk/K9/JFAONWBbXUpxtzpBCeVJlZS1wQgu4Q+Fr6imaBXJkiyiNg==
+EOB
+
+	cmd="DELETE FROM Certificate WHERE QpkgName = '$PACKAGE_NAME'; INSERT INTO Certificate (Type,QpkgName,Cert,DigitalSignature) VALUES ('qpkg','$PACKAGE_NAME','$cert','$signature');"
+
+	$GNU_SQLITE_CMD "$cert_db_pathfile" "$cmd"
+	result_code=$?
+
+	if [[ $result_code -eq 0 ]]; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" Sign ok
+		SendPackageStateChange IsSigned
+		MarkThisActionForkAsOk
+	else
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" Sign failed "$result_code"
+		result_code=1	# remap to 1
+		MarkThisActionForkAsFailed
+	fi
+
+	DebugForkFuncEx $result_code
+
+	}
+
 QPKG.ClearAppCenterNotifier()
 	{
 
@@ -6220,7 +6350,7 @@ QPKG.LogServiceStatus()
 		failed)
 			if [[ -e /var/log/$PACKAGE_NAME.log ]]; then
 				DebugAsError "$(FormatAsPackName "$PACKAGE_NAME") service action failed. Check $(FormatAsFileName "/var/log/$PACKAGE_NAME.log") for more information"
-				AddFileToDebug /var/log/$PACKAGE_NAME.log
+				AddExtLogToSessLog /var/log/$PACKAGE_NAME.log
 			else
 				DebugAsError "$(FormatAsPackName "$PACKAGE_NAME") service action failed"
 			fi
@@ -6776,7 +6906,7 @@ QPKG.GetDependents()
 
 	if QPKGs.ScStandalone.Exist "$1"; then
 		for index in "${!QPKG_NAME[@]}"; do
-			if [[ ${QPKG_DEPENDS_ON[$index]} == *"${1:?package name null}"* ]]; then
+			if [[ ${QPKG_DEPENDS_ON[$index]} = *"${1:?package name null}"* ]]; then
 				[[ ${acc[*]:-} != "${QPKG_NAME[$index]}" ]] && acc+=(${QPKG_NAME[$index]})
 			fi
 		done
@@ -6843,109 +6973,6 @@ QPKG.IsStarted()
 	#   $? = 0 (true) or 1 (false)
 
 	QPKG.IsEnabled "${1:?package name null}"
-
-	}
-
-QPKG.Sign()
-	{
-
-	# Modify the QTS App Center certificate dB, and add an unsigned QPKG as-if it were signed. It adds a QNAP-generated certificate and digital signature to the certificate database for the unsigned QPKG.
-
-	# Running the code below makes the target QPKG effectively "signed", and allows user to install and run this QPKG with the 'Allow installation of applications without a valid digital signature' App Center option unticked.
-
-	# Should only be required for QTS 4.3.5-and-later firmwares.
-
-	# input:
-	#  $1 = QPKG name to "sign"
-
-	[[ -n $1 ]] || return
-	[[ -e $GNU_SQLITE_CMD ]] || return
-	[[ ${NAS_FIRMWARE_VER//.} -ge 435 ]] || return
-
-	local qpkg_name=$1
-	local cert_db_pathfile=/etc/config/nas_sign_qpkg.db
-
-	[[ -e $cert_db_pathfile ]] || return
-
-	local cert=''
-	local signature=''
-
-	# this certificate block is the same used by QNAP for LicenseCenter
-	read -r -d '' cert << EOB
------BEGIN CERTIFICATE-----
-MIIDwzCCAqugAwIBAgIFALhDVuwwDQYJKoZIhvcNAQELBQAwgYAxCzAJBgNVBAYT
-AlRXMQ8wDQYDVQQIDAZUYWl3YW4xDzANBgNVBAcMBlRhaXBlaTENMAsGA1UECgwE
-UU5BUDEMMAoGA1UECwwDTkFTMRAwDgYDVQQDDAdRTkFQX0NBMSAwHgYJKoZIhvcN
-AQkBFhFzZWN1cml0eUBxbmFwLmNvbTAeFw0yMjAzMTgwNzM5MTRaFw0yNTAzMTcw
-NzM5MTRaMIGGMQswCQYDVQQGEwJUVzEPMA0GA1UECAwGVGFpd2FuMQ8wDQYDVQQH
-DAZUYWlwZWkxDTALBgNVBAoMBFFOQVAxDDAKBgNVBAsMA05BUzEWMBQGA1UEAwwN
-TGljZW5zZUNlbnRlcjEgMB4GCSqGSIb3DQEJARYRc2VjdXJpdHlAcW5hcC5jb20w
-ggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC/bAgbZryVvBXfpBHNUKQV
-sAkAfvDXjKnxa7lKHrRIcFcOnf+voUZcP1Ly9qWb782gB2eUHsUS1Xqj4CF/dUJf
-FEnOBrQUo9+Q9B3x4oTRpMdky7acP4dxAbt4T92swgaReQXAewy9s9//a52HIBca
-1dAA4JPwplqiZ/oh18GDCKxh84Iu9Gcu2J5e+VXEI/KUxCwKUd22aDTpv128MSoq
-dYexCerCJtQbgM3cwkkMiDnFpjrsta5iFpyrNKdLoBJ7YbY3d5Onkqy4DjE8hwR7
-0j7Qd+3xbMqv3FOCKeLLLn6N03IXHKP/big/MdXKY1dJQVA3/ks/knPH8mhcOM0d
-AgMBAAGjPDA6MDgGA1UdHwQxMC8wLaAroCmGJ2h0dHA6Ly9kb3dubG9hZC5xbmFw
-LmNvbS9jcmwvcXRzX3YxLmNybDANBgkqhkiG9w0BAQsFAAOCAQEAWlT1GDH6v8G3
-laIAs2/RdxhPgtKX4aL+fnTEFNF5V2yH0G4luyq5tHQw+VCHtDM6Z3GXWhciKPAR
-upbRcHq744JCFaUb6i8z1w1KVJDaQ38EVE5+JtpoPMrrnb+hKB/gGmi4PoMSpnvX
-VCxLbCbBnwi19o6t/MnPbz0shvUB2NDngnal6lYQFw/F8Sr6cSjV6GAY4TOZotdu
-+gunwqQtYUycEVfNyiWVk/flgED8R8oxTPl9ZoDGen+OgjkZrvgynKnqPLHyxZSd
-hYSoWyWcZWkMCQ+69kOgJVvrRa7z9F9y30uAHXIUrsLV2d/dImVjApMHbZ60iALG
-AVIlas0e4g==
------END CERTIFICATE-----
-EOB
-
-	# this digital signature block is the same used by QNAP for LicenseCenter
-	read -r -d '' signature << EOB
-MIME-Version: 1.0
-Content-Disposition: attachment; filename="smime.p7m"
-Content-Type: application/pkcs7-mime; smime-type=signed-data; name="smime.p7m"
-Content-Transfer-Encoding: base64
-
-MIIGtAYJKoZIhvcNAQcCoIIGpTCCBqECAQExDTALBglghkgBZQMEAgEwIwYJKoZI
-hvcNAQcBoBYEFAkoseBaFir08zCz63r2YA82DXzxoIIDxzCCA8MwggKroAMCAQIC
-BQC4Q1bsMA0GCSqGSIb3DQEBCwUAMIGAMQswCQYDVQQGEwJUVzEPMA0GA1UECAwG
-VGFpd2FuMQ8wDQYDVQQHDAZUYWlwZWkxDTALBgNVBAoMBFFOQVAxDDAKBgNVBAsM
-A05BUzEQMA4GA1UEAwwHUU5BUF9DQTEgMB4GCSqGSIb3DQEJARYRc2VjdXJpdHlA
-cW5hcC5jb20wHhcNMjIwMzE4MDczOTE0WhcNMjUwMzE3MDczOTE0WjCBhjELMAkG
-A1UEBhMCVFcxDzANBgNVBAgMBlRhaXdhbjEPMA0GA1UEBwwGVGFpcGVpMQ0wCwYD
-VQQKDARRTkFQMQwwCgYDVQQLDANOQVMxFjAUBgNVBAMMDUxpY2Vuc2VDZW50ZXIx
-IDAeBgkqhkiG9w0BCQEWEXNlY3VyaXR5QHFuYXAuY29tMIIBIjANBgkqhkiG9w0B
-AQEFAAOCAQ8AMIIBCgKCAQEAv2wIG2a8lbwV36QRzVCkFbAJAH7w14yp8Wu5Sh60
-SHBXDp3/r6FGXD9S8valm+/NoAdnlB7FEtV6o+Ahf3VCXxRJzga0FKPfkPQd8eKE
-0aTHZMu2nD+HcQG7eE/drMIGkXkFwHsMvbPf/2udhyAXGtXQAOCT8KZaomf6IdfB
-gwisYfOCLvRnLtieXvlVxCPylMQsClHdtmg06b9dvDEqKnWHsQnqwibUG4DN3MJJ
-DIg5xaY67LWuYhacqzSnS6ASe2G2N3eTp5KsuA4xPIcEe9I+0Hft8WzKr9xTgini
-yy5+jdNyFxyj/24oPzHVymNXSUFQN/5LP5Jzx/JoXDjNHQIDAQABozwwOjA4BgNV
-HR8EMTAvMC2gK6AphidodHRwOi8vZG93bmxvYWQucW5hcC5jb20vY3JsL3F0c192
-MS5jcmwwDQYJKoZIhvcNAQELBQADggEBAFpU9Rgx+r/Bt5WiALNv0XcYT4LSl+Gi
-/n50xBTReVdsh9BuJbsqubR0MPlQh7QzOmdxl1oXIijwEbqW0XB6u+OCQhWlG+ov
-M9cNSlSQ2kN/BFROfibaaDzK652/oSgf4BpouD6DEqZ711QsS2wmwZ8ItfaOrfzJ
-z289LIb1AdjQ54J2pepWEBcPxfEq+nEo1ehgGOEzmaLXbvoLp8KkLWFMnBFXzcol
-lZP35YBA/EfKMUz5fWaAxnp/joI5Ga74Mpyp6jyx8sWUnYWEqFslnGVpDAkPuvZD
-oCVb60Wu8/Rfct9LgB1yFK7C1dnf3SJlYwKTB22etIgCxgFSJWrNHuIxggKbMIIC
-lwIBATCBijCBgDELMAkGA1UEBhMCVFcxDzANBgNVBAgMBlRhaXdhbjEPMA0GA1UE
-BwwGVGFpcGVpMQ0wCwYDVQQKDARRTkFQMQwwCgYDVQQLDANOQVMxEDAOBgNVBAMM
-B1FOQVBfQ0ExIDAeBgkqhkiG9w0BCQEWEXNlY3VyaXR5QHFuYXAuY29tAgUAuENW
-7DALBglghkgBZQMEAgGggeQwGAYJKoZIhvcNAQkDMQsGCSqGSIb3DQEHATAcBgkq
-hkiG9w0BCQUxDxcNMjIxMjAyMDMwOTE3WjAvBgkqhkiG9w0BCQQxIgQgvtdZSm+m
-c7QevdJma9Em5ycFr3I7Wo4aG40Vcx/mT5IweQYJKoZIhvcNAQkPMWwwajALBglg
-hkgBZQMEASowCwYJYIZIAWUDBAEWMAsGCWCGSAFlAwQBAjAKBggqhkiG9w0DBzAO
-BggqhkiG9w0DAgICAIAwDQYIKoZIhvcNAwICAUAwBwYFKw4DAgcwDQYIKoZIhvcN
-AwICASgwDQYJKoZIhvcNAQEBBQAEggEAuInAOUj+ebOkTqlqg3cf7v2FdKeCvZZn
-cunx1xRnHJRVAAvcH/UZ3t7RF6MV5NmEQdVN79NBZl0KU1x7K3zyvcXnkacNuHnI
-t+6neKKKkxJmB4hh4ljeYtx9a1RBgwH+PiYyH8+58S7+MF3MVhSH8jEiomgSbvsK
-BroOCFQDoYWk14K/VIXW1scmvpNvFNBWwm19pYwi977rF+lPWzMHx/0jVXspFSEd
-U48h9xKvPg6CsIlyfuKetHBjZZI6iSCvh2FZOWsD1/W2oGYkkY9Hdff24B34/res
-cKXk/K9/JFAONWBbXUpxtzpBCeVJlZS1wQgu4Q+Fr6imaBXJkiyiNg==
-EOB
-
-	$GNU_SQLITE_CMD "$cert_db_pathfile" << EOB
-DELETE FROM Certificate WHERE QpkgName = '$qpkg_name';
-INSERT INTO Certificate (Type,QpkgName,Cert,DigitalSignature) VALUES ('qpkg','$qpkg_name','$cert','$signature');
-EOB
 
 	}
 
@@ -7023,11 +7050,12 @@ RunAndLog()
 
 	case $result_code in
 		0|"${4:-}")
-			[[ ${3:-} != log:failure-only ]] && AddFileToDebug "$2"
+			[[ ${3:-} != log:failure-only ]] && AddExtLogToSessLog "$2"
 			DebugAsDone 'exec complete'
+			[[ $self_debug_to_file = false ]] && rm -f "$2"
 			;;
 		*)
-			AddFileToDebug "$2"
+			AddExtLogToSessLog "$2"
 			DebugAsError 'exec complete, but with errors'
 	esac
 
@@ -7508,7 +7536,12 @@ DebugForkFuncEx()
 
 	SendActionStatus Ex
 	DebugAsFuncEx "${1:-0}" "$(FormatAsDuration "$(CalcMilliDifference "${!var_safe_name}" "$($DATE_CMD +%s%N)")")"
-	$CAT_CMD "$sess_active_pathfile" >> "$original_session_log_pathfile" && rm "$sess_active_pathfile"
+
+	if [[ -n $sess_active_pathfile && -e $sess_active_pathfile && -s $sess_active_pathfile ]]; then
+		$CAT_CMD "$sess_active_pathfile" >> "$original_session_log_pathfile"
+		rm "$sess_active_pathfile"
+		sess_active_pathfile="$original_session_log_pathfile"
+	fi
 
 	exit ${1:-0}
 
@@ -7541,7 +7574,7 @@ FormatAsDuration()
 DebugAsFuncEn()
 	{
 
-	DebugThis "(>>) ${FUNCNAME[2]}"
+	DebugThis "(>>) ${FUNCNAME[2]}()"
 
 	}
 
@@ -7555,6 +7588,7 @@ DebugAsFuncEx()
 DebugAsProc()
 	{
 
+	[[ -z ${1:-} ]] && return
 	DebugThis "(--) ${1:-}"
 
 	}
@@ -7562,6 +7596,7 @@ DebugAsProc()
 DebugAsDone()
 	{
 
+	[[ -z ${1:-} ]] && return
 	DebugThis "(==) ${1:-}"
 
 	}
@@ -7569,6 +7604,7 @@ DebugAsDone()
 DebugAsDetect()
 	{
 
+	[[ -z ${1:-} ]] && return
 	DebugThis "(**) ${1:-}"
 
 	}
@@ -7576,6 +7612,7 @@ DebugAsDetect()
 DebugAsInfo()
 	{
 
+	[[ -z ${1:-} ]] && return
 	DebugThis "(II) ${1:-}"
 
 	}
@@ -7583,6 +7620,7 @@ DebugAsInfo()
 DebugAsWarn()
 	{
 
+	[[ -z ${1:-} ]] && return
 	DebugThis "(WW) ${1:-}"
 
 	}
@@ -7590,6 +7628,7 @@ DebugAsWarn()
 DebugAsError()
 	{
 
+	[[ -z ${1:-} ]] && return
 	DebugThis "(EE) ${1:-}"
 
 	}
@@ -7597,6 +7636,7 @@ DebugAsError()
 DebugAsLog()
 	{
 
+	[[ -z ${1:-} ]] && return
 	DebugThis "(LL) ${1:-}"
 
 	}
@@ -7604,6 +7644,7 @@ DebugAsLog()
 DebugAsVar()
 	{
 
+	[[ -z ${1:-} ]] && return
 	DebugThis "(vv) ${1:-}"
 
 	}
@@ -7617,7 +7658,7 @@ DebugThis()
 
 	}
 
-AddFileToDebug()
+AddExtLogToSessLog()
 	{
 
 	# Add the contents of pathfile $1 to the session debug log, with each line formatted as an external log entry
@@ -7796,7 +7837,7 @@ ShowAsActionProgress()
 		ShowAsProcLong "$ACTION_PRESENT ${TOTAL_COUNT}${tier} ${PACKAGE_TYPE}$(Pluralise "$TOTAL_COUNT")" "$progress_msg"
 	fi
 
-	[[ $((OK_COUNT+SKIP_COUNT+FAIL_COUNT)) -ge $TOTAL_COUNT ]] && $SLEEP_CMD 1
+	[[ $((OK_COUNT+SKIP_COUNT+FAIL_COUNT)) -ge $TOTAL_COUNT ]] && sleep 1
 
 	return 0
 
@@ -7888,13 +7929,9 @@ ShowAsActionResultDetail()
 			[[ $(QPKGs.AcEr${1}.Count) -gt 0 ]] && er_msg="$(ColourTextBrightRed 'failed:') $(QPKGs.AcEr${1}.ListCSV)"
 			;;
 		IPK)
-
-
 			;;
 		PIP)
-
-
-
+			:
 	esac
 
 	if [[ -z $sk_msg && -z $er_msg ]]; then
@@ -8019,7 +8056,7 @@ WriteToLog()
 	#   $1 = pass/fail
 	#   $2 = message
 
-	[[ ${self_debug_to_file:-false} = false ]] && return
+	[[ ${self_debug_to_file:=false} = false ]] && return
 	[[ -n ${sess_active_pathfile:-} ]] && printf '%-4s: %s\n' "$(StripANSI "${1:-}")" "$(StripANSI "${2:-}")" >> "$sess_active_pathfile"
 
 	}
@@ -8243,6 +8280,26 @@ FormatLongMinutesSecs()
 	printf '%01dm:%02ds\n' "$((10#$m))" "$((10#$s))"
 
 	} 2>/dev/null
+
+sleep()
+	{
+
+	# $1 = seconds to sleep (decimal or integer)
+
+	[[ -n ${1:-} ]] || return
+	[[ ${1//.} -gt 0 ]] || return
+
+	if [[ -e $GNU_SLEEP_CMD ]]; then
+		$GNU_SLEEP_CMD "$1"
+	elif [[ $DECIMAL_SECONDS_SUPPORTED = false ]]; then
+		$QTS_SLEEP_CMD "$((${1%.*}+1))"		# ensure decimal seconds are rounded-up to next integer
+	else
+		$QTS_SLEEP_CMD "$1"
+	fi
+
+	return 0
+
+	}
 
 Objects.Load()
 	{
