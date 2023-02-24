@@ -6350,7 +6350,7 @@ QPKG.LogServiceStatus()
 		failed)
 			if [[ -e /var/log/$PACKAGE_NAME.log ]]; then
 				DebugAsError "$(FormatAsPackName "$PACKAGE_NAME") service action failed. Check $(FormatAsFileName "/var/log/$PACKAGE_NAME.log") for more information"
-				AddFileToDebug /var/log/$PACKAGE_NAME.log
+				AddExtLogToSessLog /var/log/$PACKAGE_NAME.log
 			else
 				DebugAsError "$(FormatAsPackName "$PACKAGE_NAME") service action failed"
 			fi
@@ -7050,11 +7050,12 @@ RunAndLog()
 
 	case $result_code in
 		0|"${4:-}")
-			[[ ${3:-} != log:failure-only ]] && AddFileToDebug "$2"
+			[[ ${3:-} != log:failure-only ]] && AddExtLogToSessLog "$2"
 			DebugAsDone 'exec complete'
+			[[ $self_debug_to_file = false ]] && rm -f "$2"
 			;;
 		*)
-			AddFileToDebug "$2"
+			AddExtLogToSessLog "$2"
 			DebugAsError 'exec complete, but with errors'
 	esac
 
@@ -7657,7 +7658,7 @@ DebugThis()
 
 	}
 
-AddFileToDebug()
+AddExtLogToSessLog()
 	{
 
 	# Add the contents of pathfile $1 to the session debug log, with each line formatted as an external log entry
