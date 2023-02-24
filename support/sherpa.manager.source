@@ -245,7 +245,6 @@ Self.Init()
 
 	# default values
 	self_debug_to_screen=false
-	EnableDebugToArchiveAndFile
 	self_display_clean=false
 	self_linespace_onscreen=false
 	self_display_zero_qpkgs=true
@@ -1189,7 +1188,7 @@ Self.Results()
 	DebugScript 'elapsed time' "$(FormatSecsToHoursMinutesSecs "$(($($DATE_CMD +%s)-SCRIPT_STARTSECONDS))")"
 	DebugInfoMajSepr
 
-	[[ $self_debug_to_archive = true ]] && ArchiveActiveSessLog
+	[[ ${self_debug_to_archive:=false} = true ]] && ArchiveActiveSessLog
 	ResetActiveSessLog
 	EraseThisLine
 	DisplayLineSpaceIfNoneAlready   # final on-screen linespace
@@ -3757,7 +3756,7 @@ GetLogSessFinishLine()
 ArchiveActiveSessLog()
 	{
 
-	[[ -e $sess_active_pathfile ]] && $CAT_CMD "$sess_active_pathfile" >> "$SESS_ARCHIVE_PATHFILE"
+	[[ -n ${sess_active_pathfile:-} && -e $sess_active_pathfile ]] && $CAT_CMD "$sess_active_pathfile" >> "$SESS_ARCHIVE_PATHFILE"
 
 	}
 
@@ -3780,7 +3779,7 @@ ArchivePriorSessLogs()
 ResetActiveSessLog()
 	{
 
-	[[ -e $sess_active_pathfile ]] && rm -f "$sess_active_pathfile"
+	[[ -n ${sess_active_pathfile:-} && -e $sess_active_pathfile ]] && rm -f "$sess_active_pathfile"
 
 	}
 
@@ -7537,7 +7536,7 @@ DebugForkFuncEx()
 	SendActionStatus Ex
 	DebugAsFuncEx "${1:-0}" "$(FormatAsDuration "$(CalcMilliDifference "${!var_safe_name}" "$($DATE_CMD +%s%N)")")"
 
-	if [[ -n $sess_active_pathfile && -e $sess_active_pathfile ]]; then
+	if [[ -n $sess_active_pathfile && -e $sess_active_pathfile && -s $sess_active_pathfile ]]; then
 		$CAT_CMD "$sess_active_pathfile" >> "$original_session_log_pathfile"
 		rm "$sess_active_pathfile"
 		sess_active_pathfile="$original_session_log_pathfile"
@@ -8056,7 +8055,7 @@ WriteToLog()
 	#   $1 = pass/fail
 	#   $2 = message
 
-	[[ ${self_debug_to_file:-false} = false ]] && return
+	[[ ${self_debug_to_file:=false} = false ]] && return
 	[[ -n ${sess_active_pathfile:-} ]] && printf '%-4s: %s\n' "$(StripANSI "${1:-}")" "$(StripANSI "${2:-}")" >> "$sess_active_pathfile"
 
 	}
