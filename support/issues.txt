@@ -1,3 +1,29 @@
+* typing 'help' on its own should display the same help screen as when 'paste' is typed on its own:
+	[/share/Public] # ./sherpa.manager.source help
+	sherpa <?today?>-<?branch?> • a mini-package-manager for QNAP NAS
+
+	[/share/Public] # ./sherpa.manager.source paste
+	sherpa <?today?>-<?branch?> • a mini-package-manager for QNAP NAS
+
+	• Usage: sherpa [action] [packages] [package group] [options]
+
+		To list available [action]s, type:
+			# sherpa list actions
+
+		To list available [packages], type:
+			# sherpa list packages
+			# sherpa p
+
+		To list available [package group]s, type:
+			# sherpa list groups
+
+		Or, for more [options], type:
+			# sherpa list options
+
+	• More in the wiki: https://github.com/OneCDOnly/sherpa/wiki
+
+	[/share/Public] #
+
 * ensure each action fork is actually being killed after it issues an 'exit' into the message pipe.
 
 * remove hint to 'enable' QPKG when attempting to 'stop' it while in a disabled state:

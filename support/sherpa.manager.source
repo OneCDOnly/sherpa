@@ -1599,8 +1599,8 @@ ParseArgs()
 						action=''
 						;;
 					last_)
-						action=''
 						opts_log_last_paste=true
+						action=''
 				esac
 
 				skip_qpkg_processing=true
