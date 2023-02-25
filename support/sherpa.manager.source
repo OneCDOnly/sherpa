@@ -5151,8 +5151,9 @@ ClaimLockFile()
 	{
 
 	readonly LOCK_PATHFILE=/var/run/sherpa.lock
+	local re=\\bsherpa.manager.sh\\b
 
-	if [[ -e $LOCK_PATHFILE && -d /proc/$(<"$LOCK_PATHFILE") && $(</proc/"$(<"$LOCK_PATHFILE")"/cmdline) =~ "sherpa.manager.sh" ]]; then
+	if [[ -e $LOCK_PATHFILE && -d /proc/$(<"$LOCK_PATHFILE") && $(</proc/"$(<"$LOCK_PATHFILE")"/cmdline) =~ $re ]]; then
 		ShowAsAbort "another instance is running (PID: $(<"$LOCK_PATHFILE"))"
 		return 1
 	fi
