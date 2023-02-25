@@ -3117,7 +3117,9 @@ DisplayAsHelpPackageNameVerStatus()
 	fi
 
 	if [[ -n ${2:-} && $maxcols -ge 2 ]]; then
-		if [[ $2 =~ '*' ]]; then
+# 		local re=\\b*\\b
+
+		if [[ $2 =~ .*\*.* ]]; then
 			printf "${HELP_COL_SPACER}%-$((HELP_PACKAGE_STATUS_WIDTH+$(LenANSIDiff "$2")))s" "$2"
 		else
 			printf "${HELP_COL_SPACER}${HELP_COL_OTHER_PREFIX}%-$((HELP_PACKAGE_STATUS_WIDTH+$(LenANSIDiff "$2")))s" "$2"
@@ -3171,7 +3173,7 @@ DisplayAsHelpPackageNameRepo()
 	fi
 
 	if [[ -n ${2:-} && $maxcols -ge 2 ]]; then
-		if [[ $2 =~ '*' ]]; then
+		if [[ $2 =~ .*\*.* ]]; then
 			printf "${HELP_COL_SPACER}%-$((HELP_PACKAGE_REPO_WIDTH+$(LenANSIDiff "$2")))s" "$2"
 		else
 			printf "${HELP_COL_SPACER}${HELP_COL_OTHER_PREFIX}%-$((HELP_PACKAGE_REPO_WIDTH+$(LenANSIDiff "$2")))s" "$2"
