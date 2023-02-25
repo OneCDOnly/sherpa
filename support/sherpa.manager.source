@@ -2613,8 +2613,8 @@ _LaunchQPKGActionForks_()
 
 	for package in "${target_packages[@]}"; do
 		while [[ $fork_count -ge $max_forks ]]; do  # don't fork until an empty spot becomes available
+			sleep .2
 			UpdateForkProgress
-			sleep .1
 		done
 
 		IncForkProgressIndex
@@ -2627,11 +2627,12 @@ _LaunchQPKGActionForks_()
 	# all action forks have launched, just need to wait for them to exit
 
 	while [[ $fork_count -gt 0 ]]; do
+		sleep .2
 		UpdateForkProgress	  # update display while running forks complete
-		sleep .1
 	done
 
 	# all forks have exited
+	sleep 1
 
 	EraseThisLine
 
@@ -2746,7 +2747,7 @@ KillActiveFork()
 	{
 
 	if [[ -n ${fork_pid:-} && ${fork_pid:-0} -gt 0 && -d /proc/$fork_pid ]]; then
-		sleep .1
+		sleep .2
 		kill -9 "$fork_pid" 2>/dev/null
 		wait 2>/dev/null
 	fi
@@ -8258,17 +8259,18 @@ FormatLongMinutesSecs()
 sleep()
 	{
 
-	# $1 = seconds to sleep (decimal or integer)
+	# $1 = seconds to sleep (decimal or integer) (optional), default is 1 second
 
-	[[ -n ${1:-} ]] || return
-	[[ ${1//.} -gt 0 ]] || return
+	local wait=${1:-}
+
+	[[ ${wait//.} -eq 0 ]] && wait=1
 
 	if [[ -e $GNU_SLEEP_CMD ]]; then
-		$GNU_SLEEP_CMD "$1"
+		$GNU_SLEEP_CMD "$wait"
 	elif [[ $DECIMAL_SECONDS_SUPPORTED = false ]]; then
-		$QTS_SLEEP_CMD "$((${1%.*}+1))"		# ensure decimal seconds are rounded-up to next integer
+		$QTS_SLEEP_CMD "$((${wait%.*}+1))"		# ensure decimal seconds are rounded-up to next integer
 	else
-		$QTS_SLEEP_CMD "$1"
+		$QTS_SLEEP_CMD "$wait"
 	fi
 
 	return 0
