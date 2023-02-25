@@ -55,14 +55,52 @@ Self.Init()
 
 	DebugScriptFuncEn
 
-	readonly MANAGER_FILE=sherpa.manager.sh
-	msg_pipe_fd=none
+	# default values
 	backup_stdin_fd=none
+	ipks_install=false
+	ipks_upgrade=false
+	msg_pipe_fd=none
+	pips_install=false
+	skip_qpkg_processing=false
+
+	self_debug_to_screen=false
+	self_display_clean=false
+	self_display_zero_qpkgs=true
+	self_linespace_onscreen=false
+
+	opts_help_abbreviations=false
+	opts_help_action_reassign=false
+	opts_help_actions=false
+	opts_help_actions_all=false
+	opts_help_backups=false
+	opts_help_basic=false
+	opts_help_failed=false
+	opts_help_groups=false
+	opts_help_ok=false
+	opts_help_options=false
+	opts_help_packages=false
+	opts_help_problems=false
+	opts_help_repos=false
+	opts_help_results=false
+	opts_help_showbackuploc=false
+	opts_help_skipped=false
+	opts_help_status=false
+	opts_help_suggestissue=false
+	opts_help_tips=false
+
+	opts_log_last_paste=false
+	opts_log_tail_paste=false
+	opts_log_last_view=false
+	opts_log_tail_view=false
+
+	opts_deps_check=false
+	opts_vers_view=false
+
 	UpdateColourisation
 
 	IsQNAP || return
 	IsSU || return
-	ClaimLockFile /var/run/sherpa.lock || return
+	ClaimLockFile || return
 
 	trap RunOnEXIT EXIT
 	trap RunOnSIGINT INT
@@ -159,21 +197,13 @@ Self.Init()
 	readonly PIP_CACHE_PATH=$WORK_PATH/pips
 	readonly ACTION_MSG_PIPE=/var/run/qpkg.messages.pipe
 
-	local -r MANAGER_ARCHIVE_FILE=${MANAGER_FILE%.*}.tar.gz
-	readonly MANAGER_ARCHIVE_PATHFILE=$WORK_PATH/$MANAGER_ARCHIVE_FILE
-	readonly MANAGER_PATHFILE=$WORK_PATH/$MANAGER_FILE
+	readonly OBJECTS_PATHFILE=$WORK_PATH/objects
+	readonly OBJECTS_ARCHIVE_URL="<?cdn_sherpa_root_url?>"/objects.tar.gz
+	readonly OBJECTS_ARCHIVE_PATHFILE=$WORK_PATH/objects.tar.gz
 
-	local -r OBJECTS_FILE=objects
-	local -r OBJECTS_ARCHIVE_FILE=$OBJECTS_FILE.tar.gz
-	readonly OBJECTS_ARCHIVE_URL="<?cdn_sherpa_root_url?>/$OBJECTS_ARCHIVE_FILE"
-	readonly OBJECTS_ARCHIVE_PATHFILE=$WORK_PATH/$OBJECTS_ARCHIVE_FILE
-	readonly OBJECTS_PATHFILE=$WORK_PATH/$OBJECTS_FILE
-
-	local -r PACKAGES_FILE=packages
-	local -r PACKAGES_ARCHIVE_FILE=$PACKAGES_FILE.tar.gz
-	local -r PACKAGES_ARCHIVE_URL="<?cdn_sherpa_root_url?>/$PACKAGES_ARCHIVE_FILE"
-	readonly PACKAGES_ARCHIVE_PATHFILE=$WORK_PATH/$PACKAGES_ARCHIVE_FILE
-	readonly PACKAGES_PATHFILE=$WORK_PATH/$PACKAGES_FILE
+	readonly PACKAGES_PATHFILE=$WORK_PATH/packages
+	readonly PACKAGES_ARCHIVE_URL="<?cdn_sherpa_root_url?>"/packages.tar.gz
+	readonly PACKAGES_ARCHIVE_PATHFILE=$WORK_PATH/packages.tar.gz
 
 	readonly EXTERNAL_PACKAGES_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
 	readonly EXTERNAL_PACKAGES_PATHFILE=$WORK_PATH/Packages
@@ -185,17 +215,19 @@ Self.Init()
 	sess_active_pathfile=$THIS_PACKAGE_PATH/session.$$.active.log
 	readonly SESS_LAST_PATHFILE=$LOGS_PATH/session.last.log
 	readonly SESS_TAIL_PATHFILE=$LOGS_PATH/session.tail.log
-	readonly ACTIONS_LOG_PATHFILE=$LOGS_PATH/session.action.results.log
+	readonly SESS_ACTIONS_RESULTS_PATHFILE=$LOGS_PATH/session.action.results.log
 
 	# ordered
-#	 MANAGEMENT_ACTIONS=(Check List Paste Status)
+# 	MANAGEMENT_ACTIONS=(Check List Paste Status)
 	PACKAGE_TIERS=(Standalone Addon Dependent)
 	PACKAGE_TYPES=(QPKG IPK PIP)
+	PACKAGE_ACTIONS=(Download Rebuild Reassign Backup Stop Disable Uninstall Upgrade Reinstall Install Restore Clean Enable Start Restart Sign)
 
 	# sorted
 	QPKG_Is_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Reassigned Reinstalled Restarted Signed Started Upgraded)
 	QPKG_IsNt_STATES=(BackedUp Downloaded Enabled Installed Started)
 	QPKG_STATES_TRANSIENT=(Restarting Starting Stopping)
+	QPKG_SERVICE_RESULTS=(Ok Unknown)
 
 	# selectable by the user
 	# sorted
@@ -205,23 +237,15 @@ Self.Init()
 	USER_QPKG_IsNt_STATES=(BackedUp Installed Started)
 	USER_QPKG_ACTIONS=(Backup Clean Install Reassign Rebuild Reinstall Restart Restore Start Stop Uninstall Upgrade)
 
-	# only used by sherpa QPKG service-script results parser
-	QPKG_RESULTS=(Ok Unknown)
-	ACTION_RESULTS=(failed ok skipped)
-
-	# ordered
-	PACKAGE_ACTIONS=(Download Rebuild Reassign Backup Stop Disable Uninstall Upgrade Reinstall Install Restore Clean Enable Start Restart Sign)
-	QPKG_ACTIONS=(Download Rebuild Reassign Backup Stop Disable Uninstall Upgrade Reinstall Install Restore Clean Enable Start Restart Sign)
-	IPK_ACTIONS=(Download Uninstall Upgrade Reinstall Install)
-	PIP_ACTIONS=(Download Uninstall Upgrade Reinstall Install)
-
-#	 readonly MANAGEMENT_ACTIONS
+	# KLUDGE: for some reason, setting 'readonly' while populating arrays causes their scope to become local, so need to set as 'readonly' afterward to ensure global scope. GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
 	readonly PACKAGE_TIERS
 	readonly PACKAGE_TYPES
+	readonly PACKAGE_ACTIONS
 
 	readonly QPKG_Is_STATES
 	readonly QPKG_IsNt_STATES
 	readonly QPKG_STATES_TRANSIENT
+	readonly QPKG_SERVICE_RESULTS
 
 	readonly USER_QPKG_Sc_GROUPS
 	readonly USER_QPKG_ScNt_GROUPS
@@ -229,62 +253,11 @@ Self.Init()
 	readonly USER_QPKG_IsNt_STATES
 	readonly USER_QPKG_ACTIONS
 
-	readonly QPKG_RESULTS
-	readonly ACTION_RESULTS
-
-	readonly PACKAGE_ACTIONS
-	readonly QPKG_ACTIONS
-	readonly IPK_ACTIONS
-	readonly PIP_ACTIONS
-
 	local action=''
 
 	for action in "${PACKAGE_ACTIONS[@]}" check debug update; do
 		readonly "$(Uppercase "$action")"_LOG_FILE="$(Lowercase "$action")".log
 	done
-
-	# default values
-	self_debug_to_screen=false
-	self_display_clean=false
-	self_linespace_onscreen=false
-	self_display_zero_qpkgs=true
-
-	opts_help_abbreviations=false
-	opts_help_action_reassign=false
-	opts_help_actions=false
-	opts_help_actions_all=false
-	opts_help_backups=false
-	opts_help_basic=false
-	opts_help_failed=false
-	opts_help_groups=false
-	opts_help_ok=false
-	opts_help_options=false
-	opts_help_packages=false
-	opts_help_problems=false
-	opts_help_repos=false
-	opts_help_results=false
-	opts_help_showbackuploc=false
-	opts_help_skipped=false
-	opts_help_status=false
-	opts_help_suggestissue=false
-	opts_help_tips=false
-
-	opts_log_last_paste=false
-	opts_log_tail_paste=false
-	opts_log_last_view=false
-	opts_log_tail_view=false
-
-	opts_deps_check=false
-	opts_vers_view=false
-
-	objects_loaded=false
-	qpkgs_loaded=false
-	skip_qpkg_processing=false
-	qpkgs_states_built=false
-	ipks_upgrade=false
-	ipks_install=false
-	pips_install=false
-	re=''
 
 	# KLUDGE: service scripts prior to 2022-12-08 would use these paths (by-default) to build/cache Python packages. This has been fixed, but still need to free-up this space to prevent out-of-space issues.
 	[[ -d /root/.cache ]] && rm -rf /root/.cache
@@ -304,7 +277,7 @@ Self.Init()
 
 	ArchivePriorSessLogs
 
-	re=\\breset\\b		# BASH 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
+	local re=\\breset\\b		# BASH 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
 
 	if [[ $USER_ARGS_RAW =~ $re ]]; then
 		ResetArchivedLogs
@@ -605,6 +578,7 @@ Self.Validate()
 	QPKGs.IsCanBackup.Build
 	QPKGs.IsCanRestartToUpdate.Build
 	QPKGs.IsCanClean.Build
+
 	AllocGroupPacksToAcs
 
 	# Meta-action pre-processing
@@ -769,7 +743,7 @@ Actions.Proc()
 	local action=''
 	local -i tier_index=0
 
-	[[ -e $ACTIONS_LOG_PATHFILE ]] && rm "$ACTIONS_LOG_PATHFILE"
+	[[ -e $SESS_ACTIONS_RESULTS_PATHFILE ]] && rm "$SESS_ACTIONS_RESULTS_PATHFILE"
 
 	Action.Proc Reassign All QPKG AcToReassign reassigning reassigned || return
 	Action.Proc Download All QPKG AcToDownload downloading downloaded || return
@@ -1308,7 +1282,7 @@ ParseArgs()
 		if [[ -n $action ]]; then
 			case $arg in
 			# these cases use only a single word or char to specify a single group
-				backedup|failed|help|installable|installed|missing|not-backedup|not-installed|ok|problems|results|skipped|started|stopped|tail|tips)
+				backedup|failed|installable|installed|missing|not-backedup|not-installed|ok|problems|results|skipped|started|stopped|tail|tips)
 					group=${arg}_
 					;;
 			# all cases below can use multiple words or chars to specify a single group
@@ -1599,8 +1573,8 @@ ParseArgs()
 						action=''
 						;;
 					last_)
-						action=''
 						opts_log_last_paste=true
+						action=''
 				esac
 
 				skip_qpkg_processing=true
@@ -1987,7 +1961,6 @@ Self.ArgSuggests.Show()
 
 AllocGroupPacksToAcs()
 	{
-
 	DebugScriptFuncEn
 
 	local action=''
@@ -2929,7 +2902,7 @@ readonly HELP_SYNTAX_SUDO_PROMPT=${HELP_SYNTAX_REGULAR_PROMPT}'sudo '
 readonly HELP_SYNTAX_SUPER_PROMPT='# '
 
 readonly HELP_PACKAGE_NAME_WIDTH=20
-readonly HELP_PACKAGE_AUTHOR_WIDTH=12
+readonly HELP_PACKAGE_AUTHOR_WIDTH=18
 readonly HELP_PACKAGE_STATUS_WIDTH=40
 readonly HELP_PACKAGE_VER_WIDTH=17
 readonly HELP_PACKAGE_PATH_WIDTH=42
@@ -3033,7 +3006,7 @@ DisplayAsHelpPackageNameAuthorDesc()
 	if [[ -z ${4:-} ]]; then
 		printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%-${HELP_PACKAGE_AUTHOR_WIDTH}s${HELP_COL_SPACER}${HELP_COL_OTHER_PREFIX}%s\n" "${1:-}" "${2:-}" "${3:-}"
 	else
-		printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%-${HELP_PACKAGE_AUTHOR_WIDTH}s${HELP_COL_SPACER}${HELP_COL_OTHER_PREFIX}%s $(ColourTextBrightOrange "%s")\n" "${1:-}" "${2:-}" "${3:-}" "${4:-}"
+		printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%-${HELP_PACKAGE_AUTHOR_WIDTH}s${HELP_COL_SPACER}${HELP_COL_OTHER_PREFIX}%s $(ColourTextBrightOrange "%s")\n" "${1:-}" "${2:-}" "${3:-}" "* ${4:-}"
 	fi
 
 	}
@@ -3458,7 +3431,7 @@ Actions.Results.Show()
 	local package_type=''
 	local found=false
 
-	if [[ -e $ACTIONS_LOG_PATHFILE ]]; then
+	if [[ -e $SESS_ACTIONS_RESULTS_PATHFILE ]]; then
 		local IFS='|'
 
 		while read -r datetime action package_name result duration reason package_type; do
@@ -3482,7 +3455,7 @@ Actions.Results.Show()
 				ShowAsActionLogDetail "$datetime" "$package_name" "$action" "$result" "$duration" "$reason" "$package_type"
 				found=true
 			fi
-		done < "$ACTIONS_LOG_PATHFILE"
+		done < "$SESS_ACTIONS_RESULTS_PATHFILE"
 	fi
 
 	if [[ $found = false ]]; then
@@ -3530,7 +3503,7 @@ Help.Packages.Show()
 	DisplayAsHelpTitle "One-or-more $(FormatAsPackages) may be specified at-once"
 
 	for tier in Standalone Dependent; do
-		DisplayAsHelpTitlePackageNameAuthorDesc "$tier QPKGs" author 'package description'
+		DisplayAsHelpTitlePackageNameAuthorDesc "$tier QPKGs" 'QPKG author' 'package description'
 
 		for package in $(QPKGs.Sc${tier}.Array); do
 			DisplayAsHelpPackageNameAuthorDesc "$package" "$(QPKG.Author "$package")" "$(QPKG.Desc "$package")" "$(QPKG.Note "$package")"
@@ -4163,7 +4136,7 @@ QPKGs.States.List()
 	QPKGs.States.Build "${1:-}"
 	DebugInfoMinSepr
 
-	for state in "${USER_QPKG_Is_STATES[@]}" "${QPKG_RESULTS[@]}"; do
+	for state in "${USER_QPKG_Is_STATES[@]}" "${QPKG_SERVICE_RESULTS[@]}"; do
 		if [[ $state = Installed || $state = Enabled ]]; then
 			continue
 		elif [[ $state = Unknown ]]; then
@@ -4173,7 +4146,7 @@ QPKGs.States.List()
 		fi
 	done
 
-	for state in "${USER_QPKG_IsNt_STATES[@]}" "${QPKG_RESULTS[@]}"; do
+	for state in "${USER_QPKG_IsNt_STATES[@]}" "${QPKG_SERVICE_RESULTS[@]}"; do
 		if [[ $state = Installed || $state = Upgradable ]]; then
 			continue
 		elif [[ $state = Ok ]]; then
@@ -4250,7 +4223,7 @@ QPKGs.States.Build()
 		qpkgs_states_built=false
 	fi
 
-	[[ $qpkgs_states_built = true ]] && return
+	[[ ${qpkgs_states_built:=false} = true ]] && return
 	DebugScriptFuncEn
 
 	local -i index=0
@@ -5177,9 +5150,10 @@ ShowZeroQPKGs()
 ClaimLockFile()
 	{
 
-	readonly LOCK_PATHFILE=${1:?null}
+	readonly LOCK_PATHFILE=/var/run/sherpa.lock
+	local re=\\bsherpa.manager.sh\\b
 
-	if [[ -e $LOCK_PATHFILE && -d /proc/$(<"$LOCK_PATHFILE") && $(</proc/"$(<"$LOCK_PATHFILE")"/cmdline) =~ $MANAGER_FILE ]]; then
+	if [[ -e $LOCK_PATHFILE && -d /proc/$(<"$LOCK_PATHFILE") && $(</proc/"$(<"$LOCK_PATHFILE")"/cmdline) =~ $re ]]; then
 		ShowAsAbort "another instance is running (PID: $(<"$LOCK_PATHFILE"))"
 		return 1
 	fi
@@ -5241,7 +5215,7 @@ SaveActionResultToLog()
 	local var_safe_name=${var_name//[.-]/_}
 	local duration="$(CalcMilliDifference "${!var_safe_name}" "$($DATE_CMD +%s%N)")"
 
-	echo "$(/bin/date +%s)|${3:?action empty}|${2:?package name empty}|${4:?result empty}|$duration|${5:-}|${1:?package type empty}" >> "$ACTIONS_LOG_PATHFILE"
+	echo "$(/bin/date +%s)|${3:?action empty}|${2:?package name empty}|${4:?result empty}|$duration|${5:-}|${1:?package type empty}" >> "$SESS_ACTIONS_RESULTS_PATHFILE"
 
 	case $4 in
 		ok)
@@ -8306,7 +8280,7 @@ Objects.Load()
 
 	# Ensure `objects` in the local work path is up-to-date, then source it
 
-	[[ $objects_loaded = true ]] && return
+	[[ ${objects_loaded:=false} = true ]] && return
 	DebugScriptFuncEn
 
 	if [[ ! -e $PWD/dont.refresh.objects ]]; then
@@ -8325,9 +8299,9 @@ Objects.Load()
 
 	ShowAsProc 'loading objects'
 	. "$OBJECTS_PATHFILE"
+	objects_loaded=true
 
 	readonly OBJECTS_VER
-	objects_loaded=true
 	DebugScriptFuncEx
 
 	}
@@ -8337,7 +8311,7 @@ Packages.Load()
 
 	# Ensure `packages` in the local work path is up-to-date, then source it
 
-	[[ $qpkgs_loaded = true ]] && return
+	[[ ${packages_loaded:=false} = true ]] && return
 	DebugScriptFuncEn
 
 	if [[ ! -e $PWD/dont.refresh.packages ]]; then
@@ -8356,6 +8330,7 @@ Packages.Load()
 
 	ShowAsProc 'loading package list'
 	. "$PACKAGES_PATHFILE"
+	packages_loaded=true
 
 	readonly PACKAGES_VER
 	readonly BASE_QPKG_CONFLICTS_WITH
@@ -8367,13 +8342,13 @@ Packages.Load()
 
 	# package arrays are now full, so lock them
 	readonly QPKG_NAME
+		readonly QPKG_ARCH
+		readonly QPKG_VERSION
+		readonly QPKG_MD5
+		readonly QPKG_URL
+		readonly QPKG_MIN_RAM_KB
 		readonly QPKG_AUTHOR
 		readonly QPKG_APP_AUTHOR
-		readonly QPKG_ARCH
-		readonly QPKG_MIN_RAM_KB
-		readonly QPKG_VERSION
-		readonly QPKG_URL
-		readonly QPKG_MD5
 		readonly QPKG_DESC
 		readonly QPKG_NOTE
 		readonly QPKG_ABBRVS
@@ -8385,7 +8360,6 @@ Packages.Load()
 		readonly QPKG_CAN_CLEAN
 		readonly QPKG_CAN_LOG
 
-	qpkgs_loaded=true
 	DebugScript version "packages: ${PACKAGES_VER:-unknown}"
 	QPKGs.ScAll.Add "${QPKG_NAME[*]}"
 	QPKGs.StandaloneDependent.Build
