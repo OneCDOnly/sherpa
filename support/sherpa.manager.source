@@ -363,7 +363,7 @@ Self.Init()
 	EraseThisLine
 
 	if [[ $self_display_clean = false && $self_debug_to_screen = false ]]; then
-		Display "$(FormatAsTitle) $(FormatAsVersion) • a mini-package-manager for QNAP NAS"
+		Display "$(FormatAsTitle) $(FormatAsVersion) $(FormatAsDescription)"
 		DisplayLineSpaceIfNoneAlready
 	fi
 
@@ -3308,7 +3308,7 @@ Help.ActionsAll.Show()
 	DisableDebugToArchiveAndFile
 	Help.Basic.Show
 	DisplayAsHelpTitle "the 'all' group applies to all installed packages. If $(FormatAsAction) is 'install all' then all available packages will be installed."
-	DisplayAsHelpTitle "$(FormatAsAction) $(FormatAsGroups) usage examples:"
+	DisplayAsHelpTitle "$(FormatAsAction) $(FormatAsGroup) usage examples:"
 	DisplayAsProjSynIndentExam 'install everything!' 'install all'
 	DisplayAsProjSynIndentExam 'uninstall everything!' 'force uninstall all'
 	DisplayAsProjSynIndentExam 'reinstall all installed packages' 'reinstall all'
@@ -3346,7 +3346,7 @@ Help.BackupLocation.Show()
 Help.Basic.Show()
 	{
 
-	DisplayAsHelpTitle "Usage: sherpa $(FormatAsAction) $(FormatAsPackages) $(FormatAsGroups) $(FormatAsOptions)"
+	DisplayAsHelpTitle "Usage: sherpa $(FormatAsAction) $(FormatAsPackages) $(FormatAsGroup) $(FormatAsOptions)"
 
 	return 0
 
@@ -3355,11 +3355,11 @@ Help.Basic.Show()
 Help.Basic.Example.Show()
 	{
 
-	DisplayAsProjSynIndentExam "to list available $(FormatAsAction)s, type" 'list actions'
-	DisplayAsProjSynIndentExam "to list available $(FormatAsPackages), type" 'list packages'
+	DisplayAsProjSynIndentExam "to list available $(FormatAsAction)s" 'list actions'
+	DisplayAsProjSynIndentExam "to list available $(FormatAsPackages)" 'list packages'
 	DisplayAsProjSynIndentExam '' p
-	DisplayAsProjSynIndentExam "to list available $(FormatAsGroups)s, type" 'list groups'
-	DisplayAsProjSynIndentExam "or, for more $(FormatAsOptions), type" 'list options'
+	DisplayAsProjSynIndentExam "to list available $(FormatAsGroup)s" 'list groups'
+	DisplayAsProjSynIndentExam "or, for more $(FormatAsOptions)" 'list options'
 	DisplayAsHelpTitle "More in the wiki: $(FormatAsURL "https://github.com/OneCDOnly/sherpa/wiki")"
 
 	return 0
@@ -3371,7 +3371,7 @@ Help.Groups.Show()
 
 	DisableDebugToArchiveAndFile
 	Help.Basic.Show
-	DisplayAsHelpTitle "$(FormatAsGroups) usage examples:"
+	DisplayAsHelpTitle "$(FormatAsGroup) usage examples:"
 	DisplayAsProjSynIndentExam 'select every package' "$(FormatAsAction) all"
 	DisplayAsProjSynIndentExam 'select only standalone packages (these do not depend on other QPKGs)' "$(FormatAsAction) standalone"
 	DisplayAsProjSynIndentExam 'select only dependent packages (these require another QPKG to be installed and started)' "$(FormatAsAction) dependent"
@@ -3383,7 +3383,7 @@ Help.Groups.Show()
 	DisplayAsProjSynIndentExam 'select only packages that are not backed-up' "$(FormatAsAction) not-backedup"
 	DisplayAsProjSynIndentExam 'select only packages that are upgradable' "$(FormatAsAction) upgradable"
 	DisplayAsProjSynIndentExam 'select only missing packages (these are partly installed and broken)' "$(FormatAsAction) missing"
-	DisplayAsProjSynExam 'multiple groups are supported like this' "$(FormatAsAction) $(FormatAsGroups) $(FormatAsGroups)"
+	DisplayAsProjSynExam 'multiple groups are supported like this' "$(FormatAsAction) $(FormatAsGroup) $(FormatAsGroup)"
 
 	return 0
 
@@ -7143,7 +7143,14 @@ FormatAsTitle()
 FormatAsVersion()
 	{
 
-	ColourTextDarkGrey "$THIS_SCRIPT_VER"
+	echo "$THIS_SCRIPT_VER"
+
+	}
+
+FormatAsDescription()
+	{
+
+	ColourTextDarkGrey '• a mini-package-manager for QNAP NAS'
 
 	}
 
@@ -7161,7 +7168,7 @@ FormatAsPackages()
 
 	}
 
-FormatAsGroups()
+FormatAsGroup()
 	{
 
 	ColourTextBrightOrange '[package group]'
