@@ -351,7 +351,6 @@ Self.Init()
 		help_syntax_sudo_prefix="$HELP_SYNTAX_SUDO_PROMPT"
 	fi
 
-	# SPEEDUP: don't build package lists if only showing basic help
 	if [[ -z $USER_ARGS_RAW ]]; then
 		opts_help_basic=true
 		skip_qpkg_processing=true
@@ -364,7 +363,7 @@ Self.Init()
 	EraseThisLine
 
 	if [[ $self_display_clean = false && $self_debug_to_screen = false ]]; then
-		Display "$(FormatAsTitle) $THIS_SCRIPT_VER • a mini-package-manager for QNAP NAS"
+		Display "$(FormatAsTitle) $(FormatAsVersion) • a mini-package-manager for QNAP NAS"
 		DisplayLineSpaceIfNoneAlready
 	fi
 
@@ -7141,6 +7140,13 @@ FormatAsTitle()
 
 	}
 
+FormatAsVersion()
+	{
+
+	ColourTextDarkGrey "$THIS_SCRIPT_VER"
+
+	}
+
 FormatAsAction()
 	{
 
@@ -8102,6 +8108,17 @@ ColourTextBrightRedBlink()
 
 	if [[ $colourful = true ]]; then
 		echo -en '\033[1;5;31m'"$(ColourReset "${1:-}")"
+	else
+		echo -n "${1:-}"
+	fi
+
+	} 2>/dev/null
+
+ColourTextDarkGrey()
+	{
+
+	if [[ $colourful = true ]]; then
+		echo -en '\033[1;90m'"$(ColourReset "${1:-}")"
 	else
 		echo -n "${1:-}"
 	fi
