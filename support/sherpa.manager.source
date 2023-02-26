@@ -54,11 +54,12 @@ Self.Init()
 	{
 
 	DebugScriptFuncEn
-	LoadDefaults
-	UpdateColourisation
+	LoadDefaultVars
 	IsQNAP || return
 	IsSU || return
 	ClaimLockFile || return
+	UpdateColourisation
+	LoadDefaultConsts
 
 	trap RunOnEXIT EXIT
 	trap RunOnSIGINT INT
@@ -185,7 +186,7 @@ Self.Init()
 
 	}
 
-LoadDefaults()
+LoadDefaultVars()
 	{
 
 	# default values
@@ -195,6 +196,7 @@ LoadDefaults()
 	msg_pipe_fd=none
 	pips_install=false
 	skip_qpkg_processing=false
+	colourful=true
 
 	self_debug_to_screen=false
 	self_display_clean=false
@@ -229,6 +231,12 @@ LoadDefaults()
 	opts_deps_check=false
 	opts_vers_view=false
 
+	}
+
+LoadDefaultConsts()
+	{
+
+	# default values
 	readonly THIS_PACKAGE_PATH=$(QPKG.InstallationPath)
 	readonly WORK_PATH=$THIS_PACKAGE_PATH/cache
 	readonly LOGS_PATH=$THIS_PACKAGE_PATH/logs

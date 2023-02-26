@@ -1,72 +1,8 @@
+* deluge-web not starting when start requested at the same time as deluge-server.
+
 * ensure each action fork is actually being killed after it issues an 'exit' into the message pipe.
 
 * remove hint to 'enable' QPKG when attempting to 'stop' it while in a disabled state:
     [~] # /etc/init.d/clamav.sh stop; echo $?
     The 'ClamAV' QPKG is disabled. Please enable it first with: qpkg_service enable ClamAV
     1
-
-* weird error while upgrading Entware and ClamAV QPKGs. I suspect this happened because GNU `sleep` became unavailable partway:
-	[~] # sherpa upgrade all
-	sherpa 230226-main • a mini-package-manager for QNAP NAS
-
-	done: downloaded 11 QPKGs
-	proc: upgrading standalone QPKG: 50% (0/1): 1 in-progressBus error
-	: 50% (0/1): 1 in-progress/opt/bin/sleep: error while loading shared libraries: /opt/lib/libc.so.6: file too short
-	/opt/bin/sleep: error while loading shared libraries: /opt/lib/libc.so.6: file too short
-	/opt/bin/sleep: error while loading shared libraries: /opt/lib/libc.so.6: file too short
-	Bus error
-	Bus error
-	Bus error
-	Bus error
-	Bus error
-	Bus error
-	Bus error
-	Bus error
-	Bus error
-	done: upgraded 1 standalone QPKG
-	done: installed no standalone QPKGs
-		└─ skipped: Entware,Par2
-	done: upgraded 1 dependent QPKG
-		└─ skipped: Headphones,LazyLibrarian,OMedusa,Mylar3,nzbToMedia,SABnzbd,OSickGear,OWatcher3
-	done: signed 2 QPKGs
-
-	• These package actions completed OK:
-		download Entware in 1 second
-		download LazyLibrarian in 1 second
-		download ClamAV in 1 second
-		download Headphones in 1 second
-		download OMedusa in 1 second
-		download Mylar3 in 1 second
-		download SABnzbd in 1 second
-		download nzbToMedia in 1 second
-		download OSickGear in 1 second
-		download OWatcher3 in 1 second
-		download Par2 in 1 second
-		upgrade Entware in 22 seconds
-		upgrade ClamAV in 7 seconds
-		sign Entware in 1 second
-		sign ClamAV in 1 second
-
-	• These package actions were skipped:
-		install Entware
-			Reason: already installed
-		install Par2
-			Reason: already installed
-		upgrade Headphones
-			Reason: no new package is available
-		upgrade LazyLibrarian
-			Reason: no new package is available
-		upgrade OMedusa
-			Reason: no new package is available
-		upgrade Mylar3
-			Reason: no new package is available
-		upgrade nzbToMedia
-			Reason: no new package is available
-		upgrade SABnzbd
-			Reason: no new package is available
-		upgrade OSickGear
-			Reason: no new package is available
-		upgrade OWatcher3
-			Reason: no new package is available
-
-	[~] #
