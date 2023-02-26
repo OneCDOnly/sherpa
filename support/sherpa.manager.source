@@ -3055,22 +3055,6 @@ CalcMaxStatusColsToDisplay()
 
 	}
 
-CalcMaxRepoColsToDisplay()
-	{
-
-	local col1_width=$((${#HELP_COL_MAIN_PREFIX}+HELP_PACKAGE_NAME_WIDTH))
-	local col2_width=$((${#HELP_COL_SPACER}+${#HELP_COL_MAIN_PREFIX}+HELP_PACKAGE_REPO_WIDTH))
-
-	if [[ $((col1_width+col2_width)) -ge $SESS_COLS ]]; then
-		echo 1
-	else
-		echo 2
-	fi
-
-	return 0
-
-	}
-
 DisplayAsHelpTitlePackageNameVerStatus()
 	{
 
@@ -3079,7 +3063,6 @@ DisplayAsHelpTitlePackageNameVerStatus()
 	# $3 = package version title
 	# $4 = package installation location (only if installed)
 
-	local maxcols=$(CalcMaxStatusColsToDisplay)
 	DisplayLineSpaceIfNoneAlready
 
 	if [[ -n ${1:-} && $maxcols -ge 1 ]]; then
@@ -3109,8 +3092,6 @@ DisplayAsHelpPackageNameVerStatus()
 	# $2 = package status (optional)
 	# $3 = package version number (optional)
 	# $4 = package installation path (optional) - only if installed
-
-	local maxcols=$(CalcMaxStatusColsToDisplay)
 
 	if [[ -n ${1:-} && $maxcols -ge 1 ]]; then
 		printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%-$((HELP_PACKAGE_NAME_WIDTH+$(LenANSIDiff "$1")))s" "$1"
@@ -3144,7 +3125,6 @@ DisplayAsHelpTitlePackageNameRepo()
 	# $1 = package name title
 	# $2 = assigned repository title
 
-	local maxcols=$(CalcMaxStatusColsToDisplay)
 	DisplayLineSpaceIfNoneAlready
 
 	if [[ -n ${1:-} && $maxcols -ge 1 ]]; then
@@ -3165,8 +3145,6 @@ DisplayAsHelpPackageNameRepo()
 
 	# $1 = package name
 	# $2 = assigned repository
-
-	local maxcols=$(CalcMaxRepoColsToDisplay)
 
 	if [[ -n ${1:-} && $maxcols -ge 1 ]]; then
 		printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%-$((HELP_PACKAGE_NAME_WIDTH+$(LenANSIDiff "$1")))s" "$1"
@@ -3509,6 +3487,7 @@ Help.PackageAbbreviations.Show()
 	local tier=''
 	local package_name=''
 	local abs=''
+	maxcols=2
 
 	DisableDebugToArchiveAndFile
 	Help.Basic.Show
@@ -4399,7 +4378,7 @@ QPKGs.Repos.Show()
 	local package_name=''
 	local package_store_id=''
 	local package_repo_URL_formatted=''
-	local maxcols=$(CalcMaxRepoColsToDisplay)
+	maxcols=2
 
 	DisableDebugToArchiveAndFile
 	QPKGs.States.Build
@@ -4475,7 +4454,7 @@ QPKGs.Statuses.Show()
 	local package_name_formatted=''
 	local package_status=''
 	local package_ver=''
-	local maxcols=$(CalcMaxStatusColsToDisplay)
+	maxcols=$(CalcMaxStatusColsToDisplay)
 
 	DisableDebugToArchiveAndFile
 	QPKGs.States.Build
@@ -4484,11 +4463,6 @@ QPKGs.Statuses.Show()
 		DisplayAsHelpTitlePackageNameVerStatus "$tier packages" 'package statuses (last result)' 'QPKG version' 'installation path'
 
 		for package_name in $(QPKGs.Sc$tier.Array); do
-			package_name_formatted=''
-			package_status=''
-			package_ver=''
-			package_status_notes=()
-
 			if ! QPKG.URL "$package_name" &>/dev/null; then
 				DisplayAsHelpPackageNameVerStatus "$package_name" "$(ColourTextBrightOrange '* not installable: no arch')"
 			elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
@@ -4496,6 +4470,10 @@ QPKGs.Statuses.Show()
 			elif QPKGs.IsNtInstalled.Exist "$package_name"; then
 				DisplayAsHelpPackageNameVerStatus "$package_name" 'not installed' "$(QPKG.Avail.Ver "$package_name")"
 			else
+				package_name_formatted=''
+				package_status=''
+				package_ver=''
+
 				if [[ $maxcols -eq 1 ]]; then
 					if QPKGs.IsMissing.Exist "$package_name"; then
 						package_name_formatted=$(ColourTextBrightRedBlink "$package_name")
@@ -4505,6 +4483,7 @@ QPKGs.Statuses.Show()
 						package_name_formatted=$(ColourTextBrightRed "$package_name")
 					fi
 
+					# state
 					if QPKGs.IsStarting.Exist "$package_name"; then
 						package_name_formatted=$(ColourTextBrightOrange "$package_name")
 					elif QPKGs.IsStopping.Exist "$package_name"; then
@@ -4517,6 +4496,8 @@ QPKGs.Statuses.Show()
 						package_name_formatted=$(ColourTextBrightRed "$package_name")
 					fi
 				else
+					package_status_notes=()
+
 					if QPKGs.IsMissing.Exist "$package_name"; then
 						package_status_notes=($(ColourTextBrightRedBlink missing))
 					elif QPKGs.IsEnabled.Exist "$package_name"; then
@@ -4525,6 +4506,7 @@ QPKGs.Statuses.Show()
 						package_status_notes+=($(ColourTextBrightRed disabled))
 					fi
 
+					# state
 					if QPKGs.IsStarting.Exist "$package_name"; then
 						package_status_notes+=($(ColourTextBrightOrange starting))
 					elif QPKGs.IsStopping.Exist "$package_name"; then
@@ -4537,6 +4519,7 @@ QPKGs.Statuses.Show()
 						package_status_notes+=($(ColourTextBrightRed stopped))
 					fi
 
+					# is this QPKG upgradable?
 					if QPKGs.ScUpgradable.Exist "$package_name"; then
 						package_ver="$(QPKG.Local.Ver "$package_name") $(ColourTextBrightOrange "($(QPKG.Avail.Ver "$package_name"))")"
 						package_status_notes+=($(ColourTextBrightOrange upgradable))
@@ -4544,6 +4527,7 @@ QPKGs.Statuses.Show()
 						package_ver=$(QPKG.Avail.Ver "$package_name")
 					fi
 
+					# service script results
 					if QPKGs.IsNtOk.Exist "$package_name"; then
 						package_status_notes+=("($(ColourTextBrightRed failed))")
 					elif QPKGs.IsOk.Exist "$package_name"; then
@@ -4552,6 +4536,7 @@ QPKGs.Statuses.Show()
 						package_status_notes+=("($(ColourTextBrightOrange unknown))")
 					fi
 
+					# insert commas
 					for ((index=0; index<=((${#package_status_notes[@]}-1)); index++)); do
 						package_status+=${package_status_notes[$index]}
 
