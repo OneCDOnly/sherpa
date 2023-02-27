@@ -54,204 +54,20 @@ Self.Init()
 	{
 
 	DebugScriptFuncEn
-
-	# default values
-	backup_stdin_fd=none
-	ipks_install=false
-	ipks_upgrade=false
-	msg_pipe_fd=none
-	pips_install=false
-	skip_qpkg_processing=false
-
-	self_debug_to_screen=false
-	self_display_clean=false
-	self_display_zero_qpkgs=true
-	self_linespace_onscreen=false
-
-	opts_help_abbreviations=false
-	opts_help_action_reassign=false
-	opts_help_actions=false
-	opts_help_actions_all=false
-	opts_help_backups=false
-	opts_help_basic=false
-	opts_help_failed=false
-	opts_help_groups=false
-	opts_help_ok=false
-	opts_help_options=false
-	opts_help_packages=false
-	opts_help_problems=false
-	opts_help_repos=false
-	opts_help_results=false
-	opts_help_showbackuploc=false
-	opts_help_skipped=false
-	opts_help_status=false
-	opts_help_suggestissue=false
-	opts_help_tips=false
-
-	opts_log_last_paste=false
-	opts_log_tail_paste=false
-	opts_log_last_view=false
-	opts_log_tail_view=false
-
-	opts_deps_check=false
-	opts_vers_view=false
-
-	UpdateColourisation
-
+	LoadDefaultVars
 	IsQNAP || return
 	IsSU || return
 	ClaimLockFile || return
+	UpdateColourisation
+	LoadDefaultConsts
 
 	trap RunOnEXIT EXIT
 	trap RunOnSIGINT INT
 
 	[[ ! -e /dev/fd ]] && ln -s /proc/self/fd /dev/fd		# KLUDGE: `/dev/fd` isn't always created by QTS during startup
 
-	# cherry-pick required Entware binaries
-	readonly OPKG_CMD=/opt/bin/opkg
-	readonly GNU_FIND_CMD=/opt/bin/find
-	readonly GNU_GREP_CMD=/opt/bin/grep
-	readonly GNU_LESS_CMD=/opt/bin/less
-	readonly GNU_SED_CMD=/opt/bin/sed
-	readonly GNU_SETTERM_CMD=/opt/bin/setterm
-	readonly GNU_SLEEP_CMD=/opt/bin/sleep
-	readonly GNU_SQLITE_CMD=/opt/bin/sqlite3
-	readonly GNU_STTY_CMD=/opt/bin/stty
-	readonly PYTHON_CMD=/opt/bin/python
-	readonly PYTHON3_CMD=/opt/bin/python3
-	readonly PIP_CMD="$PYTHON3_CMD -m pip"
-	readonly PERL_CMD=/opt/bin/perl
-
-	HideKeystrokes
-	HideCursor
-
-	# cherry-pick required OS binaries
-	readonly AWK_CMD=/bin/awk
-	readonly CAT_CMD=/bin/cat
-	readonly DATE_CMD=/bin/date
-	readonly DF_CMD=/bin/df
-	readonly GREP_CMD=/bin/grep
-	readonly LESS_CMD=/bin/less
-	readonly MD5SUM_CMD=/bin/md5sum
-	readonly MKNOD_CMD=/bin/mknod
-	readonly SED_CMD=/bin/sed
-	readonly SH_CMD=/bin/sh
-	readonly QTS_SLEEP_CMD=/bin/sleep
-	readonly TOUCH_CMD=/bin/touch
-	readonly UNAME_CMD=/bin/uname
-
-	readonly CURL_CMD=/sbin/curl
-	readonly GETCFG_CMD=/sbin/getcfg
-	readonly SETCFG_CMD=/sbin/setcfg
-
-	readonly BASENAME_CMD=/usr/bin/basename
-	readonly DIRNAME_CMD=/usr/bin/dirname
-	readonly DU_CMD=/usr/bin/du
-	readonly HEAD_CMD=/usr/bin/head
-	readonly READLINK_CMD=/usr/bin/readlink
-	readonly SORT_CMD=/usr/bin/sort
-	readonly TAIL_CMD=/usr/bin/tail
-	readonly TEE_CMD=/usr/bin/tee
-	readonly UNZIP_CMD=/usr/bin/unzip
-	readonly UPTIME_CMD=/usr/bin/uptime
-	readonly WC_CMD=/usr/bin/wc
-
-	# Confirm required binaries are present
-	IsSysFileExist $AWK_CMD || return
-	IsSysFileExist $CAT_CMD || return
-	IsSysFileExist $DATE_CMD || return
-	IsSysFileExist $DF_CMD || return
-	IsSysFileExist $GREP_CMD || return
-	# KLUDGE: don't perform a check for `/bin/less` because it's not always there
-	IsSysFileExist $MD5SUM_CMD || return
-	IsSysFileExist $MKNOD_CMD || return
-	IsSysFileExist $SED_CMD || return
-	IsSysFileExist $SH_CMD || return
-	[[ ! -e $GNU_SLEEP_CMD ]] && { IsSysFileExist $QTS_SLEEP_CMD || return ;}
-	IsSysFileExist $TOUCH_CMD || return
-	IsSysFileExist $UNAME_CMD || return
-
-	IsSysFileExist $CURL_CMD || return
-	IsSysFileExist $GETCFG_CMD || return
-	IsSysFileExist $SETCFG_CMD || return
-
-	IsSysFileExist $BASENAME_CMD || return
-	IsSysFileExist $DIRNAME_CMD || return
-	IsSysFileExist $DU_CMD || return
-	IsSysFileExist $HEAD_CMD || return
-	IsSysFileExist $READLINK_CMD || return
-	[[ ! -e $SORT_CMD ]] && ln -s /bin/busybox "$SORT_CMD"		# KLUDGE: `/usr/bin/sort` randomly disappears from QTS
-	IsSysFileExist $TAIL_CMD || return
-	IsSysFileExist $TEE_CMD || return
-	IsSysFileExist $UNZIP_CMD || return
-	IsSysFileExist $UPTIME_CMD || return
-	IsSysFileExist $WC_CMD || return
-
-	readonly THIS_PACKAGE_PATH=$(QPKG.InstallationPath)
-	readonly WORK_PATH=$THIS_PACKAGE_PATH/cache
-	readonly LOGS_PATH=$THIS_PACKAGE_PATH/logs
-	readonly QPKG_DL_PATH=$WORK_PATH/qpkgs.downloads
-	readonly QPKG_BU_PATH=$(GetDefVol)/.qpkg_config_backup
-	readonly IPK_DL_PATH=$WORK_PATH/ipks.downloads
-	readonly IPK_CACHE_PATH=$WORK_PATH/ipks
-	readonly PIP_CACHE_PATH=$WORK_PATH/pips
-	readonly ACTION_MSG_PIPE=/var/run/qpkg.messages.pipe
-
-	readonly OBJECTS_PATHFILE=$WORK_PATH/objects
-	readonly OBJECTS_ARCHIVE_URL="<?cdn_sherpa_root_url?>"/objects.tar.gz
-	readonly OBJECTS_ARCHIVE_PATHFILE=$WORK_PATH/objects.tar.gz
-
-	readonly PACKAGES_PATHFILE=$WORK_PATH/packages
-	readonly PACKAGES_ARCHIVE_URL="<?cdn_sherpa_root_url?>"/packages.tar.gz
-	readonly PACKAGES_ARCHIVE_PATHFILE=$WORK_PATH/packages.tar.gz
-
-	readonly EXTERNAL_PACKAGES_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
-	readonly EXTERNAL_PACKAGES_PATHFILE=$WORK_PATH/Packages
-
-	readonly PREV_IPK_LIST=$WORK_PATH/ipk.prev.list
-	readonly PREV_PIP_LIST=$WORK_PATH/pip.prev.list
-
-	readonly SESS_ARCHIVE_PATHFILE=$LOGS_PATH/session.archive.log
-	sess_active_pathfile=$THIS_PACKAGE_PATH/session.$$.active.log
-	readonly SESS_LAST_PATHFILE=$LOGS_PATH/session.last.log
-	readonly SESS_TAIL_PATHFILE=$LOGS_PATH/session.tail.log
-	readonly SESS_ACTIONS_RESULTS_PATHFILE=$LOGS_PATH/session.action.results.log
-
-	# ordered
-# 	MANAGEMENT_ACTIONS=(Check List Paste Status)
-	PACKAGE_TIERS=(Standalone Addon Dependent)
-	PACKAGE_TYPES=(QPKG IPK PIP)
-	PACKAGE_ACTIONS=(Download Rebuild Reassign Backup Stop Disable Uninstall Upgrade Reinstall Install Restore Clean Enable Start Restart Sign)
-
-	# sorted
-	QPKG_Is_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Reassigned Reinstalled Restarted Signed Started Upgraded)
-	QPKG_IsNt_STATES=(BackedUp Downloaded Enabled Installed Started)
-	QPKG_STATES_TRANSIENT=(Restarting Starting Stopping)
-	QPKG_SERVICE_RESULTS=(Ok Unknown)
-
-	# selectable by the user
-	# sorted
-	USER_QPKG_Sc_GROUPS=(All CanBackup CanClean CanRestartToUpdate Dependent HasDependents Installable Standalone Upgradable)
-	USER_QPKG_ScNt_GROUPS=(CanClean Installable Upgradable)
-	USER_QPKG_Is_STATES=(BackedUp Installed Missing Started)
-	USER_QPKG_IsNt_STATES=(BackedUp Installed Started)
-	USER_QPKG_ACTIONS=(Backup Clean Install Reassign Rebuild Reinstall Restart Restore Start Stop Uninstall Upgrade)
-
-	# KLUDGE: for some reason, setting 'readonly' while populating arrays causes their scope to become local, so need to set as 'readonly' afterward to ensure global scope. GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
-	readonly PACKAGE_TIERS
-	readonly PACKAGE_TYPES
-	readonly PACKAGE_ACTIONS
-
-	readonly QPKG_Is_STATES
-	readonly QPKG_IsNt_STATES
-	readonly QPKG_STATES_TRANSIENT
-	readonly QPKG_SERVICE_RESULTS
-
-	readonly USER_QPKG_Sc_GROUPS
-	readonly USER_QPKG_ScNt_GROUPS
-	readonly USER_QPKG_Is_STATES
-	readonly USER_QPKG_IsNt_STATES
-	readonly USER_QPKG_ACTIONS
+	ConfirmEnv || return
+	LoadLists
 
 	local action=''
 
@@ -259,22 +75,7 @@ Self.Init()
 		readonly "$(Uppercase "$action")"_LOG_FILE="$(Lowercase "$action")".log
 	done
 
-	# KLUDGE: service scripts prior to 2022-12-08 would use these paths (by-default) to build/cache Python packages. This has been fixed, but still need to free-up this space to prevent out-of-space issues.
-	[[ -d /root/.cache ]] && rm -rf /root/.cache
-	[[ -d /root/.local/share/virtualenv ]] && rm -rf /root/.local/share/virtualenv
-
-	[[ -d $IPK_DL_PATH ]] && rm -rf "$IPK_DL_PATH"
-	[[ -d $IPK_CACHE_PATH ]] && rm -rf "$IPK_CACHE_PATH"
-	[[ -d $PIP_CACHE_PATH ]] && rm -rf "$PIP_CACHE_PATH"
-
-	MakePath "$WORK_PATH" work || return
-	MakePath "$LOGS_PATH" logs || return
-	MakePath "$QPKG_DL_PATH" 'QPKG download' || return
-	MakePath "$IPK_DL_PATH" 'IPK download' || return
-	MakePath "$IPK_CACHE_PATH" 'IPK cache' || return
-	MakePath "$PIP_CACHE_PATH" 'PIP cache' || return
-	MakePath "$QPKG_BU_PATH" 'QPKG backup' || return
-
+	CreatePaths || return
 	ArchivePriorSessLogs
 
 	local re=\\breset\\b		# BASH 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
@@ -314,9 +115,6 @@ Self.Init()
 			break
 		fi
 	done
-
-	readonly THIS_PACKAGE_VER=$(QPKG.Local.Ver)
-	readonly THIS_SCRIPT_VER='<?today?>-<?branch?>'
 
 	DebugInfoMajSepr
 	DebugScript started "$($DATE_CMD -d @"$SCRIPT_STARTSECONDS" | tr -s ' ')"
@@ -376,12 +174,254 @@ Self.Init()
 
 	# KLUDGE: remove all max QTS versions from qpkg.conf (these are not removed automatically when installing updated QPKGs without max version set)
 	# Retain this kludge for 12 months to give everyone time to update their installed sherpa QPKGs. Remove after 2023-09-22
-	if [[ $($GETCFG_CMD sherpa max_versions_cleared -d FALSE -f /etc/config/qpkg.conf) = FALSE ]]; then
+	if [[ $(/sbin/getcfg sherpa max_versions_cleared -d FALSE -f /etc/config/qpkg.conf) = FALSE ]]; then
 		$SED_CMD -i '/^FW_Ver_Max/d' /etc/config/qpkg.conf
 		$SETCFG_CMD sherpa max_versions_cleared TRUE -f /etc/config/qpkg.conf
 	fi
 
+	Self.LogEnv
+	Self.IsAnythingToDo
+	Self.Validate
 	DebugScriptFuncEx
+
+	}
+
+LoadDefaultVars()
+	{
+
+	# default values
+	backup_stdin_fd=none
+	ipks_install=false
+	ipks_upgrade=false
+	msg_pipe_fd=none
+	pips_install=false
+	skip_qpkg_processing=false
+	colourful=true
+
+	self_debug_to_screen=false
+	self_display_clean=false
+	self_display_zero_qpkgs=true
+	self_linespace_onscreen=false
+
+	opts_help_abbreviations=false
+	opts_help_action_reassign=false
+	opts_help_actions=false
+	opts_help_actions_all=false
+	opts_help_backups=false
+	opts_help_basic=false
+	opts_help_failed=false
+	opts_help_groups=false
+	opts_help_ok=false
+	opts_help_options=false
+	opts_help_packages=false
+	opts_help_problems=false
+	opts_help_repos=false
+	opts_help_results=false
+	opts_help_showbackuploc=false
+	opts_help_skipped=false
+	opts_help_status=false
+	opts_help_suggestissue=false
+	opts_help_tips=false
+
+	opts_log_last_paste=false
+	opts_log_tail_paste=false
+	opts_log_last_view=false
+	opts_log_tail_view=false
+
+	opts_deps_check=false
+	opts_vers_view=false
+
+	}
+
+LoadDefaultConsts()
+	{
+
+	# default values
+	readonly THIS_PACKAGE_PATH=$(QPKG.InstallationPath)
+	readonly WORK_PATH=$THIS_PACKAGE_PATH/cache
+	readonly LOGS_PATH=$THIS_PACKAGE_PATH/logs
+	readonly QPKG_DL_PATH=$WORK_PATH/qpkgs.downloads
+	readonly QPKG_BU_PATH=$(GetDefVol)/.qpkg_config_backup
+	readonly IPK_DL_PATH=$WORK_PATH/ipks.downloads
+	readonly IPK_CACHE_PATH=$WORK_PATH/ipks
+	readonly PIP_CACHE_PATH=$WORK_PATH/pips
+	readonly ACTION_MSG_PIPE=/var/run/qpkg.messages.pipe
+
+	readonly OBJECTS_PATHFILE=$WORK_PATH/objects
+	readonly OBJECTS_ARCHIVE_URL="<?cdn_sherpa_root_url?>"/objects.tar.gz
+	readonly OBJECTS_ARCHIVE_PATHFILE=$WORK_PATH/objects.tar.gz
+
+	readonly PACKAGES_PATHFILE=$WORK_PATH/packages
+	readonly PACKAGES_ARCHIVE_URL="<?cdn_sherpa_root_url?>"/packages.tar.gz
+	readonly PACKAGES_ARCHIVE_PATHFILE=$WORK_PATH/packages.tar.gz
+
+	readonly EXTERNAL_PACKAGES_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
+	readonly EXTERNAL_PACKAGES_PATHFILE=$WORK_PATH/Packages
+
+	readonly PREV_IPK_LIST=$WORK_PATH/ipk.prev.list
+	readonly PREV_PIP_LIST=$WORK_PATH/pip.prev.list
+
+	readonly SESS_ARCHIVE_PATHFILE=$LOGS_PATH/session.archive.log
+	sess_active_pathfile=$THIS_PACKAGE_PATH/session.$$.active.log
+	readonly SESS_LAST_PATHFILE=$LOGS_PATH/session.last.log
+	readonly SESS_TAIL_PATHFILE=$LOGS_PATH/session.tail.log
+	readonly SESS_ACTIONS_RESULTS_PATHFILE=$LOGS_PATH/session.action.results.log
+
+	readonly THIS_PACKAGE_VER=$(QPKG.Local.Ver)
+	readonly THIS_SCRIPT_VER='<?today?>-<?branch?>'
+
+	}
+
+ConfirmEnv()
+	{
+
+	# cherry-pick required Entware binaries
+	readonly OPKG_CMD=/opt/bin/opkg
+	readonly GNU_FIND_CMD=/opt/bin/find
+	readonly GNU_GREP_CMD=/opt/bin/grep
+	readonly GNU_LESS_CMD=/opt/bin/less
+	readonly GNU_SED_CMD=/opt/bin/sed
+	readonly GNU_SETTERM_CMD=/opt/bin/setterm
+	readonly GNU_SLEEP_CMD=/opt/bin/sleep
+	readonly GNU_SQLITE_CMD=/opt/bin/sqlite3
+	readonly GNU_STTY_CMD=/opt/bin/stty
+	readonly PYTHON_CMD=/opt/bin/python
+	readonly PYTHON3_CMD=/opt/bin/python3
+	readonly PIP_CMD="$PYTHON3_CMD -m pip"
+	readonly PERL_CMD=/opt/bin/perl
+
+	HideKeystrokes
+	HideCursor
+
+	# cherry-pick required OS binaries
+	readonly AWK_CMD=/bin/awk
+	readonly CAT_CMD=/bin/cat
+	readonly DATE_CMD=/bin/date
+	readonly DF_CMD=/bin/df
+	readonly GREP_CMD=/bin/grep
+	readonly LESS_CMD=/bin/less
+	readonly MD5SUM_CMD=/bin/md5sum
+	readonly MKNOD_CMD=/bin/mknod
+	readonly MKTEMP_CMD=/bin/mktemp
+	readonly SED_CMD=/bin/sed
+	readonly SH_CMD=/bin/sh
+	readonly QTS_SLEEP_CMD=/bin/sleep
+	readonly TAR_CMD=/bin/tar
+	readonly TOUCH_CMD=/bin/touch
+	readonly UNAME_CMD=/bin/uname
+	readonly UNIQ_CMD=/bin/uniq
+
+	readonly CURL_CMD=/sbin/curl
+	# don't assign a const for `/sbin/getcfg` as it's already been called before arriving here
+	readonly SETCFG_CMD=/sbin/setcfg
+
+	readonly BASENAME_CMD=/usr/bin/basename
+	readonly DIRNAME_CMD=/usr/bin/dirname
+	readonly DU_CMD=/usr/bin/du
+	readonly HEAD_CMD=/usr/bin/head
+	readonly READLINK_CMD=/usr/bin/readlink
+	readonly SORT_CMD=/usr/bin/sort
+	readonly TAIL_CMD=/usr/bin/tail
+	readonly TEE_CMD=/usr/bin/tee
+	readonly UNZIP_CMD=/usr/bin/unzip
+	readonly UPTIME_CMD=/usr/bin/uptime
+	readonly WC_CMD=/usr/bin/wc
+
+	# Confirm required binaries are present
+	IsSysFileExist $AWK_CMD || return
+	IsSysFileExist $CAT_CMD || return
+	IsSysFileExist $DATE_CMD || return
+	IsSysFileExist $DF_CMD || return
+	IsSysFileExist $GREP_CMD || return
+	# KLUDGE: don't perform a check for `/bin/less` because it's not always there
+	IsSysFileExist $MD5SUM_CMD || return
+	IsSysFileExist $MKNOD_CMD || return
+	IsSysFileExist $MKTEMP_CMD || return
+	IsSysFileExist $SED_CMD || return
+	IsSysFileExist $SH_CMD || return
+	[[ ! -e $GNU_SLEEP_CMD ]] && { IsSysFileExist $QTS_SLEEP_CMD || return ;}
+	IsSysFileExist $TAR_CMD || return
+	IsSysFileExist $TOUCH_CMD || return
+	IsSysFileExist $UNAME_CMD || return
+	IsSysFileExist $UNIQ_CMD || return
+
+	IsSysFileExist $CURL_CMD || return
+	# don't perform a check for `/sbin/getcfg` as it's already been called before arriving here
+	IsSysFileExist $SETCFG_CMD || return
+
+	IsSysFileExist $BASENAME_CMD || return
+	IsSysFileExist $DIRNAME_CMD || return
+	IsSysFileExist $DU_CMD || return
+	IsSysFileExist $HEAD_CMD || return
+	IsSysFileExist $READLINK_CMD || return
+	[[ ! -e $SORT_CMD ]] && ln -s /bin/busybox "$SORT_CMD"		# KLUDGE: `/usr/bin/sort` randomly disappears from QTS
+	IsSysFileExist $TAIL_CMD || return
+	IsSysFileExist $TEE_CMD || return
+	IsSysFileExist $UNZIP_CMD || return
+	IsSysFileExist $UPTIME_CMD || return
+	IsSysFileExist $WC_CMD || return
+
+	}
+
+LoadLists()
+	{
+
+	# ordered
+# 	MANAGEMENT_ACTIONS=(Check List Paste Status)
+	PACKAGE_TIERS=(Standalone Addon Dependent)
+	PACKAGE_TYPES=(QPKG IPK PIP)
+	PACKAGE_ACTIONS=(Download Rebuild Reassign Backup Stop Disable Uninstall Upgrade Reinstall Install Restore Clean Enable Start Restart Sign)
+
+	# sorted
+	QPKG_Is_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Reassigned Reinstalled Restarted Signed Started Upgraded)
+	QPKG_IsNt_STATES=(BackedUp Downloaded Enabled Installed Started)
+	QPKG_STATES_TRANSIENT=(Restarting Starting Stopping)
+	QPKG_SERVICE_RESULTS=(Ok Unknown)
+
+	# selectable by the user
+	# sorted
+	USER_QPKG_Sc_GROUPS=(All CanBackup CanClean CanRestartToUpdate Dependent HasDependents Installable Standalone Upgradable)
+	USER_QPKG_ScNt_GROUPS=(CanClean Installable Upgradable)
+	USER_QPKG_Is_STATES=(BackedUp Installed Missing Started)
+	USER_QPKG_IsNt_STATES=(BackedUp Installed Started)
+	USER_QPKG_ACTIONS=(Backup Clean Install Reassign Rebuild Reinstall Restart Restore Start Stop Uninstall Upgrade)
+
+	# KLUDGE: for some reason, setting 'readonly' while populating arrays causes their scope to become local, so need to set as 'readonly' afterward to ensure global scope. GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
+	readonly PACKAGE_TIERS
+	readonly PACKAGE_TYPES
+	readonly PACKAGE_ACTIONS
+
+	readonly QPKG_Is_STATES
+	readonly QPKG_IsNt_STATES
+	readonly QPKG_STATES_TRANSIENT
+	readonly QPKG_SERVICE_RESULTS
+
+	readonly USER_QPKG_Sc_GROUPS
+	readonly USER_QPKG_ScNt_GROUPS
+	readonly USER_QPKG_Is_STATES
+	readonly USER_QPKG_IsNt_STATES
+	readonly USER_QPKG_ACTIONS
+
+	}
+
+CreatePaths()
+	{
+
+	# KLUDGE: service scripts prior to 2022-12-08 would use these paths (by-default) to build/cache Python packages. This has been fixed, but still need to free-up this space to prevent out-of-space issues.
+	[[ -d /root/.cache ]] && rm -rf /root/.cache
+	[[ -d /root/.local/share/virtualenv ]] && rm -rf /root/.local/share/virtualenv
+
+	[[ -d $IPK_DL_PATH ]] && rm -rf "$IPK_DL_PATH"
+	[[ -d $IPK_CACHE_PATH ]] && rm -rf "$IPK_CACHE_PATH"
+	[[ -d $PIP_CACHE_PATH ]] && rm -rf "$PIP_CACHE_PATH"
+
+	MakePath "$WORK_PATH" work || return
+	MakePath "$LOGS_PATH" logs || return
+	MakePath "$QPKG_DL_PATH" 'QPKG download' || return
+	MakePath "$IPK_DL_PATH" 'IPK download' || return
+	MakePath "$IPK_CACHE_PATH" 'IPK cache' || return
+	MakePath "$PIP_CACHE_PATH" 'PIP cache' || return
+	MakePath "$QPKG_BU_PATH" 'QPKG backup' || return
 
 	}
 
@@ -433,7 +473,7 @@ Self.LogEnv()
 	DebugUserspaceOK 'default volume' "$(GetDefVol)"
 	DebugUserspaceOK '/opt' "$($READLINK_CMD /opt || echo '<not present>')"
 
-	local public_share=$($GETCFG_CMD SHARE_DEF defPublic -d Qpublic -f /etc/config/def_share.info)
+	local public_share=$(/sbin/getcfg SHARE_DEF defPublic -d Qpublic -f /etc/config/def_share.info)
 
 	if [[ -L /share/$public_share ]]; then
 		DebugUserspaceOK "'$public_share' share" "/share/$public_share"
@@ -2328,7 +2368,7 @@ CalcIpkDepsToInstall()
 		local IPK_titles=$(printf '^Package: %s$\|' "${this_list[@]}")
 		IPK_titles=${IPK_titles%??}	   # remove last 2 characters
 
-		this_list=($($GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator '^Package:\|^Depends:' "$EXTERNAL_PACKAGES_PATHFILE" | $GNU_GREP_CMD -vG '^Section:\|^Version:' | $GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator "$IPK_titles" | $GNU_GREP_CMD -vG "$IPK_titles" | $GNU_GREP_CMD -vG '^Package: ' | $SED_CMD 's|^Depends: ||;s|, |\n|g' | $SORT_CMD | /bin/uniq))
+		this_list=($($GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator '^Package:\|^Depends:' "$EXTERNAL_PACKAGES_PATHFILE" | $GNU_GREP_CMD -vG '^Section:\|^Version:' | $GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator "$IPK_titles" | $GNU_GREP_CMD -vG "$IPK_titles" | $GNU_GREP_CMD -vG '^Package: ' | $SED_CMD 's|^Depends: ||;s|, |\n|g' | $SORT_CMD | $UNIQ_CMD))
 
 		if [[ ${#this_list[@]} -eq 0 ]]; then
 			complete=true
@@ -3792,7 +3832,7 @@ InitForkCounts()
 
 	# create directories so background processes can be monitored
 
-	PROC_COUNTS_PATH=$(/bin/mktemp -d /var/run/"${FUNCNAME[1]}"_XXXXXX)
+	PROC_COUNTS_PATH=$($MKTEMP_CMD -d /var/run/"${FUNCNAME[1]}"_XXXXXX)
 	[[ -n ${PROC_COUNTS_PATH:?undefined proc counts path} ]] || return
 
 	EraseForkCountPaths
@@ -4948,21 +4988,21 @@ GetKernel()
 GetPlatform()
 	{
 
-	$GETCFG_CMD '' Platform -d unknown -f /etc/platform.conf
+	/sbin/getcfg '' Platform -d unknown -f /etc/platform.conf
 
 	}
 
 GetDefVol()
 	{
 
-	$GETCFG_CMD SHARE_DEF defVolMP -f /etc/config/def_share.info
+	/sbin/getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info
 
 	}
 
 OS.IsAllowUnsignedPackages()
 	{
 
-	[[ $($GETCFG_CMD 'QPKG Management' Ignore_Cert) = TRUE ]]
+	[[ $(/sbin/getcfg 'QPKG Management' Ignore_Cert) = TRUE ]]
 
 	}
 
@@ -4973,7 +5013,7 @@ GetRepoURLFromStoreID()
 
 	[[ -n ${1:-} ]] || return
 
-	$GETCFG_CMD "$1" u -d unknown -f /etc/config/3rd_pkg_v2.conf
+	/sbin/getcfg "$1" u -d unknown -f /etc/config/3rd_pkg_v2.conf
 
 	}
 
@@ -5024,21 +5064,21 @@ GetInstalledRAM()
 GetFirmwareVer()
 	{
 
-	$GETCFG_CMD System Version -f /etc/config/uLinux.conf
+	/sbin/getcfg System Version -f /etc/config/uLinux.conf
 
 	}
 
 GetFirmwareBuild()
 	{
 
-	$GETCFG_CMD System Number -f /etc/config/uLinux.conf
+	/sbin/getcfg System Number -f /etc/config/uLinux.conf
 
 	}
 
 GetFirmwareDate()
 	{
 
-	$GETCFG_CMD System 'Build Number' -f /etc/config/uLinux.conf
+	/sbin/getcfg System 'Build Number' -f /etc/config/uLinux.conf
 
 	}
 
@@ -5104,7 +5144,7 @@ GetEntwareType()
 		fi
 	fi
 
-	}
+	} 2>/dev/null
 
 GetSudoUID()
 	{
@@ -5671,6 +5711,7 @@ _QPKG.Uninstall_()
 
 	# output:
 	#   $? = none, this function executes in background
+
 	DebugForkFuncEn
 
 	PACKAGE_NAME=${1:?package name null}
@@ -5732,7 +5773,7 @@ _QPKG.Uninstall_()
 			MarkThisActionForkAsFailed
 		fi
 	else
-		# standard QPKG .uninstall.sh was not found, so can't continue with uninstallation (maybe force this instead with `rm -r` ?)
+		# standard QPKG `.uninstall.sh` was not found, so can't continue with uninstallation (maybe force this instead with `rm -r` ?)
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" Uninstall failed '.uninstall.sh script is missing'
 		MarkThisActionForkAsFailed
 	fi
@@ -6353,7 +6394,7 @@ QPKG.InstallationPath()
 	#   stdout = the installation path to this QPKG
 	#   $? = 0 if found, !0 if not
 
-	$GETCFG_CMD "${1:-sherpa}" Install_Path -f /etc/config/qpkg.conf
+	/sbin/getcfg "${1:-sherpa}" Install_Path -f /etc/config/qpkg.conf
 
 	}
 
@@ -6367,7 +6408,7 @@ QPKG.ServicePathFile()
 	#   stdout = service script pathfile
 	#   $? = 0 if found, !0 if not
 
-	$GETCFG_CMD "${1:?package name null}" Shell -d unknown -f /etc/config/qpkg.conf
+	/sbin/getcfg "${1:?package name null}" Shell -d unknown -f /etc/config/qpkg.conf
 
 	}
 
@@ -6413,7 +6454,7 @@ QPKG.Local.Ver()
 	#   stdout = package version
 	#   $? = 0 if found, !0 if not
 
-	$GETCFG_CMD "${1:-sherpa}" Version -d unknown -f /etc/config/qpkg.conf
+	/sbin/getcfg "${1:-sherpa}" Version -d unknown -f /etc/config/qpkg.conf
 
 	}
 
@@ -6428,7 +6469,7 @@ QPKG.StoreID()
 	# output:
 	#   stdout = package store ID
 
-	$GETCFG_CMD "${1:?package name null}" store -d sherpa -f /etc/config/qpkg.conf
+	/sbin/getcfg "${1:?package name null}" store -d sherpa -f /etc/config/qpkg.conf
 
 	return 0
 
@@ -6458,7 +6499,7 @@ QPKG.Author()
 	#   $1 = QPKG name
 
 	# output:
-	#   stdout = first package author found
+	#   stdout = QPKG author (first package found)
 	#   $? = 0 if found, !0 if not
 
 	local -i index=0
@@ -6483,7 +6524,7 @@ QPKG.AppAuthor()
 	#   $1 = QPKG name
 
 	# output:
-	#   stdout = first application author found
+	#   stdout = application author (first package found)
 	#   $? = 0 if found, !0 if not
 
 	local -i index=0
@@ -6583,7 +6624,7 @@ QPKG.IsCanClean()
 QPKG.IsCanLog()
 	{
 
-	# Does this QPKG service-script support logging of operations?
+	# Does this QPKG service-script support logging of operations? When an action fails, this means user can be directed to check the service script log.
 
 	# input:
 	#   $1 = QPKG name
@@ -6666,7 +6707,7 @@ QPKG.Abbrvs()
 	#   $1 = QPKG name
 
 	# output:
-	#   stdout = first list of acceptable abbreviations that may be used to specify this package
+	#   stdout = list of abbreviations that may be used to specify this package (first package found)
 	#   $? = 0 if successful, 1 if failed
 
 	local -i index=0
@@ -6738,7 +6779,7 @@ QPKG.URL()
 	#   $1 = QPKG name
 
 	# output:
-	#   stdout = QPKG remote URL
+	#   stdout = QPKG remote URL, specific to this NAS arch
 	#   $? = 0 if successful, 1 if failed
 
 	local -i index=0
@@ -6761,7 +6802,7 @@ QPKG.Desc()
 	#   $1 = QPKG name
 
 	# output:
-	#   stdout = first QPKG description found
+	#   stdout = QPKG description (first package found)
 	#   $? = 0 if successful, 1 if failed
 
 	local -i index=0
@@ -6786,7 +6827,7 @@ QPKG.Note()
 	#   $1 = QPKG name
 
 	# output:
-	#   stdout = first package note found
+	#   stdout = package note (first package found)
 	#   $? = 0 if found, !0 if not
 
 	local -i index=0
@@ -6809,7 +6850,7 @@ QPKG.MD5()
 	#   $1 = QPKG name
 
 	# output:
-	#   stdout = QPKG MD5
+	#   stdout = QPKG MD5, specific to this NAS arch
 	#   $? = 0 if successful, 1 if failed
 
 	local -i index=0
@@ -6832,7 +6873,7 @@ QPKG.MinRAM()
 	#   $1 = QPKG name
 
 	# output:
-	#   stdout = the minimum kB of installed RAM required by this QPKG
+	#   stdout = minimum kB of installed RAM required by this QPKG (first package found)
 	#   $? = 0 if successful, 1 if failed
 
 	local -i index=0
@@ -6852,9 +6893,10 @@ QPKG.GetStandalones()
 	{
 
 	# input:
-	#   $1 = QPKG name to return standalones for
+	#   $1 = QPKG name
 
 	# output:
+	#   stdout = list of QPKGs this QPKG depends-upon (first package found)
 	#   $? = 0 if successful, 1 if failed
 
 	local -i index=0
@@ -6876,17 +6918,19 @@ QPKG.GetDependents()
 	{
 
 	# input:
-	#   $1 = standalone QPKG name to return dependents for
+	#   $1 = QPKG name
 
 	# output:
+	#   stdout = list of QPKGs that depend-upon this QPKG (first package found)
 	#   $? = 0 if successful, 1 if failed
 
 	local -i index=0
 	local -a acc=()
+	local re=\\b${1:-}\\b
 
 	if QPKGs.ScStandalone.Exist "$1"; then
 		for index in "${!QPKG_NAME[@]}"; do
-			if [[ ${QPKG_DEPENDS_ON[$index]} = *"${1:?package name null}"* ]]; then
+			if [[ ${QPKG_DEPENDS_ON[$index]} =~ $re ]]; then
 				[[ ${acc[*]:-} != "${QPKG_NAME[$index]}" ]] && acc+=(${QPKG_NAME[$index]})
 			fi
 		done
@@ -6905,7 +6949,7 @@ QPKG.IsInstalled()
 	{
 
 	# input:
-	#   $1 = package name to check
+	#   $1 = QPKG name
 
 	# output:
 	#   $? = 0 (true) or 1 (false)
@@ -6918,7 +6962,7 @@ QPKG.IsNtInstalled()
 	{
 
 	# input:
-	#   $1 = package name to check
+	#   $1 = QPKG name
 
 	# output:
 	#   $? = 0 (true) or 1 (false)
@@ -6931,12 +6975,12 @@ QPKG.IsEnabled()
 	{
 
 	# input:
-	#   $1 = package name to check
+	#   $1 = QPKG name
 
 	# output:
 	#   $? = 0 (true) or 1 (false)
 
-	[[ $($GETCFG_CMD "${1:?package name null}" Enable -u -f /etc/config/qpkg.conf) = TRUE ]]
+	[[ $(/sbin/getcfg "${1:?package name null}" Enable -u -f /etc/config/qpkg.conf) = TRUE ]]
 
 	}
 
@@ -6947,7 +6991,7 @@ QPKG.IsStarted()
 	# But, really should revisit this to make result match reality.
 
 	# input:
-	#   $1 = package name to check
+	#   $1 = QPKG name
 
 	# output:
 	#   $? = 0 (true) or 1 (false)
@@ -6977,7 +7021,7 @@ MakePath()
 
 	# input:
 	#   $1 = path to create
-	#   $2 = summarised reason for this path
+	#   $2 = reason for this path
 
 	if ! mkdir -p "${1:?path null}"; then
 		ShowAsError "unable to create ${2:?null} path $(FormatAsFileName "$1") $(FormatAsExitcode "$?")"
@@ -7002,12 +7046,12 @@ RunAndLog()
 
 	# output:
 	#   stdout = commandstring stdout and stderr if script is in `debug` mode
-	#   pathfile ($2) = commandstring ($1) stdout and stderr
+	#   pathfile (specified as $2) = stdout and stderr from commandstring (specified as $1)
 	#   $? = result_code of commandstring
 
 	DebugScriptFuncEn
 
-	local -r LOG_PATHFILE=$(/bin/mktemp /var/log/"${FUNCNAME[0]}"_XXXXXX)
+	local -r LOG_PATHFILE=$($MKTEMP_CMD /var/log/"${FUNCNAME[0]}"_XXXXXX)
 	local -i result_code=0
 
 	FormatAsCommand "${1:?null}" > "${2:?null}"
@@ -7046,7 +7090,7 @@ RunAndLog()
 DeDupeWords()
 	{
 
-	tr ' ' '\n' <<< "${1:-}" | $SORT_CMD | /bin/uniq | tr '\n' ' ' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||'
+	tr ' ' '\n' <<< "${1:-}" | $SORT_CMD | $UNIQ_CMD | tr '\n' ' ' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||'
 
 	}
 
@@ -7101,10 +7145,10 @@ FormatAsThous()
 
 	local rightside_group=''
 	local foutput=''
-	local remainder=$($SED_CMD 's/[^0-9]*//g' <<< "${1:-}")	 # strip everything not a numeric character
+	local remainder=$($SED_CMD 's/[^0-9]*//g' <<< "${1:-}")		# strip everything not a numeric character
 
 	while [[ ${#remainder} -gt 0 ]]; do
-		rightside_group=${remainder:${#remainder}<3?0:-3}	   # a nifty trick found here: https://stackoverflow.com/a/19858692
+		rightside_group=${remainder:${#remainder}<3?0:-3}		# a nifty trick found here: https://stackoverflow.com/a/19858692
 
 		if [[ -z $foutput ]]; then
 			foutput=$rightside_group
@@ -7113,7 +7157,7 @@ FormatAsThous()
 		fi
 
 		if [[ ${#rightside_group} -eq 3 ]]; then
-			remainder=${remainder%???}						  # trim rightside 3 characters
+			remainder=${remainder%???}							# trim rightside 3 characters
 		else
 			break
 		fi
@@ -7466,7 +7510,7 @@ DebugVar()
 DebugInfo()
 	{
 
-	if [[ ${2:-} = ' ' || ${2:-} = "'' " ]]; then   # if $2 has no usable content then print $1 with trailing colon and `none` as second field
+	if [[ ${2:-} = ' ' || ${2:-} = "'' " ]]; then   # if $2 has no usable content then print $1 with trailing colon and "none" as second field
 		DebugAsInfo "${1:-}: none"
 	elif [[ -n ${2:-} ]]; then
 		DebugAsInfo "${1:-}: ${2:-}"
@@ -7510,7 +7554,7 @@ DebugForkFuncEn()
 
 	# redirect debug output to a temporary log, then add it to session log before exiting. This will keep action log progress in-order
 	original_session_log_pathfile="$sess_active_pathfile"
-	sess_active_pathfile=$(/bin/mktemp /var/log/"${FUNCNAME[1]}"_XXXXXX)
+	sess_active_pathfile=$($MKTEMP_CMD /var/log/"${FUNCNAME[1]}"_XXXXXX)
 
 	local var_name=${FUNCNAME[1]}_STARTSECONDS
 	local var_safe_name=${var_name//[.-]/_}
@@ -7797,10 +7841,10 @@ ShowAsError()
 ShowAsActionProgress()
 	{
 
-	# Show actions progress as percent-complete and a fraction of the total
+	# Show single action package progress as percent-complete and a fraction of the total
 
 	# $1 = tier (optional)
-	# $2 = package type: `QPKG`, `IPK`, `PIP`, etc ...
+	# $2 = package type: `QPKG`, `IPK`, `PIP`
 	# $3 = ok count
 	# $4 = skip count
 	# $5 = fail count
@@ -7873,7 +7917,7 @@ ShowAsActionResult()
 	{
 
 	# $1 = tier (optional) e.g. `Standalone`, `Dependent`, `Addon`, `All`
-	# $2 = package type: `QPKG`, `IPK`, `PIP`, etc ...
+	# $2 = package type: `QPKG`, `IPK`, `PIP`
 	# $3 = ok count
 	# $4 = total count
 	# $5 = verb (past)
@@ -7944,14 +7988,14 @@ ShowAsActionResultDetail()
 ShowAsActionLogDetail()
 	{
 
-	# input:							example:
-	#   $1 = datetime in seconds
-	#   $2 = package or group name	  `SABnzbd`, `essential`
-	#   $3 = action					 `Download`, 'Downloaded'
-	#   $4 = result					 `ok`, `skipped-ok`, `skipped`, `failed`
+	# input:								example:
+	#   $1 = datetime in seconds (unused)
+	#   $2 = package or group name	  		`SABnzbd`, `essential`
+	#   $3 = action					 		`Download`, 'Downloaded'
+	#   $4 = result					 		`ok`, `skipped-ok`, `skipped`, `failed`
 	#   $5 = duration in milliseconds
-	#   $6 = reason (optional)		  "file already exists in local cache"
-	#   $7 = package type			   `QPKG`, `IPK`, `PIP`
+	#   $6 = reason (optional)		  		"file already exists in local cache"
+	#   $7 = package type			   		`QPKG`, `IPK`, `PIP`
 
 	case ${4:-} in
 		skipped|skipped-failed)
@@ -8175,9 +8219,9 @@ ColourReset()
 StripANSI()
 	{
 
-	# QTS 4.2.6 BusyBox `sed` doesn't fully support extended regexes, so code stripping only works with a real `sed`
+	# QTS 4.2.6 BusyBox `sed` doesn't fully support extended regexes, so code-stripping only works with a real `sed`
 
-	if [[ -e $GNU_SED_CMD && -e $GNU_SED_CMD ]]; then   # KLUDGE: yes, it looks weird, but during Entware startup, weird things happen. Need to check for this file multiple times to ensure it's there before attempting to run it.
+	if [[ -e $GNU_SED_CMD && -L /opt/etc/passwd ]]; then   # try to ensure Entware is started before using this utility
 		$GNU_SED_CMD -r 's/\x1b\[[0-9;]*m//g' <<< "${1:-}"
 	else
 		echo "${1:-}"		   # can't strip, so pass thru original message unaltered
@@ -8188,7 +8232,7 @@ StripANSI()
 UpdateColourisation()
 	{
 
-	if [[ -e /opt/bin/sed ]]; then
+	if [[ -e /opt/bin/sed && -L /opt/etc/passwd ]]; then	# try to ensure Entware is started before using this utility
 		colourful=true
 		SendParentChangeEnv 'colourful=true'
 	else
@@ -8196,7 +8240,7 @@ UpdateColourisation()
 		SendParentChangeEnv 'colourful=false'
 	fi
 
-	}
+	} 2>/dev/null
 
 HideCursor()
 	{
@@ -8295,17 +8339,17 @@ sleep()
 
 	[[ ${wait//.} -eq 0 ]] && wait=1
 
-	if [[ -e $GNU_SLEEP_CMD ]]; then
+	if [[ -e $GNU_SLEEP_CMD && -L /opt/etc/passwd ]]; then	# try to ensure Entware is started before using this utility
 		$GNU_SLEEP_CMD "$wait"
 	elif [[ $DECIMAL_SECONDS_SUPPORTED = false ]]; then
-		$QTS_SLEEP_CMD "$((${wait%.*}+1))"		# ensure decimal seconds are rounded-up to next integer
+		$QTS_SLEEP_CMD "$((${wait%.*}+1))"					# ensure decimal seconds are rounded-up to next integer
 	else
 		$QTS_SLEEP_CMD "$wait"
 	fi
 
 	return 0
 
-	}
+	} 2>/dev/null
 
 Objects.Load()
 	{
@@ -8319,7 +8363,7 @@ Objects.Load()
 		if [[ ! -e $OBJECTS_PATHFILE ]] || ! IsThisFileRecent "$OBJECTS_PATHFILE"; then
 			ShowAsProc 'updating objects'
 			if $CURL_CMD${curl_insecure_arg:-} --silent --fail "$OBJECTS_ARCHIVE_URL" > "$OBJECTS_ARCHIVE_PATHFILE"; then
-				/bin/tar --extract --gzip --file="$OBJECTS_ARCHIVE_PATHFILE" --directory="$WORK_PATH"
+				$TAR_CMD --extract --gzip --file="$OBJECTS_ARCHIVE_PATHFILE" --directory="$WORK_PATH"
 			fi
 		fi
 	fi
@@ -8350,7 +8394,7 @@ Packages.Load()
 		if [[ ! -e $PACKAGES_PATHFILE ]] || ! IsThisFileRecent "$PACKAGES_PATHFILE" 60; then
 			ShowAsProc 'updating package list'
 			if $CURL_CMD${curl_insecure_arg:-} --silent --fail "$PACKAGES_ARCHIVE_URL" > "$PACKAGES_ARCHIVE_PATHFILE"; then
-				/bin/tar --extract --gzip --file="$PACKAGES_ARCHIVE_PATHFILE" --directory="$WORK_PATH"
+				$TAR_CMD --extract --gzip --file="$PACKAGES_ARCHIVE_PATHFILE" --directory="$WORK_PATH"
 			fi
 		fi
 	fi
@@ -8421,9 +8465,6 @@ RunOnEXIT()
 	}
 
 Self.Init || exit
-Self.LogEnv
-Self.IsAnythingToDo
-Self.Validate
 Actions.Proc
 Self.Results
 Self.Error.IsNt
