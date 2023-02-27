@@ -1,7 +1,7 @@
 # checksum_filename                  qpkg_filename                    package_name         version      arch   md5
 ClamAV_230215.qpkg.md5               ClamAV_230215.qpkg               ClamAV               230215       all    a5ea397bf763a8f7385928252c1f3bff
 Deluge-server_230215.qpkg.md5        Deluge-server_230215.qpkg        Deluge-server        230215       all    6ae9d8e108dfa9556b0124e924f55b91
-Deluge-web_230215.qpkg.md5           Deluge-web_230215.qpkg           Deluge-web           230215       all    2d671243d064850cee8ef448081e9bee
+Deluge-web_230228.qpkg.md5           Deluge-web_230228.qpkg           Deluge-web           230228       all    2c99bdef81e97917fb5978e5ce544e16
 duf_220809_arm_64.qpkg.md5           duf_220809_arm_64.qpkg           duf                  220809       a64    7ecf7b6ee2e9cbe964defd3e3ae2e4f9
 duf_220809_arm-x41.qpkg.md5          duf_220809_arm-x41.qpkg          duf                  220809       a41    742792b84e039d95cd87ff619d3de839
 duf_220809_x86_64.qpkg.md5           duf_220809_x86_64.qpkg           duf                  220809       i64    8a06d6559079c60d3c2704ca6eadcf8a
