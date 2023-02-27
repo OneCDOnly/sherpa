@@ -3,7 +3,7 @@
     while true; do /usr/bin/top -b -n2 -d1 | grep 20744 | tail -1 | awk '{print $7}'; done
 
 * create a troubleshooting page for the wiki?
-    This should include explains of various ops like clean and check, so users will have a better idea which op to run when things go wrong.
+    This should include explanations of various ops like clean and check, so users will have a better idea which op to run when things go wrong.
 
 * update IPKs automatically?
     Store a local checksum of the Entware package list. If this changes, assume it's been updated and all IPKs should be checked for upgrade status and upgraded. No-need to prompt user - just upgrade automatically.

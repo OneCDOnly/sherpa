@@ -248,11 +248,11 @@ LoadDefaultConsts()
 	readonly ACTION_MSG_PIPE=/var/run/qpkg.messages.pipe
 
 	readonly OBJECTS_PATHFILE=$WORK_PATH/objects
-	readonly OBJECTS_ARCHIVE_URL="<?cdn_sherpa_root_url?>"/objects.tar.gz
+	readonly OBJECTS_ARCHIVE_URL='<?cdn_sherpa_root_url?>'/objects.tar.gz
 	readonly OBJECTS_ARCHIVE_PATHFILE=$WORK_PATH/objects.tar.gz
 
 	readonly PACKAGES_PATHFILE=$WORK_PATH/packages
-	readonly PACKAGES_ARCHIVE_URL="<?cdn_sherpa_root_url?>"/packages.tar.gz
+	readonly PACKAGES_ARCHIVE_URL='<?cdn_sherpa_root_url?>'/packages.tar.gz
 	readonly PACKAGES_ARCHIVE_PATHFILE=$WORK_PATH/packages.tar.gz
 
 	readonly EXTERNAL_PACKAGES_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
