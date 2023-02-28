@@ -15,8 +15,6 @@ Package management via **sherpa** provides extra features like easy application 
 
 - Any model QNAP NAS running QTS 4.0 or-later.
 
-- The ClamAV package will require at-least 1.5GB RAM installed.
-
 
 ## Usage
 
