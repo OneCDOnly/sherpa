@@ -5470,7 +5470,7 @@ _QPKG.Install_()
 
 	if [[ $result_code -eq 0 || $result_code -eq 10 ]]; then
 		UpdateColourisation
-		QPKG.LogServiceStatus "$PACKAGE_NAME"
+		QPKG.LogServiceStatus
 		SendPackageStateChange IsInstalled
 
 		if QPKG.IsEnabled "$PACKAGE_NAME"; then
@@ -5519,7 +5519,7 @@ _QPKG.Install_()
 		MarkThisActionForkAsFailed
 	fi
 
-	QPKG.ClearAppCenterNotifier "$PACKAGE_NAME"
+	QPKG.ClearAppCenterNotifier
 	DebugForkFuncEx $result_code
 
 	}
@@ -5571,7 +5571,7 @@ _QPKG.Reinstall_()
 	result_code=$?
 
 	if [[ $result_code -eq 0 || $result_code -eq 10 ]]; then
-		QPKG.LogServiceStatus "$PACKAGE_NAME"
+		QPKG.LogServiceStatus
 
 		if QPKG.IsEnabled "$PACKAGE_NAME"; then
 			SendPackageStateChange IsEnabled
@@ -5596,7 +5596,7 @@ _QPKG.Reinstall_()
 		MarkThisActionForkAsFailed
 	fi
 
-	QPKG.ClearAppCenterNotifier "$PACKAGE_NAME"
+	QPKG.ClearAppCenterNotifier
 	DebugForkFuncEx $result_code
 
 	}
@@ -5664,7 +5664,7 @@ _QPKG.Upgrade_()
 	result_code=$?
 
 	if [[ $result_code -eq 0 || $result_code -eq 10 ]]; then
-		QPKG.LogServiceStatus "$PACKAGE_NAME"
+		QPKG.LogServiceStatus
 		SendPackageStateChange ScNtUpgradable
 
 		if QPKG.IsEnabled "$PACKAGE_NAME"; then
@@ -5696,7 +5696,7 @@ _QPKG.Upgrade_()
 		MarkThisActionForkAsFailed
 	fi
 
-	QPKG.ClearAppCenterNotifier "$PACKAGE_NAME"
+	QPKG.ClearAppCenterNotifier
 	DebugForkFuncEx $result_code
 
 	}
@@ -5806,21 +5806,24 @@ _QPKG.Restart_()
 		DebugForkFuncEx 2
 	fi
 
-	QPKG.ClearServiceStatus "$PACKAGE_NAME"
-	local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile "$PACKAGE_NAME")
+	QPKG.ClearServiceStatus
+	local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile)
 	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$RESTART_LOG_FILE
 
-	QPKG.Enable "$PACKAGE_NAME"
-	result_code=$?
+	DebugAsProc "restarting $(FormatAsPackName "$PACKAGE_NAME")"
+	QPKG.Enable
+	[[ $self_debug_to_screen = true ]] && debug_cmd='DEBUG_QPKG=true '
 
-	if [[ $result_code -eq 0 ]]; then
-		DebugAsProc "restarting $(FormatAsPackName "$PACKAGE_NAME")"
-		[[ $self_debug_to_screen = true ]] && debug_cmd='DEBUG_QPKG=true '
+	if QPKG.IsCanLog; then			# use 'qpkg_service' if-possible, so package icon in App Center will dynamically update
+		RunAndLog "${debug_cmd}/sbin/qpkg_service restart $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
+		QPKG.LastResultWasOk && result_code=0 || result_code=1
+	else
 		RunAndLog "${debug_cmd}${PACKAGE_INIT_PATHFILE} restart" "$LOG_PATHFILE" log:failure-only
 		result_code=$?
 	fi
+
 	if [[ $result_code -eq 0 ]]; then
-		QPKG.LogServiceStatus "$PACKAGE_NAME"
+		QPKG.LogServiceStatus
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" Restart ok
 		SendPackageStateChange IsRestarted
 		MarkThisActionForkAsOk
@@ -5830,7 +5833,7 @@ _QPKG.Restart_()
 		result_code=1	# remap to 1
 		MarkThisActionForkAsFailed
 	fi
-	QPKG.ClearAppCenterNotifier "$PACKAGE_NAME"
+	QPKG.ClearAppCenterNotifier
 	DebugForkFuncEx $result_code
 
 	}
@@ -5866,22 +5869,24 @@ _QPKG.Start_()
 		DebugForkFuncEx $result_code
 	fi
 
-	QPKG.ClearServiceStatus "$PACKAGE_NAME"
-	local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile "$PACKAGE_NAME")
+	QPKG.ClearServiceStatus
+	local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile)
 	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$START_LOG_FILE
 
-	QPKG.Enable "$PACKAGE_NAME"
-	result_code=$?
+	DebugAsProc "starting $(FormatAsPackName "$PACKAGE_NAME")"
+	QPKG.Enable
+	[[ $self_debug_to_screen = true ]] && debug_cmd='DEBUG_QPKG=true '
 
-	if [[ $result_code -eq 0 ]]; then
-		DebugAsProc "starting $(FormatAsPackName "$PACKAGE_NAME")"
-		[[ $self_debug_to_screen = true ]] && debug_cmd='DEBUG_QPKG=true '
+	if QPKG.IsCanLog; then			# use 'qpkg_service' if-possible, so package icon in App Center will dynamically update
+		RunAndLog "${debug_cmd}/sbin/qpkg_service start $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
+		QPKG.LastResultWasOk && result_code=0 || result_code=1
+	else
 		RunAndLog "${debug_cmd}${PACKAGE_INIT_PATHFILE} start" "$LOG_PATHFILE" log:failure-only
 		result_code=$?
 	fi
 
 	if [[ $result_code -eq 0 ]]; then
-		QPKG.LogServiceStatus "$PACKAGE_NAME"
+		QPKG.LogServiceStatus
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" Start ok
 
 		if [[ $PACKAGE_NAME = Entware ]]; then
@@ -5899,7 +5904,7 @@ _QPKG.Start_()
 		MarkThisActionForkAsFailed
 	fi
 
-	QPKG.ClearAppCenterNotifier "$PACKAGE_NAME"
+	QPKG.ClearAppCenterNotifier
 	DebugForkFuncEx $result_code
 
 	}
@@ -5938,23 +5943,25 @@ _QPKG.Stop_()
 		DebugForkFuncEx $result_code
 	fi
 
-	QPKG.ClearServiceStatus "$PACKAGE_NAME"
-	local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile "$PACKAGE_NAME")
+	QPKG.ClearServiceStatus
+	local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile)
 	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$STOP_LOG_FILE
 
 	DebugAsProc "stopping $(FormatAsPackName "$PACKAGE_NAME")"
 	[[ $self_debug_to_screen = true ]] && debug_cmd='DEBUG_QPKG=true '
 	[[ $PACKAGE_NAME = Entware ]] && UpdateColourisation
-	RunAndLog "${debug_cmd}${PACKAGE_INIT_PATHFILE} stop" "$LOG_PATHFILE" log:failure-only
-	result_code=$?
 
-	if [[ $result_code -eq 0 ]]; then
-		QPKG.Disable "$PACKAGE_NAME"
+	if QPKG.IsCanLog; then			# use 'qpkg_service' if-possible, so package icon in App Center will dynamically update
+		RunAndLog "${debug_cmd}/sbin/qpkg_service stop $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
+		QPKG.LastResultWasOk && result_code=0 || result_code=1
+	else
+		RunAndLog "${debug_cmd}${PACKAGE_INIT_PATHFILE} stop" "$LOG_PATHFILE" log:failure-only
 		result_code=$?
 	fi
 
 	if [[ $result_code -eq 0 ]]; then
-		QPKG.LogServiceStatus "$PACKAGE_NAME"
+		QPKG.Disable
+		QPKG.LogServiceStatus
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" Stop ok
 
 		if [[ $PACKAGE_NAME = Entware ]]; then
@@ -5971,7 +5978,7 @@ _QPKG.Stop_()
 		MarkThisActionForkAsFailed
 	fi
 
-	QPKG.ClearAppCenterNotifier "$PACKAGE_NAME"
+	QPKG.ClearAppCenterNotifier
 	DebugForkFuncEx $result_code
 
 	}
@@ -5979,42 +5986,26 @@ _QPKG.Stop_()
 QPKG.Enable()
 	{
 
-	# $1 = package name to enable
-
-	PACKAGE_NAME=${1:?package name null}
-	local -i result_code=0
+	# input:
+	# 	$PACKAGE_NAME (global) = QPKG name
 
 	RunAndLog "/sbin/qpkg_service enable $PACKAGE_NAME" "$LOGS_PATH/$PACKAGE_NAME.$ENABLE_LOG_FILE" log:failure-only
-	result_code=$?
+	SendPackageStateChange IsEnabled
 
-	if [[ $result_code -eq 0 ]]; then
-		SendPackageStateChange IsEnabled
-	else
-		result_code=1	# remap to 1
-	fi
-
-	return $result_code
+	return
 
 	}
 
 QPKG.Disable()
 	{
 
-	# $1 = package name to disable
-
-	PACKAGE_NAME=${1:?package name null}
-	local -i result_code=0
+	# input:
+	# 	$PACKAGE_NAME (global) = QPKG name
 
 	RunAndLog "/sbin/qpkg_service disable $PACKAGE_NAME" "$LOGS_PATH/$PACKAGE_NAME.$DISABLE_LOG_FILE" log:failure-only
-	result_code=$?
+	SendPackageStateChange IsNtEnabled
 
-	if [[ $result_code -eq 0 ]]; then
-		SendPackageStateChange IsNtEnabled
-	else
-		result_code=1	# remap to 1
-	fi
-
-	return $result_code
+	return
 
 	}
 
@@ -6039,7 +6030,7 @@ _QPKG.Backup_()
 	if QPKGs.IsNtInstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" Backup skipped 'not installed'
 		result_code=2
-	elif ! QPKG.IsCanBackup "$PACKAGE_NAME"; then
+	elif ! QPKG.IsCanBackup; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" Backup skipped 'does not support backup'
 		result_code=2
 	fi
@@ -6049,7 +6040,7 @@ _QPKG.Backup_()
 		DebugForkFuncEx $result_code
 	fi
 
-	local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile "$PACKAGE_NAME")
+	local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile)
 	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$BACKUP_LOG_FILE
 
 	DebugAsProc "backing-up $(FormatAsPackName "$PACKAGE_NAME") configuration"
@@ -6058,7 +6049,7 @@ _QPKG.Backup_()
 	result_code=$?
 
 	if [[ $result_code -eq 0 ]]; then
-		QPKG.LogServiceStatus "$PACKAGE_NAME"
+		QPKG.LogServiceStatus
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" Backup ok
 		SendPackageStateChange IsBackedUp
 		MarkThisActionForkAsOk
@@ -6093,7 +6084,7 @@ _QPKG.Restore_()
 	if QPKGs.IsNtInstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" Restore skipped 'not installed'
 		result_code=2
-	elif ! QPKG.IsCanBackup "$PACKAGE_NAME"; then
+	elif ! QPKG.IsCanBackup; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" Restore skipped 'does not support restore'
 		result_code=2
 	fi
@@ -6103,7 +6094,7 @@ _QPKG.Restore_()
 		DebugForkFuncEx $result_code
 	fi
 
-	local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile "$PACKAGE_NAME")
+	local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile)
 	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$RESTORE_LOG_FILE
 
 	DebugAsProc "restoring $(FormatAsPackName "$PACKAGE_NAME") configuration"
@@ -6112,7 +6103,7 @@ _QPKG.Restore_()
 	result_code=$?
 
 	if [[ $result_code -eq 0 ]]; then
-		QPKG.LogServiceStatus "$PACKAGE_NAME"
+		QPKG.LogServiceStatus
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" Restore ok
 		SendPackageStateChange IsRestored
 		MarkThisActionForkAsOk
@@ -6147,7 +6138,7 @@ _QPKG.Clean_()
 	if QPKGs.IsNtInstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" Clean skipped 'not installed'
 		result_code=2
-	elif ! QPKG.IsCanClean "$PACKAGE_NAME"; then
+	elif ! QPKG.IsCanClean; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" Clean skipped 'does not support cleaning'
 		result_code=2
 	fi
@@ -6157,7 +6148,7 @@ _QPKG.Clean_()
 		DebugForkFuncEx $result_code
 	fi
 
-	local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile "$PACKAGE_NAME")
+	local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile)
 	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$CLEAN_LOG_FILE
 
 	DebugAsProc "cleaning $(FormatAsPackName "$PACKAGE_NAME")"
@@ -6166,7 +6157,7 @@ _QPKG.Clean_()
 	result_code=$?
 
 	if [[ $result_code -eq 0 ]]; then
-		QPKG.LogServiceStatus "$PACKAGE_NAME"
+		QPKG.LogServiceStatus
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" Clean ok
 		SendPackageStateChange IsCleaned
 		MarkThisActionForkAsOk
@@ -6322,9 +6313,8 @@ EOB
 QPKG.ClearAppCenterNotifier()
 	{
 
-	# $1 = QPKG name to clear from notifier list
-
-	local -r PACKAGE_NAME=${1:?package name null}
+	# input:
+	# 	$PACKAGE_NAME (global) = QPKG name to clear from notifier list
 
 	# KLUDGE: `clean` QTS 4.5.1 App Center notifier status
 	[[ -e /sbin/qpkg_cli ]] && /sbin/qpkg_cli --clean "$PACKAGE_NAME"
@@ -6342,19 +6332,37 @@ QPKG.ClearServiceStatus()
 	{
 
 	# input:
-	#   $1 = QPKG name
+	# 	$PACKAGE_NAME (global) = QPKG name
 
-	[[ -e /var/run/${1:?package name null}.last.operation ]] && rm /var/run/"${1:?package name null}".last.operation
+	[[ -e /var/run/$PACKAGE_NAME.last.operation ]] && rm /var/run/$PACKAGE_NAME.last.operation
 
 	} &>/dev/null
+
+QPKG.LastResultWasOk()
+	{
+
+	# returns true if last operation for this package is "ok"
+
+	# input:
+	# 	$PACKAGE_NAME (global) = QPKG name
+
+	case $(QPKG.GetServiceStatus "$PACKAGE_NAME") in
+		ok)
+			return 0
+			;;
+		*)
+			return 1
+	esac
+
+	return 1
+
+	}
 
 QPKG.LogServiceStatus()
 	{
 
 	# input:
-	#   $1 = QPKG name
-
-	local -r PACKAGE_NAME=${1:?package name null}
+	# 	$PACKAGE_NAME (global) = QPKG name
 
 	if ! local status=$(QPKG.GetServiceStatus "$PACKAGE_NAME"); then
 		DebugAsWarn "unable to get status of $(FormatAsPackName "$PACKAGE_NAME") service. It may be a non-sherpa package, or a sherpa package earlier than 200816c that doesn't support service results."
@@ -6402,13 +6410,17 @@ QPKG.ServicePathFile()
 	{
 
 	# input:
-	#   $1 = QPKG name
+	# 	$PACKAGE_NAME (global) = QPKG name (default)
+	#   $1 = if specified, use this as QPKG name instead
 
 	# output:
 	#   stdout = service script pathfile
 	#   $? = 0 if found, !0 if not
 
-	/sbin/getcfg "${1:?package name null}" Shell -d unknown -f /etc/config/qpkg.conf
+	local qpkg_name=${PACKAGE_NAME:-}
+	[[ -n ${1:-} ]] && qpkg_name=$1
+
+	/sbin/getcfg "$qpkg_name" Shell -d unknown -f /etc/config/qpkg.conf
 
 	}
 
@@ -6546,15 +6558,18 @@ QPKG.IsCanBackup()
 	# Does this QPKG service-script support `backup` and `restore` actions?
 
 	# input:
-	#   $1 = QPKG name
+	# 	$PACKAGE_NAME (global) = QPKG name (default)
+	#   $1 = if specified, use this as QPKG name instead
 
 	# output:
 	#   $? = 0 if true, 1 if false (first package found)
 
 	local -i index=0
+	local qpkg_name=${PACKAGE_NAME:-}
+	[[ -n ${1:-} ]] && qpkg_name=$1
 
 	for index in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$index]} = "${1:?package name null}" ]]; then
+		if [[ ${QPKG_NAME[$index]} = "$qpkg_name" ]]; then
 			if ${QPKG_CAN_BACKUP[$index]}; then
 				return 0
 			else
@@ -6600,15 +6615,18 @@ QPKG.IsCanClean()
 	# Does this QPKG service-script support cleaning of the internal application?
 
 	# input:
-	#   $1 = QPKG name
+	# 	$PACKAGE_NAME (global) = QPKG name (default)
+	#   $1 = if specified, use this as QPKG name instead
 
 	# output:
 	#   $? = 0 if true, 1 if false (first package found)
 
 	local -i index=0
+	local qpkg_name=${PACKAGE_NAME:-}
+	[[ -n ${1:-} ]] && qpkg_name=$1
 
 	for index in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$index]} = "${1:?package name null}" ]]; then
+		if [[ ${QPKG_NAME[$index]} = "$qpkg_name" ]]; then
 			if ${QPKG_CAN_CLEAN[$index]}; then
 				return 0
 			else
@@ -6627,15 +6645,18 @@ QPKG.IsCanLog()
 	# Does this QPKG service-script support logging of operations? When an action fails, this means user can be directed to check the service script log.
 
 	# input:
-	#   $1 = QPKG name
+	# 	$PACKAGE_NAME (global) = QPKG name (default)
+	#   $1 = if specified, use this as QPKG name instead
 
 	# output:
 	#   $? = 0 if true, 1 if false (first package found)
 
 	local -i index=0
+	local qpkg_name=${PACKAGE_NAME:-}
+	[[ -n ${1:-} ]] && qpkg_name=$1
 
 	for index in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$index]} = "${1:?package name null}" ]]; then
+		if [[ ${QPKG_NAME[$index]} = "$qpkg_name" ]]; then
 			if ${QPKG_CAN_LOG[$index]}; then
 				return 0
 			else

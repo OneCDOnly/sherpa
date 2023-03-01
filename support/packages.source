@@ -28,7 +28,7 @@ QPKG_REQUIRES_IPKS=()			# require these IPKs to be installed first
 QPKG_CAN_BACKUP=()				# true/false: this QPKG service-script supports configuration 'backup' and 'restore' operations
 QPKG_CAN_RESTART_TO_UPDATE=()	# true/false: the internal appplication can be updated by restarting the QPKG
 QPKG_CAN_CLEAN=()				# true/false: the internal appplication can be cleaned and re-downloaded
-QPKG_CAN_LOG=()					# true/false: the service script logs all operations
+QPKG_CAN_LOG=()					# true/false: the service script logs operation results in a format compatible with sherpa
 
 QPKG_NAME+=(ClamAV)
 QPKG_ARCH+=(all)
