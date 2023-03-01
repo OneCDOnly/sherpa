@@ -1,4 +1,3 @@
 theme: jekyll-theme-midnight
-
 - name: Auto-assign Issue
   uses: pozil/auto-assign-issue@v1.11.0
