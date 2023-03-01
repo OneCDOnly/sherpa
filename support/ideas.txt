@@ -1,6 +1,3 @@
-* add pyLoad as new QPKG? username: pyload, password: pyload, source: https://github.com/pyload/pyload
-	python3 -m pip install pyload-ng
-
 * figure-out how to trigger App Center to refresh package icon(s) when starting/stopping QPKG via the CLI (and in sherpa).
 
 * add mini rolling CPU utilitisation graph to progress display while installing QPKGs?
@@ -34,3 +31,8 @@
 * ensure each service script 'venv' upgrades its own 'pip'.
 
 * include result and duration of IPKs and PIPs install/upgrade in session results.
+
+* add pyLoad as new QPKG? username: pyload, password: pyload, source: https://github.com/pyload/pyload
+	opkg install tesseract python3-curl
+	python3 -m pip install pyload-ng
+
