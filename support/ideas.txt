@@ -29,8 +29,3 @@
 * ensure each service script 'venv' upgrades its own 'pip'.
 
 * include result and duration of IPKs and PIPs install/upgrade in session results.
-
-* add pyLoad as new QPKG? username: pyload, password: pyload, source: https://github.com/pyload/pyload
-	opkg install tesseract python3-curl
-	python3 -m pip install pyload-ng
-
