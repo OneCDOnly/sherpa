@@ -12,34 +12,34 @@ fi
 target_pathfile="$source_path"/objects
 
 # $MANAGEMENT_ACTIONS haven't been coded yet, so don't create objects for it
-#MANAGEMENT_ACTIONS=(Check List Paste Status)
+#MANAGEMENT_ACTIONS=(check list paste status)
 
 # these words may be specified by the user
 # sorted
-USER_QPKG_Sc_GROUPS=(All CanBackup CanClean CanRestartToUpdate Dependent HasDependents Installable Standalone Upgradable)
-USER_QPKG_ScNt_GROUPS=(CanClean Installable Upgradable)
-USER_QPKG_Is_STATES=(BackedUp Installed Missing Started)
-USER_QPKG_IsNt_STATES=(BackedUp Installed Started)
-USER_QPKG_ACTIONS=(Backup Clean Install Reassign Rebuild Reinstall Restart Restore Start Stop Uninstall Upgrade)
+USER_QPKG_Sc_GROUPS=(all canbackup canclean canrestarttoupdate dependent hasdependents installable standalone upgradable)
+USER_QPKG_ScNt_GROUPS=(canclean installable upgradable)
+USER_QPKG_Is_STATES=(backedup installed missing started)
+USER_QPKG_IsNt_STATES=(backedup installed started)
+USER_QPKG_ACTIONS=(backup clean install list reassign rebuild reinstall restart restore start stop uninstall upgrade)
 
 # these are used internally by sherpa
 # sorted
-IPK_STATES=(Downloaded Installed Reinstalled Upgraded)
+IPK_STATES=(downloaded installed reinstalled upgraded)
 
 # sorted
-QPKG_Is_STATES=(BackedUp Cleaned Downloaded Enabled Installed Missing Reassigned Reinstalled Restarted Signed Started Upgraded)
-QPKG_IsNt_STATES=(BackedUp Downloaded Enabled Installed Started)
+QPKG_Is_STATES=(backedup cleaned downloaded enabled installed missing reassigned reinstalled restarted signed started upgraded)
+QPKG_IsNt_STATES=(backedup downloaded enabled installed started)
 
 # unsorted
-QPKG_STATES_TRANSIENT=(Starting Stopping Restarting)
+QPKG_STATES_TRANSIENT=(starting stopping restarting)
 
 # ordered
-PIP_ACTIONS=(Download Uninstall Upgrade Reinstall Install)
-IPK_ACTIONS=(Download Uninstall Upgrade Reinstall Install)
-QPKG_ACTIONS=(Download Rebuild Reassign Backup Stop Disable Uninstall Upgrade Reinstall Install Restore Clean Enable Start Restart Sign)
-
+PIP_ACTIONS=(download uninstall upgrade reinstall install)
+IPK_ACTIONS=(download uninstall upgrade reinstall install)
+QPKG_ACTIONS=(download rebuild reassign backup stop disable uninstall upgrade reinstall install restore clean enable start restart sign)
+#
 # only used by sherpa QPKG service-script results parser
-QPKG_RESULTS=(Ok Unknown)
+QPKG_RESULTS=(ok unknown)
 
 AddFlagObj()
 	{
@@ -110,7 +110,7 @@ echo $public_function_name'.Add()
 	{ echo "${#'$_placeholder_array_'[@]}" ;}
 
 '$public_function_name'.Exist()
-	{ local patt="\b${1:-}\b"; [[ " ${'$_placeholder_array_'[*]:-} " =~ $patt ]] ;}
+	{ local patt="\b${1:-}\b"; [[ "${'$_placeholder_array_'[*]:-}" =~ $patt ]] ;}
 
 '$public_function_name'.Init()
 	{ '$_placeholder_size_'=0 '$_placeholder_array_'=() '$_placeholder_array_index_'=1 ;}
@@ -151,55 +151,35 @@ echo $public_function_name'.Add()
 echo "OBJECTS_VER='$today'" > "$target_pathfile"
 echo "#*$dontedit_msg" >> "$target_pathfile"
 
-# user option flag objects -----------------------------------------------------------------------------------------------------------------------------
+# user option & package action flag objects -----------------------------------------------------------------------------------------------------------------------------
 
 for group in "${USER_QPKG_Sc_GROUPS[@]}"; do
-	AddFlagObj QPKGs.List.Sc"${group}"
+	for action in "${USER_QPKG_ACTIONS[@]}"; do
+		AddFlagObj qpkgs.ac"$action".sc"$group"
+	done
 done
 
 for group in "${USER_QPKG_ScNt_GROUPS[@]}"; do
-	AddFlagObj QPKGs.List.ScNt"${group}"
+	for action in "${USER_QPKG_ACTIONS[@]}"; do
+		AddFlagObj qpkgs.ac"$action".scnt"$group"
+	done
 done
 
 for state in "${USER_QPKG_Is_STATES[@]}" "${QPKG_STATES_TRANSIENT[@]}"; do
-	AddFlagObj QPKGs.List.Is"${state}"
-done
-
-for state in "${USER_QPKG_IsNt_STATES[@]}"; do
-	AddFlagObj QPKGs.List.IsNt"${state}"
-done
-
-# package action flag objects --------------------------------------------------------------------------------------------------------------------------
-
-for group in "${USER_QPKG_Sc_GROUPS[@]}"; do
 	for action in "${USER_QPKG_ACTIONS[@]}"; do
-		AddFlagObj QPKGs.Ac"${action}".Sc"${group}"
-	done
-done
-
-for group in "${USER_QPKG_ScNt_GROUPS[@]}"; do
-	for action in "${USER_QPKG_ACTIONS[@]}"; do
-		AddFlagObj QPKGs.Ac"${action}".ScNt"${group}"
-	done
-done
-
-for state in "${USER_QPKG_Is_STATES[@]}"; do
-	for action in "${USER_QPKG_ACTIONS[@]}"; do
-		AddFlagObj QPKGs.Ac"${action}".Is"${state}"
+		AddFlagObj qpkgs.ac"$action".is"$state"
 	done
 done
 
 for state in "${USER_QPKG_IsNt_STATES[@]}"; do
 	for action in "${USER_QPKG_ACTIONS[@]}"; do
-		AddFlagObj QPKGs.Ac"${action}".IsNt"${state}"
+		AddFlagObj qpkgs.ac"$action".isnt"$state"
 	done
 done
-
-# performing actions on QPKGs with temporary states is unsupported, so don't create flags for them
 
 # session list objects ---------------------------------------------------------------------------------------------------------------------------------
 
-AddListObj Args.Unknown
+AddListObj args.unknown
 
 # $MANAGEMENT_ACTIONS haven't been coded yet, so don't create objects for it
 # for action in "${MANAGEMENT_ACTIONS[@]}"; do
@@ -210,35 +190,40 @@ AddListObj Args.Unknown
 # done
 
 for group in "${USER_QPKG_Sc_GROUPS[@]}"; do
-	AddListObj QPKGs.Sc"${group}"
+	AddListObj qpkgs.sc"$group"
 done
 
 for group in "${USER_QPKG_ScNt_GROUPS[@]}"; do
-	AddListObj QPKGs.ScNt"${group}"
+	AddListObj qpkgs.scnt"$group"
 done
 
 for state in "${QPKG_Is_STATES[@]}" "${QPKG_STATES_TRANSIENT[@]}" "${QPKG_RESULTS[@]}"; do
-	AddListObj QPKGs.Is"${state}"
+	AddListObj qpkgs.is"$state"
 done
 
 for state in "${QPKG_IsNt_STATES[@]}" "${QPKG_STATES_TRANSIENT[@]}" "${QPKG_RESULTS[@]}"; do
-	AddListObj QPKGs.IsNt"${state}"
+	AddListObj qpkgs.isnt"$state"
 done
 
 for action in "${QPKG_ACTIONS[@]}"; do
 	case $action in
-		Disable|Enable)
-			continue    # Ac lists are not required for these
+		disable|enable|list)
+			continue    # action result lists are not required for these
 	esac
 
-	for prefix in To Ok Er Sk So Se; do
-		AddListObj QPKGs.Ac"${prefix}${action}"
+	for prefix in to ok er sk so se; do
+		AddListObj qpkgs.ac"${prefix}${action}"
 	done
 done
 
 for action in "${IPK_ACTIONS[@]}"; do
-	for prefix in To Ok Er; do
-		AddListObj IPKs.Ac"${prefix}${action}"
+	case $action in
+		disable|enable|list)
+			continue    # action result lists are not required for these
+	esac
+
+	for prefix in to ok er; do
+		AddListObj ipks.ac"${prefix}${action}"
 	done
 done
 
