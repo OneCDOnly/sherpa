@@ -1515,10 +1515,10 @@ ParseArgs()
 					status)
 						opts_help_status=true
 						;;
-					tips_)
+					tips)
 						opts_help_tips=true
 						;;
-					versions_)
+					versions)
 						opts_vers_view=true
 						self_display_clean=true
 				esac
