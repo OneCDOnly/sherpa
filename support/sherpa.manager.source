@@ -71,7 +71,7 @@ Self:Init()
 
 	local action=''
 
-	for action in "${PACKAGE_ACTIONS[@]}" check debug update; do
+	for action in "${QPKG_ACTIONS[@]}" check debug update; do
 		readonly "$(Uppercase "$action")"_LOG_FILE="$action".log
 	done
 
@@ -366,17 +366,25 @@ Env:Confirm()
 Lists:Load()
 	{
 
+# these are used internally by sherpa -----------------------------------------------------
 	# ordered
 	PACKAGE_TIERS=(standalone addon dependent)
-	PACKAGE_ACTIONS=(download rebuild reassign backup stop disable uninstall upgrade reinstall install restore clean enable start restart sign)
 
 	# sorted
-	QPKG_IS_STATES=(backedup cleaned downloaded enabled installed missing reassigned reinstalled restarted signed started upgraded)
-	QPKG_ISNT_STATES=(backedup downloaded enabled installed started)
+	QPKG_IS_STATES=(backedup downloaded enabled installed missing signed started)
+	QPKG_ISNT_STATES=(backedup downloaded enabled installed signed started)
 	QPKG_STATES_TRANSIENT=(starting stopping restarting)
 	QPKG_SERVICE_RESULTS=(ok unknown)
 
-	# selectable by the user
+	# sorted
+	IPK_STATES=(downloaded installed reinstalled upgraded)
+
+	# ordered
+	PIP_ACTIONS=(download uninstall upgrade reinstall install)
+	IPK_ACTIONS=(download uninstall upgrade reinstall install)
+	QPKG_ACTIONS=(download rebuild reassign backup stop disable uninstall upgrade reinstall install restore clean enable start restart sign)
+
+	# these words may be specified by the user -----------------------------------------------------
 	# sorted
 	USER_QPKG_SC_GROUPS=(all canbackup canclean canrestarttoupdate dependent hasdependents installable standalone upgradable)
 	USER_QPKG_SCNT_GROUPS=(canclean installable upgradable)
@@ -386,12 +394,17 @@ Lists:Load()
 
 	# KLUDGE: for some reason, setting 'readonly' while populating arrays causes their scope to become local, so need to set as 'readonly' afterward to ensure global scope. GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
 	readonly PACKAGE_TIERS
-	readonly PACKAGE_ACTIONS
 
 	readonly QPKG_IS_STATES
 	readonly QPKG_ISNT_STATES
 	readonly QPKG_STATES_TRANSIENT
 	readonly QPKG_SERVICE_RESULTS
+
+	readonly IPK_STATES
+
+	readonly PIP_ACTIONS
+	readonly IPK_ACTIONS
+	readonly QPKG_ACTIONS
 
 	readonly USER_QPKG_SC_GROUPS
 	readonly USER_QPKG_SCNT_GROUPS
@@ -2162,9 +2175,9 @@ CalcIpkDepsToInstall()
 	done
 
 	if [[ $complete = true ]]; then
-		DebugAsDone "completed in $iterations loop iteration$(Pluralise "$iterations")"
+		DebugAsDone "completed in $iterations iteration$(Pluralise "$iterations")"
 	else
-		DebugAsError "incomplete with $iterations loop iteration$(Pluralise "$iterations"), consider raising \$ITERATION_LIMIT [$ITERATION_LIMIT]"
+		DebugAsError "incomplete with $iterations iteration$(Pluralise "$iterations"), consider raising \$ITERATION_LIMIT [$ITERATION_LIMIT]"
 		opts_help_suggestissue=true
 	fi
 
@@ -3803,30 +3816,6 @@ QPKGs.Warnings:Check()
 
 	}
 
-IPKs.Actions:List()
-	{
-
-	[[ $self_debug_to_file = true ]] || return
-
-	Func:Entry
-	local action=''
-	DebugInfoMinSepr
-
-	for action in "${PACKAGE_ACTIONS[@]}"; do
-		case $action in
-			backup|clean|disable|enable|reassign|rebuild|restart|restore|sign|start|stop)
-				continue
-		esac
-
-		IPKs.AC${action}-ok:IsAny && DebugIpkInfo "AC${action}-ok" "($(IPKs.AC${action}-ok:Count)) $(IPKs.AC${action}-ok:ListCSV) "
-		IPKs.AC${action}-er:IsAny && DebugIpkError "AC${action}-er" "($(IPKs.AC${action}-er:Count)) $(IPKs.AC${action}-er:ListCSV) "
-	done
-
-	DebugInfoMinSepr
-	Func:Exit
-
-	}
-
 PIPs.Actions:List()
 	{
 
@@ -3836,14 +3825,28 @@ PIPs.Actions:List()
 	local action=''
 	DebugInfoMinSepr
 
-	for action in "${PACKAGE_ACTIONS[@]}"; do
-		case $action in
-			backup|clean|disable|enable|reassign|rebuild|restart|restore|start|stop)
-				continue
-		esac
+	for action in "${PIP_ACTIONS[@]}"; do
+		PIPs-AC${action}-ok:IsAny && DebugPipInfo "AC${action}-ok" "($(PIPs-AC${action}-ok:Count)) $(PIPs-AC${action}-ok:ListCSV) "
+		PIPs-AC${action}-er:IsAny && DebugPipError "AC${action}-er" "($(PIPs-AC${action}-er:Count)) $(PIPs-AC${action}-er:ListCSV) "
+	done
 
-		PIPs.AC${action}-ok:IsAny && DebugPipInfo "AC${action}-ok" "($(PIPs.AC${action}-ok:Count)) $(PIPs.AC${action}-ok:ListCSV) "
-		PIPs.AC${action}-er:IsAny && DebugPipError "AC${action}-er" "($(PIPs.AC${action}-er:Count)) $(PIPs.AC${action}-er:ListCSV) "
+	DebugInfoMinSepr
+	Func:Exit
+
+	}
+
+IPKs.Actions:List()
+	{
+
+	[[ $self_debug_to_file = true ]] || return
+
+	Func:Entry
+	local action=''
+	DebugInfoMinSepr
+
+	for action in "${IPK_ACTIONS[@]}"; do
+		IPKs-AC${action}-ok:IsAny && DebugIpkInfo "AC${action}-ok" "($(IPKs-AC${action}-ok:Count)) $(IPKs-AC${action}-ok:ListCSV) "
+		IPKs-AC${action}-er:IsAny && DebugIpkError "AC${action}-er" "($(IPKs-AC${action}-er:Count)) $(IPKs-AC${action}-er:ListCSV) "
 	done
 
 	DebugInfoMinSepr
@@ -3861,20 +3864,20 @@ QPKGs.Actions:List()
 	local prefix=''
 	DebugInfoMinSepr
 
-	for action in "${PACKAGE_ACTIONS[@]}"; do
+	for action in "${QPKG_ACTIONS[@]}"; do
 		[[ $action = enable || $action = disable ]] && continue	 # no objects for these as `start` and `stop` do the same jobs
 
 		for prefix in ok er sk; do
 			if QPKGs-AC${action}-${prefix}:IsAny; then
 				case $prefix in
 					ok)
-						DebugQpkgInfo "AC${action}=${prefix}" "($(QPKGs-AC${action}-${prefix}:Count)) $(QPKGs-AC${action}-${prefix}:ListCSV) "
+						DebugQpkgInfo "AC${action}-${prefix}" "($(QPKGs-AC${action}-${prefix}:Count)) $(QPKGs-AC${action}-${prefix}:ListCSV) "
 						;;
 					sk)
-						DebugQpkgWarning "AC${action}=${prefix}" "($(QPKGs-AC${action}-${prefix}:Count)) $(QPKGs-AC${action}-${prefix}:ListCSV) "
+						DebugQpkgWarning "AC${action}-${prefix}" "($(QPKGs-AC${action}-${prefix}:Count)) $(QPKGs-AC${action}-${prefix}:ListCSV) "
 						;;
 					er)
-						DebugQpkgError "AC${action}=${prefix}" "($(QPKGs-AC${action}-${prefix}:Count)) $(QPKGs-AC${action}-${prefix}:ListCSV) "
+						DebugQpkgError "AC${action}-${prefix}" "($(QPKGs-AC${action}-${prefix}:Count)) $(QPKGs-AC${action}-${prefix}:ListCSV) "
 				esac
 			fi
 		done
@@ -3895,7 +3898,7 @@ QPKGs.Actions:ListAll()
 	local prefix=''
 	DebugInfoMinSepr
 
-	for action in "${PACKAGE_ACTIONS[@]}"; do
+	for action in "${QPKG_ACTIONS[@]}"; do
 		[[ $action = enable || $action = disable ]] && continue	 # no objects for these as `start` and `stop` do the same jobs
 
 		for prefix in to ok er sk; do
@@ -3935,7 +3938,7 @@ QPKGs.States:List()
 	done
 
 	for state in "${USER_QPKG_ISNT_STATES[@]}" "${QPKG_SERVICE_RESULTS[@]}"; do
-		if [[ $state = installed || $state = upgradable ]]; then
+		if [[ $state = installed ]]; then
 			continue
 		elif [[ $state = ok ]]; then
 			QPKGs-ISNT${state}:IsAny && DebugQpkgError "ISNT${state}" "($(QPKGs-ISNT${state}:Count)) $(QPKGs-ISNT${state}:ListCSV) "
@@ -4593,11 +4596,6 @@ ReadMsgFromActionPipe()
 
 	IFS='|' read -r _msg1_key _msg1_value _msg2_key _msg2_value
 
-	DebugVar _msg1_key
-	DebugVar _msg1_value
-	DebugVar _msg2_key
-	DebugVar _msg2_value
-
 	eval "$1='$_msg1_key' $2='$_msg1_value' $3='$_msg2_key' $4='$_msg2_value'"
 
 	return 0
@@ -5101,7 +5099,6 @@ _QPKG:reassign_()
 
 	if [[ $result_code -eq 0 ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reassign ok
-		SendPackageStateChange ISreassigned
 		MarkThisActionForkAsOk
 	else
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reassign failed "$result_code"
@@ -5608,11 +5605,9 @@ _QPKG:restart_()
 	if [[ $result_code -eq 0 ]]; then
 		QPKG.LogServiceStatus
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" restart ok
-		SendPackageStateChange ISrestarted
 		MarkThisActionForkAsOk
 	else
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" restart failed "$result_code"
-		SendPackageStateChange ISNTrestarted
 		result_code=1	# remap to 1
 		MarkThisActionForkAsFailed
 	fi
