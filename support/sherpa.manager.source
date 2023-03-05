@@ -1238,7 +1238,7 @@ ParseArgs()
 		case $arg in
 		# these cases use only a single word to specify a single action
 			backup|clean|reassign|rebuild|reinstall|restart|restore|start|stop)
-				action=${arg}_
+				action=${arg}
 				arg_identified=true
 				group=''
 				group_identified=false
@@ -1246,7 +1246,7 @@ ParseArgs()
 				skip_qpkg_processing=false
 				;;
 			paste)
-				action=paste_
+				action=paste
 				arg_identified=true
 				group=''
 				group_identified=false
@@ -1255,7 +1255,7 @@ ParseArgs()
 				;;
 		# all cases below can use multiple words or chars to specify a single action
 			add|install)
-				action=install_
+				action=install
 				arg_identified=true
 				group=''
 				group_identified=false
@@ -1263,7 +1263,7 @@ ParseArgs()
 				skip_qpkg_processing=false
 				;;
 			c|check)
-				action=check_
+				action=check
 				arg_identified=true
 				group=''
 				group_identified=false
@@ -1271,7 +1271,7 @@ ParseArgs()
 				skip_qpkg_processing=false
 				;;
 			display|help|list|show|view)
-				action=help_
+				action=help
 				arg_identified=true
 				group=''
 				group_identified=false
@@ -1279,7 +1279,7 @@ ParseArgs()
 				skip_qpkg_processing=true
 				;;
 			rm|remove|uninstall)
-				action=uninstall_
+				action=uninstall
 				arg_identified=true
 				group=''
 				group_identified=false
@@ -1287,7 +1287,7 @@ ParseArgs()
 				skip_qpkg_processing=false
 				;;
 			s|status|statuses)
-				action=status_
+				action=status
 				arg_identified=true
 				group=''
 				group_identified=false
@@ -1295,7 +1295,7 @@ ParseArgs()
 				skip_qpkg_processing=true
 				;;
 			update|upgrade)
-				action=upgrade_
+				action=upgrade
 				arg_identified=true
 				group=''
 				group_identified=false
@@ -1309,7 +1309,7 @@ ParseArgs()
 		if [[ -z $action ]]; then
 			case $arg in
 				a|abs|action|actions|actions-all|alias|aliases|all-actions|b|backups|dependent|dependents|failed|groups|installable|installed|l|last|log|missing|not-installed|ok|option|options|p|package|packages|problems|r|repo|repos|results|skipped|standalone|standalones|started|stopped|tail|tips|updatable|updateable|upgradable|v|version|versions|whole)
-					action=help_
+					action=help
 					arg_identified=true
 					group=''
 					group_identified=false
@@ -1323,54 +1323,66 @@ ParseArgs()
 		if [[ -n $action ]]; then
 			case $arg in
 			# these cases use only a single word or char to specify a single group
-				backedup|failed|installable|installed|missing|not-backedup|not-installed|ok|problems|results|skipped|started|stopped|tail|tips)
-					group=${arg}_
+				backedup|installable|installed|missing|ok|problems|results|skipped|started|tail|tips)
+					group=${arg}
+					;;
+				not-backedup)
+					group=NTbackedup
+					;;
+				not-installed)
+					group=NTinstalled
+					;;
+				failed)
+					group=NTok
+					;;
+				stopped)
+					group=NTstarted
 					;;
 			# all cases below can use multiple words or chars to specify a single group
 				a|abs|alias|aliases)
-					group=abs_
+					group=abs
 					;;
 				actions-all|all-actions)
-					group=all-actions_
+					group=all-actions
 					;;
 				action|actions)
-					group=actions_
+					group=actions
 					;;
 				all|entire|everything)
-					group=all_
+					group=all
 					;;
 				b|backups)
-					group=backups_
+					group=backups
 					;;
 				dependent|dependents)
-					group=dependent_
+					group=dependent
 					;;
 				group|groups)
-					group=groups_
+					group=groups
 					;;
 				l|last)
-					group=last_
+					group=last
 					;;
 				log|whole)
-					group=log_
+					group=log
 					;;
 				option|options)
-					group=options_
+					group=options
 					;;
 				p|package|packages)
-					group=packages_
+					group=packages
 					;;
 				r|repo|repos)
-					group=repos_
+					group=repos
 					;;
 				standalone|standalones)
-					group=standalone_
+					group=standalone
 					;;
 				updatable|updateable|upgradable)
-					group=upgradable_
+					group=upgradable
 					;;
 				v|version|versions)
-					group=versions_
+					group=versions
 			esac
 
 			if [[ -n $group ]]; then
@@ -1401,166 +1413,110 @@ ParseArgs()
 		[[ $arg_identified = false ]] && ARGs-unknown:Add "$arg"
 
 		case $action in
-			backup_)
+			backup)
 				case $group in
-					all_)
-						QPKGs.ACbackup.SCall:Set
+					all|dependent|standalone)
+						QPKGs.AC${action}.SC${group}:Set
 						group=''
 						;;
-					dependent_)
-						QPKGs.ACbackup.SCdependent:Set
-						group=''
-						;;
-					installed_)
-						QPKGs.ACbackup.ISinstalled:Set
-						group=''
-						;;
-					standalone_)
-						QPKGs.ACbackup.SCstandalone:Set
-						group=''
-						;;
-					started_)
-						QPKGs.ACbackup.ISstarted:Set
-						group=''
-						;;
-					stopped_)
-						QPKGs.ACbackup.ISNTstarted:Set
+					installed|started|NTstarted|NTbackedup)
+						QPKGs.AC${action}.IS${group}:Set
 						group=''
 						;;
 					*)
 						QPKGs-ACbackup-to:Add "$package"
 				esac
 				;;
-			check_)
+			check)
 				opts_deps_check=true
 				;;
-			clean_)
+			clean)
 				case $group in
-					all_)
-						QPKGs.ACclean.SCall:Set
+					all|dependent|standalone)
+						QPKGs.AC${action}.SC${group}:Set
 						group=''
 						;;
-					dependent_)
-						QPKGs.ACclean.SCdependent:Set
-						group=''
-						;;
-					installed_)
-						QPKGs.ACclean.ISinstalled:Set
-						group=''
-						;;
-					standalone_)
-						QPKGs.ACclean.SCstandalone:Set
-						group=''
-						;;
-					started_)
-						QPKGs.ACclean.ISstarted:Set
-						group=''
-						;;
-					stopped_)
-						QPKGs.ACclean.ISNTstarted:Set
+					installed|started|NTstarted)
+						QPKGs.ACclean.IS${group}:Set
 						group=''
 						;;
 					*)
 						QPKGs-ACclean-to:Add "$package"
 				esac
 				;;
-			help_)
+			help)
 				case $group in
-					abs_)
+					abs)
 						opts_help_abbreviations=true
 						;;
-					actions_)
+					actions)
 						opts_help_actions=true
 						;;
-					all-actions_|all_)
+					all-actions|all)
 						opts_help_actions_all=true
 						;;
-					backedup_)
-						QPKGs.AClist.ISbackedup:Set
+					backedup|installed|started|NTstarted)
+						QPKGs.AClist.IS${group}:Set
 						self_display_clean=true
 						;;
-					backups_)
+					backups)
 						opts_help_backups=true
 						;;
-					dependent_)
-						QPKGs.AClist.SCdependent:Set
+					dependent|installable|standalone|upgradable)
+						QPKGs.AClist.SC${group}:Set
 						self_display_clean=true
 						;;
-					failed_)
+					failed)
 						opts_help_failed=true
 						;;
-					groups_)
+					groups)
 						opts_help_groups=true
 						;;
-					installable_)
-						QPKGs.AClist.SCinstallable:Set
-						self_display_clean=true
-						;;
-					installed_)
-						QPKGs.AClist.ISinstalled:Set
-						self_display_clean=true
-						;;
-					last_)
+					last)
 						opts_log_last_view=true
 						self_display_clean=true
 						;;
-					log_)
+					log)
 						opts_log_tail_view=true
 						self_display_clean=true
 						;;
-					not-backedup_)
+					not-backedup)
 						QPKGs.AClist.ISNTbackedup:Set
 						self_display_clean=true
 						;;
-					not-installed_)
+					not-installed)
 						QPKGs.AClist.ISNTinstalled:Set
 						self_display_clean=true
 						;;
-					ok_)
+					ok)
 						opts_help_ok=true
 						;;
-					options_)
+					options)
 						opts_help_options=true
 						;;
-					packages_)
+					packages)
 						opts_help_packages=true
 						;;
-					problems_)
+					problems)
 						opts_help_problems=true
 						;;
-					reassign_)
+					reassign)
 						opts_help_action_reassign=true
 						;;
-					repos_)
+					repos)
 						opts_help_repos=true
 						;;
-					results_)
+					results)
 						opts_help_results=true
 						;;
-					skipped_)
+					skipped)
 						opts_help_skipped=true
 						;;
-					standalone_)
-						QPKGs.AClist.SCstandalone:Set
-						self_display_clean=true
-						;;
-					started_)
-						QPKGs.AClist.ISstarted:Set
-						self_display_clean=true
-						;;
-					status_)
+					status)
 						opts_help_status=true
-						;;
-					stopped_)
-						QPKGs.AClist.ISNTstarted:Set
-						self_display_clean=true
 						;;
 					tips_)
 						opts_help_tips=true
-						;;
-					upgradable_)
-						QPKGs.AClist.SCupgradable:Set
-						self_display_clean=true
 						;;
 					versions_)
 						opts_vers_view=true
@@ -1569,317 +1525,162 @@ ParseArgs()
 
 				skip_qpkg_processing=true
 				;;
-			install_)
+			install)
 				case $group in
-					all_)
-						QPKGs.ACinstall.SCall:Set
+					all|dependent|installable|standalone)
+						QPKGs.AC${action}.SC${group}:Set
 						group=''
 						;;
-					dependent_)
-						QPKGs.ACinstall.SCdependent:Set
+					installed|missing|started)
+						QPKGs.ACinstall.IS${group}:Set
 						group=''
 						;;
-					installable_)
-						QPKGs.ACinstall.SCinstallable:Set
-						group=''
-						;;
-					installed_)
-						QPKGs.ACinstall.ISinstalled:Set
-						group=''
-						;;
-					missing_)
-						QPKGs.ACinstall.ISmissing:Set
-						group=''
-						;;
-					not-installed_)
+					not-installed)
 						QPKGs.ACinstall.ISNTinstalled:Set
-						group=''
-						;;
-					standalone_)
-						QPKGs.ACinstall.SCstandalone:Set
-						group=''
-						;;
-					started_)
-						QPKGs.ACinstall.ISstarted:Set
 						group=''
 						;;
 					*)
 						QPKGs-ACinstall-to:Add "$package"
 				esac
 				;;
-			paste_)
+			paste)
 				case $group in
-					all_|log_|tail_)
+					all|log|tail)
 						opts_log_tail_paste=true
 						action=''
 						;;
-					last_)
+					last)
 						opts_log_last_paste=true
 						action=''
 				esac
 
 				skip_qpkg_processing=true
 				;;
-			reassign_)
+			reassign)
 				case $group in
-					all_)
-						QPKGs.ACreassign.SCall:Set
+					all|dependent|standalone)
+						QPKGs.AC${action}.SC${group}:Set
 						group=''
 						;;
-					dependent_)
-						QPKGs.ACreassign.SCdependent:Set
-						group=''
-						;;
-					installed_)
-						QPKGs.ACreassign.ISinstalled:Set
-						group=''
-						;;
-					standalone_)
-						QPKGs.ACreassign.SCstandalone:Set
-						group=''
-						;;
-					started_)
-						QPKGs.ACreassign.ISstarted:Set
-						group=''
-						;;
-					stopped_)
-						QPKGs.ACreassign.ISNTstarted:Set
-						group=''
-						;;
-					upgradable_)
-						QPKGs.ACreassign.ISupgradable:Set
+					installed|started|upgradable|NTstarted)
+						QPKGs.AC${action}.IS${group}:Set
 						group=''
 						;;
 					*)
-						QPKGs-ACreassign-to:Add "$package"
+						QPKGs-AC${action}-to:Add "$package"
 				esac
 				;;
-			rebuild_)
+			rebuild)
 				case $group in
-					all_)
-						QPKGs.ACrebuild.SCall:Set
+					all|dependent|standalone)
+						QPKGs.AC${action}.SC${group}:Set
 						group=''
 						;;
-					dependent_)
-						QPKGs.ACrebuild.SCdependent:Set
-						group=''
-						;;
-					installed_)
-						QPKGs.ACrebuild.ISinstalled:Set
-						group=''
-						;;
-					standalone_)
-						QPKGs.ACrebuild.SCstandalone:Set
+					installed)
+						QPKGs.AC${action}.IS${group}:Set
 						group=''
 						;;
 					*)
 						QPKGs-ACrebuild-to:Add "$package"
 				esac
 				;;
-			reinstall_)
+			reinstall)
 				case $group in
-					all_)
-						QPKGs.ACreinstall.SCall:Set
+					all|dependent|standalone)
+						QPKGs.AC${action}.SC${group}:Set
 						group=''
 						;;
-					dependent_)
-						QPKGs.ACreinstall.SCdependent:Set
-						group=''
-						;;
-					installed_)
-						QPKGs.ACreinstall.ISinstalled:Set
-						group=''
-						;;
-					standalone_)
-						QPKGs.ACreinstall.SCstandalone:Set
-						group=''
-						;;
-					started_)
-						QPKGs.ACreinstall.ISstarted:Set
-						group=''
-						;;
-					stopped_)
-						QPKGs.ACreinstall.ISNTstarted:Set
-						group=''
-						;;
-					upgradable_)
-						QPKGs.ACreinstall.ISupgradable:Set
+					installed|started|upgradable|NTstarted)
+						QPKGs.AC${action}.IS${group}:Set
 						group=''
 						;;
 					*)
 						QPKGs-ACreinstall-to:Add "$package"
 				esac
 				;;
-			restart_)
+			restart)
 				case $group in
-					all_)
-						QPKGs.ACrestart.SCall:Set
+					all|dependent|standalone)
+						QPKGs.AC${action}.SC${group}:Set
 						group=''
 						;;
-					dependent_)
-						QPKGs.ACrestart.SCdependent:Set
-						group=''
-						;;
-					installed_)
-						QPKGs.ACrestart.ISinstalled:Set
-						group=''
-						;;
-					standalone_)
-						QPKGs.ACrestart.SCstandalone:Set
-						group=''
-						;;
-					started_)
-						QPKGs.ACrestart.ISstarted:Set
-						group=''
-						;;
-					stopped_)
-						QPKGs.ACrestart.ISNTstarted:Set
-						group=''
-						;;
-					upgradable_)
-						QPKGs.ACrestart.ISupgradable:Set
+					installed|started|upgradable|NTstarted)
+						QPKGs.AC${action}.IS${group}:Set
 						group=''
 						;;
 					*)
 						QPKGs-ACrestart-to:Add "$package"
 				esac
 				;;
-			restore_)
+			restore)
 				case $group in
-					all_)
-						QPKGs.ACrestore.SCall:Set
+					all|dependent|standalone)
+						QPKGs.AC${action}.SC${group}:Set
 						group=''
 						;;
-					dependent_)
-						QPKGs.ACrestore.SCdependent:Set
-						group=''
-						;;
-					installed_)
-						QPKGs.ACrestore.ISinstalled:Set
-						group=''
-						;;
-					standalone_)
-						QPKGs.ACrestore.SCstandalone:Set
-						group=''
-						;;
-					started_)
-						QPKGs.ACrestore.ISstarted:Set
-						group=''
-						;;
-					stopped_)
-						QPKGs.ACrestore.ISNTstarted:Set
-						group=''
-						;;
-					upgradable_)
-						QPKGs.ACrestore.ISupgradable:Set
+					installed|started|upgradable|NTstarted)
+						QPKGs.AC${action}.IS${group}:Set
 						group=''
 						;;
 					*)
 						QPKGs-ACrestore-to:Add "$package"
 				esac
 				;;
-			start_)
+			start)
 				case $group in
-					all_)
-						QPKGs.ACstart.SCall:Set
+					all|dependent|standalone)
+						QPKGs.AC${action}.SC${group}:Set
 						group=''
 						;;
-					dependent_)
-						QPKGs.ACstart.SCdependent:Set
-						group=''
-						;;
-					installed_)
-						QPKGs.ACstart.ISinstalled:Set
-						group=''
-						;;
-					standalone_)
-						QPKGs.ACstart.SCstandalone:Set
-						group=''
-						;;
-					stopped_)
-						QPKGs.ACstart.ISNTstarted:Set
-						group=''
-						;;
-					upgradable_)
-						QPKGs.ACstart.ISupgradable:Set
+					installed|upgradable|NTstarted)
+						QPKGs.AC${action}.IS${group}:Set
 						group=''
 						;;
 					*)
 						QPKGs-ACstart-to:Add "$package"
 				esac
 				;;
-			status_)
+			status)
 				opts_help_status=true
 				skip_qpkg_processing=true
 				;;
-			stop_)
+			stop)
 				case $group in
-					all_)
-						QPKGs.ACstop.SCall:Set
+					all|dependent|standalone)
+						QPKGs.AC${action}.SC${group}:Set
 						group=''
 						;;
-					dependent_)
-						QPKGs.ACstop.SCdependent:Set
-						group=''
-						;;
-					installed_)
-						QPKGs.ACstop.ISinstalled:Set
-						group=''
-						;;
-					standalone_)
-						QPKGs.ACstop.SCstandalone:Set
-						group=''
-						;;
-					started_)
-						QPKGs.ACstop.ISstarted:Set
-						group=''
-						;;
-					upgradable_)
-						QPKGs.ACstop.ISupgradable:Set
+					installed|started|upgradable)
+						QPKGs.AC${action}.IS${group}:Set
 						group=''
 						;;
 					*)
 						QPKGs-ACstop-to:Add "$package"
 				esac
 				;;
-			uninstall_)
+			uninstall)
 				case $group in
-					all_)   		# this group is dangerous, so make `force` a requirement
+					all)   		# this group is dangerous, so make `force` a requirement
 						if [[ $action_force = true ]]; then
 							QPKGs.ACuninstall.SCall:Set
 							group=''
 							action_force=false
 						fi
 						;;
-					dependent_)
-						QPKGs.ACuninstall.SCdependent:Set
+					dependent|standalone)
+						QPKGs.AC${action}.SC${group}:Set
 						group=''
 						action_force=false
 						;;
-					installed_)		# this group is dangerous, so make `force` a requirement
+					installed)		# this group is dangerous, so make `force` a requirement
 						if [[ $action_force = true ]]; then
 							QPKGs.ACuninstall.ISinstalled:Set
 							group=''
 							action_force=false
 						fi
 						;;
-					standalone_)
-						QPKGs.ACuninstall.SCstandalone:Set
-						group=''
-						action_force=false
-						;;
-					started_)
-						QPKGs.ACuninstall.ISstarted:Set
-						group=''
-						action_force=false
-						;;
-					stopped_)
-						QPKGs.ACuninstall.ISNTstarted:Set
-						group=''
-						action_force=false
-						;;
-					upgradable_)
-						QPKGs.ACuninstall.ISupgradable:Set
+					started|upgradable|NTstarted)
+						QPKGs.AC${action}.IS${group}:Set
 						group=''
 						action_force=false
 						;;
@@ -1887,34 +1688,14 @@ ParseArgs()
 						QPKGs-ACuninstall-to:Add "$package"
 				esac
 				;;
-			upgrade_)
+			upgrade)
 				case $group in
-					all_)
-						QPKGs.ACupgrade.SCall:Set
+					all|dependent|standalone|upgradable)
+						QPKGs.AC${action}.SC${group}:Set
 						group=''
 						;;
-					dependent_)
-						QPKGs.ACupgrade.SCdependent:Set
-						group=''
-						;;
-					installed_)
-						QPKGs.ACupgrade.ISinstalled:Set
-						group=''
-						;;
-					standalone_)
-						QPKGs.ACupgrade.SCstandalone:Set
-						group=''
-						;;
-					started_)
-						QPKGs.ACupgrade.ISstarted:Set
-						group=''
-						;;
-					stopped_)
-						QPKGs.ACupgrade.ISNTstarted:Set
-						group=''
-						;;
-					upgradable_)
-						QPKGs.ACupgrade.SCupgradable:Set
+					installed|started|NTstarted)
+						QPKGs.AC${action}.IS${group}:Set
 						group=''
 						;;
 					*)
@@ -1926,7 +1707,7 @@ ParseArgs()
 	# when an action has been determined, but no group has been found, then show default information. This will usually be the help screen.
 	if [[ -n $action && $group_identified = false ]]; then
 		case $action in
-			help_|paste_)
+			help|paste)
 				opts_help_basic=true
 		esac
 	fi
