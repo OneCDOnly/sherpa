@@ -3327,7 +3327,9 @@ Help.PackageAbbreviations:Show()
 	Help.Basic:Show
 	DisplayAsHelpTitle "$(FormatAsTitle) can recognise various abbreviations and aliases as $(FormatAsPackages)"
 
-	for tier in standalone dependent; do
+	for tier in "${PACKAGE_TIERS[@]}"; do
+		[[ $tier = addon ]] && continue		# don't need to see addons
+
 		DisplayAsHelpTitlePackageNameAbs "$tier QPKGs" 'acceptable QPKG name abbreviations and aliases'
 
 		for package_name in $(QPKGs-SC${tier}:Array); do
@@ -4200,7 +4202,9 @@ QPKGs.Repos:Show()
 	DisableDebugToArchiveAndFile
 	QPKGs.States:Build
 
-	for tier in standalone dependent; do
+	for tier in "${PACKAGE_TIERS[@]}"; do
+		[[ $tier = addon ]] && continue		# don't need to see addons
+
 		DisplayAsHelpTitlePackageNameRepo "$tier QPKGs" 'repository'
 
 		for package_name in $(QPKGs-SC$tier:Array); do
@@ -4244,7 +4248,9 @@ QPKGs:List:Show()
 	Help.Basic:Show
 	DisplayAsHelpTitle "One-or-more $(FormatAsPackages) may be specified at-once"
 
-	for tier in standalone dependent; do
+	for tier in "${PACKAGE_TIERS[@]}"; do
+		[[ $tier = addon ]] && continue		# don't need to see addons
+
 		DisplayAsHelpTitlePackageNameAuthorDesc "$tier QPKGs" 'QPKG author' 'QPKG description'
 
 		for package_name in $(QPKGs-SC${tier}:Array); do
@@ -4269,15 +4275,18 @@ QPKGs.Statuses:Show()
 	local -i index=0
 	local tier=''
 	local package_name=''
-	local package_name_formatted=''
-	local package_status=''
-	local package_ver=''
+	local package_name_msg=''
+	local package_status_msg=''
+	local package_result_msg=''
+	local package_ver_msg=''
 	maxcols=$(CalcMaxStatusColsToDisplay)
 
 	DisableDebugToArchiveAndFile
 	QPKGs.States:Build
 
-	for tier in standalone dependent; do
+	for tier in "${PACKAGE_TIERS[@]}"; do
+		[[ $tier = addon ]] && continue		# don't need to see addons
+
 		DisplayAsHelpTitlePackageNameVerStatus "$tier QPKGs" 'QPKG statuses (last result)' 'QPKG version (new)' 'installation path'
 
 		for package_name in $(QPKGs-SC$tier:Array); do
@@ -4288,41 +4297,34 @@ QPKGs.Statuses:Show()
 			elif QPKGs-ISNTinstalled:Exist "$package_name"; then
 				DisplayAsHelpPackageNameVerStatus "$package_name" 'not installed' "$(QPKG.Avail.Ver "$package_name")"
 			else
-				package_name_formatted=''
-				package_status=''
-				package_ver=''
-
 				if [[ $maxcols -eq 1 ]]; then
 					if QPKGs-ISmissing:Exist "$package_name"; then
-						package_name_formatted=$(ColourTextBrightRedBlink "$package_name")
+						package_name_msg=$(ColourTextBrightRedBlink "$package_name")
 					elif QPKGs-ISenabled:Exist "$package_name"; then
-						package_name_formatted=$(ColourTextBrightGreen "$package_name")
+						package_name_msg=$(ColourTextBrightGreen "$package_name")
 					elif QPKGs-ISNTenabled:Exist "$package_name"; then
-						package_name_formatted=$(ColourTextBrightRed "$package_name")
+						package_name_msg=$(ColourTextBrightRed "$package_name")
 					fi
 
 					# state
 					if QPKGs-ISstarting:Exist "$package_name"; then
-						package_name_formatted=$(ColourTextBrightOrange "$package_name")
+						package_name_msg=$(ColourTextBrightOrange "$package_name")
 					elif QPKGs-ISstopping:Exist "$package_name"; then
-						package_name_formatted=$(ColourTextBrightOrange "$package_name")
+						package_name_msg=$(ColourTextBrightOrange "$package_name")
 					elif QPKGs-ISrestarting:Exist "$package_name"; then
-						package_name_formatted=$(ColourTextBrightOrange "$package_name")
+						package_name_msg=$(ColourTextBrightOrange "$package_name")
 					elif QPKGs-ISstarted:Exist "$package_name"; then
-						package_name_formatted=$(ColourTextBrightGreen "$package_name")
+						package_name_msg=$(ColourTextBrightGreen "$package_name")
 					elif QPKGs-ISNTstarted:Exist "$package_name"; then
-						package_name_formatted=$(ColourTextBrightRed "$package_name")
+						package_name_msg=$(ColourTextBrightRed "$package_name")
 					fi
 				else
-					package_upgrade_notes=()
-					package_status_notes=()
-
 					# is this QPKG upgradable?
 					if QPKGs-SCupgradable:Exist "$package_name"; then
-						package_ver="$(QPKG.Local.Ver "$package_name") $(ColourTextBrightOrange "($(QPKG.Avail.Ver "$package_name"))")"
 						package_upgrade_notes=($(ColourTextBrightOrange upgradable))
+						package_ver_msg="$(QPKG.Local.Ver "$package_name") $(ColourTextBrightOrange "($(QPKG.Avail.Ver "$package_name"))")"
 					else
-						package_ver=$(QPKG.Avail.Ver "$package_name")
+						package_ver_msg=$(QPKG.Avail.Ver "$package_name")
 					fi
 
 					# if an upgrade is available for this package, don't display the first package status, as it makes the field too wide.
@@ -4354,24 +4356,34 @@ QPKGs.Statuses:Show()
 					fi
 
 					# service script results
-					if QPKGs-ISNTok:Exist "$package_name"; then
-						package_status_notes+=("($(ColourTextBrightRed failed))")
+					if ! QPKG.IsCanLog "$package_name"; then
+						package_result_msg='N/A'
+					elif QPKGs-ISNTok:Exist "$package_name"; then
+						package_result_msg="$(ColourTextBrightRed failed)"
 					elif QPKGs-ISok:Exist "$package_name"; then
-						package_status_notes+=("($(ColourTextBrightGreen OK))")
+						package_result_msg="$(ColourTextBrightGreen OK)"
 					elif QPKGs-ISunknown:Exist "$package_name"; then
-						package_status_notes+=("($(ColourTextBrightOrange unknown))")
+						package_result_msg="$(ColourTextBrightOrange unknown)"
 					fi
+
+					[[ -n $package_result_msg ]] && package_status_notes+=("($package_result_msg)")
 
 					# insert commas
 					for ((index=0; index<=((${#package_status_notes[@]}-1)); index++)); do
-						package_status+=${package_status_notes[$index]}
-						[[ $((index+2)) -le ${#package_status_notes[@]} ]] && package_status+=', '
+						package_status_msg+=${package_status_notes[$index]}
+						[[ $((index+2)) -le ${#package_status_notes[@]} ]] && package_status_msg+=', '
 					done
 
-					package_name_formatted=$package_name
+					package_name_msg=$package_name
 				fi
 
-				DisplayAsHelpPackageNameVerStatus "$package_name_formatted" "$package_status" "$package_ver" "$(QPKG.InstallationPath "$package_name")"
+				DisplayAsHelpPackageNameVerStatus "$package_name_msg" "$package_status_msg" "$package_ver_msg" "$(QPKG.InstallationPath "$package_name")"
+
+				package_upgrade_notes=()
+				package_status_notes=()
+				package_status_msg=''
+				package_result_msg=''
+				package_ver_msg=''
 			fi
 		done
 
@@ -6435,7 +6447,7 @@ QPKG.IsCanLog()
 
 	for index in "${!QPKG_NAME[@]}"; do
 		if [[ ${QPKG_NAME[$index]} = "$qpkg_name" ]]; then
-			if ${QPKG_CAN_LOG[$index]}; then
+			if ${QPKG_CAN_LOG_SERVICE_OPERATIONS[$index]}; then
 				return 0
 			else
 				break
@@ -8213,7 +8225,7 @@ Packages:Load()
 	readonly MIN_PYTHON_VER
 	readonly MIN_PERL_VER
 
-	# package arrays are now full, so lock them
+	# package list arrays are now full, so lock them
 	readonly QPKG_NAME
 		readonly QPKG_ARCH
 		readonly QPKG_VERSION
@@ -8231,7 +8243,7 @@ Packages:Load()
 		readonly QPKG_CAN_BACKUP
 		readonly QPKG_CAN_RESTART_TO_UPDATE
 		readonly QPKG_CAN_CLEAN
-		readonly QPKG_CAN_LOG
+		readonly QPKG_CAN_LOG_SERVICE_OPERATIONS
 
 	DebugScript version "packages: ${PACKAGES_VER:-unknown}"
 	QPKGs-SCall:Add "${QPKG_NAME[*]}"
