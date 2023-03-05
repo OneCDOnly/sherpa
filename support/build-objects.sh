@@ -11,32 +11,28 @@ fi
 
 target_pathfile="$source_path"/objects
 
-# these words may be specified by the user
+# these are used internally by sherpa -----------------------------------------------------
 # sorted
-USER_QPKG_Sc_GROUPS=(all canbackup canclean canrestarttoupdate dependent hasdependents installable standalone upgradable)
-USER_QPKG_ScNt_GROUPS=(canclean installable upgradable)
-USER_QPKG_Is_STATES=(backedup installed missing started)
-USER_QPKG_IsNt_STATES=(backedup installed started)
-USER_QPKG_ACTIONS=(backup clean install list reassign rebuild reinstall restart restore start stop uninstall upgrade)
+QPKG_IS_STATES=(backedup downloaded enabled installed missing signed started)
+QPKG_ISNT_STATES=(backedup downloaded enabled installed signed started)
+QPKG_STATES_TRANSIENT=(starting stopping restarting)
+QPKG_SERVICE_RESULTS=(ok unknown)
 
-# these are used internally by sherpa
 # sorted
 IPK_STATES=(downloaded installed reinstalled upgraded)
-
-# sorted
-QPKG_Is_STATES=(backedup cleaned downloaded enabled installed missing reassigned reinstalled restarted signed started upgraded)
-QPKG_IsNt_STATES=(backedup downloaded enabled installed started)
-
-# unsorted
-QPKG_STATES_TRANSIENT=(starting stopping restarting)
 
 # ordered
 PIP_ACTIONS=(download uninstall upgrade reinstall install)
 IPK_ACTIONS=(download uninstall upgrade reinstall install)
 QPKG_ACTIONS=(download rebuild reassign backup stop disable uninstall upgrade reinstall install restore clean enable start restart sign)
-#
-# only used by sherpa QPKG service-script results parser
-QPKG_RESULTS=(ok unknown)
+
+# these words may be specified by the user -----------------------------------------------------
+# sorted
+USER_QPKG_SC_GROUPS=(all canbackup canclean canrestarttoupdate dependent hasdependents installable standalone upgradable)
+USER_QPKG_SCNT_GROUPS=(canclean installable upgradable)
+USER_QPKG_IS_STATES=(backedup installed missing started)
+USER_QPKG_ISNT_STATES=(backedup installed started)
+USER_QPKG_ACTIONS=(backup clean install list reassign rebuild reinstall restart restore start stop uninstall upgrade)
 
 AddFlagObj()
 	{
@@ -150,25 +146,25 @@ echo "#*$dontedit_msg" >> "$target_pathfile"
 
 # user option & package action flag objects -----------------------------------------------------------------------------------------------------------------------------
 
-for group in "${USER_QPKG_Sc_GROUPS[@]}"; do
+for group in "${USER_QPKG_SC_GROUPS[@]}"; do
 	for action in "${USER_QPKG_ACTIONS[@]}"; do
 		AddFlagObj QPKGs.AC"$action".SC"$group"
 	done
 done
 
-for group in "${USER_QPKG_ScNt_GROUPS[@]}"; do
+for group in "${USER_QPKG_SCNT_GROUPS[@]}"; do
 	for action in "${USER_QPKG_ACTIONS[@]}"; do
 		AddFlagObj QPKGs.AC"$action".SCNT"$group"
 	done
 done
 
-for state in "${USER_QPKG_Is_STATES[@]}" "${QPKG_STATES_TRANSIENT[@]}"; do
+for state in "${USER_QPKG_IS_STATES[@]}"; do
 	for action in "${USER_QPKG_ACTIONS[@]}"; do
 		AddFlagObj QPKGs.AC"$action".IS"$state"
 	done
 done
 
-for state in "${USER_QPKG_IsNt_STATES[@]}"; do
+for state in "${USER_QPKG_ISNT_STATES[@]}"; do
 	for action in "${USER_QPKG_ACTIONS[@]}"; do
 		AddFlagObj QPKGs.AC"$action".ISNT"$state"
 	done
@@ -178,19 +174,19 @@ done
 
 AddListObj ARGs-unknown
 
-for group in "${USER_QPKG_Sc_GROUPS[@]}"; do
+for group in "${USER_QPKG_SC_GROUPS[@]}"; do
 	AddListObj QPKGs-SC"$group"
 done
 
-for group in "${USER_QPKG_ScNt_GROUPS[@]}"; do
+for group in "${USER_QPKG_SCNT_GROUPS[@]}"; do
 	AddListObj QPKGs-SCNT"$group"
 done
 
-for state in "${QPKG_Is_STATES[@]}" "${QPKG_STATES_TRANSIENT[@]}" "${QPKG_RESULTS[@]}"; do
+for state in "${QPKG_IS_STATES[@]}" "${QPKG_STATES_TRANSIENT[@]}" "${QPKG_SERVICE_RESULTS[@]}"; do
 	AddListObj QPKGs-IS"$state"
 done
 
-for state in "${QPKG_IsNt_STATES[@]}" "${QPKG_STATES_TRANSIENT[@]}" "${QPKG_RESULTS[@]}"; do
+for state in "${QPKG_ISNT_STATES[@]}" "${QPKG_STATES_TRANSIENT[@]}" "${QPKG_SERVICE_RESULTS[@]}"; do
 	AddListObj QPKGs-ISNT"$state"
 done
 
