@@ -1246,7 +1246,7 @@ ParseArgs()
 				skip_qpkg_processing=false
 				;;
 			paste)
-				action=paste
+				action='paste'
 				arg_identified=true
 				group=''
 				group_identified=false
