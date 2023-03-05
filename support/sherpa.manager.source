@@ -366,7 +366,7 @@ Env:Confirm()
 Lists:Load()
 	{
 
-# these are used internally by sherpa -----------------------------------------------------
+	# these are used internally by sherpa -----------------------------------------------------
 	# ordered
 	PACKAGE_TIERS=(standalone addon dependent)
 
@@ -614,7 +614,7 @@ Self:Validate()
 
 				if [[ ${avail_ver//./} -lt $MIN_PYTHON_VER ]]; then
 					ShowAsInfo 'installed Python environment will be upgraded'
-					IPKs-Acuninstall-to:Add 'python*'
+					IPKs-ACuninstall-to:Add 'python*'
 				fi
 			fi
 
@@ -623,7 +623,7 @@ Self:Validate()
 
 				if [[ ${avail_ver//./} -lt $MIN_PERL_VER ]]; then
 					ShowAsInfo 'installed Perl environment will be upgraded'
-					IPKs-Acuninstall-to:Add 'perl*'
+					IPKs-ACuninstall-to:Add 'perl*'
 				fi
 			fi
 		fi
@@ -1675,7 +1675,7 @@ ParseArgs()
 				case $group in
 					all)   		# this group is dangerous, so make `force` a requirement
 						if [[ $action_force = true ]]; then
-							QPKGs.ACuninstall.SCall:Set
+							QPKGs.AC${action}.SC${group}:Set
 							group=''
 							action_force=false
 						fi
@@ -1687,7 +1687,7 @@ ParseArgs()
 						;;
 					installed)		# this group is dangerous, so make `force` a requirement
 						if [[ $action_force = true ]]; then
-							QPKGs.ACuninstall.ISinstalled:Set
+							QPKGs.AC${action}.IS${group}:Set
 							group=''
 							action_force=false
 						fi
@@ -4676,8 +4676,8 @@ NoteIpkAcAsOk()
 	#   $1 = package name
 	#   $2 = action
 
-	IPKs.AC"$2"-to:Remove "$1"
-	IPKs.AC"$2"-ok:Add "$1"
+	IPKs-AC"$2"-to:Remove "$1"
+	IPKs-AC"$2"-ok:Add "$1"
 
 	return 0
 
@@ -4697,8 +4697,8 @@ NoteIpkAcAsEr()
 
 	[[ -n ${3:-} ]] && msg+=" as $3"
 	DebugAsError "$msg" >&2
-	IPKs.AC"$2"-to:Remove "$1"
-	IPKs.AC"$2"-er:Add "$1"
+	IPKs-AC"$2"-to:Remove "$1"
+	IPKs-AC"$2"-er:Add "$1"
 
 	return 0
 
