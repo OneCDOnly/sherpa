@@ -2940,29 +2940,84 @@ DisplayAsHelpTitlePackageNameVerStatus()
 DisplayAsHelpPackageNameVerStatus()
 	{
 
-	# $1 = package name
-	# $2 = package status (optional)
-	# $3 = package version number (optional)
-	# $4 = package installation path (optional) - only if installed
+	# $1 = 'normal/highlighted/muted'
+	# $2 = package name
+	# $3 = package status (optional) - only if installed
+	# $4 = package last result (optional)
+	# $5 = package current version number (optional) - only if installed
+	# $6 = package avilable/upgradable version number (optional)
+	# $7 = package installation path (optional) - only if installed
 
-	if [[ -n ${1:-} && $maxcols -ge 1 ]]; then
-		printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%-$((HELP_PACKAGE_NAME_WIDTH+$(LenANSIDiff "$1")))s" "$1"
+	local package_name=${2:-}
+	local package_name_msg=$package_name
+	local package_status=${3:-}
+	local package_status_msg=''
+	local package_last_result=${4:-}
+	local package_installed_version=${5:-}
+	local package_version_msg=$package_installed_version
+	local package_upgrade_version=${6:-}
+	local package_upgrade_version_msg=''
+	local package_path=${7:-}
+	local package_path_msg=$package_path
+
+	case $1 in
+		normal)
+ 			if [[ -n $package_status ]]; then
+ 				case $package_status in
+ 					'enabled, started')
+						package_status_msg="${HELP_COL_OTHER_PREFIX}$(ColourTextBrightGreen "$package_status")"
+						;;
+ 					'disabled, stopped')
+						package_status_msg="${HELP_COL_OTHER_PREFIX}$(ColourTextBrightRed "$package_status")"
+						;;
+					*)
+						package_status_msg="${HELP_COL_OTHER_PREFIX}${package_status}"
+				esac
+			fi
+
+			if [[ -n $package_last_result ]]; then
+				case $package_last_result in
+					OK)
+						package_status_msg+=" ($(ColourTextBrightGreen "$package_last_result"))"
+						;;
+					'N/A')
+						package_status_msg+=" ($package_last_result)"
+						;;
+					failed)
+						package_status_msg+=" ($(ColourTextBrightRed "$package_last_result"))"
+						;;
+					*)
+						package_status_msg+=" ($(ColourTextBrightOrange "$package_last_result"))"
+				esac
+			fi
+
+			if [[ -n $package_upgrade_version && $package_installed_version != "$package_upgrade_version" ]]; then
+				package_version_msg+=" ($(ColourTextBrightOrange "$package_upgrade_version"))"
+			fi
+			;;
+		muted)
+			package_name_msg=$(ColourTextDarkGrey "$package_name")
+			package_status_msg="$(ColourTextDarkGrey "${HELP_COL_OTHER_PREFIX}${package_status}")"
+			package_version_msg="$(ColourTextDarkGrey "$package_upgrade_version")"
+			;;
+		highlighted)
+			package_status_msg="$(ColourTextBrightOrange "* $package_status")"
+	esac
+
+	if [[ $maxcols -ge 1 ]]; then
+		printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%-$((HELP_PACKAGE_NAME_WIDTH+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
 	fi
 
-	if [[ -n ${2:-} && $maxcols -ge 2 ]]; then
-		if [[ $2 =~ .*\*.* ]]; then
-			printf "${HELP_COL_SPACER}%-$((HELP_PACKAGE_STATUS_WIDTH+$(LenANSIDiff "$2")))s" "$2"
-		else
-			printf "${HELP_COL_SPACER}${HELP_COL_OTHER_PREFIX}%-$((HELP_PACKAGE_STATUS_WIDTH+$(LenANSIDiff "$2")))s" "$2"
-		fi
+	if [[ -n $package_status_msg && $maxcols -ge 2 ]]; then
+		printf "${HELP_COL_SPACER}%-$((HELP_PACKAGE_STATUS_WIDTH+$(LenANSIDiff "$package_status_msg")))s" "$package_status_msg"
 	fi
 
-	if [[ -n ${3:-} && $maxcols -ge 3 ]]; then
-		printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%-$((HELP_PACKAGE_VER_WIDTH+$(LenANSIDiff "$3")))s" "$3"
+	if [[ -n $package_version_msg && $maxcols -ge 3 ]]; then
+		printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%-$((HELP_PACKAGE_VER_WIDTH+$(LenANSIDiff "$package_version_msg")))s" "$package_version_msg"
 	fi
 
-	if [[ -n ${4:-} && $maxcols -ge 4 ]]; then
-		printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%s" "$4"
+	if [[ -n $package_path && $maxcols -ge 4 ]]; then
+		printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%s" "$package_path_msg"
 	fi
 
 	printf '\n'
@@ -2993,19 +3048,42 @@ DisplayAsHelpTitlePackageNameRepo()
 DisplayAsHelpPackageNameRepo()
 	{
 
-	# $1 = package name
-	# $2 = assigned repository
+	# $1 = 'normal/highlighted/muted'
+	# $2 = package name
+	# $3 = assigned repository
 
-	if [[ -n ${1:-} && $maxcols -ge 1 ]]; then
-		printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%-$((HELP_PACKAGE_NAME_WIDTH+$(LenANSIDiff "$1")))s" "$1"
+	local package_name=${2:-}
+	local package_name_msg=$package_name
+	local assigned_repo=${3:-}
+	local assigned_repo_msg=''
+
+	case $1 in
+		normal)
+			case $assigned_repo in
+				sherpa)
+					assigned_repo_msg="${HELP_COL_OTHER_PREFIX}$(ColourTextBrightGreen "$assigned_repo")"
+					;;
+				unassigned)
+					assigned_repo_msg="${HELP_COL_OTHER_PREFIX}$(ColourTextBrightOrange "$assigned_repo")"
+					;;
+				*)
+					assigned_repo_msg="${HELP_COL_OTHER_PREFIX}${assigned_repo}"
+			esac
+			;;
+		muted)
+			package_name_msg=$(ColourTextDarkGrey "$package_name")
+			assigned_repo_msg=$(ColourTextDarkGrey "${HELP_COL_OTHER_PREFIX}${assigned_repo}")
+			;;
+		highlighted)
+			assigned_repo_msg="$(ColourTextBrightOrange "* ${assigned_repo}")"
+	esac
+
+	if [[ $maxcols -ge 1 ]]; then
+		printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%-$((HELP_PACKAGE_NAME_WIDTH+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
 	fi
 
-	if [[ -n ${2:-} && $maxcols -ge 2 ]]; then
-		if [[ $2 =~ .*\*.* ]]; then
-			printf "${HELP_COL_SPACER}%-$((HELP_PACKAGE_REPO_WIDTH+$(LenANSIDiff "$2")))s" "$2"
-		else
-			printf "${HELP_COL_SPACER}${HELP_COL_OTHER_PREFIX}%-$((HELP_PACKAGE_REPO_WIDTH+$(LenANSIDiff "$2")))s" "$2"
-		fi
+	if [[ $maxcols -ge 2 ]]; then
+		printf "${HELP_COL_SPACER}%-$((HELP_PACKAGE_REPO_WIDTH+$(LenANSIDiff "$assigned_repo_msg")))s" "$assigned_repo_msg"
 	fi
 
 	printf '\n'
@@ -4150,11 +4228,11 @@ QPKGs.Abbreviations:Show()
 
 			if [[ -n $abs ]]; then
 				if ! QPKG.URL "$package_name" &>/dev/null; then
-					DisplayAsHelpPackageNameVerStatus "$package_name" "$(ColourTextBrightOrange '* not installable: no arch')"
+					DisplayAsHelpPackageNameRepo highlighted "$package_name" 'not installable: no arch'
 				elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
-					DisplayAsHelpPackageNameVerStatus "$package_name" "$(ColourTextBrightOrange '* not installable: low RAM')"
+					DisplayAsHelpPackageNameRepo highlighted "$package_name" 'not installable: low RAM'
 				elif QPKGs-ISNTinstalled:Exist "$package_name"; then
-					DisplayAsHelpPackageNameRepo "$(ColourTextDarkGrey "$package_name")" "$(ColourTextDarkGrey "${abs// /, }")"
+					DisplayAsHelpPackageNameRepo muted "$package_name" "${abs// /, }"
 				else
 					DisplayAsHelpPackageNameAbs "$package_name" "${abs// /, }"
 				fi
@@ -4211,10 +4289,9 @@ QPKGs.Repos:Show()
 	{
 
 	local tier=''
-	local -i index=0
 	local package_name=''
 	local package_store_id=''
-	local package_repo_URL_formatted=''
+	local package_repo_URL=''
 	maxcols=2
 
 	DisableDebugToArchiveAndFile
@@ -4226,23 +4303,20 @@ QPKGs.Repos:Show()
 		DisplayAsHelpTitlePackageNameRepo "$tier QPKGs" 'repository'
 
 		for package_name in $(QPKGs-SC$tier:Array); do
-			package_store_id=''
-			package_repo_URL_formatted=''
-
 			if QPKGs-ISNTinstalled:Exist "$package_name"; then
-				DisplayAsHelpPackageNameRepo "$package_name" "$(ColourTextDarkGrey 'not installed')"
+				DisplayAsHelpPackageNameRepo muted "$package_name" 'not installed'
 			else
 				package_store_id=$(QPKG.StoreID "$package_name")
 
-				if [[ $package_store_id = sherpa ]]; then
-					package_repo_URL_formatted=$(ColourTextBrightGreen "$package_store_id")
-				elif [[ -z $package_store_id ]]; then
-					package_repo_URL_formatted=$(ColourTextBrightOrange unassigned)
+				if [[ -z $package_store_id ]]; then
+					package_repo_URL=unassigned
+				elif [[ $package_store_id = sherpa ]]; then
+					package_repo_URL=$package_store_id
 				else
-					package_repo_URL_formatted=$(ColourTextBrightOrange "$(GetRepoURLFromStoreID "$package_store_id")")
+					package_repo_URL=$(GetRepoURLFromStoreID "$package_store_id")
 				fi
 
-				DisplayAsHelpPackageNameRepo "$package_name" "$package_repo_URL_formatted"
+				DisplayAsHelpPackageNameRepo normal "$package_name" "$package_repo_URL"
 			fi
 		done
 
@@ -4292,15 +4366,12 @@ QPKGs.Statuses:Show()
 
 	Func:Entry
 
-	local -a package_status_notes=()
-	local -a package_upgrade_notes=()
-	local -i index=0
 	local tier=''
 	local package_name=''
-	local package_name_msg=''
+	local -a package_status_notes=()
+	local -i index=0
 	local package_status_msg=''
 	local package_result_msg=''
-	local package_ver_msg=''
 	maxcols=$(CalcMaxStatusColsToDisplay)
 
 	DisableDebugToArchiveAndFile
@@ -4313,99 +4384,56 @@ QPKGs.Statuses:Show()
 
 		for package_name in $(QPKGs-SC$tier:Array); do
 			if ! QPKG.URL "$package_name" &>/dev/null; then
-				DisplayAsHelpPackageNameVerStatus "$(ColourTextDarkGrey "$package_name")" "$(ColourTextBrightOrange '* not installable: no arch')"
+				DisplayAsHelpPackageNameVerStatus highlighted "$package_name" 'not installable: no arch'
 			elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
-				DisplayAsHelpPackageNameVerStatus "$(ColourTextDarkGrey "$package_name")" "$(ColourTextBrightOrange '* not installable: low RAM')"
+				DisplayAsHelpPackageNameVerStatus highlighted "$package_name" 'not installable: low RAM'
 			elif QPKGs-ISNTinstalled:Exist "$package_name"; then
-				DisplayAsHelpPackageNameVerStatus "$(ColourTextDarkGrey "$package_name")" "$(ColourTextDarkGrey 'not installed')" "$(ColourTextDarkGrey "$(QPKG.Avail.Ver "$package_name")")"
+				DisplayAsHelpPackageNameVerStatus muted "$package_name" 'not installed' '' '' "$(QPKG.Avail.Ver "$package_name")"
 			else
-				if [[ $maxcols -eq 1 ]]; then
-					if QPKGs-ISmissing:Exist "$package_name"; then
-						package_name_msg=$(ColourTextBrightRedBlink "$package_name")
-					elif QPKGs-ISenabled:Exist "$package_name"; then
-						package_name_msg=$(ColourTextBrightGreen "$package_name")
-					elif QPKGs-ISNTenabled:Exist "$package_name"; then
-						package_name_msg=$(ColourTextBrightRed "$package_name")
-					fi
-
-					# state
-					if QPKGs-ISstarting:Exist "$package_name"; then
-						package_name_msg=$(ColourTextBrightOrange "$package_name")
-					elif QPKGs-ISstopping:Exist "$package_name"; then
-						package_name_msg=$(ColourTextBrightOrange "$package_name")
-					elif QPKGs-ISrestarting:Exist "$package_name"; then
-						package_name_msg=$(ColourTextBrightOrange "$package_name")
-					elif QPKGs-ISstarted:Exist "$package_name"; then
-						package_name_msg=$(ColourTextBrightGreen "$package_name")
-					elif QPKGs-ISNTstarted:Exist "$package_name"; then
-						package_name_msg=$(ColourTextBrightRed "$package_name")
-					fi
-				else
-					# is this QPKG upgradable?
-					if QPKGs-SCupgradable:Exist "$package_name"; then
-						package_upgrade_notes=($(ColourTextBrightOrange upgradable))
-						package_ver_msg="$(QPKG.Local.Ver "$package_name") $(ColourTextBrightOrange "($(QPKG.Avail.Ver "$package_name"))")"
-					else
-						package_ver_msg=$(QPKG.Avail.Ver "$package_name")
-					fi
-
-					# if an upgrade is available for this package, don't display the first package status, as it makes the field too wide.
-					if [[ ${#package_upgrade_notes[@]} -eq 0 ]]; then
-						if QPKGs-ISmissing:Exist "$package_name"; then
-							package_status_notes+=($(ColourTextBrightRedBlink missing))
-						elif QPKGs-ISenabled:Exist "$package_name"; then
-							package_status_notes+=($(ColourTextBrightGreen enabled))
-						elif QPKGs-ISNTenabled:Exist "$package_name"; then
-							package_status_notes+=($(ColourTextBrightRed disabled))
-						fi
-					fi
-
-					# state
-					if QPKGs-ISstarting:Exist "$package_name"; then
-						package_status_notes+=($(ColourTextBrightOrange starting))
-					elif QPKGs-ISstopping:Exist "$package_name"; then
-						package_status_notes+=($(ColourTextBrightOrange stopping))
-					elif QPKGs-ISrestarting:Exist "$package_name"; then
-						package_status_notes+=($(ColourTextBrightOrange restarting))
-					elif QPKGs-ISstarted:Exist "$package_name"; then
-						package_status_notes+=($(ColourTextBrightGreen started))
-					elif QPKGs-ISNTstarted:Exist "$package_name"; then
-						package_status_notes+=($(ColourTextBrightRed stopped))
-					fi
-
-					if [[ ${#package_upgrade_notes[@]} -gt 0 ]]; then
-						package_status_notes+=(${package_upgrade_notes[@]})
-					fi
-
-					# service script results
-					if ! QPKG.IsCanLog "$package_name"; then
-						package_result_msg='N/A'
-					elif QPKGs-ISNTok:Exist "$package_name"; then
-						package_result_msg="$(ColourTextBrightRed failed)"
-					elif QPKGs-ISok:Exist "$package_name"; then
-						package_result_msg="$(ColourTextBrightGreen OK)"
-					elif QPKGs-ISunknown:Exist "$package_name"; then
-						package_result_msg="$(ColourTextBrightOrange unknown)"
-					fi
-
-					[[ -n $package_result_msg ]] && package_status_notes+=("($package_result_msg)")
-
-					# insert commas
-					for ((index=0; index<=((${#package_status_notes[@]}-1)); index++)); do
-						package_status_msg+=${package_status_notes[$index]}
-						[[ $((index+2)) -le ${#package_status_notes[@]} ]] && package_status_msg+=', '
-					done
-
-					package_name_msg=$package_name
+				# transient state
+				if QPKGs-ISmissing:Exist "$package_name"; then
+					package_status_notes+=(missing)
+				elif QPKGs-ISenabled:Exist "$package_name"; then
+					package_status_notes+=(enabled)
+				elif QPKGs-ISNTenabled:Exist "$package_name"; then
+					package_status_notes+=(disabled)
 				fi
 
-				DisplayAsHelpPackageNameVerStatus "$package_name_msg" "$package_status_msg" "$package_ver_msg" "$(QPKG.InstallationPath "$package_name")"
+				# state
+				if QPKGs-ISstarting:Exist "$package_name"; then
+					package_status_notes+=(starting)
+				elif QPKGs-ISstopping:Exist "$package_name"; then
+					package_status_notes+=(stopping)
+				elif QPKGs-ISrestarting:Exist "$package_name"; then
+					package_status_notes+=(restarting)
+				elif QPKGs-ISstarted:Exist "$package_name"; then
+					package_status_notes+=(started)
+				elif QPKGs-ISNTstarted:Exist "$package_name"; then
+					package_status_notes+=(stopped)
+				fi
 
-				package_upgrade_notes=()
+				# insert commas
+				for ((index=0; index<=((${#package_status_notes[@]}-1)); index++)); do
+					package_status_msg+=${package_status_notes[$index]}
+					[[ $((index+2)) -le ${#package_status_notes[@]} ]] && package_status_msg+=', '
+				done
+
+				# service script results
+				if ! QPKG.IsCanLog "$package_name"; then
+					package_result_msg='N/A'
+				elif QPKGs-ISok:Exist "$package_name"; then
+					package_result_msg='OK'
+				elif QPKGs-ISNTok:Exist "$package_name"; then
+					package_result_msg='failed'
+				else
+					package_result_msg='unknown'
+				fi
+
+				DisplayAsHelpPackageNameVerStatus normal "$package_name" "$package_status_msg" "$package_result_msg" "$(QPKG.Local.Ver "$package_name")" "$(QPKG.Avail.Ver "$package_name")" "$(QPKG.InstallationPath "$package_name")"
+
 				package_status_notes=()
 				package_status_msg=''
 				package_result_msg=''
-				package_ver_msg=''
 			fi
 		done
 
