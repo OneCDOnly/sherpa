@@ -2850,15 +2850,31 @@ DisplayAsHelpTitlePackageNameAuthorDesc()
 DisplayAsHelpPackageNameAuthorDesc()
 	{
 
-	# $1 = package name
-	# $2 = author
-	# $3 = description
-	# $4 = notes (optional)
+	# $1 = 'normal/highlighted/muted'
+	# $2 = package name
+	# $3 = author
+	# $4 = description
+	# $5 = notes (optional)
 
-	printf "${HELP_COL_SPACER}${HELP_COL_OTHER_PREFIX}%-$((HELP_PACKAGE_NAME_WIDTH+$(LenANSIDiff "$1")))s" "${1:-}"
-	printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%-$((HELP_PACKAGE_AUTHOR_WIDTH+$(LenANSIDiff "$2")))s" "${2:-}"
-	printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%s" "${3:-}"
-	[[ -n ${4:-} ]] && printf ' %s' "$(ColourTextBrightOrange "* ${4:-}")"
+	local package_name=${2:-}
+	local package_name_msg="${HELP_COL_OTHER_PREFIX}$package_name"
+	local package_author=${3:-}
+	local package_author_msg="$package_author"
+	local package_description=${4:-}
+	local package_description_msg="$package_description"
+	local package_notes=${5:-}
+	local package_notes_msg="$(ColourTextBrightOrange "* $package_notes")"
+
+	case $1 in
+		muted)
+			package_name_msg=$(ColourTextDarkGrey "${HELP_COL_OTHER_PREFIX}$package_name")
+			package_author_msg="$(ColourTextDarkGrey "${package_author}")"
+	esac
+
+	printf "${HELP_COL_SPACER}%-$((HELP_PACKAGE_NAME_WIDTH+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
+	printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%-$((HELP_PACKAGE_AUTHOR_WIDTH+$(LenANSIDiff "$package_author_msg")))s" "$package_author_msg"
+	printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%s" "$package_description_msg"
+	[[ -n $package_notes ]] && printf ' %s' "$package_notes_msg"
 
 	printf '\n'
 
@@ -2970,6 +2986,9 @@ DisplayAsHelpPackageNameVerStatus()
  					'disabled, stopped')
 						package_status_msg="${HELP_COL_OTHER_PREFIX}$(ColourTextBrightRed "$package_status")"
 						;;
+ 					'missing')
+						package_status_msg="$(ColourTextBrightRedBlink "${HELP_COL_OTHER_PREFIX}$package_status")"
+						;;
 					*)
 						package_status_msg="${HELP_COL_OTHER_PREFIX}${package_status}"
 				esac
@@ -3008,7 +3027,7 @@ DisplayAsHelpPackageNameVerStatus()
 		printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%-$((HELP_PACKAGE_NAME_WIDTH+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
 	fi
 
-	if [[ -n $package_status_msg && $maxcols -ge 2 ]]; then
+	if [[ -n $package_status && $maxcols -ge 2 ]]; then
 		printf "${HELP_COL_SPACER}%-$((HELP_PACKAGE_STATUS_WIDTH+$(LenANSIDiff "$package_status_msg")))s" "$package_status_msg"
 	fi
 
@@ -4303,7 +4322,11 @@ QPKGs.Repos:Show()
 		DisplayAsHelpTitlePackageNameRepo "$tier QPKGs" 'repository'
 
 		for package_name in $(QPKGs-SC$tier:Array); do
-			if QPKGs-ISNTinstalled:Exist "$package_name"; then
+			if ! QPKG.URL "$package_name" &>/dev/null; then
+				DisplayAsHelpPackageNameRepo highlighted "$package_name" 'not installable: no arch'
+			elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
+				DisplayAsHelpPackageNameRepo highlighted "$package_name" 'not installable: low RAM'
+			elif QPKGs-ISNTinstalled:Exist "$package_name"; then
 				DisplayAsHelpPackageNameRepo muted "$package_name" 'not installed'
 			else
 				package_store_id=$(QPKG.StoreID "$package_name")
@@ -4347,9 +4370,9 @@ QPKGs:List:Show()
 
 		for package_name in $(QPKGs-SC${tier}:Array); do
 			if QPKGs-ISNTinstalled:Exist "$package_name"; then
-				DisplayAsHelpPackageNameAuthorDesc "$(ColourTextDarkGrey "$package_name")" "$(ColourTextDarkGrey "$(QPKG.Author "$package_name")")" "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
+				DisplayAsHelpPackageNameAuthorDesc muted "$(ColourTextDarkGrey "$package_name")" "$(ColourTextDarkGrey "$(QPKG.Author "$package_name")")" "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
 			else
-				DisplayAsHelpPackageNameAuthorDesc "$package_name" "$(QPKG.Author "$package_name")" "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
+				DisplayAsHelpPackageNameAuthorDesc normal "$package_name" "$(QPKG.Author "$package_name")" "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
 			fi
 		done
 	done
