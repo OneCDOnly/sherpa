@@ -2858,7 +2858,7 @@ DisplayAsHelpPackageNameAuthorDesc()
 	printf "${HELP_COL_SPACER}${HELP_COL_OTHER_PREFIX}%-$((HELP_PACKAGE_NAME_WIDTH+$(LenANSIDiff "$1")))s" "${1:-}"
 	printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%-$((HELP_PACKAGE_AUTHOR_WIDTH+$(LenANSIDiff "$2")))s" "${2:-}"
 	printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%s" "${3:-}"
-	[[ -n ${4:-} ]] && printf " $(ColourTextBrightOrange "%s")" "* ${4:-}"
+	[[ -n ${4:-} ]] && printf ' %s' "$(ColourTextBrightOrange "* ${4:-}")"
 
 	printf '\n'
 
