@@ -37,7 +37,8 @@
 #  background functions: '_CamelCaseWithLeadingAndTrailingUnderscores_'
 #  utility interceptors: (same as original)
 #			  variables: 'lowercase_with_inline_underscores'
-#	   "object" methods: 'Capitalised.CamelCase.With.Inline.Periods'
+# flag "object" methods: 'Capitalised.CamelCase.With.Inline.Periods.And.Colon.Before:Method'
+# list "object" methods: 'Capitalised-CamelCase-With-Inline_Hyphens-And-Colon-Before:Method'
 #	"object" properties: '_lowercase_with_leading_and_inline_and_trailing_underscores_' (these should ONLY be managed via the object's methods)
 #			  constants: 'UPPERCASE_WITH_INLINE_UNDERSCORES' (also set as readonly)
 #				indents: 1 x tab
@@ -172,7 +173,7 @@ Self:Init()
 
 	QPKGs.Warnings:Check
 
-	# KLUDGE: remove all max QTS versions from qpkg.conf (these are not removed automatically when installing updated QPKGs without max version set)
+	# KLUDGE: remove all max QTS versions from /etc/config/qpkg.conf (these are not removed automatically when installing updated QPKGs without max version set)
 	# Retain this kludge for 12 months to give everyone time to update their installed sherpa QPKGs. Remove after 2023-09-22
 	if [[ $(/sbin/getcfg sherpa max_versions_cleared -d FALSE -f /etc/config/qpkg.conf) = FALSE ]]; then
 		$SED_CMD -i '/^FW_Ver_Max/d' /etc/config/qpkg.conf
@@ -245,7 +246,8 @@ DefaultConsts:Load()
 	readonly IPK_DL_PATH=$WORK_PATH/IPKs.downloads
 	readonly IPK_CACHE_PATH=$WORK_PATH/IPKs
 	readonly PIP_CACHE_PATH=$WORK_PATH/PIPs
-	readonly ACTION_MSG_PIPE=/var/run/QPKG.messages.pipe
+	readonly ACTION_TIMES_PATH=$WORK_PATH/action.times
+	readonly ACTION_MSG_PIPE=/var/run/sherpa.action.messages.pipe
 
 	readonly OBJECTS_PATHFILE=$WORK_PATH/objects
 	readonly OBJECTS_ARCHIVE_URL='<?cdn_sherpa_root_url?>'/objects.tar.gz
@@ -283,6 +285,7 @@ Env:Confirm()
 	readonly GNU_SED_CMD=/opt/bin/sed
 	readonly GNU_SETTERM_CMD=/opt/bin/setterm
 	readonly GNU_SLEEP_CMD=/opt/bin/sleep
+	readonly GNU_SORT_CMD=/opt/bin/sort
 	readonly GNU_SQLITE_CMD=/opt/bin/sqlite3
 	readonly GNU_STTY_CMD=/opt/bin/stty
 	readonly PYTHON_CMD=/opt/bin/python
@@ -431,6 +434,7 @@ CreatePaths()
 	MakePath "$IPK_DL_PATH" 'IPK download' || return
 	MakePath "$IPK_CACHE_PATH" 'IPK cache' || return
 	MakePath "$PIP_CACHE_PATH" 'PIP cache' || return
+	MakePath "$ACTION_TIMES_PATH" 'action times' || return
 	MakePath "$QPKG_BU_PATH" 'QPKG backup' || return
 
 	}
@@ -878,7 +882,7 @@ Action:Proc()
 	Func:Entry
 
 	local -r PACKAGE_TYPE=${3:?null}
-	local -r TARGET_ACTION="${1:-null}"
+	local -r TARGET_ACTION=${1:-null}
 	total_count=0
 	local package=''
 	local state=''
@@ -893,6 +897,8 @@ Action:Proc()
 	local -r ACTION_PRESENT_MSG=${4:?null}
 	local -r ACTION_PAST=${5:?null}
 	local original_colourful=$colourful
+	local action_times_pathfile="$ACTION_TIMES_PATH/$TARGET_ACTION.milliseconds"
+	local buffer=''
 
 	case $PACKAGE_TYPE in
 		QPKG)
@@ -927,7 +933,7 @@ Action:Proc()
 				Cursor:Show
 			fi
 
-			_LaunchQpkgActionForks_ "_${PACKAGE_TYPE}:${TARGET_ACTION}_" "${target_packages[@]}" &
+			_ActionForks:Launch_ "_${PACKAGE_TYPE}:${TARGET_ACTION}_" "${target_packages[@]}" &
 			fork_pid=$!
 
 			# read message pipe and process QPKGs and actions as-per requests contained within
@@ -1027,6 +1033,13 @@ Action:Proc()
 			[[ ${#target_packages[@]} -gt 0 ]] && KillActiveFork		# this should only be needed if an action fork didn't exit properly
 			wait 2>/dev/null
 			CloseActionMsgPipe
+
+			# sort QPKG action times - longest duration first
+			if [[ -e $action_times_pathfile && -e $GNU_SORT_CMD && -L /opt/etc/passwd ]]; then		# try to ensure Entware is started before using this utility
+				buffer=$($GNU_SORT_CMD -t'|' -k2 -r -h < "$action_times_pathfile")
+				echo "$buffer" > "$action_times_pathfile"
+			fi
+
 			;;
 		IPK|PIP)
 			ShowAsProc "$ACTION_PRESENT_MSG $([[ $TIER != all ]] && echo "$TIER ")$(Uppercase "${PACKAGE_TYPE}")s"
@@ -2262,7 +2275,7 @@ IPKs:upgrade()
 	if [[ $total_count -gt 0 ]]; then
 		ShowAsProc "downloading & upgrading $total_count IPK$(Pluralise "$total_count")"
 
-		_MonitorDirSize_ "$IPK_DL_PATH" "$(IPKs-ACdownload-to:Size)" &
+		_DirSize:Monitor_ "$IPK_DL_PATH" "$(IPKs-ACdownload-to:Size)" &
 		fork_pid=$!
 
 		RunAndLog "$OPKG_CMD upgrade --force-overwrite $(IPKs-ACdownload-to:List) --cache $IPK_CACHE_PATH --tmp-dir $IPK_DL_PATH" "$LOGS_PATH/IPKs.$UPGRADE_LOG_FILE" log:failure-only
@@ -2327,7 +2340,7 @@ IPKs:install()
 	if [[ $total_count -gt 0 ]]; then
 		ShowAsProc "downloading & installing $total_count IPK$(Pluralise "$total_count"): "
 
-		_MonitorDirSize_ "$IPK_DL_PATH" "$(IPKs-ACdownload-to:Size)" &
+		_DirSize:Monitor_ "$IPK_DL_PATH" "$(IPKs-ACdownload-to:Size)" &
 		fork_pid=$!
 
 		RunAndLog "$OPKG_CMD install --force-overwrite $(IPKs-ACdownload-to:List) --cache $IPK_CACHE_PATH --tmp-dir $IPK_DL_PATH" "$LOGS_PATH/IPKs.$INSTALL_LOG_FILE" log:failure-only
@@ -2338,12 +2351,12 @@ IPKs:install()
 		if [[ $result_code -eq 0 ]]; then
 			ok_count=$total_count		   # assume they all passed
 			NoteIpkAcAsOk "$(IPKs-ACdownload-to:Array)" install
-			SaveActionResultToLog IPK addon Install ok "$result_code"
+			SaveActionResultToLog IPK addon install ok "$result_code"
 		else
 			fail_count=$total_count		 # assume they all failed
 			ShowAsFail "download & install $total_count IPK$(Pluralise "$total_count") failed $(FormatAsExitcode "$result_code")"
 			NoteIpkAcAsEr "$(IPKs-ACdownload-to:Array)" install
-			SaveActionResultToLog IPK addon Install failed "$result_code"
+			SaveActionResultToLog IPK addon install failed "$result_code"
 		fi
 	fi
 
@@ -2380,11 +2393,11 @@ PIPs:install()
 
 		if [[ $result_code -eq 0 ]]; then
 			DebugAsDone "installed $desc"
-			SaveActionResultToLog PIP "$desc" Install ok "$result_code"
+			SaveActionResultToLog PIP "$desc" install ok "$result_code"
 			((ok_count++))
 		else
 			ShowAsFail "installed $desc failed $(FormatAsResult "$result_code")"
-			SaveActionResultToLog PIP "$desc" Install failed "$result_code"
+			SaveActionResultToLog PIP "$desc" install failed "$result_code"
 			((fail_count++))
 		fi
 
@@ -2426,7 +2439,7 @@ CloseIpkArchive()
 
 	}
 
-_LaunchQpkgActionForks_()
+_ActionForks:Launch_()
 	{
 
 	# Execute actions concurrently, but only as many as $max_forks will allow given the circumstances
@@ -2474,7 +2487,7 @@ _LaunchQpkgActionForks_()
 
 	}
 
-_MonitorDirSize_()
+_DirSize:Monitor_()
 	{
 
 	# * This function runs autonomously *
@@ -5037,7 +5050,7 @@ DisableDebugToArchiveAndFile()
 SaveActionResultToLog()
 	{
 
-	# write package type, package name, datetime in seconds, action, result, reason to actions logfile
+	# write package type, package name, datetime in seconds, action, result, reason to actions logfile, and into actions durations file
 
 	# input:						example:
 
@@ -5052,22 +5065,35 @@ SaveActionResultToLog()
 	local var_name=${FUNCNAME[1]}_STARTSECONDS
 	local var_safe_name=${var_name//[.-]/_}
 	var_safe_name=${var_safe_name//:/_}
+	local package_type=${1:?package type empty}
+	local package_name=${2:?package name empty}
+	local action=${3:?action empty}
+	local clean_action=${action//\"/}
+	local result=${4:?result empty}
+	local reason=${5:-}
 	local duration="$(CalcMilliDifference "${!var_safe_name}" "$($DATE_CMD +%s%N)")"
+	local action_times_pathfile="$ACTION_TIMES_PATH/$clean_action.milliseconds"
 
-	echo "$(/bin/date +%s)|${3:?action empty}|${2:?package name empty}|${4:?result empty}|$duration|${5:-}|${1:?package type empty}" >> "$SESS_ACTIONS_RESULTS_PATHFILE"
+	# write new action results entry
+	echo "$(/bin/date +%s)|$action|$package_name|$result|$duration|$reason|$package_type" >> "$SESS_ACTIONS_RESULTS_PATHFILE"
+
+	# remove previous action duration entry if one exists
+	if [[ -e $action_times_pathfile ]] && $GREP_CMD -q "^$package_name|" < "$action_times_pathfile"; then
+		$SED_CMD -i "/^$package_name|/d" "$action_times_pathfile"
+	fi
+
+	# add new action duration entry
+	echo "$package_name|$duration" >> "$action_times_pathfile"
 
 	case $4 in
-		ok)
-			DebugAsInfo "${5:-}"
-			;;
-		skipped-ok)
-			DebugAsInfo "${5:?reason empty}"
+		ok|skipped-ok)
+			DebugAsInfo "$reason"
 			;;
 		skipped)
-			DebugAsWarn "${5:?reason empty}"
+			DebugAsWarn "$reason"
 			;;
 		failed|skipped-error)
-			DebugAsError "${5:?reason empty}"
+			DebugAsError "$reason"
 	esac
 
 	return 0
