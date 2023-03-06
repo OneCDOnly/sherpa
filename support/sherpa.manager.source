@@ -2869,6 +2869,14 @@ DisplayAsHelpPackageNameAuthorDesc()
 		muted)
 			package_name_msg=$(ColourTextDarkGrey "${HELP_COL_OTHER_PREFIX}$package_name")
 			package_author_msg="$(ColourTextDarkGrey "${package_author}")"
+			;;
+		highlighted)
+			if [[ -n $package_author ]]; then
+				case $package_author in
+					'missing')
+						package_author_msg="$(ColourTextBrightRedBlink "! $package_author")"
+				esac
+			fi
 	esac
 
 	printf "${HELP_COL_SPACER}%-$((HELP_PACKAGE_NAME_WIDTH+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
@@ -2986,15 +2994,12 @@ DisplayAsHelpPackageNameVerStatus()
  					'disabled, stopped')
 						package_status_msg="${HELP_COL_OTHER_PREFIX}$(ColourTextBrightRed "$package_status")"
 						;;
- 					'missing')
-						package_status_msg="$(ColourTextBrightRedBlink "${HELP_COL_OTHER_PREFIX}$package_status")"
-						;;
 					*)
 						package_status_msg="${HELP_COL_OTHER_PREFIX}${package_status}"
 				esac
 			fi
 
-			if [[ -n $package_last_result ]]; then
+			if [[ -n $package_last_result && $package_status != missing ]]; then
 				case $package_last_result in
 					OK)
 						package_status_msg+=" ($(ColourTextBrightGreen "$package_last_result"))"
@@ -3020,7 +3025,15 @@ DisplayAsHelpPackageNameVerStatus()
 			package_version_msg="$(ColourTextDarkGrey "$package_upgrade_version")"
 			;;
 		highlighted)
-			package_status_msg="$(ColourTextBrightOrange "* $package_status")"
+			if [[ -n $package_status ]]; then
+				case $package_status in
+					'missing')
+						package_status_msg="$(ColourTextBrightRedBlink "! $package_status")"
+						;;
+					*)
+						package_status_msg="$(ColourTextBrightOrange "* $package_status")"
+				esac
+			fi
 	esac
 
 	if [[ $maxcols -ge 1 ]]; then
@@ -3094,7 +3107,15 @@ DisplayAsHelpPackageNameRepo()
 			assigned_repo_msg=$(ColourTextDarkGrey "${HELP_COL_OTHER_PREFIX}${assigned_repo}")
 			;;
 		highlighted)
-			assigned_repo_msg="$(ColourTextBrightOrange "* ${assigned_repo}")"
+			if [[ -n $assigned_repo ]]; then
+				case $assigned_repo in
+					'missing')
+						assigned_repo_msg="$(ColourTextBrightRedBlink "! $assigned_repo")"
+						;;
+					*)
+						assigned_repo_msg="$(ColourTextBrightOrange "* $assigned_repo")"
+				esac
+			fi
 	esac
 
 	if [[ $maxcols -ge 1 ]]; then
@@ -4104,12 +4125,11 @@ QPKGs.States:Build()
 		[[ $package = "$prev" ]] && continue || prev=$package
 
 		if QPKG.IsInstalled "$package"; then
+			QPKGs-ISinstalled:Add "$package"
+
 			if [[ ! -d $(QPKG.InstallationPath "$package") ]]; then
 				QPKGs-ISmissing:Add "$package"
-				continue
 			fi
-
-			QPKGs-ISinstalled:Add "$package"
 
 			if [[ $(QPKG.Local.Ver "$package") != "${QPKG_VERSION[$index]}" ]]; then
 				QPKGs-SCupgradable:Add "$package"
@@ -4250,6 +4270,8 @@ QPKGs.Abbreviations:Show()
 					DisplayAsHelpPackageNameRepo highlighted "$package_name" 'not installable: no arch'
 				elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
 					DisplayAsHelpPackageNameRepo highlighted "$package_name" 'not installable: low RAM'
+				elif QPKGs-ISmissing:Exist "$package_name" &>/dev/null; then
+					DisplayAsHelpPackageNameRepo highlighted "$package_name" 'missing'
 				elif QPKGs-ISNTinstalled:Exist "$package_name"; then
 					DisplayAsHelpPackageNameRepo muted "$package_name" "${abs// /, }"
 				else
@@ -4326,6 +4348,8 @@ QPKGs.Repos:Show()
 				DisplayAsHelpPackageNameRepo highlighted "$package_name" 'not installable: no arch'
 			elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
 				DisplayAsHelpPackageNameRepo highlighted "$package_name" 'not installable: low RAM'
+			elif QPKGs-ISmissing:Exist "$package_name" &>/dev/null; then
+				DisplayAsHelpPackageNameRepo highlighted "$package_name" 'missing'
 			elif QPKGs-ISNTinstalled:Exist "$package_name"; then
 				DisplayAsHelpPackageNameRepo muted "$package_name" 'not installed'
 			else
@@ -4369,7 +4393,9 @@ QPKGs:List:Show()
 		DisplayAsHelpTitlePackageNameAuthorDesc "$tier QPKGs" 'QPKG author' 'QPKG description'
 
 		for package_name in $(QPKGs-SC${tier}:Array); do
-			if QPKGs-ISNTinstalled:Exist "$package_name"; then
+			if QPKGs-ISmissing:Exist "$package_name" &>/dev/null; then
+				DisplayAsHelpPackageNameAuthorDesc highlighted "$package_name" 'missing' "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
+			elif QPKGs-ISNTinstalled:Exist "$package_name"; then
 				DisplayAsHelpPackageNameAuthorDesc muted "$(ColourTextDarkGrey "$package_name")" "$(ColourTextDarkGrey "$(QPKG.Author "$package_name")")" "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
 			else
 				DisplayAsHelpPackageNameAuthorDesc normal "$package_name" "$(QPKG.Author "$package_name")" "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
@@ -4410,13 +4436,13 @@ QPKGs.Statuses:Show()
 				DisplayAsHelpPackageNameVerStatus highlighted "$package_name" 'not installable: no arch'
 			elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
 				DisplayAsHelpPackageNameVerStatus highlighted "$package_name" 'not installable: low RAM'
+			elif QPKGs-ISmissing:Exist "$package_name" &>/dev/null; then
+				DisplayAsHelpPackageNameVerStatus highlighted "$package_name" 'missing' '' "$(QPKG.Local.Ver "$package_name")" '' "$(QPKG.InstallationPath "$package_name")"
 			elif QPKGs-ISNTinstalled:Exist "$package_name"; then
 				DisplayAsHelpPackageNameVerStatus muted "$package_name" 'not installed' '' '' "$(QPKG.Avail.Ver "$package_name")"
 			else
 				# transient state
-				if QPKGs-ISmissing:Exist "$package_name"; then
-					package_status_notes+=(missing)
-				elif QPKGs-ISenabled:Exist "$package_name"; then
+				if QPKGs-ISenabled:Exist "$package_name"; then
 					package_status_notes+=(enabled)
 				elif QPKGs-ISNTenabled:Exist "$package_name"; then
 					package_status_notes+=(disabled)
