@@ -1143,7 +1143,8 @@ Self:Results()
 
 	if ARGs-unknown:IsNone; then
 		if [[ $opts_help_abbreviations = true ]]; then
-			Help.PackageAbbreviations:Show
+			QPKGs.NewVers:Show
+			QPKGs.Abbreviations:Show
 		elif [[ $opts_help_actions = true ]]; then
 			Help.Actions:Show
 		elif [[ $opts_help_action_reassign = true ]]; then
@@ -1157,6 +1158,7 @@ Self:Results()
 		elif [[ $opts_help_options = true ]]; then
 			Help.Options:Show
 		elif [[ $opts_help_packages = true ]]; then
+			QPKGs.NewVers:Show
 			QPKGs:List:Show
 		elif [[ $opts_help_problems = true ]]; then
 			Help.Problems:Show
@@ -2853,11 +2855,12 @@ DisplayAsHelpPackageNameAuthorDesc()
 	# $3 = description
 	# $4 = notes (optional)
 
-	if [[ -z ${4:-} ]]; then
-		printf "${HELP_COL_SPACER}${HELP_COL_OTHER_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%-${HELP_PACKAGE_AUTHOR_WIDTH}s${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%s\n" "${1:-}" "${2:-}" "${3:-}"
-	else
-		printf "${HELP_COL_SPACER}${HELP_COL_OTHER_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%-${HELP_PACKAGE_AUTHOR_WIDTH}s${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%s $(ColourTextBrightOrange "%s")\n" "${1:-}" "${2:-}" "${3:-}" "* ${4:-}"
-	fi
+	printf "${HELP_COL_SPACER}${HELP_COL_OTHER_PREFIX}%-$((HELP_PACKAGE_NAME_WIDTH+$(LenANSIDiff "$1")))s" "${1:-}"
+	printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%-$((HELP_PACKAGE_AUTHOR_WIDTH+$(LenANSIDiff "$2")))s" "${2:-}"
+	printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%s" "${3:-}"
+	[[ -n ${4:-} ]] && printf ' %s' "$(ColourTextBrightOrange "* ${4:-}")"
+
+	printf '\n'
 
 	}
 
@@ -3323,44 +3326,6 @@ Help.Options:Show()
 	DisplayAsProjSynIndentExam '' r
 	DisplayAsProjSynIndentExam 'show live debugging information, and record it to file' "$(FormatAsAction) $(FormatAsPackages) verbose"
 	DisplayAsProjSynIndentExam 'record debugging information to file only' "$(FormatAsAction) $(FormatAsPackages) debug"
-
-	return 0
-
-	}
-
-Help.PackageAbbreviations:Show()
-	{
-
-	local tier=''
-	local package_name=''
-	local abs=''
-	maxcols=2
-
-	DisableDebugToArchiveAndFile
-	Help.Basic:Show
-	DisplayAsHelpTitle "$(FormatAsTitle) can recognise various abbreviations and aliases as $(FormatAsPackages)"
-
-	for tier in "${PACKAGE_TIERS[@]}"; do
-		[[ $tier = addon ]] && continue		# don't need to see addons
-
-		DisplayAsHelpTitlePackageNameAbs "$tier QPKGs" 'acceptable QPKG name abbreviations and aliases'
-
-		for package_name in $(QPKGs-SC${tier}:Array); do
-			abs=$(QPKG.Abbrvs "$package_name")
-
-			if [[ -n $abs ]]; then
-				if ! QPKG.URL "$package_name" &>/dev/null; then
-					DisplayAsHelpPackageNameVerStatus "$package_name" "$(ColourTextBrightOrange '* not installable: no arch')"
-				elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
-					DisplayAsHelpPackageNameVerStatus "$package_name" "$(ColourTextBrightOrange '* not installable: low RAM')"
-				else
-					DisplayAsHelpPackageNameAbs "$package_name" "${abs// /, }"
-				fi
-			fi
-		done
-	done
-
-	DisplayAsProjSynExam "example: to install $(FormatAsPackName SABnzbd), $(FormatAsPackName Mylar3) and $(FormatAsPackName nzbToMedia) all-at-once" 'install sab my nzb2'
 
 	return 0
 
@@ -4163,6 +4128,46 @@ QPKGs.IsCanClean:Build()
 
 	}
 
+QPKGs.Abbreviations:Show()
+	{
+
+	local tier=''
+	local package_name=''
+	local abs=''
+	maxcols=2
+
+	DisableDebugToArchiveAndFile
+	Help.Basic:Show
+	DisplayAsHelpTitle "$(FormatAsTitle) can recognise various abbreviations and aliases as $(FormatAsPackages)"
+
+	for tier in "${PACKAGE_TIERS[@]}"; do
+		[[ $tier = addon ]] && continue		# don't need to see addons
+
+		DisplayAsHelpTitlePackageNameAbs "$tier QPKGs" 'acceptable QPKG name abbreviations and aliases'
+
+		for package_name in $(QPKGs-SC${tier}:Array); do
+			abs=$(QPKG.Abbrvs "$package_name")
+
+			if [[ -n $abs ]]; then
+				if ! QPKG.URL "$package_name" &>/dev/null; then
+					DisplayAsHelpPackageNameVerStatus "$package_name" "$(ColourTextBrightOrange '* not installable: no arch')"
+				elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
+					DisplayAsHelpPackageNameVerStatus "$package_name" "$(ColourTextBrightOrange '* not installable: low RAM')"
+				elif QPKGs-ISNTinstalled:Exist "$package_name"; then
+					DisplayAsHelpPackageNameRepo "$(ColourTextDarkGrey "$package_name")" "$(ColourTextDarkGrey "${abs// /, }")"
+				else
+					DisplayAsHelpPackageNameAbs "$package_name" "${abs// /, }"
+				fi
+			fi
+		done
+	done
+
+	DisplayAsProjSynExam "example: to install $(FormatAsPackName SABnzbd), $(FormatAsPackName Mylar3) and $(FormatAsPackName nzbToMedia) all-at-once" 'install sab my nzb2'
+
+	return 0
+
+	}
+
 QPKGs.Backups:Show()
 	{
 
@@ -4225,7 +4230,7 @@ QPKGs.Repos:Show()
 			package_repo_URL_formatted=''
 
 			if QPKGs-ISNTinstalled:Exist "$package_name"; then
-				DisplayAsHelpPackageNameRepo "$package_name" "$(ColourTextBrightOrange '* not installed')"
+				DisplayAsHelpPackageNameRepo "$package_name" "$(ColourTextDarkGrey 'not installed')"
 			else
 				package_store_id=$(QPKG.StoreID "$package_name")
 
@@ -4267,7 +4272,11 @@ QPKGs:List:Show()
 		DisplayAsHelpTitlePackageNameAuthorDesc "$tier QPKGs" 'QPKG author' 'QPKG description'
 
 		for package_name in $(QPKGs-SC${tier}:Array); do
-			DisplayAsHelpPackageNameAuthorDesc "$package_name" "$(QPKG.Author "$package_name")" "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
+			if QPKGs-ISNTinstalled:Exist "$package_name"; then
+				DisplayAsHelpPackageNameAuthorDesc "$(ColourTextDarkGrey "$package_name")" "$(ColourTextDarkGrey "$(QPKG.Author "$package_name")")" "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
+			else
+				DisplayAsHelpPackageNameAuthorDesc "$package_name" "$(QPKG.Author "$package_name")" "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
+			fi
 		done
 	done
 
@@ -4304,11 +4313,11 @@ QPKGs.Statuses:Show()
 
 		for package_name in $(QPKGs-SC$tier:Array); do
 			if ! QPKG.URL "$package_name" &>/dev/null; then
-				DisplayAsHelpPackageNameVerStatus "$package_name" "$(ColourTextBrightOrange '* not installable: no arch')"
+				DisplayAsHelpPackageNameVerStatus "$(ColourTextDarkGrey "$package_name")" "$(ColourTextBrightOrange '* not installable: no arch')"
 			elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
-				DisplayAsHelpPackageNameVerStatus "$package_name" "$(ColourTextBrightOrange '* not installable: low RAM')"
+				DisplayAsHelpPackageNameVerStatus "$(ColourTextDarkGrey "$package_name")" "$(ColourTextBrightOrange '* not installable: low RAM')"
 			elif QPKGs-ISNTinstalled:Exist "$package_name"; then
-				DisplayAsHelpPackageNameVerStatus "$package_name" 'not installed' "$(QPKG.Avail.Ver "$package_name")"
+				DisplayAsHelpPackageNameVerStatus "$(ColourTextDarkGrey "$package_name")" "$(ColourTextDarkGrey 'not installed')" "$(ColourTextDarkGrey "$(QPKG.Avail.Ver "$package_name")")"
 			else
 				if [[ $maxcols -eq 1 ]]; then
 					if QPKGs-ISmissing:Exist "$package_name"; then
