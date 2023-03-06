@@ -2991,7 +2991,7 @@ DisplayAsHelpPackageNameVerStatus()
 				esac
 			fi
 
-			if [[ -n $package_upgrade_version && $package_installed_version != $package_upgrade_version ]]; then
+			if [[ -n $package_upgrade_version && $package_installed_version != "$package_upgrade_version" ]]; then
 				package_version_msg+=" ($(ColourTextBrightOrange "$package_upgrade_version"))"
 			fi
 			;;
