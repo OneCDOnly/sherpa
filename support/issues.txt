@@ -1,5 +1,3 @@
-* remove 'python3-pyopenssl' IPK module from packages file
-
 * HideThatBanner not stopping when requested via sherpa:
 	[/share/Public] # ./sherpa.manager.source start watch inxi restart runlast restart ew stop hide
 	sherpa <?today?>-<?branch?> • a mini-package-manager for QNAP NAS
