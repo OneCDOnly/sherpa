@@ -3094,7 +3094,7 @@ DisplayAsHelpPackageNameRepo()
 	local package_name=${2:-}
 	local package_name_msg=$package_name
 	local assigned_repo=${3:-}
-	local assigned_repo_msg=''
+	local assigned_repo_msg="${HELP_COL_OTHER_PREFIX}${assigned_repo}"
 
 	case $1 in
 		normal)
@@ -3104,9 +3104,6 @@ DisplayAsHelpPackageNameRepo()
 					;;
 				unassigned)
 					assigned_repo_msg="${HELP_COL_OTHER_PREFIX}$(ColourTextBrightOrange "$assigned_repo")"
-					;;
-				*)
-					assigned_repo_msg="${HELP_COL_OTHER_PREFIX}${assigned_repo}"
 			esac
 			;;
 		muted)
