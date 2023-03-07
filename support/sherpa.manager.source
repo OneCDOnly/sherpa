@@ -748,6 +748,7 @@ Self:Validate()
 	# Check all items
 	if [[ $opts_deps_check = true ]]; then
 		QPKGs-ACsign-to:Add "$(QPKGs-ISinstalled:Array)"
+		QPKGs.Missing:Show
 		QPKGs.NewVers:Show
 
 		for package in $(QPKGs-SCdependent:Array); do
@@ -1143,6 +1144,7 @@ Self:Results()
 
 	if ARGs-unknown:IsNone; then
 		if [[ $opts_help_abbreviations = true ]]; then
+			QPKGs.Missing:Show
 			QPKGs.NewVers:Show
 			QPKGs.Abbreviations:Show
 		elif [[ $opts_help_actions = true ]]; then
@@ -1158,11 +1160,13 @@ Self:Results()
 		elif [[ $opts_help_options = true ]]; then
 			Help.Options:Show
 		elif [[ $opts_help_packages = true ]]; then
+			QPKGs.Missing:Show
 			QPKGs.NewVers:Show
 			QPKGs:List:Show
 		elif [[ $opts_help_problems = true ]]; then
 			Help.Problems:Show
 		elif [[ $opts_help_repos = true ]]; then
+			QPKGs.Missing:Show
 			QPKGs.NewVers:Show
 			QPKGs.Repos:Show
 		elif [[ $opts_help_results = true ]]; then
@@ -1171,6 +1175,7 @@ Self:Results()
 			opts_help_skipped=true
 			opts_help_failed=true
 		elif [[ $opts_help_status = true ]]; then
+			QPKGs.Missing:Show
 			QPKGs.NewVers:Show
 			QPKGs.Statuses:Show
 		elif [[ $opts_help_tips = true ]]; then
@@ -3836,6 +3841,27 @@ UpdateForkProgress()
 
 	}
 
+QPKGs.Missing:Show()
+	{
+
+	local package=''
+
+	[[ $self_display_clean = false ]] || return
+	QPKGs.States:Build
+
+	EraseThisLine
+	DisplayLineSpaceIfNoneAlready
+
+	[[ $(QPKGs-ISmissing:Count) -eq 0 ]] && return 1
+
+	for package in $(QPKGs-ISmissing:Array); do
+		ShowAsFail "the $(ColourTextBrightOrange "$package") QPKG is missing or broken"
+	done
+
+	return 0
+
+	}
+
 QPKGs.NewVers:Show()
 	{
 
@@ -3869,13 +3895,11 @@ QPKGs.NewVers:Show()
 	done
 
 	if [[ ${#upgradable_packages[@]} -eq 1 ]]; then
-		msg='a new QPKG is'
+		msg='an updated QPKG is'
 	else
-		msg='new QPKGs are'
+		msg='updated QPKGs are'
 	fi
 
-	EraseThisLine
-	DisplayLineSpaceIfNoneAlready
 	ShowAsInfo "$msg available for $names_formatted"
 	return 1
 
