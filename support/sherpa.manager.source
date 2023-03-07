@@ -2871,6 +2871,8 @@ DisplayAsHelpPackageNameAuthorDesc()
 			package_author_msg="$(ColourTextDarkGrey "${package_author}")"
 			;;
 		highlighted)
+			package_name_msg=$(ColourTextBrightRed "${HELP_COL_OTHER_PREFIX}$package_name")
+
 			if [[ -n $package_author ]]; then
 				case $package_author in
 					'missing')
@@ -3025,15 +3027,15 @@ DisplayAsHelpPackageNameVerStatus()
 			package_version_msg="$(ColourTextDarkGrey "$package_upgrade_version")"
 			;;
 		highlighted)
-			if [[ -n $package_status ]]; then
-				case $package_status in
-					'missing')
-						package_status_msg="$(ColourTextBrightRedBlink "! $package_status")"
-						;;
-					*)
-						package_status_msg="$(ColourTextBrightOrange "* $package_status")"
-				esac
-			fi
+			case $package_status in
+				'missing')
+					package_name_msg=$(ColourTextBrightRed "$package_name")
+					package_status_msg="$(ColourTextBrightRedBlink "! $package_status")"
+					;;
+				*)
+					package_name_msg=$(ColourTextBrightOrange "$package_name")
+					package_status_msg="$(ColourTextBrightOrange "* $package_status")"
+			esac
 	esac
 
 	if [[ $maxcols -ge 1 ]]; then
@@ -3110,9 +3112,11 @@ DisplayAsHelpPackageNameRepo()
 			if [[ -n $assigned_repo ]]; then
 				case $assigned_repo in
 					'missing')
+						package_name_msg=$(ColourTextBrightRed "$package_name")
 						assigned_repo_msg="$(ColourTextBrightRedBlink "! $assigned_repo")"
 						;;
 					*)
+						package_name_msg=$(ColourTextBrightOrange "$package_name")
 						assigned_repo_msg="$(ColourTextBrightOrange "* $assigned_repo")"
 				esac
 			fi
