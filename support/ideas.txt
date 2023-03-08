@@ -17,6 +17,11 @@
 * download QPKG updates in background when running sherpa for any reason?
 
 * keep track of each package's action times and process the longest ones first next time?
+	- add a new "launch policy" setting: 'none', 'longest', 'shortest', 'balanced'.
+		- 'none': QPKGs are processed in the same order they appear in 'packages'.
+		- 'longest': QPKGs that take a long time to execute are processed first, in-order, down to the shortest time to execute.
+		- 'shortest': QPKGs that take a short time to execute are processed first, in-order, up to the longest time to execute.
+		- 'balanced': QPKGs are processed as a mix of longest, then shortest, then next longest, then next shortest, and so-on.
 
 * autowidth display columns?
 
