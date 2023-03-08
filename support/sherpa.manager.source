@@ -3036,6 +3036,7 @@ DisplayAsHelpPackageNameVerStatus()
 				'missing')
 					package_name_msg=$(ColourTextBrightRed "$package_name")
 					package_status_msg="$(ColourTextBrightRedBlink "! $package_status")"
+					package_path_msg="$(ColourTextBrightRedBlink "$package_path")"
 					;;
 				*)
 					package_name_msg=$(ColourTextBrightOrange "$package_name")
@@ -3846,10 +3847,10 @@ QPKGs.Missing:Show()
 	[[ $self_display_clean = false ]] || return
 	QPKGs.States:Build
 
+	[[ $(QPKGs-ISmissing:Count) -eq 0 ]] && return 1
+
 	EraseThisLine
 	DisplayLineSpaceIfNoneAlready
-
-	[[ $(QPKGs-ISmissing:Count) -eq 0 ]] && return 1
 
 	for package in $(QPKGs-ISmissing:Array); do
 		ShowAsFail "the $(ColourTextBrightOrange "$package") QPKG is missing or broken"
