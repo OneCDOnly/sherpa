@@ -3094,7 +3094,7 @@ DisplayAsHelpPackageNameRepo()
 	local package_name=${2:-}
 	local package_name_msg=$package_name
 	local assigned_repo=${3:-}
-	local assigned_repo_msg=''
+	local assigned_repo_msg="${HELP_COL_OTHER_PREFIX}${assigned_repo}"
 
 	case $1 in
 		normal)
@@ -3104,9 +3104,6 @@ DisplayAsHelpPackageNameRepo()
 					;;
 				unassigned)
 					assigned_repo_msg="${HELP_COL_OTHER_PREFIX}$(ColourTextBrightOrange "$assigned_repo")"
-					;;
-				*)
-					assigned_repo_msg="${HELP_COL_OTHER_PREFIX}${assigned_repo}"
 			esac
 			;;
 		muted)
@@ -5402,7 +5399,7 @@ _QPKG:install_()
 
 	if [[ $result_code -eq 0 || $result_code -eq 10 ]]; then
 		UpdateColourisation
-		QPKG.LogServiceStatus
+		QPKG.ServiceStatus:Log
 		SendPackageStateChange ISinstalled
 
 		if QPKG.IsEnabled "$PACKAGE_NAME"; then
@@ -5451,7 +5448,7 @@ _QPKG:install_()
 		MarkThisActionForkAsFailed
 	fi
 
-	QPKG.ClearAppCenterNotifier
+	QPKG.AppCenterNotifier:Clear
 	FuncFork:Exit $result_code
 
 	}
@@ -5503,7 +5500,7 @@ _QPKG:reinstall_()
 	result_code=$?
 
 	if [[ $result_code -eq 0 || $result_code -eq 10 ]]; then
-		QPKG.LogServiceStatus
+		QPKG.ServiceStatus:Log
 
 		if QPKG.IsEnabled "$PACKAGE_NAME"; then
 			SendPackageStateChange ISenabled
@@ -5528,7 +5525,7 @@ _QPKG:reinstall_()
 		MarkThisActionForkAsFailed
 	fi
 
-	QPKG.ClearAppCenterNotifier
+	QPKG.AppCenterNotifier:Clear
 	FuncFork:Exit $result_code
 
 	}
@@ -5596,7 +5593,7 @@ _QPKG:upgrade_()
 	result_code=$?
 
 	if [[ $result_code -eq 0 || $result_code -eq 10 ]]; then
-		QPKG.LogServiceStatus
+		QPKG.ServiceStatus:Log
 		SendPackageStateChange SCNTupgradable
 
 		if QPKG.IsEnabled "$PACKAGE_NAME"; then
@@ -5628,7 +5625,7 @@ _QPKG:upgrade_()
 		MarkThisActionForkAsFailed
 	fi
 
-	QPKG.ClearAppCenterNotifier
+	QPKG.AppCenterNotifier:Clear
 	FuncFork:Exit $result_code
 
 	}
@@ -5738,7 +5735,7 @@ _QPKG:restart_()
 		FuncFork:Exit 2
 	fi
 
-	QPKG.ClearServiceStatus
+	QPKG.ServiceStatus:Clear
 	local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile)
 	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$RESTART_LOG_FILE
 
@@ -5755,7 +5752,7 @@ _QPKG:restart_()
 	fi
 
 	if [[ $result_code -eq 0 ]]; then
-		QPKG.LogServiceStatus
+		QPKG.ServiceStatus:Log
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" restart ok
 		MarkThisActionForkAsOk
 	else
@@ -5763,7 +5760,7 @@ _QPKG:restart_()
 		result_code=1	# remap to 1
 		MarkThisActionForkAsFailed
 	fi
-	QPKG.ClearAppCenterNotifier
+	QPKG.AppCenterNotifier:Clear
 	FuncFork:Exit $result_code
 
 	}
@@ -5799,7 +5796,7 @@ _QPKG:start_()
 		FuncFork:Exit $result_code
 	fi
 
-	QPKG.ClearServiceStatus
+	QPKG.ServiceStatus:Clear
 	local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile)
 	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$START_LOG_FILE
 
@@ -5816,7 +5813,7 @@ _QPKG:start_()
 	fi
 
 	if [[ $result_code -eq 0 ]]; then
-		QPKG.LogServiceStatus
+		QPKG.ServiceStatus:Log
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" start ok
 
 		if [[ $PACKAGE_NAME = Entware ]]; then
@@ -5834,7 +5831,7 @@ _QPKG:start_()
 		MarkThisActionForkAsFailed
 	fi
 
-	QPKG.ClearAppCenterNotifier
+	QPKG.AppCenterNotifier:Clear
 	FuncFork:Exit $result_code
 
 	}
@@ -5873,7 +5870,7 @@ _QPKG:stop_()
 		FuncFork:Exit $result_code
 	fi
 
-	QPKG.ClearServiceStatus
+	QPKG.ServiceStatus:Clear
 	local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile)
 	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$STOP_LOG_FILE
 
@@ -5888,10 +5885,9 @@ _QPKG:stop_()
 		RunAndLog "${debug_cmd}${PACKAGE_INIT_PATHFILE} stop" "$LOG_PATHFILE" log:failure-only
 		result_code=$?
 	fi
-
 	if [[ $result_code -eq 0 ]]; then
 		QPKG:disable
-		QPKG.LogServiceStatus
+		QPKG.ServiceStatus:Log
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" stop ok
 
 		if [[ $PACKAGE_NAME = Entware ]]; then
@@ -5908,7 +5904,7 @@ _QPKG:stop_()
 		MarkThisActionForkAsFailed
 	fi
 
-	QPKG.ClearAppCenterNotifier
+	QPKG.AppCenterNotifier:Clear
 	FuncFork:Exit $result_code
 
 	}
@@ -5979,7 +5975,7 @@ _QPKG:backup_()
 	result_code=$?
 
 	if [[ $result_code -eq 0 ]]; then
-		QPKG.LogServiceStatus
+		QPKG.ServiceStatus:Log
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" backup ok
 		SendPackageStateChange ISbackedup
 		MarkThisActionForkAsOk
@@ -6033,7 +6029,7 @@ _QPKG:restore_()
 	result_code=$?
 
 	if [[ $result_code -eq 0 ]]; then
-		QPKG.LogServiceStatus
+		QPKG.ServiceStatus:Log
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" restore ok
 		SendPackageStateChange ISrestored
 		MarkThisActionForkAsOk
@@ -6087,7 +6083,7 @@ _QPKG:clean_()
 	result_code=$?
 
 	if [[ $result_code -eq 0 ]]; then
-		QPKG.LogServiceStatus
+		QPKG.ServiceStatus:Log
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" clean ok
 		SendPackageStateChange IScleaned
 		MarkThisActionForkAsOk
@@ -6240,7 +6236,7 @@ EOB
 
 	}
 
-QPKG.ClearAppCenterNotifier()
+QPKG.AppCenterNotifier:Clear()
 	{
 
 	# input:
@@ -6258,7 +6254,7 @@ QPKG.ClearAppCenterNotifier()
 
 	} &>/dev/null
 
-QPKG.ClearServiceStatus()
+QPKG.ServiceStatus:Clear()
 	{
 
 	# input:
@@ -6276,19 +6272,11 @@ QPKG.LastResultWasOk()
 	# input:
 	# 	$PACKAGE_NAME (global) = QPKG name
 
-	case $(QPKG.GetServiceStatus "$PACKAGE_NAME") in
-		ok)
-			return 0
-			;;
-		*)
-			return 1
-	esac
-
-	return 1
+	[[ $(QPKG.GetServiceStatus "$PACKAGE_NAME") = ok ]]
 
 	}
 
-QPKG.LogServiceStatus()
+QPKG.ServiceStatus:Log()
 	{
 
 	# input:

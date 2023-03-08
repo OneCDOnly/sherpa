@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
-if [[ -e vars.source ]]; then
-	. ./vars.source
-else
+if [[ ! -e vars.source ]]; then
 	ColourTextBrightRed "'vars.source' not found\n"
 	exit 1
 fi
+
+. ./vars.source
 
 echo -e "hardcoding with branch: $branch_msg"
 
