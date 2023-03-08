@@ -4367,7 +4367,7 @@ QPKGs.Repos:Show()
 	for tier in "${PACKAGE_TIERS[@]}"; do
 		[[ $tier = addon ]] && continue		# don't need to see addons
 
-		DisplayAsHelpTitlePackageNameRepo "$tier QPKGs" 'repository'
+		DisplayAsHelpTitlePackageNameRepo "$tier QPKGs" repository
 
 		for package_name in $(QPKGs-SC$tier:Array); do
 			if ! QPKG.URL "$package_name" &>/dev/null; then
@@ -4375,21 +4375,19 @@ QPKGs.Repos:Show()
 			elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
 				DisplayAsHelpPackageNameRepo highlighted "$package_name" 'not installable: low RAM'
 			elif QPKGs-ISmissing:Exist "$package_name" &>/dev/null; then
-				DisplayAsHelpPackageNameRepo highlighted "$package_name" 'missing'
+				DisplayAsHelpPackageNameRepo highlighted "$package_name" missing
 			elif QPKGs-ISNTinstalled:Exist "$package_name"; then
 				DisplayAsHelpPackageNameRepo muted "$package_name" 'not installed'
 			else
 				package_store_id=$(QPKG.StoreID "$package_name")
 
 				if [[ -z $package_store_id ]]; then
-					package_repo_URL=unassigned
+					DisplayAsHelpPackageNameRepo normal "$package_name" unassigned
 				elif [[ $package_store_id = sherpa ]]; then
-					package_repo_URL=$package_store_id
+					DisplayAsHelpPackageNameRepo normal "$package_name" "$package_store_id"
 				else
-					package_repo_URL=$(GetRepoURLFromStoreID "$package_store_id")
+					DisplayAsHelpPackageNameRepo highlighted "$package_name" "$(GetRepoURLFromStoreID "$package_store_id")"
 				fi
-
-				DisplayAsHelpPackageNameRepo normal "$package_name" "$package_repo_URL"
 			fi
 		done
 
