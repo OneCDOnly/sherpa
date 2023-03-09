@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
-if [[ -e vars.source ]]; then
-	. ./vars.source
-else
-	echo "'vars.source' not found"
+if [[ ! -e vars.source ]]; then
+	echo "'vars.source' not found\n"
 	exit 1
 fi
+
+. ./vars.source
 
 source_pathfile="$source_path"/sherpa.manager.source
 target_func=''

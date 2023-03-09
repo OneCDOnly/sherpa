@@ -2,14 +2,14 @@
 
 # compiler for all sherpa archives
 
-echo -n 'building archives ... '
-
-if [[ -e vars.source ]]; then
-	. ./vars.source
-else
-	ColourTextBrightRed "'vars.source' not found\n"
+if [[ ! -e vars.source ]]; then
+	echo "'vars.source' not found\n"
 	exit 1
 fi
+
+. ./vars.source
+
+echo -n 'building archives ... '
 
 declare -a source_pathfiles
 declare -a target_pathfiles

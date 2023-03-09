@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
-echo -n "building 'objects' ... "
-
-if [[ -e vars.source ]]; then
-	. ./vars.source
-else
-	ColourTextBrightRed "'vars.source' not found\n"
+if [[ ! -e vars.source ]]; then
+	echo "'vars.source' not found\n"
 	exit 1
 fi
+
+. ./vars.source
+
+echo -n "building 'objects' ... "
 
 target_pathfile="$source_path"/objects
 

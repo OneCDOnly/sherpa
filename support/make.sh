@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
 if [[ ! -e vars.source ]]; then
-	ColourTextBrightRed "'vars.source' not found\n"
+	echo "'vars.source' not found\n"
 	exit 1
 fi
 
 . ./vars.source
 
-echo -e "hardcoding with branch: $branch_msg"
+echo -e "hardcoding with branch: '$branch_msg'"
 
 declare -a source_pathfiles
 declare -i index=0
