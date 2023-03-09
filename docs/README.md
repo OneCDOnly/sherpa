@@ -16,6 +16,13 @@ Package management via **sherpa** provides extra features like easy application 
 - Any model QNAP NAS running QTS 4.0 or-later.
 
 
+## Installation
+
+1) [Click here to download the **sherpa** QPKG](https://github.com/OneCDOnly/sherpa/releases/download/v230227/sherpa_230227.qpkg).
+
+2) Install the QPKG manually through your QTS App Center UI.
+
+
 ## Usage
 
 1) [SSH](https://www.qnap.com/en/how-to/faq/article/how-do-i-access-my-qnap-nas-using-ssh) into your NAS,
