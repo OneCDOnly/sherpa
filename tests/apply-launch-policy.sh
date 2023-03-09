@@ -84,33 +84,6 @@ policy:none()
 
 	} 2>/dev/null
 
-policy:balanced()
-	{
-
-	[[ -s $action_times_pathfile ]] || return
-	[[ ${#1} -gt 0 ]] || return
-
-	# use a combination of longest sorted list, and shortest sorted list
-
-	local longest=($(policy:longest "$1"))
-	local shortest=($(policy:shortest "$1"))
-
-	local combined=$(for index in ${!longest[@]}; do
-		if [[ ${longest[$index]} = ${shortest[$index]} ]]; then
-			printf "${longest[$index]} "
-			break
-		else
-			printf "${longest[$index]} ${shortest[$index]} "
- 			[[ $((index)) -ge $(((${#longest[@]}-1)/2)) ]] && break
-		fi
-	done | sed 's/|.*$//')
-
-	echo "${combined%% }"
-
-	return 0
-
-	} 2>/dev/null
-
 input_names=(c b e g)
 
 action=${1:-start}
@@ -120,7 +93,6 @@ action_times_pathfile="$action.milliseconds"
 
 sorted_names=$(policy:longest "${input_names[*]}") || exit
 echo "longest: '$sorted_names'"
-
 
 exit
 
