@@ -2840,7 +2840,7 @@ DisplayAsSynExam()
 
 	}
 
-DisplayAsHelpTitlePackageNameAuthorDesc()
+DisplayAsHelpTitleNameAuthorDesc()
 	{
 
 	# $1 = package name title
@@ -2852,7 +2852,7 @@ DisplayAsHelpTitlePackageNameAuthorDesc()
 
 	}
 
-DisplayAsHelpPackageNameAuthorDesc()
+DisplayAsHelpNameAuthorDesc()
 	{
 
 	# $1 = 'normal/highlighted/muted'
@@ -2886,7 +2886,7 @@ DisplayAsHelpPackageNameAuthorDesc()
 			fi
 	esac
 
-	printf "${HELP_COL_SPACER}%-$((HELP_PACKAGE_NAME_WIDTH+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
+	printf "${HELP_COL_SPACER}%-$((${#HELP_COL_OTHER_PREFIX}+HELP_PACKAGE_NAME_WIDTH+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
 	printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%-$((HELP_PACKAGE_AUTHOR_WIDTH+$(LenANSIDiff "$package_author_msg")))s" "$package_author_msg"
 	printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%s" "$package_description_msg"
 	[[ -n $package_notes ]] && printf ' %s' "$package_notes_msg"
@@ -2895,7 +2895,7 @@ DisplayAsHelpPackageNameAuthorDesc()
 
 	}
 
-DisplayAsHelpTitlePackageNameAbs()
+DisplayAsHelpTitleNameAbs()
 	{
 
 	# $1 = package name title
@@ -2906,7 +2906,7 @@ DisplayAsHelpTitlePackageNameAbs()
 
 	}
 
-DisplayAsHelpPackageNameAbs()
+DisplayAsHelpNameAbs()
 	{
 
 	# $1 = package name
@@ -2938,7 +2938,7 @@ CalcMaxStatusColsToDisplay()
 
 	}
 
-DisplayAsHelpTitlePackageNameVerStatus()
+DisplayAsHelpTitleNameVerStatus()
 	{
 
 	# $1 = package name title
@@ -2968,7 +2968,7 @@ DisplayAsHelpTitlePackageNameVerStatus()
 
 	}
 
-DisplayAsHelpPackageNameVerStatus()
+DisplayAsHelpNameVerStatus()
 	{
 
 	# $1 = 'normal/highlighted/muted'
@@ -3049,7 +3049,7 @@ DisplayAsHelpPackageNameVerStatus()
 	fi
 
 	if [[ -n $package_status && $maxcols -ge 2 ]]; then
-		printf "${HELP_COL_SPACER}%-$((HELP_PACKAGE_STATUS_WIDTH+$(LenANSIDiff "$package_status_msg")))s" "$package_status_msg"
+		printf "${HELP_COL_SPACER}%-$((${#HELP_COL_OTHER_PREFIX}+HELP_PACKAGE_STATUS_WIDTH+$(LenANSIDiff "$package_status_msg")))s" "$package_status_msg"
 	fi
 
 	if [[ -n $package_version_msg && $maxcols -ge 3 ]]; then
@@ -3064,7 +3064,7 @@ DisplayAsHelpPackageNameVerStatus()
 
 	}
 
-DisplayAsHelpTitlePackageNameRepo()
+DisplayAsHelpTitleNameRepo()
 	{
 
 	# $1 = package name title
@@ -3085,7 +3085,7 @@ DisplayAsHelpTitlePackageNameRepo()
 
 	}
 
-DisplayAsHelpPackageNameRepo()
+DisplayAsHelpNameRepo()
 	{
 
 	# $1 = 'normal/highlighted/muted'
@@ -4286,22 +4286,22 @@ QPKGs.Abbreviations:Show()
 	for tier in "${PACKAGE_TIERS[@]}"; do
 		[[ $tier = addon ]] && continue		# don't need to see addons
 
-		DisplayAsHelpTitlePackageNameAbs "$tier QPKGs" 'acceptable QPKG name abbreviations and aliases'
+		DisplayAsHelpTitleNameAbs "$tier QPKGs" 'acceptable QPKG name abbreviations and aliases'
 
 		for package_name in $(QPKGs-SC${tier}:Array); do
 			abs=$(QPKG.Abbrvs "$package_name")
 
 			if [[ -n $abs ]]; then
 				if ! QPKG.URL "$package_name" &>/dev/null; then
-					DisplayAsHelpPackageNameRepo highlighted "$package_name" 'not installable: no arch'
+					DisplayAsHelpNameRepo highlighted "$package_name" 'not installable: no arch'
 				elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
-					DisplayAsHelpPackageNameRepo highlighted "$package_name" 'not installable: low RAM'
+					DisplayAsHelpNameRepo highlighted "$package_name" 'not installable: low RAM'
 				elif QPKGs-ISmissing:Exist "$package_name" &>/dev/null; then
-					DisplayAsHelpPackageNameRepo highlighted "$package_name" 'missing'
+					DisplayAsHelpNameRepo highlighted "$package_name" 'missing'
 				elif QPKGs-ISNTinstalled:Exist "$package_name"; then
-					DisplayAsHelpPackageNameRepo muted "$package_name" "${abs// /, }"
+					DisplayAsHelpNameRepo muted "$package_name" "${abs// /, }"
 				else
-					DisplayAsHelpPackageNameAbs "$package_name" "${abs// /, }"
+					DisplayAsHelpNameAbs "$package_name" "${abs// /, }"
 				fi
 			fi
 		done
@@ -4367,26 +4367,26 @@ QPKGs.Repos:Show()
 	for tier in "${PACKAGE_TIERS[@]}"; do
 		[[ $tier = addon ]] && continue		# don't need to see addons
 
-		DisplayAsHelpTitlePackageNameRepo "$tier QPKGs" repository
+		DisplayAsHelpTitleNameRepo "$tier QPKGs" repository
 
 		for package_name in $(QPKGs-SC$tier:Array); do
 			if ! QPKG.URL "$package_name" &>/dev/null; then
-				DisplayAsHelpPackageNameRepo highlighted "$package_name" 'not installable: no arch'
+				DisplayAsHelpNameRepo highlighted "$package_name" 'not installable: no arch'
 			elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
-				DisplayAsHelpPackageNameRepo highlighted "$package_name" 'not installable: low RAM'
+				DisplayAsHelpNameRepo highlighted "$package_name" 'not installable: low RAM'
 			elif QPKGs-ISmissing:Exist "$package_name" &>/dev/null; then
-				DisplayAsHelpPackageNameRepo highlighted "$package_name" missing
+				DisplayAsHelpNameRepo highlighted "$package_name" missing
 			elif QPKGs-ISNTinstalled:Exist "$package_name"; then
-				DisplayAsHelpPackageNameRepo muted "$package_name" 'not installed'
+				DisplayAsHelpNameRepo muted "$package_name" 'not installed'
 			else
 				package_store_id=$(QPKG.StoreID "$package_name")
 
 				if [[ -z $package_store_id ]]; then
-					DisplayAsHelpPackageNameRepo normal "$package_name" unassigned
+					DisplayAsHelpNameRepo normal "$package_name" unassigned
 				elif [[ $package_store_id = sherpa ]]; then
-					DisplayAsHelpPackageNameRepo normal "$package_name" "$package_store_id"
+					DisplayAsHelpNameRepo normal "$package_name" "$package_store_id"
 				else
-					DisplayAsHelpPackageNameRepo highlighted "$package_name" "$(GetRepoURLFromStoreID "$package_store_id")"
+					DisplayAsHelpNameRepo highlighted "$package_name" "$(GetRepoURLFromStoreID "$package_store_id")"
 				fi
 			fi
 		done
@@ -4414,15 +4414,15 @@ QPKGs:List:Show()
 	for tier in "${PACKAGE_TIERS[@]}"; do
 		[[ $tier = addon ]] && continue		# don't need to see addons
 
-		DisplayAsHelpTitlePackageNameAuthorDesc "$tier QPKGs" 'QPKG author' 'QPKG description'
+		DisplayAsHelpTitleNameAuthorDesc "$tier QPKGs" 'QPKG author' 'QPKG description'
 
 		for package_name in $(QPKGs-SC${tier}:Array); do
 			if QPKGs-ISmissing:Exist "$package_name" &>/dev/null; then
-				DisplayAsHelpPackageNameAuthorDesc highlighted "$package_name" 'missing' "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
+				DisplayAsHelpNameAuthorDesc highlighted "$package_name" 'missing' "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
 			elif QPKGs-ISNTinstalled:Exist "$package_name"; then
-				DisplayAsHelpPackageNameAuthorDesc muted "$(ColourTextDarkGrey "$package_name")" "$(ColourTextDarkGrey "$(QPKG.Author "$package_name")")" "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
+				DisplayAsHelpNameAuthorDesc muted "$(ColourTextDarkGrey "$package_name")" "$(ColourTextDarkGrey "$(QPKG.Author "$package_name")")" "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
 			else
-				DisplayAsHelpPackageNameAuthorDesc normal "$package_name" "$(QPKG.Author "$package_name")" "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
+				DisplayAsHelpNameAuthorDesc normal "$package_name" "$(QPKG.Author "$package_name")" "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
 			fi
 		done
 	done
@@ -4453,17 +4453,17 @@ QPKGs.Statuses:Show()
 	for tier in "${PACKAGE_TIERS[@]}"; do
 		[[ $tier = addon ]] && continue		# don't need to see addons
 
-		DisplayAsHelpTitlePackageNameVerStatus "$tier QPKGs" 'QPKG statuses (last result)' 'QPKG version (new)' 'installation path'
+		DisplayAsHelpTitleNameVerStatus "$tier QPKGs" 'QPKG statuses (last result)' 'QPKG version (new)' 'installation path'
 
 		for package_name in $(QPKGs-SC$tier:Array); do
 			if ! QPKG.URL "$package_name" &>/dev/null; then
-				DisplayAsHelpPackageNameVerStatus highlighted "$package_name" 'not installable: no arch'
+				DisplayAsHelpNameVerStatus highlighted "$package_name" 'not installable: no arch'
 			elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
-				DisplayAsHelpPackageNameVerStatus highlighted "$package_name" 'not installable: low RAM'
+				DisplayAsHelpNameVerStatus highlighted "$package_name" 'not installable: low RAM'
 			elif QPKGs-ISmissing:Exist "$package_name" &>/dev/null; then
-				DisplayAsHelpPackageNameVerStatus highlighted "$package_name" 'missing' '' "$(QPKG.Local.Ver "$package_name")" '' "$(QPKG.InstallationPath "$package_name")"
+				DisplayAsHelpNameVerStatus highlighted "$package_name" 'missing' '' "$(QPKG.Local.Ver "$package_name")" '' "$(QPKG.InstallationPath "$package_name")"
 			elif QPKGs-ISNTinstalled:Exist "$package_name"; then
-				DisplayAsHelpPackageNameVerStatus muted "$package_name" 'not installed' '' '' "$(QPKG.Avail.Ver "$package_name")"
+				DisplayAsHelpNameVerStatus muted "$package_name" 'not installed' '' '' "$(QPKG.Avail.Ver "$package_name")"
 			else
 				# transient state
 				if QPKGs-ISenabled:Exist "$package_name"; then
@@ -4502,7 +4502,7 @@ QPKGs.Statuses:Show()
 					package_result_msg='unknown'
 				fi
 
-				DisplayAsHelpPackageNameVerStatus normal "$package_name" "$package_status_msg" "$package_result_msg" "$(QPKG.Local.Ver "$package_name")" "$(QPKG.Avail.Ver "$package_name")" "$(QPKG.InstallationPath "$package_name")"
+				DisplayAsHelpNameVerStatus normal "$package_name" "$package_status_msg" "$package_result_msg" "$(QPKG.Local.Ver "$package_name")" "$(QPKG.Avail.Ver "$package_name")" "$(QPKG.InstallationPath "$package_name")"
 
 				package_status_notes=()
 				package_status_msg=''
