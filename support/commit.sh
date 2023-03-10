@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
-if [[ -e vars.source ]]; then
-	. ./vars.source
-else
-	ColourTextBrightRed "'vars.source' not found\n"
+if [[ ! -e vars.source ]]; then
+	echo "'vars.source' not found"
 	exit 1
 fi
+
+. ./vars.source
 
 echo "$unstable_branch" > "$branch_pathfile"
 

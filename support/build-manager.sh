@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
-echo -n 'building management script ... '
-
-if [[ -e vars.source ]]; then
-	. ./vars.source
-else
-	ColourTextBrightRed "'vars.source' not found\n"
+if [[ ! -e vars.source ]]; then
+	echo "'vars.source' not found"
 	exit 1
 fi
+
+. ./vars.source
+
+echo -n 'building management script ... '
 
 source_pathfile="$source_path"/sherpa.manager.source
 target_pathfile="$source_path"/sherpa.manager.sh

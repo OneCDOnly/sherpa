@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
-if [[ -e vars.source ]]; then
-	. ./vars.source
-else
-	ColourTextBrightRed "'vars.source' not found\n"
+if [[ ! -e vars.source ]]; then
+	echo "'vars.source' not found"
 	exit 1
 fi
+
+. ./vars.source
 
 declare -a filenames
 declare -a exclusions
@@ -18,7 +18,7 @@ filenames+=(packages.source)
 exclusions+=(1036,1088,2034)
 
 filenames+=('*.sh')
-exclusions+=(1036,1091,2001,2006,2016,2034,2054,2086,2154,2155)
+exclusions+=(1036,1090,1091,2001,2006,2016,2034,2054,2086,2154,2155)
 
 for index in "${!filenames[@]}"; do
 	echo -n "checking '${filenames[index]}' ... "
