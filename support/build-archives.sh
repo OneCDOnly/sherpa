@@ -3,7 +3,7 @@
 # compiler for all sherpa archives
 
 if [[ ! -e vars.source ]]; then
-	echo "'vars.source' not found\n"
+	echo "'vars.source' not found"
 	exit 1
 fi
 
