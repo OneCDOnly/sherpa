@@ -47,11 +47,11 @@ echo "untimed_names=[${untimed_names[@]}]"
 
  	local sorted_names=$(sort -k2 -r <<<"${unsorted_names[@]}")
 echo "sorted_names: [$sorted_names]"
-	local stripped_names=$(sed 's/|.*$//' <<<"$sorted_names")
+	local names_only=$(sed 's/|.*$//' <<<"$sorted_names")
 
  	local untimed=$(sed 's/|.*$//' <<<"$untimed_names" | tr '\n' ' ')
 
-	echo "${untimed%% } ${stripped_names%% }"
+	echo "${untimed%% } ${names_only%% }"
 
 	return 0
 
