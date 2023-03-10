@@ -15,7 +15,6 @@ Objects:Load()
 	[[ ! -e $OBJECTS_PATHFILE ]] && ./build-objects.sh &>/dev/null
 
 	. "$OBJECTS_PATHFILE"
-	objects_loaded=true
 
 	}
 
@@ -30,7 +29,6 @@ Packages:Load()
 	fi
 
 	. "$PACKAGES_PATHFILE"
-	packages_loaded=true
 
 	readonly PACKAGES_VER
 	readonly BASE_QPKG_CONFLICTS_WITH
@@ -94,14 +92,12 @@ target_pathfile="$wiki_path"/Package-abbreviations.md
 Objects:Load
 Packages:Load 2>/dev/null	# packages source file throws a lot of syntax errors until it's processed - ignore these
 
-[[ -e $target_pathfile ]] && rm "$target_pathfile"
-
 echo '| package name | acceptable abbreviations |' > "$target_pathfile"
 echo '| ---: | :--- |' >> "$target_pathfile"
 
 for package_name in $(QPKGs-SCall:Array); do
 	abs=$(QPKG.Abbrvs "$package_name")
-	echo "| \`$package_name\` | \`${abs// /\` \`}\` |" >> "$target_pathfile"
+	echo "| $package_name | \`${abs// /\` \`}\` |" >> "$target_pathfile"
 done
 
 ColourTextBrightGreen 'done\n'
