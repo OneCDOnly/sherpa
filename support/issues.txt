@@ -1,8 +1,3 @@
 * Deluge-web not starting when start requested at the same time as deluge-server.
 
 * ensure each action fork is actually being killed after it issues an 'exit' into the message pipe.
-
-* remove hint to 'enable' QPKG when attempting to 'stop' it while in a disabled state:
-    [~] # /etc/init.d/clamav.sh stop; echo $?
-    The 'ClamAV' QPKG is disabled. Please enable it first with: qpkg_service enable ClamAV
-    1
