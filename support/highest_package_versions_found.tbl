@@ -31,7 +31,7 @@ pyLoad_230312.qpkg.md5               pyLoad_230312.qpkg               pyLoad    
 QDK_2.3.13.qpkg.md5                  QDK_2.3.13.qpkg                  QDK                  2.3.13       all    5d696c2518abd4f09dcea40c8a64259e
 RunLast_230224.qpkg.md5              RunLast_230224.qpkg              RunLast              230224       all    6cb5415fe56592ca1f4e8a4f2dcc5f17
 SABnzbd_230312.qpkg.md5              SABnzbd_230312.qpkg              SABnzbd              230312       all    ccf6c3f4269e5e9bfcb04e709b4bcb3e
-sha3sum_221205_x86_64.qpkg.md5       sha3sum_221205_x86_64.qpkg       sha3sum              221205       i64    391706e4f3fa20b11474dcd185240b6e
-sha3sum_221205_x86.qpkg.md5          sha3sum_221205_x86.qpkg          sha3sum              221205       i86    a655b91aec2809de536af0d02d149c81
+sha3sum_230312_x86_64.qpkg.md5       sha3sum_230312_x86_64.qpkg       sha3sum              230312       i64    6ceba9116e0dbcbdb4e6112f0c02f8c0
+sha3sum_230312_x86.qpkg.md5          sha3sum_230312_x86.qpkg          sha3sum              230312       i86    fdba9d16b88a5b6e3b04483ca77706dd
 sherpa_230227.qpkg.md5               sherpa_230227.qpkg               sherpa               230227       all    cb0c2261c00abbd3ee080925e01a88d2
 SortMyQPKGs_230227.qpkg.md5          SortMyQPKGs_230227.qpkg          SortMyQPKGs          230227       all    2fa79be955541a10384b9749e8a1baee
