@@ -101,6 +101,3 @@ echo "shortest: '$sorted_names'"
 
 sorted_names=$(policy:none "${input_names[*]}") || exit
 echo "none: '$sorted_names'"
-
-sorted_names=$(policy:balanced "${input_names[*]}") || exit
-echo "balanced: '$sorted_names'"
