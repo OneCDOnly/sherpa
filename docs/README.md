@@ -35,7 +35,7 @@ $ sudo sherpa
 
 ... and follow the help from there.
 
-If `sudo` is unavailable in your version of QTS, please SSH into your NAS as the 'admin' user instead, and run:
+If `sudo` is unavailable in your version of QTS, SSH into your NAS as the 'admin' user instead, and run:
 ```
 # sherpa
 ```
