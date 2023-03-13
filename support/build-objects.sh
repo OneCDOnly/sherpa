@@ -16,7 +16,7 @@ target_pathfile="$source_path"/objects
 QPKG_IS_STATES=(backedup downloaded enabled installed missing signed started)
 QPKG_ISNT_STATES=(backedup downloaded enabled installed signed started)
 QPKG_STATES_TRANSIENT=(starting stopping restarting)
-QPKG_SERVICE_RESULTS=(ok unknown)
+QPKG_SERVICE_RESULTS=(ok failed unknown)
 
 # sorted
 IPK_STATES=(downloaded installed reinstalled upgraded)
@@ -33,6 +33,10 @@ USER_QPKG_SCNT_GROUPS=(canclean installable upgradable)
 USER_QPKG_IS_STATES=(backedup installed missing started)
 USER_QPKG_ISNT_STATES=(backedup installed started)
 USER_QPKG_ACTIONS=(backup clean install list reassign rebuild reinstall restart restore start stop uninstall upgrade)
+
+# disabled for-now, but would be helpful to have these as user-specified states
+# USER_QPKG_IS_STATES+=(${QPKG_SERVICE_RESULTS[@]})
+# USER_QPKG_ISNT_STATES+=(${QPKG_SERVICE_RESULTS[@]})
 
 AddFlagObj()
 	{
