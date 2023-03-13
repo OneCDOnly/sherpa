@@ -5,19 +5,15 @@
 
 A mini-package-manager for QNAP NAS.
 
-Package management via [b]sherpa[/b] provides extra features like easy application backup and upgrading, service and daemon management, self-checking and repair, and operations may be automated via cron.
+Package management via [b]sherpa[/b] provides extra features like easy application backup and upgrading, service and daemon management, self-checking and repair, and all operations may be automated via cron.
 
 [b][url=https://github.com/OneCDOnly/sherpa/wiki/Packages]Click here for available packages[/url][/b]
-
-[b][u][size=120]Requirements[/size][/u][/b]
-
-[list]Any model QNAP NAS running QTS 4.0 or-later.[/list]
 
 [b][u][size=120]Installation[/size][/u][/b]
 
 [list=1][*][url=https://github.com/OneCDOnly/sherpa/releases/download/v230227/sherpa_230227.qpkg]Click here to download the [b]sherpa[/b] QPKG[/url].
 
-[*]Install the QPKG manually through your QTS App Center UI.
+[*]Install the QPKG manually through your QTS App Center UI. This QPKG is not digitally signed, so you'll need to allow unsigned packages to be installed in your App Center before installing it. It can "sign" itself (and all supported QPKGs) after installation.
 [/list]
 [b][u][size=120]Usage[/size][/u][/b]
 [list=1]
@@ -27,7 +23,7 @@ Package management via [b]sherpa[/b] provides extra features like easy applicati
 [code]sudo sherpa[/code]
 ... and follow the help from there.
 [/list]
-If 'sudo' is unavailable in your version of QTS, SSH into your NAS as the 'admin' user instead, and run:
+If 'sudo' is unavailable in your version of QTS, [url=https://www.qnap.com/en/how-to/faq/article/how-do-i-access-my-qnap-nas-using-ssh][b]SSH[/b][/url] into your NAS as the 'admin' user instead, and run:
 [code]sherpa[/code]
 
 Checkout the wiki for more information: https://github.com/OneCDOnly/sherpa/wiki
