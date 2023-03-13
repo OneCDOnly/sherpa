@@ -11,13 +11,6 @@ Package management via **sherpa** provides extra features like easy application 
 
 <b>[Click here for available packages](https://github.com/OneCDOnly/sherpa/wiki/Packages)</b>
 
-The aim of this project is to support **all** QNAP NAS models and **all** QTS & QuTS hero versions. Please advise if you encounter any errors when running it on your NAS.
-
-
-## Requirements
-
-- Any model QNAP NAS running QTS 4.0 or-later.
-
 
 ## Installation
 
@@ -37,10 +30,5 @@ $ sudo sherpa
 ```
 
 ... and follow the help from there.
-
-If `sudo` is unavailable in your version of QTS, SSH into your NAS as the 'admin' user instead, and run:
-```
-# sherpa
-```
 
 Checkout the wiki for more information: [https://github.com/OneCDOnly/sherpa/wiki](https://github.com/OneCDOnly/sherpa/wiki)
