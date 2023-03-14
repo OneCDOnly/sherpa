@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# a parser for pyLoad config files
+# OneCD's parser for pyLoad config files. 2023-03-14
 
 GetPyloadConfig()
 	{
