@@ -1513,11 +1513,11 @@ ParseArgs()
 						opts_log_tail_view=true
 						self_display_clean=true
 						;;
-					not-backedup)
+					NTbackedup)
 						QPKGs.AClist.ISNTbackedup:Set
 						self_display_clean=true
 						;;
-					not-installed)
+					NTinstalled)
 						QPKGs.AClist.ISNTinstalled:Set
 						self_display_clean=true
 						;;
@@ -1568,7 +1568,7 @@ ParseArgs()
 						QPKGs.ACinstall.IS${group}:Set
 						group=''
 						;;
-					not-installed)
+					NTinstalled)
 						QPKGs.ACinstall.ISNTinstalled:Set
 						group=''
 						;;
