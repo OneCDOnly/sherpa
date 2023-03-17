@@ -83,7 +83,7 @@ Self:Init()
 
 	if [[ $USER_ARGS_RAW =~ $re ]]; then
 		ResetArchivedLogs
-		ResetWorkPath
+		ResetCachePath
 		ArchiveActiveSessLog
 		ResetActiveSessLog
 		exit 0
@@ -239,29 +239,29 @@ DefaultConsts:Load()
 
 	# default values
 	readonly THIS_PACKAGE_PATH=$(QPKG.InstallationPath)
-	readonly WORK_PATH=$THIS_PACKAGE_PATH/cache
+	readonly CACHE_PATH=$THIS_PACKAGE_PATH/cache
 	readonly LOGS_PATH=$THIS_PACKAGE_PATH/logs
-	readonly QPKG_DL_PATH=$WORK_PATH/QPKGs.downloads
+	readonly QPKG_DL_PATH=$CACHE_PATH/QPKGs.downloads
 	readonly QPKG_BU_PATH=$(GetDefVol)/.qpkg_config_backup
-	readonly IPK_DL_PATH=$WORK_PATH/IPKs.downloads
-	readonly IPK_CACHE_PATH=$WORK_PATH/IPKs
-	readonly PIP_CACHE_PATH=$WORK_PATH/PIPs
-	readonly ACTION_TIMES_PATH=$WORK_PATH/action.times
+	readonly IPK_DL_PATH=$CACHE_PATH/IPKs.downloads
+	readonly IPK_CACHE_PATH=$CACHE_PATH/IPKs
+	readonly PIP_CACHE_PATH=$CACHE_PATH/PIPs
+	readonly ACTION_TIMES_PATH=$CACHE_PATH/action.times
 	readonly ACTION_MSG_PIPE=/var/run/sherpa.action.messages.pipe
 
-	readonly OBJECTS_PATHFILE=$WORK_PATH/objects
+	readonly OBJECTS_PATHFILE=$CACHE_PATH/objects
 	readonly OBJECTS_ARCHIVE_URL='<?cdn_sherpa_root_url?>'/objects.tar.gz
-	readonly OBJECTS_ARCHIVE_PATHFILE=$WORK_PATH/objects.tar.gz
+	readonly OBJECTS_ARCHIVE_PATHFILE=$CACHE_PATH/objects.tar.gz
 
-	readonly PACKAGES_PATHFILE=$WORK_PATH/packages
+	readonly PACKAGES_PATHFILE=$CACHE_PATH/packages
 	readonly PACKAGES_ARCHIVE_URL='<?cdn_sherpa_root_url?>'/packages.tar.gz
-	readonly PACKAGES_ARCHIVE_PATHFILE=$WORK_PATH/packages.tar.gz
+	readonly PACKAGES_ARCHIVE_PATHFILE=$CACHE_PATH/packages.tar.gz
 
 	readonly EXTERNAL_PACKAGES_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
-	readonly EXTERNAL_PACKAGES_PATHFILE=$WORK_PATH/Packages	 # this is the file used by Entware
+	readonly EXTERNAL_PACKAGES_PATHFILE=$CACHE_PATH/Packages	 # this is the file used by Entware
 
-	readonly PREV_IPK_LIST=$WORK_PATH/ipk.prev.list
-	readonly PREV_PIP_LIST=$WORK_PATH/pip.prev.list
+	readonly PREV_IPK_LIST=$CACHE_PATH/ipk.prev.list
+	readonly PREV_PIP_LIST=$CACHE_PATH/pip.prev.list
 
 	readonly SESS_ARCHIVE_PATHFILE=$LOGS_PATH/session.archive.log
 	sess_active_pathfile=$THIS_PACKAGE_PATH/session.$$.active.log
@@ -428,7 +428,7 @@ CreatePaths()
 	[[ -d $IPK_CACHE_PATH ]] && rm -rf "$IPK_CACHE_PATH"
 	[[ -d $PIP_CACHE_PATH ]] && rm -rf "$PIP_CACHE_PATH"
 
-	MakePath "$WORK_PATH" work || return
+	MakePath "$CACHE_PATH" cache || return
 	MakePath "$LOGS_PATH" logs || return
 	MakePath "$QPKG_DL_PATH" 'QPKG download' || return
 	MakePath "$IPK_DL_PATH" 'IPK download' || return
@@ -505,7 +505,7 @@ Self:LogEnv()
 	DebugBinPathVerAndMinVer python3 "$(GetDefPython3Ver)" "$MIN_PYTHON_VER"
 	DebugBinPathVerAndMinVer perl "$(GetDefPerlVer)" "$MIN_PERL_VER"
 	DebugScript 'logs path' "$LOGS_PATH"
-	DebugScript 'work path' "$WORK_PATH"
+	DebugScript 'cache path' "$CACHE_PATH"
 	DebugQpkg concurrency "$CONCURRENCY"
 
 	if OS.IsAllowUnsignedPackages; then
@@ -2007,11 +2007,11 @@ ResetArchivedLogs()
 
 	}
 
-ResetWorkPath()
+ResetCachePath()
 	{
 
-	if [[ -n $WORK_PATH && -d $WORK_PATH ]]; then
-		rm -rf "${WORK_PATH:?}"/*
+	if [[ -n $CACHE_PATH && -d $CACHE_PATH ]]; then
+		rm -rf "${CACHE_PATH:?}"/*
 		ShowAsDone 'package cache cleared'
 	fi
 
@@ -2428,7 +2428,7 @@ OpenIpkArchive()
 		return 1
 	fi
 
-	RunAndLog "/usr/local/sbin/7z e -o$($DIRNAME_CMD "$EXTERNAL_PACKAGES_PATHFILE") $EXTERNAL_PACKAGES_ARCHIVE_PATHFILE" "$WORK_PATH/ipk.archive.extract" log:failure-only
+	RunAndLog "/usr/local/sbin/7z e -o$($DIRNAME_CMD "$EXTERNAL_PACKAGES_PATHFILE") $EXTERNAL_PACKAGES_ARCHIVE_PATHFILE" "$CACHE_PATH/ipk.archive.extract" log:failure-only
 
 	if [[ ! -e $EXTERNAL_PACKAGES_PATHFILE ]]; then
 		ShowAsError 'unable to open the IPK list file'
@@ -8291,7 +8291,7 @@ sleep()
 Objects:Load()
 	{
 
-	# Ensure `objects` in the local work path is up-to-date, then source it
+	# Ensure `objects` in the local cache path is up-to-date, then source it
 
 	[[ ${objects_loaded:=false} = true ]] && return
 	Func:Entry
@@ -8300,7 +8300,7 @@ Objects:Load()
 		if [[ ! -e $OBJECTS_PATHFILE ]] || ! IsThisFileRecent "$OBJECTS_PATHFILE"; then
 			ShowAsProc 'updating objects'
 			if $CURL_CMD${curl_insecure_arg:-} --silent --fail "$OBJECTS_ARCHIVE_URL" > "$OBJECTS_ARCHIVE_PATHFILE"; then
-				$TAR_CMD --extract --gzip --file="$OBJECTS_ARCHIVE_PATHFILE" --directory="$WORK_PATH"
+				$TAR_CMD --extract --gzip --file="$OBJECTS_ARCHIVE_PATHFILE" --directory="$CACHE_PATH"
 			fi
 		fi
 	fi
@@ -8322,7 +8322,7 @@ Objects:Load()
 Packages:Load()
 	{
 
-	# Ensure `packages` in the local work path is up-to-date, then source it
+	# Ensure `packages` in the local cache path is up-to-date, then source it
 
 	[[ ${packages_loaded:=false} = true ]] && return
 	Func:Entry
@@ -8331,7 +8331,7 @@ Packages:Load()
 		if [[ ! -e $PACKAGES_PATHFILE ]] || ! IsThisFileRecent "$PACKAGES_PATHFILE" 60; then
 			ShowAsProc 'updating package list'
 			if $CURL_CMD${curl_insecure_arg:-} --silent --fail "$PACKAGES_ARCHIVE_URL" > "$PACKAGES_ARCHIVE_PATHFILE"; then
-				$TAR_CMD --extract --gzip --file="$PACKAGES_ARCHIVE_PATHFILE" --directory="$WORK_PATH"
+				$TAR_CMD --extract --gzip --file="$PACKAGES_ARCHIVE_PATHFILE" --directory="$CACHE_PATH"
 			fi
 		fi
 	fi
