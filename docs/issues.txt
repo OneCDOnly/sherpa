@@ -1,3 +1,1 @@
-* Deluge-web not starting when start requested at the same time as deluge-server.
-
 * ensure each action fork is actually being killed after it issues an 'exit' into the message pipe.
