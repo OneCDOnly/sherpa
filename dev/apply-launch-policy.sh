@@ -13,61 +13,69 @@
 policy:longest()
 	{
 
-	# package names will be listed with the longest action time first. Packages without times will be listed first.
+	# package names will be listed with the longest action time first. Packages without times will be listed before timed packages.
 
-	[[ -s $action_times_pathfile ]] || return
 	[[ ${#1} -gt 0 ]] || return
 
-	local package_name=''
-	local supplied_package_names=($1)
-	local matched_names=()
-	local untimed_names=()
-	local patt=''
+	if [[ ! -s $action_times_pathfile ]]; then
+		echo "${1:-}"
+		return
+	fi
 
-	local sorted=$(sort -k2 -r <<<"$(for package_name in $1; do
-		grep "^$package_name" "$action_times_pathfile"
-	done)" | sed 's/|.*$//' | tr '\n' ' ')
+	local package=''
+	local source_timed=''
+	local supplied_packages=($1)
+	local unsorted_timed=()
+	local unsorted_untimed=()
+	local sorted_supplied=()
+	local re=''
 
-echo "supplied_package_names[${supplied_package_names[*]}]"
-echo "sorted[$sorted]"
+# echo "supplied_packages=[${supplied_packages[*]}]"
 
-	for sorted_index in "${!sorted[@]}"; do
-echo "checking sorted name [${sorted[$sorted_index]}]"
+	# get list of only supplied package names where times have been recorded, sort this list by time, then return names-only
+ 	local source_timed=$(sort -k2 -r <<<"$(for package in ${supplied_packages[*]}; do
+		re="\b${package}\b"
+		grep "$re" "$action_times_pathfile"
+		done )" | sed 's/|.*$//' | tr '\n' ' ')
 
-		patt="\b${sorted_package_name}\b"
+# echo "source_timed=[$source_timed]"
 
-		for supplied_package_name in ${supplied_package_names[*]}; do
-echo "checking supplied name [$supplied_package_name]"
-			supp_patt="\b${supplied_package_name}\b"
+	# separate timed package names from untimed
+	for package in ${supplied_packages[*]}; do
+# echo -e "\nchecking supplied name [$package]"
+		re="\b${package}\b"
 
-			if [[ "$sorted" =~ $supp_patt ]]; then
-				echo -e "adding [$sorted_package_name] to matched\n"
-				matched_names+=($sorted_package_name)
-# 			else
-# 				echo "adding [$supplied_package_name] to untimed"
-# 				untimed_names+=($sorted_package_name)
-				break
-			fi
-		done
-
-# 		[[ $sorted_package_name != $supplied_package_name ]] && continue
-#
-# 			if [[ "${supplied_package_names[*]}" =~ $patt ]]; then
-# 				echo "adding [$supplied_package_name] to matched"
-# 				matched_names+=($supplied_package_name)
-# 			else
-# 				echo "adding [$supplied_package_name] to untimed"
-# 				untimed_names+=($supplied_package_name)
-# 			fi
-# 			break
-# 		done
+		if [[ "$source_timed" =~ $re ]]; then
+# echo "adding [$package] to unsorted_timed"
+			unsorted_timed+=($package)
+		else
+# echo "adding [$package] to unsorted_untimed"
+			unsorted_untimed+=($package)
+		fi
 	done
 
-echo "matched[${matched_names[*]}]"
-echo "untimed[${untimed_names[*]}]"
+# echo
+# echo "unsorted_timed=[${unsorted_timed[*]}]"
+# echo "unsorted_untimed=[${unsorted_untimed[*]}]"
+# echo '----------------------------------'
 
-exit
-	echo "${untimed_names[*]%% } ${matched_names[*]%% }"
+	# sort supplied package names as-per time-sorted list
+	for package in ${source_timed[*]}; do
+# echo -e "\nchecking sorted name [$package]"
+		re="\b${package}\b"
+
+		if [[ "${source_timed[*]}" =~ $re ]]; then
+# echo "adding [$package] to sorted_supplied"
+			sorted_supplied+=($package)
+		fi
+	done
+
+# echo
+# echo "sorted_supplied=[${sorted_supplied[*]}]"
+# echo
+
+# echo "final list=[${unsorted_untimed[*]%% } ${sorted_supplied[*]%% }}"
+echo "${unsorted_untimed[*]%% } ${sorted_supplied[*]%% }"
 
 	return 0
 
@@ -100,24 +108,20 @@ policy:none()
 
 	} 2>/dev/null
 
-input_names=(c b a e g z d 3)
+input_names=(c ab y d eywtrwu  aa rrr)
 
 action=${1:-start}
 echo "action: '$action'"
 
 action_times_pathfile="$action.milliseconds"
 
-policy:longest "${input_names[*]}" || exit
-exit
+# policy:longest "${input_names[*]}" || exit
+# exit
 sorted_names=$(policy:longest "${input_names[*]}") || exit
-echo "longest: '$sorted_names'"
-
-# while read -r package_name; do
-# 	echo "newlines name: [$package_name]"
-# done <<< "$(tr ' ' '\n' <<< "$sorted_names")"
+echo "sorted by longest policy: '$sorted_names'"
 
 for package_name in $sorted_names; do
-	echo "spaces name: [$package_name]"
+	echo "whitespace name: '$package_name'"
 done
 
 
