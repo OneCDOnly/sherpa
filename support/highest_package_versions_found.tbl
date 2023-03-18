@@ -13,8 +13,8 @@ inxi_230312.qpkg.md5                 inxi_230312.qpkg                 inxi      
 LazyLibrarian_230312.qpkg.md5        LazyLibrarian_230312.qpkg        LazyLibrarian        230312       all    b76d8f2dfbdce4d39c0b3e80219423db
 Mylar3_230312.qpkg.md5               Mylar3_230312.qpkg               Mylar3               230312       all    cbb880d415eb205b1eba78794d2ecc6f
 NZBGet_230312.qpkg.md5               NZBGet_230312.qpkg               NZBGet               230312       all    f55164ab1445b985b13af6970f96af94
-NZBHydra2_230312_arm_64.qpkg.md5     NZBHydra2_230312_arm_64.qpkg     NZBHydra2            230312       a64    96e3030799653a4234e3ad166d8228e5
-NZBHydra2_230312_x86_64.qpkg.md5     NZBHydra2_230312_x86_64.qpkg     NZBHydra2            230312       i64    9fe82b957c71988fcd5afeb7df412131
+NZBHydra2_230319_arm_64.qpkg.md5     NZBHydra2_230319_arm_64.qpkg     NZBHydra2            230319       a64    0481c80971f9cd28532f26270b36b229
+NZBHydra2_230319_x86_64.qpkg.md5     NZBHydra2_230319_x86_64.qpkg     NZBHydra2            230319       i64    88dbf4eddff6fe2ef7bb71f6f679336b
 nzbToMedia_230312.qpkg.md5           nzbToMedia_230312.qpkg           nzbToMedia           230312       all    f6a8af25b251f5a584109365a206d97a
 OMedusa_230312.qpkg.md5              OMedusa_230312.qpkg              OMedusa              230312       all    9a2c671a0f2780e3de9f9f8da2ea5a19
 OqBittorrent_230312.qpkg.md5         OqBittorrent_230312.qpkg         OqBittorrent         230312       all    64d9ceb53b70ec521ba45d26635c9979
