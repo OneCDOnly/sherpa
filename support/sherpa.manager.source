@@ -5214,12 +5214,13 @@ _QPKG:reassign_()
 	{
 
 	# * This function runs autonomously *
+	# Removes the `storeid` assignment for the QPKG named in $1
 
 	# input:
 	#   $1 = QPKG name
 
 	# output:
-	#   $? = none, this function executes in background
+	#   $? = none, this function executes in the background
 
 	FuncFork:Entry
 
@@ -5262,12 +5263,13 @@ _QPKG:download_()
 	{
 
 	# * This function runs autonomously *
+	# Downloads the QPKG named in $1
 
 	# input:
-	#   $1 = QPKG name to download
+	#   $1 = QPKG name
 
 	# output:
-	#   $? = none, this function executes in background
+	#   $? = none, this function executes in the background
 
 	FuncFork:Entry
 
@@ -5333,12 +5335,13 @@ _QPKG:install_()
 	{
 
 	# * This function runs autonomously *
+	# Installs the QPKG named in $1
 
 	# input:
 	#   $1 = QPKG name
 
 	# output:
-	#   $? = none, this function executes in background
+	#   $? = none, this function executes in the background
 
 	FuncFork:Entry
 
@@ -5456,12 +5459,13 @@ _QPKG:reinstall_()
 	{
 
 	# * This function runs autonomously *
+	# Reinstalls the QPKG named in $1
 
 	# input:
 	#   $1 = QPKG name
 
 	# output:
-	#   $? = none, this function executes in background
+	#   $? = none, this function executes in the background
 
 	FuncFork:Entry
 
@@ -5539,7 +5543,7 @@ _QPKG:upgrade_()
 	#   $1 = QPKG name
 
 	# output:
-	#   $? = none, this function executes in background
+	#   $? = none, this function executes in the background
 
 	FuncFork:Entry
 
@@ -5633,12 +5637,13 @@ _QPKG:uninstall_()
 	{
 
 	# * This function runs autonomously *
+	# Uninstalls the QPKG named in $1
 
 	# input:
 	#   $1 = QPKG name
 
 	# output:
-	#   $? = none, this function executes in background
+	#   $? = none, this function executes in the background
 
 	FuncFork:Entry
 
@@ -5714,13 +5719,13 @@ _QPKG:restart_()
 	{
 
 	# * This function runs autonomously *
-	# restarts the service script for the QPKG named in $1
+	# Restarts the service script for the QPKG named in $1
 
 	# input:
 	#   $1 = QPKG name
 
 	# output:
-	#   $? = none, this function executes in background
+	#   $? = none, this function executes in the background
 
 	FuncFork:Entry
 
@@ -5774,7 +5779,7 @@ _QPKG:start_()
 	#   $1 = QPKG name
 
 	# output:
-	#   $? = none, this function executes in background
+	#   $? = none, this function executes in the background
 
 	FuncFork:Entry
 
@@ -5845,7 +5850,7 @@ _QPKG:stop_()
 	#   $1 = QPKG name
 
 	# output:
-	#   $? = none, this function executes in background
+	#   $? = none, this function executes in the background
 
 	FuncFork:Entry
 
@@ -5944,7 +5949,7 @@ _QPKG:backup_()
 	#   $1 = QPKG name
 
 	# output:
-	#   $? = none, this function executes in background
+	#   $? = none, this function executes in the background
 
 	FuncFork:Entry
 
@@ -5998,7 +6003,7 @@ _QPKG:restore_()
 	#   $1 = QPKG name
 
 	# output:
-	#   $? = none, this function executes in background
+	#   $? = none, this function executes in the background
 
 	FuncFork:Entry
 
@@ -6052,7 +6057,7 @@ _QPKG:clean_()
 	#   $1 = QPKG name
 
 	# output:
-	#   $? = none, this function executes in background
+	#   $? = none, this function executes in the background
 
 	FuncFork:Entry
 
@@ -6100,7 +6105,6 @@ _QPKG:sign_()
 	{
 
 	# * This function runs autonomously *
-
 	# Modify the QTS App Center certificate dB, and add an unsigned QPKG as-if it were signed. It adds a QNAP-generated certificate and digital signature to the certificate database for the unsigned QPKG.
 
 	# Running the code below makes the target QPKG effectively "signed", and allows user to install and run this QPKG with the 'Allow installation of applications without a valid digital signature' App Center option unticked.
@@ -6111,7 +6115,7 @@ _QPKG:sign_()
 	#   $1 = QPKG name
 
 	# output:
-	#   $? = none, this function executes in background
+	#   $? = none, this function executes in the background
 
 	FuncFork:Entry
 
