@@ -10,7 +10,7 @@
 # output:
 #	stdout=sorted list of package names
 
-policy:longest()
+policy:slowest()
 	{
 
 	# package names will be listed with the longest action time first. Packages without times will be listed before timed packages.
@@ -69,7 +69,7 @@ policy:longest()
 
 	} 2>/dev/null
 
-policy:shortest()
+policy:quickest()
 	{
 
 	# package names will be listed with the shorted action time first. Packages without times will be listed before timed packages.
@@ -145,15 +145,15 @@ action_times_pathfile="$action.milliseconds"
 
 echo "action: '$action'"
 
-sorted_names=$(policy:longest "${input_names[*]}") || exit
-echo "'longest' policy: '$sorted_names'"
+sorted_names=$(policy:none "${input_names[*]}") || exit
+echo "'none' policy: '$sorted_names'"
+
+sorted_names=$(policy:slowest "${input_names[*]}") || exit
+echo "'slowest' policy: '$sorted_names'"
 
 # for package_name in $sorted_names; do
 # 	echo "whitespace name: '$package_name'"
 # done
 
-sorted_names=$(policy:shortest "${input_names[*]}") || exit
-echo "'shortest' policy: '$sorted_names'"
-
-sorted_names=$(policy:none "${input_names[*]}") || exit
-echo "'none' policy: '$sorted_names'"
+sorted_names=$(policy:quickest "${input_names[*]}") || exit
+echo "'quickest' policy: '$sorted_names'"
