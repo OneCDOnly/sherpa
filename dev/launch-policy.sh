@@ -10,13 +10,13 @@
 # output:
 #	stdout=sorted list of package names
 
-policy:longest()
+policy:slowest_first()
 	{
 
 	# package names will be listed with the longest action time first. Packages without times will be listed before timed packages.
 
 	# input:
-	#   $action_times_pathfile (global) : a file with execution times for each package
+	#   $action_times_pathfile (global) : a file with previously recorded execution times for each package for a specific action
 	#   $1 : a string of package names to be sorted
 
 	# output:
@@ -25,29 +25,28 @@ policy:longest()
 	[[ ${#1} -gt 0 ]] || return
 
 	if [[ ! -s $action_times_pathfile ]]; then
-		echo "${1:-}"
+		echo "$1"
 		return
 	fi
 
+	local target_packages=($1)
+	local target_timed=''
 	local package=''
-	local source_timed=''
-	local supplied_packages=($1)
 	local unsorted_timed=()
 	local unsorted_untimed=()
-	local sorted_supplied=()
+	local sorted_timed=()
 	local re=''
 
 	# get list of only supplied package names where times have been recorded, sort this list by time, then return names-only
- 	local source_timed=$(sort -k2 -r <<<"$(for package in ${supplied_packages[*]}; do
-		re="\b${package}\b"
-		grep "$re" "$action_times_pathfile"
+ 	local target_timed=$(sort -k2 -r <<<"$(for package in ${target_packages[*]}; do
+		grep "\b${package}\b" "$action_times_pathfile"
 		done )" | sed 's/|.*$//' | tr '\n' ' ')
 
 	# separate timed package names from untimed
-	for package in ${supplied_packages[*]}; do
+	for package in ${target_packages[*]}; do
 		re="\b${package}\b"
 
-		if [[ "$source_timed" =~ $re ]]; then
+		if [[ "$target_timed" =~ $re ]]; then
 			unsorted_timed+=($package)
 		else
 			unsorted_untimed+=($package)
@@ -55,21 +54,21 @@ policy:longest()
 	done
 
 	# sort supplied package names as-per time-sorted list
-	for package in ${source_timed[*]}; do
+	for package in ${target_timed[*]}; do
 		re="\b${package}\b"
 
-		if [[ "${source_timed[*]}" =~ $re ]]; then
-			sorted_supplied+=($package)
+		if [[ "${target_timed[*]}" =~ $re ]]; then
+			sorted_timed+=($package)
 		fi
 	done
 
-	echo "${unsorted_untimed[*]%% } ${sorted_supplied[*]%% }"
+	printf "${unsorted_untimed[*]%% } ${sorted_timed[*]%% }"
 
 	return 0
 
 	} 2>/dev/null
 
-policy:shortest()
+policy:quickest_first()
 	{
 
 	# package names will be listed with the shorted action time first. Packages without times will be listed before timed packages.
@@ -84,29 +83,28 @@ policy:shortest()
 	[[ ${#1} -gt 0 ]] || return
 
 	if [[ ! -s $action_times_pathfile ]]; then
-		echo "${1:-}"
+		echo "$1"
 		return
 	fi
 
+	local target_packages=($1)
+	local target_timed=''
 	local package=''
-	local source_timed=''
-	local supplied_packages=($1)
 	local unsorted_timed=()
 	local unsorted_untimed=()
-	local sorted_supplied=()
+	local sorted_timed=()
 	local re=''
 
 	# get list of only supplied package names where times have been recorded, sort this list by time, then return names-only
- 	local source_timed=$(sort -k2 <<<"$(for package in ${supplied_packages[*]}; do
-		re="\b${package}\b"
-		grep "$re" "$action_times_pathfile"
+ 	local target_timed=$(sort -k2 <<<"$(for package in ${target_packages[*]}; do
+		grep "\b${package}\b" "$action_times_pathfile"
 		done )" | sed 's/|.*$//' | tr '\n' ' ')
 
 	# separate timed package names from untimed
-	for package in ${supplied_packages[*]}; do
+	for package in ${target_packages[*]}; do
 		re="\b${package}\b"
 
-		if [[ "$source_timed" =~ $re ]]; then
+		if [[ "$target_timed" =~ $re ]]; then
 			unsorted_timed+=($package)
 		else
 			unsorted_untimed+=($package)
@@ -114,46 +112,42 @@ policy:shortest()
 	done
 
 	# sort supplied package names as-per time-sorted list
-	for package in ${source_timed[*]}; do
+	for package in ${target_timed[*]}; do
 		re="\b${package}\b"
 
-		if [[ "${source_timed[*]}" =~ $re ]]; then
-			sorted_supplied+=($package)
+		if [[ "${target_timed[*]}" =~ $re ]]; then
+			sorted_timed+=($package)
 		fi
 	done
 
-	echo "${unsorted_untimed[*]%% } ${sorted_supplied[*]%% }"
+	printf "${unsorted_untimed[*]%% } ${sorted_timed[*]%% }"
 
 	return 0
 
 	} 2>/dev/null
 
-policy:none()
+policy:unsorted()
 	{
 
 	[[ ${#1} -gt 0 ]] || return
 
-	echo "${1%% }"
+	printf "${1%% }"
 
 	return 0
 
 	} 2>/dev/null
 
-input_names=(c ab y d eywtrwu  aa rrr c a)
+input_names=(c ab y e d u 3 aa rrr c a)
 action=${1:-start}
 action_times_pathfile="$action.milliseconds"
 
 echo "action: '$action'"
 
-sorted_names=$(policy:longest "${input_names[*]}") || exit
-echo "'longest' policy: '$sorted_names'"
+sorted_names=$(policy:unsorted "${input_names[*]}") || exit
+echo "'unsorted' policy: '$sorted_names'"
 
-# for package_name in $sorted_names; do
-# 	echo "whitespace name: '$package_name'"
-# done
+sorted_names=$(policy:slowest_first "${input_names[*]}") || exit
+echo "'slowest_first' policy: '$sorted_names'"
 
-sorted_names=$(policy:shortest "${input_names[*]}") || exit
-echo "'shortest' policy: '$sorted_names'"
-
-sorted_names=$(policy:none "${input_names[*]}") || exit
-echo "'none' policy: '$sorted_names'"
+sorted_names=$(policy:quickest_first "${input_names[*]}") || exit
+echo "'quickest_first' policy: '$sorted_names'"
