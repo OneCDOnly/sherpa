@@ -2385,7 +2385,6 @@ PIPs:install()
 	local -i result_code=0
 	local -r PACKAGE_TYPE='PyPI group'
 	local -r RUNTIME=long
-	ModPathToEntware
 
 	if [[ $opts_deps_check = true ]] || IPKs-ACinstall-ok:Exist python3-pip; then
 		((total_count++))
@@ -4846,18 +4845,18 @@ ModPathToEntware()
 	local temp=''
 
 	if QPKGs-ISstarted:Exist Entware; then
-		[[ $PATH =~ $opkg_prefix ]] && return
+		! [[ $PATH =~ $opkg_prefix ]] || return
 		temp="$($SED_CMD "s|$opkg_prefix:||" <<< "$PATH:")"	# append colon prior to searching, then remove existing Entware paths
 		export PATH="$opkg_prefix:${temp%:}"				# ... now prepend Entware paths and remove trailing colon
-		DebugAsDone 'prepended $PATH to Entware'
-		DebugVar PATH
-	elif ! QPKGs-ISstarted:Exist Entware; then
-		! [[ $PATH =~ $opkg_prefix ]] && return
+		DebugAsDone 'prepended Entware to $PATH'
+	else
+		[[ $PATH =~ $opkg_prefix ]] || return
 		temp="$($SED_CMD "s|$opkg_prefix:||" <<< "$PATH:")"	# append colon prior to searching, then remove existing Entware paths
 		export PATH="${temp%:}"								# ... now remove trailing colon
-		DebugAsDone 'removed $PATH to Entware'
-		DebugVar PATH
+		DebugAsDone 'removed Entware from $PATH'
 	fi
+
+	DebugVar PATH
 
 	return 0
 
@@ -5257,7 +5256,7 @@ _QPKG:reassign_()
 
 	FuncFork:Exit $result_code
 
-	}
+	} &>/dev/null
 
 _QPKG:download_()
 	{
@@ -5306,7 +5305,7 @@ _QPKG:download_()
 
 		[[ -e $LOG_PATHFILE ]] && rm -f "$LOG_PATHFILE"
 
-		RunAndLog "$CURL_CMD${curl_insecure_arg} --output $LOCAL_PATHFILE $REMOTE_URL" "$LOG_PATHFILE" log:failure-only
+		RunAndLog "$CURL_CMD${curl_insecure_arg} --location --output $LOCAL_PATHFILE $REMOTE_URL" "$LOG_PATHFILE" log:failure-only
 		result_code=$?
 
 		if [[ $result_code -eq 0 ]]; then
@@ -5329,7 +5328,7 @@ _QPKG:download_()
 
 	FuncFork:Exit $result_code
 
-	}
+	} &>/dev/null
 
 _QPKG:install_()
 	{
@@ -5420,7 +5419,6 @@ _QPKG:install_()
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" install ok "version $current_ver"
 
 		if [[ $PACKAGE_NAME = Entware ]]; then
-			ModPathToEntware
 			SendParentChangeEnv ModPathToEntware
 			PatchEntwareService
 
@@ -5453,7 +5451,7 @@ _QPKG:install_()
 	QPKG.AppCenterNotifier:Clear
 	FuncFork:Exit $result_code
 
-	}
+	} &>/dev/null
 
 _QPKG:reinstall_()
 	{
@@ -5531,7 +5529,7 @@ _QPKG:reinstall_()
 	QPKG.AppCenterNotifier:Clear
 	FuncFork:Exit $result_code
 
-	}
+	} &>/dev/null
 
 _QPKG:upgrade_()
 	{
@@ -5631,7 +5629,7 @@ _QPKG:upgrade_()
 	QPKG.AppCenterNotifier:Clear
 	FuncFork:Exit $result_code
 
-	}
+	} &>/dev/null
 
 _QPKG:uninstall_()
 	{
@@ -5686,7 +5684,6 @@ _QPKG:uninstall_()
 			DebugAsDone 'removed icon information from App Center'
 
 			if [[ $PACKAGE_NAME = Entware ]]; then
-				ModPathToEntware
 				SendParentChangeEnv ModPathToEntware
 				UpdateColourisation
 			fi
@@ -5713,7 +5710,7 @@ _QPKG:uninstall_()
 
 	FuncFork:Exit $result_code
 
-	}
+	} &>/dev/null
 
 _QPKG:restart_()
 	{
@@ -5767,7 +5764,7 @@ _QPKG:restart_()
 	QPKG.AppCenterNotifier:Clear
 	FuncFork:Exit $result_code
 
-	}
+	} &>/dev/null
 
 _QPKG:start_()
 	{
@@ -5821,7 +5818,6 @@ _QPKG:start_()
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" start ok
 
 		if [[ $PACKAGE_NAME = Entware ]]; then
-			ModPathToEntware
 			SendParentChangeEnv ModPathToEntware
 			UpdateColourisation
 		fi
@@ -5838,7 +5834,7 @@ _QPKG:start_()
 	QPKG.AppCenterNotifier:Clear
 	FuncFork:Exit $result_code
 
-	}
+	} &>/dev/null
 
 _QPKG:stop_()
 	{
@@ -5895,7 +5891,6 @@ _QPKG:stop_()
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" stop ok
 
 		if [[ $PACKAGE_NAME = Entware ]]; then
-			ModPathToEntware
 			SendParentChangeEnv ModPathToEntware
 			UpdateColourisation
 		fi
@@ -5911,7 +5906,7 @@ _QPKG:stop_()
 	QPKG.AppCenterNotifier:Clear
 	FuncFork:Exit $result_code
 
-	}
+	} &>/dev/null
 
 QPKG:enable()
 	{
@@ -5924,7 +5919,7 @@ QPKG:enable()
 
 	return
 
-	}
+	} &>/dev/null
 
 QPKG:disable()
 	{
@@ -5937,7 +5932,7 @@ QPKG:disable()
 
 	return
 
-	}
+	} &>/dev/null
 
 _QPKG:backup_()
 	{
@@ -5991,7 +5986,7 @@ _QPKG:backup_()
 
 	FuncFork:Exit $result_code
 
-	}
+	} &>/dev/null
 
 _QPKG:restore_()
 	{
@@ -6045,7 +6040,7 @@ _QPKG:restore_()
 
 	FuncFork:Exit $result_code
 
-	}
+	} &>/dev/null
 
 _QPKG:clean_()
 	{
@@ -6099,7 +6094,7 @@ _QPKG:clean_()
 
 	FuncFork:Exit $result_code
 
-	}
+	} &>/dev/null
 
 _QPKG:sign_()
 	{
@@ -6237,7 +6232,7 @@ EOB
 
 	FuncFork:Exit $result_code
 
-	}
+	} &>/dev/null
 
 QPKG.AppCenterNotifier:Clear()
 	{
