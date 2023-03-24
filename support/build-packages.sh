@@ -74,12 +74,20 @@ while read -r checksum_pathfilename; do
 
 	IFS='_' read -r package_name version arch tailend <<< "${checksum_filename//.qpkg.md5/}"
 
-	if [[ $arch = std ]]; then     # make an exception for Entware
+	if [[ $arch = std ]]; then     			# make an exception for Entware
 		arch=''
 		tailend=''
 	fi
 
 	[[ -n $tailend ]] && arch+=_$tailend
+
+	if [[ ${version##*.} = zip ]]; then		# make an exception for QDK
+		version=${version%.*}
+	fi
+
+	if [[ ${qpkg_filename: -9} = .zip.qpkg ]]; then		# another exception for QDK
+		qpkg_filename=${qpkg_filename%.*}
+	fi
 
 	if [[ $package_name != "$previous_package_name" ]]; then
 		match=true
@@ -106,11 +114,17 @@ echo -n 'updating QPKG fields ... '
 buffer=$(sed "s|<?today?>|$today|" <<< "$buffer")
 buffer=$(sed "s|<?dontedit?>|$dontedit_msg|" <<< "$buffer")
 buffer=$(sed "s|<?cdn_sherpa_packages_url?>|$cdn_sherpa_packages_url|" <<< "$buffer")
+buffer=$(sed "s|<?cdn_qnap_dev_packages_url?>|$cdn_qnap_dev_packages_url|" <<< "$buffer")
 buffer=$(sed "s|<?cdn_other_packages_url?>|$cdn_other_packages_url|" <<< "$buffer")
 
 while read -r checksum_filename qpkg_filename package_name version arch md5; do
 	for attribute in version package_name qpkg_filename md5; do
 		buffer=$(sed "/QPKG_NAME+=($package_name)/,/^$/{/QPKG_ARCH+=($arch)/,/$attribute.*/s/<?$attribute?>/${!attribute}/}" <<< "$buffer")
+
+		if [[ $package_name = QDK && $attribute = version ]]; then
+			# run this a second time as there are 2 version placeholders in packages.source for QDK
+			buffer=$(sed "/QPKG_NAME+=($package_name)/,/^$/{/QPKG_ARCH+=($arch)/,/$attribute.*/s/<?$attribute?>/${!attribute}/}" <<< "$buffer")
+		fi
 	done
 done <<< "$(sort "$highest_package_versions_found_pathfile")"
 

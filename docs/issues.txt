@@ -1,1 +1,6 @@
+* after uninstalling a QPKG, App Center UI does not update.
+	might be able to use qpkg_cli for this.
+
+* progress line display desyncs intermittently (suspect stdout interference caused by LazyLibrarian startup).
+
 * ensure each action fork is actually being killed after it issues an 'exit' into the message pipe.
