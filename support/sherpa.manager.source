@@ -256,11 +256,11 @@ DefaultConsts:Load()
 	readonly ACTION_MSG_PIPE=/var/run/sherpa.action.messages.pipe
 
 	readonly OBJECTS_PATHFILE=$CACHE_PATH/objects
-	readonly OBJECTS_ARCHIVE_URL='<?cdn_sherpa_root_url?>'/objects.tar.gz
+	readonly OBJECTS_ARCHIVE_URL='<?cdn_sherpa_url?>'/objects.tar.gz
 	readonly OBJECTS_ARCHIVE_PATHFILE=$CACHE_PATH/objects.tar.gz
 
 	readonly PACKAGES_PATHFILE=$CACHE_PATH/packages
-	readonly PACKAGES_ARCHIVE_URL='<?cdn_sherpa_root_url?>'/packages.tar.gz
+	readonly PACKAGES_ARCHIVE_URL='<?cdn_sherpa_url?>'/packages.tar.gz
 	readonly PACKAGES_ARCHIVE_PATHFILE=$CACHE_PATH/packages.tar.gz
 
 	readonly EXTERNAL_PACKAGES_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
@@ -8265,7 +8265,7 @@ Objects:Load()
 	if [[ ! -e $PWD/dont.refresh.objects ]]; then
 		if [[ ! -e $OBJECTS_PATHFILE ]] || ! IsThisFileRecent "$OBJECTS_PATHFILE"; then
 			ShowAsProc 'updating objects'
-			if $CURL_CMD${curl_insecure_arg:-} --silent --fail "$OBJECTS_ARCHIVE_URL" > "$OBJECTS_ARCHIVE_PATHFILE"; then
+			if $CURL_CMD --insecure --silent --fail "$OBJECTS_ARCHIVE_URL" > "$OBJECTS_ARCHIVE_PATHFILE"; then
 				$TAR_CMD --extract --gzip --file="$OBJECTS_ARCHIVE_PATHFILE" --directory="$CACHE_PATH"
 			fi
 		fi
@@ -8296,7 +8296,7 @@ Packages:Load()
 	if [[ ! -e $PWD/dont.refresh.packages ]]; then
 		if [[ ! -e $PACKAGES_PATHFILE ]] || ! IsThisFileRecent "$PACKAGES_PATHFILE" 60; then
 			ShowAsProc 'updating package list'
-			if $CURL_CMD${curl_insecure_arg:-} --silent --fail "$PACKAGES_ARCHIVE_URL" > "$PACKAGES_ARCHIVE_PATHFILE"; then
+			if $CURL_CMD --insecure --silent --fail "$PACKAGES_ARCHIVE_URL" > "$PACKAGES_ARCHIVE_PATHFILE"; then
 				$TAR_CMD --extract --gzip --file="$PACKAGES_ARCHIVE_PATHFILE" --directory="$CACHE_PATH"
 			fi
 		fi
