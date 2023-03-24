@@ -79,7 +79,8 @@ Self:Init()
 	CreatePaths || return
 	ArchivePriorSessLogs
 
-	local re=\\breset\\b		# BASH 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
+	local re=''
+	re=\\breset\\b		# bash 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
 
 	if [[ $USER_ARGS_RAW =~ $re ]]; then
 		ResetArchivedLogs
@@ -140,6 +141,11 @@ Self:Init()
 	prev_msg=' '
 	fork_pid=''
 	[[ ${NAS_FIRMWARE_VER//.} -lt 426 ]] && curl_insecure_arg=' --insecure' || curl_insecure_arg=''
+
+	# KLUDGE: GitHub SSL certs are presently invalid. This might be associated with recent RSA leak: https://github.blog/2023-03-23-we-updated-our-rsa-ssh-host-key
+	# So, don't check certs for now.
+	curl_insecure_arg=' --insecure'
+
 	QPKG.IsInstalled Entware && [[ $ENTWARE_VER = none ]] && DebugAsWarn "$(FormatAsPackName Entware) appears to be installed but is not visible"
 
 	if [[ $(GetSudoUID) = '<undefined>' ]]; then
@@ -395,7 +401,7 @@ Lists:Load()
 	USER_QPKG_ISNT_STATES=(backedup installed started)
 	USER_QPKG_ACTIONS=(backup clean install list reassign rebuild reinstall restart restore start stop uninstall upgrade)
 
-	# KLUDGE: for some reason, setting 'readonly' while populating arrays causes their scope to become local, so need to set as 'readonly' afterward to ensure global scope. GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
+	# KLUDGE: for some reason, setting `readonly` while populating arrays causes their scope to become local, so need to set as `readonly` afterward to ensure global scope. GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
 	readonly PACKAGE_TIERS
 
 	readonly QPKG_IS_STATES
@@ -898,7 +904,7 @@ Action:Proc()
 	local -r ACTION_PRESENT_MSG=${4:?null}
 	local -r ACTION_PAST=${5:?null}
 	local original_colourful=$colourful
-	local action_times_pathfile="$ACTION_TIMES_PATH/$TARGET_ACTION.milliseconds"
+	local -r ACTION_TIMES_PATHFILE="$ACTION_TIMES_PATH/$TARGET_ACTION.milliseconds"
 	local buffer=''
 
 	case $PACKAGE_TYPE in
@@ -927,7 +933,7 @@ Action:Proc()
 			InitForkCounts
 			OpenActionMsgPipe
 
-			re=\\bEntware\\b		# BASH 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
+			re=\\bEntware\\b		# bash 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
 
 			if [[ $TARGET_ACTION = uninstall && ${target_packages[*]} =~ $re ]]; then
 				Keystrokes:Show		# enable this before removing Entware & GNU `stty`
@@ -1036,9 +1042,9 @@ Action:Proc()
 			CloseActionMsgPipe
 
 			# sort QPKG action times - longest duration first
-			if [[ -e $action_times_pathfile && -e $GNU_SORT_CMD && -L /opt/etc/passwd ]]; then	  # try to ensure Entware is started before using this utility
-				buffer=$($GNU_SORT_CMD -t'|' -k2 -r -h < "$action_times_pathfile")
-				echo "$buffer" > "$action_times_pathfile"
+			if [[ -e $ACTION_TIMES_PATHFILE && -e $GNU_SORT_CMD && -L /opt/etc/passwd ]]; then	  # try to ensure Entware is started before using this utility
+				buffer=$($GNU_SORT_CMD -t'|' -k2 -r -h < "$ACTION_TIMES_PATHFILE")
+				echo "$buffer" > "$ACTION_TIMES_PATHFILE"
 			fi
 
 			;;
@@ -2089,14 +2095,13 @@ UpdateEntwarePackageList()
 	[[ ${ENTWARE_PACKAGE_LIST_UPTODATE:-false} = true ]] && return 0
 
 	local -r CHANGE_THRESHOLD_MINUTES=60
-	local -r LOG_PATHFILE=$LOGS_PATH/Entware.$UPDATE_LOG_FILE
 	local -i result_code=0
 
 	# if Entware package list was recently updated, don't update again.
 	if ! IsThisFileRecent "$EXTERNAL_PACKAGES_ARCHIVE_PATHFILE" "$CHANGE_THRESHOLD_MINUTES" || [[ ! -f $EXTERNAL_PACKAGES_ARCHIVE_PATHFILE || $opts_deps_check = true ]]; then
 		DebugAsProc "updating $(FormatAsPackName Entware) package list"
 
-		RunAndLog "$OPKG_CMD update" "$LOG_PATHFILE" log:failure-only
+		RunAndLog "$OPKG_CMD update" "$LOGS_PATH/Entware.$UPDATE_LOG_FILE" log:failure-only
 		result_code=$?
 
 		if [[ $result_code -eq 0 ]]; then
@@ -2182,7 +2187,7 @@ CalcIpkDepsToInstall()
 		((iterations++))
 
 		local ipk_titles=$(printf '^Package: %s$\|' "${this_list[@]}")
-		ipk_titles=${ipk_titles%??}	# remove last 2 characters
+		ipk_titles=${ipk_titles%??}		# remove last 2 characters
 
 		this_list=($($GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator '^Package:\|^Depends:' "$EXTERNAL_PACKAGES_PATHFILE" | $GNU_GREP_CMD -vG '^Section:\|^Version:' | $GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator "$ipk_titles" | $GNU_GREP_CMD -vG "$ipk_titles" | $GNU_GREP_CMD -vG '^Package: ' | $SED_CMD 's|^Depends: ||;s|, |\n|g' | $SORT_CMD | $UNIQ_CMD))
 
@@ -2473,7 +2478,7 @@ _ActionForks:Launch_()
 		done
 
 		IncForkProgressIndex
-		MarkThisActionForkAsStarted # must create runfile here, as it takes too long to happen in background function
+		MarkThisActionForkAsStarted 	# must create runfile here, as it takes too long to happen in background function
 		$target_function "$package" &
 		DebugAsDone "forked $target_function() for $package"
 		UpdateForkProgress
@@ -2879,7 +2884,7 @@ DisplayAsHelpNameAuthorDesc()
 
 			if [[ -n $package_author ]]; then
 				case $package_author in
-					'missing')
+					missing)
 						package_author_msg="$(ColourTextBrightRedBlink "! $package_author")"
 				esac
 			fi
@@ -2970,7 +2975,7 @@ DisplayAsHelpTitleNameVerStatus()
 DisplayAsHelpNameVerStatus()
 	{
 
-	# $1 = 'normal/highlighted/muted'
+	# $1 = `normal/highlighted/muted`
 	# $2 = package name
 	# $3 = package status (optional) - only if installed
 	# $4 = package last result (optional)
@@ -3032,7 +3037,7 @@ DisplayAsHelpNameVerStatus()
 			;;
 		highlighted)
 			case $package_status in
-				'missing')
+				missing)
 					package_name_msg=$(ColourTextBrightRed "$package_name")
 					package_status_msg="$(ColourTextBrightRedBlink "! $package_status")"
 					package_path_msg="$(ColourTextBrightRedBlink "$package_path")"
@@ -3113,7 +3118,7 @@ DisplayAsHelpNameRepo()
 		highlighted)
 			if [[ -n $assigned_repo ]]; then
 				case $assigned_repo in
-					'missing')
+					missing)
 						package_name_msg=$(ColourTextBrightRed "$package_name")
 						assigned_repo_msg="$(ColourTextBrightRedBlink "! $assigned_repo")"
 						;;
@@ -4460,7 +4465,7 @@ QPKGs.Statuses:Show()
 			elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
 				DisplayAsHelpNameVerStatus highlighted "$package_name" 'not installable: low RAM'
 			elif QPKGs-ISmissing:Exist "$package_name" &>/dev/null; then
-				DisplayAsHelpNameVerStatus highlighted "$package_name" 'missing' '' "$(QPKG.Local.Ver "$package_name")" '' "$(QPKG.InstallationPath "$package_name")"
+				DisplayAsHelpNameVerStatus highlighted "$package_name" missing '' "$(QPKG.Local.Ver "$package_name")" '' "$(QPKG.InstallationPath "$package_name")"
 			elif QPKGs-ISNTinstalled:Exist "$package_name"; then
 				DisplayAsHelpNameVerStatus muted "$package_name" 'not installed' '' '' "$(QPKG.Avail.Ver "$package_name")"
 			else
@@ -4494,11 +4499,11 @@ QPKGs.Statuses:Show()
 				if ! QPKG.IsCanLog "$package_name"; then
 					package_result_msg='N/A'
 				elif QPKGs-ISok:Exist "$package_name"; then
-					package_result_msg='OK'
+					package_result_msg=OK
 				elif QPKGs-ISNTok:Exist "$package_name"; then
-					package_result_msg='failed'
+					package_result_msg=failed
 				else
-					package_result_msg='unknown'
+					package_result_msg=unknown
 				fi
 
 				DisplayAsHelpNameVerStatus normal "$package_name" "$package_status_msg" "$package_result_msg" "$(QPKG.Local.Ver "$package_name")" "$(QPKG.Avail.Ver "$package_name")" "$(QPKG.InstallationPath "$package_name")"
@@ -4841,17 +4846,17 @@ NoteIpkAcAsEr()
 ModPathToEntware()
 	{
 
-	local opkg_prefix=/opt/bin:/opt/sbin
+	local -r OPKG_PREFIX=/opt/bin:/opt/sbin
 	local temp=''
 
 	if QPKGs-ISstarted:Exist Entware; then
-		! [[ $PATH =~ $opkg_prefix ]] || return
-		temp="$($SED_CMD "s|$opkg_prefix:||" <<< "$PATH:")"	# append colon prior to searching, then remove existing Entware paths
-		export PATH="$opkg_prefix:${temp%:}"				# ... now prepend Entware paths and remove trailing colon
+		! [[ $PATH =~ $OPKG_PREFIX ]] || return
+		temp="$($SED_CMD "s|$OPKG_PREFIX:||" <<< "$PATH:")"	# append colon prior to searching, then remove existing Entware paths
+		export PATH="$OPKG_PREFIX:${temp%:}"				# ... now prepend Entware paths and remove trailing colon
 		DebugAsDone 'prepended Entware to $PATH'
 	else
-		[[ $PATH =~ $opkg_prefix ]] || return
-		temp="$($SED_CMD "s|$opkg_prefix:||" <<< "$PATH:")"	# append colon prior to searching, then remove existing Entware paths
+		[[ $PATH =~ $OPKG_PREFIX ]] || return
+		temp="$($SED_CMD "s|$OPKG_PREFIX:||" <<< "$PATH:")"	# append colon prior to searching, then remove existing Entware paths
 		export PATH="${temp%:}"								# ... now remove trailing colon
 		DebugAsDone 'removed Entware from $PATH'
 	fi
@@ -5159,10 +5164,9 @@ DisableDebugToArchiveAndFile()
 SaveActionResultToLog()
 	{
 
-	# write package type, package name, datetime in seconds, action, result, reason to actions logfile, and into actions durations file
+	# Write package type, package name, datetime in seconds, action, result, reason to actions logfile, and into actions durations file
 
 	# input:						example:
-
 	#   $1 = package type			`QPKG`, `IPK`, `PIP`
 	#   $2 = package or group name	`SABnzbd`, `essential`
 	#   $3 = action					`download`, `downloaded`
@@ -5171,38 +5175,38 @@ SaveActionResultToLog()
 
 	# calculate duration here
 
-	local var_name=${FUNCNAME[1]}_STARTSECONDS
-	local var_safe_name=${var_name//[.-]/_}
+	local -r VAR_NAME=${FUNCNAME[1]}_STARTSECONDS
+	local var_safe_name=${VAR_NAME//[.-]/_}
 	var_safe_name=${var_safe_name//:/_}
-	local package_type=${1:?package type empty}
-	local package_name=${2:?package name empty}
-	local action=${3:?action empty}
-	local clean_action=${action//\"/}
-	local result=${4:?result empty}
-	local reason=${5:-}
-	local duration="$(CalcMilliDifference "${!var_safe_name}" "$($DATE_CMD +%s%N)")"
-	local action_times_pathfile="$ACTION_TIMES_PATH/$clean_action.milliseconds"
+	local -r PACKAGE_TYPE=${1:?package type empty}
+	local -r PACKAGE_NAME=${2:?package name empty}
+	local -r ACTION=${3:?action empty}
+	local -r CLEAN_ACTION=${ACTION//\"/}
+	local -r RESULT=${4:?result empty}
+	local -r REASON=${5:-}
+	local -r DURATION="$(CalcMilliDifference "${!var_safe_name}" "$($DATE_CMD +%s%N)")"
+	local -r ACTION_TIMES_PATHFILE="$ACTION_TIMES_PATH/$CLEAN_ACTION.milliseconds"
 
 	# write new action results entry
-	echo "$(/bin/date +%s)|$action|$package_name|$result|$duration|$reason|$package_type" >> "$SESS_ACTIONS_RESULTS_PATHFILE"
+	echo "$(/bin/date +%s)|$ACTION|$PACKAGE_NAME|$RESULT|$DURATION|$REASON|$PACKAGE_TYPE" >> "$SESS_ACTIONS_RESULTS_PATHFILE"
 
 	# remove previous action duration entry if one exists
-	if [[ -e $action_times_pathfile ]] && $GREP_CMD -q "^$package_name|" < "$action_times_pathfile"; then
-		$SED_CMD -i "/^$package_name|/d" "$action_times_pathfile"
+	if [[ -e $ACTION_TIMES_PATHFILE ]] && $GREP_CMD -q "^$PACKAGE_NAME|" < "$ACTION_TIMES_PATHFILE"; then
+		$SED_CMD -i "/^$PACKAGE_NAME|/d" "$ACTION_TIMES_PATHFILE"
 	fi
 
 	# add new action duration entry
-	echo "$package_name|$duration" >> "$action_times_pathfile"
+	echo "$PACKAGE_NAME|$DURATION" >> "$ACTION_TIMES_PATHFILE"
 
 	case $4 in
 		ok|skipped-ok)
-			DebugAsInfo "$reason"
+			DebugAsInfo "$REASON"
 			;;
 		skipped)
-			DebugAsWarn "$reason"
+			DebugAsWarn "$REASON"
 			;;
 		failed|skipped-error)
-			DebugAsError "$reason"
+			DebugAsError "$REASON"
 	esac
 
 	return 0
@@ -5225,13 +5229,11 @@ _QPKG:reassign_()
 
 	PACKAGE_NAME=${1:?package name null}
 	local -i result_code=0
-	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$REASSIGN_LOG_FILE
-	local package_store_id=$(QPKG.StoreID "$PACKAGE_NAME")
 
 	if ! QPKGs-ISinstalled:Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reassign skipped 'not installed'
 		result_code=2
-	elif [[ $package_store_id = sherpa ]]; then
+	elif [[ $(QPKG.StoreID "$PACKAGE_NAME") = sherpa ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reassign skipped 'already assigned to sherpa'
 		result_code=2
 	fi
@@ -5242,7 +5244,7 @@ _QPKG:reassign_()
 	fi
 
 	DebugAsProc "reassigning $(FormatAsPackName "$PACKAGE_NAME")"
-	RunAndLog "$SETCFG_CMD -e $PACKAGE_NAME store -f /etc/config/qpkg.conf" "$LOG_PATHFILE" log:failure-only
+	RunAndLog "$SETCFG_CMD -e $PACKAGE_NAME store -f /etc/config/qpkg.conf" "$LOGS_PATH/$PACKAGE_NAME.$REASSIGN_LOG_FILE" log:failure-only
 	result_code=$?
 
 	if [[ $result_code -eq 0 ]]; then
@@ -5310,6 +5312,7 @@ _QPKG:download_()
 
 		if [[ $result_code -eq 0 ]]; then
 			if FileMatchesMD5 "$LOCAL_PATHFILE" "$REMOTE_MD5"; then
+				[[ $(Lowercase "${LOCAL_PATHFILE##*.}") = zip ]] && $UNZIP_CMD -nq "$LOCAL_PATHFILE" -d "$QPKG_DL_PATH"
 				SaveActionResultToLog QPKG "$PACKAGE_NAME" download ok
 				SendPackageStateChange ISdownloaded
 				MarkThisActionForkAsOk
@@ -5366,12 +5369,7 @@ _QPKG:install_()
 
 	local local_pathfile=$(QPKG.PathFilename "$PACKAGE_NAME")
 
-	if [[ ${local_pathfile##*.} = zip ]]; then
-		$UNZIP_CMD -nq "$local_pathfile" -d "$QPKG_DL_PATH"
-		local_pathfile=${local_pathfile%.*}
-	fi
-
-	if [[ -z $local_pathfile ]]; then
+	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" install skipped-error 'no local file found for processing: please report this issue'
 		MarkThisActionForkAsSkippedError
 		FuncFork:Exit 2
@@ -5388,14 +5386,12 @@ _QPKG:install_()
 		fi
 	fi
 
-	local -r TARGET_FILE=$($BASENAME_CMD "$local_pathfile")
-	local -r LOG_PATHFILE=$LOGS_PATH/$TARGET_FILE.$INSTALL_LOG_FILE
 	local target_path=''
 
 	DebugAsProc "installing $(FormatAsPackName "$PACKAGE_NAME")"
 	[[ $self_debug_to_screen = true ]] && debug_cmd='DEBUG_QPKG=true '
 	[[ ${QPKGs_were_installed_name[*]:-} = *"$PACKAGE_NAME"* ]] && target_path="QINSTALL_PATH=$(QPKG.OriginalPath "$PACKAGE_NAME") "
-	RunAndLog "${debug_cmd}${target_path}${SH_CMD} $local_pathfile" "$LOG_PATHFILE" log:failure-only 10
+	RunAndLog "${debug_cmd}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$INSTALL_LOG_FILE" log:failure-only 10
 	result_code=$?
 
 	if [[ $result_code -eq 0 || $result_code -eq 10 ]]; then
@@ -5415,8 +5411,7 @@ _QPKG:install_()
 			SendPackageStateChange ISNTstarted
 		fi
 
-		local current_ver=$(QPKG.Local.Ver "$PACKAGE_NAME")
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" install ok "version $current_ver"
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" install ok "version $(QPKG.Local.Ver "$PACKAGE_NAME")"
 
 		if [[ $PACKAGE_NAME = Entware ]]; then
 			SendParentChangeEnv ModPathToEntware
@@ -5479,25 +5474,18 @@ _QPKG:reinstall_()
 
 	local local_pathfile=$(QPKG.PathFilename "$PACKAGE_NAME")
 
-	if [[ ${local_pathfile##*.} = zip ]]; then
-		$UNZIP_CMD -nq "$local_pathfile" -d "$QPKG_DL_PATH"
-		local_pathfile=${local_pathfile%.*}
-	fi
-
-	if [[ -z $local_pathfile ]]; then
+	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reinstall skipped-error 'no local file found for processing, please report this issue'
 		MarkThisActionForkAsSkippedError
 		FuncFork:Exit 2
 	fi
 
-	local -r TARGET_FILE=$($BASENAME_CMD "$local_pathfile")
-	local -r LOG_PATHFILE=$LOGS_PATH/$TARGET_FILE.$REINSTALL_LOG_FILE
 	local target_path=''
 
 	DebugAsProc "reinstalling $(FormatAsPackName "$PACKAGE_NAME")"
 	[[ $self_debug_to_screen = true ]] && debug_cmd='DEBUG_QPKG=true '
 	QPKG.IsInstalled "$PACKAGE_NAME" && target_path="QINSTALL_PATH=$($DIRNAME_CMD "$(QPKG.InstallationPath $PACKAGE_NAME)") "
-	RunAndLog "${debug_cmd}${target_path}${SH_CMD} $local_pathfile" "$LOG_PATHFILE" log:failure-only 10
+	RunAndLog "${debug_cmd}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$REINSTALL_LOG_FILE" log:failure-only 10
 	result_code=$?
 
 	if [[ $result_code -eq 0 || $result_code -eq 10 ]]; then
@@ -5557,9 +5545,7 @@ _QPKG:upgrade_()
 		result_code=2
 	fi
 
-	local package_store_id=$(QPKG.StoreID "$PACKAGE_NAME")
-
-	if [[ $package_store_id != sherpa ]]; then
+	if [[ $(QPKG.StoreID "$PACKAGE_NAME") != sherpa ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" upgrade skipped "assigned to another repository, please 'reassign' it first"
 		result_code=2
 	fi
@@ -5571,26 +5557,19 @@ _QPKG:upgrade_()
 
 	local local_pathfile=$(QPKG.PathFilename "$PACKAGE_NAME")
 
-	if [[ ${local_pathfile##*.} = zip ]]; then
-		$UNZIP_CMD -nq "$local_pathfile" -d "$QPKG_DL_PATH"
-		local_pathfile=${local_pathfile%.*}
-	fi
-
-	if [[ -z $local_pathfile ]]; then
+	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" upgrade skipped-error 'no local file found for processing, please report this issue'
 		MarkThisActionForkAsSkippedError
 		FuncFork:Exit 2
 	fi
 
-	local -r TARGET_FILE=$($BASENAME_CMD "$local_pathfile")
-	local -r LOG_PATHFILE=$LOGS_PATH/$TARGET_FILE.$UPGRADE_LOG_FILE
 	local prev_ver=$(QPKG.Local.Ver "$PACKAGE_NAME")
 	local target_path=''
 
 	DebugAsProc "upgrading $(FormatAsPackName "$PACKAGE_NAME")"
 	[[ $self_debug_to_screen = true ]] && debug_cmd='DEBUG_QPKG=true '
 	QPKG.IsInstalled "$PACKAGE_NAME" && target_path="QINSTALL_PATH=$($DIRNAME_CMD "$(QPKG.InstallationPath "$PACKAGE_NAME")") "
-	RunAndLog "${debug_cmd}${target_path}${SH_CMD} $local_pathfile" "$LOG_PATHFILE" log:failure-only 10
+	RunAndLog "${debug_cmd}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$UPGRADE_LOG_FILE" log:failure-only 10
 	result_code=$?
 
 	if [[ $result_code -eq 0 || $result_code -eq 10 ]]; then
@@ -5663,7 +5642,6 @@ _QPKG:uninstall_()
 	fi
 
 	local -r QPKG_UNINSTALLER_PATHFILE=$(QPKG.InstallationPath "$PACKAGE_NAME")/.uninstall.sh
-	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$UNINSTALL_LOG_FILE
 
 	[[ $PACKAGE_NAME = Entware ]] && SavePackageLists
 
@@ -5675,7 +5653,7 @@ _QPKG:uninstall_()
 			SendParentChangeEnv Cursor:Show
 		fi
 
-		RunAndLog "${debug_cmd}${SH_CMD} $QPKG_UNINSTALLER_PATHFILE" "$LOG_PATHFILE" log:failure-only
+		RunAndLog "${debug_cmd}${SH_CMD} $QPKG_UNINSTALLER_PATHFILE" "$LOGS_PATH/$PACKAGE_NAME.$UNINSTALL_LOG_FILE" log:failure-only
 		result_code=$?
 
 		if [[ $result_code -eq 0 ]]; then
@@ -5737,18 +5715,17 @@ _QPKG:restart_()
 	fi
 
 	QPKG.ServiceStatus:Clear
-	local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile)
 	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$RESTART_LOG_FILE
 
 	DebugAsProc "restarting $(FormatAsPackName "$PACKAGE_NAME")"
 	QPKG:enable
 	[[ $self_debug_to_screen = true ]] && debug_cmd='DEBUG_QPKG=true '
 
-	if QPKG.IsCanLog; then		  # use 'qpkg_service' if-possible, so package icon in App Center will dynamically update
+	if QPKG.IsCanLog; then		  # use `qpkg_service` if-possible, so package icon in App Center will dynamically update
 		RunAndLog "${debug_cmd}/sbin/qpkg_service restart $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
 		QPKG.LastResultWasOk && result_code=0 || result_code=1
 	else
-		RunAndLog "${debug_cmd}${PACKAGE_INIT_PATHFILE} restart" "$LOG_PATHFILE" log:failure-only
+		RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) restart" "$LOG_PATHFILE" log:failure-only
 		result_code=$?
 	fi
 
@@ -5798,18 +5775,17 @@ _QPKG:start_()
 	fi
 
 	QPKG.ServiceStatus:Clear
-	local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile)
 	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$START_LOG_FILE
 
 	DebugAsProc "starting $(FormatAsPackName "$PACKAGE_NAME")"
 	QPKG:enable
 	[[ $self_debug_to_screen = true ]] && debug_cmd='DEBUG_QPKG=true '
 
-	if QPKG.IsCanLog; then		  # use 'qpkg_service' if-possible, so package icon in App Center will dynamically update
+	if QPKG.IsCanLog; then		  # use `qpkg_service` if-possible, so package icon in App Center will dynamically update
 		RunAndLog "${debug_cmd}/sbin/qpkg_service start $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
 		QPKG.LastResultWasOk && result_code=0 || result_code=1
 	else
-		RunAndLog "${debug_cmd}${PACKAGE_INIT_PATHFILE} start" "$LOG_PATHFILE" log:failure-only
+		RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) start" "$LOG_PATHFILE" log:failure-only
 		result_code=$?
 	fi
 
@@ -5871,18 +5847,17 @@ _QPKG:stop_()
 	fi
 
 	QPKG.ServiceStatus:Clear
-	local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile)
 	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$STOP_LOG_FILE
 
 	DebugAsProc "stopping $(FormatAsPackName "$PACKAGE_NAME")"
 	[[ $self_debug_to_screen = true ]] && debug_cmd='DEBUG_QPKG=true '
 	[[ $PACKAGE_NAME = Entware ]] && UpdateColourisation
 
-	if QPKG.IsCanLog; then		  # use 'qpkg_service' if-possible, so package icon in App Center will dynamically update
+	if QPKG.IsCanLog; then		  # use `qpkg_service` if-possible, so package icon in App Center will dynamically update
 		RunAndLog "${debug_cmd}/sbin/qpkg_service stop $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
 		QPKG.LastResultWasOk && result_code=0 || result_code=1
 	else
-		RunAndLog "${debug_cmd}${PACKAGE_INIT_PATHFILE} stop" "$LOG_PATHFILE" log:failure-only
+		RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) stop" "$LOG_PATHFILE" log:failure-only
 		result_code=$?
 	fi
 	if [[ $result_code -eq 0 ]]; then
@@ -5965,12 +5940,9 @@ _QPKG:backup_()
 		FuncFork:Exit $result_code
 	fi
 
-	local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile)
-	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$BACKUP_LOG_FILE
-
 	DebugAsProc "backing-up $(FormatAsPackName "$PACKAGE_NAME") configuration"
 	[[ $self_debug_to_screen = true ]] && debug_cmd='DEBUG_QPKG=true '
-	RunAndLog "${debug_cmd}${PACKAGE_INIT_PATHFILE} backup" "$LOG_PATHFILE" log:failure-only
+	RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) backup" "$LOGS_PATH/$PACKAGE_NAME.$BACKUP_LOG_FILE" log:failure-only
 	result_code=$?
 
 	if [[ $result_code -eq 0 ]]; then
@@ -6019,12 +5991,9 @@ _QPKG:restore_()
 		FuncFork:Exit $result_code
 	fi
 
-	local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile)
-	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$RESTORE_LOG_FILE
-
 	DebugAsProc "restoring $(FormatAsPackName "$PACKAGE_NAME") configuration"
 	[[ $self_debug_to_screen = true ]] && debug_cmd='DEBUG_QPKG=true '
-	RunAndLog "${debug_cmd}${PACKAGE_INIT_PATHFILE} restore" "$LOG_PATHFILE" log:failure-only
+	RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) restore" "$LOGS_PATH/$PACKAGE_NAME.$RESTORE_LOG_FILE" log:failure-only
 	result_code=$?
 
 	if [[ $result_code -eq 0 ]]; then
@@ -6073,12 +6042,9 @@ _QPKG:clean_()
 		FuncFork:Exit $result_code
 	fi
 
-	local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile)
-	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$CLEAN_LOG_FILE
-
 	DebugAsProc "cleaning $(FormatAsPackName "$PACKAGE_NAME")"
 	[[ $self_debug_to_screen = true ]] && debug_cmd='DEBUG_QPKG=true '
-	RunAndLog "${debug_cmd}${PACKAGE_INIT_PATHFILE} clean" "$LOG_PATHFILE" log:failure-only
+	RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) clean" "$LOGS_PATH/$PACKAGE_NAME.$CLEAN_LOG_FILE" log:failure-only
 	result_code=$?
 
 	if [[ $result_code -eq 0 ]]; then
@@ -6115,9 +6081,8 @@ _QPKG:sign_()
 	FuncFork:Entry
 
 	local -r PACKAGE_NAME=${1:?package name null}
+	local -r CERT_DB_PATHFILE=/etc/config/nas_sign_qpkg.db
 	local -i result_code=0
-	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$SIGN_LOG_FILE
-	local cert_db_pathfile=/etc/config/nas_sign_qpkg.db
 	local cert=''
 	local signature=''
 	local cmd=''
@@ -6131,7 +6096,7 @@ _QPKG:sign_()
 	elif [[ ! -e $GNU_SQLITE_CMD ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped 'sqlite3 not installed'
 		result_code=2
-	elif [[ ! -e $cert_db_pathfile ]]; then
+	elif [[ ! -e $CERT_DB_PATHFILE ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped 'certificate database not found'
 		result_code=2
 	fi
@@ -6217,7 +6182,7 @@ EOB
 
 	cmd="DELETE FROM Certificate WHERE QpkgName = '$PACKAGE_NAME'; INSERT INTO Certificate (Type,QpkgName,Cert,DigitalSignature) VALUES ('qpkg','$PACKAGE_NAME','$cert','$signature');"
 
-	$GNU_SQLITE_CMD "$cert_db_pathfile" "$cmd"
+	$GNU_SQLITE_CMD "$CERT_DB_PATHFILE" "$cmd"
 	result_code=$?
 
 	if [[ $result_code -eq 0 ]]; then
@@ -6265,7 +6230,7 @@ QPKG.ServiceStatus:Clear()
 QPKG.LastResultWasOk()
 	{
 
-	# returns true if last operation for this package is "ok"
+	# returns true if last operation for this package is `ok`
 
 	# input:
 	#   $PACKAGE_NAME (global) = QPKG name
@@ -6421,7 +6386,7 @@ QPKG.IsBackupExist()
 QPKG.Author()
 	{
 
-	# return the maintainer of the specified QPKG
+	# Return the maintainer of the specified QPKG
 
 	# input:
 	#   $1 = QPKG name
@@ -6446,7 +6411,7 @@ QPKG.Author()
 QPKG.AppAuthor()
 	{
 
-	# return the author of the application contained within the specified QPKG
+	# Return the author of the application contained within the specified QPKG
 
 	# input:
 	#   $1 = QPKG name
@@ -6701,10 +6666,12 @@ QPKG.PathFilename()
 	#   stdout = QPKG local filename
 	#   $? = 0 if successful, 1 if failed
 
-	local -r URL=$(QPKG.URL "${1:?package name null}")
+	local url=$(QPKG.URL "${1:?package name null}")
 
-	[[ -n ${URL:-} ]] || return
-	echo "$QPKG_DL_PATH/$($BASENAME_CMD "$URL")"
+	[[ -n ${url:-} ]] || return
+	[[ $(Lowercase "${url##*.}") != qpkg ]] && url=${url%.*}.qpkg		# swap `zip` for `qpkg` here (only used for `QDK.zip`)
+
+	echo "$QPKG_DL_PATH/$($BASENAME_CMD "$url")"
 	return 0
 
 	}
@@ -7052,7 +7019,7 @@ Pluralise()
 Capitalise()
 	{
 
-	# capitalise the first character of $1
+	# capitalise first character of $1
 
 	echo "$(Uppercase ${1:0:1})${1:1}"
 
@@ -7432,7 +7399,7 @@ DebugErrorTabld()
 DebugVar()
 	{
 
-	# had to split this onto its own line so Kate editor wouldn't choke when highlighting syntax
+	# had to split this onto its own line so Kate editor won't choke when highlighting syntax
 	local temp=${!1}
 
 	DebugAsVar "\$$1 : '$temp'"
@@ -7442,7 +7409,7 @@ DebugVar()
 DebugInfo()
 	{
 
-	if [[ ${2:-} = ' ' || ${2:-} = "'' " ]]; then	# if $2 has no usable content then print $1 with trailing colon and "none" as second field
+	if [[ ${2:-} = ' ' || ${2:-} = "'' " ]]; then	# if $2 has no usable content then print $1 with trailing colon and `none` as second field
 		DebugAsInfo "${1:-}: none"
 	elif [[ -n ${2:-} ]]; then
 		DebugAsInfo "${1:-}: ${2:-}"
@@ -7457,8 +7424,8 @@ Func:Entry()
 
 	# debug function entry
 
-	local var_name=${FUNCNAME[1]}_STARTSECONDS
-	local var_safe_name=${var_name//[.-]/_}
+	local -r VAR_NAME=${FUNCNAME[1]}_STARTSECONDS
+	local var_safe_name=${VAR_NAME//[.-]/_}
 	var_safe_name=${var_safe_name//:/_}
 
 	eval "$var_safe_name=$(/bin/date +%s%N)"
@@ -7471,8 +7438,8 @@ Func:Exit()
 
 	# debug function exit
 
-	local var_name=${FUNCNAME[1]}_STARTSECONDS
-	local var_safe_name=${var_name//[.-]/_}
+	local -r VAR_NAME=${FUNCNAME[1]}_STARTSECONDS
+	local var_safe_name=${VAR_NAME//[.-]/_}
 	var_safe_name=${var_safe_name//:/_}
 
 	DebugAsFuncEx "${1:-0}" "$(FormatAsDuration "$(CalcMilliDifference "${!var_safe_name}" "$($DATE_CMD +%s%N)")")"
@@ -7489,8 +7456,8 @@ FuncFork:Entry()
 	original_session_log_pathfile="$sess_active_pathfile"
 	sess_active_pathfile=$($MKTEMP_CMD /var/log/"${FUNCNAME[1]}"_XXXXXX)
 
-	local var_name=${FUNCNAME[1]}_STARTSECONDS
-	local var_safe_name=${var_name//[.-]/_}
+	local -r VAR_NAME=${FUNCNAME[1]}_STARTSECONDS
+	local var_safe_name=${VAR_NAME//[.-]/_}
 	var_safe_name=${var_safe_name//:/_}
 	eval "$var_safe_name=$(/bin/date +%s%N)"
 
@@ -7503,8 +7470,8 @@ FuncFork:Exit()
 
 	# debug forked function exit
 
-	local var_name=${FUNCNAME[1]}_STARTSECONDS
-	local var_safe_name=${var_name//[.-]/_}
+	local -r VAR_NAME=${FUNCNAME[1]}_STARTSECONDS
+	local var_safe_name=${VAR_NAME//[.-]/_}
 	var_safe_name=${var_safe_name//:/_}
 
 	SendActionStatus ex
