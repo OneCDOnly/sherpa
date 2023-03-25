@@ -2878,6 +2878,7 @@ DisplayAsHelpNameAuthorDesc()
 		muted)
 			package_name_msg=$(ColourTextDarkGrey "${HELP_COL_OTHER_PREFIX}$package_name")
 			package_author_msg="$(ColourTextDarkGrey "${package_author}")"
+			package_description_msg="$(ColourTextDarkGrey "${package_description}")"
 			;;
 		highlighted)
 			package_name_msg=$(ColourTextBrightRed "${HELP_COL_OTHER_PREFIX}$package_name")
@@ -4422,9 +4423,9 @@ QPKGs:List:Show()
 
 		for package_name in $(QPKGs-SC${tier}:Array); do
 			if QPKGs-ISmissing:Exist "$package_name" &>/dev/null; then
-				DisplayAsHelpNameAuthorDesc highlighted "$package_name" 'missing' "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
+				DisplayAsHelpNameAuthorDesc highlighted "$package_name" missing "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
 			elif QPKGs-ISNTinstalled:Exist "$package_name"; then
-				DisplayAsHelpNameAuthorDesc muted "$(ColourTextDarkGrey "$package_name")" "$(ColourTextDarkGrey "$(QPKG.Author "$package_name")")" "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
+				DisplayAsHelpNameAuthorDesc muted "$package_name" "$(QPKG.Author "$package_name")" "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
 			else
 				DisplayAsHelpNameAuthorDesc normal "$package_name" "$(QPKG.Author "$package_name")" "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
 			fi
