@@ -108,7 +108,7 @@ today=$(date '+%y%m%d')
 year=$(date '+%Y')
 colourful=true
 
-md5_root_path="$HOME"/scripts/nas
+checksum_root_path="$HOME"/scripts/nas
 source_path="$HOME"/scripts/nas/sherpa/support
 target_path="$HOME"/scripts/nas/sherpa
 wiki_path="$HOME"/documents/sherpa.wiki

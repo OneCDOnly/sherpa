@@ -61,7 +61,7 @@ TranslateQPKGArch()
 	}
 
 echo -n 'locating QPKG checksum files ... '
-raw=$(find "$md5_root_path" -name '*.qpkg.md5')
+raw=$(find "$checksum_root_path" -name '*.qpkg.md5')
 ColourTextBrightGreen 'done\n'
 
 sorted=$(sort --version-sort --reverse <<< "$raw")
