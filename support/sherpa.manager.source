@@ -7863,13 +7863,58 @@ ShowAsActionResultDetail()
 	#  $2 = action
 	#  $3 = package type
 
+	local -a packages=()
+	local packages_msg=''
 	local sk_msg=''
 	local er_msg=''
 
 	case $3 in
 		QPKG)
-			[[ $(QPKGs-AC${2}-sk:Count) -gt 0 || $(QPKGs-AC${2}-se:Count) -gt 0 ]] && sk_msg="$(ColourTextBrightOrange 'skipped:') $(QPKGs-AC${2}-sk:ListCSV) $(QPKGs-AC${2}-se:ListCSV)"
-			[[ $(QPKGs-AC${2}-er:Count) -gt 0 ]] && er_msg="$(ColourTextBrightRed 'failed:') $(QPKGs-AC${2}-er:ListCSV)"
+			if [[ $(QPKGs-AC${2}-sk:Count) -gt 0 || $(QPKGs-AC${2}-se:Count) -gt 0 ]]; then
+				case $1 in
+					dependent)
+						for package in $(QPKGs-AC${2}-sk:Array) $(QPKGs-AC${2}-se:Array); do
+							QPKG.IsDependent "$package" && packages+=($package)
+						done
+						;;
+					standalone)
+						for package in $(QPKGs-AC${2}-sk:Array) $(QPKGs-AC${2}-se:Array); do
+							! QPKG.IsDependent "$package" && packages+=($package)
+						done
+						;;
+					*)
+						packages+=($(QPKGs-AC${2}-sk:List) $(QPKGs-AC${2}-se:List))
+				esac
+
+				if [[ ${#packages[@]} -gt 0 ]]; then
+					packages_msg="${packages[*]}"
+					sk_msg="$(ColourTextBrightOrange 'skipped:') ${packages_msg// /,}"
+				fi
+			fi
+
+			if [[ $(QPKGs-AC${2}-er:Count) -gt 0 ]]; then
+				packages=()
+
+				case $1 in
+					dependent)
+						for package in $(QPKGs-AC${2}-er:Array); do
+							QPKG.IsDependent "$package" && packages+=($package)
+						done
+						;;
+					standalone)
+						for package in $(QPKGs-AC${2}-er:Array); do
+							! QPKG.IsDependent "$package" && packages+=($package)
+						done
+						;;
+					*)
+						packages+=($(QPKGs-AC${2}-er:List))
+				esac
+
+				if [[ ${#packages[@]} -gt 0 ]]; then
+					packages_msg="${packages[*]}"
+					er_msg="$(ColourTextBrightRed 'failed:') ${packages_msg// /,}"
+				fi
+			fi
 			;;
 		IPK)
 			;;
