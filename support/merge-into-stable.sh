@@ -24,7 +24,7 @@ echo "$stable_branch" > "$branch_pathfile"
 ./make.sh || exit
 
 cd "$HOME"/scripts/nas/sherpa || exit
-git add . && git commit -m 'update archives' && git push
+git add . && git commit -m '[pre-merge] update archives' && git push
 git checkout "$stable_branch"
 git merge --no-ff -m "merge from \`$unstable_branch\` into \`$stable_branch\`" "$unstable_branch" && git push
 git checkout "$unstable_branch"
