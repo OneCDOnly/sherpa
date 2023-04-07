@@ -6089,7 +6089,7 @@ _QPKG:sign_()
 	local cmd=''
 
 	if [[ ${NAS_FIRMWARE_VER//.} -lt 435 ]]; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped 'not required'
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped 'not required: firmware < 4.3.5'
 		result_code=2
 	elif ! QPKGs-ISinstalled:Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped 'not installed'
