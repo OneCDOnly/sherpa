@@ -4298,9 +4298,9 @@ QPKGs.Abbreviations:Show()
 
 			if [[ -n $abs ]]; then
 				if ! QPKG.URL "$package_name" &>/dev/null; then
-					DisplayAsHelpNameRepo highlighted "$package_name" 'not installable: no arch'
+					DisplayAsHelpNameRepo muted "$package_name" 'not installable: no arch'
 				elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
-					DisplayAsHelpNameRepo highlighted "$package_name" 'not installable: low RAM'
+					DisplayAsHelpNameRepo muted "$package_name" 'not installable: low RAM'
 				elif QPKGs-ISmissing:Exist "$package_name" &>/dev/null; then
 					DisplayAsHelpNameRepo highlighted "$package_name" 'missing'
 				elif QPKGs-ISNTinstalled:Exist "$package_name"; then
@@ -4376,9 +4376,9 @@ QPKGs.Repos:Show()
 
 		for package_name in $(QPKGs-SC$tier:Array); do
 			if ! QPKG.URL "$package_name" &>/dev/null; then
-				DisplayAsHelpNameRepo highlighted "$package_name" 'not installable: no arch'
+				DisplayAsHelpNameRepo muted "$package_name" 'not installable: no arch'
 			elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
-				DisplayAsHelpNameRepo highlighted "$package_name" 'not installable: low RAM'
+				DisplayAsHelpNameRepo muted "$package_name" 'not installable: low RAM'
 			elif QPKGs-ISmissing:Exist "$package_name" &>/dev/null; then
 				DisplayAsHelpNameRepo highlighted "$package_name" missing
 			elif QPKGs-ISNTinstalled:Exist "$package_name"; then
@@ -7101,7 +7101,7 @@ FormatAsVersion()
 FormatAsDescription()
 	{
 
-	ColourTextDarkGrey '• a mini-package-manager for QNAP NAS'
+	echo '• a mini-package-manager for QNAP NAS'
 
 	}
 
