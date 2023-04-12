@@ -33,14 +33,14 @@
 #*   You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 
 # Project variable and function naming style-guide:
-#			  functions: 'CamelCase'
+#			 functions: 'CamelCase'
 #  background functions: '_CamelCaseWithLeadingAndTrailingUnderscores_'
 #  utility interceptors: (same as original)
-#			  variables: 'lowercase_with_inline_underscores'
+#			 variables: 'lowercase_with_inline_underscores'
 # flag "object" methods: 'Capitalised.CamelCase.With.Inline.Periods.And.Colon.Before:Method'
 # list "object" methods: 'Capitalised-CamelCase-With-Inline_Hyphens-And-Colon-Before:Method'
 #   "object" properties: '_lowercase_with_leading_and_inline_and_trailing_underscores_' (these should ONLY be managed via the object's methods)
-#			  constants: 'UPPERCASE_WITH_INLINE_UNDERSCORES' (also set as readonly)
+#			 constants: 'UPPERCASE_WITH_INLINE_UNDERSCORES' (also set as readonly)
 #				indents: 1 x tab
 
 # Notes:
@@ -65,7 +65,7 @@ Self:Init()
 	trap RunOnEXIT EXIT
 	trap RunOnSIGINT INT
 
-	[[ ! -e /dev/fd ]] && ln -s /proc/self/fd /dev/fd	   # KLUDGE: `/dev/fd` isn't always created by QTS during startup
+	[[ ! -e /dev/fd ]] && ln -s /proc/self/fd /dev/fd	# KLUDGE: `/dev/fd` isn't always created by QTS during startup
 
 	Env:Confirm || return
 	Lists:Load
@@ -136,7 +136,7 @@ Self:Init()
 	readonly NAS_QPKG_ARCH=$(GetQpkgArch)
 	readonly ENTWARE_VER=$(GetEntwareType)
 	readonly CPU_CORES=$(GetCPUCores)
-	readonly CONCURRENCY=$CPU_CORES	 # maximum concurrent package actions to run. Should probably make this account for CPU speed too.
+	readonly CONCURRENCY=$CPU_CORES	# maximum concurrent package actions to run. Should probably make this account for CPU speed too.
 	readonly LOG_TAIL_LINES=5000		# note: a full download and install of everything generates a session log of around 1600 lines, but include a bunch of opkg updates and it can get much longer
 	prev_msg=' '
 	fork_pid=''
@@ -264,7 +264,7 @@ DefaultConsts:Load()
 	readonly PACKAGES_ARCHIVE_PATHFILE=$CACHE_PATH/packages.tar.gz
 
 	readonly EXTERNAL_PACKAGES_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
-	readonly EXTERNAL_PACKAGES_PATHFILE=$CACHE_PATH/Packages	 # this is the file used by Entware
+	readonly EXTERNAL_PACKAGES_PATHFILE=$CACHE_PATH/Packages	# this is the file used by Entware
 
 	readonly PREV_IPK_LIST=$CACHE_PATH/ipk.prev.list
 	readonly PREV_PIP_LIST=$CACHE_PATH/pip.prev.list
@@ -363,7 +363,7 @@ Env:Confirm()
 	IsSysFileExist $DU_CMD || return
 	IsSysFileExist $HEAD_CMD || return
 	IsSysFileExist $READLINK_CMD || return
-	[[ ! -e $SORT_CMD ]] && ln -s /bin/busybox "$SORT_CMD"	  # KLUDGE: `/usr/bin/sort` randomly disappears from QTS
+	[[ ! -e $SORT_CMD ]] && ln -s /bin/busybox "$SORT_CMD"	 # KLUDGE: `/usr/bin/sort` randomly disappears from QTS
 	IsSysFileExist $TAIL_CMD || return
 	IsSysFileExist $TEE_CMD || return
 	IsSysFileExist $UNZIP_CMD || return
@@ -816,7 +816,7 @@ Actions:Proc()
 
 	# -> package removal phase begins here <-
 
-	for ((tier_index=${#PACKAGE_TIERS[@]}-1; tier_index>=0; tier_index--)); do	  # process tiers in-reverse
+	for ((tier_index=${#PACKAGE_TIERS[@]}-1; tier_index>=0; tier_index--)); do	 # process tiers in-reverse
 		tier=${PACKAGE_TIERS[$tier_index]}
 
 		case $tier in
@@ -869,7 +869,7 @@ Actions:Proc()
 		QPKGs.Actions:List
 	fi
 
-	[[ $self_debug_to_screen = true ]] && QPKGs.States:List rebuild	 # rebuild these after processing QPKGs to get current states
+	[[ $self_debug_to_screen = true ]] && QPKGs.States:List rebuild	# rebuild these after processing QPKGs to get current states
 	Func:Exit
 
 	}
@@ -1042,7 +1042,7 @@ Action:Proc()
 			CloseActionMsgPipe
 
 			# sort QPKG action times - longest duration first
-			if [[ -e $ACTION_TIMES_PATHFILE && -e $GNU_SORT_CMD && -L /opt/etc/passwd ]]; then	  # try to ensure Entware is started before using this utility
+			if [[ -e $ACTION_TIMES_PATHFILE && -e $GNU_SORT_CMD && -L /opt/etc/passwd ]]; then	 # try to ensure Entware is started before using this utility
 				buffer=$($GNU_SORT_CMD -t'|' -k2 -r -h < "$ACTION_TIMES_PATHFILE")
 				echo "$buffer" > "$ACTION_TIMES_PATHFILE"
 			fi
@@ -1052,7 +1052,7 @@ Action:Proc()
 			ShowAsProc "$ACTION_PRESENT_MSG $([[ $TIER != all ]] && echo "$TIER ")$(Uppercase "${PACKAGE_TYPE}")s"
 
 			InitForkCounts
-			${PACKAGE_TYPE}s:${TARGET_ACTION}	  # only process these packages in groups, not individually
+			${PACKAGE_TYPE}s:${TARGET_ACTION}	 # only process these packages in groups, not individually
 	esac
 
 	# show completed line in colour if colour was enabled earlier, as ANSI codes create a longer onscreen message (due to extra characters used). Showing completed line without colour means part of previous onscreen message may not be blanked.
@@ -2134,7 +2134,7 @@ IsThisFileRecent()
 
 	# examine `change` time as this is updated even if file content isn't modified
 	if [[ -e $1 && -e $GNU_FIND_CMD ]]; then
-		if [[ -z $($GNU_FIND_CMD "$1" -cmin +${2:-1440}) ]]; then	   # no-output if last `change` was less than $2 minutes ago
+		if [[ -z $($GNU_FIND_CMD "$1" -cmin +${2:-1440}) ]]; then	# no-output if last `change` was less than $2 minutes ago
 			return 0
 		fi
 	fi
@@ -4289,7 +4289,7 @@ QPKGs.Abbreviations:Show()
 	DisplayAsHelpTitle "$(FormatAsTitle) can recognise various abbreviations and aliases as $(FormatAsPackages)"
 
 	for tier in "${PACKAGE_TIERS[@]}"; do
-		[[ $tier = addon ]] && continue	 # don't need to see addons
+		[[ $tier = addon ]] && continue	# don't need to see addons
 
 		DisplayAsHelpTitleNameAbs "$tier QPKGs" 'acceptable QPKG name abbreviations and aliases'
 
@@ -4321,7 +4321,7 @@ QPKGs.Abbreviations:Show()
 QPKGs.Backups:Show()
 	{
 
-	local epochtime=0	  # allow float as seconds have a fractional component
+	local epochtime=0	 # allow float as seconds have a fractional component
 	local filename=''
 	local highlight_older_than='2 weeks ago'
 	local format=''
@@ -4370,7 +4370,7 @@ QPKGs.Repos:Show()
 	QPKGs.States:Build
 
 	for tier in "${PACKAGE_TIERS[@]}"; do
-		[[ $tier = addon ]] && continue	 # don't need to see addons
+		[[ $tier = addon ]] && continue	# don't need to see addons
 
 		DisplayAsHelpTitleNameRepo "$tier QPKGs" repository
 
@@ -4417,7 +4417,7 @@ QPKGs:List:Show()
 	DisplayAsHelpTitle "One-or-more $(FormatAsPackages) may be specified at-once"
 
 	for tier in "${PACKAGE_TIERS[@]}"; do
-		[[ $tier = addon ]] && continue	 # don't need to see addons
+		[[ $tier = addon ]] && continue	# don't need to see addons
 
 		DisplayAsHelpTitleNameAuthorDesc "$tier QPKGs" 'QPKG author' 'QPKG description'
 
@@ -4456,7 +4456,7 @@ QPKGs.Statuses:Show()
 	QPKGs.States:Build
 
 	for tier in "${PACKAGE_TIERS[@]}"; do
-		[[ $tier = addon ]] && continue	 # don't need to see addons
+		[[ $tier = addon ]] && continue	# don't need to see addons
 
 		DisplayAsHelpTitleNameVerStatus "$tier QPKGs" 'QPKG statuses (last result)' 'QPKG version (new)' 'installation path'
 
@@ -5722,7 +5722,7 @@ _QPKG:restart_()
 	QPKG:enable
 	[[ $self_debug_to_screen = true ]] && debug_cmd='DEBUG_QPKG=true '
 
-	if QPKG.IsCanLog; then		  # use `qpkg_service` if-possible, so package icon in App Center will dynamically update
+	if QPKG.IsCanLog; then		 # use `qpkg_service` if-possible, so package icon in App Center will dynamically update
 		RunAndLog "${debug_cmd}/sbin/qpkg_service restart $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
 		QPKG.LastResultWasOk && result_code=0 || result_code=1
 	else
@@ -5782,7 +5782,7 @@ _QPKG:start_()
 	QPKG:enable
 	[[ $self_debug_to_screen = true ]] && debug_cmd='DEBUG_QPKG=true '
 
-	if QPKG.IsCanLog; then		  # use `qpkg_service` if-possible, so package icon in App Center will dynamically update
+	if QPKG.IsCanLog; then		 # use `qpkg_service` if-possible, so package icon in App Center will dynamically update
 		RunAndLog "${debug_cmd}/sbin/qpkg_service start $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
 		QPKG.LastResultWasOk && result_code=0 || result_code=1
 	else
@@ -5854,7 +5854,7 @@ _QPKG:stop_()
 	[[ $self_debug_to_screen = true ]] && debug_cmd='DEBUG_QPKG=true '
 	[[ $PACKAGE_NAME = Entware ]] && UpdateColourisation
 
-	if QPKG.IsCanLog; then		  # use `qpkg_service` if-possible, so package icon in App Center will dynamically update
+	if QPKG.IsCanLog; then		 # use `qpkg_service` if-possible, so package icon in App Center will dynamically update
 		RunAndLog "${debug_cmd}/sbin/qpkg_service stop $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
 		QPKG.LastResultWasOk && result_code=0 || result_code=1
 	else
@@ -7052,10 +7052,10 @@ FormatAsThous()
 
 	local rightside_group=''
 	local foutput=''
-	local remainder=$($SED_CMD 's/[^0-9]*//g' <<< "${1:-}")	 # strip everything not a numeric character
+	local remainder=$($SED_CMD 's/[^0-9]*//g' <<< "${1:-}")	# strip everything not a numeric character
 
 	while [[ ${#remainder} -gt 0 ]]; do
-		rightside_group=${remainder:${#remainder}<3?0:-3}	   # a nifty trick found here: https://stackoverflow.com/a/19858692
+		rightside_group=${remainder:${#remainder}<3?0:-3}	# a nifty trick found here: https://stackoverflow.com/a/19858692
 
 		if [[ -z $foutput ]]; then
 			foutput=$rightside_group
@@ -7064,7 +7064,7 @@ FormatAsThous()
 		fi
 
 		if [[ ${#rightside_group} -eq 3 ]]; then
-			remainder=${remainder%???}						  # trim rightside 3 characters
+			remainder=${remainder%???}						 # trim rightside 3 characters
 		else
 			break
 		fi
@@ -8173,7 +8173,7 @@ StripANSI()
 	if [[ -e $GNU_SED_CMD && -L /opt/etc/passwd ]]; then   # try to ensure Entware is started before using this utility
 		$GNU_SED_CMD -r 's/\x1b\[[0-9;]*m//g' <<< "${1:-}"
 	else
-		echo "${1:-}"		  # can't strip, so pass thru original message unaltered
+		echo "${1:-}"		 # can't strip, so pass thru original message unaltered
 	fi
 
 	} 2>/dev/null
@@ -8291,7 +8291,7 @@ sleep()
 	if [[ -e $GNU_SLEEP_CMD && -L /opt/etc/passwd ]]; then  # try to ensure Entware is started before using this utility
 		$GNU_SLEEP_CMD "$wait"
 	elif [[ $DECIMAL_SLEEP_SECONDS_SUPPORTED = false ]]; then
-		$QTS_SLEEP_CMD "$((${wait%.*}+1))"				  # ensure decimal seconds are rounded-up to next integer
+		$QTS_SLEEP_CMD "$((${wait%.*}+1))"				 # ensure decimal seconds are rounded-up to next integer
 	else
 		$QTS_SLEEP_CMD "$wait"
 	fi
