@@ -33,14 +33,14 @@
 #*   You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 
 # Project variable and function naming style-guide:
-#			 functions: 'CamelCase'
+#			  functions: 'CamelCase'
 #  background functions: '_CamelCaseWithLeadingAndTrailingUnderscores_'
 #  utility interceptors: (same as original)
-#			 variables: 'lowercase_with_inline_underscores'
+#			  variables: 'lowercase_with_inline_underscores'
 # flag "object" methods: 'Capitalised.CamelCase.With.Inline.Periods.And.Colon.Before:Method'
 # list "object" methods: 'Capitalised-CamelCase-With-Inline_Hyphens-And-Colon-Before:Method'
 #   "object" properties: '_lowercase_with_leading_and_inline_and_trailing_underscores_' (these should ONLY be managed via the object's methods)
-#			 constants: 'UPPERCASE_WITH_INLINE_UNDERSCORES' (also set as readonly)
+#			  constants: 'UPPERCASE_WITH_INLINE_UNDERSCORES' (also set as readonly)
 #				indents: 1 x tab
 
 # Notes:
@@ -363,7 +363,7 @@ Env:Confirm()
 	IsSysFileExist $DU_CMD || return
 	IsSysFileExist $HEAD_CMD || return
 	IsSysFileExist $READLINK_CMD || return
-	[[ ! -e $SORT_CMD ]] && ln -s /bin/busybox "$SORT_CMD"	 # KLUDGE: `/usr/bin/sort` randomly disappears from QTS
+	[[ ! -e $SORT_CMD ]] && ln -s /bin/busybox "$SORT_CMD"	# KLUDGE: `/usr/bin/sort` randomly disappears from QTS
 	IsSysFileExist $TAIL_CMD || return
 	IsSysFileExist $TEE_CMD || return
 	IsSysFileExist $UNZIP_CMD || return
@@ -816,7 +816,7 @@ Actions:Proc()
 
 	# -> package removal phase begins here <-
 
-	for ((tier_index=${#PACKAGE_TIERS[@]}-1; tier_index>=0; tier_index--)); do	 # process tiers in-reverse
+	for ((tier_index=${#PACKAGE_TIERS[@]}-1; tier_index>=0; tier_index--)); do	# process tiers in-reverse
 		tier=${PACKAGE_TIERS[$tier_index]}
 
 		case $tier in
@@ -1042,7 +1042,7 @@ Action:Proc()
 			CloseActionMsgPipe
 
 			# sort QPKG action times - longest duration first
-			if [[ -e $ACTION_TIMES_PATHFILE && -e $GNU_SORT_CMD && -L /opt/etc/passwd ]]; then	 # try to ensure Entware is started before using this utility
+			if [[ -e $ACTION_TIMES_PATHFILE && -e $GNU_SORT_CMD && -L /opt/etc/passwd ]]; then	# try to ensure Entware is started before using this utility
 				buffer=$($GNU_SORT_CMD -t'|' -k2 -r -h < "$ACTION_TIMES_PATHFILE")
 				echo "$buffer" > "$ACTION_TIMES_PATHFILE"
 			fi
@@ -1052,7 +1052,7 @@ Action:Proc()
 			ShowAsProc "$ACTION_PRESENT_MSG $([[ $TIER != all ]] && echo "$TIER ")$(Uppercase "${PACKAGE_TYPE}")s"
 
 			InitForkCounts
-			${PACKAGE_TYPE}s:${TARGET_ACTION}	 # only process these packages in groups, not individually
+			${PACKAGE_TYPE}s:${TARGET_ACTION}	# only process these packages in groups, not individually
 	esac
 
 	# show completed line in colour if colour was enabled earlier, as ANSI codes create a longer onscreen message (due to extra characters used). Showing completed line without colour means part of previous onscreen message may not be blanked.
@@ -4321,7 +4321,7 @@ QPKGs.Abbreviations:Show()
 QPKGs.Backups:Show()
 	{
 
-	local epochtime=0	 # allow float as seconds have a fractional component
+	local epochtime=0	# allow float as seconds have a fractional component
 	local filename=''
 	local highlight_older_than='2 weeks ago'
 	local format=''
@@ -4462,9 +4462,9 @@ QPKGs.Statuses:Show()
 
 		for package_name in $(QPKGs-SC$tier:Array); do
 			if ! QPKG.URL "$package_name" &>/dev/null; then
-				DisplayAsHelpNameVerStatus highlighted "$package_name" 'not installable: no arch'
+				DisplayAsHelpNameVerStatus muted "$package_name" 'not installable: no arch'
 			elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
-				DisplayAsHelpNameVerStatus highlighted "$package_name" 'not installable: low RAM'
+				DisplayAsHelpNameVerStatus muted "$package_name" 'not installable: low RAM'
 			elif QPKGs-ISmissing:Exist "$package_name" &>/dev/null; then
 				DisplayAsHelpNameVerStatus highlighted "$package_name" missing '' "$(QPKG.Local.Ver "$package_name")" '' "$(QPKG.InstallationPath "$package_name")"
 			elif QPKGs-ISNTinstalled:Exist "$package_name"; then
@@ -5722,7 +5722,7 @@ _QPKG:restart_()
 	QPKG:enable
 	[[ $self_debug_to_screen = true ]] && debug_cmd='DEBUG_QPKG=true '
 
-	if QPKG.IsCanLog; then		 # use `qpkg_service` if-possible, so package icon in App Center will dynamically update
+	if QPKG.IsCanLog; then		# use `qpkg_service` if-possible, so package icon in App Center will dynamically update
 		RunAndLog "${debug_cmd}/sbin/qpkg_service restart $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
 		QPKG.LastResultWasOk && result_code=0 || result_code=1
 	else
@@ -5782,7 +5782,7 @@ _QPKG:start_()
 	QPKG:enable
 	[[ $self_debug_to_screen = true ]] && debug_cmd='DEBUG_QPKG=true '
 
-	if QPKG.IsCanLog; then		 # use `qpkg_service` if-possible, so package icon in App Center will dynamically update
+	if QPKG.IsCanLog; then		# use `qpkg_service` if-possible, so package icon in App Center will dynamically update
 		RunAndLog "${debug_cmd}/sbin/qpkg_service start $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
 		QPKG.LastResultWasOk && result_code=0 || result_code=1
 	else
@@ -5854,7 +5854,7 @@ _QPKG:stop_()
 	[[ $self_debug_to_screen = true ]] && debug_cmd='DEBUG_QPKG=true '
 	[[ $PACKAGE_NAME = Entware ]] && UpdateColourisation
 
-	if QPKG.IsCanLog; then		 # use `qpkg_service` if-possible, so package icon in App Center will dynamically update
+	if QPKG.IsCanLog; then		# use `qpkg_service` if-possible, so package icon in App Center will dynamically update
 		RunAndLog "${debug_cmd}/sbin/qpkg_service stop $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
 		QPKG.LastResultWasOk && result_code=0 || result_code=1
 	else
@@ -7064,7 +7064,7 @@ FormatAsThous()
 		fi
 
 		if [[ ${#rightside_group} -eq 3 ]]; then
-			remainder=${remainder%???}						 # trim rightside 3 characters
+			remainder=${remainder%???}						# trim rightside 3 characters
 		else
 			break
 		fi
@@ -8173,7 +8173,7 @@ StripANSI()
 	if [[ -e $GNU_SED_CMD && -L /opt/etc/passwd ]]; then   # try to ensure Entware is started before using this utility
 		$GNU_SED_CMD -r 's/\x1b\[[0-9;]*m//g' <<< "${1:-}"
 	else
-		echo "${1:-}"		 # can't strip, so pass thru original message unaltered
+		echo "${1:-}"		# can't strip, so pass thru original message unaltered
 	fi
 
 	} 2>/dev/null
@@ -8291,7 +8291,7 @@ sleep()
 	if [[ -e $GNU_SLEEP_CMD && -L /opt/etc/passwd ]]; then  # try to ensure Entware is started before using this utility
 		$GNU_SLEEP_CMD "$wait"
 	elif [[ $DECIMAL_SLEEP_SECONDS_SUPPORTED = false ]]; then
-		$QTS_SLEEP_CMD "$((${wait%.*}+1))"				 # ensure decimal seconds are rounded-up to next integer
+		$QTS_SLEEP_CMD "$((${wait%.*}+1))"				# ensure decimal seconds are rounded-up to next integer
 	else
 		$QTS_SLEEP_CMD "$wait"
 	fi
