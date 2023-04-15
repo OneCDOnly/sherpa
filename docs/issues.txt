@@ -1,7 +1,3 @@
-* need to ensure required.txt/recommended.txt mods do not interupt app internal git update.
-
-* ensure 'recommended.txt' for each project is parsed for cffi/cryptography modules - same as 'required.txt'
-
 * after uninstalling a QPKG, App Center UI does not update.
 	might be able to use qpkg_cli for this.
 
