@@ -5665,6 +5665,7 @@ _QPKG:uninstall_()
 		result_code=$?
 
 		if [[ $result_code -eq 0 ]]; then
+			[[ -e /sbin/qpkg_cli ]] && /sbin/qpkg_cli --remove "$PACKAGE_NAME" &>/dev/null
 			SaveActionResultToLog QPKG "$PACKAGE_NAME" uninstall ok
 			/sbin/rmcfg "$PACKAGE_NAME" -f /etc/config/qpkg.conf
 			DebugAsDone 'removed icon information from App Center'
