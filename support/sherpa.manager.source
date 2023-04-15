@@ -6206,8 +6206,8 @@ QPKG.AppCenterNotifier:Clear()
 	# input:
 	#   $PACKAGE_NAME (global) = QPKG name to clear from notifier list
 
-	# KLUDGE: `clean` QTS 4.5.1 App Center notifier status
-	[[ -e /sbin/qpkg_cli ]] && /sbin/qpkg_cli --clean "$PACKAGE_NAME"
+	# KLUDGE: `clean` QTS 4.5.1+ App Center notifier status
+	[[ -e /sbin/qpkg_cli ]] && /sbin/qpkg_cli --cancel "$PACKAGE_NAME"
 
 	QPKG.IsNtInstalled "$PACKAGE_NAME" && return 0
 
