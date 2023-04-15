@@ -1,5 +1,3 @@
-* when running sherpa in verbose mode, action forks are not being displayed verbose.
-
 * need to ensure required.txt/recommended.txt mods do not interupt app internal git update.
 
 * ensure 'recommended.txt' for each project is parsed for cffi/cryptography modules - same as 'required.txt'

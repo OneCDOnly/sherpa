@@ -5226,6 +5226,7 @@ _QPKG:reassign_()
 	# output:
 	#   $? = none, this function executes in the background
 
+	[[ $self_debug_to_screen != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
 	PACKAGE_NAME=${1:?package name null}
@@ -5259,7 +5260,7 @@ _QPKG:reassign_()
 
 	FuncFork:Exit $result_code
 
-	} &>/dev/null
+	}
 
 _QPKG:download_()
 	{
@@ -5273,6 +5274,7 @@ _QPKG:download_()
 	# output:
 	#   $? = none, this function executes in the background
 
+	[[ $self_debug_to_screen != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
 	PACKAGE_NAME=${1:?package name null}
@@ -5332,7 +5334,7 @@ _QPKG:download_()
 
 	FuncFork:Exit $result_code
 
-	} &>/dev/null
+	}
 
 _QPKG:install_()
 	{
@@ -5346,6 +5348,7 @@ _QPKG:install_()
 	# output:
 	#   $? = none, this function executes in the background
 
+	[[ $self_debug_to_screen != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
 	PACKAGE_NAME=${1:?package name null}
@@ -5391,6 +5394,7 @@ _QPKG:install_()
 
 	DebugAsProc "installing $(FormatAsPackName "$PACKAGE_NAME")"
 	[[ $self_debug_to_screen = true ]] && debug_cmd='DEBUG_QPKG=true '
+
 	[[ ${QPKGs_were_installed_name[*]:-} = *"$PACKAGE_NAME"* ]] && target_path="QINSTALL_PATH=$(QPKG.OriginalPath "$PACKAGE_NAME") "
 	RunAndLog "${debug_cmd}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$INSTALL_LOG_FILE" log:failure-only 10
 	result_code=$?
@@ -5447,7 +5451,7 @@ _QPKG:install_()
 	QPKG.AppCenterNotifier:Clear
 	FuncFork:Exit $result_code
 
-	} &>/dev/null
+	}
 
 _QPKG:reinstall_()
 	{
@@ -5461,6 +5465,7 @@ _QPKG:reinstall_()
 	# output:
 	#   $? = none, this function executes in the background
 
+	[[ $self_debug_to_screen != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
 	PACKAGE_NAME=${1:?package name null}
@@ -5485,6 +5490,7 @@ _QPKG:reinstall_()
 
 	DebugAsProc "reinstalling $(FormatAsPackName "$PACKAGE_NAME")"
 	[[ $self_debug_to_screen = true ]] && debug_cmd='DEBUG_QPKG=true '
+
 	QPKG.IsInstalled "$PACKAGE_NAME" && target_path="QINSTALL_PATH=$($DIRNAME_CMD "$(QPKG.InstallationPath $PACKAGE_NAME)") "
 	RunAndLog "${debug_cmd}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$REINSTALL_LOG_FILE" log:failure-only 10
 	result_code=$?
@@ -5518,7 +5524,7 @@ _QPKG:reinstall_()
 	QPKG.AppCenterNotifier:Clear
 	FuncFork:Exit $result_code
 
-	} &>/dev/null
+	}
 
 _QPKG:upgrade_()
 	{
@@ -5532,6 +5538,7 @@ _QPKG:upgrade_()
 	# output:
 	#   $? = none, this function executes in the background
 
+	[[ $self_debug_to_screen != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
 	PACKAGE_NAME=${1:?package name null}
@@ -5569,6 +5576,7 @@ _QPKG:upgrade_()
 
 	DebugAsProc "upgrading $(FormatAsPackName "$PACKAGE_NAME")"
 	[[ $self_debug_to_screen = true ]] && debug_cmd='DEBUG_QPKG=true '
+
 	QPKG.IsInstalled "$PACKAGE_NAME" && target_path="QINSTALL_PATH=$($DIRNAME_CMD "$(QPKG.InstallationPath "$PACKAGE_NAME")") "
 	RunAndLog "${debug_cmd}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$UPGRADE_LOG_FILE" log:failure-only 10
 	result_code=$?
@@ -5609,7 +5617,7 @@ _QPKG:upgrade_()
 	QPKG.AppCenterNotifier:Clear
 	FuncFork:Exit $result_code
 
-	} &>/dev/null
+	}
 
 _QPKG:uninstall_()
 	{
@@ -5623,6 +5631,7 @@ _QPKG:uninstall_()
 	# output:
 	#   $? = none, this function executes in the background
 
+	[[ $self_debug_to_screen != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
 	PACKAGE_NAME=${1:?package name null}
@@ -5650,9 +5659,7 @@ _QPKG:uninstall_()
 		DebugAsProc "uninstalling $(FormatAsPackName "$PACKAGE_NAME")"
 		[[ $self_debug_to_screen = true ]] && debug_cmd='DEBUG_QPKG=true '
 
-		if [[ $PACKAGE_NAME = Entware ]]; then
-			SendParentChangeEnv Cursor:Show
-		fi
+		[[ $PACKAGE_NAME = Entware ]] && SendParentChangeEnv Cursor:Show
 
 		RunAndLog "${debug_cmd}${SH_CMD} $QPKG_UNINSTALLER_PATHFILE" "$LOGS_PATH/$PACKAGE_NAME.$UNINSTALL_LOG_FILE" log:failure-only
 		result_code=$?
@@ -5674,9 +5681,7 @@ _QPKG:uninstall_()
 		else
 			SaveActionResultToLog QPKG "$PACKAGE_NAME" uninstall failed "$result_code"
 
-			if [[ $PACKAGE_NAME = Entware ]]; then
-				SendParentChangeEnv Cursor:Hide
-			fi
+			[[ $PACKAGE_NAME = Entware ]] && SendParentChangeEnv Cursor:Hide
 
 			result_code=1   # remap to 1
 			MarkThisActionForkAsFailed
@@ -5689,7 +5694,7 @@ _QPKG:uninstall_()
 
 	FuncFork:Exit $result_code
 
-	} &>/dev/null
+	}
 
 _QPKG:restart_()
 	{
@@ -5703,6 +5708,7 @@ _QPKG:restart_()
 	# output:
 	#   $? = none, this function executes in the background
 
+	[[ $self_debug_to_screen != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
 	PACKAGE_NAME=${1:?package name null}
@@ -5720,13 +5726,16 @@ _QPKG:restart_()
 
 	DebugAsProc "restarting $(FormatAsPackName "$PACKAGE_NAME")"
 	QPKG:enable
-	[[ $self_debug_to_screen = true ]] && debug_cmd='DEBUG_QPKG=true '
 
-	if QPKG.IsCanLog; then		# use `qpkg_service` if-possible, so package icon in App Center will dynamically update
-		RunAndLog "${debug_cmd}/sbin/qpkg_service restart $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
+	if [[ $self_debug_to_screen = true ]]; then
+		debug_cmd='DEBUG_QPKG=true '
+		RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) restart" "$LOG_PATHFILE" log:failure-only
+		result_code=$?
+	elif QPKG.IsCanLog; then		# use `qpkg_service` if-possible, so package icon in App Center will dynamically update
+		RunAndLog "/sbin/qpkg_service restart $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
 		QPKG.LastResultWasOk && result_code=0 || result_code=1
 	else
-		RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) restart" "$LOG_PATHFILE" log:failure-only
+		RunAndLog "$(QPKG.ServicePathFile) restart" "$LOG_PATHFILE" log:failure-only
 		result_code=$?
 	fi
 
@@ -5742,7 +5751,7 @@ _QPKG:restart_()
 	QPKG.AppCenterNotifier:Clear
 	FuncFork:Exit $result_code
 
-	} &>/dev/null
+	}
 
 _QPKG:start_()
 	{
@@ -5756,6 +5765,7 @@ _QPKG:start_()
 	# output:
 	#   $? = none, this function executes in the background
 
+	[[ $self_debug_to_screen != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
 	PACKAGE_NAME=${1:?package name null}
@@ -5780,13 +5790,16 @@ _QPKG:start_()
 
 	DebugAsProc "starting $(FormatAsPackName "$PACKAGE_NAME")"
 	QPKG:enable
-	[[ $self_debug_to_screen = true ]] && debug_cmd='DEBUG_QPKG=true '
 
-	if QPKG.IsCanLog; then		# use `qpkg_service` if-possible, so package icon in App Center will dynamically update
-		RunAndLog "${debug_cmd}/sbin/qpkg_service start $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
+	if [[ $self_debug_to_screen = true ]]; then
+		debug_cmd='DEBUG_QPKG=true '
+		RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) start" "$LOG_PATHFILE" log:failure-only
+		result_code=$?
+	elif QPKG.IsCanLog; then		# use `qpkg_service` if-possible, so package icon in App Center will dynamically update
+		RunAndLog "/sbin/qpkg_service start $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
 		QPKG.LastResultWasOk && result_code=0 || result_code=1
 	else
-		RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) start" "$LOG_PATHFILE" log:failure-only
+		RunAndLog "$(QPKG.ServicePathFile) start" "$LOG_PATHFILE" log:failure-only
 		result_code=$?
 	fi
 
@@ -5811,7 +5824,7 @@ _QPKG:start_()
 	QPKG.AppCenterNotifier:Clear
 	FuncFork:Exit $result_code
 
-	} &>/dev/null
+	}
 
 _QPKG:stop_()
 	{
@@ -5825,6 +5838,7 @@ _QPKG:stop_()
 	# output:
 	#   $? = none, this function executes in the background
 
+	[[ $self_debug_to_screen != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
 	PACKAGE_NAME=${1:?package name null}
@@ -5851,16 +5865,20 @@ _QPKG:stop_()
 	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$STOP_LOG_FILE
 
 	DebugAsProc "stopping $(FormatAsPackName "$PACKAGE_NAME")"
-	[[ $self_debug_to_screen = true ]] && debug_cmd='DEBUG_QPKG=true '
 	[[ $PACKAGE_NAME = Entware ]] && UpdateColourisation
 
-	if QPKG.IsCanLog; then		# use `qpkg_service` if-possible, so package icon in App Center will dynamically update
-		RunAndLog "${debug_cmd}/sbin/qpkg_service stop $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
-		QPKG.LastResultWasOk && result_code=0 || result_code=1
-	else
+	if [[ $self_debug_to_screen = true ]]; then
+		debug_cmd='DEBUG_QPKG=true '
 		RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) stop" "$LOG_PATHFILE" log:failure-only
 		result_code=$?
+	elif QPKG.IsCanLog; then		# use `qpkg_service` if-possible, so package icon in App Center will dynamically update
+		RunAndLog "/sbin/qpkg_service stop $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
+		QPKG.LastResultWasOk && result_code=0 || result_code=1
+	else
+		RunAndLog "$(QPKG.ServicePathFile) stop" "$LOG_PATHFILE" log:failure-only
+		result_code=$?
 	fi
+
 	if [[ $result_code -eq 0 ]]; then
 		QPKG:disable
 		QPKG.ServiceStatus:Log
@@ -5882,7 +5900,7 @@ _QPKG:stop_()
 	QPKG.AppCenterNotifier:Clear
 	FuncFork:Exit $result_code
 
-	} &>/dev/null
+	}
 
 QPKG:enable()
 	{
@@ -5895,7 +5913,7 @@ QPKG:enable()
 
 	return
 
-	} &>/dev/null
+	}
 
 QPKG:disable()
 	{
@@ -5908,7 +5926,7 @@ QPKG:disable()
 
 	return
 
-	} &>/dev/null
+	}
 
 _QPKG:backup_()
 	{
@@ -5922,6 +5940,7 @@ _QPKG:backup_()
 	# output:
 	#   $? = none, this function executes in the background
 
+	[[ $self_debug_to_screen != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
 	PACKAGE_NAME=${1:?package name null}
@@ -5943,6 +5962,7 @@ _QPKG:backup_()
 
 	DebugAsProc "backing-up $(FormatAsPackName "$PACKAGE_NAME") configuration"
 	[[ $self_debug_to_screen = true ]] && debug_cmd='DEBUG_QPKG=true '
+
 	RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) backup" "$LOGS_PATH/$PACKAGE_NAME.$BACKUP_LOG_FILE" log:failure-only
 	result_code=$?
 
@@ -5959,7 +5979,7 @@ _QPKG:backup_()
 
 	FuncFork:Exit $result_code
 
-	} &>/dev/null
+	}
 
 _QPKG:restore_()
 	{
@@ -5973,6 +5993,7 @@ _QPKG:restore_()
 	# output:
 	#   $? = none, this function executes in the background
 
+	[[ $self_debug_to_screen != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
 	PACKAGE_NAME=${1:?package name null}
@@ -5994,6 +6015,7 @@ _QPKG:restore_()
 
 	DebugAsProc "restoring $(FormatAsPackName "$PACKAGE_NAME") configuration"
 	[[ $self_debug_to_screen = true ]] && debug_cmd='DEBUG_QPKG=true '
+
 	RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) restore" "$LOGS_PATH/$PACKAGE_NAME.$RESTORE_LOG_FILE" log:failure-only
 	result_code=$?
 
@@ -6010,7 +6032,7 @@ _QPKG:restore_()
 
 	FuncFork:Exit $result_code
 
-	} &>/dev/null
+	}
 
 _QPKG:clean_()
 	{
@@ -6024,6 +6046,7 @@ _QPKG:clean_()
 	# output:
 	#   $? = none, this function executes in the background
 
+	[[ $self_debug_to_screen != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
 	PACKAGE_NAME=${1:?package name null}
@@ -6045,6 +6068,7 @@ _QPKG:clean_()
 
 	DebugAsProc "cleaning $(FormatAsPackName "$PACKAGE_NAME")"
 	[[ $self_debug_to_screen = true ]] && debug_cmd='DEBUG_QPKG=true '
+
 	RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) clean" "$LOGS_PATH/$PACKAGE_NAME.$CLEAN_LOG_FILE" log:failure-only
 	result_code=$?
 
@@ -6061,7 +6085,7 @@ _QPKG:clean_()
 
 	FuncFork:Exit $result_code
 
-	} &>/dev/null
+	}
 
 _QPKG:sign_()
 	{
@@ -6079,6 +6103,7 @@ _QPKG:sign_()
 	# output:
 	#   $? = none, this function executes in the background
 
+	[[ $self_debug_to_screen != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
 	local -r PACKAGE_NAME=${1:?package name null}
@@ -6198,7 +6223,7 @@ EOB
 
 	FuncFork:Exit $result_code
 
-	} &>/dev/null
+	}
 
 QPKG.AppCenterNotifier:Clear()
 	{
