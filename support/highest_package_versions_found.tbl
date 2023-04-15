@@ -18,7 +18,7 @@ NZBHydra2_230319_x86_64.qpkg.md5     NZBHydra2_230319_x86_64.qpkg     NZBHydra2 
 nzbToMedia_230312.qpkg.md5           nzbToMedia_230312.qpkg           nzbToMedia           230312       all    f6a8af25b251f5a584109365a206d97a
 OMedusa_230412.qpkg.md5              OMedusa_230412.qpkg              OMedusa              230412       all    0c6ac3069c137d03415b219af209af87
 OqBittorrent_230312.qpkg.md5         OqBittorrent_230312.qpkg         OqBittorrent         230312       all    64d9ceb53b70ec521ba45d26635c9979
-OSickGear_230412.qpkg.md5            OSickGear_230412.qpkg            OSickGear            230412       all    2f7c196ab867c79ccc7d9bca83620e3e
+OSickGear_230415.qpkg.md5            OSickGear_230415.qpkg            OSickGear            230415       all    f21f23727c79ff2c61c3e79ff4014b8e
 OTransmission_230312.qpkg.md5        OTransmission_230312.qpkg        OTransmission        230312       all    ea0ab1b7f4afaea9bbc84aa732abc58f
 OWatcher3_230412.qpkg.md5            OWatcher3_230412.qpkg            OWatcher3            230412       all    62a5f6d9903043dfc7fe0a4a34db56a9
 Par2_0.8.1.1_arm_64.qpkg.md5         Par2_0.8.1.1_arm_64.qpkg         Par2                 0.8.1.1      a64    b8e89f295bdec56eecae88ec685d1e23
@@ -30,7 +30,7 @@ Par2_0.8.1.1_x86.qpkg.md5            Par2_0.8.1.1_x86.qpkg            Par2      
 pyLoad_230415a.qpkg.md5              pyLoad_230415a.qpkg              pyLoad               230415a      all    9c715462fc2a555cf62925c3dbbc5c35
 QDK_2.3.13.zip.qpkg.md5              QDK_2.3.13.zip                   QDK                  2.3.13       all    0b003e703a29520e98a0aca41ed0e585
 RunLast_230224.qpkg.md5              RunLast_230224.qpkg              RunLast              230224       all    6cb5415fe56592ca1f4e8a4f2dcc5f17
-SABnzbd_230415.qpkg.md5              SABnzbd_230415.qpkg              SABnzbd              230415       all    a0a87684f24a61f7c7434b428e42b99f
+SABnzbd_230415a.qpkg.md5             SABnzbd_230415a.qpkg             SABnzbd              230415a      all    5d28853e7d4f258df474ff0817a59676
 sha3sum_230312_x86_64.qpkg.md5       sha3sum_230312_x86_64.qpkg       sha3sum              230312       i64    6ceba9116e0dbcbdb4e6112f0c02f8c0
 sha3sum_230312_x86.qpkg.md5          sha3sum_230312_x86.qpkg          sha3sum              230312       i86    fdba9d16b88a5b6e3b04483ca77706dd
 sherpa_230325.qpkg.md5               sherpa_230325.qpkg               sherpa               230325       all    cbee54aaf49b62cd241cecd2d5405dba
