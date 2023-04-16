@@ -457,54 +457,54 @@ Self:LogEnv()
 	local -i trimmed_width=$((max_width-3))
 
 	DebugInfoMinSepr
-	DebugHardwareOk model "$(get_display_name)"
-	DebugHardwareOk CPU "$(GetCPUInfo)"
-	DebugHardwareOk 'CPU cores' "$CPU_CORES"
-	DebugHardwareOk 'CPU architecture' "$NAS_ARCH"
-	DebugHardwareOk RAM "$(FormatAsThous "$NAS_RAM_KB")kiB"
-	DebugFirmwareOk OS "$(GetQnapOS)"
+	DebugHardware ok model "$(get_display_name)"
+	DebugHardware ok CPU "$(GetCPUInfo)"
+	DebugHardware ok 'CPU cores' "$CPU_CORES"
+	DebugHardware ok 'CPU architecture' "$NAS_ARCH"
+	DebugHardware ok RAM "$(FormatAsThous "$NAS_RAM_KB")kiB"
+	DebugFirmware ok OS "$(GetQnapOS)"
 
 	if [[ ${NAS_FIRMWARE_VER//.} -ge 400 ]]; then
-		DebugFirmwareOk version "$NAS_FIRMWARE_VER.$NAS_FIRMWARE_BUILD"
+		DebugFirmware ok version "$NAS_FIRMWARE_VER.$NAS_FIRMWARE_BUILD"
 	else
-		DebugFirmwareWarning version "$NAS_FIRMWARE_VER"
+		DebugFirmware warning version "$NAS_FIRMWARE_VER"
 	fi
 
 	if [[ $NAS_FIRMWARE_DATE -lt 20201015 || $NAS_FIRMWARE_DATE -gt 20201020 ]]; then   # QTS builds released over these 6 days don't allow unsigned QPKGs to run at-all
-		DebugFirmwareOk 'build date' "$NAS_FIRMWARE_DATE"
+		DebugFirmware ok 'build date' "$NAS_FIRMWARE_DATE"
 	else
-		DebugFirmwareWarning 'build date' "$NAS_FIRMWARE_DATE"
+		DebugFirmware warning 'build date' "$NAS_FIRMWARE_DATE"
 	fi
 
-	DebugFirmwareOk kernel "$(GetKernel)"
-	DebugFirmwareOk platform "$NAS_PLATFORM"
-	DebugUserspaceOk 'OS uptime' "$(GetUptime)"
-	DebugUserspaceOk 'system load' "$(GetSysLoadAverages)"
+	DebugFirmware ok kernel "$(GetKernel)"
+	DebugFirmware ok platform "$NAS_PLATFORM"
+	DebugUserspace ok 'OS uptime' "$(GetUptime)"
+	DebugUserspace ok 'system load' "$(GetSysLoadAverages)"
 
 	if [[ $EUID -eq 0 ]]; then
-		DebugUserspaceOk '$EUID' "$EUID"
+		DebugUserspace ok '$EUID' "$EUID"
 	else
-		DebugUserspaceWarning '$EUID' "$EUID"
+		DebugUserspace warning '$EUID' "$EUID"
 	fi
 
-	DebugUserspaceOk '$SUDO_UID' "$(GetSudoUID)"
-	DebugUserspaceOk 'time in shell' "$(GetTimeInShell)"
-	DebugUserspaceOk '$BASH_VERSION' "$BASH_VERSION"
-	DebugUserspaceOk 'default volume' "$(GetDefVol)"
-	DebugUserspaceOk '/opt' "$($READLINK_CMD /opt || echo '<not present>')"
+	DebugUserspace ok '$SUDO_UID' "$(GetSudoUID)"
+	DebugUserspace ok 'time in shell' "$(GetTimeInShell)"
+	DebugUserspace ok '$BASH_VERSION' "$BASH_VERSION"
+	DebugUserspace ok 'default volume' "$(GetDefVol)"
+	DebugUserspace ok '/opt' "$($READLINK_CMD /opt || echo '<not present>')"
 
 	local public_share=$(/sbin/getcfg SHARE_DEF defPublic -d Qpublic -f /etc/config/def_share.info)
 
 	if [[ -L /share/$public_share ]]; then
-		DebugUserspaceOk "'$public_share' share" "/share/$public_share"
+		DebugUserspace ok "'$public_share' share" "/share/$public_share"
 	else
-		DebugUserspaceWarning "'$public_share' share" '<not present>'
+		DebugUserspace warning "'$public_share' share" '<not present>'
 	fi
 
 	if [[ ${#PATH} -le $max_width ]]; then
-		DebugUserspaceOk '$PATH' "$PATH"
+		DebugUserspace ok '$PATH' "$PATH"
 	else
-		DebugUserspaceOk '$PATH' "${PATH:0:trimmed_width}..."
+		DebugUserspace ok '$PATH' "${PATH:0:trimmed_width}..."
 	fi
 
 	DebugBinPathVerAndMinVer python "$(GetDefPythonVer)" "$MIN_PYTHON_VER"
@@ -512,16 +512,16 @@ Self:LogEnv()
 	DebugBinPathVerAndMinVer perl "$(GetDefPerlVer)" "$MIN_PERL_VER"
 	DebugScript 'logs path' "$LOGS_PATH"
 	DebugScript 'cache path' "$CACHE_PATH"
-	DebugQpkg concurrency "$CONCURRENCY"
+	DebugQpkg detect concurrency "$CONCURRENCY"
 
 	if OS.IsAllowUnsignedPackages; then
-		DebugQpkg 'allow unsigned' yes
+		DebugQpkg detect 'allow unsigned' yes
 	else
-		DebugQpkg 'allow unsigned' no
+		DebugQpkg detect 'allow unsigned' no
 	fi
 
-	DebugQpkg architecture "$NAS_QPKG_ARCH"
-	DebugQpkg 'Entware installer' "$ENTWARE_VER"
+	DebugQpkg detect architecture "$NAS_QPKG_ARCH"
+	DebugQpkg detect 'Entware installer' "$ENTWARE_VER"
 
 	RunAndLog "$DF_CMD -h | $GREP_CMD '^Filesystem\|^none\|^tmpfs\|ram'" /var/log/ramdisks.freespace.log
 
@@ -2703,19 +2703,19 @@ DebugBinPathVerAndMinVer()
 	local bin_path=$(GetThisBinPath "$1")
 
 	if [[ -n $bin_path ]]; then
-		DebugUserspaceOk "'$1' path" "$bin_path"
+		DebugUserspace ok "'$1' path" "$bin_path"
 	else
-		DebugUserspaceWarning "'$1' path" '<not present>'
+		DebugUserspace warning "'$1' path" '<not present>'
 	fi
 
 	if [[ -n ${2:-} ]]; then
 		if [[ ${2//./} -ge ${3//./} ]]; then
-			DebugUserspaceOk "'$1' version" "$2"
+			DebugUserspace ok "'$1' version" "$2"
 		else
-			DebugUserspaceWarning "'$1' version" "$2"
+			DebugUserspace warning "'$1' version" "$2"
 		fi
 	else
-		DebugUserspaceWarning "'$1' version" '<unknown>'
+		DebugUserspace warning "'$1' version" '<unknown>'
 	fi
 
 	return 0
@@ -3974,8 +3974,8 @@ IPKs.Actions:List()
 	DebugInfoMinSepr
 
 	for action in "${IPK_ACTIONS[@]}"; do
-		IPKs-AC${action}-ok:IsAny && DebugIpkInfo "AC${action}-ok" "($(IPKs-AC${action}-ok:Count)) $(IPKs-AC${action}-ok:ListCSV) "
-		IPKs-AC${action}-er:IsAny && DebugIpkError "AC${action}-er" "($(IPKs-AC${action}-er:Count)) $(IPKs-AC${action}-er:ListCSV) "
+		IPKs-AC${action}-ok:IsAny && DebugIpk info "AC${action}-ok" "($(IPKs-AC${action}-ok:Count)) $(IPKs-AC${action}-ok:ListCSV) "
+		IPKs-AC${action}-er:IsAny && DebugIpk error "AC${action}-er" "($(IPKs-AC${action}-er:Count)) $(IPKs-AC${action}-er:ListCSV) "
 	done
 
 	DebugInfoMinSepr
@@ -4000,13 +4000,13 @@ QPKGs.Actions:List()
 			if QPKGs-AC${action}-${prefix}:IsAny; then
 				case $prefix in
 					ok)
-						DebugQpkgInfo "AC${action}-${prefix}" "($(QPKGs-AC${action}-${prefix}:Count)) $(QPKGs-AC${action}-${prefix}:ListCSV) "
+						DebugQpkg info "AC${action}-${prefix}" "($(QPKGs-AC${action}-${prefix}:Count)) $(QPKGs-AC${action}-${prefix}:ListCSV) "
 						;;
 					sk)
-						DebugQpkgWarning "AC${action}-${prefix}" "($(QPKGs-AC${action}-${prefix}:Count)) $(QPKGs-AC${action}-${prefix}:ListCSV) "
+						DebugQpkg warning "AC${action}-${prefix}" "($(QPKGs-AC${action}-${prefix}:Count)) $(QPKGs-AC${action}-${prefix}:ListCSV) "
 						;;
 					er)
-						DebugQpkgError "AC${action}-${prefix}" "($(QPKGs-AC${action}-${prefix}:Count)) $(QPKGs-AC${action}-${prefix}:ListCSV) "
+						DebugQpkg error "AC${action}-${prefix}" "($(QPKGs-AC${action}-${prefix}:Count)) $(QPKGs-AC${action}-${prefix}:ListCSV) "
 				esac
 			fi
 		done
@@ -4032,7 +4032,7 @@ QPKGs.Actions:ListAll()
 
 		for prefix in to ok er sk; do
 			if QPKGs-AC${action}-${prefix}:IsAny; then
-				DebugQpkgInfo "AC${action}=${prefix}" "($(QPKGs-AC${action}-${prefix}:Count)) $(QPKGs-AC${action}-${prefix}:ListCSV) "
+				DebugQpkg info "AC${action}=${prefix}" "($(QPKGs-AC${action}-${prefix}:Count)) $(QPKGs-AC${action}-${prefix}:ListCSV) "
 			fi
 		done
 	done
@@ -4060,9 +4060,9 @@ QPKGs.States:List()
 		if [[ $state = installed || $state = enabled ]]; then
 			continue
 		elif [[ $state = unknown ]]; then
-			QPKGs-IS${state}:IsAny && DebugQpkgWarning "IS${state}" "($(QPKGs-IS${state}:Count)) $(QPKGs-IS${state}:ListCSV) "
+			QPKGs-IS${state}:IsAny && DebugQpkg warning "IS${state}" "($(QPKGs-IS${state}:Count)) $(QPKGs-IS${state}:ListCSV) "
 		else
-			QPKGs-IS${state}:IsAny && DebugQpkgInfo "IS${state}" "($(QPKGs-IS${state}:Count)) $(QPKGs-IS${state}:ListCSV) "
+			QPKGs-IS${state}:IsAny && DebugQpkg info "IS${state}" "($(QPKGs-IS${state}:Count)) $(QPKGs-IS${state}:ListCSV) "
 		fi
 	done
 
@@ -4070,17 +4070,17 @@ QPKGs.States:List()
 		if [[ $state = installed ]]; then
 			continue
 		elif [[ $state = ok ]]; then
-			QPKGs-ISNT${state}:IsAny && DebugQpkgError "ISNT${state}" "($(QPKGs-ISNT${state}:Count)) $(QPKGs-ISNT${state}:ListCSV) "
+			QPKGs-ISNT${state}:IsAny && DebugQpkg error "ISNT${state}" "($(QPKGs-ISNT${state}:Count)) $(QPKGs-ISNT${state}:ListCSV) "
 		elif [[ $state = backedup ]]; then
-			QPKGs-ISNT${state}:IsAny && DebugQpkgWarning "ISNT${state}" "($(QPKGs-ISNT${state}:Count)) $(QPKGs-ISNT${state}:ListCSV) "
+			QPKGs-ISNT${state}:IsAny && DebugQpkg warning "ISNT${state}" "($(QPKGs-ISNT${state}:Count)) $(QPKGs-ISNT${state}:ListCSV) "
 		else
-			QPKGs-ISNT${state}:IsAny && DebugQpkgInfo "ISNT${state}" "($(QPKGs-ISNT${state}:Count)) $(QPKGs-ISNT${state}:ListCSV) "
+			QPKGs-ISNT${state}:IsAny && DebugQpkg info "ISNT${state}" "($(QPKGs-ISNT${state}:Count)) $(QPKGs-ISNT${state}:ListCSV) "
 		fi
 	done
 
 	for state in "${QPKG_STATES_TRANSIENT[@]}"; do
 		# shellcheck disable=2043
-		QPKGs-IS${state}:IsAny && DebugQpkgInfo "IS${state}" "($(QPKGs-IS${state}:Count)) $(QPKGs-IS${state}:ListCSV) "
+		QPKGs-IS${state}:IsAny && DebugQpkg info "IS${state}" "($(QPKGs-IS${state}:Count)) $(QPKGs-IS${state}:ListCSV) "
 	done
 
 	DebugInfoMinSepr
@@ -7278,80 +7278,74 @@ DebugScript()
 
 	}
 
-DebugHardwareOk()
+DebugHardware()
 	{
 
-	DebugDetectTabld HARDWARE "${1:-}" "${2:-}"
+	case ${1:-} in
+		warning)
+			DebugWarningTabld HARDWARE "${2:-}" "${3:-}"
+			;;
+		*)
+			DebugDetectTabld HARDWARE "${2:-}" "${3:-}"
+	esac
 
 	}
 
-DebugFirmwareOk()
+DebugFirmware()
 	{
 
-	DebugDetectTabld FIRMWARE "${1:-}" "${2:-}"
+	case ${1:-} in
+		warning)
+			DebugWarningTabld FIRMWARE "${2:-}" "${3:-}"
+			;;
+		*)
+			DebugDetectTabld FIRMWARE "${2:-}" "${3:-}"
+	esac
 
 	}
 
-DebugFirmwareWarning()
+DebugUserspace()
 	{
 
-	DebugWarningTabld FIRMWARE "${1:-}" "${2:-}"
+	case ${1:-} in
+		warning)
+			DebugWarningTabld USERSPACE "${2:-}" "${3:-}"
+			;;
+		*)
+			DebugDetectTabld USERSPACE "${2:-}" "${3:-}"
+	esac
 
 	}
 
-DebugUserspaceOk()
+DebugIpk()
 	{
 
-	DebugDetectTabld USERSPACE "${1:-}" "${2:-}"
-
-	}
-
-DebugUserspaceWarning()
-	{
-
-	DebugWarningTabld USERSPACE "${1:-}" "${2:-}"
-
-	}
-
-DebugIpkInfo()
-	{
-
-	DebugInfoTabld IPK "${1:-}" "${2:-}"
-
-	}
-
-DebugIpkError()
-	{
-
-	DebugErrorTabld IPK "${1:-}" "${2:-}"
+	case ${1:-} in
+		error)
+			DebugErrorTabld IPK "${2:-}" "${3:-}"
+			;;
+		*)
+			DebugInfoTabld IPK "${2:-}" "${3:-}"
+	esac
 
 	}
 
 DebugQpkg()
 	{
 
-	DebugDetectTabld QPKG "${1:-}" "${2:-}"
-
-	}
-
-DebugQpkgInfo()
-	{
-
-	DebugInfoTabld QPKG "${1:-}" "${2:-}"
-
-	}
-
-DebugQpkgWarning()
-	{
-
-	DebugWarningTabld QPKG "${1:-}" "${2:-}"
-
-	}
-
-DebugQpkgError()
-	{
-
-	DebugErrorTabld QPKG "${1:-}" "${2:-}"
+	case ${1:-} in
+		error)
+			DebugErrorTabld QPKG "${2:-}" "${3:-}"
+			;;
+		warning)
+			DebugWarningTabld QPKG "${2:-}" "${3:-}"
+			;;
+		info)
+			DebugInfoTabld QPKG "${2:-}" "${3:-}"
+			;;
+		*)
+			DebugDetectTabld QPKG "${2:-}" "${3:-}"
+	esac
 
 	}
 
