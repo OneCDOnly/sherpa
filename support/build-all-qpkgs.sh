@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-for d in $(ls -d */); do
-	cd "$d"
-	qbuild
-	cd ..
+for d in */; do
+	(cd "$d" && qbuild)
 done
