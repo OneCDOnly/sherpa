@@ -741,7 +741,7 @@ Self:Validate()
 
 	if QPKGs-ACuninstall-to:IsAny; then
 		for package in $(QPKGs-ACuninstall-to:Array); do
-			if QPKGs-ACinstall-to:Exist "$package"; then
+			if QPKGs-ISinstalled:Exist "$package" && QPKGs-ACinstall-to:Exist "$package"; then
 				QPKGs_were_installed_name+=("$package")
 				QPKGs_were_installed_path+=("$($DIRNAME_CMD "$(QPKG.InstallationPath "$package")")")
 			fi
