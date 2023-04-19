@@ -663,9 +663,9 @@ Self:Validate()
 		done
 	done
 
-	# Install standalones for started packages only
+	# Install standalones for installed dependents
 	for package in $(QPKGs-ISinstalled:Array); do
-		if QPKGs-ISstarted:Exist "$package" || QPKGs-ACstart-to:Exist "$package"; then
+		if [[ $opts_deps_check = true ]] || QPKGs-ISstarted:Exist "$package" || QPKGs-ACstart-to:Exist "$package"; then
 			for prospect in $(QPKG:GetStandalones "$package"); do
 				QPKGs-ISNTinstalled:Exist "$prospect" && QPKGs-ACinstall-to:Add "$prospect"
 			done
@@ -1125,7 +1125,7 @@ AdjustMaxForks()
 		DebugInfo "limiting \$max_forks to $max_forks because debug mode is active"
 	else
 		case ${1:-} in
-			clean)						# don't make too-many calls to PyPI at the same time
+			clean)						# precautionary: don't make too-many calls to PyPI at the same time
 				max_forks=$(((max_forks+1)/2))
 				DebugInfo "limiting \$max_forks to $max_forks because '$1' action was requested"
 				;;
@@ -1743,7 +1743,7 @@ ParseArgs()
 		esac
 	done
 
-	# when an action has been determined, but no group has been found, then show default information. This will usually be the help screen.
+	# when an action has been determined, but no group was found, then show default information. This will usually be the help screen.
 	if [[ -n $action && $group_identified = false ]]; then
 		case $action in
 			help|paste)
@@ -5602,7 +5602,7 @@ _QPKG:upgrade_()
 		if [[ $current_ver = "$prev_ver" ]]; then
 			SaveActionResultToLog QPKG "$PACKAGE_NAME" upgrade ok "version $current_ver"
 		else
-			SaveActionResultToLog QPKG "$PACKAGE_NAME" upgrade ok "from version $prev_ver to version $current_ver"
+			SaveActionResultToLog QPKG "$PACKAGE_NAME" upgrade ok "upgraded from version $prev_ver to version $current_ver"
 		fi
 
 		SendParentChangeEnv "QPKGs-ACsign-to:Add $PACKAGE_NAME"
