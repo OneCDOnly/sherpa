@@ -2006,6 +2006,7 @@ ResetArchivedLogs()
 
 	if [[ -n $LOGS_PATH && -d $LOGS_PATH ]]; then
 		rm -rf "${LOGS_PATH:?}"/*
+		echo 'log reset' > "$sess_active_pathfile"
 		ShowAsDone 'all logs cleared'
 	fi
 
