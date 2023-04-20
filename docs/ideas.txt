@@ -1,5 +1,3 @@
-* running a 'check' should install standalone QPKGs required to support installed dependents, even if those dependents are stopped.
-
 * add mini rolling CPU utilitisation graph to progress display while installing QPKGs?
     while true; do top -b -n 2 -d 0.2 -p 1621 | tail -1 | awk '{print $9}'; done
     while true; do /usr/bin/top -b -n2 -d1 | grep 20744 | tail -1 | awk '{print $7}'; done
