@@ -2990,6 +2990,7 @@ DisplayAsHelpNameVerStatus()
 	local package_status=${3:-}
 	local package_status_msg=''
 	local package_last_result=${4:-}
+	local package_last_result_msg=''
 	local package_installed_version=${5:-}
 	local package_version_msg=$package_installed_version
 	local package_upgrade_version=${6:-}
@@ -3000,32 +3001,36 @@ DisplayAsHelpNameVerStatus()
 	case $1 in
 		normal)
 			if [[ -n $package_status ]]; then
-				case $package_status in
-					'enabled, started')
-						package_status_msg="${HELP_COL_OTHER_PREFIX}$(ColourTextBrightGreen "$package_status")"
-						;;
-					'disabled, stopped')
-						package_status_msg="${HELP_COL_OTHER_PREFIX}$(ColourTextBrightRed "$package_status")"
-						;;
-					*)
-						package_status_msg="${HELP_COL_OTHER_PREFIX}${package_status}"
-				esac
+				[[ $package_status =~ 'enabled' ]] && package_status_msg="$(ColourTextBrightGreen enabled)"
+				[[ $package_status =~ 'disabled' ]] && package_status_msg="$(ColourTextBrightRed disabled)"
+
+				[[ $package_status =~ 'started' ]] && package_status_msg+=", $(ColourTextBrightGreen started)"
+				[[ $package_status =~ 'stopped' ]] && package_status_msg+=", $(ColourTextBrightRed stopped)"
+
+				[[ $package_status =~ 'starting' ]] && package_status_msg+=", $(ColourTextBrightOrange starting)"
+				[[ $package_status =~ 'stopping' ]] && package_status_msg+=", $(ColourTextBrightOrange stopping)"
+
+				[[ -z $package_status_msg ]] && package_status_msg="$package_status"
+
+				package_status_msg="${HELP_COL_OTHER_PREFIX}${package_status_msg}"
 			fi
 
 			if [[ -n $package_last_result && $package_status != missing ]]; then
 				case $package_last_result in
 					OK)
-						package_status_msg+=" ($(ColourTextBrightGreen "$package_last_result"))"
+						package_last_result_msg="$(ColourTextBrightGreen "$package_last_result")"
 						;;
 					'N/A')
-						package_status_msg+=" ($package_last_result)"
+						package_last_result_msg="$package_last_result"
 						;;
 					failed)
-						package_status_msg+=" ($(ColourTextBrightRed "$package_last_result"))"
+						package_last_result_msg="$(ColourTextBrightRed "$package_last_result")"
 						;;
 					*)
-						package_status_msg+=" ($(ColourTextBrightOrange "$package_last_result"))"
+						package_last_result_msg="$(ColourTextBrightOrange "$package_last_result")"
 				esac
+
+				[[ -n $package_last_result_msg ]] && package_status_msg+=" ($package_last_result_msg)"
 			fi
 
 			if [[ -n $package_upgrade_version && $package_installed_version != "$package_upgrade_version" ]]; then
@@ -3033,19 +3038,19 @@ DisplayAsHelpNameVerStatus()
 			fi
 			;;
 		muted)
-			package_name_msg=$(ColourTextDarkGrey "$package_name")
+			package_name_msg="$(ColourTextDarkGrey "$package_name")"
 			package_status_msg="$(ColourTextDarkGrey "${HELP_COL_OTHER_PREFIX}${package_status}")"
 			package_version_msg="$(ColourTextDarkGrey "$package_upgrade_version")"
 			;;
 		highlighted)
 			case $package_status in
 				missing)
-					package_name_msg=$(ColourTextBrightRed "$package_name")
+					package_name_msg="$(ColourTextBrightRed "$package_name")"
 					package_status_msg="$(ColourTextBrightRedBlink "! $package_status")"
 					package_path_msg="$(ColourTextBrightRedBlink "$package_path")"
 					;;
 				*)
-					package_name_msg=$(ColourTextBrightOrange "$package_name")
+					package_name_msg="$(ColourTextBrightOrange "$package_name")"
 					package_status_msg="$(ColourTextBrightOrange "* $package_status")"
 			esac
 	esac
@@ -4471,14 +4476,14 @@ QPKGs.Statuses:Show()
 			elif QPKGs-ISNTinstalled:Exist "$package_name"; then
 				DisplayAsHelpNameVerStatus muted "$package_name" 'not installed' '' '' "$(QPKG.Avail.Ver "$package_name")"
 			else
-				# transient state
+				# state
 				if QPKGs-ISenabled:Exist "$package_name"; then
 					package_status_notes+=(enabled)
 				elif QPKGs-ISNTenabled:Exist "$package_name"; then
 					package_status_notes+=(disabled)
 				fi
 
-				# state
+				# transient state
 				if QPKGs-ISstarting:Exist "$package_name"; then
 					package_status_notes+=(starting)
 				elif QPKGs-ISstopping:Exist "$package_name"; then
