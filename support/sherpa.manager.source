@@ -38,7 +38,7 @@
 #  utility interceptors: (same as original)
 #			  variables: 'lowercase_with_inline_underscores'
 # flag "object" methods: 'Capitalised.CamelCase.With.Inline.Periods.And.Colon.Before:Method'
-# list "object" methods: 'Capitalised-CamelCase-With-Inline_Hyphens-And-Colon-Before:Method'
+# list "object" methods: 'Capitalised-CamelCase-With-Inline-Hyphens-And-Colon-Before:Method'
 #   "object" properties: '_lowercase_with_leading_and_inline_and_trailing_underscores_' (these should ONLY be managed via the object's methods)
 #			  constants: 'UPPERCASE_WITH_INLINE_UNDERSCORES' (also set as readonly)
 #				indents: 1 x tab
@@ -7889,10 +7889,10 @@ ShowAsActionResultDetail()
 	#  $2 = action
 	#  $3 = package type
 
-	local -a packages=()
-	local packages_msg=''
 	local sk_msg=''
 	local er_msg=''
+	local -i skip_acc=0
+	local -i fail_acc=0
 
 	case $3 in
 		QPKG)
@@ -7900,45 +7900,41 @@ ShowAsActionResultDetail()
 				case $1 in
 					dependent)
 						for package in $(QPKGs-AC${2}-sk:Array) $(QPKGs-AC${2}-se:Array); do
-							QPKG.IsDependent "$package" && packages+=($package)
+							QPKG.IsDependent "$package" && ((skip_acc++))
 						done
 						;;
 					standalone)
 						for package in $(QPKGs-AC${2}-sk:Array) $(QPKGs-AC${2}-se:Array); do
-							! QPKG.IsDependent "$package" && packages+=($package)
+							! QPKG.IsDependent "$package" && ((skip_acc++))
 						done
 						;;
 					*)
-						packages+=($(QPKGs-AC${2}-sk:List) $(QPKGs-AC${2}-se:List))
+						skip_acc=$(($(QPKGs-AC${2}-sk:Count)+$(QPKGs-AC${2}-se:Count)))
 				esac
 
-				if [[ ${#packages[@]} -gt 0 ]]; then
-					packages_msg="${packages[*]}"
-					sk_msg="$(ColourTextBrightOrange 'skipped:') ${packages_msg// /,}"
+				if [[ $skip_acc -gt 0 ]]; then
+					sk_msg="$(ColourTextBrightOrange 'skipped') $skip_acc QPKG$(Pluralise "$skip_acc")"
 				fi
 			fi
 
 			if [[ $(QPKGs-AC${2}-er:Count) -gt 0 ]]; then
-				packages=()
-
 				case $1 in
 					dependent)
 						for package in $(QPKGs-AC${2}-er:Array); do
-							QPKG.IsDependent "$package" && packages+=($package)
+							QPKG.IsDependent "$package" && ((fail_acc++))
 						done
 						;;
 					standalone)
 						for package in $(QPKGs-AC${2}-er:Array); do
-							! QPKG.IsDependent "$package" && packages+=($package)
+							! QPKG.IsDependent "$package" && ((fail_acc++))
 						done
 						;;
 					*)
-						packages+=($(QPKGs-AC${2}-er:List))
+						fail_acc=$(QPKGs-AC${2}-er:Count)
 				esac
 
-				if [[ ${#packages[@]} -gt 0 ]]; then
-					packages_msg="${packages[*]}"
-					er_msg="$(ColourTextBrightRed 'failed:') ${packages_msg// /,}"
+				if [[ $fail_acc -gt 0 ]]; then
+					er_msg="$(ColourTextBrightRed 'failed') $fail_acc QPKG$(Pluralise "$fail_acc")"
 				fi
 			fi
 			;;
