@@ -856,7 +856,10 @@ Actions:Proc()
 		esac
 	done
 
-	Action:Proc sign all QPKG '"signing"' '"signed"' || return
+	if [[ ${NAS_FIRMWARE_VER//.} -ge 435 ]]; then
+		Action:Proc sign all QPKG '"signing"' '"signed"' || return
+	fi
+
 	EraseThisLine
 
 	if [[ $opts_deps_check = true ]]; then
