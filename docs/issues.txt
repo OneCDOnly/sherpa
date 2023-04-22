@@ -1,3 +1,6 @@
+* if QPKG is manually stopped (via service script), sherpa status table shows as still "enabled, started"
+	this is because QPKG is not disabled when stopping via service script, and sherpa doesn't confirm if package is still running or not when collecting statuses.
+
 * progress line display desyncs intermittently (suspect stdout interference caused by LazyLibrarian startup).
 
 * ensure each action fork is actually being killed after it issues an 'exit' into the message pipe.
