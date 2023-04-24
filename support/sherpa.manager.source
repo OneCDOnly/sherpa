@@ -514,10 +514,14 @@ Self:LogEnv()
 	DebugScript 'cache path' "$CACHE_PATH"
 	DebugQpkg detect concurrency "$CONCURRENCY"
 
-	if OS.IsAllowUnsignedPackages; then
-		DebugQpkg detect 'allow unsigned' yes
+	if OS.IsSupportSignedPackages; then
+		if OS.IsAllowUnsignedPackages; then
+			DebugQpkg detect 'allow unsigned' yes
+		else
+			DebugQpkg detect 'allow unsigned' no
+		fi
 	else
-		DebugQpkg detect 'allow unsigned' no
+		DebugQpkg detect 'allow unsigned' 'N/A'
 	fi
 
 	DebugQpkg detect architecture "$NAS_QPKG_ARCH"
@@ -856,7 +860,7 @@ Actions:Proc()
 		esac
 	done
 
-	if [[ ${NAS_FIRMWARE_VER//.} -ge 435 ]]; then
+	if OS.IsSupportSignedPackages; then
 		Action:Proc sign all QPKG '"signing"' '"signed"' || return
 	fi
 
@@ -4923,6 +4927,13 @@ GetDefVol()
 
 	}
 
+OS.IsSupportSignedPackages()
+	{
+
+	[[ ${NAS_FIRMWARE_VER//.} -ge 435 ]]
+
+	}
+
 OS.IsAllowUnsignedPackages()
 	{
 
@@ -6123,7 +6134,7 @@ _QPKG:sign_()
 	local signature=''
 	local cmd=''
 
-	if [[ ${NAS_FIRMWARE_VER//.} -lt 435 ]]; then
+	if ! OS.IsSupportSignedPackages; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped 'not required: firmware < 4.3.5'
 		result_code=2
 	elif ! QPKGs-ISinstalled:Exist "$PACKAGE_NAME"; then
