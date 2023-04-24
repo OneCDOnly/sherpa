@@ -136,7 +136,7 @@ Self:Init()
 	readonly NAS_QPKG_ARCH=$(GetQpkgArch)
 	readonly ENTWARE_VER=$(GetEntwareType)
 	readonly CPU_CORES=$(GetCPUCores)
-	readonly CONCURRENCY=$CPU_CORES	# maximum concurrent package actions to run. Should probably make this account for CPU speed too.
+	readonly CONCURRENCY=$CPU_CORES		# maximum concurrent package actions to run. Should probably make this account for CPU speed too.
 	readonly LOG_TAIL_LINES=5000		# note: a full download and install of everything generates a session log of around 1600 lines, but include a bunch of opkg updates and it can get much longer
 	prev_msg=' '
 	fork_pid=''
@@ -2898,7 +2898,7 @@ DisplayAsHelpNameAuthorDesc()
 	printf "${HELP_COL_SPACER}%-$((${#HELP_COL_OTHER_PREFIX}+HELP_PACKAGE_NAME_WIDTH+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
 	printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%-$((HELP_PACKAGE_AUTHOR_WIDTH+$(LenANSIDiff "$package_author_msg")))s" "$package_author_msg"
 	printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%s" "$package_description_msg"
-	[[ -n $package_notes ]] && printf ' %s' "$package_notes_msg"
+	[[ -n $package_notes ]] && printf "\n%$(((${#HELP_COL_SPACER}*3)+(${#HELP_COL_BLANK_PREFIX}*3)+HELP_PACKAGE_NAME_WIDTH+HELP_PACKAGE_AUTHOR_WIDTH))s└─ %s" '' "$package_notes_msg"
 
 	printf '\n'
 
