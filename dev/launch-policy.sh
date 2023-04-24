@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
+# check QPKG last launch times for a specific action.
+# sort them based on current policy setting.
+
 # input:
 #	- a string of package names
 #   - action
-
-# check their last launch times for a specific action
-# sort them based on current policy setting.
 
 # output:
 #	stdout=sorted list of package names
