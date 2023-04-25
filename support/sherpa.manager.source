@@ -2903,7 +2903,7 @@ DisplayAsHelpNameAuthorDesc()
 	local package_description=${4:-}
 	local package_description_msg="$package_description"
 	local package_notes=${5:-}
-	local package_notes_msg="$(ColourTextBrightOrange "* $package_notes")"
+	local package_notes_msg="$(ColourTextCyan "* $package_notes")"
 
 	case $1 in
 		muted)
@@ -8216,6 +8216,17 @@ ColourTextBrightRedBlink()
 
 	if [[ $colourful = true ]]; then
 		echo -en '\033[1;5;31m'"$(ColourReset "${1:-}")"
+	else
+		echo -n "${1:-}"
+	fi
+
+	} 2>/dev/null
+
+ColourTextCyan()
+	{
+
+	if [[ $colourful = true ]]; then
+		echo -en '\033[1;36m'"$(ColourReset "${1:-}")"
 	else
 		echo -n "${1:-}"
 	fi
