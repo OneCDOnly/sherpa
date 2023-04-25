@@ -167,7 +167,7 @@ Self:Init()
 
 	EraseThisLine
 
-	if [[ $self_display_clean = false && $self_debug_to_screen = false ]]; then
+	if [[ $self_display_clean = false && $self_verbose = false ]]; then
 		Display "$(FormatAsTitle) $(FormatAsVersion) $(FormatAsDescription)"
 		DisplayLineSpaceIfNoneAlready
 	fi
@@ -205,7 +205,7 @@ DefaultVars:Load()
 	skip_qpkg_processing=false
 	colourful=true
 
-	self_debug_to_screen=false
+	self_verbose=false
 	self_display_clean=false
 	self_display_zero_qpkgs=true
 	self_linespace_onscreen=false
@@ -451,11 +451,8 @@ Self:LogEnv()
 	ArgSuggestions:Show
 	[[ $skip_qpkg_processing = true ]] && return
 	Func:Entry
+
 	ShowAsProc environment
-
-	local -i max_width=70
-	local -i trimmed_width=$((max_width-3))
-
 	DebugInfoMinSepr
 	DebugHardware ok model "$(get_display_name)"
 	DebugHardware ok CPU "$(GetCPUInfo)"
@@ -464,13 +461,13 @@ Self:LogEnv()
 	DebugHardware ok RAM "$(FormatAsThous "$NAS_RAM_KB")kiB"
 	DebugFirmware ok OS "$(GetQnapOS)"
 
-	if [[ ${NAS_FIRMWARE_VER//.} -ge 400 ]]; then
+	if OS.IsSupported; then
 		DebugFirmware ok version "$NAS_FIRMWARE_VER.$NAS_FIRMWARE_BUILD"
 	else
 		DebugFirmware warning version "$NAS_FIRMWARE_VER"
 	fi
 
-	if [[ $NAS_FIRMWARE_DATE -lt 20201015 || $NAS_FIRMWARE_DATE -gt 20201020 ]]; then   # QTS builds released over these 6 days don't allow unsigned QPKGs to run at-all
+	if OS.IsCompatibleWithSigned; then
 		DebugFirmware ok 'build date' "$NAS_FIRMWARE_DATE"
 	else
 		DebugFirmware warning 'build date' "$NAS_FIRMWARE_DATE"
@@ -501,6 +498,9 @@ Self:LogEnv()
 		DebugUserspace warning "'$public_share' share" '<not present>'
 	fi
 
+	local -i max_width=70
+	local -i trimmed_width=$((max_width-3))
+
 	if [[ ${#PATH} -le $max_width ]]; then
 		DebugUserspace ok '$PATH' "$PATH"
 	else
@@ -514,10 +514,14 @@ Self:LogEnv()
 	DebugScript 'cache path' "$CACHE_PATH"
 	DebugQpkg detect concurrency "$CONCURRENCY"
 
-	if OS.IsAllowUnsignedPackages; then
-		DebugQpkg detect 'allow unsigned' yes
+	if OS.IsSupportSignedPackages; then
+		if OS.IsAllowUnsignedPackages; then
+			DebugQpkg detect 'allow unsigned' yes
+		else
+			DebugQpkg detect 'allow unsigned' no
+		fi
 	else
-		DebugQpkg detect 'allow unsigned' no
+		DebugQpkg detect 'allow unsigned' 'N/A'
 	fi
 
 	DebugQpkg detect architecture "$NAS_QPKG_ARCH"
@@ -856,7 +860,7 @@ Actions:Proc()
 		esac
 	done
 
-	if [[ ${NAS_FIRMWARE_VER//.} -ge 435 ]]; then
+	if OS.IsSupportSignedPackages; then
 		Action:Proc sign all QPKG '"signing"' '"signed"' || return
 	fi
 
@@ -872,7 +876,7 @@ Actions:Proc()
 		QPKGs.Actions:List
 	fi
 
-	[[ $self_debug_to_screen = true ]] && QPKGs.States:List rebuild	# rebuild these after processing QPKGs to get current states
+	[[ $self_verbose = true ]] && QPKGs.States:List rebuild	# rebuild these after processing QPKGs to get current states
 	Func:Exit
 
 	}
@@ -1118,30 +1122,38 @@ CloseActionMsgPipe()
 AdjustMaxForks()
 	{
 
-	# $1 = action
+	# input:
+	#   $1 = action
+
+	# output:
+	#   $max_forks (global)
 
 	max_forks=$CONCURRENCY
+	local reason=''
 
 	# no-point running actions async in debug mode: their stdout will make a confusing mess of the screen
-	if [[ $self_debug_to_screen = true ]]; then
+	if [[ $self_debug_to_file = true ]]; then
 		max_forks=1
-		DebugInfo "limiting \$max_forks to $max_forks because debug mode is active"
+		reason='debug mode is active'
 	else
 		case ${1:-} in
 			clean)						# precautionary: don't make too-many calls to PyPI at the same time
 				max_forks=$(((max_forks+1)/2))
-				DebugInfo "limiting \$max_forks to $max_forks because '$1' action was requested"
+				reason="'$1'"
 				;;
 			install|reinstall|upgrade)	# don't execute these actions async: QTS installer for each package eventually aborts (looks like QTS can only manage a single package at-a-time, because packages overwrite each other, and package source files end-up in the wrong install paths)
 				max_forks=1
-				DebugInfo "limiting \$max_forks to $max_forks because '$1' action was requested"
+				reason="'$1'"
 				;;
 			sign)						# precautionary: don't create multiple writes to the certificate database at the same time
 				max_forks=1
-				DebugInfo "limiting \$max_forks to $max_forks because '$1' action was requested"
+				reason="'$1'"
 		esac
+
+		[[ -n $reason ]] && reason+=' action was requested'
 	fi
 
+	[[ -n $reason ]] && DebugInfo "limiting \$max_forks to $max_forks because $reason"
 	DebugVar max_forks
 
 	}
@@ -2777,6 +2789,8 @@ readonly HELP_COL_SPACER=' '
 readonly HELP_COL_MAIN_PREFIX='• '
 readonly HELP_COL_OTHER_PREFIX='- '
 readonly HELP_COL_BLANK_PREFIX='  '
+readonly HELP_COL_DROPTHRU_PREFIX='├─ '
+readonly HELP_COL_DROPEND_PREFIX='└─ '
 
 LenANSIDiff()
 	{
@@ -2851,9 +2865,10 @@ DisplayAsSynExam()
 DisplayAsHelpTitleNameAuthorDesc()
 	{
 
-	# $1 = package name title
-	# $2 = author title
-	# $2 = description title
+	# input:
+	#	$1 = package name title
+	#	$2 = author title
+	#	$2 = description title
 
 	Display
 	printf "${HELP_COL_MAIN_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s${HELP_COL_SPACER}${HELP_COL_MAIN_PREFIX}%-${HELP_PACKAGE_AUTHOR_WIDTH}s${HELP_COL_SPACER}${HELP_COL_MAIN_PREFIX}%s\n" "${1:-}:" "${2:-}:" "${3:-}:"
@@ -2863,11 +2878,12 @@ DisplayAsHelpTitleNameAuthorDesc()
 DisplayAsHelpNameAuthorDesc()
 	{
 
-	# $1 = 'normal/highlighted/muted'
-	# $2 = package name
-	# $3 = author
-	# $4 = description
-	# $5 = notes (optional)
+	# input:
+	#	$1 = 'normal/highlighted/muted'
+	#	$2 = package name
+	#	$3 = author
+	#	$4 = description
+	#	$5 = notes (optional)
 
 	local package_name=${2:-}
 	local package_name_msg="${HELP_COL_OTHER_PREFIX}$package_name"
@@ -2895,10 +2911,17 @@ DisplayAsHelpNameAuthorDesc()
 			fi
 	esac
 
+	# column 1: package name
 	printf "${HELP_COL_SPACER}%-$((${#HELP_COL_OTHER_PREFIX}+HELP_PACKAGE_NAME_WIDTH+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
+
+	# column 2: package author
 	printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%-$((HELP_PACKAGE_AUTHOR_WIDTH+$(LenANSIDiff "$package_author_msg")))s" "$package_author_msg"
+
+	# column 3: package description
 	printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%s" "$package_description_msg"
-	[[ -n $package_notes ]] && printf "\n%$(((${#HELP_COL_SPACER}*3)+(${#HELP_COL_BLANK_PREFIX}*3)+HELP_PACKAGE_NAME_WIDTH+HELP_PACKAGE_AUTHOR_WIDTH))s└─ %s" '' "$package_notes_msg"
+
+	# column 3: package description 2nd line
+	[[ -n $package_notes ]] && printf "\n%$(((${#HELP_COL_SPACER}*3)+(${#HELP_COL_BLANK_PREFIX}*3)+HELP_PACKAGE_NAME_WIDTH+HELP_PACKAGE_AUTHOR_WIDTH))s${HELP_COL_DROPEND_PREFIX}%s" '' "$package_notes_msg"
 
 	printf '\n'
 
@@ -2907,8 +2930,9 @@ DisplayAsHelpNameAuthorDesc()
 DisplayAsHelpTitleNameAbs()
 	{
 
-	# $1 = package name title
-	# $2 = abbreviations title
+	# input:
+	#	$1 = package name title
+	#	$2 = abbreviations title
 
 	Display
 	printf "${HELP_COL_MAIN_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s${HELP_COL_SPACER}${HELP_COL_MAIN_PREFIX}%s\n" "${1:-}:" "${2:-}:"
@@ -2918,8 +2942,9 @@ DisplayAsHelpTitleNameAbs()
 DisplayAsHelpNameAbs()
 	{
 
-	# $1 = package name
-	# $2 = abbreviations
+	# input:
+	#	$1 = package name
+	#	$2 = abbreviations
 
 	printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s${HELP_COL_SPACER}${HELP_COL_OTHER_PREFIX}%s\n" "${1:-}" "${2:-}"
 
@@ -2950,25 +2975,30 @@ CalcMaxStatusColsToDisplay()
 DisplayAsHelpTitleNameVerStatus()
 	{
 
-	# $1 = package name title
-	# $2 = package status title
-	# $3 = package version title
-	# $4 = package installation location (only if installed)
+	# input:
+	#	$1 = package name title
+	#	$2 = package status title
+	#	$3 = package version title
+	#	$4 = package installation location (only if installed)
 
 	DisplayLineSpaceIfNoneAlready
 
+	# column 1: package name
 	if [[ -n ${1:-} && $maxcols -ge 1 ]]; then
 		printf "${HELP_COL_MAIN_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s" "$1:"
 	fi
 
+	# column 2: package statuses
 	if [[ -n ${2:-} && $maxcols -ge 2 ]]; then
 		printf "${HELP_COL_SPACER}${HELP_COL_MAIN_PREFIX}%-${HELP_PACKAGE_STATUS_WIDTH}s" "$2:"
 	fi
 
+	# column 3: package version
 	if [[ -n ${3:-} && $maxcols -ge 3 ]]; then
 		printf "${HELP_COL_SPACER}${HELP_COL_MAIN_PREFIX}%-${HELP_PACKAGE_VER_WIDTH}s" "$3:"
 	fi
 
+	# column 4: package installation path
 	if [[ -n ${4:-} && $maxcols -ge 4 ]]; then
 		printf "${HELP_COL_SPACER}${HELP_COL_MAIN_PREFIX}%s" "$4:"
 	fi
@@ -2980,13 +3010,14 @@ DisplayAsHelpTitleNameVerStatus()
 DisplayAsHelpNameVerStatus()
 	{
 
-	# $1 = `normal/highlighted/muted`
-	# $2 = package name
-	# $3 = package status (optional) - only if installed
-	# $4 = package last result (optional)
-	# $5 = package current version number (optional) - only if installed
-	# $6 = package avilable/upgradable version number (optional)
-	# $7 = package installation path (optional) - only if installed
+	# input:
+	#	$1 = `normal/highlighted/muted`
+	#	$2 = package name
+	#	$3 = package status (optional) - only if installed
+	#	$4 = package last result (optional)
+	#	$5 = package current version number (optional) - only if installed
+	#	$6 = package avilable/upgradable version number (optional)
+	#	$7 = package installation path (optional) - only if installed
 
 	local package_name=${2:-}
 	local package_name_msg=$package_name
@@ -3058,18 +3089,22 @@ DisplayAsHelpNameVerStatus()
 			esac
 	esac
 
+	# column 1: package name
 	if [[ $maxcols -ge 1 ]]; then
 		printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%-$((HELP_PACKAGE_NAME_WIDTH+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
 	fi
 
+	# column 2: package statuses
 	if [[ -n $package_status && $maxcols -ge 2 ]]; then
 		printf "${HELP_COL_SPACER}%-$((${#HELP_COL_OTHER_PREFIX}+HELP_PACKAGE_STATUS_WIDTH+$(LenANSIDiff "$package_status_msg")))s" "$package_status_msg"
 	fi
 
+	# column 3: package version
 	if [[ -n $package_version_msg && $maxcols -ge 3 ]]; then
 		printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%-$((HELP_PACKAGE_VER_WIDTH+$(LenANSIDiff "$package_version_msg")))s" "$package_version_msg"
 	fi
 
+	# column 4: package installation path
 	if [[ -n $package_path && $maxcols -ge 4 ]]; then
 		printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%s" "$package_path_msg"
 	fi
@@ -3081,15 +3116,18 @@ DisplayAsHelpNameVerStatus()
 DisplayAsHelpTitleNameRepo()
 	{
 
-	# $1 = package name title
-	# $2 = assigned repository title
+	# input:
+	#	$1 = package name title
+	#	$2 = assigned repository title
 
 	DisplayLineSpaceIfNoneAlready
 
+	# column 1: package name
 	if [[ -n ${1:-} && $maxcols -ge 1 ]]; then
 		printf "${HELP_COL_MAIN_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s" "$1:"
 	fi
 
+	# column 2: package repository
 	if [[ -n ${2:-} && $maxcols -ge 2 ]]; then
 		printf "${HELP_COL_SPACER}${HELP_COL_MAIN_PREFIX}%-${HELP_PACKAGE_REPO_WIDTH}s" "$2:"
 	fi
@@ -3102,9 +3140,10 @@ DisplayAsHelpTitleNameRepo()
 DisplayAsHelpNameRepo()
 	{
 
-	# $1 = 'normal/highlighted/muted'
-	# $2 = package name
-	# $3 = assigned repository
+	# input:
+	#	$1 = 'normal/highlighted/muted'
+	#	$2 = package name
+	#	$3 = assigned repository
 
 	local package_name=${2:-}
 	local package_name_msg=$package_name
@@ -3139,10 +3178,12 @@ DisplayAsHelpNameRepo()
 			fi
 	esac
 
+	# column 1: package name
 	if [[ $maxcols -ge 1 ]]; then
 		printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%-$((HELP_PACKAGE_NAME_WIDTH+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
 	fi
 
+	# column 2: package repository
 	if [[ $maxcols -ge 2 ]]; then
 		printf "${HELP_COL_SPACER}%-$((HELP_PACKAGE_REPO_WIDTH+$(LenANSIDiff "$assigned_repo_msg")))s" "$assigned_repo_msg"
 	fi
@@ -3191,7 +3232,7 @@ DisplayAsActionResultNtLastLine()
 
 	# $1 = text
 
-	printf "%${ACTION_RESULT_INDENT}s├─ %s\n" '' "$1"
+	printf "%${ACTION_RESULT_INDENT}s${HELP_COL_DROPTHRU_PREFIX}%s\n" '' "$1"
 
 	}
 
@@ -3200,7 +3241,7 @@ DisplayAsActionResultLastLine()
 
 	# $1 = text
 
-	printf "%${ACTION_RESULT_INDENT}s└─ %s\n" '' "$1"
+	printf "%${ACTION_RESULT_INDENT}s${HELP_COL_DROPEND_PREFIX}%s\n" '' "$1"
 
 	}
 
@@ -3218,9 +3259,9 @@ DisplayAsIndentPrefixActionResultDurationReason()
 	[[ -n ${4:-} ]] && duration="$(FormatMillisecsToMinutesSecs "$4")"
 
 	if [[ -n ${5:-} ]]; then
-		printf "%${ACTION_RESULT_INDENT}s%s%s %s%s\n%${ACTION_RESULT_INDENT}s${HELP_COL_BLANK_PREFIX}${HELP_COL_BLANK_PREFIX}%s\n" '' "${1:-}" "$(Lowercase "${2:-}")" "${3:-}" "$([[ -n $duration ]] && echo -n " in $duration")" '' "$5"
+		printf "%${ACTION_RESULT_INDENT}s%s%s %s%s\n%${ACTION_RESULT_INDENT}s${HELP_COL_DROPEND_PREFIX}%s\n" '' "${1:-}" "$(Lowercase "${2:-}")" "${3:-}" "$([[ -n $duration ]] && printf ' in %s' "$duration")" '' "$5"
 	else
-		printf "%${ACTION_RESULT_INDENT}s%s%s %s%s\n" '' "${1:-}" "$(Lowercase "${2:-}")" "${3:-}" "$([[ -n $duration ]] && echo -n " in $duration")"
+		printf "%${ACTION_RESULT_INDENT}s%s%s %s%s\n" '' "${1:-}" "$(Lowercase "${2:-}")" "${3:-}" "$([[ -n $duration ]] && printf ' in %s' "$duration")"
 	fi
 
 	}
@@ -3230,7 +3271,7 @@ EraseThisLine()
 
 	# reset cursor to start-of-line, erasing entire line
 
-	[[ ${self_debug_to_screen:-false} = true ]] && return
+	[[ ${self_verbose:-false} = true ]] && return
 
 	echo -en "\033[2K\r"
 
@@ -3439,13 +3480,13 @@ Actions.Results:Show()
 	if [[ $found = false ]]; then
 		case $1 in
 			ok)
-				DisplayAsHelpTitle "No package actions completed $(ColourTextBrightGreen OK)"
+				DisplayAsHelpTitle "No package actions completed $(ColourTextBrightGreen OK)."
 				;;
 			skipped)
-				DisplayAsHelpTitle "No package actions were $(ColourTextBrightOrange skipped)"
+				DisplayAsHelpTitle "No package actions were $(ColourTextBrightOrange skipped)."
 				;;
 			failed)
-				DisplayAsHelpTitle "No package actions $(ColourTextBrightRed failed)"
+				DisplayAsHelpTitle "No package actions $(ColourTextBrightRed failed)."
 		esac
 	fi
 
@@ -3823,7 +3864,7 @@ UpdateForkProgress()
 	local msg=': '
 
 	RefreshForkCounts
-	[[ $self_debug_to_screen = true ]] && return		# don't display progress, it's impossible to view it with so-many other writes to the screen.
+	[[ $self_verbose = true ]] && return		# don't display progress, it's impossible to view it with so-many other writes to the screen.
 
 	msg+="$(PercFrac "$ok_count" "$((skip_count+skip_ok_count+skip_error_count))" "$fail_count" "$total_count")"
 
@@ -4923,6 +4964,28 @@ GetDefVol()
 
 	}
 
+OS.IsCompatibleWithSigned()
+	{
+
+	# QTS builds released over these 6 days don't allow unsigned QPKGs to run at-all
+	[[ $NAS_FIRMWARE_DATE -lt 20201015 || $NAS_FIRMWARE_DATE -gt 20201020 ]]
+
+	}
+
+OS.IsSupported()
+	{
+
+	[[ ${NAS_FIRMWARE_VER//.} -ge 400 ]]
+
+	}
+
+OS.IsSupportSignedPackages()
+	{
+
+	[[ ${NAS_FIRMWARE_VER//.} -ge 435 ]]
+
+	}
+
 OS.IsAllowUnsignedPackages()
 	{
 
@@ -5148,7 +5211,7 @@ Self.LockFile:Release()
 Self.Verbose:Enable()
 	{
 
-	self_debug_to_screen=true
+	self_verbose=true
 	Keystrokes:Show
 	Cursor:Show
 	EnableDebugToArchiveAndFile
@@ -5235,7 +5298,7 @@ _QPKG:reassign_()
 	# output:
 	#   $? = none, this function executes in the background
 
-	[[ $self_debug_to_screen != true ]] && exec &>/dev/null
+	[[ $self_verbose != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
 	PACKAGE_NAME=${1:?package name null}
@@ -5283,7 +5346,7 @@ _QPKG:download_()
 	# output:
 	#   $? = none, this function executes in the background
 
-	[[ $self_debug_to_screen != true ]] && exec &>/dev/null
+	[[ $self_verbose != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
 	PACKAGE_NAME=${1:?package name null}
@@ -5357,7 +5420,7 @@ _QPKG:install_()
 	# output:
 	#   $? = none, this function executes in the background
 
-	[[ $self_debug_to_screen != true ]] && exec &>/dev/null
+	[[ $self_verbose != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
 	PACKAGE_NAME=${1:?package name null}
@@ -5402,7 +5465,7 @@ _QPKG:install_()
 	local target_path=''
 
 	DebugAsProc "installing $(FormatAsPackName "$PACKAGE_NAME")"
-	[[ $self_debug_to_screen = true ]] && debug_cmd='DEBUG_QPKG=true '
+	[[ $self_debug_to_file = true ]] && debug_cmd='DEBUG_QPKG=true '
 
 	[[ ${QPKGs_were_installed_name[*]:-} = *"$PACKAGE_NAME"* ]] && target_path="QINSTALL_PATH=$(QPKG.OriginalPath "$PACKAGE_NAME") "
 	RunAndLog "${debug_cmd}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$INSTALL_LOG_FILE" log:failure-only 10
@@ -5474,7 +5537,7 @@ _QPKG:reinstall_()
 	# output:
 	#   $? = none, this function executes in the background
 
-	[[ $self_debug_to_screen != true ]] && exec &>/dev/null
+	[[ $self_verbose != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
 	PACKAGE_NAME=${1:?package name null}
@@ -5498,7 +5561,7 @@ _QPKG:reinstall_()
 	local target_path=''
 
 	DebugAsProc "reinstalling $(FormatAsPackName "$PACKAGE_NAME")"
-	[[ $self_debug_to_screen = true ]] && debug_cmd='DEBUG_QPKG=true '
+	[[ $self_debug_to_file = true ]] && debug_cmd='DEBUG_QPKG=true '
 
 	QPKG.IsInstalled "$PACKAGE_NAME" && target_path="QINSTALL_PATH=$($DIRNAME_CMD "$(QPKG.InstallationPath $PACKAGE_NAME)") "
 	RunAndLog "${debug_cmd}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$REINSTALL_LOG_FILE" log:failure-only 10
@@ -5547,7 +5610,7 @@ _QPKG:upgrade_()
 	# output:
 	#   $? = none, this function executes in the background
 
-	[[ $self_debug_to_screen != true ]] && exec &>/dev/null
+	[[ $self_verbose != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
 	PACKAGE_NAME=${1:?package name null}
@@ -5584,7 +5647,7 @@ _QPKG:upgrade_()
 	local target_path=''
 
 	DebugAsProc "upgrading $(FormatAsPackName "$PACKAGE_NAME")"
-	[[ $self_debug_to_screen = true ]] && debug_cmd='DEBUG_QPKG=true '
+	[[ $self_debug_to_file = true ]] && debug_cmd='DEBUG_QPKG=true '
 
 	QPKG.IsInstalled "$PACKAGE_NAME" && target_path="QINSTALL_PATH=$($DIRNAME_CMD "$(QPKG.InstallationPath "$PACKAGE_NAME")") "
 	RunAndLog "${debug_cmd}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$UPGRADE_LOG_FILE" log:failure-only 10
@@ -5640,7 +5703,7 @@ _QPKG:uninstall_()
 	# output:
 	#   $? = none, this function executes in the background
 
-	[[ $self_debug_to_screen != true ]] && exec &>/dev/null
+	[[ $self_verbose != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
 	PACKAGE_NAME=${1:?package name null}
@@ -5666,7 +5729,7 @@ _QPKG:uninstall_()
 
 	if [[ -e $QPKG_UNINSTALLER_PATHFILE ]]; then
 		DebugAsProc "uninstalling $(FormatAsPackName "$PACKAGE_NAME")"
-		[[ $self_debug_to_screen = true ]] && debug_cmd='DEBUG_QPKG=true '
+		[[ $self_debug_to_file = true ]] && debug_cmd='DEBUG_QPKG=true '
 
 		[[ $PACKAGE_NAME = Entware ]] && SendParentChangeEnv Cursor:Show
 
@@ -5718,7 +5781,7 @@ _QPKG:restart_()
 	# output:
 	#   $? = none, this function executes in the background
 
-	[[ $self_debug_to_screen != true ]] && exec &>/dev/null
+	[[ $self_verbose != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
 	PACKAGE_NAME=${1:?package name null}
@@ -5737,7 +5800,7 @@ _QPKG:restart_()
 	DebugAsProc "restarting $(FormatAsPackName "$PACKAGE_NAME")"
 	QPKG:enable
 
-	if [[ $self_debug_to_screen = true ]]; then
+	if [[ $self_debug_to_file = true ]]; then
 		debug_cmd='DEBUG_QPKG=true '
 		RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) restart" "$LOG_PATHFILE" log:failure-only
 		result_code=$?
@@ -5775,7 +5838,7 @@ _QPKG:start_()
 	# output:
 	#   $? = none, this function executes in the background
 
-	[[ $self_debug_to_screen != true ]] && exec &>/dev/null
+	[[ $self_verbose != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
 	PACKAGE_NAME=${1:?package name null}
@@ -5801,7 +5864,7 @@ _QPKG:start_()
 	DebugAsProc "starting $(FormatAsPackName "$PACKAGE_NAME")"
 	QPKG:enable
 
-	if [[ $self_debug_to_screen = true ]]; then
+	if [[ $self_debug_to_file = true ]]; then
 		debug_cmd='DEBUG_QPKG=true '
 		RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) start" "$LOG_PATHFILE" log:failure-only
 		result_code=$?
@@ -5848,7 +5911,7 @@ _QPKG:stop_()
 	# output:
 	#   $? = none, this function executes in the background
 
-	[[ $self_debug_to_screen != true ]] && exec &>/dev/null
+	[[ $self_verbose != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
 	PACKAGE_NAME=${1:?package name null}
@@ -5877,7 +5940,7 @@ _QPKG:stop_()
 	DebugAsProc "stopping $(FormatAsPackName "$PACKAGE_NAME")"
 	[[ $PACKAGE_NAME = Entware ]] && UpdateColourisation
 
-	if [[ $self_debug_to_screen = true ]]; then
+	if [[ $self_debug_to_file = true ]]; then
 		debug_cmd='DEBUG_QPKG=true '
 		RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) stop" "$LOG_PATHFILE" log:failure-only
 		result_code=$?
@@ -5950,7 +6013,7 @@ _QPKG:backup_()
 	# output:
 	#   $? = none, this function executes in the background
 
-	[[ $self_debug_to_screen != true ]] && exec &>/dev/null
+	[[ $self_verbose != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
 	PACKAGE_NAME=${1:?package name null}
@@ -5971,7 +6034,7 @@ _QPKG:backup_()
 	fi
 
 	DebugAsProc "backing-up $(FormatAsPackName "$PACKAGE_NAME") configuration"
-	[[ $self_debug_to_screen = true ]] && debug_cmd='DEBUG_QPKG=true '
+	[[ $self_debug_to_file = true ]] && debug_cmd='DEBUG_QPKG=true '
 
 	RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) backup" "$LOGS_PATH/$PACKAGE_NAME.$BACKUP_LOG_FILE" log:failure-only
 	result_code=$?
@@ -6003,7 +6066,7 @@ _QPKG:restore_()
 	# output:
 	#   $? = none, this function executes in the background
 
-	[[ $self_debug_to_screen != true ]] && exec &>/dev/null
+	[[ $self_verbose != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
 	PACKAGE_NAME=${1:?package name null}
@@ -6024,7 +6087,7 @@ _QPKG:restore_()
 	fi
 
 	DebugAsProc "restoring $(FormatAsPackName "$PACKAGE_NAME") configuration"
-	[[ $self_debug_to_screen = true ]] && debug_cmd='DEBUG_QPKG=true '
+	[[ $self_debug_to_file = true ]] && debug_cmd='DEBUG_QPKG=true '
 
 	RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) restore" "$LOGS_PATH/$PACKAGE_NAME.$RESTORE_LOG_FILE" log:failure-only
 	result_code=$?
@@ -6056,7 +6119,7 @@ _QPKG:clean_()
 	# output:
 	#   $? = none, this function executes in the background
 
-	[[ $self_debug_to_screen != true ]] && exec &>/dev/null
+	[[ $self_verbose != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
 	PACKAGE_NAME=${1:?package name null}
@@ -6077,7 +6140,7 @@ _QPKG:clean_()
 	fi
 
 	DebugAsProc "cleaning $(FormatAsPackName "$PACKAGE_NAME")"
-	[[ $self_debug_to_screen = true ]] && debug_cmd='DEBUG_QPKG=true '
+	[[ $self_debug_to_file = true ]] && debug_cmd='DEBUG_QPKG=true '
 
 	RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) clean" "$LOGS_PATH/$PACKAGE_NAME.$CLEAN_LOG_FILE" log:failure-only
 	result_code=$?
@@ -6113,7 +6176,7 @@ _QPKG:sign_()
 	# output:
 	#   $? = none, this function executes in the background
 
-	[[ $self_debug_to_screen != true ]] && exec &>/dev/null
+	[[ $self_verbose != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
 	local -r PACKAGE_NAME=${1:?package name null}
@@ -6123,7 +6186,7 @@ _QPKG:sign_()
 	local signature=''
 	local cmd=''
 
-	if [[ ${NAS_FIRMWARE_VER//.} -lt 435 ]]; then
+	if ! OS.IsSupportSignedPackages; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped 'not required: firmware < 4.3.5'
 		result_code=2
 	elif ! QPKGs-ISinstalled:Exist "$PACKAGE_NAME"; then
@@ -6997,7 +7060,7 @@ RunAndLog()
 	FormatAsCommand "${1:?null}" > "${2:?null}"
 	DebugAsProc "exec: '$1'"
 
-	if [[ $self_debug_to_screen = true ]]; then
+	if [[ $self_verbose = true ]]; then
 		eval "$1 > >($TEE_CMD $LOG_PATHFILE) 2>&1"	# NOTE: `tee` buffers stdout here
 		result_code=$?
 	else
@@ -7623,7 +7686,7 @@ DebugThis()
 	{
 
 	[[ -z ${1:-} ]] && return
-	[[ ${self_debug_to_screen:-false} = true ]] && ShowAsDebug "${1:-}"
+	[[ ${self_verbose:-false} = true ]] && ShowAsDebug "${1:-}"
 	WriteToLog dbug "${1:-}"
 
 	}
@@ -7634,14 +7697,14 @@ AddExtLogToSessLog()
 	# Add the contents of pathfile $1 to the session debug log, with each line formatted as an external log entry
 
 	local linebuff=''
-	local original_screen_debug=false
+	local original_verbose=false
 
 	DebugAsLog 'adding external log to main log'
 	DebugExtLogMinSepr
 
-	if [[ $self_debug_to_screen = true ]]; then   # prevent external log contents appearing onscreen again, because they've already been seen "live"
-		original_screen_debug=true
-		self_debug_to_screen=false
+	if [[ $self_verbose = true ]]; then   # prevent external log contents appearing onscreen again, because they've already been seen "live"
+		original_verbose=true
+		self_verbose=false
 	fi
 
 	DebugAsLog "$(FormatAsLogFilename "${1:?filename null}")"
@@ -7650,7 +7713,7 @@ AddExtLogToSessLog()
 		DebugAsLog "$linebuff"
 	done < "${1:?filename null}"
 
-	self_debug_to_screen=$original_screen_debug
+	self_verbose=$original_verbose
 	DebugExtLogMinSepr
 
 	}
@@ -7671,7 +7734,7 @@ ShowAsProc()
 	EraseThisLine
 	WriteToDisplayWait "$(ColourTextBrightYellow proc)" "${1:-}${suffix}"
 	WriteToLog proc "${1:-}${suffix}"
-	[[ ${self_debug_to_screen:=false} = true ]] && Display
+	[[ ${self_verbose:=false} = true ]] && Display
 
 	} >&2
 
@@ -7974,7 +8037,7 @@ ShowAsActionLogDetail()
 	case ${4:-} in
 		skipped|skipped-failed)
 			if [[ -n "${6:-}" ]]; then
-				DisplayAsIndentPrefixActionResultDurationReason '' "$3" "$2" '' "Reason: $6"
+				DisplayAsIndentPrefixActionResultDurationReason '' "$3" "$2" '' "reason: $6"
 			else
 				DisplayAsIndentPrefixActionResultDurationReason '' "$3" "$2" '' "no reason was provided by $(FormatAsTitle)"
 			fi
@@ -7984,7 +8047,7 @@ ShowAsActionLogDetail()
 				if QPKG.IsCanLog "$2"; then
 					DisplayAsIndentPrefixActionResultDurationReason 'Unable to ' "$3" "$2" "$5" "For more information, please check the service log: /etc/init.d/$($BASENAME_CMD "$(QPKG.ServicePathFile "$2")") log"
 				else
-					DisplayAsIndentPrefixActionResultDurationReason 'Unable to ' "$3" "$2" "$5" "Reason: $6"
+					DisplayAsIndentPrefixActionResultDurationReason 'Unable to ' "$3" "$2" "$5" "reason: $6"
 				fi
 			else
 				DisplayAsIndentPrefixActionResultDurationReason 'Unable to ' "$3" "$2" "$5" 'no reason was provided by the service script'
