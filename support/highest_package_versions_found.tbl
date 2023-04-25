@@ -40,4 +40,4 @@ sha3sum_230312_x86_64.qpkg.md5       sha3sum_230312_x86_64.qpkg       sha3sum   
 sha3sum_230312_x86.qpkg.md5          sha3sum_230312_x86.qpkg          sha3sum              230312       i86    fdba9d16b88a5b6e3b04483ca77706dd
 sherpa_230325.qpkg.md5               sherpa_230325.qpkg               sherpa               230325       all    cbee54aaf49b62cd241cecd2d5405dba
 SortMyQPKGs_230227.qpkg.md5          SortMyQPKGs_230227.qpkg          SortMyQPKGs          230227       all    2fa79be955541a10384b9749e8a1baee
-WebSSH_230426.qpkg.md5               WebSSH_230426.qpkg               WebSSH               230426       all    62e43e7929e957223ac85b6b8a4f0224
+WebSSH_230426a.qpkg.md5              WebSSH_230426a.qpkg              WebSSH               230426a      all    ec9366aa3ae1b7eb4ac3d410d8390ab0

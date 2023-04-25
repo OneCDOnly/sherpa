@@ -20,7 +20,7 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=WebSSH
-	readonly SCRIPT_VERSION=230426
+	readonly SCRIPT_VERSION=230426a
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -182,7 +182,7 @@ StartQPKG()
 		return 1
 	fi
 
-	DisplayRunAndLog 'start daemon' "$LAUNCHER" '' background || { SetError; return 1 ;}
+	DisplayRunAndLog 'start daemon' ". $VENV_PATH/bin/activate && /opt/bin/nohup $LAUNCHER" '' background || { SetError; return 1 ;}
 	WritePID || { SetError; return 1 ;}
 	WaitForPID || { SetError; return 1 ;}
 	IsDaemonActive || { SetError; return 1 ;}
