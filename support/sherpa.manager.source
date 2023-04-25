@@ -3259,9 +3259,9 @@ DisplayAsIndentPrefixActionResultDurationReason()
 	[[ -n ${4:-} ]] && duration="$(FormatMillisecsToMinutesSecs "$4")"
 
 	if [[ -n ${5:-} ]]; then
-		printf "%${ACTION_RESULT_INDENT}s%s%s %s%s\n%${ACTION_RESULT_INDENT}s${HELP_COL_DROPEND_PREFIX}%s\n" '' "${1:-}" "$(Lowercase "${2:-}")" "${3:-}" "$([[ -n $duration ]] && printf " in $duration")" '' "$5"
+		printf "%${ACTION_RESULT_INDENT}s%s%s %s%s\n%${ACTION_RESULT_INDENT}s${HELP_COL_DROPEND_PREFIX}%s\n" '' "${1:-}" "$(Lowercase "${2:-}")" "${3:-}" "$([[ -n $duration ]] && printf ' in %s' "$duration")" '' "$5"
 	else
-		printf "%${ACTION_RESULT_INDENT}s%s%s %s%s\n" '' "${1:-}" "$(Lowercase "${2:-}")" "${3:-}" "$([[ -n $duration ]] && printf " in $duration")"
+		printf "%${ACTION_RESULT_INDENT}s%s%s %s%s\n" '' "${1:-}" "$(Lowercase "${2:-}")" "${3:-}" "$([[ -n $duration ]] && printf ' in %s' "$duration")"
 	fi
 
 	}
