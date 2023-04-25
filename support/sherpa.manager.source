@@ -62,6 +62,8 @@ Self:Init()
 	UpdateColourisation
 	DefaultConsts:Load
 
+	sess_active_pathfile=$THIS_PACKAGE_PATH/session.$$.active.log
+
 	trap RunOnEXIT EXIT
 	trap RunOnSIGINT INT
 
@@ -198,17 +200,17 @@ DefaultVars:Load()
 
 	# default values
 	backup_stdin_fd=none
+	colourful=true
 	ipks_install=false
 	ipks_upgrade=false
 	msg_pipe_fd=none
 	pips_install=false
 	skip_qpkg_processing=false
-	colourful=true
 
-	self_verbose=false
 	self_display_clean=false
 	self_display_zero_qpkgs=true
 	self_linespace_onscreen=false
+	self_verbose=false
 
 	opts_help_abbreviations=false
 	opts_help_action_reassign=false
@@ -245,6 +247,9 @@ DefaultConsts:Load()
 
 	# default values
 	readonly THIS_PACKAGE_PATH=$(QPKG.InstallationPath)
+	readonly THIS_PACKAGE_VER=$(QPKG.Local.Ver)
+	readonly THIS_SCRIPT_VER='<?today?>-<?branch?>'
+
 	readonly CACHE_PATH=$THIS_PACKAGE_PATH/cache
 	readonly LOGS_PATH=$THIS_PACKAGE_PATH/logs
 	readonly QPKG_DL_PATH=$CACHE_PATH/QPKGs.downloads
@@ -264,24 +269,42 @@ DefaultConsts:Load()
 	readonly PACKAGES_ARCHIVE_PATHFILE=$CACHE_PATH/packages.tar.gz
 
 	readonly EXTERNAL_PACKAGES_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
-	readonly EXTERNAL_PACKAGES_PATHFILE=$CACHE_PATH/Packages	# this is the file used by Entware
+	readonly EXTERNAL_PACKAGES_PATHFILE=$CACHE_PATH/Packages	# used by Entware
 
 	readonly PREV_IPK_LIST=$CACHE_PATH/ipk.prev.list
 	readonly PREV_PIP_LIST=$CACHE_PATH/pip.prev.list
 
 	readonly SESS_ARCHIVE_PATHFILE=$LOGS_PATH/session.archive.log
-	sess_active_pathfile=$THIS_PACKAGE_PATH/session.$$.active.log
 	readonly SESS_LAST_PATHFILE=$LOGS_PATH/session.last.log
 	readonly SESS_TAIL_PATHFILE=$LOGS_PATH/session.tail.log
 	readonly SESS_ACTIONS_RESULTS_PATHFILE=$LOGS_PATH/session.action.results.log
 
-	readonly THIS_PACKAGE_VER=$(QPKG.Local.Ver)
-	readonly THIS_SCRIPT_VER='<?today?>-<?branch?>'
+	readonly HELP_DESC_INDENT=3
+	readonly HELP_FILE_NAME_WIDTH=33
+	readonly ACTION_RESULT_INDENT=6
 
-	}
+	readonly HELP_SYNTAX_INDENT=6
+	readonly HELP_SYNTAX_REGULAR_PROMPT='$ '
+	readonly HELP_SYNTAX_SUDO_PROMPT=${HELP_SYNTAX_REGULAR_PROMPT}'sudo '
+	readonly HELP_SYNTAX_SUPER_PROMPT='# '
 
-Env:Confirm()
-	{
+	readonly HELP_PACKAGE_NAME_WIDTH=21
+	readonly HELP_PACKAGE_AUTHOR_WIDTH=18
+	readonly HELP_PACKAGE_STATUS_WIDTH=32
+	readonly HELP_PACKAGE_VER_WIDTH=20
+	readonly HELP_PACKAGE_PATH_WIDTH=42
+	readonly HELP_PACKAGE_REPO_WIDTH=40
+
+	readonly HELP_COL_SPACER=' '
+	readonly HELP_COL_MAIN_PREFIX='• '
+	readonly HELP_COL_OTHER_PREFIX='- '
+	readonly HELP_COL_BLANK_PREFIX='  '
+	readonly HELP_COL_DROPTHRU_PREFIX='├─ '
+	readonly HELP_COL_DROPEND_PREFIX='└─ '
+
+	readonly DEBUG_LOG_DATAWIDTH=100
+	readonly DEBUG_LOG_FIRST_COL_WIDTH=9
+	readonly DEBUG_LOG_SECOND_COL_WIDTH=17
 
 	# cherry-pick required Entware binaries
 	readonly OPKG_CMD=/opt/bin/opkg
@@ -299,10 +322,6 @@ Env:Confirm()
 	readonly PIP_CMD="$PYTHON3_CMD -m pip"
 	readonly PERL_CMD=/opt/bin/perl
 
-	Keystrokes:Hide
-	Cursor:Hide
-
-	# cherry-pick required OS binaries
 	readonly AWK_CMD=/bin/awk
 	readonly CAT_CMD=/bin/cat
 	readonly DATE_CMD=/bin/date
@@ -335,6 +354,14 @@ Env:Confirm()
 	readonly UNZIP_CMD=/usr/bin/unzip
 	readonly UPTIME_CMD=/usr/bin/uptime
 	readonly WC_CMD=/usr/bin/wc
+
+	}
+
+Env:Confirm()
+	{
+
+	Keystrokes:Hide
+	Cursor:Hide
 
 	# Confirm required binaries are present
 	IsSysFileExist $AWK_CMD || return
@@ -876,7 +903,7 @@ Actions:Proc()
 		QPKGs.Actions:List
 	fi
 
-	[[ $self_verbose = true ]] && QPKGs.States:List rebuild	# rebuild these after processing QPKGs to get current states
+	[[ $self_verbose = true ]] && QPKGs.States:List rebuild		# rebuild these after processing QPKGs to get current states
 	Func:Exit
 
 	}
@@ -1044,7 +1071,7 @@ Action:Proc()
 			[[ $skip_count -gt 0 || $skip_error_count -gt 0 ]] && opts_help_skipped=true
 			[[ $fail_count -gt 0 ]] && opts_help_failed=true
 
-			[[ ${#target_packages[@]} -gt 0 ]] && KillActiveFork		# this should only be needed if an action fork didn't exit properly
+			[[ ${#target_packages[@]} -gt 0 ]] && KillActiveFork		# should only be needed if an action fork didn't exit properly
 			wait 2>/dev/null
 			CloseActionMsgPipe
 
@@ -1087,12 +1114,14 @@ OpenActionMsgPipe()
 	[[ -p $ACTION_MSG_PIPE ]] && rm "$ACTION_MSG_PIPE"
 	[[ ! -p $ACTION_MSG_PIPE ]] && mknod "$ACTION_MSG_PIPE" p
 
+	# create a file descriptor to store original stdin FD
 	backup_stdin_fd=$(FindNextFD)
 	DebugVar backup_stdin_fd
 
 	# backup original stdin file descriptor so it can be restored later
 	eval "exec $backup_stdin_fd>&0"
 
+	# create another file descriptor to use in message pipe
 	msg_pipe_fd=$(FindNextFD)
 	DebugVar msg_pipe_fd
 
@@ -1115,6 +1144,7 @@ CloseActionMsgPipe()
 	# delete message pipe FD
 	[[ $msg_pipe_fd != none ]] && eval "exec $msg_pipe_fd>&-"
 
+	# delete message pipe
 	[[ -p $ACTION_MSG_PIPE ]] && rm "$ACTION_MSG_PIPE"
 
 	}
@@ -2113,7 +2143,7 @@ UpdateEntwarePackageList()
 	local -r CHANGE_THRESHOLD_MINUTES=60
 	local -i result_code=0
 
-	# if Entware package list was recently updated, don't update again.
+	# if Entware package list was recently updated, don't update again
 	if ! IsThisFileRecent "$EXTERNAL_PACKAGES_ARCHIVE_PATHFILE" "$CHANGE_THRESHOLD_MINUTES" || [[ ! -f $EXTERNAL_PACKAGES_ARCHIVE_PATHFILE || $opts_deps_check = true ]]; then
 		DebugAsProc "updating $(FormatAsPackName Entware) package list"
 
@@ -2710,9 +2740,10 @@ GetThisBinPath()
 DebugBinPathVerAndMinVer()
 	{
 
-	# $1 = binary filename
-	# $2 = current version found
-	# $3 = minimum version required
+	# input:
+	#	$1 = binary filename
+	#	$2 = current version found
+	#	$3 = minimum version required
 
 	[[ -n ${1:-} ]] || return
 
@@ -2769,29 +2800,6 @@ IsNtSysFileExist()
 
 	}
 
-readonly HELP_DESC_INDENT=3
-readonly HELP_FILE_NAME_WIDTH=33
-readonly ACTION_RESULT_INDENT=6
-
-readonly HELP_SYNTAX_INDENT=6
-readonly HELP_SYNTAX_REGULAR_PROMPT='$ '
-readonly HELP_SYNTAX_SUDO_PROMPT=${HELP_SYNTAX_REGULAR_PROMPT}'sudo '
-readonly HELP_SYNTAX_SUPER_PROMPT='# '
-
-readonly HELP_PACKAGE_NAME_WIDTH=21
-readonly HELP_PACKAGE_AUTHOR_WIDTH=18
-readonly HELP_PACKAGE_STATUS_WIDTH=32
-readonly HELP_PACKAGE_VER_WIDTH=20
-readonly HELP_PACKAGE_PATH_WIDTH=42
-readonly HELP_PACKAGE_REPO_WIDTH=40
-
-readonly HELP_COL_SPACER=' '
-readonly HELP_COL_MAIN_PREFIX='• '
-readonly HELP_COL_OTHER_PREFIX='- '
-readonly HELP_COL_BLANK_PREFIX='  '
-readonly HELP_COL_DROPTHRU_PREFIX='├─ '
-readonly HELP_COL_DROPEND_PREFIX='└─ '
-
 LenANSIDiff()
 	{
 
@@ -2807,8 +2815,9 @@ DisplayAsProjSynExam()
 
 	# display as project syntax example
 
-	# $1 = description
-	# $2 = example syntax
+	# input:
+	#	$1 = description
+	#	$2 = example syntax
 
 	Display
 
@@ -2827,8 +2836,9 @@ DisplayAsProjSynIndentExam()
 
 	# display as project syntax indented example
 
-	# $1 = description
-	# $2 = example syntax
+	# input:
+	#	$1 = description
+	#	$2 = example syntax
 
 	if [[ -z ${1:-} ]]; then
 		printf "%${HELP_SYNTAX_INDENT}s${help_syntax_sudo_prefix}%s\n" '' "sherpa ${2:-}"
@@ -2847,8 +2857,9 @@ DisplayAsSynExam()
 
 	# display as syntax example
 
-	# $1 = description
-	# $2 = example syntax
+	# input:
+	#	$1 = description
+	#	$2 = example syntax
 
 	if [[ -z ${2:-} && ${1: -1} = ':' ]]; then
 		printf "\n${HELP_COL_MAIN_PREFIX}%s\n" "$1"
@@ -3195,8 +3206,9 @@ DisplayAsHelpNameRepo()
 DisplayAsHelpTitleFileNamePlusSomething()
 	{
 
-	# $1 = file name title
-	# $2 = second column title
+	# input:
+	#	$1 = file name title
+	#	$2 = second column title
 
 	DisplayLineSpaceIfNoneAlready
 	printf "${HELP_COL_MAIN_PREFIX}%-${HELP_FILE_NAME_WIDTH}s ${HELP_COL_MAIN_PREFIX}%s\n" "$(Capitalise "${1:-}"):" "$(Capitalise "${2:-}"):"
@@ -3207,7 +3219,8 @@ DisplayAsHelpTitleFileNamePlusSomething()
 DisplayAsHelpTitle()
 	{
 
-	# $1 = text
+	# input:
+	#	$1 = text
 
 	DisplayLineSpaceIfNoneAlready
 	printf "${HELP_COL_MAIN_PREFIX}%s\n" "$(Capitalise "${1:-}" | tr -s ' ')"
@@ -3218,7 +3231,8 @@ DisplayAsHelpTitle()
 DisplayAsHelpTitleHighlighted()
 	{
 
-	# $1 = text
+	# input:
+	#	$1 = text
 
 	DisplayLineSpaceIfNoneAlready
 	# shellcheck disable=2059
@@ -3230,7 +3244,8 @@ DisplayAsHelpTitleHighlighted()
 DisplayAsActionResultNtLastLine()
 	{
 
-	# $1 = text
+	# input:
+	#	$1 = text
 
 	printf "%${ACTION_RESULT_INDENT}s${HELP_COL_DROPTHRU_PREFIX}%s\n" '' "$1"
 
@@ -3239,7 +3254,8 @@ DisplayAsActionResultNtLastLine()
 DisplayAsActionResultLastLine()
 	{
 
-	# $1 = text
+	# input:
+	#	$1 = text
 
 	printf "%${ACTION_RESULT_INDENT}s${HELP_COL_DROPEND_PREFIX}%s\n" '' "$1"
 
@@ -3248,11 +3264,12 @@ DisplayAsActionResultLastLine()
 DisplayAsIndentPrefixActionResultDurationReason()
 	{
 
-	# $1 = prefix message (optional)
-	# $2 = action
-	# $3 = result message
-	# $4 = duration in milliseconds (optional)
-	# $5 = reason message (optional)
+	# input:
+	#	$1 = prefix message (optional)
+	#	$2 = action
+	#	$3 = result message
+	#	$4 = duration in milliseconds (optional)
+	#	$5 = reason message (optional)
 
 	local duration=''
 
@@ -3439,7 +3456,8 @@ Help.Issue:Show()
 Actions.Results:Show()
 	{
 
-	# $1 = `ok`, `skipped`, `failed`
+	# input:
+	#	$1 = `ok`, `skipped`, `failed`
 
 	local -i datetime=0
 	local action=''
@@ -3675,7 +3693,8 @@ Log.Tail:Paste()
 GetLogSessStartLine()
 	{
 
-	# $1 = how many sessions back? (optional) default = 1
+	# input:
+	#	$1 = how many sessions back? (optional) default = 1
 
 	local -i linenum=$(($($GREP_CMD -n 'SCRIPT:.*started:' "$SESS_TAIL_PATHFILE" | $TAIL_CMD -n${1:-1} | $HEAD_CMD -n1 | cut -d':' -f1)-1))
 	[[ $linenum -lt 1 ]] && linenum=1
@@ -3686,7 +3705,8 @@ GetLogSessStartLine()
 GetLogSessFinishLine()
 	{
 
-	# $1 = how many sessions back? (optional) default = 1
+	# input:
+	#	$1 = how many sessions back? (optional) default = 1
 
 	local -i linenum=$(($($GREP_CMD -n 'SCRIPT:.*finished:' "$SESS_TAIL_PATHFILE" | $TAIL_CMD -n${1:-1} | cut -d':' -f1)+2))
 	[[ $linenum -eq 2 ]] && linenum=3
@@ -3731,7 +3751,7 @@ ExtractPrevSessFromTail()
 	local -i end_line=0
 	local -i old_session=1
 
-	# don't try to find `started:` further back than this many sessions
+	# don't try to find "started:" further back than this many sessions
 	local -i old_session_limit=12
 
 	ExtractTailFromLog
@@ -3864,7 +3884,7 @@ UpdateForkProgress()
 	local msg=': '
 
 	RefreshForkCounts
-	[[ $self_verbose = true ]] && return		# don't display progress, it's impossible to view it with so-many other writes to the screen.
+	[[ $self_verbose = true ]] && return		# don't display progress, it's impossible to view it with so-many other writes to the screen
 
 	msg+="$(PercFrac "$ok_count" "$((skip_count+skip_ok_count+skip_error_count))" "$fail_count" "$total_count")"
 
@@ -3920,8 +3940,9 @@ QPKGs.NewVers:Show()
 
 	# Check installed QPKGs and compare versions against upgradable array. If new versions are available, advise on-screen.
 
-	# $? = 0 if all packages are up-to-date
-	# $? = 1 if one-or-more packages can be upgraded
+	# output:
+	#	$? = 0 if all packages are up-to-date
+	#	$? = 1 if one-or-more packages can be upgraded
 
 	local -a upgradable_packages=()
 	local -i index=0
@@ -4095,7 +4116,8 @@ QPKGs.Actions:ListAll()
 QPKGs.States:List()
 	{
 
-	# $1 (optional passthrough) = `rebuild` - clear existing lists and rebuild them from scratch
+	# input:
+	#	$1 (optional passthrough) = `rebuild` - clear existing lists and rebuild them from scratch
 
 	[[ $self_debug_to_file = true ]] || return
 
@@ -4174,7 +4196,8 @@ QPKGs.States:Build()
 	#   - have config blocks in [/etc/config/qpkg.conf], but no files on-disk
 	#   - those in the process of starting, stopping, or restarting
 
-	# $1 (optional) = `rebuild` - clear existing lists and rebuild them from scratch
+	# input:
+	#	$1 (optional) = `rebuild` - clear existing lists and rebuild them from scratch
 
 	local state=''
 
@@ -4996,7 +5019,8 @@ OS.IsAllowUnsignedPackages()
 GetRepoURLFromStoreID()
 	{
 
-	# $1 = store ID to lookup repo URL for
+	# input:
+	#	$1 = store ID to lookup repo URL for
 
 	[[ -n ${1:-} ]] || return
 
@@ -7311,10 +7335,6 @@ DisplayLineSpaceIfNoneAlready()
 	fi
 
 	}
-
-readonly DEBUG_LOG_DATAWIDTH=100
-readonly DEBUG_LOG_FIRST_COL_WIDTH=9
-readonly DEBUG_LOG_SECOND_COL_WIDTH=17
 
 DebugInfoMajSepr()
 	{
