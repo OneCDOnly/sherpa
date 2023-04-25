@@ -451,11 +451,8 @@ Self:LogEnv()
 	ArgSuggestions:Show
 	[[ $skip_qpkg_processing = true ]] && return
 	Func:Entry
+
 	ShowAsProc environment
-
-	local -i max_width=70
-	local -i trimmed_width=$((max_width-3))
-
 	DebugInfoMinSepr
 	DebugHardware ok model "$(get_display_name)"
 	DebugHardware ok CPU "$(GetCPUInfo)"
@@ -464,13 +461,13 @@ Self:LogEnv()
 	DebugHardware ok RAM "$(FormatAsThous "$NAS_RAM_KB")kiB"
 	DebugFirmware ok OS "$(GetQnapOS)"
 
-	if [[ ${NAS_FIRMWARE_VER//.} -ge 400 ]]; then
+	if OS.IsSupported; then
 		DebugFirmware ok version "$NAS_FIRMWARE_VER.$NAS_FIRMWARE_BUILD"
 	else
 		DebugFirmware warning version "$NAS_FIRMWARE_VER"
 	fi
 
-	if [[ $NAS_FIRMWARE_DATE -lt 20201015 || $NAS_FIRMWARE_DATE -gt 20201020 ]]; then   # QTS builds released over these 6 days don't allow unsigned QPKGs to run at-all
+	if OS.IsCompatibleWithSigned; then
 		DebugFirmware ok 'build date' "$NAS_FIRMWARE_DATE"
 	else
 		DebugFirmware warning 'build date' "$NAS_FIRMWARE_DATE"
@@ -500,6 +497,9 @@ Self:LogEnv()
 	else
 		DebugUserspace warning "'$public_share' share" '<not present>'
 	fi
+
+	local -i max_width=70
+	local -i trimmed_width=$((max_width-3))
 
 	if [[ ${#PATH} -le $max_width ]]; then
 		DebugUserspace ok '$PATH' "$PATH"
@@ -4961,6 +4961,21 @@ GetDefVol()
 	{
 
 	/sbin/getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info
+
+	}
+
+OS.IsCompatibleWithSigned()
+	{
+
+	# QTS builds released over these 6 days don't allow unsigned QPKGs to run at-all
+	[[ $NAS_FIRMWARE_DATE -lt 20201015 || $NAS_FIRMWARE_DATE -gt 20201020 ]]
+
+	}
+
+OS.IsSupported()
+	{
+
+	[[ ${NAS_FIRMWARE_VER//.} -ge 400 ]]
 
 	}
 
