@@ -20,7 +20,7 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=WebSSH
-	readonly SCRIPT_VERSION=230425
+	readonly SCRIPT_VERSION=230426
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -53,7 +53,7 @@ Init()
 	# specific to daemonised applications only
 	readonly DAEMON_PATHFILE=$VENV_PATH/bin/wssh
 	readonly DAEMON_PID_PATHFILE=/var/run/$QPKG_NAME.pid
-	readonly LAUNCHER="$DAEMON_PATHFILE --address='0.0.0.0' --port=8010"
+	readonly LAUNCHER="$DAEMON_PATHFILE --address='0.0.0.0' --port=8010 --encoding=850"
 	readonly PORT_CHECK_TIMEOUT=240
 	readonly DAEMON_STOP_TIMEOUT=60
 	readonly DAEMON_PORT_CMD=''
