@@ -553,7 +553,7 @@ Self:LogEnv()
 
 	DebugQpkg detect architecture "$NAS_QPKG_ARCH"
 	DebugQpkg detect 'Entware installer' "$ENTWARE_VER"
-
+	DebugInfoMinSepr
 	RunAndLog "$DF_CMD -h | $GREP_CMD '^Filesystem\|^none\|^tmpfs\|ram'" /var/log/ramdisks.freespace.log
 
 	QPKGs.States:Build
@@ -7719,22 +7719,21 @@ AddExtLogToSessLog()
 	local linebuff=''
 	local original_verbose=false
 
-	DebugAsLog 'adding external log to main log'
-	DebugExtLogMinSepr
-
 	if [[ $self_verbose = true ]]; then   # prevent external log contents appearing onscreen again, because they've already been seen "live"
 		original_verbose=true
 		self_verbose=false
 	fi
 
+	DebugAsLog 'adding external log to main log'
+	DebugExtLogMinSepr
 	DebugAsLog "$(FormatAsLogFilename "${1:?filename null}")"
 
 	while read -r linebuff; do
 		DebugAsLog "$linebuff"
 	done < "${1:?filename null}"
 
-	self_verbose=$original_verbose
 	DebugExtLogMinSepr
+	self_verbose=$original_verbose
 
 	}
 
