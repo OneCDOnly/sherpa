@@ -5,6 +5,7 @@ if [[ ! -e vars.source ]]; then
 	exit 1
 fi
 
+objects_built=false
 . ./vars.source
 
 Objects:Load()
@@ -12,9 +13,19 @@ Objects:Load()
 
 	readonly OBJECTS_PATHFILE="$source_path"/objects
 
-	[[ ! -e $OBJECTS_PATHFILE ]] && ./build-objects.sh &>/dev/null
+	if [[ ! -e $OBJECTS_PATHFILE ]]; then
+		./build-objects.sh &>/dev/null
+		objects_built=true
+	fi
 
-	. "$OBJECTS_PATHFILE"
+	if [[ -e $OBJECTS_PATHFILE ]]; then
+		. "$OBJECTS_PATHFILE"
+	else
+		echo 'unable to load objects: file missing'
+		return 1
+	fi
+
+	return 0
 
 	}
 
@@ -100,6 +111,8 @@ for package_name in $(QPKGs-SCall:Array); do
 	abs=$(QPKG.Abbrvs "$package_name")
 	echo "| $package_name | \`${abs// /\` \`}\` |" >> "$target_pathfile"
 done
+
+[[ $objects_built = true ]] && rm -f "$OBJECTS_PATHFILE"
 
 ColourTextBrightGreen 'done\n'
 exit 0
