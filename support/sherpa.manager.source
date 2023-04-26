@@ -1894,7 +1894,7 @@ AllocGroupPacksToAcs()
 								done
 								;;
 							*)
-								DebugAsWarn "specified group $group has no handler for specifed action $action"
+								DebugAsWarn "specified group $group has no handler for specified action $action"
 						esac
 						;;
 					install)
@@ -1905,7 +1905,7 @@ AllocGroupPacksToAcs()
 								QPKGs-AC${action}-to:Add "$(QPKGs-SC${group}:Array)"
 								;;
 							*)
-								DebugAsWarn "specified group $group has no handler for specifed action $action"
+								DebugAsWarn "specified group $group has no handler for specified action $action"
 						esac
 						;;
 					restart|start|stop|uninstall)
@@ -1918,7 +1918,7 @@ AllocGroupPacksToAcs()
 								done
 								;;
 							*)
-								DebugAsWarn "specified group $group has no handler for specifed action $action"
+								DebugAsWarn "specified group $group has no handler for specified action $action"
 						esac
 						;;
 					rebuild)
@@ -1931,12 +1931,12 @@ AllocGroupPacksToAcs()
 								done
 								;;
 							*)
-								DebugAsWarn "specified group $group has no handler for specifed action $action"
+								DebugAsWarn "specified group $group has no handler for specified action $action"
 						esac
 						;;
 					upgrade)
 						case $group in
-							all|dependent|standalone)
+							all|dependent|standalone|upgradable)
 								found=true
 
 								QPKGs-AC${action}-to:Add "$(QPKGs-SCupgradable:Array)"
@@ -1948,7 +1948,7 @@ AllocGroupPacksToAcs()
 								QPKGs-ACrestart-to:Remove "$(QPKGs-ACupgrade-to:Array)"
 								;;
 							*)
-								DebugAsWarn "specified group $group has no handler for specifed action $action"
+								DebugAsWarn "specified group $group has no handler for specified action $action"
 						esac
 				esac
 
