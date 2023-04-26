@@ -4042,14 +4042,27 @@ IPKs.Actions:List()
 
 	Func:Entry
 	local action=''
-	DebugInfoMinSepr
+	local borders_shown=false
 
 	for action in "${IPK_ACTIONS[@]}"; do
-		IPKs-AC${action}-ok:IsAny && DebugIpk info "AC${action}-ok" "($(IPKs-AC${action}-ok:Count)) $(IPKs-AC${action}-ok:ListCSV) "
-		IPKs-AC${action}-er:IsAny && DebugIpk error "AC${action}-er" "($(IPKs-AC${action}-er:Count)) $(IPKs-AC${action}-er:ListCSV) "
+		if IPKs-AC${action}-ok:IsAny; then
+			if [[ $borders_shown = false ]]; then
+				DebugInfoMinSepr
+				borders_shown=true
+			fi
+			DebugIpk info "AC${action}-ok" "($(IPKs-AC${action}-ok:Count)) $(IPKs-AC${action}-ok:ListCSV) "
+		fi
+
+		if IPKs-AC${action}-er:IsAny; then
+			if [[ $borders_shown = false ]]; then
+				DebugInfoMinSepr
+				borders_shown=true
+			fi
+			DebugIpk error "AC${action}-er" "($(IPKs-AC${action}-er:Count)) $(IPKs-AC${action}-er:ListCSV) "
+		fi
 	done
 
-	DebugInfoMinSepr
+	[[ $borders_shown = true ]] && DebugInfoMinSepr
 	Func:Exit
 
 	}
@@ -4062,13 +4075,18 @@ QPKGs.Actions:List()
 	Func:Entry
 	local action=''
 	local prefix=''
-	DebugInfoMinSepr
+	local borders_shown=false
 
 	for action in "${QPKG_ACTIONS[@]}"; do
 		[[ $action = enable || $action = disable ]] && continue		# no objects for these as `start` and `stop` do the same jobs
 
 		for prefix in ok er sk; do
 			if QPKGs-AC${action}-${prefix}:IsAny; then
+				if [[ $borders_shown = false ]]; then
+					DebugInfoMinSepr
+					borders_shown=true
+				fi
+
 				case $prefix in
 					ok)
 						DebugQpkg info "AC${action}-${prefix}" "($(QPKGs-AC${action}-${prefix}:Count)) $(QPKGs-AC${action}-${prefix}:ListCSV) "
@@ -4083,7 +4101,7 @@ QPKGs.Actions:List()
 		done
 	done
 
-	DebugInfoMinSepr
+	[[ $borders_shown = true ]] && DebugInfoMinSepr
 	Func:Exit
 
 	}
