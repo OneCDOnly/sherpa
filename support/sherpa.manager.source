@@ -296,10 +296,10 @@ DefaultConsts:Load()
 	readonly HELP_PACKAGE_REPO_WIDTH=40
 
 	readonly HELP_COL_SPACER=' '
-	readonly HELP_COL_MAIN_PREFIX='• '
-	readonly HELP_COL_OTHER_PREFIX='- '
-	readonly HELP_COL_ALERT_PREFIX='* '
-	readonly HELP_COL_ERROR_PREFIX='! '
+	readonly HELP_COL_SPECIAL_PREFIX='• '
+	readonly HELP_COL_NORMAL_PREFIX='- '
+	readonly HELP_COL_NOTE_PREFIX='* '
+	readonly HELP_COL_ALERT_PREFIX='! '
 	readonly HELP_COL_BLANK_PREFIX='  '
 	readonly HELP_COL_DROPTHRU_PREFIX='├─ '
 	readonly HELP_COL_DROPEND_PREFIX='└─ '
@@ -2823,12 +2823,10 @@ DisplayAsProjSynExam()
 
 	Display
 
-	if [[ ${1: -1} = '!' ]]; then
-		printf "${HELP_COL_MAIN_PREFIX}%s\n%${HELP_SYNTAX_INDENT}s${help_syntax_sudo_prefix}%s\n" "$(Capitalise "${1:-}")" '' "sherpa ${2:-}"
-	else
-		printf "${HELP_COL_MAIN_PREFIX}%s:\n%${HELP_SYNTAX_INDENT}s${help_syntax_sudo_prefix}%s\n" "$(Capitalise "${1:-}")" '' "sherpa ${2:-}"
-	fi
+	printf "${HELP_COL_SPECIAL_PREFIX}%s" "$(Capitalise "${1:-}")"
+	[[ ${1: -1} != '!' ]] && printf ':'
 
+	printf "\n%${HELP_SYNTAX_INDENT}s${help_syntax_sudo_prefix}%s\n" '' "sherpa ${2:-}"
 	self_linespace_onscreen=false
 
 	}
@@ -2842,14 +2840,13 @@ DisplayAsProjSynIndentExam()
 	#	$1 = description
 	#	$2 = example syntax
 
-	if [[ -z ${1:-} ]]; then
-		printf "%${HELP_SYNTAX_INDENT}s${help_syntax_sudo_prefix}%s\n" '' "sherpa ${2:-}"
-	elif [[ ${1: -1} = '!' ]]; then
-		printf "\n%${HELP_DESC_INDENT}s%s\n%${HELP_SYNTAX_INDENT}s${help_syntax_sudo_prefix}%s\n" '' "$(Capitalise "${1:-}")" '' "sherpa ${2:-}"
-	else
-		printf "\n%${HELP_DESC_INDENT}s%s:\n%${HELP_SYNTAX_INDENT}s${help_syntax_sudo_prefix}%s\n" '' "$(Capitalise "${1:-}")" '' "sherpa ${2:-}"
+	if [[ -n $1	]]; then
+		printf "\n%${HELP_DESC_INDENT}s%s" '' "$(Capitalise "${1:-}")"
+		[[ ${1: -1} != '!' ]] && printf ':'
+		printf '\n'
 	fi
 
+	printf "%${HELP_SYNTAX_INDENT}s${help_syntax_sudo_prefix}%s\n" '' "sherpa ${2:-}"
 	self_linespace_onscreen=false
 
 	}
@@ -2863,14 +2860,7 @@ DisplayAsSynExam()
 	#	$1 = description
 	#	$2 = example syntax
 
-	if [[ -z ${2:-} && ${1: -1} = ':' ]]; then
-		printf "\n${HELP_COL_MAIN_PREFIX}%s\n" "$1"
-	elif [[ ${1: -1} = '!' ]]; then
-		printf "\n${HELP_COL_MAIN_PREFIX}%s\n%${HELP_SYNTAX_INDENT}s${help_syntax_prefix}%s\n" "$(Capitalise "${1:-}")" '' "${2:-}"
-	else
-		printf "\n${HELP_COL_MAIN_PREFIX}%s:\n%${HELP_SYNTAX_INDENT}s${help_syntax_prefix}%s\n" "$(Capitalise "${1:-}")" '' "${2:-}"
-	fi
-
+	printf "\n${HELP_COL_SPECIAL_PREFIX}%s:\n%${HELP_SYNTAX_INDENT}s${help_syntax_prefix}%s\n" "$(Capitalise "${1:-}")" '' "${2:-}"
 	self_linespace_onscreen=false
 
 	}
@@ -2884,7 +2874,7 @@ DisplayAsHelpTitleNameAuthorDesc()
 	#	$2 = description title
 
 	Display
-	printf "${HELP_COL_MAIN_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s${HELP_COL_SPACER}${HELP_COL_MAIN_PREFIX}%-${HELP_PACKAGE_AUTHOR_WIDTH}s${HELP_COL_SPACER}${HELP_COL_MAIN_PREFIX}%s\n" "${1:-}:" "${2:-}:" "${3:-}:"
+	printf "${HELP_COL_SPECIAL_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s${HELP_COL_SPACER}${HELP_COL_SPECIAL_PREFIX}%-${HELP_PACKAGE_AUTHOR_WIDTH}s${HELP_COL_SPACER}${HELP_COL_SPECIAL_PREFIX}%s\n" "${1:-}:" "${2:-}:" "${3:-}:"
 
 	}
 
@@ -2900,39 +2890,39 @@ DisplayAsHelpNameAuthorDesc()
 	#	$6 = true/false = "not installable"
 
 	local package_name=${2:-}
-	local package_name_msg="${HELP_COL_OTHER_PREFIX}$package_name"
+	local package_name_msg="${HELP_COL_NORMAL_PREFIX}${package_name}"
 	local package_author=${3:-}
 	local package_author_msg="$package_author"
 	local package_description=${4:-}
 	local package_description_msg="$package_description"
 	local package_notes=${5:-}
-	local package_notes_msg="$(ColourTextCyan "${HELP_COL_ALERT_PREFIX}${package_notes}")"
+	local package_notes_msg="$(ColourTextCyan "${HELP_COL_NOTE_PREFIX}${package_notes}")"
 	local package_not_installable=${6:-false}
 
 	case $1 in
 		muted)
 			if [[ $package_not_installable = true ]]; then
-				package_name_msg=$(ColourTextDarkGrey "${HELP_COL_ERROR_PREFIX}${package_name}")
+				package_name_msg=$(ColourTextDarkGrey "${HELP_COL_ALERT_PREFIX}${package_name}")
 			else
-				package_name_msg=$(ColourTextDarkGrey "${HELP_COL_OTHER_PREFIX}${package_name}")
+				package_name_msg=$(ColourTextDarkGrey "${HELP_COL_NORMAL_PREFIX}${package_name}")
 			fi
 
 			package_author_msg="$(ColourTextDarkGrey "${package_author}")"
 			package_description_msg="$(ColourTextDarkGrey "${package_description}")"
 			;;
 		highlighted)
-			package_name_msg=$(ColourTextBrightRed "${HELP_COL_OTHER_PREFIX}${package_name}")
+			package_name_msg=$(ColourTextBrightRed "${HELP_COL_NORMAL_PREFIX}${package_name}")
 
 			if [[ -n $package_author ]]; then
 				case $package_author in
 					missing)
-						package_author_msg="$(ColourTextBrightRedBlink "${HELP_COL_ERROR_PREFIX}${package_author}")"
+						package_author_msg="$(ColourTextBrightRedBlink "${HELP_COL_ALERT_PREFIX}${package_author}")"
 				esac
 			fi
 	esac
 
 	# column 1: package name
-	printf "${HELP_COL_SPACER}%-$((${#HELP_COL_OTHER_PREFIX}+HELP_PACKAGE_NAME_WIDTH+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
+	printf "${HELP_COL_SPACER}%-$((${#HELP_COL_NORMAL_PREFIX}+HELP_PACKAGE_NAME_WIDTH+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
 
 	# column 2: package author
 	printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%-$((HELP_PACKAGE_AUTHOR_WIDTH+$(LenANSIDiff "$package_author_msg")))s" "$package_author_msg"
@@ -2955,17 +2945,17 @@ DisplayAsHelpTitleNameAbs()
 	#	$2 = abbreviations title
 
 	Display
-	printf "${HELP_COL_MAIN_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s${HELP_COL_SPACER}${HELP_COL_MAIN_PREFIX}%s\n" "${1:-}:" "${2:-}:"
+	printf "${HELP_COL_SPECIAL_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s${HELP_COL_SPACER}${HELP_COL_SPECIAL_PREFIX}%s\n" "${1:-}:" "${2:-}:"
 
 	}
 
 CalcMaxStatusColsToDisplay()
 	{
 
-	local col1_width=$((${#HELP_COL_MAIN_PREFIX}+HELP_PACKAGE_NAME_WIDTH))
-	local col2_width=$((${#HELP_COL_SPACER}+${#HELP_COL_MAIN_PREFIX}+HELP_PACKAGE_STATUS_WIDTH))
-	local col3_width=$((${#HELP_COL_SPACER}+${#HELP_COL_MAIN_PREFIX}+HELP_PACKAGE_VER_WIDTH))
-	local col4_width=$((${#HELP_COL_SPACER}+${#HELP_COL_MAIN_PREFIX}+HELP_PACKAGE_PATH_WIDTH))
+	local col1_width=$((${#HELP_COL_SPECIAL_PREFIX}+HELP_PACKAGE_NAME_WIDTH))
+	local col2_width=$((${#HELP_COL_SPACER}+${#HELP_COL_SPECIAL_PREFIX}+HELP_PACKAGE_STATUS_WIDTH))
+	local col3_width=$((${#HELP_COL_SPACER}+${#HELP_COL_SPECIAL_PREFIX}+HELP_PACKAGE_VER_WIDTH))
+	local col4_width=$((${#HELP_COL_SPACER}+${#HELP_COL_SPECIAL_PREFIX}+HELP_PACKAGE_PATH_WIDTH))
 
 	if [[ $((col1_width+col2_width)) -ge $SESS_COLS ]]; then
 		echo 1
@@ -2994,22 +2984,22 @@ DisplayAsHelpTitleNameVerStatus()
 
 	# column 1: package name
 	if [[ -n ${1:-} && $maxcols -ge 1 ]]; then
-		printf "${HELP_COL_MAIN_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s" "$1:"
+		printf "${HELP_COL_SPECIAL_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s" "$1:"
 	fi
 
 	# column 2: package statuses
 	if [[ -n ${2:-} && $maxcols -ge 2 ]]; then
-		printf "${HELP_COL_SPACER}${HELP_COL_MAIN_PREFIX}%-${HELP_PACKAGE_STATUS_WIDTH}s" "$2:"
+		printf "${HELP_COL_SPACER}${HELP_COL_SPECIAL_PREFIX}%-${HELP_PACKAGE_STATUS_WIDTH}s" "$2:"
 	fi
 
 	# column 3: package version
 	if [[ -n ${3:-} && $maxcols -ge 3 ]]; then
-		printf "${HELP_COL_SPACER}${HELP_COL_MAIN_PREFIX}%-${HELP_PACKAGE_VER_WIDTH}s" "$3:"
+		printf "${HELP_COL_SPACER}${HELP_COL_SPECIAL_PREFIX}%-${HELP_PACKAGE_VER_WIDTH}s" "$3:"
 	fi
 
 	# column 4: package installation path
 	if [[ -n ${4:-} && $maxcols -ge 4 ]]; then
-		printf "${HELP_COL_SPACER}${HELP_COL_MAIN_PREFIX}%s" "$4:"
+		printf "${HELP_COL_SPACER}${HELP_COL_SPECIAL_PREFIX}%s" "$4:"
 	fi
 
 	printf '\n'
@@ -3055,7 +3045,7 @@ DisplayAsHelpNameVerStatus()
 
 				[[ -z $package_status_msg ]] && package_status_msg="$package_status"
 
-				package_status_msg="${HELP_COL_OTHER_PREFIX}${package_status_msg}"
+				package_status_msg="${HELP_COL_NORMAL_PREFIX}${package_status_msg}"
 			fi
 
 			if [[ -n $package_last_result && $package_status != missing ]]; then
@@ -3085,9 +3075,9 @@ DisplayAsHelpNameVerStatus()
 
 			if [[ -n $package_status ]]; then
 				if [[ $package_status =~ 'not installable' ]]; then
-					package_status_msg="$(ColourTextDarkGrey "${HELP_COL_ERROR_PREFIX}${package_status}")"
+					package_status_msg="$(ColourTextDarkGrey "${HELP_COL_ALERT_PREFIX}${package_status}")"
 				else
-					package_status_msg="$(ColourTextDarkGrey "${HELP_COL_OTHER_PREFIX}${package_status}")"
+					package_status_msg="$(ColourTextDarkGrey "${HELP_COL_NORMAL_PREFIX}${package_status}")"
 				fi
 			fi
 
@@ -3097,12 +3087,12 @@ DisplayAsHelpNameVerStatus()
 			case $package_status in
 				missing)
 					package_name_msg="$(ColourTextBrightRed "$package_name")"
-					package_status_msg="$(ColourTextBrightRedBlink "${HELP_COL_ERROR_PREFIX}${package_status}")"
+					package_status_msg="$(ColourTextBrightRedBlink "${HELP_COL_ALERT_PREFIX}${package_status}")"
 					package_path_msg="$(ColourTextBrightRedBlink "$package_path")"
 					;;
 				*)
 					package_name_msg="$(ColourTextBrightOrange "$package_name")"
-					package_status_msg="$(ColourTextBrightOrange "${HELP_COL_ALERT_PREFIX}${package_status}")"
+					package_status_msg="$(ColourTextBrightOrange "${HELP_COL_NOTE_PREFIX}${package_status}")"
 			esac
 	esac
 
@@ -3113,7 +3103,7 @@ DisplayAsHelpNameVerStatus()
 
 	# column 2: package statuses
 	if [[ -n $package_status && $maxcols -ge 2 ]]; then
-		printf "${HELP_COL_SPACER}%-$((${#HELP_COL_OTHER_PREFIX}+HELP_PACKAGE_STATUS_WIDTH+$(LenANSIDiff "$package_status_msg")))s" "$package_status_msg"
+		printf "${HELP_COL_SPACER}%-$((${#HELP_COL_NORMAL_PREFIX}+HELP_PACKAGE_STATUS_WIDTH+$(LenANSIDiff "$package_status_msg")))s" "$package_status_msg"
 	fi
 
 	# column 3: package version
@@ -3141,12 +3131,12 @@ DisplayAsHelpTitleNameRepo()
 
 	# column 1: package name
 	if [[ -n ${1:-} && $maxcols -ge 1 ]]; then
-		printf "${HELP_COL_MAIN_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s" "$1:"
+		printf "${HELP_COL_SPECIAL_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s" "$1:"
 	fi
 
 	# column 2: package repository
 	if [[ -n ${2:-} && $maxcols -ge 2 ]]; then
-		printf "${HELP_COL_SPACER}${HELP_COL_MAIN_PREFIX}%-${HELP_PACKAGE_REPO_WIDTH}s" "$2:"
+		printf "${HELP_COL_SPACER}${HELP_COL_SPECIAL_PREFIX}%-${HELP_PACKAGE_REPO_WIDTH}s" "$2:"
 	fi
 
 	printf '\n'
@@ -3165,25 +3155,25 @@ DisplayAsHelpNameRepo()
 	local package_name=${2:-}
 	local package_name_msg=$package_name
 	local assigned_repo=${3:-}
-	local assigned_repo_msg="${HELP_COL_OTHER_PREFIX}${assigned_repo}"
+	local assigned_repo_msg="${HELP_COL_NORMAL_PREFIX}${assigned_repo}"
 
 	case $1 in
 		normal)
 			case $assigned_repo in
 				sherpa)
-					assigned_repo_msg="${HELP_COL_OTHER_PREFIX}$(ColourTextBrightGreen "$assigned_repo")"
+					assigned_repo_msg="${HELP_COL_NORMAL_PREFIX}$(ColourTextBrightGreen "$assigned_repo")"
 					;;
 				unassigned)
-					assigned_repo_msg="${HELP_COL_OTHER_PREFIX}$(ColourTextBrightOrange "$assigned_repo")"
+					assigned_repo_msg="${HELP_COL_NORMAL_PREFIX}$(ColourTextBrightOrange "$assigned_repo")"
 			esac
 			;;
 		muted)
 			package_name_msg=$(ColourTextDarkGrey "$package_name")
 
 			if [[ $assigned_repo =~ 'not installable' ]]; then
-				assigned_repo_msg="$(ColourTextDarkGrey "${HELP_COL_ERROR_PREFIX}${assigned_repo}")"
+				assigned_repo_msg="$(ColourTextDarkGrey "${HELP_COL_ALERT_PREFIX}${assigned_repo}")"
 			else
-	 			assigned_repo_msg=$(ColourTextDarkGrey "${HELP_COL_OTHER_PREFIX}${assigned_repo}")
+				assigned_repo_msg=$(ColourTextDarkGrey "${HELP_COL_NORMAL_PREFIX}${assigned_repo}")
 			fi
 			;;
 		highlighted)
@@ -3191,11 +3181,11 @@ DisplayAsHelpNameRepo()
 				case $assigned_repo in
 					missing)
 						package_name_msg=$(ColourTextBrightRed "$package_name")
-						assigned_repo_msg="$(ColourTextBrightRedBlink "${HELP_COL_ERROR_PREFIX}${assigned_repo}")"
+						assigned_repo_msg="$(ColourTextBrightRedBlink "${HELP_COL_ALERT_PREFIX}${assigned_repo}")"
 						;;
 					*)
 						package_name_msg=$(ColourTextBrightOrange "$package_name")
-						assigned_repo_msg="$(ColourTextBrightOrange "${HELP_COL_ALERT_PREFIX}${assigned_repo}")"
+						assigned_repo_msg="$(ColourTextBrightOrange "${HELP_COL_NOTE_PREFIX}${assigned_repo}")"
 				esac
 			fi
 	esac
@@ -3222,7 +3212,7 @@ DisplayAsHelpTitleFileNamePlusSomething()
 	#	$2 = second column title
 
 	DisplayLineSpaceIfNoneAlready
-	printf "${HELP_COL_MAIN_PREFIX}%-${HELP_FILE_NAME_WIDTH}s ${HELP_COL_MAIN_PREFIX}%s\n" "$(Capitalise "${1:-}"):" "$(Capitalise "${2:-}"):"
+	printf "${HELP_COL_SPECIAL_PREFIX}%-${HELP_FILE_NAME_WIDTH}s ${HELP_COL_SPECIAL_PREFIX}%s\n" "$(Capitalise "${1:-}"):" "$(Capitalise "${2:-}"):"
 	self_linespace_onscreen=false
 
 	}
@@ -3234,7 +3224,7 @@ DisplayAsHelpTitle()
 	#	$1 = text
 
 	DisplayLineSpaceIfNoneAlready
-	printf "${HELP_COL_MAIN_PREFIX}%s\n" "$(Capitalise "${1:-}" | tr -s ' ')"
+	printf "${HELP_COL_SPECIAL_PREFIX}%s\n" "$(Capitalise "${1:-}" | tr -s ' ')"
 	self_linespace_onscreen=false
 
 	}
@@ -3247,7 +3237,7 @@ DisplayAsHelpTitleHighlighted()
 
 	DisplayLineSpaceIfNoneAlready
 	# shellcheck disable=2059
-	printf "$(ColourTextBrightOrange "${HELP_COL_MAIN_PREFIX}%s\n")" "$(Capitalise "${1:-}")"
+	printf "$(ColourTextBrightOrange "${HELP_COL_SPECIAL_PREFIX}%s\n")" "$(Capitalise "${1:-}")"
 	self_linespace_onscreen=false
 
 	}
@@ -3286,11 +3276,15 @@ DisplayAsIndentPrefixActionResultDurationReason()
 
 	[[ -n ${4:-} ]] && duration="$(FormatMillisecsToMinutesSecs "$4")"
 
-	if [[ -n ${5:-} ]]; then
-		printf "%${ACTION_RESULT_INDENT}s%s%s %s%s\n%${ACTION_RESULT_INDENT}s${HELP_COL_DROPEND_PREFIX}%s\n" '' "${1:-}" "$(Lowercase "${2:-}")" "${3:-}" "$([[ -n $duration ]] && printf ' in %s' "$duration")" '' "$5"
+	printf "%${ACTION_RESULT_INDENT}s" ''
+
+	if [[ -z ${5:-} ]]; then
+		printf "%s%s %s%s" "${1:-}" "$(Lowercase "${2:-}")" "${3:-}" "$([[ -n $duration ]] && printf ' in %s' "$duration")"
 	else
-		printf "%${ACTION_RESULT_INDENT}s%s%s %s%s\n" '' "${1:-}" "$(Lowercase "${2:-}")" "${3:-}" "$([[ -n $duration ]] && printf ' in %s' "$duration")"
+		printf "%s%s %s%s\n%${ACTION_RESULT_INDENT}s${HELP_COL_DROPEND_PREFIX}%s" "${1:-}" "$(Lowercase "${2:-}")" "${3:-}" "$([[ -n $duration ]] && printf ' in %s' "$duration")" '' "$5"
 	fi
+
+	printf '\n'
 
 	}
 
