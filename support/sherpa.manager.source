@@ -2528,7 +2528,7 @@ _ActionForks:Launch_()
 		IncForkProgressIndex
 		MarkThisActionForkAsStarted 	# must create runfile here, as it takes too long to happen in background function
 		$target_function "$package" &
-		DebugAsDone "forked $target_function() for $package"
+		DebugAsDone "forked $target_function() for '$package'"
 		UpdateForkProgress
 	done
 
