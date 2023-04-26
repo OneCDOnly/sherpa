@@ -298,6 +298,8 @@ DefaultConsts:Load()
 	readonly HELP_COL_SPACER=' '
 	readonly HELP_COL_MAIN_PREFIX='• '
 	readonly HELP_COL_OTHER_PREFIX='- '
+	readonly HELP_COL_ALERT_PREFIX='* '
+	readonly HELP_COL_ERROR_PREFIX='! '
 	readonly HELP_COL_BLANK_PREFIX='  '
 	readonly HELP_COL_DROPTHRU_PREFIX='├─ '
 	readonly HELP_COL_DROPEND_PREFIX='└─ '
@@ -2895,6 +2897,7 @@ DisplayAsHelpNameAuthorDesc()
 	#	$3 = author
 	#	$4 = description
 	#	$5 = notes (optional)
+	#	$6 = true/false = "not installable"
 
 	local package_name=${2:-}
 	local package_name_msg="${HELP_COL_OTHER_PREFIX}$package_name"
@@ -2903,21 +2906,27 @@ DisplayAsHelpNameAuthorDesc()
 	local package_description=${4:-}
 	local package_description_msg="$package_description"
 	local package_notes=${5:-}
-	local package_notes_msg="$(ColourTextCyan "* $package_notes")"
+	local package_notes_msg="$(ColourTextCyan "${HELP_COL_ALERT_PREFIX}${package_notes}")"
+	local package_not_installable=${6:-false}
 
 	case $1 in
 		muted)
-			package_name_msg=$(ColourTextDarkGrey "${HELP_COL_OTHER_PREFIX}$package_name")
+			if [[ $package_not_installable = true ]]; then
+				package_name_msg=$(ColourTextDarkGrey "${HELP_COL_ERROR_PREFIX}${package_name}")
+			else
+				package_name_msg=$(ColourTextDarkGrey "${HELP_COL_OTHER_PREFIX}${package_name}")
+			fi
+
 			package_author_msg="$(ColourTextDarkGrey "${package_author}")"
 			package_description_msg="$(ColourTextDarkGrey "${package_description}")"
 			;;
 		highlighted)
-			package_name_msg=$(ColourTextBrightRed "${HELP_COL_OTHER_PREFIX}$package_name")
+			package_name_msg=$(ColourTextBrightRed "${HELP_COL_OTHER_PREFIX}${package_name}")
 
 			if [[ -n $package_author ]]; then
 				case $package_author in
 					missing)
-						package_author_msg="$(ColourTextBrightRedBlink "! $package_author")"
+						package_author_msg="$(ColourTextBrightRedBlink "${HELP_COL_ERROR_PREFIX}${package_author}")"
 				esac
 			fi
 	esac
@@ -2947,17 +2956,6 @@ DisplayAsHelpTitleNameAbs()
 
 	Display
 	printf "${HELP_COL_MAIN_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s${HELP_COL_SPACER}${HELP_COL_MAIN_PREFIX}%s\n" "${1:-}:" "${2:-}:"
-
-	}
-
-DisplayAsHelpNameAbs()
-	{
-
-	# input:
-	#	$1 = package name
-	#	$2 = abbreviations
-
-	printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s${HELP_COL_SPACER}${HELP_COL_OTHER_PREFIX}%s\n" "${1:-}" "${2:-}"
 
 	}
 
@@ -3084,19 +3082,27 @@ DisplayAsHelpNameVerStatus()
 			;;
 		muted)
 			package_name_msg="$(ColourTextDarkGrey "$package_name")"
-			package_status_msg="$(ColourTextDarkGrey "${HELP_COL_OTHER_PREFIX}${package_status}")"
+
+			if [[ -n $package_status ]]; then
+				if [[ $package_status =~ 'not installable' ]]; then
+					package_status_msg="$(ColourTextDarkGrey "${HELP_COL_ERROR_PREFIX}${package_status}")"
+				else
+					package_status_msg="$(ColourTextDarkGrey "${HELP_COL_OTHER_PREFIX}${package_status}")"
+				fi
+			fi
+
 			package_version_msg="$(ColourTextDarkGrey "$package_upgrade_version")"
 			;;
 		highlighted)
 			case $package_status in
 				missing)
 					package_name_msg="$(ColourTextBrightRed "$package_name")"
-					package_status_msg="$(ColourTextBrightRedBlink "! $package_status")"
+					package_status_msg="$(ColourTextBrightRedBlink "${HELP_COL_ERROR_PREFIX}${package_status}")"
 					package_path_msg="$(ColourTextBrightRedBlink "$package_path")"
 					;;
 				*)
 					package_name_msg="$(ColourTextBrightOrange "$package_name")"
-					package_status_msg="$(ColourTextBrightOrange "* $package_status")"
+					package_status_msg="$(ColourTextBrightOrange "${HELP_COL_ALERT_PREFIX}${package_status}")"
 			esac
 	esac
 
@@ -3173,18 +3179,23 @@ DisplayAsHelpNameRepo()
 			;;
 		muted)
 			package_name_msg=$(ColourTextDarkGrey "$package_name")
-			assigned_repo_msg=$(ColourTextDarkGrey "${HELP_COL_OTHER_PREFIX}${assigned_repo}")
+
+			if [[ $assigned_repo =~ 'not installable' ]]; then
+				assigned_repo_msg="$(ColourTextDarkGrey "${HELP_COL_ERROR_PREFIX}${assigned_repo}")"
+			else
+	 			assigned_repo_msg=$(ColourTextDarkGrey "${HELP_COL_OTHER_PREFIX}${assigned_repo}")
+			fi
 			;;
 		highlighted)
 			if [[ -n $assigned_repo ]]; then
 				case $assigned_repo in
 					missing)
 						package_name_msg=$(ColourTextBrightRed "$package_name")
-						assigned_repo_msg="$(ColourTextBrightRedBlink "! $assigned_repo")"
+						assigned_repo_msg="$(ColourTextBrightRedBlink "${HELP_COL_ERROR_PREFIX}${assigned_repo}")"
 						;;
 					*)
 						package_name_msg=$(ColourTextBrightOrange "$package_name")
-						assigned_repo_msg="$(ColourTextBrightOrange "* $assigned_repo")"
+						assigned_repo_msg="$(ColourTextBrightOrange "${HELP_COL_ALERT_PREFIX}${assigned_repo}")"
 				esac
 			fi
 	esac
@@ -4397,7 +4408,7 @@ QPKGs.Abbreviations:Show()
 				elif QPKGs-ISNTinstalled:Exist "$package_name"; then
 					DisplayAsHelpNameRepo muted "$package_name" "${abs// /, }"
 				else
-					DisplayAsHelpNameAbs "$package_name" "${abs// /, }"
+					DisplayAsHelpNameRepo normal "$package_name" "${abs// /, }"
 				fi
 			fi
 		done
@@ -4516,7 +4527,13 @@ QPKGs:List:Show()
 			if QPKGs-ISmissing:Exist "$package_name" &>/dev/null; then
 				DisplayAsHelpNameAuthorDesc highlighted "$package_name" missing "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
 			elif QPKGs-ISNTinstalled:Exist "$package_name"; then
-				DisplayAsHelpNameAuthorDesc muted "$package_name" "$(QPKG.Author "$package_name")" "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
+				if ! QPKG.URL "$package_name" &>/dev/null; then
+					DisplayAsHelpNameAuthorDesc muted "$package_name" "$(QPKG.Author "$package_name")" "$(QPKG.Desc "$package_name")" "$(QPKG.Note 	"$package_name")" true
+				elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
+					DisplayAsHelpNameAuthorDesc muted "$package_name" "$(QPKG.Author "$package_name")" "$(QPKG.Desc "$package_name")" "$(QPKG.Note 	"$package_name")" true
+				else
+					DisplayAsHelpNameAuthorDesc muted "$package_name" "$(QPKG.Author "$package_name")" "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
+				fi
 			else
 				DisplayAsHelpNameAuthorDesc normal "$package_name" "$(QPKG.Author "$package_name")" "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
 			fi
