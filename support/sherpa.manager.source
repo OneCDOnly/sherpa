@@ -55,12 +55,12 @@ Self:Init()
 	{
 
 	Func:Entry
-	DefaultVars:Load
+	Vars:Load
 	IsQNAP || return
 	IsSU || return
 	Self.LockFile:Claim || return
 	UpdateColourisation
-	DefaultConsts:Load
+	Consts:Load
 
 	sess_active_pathfile=$THIS_PACKAGE_PATH/session.$$.active.log
 
@@ -93,15 +93,7 @@ Self:Init()
 	fi
 
 	Objects:Load || return
-
-	if [[ -e $GNU_STTY_CMD && -t 0 ]]; then
-		local terminal_dimensions=$($GNU_STTY_CMD size)
-		readonly SESS_ROWS=${terminal_dimensions% *}
-		readonly SESS_COLS=${terminal_dimensions#* }
-	else
-		readonly SESS_ROWS=40
-		readonly SESS_COLS=156
-	fi
+	TerminalDimensions:Load
 
 	# test if this QTS `sleep` can handle decimal seconds. Early QTS BusyBox versions cannot.
 	readonly DECIMAL_SLEEP_SECONDS_SUPPORTED=$($QTS_SLEEP_CMD .01 &>/dev/null && echo true || echo false)
@@ -142,12 +134,8 @@ Self:Init()
 	readonly LOG_TAIL_LINES=5000		# note: a full download and install of everything generates a session log of around 1600 lines, but include a bunch of opkg updates and it can get much longer
 	prev_msg=' '
 	fork_pid=''
-	[[ ${NAS_FIRMWARE_VER//.} -lt 426 ]] && curl_insecure_arg=' --insecure' || curl_insecure_arg=''
 
-	# KLUDGE: GitHub SSL certs are presently invalid. This might be associated with recent RSA leak: https://github.blog/2023-03-23-we-updated-our-rsa-ssh-host-key
-	# So, don't check certs for now.
-	curl_insecure_arg=' --insecure'
-
+	ConfigInsecure
 	QPKG.IsInstalled Entware && [[ $ENTWARE_VER = none ]] && DebugAsWarn "$(FormatAsPackName Entware) appears to be installed but is not visible"
 
 	if [[ $(GetSudoUID) = '<undefined>' ]]; then
@@ -159,8 +147,8 @@ Self:Init()
 	fi
 
 	if [[ -z $USER_ARGS_RAW ]]; then
-		opts_help_basic=true
-		skip_qpkg_processing=true
+		opts_show_basic_help=true
+		skip_package_actions=true
 		DisableDebugToArchiveAndFile
 	else
 		Packages:Load || return
@@ -169,13 +157,13 @@ Self:Init()
 
 	EraseThisLine
 
-	if [[ $self_display_clean = false && $self_verbose = false ]]; then
+	if [[ $self_no_title = false && $opts_verbose = false ]]; then
 		Display "$(FormatAsTitle) $(FormatAsVersion) $(FormatAsDescription)"
 		DisplayLineSpaceIfNoneAlready
 	fi
 
 	if ! QPKGs.Conflicts:Check; then
-		skip_qpkg_processing=true
+		skip_package_actions=true
 		Func:Exit 1; return
 	fi
 
@@ -195,7 +183,7 @@ Self:Init()
 
 	}
 
-DefaultVars:Load()
+Vars:Load()
 	{
 
 	# default values
@@ -203,46 +191,45 @@ DefaultVars:Load()
 	colourful=true
 	ipks_install=false
 	ipks_upgrade=false
+	linespace_visible=false
 	msg_pipe_fd=none
 	pips_install=false
-	skip_qpkg_processing=false
+	self_no_title=false
+	show_suggest_issue=false
+	show_zero_qpkgs=true
+	skip_package_actions=false
 
-	self_display_clean=false
-	self_display_zero_qpkgs=true
-	self_linespace_onscreen=false
-	self_verbose=false
+	opts_check=false
+	opts_verbose=false
 
-	opts_help_abbreviations=false
-	opts_help_action_reassign=false
-	opts_help_actions=false
-	opts_help_actions_all=false
-	opts_help_backups=false
-	opts_help_basic=false
-	opts_help_failed=false
-	opts_help_groups=false
-	opts_help_ok=false
-	opts_help_options=false
-	opts_help_packages=false
-	opts_help_problems=false
-	opts_help_repos=false
-	opts_help_results=false
-	opts_help_showbackuploc=false
-	opts_help_skipped=false
-	opts_help_status=false
-	opts_help_suggestissue=false
-	opts_help_tips=false
+	opts_paste_log_last=false
+	opts_paste_log_tail=false
 
-	opts_log_last_paste=false
-	opts_log_tail_paste=false
-	opts_log_last_view=false
-	opts_log_tail_view=false
-
-	opts_deps_check=false
-	opts_vers_view=false
+	opts_show_abbreviations=false
+	opts_show_actions=false
+	opts_show_actions_all=false
+	opts_show_backups=false
+	opts_show_backuploc=false
+	opts_show_basic_help=false
+	opts_show_groups=false
+	opts_show_log_last=false
+	opts_show_log_tail=false
+	opts_show_options=false
+	opts_show_packages=false
+	opts_show_packages_failed=false
+	opts_show_packages_ok=false
+	opts_show_packages_skipped=false
+	opts_show_problems=false
+	opts_show_reassign=false
+	opts_show_repos=false
+	opts_show_results=false
+	opts_show_status=false
+	opts_show_tips=false
+	opts_show_versions=false
 
 	}
 
-DefaultConsts:Load()
+Consts:Load()
 	{
 
 	# default values
@@ -478,7 +465,7 @@ Self:LogEnv()
 	{
 
 	ArgSuggestions:Show
-	[[ $skip_qpkg_processing = true ]] && return
+	[[ $skip_package_actions = true ]] && return
 	Func:Entry
 
 	ShowAsProc environment
@@ -568,14 +555,14 @@ Self:IsAnythingToDo()
 
 	# Establish whether there's something to-do
 
-	[[ $skip_qpkg_processing = true ]] && return
+	[[ $skip_package_actions = true ]] && return
 
 	local action=''
 	local group=''
 	local state=''
 	local something_to_do=false
 
-	if [[ $opts_deps_check = true || $opts_help_status = true ]]; then
+	if [[ $opts_check = true || $opts_show_status = true ]]; then
 		something_to_do=true
 	else
 		for action in "${USER_QPKG_ACTIONS[@]}"; do
@@ -621,8 +608,8 @@ Self:IsAnythingToDo()
 
 	if [[ $something_to_do = false ]]; then
 		ShowAsError "I've nothing to-do (the supplied arguments were incomplete, or didn't make sense)"
-		opts_help_basic=true
-		skip_qpkg_processing=true
+		opts_show_basic_help=true
+		skip_package_actions=true
 		return 1
 	fi
 
@@ -636,7 +623,7 @@ Self:Validate()
 	# This function handles most of the high-level logic for package actions.
 	# If a package isn't being processed by the correct action, odds-are it's due to a logic error in this function.
 
-	[[ $skip_qpkg_processing = true ]] && return
+	[[ $skip_package_actions = true ]] && return
 	Func:Entry
 	ShowAsProc arguments
 
@@ -646,7 +633,7 @@ Self:Validate()
 	local prospect=''
 
 	# Decide if IPKs and PIPs should be installed/upgraded
-	if [[ $opts_deps_check = true ]] || QPKGs-ACupgrade-to:Exist Entware || QPKGs-ACinstall-to:Exist Entware || QPKGs-ACreinstall-to:Exist Entware; then
+	if [[ $opts_check = true ]] || QPKGs-ACupgrade-to:Exist Entware || QPKGs-ACinstall-to:Exist Entware || QPKGs-ACreinstall-to:Exist Entware; then
 		ipks_upgrade=true
 		ipks_install=true
 		pips_install=true
@@ -698,7 +685,7 @@ Self:Validate()
 
 	# Install standalones for installed dependents
 	for package in $(QPKGs-ISinstalled:Array); do
-		if [[ $opts_deps_check = true ]] || QPKGs-ISstarted:Exist "$package" || QPKGs-ACstart-to:Exist "$package"; then
+		if [[ $opts_check = true ]] || QPKGs-ISstarted:Exist "$package" || QPKGs-ACstart-to:Exist "$package"; then
 			for prospect in $(QPKG:GetStandalones "$package"); do
 				QPKGs-ISNTinstalled:Exist "$prospect" && QPKGs-ACinstall-to:Add "$prospect"
 			done
@@ -785,7 +772,7 @@ Self:Validate()
 	QPKGs-ACdownload-to:Add "$(QPKGs-ACupgrade-to:Array) $(QPKGs-ACreinstall-to:Array) $(QPKGs-ACinstall-to:Array)"
 
 	# Check all items
-	if [[ $opts_deps_check = true ]]; then
+	if [[ $opts_check = true ]]; then
 		QPKGs-ACsign-to:Add "$(QPKGs-ISinstalled:Array)"
 		QPKGs.Missing:Show
 		QPKGs.NewVers:Show
@@ -834,7 +821,7 @@ Self:Validate()
 Actions:Proc()
 	{
 
-	[[ $skip_qpkg_processing = true ]] && return
+	[[ $skip_package_actions = true ]] && return
 	Func:Entry
 
 	local tier=''
@@ -895,17 +882,17 @@ Actions:Proc()
 
 	EraseThisLine
 
-	if [[ $opts_deps_check = true ]]; then
+	if [[ $opts_check = true ]]; then
 		ShowAsDone 'check complete'
 	fi
 
-	if [[ ${self_debug_to_file:-false} = true ]]; then
+	if [[ ${opts_debug:-false} = true ]]; then
 #		PIPs.Actions:List
 		IPKs.Actions:List
 		QPKGs.Actions:List
 	fi
 
-	[[ $self_verbose = true ]] && QPKGs.States:List rebuild		# rebuild these after processing QPKGs to get current states
+	[[ $opts_verbose = true ]] && QPKGs.States:List rebuild		# rebuild these after processing QPKGs to get current states
 	Func:Exit
 
 	}
@@ -1069,9 +1056,9 @@ Action:Proc()
 				esac
 			done
 
-			[[ $ok_count -gt 0 ]] && opts_help_ok=true
-			[[ $skip_count -gt 0 || $skip_error_count -gt 0 ]] && opts_help_skipped=true
-			[[ $fail_count -gt 0 ]] && opts_help_failed=true
+			[[ $ok_count -gt 0 ]] && opts_show_packages_ok=true
+			[[ $skip_count -gt 0 || $skip_error_count -gt 0 ]] && opts_show_packages_skipped=true
+			[[ $fail_count -gt 0 ]] && opts_show_packages_failed=true
 
 			[[ ${#target_packages[@]} -gt 0 ]] && KillActiveFork		# should only be needed if an action fork didn't exit properly
 			wait 2>/dev/null
@@ -1164,7 +1151,7 @@ AdjustMaxForks()
 	local reason=''
 
 	# no-point running actions async in debug mode: their stdout will make a confusing mess of the screen
-	if [[ $self_debug_to_file = true ]]; then
+	if [[ $opts_debug = true ]]; then
 		max_forks=1
 		reason='debug mode is active'
 	else
@@ -1196,56 +1183,56 @@ Self:Results()
 	display_last_action_datetime=false
 
 	if ARGs-unknown:IsNone; then
-		if [[ $opts_help_abbreviations = true ]]; then
+		if [[ $opts_show_abbreviations = true ]]; then
 			QPKGs.Missing:Show
 			QPKGs.NewVers:Show
 			QPKGs.Abbreviations:Show
-		elif [[ $opts_help_actions = true ]]; then
+		elif [[ $opts_show_actions = true ]]; then
 			Help.Actions:Show
-		elif [[ $opts_help_action_reassign = true ]]; then
+		elif [[ $opts_show_reassign = true ]]; then
 			Help.Action.Reassign:Show
-		elif [[ $opts_help_actions_all = true ]]; then
+		elif [[ $opts_show_actions_all = true ]]; then
 			Help.ActionsAll:Show
-		elif [[ $opts_help_backups = true ]]; then
+		elif [[ $opts_show_backups = true ]]; then
 			QPKGs.Backups:Show
-		elif [[ $opts_help_groups = true ]]; then
+		elif [[ $opts_show_groups = true ]]; then
 			Help.Groups:Show
-		elif [[ $opts_help_options = true ]]; then
+		elif [[ $opts_show_options = true ]]; then
 			Help.Options:Show
-		elif [[ $opts_help_packages = true ]]; then
+		elif [[ $opts_show_packages = true ]]; then
 			QPKGs.Missing:Show
 			QPKGs.NewVers:Show
 			QPKGs:List:Show
-		elif [[ $opts_help_problems = true ]]; then
+		elif [[ $opts_show_problems = true ]]; then
 			Help.Problems:Show
-		elif [[ $opts_help_repos = true ]]; then
+		elif [[ $opts_show_repos = true ]]; then
 			QPKGs.Missing:Show
 			QPKGs.NewVers:Show
 			QPKGs.Repos:Show
-		elif [[ $opts_help_results = true ]]; then
+		elif [[ $opts_show_results = true ]]; then
 			display_last_action_datetime=true
-			opts_help_ok=true
-			opts_help_skipped=true
-			opts_help_failed=true
-		elif [[ $opts_help_status = true ]]; then
+			opts_show_packages_ok=true
+			opts_show_packages_skipped=true
+			opts_show_packages_failed=true
+		elif [[ $opts_show_status = true ]]; then
 			QPKGs.Missing:Show
 			QPKGs.NewVers:Show
 			QPKGs.Statuses:Show
-		elif [[ $opts_help_tips = true ]]; then
+		elif [[ $opts_show_tips = true ]]; then
 			Help.Tips:Show
 		fi
 
-		if [[ $opts_log_last_paste = true ]]; then
+		if [[ $opts_paste_log_last = true ]]; then
 			Log.Last:Paste
-		elif [[ $opts_log_last_view = true ]]; then
+		elif [[ $opts_show_log_last = true ]]; then
 			Self.LockFile:Release
 			Log.Last:View
-		elif [[ $opts_log_tail_paste = true ]]; then
+		elif [[ $opts_paste_log_tail = true ]]; then
 			Log.Tail:Paste
-		elif [[ $opts_log_tail_view = true ]]; then
+		elif [[ $opts_show_log_tail = true ]]; then
 			Self.LockFile:Release
 			Log.Tail:View
-		elif [[ $opts_vers_view = true ]]; then
+		elif [[ $opts_show_versions = true ]]; then
 			Self.Vers:Show
 		fi
 
@@ -1272,24 +1259,24 @@ Self:Results()
 		fi
 	fi
 
-	if [[ $opts_help_basic = true ]]; then
+	if [[ $opts_show_basic_help = true ]]; then
 		Help.Basic:Show
 		Help.Basic.Example:Show
 	fi
 
-	[[ $opts_help_ok = true ]] && Actions.Results:Show ok
-	[[ $opts_help_skipped = true ]] && Actions.Results:Show skipped
-	[[ $opts_help_failed = true ]] && Actions.Results:Show failed
-	[[ $opts_help_showbackuploc = true ]] && Help.BackupLocation:Show
-	[[ $self_display_zero_qpkgs = true ]] && ShowZeroQpkgs
-	[[ $opts_help_suggestissue = true ]] && Help.Issue:Show
+	[[ $opts_show_packages_ok = true ]] && Actions.Results:Show ok
+	[[ $opts_show_packages_skipped = true ]] && Actions.Results:Show skipped
+	[[ $opts_show_packages_failed = true ]] && Actions.Results:Show failed
+	[[ $opts_show_backuploc = true ]] && Help.BackupLocation:Show
+	[[ $show_zero_qpkgs = true ]] && ShowZeroQpkgs
+	[[ $show_suggest_issue = true ]] && Help.Issue:Show
 
 	DebugInfoMinSepr
 	DebugScript finished "$($DATE_CMD)"
 	DebugScript 'elapsed time' "$(FormatSecsToHoursMinutesSecs "$(($($DATE_CMD +%s)-SCRIPT_STARTSECONDS))")"
 	DebugInfoMajSepr
 
-	[[ ${self_debug_to_archive:=false} = true ]] && ArchiveActiveSessLog
+	[[ ${self_debug_archive_afterward:=false} = true ]] && ArchiveActiveSessLog
 	ResetActiveSessLog
 	EraseThisLine
 	DisplayLineSpaceIfNoneAlready   # final on-screen linespace
@@ -1328,16 +1315,17 @@ ParseArgs()
 				arg_identified=true
 				group=''
 				group_identified=false
-				self_display_clean=false
-				skip_qpkg_processing=false
+				self_no_title=false
+				skip_package_actions=false
 				;;
 			paste)
-				action='paste'
+				# shellcheck disable=2209
+				action=paste
 				arg_identified=true
 				group=''
 				group_identified=false
-				self_display_clean=false
-				skip_qpkg_processing=true
+				self_no_title=false
+				skip_package_actions=true
 				;;
 		# all cases below can use multiple words or chars to specify a single action
 			add|install)
@@ -1345,48 +1333,48 @@ ParseArgs()
 				arg_identified=true
 				group=''
 				group_identified=false
-				self_display_clean=false
-				skip_qpkg_processing=false
+				self_no_title=false
+				skip_package_actions=false
 				;;
 			c|check)
 				action=check
 				arg_identified=true
 				group=''
 				group_identified=false
-				self_display_clean=false
-				skip_qpkg_processing=false
+				self_no_title=false
+				skip_package_actions=false
 				;;
 			display|help|list|show|view)
 				action=help
 				arg_identified=true
 				group=''
 				group_identified=false
-				self_display_clean=false
-				skip_qpkg_processing=true
+				self_no_title=false
+				skip_package_actions=true
 				;;
 			rm|remove|uninstall)
 				action=uninstall
 				arg_identified=true
 				group=''
 				group_identified=false
-				self_display_clean=false
-				skip_qpkg_processing=false
+				self_no_title=false
+				skip_package_actions=false
 				;;
 			s|status|statuses)
 				action=status
 				arg_identified=true
 				group=''
 				group_identified=false
-				self_display_clean=false
-				skip_qpkg_processing=true
+				self_no_title=false
+				skip_package_actions=true
 				;;
 			update|upgrade)
 				action=upgrade
 				arg_identified=true
 				group=''
 				group_identified=false
-				self_display_clean=false
-				skip_qpkg_processing=false
+				self_no_title=false
+				skip_package_actions=false
 		esac
 
 		# identify group in two stages: stage 1 for when user didn't supply an action before group, stage 2 is after an action has been defined.
@@ -1399,7 +1387,7 @@ ParseArgs()
 					arg_identified=true
 					group=''
 					group_identified=false
-					skip_qpkg_processing=true
+					skip_package_actions=true
 			esac
 
 			DebugVar action
@@ -1514,7 +1502,7 @@ ParseArgs()
 				esac
 				;;
 			check)
-				opts_deps_check=true
+				opts_check=true
 				;;
 			clean)
 				case $group in
@@ -1533,83 +1521,83 @@ ParseArgs()
 			help)
 				case $group in
 					abs)
-						opts_help_abbreviations=true
+						opts_show_abbreviations=true
 						;;
 					actions)
-						opts_help_actions=true
+						opts_show_actions=true
 						;;
 					all-actions|all)
-						opts_help_actions_all=true
+						opts_show_actions_all=true
 						;;
 					backedup|installed|started|NTstarted)
 						QPKGs.AClist.IS${group}:Set
-						self_display_clean=true
+						self_no_title=true
 						;;
 					backups)
-						opts_help_backups=true
+						opts_show_backups=true
 						;;
 					dependent|installable|standalone|upgradable)
 						QPKGs.AClist.SC${group}:Set
-						self_display_clean=true
+						self_no_title=true
 						;;
 					failed)
-						opts_help_failed=true
+						opts_show_packages_failed=true
 						;;
 					groups)
-						opts_help_groups=true
+						opts_show_groups=true
 						;;
 					last)
-						opts_log_last_view=true
-						self_display_clean=true
+						opts_show_log_last=true
+						self_no_title=true
 						;;
 					log)
-						opts_log_tail_view=true
-						self_display_clean=true
+						opts_show_log_tail=true
+						self_no_title=true
 						;;
 					NTbackedup)
 						QPKGs.AClist.ISNTbackedup:Set
-						self_display_clean=true
+						self_no_title=true
 						;;
 					NTinstalled)
 						QPKGs.AClist.ISNTinstalled:Set
-						self_display_clean=true
+						self_no_title=true
 						;;
 					ok)
-						opts_help_ok=true
+						opts_show_packages_ok=true
 						;;
 					options)
-						opts_help_options=true
+						opts_show_options=true
 						;;
 					packages)
-						opts_help_packages=true
+						opts_show_packages=true
 						;;
 					problems)
-						opts_help_problems=true
+						opts_show_problems=true
 						;;
 					reassign)
-						opts_help_action_reassign=true
+						opts_show_reassign=true
 						;;
 					repos)
-						opts_help_repos=true
+						opts_show_repos=true
 						;;
 					results)
-						opts_help_results=true
+						opts_show_results=true
 						;;
 					skipped)
-						opts_help_skipped=true
+						opts_show_packages_skipped=true
 						;;
 					status)
-						opts_help_status=true
+						opts_show_status=true
 						;;
 					tips)
-						opts_help_tips=true
+						opts_show_tips=true
 						;;
 					versions)
-						opts_vers_view=true
-						self_display_clean=true
+						opts_show_versions=true
+						self_no_title=true
 				esac
 
-				skip_qpkg_processing=true
+				skip_package_actions=true
 				;;
 			install)
 				case $group in
@@ -1632,15 +1620,15 @@ ParseArgs()
 			paste)
 				case $group in
 					all|log|tail)
-						opts_log_tail_paste=true
+						opts_paste_log_tail=true
 						action=''
 						;;
 					last)
-						opts_log_last_paste=true
+						opts_paste_log_last=true
 						action=''
 				esac
 
-				skip_qpkg_processing=true
+				skip_package_actions=true
 				;;
 			reassign)
 				case $group in
@@ -1727,8 +1715,8 @@ ParseArgs()
 				esac
 				;;
 			status)
-				opts_help_status=true
-				skip_qpkg_processing=true
+				opts_show_status=true
+				skip_package_actions=true
 				;;
 			stop)
 				case $group in
@@ -1794,14 +1782,14 @@ ParseArgs()
 	if [[ -n $action && $group_identified = false ]]; then
 		case $action in
 			help|paste)
-				opts_help_basic=true
+				opts_show_basic_help=true
 		esac
 	fi
 
 	if ARGs-unknown:IsAny; then
-		opts_help_basic=true
-		skip_qpkg_processing=true
-		self_display_clean=false
+		opts_show_basic_help=true
+		skip_package_actions=true
+		self_no_title=false
 	fi
 
 	Func:Exit
@@ -1822,43 +1810,43 @@ ArgSuggestions:Show()
 			case $arg in
 				all)
 					DisplayAsProjSynExam "please provide a valid $(FormatAsAction) before 'all' like" 'start all'
-					opts_help_basic=false
+					opts_show_basic_help=false
 					;;
 				all-backup|backup-all)
 					DisplayAsProjSynExam 'to backup all installed package configurations, use' 'backup all'
-					opts_help_basic=false
+					opts_show_basic_help=false
 					;;
 				dependent)
 					DisplayAsProjSynExam "please provide a valid $(FormatAsAction) before 'dependent' like" 'start dependents'
-					opts_help_basic=false
+					opts_show_basic_help=false
 					;;
 				all-restart|restart-all)
 					DisplayAsProjSynExam 'to restart all packages, use' 'restart all'
-					opts_help_basic=false
+					opts_show_basic_help=false
 					;;
 				all-restore|restore-all)
 					DisplayAsProjSynExam 'to restore all installed package configurations, use' 'restore all'
-					opts_help_basic=false
+					opts_show_basic_help=false
 					;;
 				standalone)
 					DisplayAsProjSynExam "please provide a valid $(FormatAsAction) before 'standalone' like" 'start standalones'
-					opts_help_basic=false
+					opts_show_basic_help=false
 					;;
 				all-start|start-all)
 					DisplayAsProjSynExam 'to start all packages, use' 'start all'
-					opts_help_basic=false
+					opts_show_basic_help=false
 					;;
 				all-stop|stop-all)
 					DisplayAsProjSynExam 'to stop all packages, use' 'stop all'
-					opts_help_basic=false
+					opts_show_basic_help=false
 					;;
 				all-uninstall|all-remove|uninstall-all|remove-all)
 					DisplayAsProjSynExam 'to uninstall all packages, use' 'force uninstall all'
-					opts_help_basic=false
+					opts_show_basic_help=false
 					;;
 				all-upgrade|upgrade-all)
 					DisplayAsProjSynExam 'to upgrade all packages, use' 'upgrade all'
-					opts_help_basic=false
+					opts_show_basic_help=false
 			esac
 		done
 	fi
@@ -2146,7 +2134,7 @@ UpdateEntwarePackageList()
 	local -i result_code=0
 
 	# if Entware package list was recently updated, don't update again
-	if ! IsThisFileRecent "$EXTERNAL_PACKAGES_ARCHIVE_PATHFILE" "$CHANGE_THRESHOLD_MINUTES" || [[ ! -f $EXTERNAL_PACKAGES_ARCHIVE_PATHFILE || $opts_deps_check = true ]]; then
+	if ! IsThisFileRecent "$EXTERNAL_PACKAGES_ARCHIVE_PATHFILE" "$CHANGE_THRESHOLD_MINUTES" || [[ ! -f $EXTERNAL_PACKAGES_ARCHIVE_PATHFILE || $opts_check = true ]]; then
 		DebugAsProc "updating $(FormatAsPackName Entware) package list"
 
 		RunAndLog "$OPKG_CMD update" "$LOGS_PATH/Entware.$UPDATE_LOG_FILE" log:failure-only
@@ -2251,7 +2239,7 @@ CalcIpkDepsToInstall()
 		DebugAsDone "completed in $iterations iteration$(Pluralise "$iterations")"
 	else
 		DebugAsError "incomplete with $iterations iteration$(Pluralise "$iterations"), consider raising \$ITERATION_LIMIT [$ITERATION_LIMIT]"
-		opts_help_suggestissue=true
+		show_suggest_issue=true
 	fi
 
 	# exclude already installed IPKs
@@ -2380,13 +2368,11 @@ IPKs:install()
 
 	if QPKGs.ACinstall.SCall:IsSet; then
 		for index in "${!QPKG_NAME[@]}"; do
-#			[[ ${QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${QPKG_ARCH[$index]} = all ]] || continue
 			IPKs-ACinstall-to:Add "${QPKG_REQUIRES_IPKS[$index]}"
 		done
 	else
 		for index in "${!QPKG_NAME[@]}"; do
 			if QPKGs-ACinstall-to:Exist "${QPKG_NAME[$index]}" || QPKGs-ISinstalled:Exist "${QPKG_NAME[$index]}" || QPKGs-ACreinstall-to:Exist "${QPKG_NAME[$index]}" || (QPKGs-ACstart-to:Exist "${QPKG_NAME[$index]}" && (QPKGs-ACinstall-to:Exist "${QPKG_NAME[$index]}" || QPKGs-ISinstalled:Exist "${QPKG_NAME[$index]}" || QPKGs-ACreinstall-to:Exist "${QPKG_NAME[$index]}")); then
-#				[[ ${QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" || ${QPKG_ARCH[$index]} = all ]] || continue
 				QPKG.MinRAM "${QPKG_NAME[$index]}" &>/dev/null || continue
 				IPKs-ACinstall-to:Add "${QPKG_REQUIRES_IPKS[$index]}"
 			fi
@@ -2439,7 +2425,7 @@ PIPs:install()
 	local -r PACKAGE_TYPE='PyPI group'
 	local -r RUNTIME=long
 
-	if [[ $opts_deps_check = true ]] || IPKs-ACinstall-ok:Exist python3-pip; then
+	if [[ $opts_check = true ]] || IPKs-ACinstall-ok:Exist python3-pip; then
 		((total_count++))
 		ShowAsActionProgress '' "$PACKAGE_TYPE" "$ok_count" "$skip_count" "$fail_count" "$total_count" installing "$RUNTIME"
 
@@ -2697,6 +2683,33 @@ IsSU()
 
 	}
 
+TerminalDimensions:Load()
+	{
+
+	if [[ -e $GNU_STTY_CMD && -t 0 ]]; then
+		local terminal_dimensions=$($GNU_STTY_CMD size)
+		readonly SESS_ROWS=${terminal_dimensions% *}
+		readonly SESS_COLS=${terminal_dimensions#* }
+	else
+		readonly SESS_ROWS=40
+		readonly SESS_COLS=156
+	fi
+
+	return 0
+
+	}
+
+ConfigInsecure()
+	{
+
+	[[ ${NAS_FIRMWARE_VER//.} -lt 426 ]] && curl_insecure_arg=' --insecure' || curl_insecure_arg=''
+
+	# KLUDGE: GitHub SSL certs are presently invalid. This might be associated with recent RSA leak: https://github.blog/2023-03-23-we-updated-our-rsa-ssh-host-key
+	# So, don't check certs for now.
+	curl_insecure_arg=' --insecure'
+
+	}
+
 GetDefPythonVer()
 	{
 
@@ -2827,7 +2840,7 @@ DisplayAsProjSynExam()
 	[[ ${1: -1} != '!' ]] && printf ':'
 
 	printf "\n%${HELP_SYNTAX_INDENT}s${help_syntax_sudo_prefix}%s\n" '' "sherpa ${2:-}"
-	self_linespace_onscreen=false
+	linespace_visible=false
 
 	}
 
@@ -2847,7 +2860,7 @@ DisplayAsProjSynIndentExam()
 	fi
 
 	printf "%${HELP_SYNTAX_INDENT}s${help_syntax_sudo_prefix}%s\n" '' "sherpa ${2:-}"
-	self_linespace_onscreen=false
+	linespace_visible=false
 
 	}
 
@@ -2861,7 +2874,7 @@ DisplayAsSynExam()
 	#	$2 = example syntax
 
 	printf "\n${HELP_COL_SPECIAL_PREFIX}%s:\n%${HELP_SYNTAX_INDENT}s${help_syntax_prefix}%s\n" "$(Capitalise "${1:-}")" '' "${2:-}"
-	self_linespace_onscreen=false
+	linespace_visible=false
 
 	}
 
@@ -3140,7 +3153,7 @@ DisplayAsHelpTitleNameRepo()
 	fi
 
 	printf '\n'
-	self_linespace_onscreen=false
+	linespace_visible=false
 
 	}
 
@@ -3213,7 +3226,7 @@ DisplayAsHelpTitleFileNamePlusSomething()
 
 	DisplayLineSpaceIfNoneAlready
 	printf "${HELP_COL_SPECIAL_PREFIX}%-${HELP_FILE_NAME_WIDTH}s ${HELP_COL_SPECIAL_PREFIX}%s\n" "$(Capitalise "${1:-}"):" "$(Capitalise "${2:-}"):"
-	self_linespace_onscreen=false
+	linespace_visible=false
 
 	}
 
@@ -3225,7 +3238,7 @@ DisplayAsHelpTitle()
 
 	DisplayLineSpaceIfNoneAlready
 	printf "${HELP_COL_SPECIAL_PREFIX}%s\n" "$(Capitalise "${1:-}" | tr -s ' ')"
-	self_linespace_onscreen=false
+	linespace_visible=false
 
 	}
 
@@ -3238,7 +3251,7 @@ DisplayAsHelpTitleHighlighted()
 	DisplayLineSpaceIfNoneAlready
 	# shellcheck disable=2059
 	printf "$(ColourTextBrightOrange "${HELP_COL_SPECIAL_PREFIX}%s\n")" "$(Capitalise "${1:-}")"
-	self_linespace_onscreen=false
+	linespace_visible=false
 
 	}
 
@@ -3293,7 +3306,7 @@ EraseThisLine()
 
 	# reset cursor to start-of-line, erasing entire line
 
-	[[ ${self_verbose:-false} = true ]] && return
+	[[ ${opts_verbose:-false} = true ]] && return
 
 	echo -en "\033[2K\r"
 
@@ -3303,7 +3316,7 @@ Display()
 	{
 
 	echo -e "${1:-}"
-	self_linespace_onscreen=false
+	linespace_visible=false
 
 	}
 
@@ -3320,11 +3333,11 @@ Help.Actions:Show()
 	DisableDebugToArchiveAndFile
 	Help.Basic:Show
 	DisplayAsHelpTitle "$(FormatAsAction) usage examples:"
-	DisplayAsProjSynIndentExam 'show package statuses' 'status'
+	DisplayAsProjSynIndentExam 'show package statuses' status
 	DisplayAsProjSynIndentExam '' s
-	DisplayAsProjSynIndentExam 'show package repositories' 'repos'
+	DisplayAsProjSynIndentExam 'show package repositories' repos
 	DisplayAsProjSynIndentExam '' r
-	DisplayAsProjSynIndentExam 'ensure all application dependencies are installed' 'check'
+	DisplayAsProjSynIndentExam 'ensure all application dependencies are installed' check
 	DisplayAsProjSynIndentExam '' c
 	DisplayAsProjSynIndentExam 'install these packages' "install $(FormatAsPackages)"
 	DisplayAsProjSynIndentExam 'uninstall these packages' "uninstall $(FormatAsPackages)"
@@ -3449,8 +3462,8 @@ Help.Issue:Show()
 
 	DisplayAsHelpTitle "please consider creating a new issue for this on GitHub:\n\thttps://github.com/OneCDOnly/sherpa/issues"
 	DisplayAsHelpTitle "alternatively, post on the QNAP NAS Community Forum:\n\thttps://forum.qnap.com/viewtopic.php?f=320&t=132373"
-	DisplayAsProjSynIndentExam "view only the most recent $(FormatAsTitle) session log" 'last'
-	DisplayAsProjSynIndentExam "view the entire $(FormatAsTitle) session log" 'log'
+	DisplayAsProjSynIndentExam "view only the most recent $(FormatAsTitle) session log" last
+	DisplayAsProjSynIndentExam "view the entire $(FormatAsTitle) session log" log
 	DisplayAsProjSynIndentExam "upload the most-recent $(FormatAsThous "$LOG_TAIL_LINES") lines in your $(FormatAsTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste log'
 	DisplayAsHelpTitleHighlighted "If you need help, please include a copy of your $(FormatAsTitle) $(ColourTextBrightOrange "log for analysis!")"
 
@@ -3523,9 +3536,9 @@ Help.Options:Show()
 	DisableDebugToArchiveAndFile
 	Help.Basic:Show
 	DisplayAsHelpTitle "$(FormatAsOptions) usage examples:"
-	DisplayAsProjSynIndentExam 'show package statuses' 'status'
+	DisplayAsProjSynIndentExam 'show package statuses' status
 	DisplayAsProjSynIndentExam '' s
-	DisplayAsProjSynIndentExam 'show package repositories' 'repos'
+	DisplayAsProjSynIndentExam 'show package repositories' repos
 	DisplayAsProjSynIndentExam '' r
 	DisplayAsProjSynIndentExam 'show live debugging information, and record it to file' "$(FormatAsAction) $(FormatAsPackages) verbose"
 	DisplayAsProjSynIndentExam 'record debugging information to file only' "$(FormatAsAction) $(FormatAsPackages) debug"
@@ -3540,20 +3553,20 @@ Help.Problems:Show()
 	DisableDebugToArchiveAndFile
 	Help.Basic:Show
 	DisplayAsHelpTitle 'usage examples for dealing with problems:'
-	DisplayAsProjSynIndentExam 'show package statuses' 'status'
+	DisplayAsProjSynIndentExam 'show package statuses' status
 	DisplayAsProjSynIndentExam '' s
 	DisplayAsProjSynIndentExam 'show live debugging information, and record it to file' "$(FormatAsAction) $(FormatAsPackages) verbose"
 	DisplayAsProjSynIndentExam 'record debugging information to file only' "$(FormatAsAction) $(FormatAsPackages) debug"
-	DisplayAsProjSynIndentExam 'ensure all dependencies exist for installed packages' 'check'
+	DisplayAsProjSynIndentExam 'ensure all dependencies exist for installed packages' check
 	DisplayAsProjSynIndentExam '' c
 	DisplayAsProjSynIndentExam 'clear local repository files from these packages' "clean $(FormatAsPackages)"
-	DisplayAsProjSynIndentExam "remove all cached $(FormatAsTitle) items and logs" 'reset'
+	DisplayAsProjSynIndentExam "remove all cached $(FormatAsTitle) items and logs" reset
 	DisplayAsProjSynIndentExam 'restart all installed packages (upgrades internal applications where-supported)' 'restart all'
 	DisplayAsProjSynIndentExam 'enable then start these packages' "start $(FormatAsPackages)"
 	DisplayAsProjSynIndentExam 'stop then disable these packages (disabling will prevent them starting on reboot)' "stop $(FormatAsPackages)"
-	DisplayAsProjSynIndentExam "view only the most recent $(FormatAsTitle) session log" 'last'
+	DisplayAsProjSynIndentExam "view only the most recent $(FormatAsTitle) session log" last
 	DisplayAsProjSynIndentExam '' l
-	DisplayAsProjSynIndentExam "view the entire $(FormatAsTitle) session log" 'log'
+	DisplayAsProjSynIndentExam "view the entire $(FormatAsTitle) session log" log
 	DisplayAsProjSynIndentExam "upload the most-recent session in your $(FormatAsTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste last'
 	DisplayAsProjSynIndentExam "upload the most-recent $(FormatAsThous "$LOG_TAIL_LINES") lines in your $(FormatAsTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste log'
 	DisplayAsHelpTitleHighlighted "If you need help, please include a copy of your $(FormatAsTitle) $(ColourTextBrightOrange "log for analysis!")"
@@ -3573,7 +3586,7 @@ Help.Tips:Show()
 	DisplayAsProjSynIndentExam '' a
 	DisplayAsProjSynIndentExam 'restart all installed packages (upgrades internal applications where-supported)' 'restart all'
 	DisplayAsProjSynIndentExam 'list only packages that can be installed' 'list installable'
-	DisplayAsProjSynIndentExam "view only the most recent $(FormatAsTitle) session log" 'last'
+	DisplayAsProjSynIndentExam "view only the most recent $(FormatAsTitle) session log" last
 	DisplayAsProjSynIndentExam '' l
 	DisplayAsProjSynIndentExam 'start all stopped packages' 'start stopped'
 	DisplayAsProjSynIndentExam 'upgrade the internal applications only' "restart $(FormatAsPackages)"
@@ -3652,7 +3665,7 @@ Log.Last:Paste()
 		else
 			DebugInfoMinSepr
 			DebugScript 'user abort'
-			self_display_zero_qpkgs=false
+			show_zero_qpkgs=false
 			return 1
 		fi
 	else
@@ -3684,7 +3697,7 @@ Log.Tail:Paste()
 		else
 			DebugInfoMinSepr
 			DebugScript 'user abort'
-			self_display_zero_qpkgs=false
+			show_zero_qpkgs=false
 			return 1
 		fi
 	else
@@ -3889,7 +3902,7 @@ UpdateForkProgress()
 	local msg=': '
 
 	RefreshForkCounts
-	[[ $self_verbose = true ]] && return		# don't display progress, it's impossible to view it with so-many other writes to the screen
+	[[ $opts_verbose = true ]] && return		# don't display progress, it's impossible to view it with so-many other writes to the screen
 
 	msg+="$(PercFrac "$ok_count" "$((skip_count+skip_ok_count+skip_error_count))" "$fail_count" "$total_count")"
 
@@ -3924,7 +3937,7 @@ QPKGs.Missing:Show()
 
 	local package=''
 
-	[[ $self_display_clean = false ]] || return
+	[[ $self_no_title = false ]] || return
 	QPKGs.States:Build
 
 	[[ $(QPKGs-ISmissing:Count) -eq 0 ]] && return 1
@@ -3954,7 +3967,7 @@ QPKGs.NewVers:Show()
 	local names_formatted=''
 	local msg=''
 
-	[[ $self_display_clean = false ]] || return
+	[[ $self_no_title = false ]] || return
 	QPKGs.States:Build
 
 	if [[ $(QPKGs-SCupgradable:Count) -eq 0 ]]; then
@@ -4024,7 +4037,7 @@ QPKGs.Warnings:Check()
 PIPs.Actions:List()
 	{
 
-	[[ $self_debug_to_file = true ]] || return
+	[[ $opts_debug = true ]] || return
 
 	Func:Entry
 	local action=''
@@ -4043,31 +4056,31 @@ PIPs.Actions:List()
 IPKs.Actions:List()
 	{
 
-	[[ $self_debug_to_file = true ]] || return
+	[[ $opts_debug = true ]] || return
 
 	Func:Entry
 	local action=''
-	local borders_shown=false
+	local border_shown=false
 
 	for action in "${IPK_ACTIONS[@]}"; do
 		if IPKs-AC${action}-ok:IsAny; then
-			if [[ $borders_shown = false ]]; then
+			if [[ $border_shown = false ]]; then
 				DebugInfoMinSepr
-				borders_shown=true
+				border_shown=true
 			fi
 			DebugIpk info "AC${action}-ok" "($(IPKs-AC${action}-ok:Count)) $(IPKs-AC${action}-ok:ListCSV) "
 		fi
 
 		if IPKs-AC${action}-er:IsAny; then
-			if [[ $borders_shown = false ]]; then
+			if [[ $border_shown = false ]]; then
 				DebugInfoMinSepr
-				borders_shown=true
+				border_shown=true
 			fi
 			DebugIpk error "AC${action}-er" "($(IPKs-AC${action}-er:Count)) $(IPKs-AC${action}-er:ListCSV) "
 		fi
 	done
 
-	[[ $borders_shown = true ]] && DebugInfoMinSepr
+	[[ $border_shown = true ]] && DebugInfoMinSepr
 	Func:Exit
 
 	}
@@ -4075,21 +4088,21 @@ IPKs.Actions:List()
 QPKGs.Actions:List()
 	{
 
-	[[ $self_debug_to_file = true ]] || return
+	[[ $opts_debug = true ]] || return
 
 	Func:Entry
 	local action=''
 	local prefix=''
-	local borders_shown=false
+	local border_shown=false
 
 	for action in "${QPKG_ACTIONS[@]}"; do
 		[[ $action = enable || $action = disable ]] && continue		# no objects for these as `start` and `stop` do the same jobs
 
 		for prefix in ok er sk; do
 			if QPKGs-AC${action}-${prefix}:IsAny; then
-				if [[ $borders_shown = false ]]; then
+				if [[ $border_shown = false ]]; then
 					DebugInfoMinSepr
-					borders_shown=true
+					border_shown=true
 				fi
 
 				case $prefix in
@@ -4106,7 +4119,7 @@ QPKGs.Actions:List()
 		done
 	done
 
-	[[ $borders_shown = true ]] && DebugInfoMinSepr
+	[[ $border_shown = true ]] && DebugInfoMinSepr
 	Func:Exit
 
 	}
@@ -4142,7 +4155,7 @@ QPKGs.States:List()
 	# input:
 	#	$1 (optional passthrough) = `rebuild` - clear existing lists and rebuild them from scratch
 
-	[[ $self_debug_to_file = true ]] || return
+	[[ $opts_debug = true ]] || return
 
 	Func:Entry
 	local state=''
@@ -4398,7 +4411,7 @@ QPKGs.Abbreviations:Show()
 				elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
 					DisplayAsHelpNameRepo muted "$package_name" 'not installable: low RAM'
 				elif QPKGs-ISmissing:Exist "$package_name" &>/dev/null; then
-					DisplayAsHelpNameRepo highlighted "$package_name" 'missing'
+					DisplayAsHelpNameRepo highlighted "$package_name" missing
 				elif QPKGs-ISNTinstalled:Exist "$package_name"; then
 					DisplayAsHelpNameRepo muted "$package_name" "${abs// /, }"
 				else
@@ -4865,7 +4878,7 @@ FindNextFD()
 MarkThisActionForkAsStarted()
 	{
 
-	[[ -n ${proc_fork_pathfile:-} ]] && touch "$proc_fork_pathfile"
+	[[ -n ${proc_fork_pathfile:-} ]] && $TOUCH_CMD "$proc_fork_pathfile"
 
 	}
 
@@ -5196,7 +5209,7 @@ GetSudoUID()
 Self.Error:Set()
 	{
 
-	skip_qpkg_processing=true
+	skip_package_actions=true
 	Self.Error:IsSet && return
 	_script_error_flag_=true
 	DebugVar _script_error_flag_
@@ -5264,7 +5277,7 @@ Self.LockFile:Release()
 Self.Verbose:Enable()
 	{
 
-	self_verbose=true
+	opts_verbose=true
 	Keystrokes:Show
 	Cursor:Show
 	EnableDebugToArchiveAndFile
@@ -5274,16 +5287,16 @@ Self.Verbose:Enable()
 EnableDebugToArchiveAndFile()
 	{
 
-	self_debug_to_archive=true
-	self_debug_to_file=true
+	self_debug_archive_afterward=true
+	opts_debug=true
 
 	}
 
 DisableDebugToArchiveAndFile()
 	{
 
-	self_debug_to_archive=false
-	self_debug_to_file=false
+	self_debug_archive_afterward=false
+	opts_debug=false
 
 	}
 
@@ -5351,7 +5364,7 @@ _QPKG:reassign_()
 	# output:
 	#   $? = none, this function executes in the background
 
-	[[ $self_verbose != true ]] && exec &>/dev/null
+	[[ $opts_verbose != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
 	PACKAGE_NAME=${1:?package name null}
@@ -5399,7 +5412,7 @@ _QPKG:download_()
 	# output:
 	#   $? = none, this function executes in the background
 
-	[[ $self_verbose != true ]] && exec &>/dev/null
+	[[ $opts_verbose != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
 	PACKAGE_NAME=${1:?package name null}
@@ -5473,7 +5486,7 @@ _QPKG:install_()
 	# output:
 	#   $? = none, this function executes in the background
 
-	[[ $self_verbose != true ]] && exec &>/dev/null
+	[[ $opts_verbose != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
 	PACKAGE_NAME=${1:?package name null}
@@ -5518,7 +5531,7 @@ _QPKG:install_()
 	local target_path=''
 
 	DebugAsProc "installing $(FormatAsPackName "$PACKAGE_NAME")"
-	[[ $self_debug_to_file = true ]] && debug_cmd='DEBUG_QPKG=true '
+	[[ $opts_debug = true ]] && debug_cmd='DEBUG_QPKG=true '
 
 	[[ ${QPKGs_were_installed_name[*]:-} = *"$PACKAGE_NAME"* ]] && target_path="QINSTALL_PATH=$(QPKG.OriginalPath "$PACKAGE_NAME") "
 	RunAndLog "${debug_cmd}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$INSTALL_LOG_FILE" log:failure-only 10
@@ -5551,7 +5564,7 @@ _QPKG:install_()
 			if [[ -L ${OPT_PATH:-} && -d ${OPT_BU_PATH:-} ]]; then
 				DebugAsProc 'restoring original /opt'
 				mv "$OPT_BU_PATH"/* "$OPT_PATH" && rm -rf "$OPT_BU_PATH"
-				DebugAsDone 'complete'
+				DebugAsDone complete
 			fi
 
 			# add essential IPKs needed immediately
@@ -5590,7 +5603,7 @@ _QPKG:reinstall_()
 	# output:
 	#   $? = none, this function executes in the background
 
-	[[ $self_verbose != true ]] && exec &>/dev/null
+	[[ $opts_verbose != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
 	PACKAGE_NAME=${1:?package name null}
@@ -5614,7 +5627,7 @@ _QPKG:reinstall_()
 	local target_path=''
 
 	DebugAsProc "reinstalling $(FormatAsPackName "$PACKAGE_NAME")"
-	[[ $self_debug_to_file = true ]] && debug_cmd='DEBUG_QPKG=true '
+	[[ $opts_debug = true ]] && debug_cmd='DEBUG_QPKG=true '
 
 	QPKG.IsInstalled "$PACKAGE_NAME" && target_path="QINSTALL_PATH=$($DIRNAME_CMD "$(QPKG.InstallationPath $PACKAGE_NAME)") "
 	RunAndLog "${debug_cmd}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$REINSTALL_LOG_FILE" log:failure-only 10
@@ -5663,7 +5676,7 @@ _QPKG:upgrade_()
 	# output:
 	#   $? = none, this function executes in the background
 
-	[[ $self_verbose != true ]] && exec &>/dev/null
+	[[ $opts_verbose != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
 	PACKAGE_NAME=${1:?package name null}
@@ -5700,7 +5713,7 @@ _QPKG:upgrade_()
 	local target_path=''
 
 	DebugAsProc "upgrading $(FormatAsPackName "$PACKAGE_NAME")"
-	[[ $self_debug_to_file = true ]] && debug_cmd='DEBUG_QPKG=true '
+	[[ $opts_debug = true ]] && debug_cmd='DEBUG_QPKG=true '
 
 	QPKG.IsInstalled "$PACKAGE_NAME" && target_path="QINSTALL_PATH=$($DIRNAME_CMD "$(QPKG.InstallationPath "$PACKAGE_NAME")") "
 	RunAndLog "${debug_cmd}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$UPGRADE_LOG_FILE" log:failure-only 10
@@ -5756,7 +5769,7 @@ _QPKG:uninstall_()
 	# output:
 	#   $? = none, this function executes in the background
 
-	[[ $self_verbose != true ]] && exec &>/dev/null
+	[[ $opts_verbose != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
 	PACKAGE_NAME=${1:?package name null}
@@ -5782,7 +5795,7 @@ _QPKG:uninstall_()
 
 	if [[ -e $QPKG_UNINSTALLER_PATHFILE ]]; then
 		DebugAsProc "uninstalling $(FormatAsPackName "$PACKAGE_NAME")"
-		[[ $self_debug_to_file = true ]] && debug_cmd='DEBUG_QPKG=true '
+		[[ $opts_debug = true ]] && debug_cmd='DEBUG_QPKG=true '
 
 		[[ $PACKAGE_NAME = Entware ]] && SendParentChangeEnv Cursor:Show
 
@@ -5834,7 +5847,7 @@ _QPKG:restart_()
 	# output:
 	#   $? = none, this function executes in the background
 
-	[[ $self_verbose != true ]] && exec &>/dev/null
+	[[ $opts_verbose != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
 	PACKAGE_NAME=${1:?package name null}
@@ -5853,7 +5866,7 @@ _QPKG:restart_()
 	DebugAsProc "restarting $(FormatAsPackName "$PACKAGE_NAME")"
 	QPKG:enable
 
-	if [[ $self_debug_to_file = true ]]; then
+	if [[ $opts_debug = true ]]; then
 		debug_cmd='DEBUG_QPKG=true '
 		RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) restart" "$LOG_PATHFILE" log:failure-only
 		result_code=$?
@@ -5891,7 +5904,7 @@ _QPKG:start_()
 	# output:
 	#   $? = none, this function executes in the background
 
-	[[ $self_verbose != true ]] && exec &>/dev/null
+	[[ $opts_verbose != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
 	PACKAGE_NAME=${1:?package name null}
@@ -5917,7 +5930,7 @@ _QPKG:start_()
 	DebugAsProc "starting $(FormatAsPackName "$PACKAGE_NAME")"
 	QPKG:enable
 
-	if [[ $self_debug_to_file = true ]]; then
+	if [[ $opts_debug = true ]]; then
 		debug_cmd='DEBUG_QPKG=true '
 		RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) start" "$LOG_PATHFILE" log:failure-only
 		result_code=$?
@@ -5964,7 +5977,7 @@ _QPKG:stop_()
 	# output:
 	#   $? = none, this function executes in the background
 
-	[[ $self_verbose != true ]] && exec &>/dev/null
+	[[ $opts_verbose != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
 	PACKAGE_NAME=${1:?package name null}
@@ -5993,7 +6006,7 @@ _QPKG:stop_()
 	DebugAsProc "stopping $(FormatAsPackName "$PACKAGE_NAME")"
 	[[ $PACKAGE_NAME = Entware ]] && UpdateColourisation
 
-	if [[ $self_debug_to_file = true ]]; then
+	if [[ $opts_debug = true ]]; then
 		debug_cmd='DEBUG_QPKG=true '
 		RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) stop" "$LOG_PATHFILE" log:failure-only
 		result_code=$?
@@ -6066,7 +6079,7 @@ _QPKG:backup_()
 	# output:
 	#   $? = none, this function executes in the background
 
-	[[ $self_verbose != true ]] && exec &>/dev/null
+	[[ $opts_verbose != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
 	PACKAGE_NAME=${1:?package name null}
@@ -6087,7 +6100,7 @@ _QPKG:backup_()
 	fi
 
 	DebugAsProc "backing-up $(FormatAsPackName "$PACKAGE_NAME") configuration"
-	[[ $self_debug_to_file = true ]] && debug_cmd='DEBUG_QPKG=true '
+	[[ $opts_debug = true ]] && debug_cmd='DEBUG_QPKG=true '
 
 	RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) backup" "$LOGS_PATH/$PACKAGE_NAME.$BACKUP_LOG_FILE" log:failure-only
 	result_code=$?
@@ -6119,7 +6132,7 @@ _QPKG:restore_()
 	# output:
 	#   $? = none, this function executes in the background
 
-	[[ $self_verbose != true ]] && exec &>/dev/null
+	[[ $opts_verbose != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
 	PACKAGE_NAME=${1:?package name null}
@@ -6140,7 +6153,7 @@ _QPKG:restore_()
 	fi
 
 	DebugAsProc "restoring $(FormatAsPackName "$PACKAGE_NAME") configuration"
-	[[ $self_debug_to_file = true ]] && debug_cmd='DEBUG_QPKG=true '
+	[[ $opts_debug = true ]] && debug_cmd='DEBUG_QPKG=true '
 
 	RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) restore" "$LOGS_PATH/$PACKAGE_NAME.$RESTORE_LOG_FILE" log:failure-only
 	result_code=$?
@@ -6172,7 +6185,7 @@ _QPKG:clean_()
 	# output:
 	#   $? = none, this function executes in the background
 
-	[[ $self_verbose != true ]] && exec &>/dev/null
+	[[ $opts_verbose != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
 	PACKAGE_NAME=${1:?package name null}
@@ -6193,7 +6206,7 @@ _QPKG:clean_()
 	fi
 
 	DebugAsProc "cleaning $(FormatAsPackName "$PACKAGE_NAME")"
-	[[ $self_debug_to_file = true ]] && debug_cmd='DEBUG_QPKG=true '
+	[[ $opts_debug = true ]] && debug_cmd='DEBUG_QPKG=true '
 
 	RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) clean" "$LOGS_PATH/$PACKAGE_NAME.$CLEAN_LOG_FILE" log:failure-only
 	result_code=$?
@@ -6229,7 +6242,7 @@ _QPKG:sign_()
 	# output:
 	#   $? = none, this function executes in the background
 
-	[[ $self_verbose != true ]] && exec &>/dev/null
+	[[ $opts_verbose != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
 	local -r PACKAGE_NAME=${1:?package name null}
@@ -7081,7 +7094,7 @@ MakePath()
 
 	if ! mkdir -p "${1:?path null}"; then
 		ShowAsError "unable to create ${2:?null} path $(FormatAsFileName "$1") $(FormatAsExitcode "$?")"
-		opts_help_suggestissue=true
+		show_suggest_issue=true
 		return 1
 	fi
 
@@ -7113,7 +7126,7 @@ RunAndLog()
 	FormatAsCommand "${1:?null}" > "${2:?null}"
 	DebugAsProc "exec: '$1'"
 
-	if [[ $self_verbose = true ]]; then
+	if [[ $opts_verbose = true ]]; then
 		eval "$1 > >($TEE_CMD $LOG_PATHFILE) 2>&1"	# NOTE: `tee` buffers stdout here
 		result_code=$?
 	else
@@ -7132,7 +7145,7 @@ RunAndLog()
 		0|"${4:-}")
 			[[ ${3:-} != log:failure-only ]] && AddExtLogToSessLog "$2"
 			DebugAsDone 'exec complete'
-			[[ $self_debug_to_file = false ]] && rm -f "$2"
+			[[ $opts_debug = false ]] && rm -f "$2"
 			;;
 		*)
 			AddExtLogToSessLog "$2"
@@ -7356,11 +7369,11 @@ FormatAsResultAndStdout()
 DisplayLineSpaceIfNoneAlready()
 	{
 
-	if [[ $self_linespace_onscreen = false && $self_display_clean = false ]]; then
+	if [[ $linespace_visible = false && $self_no_title = false ]]; then
 		echo
-		self_linespace_onscreen=true
+		linespace_visible=true
 	else
-		self_linespace_onscreen=false
+		linespace_visible=false
 	fi
 
 	}
@@ -7735,7 +7748,7 @@ DebugThis()
 	{
 
 	[[ -z ${1:-} ]] && return
-	[[ ${self_verbose:-false} = true ]] && ShowAsDebug "${1:-}"
+	[[ ${opts_verbose:-false} = true ]] && ShowAsDebug "${1:-}"
 	WriteToLog dbug "${1:-}"
 
 	}
@@ -7748,9 +7761,9 @@ AddExtLogToSessLog()
 	local linebuff=''
 	local original_verbose=false
 
-	if [[ $self_verbose = true ]]; then   # prevent external log contents appearing onscreen again, because they've already been seen "live"
+	if [[ $opts_verbose = true ]]; then   # prevent external log contents appearing onscreen again, because they've already been seen "live"
 		original_verbose=true
-		self_verbose=false
+		opts_verbose=false
 	fi
 
 	DebugAsLog 'adding external log to main log'
@@ -7762,7 +7775,7 @@ AddExtLogToSessLog()
 	done < "${1:?filename null}"
 
 	DebugExtLogMinSepr
-	self_verbose=$original_verbose
+	opts_verbose=$original_verbose
 
 	}
 
@@ -7782,7 +7795,7 @@ ShowAsProc()
 	EraseThisLine
 	WriteToDisplayWait "$(ColourTextBrightYellow proc)" "${1:-}${suffix}"
 	WriteToLog proc "${1:-}${suffix}"
-	[[ ${self_verbose:=false} = true ]] && Display
+	[[ ${opts_verbose:=false} = true ]] && Display
 
 	} >&2
 
@@ -7825,11 +7838,10 @@ ShowAsDone()
 	# process completed OK
 
 	EraseThisLine
-	# shellcheck disable=1010
-	WriteToDisplayNew "$(ColourTextBrightGreen done)" "${1:-}"
+	WriteToDisplayNew "$(ColourTextBrightGreen 'done')" "${1:-}"
 	WriteToLog 'done' "$1"
 
-	}
+	} >&2
 
 ShowAsWarn()
 	{
@@ -8179,7 +8191,7 @@ WriteToLog()
 	#   $1 = pass/fail
 	#   $2 = message
 
-	[[ ${self_debug_to_file:=false} = false ]] && return
+	[[ ${opts_debug:=false} = false ]] && return
 	[[ -n ${sess_active_pathfile:-} ]] && printf '%-4s: %s\n' "$(StripANSI "${1:-}")" "$(StripANSI "${2:-}")" >> "$sess_active_pathfile"
 
 	}
