@@ -157,7 +157,7 @@ Self:Init()
 
 	EraseThisLine
 
-	if [[ $self_no_title = false && $opts_verbose = false ]]; then
+	if [[ $hide_title = false && $opts_verbose = false ]]; then
 		Display "$(FormatAsTitle) $(FormatAsVersion) $(FormatAsDescription)"
 		DisplayLineSpaceIfNoneAlready
 	fi
@@ -189,13 +189,13 @@ Vars:Load()
 	# default values
 	backup_stdin_fd=none
 	colourful=true
+	hide_title=false
 	ipks_install=false
 	ipks_upgrade=false
 	linespace_visible=false
 	msg_pipe_fd=none
 	pips_install=false
-	self_no_title=false
-	show_suggest_issue=false
+	show_suggest_raise_issue=false
 	show_zero_qpkgs=true
 	skip_package_actions=false
 
@@ -255,8 +255,9 @@ Consts:Load()
 	readonly PACKAGES_ARCHIVE_URL='<?cdn_sherpa_url?>'/packages.tar.gz
 	readonly PACKAGES_ARCHIVE_PATHFILE=$CACHE_PATH/packages.tar.gz
 
+	# Entware
 	readonly EXTERNAL_PACKAGES_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
-	readonly EXTERNAL_PACKAGES_PATHFILE=$CACHE_PATH/Packages	# used by Entware
+	readonly EXTERNAL_PACKAGES_PATHFILE=$CACHE_PATH/Packages
 
 	readonly PREV_IPK_LIST=$CACHE_PATH/ipk.prev.list
 	readonly PREV_PIP_LIST=$CACHE_PATH/pip.prev.list
@@ -295,7 +296,7 @@ Consts:Load()
 	readonly DEBUG_LOG_FIRST_COL_WIDTH=9
 	readonly DEBUG_LOG_SECOND_COL_WIDTH=17
 
-	# cherry-pick required Entware binaries
+	# cherry-pick Entware binaries
 	readonly OPKG_CMD=/opt/bin/opkg
 	readonly GNU_FIND_CMD=/opt/bin/find
 	readonly GNU_GREP_CMD=/opt/bin/grep
@@ -306,11 +307,13 @@ Consts:Load()
 	readonly GNU_SORT_CMD=/opt/bin/sort
 	readonly GNU_SQLITE_CMD=/opt/bin/sqlite3
 	readonly GNU_STTY_CMD=/opt/bin/stty
+
+	readonly PERL_CMD=/opt/bin/perl
 	readonly PYTHON_CMD=/opt/bin/python
 	readonly PYTHON3_CMD=/opt/bin/python3
 	readonly PIP_CMD="$PYTHON3_CMD -m pip"
-	readonly PERL_CMD=/opt/bin/perl
 
+	# cherry-pick QTS binaries
 	readonly AWK_CMD=/bin/awk
 	readonly CAT_CMD=/bin/cat
 	readonly DATE_CMD=/bin/date
@@ -627,7 +630,7 @@ Self:Validate()
 	Func:Entry
 	ShowAsProc arguments
 
-	local avail_ver=''
+	local installed_ver=''
 	local package=''
 	local action=''
 	local prospect=''
@@ -640,18 +643,18 @@ Self:Validate()
 
 		if QPKG.IsInstalled Entware && QPKG.IsEnabled Entware; then
 			if [[ -e $PYTHON3_CMD ]]; then
-				avail_ver=$(GetDefPython3Ver "$PYTHON3_CMD")
+				installed_ver=$(GetDefPython3Ver "$PYTHON3_CMD")
 
-				if [[ ${avail_ver//./} -lt $MIN_PYTHON_VER ]]; then
+				if [[ ${installed_ver//./} -lt $MIN_PYTHON_VER ]]; then
 					ShowAsInfo 'installed Python environment will be upgraded'
 					IPKs-ACuninstall-to:Add 'python*'
 				fi
 			fi
 
 			if [[ -e $PERL_CMD ]]; then
-				avail_ver=$(GetDefPerlVer "$PERL_CMD")
+				installed_ver=$(GetDefPerlVer "$PERL_CMD")
 
-				if [[ ${avail_ver//./} -lt $MIN_PERL_VER ]]; then
+				if [[ ${installed_ver//./} -lt $MIN_PERL_VER ]]; then
 					ShowAsInfo 'installed Perl environment will be upgraded'
 					IPKs-ACuninstall-to:Add 'perl*'
 				fi
@@ -820,6 +823,8 @@ Self:Validate()
 
 Actions:Proc()
 	{
+
+	# Run all actions on selected packages in all tiers
 
 	[[ $skip_package_actions = true ]] && return
 	Func:Entry
@@ -1127,10 +1132,10 @@ CloseActionMsgPipe()
 	# restore stdin FD
 	[[ $backup_stdin_fd != none ]] && eval "exec 0>&$backup_stdin_fd"
 
-	# delete backup of stdin FD
+	# release backup of stdin FD
 	[[ $backup_stdin_fd != none ]] && eval "exec $backup_stdin_fd>&-"
 
-	# delete message pipe FD
+	# release message pipe FD
 	[[ $msg_pipe_fd != none ]] && eval "exec $msg_pipe_fd>&-"
 
 	# delete message pipe
@@ -1269,7 +1274,7 @@ Self:Results()
 	[[ $opts_show_packages_failed = true ]] && Actions.Results:Show failed
 	[[ $opts_show_backuploc = true ]] && Help.BackupLocation:Show
 	[[ $show_zero_qpkgs = true ]] && ShowZeroQpkgs
-	[[ $show_suggest_issue = true ]] && Help.Issue:Show
+	[[ $show_suggest_raise_issue = true ]] && Help.Issue:Show
 
 	DebugInfoMinSepr
 	DebugScript finished "$($DATE_CMD)"
@@ -1315,7 +1320,7 @@ ParseArgs()
 				arg_identified=true
 				group=''
 				group_identified=false
-				self_no_title=false
+				hide_title=false
 				skip_package_actions=false
 				;;
 			paste)
@@ -1324,7 +1329,7 @@ ParseArgs()
 				arg_identified=true
 				group=''
 				group_identified=false
-				self_no_title=false
+				hide_title=false
 				skip_package_actions=true
 				;;
 		# all cases below can use multiple words or chars to specify a single action
@@ -1333,7 +1338,7 @@ ParseArgs()
 				arg_identified=true
 				group=''
 				group_identified=false
-				self_no_title=false
+				hide_title=false
 				skip_package_actions=false
 				;;
 			c|check)
@@ -1341,7 +1346,7 @@ ParseArgs()
 				arg_identified=true
 				group=''
 				group_identified=false
-				self_no_title=false
+				hide_title=false
 				skip_package_actions=false
 				;;
 			display|help|list|show|view)
@@ -1349,7 +1354,7 @@ ParseArgs()
 				arg_identified=true
 				group=''
 				group_identified=false
-				self_no_title=false
+				hide_title=false
 				skip_package_actions=true
 				;;
 			rm|remove|uninstall)
@@ -1357,7 +1362,7 @@ ParseArgs()
 				arg_identified=true
 				group=''
 				group_identified=false
-				self_no_title=false
+				hide_title=false
 				skip_package_actions=false
 				;;
 			s|status|statuses)
@@ -1365,7 +1370,7 @@ ParseArgs()
 				arg_identified=true
 				group=''
 				group_identified=false
-				self_no_title=false
+				hide_title=false
 				skip_package_actions=true
 				;;
 			update|upgrade)
@@ -1373,7 +1378,7 @@ ParseArgs()
 				arg_identified=true
 				group=''
 				group_identified=false
-				self_no_title=false
+				hide_title=false
 				skip_package_actions=false
 		esac
 
@@ -1531,14 +1536,14 @@ ParseArgs()
 						;;
 					backedup|installed|started|NTstarted)
 						QPKGs.AClist.IS${group}:Set
-						self_no_title=true
+						hide_title=true
 						;;
 					backups)
 						opts_show_backups=true
 						;;
 					dependent|installable|standalone|upgradable)
 						QPKGs.AClist.SC${group}:Set
-						self_no_title=true
+						hide_title=true
 						;;
 					failed)
 						opts_show_packages_failed=true
@@ -1548,19 +1553,19 @@ ParseArgs()
 						;;
 					last)
 						opts_show_log_last=true
-						self_no_title=true
+						hide_title=true
 						;;
 					log)
 						opts_show_log_tail=true
-						self_no_title=true
+						hide_title=true
 						;;
 					NTbackedup)
 						QPKGs.AClist.ISNTbackedup:Set
-						self_no_title=true
+						hide_title=true
 						;;
 					NTinstalled)
 						QPKGs.AClist.ISNTinstalled:Set
-						self_no_title=true
+						hide_title=true
 						;;
 					ok)
 						opts_show_packages_ok=true
@@ -1594,7 +1599,7 @@ ParseArgs()
 						;;
 					versions)
 						opts_show_versions=true
-						self_no_title=true
+						hide_title=true
 				esac
 
 				skip_package_actions=true
@@ -1789,7 +1794,7 @@ ParseArgs()
 	if ARGs-unknown:IsAny; then
 		opts_show_basic_help=true
 		skip_package_actions=true
-		self_no_title=false
+		hide_title=false
 	fi
 
 	Func:Exit
@@ -2239,7 +2244,7 @@ CalcIpkDepsToInstall()
 		DebugAsDone "completed in $iterations iteration$(Pluralise "$iterations")"
 	else
 		DebugAsError "incomplete with $iterations iteration$(Pluralise "$iterations"), consider raising \$ITERATION_LIMIT [$ITERATION_LIMIT]"
-		show_suggest_issue=true
+		show_suggest_raise_issue=true
 	fi
 
 	# exclude already installed IPKs
@@ -3541,7 +3546,7 @@ Help.Options:Show()
 	DisplayAsProjSynIndentExam 'show package repositories' repos
 	DisplayAsProjSynIndentExam '' r
 	DisplayAsProjSynIndentExam 'show live debugging information, and record it to file' "$(FormatAsAction) $(FormatAsPackages) verbose"
-	DisplayAsProjSynIndentExam 'record debugging information to file only' "$(FormatAsAction) $(FormatAsPackages) debug"
+	DisplayAsProjSynIndentExam 'record debugging information to file-only' "$(FormatAsAction) $(FormatAsPackages) debug"
 
 	return 0
 
@@ -3556,7 +3561,7 @@ Help.Problems:Show()
 	DisplayAsProjSynIndentExam 'show package statuses' status
 	DisplayAsProjSynIndentExam '' s
 	DisplayAsProjSynIndentExam 'show live debugging information, and record it to file' "$(FormatAsAction) $(FormatAsPackages) verbose"
-	DisplayAsProjSynIndentExam 'record debugging information to file only' "$(FormatAsAction) $(FormatAsPackages) debug"
+	DisplayAsProjSynIndentExam 'record debugging information to file-only' "$(FormatAsAction) $(FormatAsPackages) debug"
 	DisplayAsProjSynIndentExam 'ensure all dependencies exist for installed packages' check
 	DisplayAsProjSynIndentExam '' c
 	DisplayAsProjSynIndentExam 'clear local repository files from these packages' "clean $(FormatAsPackages)"
@@ -3937,7 +3942,7 @@ QPKGs.Missing:Show()
 
 	local package=''
 
-	[[ $self_no_title = false ]] || return
+	[[ $hide_title = false ]] || return
 	QPKGs.States:Build
 
 	[[ $(QPKGs-ISmissing:Count) -eq 0 ]] && return 1
@@ -3967,7 +3972,7 @@ QPKGs.NewVers:Show()
 	local names_formatted=''
 	local msg=''
 
-	[[ $self_no_title = false ]] || return
+	[[ $hide_title = false ]] || return
 	QPKGs.States:Build
 
 	if [[ $(QPKGs-SCupgradable:Count) -eq 0 ]]; then
@@ -4199,11 +4204,11 @@ QPKGs.States:List()
 QPKGs.StandaloneDependent:Build()
 	{
 
-	# there are three tiers of package: `standalone`, `addon` and `dependent`
+	# There are three tiers of package: `standalone`, `addon` and `dependent`
 	# ... but only two tiers of QPKG: `standalone` and `dependent`
 
-	# `standalone` QPKGs don't depend on other QPKGs, but may be required for other QPKGs. They should be installed/started before any `dependent` QPKGs.
-	# `dependent` QPKGs depend on other QPKGs. They should be installed/started after all `standalone` QPKGs.
+	# `standalone` QPKGs don't depend-on other QPKGs, but may be required for other QPKGs. They should be installed/started before any `dependent` QPKGs.
+	# `dependent` QPKGs depend-on other QPKGs. They should be installed/started after all `standalone` QPKGs.
 
 	local package=''
 
@@ -4354,7 +4359,7 @@ QPKGs.IsCanBackup:Build()
 QPKGs.IsCanRestartToUpdate:Build()
 	{
 
-	# Build a list of QPKGs that support application updating on QPKG restart
+	# Build a list of QPKGs that support application update on QPKG restart
 
 	Func:Entry
 
@@ -4793,8 +4798,7 @@ QPKGs.ScDependent:Show()
 SendParentChangeEnv()
 	{
 
-	# Send a message into message stream to change the sherpa environment
-	# a package name is not required
+	# Send a message into message stream to change a sherpa parent environment variable or variables
 	# This function is only called from within background functions
 
 	# input:
@@ -4807,7 +4811,7 @@ SendParentChangeEnv()
 SendPackageStateChange()
 	{
 
-	# Send a message into message stream to change the state of this QPKG to $1
+	# Send a message into message stream to change the state of this QPKG to $1 in sherpa parent environment
 	# This might be: `isinstalled`, `isntenabled`, `isstarted`, `scntupgradable`, etc ...
 	# This function is only called from within background functions
 
@@ -4821,7 +4825,7 @@ SendPackageStateChange()
 SendActionStatus()
 	{
 
-	# send a message into message stream to update parent with the status of this action on $PACKAGE_NAME
+	# send a message into message stream to update sherpa parent environment with the status of this action for $PACKAGE_NAME
 	# This can be: `ok`, `skipped`, `failed`, `exit`
 	# This function is only called from within background functions
 
@@ -4835,7 +4839,7 @@ SendActionStatus()
 WriteMsgToActionPipe()
 	{
 
-	# send a message into message stream to update parent shell environment
+	# send a message into message stream to update sherpa parent shell environment
 
 	[[ $msg_pipe_fd != none && -e /proc/$$/fd/$msg_pipe_fd ]] && echo "$1|$2|$3|$4" >&$msg_pipe_fd
 
@@ -7094,7 +7098,7 @@ MakePath()
 
 	if ! mkdir -p "${1:?path null}"; then
 		ShowAsError "unable to create ${2:?null} path $(FormatAsFileName "$1") $(FormatAsExitcode "$?")"
-		show_suggest_issue=true
+		show_suggest_raise_issue=true
 		return 1
 	fi
 
@@ -7216,7 +7220,7 @@ FormatAsThous()
 
 	local rightside_group=''
 	local foutput=''
-	local remainder=$($SED_CMD 's/[^0-9]*//g' <<< "${1:-}")	# strip everything not a numeric character
+	local remainder=$($SED_CMD 's/[^0-9]*//g' <<< "${1:-}")	# strip everything not a numeral
 
 	while [[ ${#remainder} -gt 0 ]]; do
 		rightside_group=${remainder:${#remainder}<3?0:-3}	# a nifty trick found here: https://stackoverflow.com/a/19858692
@@ -7369,7 +7373,7 @@ FormatAsResultAndStdout()
 DisplayLineSpaceIfNoneAlready()
 	{
 
-	if [[ $linespace_visible = false && $self_no_title = false ]]; then
+	if [[ $linespace_visible = false && $hide_title = false ]]; then
 		echo
 		linespace_visible=true
 	else
@@ -7645,10 +7649,13 @@ FuncFork:Exit()
 CalcMilliDifference()
 	{
 
-	# $1 = starttime in epoch nanoseconds
-	# $2 = endtime in epoch nanoseconds
+	# input:
+	#	$1 = starttime in epoch nanoseconds
+	#	$2 = endtime in epoch nanoseconds
 
-	# stdout = difference in milliseconds
+	# output:
+	#	stdout = difference in milliseconds
+
 	echo "$((($2-$1)/1000000))"
 
 	}
@@ -7656,7 +7663,8 @@ CalcMilliDifference()
 FormatAsDuration()
 	{
 
-	# $1 = duration in milliseconds
+	# input:
+	#	$1 = duration in milliseconds
 
 	if [[ ${1:-0} -lt 30000 ]]; then
 		echo "$(FormatAsThous "${1:-0}")ms"
@@ -7899,14 +7907,15 @@ ShowAsActionProgress()
 
 	# Show single action package progress as percent-complete and a fraction of the total
 
-	# $1 = tier (optional)
-	# $2 = package type: `qpkg`, `ipk`, `pip`
-	# $3 = ok count
-	# $4 = skip count
-	# $5 = fail count
-	# $6 = total count
-	# $7 = verb (present)
-	# $8 = expected action duration: `long` (optional)
+	# input:
+	#	$1 = tier (optional)
+	#	$2 = package type: `qpkg`, `ipk`, `pip`
+	#	$3 = ok count
+	#	$4 = skip count
+	#	$5 = fail count
+	#	$6 = total count
+	#	$7 = verb (present)
+	#	$8 = expected action duration: `long` (optional)
 
 	if [[ -n $1 && $1 != all ]]; then
 		local tier=" $(Lowercase "$1")"
@@ -7942,10 +7951,11 @@ PercFrac()
 
 	# calculate percent-complete and a fraction of the total
 
-	# $1 = ok count
-	# $2 = skip count
-	# $3 = fail count
-	# $4 = total count
+	# input:
+	#	$1 = ok count
+	#	$2 = skip count
+	#	$3 = fail count
+	#	$4 = total count
 
 	declare -i -r OK_COUNT=${1:-0}
 	declare -i -r SKIP_COUNT=${2:-0}
@@ -7972,11 +7982,12 @@ PercFrac()
 ShowAsActionResult()
 	{
 
-	# $1 = tier (optional) e.g. `standalone`, `dependent`, `addon`, `all`
-	# $2 = package type: `qpkg`, `ipk`, `pip`
-	# $3 = ok count
-	# $4 = total count
-	# $5 = verb (past)
+	# input:
+	#	$1 = tier (optional) e.g. `standalone`, `dependent`, `addon`, `all`
+	#	$2 = package type: `qpkg`, `ipk`, `pip`
+	#	$3 = ok count
+	#	$4 = total count
+	#	$5 = verb (past)
 
 	if [[ -n $1 && $1 != all ]]; then
 		local -r TIER=" $1"
@@ -8011,9 +8022,9 @@ ShowAsActionResultDetail()
 	{
 
 	# input:
-	#  $1 = tier
-	#  $2 = action
-	#  $3 = package type
+	#	$1 = tier
+	#	$2 = action
+	#	$3 = package type
 
 	local sk_msg=''
 	local er_msg=''
@@ -8125,11 +8136,11 @@ WriteToDisplayWait()
 	# Writes a new message without newline
 
 	# input:
-	#   $1 = pass/fail
-	#   $2 = message
+	#	$1 = pass/fail
+	#	$2 = message
 
 	# output:
-	#   $prev_msg = global and will be used again later
+	#	$prev_msg = (global) will be used again later
 
 	local -i width=4
 
@@ -8148,12 +8159,12 @@ WriteToDisplayNew()
 	# Updates the previous message
 
 	# input:
-	#   $1 = pass/fail
-	#   $2 = message
+	#	$1 = pass/fail
+	#	$2 = message
 
 	# output:
-	#   stdout = overwrites previous message with updated message
-	#   $prev_length
+	#	stdout = overwrites previous message with updated message
+	#	$prev_length
 
 	local -i width=4
 	local -i length=0
@@ -8188,8 +8199,8 @@ WriteToLog()
 	{
 
 	# input:
-	#   $1 = pass/fail
-	#   $2 = message
+	#	$1 = pass/fail
+	#	$2 = message
 
 	[[ ${opts_debug:=false} = false ]] && return
 	[[ -n ${sess_active_pathfile:-} ]] && printf '%-4s: %s\n' "$(StripANSI "${1:-}")" "$(StripANSI "${2:-}")" >> "$sess_active_pathfile"
@@ -8384,7 +8395,7 @@ FormatMillisecsToMinutesSecs()
 	# http://stackoverflow.com/questions/12199631/convert-seconds-to-hours-minutes-seconds
 
 	# input:
-	#   $1 = a time in milliseconds to convert to `S seconds` or `Mm:SSs`
+	#	$1 = a time in milliseconds to convert to `S seconds` or `Mm:SSs`
 
 	local seconds=$((${1:-0}/1000))
 	((m=(seconds%3600)/60))
@@ -8410,7 +8421,7 @@ FormatSecsToHoursMinutesSecs()
 	# http://stackoverflow.com/questions/12199631/convert-seconds-to-hours-minutes-seconds
 
 	# input:
-	#   $1 = a time in seconds to convert to `HHh:MMm:SSs`
+	#	$1 = a time in seconds to convert to `HHh:MMm:SSs`
 
 	((h=${1:-0}/3600))
 	((m=(${1:-0}%3600)/60))
@@ -8424,7 +8435,7 @@ FormatLongMinutesSecs()
 	{
 
 	# input:
-	#   $1 = a time in long minutes and seconds to convert to `MMMm:SSs`
+	#	$1 = a time in long minutes and seconds to convert to `MMMm:SSs`
 
 	# separate minutes from seconds
 	local m=${1%%:*}
@@ -8441,7 +8452,8 @@ FormatLongMinutesSecs()
 sleep()
 	{
 
-	# $1 = seconds to sleep (decimal or integer) (optional), default is 1 second
+	# input:
+	#	$1 = seconds to sleep (decimal or integer) (optional), default is 1 second
 
 	local wait=${1:-}
 
