@@ -307,10 +307,11 @@ Consts:Load()
 	readonly GNU_SORT_CMD=/opt/bin/sort
 	readonly GNU_SQLITE_CMD=/opt/bin/sqlite3
 	readonly GNU_STTY_CMD=/opt/bin/stty
+
 	readonly PERL_CMD=/opt/bin/perl
-	readonly PIP_CMD="$PYTHON3_CMD -m pip"
 	readonly PYTHON_CMD=/opt/bin/python
 	readonly PYTHON3_CMD=/opt/bin/python3
+	readonly PIP_CMD="$PYTHON3_CMD -m pip"
 
 	# cherry-pick QTS binaries
 	readonly AWK_CMD=/bin/awk
