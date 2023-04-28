@@ -20,7 +20,7 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=SABnzbd
-	readonly SCRIPT_VERSION=230422
+	readonly SCRIPT_VERSION=230429
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -296,7 +296,7 @@ InstallAddons()
 		if $(/bin/grep -q sabyenc3 < "$requirements_pathfile" &>/dev/null); then
 			echo '--no-binary=sabyenc3' >> "$requirements_pathfile"
 		elif $(/bin/grep -q sabctools < "$requirements_pathfile" &>/dev/null); then
-			echo '--no-binary=sabyenc3' >> "$requirements_pathfile"
+			echo '--no-binary=sabctools' >> "$requirements_pathfile"
 		fi
 	fi
 
