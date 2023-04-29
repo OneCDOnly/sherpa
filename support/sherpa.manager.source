@@ -966,7 +966,6 @@ Action:Proc()
 
 			if [[ $TARGET_ACTION = uninstall && ${target_packages[*]} =~ $re ]]; then
 				Keystrokes:Show		# enable this before removing Entware & GNU `stty`
-				Cursor:Show
 			fi
 
 			_ActionForks:Launch_ "_${PACKAGE_TYPE}:${TARGET_ACTION}_" "${target_packages[@]}" &
@@ -3037,40 +3036,35 @@ DisplayAsHelpNameVerStatus()
 	local package_upgrade_version_msg=''
 	local package_path=${7:-}
 	local package_path_msg=$package_path
+	local patt=''
 
 	case $1 in
 		normal)
 			if [[ -n $package_status ]]; then
-				[[ $package_status =~ 'enabled' ]] && package_status_msg="$(ColourTextBrightGreen enabled)"
-				[[ $package_status =~ 'disabled' ]] && package_status_msg="$(ColourTextBrightRed disabled)"
+				patt=\\benabled\\b
+				[[ $package_status =~ $patt ]] && package_status_msg="$(ColourTextBrightGreen enabled)"
 
-				[[ $package_status =~ 'started' ]] && package_status_msg+=", $(ColourTextBrightGreen started)"
-				[[ $package_status =~ 'stopped' ]] && package_status_msg+=", $(ColourTextBrightRed stopped)"
+				patt=\\bdisabled\\b
+				[[ $package_status =~ $patt ]] && package_status_msg="$(ColourTextBrightRed disabled)"
 
-				[[ $package_status =~ 'starting' ]] && package_status_msg+=", $(ColourTextBrightOrange starting)"
-				[[ $package_status =~ 'stopping' ]] && package_status_msg+=", $(ColourTextBrightOrange stopping)"
+				patt=\\bstarting\\b
+				[[ $package_status =~ $patt ]] && package_status_msg+=", $(ColourTextBrightOrange starting)"
+
+				patt=\\bstopping\\b
+				[[ $package_status =~ $patt ]] && package_status_msg+=", $(ColourTextBrightOrange stopping)"
+
+				patt=\\bactive\\b
+				[[ $package_status =~ $patt ]] && package_status_msg+=", $(ColourTextBrightGreen active)"
+
+				patt=\\binactive\\b
+				[[ $package_status =~ $patt ]] && package_status_msg+=", $(ColourTextBrightRed inactive)"
+
+				patt=\\bunknown\\b
+				[[ $package_status =~ $patt ]] && package_status_msg+=", $(ColourTextBrightOrange unknown)"
 
 				[[ -z $package_status_msg ]] && package_status_msg="$package_status"
 
 				package_status_msg="${HELP_COL_NORMAL_PREFIX}${package_status_msg}"
-			fi
-
-			if [[ -n $package_last_result && $package_status != missing ]]; then
-				case $package_last_result in
-					OK)
-						package_last_result_msg="$(ColourTextBrightGreen "$package_last_result")"
-						;;
-					'N/A')
-						package_last_result_msg="$package_last_result"
-						;;
-					failed)
-						package_last_result_msg="$(ColourTextBrightRed "$package_last_result")"
-						;;
-					*)
-						package_last_result_msg="$(ColourTextBrightOrange "$package_last_result")"
-				esac
-
-				[[ -n $package_last_result_msg ]] && package_status_msg+=" ($package_last_result_msg)"
 			fi
 
 			if [[ -n $package_upgrade_version && $package_installed_version != "$package_upgrade_version" ]]; then
@@ -4567,7 +4561,7 @@ QPKGs.Statuses:Show()
 	for tier in "${PACKAGE_TIERS[@]}"; do
 		[[ $tier = addon ]] && continue	# don't need to see addons
 
-		DisplayAsHelpTitleNameVerStatus "$tier QPKGs" 'QPKG statuses (last result)' 'QPKG version (new)' 'installation path'
+		DisplayAsHelpTitleNameVerStatus "$tier QPKGs" 'QPKG statuses' 'QPKG version (new)' 'installation path'
 
 		for package_name in $(QPKGs-SC$tier:Array); do
 			if ! QPKG.URL "$package_name" &>/dev/null; then
@@ -4593,10 +4587,16 @@ QPKGs.Statuses:Show()
 					package_status_notes+=(stopping)
 				elif QPKGs-ISrestarting:Exist "$package_name"; then
 					package_status_notes+=(restarting)
-				elif QPKGs-ISstarted:Exist "$package_name"; then
-					package_status_notes+=(started)
-				elif QPKGs-ISNTstarted:Exist "$package_name"; then
-					package_status_notes+=(stopped)
+				fi
+
+				if ! QPKG.IsCanLog "$package_name"; then
+					package_status_notes+=(unknown)
+				else
+					if QPKG.IsActive "$package_name"; then
+						package_status_notes+=(active)
+					else
+						package_status_notes+=(inactive)
+					fi
 				fi
 
 				# insert commas
@@ -4604,17 +4604,6 @@ QPKGs.Statuses:Show()
 					package_status_msg+=${package_status_notes[$index]}
 					[[ $((index+2)) -le ${#package_status_notes[@]} ]] && package_status_msg+=', '
 				done
-
-				# service script results
-				if ! QPKG.IsCanLog "$package_name"; then
-					package_result_msg='N/A'
-				elif QPKGs-ISok:Exist "$package_name"; then
-					package_result_msg=OK
-				elif QPKGs-ISNTok:Exist "$package_name"; then
-					package_result_msg=failed
-				else
-					package_result_msg=unknown
-				fi
 
 				DisplayAsHelpNameVerStatus normal "$package_name" "$package_status_msg" "$package_result_msg" "$(QPKG.Local.Ver "$package_name")" "$(QPKG.Avail.Ver "$package_name")" "$(QPKG.InstallationPath "$package_name")"
 
@@ -5565,7 +5554,6 @@ _QPKG:install_()
 			RunAndLog "$OPKG_CMD install --force-overwrite $ESSENTIAL_IPKS --cache $IPK_CACHE_PATH --tmp-dir $IPK_DL_PATH" "$LOGS_PATH/IPKs.essential.$INSTALL_LOG_FILE" log:failure-only
 #			SendParentChangeEnv 'IPKs-ACinstall-ok:Add "$ESSENTIAL_IPKS"'
 			SendParentChangeEnv Keystrokes:Hide
-			SendParentChangeEnv Cursor:Hide
 			UpdateColourisation
 			DebugAsDone 'installed essential IPKs'
 		fi
@@ -5790,8 +5778,6 @@ _QPKG:uninstall_()
 		DebugAsProc "uninstalling $(FormatAsPackName "$PACKAGE_NAME")"
 		[[ $opts_debug = true ]] && debug_cmd='DEBUG_QPKG=true '
 
-		[[ $PACKAGE_NAME = Entware ]] && SendParentChangeEnv Cursor:Show
-
 		RunAndLog "${debug_cmd}${SH_CMD} $QPKG_UNINSTALLER_PATHFILE" "$LOGS_PATH/$PACKAGE_NAME.$UNINSTALL_LOG_FILE" log:failure-only
 		result_code=$?
 
@@ -5812,8 +5798,6 @@ _QPKG:uninstall_()
 			MarkThisActionForkAsOk
 		else
 			SaveActionResultToLog QPKG "$PACKAGE_NAME" uninstall failed "$result_code"
-
-			[[ $PACKAGE_NAME = Entware ]] && SendParentChangeEnv Cursor:Hide
 
 			result_code=1   # remap to 1
 			MarkThisActionForkAsFailed
@@ -7059,6 +7043,32 @@ QPKG.IsStarted()
 	#   $? = 0 (true) or 1 (false)
 
 	QPKG.IsEnabled "${1:?package name null}"
+
+	}
+
+QPKG.IsActive()
+	{
+
+	# input:
+	#   $1 = QPKG name
+
+	# output:
+	#   $? = 0 (true) or 1 (false)
+
+	$(QPKG.ServicePathFile "${1:?package name null}") status &>/dev/null
+
+	}
+
+QPKG.IsNtActive()
+	{
+
+	# input:
+	#   $1 = QPKG name
+
+	# output:
+	#   $? = 0 (true) or 1 (false)
+
+	! QPKG.IsActive "${1:?package name null}"
 
 	}
 
