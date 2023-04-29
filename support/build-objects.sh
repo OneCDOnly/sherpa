@@ -148,7 +148,7 @@ echo $public_function_name':Add()
 echo "OBJECTS_VER='$today'" > "$target_pathfile"
 echo "#*$dontedit_msg" >> "$target_pathfile"
 
-# user option & package action flag objects -----------------------------------------------------------------------------------------------------------------------------
+# package action flag objects -----------------------------------------------------------------------------------------------------------------------------
 
 for group in "${USER_QPKG_SC_GROUPS[@]}"; do
 	for action in "${USER_QPKG_ACTIONS[@]}"; do
