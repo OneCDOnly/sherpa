@@ -20,7 +20,7 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=OliveTin
-	readonly SCRIPT_VERSION=230421
+	readonly SCRIPT_VERSION=230430
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -55,7 +55,7 @@ Init()
 	# specific to daemonised applications only
 	readonly DAEMON_PATHFILE=$QPKG_REPO_PATH/OliveTin
 	readonly DAEMON_PID_PATHFILE=/var/run/$QPKG_NAME.pid
-	readonly LAUNCHER_CMD="cd $QPKG_REPO_PATH && $DAEMON_PATHFILE -configdir $QPKG_CONFIG_PATH"
+	readonly LAUNCHER_CMD="$DAEMON_PATHFILE -configdir $QPKG_CONFIG_PATH"
 	readonly PORT_CHECK_TIMEOUT=240
 	readonly DAEMON_CHECK_TIMEOUT=30
 	readonly DAEMON_STOP_TIMEOUT=60
@@ -193,7 +193,7 @@ StartQPKG()
 		return 1
 	fi
 
-	DisplayRunAndLog 'start daemon' "$LAUNCHER_CMD" '' background || { SetError; return 1 ;}
+	DisplayRunAndLog 'start daemon' "cd $QPKG_REPO_PATH && /opt/bin/nohup $LAUNCHER_CMD" '' background || { SetError; return 1 ;}
 	WritePID || { SetError; return 1 ;}
 	WaitForPID || { SetError; return 1 ;}
 	WaitForDaemon || { SetError; return 1 ;}
