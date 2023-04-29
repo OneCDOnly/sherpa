@@ -498,7 +498,7 @@ StripANSI()
     # QTS 4.2.6 BusyBox `sed` doesn't fully support extended regexes, so code stripping only works with a real `sed`
 
     if [[ -e $GNU_SED_CMD && -e $GNU_SED_CMD ]]; then   # KLUDGE: yes, it looks weird, but during Entware startup, weird things happen. Need to check for this file multiple times to ensure it's there before attempting to run it.
-        $GNU_SED_CMD -r 's/\x1b\[[0-9;]*m//g' <<< "${1:-}"
+        $GNU_SED_CMD -r 's/\x1B\[[0-9;]*m//g' <<< "${1:-}"
     else
         echo "${1:-}"           # can't strip, so pass thru original message unaltered
     fi
@@ -506,3 +506,4 @@ StripANSI()
     } 2>/dev/null
 
 LaunchQPKGActionForks
+
