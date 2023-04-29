@@ -1,17 +1,18 @@
 babel
 bitmath
+blinker
 brotli
 --no-binary=brotli
-cachelib
+cachelib<0.10.0,>=0.9.0
 certifi
-cheroot
+cheroot~=8.4
 click
 filetype
 flask
-flask-babel
-flask-caching
+flask-babel~=1.0
+flask-caching~=1.9
 flask-compress
-flask-session
+flask-session2~=1.3; python_version >= "3.7"
 flask-themes2
 itsdangerous
 jaraco.collections
@@ -24,6 +25,6 @@ pycurl
 pyjsparser
 pyload-ng
 pytz
-semver
+semver~=2.10
 setuptools
 werkzeug
