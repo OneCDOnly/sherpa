@@ -63,7 +63,7 @@ Self:Init()
 	Consts:Load
 
 	sess_active_pathfile=$THIS_PACKAGE_PATH/session.$$.active.log
-	rm -f "$STATUS_REPORT_PATHFILE"
+	rm -f "$REPORT_PATHFILE"
 	rm -f "$RAMDISKS_FREESPACE_PATHFILE"
 
 	trap RunOnEXIT EXIT
@@ -351,7 +351,7 @@ Consts:Load()
 	readonly SESS_LAST_PATHFILE=$LOGS_PATH/session.last.log
 	readonly SESS_TAIL_PATHFILE=$LOGS_PATH/session.tail.log
 	readonly SESS_ACTIONS_RESULTS_PATHFILE=$LOGS_PATH/session.action.results.log
-	readonly STATUS_REPORT_PATHFILE=$LOGS_PATH/status.report.ansi
+	readonly REPORT_PATHFILE=$LOGS_PATH/report.ansi
 	readonly RAMDISKS_FREESPACE_PATHFILE=$LOGS_PATH/ramdisks.freespace
 
 	readonly HELP_DESC_INDENT=3
@@ -3046,8 +3046,6 @@ DisplayAsHelpTitleNameVerStatus()
 	#	$3 = package version title
 	#	$4 = package installation location (only if installed)
 
-	DisplayLineSpaceIfNoneAlready
-
 	# column 1: package name
 	if [[ -n ${1:-} && $maxcols -ge 1 ]]; then
 		printf "${HELP_COL_SPECIAL_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s" "$1:"
@@ -3188,8 +3186,6 @@ DisplayAsHelpTitleNameRepo()
 	#	$1 = package name title
 	#	$2 = assigned repository title
 
-	DisplayLineSpaceIfNoneAlready
-
 	# column 1: package name
 	if [[ -n ${1:-} && $maxcols -ge 1 ]]; then
 		printf "${HELP_COL_SPECIAL_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s" "$1:"
@@ -3201,7 +3197,6 @@ DisplayAsHelpTitleNameRepo()
 	fi
 
 	printf '\n'
-	linespace_visible=false
 
 	}
 
@@ -4442,34 +4437,45 @@ QPKGs.Abbreviations:Show()
 	maxcols=2
 
 	DisableDebugToArchiveAndFile
-	Help.Basic:Show
-	DisplayAsHelpTitle "$(FormatAsTitle) can recognise various abbreviations and aliases as $(FormatAsPackages)"
+	ShowAsProc 'building report'
 
-	for tier in "${PACKAGE_TIERS[@]}"; do
-		[[ $tier = addon ]] && continue	# don't need to see addons
+		{
 
-		DisplayAsHelpTitleNameAbs "$tier QPKGs" 'acceptable QPKG name abbreviations and aliases'
+		Help.Basic:Show
+		DisplayAsHelpTitle "$(FormatAsTitle) can recognise various abbreviations and aliases as $(FormatAsPackages)"
 
-		for package_name in $(QPKGs-SC${tier}:Array); do
-			abs=$(QPKG.Abbrvs "$package_name")
+		for tier in "${PACKAGE_TIERS[@]}"; do
+			[[ $tier = addon ]] && continue	# don't need to see addons
 
-			if [[ -n $abs ]]; then
-				if ! QPKG.URL "$package_name" &>/dev/null; then
-					DisplayAsHelpNameRepo muted "$package_name" 'not installable: no arch'
-				elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
-					DisplayAsHelpNameRepo muted "$package_name" 'not installable: low RAM'
-				elif QPKGs-ISmissing:Exist "$package_name" &>/dev/null; then
-					DisplayAsHelpNameRepo highlighted "$package_name" missing
-				elif QPKGs-ISNTinstalled:Exist "$package_name"; then
-					DisplayAsHelpNameRepo muted "$package_name" "${abs// /, }"
-				else
-					DisplayAsHelpNameRepo normal "$package_name" "${abs// /, }"
+			DisplayAsHelpTitleNameAbs "$tier QPKGs" 'acceptable QPKG name abbreviations and aliases'
+
+			for package_name in $(QPKGs-SC${tier}:Array); do
+				abs=$(QPKG.Abbrvs "$package_name")
+
+				if [[ -n $abs ]]; then
+					if ! QPKG.URL "$package_name" &>/dev/null; then
+						DisplayAsHelpNameRepo muted "$package_name" 'not installable: no arch'
+					elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
+						DisplayAsHelpNameRepo muted "$package_name" 'not installable: low RAM'
+					elif QPKGs-ISmissing:Exist "$package_name" &>/dev/null; then
+						DisplayAsHelpNameRepo highlighted "$package_name" missing
+					elif QPKGs-ISNTinstalled:Exist "$package_name"; then
+						DisplayAsHelpNameRepo muted "$package_name" "${abs// /, }"
+					else
+						DisplayAsHelpNameRepo normal "$package_name" "${abs// /, }"
+					fi
 				fi
-			fi
+			done
 		done
-	done
 
-	DisplayAsProjSynExam "example: to install $(FormatAsPackName SABnzbd), $(FormatAsPackName Mylar3) and $(FormatAsPackName nzbToMedia) all-at-once" 'install sab my nzb2'
+		DisplayAsProjSynExam "example: to install $(FormatAsPackName SABnzbd), $(FormatAsPackName Mylar3) and $(FormatAsPackName nzbToMedia) all-at-once" 'install sab my nzb2'
+
+		} > "$REPORT_PATHFILE"
+
+	ShowAsDone 'built report'
+	DisplayLineSpaceIfNoneAlready
+	[[ -e $REPORT_PATHFILE ]] && $CAT_CMD "$REPORT_PATHFILE"
+	linespace_visible=false
 
 	return 0
 
@@ -4517,6 +4523,8 @@ QPKGs.Backups:Show()
 QPKGs.Repos:Show()
 	{
 
+	Func:Entry
+
 	local tier=''
 	local package_name=''
 	local package_store_id=''
@@ -4525,41 +4533,49 @@ QPKGs.Repos:Show()
 
 	DisableDebugToArchiveAndFile
 	QPKGs.States:Build
+	ShowAsProc 'building report'
 
-	for tier in "${PACKAGE_TIERS[@]}"; do
-		[[ $tier = addon ]] && continue	# don't need to see addons
+		{
 
-		DisplayAsHelpTitleNameRepo "$tier QPKGs" repository
+		for tier in "${PACKAGE_TIERS[@]}"; do
+			[[ $tier = addon ]] && continue	# don't need to see addons
 
-		for package_name in $(QPKGs-SC$tier:Array); do
-			if ! QPKG.URL "$package_name" &>/dev/null; then
-				DisplayAsHelpNameRepo muted "$package_name" 'not installable: no arch'
-			elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
-				DisplayAsHelpNameRepo muted "$package_name" 'not installable: low RAM'
-			elif QPKGs-ISmissing:Exist "$package_name" &>/dev/null; then
-				DisplayAsHelpNameRepo highlighted "$package_name" missing
-			elif QPKGs-ISNTinstalled:Exist "$package_name"; then
-				DisplayAsHelpNameRepo muted "$package_name" 'not installed'
-			else
-				package_store_id=$(QPKG.StoreID "$package_name")
+			DisplayAsHelpTitleNameRepo "$tier QPKGs" repository
 
-				if [[ -z $package_store_id ]]; then
-					DisplayAsHelpNameRepo normal "$package_name" unassigned
-				elif [[ $package_store_id = sherpa ]]; then
-					DisplayAsHelpNameRepo normal "$package_name" "$package_store_id"
+			for package_name in $(QPKGs-SC$tier:Array); do
+				if ! QPKG.URL "$package_name" &>/dev/null; then
+					DisplayAsHelpNameRepo muted "$package_name" 'not installable: no arch'
+				elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
+					DisplayAsHelpNameRepo muted "$package_name" 'not installable: low RAM'
+				elif QPKGs-ISmissing:Exist "$package_name" &>/dev/null; then
+					DisplayAsHelpNameRepo highlighted "$package_name" missing
+				elif QPKGs-ISNTinstalled:Exist "$package_name"; then
+					DisplayAsHelpNameRepo muted "$package_name" 'not installed'
 				else
-					DisplayAsHelpNameRepo highlighted "$package_name" "$(GetRepoURLFromStoreID "$package_store_id")"
+					package_store_id=$(QPKG.StoreID "$package_name")
+
+					if [[ -z $package_store_id ]]; then
+						DisplayAsHelpNameRepo normal "$package_name" unassigned
+					elif [[ $package_store_id = sherpa ]]; then
+						DisplayAsHelpNameRepo normal "$package_name" "$package_store_id"
+					else
+						DisplayAsHelpNameRepo highlighted "$package_name" "$(GetRepoURLFromStoreID "$package_store_id")"
+					fi
 				fi
-			fi
+			done
+
+			echo
 		done
 
-		DisplayLineSpaceIfNoneAlready
-	done
+		} > "$REPORT_PATHFILE"
 
+	ShowAsDone 'built report'
+	DisplayLineSpaceIfNoneAlready
+	[[ -e $REPORT_PATHFILE ]] && $CAT_CMD "$REPORT_PATHFILE"
 	QPKGs.Actions:List
 	QPKGs.States:List
 
-	return 0
+	Func:Exit
 
 	}
 
@@ -4570,33 +4586,44 @@ QPKGs:List:Show()
 	local package_name=''
 
 	DisableDebugToArchiveAndFile
-	Help.Basic:Show
-	DisplayAsHelpTitle "One-or-more $(FormatAsPackages) may be specified at-once"
+	ShowAsProc 'building report'
 
-	for tier in "${PACKAGE_TIERS[@]}"; do
-		[[ $tier = addon ]] && continue	# don't need to see addons
+		{
 
-		DisplayAsHelpTitleNameAuthorDesc "$tier QPKGs" 'QPKG author' 'QPKG description'
+		Help.Basic:Show
+		DisplayAsHelpTitle "One-or-more $(FormatAsPackages) may be specified at-once"
 
-		for package_name in $(QPKGs-SC${tier}:Array); do
-			if QPKGs-ISmissing:Exist "$package_name" &>/dev/null; then
-				DisplayAsHelpNameAuthorDesc highlighted "$package_name" missing "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
-			elif QPKGs-ISNTinstalled:Exist "$package_name"; then
-				if ! QPKG.URL "$package_name" &>/dev/null; then
-					DisplayAsHelpNameAuthorDesc muted "$package_name" "$(QPKG.Author "$package_name")" "$(QPKG.Desc "$package_name")" "$(QPKG.Note 	"$package_name")" true
-				elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
-					DisplayAsHelpNameAuthorDesc muted "$package_name" "$(QPKG.Author "$package_name")" "$(QPKG.Desc "$package_name")" "$(QPKG.Note 	"$package_name")" true
+		for tier in "${PACKAGE_TIERS[@]}"; do
+			[[ $tier = addon ]] && continue	# don't need to see addons
+
+			DisplayAsHelpTitleNameAuthorDesc "$tier QPKGs" 'QPKG author' 'QPKG description'
+
+			for package_name in $(QPKGs-SC${tier}:Array); do
+				if QPKGs-ISmissing:Exist "$package_name" &>/dev/null; then
+					DisplayAsHelpNameAuthorDesc highlighted "$package_name" missing "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
+				elif QPKGs-ISNTinstalled:Exist "$package_name"; then
+					if ! QPKG.URL "$package_name" &>/dev/null; then
+						DisplayAsHelpNameAuthorDesc muted "$package_name" "$(QPKG.Author "$package_name")" "$(QPKG.Desc "$package_name")" "$(QPKG.Note 	"$package_name")" true
+					elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
+						DisplayAsHelpNameAuthorDesc muted "$package_name" "$(QPKG.Author "$package_name")" "$(QPKG.Desc "$package_name")" "$(QPKG.Note 	"$package_name")" true
+					else
+						DisplayAsHelpNameAuthorDesc muted "$package_name" "$(QPKG.Author "$package_name")" "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
+					fi
 				else
-					DisplayAsHelpNameAuthorDesc muted "$package_name" "$(QPKG.Author "$package_name")" "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
+					DisplayAsHelpNameAuthorDesc normal "$package_name" "$(QPKG.Author "$package_name")" "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
 				fi
-			else
-				DisplayAsHelpNameAuthorDesc normal "$package_name" "$(QPKG.Author "$package_name")" "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
-			fi
+			done
 		done
-	done
 
-	DisplayAsProjSynExam "abbreviations and aliases may also be used to specify $(FormatAsPackages). To list these" 'list abs'
-	DisplayAsProjSynIndentExam '' a
+		DisplayAsProjSynExam "abbreviations and aliases may also be used to specify $(FormatAsPackages). To list these" 'list abs'
+		DisplayAsProjSynIndentExam '' a
+
+		} > "$REPORT_PATHFILE"
+
+	ShowAsDone 'built report'
+	DisplayLineSpaceIfNoneAlready
+	[[ -e $REPORT_PATHFILE ]] && $CAT_CMD "$REPORT_PATHFILE"
+	linespace_visible=false
 
 	return 0
 
@@ -4617,8 +4644,7 @@ QPKGs.Statuses:Show()
 
 	DisableDebugToArchiveAndFile
 	QPKGs.States:Build
-
-	ShowAsProc 'status report'
+	ShowAsProc 'building report'
 
 		{
 
@@ -4680,13 +4706,14 @@ QPKGs.Statuses:Show()
 				fi
 			done
 
-			DisplayLineSpaceIfNoneAlready
+			echo
 		done
 
-		} > "$STATUS_REPORT_PATHFILE"
+		} > "$REPORT_PATHFILE"
 
-	ShowAsDone 'status report'
-	[[ -e $STATUS_REPORT_PATHFILE ]] && $CAT_CMD "$STATUS_REPORT_PATHFILE"
+	ShowAsDone 'built report'
+	DisplayLineSpaceIfNoneAlready
+	[[ -e $REPORT_PATHFILE ]] && $CAT_CMD "$REPORT_PATHFILE"
 	QPKGs.Actions:List
 	QPKGs.States:List
 
