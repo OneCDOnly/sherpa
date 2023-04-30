@@ -4686,7 +4686,7 @@ QPKGs.Statuses:Show()
 					fi
 
 					# package/process: active or inactive?
-					if QPKG.IsCanLog "$package_name" && QPKGs-ACstatus-ok:Exist "$package_name"; then
+					if QPKGs-ACstatus-ok:Exist "$package_name"; then
 						if QPKGs-ISactive:Exist "$package_name"; then
 							package_status_notes+=(active)
 						else
