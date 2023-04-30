@@ -73,46 +73,17 @@ Self:Init()
 
 	Env:Confirm || return
 	Lists:Load
-
-	local action=''
-
-	for action in "${QPKG_ACTIONS[@]}" check debug update; do
-		readonly "$(Uppercase "$action")"_LOG_FILE="$action".log
-	done
-
 	CreatePaths || return
 	ArchivePriorSessLogs
-
-	local re=''
-	re=\\breset\\b		# bash 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
-
-	if [[ $USER_ARGS_RAW =~ $re ]]; then
-		ResetArchivedLogs
-		ResetCachePath
-		ArchiveActiveSessLog
-		ResetActiveSessLog
-		exit 0
-	fi
-
+	IsReset
 	Objects:Load || return
 	TerminalDimensions:Load
 
 	# test if this QTS `sleep` can handle decimal seconds. Early QTS BusyBox versions cannot.
 	readonly DECIMAL_SLEEP_SECONDS_SUPPORTED=$($QTS_SLEEP_CMD .01 &>/dev/null && echo true || echo false)
 
-	re=\\bverbose\\b
-
-	if [[ $USER_ARGS_RAW =~ $re ]]; then
-		Display >&2
-		Self.Verbose:Enable
-	fi
-
-	for re in \\bdebug\\b \\bdbug\\b; do
-		if [[ $USER_ARGS_RAW =~ $re ]]; then
-			EnableDebugToArchiveAndFile
-			break
-		fi
-	done
+	IsVerbose
+	IsDebug
 
 	DebugInfoMajSepr
 	DebugScript started "$(/bin/date -d @"$SCRIPT_STARTSECONDS" | tr -s ' ')"
@@ -555,6 +526,12 @@ Lists:Load()
 	readonly USER_QPKG_IS_STATES
 	readonly USER_QPKG_ISNT_STATES
 	readonly USER_QPKG_ACTIONS
+
+	local action=''
+
+	for action in "${QPKG_ACTIONS[@]}" check debug update; do
+		readonly "$(Uppercase "$action")"_LOG_FILE="$action".log
+	done
 
 	}
 
@@ -2724,6 +2701,49 @@ IsSU()
 	fi
 
 	return 0
+
+	}
+
+IsReset()
+	{
+
+	local re=''
+	re=\\breset\\b		# bash 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
+
+	if [[ $USER_ARGS_RAW =~ $re ]]; then
+		ResetArchivedLogs
+		ResetCachePath
+		ArchiveActiveSessLog
+		ResetActiveSessLog
+		exit 0
+	fi
+
+	}
+
+IsVerbose()
+	{
+
+	local re=''
+	re=\\bverbose\\b
+
+	if [[ $USER_ARGS_RAW =~ $re ]]; then
+		Display >&2
+		Self.Verbose:Enable
+	fi
+
+	}
+
+IsDebug()
+	{
+
+	local re=''
+
+	for re in \\bdebug\\b \\bdbug\\b; do
+		if [[ $USER_ARGS_RAW =~ $re ]]; then
+			EnableDebugToArchiveAndFile
+			break
+		fi
+	done
 
 	}
 
