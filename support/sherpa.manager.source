@@ -6484,7 +6484,7 @@ _QPKG:status_()
 			result_code=$?
 			;;
 		Entware)
-			command -v opkg &>/dev/null && [[ -L /opt && -L /opt/etc/passwd ]]
+			[[ -L /opt && -L /opt/etc/passwd ]] && $GREP_CMD -q '/opt/etc/profile' /root/.profile
 			result_code=$?
 			;;
 		Par2)
