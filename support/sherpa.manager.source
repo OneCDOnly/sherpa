@@ -6424,12 +6424,16 @@ _QPKG:status_()
 	DebugAsProc "statusing $(FormatAsPackName "$PACKAGE_NAME")"
 
 	case $PACKAGE_NAME in
-		duf|HideThatBanner|RunLast|sherpa|SortMyQPKGs)		# these don't issue status results
+		HideThatBanner|RunLast|sherpa|SortMyQPKGs)	# these don't issue status results
 			true
 			result_code=$?
 			;;
+		duf)
+			command -v duf &>/dev/null
+			result_code=$?
+			;;
 		Entware)
-			[[ -L /opt && -L /opt/etc/passwd ]]
+			command -v opkg &>/dev/null && [[ -L /opt && -L /opt/etc/passwd ]]
 			result_code=$?
 			;;
 		Par2)
@@ -6448,16 +6452,12 @@ _QPKG:status_()
 	esac
 
 	if [[ $result_code -eq 0 ]]; then
-# 		QPKG.ServiceStatus:Log
 		SendPackageStateChange ISactive
 	else
 		SendPackageStateChange ISNTactive
-# 		result_code=1   # remap to 1
-# 		MarkThisActionForkAsFailed
 	fi
 
 	SaveActionResultToLog QPKG "$PACKAGE_NAME" status ok
-# 	SaveActionResultToLog QPKG "$PACKAGE_NAME" status failed "$result_code"
 	MarkThisActionForkAsOk
 
 	FuncFork:Exit $result_code
