@@ -13,8 +13,8 @@ target_pathfile="$source_path"/objects
 
 # these are used internally by sherpa -----------------------------------------------------
 # sorted
-QPKG_IS_STATES=(backedup downloaded enabled installed missing signed started)
-QPKG_ISNT_STATES=(backedup downloaded enabled installed signed started)
+QPKG_IS_STATES=(active backedup downloaded enabled installed missing signed started)
+QPKG_ISNT_STATES=(active backedup downloaded enabled installed signed started)
 QPKG_STATES_TRANSIENT=(starting stopping restarting)
 QPKG_SERVICE_RESULTS=(ok failed unknown)
 
@@ -24,7 +24,7 @@ IPK_STATES=(downloaded installed reinstalled upgraded)
 # ordered
 PIP_ACTIONS=(download uninstall upgrade reinstall install)
 IPK_ACTIONS=(download uninstall upgrade reinstall install)
-QPKG_ACTIONS=(download rebuild reassign backup stop disable uninstall upgrade reinstall install restore clean enable start restart sign)
+QPKG_ACTIONS=(download rebuild reassign backup stop disable uninstall upgrade reinstall install restore clean enable start restart sign status)
 
 # these words may be specified by the user -----------------------------------------------------
 # sorted
@@ -32,7 +32,7 @@ USER_QPKG_SC_GROUPS=(all canbackup canclean canrestarttoupdate dependent hasdepe
 USER_QPKG_SCNT_GROUPS=(canclean installable upgradable)
 USER_QPKG_IS_STATES=(backedup installed missing started)
 USER_QPKG_ISNT_STATES=(backedup installed started)
-USER_QPKG_ACTIONS=(backup clean install list reassign rebuild reinstall restart restore start stop uninstall upgrade)
+USER_QPKG_ACTIONS=(backup clean install list reassign rebuild reinstall restart restore start status stop uninstall upgrade)
 
 # disabled for-now, but would be helpful to have these as user-specified states
 # USER_QPKG_IS_STATES+=(${QPKG_SERVICE_RESULTS[@]})
