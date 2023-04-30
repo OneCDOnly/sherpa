@@ -1,6 +1,6 @@
 * RunLast does not respond to '--status' query.
 	need to add this to service script.
 
-* progress line display desyncs intermittently (suspect stdout interference caused by LazyLibrarian startup).
+* progress line display desyncs intermittently (suspect stdout interference caused by LazyLibrarian startup?).
 
 * ensure each action fork is actually being killed after it issues an 'exit' into the message pipe.
