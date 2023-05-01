@@ -331,7 +331,7 @@ Consts:Load()
 	readonly ACTION_TIMES_PATH=$CACHE_PATH/action.times
 	readonly ACTION_MSG_PIPE=/var/run/sherpa.action.messages.pipe
 	readonly FILE_CHANGE_THRESHOLD_MINUTES=60
-	readonly STATUS_CHECK_TIMEOUT_SECONDS=8
+	readonly STATUS_CHECK_TIMEOUT_SECONDS=10
 
 	readonly OBJECTS_PATHFILE=$CACHE_PATH/objects
 	readonly OBJECTS_ARCHIVE_URL='<?cdn_sherpa_url?>'/objects.tar.gz
@@ -3111,12 +3111,6 @@ DisplayAsHelpNameVerStatus()
 				patt=\\bdisabled\\b
 				[[ $package_status =~ $patt ]] && package_status_msg="$(ColourTextBrightRed disabled)"
 
-				patt=\\bstarting\\b
-				[[ $package_status =~ $patt ]] && package_status_msg+=", $(ColourTextBrightOrange starting)"
-
-				patt=\\bstopping\\b
-				[[ $package_status =~ $patt ]] && package_status_msg+=", $(ColourTextBrightOrange stopping)"
-
 				patt=\\bactive\\b
 				[[ $package_status =~ $patt ]] && package_status_msg+=", $(ColourTextBrightGreen active)"
 
@@ -3125,6 +3119,12 @@ DisplayAsHelpNameVerStatus()
 
 				patt=\\binactive\\b
 				[[ $package_status =~ $patt ]] && package_status_msg+=", $(ColourTextBrightRed inactive)"
+
+				patt=\\bstarting\\b
+				[[ $package_status =~ $patt ]] && package_status_msg+=", $(ColourTextBrightOrange starting)"
+
+				patt=\\bstopping\\b
+				[[ $package_status =~ $patt ]] && package_status_msg+=", $(ColourTextBrightOrange stopping)"
 
 				patt=\\bunknown\\b
 				[[ $package_status =~ $patt ]] && package_status_msg+=", $(ColourTextBrightOrange unknown)"
