@@ -20,7 +20,7 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=OSickGear
-	readonly SCRIPT_VERSION=230418
+	readonly SCRIPT_VERSION=230501
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -296,14 +296,15 @@ InstallAddons()
 		if $(/bin/grep -q sabyenc3 < "$requirements_pathfile" &>/dev/null); then
 			echo '--no-binary=sabyenc3' >> "$requirements_pathfile"
 		elif $(/bin/grep -q sabctools < "$requirements_pathfile" &>/dev/null); then
-			echo '--no-binary=sabyenc3' >> "$requirements_pathfile"
+			echo '--no-binary=sabctools' >> "$requirements_pathfile"
 		fi
 	fi
 
 	for target in $requirements_pathfile $recommended_pathfile; do
 		if [[ -e $target ]]; then
-			# need to remove `cffi` and `cryptography` modules from repo txt files, as we must use the ones installed via `opkg` instead. If not, `pip` will attempt to compile these, which fails on early arm CPUs.
-			DisplayRunAndLog 'KLUDGE: exclude various PyPI modules from installation' "/bin/sed -i '/^cffi\|^cryptography/d' $target" log:failure-only || SetError
+			# Must remove these modules from repo txt files, and use the ones installed via `opkg` instead (if available).
+			# If not, `pip` will attempt to compile these, which fails on early ARM CPUs.
+			DisplayRunAndLog 'KLUDGE: exclude various PyPI modules from installation' "/bin/sed -i '/^cffi\|^cryptography\|^Levenshtein/d' $target" log:failure-only || SetError
 
 			name=$(/usr/bin/basename "$target"); name=${name%%.*}
 
