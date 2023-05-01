@@ -1,4 +1,6 @@
-* RunLast does not respond to '--status' query.
+* LazyLibrarian: can't install Levenshtein PyPI on armv5 (no compatible compiled binary) fails while building wheels for cmake & ninja, but Levenshtein is being installed indirectly via pyproject.toml. Need to find out how essential this module is to this application.
+
+* RunLast: does not respond to '--status' query.
 	need to add this to service script.
 
 * progress line display desyncs intermittently (suspect stdout interference caused by an application start-up).
