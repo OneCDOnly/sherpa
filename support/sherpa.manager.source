@@ -597,7 +597,7 @@ Self:LogEnv()
 	DebugUserspace ok 'time in shell' "$(GetTimeInShell)"
 	DebugUserspace ok '$BASH_VERSION' "$BASH_VERSION"
 	DebugUserspace ok 'default volume' "$(GetDefVol)"
-	DebugUserspace ok '/opt' "$($READLINK_CMD /opt || echo '<not present>')"
+	DebugUserspace ok '/opt' "$($READLINK_CMD /opt 2>/dev/null || echo '<not present>')"
 
 	local public_share=$(/sbin/getcfg SHARE_DEF defPublic -d Qpublic -f /etc/config/def_share.info)
 
