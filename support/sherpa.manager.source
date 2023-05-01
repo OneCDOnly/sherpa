@@ -163,8 +163,6 @@ Self:Results()
 
 	if ARGs-unknown:IsNone; then
 		if [[ $opts_show_abbreviations = true ]]; then
-			QPKGs.Missing:Show
-			QPKGs.NewVers:Show
 			QPKGs.Abbreviations:Show
 		elif [[ $opts_show_actions = true ]]; then
 			Help.Actions:Show
@@ -179,14 +177,10 @@ Self:Results()
 		elif [[ $opts_show_options = true ]]; then
 			Help.Options:Show
 		elif [[ $opts_show_packages = true ]]; then
-			QPKGs.Missing:Show
-			QPKGs.NewVers:Show
 			QPKGs:List:Show
 		elif [[ $opts_show_problems = true ]]; then
 			Help.Problems:Show
 		elif [[ $opts_show_repos = true ]]; then
-			QPKGs.Missing:Show
-			QPKGs.NewVers:Show
 			QPKGs.Repos:Show
 		elif [[ $opts_show_results = true ]]; then
 			display_last_action_datetime=true
@@ -194,8 +188,6 @@ Self:Results()
 			opts_show_packages_skipped=true
 			opts_show_packages_failed=true
 		elif [[ $opts_show_status = true ]]; then
-			QPKGs.Missing:Show
-			QPKGs.NewVers:Show
 			QPKGs.Statuses:Show
 			opts_show_packages_ok=false
 			opts_show_packages_skipped=false
@@ -4380,6 +4372,12 @@ QPKGs.States:Build()
 
 	qpkgs_states_built=true
 	[[ ${FUNCNAME[1]} != Self:LogEnv ]] && EraseThisLine		# prevent empty line appearing briefly when starting-up
+
+	if [[ ${1:-} != rebuild ]]; then
+		QPKGs.Missing:Show
+		QPKGs.NewVers:Show
+	fi
+
 	Func:Exit
 
 	}
@@ -4479,8 +4477,7 @@ QPKGs.Abbreviations:Show()
 
 		} > "$REPORT_PATHFILE"
 
-	ShowAsDone 'built report'
-	DisplayLineSpaceIfNoneAlready
+	EraseThisLine		# clear the "proc:" message shown earlier
 	[[ -e $REPORT_PATHFILE ]] && $CAT_CMD "$REPORT_PATHFILE"
 	linespace_visible=false
 
@@ -4491,39 +4488,50 @@ QPKGs.Abbreviations:Show()
 QPKGs.Backups:Show()
 	{
 
+	Func:Entry
+
 	local epochtime=0	# allow float as seconds have a fractional component
 	local filename=''
 	local highlight_older_than='2 weeks ago'
 	local format=''
 
 	DisableDebugToArchiveAndFile
-	DisplayAsHelpTitle "the location for $(FormatAsTitle) backups is: $QPKG_BU_PATH"
+	ShowAsProc 'building report'
 
-	if [[ -e $GNU_FIND_CMD ]]; then
-		DisplayAsHelpTitle "backups are listed oldest-first, and those $(ColourTextBrightRed 'in red') were last updated more than $highlight_older_than"
-		DisplayAsHelpTitleFileNamePlusSomething 'backup file' 'last backup date'
+		{
 
-		while read -r epochtime filename; do
-			[[ -z $epochtime || -z $filename ]] && break
+		DisplayAsHelpTitle "the location for $(FormatAsTitle) backups is: $QPKG_BU_PATH"
 
-			if [[ ${epochtime%.*} -lt $(/bin/date --date="$highlight_older_than" +%s) ]]; then
-				format="$(ColourTextBrightRed "%${HELP_DESC_INDENT}s%-${HELP_FILE_NAME_WIDTH}s - %s\n")"
-			else
-				format="%${HELP_DESC_INDENT}s%-${HELP_FILE_NAME_WIDTH}s - %s\n"
-			fi
+		if [[ -e $GNU_FIND_CMD ]]; then
+			DisplayAsHelpTitle "backups are listed oldest-first, and those $(ColourTextBrightRed 'in red') were last updated more than $highlight_older_than"
+			DisplayAsHelpTitleFileNamePlusSomething 'backup file' 'last backup date'
 
-			# shellcheck disable=2059
-			printf "$format" '' "$filename" "$(/bin/date -d @"$epochtime" +%c)"
-		done <<< "$($GNU_FIND_CMD "$QPKG_BU_PATH"/*.config.tar.gz -maxdepth 1 -printf '%C@ %f\n' 2>/dev/null | $SORT_CMD)"
+			while read -r epochtime filename; do
+				[[ -z $epochtime || -z $filename ]] && break
 
-	else
-		DisplayAsHelpTitle 'backups are listed oldest-first'
-		Display
+				if [[ ${epochtime%.*} -lt $(/bin/date --date="$highlight_older_than" +%s) ]]; then
+					format="$(ColourTextBrightRed "%${HELP_DESC_INDENT}s%-${HELP_FILE_NAME_WIDTH}s - %s\n")"
+				else
+					format="%${HELP_DESC_INDENT}s%-${HELP_FILE_NAME_WIDTH}s - %s\n"
+				fi
 
-		(cd "$QPKG_BU_PATH" && ls -1 ./*.config.tar.gz 2>/dev/null)
-	fi
+				# shellcheck disable=2059
+				printf "$format" '' "$filename" "$(/bin/date -d @"$epochtime" +%c)"
+			done <<< "$($GNU_FIND_CMD "$QPKG_BU_PATH"/*.config.tar.gz -maxdepth 1 -printf '%C@ %f\n' 2>/dev/null | $SORT_CMD)"
 
-	return 0
+		else
+			DisplayAsHelpTitle 'backups are listed oldest-first'
+			Display
+
+			(cd "$QPKG_BU_PATH" && ls -1 ./*.config.tar.gz 2>/dev/null)
+		fi
+
+		} > "$REPORT_PATHFILE"
+
+	EraseThisLine		# clear the "proc:" message shown earlier
+	[[ -e $REPORT_PATHFILE ]] && $CAT_CMD "$REPORT_PATHFILE"
+
+	Func:Exit
 
 	}
 
@@ -4576,8 +4584,8 @@ QPKGs.Repos:Show()
 
 		} > "$REPORT_PATHFILE"
 
-	ShowAsDone 'built report'
-	DisplayLineSpaceIfNoneAlready
+	EraseThisLine		# clear the "proc:" message shown earlier
+ 	DisplayLineSpaceIfNoneAlready
 	[[ -e $REPORT_PATHFILE ]] && $CAT_CMD "$REPORT_PATHFILE"
 	QPKGs.Actions:List
 	QPKGs.States:List
@@ -4627,8 +4635,7 @@ QPKGs:List:Show()
 
 		} > "$REPORT_PATHFILE"
 
-	ShowAsDone 'built report'
-	DisplayLineSpaceIfNoneAlready
+	EraseThisLine		# clear the "proc:" message shown earlier
 	[[ -e $REPORT_PATHFILE ]] && $CAT_CMD "$REPORT_PATHFILE"
 	linespace_visible=false
 
@@ -4722,8 +4729,8 @@ QPKGs.Statuses:Show()
 
 		} > "$REPORT_PATHFILE"
 
-	ShowAsDone 'built report'
-	DisplayLineSpaceIfNoneAlready
+	EraseThisLine		# clear the "proc:" message shown earlier
+ 	DisplayLineSpaceIfNoneAlready
 	[[ -e $REPORT_PATHFILE ]] && $CAT_CMD "$REPORT_PATHFILE"
 	QPKGs.Actions:List
 	QPKGs.States:List
