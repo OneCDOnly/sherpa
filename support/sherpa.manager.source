@@ -324,6 +324,9 @@ Consts:Load()
 	readonly ACTION_MSG_PIPE=/var/run/sherpa.action.messages.pipe
 	readonly FILE_CHANGE_THRESHOLD_MINUTES=60
 	readonly STATUS_CHECK_TIMEOUT_SECONDS=10
+	readonly QPKG_START_TIMEOUT_SECONDS=1200		# 20 minutes
+	readonly QPKG_RESTART_TIMEOUT_SECONDS=1500		# 25 minutes
+	readonly QPKG_STOP_TIMEOUT_SECONDS=300			# 5 minutes
 
 	readonly OBJECTS_PATHFILE=$CACHE_PATH/objects
 	readonly OBJECTS_ARCHIVE_URL='<?cdn_sherpa_url?>'/objects.tar.gz
@@ -4442,7 +4445,7 @@ QPKGs.Abbreviations:Show()
 	maxcols=2
 
 	DisableDebugToArchiveAndFile
-	ShowAsProc 'building report'
+	ShowAsProc report
 
 		{
 
@@ -4496,7 +4499,7 @@ QPKGs.Backups:Show()
 	local format=''
 
 	DisableDebugToArchiveAndFile
-	ShowAsProc 'building report'
+	ShowAsProc report
 
 		{
 
@@ -4548,7 +4551,7 @@ QPKGs.Repos:Show()
 
 	DisableDebugToArchiveAndFile
 	QPKGs.States:Build
-	ShowAsProc 'building report'
+	ShowAsProc report
 
 		{
 
@@ -4601,7 +4604,7 @@ QPKGs:List:Show()
 	local package_name=''
 
 	DisableDebugToArchiveAndFile
-	ShowAsProc 'building report'
+	ShowAsProc report
 
 		{
 
@@ -4658,7 +4661,7 @@ QPKGs.Statuses:Show()
 
 	DisableDebugToArchiveAndFile
 	QPKGs.States:Build
-	ShowAsProc 'building report'
+	ShowAsProc report
 
 		{
 
@@ -5964,7 +5967,7 @@ _QPKG:restart_()
 		RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) restart" "$LOG_PATHFILE" log:failure-only
 		result_code=$?
 	elif QPKG.IsCanLog; then		# use `qpkg_service` if-possible, so package icon in App Center will dynamically update
-		RunAndLog "/sbin/qpkg_service restart $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
+		RunAndLog "/sbin/qpkg_service -t $QPKG_RESTART_TIMEOUT_SECONDS restart $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
 		QPKG.LastResultWasOk && result_code=0 || result_code=1
 	else
 		RunAndLog "$(QPKG.ServicePathFile) restart" "$LOG_PATHFILE" log:failure-only
@@ -6028,7 +6031,7 @@ _QPKG:start_()
 		RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) start" "$LOG_PATHFILE" log:failure-only
 		result_code=$?
 	elif QPKG.IsCanLog; then		# use `qpkg_service` if-possible, so package icon in App Center will dynamically update
-		RunAndLog "/sbin/qpkg_service start $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
+		RunAndLog "/sbin/qpkg_service -t $QPKG_START_TIMEOUT_SECONDS start $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
 		QPKG.LastResultWasOk && result_code=0 || result_code=1
 	else
 		RunAndLog "$(QPKG.ServicePathFile) start" "$LOG_PATHFILE" log:failure-only
@@ -6104,7 +6107,7 @@ _QPKG:stop_()
 		RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) stop" "$LOG_PATHFILE" log:failure-only
 		result_code=$?
 	elif QPKG.IsCanLog; then		# use `qpkg_service` if-possible, so package icon in App Center will dynamically update
-		RunAndLog "/sbin/qpkg_service stop $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
+		RunAndLog "/sbin/qpkg_service -t $QPKG_STOP_TIMEOUT_SECONDS stop $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
 		QPKG.LastResultWasOk && result_code=0 || result_code=1
 	else
 		RunAndLog "$(QPKG.ServicePathFile) stop" "$LOG_PATHFILE" log:failure-only
@@ -6527,16 +6530,16 @@ _QPKG:status_()
 	DebugVar result_code
 
 	case $result_code in
-		0)		# OK
+		0)
 			SendPackageStateChange ISactive
 			;;
-		124)	# too-slow
+		124)
 			SendPackageStateChange ISslow
 			;;
-		130)	# unknown
+		130)
 			SendPackageStateChange ISunknown
 			;;
-		*)		# bad
+		*)
 			SendPackageStateChange ISNTactive
 	esac
 
