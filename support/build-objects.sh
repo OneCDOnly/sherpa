@@ -13,7 +13,7 @@ target_pathfile="$source_path"/objects
 
 # these are used internally by sherpa -----------------------------------------------------
 # sorted
-QPKG_IS_STATES=(active backedup downloaded enabled installed missing signed started)
+QPKG_IS_STATES=(active backedup downloaded enabled installed missing signed slow started unknown)
 QPKG_ISNT_STATES=(active backedup downloaded enabled installed signed started)
 QPKG_STATES_TRANSIENT=(starting stopping restarting)
 QPKG_SERVICE_RESULTS=(ok failed unknown)
