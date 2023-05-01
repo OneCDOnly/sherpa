@@ -31,6 +31,4 @@ git checkout "$unstable_branch"
 git merge "$stable_branch" && git push		# ensure remote 'unstable' is up-to-date with 'stable'
 cd "$HOME"/scripts/nas/sherpa/support || exit
 
-echo "$unstable_branch" > "$branch_pathfile"
-
 exit 0
