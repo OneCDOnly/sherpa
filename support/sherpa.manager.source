@@ -330,7 +330,8 @@ Consts:Load()
 	readonly PIP_CACHE_PATH=$CACHE_PATH/PIPs
 	readonly ACTION_TIMES_PATH=$CACHE_PATH/action.times
 	readonly ACTION_MSG_PIPE=/var/run/sherpa.action.messages.pipe
-	readonly CHANGE_THRESHOLD_MINUTES=60
+	readonly FILE_CHANGE_THRESHOLD_MINUTES=60
+	readonly STATUS_CHECK_TIMEOUT_SECONDS=8
 
 	readonly OBJECTS_PATHFILE=$CACHE_PATH/objects
 	readonly OBJECTS_ARCHIVE_URL='<?cdn_sherpa_url?>'/objects.tar.gz
@@ -394,6 +395,7 @@ Consts:Load()
 	readonly GNU_SORT_CMD=/opt/bin/sort
 	readonly GNU_SQLITE_CMD=/opt/bin/sqlite3
 	readonly GNU_STTY_CMD=/opt/bin/stty
+	readonly GNU_TIMEOUT_CMD=/opt/bin/timeout
 
 	readonly PERL_CMD=/opt/bin/perl
 	readonly PYTHON_CMD=/opt/bin/python
@@ -486,7 +488,7 @@ Lists:Load()
 	PACKAGE_TIERS=(standalone addon dependent)
 
 	# sorted
-	QPKG_IS_STATES=(active backedup downloaded enabled installed missing signed started)
+	QPKG_IS_STATES=(active backedup downloaded enabled installed missing signed slow started unknown)
 	QPKG_ISNT_STATES=(active backedup downloaded enabled installed signed started)
 	QPKG_STATES_TRANSIENT=(starting stopping restarting)
 	QPKG_SERVICE_RESULTS=(ok unknown)
@@ -1379,7 +1381,7 @@ ParseArgs()
 		# stage 1
 		if [[ -z $action ]]; then
 			case $arg in
-				a|abs|action|actions|actions-all|alias|aliases|all-actions|b|backups|dependent|dependents|failed|groups|installable|installed|l|last|log|missing|not-installed|ok|option|options|p|package|packages|problems|r|repo|repos|results|skipped|standalone|standalones|started|stopped|tail|tips|updatable|updateable|upgradable|v|version|versions|whole)
+				a|abs|action|actions|actions-all|alias|aliases|all-actions|b|backups|deps|dependent|dependents|failed|groups|indeps|independent|independents|installable|installed|l|last|log|missing|not-installed|ok|option|options|p|package|packages|problems|r|repo|repos|results|skipped|standalone|standalones|started|stopped|tail|tips|updatable|updateable|upgradable|v|version|versions|whole)
 					action=help
 					arg_identified=true
 					group=''
@@ -1425,7 +1427,7 @@ ParseArgs()
 				b|backups)
 					group=backups
 					;;
-				dependent|dependents)
+				deps|dependent|dependents)
 					group=dependent
 					;;
 				group|groups)
@@ -1446,7 +1448,7 @@ ParseArgs()
 				r|repo|repos)
 					group=repos
 					;;
-				standalone|standalones)
+				standalone|standalones|indeps|independent|independents)
 					group=standalone
 					;;
 				updatable|updateable|upgradable)
@@ -2159,7 +2161,7 @@ UpdateEntwarePackageList()
 	local -i result_code=0
 
 	# if Entware package list was recently updated, don't update again
-	if ! IsThisFileRecent "$EXTERNAL_PACKAGES_ARCHIVE_PATHFILE" "$CHANGE_THRESHOLD_MINUTES" || [[ ! -f $EXTERNAL_PACKAGES_ARCHIVE_PATHFILE || $opts_check = true ]]; then
+	if ! IsThisFileRecent "$EXTERNAL_PACKAGES_ARCHIVE_PATHFILE" "$FILE_CHANGE_THRESHOLD_MINUTES" || [[ ! -f $EXTERNAL_PACKAGES_ARCHIVE_PATHFILE || $opts_check = true ]]; then
 		DebugAsProc "updating $(FormatAsPackName Entware) package list"
 
 		RunAndLog "$OPKG_CMD update" "$LOGS_PATH/Entware.$UPDATE_LOG_FILE" log:failure-only
@@ -2173,7 +2175,7 @@ UpdateEntwarePackageList()
 			# no-big-deal
 		fi
 	else
-		DebugInfo "$(FormatAsPackName Entware) package list updated less-than $CHANGE_THRESHOLD_MINUTES minutes ago: skipping update"
+		DebugInfo "$(FormatAsPackName Entware) package list updated less-than $FILE_CHANGE_THRESHOLD_MINUTES minutes ago: skipping update"
 	fi
 
 	[[ -f $EXTERNAL_PACKAGES_ARCHIVE_PATHFILE && ! -f $EXTERNAL_PACKAGES_PATHFILE ]] && OpenIpkArchive
@@ -3117,6 +3119,9 @@ DisplayAsHelpNameVerStatus()
 
 				patt=\\bactive\\b
 				[[ $package_status =~ $patt ]] && package_status_msg+=", $(ColourTextBrightGreen active)"
+
+				patt=\\bslow\\b
+				[[ $package_status =~ $patt ]] && package_status_msg+=", $(ColourTextBrightOrange slow)"
 
 				patt=\\binactive\\b
 				[[ $package_status =~ $patt ]] && package_status_msg+=", $(ColourTextBrightRed inactive)"
@@ -4353,8 +4358,6 @@ QPKGs.States:Build()
 					ok)
 						QPKGs-ISok:Add "$package"
 				esac
-			else
-				QPKGs-ISunknown:Add "$package"
 			fi
 		else
 			QPKGs-ISNTinstalled:Add "$package"
@@ -4676,6 +4679,21 @@ QPKGs.Statuses:Show()
 						package_status_notes+=(disabled)
 					fi
 
+					# package/process: active/slow or inactive?
+					if QPKGs-ACstatus-ok:Exist "$package_name"; then
+						if QPKGs-ISactive:Exist "$package_name"; then
+							package_status_notes+=(active)
+						elif QPKGs-ISslow:Exist "$package_name"; then
+							package_status_notes+=(slow)
+						elif QPKGs-ISunknown:Exist "$package_name"; then
+							package_status_notes+=(unknown)
+						else
+							package_status_notes+=(inactive)
+						fi
+					else
+						package_status_notes+=(unknown)
+					fi
+
 					# transient state
 					if QPKGs-ISstarting:Exist "$package_name"; then
 						package_status_notes+=(starting)
@@ -4683,17 +4701,6 @@ QPKGs.Statuses:Show()
 						package_status_notes+=(stopping)
 					elif QPKGs-ISrestarting:Exist "$package_name"; then
 						package_status_notes+=(restarting)
-					fi
-
-					# package/process: active or inactive?
-					if QPKGs-ACstatus-ok:Exist "$package_name"; then
-						if QPKGs-ISactive:Exist "$package_name"; then
-							package_status_notes+=(active)
-						else
-							package_status_notes+=(inactive)
-						fi
-					else
-						package_status_notes+=(unknown)
 					fi
 
 					# insert commas
@@ -6475,16 +6482,19 @@ _QPKG:status_()
 	DebugAsProc "statusing $(FormatAsPackName "$PACKAGE_NAME")"
 
 	case $PACKAGE_NAME in
-		HideThatBanner|RunLast|sherpa|SortMyQPKGs)	# these don't issue status results
+		sherpa)
 			true
 			result_code=$?
+			;;
+		HideThatBanner|RunLast|SortMyQPKGs)		# these don't issue status results
+			result_code=130
 			;;
 		duf)
 			command -v duf &>/dev/null
 			result_code=$?
 			;;
 		Entware)
-			command -v opkg &>/dev/null && [[ -L /opt && -L /opt/etc/passwd ]]
+			[[ -L /opt && -L /opt/etc/passwd ]] && $GREP_CMD -q '/opt/etc/profile' /root/.profile
 			result_code=$?
 			;;
 		Par2)
@@ -6498,20 +6508,35 @@ _QPKG:status_()
 		*)
 			[[ $opts_debug = true ]] && debug_cmd='DEBUG_QPKG=true '
 
-			RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) status" "$LOGS_PATH/$PACKAGE_NAME.$CLEAN_LOG_FILE" log:failure-only
-			result_code=$?
+			if [[ -e $GNU_TIMEOUT_CMD ]]; then
+				$GNU_TIMEOUT_CMD "$STATUS_CHECK_TIMEOUT_SECONDS" /bin/bash -c "${debug_cmd}$(QPKG.ServicePathFile) status"
+				result_code=$?
+			else
+				RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) status" "$LOGS_PATH/$PACKAGE_NAME.$CLEAN_LOG_FILE" log:failure-only
+				result_code=$?
+			fi
 	esac
 
-	if [[ $result_code -eq 0 ]]; then
-		SendPackageStateChange ISactive
-	else
-		SendPackageStateChange ISNTactive
-	fi
+	DebugVar result_code
+
+	case $result_code in
+		0)		# OK
+			SendPackageStateChange ISactive
+			;;
+		124)	# too-slow
+			SendPackageStateChange ISslow
+			;;
+		130)	# unknown
+			SendPackageStateChange ISunknown
+			;;
+		*)		# bad
+			SendPackageStateChange ISNTactive
+	esac
 
 	SaveActionResultToLog QPKG "$PACKAGE_NAME" status ok
 	MarkThisActionForkAsOk
 
-	FuncFork:Exit $result_code
+	FuncFork:Exit
 
 	}
 
@@ -8637,7 +8662,7 @@ Objects:Load()
 	Func:Entry
 
 	if [[ ! -e $PWD/dont.refresh.objects ]]; then
-		if [[ ! -e $OBJECTS_PATHFILE ]] || ! IsThisFileRecent "$OBJECTS_PATHFILE" "$CHANGE_THRESHOLD_MINUTES"; then
+		if [[ ! -e $OBJECTS_PATHFILE ]] || ! IsThisFileRecent "$OBJECTS_PATHFILE" "$FILE_CHANGE_THRESHOLD_MINUTES"; then
 			ShowAsProc 'updating objects'
 			if $CURL_CMD --insecure --silent --fail "$OBJECTS_ARCHIVE_URL" > "$OBJECTS_ARCHIVE_PATHFILE"; then
 				$TAR_CMD --extract --gzip --file="$OBJECTS_ARCHIVE_PATHFILE" --directory="$CACHE_PATH"
@@ -8668,7 +8693,7 @@ Packages:Load()
 	Func:Entry
 
 	if [[ ! -e $PWD/dont.refresh.packages ]]; then
-		if [[ ! -e $PACKAGES_PATHFILE ]] || ! IsThisFileRecent "$PACKAGES_PATHFILE" "$CHANGE_THRESHOLD_MINUTES"; then
+		if [[ ! -e $PACKAGES_PATHFILE ]] || ! IsThisFileRecent "$PACKAGES_PATHFILE" "$FILE_CHANGE_THRESHOLD_MINUTES"; then
 			ShowAsProc 'updating package list'
 			if $CURL_CMD --insecure --silent --fail "$PACKAGES_ARCHIVE_URL" > "$PACKAGES_ARCHIVE_PATHFILE"; then
 				$TAR_CMD --extract --gzip --file="$PACKAGES_ARCHIVE_PATHFILE" --directory="$CACHE_PATH"
