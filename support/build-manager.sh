@@ -17,7 +17,7 @@ buffer=$(<"$source_pathfile")
 buffer=$(sed "s|<?dontedit?>|$dontedit_msg|" <<< "$buffer")
 buffer=$(sed "s|<?year?>|$year|" <<< "$buffer")
 buffer=$(sed "s|<?today?>|$today|" <<< "$buffer")
-buffer=$(sed "s|<?branch?>|$branch|" <<< "$buffer")
+buffer=$(sed "s|<?branch?>|$(git symbolic-ref --short HEAD)|" <<< "$buffer")
 buffer=$(sed "s|<?cdn_sherpa_url?>|$cdn_sherpa_url|" <<< "$buffer")
 
 buffer=$(sed -e '/^#[[:space:]].*/d;s/[[:space:]]#[[:space:]].*//' <<< "$buffer")		# remove comment lines and line comments

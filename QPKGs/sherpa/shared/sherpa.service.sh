@@ -72,8 +72,17 @@ case $1 in
 		$0 stop
 		$0 start
 		;;
+	status)
+		if [[ -L $APPARENT_LOADER_SCRIPT_PATHNAME ]]; then
+			echo 'active'
+			exit 0
+		else
+			echo 'inactive'
+			exit 1
+		fi
+		;;
 	*)
-		echo -e "\n Usage: $0 {start|stop|restart}\n"
+		echo -e "\n Usage: $0 {start|stop|restart|status}\n"
 esac
 
 SetServiceOperationResult ok
