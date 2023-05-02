@@ -7,8 +7,6 @@ fi
 
 . ./vars.source
 
-echo -e "hardcoding with branch: '$branch_msg'"
-
 declare -a source_pathfiles
 declare -i index=0
 
