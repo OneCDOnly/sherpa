@@ -115,8 +115,6 @@ wiki_path="$HOME"/documents/sherpa.wiki
 
 stable_branch=stable
 unstable_branch=unstable
-branch_pathfile="$source_path"/branch.txt
-branch=$(<"$branch_pathfile")
 
 stable_branch_msg="$(ColourTextBrightGreen "$stable_branch")"
 unstable_branch_msg="$(ColourTextBrightRed "$unstable_branch")"
@@ -127,11 +125,3 @@ cdn_sherpa_url="$cdn_onecd_url/sherpa/$stable_branch"
 cdn_sherpa_packages_url="$cdn_sherpa_url/QPKGs/<?package_name?>/build"
 cdn_qnap_dev_packages_url='https://github.com/qnap-dev/<?package_name?>/releases/download/v<?version?>'
 cdn_other_packages_url="$cdn_onecd_url/<?package_name?>/main/build"
-
-case $branch in
-	"$stable_branch")
-		branch_msg="$stable_branch_msg"
-		;;
-	*)
-		branch_msg="$unstable_branch_msg"
-esac

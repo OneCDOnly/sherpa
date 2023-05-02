@@ -7,7 +7,6 @@ fi
 
 . ./vars.source
 
-echo "$unstable_branch" > "$branch_pathfile"
 [[ -e objects ]] && rm -f objects
 cd "$target_path" || exit
 git add . && git commit && git push

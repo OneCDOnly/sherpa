@@ -19,8 +19,6 @@ case ${response:0:1} in
 		exit 0
 esac
 
-echo "$stable_branch" > "$branch_pathfile"
-
 ./make.sh || exit
 
 cd "$HOME"/scripts/nas/sherpa || exit
