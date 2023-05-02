@@ -1,3 +1,5 @@
+* sherpa is pulling packages and objects from github on every run, instead of only when they're older than 1 hour.
+
 * RunLast: does not respond to '--status' query.
 	need to add this to service script.
 
