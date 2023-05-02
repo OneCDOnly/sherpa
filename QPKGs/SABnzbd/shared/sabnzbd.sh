@@ -20,7 +20,7 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=SABnzbd
-	readonly SCRIPT_VERSION=230429
+	readonly SCRIPT_VERSION=230503
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -319,13 +319,13 @@ InstallAddons()
 		fi
 	fi
 
-	if [[ $QPKG_NAME = SABnzbd && $new_env = true ]]; then
+	if [[ $QPKG_NAME = SABnzbd ]]; then
 		# run [tools/make_mo.py] if SABnzbd version number has changed since last run
 		LoadAppVersion
-		[[ -e $APP_VERSION_STORE_PATHFILE && $(<"$APP_VERSION_STORE_PATHFILE") = "$app_version" && -d $QPKG_REPO_PATH/locale ]] && return 0
 
-		DisplayRunAndLog "update $(FormatAsPackageName $QPKG_NAME) language translations" ". $VENV_PATH/bin/activate && cd $QPKG_REPO_PATH; $VENV_INTERPRETER $QPKG_REPO_PATH/tools/make_mo.py" log:failure-only
-		[[ ! -e $APP_VERSION_STORE_PATHFILE ]] && return 0
+		if [[ ! -e $APP_VERSION_STORE_PATHFILE || $(<"$APP_VERSION_STORE_PATHFILE") != "$app_version" ]]; then
+ 			DisplayRunAndLog "update $(FormatAsPackageName $QPKG_NAME) language translations" ". $VENV_PATH/bin/activate && cd $QPKG_REPO_PATH; $VENV_INTERPRETER $QPKG_REPO_PATH/tools/make_mo.py" log:failure-only
+		fi
 
 		SaveAppVersion
 	fi
