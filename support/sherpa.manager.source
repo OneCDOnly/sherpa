@@ -4041,9 +4041,9 @@ QPKGs.NewVers:Show()
 	done
 
 	if [[ ${#upgradable_packages[@]} -eq 1 ]]; then
-		msg='an updated QPKG is'
+		msg='an upgraded QPKG is'
 	else
-		msg='updated QPKGs are'
+		msg='upgraded QPKGs are'
 	fi
 
 	ShowAsInfo "$msg available for $names_formatted"
