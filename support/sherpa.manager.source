@@ -312,7 +312,7 @@ Consts:Load()
 	readonly THIS_PACKAGE_PATH=$(QPKG.InstallationPath)
 	readonly THIS_PACKAGE_VER=$(QPKG.Local.Ver)
 
-	if ! /bin/grep -q $(echo 'ZG9udGVkaXQK' | /usr/bin/openssl enc -base64 -d) "$0"; then	# use encrypted 'dontedit' string to prevent grep from seeing it.
+	if ! /bin/grep -q "$(echo 'ZG9udGVkaXQK' | /usr/bin/openssl enc -base64 -d)" "$0"; then	# use encrypted 'dontedit' string to prevent grep from seeing it.
 		local -r BRANCH=stable
 	else
 		local -r BRANCH=unstable
