@@ -312,7 +312,7 @@ Consts:Load()
 	readonly THIS_PACKAGE_PATH=$(QPKG.InstallationPath)
 	readonly THIS_PACKAGE_VER=$(QPKG.Local.Ver)
 
-	if ! $(/bin/grep -q dontedit "$0"); then
+	if ! /bin/grep -q dontedit "$0"; then
 		local -r BRANCH=stable
 	else
 		local -r BRANCH=unstable
