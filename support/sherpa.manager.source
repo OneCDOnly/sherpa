@@ -6492,10 +6492,6 @@ _QPKG:status_()
 	DebugAsProc "statusing $(FormatAsPackName "$PACKAGE_NAME")"
 
 	case $PACKAGE_NAME in
-		sherpa)
-			true
-			result_code=$?
-			;;
 		HideThatBanner|RunLast|SortMyQPKGs)		# these don't issue status results
 			result_code=130
 			;;
