@@ -9,7 +9,7 @@
 	[/share/Public] # /etc/init.d/oqbittorrent.sh s
 	daemon active: false
 
-* progress line has an extra whitespace when displayed in colour on older NAS (QTS 4.2.6 & 4.3.3)
+* progress line display has extra whitespace(s) when displayed in colour on older NAS (QTS 4.2.6 & 4.3.3)
 
 * RunLast: does not respond to '--status' query.
 	need to add this to service script.
