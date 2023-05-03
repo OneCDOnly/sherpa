@@ -6,6 +6,5 @@
 	need to add this to service script.
 
 * progress line display desyncs intermittently (suspect stdout interference caused by an application start-up).
-	must investigate NZBHydra and nzbToMedia.
 
 * ensure each action fork is actually being killed after it issues an 'exit' into the message pipe.
