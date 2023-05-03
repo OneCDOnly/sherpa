@@ -162,7 +162,11 @@ Self:Results()
 	display_last_action_datetime=false
 
 	if ARGs-unknown:IsNone; then
-		if [[ $opts_show_abbreviations = true ]]; then
+		if [[ $opts_increase_qpkg_timeouts = true ]]; then
+			QPKGs.Timeouts:Increase
+		elif [[ $opts_revert_qpkg_timeouts = true ]]; then
+			QPKGs.Timeouts:Decrease
+		elif [[ $opts_show_abbreviations = true ]]; then
 			QPKGs.Abbreviations:Show
 		elif [[ $opts_show_actions = true ]]; then
 			Help.Actions:Show
@@ -271,11 +275,15 @@ Vars:Load()
 	linespace_visible=false
 	msg_pipe_fd=none
 	pips_install=false
+	qpkg_timeouts_increased=false
 	show_suggest_raise_issue=false
 	show_zero_qpkgs=true
 	skip_package_actions=false
 
+	# user-selectable options
 	opts_check=false
+	opts_increase_qpkg_timeouts=false
+	opts_revert_qpkg_timeouts=false
 	opts_verbose=false
 
 	opts_paste_log_last=false
@@ -330,9 +338,10 @@ Consts:Load()
 	readonly ACTION_MSG_PIPE=/var/run/sherpa.action.messages.pipe
 	readonly FILE_CHANGE_THRESHOLD_MINUTES=60
 	readonly STATUS_CHECK_TIMEOUT_SECONDS=10
-	readonly QPKG_START_TIMEOUT_SECONDS=1200		# 20 minutes
-	readonly QPKG_RESTART_TIMEOUT_SECONDS=1500		# 25 minutes
+	readonly QPKG_START_TIMEOUT_SECONDS=1500		# 25 minutes
+	readonly QPKG_RESTART_TIMEOUT_SECONDS=1800		# 30 minutes
 	readonly QPKG_STOP_TIMEOUT_SECONDS=300			# 5 minutes
+	readonly QPKG_EXTENDED_TIMEOUT_SECONDS=1800		# 30 minutes - this value is applied to 'qpkg_service' when '--increase-timeout' is specified
 
 	readonly OBJECTS_PATHFILE=$CACHE_PATH/objects
 	readonly OBJECTS_ARCHIVE_URL='<?cdn_sherpa_url?>'/objects.tar.gz
@@ -1344,8 +1353,24 @@ ParseArgs()
 				hide_title=false
 				skip_package_actions=false
 				;;
+			decrease-timeout|decrease-timeouts|revert-timeout|revert-timeouts)
+				action=reverttimeout
+				arg_identified=true
+				group=''
+				group_identified=false
+				hide_title=false
+				skip_package_actions=true
+				;;
 			display|help|list|show|view)
 				action=help
+				arg_identified=true
+				group=''
+				group_identified=false
+				hide_title=false
+				skip_package_actions=true
+				;;
+			increase-timeout|increase-timeouts)
+				action=increasetimeout
 				arg_identified=true
 				group=''
 				group_identified=false
@@ -1599,6 +1624,9 @@ ParseArgs()
 
 				skip_package_actions=true
 				;;
+			increasetimeout)
+				opts_increase_qpkg_timeouts=true
+				;;
 			install)
 				case $group in
 					all|dependent|installable|standalone)
@@ -1699,6 +1727,9 @@ ParseArgs()
 					*)
 						QPKGs-ACrestore-to:Add "$package"
 				esac
+				;;
+			reverttimeout)
+				opts_revert_qpkg_timeouts=true
 				;;
 			start)
 				case $group in
@@ -3620,6 +3651,8 @@ Help.Problems:Show()
 	DisplayAsProjSynIndentExam "view only the most recent $(FormatAsTitle) session log" last
 	DisplayAsProjSynIndentExam '' l
 	DisplayAsProjSynIndentExam "view the entire $(FormatAsTitle) session log" log
+	DisplayAsProjSynIndentExam "increase the default $(GetQnapOS) QPKG timeout for all packages to $((QPKG_EXTENDED_TIMEOUT_SECONDS/60)) minutes" 'increase-timeout'
+	DisplayAsProjSynIndentExam "revert the default $(GetQnapOS) QPKG timeout for all packages to 3 minutes" 'revert-timeout'
 	DisplayAsProjSynIndentExam "upload the most-recent session in your $(FormatAsTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste last'
 	DisplayAsProjSynIndentExam "upload the most-recent $(FormatAsThous "$LOG_TAIL_LINES") lines in your $(FormatAsTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste log'
 	DisplayAsHelpTitleHighlighted "If you need help, please include a copy of your $(FormatAsTitle) $(ColourTextBrightOrange "log for analysis!")"
@@ -4451,7 +4484,7 @@ QPKGs.Abbreviations:Show()
 	maxcols=2
 
 	DisableDebugToArchiveAndFile
-	ShowAsProc report
+	ShowAsProc 'writing report'
 
 		{
 
@@ -4505,7 +4538,7 @@ QPKGs.Backups:Show()
 	local format=''
 
 	DisableDebugToArchiveAndFile
-	ShowAsProc report
+	ShowAsProc 'writing report'
 
 		{
 
@@ -4557,7 +4590,7 @@ QPKGs.Repos:Show()
 
 	DisableDebugToArchiveAndFile
 	QPKGs.States:Build
-	ShowAsProc report
+	ShowAsProc 'writing report'
 
 		{
 
@@ -4610,7 +4643,7 @@ QPKGs:List:Show()
 	local package_name=''
 
 	DisableDebugToArchiveAndFile
-	ShowAsProc report
+	ShowAsProc 'writing report'
 
 		{
 
@@ -4667,7 +4700,7 @@ QPKGs.Statuses:Show()
 
 	DisableDebugToArchiveAndFile
 	QPKGs.States:Build
-	ShowAsProc report
+	ShowAsProc 'writing report'
 
 		{
 
@@ -4743,6 +4776,67 @@ QPKGs.Statuses:Show()
 	[[ -e $REPORT_PATHFILE ]] && $CAT_CMD "$REPORT_PATHFILE"
 	QPKGs.Actions:List
 	QPKGs.States:List
+
+	Func:Exit
+
+	}
+
+QPKGs.Timeouts:Increase()
+	{
+
+	Func:Entry
+
+	local target_utility_pathfile=/usr/local/sbin/qpkg_service
+	local backup_utility_pathfile=/usr/local/sbin/qpkg_service.orig
+
+	if [[ ! -e $target_utility_pathfile ]]; then
+		ShowAsError 'original utility not found'
+		Func:Exit 1
+		return 1
+	fi
+
+	if [[ -e $backup_utility_pathfile ]]; then
+		ShowAsInfo 'default QPKG timeouts have already been increased'
+	else
+		mv "$target_utility_pathfile" "$backup_utility_pathfile"
+
+		/bin/cat > "$target_utility_pathfile" << EOF
+#!/usr/bin/env bash
+
+# this script was added by sherpa: https://git.io/sherpa
+
+# increase the default timeout for qpkg_service to $((QPKG_EXTENDED_TIMEOUT_SECONDS/60)) minutes
+# subsequent specification of -t values will override this value
+
+$backup_utility_pathfile -t $QPKG_EXTENDED_TIMEOUT_SECONDS "\$@"
+EOF
+
+		/bin/chmod +x "$target_utility_pathfile"
+		ShowAsDone "default QPKG timeouts have been increased to $((QPKG_EXTENDED_TIMEOUT_SECONDS/60)) minutes"
+	fi
+
+	qpkg_timeouts_increased=true
+
+	Func:Exit
+
+	}
+
+QPKGs.Timeouts:Decrease()
+	{
+
+	Func:Entry
+
+	local target_utility_pathfile=/usr/local/sbin/qpkg_service
+	local backup_utility_pathfile=/usr/local/sbin/qpkg_service.orig
+
+	if [[ ! -e $backup_utility_pathfile ]]; then
+		ShowAsInfo 'default QPKG timeouts are in-effect'
+	else
+		mv -f "$backup_utility_pathfile" "$target_utility_pathfile"
+		ShowAsDone 'default QPKG timeouts have been reverted to 3 minutes'
+	fi
+
+	qpkg_timeouts_increased=false
 
 	Func:Exit
 
