@@ -4802,12 +4802,9 @@ QPKGs.Timeouts:Increase()
 
 		/bin/cat > "$target_utility_pathfile" << EOF
 #!/usr/bin/env bash
-
-# this script was added by sherpa: https://git.io/sherpa
-
-# increase the default timeout for qpkg_service to $((QPKG_EXTENDED_TIMEOUT_SECONDS/60)) minutes
-# subsequent specification of -t values will override this value
-
+#* this script was added by sherpa: https://git.io/sherpa
+#* increase the default timeout for qpkg_service to $((QPKG_EXTENDED_TIMEOUT_SECONDS/60)) minutes
+#* subsequent specification of -t values will override this value
 $backup_utility_pathfile -t $QPKG_EXTENDED_TIMEOUT_SECONDS "\$@"
 EOF
 
