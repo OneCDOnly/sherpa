@@ -636,7 +636,7 @@ Self:LogEnv()
 	DebugBinPathVerAndMinVer perl "$(GetDefPerlVer)" "$MIN_PERL_VER"
 	DebugScript 'logs path' "$LOGS_PATH"
 	DebugScript 'cache path' "$CACHE_PATH"
-	DebugQpkg detect concurrency "$CONCURRENCY"
+	DebugQpkg detect 'action concurrency' "$CONCURRENCY"
 
 	if OS.IsSupportSignedPackages; then
 		if OS.IsAllowUnsignedPackages; then

@@ -20,7 +20,7 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=LazyLibrarian
-	readonly SCRIPT_VERSION=230418
+	readonly SCRIPT_VERSION=230504
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -154,7 +154,7 @@ StartQPKG()
 	fi
 
 	PullGitRepo || { SetError; return 1 ;}
-	InstallAddons || { SetError; return 1 ;}
+ 	InstallAddons || { SetError; return 1 ;}
 	IsNotDaemon && return
 	WaitForLaunchTarget || { SetError; return 1 ;}
 	EnsureConfigFileExists
@@ -280,25 +280,11 @@ InstallAddons()
 
 	IsNotAutoUpdate && [[ $new_env = false ]] && return 0
 
-	if [[ $QPKG_NAME = OWatcher3 ]]; then
-		# need to install `m2r` PyPI module first
-		DisplayRunAndLog "KLUDGE: install 'm2r' PyPI module first" ". $VENV_PATH/bin/activate && pip install${pip_deps} --no-input m2r" log:failure-only || SetError
-	fi
-
 	[[ -e $requirements_pathfile ]] && cp -f "$requirements_pathfile" "$default_requirements_pathfile"
 	[[ -e $default_requirements_pathfile ]] && requirements_pathfile=$default_requirements_pathfile
 
 	[[ -e $recommended_pathfile ]] && cp -f "$recommended_pathfile" "$default_recommended_pathfile"
 	[[ -e $default_recommended_pathfile ]] && recommended_pathfile=$default_recommended_pathfile
-
-	if [[ $QPKG_NAME = SABnzbd ]]; then
-		# KLUDGE: can't use `manytolinux2014` wheel builds in QTS, so force wheels to rebuild locally
-		if $(/bin/grep -q sabyenc3 < "$requirements_pathfile" &>/dev/null); then
-			echo '--no-binary=sabyenc3' >> "$requirements_pathfile"
-		elif $(/bin/grep -q sabctools < "$requirements_pathfile" &>/dev/null); then
-			echo '--no-binary=sabyenc3' >> "$requirements_pathfile"
-		fi
-	fi
 
 	for target in $requirements_pathfile $recommended_pathfile; do
 		if [[ -e $target ]]; then
@@ -317,17 +303,6 @@ InstallAddons()
 			DisplayRunAndLog "install 'default' PyPI modules" ". $VENV_PATH/bin/activate && pip install${pip_deps} --no-input --upgrade pip $QPKG_REPO_PATH" log:failure-only || SetError
 			no_pips_installed=false
 		fi
-	fi
-
-	if [[ $QPKG_NAME = SABnzbd && $new_env = true ]]; then
-		# run [tools/make_mo.py] if SABnzbd version number has changed since last run
-		LoadAppVersion
-		[[ -e $APP_VERSION_STORE_PATHFILE && $(<"$APP_VERSION_STORE_PATHFILE") = "$app_version" && -d $QPKG_REPO_PATH/locale ]] && return 0
-
-		DisplayRunAndLog "update $(FormatAsPackageName $QPKG_NAME) language translations" ". $VENV_PATH/bin/activate && cd $QPKG_REPO_PATH; $VENV_INTERPRETER $QPKG_REPO_PATH/tools/make_mo.py" log:failure-only
-		[[ ! -e $APP_VERSION_STORE_PATHFILE ]] && return 0
-
-		SaveAppVersion
 	fi
 
 	}
