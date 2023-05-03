@@ -8,7 +8,7 @@ duf_220809_x86_64.qpkg.md5           duf_220809_x86_64.qpkg           duf       
 duf_220809_x86.qpkg.md5              duf_220809_x86.qpkg              duf                  220809       i86    94102ff3609e88fc0c6ff7093469d133
 Entware_1.03a_std.qpkg.md5           Entware_1.03a_std.qpkg           Entware              1.03a        all    deb88a170716d39309d124ad77875b4d
 Headphones_230422.qpkg.md5           Headphones_230422.qpkg           Headphones           230422       all    87da5bfa094eafd9b2e688cb82fcf60d
-HideThatBanner_230309.qpkg.md5       HideThatBanner_230309.qpkg       HideThatBanner       230309       all    bb0c41f619680443a7c680734b3267ce
+HideThatBanner_230503.qpkg.md5       HideThatBanner_230503.qpkg       HideThatBanner       230503       all    467c7c005e113d06b37bf467d4ba9019
 inxi_230329.qpkg.md5                 inxi_230329.qpkg                 inxi                 230329       all    5f3fcd8df30d526e8c45a4fb7e96d54e
 LazyLibrarian_230418.qpkg.md5        LazyLibrarian_230418.qpkg        LazyLibrarian        230418       all    1dba6e604746cfc05f44c64ed8c37582
 Mylar3_230419.qpkg.md5               Mylar3_230419.qpkg               Mylar3               230419       all    67be3ce4bcd99d98124c8d134ef2aece
@@ -39,7 +39,7 @@ SABnzbd_230503.qpkg.md5              SABnzbd_230503.qpkg              SABnzbd   
 sha3sum_230312_x86_64.qpkg.md5       sha3sum_230312_x86_64.qpkg       sha3sum              230312       i64    6ceba9116e0dbcbdb4e6112f0c02f8c0
 sha3sum_230312_x86.qpkg.md5          sha3sum_230312_x86.qpkg          sha3sum              230312       i86    fdba9d16b88a5b6e3b04483ca77706dd
 sherpa_230503.qpkg.md5               sherpa_230503.qpkg               sherpa               230503       all    d497d0fcf9ecb76460168fa5fbfbd1e3
-SortMyQPKGs_230227.qpkg.md5          SortMyQPKGs_230227.qpkg          SortMyQPKGs          230227       all    2fa79be955541a10384b9749e8a1baee
+SortMyQPKGs_230503.qpkg.md5          SortMyQPKGs_230503.qpkg          SortMyQPKGs          230503       all    6aaf8bc333e2f6661dc10295a798e13e
 WebSSH_230426b_arm_64.qpkg.md5       WebSSH_230426b_arm_64.qpkg       WebSSH               230426b      a64    64f0f533462ff9d83601ca899a608408
 WebSSH_230426b_x86_64.qpkg.md5       WebSSH_230426b_x86_64.qpkg       WebSSH               230426b      i64    f421a7f83b2c77c3c7bfa84856c40d58
 WebSSH_230426b_x86.qpkg.md5          WebSSH_230426b_x86.qpkg          WebSSH               230426b      i86    bff44c8d5c41ba750e2eecbf655408f1
