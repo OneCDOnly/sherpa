@@ -1,3 +1,16 @@
+* OqBitorrent status not reporting correctly
+	[/share/Public] # /etc/init.d/oqbittorrent.sh start debug
+	daemon active: false
+	file /opt/bin/qbittorrent-nox: exists
+	load ports from configuration file: OK
+	unable to start daemon: ports 9080 or 9080 are already in use!
+	process details for port 9080: "/opt/bin/qbittorrent-nox --profile=/share/HDA_DATA/.qpkg/OqBittorrent/config --daemon "
+	process details for secure port 9080: "/opt/bin/qbittorrent-nox --profile=/share/HDA_DATA/.qpkg/OqBittorrent/config --daemon "
+	[/share/Public] # /etc/init.d/oqbittorrent.sh s
+	daemon active: false
+
+* progress line has an extra whitespace when displayed in colour on older NAS (QTS 4.2.6 & 4.3.3)
+
 * RunLast: does not respond to '--status' query.
 	need to add this to service script.
 
