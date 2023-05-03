@@ -6589,8 +6589,9 @@ _QPKG:status_()
 	DebugAsProc "statusing $(FormatAsPackName "$PACKAGE_NAME")"
 
 	case $PACKAGE_NAME in
-		HideThatBanner|RunLast|SortMyQPKGs)		# these don't issue status results
-			result_code=130
+		RunLast)
+			true			# always active after installation
+			result_code=$?
 			;;
 		duf)
 			command -v duf &>/dev/null
