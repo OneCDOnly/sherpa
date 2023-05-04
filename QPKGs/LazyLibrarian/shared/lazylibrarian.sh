@@ -20,7 +20,7 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=LazyLibrarian
-	readonly SCRIPT_VERSION=230504
+	readonly SCRIPT_VERSION=230505
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -254,6 +254,7 @@ InstallAddons()
 	local default_recommended_pathfile=$QPKG_PATH/config/recommended.txt
 	local requirements_pathfile=$QPKG_REPO_PATH/requirements.txt
 	local recommended_pathfile=$QPKG_REPO_PATH/recommended.txt
+	local pyproject_pathfile=$QPKG_REPO_PATH/pyproject.toml
 	local pip_conf_pathfile=$VENV_PATH/pip.conf
 	local new_env=false
 	local sys_packages=' --system-site-packages'
@@ -280,16 +281,21 @@ InstallAddons()
 
 	IsNotAutoUpdate && [[ $new_env = false ]] && return 0
 
+	# edit developer-provided Python module requirements files out-of-repo
 	[[ -e $requirements_pathfile ]] && cp -f "$requirements_pathfile" "$default_requirements_pathfile"
 	[[ -e $default_requirements_pathfile ]] && requirements_pathfile=$default_requirements_pathfile
 
 	[[ -e $recommended_pathfile ]] && cp -f "$recommended_pathfile" "$default_recommended_pathfile"
 	[[ -e $default_recommended_pathfile ]] && recommended_pathfile=$default_recommended_pathfile
 
+	# Must remove these modules from repo txt files, and use the ones installed via `opkg` instead (if available).
+	# If not, `pip` will attempt to compile these, which fails on early ARMv5 CPUs.
+	local python_exclusions='cffi cryptography Levenshtein mako Pillow requests urllib3'
+	local ex_modules_re="/^${python_exclusions// /\|^}"
+
 	for target in $requirements_pathfile $recommended_pathfile; do
 		if [[ -e $target ]]; then
-			# need to remove `cffi` and `cryptography` modules from repo txt files, as we must use the ones installed via `opkg` instead. If not, `pip` will attempt to compile these, which fails on early arm CPUs.
-			DisplayRunAndLog 'KLUDGE: exclude various PyPI modules from installation' "/bin/sed -i '/^cffi\|^cryptography/d' $target" log:failure-only || SetError
+			DisplayRunAndLog 'KLUDGE: exclude Entware PyPI modules from installation' "/bin/sed -i '${ex_modules_re}/d' $target" log:failure-only || SetError
 
 			name=$(/usr/bin/basename "$target"); name=${name%%.*}
 
@@ -299,8 +305,12 @@ InstallAddons()
 	done
 
 	if [[ $no_pips_installed = true ]]; then		# fallback to general installation method
-		if [[ -e $QPKG_REPO_PATH/setup.py || -e $QPKG_REPO_PATH/pyproject.toml ]]; then
-			DisplayRunAndLog "install 'default' PyPI modules" ". $VENV_PATH/bin/activate && pip install${pip_deps} --no-input --upgrade pip $QPKG_REPO_PATH" log:failure-only || SetError
+		if [[ -e $QPKG_REPO_PATH/setup.py || -e $pyproject_pathfile ]]; then
+			DisplayRunAndLog 'KLUDGE: exclude Entware PyPI modules from installation' "/bin/sed -i '${ex_modules_re}/d' $pyproject_pathfile" log:failure-only || SetError
+
+			name=$(/usr/bin/basename "$pyproject_pathfile"); name=${name%%.*}
+
+			DisplayRunAndLog "install '$name' PyPI modules" ". $VENV_PATH/bin/activate && pip install${pip_deps} --no-input --upgrade pip $QPKG_REPO_PATH" log:failure-only || SetError
 			no_pips_installed=false
 		fi
 	fi
