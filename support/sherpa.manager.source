@@ -6588,6 +6588,7 @@ _QPKG:status_()
 
 	PACKAGE_NAME=${1:?package name null}
 	local -i result_code=0
+	local package_tests=''
 	local debug_cmd=''
 
 	if QPKGs-ISNTinstalled:Exist "$PACKAGE_NAME"; then
@@ -6602,38 +6603,20 @@ _QPKG:status_()
 
 	DebugAsProc "statusing $(FormatAsPackName "$PACKAGE_NAME")"
 
-	case $PACKAGE_NAME in
-		RunLast)
-			true			# always active after installation
-			result_code=$?
-			;;
-		duf)
-			command -v duf &>/dev/null
-			result_code=$?
-			;;
-		Entware)
-			[[ -L /opt && -L /opt/etc/passwd ]] && $GREP_CMD -q '/opt/etc/profile' /root/.profile
-			result_code=$?
-			;;
-		Par2)
-			command -v par2 &>/dev/null
-			result_code=$?
-			;;
-		QDK)
-			command -v qbuild &>/dev/null
-			result_code=$?
-			;;
-		*)
-			[[ $opts_debug = true ]] && debug_cmd='DEBUG_QPKG=true '
+	if package_tests=$(QPKG.GetActiveTest "$PACKAGE_NAME"); then
+		eval "$package_tests"
+		result_code=$?
+	else
+		[[ $opts_debug = true ]] && debug_cmd='DEBUG_QPKG=true '
 
-			if [[ -e $GNU_TIMEOUT_CMD ]]; then
-				$GNU_TIMEOUT_CMD "$STATUS_CHECK_TIMEOUT_SECONDS" /bin/bash -c "${debug_cmd}$(QPKG.ServicePathFile) status"
-				result_code=$?
-			else
-				RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) status" "$LOGS_PATH/$PACKAGE_NAME.$CLEAN_LOG_FILE" log:failure-only
-				result_code=$?
-			fi
-	esac
+		if [[ -e $GNU_TIMEOUT_CMD ]]; then
+			$GNU_TIMEOUT_CMD "$STATUS_CHECK_TIMEOUT_SECONDS" /bin/bash -c "${debug_cmd}$(QPKG.ServicePathFile) status"
+			result_code=$?
+		else
+			RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) status" "$LOGS_PATH/$PACKAGE_NAME.$CLEAN_LOG_FILE" log:failure-only
+			result_code=$?
+		fi
+	fi
 
 	DebugVar result_code
 
@@ -6885,6 +6868,38 @@ QPKG.AppAuthor()
 		if [[ ${QPKG_NAME[$index]} = "${1:?package name null}" ]]; then
 			echo "${QPKG_APP_AUTHOR[$index]}"
 			return 0
+		fi
+	done
+
+	return 1
+
+	}
+
+QPKG.GetActiveTest()
+	{
+
+	# Return the tests required to determine if specified QPKG is active or not
+
+	# input:
+	#   $1 = QPKG name
+
+	# output:
+	#   stdout = bash tests
+	#   $? = 0 if found, !0 if not
+
+	local -i index=0
+	local buff=''
+
+	for index in "${!QPKG_NAME[@]}"; do
+		if [[ ${QPKG_NAME[$index]} = "${1:?package name null}" ]]; then
+			buff="${QPKG_TEST_FOR_ACTIVE[$index]}"
+
+			if [[ -n $buff ]]; then
+				echo "$buff"
+				return 0
+			else
+				break
+			fi
 		fi
 	done
 
@@ -8855,6 +8870,7 @@ Packages:Load()
 		readonly QPKG_CAN_RESTART_TO_UPDATE
 		readonly QPKG_CAN_CLEAN
 		readonly QPKG_CAN_LOG_SERVICE_OPERATIONS
+		readonly QPKG_TEST_FOR_ACTIVE
 
 	DebugScript version "packages: ${PACKAGES_VER:-unknown}"
 	QPKGs-SCall:Add "${QPKG_NAME[*]}"
