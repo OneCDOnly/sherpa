@@ -20,7 +20,7 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=OqBittorrent
-	readonly SCRIPT_VERSION=230505
+	readonly SCRIPT_VERSION=230505a
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -156,9 +156,6 @@ StartQPKG()
 	fi
 
 	DisplayRunAndLog 'start daemon' "$LAUNCHER" || { SetError; return 1 ;}
-	WritePID || { SetError; return 1 ;}
-	WaitForPID || { SetError; return 1 ;}
-	WaitForDaemon || { SetError; return 1 ;}
  	IsDaemonActive || { SetError; return 1 ;}
 	CheckPorts || { SetError; return 1 ;}
 
@@ -408,67 +405,6 @@ WritePID()
 	else
 		return 1
 	fi
-
-	}
-
-WaitForPID()
-	{
-
-	if WaitForFileToAppear "$DAEMON_PID_PATHFILE" 60; then
-		sleep 1		# wait one more second to allow file to have PID written into it
-		return 0
-	else
-		return 1
-	fi
-
-	}
-
-WaitForDaemon()
-	{
-
-	# input:
-	#   $1 = timeout in seconds (optional) - default 30
-
-	# output:
-	#   $? = 0 (file was found) or 1 (file not found: timeout)
-
-	local -i count=0
-
-	if [[ -n $1 ]]; then
-		MAX_SECONDS=$1
-	else
-		MAX_SECONDS=$DAEMON_CHECK_TIMEOUT
-	fi
-
-	if [[ ! -e $1 ]]; then
-		DisplayWaitCommitToLog "wait for daemon to appear:"
-		DisplayWait "(no-more than $MAX_SECONDS seconds):"
-
-		(
-			for ((count=1; count<=MAX_SECONDS; count++)); do
-				sleep 1
-				DisplayWait "$count,"
-
-				if IsProcessActive "$DAEMON_PATHFILE" "$DAEMON_PID_PATHFILE"; then
-					Display OK
-					CommitLog "active in $count second$(FormatAsPlural "$count")"
-					true
-					exit	# only this sub-shell
-				fi
-			done
-			false
-		)
-
-		if [[ $? -ne 0 ]]; then
-			DisplayCommitToLog 'failed!'
-			DisplayErrCommitAllLogs "daemon not found! (exceeded timeout: $MAX_SECONDS seconds)"
-			return 1
-		fi
-	fi
-
-	DisplayCommitToLog "daemon: exists"
-
-	return 0
 
 	}
 
@@ -1010,7 +946,10 @@ IsProcessActive()
 
 	[[ -n ${1:-} ]] || return
 	[[ -n ${2:-} ]] || return
-	[[ -e $2 && -d /proc/$(<"$2") && -n ${1:-} && $(</proc/"$(<"$2")"/cmdline) =~ ${1:-} ]]
+	[[ ! -e $2 ]] && WritePID
+
+	# OqBittorrent: check for process twice as it can disappear briefly during launch.
+	[[ -e $2 && -d /proc/$(<"$2") && $(</proc/"$(<"$2")"/cmdline) =~ $1 ]]	|| { sleep 5; [[ -e $2 && -d /proc/$(<"$2") && $(</proc/"$(<"$2")"/cmdline) =~ $1 ]] ;}
 
 	}
 
