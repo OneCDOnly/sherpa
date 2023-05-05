@@ -1,3 +1,5 @@
+* ensure all calls to 'pidof' return only a single PID.
+
 * include elapsed time when writing DisplayRunAndLog() results to debug log.
 
 * add mini rolling CPU utilitisation graph to progress display while installing QPKGs?
