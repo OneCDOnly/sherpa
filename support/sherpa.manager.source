@@ -63,8 +63,8 @@ Self:Init()
 	Consts:Load
 
 	sess_active_pathfile=$THIS_PACKAGE_PATH/session.$$.active.log
-	rm -f "$REPORT_PATHFILE"
-	rm -f "$RAMDISKS_FREESPACE_PATHFILE"
+	rm -f "$REPORT_PATHFILE" &>/dev/null
+	rm -f "$RAMDISKS_FREESPACE_PATHFILE" &>/dev/null
 
 	trap RunOnEXIT EXIT
 	trap RunOnSIGINT INT
@@ -945,7 +945,7 @@ Actions:Proc()
 	local action=''
 	local -i tier_index=0
 
-	rm -f "$SESS_ACTIONS_RESULTS_PATHFILE"
+	rm -f "$SESS_ACTIONS_RESULTS_PATHFILE" &>/dev/null
 
 	if QPKGs-ACstatus-to:IsAny; then
 		Action:Proc status all QPKG statusing statused || return
@@ -1220,7 +1220,7 @@ OpenActionMsgPipe()
 
 	# create a message pipe, so action forks can send data back to parent
 
-	[[ -p $ACTION_MSG_PIPE ]] && rm -f "$ACTION_MSG_PIPE"
+	[[ -p $ACTION_MSG_PIPE ]] && rm -f "$ACTION_MSG_PIPE" &>/dev/null
 	[[ ! -p $ACTION_MSG_PIPE ]] && mknod "$ACTION_MSG_PIPE" p
 
 	# create a file descriptor to store original stdin FD
@@ -1254,7 +1254,7 @@ CloseActionMsgPipe()
 	[[ $msg_pipe_fd != none ]] && eval "exec $msg_pipe_fd>&-"
 
 	# delete message pipe
-	[[ -p $ACTION_MSG_PIPE ]] && rm -f "$ACTION_MSG_PIPE"
+	[[ -p $ACTION_MSG_PIPE ]] && rm -f "$ACTION_MSG_PIPE" &>/dev/null
 
 	}
 
@@ -2548,7 +2548,7 @@ CloseIpkArchive()
 
 	rm -f "$EXTERNAL_PACKAGES_PATHFILE"
 
-	}
+	} &>/dev/null
 
 _ActionForks:Launch_()
 	{
@@ -3842,7 +3842,7 @@ ArchivePriorSessLogs()
 	for log_pathfile in "$THIS_PACKAGE_PATH/session."*".active.log"; do
 		if [[ -f $log_pathfile && $log_pathfile != "$sess_active_pathfile" ]]; then
 			$CAT_CMD "$log_pathfile" >> "$SESS_ARCHIVE_PATHFILE"
-			rm -f "$log_pathfile"
+			rm -f "$log_pathfile" &>/dev/null
 		fi
 	done
 
@@ -3853,7 +3853,7 @@ ResetActiveSessLog()
 
 	rm -f "$sess_active_pathfile"
 
-	}
+	} &>/dev/null
 
 ExtractPrevSessFromTail()
 	{
@@ -3880,7 +3880,7 @@ ExtractPrevSessFromTail()
 
 		$SED_CMD "$start_line,$end_line!d" "$SESS_TAIL_PATHFILE" > "$SESS_LAST_PATHFILE"
 	else
-		rm -f "$SESS_LAST_PATHFILE"
+		rm -f "$SESS_LAST_PATHFILE" &>/dev/null
 	fi
 
 	return 0
@@ -3893,7 +3893,7 @@ ExtractTailFromLog()
 	if [[ -e $SESS_ARCHIVE_PATHFILE ]]; then
 		$TAIL_CMD -n${LOG_TAIL_LINES} "$SESS_ARCHIVE_PATHFILE" > "$SESS_TAIL_PATHFILE"	# trim main log first so there's less to `grep`
 	else
-		rm -f "$SESS_TAIL_PATHFILE"
+		rm -f "$SESS_TAIL_PATHFILE" &>/dev/null
 	fi
 
 	return 0
@@ -3961,19 +3961,19 @@ IncForkProgressIndex()
 RefreshForkCounts()
 	{
 
-	fork_count="$(ls -A -1 "$proc_fork_count_path" | $WC_CMD -l)"
-	ok_count="$(ls -A -1 "$proc_ok_count_path" | $WC_CMD -l)"
-	skip_ok_count="$(ls -A -1 "$proc_skip_ok_count_path" | $WC_CMD -l)"
-	skip_count="$(ls -A -1 "$proc_skip_count_path" | $WC_CMD -l)"
-	skip_error_count="$(ls -A -1 "$proc_skip_error_count_path" | $WC_CMD -l)"
-	fail_count="$(ls -A -1 "$proc_fail_count_path" | $WC_CMD -l)"
+	fork_count="$(ls -A -1 "$proc_fork_count_path" | $WC_CMD -l 2>/dev/null)"
+	ok_count="$(ls -A -1 "$proc_ok_count_path" | $WC_CMD -l 2>/dev/null)"
+	skip_ok_count="$(ls -A -1 "$proc_skip_ok_count_path" | $WC_CMD -l 2>/dev/null)"
+	skip_count="$(ls -A -1 "$proc_skip_count_path" | $WC_CMD -l 2>/dev/null)"
+	skip_error_count="$(ls -A -1 "$proc_skip_error_count_path" | $WC_CMD -l 2>/dev/null)"
+	fail_count="$(ls -A -1 "$proc_fail_count_path" | $WC_CMD -l 2>/dev/null)"
 
 	}
 
 EraseForkCountPaths()
 	{
 
-	[[ -d ${PROC_COUNTS_PATH:?undefined proc counts path} ]] && rm -r "$PROC_COUNTS_PATH"
+	[[ -d ${PROC_COUNTS_PATH:?undefined proc counts path} ]] && rm -r "$PROC_COUNTS_PATH" &>/dev/null
 
 	}
 
@@ -5484,7 +5484,7 @@ Self.LockFile:Release()
 
 	rm -f "$LOCK_PATHFILE"
 
-	}
+	} &>/dev/null
 
 Self.Verbose:Enable()
 	{
@@ -5647,7 +5647,7 @@ _QPKG:download_()
 			FuncFork:Exit 0
 		else
 			DebugInfo "deleting $(FormatAsFileName "$LOCAL_FILENAME") as checksum is incorrect"
-			rm -f "$LOCAL_PATHFILE"
+			rm -f "$LOCAL_PATHFILE" &>/dev/null
 		fi
 	fi
 
@@ -5658,7 +5658,7 @@ _QPKG:download_()
 	if [[ ! -f $LOCAL_PATHFILE ]]; then
 		DebugAsProc "downloading $(FormatAsFileName "$REMOTE_FILENAME")"
 
-		rm -f "$LOG_PATHFILE"
+		rm -f "$LOG_PATHFILE" &>/dev/null
 
 		RunAndLog "$CURL_CMD${curl_insecure_arg} --location --output $LOCAL_PATHFILE $REMOTE_URL" "$LOG_PATHFILE" log:failure-only
 		result_code=$?
@@ -7471,7 +7471,7 @@ RunAndLog()
 
 	if [[ -e $LOG_PATHFILE ]]; then
 		FormatAsResultAndStdout "$result_code" "$(<"$LOG_PATHFILE")" >> "$2"
-		rm -f "$LOG_PATHFILE"
+		rm -f "$LOG_PATHFILE" &>/dev/null
 	else
 		FormatAsResultAndStdout "$result_code" '<null>' >> "$2"
 	fi
@@ -7480,7 +7480,7 @@ RunAndLog()
 		0|"${4:-}")
 			[[ ${3:-} != log:failure-only ]] && AddExtLogToSessLog "$2"
 			DebugAsDone 'exec complete'
-			[[ $opts_debug = false ]] && rm -f "$2"
+			[[ $opts_debug = false ]] && rm -f "$2" &>/dev/null
 			;;
 		*)
 			AddExtLogToSessLog "$2"
