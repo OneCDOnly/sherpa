@@ -20,7 +20,7 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=OqBittorrent
-	readonly SCRIPT_VERSION=230503
+	readonly SCRIPT_VERSION=230505
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -401,7 +401,7 @@ WaitForLaunchTarget()
 WritePID()
 	{
 
-	/bin/pidof $(/usr/bin/basename "$DAEMON_PATHFILE") > "$DAEMON_PID_PATHFILE"
+	/bin/pidof -s $(/usr/bin/basename "$DAEMON_PATHFILE") > "$DAEMON_PID_PATHFILE"
 
 	if [[ -s $DAEMON_PID_PATHFILE ]]; then
 		return 0
