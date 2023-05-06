@@ -71,6 +71,8 @@ Self:Init()
 
 	[[ ! -e /dev/fd ]] && ln -s /proc/self/fd /dev/fd	# KLUDGE: `/dev/fd` isn't always created by QTS during startup
 
+	Keystrokes:Hide
+	Cursor:Hide
 	Env:Confirm || return
 	Lists:Load
 	CreatePaths || return
@@ -112,11 +114,11 @@ Self:Init()
 	QPKG.IsInstalled Entware && [[ $ENTWARE_VER = none ]] && DebugAsWarn "$(FormatAsPackName Entware) appears to be installed but is not visible"
 
 	if [[ $(GetSudoUID) = '<undefined>' ]]; then
-		help_syntax_prefix="$HELP_SYNTAX_SUPER_PROMPT"
-		help_syntax_sudo_prefix="$HELP_SYNTAX_SUPER_PROMPT"
+		help_syntax_prefix="$CHARS_SUPER_PROMPT"
+		help_syntax_sudo_prefix="$CHARS_SUPER_PROMPT"
 	else
-		help_syntax_prefix="$HELP_SYNTAX_REGULAR_PROMPT"
-		help_syntax_sudo_prefix="$HELP_SYNTAX_SUDO_PROMPT"
+		help_syntax_prefix="$CHARS_REGULAR_PROMPT"
+		help_syntax_sudo_prefix="$CHARS_SUDO_PROMPT"
 	fi
 
 	if [[ -z $USER_ARGS_RAW ]]; then
@@ -144,11 +146,13 @@ Self:Init()
 
 	# KLUDGE: remove all max QTS versions from /etc/config/qpkg.conf (these are not removed automatically when installing updated QPKGs without max version set)
 	# Retain this kludge for 12 months to give everyone time to update their installed sherpa QPKGs. Remove after 2023-09-22
+
 	if [[ $(/sbin/getcfg sherpa max_versions_cleared -d FALSE -f /etc/config/qpkg.conf) = FALSE ]]; then
 		$SED_CMD -i '/^FW_Ver_Max/d' /etc/config/qpkg.conf
 		$SETCFG_CMD sherpa max_versions_cleared TRUE -f /etc/config/qpkg.conf
 	fi
 
+	ArgSuggestions:Show
 	Self:LogEnv
 	Self:IsAnythingToDo
 	Self:Validate
@@ -365,31 +369,33 @@ Consts:Load()
 	readonly REPORT_PATHFILE=$LOGS_PATH/report.ansi
 	readonly RAMDISKS_FREESPACE_PATHFILE=$LOGS_PATH/ramdisks.freespace
 
-	readonly HELP_DESC_INDENT=3
-	readonly HELP_FILE_NAME_WIDTH=33
 	readonly ACTION_RESULT_INDENT=6
-
+	readonly FILE_NAME_COL_WIDTH=33
+	readonly HELP_DESC_INDENT=3
 	readonly HELP_SYNTAX_INDENT=6
-	readonly HELP_SYNTAX_REGULAR_PROMPT='$ '
-	readonly HELP_SYNTAX_SUDO_PROMPT=${HELP_SYNTAX_REGULAR_PROMPT}'sudo '
-	readonly HELP_SYNTAX_SUPER_PROMPT='# '
 
-	readonly HELP_PACKAGE_NAME_WIDTH=21
-	readonly HELP_PACKAGE_AUTHOR_WIDTH=18
-	readonly HELP_PACKAGE_STATUS_WIDTH=32
-	readonly HELP_PACKAGE_VER_WIDTH=20
-	readonly HELP_PACKAGE_PATH_WIDTH=42
-	readonly HELP_PACKAGE_REPO_WIDTH=40
+	readonly PACKAGE_AUTHOR_COL_WIDTH=18
+	readonly PACKAGE_NAME_COL_WIDTH=21
+	readonly PACKAGE_PATH_COL_WIDTH=42
+	readonly PACKAGE_REPO_COL_WIDTH=40
+	readonly PACKAGE_STATUS_COL_WIDTH=32
+	readonly PACKAGE_VER_COL_WIDTH=20
 
-	readonly HELP_COL_SPACER=' '
-	readonly HELP_COL_SPECIAL_PREFIX='• '
-	readonly HELP_COL_NORMAL_PREFIX='- '
-	readonly HELP_COL_RESULTS_PREFIX='= '
-	readonly HELP_COL_NOTE_PREFIX='* '
-	readonly HELP_COL_ALERT_PREFIX='! '
-	readonly HELP_COL_BLANK_PREFIX='  '
-	readonly HELP_COL_DROPTHRU_PREFIX='├─ '
-	readonly HELP_COL_DROPEND_PREFIX='└─ '
+	readonly CHAR_SPACER=' '
+
+	readonly CHARS_ALERT='! '
+	readonly CHARS_BLANK='  '
+	readonly CHARS_DROPEND='└─ '
+	readonly CHARS_DROPTHRU='├─ '
+	readonly CHARS_ELLIPSIS='...'
+	readonly CHARS_NORMAL='- '
+	readonly CHARS_NOTE='* '
+	readonly CHARS_RESULTS='= '
+	readonly CHARS_SPECIAL='• '
+
+	readonly CHARS_REGULAR_PROMPT='$ '
+	readonly CHARS_SUPER_PROMPT='# '
+	readonly CHARS_SUDO_PROMPT="${CHARS_REGULAR_PROMPT}sudo "
 
 	readonly DEBUG_LOG_DATAWIDTH=100
 	readonly DEBUG_LOG_FIRST_COL_WIDTH=9
@@ -450,9 +456,6 @@ Consts:Load()
 
 Env:Confirm()
 	{
-
-	Keystrokes:Hide
-	Cursor:Hide
 
 	# Confirm required binaries are present
 	IsSysFileExist $AWK_CMD || return
@@ -572,10 +575,9 @@ CreatePaths()
 Self:LogEnv()
 	{
 
-	ArgSuggestions:Show
 	[[ $skip_package_actions = true ]] && return
-	Func:Entry
 
+	Func:Entry
 	ShowAsProc environment
 	DebugInfoMinSepr
 	DebugHardware ok model "$(get_display_name)"
@@ -623,12 +625,12 @@ Self:LogEnv()
 	fi
 
 	local -i max_width=70
-	local -i trimmed_width=$((max_width-3))
+	local -i trimmed_width=$((max_width-${#CHARS_ELLIPSIS}))
 
 	if [[ ${#PATH} -le $max_width ]]; then
 		DebugUserspace ok '$PATH' "$PATH"
 	else
-		DebugUserspace ok '$PATH' "${PATH:0:trimmed_width}..."
+		DebugUserspace ok '$PATH' "${PATH:0:trimmed_width}${CHARS_ELLIPSIS}"
 	fi
 
 	DebugBinPathVerAndMinVer python "$(GetDefPythonVer)" "$MIN_PYTHON_VER"
@@ -681,10 +683,7 @@ Self:IsAnythingToDo()
 		something_to_do=true
 	else
 		for action in "${USER_QPKG_ACTIONS[@]}"; do
-			case $action in
-				list)
-					continue	# action results lists are unavailable for these
-			esac
+			[[ $action = list ]] && continue
 
 			if QPKGs-AC${action}-to:IsAny; then
 				something_to_do=true
@@ -739,6 +738,7 @@ Self:Validate()
 	# If a package isn't being processed by the correct action, odds-are it's due to a logic error in this function.
 
 	[[ $skip_package_actions = true ]] && return
+
 	Func:Entry
 	ShowAsProc arguments
 
@@ -748,6 +748,7 @@ Self:Validate()
 	local prospect=''
 
 	# Decide if IPKs and PIPs should be installed/upgraded
+
 	if [[ $opts_check = true ]] || QPKGs-ACupgrade-to:Exist Entware || QPKGs-ACinstall-to:Exist Entware || QPKGs-ACreinstall-to:Exist Entware; then
 		ipks_upgrade=true
 		ipks_install=true
@@ -758,7 +759,7 @@ Self:Validate()
 				installed_ver=$(GetDefPython3Ver "$PYTHON3_CMD")
 
 				if [[ ${installed_ver//./} -lt $MIN_PYTHON_VER ]]; then
-					ShowAsInfo 'installed Python environment will be upgraded'
+					ShowAsInfo 'the installed Python environment will be upgraded'
 					IPKs-ACuninstall-to:Add 'python*'
 				fi
 			fi
@@ -767,7 +768,7 @@ Self:Validate()
 				installed_ver=$(GetDefPerlVer "$PERL_CMD")
 
 				if [[ ${installed_ver//./} -lt $MIN_PERL_VER ]]; then
-					ShowAsInfo 'installed Perl environment will be upgraded'
+					ShowAsInfo 'the installed Perl environment will be upgraded'
 					IPKs-ACuninstall-to:Add 'perl*'
 				fi
 			fi
@@ -781,6 +782,7 @@ Self:Validate()
 	AllocGroupPacksToAcs
 
 	# Meta-action pre-processing
+
 	if QPKGs-ACrebuild-to:IsAny; then
 		for package in $(QPKGs-ACrebuild-to:Array); do
 			QPKGs-ACinstall-to:Add "$package"
@@ -887,6 +889,7 @@ Self:Validate()
 	QPKGs-ACdownload-to:Add "$(QPKGs-ACupgrade-to:Array) $(QPKGs-ACreinstall-to:Array) $(QPKGs-ACinstall-to:Array)"
 
 	# Check all items
+
 	if [[ $opts_check = true ]]; then
 		QPKGs-ACsign-to:Add "$(QPKGs-ISinstalled:Array)"
 		QPKGs.Missing:Show
@@ -898,7 +901,7 @@ Self:Validate()
 	fi
 
 	# KLUDGE: just in-case `python` has disappeared again ... ¯\_(ツ)_/¯
-	[[ ! -L $PYTHON_CMD && -e $PYTHON3_CMD ]] && ln -s "$PYTHON3_CMD" "$PYTHON_CMD"
+	[[ -e $PYTHON3_CMD && ! -L $PYTHON_CMD ]] && ln -s "$PYTHON3_CMD" "$PYTHON_CMD"
 
 	Func:Exit
 
@@ -939,8 +942,8 @@ Actions:Proc()
 	# Run all actions on selected packages in all tiers
 
 	[[ $skip_package_actions = true ]] && return
-	Func:Entry
 
+	Func:Entry
 	local tier=''
 	local action=''
 	local -i tier_index=0
@@ -1031,7 +1034,6 @@ Action:Proc()
 	#   $5 = $ACTION_PAST_MSG				e.g. `started` ...
 
 	Func:Entry
-
 	local -r PACKAGE_TYPE=${3:?null}
 	local -r TARGET_ACTION=${1:-null}
 	total_count=0
@@ -1185,6 +1187,7 @@ Action:Proc()
 			CloseActionMsgPipe
 
 			# sort QPKG action times - longest duration first
+
 			if [[ -e $ACTION_TIMES_PATHFILE && -e $GNU_SORT_CMD && -L /opt/etc/passwd ]]; then	# try to ensure Entware is started before using this utility
 				buffer=$($GNU_SORT_CMD -t'|' -k2 -r -h < "$ACTION_TIMES_PATHFILE")
 				echo "$buffer" > "$ACTION_TIMES_PATHFILE"
@@ -1199,6 +1202,7 @@ Action:Proc()
 	esac
 
 	# show completed line in colour if colour was enabled earlier, as ANSI codes create a longer onscreen message (due to extra characters used). Showing completed line without colour means part of previous onscreen message may not be blanked.
+
 	if [[ $original_colourful = true && $colourful = false ]]; then
 		colourful=true
 		ShowAsActionResult "$TIER" "$PACKAGE_TYPE" "$ok_count" "$total_count" "$ACTION_PAST"
@@ -1271,6 +1275,7 @@ AdjustMaxForks()
 	local reason=''
 
 	# no-point running actions async in debug mode: their stdout will make a confusing mess of the screen
+
 	if [[ $opts_debug = true ]]; then
 		max_forks=1
 		reason='debug mode is active'
@@ -1412,6 +1417,7 @@ ParseArgs()
 		# identify group in two stages: stage 1 for when user didn't supply an action before group, stage 2 is after an action has been defined.
 
 		# stage 1
+
 		if [[ -z $action ]]; then
 			case $arg in
 				a|abs|action|actions|actions-all|alias|aliases|all-actions|b|backups|deps|dependent|dependents|failed|groups|indeps|independent|independents|installable|installed|l|last|log|missing|not-installed|ok|option|options|p|package|packages|problems|r|repo|repos|results|skipped|standalone|standalones|started|stopped|tail|tips|updatable|updateable|upgradable|v|version|versions|whole)
@@ -1426,6 +1432,7 @@ ParseArgs()
 		fi
 
 		# stage 2
+
 		if [[ -n $action ]]; then
 			case $arg in
 			# these cases use only a single word or char to specify a single group
@@ -1829,6 +1836,7 @@ ParseArgs()
 	done
 
 	# when an action has been determined, but no group was found, then show default information. This will usually be the help screen.
+
 	if [[ -n $action && $group_identified = false ]]; then
 		case $action in
 			help|paste)
@@ -1854,7 +1862,6 @@ ArgSuggestions:Show()
 	{
 
 	Func:Entry
-
 	local arg=''
 
 	if ARGs-unknown:IsAny; then
@@ -1911,8 +1918,8 @@ ArgSuggestions:Show()
 
 AllocGroupPacksToAcs()
 	{
-	Func:Entry
 
+	Func:Entry
 	local action=''
 	local group=''
 	local state=''
@@ -1921,6 +1928,7 @@ AllocGroupPacksToAcs()
 
 	for action in "${USER_QPKG_ACTIONS[@]}"; do
 		# process group-based user-options
+
 		for group in "${USER_QPKG_SC_GROUPS[@]}"; do
 			found=false
 
@@ -2036,6 +2044,7 @@ AllocGroupPacksToAcs()
 		done
 
 		# process state-based user-options
+
 		for state in "${USER_QPKG_IS_STATES[@]}"; do
 			found=false
 
@@ -2200,6 +2209,7 @@ UpdateEntwarePackageList()
 	local -i result_code=0
 
 	# if Entware package list was recently updated, don't update again
+
 	if ! IsThisFileRecent "$EXTERNAL_PACKAGES_ARCHIVE_PATHFILE" "$FILE_CHANGE_THRESHOLD_MINUTES" || [[ ! -f $EXTERNAL_PACKAGES_ARCHIVE_PATHFILE || $opts_check = true ]]; then
 		DebugAsProc "updating $(FormatAsPackName Entware) package list"
 
@@ -2235,6 +2245,7 @@ IsThisFileRecent()
 	#   $? = true/false
 
 	# examine `change` time as this is updated even if file content isn't modified
+
 	if [[ -e $1 && -e $GNU_FIND_CMD ]]; then
 		if [[ -z $($GNU_FIND_CMD "$1" -cmin +${2:-1440}) ]]; then	# no-output if last `change` was less than $2 minutes ago
 			return 0
@@ -2259,8 +2270,8 @@ CalcIpkDepsToInstall()
 	# From a specified list of IPK names, find all dependent IPKs, exclude those already installed, then generate a list to download
 
 	IsNtSysFileExist $GNU_GREP_CMD && return 1
-	Func:Entry
 
+	Func:Entry
 	local -a this_list=()
 	local -a dep_acc=()
 	local -i requested_count=0
@@ -2302,9 +2313,9 @@ CalcIpkDepsToInstall()
 	done
 
 	if [[ $complete = true ]]; then
-		DebugAsDone "completed in $iterations iteration$(Pluralise "$iterations")"
+		DebugAsDone "complete in $iterations iteration$(Pluralise "$iterations")"
 	else
-		DebugAsError "incomplete with $iterations iteration$(Pluralise "$iterations"), consider raising \$ITERATION_LIMIT [$ITERATION_LIMIT]"
+		DebugAsError "incomplete in $iterations iteration$(Pluralise "$iterations"), consider raising \$ITERATION_LIMIT [$ITERATION_LIMIT]"
 		show_suggest_raise_issue=true
 	fi
 
@@ -2319,10 +2330,12 @@ CalcIpkDepsToInstall()
 
 		for element in $pre_exclude_list; do
 			# KLUDGE: silently exclude these packages from being installed:
-			# KLUDGE: `ca-certs` appears to be a bogus meta-package.
-			# KLUDGE: `python3-gdbm` is not available, but can be requested as per https://forum.qnap.com/viewtopic.php?p=806031#p806031 (don't know why).
+			#   KLUDGE: `ca-certs` appears to be a bogus meta-package.
+			#   KLUDGE: `python3-gdbm` is not available, but can be requested as per https://forum.qnap.com/viewtopic.php?p=806031#p806031 (don't know why).
+
 			if [[ $element != 'ca-certs' && $element != 'python3-gdbm' ]]; then
 				# KLUDGE: `libjpeg` appears to have been replaced by `libjpeg-turbo`, but many packages still have `libjpeg` as a dependency, so replace it with `libjpeg-turbo`.
+
 				if [[ $element != 'libjpeg' ]]; then
 					if ! $OPKG_CMD status "$element" | $GREP_CMD -q "Status:.*installed"; then
 						IPKs-ACdownload-to:Add "$element"
@@ -2346,7 +2359,6 @@ CalcIpkDownloadSize()
 	# calculate size of required IPKs
 
 	Func:Entry
-
 	local -a size_array=()
 	local -i size_count=0
 	size_count=$(IPKs-ACdownload-to:Count)
@@ -2375,6 +2387,7 @@ IPKs:upgrade()
 	QPKGs-ISNTstarted:Exist Entware && return
 	UpdateEntwarePackageList
 	Self.Error:IsSet && return
+
 	Func:Entry
 	local -i result_code=0
 	IPKs-ACupgrade-to:Init
@@ -2422,6 +2435,7 @@ IPKs:install()
 	QPKGs-ISNTstarted:Exist Entware && return
 	UpdateEntwarePackageList
 	Self.Error:IsSet && return
+
 	Func:Entry
 	local -i index=0
 	local -i result_code=0
@@ -2484,8 +2498,8 @@ PIPs:install()
 	QPKGs-ISNTstarted:Exist Entware && return
 	! $OPKG_CMD status python3-pip | $GREP_CMD -q "Status:.*installed" && return
 	Self.Error:IsSet && return
-	Func:Entry
 
+	Func:Entry
 	local exec_cmd=''
 	local -i result_code=0
 	local -r PACKAGE_TYPE='PyPI group'
@@ -2650,11 +2664,13 @@ _DirSize:Monitor_()
 			fi
 
 			# add a suggestion to cancel if download has stalled for too long
+
 			if [[ $stall_seconds -ge 90 ]]; then
 				stall_msg+=': cancel with CTRL+C and try again later'
 			fi
 
 			# colourise as-required
+
 			if [[ $stall_seconds -ge 90 ]]; then
 				stall_msg=$(ColourTextBrightRed "$stall_msg")
 			elif [[ $stall_seconds -ge 45 ]]; then
@@ -2737,7 +2753,7 @@ IsSU()
 		if [[ -e /usr/bin/sudo ]]; then
 			ShowAsError 'this utility must be run with superuser privileges. Try again as:'
 
-			echo "${HELP_SYNTAX_SUDO_PROMPT}sherpa $USER_ARGS_RAW" >&2
+			echo "${CHARS_SUDO_PROMPT}sherpa $USER_ARGS_RAW" >&2
 		else
 			ShowAsError "this utility must be run as the 'admin' user. Please login via SSH as 'admin' and try again"
 		fi
@@ -2934,7 +2950,7 @@ DisplayAsProjSynExam()
 
 	Display
 
-	printf "${HELP_COL_SPECIAL_PREFIX}%s" "$(Capitalise "${1:-}")"
+	printf "${CHARS_SPECIAL}%s" "$(Capitalise "${1:-}")"
 	[[ ${1: -1} != '!' ]] && printf ':'
 
 	printf "\n%${HELP_SYNTAX_INDENT}s${help_syntax_sudo_prefix}%s\n" '' "sherpa ${2:-}"
@@ -2971,7 +2987,7 @@ DisplayAsSynExam()
 	#	$1 = description
 	#	$2 = example syntax
 
-	printf "\n${HELP_COL_SPECIAL_PREFIX}%s:\n%${HELP_SYNTAX_INDENT}s${help_syntax_prefix}%s\n" "$(Capitalise "${1:-}")" '' "${2:-}"
+	printf "\n${CHARS_SPECIAL}%s:\n%${HELP_SYNTAX_INDENT}s${help_syntax_prefix}%s\n" "$(Capitalise "${1:-}")" '' "${2:-}"
 	linespace_visible=false
 
 	}
@@ -2985,7 +3001,7 @@ DisplayAsHelpTitleNameAuthorDesc()
 	#	$2 = description title
 
 	Display
-	printf "${HELP_COL_SPECIAL_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s${HELP_COL_SPACER}${HELP_COL_SPECIAL_PREFIX}%-${HELP_PACKAGE_AUTHOR_WIDTH}s${HELP_COL_SPACER}${HELP_COL_SPECIAL_PREFIX}%s\n" "${1:-}:" "${2:-}:" "${3:-}:"
+	printf "${CHARS_SPECIAL}%-${PACKAGE_NAME_COL_WIDTH}s${CHAR_SPACER}${CHARS_SPECIAL}%-${PACKAGE_AUTHOR_COL_WIDTH}s${CHAR_SPACER}${CHARS_SPECIAL}%s\n" "${1:-}:" "${2:-}:" "${3:-}:"
 
 	}
 
@@ -3001,48 +3017,48 @@ DisplayAsHelpNameAuthorDesc()
 	#	$6 = true/false = "not installable"
 
 	local package_name=${2:-}
-	local package_name_msg="${HELP_COL_NORMAL_PREFIX}${package_name}"
+	local package_name_msg="${CHARS_NORMAL}${package_name}"
 	local package_author=${3:-}
 	local package_author_msg="$package_author"
 	local package_description=${4:-}
 	local package_description_msg="$package_description"
 	local package_notes=${5:-}
-	local package_notes_msg="$(ColourTextCyan "${HELP_COL_NOTE_PREFIX}${package_notes}")"
+	local package_notes_msg="$(ColourTextCyan "${CHARS_NOTE}${package_notes}")"
 	local package_not_installable=${6:-false}
 
 	case $1 in
 		muted)
 			if [[ $package_not_installable = true ]]; then
-				package_name_msg=$(ColourTextDarkGrey "${HELP_COL_ALERT_PREFIX}${package_name}")
+				package_name_msg=$(ColourTextDarkGrey "${CHARS_ALERT}${package_name}")
 			else
-				package_name_msg=$(ColourTextDarkGrey "${HELP_COL_NORMAL_PREFIX}${package_name}")
+				package_name_msg=$(ColourTextDarkGrey "${CHARS_NORMAL}${package_name}")
 			fi
 
 			package_author_msg="$(ColourTextDarkGrey "${package_author}")"
 			package_description_msg="$(ColourTextDarkGrey "${package_description}")"
 			;;
 		highlighted)
-			package_name_msg=$(ColourTextBrightRed "${HELP_COL_NORMAL_PREFIX}${package_name}")
+			package_name_msg=$(ColourTextBrightRed "${CHARS_NORMAL}${package_name}")
 
 			if [[ -n $package_author ]]; then
 				case $package_author in
 					missing)
-						package_author_msg="$(ColourTextBrightRedBlink "${HELP_COL_ALERT_PREFIX}${package_author}")"
+						package_author_msg="$(ColourTextBrightRedBlink "${CHARS_ALERT}${package_author}")"
 				esac
 			fi
 	esac
 
 	# column 1: package name
-	printf "${HELP_COL_SPACER}%-$((${#HELP_COL_NORMAL_PREFIX}+HELP_PACKAGE_NAME_WIDTH+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
+	printf "${CHAR_SPACER}%-$((${#CHARS_NORMAL}+PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
 
 	# column 2: package author
-	printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%-$((HELP_PACKAGE_AUTHOR_WIDTH+$(LenANSIDiff "$package_author_msg")))s" "$package_author_msg"
+	printf "${CHAR_SPACER}${CHARS_BLANK}%-$((PACKAGE_AUTHOR_COL_WIDTH+$(LenANSIDiff "$package_author_msg")))s" "$package_author_msg"
 
 	# column 3: package description
-	printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%s" "$package_description_msg"
+	printf "${CHAR_SPACER}${CHARS_BLANK}%s" "$package_description_msg"
 
 	# column 3: package description 2nd line
-	[[ -n $package_notes ]] && printf "\n%$(((${#HELP_COL_SPACER}*3)+(${#HELP_COL_BLANK_PREFIX}*3)+HELP_PACKAGE_NAME_WIDTH+HELP_PACKAGE_AUTHOR_WIDTH))s${HELP_COL_DROPEND_PREFIX}%s" '' "$package_notes_msg"
+	[[ -n $package_notes ]] && printf "\n%$(((${#CHAR_SPACER}*3)+(${#CHARS_BLANK}*3)+PACKAGE_NAME_COL_WIDTH+PACKAGE_AUTHOR_COL_WIDTH))s${CHARS_DROPEND}%s" '' "$package_notes_msg"
 
 	printf '\n'
 
@@ -3056,17 +3072,17 @@ DisplayAsHelpTitleNameAbs()
 	#	$2 = abbreviations title
 
 	Display
-	printf "${HELP_COL_SPECIAL_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s${HELP_COL_SPACER}${HELP_COL_SPECIAL_PREFIX}%s\n" "${1:-}:" "${2:-}:"
+	printf "${CHARS_SPECIAL}%-${PACKAGE_NAME_COL_WIDTH}s${CHAR_SPACER}${CHARS_SPECIAL}%s\n" "${1:-}:" "${2:-}:"
 
 	}
 
 CalcMaxStatusColsToDisplay()
 	{
 
-	local col1_width=$((${#HELP_COL_SPECIAL_PREFIX}+HELP_PACKAGE_NAME_WIDTH))
-	local col2_width=$((${#HELP_COL_SPACER}+${#HELP_COL_SPECIAL_PREFIX}+HELP_PACKAGE_STATUS_WIDTH))
-	local col3_width=$((${#HELP_COL_SPACER}+${#HELP_COL_SPECIAL_PREFIX}+HELP_PACKAGE_VER_WIDTH))
-	local col4_width=$((${#HELP_COL_SPACER}+${#HELP_COL_SPECIAL_PREFIX}+HELP_PACKAGE_PATH_WIDTH))
+	local col1_width=$((${#CHARS_SPECIAL}+PACKAGE_NAME_COL_WIDTH))
+	local col2_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_STATUS_COL_WIDTH))
+	local col3_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_VER_COL_WIDTH))
+	local col4_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_PATH_COL_WIDTH))
 
 	if [[ $((col1_width+col2_width)) -ge $SESS_COLS ]]; then
 		echo 1
@@ -3092,23 +3108,27 @@ DisplayAsHelpTitleNameVerStatus()
 	#	$4 = package installation location (only if installed)
 
 	# column 1: package name
+
 	if [[ -n ${1:-} && $maxcols -ge 1 ]]; then
-		printf "${HELP_COL_SPECIAL_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s" "$1:"
+		printf "${CHARS_SPECIAL}%-${PACKAGE_NAME_COL_WIDTH}s" "$1:"
 	fi
 
 	# column 2: package statuses
+
 	if [[ -n ${2:-} && $maxcols -ge 2 ]]; then
-		printf "${HELP_COL_SPACER}${HELP_COL_SPECIAL_PREFIX}%-${HELP_PACKAGE_STATUS_WIDTH}s" "$2:"
+		printf "${CHAR_SPACER}${CHARS_SPECIAL}%-${PACKAGE_STATUS_COL_WIDTH}s" "$2:"
 	fi
 
 	# column 3: package version
+
 	if [[ -n ${3:-} && $maxcols -ge 3 ]]; then
-		printf "${HELP_COL_SPACER}${HELP_COL_SPECIAL_PREFIX}%-${HELP_PACKAGE_VER_WIDTH}s" "$3:"
+		printf "${CHAR_SPACER}${CHARS_SPECIAL}%-${PACKAGE_VER_COL_WIDTH}s" "$3:"
 	fi
 
 	# column 4: package installation path
+
 	if [[ -n ${4:-} && $maxcols -ge 4 ]]; then
-		printf "${HELP_COL_SPACER}${HELP_COL_SPECIAL_PREFIX}%s" "$4:"
+		printf "${CHAR_SPACER}${CHARS_SPECIAL}%s" "$4:"
 	fi
 
 	printf '\n'
@@ -3170,7 +3190,7 @@ DisplayAsHelpNameVerStatus()
 
 				[[ -z $package_status_msg ]] && package_status_msg="$package_status"
 
-				package_status_msg="${HELP_COL_NORMAL_PREFIX}${package_status_msg}"
+				package_status_msg="${CHARS_NORMAL}${package_status_msg}"
 			fi
 
 			if [[ -n $package_upgrade_version && $package_installed_version != "$package_upgrade_version" ]]; then
@@ -3182,9 +3202,9 @@ DisplayAsHelpNameVerStatus()
 
 			if [[ -n $package_status ]]; then
 				if [[ $package_status =~ 'not installable' ]]; then
-					package_status_msg="$(ColourTextDarkGrey "${HELP_COL_ALERT_PREFIX}${package_status}")"
+					package_status_msg="$(ColourTextDarkGrey "${CHARS_ALERT}${package_status}")"
 				else
-					package_status_msg="$(ColourTextDarkGrey "${HELP_COL_NORMAL_PREFIX}${package_status}")"
+					package_status_msg="$(ColourTextDarkGrey "${CHARS_NORMAL}${package_status}")"
 				fi
 			fi
 
@@ -3194,33 +3214,37 @@ DisplayAsHelpNameVerStatus()
 			case $package_status in
 				missing)
 					package_name_msg="$(ColourTextBrightRed "$package_name")"
-					package_status_msg="$(ColourTextBrightRedBlink "${HELP_COL_ALERT_PREFIX}${package_status}")"
+					package_status_msg="$(ColourTextBrightRedBlink "${CHARS_ALERT}${package_status}")"
 					package_path_msg="$(ColourTextBrightRedBlink "$package_path")"
 					;;
 				*)
 					package_name_msg="$(ColourTextBrightOrange "$package_name")"
-					package_status_msg="$(ColourTextBrightOrange "${HELP_COL_NOTE_PREFIX}${package_status}")"
+					package_status_msg="$(ColourTextBrightOrange "${CHARS_NOTE}${package_status}")"
 			esac
 	esac
 
 	# column 1: package name
+
 	if [[ $maxcols -ge 1 ]]; then
-		printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%-$((HELP_PACKAGE_NAME_WIDTH+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
+		printf "${CHAR_SPACER}${CHARS_BLANK}%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
 	fi
 
 	# column 2: package statuses
+
 	if [[ -n $package_status && $maxcols -ge 2 ]]; then
-		printf "${HELP_COL_SPACER}%-$((${#HELP_COL_NORMAL_PREFIX}+HELP_PACKAGE_STATUS_WIDTH+$(LenANSIDiff "$package_status_msg")))s" "$package_status_msg"
+		printf "${CHAR_SPACER}%-$((${#CHARS_NORMAL}+PACKAGE_STATUS_COL_WIDTH+$(LenANSIDiff "$package_status_msg")))s" "$package_status_msg"
 	fi
 
 	# column 3: package version
+
 	if [[ -n $package_version_msg && $maxcols -ge 3 ]]; then
-		printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%-$((HELP_PACKAGE_VER_WIDTH+$(LenANSIDiff "$package_version_msg")))s" "$package_version_msg"
+		printf "${CHAR_SPACER}${CHARS_BLANK}%-$((PACKAGE_VER_COL_WIDTH+$(LenANSIDiff "$package_version_msg")))s" "$package_version_msg"
 	fi
 
 	# column 4: package installation path
+
 	if [[ -n $package_path && $maxcols -ge 4 ]]; then
-		printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%s" "$package_path_msg"
+		printf "${CHAR_SPACER}${CHARS_BLANK}%s" "$package_path_msg"
 	fi
 
 	printf '\n'
@@ -3235,13 +3259,15 @@ DisplayAsHelpTitleNameRepo()
 	#	$2 = assigned repository title
 
 	# column 1: package name
+
 	if [[ -n ${1:-} && $maxcols -ge 1 ]]; then
-		printf "${HELP_COL_SPECIAL_PREFIX}%-${HELP_PACKAGE_NAME_WIDTH}s" "$1:"
+		printf "${CHARS_SPECIAL}%-${PACKAGE_NAME_COL_WIDTH}s" "$1:"
 	fi
 
 	# column 2: package repository
+
 	if [[ -n ${2:-} && $maxcols -ge 2 ]]; then
-		printf "${HELP_COL_SPACER}${HELP_COL_SPECIAL_PREFIX}%-${HELP_PACKAGE_REPO_WIDTH}s" "$2:"
+		printf "${CHAR_SPACER}${CHARS_SPECIAL}%-${PACKAGE_REPO_COL_WIDTH}s" "$2:"
 	fi
 
 	printf '\n'
@@ -3259,25 +3285,25 @@ DisplayAsHelpNameRepo()
 	local package_name=${2:-}
 	local package_name_msg=$package_name
 	local assigned_repo=${3:-}
-	local assigned_repo_msg="${HELP_COL_NORMAL_PREFIX}${assigned_repo}"
+	local assigned_repo_msg="${CHARS_NORMAL}${assigned_repo}"
 
 	case $1 in
 		normal)
 			case $assigned_repo in
 				sherpa)
-					assigned_repo_msg="${HELP_COL_NORMAL_PREFIX}$(ColourTextBrightGreen "$assigned_repo")"
+					assigned_repo_msg="${CHARS_NORMAL}$(ColourTextBrightGreen "$assigned_repo")"
 					;;
 				unassigned)
-					assigned_repo_msg="${HELP_COL_NORMAL_PREFIX}$(ColourTextBrightOrange "$assigned_repo")"
+					assigned_repo_msg="${CHARS_NORMAL}$(ColourTextBrightOrange "$assigned_repo")"
 			esac
 			;;
 		muted)
 			package_name_msg=$(ColourTextDarkGrey "$package_name")
 
 			if [[ $assigned_repo =~ 'not installable' ]]; then
-				assigned_repo_msg="$(ColourTextDarkGrey "${HELP_COL_ALERT_PREFIX}${assigned_repo}")"
+				assigned_repo_msg="$(ColourTextDarkGrey "${CHARS_ALERT}${assigned_repo}")"
 			else
-				assigned_repo_msg=$(ColourTextDarkGrey "${HELP_COL_NORMAL_PREFIX}${assigned_repo}")
+				assigned_repo_msg=$(ColourTextDarkGrey "${CHARS_NORMAL}${assigned_repo}")
 			fi
 			;;
 		highlighted)
@@ -3285,23 +3311,25 @@ DisplayAsHelpNameRepo()
 				case $assigned_repo in
 					missing)
 						package_name_msg=$(ColourTextBrightRed "$package_name")
-						assigned_repo_msg="$(ColourTextBrightRedBlink "${HELP_COL_ALERT_PREFIX}${assigned_repo}")"
+						assigned_repo_msg="$(ColourTextBrightRedBlink "${CHARS_ALERT}${assigned_repo}")"
 						;;
 					*)
 						package_name_msg=$(ColourTextBrightOrange "$package_name")
-						assigned_repo_msg="$(ColourTextBrightOrange "${HELP_COL_NOTE_PREFIX}${assigned_repo}")"
+						assigned_repo_msg="$(ColourTextBrightOrange "${CHARS_NOTE}${assigned_repo}")"
 				esac
 			fi
 	esac
 
 	# column 1: package name
+
 	if [[ $maxcols -ge 1 ]]; then
-		printf "${HELP_COL_SPACER}${HELP_COL_BLANK_PREFIX}%-$((HELP_PACKAGE_NAME_WIDTH+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
+		printf "${CHAR_SPACER}${CHARS_BLANK}%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
 	fi
 
 	# column 2: package repository
+
 	if [[ $maxcols -ge 2 ]]; then
-		printf "${HELP_COL_SPACER}%-$((HELP_PACKAGE_REPO_WIDTH+$(LenANSIDiff "$assigned_repo_msg")))s" "$assigned_repo_msg"
+		printf "${CHAR_SPACER}%-$((PACKAGE_REPO_COL_WIDTH+$(LenANSIDiff "$assigned_repo_msg")))s" "$assigned_repo_msg"
 	fi
 
 	printf '\n'
@@ -3316,7 +3344,7 @@ DisplayAsHelpTitleFileNamePlusSomething()
 	#	$2 = second column title
 
 	DisplayLineSpaceIfNoneAlready
-	printf "${HELP_COL_SPECIAL_PREFIX}%-${HELP_FILE_NAME_WIDTH}s ${HELP_COL_SPECIAL_PREFIX}%s\n" "$(Capitalise "${1:-}"):" "$(Capitalise "${2:-}"):"
+	printf "${CHARS_SPECIAL}%-${FILE_NAME_COL_WIDTH}s ${CHARS_SPECIAL}%s\n" "$(Capitalise "${1:-}"):" "$(Capitalise "${2:-}"):"
 	linespace_visible=false
 
 	}
@@ -3328,7 +3356,7 @@ DisplayAsHelpTitle()
 	#	$1 = text
 
 	DisplayLineSpaceIfNoneAlready
-	printf "${HELP_COL_SPECIAL_PREFIX}%s\n" "$(Capitalise "${1:-}" | tr -s ' ')"
+	printf "${CHARS_SPECIAL}%s\n" "$(Capitalise "${1:-}" | tr -s ' ')"
 	linespace_visible=false
 
 	}
@@ -3341,7 +3369,7 @@ DisplayAsHelpTitleHighlighted()
 
 	DisplayLineSpaceIfNoneAlready
 	# shellcheck disable=2059
-	printf "$(ColourTextBrightOrange "${HELP_COL_SPECIAL_PREFIX}%s\n")" "$(Capitalise "${1:-}")"
+	printf "$(ColourTextBrightOrange "${CHARS_SPECIAL}%s\n")" "$(Capitalise "${1:-}")"
 	linespace_visible=false
 
 	}
@@ -3352,7 +3380,7 @@ DisplayAsActionResultNtLastLine()
 	# input:
 	#	$1 = text
 
-	printf "%${ACTION_RESULT_INDENT}s${HELP_COL_DROPTHRU_PREFIX}%s\n" '' "$1"
+	printf "%${ACTION_RESULT_INDENT}s${CHARS_DROPTHRU}%s\n" '' "$1"
 
 	}
 
@@ -3362,7 +3390,7 @@ DisplayAsActionResultLastLine()
 	# input:
 	#	$1 = text
 
-	printf "%${ACTION_RESULT_INDENT}s${HELP_COL_DROPEND_PREFIX}%s\n" '' "$1"
+	printf "%${ACTION_RESULT_INDENT}s${CHARS_DROPEND}%s\n" '' "$1"
 
 	}
 
@@ -3385,7 +3413,7 @@ DisplayAsIndentPrefixActionResultDurationReason()
 	if [[ -z ${5:-} ]]; then
 		printf "%s%s %s%s" "${1:-}" "$(Lowercase "${2:-}")" "${3:-}" "$([[ -n $duration ]] && printf ' in %s' "$duration")"
 	else
-		printf "%s%s %s%s\n%${ACTION_RESULT_INDENT}s${HELP_COL_DROPEND_PREFIX}%s" "${1:-}" "$(Lowercase "${2:-}")" "${3:-}" "$([[ -n $duration ]] && printf ' in %s' "$duration")" '' "$5"
+		printf "%s%s %s%s\n%${ACTION_RESULT_INDENT}s${CHARS_DROPEND}%s" "${1:-}" "$(Lowercase "${2:-}")" "${3:-}" "$([[ -n $duration ]] && printf ' in %s' "$duration")" '' "$5"
 	fi
 
 	printf '\n'
@@ -4346,8 +4374,8 @@ QPKGs.States:Build()
 	fi
 
 	[[ ${qpkgs_states_built:=false} = true ]] && return
-	Func:Entry
 
+	Func:Entry
 	local -i index=0
 	local package=''
 	local prev=''
@@ -4437,7 +4465,6 @@ QPKGs.IsCanBackup:Build()
 	# Build a list of QPKGs that support `backup` and `restore` actions
 
 	Func:Entry
-
 	local package=''
 
 	for package in $(QPKGs-SCall:Array); do
@@ -4454,7 +4481,6 @@ QPKGs.IsCanRestartToUpdate:Build()
 	# Build a list of QPKGs that support application update on QPKG restart
 
 	Func:Entry
-
 	local package=''
 
 	for package in $(QPKGs-SCall:Array); do
@@ -4471,7 +4497,6 @@ QPKGs.IsCanClean:Build()
 	# Build a list of QPKGs that support `clean` actions
 
 	Func:Entry
-
 	local package=''
 
 	for package in $(QPKGs-SCall:Array); do
@@ -4545,7 +4570,6 @@ QPKGs.Backups:Show()
 	{
 
 	Func:Entry
-
 	local epochtime=0	# allow float as seconds have a fractional component
 	local filename=''
 	local highlight_older_than='2 weeks ago'
@@ -4566,9 +4590,9 @@ QPKGs.Backups:Show()
 				[[ -z $epochtime || -z $filename ]] && break
 
 				if [[ ${epochtime%.*} -lt $(/bin/date --date="$highlight_older_than" +%s) ]]; then
-					format="$(ColourTextBrightRed "%${HELP_DESC_INDENT}s%-${HELP_FILE_NAME_WIDTH}s - %s\n")"
+					format="$(ColourTextBrightRed "%${HELP_DESC_INDENT}s%-${FILE_NAME_COL_WIDTH}s - %s\n")"
 				else
-					format="%${HELP_DESC_INDENT}s%-${HELP_FILE_NAME_WIDTH}s - %s\n"
+					format="%${HELP_DESC_INDENT}s%-${FILE_NAME_COL_WIDTH}s - %s\n"
 				fi
 
 				# shellcheck disable=2059
@@ -4595,7 +4619,6 @@ QPKGs.Repos:Show()
 	{
 
 	Func:Entry
-
 	local tier=''
 	local package_name=''
 	local package_store_id=''
@@ -4703,7 +4726,6 @@ QPKGs.Statuses:Show()
 	{
 
 	Func:Entry
-
 	local tier=''
 	local package_name=''
 	local -a package_status_notes=()
@@ -4736,6 +4758,7 @@ QPKGs.Statuses:Show()
 					fi
 				else
 					# state
+
 					if QPKGs-ISenabled:Exist "$package_name"; then
 						package_status_notes+=(enabled)
 					elif QPKGs-ISNTenabled:Exist "$package_name"; then
@@ -4743,6 +4766,7 @@ QPKGs.Statuses:Show()
 					fi
 
 					# package/process: active/slow or inactive?
+
 					if QPKGs-ACstatus-ok:Exist "$package_name"; then
 						if QPKGs-ISactive:Exist "$package_name"; then
 							package_status_notes+=(active)
@@ -4758,6 +4782,7 @@ QPKGs.Statuses:Show()
 					fi
 
 					# transient state
+
 					if QPKGs-ISstarting:Exist "$package_name"; then
 						package_status_notes+=(starting)
 					elif QPKGs-ISstopping:Exist "$package_name"; then
@@ -4767,6 +4792,7 @@ QPKGs.Statuses:Show()
 					fi
 
 					# insert commas
+
 					for ((index=0; index<=((${#package_status_notes[@]}-1)); index++)); do
 						package_status_msg+=${package_status_notes[$index]}
 						[[ $((index+2)) -le ${#package_status_notes[@]} ]] && package_status_msg+=', '
@@ -4799,7 +4825,6 @@ QPKGs.Timeouts:Increase()
 	{
 
 	Func:Entry
-
 	local target_utility_pathfile=/usr/local/sbin/qpkg_service
 	local backup_utility_pathfile=/usr/local/sbin/qpkg_service.orig
 
@@ -4836,7 +4861,6 @@ QPKGs.Timeouts:Decrease()
 	{
 
 	Func:Entry
-
 	local target_utility_pathfile=/usr/local/sbin/qpkg_service
 	local backup_utility_pathfile=/usr/local/sbin/qpkg_service.orig
 
@@ -5174,17 +5198,17 @@ NoteIpkAcAsEr()
 ModPathToEntware()
 	{
 
-	local -r OPKG_PREFIX=/opt/bin:/opt/sbin
+	local -r OPKG=/opt/bin:/opt/sbin
 	local temp=''
 
 	if QPKGs-ISstarted:Exist Entware; then
-		! [[ $PATH =~ $OPKG_PREFIX ]] || return
-		temp="$($SED_CMD "s|$OPKG_PREFIX:||" <<< "$PATH:")"	# append colon prior to searching, then remove existing Entware paths
-		export PATH="$OPKG_PREFIX:${temp%:}"				# ... now prepend Entware paths and remove trailing colon
+		! [[ $PATH =~ $OPKG ]] || return
+		temp="$($SED_CMD "s|$OPKG:||" <<< "$PATH:")"	# append colon prior to searching, then remove existing Entware paths
+		export PATH="$OPKG:${temp%:}"				# ... now prepend Entware paths and remove trailing colon
 		DebugAsDone 'prepended Entware to $PATH'
 	else
-		[[ $PATH =~ $OPKG_PREFIX ]] || return
-		temp="$($SED_CMD "s|$OPKG_PREFIX:||" <<< "$PATH:")"	# append colon prior to searching, then remove existing Entware paths
+		[[ $PATH =~ $OPKG ]] || return
+		temp="$($SED_CMD "s|$OPKG:||" <<< "$PATH:")"	# append colon prior to searching, then remove existing Entware paths
 		export PATH="${temp%:}"								# ... now remove trailing colon
 		DebugAsDone 'removed Entware from $PATH'
 	fi
@@ -5542,6 +5566,7 @@ SaveActionResultToLog()
 	echo "$(/bin/date +%s)|$ACTION|$PACKAGE_NAME|$RESULT|$DURATION|$REASON|$PACKAGE_TYPE" >> "$SESS_ACTIONS_RESULTS_PATHFILE"
 
 	# remove previous action duration entry if one exists
+
 	if [[ -e $ACTION_TIMES_PATHFILE ]] && $GREP_CMD -q "^$PACKAGE_NAME|" < "$ACTION_TIMES_PATHFILE"; then
 		$SED_CMD -i "/^$PACKAGE_NAME|/d" "$ACTION_TIMES_PATHFILE"
 	fi
@@ -5773,6 +5798,7 @@ _QPKG:install_()
 			PatchEntwareService
 
 			# shift all files from original [/opt] into new [/opt]
+
 			if [[ -L ${OPT_PATH:-} && -d ${OPT_BU_PATH:-} ]]; then
 				DebugAsProc 'restoring original /opt'
 				mv "$OPT_BU_PATH"/* "$OPT_PATH" && rm -rf "$OPT_BU_PATH"
@@ -7378,32 +7404,6 @@ QPKG.IsStarted()
 
 	}
 
-QPKG.IsActive()
-	{
-
-	# input:
-	#   $1 = QPKG name
-
-	# output:
-	#   $? = 0 (true) or 1 (false)
-
-	$(QPKG.ServicePathFile "${1:?package name null}") status &>/dev/null
-
-	}
-
-QPKG.IsNtActive()
-	{
-
-	# input:
-	#   $1 = QPKG name
-
-	# output:
-	#   $? = 0 (true) or 1 (false)
-
-	! QPKG.IsActive "${1:?package name null}"
-
-	}
-
 QPKG.GetServiceStatus()
 	{
 
@@ -7454,7 +7454,6 @@ RunAndLog()
 	#   $? = result_code of commandstring
 
 	Func:Entry
-
 	local -r LOG_PATHFILE=$($MKTEMP_CMD /var/log/"${FUNCNAME[0]}"_XXXXXX)
 	local -i result_code=0
 
@@ -7600,7 +7599,7 @@ FormatAsVersion()
 FormatAsDescription()
 	{
 
-	echo "${HELP_COL_SPECIAL_PREFIX}a mini-package-manager for QNAP NAS"
+	echo "${CHARS_SPECIAL}a mini-package-manager for QNAP NAS"
 
 	}
 
@@ -7665,22 +7664,22 @@ FormatAsExitcode()
 FormatAsLogFilename()
 	{
 
-	echo "${HELP_COL_RESULTS_PREFIX}log file: '${1:?filename null}'"
+	echo "${CHARS_RESULTS}log file: '${1:?filename null}'"
 
 	}
 
 FormatAsCommand()
 	{
 
-	echo "${HELP_COL_RESULTS_PREFIX}command: '${1:?command null}'"
+	echo "${CHARS_RESULTS}command: '${1:?command null}'"
 
 	}
 
 FormatAsResult()
 	{
 
-	local prefix="$HELP_COL_RESULTS_PREFIX"
-	[[ ${1:-0} -ne 0 ]] && prefix="$HELP_COL_ALERT_PREFIX"
+	local prefix="$CHARS_RESULTS"
+	[[ ${1:-0} -ne 0 ]] && prefix="$CHARS_ALERT"
 	echo "${prefix}result_code: $(FormatAsExitcode "${1:-}")"
 
 	}
@@ -7688,8 +7687,8 @@ FormatAsResult()
 FormatAsResultAndStdout()
 	{
 
-	local prefix="$HELP_COL_RESULTS_PREFIX"
-	[[ ${1:-0} -ne 0 ]] && prefix="$HELP_COL_ALERT_PREFIX"
+	local prefix="$CHARS_RESULTS"
+	[[ ${1:-0} -ne 0 ]] && prefix="$CHARS_ALERT"
 	echo "${prefix}result_code: $(FormatAsExitcode "${1:-}") ***** stdout/stderr begins below *****"
 	echo "${2:-}"
 	echo "${prefix}***** stdout/stderr is complete *****"
@@ -8505,6 +8504,7 @@ WriteToDisplayNew()
 		strbuffer=$(echo -en "\r$msg ")
 
 		# if new msg is shorter then add spaces to end to cover previous msg
+
 		if [[ $length -lt $prev_length ]]; then
 			blanking_length=$((length-prev_length))
 			strbuffer+=$(printf "%${blanking_length}s")
@@ -8792,11 +8792,13 @@ Objects:Load()
 	# Ensure `objects` in the local cache path is up-to-date, then source it
 
 	[[ ${objects_loaded:=false} = true ]] && return
+
 	Func:Entry
 
 	if [[ ! -e $PWD/dont.refresh.objects ]]; then
 		if [[ ! -e $OBJECTS_PATHFILE ]] || ! IsThisFileRecent "$OBJECTS_PATHFILE" "$FILE_CHANGE_THRESHOLD_MINUTES"; then
 			ShowAsProc 'updating objects'
+
 			if $CURL_CMD --insecure --silent --fail "$OBJECTS_ARCHIVE_URL" > "$OBJECTS_ARCHIVE_PATHFILE"; then
 				$TAR_CMD --extract --gzip --file="$OBJECTS_ARCHIVE_PATHFILE" --directory="$CACHE_PATH"
 			fi
@@ -8823,11 +8825,13 @@ Packages:Load()
 	# Ensure `packages` in the local cache path is up-to-date, then source it
 
 	[[ ${packages_loaded:=false} = true ]] && return
+
 	Func:Entry
 
 	if [[ ! -e $PWD/dont.refresh.packages ]]; then
 		if [[ ! -e $PACKAGES_PATHFILE ]] || ! IsThisFileRecent "$PACKAGES_PATHFILE" "$FILE_CHANGE_THRESHOLD_MINUTES"; then
 			ShowAsProc 'updating package list'
+
 			if $CURL_CMD --insecure --silent --fail "$PACKAGES_ARCHIVE_URL" > "$PACKAGES_ARCHIVE_PATHFILE"; then
 				$TAR_CMD --extract --gzip --file="$PACKAGES_ARCHIVE_PATHFILE" --directory="$CACHE_PATH"
 			fi
