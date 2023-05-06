@@ -1,5 +1,1 @@
 * progress line display has extra whitespace(s) when displayed in colour on older NAS (QTS 4.2.6 & 4.3.3)
-
-* progress line display desyncs intermittently (suspect stdout interference caused by an application start-up).
-
-* ensure each action fork is actually being killed after it issues an 'exit' into the message pipe.
