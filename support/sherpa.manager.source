@@ -5361,7 +5361,7 @@ GetQnapOS()
 GetQpkgArch()
 	{
 
-	# translate arch from QTS to sherpa
+	# translate arch from QTS-to-sherpa notation
 
 	case $NAS_ARCH in
 		x86_64)
