@@ -2949,7 +2949,7 @@ DisplayAsProjSynExam()
 	#	$1 = description
 	#	$2 = example syntax
 
-	Display
+	DisplayLineSpaceIfNoneAlready
 
 	printf "${CHARS_SPECIAL}%s" "$(Capitalise "${1:-}")"
 	[[ ${1: -1} != '!' ]] && printf ':'
@@ -2997,12 +2997,30 @@ DisplayAsHelpTitleNameAuthorDesc()
 	{
 
 	# input:
-	#	$1 = package name title
-	#	$2 = author title
-	#	$2 = description title
+	#	$1 = package tier
 
-	Display
-	printf "${CHARS_SPECIAL}%-${PACKAGE_NAME_COL_WIDTH}s${CHAR_SPACER}${CHARS_SPECIAL}%-${PACKAGE_AUTHOR_COL_WIDTH}s${CHAR_SPACER}${CHARS_SPECIAL}%s\n" "${1:-}:" "${2:-}:" "${3:-}:"
+	DisplayLineSpaceIfNoneAlready
+
+	# column 1: package name
+
+	if [[ $maxcols -ge 1 ]]; then
+		printf "${CHARS_SPECIAL}%-${PACKAGE_NAME_COL_WIDTH}s" "$1 QPKGs:"
+	fi
+
+	# column 2: package author
+
+	if [[ $maxcols -ge 2 ]]; then
+		printf "${CHAR_SPACER}${CHARS_SPECIAL}%-${PACKAGE_AUTHOR_COL_WIDTH}s" "QPKG author:"
+	fi
+
+	# column 3: package description
+
+	if [[ $maxcols -ge 3 ]]; then
+		printf "${CHAR_SPACER}${CHARS_SPECIAL}%s" "QPKG description:"
+	fi
+
+	printf '\n'
+	linespace_visible=false
 
 	}
 
@@ -3072,18 +3090,7 @@ DisplayAsHelpNameAuthorDesc()
 	fi
 
 	printf '\n'
-
-	}
-
-DisplayAsHelpTitleNameAbs()
-	{
-
-	# input:
-	#	$1 = package name title
-	#	$2 = abbreviations title
-
-	Display
-	printf "${CHARS_SPECIAL}%-${PACKAGE_NAME_COL_WIDTH}s${CHAR_SPACER}${CHARS_SPECIAL}%s\n" "${1:-}:" "${2:-}:"
+	linespace_visible=false
 
 	}
 
@@ -3109,44 +3116,44 @@ CalcMaxStatusColsToDisplay()
 
 	}
 
-DisplayAsHelpTitleNameVerStatus()
+DisplayAsHelpTitleNameStatusVerPath()
 	{
 
 	# input:
-	#	$1 = package name title
-	#	$2 = package status title
-	#	$3 = package version title
-	#	$4 = package installation location (only if installed)
+	#	$1 = package tier
+
+	DisplayLineSpaceIfNoneAlready
 
 	# column 1: package name
 
-	if [[ $maxcols -ge 1 && -n ${1:-} ]]; then
-		printf "${CHARS_SPECIAL}%-${PACKAGE_NAME_COL_WIDTH}s" "$1:"
+	if [[ $maxcols -ge 1 ]]; then
+		printf "${CHARS_SPECIAL}%-${PACKAGE_NAME_COL_WIDTH}s" "$1 QPKGs:"
 	fi
 
 	# column 2: package statuses
 
-	if [[ $maxcols -ge 2 && -n ${2:-} ]]; then
-		printf "${CHAR_SPACER}${CHARS_SPECIAL}%-${PACKAGE_STATUS_COL_WIDTH}s" "$2:"
+	if [[ $maxcols -ge 2 ]]; then
+		printf "${CHAR_SPACER}${CHARS_SPECIAL}%-${PACKAGE_STATUS_COL_WIDTH}s" "QPKG statuses:"
 	fi
 
 	# column 3: package version
 
-	if [[ $maxcols -ge 3 && -n ${3:-} ]]; then
-		printf "${CHAR_SPACER}${CHARS_SPECIAL}%-${PACKAGE_VER_COL_WIDTH}s" "$3:"
+	if [[ $maxcols -ge 3 ]]; then
+		printf "${CHAR_SPACER}${CHARS_SPECIAL}%-${PACKAGE_VER_COL_WIDTH}s" "QPKG version ($(ColourTextBrightOrange new)):"
 	fi
 
 	# column 4: package installation path
 
-	if [[ $maxcols -ge 4 && -n ${4:-} ]]; then
-		printf "${CHAR_SPACER}${CHARS_SPECIAL}%s" "$4:"
+	if [[ $maxcols -ge 4 ]]; then
+		printf "${CHAR_SPACER}${CHARS_SPECIAL}%s" "installation path:"
 	fi
 
 	printf '\n'
+	linespace_visible=false
 
 	}
 
-DisplayAsHelpNameVerStatus()
+DisplayAsHelpNameStatusVerPath()
 	{
 
 	# input:
@@ -3259,6 +3266,7 @@ DisplayAsHelpNameVerStatus()
 	fi
 
 	printf '\n'
+	linespace_visible=false
 
 	}
 
@@ -3266,29 +3274,30 @@ DisplayAsHelpTitleNameDateRepo()
 	{
 
 	# input:
-	#	$1 = package name title
-	#	$2 = assigned repository title
-	#	$3 = package installation date
+	#	$1 = package tier
+
+	DisplayLineSpaceIfNoneAlready
 
 	# column 1: package name
 
-	if [[ $maxcols -ge 1 && -n ${1:-} ]]; then
-		printf "${CHARS_SPECIAL}%-${PACKAGE_NAME_COL_WIDTH}s" "$1:"
+	if [[ $maxcols -ge 1 ]]; then
+		printf "${CHARS_SPECIAL}%-${PACKAGE_NAME_COL_WIDTH}s" "$1 QPKGs:"
 	fi
 
 	# column 2: package installation date
 
-	if [[ $maxcols -ge 2 && -n ${3:-} ]]; then
-		printf "${CHAR_SPACER}${CHARS_SPECIAL}%-${PACKAGE_INSTALL_DATE_COL_WIDTH}s" "$3:"
+	if [[ $maxcols -ge 2 ]]; then
+		printf "${CHAR_SPACER}${CHARS_SPECIAL}%-${PACKAGE_INSTALL_DATE_COL_WIDTH}s" "installation date:"
 	fi
 
 	# column 3: package repository
 
-	if [[ $maxcols -ge 3 && -n ${2:-} ]]; then
-		printf "${CHAR_SPACER}${CHARS_SPECIAL}%-${PACKAGE_REPO_COL_WIDTH}s" "$2:"
+	if [[ $maxcols -ge 3 ]]; then
+		printf "${CHAR_SPACER}${CHARS_SPECIAL}%-${PACKAGE_REPO_COL_WIDTH}s" "repository:"
 	fi
 
 	printf '\n'
+	linespace_visible=false
 
 	}
 
@@ -3360,6 +3369,7 @@ DisplayAsHelpNameDateRepo()
 	fi
 
 	printf '\n'
+	linespace_visible=false
 
 	}
 
@@ -3367,24 +3377,24 @@ DisplayAsHelpTitleNameAbs()
 	{
 
 	# input:
-	#	$1 = package name title
-	#	$2 = acceptable package abbreviations
+	#	$1 = package tier title
 
-	printf '\n'
+	DisplayLineSpaceIfNoneAlready
 
 	# column 1: package name
 
-	if [[ $maxcols -ge 1 && -n ${1:-} ]]; then
-		printf "${CHARS_SPECIAL}%-${PACKAGE_NAME_COL_WIDTH}s" "$1:"
+	if [[ $maxcols -ge 1 ]]; then
+		printf "${CHARS_SPECIAL}%-${PACKAGE_NAME_COL_WIDTH}s" "$1 QPKGs:"
 	fi
 
 	# column 2: package abbreviations
 
-	if [[ $maxcols -ge 2 && -n ${2:-} ]]; then
-		printf "${CHAR_SPACER}${CHARS_SPECIAL}%s" "$2:"
+	if [[ $maxcols -ge 2 ]]; then
+		printf "${CHAR_SPACER}${CHARS_SPECIAL}%s" "acceptable QPKG name abbreviations and aliases:"
 	fi
 
 	printf '\n'
+	linespace_visible=false
 
 	}
 
@@ -3447,6 +3457,7 @@ DisplayAsHelpNameAbs()
 	fi
 
 	printf '\n'
+	linespace_visible=false
 
 	}
 
@@ -3458,6 +3469,7 @@ DisplayAsHelpTitleFileNamePlusSomething()
 	#	$2 = second column title
 
 	DisplayLineSpaceIfNoneAlready
+
 	printf "${CHARS_SPECIAL}%-${FILE_NAME_COL_WIDTH}s ${CHARS_SPECIAL}%s\n" "$(Capitalise "${1:-}"):" "$(Capitalise "${2:-}"):"
 	linespace_visible=false
 
@@ -3470,6 +3482,7 @@ DisplayAsHelpTitle()
 	#	$1 = text
 
 	DisplayLineSpaceIfNoneAlready
+
 	printf "${CHARS_SPECIAL}%s\n" "$(Capitalise "${1:-}" | tr -s ' ')"
 	linespace_visible=false
 
@@ -3482,6 +3495,7 @@ DisplayAsHelpTitleHighlighted()
 	#	$1 = text
 
 	DisplayLineSpaceIfNoneAlready
+
 	# shellcheck disable=2059
 	printf "$(ColourTextBrightOrange "${CHARS_SPECIAL}%s\n")" "$(Capitalise "${1:-}")"
 	linespace_visible=false
@@ -3495,6 +3509,7 @@ DisplayAsActionResultNtLastLine()
 	#	$1 = text
 
 	printf "%${ACTION_RESULT_INDENT}s${CHARS_DROPTHRU}%s\n" '' "$1"
+	linespace_visible=false
 
 	}
 
@@ -3505,6 +3520,7 @@ DisplayAsActionResultLastLine()
 	#	$1 = text
 
 	printf "%${ACTION_RESULT_INDENT}s${CHARS_DROPEND}%s\n" '' "$1"
+	linespace_visible=false
 
 	}
 
@@ -3531,6 +3547,7 @@ DisplayAsIndentPrefixActionResultDurationReason()
 	fi
 
 	printf '\n'
+	linespace_visible=false
 
 	}
 
@@ -4222,9 +4239,9 @@ QPKGs.NewVers:Show()
 	done
 
 	if [[ ${#upgradable_packages[@]} -eq 1 ]]; then
-		msg='an upgraded QPKG is'
+		msg='a new QPKG is'
 	else
-		msg='upgraded QPKGs are'
+		msg='new QPKGs are'
 	fi
 
 	ShowAsInfo "$msg available for $names_formatted"
@@ -4631,6 +4648,7 @@ QPKGs.IsTimeoutsIncreased()
 QPKGs.Abbreviations:Show()
 	{
 
+	Func:Entry
 	local tier=''
 	local package_name=''
 	local abs=''
@@ -4647,7 +4665,7 @@ QPKGs.Abbreviations:Show()
 		for tier in "${PACKAGE_TIERS[@]}"; do
 			[[ $tier = addon ]] && continue	# don't need to see addons
 
-			DisplayAsHelpTitleNameAbs "$tier QPKGs" 'acceptable QPKG name abbreviations and aliases'
+			DisplayAsHelpTitleNameAbs "$tier"
 
 			for package_name in $(QPKGs-SC${tier}:Array); do
 				abs=$(QPKG.Abbrvs "$package_name")
@@ -4676,7 +4694,7 @@ QPKGs.Abbreviations:Show()
 	[[ -e $REPORT_PATHFILE ]] && $CAT_CMD "$REPORT_PATHFILE"
 	linespace_visible=false
 
-	return 0
+	Func:Exit
 
 	}
 
@@ -4749,7 +4767,7 @@ QPKGs.Repos:Show()
 		for tier in "${PACKAGE_TIERS[@]}"; do
 			[[ $tier = addon ]] && continue	# don't need to see addons
 
-			DisplayAsHelpTitleNameDateRepo "$tier QPKGs" repository 'installation date'
+			DisplayAsHelpTitleNameDateRepo "$tier"
 
 			for package_name in $(QPKGs-SC$tier:Array); do
 				if ! QPKG.URL "$package_name" &>/dev/null; then
@@ -4773,14 +4791,11 @@ QPKGs.Repos:Show()
 					fi
 				fi
 			done
-
-			echo
 		done
 
 		} > "$REPORT_PATHFILE"
 
 	EraseThisLine		# clear the "proc:" message shown earlier
- 	DisplayLineSpaceIfNoneAlready
 	[[ -e $REPORT_PATHFILE ]] && $CAT_CMD "$REPORT_PATHFILE"
 	QPKGs.Actions:List
 	QPKGs.States:List
@@ -4807,7 +4822,7 @@ QPKGs:List:Show()
 		for tier in "${PACKAGE_TIERS[@]}"; do
 			[[ $tier = addon ]] && continue	# don't need to see addons
 
-			DisplayAsHelpTitleNameAuthorDesc "$tier QPKGs" 'QPKG author' 'QPKG description'
+			DisplayAsHelpTitleNameAuthorDesc "$tier"
 
 			for package_name in $(QPKGs-SC${tier}:Array); do
 				if QPKGs-ISmissing:Exist "$package_name" &>/dev/null; then
@@ -4860,18 +4875,18 @@ QPKGs.Statuses:Show()
 		for tier in "${PACKAGE_TIERS[@]}"; do
 			[[ $tier = addon ]] && continue		# don't need to see addons
 
-			DisplayAsHelpTitleNameVerStatus "$tier QPKGs" 'QPKG statuses' 'QPKG version (new)' 'installation path'
+			DisplayAsHelpTitleNameStatusVerPath "$tier"
 
 			for package_name in $(QPKGs-SC$tier:Array); do
 				if QPKGs-ISNTinstalled:Exist "$package_name"; then
 					if ! QPKG.URL "$package_name" &>/dev/null; then
-						DisplayAsHelpNameVerStatus muted "$package_name" 'not installable: no arch'
+						DisplayAsHelpNameStatusVerPath muted "$package_name" 'not installable: no arch'
 					elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
-						DisplayAsHelpNameVerStatus muted "$package_name" 'not installable: low RAM'
+						DisplayAsHelpNameStatusVerPath muted "$package_name" 'not installable: low RAM'
 					elif QPKGs-ISmissing:Exist "$package_name"; then
-						DisplayAsHelpNameVerStatus highlighted "$package_name" missing '' "$(QPKG.Local.Ver "$package_name")" '' "$(QPKG.InstallationPath "$package_name")"
+						DisplayAsHelpNameStatusVerPath highlighted "$package_name" missing '' "$(QPKG.Local.Ver "$package_name")" '' "$(QPKG.InstallationPath "$package_name")"
 					else
-						DisplayAsHelpNameVerStatus muted "$package_name" 'not installed' '' '' "$(QPKG.Avail.Ver "$package_name")"
+						DisplayAsHelpNameStatusVerPath muted "$package_name" 'not installed' '' '' "$(QPKG.Avail.Ver "$package_name")"
 					fi
 				else
 					# state
@@ -4915,21 +4930,18 @@ QPKGs.Statuses:Show()
 						[[ $((index+2)) -le ${#package_status_notes[@]} ]] && package_status_msg+=', '
 					done
 
-					DisplayAsHelpNameVerStatus normal "$package_name" "$package_status_msg" "$package_result_msg" "$(QPKG.Local.Ver "$package_name")" "$(QPKG.Avail.Ver "$package_name")" "$(QPKG.InstallationPath "$package_name")"
+					DisplayAsHelpNameStatusVerPath normal "$package_name" "$package_status_msg" "$package_result_msg" "$(QPKG.Local.Ver "$package_name")" "$(QPKG.Avail.Ver "$package_name")" "$(QPKG.InstallationPath "$package_name")"
 
 					package_status_notes=()
 					package_status_msg=''
 					package_result_msg=''
 				fi
 			done
-
-			echo
 		done
 
 		} > "$REPORT_PATHFILE"
 
 	EraseThisLine		# clear the "proc:" message shown earlier
- 	DisplayLineSpaceIfNoneAlready
 	[[ -e $REPORT_PATHFILE ]] && $CAT_CMD "$REPORT_PATHFILE"
 	QPKGs.Actions:List
 	QPKGs.States:List
