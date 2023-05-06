@@ -6,8 +6,9 @@
 # Might be related to 'sed' handling of extended regexes when striping ANSI codes.
 
 readonly SCRIPT_STARTSECONDS=$(/bin/date +%s)
-GNU_SED_CMD=/usr/bin/sed
-#GNU_SED_CMD=/opt/bin/sed
+# GNU_SED_CMD=/usr/bin/sed
+GNU_SED_CMD=/opt/bin/sed
+# GNU_SED_CMD=/bin/sed
 [[ -e $GNU_SED_CMD ]] && colourful=true || colourful=false
 
 LaunchQPKGActionForks()

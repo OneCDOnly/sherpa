@@ -2,10 +2,11 @@
 ClamAV_230419.qpkg.md5               ClamAV_230419.qpkg               ClamAV               230419       all    b1f69a6eb10389932dbe9dfd427ab661
 Deluge-server_230419.qpkg.md5        Deluge-server_230419.qpkg        Deluge-server        230419       all    62edfd0e1d628639a40fb2435a9f5ffb
 Deluge-web_230501.qpkg.md5           Deluge-web_230501.qpkg           Deluge-web           230501       all    1d348f25a397b75a7d96ca53748142fc
-duf_220809_arm_64.qpkg.md5           duf_220809_arm_64.qpkg           duf                  220809       a64    7ecf7b6ee2e9cbe964defd3e3ae2e4f9
-duf_220809_arm-x41.qpkg.md5          duf_220809_arm-x41.qpkg          duf                  220809       a41    742792b84e039d95cd87ff619d3de839
-duf_220809_x86_64.qpkg.md5           duf_220809_x86_64.qpkg           duf                  220809       i64    8a06d6559079c60d3c2704ca6eadcf8a
-duf_220809_x86.qpkg.md5              duf_220809_x86.qpkg              duf                  220809       i86    94102ff3609e88fc0c6ff7093469d133
+duf_220809_arm_64.qpkg.md5           duf_220809_arm_64.qpkg           duf                  220809       a64    7684a8940ba63704b95cbc713cd55b35
+duf_220809_arm-x31.qpkg.md5          duf_220809_arm-x31.qpkg          duf                  220809       a31    5aa8aef6f515eb5ae1d28991bc1d4084
+duf_220809_arm-x41.qpkg.md5          duf_220809_arm-x41.qpkg          duf                  220809       a41    5dcac4470bf45f83342ba9275a740022
+duf_220809_x86_64.qpkg.md5           duf_220809_x86_64.qpkg           duf                  220809       i64    dac17d3e9f29f058f9e024e7f5ff4a4b
+duf_220809_x86.qpkg.md5              duf_220809_x86.qpkg              duf                  220809       i86    e351230ffde4a6040d423fe73d7ee5fc
 Entware_1.03a_std.qpkg.md5           Entware_1.03a_std.qpkg           Entware              1.03a        all    deb88a170716d39309d124ad77875b4d
 Headphones_230422.qpkg.md5           Headphones_230422.qpkg           Headphones           230422       all    87da5bfa094eafd9b2e688cb82fcf60d
 HideThatBanner_230503.qpkg.md5       HideThatBanner_230503.qpkg       HideThatBanner       230503       all    467c7c005e113d06b37bf467d4ba9019
