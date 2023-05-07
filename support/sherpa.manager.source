@@ -315,6 +315,8 @@ Vars:Load()
 	opts_show_tips=false
 	opts_show_versions=false
 
+	package_ver_final_col_width=0
+
 	}
 
 Consts:Load()
@@ -374,25 +376,29 @@ Consts:Load()
 	readonly HELP_DESC_INDENT=3
 	readonly HELP_SYNTAX_INDENT=6
 
-	readonly PACKAGE_AUTHOR_COL_WIDTH=18
-	readonly PACKAGE_INSTALL_DATE_COL_WIDTH=18
-	readonly PACKAGE_NAME_COL_WIDTH=17
-	readonly PACKAGE_PATH_COL_WIDTH=42
+	readonly PACKAGE_NAME_COL_WIDTH=22
+	readonly PACKAGE_STATUS_COL_WIDTH=29
+	readonly PACKAGE_AUTHOR_COL_WIDTH=21
 	readonly PACKAGE_REPO_COL_WIDTH=40
-	readonly PACKAGE_STATUS_COL_WIDTH=28
-	readonly PACKAGE_VER_COL_WIDTH=19
+	readonly PACKAGE_INSTALL_DATE_COL_WIDTH=22
+	readonly PACKAGE_VER_COL_WIDTH=17
+	readonly PACKAGE_PATH_COL_WIDTH=48
+	readonly PACKAGE_ABBS_COL_WIDTH=84
+	readonly PACKAGE_DESCRIPTION_COL_WIDTH=100
 
 	readonly CHAR_SPACER=' '
 
-	readonly CHARS_ALERT='! '
-	readonly CHARS_BLANK='  '
+	readonly CHARS_SPECIAL='• '
+	readonly CHARS_BLANK=$CHAR_SPACER'  '
+	readonly CHARS_NORMAL=$CHAR_SPACER'- '
+	readonly CHARS_ALERT=$CHAR_SPACER'! '
 	readonly CHARS_DROPEND='└─ '
 	readonly CHARS_DROPTHRU='├─ '
-	readonly CHARS_ELLIPSIS='...'
-	readonly CHARS_NORMAL='- '
+
 	readonly CHARS_NOTE='* '
 	readonly CHARS_RESULTS='= '
-	readonly CHARS_SPECIAL='• '
+
+	readonly CHARS_ELLIPSIS='...'
 
 	readonly CHARS_REGULAR_PROMPT='$ '
 	readonly CHARS_SUPER_PROMPT='# '
@@ -2999,24 +3005,31 @@ DisplayAsHelpTitleNameAuthorDesc()
 	# input:
 	#	$1 = package tier
 
+	local package_name_msg=''
+	local package_author_msg=''
+	local package_description_msg=''
+
 	DisplayLineSpaceIfNoneAlready
 
 	# column 1: package name
 
 	if [[ $maxcols -ge 1 ]]; then
-		printf "${CHARS_SPECIAL}%-${PACKAGE_NAME_COL_WIDTH}s" "$1 QPKGs:"
+		package_name_msg="${CHARS_SPECIAL}$1 QPKGs:"
+		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
 	fi
 
 	# column 2: package author
 
 	if [[ $maxcols -ge 2 ]]; then
-		printf "${CHAR_SPACER}${CHARS_SPECIAL}%-${PACKAGE_AUTHOR_COL_WIDTH}s" "QPKG author:"
+		package_author_msg="${CHARS_SPECIAL}QPKG author:"
+		printf "%-$((PACKAGE_AUTHOR_COL_WIDTH+2+$(LenANSIDiff "$package_author_msg")))s" "$package_author_msg"
 	fi
 
 	# column 3: package description
 
 	if [[ $maxcols -ge 3 ]]; then
-		printf "${CHAR_SPACER}${CHARS_SPECIAL}%s" "QPKG description:"
+		package_description_msg="${CHARS_SPECIAL}QPKG description:"
+		printf "%-$((PACKAGE_DESCRIPTION_COL_WIDTH+2+$(LenANSIDiff "$package_description_msg")))s" "$package_description_msg"
 	fi
 
 	printf '\n'
@@ -3038,9 +3051,9 @@ DisplayAsHelpNameAuthorDesc()
 	local package_name=${2:-}
 	local package_name_msg="${CHARS_NORMAL}${package_name}"
 	local package_author=${3:-}
-	local package_author_msg="$package_author"
+	local package_author_msg="${CHARS_BLANK}${package_author}"
 	local package_description=${4:-}
-	local package_description_msg="$package_description"
+	local package_description_msg="${CHARS_BLANK}${package_description}"
 	local package_notes=${5:-}
 	local package_notes_msg="$(ColourTextCyan "${CHARS_NOTE}${package_notes}")"
 	local package_not_installable=${6:-false}
@@ -3054,7 +3067,7 @@ DisplayAsHelpNameAuthorDesc()
 			fi
 
 			package_author_msg="$(ColourTextDarkGrey "${package_author}")"
-			package_description_msg="$(ColourTextDarkGrey "${package_description}")"
+			package_description_msg="$(ColourTextDarkGrey "${CHARS_NORMAL}${package_description}")"
 			;;
 		highlighted)
 			package_name_msg=$(ColourTextBrightRed "${CHARS_NORMAL}${package_name}")
@@ -3069,23 +3082,23 @@ DisplayAsHelpNameAuthorDesc()
 
 	# column 1: package name
 
-	if [[ $maxcols -ge 1 && -n $package_name ]]; then
-		printf "${CHAR_SPACER}%-$((${#CHARS_NORMAL}+PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
+	if [[ $maxcols -ge 1 && -n $package_name_msg ]]; then
+		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
 	fi
 
 	# column 2: package author
 
 	if [[ $maxcols -ge 2 && -n $package_author ]]; then
-		printf "${CHAR_SPACER}${CHARS_BLANK}%-$((PACKAGE_AUTHOR_COL_WIDTH+$(LenANSIDiff "$package_author_msg")))s" "$package_author_msg"
+		printf "%-$((PACKAGE_AUTHOR_COL_WIDTH+$(LenANSIDiff "$package_author_msg")))s" "$package_author_msg"
 	fi
 
 	# column 3: package description
 
 	if [[ $maxcols -ge 3 && -n $package_description ]]; then
-		printf "${CHAR_SPACER}${CHARS_BLANK}%s" "$package_description_msg"
+		printf "%-$((PACKAGE_DESCRIPTION_COL_WIDTH+$(LenANSIDiff "$package_description_msg")))s" "$package_description_msg"
 
 		if [[ -n $package_notes ]]; then
-			printf "\n%$(((${#CHAR_SPACER}*3)+(${#CHARS_BLANK}*3)+PACKAGE_NAME_COL_WIDTH+PACKAGE_AUTHOR_COL_WIDTH))s${CHARS_DROPEND}%s" '' "$package_notes_msg"
+			printf "\n%$((${#CHARS_BLANK}+PACKAGE_NAME_COL_WIDTH+PACKAGE_AUTHOR_COL_WIDTH))s${CHARS_DROPEND}%s" '' "$package_notes_msg"
 		fi
 	fi
 
@@ -3102,14 +3115,22 @@ CalcMaxStatusColsToDisplay()
 	local col3_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_VER_COL_WIDTH))
 	local col4_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_PATH_COL_WIDTH))
 
-	if [[ $((col1_width+col2_width)) -ge $SESS_COLS ]]; then
-		echo 1
-	elif [[ $((col1_width+col2_width+col3_width)) -ge $SESS_COLS ]]; then
-		echo 2
-	elif [[ $((col1_width+col2_width+col3_width+col4_width)) -ge $SESS_COLS ]]; then
-		echo 3
+	# add width to include " (new)" string to QPKG version title
+	if QPKGs-SCupgradable:IsAny; then
+		package_ver_final_col_width=$((PACKAGE_VER_COL_WIDTH+6))
+		((col3_width+6))
 	else
-		echo 4
+		package_ver_final_col_width=$PACKAGE_VER_COL_WIDTH
+	fi
+
+	if [[ $((col1_width+col2_width)) -ge $SESS_COLS ]]; then
+		maxcols=1
+	elif [[ $((col1_width+col2_width+col3_width)) -ge $SESS_COLS ]]; then
+		maxcols=2
+	elif [[ $((col1_width+col2_width+col3_width+col4_width)) -ge $SESS_COLS ]]; then
+		maxcols=3
+	else
+		maxcols=4
 	fi
 
 	return 0
@@ -3122,30 +3143,44 @@ DisplayAsHelpTitleNameStatusVerPath()
 	# input:
 	#	$1 = package tier
 
+	local package_name_msg=''
+	local package_status_msg=''
+	local package_version_msg=''
+	local package_path_msg=''
+
 	DisplayLineSpaceIfNoneAlready
 
 	# column 1: package name
 
 	if [[ $maxcols -ge 1 ]]; then
-		printf "${CHARS_SPECIAL}%-${PACKAGE_NAME_COL_WIDTH}s" "$1 QPKGs:"
+		package_name_msg="${CHARS_SPECIAL}$1 QPKGs:"
+		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
 	fi
 
 	# column 2: package statuses
 
 	if [[ $maxcols -ge 2 ]]; then
-		printf "${CHAR_SPACER}${CHARS_SPECIAL}%-${PACKAGE_STATUS_COL_WIDTH}s" "QPKG statuses:"
+		package_status_msg="${CHARS_SPECIAL}QPKG statuses:"
+		printf "%-$((PACKAGE_STATUS_COL_WIDTH+2+$(LenANSIDiff "$package_status_msg")))s" "$package_status_msg"
 	fi
 
 	# column 3: package version
 
 	if [[ $maxcols -ge 3 ]]; then
-		printf "${CHAR_SPACER}${CHARS_SPECIAL}%-${PACKAGE_VER_COL_WIDTH}s" "QPKG version ($(ColourTextBrightOrange new)):"
+		if QPKGs-SCupgradable:IsNone; then
+			package_version_msg="${CHARS_SPECIAL}QPKG version:"
+		else
+			package_version_msg="${CHARS_SPECIAL}QPKG version ($(ColourTextBrightOrange new)):"
+		fi
+
+		printf "%-$((package_ver_final_col_width+2+$(LenANSIDiff "$package_version_msg")))s" "$package_version_msg"
 	fi
 
 	# column 4: package installation path
 
 	if [[ $maxcols -ge 4 ]]; then
-		printf "${CHAR_SPACER}${CHARS_SPECIAL}%s" "installation path:"
+		package_path_msg="${CHARS_SPECIAL}installation path:"
+		printf "%-$((PACKAGE_PATH_COL_WIDTH+2+$(LenANSIDiff "$package_path_msg")))s" "$package_path_msg"
 	fi
 
 	printf '\n'
@@ -3166,21 +3201,23 @@ DisplayAsHelpNameStatusVerPath()
 	#	$7 = package installation path (optional) - only if installed
 
 	local package_name=${2:-}
-	local package_name_msg=$package_name
+	local package_name_msg=''
 	local package_status=${3:-}
 	local package_status_msg=''
 	local package_last_result=${4:-}
 	local package_last_result_msg=''
 	local package_installed_version=${5:-}
-	local package_version_msg=$package_installed_version
+	local package_version_msg=''
 	local package_upgrade_version=${6:-}
 	local package_upgrade_version_msg=''
 	local package_path=${7:-}
-	local package_path_msg=$package_path
+	local package_path_msg="${CHARS_BLANK}${package_path}"
 	local patt=''
 
 	case $1 in
 		normal)
+			package_name_msg="${CHARS_BLANK}$package_name"
+
 			if [[ -n $package_status ]]; then
 				patt=\\benabled\\b
 				[[ $package_status =~ $patt ]] && package_status_msg="$(ColourTextBrightGreen enabled)"
@@ -3211,58 +3248,62 @@ DisplayAsHelpNameStatusVerPath()
 				package_status_msg="${CHARS_NORMAL}${package_status_msg}"
 			fi
 
+			package_version_msg=${CHARS_BLANK}$package_installed_version
+
 			if [[ -n $package_upgrade_version && $package_installed_version != "$package_upgrade_version" ]]; then
 				package_version_msg+=" ($(ColourTextBrightOrange "$package_upgrade_version"))"
 			fi
 			;;
 		muted)
-			package_name_msg="$(ColourTextDarkGrey "$package_name")"
+			package_name_msg="$(ColourTextDarkGrey "${CHARS_BLANK}$package_name")"
+			package_version_msg="${CHARS_BLANK}$(ColourTextDarkGrey "$package_upgrade_version")"
+			package_path_msg=''
 
 			if [[ -n $package_status ]]; then
 				if [[ $package_status =~ 'not installable' ]]; then
 					package_status_msg="$(ColourTextDarkGrey "${CHARS_ALERT}${package_status}")"
+					package_version_msg=''
 				else
 					package_status_msg="$(ColourTextDarkGrey "${CHARS_NORMAL}${package_status}")"
 				fi
 			fi
-
-			package_version_msg="$(ColourTextDarkGrey "$package_upgrade_version")"
 			;;
 		highlighted)
-			case $package_status in
-				missing)
-					package_name_msg="$(ColourTextBrightRed "$package_name")"
-					package_status_msg="$(ColourTextBrightRedBlink "${CHARS_ALERT}${package_status}")"
-					package_path_msg="$(ColourTextBrightRedBlink "$package_path")"
-					;;
-				*)
-					package_name_msg="$(ColourTextBrightOrange "$package_name")"
-					package_status_msg="$(ColourTextBrightOrange "${CHARS_NOTE}${package_status}")"
-			esac
+			patt=\\bmissing\\b
+
+			if [[ $package_status =~ $patt ]]; then
+				package_name_msg="${CHARS_BLANK}$(ColourTextBrightRed "$package_name")"
+				package_status_msg="$(ColourTextBrightRedBlink "${CHARS_ALERT}${package_status}")"
+				package_version_msg="${CHARS_BLANK}$(ColourTextBrightRedBlink "${package_installed_version}")"
+				package_path_msg="${CHARS_BLANK}$(ColourTextBrightRedBlink "$package_path")"
+			else
+				package_name_msg="${CHARS_BLANK}$(ColourTextBrightOrange "$package_name")"
+				package_status_msg="$(ColourTextBrightOrange "${CHARS_NOTE}${package_status}")"
+			fi
 	esac
 
 	# column 1: package name
 
 	if [[ $maxcols -ge 1 && -n $package_name ]]; then
-		printf "${CHAR_SPACER}${CHARS_BLANK}%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
+		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
 	fi
 
 	# column 2: package statuses
 
 	if [[ $maxcols -ge 2 && -n $package_status ]]; then
-		printf "${CHAR_SPACER}%-$((${#CHARS_NORMAL}+PACKAGE_STATUS_COL_WIDTH+$(LenANSIDiff "$package_status_msg")))s" "$package_status_msg"
+		printf "%-$((PACKAGE_STATUS_COL_WIDTH+$(LenANSIDiff "$package_status_msg")))s" "$package_status_msg"
 	fi
 
 	# column 3: package version
 
 	if [[ $maxcols -ge 3 && -n $package_version_msg ]]; then
-		printf "${CHAR_SPACER}${CHARS_BLANK}%-$((PACKAGE_VER_COL_WIDTH+$(LenANSIDiff "$package_version_msg")))s" "$package_version_msg"
+		printf "%-$((package_ver_final_col_width+$(LenANSIDiff "$package_version_msg")))s" "$package_version_msg"
 	fi
 
 	# column 4: package installation path
 
 	if [[ $maxcols -ge 4 && -n $package_path_msg ]]; then
-		printf "${CHAR_SPACER}${CHARS_BLANK}%s" "$package_path_msg"
+		printf "%-$((PACKAGE_PATH_COL_WIDTH+$(LenANSIDiff "$package_path_msg")))s" "$package_path_msg"
 	fi
 
 	printf '\n'
@@ -3276,24 +3317,31 @@ DisplayAsHelpTitleNameDateRepo()
 	# input:
 	#	$1 = package tier
 
+	local package_name_msg=''
+	local package_install_date_msg=''
+	local package_repo_msg=''
+
 	DisplayLineSpaceIfNoneAlready
 
 	# column 1: package name
 
 	if [[ $maxcols -ge 1 ]]; then
-		printf "${CHARS_SPECIAL}%-${PACKAGE_NAME_COL_WIDTH}s" "$1 QPKGs:"
+		package_name_msg="${CHARS_SPECIAL}$1 QPKGs:"
+		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
 	fi
 
 	# column 2: package installation date
 
 	if [[ $maxcols -ge 2 ]]; then
-		printf "${CHAR_SPACER}${CHARS_SPECIAL}%-${PACKAGE_INSTALL_DATE_COL_WIDTH}s" "installation date:"
+		package_install_date_msg="${CHARS_SPECIAL}installation date:"
+		printf "%-$((PACKAGE_INSTALL_DATE_COL_WIDTH+2+$(LenANSIDiff "$package_install_date_msg")))s" "$package_install_date_msg"
 	fi
 
 	# column 3: package repository
 
 	if [[ $maxcols -ge 3 ]]; then
-		printf "${CHAR_SPACER}${CHARS_SPECIAL}%-${PACKAGE_REPO_COL_WIDTH}s" "repository:"
+		package_repo_msg="${CHARS_SPECIAL}repository:"
+		printf "%-$((PACKAGE_REPO_COL_WIDTH+2+$(LenANSIDiff "$package_repo_msg")))s" "$package_repo_msg"
 	fi
 
 	printf '\n'
@@ -3311,11 +3359,11 @@ DisplayAsHelpNameDateRepo()
 	#	$4 = package installation date
 
 	local package_name=${2:-}
-	local package_name_msg=$package_name
+	local package_name_msg=${CHARS_BLANK}$package_name
 	local assigned_repo=${3:-}
 	local assigned_repo_msg="${CHARS_NORMAL}${assigned_repo}"
 	local package_install_date=${4:-}
-	local package_install_date_msg=$package_install_date
+	local package_install_date_msg=${CHARS_BLANK}$package_install_date
 
 	case $1 in
 		normal)
@@ -3328,23 +3376,25 @@ DisplayAsHelpNameDateRepo()
 			esac
 			;;
 		muted)
-			package_name_msg=$(ColourTextDarkGrey "$package_name")
+			package_name_msg=${CHARS_BLANK}$(ColourTextDarkGrey "$package_name")
+			assigned_repo_msg=''
 
 			if [[ $assigned_repo =~ 'not installable' ]]; then
-				assigned_repo_msg="$(ColourTextDarkGrey "${CHARS_ALERT}${assigned_repo}")"
+				package_install_date_msg="$(ColourTextDarkGrey "${CHARS_ALERT}${assigned_repo}")"
 			else
-				assigned_repo_msg=$(ColourTextDarkGrey "${CHARS_NORMAL}${assigned_repo}")
+				package_install_date_msg=$(ColourTextDarkGrey "${CHARS_NORMAL}${assigned_repo}")
 			fi
 			;;
 		highlighted)
 			if [[ -n $assigned_repo ]]; then
 				case $assigned_repo in
 					missing)
-						package_name_msg=$(ColourTextBrightRed "$package_name")
+						package_name_msg=${CHARS_BLANK}$(ColourTextBrightRed "$package_name")
+						package_install_date_msg="${CHARS_BLANK}$(ColourTextBrightRedBlink "$assigned_repo")"
 						assigned_repo_msg="$(ColourTextBrightRedBlink "${CHARS_ALERT}${assigned_repo}")"
 						;;
 					*)
-						package_name_msg=$(ColourTextBrightOrange "$package_name")
+						package_name_msg=${CHARS_BLANK}$(ColourTextBrightOrange "$package_name")
 						assigned_repo_msg="$(ColourTextBrightOrange "${CHARS_NOTE}${assigned_repo}")"
 				esac
 			fi
@@ -3353,19 +3403,19 @@ DisplayAsHelpNameDateRepo()
 	# column 1: package name
 
 	if [[ $maxcols -ge 1 && -n $package_name_msg ]]; then
-		printf "${CHAR_SPACER}${CHARS_BLANK}%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
+		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
 	fi
 
 	# column 2: package installation date
 
 	if [[ $maxcols -ge 2 && -n $package_install_date_msg ]]; then
-		printf "${CHAR_SPACER}${CHARS_BLANK}%-$((PACKAGE_INSTALL_DATE_COL_WIDTH+$(LenANSIDiff "$package_install_date_msg")))s" "$package_install_date_msg"
+		printf "%-$((PACKAGE_INSTALL_DATE_COL_WIDTH+$(LenANSIDiff "$package_install_date_msg")))s" "$package_install_date_msg"
 	fi
 
 	# column 3: package repository
 
 	if [[ $maxcols -ge 3 && -n $assigned_repo_msg ]]; then
-		printf "${CHAR_SPACER}%-$((PACKAGE_REPO_COL_WIDTH+$(LenANSIDiff "$assigned_repo_msg")))s" "$assigned_repo_msg"
+		printf "%-$((PACKAGE_REPO_COL_WIDTH+$(LenANSIDiff "$assigned_repo_msg")))s" "$assigned_repo_msg"
 	fi
 
 	printf '\n'
@@ -3379,18 +3429,23 @@ DisplayAsHelpTitleNameAbs()
 	# input:
 	#	$1 = package tier title
 
+	local package_name_msg=''
+	local package_abs_msg=''
+
 	DisplayLineSpaceIfNoneAlready
 
 	# column 1: package name
 
 	if [[ $maxcols -ge 1 ]]; then
-		printf "${CHARS_SPECIAL}%-${PACKAGE_NAME_COL_WIDTH}s" "$1 QPKGs:"
+		package_name_msg="${CHARS_SPECIAL}$1 QPKGs:"
+		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
 	fi
 
 	# column 2: package abbreviations
 
 	if [[ $maxcols -ge 2 ]]; then
-		printf "${CHAR_SPACER}${CHARS_SPECIAL}%s" "acceptable QPKG name abbreviations and aliases:"
+		package_abs_msg="${CHARS_SPECIAL}acceptable QPKG name abbreviations and aliases:"
+		printf "%-$((PACKAGE_ABBS_COL_WIDTH+2+$(LenANSIDiff "$package_abs_msg")))s" "$package_abs_msg"
 	fi
 
 	printf '\n'
@@ -3407,7 +3462,7 @@ DisplayAsHelpNameAbs()
 	#	$3 = acceptable package abbreviations
 
 	local package_name=${2:-}
-	local package_name_msg=$package_name
+	local package_name_msg=${CHARS_BLANK}$package_name
 	local package_abs=${3:-}
 	local package_abs_msg="${CHARS_NORMAL}${package_abs}"
 
@@ -3422,23 +3477,23 @@ DisplayAsHelpNameAbs()
 			esac
 			;;
 		muted)
-			package_name_msg=$(ColourTextDarkGrey "$package_name")
+			package_name_msg="${CHARS_BLANK}$(ColourTextDarkGrey "$package_name")"
 
 			if [[ $package_abs =~ 'not installable' ]]; then
 				package_abs_msg="$(ColourTextDarkGrey "${CHARS_ALERT}${package_abs}")"
 			else
-				package_abs_msg=$(ColourTextDarkGrey "${CHARS_NORMAL}${package_abs}")
+				package_abs_msg="$(ColourTextDarkGrey "${CHARS_NORMAL}${package_abs}")"
 			fi
 			;;
 		highlighted)
 			if [[ -n $package_abs ]]; then
 				case $package_abs in
 					missing)
-						package_name_msg=$(ColourTextBrightRed "$package_name")
+						package_name_msg=$(ColourTextBrightRed "${CHARS_ALERT}${package_name}")
 						package_abs_msg="$(ColourTextBrightRedBlink "${CHARS_ALERT}${package_abs}")"
 						;;
 					*)
-						package_name_msg=$(ColourTextBrightOrange "$package_name")
+						package_name_msg=${CHARS_NORMAL}$(ColourTextBrightOrange "$package_name")
 						package_abs_msg="$(ColourTextBrightOrange "${CHARS_NOTE}${package_abs}")"
 				esac
 			fi
@@ -3447,13 +3502,13 @@ DisplayAsHelpNameAbs()
 	# column 1: package name
 
 	if [[ $maxcols -ge 1 && -n $package_name_msg ]]; then
-		printf "${CHAR_SPACER}${CHARS_BLANK}%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
+		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
 	fi
 
 	# column 2: package repository
 
 	if [[ $maxcols -ge 2 && -n $package_abs_msg ]]; then
-		printf "${CHAR_SPACER}%s" "$package_abs_msg"
+		printf "%-$((PACKAGE_ABBS_COL_WIDTH+$(LenANSIDiff "$package_abs_msg")))s" "$package_abs_msg"
 	fi
 
 	printf '\n'
@@ -4198,7 +4253,7 @@ QPKGs.Missing:Show()
 	DisplayLineSpaceIfNoneAlready
 
 	for package in $(QPKGs-ISmissing:Array); do
-		ShowAsFail "the $(ColourTextBrightOrange "$package") QPKG is missing or broken"
+		ShowAsFail "the $(ColourTextBrightOrange "$package") QPKG is missing or broken. Please reinstall it."
 	done
 
 	return 0
@@ -4864,8 +4919,8 @@ QPKGs.Statuses:Show()
 	local -i index=0
 	local package_status_msg=''
 	local package_result_msg=''
-	maxcols=$(CalcMaxStatusColsToDisplay)
 
+	CalcMaxStatusColsToDisplay
 	DisableDebugToArchiveAndFile
 	QPKGs.States:Build
 	ShowAsProc 'writing report'
@@ -4873,7 +4928,7 @@ QPKGs.Statuses:Show()
 		{
 
 		for tier in "${PACKAGE_TIERS[@]}"; do
-			[[ $tier = addon ]] && continue		# don't need to see addons
+			[[ $tier != addon ]] || continue		# don't need to see addons
 
 			DisplayAsHelpTitleNameStatusVerPath "$tier"
 
@@ -4883,54 +4938,56 @@ QPKGs.Statuses:Show()
 						DisplayAsHelpNameStatusVerPath muted "$package_name" 'not installable: no arch'
 					elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
 						DisplayAsHelpNameStatusVerPath muted "$package_name" 'not installable: low RAM'
-					elif QPKGs-ISmissing:Exist "$package_name"; then
-						DisplayAsHelpNameStatusVerPath highlighted "$package_name" missing '' "$(QPKG.Local.Ver "$package_name")" '' "$(QPKG.InstallationPath "$package_name")"
 					else
 						DisplayAsHelpNameStatusVerPath muted "$package_name" 'not installed' '' '' "$(QPKG.Avail.Ver "$package_name")"
 					fi
 				else
-					# state
-
-					if QPKGs-ISenabled:Exist "$package_name"; then
-						package_status_notes+=(enabled)
-					elif QPKGs-ISNTenabled:Exist "$package_name"; then
-						package_status_notes+=(disabled)
-					fi
-
-					# package/process: active/slow or inactive?
-
-					if QPKGs-ACstatus-ok:Exist "$package_name"; then
-						if QPKGs-ISactive:Exist "$package_name"; then
-							package_status_notes+=(active)
-						elif QPKGs-ISslow:Exist "$package_name"; then
-							package_status_notes+=(slow)
-						elif QPKGs-ISunknown:Exist "$package_name"; then
-							package_status_notes+=(unknown)
-						else
-							package_status_notes+=(inactive)
-						fi
+					if QPKGs-ISmissing:Exist "$package_name"; then
+						DisplayAsHelpNameStatusVerPath highlighted "$package_name" missing '' "$(QPKG.Local.Ver "$package_name")" '' "$(QPKG.InstallationPath "$package_name")"
 					else
-						package_status_notes+=(unknown)
+						# state
+
+						if QPKGs-ISenabled:Exist "$package_name"; then
+							package_status_notes+=(enabled)
+						elif QPKGs-ISNTenabled:Exist "$package_name"; then
+							package_status_notes+=(disabled)
+						fi
+
+						# package/process: active/slow or inactive?
+
+						if QPKGs-ACstatus-ok:Exist "$package_name"; then
+							if QPKGs-ISactive:Exist "$package_name"; then
+								package_status_notes+=(active)
+							elif QPKGs-ISslow:Exist "$package_name"; then
+								package_status_notes+=(slow)
+							elif QPKGs-ISunknown:Exist "$package_name"; then
+								package_status_notes+=(unknown)
+							else
+								package_status_notes+=(inactive)
+							fi
+						else
+							package_status_notes+=(unknown)
+						fi
+
+						# transient state
+
+						if QPKGs-ISstarting:Exist "$package_name"; then
+							package_status_notes+=(starting)
+						elif QPKGs-ISstopping:Exist "$package_name"; then
+							package_status_notes+=(stopping)
+						elif QPKGs-ISrestarting:Exist "$package_name"; then
+							package_status_notes+=(restarting)
+						fi
+
+						# insert commas
+
+						for ((index=0; index<=((${#package_status_notes[@]}-1)); index++)); do
+							package_status_msg+=${package_status_notes[$index]}
+							[[ $((index+2)) -le ${#package_status_notes[@]} ]] && package_status_msg+=', '
+						done
+
+						DisplayAsHelpNameStatusVerPath normal "$package_name" "$package_status_msg" "$package_result_msg" "$(QPKG.Local.Ver "$package_name")" "$(QPKG.Avail.Ver "$package_name")" "$(QPKG.InstallationPath "$package_name")"
 					fi
-
-					# transient state
-
-					if QPKGs-ISstarting:Exist "$package_name"; then
-						package_status_notes+=(starting)
-					elif QPKGs-ISstopping:Exist "$package_name"; then
-						package_status_notes+=(stopping)
-					elif QPKGs-ISrestarting:Exist "$package_name"; then
-						package_status_notes+=(restarting)
-					fi
-
-					# insert commas
-
-					for ((index=0; index<=((${#package_status_notes[@]}-1)); index++)); do
-						package_status_msg+=${package_status_notes[$index]}
-						[[ $((index+2)) -le ${#package_status_notes[@]} ]] && package_status_msg+=', '
-					done
-
-					DisplayAsHelpNameStatusVerPath normal "$package_name" "$package_status_msg" "$package_result_msg" "$(QPKG.Local.Ver "$package_name")" "$(QPKG.Avail.Ver "$package_name")" "$(QPKG.InstallationPath "$package_name")"
 
 					package_status_notes=()
 					package_status_msg=''
