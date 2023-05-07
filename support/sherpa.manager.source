@@ -260,8 +260,11 @@ Self:Results()
 
 	[[ ${self_debug_archive_afterward:=false} = true ]] && ArchiveActiveSessLog
 	ResetActiveSessLog
-	EraseThisLine
-	DisplayLineSpaceIfNoneAlready   # final on-screen linespace
+
+	if [[ $opts_verbose = false ]]; then
+		EraseThisLine
+		DisplayLineSpaceIfNoneAlready   # final on-screen linespace
+	fi
 
 	return 0
 
@@ -3252,6 +3255,7 @@ DisplayAsHelpNameStatusVerPath()
 
 			if [[ -n $package_upgrade_version && $package_installed_version != "$package_upgrade_version" ]]; then
 				package_version_msg+=" ($(ColourTextBrightOrange "$package_upgrade_version"))"
+				package_name_msg="${CHARS_BLANK}$(ColourTextBrightOrange "$package_name")"
 			fi
 			;;
 		muted)
@@ -3261,7 +3265,7 @@ DisplayAsHelpNameStatusVerPath()
 
 			if [[ -n $package_status ]]; then
 				if [[ $package_status =~ 'not installable' ]]; then
-					package_status_msg="$(ColourTextDarkGrey "${CHARS_ALERT}${package_status}")"
+					package_status_msg="$(ColourTextDarkGrey "${CHARS_NORMAL}${package_status}")"
 					package_version_msg=''
 				else
 					package_status_msg="$(ColourTextDarkGrey "${CHARS_NORMAL}${package_status}")"
@@ -3377,13 +3381,8 @@ DisplayAsHelpNameDateRepo()
 			;;
 		muted)
 			package_name_msg=${CHARS_BLANK}$(ColourTextDarkGrey "$package_name")
+			package_install_date_msg="${CHARS_BLANK}$(ColourTextDarkGrey "$assigned_repo")"
 			assigned_repo_msg=''
-
-			if [[ $assigned_repo =~ 'not installable' ]]; then
-				package_install_date_msg="$(ColourTextDarkGrey "${CHARS_ALERT}${assigned_repo}")"
-			else
-				package_install_date_msg=$(ColourTextDarkGrey "${CHARS_NORMAL}${assigned_repo}")
-			fi
 			;;
 		highlighted)
 			if [[ -n $assigned_repo ]]; then
@@ -3478,12 +3477,7 @@ DisplayAsHelpNameAbs()
 			;;
 		muted)
 			package_name_msg="${CHARS_BLANK}$(ColourTextDarkGrey "$package_name")"
-
-			if [[ $package_abs =~ 'not installable' ]]; then
-				package_abs_msg="$(ColourTextDarkGrey "${CHARS_ALERT}${package_abs}")"
-			else
-				package_abs_msg="$(ColourTextDarkGrey "${CHARS_NORMAL}${package_abs}")"
-			fi
+			package_abs_msg="$(ColourTextDarkGrey "${CHARS_NORMAL}${package_abs}")"
 			;;
 		highlighted)
 			if [[ -n $package_abs ]]; then
