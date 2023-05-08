@@ -1,3 +1,6 @@
+* add 'activate' as alias to 'restart' action.
+	'deactivate' as an alias to 'stop' action.
+
 * ensure all calls to 'pidof' return only a single PID.
 
 * include elapsed time when writing DisplayRunAndLog() results to debug log.
