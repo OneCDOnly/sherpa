@@ -379,9 +379,9 @@ Consts:Load()
 	readonly HELP_DESC_INDENT=3
 	readonly HELP_SYNTAX_INDENT=6
 
-	readonly PACKAGE_NAME_COL_WIDTH=22
-	readonly PACKAGE_STATUS_COL_WIDTH=29
-	readonly PACKAGE_AUTHOR_COL_WIDTH=21
+	readonly PACKAGE_NAME_COL_WIDTH=21
+	readonly PACKAGE_STATUS_COL_WIDTH=23
+	readonly PACKAGE_AUTHOR_COL_WIDTH=22
 	readonly PACKAGE_REPO_COL_WIDTH=40
 	readonly PACKAGE_INSTALL_DATE_COL_WIDTH=22
 	readonly PACKAGE_VER_COL_WIDTH=17
@@ -3223,32 +3223,40 @@ DisplayAsHelpNameStatusVerPath()
 
 			if [[ -n $package_status ]]; then
 				patt=\\benabled\\b
-				[[ $package_status =~ $patt ]] && package_status_msg="$(ColourTextBrightGreen enabled)"
+				[[ $package_status =~ $patt ]] && package_status_msg+=" $(ColourTextBrightGreen enabled)"
 
 				patt=\\bdisabled\\b
-				[[ $package_status =~ $patt ]] && package_status_msg="$(ColourTextBrightRed disabled)"
+				[[ $package_status =~ $patt ]] && package_status_msg+=" $(ColourTextBrightRed disabled)"
 
 				patt=\\bactive\\b
-				[[ $package_status =~ $patt ]] && package_status_msg+=", $(ColourTextBrightGreen active)"
+				[[ $package_status =~ $patt ]] && package_status_msg+=" $(ColourTextBrightGreen active)"
 
 				patt=\\bslow\\b
-				[[ $package_status =~ $patt ]] && package_status_msg+=", $(ColourTextBrightOrange slow)"
+				[[ $package_status =~ $patt ]] && package_status_msg+=" $(ColourTextBrightOrange slow)"
 
 				patt=\\binactive\\b
-				[[ $package_status =~ $patt ]] && package_status_msg+=", $(ColourTextBrightRed inactive)"
+				[[ $package_status =~ $patt ]] && package_status_msg+=" $(ColourTextBrightRed inactive)"
 
 				patt=\\bstarting\\b
-				[[ $package_status =~ $patt ]] && package_status_msg+=", $(ColourTextBrightOrange starting)"
+				[[ $package_status =~ $patt ]] && package_status_msg+=" $(ColourTextBrightOrange starting)"
 
 				patt=\\bstopping\\b
-				[[ $package_status =~ $patt ]] && package_status_msg+=", $(ColourTextBrightOrange stopping)"
+				[[ $package_status =~ $patt ]] && package_status_msg+=" $(ColourTextBrightOrange stopping)"
 
 				patt=\\bunknown\\b
-				[[ $package_status =~ $patt ]] && package_status_msg+=", $(ColourTextBrightOrange unknown)"
+				[[ $package_status =~ $patt ]] && package_status_msg+=" $(ColourTextBrightOrange unknown)"
 
-				[[ -z $package_status_msg ]] && package_status_msg="$package_status"
+				if [[ -n $package_status_msg ]]; then
+					package_status_msg="${package_status_msg#* }"		# remove leading whitespace
+					package_status_msg="${package_status_msg%* }"		# remove trailing whitespace
+					package_status_msg="${package_status_msg// /, }"	# insert separators
+				else
+					package_status_msg="$package_status"
+				fi
 
 				package_status_msg="${CHARS_NORMAL}${package_status_msg}"
+			else
+				package_status_msg="$(ColourTextBrightOrange "${CHARS_NOTE}unknown")"
 			fi
 
 			package_version_msg=${CHARS_BLANK}$package_installed_version
@@ -4918,8 +4926,6 @@ QPKGs.Statuses:Show()
 	Func:Entry
 	local tier=''
 	local package_name=''
-	local -a package_status_notes=()
-	local -i index=0
 	local package_status_msg=''
 	local package_result_msg=''
 
@@ -4951,48 +4957,36 @@ QPKGs.Statuses:Show()
 						# state
 
 						if QPKGs-ISenabled:Exist "$package_name"; then
-							package_status_notes+=(enabled)
+							package_status_msg=enabled
 						elif QPKGs-ISNTenabled:Exist "$package_name"; then
-							package_status_notes+=(disabled)
+							package_status_msg=disabled
 						fi
 
 						# package/process: active/slow or inactive?
 
 						if QPKGs-ACstatus-ok:Exist "$package_name"; then
 							if QPKGs-ISactive:Exist "$package_name"; then
-								package_status_notes+=(active)
+								package_status_msg+=' active'
 							elif QPKGs-ISslow:Exist "$package_name"; then
-								package_status_notes+=(slow)
+								package_status_msg+=' slow'
+							elif QPKGs-ISstarting:Exist "$package_name"; then
+								package_status_msg+=' starting'
+							elif QPKGs-ISstopping:Exist "$package_name"; then
+								package_status_msg+=' stopping'
+							elif QPKGs-ISrestarting:Exist "$package_name"; then
+								package_status_msg+=' restarting'
 							elif QPKGs-ISunknown:Exist "$package_name"; then
-								package_status_notes+=(unknown)
+								package_status_msg+=' unknown'
 							else
-								package_status_notes+=(inactive)
+								package_status_msg+=' inactive'
 							fi
 						else
-							package_status_notes+=(unknown)
+							package_status_msg+=' unknown'
 						fi
-
-						# transient state
-
-						if QPKGs-ISstarting:Exist "$package_name"; then
-							package_status_notes+=(starting)
-						elif QPKGs-ISstopping:Exist "$package_name"; then
-							package_status_notes+=(stopping)
-						elif QPKGs-ISrestarting:Exist "$package_name"; then
-							package_status_notes+=(restarting)
-						fi
-
-						# insert commas
-
-						for ((index=0; index<=((${#package_status_notes[@]}-1)); index++)); do
-							package_status_msg+=${package_status_notes[$index]}
-							[[ $((index+2)) -le ${#package_status_notes[@]} ]] && package_status_msg+=', '
-						done
 
 						DisplayAsHelpNameStatusVerPath normal "$package_name" "$package_status_msg" "$package_result_msg" "$(QPKG.Local.Ver "$package_name")" "$(QPKG.Avail.Ver "$package_name")" "$(QPKG.InstallationPath "$package_name")"
 					fi
 
-					package_status_notes=()
 					package_status_msg=''
 					package_result_msg=''
 				fi
