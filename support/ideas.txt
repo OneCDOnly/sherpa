@@ -1,5 +1,3 @@
-* sherpa should auto-upgrade the sherpa QPKG if one is available when next performing a package action.
-
 * each QPKG service script should not affect the last operation result when QPKG status is requested.
 
 * ensure all calls to 'pidof' return only a single PID.
