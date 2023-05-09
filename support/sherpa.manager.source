@@ -325,7 +325,7 @@ Vars:Load()
 Consts:Load()
 	{
 
-	if ! /bin/grep -q "$(echo 'ZG9udGVkaXQK' | /usr/bin/openssl enc -base64 -d)" "$0"; then		# use encrypted search string to prevent grep finding this code line
+	if ! /bin/grep -q "$(echo 'ZG9udGVkaXQK' | /usr/bin/openssl enc -base64 -d)" "$0"; then		# use encrypted search-string to prevent grep finding this code line
 		local -r SOURCE_BRANCH=stable
 	else
 		local -r SOURCE_BRANCH=unstable
@@ -802,6 +802,7 @@ Self:Validate()
 	fi
 
 	# Ensure standalone packages are also installed when processing these specific actions
+
 	for action in upgrade reinstall install; do
 		for package in $(QPKGs-AC${action}-to:Array); do
 			for prospect in $(QPKG:GetStandalones "$package"); do
@@ -811,19 +812,21 @@ Self:Validate()
 	done
 
 	# Install standalones for installed dependents
+
 	for package in $(QPKGs-ISinstalled:Array); do
-		if [[ $opts_check = true ]] || QPKGs-ISactive:Exist "$package" || QPKGs-ACactivate-to:Exist "$package"; then
+		if [[ $opts_check = true ]] || QPKGs-ACactivate-to:Exist "$package"; then
 			for prospect in $(QPKG:GetStandalones "$package"); do
 				QPKGs-ISNTinstalled:Exist "$prospect" && QPKGs-ACinstall-to:Add "$prospect"
 			done
 		fi
 	done
 
-	# If a standalone has been selected for `reinstall` or `reactivate`, need to `deactivate` its dependents first, and `activate` them again later
+	# If a standalone has been selected for `reinstall`/`reactivate`, need to `deactivate` its dependents first, and `activate` them again later
+
 	for package in $(QPKGs-ACreinstall-to:Array) $(QPKGs-ACreactivate-to:Array); do
-		if QPKGs-SCstandalone:Exist "$package" && QPKGs-ISactive:Exist "$package"; then
+		if QPKGs-SCstandalone:Exist "$package" && QPKGs-ISinstalled:Exist "$package"; then
 			for prospect in $(QPKG:GetDependents "$package"); do
-				if QPKGs-ISactive:Exist "$prospect"; then
+				if QPKGs-ISinstalled:Exist "$prospect"; then
 					QPKGs-ACdeactivate-to:Add "$prospect"
 					! QPKGs-ACuninstall-to:Exist "$prospect" && ! QPKGs-ACinstall-to:Exist "$prospect" && QPKGs-ACactivate-to:Add "$prospect"
 				fi
@@ -831,21 +834,23 @@ Self:Validate()
 		fi
 	done
 
-	# If a standalone has been selected for `deactivate` or `uninstall`, need to `deactivate` its dependents first
+	# If a standalone has been selected for `deactivate`/`uninstall`, need to `deactivate` its dependents first
+
 	for package in $(QPKGs-ACdeactivate-to:Array) $(QPKGs-ACuninstall-to:Array); do
 		if QPKGs-SCstandalone:Exist "$package" && QPKGs-ISinstalled:Exist "$package"; then
 			for prospect in $(QPKG:GetDependents "$package"); do
-				QPKGs-ISactive:Exist "$prospect" && QPKGs-ACdeactivate-to:Add "$prospect"
+				QPKGs-ISinstalled:Exist "$prospect" && QPKGs-ACdeactivate-to:Add "$prospect"
 			done
 		fi
 	done
 
 	# If a standalone has been selected for `uninstall`, then `install`, need to `deactivate` its dependents first, and `activate` them again later
+
 	for package in $(QPKGs-ACuninstall-to:Array); do
 		if QPKGs-SCstandalone:Exist "$package" && QPKGs-ISinstalled:Exist "$package"; then
 			if QPKGs-ACinstall-to:Exist "$package"; then
 				for prospect in $(QPKG:GetDependents "$package"); do
-					if QPKGs-ISactive:Exist "$prospect"; then
+					if QPKGs-ISinstalled:Exist "$prospect"; then
 						QPKGs-ACdeactivate-to:Add "$prospect"
 						! QPKGs-ACuninstall-to:Exist "$prospect" && ! QPKGs-ACinstall-to:Exist "$prospect" && QPKGs-ACactivate-to:Add "$prospect"
 					fi
@@ -854,36 +859,44 @@ Self:Validate()
 		fi
 	done
 
-	if QPKGs-ACreinstall-to:Exist Entware; then # Entware is a special case: complete removal and fresh install (to clear all installed IPKs)
+	if QPKGs-ACreinstall-to:Exist Entware; then 	# Entware is a special case: complete removal and fresh install (to clear all installed IPKs)
 		QPKGs-ACreinstall-to:Remove Entware
 		QPKGs-ACuninstall-to:Add Entware
 		QPKGs-ACinstall-to:Add Entware
 	fi
 
-	# Check for standalone packages that must be active first, because dependents are being reinstalled/installed/activated/reactivated
+	# If dependents have been selected for `reinstall`/`install`/`activate`/`reactivate, need to `activate` their standalone packages first
+
 	for action in reinstall install activate reactivate; do
 		for package in $(QPKGs-AC${action}-to:Array); do
 			for prospect in $(QPKG:GetStandalones "$package"); do
-				QPKGs-ISNTactive:Exist "$prospect" && QPKGs-ACactivate-to:Add "$prospect"
+				QPKGs-ISinstalled:Exist "$prospect" && QPKGs-ACactivate-to:Add "$prospect"
 			done
 		done
 	done
 
-	# Check for packages that must be enabled first, because an `activate`/`reactivate` was requested
+	# Check for packages that must be enabled first, because `activate`/`reactivate` was requested
+
 	for action in activate reactivate; do
 		for package in $(QPKGs-AC${action}-to:Array); do
-			QPKGs-ISNTenabled:Exist "$package" && QPKGs-ACenable-to:Add "$package"
+			QPKGs-ISinstalled:Exist "$package" && QPKGs-ISNTenabled:Exist "$package" && QPKGs-ACenable-to:Add "$package"
 		done
 	done
 
-	# No-need to `deactivate` packages that are about to be uninstalled
+	# No-need to `deactivate`/`reactivate`/`disable` packages that are to be uninstalled
+
 	if QPKGs.ACuninstall.SCall:IsSet; then
 		QPKGs-ACdeactivate-to:Init
+		QPKGs-ACreactivate-to:Init
+		QPKGs-ACdisable-to:Init
 	else
 		QPKGs-ACdeactivate-to:Remove "$(QPKGs-ACuninstall-to:Array)"
+		QPKGs-ACreactivate-to:Remove "$(QPKGs-ACuninstall-to:Array)"
+		QPKGs-ACdisable-to:Remove "$(QPKGs-ACuninstall-to:Array)"
 	fi
 
-	# No-need to `reactivate` packages that are about to be upgraded/reinstalled/installed/activated
+	# No-need to `reactivate` packages that are to be upgraded/reinstalled/installed/activated
+
 	for action in upgrade reinstall install activate; do
 		QPKGs-ACreactivate-to:Remove "$(QPKGs-AC${action}-to:Array)"
 	done
@@ -913,7 +926,7 @@ Self:Validate()
 		QPKGs.NewVers:Show
 
 		for package in $(QPKGs-SCdependent:Array); do
-			! QPKGs-SCupgradable:Exist "$package" && QPKGs-ISactive:Exist "$package" && QPKGs-SCcanrestarttoupdate:Exist "$package" && QPKGs-ACreactivate-to:Add "$package"
+			! QPKGs-SCupgradable:Exist "$package" && QPKGs-SCcanrestarttoupdate:Exist "$package" && QPKGs-ISinstalled:Exist "$package" && QPKGs-ACreactivate-to:Add "$package"
 		done
 	fi
 
@@ -1506,9 +1519,6 @@ ParseArgs()
 				action|actions)
 					group=actions
 					;;
-				active|started)
-					group=active
-					;;
 				all|entire|everything)
 					group=all
 					;;
@@ -1520,9 +1530,6 @@ ParseArgs()
 					;;
 				group|groups)
 					group=groups
-					;;
-				inactive|stopped|not-active)
-					group=NTactive
 					;;
 				l|last)
 					group=last
@@ -1583,7 +1590,7 @@ ParseArgs()
 						QPKGs.AC${action}.SC${group}:Set
 						group=''
 						;;
-					active|installed|upgradable|NTactive)
+					installed|upgradable)
 						QPKGs.AC${action}.IS${group}:Set
 						group=''
 						;;
@@ -1605,7 +1612,7 @@ ParseArgs()
 					all-actions|all)
 						opts_show_actions_all=true
 						;;
-					active|backedup|installed|NTactive|NTbackedup|NTinstalled)
+					backedup|installed|NTbackedup|NTinstalled)
 						QPKGs.AClist.IS${group}:Set
 						hide_title=true
 						;;
@@ -1694,7 +1701,7 @@ ParseArgs()
 						QPKGs.AC${action}.SC${group}:Set
 						group=''
 						;;
-					active|installed|upgradable|NTactive)
+					installed|upgradable)
 						QPKGs.AC${action}.IS${group}:Set
 						group=''
 						;;
@@ -1723,7 +1730,7 @@ ParseArgs()
 							action_force=false
 						fi
 						;;
-					active|upgradable|NTactive)
+					upgradable)
 						QPKGs.AC${action}.IS${group}:Set
 						group=''
 						action_force=false
@@ -2610,7 +2617,9 @@ KillActiveFork()
 
 	if [[ -n ${fork_pid:-} && ${fork_pid:-0} -gt 0 && -d /proc/$fork_pid ]]; then
 		sleep .2
+		set +m		# disable job control
 		kill -9 "$fork_pid" 2>/dev/null
+		set -m		# re-enable job control
 		wait 2>/dev/null
 	fi
 
