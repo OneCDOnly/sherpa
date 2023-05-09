@@ -1,8 +1,12 @@
+* sherpa should auto-upgrade the sherpa QPKG if one is available when next performing a package action.
+
+* each QPKG service script should not affect the last operation result when QPKG status is requested.
+
 * ensure all calls to 'pidof' return only a single PID.
 
 * include elapsed time when writing DisplayRunAndLog() results to debug log.
 
-* service scripts should explicitly state that a 'start' or 'stop' action has completed. And how long it took.
+* service scripts should explicitly state that a requested 'start' or 'stop' action has completed. And how long it took.
 
 * add mini rolling CPU utilitisation graph to progress display while installing QPKGs?
     while true; do top -b -n 2 -d 0.2 -p 1621 | tail -1 | awk '{print $9}'; done

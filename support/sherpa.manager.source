@@ -63,8 +63,8 @@ Self:Init()
 	Consts:Load
 
 	sess_active_pathfile=$THIS_PACKAGE_PATH/session.$$.active.log
-	rm -f "$REPORT_PATHFILE" &>/dev/null
-	rm -f "$RAMDISKS_FREESPACE_PATHFILE" &>/dev/null
+	rm -f "$REPORT_PATHFILE"
+	rm -f "$RAMDISKS_FREESPACE_PATHFILE"
 
 	trap RunOnEXIT EXIT
 	trap RunOnSIGINT INT
@@ -226,10 +226,10 @@ Self:Results()
 			QPKGs.IsInstalled:Show
 		elif QPKGs.AClist.ISNTinstalled:IsSet; then
 			QPKGs.IsNtInstalled:Show
-		elif QPKGs.AClist.ISstarted:IsSet; then
-			QPKGs.IsStarted:Show
-		elif QPKGs.AClist.ISNTstarted:IsSet; then
-			QPKGs.IsNtStarted:Show
+		elif QPKGs.AClist.ISactive:IsSet; then
+			QPKGs.IsActive:Show
+		elif QPKGs.AClist.ISNTactive:IsSet; then
+			QPKGs.IsNtActive:Show
 		elif QPKGs.AClist.SCinstallable:IsSet; then
 			QPKGs.ScInstallable:Show
 		elif QPKGs.AClist.SCupgradable:IsSet; then
@@ -325,7 +325,7 @@ Vars:Load()
 Consts:Load()
 	{
 
-	if ! /bin/grep -q "$(echo 'ZG9udGVkaXQK' | /usr/bin/openssl enc -base64 -d)" "$0"; then		# use encrypted search string to prevent grep finding this code line
+	if ! /bin/grep -q "$(echo 'ZG9udGVkaXQK' | /usr/bin/openssl enc -base64 -d)" "$0"; then		# use encrypted search-string to prevent grep finding this code line
 		local -r SOURCE_BRANCH=stable
 	else
 		local -r SOURCE_BRANCH=unstable
@@ -379,9 +379,9 @@ Consts:Load()
 	readonly HELP_DESC_INDENT=3
 	readonly HELP_SYNTAX_INDENT=6
 
-	readonly PACKAGE_NAME_COL_WIDTH=22
-	readonly PACKAGE_STATUS_COL_WIDTH=29
-	readonly PACKAGE_AUTHOR_COL_WIDTH=21
+	readonly PACKAGE_NAME_COL_WIDTH=21
+	readonly PACKAGE_STATUS_COL_WIDTH=23
+	readonly PACKAGE_AUTHOR_COL_WIDTH=22
 	readonly PACKAGE_REPO_COL_WIDTH=40
 	readonly PACKAGE_INSTALL_DATE_COL_WIDTH=22
 	readonly PACKAGE_VER_COL_WIDTH=17
@@ -511,10 +511,10 @@ Lists:Load()
 	PACKAGE_TIERS=(standalone addon dependent)
 
 	# sorted
-	QPKG_IS_STATES=(active backedup downloaded enabled installed missing signed slow started unknown)
-	QPKG_ISNT_STATES=(active backedup downloaded enabled installed signed started)
+	QPKG_IS_STATES=(active backedup downloaded enabled installed missing signed slow unknown)
+	QPKG_ISNT_STATES=(active backedup downloaded enabled installed signed)
 	QPKG_STATES_TRANSIENT=(starting stopping restarting)
-	QPKG_SERVICE_RESULTS=(ok unknown)
+	QPKG_SERVICE_RESULTS=(ok failed unknown)
 
 	# sorted
 	IPK_STATES=(downloaded installed reinstalled upgraded)
@@ -522,15 +522,15 @@ Lists:Load()
 	# ordered
 	PIP_ACTIONS=(download uninstall upgrade reinstall install)
 	IPK_ACTIONS=(download uninstall upgrade reinstall install)
-	QPKG_ACTIONS=(download rebuild reassign backup stop disable uninstall upgrade reinstall install restore clean enable start restart sign status)
+	QPKG_ACTIONS=(status rebuild reassign download backup deactivate disable uninstall upgrade reinstall install restore clean enable activate reactivate sign)
 
-	# these words may be specified by the user -----------------------------------------------------
+	# these actions, states and scopes may be specified by the user -----------------------------------------------------
 	# sorted
 	USER_QPKG_SC_GROUPS=(all canbackup canclean canrestarttoupdate dependent hasdependents installable standalone upgradable)
 	USER_QPKG_SCNT_GROUPS=(canclean installable upgradable)
-	USER_QPKG_IS_STATES=(backedup installed missing started)
-	USER_QPKG_ISNT_STATES=(backedup installed started)
-	USER_QPKG_ACTIONS=(backup clean install list reassign rebuild reinstall restart restore start status stop uninstall upgrade)
+	USER_QPKG_IS_STATES=(active backedup enabled installed missing)
+	USER_QPKG_ISNT_STATES=(active backedup enabled installed)
+	USER_QPKG_ACTIONS=(activate backup clean enable deactivate disable install list reactivate reassign rebuild reinstall restore status uninstall upgrade)
 
 	# KLUDGE: for some reason, setting `readonly` while populating arrays causes their scope to become local, so need to set as `readonly` afterward to ensure global scope. GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
 	readonly PACKAGE_TIERS
@@ -643,9 +643,9 @@ Self:LogEnv()
 		DebugUserspace ok '$PATH' "${PATH:0:trimmed_width}${CHARS_ELLIPSIS}"
 	fi
 
-	DebugBinPathVerAndMinVer python "$(GetDefPythonVer)" "$MIN_PYTHON_VER"
-	DebugBinPathVerAndMinVer python3 "$(GetDefPython3Ver)" "$MIN_PYTHON_VER"
-	DebugBinPathVerAndMinVer perl "$(GetDefPerlVer)" "$MIN_PERL_VER"
+	DebugBinPathVerAndMinVer python "$(GetPythonVer)" "$MIN_PYTHON_VER"
+	DebugBinPathVerAndMinVer python3 "$(GetPython3Ver)" "$MIN_PYTHON_VER"
+	DebugBinPathVerAndMinVer perl "$(GetPerlVer)" "$MIN_PERL_VER"
 	DebugScript 'logs path' "$LOGS_PATH"
 	DebugScript 'cache path' "$CACHE_PATH"
 	DebugQpkg detect 'action concurrency' "$CONCURRENCY"
@@ -766,7 +766,7 @@ Self:Validate()
 
 		if QPKG.IsInstalled Entware && QPKG.IsEnabled Entware; then
 			if [[ -e $PYTHON3_CMD ]]; then
-				installed_ver=$(GetDefPython3Ver "$PYTHON3_CMD")
+				installed_ver=$(GetPython3Ver "$PYTHON3_CMD")
 
 				if [[ ${installed_ver//./} -lt $MIN_PYTHON_VER ]]; then
 					ShowAsInfo 'the installed Python environment will be upgraded'
@@ -775,7 +775,7 @@ Self:Validate()
 			fi
 
 			if [[ -e $PERL_CMD ]]; then
-				installed_ver=$(GetDefPerlVer "$PERL_CMD")
+				installed_ver=$(GetPerlVer "$PERL_CMD")
 
 				if [[ ${installed_ver//./} -lt $MIN_PERL_VER ]]; then
 					ShowAsInfo 'the installed Perl environment will be upgraded'
@@ -802,6 +802,7 @@ Self:Validate()
 	fi
 
 	# Ensure standalone packages are also installed when processing these specific actions
+
 	for action in upgrade reinstall install; do
 		for package in $(QPKGs-AC${action}-to:Array); do
 			for prospect in $(QPKG:GetStandalones "$package"); do
@@ -811,74 +812,93 @@ Self:Validate()
 	done
 
 	# Install standalones for installed dependents
+
 	for package in $(QPKGs-ISinstalled:Array); do
-		if [[ $opts_check = true ]] || QPKGs-ISstarted:Exist "$package" || QPKGs-ACstart-to:Exist "$package"; then
+		if [[ $opts_check = true ]] || QPKGs-ACactivate-to:Exist "$package"; then
 			for prospect in $(QPKG:GetStandalones "$package"); do
 				QPKGs-ISNTinstalled:Exist "$prospect" && QPKGs-ACinstall-to:Add "$prospect"
 			done
 		fi
 	done
 
-	# If a standalone has been selected for `reinstall` or `restart`, need to `stop` its dependents first, and `start` them again later
-	for package in $(QPKGs-ACreinstall-to:Array) $(QPKGs-ACrestart-to:Array); do
-		if QPKGs-SCstandalone:Exist "$package" && QPKGs-ISstarted:Exist "$package"; then
+	# If a standalone has been selected for `reinstall`/`reactivate`, need to `deactivate` its dependents first, and `activate` them again later
+
+	for package in $(QPKGs-ACreinstall-to:Array) $(QPKGs-ACreactivate-to:Array); do
+		if QPKGs-SCstandalone:Exist "$package" && QPKGs-ISinstalled:Exist "$package"; then
 			for prospect in $(QPKG:GetDependents "$package"); do
-				if QPKGs-ISstarted:Exist "$prospect"; then
-					QPKGs-ACstop-to:Add "$prospect"
-					! QPKGs-ACuninstall-to:Exist "$prospect" && ! QPKGs-ACinstall-to:Exist "$prospect" && QPKGs-ACstart-to:Add "$prospect"
+				if QPKGs-ISinstalled:Exist "$prospect"; then
+					QPKGs-ACdeactivate-to:Add "$prospect"
+					! QPKGs-ACuninstall-to:Exist "$prospect" && ! QPKGs-ACinstall-to:Exist "$prospect" && QPKGs-ACactivate-to:Add "$prospect"
 				fi
 			done
 		fi
 	done
 
-	# If a standalone has been selected for `stop` or `uninstall`, need to `stop` its dependents first
-	for package in $(QPKGs-ACstop-to:Array) $(QPKGs-ACuninstall-to:Array); do
+	# If a standalone has been selected for `deactivate`/`uninstall`, need to `deactivate` its dependents first
+
+	for package in $(QPKGs-ACdeactivate-to:Array) $(QPKGs-ACuninstall-to:Array); do
 		if QPKGs-SCstandalone:Exist "$package" && QPKGs-ISinstalled:Exist "$package"; then
 			for prospect in $(QPKG:GetDependents "$package"); do
-				QPKGs-ISstarted:Exist "$prospect" && QPKGs-ACstop-to:Add "$prospect"
+				QPKGs-ISinstalled:Exist "$prospect" && QPKGs-ACdeactivate-to:Add "$prospect"
 			done
 		fi
 	done
 
-	# If a standalone has been selected for `uninstall`, then `install`, need to `stop` its dependents first, and `start` them again later
+	# If a standalone has been selected for `uninstall`, then `install`, need to `deactivate` its dependents first, and `activate` them again later
+
 	for package in $(QPKGs-ACuninstall-to:Array); do
 		if QPKGs-SCstandalone:Exist "$package" && QPKGs-ISinstalled:Exist "$package"; then
 			if QPKGs-ACinstall-to:Exist "$package"; then
 				for prospect in $(QPKG:GetDependents "$package"); do
-					if QPKGs-ISstarted:Exist "$prospect"; then
-						QPKGs-ACstop-to:Add "$prospect"
-						! QPKGs-ACuninstall-to:Exist "$prospect" && ! QPKGs-ACinstall-to:Exist "$prospect" && QPKGs-ACstart-to:Add "$prospect"
+					if QPKGs-ISinstalled:Exist "$prospect"; then
+						QPKGs-ACdeactivate-to:Add "$prospect"
+						! QPKGs-ACuninstall-to:Exist "$prospect" && ! QPKGs-ACinstall-to:Exist "$prospect" && QPKGs-ACactivate-to:Add "$prospect"
 					fi
 				done
 			fi
 		fi
 	done
 
-	if QPKGs-ACreinstall-to:Exist Entware; then # Entware is a special case: complete removal and fresh install (to clear all installed IPKs)
+	if QPKGs-ACreinstall-to:Exist Entware; then 	# Entware is a special case: complete removal and fresh install (to clear all installed IPKs)
 		QPKGs-ACreinstall-to:Remove Entware
 		QPKGs-ACuninstall-to:Add Entware
 		QPKGs-ACinstall-to:Add Entware
 	fi
 
-	# Check for standalone packages that must be started first, because dependents are being reinstalled/installed/started/restarted
-	for action in reinstall install start restart; do
+	# If dependents have been selected for `reinstall`/`install`/`activate`/`reactivate, need to `activate` their standalone packages first
+
+	for action in reinstall install activate reactivate; do
 		for package in $(QPKGs-AC${action}-to:Array); do
 			for prospect in $(QPKG:GetStandalones "$package"); do
-				QPKGs-ISNTstarted:Exist "$prospect" && QPKGs-ACstart-to:Add "$prospect"
+				QPKGs-ISinstalled:Exist "$prospect" && QPKGs-ACactivate-to:Add "$prospect"
 			done
 		done
 	done
 
-	# No-need to `stop` packages that are about to be uninstalled
+	# Check for packages that must be enabled first, because `activate`/`reactivate` was requested
+
+	for action in activate reactivate; do
+		for package in $(QPKGs-AC${action}-to:Array); do
+			QPKGs-ISinstalled:Exist "$package" && QPKGs-ISNTenabled:Exist "$package" && QPKGs-ACenable-to:Add "$package"
+		done
+	done
+
+	# No-need to `deactivate`/`reactivate`/`disable` packages that are to be uninstalled
+
 	if QPKGs.ACuninstall.SCall:IsSet; then
-		QPKGs-ACstop-to:Init
+		QPKGs-ACdeactivate-to:Init
+		QPKGs-ACreactivate-to:Init
+		QPKGs-ACdisable-to:Init
 	else
-		QPKGs-ACstop-to:Remove "$(QPKGs-ACuninstall-to:Array)"
+		QPKGs-ACdeactivate-to:Remove "$(QPKGs-ACuninstall-to:Array)"
+		QPKGs-ACreactivate-to:Remove "$(QPKGs-ACuninstall-to:Array)"
+		QPKGs-ACdisable-to:Remove "$(QPKGs-ACuninstall-to:Array)"
 	fi
 
-	# No-need to `restart` packages that are about to be upgraded/reinstalled/installed/started
-	for action in upgrade reinstall install start; do
-		QPKGs-ACrestart-to:Remove "$(QPKGs-AC${action}-to:Array)"
+	# No-need to `reactivate` packages that are to be upgraded/reinstalled/installed/activated
+
+	for action in upgrade reinstall install activate; do
+		QPKGs-ACreactivate-to:Remove "$(QPKGs-AC${action}-to:Array)"
 	done
 
 	# Build a list of original storage paths for packages to be uninstalled, then installed again later this session (a "complex reinstall")
@@ -906,7 +926,7 @@ Self:Validate()
 		QPKGs.NewVers:Show
 
 		for package in $(QPKGs-SCdependent:Array); do
-			! QPKGs-SCupgradable:Exist "$package" && QPKGs-ISstarted:Exist "$package" && QPKGs-SCcanrestarttoupdate:Exist "$package" && QPKGs-ACrestart-to:Add "$package"
+			! QPKGs-SCupgradable:Exist "$package" && QPKGs-SCcanrestarttoupdate:Exist "$package" && QPKGs-ISinstalled:Exist "$package" && QPKGs-ACreactivate-to:Add "$package"
 		done
 	fi
 
@@ -919,32 +939,37 @@ Self:Validate()
 
 # QPKG action processing shall be conducted in this order:
 
-#   1. rebuild all				(meta-action: `install` QPKG and `restore` config, but only if package has an existing backup file)
-#   2. reassign all
-#   3. download all
-#   4. backup all
-#   5. stop & disable dependents
-#   6. stop & disable standalones
-#   7. uninstall all
+#	1. status all
+#	2. rebuild all				(meta-action: `install` QPKG and `restore` config, but only if package has an existing backup file)
+#	3. reassign all
+#	4. download all
+#	5. backup all
 
-#   8. upgrade standalones
-#   9. reinstall standalones
-#  10. install standalones
-#  11. restore standalones
-#  12. clean standalones		(unsupported by all standalone QPKGs)
-#  13. enable & start standalones
-#  14. restart standalones
+#	6. stop/deactivate dependents
+#	7. disable dependents
+#	8. stop/deactivate standalones
+#	9. disable standalones
+#  10. uninstall all
 
-#  15. upgrade dependents
-#  16. reinstall dependents
-#  17. install dependents
-#  18. restore dependents
-#  19. clean dependents			(supported by most dependent packages, but not all)
-#  20. enable & start dependents
-#  21. restart dependents
+#  11. upgrade standalones
+#  12. reinstall standalones
+#  13. install standalones
+#  14. restore standalones
+#  15. clean standalones		(unsupported by all standalone QPKGs)
+#  16. enable standalones
+#  17. start/activate standalones
+#  18. restart/reactivate standalones
 
-#  22. "sign" all
-#  23. status all
+#  19. upgrade dependents
+#  20. reinstall dependents
+#  21. install dependents
+#  22. restore dependents
+#  23. clean dependents			(supported by most dependent packages, but not all)
+#  24. enable dependents
+#  25. start/activate dependents
+#  26. restart/reactivate dependents
+
+#  27. "sign" all
 
 Actions:Proc()
 	{
@@ -958,7 +983,7 @@ Actions:Proc()
 	local action=''
 	local -i tier_index=0
 
-	rm -f "$SESS_ACTIONS_RESULTS_PATHFILE" &>/dev/null
+	rm -f "$SESS_ACTIONS_RESULTS_PATHFILE"
 
 	if QPKGs-ACstatus-to:IsAny; then
 		Action:Proc status all QPKG statusing statused || return
@@ -974,7 +999,8 @@ Actions:Proc()
 
 			case $tier in
 				standalone|dependent)
-					Action:Proc stop $tier QPKG stopping stopped || return
+					Action:Proc deactivate $tier QPKG deactivating deactivated || return
+					Action:Proc disable $tier QPKG disabling disabled || return
 					Action:Proc uninstall $tier QPKG uninstalling uninstalled || return
 			esac
 		done
@@ -989,16 +1015,17 @@ Actions:Proc()
 					Action:Proc install $tier QPKG installing installed || return
 					Action:Proc restore $tier QPKG restoring restored || return
 					Action:Proc clean $tier QPKG cleaning cleaned || return
-					Action:Proc start $tier QPKG starting started || return
-					Action:Proc restart $tier QPKG restarting restarted || return
+					Action:Proc enable $tier QPKG enabling enabled || return
+					Action:Proc activate $tier QPKG activating activated || return
+					Action:Proc reactivate $tier QPKG reactivating reactivated || return
 					;;
 				addon)
-					for action in install reinstall upgrade start; do
-						QPKGs-ISstarted:Exist Entware && ipks_upgrade=true
+					for action in install reinstall upgrade activate; do
+						QPKGs-ISactive:Exist Entware && ipks_upgrade=true
 						QPKGs-AC${action}-to:IsAny && ipks_install=true
 					done
 
-					if QPKGs-ISstarted:Exist Entware; then
+					if QPKGs-ISactive:Exist Entware; then
 						ModPathToEntware
 						Action:Proc upgrade $tier IPK upgrading upgraded || return
 						Action:Proc install $tier IPK installing installed || return
@@ -1037,11 +1064,11 @@ Action:Proc()
 	# Run a single action on an entire tier of packages, asynchronously where possible
 
 	# input:
-	#   $1 = $TARGET_ACTION					e.g. `start`, `restart` ...
+	#   $1 = $TARGET_ACTION					e.g. `activate`, `reactivate` ...
 	#   $2 = $TIER							e.g. `standalone`, `dependent`, `addon`, `all`
-	#   $3 = $PACKAGE_TYPE					e.g. `QPKG`, `ipk`, `pip`
-	#   $4 = $ACTION_PRESENT_MSG			e.g. `starting` ...
-	#   $5 = $ACTION_PAST_MSG				e.g. `started` ...
+	#   $3 = $PACKAGE_TYPE					e.g. `QPKG`, `IPK`, `PIP`
+	#   $4 = $ACTION_PRESENT_MSG			e.g. `activating` ...
+	#   $5 = $ACTION_PAST_MSG				e.g. `activated` ...
 
 	Func:Entry
 	local -r PACKAGE_TYPE=${3:?null}
@@ -1198,7 +1225,7 @@ Action:Proc()
 
 			# sort QPKG action times - longest duration first
 
-			if [[ -e $ACTION_TIMES_PATHFILE && -e $GNU_SORT_CMD && -L /opt/etc/passwd ]]; then	# try to ensure Entware is started before using this utility
+			if [[ -e $ACTION_TIMES_PATHFILE && -e $GNU_SORT_CMD && -L /opt/etc/passwd ]]; then	# try to ensure Entware is active before using this utility
 				buffer=$($GNU_SORT_CMD -t'|' -k2 -r -h < "$ACTION_TIMES_PATHFILE")
 				echo "$buffer" > "$ACTION_TIMES_PATHFILE"
 			fi
@@ -1234,7 +1261,7 @@ OpenActionMsgPipe()
 
 	# create a message pipe, so action forks can send data back to parent
 
-	[[ -p $ACTION_MSG_PIPE ]] && rm -f "$ACTION_MSG_PIPE" &>/dev/null
+	[[ -p $ACTION_MSG_PIPE ]] && rm -f "$ACTION_MSG_PIPE"
 	[[ ! -p $ACTION_MSG_PIPE ]] && mknod "$ACTION_MSG_PIPE" p
 
 	# create a file descriptor to store original stdin FD
@@ -1268,7 +1295,7 @@ CloseActionMsgPipe()
 	[[ $msg_pipe_fd != none ]] && eval "exec $msg_pipe_fd>&-"
 
 	# delete message pipe
-	[[ -p $ACTION_MSG_PIPE ]] && rm -f "$ACTION_MSG_PIPE" &>/dev/null
+	[[ -p $ACTION_MSG_PIPE ]] && rm -f "$ACTION_MSG_PIPE"
 
 	}
 
@@ -1295,7 +1322,7 @@ AdjustMaxForks()
 				max_forks=$(((max_forks+1)/2))
 				reason="'$1'"
 				;;
-			install|reinstall|upgrade)	# don't execute these actions async: QTS installer for each package eventually aborts (looks like QTS can only manage a single package at-a-time, because packages overwrite each other, and package source files end-up in the wrong install paths)
+			install|reinstall|upgrade)	# don't execute these actions async: installer for each package eventually aborts (looks like QPKGs can only be managed one-at-a-time, else packages overwrite each other, and package source files end-up in the wrong install paths)
 				max_forks=1
 				reason="'$1'"
 				;;
@@ -1303,7 +1330,7 @@ AdjustMaxForks()
 				max_forks=1
 				reason="'$1'"
 				;;
-			backup|download|status|stop|uninstall)		# low-resource actions, so allow multiple forks, even on ARMv5
+			backup|deactivate|disable|download|enable|status|uninstall)		# low-resource actions, so force multiple forks, even on ARMv5
 				max_forks=4
 				reason="'$1'"
 		esac
@@ -1341,7 +1368,7 @@ ParseArgs()
 		# identify action: every time action changes, must clear group too
 		case $arg in
 		# these cases use only a single word to specify a single action
-			backup|clean|reassign|rebuild|reinstall|restart|restore|start|stop)
+			backup|clean|enable|disable|reassign|rebuild|reinstall|restore)
 				action=${arg}
 				arg_identified=true
 				group=''
@@ -1359,6 +1386,14 @@ ParseArgs()
 				skip_package_actions=true
 				;;
 		# all cases below can use multiple words or chars to specify a single action
+			activate|start)
+				action=activate
+				arg_identified=true
+				group=''
+				group_identified=false
+				hide_title=false
+				skip_package_actions=false
+				;;
 			add|install)
 				action=install
 				arg_identified=true
@@ -1369,6 +1404,14 @@ ParseArgs()
 				;;
 			c|check)
 				action=check
+				arg_identified=true
+				group=''
+				group_identified=false
+				hide_title=false
+				skip_package_actions=false
+				;;
+			deactivate|stop)
+				action=deactivate
 				arg_identified=true
 				group=''
 				group_identified=false
@@ -1398,6 +1441,14 @@ ParseArgs()
 				group_identified=false
 				hide_title=false
 				skip_package_actions=true
+				;;
+			reactivate|restart)
+				action=reactivate
+				arg_identified=true
+				group=''
+				group_identified=false
+				hide_title=false
+				skip_package_actions=false
 				;;
 			rm|remove|uninstall)
 				action=uninstall
@@ -1430,7 +1481,7 @@ ParseArgs()
 
 		if [[ -z $action ]]; then
 			case $arg in
-				a|abs|action|actions|actions-all|alias|aliases|all-actions|b|backups|deps|dependent|dependents|failed|groups|indeps|independent|independents|installable|installed|l|last|log|missing|not-installed|ok|option|options|p|package|packages|problems|r|repo|repos|results|skipped|standalone|standalones|started|stopped|tail|tips|updatable|updateable|upgradable|v|version|versions|whole)
+				a|abs|action|actions|actions-all|alias|aliases|all-actions|b|backups|deps|dependent|dependents|disabled|enabled|failed|groups|indeps|independent|independents|installable|installed|l|last|log|missing|not-installed|ok|option|options|p|package|packages|problems|r|repo|repos|results|skipped|standalone|standalones|tail|tips|updatable|updateable|upgradable|v|version|versions|whole)
 					action=help
 					arg_identified=true
 					group=''
@@ -1446,7 +1497,7 @@ ParseArgs()
 		if [[ -n $action ]]; then
 			case $arg in
 			# these cases use only a single word or char to specify a single group
-				backedup|installable|installed|missing|ok|problems|results|skipped|started|tail|tips)
+				backedup|installable|installed|missing|ok|problems|results|skipped|tail|tips)
 					group=${arg}
 					;;
 				not-backedup)
@@ -1457,9 +1508,6 @@ ParseArgs()
 					;;
 				failed)
 					group=NTok
-					;;
-				stopped)
-					group=NTstarted
 					;;
 			# all cases below can use multiple words or chars to specify a single group
 				a|abs|alias|aliases)
@@ -1536,36 +1584,22 @@ ParseArgs()
 		[[ $arg_identified = false ]] && ARGs-unknown:Add "$arg"
 
 		case $action in
-			backup)
+			activate|backup|clean|deactivate|disable|enable|install|reactivate|reassign|rebuild|reinstall|restore|upgrade)
 				case $group in
 					all|dependent|standalone)
 						QPKGs.AC${action}.SC${group}:Set
 						group=''
 						;;
-					installed|started|NTstarted|NTbackedup)
+					installed|upgradable)
 						QPKGs.AC${action}.IS${group}:Set
 						group=''
 						;;
 					*)
-						QPKGs-ACbackup-to:Add "$package"
+						QPKGs-AC${action}-to:Add "$package"
 				esac
 				;;
 			check)
 				opts_check=true
-				;;
-			clean)
-				case $group in
-					all|dependent|standalone)
-						QPKGs.AC${action}.SC${group}:Set
-						group=''
-						;;
-					installed|started|NTstarted)
-						QPKGs.ACclean.IS${group}:Set
-						group=''
-						;;
-					*)
-						QPKGs-ACclean-to:Add "$package"
-				esac
 				;;
 			help)
 				case $group in
@@ -1578,7 +1612,7 @@ ParseArgs()
 					all-actions|all)
 						opts_show_actions_all=true
 						;;
-					backedup|installed|started|NTstarted)
+					backedup|installed|NTbackedup|NTinstalled)
 						QPKGs.AClist.IS${group}:Set
 						hide_title=true
 						;;
@@ -1601,14 +1635,6 @@ ParseArgs()
 						;;
 					log)
 						opts_show_log_tail=true
-						hide_title=true
-						;;
-					NTbackedup)
-						QPKGs.AClist.ISNTbackedup:Set
-						hide_title=true
-						;;
-					NTinstalled)
-						QPKGs.AClist.ISNTinstalled:Set
 						hide_title=true
 						;;
 					ok)
@@ -1651,24 +1677,6 @@ ParseArgs()
 			increasetimeout)
 				opts_increase_qpkg_timeouts=true
 				;;
-			install)
-				case $group in
-					all|dependent|installable|standalone)
-						QPKGs.AC${action}.SC${group}:Set
-						group=''
-						;;
-					installed|missing|started)
-						QPKGs.ACinstall.IS${group}:Set
-						group=''
-						;;
-					NTinstalled)
-						QPKGs.ACinstall.ISNTinstalled:Set
-						group=''
-						;;
-					*)
-						QPKGs-ACinstall-to:Add "$package"
-				esac
-				;;
 			paste)
 				case $group in
 					all|log|tail)
@@ -1682,92 +1690,8 @@ ParseArgs()
 
 				skip_package_actions=true
 				;;
-			reassign)
-				case $group in
-					all|dependent|standalone)
-						QPKGs.AC${action}.SC${group}:Set
-						group=''
-						;;
-					installed|started|upgradable|NTstarted)
-						QPKGs.AC${action}.IS${group}:Set
-						group=''
-						;;
-					*)
-						QPKGs-AC${action}-to:Add "$package"
-				esac
-				;;
-			rebuild)
-				case $group in
-					all|dependent|standalone)
-						QPKGs.AC${action}.SC${group}:Set
-						group=''
-						;;
-					installed)
-						QPKGs.AC${action}.IS${group}:Set
-						group=''
-						;;
-					*)
-						QPKGs-ACrebuild-to:Add "$package"
-				esac
-				;;
-			reinstall)
-				case $group in
-					all|dependent|standalone)
-						QPKGs.AC${action}.SC${group}:Set
-						group=''
-						;;
-					installed|started|upgradable|NTstarted)
-						QPKGs.AC${action}.IS${group}:Set
-						group=''
-						;;
-					*)
-						QPKGs-ACreinstall-to:Add "$package"
-				esac
-				;;
-			restart)
-				case $group in
-					all|dependent|standalone)
-						QPKGs.AC${action}.SC${group}:Set
-						group=''
-						;;
-					installed|started|upgradable|NTstarted)
-						QPKGs.AC${action}.IS${group}:Set
-						group=''
-						;;
-					*)
-						QPKGs-ACrestart-to:Add "$package"
-				esac
-				;;
-			restore)
-				case $group in
-					all|dependent|standalone)
-						QPKGs.AC${action}.SC${group}:Set
-						group=''
-						;;
-					installed|started|upgradable|NTstarted)
-						QPKGs.AC${action}.IS${group}:Set
-						group=''
-						;;
-					*)
-						QPKGs-ACrestore-to:Add "$package"
-				esac
-				;;
 			reverttimeout)
 				opts_revert_qpkg_timeouts=true
-				;;
-			start)
-				case $group in
-					all|dependent|standalone)
-						QPKGs.AC${action}.SC${group}:Set
-						group=''
-						;;
-					installed|upgradable|NTstarted)
-						QPKGs.AC${action}.IS${group}:Set
-						group=''
-						;;
-					*)
-						QPKGs-ACstart-to:Add "$package"
-				esac
 				;;
 			status)
 				opts_show_status=true
@@ -1777,26 +1701,12 @@ ParseArgs()
 						QPKGs.AC${action}.SC${group}:Set
 						group=''
 						;;
-					installed|upgradable|NTstarted)
+					installed|upgradable)
 						QPKGs.AC${action}.IS${group}:Set
 						group=''
 						;;
 					*)
-						QPKGs-ACstatus-to:Add "$package"
-				esac
-				;;
-			stop)
-				case $group in
-					all|dependent|standalone)
-						QPKGs.AC${action}.SC${group}:Set
-						group=''
-						;;
-					installed|started|upgradable)
-						QPKGs.AC${action}.IS${group}:Set
-						group=''
-						;;
-					*)
-						QPKGs-ACstop-to:Add "$package"
+						QPKGs-AC${action}-to:Add "$package"
 				esac
 				;;
 			uninstall)
@@ -1820,27 +1730,13 @@ ParseArgs()
 							action_force=false
 						fi
 						;;
-					started|upgradable|NTstarted)
+					upgradable)
 						QPKGs.AC${action}.IS${group}:Set
 						group=''
 						action_force=false
 						;;
 					*)
-						QPKGs-ACuninstall-to:Add "$package"
-				esac
-				;;
-			upgrade)
-				case $group in
-					all|dependent|standalone|upgradable)
-						QPKGs.AC${action}.SC${group}:Set
-						group=''
-						;;
-					installed|started|NTstarted)
-						QPKGs.AC${action}.IS${group}:Set
-						group=''
-						;;
-					*)
-						QPKGs-ACupgrade-to:Add "$package"
+						QPKGs-AC${action}-to:Add "$package"
 				esac
 		esac
 	done
@@ -1880,7 +1776,7 @@ ArgSuggestions:Show()
 		for arg in $(ARGs-unknown:Array); do
 			case $arg in
 				all)
-					DisplayAsProjSynExam "please provide a valid $(FormatAsAction) before 'all' like" 'start all'
+					DisplayAsProjSynExam "please provide a valid $(FormatAsAction) before 'all' like" 'activate all'
 					opts_show_basic_help=false
 					;;
 				all-backup|backup-all)
@@ -1888,11 +1784,11 @@ ArgSuggestions:Show()
 					opts_show_basic_help=false
 					;;
 				dependent)
-					DisplayAsProjSynExam "please provide a valid $(FormatAsAction) before 'dependent' like" 'start dependents'
+					DisplayAsProjSynExam "please provide a valid $(FormatAsAction) before 'dependent' like" 'activate dependents'
 					opts_show_basic_help=false
 					;;
-				all-restart|restart-all)
-					DisplayAsProjSynExam 'to restart all packages, use' 'restart all'
+				all-reactivate|reactivate-all)
+					DisplayAsProjSynExam 'to reactivate all packages, use' 'reactivate all'
 					opts_show_basic_help=false
 					;;
 				all-restore|restore-all)
@@ -1900,11 +1796,11 @@ ArgSuggestions:Show()
 					opts_show_basic_help=false
 					;;
 				standalone)
-					DisplayAsProjSynExam "please provide a valid $(FormatAsAction) before 'standalone' like" 'start standalones'
+					DisplayAsProjSynExam "please provide a valid $(FormatAsAction) before 'standalone' like" 'activate standalones'
 					opts_show_basic_help=false
 					;;
-				all-start|start-all)
-					DisplayAsProjSynExam 'to start all packages, use' 'start all'
+				all-activate|activate-all)
+					DisplayAsProjSynExam 'to activate all packages, use' 'activate all'
 					opts_show_basic_help=false
 					;;
 				all-stop|stop-all)
@@ -1968,7 +1864,7 @@ AllocGroupPacksToAcs()
 								DebugAsWarn "specified group $group has no handler for specified action $action"
 						esac
 						;;
-					restart|start|stop|uninstall)
+					activate|deactivate|enable|disable|reactivate|status|stop|uninstall)
 						case $group in
 							all|dependent|standalone)
 								found=true
@@ -1994,19 +1890,6 @@ AllocGroupPacksToAcs()
 								DebugAsWarn "specified group $group has no handler for specified action $action"
 						esac
 						;;
-					status)
-						case $group in
-							all|dependent|standalone)
-								found=true
-
-								for prospect in $(QPKGs-SC${group}:Array); do
-									QPKGs-ISinstalled:Exist "$prospect" && QPKGs-AC${action}-to:Add "$prospect"
-								done
-								;;
-							*)
-								DebugAsWarn "specified group $group has no handler for specified action $action"
-						esac
-						;;
 					upgrade)
 						case $group in
 							all|dependent|standalone|upgradable)
@@ -2018,7 +1901,7 @@ AllocGroupPacksToAcs()
 									QPKGs-SCcanrestarttoupdate:Exist "$prospect" && QPKGs-AC${action}-to:Add "$prospect"
 								done
 
-								QPKGs-ACrestart-to:Remove "$(QPKGs-ACupgrade-to:Array)"
+								QPKGs-ACreactivate-to:Remove "$(QPKGs-ACupgrade-to:Array)"
 								;;
 							*)
 								DebugAsWarn "specified group $group has no handler for specified action $action"
@@ -2046,7 +1929,7 @@ AllocGroupPacksToAcs()
 				fi
 
 				if QPKGs-AC${action}-to:IsAny; then
-					DebugAsDone "action: '$action', group: 'Nt${group}': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
+					DebugAsDone "action: '$action', group: 'NT${group}': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
 				else
 					ShowAsWarn "unable to find any packages to $(Lowercase "$action")"
 				fi
@@ -2062,18 +1945,18 @@ AllocGroupPacksToAcs()
 				case $action in
 					backup|clean|uninstall|upgrade)
 						case $state in
-							backedup|cleaned|downloaded|enabled|installed|started|upgradable)
+							active|backedup|cleaned|downloaded|enabled|installed|upgradable)
 								found=true
 								QPKGs-AC${action}-to:Add "$(QPKGs-IS${state}:Array)"
 								;;
-							stopped)
+							inactive)
 								found=true
-								QPKGs-AC${action}-to:Add "$(QPKGs-ISNTstarted:Array)"
+								QPKGs-AC${action}-to:Add "$(QPKGs-ISNTactive:Array)"
 						esac
 						;;
 					install)
 						case $state in
-							enabled|installed|started|stopped)
+							active|enabled|inactive|installed)
 								found=true
 						esac
 				esac
@@ -2093,15 +1976,15 @@ AllocGroupPacksToAcs()
 		for state in "${USER_QPKG_ISNT_STATES[@]}"; do
 			if QPKGs.AC${action}.ISNT${state}:IsSet; then
 				case $action in
-					backup|clean|install|start|uninstall)
+					active|backup|clean|install|uninstall)
 						case $state in
-							installed|started)
+							active|installed)
 								found=true
 								QPKGs-AC${action}-to:Add "$(QPKGs-ISNT${state}:Array)"
 								;;
-							stopped)
+							inactive)
 								found=true
-								QPKGs-AC${action}-to:Add "$(QPKGs-ISstarted:Array)"
+								QPKGs-AC${action}-to:Add "$(QPKGs-ISactive:Array)"
 						esac
 				esac
 
@@ -2110,7 +1993,7 @@ AllocGroupPacksToAcs()
 				fi
 
 				if QPKGs-AC${action}-to:IsAny; then
-					DebugAsDone "action: '$action', state: 'Nt${state}': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
+					DebugAsDone "action: '$action', state: 'NT${state}': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
 				else
 					ShowAsWarn "unable to find any packages to $(Lowercase "$action")"
 				fi
@@ -2210,7 +2093,7 @@ UpdateEntwarePackageList()
 	{
 
 	if IsNtSysFileExist $OPKG_CMD; then
-		DisplayAsProjSynExam 'try restarting Entware' 'restart ew'
+		DisplayAsProjSynExam 'try reactivating Entware' 'reactivate ew'
 		return 1
 	fi
 
@@ -2394,7 +2277,7 @@ IPKs:upgrade()
 
 	[[ $ipks_upgrade = false ]] && return
 	QPKGs-ISNTinstalled:Exist Entware && return
-	QPKGs-ISNTstarted:Exist Entware && return
+	QPKGs-ISNTactive:Exist Entware && return
 	UpdateEntwarePackageList
 	Self.Error:IsSet && return
 
@@ -2442,7 +2325,7 @@ IPKs:install()
 
 	[[ $ipks_install = false ]] && return
 	QPKGs-ISNTinstalled:Exist Entware && return
-	QPKGs-ISNTstarted:Exist Entware && return
+	QPKGs-ISNTactive:Exist Entware && return
 	UpdateEntwarePackageList
 	Self.Error:IsSet && return
 
@@ -2462,7 +2345,7 @@ IPKs:install()
 		done
 	else
 		for index in "${!QPKG_NAME[@]}"; do
-			if QPKGs-ACinstall-to:Exist "${QPKG_NAME[$index]}" || QPKGs-ISinstalled:Exist "${QPKG_NAME[$index]}" || QPKGs-ACreinstall-to:Exist "${QPKG_NAME[$index]}" || (QPKGs-ACstart-to:Exist "${QPKG_NAME[$index]}" && (QPKGs-ACinstall-to:Exist "${QPKG_NAME[$index]}" || QPKGs-ISinstalled:Exist "${QPKG_NAME[$index]}" || QPKGs-ACreinstall-to:Exist "${QPKG_NAME[$index]}")); then
+			if QPKGs-ACinstall-to:Exist "${QPKG_NAME[$index]}" || QPKGs-ISinstalled:Exist "${QPKG_NAME[$index]}" || QPKGs-ACreinstall-to:Exist "${QPKG_NAME[$index]}" || (QPKGs-ACactivate-to:Exist "${QPKG_NAME[$index]}" && (QPKGs-ACinstall-to:Exist "${QPKG_NAME[$index]}" || QPKGs-ISinstalled:Exist "${QPKG_NAME[$index]}" || QPKGs-ACreinstall-to:Exist "${QPKG_NAME[$index]}")); then
 				QPKG.MinRAM "${QPKG_NAME[$index]}" &>/dev/null || continue
 				IPKs-ACinstall-to:Add "${QPKG_REQUIRES_IPKS[$index]}"
 			fi
@@ -2505,7 +2388,7 @@ PIPs:install()
 
 	[[ $pips_install = false ]] && return
 	QPKGs-ISNTinstalled:Exist Entware && return
-	QPKGs-ISNTstarted:Exist Entware && return
+	QPKGs-ISNTactive:Exist Entware && return
 	! $OPKG_CMD status python3-pip | $GREP_CMD -q "Status:.*installed" && return
 	Self.Error:IsSet && return
 
@@ -2572,7 +2455,7 @@ CloseIpkArchive()
 
 	rm -f "$EXTERNAL_PACKAGES_PATHFILE"
 
-	} &>/dev/null
+	}
 
 _ActionForks:Launch_()
 	{
@@ -2734,7 +2617,9 @@ KillActiveFork()
 
 	if [[ -n ${fork_pid:-} && ${fork_pid:-0} -gt 0 && -d /proc/$fork_pid ]]; then
 		sleep .2
-		kill -9 "$fork_pid" 2>/dev/null
+		set +m		# disable job control
+		kill -9 "$fork_pid" &>/dev/null
+		set -m		# re-enable job control
 		wait 2>/dev/null
 	fi
 
@@ -2834,24 +2719,10 @@ TerminalDimensions:Load()
 
 	}
 
-GetDefPythonVer()
-	{
-
-	GetPythonVer "${1:-}"
-
-	}
-
-GetDefPython3Ver()
+GetPython3Ver()
 	{
 
 	GetPythonVer "${1:-python3}"
-
-	}
-
-GetDefPerlVer()
-	{
-
-	GetPerlVer
 
 	}
 
@@ -3223,32 +3094,40 @@ DisplayAsHelpNameStatusVerPath()
 
 			if [[ -n $package_status ]]; then
 				patt=\\benabled\\b
-				[[ $package_status =~ $patt ]] && package_status_msg="$(ColourTextBrightGreen enabled)"
+				[[ $package_status =~ $patt ]] && package_status_msg+=" $(ColourTextBrightGreen enabled)"
 
 				patt=\\bdisabled\\b
-				[[ $package_status =~ $patt ]] && package_status_msg="$(ColourTextBrightRed disabled)"
+				[[ $package_status =~ $patt ]] && package_status_msg+=" $(ColourTextBrightRed disabled)"
 
 				patt=\\bactive\\b
-				[[ $package_status =~ $patt ]] && package_status_msg+=", $(ColourTextBrightGreen active)"
+				[[ $package_status =~ $patt ]] && package_status_msg+=" $(ColourTextBrightGreen active)"
 
 				patt=\\bslow\\b
-				[[ $package_status =~ $patt ]] && package_status_msg+=", $(ColourTextBrightOrange slow)"
+				[[ $package_status =~ $patt ]] && package_status_msg+=" $(ColourTextBrightOrange slow)"
 
 				patt=\\binactive\\b
-				[[ $package_status =~ $patt ]] && package_status_msg+=", $(ColourTextBrightRed inactive)"
+				[[ $package_status =~ $patt ]] && package_status_msg+=" $(ColourTextBrightRed inactive)"
 
 				patt=\\bstarting\\b
-				[[ $package_status =~ $patt ]] && package_status_msg+=", $(ColourTextBrightOrange starting)"
+				[[ $package_status =~ $patt ]] && package_status_msg+=" $(ColourTextBrightOrange starting)"
 
 				patt=\\bstopping\\b
-				[[ $package_status =~ $patt ]] && package_status_msg+=", $(ColourTextBrightOrange stopping)"
+				[[ $package_status =~ $patt ]] && package_status_msg+=" $(ColourTextBrightOrange stopping)"
 
 				patt=\\bunknown\\b
-				[[ $package_status =~ $patt ]] && package_status_msg+=", $(ColourTextBrightOrange unknown)"
+				[[ $package_status =~ $patt ]] && package_status_msg+=" $(ColourTextBrightOrange unknown)"
 
-				[[ -z $package_status_msg ]] && package_status_msg="$package_status"
+				if [[ -n $package_status_msg ]]; then
+					package_status_msg="${package_status_msg#* }"		# remove leading whitespace
+					package_status_msg="${package_status_msg%* }"		# remove trailing whitespace
+					package_status_msg="${package_status_msg// /, }"	# insert separators
+				else
+					package_status_msg="$package_status"
+				fi
 
 				package_status_msg="${CHARS_NORMAL}${package_status_msg}"
+			else
+				package_status_msg="$(ColourTextBrightOrange "${CHARS_NOTE}unknown")"
 			fi
 
 			package_version_msg=${CHARS_BLANK}$package_installed_version
@@ -3634,7 +3513,7 @@ Help.Actions:Show()
 	DisplayAsHelpTitle "$(FormatAsAction) usage examples:"
 	DisplayAsProjSynIndentExam 'show package statuses' status
 	DisplayAsProjSynIndentExam '' s
-	DisplayAsProjSynIndentExam 'show package repositories' repos
+	DisplayAsProjSynIndentExam 'show current package repository assignments' repos
 	DisplayAsProjSynIndentExam '' r
 	DisplayAsProjSynIndentExam 'ensure all application dependencies are installed' check
 	DisplayAsProjSynIndentExam '' c
@@ -3642,10 +3521,15 @@ Help.Actions:Show()
 	DisplayAsProjSynIndentExam 'uninstall these packages' "uninstall $(FormatAsPackages)"
 	DisplayAsProjSynIndentExam 'reinstall these packages' "reinstall $(FormatAsPackages)"
 	DisplayAsProjSynIndentExam "rebuild these packages ('install' packages, then 'restore' configuration backups)" "rebuild $(FormatAsPackages)"
-	DisplayAsProjSynIndentExam 'upgrade these packages (and internal applications where-supported)' "upgrade $(FormatAsPackages)"
-	DisplayAsProjSynIndentExam 'enable then start these packages' "start $(FormatAsPackages)"
-	DisplayAsProjSynIndentExam 'stop then disable these packages (disabling will prevent them starting on reboot)' "stop $(FormatAsPackages)"
-	DisplayAsProjSynIndentExam 'restart these packages (this will upgrade internal applications where-supported)' "restart $(FormatAsPackages)"
+	DisplayAsProjSynIndentExam 'upgrade these packages (this will upgrade internal applications where-supported)' "upgrade $(FormatAsPackages)"
+	DisplayAsProjSynIndentExam 'enable these packages' "enable $(FormatAsPackages)"
+	DisplayAsProjSynIndentExam 'disable these packages (disabling will prevent them activating on reboot)' "disable $(FormatAsPackages)"
+	DisplayAsProjSynIndentExam 'enable, then activate these packages (this will upgrade internal applications where-supported)' "activate $(FormatAsPackages)"
+	DisplayAsProjSynIndentExam '' "start $(FormatAsPackages)"
+	DisplayAsProjSynIndentExam 'deactivate these packages' "deactivate $(FormatAsPackages)"
+	DisplayAsProjSynIndentExam '' "stop $(FormatAsPackages)"
+	DisplayAsProjSynIndentExam 'reactivate these packages (this will upgrade internal applications where-supported)' "reactivate $(FormatAsPackages)"
+	DisplayAsProjSynIndentExam '' "restart $(FormatAsPackages)"
 	Help.Action.Reassign:Show
 	DisplayAsProjSynIndentExam 'clear local repository files from these packages' "clean $(FormatAsPackages)"
 	DisplayAsProjSynIndentExam 'backup these application configurations to the backup location' "backup $(FormatAsPackages)"
@@ -3656,7 +3540,7 @@ Help.Actions:Show()
 	DisplayAsProjSynIndentExam '' v
 	DisplayAsProjSynExam "$(FormatAsAction)s to affect all packages can be seen with" 'all-actions'
 	DisplayAsProjSynExam "multiple $(FormatAsAction)s are supported like this" "$(FormatAsAction) $(FormatAsPackages) $(FormatAsAction) $(FormatAsPackages)"
-	DisplayAsProjSynIndentExam '' 'install sabnzbd sickgear restart transmission uninstall lazy nzbget upgrade nzbtomedia'
+	DisplayAsProjSynIndentExam '' 'install sabnzbd sickgear reactivate transmission uninstall lazy nzbget upgrade nzbtomedia'
 
 	return 0
 
@@ -3665,7 +3549,7 @@ Help.Actions:Show()
 Help.Action.Reassign:Show()
 	{
 
-	DisplayAsProjSynIndentExam "reassign packages to $(FormatAsTitle). Use this action to separate QPKGs previously installed via an online respository from further management by that repository" "reassign $(FormatAsPackages)"
+	DisplayAsProjSynIndentExam "reassign packages to $(FormatAsTitle). Use this action to detach QPKGs previously installed via an online respository from further management by that repository" "reassign $(FormatAsPackages)"
 
 	}
 
@@ -3681,9 +3565,14 @@ Help.ActionsAll:Show()
 	DisplayAsProjSynIndentExam 'reinstall all installed packages' 'reinstall all'
 	DisplayAsProjSynIndentExam "rebuild all packages with backups ('install' packages and 'restore' backups)" 'rebuild all'
 	DisplayAsProjSynIndentExam 'upgrade all installed packages (and internal applications where-supported)' 'upgrade all'
-	DisplayAsProjSynIndentExam 'enable then start all installed packages (upgrade internal applications, not packages)' 'start all'
-	DisplayAsProjSynIndentExam 'stop then disable all installed packages (disabling will prevent them starting on reboot)' 'stop all'
-	DisplayAsProjSynIndentExam 'restart packages (this will upgrade internal applications where-supported)' 'restart all'
+	DisplayAsProjSynIndentExam 'enable all installed packages (allow them to activate on reboot)' 'enable all'
+	DisplayAsProjSynIndentExam 'disable all installed packages (prevent them activating on reboot)' 'disable all'
+	DisplayAsProjSynIndentExam 'enable, then activate all installed packages (this will upgrade internal applications where-supported)' 'activate all'
+	DisplayAsProjSynIndentExam '' 'start all'
+	DisplayAsProjSynIndentExam 'deactivate all installed packages' 'deactivate all'
+	DisplayAsProjSynIndentExam '' 'stop all'
+	DisplayAsProjSynIndentExam 'reactivate packages (this will upgrade internal applications where-supported)' 'reactivate all'
+	DisplayAsProjSynIndentExam '' 'restart all'
 	DisplayAsProjSynIndentExam 'clear local repository files from all packages' 'clean all'
 	DisplayAsProjSynIndentExam 'list all available packages' 'list all'
 	DisplayAsProjSynIndentExam 'list only installed packages' 'list installed'
@@ -3741,9 +3630,12 @@ Help.Groups:Show()
 	DisplayAsHelpTitle "$(FormatAsGroup) usage examples:"
 	DisplayAsProjSynIndentExam 'select every package' "$(FormatAsAction) all"
 	DisplayAsProjSynIndentExam 'select only standalone packages (these do not depend on other QPKGs)' "$(FormatAsAction) standalone"
-	DisplayAsProjSynIndentExam 'select only dependent packages (these require another QPKG to be installed and started)' "$(FormatAsAction) dependent"
-	DisplayAsProjSynIndentExam 'select only started packages' "$(FormatAsAction) started"
-	DisplayAsProjSynIndentExam 'select only stopped packages' "$(FormatAsAction) stopped"
+	DisplayAsProjSynIndentExam 'select only dependent packages (these require another QPKG to be installed and active)' "$(FormatAsAction) dependent"
+	DisplayAsProjSynIndentExam '' "$(FormatAsAction) deps"
+	DisplayAsProjSynIndentExam 'select only active packages' "$(FormatAsAction) active"
+	DisplayAsProjSynIndentExam '' "$(FormatAsAction) started"
+	DisplayAsProjSynIndentExam 'select only inactive packages' "$(FormatAsAction) inactive"
+	DisplayAsProjSynIndentExam '' "$(FormatAsAction) stopped"
 	DisplayAsProjSynIndentExam 'select only installed packages' "$(FormatAsAction) installed"
 	DisplayAsProjSynIndentExam 'select only packages that are not installed' "$(FormatAsAction) not-installed"
 	DisplayAsProjSynIndentExam 'select only packages that are backed-up' "$(FormatAsAction) backedup"
@@ -3869,8 +3761,8 @@ Help.Problems:Show()
 	DisplayAsProjSynIndentExam '' c
 	DisplayAsProjSynIndentExam 'clear local repository files from these packages' "clean $(FormatAsPackages)"
 	DisplayAsProjSynIndentExam "remove all cached $(FormatAsTitle) items and logs" reset
-	DisplayAsProjSynIndentExam 'restart all installed packages (upgrades internal applications where-supported)' 'restart all'
-	DisplayAsProjSynIndentExam 'enable then start these packages' "start $(FormatAsPackages)"
+	DisplayAsProjSynIndentExam 'reactivate all installed packages (upgrades internal applications where-supported)' 'reactivate all'
+	DisplayAsProjSynIndentExam 'enable then activate these packages' "activate $(FormatAsPackages)"
 	DisplayAsProjSynIndentExam 'stop then disable these packages (disabling will prevent them starting on reboot)' "stop $(FormatAsPackages)"
 	DisplayAsProjSynIndentExam "view only the most recent $(FormatAsTitle) session log" last
 	DisplayAsProjSynIndentExam '' l
@@ -3894,12 +3786,12 @@ Help.Tips:Show()
 	DisplayAsProjSynIndentExam "install all available $(FormatAsTitle) packages" 'install all'
 	DisplayAsProjSynIndentExam 'package abbreviations and aliases also work. To see these' 'list abs'
 	DisplayAsProjSynIndentExam '' a
-	DisplayAsProjSynIndentExam 'restart all installed packages (upgrades internal applications where-supported)' 'restart all'
+	DisplayAsProjSynIndentExam 'reactivate all installed packages (upgrades internal applications where-supported)' 'reactivate all'
 	DisplayAsProjSynIndentExam 'list only packages that can be installed' 'list installable'
 	DisplayAsProjSynIndentExam "view only the most recent $(FormatAsTitle) session log" last
 	DisplayAsProjSynIndentExam '' l
-	DisplayAsProjSynIndentExam 'start all stopped packages' 'start stopped'
-	DisplayAsProjSynIndentExam 'upgrade the internal applications only' "restart $(FormatAsPackages)"
+	DisplayAsProjSynIndentExam 'activate all inactive packages' 'activate inactive'
+	DisplayAsProjSynIndentExam 'upgrade the internal applications only' "reactivate $(FormatAsPackages)"
 	Help.BackupLocation:Show
 
 	return 0
@@ -4059,7 +3951,7 @@ ArchivePriorSessLogs()
 	for log_pathfile in "$THIS_PACKAGE_PATH/session."*".active.log"; do
 		if [[ -f $log_pathfile && $log_pathfile != "$sess_active_pathfile" ]]; then
 			$CAT_CMD "$log_pathfile" >> "$SESS_ARCHIVE_PATHFILE"
-			rm -f "$log_pathfile" &>/dev/null
+			rm -f "$log_pathfile"
 		fi
 	done
 
@@ -4070,7 +3962,7 @@ ResetActiveSessLog()
 
 	rm -f "$sess_active_pathfile"
 
-	} &>/dev/null
+	}
 
 ExtractPrevSessFromTail()
 	{
@@ -4097,7 +3989,7 @@ ExtractPrevSessFromTail()
 
 		$SED_CMD "$start_line,$end_line!d" "$SESS_TAIL_PATHFILE" > "$SESS_LAST_PATHFILE"
 	else
-		rm -f "$SESS_LAST_PATHFILE" &>/dev/null
+		rm -f "$SESS_LAST_PATHFILE"
 	fi
 
 	return 0
@@ -4110,7 +4002,7 @@ ExtractTailFromLog()
 	if [[ -e $SESS_ARCHIVE_PATHFILE ]]; then
 		$TAIL_CMD -n${LOG_TAIL_LINES} "$SESS_ARCHIVE_PATHFILE" > "$SESS_TAIL_PATHFILE"	# trim main log first so there's less to `grep`
 	else
-		rm -f "$SESS_TAIL_PATHFILE" &>/dev/null
+		rm -f "$SESS_TAIL_PATHFILE"
 	fi
 
 	return 0
@@ -4406,8 +4298,6 @@ QPKGs.Actions:List()
 	local border_shown=false
 
 	for action in "${QPKG_ACTIONS[@]}"; do
-		[[ $action = enable || $action = disable ]] && continue		# no objects for these as `start` and `stop` do the same jobs
-
 		for prefix in ok er sk; do
 			if QPKGs-AC${action}-${prefix}:IsAny; then
 				if [[ $border_shown = false ]]; then
@@ -4445,7 +4335,7 @@ QPKGs.Actions:ListAll()
 	DebugInfoMinSepr
 
 	for action in "${QPKG_ACTIONS[@]}"; do
-		[[ $action = enable || $action = disable ]] && continue  # no objects for these as `start` and `stop` do the same jobs
+		[[ $action = enable || $action = disable ]] && continue  # no objects for these as `activate` and `stop` do the same jobs
 
 		for prefix in to ok er sk; do
 			if QPKGs-AC${action}-${prefix}:IsAny; then
@@ -4475,7 +4365,7 @@ QPKGs.States:List()
 	DebugInfoMinSepr
 
 	for state in "${QPKG_IS_STATES[@]}" "${QPKG_SERVICE_RESULTS[@]}"; do
-		if [[ $state = installed || $state = enabled ]]; then
+		if [[ $state = installed ]]; then
 			continue
 		elif [[ $state = unknown ]]; then
 			QPKGs-IS${state}:IsAny && DebugQpkg warning "IS${state}" "($(QPKGs-IS${state}:Count)) $(QPKGs-IS${state}:ListCSV) "
@@ -4512,8 +4402,8 @@ QPKGs.StandaloneDependent:Build()
 	# There are three tiers of package: `standalone`, `addon` and `dependent`
 	# ... but only two tiers of QPKG: `standalone` and `dependent`
 
-	# `standalone` QPKGs don't depend-on other QPKGs, but may be required for other QPKGs. They should be installed/started before any `dependent` QPKGs.
-	# `dependent` QPKGs depend-on other QPKGs. They should be installed/started after all `standalone` QPKGs.
+	# `standalone` QPKGs don't depend-on other QPKGs, but may be required for other QPKGs. They should be installed/activated before any `dependent` QPKGs.
+	# `dependent` QPKGs depend-on other QPKGs. They should be installed/activated after all `standalone` QPKGs.
 
 	local package=''
 
@@ -4537,7 +4427,7 @@ QPKGs.States:Build()
 	#   - are installed or not
 	#   - can be upgraded
 	#   - are enabled or disabled in [/etc/config/qpkg.conf]
-	#   - are started or stopped
+	#   - are active or inactive
 	#   - have backup files in backup location
 	#   - have config blocks in [/etc/config/qpkg.conf], but no files on-disk
 	#   - those in the process of starting, stopping, or restarting
@@ -4591,12 +4481,6 @@ QPKGs.States:Build()
 				QPKGs-ISenabled:Add "$package"
 			else
 				QPKGs-ISNTenabled:Add "$package"
-			fi
-
-			if QPKG.IsStarted "$package"; then
-				QPKGs-ISstarted:Add "$package"
-			else
-				QPKGs-ISNTstarted:Add "$package"
 			fi
 
 			if [[ -e /var/run/$package.last.operation ]]; then
@@ -4918,8 +4802,6 @@ QPKGs.Statuses:Show()
 	Func:Entry
 	local tier=''
 	local package_name=''
-	local -a package_status_notes=()
-	local -i index=0
 	local package_status_msg=''
 	local package_result_msg=''
 
@@ -4951,48 +4833,36 @@ QPKGs.Statuses:Show()
 						# state
 
 						if QPKGs-ISenabled:Exist "$package_name"; then
-							package_status_notes+=(enabled)
+							package_status_msg=enabled
 						elif QPKGs-ISNTenabled:Exist "$package_name"; then
-							package_status_notes+=(disabled)
+							package_status_msg=disabled
 						fi
 
 						# package/process: active/slow or inactive?
 
 						if QPKGs-ACstatus-ok:Exist "$package_name"; then
 							if QPKGs-ISactive:Exist "$package_name"; then
-								package_status_notes+=(active)
+								package_status_msg+=' active'
 							elif QPKGs-ISslow:Exist "$package_name"; then
-								package_status_notes+=(slow)
+								package_status_msg+=' slow'
+							elif QPKGs-ISstarting:Exist "$package_name"; then
+								package_status_msg+=' starting'
+							elif QPKGs-ISstopping:Exist "$package_name"; then
+								package_status_msg+=' stopping'
+							elif QPKGs-ISrestarting:Exist "$package_name"; then
+								package_status_msg+=' restarting'
 							elif QPKGs-ISunknown:Exist "$package_name"; then
-								package_status_notes+=(unknown)
+								package_status_msg+=' unknown'
 							else
-								package_status_notes+=(inactive)
+								package_status_msg+=' inactive'
 							fi
 						else
-							package_status_notes+=(unknown)
+							package_status_msg+=' unknown'
 						fi
-
-						# transient state
-
-						if QPKGs-ISstarting:Exist "$package_name"; then
-							package_status_notes+=(starting)
-						elif QPKGs-ISstopping:Exist "$package_name"; then
-							package_status_notes+=(stopping)
-						elif QPKGs-ISrestarting:Exist "$package_name"; then
-							package_status_notes+=(restarting)
-						fi
-
-						# insert commas
-
-						for ((index=0; index<=((${#package_status_notes[@]}-1)); index++)); do
-							package_status_msg+=${package_status_notes[$index]}
-							[[ $((index+2)) -le ${#package_status_notes[@]} ]] && package_status_msg+=', '
-						done
 
 						DisplayAsHelpNameStatusVerPath normal "$package_name" "$package_status_msg" "$package_result_msg" "$(QPKG.Local.Ver "$package_name")" "$(QPKG.Avail.Ver "$package_name")" "$(QPKG.InstallationPath "$package_name")"
 					fi
 
-					package_status_notes=()
 					package_status_msg=''
 					package_result_msg=''
 				fi
@@ -5141,14 +5011,14 @@ QPKGs.IsNtInstalled:Show()
 
 	}
 
-QPKGs.IsStarted:Show()
+QPKGs.IsActive:Show()
 	{
 
 	local package=''
 	QPKGs.States:Build
 	DisableDebugToArchiveAndFile
 
-	for package in $(QPKGs-ISstarted:Array); do
+	for package in $(QPKGs-ISactive:Array); do
 		Display "$package"
 	done
 
@@ -5156,14 +5026,14 @@ QPKGs.IsStarted:Show()
 
 	}
 
-QPKGs.IsNtStarted:Show()
+QPKGs.IsNtActive:Show()
 	{
 
 	local package=''
 	QPKGs.States:Build
 	DisableDebugToArchiveAndFile
 
-	for package in $(QPKGs-ISNTstarted:Array); do
+	for package in $(QPKGs-ISNTactive:Array); do
 		Display "$package"
 	done
 
@@ -5390,7 +5260,7 @@ ModPathToEntware()
 	local -r OPKG=/opt/bin:/opt/sbin
 	local temp=''
 
-	if QPKGs-ISstarted:Exist Entware; then
+	if QPKGs-ISactive:Exist Entware; then
 		! [[ $PATH =~ $OPKG ]] || return
 		temp="$($SED_CMD "s|$OPKG:||" <<< "$PATH:")"	# append colon prior to searching, then remove existing Entware paths
 		export PATH="$OPKG:${temp%:}"				# ... now prepend Entware paths and remove trailing colon
@@ -5697,7 +5567,7 @@ Self.LockFile:Release()
 
 	rm -f "$LOCK_PATHFILE"
 
-	} &>/dev/null
+	}
 
 Self.Verbose:Enable()
 	{
@@ -5733,7 +5603,7 @@ SaveActionResultToLog()
 	# input:						example:
 	#   $1 = package type			`QPKG`, `IPK`, `PIP`
 	#   $2 = package or group name	`SABnzbd`, `essential`
-	#   $3 = action					`download`, `downloaded`
+	#   $3 = action					`download`, `activate`
 	#   $4 = result					`ok`, `skipped-ok`, `skipped`, `failed`
 	#   $5 = reason (optional)		"file already exists in local cache"
 
@@ -5861,7 +5731,7 @@ _QPKG:download_()
 			FuncFork:Exit 0
 		else
 			DebugInfo "deleting $(FormatAsFileName "$LOCAL_FILENAME") as checksum is incorrect"
-			rm -f "$LOCAL_PATHFILE" &>/dev/null
+			rm -f "$LOCAL_PATHFILE"
 		fi
 	fi
 
@@ -5872,7 +5742,7 @@ _QPKG:download_()
 	if [[ ! -f $LOCAL_PATHFILE ]]; then
 		DebugAsProc "downloading $(FormatAsFileName "$REMOTE_FILENAME")"
 
-		rm -f "$LOG_PATHFILE" &>/dev/null
+		rm -f "$LOG_PATHFILE"
 
 		RunAndLog "$CURL_CMD${curl_insecure_arg} --location --output $LOCAL_PATHFILE $REMOTE_URL" "$LOG_PATHFILE" log:failure-only
 		result_code=$?
@@ -5974,12 +5844,6 @@ _QPKG:install_()
 			SendPackageStateChange ISNTenabled
 		fi
 
-		if QPKG.IsStarted "$PACKAGE_NAME"; then
-			SendPackageStateChange ISstarted
-		else
-			SendPackageStateChange ISNTstarted
-		fi
-
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" install ok "version $(QPKG.Local.Ver "$PACKAGE_NAME")"
 
 		if [[ $PACKAGE_NAME = Entware ]]; then
@@ -6068,12 +5932,6 @@ _QPKG:reinstall_()
 			SendPackageStateChange ISNTenabled
 		fi
 
-		if QPKG.IsStarted "$PACKAGE_NAME"; then
-			SendPackageStateChange ISstarted
-		else
-			SendPackageStateChange ISNTstarted
-		fi
-
 		local current_ver=$(QPKG.Local.Ver "$PACKAGE_NAME")
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reinstall ok "version $current_ver"
 		SendParentChangeEnv "QPKGs-ACsign-to:Add $PACKAGE_NAME"
@@ -6155,12 +6013,6 @@ _QPKG:upgrade_()
 			SendPackageStateChange ISNTenabled
 		fi
 
-		if QPKG.IsStarted "$PACKAGE_NAME"; then
-			SendPackageStateChange ISstarted
-		else
-			SendPackageStateChange ISNTstarted
-		fi
-
 		local current_ver=$(QPKG.Local.Ver "$PACKAGE_NAME")
 
 		if [[ $current_ver = "$prev_ver" ]]; then
@@ -6238,7 +6090,7 @@ _QPKG:uninstall_()
 			fi
 
 			SendPackageStateChange ISNTinstalled
-			SendPackageStateChange ISNTstarted
+			SendPackageStateChange ISNTactive
 			SendPackageStateChange ISNTenabled
 			MarkThisActionForkAsOk
 		else
@@ -6257,11 +6109,11 @@ _QPKG:uninstall_()
 
 	}
 
-_QPKG:restart_()
+_QPKG:reactivate_()
 	{
 
 	# * This function runs autonomously *
-	# Restarts the service script for the QPKG named in $1
+	# Restarts/reactivates the service script for the QPKG named in $1
 
 	# input:
 	#   $1 = QPKG name
@@ -6277,16 +6129,15 @@ _QPKG:restart_()
 	local debug_cmd=''
 
 	if QPKGs-ISNTinstalled:Exist "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" restart skipped 'not installed'
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" reactivate skipped 'not installed'
 		MarkThisActionForkAsSkipped
 		FuncFork:Exit 2
 	fi
 
 	QPKG.ServiceStatus:Clear
-	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$RESTART_LOG_FILE
+	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$REACTIVATE_LOG_FILE
 
-	DebugAsProc "restarting $(FormatAsPackName "$PACKAGE_NAME")"
-	QPKG:enable
+	DebugAsProc "reactivating $(FormatAsPackName "$PACKAGE_NAME")"
 
 	if [[ $opts_debug = true ]]; then
 		debug_cmd='DEBUG_QPKG=true '
@@ -6302,10 +6153,10 @@ _QPKG:restart_()
 
 	if [[ $result_code -eq 0 ]]; then
 		QPKG.ServiceStatus:Log
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" restart ok
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" reactivate ok
 		MarkThisActionForkAsOk
 	else
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" restart failed "$result_code"
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" reactivate failed "$result_code"
 		result_code=1   # remap to 1
 		MarkThisActionForkAsFailed
 	fi
@@ -6314,11 +6165,11 @@ _QPKG:restart_()
 
 	}
 
-_QPKG:start_()
+_QPKG:activate_()
 	{
 
 	# * This function runs autonomously *
-	# Starts the service script for the QPKG named in $1
+	# Starts/activates the service script for the QPKG named in $1
 
 	# input:
 	#   $1 = QPKG name
@@ -6334,23 +6185,15 @@ _QPKG:start_()
 	local debug_cmd=''
 
 	if QPKGs-ISNTinstalled:Exist "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" start skipped 'not installed'
-		result_code=2
-	elif QPKGs-ISstarted:Exist "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" start skipped 'already started'
-		result_code=2
-	fi
-
-	if [[ $result_code -gt 0 ]]; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" activate skipped 'not installed'
 		MarkThisActionForkAsSkipped
-		FuncFork:Exit $result_code
+		FuncFork:Exit 2
 	fi
 
 	QPKG.ServiceStatus:Clear
-	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$START_LOG_FILE
+	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$ACTIVATE_LOG_FILE
 
-	DebugAsProc "starting $(FormatAsPackName "$PACKAGE_NAME")"
-	QPKG:enable
+	DebugAsProc "activating $(FormatAsPackName "$PACKAGE_NAME")"
 
 	if [[ $opts_debug = true ]]; then
 		debug_cmd='DEBUG_QPKG=true '
@@ -6366,18 +6209,18 @@ _QPKG:start_()
 
 	if [[ $result_code -eq 0 ]]; then
 		QPKG.ServiceStatus:Log
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" start ok
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" activate ok
 
 		if [[ $PACKAGE_NAME = Entware ]]; then
 			SendParentChangeEnv ModPathToEntware
 			UpdateColourisation
 		fi
 
-		SendPackageStateChange ISstarted
+		SendPackageStateChange ISactive
 		MarkThisActionForkAsOk
 	else
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" start failed "$result_code"
-		SendPackageStateChange ISNTstarted
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" activate failed "$result_code"
+		SendPackageStateChange ISNTactive
 		result_code=1   # remap to 1
 		MarkThisActionForkAsFailed
 	fi
@@ -6387,11 +6230,11 @@ _QPKG:start_()
 
 	}
 
-_QPKG:stop_()
+_QPKG:deactivate_()
 	{
 
 	# * This function runs autonomously *
-	# Stops the service script for the QPKG named in $1
+	# Stops/deactivates the service script for the QPKG named in $1
 
 	# input:
 	#   $1 = QPKG name
@@ -6407,13 +6250,10 @@ _QPKG:stop_()
 	local debug_cmd=''
 
 	if QPKGs-ISNTinstalled:Exist "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" stop skipped 'not installed'
-		result_code=2
-	elif QPKGs-ISNTstarted:Exist "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" stop skipped 'already stopped'
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" deactivate skipped 'not installed'
 		result_code=2
 	elif [[ $PACKAGE_NAME = sherpa ]]; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" stop skipped "it's needed here! 😉"
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" deactivate skipped "it's needed here! 😉"
 		result_code=2
 	fi
 
@@ -6423,9 +6263,9 @@ _QPKG:stop_()
 	fi
 
 	QPKG.ServiceStatus:Clear
-	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$STOP_LOG_FILE
+	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$DEACTIVATE_LOG_FILE
 
-	DebugAsProc "stopping $(FormatAsPackName "$PACKAGE_NAME")"
+	DebugAsProc "deactivating $(FormatAsPackName "$PACKAGE_NAME")"
 	[[ $PACKAGE_NAME = Entware ]] && UpdateColourisation
 
 	if [[ $opts_debug = true ]]; then
@@ -6441,19 +6281,18 @@ _QPKG:stop_()
 	fi
 
 	if [[ $result_code -eq 0 ]]; then
-		QPKG:disable
 		QPKG.ServiceStatus:Log
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" stop ok
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" deactivate ok
 
 		if [[ $PACKAGE_NAME = Entware ]]; then
 			SendParentChangeEnv ModPathToEntware
 			UpdateColourisation
 		fi
 
-		SendPackageStateChange ISNTstarted
+		SendPackageStateChange ISNTactive
 		MarkThisActionForkAsOk
 	else
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" stop failed "$result_code"
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" deactivate failed "$result_code"
 		result_code=1   # remap to 1
 		MarkThisActionForkAsFailed
 	fi
@@ -6463,29 +6302,99 @@ _QPKG:stop_()
 
 	}
 
-QPKG:enable()
+_QPKG:enable_()
 	{
 
+	# * This function runs autonomously *
+	# Enables the QPKG named in $1
+
 	# input:
-	#   $PACKAGE_NAME (global) = QPKG name
+	#   $1 = QPKG name
 
-	RunAndLog "/sbin/qpkg_service enable $PACKAGE_NAME" "$LOGS_PATH/$PACKAGE_NAME.$ENABLE_LOG_FILE" log:failure-only
-	SendPackageStateChange ISenabled
+	# output:
+	#   $? = none, this function executes in the background
 
-	return
+	[[ $opts_verbose != true ]] && exec &>/dev/null
+	FuncFork:Entry
+
+	PACKAGE_NAME=${1:?package name null}
+	local -i result_code=0
+	local debug_cmd=''
+
+	if QPKGs-ISNTinstalled:Exist "$PACKAGE_NAME"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" enable skipped 'not installed'
+		result_code=2
+	elif QPKGs-ISenabled:Exist "$PACKAGE_NAME"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" enable skipped 'already enabled'
+		result_code=2
+	fi
+
+	if [[ $result_code -gt 0 ]]; then
+		MarkThisActionForkAsSkipped
+		FuncFork:Exit $result_code
+	fi
+
+	QPKG.ServiceStatus:Clear
+	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$ENABLE_LOG_FILE
+
+	DebugAsProc "enabling $(FormatAsPackName "$PACKAGE_NAME")"
+
+	RunAndLog "/sbin/qpkg_service enable $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
+	QPKG.IsEnabled "$PACKAGE_NAME" && SendPackageStateChange ISenabled
+	QPKG.AppCenterNotifier:Clear
+	SaveActionResultToLog QPKG "$PACKAGE_NAME" enable ok
+	MarkThisActionForkAsOk
+	FuncFork:Exit $result_code
 
 	}
 
-QPKG:disable()
+_QPKG:disable_()
 	{
 
+	# * This function runs autonomously *
+	# Disabled the QPKG named in $1
+
 	# input:
-	#   $PACKAGE_NAME (global) = QPKG name
+	#   $1 = QPKG name
 
-	RunAndLog "/sbin/qpkg_service disable $PACKAGE_NAME" "$LOGS_PATH/$PACKAGE_NAME.$DISABLE_LOG_FILE" log:failure-only
-	SendPackageStateChange ISNTenabled
+	# output:
+	#   $? = none, this function executes in the background
 
-	return
+	[[ $opts_verbose != true ]] && exec &>/dev/null
+	FuncFork:Entry
+
+	PACKAGE_NAME=${1:?package name null}
+	local -i result_code=0
+	local debug_cmd=''
+
+	if QPKGs-ISNTinstalled:Exist "$PACKAGE_NAME"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" disable skipped 'not installed'
+		result_code=2
+	elif QPKGs-ISNTenabled:Exist "$PACKAGE_NAME"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" disable skipped 'already disabled'
+		result_code=2
+	elif [[ $PACKAGE_NAME = sherpa ]]; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" disable skipped "it's needed here! 😉"
+		result_code=2
+	fi
+
+	if [[ $result_code -gt 0 ]]; then
+		MarkThisActionForkAsSkipped
+		FuncFork:Exit $result_code
+	fi
+
+	QPKG.ServiceStatus:Clear
+	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$DISABLE_LOG_FILE
+
+	DebugAsProc "disabling $(FormatAsPackName "$PACKAGE_NAME")"
+
+	RunAndLog "/sbin/qpkg_service -t $QPKG_START_TIMEOUT_SECONDS disable $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
+	! QPKG.IsEnabled "$PACKAGE_NAME" && SendPackageStateChange ISNTenabled
+
+	QPKG.AppCenterNotifier:Clear
+	SaveActionResultToLog QPKG "$PACKAGE_NAME" disable ok
+	MarkThisActionForkAsOk
+	FuncFork:Exit $result_code
 
 	}
 
@@ -6819,7 +6728,7 @@ _QPKG:status_()
 	DebugAsProc "statusing $(FormatAsPackName "$PACKAGE_NAME")"
 
 	if package_tests=$(QPKG.GetActiveTest "$PACKAGE_NAME"); then
-		eval "$package_tests"
+		eval "$package_tests" &>/dev/null
 		result_code=$?
 	else
 		[[ $opts_debug = true ]] && debug_cmd='DEBUG_QPKG=true '
@@ -6828,7 +6737,7 @@ _QPKG:status_()
 			$GNU_TIMEOUT_CMD "$STATUS_CHECK_TIMEOUT_SECONDS" /bin/bash -c "${debug_cmd}$(QPKG.ServicePathFile) status"
 			result_code=$?
 		else
-			RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) status" "$LOGS_PATH/$PACKAGE_NAME.$CLEAN_LOG_FILE" log:failure-only
+			RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) status" "$LOGS_PATH/$PACKAGE_NAME.$STATUS_LOG_FILE" log:failure-only
 			result_code=$?
 		fi
 	fi
@@ -6882,7 +6791,7 @@ QPKG.ServiceStatus:Clear()
 
 	rm -f "/var/run/$PACKAGE_NAME.last.operation"
 
-	} &>/dev/null
+	}
 
 QPKG.LastResultWasOk()
 	{
@@ -7594,22 +7503,6 @@ QPKG.IsEnabled()
 
 	}
 
-QPKG.IsStarted()
-	{
-
-	# Assume that if package is enabled, it's also started. Hey, it's true most of the time. ;)
-	# But, really should revisit this to make result match reality.
-
-	# input:
-	#   $1 = QPKG name
-
-	# output:
-	#   $? = 0 (true) or 1 (false)
-
-	QPKG.IsEnabled "${1:?package name null}"
-
-	}
-
 QPKG.GetServiceStatus()
 	{
 
@@ -7676,7 +7569,7 @@ RunAndLog()
 
 	if [[ -e $LOG_PATHFILE ]]; then
 		FormatAsResultAndStdout "$result_code" "$(<"$LOG_PATHFILE")" >> "$2"
-		rm -f "$LOG_PATHFILE" &>/dev/null
+		rm -f "$LOG_PATHFILE"
 	else
 		FormatAsResultAndStdout "$result_code" '<null>' >> "$2"
 	fi
@@ -7684,12 +7577,12 @@ RunAndLog()
 	case $result_code in
 		0|"${4:-}")
 			[[ ${3:-} != log:failure-only ]] && AddExtLogToSessLog "$2"
-			DebugAsDone 'exec complete'
-			[[ $opts_debug = false ]] && rm -f "$2" &>/dev/null
+			DebugAsDone 'exec: complete'
+			[[ $opts_debug = false ]] && rm -f "$2"
 			;;
 		*)
 			AddExtLogToSessLog "$2"
-			DebugAsError 'exec complete, but with errors'
+			DebugAsError 'exec: complete, but with errors'
 	esac
 
 	Func:Exit $result_code
@@ -8861,7 +8754,7 @@ StripANSI()
 
 	# QTS 4.2.6 BusyBox `sed` doesn't fully support extended regexes, so code-stripping only works with a real `sed`
 
-	if [[ -e $GNU_SED_CMD && -L /opt/etc/passwd ]]; then   # try to ensure Entware is started before using this utility
+	if [[ -e $GNU_SED_CMD && -L /opt/etc/passwd ]]; then   # try to ensure Entware is active before using this utility
 		$GNU_SED_CMD -r 's/\x1b\[[0-9;]*m//g' <<< "${1:-}"
 	else
 		echo "${1:-}"		# can't strip, so pass thru original message unaltered
@@ -8872,7 +8765,7 @@ StripANSI()
 UpdateColourisation()
 	{
 
-	if [[ -e /opt/bin/sed && -L /opt/etc/passwd ]]; then	# try to ensure Entware is started before using this utility
+	if [[ -e /opt/bin/sed && -L /opt/etc/passwd ]]; then	# try to ensure Entware is active before using this utility
 		colourful=true
 		SendParentChangeEnv 'colourful=true'
 	else
@@ -8980,7 +8873,7 @@ sleep()
 
 	[[ ${wait//.} -eq 0 ]] && wait=1
 
-	if [[ -e $GNU_SLEEP_CMD && -L /opt/etc/passwd ]]; then  # try to ensure Entware is started before using this utility
+	if [[ -e $GNU_SLEEP_CMD && -L /opt/etc/passwd ]]; then  # try to ensure Entware is active before using this utility
 		$GNU_SLEEP_CMD "$wait"
 	elif [[ $DECIMAL_SLEEP_SECONDS_SUPPORTED = false ]]; then
 		$QTS_SLEEP_CMD "$((${wait%.*}+1))"				# ensure decimal seconds are rounded-up to next integer
