@@ -63,8 +63,8 @@ Self:Init()
 	Consts:Load
 
 	sess_active_pathfile=$THIS_PACKAGE_PATH/session.$$.active.log
-	rm -f "$REPORT_PATHFILE" &>/dev/null
-	rm -f "$RAMDISKS_FREESPACE_PATHFILE" &>/dev/null
+	rm -f "$REPORT_PATHFILE"
+	rm -f "$RAMDISKS_FREESPACE_PATHFILE"
 
 	trap RunOnEXIT EXIT
 	trap RunOnSIGINT INT
@@ -643,9 +643,9 @@ Self:LogEnv()
 		DebugUserspace ok '$PATH' "${PATH:0:trimmed_width}${CHARS_ELLIPSIS}"
 	fi
 
-	DebugBinPathVerAndMinVer python "$(GetDefPythonVer)" "$MIN_PYTHON_VER"
-	DebugBinPathVerAndMinVer python3 "$(GetDefPython3Ver)" "$MIN_PYTHON_VER"
-	DebugBinPathVerAndMinVer perl "$(GetDefPerlVer)" "$MIN_PERL_VER"
+	DebugBinPathVerAndMinVer python "$(GetPythonVer)" "$MIN_PYTHON_VER"
+	DebugBinPathVerAndMinVer python3 "$(GetPython3Ver)" "$MIN_PYTHON_VER"
+	DebugBinPathVerAndMinVer perl "$(GetPerlVer)" "$MIN_PERL_VER"
 	DebugScript 'logs path' "$LOGS_PATH"
 	DebugScript 'cache path' "$CACHE_PATH"
 	DebugQpkg detect 'action concurrency' "$CONCURRENCY"
@@ -766,7 +766,7 @@ Self:Validate()
 
 		if QPKG.IsInstalled Entware && QPKG.IsEnabled Entware; then
 			if [[ -e $PYTHON3_CMD ]]; then
-				installed_ver=$(GetDefPython3Ver "$PYTHON3_CMD")
+				installed_ver=$(GetPython3Ver "$PYTHON3_CMD")
 
 				if [[ ${installed_ver//./} -lt $MIN_PYTHON_VER ]]; then
 					ShowAsInfo 'the installed Python environment will be upgraded'
@@ -775,7 +775,7 @@ Self:Validate()
 			fi
 
 			if [[ -e $PERL_CMD ]]; then
-				installed_ver=$(GetDefPerlVer "$PERL_CMD")
+				installed_ver=$(GetPerlVer "$PERL_CMD")
 
 				if [[ ${installed_ver//./} -lt $MIN_PERL_VER ]]; then
 					ShowAsInfo 'the installed Perl environment will be upgraded'
@@ -819,7 +819,7 @@ Self:Validate()
 		fi
 	done
 
-	# If a standalone has been selected for `reinstall` or `restart`, need to `stop` its dependents first, and `activate` them again later
+	# If a standalone has been selected for `reinstall` or `reactivate`, need to `deactivate` its dependents first, and `activate` them again later
 	for package in $(QPKGs-ACreinstall-to:Array) $(QPKGs-ACreactivate-to:Array); do
 		if QPKGs-SCstandalone:Exist "$package" && QPKGs-ISactive:Exist "$package"; then
 			for prospect in $(QPKG:GetDependents "$package"); do
@@ -831,7 +831,7 @@ Self:Validate()
 		fi
 	done
 
-	# If a standalone has been selected for `stop` or `uninstall`, need to `stop` its dependents first
+	# If a standalone has been selected for `deactivate` or `uninstall`, need to `deactivate` its dependents first
 	for package in $(QPKGs-ACdeactivate-to:Array) $(QPKGs-ACuninstall-to:Array); do
 		if QPKGs-SCstandalone:Exist "$package" && QPKGs-ISinstalled:Exist "$package"; then
 			for prospect in $(QPKG:GetDependents "$package"); do
@@ -840,7 +840,7 @@ Self:Validate()
 		fi
 	done
 
-	# If a standalone has been selected for `uninstall`, then `install`, need to `stop` its dependents first, and `activate` them again later
+	# If a standalone has been selected for `uninstall`, then `install`, need to `deactivate` its dependents first, and `activate` them again later
 	for package in $(QPKGs-ACuninstall-to:Array); do
 		if QPKGs-SCstandalone:Exist "$package" && QPKGs-ISinstalled:Exist "$package"; then
 			if QPKGs-ACinstall-to:Exist "$package"; then
@@ -860,7 +860,7 @@ Self:Validate()
 		QPKGs-ACinstall-to:Add Entware
 	fi
 
-	# Check for standalone packages that must be active first, because dependents are being reinstalled/installed/activated/restarted
+	# Check for standalone packages that must be active first, because dependents are being reinstalled/installed/activated/reactivated
 	for action in reinstall install activate reactivate; do
 		for package in $(QPKGs-AC${action}-to:Array); do
 			for prospect in $(QPKG:GetStandalones "$package"); do
@@ -869,14 +869,14 @@ Self:Validate()
 		done
 	done
 
-	# Check for packages that must be enabled first, because a activate/restart was requested
+	# Check for packages that must be enabled first, because an `activate`/`reactivate` was requested
 	for action in activate reactivate; do
 		for package in $(QPKGs-AC${action}-to:Array); do
 			QPKGs-ISNTenabled:Exist "$package" && QPKGs-ACenable-to:Add "$package"
 		done
 	done
 
-	# No-need to `stop` packages that are about to be uninstalled
+	# No-need to `deactivate` packages that are about to be uninstalled
 	if QPKGs.ACuninstall.SCall:IsSet; then
 		QPKGs-ACdeactivate-to:Init
 	else
@@ -970,7 +970,7 @@ Actions:Proc()
 	local action=''
 	local -i tier_index=0
 
-	rm -f "$SESS_ACTIONS_RESULTS_PATHFILE" &>/dev/null
+	rm -f "$SESS_ACTIONS_RESULTS_PATHFILE"
 
 	if QPKGs-ACstatus-to:IsAny; then
 		Action:Proc status all QPKG statusing statused || return
@@ -1053,8 +1053,8 @@ Action:Proc()
 	# input:
 	#   $1 = $TARGET_ACTION					e.g. `activate`, `reactivate` ...
 	#   $2 = $TIER							e.g. `standalone`, `dependent`, `addon`, `all`
-	#   $3 = $PACKAGE_TYPE					e.g. `QPKG`, `ipk`, `pip`
-	#   $4 = $ACTION_PRESENT_MSG			e.g. `starting` ...
+	#   $3 = $PACKAGE_TYPE					e.g. `QPKG`, `IPK`, `PIP`
+	#   $4 = $ACTION_PRESENT_MSG			e.g. `activating` ...
 	#   $5 = $ACTION_PAST_MSG				e.g. `activated` ...
 
 	Func:Entry
@@ -1248,7 +1248,7 @@ OpenActionMsgPipe()
 
 	# create a message pipe, so action forks can send data back to parent
 
-	[[ -p $ACTION_MSG_PIPE ]] && rm -f "$ACTION_MSG_PIPE" &>/dev/null
+	[[ -p $ACTION_MSG_PIPE ]] && rm -f "$ACTION_MSG_PIPE"
 	[[ ! -p $ACTION_MSG_PIPE ]] && mknod "$ACTION_MSG_PIPE" p
 
 	# create a file descriptor to store original stdin FD
@@ -1282,7 +1282,7 @@ CloseActionMsgPipe()
 	[[ $msg_pipe_fd != none ]] && eval "exec $msg_pipe_fd>&-"
 
 	# delete message pipe
-	[[ -p $ACTION_MSG_PIPE ]] && rm -f "$ACTION_MSG_PIPE" &>/dev/null
+	[[ -p $ACTION_MSG_PIPE ]] && rm -f "$ACTION_MSG_PIPE"
 
 	}
 
@@ -1317,7 +1317,7 @@ AdjustMaxForks()
 				max_forks=1
 				reason="'$1'"
 				;;
-			backup|download|status|stop|uninstall)		# low-resource actions, so allow multiple forks, even on ARMv5
+			backup|download|status|deactivate|uninstall)		# low-resource actions, so allow multiple forks, even on ARMv5
 				max_forks=4
 				reason="'$1'"
 		esac
@@ -1468,7 +1468,7 @@ ParseArgs()
 
 		if [[ -z $action ]]; then
 			case $arg in
-				a|abs|action|actions|actions-all|active|alias|aliases|all-actions|b|backups|deactive|deps|dependent|dependents|disabled|enabled|failed|groups|indeps|independent|independents|installable|installed|l|last|log|missing|not-installed|ok|option|options|p|package|packages|problems|r|repo|repos|results|skipped|standalone|standalones|tail|tips|updatable|updateable|upgradable|v|version|versions|whole)
+				a|abs|action|actions|actions-all|alias|aliases|all-actions|b|backups|deps|dependent|dependents|disabled|enabled|failed|groups|indeps|independent|independents|installable|installed|l|last|log|missing|not-installed|ok|option|options|p|package|packages|problems|r|repo|repos|results|skipped|standalone|standalones|tail|tips|updatable|updateable|upgradable|v|version|versions|whole)
 					action=help
 					arg_identified=true
 					group=''
@@ -1922,7 +1922,7 @@ AllocGroupPacksToAcs()
 				fi
 
 				if QPKGs-AC${action}-to:IsAny; then
-					DebugAsDone "action: '$action', group: 'Nt${group}': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
+					DebugAsDone "action: '$action', group: 'NT${group}': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
 				else
 					ShowAsWarn "unable to find any packages to $(Lowercase "$action")"
 				fi
@@ -1986,7 +1986,7 @@ AllocGroupPacksToAcs()
 				fi
 
 				if QPKGs-AC${action}-to:IsAny; then
-					DebugAsDone "action: '$action', state: 'Nt${state}': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
+					DebugAsDone "action: '$action', state: 'NT${state}': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
 				else
 					ShowAsWarn "unable to find any packages to $(Lowercase "$action")"
 				fi
@@ -2448,7 +2448,7 @@ CloseIpkArchive()
 
 	rm -f "$EXTERNAL_PACKAGES_PATHFILE"
 
-	} &>/dev/null
+	}
 
 _ActionForks:Launch_()
 	{
@@ -2710,24 +2710,10 @@ TerminalDimensions:Load()
 
 	}
 
-GetDefPythonVer()
-	{
-
-	GetPythonVer "${1:-}"
-
-	}
-
-GetDefPython3Ver()
+GetPython3Ver()
 	{
 
 	GetPythonVer "${1:-python3}"
-
-	}
-
-GetDefPerlVer()
-	{
-
-	GetPerlVer
 
 	}
 
@@ -3956,7 +3942,7 @@ ArchivePriorSessLogs()
 	for log_pathfile in "$THIS_PACKAGE_PATH/session."*".active.log"; do
 		if [[ -f $log_pathfile && $log_pathfile != "$sess_active_pathfile" ]]; then
 			$CAT_CMD "$log_pathfile" >> "$SESS_ARCHIVE_PATHFILE"
-			rm -f "$log_pathfile" &>/dev/null
+			rm -f "$log_pathfile"
 		fi
 	done
 
@@ -3967,7 +3953,7 @@ ResetActiveSessLog()
 
 	rm -f "$sess_active_pathfile"
 
-	} &>/dev/null
+	}
 
 ExtractPrevSessFromTail()
 	{
@@ -3994,7 +3980,7 @@ ExtractPrevSessFromTail()
 
 		$SED_CMD "$start_line,$end_line!d" "$SESS_TAIL_PATHFILE" > "$SESS_LAST_PATHFILE"
 	else
-		rm -f "$SESS_LAST_PATHFILE" &>/dev/null
+		rm -f "$SESS_LAST_PATHFILE"
 	fi
 
 	return 0
@@ -4007,7 +3993,7 @@ ExtractTailFromLog()
 	if [[ -e $SESS_ARCHIVE_PATHFILE ]]; then
 		$TAIL_CMD -n${LOG_TAIL_LINES} "$SESS_ARCHIVE_PATHFILE" > "$SESS_TAIL_PATHFILE"	# trim main log first so there's less to `grep`
 	else
-		rm -f "$SESS_TAIL_PATHFILE" &>/dev/null
+		rm -f "$SESS_TAIL_PATHFILE"
 	fi
 
 	return 0
@@ -5572,7 +5558,7 @@ Self.LockFile:Release()
 
 	rm -f "$LOCK_PATHFILE"
 
-	} &>/dev/null
+	}
 
 Self.Verbose:Enable()
 	{
@@ -5608,7 +5594,7 @@ SaveActionResultToLog()
 	# input:						example:
 	#   $1 = package type			`QPKG`, `IPK`, `PIP`
 	#   $2 = package or group name	`SABnzbd`, `essential`
-	#   $3 = action					`download`, `downloaded`
+	#   $3 = action					`download`, `activate`
 	#   $4 = result					`ok`, `skipped-ok`, `skipped`, `failed`
 	#   $5 = reason (optional)		"file already exists in local cache"
 
@@ -5736,7 +5722,7 @@ _QPKG:download_()
 			FuncFork:Exit 0
 		else
 			DebugInfo "deleting $(FormatAsFileName "$LOCAL_FILENAME") as checksum is incorrect"
-			rm -f "$LOCAL_PATHFILE" &>/dev/null
+			rm -f "$LOCAL_PATHFILE"
 		fi
 	fi
 
@@ -5747,7 +5733,7 @@ _QPKG:download_()
 	if [[ ! -f $LOCAL_PATHFILE ]]; then
 		DebugAsProc "downloading $(FormatAsFileName "$REMOTE_FILENAME")"
 
-		rm -f "$LOG_PATHFILE" &>/dev/null
+		rm -f "$LOG_PATHFILE"
 
 		RunAndLog "$CURL_CMD${curl_insecure_arg} --location --output $LOCAL_PATHFILE $REMOTE_URL" "$LOG_PATHFILE" log:failure-only
 		result_code=$?
@@ -6796,7 +6782,7 @@ QPKG.ServiceStatus:Clear()
 
 	rm -f "/var/run/$PACKAGE_NAME.last.operation"
 
-	} &>/dev/null
+	}
 
 QPKG.LastResultWasOk()
 	{
@@ -7574,7 +7560,7 @@ RunAndLog()
 
 	if [[ -e $LOG_PATHFILE ]]; then
 		FormatAsResultAndStdout "$result_code" "$(<"$LOG_PATHFILE")" >> "$2"
-		rm -f "$LOG_PATHFILE" &>/dev/null
+		rm -f "$LOG_PATHFILE"
 	else
 		FormatAsResultAndStdout "$result_code" '<null>' >> "$2"
 	fi
@@ -7583,7 +7569,7 @@ RunAndLog()
 		0|"${4:-}")
 			[[ ${3:-} != log:failure-only ]] && AddExtLogToSessLog "$2"
 			DebugAsDone 'exec: complete'
-			[[ $opts_debug = false ]] && rm -f "$2" &>/dev/null
+			[[ $opts_debug = false ]] && rm -f "$2"
 			;;
 		*)
 			AddExtLogToSessLog "$2"
