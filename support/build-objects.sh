@@ -12,9 +12,12 @@ echo -n "building 'objects' ... "
 target_pathfile="$source_path"/objects
 
 # these are used internally by sherpa -----------------------------------------------------
+# ordered
+PACKAGE_TIERS=(standalone addon dependent)
+
 # sorted
-QPKG_IS_STATES=(active backedup downloaded enabled installed missing signed slow started unknown)
-QPKG_ISNT_STATES=(active backedup downloaded enabled installed signed started)
+QPKG_IS_STATES=(active backedup downloaded enabled installed missing signed slow unknown)
+QPKG_ISNT_STATES=(active backedup downloaded enabled installed signed)
 QPKG_STATES_TRANSIENT=(starting stopping restarting)
 QPKG_SERVICE_RESULTS=(ok failed unknown)
 
@@ -24,15 +27,15 @@ IPK_STATES=(downloaded installed reinstalled upgraded)
 # ordered
 PIP_ACTIONS=(download uninstall upgrade reinstall install)
 IPK_ACTIONS=(download uninstall upgrade reinstall install)
-QPKG_ACTIONS=(status rebuild reassign download backup stop disable uninstall upgrade reinstall install restore clean enable start restart sign)
+QPKG_ACTIONS=(status rebuild reassign download backup deactivate disable uninstall upgrade reinstall install restore clean enable activate reactivate sign)
 
 # these actions, states and scopes may be specified by the user -----------------------------------------------------
 # sorted
 USER_QPKG_SC_GROUPS=(all canbackup canclean canrestarttoupdate dependent hasdependents installable standalone upgradable)
 USER_QPKG_SCNT_GROUPS=(canclean installable upgradable)
-USER_QPKG_IS_STATES=(active backedup enabled installed missing started)
-USER_QPKG_ISNT_STATES=(active backedup enabled installed started)
-USER_QPKG_ACTIONS=(backup clean enable disable install list reassign rebuild reinstall restart restore start status stop uninstall upgrade)
+USER_QPKG_IS_STATES=(active backedup enabled installed missing)
+USER_QPKG_ISNT_STATES=(active backedup enabled installed)
+USER_QPKG_ACTIONS=(activate backup clean enable deactivate disable install list reactivate reassign rebuild reinstall restore status uninstall upgrade)
 
 AddFlagObj()
 	{
