@@ -788,8 +788,8 @@ Self:Validate()
 	QPKGs.IsCanBackup:Build
 	QPKGs.IsCanRestartToUpdate:Build
 	QPKGs.IsCanClean:Build
-
 	AllocGroupPacksToAcs
+	QPKGs-SCupgradable:Exist sherpa && QPKGs-ACupgrade-to:Add sherpa
 
 	# Meta-action pre-processing
 
@@ -922,8 +922,6 @@ Self:Validate()
 
 	if [[ $opts_check = true ]]; then
 		QPKGs-ACsign-to:Add "$(QPKGs-ISinstalled:Array)"
-		QPKGs.Missing:Show
-		QPKGs.NewVers:Show
 
 		for package in $(QPKGs-SCdependent:Array); do
 			! QPKGs-SCupgradable:Exist "$package" && QPKGs-SCcanrestarttoupdate:Exist "$package" && QPKGs-ISinstalled:Exist "$package" && QPKGs-ACreactivate-to:Add "$package"
@@ -2618,12 +2616,12 @@ KillActiveFork()
 	if [[ -n ${fork_pid:-} && ${fork_pid:-0} -gt 0 && -d /proc/$fork_pid ]]; then
 		sleep .2
 		set +m		# disable job control
-		kill -9 "$fork_pid" &>/dev/null
+		kill -9 "$fork_pid"
 		set -m		# re-enable job control
-		wait 2>/dev/null
+		wait
 	fi
 
-	}
+	} &>/dev/null
 
 IsQNAP()
 	{
