@@ -24,19 +24,15 @@ IPK_STATES=(downloaded installed reinstalled upgraded)
 # ordered
 PIP_ACTIONS=(download uninstall upgrade reinstall install)
 IPK_ACTIONS=(download uninstall upgrade reinstall install)
-QPKG_ACTIONS=(download rebuild reassign backup stop disable uninstall upgrade reinstall install restore clean enable start restart sign status)
+QPKG_ACTIONS=(status rebuild reassign download backup stop disable uninstall upgrade reinstall install restore clean enable start restart sign)
 
-# these words may be specified by the user -----------------------------------------------------
+# these actions, states and scopes may be specified by the user -----------------------------------------------------
 # sorted
 USER_QPKG_SC_GROUPS=(all canbackup canclean canrestarttoupdate dependent hasdependents installable standalone upgradable)
 USER_QPKG_SCNT_GROUPS=(canclean installable upgradable)
-USER_QPKG_IS_STATES=(backedup installed missing started)
-USER_QPKG_ISNT_STATES=(backedup installed started)
-USER_QPKG_ACTIONS=(backup clean install list reassign rebuild reinstall restart restore start status stop uninstall upgrade)
-
-# disabled for-now, but would be helpful to have these as user-specified states
-# USER_QPKG_IS_STATES+=(${QPKG_SERVICE_RESULTS[@]})
-# USER_QPKG_ISNT_STATES+=(${QPKG_SERVICE_RESULTS[@]})
+USER_QPKG_IS_STATES=(active backedup enabled installed missing started)
+USER_QPKG_ISNT_STATES=(active backedup enabled installed started)
+USER_QPKG_ACTIONS=(backup clean enable disable install list reassign rebuild reinstall restart restore start status stop uninstall upgrade)
 
 AddFlagObj()
 	{
@@ -196,7 +192,7 @@ done
 
 for action in "${QPKG_ACTIONS[@]}"; do
 	case $action in
-		disable|enable|list)
+		list)
 			continue    # action result lists are not required for these
 	esac
 
@@ -207,7 +203,7 @@ done
 
 for action in "${IPK_ACTIONS[@]}"; do
 	case $action in
-		disable|enable|list)
+		list)
 			continue    # action result lists are not required for these
 	esac
 
