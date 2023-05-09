@@ -3518,7 +3518,7 @@ Help.Actions:Show()
 	DisplayAsHelpTitle "$(FormatAsAction) usage examples:"
 	DisplayAsProjSynIndentExam 'show package statuses' status
 	DisplayAsProjSynIndentExam '' s
-	DisplayAsProjSynIndentExam 'show package repositories' repos
+	DisplayAsProjSynIndentExam 'show current package repository assignments' repos
 	DisplayAsProjSynIndentExam '' r
 	DisplayAsProjSynIndentExam 'ensure all application dependencies are installed' check
 	DisplayAsProjSynIndentExam '' c
@@ -3526,10 +3526,15 @@ Help.Actions:Show()
 	DisplayAsProjSynIndentExam 'uninstall these packages' "uninstall $(FormatAsPackages)"
 	DisplayAsProjSynIndentExam 'reinstall these packages' "reinstall $(FormatAsPackages)"
 	DisplayAsProjSynIndentExam "rebuild these packages ('install' packages, then 'restore' configuration backups)" "rebuild $(FormatAsPackages)"
-	DisplayAsProjSynIndentExam 'upgrade these packages (and internal applications where-supported)' "upgrade $(FormatAsPackages)"
-	DisplayAsProjSynIndentExam 'enable then activate these packages' "activate $(FormatAsPackages)"
-	DisplayAsProjSynIndentExam 'stop then disable these packages (disabling will prevent them starting on reboot)' "stop $(FormatAsPackages)"
+	DisplayAsProjSynIndentExam 'upgrade these packages (this will upgrade internal applications where-supported)' "upgrade $(FormatAsPackages)"
+	DisplayAsProjSynIndentExam 'enable these packages' "enable $(FormatAsPackages)"
+	DisplayAsProjSynIndentExam 'disable these packages (disabling will prevent them activating on reboot)' "disable $(FormatAsPackages)"
+	DisplayAsProjSynIndentExam 'enable, then activate these packages (this will upgrade internal applications where-supported)' "activate $(FormatAsPackages)"
+	DisplayAsProjSynIndentExam '' "start $(FormatAsPackages)"
+	DisplayAsProjSynIndentExam 'deactivate these packages' "deactivate $(FormatAsPackages)"
+	DisplayAsProjSynIndentExam '' "stop $(FormatAsPackages)"
 	DisplayAsProjSynIndentExam 'reactivate these packages (this will upgrade internal applications where-supported)' "reactivate $(FormatAsPackages)"
+	DisplayAsProjSynIndentExam '' "restart $(FormatAsPackages)"
 	Help.Action.Reassign:Show
 	DisplayAsProjSynIndentExam 'clear local repository files from these packages' "clean $(FormatAsPackages)"
 	DisplayAsProjSynIndentExam 'backup these application configurations to the backup location' "backup $(FormatAsPackages)"
@@ -3549,7 +3554,7 @@ Help.Actions:Show()
 Help.Action.Reassign:Show()
 	{
 
-	DisplayAsProjSynIndentExam "reassign packages to $(FormatAsTitle). Use this action to separate QPKGs previously installed via an online respository from further management by that repository" "reassign $(FormatAsPackages)"
+	DisplayAsProjSynIndentExam "reassign packages to $(FormatAsTitle). Use this action to detach QPKGs previously installed via an online respository from further management by that repository" "reassign $(FormatAsPackages)"
 
 	}
 
@@ -3565,9 +3570,14 @@ Help.ActionsAll:Show()
 	DisplayAsProjSynIndentExam 'reinstall all installed packages' 'reinstall all'
 	DisplayAsProjSynIndentExam "rebuild all packages with backups ('install' packages and 'restore' backups)" 'rebuild all'
 	DisplayAsProjSynIndentExam 'upgrade all installed packages (and internal applications where-supported)' 'upgrade all'
-	DisplayAsProjSynIndentExam 'enable then activate all installed packages (upgrade internal applications, not packages)' 'activate all'
-	DisplayAsProjSynIndentExam 'stop then disable all installed packages (disabling will prevent them starting on reboot)' 'stop all'
+	DisplayAsProjSynIndentExam 'enable all installed packages (allow them to activate on reboot)' 'enable all'
+	DisplayAsProjSynIndentExam 'disable all installed packages (prevent them activating on reboot)' 'disable all'
+	DisplayAsProjSynIndentExam 'enable, then activate all installed packages (this will upgrade internal applications where-supported)' 'activate all'
+	DisplayAsProjSynIndentExam '' 'start all'
+	DisplayAsProjSynIndentExam 'deactivate all installed packages' 'deactivate all'
+	DisplayAsProjSynIndentExam '' 'stop all'
 	DisplayAsProjSynIndentExam 'reactivate packages (this will upgrade internal applications where-supported)' 'reactivate all'
+	DisplayAsProjSynIndentExam '' 'restart all'
 	DisplayAsProjSynIndentExam 'clear local repository files from all packages' 'clean all'
 	DisplayAsProjSynIndentExam 'list all available packages' 'list all'
 	DisplayAsProjSynIndentExam 'list only installed packages' 'list installed'
@@ -3626,6 +3636,7 @@ Help.Groups:Show()
 	DisplayAsProjSynIndentExam 'select every package' "$(FormatAsAction) all"
 	DisplayAsProjSynIndentExam 'select only standalone packages (these do not depend on other QPKGs)' "$(FormatAsAction) standalone"
 	DisplayAsProjSynIndentExam 'select only dependent packages (these require another QPKG to be installed and active)' "$(FormatAsAction) dependent"
+	DisplayAsProjSynIndentExam '' "$(FormatAsAction) deps"
 	DisplayAsProjSynIndentExam 'select only active packages' "$(FormatAsAction) active"
 	DisplayAsProjSynIndentExam '' "$(FormatAsAction) started"
 	DisplayAsProjSynIndentExam 'select only inactive packages' "$(FormatAsAction) inactive"
@@ -4475,12 +4486,6 @@ QPKGs.States:Build()
 				QPKGs-ISenabled:Add "$package"
 			else
 				QPKGs-ISNTenabled:Add "$package"
-			fi
-
-			if QPKG.IsActive "$package"; then
-				QPKGs-ISactive:Add "$package"
-			else
-				QPKGs-ISNTactive:Add "$package"
 			fi
 
 			if [[ -e /var/run/$package.last.operation ]]; then
@@ -5844,12 +5849,6 @@ _QPKG:install_()
 			SendPackageStateChange ISNTenabled
 		fi
 
-		if QPKG.IsActive "$PACKAGE_NAME"; then
-			SendPackageStateChange ISactive
-		else
-			SendPackageStateChange ISNTactive
-		fi
-
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" install ok "version $(QPKG.Local.Ver "$PACKAGE_NAME")"
 
 		if [[ $PACKAGE_NAME = Entware ]]; then
@@ -5938,12 +5937,6 @@ _QPKG:reinstall_()
 			SendPackageStateChange ISNTenabled
 		fi
 
-		if QPKG.IsActive "$PACKAGE_NAME"; then
-			SendPackageStateChange ISactive
-		else
-			SendPackageStateChange ISNTactive
-		fi
-
 		local current_ver=$(QPKG.Local.Ver "$PACKAGE_NAME")
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reinstall ok "version $current_ver"
 		SendParentChangeEnv "QPKGs-ACsign-to:Add $PACKAGE_NAME"
@@ -6023,12 +6016,6 @@ _QPKG:upgrade_()
 			SendPackageStateChange ISenabled
 		else
 			SendPackageStateChange ISNTenabled
-		fi
-
-		if QPKG.IsActive "$PACKAGE_NAME"; then
-			SendPackageStateChange ISactive
-		else
-			SendPackageStateChange ISNTactive
 		fi
 
 		local current_ver=$(QPKG.Local.Ver "$PACKAGE_NAME")
@@ -7518,22 +7505,6 @@ QPKG.IsEnabled()
 	#   $? = 0 (true) or 1 (false)
 
 	[[ $(/sbin/getcfg "${1:?package name null}" Enable -u -f /etc/config/qpkg.conf) = TRUE ]]
-
-	}
-
-QPKG.IsActive()
-	{
-
-	# Assume that if package is enabled, it's also started. Hey, it's true most of the time. ;)
-	# But, really should revisit this to make result match reality.
-
-	# input:
-	#   $1 = QPKG name
-
-	# output:
-	#   $? = 0 (true) or 1 (false)
-
-	QPKG.IsEnabled "${1:?package name null}"
 
 	}
 
