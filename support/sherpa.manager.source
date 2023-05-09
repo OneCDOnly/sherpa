@@ -1322,7 +1322,7 @@ AdjustMaxForks()
 				max_forks=$(((max_forks+1)/2))
 				reason="'$1'"
 				;;
-			install|reinstall|upgrade)	# don't execute these actions async: QTS installer for each package eventually aborts (looks like QTS can only manage a single package at-a-time, because packages overwrite each other, and package source files end-up in the wrong install paths)
+			install|reinstall|upgrade)	# don't execute these actions async: installer for each package eventually aborts (looks like QPKGs can only be managed one-at-a-time, else packages overwrite each other, and package source files end-up in the wrong install paths)
 				max_forks=1
 				reason="'$1'"
 				;;
@@ -1330,7 +1330,7 @@ AdjustMaxForks()
 				max_forks=1
 				reason="'$1'"
 				;;
-			backup|download|status|deactivate|uninstall)		# low-resource actions, so allow multiple forks, even on ARMv5
+			backup|deactivate|disable|download|enable|status|uninstall)		# low-resource actions, so force multiple forks, even on ARMv5
 				max_forks=4
 				reason="'$1'"
 		esac
@@ -2618,7 +2618,7 @@ KillActiveFork()
 	if [[ -n ${fork_pid:-} && ${fork_pid:-0} -gt 0 && -d /proc/$fork_pid ]]; then
 		sleep .2
 		set +m		# disable job control
-		kill -9 "$fork_pid" 2>/dev/null
+		kill -9 "$fork_pid" &>/dev/null
 		set -m		# re-enable job control
 		wait 2>/dev/null
 	fi
