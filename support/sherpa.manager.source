@@ -924,7 +924,7 @@ Self:Validate()
 		QPKGs-ACsign-to:Add "$(QPKGs-ISinstalled:Array)"
 
 		for package in $(QPKGs-SCdependent:Array); do
-			! QPKGs-SCupgradable:Exist "$package" && QPKGs-SCcanrestarttoupdate:Exist "$package" && QPKGs-ISinstalled:Exist "$package" && QPKGs-ACreactivate-to:Add "$package"
+			! QPKGs-SCupgradable:Exist "$package" && QPKGs-SCcanrestarttoupdate:Exist "$package" && QPKGs-ISenabled:Exist "$package" && QPKGs-ACreactivate-to:Add "$package"
 		done
 	fi
 

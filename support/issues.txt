@@ -1,5 +1,3 @@
-* don't restart deps after `check` if they were stopped & disabled.
-
 * if a forked action hangs, it's not being killed by its caller.
 	need to confirm this.
 
