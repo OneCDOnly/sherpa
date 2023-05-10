@@ -397,12 +397,9 @@ Consts:Load()
 	readonly CHARS_ALERT=$CHAR_SPACER'! '
 	readonly CHARS_DROPEND='└─ '
 	readonly CHARS_DROPTHRU='├─ '
-
 	readonly CHARS_NOTE='* '
 	readonly CHARS_RESULTS='= '
-
 	readonly CHARS_ELLIPSIS='...'
-
 	readonly CHARS_REGULAR_PROMPT='$ '
 	readonly CHARS_SUPER_PROMPT='# '
 	readonly CHARS_SUDO_PROMPT="${CHARS_REGULAR_PROMPT}sudo "
@@ -1103,7 +1100,7 @@ Action:Proc()
 			total_count=${#target_packages[@]}
 			DebugVar total_count
 
-			ShowAsProc "$ACTION_PRESENT_MSG $([[ $TIER != all ]] && echo "$TIER ")$(Uppercase "${PACKAGE_TYPE}")$(Pluralise "$total_count")"
+			ShowAsProc "$ACTION_PRESENT_MSG $([[ $TIER != all ]] && echo "$TIER ")$(Uppercase "$PACKAGE_TYPE")$(Pluralise "$total_count")"
 
 			if [[ $total_count -eq 0 ]]; then
 				DebugInfo 'nothing to process'
@@ -1230,7 +1227,7 @@ Action:Proc()
 
 			;;
 		IPK|PIP)
-			ShowAsProc "$ACTION_PRESENT_MSG $([[ $TIER != all ]] && echo "$TIER ")$(Uppercase "${PACKAGE_TYPE}")s"
+			ShowAsProc "$ACTION_PRESENT_MSG $([[ $TIER != all ]] && echo "$TIER ")$(Uppercase "$PACKAGE_TYPE")s"
 
 			InitForkCounts
 			${PACKAGE_TYPE}s:${TARGET_ACTION}	# only process these packages in groups, not individually
@@ -2938,7 +2935,7 @@ DisplayAsHelpNameAuthorDesc()
 				package_name_msg=$(ColourTextDarkGrey "${CHARS_NORMAL}${package_name}")
 			fi
 
-			package_author_msg="$(ColourTextDarkGrey "${package_author}")"
+			package_author_msg="$(ColourTextDarkGrey "$package_author")"
 			package_description_msg="$(ColourTextDarkGrey "${CHARS_NORMAL}${package_description}")"
 			;;
 		highlighted)
@@ -3155,7 +3152,7 @@ DisplayAsHelpNameStatusVerPath()
 			if [[ $package_status =~ $patt ]]; then
 				package_name_msg="${CHARS_BLANK}$(ColourTextBrightRed "$package_name")"
 				package_status_msg="$(ColourTextBrightRedBlink "${CHARS_ALERT}${package_status}")"
-				package_version_msg="${CHARS_BLANK}$(ColourTextBrightRedBlink "${package_installed_version}")"
+				package_version_msg="${CHARS_BLANK}$(ColourTextBrightRedBlink "$package_installed_version")"
 				package_path_msg="${CHARS_BLANK}$(ColourTextBrightRedBlink "$package_path")"
 			else
 				package_name_msg="${CHARS_BLANK}$(ColourTextBrightOrange "$package_name")"
