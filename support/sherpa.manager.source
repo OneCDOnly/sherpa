@@ -8989,7 +8989,6 @@ RunOnSIGINT()
 	ShowAsAbort 'caught SIGINT'
 	KillActiveFork
 	CloseActionMsgPipe
-	rm -f "$DISPLAY_INHBIT_PATHFILE"
 	exit
 
 	}
