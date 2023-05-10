@@ -65,6 +65,7 @@ Self:Init()
 	sess_active_pathfile=$THIS_PACKAGE_PATH/session.$$.active.log
 	rm -f "$REPORT_PATHFILE"
 	rm -f "$RAMDISKS_FREESPACE_PATHFILE"
+	rm -f "$DISPLAY_INHBIT_PATHFILE"
 
 	trap RunOnEXIT EXIT
 	trap RunOnSIGINT INT
@@ -373,6 +374,7 @@ Consts:Load()
 	readonly SESS_ACTIONS_RESULTS_PATHFILE=$LOGS_PATH/session.action.results.log
 	readonly REPORT_PATHFILE=$LOGS_PATH/report.ansi
 	readonly RAMDISKS_FREESPACE_PATHFILE=$LOGS_PATH/ramdisks.freespace
+	readonly DISPLAY_INHBIT_PATHFILE=$CACHE_PATH/display.inhibit
 
 	readonly ACTION_RESULT_INDENT=6
 	readonly FILE_NAME_COL_WIDTH=33
@@ -2570,6 +2572,7 @@ _DirSize:Monitor_()
 			progress_msg+=$stall_msg
 		fi
 
+		[[ ! -e $DISPLAY_INHBIT_PATHFILE ]] || return
 		WriteMsgInPlace "$progress_msg"
 		sleep 1
 	done
@@ -4100,6 +4103,7 @@ UpdateForkProgress()
 
 	RefreshForkCounts
 	[[ $opts_verbose = true ]] && return		# don't display progress, it's impossible to view it with so-many other writes to the screen
+	[[ ! -e $DISPLAY_INHBIT_PATHFILE ]] || return
 
 	msg+="$(PercFrac "$ok_count" "$((skip_count+skip_ok_count+skip_error_count))" "$fail_count" "$total_count")"
 
@@ -8980,10 +8984,12 @@ Packages:Load()
 RunOnSIGINT()
 	{
 
+	$TOUCH_CMD "$DISPLAY_INHBIT_PATHFILE"
 	EraseThisLine
 	ShowAsAbort 'caught SIGINT'
 	KillActiveFork
 	CloseActionMsgPipe
+	rm -f "$DISPLAY_INHBIT_PATHFILE"
 	exit
 
 	}
