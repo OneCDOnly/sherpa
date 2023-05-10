@@ -1018,11 +1018,11 @@ Actions:Proc()
 					;;
 				addon)
 					for action in install reinstall upgrade activate; do
-						QPKGs-ISactive:Exist Entware && ipks_upgrade=true
+						QPKGs-ISenabled:Exist Entware && ipks_upgrade=true
 						QPKGs-AC${action}-to:IsAny && ipks_install=true
 					done
 
-					if QPKGs-ISactive:Exist Entware; then
+					if QPKGs-ISenabled:Exist Entware; then
 						ModPathToEntware
 						Action:Proc upgrade $tier IPK upgrading upgraded || return
 						Action:Proc install $tier IPK installing installed || return
