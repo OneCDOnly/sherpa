@@ -611,7 +611,6 @@ Self:LogEnv()
 	DebugFirmware ok kernel "$(GetKernel)"
 	DebugFirmware ok platform "$NAS_PLATFORM"
 	DebugUserspace ok 'OS uptime' "$(GetUptime)"
-	DebugUserspace ok 'system load' "$(GetSysLoadAverages)"
 
 	if OS.IsStarting; then
 		DebugUserspace warning 'OS startup' starting-up
@@ -624,6 +623,8 @@ Self:LogEnv()
 	else
 		DebugUserspace ok 'OS shutdown' inactive
 	fi
+
+	DebugUserspace ok 'system load' "$(GetSysLoadAverages)"
 
 	if [[ $EUID -eq 0 ]]; then
 		DebugUserspace ok '$EUID' "$EUID"
@@ -651,7 +652,7 @@ Self:LogEnv()
 	if [[ ${#PATH} -le $max_width ]]; then
 		DebugUserspace ok '$PATH' "$PATH"
 	else
-		DebugUserspace ok '$PATH' "${PATH:0:trimmed_width}${CHARS_ELLIPSIS}"
+		DebugUserspace ok '$PATH (LHS-only)' "${PATH:0:trimmed_width}${CHARS_ELLIPSIS}"
 	fi
 
 	DebugBinPathVerAndMinVer python "$(GetPythonVer)" "$MIN_PYTHON_VER"
