@@ -2140,7 +2140,7 @@ UpdateEntwarePackageList()
 			# no-big-deal
 		fi
 	else
-		DebugInfo "$(FormatAsPackName Entware) package list updated less-than $FILE_CHANGE_THRESHOLD_MINUTES minutes ago: skipping update"
+		DebugInfo "$(FormatAsPackName Entware) package list was updated less-than $FILE_CHANGE_THRESHOLD_MINUTES minutes ago: skipping update"
 	fi
 
 	[[ -f $EXTERNAL_PACKAGES_ARCHIVE_PATHFILE && ! -f $EXTERNAL_PACKAGES_PATHFILE ]] && OpenIpkArchive
@@ -2229,9 +2229,9 @@ CalcIpkDepsToInstall()
 	done
 
 	if [[ $complete = true ]]; then
-		DebugAsDone "complete in $iterations iteration$(Pluralise "$iterations")"
+		DebugAsDone "dependency calculation complete in $iterations iteration$(Pluralise "$iterations")"
 	else
-		DebugAsError "incomplete in $iterations iteration$(Pluralise "$iterations"), consider raising \$ITERATION_LIMIT [$ITERATION_LIMIT]"
+		DebugAsError "dependency calculation incomplete in $iterations iteration$(Pluralise "$iterations"), consider raising \$ITERATION_LIMIT [$ITERATION_LIMIT]"
 		show_suggest_raise_issue=true
 	fi
 
