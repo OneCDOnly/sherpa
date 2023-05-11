@@ -613,6 +613,18 @@ Self:LogEnv()
 	DebugUserspace ok 'OS uptime' "$(GetUptime)"
 	DebugUserspace ok 'system load' "$(GetSysLoadAverages)"
 
+	if OS.IsStarting; then
+		DebugUserspace warning 'OS startup' starting-up
+	else
+		DebugUserspace ok 'OS startup' complete
+	fi
+
+	if OS.IsStopping; then
+		DebugUserspace warning 'OS shutdown' shutting-down
+	else
+		DebugUserspace ok 'OS shutdown' inactive
+	fi
+
 	if [[ $EUID -eq 0 ]]; then
 		DebugUserspace ok '$EUID' "$EUID"
 	else
@@ -4457,6 +4469,8 @@ QPKGs.States:Build()
 	local -i index=0
 	local package=''
 	local prev=''
+	OS.IsStarting && ShowAsWarn "$(GetQnapOS) is starting-up. QPKG statuses are in-flux. Try checking again in a few minutes"
+	OS.IsStopping && ShowAsWarn "$(GetQnapOS) is shutting-down. All QPKGs are in the process of being stopped"
 	ShowAsProc 'package states'
 
 	for index in "${!QPKG_NAME[@]}"; do
@@ -5351,6 +5365,20 @@ OS.IsAllowUnsignedPackages()
 	[[ $(/sbin/getcfg 'QPKG Management' Ignore_Cert) = TRUE ]]
 
 	}
+
+OS.IsStarting()
+	{
+
+	ps | $GREP_CMD -F '/bin/sh /etc/init.d/rcS' | $GREP_CMD -v grep
+
+	} &>/dev/null
+
+OS.IsStopping()
+	{
+
+	ps | $GREP_CMD -F '/bin/sh /etc/init.d/rcK' | $GREP_CMD -v grep
+
+	} &>/dev/null
 
 GetRepoURLFromStoreID()
 	{
