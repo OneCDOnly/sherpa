@@ -20,7 +20,7 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=Deluge-web
-	readonly SCRIPT_VERSION=230501
+	readonly SCRIPT_VERSION=230511
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -334,7 +334,6 @@ StatusQPKG()
 	{
 
 	IsNotError || return
-	SetServiceOperationResultOK
 
 	if IsDaemonActive; then
 		if IsDaemon || IsSourcedOnline; then
@@ -1800,7 +1799,6 @@ if IsNotError; then
 			fi
 			;;
 		s|-s|status|--status)
-			SetServiceOperation status
 			StatusQPKG
 			;;
 		b|-b|backup|--backup|backup-config|--backup-config)
