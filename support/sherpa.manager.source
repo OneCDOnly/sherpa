@@ -803,6 +803,17 @@ Self:Validate()
 	AllocGroupPacksToAcs
 	QPKGs-SCupgradable:Exist sherpa && QPKGs-ACupgrade-to:Add sherpa
 
+	# KLUDGE: ensure old installs of Entware are reinstalled, due to an OpenSSL update breaking several IPKs in mid-March 2023
+
+	if QPKG.IsInstalled Entware && QPKG.IsEnabled Entware; then
+		local entware_install_date=$(QPKG.InstallDate Entware)
+
+		if [[ ${entware_install_date//-/} -le 20230318 ]]; then
+			ShowAsInfo 'the Entware QPKG will be reinstalled (a recent OpenSSL update broke a few packages)'
+			QPKGs-ACreinstall-to:Add Entware
+		fi
+	fi
+
 	# Meta-action pre-processing
 
 	if QPKGs-ACrebuild-to:IsAny; then
@@ -871,7 +882,9 @@ Self:Validate()
 		fi
 	done
 
-	if QPKGs-ACreinstall-to:Exist Entware; then 	# Entware is a special case: complete removal and fresh install (to clear all installed IPKs)
+	# Entware is a special case: complete removal and fresh install (to clear all installed IPKs)
+
+	if QPKGs-ACreinstall-to:Exist Entware; then
 		QPKGs-ACreinstall-to:Remove Entware
 		QPKGs-ACuninstall-to:Add Entware
 		QPKGs-ACinstall-to:Add Entware
