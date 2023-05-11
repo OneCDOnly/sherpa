@@ -20,7 +20,7 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=SABnzbd
-	readonly SCRIPT_VERSION=230503
+	readonly SCRIPT_VERSION=230511
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -55,7 +55,7 @@ Init()
 	readonly DAEMON_PID_PATHFILE=/var/run/$QPKG_NAME.pid
 	readonly LAUNCHER="$DAEMON_PATHFILE --daemon --browser 0 --config-file $QPKG_INI_PATHFILE --pidfile $DAEMON_PID_PATHFILE"
 	readonly PORT_CHECK_TIMEOUT=240
-	readonly DAEMON_STOP_TIMEOUT=60
+	readonly DAEMON_STOP_TIMEOUT=120
 	readonly DAEMON_PORT_CMD=''
 	readonly UI_PORT_CMD="/sbin/getcfg misc port -d 0 -f $QPKG_INI_PATHFILE"
 	readonly UI_PORT_SECURE_CMD="/sbin/getcfg misc https_port -d 0 -f $QPKG_INI_PATHFILE"
@@ -254,6 +254,7 @@ InstallAddons()
 	local default_recommended_pathfile=$QPKG_PATH/config/recommended.txt
 	local requirements_pathfile=$QPKG_REPO_PATH/requirements.txt
 	local recommended_pathfile=$QPKG_REPO_PATH/recommended.txt
+	local pyproject_pathfile=$QPKG_REPO_PATH/pyproject.toml
 	local pip_conf_pathfile=$VENV_PATH/pip.conf
 	local new_env=false
 	local sys_packages=' --system-site-packages'
@@ -285,6 +286,7 @@ InstallAddons()
 		DisplayRunAndLog "KLUDGE: install 'm2r' PyPI module first" ". $VENV_PATH/bin/activate && pip install${pip_deps} --no-input m2r" log:failure-only || SetError
 	fi
 
+	# edit developer-provided Python module requirements files out-of-repo
 	[[ -e $requirements_pathfile ]] && cp -f "$requirements_pathfile" "$default_requirements_pathfile"
 	[[ -e $default_requirements_pathfile ]] && requirements_pathfile=$default_requirements_pathfile
 
@@ -300,10 +302,14 @@ InstallAddons()
 		fi
 	fi
 
+	# Must remove these modules from repo txt files, and use the ones installed via `opkg` instead (if available).
+	# If not, `pip` will attempt to compile these, which fails on early ARMv5 CPUs.
+	local python_exclusions='cffi cryptography Levenshtein mako Pillow requests urllib3'
+	local ex_modules_re="/^${python_exclusions// /\|^}"
+
 	for target in $requirements_pathfile $recommended_pathfile; do
 		if [[ -e $target ]]; then
-			# need to remove `cffi` and `cryptography` modules from repo txt files, as we must use the ones installed via `opkg` instead. If not, `pip` will attempt to compile these, which fails on early arm CPUs.
-			DisplayRunAndLog 'KLUDGE: exclude various PyPI modules from installation' "/bin/sed -i '/^cffi\|^cryptography/d' $target" log:failure-only || SetError
+			DisplayRunAndLog 'KLUDGE: exclude Entware PyPI modules from installation' "/bin/sed -i '${ex_modules_re}/d' $target" log:failure-only || SetError
 
 			name=$(/usr/bin/basename "$target"); name=${name%%.*}
 
@@ -313,8 +319,12 @@ InstallAddons()
 	done
 
 	if [[ $no_pips_installed = true ]]; then		# fallback to general installation method
-		if [[ -e $QPKG_REPO_PATH/setup.py || -e $QPKG_REPO_PATH/pyproject.toml ]]; then
-			DisplayRunAndLog "install 'default' PyPI modules" ". $VENV_PATH/bin/activate && pip install${pip_deps} --no-input --upgrade pip $QPKG_REPO_PATH" log:failure-only || SetError
+		if [[ -e $QPKG_REPO_PATH/setup.py || -e $pyproject_pathfile ]]; then
+			DisplayRunAndLog 'KLUDGE: exclude Entware PyPI modules from installation' "/bin/sed -i '${ex_modules_re}/d' $pyproject_pathfile" log:failure-only || SetError
+
+			name=$(/usr/bin/basename "$pyproject_pathfile"); name=${name%%.*}
+
+			DisplayRunAndLog "install '$name' PyPI modules" ". $VENV_PATH/bin/activate && pip install${pip_deps} --no-input --upgrade pip $QPKG_REPO_PATH" log:failure-only || SetError
 			no_pips_installed=false
 		fi
 	fi
@@ -437,7 +447,6 @@ StatusQPKG()
 	{
 
 	IsNotError || return
-	SetServiceOperationResultOK
 
 	if IsDaemonActive; then
 		if IsDaemon || IsSourcedOnline; then
@@ -779,7 +788,7 @@ RunAndLog()
 
 	# input:
 	#   $1 = commandstring to execute
-	#   $2 = pathfile of log for stdout and stderr
+	#   $2 = pathfile to record stdout and stderr for commandstring
 	#   $3 = 'log:failure-only' (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed. default is to always record stdout & stderr.
 	#   $4 = e.g. '10' (optional) - an additional acceptable result code. Any other result from command (other than zero) will be considered a failure
 
@@ -796,10 +805,10 @@ RunAndLog()
 	if IsDebug; then
 		Display
 		Display "exec: '$1'"
-		eval "$1 &> >(/usr/bin/tee $LOG_PATHFILE)"	# NOTE: 'tee' buffers stdout here
+		eval "$1 > >(/usr/bin/tee $LOG_PATHFILE) 2>&1"	# NOTE: 'tee' buffers stdout here
 		result_code=$?
 	else
-		eval "$1" &> "$LOG_PATHFILE"
+		eval "$1" > "$LOG_PATHFILE" 2>&1
 		result_code=$?
 	fi
 
@@ -1306,14 +1315,14 @@ IsPortResponds()
 
 	while true; do
 		if ! IsProcessActive "$DAEMON_PATHFILE" "$DAEMON_PID_PATHFILE"; then
-			DisplayCommitToLog 'process inactive!'
+			DisplayCommitToLog 'process not active!'
 			break
 		fi
 
 		/sbin/curl --silent --fail --max-time 1 http://localhost:"$port" &>/dev/null
 
 		case $? in
-			0|22|52)	# accept these as evidence of valid responses
+			0|22|52)	# accept these exitcodes as evidence of valid responses
 				Display OK
 				CommitLog "port responded after $acc seconds"
 				return 0
@@ -1932,7 +1941,6 @@ if IsNotError; then
 			fi
 			;;
 		s|-s|status|--status)
-			SetServiceOperation status
 			StatusQPKG
 			;;
 		b|-b|backup|--backup|backup-config|--backup-config)
