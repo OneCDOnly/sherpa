@@ -1595,11 +1595,11 @@ ParseArgs()
 		case $action in
 			activate|backup|clean|deactivate|disable|enable|install|reactivate|reassign|rebuild|reinstall|restore|upgrade)
 				case $group in
-					all|dependent|standalone)
+					all|dependent|standalone|upgradable)
 						QPKGs.AC${action}.SC${group}:Set
 						group=''
 						;;
-					installed|upgradable)
+					installed)
 						QPKGs.AC${action}.IS${group}:Set
 						group=''
 						;;
@@ -1706,11 +1706,11 @@ ParseArgs()
 				opts_show_status=true
 
 				case $group in
-					all|dependent|standalone)
+					all|dependent|standalone|upgradable)
 						QPKGs.AC${action}.SC${group}:Set
 						group=''
 						;;
-					installed|upgradable)
+					installed)
 						QPKGs.AC${action}.IS${group}:Set
 						group=''
 						;;
@@ -1954,7 +1954,7 @@ AllocGroupPacksToAcs()
 				case $action in
 					backup|clean|uninstall|upgrade)
 						case $state in
-							active|backedup|cleaned|downloaded|enabled|installed|upgradable)
+							active|backedup|cleaned|downloaded|enabled|installed)
 								found=true
 								QPKGs-AC${action}-to:Add "$(QPKGs-IS${state}:Array)"
 								;;
