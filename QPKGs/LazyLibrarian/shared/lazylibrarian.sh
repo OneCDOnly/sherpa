@@ -154,7 +154,7 @@ StartQPKG()
 	fi
 
 	PullGitRepo || { SetError; return 1 ;}
- 	InstallAddons || { SetError; return 1 ;}
+	InstallAddons || { SetError; return 1 ;}
 	IsNotDaemon && return
 	WaitForLaunchTarget || { SetError; return 1 ;}
 	EnsureConfigFileExists
