@@ -4094,12 +4094,12 @@ IncForkProgressIndex()
 RefreshForkCounts()
 	{
 
-	fork_count="$(ls -A -1 "$proc_fork_count_path" | $WC_CMD -l 2>/dev/null)"
-	ok_count="$(ls -A -1 "$proc_ok_count_path" | $WC_CMD -l 2>/dev/null)"
-	skip_ok_count="$(ls -A -1 "$proc_skip_ok_count_path" | $WC_CMD -l 2>/dev/null)"
-	skip_count="$(ls -A -1 "$proc_skip_count_path" | $WC_CMD -l 2>/dev/null)"
-	skip_error_count="$(ls -A -1 "$proc_skip_error_count_path" | $WC_CMD -l 2>/dev/null)"
-	fail_count="$(ls -A -1 "$proc_fail_count_path" | $WC_CMD -l 2>/dev/null)"
+	fork_count="$(ls -A -1 "$proc_fork_count_path" | $WC_CMD -l | $SED_CMD 's|^ *||' 2>/dev/null)"
+	ok_count="$(ls -A -1 "$proc_ok_count_path" | $WC_CMD -l | $SED_CMD 's|^ *||' 2>/dev/null)"
+	skip_ok_count="$(ls -A -1 "$proc_skip_ok_count_path" | $WC_CMD -l | $SED_CMD 's|^ *||' 2>/dev/null)"
+	skip_count="$(ls -A -1 "$proc_skip_count_path" | $WC_CMD -l | $SED_CMD 's|^ *||' 2>/dev/null)"
+	skip_error_count="$(ls -A -1 "$proc_skip_error_count_path" | $WC_CMD -l | $SED_CMD 's|^ *||' 2>/dev/null)"
+	fail_count="$(ls -A -1 "$proc_fail_count_path" | $WC_CMD -l | $SED_CMD 's|^ *||' 2>/dev/null)"
 
 	}
 
