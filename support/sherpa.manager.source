@@ -809,7 +809,7 @@ Self:Validate()
 		local entware_install_date=$(QPKG.InstallDate Entware)
 
 		if [[ ${entware_install_date//-/} -le 20230318 ]]; then
-			ShowAsInfo 'the Entware QPKG will be reinstalled (a recent OpenSSL update broke a few packages)'
+			ShowAsInfo 'the Entware QPKG will be reinstalled (an OpenSSL update in mid-March 2023 broke a few packages)'
 			QPKGs-ACreinstall-to:Add Entware
 		fi
 	fi
