@@ -385,7 +385,7 @@ Consts:Load()
 	readonly PACKAGE_STATUS_COL_WIDTH=23
 	readonly PACKAGE_AUTHOR_COL_WIDTH=22
 	readonly PACKAGE_REPO_COL_WIDTH=40
-	readonly PACKAGE_INSTALL_DATE_COL_WIDTH=22
+	readonly PACKAGE_INSTALL_DATE_COL_WIDTH=18
 	readonly PACKAGE_VER_COL_WIDTH=17
 	readonly PACKAGE_PATH_COL_WIDTH=48
 	readonly PACKAGE_ABBS_COL_WIDTH=84
@@ -3240,7 +3240,7 @@ DisplayAsHelpTitleNameDateRepo()
 	# column 2: package installation date
 
 	if [[ $maxcols -ge 2 ]]; then
-		package_install_date_msg="${CHARS_SPECIAL}installation date:"
+		package_install_date_msg="${CHARS_SPECIAL}install date:"
 		printf "%-$((PACKAGE_INSTALL_DATE_COL_WIDTH+2+$(LenANSIDiff "$package_install_date_msg")))s" "$package_install_date_msg"
 	fi
 
