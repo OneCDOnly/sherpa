@@ -20,7 +20,7 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=OqBittorrent
-	readonly SCRIPT_VERSION=230505a
+	readonly SCRIPT_VERSION=230513
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -156,7 +156,7 @@ StartQPKG()
 	fi
 
 	DisplayRunAndLog 'start daemon' "$LAUNCHER" || { SetError; return 1 ;}
- 	IsDaemonActive || { SetError; return 1 ;}
+	IsDaemonActive || { SetError; return 1 ;}
 	CheckPorts || { SetError; return 1 ;}
 
 	return 0
@@ -322,7 +322,6 @@ StatusQPKG()
 	{
 
 	IsNotError || return
-	SetServiceOperationResultOK
 
 	if IsDaemonActive; then
 		if IsDaemon || IsSourcedOnline; then
@@ -405,6 +404,67 @@ WritePID()
 	else
 		return 1
 	fi
+
+	}
+
+WaitForPID()
+	{
+
+	if WaitForFileToAppear "$DAEMON_PID_PATHFILE" 60; then
+		sleep 1		# wait one more second to allow file to have PID written into it
+		return 0
+	else
+		return 1
+	fi
+
+	}
+
+WaitForDaemon()
+	{
+
+	# input:
+	#   $1 = timeout in seconds (optional) - default 30
+
+	# output:
+	#   $? = 0 (file was found) or 1 (file not found: timeout)
+
+	local -i count=0
+
+	if [[ -n $1 ]]; then
+		MAX_SECONDS=$1
+	else
+		MAX_SECONDS=$DAEMON_CHECK_TIMEOUT
+	fi
+
+	if [[ ! -e $1 ]]; then
+		DisplayWaitCommitToLog "wait for daemon to appear:"
+		DisplayWait "(no-more than $MAX_SECONDS seconds):"
+
+		(
+			for ((count=1; count<=MAX_SECONDS; count++)); do
+				sleep 1
+				DisplayWait "$count,"
+
+				if IsProcessActive "$DAEMON_PATHFILE" "$DAEMON_PID_PATHFILE"; then
+					Display OK
+					CommitLog "active in $count second$(FormatAsPlural "$count")"
+					true
+					exit	# only this sub-shell
+				fi
+			done
+			false
+		)
+
+		if [[ $? -ne 0 ]]; then
+			DisplayCommitToLog 'failed!'
+			DisplayErrCommitAllLogs "daemon not found! (exceeded timeout: $MAX_SECONDS seconds)"
+			return 1
+		fi
+	fi
+
+	DisplayCommitToLog "daemon: exists"
+
+	return 0
 
 	}
 
@@ -1632,16 +1692,9 @@ SessionSeparator()
 ColourTextBrightWhite()
 	{
 
-	echo -en '\033[1;97m'"$(ColourReset "$1")"
+	printf '\033[1;97m%s\033[0m' "${1:-}"
 
-	}
-
-ColourReset()
-	{
-
-	echo -en "$1"'\033[0m'
-
-	}
+	} 2>/dev/null
 
 FormatAsPlural()
 	{
@@ -1709,6 +1762,7 @@ if IsNotError; then
 		start|--start)
 			if IsNotQPKGEnabled; then
 				echo "The $(FormatAsPackageName "$QPKG_NAME") QPKG is disabled. Please enable it first with: qpkg_service enable $QPKG_NAME"
+				SetError
 			else
 				SetServiceOperation starting
 				StartQPKG
@@ -1721,13 +1775,13 @@ if IsNotError; then
 		r|-r|restart|--restart)
 			if IsNotQPKGEnabled; then
 				echo "The $(FormatAsPackageName "$QPKG_NAME") QPKG is disabled. Please enable it first with: qpkg_service enable $QPKG_NAME"
+				SetError
 			else
 				SetServiceOperation restarting
 				StopQPKG && StartQPKG
 			fi
 			;;
 		s|-s|status|--status)
-			SetServiceOperation status
 			StatusQPKG
 			;;
 		b|-b|backup|--backup|backup-config|--backup-config)
