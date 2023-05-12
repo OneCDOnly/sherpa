@@ -20,7 +20,7 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=SABnzbd
-	readonly SCRIPT_VERSION=230511
+	readonly SCRIPT_VERSION=230513
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -55,6 +55,7 @@ Init()
 	readonly DAEMON_PID_PATHFILE=/var/run/$QPKG_NAME.pid
 	readonly LAUNCHER="$DAEMON_PATHFILE --daemon --browser 0 --config-file $QPKG_INI_PATHFILE --pidfile $DAEMON_PID_PATHFILE"
 	readonly PORT_CHECK_TIMEOUT=240
+	readonly DAEMON_CHECK_TIMEOUT=30
 	readonly DAEMON_STOP_TIMEOUT=120
 	readonly DAEMON_PORT_CMD=''
 	readonly UI_PORT_CMD="/sbin/getcfg misc port -d 0 -f $QPKG_INI_PATHFILE"
@@ -567,7 +568,7 @@ WaitForLaunchTarget()
 WritePID()
 	{
 
-	/bin/pidof $(/usr/bin/basename "$DAEMON_PATHFILE") > "$DAEMON_PID_PATHFILE"
+	/bin/pidof -s $(/usr/bin/basename "$DAEMON_PATHFILE") > "$DAEMON_PID_PATHFILE"
 
 	if [[ -s $DAEMON_PID_PATHFILE ]]; then
 		return 0
@@ -615,7 +616,7 @@ WaitForDaemon()
 				sleep 1
 				DisplayWait "$count,"
 
-				if [[ -e $DAEMON_PID_PATHFILE && -d /proc/$(<$DAEMON_PID_PATHFILE) && -n ${DAEMON_PATHFILE:-} && $(</proc/"$(<$DAEMON_PID_PATHFILE)"/cmdline) =~ $DAEMON_PATHFILE ]]; then
+				if IsProcessActive "$DAEMON_PATHFILE" "$DAEMON_PID_PATHFILE"; then
 					Display OK
 					CommitLog "active in $count second$(FormatAsPlural "$count")"
 					true
@@ -757,13 +758,14 @@ DisplayRunAndLog()
 	#   $1 = processing message
 	#   $2 = commandstring to execute
 	#   $3 = 'log:failure-only' (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed. default is to always record stdout & stderr.
+	#   $4 = e.g. 'background' (optional) - run command as a background process
 
 	local -r LOG_PATHFILE=$(/bin/mktemp /var/log/"${FUNCNAME[0]}"_XXXXXX)
 	local -i result_code=0
 
 	DisplayWaitCommitToLog "$1:"
 
-	RunAndLog "${2:?empty}" "$LOG_PATHFILE" "${3:-}"
+	RunAndLog "${2:?empty}" "$LOG_PATHFILE" "${3:-}" '' "${4:-}"
 	result_code=$?
 
 	if [[ -e $LOG_PATHFILE ]]; then
@@ -791,6 +793,7 @@ RunAndLog()
 	#   $2 = pathfile to record stdout and stderr for commandstring
 	#   $3 = 'log:failure-only' (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed. default is to always record stdout & stderr.
 	#   $4 = e.g. '10' (optional) - an additional acceptable result code. Any other result from command (other than zero) will be considered a failure
+	#   $5 = e.g. 'background' (optional) - run command as a background process
 
 	# output:
 	#   stdout : commandstring stdout and stderr if script is in 'debug' mode
@@ -805,10 +808,21 @@ RunAndLog()
 	if IsDebug; then
 		Display
 		Display "exec: '$1'"
-		eval "$1 > >(/usr/bin/tee $LOG_PATHFILE) 2>&1"	# NOTE: 'tee' buffers stdout here
+
+		if [[ ${5:-} != background ]]; then
+			eval "$1 > >(/usr/bin/tee $LOG_PATHFILE) 2>&1"		# NOTE: 'tee' buffers stdout here
+		else
+			eval "$1 > >(/usr/bin/tee $LOG_PATHFILE) 2>&1" &	# NOTE: 'tee' buffers stdout here
+		fi
+
 		result_code=$?
 	else
-		eval "$1" > "$LOG_PATHFILE" 2>&1
+		if [[ ${5:-} != background ]]; then
+			eval "$1" > "$LOG_PATHFILE" 2>&1
+		else
+ 			eval "$1" > "$LOG_PATHFILE" 2>&1 &
+		fi
+
 		result_code=$?
 	fi
 
@@ -1846,16 +1860,9 @@ SessionSeparator()
 ColourTextBrightWhite()
 	{
 
-	echo -en '\033[1;97m'"$(ColourReset "$1")"
+	printf '\033[1;97m%s\033[0m' "${1:-}"
 
-	}
-
-ColourReset()
-	{
-
-	echo -en "$1"'\033[0m'
-
-	}
+	} 2>/dev/null
 
 FormatAsPlural()
 	{
@@ -1923,6 +1930,7 @@ if IsNotError; then
 		start|--start)
 			if IsNotQPKGEnabled; then
 				echo "The $(FormatAsPackageName "$QPKG_NAME") QPKG is disabled. Please enable it first with: qpkg_service enable $QPKG_NAME"
+				SetError
 			else
 				SetServiceOperation starting
 				StartQPKG
@@ -1935,6 +1943,7 @@ if IsNotError; then
 		r|-r|restart|--restart)
 			if IsNotQPKGEnabled; then
 				echo "The $(FormatAsPackageName "$QPKG_NAME") QPKG is disabled. Please enable it first with: qpkg_service enable $QPKG_NAME"
+				SetError
 			else
 				SetServiceOperation restarting
 				StopQPKG && StartQPKG

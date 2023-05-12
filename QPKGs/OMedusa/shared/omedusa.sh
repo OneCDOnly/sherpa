@@ -20,7 +20,7 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=OMedusa
-	readonly SCRIPT_VERSION=230422
+	readonly SCRIPT_VERSION=230513
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -55,7 +55,8 @@ Init()
 	readonly DAEMON_PID_PATHFILE=/var/run/$QPKG_NAME.pid
 	readonly LAUNCHER="$DAEMON_PATHFILE --daemon --nolaunch --datadir $(/usr/bin/dirname "$QPKG_INI_PATHFILE") --config $QPKG_INI_PATHFILE --pidfile $DAEMON_PID_PATHFILE"
 	readonly PORT_CHECK_TIMEOUT=240
-	readonly DAEMON_STOP_TIMEOUT=60
+	readonly DAEMON_CHECK_TIMEOUT=30
+	readonly DAEMON_STOP_TIMEOUT=120
 	readonly DAEMON_PORT_CMD=''
 	readonly UI_PORT_CMD='/sbin/getcfg general web_port -d 0 -f '$QPKG_INI_PATHFILE
 	readonly UI_PORT_SECURE_CMD='/sbin/getcfg general web_port -d 0 -f '$QPKG_INI_PATHFILE
@@ -254,6 +255,7 @@ InstallAddons()
 	local default_recommended_pathfile=$QPKG_PATH/config/recommended.txt
 	local requirements_pathfile=$QPKG_REPO_PATH/requirements.txt
 	local recommended_pathfile=$QPKG_REPO_PATH/recommended.txt
+	local pyproject_pathfile=$QPKG_REPO_PATH/pyproject.toml
 	local pip_conf_pathfile=$VENV_PATH/pip.conf
 	local new_env=false
 	local sys_packages=' --system-site-packages'
@@ -280,30 +282,21 @@ InstallAddons()
 
 	IsNotAutoUpdate && [[ $new_env = false ]] && return 0
 
-	if [[ $QPKG_NAME = OWatcher3 ]]; then
-		# need to install `m2r` PyPI module first
-		DisplayRunAndLog "KLUDGE: install 'm2r' PyPI module first" ". $VENV_PATH/bin/activate && pip install${pip_deps} --no-input m2r" log:failure-only || SetError
-	fi
-
+	# edit developer-provided Python module requirements files out-of-repo
 	[[ -e $requirements_pathfile ]] && cp -f "$requirements_pathfile" "$default_requirements_pathfile"
 	[[ -e $default_requirements_pathfile ]] && requirements_pathfile=$default_requirements_pathfile
 
 	[[ -e $recommended_pathfile ]] && cp -f "$recommended_pathfile" "$default_recommended_pathfile"
 	[[ -e $default_recommended_pathfile ]] && recommended_pathfile=$default_recommended_pathfile
 
-	if [[ $QPKG_NAME = SABnzbd ]]; then
-		# KLUDGE: can't use `manytolinux2014` wheel builds in QTS, so force wheels to rebuild locally
-		if $(/bin/grep -q sabyenc3 < "$requirements_pathfile" &>/dev/null); then
-			echo '--no-binary=sabyenc3' >> "$requirements_pathfile"
-		elif $(/bin/grep -q sabctools < "$requirements_pathfile" &>/dev/null); then
-			echo '--no-binary=sabyenc3' >> "$requirements_pathfile"
-		fi
-	fi
+	# Must remove these modules from repo txt files, and use the ones installed via `opkg` instead (if available).
+	# If not, `pip` will attempt to compile these, which fails on early ARMv5 CPUs.
+	local python_exclusions='cffi cryptography Levenshtein mako Pillow requests urllib3'
+	local ex_modules_re="/^${python_exclusions// /\|^}"
 
 	for target in $requirements_pathfile $recommended_pathfile; do
 		if [[ -e $target ]]; then
-			# need to remove `cffi` and `cryptography` modules from repo txt files, as we must use the ones installed via `opkg` instead. If not, `pip` will attempt to compile these, which fails on early arm CPUs.
-			DisplayRunAndLog 'KLUDGE: exclude various PyPI modules from installation' "/bin/sed -i '/^cffi\|^cryptography/d' $target" log:failure-only || SetError
+			DisplayRunAndLog 'KLUDGE: exclude Entware PyPI modules from installation' "/bin/sed -i '${ex_modules_re}/d' $target" log:failure-only || SetError
 
 			name=$(/usr/bin/basename "$target"); name=${name%%.*}
 
@@ -313,21 +306,14 @@ InstallAddons()
 	done
 
 	if [[ $no_pips_installed = true ]]; then		# fallback to general installation method
-		if [[ -e $QPKG_REPO_PATH/setup.py || -e $QPKG_REPO_PATH/pyproject.toml ]]; then
-			DisplayRunAndLog "install 'default' PyPI modules" ". $VENV_PATH/bin/activate && pip install${pip_deps} --no-input --upgrade pip $QPKG_REPO_PATH" log:failure-only || SetError
+		if [[ -e $QPKG_REPO_PATH/setup.py || -e $pyproject_pathfile ]]; then
+			DisplayRunAndLog 'KLUDGE: exclude Entware PyPI modules from installation' "/bin/sed -i '${ex_modules_re}/d' $pyproject_pathfile" log:failure-only || SetError
+
+			name=$(/usr/bin/basename "$pyproject_pathfile"); name=${name%%.*}
+
+			DisplayRunAndLog "install '$name' PyPI modules" ". $VENV_PATH/bin/activate && pip install${pip_deps} --no-input --upgrade pip $QPKG_REPO_PATH" log:failure-only || SetError
 			no_pips_installed=false
 		fi
-	fi
-
-	if [[ $QPKG_NAME = SABnzbd && $new_env = true ]]; then
-		# run [tools/make_mo.py] if SABnzbd version number has changed since last run
-		LoadAppVersion
-		[[ -e $APP_VERSION_STORE_PATHFILE && $(<"$APP_VERSION_STORE_PATHFILE") = "$app_version" && -d $QPKG_REPO_PATH/locale ]] && return 0
-
-		DisplayRunAndLog "update $(FormatAsPackageName $QPKG_NAME) language translations" ". $VENV_PATH/bin/activate && cd $QPKG_REPO_PATH; $VENV_INTERPRETER $QPKG_REPO_PATH/tools/make_mo.py" log:failure-only
-		[[ ! -e $APP_VERSION_STORE_PATHFILE ]] && return 0
-
-		SaveAppVersion
 	fi
 
 	}
@@ -437,7 +423,6 @@ StatusQPKG()
 	{
 
 	IsNotError || return
-	SetServiceOperationResultOK
 
 	if IsDaemonActive; then
 		if IsDaemon || IsSourcedOnline; then
@@ -558,7 +543,7 @@ WaitForLaunchTarget()
 WritePID()
 	{
 
-	/bin/pidof $(/usr/bin/basename "$DAEMON_PATHFILE") > "$DAEMON_PID_PATHFILE"
+	/bin/pidof -s $(/usr/bin/basename "$DAEMON_PATHFILE") > "$DAEMON_PID_PATHFILE"
 
 	if [[ -s $DAEMON_PID_PATHFILE ]]; then
 		return 0
@@ -606,7 +591,7 @@ WaitForDaemon()
 				sleep 1
 				DisplayWait "$count,"
 
-				if [[ -e $DAEMON_PID_PATHFILE && -d /proc/$(<$DAEMON_PID_PATHFILE) && -n ${DAEMON_PATHFILE:-} && $(</proc/"$(<$DAEMON_PID_PATHFILE)"/cmdline) =~ $DAEMON_PATHFILE ]]; then
+				if IsProcessActive "$DAEMON_PATHFILE" "$DAEMON_PID_PATHFILE"; then
 					Display OK
 					CommitLog "active in $count second$(FormatAsPlural "$count")"
 					true
@@ -748,13 +733,14 @@ DisplayRunAndLog()
 	#   $1 = processing message
 	#   $2 = commandstring to execute
 	#   $3 = 'log:failure-only' (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed. default is to always record stdout & stderr.
+	#   $4 = e.g. 'background' (optional) - run command as a background process
 
 	local -r LOG_PATHFILE=$(/bin/mktemp /var/log/"${FUNCNAME[0]}"_XXXXXX)
 	local -i result_code=0
 
 	DisplayWaitCommitToLog "$1:"
 
-	RunAndLog "${2:?empty}" "$LOG_PATHFILE" "${3:-}"
+	RunAndLog "${2:?empty}" "$LOG_PATHFILE" "${3:-}" '' "${4:-}"
 	result_code=$?
 
 	if [[ -e $LOG_PATHFILE ]]; then
@@ -779,9 +765,10 @@ RunAndLog()
 
 	# input:
 	#   $1 = commandstring to execute
-	#   $2 = pathfile of log for stdout and stderr
+	#   $2 = pathfile to record stdout and stderr for commandstring
 	#   $3 = 'log:failure-only' (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed. default is to always record stdout & stderr.
 	#   $4 = e.g. '10' (optional) - an additional acceptable result code. Any other result from command (other than zero) will be considered a failure
+	#   $5 = e.g. 'background' (optional) - run command as a background process
 
 	# output:
 	#   stdout : commandstring stdout and stderr if script is in 'debug' mode
@@ -796,10 +783,21 @@ RunAndLog()
 	if IsDebug; then
 		Display
 		Display "exec: '$1'"
-		eval "$1 &> >(/usr/bin/tee $LOG_PATHFILE)"	# NOTE: 'tee' buffers stdout here
+
+		if [[ ${5:-} != background ]]; then
+			eval "$1 > >(/usr/bin/tee $LOG_PATHFILE) 2>&1"		# NOTE: 'tee' buffers stdout here
+		else
+			eval "$1 > >(/usr/bin/tee $LOG_PATHFILE) 2>&1" &	# NOTE: 'tee' buffers stdout here
+		fi
+
 		result_code=$?
 	else
-		eval "$1" &> "$LOG_PATHFILE"
+		if [[ ${5:-} != background ]]; then
+			eval "$1" > "$LOG_PATHFILE" 2>&1
+		else
+ 			eval "$1" > "$LOG_PATHFILE" 2>&1 &
+		fi
+
 		result_code=$?
 	fi
 
@@ -1306,14 +1304,14 @@ IsPortResponds()
 
 	while true; do
 		if ! IsProcessActive "$DAEMON_PATHFILE" "$DAEMON_PID_PATHFILE"; then
-			DisplayCommitToLog 'process inactive!'
+			DisplayCommitToLog 'process not active!'
 			break
 		fi
 
 		/sbin/curl --silent --fail --max-time 1 http://localhost:"$port" &>/dev/null
 
 		case $? in
-			0|22|52)	# accept these as evidence of valid responses
+			0|22|52)	# accept these exitcodes as evidence of valid responses
 				Display OK
 				CommitLog "port responded after $acc seconds"
 				return 0
@@ -1837,16 +1835,9 @@ SessionSeparator()
 ColourTextBrightWhite()
 	{
 
-	echo -en '\033[1;97m'"$(ColourReset "$1")"
+	printf '\033[1;97m%s\033[0m' "${1:-}"
 
-	}
-
-ColourReset()
-	{
-
-	echo -en "$1"'\033[0m'
-
-	}
+	} 2>/dev/null
 
 FormatAsPlural()
 	{
@@ -1914,6 +1905,7 @@ if IsNotError; then
 		start|--start)
 			if IsNotQPKGEnabled; then
 				echo "The $(FormatAsPackageName "$QPKG_NAME") QPKG is disabled. Please enable it first with: qpkg_service enable $QPKG_NAME"
+				SetError
 			else
 				SetServiceOperation starting
 				StartQPKG
@@ -1926,13 +1918,13 @@ if IsNotError; then
 		r|-r|restart|--restart)
 			if IsNotQPKGEnabled; then
 				echo "The $(FormatAsPackageName "$QPKG_NAME") QPKG is disabled. Please enable it first with: qpkg_service enable $QPKG_NAME"
+				SetError
 			else
 				SetServiceOperation restarting
 				StopQPKG && StartQPKG
 			fi
 			;;
 		s|-s|status|--status)
-			SetServiceOperation status
 			StatusQPKG
 			;;
 		b|-b|backup|--backup|backup-config|--backup-config)
