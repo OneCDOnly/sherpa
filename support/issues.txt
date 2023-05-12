@@ -2,5 +2,3 @@
 	need to confirm this.
 
 * QPKG restart when disabled should return 1.
-
-* progress line display has extra whitespace(s) when displayed in colour on older NAS (QTS 4.2.6 & 4.3.3)
