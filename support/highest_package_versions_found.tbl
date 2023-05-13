@@ -17,11 +17,11 @@ NZBGet_230513.qpkg.md5               NZBGet_230513.qpkg               NZBGet    
 NZBHydra2_230513_arm_64.qpkg.md5     NZBHydra2_230513_arm_64.qpkg     NZBHydra2            230513       a64    ceb0f566070717d1c1296334a5d49b97
 NZBHydra2_230513_x86_64.qpkg.md5     NZBHydra2_230513_x86_64.qpkg     NZBHydra2            230513       i64    b1274b2d0c364b5f0e350a74b820982f
 nzbToMedia_230513.qpkg.md5           nzbToMedia_230513.qpkg           nzbToMedia           230513       all    5018ca55414dc9e82da5d249fcfec9ee
-OliveTin_230513_arm_64.qpkg.md5      OliveTin_230513_arm_64.qpkg      OliveTin             230513       a64    ca2416ba6a38ff9ff493cbc7280df2e1
-OliveTin_230513_arm-x19.qpkg.md5     OliveTin_230513_arm-x19.qpkg     OliveTin             230513       a19    451cae1211149076fbc861c49c262873
-OliveTin_230513_arm-x31.qpkg.md5     OliveTin_230513_arm-x31.qpkg     OliveTin             230513       a31    396eb1da235247e0132749bf43733a25
-OliveTin_230513_arm-x41.qpkg.md5     OliveTin_230513_arm-x41.qpkg     OliveTin             230513       a41    83270a18b15dc1662e41796656aed036
-OliveTin_230513_x86_64.qpkg.md5      OliveTin_230513_x86_64.qpkg      OliveTin             230513       i64    c88c71cedb5de2a981711a339ed014d0
+OliveTin_230513a_arm_64.qpkg.md5     OliveTin_230513a_arm_64.qpkg     OliveTin             230513a      a64    7693bfd77b00ed00215564a40d8b34bd
+OliveTin_230513a_arm-x19.qpkg.md5    OliveTin_230513a_arm-x19.qpkg    OliveTin             230513a      a19    d4b7ba6a4a27d15de68c807e1c11bb66
+OliveTin_230513a_arm-x31.qpkg.md5    OliveTin_230513a_arm-x31.qpkg    OliveTin             230513a      a31    f526ace73e392c536018769ca058d13e
+OliveTin_230513a_arm-x41.qpkg.md5    OliveTin_230513a_arm-x41.qpkg    OliveTin             230513a      a41    2802501681f402deda5ec077edbf92dc
+OliveTin_230513a_x86_64.qpkg.md5     OliveTin_230513a_x86_64.qpkg     OliveTin             230513a      i64    bf88a2f6a1fc8a503a073853951de403
 OMedusa_230513.qpkg.md5              OMedusa_230513.qpkg              OMedusa              230513       all    7f1f46728955000f95f80eedf6e04b7c
 OqBittorrent_230513.qpkg.md5         OqBittorrent_230513.qpkg         OqBittorrent         230513       all    cce64489a0dc49c8c8db4dae000b0191
 OSickGear_230513.qpkg.md5            OSickGear_230513.qpkg            OSickGear            230513       all    753cfb09c72a2715da294a0b254365cd
