@@ -20,7 +20,7 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=OliveTin
-	readonly SCRIPT_VERSION=230513
+	readonly SCRIPT_VERSION=230513a
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -688,9 +688,9 @@ RunAndLog()
 		result_code=$?
 	else
 		if [[ ${5:-} != background ]]; then
-			eval "$1" > "$LOG_PATHFILE" 2>&1
+			(eval "$1" > "$LOG_PATHFILE" 2>&1)			# run in a subshell to suppress 'Terminated' message later
 		else
- 			eval "$1" > "$LOG_PATHFILE" 2>&1 &
+ 			(eval "$1" > "$LOG_PATHFILE" 2>&1 &)		# run in a subshell to suppress 'Terminated' message later
 		fi
 
 		result_code=$?
