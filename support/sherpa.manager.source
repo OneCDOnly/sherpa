@@ -63,9 +63,7 @@ Self:Init()
 	Consts:Load
 
 	sess_active_pathfile=$THIS_PACKAGE_PATH/session.$$.active.log
-	rm -f "$REPORT_PATHFILE"
-	rm -f "$RAMDISKS_FREESPACE_PATHFILE"
-	rm -f "$DISPLAY_INHBIT_PATHFILE"
+	rm -f "$REPORT_PATHFILE" "$RAMDISKS_FREESPACE_PATHFILE" "$DISPLAY_INHBIT_PATHFILE"
 
 	trap RunOnEXIT EXIT
 	trap RunOnSIGINT INT
@@ -341,16 +339,20 @@ Consts:Load()
 	readonly LOGS_PATH=$THIS_PACKAGE_PATH/logs
 	readonly QPKG_DL_PATH=$CACHE_PATH/QPKGs.downloads
 	readonly QPKG_BU_PATH=$(GetDefVol)/.qpkg_config_backup
+	readonly CERT_DB_PATHFILE=/etc/config/nas_sign_qpkg.db
 	readonly IPK_DL_PATH=$CACHE_PATH/IPKs.downloads
 	readonly IPK_CACHE_PATH=$CACHE_PATH/IPKs
 	readonly PIP_CACHE_PATH=$CACHE_PATH/PIPs
 	readonly ACTION_TIMES_PATH=$CACHE_PATH/action.times
 	readonly ACTION_MSG_PIPE=/var/run/sherpa.action.messages.pipe
+
 	readonly FILE_CHANGE_THRESHOLD_MINUTES=60
 	readonly STATUS_CHECK_TIMEOUT_SECONDS=10
 	readonly QPKG_START_TIMEOUT_SECONDS=1500		# 25 minutes
 	readonly QPKG_RESTART_TIMEOUT_SECONDS=1800		# 30 minutes
 	readonly QPKG_STOP_TIMEOUT_SECONDS=300			# 5 minutes
+	readonly QPKG_ENABLE_TIMEOUT_SECONDS=10
+	readonly QPKG_DISABLE_TIMEOUT_SECONDS=10
 	readonly QPKG_EXTENDED_TIMEOUT_SECONDS=1800		# 30 minutes - this value is applied to 'qpkg_service' when '--increase-timeout' is specified
 
 	readonly OBJECTS_PATHFILE=$CACHE_PATH/objects
@@ -5394,6 +5396,13 @@ OS.IsStopping()
 
 	} &>/dev/null
 
+OS.SupportsQpkgTimeout()
+	{
+
+	[[ ${NAS_FIRMWARE_VER//.} -gt 426 ]]
+
+	}
+
 GetRepoURLFromStoreID()
 	{
 
@@ -6177,6 +6186,8 @@ _QPKG:reactivate_()
 
 	QPKG.ServiceStatus:Clear
 	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$REACTIVATE_LOG_FILE
+	local timeout=''
+	OS.SupportsQpkgTimeout && timeout=" -t $QPKG_RESTART_TIMEOUT_SECONDS"
 
 	DebugAsProc "reactivating $(FormatAsPackName "$PACKAGE_NAME")"
 
@@ -6185,7 +6196,7 @@ _QPKG:reactivate_()
 		RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) restart" "$LOG_PATHFILE" log:failure-only
 		result_code=$?
 	elif QPKG.IsCanLog; then		# use `qpkg_service` if-possible, so package icon in App Center will dynamically update
-		RunAndLog "/sbin/qpkg_service -t $QPKG_RESTART_TIMEOUT_SECONDS restart $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
+		RunAndLog "/sbin/qpkg_service${timeout} restart $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
 		QPKG.LastResultWasOk && result_code=0 || result_code=1
 	else
 		RunAndLog "$(QPKG.ServicePathFile) restart" "$LOG_PATHFILE" log:failure-only
@@ -6233,6 +6244,8 @@ _QPKG:activate_()
 
 	QPKG.ServiceStatus:Clear
 	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$ACTIVATE_LOG_FILE
+	local timeout=''
+	OS.SupportsQpkgTimeout && timeout=" -t $QPKG_START_TIMEOUT_SECONDS"
 
 	DebugAsProc "activating $(FormatAsPackName "$PACKAGE_NAME")"
 
@@ -6241,7 +6254,7 @@ _QPKG:activate_()
 		RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) start" "$LOG_PATHFILE" log:failure-only
 		result_code=$?
 	elif QPKG.IsCanLog; then		# use `qpkg_service` if-possible, so package icon in App Center will dynamically update
-		RunAndLog "/sbin/qpkg_service -t $QPKG_START_TIMEOUT_SECONDS start $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
+		RunAndLog "/sbin/qpkg_service${timeout} start $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
 		QPKG.LastResultWasOk && result_code=0 || result_code=1
 	else
 		RunAndLog "$(QPKG.ServicePathFile) start" "$LOG_PATHFILE" log:failure-only
@@ -6305,6 +6318,8 @@ _QPKG:deactivate_()
 
 	QPKG.ServiceStatus:Clear
 	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$DEACTIVATE_LOG_FILE
+	local timeout=''
+	OS.SupportsQpkgTimeout && timeout=" -t $QPKG_STOP_TIMEOUT_SECONDS"
 
 	DebugAsProc "deactivating $(FormatAsPackName "$PACKAGE_NAME")"
 	[[ $PACKAGE_NAME = Entware ]] && UpdateColourisation
@@ -6314,7 +6329,7 @@ _QPKG:deactivate_()
 		RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) stop" "$LOG_PATHFILE" log:failure-only
 		result_code=$?
 	elif QPKG.IsCanLog; then		# use `qpkg_service` if-possible, so package icon in App Center will dynamically update
-		RunAndLog "/sbin/qpkg_service -t $QPKG_STOP_TIMEOUT_SECONDS stop $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
+		RunAndLog "/sbin/qpkg_service${timeout} stop $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
 		QPKG.LastResultWasOk && result_code=0 || result_code=1
 	else
 		RunAndLog "$(QPKG.ServicePathFile) stop" "$LOG_PATHFILE" log:failure-only
@@ -6377,10 +6392,12 @@ _QPKG:enable_()
 
 	QPKG.ServiceStatus:Clear
 	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$ENABLE_LOG_FILE
+	local timeout=''
+	OS.SupportsQpkgTimeout && timeout=" -t $QPKG_ENABLE_TIMEOUT_SECONDS"
 
 	DebugAsProc "enabling $(FormatAsPackName "$PACKAGE_NAME")"
 
-	RunAndLog "/sbin/qpkg_service enable $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
+	RunAndLog "/sbin/qpkg_service${timeout} enable $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
 	QPKG.IsEnabled "$PACKAGE_NAME" && SendPackageStateChange ISenabled
 	QPKG.AppCenterNotifier:Clear
 	SaveActionResultToLog QPKG "$PACKAGE_NAME" enable ok
@@ -6426,10 +6443,12 @@ _QPKG:disable_()
 
 	QPKG.ServiceStatus:Clear
 	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$DISABLE_LOG_FILE
+	local timeout=''
+	OS.SupportsQpkgTimeout && timeout=" -t $QPKG_DISABLE_TIMEOUT_SECONDS"
 
 	DebugAsProc "disabling $(FormatAsPackName "$PACKAGE_NAME")"
 
-	RunAndLog "/sbin/qpkg_service -t $QPKG_START_TIMEOUT_SECONDS disable $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
+	RunAndLog "/sbin/qpkg_service${timeout} disable $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
 	! QPKG.IsEnabled "$PACKAGE_NAME" && SendPackageStateChange ISNTenabled
 
 	QPKG.AppCenterNotifier:Clear
@@ -6618,7 +6637,6 @@ _QPKG:sign_()
 	FuncFork:Entry
 
 	local -r PACKAGE_NAME=${1:?package name null}
-	local -r CERT_DB_PATHFILE=/etc/config/nas_sign_qpkg.db
 	local -i result_code=0
 	local cert=''
 	local signature=''
