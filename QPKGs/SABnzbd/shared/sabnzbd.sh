@@ -146,7 +146,7 @@ StartQPKG()
 		IsNotRestartPending && return
 	fi
 
-	DisplayWaitCommitToLog "auto-update:"
+	DisplayWaitCommitToLog 'auto-update:'
 
 	if IsAutoUpdate; then
 		DisplayCommitToLog true

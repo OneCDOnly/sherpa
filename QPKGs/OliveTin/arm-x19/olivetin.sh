@@ -20,7 +20,7 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=OliveTin
-	readonly SCRIPT_VERSION=230430
+	readonly SCRIPT_VERSION=230513
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -363,7 +363,6 @@ StatusQPKG()
 	{
 
 	IsNotError || return
-	SetServiceOperationResultOK
 
 	if IsDaemonActive; then
 		if IsDaemon || IsSourcedOnline; then
@@ -439,7 +438,7 @@ WaitForLaunchTarget()
 WritePID()
 	{
 
-	/bin/pidof $(/usr/bin/basename "$DAEMON_PATHFILE") > "$DAEMON_PID_PATHFILE"
+	/bin/pidof -s $(/usr/bin/basename "$DAEMON_PATHFILE") > "$DAEMON_PID_PATHFILE"
 
 	if [[ -s $DAEMON_PID_PATHFILE ]]; then
 		return 0
@@ -1836,6 +1835,7 @@ if IsNotError; then
 		start|--start)
 			if IsNotQPKGEnabled; then
 				echo "The $(FormatAsPackageName "$QPKG_NAME") QPKG is disabled. Please enable it first with: qpkg_service enable $QPKG_NAME"
+				SetError
 			else
 				SetServiceOperation starting
 				StartQPKG
@@ -1848,13 +1848,13 @@ if IsNotError; then
 		r|-r|restart|--restart)
 			if IsNotQPKGEnabled; then
 				echo "The $(FormatAsPackageName "$QPKG_NAME") QPKG is disabled. Please enable it first with: qpkg_service enable $QPKG_NAME"
+				SetError
 			else
 				SetServiceOperation restarting
 				StopQPKG && StartQPKG
 			fi
 			;;
 		s|-s|status|--status)
-			SetServiceOperation status
 			StatusQPKG
 			;;
 		b|-b|backup|--backup|backup-config|--backup-config)
