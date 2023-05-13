@@ -1,7 +1,4 @@
 * QPKG version sort is not correctly sorting version numbers followed by an alpha.
 
-* Entware is not being restarted during 'sherpa restart ew'.
-	restarts all deps though.
-
 * if a forked action hangs, it's not being killed by its caller.
 	need to confirm this.

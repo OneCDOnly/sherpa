@@ -920,10 +920,10 @@ Self:Validate()
 		QPKGs-ACdisable-to:Remove "$(QPKGs-ACuninstall-to:Array)"
 	fi
 
-	# No-need to `reactivate` packages that are to be upgraded/reinstalled/installed/activated
+	# No-need to `activate` packages that are to be upgraded/reinstalled/installed/reactivated
 
-	for action in upgrade reinstall install activate; do
-		QPKGs-ACreactivate-to:Remove "$(QPKGs-AC${action}-to:Array)"
+	for action in upgrade reinstall install reactivate; do
+		QPKGs-ACactivate-to:Remove "$(QPKGs-AC${action}-to:Array)"
 	done
 
 	# Build a list of original storage paths for packages to be uninstalled, then installed again later this session (a "complex reinstall")
@@ -980,8 +980,8 @@ Self:Validate()
 #  14. restore standalones
 #  15. clean standalones		(unsupported by all standalone QPKGs)
 #  16. enable standalones
-#  17. start/activate standalones
-#  18. restart/reactivate standalones
+#  17. restart/reactivate standalones
+#  18. start/activate standalones
 
 #  19. upgrade dependents
 #  20. reinstall dependents
@@ -989,8 +989,8 @@ Self:Validate()
 #  22. restore dependents
 #  23. clean dependents			(supported by most dependent packages, but not all)
 #  24. enable dependents
-#  25. start/activate dependents
-#  26. restart/reactivate dependents
+#  25. restart/reactivate dependents
+#  26. start/activate dependents
 
 #  27. "sign" all
 
@@ -1039,8 +1039,8 @@ Actions:Proc()
 					Action:Proc restore $tier QPKG restoring restored || return
 					Action:Proc clean $tier QPKG cleaning cleaned || return
 					Action:Proc enable $tier QPKG enabling enabled || return
-					Action:Proc activate $tier QPKG activating activated || return
 					Action:Proc reactivate $tier QPKG reactivating reactivated || return
+					Action:Proc activate $tier QPKG activating activated || return
 					;;
 				addon)
 					for action in install reinstall upgrade activate; do
