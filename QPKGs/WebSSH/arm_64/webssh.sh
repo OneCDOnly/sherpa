@@ -20,7 +20,7 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=WebSSH
-	readonly SCRIPT_VERSION=230513
+	readonly SCRIPT_VERSION=230513a
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -39,6 +39,7 @@ Init()
 
 	# specific to online-sourced applications only
 	readonly SOURCE_GIT_URL=''
+	readonly SOURCE_ARCH=''
 	readonly SOURCE_GIT_BRANCH=''
 	# 'shallow' (depth 1) or 'single-branch' ... 'shallow' implies 'single-branch'
 	readonly SOURCE_GIT_DEPTH=''
@@ -55,6 +56,7 @@ Init()
 	readonly DAEMON_PID_PATHFILE=/var/run/$QPKG_NAME.pid
 	readonly LAUNCHER="$DAEMON_PATHFILE --address='0.0.0.0' --port=8010 --encoding=850"
 	readonly PORT_CHECK_TIMEOUT=240
+	readonly DAEMON_CHECK_TIMEOUT=30
 	readonly DAEMON_STOP_TIMEOUT=60
 	readonly DAEMON_PORT_CMD=''
 	readonly UI_PORT_CMD='echo 8010'
@@ -763,9 +765,9 @@ RunAndLog()
 		result_code=$?
 	else
 		if [[ ${5:-} != background ]]; then
-			eval "$1" > "$LOG_PATHFILE" 2>&1
+			(eval "$1" > "$LOG_PATHFILE" 2>&1)			# run in a subshell to suppress 'Terminated' message later
 		else
- 			eval "$1" > "$LOG_PATHFILE" 2>&1 &
+ 			(eval "$1" > "$LOG_PATHFILE" 2>&1 &)		# run in a subshell to suppress 'Terminated' message later
 		fi
 
 		result_code=$?
