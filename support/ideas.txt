@@ -1,3 +1,6 @@
+* check if QPKG has been signed before signing it again?
+	Don't check if QPKG has just been installed (assume package won't have been signed).
+
 * include elapsed time when writing DisplayRunAndLog() results to debug log.
 
 * service scripts should explicitly log when a requested 'start' or 'stop' action has completed. And how long it took.
