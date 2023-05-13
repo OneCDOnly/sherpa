@@ -1,3 +1,5 @@
+* QPKG version sort is not correctly sorting version numbers followed by an alpha.
+
 * Entware is not being restarted during 'sherpa restart ew'.
 	restarts all deps though.
 
