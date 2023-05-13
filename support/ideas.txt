@@ -1,7 +1,3 @@
-* each QPKG service script should not affect the last operation result when QPKG status is requested.
-
-* ensure all calls to 'pidof' return only a single PID.
-
 * include elapsed time when writing DisplayRunAndLog() results to debug log.
 
 * service scripts should explicitly log when a requested 'start' or 'stop' action has completed. And how long it took.
