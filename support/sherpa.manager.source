@@ -1,37 +1,37 @@
 #!/usr/bin/env bash
 #*<?dontedit?>
-
+#
 #* sherpa.manager.sh
 #*  Copyright (C) 2017-<?year?> OneCD - one.cd.only@gmail.com
-
+#
 #   So, blame OneCD if it all goes horribly wrong. ;)
-
+#
 # Description:
 #   This is the management script for the sherpa mini-package-manager.
 #   It's automatically downloaded via the `sherpa.loader.sh` script in the `sherpa` QPKG no-more than once per 24 hours.
-
+#
 #* Project:
 #*   https://git.io/sherpa
-
+#
 # Forum:
 #   https://forum.qnap.com/viewtopic.php?f=320&t=132373
-
+#
 # Tested on:
 #   GNU bash, version 3.2.57(2)-release (i686-pc-linux-gnu)
 #   GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
 #   Copyright (C) 2007 Free Software Foundation, Inc.
-
+#
 # ... and periodically on:
 #   GNU bash, version 5.1.16(1)-release (aarch64-openwrt-linux-gnu)
 #   Copyright (C) 2020 Free Software Foundation, Inc.
-
+#
 #* License:
 #*   This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
-
+#
 #*   This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-
+#
 #*   You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
-
+#
 # Project variable and function naming style-guide:
 #			  functions: 'CamelCase'
 #  background functions: '_CamelCaseWithLeadingAndTrailingUnderscores_'
@@ -42,7 +42,7 @@
 #   "object" properties: '_lowercase_with_leading_and_inline_and_trailing_underscores_' (these should ONLY be managed via the object's methods)
 #			  constants: 'UPPERCASE_WITH_INLINE_UNDERSCORES' (also set as readonly)
 #				indents: 1 x tab
-
+#
 # Notes:
 #   If on-screen line-spacing is required, this should only be done by the next function that outputs to display.
 #   Display functions should never finish by putting an empty line on-screen for spacing.
@@ -963,19 +963,19 @@ Self:Validate()
 	}
 
 # QPKG action processing shall be conducted in this order:
-
+#
 #	1. status all
 #	2. rebuild all				(meta-action: `install` QPKG and `restore` config, but only if package has an existing backup file)
 #	3. reassign all
 #	4. download all
 #	5. backup all
-
+#
 #	6. stop/deactivate dependents
 #	7. disable dependents
 #	8. stop/deactivate standalones
 #	9. disable standalones
 #  10. uninstall all
-
+#
 #  11. upgrade standalones
 #  12. reinstall standalones
 #  13. install standalones
@@ -984,7 +984,7 @@ Self:Validate()
 #  16. enable standalones
 #  17. restart/reactivate standalones
 #  18. start/activate standalones
-
+#
 #  19. upgrade dependents
 #  20. reinstall dependents
 #  21. install dependents
@@ -993,7 +993,7 @@ Self:Validate()
 #  24. enable dependents
 #  25. restart/reactivate dependents
 #  26. start/activate dependents
-
+#
 #  27. "sign" all
 
 Actions:Proc()
@@ -1068,9 +1068,7 @@ Actions:Proc()
 
 	EraseThisLine
 
-	if [[ $opts_check = true ]]; then
-		ShowAsDone 'check complete'
-	fi
+	[[ $opts_check = true ]] && ShowAsDone 'check complete'
 
 	if [[ ${opts_debug:-false} = true ]]; then
 #		PIPs.Actions:List
@@ -2318,12 +2316,14 @@ IPKs:upgrade()
 	total_count=$(IPKs-ACdownload-to:Count)
 
 	if [[ $total_count -gt 0 ]]; then
-		ShowAsProc "downloading & upgrading $total_count IPK$(Pluralise "$total_count")"
+		local desc="$total_count IPK module$(Pluralise "$total_count")"
+		local log_pathfile=$LOGS_PATH/ipks.$UPGRADE_LOG_FILE
+		ShowAsProc "upgrading $desc: "
 
 		_DirSize:Monitor_ "$IPK_DL_PATH" "$(IPKs-ACdownload-to:Size)" &
 		fork_pid=$!
 
-		RunAndLog "$OPKG_CMD upgrade --force-overwrite $(IPKs-ACdownload-to:List) --cache $IPK_CACHE_PATH --tmp-dir $IPK_DL_PATH" "$LOGS_PATH/IPKs.$UPGRADE_LOG_FILE" log:failure-only
+		RunAndLog "$OPKG_CMD upgrade --force-overwrite $(IPKs-ACdownload-to:List) --cache $IPK_CACHE_PATH --tmp-dir $IPK_DL_PATH" "$log_pathfile" log:failure-only
 		result_code=$?
 
 		KillActiveFork
@@ -2331,11 +2331,11 @@ IPKs:upgrade()
 		if [[ $result_code -eq 0 ]]; then
 			ok_count=$total_count		# assume they all passed
 			NoteIpkAcAsOk "$(IPKs-ACupgrade-to:Array)" upgrade
-			SaveActionResultToLog IPK addon upgrade ok "$result_code"
+			SaveActionResultToLog IPK "$desc" upgrade ok "$result_code"
 		else
-			ShowAsFail "download & upgrade $total_count IPK$(Pluralise "$total_count") failed $(FormatAsExitcode "$result_code")"
+			ShowAsFail "upgrade $total_count IPK$(Pluralise "$total_count") failed $(FormatAsExitcode "$result_code")"
 			NoteIpkAcAsEr "$(IPKs-ACupgrade-to:Array)" upgrade
-			SaveActionResultToLog IPK addon upgrade failed "$result_code"
+			SaveActionResultToLog IPK "$desc" upgrade failed "$result_code"
 		fi
 	fi
 
@@ -2382,9 +2382,9 @@ IPKs:install()
 	total_count=$(IPKs-ACdownload-to:Count)
 
 	if [[ $total_count -gt 0 ]]; then
-		local desc="essential IPK module$(Pluralise "$total_count")"
+		local desc="$total_count essential IPK module$(Pluralise "$total_count")"
 		local log_pathfile=$LOGS_PATH/ipks.$INSTALL_LOG_FILE
-		ShowAsProc "installing $total_count $desc: "
+		ShowAsProc "installing $desc: "
 
 		_DirSize:Monitor_ "$IPK_DL_PATH" "$(IPKs-ACdownload-to:Size)" &
 		fork_pid=$!
@@ -2400,7 +2400,7 @@ IPKs:install()
 			SaveActionResultToLog IPK "$desc" install ok "$result_code"
 		else
 			fail_count=$total_count		# assume they all failed
-			ShowAsFail "install $total_count $desc failed $(FormatAsExitcode "$result_code")"
+			ShowAsFail "install $desc failed $(FormatAsExitcode "$result_code")"
 			NoteIpkAcAsEr "$(IPKs-ACdownload-to:Array)" install
 			SaveActionResultToLog IPK "$desc" install failed "$result_code"
 		fi
