@@ -63,7 +63,7 @@ Self:Init()
 	Consts:Load
 
 	sess_active_pathfile=$THIS_PACKAGE_PATH/session.$$.active.log
-	rm -f "$REPORT_PATHFILE" "$RAMDISKS_FREESPACE_PATHFILE" "$DISPLAY_INHBIT_PATHFILE"
+	rm -f "$REPORT_PATHFILE" "$RAMDISKS_FREESPACE_PATHFILE" "$DISPLAY_INHIBIT_PATHFILE"
 
 	trap RunOnEXIT EXIT
 	trap RunOnSIGINT INT
@@ -72,29 +72,31 @@ Self:Init()
 
 	Keystrokes:Hide
 	Cursor:Hide
+	IsVerbose
+	IsDebug
 	Env:Confirm || return
 	Lists:Load
 	CreatePaths || return
 	ArchivePriorSessLogs
 	IsReset
-	Objects:Load || return
 	TerminalDimensions:Load
-
-	# test if this QTS `sleep` can handle decimal seconds. Early QTS BusyBox versions cannot.
-	readonly DECIMAL_SLEEP_SECONDS_SUPPORTED=$($QTS_SLEEP_CMD .01 &>/dev/null && echo true || echo false)
-
-	IsVerbose
-	IsDebug
 
 	DebugInfoMajSepr
 	DebugScript started "$(/bin/date -d @"$SCRIPT_STARTSECONDS" | tr -s ' ')"
-	DebugScript versions "QPKG: ${THIS_PACKAGE_VER:-unknown}, manager: ${THIS_SCRIPT_VER:-unknown}, loader: ${LOADER_SCRIPT_VER:-unknown}, objects: ${OBJECTS_VER:-unknown}"
 	DebugScript PID "$$"
 	DebugInfoMinSepr
 	DebugInfo 'Markers: (**) detected, (II) information, (WW) warning, (EE) error, (LL) log file, (--) processing,'
 	DebugInfo '(==) done, (>>) f entry, (<<) f exit, (vv) variable name & value, ($1) positional argument value'
 	DebugInfoMinSepr
 
+	DebugVar THIS_PACKAGE_VER
+	DebugVar THIS_SCRIPT_VER
+	DebugVar LOADER_SCRIPT_VER
+
+	Objects:Load || return
+
+	# test if this QTS `sleep` can handle decimal seconds. Early QTS BusyBox versions cannot.
+	readonly DECIMAL_SLEEP_SECONDS_SUPPORTED=$($QTS_SLEEP_CMD .01 &>/dev/null && echo true || echo false)
 	readonly NAS_FIRMWARE_VER=$(GetFirmwareVer)
 	readonly NAS_FIRMWARE_BUILD=$(GetFirmwareBuild)
 	readonly NAS_FIRMWARE_DATE=$(GetFirmwareDate)
@@ -376,7 +378,7 @@ Consts:Load()
 	readonly SESS_ACTIONS_RESULTS_PATHFILE=$LOGS_PATH/session.action.results.log
 	readonly REPORT_PATHFILE=$LOGS_PATH/report.ansi
 	readonly RAMDISKS_FREESPACE_PATHFILE=$LOGS_PATH/ramdisks.freespace
-	readonly DISPLAY_INHBIT_PATHFILE=$CACHE_PATH/display.inhibit
+	readonly DISPLAY_INHIBIT_PATHFILE=$CACHE_PATH/display.inhibit
 
 	readonly ACTION_RESULT_INDENT=6
 	readonly FILE_NAME_COL_WIDTH=33
@@ -565,12 +567,9 @@ CreatePaths()
 	{
 
 	# KLUDGE: service scripts prior to 2022-12-08 would use these paths (by-default) to build/cache Python packages. This has been fixed, but still need to free-up this space to prevent out-of-space issues.
-	[[ -d /root/.cache ]] && rm -rf /root/.cache
-	[[ -d /root/.local/share/virtualenv ]] && rm -rf /root/.local/share/virtualenv
+	rm -rf /root/.cache /root/.local/share/virtualenv
 
-	[[ -d $IPK_DL_PATH ]] && rm -rf "$IPK_DL_PATH"
-	[[ -d $IPK_CACHE_PATH ]] && rm -rf "$IPK_CACHE_PATH"
-	[[ -d $PIP_CACHE_PATH ]] && rm -rf "$PIP_CACHE_PATH"
+	rm -rf "$IPK_DL_PATH" "$IPK_CACHE_PATH" "$PIP_CACHE_PATH"
 
 	MakePath "$CACHE_PATH" cache || return
 	MakePath "$LOGS_PATH" logs || return
@@ -2604,7 +2603,7 @@ _DirSize:Monitor_()
 			progress_msg+=$stall_msg
 		fi
 
-		[[ ! -e $DISPLAY_INHBIT_PATHFILE ]] || return
+		[[ ! -e $DISPLAY_INHIBIT_PATHFILE ]] || return
 		WriteMsgInPlace "$progress_msg"
 		sleep 1
 	done
@@ -2713,8 +2712,8 @@ IsVerbose()
 	re=\\bverbose\\b
 
 	if [[ $USER_ARGS_RAW =~ $re ]]; then
-		Display >&2
 		Self.Verbose:Enable
+		EnableDebugToArchiveAndFile
 	fi
 
 	}
@@ -4135,7 +4134,7 @@ UpdateForkProgress()
 
 	RefreshForkCounts
 	[[ $opts_verbose = true ]] && return		# don't display progress, it's impossible to view it with so-many other writes to the screen
-	[[ ! -e $DISPLAY_INHBIT_PATHFILE ]] || return
+	[[ ! -e $DISPLAY_INHIBIT_PATHFILE ]] || return
 
 	msg+="$(PercFrac "$ok_count" "$((skip_count+skip_ok_count+skip_error_count))" "$fail_count" "$total_count")"
 
@@ -5634,17 +5633,21 @@ Self.Verbose:Enable()
 	{
 
 	opts_verbose=true
+	DebugVar opts_verbose
+
 	Keystrokes:Show
 	Cursor:Show
-	EnableDebugToArchiveAndFile
 
 	}
 
 EnableDebugToArchiveAndFile()
 	{
 
-	self_debug_archive_afterward=true
 	opts_debug=true
+	DebugVar opts_debug
+
+	self_debug_archive_afterward=true
+	DebugVar self_debug_archive_afterward
 
 	}
 
@@ -6161,64 +6164,6 @@ _QPKG:uninstall_()
 
 	}
 
-_QPKG:reactivate_()
-	{
-
-	# * This function runs autonomously *
-	# Restarts/reactivates the service script for the QPKG named in $1
-
-	# input:
-	#   $1 = QPKG name
-
-	# output:
-	#   $? = none, this function executes in the background
-
-	[[ $opts_verbose != true ]] && exec &>/dev/null
-	FuncFork:Entry
-
-	PACKAGE_NAME=${1:?package name null}
-	local -i result_code=0
-	local debug_cmd=''
-
-	if QPKGs-ISNTinstalled:Exist "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" reactivate skipped 'not installed'
-		MarkThisActionForkAsSkipped
-		FuncFork:Exit 2
-	fi
-
-	QPKG.ServiceStatus:Clear
-	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$REACTIVATE_LOG_FILE
-	local timeout=''
-	OS.IsSupportQpkgTimeout && timeout=" -t $QPKG_RESTART_TIMEOUT_SECONDS"
-
-	DebugAsProc "reactivating $(FormatAsPackName "$PACKAGE_NAME")"
-
-	if [[ $opts_debug = true ]]; then
-		debug_cmd='DEBUG_QPKG=true '
-		RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) restart" "$LOG_PATHFILE" log:failure-only
-		result_code=$?
-	elif QPKG.IsCanLog; then		# use `qpkg_service` if-possible, so package icon in App Center will dynamically update
-		RunAndLog "/sbin/qpkg_service${timeout} restart $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
-		QPKG.LastResultWasOk && result_code=0 || result_code=1
-	else
-		RunAndLog "$(QPKG.ServicePathFile) restart" "$LOG_PATHFILE" log:failure-only
-		result_code=$?
-	fi
-
-	if [[ $result_code -eq 0 ]]; then
-		QPKG.ServiceStatus:Log
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" reactivate ok
-		MarkThisActionForkAsOk
-	else
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" reactivate failed "$result_code"
-		result_code=1   # remap to 1
-		MarkThisActionForkAsFailed
-	fi
-	QPKG.AppCenterNotifier:Clear
-	FuncFork:Exit $result_code
-
-	}
-
 _QPKG:activate_()
 	{
 
@@ -6281,6 +6226,64 @@ _QPKG:activate_()
 		MarkThisActionForkAsFailed
 	fi
 
+	QPKG.AppCenterNotifier:Clear
+	FuncFork:Exit $result_code
+
+	}
+
+_QPKG:reactivate_()
+	{
+
+	# * This function runs autonomously *
+	# Restarts/reactivates the service script for the QPKG named in $1
+
+	# input:
+	#   $1 = QPKG name
+
+	# output:
+	#   $? = none, this function executes in the background
+
+	[[ $opts_verbose != true ]] && exec &>/dev/null
+	FuncFork:Entry
+
+	PACKAGE_NAME=${1:?package name null}
+	local -i result_code=0
+	local debug_cmd=''
+
+	if QPKGs-ISNTinstalled:Exist "$PACKAGE_NAME"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" reactivate skipped 'not installed'
+		MarkThisActionForkAsSkipped
+		FuncFork:Exit 2
+	fi
+
+	QPKG.ServiceStatus:Clear
+	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$REACTIVATE_LOG_FILE
+	local timeout=''
+	OS.IsSupportQpkgTimeout && timeout=" -t $QPKG_RESTART_TIMEOUT_SECONDS"
+
+	DebugAsProc "reactivating $(FormatAsPackName "$PACKAGE_NAME")"
+
+	if [[ $opts_debug = true ]]; then
+		debug_cmd='DEBUG_QPKG=true '
+		RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) restart" "$LOG_PATHFILE" log:failure-only
+		result_code=$?
+	elif QPKG.IsCanLog; then		# use `qpkg_service` if-possible, so package icon in App Center will dynamically update
+		RunAndLog "/sbin/qpkg_service${timeout} restart $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
+		QPKG.LastResultWasOk && result_code=0 || result_code=1
+	else
+		RunAndLog "$(QPKG.ServicePathFile) restart" "$LOG_PATHFILE" log:failure-only
+		result_code=$?
+	fi
+
+	if [[ $result_code -eq 0 ]]; then
+		QPKG.ServiceStatus:Log
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" reactivate ok
+		MarkThisActionForkAsOk
+	else
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" reactivate failed "$result_code"
+		result_code=1   # remap to 1
+		MarkThisActionForkAsFailed
+	fi
 	QPKG.AppCenterNotifier:Clear
 	FuncFork:Exit $result_code
 
@@ -8043,7 +8046,7 @@ DebugVar()
 	{
 
 	# had to split this onto its own line so Kate editor won't choke when highlighting syntax
-	local temp=${!1}
+	local temp=${!1:-undefined}
 
 	DebugAsVar "\$$1 : '$temp'"
 
@@ -8974,6 +8977,7 @@ Objects:Load()
 	objects_loaded=true
 
 	readonly OBJECTS_VER
+	DebugVar OBJECTS_VER
 	Func:Exit
 
 	}
@@ -9035,9 +9039,9 @@ Packages:Load()
 		readonly QPKG_CAN_LOG_SERVICE_OPERATIONS
 		readonly QPKG_TEST_FOR_ACTIVE
 
-	DebugScript version "packages: ${PACKAGES_VER:-unknown}"
 	QPKGs-SCall:Add "${QPKG_NAME[*]}"
 	QPKGs.StandaloneDependent:Build
+	DebugVar PACKAGES_VER
 	Func:Exit
 
 	}
@@ -9045,7 +9049,7 @@ Packages:Load()
 RunOnSIGINT()
 	{
 
-	$TOUCH_CMD "$DISPLAY_INHBIT_PATHFILE"
+	$TOUCH_CMD "$DISPLAY_INHIBIT_PATHFILE"
 	EraseThisLine
 	ShowAsAbort 'caught SIGINT'
 	KillActiveFork
