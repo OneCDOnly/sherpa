@@ -109,7 +109,7 @@ Self:Init()
 	prev_msg=' '
 	fork_pid=''
 
-	[[ ${NAS_FIRMWARE_VER//.} -lt 426 ]] && curl_insecure_arg=' --insecure' || curl_insecure_arg=''
+	OS.IsSupportSecureDownload && curl_insecure_arg='' || curl_insecure_arg=' --insecure'
 	QPKG.IsInstalled Entware && [[ $ENTWARE_VER = none ]] && DebugAsWarn "$(FormatAsPackName Entware) appears to be installed but is not visible"
 
 	if [[ $(GetSudoUID) = '<undefined>' ]]; then
@@ -2331,6 +2331,7 @@ IPKs:upgrade()
 		if [[ $result_code -eq 0 ]]; then
 			ok_count=$total_count		# assume they all passed
 			NoteIpkAcAsOk "$(IPKs-ACupgrade-to:Array)" upgrade
+			DebugAsDone "upgraded $desc"
 			SaveActionResultToLog IPK "$desc" upgrade ok "$result_code"
 		else
 			ShowAsFail "upgrade $total_count IPK$(Pluralise "$total_count") failed $(FormatAsExitcode "$result_code")"
@@ -2360,9 +2361,7 @@ IPKs:install()
 	IPKs-ACinstall-to:Init
 	IPKs-ACdownload-to:Init
 
-	# only install essential IPKs once per session. NOTE: This is done immediately after Entware is installed.
-	# If Entware wasn't just installed, reinstall essential IPKs now along with remaining IPKs required for QPKGs.
-	! QPKGs-ACinstall-ok:Exist Entware && IPKs-ACinstall-to:Add "$ESSENTIAL_IPKS"
+	QPKGs-ACinstall-ok:Exist Entware && IPKs-ACinstall-to:Add "$ESSENTIAL_IPKS"
 
 	if QPKGs.ACinstall.SCall:IsSet; then
 		for index in "${!QPKG_NAME[@]}"; do
@@ -2382,7 +2381,7 @@ IPKs:install()
 	total_count=$(IPKs-ACdownload-to:Count)
 
 	if [[ $total_count -gt 0 ]]; then
-		local desc="$total_count essential IPK module$(Pluralise "$total_count")"
+		local desc="$total_count addon IPK module$(Pluralise "$total_count")"
 		local log_pathfile=$LOGS_PATH/ipks.$INSTALL_LOG_FILE
 		ShowAsProc "installing $desc: "
 
@@ -2397,7 +2396,10 @@ IPKs:install()
 		if [[ $result_code -eq 0 ]]; then
 			ok_count=$total_count		# assume they all passed
 			NoteIpkAcAsOk "$(IPKs-ACdownload-to:Array)" install
+			DebugAsDone "installed $desc"
 			SaveActionResultToLog IPK "$desc" install ok "$result_code"
+			Keystrokes:Hide
+			UpdateColourisation
 		else
 			fail_count=$total_count		# assume they all failed
 			ShowAsFail "install $desc failed $(FormatAsExitcode "$result_code")"
@@ -2430,20 +2432,20 @@ PIPs:install()
 		ShowAsActionProgress '' "$PACKAGE_TYPE" "$ok_count" "$skip_count" "$fail_count" "$total_count" installing "$RUNTIME"
 
 		exec_cmd="$PIP_CMD install --upgrade --no-input $ESSENTIAL_PIPS --cache-dir $PIP_CACHE_PATH 2> >($GREP_CMD -v \"Running pip as the 'root' user\") >&2"
-		local desc="essential PyPI modules"
+		local desc="addon PyPI modules"
 		local log_pathfile=$LOGS_PATH/pypi.$INSTALL_LOG_FILE
-		DebugAsProc "installing $desc"
+		ShowAsProc "installing $desc: "
 		RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
 		result_code=$?
 
 		if [[ $result_code -eq 0 ]]; then
+			((ok_count++))
 			DebugAsDone "installed $desc"
 			SaveActionResultToLog PIP "$desc" install ok "$result_code"
-			((ok_count++))
 		else
+			((fail_count++))
 			ShowAsFail "install $desc failed $(FormatAsResult "$result_code")"
 			SaveActionResultToLog PIP "$desc" install failed "$result_code"
-			((fail_count++))
 		fi
 
 		ShowAsActionProgress '' "$PACKAGE_TYPE" "$ok_count" "$skip_count" "$fail_count" "$total_count" installing "$RUNTIME"
@@ -5370,6 +5372,20 @@ OS.IsSupported()
 
 	}
 
+OS.IsSupportSecureDownload()
+	{
+
+	[[ ${NAS_FIRMWARE_VER//.} -ge 426 ]]
+
+	}
+
+OS.IsSupportQpkgTimeout()
+	{
+
+	[[ ${NAS_FIRMWARE_VER//.} -ge 430 ]]
+
+	}
+
 OS.IsSupportSignedPackages()
 	{
 
@@ -5397,13 +5413,6 @@ OS.IsStopping()
 	ps | $GREP_CMD -F '/bin/sh /etc/init.d/rcK' | $GREP_CMD -v grep
 
 	} &>/dev/null
-
-OS.SupportsQpkgTimeout()
-	{
-
-	[[ ${NAS_FIRMWARE_VER//.} -gt 426 ]]
-
-	}
 
 GetRepoURLFromStoreID()
 	{
@@ -5886,7 +5895,6 @@ _QPKG:install_()
 	result_code=$?
 
 	if [[ $result_code -eq 0 || $result_code -eq 10 ]]; then
-		UpdateColourisation
 		QPKG.ServiceStatus:Log
 		SendPackageStateChange ISinstalled
 
@@ -5909,13 +5917,6 @@ _QPKG:install_()
 				mv "$OPT_BU_PATH"/* "$OPT_PATH" && rm -rf "$OPT_BU_PATH"
 				DebugAsDone complete
 			fi
-
-			# add essential IPKs needed immediately
-			DebugAsProc 'installing essential IPKs'
-			RunAndLog "$OPKG_CMD install --force-overwrite $ESSENTIAL_IPKS --cache $IPK_CACHE_PATH --tmp-dir $IPK_DL_PATH" "$LOGS_PATH/IPKs.essential.$INSTALL_LOG_FILE" log:failure-only
-			SendParentChangeEnv Keystrokes:Hide
-			UpdateColourisation
-			DebugAsDone 'installed essential IPKs'
 		fi
 
 		SendParentChangeEnv "QPKGs-ACsign-to:Add $PACKAGE_NAME"
@@ -6188,7 +6189,7 @@ _QPKG:reactivate_()
 	QPKG.ServiceStatus:Clear
 	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$REACTIVATE_LOG_FILE
 	local timeout=''
-	OS.SupportsQpkgTimeout && timeout=" -t $QPKG_RESTART_TIMEOUT_SECONDS"
+	OS.IsSupportQpkgTimeout && timeout=" -t $QPKG_RESTART_TIMEOUT_SECONDS"
 
 	DebugAsProc "reactivating $(FormatAsPackName "$PACKAGE_NAME")"
 
@@ -6246,7 +6247,7 @@ _QPKG:activate_()
 	QPKG.ServiceStatus:Clear
 	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$ACTIVATE_LOG_FILE
 	local timeout=''
-	OS.SupportsQpkgTimeout && timeout=" -t $QPKG_START_TIMEOUT_SECONDS"
+	OS.IsSupportQpkgTimeout && timeout=" -t $QPKG_START_TIMEOUT_SECONDS"
 
 	DebugAsProc "activating $(FormatAsPackName "$PACKAGE_NAME")"
 
@@ -6320,10 +6321,9 @@ _QPKG:deactivate_()
 	QPKG.ServiceStatus:Clear
 	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$DEACTIVATE_LOG_FILE
 	local timeout=''
-	OS.SupportsQpkgTimeout && timeout=" -t $QPKG_STOP_TIMEOUT_SECONDS"
+	OS.IsSupportQpkgTimeout && timeout=" -t $QPKG_STOP_TIMEOUT_SECONDS"
 
 	DebugAsProc "deactivating $(FormatAsPackName "$PACKAGE_NAME")"
-	[[ $PACKAGE_NAME = Entware ]] && UpdateColourisation
 
 	if [[ $opts_debug = true ]]; then
 		debug_cmd='DEBUG_QPKG=true '
@@ -6394,7 +6394,7 @@ _QPKG:enable_()
 	QPKG.ServiceStatus:Clear
 	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$ENABLE_LOG_FILE
 	local timeout=''
-	OS.SupportsQpkgTimeout && timeout=" -t $QPKG_ENABLE_TIMEOUT_SECONDS"
+	OS.IsSupportQpkgTimeout && timeout=" -t $QPKG_ENABLE_TIMEOUT_SECONDS"
 
 	DebugAsProc "enabling $(FormatAsPackName "$PACKAGE_NAME")"
 
@@ -6445,7 +6445,7 @@ _QPKG:disable_()
 	QPKG.ServiceStatus:Clear
 	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$DISABLE_LOG_FILE
 	local timeout=''
-	OS.SupportsQpkgTimeout && timeout=" -t $QPKG_DISABLE_TIMEOUT_SECONDS"
+	OS.IsSupportQpkgTimeout && timeout=" -t $QPKG_DISABLE_TIMEOUT_SECONDS"
 
 	DebugAsProc "disabling $(FormatAsPackName "$PACKAGE_NAME")"
 
@@ -8838,7 +8838,7 @@ UpdateColourisation()
 Cursor:Hide()
 	{
 
-	printf '\033[?25l'
+	[[ $opts_verbose = false ]] && printf '\033[?25l'
 
 	}
 
@@ -8852,7 +8852,7 @@ Cursor:Show()
 Keystrokes:Hide()
 	{
 
-	[[ -e $GNU_STTY_CMD && -t 0 ]] && $GNU_STTY_CMD '-echo'
+	[[ $opts_verbose = false && -e $GNU_STTY_CMD && -t 0 ]] && $GNU_STTY_CMD '-echo'
 
 	}
 
