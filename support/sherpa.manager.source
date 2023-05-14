@@ -4471,10 +4471,12 @@ QPKGs.States:Build()
 		DebugAsProc 'clearing existing state lists'
 
 		for state in "${USER_QPKG_IS_STATES[@]}" "${QPKG_STATES_TRANSIENT[@]}"; do
+			[[ $state = active ]] && continue		# don't reset
 			QPKGs-IS${state}:Init
 		done
 
 		for state in "${USER_QPKG_ISNT_STATES[@]}"; do
+			[[ $state = active ]] && continue		# don't reset
 			QPKGs-ISNT${state}:Init
 		done
 
