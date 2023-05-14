@@ -19,10 +19,10 @@ buffer=$(sed "s|<?year?>|$year|" <<< "$buffer")
 buffer=$(sed "s|<?today?>|$today|" <<< "$buffer")
 buffer=$(sed "s|<?cdn_sherpa_url?>|$cdn_sherpa_url|" <<< "$buffer")
 
-buffer=$(sed -e '/^#[[:space:]].*/d;s/[[:space:]]#[[:space:]].*//' <<< "$buffer")		# remove comment lines and line comments
-buffer=$(sed -e 's/^[[:space:]]*//' <<< "$buffer")										# remove leading whitespace
-buffer=$(sed 's/[[:space:]]*$//' <<< "$buffer")											# remove trailing whitespace
-buffer=$(sed "/^$/d" <<< "$buffer")														# remove empty lines
+buffer=$(sed -e '/^#[[:space:]].*/d;/#$/d;s/[[:space:]]#[[:space:]].*//' <<< "$buffer")		# remove comment lines and line comments
+buffer=$(sed -e 's/^[[:space:]]*//' <<< "$buffer")											# remove leading whitespace
+buffer=$(sed 's/[[:space:]]*$//' <<< "$buffer")												# remove trailing whitespace
+buffer=$(sed "/^$/d" <<< "$buffer")															# remove empty lines
 buffer=$(sed "s|Content-Transfer-Encoding: base64|Content-Transfer-Encoding: base64\n|" <<< "$buffer")	# need to add a newline after this string so signature block is accepted by QTS
 
 [[ -e $target_pathfile ]] && rm -f "$target_pathfile"
