@@ -216,10 +216,10 @@ for action in "${IPK_ACTIONS[@]}"; do
 done
 
 buffer=$(<"$target_pathfile")
-buffer=$(sed -e '/^#[[:space:]].*/d;s/[[:space:]]#[[:space:]].*//' <<< "$buffer")		# remove comment lines and line comments
-buffer=$(sed -e 's/^[[:space:]]*//' <<< "$buffer")										# remove leading whitespace
-buffer=$(sed 's/[[:space:]]*$//' <<< "$buffer")											# remove trailing whitespace
-buffer=$(sed "/^$/d" <<< "$buffer")														# remove empty lines
+buffer=$(sed -e '/^#[[:space:]].*/d;/#$/d;s/[[:space:]]#[[:space:]].*//' <<< "$buffer")		# remove comment lines and line comments
+buffer=$(sed -e 's/^[[:space:]]*//' <<< "$buffer")											# remove leading whitespace
+buffer=$(sed 's/[[:space:]]*$//' <<< "$buffer")												# remove trailing whitespace
+buffer=$(sed "/^$/d" <<< "$buffer")															# remove empty lines
 
 echo "$buffer" > "$target_pathfile"
 
