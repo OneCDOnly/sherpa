@@ -2302,7 +2302,7 @@ IPKs:upgrade()
 
 	[[ $ipks_upgrade = false ]] && return
 	QPKGs-ISNTinstalled:Exist Entware && return
-	QPKGs-ISNTactive:Exist Entware && return
+	QPKGs-ISNTenabled:Exist Entware && return
 	UpdateEntwarePackageList
 	Self.Error:IsSet && return
 
@@ -2350,7 +2350,7 @@ IPKs:install()
 
 	[[ $ipks_install = false ]] && return
 	QPKGs-ISNTinstalled:Exist Entware && return
-	QPKGs-ISNTactive:Exist Entware && return
+	QPKGs-ISNTenabled:Exist Entware && return
 	UpdateEntwarePackageList
 	Self.Error:IsSet && return
 
@@ -2382,12 +2382,14 @@ IPKs:install()
 	total_count=$(IPKs-ACdownload-to:Count)
 
 	if [[ $total_count -gt 0 ]]; then
-		ShowAsProc "downloading & installing $total_count IPK$(Pluralise "$total_count"): "
+		local desc="essential IPK module$(Pluralise "$total_count")"
+		local log_pathfile=$LOGS_PATH/ipks.$INSTALL_LOG_FILE
+		ShowAsProc "installing $total_count $desc: "
 
 		_DirSize:Monitor_ "$IPK_DL_PATH" "$(IPKs-ACdownload-to:Size)" &
 		fork_pid=$!
 
-		RunAndLog "$OPKG_CMD install --force-overwrite $(IPKs-ACdownload-to:List) --cache $IPK_CACHE_PATH --tmp-dir $IPK_DL_PATH" "$LOGS_PATH/IPKs.$INSTALL_LOG_FILE" log:failure-only
+		RunAndLog "$OPKG_CMD install --force-overwrite $(IPKs-ACdownload-to:List) --cache $IPK_CACHE_PATH --tmp-dir $IPK_DL_PATH" "$log_pathfile" log:failure-only
 		result_code=$?
 
 		KillActiveFork
@@ -2395,12 +2397,12 @@ IPKs:install()
 		if [[ $result_code -eq 0 ]]; then
 			ok_count=$total_count		# assume they all passed
 			NoteIpkAcAsOk "$(IPKs-ACdownload-to:Array)" install
-			SaveActionResultToLog IPK addon install ok "$result_code"
+			SaveActionResultToLog IPK "$desc" install ok "$result_code"
 		else
 			fail_count=$total_count		# assume they all failed
-			ShowAsFail "download & install $total_count IPK$(Pluralise "$total_count") failed $(FormatAsExitcode "$result_code")"
+			ShowAsFail "install $total_count $desc failed $(FormatAsExitcode "$result_code")"
 			NoteIpkAcAsEr "$(IPKs-ACdownload-to:Array)" install
-			SaveActionResultToLog IPK addon install failed "$result_code"
+			SaveActionResultToLog IPK "$desc" install failed "$result_code"
 		fi
 	fi
 
@@ -2413,7 +2415,7 @@ PIPs:install()
 
 	[[ $pips_install = false ]] && return
 	QPKGs-ISNTinstalled:Exist Entware && return
-	QPKGs-ISNTactive:Exist Entware && return
+	QPKGs-ISNTenabled:Exist Entware && return
 	! $OPKG_CMD status python3-pip | $GREP_CMD -q "Status:.*installed" && return
 	Self.Error:IsSet && return
 
@@ -2428,7 +2430,7 @@ PIPs:install()
 		ShowAsActionProgress '' "$PACKAGE_TYPE" "$ok_count" "$skip_count" "$fail_count" "$total_count" installing "$RUNTIME"
 
 		exec_cmd="$PIP_CMD install --upgrade --no-input $ESSENTIAL_PIPS --cache-dir $PIP_CACHE_PATH 2> >($GREP_CMD -v \"Running pip as the 'root' user\") >&2"
-		local desc="'PyPI' essential modules"
+		local desc="essential PyPI modules"
 		local log_pathfile=$LOGS_PATH/pypi.$INSTALL_LOG_FILE
 		DebugAsProc "installing $desc"
 		RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
@@ -2439,7 +2441,7 @@ PIPs:install()
 			SaveActionResultToLog PIP "$desc" install ok "$result_code"
 			((ok_count++))
 		else
-			ShowAsFail "installed $desc failed $(FormatAsResult "$result_code")"
+			ShowAsFail "install $desc failed $(FormatAsResult "$result_code")"
 			SaveActionResultToLog PIP "$desc" install failed "$result_code"
 			((fail_count++))
 		fi
@@ -4634,7 +4636,7 @@ QPKGs.Abbreviations:Show()
 		DisplayAsHelpTitle "$(FormatAsTitle) can recognise various abbreviations and aliases as $(FormatAsPackages)"
 
 		for tier in "${PACKAGE_TIERS[@]}"; do
-			[[ $tier = addon ]] && continue	# don't need to see addons
+			[[ $tier = addon ]] && continue		# don't need to see addons
 
 			DisplayAsHelpTitleNameAbs "$tier"
 
@@ -4736,7 +4738,7 @@ QPKGs.Repos:Show()
 		{
 
 		for tier in "${PACKAGE_TIERS[@]}"; do
-			[[ $tier = addon ]] && continue	# don't need to see addons
+			[[ $tier = addon ]] && continue		# don't need to see addons
 
 			DisplayAsHelpTitleNameDateRepo "$tier"
 
@@ -4791,7 +4793,7 @@ QPKGs:List:Show()
 		DisplayAsHelpTitle "One-or-more $(FormatAsPackages) may be specified at-once"
 
 		for tier in "${PACKAGE_TIERS[@]}"; do
-			[[ $tier = addon ]] && continue	# don't need to see addons
+			[[ $tier = addon ]] && continue		# don't need to see addons
 
 			DisplayAsHelpTitleNameAuthorDesc "$tier"
 
@@ -5289,7 +5291,7 @@ ModPathToEntware()
 	local -r OPKG=/opt/bin:/opt/sbin
 	local temp=''
 
-	if QPKGs-ISactive:Exist Entware; then
+	if QPKGs-ISenabled:Exist Entware; then
 		! [[ $PATH =~ $OPKG ]] || return
 		temp="$($SED_CMD "s|$OPKG:||" <<< "$PATH:")"	# append colon prior to searching, then remove existing Entware paths
 		export PATH="$OPKG:${temp%:}"				# ... now prepend Entware paths and remove trailing colon
@@ -5911,7 +5913,6 @@ _QPKG:install_()
 			# add essential IPKs needed immediately
 			DebugAsProc 'installing essential IPKs'
 			RunAndLog "$OPKG_CMD install --force-overwrite $ESSENTIAL_IPKS --cache $IPK_CACHE_PATH --tmp-dir $IPK_DL_PATH" "$LOGS_PATH/IPKs.essential.$INSTALL_LOG_FILE" log:failure-only
-#			SendParentChangeEnv 'IPKs-ACinstall-ok:Add "$ESSENTIAL_IPKS"'
 			SendParentChangeEnv Keystrokes:Hide
 			UpdateColourisation
 			DebugAsDone 'installed essential IPKs'
