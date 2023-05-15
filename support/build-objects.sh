@@ -224,11 +224,11 @@ buffer=$(sed "/^$/d" <<< "$buffer")															# remove empty lines
 echo "$buffer" > "$target_pathfile"
 
 if [[ ! -e $target_pathfile ]]; then
-	ColourTextBrightRed "'$target_pathfile' was not written to disk\n"
+	ColourTextBrightRed "'$target_pathfile' was not written to disk"; echo
 	exit 1
 fi
 
 chmod 444 "$target_pathfile"
 
-ColourTextBrightGreen 'done\n'
+ShowDone
 exit 0

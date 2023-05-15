@@ -68,6 +68,7 @@ Packages:Load()
 		readonly QPKG_CAN_RESTART_TO_UPDATE
 		readonly QPKG_CAN_CLEAN
 		readonly QPKG_CAN_LOG_SERVICE_OPERATIONS
+		readonly QPKG_TEST_FOR_ACTIVE
 
 	QPKGs-SCall:Add "${QPKG_NAME[*]}"
 
@@ -114,5 +115,5 @@ done
 
 [[ $objects_built = true ]] && rm -f "$OBJECTS_PATHFILE"
 
-ColourTextBrightGreen 'done\n'
+ShowDone
 exit 0
