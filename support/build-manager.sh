@@ -29,11 +29,11 @@ buffer=$(sed "s|Content-Transfer-Encoding: base64|Content-Transfer-Encoding: bas
 echo "$buffer" > "$target_pathfile"
 
 if [[ ! -e $target_pathfile ]]; then
-	ColourTextBrightRed "'$target_pathfile' was not written to disk\n"
+	ColourTextBrightRed "'$target_pathfile' was not written to disk"; echo
 	exit 1
 fi
 
 chmod 554 "$target_pathfile"
 
-ColourTextBrightGreen 'done\n'
+ShowDone
 exit 0

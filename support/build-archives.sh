@@ -35,7 +35,7 @@ for index in "${!source_pathfiles[@]}"; do
 	tar --create --gzip --numeric-owner --file="${target_pathfiles[index]}" --directory="$source_path" "$(basename "${source_pathfiles[index]}")"
 
 	if [[ ! -s ${target_pathfiles[index]} ]]; then
-		ColourTextBrightRed "'${target_pathfiles[index]}' was not written\n"
+		ColourTextBrightRed "'${target_pathfiles[index]}' was not written"; echo
 		exit 1
 	fi
 
@@ -43,5 +43,5 @@ for index in "${!source_pathfiles[@]}"; do
 	chmod 444 "${target_pathfiles[index]}"
 done
 
-ColourTextBrightGreen 'done\n'
+ShowDone
 exit 0
