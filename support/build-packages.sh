@@ -62,7 +62,8 @@ TranslateQPKGArch()
 
 echo -n 'locating QPKG checksum files ... '
 raw=$(find "$checksum_root_path" -name '*.qpkg.md5')
-ColourTextBrightGreen 'done\n'
+
+ShowDone
 
 sorted=$(sort --version-sort --reverse <<< "$raw")
 
@@ -107,7 +108,7 @@ while read -r checksum_pathfilename; do
 	fi
 done <<< "$sorted" | uniq > "$highest_package_versions_found_pathfile"
 
-ColourTextBrightGreen 'done\n'
+ShowDone
 
 echo -n 'updating QPKG fields ... '
 
@@ -133,7 +134,7 @@ buffer=$(sed -e 's/^[[:space:]]*//' <<< "$buffer")										# remove leading whi
 buffer=$(sed 's/[[:space:]]*$//' <<< "$buffer")											# remove trailing whitespace
 buffer=$(sed "/^$/d" <<< "$buffer")														# remove empty lines
 
-ColourTextBrightGreen 'done\n'
+ShowDone
 
 echo -n "building 'packages' ... "
 
@@ -141,13 +142,13 @@ echo -n "building 'packages' ... "
 echo "$buffer" > "$target_pathfile"
 
 if [[ ! -e $target_pathfile ]]; then
-	ColourTextBrightRed "'$target_pathfile' was not written to disk\n"
+	ColourTextBrightRed "'$target_pathfile' was not written to disk"; echo
 	exit 1
 fi
 
 chmod 444 "$target_pathfile"
 
-ColourTextBrightGreen 'done\n'
+ShowDone
 
 # sort and add header line for easier viewing
 printf '%-36s %-32s %-20s %-12s %-6s %s\n%s\n' '# checksum_filename' qpkg_filename package_name version arch md5 "$(sort "$highest_package_versions_found_pathfile")" > "$highest_package_versions_found_sorted_pathfile"
