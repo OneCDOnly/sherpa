@@ -786,7 +786,7 @@ Self:Validate()
 		ipks_install=true
 		pips_install=true
 
-		if QPKG.IsInstalled Entware && QPKG.IsEnabled Entware; then
+		if QPKG.IsEnabled Entware; then
 			if [[ -e $PYTHON3_CMD ]]; then
 				installed_ver=$(GetPython3Ver "$PYTHON3_CMD")
 
@@ -815,7 +815,7 @@ Self:Validate()
 
 	# KLUDGE: ensure old installs of Entware are reinstalled, due to an OpenSSL update breaking several IPKs in mid-March 2023
 
-	if QPKG.IsInstalled Entware && QPKG.IsEnabled Entware; then
+	if QPKG.IsInstalled Entware; then
 		local entware_install_date=$(QPKG.InstallDate Entware)
 
 		if [[ ${entware_install_date//-/} -le 20230318 ]]; then
@@ -2183,17 +2183,20 @@ IsThisFileRecent()
 SavePackageLists()
 	{
 
-	$PIP_CMD freeze > "$PREV_PIP_LIST" 2>/dev/null && DebugAsDone "saved current PIP module list to $(FormatAsFileName "$PREV_PIP_LIST")"
-	$OPKG_CMD list-installed > "$PREV_IPK_LIST" 2>/dev/null && DebugAsDone "saved current $(FormatAsPackName Entware) IPK list to $(FormatAsFileName "$PREV_IPK_LIST")"
+	$PIP_CMD freeze > "$PREV_PIP_LIST"
+	[[ -e $PREV_PIP_LIST ]] && DebugAsDone "saved current PIP module list to $(FormatAsFileName "$PREV_PIP_LIST")"
 
-	}
+	$OPKG_CMD list-installed > "$PREV_IPK_LIST"
+	[[ -e $PREV_IPK_LIST ]] && DebugAsDone "saved current $(FormatAsPackName Entware) IPK list to $(FormatAsFileName "$PREV_IPK_LIST")"
+
+	} 2>/dev/null
 
 CalcIpkDepsToInstall()
 	{
 
 	# From a specified list of IPK names, find all dependent IPKs, exclude those already installed, then generate a list to download
 
-	IsNtSysFileExist $GNU_GREP_CMD && return 1
+	IsSysFileExist $GNU_GREP_CMD || return
 
 	Func:Entry
 	local -a this_list=()
@@ -2306,11 +2309,10 @@ IPKs:upgrade()
 
 	# upgrade all installed IPKs
 
-	[[ $ipks_upgrade = false ]] && return
-	QPKGs-ISNTinstalled:Exist Entware && return
-	QPKGs-ISNTenabled:Exist Entware && return
+	[[ $ipks_upgrade = true ]] || return
+	QPKGs-ISenabled:Exist Entware || return
 	UpdateEntwarePackageList
-	Self.Error:IsSet && return
+	Self.Error:IsNt || return
 
 	Func:Entry
 	local -i result_code=0
@@ -2357,11 +2359,10 @@ IPKs:install()
 
 	# install IPKs required to support QPKGs
 
-	[[ $ipks_install = false ]] && return
-	QPKGs-ISNTinstalled:Exist Entware && return
-	QPKGs-ISNTenabled:Exist Entware && return
+	[[ $ipks_install = true ]] || return
+	QPKGs-ISenabled:Exist Entware || return
 	UpdateEntwarePackageList
-	Self.Error:IsSet && return
+	Self.Error:IsNt || return
 
 	Func:Entry
 	local -i index=0
@@ -2423,11 +2424,10 @@ IPKs:install()
 PIPs:install()
 	{
 
-	[[ $pips_install = false ]] && return
-	QPKGs-ISNTinstalled:Exist Entware && return
-	QPKGs-ISNTenabled:Exist Entware && return
-	! $OPKG_CMD status python3-pip | $GREP_CMD -q "Status:.*installed" && return
-	Self.Error:IsSet && return
+	[[ $pips_install = true ]] || return
+	QPKGs-ISenabled:Exist Entware || return
+	$OPKG_CMD status python3-pip | $GREP_CMD -q "Status:.*installed" || return
+	Self.Error:IsNt || return
 
 	Func:Entry
 	local exec_cmd=''
@@ -2555,7 +2555,7 @@ _DirSize:Monitor_()
 	#   stdout = "percentage downloaded (downloaded bytes/total expected bytes)"
 
 	[[ -z ${1:?path null} || ! -d ${1:-} || -z ${2:?total bytes null} || ${2:-} -eq 0 ]] && exit
-	IsNtSysFileExist $GNU_FIND_CMD && exit
+	IsSysFileExist $GNU_FIND_CMD || exit
 
 	local -i current_bytes=-1
 	local -i total_bytes=$2
