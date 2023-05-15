@@ -24,9 +24,9 @@ for index in "${!filenames[@]}"; do
 	echo -n "checking '${filenames[index]}' ... "
 
 	if shellcheck --shell=bash --exclude="${exclusions[index]}" "$source_path"/${filenames[index]}; then
-		ColourTextBrightGreen 'passed\n'
+		ShowPassed
 	else
-		ColourTextBrightRed 'failed\n'
+		ShowFailed
 		exit 1
 	fi
 done
