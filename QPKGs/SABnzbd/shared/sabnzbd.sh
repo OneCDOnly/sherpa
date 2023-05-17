@@ -282,11 +282,6 @@ InstallAddons()
 
 	IsNotAutoUpdate && [[ $new_env = false ]] && return 0
 
-	if [[ $QPKG_NAME = OWatcher3 ]]; then
-		# need to install `m2r` PyPI module first
-		DisplayRunAndLog "KLUDGE: install 'm2r' PyPI module first" ". $VENV_PATH/bin/activate && pip install${pip_deps} --no-input m2r" log:failure-only || SetError
-	fi
-
 	# edit developer-provided Python module requirements files out-of-repo
 	[[ -e $requirements_pathfile ]] && cp -f "$requirements_pathfile" "$default_requirements_pathfile"
 	[[ -e $default_requirements_pathfile ]] && requirements_pathfile=$default_requirements_pathfile
