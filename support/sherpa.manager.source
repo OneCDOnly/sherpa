@@ -4499,7 +4499,7 @@ QPKGs.States:Build()
 	local -i index=0
 	local package=''
 	local prev=''
-	OS.IsStarting && ShowAsWarn "$(GetQnapOS) is starting-up. QPKG statuses are in-flux. Try checking again in a few minutes"
+	OS.IsStarting && ShowAsWarn "$(GetQnapOS) is still starting-up. QPKG statuses are in-flux. Try checking again in a few minutes"
 	OS.IsStopping && ShowAsWarn "$(GetQnapOS) is shutting-down. All QPKGs are in the process of being stopped"
 	ShowAsProc 'package states'
 
@@ -7761,8 +7761,6 @@ FormatAsIsoBytes()
 FormatAsTitle()
 	{
 
-	# format as script title
-
 	ColourTextBrightWhite sherpa
 
 	}
@@ -8301,8 +8299,8 @@ ShowAsProc()
 	{
 
 	local suffix=''
-	[[ -n ${2:-} ]] && suffix=": $2"
 
+	[[ -n ${2:-} ]] && suffix=": $2"
 	EraseThisLine
 	WriteToDisplayWait "$(ColourTextBrightYellow proc)" "${1:-}${suffix}"
 	WriteToLog proc "${1:-}${suffix}"
@@ -8381,8 +8379,9 @@ ShowAsFail()
 
 	# non-fatal error
 
-	EraseThisLine
 	local capitalised="$(Capitalise "${1:-}")"
+
+	EraseThisLine
 	WriteToDisplayNew "$(ColourTextBrightRed fail)" "$capitalised"
 	WriteToLog fail "$capitalised"
 
@@ -8393,8 +8392,9 @@ ShowAsError()
 
 	# fatal error
 
-	EraseThisLine
 	local capitalised="$(Capitalise "${1:-}")"
+
+	EraseThisLine
 	WriteToDisplayNew "$(ColourTextBrightRed derp)" "$capitalised"
 	WriteToLog derp "$capitalised"
 	Self.Error:Set
@@ -8416,12 +8416,7 @@ ShowAsActionProgress()
 	#	$7 = verb (present)
 	#	$8 = expected action duration: `long` (optional)
 
-	if [[ -n $1 && $1 != all ]]; then
-		local tier=" $(Lowercase "$1")"
-	else
-		local tier=''
-	fi
-
+	local tier=''
 	local -r PACKAGE_TYPE=${2:?null}
 	declare -i -r OK_COUNT=${3:-0}
 	declare -i -r SKIP_COUNT=${4:-0}
@@ -8431,6 +8426,7 @@ ShowAsActionProgress()
 	local -r DURATION=${8:-}
 	local progress_msg=''
 
+	[[ -n $1 && $1 != all ]] && tier=" $(Lowercase "$1")"
 	progress_msg="$(PercFrac "$OK_COUNT" "$SKIP_COUNT" "$FAIL_COUNT" "$TOTAL_COUNT")"
 
 	if [[ $DURATION != long ]]; then
@@ -8488,26 +8484,23 @@ ShowAsActionResult()
 	#	$4 = total count
 	#	$5 = verb (past)
 
-	if [[ -n $1 && $1 != all ]]; then
-		local -r TIER=" $1"
-	else
-		local -r TIER=''
-	fi
-
+	local tier=''
 	local -r PACKAGE_TYPE=$(Uppercase "${2:?null}")
 	declare -i -r OK_COUNT=${3:-0}
 	declare -i -r TOTAL_COUNT=${4:-0}
 	local msg="${5:?null} "
 
+	[[ -n $1 && $1 != all ]] && tier=" $1"
+
 	if [[ $OK_COUNT -gt 0 ]]; then
-		msg+="${OK_COUNT}${TIER} ${PACKAGE_TYPE}$(Pluralise "$OK_COUNT")"
+		msg+="${OK_COUNT}${tier} ${PACKAGE_TYPE}$(Pluralise "$OK_COUNT")"
 	else
-		msg+="no${TIER} ${PACKAGE_TYPE}s"
+		msg+="no${tier} ${PACKAGE_TYPE}s"
 	fi
 
 	case $TOTAL_COUNT in
 		0)
-			DebugAsDone "no${TIER} ${PACKAGE_TYPE}s processed"
+			DebugAsDone "no${tier} ${PACKAGE_TYPE}s processed"
 			;;
 		*)
 			ShowAsDone "$msg"
@@ -8643,7 +8636,7 @@ WriteToDisplayWait()
 
 	local -i width=4
 
-	[[ $colourful = true ]] && width=10  # allow extra length for ANSI codes
+	[[ $colourful = true ]] && width=10		# allow extra length for ANSI codes
 	prev_msg=$(printf "%-${width}s: %s" "${1:-}" "${2:-}")
 
 	DisplayWait "$prev_msg"
@@ -8671,7 +8664,7 @@ WriteToDisplayNew()
 	local msg=''
 	local strbuffer=''
 
-	[[ $colourful = true ]] && width=10  # allow extra length for ANSI codes
+	[[ $colourful = true ]] && width=10  	# allow extra length for ANSI codes
 	msg=$(printf "%-${width}s: %s" "${1:-}" "${2:-}")
 
 	if [[ $msg != "${prev_msg:=''}" ]]; then
@@ -8833,7 +8826,7 @@ StripANSI()
 
 	# QTS 4.2.6 BusyBox `sed` doesn't fully support extended regexes, so code-stripping only works with a real `sed`
 
-	if [[ -e $GNU_SED_CMD && -L /opt/etc/passwd ]]; then   # try to ensure Entware is active before using this utility
+	if [[ -e $GNU_SED_CMD && -L /opt/etc/passwd ]]; then	# try to ensure Entware is active before using this utility
 		$GNU_SED_CMD -r 's/\x1b\[[0-9;]*m//g' <<< "${1:-}"
 	else
 		echo "${1:-}"		# can't strip, so pass thru original message unaltered
@@ -8955,7 +8948,7 @@ sleep()
 	if [[ -e $GNU_SLEEP_CMD && -L /opt/etc/passwd ]]; then  # try to ensure Entware is active before using this utility
 		$GNU_SLEEP_CMD "$wait"
 	elif [[ $DECIMAL_SLEEP_SECONDS_SUPPORTED = false ]]; then
-		$QTS_SLEEP_CMD "$((${wait%.*}+1))"				# ensure decimal seconds are rounded-up to next integer
+		$QTS_SLEEP_CMD "$((${wait%.*}+1))"					# ensure decimal seconds are rounded-up to next integer
 	else
 		$QTS_SLEEP_CMD "$wait"
 	fi
@@ -9055,9 +9048,9 @@ Packages:Load()
 		readonly QPKG_CAN_LOG_SERVICE_OPERATIONS
 		readonly QPKG_TEST_FOR_ACTIVE
 
+	DebugVar PACKAGES_VER
 	QPKGs-SCall:Add "${QPKG_NAME[*]}"
 	QPKGs.StandaloneDependent:Build
-	DebugVar PACKAGES_VER
 	Func:Exit
 
 	}

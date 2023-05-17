@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 ####################################################################################
-# sabnzbd.sh
+# glances.sh
 
-# Copyright (C) 2020-2023 OneCD - one.cd.only@gmail.com
+# Copyright (C) 2023 OneCD - one.cd.only@gmail.com
 
 # so, blame OneCD if it all goes horribly wrong. ;)
 
@@ -19,8 +19,8 @@ Init()
 	IsQNAP || return
 
 	# service-script environment
-	readonly QPKG_NAME=SABnzbd
-	readonly SCRIPT_VERSION=230513
+	readonly QPKG_NAME=Glances
+	readonly SCRIPT_VERSION=230518
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -38,7 +38,7 @@ Init()
 	local re=''
 
 	# specific to online-sourced applications only
-	readonly SOURCE_GIT_URL=https://github.com/sabnzbd/sabnzbd.git
+	readonly SOURCE_GIT_URL=https://github.com/nicolargo/glances.git
 	readonly SOURCE_GIT_BRANCH=master
 	# 'shallow' (depth 1) or 'single-branch' ... 'shallow' implies 'single-branch'
 	readonly SOURCE_GIT_DEPTH=shallow
@@ -51,25 +51,25 @@ Init()
 	readonly INSTALL_PIP_DEPS=true
 
 	# specific to daemonised applications only
-	readonly DAEMON_PATHFILE=$QPKG_REPO_PATH/SABnzbd.py
+	readonly DAEMON_PATHFILE=$VENV_PATH/bin/glances
 	readonly DAEMON_PID_PATHFILE=/var/run/$QPKG_NAME.pid
-	readonly LAUNCHER="$DAEMON_PATHFILE --daemon --browser 0 --config-file $QPKG_INI_PATHFILE --pidfile $DAEMON_PID_PATHFILE"
+	readonly LAUNCHER="$DAEMON_PATHFILE --webserver"
 	readonly PORT_CHECK_TIMEOUT=240
 	readonly DAEMON_CHECK_TIMEOUT=30
 	readonly DAEMON_STOP_TIMEOUT=120
 	readonly DAEMON_PORT_CMD=''
-	readonly UI_PORT_CMD="/sbin/getcfg misc port -d 0 -f $QPKG_INI_PATHFILE"
-	readonly UI_PORT_SECURE_CMD="/sbin/getcfg misc https_port -d 0 -f $QPKG_INI_PATHFILE"
-	readonly UI_PORT_SECURE_ENABLED_TEST_CMD='[[ $(/sbin/getcfg misc enable_https -d 0 -f '$QPKG_INI_PATHFILE') = 1 ]]'
-	readonly UI_LISTENING_ADDRESS_CMD="/sbin/getcfg misc host -d undefined -f $QPKG_INI_PATHFILE"
+	readonly UI_PORT_CMD="echo 61208"
+	readonly UI_PORT_SECURE_CMD="echo 61208"
+	readonly UI_PORT_SECURE_ENABLED_TEST_CMD='false'
+	readonly UI_LISTENING_ADDRESS_CMD="echo 0.0.0.0"
 	daemon_port=0
 	ui_port=0
 	ui_port_secure=0
 	ui_listening_address=undefined
 
 	# specific to applications supporting version lookup only
-	readonly APP_VERSION_PATHFILE=$QPKG_REPO_PATH/sabnzbd/version.py
-	readonly APP_VERSION_CMD="/bin/grep '__version__ =' $APP_VERSION_PATHFILE | /bin/sed 's|^.*\"\(.*\)\"|\1|'"
+	readonly APP_VERSION_PATHFILE=''
+	readonly APP_VERSION_CMD=''
 
 	if [[ -z $LANG ]]; then
 		export LANG=en_US.UTF-8
@@ -184,7 +184,8 @@ StartQPKG()
 		return 1
 	fi
 
-	DisplayRunAndLog 'start daemon' ". $VENV_PATH/bin/activate && cd $QPKG_REPO_PATH && $VENV_INTERPRETER $LAUNCHER" || { SetError; return 1 ;}
+	DisplayRunAndLog 'start daemon' "/usr/sbin/screen -dmS $QPKG_NAME bash -c '$LAUNCHER'" || { SetError; return 1 ;}
+	WritePID || { SetError; return 1 ;}
 	WaitForPID || { SetError; return 1 ;}
 	IsDaemonActive || { SetError; return 1 ;}
 	CheckPorts || { SetError; return 1 ;}
@@ -252,9 +253,9 @@ InstallAddons()
 	{
 
 	local default_requirements_pathfile=$QPKG_PATH/config/requirements.txt
-	local default_recommended_pathfile=$QPKG_PATH/config/recommended.txt
+	local default_recommended_pathfile=$QPKG_PATH/config/optional-requirements.txt
 	local requirements_pathfile=$QPKG_REPO_PATH/requirements.txt
-	local recommended_pathfile=$QPKG_REPO_PATH/recommended.txt
+	local recommended_pathfile=$QPKG_REPO_PATH/optional-requirements.txt
 	local pyproject_pathfile=$QPKG_REPO_PATH/pyproject.toml
 	local pip_conf_pathfile=$VENV_PATH/pip.conf
 	local new_env=false
@@ -289,18 +290,16 @@ InstallAddons()
 	[[ -e $recommended_pathfile ]] && cp -f "$recommended_pathfile" "$default_recommended_pathfile"
 	[[ -e $default_recommended_pathfile ]] && recommended_pathfile=$default_recommended_pathfile
 
-	if [[ $QPKG_NAME = SABnzbd ]]; then
+	if [[ $QPKG_NAME = Glances ]]; then
 		# KLUDGE: can't use `manytolinux2014` wheel builds in QTS, so force wheels to rebuild locally
-		if $(/bin/grep -q sabyenc3 < "$requirements_pathfile" &>/dev/null); then
-			echo '--no-binary=sabyenc3' >> "$requirements_pathfile"
-		elif $(/bin/grep -q sabctools < "$requirements_pathfile" &>/dev/null); then
-			echo '--no-binary=sabctools' >> "$requirements_pathfile"
+		if $(/bin/grep -q ujson < "$requirements_pathfile" &>/dev/null); then
+			echo '--no-binary=ujson' >> "$requirements_pathfile"
 		fi
 	fi
 
 	# Must remove these modules from repo txt files, and use the ones installed via `opkg` instead (if available).
 	# If not, `pip` will attempt to compile these, which fails on early ARMv5 CPUs.
-	local python_exclusions='cffi cryptography Levenshtein mako Pillow requests urllib3'
+	local python_exclusions='cffi cryptography dateutil defusedxml Levenshtein mako packaging Pillow psutil python-dateutil requests six urllib3 zeroconf'
 	local ex_modules_re="/^${python_exclusions// /\|^}"
 
 	for target in $requirements_pathfile $recommended_pathfile; do
@@ -314,6 +313,10 @@ InstallAddons()
 		fi
 	done
 
+	if [[ $QPKG_NAME = Glances && $new_env = true ]]; then
+		DisplayRunAndLog "setup '$name' application" ". $VENV_PATH/bin/activate && cd $QPKG_REPO_PATH && python3 setup.py install" log:failure-only || SetError
+	fi
+
 	if [[ $no_pips_installed = true ]]; then		# fallback to general installation method
 		if [[ -e $QPKG_REPO_PATH/setup.py || -e $pyproject_pathfile ]]; then
 			DisplayRunAndLog 'KLUDGE: exclude Entware PyPI modules from installation' "/bin/sed -i '${ex_modules_re}/d' $pyproject_pathfile" log:failure-only || SetError
@@ -323,17 +326,6 @@ InstallAddons()
 			DisplayRunAndLog "install '$name' PyPI modules" ". $VENV_PATH/bin/activate && pip install${pip_deps} --no-input --upgrade pip $QPKG_REPO_PATH" log:failure-only || SetError
 			no_pips_installed=false
 		fi
-	fi
-
-	if [[ $QPKG_NAME = SABnzbd ]]; then
-		# run [tools/make_mo.py] if SABnzbd version number has changed since last run
-		LoadAppVersion
-
-		if [[ ! -e $APP_VERSION_STORE_PATHFILE || $(<"$APP_VERSION_STORE_PATHFILE") != "$app_version" ]]; then
- 			DisplayRunAndLog "update $(FormatAsPackageName $QPKG_NAME) language translations" ". $VENV_PATH/bin/activate && cd $QPKG_REPO_PATH; $VENV_INTERPRETER $QPKG_REPO_PATH/tools/make_mo.py" log:failure-only
-		fi
-
-		SaveAppVersion
 	fi
 
 	}
@@ -802,20 +794,21 @@ RunAndLog()
 
 	if IsDebug; then
 		Display
-		Display "exec: '$1'"
 
 		if [[ ${5:-} != background ]]; then
+			Display "exec: '$1'"
 			eval "$1 > >(/usr/bin/tee $LOG_PATHFILE) 2>&1"		# NOTE: 'tee' buffers stdout here
 		else
+			Display "exec (in background): '$1'"
 			eval "$1 > >(/usr/bin/tee $LOG_PATHFILE) 2>&1" &	# NOTE: 'tee' buffers stdout here
 		fi
 
 		result_code=$?
 	else
 		if [[ ${5:-} != background ]]; then
-			eval "$1" > "$LOG_PATHFILE" 2>&1
+			(eval "$1" > "$LOG_PATHFILE" 2>&1)			# run in a subshell to suppress 'Terminated' message later
 		else
- 			eval "$1" > "$LOG_PATHFILE" 2>&1 &
+ 			(eval "$1" > "$LOG_PATHFILE" 2>&1 &)		# run in a subshell to suppress 'Terminated' message later
 		fi
 
 		result_code=$?
