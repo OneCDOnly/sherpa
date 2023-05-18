@@ -20,7 +20,7 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=Glances
-	readonly SCRIPT_VERSION=230518a
+	readonly SCRIPT_VERSION=230519
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -262,8 +262,9 @@ StopQPKG()
 InstallAddons()
 	{
 
-	local default_requirements_pathfile=$QPKG_PATH/config/requirements.txt
-	local default_recommended_pathfile=$QPKG_PATH/config/optional-requirements.txt
+	local default_requirements_pathfile=$QPKG_CONFIG_PATH/requirements.txt
+	local default_recommended_pathfile=$QPKG_CONFIG_PATH/optional-requirements.txt
+	local exclusions_pathfile=$QPKG_CONFIG_PATH/exclusions.txt
 	local requirements_pathfile=$QPKG_REPO_PATH/requirements.txt
 	local recommended_pathfile=$QPKG_REPO_PATH/optional-requirements.txt
 	local pyproject_pathfile=$QPKG_REPO_PATH/pyproject.toml
@@ -294,42 +295,46 @@ InstallAddons()
 	IsNotAutoUpdate && [[ $new_env = false ]] && return 0
 
 	# edit developer-provided Python module requirements files out-of-repo
+
 	[[ -e $requirements_pathfile ]] && cp -f "$requirements_pathfile" "$default_requirements_pathfile"
 	[[ -e $default_requirements_pathfile ]] && requirements_pathfile=$default_requirements_pathfile
 
 	[[ -e $recommended_pathfile ]] && cp -f "$recommended_pathfile" "$default_recommended_pathfile"
 	[[ -e $default_recommended_pathfile ]] && recommended_pathfile=$default_recommended_pathfile
 
-	if [[ $QPKG_NAME = Glances ]]; then
-		# KLUDGE: can't use `manytolinux2014` wheel builds in QTS, so force wheels to rebuild locally
-		if $(/bin/grep -q ujson < "$requirements_pathfile" &>/dev/null); then
-			echo '--no-binary=ujson' >> "$requirements_pathfile"
-		fi
+	# KLUDGE: can't use `manytolinux2014` wheel builds in QTS, so force wheels to rebuild locally
+
+	if $(/bin/grep -q ujson < "$requirements_pathfile" &>/dev/null); then
+		echo '--no-binary=ujson' >> "$requirements_pathfile"
 	fi
 
 	# Must remove these modules from repo txt files, and use the ones installed via `opkg` instead (if available).
 	# If not, `pip` will attempt to compile these, which fails on early ARMv5 CPUs.
-	local python_exclusions='cassandra-driver cffi cryptography dateutil defusedxml Levenshtein mako packaging Pillow psutil python-dateutil pyzmq requests six urllib3 zeroconf'
-	local ex_modules_re="/^${python_exclusions// /\|^}"
 
-	for target in $requirements_pathfile $recommended_pathfile; do
-		if [[ -e $target ]]; then
-			DisplayRunAndLog 'KLUDGE: exclude Entware PyPI modules from installation' "/bin/sed -i '${ex_modules_re}/d' $target" log:failure-only || SetError
+	if [[ -e $exclusions_pathfile ]]; then
+		local module_exclusions=$(tr '\n' ' ' < $exclusions_pathfile)
+		module_exclusions=${module_exclusions%* }
+		local module_exclusions_re="/^${module_exclusions// /\|^}"
 
-			name=$(/usr/bin/basename "$target"); name=${name%%.*}
+		for target in $requirements_pathfile $recommended_pathfile; do
+			if [[ -e $target ]]; then
+				DisplayRunAndLog 'KLUDGE: exclude problem PyPI modules from installation' "/bin/sed -i '${module_exclusions_re}/d' $target" log:failure-only || SetError
 
-			DisplayRunAndLog "install '$name' PyPI modules" ". $VENV_PATH/bin/activate && pip install${pip_deps} --no-input --upgrade pip -r $target" log:failure-only || SetError
-			no_pips_installed=false
-		fi
-	done
+				name=$(/usr/bin/basename "$target"); name=${name%%.*}
+
+				DisplayRunAndLog "install '$name' PyPI modules" ". $VENV_PATH/bin/activate && pip install${pip_deps} --no-input --upgrade pip -r $target" log:failure-only || SetError
+				no_pips_installed=false
+			fi
+		done
+	fi
 
 	if [[ $QPKG_NAME = Glances && ! -e $DAEMON_PATHFILE ]]; then
-		DisplayRunAndLog "setup '$name' application" ". $VENV_PATH/bin/activate && cd $QPKG_REPO_PATH && python3 setup.py install" log:failure-only || SetError
+		DisplayRunAndLog "setup '$name' PyPI modules" ". $VENV_PATH/bin/activate && cd $QPKG_REPO_PATH && python3 setup.py install" log:failure-only || SetError
 	fi
 
 	if [[ $no_pips_installed = true ]]; then		# fallback to general installation method
 		if [[ -e $QPKG_REPO_PATH/setup.py || -e $pyproject_pathfile ]]; then
-			DisplayRunAndLog 'KLUDGE: exclude Entware PyPI modules from installation' "/bin/sed -i '${ex_modules_re}/d' $pyproject_pathfile" log:failure-only || SetError
+			DisplayRunAndLog 'KLUDGE: exclude problem PyPI modules from installation' "/bin/sed -i '${module_exclusions_re}/d' $pyproject_pathfile" log:failure-only || SetError
 
 			name=$(/usr/bin/basename "$pyproject_pathfile"); name=${name%%.*}
 
