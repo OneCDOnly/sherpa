@@ -20,11 +20,13 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=WebSSH
-	readonly SCRIPT_VERSION=230513a
+	readonly SCRIPT_VERSION=230518
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
 	readonly QPKG_VERSION=$(/sbin/getcfg $QPKG_NAME Version -d unknown -f /etc/config/qpkg.conf)
+	readonly QPKG_CONFIG_PATH=$QPKG_PATH/config
+	readonly SCREEN_CONF_PATHFILE=$QPKG_CONFIG_PATH/screen.conf
 	readonly QPKG_INI_PATHFILE=''
 	readonly QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
 	readonly APP_VERSION_STORE_PATHFILE=$QPKG_PATH/config/version.stored
@@ -54,15 +56,16 @@ Init()
 	# specific to daemonised applications only
 	readonly DAEMON_PATHFILE=$VENV_PATH/bin/wssh
 	readonly DAEMON_PID_PATHFILE=/var/run/$QPKG_NAME.pid
-	readonly LAUNCHER="$DAEMON_PATHFILE --address='0.0.0.0' --port=8010 --encoding=850"
+	readonly DAEMON_LAUNCH_CMD="/usr/sbin/screen -c $SCREEN_CONF_PATHFILE -dmLS $QPKG_NAME bash -c '$DAEMON_PATHFILE --address='0.0.0.0' --port=8010 --encoding=850'"
+	readonly DAEMON_LOG_PATHFILE=/var/log/$QPKG_NAME.daemon.log
 	readonly PORT_CHECK_TIMEOUT=240
 	readonly DAEMON_CHECK_TIMEOUT=30
 	readonly DAEMON_STOP_TIMEOUT=60
-	readonly DAEMON_PORT_CMD=''
-	readonly UI_PORT_CMD='echo 8010'
-	readonly UI_PORT_SECURE_CMD='echo 0'
-	readonly UI_PORT_SECURE_ENABLED_TEST_CMD='false'
-	readonly UI_LISTENING_ADDRESS_CMD='echo 0.0.0.0'
+	readonly GET_DAEMON_PORT_CMD=''
+	readonly GET_UI_PORT_CMD='echo 8010'
+	readonly GET_UI_PORT_SECURE_CMD='echo 0'
+	readonly GET_UI_PORT_SECURE_ENABLED_TEST_CMD='false'
+	readonly GET_UI_LISTENING_ADDRESS_CMD='echo 0.0.0.0'
 	daemon_port=0
 	ui_port=0
 	ui_port_secure=0
@@ -101,6 +104,12 @@ Init()
 	[[ -n ${PIP_CACHE_PATH:-} && ! -d $PIP_CACHE_PATH ]] && mkdir -p "$PIP_CACHE_PATH"
 
 	IsAutoUpdateMissing && EnableAutoUpdate >/dev/null
+
+	if [[ ! -e $SCREEN_CONF_PATHFILE && -n $DAEMON_LOG_PATHFILE ]]; then
+		echo "logfile $DAEMON_LOG_PATHFILE" > "$SCREEN_CONF_PATHFILE"
+		echo 'logfile flush 1' >> "$SCREEN_CONF_PATHFILE"
+		echo 'log on' >> "$SCREEN_CONF_PATHFILE"
+	fi
 
 	return 0
 
@@ -184,7 +193,7 @@ StartQPKG()
 		return 1
 	fi
 
-	DisplayRunAndLog 'start daemon' ". $VENV_PATH/bin/activate && /opt/bin/nohup $LAUNCHER" '' background || { SetError; return 1 ;}
+	DisplayRunAndLog 'start daemon' "$DAEMON_LAUNCH_CMD" || { SetError; return 1 ;}
 	WritePID || { SetError; return 1 ;}
 	WaitForPID || { SetError; return 1 ;}
 	IsDaemonActive || { SetError; return 1 ;}
@@ -256,6 +265,7 @@ InstallAddons()
 	local default_recommended_pathfile=$QPKG_PATH/config/recommended.txt
 	local requirements_pathfile=$QPKG_REPO_PATH/requirements.txt
 	local recommended_pathfile=$QPKG_REPO_PATH/recommended.txt
+	local pyproject_pathfile=$QPKG_REPO_PATH/pyproject.toml
 	local pip_conf_pathfile=$VENV_PATH/pip.conf
 	local new_env=false
 	local sys_packages=' --system-site-packages'
@@ -282,30 +292,21 @@ InstallAddons()
 
 	IsNotAutoUpdate && [[ $new_env = false ]] && return 0
 
-	if [[ $QPKG_NAME = OWatcher3 ]]; then
-		# need to install `m2r` PyPI module first
-		DisplayRunAndLog "KLUDGE: install 'm2r' PyPI module first" ". $VENV_PATH/bin/activate && pip install${pip_deps} --no-input m2r" log:failure-only || SetError
-	fi
-
+	# edit developer-provided Python module requirements files out-of-repo
 	[[ -e $requirements_pathfile ]] && cp -f "$requirements_pathfile" "$default_requirements_pathfile"
 	[[ -e $default_requirements_pathfile ]] && requirements_pathfile=$default_requirements_pathfile
 
 	[[ -e $recommended_pathfile ]] && cp -f "$recommended_pathfile" "$default_recommended_pathfile"
 	[[ -e $default_recommended_pathfile ]] && recommended_pathfile=$default_recommended_pathfile
 
-	if [[ $QPKG_NAME = SABnzbd ]]; then
-		# KLUDGE: can't use `manytolinux2014` wheel builds in QTS, so force wheels to rebuild locally
-		if $(/bin/grep -q sabyenc3 < "$requirements_pathfile" &>/dev/null); then
-			echo '--no-binary=sabyenc3' >> "$requirements_pathfile"
-		elif $(/bin/grep -q sabctools < "$requirements_pathfile" &>/dev/null); then
-			echo '--no-binary=sabyenc3' >> "$requirements_pathfile"
-		fi
-	fi
+	# Must remove these modules from repo txt files, and use the ones installed via `opkg` instead (if available).
+	# If not, `pip` will attempt to compile these, which fails on early ARMv5 CPUs.
+	local python_exclusions='cffi cryptography dateutil defusedxml Levenshtein mako packaging Pillow psutil python-dateutil requests six urllib3 zeroconf'
+	local ex_modules_re="/^${python_exclusions// /\|^}"
 
 	for target in $requirements_pathfile $recommended_pathfile; do
 		if [[ -e $target ]]; then
-			# need to remove `cffi` and `cryptography` modules from repo txt files, as we must use the ones installed via `opkg` instead. If not, `pip` will attempt to compile these, which fails on early arm CPUs.
-			DisplayRunAndLog 'KLUDGE: exclude various PyPI modules from installation' "/bin/sed -i '/^cffi\|^cryptography/d' $target" log:failure-only || SetError
+			DisplayRunAndLog 'KLUDGE: exclude Entware PyPI modules from installation' "/bin/sed -i '${ex_modules_re}/d' $target" log:failure-only || SetError
 
 			name=$(/usr/bin/basename "$target"); name=${name%%.*}
 
@@ -315,21 +316,14 @@ InstallAddons()
 	done
 
 	if [[ $no_pips_installed = true ]]; then		# fallback to general installation method
-		if [[ -e $QPKG_REPO_PATH/setup.py || -e $QPKG_REPO_PATH/pyproject.toml ]]; then
-			DisplayRunAndLog "install 'default' PyPI modules" ". $VENV_PATH/bin/activate && pip install${pip_deps} --no-input --upgrade pip $QPKG_REPO_PATH" log:failure-only || SetError
+		if [[ -e $QPKG_REPO_PATH/setup.py || -e $pyproject_pathfile ]]; then
+			DisplayRunAndLog 'KLUDGE: exclude Entware PyPI modules from installation' "/bin/sed -i '${ex_modules_re}/d' $pyproject_pathfile" log:failure-only || SetError
+
+			name=$(/usr/bin/basename "$pyproject_pathfile"); name=${name%%.*}
+
+			DisplayRunAndLog "install '$name' PyPI modules" ". $VENV_PATH/bin/activate && pip install${pip_deps} --no-input --upgrade pip $QPKG_REPO_PATH" log:failure-only || SetError
 			no_pips_installed=false
 		fi
-	fi
-
-	if [[ $QPKG_NAME = SABnzbd && $new_env = true ]]; then
-		# run [tools/make_mo.py] if SABnzbd version number has changed since last run
-		LoadAppVersion
-		[[ -e $APP_VERSION_STORE_PATHFILE && $(<"$APP_VERSION_STORE_PATHFILE") = "$app_version" && -d $QPKG_REPO_PATH/locale ]] && return 0
-
-		DisplayRunAndLog "update $(FormatAsPackageName $QPKG_NAME) language translations" ". $VENV_PATH/bin/activate && cd $QPKG_REPO_PATH; $VENV_INTERPRETER $QPKG_REPO_PATH/tools/make_mo.py" log:failure-only
-		[[ ! -e $APP_VERSION_STORE_PATHFILE ]] && return 0
-
-		SaveAppVersion
 	fi
 
 	}
@@ -380,8 +374,8 @@ LoadPorts()
 		app)
 			# Read the current application UI ports from application configuration
 			DisplayWaitCommitToLog 'load ports from configuration file:'
-			[[ -n ${UI_PORT_CMD:-} ]] && ui_port=$(eval "$UI_PORT_CMD")
-			[[ -n ${UI_PORT_SECURE_CMD:-} ]] && ui_port_secure=$(eval "$UI_PORT_SECURE_CMD")
+			[[ -n ${GET_UI_PORT_CMD:-} ]] && ui_port=$(eval "$GET_UI_PORT_CMD")
+			[[ -n ${GET_UI_PORT_SECURE_CMD:-} ]] && ui_port_secure=$(eval "$GET_UI_PORT_SECURE_CMD")
 			DisplayCommitToLog OK
 			;;
 		qts)
@@ -399,8 +393,8 @@ LoadPorts()
 	esac
 
 	# Always read these from the application configuration
-	[[ -n ${DAEMON_PORT_CMD:-} ]] && daemon_port=$(eval "$DAEMON_PORT_CMD")
-	[[ -n ${UI_LISTENING_ADDRESS_CMD:-} ]] && ui_listening_address=$(eval "$UI_LISTENING_ADDRESS_CMD")
+	[[ -n ${GET_DAEMON_PORT_CMD:-} ]] && daemon_port=$(eval "$GET_DAEMON_PORT_CMD")
+	[[ -n ${GET_UI_LISTENING_ADDRESS_CMD:-} ]] && ui_listening_address=$(eval "$GET_UI_LISTENING_ADDRESS_CMD")
 
 	# validate port numbers
 	ui_port=${ui_port//[!0-9]/}					# strip everything not a numeral
@@ -902,7 +896,7 @@ ReWriteUIPorts()
 
 	# If SSL is enabled, attempting to access with non-SSL via 'Web_Port' results in "connection was reset"
 
-	[[ -n ${DAEMON_PORT_CMD:-} ]] && return		# dont need to rewrite QTS UI ports if this app has a daemon port, as UI ports are unused
+	[[ -n ${GET_DAEMON_PORT_CMD:-} ]] && return		# dont need to rewrite QTS UI ports if this app has a daemon port, as UI ports are unused
 
 	DisplayWaitCommitToLog 'update QPKG icon with UI ports:'
 	/sbin/setcfg $QPKG_NAME Web_Port "$ui_port" -f /etc/config/qpkg.conf
@@ -1169,7 +1163,7 @@ IsNotSourcedOnline()
 IsSSLEnabled()
 	{
 
-	eval "$UI_PORT_SECURE_ENABLED_TEST_CMD"
+	eval "$GET_UI_PORT_SECURE_ENABLED_TEST_CMD"
 
 	}
 
@@ -1890,16 +1884,9 @@ SessionSeparator()
 ColourTextBrightWhite()
 	{
 
-	echo -en '\033[1;97m'"$(ColourReset "$1")"
+	printf '\033[1;97m%s\033[0m' "${1:-}"
 
-	}
-
-ColourReset()
-	{
-
-	echo -en "$1"'\033[0m'
-
-	}
+	} 2>/dev/null
 
 FormatAsPlural()
 	{
