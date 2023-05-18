@@ -20,12 +20,13 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=OliveTin
-	readonly SCRIPT_VERSION=230513b
+	readonly SCRIPT_VERSION=230518
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
 	readonly QPKG_VERSION=$(/sbin/getcfg $QPKG_NAME Version -d unknown -f /etc/config/qpkg.conf)
 	readonly QPKG_CONFIG_PATH=$QPKG_PATH/config
+	readonly SCREEN_CONF_PATHFILE=$QPKG_CONFIG_PATH/screen.conf
 	readonly QPKG_INI_PATHFILE=$QPKG_CONFIG_PATH/config.yaml
 	readonly QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
 	readonly APP_VERSION_STORE_PATHFILE=$QPKG_PATH/config/version.stored
@@ -55,15 +56,16 @@ Init()
 	# specific to daemonised applications only
 	readonly DAEMON_PATHFILE=$QPKG_REPO_PATH/OliveTin
 	readonly DAEMON_PID_PATHFILE=/var/run/$QPKG_NAME.pid
-	readonly LAUNCHER_CMD="$DAEMON_PATHFILE -configdir $QPKG_CONFIG_PATH"
+	readonly DAEMON_LAUNCH_CMD="/usr/sbin/screen -c $SCREEN_CONF_PATHFILE -dmLS $QPKG_NAME bash -c '$DAEMON_PATHFILE -configdir $QPKG_CONFIG_PATH'"
+	readonly DAEMON_LOG_PATHFILE=/var/log/$QPKG_NAME.daemon.log
 	readonly PORT_CHECK_TIMEOUT=240
 	readonly DAEMON_CHECK_TIMEOUT=30
 	readonly DAEMON_STOP_TIMEOUT=60
-	readonly DAEMON_PORT_CMD=''
-	readonly UI_PORT_CMD='parse_yaml '$QPKG_INI_PATHFILE' | /bin/grep listenAddressSingleHTTPFrontend | cut -d= -f2 | cut -d: -f2 | /bin/sed "s| .*$||"'
-	readonly UI_PORT_SECURE_CMD='echo 0'
-	readonly UI_PORT_SECURE_ENABLED_TEST_CMD='false'
-	readonly UI_LISTENING_ADDRESS_CMD='parse_yaml '$QPKG_INI_PATHFILE' | /bin/grep listenAddressSingleHTTPFrontend | cut -d= -f2 | cut -d: -f1 | /bin/sed "s|\"||"'
+	readonly GET_DAEMON_PORT_CMD=''
+	readonly GET_UI_PORT_CMD='parse_yaml '$QPKG_INI_PATHFILE' | /bin/grep listenAddressSingleHTTPFrontend | cut -d= -f2 | cut -d: -f2 | /bin/sed "s| .*$||"'
+	readonly GET_UI_PORT_SECURE_CMD='echo 0'
+	readonly GET_UI_PORT_SECURE_ENABLED_TEST_CMD='false'
+	readonly GET_UI_LISTENING_ADDRESS_CMD='parse_yaml '$QPKG_INI_PATHFILE' | /bin/grep listenAddressSingleHTTPFrontend | cut -d= -f2 | cut -d: -f1 | /bin/sed "s|\"||"'
 	daemon_port=0
 	ui_port=0
 	ui_port_secure=0
@@ -96,9 +98,14 @@ Init()
 	UnsetRestartPending
 	EnsureConfigFileExists
 	LoadAppVersion
-	DisableOpkgDaemonStart
 
 	IsSupportBackup && [[ -n ${BACKUP_PATH:-} && ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
+
+	if [[ ! -e $SCREEN_CONF_PATHFILE && -n $DAEMON_LOG_PATHFILE ]]; then
+		echo "logfile $DAEMON_LOG_PATHFILE" > "$SCREEN_CONF_PATHFILE"
+		echo 'logfile flush 1' >> "$SCREEN_CONF_PATHFILE"
+		echo 'log on' >> "$SCREEN_CONF_PATHFILE"
+	fi
 
 	return 0
 
@@ -192,10 +199,10 @@ StartQPKG()
 		return 1
 	fi
 
-	DisplayRunAndLog 'start daemon' "cd $QPKG_REPO_PATH && /opt/bin/nohup $LAUNCHER_CMD" '' background || { SetError; return 1 ;}
+	DisplayRunAndLog 'start daemon' "$DAEMON_LAUNCH_CMD" || { SetError; return 1 ;}
 	WritePID || { SetError; return 1 ;}
 	WaitForPID || { SetError; return 1 ;}
-	WaitForDaemon || { SetError; return 1 ;}
+	IsDaemonActive || { SetError; return 1 ;}
 	CheckPorts || { SetError; return 1 ;}
 
 	return 0
@@ -303,8 +310,8 @@ LoadPorts()
 		app)
 			# Read the current application UI ports from application configuration
 			DisplayWaitCommitToLog 'load ports from configuration file:'
-			[[ -n ${UI_PORT_CMD:-} ]] && ui_port=$(eval "$UI_PORT_CMD")
-			[[ -n ${UI_PORT_SECURE_CMD:-} ]] && ui_port_secure=$(eval "$UI_PORT_SECURE_CMD")
+			[[ -n ${GET_UI_PORT_CMD:-} ]] && ui_port=$(eval "$GET_UI_PORT_CMD")
+			[[ -n ${GET_UI_PORT_SECURE_CMD:-} ]] && ui_port_secure=$(eval "$GET_UI_PORT_SECURE_CMD")
 			DisplayCommitToLog OK
 			;;
 		qts)
@@ -322,8 +329,8 @@ LoadPorts()
 	esac
 
 	# Always read these from the application configuration
-	[[ -n ${DAEMON_PORT_CMD:-} ]] && daemon_port=$(eval "$DAEMON_PORT_CMD")
-	[[ -n ${UI_LISTENING_ADDRESS_CMD:-} ]] && ui_listening_address=$(eval "$UI_LISTENING_ADDRESS_CMD")
+	[[ -n ${GET_DAEMON_PORT_CMD:-} ]] && daemon_port=$(eval "$GET_DAEMON_PORT_CMD")
+	[[ -n ${GET_UI_LISTENING_ADDRESS_CMD:-} ]] && ui_listening_address=$(eval "$GET_UI_LISTENING_ADDRESS_CMD")
 
 	# validate port numbers
 	ui_port=${ui_port//[!0-9]/}					# strip everything not a numeral
@@ -825,7 +832,7 @@ ReWriteUIPorts()
 
 	# If SSL is enabled, attempting to access with non-SSL via 'Web_Port' results in "connection was reset"
 
-	[[ -n ${DAEMON_PORT_CMD:-} ]] && return		# dont need to rewrite QTS UI ports if this app has a daemon port, as UI ports are unused
+	[[ -n ${GET_DAEMON_PORT_CMD:-} ]] && return		# dont need to rewrite QTS UI ports if this app has a daemon port, as UI ports are unused
 
 	DisplayWaitCommitToLog 'update QPKG icon with UI ports:'
 	/sbin/setcfg $QPKG_NAME Web_Port "$ui_port" -f /etc/config/qpkg.conf
@@ -1037,7 +1044,7 @@ IsNotSourcedOnline()
 IsSSLEnabled()
 	{
 
-	eval "$UI_PORT_SECURE_ENABLED_TEST_CMD"
+	eval "$GET_UI_PORT_SECURE_ENABLED_TEST_CMD"
 
 	}
 
@@ -1758,16 +1765,9 @@ SessionSeparator()
 ColourTextBrightWhite()
 	{
 
-	echo -en '\033[1;97m'"$(ColourReset "$1")"
+	printf '\033[1;97m%s\033[0m' "${1:-}"
 
-	}
-
-ColourReset()
-	{
-
-	echo -en "$1"'\033[0m'
-
-	}
+	} 2>/dev/null
 
 FormatAsPlural()
 	{
