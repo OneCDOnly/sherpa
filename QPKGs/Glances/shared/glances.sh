@@ -309,7 +309,7 @@ InstallAddons()
 
 	# Must remove these modules from repo txt files, and use the ones installed via `opkg` instead (if available).
 	# If not, `pip` will attempt to compile these, which fails on early ARMv5 CPUs.
-	local python_exclusions='cffi cryptography dateutil defusedxml Levenshtein mako packaging Pillow psutil python-dateutil requests six urllib3 zeroconf'
+	local python_exclusions='cassandra-driver cffi cryptography dateutil defusedxml Levenshtein mako packaging Pillow psutil python-dateutil pyzmq requests six urllib3 zeroconf'
 	local ex_modules_re="/^${python_exclusions// /\|^}"
 
 	for target in $requirements_pathfile $recommended_pathfile; do
@@ -323,7 +323,7 @@ InstallAddons()
 		fi
 	done
 
-	if [[ $QPKG_NAME = Glances && $new_env = true ]]; then
+	if [[ $QPKG_NAME = Glances && ! -e $DAEMON_PATHFILE ]]; then
 		DisplayRunAndLog "setup '$name' application" ". $VENV_PATH/bin/activate && cd $QPKG_REPO_PATH && python3 setup.py install" log:failure-only || SetError
 	fi
 
