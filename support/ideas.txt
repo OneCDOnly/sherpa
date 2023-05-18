@@ -1,5 +1,3 @@
-* make glances available at CLI?
-
 * check if QPKG has been signed before signing it again?
 	Don't check if QPKG has just been installed (assume package won't have been signed).
 
