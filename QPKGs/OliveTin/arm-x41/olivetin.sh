@@ -20,7 +20,7 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=OliveTin
-	readonly SCRIPT_VERSION=230518
+	readonly SCRIPT_VERSION=230518a
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -56,7 +56,7 @@ Init()
 	# specific to daemonised applications only
 	readonly DAEMON_PATHFILE=$QPKG_REPO_PATH/OliveTin
 	readonly DAEMON_PID_PATHFILE=/var/run/$QPKG_NAME.pid
-	readonly DAEMON_LAUNCH_CMD="/usr/sbin/screen -c $SCREEN_CONF_PATHFILE -dmLS $QPKG_NAME bash -c '$DAEMON_PATHFILE -configdir $QPKG_CONFIG_PATH'"
+	readonly DAEMON_LAUNCH_CMD="/usr/sbin/screen -c $SCREEN_CONF_PATHFILE -dmLS $QPKG_NAME bash -c 'cd $QPKG_REPO_PATH && $DAEMON_PATHFILE -configdir $QPKG_CONFIG_PATH'"
 	readonly DAEMON_LOG_PATHFILE=/var/log/$QPKG_NAME.daemon.log
 	readonly PORT_CHECK_TIMEOUT=240
 	readonly DAEMON_CHECK_TIMEOUT=30
@@ -101,7 +101,8 @@ Init()
 
 	IsSupportBackup && [[ -n ${BACKUP_PATH:-} && ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
 
-	if [[ ! -e $SCREEN_CONF_PATHFILE && -n $DAEMON_LOG_PATHFILE ]]; then
+	# force-rewrite `screen` config
+	if [[ -n $DAEMON_LOG_PATHFILE ]]; then
 		echo "logfile $DAEMON_LOG_PATHFILE" > "$SCREEN_CONF_PATHFILE"
 		echo 'logfile flush 1' >> "$SCREEN_CONF_PATHFILE"
 		echo 'log on' >> "$SCREEN_CONF_PATHFILE"
