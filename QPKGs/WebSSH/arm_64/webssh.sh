@@ -20,7 +20,7 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=WebSSH
-	readonly SCRIPT_VERSION=230520
+	readonly SCRIPT_VERSION=230521
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -66,6 +66,7 @@ Init()
 	readonly PORT_CHECK_TIMEOUT=240
 	readonly DAEMON_CHECK_TIMEOUT=60
 	readonly DAEMON_STOP_TIMEOUT=120
+	readonly PIDFILE_APPEAR_TIMEOUT=60
 	readonly GET_DAEMON_PORT_CMD=''
 	readonly GET_UI_PORT_CMD='echo 8010'
 	readonly GET_UI_PORT_SECURE_CMD='echo 0'
@@ -194,7 +195,7 @@ StartQPKG()
 	fi
 
 	DisplayRunAndLog 'start daemon' "$DAEMON_LAUNCH_CMD" log:failure-only "$RUN_DAEMON_IN_SCREEN_SESSION"
-  	WritePID
+	FindAndWritePIDFile
 	WaitForDaemon
 
 	if ! IsDaemonActive; then
@@ -531,7 +532,7 @@ WaitForLaunchTarget()
 
 	}
 
-WritePID()
+FindAndWritePIDFile()
 	{
 
 	local -i pid=0
@@ -539,15 +540,20 @@ WritePID()
 	target_pid=${target_pid:0:5}
 	target_pid=$(tr -d ' ' <<< "$target_pid")
 
-	[[ $target_pid -gt 0 ]] || return
-	echo "$target_pid" > "$DAEMON_PID_PATHFILE"
+	if [[ $target_pid -gt 0 ]]; then
+		Display "found PID: $target_pid"
+		echo "$target_pid" > "$DAEMON_PID_PATHFILE"
+		return 0
+	fi
+
+	return 1
 
 	}
 
 WaitForPID()
 	{
 
-	if WaitForFileToAppear "$DAEMON_PID_PATHFILE" 60; then
+	if WaitForFileToAppear "$DAEMON_PID_PATHFILE" "$PIDFILE_APPEAR_TIMEOUT"; then
 		sleep 1		# wait one more second to allow file to have PID written into it
 		return 0
 	else
@@ -963,89 +969,6 @@ CheckPorts()
 
 	}
 
-GetPyloadConfig()
-	{
-
-	# input:
-	#   $1 = pathfilename to read from
-	#   $2 = section name
-	#   $3 = variable name to return value for
-
-	# output:
-	#   $? = 0 : variable found
-	#   $? = 1 : file/section/variable not found
-	#   stdout = variable value
-
-	local source_pathfile=${1:?no pathfilename supplied}
-	local target_section_name=${2:?no section supplied}
-	local target_var_name=${3:?no variable supplied}
-
-	if [[ ! -e $source_pathfile ]]; then
-		echo false
-		return
-	fi
-
-	local result_line=''
-	local -i line_num=0
-	local section_raw=''
-	local blank=''
-	local section_description=''
-	local section_name=''
-	local -i start_line_num=0
-	local target_section=''
-	local end_line_num='$'
-
-	local raw_var_type=''
-	local raw_var_description=''
-	local value_raw=''
-	local var_type=''
-	local value=''
-
-	local var_found=false
-
-	while read -r result_line; do
-		IFS=':' read -r line_num section_raw <<< "$result_line"
-		IFS=' ' read -r section_name blank section_description <<< "$section_raw"
-
-		if [[ $section_name = $target_section_name ]]; then
-			[[ $start_line_num -eq 0 ]] && start_line_num=$((line_num+1))
-		else
-			if [[ $start_line_num -ne 0 ]]; then
-				end_line_num=$((line_num-2))
-				break
-			fi
-		fi
-	done <<< "$(/bin/grep '.*:$' -n "$source_pathfile")"
-
-	if [[ $start_line_num -eq 0 ]]; then
-		echo 'section match not found'
-		return 1
-	fi
-
-	target_section=$(/bin/sed -n "${start_line_num},${end_line_num}p" "$source_pathfile")
-
-	while read -r section_line; do
-		IFS=':' read -r raw_var_type raw_var_description <<< "$section_line"
-		read -r var_type var_name <<< "$raw_var_type"
-
-		[[ $var_name != $target_var_name ]] && continue
-
-		var_found=true
-		IFS='"' read -r blank var_description value_raw <<< "$raw_var_description"
-		IFS='=' read -r blank value <<< "$value_raw"
-		value=${value% }; value=${value# }
-		break
-	done <<< "$target_section"
-
-	if [[ $var_found = false ]]; then
-		echo 'variable match not found'
-		return 1
-	fi
-
-	echo "$value"
-
-	}
-
 IsQNAP()
 	{
 
@@ -1242,7 +1165,7 @@ IsProcessActive()
 
 	[[ -n ${1:-} ]] || return
 	[[ -n ${2:-} ]] || return
-	[[ ! -e $2 ]] && WritePID
+	[[ ! -e $2 ]] && FindAndWritePIDFile
 	[[ -e $2 && -d /proc/$(<"$2") && -n ${1:-} && $(</proc/"$(<"$2")"/cmdline) =~ ${1:-} ]]
 
 	}
