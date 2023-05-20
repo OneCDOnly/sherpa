@@ -3146,11 +3146,14 @@ DisplayAsHelpNameStatusVerPath()
 				patt=\\binactive\\b
 				[[ $package_status =~ $patt ]] && package_status_msg+=" $(ColourTextBrightRed inactive)"
 
-				patt=\\bstarting\\b
+				patt=\\bstart\\b
 				[[ $package_status =~ $patt ]] && package_status_msg+=" $(ColourTextBrightOrange starting)"
 
-				patt=\\bstopping\\b
+				patt=\\bstop\\b
 				[[ $package_status =~ $patt ]] && package_status_msg+=" $(ColourTextBrightOrange stopping)"
+
+				patt=\\brestart\\b
+				[[ $package_status =~ $patt ]] && package_status_msg+=" $(ColourTextBrightOrange restarting)"
 
 				patt=\\bunknown\\b
 				[[ $package_status =~ $patt ]] && package_status_msg+=" $(ColourTextBrightOrange unknown)"
@@ -4528,13 +4531,13 @@ QPKGs.States:Build()
 
 			if [[ -e /var/run/$package.last.operation ]]; then
 				case $(</var/run/$package.last.operation) in
-					starting)
+					start)
 						QPKGs-ISstarting:Add "$package"
 						;;
-					restarting)
+					restart)
 						QPKGs-ISrestarting:Add "$package"
 						;;
-					stopping)
+					stop)
 						QPKGs-ISstopping:Add "$package"
 						;;
 					failed)
@@ -4889,11 +4892,11 @@ QPKGs.Statuses:Show()
 							elif QPKGs-ISslow:Exist "$package_name"; then
 								package_status_msg+=' slow'
 							elif QPKGs-ISstarting:Exist "$package_name"; then
-								package_status_msg+=' starting'
+								package_status_msg+=' start'
 							elif QPKGs-ISstopping:Exist "$package_name"; then
-								package_status_msg+=' stopping'
+								package_status_msg+=' stop'
 							elif QPKGs-ISrestarting:Exist "$package_name"; then
-								package_status_msg+=' restarting'
+								package_status_msg+=' restart'
 							elif QPKGs-ISunknown:Exist "$package_name"; then
 								package_status_msg+=' unknown'
 							else
@@ -6896,7 +6899,7 @@ QPKG.ServiceStatus:Log()
 	fi
 
 	case $status in
-		starting|stopping|restarting)
+		start|stop|restart)
 			DebugInfo "$(FormatAsPackName "$PACKAGE_NAME") service is $status"
 			;;
 		ok)
