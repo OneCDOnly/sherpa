@@ -42,6 +42,6 @@ sha3sum_230312_x86_64.qpkg.md5       sha3sum_230312_x86_64.qpkg       sha3sum   
 sha3sum_230312_x86.qpkg.md5          sha3sum_230312_x86.qpkg          sha3sum              230312       i86    fdba9d16b88a5b6e3b04483ca77706dd
 sherpa_230503.qpkg.md5               sherpa_230503.qpkg               sherpa               230503       all    d497d0fcf9ecb76460168fa5fbfbd1e3
 SortMyQPKGs_230503.qpkg.md5          SortMyQPKGs_230503.qpkg          SortMyQPKGs          230503       all    6aaf8bc333e2f6661dc10295a798e13e
-WebSSH_230520_arm_64.qpkg.md5        WebSSH_230520_arm_64.qpkg        WebSSH               230520       a64    a66efb1853af5399331bf909a64fd164
-WebSSH_230520_x86_64.qpkg.md5        WebSSH_230520_x86_64.qpkg        WebSSH               230520       i64    2b8061d9f6396f90b3f96a48a39ae431
-WebSSH_230520_x86.qpkg.md5           WebSSH_230520_x86.qpkg           WebSSH               230520       i86    0a835811eb0f268dc5ed4e568695debd
+WebSSH_230521_arm_64.qpkg.md5        WebSSH_230521_arm_64.qpkg        WebSSH               230521       a64    c82575050c72896411f573737f7a1fe4
+WebSSH_230521_x86_64.qpkg.md5        WebSSH_230521_x86_64.qpkg        WebSSH               230521       i64    3dd398fe45298b8dc4fcb7efcc9f1e2d
+WebSSH_230521_x86.qpkg.md5           WebSSH_230521_x86.qpkg           WebSSH               230521       i86    9910ee8429ff8f10a9598243cf9c1865
