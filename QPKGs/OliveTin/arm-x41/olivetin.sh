@@ -20,7 +20,7 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=OliveTin
-	readonly SCRIPT_VERSION=230520
+	readonly SCRIPT_VERSION=230521
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -66,6 +66,7 @@ Init()
 	readonly PORT_CHECK_TIMEOUT=240
 	readonly DAEMON_CHECK_TIMEOUT=60
 	readonly DAEMON_STOP_TIMEOUT=120
+	readonly PIDFILE_APPEAR_TIMEOUT=60
 	readonly GET_DAEMON_PORT_CMD=''
 	readonly GET_UI_PORT_CMD='parse_yaml '$QPKG_INI_PATHFILE' | /bin/grep listenAddressSingleHTTPFrontend | cut -d= -f2 | cut -d: -f2 | /bin/sed "s| .*$||"'
 	readonly GET_UI_PORT_SECURE_CMD='echo 0'
@@ -101,6 +102,7 @@ Init()
 	LoadAppVersion
 
 	IsSupportBackup && [[ -n ${BACKUP_PATH:-} && ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
+	IsAutoUpdateMissing && EnableAutoUpdate >/dev/null
 
 	if [[ $RUN_DAEMON_IN_SCREEN_SESSION = true && ! -e $SCREEN_CONF_PATHFILE ]]; then
 		echo "logfile $DAEMON_LOG_PATHFILE" > "$SCREEN_CONF_PATHFILE"
@@ -152,6 +154,14 @@ StartQPKG()
 		IsNotRestartPending && return
 	fi
 
+	DisplayWaitCommitToLog 'auto-update:'
+
+	if IsAutoUpdate; then
+		DisplayCommitToLog true
+	else
+		DisplayCommitToLog false
+	fi
+
 	IsNotDaemon && return
 
 	[[ -n ${QPKG_REPO_PATH:-} && ! -d $QPKG_REPO_PATH ]] && mkdir -p "$QPKG_REPO_PATH"
@@ -200,7 +210,7 @@ StartQPKG()
 	fi
 
 	DisplayRunAndLog 'start daemon' "$DAEMON_LAUNCH_CMD" log:failure-only "$RUN_DAEMON_IN_SCREEN_SESSION"
-  	WritePID
+  	FindAndWritePIDFile
 	WaitForDaemon
 
 	if ! IsDaemonActive; then
@@ -444,7 +454,7 @@ WaitForLaunchTarget()
 
 	}
 
-WritePID()
+FindAndWritePIDFile()
 	{
 
 	local -i pid=0
@@ -452,15 +462,20 @@ WritePID()
 	target_pid=${target_pid:0:5}
 	target_pid=$(tr -d ' ' <<< "$target_pid")
 
-	[[ $target_pid -gt 0 ]] || return
-	echo "$target_pid" > "$DAEMON_PID_PATHFILE"
+	if [[ $target_pid -gt 0 ]]; then
+		Display "found PID: $target_pid"
+		echo "$target_pid" > "$DAEMON_PID_PATHFILE"
+		return 0
+	fi
+
+	return 1
 
 	}
 
 WaitForPID()
 	{
 
-	if WaitForFileToAppear "$DAEMON_PID_PATHFILE" 60; then
+	if WaitForFileToAppear "$DAEMON_PID_PATHFILE" "$PIDFILE_APPEAR_TIMEOUT"; then
 		sleep 1		# wait one more second to allow file to have PID written into it
 		return 0
 	else
@@ -1100,7 +1115,7 @@ IsProcessActive()
 
 	[[ -n ${1:-} ]] || return
 	[[ -n ${2:-} ]] || return
-	[[ ! -e $2 ]] && WritePID
+	[[ ! -e $2 ]] && FindAndWritePIDFile
 	[[ -e $2 && -d /proc/$(<"$2") && -n ${1:-} && $(</proc/"$(<"$2")"/cmdline) =~ ${1:-} ]]
 
 	}
@@ -2010,6 +2025,14 @@ if IsNotError; then
 		l|-l|log|--log)
 			SetServiceAction log
 			ViewLog
+			;;
+		disable-auto-update|--disable-auto-update)
+			SetServiceAction disable-auto-update
+			DisableAutoUpdate
+			;;
+		enable-auto-update|--enable-auto-update)
+			SetServiceAction enable-auto-update
+			EnableAutoUpdate
 			;;
 		v|-v|version|--version)
 			SetServiceAction none
