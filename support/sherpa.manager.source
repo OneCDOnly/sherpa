@@ -378,6 +378,7 @@ Consts:Load()
 	readonly SESS_ACTIONS_RESULTS_PATHFILE=$LOGS_PATH/session.action.results.log
 	readonly REPORT_PATHFILE=$LOGS_PATH/report.ansi
 	readonly RAMDISKS_FREESPACE_PATHFILE=$LOGS_PATH/ramdisks.freespace
+	readonly SCREEN_SESSIONS_PATHFILE=$LOGS_PATH/screen.sessions
 	readonly DISPLAY_INHIBIT_PATHFILE=$CACHE_PATH/display.inhibit
 
 	readonly ACTION_RESULT_INDENT=6
@@ -465,6 +466,8 @@ Consts:Load()
 	readonly UPTIME_CMD=/usr/bin/uptime
 	readonly WC_CMD=/usr/bin/wc
 
+	readonly SCREEN_CMD=/usr/sbin/screen
+
 	}
 
 Env:Confirm()
@@ -503,6 +506,8 @@ Env:Confirm()
 	IsSysFileExist $UNZIP_CMD || return
 	IsSysFileExist $UPTIME_CMD || return
 	IsSysFileExist $WC_CMD || return
+
+	IsSysFileExist $SCREEN_CMD || return
 
 	}
 
@@ -693,6 +698,7 @@ Self:LogEnv()
 	DebugQpkg detect 'Entware installer' "$ENTWARE_VER"
 	DebugInfoMinSepr
 	RunAndLog "$DF_CMD -h | $GREP_CMD '^Filesystem\|^none\|^tmpfs\|ram'" "$RAMDISKS_FREESPACE_PATHFILE"
+	RunAndLog "$SCREEN_CMD -ls" "$SCREEN_SESSIONS_PATHFILE" '' 1
 
 	QPKGs.States:Build
 	Func:Exit
@@ -4502,7 +4508,7 @@ QPKGs.States:Build()
 	local -i index=0
 	local package=''
 	local prev=''
-	OS.IsStarting && ShowAsWarn "$(GetQnapOS) is still starting-up. QPKG statuses are in-flux. Try checking again in a few minutes"
+	OS.IsStarting && ShowAsWarn "$(GetQnapOS) is still starting. QPKG statuses are in-flux. Try checking again in a few minutes"
 	OS.IsStopping && ShowAsWarn "$(GetQnapOS) is shutting-down. All QPKGs are in the process of being stopped"
 	ShowAsProc 'package states'
 
