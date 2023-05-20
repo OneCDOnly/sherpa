@@ -1767,7 +1767,7 @@ DisplayAndCommitActionToLog()
 	{
 
 	starttime="$(/bin/date +%s%N)"
-	local msg="datetime: $(date), begin action: $service_operation, package: $QPKG_VERSION, service: $SCRIPT_VERSION"
+	local msg="begin action: $service_operation, datetime: $(date), package: $QPKG_VERSION, service: $SCRIPT_VERSION"
 
 	if IsNotStatus && IsNotLog && IsNotNone; then
 		CommitToLog
@@ -1779,7 +1779,7 @@ DisplayAndCommitActionToLog()
 DisplayAndCommitStatusToLog()
 	{
 
-	local msg="datetime: $(date), end action: $service_operation, result: $service_result, elapsed time: $(FormatAsDuration "$(CalcMilliDifference "$starttime" "$(/bin/date +%s%N)")")"
+	local msg="end action: $service_operation, datetime: $(date), result: $service_result, elapsed time: $(FormatAsDuration "$(CalcMilliDifference "$starttime" "$(/bin/date +%s%N)")")"
 
 	if IsNotStatus && IsNotLog && IsNotNone; then
 		case $service_result in
