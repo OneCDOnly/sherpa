@@ -1009,7 +1009,7 @@ IsProcessActive()
 	[[ ! -e $2 ]] && WritePID
 
 	# OqBittorrent: check for process twice as it can disappear briefly during launch.
-	[[ -e $2 && -d /proc/$(<"$2") && $(</proc/"$(<"$2")"/cmdline) =~ $1 ]]	|| { sleep 5; [[ -e $2 && -d /proc/$(<"$2") && $(</proc/"$(<"$2")"/cmdline) =~ $1 ]] ;}
+	[[ -e $2 && -d /proc/$(<"$2") && $(</proc/"$(<"$2")"/cmdline) =~ $1 ]] || { sleep 5; [[ -e $2 && -d /proc/$(<"$2") && $(</proc/"$(<"$2")"/cmdline) =~ $1 ]] ;}
 
 	}
 
