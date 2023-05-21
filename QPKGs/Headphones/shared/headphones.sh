@@ -20,7 +20,7 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=Headphones
-	readonly SCRIPT_VERSION=230521
+	readonly SCRIPT_VERSION=230522
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -196,7 +196,12 @@ StartQPKG()
 	fi
 
 	DisplayRunAndLog 'start daemon' "$DAEMON_LAUNCH_CMD" log:failure-only "$RUN_DAEMON_IN_SCREEN_SESSION"
-  	WaitForPID
+
+	FindAndWritePIDFile
+	DisplayWaitCommitToLog 'wait 5 seconds to check PID again:'
+	sleep 5
+	DisplayCommitToLog 'done'
+	FindAndWritePIDFile
 
 	if ! IsDaemonActive; then
 		DisplayErrCommitAllLogs 'IsDaemonActive() failed'
@@ -586,7 +591,7 @@ FindAndWritePIDFile()
 	target_pid=$(tr -d ' ' <<< "$target_pid")
 
 	if [[ $target_pid -gt 0 ]]; then
-		Display "found PID: $target_pid"
+		DisplayCommitToLog "found PID: $target_pid"
 		echo "$target_pid" > "$DAEMON_PID_PATHFILE"
 		return 0
 	fi
