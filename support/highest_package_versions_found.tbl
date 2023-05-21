@@ -15,8 +15,8 @@ inxi_230329.qpkg.md5                 inxi_230329.qpkg                 inxi      
 LazyLibrarian_230521.qpkg.md5        LazyLibrarian_230521.qpkg        LazyLibrarian        230521       all    ada012597a0d6a0a0d3666a3afd62c5a
 Mylar3_230521.qpkg.md5               Mylar3_230521.qpkg               Mylar3               230521       all    7d1695b790997ed2690f060a1d6a1de0
 NZBGet_230513.qpkg.md5               NZBGet_230513.qpkg               NZBGet               230513       all    9fd7bb731e369da500be65b93e0c9568
-NZBHydra2_230513_arm_64.qpkg.md5     NZBHydra2_230513_arm_64.qpkg     NZBHydra2            230513       a64    ceb0f566070717d1c1296334a5d49b97
-NZBHydra2_230513_x86_64.qpkg.md5     NZBHydra2_230513_x86_64.qpkg     NZBHydra2            230513       i64    b1274b2d0c364b5f0e350a74b820982f
+NZBHydra2_230521_arm_64.qpkg.md5     NZBHydra2_230521_arm_64.qpkg     NZBHydra2            230521       a64    f5c6bb3a1292e5fc3ac01bb64f2a9ac3
+NZBHydra2_230521_x86_64.qpkg.md5     NZBHydra2_230521_x86_64.qpkg     NZBHydra2            230521       i64    ac22d9c223ff4863bda02f6243c03d57
 nzbToMedia_230513.qpkg.md5           nzbToMedia_230513.qpkg           nzbToMedia           230513       all    5018ca55414dc9e82da5d249fcfec9ee
 OliveTin_230521_arm_64.qpkg.md5      OliveTin_230521_arm_64.qpkg      OliveTin             230521       a64    82998b83e9af3632a88465b6cd876c1a
 OliveTin_230521_arm-x19.qpkg.md5     OliveTin_230521_arm-x19.qpkg     OliveTin             230521       a19    82bae867589331410e6778dbf1845cca

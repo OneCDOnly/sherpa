@@ -1728,7 +1728,7 @@ DisplayAndCommitActionToLog()
 	local msg="begin action: $service_operation, datetime: $(date), package: $QPKG_VERSION, service: $SCRIPT_VERSION"
 
 	if IsNotStatus && IsNotLog && IsNotNone; then
-		CommitToLog
+		CommitToLog '•'
 		DisplayCommitToLog "$(ColourTextInverse "$msg")"
 	fi
 
@@ -1922,7 +1922,7 @@ FormatAsDuration()
 	# input:
 	#	$1 = duration in milliseconds
 
-	if [[ ${1:-0} -lt 30000 ]]; then
+	if [[ ${1:-0} -lt 10000 ]]; then
 		echo "$(FormatAsThous "${1:-0}")ms"
 	else
 		FormatSecsToHoursMinutesSecs "$(($1/1000))"
