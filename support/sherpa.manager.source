@@ -698,7 +698,9 @@ Self:LogEnv()
 	DebugQpkg detect 'Entware installer' "$ENTWARE_VER"
 	DebugInfoMinSepr
 	RunAndLog "$DF_CMD -h | $GREP_CMD '^Filesystem\|^none\|^tmpfs\|ram'" "$RAMDISKS_FREESPACE_PATHFILE"
+	DebugInfoMinSepr
 	RunAndLog "$SCREEN_CMD -ls" "$SCREEN_SESSIONS_PATHFILE" '' 1
+	DebugInfoMinSepr
 
 	QPKGs.States:Build
 	Func:Exit
@@ -4216,6 +4218,7 @@ QPKGs.NewVers:Show()
 	local -i index=0
 	local names_formatted=''
 	local msg=''
+	local name_limit=3
 
 	[[ $hide_title = false ]] || return
 	QPKGs.States:Build
@@ -4229,7 +4232,10 @@ QPKGs.NewVers:Show()
 	for ((index=0; index<=((${#upgradable_packages[@]}-1)); index++)); do
 		names_formatted+=$(ColourTextBrightOrange "${upgradable_packages[$index]}")
 
-		if [[ $((index+2)) -lt ${#upgradable_packages[@]} ]]; then
+		if [[ $((index+1)) -ge $name_limit && $((${#upgradable_packages[@]}-name_limit)) -gt 0 ]]; then
+			names_formatted+=" & $(ColourTextBrightOrange "$((${#upgradable_packages[@]}-name_limit))") other$(Pluralise "$((${#upgradable_packages[@]}-name_limit))")"
+			break
+		elif [[ $((index+2)) -lt ${#upgradable_packages[@]} ]]; then
 			names_formatted+=', '
 		elif [[ $((index+2)) -eq ${#upgradable_packages[@]} ]]; then
 			names_formatted+=' & '
