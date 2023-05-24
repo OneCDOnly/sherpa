@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 ####################################################################################
 # nzbget.sh
-
+#
 # Copyright (C) 2019-2023 OneCD - one.cd.only@gmail.com
-
+#
 # so, blame OneCD if it all goes horribly wrong. ;)
-
+#
 # This is a type 3 service-script: https://github.com/OneCDOnly/sherpa/wiki/Service-Script-Types
-
+#
 # For more info: https://forum.qnap.com/viewtopic.php?f=320&t=132373
 ####################################################################################
 
@@ -20,42 +20,50 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=NZBGet
-	readonly SCRIPT_VERSION=230513
+	readonly SCRIPT_VERSION=230525
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
 	readonly QPKG_VERSION=$(/sbin/getcfg $QPKG_NAME Version -d unknown -f /etc/config/qpkg.conf)
-	readonly QPKG_INI_PATHFILE=$QPKG_PATH/config/config.ini
+	readonly QPKG_CONFIG_PATH=$QPKG_PATH/config
+	readonly SCREEN_CONF_PATHFILE=$QPKG_CONFIG_PATH/screen.conf
+	readonly QPKG_INI_PATHFILE=$QPKG_CONFIG_PATH/config.ini
 	readonly QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
-	readonly APP_VERSION_STORE_PATHFILE=$QPKG_PATH/config/version.stored
+	readonly APP_VERSION_STORE_PATHFILE=$QPKG_CONFIG_PATH/version.stored
 	readonly SERVICE_STATUS_PATHFILE=/var/run/$QPKG_NAME.last.operation
+	readonly DAEMON_PID_PATHFILE=/opt/var/lock/nzbget.lock
 	readonly SERVICE_LOG_PATHFILE=/var/log/$QPKG_NAME.log
+	readonly DAEMON_LOG_PATHFILE=/var/log/$QPKG_NAME.daemon.log
 	local -r BACKUP_PATH=$(/sbin/getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
 	readonly BACKUP_PATHFILE=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
 	readonly OPKG_PATH=/opt/bin:/opt/sbin
 	export PATH="$OPKG_PATH:$(/bin/sed "s|$OPKG_PATH||" <<< "$PATH")"
 	readonly DEBUG_LOG_DATAWIDTH=100
 	local re=''
+	daemon_port=0
+	ui_port=0
+	ui_port_secure=0
+	ui_listening_address=undefined
 
 	# specific to Entware binaries only
 	readonly ORIG_DAEMON_SERVICE_SCRIPT=/opt/etc/init.d/S75nzbget
 
 	# specific to daemonised applications only
 	readonly DAEMON_PATHFILE=/opt/bin/nzbget
-	readonly DAEMON_PID_PATHFILE=/opt/var/lock/nzbget.lock
-	readonly LAUNCHER="$DAEMON_PATHFILE --daemon --configfile $QPKG_INI_PATHFILE"
-	readonly PORT_CHECK_TIMEOUT=60
-	readonly DAEMON_CHECK_TIMEOUT=30
-	readonly DAEMON_STOP_TIMEOUT=60
-	readonly DAEMON_PORT_CMD=''
-	readonly UI_PORT_CMD="/sbin/getcfg '' ControlPort -d 0 -f $QPKG_INI_PATHFILE"
-	readonly UI_PORT_SECURE_CMD="/sbin/getcfg '' SecurePort -d 0 -f $QPKG_INI_PATHFILE"
-	readonly UI_PORT_SECURE_ENABLED_TEST_CMD='[[ $(/sbin/getcfg "" SecureControl -d no -f '$QPKG_INI_PATHFILE') = yes ]]'
-	readonly UI_LISTENING_ADDRESS_CMD="/sbin/getcfg '' ControlIP -f $QPKG_INI_PATHFILE"
-	daemon_port=0
-	ui_port=0
-	ui_port_secure=0
-	ui_listening_address=undefined
+	readonly DAEMON_LAUNCH_CMD="$DAEMON_PATHFILE --daemon --configfile $QPKG_INI_PATHFILE"
+	readonly RUN_DAEMON_IN_SCREEN_SESSION=false
+	readonly PORT_CHECK_TIMEOUT_SECONDS=240
+	readonly DAEMON_CHECK_TIMEOUT_SECONDS=60
+	readonly DAEMON_STOP_TIMEOUT_SECONDS=120
+	readonly PIDFILE_APPEAR_TIMEOUT_SECONDS=60
+	readonly PIDFILE_RECHECK_WAIT_SECONDS=10
+	readonly PIDFILE_IS_MANAGED_BY_APP=true
+
+	readonly GET_DAEMON_PORT_CMD=''
+	readonly GET_UI_PORT_CMD="/sbin/getcfg '' ControlPort -d 0 -f $QPKG_INI_PATHFILE"
+	readonly GET_UI_PORT_SECURE_CMD="/sbin/getcfg '' SecurePort -d 0 -f $QPKG_INI_PATHFILE"
+	readonly GET_UI_PORT_SECURE_ENABLED_TEST_CMD='[[ $(/sbin/getcfg "" SecureControl -d no -f '$QPKG_INI_PATHFILE') = yes ]]'
+	readonly GET_UI_LISTENING_ADDRESS_CMD="/sbin/getcfg '' ControlIP -f $QPKG_INI_PATHFILE"
 
 	# specific to applications supporting version lookup only
 	readonly APP_VERSION_PATHFILE=$DAEMON_PATHFILE
@@ -68,14 +76,14 @@ Init()
 	fi
 
 	if [[ ${DEBUG_QPKG:-} = true ]]; then
-		SetDebug
+		debug=true
 	else
-		UnsetDebug
+		debug=false
 	fi
 
 	for re in \\bd\\b \\bdebug\\b \\bdbug\\b \\bverbose\\b; do
 		if [[ $USER_ARGS_RAW =~ $re ]]; then
-			SetDebug
+			debug=true
 			break
 		fi
 	done
@@ -87,6 +95,14 @@ Init()
 	DisableOpkgDaemonStart
 
 	IsSupportBackup && [[ -n ${BACKUP_PATH:-} && ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
+	[[ -n ${VENV_PATH:-} && ! -d $VENV_PATH ]] && mkdir -p "$VENV_PATH"
+	[[ -n ${PIP_CACHE_PATH:-} && ! -d $PIP_CACHE_PATH ]] && mkdir -p "$PIP_CACHE_PATH"
+
+	if [[ $RUN_DAEMON_IN_SCREEN_SESSION = true && ! -e $SCREEN_CONF_PATHFILE ]]; then
+		echo "logfile $DAEMON_LOG_PATHFILE" > "$SCREEN_CONF_PATHFILE"
+		echo 'logfile flush 1' >> "$SCREEN_CONF_PATHFILE"
+		echo 'log on' >> "$SCREEN_CONF_PATHFILE"
+	fi
 
 	return 0
 
@@ -125,7 +141,6 @@ StartQPKG()
 	IsError && return
 
 	if IsNotRestart && IsNotRestore && IsNotClean && IsNotReset; then
-		CommitOperationToLog
 		IsDaemonActive && return
 	fi
 
@@ -146,19 +161,30 @@ StartQPKG()
 		DisplayErrCommitAllLogs "unable to start daemon: ports $ui_port or $ui_port_secure are already in use!"
 
 		portpid=$(/usr/sbin/lsof -i :$ui_port -Fp)
-		DisplayErrCommitAllLogs "process details for port $ui_port: \"$([[ -n ${portpid:-} ]] && /bin/tr '\000' ' ' </proc/"${portpid/p/}"/cmdline)\""
+		DisplayErrCommitAllLogs "process details for port $ui_port: '$([[ -n ${portpid:-} ]] && /bin/tr '\000' ' ' </proc/"${portpid/p/}"/cmdline)'"
 
 		portpid=$(/usr/sbin/lsof -i :$ui_port_secure -Fp)
-		DisplayErrCommitAllLogs "process details for secure port $ui_port_secure: \"$([[ -n ${portpid:-} ]] && /bin/tr '\000' ' ' </proc/"${portpid/p/}"/cmdline)\""
+		DisplayErrCommitAllLogs "process details for secure port $ui_port_secure: '$([[ -n ${portpid:-} ]] && /bin/tr '\000' ' ' </proc/"${portpid/p/}"/cmdline)'"
 
 		SetError
 		return 1
 	fi
 
-	DisplayRunAndLog 'start daemon' "$LAUNCHER" || { SetError; return 1 ;}
-	WaitForPID || { SetError; return 1 ;}
-	IsDaemonActive || { SetError; return 1 ;}
-	CheckPorts || { SetError; return 1 ;}
+	DisplayRunAndLog 'start daemon' "$DAEMON_LAUNCH_CMD" log:failure-only "$RUN_DAEMON_IN_SCREEN_SESSION"
+	WaitForDaemon
+	WaitForPID
+
+	if ! IsDaemonActive; then
+		DisplayErrCommitAllLogs 'IsDaemonActive() failed'
+		SetError
+		return 1
+	fi
+
+	if ! CheckPorts; then
+		DisplayErrCommitAllLogs 'CheckPorts() failed'
+		SetError
+		return 1
+	fi
 
 	return 0
 
@@ -171,10 +197,6 @@ StopQPKG()
 
 	IsError && return
 
-	if IsNotRestore && IsNotClean && IsNotReset; then
-		CommitOperationToLog
-	fi
-
 	if IsDaemonActive; then
 		if IsRestart || IsRestore || IsClean || IsReset; then
 			SetRestartPending
@@ -184,20 +206,21 @@ StopQPKG()
 		local pid=0
 		SetRestartPending
 
-		killall "$(/usr/bin/basename "$DAEMON_PATHFILE")"
-		DisplayWaitCommitToLog 'stop daemon with SIGTERM:'
-		DisplayWait "(no-more than $DAEMON_STOP_TIMEOUT seconds):"
+		pid=$(<$DAEMON_PID_PATHFILE)
+		kill "$pid"
+		DisplayWaitCommitToLog "stop daemon PID ($pid) with SIGTERM:"
+		DisplayWait "(no-more than $DAEMON_STOP_TIMEOUT_SECONDS seconds):"
 
 		while true; do
-			while (ps ax | /bin/grep $DAEMON_PATHFILE | /bin/grep -vq grep); do
+			while [[ -d /proc/$pid ]]; do
 				sleep 1
 				((acc++))
 				DisplayWait "$acc,"
 
-				if [[ $acc -ge $DAEMON_STOP_TIMEOUT ]]; then
+				if [[ $acc -ge $DAEMON_STOP_TIMEOUT_SECONDS ]]; then
 					DisplayCommitToLog 'failed!'
-					DisplayCommitToLog 'stop daemon with SIGKILL'
-					killall -9 "$(/usr/bin/basename "$DAEMON_PATHFILE")"
+					DisplayCommitToLog "stop daemon PID ($pid) with SIGKILL:"
+					kill -9 "$pid" 2> /dev/null
 					[[ -f $DAEMON_PID_PATHFILE ]] && rm -f $DAEMON_PID_PATHFILE
 					break 2
 				fi
@@ -205,7 +228,7 @@ StopQPKG()
 
 			[[ -f $DAEMON_PID_PATHFILE ]] && rm -f $DAEMON_PID_PATHFILE
 			Display OK
-			CommitLog "stopped OK in $acc seconds"
+			CommitToLog "stopped in $acc seconds"
 
 			CommitInfoToSysLog 'stop daemon: OK'
 			break
@@ -221,7 +244,6 @@ StopQPKG()
 BackupConfig()
 	{
 
-	CommitOperationToLog
 	DisplayRunAndLog 'update configuration backup' "/bin/tar --create --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config ." || SetError
 
 	return 0
@@ -230,8 +252,6 @@ BackupConfig()
 
 RestoreConfig()
 	{
-
-	CommitOperationToLog
 
 	if [[ ! -f $BACKUP_PATHFILE ]]; then
 		DisplayErrCommitAllLogs 'unable to restore configuration: no backup file was found!'
@@ -248,7 +268,6 @@ RestoreConfig()
 ResetConfig()
 	{
 
-	CommitOperationToLog
 	DisplayRunAndLog 'reset configuration' "mv $QPKG_INI_DEFAULT_PATHFILE $QPKG_PATH; rm -rf $QPKG_PATH/config/*; mv $QPKG_PATH/$(/usr/bin/basename "$QPKG_INI_DEFAULT_PATHFILE") $QPKG_INI_DEFAULT_PATHFILE" || SetError
 
 	return 0
@@ -264,8 +283,8 @@ LoadPorts()
 		app)
 			# Read the current application UI ports from application configuration
 			DisplayWaitCommitToLog 'load ports from configuration file:'
-			[[ -n ${UI_PORT_CMD:-} ]] && ui_port=$(eval "$UI_PORT_CMD")
-			[[ -n ${UI_PORT_SECURE_CMD:-} ]] && ui_port_secure=$(eval "$UI_PORT_SECURE_CMD")
+			[[ -n ${GET_UI_PORT_CMD:-} ]] && ui_port=$(eval "$GET_UI_PORT_CMD")
+			[[ -n ${GET_UI_PORT_SECURE_CMD:-} ]] && ui_port_secure=$(eval "$GET_UI_PORT_SECURE_CMD")
 			DisplayCommitToLog OK
 			;;
 		qts)
@@ -283,8 +302,8 @@ LoadPorts()
 	esac
 
 	# Always read these from the application configuration
-	[[ -n ${DAEMON_PORT_CMD:-} ]] && daemon_port=$(eval "$DAEMON_PORT_CMD")
-	[[ -n ${UI_LISTENING_ADDRESS_CMD:-} ]] && ui_listening_address=$(eval "$UI_LISTENING_ADDRESS_CMD")
+	[[ -n ${GET_DAEMON_PORT_CMD:-} ]] && daemon_port=$(eval "$GET_DAEMON_PORT_CMD")
+	[[ -n ${GET_UI_LISTENING_ADDRESS_CMD:-} ]] && ui_listening_address=$(eval "$GET_UI_LISTENING_ADDRESS_CMD")
 
 	# validate port numbers
 	ui_port=${ui_port//[!0-9]/}					# strip everything not a numeral
@@ -352,8 +371,6 @@ CleanLocalClone()
 
 	# for occasions where the local repo needs to be deleted and cloned again from source.
 
-	CommitOperationToLog
-
 	if [[ -z $QPKG_PATH || -z $QPKG_NAME ]] || IsNotSourcedOnline; then
 		SetError
 		return 1
@@ -378,43 +395,71 @@ WaitForGit()
 
 	}
 
-WaitForLaunchTarget()
+GetLaunchTarget()
 	{
 
-	local launch_target=''
-
-	if [[ -n ${INTERPRETER:-} ]]; then
-		launch_target=$INTERPRETER
+	if [[ -n ${VENV_INTERPRETER:-} ]]; then
+		echo "$VENV_INTERPRETER"
 	elif [[ -n ${DAEMON_PATHFILE:-} ]]; then
-		launch_target=$DAEMON_PATHFILE
-	else
-		return 0
-	fi
-
-	WaitForFileToAppear "$launch_target" 30 || return
-
-	}
-
-WritePID()
-	{
-
-	/bin/pidof -s $(/usr/bin/basename "$DAEMON_PATHFILE") > "$DAEMON_PID_PATHFILE"
-
-	if [[ -s $DAEMON_PID_PATHFILE ]]; then
-		return 0
+		echo "$DAEMON_PATHFILE"
 	else
 		return 1
 	fi
 
 	}
 
+WaitForLaunchTarget()
+	{
+
+	WaitForFileToAppear "$(GetLaunchTarget)" 30 || return
+
+	}
+
+FindAndWritePIDFile()
+	{
+
+	local -i pid=0
+	target_pid="$(ps | /bin/grep "$(GetLaunchTarget)" | /bin/grep -v grep)"
+	target_pid=${target_pid:0:5}
+	target_pid=$(tr -d ' ' <<< "$target_pid")
+
+	if [[ $target_pid -gt 0 ]]; then
+		echo "$target_pid" > "$DAEMON_PID_PATHFILE"
+		return 0
+	fi
+
+	return 1
+
+	}
+
 WaitForPID()
 	{
 
-	if WaitForFileToAppear "$DAEMON_PID_PATHFILE" 60; then
-		sleep 1		# wait one more second to allow file to have PID written into it
-		return 0
+	if [[ $PIDFILE_IS_MANAGED_BY_APP = true ]]; then
+		if WaitForFileToAppear "$DAEMON_PID_PATHFILE" "$PIDFILE_APPEAR_TIMEOUT_SECONDS"; then
+			sleep 1		# wait one more second to allow file to have PID written into it
+		fi
+	fi
+
+	DisplayWaitCommitToLog 'found daemon PID:'
+
+	if FindAndWritePIDFile; then
+		DisplayCommitToLog "$(<"$DAEMON_PID_PATHFILE")"
 	else
+		DisplayCommitToLog false
+	fi
+
+	DisplayWaitCommitToLog "wait $PIDFILE_RECHECK_WAIT_SECONDS seconds to recheck PID:"
+	sleep "$PIDFILE_RECHECK_WAIT_SECONDS"
+	DisplayCommitToLog 'done'
+
+	DisplayWaitCommitToLog 'found daemon PID:'
+
+	if FindAndWritePIDFile; then
+		DisplayCommitToLog "$(<"$DAEMON_PID_PATHFILE")"
+	else
+		DisplayErrCommitAllLogs false
+		DisplayErrCommitAllLogs 'unable to locate active daemon process'
 		return 1
 	fi
 
@@ -434,11 +479,11 @@ WaitForDaemon()
 	if [[ -n $1 ]]; then
 		MAX_SECONDS=$1
 	else
-		MAX_SECONDS=$DAEMON_CHECK_TIMEOUT
+		MAX_SECONDS=$DAEMON_CHECK_TIMEOUT_SECONDS
 	fi
 
 	if [[ ! -e $1 ]]; then
-		DisplayWaitCommitToLog "wait for daemon to appear:"
+		DisplayWaitCommitToLog 'wait for daemon to appear:'
 		DisplayWait "(no-more than $MAX_SECONDS seconds):"
 
 		(
@@ -448,7 +493,7 @@ WaitForDaemon()
 
 				if IsProcessActive "$DAEMON_PATHFILE" "$DAEMON_PID_PATHFILE"; then
 					Display OK
-					CommitLog "active in $count second$(FormatAsPlural "$count")"
+					CommitToLog "active after $count second$(FormatAsPlural "$count")"
 					true
 					exit	# only this sub-shell
 				fi
@@ -499,7 +544,7 @@ WaitForFileToAppear()
 
 				if [[ -e $1 ]]; then
 					Display OK
-					CommitLog "visible in $count second$(FormatAsPlural "$count")"
+					CommitToLog "visible after $count second$(FormatAsPlural "$count")"
 					true
 					exit	# only this sub-shell
 				fi
@@ -525,7 +570,7 @@ ViewLog()
 
 	if [[ -e $SERVICE_LOG_PATHFILE ]]; then
 		if [[ -e /opt/bin/less ]]; then
-			LESSSECURE=1 /opt/bin/less +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SERVICE_LOG_PATHFILE"
+			LESSSECURE=1 /opt/bin/less +G --quit-on-intr --tilde --LINE-NUMBERS --RAW-CONTROL-CHARS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SERVICE_LOG_PATHFILE"
 		else
 			/bin/cat --number "$SERVICE_LOG_PATHFILE"
 		fi
@@ -559,25 +604,6 @@ SaveAppVersion()
 
 	}
 
-ViewLog()
-	{
-
-	if [[ -e $SERVICE_LOG_PATHFILE ]]; then
-		if [[ -e /opt/bin/less ]]; then
-			LESSSECURE=1 /opt/bin/less +G --quit-on-intr --tilde --LINE-NUMBERS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$SERVICE_LOG_PATHFILE"
-		else
-			/bin/cat --number "$SERVICE_LOG_PATHFILE"
-		fi
-	else
-		Display "service log not found: $SERVICE_LOG_PATHFILE"
-		SetError
-		return 1
-	fi
-
-	return 0
-
-	}
-
 DisplayRunAndLog()
 	{
 
@@ -588,14 +614,14 @@ DisplayRunAndLog()
 	#   $1 = processing message
 	#   $2 = commandstring to execute
 	#   $3 = 'log:failure-only' (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed. default is to always record stdout & stderr.
-	#   $4 = e.g. 'background' (optional) - run command as a background process
+	#   $4 = true/false (optional) - if true, run command in a screen session
 
 	local -r LOG_PATHFILE=$(/bin/mktemp /var/log/"${FUNCNAME[0]}"_XXXXXX)
 	local -i result_code=0
 
 	DisplayWaitCommitToLog "$1:"
 
-	RunAndLog "${2:?empty}" "$LOG_PATHFILE" "${3:-}" '' "${4:-}"
+	RunAndLog "${2:?empty}" "$LOG_PATHFILE" "${3:-}" '' "${4:-false}"
 	result_code=$?
 
 	if [[ -e $LOG_PATHFILE ]]; then
@@ -603,8 +629,8 @@ DisplayRunAndLog()
 	fi
 
 	if [[ $result_code -eq 0 ]]; then
-		DisplayCommitToLog OK
 		[[ ${3:-} != log:failure-only ]] && CommitInfoToSysLog "${1:?empty}: OK"
+		[[ $debug = false ]] && DisplayCommitToLog OK
 		return 0
 	else
 		DisplayErrCommitAllLogs 'failed!'
@@ -620,10 +646,10 @@ RunAndLog()
 
 	# input:
 	#   $1 = commandstring to execute
-	#   $2 = pathfile to record stdout and stderr for commandstring
+	#   $2 = log pathfile to record stdout and stderr for commandstring
 	#   $3 = 'log:failure-only' (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed. default is to always record stdout & stderr.
 	#   $4 = e.g. '10' (optional) - an additional acceptable result code. Any other result from command (other than zero) will be considered a failure
-	#   $5 = e.g. 'background' (optional) - run command as a background process
+	#   $5 = true/false (optional) - if true, run command in a screen session
 
 	# output:
 	#   stdout : commandstring stdout and stderr if script is in 'debug' mode
@@ -635,24 +661,24 @@ RunAndLog()
 
 	FormatAsCommand "${1:?empty}" > "${2:?empty}"
 
-	if IsDebug; then
+	if [[ $debug = true ]]; then
 		Display
-		Display "exec: '$1'"
 
-		if [[ ${5:-} != background ]]; then
+		if [[ ${5:-false} = false ]]; then
+			Display "exec: '$1'"
 			eval "$1 > >(/usr/bin/tee $LOG_PATHFILE) 2>&1"		# NOTE: 'tee' buffers stdout here
+			result_code=$?
 		else
-			eval "$1 > >(/usr/bin/tee $LOG_PATHFILE) 2>&1" &	# NOTE: 'tee' buffers stdout here
+			Display "exec (in screen session): '$1'"
 		fi
-
-		result_code=$?
 	else
-		if [[ ${5:-} != background ]]; then
-			eval "$1" > "$LOG_PATHFILE" 2>&1
-		else
- 			eval "$1" > "$LOG_PATHFILE" 2>&1 &
+		if [[ ${5:-false} = false ]]; then
+			(eval "$1" > "$LOG_PATHFILE" 2>&1)			# run in a subshell to suppress 'Terminated' message later
 		fi
+	fi
 
+	if [[ ${5:-false} = true ]]; then
+		/usr/sbin/screen -c "$SCREEN_CONF_PATHFILE" -dmLS "$QPKG_NAME" bash -c "$1"
 		result_code=$?
 	fi
 
@@ -665,8 +691,10 @@ RunAndLog()
 
 	if [[ $result_code -eq 0 ]]; then
 		[[ ${3:-} != log:failure-only ]] && AddFileToDebug "$2"
+		[[ $debug = true ]] && Display 'exec: completed OK' || rm -f "$2"
 	else
 		[[ $result_code -ne ${4:-} ]] && AddFileToDebug "$2"
+		[[ $debug = true ]] && Display 'exec: completed, but with errors'
 	fi
 
 	return $result_code
@@ -678,13 +706,11 @@ AddFileToDebug()
 
 	# Add the contents of specified pathfile $1 to the runtime log
 
-	local debug_was_set=false
+	local debug_was_set=$debug
 	local linebuff=''
 
-	if IsDebug; then	# prevent external log contents appearing onscreen again, as they have already been seen "live"
-		debug_was_set=true
-		UnsetDebug
-	fi
+	# prevent external log contents appearing onscreen again, as they have already been seen "live"
+	debug=false
 
 	DebugAsLog ''
 	DebugAsLog 'adding external log to main log ...'
@@ -696,7 +722,7 @@ AddFileToDebug()
 	done < "$1"
 
 	DebugExtLogMinorSeparator
-	[[ $debug_was_set = true ]] && SetDebug
+	debug=$debug_was_set
 
 	}
 
@@ -719,7 +745,7 @@ DebugAsLog()
 DebugThis()
 	{
 
-	IsDebug && Display "${1:-}"
+	[[ $debug = true ]] && Display "${1:-}"
 	WriteAsDebug "${1:-}"
 
 	}
@@ -785,7 +811,7 @@ ReWriteUIPorts()
 
 	# If SSL is enabled, attempting to access with non-SSL via 'Web_Port' results in "connection was reset"
 
-	[[ -n ${DAEMON_PORT_CMD:-} ]] && return		# dont need to rewrite QTS UI ports if this app has a daemon port, as UI ports are unused
+	[[ -n ${GET_DAEMON_PORT_CMD:-} ]] && return		# dont need to rewrite QTS UI ports if this app has a daemon port, as UI ports are unused
 
 	DisplayWaitCommitToLog 'update QPKG icon with UI ports:'
 	/sbin/setcfg $QPKG_NAME Web_Port "$ui_port" -f /etc/config/qpkg.conf
@@ -969,7 +995,7 @@ IsNotSourcedOnline()
 IsSSLEnabled()
 	{
 
-	eval "$UI_PORT_SECURE_ENABLED_TEST_CMD"
+	eval "$GET_UI_PORT_SECURE_ENABLED_TEST_CMD"
 
 	}
 
@@ -994,6 +1020,39 @@ IsNotDaemon()
 
 	}
 
+IsDaemonActive()
+	{
+
+	# $? = 0 : $DAEMON_PATHFILE is in memory
+	# $? = 1 : $DAEMON_PATHFILE is not in memory
+
+	DisplayWaitCommitToLog 'daemon active:'
+
+	if [[ -n $VENV_INTERPRETER ]]; then
+		if IsProcessActive "$VENV_INTERPRETER" "$DAEMON_PID_PATHFILE"; then
+			DisplayCommitToLog true
+			return 0
+		fi
+	else
+		if IsProcessActive "$DAEMON_PATHFILE" "$DAEMON_PID_PATHFILE"; then
+			DisplayCommitToLog true
+			return 0
+		fi
+	fi
+
+	DisplayCommitToLog false
+	[[ -f $DAEMON_PID_PATHFILE ]] && rm "$DAEMON_PID_PATHFILE"
+	return 1
+
+	}
+
+IsNotDaemonActive()
+	{
+
+	! IsDaemonActive
+
+	}
+
 IsProcessActive()
 	{
 
@@ -1007,34 +1066,8 @@ IsProcessActive()
 
 	[[ -n ${1:-} ]] || return
 	[[ -n ${2:-} ]] || return
+	[[ ! -e $2 ]] && FindAndWritePIDFile
 	[[ -e $2 && -d /proc/$(<"$2") && -n ${1:-} && $(</proc/"$(<"$2")"/cmdline) =~ ${1:-} ]]
-
-	}
-
-IsDaemonActive()
-	{
-
-	# $? = 0 : $DAEMON_PATHFILE is in memory
-	# $? = 1 : $DAEMON_PATHFILE is not in memory
-
-	DisplayWaitCommitToLog 'daemon active:'
-
-	if IsProcessActive "$DAEMON_PATHFILE" "$DAEMON_PID_PATHFILE"; then
-		DisplayCommitToLog true
-		DisplayCommitToLog "daemon PID: $(<"$DAEMON_PID_PATHFILE")"
-		return 0
-	fi
-
-	DisplayCommitToLog false
-	[[ -f $DAEMON_PID_PATHFILE ]] && rm "$DAEMON_PID_PATHFILE"
-	return 1
-
-	}
-
-IsNotDaemonActive()
-	{
-
-	! IsDaemonActive
 
 	}
 
@@ -1155,7 +1188,7 @@ IsPortResponds()
 	local acc=0
 
 	DisplayWaitCommitToLog "test for port $port response:"
-	DisplayWait "(no-more than $PORT_CHECK_TIMEOUT seconds):"
+	DisplayWait "(no-more than $PORT_CHECK_TIMEOUT_SECONDS seconds):"
 
 	while true; do
 		if ! IsProcessActive "$DAEMON_PATHFILE" "$DAEMON_PID_PATHFILE"; then
@@ -1168,7 +1201,7 @@ IsPortResponds()
 		case $? in
 			0|22|52)	# accept these exitcodes as evidence of valid responses
 				Display OK
-				CommitLog "port responded after $acc seconds"
+				CommitToLog "port responded after $acc seconds"
 				return 0
 				;;
 			28)			# timeout
@@ -1184,7 +1217,7 @@ IsPortResponds()
 		((acc+=1))
 		DisplayWait "$acc,"
 
-		if [[ $acc -ge $PORT_CHECK_TIMEOUT ]]; then
+		if [[ $acc -ge $PORT_CHECK_TIMEOUT_SECONDS ]]; then
 			DisplayCommitToLog 'failed!'
 			CommitErrToSysLog "port $port failed to respond after $acc seconds!"
 			break
@@ -1218,7 +1251,7 @@ IsPortSecureResponds()
 	local acc=0
 
 	DisplayWaitCommitToLog "test for secure port $port response:"
-	DisplayWait "(no-more than $PORT_CHECK_TIMEOUT seconds):"
+	DisplayWait "(no-more than $PORT_CHECK_TIMEOUT_SECONDS seconds):"
 
 	while true; do
 		if ! IsProcessActive "$DAEMON_PATHFILE" "$DAEMON_PID_PATHFILE"; then
@@ -1231,7 +1264,7 @@ IsPortSecureResponds()
 		case $? in
 			0|22|52)	# accept these exitcodes as evidence of valid responses
 				Display OK
-				CommitLog "port responded after $acc seconds"
+				CommitToLog "port responded after $acc seconds"
 				return 0
 				;;
 			28)			# timeout
@@ -1247,7 +1280,7 @@ IsPortSecureResponds()
 		((acc+=1))
 		DisplayWait "$acc,"
 
-		if [[ $acc -ge $PORT_CHECK_TIMEOUT ]]; then
+		if [[ $acc -ge $PORT_CHECK_TIMEOUT_SECONDS ]]; then
 			DisplayCommitToLog 'failed!'
 			CommitErrToSysLog "secure port $port failed to respond after $acc seconds!"
 			break
@@ -1306,34 +1339,41 @@ IsNotVirtualEnvironmentExist()
 
 	}
 
-SetServiceOperation()
+SetServiceAction()
 	{
 
 	service_operation="${1:-}"
-	SetServiceOperationResult "${1:-}"
+	CommitServiceStatus "$service_operation"
+	DisplayAndCommitActionToLog
 
 	}
 
-SetServiceOperationResultOK()
+SetServiceStatusAsOK()
 	{
 
-	SetServiceOperationResult ok
+	service_result=ok
+	CommitServiceStatus "$service_result"
+	DisplayAndCommitStatusToLog
 
 	}
 
-SetServiceOperationResultFailed()
+SetServiceStatusAsFailed()
 	{
 
-	SetServiceOperationResult failed
+	service_result=failed
+	CommitServiceStatus "$service_result"
+	DisplayAndCommitStatusToLog
 
 	}
 
-SetServiceOperationResult()
+CommitServiceStatus()
 	{
 
 	# $1 = result of operation to record
 
-	[[ -n ${1:-} && -n ${SERVICE_STATUS_PATHFILE:-} ]] && echo "${1:-}" > "$SERVICE_STATUS_PATHFILE"
+	if IsNotStatus && IsNotLog && IsNotNone; then
+		[[ -n ${1:-} && -n ${SERVICE_STATUS_PATHFILE:-} ]] && echo "${1:-}" > "$SERVICE_STATUS_PATHFILE"
+	fi
 
 	}
 
@@ -1362,34 +1402,6 @@ IsNotRestartPending()
 	{
 
 	[[ $_restart_pending_flag = false ]]
-
-	}
-
-SetDebug()
-	{
-
-	debug=true
-
-	}
-
-UnsetDebug()
-	{
-
-	debug=false
-
-	}
-
-IsDebug()
-	{
-
-	[[ $debug = true ]]
-
-	}
-
-IsNotDebug()
-	{
-
-	! IsDebug
 
 	}
 
@@ -1426,7 +1438,7 @@ IsNotError()
 IsRestart()
 	{
 
-	[[ $service_operation = restarting ]]
+	[[ $service_operation = restart ]]
 
 	}
 
@@ -1437,13 +1449,6 @@ IsNotRestart()
 
 	}
 
-IsNotRestore()
-	{
-
-	! [[ $service_operation = restoring ]]
-
-	}
-
 IsNotLog()
 	{
 
@@ -1451,10 +1456,17 @@ IsNotLog()
 
 	}
 
+IsNotNone()
+	{
+
+	! [[ $service_operation = none ]]
+
+	}
+
 IsClean()
 	{
 
-	[[ $service_operation = cleaning ]]
+	[[ $service_operation = clean ]]
 
 	}
 
@@ -1468,7 +1480,7 @@ IsNotClean()
 IsRestore()
 	{
 
-	[[ $service_operation = restoring ]]
+	[[ $service_operation = restore ]]
 
 	}
 
@@ -1482,7 +1494,7 @@ IsNotRestore()
 IsReset()
 	{
 
-	[[ $service_operation = 'resetting-config' ]]
+	[[ $service_operation = reset ]]
 
 	}
 
@@ -1512,7 +1524,7 @@ DisplayCommitToLog()
 	{
 
 	Display "${1:-}"
-	CommitLog "${1:-}"
+	CommitToLog "${1:-}"
 
 	}
 
@@ -1520,7 +1532,7 @@ DisplayWaitCommitToLog()
 	{
 
 	DisplayWait "${1:-}"
-	CommitLogWait "${1:-}"
+	CommitToLogWait "${1:-}"
 
 	}
 
@@ -1610,10 +1622,36 @@ DisplayWait()
 
 	}
 
-CommitOperationToLog()
+DisplayAndCommitActionToLog()
 	{
 
-	CommitLog "$(SessionSeparator "datetime:'$(date)', request:'$service_operation', package:'$QPKG_VERSION', service:'$SCRIPT_VERSION', app:'$app_version'")"
+	starttime="$(/bin/date +%s%N)"
+	local msg="begin action: $service_operation, datetime: $(date), package: $QPKG_VERSION, service: $SCRIPT_VERSION"
+
+	if IsNotStatus && IsNotLog && IsNotNone; then
+		CommitToLog '•'
+		DisplayCommitToLog "$(ColourTextInverse "$msg")"
+	fi
+
+	}
+
+DisplayAndCommitStatusToLog()
+	{
+
+	local msg="end action: $service_operation, datetime: $(date), result: $service_result, elapsed time: $(FormatAsDuration "$(CalcMilliDifference "$starttime" "$(/bin/date +%s%N)")")"
+
+	if IsNotStatus && IsNotLog && IsNotNone; then
+		case $service_result in
+			ok)
+				DisplayCommitToLog "$(ColourTextBlackOnGreen "$msg")"
+				;;
+			failed)
+				DisplayCommitToLog "$(ColourTextBlackOnRed "$msg")"
+				;;
+			*)
+				DisplayCommitToLog "$(ColourTextBlackOnYellow "$msg")"
+		esac
+	fi
 
 	}
 
@@ -1638,19 +1676,19 @@ CommitErrToSysLog()
 
 	}
 
-CommitLog()
+CommitToLog()
 	{
 
-	if IsNotStatus && IsNotLog; then
-		echo "${1:-}" >> "$SERVICE_LOG_PATHFILE"
+	if IsNotStatus && IsNotLog && IsNotNone; then
+		echo -e "${1:-}" >> "$SERVICE_LOG_PATHFILE"
 	fi
 
 	}
 
-CommitLogWait()
+CommitToLogWait()
 	{
 
-	if IsNotStatus && IsNotLog; then
+	if IsNotStatus && IsNotLog && IsNotNone; then
 		echo -n "${1:-} " >> "$SERVICE_LOG_PATHFILE"
 	fi
 
@@ -1669,21 +1707,14 @@ CommitSysLog()
 	#	 2 : Warning
 	#	 4 : Information
 
-	if [[ -z ${1:-} || -z ${2:-} ]]; then
-		SetError
-		return 1
+	if IsNotStatus && IsNotLog && IsNotNone; then
+		if [[ -z ${1:-} || -z ${2:-} ]]; then
+			SetError
+			return 1
+		fi
+
+		/sbin/write_log "[$QPKG_NAME] $1" "$2"
 	fi
-
-	/sbin/write_log "[$QPKG_NAME] $1" "$2"
-
-	}
-
-SessionSeparator()
-	{
-
-	# $1 = message
-
-	printf '%0.s>' {1..10}; echo -n " $1 "; printf '%0.s<' {1..10}
 
 	}
 
@@ -1694,12 +1725,127 @@ ColourTextBrightWhite()
 
 	} 2>/dev/null
 
+ColourTextBlackOnGreen()
+	{
+
+	printf '\033[30;42m%s\033[0m' "${1:-}"
+
+	} 2>/dev/null
+
+ColourTextBlackOnRed()
+	{
+
+	printf '\033[30;41m%s\033[0m' "${1:-}"
+
+	} 2>/dev/null
+
+ColourTextBlackOnYellow()
+	{
+
+	printf '\033[30;43m%s\033[0m' "${1:-}"
+
+	} 2>/dev/null
+
+ColourTextInverse()
+	{
+
+	printf '\033[7m%s\033[0m' "${1:-}"
+
+	} 2>/dev/null
+
 FormatAsPlural()
 	{
 
 	[[ $1 -ne 1 ]] && echo s
 
 	}
+
+JustFile()
+	{
+
+	local name=$(/usr/bin/basename "$1")
+	echo "${name%%.*}"
+
+	}
+
+CalcMilliDifference()
+	{
+
+	# input:
+	#	$1 = starttime in epoch nanoseconds
+	#	$2 = endtime in epoch nanoseconds
+
+	# output:
+	#	stdout = difference in milliseconds
+
+	echo "$((($2-$1)/1000000))"
+
+	}
+
+FormatAsThous()
+	{
+
+	# Format as thousands
+
+	# A string-based thousands-group formatter totally unreliant on locale
+	# Why? Because builtin `printf` in 32b ARM QTS versions doesn't follow locale ¯\_(ツ)_/¯
+
+	# $1 = integer value
+
+	local rightside_group=''
+	local foutput=''
+	local remainder=$(/bin/sed 's/[^0-9]*//g' <<< "${1:-}")	# strip everything not a numeral
+
+	while [[ ${#remainder} -gt 0 ]]; do
+		rightside_group=${remainder:${#remainder}<3?0:-3}	# a nifty trick found here: https://stackoverflow.com/a/19858692
+
+		if [[ -z $foutput ]]; then
+			foutput=$rightside_group
+		else
+			foutput=$rightside_group,$foutput
+		fi
+
+		if [[ ${#rightside_group} -eq 3 ]]; then
+			remainder=${remainder%???}						# trim rightside 3 characters
+		else
+			break
+		fi
+	done
+
+	echo "$foutput"
+	return 0
+
+	}
+
+FormatAsDuration()
+	{
+
+	# input:
+	#	$1 = duration in milliseconds
+
+	if [[ ${1:-0} -lt 10000 ]]; then
+		echo "$(FormatAsThous "${1:-0}")ms"
+	else
+		FormatSecsToHoursMinutesSecs "$(($1/1000))"
+	fi
+
+	}
+
+FormatSecsToHoursMinutesSecs()
+	{
+
+	# http://stackoverflow.com/questions/12199631/convert-seconds-to-hours-minutes-seconds
+
+	# input:
+	#	$1 = a time in seconds to convert to `HHh:MMm:SSs`
+
+	((h=${1:-0}/3600))
+	((m=(${1:-0}%3600)/60))
+	((s=${1:-0}%60))
+
+	printf '%01dh:%02dm:%02ds\n' "$h" "$m" "$s"
+
+	} 2>/dev/null
 
 IsAutoUpdateMissing()
 	{
@@ -1762,12 +1908,12 @@ if IsNotError; then
 				echo "The $(FormatAsPackageName "$QPKG_NAME") QPKG is disabled. Please enable it first with: qpkg_service enable $QPKG_NAME"
 				SetError
 			else
-				SetServiceOperation starting
+				SetServiceAction start
 				StartQPKG
 			fi
 			;;
 		stop|--stop)
-			SetServiceOperation stopping
+			SetServiceAction stop
 			StopQPKG
 			;;
 		r|-r|restart|--restart)
@@ -1775,66 +1921,67 @@ if IsNotError; then
 				echo "The $(FormatAsPackageName "$QPKG_NAME") QPKG is disabled. Please enable it first with: qpkg_service enable $QPKG_NAME"
 				SetError
 			else
-				SetServiceOperation restarting
+				SetServiceAction restart
 				StopQPKG && StartQPKG
 			fi
 			;;
 		s|-s|status|--status)
+			SetServiceAction status
 			StatusQPKG
 			;;
 		b|-b|backup|--backup|backup-config|--backup-config)
 			if IsSupportBackup; then
-				SetServiceOperation backing-up
+				SetServiceAction backup
 				BackupConfig
 			else
-				SetServiceOperation none
+				SetServiceAction none
 				ShowHelp
 			fi
 			;;
 		reset-config|--reset-config)
 			if IsSupportReset; then
-				SetServiceOperation resetting-config
+				SetServiceAction reset
 				StopQPKG
 				ResetConfig
 				StartQPKG
 			else
-				SetServiceOperation none
+				SetServiceAction none
 				ShowHelp
 			fi
 			;;
 		restore|--restore|restore-config|--restore-config)
 			if IsSupportBackup; then
-				SetServiceOperation restoring
+				SetServiceAction restore
 				StopQPKG
 				RestoreConfig
 				StartQPKG
 			else
-				SetServiceOperation none
+				SetServiceAction none
 				ShowHelp
 			fi
 			;;
 		l|-l|log|--log)
-			SetServiceOperation logging
+			SetServiceAction log
 			ViewLog
 			;;
 		v|-v|version|--version)
-			SetServiceOperation versioning
+			SetServiceAction none
 			Display "package: $QPKG_VERSION"
 			Display "service: $SCRIPT_VERSION"
 			;;
 		remove)		# only called by the QDK .uninstall.sh script
-			SetServiceOperation removing
+			SetServiceAction uninstall
 			;;
 		*)
-			SetServiceOperation none
+			SetServiceAction none
 			ShowHelp
 	esac
 fi
 
 if IsError; then
-	SetServiceOperationResultFailed
+	SetServiceStatusAsFailed
 	exit 1
 fi
 
-SetServiceOperationResultOK
+SetServiceStatusAsOK
 exit
