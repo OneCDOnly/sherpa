@@ -20,7 +20,7 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=OWatcher3
-	readonly SCRIPT_VERSION=230521
+	readonly SCRIPT_VERSION=230524
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -63,10 +63,13 @@ Init()
 	readonly DAEMON_PATHFILE=$QPKG_REPO_PATH/watcher.py
 	readonly DAEMON_LAUNCH_CMD=". $VENV_PATH/bin/activate && cd $QPKG_REPO_PATH && $VENV_INTERPRETER $DAEMON_PATHFILE --daemon --userdata $(dirname "$QPKG_INI_PATHFILE") --conf $QPKG_INI_PATHFILE --pid $DAEMON_PID_PATHFILE"
 	readonly RUN_DAEMON_IN_SCREEN_SESSION=false
-	readonly PORT_CHECK_TIMEOUT=240
-	readonly DAEMON_CHECK_TIMEOUT=60
-	readonly DAEMON_STOP_TIMEOUT=120
-	readonly PIDFILE_APPEAR_TIMEOUT=60
+	readonly PORT_CHECK_TIMEOUT_SECONDS=240
+	readonly DAEMON_CHECK_TIMEOUT_SECONDS=60
+	readonly DAEMON_STOP_TIMEOUT_SECONDS=120
+	readonly PIDFILE_APPEAR_TIMEOUT_SECONDS=60
+	readonly PIDFILE_RECHECK_WAIT_SECONDS=10
+	readonly PIDFILE_IS_MANAGED_BY_APP=true
+
 	readonly GET_DAEMON_PORT_CMD=''
 	readonly GET_UI_PORT_CMD="/opt/bin/jq -r .Server.serverport < $QPKG_INI_PATHFILE"
 	readonly GET_UI_PORT_SECURE_CMD="/opt/bin/jq -r .Server.serverport < $QPKG_INI_PATHFILE"
@@ -196,8 +199,8 @@ StartQPKG()
 	fi
 
 	DisplayRunAndLog 'start daemon' "$DAEMON_LAUNCH_CMD" log:failure-only "$RUN_DAEMON_IN_SCREEN_SESSION"
-	FindAndWritePIDFile
 	WaitForDaemon
+	WaitForPID
 
 	if ! IsDaemonActive; then
 		DisplayErrCommitAllLogs 'IsDaemonActive() failed'
@@ -233,8 +236,8 @@ StopQPKG()
 
 		pid=$(<$DAEMON_PID_PATHFILE)
 		kill "$pid"
-		DisplayWaitCommitToLog 'stop daemon with SIGTERM:'
-		DisplayWait "(no-more than $DAEMON_STOP_TIMEOUT seconds):"
+		DisplayWaitCommitToLog "stop daemon PID ($pid) with SIGTERM:"
+		DisplayWait "(no-more than $DAEMON_STOP_TIMEOUT_SECONDS seconds):"
 
 		while true; do
 			while [[ -d /proc/$pid ]]; do
@@ -242,9 +245,9 @@ StopQPKG()
 				((acc++))
 				DisplayWait "$acc,"
 
-				if [[ $acc -ge $DAEMON_STOP_TIMEOUT ]]; then
+				if [[ $acc -ge $DAEMON_STOP_TIMEOUT_SECONDS ]]; then
 					DisplayCommitToLog 'failed!'
-					DisplayCommitToLog 'stop daemon with SIGKILL'
+					DisplayCommitToLog "stop daemon PID ($pid) with SIGKILL:"
 					kill -9 "$pid" 2> /dev/null
 					[[ -f $DAEMON_PID_PATHFILE ]] && rm -f $DAEMON_PID_PATHFILE
 					break 2
@@ -253,7 +256,7 @@ StopQPKG()
 
 			[[ -f $DAEMON_PID_PATHFILE ]] && rm -f $DAEMON_PID_PATHFILE
 			Display OK
-			CommitToLog "stopped OK in $acc seconds"
+			CommitToLog "stopped in $acc seconds"
 
 			CommitInfoToSysLog 'stop daemon: OK'
 			break
@@ -592,7 +595,6 @@ FindAndWritePIDFile()
 	target_pid=$(tr -d ' ' <<< "$target_pid")
 
 	if [[ $target_pid -gt 0 ]]; then
-		Display "found PID: $target_pid"
 		echo "$target_pid" > "$DAEMON_PID_PATHFILE"
 		return 0
 	fi
@@ -604,10 +606,31 @@ FindAndWritePIDFile()
 WaitForPID()
 	{
 
-	if WaitForFileToAppear "$DAEMON_PID_PATHFILE" "$PIDFILE_APPEAR_TIMEOUT"; then
-		sleep 1		# wait one more second to allow file to have PID written into it
-		return 0
+	if [[ $PIDFILE_IS_MANAGED_BY_APP = true ]]; then
+		if WaitForFileToAppear "$DAEMON_PID_PATHFILE" "$PIDFILE_APPEAR_TIMEOUT_SECONDS"; then
+			sleep 1		# wait one more second to allow file to have PID written into it
+		fi
+	fi
+
+	DisplayWaitCommitToLog 'found daemon PID:'
+
+	if FindAndWritePIDFile; then
+		DisplayCommitToLog "$(<"$DAEMON_PID_PATHFILE")"
 	else
+		DisplayCommitToLog false
+	fi
+
+	DisplayWaitCommitToLog "wait $PIDFILE_RECHECK_WAIT_SECONDS seconds to recheck PID:"
+	sleep "$PIDFILE_RECHECK_WAIT_SECONDS"
+	DisplayCommitToLog 'done'
+
+	DisplayWaitCommitToLog 'found daemon PID:'
+
+	if FindAndWritePIDFile; then
+		DisplayCommitToLog "$(<"$DAEMON_PID_PATHFILE")"
+	else
+		DisplayErrCommitAllLogs false
+		DisplayErrCommitAllLogs 'unable to locate active daemon process'
 		return 1
 	fi
 
@@ -627,11 +650,11 @@ WaitForDaemon()
 	if [[ -n $1 ]]; then
 		MAX_SECONDS=$1
 	else
-		MAX_SECONDS=$DAEMON_CHECK_TIMEOUT
+		MAX_SECONDS=$DAEMON_CHECK_TIMEOUT_SECONDS
 	fi
 
 	if [[ ! -e $1 ]]; then
-		DisplayWaitCommitToLog "wait for daemon to appear:"
+		DisplayWaitCommitToLog 'wait for daemon to appear:'
 		DisplayWait "(no-more than $MAX_SECONDS seconds):"
 
 		(
@@ -1186,13 +1209,11 @@ IsDaemonActive()
 	if [[ -n $VENV_INTERPRETER ]]; then
 		if IsProcessActive "$VENV_INTERPRETER" "$DAEMON_PID_PATHFILE"; then
 			DisplayCommitToLog true
-			DisplayCommitToLog "daemon PID: $(<"$DAEMON_PID_PATHFILE")"
 			return 0
 		fi
 	else
 		if IsProcessActive "$DAEMON_PATHFILE" "$DAEMON_PID_PATHFILE"; then
 			DisplayCommitToLog true
-			DisplayCommitToLog "daemon PID: $(<"$DAEMON_PID_PATHFILE")"
 			return 0
 		fi
 	fi
@@ -1345,7 +1366,7 @@ IsPortResponds()
 	local acc=0
 
 	DisplayWaitCommitToLog "test for port $port response:"
-	DisplayWait "(no-more than $PORT_CHECK_TIMEOUT seconds):"
+	DisplayWait "(no-more than $PORT_CHECK_TIMEOUT_SECONDS seconds):"
 
 	while true; do
 		if ! IsProcessActive "$DAEMON_PATHFILE" "$DAEMON_PID_PATHFILE"; then
@@ -1374,7 +1395,7 @@ IsPortResponds()
 		((acc+=1))
 		DisplayWait "$acc,"
 
-		if [[ $acc -ge $PORT_CHECK_TIMEOUT ]]; then
+		if [[ $acc -ge $PORT_CHECK_TIMEOUT_SECONDS ]]; then
 			DisplayCommitToLog 'failed!'
 			CommitErrToSysLog "port $port failed to respond after $acc seconds!"
 			break
@@ -1408,7 +1429,7 @@ IsPortSecureResponds()
 	local acc=0
 
 	DisplayWaitCommitToLog "test for secure port $port response:"
-	DisplayWait "(no-more than $PORT_CHECK_TIMEOUT seconds):"
+	DisplayWait "(no-more than $PORT_CHECK_TIMEOUT_SECONDS seconds):"
 
 	while true; do
 		if ! IsProcessActive "$DAEMON_PATHFILE" "$DAEMON_PID_PATHFILE"; then
@@ -1437,7 +1458,7 @@ IsPortSecureResponds()
 		((acc+=1))
 		DisplayWait "$acc,"
 
-		if [[ $acc -ge $PORT_CHECK_TIMEOUT ]]; then
+		if [[ $acc -ge $PORT_CHECK_TIMEOUT_SECONDS ]]; then
 			DisplayCommitToLog 'failed!'
 			CommitErrToSysLog "secure port $port failed to respond after $acc seconds!"
 			break
@@ -1595,7 +1616,7 @@ IsNotError()
 IsRestart()
 	{
 
-	[[ $service_operation = restarting ]]
+	[[ $service_operation = restart ]]
 
 	}
 
