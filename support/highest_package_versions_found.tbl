@@ -1,6 +1,6 @@
 # checksum_filename                  qpkg_filename                    package_name         version      arch   md5
 ClamAV_230513.qpkg.md5               ClamAV_230513.qpkg               ClamAV               230513       all    14fa3092fe570750b55cd5ded5e86e85
-Deluge-server_230513.qpkg.md5        Deluge-server_230513.qpkg        Deluge-server        230513       all    065af0f00dbfe3c9bff00828991787ee
+Deluge-server_230525.qpkg.md5        Deluge-server_230525.qpkg        Deluge-server        230525       all    adfa3ae147c88e1b136bb4b3e90f9b0e
 Deluge-web_230513.qpkg.md5           Deluge-web_230513.qpkg           Deluge-web           230513       all    f31fcbdccbc2e56e4f1c0f5349a9d152
 duf_220809_arm_64.qpkg.md5           duf_220809_arm_64.qpkg           duf                  220809       a64    7684a8940ba63704b95cbc713cd55b35
 duf_220809_arm-x31.qpkg.md5          duf_220809_arm-x31.qpkg          duf                  220809       a31    5aa8aef6f515eb5ae1d28991bc1d4084
@@ -14,7 +14,7 @@ HideThatBanner_230503.qpkg.md5       HideThatBanner_230503.qpkg       HideThatBa
 inxi_230329.qpkg.md5                 inxi_230329.qpkg                 inxi                 230329       all    5f3fcd8df30d526e8c45a4fb7e96d54e
 LazyLibrarian_230524.qpkg.md5        LazyLibrarian_230524.qpkg        LazyLibrarian        230524       all    a2a0b8ac456946cbf4a759687776cc09
 Mylar3_230524.qpkg.md5               Mylar3_230524.qpkg               Mylar3               230524       all    84840131a0889d2869152537ecb450ce
-NZBGet_230513.qpkg.md5               NZBGet_230513.qpkg               NZBGet               230513       all    9fd7bb731e369da500be65b93e0c9568
+NZBGet_230525.qpkg.md5               NZBGet_230525.qpkg               NZBGet               230525       all    27dd8006dfc9388819695faab9bbdc25
 NZBHydra2_230521_arm_64.qpkg.md5     NZBHydra2_230521_arm_64.qpkg     NZBHydra2            230521       a64    f5c6bb3a1292e5fc3ac01bb64f2a9ac3
 NZBHydra2_230521_x86_64.qpkg.md5     NZBHydra2_230521_x86_64.qpkg     NZBHydra2            230521       i64    ac22d9c223ff4863bda02f6243c03d57
 nzbToMedia_230513.qpkg.md5           nzbToMedia_230513.qpkg           nzbToMedia           230513       all    5018ca55414dc9e82da5d249fcfec9ee
@@ -24,9 +24,9 @@ OliveTin_230524_arm-x31.qpkg.md5     OliveTin_230524_arm-x31.qpkg     OliveTin  
 OliveTin_230524_arm-x41.qpkg.md5     OliveTin_230524_arm-x41.qpkg     OliveTin             230524       a41    c7068bcdf7fde6882eaa0d034eaa5967
 OliveTin_230524_x86_64.qpkg.md5      OliveTin_230524_x86_64.qpkg      OliveTin             230524       i64    d3a921f7b472edfb9f2a98b4032b44c1
 OMedusa_230524.qpkg.md5              OMedusa_230524.qpkg              OMedusa              230524       all    6f96852535ef33c854759bab4b010f55
-OqBittorrent_230513.qpkg.md5         OqBittorrent_230513.qpkg         OqBittorrent         230513       all    cce64489a0dc49c8c8db4dae000b0191
+OqBittorrent_230525.qpkg.md5         OqBittorrent_230525.qpkg         OqBittorrent         230525       all    69890ab2009464851da3e21fd5965144
 OSickGear_230524.qpkg.md5            OSickGear_230524.qpkg            OSickGear            230524       all    0c865125c0ff79e16060cd9e664d9dea
-OTransmission_230513.qpkg.md5        OTransmission_230513.qpkg        OTransmission        230513       all    e9357832d74e990e371fe2ca75d59490
+OTransmission_230525.qpkg.md5        OTransmission_230525.qpkg        OTransmission        230525       all    fb763bd1ce1ec87fc3f7b237020f9174
 OWatcher3_230524.qpkg.md5            OWatcher3_230524.qpkg            OWatcher3            230524       all    a6754734a1a857092fdc8c8e3fd9e009
 Par2_0.8.1.1_arm_64.qpkg.md5         Par2_0.8.1.1_arm_64.qpkg         Par2                 0.8.1.1      a64    b8e89f295bdec56eecae88ec685d1e23
 Par2_0.8.1.1_arm-x19.qpkg.md5        Par2_0.8.1.1_arm-x19.qpkg        Par2                 0.8.1.1      a19    d312d8bd2dee43e62a720f0d209905f8
