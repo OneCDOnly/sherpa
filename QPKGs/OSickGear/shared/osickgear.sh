@@ -20,7 +20,7 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=OSickGear
-	readonly SCRIPT_VERSION=230525
+	readonly SCRIPT_VERSION=230526
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -50,7 +50,7 @@ Init()
 	readonly SOURCE_ARCH=''
 	readonly SOURCE_GIT_BRANCH=main
 	# 'shallow' (depth 1) or 'single-branch' ... 'shallow' implies 'single-branch'
-	readonly SOURCE_GIT_DEPTH=single-branch
+	readonly SOURCE_GIT_BRANCH_DEPTH=single-branch
 	readonly QPKG_REPO_PATH=$QPKG_PATH/repo-cache
 	readonly PIP_CACHE_PATH=$QPKG_PATH/pip-cache
 	readonly INTERPRETER=/opt/bin/python3
@@ -129,10 +129,10 @@ ShowHelp()
 	Display
 	Display '[OPTION] may be any one of the following:'
 	Display
-	DisplayAsHelp start "launch $(FormatAsPackageName $QPKG_NAME) if not already running."
-	DisplayAsHelp stop "shutdown $(FormatAsPackageName $QPKG_NAME) if running."
+	DisplayAsHelp start "activate $(FormatAsPackageName $QPKG_NAME) if not already active."
+	DisplayAsHelp stop "deactivate $(FormatAsPackageName $QPKG_NAME) if active."
 	DisplayAsHelp restart "stop, then start $(FormatAsPackageName $QPKG_NAME)."
-	DisplayAsHelp status "check if $(FormatAsPackageName $QPKG_NAME) daemon is running. Returns \$? = 0 if running, 1 if not."
+	DisplayAsHelp status "check if $(FormatAsPackageName $QPKG_NAME) package is active. Returns \$? = 0 if active, 1 if not."
 	IsSupportBackup && DisplayAsHelp backup "backup the current $(FormatAsPackageName $QPKG_NAME) configuration to persistent storage."
 	IsSupportBackup && DisplayAsHelp restore "restore a previously saved configuration from persistent storage. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
 	IsSupportReset && DisplayAsHelp reset-config "delete the application configuration, databases and history. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
@@ -546,6 +546,7 @@ CleanLocalClone()
 	[[ -n $QPKG_REPO_PATH && -d $(/usr/bin/dirname "$QPKG_REPO_PATH")/$QPKG_NAME ]] && DisplayRunAndLog 'KLUDGE: remove previous local repository' "rm -r $(/usr/bin/dirname "$QPKG_REPO_PATH")/$QPKG_NAME" log:failure-only
 	[[ -n $VENV_PATH && -d $VENV_PATH ]] && DisplayRunAndLog 'clean virtual environment' "rm -rf $VENV_PATH" log:failure-only
 	[[ -n $PIP_CACHE_PATH && -d $PIP_CACHE_PATH ]] && DisplayRunAndLog 'clean PyPI cache' "rm -rf $PIP_CACHE_PATH" log:failure-only
+	[[ -e $APP_VERSION_STORE_PATHFILE ]] && DisplayRunAndLog 'remove application version' "rm -f $APP_VERSION_STORE_PATHFILE" log:failure-only
 
 	}
 
