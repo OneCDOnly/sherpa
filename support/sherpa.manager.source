@@ -1369,8 +1369,12 @@ AdjustMaxForks()
 				max_forks=1
 				reason="'$1'"
 				;;
-			backup|deactivate|disable|download|enable|status|uninstall)		# low-resource actions, so force multiple forks, even on ARMv5
+			backup|deactivate|download|uninstall)	# low-resource actions, so force multiple forks, even on ARMv5
 				max_forks=4
+				reason="'$1'"
+				;;
+			disable|enable|status)					# really low-resource actions
+				max_forks=8
 				reason="'$1'"
 		esac
 
