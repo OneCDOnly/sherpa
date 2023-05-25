@@ -20,7 +20,7 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=OWatcher3
-	readonly SCRIPT_VERSION=230524
+	readonly SCRIPT_VERSION=230525
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -606,6 +606,8 @@ FindAndWritePIDFile()
 WaitForPID()
 	{
 
+	local -i count=0
+
 	if [[ $PIDFILE_IS_MANAGED_BY_APP = true ]]; then
 		if WaitForFileToAppear "$DAEMON_PID_PATHFILE" "$PIDFILE_APPEAR_TIMEOUT_SECONDS"; then
 			sleep 1		# wait one more second to allow file to have PID written into it
@@ -621,7 +623,12 @@ WaitForPID()
 	fi
 
 	DisplayWaitCommitToLog "wait $PIDFILE_RECHECK_WAIT_SECONDS seconds to recheck PID:"
-	sleep "$PIDFILE_RECHECK_WAIT_SECONDS"
+
+	for ((count=1; count<=PIDFILE_RECHECK_WAIT_SECONDS; count++)); do
+		sleep 1
+		DisplayWait "$count,"
+	done
+
 	DisplayCommitToLog 'done'
 
 	DisplayWaitCommitToLog 'found daemon PID:'
@@ -669,6 +676,7 @@ WaitForDaemon()
 					exit	# only this sub-shell
 				fi
 			done
+
 			false
 		)
 
@@ -1858,7 +1866,7 @@ CommitToLog()
 	{
 
 	if IsNotStatus && IsNotLog && IsNotNone; then
-		echo -e "${1:-}" >> "$SERVICE_LOG_PATHFILE"
+		[[ ${1:-} = '•' && ! -s "$SERVICE_LOG_PATHFILE" ]] || echo -e "${1:-}" >> "$SERVICE_LOG_PATHFILE"
 	fi
 
 	}
