@@ -259,7 +259,7 @@ Self:Results()
 	DebugScript 'elapsed time' "$(FormatSecsToHoursMinutesSecs "$(($(/bin/date +%s)-SCRIPT_STARTSECONDS))")"
 	DebugInfoMajSepr
 
-	[[ ${self_debug_archive_afterward:=false} = true ]] && ArchiveActiveSessLog
+	[[ ${self_archive_debug_afterward:=false} = true ]] && ArchiveActiveSessLog
 	ResetActiveSessLog
 
 	if [[ $opts_verbose = false ]]; then
@@ -1633,7 +1633,7 @@ ParseArgs()
 						QPKGs.AC${action}.SC${group}:Set
 						group=''
 						;;
-					installed)
+					installed|NTinstalled)
 						QPKGs.AC${action}.IS${group}:Set
 						group=''
 						;;
@@ -5681,15 +5681,15 @@ EnableDebugToArchiveAndFile()
 	opts_debug=true
 	DebugVar opts_debug
 
-	self_debug_archive_afterward=true
-	DebugVar self_debug_archive_afterward
+	self_archive_debug_afterward=true
+	DebugVar self_archive_debug_afterward
 
 	}
 
 DisableDebugToArchiveAndFile()
 	{
 
-	self_debug_archive_afterward=false
+	self_archive_debug_afterward=false
 	opts_debug=false
 
 	}
