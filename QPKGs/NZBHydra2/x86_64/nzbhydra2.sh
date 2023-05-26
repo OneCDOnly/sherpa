@@ -20,7 +20,7 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=NZBHydra2
-	readonly SCRIPT_VERSION=230521
+	readonly SCRIPT_VERSION=230527
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -50,7 +50,7 @@ Init()
 	readonly SOURCE_ARCH=amd64-linux
 	readonly SOURCE_GIT_BRANCH=''
 	# 'shallow' (depth 1) or 'single-branch' ... 'shallow' implies 'single-branch'
-	readonly SOURCE_GIT_DEPTH=''
+	readonly SOURCE_GIT_BRANCH_DEPTH=''
 	readonly QPKG_REPO_PATH=$QPKG_PATH/repo-cache
 	readonly PIP_CACHE_PATH=''
 	readonly INTERPRETER=/opt/bin/python3
@@ -63,10 +63,13 @@ Init()
 	readonly DAEMON_PATHFILE=$QPKG_REPO_PATH/nzbhydra2wrapperPy3.py
 	readonly DAEMON_LAUNCH_CMD="cd $QPKG_REPO_PATH && $INTERPRETER $DAEMON_PATHFILE --nobrowser --daemon --datafolder $QPKG_CONFIG_PATH --pidfile $DAEMON_PID_PATHFILE"
 	readonly RUN_DAEMON_IN_SCREEN_SESSION=false
-	readonly PORT_CHECK_TIMEOUT=240
-	readonly DAEMON_CHECK_TIMEOUT=60
-	readonly DAEMON_STOP_TIMEOUT=120
-	readonly PIDFILE_APPEAR_TIMEOUT=60
+	readonly PORT_CHECK_TIMEOUT_SECONDS=240
+	readonly DAEMON_CHECK_TIMEOUT_SECONDS=60
+	readonly DAEMON_STOP_TIMEOUT_SECONDS=120
+	readonly PIDFILE_APPEAR_TIMEOUT_SECONDS=60
+	readonly PIDFILE_RECHECK_WAIT_SECONDS=10
+	readonly PIDFILE_IS_MANAGED_BY_APP=true
+
 	readonly GET_DAEMON_PORT_CMD=''
 	readonly GET_UI_PORT_CMD='parse_yaml '$QPKG_INI_PATHFILE' | /bin/grep main_port= | cut -d\" -f2'
 	readonly GET_UI_PORT_SECURE_CMD='parse_yaml '$QPKG_INI_PATHFILE' | /bin/grep main_port= | cut -d\" -f2'
@@ -102,6 +105,8 @@ Init()
 	LoadAppVersion
 
 	IsSupportBackup && [[ -n ${BACKUP_PATH:-} && ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
+	[[ -n ${VENV_PATH:-} && ! -d $VENV_PATH ]] && mkdir -p "$VENV_PATH"
+	[[ -n ${PIP_CACHE_PATH:-} && ! -d $PIP_CACHE_PATH ]] && mkdir -p "$PIP_CACHE_PATH"
 
 	IsAutoUpdateMissing && EnableAutoUpdate >/dev/null
 
@@ -124,10 +129,10 @@ ShowHelp()
 	Display
 	Display '[OPTION] may be any one of the following:'
 	Display
-	DisplayAsHelp start "launch $(FormatAsPackageName $QPKG_NAME) if not already running."
-	DisplayAsHelp stop "shutdown $(FormatAsPackageName $QPKG_NAME) if running."
+	DisplayAsHelp start "activate $(FormatAsPackageName $QPKG_NAME) if not already active."
+	DisplayAsHelp stop "deactivate $(FormatAsPackageName $QPKG_NAME) if active."
 	DisplayAsHelp restart "stop, then start $(FormatAsPackageName $QPKG_NAME)."
-	DisplayAsHelp status "check if $(FormatAsPackageName $QPKG_NAME) daemon is running. Returns \$? = 0 if running, 1 if not."
+	DisplayAsHelp status "check if $(FormatAsPackageName $QPKG_NAME) package is active. Returns \$? = 0 if active, 1 if not."
 	IsSupportBackup && DisplayAsHelp backup "backup the current $(FormatAsPackageName $QPKG_NAME) configuration to persistent storage."
 	IsSupportBackup && DisplayAsHelp restore "restore a previously saved configuration from persistent storage. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
 	IsSupportReset && DisplayAsHelp reset-config "delete the application configuration, databases and history. $(FormatAsPackageName $QPKG_NAME) will be stopped, then restarted."
@@ -211,7 +216,8 @@ StartQPKG()
 	fi
 
 	DisplayRunAndLog 'start daemon' "$DAEMON_LAUNCH_CMD" log:failure-only "$RUN_DAEMON_IN_SCREEN_SESSION"
-  	WaitForPID
+	WaitForDaemon
+	WaitForPID
 
 	if ! IsDaemonActive; then
 		DisplayErrCommitAllLogs 'IsDaemonActive() failed'
@@ -247,8 +253,8 @@ StopQPKG()
 
 		pid=$(<$DAEMON_PID_PATHFILE)
 		kill "$pid"
-		DisplayWaitCommitToLog 'stop daemon with SIGTERM:'
-		DisplayWait "(no-more than $DAEMON_STOP_TIMEOUT seconds):"
+		DisplayWaitCommitToLog "stop daemon PID ($pid) with SIGTERM:"
+		DisplayWait "(no-more than $DAEMON_STOP_TIMEOUT_SECONDS second$(Pluralise "$DAEMON_STOP_TIMEOUT_SECONDS")):"
 
 		while true; do
 			while [[ -d /proc/$pid ]]; do
@@ -256,9 +262,9 @@ StopQPKG()
 				((acc++))
 				DisplayWait "$acc,"
 
-				if [[ $acc -ge $DAEMON_STOP_TIMEOUT ]]; then
+				if [[ $acc -ge $DAEMON_STOP_TIMEOUT_SECONDS ]]; then
 					DisplayCommitToLog 'failed!'
-					DisplayCommitToLog 'stop daemon with SIGKILL'
+					DisplayCommitToLog "stop daemon PID ($pid) with SIGKILL:"
 					kill -9 "$pid" 2> /dev/null
 					[[ -f $DAEMON_PID_PATHFILE ]] && rm -f $DAEMON_PID_PATHFILE
 					break 2
@@ -267,7 +273,7 @@ StopQPKG()
 
 			[[ -f $DAEMON_PID_PATHFILE ]] && rm -f $DAEMON_PID_PATHFILE
 			Display OK
-			CommitToLog "stopped OK in $acc seconds"
+			CommitToLog "stopped in $acc second$(Pluralise "$acc")"
 
 			CommitInfoToSysLog 'stop daemon: OK'
 			break
@@ -419,6 +425,7 @@ CleanLocalClone()
 	[[ -n $QPKG_REPO_PATH && -d $(/usr/bin/dirname "$QPKG_REPO_PATH")/$QPKG_NAME ]] && DisplayRunAndLog 'KLUDGE: remove previous local repository' "rm -r $(/usr/bin/dirname "$QPKG_REPO_PATH")/$QPKG_NAME" log:failure-only
 	[[ -n $VENV_PATH && -d $VENV_PATH ]] && DisplayRunAndLog 'clean virtual environment' "rm -rf $VENV_PATH" log:failure-only
 	[[ -n $PIP_CACHE_PATH && -d $PIP_CACHE_PATH ]] && DisplayRunAndLog 'clean PyPI cache' "rm -rf $PIP_CACHE_PATH" log:failure-only
+	[[ -e $APP_VERSION_STORE_PATHFILE ]] && DisplayRunAndLog 'remove application version' "rm -f $APP_VERSION_STORE_PATHFILE" log:failure-only
 
 	}
 
@@ -463,7 +470,6 @@ FindAndWritePIDFile()
 	target_pid=$(tr -d ' ' <<< "$target_pid")
 
 	if [[ $target_pid -gt 0 ]]; then
-		Display "found PID: $target_pid"
 		echo "$target_pid" > "$DAEMON_PID_PATHFILE"
 		return 0
 	fi
@@ -475,10 +481,38 @@ FindAndWritePIDFile()
 WaitForPID()
 	{
 
-	if WaitForFileToAppear "$DAEMON_PID_PATHFILE" "$PIDFILE_APPEAR_TIMEOUT"; then
-		sleep 1		# wait one more second to allow file to have PID written into it
-		return 0
+	local -i count=0
+
+	if [[ $PIDFILE_IS_MANAGED_BY_APP = true ]]; then
+		if WaitForFileToAppear "$DAEMON_PID_PATHFILE" "$PIDFILE_APPEAR_TIMEOUT_SECONDS"; then
+			sleep 1		# wait one more second to allow file to have PID written into it
+		fi
+	fi
+
+	DisplayWaitCommitToLog 'found daemon PID:'
+
+	if FindAndWritePIDFile; then
+		DisplayCommitToLog "$(<"$DAEMON_PID_PATHFILE")"
 	else
+		DisplayCommitToLog false
+	fi
+
+	DisplayWaitCommitToLog "wait $PIDFILE_RECHECK_WAIT_SECONDS second$(Pluralise "$PIDFILE_RECHECK_WAIT_SECONDS") to recheck PID:"
+
+	for ((count=1; count<=PIDFILE_RECHECK_WAIT_SECONDS; count++)); do
+		sleep 1
+		DisplayWait "$count,"
+	done
+
+	DisplayCommitToLog 'done'
+
+	DisplayWaitCommitToLog 'found daemon PID:'
+
+	if FindAndWritePIDFile; then
+		DisplayCommitToLog "$(<"$DAEMON_PID_PATHFILE")"
+	else
+		DisplayErrCommitAllLogs false
+		DisplayErrCommitAllLogs 'unable to locate active daemon process'
 		return 1
 	fi
 
@@ -498,12 +532,12 @@ WaitForDaemon()
 	if [[ -n $1 ]]; then
 		MAX_SECONDS=$1
 	else
-		MAX_SECONDS=$DAEMON_CHECK_TIMEOUT
+		MAX_SECONDS=$DAEMON_CHECK_TIMEOUT_SECONDS
 	fi
 
 	if [[ ! -e $1 ]]; then
-		DisplayWaitCommitToLog "wait for daemon to appear:"
-		DisplayWait "(no-more than $MAX_SECONDS seconds):"
+		DisplayWaitCommitToLog 'wait for daemon to appear:'
+		DisplayWait "(no-more than $MAX_SECONDS second$(Pluralise "$MAX_SECONDS")):"
 
 		(
 			for ((count=1; count<=MAX_SECONDS; count++)); do
@@ -512,17 +546,18 @@ WaitForDaemon()
 
 				if IsProcessActive "$DAEMON_PATHFILE" "$DAEMON_PID_PATHFILE"; then
 					Display OK
-					CommitToLog "active after $count second$(FormatAsPlural "$count")"
+					CommitToLog "active after $count second$(Pluralise "$count")"
 					true
 					exit	# only this sub-shell
 				fi
 			done
+
 			false
 		)
 
 		if [[ $? -ne 0 ]]; then
 			DisplayCommitToLog 'failed!'
-			DisplayErrCommitAllLogs "daemon not found! (exceeded timeout: $MAX_SECONDS seconds)"
+			DisplayErrCommitAllLogs "daemon not found! (exceeded timeout: $MAX_SECONDS second$(Pluralise "$MAX_SECONDS"))"
 			return 1
 		fi
 	fi
@@ -554,7 +589,7 @@ WaitForFileToAppear()
 
 	if [[ ! -e $1 ]]; then
 		DisplayWaitCommitToLog "wait for $1 to appear:"
-		DisplayWait "(no-more than $MAX_SECONDS seconds):"
+		DisplayWait "(no-more than $MAX_SECONDS second$(Pluralise "$MAX_SECONDS")):"
 
 		(
 			for ((count=1; count<=MAX_SECONDS; count++)); do
@@ -563,7 +598,7 @@ WaitForFileToAppear()
 
 				if [[ -e $1 ]]; then
 					Display OK
-					CommitToLog "visible after $count second$(FormatAsPlural "$count")"
+					CommitToLog "visible after $count second$(Pluralise "$count")"
 					true
 					exit	# only this sub-shell
 				fi
@@ -573,7 +608,7 @@ WaitForFileToAppear()
 
 		if [[ $? -ne 0 ]]; then
 			DisplayCommitToLog 'failed!'
-			DisplayErrCommitAllLogs "$1 not found! (exceeded timeout: $MAX_SECONDS seconds)"
+			DisplayErrCommitAllLogs "$1 not found! (exceeded timeout: $MAX_SECONDS second$(Pluralise "$MAX_SECONDS"))"
 			return 1
 		fi
 	fi
@@ -1078,13 +1113,11 @@ IsDaemonActive()
 	if [[ -n $VENV_INTERPRETER ]]; then
 		if IsProcessActive "$VENV_INTERPRETER" "$DAEMON_PID_PATHFILE"; then
 			DisplayCommitToLog true
-			DisplayCommitToLog "daemon PID: $(<"$DAEMON_PID_PATHFILE")"
 			return 0
 		fi
 	else
 		if IsProcessActive "$DAEMON_PATHFILE" "$DAEMON_PID_PATHFILE"; then
 			DisplayCommitToLog true
-			DisplayCommitToLog "daemon PID: $(<"$DAEMON_PID_PATHFILE")"
 			return 0
 		fi
 	fi
@@ -1237,7 +1270,7 @@ IsPortResponds()
 	local acc=0
 
 	DisplayWaitCommitToLog "test for port $port response:"
-	DisplayWait "(no-more than $PORT_CHECK_TIMEOUT seconds):"
+	DisplayWait "(no-more than $PORT_CHECK_TIMEOUT_SECONDS second$(Pluralise "$PORT_CHECK_TIMEOUT_SECONDS")):"
 
 	while true; do
 		if ! IsProcessActive "$DAEMON_PATHFILE" "$DAEMON_PID_PATHFILE"; then
@@ -1250,7 +1283,7 @@ IsPortResponds()
 		case $? in
 			0|22|52)	# accept these exitcodes as evidence of valid responses
 				Display OK
-				CommitToLog "port responded after $acc seconds"
+				CommitToLog "port responded after $acc second$(Pluralise "$acc")"
 				return 0
 				;;
 			28)			# timeout
@@ -1266,9 +1299,9 @@ IsPortResponds()
 		((acc+=1))
 		DisplayWait "$acc,"
 
-		if [[ $acc -ge $PORT_CHECK_TIMEOUT ]]; then
+		if [[ $acc -ge $PORT_CHECK_TIMEOUT_SECONDS ]]; then
 			DisplayCommitToLog 'failed!'
-			CommitErrToSysLog "port $port failed to respond after $acc seconds!"
+			CommitErrToSysLog "port $port failed to respond after $acc second$(Pluralise "$acc")!"
 			break
 		fi
 	done
@@ -1300,7 +1333,7 @@ IsPortSecureResponds()
 	local acc=0
 
 	DisplayWaitCommitToLog "test for secure port $port response:"
-	DisplayWait "(no-more than $PORT_CHECK_TIMEOUT seconds):"
+	DisplayWait "(no-more than $PORT_CHECK_TIMEOUT_SECONDS second$(Pluralise "$PORT_CHECK_TIMEOUT_SECONDS")):"
 
 	while true; do
 		if ! IsProcessActive "$DAEMON_PATHFILE" "$DAEMON_PID_PATHFILE"; then
@@ -1313,7 +1346,7 @@ IsPortSecureResponds()
 		case $? in
 			0|22|52)	# accept these exitcodes as evidence of valid responses
 				Display OK
-				CommitToLog "port responded after $acc seconds"
+				CommitToLog "port responded after $acc second$(Pluralise "$acc")"
 				return 0
 				;;
 			28)			# timeout
@@ -1329,9 +1362,9 @@ IsPortSecureResponds()
 		((acc+=1))
 		DisplayWait "$acc,"
 
-		if [[ $acc -ge $PORT_CHECK_TIMEOUT ]]; then
+		if [[ $acc -ge $PORT_CHECK_TIMEOUT_SECONDS ]]; then
 			DisplayCommitToLog 'failed!'
-			CommitErrToSysLog "secure port $port failed to respond after $acc seconds!"
+			CommitErrToSysLog "secure port $port failed to respond after $acc second$(Pluralise "$acc")!"
 			break
 		fi
 	done
@@ -1487,7 +1520,7 @@ IsNotError()
 IsRestart()
 	{
 
-	[[ $service_operation = restarting ]]
+	[[ $service_operation = restart ]]
 
 	}
 
@@ -1729,7 +1762,7 @@ CommitToLog()
 	{
 
 	if IsNotStatus && IsNotLog && IsNotNone; then
-		echo -e "${1:-}" >> "$SERVICE_LOG_PATHFILE"
+		[[ ${1:-} = '•' && ! -s "$SERVICE_LOG_PATHFILE" ]] || echo -e "${1:-}" >> "$SERVICE_LOG_PATHFILE"
 	fi
 
 	}
@@ -1802,10 +1835,10 @@ ColourTextInverse()
 
 	} 2>/dev/null
 
-FormatAsPlural()
+Pluralise()
 	{
 
-	[[ $1 -ne 1 ]] && echo s
+	[[ ${1:-0} -ne 1 ]] && echo s
 
 	}
 
