@@ -20,7 +20,7 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=SABnzbd
-	readonly SCRIPT_VERSION=230526
+	readonly SCRIPT_VERSION=230527
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -237,7 +237,7 @@ StopQPKG()
 		pid=$(<$DAEMON_PID_PATHFILE)
 		kill "$pid"
 		DisplayWaitCommitToLog "stop daemon PID ($pid) with SIGTERM:"
-		DisplayWait "(no-more than $DAEMON_STOP_TIMEOUT_SECONDS seconds):"
+		DisplayWait "(no-more than $DAEMON_STOP_TIMEOUT_SECONDS second$(Pluralise "$DAEMON_STOP_TIMEOUT_SECONDS")):"
 
 		while true; do
 			while [[ -d /proc/$pid ]]; do
@@ -256,7 +256,7 @@ StopQPKG()
 
 			[[ -f $DAEMON_PID_PATHFILE ]] && rm -f $DAEMON_PID_PATHFILE
 			Display OK
-			CommitToLog "stopped in $acc seconds"
+			CommitToLog "stopped in $acc second$(Pluralise "$acc")"
 
 			CommitInfoToSysLog 'stop daemon: OK'
 			break
@@ -629,7 +629,7 @@ WaitForPID()
 		DisplayCommitToLog false
 	fi
 
-	DisplayWaitCommitToLog "wait $PIDFILE_RECHECK_WAIT_SECONDS seconds to recheck PID:"
+	DisplayWaitCommitToLog "wait $PIDFILE_RECHECK_WAIT_SECONDS second$(Pluralise "$PIDFILE_RECHECK_WAIT_SECONDS") to recheck PID:"
 
 	for ((count=1; count<=PIDFILE_RECHECK_WAIT_SECONDS; count++)); do
 		sleep 1
@@ -669,7 +669,7 @@ WaitForDaemon()
 
 	if [[ ! -e $1 ]]; then
 		DisplayWaitCommitToLog 'wait for daemon to appear:'
-		DisplayWait "(no-more than $MAX_SECONDS seconds):"
+		DisplayWait "(no-more than $MAX_SECONDS second$(Pluralise "$MAX_SECONDS")):"
 
 		(
 			for ((count=1; count<=MAX_SECONDS; count++)); do
@@ -678,7 +678,7 @@ WaitForDaemon()
 
 				if IsProcessActive "$DAEMON_PATHFILE" "$DAEMON_PID_PATHFILE"; then
 					Display OK
-					CommitToLog "active after $count second$(FormatAsPlural "$count")"
+					CommitToLog "active after $count second$(Pluralise "$count")"
 					true
 					exit	# only this sub-shell
 				fi
@@ -689,7 +689,7 @@ WaitForDaemon()
 
 		if [[ $? -ne 0 ]]; then
 			DisplayCommitToLog 'failed!'
-			DisplayErrCommitAllLogs "daemon not found! (exceeded timeout: $MAX_SECONDS seconds)"
+			DisplayErrCommitAllLogs "daemon not found! (exceeded timeout: $MAX_SECONDS second$(Pluralise "$MAX_SECONDS"))"
 			return 1
 		fi
 	fi
@@ -721,7 +721,7 @@ WaitForFileToAppear()
 
 	if [[ ! -e $1 ]]; then
 		DisplayWaitCommitToLog "wait for $1 to appear:"
-		DisplayWait "(no-more than $MAX_SECONDS seconds):"
+		DisplayWait "(no-more than $MAX_SECONDS second$(Pluralise "$MAX_SECONDS")):"
 
 		(
 			for ((count=1; count<=MAX_SECONDS; count++)); do
@@ -730,7 +730,7 @@ WaitForFileToAppear()
 
 				if [[ -e $1 ]]; then
 					Display OK
-					CommitToLog "visible after $count second$(FormatAsPlural "$count")"
+					CommitToLog "visible after $count second$(Pluralise "$count")"
 					true
 					exit	# only this sub-shell
 				fi
@@ -740,7 +740,7 @@ WaitForFileToAppear()
 
 		if [[ $? -ne 0 ]]; then
 			DisplayCommitToLog 'failed!'
-			DisplayErrCommitAllLogs "$1 not found! (exceeded timeout: $MAX_SECONDS seconds)"
+			DisplayErrCommitAllLogs "$1 not found! (exceeded timeout: $MAX_SECONDS second$(Pluralise "$MAX_SECONDS"))"
 			return 1
 		fi
 	fi
@@ -1374,7 +1374,7 @@ IsPortResponds()
 	local acc=0
 
 	DisplayWaitCommitToLog "test for port $port response:"
-	DisplayWait "(no-more than $PORT_CHECK_TIMEOUT_SECONDS seconds):"
+	DisplayWait "(no-more than $PORT_CHECK_TIMEOUT_SECONDS second$(Pluralise "$PORT_CHECK_TIMEOUT_SECONDS")):"
 
 	while true; do
 		if ! IsProcessActive "$DAEMON_PATHFILE" "$DAEMON_PID_PATHFILE"; then
@@ -1387,7 +1387,7 @@ IsPortResponds()
 		case $? in
 			0|22|52)	# accept these exitcodes as evidence of valid responses
 				Display OK
-				CommitToLog "port responded after $acc seconds"
+				CommitToLog "port responded after $acc second$(Pluralise "$acc")"
 				return 0
 				;;
 			28)			# timeout
@@ -1405,7 +1405,7 @@ IsPortResponds()
 
 		if [[ $acc -ge $PORT_CHECK_TIMEOUT_SECONDS ]]; then
 			DisplayCommitToLog 'failed!'
-			CommitErrToSysLog "port $port failed to respond after $acc seconds!"
+			CommitErrToSysLog "port $port failed to respond after $acc second$(Pluralise "$acc")!"
 			break
 		fi
 	done
@@ -1437,7 +1437,7 @@ IsPortSecureResponds()
 	local acc=0
 
 	DisplayWaitCommitToLog "test for secure port $port response:"
-	DisplayWait "(no-more than $PORT_CHECK_TIMEOUT_SECONDS seconds):"
+	DisplayWait "(no-more than $PORT_CHECK_TIMEOUT_SECONDS second$(Pluralise "$PORT_CHECK_TIMEOUT_SECONDS")):"
 
 	while true; do
 		if ! IsProcessActive "$DAEMON_PATHFILE" "$DAEMON_PID_PATHFILE"; then
@@ -1450,7 +1450,7 @@ IsPortSecureResponds()
 		case $? in
 			0|22|52)	# accept these exitcodes as evidence of valid responses
 				Display OK
-				CommitToLog "port responded after $acc seconds"
+				CommitToLog "port responded after $acc second$(Pluralise "$acc")"
 				return 0
 				;;
 			28)			# timeout
@@ -1468,7 +1468,7 @@ IsPortSecureResponds()
 
 		if [[ $acc -ge $PORT_CHECK_TIMEOUT_SECONDS ]]; then
 			DisplayCommitToLog 'failed!'
-			CommitErrToSysLog "secure port $port failed to respond after $acc seconds!"
+			CommitErrToSysLog "secure port $port failed to respond after $acc second$(Pluralise "$acc")!"
 			break
 		fi
 	done
@@ -1939,10 +1939,10 @@ ColourTextInverse()
 
 	} 2>/dev/null
 
-FormatAsPlural()
+Pluralise()
 	{
 
-	[[ $1 -ne 1 ]] && echo s
+	[[ ${1:-0} -ne 1 ]] && echo s
 
 	}
 
