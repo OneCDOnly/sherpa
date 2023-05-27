@@ -349,7 +349,7 @@ Consts:Load()
 	readonly ACTION_MSG_PIPE=/var/run/sherpa.action.messages.pipe
 
 	readonly FILE_CHANGE_THRESHOLD_MINUTES=60
-	readonly STATUS_CHECK_TIMEOUT_SECONDS=10
+	readonly QPKG_STATUS_CHECK_TIMEOUT_SECONDS=15
 	readonly QPKG_START_TIMEOUT_SECONDS=1500		# 25 minutes
 	readonly QPKG_RESTART_TIMEOUT_SECONDS=1800		# 30 minutes
 	readonly QPKG_STOP_TIMEOUT_SECONDS=300			# 5 minutes
@@ -6832,7 +6832,7 @@ _QPKG:status_()
 		[[ $opts_debug = true ]] && debug_cmd='DEBUG_QPKG=true '
 
 		if [[ -e $GNU_TIMEOUT_CMD ]]; then
-			$GNU_TIMEOUT_CMD "$STATUS_CHECK_TIMEOUT_SECONDS" /bin/bash -c "${debug_cmd}$(QPKG.ServicePathFile) status"
+			$GNU_TIMEOUT_CMD "$QPKG_STATUS_CHECK_TIMEOUT_SECONDS" /bin/bash -c "${debug_cmd}$(QPKG.ServicePathFile) status"
 			result_code=$?
 		else
 			RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) status" "$LOGS_PATH/$PACKAGE_NAME.$STATUS_LOG_FILE" log:failure-only
