@@ -20,7 +20,7 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=SABnzbd
-	readonly SCRIPT_VERSION=230527
+	readonly SCRIPT_VERSION=230529
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -33,7 +33,7 @@ Init()
 	readonly SERVICE_STATUS_PATHFILE=/var/run/$QPKG_NAME.last.operation
 	readonly DAEMON_PID_PATHFILE=/var/run/$QPKG_NAME.pid
 	readonly SERVICE_LOG_PATHFILE=/var/log/$QPKG_NAME.log
-	readonly DAEMON_LOG_PATHFILE=/var/log/$QPKG_NAME.daemon.log
+	readonly SCREEN_LOG_PATHFILE=/var/log/$QPKG_NAME.screen.log
 	local -r BACKUP_PATH=$(/sbin/getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
 	readonly BACKUP_PATHFILE=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
 	readonly OPKG_PATH=/opt/bin:/opt/sbin
@@ -111,7 +111,7 @@ Init()
 	IsAutoUpdateMissing && EnableAutoUpdate >/dev/null
 
 	if [[ $RUN_DAEMON_IN_SCREEN_SESSION = true && ! -e $SCREEN_CONF_PATHFILE ]]; then
-		echo "logfile $DAEMON_LOG_PATHFILE" > "$SCREEN_CONF_PATHFILE"
+		echo "logfile $SCREEN_LOG_PATHFILE" > "$SCREEN_CONF_PATHFILE"
 		echo 'logfile flush 1' >> "$SCREEN_CONF_PATHFILE"
 		echo 'log on' >> "$SCREEN_CONF_PATHFILE"
 	fi
@@ -198,18 +198,22 @@ StartQPKG()
 		return 1
 	fi
 
-	DisplayRunAndLog 'start daemon' "$DAEMON_LAUNCH_CMD" log:failure-only "$RUN_DAEMON_IN_SCREEN_SESSION"
+	if ! DisplayRunAndLog 'start daemon' "$DAEMON_LAUNCH_CMD" log:failure-only "$RUN_DAEMON_IN_SCREEN_SESSION"; then
+		SetError
+		return 1
+	fi
+
 	WaitForDaemon
 	WaitForPID
 
 	if ! IsDaemonActive; then
-		DisplayErrCommitAllLogs 'IsDaemonActive() failed'
+		DisplayErrCommitAllLogs 'IsDaemonActive() failed!'
 		SetError
 		return 1
 	fi
 
 	if ! CheckPorts; then
-		DisplayErrCommitAllLogs 'CheckPorts() failed'
+		DisplayErrCommitAllLogs 'CheckPorts() failed!'
 		SetError
 		return 1
 	fi
@@ -249,12 +253,12 @@ StopQPKG()
 					DisplayCommitToLog 'failed!'
 					DisplayCommitToLog "stop daemon PID ($pid) with SIGKILL:"
 					kill -9 "$pid" 2> /dev/null
-					[[ -f $DAEMON_PID_PATHFILE ]] && rm -f $DAEMON_PID_PATHFILE
+					[[ -f $DAEMON_PID_PATHFILE ]] && rm -f "$DAEMON_PID_PATHFILE"
 					break 2
 				fi
 			done
 
-			[[ -f $DAEMON_PID_PATHFILE ]] && rm -f $DAEMON_PID_PATHFILE
+			[[ -f $DAEMON_PID_PATHFILE ]] && rm -f "$DAEMON_PID_PATHFILE"
 			Display OK
 			CommitToLog "stopped in $acc second$(Pluralise "$acc")"
 
@@ -320,7 +324,7 @@ InstallAddons()
 			if [[ -e $target ]]; then
 				for module in $(<$rebuild_pathfile); do
 					if (/bin/grep -q $module < "$target") && ! (/bin/grep -q -- "--no-binary=$module" < "$target"); then
-						DisplayRunAndLog "include rebuild directive for '$module' in '$(JustFile "$target")'" "echo \"--no-binary=$module\" >> $target" log:failure-only || SetError
+						DisplayRunAndLog "include rebuild directive for '$module' in '$(/usr/bin/basename "$target")'" "echo \"--no-binary=$module\" >> $target" log:failure-only || SetError
 					fi
 				done
 			fi
@@ -337,7 +341,7 @@ InstallAddons()
 
 		for target in $requirements_pathfile $recommended_pathfile $pyproject_pathfile; do
 			if [[ -e $target ]]; then
-				DisplayRunAndLog "exclude problem PyPI modules from '$(JustFile "$target")'" "/bin/sed -i '${module_exclusions_re}/d' $target" log:failure-only || SetError
+				DisplayRunAndLog "exclude problem PyPI modules from '$(/usr/bin/basename "$target")'" "/bin/sed -i '${module_exclusions_re}/d' $target" log:failure-only || SetError
 			fi
 		done
 	fi
@@ -346,7 +350,7 @@ InstallAddons()
 
 	for target in $requirements_pathfile $recommended_pathfile; do
 		if [[ -e $target ]]; then
-			DisplayRunAndLog "install PyPI modules from '$(JustFile "$target")'" ". $VENV_PATH/bin/activate && pip install${pip_deps} --no-input --upgrade pip -r $target" log:failure-only || SetError
+			DisplayRunAndLog "install PyPI modules from '$(/usr/bin/basename "$target")'" ". $VENV_PATH/bin/activate && pip install${pip_deps} --no-input --upgrade pip -r $target" log:failure-only || SetError
 			no_pips_installed=false
 		fi
 	done
@@ -355,17 +359,23 @@ InstallAddons()
 
 	if [[ $no_pips_installed = true ]]; then
 		if [[ -e $QPKG_REPO_PATH/setup.py || -e $pyproject_pathfile ]]; then
-			DisplayRunAndLog "install PyPI modules from '$(JustFile "$target")'" ". $VENV_PATH/bin/activate && pip install${pip_deps} --no-input --upgrade pip $QPKG_REPO_PATH" log:failure-only || SetError
+			DisplayRunAndLog "install PyPI modules from '$(/usr/bin/basename "$target")'" ". $VENV_PATH/bin/activate && pip install${pip_deps} --no-input --upgrade pip $QPKG_REPO_PATH" log:failure-only || SetError
 			no_pips_installed=false
 		fi
 	fi
 
 	if [[ $QPKG_NAME = SABnzbd ]]; then
-		# run [tools/make_mo.py] if SABnzbd version number has changed since last run
 		LoadAppVersion
 
+		if [[ $new_env = false && $(<"$APP_VERSION_STORE_PATHFILE") != "$app_version" ]]; then
+			# remove existing .pyc files to prevent runtime errors
+			DisplayRunAndLog "clean Python bytecode files" "cd $QPKG_REPO_PATH; /usr/bin/find . -type d -name '__pycache__' -print0 | xargs -I {} -0 rm -rf '{}'
+" log:failure-only
+		fi
+
 		if [[ ! -e $APP_VERSION_STORE_PATHFILE || $(<"$APP_VERSION_STORE_PATHFILE") != "$app_version" ]]; then
- 			DisplayRunAndLog "update $(FormatAsPackageName $QPKG_NAME) language translations" ". $VENV_PATH/bin/activate && cd $QPKG_REPO_PATH; $VENV_INTERPRETER $QPKG_REPO_PATH/tools/make_mo.py" log:failure-only
+			# generate language translations
+			DisplayRunAndLog "generate language translations" ". $VENV_PATH/bin/activate && cd $QPKG_REPO_PATH; $VENV_INTERPRETER $QPKG_REPO_PATH/tools/make_mo.py" log:failure-only
 		fi
 
 		SaveAppVersion
@@ -553,11 +563,11 @@ CleanLocalClone()
 		return 1
 	fi
 
-	DisplayRunAndLog 'clean local repository' "rm -rf $QPKG_REPO_PATH" log:failure-only
-	[[ -n $QPKG_REPO_PATH && -d $(/usr/bin/dirname "$QPKG_REPO_PATH")/$QPKG_NAME ]] && DisplayRunAndLog 'KLUDGE: remove previous local repository' "rm -r $(/usr/bin/dirname "$QPKG_REPO_PATH")/$QPKG_NAME" log:failure-only
-	[[ -n $VENV_PATH && -d $VENV_PATH ]] && DisplayRunAndLog 'clean virtual environment' "rm -rf $VENV_PATH" log:failure-only
-	[[ -n $PIP_CACHE_PATH && -d $PIP_CACHE_PATH ]] && DisplayRunAndLog 'clean PyPI cache' "rm -rf $PIP_CACHE_PATH" log:failure-only
-	[[ -e $APP_VERSION_STORE_PATHFILE ]] && DisplayRunAndLog 'remove application version' "rm -f $APP_VERSION_STORE_PATHFILE" log:failure-only
+	DisplayRunAndLog 'clean local repository' "rm -rf \"$QPKG_REPO_PATH\"" log:failure-only
+	[[ -n $QPKG_REPO_PATH && -d $(/usr/bin/dirname "$QPKG_REPO_PATH")/$QPKG_NAME ]] && DisplayRunAndLog 'KLUDGE: remove previous local repository' "rm -r \"$(/usr/bin/dirname "$QPKG_REPO_PATH")/$QPKG_NAME\"" log:failure-only
+	[[ -n $VENV_PATH && -d $VENV_PATH ]] && DisplayRunAndLog 'clean virtual environment' "rm -rf \"$VENV_PATH\"" log:failure-only
+	[[ -n $PIP_CACHE_PATH && -d $PIP_CACHE_PATH ]] && DisplayRunAndLog 'clean PyPI cache' "rm -rf \"$PIP_CACHE_PATH\"" log:failure-only
+	[[ -e $APP_VERSION_STORE_PATHFILE ]] && DisplayRunAndLog 'remove application version' "rm -f \"$APP_VERSION_STORE_PATHFILE\"" log:failure-only
 
 	}
 
@@ -810,18 +820,21 @@ DisplayRunAndLog()
 	RunAndLog "${2:?empty}" "$LOG_PATHFILE" "${3:-}" '' "${4:-false}"
 	result_code=$?
 
-	if [[ -e $LOG_PATHFILE ]]; then
-		rm -f "$LOG_PATHFILE"
+	if [[ $result_code -eq 0 ]]; then
+		[[ ${3:-} != log:failure-only ]] && CommitInfoToSysLog "${1:?empty}: OK"
+		DisplayCommitToLog OK
+	else
+		DisplayErrCommitAllLogs 'failed!'
 	fi
 
 	if [[ $result_code -eq 0 ]]; then
-		[[ ${3:-} != log:failure-only ]] && CommitInfoToSysLog "${1:?empty}: OK"
-		[[ $debug = false ]] && DisplayCommitToLog OK
-		return 0
+		[[ ${3:-} != log:failure-only ]] && AddFileToDebug "$LOG_PATHFILE"
 	else
-		DisplayErrCommitAllLogs 'failed!'
-		return 1
+		[[ $result_code -ne ${4:-} ]] && AddFileToDebug "$LOG_PATHFILE"
 	fi
+
+	[[ -e $LOG_PATHFILE ]] && rm -f "$LOG_PATHFILE"
+	return $result_code
 
 	}
 
@@ -853,13 +866,14 @@ RunAndLog()
 		if [[ ${5:-false} = false ]]; then
 			Display "exec: '$1'"
 			eval "$1 > >(/usr/bin/tee $LOG_PATHFILE) 2>&1"		# NOTE: 'tee' buffers stdout here
-			result_code=$?
+			result_code=${PIPESTATUS[0]}						# must use $PIPESTATUS after `tee` to get returncode of previous command: https://stackoverflow.com/questions/1221833/pipe-output-and-capture-exit-status-in-bash
 		else
 			Display "exec (in screen session): '$1'"
 		fi
 	else
 		if [[ ${5:-false} = false ]]; then
-			(eval "$1" > "$LOG_PATHFILE" 2>&1)			# run in a subshell to suppress 'Terminated' message later
+			(eval "$1" > "$LOG_PATHFILE" 2>&1)					# run in a subshell to suppress 'Terminated' message later
+			result_code=$?
 		fi
 	fi
 
@@ -870,19 +884,19 @@ RunAndLog()
 
 	if [[ -e $LOG_PATHFILE ]]; then
 		FormatAsResultAndStdout "$result_code" "$(<"$LOG_PATHFILE")" >> "$2"
-		rm -f "$LOG_PATHFILE"
 	else
 		FormatAsResultAndStdout "$result_code" '<null>' >> "$2"
 	fi
 
-	if [[ $result_code -eq 0 ]]; then
-		[[ ${3:-} != log:failure-only ]] && AddFileToDebug "$2"
-		[[ $debug = true ]] && Display 'exec: completed OK' || rm -f "$2"
-	else
-		[[ $result_code -ne ${4:-} ]] && AddFileToDebug "$2"
-		[[ $debug = true ]] && Display 'exec: completed, but with errors'
+	if [[ $debug = true ]]; then
+		if [[ $result_code -eq 0 ]]; then
+			Display 'exec: completed OK'
+		else
+			Display 'exec: completed, but with errors'
+		fi
 	fi
 
+	[[ -e $LOG_PATHFILE ]] && rm -f "$LOG_PATHFILE"
 	return $result_code
 
 	}
@@ -1943,14 +1957,6 @@ Pluralise()
 	{
 
 	[[ ${1:-0} -ne 1 ]] && echo s
-
-	}
-
-JustFile()
-	{
-
-	local name=$(/usr/bin/basename "$1")
-	echo "${name%%.*}"
 
 	}
 
