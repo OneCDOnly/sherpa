@@ -32,6 +32,9 @@ Init()
 	readonly APP_VERSION_STORE_PATHFILE=$QPKG_CONFIG_PATH/version.stored
 	readonly SERVICE_STATUS_PATHFILE=/var/run/$QPKG_NAME.last.operation
 	readonly DAEMON_PID_PATHFILE=/var/run/$QPKG_NAME.pid
+	readonly QPKG_REPO_PATH=$QPKG_PATH/repo-cache
+	readonly PIP_CACHE_PATH=$QPKG_PATH/pip-cache
+	readonly VENV_PATH=$QPKG_PATH/venv
 	readonly SERVICE_LOG_PATHFILE=/var/log/$QPKG_NAME.log
 	readonly SCREEN_LOG_PATHFILE=/var/log/$QPKG_NAME.screen.log
 	local -r BACKUP_PATH=$(/sbin/getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
@@ -51,13 +54,13 @@ Init()
 	readonly SOURCE_GIT_BRANCH=master
 	# 'shallow' (depth 1) or 'single-branch' ... 'shallow' implies 'single-branch'
 	readonly SOURCE_GIT_BRANCH_DEPTH=shallow
-	readonly QPKG_REPO_PATH=$QPKG_PATH/repo-cache
-	readonly PIP_CACHE_PATH=$QPKG_PATH/pip-cache
 	readonly INTERPRETER=/opt/bin/python3
-	readonly VENV_PATH=$QPKG_PATH/venv
 	readonly VENV_INTERPRETER=$VENV_PATH/bin/python3
 	readonly ALLOW_ACCESS_TO_SYS_PACKAGES=true
 	readonly INSTALL_PIP_DEPS=true
+
+    # specific to Entware binaries only
+	readonly ORIG_DAEMON_SERVICE_SCRIPT=''
 
 	# specific to daemonised applications only
 	readonly DAEMON_PATHFILE=$QPKG_REPO_PATH/SABnzbd.py
