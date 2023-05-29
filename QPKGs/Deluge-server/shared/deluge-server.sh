@@ -20,7 +20,7 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=Deluge-server
-	readonly SCRIPT_VERSION=230526
+	readonly SCRIPT_VERSION=230529
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -32,8 +32,11 @@ Init()
 	readonly APP_VERSION_STORE_PATHFILE=$QPKG_CONFIG_PATH/version.stored
 	readonly SERVICE_STATUS_PATHFILE=/var/run/$QPKG_NAME.last.operation
 	readonly DAEMON_PID_PATHFILE=/var/run/$QPKG_NAME.pid
+	readonly QPKG_REPO_PATH=''
+	readonly PIP_CACHE_PATH=''
+	readonly VENV_PATH=''
 	readonly SERVICE_LOG_PATHFILE=/var/log/$QPKG_NAME.log
-	readonly DAEMON_LOG_PATHFILE=/var/log/$QPKG_NAME.daemon.log
+	readonly SCREEN_LOG_PATHFILE=/var/log/$QPKG_NAME.screen.log
 	local -r BACKUP_PATH=$(/sbin/getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
 	readonly BACKUP_PATHFILE=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
 	readonly OPKG_PATH=/opt/bin:/opt/sbin
@@ -45,7 +48,18 @@ Init()
 	ui_port_secure=0
 	ui_listening_address=undefined
 
-	# specific to Entware binaries only
+	# specific to online-sourced applications only
+	readonly SOURCE_GIT_URL=''
+	readonly SOURCE_ARCH=''
+	readonly SOURCE_GIT_BRANCH=''
+	# 'shallow' (depth 1) or 'single-branch' ... 'shallow' implies 'single-branch'
+	readonly SOURCE_GIT_BRANCH_DEPTH=''
+	readonly INTERPRETER=''
+	readonly VENV_INTERPRETER=''
+	readonly ALLOW_ACCESS_TO_SYS_PACKAGES=false
+	readonly INSTALL_PIP_DEPS=false
+
+    # specific to Entware binaries only
 	readonly ORIG_DAEMON_SERVICE_SCRIPT=/opt/etc/init.d/S80deluged
 
 	# specific to daemonised applications only
@@ -99,7 +113,7 @@ Init()
 	[[ -n ${PIP_CACHE_PATH:-} && ! -d $PIP_CACHE_PATH ]] && mkdir -p "$PIP_CACHE_PATH"
 
 	if [[ $RUN_DAEMON_IN_SCREEN_SESSION = true && ! -e $SCREEN_CONF_PATHFILE ]]; then
-		echo "logfile $DAEMON_LOG_PATHFILE" > "$SCREEN_CONF_PATHFILE"
+		echo "logfile $SCREEN_LOG_PATHFILE" > "$SCREEN_CONF_PATHFILE"
 		echo 'logfile flush 1' >> "$SCREEN_CONF_PATHFILE"
 		echo 'log on' >> "$SCREEN_CONF_PATHFILE"
 	fi
@@ -170,18 +184,22 @@ StartQPKG()
 		return 1
 	fi
 
-	DisplayRunAndLog 'start daemon' "$DAEMON_LAUNCH_CMD" log:failure-only "$RUN_DAEMON_IN_SCREEN_SESSION"
+	if ! DisplayRunAndLog 'start daemon' "$DAEMON_LAUNCH_CMD" log:failure-only "$RUN_DAEMON_IN_SCREEN_SESSION"; then
+		SetError
+		return 1
+	fi
+
 	WaitForDaemon
 	WaitForPID
 
 	if ! IsDaemonActive; then
-		DisplayErrCommitAllLogs 'IsDaemonActive() failed'
+		DisplayErrCommitAllLogs 'IsDaemonActive() failed!'
 		SetError
 		return 1
 	fi
 
 	if ! CheckPorts; then
-		DisplayErrCommitAllLogs 'CheckPorts() failed'
+		DisplayErrCommitAllLogs 'CheckPorts() failed!'
 		SetError
 		return 1
 	fi
@@ -209,7 +227,7 @@ StopQPKG()
 		pid=$(<$DAEMON_PID_PATHFILE)
 		kill "$pid"
 		DisplayWaitCommitToLog "stop daemon PID ($pid) with SIGTERM:"
-		DisplayWait "(no-more than $DAEMON_STOP_TIMEOUT_SECONDS seconds):"
+		DisplayWait "(no-more than $DAEMON_STOP_TIMEOUT_SECONDS second$(Pluralise "$DAEMON_STOP_TIMEOUT_SECONDS")):"
 
 		while true; do
 			while [[ -d /proc/$pid ]]; do
@@ -221,14 +239,14 @@ StopQPKG()
 					DisplayCommitToLog 'failed!'
 					DisplayCommitToLog "stop daemon PID ($pid) with SIGKILL:"
 					kill -9 "$pid" 2> /dev/null
-					[[ -f $DAEMON_PID_PATHFILE ]] && rm -f $DAEMON_PID_PATHFILE
+					[[ -f $DAEMON_PID_PATHFILE ]] && rm -f "$DAEMON_PID_PATHFILE"
 					break 2
 				fi
 			done
 
-			[[ -f $DAEMON_PID_PATHFILE ]] && rm -f $DAEMON_PID_PATHFILE
+			[[ -f $DAEMON_PID_PATHFILE ]] && rm -f "$DAEMON_PID_PATHFILE"
 			Display OK
-			CommitToLog "stopped in $acc seconds"
+			CommitToLog "stopped in $acc second$(Pluralise "$acc")"
 
 			CommitInfoToSysLog 'stop daemon: OK'
 			break
@@ -376,11 +394,11 @@ CleanLocalClone()
 		return 1
 	fi
 
-	DisplayRunAndLog 'clean local repository' "rm -rf $QPKG_REPO_PATH" log:failure-only
-	[[ -n $QPKG_REPO_PATH && -d $(/usr/bin/dirname "$QPKG_REPO_PATH")/$QPKG_NAME ]] && DisplayRunAndLog 'KLUDGE: remove previous local repository' "rm -r $(/usr/bin/dirname "$QPKG_REPO_PATH")/$QPKG_NAME" log:failure-only
-	[[ -n $VENV_PATH && -d $VENV_PATH ]] && DisplayRunAndLog 'clean virtual environment' "rm -rf $VENV_PATH" log:failure-only
-	[[ -n $PIP_CACHE_PATH && -d $PIP_CACHE_PATH ]] && DisplayRunAndLog 'clean PyPI cache' "rm -rf $PIP_CACHE_PATH" log:failure-only
-	[[ -e $APP_VERSION_STORE_PATHFILE ]] && DisplayRunAndLog 'remove application version' "rm -f $APP_VERSION_STORE_PATHFILE" log:failure-only
+	DisplayRunAndLog 'clean local repository' "rm -rf \"$QPKG_REPO_PATH\"" log:failure-only
+	[[ -n $QPKG_REPO_PATH && -d $(/usr/bin/dirname "$QPKG_REPO_PATH")/$QPKG_NAME ]] && DisplayRunAndLog 'KLUDGE: remove previous local repository' "rm -r \"$(/usr/bin/dirname "$QPKG_REPO_PATH")/$QPKG_NAME\"" log:failure-only
+	[[ -n $VENV_PATH && -d $VENV_PATH ]] && DisplayRunAndLog 'clean virtual environment' "rm -rf \"$VENV_PATH\"" log:failure-only
+	[[ -n $PIP_CACHE_PATH && -d $PIP_CACHE_PATH ]] && DisplayRunAndLog 'clean PyPI cache' "rm -rf \"$PIP_CACHE_PATH\"" log:failure-only
+	[[ -e $APP_VERSION_STORE_PATHFILE ]] && DisplayRunAndLog 'remove application version' "rm -f \"$APP_VERSION_STORE_PATHFILE\"" log:failure-only
 
 	}
 
@@ -452,7 +470,7 @@ WaitForPID()
 		DisplayCommitToLog false
 	fi
 
-	DisplayWaitCommitToLog "wait $PIDFILE_RECHECK_WAIT_SECONDS seconds to recheck PID:"
+	DisplayWaitCommitToLog "wait $PIDFILE_RECHECK_WAIT_SECONDS second$(Pluralise "$PIDFILE_RECHECK_WAIT_SECONDS") to recheck PID:"
 
 	for ((count=1; count<=PIDFILE_RECHECK_WAIT_SECONDS; count++)); do
 		sleep 1
@@ -492,7 +510,7 @@ WaitForDaemon()
 
 	if [[ ! -e $1 ]]; then
 		DisplayWaitCommitToLog 'wait for daemon to appear:'
-		DisplayWait "(no-more than $MAX_SECONDS seconds):"
+		DisplayWait "(no-more than $MAX_SECONDS second$(Pluralise "$MAX_SECONDS")):"
 
 		(
 			for ((count=1; count<=MAX_SECONDS; count++)); do
@@ -501,7 +519,7 @@ WaitForDaemon()
 
 				if IsProcessActive "$DAEMON_PATHFILE" "$DAEMON_PID_PATHFILE"; then
 					Display OK
-					CommitToLog "active after $count second$(FormatAsPlural "$count")"
+					CommitToLog "active after $count second$(Pluralise "$count")"
 					true
 					exit	# only this sub-shell
 				fi
@@ -512,7 +530,7 @@ WaitForDaemon()
 
 		if [[ $? -ne 0 ]]; then
 			DisplayCommitToLog 'failed!'
-			DisplayErrCommitAllLogs "daemon not found! (exceeded timeout: $MAX_SECONDS seconds)"
+			DisplayErrCommitAllLogs "daemon not found! (exceeded timeout: $MAX_SECONDS second$(Pluralise "$MAX_SECONDS"))"
 			return 1
 		fi
 	fi
@@ -544,7 +562,7 @@ WaitForFileToAppear()
 
 	if [[ ! -e $1 ]]; then
 		DisplayWaitCommitToLog "wait for $1 to appear:"
-		DisplayWait "(no-more than $MAX_SECONDS seconds):"
+		DisplayWait "(no-more than $MAX_SECONDS second$(Pluralise "$MAX_SECONDS")):"
 
 		(
 			for ((count=1; count<=MAX_SECONDS; count++)); do
@@ -553,7 +571,7 @@ WaitForFileToAppear()
 
 				if [[ -e $1 ]]; then
 					Display OK
-					CommitToLog "visible after $count second$(FormatAsPlural "$count")"
+					CommitToLog "visible after $count second$(Pluralise "$count")"
 					true
 					exit	# only this sub-shell
 				fi
@@ -563,7 +581,7 @@ WaitForFileToAppear()
 
 		if [[ $? -ne 0 ]]; then
 			DisplayCommitToLog 'failed!'
-			DisplayErrCommitAllLogs "$1 not found! (exceeded timeout: $MAX_SECONDS seconds)"
+			DisplayErrCommitAllLogs "$1 not found! (exceeded timeout: $MAX_SECONDS second$(Pluralise "$MAX_SECONDS"))"
 			return 1
 		fi
 	fi
@@ -651,18 +669,21 @@ DisplayRunAndLog()
 	RunAndLog "${2:?empty}" "$LOG_PATHFILE" "${3:-}" '' "${4:-false}"
 	result_code=$?
 
-	if [[ -e $LOG_PATHFILE ]]; then
-		rm -f "$LOG_PATHFILE"
+	if [[ $result_code -eq 0 ]]; then
+		[[ ${3:-} != log:failure-only ]] && CommitInfoToSysLog "${1:?empty}: OK"
+		DisplayCommitToLog OK
+	else
+		DisplayErrCommitAllLogs 'failed!'
 	fi
 
 	if [[ $result_code -eq 0 ]]; then
-		[[ ${3:-} != log:failure-only ]] && CommitInfoToSysLog "${1:?empty}: OK"
-		[[ $debug = false ]] && DisplayCommitToLog OK
-		return 0
+		[[ ${3:-} != log:failure-only ]] && AddFileToDebug "$LOG_PATHFILE"
 	else
-		DisplayErrCommitAllLogs 'failed!'
-		return 1
+		[[ $result_code -ne ${4:-} ]] && AddFileToDebug "$LOG_PATHFILE"
 	fi
+
+	[[ -e $LOG_PATHFILE ]] && rm -f "$LOG_PATHFILE"
+	return $result_code
 
 	}
 
@@ -694,13 +715,14 @@ RunAndLog()
 		if [[ ${5:-false} = false ]]; then
 			Display "exec: '$1'"
 			eval "$1 > >(/usr/bin/tee $LOG_PATHFILE) 2>&1"		# NOTE: 'tee' buffers stdout here
-			result_code=$?
+			result_code=${PIPESTATUS[0]}						# must use $PIPESTATUS after `tee` to get returncode of previous command: https://stackoverflow.com/questions/1221833/pipe-output-and-capture-exit-status-in-bash
 		else
 			Display "exec (in screen session): '$1'"
 		fi
 	else
 		if [[ ${5:-false} = false ]]; then
-			(eval "$1" > "$LOG_PATHFILE" 2>&1)			# run in a subshell to suppress 'Terminated' message later
+			(eval "$1" > "$LOG_PATHFILE" 2>&1)					# run in a subshell to suppress 'Terminated' message later
+			result_code=$?
 		fi
 	fi
 
@@ -711,19 +733,19 @@ RunAndLog()
 
 	if [[ -e $LOG_PATHFILE ]]; then
 		FormatAsResultAndStdout "$result_code" "$(<"$LOG_PATHFILE")" >> "$2"
-		rm -f "$LOG_PATHFILE"
 	else
 		FormatAsResultAndStdout "$result_code" '<null>' >> "$2"
 	fi
 
-	if [[ $result_code -eq 0 ]]; then
-		[[ ${3:-} != log:failure-only ]] && AddFileToDebug "$2"
-		[[ $debug = true ]] && Display 'exec: completed OK' || rm -f "$2"
-	else
-		[[ $result_code -ne ${4:-} ]] && AddFileToDebug "$2"
-		[[ $debug = true ]] && Display 'exec: completed, but with errors'
+	if [[ $debug = true ]]; then
+		if [[ $result_code -eq 0 ]]; then
+			Display 'exec: completed OK'
+		else
+			Display 'exec: completed, but with errors'
+		fi
 	fi
 
+	[[ -e $LOG_PATHFILE ]] && rm -f "$LOG_PATHFILE"
 	return $result_code
 
 	}
@@ -1215,7 +1237,7 @@ IsPortResponds()
 	local acc=0
 
 	DisplayWaitCommitToLog "test for port $port response:"
-	DisplayWait "(no-more than $PORT_CHECK_TIMEOUT_SECONDS seconds):"
+	DisplayWait "(no-more than $PORT_CHECK_TIMEOUT_SECONDS second$(Pluralise "$PORT_CHECK_TIMEOUT_SECONDS")):"
 
 	while true; do
 		if ! IsProcessActive "$DAEMON_PATHFILE" "$DAEMON_PID_PATHFILE"; then
@@ -1228,7 +1250,7 @@ IsPortResponds()
 		case $? in
 			0|22|52)	# accept these exitcodes as evidence of valid responses
 				Display OK
-				CommitToLog "port responded after $acc seconds"
+				CommitToLog "port responded after $acc second$(Pluralise "$acc")"
 				return 0
 				;;
 			28)			# timeout
@@ -1246,7 +1268,7 @@ IsPortResponds()
 
 		if [[ $acc -ge $PORT_CHECK_TIMEOUT_SECONDS ]]; then
 			DisplayCommitToLog 'failed!'
-			CommitErrToSysLog "port $port failed to respond after $acc seconds!"
+			CommitErrToSysLog "port $port failed to respond after $acc second$(Pluralise "$acc")!"
 			break
 		fi
 	done
@@ -1278,7 +1300,7 @@ IsPortSecureResponds()
 	local acc=0
 
 	DisplayWaitCommitToLog "test for secure port $port response:"
-	DisplayWait "(no-more than $PORT_CHECK_TIMEOUT_SECONDS seconds):"
+	DisplayWait "(no-more than $PORT_CHECK_TIMEOUT_SECONDS second$(Pluralise "$PORT_CHECK_TIMEOUT_SECONDS")):"
 
 	while true; do
 		if ! IsProcessActive "$DAEMON_PATHFILE" "$DAEMON_PID_PATHFILE"; then
@@ -1291,7 +1313,7 @@ IsPortSecureResponds()
 		case $? in
 			0|22|52)	# accept these exitcodes as evidence of valid responses
 				Display OK
-				CommitToLog "port responded after $acc seconds"
+				CommitToLog "port responded after $acc second$(Pluralise "$acc")"
 				return 0
 				;;
 			28)			# timeout
@@ -1309,7 +1331,7 @@ IsPortSecureResponds()
 
 		if [[ $acc -ge $PORT_CHECK_TIMEOUT_SECONDS ]]; then
 			DisplayCommitToLog 'failed!'
-			CommitErrToSysLog "secure port $port failed to respond after $acc seconds!"
+			CommitErrToSysLog "secure port $port failed to respond after $acc second$(Pluralise "$acc")!"
 			break
 		fi
 	done
@@ -1780,18 +1802,10 @@ ColourTextInverse()
 
 	} 2>/dev/null
 
-FormatAsPlural()
+Pluralise()
 	{
 
-	[[ $1 -ne 1 ]] && echo s
-
-	}
-
-JustFile()
-	{
-
-	local name=$(/usr/bin/basename "$1")
-	echo "${name%%.*}"
+	[[ ${1:-0} -ne 1 ]] && echo s
 
 	}
 
