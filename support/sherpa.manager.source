@@ -8158,9 +8158,10 @@ FuncFork:Exit()
 
 	if [[ -n $sess_active_pathfile && -e $sess_active_pathfile && -s $sess_active_pathfile ]]; then
 		$CAT_CMD "$sess_active_pathfile" >> "$original_session_log_pathfile"
-		rm "$sess_active_pathfile"
 		sess_active_pathfile="$original_session_log_pathfile"
 	fi
+
+	rm -f "$sess_active_pathfile"
 
 	exit ${1:-0}
 
