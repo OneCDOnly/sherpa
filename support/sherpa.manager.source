@@ -514,7 +514,7 @@ Env:Confirm()
 Lists:Load()
 	{
 
-	# these are used internally by sherpa -----------------------------------------------------
+	# these are used internally by sherpa
 	# ordered
 	PACKAGE_TIERS=(standalone addon dependent)
 
@@ -532,7 +532,7 @@ Lists:Load()
 	IPK_ACTIONS=(download uninstall upgrade reinstall install)
 	QPKG_ACTIONS=(status rebuild reassign download backup deactivate disable uninstall upgrade reinstall install restore clean enable activate reactivate sign)
 
-	# these actions, states and scopes may be specified by the user -----------------------------------------------------
+	# these actions, states and scopes may be specified by the user
 	# sorted
 	USER_QPKG_SC_GROUPS=(all canbackup canclean canrestarttoupdate dependent hasdependents installable standalone upgradable)
 	USER_QPKG_SCNT_GROUPS=(canclean installable upgradable)
@@ -571,7 +571,7 @@ Lists:Load()
 CreatePaths()
 	{
 
-	# KLUDGE: service scripts prior to 2022-12-08 would use these paths (by-default) to build/cache Python packages. This has been fixed, but still need to free-up this space to prevent out-of-space issues.
+	# KLUDGE: service scripts prior to 2022-12-08 would use these paths (by-default) to build/cache Python packages. This has been fixed, but still need to free-up these paths to prevent out-of-space issues.
 	rm -rf /root/.cache /root/.local/share/virtualenv
 
 	rm -rf "$IPK_DL_PATH" "$IPK_CACHE_PATH" "$PIP_CACHE_PATH"
@@ -821,7 +821,7 @@ Self:Validate()
 	AllocGroupPacksToAcs
 	QPKGs-SCupgradable:Exist sherpa && QPKGs-ACupgrade-to:Add sherpa
 
-	# KLUDGE: ensure old installs of Entware are reinstalled, due to an OpenSSL update breaking several IPKs in mid-March 2023
+	# KLUDGE: ensure old installs of Entware are reinstalled
 
 	if QPKG.IsInstalled Entware; then
 		local entware_install_date=$(QPKG.InstallDate Entware)
@@ -967,7 +967,7 @@ Self:Validate()
 		QPKGs-ACsign-to:Add "$(QPKGs-ISinstalled:Array)"
 
 		for package in $(QPKGs-SCdependent:Array); do
-			! QPKGs-SCupgradable:Exist "$package" && QPKGs-SCcanrestarttoupdate:Exist "$package" && QPKGs-ISenabled:Exist "$package" && QPKGs-ACreactivate-to:Add "$package"
+			QPKGs-ISenabled:Exist "$package" && QPKGs-ACreactivate-to:Add "$package"
 		done
 	fi
 
@@ -996,7 +996,7 @@ Self:Validate()
 #  12. reinstall standalones
 #  13. install standalones
 #  14. restore standalones
-#  15. clean standalones		(unsupported by all standalone QPKGs)
+#  15. clean standalones
 #  16. enable standalones
 #  17. restart/reactivate standalones
 #  18. start/activate standalones
@@ -8158,9 +8158,10 @@ FuncFork:Exit()
 
 	if [[ -n $sess_active_pathfile && -e $sess_active_pathfile && -s $sess_active_pathfile ]]; then
 		$CAT_CMD "$sess_active_pathfile" >> "$original_session_log_pathfile"
-		rm "$sess_active_pathfile"
 		sess_active_pathfile="$original_session_log_pathfile"
 	fi
+
+	rm -f "$sess_active_pathfile"
 
 	exit ${1:-0}
 

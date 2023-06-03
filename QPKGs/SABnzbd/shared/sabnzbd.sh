@@ -20,7 +20,7 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=SABnzbd
-	readonly SCRIPT_VERSION=230529
+	readonly SCRIPT_VERSION=230604
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -59,16 +59,18 @@ Init()
 	readonly ALLOW_ACCESS_TO_SYS_PACKAGES=true
 	readonly INSTALL_PIP_DEPS=true
 
-    # specific to Entware binaries only
+	# specific to Entware binaries only
 	readonly ORIG_DAEMON_SERVICE_SCRIPT=''
 
 	# specific to daemonised applications only
 	readonly DAEMON_PATHFILE=$QPKG_REPO_PATH/SABnzbd.py
 	readonly DAEMON_LAUNCH_CMD=". $VENV_PATH/bin/activate && cd $QPKG_REPO_PATH && $VENV_INTERPRETER $DAEMON_PATHFILE --daemon --browser 0 --config-file $QPKG_INI_PATHFILE --pidfile $DAEMON_PID_PATHFILE"
 	readonly RUN_DAEMON_IN_SCREEN_SESSION=false
+	readonly DAEMON_PROC_IS_NAME_ONLY=false
 	readonly PORT_CHECK_TIMEOUT_SECONDS=240
 	readonly DAEMON_CHECK_TIMEOUT_SECONDS=60
 	readonly DAEMON_STOP_TIMEOUT_SECONDS=120
+	readonly RECHECK_DAEMON_PID_AFTER_LAUNCH=true
 	readonly PIDFILE_APPEAR_TIMEOUT_SECONDS=60
 	readonly PIDFILE_RECHECK_WAIT_SECONDS=10
 	readonly PIDFILE_IS_MANAGED_BY_APP=true
@@ -106,12 +108,13 @@ Init()
 	UnsetRestartPending
 	EnsureConfigFileExists
 	LoadAppVersion
+	DisableOpkgDaemonStart
 
 	IsSupportBackup && [[ -n ${BACKUP_PATH:-} && ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
 	[[ -n ${VENV_PATH:-} && ! -d $VENV_PATH ]] && mkdir -p "$VENV_PATH"
 	[[ -n ${PIP_CACHE_PATH:-} && ! -d $PIP_CACHE_PATH ]] && mkdir -p "$PIP_CACHE_PATH"
 
-	IsAutoUpdateMissing && EnableAutoUpdate >/dev/null
+	IsSourcedOnline && IsAutoUpdateMissing && EnableAutoUpdate >/dev/null
 
 	if [[ $RUN_DAEMON_IN_SCREEN_SESSION = true && ! -e $SCREEN_CONF_PATHFILE ]]; then
 		echo "logfile $SCREEN_LOG_PATHFILE" > "$SCREEN_CONF_PATHFILE"
@@ -171,6 +174,7 @@ StartQPKG()
 		DisplayCommitToLog false
 	fi
 
+	MakePaths
 	PullGitRepo || { SetError; return 1 ;}
 	InstallAddons || { SetError; return 1 ;}
 	IsNotDaemon && return
@@ -338,7 +342,7 @@ InstallAddons()
 	# If not, `pip` will attempt to compile these, which fails on early ARMv5 CPUs.
 
 	if [[ -e $exclusions_pathfile ]]; then
-		local module_exclusions=$(tr '\n' ' ' < "$exclusions_pathfile")
+		local module_exclusions=$(/bin/tr '\n' ' ' < "$exclusions_pathfile")
 		module_exclusions=${module_exclusions%* }
 		local module_exclusions_re="/^${module_exclusions// /\|^}"
 
@@ -389,6 +393,7 @@ InstallAddons()
 BackupConfig()
 	{
 
+	MakePaths
 	DisplayRunAndLog 'update configuration backup' "/bin/tar --create --gzip --file=$BACKUP_PATHFILE --directory=$QPKG_PATH/config ." || SetError
 
 	return 0
@@ -416,6 +421,18 @@ ResetConfig()
 	DisplayRunAndLog 'reset configuration' "mv $QPKG_INI_DEFAULT_PATHFILE $QPKG_PATH; rm -rf $QPKG_PATH/config/*; mv $QPKG_PATH/$(/usr/bin/basename "$QPKG_INI_DEFAULT_PATHFILE") $QPKG_INI_DEFAULT_PATHFILE" || SetError
 
 	return 0
+
+	}
+
+MakePaths()
+	{
+
+	DisplayWaitCommitToLog 'create paths:'
+	[[ -n ${BACKUP_PATH:-} && ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
+	[[ -n ${QPKG_REPO_PATH:-} && ! -d $QPKG_REPO_PATH ]] && mkdir -p "$QPKG_REPO_PATH"
+	[[ -n ${PIP_CACHE_PATH:-} && ! -d $PIP_CACHE_PATH ]] && mkdir -p "$PIP_CACHE_PATH"
+	[[ -n ${VENV_PATH:-} && ! -d $VENV_PATH ]] && mkdir -p "$VENV_PATH"
+	DisplayCommitToLog OK
 
 	}
 
@@ -580,9 +597,9 @@ WaitForGit()
 	if WaitForFileToAppear '/opt/bin/git' 300; then
 		export PATH="$OPKG_PATH:$(/bin/sed "s|$OPKG_PATH||" <<< "$PATH")"
 		return 0
-	else
-		return 1
 	fi
+
+	return 1
 
 	}
 
@@ -609,15 +626,23 @@ WaitForLaunchTarget()
 FindAndWritePIDFile()
 	{
 
-	local -i pid=0
-	target_pid="$(ps | /bin/grep "$(GetLaunchTarget)" | /bin/grep -v grep)"
-	target_pid=${target_pid:0:5}
-	target_pid=$(tr -d ' ' <<< "$target_pid")
+	local target_pid=''
+
+	if [[ $DAEMON_PROC_IS_NAME_ONLY = true ]]; then
+		# QTS `pidof` is unreliable and should be used as a last resort only
+		target_pid="$(/bin/pidof -s "$(/usr/bin/basename "$DAEMON_PATHFILE")")"
+	else
+		target_pid="$(ps | /bin/grep "$(GetLaunchTarget)" | /bin/grep -v grep)"
+		target_pid=${target_pid:0:5}
+		target_pid=$(/bin/tr -d ' ' <<< "$target_pid")
+	fi
 
 	if [[ $target_pid -gt 0 ]]; then
 		echo "$target_pid" > "$DAEMON_PID_PATHFILE"
 		return 0
 	fi
+
+	rm -f "$DAEMON_PID_PATHFILE"
 
 	return 1
 
@@ -634,22 +659,24 @@ WaitForPID()
 		fi
 	fi
 
-	DisplayWaitCommitToLog 'found daemon PID:'
+	if [[ $RECHECK_DAEMON_PID_AFTER_LAUNCH = true ]]; then
+		DisplayWaitCommitToLog 'found daemon PID:'
 
-	if FindAndWritePIDFile; then
-		DisplayCommitToLog "$(<"$DAEMON_PID_PATHFILE")"
-	else
-		DisplayCommitToLog false
+		if FindAndWritePIDFile; then
+			DisplayCommitToLog "$(<"$DAEMON_PID_PATHFILE")"
+		else
+			DisplayCommitToLog false
+		fi
+
+		DisplayWaitCommitToLog "wait $PIDFILE_RECHECK_WAIT_SECONDS second$(Pluralise "$PIDFILE_RECHECK_WAIT_SECONDS") to recheck PID:"
+
+		for ((count=1; count<=PIDFILE_RECHECK_WAIT_SECONDS; count++)); do
+			sleep 1
+			DisplayWait "$count,"
+		done
+
+		DisplayCommitToLog 'done'
 	fi
-
-	DisplayWaitCommitToLog "wait $PIDFILE_RECHECK_WAIT_SECONDS second$(Pluralise "$PIDFILE_RECHECK_WAIT_SECONDS") to recheck PID:"
-
-	for ((count=1; count<=PIDFILE_RECHECK_WAIT_SECONDS; count++)); do
-		sleep 1
-		DisplayWait "$count,"
-	done
-
-	DisplayCommitToLog 'done'
 
 	DisplayWaitCommitToLog 'found daemon PID:'
 
@@ -660,6 +687,8 @@ WaitForPID()
 		DisplayErrCommitAllLogs 'unable to locate active daemon process'
 		return 1
 	fi
+
+	return 0
 
 	}
 
@@ -684,12 +713,20 @@ WaitForDaemon()
 		DisplayWaitCommitToLog 'wait for daemon to appear:'
 		DisplayWait "(no-more than $MAX_SECONDS second$(Pluralise "$MAX_SECONDS")):"
 
+		local target_proc=''
+
+		if [[ $DAEMON_PROC_IS_NAME_ONLY = true ]]; then
+			target_proc=$(/usr/bin/basename "$DAEMON_PATHFILE")
+		else
+			target_proc="$(GetLaunchTarget)"
+		fi
+
 		(
 			for ((count=1; count<=MAX_SECONDS; count++)); do
 				sleep 1
 				DisplayWait "$count,"
 
-				if IsProcessActive "$DAEMON_PATHFILE" "$DAEMON_PID_PATHFILE"; then
+				if IsProcessActive "$target_proc" "$DAEMON_PID_PATHFILE"; then
 					Display OK
 					CommitToLog "active after $count second$(Pluralise "$count")"
 					true
@@ -987,14 +1024,14 @@ StripANSI()
 Uppercase()
 	{
 
-	tr 'a-z' 'A-Z' <<< "$1"
+	/bin/tr 'a-z' 'A-Z' <<< "$1"
 
 	}
 
 Lowercase()
 	{
 
-	tr 'A-Z' 'a-z' <<< "$1"
+	/bin/tr 'A-Z' 'a-z' <<< "$1"
 
 	}
 
@@ -1231,20 +1268,22 @@ IsDaemonActive()
 
 	DisplayWaitCommitToLog 'daemon active:'
 
-	if [[ -n $VENV_INTERPRETER ]]; then
-		if IsProcessActive "$VENV_INTERPRETER" "$DAEMON_PID_PATHFILE"; then
-			DisplayCommitToLog true
-			return 0
-		fi
+	local target_proc=''
+
+	if [[ $DAEMON_PROC_IS_NAME_ONLY = true ]]; then
+		target_proc=$(/usr/bin/basename "$(GetLaunchTarget)")
 	else
-		if IsProcessActive "$DAEMON_PATHFILE" "$DAEMON_PID_PATHFILE"; then
-			DisplayCommitToLog true
-			return 0
-		fi
+		target_proc="$(GetLaunchTarget)"
+	fi
+
+	if IsProcessActive "$target_proc" "$DAEMON_PID_PATHFILE"; then
+		DisplayCommitToLog true
+		DisplayCommitToLog "daemon PID: $(<"$DAEMON_PID_PATHFILE")"
+		return 0
 	fi
 
 	DisplayCommitToLog false
-	[[ -f $DAEMON_PID_PATHFILE ]] && rm "$DAEMON_PID_PATHFILE"
+	rm -f "$DAEMON_PID_PATHFILE"
 	return 1
 
 	}
@@ -1393,8 +1432,16 @@ IsPortResponds()
 	DisplayWaitCommitToLog "test for port $port response:"
 	DisplayWait "(no-more than $PORT_CHECK_TIMEOUT_SECONDS second$(Pluralise "$PORT_CHECK_TIMEOUT_SECONDS")):"
 
+	local target_proc=''
+
+	if [[ $DAEMON_PROC_IS_NAME_ONLY = true ]]; then
+		target_proc=$(/usr/bin/basename "$DAEMON_PATHFILE")
+	else
+		target_proc="$(GetLaunchTarget)"
+	fi
+
 	while true; do
-		if ! IsProcessActive "$DAEMON_PATHFILE" "$DAEMON_PID_PATHFILE"; then
+		if ! IsProcessActive "$target_proc" "$DAEMON_PID_PATHFILE"; then
 			DisplayCommitToLog 'process not active!'
 			break
 		fi
@@ -1456,8 +1503,16 @@ IsPortSecureResponds()
 	DisplayWaitCommitToLog "test for secure port $port response:"
 	DisplayWait "(no-more than $PORT_CHECK_TIMEOUT_SECONDS second$(Pluralise "$PORT_CHECK_TIMEOUT_SECONDS")):"
 
+	local target_proc=''
+
+	if [[ $DAEMON_PROC_IS_NAME_ONLY = true ]]; then
+		target_proc=$(/usr/bin/basename "$DAEMON_PATHFILE")
+	else
+		target_proc="$(GetLaunchTarget)"
+	fi
+
 	while true; do
-		if ! IsProcessActive "$DAEMON_PATHFILE" "$DAEMON_PID_PATHFILE"; then
+		if ! IsProcessActive "$target_proc" "$DAEMON_PID_PATHFILE"; then
 			DisplayCommitToLog 'process not active!'
 			break
 		fi
@@ -1831,6 +1886,8 @@ DisplayAndCommitActionToLog()
 	starttime="$(/bin/date +%s%N)"
 	local msg="begin action: $service_operation, datetime: $(date), package: $QPKG_VERSION, service: $SCRIPT_VERSION"
 
+	msg=$(/bin/tr -s ' ' <<< "$msg")
+
 	if IsNotStatus && IsNotLog && IsNotNone; then
 		CommitToLog '•'
 		DisplayCommitToLog "$(ColourTextInverse "$msg")"
@@ -1842,6 +1899,8 @@ DisplayAndCommitStatusToLog()
 	{
 
 	local msg="end action: $service_operation, datetime: $(date), result: $service_result, elapsed time: $(FormatAsDuration "$(CalcMilliDifference "$starttime" "$(/bin/date +%s%N)")")"
+
+	msg=$(/bin/tr -s ' ' <<< "$msg")
 
 	if IsNotStatus && IsNotLog && IsNotNone; then
 		case $service_result in
