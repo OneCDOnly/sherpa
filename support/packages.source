@@ -4,7 +4,7 @@ BASE_QPKG_CONFLICTS_WITH='TarMT'
 BASE_QPKG_WARNINGS='Qboost'
 ESSENTIAL_IPKS='ca-certificates coreutils-sleep coreutils-sort coreutils-stty coreutils-timeout findutils gcc git git-http grep less nano sed sqlite3-cli'
 ESSENTIAL_PIPS='pip virtualenv'		# 'pip' is listed here to ensure an upgrade to the the 'python3-pip' IPKG from Entware
-MIN_PYTHON_VER=3107					# keep this up-to-date with Entware Python3 version, so IPK upgrade notifier will work
+MIN_PYTHON_VER=3113					# keep this up-to-date with Entware Python3 version, so IPK upgrade notifier will work
 MIN_PERL_VER=5281					# keep this up-to-date with Entware Perl version, so IPK upgrade notifier will work
 
 # use pseudo-alpha-sorted QPKG name order (i.e. disregard character-case and leading 'O')
@@ -904,7 +904,7 @@ QPKG_NOTE+=("arm64, x86 & x86-64 NAS architectures-only")
 QPKG_ABBRVS+=('ws ssh web wssh webssh')
 QPKG_CONFLICTS_WITH+=('')
 QPKG_DEPENDS_ON+=(Entware)
-QPKG_REQUIRES_IPKS+=('python3-bcrypt python3-cryptography python3-cffi python3-pip')
+QPKG_REQUIRES_IPKS+=('python3-bcrypt python3-cryptography python3-cffi python3-pip python3-six')
 QPKG_CAN_BACKUP+=(false)
 QPKG_CAN_RESTART_TO_UPDATE+=(false)
 QPKG_CAN_CLEAN+=(true)
