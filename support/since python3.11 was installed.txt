@@ -2,5 +2,3 @@ broken:
 	HeadPhones 		# https://github.com/rembo10/headphones/issues/3320
 	WebSSH			# fix by removing exception for cryptography PyPI, and manually install cryptography & bcrypt PyPI packages.
 	LazyLibrarian	# fix by removing exception for cryptography PyPI, and manually install/upgrade cryptography & pyopenssl PyPI packages. This can't be done on ARMv5 CPUs. :(
-	Deluge-server	# must upgrade cryptography & pyopenssl packages
-	Deluge-web		# must upgrade cryptography & pyopenssl packages
