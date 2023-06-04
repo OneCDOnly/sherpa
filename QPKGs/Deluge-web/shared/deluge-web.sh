@@ -20,7 +20,7 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=Deluge-web
-	readonly SCRIPT_VERSION=230604
+	readonly SCRIPT_VERSION=230605
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -33,8 +33,8 @@ Init()
 	readonly SERVICE_STATUS_PATHFILE=/var/run/$QPKG_NAME.last.operation
 	readonly DAEMON_PID_PATHFILE=/var/run/$QPKG_NAME.pid
 	readonly QPKG_REPO_PATH=''
-	readonly PIP_CACHE_PATH=''
-	readonly VENV_PATH=''
+	readonly PIP_CACHE_PATH=$QPKG_PATH/pip-cache
+	readonly VENV_PATH=$QPKG_PATH/venv
 	readonly SERVICE_LOG_PATHFILE=/var/log/$QPKG_NAME.log
 	readonly SCREEN_LOG_PATHFILE=/var/log/$QPKG_NAME.screen.log
 	local -r BACKUP_PATH=$(/sbin/getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
@@ -54,9 +54,9 @@ Init()
 	readonly SOURCE_GIT_BRANCH=''
 	# 'shallow' (depth 1) or 'single-branch' ... 'shallow' implies 'single-branch'
 	readonly SOURCE_GIT_BRANCH_DEPTH=''
-	readonly INTERPRETER=''
-	readonly VENV_INTERPRETER=''
-	readonly ALLOW_ACCESS_TO_SYS_PACKAGES=false
+	readonly INTERPRETER=/opt/bin/python3
+	readonly VENV_INTERPRETER=$VENV_PATH/bin/python3
+	readonly ALLOW_ACCESS_TO_SYS_PACKAGES=true
 	readonly INSTALL_PIP_DEPS=false
 
 	# specific to Entware binaries only
@@ -64,7 +64,7 @@ Init()
 
 	# specific to daemonised applications only
 	readonly DAEMON_PATHFILE=/opt/bin/deluge-web
-	readonly DAEMON_LAUNCH_CMD="$DAEMON_PATHFILE --logfile $(/usr/bin/dirname "$QPKG_INI_PATHFILE")/$QPKG_NAME.log --config $(/usr/bin/dirname "$QPKG_INI_PATHFILE")/ --pidfile $DAEMON_PID_PATHFILE"
+	readonly DAEMON_LAUNCH_CMD=". $VENV_PATH/bin/activate && $VENV_INTERPRETER $DAEMON_PATHFILE --logfile $(/usr/bin/dirname "$QPKG_INI_PATHFILE")/$QPKG_NAME.log --config $(/usr/bin/dirname "$QPKG_INI_PATHFILE")/ --pidfile $DAEMON_PID_PATHFILE"
 	readonly RUN_DAEMON_IN_SCREEN_SESSION=false
 	readonly DAEMON_PROC_IS_NAME_ONLY=true
 	readonly PORT_CHECK_TIMEOUT_SECONDS=240
@@ -167,6 +167,7 @@ StartQPKG()
 	fi
 
 	MakePaths
+	InstallAddons || { SetError; return 1 ;}
 	IsNotDaemon && return
 	WaitForLaunchTarget || { SetError; return 1 ;}
 	EnsureConfigFileExists
@@ -185,6 +186,12 @@ StartQPKG()
 		portpid=$(/usr/sbin/lsof -i :$ui_port_secure -Fp)
 		DisplayErrCommitAllLogs "process details for secure port $ui_port_secure: '$([[ -n ${portpid:-} ]] && /bin/tr '\000' ' ' </proc/"${portpid/p/}"/cmdline)'"
 
+		SetError
+		return 1
+	fi
+
+	if IsNotVirtualEnvironmentExist; then
+		DisplayErrCommitAllLogs 'unable to start daemon: virtual environment does not exist!'
 		SetError
 		return 1
 	fi
@@ -273,6 +280,99 @@ StopQPKG()
 	fi
 
 	return 0
+
+	}
+
+InstallAddons()
+	{
+
+	local default_requirements_pathfile=$QPKG_CONFIG_PATH/requirements.txt
+	local default_recommended_pathfile=$QPKG_CONFIG_PATH/recommended.txt
+	local exclusions_pathfile=$QPKG_CONFIG_PATH/exclusions.txt
+	local rebuild_pathfile=$QPKG_CONFIG_PATH/rebuild.txt
+	local requirements_pathfile=$QPKG_REPO_PATH/requirements.txt
+	local recommended_pathfile=$QPKG_REPO_PATH/recommended.txt
+	local pyproject_pathfile=$QPKG_REPO_PATH/pyproject.toml
+	local pip_conf_pathfile=$VENV_PATH/pip.conf
+	local new_env=false
+	local sys_packages=' --system-site-packages'
+	local no_pips_installed=true
+	local pip_deps=' --no-deps'
+
+	[[ $ALLOW_ACCESS_TO_SYS_PACKAGES != true ]] && sys_packages=''
+	[[ $INSTALL_PIP_DEPS = true ]] && pip_deps=''
+
+	if IsNotVirtualEnvironmentExist; then
+		DisplayRunAndLog 'create new virtual Python environment' "export PIP_CACHE_DIR=$PIP_CACHE_PATH VIRTUALENV_OVERRIDE_APP_DATA=$PIP_CACHE_PATH; $INTERPRETER -m virtualenv ${VENV_PATH}${sys_packages}" log:failure-only || SetError
+		new_env=true
+	fi
+
+	if IsNotVirtualEnvironmentExist; then
+		DisplayErrCommitAllLogs 'unable to install addons: virtual environment does not exist!'
+		SetError
+		return 1
+	fi
+
+	if [[ ! -e $pip_conf_pathfile ]]; then
+		DisplayRunAndLog "create global 'pip' config" "echo -e \"[global]\ncache-dir = $PIP_CACHE_PATH\" > $pip_conf_pathfile" log:failure-only || SetError
+	fi
+
+	IsNotAutoUpdate && [[ $new_env = false ]] && return 0
+
+	# edit developer-provided Python module requirements files out-of-repo
+
+	[[ -e $requirements_pathfile ]] && cp -f "$requirements_pathfile" "$default_requirements_pathfile"
+	[[ -e $default_requirements_pathfile ]] && requirements_pathfile=$default_requirements_pathfile
+
+	[[ -e $recommended_pathfile ]] && cp -f "$recommended_pathfile" "$default_recommended_pathfile"
+	[[ -e $default_recommended_pathfile ]] && recommended_pathfile=$default_recommended_pathfile
+
+	# KLUDGE: can't use `manytolinux2014` wheel builds in QTS, so force these wheels to be rebuilt locally
+
+	if [[ -e $rebuild_pathfile ]]; then
+		for target in $requirements_pathfile $recommended_pathfile $pyproject_pathfile; do
+			if [[ -e $target ]]; then
+				for module in $(<$rebuild_pathfile); do
+					if (/bin/grep -q $module < "$target") && ! (/bin/grep -q -- "--no-binary=$module" < "$target"); then
+						DisplayRunAndLog "include rebuild directive for '$module' in '$(/usr/bin/basename "$target")'" "echo \"--no-binary=$module\" >> $target" log:failure-only || SetError
+					fi
+				done
+			fi
+		done
+	fi
+
+	# Must remove these modules from repo txt files, and use the ones installed via `opkg` instead (if available).
+	# If not, `pip` will attempt to compile these, which fails on early ARMv5 CPUs.
+
+	if [[ -e $exclusions_pathfile ]]; then
+		local module_exclusions=$(/bin/tr '\n' ' ' < "$exclusions_pathfile")
+		module_exclusions=${module_exclusions%* }
+		local module_exclusions_re="/^${module_exclusions// /\|^}"
+
+		for target in $requirements_pathfile $recommended_pathfile $pyproject_pathfile; do
+			if [[ -e $target ]]; then
+				DisplayRunAndLog "exclude problem PyPI modules from '$(/usr/bin/basename "$target")'" "/bin/sed -i '${module_exclusions_re}/d' $target" log:failure-only || SetError
+			fi
+		done
+	fi
+
+	# Install remaining PyPI modules
+
+	for target in $requirements_pathfile $recommended_pathfile; do
+		if [[ -e $target ]]; then
+			DisplayRunAndLog "install PyPI modules from '$(/usr/bin/basename "$target")'" ". $VENV_PATH/bin/activate && pip install${pip_deps} --no-input --upgrade pip -r $target" log:failure-only || SetError
+			no_pips_installed=false
+		fi
+	done
+
+	# fallback to general installation method
+
+	if [[ $no_pips_installed = true ]]; then
+		if [[ -e $QPKG_REPO_PATH/setup.py || -e $pyproject_pathfile ]]; then
+			DisplayRunAndLog "install PyPI modules from '$(/usr/bin/basename "$target")'" ". $VENV_PATH/bin/activate && pip install${pip_deps} --no-input --upgrade pip $QPKG_REPO_PATH" log:failure-only || SetError
+			no_pips_installed=false
+		fi
+	fi
 
 	}
 
@@ -559,7 +659,7 @@ WaitForDaemon()
 		if [[ $DAEMON_PROC_IS_NAME_ONLY = true ]]; then
 			target_proc=$(/usr/bin/basename "$DAEMON_PATHFILE")
 		else
-			target_proc=$DAEMON_PATHFILE
+			target_proc="$(GetLaunchTarget)"
 		fi
 
 		(
@@ -1126,7 +1226,8 @@ IsDaemonActive()
 	local target_proc=''
 
 	if [[ $DAEMON_PROC_IS_NAME_ONLY = true ]]; then
-		target_proc=$(/usr/bin/basename "$(GetLaunchTarget)")
+		# Deluge-web only: search for `deluge-web` in process list instead of Python running as a daemon
+		target_proc="$(/usr/bin/basename "$DAEMON_PATHFILE")"
 	else
 		target_proc="$(GetLaunchTarget)"
 	fi
@@ -1292,7 +1393,7 @@ IsPortResponds()
 	if [[ $DAEMON_PROC_IS_NAME_ONLY = true ]]; then
 		target_proc=$(/usr/bin/basename "$DAEMON_PATHFILE")
 	else
-		target_proc=$DAEMON_PATHFILE
+		target_proc="$(GetLaunchTarget)"
 	fi
 
 	while true; do
@@ -1363,7 +1464,7 @@ IsPortSecureResponds()
 	if [[ $DAEMON_PROC_IS_NAME_ONLY = true ]]; then
 		target_proc=$(/usr/bin/basename "$DAEMON_PATHFILE")
 	else
-		target_proc=$DAEMON_PATHFILE
+		target_proc="$(GetLaunchTarget)"
 	fi
 
 	while true; do
@@ -2064,6 +2165,19 @@ if IsNotError; then
 				StopQPKG
 				RestoreConfig
 				StartQPKG
+			else
+				SetServiceAction none
+				ShowHelp
+			fi
+			;;
+		clean|--clean)
+			if IsSourcedOnline; then
+				SetServiceAction clean
+				StopQPKG
+				[[ $QPKG_NAME = nzbToMedia ]] && BackupConfig
+				CleanLocalClone
+				StartQPKG
+				[[ $QPKG_NAME = nzbToMedia ]] && RestoreConfig
 			else
 				SetServiceAction none
 				ShowHelp
