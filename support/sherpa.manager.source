@@ -829,6 +829,9 @@ Self:Validate()
 		if [[ ${entware_install_date//-/} -le 20230318 ]]; then
 			ShowAsInfo 'the Entware QPKG will be reinstalled (an OpenSSL update in mid-March 2023 broke a few packages)'
 			QPKGs-ACreinstall-to:Add Entware
+		elif [[ ${entware_install_date//-/} -le 20230604 ]]; then
+			ShowAsInfo 'the Entware QPKG will be reinstalled (Entware packages have been updated)'
+			QPKGs-ACreinstall-to:Add Entware
 		fi
 	fi
 
