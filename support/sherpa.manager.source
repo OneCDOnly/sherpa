@@ -164,6 +164,8 @@ Self:Init()
 Self:Results()
 	{
 
+	Func:Entry
+
 	display_last_action_datetime=false
 
 	if ARGs-unknown:IsNone; then
@@ -267,7 +269,7 @@ Self:Results()
 		DisplayLineSpaceIfNoneAlready   # final on-screen linespace
 	fi
 
-	return 0
+	Func:Exit
 
 	}
 
@@ -1030,11 +1032,11 @@ Actions:Proc()
 	rm -f "$SESS_ACTIONS_RESULTS_PATHFILE"
 
 	if QPKGs-ACstatus-to:IsAny; then
-		Action:Proc status all QPKG statusing statused || return
+		Action:Proc status all QPKG statusing statused
 	else
-		Action:Proc reassign all QPKG reassigning reassigned || return
-		Action:Proc download all QPKG downloading downloaded || return
-		Action:Proc backup all QPKG backing-up backed-up || return
+		Action:Proc reassign all QPKG reassigning reassigned
+		Action:Proc download all QPKG downloading downloaded
+		Action:Proc backup all QPKG backing-up backed-up
 
 		# -> package removal phase begins here <-
 
@@ -1043,9 +1045,9 @@ Actions:Proc()
 
 			case $tier in
 				standalone|dependent)
-					Action:Proc deactivate $tier QPKG deactivating deactivated || return
-					Action:Proc disable $tier QPKG disabling disabled || return
-					Action:Proc uninstall $tier QPKG uninstalling uninstalled || return
+					Action:Proc deactivate $tier QPKG deactivating deactivated
+					Action:Proc disable $tier QPKG disabling disabled
+					Action:Proc uninstall $tier QPKG uninstalling uninstalled
 			esac
 		done
 
@@ -1054,14 +1056,14 @@ Actions:Proc()
 		for tier in "${PACKAGE_TIERS[@]}"; do
 			case $tier in
 				standalone|dependent)
-					Action:Proc upgrade $tier QPKG upgrading upgraded || return
-					Action:Proc reinstall $tier QPKG reinstalling reinstalled || return
-					Action:Proc install $tier QPKG installing installed || return
-					Action:Proc restore $tier QPKG restoring restored || return
-					Action:Proc clean $tier QPKG cleaning cleaned || return
-					Action:Proc enable $tier QPKG enabling enabled || return
-					Action:Proc reactivate $tier QPKG reactivating reactivated || return
-					Action:Proc activate $tier QPKG activating activated || return
+					Action:Proc upgrade $tier QPKG upgrading upgraded
+					Action:Proc reinstall $tier QPKG reinstalling reinstalled
+					Action:Proc install $tier QPKG installing installed
+					Action:Proc restore $tier QPKG restoring restored
+					Action:Proc clean $tier QPKG cleaning cleaned
+					Action:Proc enable $tier QPKG enabling enabled
+					Action:Proc reactivate $tier QPKG reactivating reactivated
+					Action:Proc activate $tier QPKG activating activated
 					;;
 				addon)
 					for action in install reinstall upgrade activate; do
@@ -1071,17 +1073,17 @@ Actions:Proc()
 
 					if QPKGs-ISenabled:Exist Entware; then
 						ModPathToEntware
-						Action:Proc upgrade $tier IPK upgrading upgraded || return
-						Action:Proc install $tier IPK installing installed || return
+						Action:Proc upgrade $tier IPK upgrading upgraded
+						Action:Proc install $tier IPK installing installed
 
 						pips_install=true
-						Action:Proc install $tier PIP installing installed || return
+						Action:Proc install $tier PIP installing installed
 					fi
 			esac
 		done
 
 		if OS.IsSupportSignedPackages; then
-			Action:Proc sign all QPKG '"signing"' '"signed"' || return
+			Action:Proc sign all QPKG '"signing"' '"signed"'
 		fi
 	fi
 
