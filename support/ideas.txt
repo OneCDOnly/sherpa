@@ -1,3 +1,6 @@
+* add Gitea as new package?
+	https://docs.gitea.com/installation/install-from-binary
+
 * add netbox as new package?
 	https://docs.netbox.dev/en/stable/installation/
 
