@@ -1,7 +1,10 @@
+* add fileshelter as new package?
+	https://github.com/epoupon/fileshelter/blob/master/INSTALL.md
+
 * add Gitea as new package?
 	https://docs.gitea.com/installation/install-from-binary
 
-* add netbox as new package?
+* add NetBox as new package?
 	https://docs.netbox.dev/en/stable/installation/
 
 * check if QPKG has been signed before signing it again?
