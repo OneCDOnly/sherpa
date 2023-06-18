@@ -20,7 +20,7 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=pyLoad
-	readonly SCRIPT_VERSION=230604
+	readonly SCRIPT_VERSION=230619
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -285,7 +285,7 @@ InstallAddons()
 	local default_requirements_pathfile=$QPKG_CONFIG_PATH/requirements.txt
 	local default_recommended_pathfile=$QPKG_CONFIG_PATH/recommended.txt
 	local exclusions_pathfile=$QPKG_CONFIG_PATH/exclusions.txt
-	local rebuild_pathfile=$QPKG_CONFIG_PATH/rebuild.txt
+	local rename_pathfile=$QPKG_CONFIG_PATH/rename.txt
 	local requirements_pathfile=$QPKG_REPO_PATH/requirements.txt
 	local recommended_pathfile=$QPKG_REPO_PATH/recommended.txt
 	local pyproject_pathfile=$QPKG_REPO_PATH/pyproject.toml
@@ -323,20 +323,6 @@ InstallAddons()
 	[[ -e $recommended_pathfile ]] && cp -f "$recommended_pathfile" "$default_recommended_pathfile"
 	[[ -e $default_recommended_pathfile ]] && recommended_pathfile=$default_recommended_pathfile
 
-	# KLUDGE: can't use `manytolinux2014` wheel builds in QTS, so force these wheels to be rebuilt locally
-
-	if [[ -e $rebuild_pathfile ]]; then
-		for target in $requirements_pathfile $recommended_pathfile $pyproject_pathfile; do
-			if [[ -e $target ]]; then
-				for module in $(<$rebuild_pathfile); do
-					if (/bin/grep -q $module < "$target") && ! (/bin/grep -q -- "--no-binary=$module" < "$target"); then
-						DisplayRunAndLog "include rebuild directive for '$module' in '$(/usr/bin/basename "$target")'" "echo \"--no-binary=$module\" >> $target" log:failure-only || SetError
-					fi
-				done
-			fi
-		done
-	fi
-
 	# Must remove these modules from repo txt files, and use the ones installed via `opkg` instead (if available).
 	# If not, `pip` will attempt to compile these, which fails on early ARMv5 CPUs.
 
@@ -369,6 +355,16 @@ InstallAddons()
 			no_pips_installed=false
 		fi
 	fi
+
+	# KLUDGE: `manytolinux2014` builds are problematic in QTS, so rename these locally
+
+	if [[ -e $rename_pathfile ]]; then
+		for module in $(<$rename_pathfile); do
+			RenameSharedObjectFile "$module"
+		done
+	fi
+
+	return 0
 
 	}
 
@@ -1129,6 +1125,65 @@ GetPyloadConfig()
 	fi
 
 	echo "$value"
+
+	}
+
+GetPythonVer()
+	{
+
+	local v=''
+	v=$(GetThisBinPath ${1:-python} &>/dev/null && ${1:-python} -V 2>&1 | /bin/sed 's|^Python ||;s|\.||g')
+	[[ -n $v ]] && echo "${v:0:3}"
+
+	}
+
+GetThisBinPath()
+	{
+
+	[[ -n ${1:?null} ]] && command -v "$1" 2>&1
+
+	}
+
+RenameSharedObjectFile()
+	{
+
+	[[ -n ${1:-} ]] || return
+
+	if [[ -e $(GetModulePath)/$(GetOriginalModuleSOFilename "_$1") ]]; then
+		mv "$(GetModulePath)/$(GetOriginalModuleSOFilename "_$1")" "$(GetModulePath)/$(GetFixedModuleSOFilename "_$1")"
+		echo "renamed module: _$1"
+	fi
+
+	if [[ -e $(GetModulePath)/$1/$(GetOriginalModuleSOFilename "$1") ]]; then
+		mv "$(GetModulePath)/$1/$(GetOriginalModuleSOFilename "$1")" "$(GetModulePath)/$1/$(GetFixedModuleSOFilename "$1")"
+		echo "renamed module: $1/$1"
+	fi
+
+	return 0
+
+	}
+
+GetOriginalModuleSOFilename()
+	{
+
+	[[ -z $pyver ]] && pyver=$(GetPythonVer)
+	[[ -n ${1:-} ]] && echo "$1.cpython-$pyver-$(uname -m)-linux-gnu.so"
+
+	}
+
+GetFixedModuleSOFilename()
+	{
+
+	[[ -z $pyver ]] && pyver=$(GetPythonVer)
+	[[ -n ${1:-} ]] && echo "$1.cpython-$pyver.so"
+
+	}
+
+GetModulePath()
+	{
+
+	[[ -z $pyver ]] && pyver=$(GetPythonVer)
+	echo "$VENV_PATH/lib/python${pyver:0:1}.${pyver:1:2}/site-packages"
 
 	}
 
