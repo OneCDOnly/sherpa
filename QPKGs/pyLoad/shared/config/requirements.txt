@@ -2,7 +2,6 @@ babel
 bitmath
 blinker
 brotli
---no-binary=brotli
 cachelib<0.10.0,>=0.9.0
 certifi
 cheroot~=8.4

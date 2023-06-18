@@ -110,6 +110,7 @@ Self:Init()
 	readonly LOG_TAIL_LINES=5000		# note: a full download and install of everything generates a session log of around 1600 lines, but include a bunch of opkg updates and it can get much longer
 	prev_msg=' '
 	fork_pid=''
+	package_ver_final_col_width=0
 
 	OS.IsSupportSecureDownload && curl_insecure_arg='' || curl_insecure_arg=' --insecure'
 	QPKG.IsInstalled Entware && [[ $ENTWARE_VER = none ]] && DebugAsWarn "$(FormatAsPackName Entware) appears to be installed but is not visible"
@@ -320,8 +321,6 @@ Vars:Load()
 	opts_show_status=false
 	opts_show_tips=false
 	opts_show_versions=false
-
-	package_ver_final_col_width=0
 
 	}
 
@@ -2308,6 +2307,8 @@ CalcIpkDownloadSize()
 		DebugAsDone "$size_count IPK$(Pluralise "$size_count") to download: '$(IPKs-ACdownload-to:List)'"
 		DebugAsProc "calculating size of IPK$(Pluralise "$size_count") to download"
 		size_array=($($GNU_GREP_CMD -w '^Package:\|^Size:' "$EXTERNAL_PACKAGES_PATHFILE" | $GNU_GREP_CMD --after-context 1 --no-group-separator ": $($SED_CMD 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKs-ACdownload-to:List)")" | $GREP_CMD '^Size:' | $SED_CMD 's|^Size: ||'))
+
+		# shellcheck disable=2283
 		IPKs-ACdownload-to:Size = "$(IFS=+; echo "$((${size_array[*]}))")"		# a nifty sizing shortcut found here https://stackoverflow.com/a/13635566/6182835
 		DebugAsDone "$(FormatAsThous "$(IPKs-ACdownload-to:Size)") bytes ($(FormatAsIsoBytes "$(IPKs-ACdownload-to:Size)")) to download"
 	else
@@ -4235,6 +4236,7 @@ QPKGs.NewVers:Show()
 		upgradable_packages+=($(QPKGs-SCupgradable:Array))
 	fi
 
+	# shellcheck disable=2322
 	for ((index=0; index<=((${#upgradable_packages[@]}-1)); index++)); do
 		names_formatted+=$(ColourTextBrightOrange "${upgradable_packages[$index]}")
 
@@ -8080,10 +8082,7 @@ DebugErrorTabld()
 DebugVar()
 	{
 
-	# had to split this onto its own line so Kate editor won't choke when highlighting syntax
-	local temp=${!1:-undefined}
-
-	DebugAsVar "\$$1 : '$temp'"
+	DebugAsVar "\$$1 : '${!1:-undefined}'"
 
 	}
 
