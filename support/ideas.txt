@@ -1,3 +1,5 @@
+* ensure all IPKs previously installed are reinstalled after reinstalling Entware.
+
 * add fileshelter as new package?
 	https://github.com/epoupon/fileshelter/blob/master/INSTALL.md
 
