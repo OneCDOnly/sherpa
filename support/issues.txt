@@ -1,3 +1,5 @@
+* extend startup timeouts for Deluge QPKGs
+
 * sherpa debug log incomplete when running 'check'
 	1 log reset
 	2 done: "signed" 28 QPKGs
