@@ -1,9 +1,4 @@
-* sherpa debug log incomplete when running 'check'
-	1 log reset
-	2 done: "signed" 28 QPKGs
-	3 dbug: (<<) Action:Proc|0|15,882ms
-	4 done: check complete
-	5 dbug: (>>) IPKs.Actions:List()
+* extend startup timeouts for Deluge QPKGs
 
 * QPKG version sort is not correctly sorting version numbers followed by an alpha as later than non-alpha.
 

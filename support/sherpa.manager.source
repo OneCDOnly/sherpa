@@ -72,13 +72,13 @@ Self:Init()
 
 	Keystrokes:Hide
 	Cursor:Hide
-	IsVerbose
-	IsDebug
+	User:IsVerbose
+	User:IsDebug
 	Env:Confirm || return
 	Lists:Load
 	CreatePaths || return
 	ArchivePriorSessLogs
-	IsReset
+	User:IsReset
 	TerminalDimensions:Load
 
 	DebugInfoMajSepr
@@ -261,6 +261,7 @@ Self:Results()
 	DebugScript finished "$(/bin/date)"
 	DebugScript 'elapsed time' "$(FormatSecsToHoursMinutesSecs "$(($(/bin/date +%s)-SCRIPT_STARTSECONDS))")"
 	DebugInfoMajSepr
+	Func:Exit
 
 	[[ ${self_archive_debug_afterward:=false} = true ]] && ArchiveActiveSessLog
 	ResetActiveSessLog
@@ -269,8 +270,6 @@ Self:Results()
 		EraseThisLine
 		DisplayLineSpaceIfNoneAlready   # final on-screen linespace
 	fi
-
-	Func:Exit
 
 	}
 
@@ -1087,7 +1086,7 @@ Actions:Proc()
 
 	[[ $opts_check = true ]] && ShowAsDone 'check complete'
 
-	if [[ ${opts_debug:-false} = true ]]; then
+	if [[ $opts_debug = true ]]; then
 #		PIPs.Actions:List
 		IPKs.Actions:List
 		QPKGs.Actions:List
@@ -1310,7 +1309,6 @@ OpenActionMsgPipe()
 
 	# backup original stdin file descriptor so it can be restored later
 	eval "exec $backup_stdin_fd>&0"
-
 	# create another file descriptor to use in message pipe
 	msg_pipe_fd=$(FindNextFD)
 	DebugVar msg_pipe_fd
@@ -2713,7 +2711,7 @@ IsSU()
 
 	}
 
-IsReset()
+User:IsReset()
 	{
 
 	local re=''
@@ -2727,9 +2725,11 @@ IsReset()
 		exit 0
 	fi
 
+	return 1
+
 	}
 
-IsVerbose()
+User:IsVerbose()
 	{
 
 	local re=''
@@ -2738,11 +2738,14 @@ IsVerbose()
 	if [[ $USER_ARGS_RAW =~ $re ]]; then
 		Self.Verbose:Enable
 		EnableDebugToArchiveAndFile
+		return 0
 	fi
+
+	return 1
 
 	}
 
-IsDebug()
+User:IsDebug()
 	{
 
 	local re=''
@@ -2750,9 +2753,11 @@ IsDebug()
 	for re in \\bdebug\\b \\bdbug\\b; do
 		if [[ $USER_ARGS_RAW =~ $re ]]; then
 			EnableDebugToArchiveAndFile
-			break
+			return 0
 		fi
 	done
+
+	return 1
 
 	}
 
@@ -5693,8 +5698,8 @@ EnableDebugToArchiveAndFile()
 DisableDebugToArchiveAndFile()
 	{
 
-	self_archive_debug_afterward=false
 	opts_debug=false
+	self_archive_debug_afterward=false
 
 	}
 
@@ -8133,7 +8138,7 @@ FuncFork:Entry()
 	# debug forked function entry
 
 	# redirect debug output to a temporary log, then add it to session log before exiting. This will keep action log progress in-order
-	original_session_log_pathfile="$sess_active_pathfile"
+	original_sess_active_pathfile="$sess_active_pathfile"
 	sess_active_pathfile=$($MKTEMP_CMD /var/log/"${FUNCNAME[1]}"_XXXXXX)
 
 	local -r VAR_NAME=${FUNCNAME[1]}_STARTSECONDS
@@ -8158,11 +8163,12 @@ FuncFork:Exit()
 	DebugAsFuncEx "${1:-0}" "$(FormatAsDuration "$(CalcMilliDifference "${!var_safe_name}" "$(/bin/date +%s%N)")")"
 
 	if [[ -n $sess_active_pathfile && -e $sess_active_pathfile && -s $sess_active_pathfile ]]; then
-		$CAT_CMD "$sess_active_pathfile" >> "$original_session_log_pathfile"
-		sess_active_pathfile="$original_session_log_pathfile"
+		$CAT_CMD "$sess_active_pathfile" >> "$original_sess_active_pathfile"
+		rm -f "$sess_active_pathfile"
 	fi
 
-	rm -f "$sess_active_pathfile"
+	sess_active_pathfile="$original_sess_active_pathfile"
+	original_sess_active_pathfile=''
 
 	exit ${1:-0}
 
@@ -8213,64 +8219,56 @@ DebugAsFuncEx()
 DebugAsProc()
 	{
 
-	[[ -z ${1:-} ]] && return
-	DebugThis "(--) ${1:-}"
+	[[ -n ${1:-} ]] && DebugThis "(--) ${1:-}"
 
 	}
 
 DebugAsDone()
 	{
 
-	[[ -z ${1:-} ]] && return
-	DebugThis "(==) ${1:-}"
+	[[ -n ${1:-} ]] && DebugThis "(==) ${1:-}"
 
 	}
 
 DebugAsDetect()
 	{
 
-	[[ -z ${1:-} ]] && return
-	DebugThis "(**) ${1:-}"
+	[[ -n ${1:-} ]] && DebugThis "(**) ${1:-}"
 
 	}
 
 DebugAsInfo()
 	{
 
-	[[ -z ${1:-} ]] && return
-	DebugThis "(II) ${1:-}"
+	[[ -n ${1:-} ]] && DebugThis "(II) ${1:-}"
 
 	}
 
 DebugAsWarn()
 	{
 
-	[[ -z ${1:-} ]] && return
-	DebugThis "(WW) ${1:-}"
+	[[ -n ${1:-} ]] && DebugThis "(WW) ${1:-}"
 
 	}
 
 DebugAsError()
 	{
 
-	[[ -z ${1:-} ]] && return
-	DebugThis "(EE) ${1:-}"
+	[[ -n ${1:-} ]] && DebugThis "(EE) ${1:-}"
 
 	}
 
 DebugAsLog()
 	{
 
-	[[ -z ${1:-} ]] && return
-	DebugThis "(LL) ${1:-}"
+	[[ -n ${1:-} ]] && DebugThis "(LL) ${1:-}"
 
 	}
 
 DebugAsVar()
 	{
 
-	[[ -z ${1:-} ]] && return
-	DebugThis "(vv) ${1:-}"
+	[[ -n ${1:-} ]] && DebugThis "(vv) ${1:-}"
 
 	}
 
@@ -8716,8 +8714,7 @@ WriteToLog()
 	#	$1 = pass/fail
 	#	$2 = message
 
-	[[ ${opts_debug:=false} = false ]] && return
-	[[ -n ${sess_active_pathfile:-} ]] && printf '%-4s: %s\n' "$(StripANSI "${1:-}")" "$(StripANSI "${2:-}")" >> "$sess_active_pathfile"
+	[[ ${opts_debug:=false} = true && -n ${sess_active_pathfile:-} ]] && printf '%-4s: %s\n' "$(StripANSI "${1:-}")" "$(StripANSI "${2:-}")" >> "$sess_active_pathfile"
 
 	}
 
