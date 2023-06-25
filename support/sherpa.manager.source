@@ -4794,7 +4794,6 @@ QPKGs.Repos:Show()
 	local package_install_date=''
 	maxcols=3
 
-	DisableDebugToArchiveAndFile
 	QPKGs.States:Build
 	DisplayWritingReport
 
@@ -4833,7 +4832,6 @@ QPKGs.Repos:Show()
 
 	EraseThisLine		# clear the "proc:" message shown earlier
 	[[ -e $REPORT_PATHFILE ]] && $CAT_CMD "$REPORT_PATHFILE"
-	QPKGs.Actions:List
 	QPKGs.States:List
 
 	Func:Exit
@@ -4900,7 +4898,6 @@ QPKGs.Statuses:Show()
 	local package_result_msg=''
 
 	CalcMaxStatusColsToDisplay
-	DisableDebugToArchiveAndFile
 	QPKGs.States:Build
 	DisplayWritingReport
 
@@ -4967,7 +4964,6 @@ QPKGs.Statuses:Show()
 
 	EraseThisLine		# clear the "proc:" message shown earlier
 	[[ -e $REPORT_PATHFILE ]] && $CAT_CMD "$REPORT_PATHFILE"
-	QPKGs.Actions:List
 	QPKGs.States:List
 
 	Func:Exit
@@ -4983,13 +4979,14 @@ QPKGs.Timeouts:Increase()
 
 	if ! OS.IsSupportQpkgTimeout; then
 		ShowAsAbort "QPKG timeouts are unsupported in this $(GetQnapOS) version"
-		return 1
+		Func:Exit 1
+		return
 	fi
 
 	if [[ ! -e $target_utility_pathfile ]]; then
 		ShowAsError 'original utility not found'
 		Func:Exit 1
-		return 1
+		return
 	fi
 
 	if [[ -e $backup_utility_pathfile ]]; then
