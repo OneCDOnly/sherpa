@@ -56,9 +56,19 @@ Self:Init()
 
 	Func:Entry
 	Vars:Load
-	IsQNAP || return
-	IsSU || return
-	Self.LockFile:Claim || return
+
+	if ! IsQNAP; then
+		Func:Exit 1; return
+	fi
+
+	if ! IsSU; then
+		Func:Exit 1; return
+	fi
+
+	if ! Self.LockFile:Claim; then
+		Func:Exit 1; return
+	fi
+
 	UpdateColourisation
 	Consts:Load
 
@@ -74,9 +84,17 @@ Self:Init()
 	Cursor:Hide
 	User:IsVerbose
 	User:IsDebug
-	Env:Confirm || return
+
+	if ! Env:Confirm; then
+		Func:Exit 1; return
+	fi
+
 	Lists:Load
-	CreatePaths || return
+
+	if ! CreatePaths; then
+		Func:Exit 1; return
+	fi
+
 	ArchivePriorSessLogs
 	User:IsReset
 	TerminalDimensions:Load
@@ -93,7 +111,9 @@ Self:Init()
 	DebugVar THIS_SCRIPT_VER
 	DebugVar LOADER_SCRIPT_VER
 
-	Objects:Load || return
+	if ! Objects:Load; then
+		Func:Exit 1; return
+	fi
 
 	# test if this QTS `sleep` can handle decimal seconds. Early QTS BusyBox versions cannot.
 	readonly DECIMAL_SLEEP_SECONDS_SUPPORTED=$($QTS_SLEEP_CMD .01 &>/dev/null && echo true || echo false)
@@ -128,7 +148,10 @@ Self:Init()
 		skip_package_actions=true
 		DisableDebugToArchiveAndFile
 	else
-		Packages:Load || return
+		if ! Packages:Load; then
+			Func:Exit 1; return
+		fi
+
 		ParseArgs
 	fi
 
@@ -3738,7 +3761,7 @@ Actions.Results:Show()
 	local package_type=''
 	local found=false
 
-	ShowAsProc 'writing report'
+	DisplayWritingReport
 
 		{
 
@@ -4668,7 +4691,7 @@ QPKGs.Abbreviations:Show()
 	maxcols=2
 
 	DisableDebugToArchiveAndFile
-	ShowAsProc 'writing report'
+	DisplayWritingReport
 
 		{
 
@@ -4721,7 +4744,7 @@ QPKGs.Backups:Show()
 	local format=''
 
 	DisableDebugToArchiveAndFile
-	ShowAsProc 'writing report'
+	DisplayWritingReport
 
 		{
 
@@ -4773,7 +4796,7 @@ QPKGs.Repos:Show()
 
 	DisableDebugToArchiveAndFile
 	QPKGs.States:Build
-	ShowAsProc 'writing report'
+	DisplayWritingReport
 
 		{
 
@@ -4825,7 +4848,7 @@ QPKGs:List:Show()
 	maxcols=3
 
 	DisableDebugToArchiveAndFile
-	ShowAsProc 'writing report'
+	DisplayWritingReport
 
 		{
 
@@ -4879,7 +4902,7 @@ QPKGs.Statuses:Show()
 	CalcMaxStatusColsToDisplay
 	DisableDebugToArchiveAndFile
 	QPKGs.States:Build
-	ShowAsProc 'writing report'
+	DisplayWritingReport
 
 		{
 
@@ -7907,6 +7930,16 @@ DisplayLineSpaceIfNoneAlready()
 		linespace_visible=true
 	else
 		linespace_visible=false
+	fi
+
+	}
+
+DisplayWritingReport()
+	{
+
+	if [[ ${report_title_shown:=false} = false ]]; then
+		ShowAsProc 'writing report'
+		report_title_shown=true
 	fi
 
 	}
