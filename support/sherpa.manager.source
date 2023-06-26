@@ -315,6 +315,7 @@ Vars:Load()
 
 	# user-selectable options
 	opts_check=false
+	opts_debug=false
 	opts_increase_qpkg_timeouts=false
 	opts_revert_qpkg_timeouts=false
 	opts_verbose=false
@@ -349,7 +350,7 @@ Vars:Load()
 Consts:Load()
 	{
 
-	if ! /bin/grep -q "$(echo 'ZG9udGVkaXQK' | /usr/bin/openssl enc -base64 -d)" "$0"; then		# use encrypted search-string to prevent grep finding this code line
+	if ! /bin/grep -q "$(echo 'ZG9udGVkaXQK' | /usr/bin/openssl enc -base64 -d)" "$0"; then		# use encrypted search-string to prevent `grep` finding this code line
 		local -r SOURCE_BRANCH=stable
 	else
 		local -r SOURCE_BRANCH=unstable
@@ -4794,7 +4795,6 @@ QPKGs.Repos:Show()
 	local package_install_date=''
 	maxcols=3
 
-	DisableDebugToArchiveAndFile
 	QPKGs.States:Build
 	DisplayWritingReport
 
@@ -4833,7 +4833,6 @@ QPKGs.Repos:Show()
 
 	EraseThisLine		# clear the "proc:" message shown earlier
 	[[ -e $REPORT_PATHFILE ]] && $CAT_CMD "$REPORT_PATHFILE"
-	QPKGs.Actions:List
 	QPKGs.States:List
 
 	Func:Exit
@@ -4900,7 +4899,6 @@ QPKGs.Statuses:Show()
 	local package_result_msg=''
 
 	CalcMaxStatusColsToDisplay
-	DisableDebugToArchiveAndFile
 	QPKGs.States:Build
 	DisplayWritingReport
 
@@ -4967,7 +4965,6 @@ QPKGs.Statuses:Show()
 
 	EraseThisLine		# clear the "proc:" message shown earlier
 	[[ -e $REPORT_PATHFILE ]] && $CAT_CMD "$REPORT_PATHFILE"
-	QPKGs.Actions:List
 	QPKGs.States:List
 
 	Func:Exit
@@ -4983,13 +4980,14 @@ QPKGs.Timeouts:Increase()
 
 	if ! OS.IsSupportQpkgTimeout; then
 		ShowAsAbort "QPKG timeouts are unsupported in this $(GetQnapOS) version"
-		return 1
+		Func:Exit 1
+		return
 	fi
 
 	if [[ ! -e $target_utility_pathfile ]]; then
 		ShowAsError 'original utility not found'
 		Func:Exit 1
-		return 1
+		return
 	fi
 
 	if [[ -e $backup_utility_pathfile ]]; then
