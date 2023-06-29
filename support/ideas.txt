@@ -1,5 +1,8 @@
 * ensure all IPKs previously installed are reinstalled after reinstalling Entware.
 
+* add comictagger as new package?
+	https://github.com/comictagger/comictagger/wiki/Installation
+
 * add fileshelter as new package?
 	https://github.com/epoupon/fileshelter/blob/master/INSTALL.md
 
