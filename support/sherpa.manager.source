@@ -509,7 +509,11 @@ Env:Confirm()
 	IsSysFileExist $MKTEMP_CMD || return
 	IsSysFileExist $SED_CMD || return
 	IsSysFileExist $SH_CMD || return
-	[[ ! -e $GNU_SLEEP_CMD ]] && { IsSysFileExist $QTS_SLEEP_CMD || return ;}
+
+	if [[ ! -e $GNU_SLEEP_CMD ]]; then
+		IsSysFileExist $QTS_SLEEP_CMD || return
+	fi
+
 	IsSysFileExist $TAR_CMD || return
 	IsSysFileExist $TOUCH_CMD || return
 	IsSysFileExist $UNAME_CMD || return
@@ -1333,6 +1337,7 @@ OpenActionMsgPipe()
 
 	# backup original stdin file descriptor so it can be restored later
 	eval "exec $backup_stdin_fd>&0"
+
 	# create another file descriptor to use in message pipe
 	msg_pipe_fd=$(FindNextFD)
 	DebugVar msg_pipe_fd
@@ -7704,7 +7709,7 @@ RunAndLog()
 
 	case $result_code in
 		0|"${4:-}")
-			[[ ${3:-} != log:failure-only ]] && AddExtLogToSessLog "$2"
+			[[ ${3:-} != log:failure-only || $opts_debug = true ]] && AddExtLogToSessLog "$2"
 			DebugAsDone 'exec: complete'
 			[[ $opts_debug = false ]] && rm -f "$2"
 			;;
