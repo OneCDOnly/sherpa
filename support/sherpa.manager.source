@@ -56,6 +56,7 @@ Self:Init()
 
 	Func:Entry
 	Vars:Load
+	Consts:Load
 
 	if ! IsQNAP; then
 		Func:Exit 1; return
@@ -70,7 +71,6 @@ Self:Init()
 	fi
 
 	UpdateColourisation
-	Consts:Load
 
 	sess_active_pathfile=$THIS_PACKAGE_PATH/session.$$.active.log
 	rm -f "$REPORT_PATHFILE" "$RAMDISKS_FREESPACE_PATHFILE" "$DISPLAY_INHIBIT_PATHFILE"
