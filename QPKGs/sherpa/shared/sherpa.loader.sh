@@ -30,13 +30,20 @@
 
 #	You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 
+readonly USER_ARGS_RAW=$*
+
 Init()
 	{
 
-	IsQNAP || return
-
-	export LOADER_SCRIPT_VER=230430
+	export LOADER_SCRIPT_VER=230713
 	export LOADER_SCRIPT_PPID=$PPID
+
+	readonly CHARS_REGULAR_PROMPT='$ '
+	readonly CHARS_SUPER_PROMPT='# '
+	readonly CHARS_SUDO_PROMPT="${CHARS_REGULAR_PROMPT}sudo "
+
+	IsQNAP || return
+	IsSU || return
 
 	local -r WORK_PATH=$(/sbin/getcfg sherpa Install_Path -f /etc/config/qpkg.conf)/cache
 
@@ -75,7 +82,7 @@ EnsureFileIsCurrent()
 
 	if [[ -n $msgs ]]; then
 		if ! (/sbin/curl"$curl_insecure_arg" --silent --fail "$2" > "$3"); then
-			ShowAsWarning 'Remote file download failed'
+			ShowAsWarn 'Remote file download failed'
 		else
 			/bin/tar --extract --gzip --file="$3" --directory="$(/usr/bin/dirname "$3")" 2>/dev/null
 		fi
@@ -102,7 +109,28 @@ IsQNAP()
 
 	}
 
-ShowAsWarning()
+IsSU()
+	{
+
+	# running as superuser?
+
+	if [[ $EUID -ne 0 ]]; then
+		if [[ -e /usr/bin/sudo ]]; then
+			ShowAsError 'this utility must be run with superuser privileges. Try again as:'
+
+			echo "${CHARS_SUDO_PROMPT}sherpa $USER_ARGS_RAW" >&2
+		else
+			ShowAsError "this utility must be run as the 'admin' user. Please login via SSH as 'admin' and try again"
+		fi
+
+		return 1
+	fi
+
+	return 0
+
+	}
+
+ShowAsWarn()
 	{
 
 	# warning only
@@ -121,6 +149,35 @@ ShowAsAbort()
 	WriteToDisplay.New "$(ColourTextBrightRed bort)" "${1:-}"
 
 	return 0
+
+	}
+
+ShowAsError()
+	{
+
+	# fatal error
+
+	local capitalised="$(Capitalise "${1:-}")"
+
+	WriteToDisplay.New "$(ColourTextBrightRed derp)" "$capitalised"
+
+	return 0
+
+	}
+
+Capitalise()
+	{
+
+	# capitalise first character of $1
+
+	echo "$(Uppercase ${1:0:1})${1:1}"
+
+	}
+
+Uppercase()
+	{
+
+	tr 'a-z' 'A-Z' <<< "$1"
 
 	}
 
@@ -180,4 +237,4 @@ ColourTextBrightRed()
 
 Init || exit
 EnsureFileIsCurrent "$MANAGER_PATHFILE" "$MANAGER_ARCHIVE_URL" "$MANAGER_ARCHIVE_PATHFILE"
-eval '/usr/bin/env bash' "$MANAGER_PATHFILE" "$*"
+eval '/usr/bin/env bash' "$MANAGER_PATHFILE" "$USER_ARGS_RAW"
