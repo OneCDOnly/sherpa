@@ -126,6 +126,7 @@ Self:Init()
 	readonly NAS_QPKG_ARCH=$(GetQpkgArch)
 	readonly ENTWARE_VER=$(GetEntwareType)
 	readonly CPU_CORES=$(GetCPUCores)
+	readonly KERNEL_PAGESIZE=$(GetKernelPageSize)
 	readonly CONCURRENCY=$CPU_CORES		# maximum concurrent package actions to run. Should probably make this account for CPU speed too.
 	readonly LOG_TAIL_LINES=5000		# note: a full download and install of everything generates a session log of around 1600 lines, but include a bunch of opkg updates and it can get much longer
 	prev_msg=' '
@@ -642,7 +643,14 @@ Self:LogEnv()
 		DebugFirmware warning 'build date' "$NAS_FIRMWARE_DATE"
 	fi
 
-	DebugFirmware ok kernel "$(GetKernel)"
+	DebugFirmware ok 'kernel version' "$(GetKernelVersion)"
+
+	if [[ $KERNEL_PAGESIZE = '4kB' ]]; then
+		DebugFirmware ok 'kernel page size' "$KERNEL_PAGESIZE"
+	else
+		DebugFirmware warning 'kernel page size' "$KERNEL_PAGESIZE"
+	fi
+
 	DebugFirmware ok platform "$NAS_PLATFORM"
 	DebugUserspace ok 'OS uptime' "$(GetUptime)"
 
@@ -3208,8 +3216,7 @@ DisplayAsHelpNameStatusVerPath()
 				[[ $package_status =~ $patt ]] && package_status_msg+=" $(ColourTextBrightOrange unknown)"
 
 				if [[ -n $package_status_msg ]]; then
-					package_status_msg="${package_status_msg#* }"		# remove leading whitespace
-					package_status_msg="${package_status_msg%* }"		# remove trailing whitespace
+					package_status_msg=$(Trim "$package_status_msg")
 					package_status_msg="${package_status_msg// /, }"	# insert separators
 				else
 					package_status_msg="$package_status"
@@ -5405,10 +5412,17 @@ GetArch()
 
 	}
 
-GetKernel()
+GetKernelVersion()
 	{
 
 	$UNAME_CMD -r
+
+	}
+
+GetKernelPageSize()
+	{
+
+	$GREP_CMD KernelPageSize /proc/1/smaps | $HEAD_CMD -n1 | cut -f2 -d':' | tr -d ' '
 
 	}
 
@@ -7767,6 +7781,33 @@ Lowercase()
 	{
 
 	tr 'A-Z' 'a-z' <<< "$1"
+
+	}
+
+LTrim()
+	{
+
+	# trim leading whitespace from $1
+
+	(shopt -s extglob; echo -n "${1##+(' ')}")
+
+	}
+
+RTrim()
+	{
+
+	# trim trailing whitespace from $1
+
+	(shopt -s extglob; echo -n "${1%%+(' ')}")
+
+	}
+
+Trim()
+	{
+
+	# trim leading and trailing whitespace from $1
+
+	RTrim "$(LTrim "$1")"
 
 	}
 
