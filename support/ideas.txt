@@ -1,3 +1,6 @@
+* create a function to determine if a specified package name is upgradable
+	must be already installed, have supported arch and RAM, and version number different.
+
 * ensure all IPKs previously installed are reinstalled after reinstalling Entware.
 
 * add comictagger as new package?
