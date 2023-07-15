@@ -27,7 +27,9 @@ OMedusa_230604.qpkg.md5              OMedusa_230604.qpkg              OMedusa   
 OqBittorrent_230604.qpkg.md5         OqBittorrent_230604.qpkg         OqBittorrent         230604       all    65413ee56337ff0f7b83d2c3c3cdc8ea
 OSickGear_230619.qpkg.md5            OSickGear_230619.qpkg            OSickGear            230619       all    74bba7ad9443150d6eda792ade228021
 OTransmission_230604.qpkg.md5        OTransmission_230604.qpkg        OTransmission        230604       all    1c2e26ebdb4c779e0b166738b9d77687
-OWatcher3_230604.qpkg.md5            OWatcher3_230604.qpkg            OWatcher3            230604       all    687dd0c79efe2ea1ea4aed34b6715dfc
+OWatcher3_230716_arm_64.qpkg.md5     OWatcher3_230716_arm_64.qpkg     OWatcher3            230716       a64    a9f7279323954ca99dbdcc5eb5f3a35a
+OWatcher3_230716_x86_64.qpkg.md5     OWatcher3_230716_x86_64.qpkg     OWatcher3            230716       i64    478060d752fbb242e4d2ce6764a6ed8d
+OWatcher3_230716_x86.qpkg.md5        OWatcher3_230716_x86.qpkg        OWatcher3            230716       i86    df94e5efaf47cdaa6a36127a237ad7d6
 Par2_0.8.1.1_arm_64.qpkg.md5         Par2_0.8.1.1_arm_64.qpkg         Par2                 0.8.1.1      a64    b8e89f295bdec56eecae88ec685d1e23
 Par2_0.8.1.1_arm-x19.qpkg.md5        Par2_0.8.1.1_arm-x19.qpkg        Par2                 0.8.1.1      a19    d312d8bd2dee43e62a720f0d209905f8
 Par2_0.8.1.1_arm-x31.qpkg.md5        Par2_0.8.1.1_arm-x31.qpkg        Par2                 0.8.1.1      a31    fcf3a710e453cb38b14920e5ac2f2812
