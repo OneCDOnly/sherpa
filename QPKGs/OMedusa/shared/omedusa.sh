@@ -20,7 +20,7 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=OMedusa
-	readonly SCRIPT_VERSION=230604
+	readonly SCRIPT_VERSION=230716
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -42,6 +42,9 @@ Init()
 	readonly OPKG_PATH=/opt/bin:/opt/sbin
 	export PATH="$OPKG_PATH:$(/bin/sed "s|$OPKG_PATH||" <<< "$PATH")"
 	readonly DEBUG_LOG_DATAWIDTH=100
+	readonly CHARS_REGULAR_PROMPT='$ '
+	readonly CHARS_SUPER_PROMPT='# '
+	readonly CHARS_SUDO_PROMPT="${CHARS_REGULAR_PROMPT}sudo "
 	local re=''
 	daemon_port=0
 	ui_port=0
@@ -55,7 +58,8 @@ Init()
 	# 'shallow' (depth 1) or 'single-branch' ... 'shallow' implies 'single-branch'
 	readonly SOURCE_GIT_BRANCH_DEPTH=single-branch
 	readonly INTERPRETER=/opt/bin/python3
-	readonly VENV_INTERPRETER=$VENV_PATH/bin/python3
+	readonly VENV_PYTHON_PATHFILE=$VENV_PATH/bin/python3
+	readonly VENV_PIP_PATHFILE=$VENV_PATH/bin/pip
 	readonly ALLOW_ACCESS_TO_SYS_PACKAGES=true
 	readonly INSTALL_PIP_DEPS=true
 
@@ -64,7 +68,7 @@ Init()
 
 	# specific to daemonised applications only
 	readonly DAEMON_PATHFILE=$QPKG_REPO_PATH/start.py
-	readonly DAEMON_LAUNCH_CMD=". $VENV_PATH/bin/activate && cd $QPKG_REPO_PATH && $VENV_INTERPRETER $DAEMON_PATHFILE --daemon --nolaunch --datadir $(/usr/bin/dirname "$QPKG_INI_PATHFILE") --config $QPKG_INI_PATHFILE --pidfile $DAEMON_PID_PATHFILE"
+	readonly DAEMON_LAUNCH_CMD="$VENV_PYTHON_PATHFILE $DAEMON_PATHFILE --daemon --nolaunch --datadir $(/usr/bin/dirname "$QPKG_INI_PATHFILE") --config $QPKG_INI_PATHFILE --pidfile $DAEMON_PID_PATHFILE"
 	readonly RUN_DAEMON_IN_SCREEN_SESSION=false
 	readonly DAEMON_PROC_IS_NAME_ONLY=false
 	readonly PORT_CHECK_TIMEOUT_SECONDS=240
@@ -286,7 +290,7 @@ InstallAddons()
 	local default_requirements_pathfile=$QPKG_CONFIG_PATH/requirements.txt
 	local default_recommended_pathfile=$QPKG_CONFIG_PATH/recommended.txt
 	local exclusions_pathfile=$QPKG_CONFIG_PATH/exclusions.txt
-	local rebuild_pathfile=$QPKG_CONFIG_PATH/rebuild.txt
+	local rename_pathfile=$QPKG_CONFIG_PATH/rename.txt
 	local requirements_pathfile=$QPKG_REPO_PATH/requirements.txt
 	local recommended_pathfile=$QPKG_REPO_PATH/recommended.txt
 	local pyproject_pathfile=$QPKG_REPO_PATH/pyproject.toml
@@ -324,20 +328,6 @@ InstallAddons()
 	[[ -e $recommended_pathfile ]] && cp -f "$recommended_pathfile" "$default_recommended_pathfile"
 	[[ -e $default_recommended_pathfile ]] && recommended_pathfile=$default_recommended_pathfile
 
-	# KLUDGE: can't use `manytolinux2014` wheel builds in QTS, so force these wheels to be rebuilt locally
-
-	if [[ -e $rebuild_pathfile ]]; then
-		for target in $requirements_pathfile $recommended_pathfile $pyproject_pathfile; do
-			if [[ -e $target ]]; then
-				for module in $(<$rebuild_pathfile); do
-					if (/bin/grep -q $module < "$target") && ! (/bin/grep -q -- "--no-binary=$module" < "$target"); then
-						DisplayRunAndLog "include rebuild directive for '$module' in '$(/usr/bin/basename "$target")'" "echo \"--no-binary=$module\" >> $target" log:failure-only || SetError
-					fi
-				done
-			fi
-		done
-	fi
-
 	# Must remove these modules from repo txt files, and use the ones installed via `opkg` instead (if available).
 	# If not, `pip` will attempt to compile these, which fails on early ARMv5 CPUs.
 
@@ -357,7 +347,7 @@ InstallAddons()
 
 	for target in $requirements_pathfile $recommended_pathfile; do
 		if [[ -e $target ]]; then
-			DisplayRunAndLog "install PyPI modules from '$(/usr/bin/basename "$target")'" ". $VENV_PATH/bin/activate && pip install${pip_deps} --no-input --upgrade pip -r $target" log:failure-only || SetError
+			DisplayRunAndLog "install PyPI modules from '$(/usr/bin/basename "$target")'" "$VENV_PIP_PATHFILE install${pip_deps} --no-input --upgrade pip -r $target" log:failure-only || SetError
 			no_pips_installed=false
 		fi
 	done
@@ -366,10 +356,20 @@ InstallAddons()
 
 	if [[ $no_pips_installed = true ]]; then
 		if [[ -e $QPKG_REPO_PATH/setup.py || -e $pyproject_pathfile ]]; then
-			DisplayRunAndLog "install PyPI modules from '$(/usr/bin/basename "$target")'" ". $VENV_PATH/bin/activate && pip install${pip_deps} --no-input --upgrade pip $QPKG_REPO_PATH" log:failure-only || SetError
+			DisplayRunAndLog "install PyPI modules from '$(/usr/bin/basename "$target")'" "$VENV_PIP_PATHFILE install${pip_deps} --no-input --upgrade pip $QPKG_REPO_PATH" log:failure-only || SetError
 			no_pips_installed=false
 		fi
 	fi
+
+	# KLUDGE: `manytolinux2014` builds are problematic in QTS, so rename these locally
+
+	if [[ -e $rename_pathfile ]]; then
+		for module in $(<$rename_pathfile); do
+			RenameSharedObjectFile "$module"
+		done
+	fi
+
+	return 0
 
 	}
 
@@ -589,8 +589,8 @@ WaitForGit()
 GetLaunchTarget()
 	{
 
-	if [[ -n ${VENV_INTERPRETER:-} ]]; then
-		echo "$VENV_INTERPRETER"
+	if [[ -n ${VENV_PYTHON_PATHFILE:-} ]]; then
+		echo "$VENV_PYTHON_PATHFILE"
 	elif [[ -n ${DAEMON_PATHFILE:-} ]]; then
 		echo "$DAEMON_PATHFILE"
 	else
@@ -701,7 +701,7 @@ WaitForDaemon()
 		if [[ $DAEMON_PROC_IS_NAME_ONLY = true ]]; then
 			target_proc=$(/usr/bin/basename "$DAEMON_PATHFILE")
 		else
-			target_proc=$DAEMON_PATHFILE
+			target_proc="$(GetLaunchTarget)"
 		fi
 
 		(
@@ -1004,6 +1004,15 @@ StripANSI()
 
 	}
 
+Capitalise()
+	{
+
+	# capitalise first character of $1
+
+	echo "$(Uppercase ${1:0:1})${1:1}"
+
+	}
+
 Uppercase()
 	{
 
@@ -1092,6 +1101,65 @@ CheckPorts()
 		ReWriteUIPorts
 		return 0
 	fi
+
+	}
+
+GetPythonVer()
+	{
+
+	local v=''
+	v=$(GetThisBinPath ${1:-python} &>/dev/null && ${1:-python} -V 2>&1 | /bin/sed 's|^Python ||;s|\.||g')
+	[[ -n $v ]] && echo "${v:0:3}"
+
+	}
+
+GetThisBinPath()
+	{
+
+	[[ -n ${1:?null} ]] && command -v "$1" 2>&1
+
+	}
+
+RenameSharedObjectFile()
+	{
+
+	[[ -n ${1:-} ]] || return
+
+	if [[ -e $(GetModulePath)/$(GetOriginalModuleSOFilename "_$1") ]]; then
+		mv "$(GetModulePath)/$(GetOriginalModuleSOFilename "_$1")" "$(GetModulePath)/$(GetFixedModuleSOFilename "_$1")"
+		echo "renamed module: _$1"
+	fi
+
+	if [[ -e $(GetModulePath)/$1/$(GetOriginalModuleSOFilename "$1") ]]; then
+		mv "$(GetModulePath)/$1/$(GetOriginalModuleSOFilename "$1")" "$(GetModulePath)/$1/$(GetFixedModuleSOFilename "$1")"
+		echo "renamed module: $1/$1"
+	fi
+
+	return 0
+
+	}
+
+GetOriginalModuleSOFilename()
+	{
+
+	[[ -z $pyver ]] && pyver=$(GetPythonVer)
+	[[ -n ${1:-} ]] && echo "$1.cpython-$pyver-$(uname -m)-linux-gnu.so"
+
+	}
+
+GetFixedModuleSOFilename()
+	{
+
+	[[ -z $pyver ]] && pyver=$(GetPythonVer)
+	[[ -n ${1:-} ]] && echo "$1.cpython-$pyver.so"
+
+	}
+
+GetModulePath()
+	{
+
+	[[ -z $pyver ]] && pyver=$(GetPythonVer)
+	echo "$VENV_PATH/lib/python${pyver:0:1}.${pyver:1:2}/site-packages"
 
 	}
 
@@ -1420,7 +1488,7 @@ IsPortResponds()
 	if [[ $DAEMON_PROC_IS_NAME_ONLY = true ]]; then
 		target_proc=$(/usr/bin/basename "$DAEMON_PATHFILE")
 	else
-		target_proc=$DAEMON_PATHFILE
+		target_proc="$(GetLaunchTarget)"
 	fi
 
 	while true; do
@@ -1491,7 +1559,7 @@ IsPortSecureResponds()
 	if [[ $DAEMON_PROC_IS_NAME_ONLY = true ]]; then
 		target_proc=$(/usr/bin/basename "$DAEMON_PATHFILE")
 	else
-		target_proc=$DAEMON_PATHFILE
+		target_proc="$(GetLaunchTarget)"
 	fi
 
 	while true; do
@@ -1753,6 +1821,17 @@ IsNotStatus()
 
 	}
 
+ShowAsError()
+	{
+
+	# fatal error
+
+	local capitalised="$(Capitalise "${1:-}")"
+
+	Display "$(ColourTextBrightRed derp): $capitalised"
+
+	} >&2
+
 DisplayErrCommitAllLogs()
 	{
 
@@ -1867,7 +1946,7 @@ DisplayAndCommitActionToLog()
 	{
 
 	starttime="$(/bin/date +%s%N)"
-	local msg="begin action: $service_operation, datetime: $(date), package: $QPKG_VERSION, service: $SCRIPT_VERSION"
+	local msg="source: $(/usr/bin/basename "$0"), action: $service_operation, datetime: $(date), package: $QPKG_VERSION, service: $SCRIPT_VERSION"
 
 	msg=$(/bin/tr -s ' ' <<< "$msg")
 
@@ -1881,7 +1960,7 @@ DisplayAndCommitActionToLog()
 DisplayAndCommitStatusToLog()
 	{
 
-	local msg="end action: $service_operation, datetime: $(date), result: $service_result, elapsed time: $(FormatAsDuration "$(CalcMilliDifference "$starttime" "$(/bin/date +%s%N)")")"
+	local msg="source: $(/usr/bin/basename "$0"), action: $service_operation, datetime: $(date), result: $service_result, elapsed time: $(FormatAsDuration "$(CalcMilliDifference "$starttime" "$(/bin/date +%s%N)")")"
 
 	msg=$(/bin/tr -s ' ' <<< "$msg")
 
@@ -1967,6 +2046,13 @@ ColourTextBrightWhite()
 	{
 
 	printf '\033[1;97m%s\033[0m' "${1:-}"
+
+	} 2>/dev/null
+
+ColourTextBrightRed()
+	{
+
+	printf '\033[1;31m%s\033[0m' "${1:-}"
 
 	} 2>/dev/null
 
@@ -2136,13 +2222,35 @@ GetPathGitBranch()
 
 	} 2>/dev/null
 
+IsSU()
+	{
+
+	# running as superuser?
+
+	if [[ $EUID -ne 0 ]]; then
+		if [[ -e /usr/bin/sudo ]]; then
+			ShowAsError 'this utility must be run with superuser privileges. Try again as:'
+			Display "${CHARS_SUDO_PROMPT}$0 $USER_ARGS_RAW" >&2
+		else
+			ShowAsError "this utility must be run as the 'admin' user. Please login via SSH as 'admin' and try again"
+		fi
+
+		return 1
+	fi
+
+	return 0
+
+	}
+
 Init
 
 if IsNotError; then
 	case $1 in
 		start|--start)
+			IsSU ||	exit 1
+
 			if IsNotQPKGEnabled; then
-				echo "The $(FormatAsPackageName "$QPKG_NAME") QPKG is disabled. Please enable it first with: qpkg_service enable $QPKG_NAME"
+				Display "The $(FormatAsPackageName "$QPKG_NAME") QPKG is disabled. Please enable it first with: qpkg_service enable $QPKG_NAME"
 				SetError
 			else
 				SetServiceAction start
@@ -2150,12 +2258,15 @@ if IsNotError; then
 			fi
 			;;
 		stop|--stop)
+			IsSU ||	exit 1
 			SetServiceAction stop
 			StopQPKG
 			;;
 		r|-r|restart|--restart)
+			IsSU ||	exit 1
+
 			if IsNotQPKGEnabled; then
-				echo "The $(FormatAsPackageName "$QPKG_NAME") QPKG is disabled. Please enable it first with: qpkg_service enable $QPKG_NAME"
+				Display "The $(FormatAsPackageName "$QPKG_NAME") QPKG is disabled. Please enable it first with: qpkg_service enable $QPKG_NAME"
 				SetError
 			else
 				SetServiceAction restart
@@ -2167,6 +2278,8 @@ if IsNotError; then
 			StatusQPKG
 			;;
 		b|-b|backup|--backup|backup-config|--backup-config)
+			IsSU ||	exit 1
+
 			if IsSupportBackup; then
 				SetServiceAction backup
 				BackupConfig
@@ -2176,6 +2289,8 @@ if IsNotError; then
 			fi
 			;;
 		reset-config|--reset-config)
+			IsSU ||	exit 1
+
 			if IsSupportReset; then
 				SetServiceAction reset
 				StopQPKG
@@ -2187,6 +2302,8 @@ if IsNotError; then
 			fi
 			;;
 		restore|--restore|restore-config|--restore-config)
+			IsSU ||	exit 1
+
 			if IsSupportBackup; then
 				SetServiceAction restore
 				StopQPKG
@@ -2198,6 +2315,8 @@ if IsNotError; then
 			fi
 			;;
 		clean|--clean)
+			IsSU ||	exit 1
+
 			if IsSourcedOnline; then
 				SetServiceAction clean
 				StopQPKG
@@ -2215,10 +2334,12 @@ if IsNotError; then
 			ViewLog
 			;;
 		disable-auto-update|--disable-auto-update)
+			IsSU ||	exit 1
 			SetServiceAction disable-auto-update
 			DisableAutoUpdate
 			;;
 		enable-auto-update|--enable-auto-update)
+			IsSU ||	exit 1
 			SetServiceAction enable-auto-update
 			EnableAutoUpdate
 			;;
