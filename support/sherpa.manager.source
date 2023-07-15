@@ -1560,7 +1560,7 @@ ParseArgs()
 
 		if [[ -z $action ]]; then
 			case $arg in
-				a|abs|action|actions|actions-all|alias|aliases|all-actions|b|backups|deps|dependent|dependents|disabled|enabled|failed|groups|indeps|independent|independents|installable|installed|l|last|log|missing|new|not-installed|ok|option|options|p|package|packages|problems|r|repo|repos|results|skipped|standalone|standalones|tail|tips|updatable|updateable|upgradable|v|version|versions|whole)
+				a|abs|action|actions|actions-all|alias|aliases|all-actions|b|backups|deps|dependent|dependents|disabled|enabled|failed|groups|indeps|independent|independents|installable|installed|l|last|log|missing|new|not-installed|o|ok|option|options|p|package|packages|problems|r|repo|repos|results|skipped|standalone|standalones|tail|tips|updatable|updateable|upgradable|v|version|versions|whole)
 					action=help
 					arg_identified=true
 					group=''
@@ -1616,7 +1616,7 @@ ParseArgs()
 				log|whole)
 					group=log
 					;;
-				option|options)
+				o|option|options)
 					group=options
 					;;
 				p|package|packages)
