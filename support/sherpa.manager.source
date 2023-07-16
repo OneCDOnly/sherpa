@@ -3870,7 +3870,9 @@ Help.Problems:Show()
 	DisplayAsProjSynIndentExam '' l
 	DisplayAsProjSynIndentExam "view the entire $(FormatAsTitle) session log" log
 	DisplayAsProjSynIndentExam "increase the default $(GetQnapOS) QPKG timeout for all packages to $((QPKG_EXTENDED_TIMEOUT_SECONDS/60)) minutes" 'increase-timeout'
+	DisplayAsProjSynIndentExam '' 'timeout:increase'
 	DisplayAsProjSynIndentExam "revert the default $(GetQnapOS) QPKG timeout for all packages to 3 minutes" 'revert-timeout'
+	DisplayAsProjSynIndentExam '' 'timeout:decrease'
 	DisplayAsProjSynIndentExam "upload the most-recent session in your $(FormatAsTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste last'
 	DisplayAsProjSynIndentExam "upload the most-recent $(FormatAsThous "$LOG_TAIL_LINES") lines in your $(FormatAsTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste log'
 	DisplayAsHelpTitleHighlighted "If you need help, please include a copy of your $(FormatAsTitle) $(ColourTextBrightOrange "log for analysis!")"
