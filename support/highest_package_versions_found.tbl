@@ -13,7 +13,9 @@ Headphones_230619.qpkg.md5           Headphones_230619.qpkg           Headphones
 HideThatBanner_230503.qpkg.md5       HideThatBanner_230503.qpkg       HideThatBanner       230503       all    467c7c005e113d06b37bf467d4ba9019
 inxi_230329.qpkg.md5                 inxi_230329.qpkg                 inxi                 230329       all    5f3fcd8df30d526e8c45a4fb7e96d54e
 LazyLibrarian_230604.qpkg.md5        LazyLibrarian_230604.qpkg        LazyLibrarian        230604       all    7bc9ad2fabf6a2961dcf7a93ec54c851
-Mylar3_230604.qpkg.md5               Mylar3_230604.qpkg               Mylar3               230604       all    23d3ebb2b4eede8bba755fa8ce05ae2a
+Mylar3_230716_arm_64.qpkg.md5        Mylar3_230716_arm_64.qpkg        Mylar3               230716       a64    36d8c651d9dd49a4137e19fa90b200b2
+Mylar3_230716_x86_64.qpkg.md5        Mylar3_230716_x86_64.qpkg        Mylar3               230716       i64    92f1059febec1c7d862cfacc33586ad3
+Mylar3_230716_x86.qpkg.md5           Mylar3_230716_x86.qpkg           Mylar3               230716       i86    db16499b672ac1f4ea1c57fd6dec06fe
 NZBGet_230604.qpkg.md5               NZBGet_230604.qpkg               NZBGet               230604       all    2c9d7c8334274d23c835d189dfcc5155
 NZBHydra2_230604_arm_64.qpkg.md5     NZBHydra2_230604_arm_64.qpkg     NZBHydra2            230604       a64    3ffb490264630cc933742a84db6b9362
 NZBHydra2_230604_x86_64.qpkg.md5     NZBHydra2_230604_x86_64.qpkg     NZBHydra2            230604       i64    4bd068815ccd208f527e073b8e948c88
