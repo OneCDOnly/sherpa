@@ -4,6 +4,7 @@ cryptography
 dateutil
 defusedxml
 Levenshtein
+lxml
 mako
 packaging
 Pillow
