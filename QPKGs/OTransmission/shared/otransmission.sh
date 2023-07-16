@@ -20,7 +20,7 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=OTransmission
-	readonly SCRIPT_VERSION=230604
+	readonly SCRIPT_VERSION=230717
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -42,6 +42,9 @@ Init()
 	readonly OPKG_PATH=/opt/bin:/opt/sbin
 	export PATH="$OPKG_PATH:$(/bin/sed "s|$OPKG_PATH||" <<< "$PATH")"
 	readonly DEBUG_LOG_DATAWIDTH=100
+	readonly CHARS_REGULAR_PROMPT='$ '
+	readonly CHARS_SUPER_PROMPT='# '
+	readonly CHARS_SUDO_PROMPT="${CHARS_REGULAR_PROMPT}sudo "
 	local re=''
 	daemon_port=0
 	ui_port=0
@@ -55,7 +58,8 @@ Init()
 	# 'shallow' (depth 1) or 'single-branch' ... 'shallow' implies 'single-branch'
 	readonly SOURCE_GIT_BRANCH_DEPTH=''
 	readonly INTERPRETER=''
-	readonly VENV_INTERPRETER=''
+	readonly VENV_PYTHON_PATHFILE=''
+	readonly VENV_PIP_PATHFILE=''
 	readonly ALLOW_ACCESS_TO_SYS_PACKAGES=''
 	readonly INSTALL_PIP_DEPS=''
 
@@ -78,7 +82,7 @@ Init()
 
 	readonly GET_DAEMON_PORT_CMD=''
 	readonly GET_UI_PORT_CMD="/opt/bin/jq -r '.\"rpc-port\"' < "$QPKG_INI_PATHFILE""
-	readonly GET_UI_PORT_SECURE_CMD='echo 0'		# Transmission doesnt appear to contain any SSL UI ability
+	readonly GET_UI_PORT_SECURE_CMD='echo 0'		# Transmission doesn't appear to contain any SSL UI ability
 	readonly GET_UI_PORT_SECURE_ENABLED_TEST_CMD='false'
 	readonly GET_UI_LISTENING_ADDRESS_CMD="/opt/bin/jq -r '.\"rpc-bind-address\"' < $QPKG_INI_PATHFILE"
 
@@ -436,8 +440,8 @@ WaitForGit()
 GetLaunchTarget()
 	{
 
-	if [[ -n ${VENV_INTERPRETER:-} ]]; then
-		echo "$VENV_INTERPRETER"
+	if [[ -n ${VENV_PYTHON_PATHFILE:-} ]]; then
+		echo "$VENV_PYTHON_PATHFILE"
 	elif [[ -n ${DAEMON_PATHFILE:-} ]]; then
 		echo "$DAEMON_PATHFILE"
 	else
@@ -851,6 +855,15 @@ StripANSI()
 
 	}
 
+Capitalise()
+	{
+
+	# capitalise first character of $1
+
+	echo "$(Uppercase ${1:0:1})${1:1}"
+
+	}
+
 Uppercase()
 	{
 
@@ -939,6 +952,65 @@ CheckPorts()
 		ReWriteUIPorts
 		return 0
 	fi
+
+	}
+
+GetPythonVer()
+	{
+
+	local v=''
+	v=$(GetThisBinPath ${1:-python} &>/dev/null && ${1:-python} -V 2>&1 | /bin/sed 's|^Python ||;s|\.||g')
+	[[ -n $v ]] && echo "${v:0:3}"
+
+	}
+
+GetThisBinPath()
+	{
+
+	[[ -n ${1:?null} ]] && command -v "$1" 2>&1
+
+	}
+
+RenameSharedObjectFile()
+	{
+
+	[[ -n ${1:-} ]] || return
+
+	if [[ -e $(GetModulePath)/$(GetOriginalModuleSOFilename "_$1") ]]; then
+		mv "$(GetModulePath)/$(GetOriginalModuleSOFilename "_$1")" "$(GetModulePath)/$(GetFixedModuleSOFilename "_$1")"
+		echo "renamed module: _$1"
+	fi
+
+	if [[ -e $(GetModulePath)/$1/$(GetOriginalModuleSOFilename "$1") ]]; then
+		mv "$(GetModulePath)/$1/$(GetOriginalModuleSOFilename "$1")" "$(GetModulePath)/$1/$(GetFixedModuleSOFilename "$1")"
+		echo "renamed module: $1/$1"
+	fi
+
+	return 0
+
+	}
+
+GetOriginalModuleSOFilename()
+	{
+
+	[[ -z $pyver ]] && pyver=$(GetPythonVer)
+	[[ -n ${1:-} ]] && echo "$1.cpython-$pyver-$(uname -m)-linux-gnu.so"
+
+	}
+
+GetFixedModuleSOFilename()
+	{
+
+	[[ -z $pyver ]] && pyver=$(GetPythonVer)
+	[[ -n ${1:-} ]] && echo "$1.cpython-$pyver.so"
+
+	}
+
+GetModulePath()
+	{
+
+	[[ -z $pyver ]] && pyver=$(GetPythonVer)
+	echo "$VENV_PATH/lib/python${pyver:0:1}.${pyver:1:2}/site-packages"
 
 	}
 
@@ -1600,6 +1672,17 @@ IsNotStatus()
 
 	}
 
+ShowAsError()
+	{
+
+	# fatal error
+
+	local capitalised="$(Capitalise "${1:-}")"
+
+	Display "$(ColourTextBrightRed derp): $capitalised"
+
+	} >&2
+
 DisplayErrCommitAllLogs()
 	{
 
@@ -1714,7 +1797,7 @@ DisplayAndCommitActionToLog()
 	{
 
 	starttime="$(/bin/date +%s%N)"
-	local msg="begin action: $service_operation, datetime: $(date), package: $QPKG_VERSION, service: $SCRIPT_VERSION"
+	local msg="source: $(/usr/bin/basename "$0"), action: $service_operation, datetime: $(date), package: $QPKG_VERSION, service: $SCRIPT_VERSION"
 
 	msg=$(/bin/tr -s ' ' <<< "$msg")
 
@@ -1728,7 +1811,7 @@ DisplayAndCommitActionToLog()
 DisplayAndCommitStatusToLog()
 	{
 
-	local msg="end action: $service_operation, datetime: $(date), result: $service_result, elapsed time: $(FormatAsDuration "$(CalcMilliDifference "$starttime" "$(/bin/date +%s%N)")")"
+	local msg="source: $(/usr/bin/basename "$0"), action: $service_operation, datetime: $(date), result: $service_result, elapsed time: $(FormatAsDuration "$(CalcMilliDifference "$starttime" "$(/bin/date +%s%N)")")"
 
 	msg=$(/bin/tr -s ' ' <<< "$msg")
 
@@ -1814,6 +1897,13 @@ ColourTextBrightWhite()
 	{
 
 	printf '\033[1;97m%s\033[0m' "${1:-}"
+
+	} 2>/dev/null
+
+ColourTextBrightRed()
+	{
+
+	printf '\033[1;31m%s\033[0m' "${1:-}"
 
 	} 2>/dev/null
 
@@ -1983,13 +2073,35 @@ GetPathGitBranch()
 
 	} 2>/dev/null
 
+IsSU()
+	{
+
+	# running as superuser?
+
+	if [[ $EUID -ne 0 ]]; then
+		if [[ -e /usr/bin/sudo ]]; then
+			ShowAsError 'this utility must be run with superuser privileges. Try again as:'
+			Display "${CHARS_SUDO_PROMPT}$0 $USER_ARGS_RAW" >&2
+		else
+			ShowAsError "this utility must be run as the 'admin' user. Please login via SSH as 'admin' and try again"
+		fi
+
+		return 1
+	fi
+
+	return 0
+
+	}
+
 Init
 
 if IsNotError; then
 	case $1 in
 		start|--start)
+			IsSU ||	exit 1
+
 			if IsNotQPKGEnabled; then
-				echo "The $(FormatAsPackageName "$QPKG_NAME") QPKG is disabled. Please enable it first with: qpkg_service enable $QPKG_NAME"
+				Display "The $(FormatAsPackageName "$QPKG_NAME") QPKG is disabled. Please enable it first with: qpkg_service enable $QPKG_NAME"
 				SetError
 			else
 				SetServiceAction start
@@ -1997,12 +2109,15 @@ if IsNotError; then
 			fi
 			;;
 		stop|--stop)
+			IsSU ||	exit 1
 			SetServiceAction stop
 			StopQPKG
 			;;
 		r|-r|restart|--restart)
+			IsSU ||	exit 1
+
 			if IsNotQPKGEnabled; then
-				echo "The $(FormatAsPackageName "$QPKG_NAME") QPKG is disabled. Please enable it first with: qpkg_service enable $QPKG_NAME"
+				Display "The $(FormatAsPackageName "$QPKG_NAME") QPKG is disabled. Please enable it first with: qpkg_service enable $QPKG_NAME"
 				SetError
 			else
 				SetServiceAction restart
@@ -2014,6 +2129,8 @@ if IsNotError; then
 			StatusQPKG
 			;;
 		b|-b|backup|--backup|backup-config|--backup-config)
+			IsSU ||	exit 1
+
 			if IsSupportBackup; then
 				SetServiceAction backup
 				BackupConfig
@@ -2023,6 +2140,8 @@ if IsNotError; then
 			fi
 			;;
 		reset-config|--reset-config)
+			IsSU ||	exit 1
+
 			if IsSupportReset; then
 				SetServiceAction reset
 				StopQPKG
@@ -2034,6 +2153,8 @@ if IsNotError; then
 			fi
 			;;
 		restore|--restore|restore-config|--restore-config)
+			IsSU ||	exit 1
+
 			if IsSupportBackup; then
 				SetServiceAction restore
 				StopQPKG
