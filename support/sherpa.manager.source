@@ -438,7 +438,8 @@ Consts:Load()
 
 	readonly DEBUG_LOG_FIRST_COL_WIDTH=9
 	readonly DEBUG_LOG_SECOND_COL_WIDTH=21
-	readonly DEBUG_LOG_DATAWIDTH=$((130-DEBUG_LOG_FIRST_COL_WIDTH-DEBUG_LOG_SECOND_COL_WIDTH))
+	readonly DEBUG_LOG_THIRD_COL_WIDTH=66
+	readonly DEBUG_LOG_DATAWIDTH=$((DEBUG_LOG_FIRST_COL_WIDTH+DEBUG_LOG_SECOND_COL_WIDTH+DEBUG_LOG_THIRD_COL_WIDTH+4))
 
 	# cherry-pick Entware binaries
 	readonly OPKG_CMD=/opt/bin/opkg
@@ -688,13 +689,10 @@ Self:LogEnv()
 		DebugUserspace warning "'$public_share' share" '<not present>'
 	fi
 
-	local -i max_width=66
-	local -i trimmed_width=$((max_width-${#CHARS_ELLIPSIS}))
-
-	if [[ ${#PATH} -le $max_width ]]; then
+	if [[ ${#PATH} -le $DEBUG_LOG_THIRD_COL_WIDTH ]]; then
 		DebugUserspace ok '$PATH' "$PATH"
 	else
-		DebugUserspace ok '$PATH (LHS-only)' "${PATH:0:trimmed_width}${CHARS_ELLIPSIS}"
+		DebugUserspace ok '$PATH (LHS-only)' "${PATH:0:$((DEBUG_LOG_THIRD_COL_WIDTH-${#CHARS_ELLIPSIS}))}${CHARS_ELLIPSIS}"
 	fi
 
 	DebugBinPathVerAndMinVer python "$(GetPythonVer)" "$MIN_PYTHON_VER"
