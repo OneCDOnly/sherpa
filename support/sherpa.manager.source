@@ -436,9 +436,9 @@ Consts:Load()
 	readonly CHARS_SUPER_PROMPT='# '
 	readonly CHARS_SUDO_PROMPT="${CHARS_REGULAR_PROMPT}sudo "
 
-	readonly DEBUG_LOG_DATAWIDTH=100
 	readonly DEBUG_LOG_FIRST_COL_WIDTH=9
-	readonly DEBUG_LOG_SECOND_COL_WIDTH=18
+	readonly DEBUG_LOG_SECOND_COL_WIDTH=21
+	readonly DEBUG_LOG_DATAWIDTH=$((130-DEBUG_LOG_FIRST_COL_WIDTH-DEBUG_LOG_SECOND_COL_WIDTH))
 
 	# cherry-pick Entware binaries
 	readonly OPKG_CMD=/opt/bin/opkg
@@ -688,7 +688,7 @@ Self:LogEnv()
 		DebugUserspace warning "'$public_share' share" '<not present>'
 	fi
 
-	local -i max_width=70
+	local -i max_width=66
 	local -i trimmed_width=$((max_width-${#CHARS_ELLIPSIS}))
 
 	if [[ ${#PATH} -le $max_width ]]; then
@@ -724,7 +724,7 @@ Self:LogEnv()
 		fi
 	else
 		if QPKGs.IsTimeoutsIncreased; then
-			DebugQpkg error 'timeouts increased' yes		# increased timeouts on non-compatible QTS versions will cause errors when calling `qpkg_service`, as '-t' option is unsupported
+			DebugQpkg error 'timeouts increased' yes		# increased timeouts on non-compatible QTS versions will cause errors when calling `qpkg_service`, as '-t' option is unsupported in early versions of this utility
 			ShowAsFail "your version of $(GetQnapOS) doesn't support QPKG timeouts. Please revert using the 'timeouts:revert' option"
 		else
 			DebugQpkg detect 'timeouts increased' no
@@ -732,6 +732,13 @@ Self:LogEnv()
 	fi
 
 	DebugQpkg detect 'Entware installer' "$ENTWARE_VER"
+
+	if QPKG.IsInstalled SortMyQPKGs; then
+		DebugQpkg detect 'SortMyQPKGs installed' yes
+	else
+		DebugQpkg warning 'SortMyQPKGs installed' no
+	fi
+
 	DebugInfoMinSepr
 	RunAndLog "$DF_CMD -h | $GREP_CMD '^Filesystem\|^none\|^tmpfs\|ram'" "$RAMDISKS_FREESPACE_PATHFILE"
 	DebugInfoMinSepr
