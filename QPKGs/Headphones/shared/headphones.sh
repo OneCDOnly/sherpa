@@ -20,7 +20,7 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=Headphones
-	readonly SCRIPT_VERSION=230619
+	readonly SCRIPT_VERSION=230716
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -42,6 +42,9 @@ Init()
 	readonly OPKG_PATH=/opt/bin:/opt/sbin
 	export PATH="$OPKG_PATH:$(/bin/sed "s|$OPKG_PATH||" <<< "$PATH")"
 	readonly DEBUG_LOG_DATAWIDTH=100
+	readonly CHARS_REGULAR_PROMPT='$ '
+	readonly CHARS_SUPER_PROMPT='# '
+	readonly CHARS_SUDO_PROMPT="${CHARS_REGULAR_PROMPT}sudo "
 	local re=''
 	daemon_port=0
 	ui_port=0
@@ -55,7 +58,8 @@ Init()
 	# 'shallow' (depth 1) or 'single-branch' ... 'shallow' implies 'single-branch'
 	readonly SOURCE_GIT_BRANCH_DEPTH=shallow
 	readonly INTERPRETER=/opt/bin/python3
-	readonly VENV_INTERPRETER=$VENV_PATH/bin/python3
+	readonly VENV_PYTHON_PATHFILE=$VENV_PATH/bin/python3
+	readonly VENV_PIP_PATHFILE=$VENV_PATH/bin/pip
 	readonly ALLOW_ACCESS_TO_SYS_PACKAGES=true
 	readonly INSTALL_PIP_DEPS=true
 
@@ -64,7 +68,7 @@ Init()
 
 	# specific to daemonised applications only
 	readonly DAEMON_PATHFILE=$QPKG_REPO_PATH/Headphones.py
-	readonly DAEMON_LAUNCH_CMD=". $VENV_PATH/bin/activate && cd $QPKG_REPO_PATH && $VENV_INTERPRETER $DAEMON_PATHFILE --daemon --nolaunch --datadir $(/usr/bin/dirname "$QPKG_INI_PATHFILE") --config $QPKG_INI_PATHFILE --pidfile $DAEMON_PID_PATHFILE"
+	readonly DAEMON_LAUNCH_CMD="$VENV_PYTHON_PATHFILE $DAEMON_PATHFILE --daemon --nolaunch --datadir $(/usr/bin/dirname "$QPKG_INI_PATHFILE") --config $QPKG_INI_PATHFILE --pidfile $DAEMON_PID_PATHFILE"
 	readonly RUN_DAEMON_IN_SCREEN_SESSION=false
 	readonly DAEMON_PROC_IS_NAME_ONLY=false
 	readonly PORT_CHECK_TIMEOUT_SECONDS=240
@@ -343,7 +347,7 @@ InstallAddons()
 
 	for target in $requirements_pathfile $recommended_pathfile; do
 		if [[ -e $target ]]; then
-			DisplayRunAndLog "install PyPI modules from '$(/usr/bin/basename "$target")'" ". $VENV_PATH/bin/activate && pip install${pip_deps} --no-input --upgrade pip -r $target" log:failure-only || SetError
+			DisplayRunAndLog "install PyPI modules from '$(/usr/bin/basename "$target")'" "$VENV_PIP_PATHFILE install${pip_deps} --no-input --upgrade pip -r $target" log:failure-only || SetError
 			no_pips_installed=false
 		fi
 	done
@@ -352,7 +356,7 @@ InstallAddons()
 
 	if [[ $no_pips_installed = true ]]; then
 		if [[ -e $QPKG_REPO_PATH/setup.py || -e $pyproject_pathfile ]]; then
-			DisplayRunAndLog "install PyPI modules from '$(/usr/bin/basename "$target")'" ". $VENV_PATH/bin/activate && pip install${pip_deps} --no-input --upgrade pip $QPKG_REPO_PATH" log:failure-only || SetError
+			DisplayRunAndLog "install PyPI modules from '$(/usr/bin/basename "$target")'" "$VENV_PIP_PATHFILE install${pip_deps} --no-input --upgrade pip $QPKG_REPO_PATH" log:failure-only || SetError
 			no_pips_installed=false
 		fi
 	fi
@@ -585,8 +589,8 @@ WaitForGit()
 GetLaunchTarget()
 	{
 
-	if [[ -n ${VENV_INTERPRETER:-} ]]; then
-		echo "$VENV_INTERPRETER"
+	if [[ -n ${VENV_PYTHON_PATHFILE:-} ]]; then
+		echo "$VENV_PYTHON_PATHFILE"
 	elif [[ -n ${DAEMON_PATHFILE:-} ]]; then
 		echo "$DAEMON_PATHFILE"
 	else
@@ -997,6 +1001,15 @@ StripANSI()
 	else
 		echo "${1:-}"		# can't strip, so pass thru original message unaltered
 	fi
+
+	}
+
+Capitalise()
+	{
+
+	# capitalise first character of $1
+
+	echo "$(Uppercase ${1:0:1})${1:1}"
 
 	}
 
@@ -1808,6 +1821,17 @@ IsNotStatus()
 
 	}
 
+ShowAsError()
+	{
+
+	# fatal error
+
+	local capitalised="$(Capitalise "${1:-}")"
+
+	Display "$(ColourTextBrightRed derp): $capitalised"
+
+	} >&2
+
 DisplayErrCommitAllLogs()
 	{
 
@@ -1922,7 +1946,7 @@ DisplayAndCommitActionToLog()
 	{
 
 	starttime="$(/bin/date +%s%N)"
-	local msg="begin action: $service_operation, datetime: $(date), package: $QPKG_VERSION, service: $SCRIPT_VERSION"
+	local msg="source: $(/usr/bin/basename "$0"), action: $service_operation, datetime: $(date), package: $QPKG_VERSION, service: $SCRIPT_VERSION"
 
 	msg=$(/bin/tr -s ' ' <<< "$msg")
 
@@ -1936,7 +1960,7 @@ DisplayAndCommitActionToLog()
 DisplayAndCommitStatusToLog()
 	{
 
-	local msg="end action: $service_operation, datetime: $(date), result: $service_result, elapsed time: $(FormatAsDuration "$(CalcMilliDifference "$starttime" "$(/bin/date +%s%N)")")"
+	local msg="source: $(/usr/bin/basename "$0"), action: $service_operation, datetime: $(date), result: $service_result, elapsed time: $(FormatAsDuration "$(CalcMilliDifference "$starttime" "$(/bin/date +%s%N)")")"
 
 	msg=$(/bin/tr -s ' ' <<< "$msg")
 
@@ -2022,6 +2046,13 @@ ColourTextBrightWhite()
 	{
 
 	printf '\033[1;97m%s\033[0m' "${1:-}"
+
+	} 2>/dev/null
+
+ColourTextBrightRed()
+	{
+
+	printf '\033[1;31m%s\033[0m' "${1:-}"
 
 	} 2>/dev/null
 
@@ -2191,13 +2222,35 @@ GetPathGitBranch()
 
 	} 2>/dev/null
 
+IsSU()
+	{
+
+	# running as superuser?
+
+	if [[ $EUID -ne 0 ]]; then
+		if [[ -e /usr/bin/sudo ]]; then
+			ShowAsError 'this utility must be run with superuser privileges. Try again as:'
+			Display "${CHARS_SUDO_PROMPT}$0 $USER_ARGS_RAW" >&2
+		else
+			ShowAsError "this utility must be run as the 'admin' user. Please login via SSH as 'admin' and try again"
+		fi
+
+		return 1
+	fi
+
+	return 0
+
+	}
+
 Init
 
 if IsNotError; then
 	case $1 in
 		start|--start)
+			IsSU ||	exit 1
+
 			if IsNotQPKGEnabled; then
-				echo "The $(FormatAsPackageName "$QPKG_NAME") QPKG is disabled. Please enable it first with: qpkg_service enable $QPKG_NAME"
+				Display "The $(FormatAsPackageName "$QPKG_NAME") QPKG is disabled. Please enable it first with: qpkg_service enable $QPKG_NAME"
 				SetError
 			else
 				SetServiceAction start
@@ -2205,12 +2258,15 @@ if IsNotError; then
 			fi
 			;;
 		stop|--stop)
+			IsSU ||	exit 1
 			SetServiceAction stop
 			StopQPKG
 			;;
 		r|-r|restart|--restart)
+			IsSU ||	exit 1
+
 			if IsNotQPKGEnabled; then
-				echo "The $(FormatAsPackageName "$QPKG_NAME") QPKG is disabled. Please enable it first with: qpkg_service enable $QPKG_NAME"
+				Display "The $(FormatAsPackageName "$QPKG_NAME") QPKG is disabled. Please enable it first with: qpkg_service enable $QPKG_NAME"
 				SetError
 			else
 				SetServiceAction restart
@@ -2222,6 +2278,8 @@ if IsNotError; then
 			StatusQPKG
 			;;
 		b|-b|backup|--backup|backup-config|--backup-config)
+			IsSU ||	exit 1
+
 			if IsSupportBackup; then
 				SetServiceAction backup
 				BackupConfig
@@ -2231,6 +2289,8 @@ if IsNotError; then
 			fi
 			;;
 		reset-config|--reset-config)
+			IsSU ||	exit 1
+
 			if IsSupportReset; then
 				SetServiceAction reset
 				StopQPKG
@@ -2242,6 +2302,8 @@ if IsNotError; then
 			fi
 			;;
 		restore|--restore|restore-config|--restore-config)
+			IsSU ||	exit 1
+
 			if IsSupportBackup; then
 				SetServiceAction restore
 				StopQPKG
@@ -2253,6 +2315,8 @@ if IsNotError; then
 			fi
 			;;
 		clean|--clean)
+			IsSU ||	exit 1
+
 			if IsSourcedOnline; then
 				SetServiceAction clean
 				StopQPKG
@@ -2270,10 +2334,12 @@ if IsNotError; then
 			ViewLog
 			;;
 		disable-auto-update|--disable-auto-update)
+			IsSU ||	exit 1
 			SetServiceAction disable-auto-update
 			DisableAutoUpdate
 			;;
 		enable-auto-update|--enable-auto-update)
+			IsSU ||	exit 1
 			SetServiceAction enable-auto-update
 			EnableAutoUpdate
 			;;
