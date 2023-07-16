@@ -14,6 +14,5 @@ python-dateutil
 pyzmq
 requests
 six
-urllib3
 wifi
 zeroconf
