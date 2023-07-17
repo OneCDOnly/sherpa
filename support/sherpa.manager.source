@@ -4993,6 +4993,16 @@ QPKGs.Statuses:Show()
 QPKGs.Timeouts:Increase()
 	{
 
+	# boot-persistent:
+	#	QTS 4.3.3.1624 20221124 (TS-220) as /usr is symlink to /mnt/ext/usr
+
+	# not boot-persistent:
+	#	QTS 5.1.0.2444 20230629 (TS-230)
+	#	QTS 5.1.0.2444 20230629 (TS-231P2)
+
+	# not boot-persistent (but timeout specifier is unsupported anyway):
+	#	QTS 4.2.6.0468 20221028 (TS-559 Pro+)
+
 	Func:Entry
 	local target_utility_pathfile=/usr/local/sbin/qpkg_service
 	local backup_utility_pathfile=/usr/local/sbin/qpkg_service.orig
