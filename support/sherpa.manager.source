@@ -3234,7 +3234,7 @@ DisplayAsHelpNameStatusVerPath()
 
 			package_version_msg=${CHARS_BLANK}$package_installed_version
 
-			if [[ -n $package_upgrade_version && $package_installed_version != "$package_upgrade_version" ]] && QPKG.URL "$package_name" &>/dev/null && QPKG.MinRAM "$package_name" &>/dev/null; then
+			if QPKG.IsUpgradable "$package_name"; then
 				package_version_msg+=" ($(ColourTextBrightOrange "$package_upgrade_version"))"
 				package_name_msg="${CHARS_BLANK}$(ColourTextBrightOrange "$package_name")"
 			fi
@@ -4585,7 +4585,7 @@ QPKGs.States:Build()
 				QPKGs-ISmissing:Add "$package"
 			fi
 
-			if [[ $(QPKG.Local.Ver "$package") != "${QPKG_VERSION[$index]}" ]] && QPKG.URL "$package" &>/dev/null && QPKG.MinRAM "$package" &>/dev/null; then
+			if QPKG.IsUpgradable "$package"; then
 				QPKGs-SCupgradable:Add "$package"
 			else
 				QPKGs-SCNTupgradable:Add "$package"
@@ -7353,6 +7353,25 @@ QPKG.IsDependent()
 	done
 
 	return 1
+
+	}
+
+QPKG.IsUpgradable()
+	{
+
+	# Does an upgraded QPKG exist?
+
+	# input:
+	#   $PACKAGE_NAME (global) = QPKG name (default)
+	#   $1 = if specified, use this as QPKG name instead
+
+	# output:
+	#   $? = 0 if true, 1 if false
+
+	local package=${PACKAGE_NAME:-}
+	[[ -n ${1:-} ]] && package=$1
+
+	QPKG.IsInstalled "$package" && [[ $(QPKG.Local.Ver "$package") != "$(QPKG.Avail.Ver "$package")" ]] && QPKG.URL "$package" &>/dev/null && QPKG.MinRAM "$package" &>/dev/null
 
 	}
 
