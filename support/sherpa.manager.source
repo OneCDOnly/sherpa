@@ -3234,7 +3234,7 @@ DisplayAsHelpNameStatusVerPath()
 
 			package_version_msg=${CHARS_BLANK}$package_installed_version
 
-			if QPKG.IsUpgradable "$package_name"; then
+			if [[ -n $package_upgrade_version ]]; then
 				package_version_msg+=" ($(ColourTextBrightOrange "$package_upgrade_version"))"
 				package_name_msg="${CHARS_BLANK}$(ColourTextBrightOrange "$package_name")"
 			fi
@@ -4916,6 +4916,7 @@ QPKGs.Statuses:Show()
 	local package_name=''
 	local package_status_msg=''
 	local package_result_msg=''
+	local package_upgrade_version=''
 
 	CalcMaxStatusColsToDisplay
 	QPKGs.States:Build
@@ -4971,11 +4972,14 @@ QPKGs.Statuses:Show()
 							package_status_msg+=' unknown'
 						fi
 
-						DisplayAsHelpNameStatusVerPath normal "$package_name" "$package_status_msg" "$package_result_msg" "$(QPKG.Local.Ver "$package_name")" "$(QPKG.Avail.Ver "$package_name")" "$(QPKG.InstallationPath "$package_name")"
+						QPKG.IsUpgradable "$package_name" && package_upgrade_version=$(QPKG.Avail.Ver "$package_name")
+
+						DisplayAsHelpNameStatusVerPath normal "$package_name" "$package_status_msg" "$package_result_msg" "$(QPKG.Local.Ver "$package_name")" "$package_upgrade_version" "$(QPKG.InstallationPath "$package_name")"
 					fi
 
 					package_status_msg=''
 					package_result_msg=''
+					package_upgrade_version=''
 				fi
 			done
 		done
