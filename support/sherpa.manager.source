@@ -8,7 +8,7 @@
 #
 # Description:
 #   This is the management script for the sherpa mini-package-manager.
-#   It's automatically downloaded via the `sherpa.loader.sh` script in the `sherpa` QPKG no-more than once per 24 hours.
+#   It's automatically downloaded via the `sherpa.loader.sh` script in the `sherpa` QPKG no-more than once-per-hour.
 #
 #* Project:
 #*   https://git.io/sherpa
@@ -725,7 +725,7 @@ Self:LogEnv()
 			DebugQpkg warning "$(FormatAsPackName IncreaseTimeouts)" 'not installed'
 		fi
 	else
-		DebugQpkg detect "$(FormatAsPackName IncreaseTimeouts)" unavailable
+		DebugQpkg detect "$(FormatAsPackName IncreaseTimeouts)" 'N/A'
 	fi
 
 	DebugInfoMinSepr
