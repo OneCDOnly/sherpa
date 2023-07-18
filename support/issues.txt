@@ -1,6 +1,3 @@
-* extended system timeouts not applied after NAS restart on QTS 5.1.0
-	location of /usr/local/sbin is not on /mnt/ext on this firmware version
-
 * extend startup timeouts for Deluge QPKGs
 
 * QPKG version sort is not correctly sorting version numbers followed by an alpha as later than non-alpha.
