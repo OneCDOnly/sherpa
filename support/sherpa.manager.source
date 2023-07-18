@@ -194,11 +194,7 @@ Self:Results()
 	display_last_action_datetime=false
 
 	if ARGs-unknown:IsNone; then
-		if [[ $opts_increase_qpkg_timeouts = true ]]; then
-			QPKGs.Timeouts:Increase
-		elif [[ $opts_revert_qpkg_timeouts = true ]]; then
-			QPKGs.Timeouts:Decrease
-		elif [[ $opts_show_abbreviations = true ]]; then
+		if [[ $opts_show_abbreviations = true ]]; then
 			QPKGs.Abbreviations:Show
 		elif [[ $opts_show_actions = true ]]; then
 			Help.Actions:Show
@@ -317,8 +313,6 @@ Vars:Load()
 	# user-selectable options
 	opts_check=false
 	opts_debug=false
-	opts_increase_qpkg_timeouts=false
-	opts_revert_qpkg_timeouts=false
 	opts_verbose=false
 
 	opts_paste_log_last=false
@@ -380,7 +374,6 @@ Consts:Load()
 	readonly QPKG_STOP_TIMEOUT_SECONDS=300			# 5 minutes
 	readonly QPKG_ENABLE_TIMEOUT_SECONDS=10
 	readonly QPKG_DISABLE_TIMEOUT_SECONDS=10
-	readonly QPKG_EXTENDED_TIMEOUT_SECONDS=1800		# 30 minutes - this value is applied to 'qpkg_service' when '--increase-timeout' is specified
 
 	readonly OBJECTS_PATHFILE=$CACHE_PATH/objects
 	readonly OBJECTS_ARCHIVE_URL='<?cdn_sherpa_url?>'/objects.tar.gz
@@ -437,7 +430,7 @@ Consts:Load()
 	readonly CHARS_SUDO_PROMPT="${CHARS_REGULAR_PROMPT}sudo "
 
 	readonly DEBUG_LOG_FIRST_COL_WIDTH=9
-	readonly DEBUG_LOG_SECOND_COL_WIDTH=21
+	readonly DEBUG_LOG_SECOND_COL_WIDTH=18
 	readonly DEBUG_LOG_THIRD_COL_WIDTH=66
 	readonly DEBUG_LOG_DATAWIDTH=$((DEBUG_LOG_FIRST_COL_WIDTH+DEBUG_LOG_SECOND_COL_WIDTH+DEBUG_LOG_THIRD_COL_WIDTH+4))
 
@@ -713,28 +706,26 @@ Self:LogEnv()
 	fi
 
 	DebugQpkg detect architecture "$NAS_QPKG_ARCH"
-
-	if OS.IsSupportQpkgTimeout; then
-		if QPKGs.IsTimeoutsIncreased; then
-			DebugQpkg detect 'timeouts increased' yes
-		else
-			DebugQpkg warning 'timeouts increased' no
-		fi
-	else
-		if QPKGs.IsTimeoutsIncreased; then
-			DebugQpkg error 'timeouts increased' yes		# increased timeouts on non-compatible QTS versions will cause errors when calling `qpkg_service`, as '-t' option is unsupported in early versions of this utility
-			ShowAsFail "your version of $(GetQnapOS) doesn't support QPKG timeouts. Please revert using the 'timeouts:revert' option"
-		else
-			DebugQpkg detect 'timeouts increased' no
-		fi
-	fi
-
-	DebugQpkg detect 'Entware installer' "$ENTWARE_VER"
+	DebugQpkg detect "$(FormatAsPackName Entware)" "$ENTWARE_VER"
 
 	if QPKG.IsInstalled SortMyQPKGs; then
-		DebugQpkg detect 'SortMyQPKGs installed' yes
+		DebugQpkg detect "$(FormatAsPackName SortMyQPKGs)" installed
 	else
-		DebugQpkg warning 'SortMyQPKGs installed' no
+		DebugQpkg warning "$(FormatAsPackName SortMyQPKGs)" 'not installed'
+	fi
+
+	if OS.IsSupportQpkgTimeout; then
+		if QPKG.IsInstalled IncreaseTimeouts; then
+			if QPKGs.IsTimeoutsIncreased; then
+				DebugQpkg detect "$(FormatAsPackName IncreaseTimeouts)" active
+			else
+				DebugQpkg warning "$(FormatAsPackName IncreaseTimeouts)" inactive
+			fi
+		else
+			DebugQpkg warning "$(FormatAsPackName IncreaseTimeouts)" 'not installed'
+		fi
+	else
+		DebugQpkg detect "$(FormatAsPackName IncreaseTimeouts)" unavailable
 	fi
 
 	DebugInfoMinSepr
@@ -1502,24 +1493,8 @@ ParseArgs()
 				hide_title=false
 				skip_package_actions=false
 				;;
-			decrease-timeout|decrease-timeouts|timeout:decrease|timeouts:decrease|revert-timeout|revert-timeouts|timeout:revert|timeouts:revert)
-				action=reverttimeout
-				arg_identified=true
-				group=''
-				group_identified=false
-				hide_title=false
-				skip_package_actions=true
-				;;
 			display|help|list|show|view)
 				action=help
-				arg_identified=true
-				group=''
-				group_identified=false
-				hide_title=false
-				skip_package_actions=true
-				;;
-			increase-timeout|increase-timeouts|timeout:increase|timeouts:increase)
-				action=increasetimeout
 				arg_identified=true
 				group=''
 				group_identified=false
@@ -1758,9 +1733,6 @@ ParseArgs()
 
 				skip_package_actions=true
 				;;
-			increasetimeout)
-				opts_increase_qpkg_timeouts=true
-				;;
 			paste)
 				case $group in
 					all|log|tail)
@@ -1773,9 +1745,6 @@ ParseArgs()
 				esac
 
 				skip_package_actions=true
-				;;
-			reverttimeout)
-				opts_revert_qpkg_timeouts=true
 				;;
 			status)
 				opts_show_status=true
@@ -3869,10 +3838,6 @@ Help.Problems:Show()
 	DisplayAsProjSynIndentExam "view only the most recent $(FormatAsTitle) session log" last
 	DisplayAsProjSynIndentExam '' l
 	DisplayAsProjSynIndentExam "view the entire $(FormatAsTitle) session log" log
-	DisplayAsProjSynIndentExam "increase the default $(GetQnapOS) QPKG timeout for all packages to $((QPKG_EXTENDED_TIMEOUT_SECONDS/60)) minutes" 'increase-timeout'
-	DisplayAsProjSynIndentExam '' 'timeout:increase'
-	DisplayAsProjSynIndentExam "revert the default $(GetQnapOS) QPKG timeout for all packages to 3 minutes" 'revert-timeout'
-	DisplayAsProjSynIndentExam '' 'timeout:decrease'
 	DisplayAsProjSynIndentExam "upload the most-recent session in your $(FormatAsTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste last'
 	DisplayAsProjSynIndentExam "upload the most-recent $(FormatAsThous "$LOG_TAIL_LINES") lines in your $(FormatAsTitle) log to the $(FormatAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste log'
 	DisplayAsHelpTitleHighlighted "If you need help, please include a copy of your $(FormatAsTitle) $(ColourTextBrightOrange "log for analysis!")"
@@ -4989,78 +4954,6 @@ QPKGs.Statuses:Show()
 	EraseThisLine		# clear the "proc:" message shown earlier
 	[[ -e $REPORT_PATHFILE ]] && $CAT_CMD "$REPORT_PATHFILE"
 	QPKGs.States:List
-
-	Func:Exit
-
-	}
-
-QPKGs.Timeouts:Increase()
-	{
-
-	# boot-persistent:
-	#	QTS 4.3.3.1624 20221124 (TS-220) as /usr is symlink to /mnt/ext/usr
-
-	# not boot-persistent:
-	#	QTS 5.1.0.2444 20230629 (TS-230)
-	#	QTS 5.1.0.2444 20230629 (TS-231P2)
-
-	# not boot-persistent (but timeout specifier is unsupported anyway):
-	#	QTS 4.2.6.0468 20221028 (TS-559 Pro+)
-
-	Func:Entry
-	local target_utility_pathfile=/usr/local/sbin/qpkg_service
-	local backup_utility_pathfile=/usr/local/sbin/qpkg_service.orig
-
-	if ! OS.IsSupportQpkgTimeout; then
-		ShowAsAbort "QPKG timeouts are unsupported in this $(GetQnapOS) version"
-		Func:Exit 1
-		return
-	fi
-
-	if [[ ! -e $target_utility_pathfile ]]; then
-		ShowAsError 'original utility not found'
-		Func:Exit 1
-		return
-	fi
-
-	if [[ -e $backup_utility_pathfile ]]; then
-		ShowAsInfo 'default QPKG timeouts have already been increased'
-	else
-		mv "$target_utility_pathfile" "$backup_utility_pathfile"
-
-		/bin/cat > "$target_utility_pathfile" << EOF
-#!/usr/bin/env bash
-#* this script was added by sherpa: https://git.io/sherpa
-#* increase the default timeout for qpkg_service to $((QPKG_EXTENDED_TIMEOUT_SECONDS/60)) minutes
-#* subsequent specification of -t values will override this value
-$backup_utility_pathfile -t $QPKG_EXTENDED_TIMEOUT_SECONDS "\$@"
-EOF
-
-		/bin/chmod +x "$target_utility_pathfile"
-		ShowAsDone "default QPKG timeouts have been increased to $((QPKG_EXTENDED_TIMEOUT_SECONDS/60)) minutes"
-	fi
-
-	qpkg_timeouts_increased=true
-
-	Func:Exit
-
-	}
-
-QPKGs.Timeouts:Decrease()
-	{
-
-	Func:Entry
-	local target_utility_pathfile=/usr/local/sbin/qpkg_service
-	local backup_utility_pathfile=/usr/local/sbin/qpkg_service.orig
-
-	if [[ ! -e $backup_utility_pathfile ]]; then
-		ShowAsInfo 'default QPKG timeouts are in-effect'
-	else
-		mv -f "$backup_utility_pathfile" "$target_utility_pathfile"
-		ShowAsDone 'default QPKG timeouts have been reverted to 3 minutes'
-	fi
-
-	qpkg_timeouts_increased=false
 
 	Func:Exit
 
