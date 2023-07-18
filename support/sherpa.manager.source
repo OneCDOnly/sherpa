@@ -2403,6 +2403,7 @@ IPKs:install()
 	else
 		for index in "${!QPKG_NAME[@]}"; do
 			if QPKGs-ACinstall-to:Exist "${QPKG_NAME[$index]}" || QPKGs-ISinstalled:Exist "${QPKG_NAME[$index]}" || QPKGs-ACreinstall-to:Exist "${QPKG_NAME[$index]}" || (QPKGs-ACactivate-to:Exist "${QPKG_NAME[$index]}" && (QPKGs-ACinstall-to:Exist "${QPKG_NAME[$index]}" || QPKGs-ISinstalled:Exist "${QPKG_NAME[$index]}" || QPKGs-ACreinstall-to:Exist "${QPKG_NAME[$index]}")); then
+				QPKG.MinOSVer "${QPKG_NAME[$index]}" &>/dev/null || continue
 				QPKG.MinRAM "${QPKG_NAME[$index]}" &>/dev/null || continue
 				IPKs-ACinstall-to:Add "${QPKG_REQUIRES_IPKS[$index]}"
 			fi
@@ -2785,34 +2786,6 @@ TerminalDimensions:Load()
 	fi
 
 	return 0
-
-	}
-
-GetPython3Ver()
-	{
-
-	GetPythonVer "${1:-python3}"
-
-	}
-
-GetPythonVer()
-	{
-
-	GetThisBinPath ${1:-python} &>/dev/null && ${1:-python} -V 2>&1 | $SED_CMD 's|^Python ||'
-
-	}
-
-GetPerlVer()
-	{
-
-	GetThisBinPath ${1:-perl} &>/dev/null && ${1:-perl} -e 'print "$^V\n"' 2>/dev/null | $SED_CMD 's|v||'
-
-	}
-
-GetThisBinPath()
-	{
-
-	[[ -n ${1:?null} ]] && command -v "$1" 2>&1
 
 	}
 
@@ -4694,6 +4667,8 @@ QPKGs.Abbreviations:Show()
 				if [[ -n $abs ]]; then
 					if ! QPKG.URL "$package_name" &>/dev/null; then
 						DisplayAsHelpNameAbs muted "$package_name" 'not installable (incompatible arch)'
+					elif ! QPKG.MinOSVer "$package_name" &>/dev/null; then
+						DisplayAsHelpNameAbs muted "$package_name" "not installable (incompatible $(GetQnapOS) version)"
 					elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
 						DisplayAsHelpNameAbs muted "$package_name" 'not installable (insufficient RAM)'
 					elif QPKGs-ISmissing:Exist "$package_name" &>/dev/null; then
@@ -4792,6 +4767,8 @@ QPKGs.Repos:Show()
 			for package_name in $(QPKGs-SC$tier:Array); do
 				if ! QPKG.URL "$package_name" &>/dev/null; then
 					DisplayAsHelpNameDateRepo muted "$package_name" 'not installable (incompatible arch)'
+				elif ! QPKG.MinOSVer "$package_name" &>/dev/null; then
+					DisplayAsHelpNameDateRepo muted "$package_name" "not installable (incompatible $(GetQnapOS) version)"
 				elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
 					DisplayAsHelpNameDateRepo muted "$package_name" 'not installable (insufficient RAM)'
 				elif QPKGs-ISmissing:Exist "$package_name" &>/dev/null; then
@@ -4847,9 +4824,7 @@ QPKGs:List:Show()
 				if QPKGs-ISmissing:Exist "$package_name" &>/dev/null; then
 					DisplayAsHelpNameAuthorDesc highlighted "$package_name" missing "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
 				elif QPKGs-ISNTinstalled:Exist "$package_name"; then
-					if ! QPKG.URL "$package_name" &>/dev/null; then
-						DisplayAsHelpNameAuthorDesc muted "$package_name" "$(QPKG.Author "$package_name")" "$(QPKG.Desc "$package_name")" "$(QPKG.Note 	"$package_name")" true
-					elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
+					if ! QPKG.URL "$package_name" &>/dev/null || ! QPKG.MinOSVer "$package_name" &>/dev/null || ! QPKG.MinRAM "$package_name" &>/dev/null; then
 						DisplayAsHelpNameAuthorDesc muted "$package_name" "$(QPKG.Author "$package_name")" "$(QPKG.Desc "$package_name")" "$(QPKG.Note 	"$package_name")" true
 					else
 						DisplayAsHelpNameAuthorDesc muted "$package_name" "$(QPKG.Author "$package_name")" "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
@@ -4898,6 +4873,8 @@ QPKGs.Statuses:Show()
 				if QPKGs-ISNTinstalled:Exist "$package_name"; then
 					if ! QPKG.URL "$package_name" &>/dev/null; then
 						DisplayAsHelpNameStatusVerPath muted "$package_name" 'not installable (incompatible arch)'
+					elif ! QPKG.MinOSVer "$package_name" &>/dev/null; then
+						DisplayAsHelpNameStatusVerPath muted "$package_name" "not installable (incompatible $(GetQnapOS) version)"
 					elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
 						DisplayAsHelpNameStatusVerPath muted "$package_name" 'not installable (insufficient RAM)'
 					else
@@ -5351,6 +5328,34 @@ GetDefVol()
 	{
 
 	/sbin/getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info
+
+	}
+
+GetPython3Ver()
+	{
+
+	GetPythonVer "${1:-python3}"
+
+	}
+
+GetPythonVer()
+	{
+
+	GetThisBinPath ${1:-python} &>/dev/null && ${1:-python} -V 2>&1 | $SED_CMD 's|^Python ||'
+
+	}
+
+GetPerlVer()
+	{
+
+	GetThisBinPath ${1:-perl} &>/dev/null && ${1:-perl} -e 'print "$^V\n"' 2>/dev/null | $SED_CMD 's|v||'
+
+	}
+
+GetThisBinPath()
+	{
+
+	[[ -n ${1:?null} ]] && command -v "$1" 2>&1
 
 	}
 
@@ -5856,6 +5861,9 @@ _QPKG:install_()
 		result_code=2
 	elif ! QPKG.URL "$PACKAGE_NAME" &>/dev/null; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" install skipped 'NAS is unsupported'
+		result_code=2
+	elif ! QPKG.MinOSVer "$PACKAGE_NAME" &>/dev/null; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" install skipped "$(GetQnapOS) version is incompatible"
 		result_code=2
 	elif ! QPKG.MinRAM "$PACKAGE_NAME" &>/dev/null; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" install skipped 'NAS has insufficient RAM'
@@ -7268,7 +7276,7 @@ QPKG.IsUpgradable()
 	local package=${PACKAGE_NAME:-}
 	[[ -n ${1:-} ]] && package=$1
 
-	QPKG.IsInstalled "$package" && [[ $(QPKG.Local.Ver "$package") != "$(QPKG.Avail.Ver "$package")" ]] && QPKG.URL "$package" &>/dev/null && QPKG.MinRAM "$package" &>/dev/null
+	QPKG.IsInstalled "$package" && [[ $(QPKG.Local.Ver "$package") != "$(QPKG.Avail.Ver "$package")" ]] && QPKG.URL "$package" &>/dev/null && QPKG.MinOSVer "$package" &>/dev/null && QPKG.MinRAM "$package" &>/dev/null
 
 	}
 
@@ -7480,6 +7488,29 @@ QPKG.MinRAM()
 	for index in "${!QPKG_NAME[@]}"; do
 		if [[ ${QPKG_NAME[$index]} = "${1:?package name null}" ]] && [[ ${QPKG_MIN_RAM_KB[$index]} = none || $NAS_RAM_KB -ge ${QPKG_MIN_RAM_KB[$index]} ]]; then
 			echo "${QPKG_MIN_RAM_KB[$index]}"
+			return 0
+		fi
+	done
+
+	return 1
+
+	}
+
+QPKG.MinOSVer()
+	{
+
+	# input:
+	#   $1 = QPKG name
+
+	# output:
+	#   stdout = minimum QTS/QuTS version required by this QPKG (first package found)
+	#   $? = 0 if successful, 1 if failed
+
+	local -i index=0
+
+	for index in "${!QPKG_NAME[@]}"; do
+		if [[ ${QPKG_NAME[$index]} = "${1:?package name null}" ]] && [[ ${QPKG_MIN_OS_VERSION[$index]} = none || ${NAS_FIRMWARE_VER//.} -ge ${QPKG_MIN_OS_VERSION[$index]} ]]; then
+			echo "${QPKG_MIN_OS_VERSION[$index]}"
 			return 0
 		fi
 	done
@@ -9062,6 +9093,7 @@ Packages:Load()
 		readonly QPKG_MD5
 		readonly QPKG_URL
 		readonly QPKG_MIN_RAM_KB
+		readonly QPKG_MIN_OS_VERSION
 		readonly QPKG_AUTHOR
 		readonly QPKG_APP_AUTHOR
 		readonly QPKG_DESC
