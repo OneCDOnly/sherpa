@@ -1309,18 +1309,6 @@ Action:Proc()
 			${PACKAGE_TYPE}s:${TARGET_ACTION}	# only process these packages in groups, not individually
 	esac
 
-	# show completed line in colour if colour was enabled earlier, as ANSI codes create a longer onscreen message (due to extra characters used). Showing completed line without colour means part of previous onscreen message may not be blanked.
-
-	if [[ $original_colourful = true && $colourful = false ]]; then
-		colourful=true
-		ShowAsActionResult "$TIER" "$PACKAGE_TYPE" "$ok_count" "$total_count" "$ACTION_PAST"
-		colourful=false
-	else
-		ShowAsActionResult "$TIER" "$PACKAGE_TYPE" "$ok_count" "$total_count" "$ACTION_PAST"
-	fi
-
-	ShowAsActionResultDetail "$TIER" "$TARGET_ACTION" "$PACKAGE_TYPE"
-
 	EraseForkCountPaths
 	Func:Exit
 	Self.Error:IsNt
@@ -8548,118 +8536,6 @@ PercFrac()
 	return 0
 
 	} 2>/dev/null
-
-ShowAsActionResult()
-	{
-
-	# input:
-	#	$1 = tier (optional) e.g. `standalone`, `dependent`, `addon`, `all`
-	#	$2 = package type: `qpkg`, `ipk`, `pip`
-	#	$3 = ok count
-	#	$4 = total count
-	#	$5 = verb (past)
-
-	local tier=''
-	local -r PACKAGE_TYPE=$(Uppercase "${2:?null}")
-	declare -i -r OK_COUNT=${3:-0}
-	declare -i -r TOTAL_COUNT=${4:-0}
-	local msg="${5:?null} "
-
-	[[ -n $1 && $1 != all ]] && tier=" $1"
-
-	if [[ $OK_COUNT -gt 0 ]]; then
-		msg+="${OK_COUNT}${tier} ${PACKAGE_TYPE}$(Pluralise "$OK_COUNT")"
-	else
-		msg+="no${tier} ${PACKAGE_TYPE}s"
-	fi
-
-	case $TOTAL_COUNT in
-		0)
-			DebugAsDone "no${tier} ${PACKAGE_TYPE}s processed"
-			;;
-		*)
-			ShowAsDone "$msg"
-	esac
-
-	return 0
-
-	} >&2
-
-ShowAsActionResultDetail()
-	{
-
-	# input:
-	#	$1 = tier
-	#	$2 = action
-	#	$3 = package type
-
-	local sk_msg=''
-	local er_msg=''
-	local -i skip_acc=0
-	local -i fail_acc=0
-
-	case $3 in
-		QPKG)
-			if [[ $(QPKGs-AC${2}-sk:Count) -gt 0 || $(QPKGs-AC${2}-se:Count) -gt 0 ]]; then
-				case $1 in
-					dependent)
-						for package in $(QPKGs-AC${2}-sk:Array) $(QPKGs-AC${2}-se:Array); do
-							QPKG.IsDependent "$package" && ((skip_acc++))
-						done
-						;;
-					standalone)
-						for package in $(QPKGs-AC${2}-sk:Array) $(QPKGs-AC${2}-se:Array); do
-							! QPKG.IsDependent "$package" && ((skip_acc++))
-						done
-						;;
-					*)
-						skip_acc=$(($(QPKGs-AC${2}-sk:Count)+$(QPKGs-AC${2}-se:Count)))
-				esac
-
-				if [[ $skip_acc -gt 0 ]]; then
-					sk_msg="$(ColourTextBrightOrange 'skipped') $skip_acc QPKG$(Pluralise "$skip_acc")"
-				fi
-			fi
-
-			if [[ $(QPKGs-AC${2}-er:Count) -gt 0 ]]; then
-				case $1 in
-					dependent)
-						for package in $(QPKGs-AC${2}-er:Array); do
-							QPKG.IsDependent "$package" && ((fail_acc++))
-						done
-						;;
-					standalone)
-						for package in $(QPKGs-AC${2}-er:Array); do
-							! QPKG.IsDependent "$package" && ((fail_acc++))
-						done
-						;;
-					*)
-						fail_acc=$(QPKGs-AC${2}-er:Count)
-				esac
-
-				if [[ $fail_acc -gt 0 ]]; then
-					er_msg="$(ColourTextBrightRed 'failed') $fail_acc QPKG$(Pluralise "$fail_acc")"
-				fi
-			fi
-			;;
-		IPK)
-			;;
-		PIP)
-			:
-	esac
-
-	if [[ -z $sk_msg && -z $er_msg ]]; then
-		return
-	elif [[ -n $sk_msg && -z $er_msg ]]; then
-		DisplayAsActionResultLastLine "$sk_msg"
-	elif [[ -z $sk_msg && -n $er_msg ]]; then
-		DisplayAsActionResultLastLine "$er_msg"
-	else
-		DisplayAsActionResultNtLastLine "$sk_msg"
-		DisplayAsActionResultLastLine "$er_msg"
-	fi
-
-	} >&2
 
 ShowAsActionLogDetail()
 	{
