@@ -20,7 +20,7 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=OSickGear
-	readonly SCRIPT_VERSION=230716
+	readonly SCRIPT_VERSION=230720
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -304,7 +304,7 @@ InstallAddons()
 	[[ $INSTALL_PIP_DEPS = true ]] && pip_deps=''
 
 	if IsNotVirtualEnvironmentExist; then
-		DisplayRunAndLog 'create new virtual Python environment' "export PIP_CACHE_DIR=$PIP_CACHE_PATH VIRTUALENV_OVERRIDE_APP_DATA=$PIP_CACHE_PATH; $INTERPRETER -m virtualenv ${VENV_PATH}${sys_packages}" log:failure-only || SetError
+		DisplayRunAndLog 'create new virtual Python environment' "export PIP_CACHE_DIR=$PIP_CACHE_PATH VIRTUALENV_OVERRIDE_APP_DATA=$PIP_CACHE_PATH; $INTERPRETER -m virtualenv ${VENV_PATH}${sys_packages}" log:failure-only
 		new_env=true
 	fi
 
@@ -315,7 +315,7 @@ InstallAddons()
 	fi
 
 	if [[ ! -e $pip_conf_pathfile ]]; then
-		DisplayRunAndLog "create global 'pip' config" "echo -e \"[global]\ncache-dir = $PIP_CACHE_PATH\" > $pip_conf_pathfile" log:failure-only || SetError
+		DisplayRunAndLog "create global 'pip' config" "echo -e \"[global]\ncache-dir = $PIP_CACHE_PATH\" > $pip_conf_pathfile" log:failure-only
 	fi
 
 	IsNotAutoUpdate && [[ $new_env = false ]] && return 0
@@ -338,7 +338,7 @@ InstallAddons()
 
 		for target in $requirements_pathfile $recommended_pathfile $pyproject_pathfile; do
 			if [[ -e $target ]]; then
-				DisplayRunAndLog "exclude problem PyPI modules from '$(/usr/bin/basename "$target")'" "/bin/sed -i '${module_exclusions_re}/d' $target" log:failure-only || SetError
+				DisplayRunAndLog "exclude problem PyPI modules from '$(/usr/bin/basename "$target")'" "/bin/sed -i '${module_exclusions_re}/d' $target" log:failure-only
 			fi
 		done
 	fi
@@ -347,7 +347,7 @@ InstallAddons()
 
 	for target in $requirements_pathfile $recommended_pathfile; do
 		if [[ -e $target ]]; then
-			DisplayRunAndLog "install PyPI modules from '$(/usr/bin/basename "$target")'" "$VENV_PIP_PATHFILE install${pip_deps} --no-input --upgrade pip -r $target" log:failure-only || SetError
+			DisplayRunAndLog "install PyPI modules from '$(/usr/bin/basename "$target")'" "$VENV_PIP_PATHFILE install${pip_deps} --no-input --upgrade pip -r $target" log:failure-only
 			no_pips_installed=false
 		fi
 	done
@@ -356,7 +356,7 @@ InstallAddons()
 
 	if [[ $no_pips_installed = true ]]; then
 		if [[ -e $QPKG_REPO_PATH/setup.py || -e $pyproject_pathfile ]]; then
-			DisplayRunAndLog "install PyPI modules from '$(/usr/bin/basename "$target")'" "$VENV_PIP_PATHFILE install${pip_deps} --no-input --upgrade pip $QPKG_REPO_PATH" log:failure-only || SetError
+			DisplayRunAndLog "install PyPI modules from '$(/usr/bin/basename "$target")'" "$VENV_PIP_PATHFILE install${pip_deps} --no-input --upgrade pip $QPKG_REPO_PATH" log:failure-only
 			no_pips_installed=false
 		fi
 	fi
