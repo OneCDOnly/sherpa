@@ -2374,7 +2374,7 @@ IPKs:upgrade()
 		fi
 	fi
 
-	Func:Exit
+	Func:Exit $result_code
 
 	}
 
@@ -2394,7 +2394,14 @@ IPKs:install()
 	IPKs-ACinstall-to:Init
 	IPKs-ACdownload-to:Init
 
-	QPKGs-ACinstall-ok:Exist Entware && IPKs-ACinstall-to:Add "$ESSENTIAL_IPKS"
+	if QPKGs-ACinstall-ok:Exist Entware; then
+		IPKs-ACinstall-to:Add "$ESSENTIAL_IPKS"
+
+# 		if [[ -e $PREV_IPK_LIST ]]; then
+# 			add previously installed IPKs to install list
+# 			mv "$PREV_IPK_LIST" "$PREV_IPK_LIST.installing"
+# 		fi
+	fi
 
 	if QPKGs.ACinstall.SCall:IsSet; then
 		for index in "${!QPKG_NAME[@]}"; do
@@ -2434,15 +2441,23 @@ IPKs:install()
 			SaveActionResultToLog IPK "$desc" install ok "$result_code"
 			Keystrokes:Hide
 			UpdateColourisation
+
+# 			if [[ -e $PREV_IPK_LIST.installing ]]; then
+# 				rm "$PREV_IPK_LIST.installing"
+# 			fi
 		else
 			fail_count=$total_count		# assume they all failed
 			ShowAsFail "install $desc failed $(FormatAsExitcode "$result_code")"
 			NoteIpkAcAsEr "$(IPKs-ACdownload-to:Array)" install
 			SaveActionResultToLog IPK "$desc" install failed "$result_code"
+
+# 			if [[ -e $PREV_IPK_LIST.installing ]]; then
+# 				mv "$PREV_IPK_LIST.installing" "$PREV_IPK_LIST"
+# 			fi
 		fi
 	fi
 
-	Func:Exit
+	Func:Exit $result_code
 
 	}
 
