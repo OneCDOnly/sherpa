@@ -30,11 +30,9 @@ OliveTin_230604_arm-x41.qpkg.md5     OliveTin_230604_arm-x41.qpkg     OliveTin  
 OliveTin_230604_x86_64.qpkg.md5      OliveTin_230604_x86_64.qpkg      OliveTin             230604       i64    259606ad833ae2de1b3e389424386268
 OMedusa_230716.qpkg.md5              OMedusa_230716.qpkg              OMedusa              230716       all    f660fa9a9a1fd04449df6833e1b95f08
 OqBittorrent_230604.qpkg.md5         OqBittorrent_230604.qpkg         OqBittorrent         230604       all    65413ee56337ff0f7b83d2c3c3cdc8ea
-OSickGear_230716.qpkg.md5            OSickGear_230716.qpkg            OSickGear            230716       all    d43497abf64f39eeb19366bb84a4ff93
+OSickGear_230720.qpkg.md5            OSickGear_230720.qpkg            OSickGear            230720       all    8d49e465c8a42dc3afc004099d2a743a
 OTransmission_230717.qpkg.md5        OTransmission_230717.qpkg        OTransmission        230717       all    92cbd8c5cdfc3f1e54b84ad7cb27e391
-OWatcher3_230716_arm_64.qpkg.md5     OWatcher3_230716_arm_64.qpkg     OWatcher3            230716       a64    a9f7279323954ca99dbdcc5eb5f3a35a
-OWatcher3_230716_x86_64.qpkg.md5     OWatcher3_230716_x86_64.qpkg     OWatcher3            230716       i64    478060d752fbb242e4d2ce6764a6ed8d
-OWatcher3_230716_x86.qpkg.md5        OWatcher3_230716_x86.qpkg        OWatcher3            230716       i86    df94e5efaf47cdaa6a36127a237ad7d6
+OWatcher3_230720.qpkg.md5            OWatcher3_230720.qpkg            OWatcher3            230720       all    b0625e05be062bc2a25677886877298f
 Par2_0.8.1.1_arm_64.qpkg.md5         Par2_0.8.1.1_arm_64.qpkg         Par2                 0.8.1.1      a64    b8e89f295bdec56eecae88ec685d1e23
 Par2_0.8.1.1_arm-x19.qpkg.md5        Par2_0.8.1.1_arm-x19.qpkg        Par2                 0.8.1.1      a19    d312d8bd2dee43e62a720f0d209905f8
 Par2_0.8.1.1_arm-x31.qpkg.md5        Par2_0.8.1.1_arm-x31.qpkg        Par2                 0.8.1.1      a31    fcf3a710e453cb38b14920e5ac2f2812
