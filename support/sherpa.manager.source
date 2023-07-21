@@ -2915,9 +2915,6 @@ DisplayAsSynExam()
 DisplayAsHelpTitleNameAuthorDesc()
 	{
 
-	# input:
-	#	$1 = package tier
-
 	local package_name_msg=''
 	local package_author_msg=''
 	local package_description_msg=''
@@ -2927,7 +2924,7 @@ DisplayAsHelpTitleNameAuthorDesc()
 	# column 1: package name
 
 	if [[ $maxcols -ge 1 ]]; then
-		package_name_msg="${CHARS_SPECIAL}$1 QPKGs:"
+		package_name_msg="${CHARS_SPECIAL}QPKG name:"
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
 	fi
 
@@ -3046,9 +3043,6 @@ CalcMaxStatusColsToDisplay()
 DisplayAsHelpTitleNameStatusVerPath()
 	{
 
-	# input:
-	#	$1 = package tier
-
 	local package_name_msg=''
 	local package_status_msg=''
 	local package_version_msg=''
@@ -3059,7 +3053,7 @@ DisplayAsHelpTitleNameStatusVerPath()
 	# column 1: package name
 
 	if [[ $maxcols -ge 1 ]]; then
-		package_name_msg="${CHARS_SPECIAL}$1 QPKGs:"
+		package_name_msg="${CHARS_SPECIAL}QPKG name:"
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
 	fi
 
@@ -3073,11 +3067,9 @@ DisplayAsHelpTitleNameStatusVerPath()
 	# column 3: package version
 
 	if [[ $maxcols -ge 3 ]]; then
-		if QPKGs-SCupgradable:IsNone; then
-			package_version_msg="${CHARS_SPECIAL}QPKG version:"
-		else
-			package_version_msg="${CHARS_SPECIAL}QPKG version ($(ColourTextBrightOrange new)):"
-		fi
+		package_version_msg="${CHARS_SPECIAL}QPKG version"
+		QPKGs-SCupgradable:IsAny && package_version_msg+=" ($(ColourTextBrightOrange new))"
+		package_version_msg+=':'
 
 		printf "%-$((package_ver_final_col_width+2+$(LenANSIDiff "$package_version_msg")))s" "$package_version_msg"
 	fi
@@ -3085,7 +3077,7 @@ DisplayAsHelpTitleNameStatusVerPath()
 	# column 4: package installation path
 
 	if [[ $maxcols -ge 4 ]]; then
-		package_path_msg="${CHARS_SPECIAL}installation path:"
+		package_path_msg="${CHARS_SPECIAL}QPKG installation path:"
 		printf "%-$((PACKAGE_PATH_COL_WIDTH+2+$(LenANSIDiff "$package_path_msg")))s" "$package_path_msg"
 	fi
 
@@ -3231,9 +3223,6 @@ DisplayAsHelpNameStatusVerPath()
 DisplayAsHelpTitleNameDateRepo()
 	{
 
-	# input:
-	#	$1 = package tier
-
 	local package_name_msg=''
 	local package_install_date_msg=''
 	local package_repo_msg=''
@@ -3243,7 +3232,7 @@ DisplayAsHelpTitleNameDateRepo()
 	# column 1: package name
 
 	if [[ $maxcols -ge 1 ]]; then
-		package_name_msg="${CHARS_SPECIAL}$1 QPKGs:"
+		package_name_msg="${CHARS_SPECIAL}QPKG name:"
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
 	fi
 
@@ -3338,9 +3327,6 @@ DisplayAsHelpNameDateRepo()
 DisplayAsHelpTitleNameAbs()
 	{
 
-	# input:
-	#	$1 = package tier title
-
 	local package_name_msg=''
 	local package_abs_msg=''
 
@@ -3349,7 +3335,7 @@ DisplayAsHelpTitleNameAbs()
 	# column 1: package name
 
 	if [[ $maxcols -ge 1 ]]; then
-		package_name_msg="${CHARS_SPECIAL}$1 QPKGs:"
+		package_name_msg="${CHARS_SPECIAL}QPKG name:"
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
 	fi
 
@@ -4633,7 +4619,6 @@ QPKGs.Abbreviations:Show()
 	{
 
 	Func:Entry
-	local tier=''
 	local package_name=''
 	local abs=''
 	maxcols=2
@@ -4645,31 +4630,26 @@ QPKGs.Abbreviations:Show()
 
 		Help.Basic:Show
 		DisplayAsHelpTitle "$(FormatAsTitle) can recognise various abbreviations and aliases as $(FormatAsPackages)"
+		DisplayAsHelpTitleNameAbs
 
-		for tier in "${PACKAGE_TIERS[@]}"; do
-			[[ $tier = addon ]] && continue		# don't need to see addons
+		for package_name in $(QPKGs-SCall:Array); do
+			abs=$(QPKG.Abbrvs "$package_name")
 
-			DisplayAsHelpTitleNameAbs "$tier"
-
-			for package_name in $(QPKGs-SC${tier}:Array); do
-				abs=$(QPKG.Abbrvs "$package_name")
-
-				if [[ -n $abs ]]; then
-					if ! QPKG.URL "$package_name" &>/dev/null; then
-						DisplayAsHelpNameAbs muted "$package_name" 'not installable (incompatible arch)'
-					elif ! QPKG.MinOSVer "$package_name" &>/dev/null; then
-						DisplayAsHelpNameAbs muted "$package_name" "not installable (incompatible $(GetQnapOS) version)"
-					elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
-						DisplayAsHelpNameAbs muted "$package_name" 'not installable (insufficient RAM)'
-					elif QPKGs-ISmissing:Exist "$package_name" &>/dev/null; then
-						DisplayAsHelpNameAbs highlighted "$package_name" missing
-					elif QPKG.IsNtInstalled "$package_name"; then
-						DisplayAsHelpNameAbs muted "$package_name" "${abs// /, }"
-					else
-						DisplayAsHelpNameAbs normal "$package_name" "${abs// /, }"
-					fi
+			if [[ -n $abs ]]; then
+				if ! QPKG.URL "$package_name" &>/dev/null; then
+					DisplayAsHelpNameAbs muted "$package_name" 'not installable (incompatible arch)'
+				elif ! QPKG.MinOSVer "$package_name" &>/dev/null; then
+					DisplayAsHelpNameAbs muted "$package_name" "not installable (incompatible $(GetQnapOS) version)"
+				elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
+					DisplayAsHelpNameAbs muted "$package_name" 'not installable (insufficient RAM)'
+				elif QPKGs-ISmissing:Exist "$package_name" &>/dev/null; then
+					DisplayAsHelpNameAbs highlighted "$package_name" missing
+				elif QPKG.IsNtInstalled "$package_name"; then
+					DisplayAsHelpNameAbs muted "$package_name" "${abs// /, }"
+				else
+					DisplayAsHelpNameAbs normal "$package_name" "${abs// /, }"
 				fi
-			done
+			fi
 		done
 
 		DisplayAsProjSynExam "example: to install $(FormatAsPackName SABnzbd), $(FormatAsPackName Mylar3) and $(FormatAsPackName nzbToMedia) all-at-once" 'install sab my nzb2'
@@ -4737,7 +4717,6 @@ QPKGs.Repos:Show()
 	{
 
 	Func:Entry
-	local tier=''
 	local package_name=''
 	local package_store_id=''
 	local package_repo_URL=''
@@ -4749,35 +4728,31 @@ QPKGs.Repos:Show()
 
 		{
 
-		for tier in "${PACKAGE_TIERS[@]}"; do
-			[[ $tier = addon ]] && continue		# don't need to see addons
+		DisplayAsHelpTitleNameDateRepo
 
-			DisplayAsHelpTitleNameDateRepo "$tier"
+		for package_name in $(QPKGs-SCall:Array); do
+			if ! QPKG.URL "$package_name" &>/dev/null; then
+				DisplayAsHelpNameDateRepo muted "$package_name" 'not installable (incompatible arch)'
+			elif ! QPKG.MinOSVer "$package_name" &>/dev/null; then
+				DisplayAsHelpNameDateRepo muted "$package_name" "not installable (incompatible $(GetQnapOS) version)"
+			elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
+				DisplayAsHelpNameDateRepo muted "$package_name" 'not installable (insufficient RAM)'
+			elif QPKGs-ISmissing:Exist "$package_name" &>/dev/null; then
+				DisplayAsHelpNameDateRepo highlighted "$package_name" missing
+			elif QPKGs-ISNTinstalled:Exist "$package_name"; then
+				DisplayAsHelpNameDateRepo muted "$package_name" 'not installed'
+			else
+				package_store_id=$(QPKG.StoreID "$package_name")
+				package_install_date=$(QPKG.InstallDate "$package_name")
 
-			for package_name in $(QPKGs-SC$tier:Array); do
-				if ! QPKG.URL "$package_name" &>/dev/null; then
-					DisplayAsHelpNameDateRepo muted "$package_name" 'not installable (incompatible arch)'
-				elif ! QPKG.MinOSVer "$package_name" &>/dev/null; then
-					DisplayAsHelpNameDateRepo muted "$package_name" "not installable (incompatible $(GetQnapOS) version)"
-				elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
-					DisplayAsHelpNameDateRepo muted "$package_name" 'not installable (insufficient RAM)'
-				elif QPKGs-ISmissing:Exist "$package_name" &>/dev/null; then
-					DisplayAsHelpNameDateRepo highlighted "$package_name" missing
-				elif QPKGs-ISNTinstalled:Exist "$package_name"; then
-					DisplayAsHelpNameDateRepo muted "$package_name" 'not installed'
+				if [[ -z $package_store_id ]]; then
+					DisplayAsHelpNameDateRepo normal "$package_name" unassigned "$package_install_date"
+				elif [[ $package_store_id = sherpa ]]; then
+					DisplayAsHelpNameDateRepo normal "$package_name" "$package_store_id" "$package_install_date"
 				else
-					package_store_id=$(QPKG.StoreID "$package_name")
-					package_install_date=$(QPKG.InstallDate "$package_name")
-
-					if [[ -z $package_store_id ]]; then
-						DisplayAsHelpNameDateRepo normal "$package_name" unassigned "$package_install_date"
-					elif [[ $package_store_id = sherpa ]]; then
-						DisplayAsHelpNameDateRepo normal "$package_name" "$package_store_id" "$package_install_date"
-					else
-						DisplayAsHelpNameDateRepo highlighted "$package_name" "$(GetRepoURLFromStoreID "$package_store_id")" "$package_install_date"
-					fi
+					DisplayAsHelpNameDateRepo highlighted "$package_name" "$(GetRepoURLFromStoreID "$package_store_id")" "$package_install_date"
 				fi
-			done
+			fi
 		done
 
 		} > "$REPORT_PATHFILE"
@@ -4793,7 +4768,6 @@ QPKGs.Repos:Show()
 QPKGs:List:Show()
 	{
 
-	local tier=''
 	local package_name=''
 	maxcols=3
 
@@ -4804,21 +4778,16 @@ QPKGs:List:Show()
 
 		Help.Basic:Show
 		DisplayAsHelpTitle "One-or-more $(FormatAsPackages) may be specified at-once"
+		DisplayAsHelpTitleNameAuthorDesc
 
-		for tier in "${PACKAGE_TIERS[@]}"; do
-			[[ $tier = addon ]] && continue		# don't need to see addons
-
-			DisplayAsHelpTitleNameAuthorDesc "$tier"
-
-			for package_name in $(QPKGs-SC${tier}:Array); do
-				if QPKGs-ISmissing:Exist "$package_name" &>/dev/null; then
-					DisplayAsHelpNameAuthorDesc highlighted "$package_name" missing "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
-				elif QPKG.IsNtInstalled "$package_name"; then
-					DisplayAsHelpNameAuthorDesc muted "$package_name" "$(QPKG.Author "$package_name")" "$(QPKG.Desc "$package_name")" "$(QPKG.Note 	"$package_name")"
-				else
-					DisplayAsHelpNameAuthorDesc normal "$package_name" "$(QPKG.Author "$package_name")" "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
-				fi
-			done
+		for package_name in $(QPKGs-SCall:Array); do
+			if QPKGs-ISmissing:Exist "$package_name" &>/dev/null; then
+				DisplayAsHelpNameAuthorDesc highlighted "$package_name" missing "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
+			elif QPKG.IsNtInstalled "$package_name"; then
+				DisplayAsHelpNameAuthorDesc muted "$package_name" "$(QPKG.Author "$package_name")" "$(QPKG.Desc "$package_name")" "$(QPKG.Note 	"$package_name")"
+			else
+				DisplayAsHelpNameAuthorDesc normal "$package_name" "$(QPKG.Author "$package_name")" "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
+			fi
 		done
 
 		DisplayAsProjSynExam "abbreviations and aliases may also be used to specify $(FormatAsPackages). To list these" 'list abs'
@@ -4838,7 +4807,6 @@ QPKGs.Statuses:Show()
 	{
 
 	Func:Entry
-	local tier=''
 	local package_name=''
 	local package_status_msg=''
 	local package_result_msg=''
@@ -4850,66 +4818,62 @@ QPKGs.Statuses:Show()
 
 		{
 
-		for tier in "${PACKAGE_TIERS[@]}"; do
-			[[ $tier != addon ]] || continue		# don't need to see addons
+		DisplayAsHelpTitleNameStatusVerPath
 
-			DisplayAsHelpTitleNameStatusVerPath "$tier"
-
-			for package_name in $(QPKGs-SC$tier:Array); do
-				if QPKGs-ISNTinstalled:Exist "$package_name"; then
-					if ! QPKG.URL "$package_name" &>/dev/null; then
-						DisplayAsHelpNameStatusVerPath muted "$package_name" 'not installable (incompatible arch)'
-					elif ! QPKG.MinOSVer "$package_name" &>/dev/null; then
-						DisplayAsHelpNameStatusVerPath muted "$package_name" "not installable (incompatible $(GetQnapOS) version)"
-					elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
-						DisplayAsHelpNameStatusVerPath muted "$package_name" 'not installable (insufficient RAM)'
-					else
-						DisplayAsHelpNameStatusVerPath muted "$package_name" 'not installed' '' '' "$(QPKG.Avail.Ver "$package_name")"
-					fi
+		for package_name in $(QPKGs-SCall:Array); do
+			if QPKGs-ISNTinstalled:Exist "$package_name"; then
+				if ! QPKG.URL "$package_name" &>/dev/null; then
+					DisplayAsHelpNameStatusVerPath muted "$package_name" 'not installable (incompatible arch)'
+				elif ! QPKG.MinOSVer "$package_name" &>/dev/null; then
+					DisplayAsHelpNameStatusVerPath muted "$package_name" "not installable (incompatible $(GetQnapOS) version)"
+				elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
+					DisplayAsHelpNameStatusVerPath muted "$package_name" 'not installable (insufficient RAM)'
 				else
-					if QPKGs-ISmissing:Exist "$package_name"; then
-						DisplayAsHelpNameStatusVerPath highlighted "$package_name" missing '' "$(QPKG.Local.Ver "$package_name")" '' "$(QPKG.InstallationPath "$package_name")"
-					else
-						# state
+					DisplayAsHelpNameStatusVerPath muted "$package_name" 'not installed' '' '' "$(QPKG.Avail.Ver "$package_name")"
+				fi
+			else
+				if QPKGs-ISmissing:Exist "$package_name"; then
+					DisplayAsHelpNameStatusVerPath highlighted "$package_name" missing '' "$(QPKG.Local.Ver "$package_name")" '' "$(QPKG.InstallationPath "$package_name")"
+				else
+					# state
 
-						if QPKGs-ISenabled:Exist "$package_name"; then
-							package_status_msg=enabled
-						elif QPKGs-ISNTenabled:Exist "$package_name"; then
-							package_status_msg=disabled
-						fi
-
-						# package/process: active/slow or inactive?
-
-						if QPKGs-ACstatus-ok:Exist "$package_name"; then
-							if QPKGs-ISactive:Exist "$package_name"; then
-								package_status_msg+=' active'
-							elif QPKGs-ISslow:Exist "$package_name"; then
-								package_status_msg+=' slow'
-							elif QPKGs-ISstarting:Exist "$package_name"; then
-								package_status_msg+=' start'
-							elif QPKGs-ISstopping:Exist "$package_name"; then
-								package_status_msg+=' stop'
-							elif QPKGs-ISrestarting:Exist "$package_name"; then
-								package_status_msg+=' restart'
-							elif QPKGs-ISunknown:Exist "$package_name"; then
-								package_status_msg+=' unknown'
-							else
-								package_status_msg+=' inactive'
-							fi
-						else
-							package_status_msg+=' unknown'
-						fi
-
-						QPKG.IsUpgradable "$package_name" && package_upgrade_version=$(QPKG.Avail.Ver "$package_name")
-
-						DisplayAsHelpNameStatusVerPath normal "$package_name" "$package_status_msg" "$package_result_msg" "$(QPKG.Local.Ver "$package_name")" "$package_upgrade_version" "$(QPKG.InstallationPath "$package_name")"
+					if QPKGs-ISenabled:Exist "$package_name"; then
+						package_status_msg=enabled
+					elif QPKGs-ISNTenabled:Exist "$package_name"; then
+						package_status_msg=disabled
 					fi
 
-					package_status_msg=''
-					package_result_msg=''
-					package_upgrade_version=''
+					# package/process: active/slow or inactive?
+
+					if QPKGs-ACstatus-ok:Exist "$package_name"; then
+						if QPKGs-ISactive:Exist "$package_name"; then
+							package_status_msg+=' active'
+						elif QPKGs-ISslow:Exist "$package_name"; then
+							package_status_msg+=' slow'
+						elif QPKGs-ISstarting:Exist "$package_name"; then
+							package_status_msg+=' start'
+						elif QPKGs-ISstopping:Exist "$package_name"; then
+							package_status_msg+=' stop'
+						elif QPKGs-ISrestarting:Exist "$package_name"; then
+							package_status_msg+=' restart'
+						elif QPKGs-ISunknown:Exist "$package_name"; then
+							package_status_msg+=' unknown'
+						else
+							package_status_msg+=' inactive'
+						fi
+					else
+						package_status_msg+=' unknown'
+					fi
+
+					QPKG.IsUpgradable "$package_name" && package_upgrade_version=$(QPKG.Avail.Ver "$package_name")
+
+					DisplayAsHelpNameStatusVerPath normal "$package_name" "$package_status_msg" "$package_result_msg" "$(QPKG.Local.Ver "$package_name")" "$package_upgrade_version" "$(QPKG.InstallationPath "$package_name")"
 				fi
-			done
+
+				package_status_msg=''
+				package_result_msg=''
+				package_upgrade_version=''
+			fi
 		done
 
 		} > "$REPORT_PATHFILE"
