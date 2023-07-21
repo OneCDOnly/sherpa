@@ -56,6 +56,7 @@ Packages:Load()
 		readonly QPKG_MD5
 		readonly QPKG_URL
 		readonly QPKG_MIN_RAM_KB
+		readonly QPKG_MIN_OS_VERSION
 		readonly QPKG_AUTHOR
 		readonly QPKG_APP_AUTHOR
 		readonly QPKG_DESC
