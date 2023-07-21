@@ -144,7 +144,7 @@ ShowDone()
 	}
 
 today=$(date '+%y%m%d')
-year=$(date '+%Y')
+thisyear=$(date '+%Y')
 colourful=true
 
 checksum_root_path="$HOME"/scripts/nas
