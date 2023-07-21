@@ -425,7 +425,6 @@ Consts:Load()
 	readonly CHARS_NORMAL=$CHAR_SPACER'- '
 	readonly CHARS_ALERT=$CHAR_SPACER'! '
 	readonly CHARS_DROPEND='└─ '
-	readonly CHARS_DROPTHRU='├─ '
 	readonly CHARS_NOTE='* '
 	readonly CHARS_RESULTS='= '
 	readonly CHARS_ELLIPSIS='...'
@@ -2869,6 +2868,36 @@ LenANSIDiff()
 
 	}
 
+CalcMaxStatusColsToDisplay()
+	{
+
+	local col1_width=$((${#CHARS_SPECIAL}+PACKAGE_NAME_COL_WIDTH))
+	local col2_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_STATUS_COL_WIDTH))
+	local col3_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_VER_COL_WIDTH))
+	local col4_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_PATH_COL_WIDTH))
+
+	# add width to include " (new)" string to QPKG version title
+	if QPKGs-SCupgradable:IsAny; then
+		package_ver_final_col_width=$((PACKAGE_VER_COL_WIDTH+6))
+		((col3_width+6))
+	else
+		package_ver_final_col_width=$PACKAGE_VER_COL_WIDTH
+	fi
+
+	if [[ $((col1_width+col2_width)) -ge $SESS_COLS ]]; then
+		maxcols=1
+	elif [[ $((col1_width+col2_width+col3_width)) -ge $SESS_COLS ]]; then
+		maxcols=2
+	elif [[ $((col1_width+col2_width+col3_width+col4_width)) -ge $SESS_COLS ]]; then
+		maxcols=3
+	else
+		maxcols=4
+	fi
+
+	return 0
+
+	}
+
 DisplayAsProjSynExam()
 	{
 
@@ -3020,36 +3049,6 @@ DisplayAsHelpNameAuthorDesc()
 
 	}
 
-CalcMaxStatusColsToDisplay()
-	{
-
-	local col1_width=$((${#CHARS_SPECIAL}+PACKAGE_NAME_COL_WIDTH))
-	local col2_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_STATUS_COL_WIDTH))
-	local col3_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_VER_COL_WIDTH))
-	local col4_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_PATH_COL_WIDTH))
-
-	# add width to include " (new)" string to QPKG version title
-	if QPKGs-SCupgradable:IsAny; then
-		package_ver_final_col_width=$((PACKAGE_VER_COL_WIDTH+6))
-		((col3_width+6))
-	else
-		package_ver_final_col_width=$PACKAGE_VER_COL_WIDTH
-	fi
-
-	if [[ $((col1_width+col2_width)) -ge $SESS_COLS ]]; then
-		maxcols=1
-	elif [[ $((col1_width+col2_width+col3_width)) -ge $SESS_COLS ]]; then
-		maxcols=2
-	elif [[ $((col1_width+col2_width+col3_width+col4_width)) -ge $SESS_COLS ]]; then
-		maxcols=3
-	else
-		maxcols=4
-	fi
-
-	return 0
-
-	}
-
 DisplayAsHelpTitleNameStatusVerPath()
 	{
 
@@ -3155,7 +3154,7 @@ DisplayAsHelpNameStatusVerPath()
 				[[ $package_status =~ $patt ]] && package_status_msg+=" $(ColourTextBrightOrange unknown)"
 
 				if [[ -n $package_status_msg ]]; then
-					package_status_msg=$(Trim "$package_status_msg")
+					package_status_msg="$(Trim "$package_status_msg")"
 					package_status_msg="${package_status_msg// /, }"	# insert separators
 				else
 					package_status_msg="$package_status"
@@ -3174,7 +3173,7 @@ DisplayAsHelpNameStatusVerPath()
 			fi
 			;;
 		muted)
-			package_name_msg="$(ColourTextDarkGrey "${CHARS_BLANK}$package_name")"
+			package_name_msg="${CHARS_BLANK}$(ColourTextDarkGrey "$package_name")"
 			package_version_msg="${CHARS_BLANK}$(ColourTextDarkGrey "$package_upgrade_version")"
 			package_path_msg=''
 
@@ -3292,7 +3291,7 @@ DisplayAsHelpNameDateRepo()
 			esac
 			;;
 		muted)
-			package_name_msg=${CHARS_BLANK}$(ColourTextDarkGrey "$package_name")
+			package_name_msg="${CHARS_BLANK}$(ColourTextDarkGrey "$package_name")"
 			package_install_date_msg="${CHARS_BLANK}$(ColourTextDarkGrey "$assigned_repo")"
 			assigned_repo_msg=''
 			;;
@@ -3300,12 +3299,12 @@ DisplayAsHelpNameDateRepo()
 			if [[ -n $assigned_repo ]]; then
 				case $assigned_repo in
 					missing)
-						package_name_msg=${CHARS_BLANK}$(ColourTextBrightRed "$package_name")
+						package_name_msg="${CHARS_BLANK}$(ColourTextBrightRed "$package_name")"
 						package_install_date_msg="${CHARS_BLANK}$(ColourTextBrightRedBlink "$assigned_repo")"
 						assigned_repo_msg="$(ColourTextBrightRedBlink "${CHARS_ALERT}${assigned_repo}")"
 						;;
 					*)
-						package_name_msg=${CHARS_BLANK}$(ColourTextBrightOrange "$package_name")
+						package_name_msg="${CHARS_BLANK}$(ColourTextBrightOrange "$package_name")"
 						assigned_repo_msg="$(ColourTextBrightOrange "${CHARS_NOTE}${assigned_repo}")"
 				esac
 			fi
@@ -3361,6 +3360,55 @@ DisplayAsHelpTitleNameAbs()
 
 	}
 
+DisplayAsHelpNameAbs()
+	{
+
+	# input:
+	#	$1 = 'normal/highlighted/muted'
+	#	$2 = package name
+	#	$3 = acceptable package abbreviations
+
+	local package_name=${2:-}
+	local package_name_msg=${CHARS_BLANK}$package_name
+	local package_abs=${3:-}
+	local package_abs_msg="${CHARS_NORMAL}${package_abs}"
+
+	case $1 in
+		muted)
+			package_name_msg="$(ColourTextDarkGrey "${CHARS_BLANK}$package_name")"
+			package_abs_msg="$(ColourTextDarkGrey "${CHARS_NORMAL}${package_abs}")"
+			;;
+		highlighted)
+			if [[ -n $package_abs ]]; then
+				case $package_abs in
+					missing)
+						package_name_msg=$(ColourTextBrightRed "${CHARS_ALERT}${package_name}")
+						package_abs_msg="$(ColourTextBrightRedBlink "${CHARS_ALERT}${package_abs}")"
+						;;
+					*)
+						package_name_msg=$(ColourTextBrightOrange "${CHARS_NORMAL}$package_name")
+						package_abs_msg="$(ColourTextBrightOrange "${CHARS_NOTE}${package_abs}")"
+				esac
+			fi
+	esac
+
+	# column 1: package name
+
+	if [[ $maxcols -ge 1 && -n $package_name_msg ]]; then
+		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
+	fi
+
+	# column 2: package repository
+
+	if [[ $maxcols -ge 2 && -n $package_abs_msg ]]; then
+		printf "%-$((PACKAGE_ABBS_COL_WIDTH+$(LenANSIDiff "$package_abs_msg")))s" "$package_abs_msg"
+	fi
+
+	printf '\n'
+	linespace_visible=false
+
+	}
+
 DisplayAsHelpTitleNameDeps()
 	{
 
@@ -3388,64 +3436,6 @@ DisplayAsHelpTitleNameDeps()
 
 	}
 
-DisplayAsHelpNameAbs()
-	{
-
-	# input:
-	#	$1 = 'normal/highlighted/muted'
-	#	$2 = package name
-	#	$3 = acceptable package abbreviations
-
-	local package_name=${2:-}
-	local package_name_msg=${CHARS_BLANK}$package_name
-	local package_abs=${3:-}
-	local package_abs_msg="${CHARS_NORMAL}${package_abs}"
-
-	case $1 in
-		normal)
-			case $package_abs in
-				sherpa)
-					package_abs_msg="${CHARS_NORMAL}$(ColourTextBrightGreen "$package_abs")"
-					;;
-				unassigned)
-					package_abs_msg="${CHARS_NORMAL}$(ColourTextBrightOrange "$package_abs")"
-			esac
-			;;
-		muted)
-			package_name_msg="${CHARS_BLANK}$(ColourTextDarkGrey "$package_name")"
-			package_abs_msg="$(ColourTextDarkGrey "${CHARS_NORMAL}${package_abs}")"
-			;;
-		highlighted)
-			if [[ -n $package_abs ]]; then
-				case $package_abs in
-					missing)
-						package_name_msg=$(ColourTextBrightRed "${CHARS_ALERT}${package_name}")
-						package_abs_msg="$(ColourTextBrightRedBlink "${CHARS_ALERT}${package_abs}")"
-						;;
-					*)
-						package_name_msg=${CHARS_NORMAL}$(ColourTextBrightOrange "$package_name")
-						package_abs_msg="$(ColourTextBrightOrange "${CHARS_NOTE}${package_abs}")"
-				esac
-			fi
-	esac
-
-	# column 1: package name
-
-	if [[ $maxcols -ge 1 && -n $package_name_msg ]]; then
-		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
-	fi
-
-	# column 2: package repository
-
-	if [[ $maxcols -ge 2 && -n $package_abs_msg ]]; then
-		printf "%-$((PACKAGE_ABBS_COL_WIDTH+$(LenANSIDiff "$package_abs_msg")))s" "$package_abs_msg"
-	fi
-
-	printf '\n'
-	linespace_visible=false
-
-	}
-
 DisplayAsHelpNameDeps()
 	{
 
@@ -3459,10 +3449,14 @@ DisplayAsHelpNameDeps()
 	local package_deps=${3:-}
 	local package_deps_msg="${CHARS_NORMAL}${package_deps}"
 
-	if [[ $1 = muted ]]; then
-		package_name_msg="${CHARS_BLANK}$(ColourTextDarkGrey "$package_name")"
-		package_deps_msg="$(ColourTextDarkGrey "${CHARS_NORMAL}${package_deps}")"
-	fi
+	case $1 in
+		muted)
+			package_name_msg="$(ColourTextDarkGrey "${CHARS_BLANK}$package_name")"
+			package_deps_msg="$(ColourTextDarkGrey "${CHARS_NORMAL}${package_deps}")"
+			;;
+		highlighted)
+			package_deps_msg="$(ColourTextBrightGreen "${CHARS_NORMAL}${package_deps}")"
+	esac
 
 	# column 1: package name
 
@@ -3518,28 +3512,6 @@ DisplayAsHelpTitleHighlighted()
 
 	# shellcheck disable=2059
 	printf "$(ColourTextBrightOrange "${CHARS_SPECIAL}%s\n")" "$(Capitalise "${1:-}")"
-	linespace_visible=false
-
-	}
-
-DisplayAsActionResultNtLastLine()
-	{
-
-	# input:
-	#	$1 = text
-
-	printf "%${ACTION_RESULT_INDENT}s${CHARS_DROPTHRU}%s\n" '' "$1"
-	linespace_visible=false
-
-	}
-
-DisplayAsActionResultLastLine()
-	{
-
-	# input:
-	#	$1 = text
-
-	printf "%${ACTION_RESULT_INDENT}s${CHARS_DROPEND}%s\n" '' "$1"
 	linespace_visible=false
 
 	}
@@ -4810,7 +4782,7 @@ QPKGs.Dependencies:Show()
 				elif QPKG.IsNtInstalled "$package_name"; then
 					DisplayAsHelpNameDeps muted "$package_name" "${deps// /, }"
 				else
-					DisplayAsHelpNameDeps normal "$package_name" "${deps// /, }"
+					DisplayAsHelpNameDeps highlighted "$package_name" "${deps// /, }"
 				fi
 			else
 				DisplayAsHelpNameDeps normal "$package_name" none

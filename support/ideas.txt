@@ -1,5 +1,3 @@
-* ensure all package decriptions end with a period.
-
 * show integrated package list help in a 'less' displayport.
 	so it will be scrollable.
 
