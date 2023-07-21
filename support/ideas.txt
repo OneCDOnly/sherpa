@@ -1,13 +1,9 @@
-* show integrated package list help in a 'less' displayport
+* ensure all package decriptions end with a period.
+
+* show integrated package list help in a 'less' displayport.
 	so it will be scrollable.
 
-* ensure all IPKs previously installed are reinstalled after reinstalling Entware.
-
-* add comictagger as new package?
-	https://github.com/comictagger/comictagger/wiki/Installation
-
-* add fileshelter as new package?
-	https://github.com/epoupon/fileshelter/blob/master/INSTALL.md
+* ensure all IPKs are reinstalled after reinstalling Entware.
 
 * add Gitea as new package?
 	https://docs.gitea.com/installation/install-from-binary
