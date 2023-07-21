@@ -4663,7 +4663,7 @@ QPKGs.Abbreviations:Show()
 						DisplayAsHelpNameAbs muted "$package_name" 'not installable (insufficient RAM)'
 					elif QPKGs-ISmissing:Exist "$package_name" &>/dev/null; then
 						DisplayAsHelpNameAbs highlighted "$package_name" missing
-					elif QPKGs-ISNTinstalled:Exist "$package_name"; then
+					elif QPKG.IsNtInstalled "$package_name"; then
 						DisplayAsHelpNameAbs muted "$package_name" "${abs// /, }"
 					else
 						DisplayAsHelpNameAbs normal "$package_name" "${abs// /, }"
@@ -4813,7 +4813,7 @@ QPKGs:List:Show()
 			for package_name in $(QPKGs-SC${tier}:Array); do
 				if QPKGs-ISmissing:Exist "$package_name" &>/dev/null; then
 					DisplayAsHelpNameAuthorDesc highlighted "$package_name" missing "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
-				elif ! QPKG.URL "$package_name" &>/dev/null || ! QPKG.MinOSVer "$package_name" &>/dev/null || ! QPKG.MinRAM "$package_name" &>/dev/null; then
+				elif QPKG.IsNtInstalled "$package_name"; then
 					DisplayAsHelpNameAuthorDesc muted "$package_name" "$(QPKG.Author "$package_name")" "$(QPKG.Desc "$package_name")" "$(QPKG.Note 	"$package_name")"
 				else
 					DisplayAsHelpNameAuthorDesc normal "$package_name" "$(QPKG.Author "$package_name")" "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
