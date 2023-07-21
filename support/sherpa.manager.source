@@ -1114,10 +1114,6 @@ Actions:Proc()
 		fi
 	fi
 
-	EraseThisLine
-
-	[[ $opts_check = true ]] && ShowAsDone 'check complete'
-
 	if [[ $opts_debug = true ]]; then
 #		PIPs.Actions:List
 		IPKs.Actions:List
@@ -2565,8 +2561,6 @@ _ActionForks:Launch_()
 
 	# all forks have exited
 	sleep 1
-
-	EraseThisLine
 
 	}
 
