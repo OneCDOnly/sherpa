@@ -206,6 +206,8 @@ Self:Results()
 			QPKGs.Backups:Show
 		elif [[ $opts_show_groups = true ]]; then
 			Help.Groups:Show
+		elif [[ $opts_show_dependencies = true ]]; then
+			QPKGs.Dependencies:Show
 		elif [[ $opts_show_options = true ]]; then
 			Help.Options:Show
 		elif [[ $opts_show_packages = true ]]; then
@@ -324,6 +326,7 @@ Vars:Load()
 	opts_show_backups=false
 	opts_show_backuploc=false
 	opts_show_basic_help=false
+	opts_show_dependencies=false
 	opts_show_groups=false
 	opts_show_log_last=false
 	opts_show_log_tail=false
@@ -404,15 +407,16 @@ Consts:Load()
 	readonly HELP_DESC_INDENT=3
 	readonly HELP_SYNTAX_INDENT=6
 
-	readonly PACKAGE_NAME_COL_WIDTH=21
-	readonly PACKAGE_STATUS_COL_WIDTH=23
-	readonly PACKAGE_AUTHOR_COL_WIDTH=22
-	readonly PACKAGE_REPO_COL_WIDTH=40
-	readonly PACKAGE_INSTALL_DATE_COL_WIDTH=18
-	readonly PACKAGE_VER_COL_WIDTH=17
-	readonly PACKAGE_PATH_COL_WIDTH=48
 	readonly PACKAGE_ABBS_COL_WIDTH=84
+	readonly PACKAGE_AUTHOR_COL_WIDTH=22
+	readonly PACKAGE_DEPS_COL_WIDTH=30
 	readonly PACKAGE_DESCRIPTION_COL_WIDTH=100
+	readonly PACKAGE_INSTALL_DATE_COL_WIDTH=18
+	readonly PACKAGE_NAME_COL_WIDTH=21
+	readonly PACKAGE_PATH_COL_WIDTH=48
+	readonly PACKAGE_REPO_COL_WIDTH=40
+	readonly PACKAGE_STATUS_COL_WIDTH=23
+	readonly PACKAGE_VER_COL_WIDTH=17
 
 	readonly CHAR_SPACER=' '
 
@@ -878,7 +882,7 @@ Self:Validate()
 
 	for action in upgrade reinstall install; do
 		for package in $(QPKGs-AC${action}-to:Array); do
-			for prospect in $(QPKG:GetStandalones "$package"); do
+			for prospect in $(QPKG:GetDependencies "$package"); do
 				QPKGs-ACinstall-to:Add "$prospect"
 			done
 		done
@@ -888,7 +892,7 @@ Self:Validate()
 
 	for package in $(QPKGs-ISinstalled:Array); do
 		if [[ $opts_check = true ]] || QPKGs-ACactivate-to:Exist "$package"; then
-			for prospect in $(QPKG:GetStandalones "$package"); do
+			for prospect in $(QPKG:GetDependencies "$package"); do
 				QPKGs-ISNTinstalled:Exist "$prospect" && QPKGs-ACinstall-to:Add "$prospect"
 			done
 		fi
@@ -944,7 +948,7 @@ Self:Validate()
 
 	for action in reinstall install activate reactivate; do
 		for package in $(QPKGs-AC${action}-to:Array); do
-			for prospect in $(QPKG:GetStandalones "$package"); do
+			for prospect in $(QPKG:GetDependencies "$package"); do
 				QPKGs-ISinstalled:Exist "$prospect" && QPKGs-ACactivate-to:Add "$prospect"
 			done
 		done
@@ -1524,7 +1528,7 @@ ParseArgs()
 
 		if [[ -z $action ]]; then
 			case $arg in
-				a|abs|action|actions|actions-all|alias|aliases|all-actions|b|backups|deps|dependent|dependents|disabled|enabled|failed|groups|indeps|independent|independents|installable|installed|l|last|log|missing|new|not-installed|o|ok|option|options|p|package|packages|problems|r|repo|repos|results|skipped|standalone|standalones|tail|tips|updatable|updateable|upgradable|v|version|versions|whole)
+				a|abs|action|actions|actions-all|alias|aliases|all-actions|b|backups|d|deps|dependencies|dependent|dependents|disabled|enabled|failed|groups|indeps|independent|independents|installable|installed|l|last|log|missing|new|not-installed|o|ok|option|options|p|package|packages|problems|r|repo|repos|results|skipped|standalone|standalones|tail|tips|updatable|updateable|upgradable|v|version|versions|whole)
 					action=help
 					arg_identified=true
 					group=''
@@ -1568,7 +1572,10 @@ ParseArgs()
 				b|backups)
 					group=backups
 					;;
-				deps|dependent|dependents)
+				d|deps|dependencies)
+					group=dependencies
+					;;
+				dependent|dependents)
 					group=dependent
 					;;
 				group|groups)
@@ -1661,6 +1668,9 @@ ParseArgs()
 						;;
 					backups)
 						opts_show_backups=true
+						;;
+					dependencies)
+						opts_show_dependencies=true
 						;;
 					dependent|installable|standalone|upgradable)
 						QPKGs.AClist.SC${group}:Set
@@ -3351,6 +3361,33 @@ DisplayAsHelpTitleNameAbs()
 
 	}
 
+DisplayAsHelpTitleNameDeps()
+	{
+
+	local package_name_msg=''
+	local package_deps_msg=''
+
+	DisplayLineSpaceIfNoneAlready
+
+	# column 1: package name
+
+	if [[ $maxcols -ge 1 ]]; then
+		package_name_msg="${CHARS_SPECIAL}QPKG name:"
+		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
+	fi
+
+	# column 2: package dependencies
+
+	if [[ $maxcols -ge 2 ]]; then
+		package_deps_msg="${CHARS_SPECIAL}QPKG dependencies:"
+		printf "%-$((PACKAGE_DEPS_COL_WIDTH+2+$(LenANSIDiff "$package_deps_msg")))s" "$package_deps_msg"
+	fi
+
+	printf '\n'
+	linespace_visible=false
+
+	}
+
 DisplayAsHelpNameAbs()
 	{
 
@@ -3402,6 +3439,41 @@ DisplayAsHelpNameAbs()
 
 	if [[ $maxcols -ge 2 && -n $package_abs_msg ]]; then
 		printf "%-$((PACKAGE_ABBS_COL_WIDTH+$(LenANSIDiff "$package_abs_msg")))s" "$package_abs_msg"
+	fi
+
+	printf '\n'
+	linespace_visible=false
+
+	}
+
+DisplayAsHelpNameDeps()
+	{
+
+	# input:
+	#	$1 = 'normal/highlighted/muted'
+	#	$2 = package name
+	#	$3 = package dependencies
+
+	local package_name=${2:-}
+	local package_name_msg=${CHARS_BLANK}$package_name
+	local package_deps=${3:-}
+	local package_deps_msg="${CHARS_NORMAL}${package_deps}"
+
+	if [[ $1 = muted ]]; then
+		package_name_msg="${CHARS_BLANK}$(ColourTextDarkGrey "$package_name")"
+		package_deps_msg="$(ColourTextDarkGrey "${CHARS_NORMAL}${package_deps}")"
+	fi
+
+	# column 1: package name
+
+	if [[ $maxcols -ge 1 && -n $package_name_msg ]]; then
+		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
+	fi
+
+	# column 2: package repository
+
+	if [[ $maxcols -ge 2 && -n $package_deps_msg ]]; then
+		printf "%-$((PACKAGE_DEPS_COL_WIDTH+$(LenANSIDiff "$package_deps_msg")))s" "$package_deps_msg"
 	fi
 
 	printf '\n'
@@ -4633,7 +4705,7 @@ QPKGs.Abbreviations:Show()
 		DisplayAsHelpTitleNameAbs
 
 		for package_name in $(QPKGs-SCall:Array); do
-			abs=$(QPKG.Abbrvs "$package_name")
+			abs=$(QPKG:GetAbbrvs "$package_name")
 
 			if [[ -n $abs ]]; then
 				if ! QPKG.URL "$package_name" &>/dev/null; then
@@ -4713,6 +4785,86 @@ QPKGs.Backups:Show()
 
 	}
 
+QPKGs.Dependencies:Show()
+	{
+
+	Func:Entry
+	local package_name=''
+	local deps=''
+	maxcols=2
+
+	DisableDebugToArchiveAndFile
+	DisplayWritingReport
+
+		{
+
+		DisplayAsHelpTitle "$(FormatAsTitle) will automatically install and start/stop dependencies as-required"
+		DisplayAsHelpTitleNameDeps
+
+		for package_name in $(QPKGs-SCall:Array); do
+			deps=$(QPKG:GetDependencies "$package_name")
+
+			if [[ -n $deps ]]; then
+				if QPKGs-ISmissing:Exist "$package_name" &>/dev/null; then
+					DisplayAsHelpNameDeps highlighted "$package_name" missing
+				elif QPKG.IsNtInstalled "$package_name"; then
+					DisplayAsHelpNameDeps muted "$package_name" "${deps// /, }"
+				else
+					DisplayAsHelpNameDeps normal "$package_name" "${deps// /, }"
+				fi
+			else
+				DisplayAsHelpNameDeps normal "$package_name" none
+			fi
+		done
+
+		} > "$REPORT_PATHFILE"
+
+	EraseThisLine		# clear the "proc:" message shown earlier
+	[[ -e $REPORT_PATHFILE ]] && $CAT_CMD "$REPORT_PATHFILE"
+	linespace_visible=false
+
+	Func:Exit
+
+	}
+
+QPKGs:List:Show()
+	{
+
+	local package_name=''
+	maxcols=3
+
+	DisableDebugToArchiveAndFile
+	DisplayWritingReport
+
+		{
+
+		Help.Basic:Show
+		DisplayAsHelpTitle "One-or-more $(FormatAsPackages) may be specified at-once"
+		DisplayAsHelpTitleNameAuthorDesc
+
+		for package_name in $(QPKGs-SCall:Array); do
+			if QPKGs-ISmissing:Exist "$package_name" &>/dev/null; then
+				DisplayAsHelpNameAuthorDesc highlighted "$package_name" missing "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
+			elif QPKG.IsNtInstalled "$package_name"; then
+				DisplayAsHelpNameAuthorDesc muted "$package_name" "$(QPKG.Author "$package_name")" "$(QPKG.Desc "$package_name")" "$(QPKG.Note 	"$package_name")"
+			else
+				DisplayAsHelpNameAuthorDesc normal "$package_name" "$(QPKG.Author "$package_name")" "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
+			fi
+		done
+
+		DisplayAsProjSynExam "abbreviations and aliases may also be used to specify $(FormatAsPackages). To list these" 'list abs'
+		DisplayAsProjSynIndentExam '' a
+
+		} > "$REPORT_PATHFILE"
+
+	EraseThisLine		# clear the "proc:" message shown earlier
+	[[ -e $REPORT_PATHFILE ]] && $CAT_CMD "$REPORT_PATHFILE"
+	linespace_visible=false
+
+	return 0
+
+	}
+
 QPKGs.Repos:Show()
 	{
 
@@ -4762,44 +4914,6 @@ QPKGs.Repos:Show()
 	QPKGs.States:List
 
 	Func:Exit
-
-	}
-
-QPKGs:List:Show()
-	{
-
-	local package_name=''
-	maxcols=3
-
-	DisableDebugToArchiveAndFile
-	DisplayWritingReport
-
-		{
-
-		Help.Basic:Show
-		DisplayAsHelpTitle "One-or-more $(FormatAsPackages) may be specified at-once"
-		DisplayAsHelpTitleNameAuthorDesc
-
-		for package_name in $(QPKGs-SCall:Array); do
-			if QPKGs-ISmissing:Exist "$package_name" &>/dev/null; then
-				DisplayAsHelpNameAuthorDesc highlighted "$package_name" missing "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
-			elif QPKG.IsNtInstalled "$package_name"; then
-				DisplayAsHelpNameAuthorDesc muted "$package_name" "$(QPKG.Author "$package_name")" "$(QPKG.Desc "$package_name")" "$(QPKG.Note 	"$package_name")"
-			else
-				DisplayAsHelpNameAuthorDesc normal "$package_name" "$(QPKG.Author "$package_name")" "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
-			fi
-		done
-
-		DisplayAsProjSynExam "abbreviations and aliases may also be used to specify $(FormatAsPackages). To list these" 'list abs'
-		DisplayAsProjSynIndentExam '' a
-
-		} > "$REPORT_PATHFILE"
-
-	EraseThisLine		# clear the "proc:" message shown earlier
-	[[ -e $REPORT_PATHFILE ]] && $CAT_CMD "$REPORT_PATHFILE"
-	linespace_visible=false
-
-	return 0
 
 	}
 
@@ -7255,7 +7369,7 @@ QPKG.OriginalPath()
 
 	}
 
-QPKG.Abbrvs()
+QPKG:GetAbbrvs()
 	{
 
 	# input:
@@ -7469,7 +7583,7 @@ QPKG.MinOSVer()
 
 	}
 
-QPKG:GetStandalones()
+QPKG:GetDependencies()
 	{
 
 	# input:
