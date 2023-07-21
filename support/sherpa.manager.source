@@ -1817,7 +1817,7 @@ ArgSuggestions:Show()
 	local arg=''
 
 	if ARGs-unknown:IsAny; then
-		ShowAsError "unknown argument$(Pluralise "$(ARGs-unknown:Count)"): \"$(ARGs-unknown:List)\". Please check the argument list again"
+		ShowAsError "unknown argument$(Pluralise "$(ARGs-unknown:Count)"): \"$(ARGs-unknown:List)\". Please check the argument list again."
 
 		for arg in $(ARGs-unknown:Array); do
 			case $arg in
@@ -3607,7 +3607,7 @@ Help.Actions:Show()
 Help.Action.Reassign:Show()
 	{
 
-	DisplayAsProjSynIndentExam "reassign packages to $(FormatAsTitle). Use this action to detach QPKGs previously installed via an online respository from further management by that repository" "reassign $(FormatAsPackages)"
+	DisplayAsProjSynIndentExam "reassign packages to $(FormatAsTitle). Use this action to detach QPKGs previously installed via an online repository from further management by that repository" "reassign $(FormatAsPackages)"
 
 	}
 
@@ -3688,8 +3688,8 @@ Help.Groups:Show()
 	DisplayAsHelpTitle "$(FormatAsGroup) usage examples:"
 	DisplayAsProjSynIndentExam 'select every package' "$(FormatAsAction) all"
 	DisplayAsProjSynIndentExam 'select only standalone packages (these do not depend on other QPKGs)' "$(FormatAsAction) standalone"
+	DisplayAsProjSynIndentExam '' "$(FormatAsAction) independents"
 	DisplayAsProjSynIndentExam 'select only dependent packages (these require another QPKG to be installed and active)' "$(FormatAsAction) dependent"
-	DisplayAsProjSynIndentExam '' "$(FormatAsAction) deps"
 	DisplayAsProjSynIndentExam 'select only active packages' "$(FormatAsAction) active"
 	DisplayAsProjSynIndentExam '' "$(FormatAsAction) started"
 	DisplayAsProjSynIndentExam 'select only inactive packages' "$(FormatAsAction) inactive"
@@ -3699,6 +3699,7 @@ Help.Groups:Show()
 	DisplayAsProjSynIndentExam 'select only packages that are backed-up' "$(FormatAsAction) backedup"
 	DisplayAsProjSynIndentExam 'select only packages that are not backed-up' "$(FormatAsAction) not-backedup"
 	DisplayAsProjSynIndentExam 'select only packages that are upgradable' "$(FormatAsAction) upgradable"
+	DisplayAsProjSynIndentExam '' "$(FormatAsAction) new"
 	DisplayAsProjSynIndentExam 'select only missing packages (these are partly installed and broken)' "$(FormatAsAction) missing"
 	DisplayAsProjSynExam 'multiple groups are supported like this' "$(FormatAsAction) $(FormatAsGroup) $(FormatAsGroup)"
 
