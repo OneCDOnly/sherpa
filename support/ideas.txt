@@ -1,7 +1,5 @@
 * ensure all package decriptions end with a period.
 
-* don't split package list displays into 'standalone' and 'dependent', just combine them into a single list.
-
 * show integrated package list help in a 'less' displayport.
 	so it will be scrollable.
 
