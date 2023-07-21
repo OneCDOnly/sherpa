@@ -15,7 +15,7 @@ target_pathfile="$source_path"/sherpa.manager.sh
 buffer=$(<"$source_pathfile")
 
 buffer=$(sed "s|<?dontedit?>|$dontedit_msg|" <<< "$buffer")
-buffer=$(sed "s|<?year?>|$year|" <<< "$buffer")
+buffer=$(sed "s|<?thisyear?>|$thisyear|" <<< "$buffer")
 buffer=$(sed "s|<?today?>|$today|" <<< "$buffer")
 buffer=$(sed "s|<?cdn_sherpa_url?>|$cdn_sherpa_url|" <<< "$buffer")
 
