@@ -3007,19 +3007,13 @@ DisplayAsHelpNameAuthorDesc()
 
 	case $1 in
 		muted)
-			package_name_msg=$(ColourTextDarkGrey "$package_name_msg")
+			package_name_msg="$(ColourTextDarkGrey "$package_name_msg")"
 			package_author_msg="$(ColourTextDarkGrey "$package_author_msg")"
 			package_description_msg="$(ColourTextDarkGrey "$package_description_msg")"
 			;;
 		highlighted)
-			package_name_msg=$(ColourTextBrightRed "$package_name_msg")
-
-			if [[ -n $package_author ]]; then
-				case $package_author in
-					missing)
-						package_author_msg="$(ColourTextBrightRedBlink "${CHARS_ALERT}${package_author}")"
-				esac
-			fi
+			package_name_msg="$(ColourTextBrightRed "$package_name_msg")"
+			[[ $package_author = missing ]] && package_author_msg="$(ColourTextBrightRedBlink "${CHARS_ALERT}${package_author}")"
 	esac
 
 	# column 1: package name
@@ -3382,11 +3376,11 @@ DisplayAsHelpNameAbs()
 			if [[ -n $package_abs ]]; then
 				case $package_abs in
 					missing)
-						package_name_msg=$(ColourTextBrightRed "${CHARS_ALERT}${package_name}")
+						package_name_msg="$(ColourTextBrightRed "${CHARS_ALERT}${package_name}")"
 						package_abs_msg="$(ColourTextBrightRedBlink "${CHARS_ALERT}${package_abs}")"
 						;;
 					*)
-						package_name_msg=$(ColourTextBrightOrange "${CHARS_NORMAL}$package_name")
+						package_name_msg="$(ColourTextBrightOrange "${CHARS_NORMAL}$package_name")"
 						package_abs_msg="$(ColourTextBrightOrange "${CHARS_NOTE}${package_abs}")"
 				esac
 			fi
@@ -3715,7 +3709,7 @@ Help.Groups:Show()
 Help.Issue:Show()
 	{
 
-	DisplayAsHelpTitle "please consider creating a new issue for this on GitHub:\n\thttps://github.com/OneCDOnly/sherpa/issues"
+	DisplayAsHelpTitle "please consider creating a new issue for this on GitHub:\n\thttps://github.com/OneCDOnly/sherpa/issues."
 	DisplayAsHelpTitle "alternatively, post on the QNAP NAS Community Forum:\n\thttps://forum.qnap.com/viewtopic.php?f=320&t=132373"
 	DisplayAsProjSynIndentExam "view only the most recent $(FormatAsTitle) session log" last
 	DisplayAsProjSynIndentExam "view the entire $(FormatAsTitle) session log" log
@@ -3775,13 +3769,13 @@ Actions.Results:Show()
 		if [[ $found = false ]]; then
 			case $1 in
 				ok)
-					DisplayAsHelpTitle "No package actions completed $(ColourTextBrightGreen OK)."
+					DisplayAsHelpTitle "no package actions completed $(ColourTextBrightGreen OK)."
 					;;
 				skipped)
-					DisplayAsHelpTitle "No package actions were $(ColourTextBrightOrange skipped)."
+					DisplayAsHelpTitle "no package actions were $(ColourTextBrightOrange skipped)."
 					;;
 				failed)
-					DisplayAsHelpTitle "No package actions $(ColourTextBrightRed failed)."
+					DisplayAsHelpTitle "no package actions $(ColourTextBrightRed failed)."
 			esac
 		fi
 
@@ -3922,7 +3916,7 @@ Log.Last:Paste()
 			link=$($CAT_CMD --number "$SESS_LAST_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
 
 			if [[ $? -eq 0 ]]; then
-				ShowAsDone "your $(FormatAsTitle) log is now online at $(FormatAsURL "$link") and will be deleted in 1 month"
+				ShowAsDone "your $(FormatAsTitle) log is now online at $(FormatAsURL "$link") and will be deleted in 1 month."
 			else
 				ShowAsFail "a link could not be generated. Most likely a problem occurred when talking with $(FormatAsURL 'https://termbin.com')"
 			fi
@@ -3933,7 +3927,7 @@ Log.Last:Paste()
 			return 1
 		fi
 	else
-		ShowAsError 'no last session log found'
+		ShowAsError 'no last session log found.'
 	fi
 
 	return 0
@@ -3954,7 +3948,7 @@ Log.Tail:Paste()
 			link=$($CAT_CMD --number "$SESS_TAIL_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
 
 			if [[ $? -eq 0 ]]; then
-				ShowAsDone "your $(FormatAsTitle) log is now online at $(FormatAsURL "$link") and will be deleted in 1 month"
+				ShowAsDone "your $(FormatAsTitle) log is now online at $(FormatAsURL "$link") and will be deleted in 1 month."
 			else
 				ShowAsFail "a link could not be generated. Most likely a problem occurred when talking with $(FormatAsURL 'https://termbin.com')"
 			fi
@@ -3965,7 +3959,7 @@ Log.Tail:Paste()
 			return 1
 		fi
 	else
-		ShowAsError 'no session log tail found'
+		ShowAsError 'no session log tail found.'
 	fi
 
 	return 0
@@ -4091,17 +4085,17 @@ InitForkCounts()
 
 	# create directories so background processes can be monitored
 
-	PROC_COUNTS_PATH=$($MKTEMP_CMD -d /var/run/"${FUNCNAME[1]}"_XXXXXX)
+	PROC_COUNTS_PATH="$($MKTEMP_CMD -d /var/run/"${FUNCNAME[1]}"_XXXXXX)"
 	[[ -n ${PROC_COUNTS_PATH:?undefined proc counts path} ]] || return
 
 	EraseForkCountPaths
 
-	proc_fork_count_path=${PROC_COUNTS_PATH}/fork.count
-	proc_ok_count_path=${PROC_COUNTS_PATH}/ok.count
-	proc_skip_ok_count_path=${PROC_COUNTS_PATH}/skip.ok.count
-	proc_skip_count_path=${PROC_COUNTS_PATH}/skip.count
-	proc_skip_error_count_path=${PROC_COUNTS_PATH}/skip.error.count
-	proc_fail_count_path=${PROC_COUNTS_PATH}/fail.count
+	proc_fork_count_path="${PROC_COUNTS_PATH}/fork.count"
+	proc_ok_count_path="${PROC_COUNTS_PATH}/ok.count"
+	proc_skip_ok_count_path="${PROC_COUNTS_PATH}/skip.ok.count"
+	proc_skip_count_path="${PROC_COUNTS_PATH}/skip.count"
+	proc_skip_error_count_path="${PROC_COUNTS_PATH}/skip.error.count"
+	proc_fail_count_path="${PROC_COUNTS_PATH}/fail.count"
 
 	mkdir -p "$proc_fork_count_path"
 	mkdir -p "$proc_ok_count_path"
@@ -4262,7 +4256,7 @@ QPKGs.NewVers:Show()
 		msg='new QPKGs are'
 	fi
 
-	ShowAsInfo "$msg available for $names_formatted"
+	ShowAsInfo "$msg available for $names_formatted."
 	return 1
 
 	}
@@ -4276,7 +4270,7 @@ QPKGs.Conflicts:Check()
 		# shellcheck disable=2068
 		for package in "${BASE_QPKG_CONFLICTS_WITH[@]}"; do
 			if QPKG.IsEnabled "$package"; then
-				ShowAsError "the '$package' QPKG is enabled. $(FormatAsTitle) is incompatible with this package. Please consider 'stop'ing this QPKG in your App Center"
+				ShowAsError "the '$package' QPKG is enabled. $(FormatAsTitle) is incompatible with this package. Please consider 'stop'ing this QPKG in your App Center."
 				return 1
 			fi
 		done
@@ -4295,7 +4289,7 @@ QPKGs.Warnings:Check()
 		# shellcheck disable=2068
 		for package in "${BASE_QPKG_WARNINGS[@]}"; do
 			if QPKG.IsEnabled "$package"; then
-				ShowAsWarn "the '$package' QPKG is enabled. This may cause problems with $(FormatAsTitle) applications. Please consider 'stop'ing this QPKG in your App Center"
+				ShowAsWarn "the '$package' QPKG is enabled. This may cause problems with $(FormatAsTitle) applications. Please consider 'stop'ing this QPKG in your App Center."
 			fi
 		done
 	fi
@@ -4528,8 +4522,8 @@ QPKGs.States:Build()
 	local -i index=0
 	local package=''
 	local prev=''
-	OS.IsStarting && ShowAsWarn "$(GetQnapOS) is still starting. QPKG statuses are in-flux. Try checking again in a few minutes"
-	OS.IsStopping && ShowAsWarn "$(GetQnapOS) is shutting-down. All QPKGs are in the process of being stopped"
+	OS.IsStarting && ShowAsWarn "$(GetQnapOS) is still starting. QPKG statuses are in-flux. Try checking again in a few minutes."
+	OS.IsStopping && ShowAsWarn "$(GetQnapOS) is shutting-down. All QPKGs are in the process of being stopped."
 	ShowAsProc 'package states'
 
 	for index in "${!QPKG_NAME[@]}"; do
@@ -4673,7 +4667,7 @@ QPKGs.Abbreviations:Show()
 		{
 
 		Help.Basic:Show
-		DisplayAsHelpTitle "$(FormatAsTitle) can recognise various abbreviations and aliases as $(FormatAsPackages)"
+		DisplayAsHelpTitle "$(FormatAsTitle) can recognise various abbreviations and aliases as $(FormatAsPackages)."
 		DisplayAsHelpTitleNameAbs
 
 		for package_name in $(QPKGs-SCall:Array); do
@@ -4725,7 +4719,7 @@ QPKGs.Backups:Show()
 		DisplayAsHelpTitle "the location for $(FormatAsTitle) backups is: $QPKG_BU_PATH"
 
 		if [[ -e $GNU_FIND_CMD ]]; then
-			DisplayAsHelpTitle "backups are listed oldest-first, and those $(ColourTextBrightRed 'in red') were last updated more than $highlight_older_than"
+			DisplayAsHelpTitle "backups are listed oldest-first, and those $(ColourTextBrightRed 'in red') were last updated more than $highlight_older_than."
 			DisplayAsHelpTitleFileNamePlusSomething 'backup file' 'last backup date'
 
 			while read -r epochtime filename; do
@@ -4742,7 +4736,7 @@ QPKGs.Backups:Show()
 			done <<< "$($GNU_FIND_CMD "$QPKG_BU_PATH"/*.config.tar.gz -maxdepth 1 -printf '%C@ %f\n' 2>/dev/null | $SORT_CMD)"
 
 		else
-			DisplayAsHelpTitle 'backups are listed oldest-first'
+			DisplayAsHelpTitle 'backups are listed oldest-first.'
 			Display
 
 			(cd "$QPKG_BU_PATH" && ls -1 ./*.config.tar.gz 2>/dev/null)
@@ -4770,7 +4764,7 @@ QPKGs.Dependencies:Show()
 
 		{
 
-		DisplayAsHelpTitle "$(FormatAsTitle) will automatically install and start/stop dependencies as-required"
+		DisplayAsHelpTitle "$(FormatAsTitle) will automatically install and start/stop dependencies as-required."
 		DisplayAsHelpTitleNameDeps
 
 		for package_name in $(QPKGs-SCall:Array); do
@@ -4811,7 +4805,7 @@ QPKGs:List:Show()
 		{
 
 		Help.Basic:Show
-		DisplayAsHelpTitle "One-or-more $(FormatAsPackages) may be specified at-once"
+		DisplayAsHelpTitle "One-or-more $(FormatAsPackages) may be specified at-once."
 		DisplayAsHelpTitleNameAuthorDesc
 
 		for package_name in $(QPKGs-SCall:Array); do
