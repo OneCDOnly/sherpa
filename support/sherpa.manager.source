@@ -58,11 +58,19 @@ Self:Init()
 	Vars:Load
 	Consts:Load
 
-	if ! IsQNAP; then
+	if ! OS.IsQNAP; then
+		ShowAsAbort 'QNAP shell functions not found ... is this a QNAP NAS?'
 		Func:Exit 1; return
 	fi
 
-	if ! IsSU; then
+	if ! User.IsSu; then
+		if OS.IsSupportSudo; then
+			ShowAsError 'this utility must be run with superuser privileges. Try again as:'
+			echo "${CHARS_SUDO_PROMPT}sherpa $USER_ARGS_RAW" >&2
+		else
+			ShowAsError "this utility must be run as the 'admin' user. Please login via SSH as 'admin' and try again."
+		fi
+
 		Func:Exit 1; return
 	fi
 
@@ -82,8 +90,8 @@ Self:Init()
 
 	Keystrokes:Hide
 	Cursor:Hide
-	User:IsVerbose
-	User:IsDebug
+	User.IsVerbose
+	User.IsDebug
 
 	if ! Env:Confirm; then
 		Func:Exit 1; return
@@ -96,7 +104,7 @@ Self:Init()
 	fi
 
 	ArchivePriorSessLogs
-	User:IsReset
+	User.IsReset
 	TerminalDimensions:Load
 
 	DebugInfoMajSepr
@@ -136,14 +144,6 @@ Self:Init()
 	OS.IsSupportSecureDownload && curl_insecure_arg='' || curl_insecure_arg=' --insecure'
 	QPKG.IsInstalled Entware && [[ $ENTWARE_VER = none ]] && DebugAsWarn "$(FormatAsPackName Entware) appears to be installed but is not visible"
 
-	if [[ $(GetSudoUID) = '<undefined>' ]]; then
-		help_syntax_prefix="$CHARS_SUPER_PROMPT"
-		help_syntax_sudo_prefix="$CHARS_SUPER_PROMPT"
-	else
-		help_syntax_prefix="$CHARS_REGULAR_PROMPT"
-		help_syntax_sudo_prefix="$CHARS_SUDO_PROMPT"
-	fi
-
 	if [[ -z $USER_ARGS_RAW ]]; then
 		opts_show_basic_help=true
 		skip_package_actions=true
@@ -180,7 +180,7 @@ Self:Init()
 
 	ArgSuggestions:Show
 	Self:LogEnv
-	Self:IsAnythingToDo
+	Self.IsAnythingToDo
 	Self:Validate
 	Func:Exit
 
@@ -193,7 +193,7 @@ Self:Results()
 
 	display_last_action_datetime=false
 
-	if ARGs-unknown:IsNone; then
+	if ARGs-unknown.IsNone; then
 		if [[ $opts_show_abbreviations = true ]]; then
 			QPKGs.Abbreviations:Show
 		elif [[ $opts_show_actions = true ]]; then
@@ -244,25 +244,25 @@ Self:Results()
 			Self.Vers:Show
 		fi
 
-		if QPKGs.AClist.ISbackedup:IsSet; then
+		if QPKGs.AClist.ISbackedup.IsSet; then
 			QPKGs.IsBackedUp:Show
-		elif QPKGs.AClist.ISNTbackedup:IsSet; then
+		elif QPKGs.AClist.ISNTbackedup.IsSet; then
 			QPKGs.IsNtBackedUp:Show
-		elif QPKGs.AClist.ISinstalled:IsSet; then
+		elif QPKGs.AClist.ISinstalled.IsSet; then
 			QPKGs.IsInstalled:Show
-		elif QPKGs.AClist.ISNTinstalled:IsSet; then
+		elif QPKGs.AClist.ISNTinstalled.IsSet; then
 			QPKGs.IsNtInstalled:Show
-		elif QPKGs.AClist.ISactive:IsSet; then
+		elif QPKGs.AClist.ISactive.IsSet; then
 			QPKGs.IsActive:Show
-		elif QPKGs.AClist.ISNTactive:IsSet; then
+		elif QPKGs.AClist.ISNTactive.IsSet; then
 			QPKGs.IsNtActive:Show
-		elif QPKGs.AClist.SCinstallable:IsSet; then
+		elif QPKGs.AClist.SCinstallable.IsSet; then
 			QPKGs.ScInstallable:Show
-		elif QPKGs.AClist.SCupgradable:IsSet; then
+		elif QPKGs.AClist.SCupgradable.IsSet; then
 			QPKGs.ScUpgradable:Show
-		elif QPKGs.AClist.SCstandalone:IsSet; then
+		elif QPKGs.AClist.SCstandalone.IsSet; then
 			QPKGs.ScStandalone:Show
-		elif QPKGs.AClist.SCdependent:IsSet; then
+		elif QPKGs.AClist.SCdependent.IsSet; then
 			QPKGs.ScDependent:Show
 		fi
 	fi
@@ -436,7 +436,7 @@ Consts:Load()
 
 	readonly DEBUG_LOG_FIRST_COL_WIDTH=9
 	readonly DEBUG_LOG_SECOND_COL_WIDTH=18
-	readonly DEBUG_LOG_THIRD_COL_WIDTH=66
+	readonly DEBUG_LOG_THIRD_COL_WIDTH=68
 	readonly DEBUG_LOG_DATAWIDTH=$((DEBUG_LOG_FIRST_COL_WIDTH+DEBUG_LOG_SECOND_COL_WIDTH+DEBUG_LOG_THIRD_COL_WIDTH+4))
 
 	# cherry-pick Entware binaries
@@ -491,6 +491,19 @@ Consts:Load()
 	readonly WC_CMD=/usr/bin/wc
 
 	readonly SCREEN_CMD=/usr/sbin/screen
+
+	if OS.IsSupportSudo; then
+		if [[ $(GetSudoUID) = '<undefined>' ]]; then
+			readonly HELP_SYNTAX_PREFIX="$CHARS_SUPER_PROMPT"
+			readonly HELP_SYNTAX_SUDO_PREFIX="$CHARS_SUPER_PROMPT"
+		else
+			readonly HELP_SYNTAX_PREFIX="$CHARS_REGULAR_PROMPT"
+			readonly HELP_SYNTAX_SUDO_PREFIX="$CHARS_SUDO_PROMPT"
+		fi
+	else
+		readonly HELP_SYNTAX_PREFIX="$CHARS_SUPER_PROMPT"
+		readonly HELP_SYNTAX_SUDO_PREFIX="$CHARS_SUPER_PROMPT"
+	fi
 
 	}
 
@@ -667,13 +680,18 @@ Self:LogEnv()
 
 	DebugUserspace ok 'system load' "$(GetSysLoadAverages)"
 
-	if [[ $EUID -eq 0 ]]; then
+	if OS.IsSupportSudo; then
+		DebugUserspace ok '$SUDO_UID' "$(GetSudoUID)"
+	else
+		DebugUserspace ok '$SUDO_UID' 'N/A'
+	fi
+
+	if User.IsSu; then
 		DebugUserspace ok '$EUID' "$EUID"
 	else
 		DebugUserspace warning '$EUID' "$EUID"
 	fi
 
-	DebugUserspace ok '$SUDO_UID' "$(GetSudoUID)"
 	DebugUserspace ok 'time in shell' "$(GetTimeInShell)"
 	DebugUserspace ok '$BASH_VERSION' "$BASH_VERSION"
 	DebugUserspace ok 'default volume' "$(GetDefVol)"
@@ -744,7 +762,7 @@ Self:LogEnv()
 
 	}
 
-Self:IsAnythingToDo()
+Self.IsAnythingToDo()
 	{
 
 	# Establish whether there's something to-do
@@ -762,34 +780,34 @@ Self:IsAnythingToDo()
 		for action in "${USER_QPKG_ACTIONS[@]}"; do
 			[[ $action = list ]] && continue
 
-			if QPKGs-AC${action}-to:IsAny; then
+			if QPKGs-AC${action}-to.IsAny; then
 				something_to_do=true
 				break
 			fi
 
 			for group in "${USER_QPKG_SC_GROUPS[@]}"; do
-				if QPKGs.AC${action}.SC${group}:IsSet; then
+				if QPKGs.AC${action}.SC${group}.IsSet; then
 					something_to_do=true
 					break 2
 				fi
 			done
 
 			for group in "${USER_QPKG_SCNT_GROUPS[@]}"; do
-				if QPKGs.AC${action}.SCNT${group}:IsSet; then
+				if QPKGs.AC${action}.SCNT${group}.IsSet; then
 					something_to_do=true
 					break 2
 				fi
 			done
 
 			for state in "${USER_QPKG_IS_STATES[@]}"; do
-				if QPKGs.AC${action}.IS${state}:IsSet; then
+				if QPKGs.AC${action}.IS${state}.IsSet; then
 					something_to_do=true
 					break 2
 				fi
 			done
 
 			for state in "${USER_QPKG_ISNT_STATES[@]}"; do
-				if QPKGs.AC${action}.ISNT${state}:IsSet; then
+				if QPKGs.AC${action}.ISNT${state}.IsSet; then
 					something_to_do=true
 					break 2
 				fi
@@ -826,7 +844,7 @@ Self:Validate()
 
 	# Decide if IPKs and PIPs should be installed/upgraded
 
-	if [[ $opts_check = true ]] || QPKGs-ACupgrade-to:Exist Entware || QPKGs-ACinstall-to:Exist Entware || QPKGs-ACreinstall-to:Exist Entware; then
+	if [[ $opts_check = true ]] || QPKGs-ACupgrade-to.Exist Entware || QPKGs-ACinstall-to.Exist Entware || QPKGs-ACreinstall-to.Exist Entware; then
 		ipks_upgrade=true
 		ipks_install=true
 		pips_install=true
@@ -856,7 +874,7 @@ Self:Validate()
 	QPKGs.IsCanRestartToUpdate:Build
 	QPKGs.IsCanClean:Build
 	AllocGroupPacksToAcs
-	QPKGs-SCupgradable:Exist sherpa && QPKGs-ACupgrade-to:Add sherpa
+	QPKGs-SCupgradable.Exist sherpa && QPKGs-ACupgrade-to:Add sherpa
 
 	# KLUDGE: ensure old installs of Entware are reinstalled
 
@@ -871,7 +889,7 @@ Self:Validate()
 
 	# Meta-action pre-processing
 
-	if QPKGs-ACrebuild-to:IsAny; then
+	if QPKGs-ACrebuild-to.IsAny; then
 		for package in $(QPKGs-ACrebuild-to:Array); do
 			QPKGs-ACinstall-to:Add "$package"
 			QPKGs-ACrestore-to:Add "$package"
@@ -892,9 +910,9 @@ Self:Validate()
 	# Install standalones for installed dependents
 
 	for package in $(QPKGs-ISinstalled:Array); do
-		if [[ $opts_check = true ]] || QPKGs-ACactivate-to:Exist "$package"; then
+		if [[ $opts_check = true ]] || QPKGs-ACactivate-to.Exist "$package"; then
 			for prospect in $(QPKG:GetDependencies "$package"); do
-				QPKGs-ISNTinstalled:Exist "$prospect" && QPKGs-ACinstall-to:Add "$prospect"
+				QPKGs-ISNTinstalled.Exist "$prospect" && QPKGs-ACinstall-to:Add "$prospect"
 			done
 		fi
 	done
@@ -902,11 +920,11 @@ Self:Validate()
 	# If a standalone has been selected for `reinstall`/`reactivate`, need to `deactivate` its dependents first, and `activate` them again later
 
 	for package in $(QPKGs-ACreinstall-to:Array) $(QPKGs-ACreactivate-to:Array); do
-		if QPKGs-SCstandalone:Exist "$package" && QPKGs-ISinstalled:Exist "$package"; then
+		if QPKGs-SCstandalone.Exist "$package" && QPKGs-ISinstalled.Exist "$package"; then
 			for prospect in $(QPKG:GetDependents "$package"); do
-				if QPKGs-ISinstalled:Exist "$prospect"; then
+				if QPKGs-ISinstalled.Exist "$prospect"; then
 					QPKGs-ACdeactivate-to:Add "$prospect"
-					! QPKGs-ACuninstall-to:Exist "$prospect" && ! QPKGs-ACinstall-to:Exist "$prospect" && QPKGs-ACactivate-to:Add "$prospect"
+					! QPKGs-ACuninstall-to.Exist "$prospect" && ! QPKGs-ACinstall-to.Exist "$prospect" && QPKGs-ACactivate-to:Add "$prospect"
 				fi
 			done
 		fi
@@ -915,9 +933,9 @@ Self:Validate()
 	# If a standalone has been selected for `deactivate`/`uninstall`, need to `deactivate` its dependents first
 
 	for package in $(QPKGs-ACdeactivate-to:Array) $(QPKGs-ACuninstall-to:Array); do
-		if QPKGs-SCstandalone:Exist "$package" && QPKGs-ISinstalled:Exist "$package"; then
+		if QPKGs-SCstandalone.Exist "$package" && QPKGs-ISinstalled.Exist "$package"; then
 			for prospect in $(QPKG:GetDependents "$package"); do
-				QPKGs-ISinstalled:Exist "$prospect" && QPKGs-ACdeactivate-to:Add "$prospect"
+				QPKGs-ISinstalled.Exist "$prospect" && QPKGs-ACdeactivate-to:Add "$prospect"
 			done
 		fi
 	done
@@ -925,12 +943,12 @@ Self:Validate()
 	# If a standalone has been selected for `uninstall`, then `install`, need to `deactivate` its dependents first, and `activate` them again later
 
 	for package in $(QPKGs-ACuninstall-to:Array); do
-		if QPKGs-SCstandalone:Exist "$package" && QPKGs-ISinstalled:Exist "$package"; then
-			if QPKGs-ACinstall-to:Exist "$package"; then
+		if QPKGs-SCstandalone.Exist "$package" && QPKGs-ISinstalled.Exist "$package"; then
+			if QPKGs-ACinstall-to.Exist "$package"; then
 				for prospect in $(QPKG:GetDependents "$package"); do
-					if QPKGs-ISinstalled:Exist "$prospect"; then
+					if QPKGs-ISinstalled.Exist "$prospect"; then
 						QPKGs-ACdeactivate-to:Add "$prospect"
-						! QPKGs-ACuninstall-to:Exist "$prospect" && ! QPKGs-ACinstall-to:Exist "$prospect" && QPKGs-ACactivate-to:Add "$prospect"
+						! QPKGs-ACuninstall-to.Exist "$prospect" && ! QPKGs-ACinstall-to.Exist "$prospect" && QPKGs-ACactivate-to:Add "$prospect"
 					fi
 				done
 			fi
@@ -939,7 +957,7 @@ Self:Validate()
 
 	# Entware is a special case: complete removal and fresh install (to clear all installed IPKs)
 
-	if QPKGs-ACreinstall-to:Exist Entware; then
+	if QPKGs-ACreinstall-to.Exist Entware; then
 		QPKGs-ACreinstall-to:Remove Entware
 		QPKGs-ACuninstall-to:Add Entware
 		QPKGs-ACinstall-to:Add Entware
@@ -950,7 +968,7 @@ Self:Validate()
 	for action in reinstall install activate reactivate; do
 		for package in $(QPKGs-AC${action}-to:Array); do
 			for prospect in $(QPKG:GetDependencies "$package"); do
-				QPKGs-ISinstalled:Exist "$prospect" && QPKGs-ACactivate-to:Add "$prospect"
+				QPKGs-ISinstalled.Exist "$prospect" && QPKGs-ACactivate-to:Add "$prospect"
 			done
 		done
 	done
@@ -959,13 +977,13 @@ Self:Validate()
 
 	for action in activate reactivate; do
 		for package in $(QPKGs-AC${action}-to:Array); do
-			QPKGs-ISinstalled:Exist "$package" && QPKGs-ISNTenabled:Exist "$package" && QPKGs-ACenable-to:Add "$package"
+			QPKGs-ISinstalled.Exist "$package" && QPKGs-ISNTenabled.Exist "$package" && QPKGs-ACenable-to:Add "$package"
 		done
 	done
 
 	# No-need to `deactivate`/`reactivate`/`disable` packages that are to be uninstalled
 
-	if QPKGs.ACuninstall.SCall:IsSet; then
+	if QPKGs.ACuninstall.SCall.IsSet; then
 		QPKGs-ACdeactivate-to:Init
 		QPKGs-ACreactivate-to:Init
 		QPKGs-ACdisable-to:Init
@@ -986,9 +1004,9 @@ Self:Validate()
 	QPKGs_were_installed_name=()
 	QPKGs_were_installed_path=()
 
-	if QPKGs-ACuninstall-to:IsAny; then
+	if QPKGs-ACuninstall-to.IsAny; then
 		for package in $(QPKGs-ACuninstall-to:Array); do
-			if QPKGs-ISinstalled:Exist "$package" && QPKGs-ACinstall-to:Exist "$package"; then
+			if QPKGs-ISinstalled.Exist "$package" && QPKGs-ACinstall-to.Exist "$package"; then
 				QPKGs_were_installed_name+=("$package")
 				QPKGs_were_installed_path+=("$($DIRNAME_CMD "$(QPKG.InstallationPath "$package")")")
 			fi
@@ -1004,7 +1022,7 @@ Self:Validate()
 		QPKGs-ACsign-to:Add "$(QPKGs-ISinstalled:Array)"
 
 		for package in $(QPKGs-SCdependent:Array); do
-			QPKGs-ISenabled:Exist "$package" && QPKGs-ACreactivate-to:Add "$package"
+			QPKGs-ISenabled.Exist "$package" && QPKGs-ACreactivate-to:Add "$package"
 		done
 	fi
 
@@ -1063,7 +1081,7 @@ Actions:Proc()
 
 	rm -f "$SESS_ACTIONS_RESULTS_PATHFILE"
 
-	if QPKGs-ACstatus-to:IsAny; then
+	if QPKGs-ACstatus-to.IsAny; then
 		Action:Proc status all QPKG statusing statused
 	else
 		Action:Proc reassign all QPKG reassigning reassigned
@@ -1099,11 +1117,11 @@ Actions:Proc()
 					;;
 				addon)
 					for action in install reinstall upgrade activate; do
-						QPKGs-ISenabled:Exist Entware && ipks_upgrade=true
-						QPKGs-AC${action}-to:IsAny && ipks_install=true
+						QPKGs-ISenabled.Exist Entware && ipks_upgrade=true
+						QPKGs-AC${action}-to.IsAny && ipks_install=true
 					done
 
-					if QPKGs-ISenabled:Exist Entware; then
+					if QPKGs-ISenabled.Exist Entware; then
 						ModPathToEntware
 						Action:Proc upgrade $tier IPK upgrading upgraded
 						Action:Proc install $tier IPK installing installed
@@ -1170,7 +1188,7 @@ Action:Proc()
 				target_packages=($(${PACKAGE_TYPE}s-$TARGET_OBJECT_NAME:Array))
 			else						# process a single tier only
 				for package in $(${PACKAGE_TYPE}s-$TARGET_OBJECT_NAME:Array); do
-					${PACKAGE_TYPE}s-SC${TIER}:Exist "$package" && target_packages+=("$package")
+					${PACKAGE_TYPE}s-SC${TIER}.Exist "$package" && target_packages+=("$package")
 				done
 			fi
 
@@ -1312,7 +1330,7 @@ Action:Proc()
 
 	EraseForkCountPaths
 	Func:Exit
-	Self.Error:IsNt
+	Self.Error.IsNt
 
 	}
 
@@ -1615,7 +1633,7 @@ ParseArgs()
 
 		# identify options
 		case $arg in
-			debug|dbug|verbose)
+			v|debug|dbug|verbose)
 				arg_identified=true
 				group_identified=true
 				;;
@@ -1798,11 +1816,11 @@ ParseArgs()
 		esac
 	fi
 
-	if [[ $opts_show_status = true ]] && QPKGs-ACstatus-to:IsNone; then		# if user specifies `status` without a scope, then scope is `all`.
+	if [[ $opts_show_status = true ]] && QPKGs-ACstatus-to.IsNone; then		# if user specifies `status` without a scope, then scope is `all`.
 		QPKGs.ACstatus.SCall:Set
 	fi
 
-	if ARGs-unknown:IsAny; then
+	if ARGs-unknown.IsAny; then
 		opts_show_basic_help=true
 		skip_package_actions=true
 		hide_title=false
@@ -1818,7 +1836,7 @@ ArgSuggestions:Show()
 	Func:Entry
 	local arg=''
 
-	if ARGs-unknown:IsAny; then
+	if ARGs-unknown.IsAny; then
 		ShowAsError "unknown argument$(Pluralise "$(ARGs-unknown:Count)"): \"$(ARGs-unknown:List)\". Please check the argument list again."
 
 		for arg in $(ARGs-unknown:Array); do
@@ -1886,7 +1904,7 @@ AllocGroupPacksToAcs()
 		for group in "${USER_QPKG_SC_GROUPS[@]}"; do
 			found=false
 
-			if QPKGs.AC${action}.SC${group}:IsSet; then
+			if QPKGs.AC${action}.SC${group}.IsSet; then
 				case $action in
 					clean)
 						case $group in
@@ -1918,7 +1936,7 @@ AllocGroupPacksToAcs()
 								found=true
 
 								for prospect in $(QPKGs-SC${group}:Array); do
-									QPKGs-ISinstalled:Exist "$prospect" && QPKGs-AC${action}-to:Add "$prospect"
+									QPKGs-ISinstalled.Exist "$prospect" && QPKGs-AC${action}-to:Add "$prospect"
 								done
 								;;
 							*)
@@ -1931,7 +1949,7 @@ AllocGroupPacksToAcs()
 								found=true
 
 								for prospect in $(QPKGs-SC${group}:Array); do
-									QPKGs-SCcanbackup:Exist "$prospect" && QPKGs-AC${action}-to:Add "$prospect"
+									QPKGs-SCcanbackup.Exist "$prospect" && QPKGs-AC${action}-to:Add "$prospect"
 								done
 								;;
 							*)
@@ -1946,7 +1964,7 @@ AllocGroupPacksToAcs()
 								QPKGs-AC${action}-to:Add "$(QPKGs-SCupgradable:Array)"
 
 								for prospect in $(QPKGs-SC${group}:Array); do
-									QPKGs-SCcanrestarttoupdate:Exist "$prospect" && QPKGs-AC${action}-to:Add "$prospect"
+									QPKGs-SCcanrestarttoupdate.Exist "$prospect" && QPKGs-AC${action}-to:Add "$prospect"
 								done
 
 								QPKGs-ACreactivate-to:Remove "$(QPKGs-ACupgrade-to:Array)"
@@ -1960,7 +1978,7 @@ AllocGroupPacksToAcs()
 					QPKGs-AC${action}-to:Add "$(QPKGs-SC${group}:Array)"
 				fi
 
-				if QPKGs-AC${action}-to:IsAny; then
+				if QPKGs-AC${action}-to.IsAny; then
 					DebugAsDone "action: '$action', group: '$group': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
 				else
 					ShowAsWarn "unable to find any packages to $(Lowercase "$action")"
@@ -1971,12 +1989,12 @@ AllocGroupPacksToAcs()
 		for group in "${USER_QPKG_SCNT_GROUPS[@]}"; do
 			found=false
 
-			if QPKGs.AC${action}.SCNT${group}:IsSet; then
+			if QPKGs.AC${action}.SCNT${group}.IsSet; then
 				if [[ $found = false ]]; then
 					QPKGs-AC${action}-to:Add "$(QPKGs-SCNT${group}:Array)"
 				fi
 
-				if QPKGs-AC${action}-to:IsAny; then
+				if QPKGs-AC${action}-to.IsAny; then
 					DebugAsDone "action: '$action', group: 'NT${group}': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
 				else
 					ShowAsWarn "unable to find any packages to $(Lowercase "$action")"
@@ -1989,7 +2007,7 @@ AllocGroupPacksToAcs()
 		for state in "${USER_QPKG_IS_STATES[@]}"; do
 			found=false
 
-			if QPKGs.AC${action}.IS${state}:IsSet; then
+			if QPKGs.AC${action}.IS${state}.IsSet; then
 				case $action in
 					backup|clean|uninstall|upgrade)
 						case $state in
@@ -2013,7 +2031,7 @@ AllocGroupPacksToAcs()
 					QPKGs-AC${action}-to:Add "$(QPKGs-IS${state}:Array)"
 				fi
 
-				if QPKGs-AC${action}-to:IsAny; then
+				if QPKGs-AC${action}-to.IsAny; then
 					DebugAsDone "action: '$action', state: '$state': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
 				else
 					ShowAsWarn "unable to find any packages to $(Lowercase "$action")"
@@ -2022,7 +2040,7 @@ AllocGroupPacksToAcs()
 		done
 
 		for state in "${USER_QPKG_ISNT_STATES[@]}"; do
-			if QPKGs.AC${action}.ISNT${state}:IsSet; then
+			if QPKGs.AC${action}.ISNT${state}.IsSet; then
 				case $action in
 					active|backup|clean|install|uninstall)
 						case $state in
@@ -2040,7 +2058,7 @@ AllocGroupPacksToAcs()
 					QPKGs-AC${action}-to:Add "$(QPKGs-ISNT${state}:Array)"
 				fi
 
-				if QPKGs-AC${action}-to:IsAny; then
+				if QPKGs-AC${action}-to.IsAny; then
 					DebugAsDone "action: '$action', state: 'NT${state}': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
 				else
 					ShowAsWarn "unable to find any packages to $(Lowercase "$action")"
@@ -2332,9 +2350,9 @@ IPKs:upgrade()
 	# upgrade all installed IPKs
 
 	[[ $ipks_upgrade = true ]] || return
-	QPKGs-ISenabled:Exist Entware || return
+	QPKGs-ISenabled.Exist Entware || return
 	UpdateEntwarePackageList
-	Self.Error:IsNt || return
+	Self.Error.IsNt || return
 
 	Func:Entry
 	local -i total_count=0
@@ -2383,9 +2401,9 @@ IPKs:install()
 	# install IPKs required to support QPKGs
 
 	[[ $ipks_install = true ]] || return
-	QPKGs-ISenabled:Exist Entware || return
+	QPKGs-ISenabled.Exist Entware || return
 	UpdateEntwarePackageList
-	Self.Error:IsNt || return
+	Self.Error.IsNt || return
 
 	Func:Entry
 	local -i index=0
@@ -2394,7 +2412,7 @@ IPKs:install()
 	IPKs-ACinstall-to:Init
 	IPKs-ACdownload-to:Init
 
-	if QPKGs-ACinstall-ok:Exist Entware; then
+	if QPKGs-ACinstall-ok.Exist Entware; then
 		IPKs-ACinstall-to:Add "$ESSENTIAL_IPKS"
 
 # 		if [[ -e $PREV_IPK_LIST ]]; then
@@ -2403,13 +2421,13 @@ IPKs:install()
 # 		fi
 	fi
 
-	if QPKGs.ACinstall.SCall:IsSet; then
+	if QPKGs.ACinstall.SCall.IsSet; then
 		for index in "${!QPKG_NAME[@]}"; do
 			IPKs-ACinstall-to:Add "${QPKG_REQUIRES_IPKS[$index]}"
 		done
 	else
 		for index in "${!QPKG_NAME[@]}"; do
-			if QPKGs-ACinstall-to:Exist "${QPKG_NAME[$index]}" || QPKGs-ISinstalled:Exist "${QPKG_NAME[$index]}" || QPKGs-ACreinstall-to:Exist "${QPKG_NAME[$index]}" || (QPKGs-ACactivate-to:Exist "${QPKG_NAME[$index]}" && (QPKGs-ACinstall-to:Exist "${QPKG_NAME[$index]}" || QPKGs-ISinstalled:Exist "${QPKG_NAME[$index]}" || QPKGs-ACreinstall-to:Exist "${QPKG_NAME[$index]}")); then
+			if QPKGs-ACinstall-to.Exist "${QPKG_NAME[$index]}" || QPKGs-ISinstalled.Exist "${QPKG_NAME[$index]}" || QPKGs-ACreinstall-to.Exist "${QPKG_NAME[$index]}" || (QPKGs-ACactivate-to.Exist "${QPKG_NAME[$index]}" && (QPKGs-ACinstall-to.Exist "${QPKG_NAME[$index]}" || QPKGs-ISinstalled.Exist "${QPKG_NAME[$index]}" || QPKGs-ACreinstall-to.Exist "${QPKG_NAME[$index]}")); then
 				QPKG.MinOSVerOk "${QPKG_NAME[$index]}" || continue
 				QPKG.MinRAMOk "${QPKG_NAME[$index]}" || continue
 				IPKs-ACinstall-to:Add "${QPKG_REQUIRES_IPKS[$index]}"
@@ -2465,9 +2483,9 @@ PIPs:install()
 	{
 
 	[[ $pips_install = true ]] || return
-	QPKGs-ISenabled:Exist Entware || return
+	QPKGs-ISenabled.Exist Entware || return
 	$OPKG_CMD status python3-pip | $GREP_CMD -q "Status:.*installed" || return
-	Self.Error:IsNt || return
+	Self.Error.IsNt || return
 
 	Func:Entry
 	local exec_cmd=''
@@ -2479,7 +2497,7 @@ PIPs:install()
 	local -r PACKAGE_TYPE='PyPI group'
 	local -r RUNTIME=long
 
-	if [[ $opts_check = true ]] || IPKs-ACinstall-ok:Exist python3-pip; then
+	if [[ $opts_check = true ]] || IPKs-ACinstall-ok.Exist python3-pip; then
 		((total_count++))
 
 		exec_cmd="$PIP_CMD install --upgrade --no-input $ESSENTIAL_PIPS --cache-dir $PIP_CACHE_PATH 2> >($GREP_CMD -v \"Running pip as the 'root' user\") >&2"
@@ -2705,42 +2723,16 @@ KillActiveFork()
 
 	} &>/dev/null
 
-IsQNAP()
+OS.IsQNAP()
 	{
 
 	# is this a QNAP NAS?
 
-	if [[ ! -e /etc/init.d/functions ]]; then
-		ShowAsAbort 'QNAP functions not found ... is this a QNAP NAS?'
-		return 1
-	fi
-
-	return 0
+	[[ -e /etc/init.d/functions ]]
 
 	}
 
-IsSU()
-	{
-
-	# running as superuser?
-
-	if [[ $EUID -ne 0 ]]; then
-		if [[ -e /usr/bin/sudo ]]; then
-			ShowAsError 'this utility must be run with superuser privileges. Try again as:'
-
-			echo "${CHARS_SUDO_PROMPT}sherpa $USER_ARGS_RAW" >&2
-		else
-			ShowAsError "this utility must be run as the 'admin' user. Please login via SSH as 'admin' and try again"
-		fi
-
-		return 1
-	fi
-
-	return 0
-
-	}
-
-User:IsReset()
+User.IsReset()
 	{
 
 	local re=''
@@ -2758,7 +2750,7 @@ User:IsReset()
 
 	}
 
-User:IsVerbose()
+User.IsVerbose()
 	{
 
 	local re=''
@@ -2775,7 +2767,7 @@ User:IsVerbose()
 
 	}
 
-User:IsDebug()
+User.IsDebug()
 	{
 
 	local re=''
@@ -2889,7 +2881,7 @@ CalcMaxStatusColsToDisplay()
 	local col4_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_PATH_COL_WIDTH))
 
 	# add width to include " (new)" string to QPKG version title
-	if QPKGs-SCupgradable:IsAny; then
+	if QPKGs-SCupgradable.IsAny; then
 		package_ver_final_col_width=$((PACKAGE_VER_COL_WIDTH+6))
 		((col3_width+6))
 	else
@@ -2924,7 +2916,7 @@ DisplayAsProjSynExam()
 	printf "${CHARS_SPECIAL}%s" "$(Capitalise "${1:-}")"
 	[[ ${1: -1} != '!' ]] && printf ':'
 
-	printf "\n%${HELP_SYNTAX_INDENT}s${help_syntax_sudo_prefix}%s\n" '' "sherpa ${2:-}"
+	printf "\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_SUDO_PREFIX}%s\n" '' "sherpa ${2:-}"
 	linespace_visible=false
 
 	}
@@ -2944,7 +2936,7 @@ DisplayAsProjSynIndentExam()
 		printf '\n'
 	fi
 
-	printf "%${HELP_SYNTAX_INDENT}s${help_syntax_sudo_prefix}%s\n" '' "sherpa ${2:-}"
+	printf "%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_SUDO_PREFIX}%s\n" '' "sherpa ${2:-}"
 	linespace_visible=false
 
 	}
@@ -2958,7 +2950,7 @@ DisplayAsSynExam()
 	#	$1 = description
 	#	$2 = example syntax
 
-	printf "\n${CHARS_SPECIAL}%s:\n%${HELP_SYNTAX_INDENT}s${help_syntax_prefix}%s\n" "$(Capitalise "${1:-}")" '' "${2:-}"
+	printf "\n${CHARS_SPECIAL}%s:\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" "$(Capitalise "${1:-}")" '' "${2:-}"
 	linespace_visible=false
 
 	}
@@ -3083,7 +3075,7 @@ DisplayAsHelpTitleNameStatusVerPath()
 
 	if [[ $maxcols -ge 3 ]]; then
 		package_version_msg="${CHARS_SPECIAL}QPKG version"
-		QPKGs-SCupgradable:IsAny && package_version_msg+=" ($(ColourTextBrightOrange new))"
+		QPKGs-SCupgradable.IsAny && package_version_msg+=" ($(ColourTextBrightOrange new))"
 		package_version_msg+=':'
 
 		printf "%-$((package_ver_final_col_width+2+$(LenANSIDiff "$package_version_msg")))s" "$package_version_msg"
@@ -4367,8 +4359,8 @@ PIPs.Actions:List()
 	DebugInfoMinSepr
 
 	for action in "${PIP_ACTIONS[@]}"; do
-		PIPs-AC${action}-ok:IsAny && DebugPipInfo "AC${action}-ok" "($(PIPs-AC${action}-ok:Count)) $(PIPs-AC${action}-ok:ListCSV) "
-		PIPs-AC${action}-er:IsAny && DebugPipError "AC${action}-er" "($(PIPs-AC${action}-er:Count)) $(PIPs-AC${action}-er:ListCSV) "
+		PIPs-AC${action}-ok.IsAny && DebugPipInfo "AC${action}-ok" "($(PIPs-AC${action}-ok:Count)) $(PIPs-AC${action}-ok:ListCSV) "
+		PIPs-AC${action}-er.IsAny && DebugPipError "AC${action}-er" "($(PIPs-AC${action}-er:Count)) $(PIPs-AC${action}-er:ListCSV) "
 	done
 
 	DebugInfoMinSepr
@@ -4386,7 +4378,7 @@ IPKs.Actions:List()
 	local border_shown=false
 
 	for action in "${IPK_ACTIONS[@]}"; do
-		if IPKs-AC${action}-ok:IsAny; then
+		if IPKs-AC${action}-ok.IsAny; then
 			if [[ $border_shown = false ]]; then
 				DebugInfoMinSepr
 				border_shown=true
@@ -4394,7 +4386,7 @@ IPKs.Actions:List()
 			DebugIpk info "AC${action}-ok" "($(IPKs-AC${action}-ok:Count)) $(IPKs-AC${action}-ok:ListCSV) "
 		fi
 
-		if IPKs-AC${action}-er:IsAny; then
+		if IPKs-AC${action}-er.IsAny; then
 			if [[ $border_shown = false ]]; then
 				DebugInfoMinSepr
 				border_shown=true
@@ -4420,7 +4412,7 @@ QPKGs.Actions:List()
 
 	for action in "${QPKG_ACTIONS[@]}"; do
 		for prefix in ok er sk; do
-			if QPKGs-AC${action}-${prefix}:IsAny; then
+			if QPKGs-AC${action}-${prefix}.IsAny; then
 				if [[ $border_shown = false ]]; then
 					DebugInfoMinSepr
 					border_shown=true
@@ -4459,7 +4451,7 @@ QPKGs.Actions:ListAll()
 		[[ $action = enable || $action = disable ]] && continue  # no objects for these as `activate` and `stop` do the same jobs
 
 		for prefix in to ok er sk; do
-			if QPKGs-AC${action}-${prefix}:IsAny; then
+			if QPKGs-AC${action}-${prefix}.IsAny; then
 				DebugQpkg info "AC${action}=${prefix}" "($(QPKGs-AC${action}-${prefix}:Count)) $(QPKGs-AC${action}-${prefix}:ListCSV) "
 			fi
 		done
@@ -4489,9 +4481,9 @@ QPKGs.States:List()
 		if [[ $state = installed ]]; then
 			continue
 		elif [[ $state = unknown ]]; then
-			QPKGs-IS${state}:IsAny && DebugQpkg warning "IS${state}" "($(QPKGs-IS${state}:Count)) $(QPKGs-IS${state}:ListCSV) "
+			QPKGs-IS${state}.IsAny && DebugQpkg warning "IS${state}" "($(QPKGs-IS${state}:Count)) $(QPKGs-IS${state}:ListCSV) "
 		else
-			QPKGs-IS${state}:IsAny && DebugQpkg info "IS${state}" "($(QPKGs-IS${state}:Count)) $(QPKGs-IS${state}:ListCSV) "
+			QPKGs-IS${state}.IsAny && DebugQpkg info "IS${state}" "($(QPKGs-IS${state}:Count)) $(QPKGs-IS${state}:ListCSV) "
 		fi
 	done
 
@@ -4499,17 +4491,17 @@ QPKGs.States:List()
 		if [[ $state = installed ]]; then
 			continue
 		elif [[ $state = ok ]]; then
-			QPKGs-ISNT${state}:IsAny && DebugQpkg error "ISNT${state}" "($(QPKGs-ISNT${state}:Count)) $(QPKGs-ISNT${state}:ListCSV) "
+			QPKGs-ISNT${state}.IsAny && DebugQpkg error "ISNT${state}" "($(QPKGs-ISNT${state}:Count)) $(QPKGs-ISNT${state}:ListCSV) "
 		elif [[ $state = backedup ]]; then
-			QPKGs-ISNT${state}:IsAny && DebugQpkg warning "ISNT${state}" "($(QPKGs-ISNT${state}:Count)) $(QPKGs-ISNT${state}:ListCSV) "
+			QPKGs-ISNT${state}.IsAny && DebugQpkg warning "ISNT${state}" "($(QPKGs-ISNT${state}:Count)) $(QPKGs-ISNT${state}:ListCSV) "
 		else
-			QPKGs-ISNT${state}:IsAny && DebugQpkg info "ISNT${state}" "($(QPKGs-ISNT${state}:Count)) $(QPKGs-ISNT${state}:ListCSV) "
+			QPKGs-ISNT${state}.IsAny && DebugQpkg info "ISNT${state}" "($(QPKGs-ISNT${state}:Count)) $(QPKGs-ISNT${state}:ListCSV) "
 		fi
 	done
 
 	for state in "${QPKG_STATES_TRANSIENT[@]}"; do
 		# shellcheck disable=2043
-		QPKGs-IS${state}:IsAny && DebugQpkg info "IS${state}" "($(QPKGs-IS${state}:Count)) $(QPKGs-IS${state}:ListCSV) "
+		QPKGs-IS${state}.IsAny && DebugQpkg info "IS${state}" "($(QPKGs-IS${state}:Count)) $(QPKGs-IS${state}:ListCSV) "
 	done
 
 	DebugInfoMinSepr
@@ -4739,7 +4731,7 @@ QPKGs.Abbreviations:Show()
 					DisplayAsHelpNameAbs muted "$package_name" "not installable (incompatible $(GetQnapOS) version)"
 				elif ! QPKG.MinRAMOk "$package_name"; then
 					DisplayAsHelpNameAbs muted "$package_name" 'not installable (insufficient RAM)'
-				elif QPKGs-ISmissing:Exist "$package_name"; then
+				elif QPKGs-ISmissing.Exist "$package_name"; then
 					DisplayAsHelpNameAbs highlighted "$package_name" missing
 				elif QPKG.IsNtInstalled "$package_name"; then
 					DisplayAsHelpNameAbs muted "$package_name" "${abs// /, }"
@@ -4829,7 +4821,7 @@ QPKGs.Dependencies:Show()
 		for package_name in $(QPKGs-SCall:Array); do
 			deps=$(QPKG:GetDependencies "$package_name")
 
-			if QPKGs-ISmissing:Exist "$package_name" &>/dev/null; then
+			if QPKGs-ISmissing.Exist "$package_name" &>/dev/null; then
 				DisplayAsHelpNameDepsMinRamMinOS highlighted "$package_name" missing
 				continue
 			fi
@@ -4875,7 +4867,7 @@ QPKGs:List:Show()
 		DisplayAsHelpTitleNameAuthorDesc
 
 		for package_name in $(QPKGs-SCall:Array); do
-			if QPKGs-ISmissing:Exist "$package_name" &>/dev/null; then
+			if QPKGs-ISmissing.Exist "$package_name" &>/dev/null; then
 				DisplayAsHelpNameAuthorDesc highlighted "$package_name" missing "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
 			elif QPKG.IsNtInstalled "$package_name"; then
 				DisplayAsHelpNameAuthorDesc muted "$package_name" "$(QPKG.Author "$package_name")" "$(QPKG.Desc "$package_name")" "$(QPKG.Note 	"$package_name")"
@@ -4921,9 +4913,9 @@ QPKGs.Repos:Show()
 				DisplayAsHelpNameDateRepo muted "$package_name" "not installable (incompatible $(GetQnapOS) version)"
 			elif ! QPKG.MinRAMOk "$package_name"; then
 				DisplayAsHelpNameDateRepo muted "$package_name" 'not installable (insufficient RAM)'
-			elif QPKGs-ISmissing:Exist "$package_name"; then
+			elif QPKGs-ISmissing.Exist "$package_name"; then
 				DisplayAsHelpNameDateRepo highlighted "$package_name" missing
-			elif QPKGs-ISNTinstalled:Exist "$package_name"; then
+			elif QPKGs-ISNTinstalled.Exist "$package_name"; then
 				DisplayAsHelpNameDateRepo muted "$package_name" 'not installed'
 			else
 				package_store_id=$(QPKG.StoreID "$package_name")
@@ -4967,7 +4959,7 @@ QPKGs.Statuses:Show()
 		DisplayAsHelpTitleNameStatusVerPath
 
 		for package_name in $(QPKGs-SCall:Array); do
-			if QPKGs-ISNTinstalled:Exist "$package_name"; then
+			if QPKGs-ISNTinstalled.Exist "$package_name"; then
 				if ! QPKG.URLOk "$package_name"; then
 					DisplayAsHelpNameStatusVerPath muted "$package_name" 'not installable (incompatible arch)'
 				elif ! QPKG.MinOSVerOk "$package_name"; then
@@ -4978,31 +4970,31 @@ QPKGs.Statuses:Show()
 					DisplayAsHelpNameStatusVerPath muted "$package_name" 'not installed' '' '' "$(QPKG.Avail.Ver "$package_name")"
 				fi
 			else
-				if QPKGs-ISmissing:Exist "$package_name"; then
+				if QPKGs-ISmissing.Exist "$package_name"; then
 					DisplayAsHelpNameStatusVerPath highlighted "$package_name" missing '' "$(QPKG.Local.Ver "$package_name")" '' "$(QPKG.InstallationPath "$package_name")"
 				else
 					# state
 
-					if QPKGs-ISenabled:Exist "$package_name"; then
+					if QPKGs-ISenabled.Exist "$package_name"; then
 						package_status_msg=enabled
-					elif QPKGs-ISNTenabled:Exist "$package_name"; then
+					elif QPKGs-ISNTenabled.Exist "$package_name"; then
 						package_status_msg=disabled
 					fi
 
 					# package/process: active/slow or inactive?
 
-					if QPKGs-ACstatus-ok:Exist "$package_name"; then
-						if QPKGs-ISactive:Exist "$package_name"; then
+					if QPKGs-ACstatus-ok.Exist "$package_name"; then
+						if QPKGs-ISactive.Exist "$package_name"; then
 							package_status_msg+=' active'
-						elif QPKGs-ISslow:Exist "$package_name"; then
+						elif QPKGs-ISslow.Exist "$package_name"; then
 							package_status_msg+=' slow'
-						elif QPKGs-ISstarting:Exist "$package_name"; then
+						elif QPKGs-ISstarting.Exist "$package_name"; then
 							package_status_msg+=' start'
-						elif QPKGs-ISstopping:Exist "$package_name"; then
+						elif QPKGs-ISstopping.Exist "$package_name"; then
 							package_status_msg+=' stop'
-						elif QPKGs-ISrestarting:Exist "$package_name"; then
+						elif QPKGs-ISrestarting.Exist "$package_name"; then
 							package_status_msg+=' restart'
-						elif QPKGs-ISunknown:Exist "$package_name"; then
+						elif QPKGs-ISunknown.Exist "$package_name"; then
 							package_status_msg+=' unknown'
 						else
 							package_status_msg+=' inactive'
@@ -5356,7 +5348,7 @@ ModPathToEntware()
 	local -r OPKG=/opt/bin:/opt/sbin
 	local temp=''
 
-	if QPKGs-ISenabled:Exist Entware; then
+	if QPKGs-ISenabled.Exist Entware; then
 		! [[ $PATH =~ $OPKG ]] || return
 		temp="$($SED_CMD "s|$OPKG:||" <<< "$PATH:")"	# append colon prior to searching, then remove existing Entware paths
 		export PATH="$OPKG:${temp%:}"				# ... now prepend Entware paths and remove trailing colon
@@ -5488,6 +5480,20 @@ OS.IsSupportSignedPackages()
 	{
 
 	[[ ${NAS_FIRMWARE_VER//.} -ge 435 ]]
+
+	}
+
+OS.IsSupportSudo()
+	{
+
+	[[ -e /usr/bin/sudo ]]
+
+	}
+
+User.IsSu()
+	{
+
+	[[ $EUID -eq 0 ]]
 
 	}
 
@@ -5664,20 +5670,20 @@ Self.Error:Set()
 	{
 
 	skip_package_actions=true
-	Self.Error:IsSet && return
+	Self.Error.IsSet && return
 	_script_error_flag_=true
 	DebugVar _script_error_flag_
 
 	}
 
-Self.Error:IsSet()
+Self.Error.IsSet()
 	{
 
 	[[ ${_script_error_flag_:-} = true ]]
 
 	}
 
-Self.Error:IsNt()
+Self.Error.IsNt()
 	{
 
 	[[ ${_script_error_flag_:-} != true ]]
@@ -5697,7 +5703,7 @@ ShowZeroQpkgs()
 					continue	# action results lists are unavailable for these
 			esac
 
-			QPKGs.AC${action}.IS${state}:IsSet && QPKGs-AC${action}-ok:IsNone && ShowAsWarn "no QPKGs were able to $(Lowercase "$action")"
+			QPKGs.AC${action}.IS${state}.IsSet && QPKGs-AC${action}-ok.IsNone && ShowAsWarn "no QPKGs were able to $(Lowercase "$action")"
 		done
 	done
 
@@ -5829,7 +5835,7 @@ _QPKG:reassign_()
 	PACKAGE_NAME=${1:?package name null}
 	local -i result_code=0
 
-	if ! QPKGs-ISinstalled:Exist "$PACKAGE_NAME"; then
+	if ! QPKGs-ISinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reassign skipped 'not installed'
 		result_code=2
 	elif [[ $(QPKG.StoreID "$PACKAGE_NAME") = sherpa ]]; then
@@ -5952,7 +5958,7 @@ _QPKG:install_()
 	local -i result_code=0
 	local debug_cmd=''
 
-	if QPKGs-ISinstalled:Exist "$PACKAGE_NAME"; then
+	if QPKGs-ISinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" install skipped 'already installed'
 		result_code=2
 	elif ! QPKG.URLOk "$PACKAGE_NAME"; then
@@ -5979,7 +5985,7 @@ _QPKG:install_()
 		FuncFork:Exit 2
 	fi
 
-	if [[ $PACKAGE_NAME = Entware ]] && ! QPKGs-ISinstalled:Exist Entware && QPKGs-ACinstall-to:Exist Entware; then
+	if [[ $PACKAGE_NAME = Entware ]] && ! QPKGs-ISinstalled.Exist Entware && QPKGs-ACinstall-to.Exist Entware; then
 		local -r OPT_PATH=/opt
 		local -r OPT_BU_PATH=/opt.orig
 
@@ -6057,7 +6063,7 @@ _QPKG:reinstall_()
 	local -i result_code=0
 	local debug_cmd=''
 
-	if ! QPKGs-ISinstalled:Exist "$PACKAGE_NAME"; then
+	if ! QPKGs-ISinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reinstall skipped "not installed, please use 'install' instead"
 		MarkThisActionForkAsSkipped
 		FuncFork:Exit 2
@@ -6124,10 +6130,10 @@ _QPKG:upgrade_()
 	local -i result_code=0
 	local debug_cmd=''
 
-	if ! QPKGs-ISinstalled:Exist "$PACKAGE_NAME"; then
+	if ! QPKGs-ISinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" upgrade skipped 'not installed'
 		result_code=2
-	elif ! QPKGs-SCupgradable:Exist "$PACKAGE_NAME"; then
+	elif ! QPKGs-SCupgradable.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" upgrade skipped 'no new package is available'
 		result_code=2
 	fi
@@ -6211,7 +6217,7 @@ _QPKG:uninstall_()
 	local -i result_code=0
 	local debug_cmd=''
 
-	if QPKGs-ISNTinstalled:Exist "$PACKAGE_NAME"; then
+	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" uninstall skipped 'not installed'
 		result_code=2
 	elif [[ $PACKAGE_NAME = sherpa ]]; then
@@ -6285,7 +6291,7 @@ _QPKG:activate_()
 	local -i result_code=0
 	local debug_cmd=''
 
-	if QPKGs-ISNTinstalled:Exist "$PACKAGE_NAME"; then
+	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" activate skipped 'not installed'
 		MarkThisActionForkAsSkipped
 		FuncFork:Exit 2
@@ -6352,7 +6358,7 @@ _QPKG:reactivate_()
 	local -i result_code=0
 	local debug_cmd=''
 
-	if QPKGs-ISNTinstalled:Exist "$PACKAGE_NAME"; then
+	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reactivate skipped 'not installed'
 		MarkThisActionForkAsSkipped
 		FuncFork:Exit 2
@@ -6410,7 +6416,7 @@ _QPKG:deactivate_()
 	local -i result_code=0
 	local debug_cmd=''
 
-	if QPKGs-ISNTinstalled:Exist "$PACKAGE_NAME"; then
+	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" deactivate skipped 'not installed'
 		result_code=2
 	elif [[ $PACKAGE_NAME = sherpa ]]; then
@@ -6483,10 +6489,10 @@ _QPKG:enable_()
 	local -i result_code=0
 	local debug_cmd=''
 
-	if QPKGs-ISNTinstalled:Exist "$PACKAGE_NAME"; then
+	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" enable skipped 'not installed'
 		result_code=2
-	elif QPKGs-ISenabled:Exist "$PACKAGE_NAME"; then
+	elif QPKGs-ISenabled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" enable skipped 'already enabled'
 		result_code=2
 	fi
@@ -6531,10 +6537,10 @@ _QPKG:disable_()
 	local -i result_code=0
 	local debug_cmd=''
 
-	if QPKGs-ISNTinstalled:Exist "$PACKAGE_NAME"; then
+	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" disable skipped 'not installed'
 		result_code=2
-	elif QPKGs-ISNTenabled:Exist "$PACKAGE_NAME"; then
+	elif QPKGs-ISNTenabled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" disable skipped 'already disabled'
 		result_code=2
 	elif [[ $PACKAGE_NAME = sherpa ]]; then
@@ -6583,7 +6589,7 @@ _QPKG:backup_()
 	local -i result_code=0
 	local debug_cmd=''
 
-	if QPKGs-ISNTinstalled:Exist "$PACKAGE_NAME"; then
+	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" backup skipped 'not installed'
 		result_code=2
 	elif ! QPKG.IsCanBackup; then
@@ -6636,7 +6642,7 @@ _QPKG:restore_()
 	local -i result_code=0
 	local debug_cmd=''
 
-	if QPKGs-ISNTinstalled:Exist "$PACKAGE_NAME"; then
+	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" restore skipped 'not installed'
 		result_code=2
 	elif ! QPKG.IsCanBackup; then
@@ -6689,7 +6695,7 @@ _QPKG:clean_()
 	local -i result_code=0
 	local debug_cmd=''
 
-	if QPKGs-ISNTinstalled:Exist "$PACKAGE_NAME"; then
+	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" clean skipped 'not installed'
 		result_code=2
 	elif ! QPKG.IsCanClean; then
@@ -6751,7 +6757,7 @@ _QPKG:sign_()
 	if ! OS.IsSupportSignedPackages; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped 'not required: firmware < 4.3.5'
 		result_code=2
-	elif ! QPKGs-ISinstalled:Exist "$PACKAGE_NAME"; then
+	elif ! QPKGs-ISinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped 'not installed'
 		result_code=2
 	elif [[ ! -e $GNU_SQLITE_CMD ]]; then
@@ -6880,7 +6886,7 @@ _QPKG:status_()
 	local package_tests=''
 	local debug_cmd=''
 
-	if QPKGs-ISNTinstalled:Exist "$PACKAGE_NAME"; then
+	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" status skipped 'not installed'
 		result_code=2
 	fi
@@ -7545,7 +7551,7 @@ QPKG:GetDependents()
 	local -a acc=()
 	local re=\\b${1:-}\\b
 
-	if QPKGs-SCstandalone:Exist "$1"; then
+	if QPKGs-SCstandalone.Exist "$1"; then
 		for index in "${!QPKG_NAME[@]}"; do
 			if [[ ${QPKG_DEPENDS_ON[$index]} =~ $re ]]; then
 				[[ ${acc[*]:-} != "${QPKG_NAME[$index]}" ]] && acc+=(${QPKG_NAME[$index]})
@@ -9197,4 +9203,4 @@ RunOnEXIT()
 Self:Init || exit
 Actions:Proc
 Self:Results
-Self.Error:IsNt
+Self.Error.IsNt
