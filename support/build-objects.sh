@@ -56,10 +56,10 @@ echo $public_function_name':Init()
 	{ '$_placeholder_flag_'='$state_default'
 	'$_placeholder_log_changes_flag_'='$state_logmods' ;}
 
-'$public_function_name':IsNt()
+'$public_function_name'.IsNt()
 	{ [[ $'$_placeholder_flag_' != '\'true\'' ]] ;}
 
-'$public_function_name':IsSet()
+'$public_function_name'.IsSet()
 	{ [[ $'$_placeholder_flag_' = '\'true\'' ]] ;}
 
 '$public_function_name':Set()
@@ -96,7 +96,7 @@ AddListObj()
 echo $public_function_name':Add()
 	{ local ar=(${1:-}) it='\'\''; [[ ${#ar[@]} -eq 0 ]] && return
 	for it in "${ar[@]:-}"; do
-		! '$public_function_name':Exist "$it" && '$_placeholder_array_'+=("$it")
+		! '$public_function_name'.Exist "$it" && '$_placeholder_array_'+=("$it")
 	done ;}
 
 '$public_function_name':Array()
@@ -105,16 +105,16 @@ echo $public_function_name':Add()
 '$public_function_name':Count()
 	{ echo "${#'$_placeholder_array_'[@]}" ;}
 
-'$public_function_name':Exist()
+'$public_function_name'.Exist()
 	{ local patt="\b${1:-}\b"; [[ "${'$_placeholder_array_'[*]:-}" =~ $patt ]] ;}
 
 '$public_function_name':Init()
 	{ '$_placeholder_size_'=0 '$_placeholder_array_'=() '$_placeholder_array_index_'=1 ;}
 
-'$public_function_name':IsAny()
+'$public_function_name'.IsAny()
 	{ [[ ${#'$_placeholder_array_'[@]} -gt 0 ]] ;}
 
-'$public_function_name':IsNone()
+'$public_function_name'.IsNone()
 	{ [[ ${#'$_placeholder_array_'[@]} -eq 0 ]] ;}
 
 '$public_function_name':List()
