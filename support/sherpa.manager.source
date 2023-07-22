@@ -2235,16 +2235,19 @@ CalcIpkDepsToInstall()
 		Func:Exit 1; return
 	fi
 
-	ShowAsProc 'calculating IPK dependencies'
 	DebugInfo "$requested_count IPK$(Pluralise "$requested_count") requested" "'$req_list' "
 
 	while [[ $iterations -lt $ITERATION_LIMIT ]]; do
-		((iterations++))
+		ShowAsIncrementalProgress 'resolving IPK dependencies' "$iterations" iteration "${#dep_acc[@]}" package
 
+		((iterations++))
 		local ipk_titles=$(printf '^Package: %s$\|' "${this_list[@]}")
 		ipk_titles=${ipk_titles%??}		# remove last 2 characters
 
 		this_list=($($GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator '^Package:\|^Depends:' "$EXTERNAL_PACKAGES_PATHFILE" | $GNU_GREP_CMD -vG '^Section:\|^Version:' | $GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator "$ipk_titles" | $GNU_GREP_CMD -vG "$ipk_titles" | $GNU_GREP_CMD -vG '^Package: ' | $SED_CMD 's|^Depends: ||;s|, |\n|g' | $SORT_CMD | $UNIQ_CMD))
+
+		# update progress twice per loop
+		ShowAsIncrementalProgress 'resolving IPK dependencies' "$iterations" iteration "${#dep_acc[@]}" package
 
 		if [[ ${#this_list[@]} -eq 0 ]]; then
 			complete=true
@@ -2268,7 +2271,7 @@ CalcIpkDepsToInstall()
 	if [[ $pre_exclude_count -gt 0 ]]; then
 		DebugInfo "$pre_exclude_count IPK$(Pluralise "$pre_exclude_count") required (including dependencies)" "'$pre_exclude_list' "
 
-		DebugAsProc 'excluding IPKs already installed'
+		ShowAsProc 'excluding IPKs already installed'
 
 		for element in $pre_exclude_list; do
 			# KLUDGE: silently exclude these packages from being installed:
@@ -2306,8 +2309,8 @@ CalcIpkDownloadSize()
 	size_count=$(IPKs-ACdownload-to:Count)
 
 	if [[ $size_count -gt 0 ]]; then
+		ShowAsProc "calculating size of IPK$(Pluralise "$size_count") to download"
 		DebugAsDone "$size_count IPK$(Pluralise "$size_count") to download: '$(IPKs-ACdownload-to:List)'"
-		DebugAsProc "calculating size of IPK$(Pluralise "$size_count") to download"
 		size_array=($($GNU_GREP_CMD -w '^Package:\|^Size:' "$EXTERNAL_PACKAGES_PATHFILE" | $GNU_GREP_CMD --after-context 1 --no-group-separator ": $($SED_CMD 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKs-ACdownload-to:List)")" | $GREP_CMD '^Size:' | $SED_CMD 's|^Size: ||'))
 
 		# shellcheck disable=2283
@@ -2332,6 +2335,7 @@ IPKs:upgrade()
 	Self.Error:IsNt || return
 
 	Func:Entry
+	local -i total_count=0
 	local -i result_code=0
 	IPKs-ACupgrade-to:Init
 	IPKs-ACdownload-to:Init
@@ -2345,7 +2349,7 @@ IPKs:upgrade()
 	if [[ $total_count -gt 0 ]]; then
 		local desc="$total_count IPK module$(Pluralise "$total_count")"
 		local log_pathfile=$LOGS_PATH/ipks.$UPGRADE_LOG_FILE
-		ShowAsProc "upgrading $desc: "
+		ShowAsProc "upgrading $desc"
 
 		_DirSize:Monitor_ "$IPK_DL_PATH" "$(IPKs-ACdownload-to:Size)" &
 		fork_pid=$!
@@ -2383,6 +2387,7 @@ IPKs:install()
 
 	Func:Entry
 	local -i index=0
+	local -i total_count=0
 	local -i result_code=0
 	IPKs-ACinstall-to:Init
 	IPKs-ACdownload-to:Init
@@ -2417,7 +2422,7 @@ IPKs:install()
 	if [[ $total_count -gt 0 ]]; then
 		local desc="$total_count addon IPK module$(Pluralise "$total_count")"
 		local log_pathfile=$LOGS_PATH/ipks.$INSTALL_LOG_FILE
-		ShowAsProc "installing $desc: "
+		ShowAsProc "installing $desc"
 
 		_DirSize:Monitor_ "$IPK_DL_PATH" "$(IPKs-ACdownload-to:Size)" &
 		fork_pid=$!
@@ -2465,17 +2470,21 @@ PIPs:install()
 	Func:Entry
 	local exec_cmd=''
 	local -i result_code=0
+	local -i ok_count=0
+	local -i skip_count=0
+	local -i fail_count=0
+	local -i total_count=0
 	local -r PACKAGE_TYPE='PyPI group'
 	local -r RUNTIME=long
 
 	if [[ $opts_check = true ]] || IPKs-ACinstall-ok:Exist python3-pip; then
 		((total_count++))
-		ShowAsActionProgress '' "$PACKAGE_TYPE" "$ok_count" "$skip_count" "$fail_count" "$total_count" installing "$RUNTIME"
 
 		exec_cmd="$PIP_CMD install --upgrade --no-input $ESSENTIAL_PIPS --cache-dir $PIP_CACHE_PATH 2> >($GREP_CMD -v \"Running pip as the 'root' user\") >&2"
-		local desc="addon PyPI modules"
+		local desc='addon PyPI modules'
 		local log_pathfile=$LOGS_PATH/pypi.$INSTALL_LOG_FILE
-		ShowAsProc "installing $desc: "
+
+		ShowAsActionProgress '' "$PACKAGE_TYPE" "$ok_count" "$skip_count" "$fail_count" "$total_count" installing "$RUNTIME"
 		RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
 		result_code=$?
 
@@ -4158,7 +4167,7 @@ UpdateForkProgress()
 
 	# all input vars are global
 
-	local msg=': '
+	local msg=' '
 
 	RefreshForkCounts
 	[[ $opts_verbose = true ]] && return		# don't display progress, it's impossible to view it with so-many other writes to the screen
@@ -8391,9 +8400,9 @@ ShowAsProc()
 
 	local suffix=''
 
-	[[ -n ${2:-} ]] && suffix=": $2"
+	[[ -n ${2:-} ]] && suffix=" $2"
 	EraseThisLine
-	WriteToDisplayWait "$(ColourTextBrightYellow proc)" "${1:-}${suffix}"
+	WriteToDisplayWait "$(ColourTextBrightYellow proc)" "${1:-} ${CHARS_ELLIPSIS}${suffix}"
 	WriteToLog proc "${1:-}${suffix}"
 	[[ ${opts_verbose:=false} = true ]] && Display
 
@@ -8499,7 +8508,7 @@ ShowAsActionProgress()
 
 	# input:
 	#	$1 = tier (optional)
-	#	$2 = package type: `qpkg`, `ipk`, `pip`
+	#	$2 = package type		"qpkg", "ipk", "pip"
 	#	$3 = ok count
 	#	$4 = skip count
 	#	$5 = fail count
@@ -8564,6 +8573,39 @@ PercFrac()
 	return 0
 
 	} 2>/dev/null
+
+ShowAsIncrementalProgress()
+	{
+
+	# Show single action package progress as an incrementing amount with no limit
+
+	# input:
+	#	$1 = operation 		"calculating"
+	#	$2 = count1			15
+	#	$3 = suffix1		"iterations"
+	#	$4 = count2			560
+	#	$5 = suffix2		"packages"
+	#	$6 = expected action duration: `long` (optional)
+
+	local -r ACTION=${1:?null}
+	declare -i -r COUNT1=${2:-0}
+	local -r SUFFIX1=${3:?null}
+	declare -i -r COUNT2=${4:-0}
+	local -r SUFFIX2=${5:?null}
+	local -r DURATION=${6:-}
+	local progress_msg=''
+
+	progress_msg="$(ColourTextBrightWhite "$COUNT1") ${SUFFIX1}$(Pluralise "$COUNT1"): $(ColourTextBrightWhite "$COUNT2") ${SUFFIX2}$(Pluralise "$COUNT2")"
+
+	if [[ $DURATION != long ]]; then
+		ShowAsProc "${ACTION}" "$progress_msg"
+	else
+		ShowAsProcLong "$ACTION" "$progress_msg"
+	fi
+
+	return 0
+
+	}
 
 ShowAsActionLogDetail()
 	{
