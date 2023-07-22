@@ -1529,7 +1529,7 @@ ParseArgs()
 
 		if [[ -z $action ]]; then
 			case $arg in
-				a|abs|action|actions|actions-all|alias|aliases|all-actions|b|backups|d|deps|dependencies|dependent|dependents|disabled|enabled|failed|groups|indeps|independent|independents|installable|installed|l|last|log|missing|new|not-installed|o|ok|option|options|p|package|packages|problems|r|repo|repos|results|skipped|standalone|standalones|tail|tips|updatable|updateable|upgradable|v|version|versions|whole)
+				a|abs|action|actions|actions-all|alias|aliases|all-actions|b|backups|d|deps|dependencies|dependent|dependents|disabled|enabled|failed|groups|indeps|independent|independents|installable|installed|l|last|log|missing|new|not-installed|o|ok|option|options|p|package|packages|problems|r|repo|repos|results|skipped|standalone|standalones|tail|tips|updatable|updateable|upgradable|version|versions|whole)
 					action=help
 					arg_identified=true
 					group=''
@@ -1603,7 +1603,7 @@ ParseArgs()
 				new|updatable|updateable|upgradable)
 					group=upgradable
 					;;
-				v|version|versions)
+				version|versions)
 					group=versions
 			esac
 
@@ -2762,13 +2762,14 @@ User:IsVerbose()
 	{
 
 	local re=''
-	re=\\bverbose\\b
 
-	if [[ $USER_ARGS_RAW =~ $re ]]; then
-		Self.Verbose:Enable
-		EnableDebugToArchiveAndFile
-		return 0
-	fi
+	for re in \\bverbose\\b \\bv\\b; do
+		if [[ $USER_ARGS_RAW =~ $re ]]; then
+			Self.Verbose:Enable
+			EnableDebugToArchiveAndFile
+			return 0
+		fi
+	done
 
 	return 1
 
@@ -3629,6 +3630,8 @@ Help.Actions:Show()
 	DisplayAsProjSynIndentExam '' r
 	DisplayAsProjSynIndentExam 'ensure all application dependencies are installed' check
 	DisplayAsProjSynIndentExam '' c
+	DisplayAsProjSynIndentExam 'show QPKG dependencies' dependencies
+	DisplayAsProjSynIndentExam '' d
 	DisplayAsProjSynIndentExam 'install these packages' "install $(FormatAsPackages)"
 	DisplayAsProjSynIndentExam 'uninstall these packages' "uninstall $(FormatAsPackages)"
 	DisplayAsProjSynIndentExam 'reinstall these packages' "reinstall $(FormatAsPackages)"
@@ -3649,7 +3652,6 @@ Help.Actions:Show()
 	DisplayAsProjSynIndentExam 'show application backup files' 'list backups'
 	DisplayAsProjSynIndentExam '' b
 	DisplayAsProjSynIndentExam "list $(FormatAsTitle) object version numbers" 'list versions'
-	DisplayAsProjSynIndentExam '' v
 	DisplayAsProjSynExam "$(FormatAsAction)s to affect all packages can be seen with" 'all-actions'
 	DisplayAsProjSynExam "multiple $(FormatAsAction)s are supported like this" "$(FormatAsAction) $(FormatAsPackages) $(FormatAsAction) $(FormatAsPackages)"
 	DisplayAsProjSynIndentExam '' 'install sabnzbd sickgear reactivate transmission uninstall lazy nzbget upgrade nzbtomedia'
@@ -3854,6 +3856,7 @@ Help.Options:Show()
 	DisplayAsProjSynIndentExam 'show package repositories' repos
 	DisplayAsProjSynIndentExam '' r
 	DisplayAsProjSynIndentExam 'show live debugging information, and record it to file' "$(FormatAsAction) $(FormatAsPackages) verbose"
+	DisplayAsProjSynIndentExam '' v
 	DisplayAsProjSynIndentExam 'record debugging information to file-only' "$(FormatAsAction) $(FormatAsPackages) debug"
 
 	return 0
@@ -3869,6 +3872,7 @@ Help.Problems:Show()
 	DisplayAsProjSynIndentExam 'show package statuses' status
 	DisplayAsProjSynIndentExam '' s
 	DisplayAsProjSynIndentExam 'show live debugging information, and record it to file' "$(FormatAsAction) $(FormatAsPackages) verbose"
+	DisplayAsProjSynIndentExam '' v
 	DisplayAsProjSynIndentExam 'record debugging information to file-only' "$(FormatAsAction) $(FormatAsPackages) debug"
 	DisplayAsProjSynIndentExam 'ensure all dependencies exist for installed packages' check
 	DisplayAsProjSynIndentExam '' c
