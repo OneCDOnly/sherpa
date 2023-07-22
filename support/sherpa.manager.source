@@ -409,9 +409,11 @@ Consts:Load()
 
 	readonly PACKAGE_ABBS_COL_WIDTH=84
 	readonly PACKAGE_AUTHOR_COL_WIDTH=22
-	readonly PACKAGE_DEPS_COL_WIDTH=30
+	readonly PACKAGE_DEPENDENCIES_COL_WIDTH=28
 	readonly PACKAGE_DESCRIPTION_COL_WIDTH=100
 	readonly PACKAGE_INSTALL_DATE_COL_WIDTH=18
+	readonly PACKAGE_MIN_RAM_COL_WIDTH=19
+	readonly PACKAGE_MIN_OS_COL_WIDTH=14
 	readonly PACKAGE_NAME_COL_WIDTH=21
 	readonly PACKAGE_PATH_COL_WIDTH=48
 	readonly PACKAGE_REPO_COL_WIDTH=40
@@ -420,17 +422,17 @@ Consts:Load()
 
 	readonly CHAR_SPACER=' '
 
-	readonly CHARS_SPECIAL='• '
-	readonly CHARS_BLANK=$CHAR_SPACER'  '
-	readonly CHARS_NORMAL=$CHAR_SPACER'- '
 	readonly CHARS_ALERT=$CHAR_SPACER'! '
+	readonly CHARS_BLANK=$CHAR_SPACER'  '
 	readonly CHARS_DROPEND='└─ '
+	readonly CHARS_ELLIPSIS='...'
+	readonly CHARS_NORMAL=$CHAR_SPACER'- '
 	readonly CHARS_NOTE='* '
 	readonly CHARS_RESULTS='= '
-	readonly CHARS_ELLIPSIS='...'
 	readonly CHARS_REGULAR_PROMPT='$ '
-	readonly CHARS_SUPER_PROMPT='# '
+	readonly CHARS_SPECIAL='• '
 	readonly CHARS_SUDO_PROMPT="${CHARS_REGULAR_PROMPT}sudo "
+	readonly CHARS_SUPER_PROMPT='# '
 
 	readonly DEBUG_LOG_FIRST_COL_WIDTH=9
 	readonly DEBUG_LOG_SECOND_COL_WIDTH=18
@@ -2408,8 +2410,8 @@ IPKs:install()
 	else
 		for index in "${!QPKG_NAME[@]}"; do
 			if QPKGs-ACinstall-to:Exist "${QPKG_NAME[$index]}" || QPKGs-ISinstalled:Exist "${QPKG_NAME[$index]}" || QPKGs-ACreinstall-to:Exist "${QPKG_NAME[$index]}" || (QPKGs-ACactivate-to:Exist "${QPKG_NAME[$index]}" && (QPKGs-ACinstall-to:Exist "${QPKG_NAME[$index]}" || QPKGs-ISinstalled:Exist "${QPKG_NAME[$index]}" || QPKGs-ACreinstall-to:Exist "${QPKG_NAME[$index]}")); then
-				QPKG.MinOSVer "${QPKG_NAME[$index]}" &>/dev/null || continue
-				QPKG.MinRAM "${QPKG_NAME[$index]}" &>/dev/null || continue
+				QPKG.MinOSVerOk "${QPKG_NAME[$index]}" || continue
+				QPKG.MinRAMOk "${QPKG_NAME[$index]}" || continue
 				IPKs-ACinstall-to:Add "${QPKG_REQUIRES_IPKS[$index]}"
 			fi
 		done
@@ -3412,11 +3414,13 @@ DisplayAsHelpNameAbs()
 
 	}
 
-DisplayAsHelpTitleNameDeps()
+DisplayAsHelpTitleNameDepsMinRamMinOS()
 	{
 
 	local package_name_msg=''
 	local package_deps_msg=''
+	local package_min_ram_msg=''
+	local package_min_os_msg=''
 
 	DisplayLineSpaceIfNoneAlready
 
@@ -3431,7 +3435,21 @@ DisplayAsHelpTitleNameDeps()
 
 	if [[ $maxcols -ge 2 ]]; then
 		package_deps_msg="${CHARS_SPECIAL}QPKG dependencies:"
-		printf "%-$((PACKAGE_DEPS_COL_WIDTH+2+$(LenANSIDiff "$package_deps_msg")))s" "$package_deps_msg"
+		printf "%-$((PACKAGE_DEPENDENCIES_COL_WIDTH+2+$(LenANSIDiff "$package_deps_msg")))s" "$package_deps_msg"
+	fi
+
+	# column 3: minimum NAS RAM required
+
+	if [[ $maxcols -ge 3 ]]; then
+		package_min_ram_msg="${CHARS_SPECIAL}minimum kB RAM:"
+		printf "%-$((PACKAGE_MIN_RAM_COL_WIDTH+2+$(LenANSIDiff "$package_min_ram_msg")))s" "$package_min_ram_msg"
+	fi
+
+	# column 4: minimum OS fimware version supported
+
+	if [[ $maxcols -ge 4 ]]; then
+		package_min_os_msg="${CHARS_SPECIAL}minimum OS version:"
+		printf "%-$((PACKAGE_MIN_OS_COL_WIDTH+2+$(LenANSIDiff "$package_min_os_msg")))s" "$package_min_os_msg"
 	fi
 
 	printf '\n'
@@ -3439,23 +3457,38 @@ DisplayAsHelpTitleNameDeps()
 
 	}
 
-DisplayAsHelpNameDeps()
+DisplayAsHelpNameDepsMinRamMinOS()
 	{
 
 	# input:
 	#	$1 = 'normal/highlighted/muted'
 	#	$2 = package name
 	#	$3 = package dependencies
+	#	$4 = minimum NAS RAM required
+	#	$5 = minimum OS firmware version
 
-	local package_name=${2:-}
-	local package_name_msg=${CHARS_BLANK}$package_name
-	local package_deps=${3:-}
+	local package_name="${2:-}"
+	local package_name_msg="${CHARS_BLANK}$package_name"
+	local package_deps="${3:-}"
 	local package_deps_msg="${CHARS_NORMAL}${package_deps}"
+	local package_min_ram=''
+
+	if [[ $4 = none ]]; then
+		package_min_ram="${4:-}"
+	else
+		package_min_ram="$(FormatAsThous "${4:-}")kB"
+	fi
+
+	local package_min_ram_msg="${CHARS_BLANK}${package_min_ram}"
+	local package_min_os="${5:0:1}.${5:1:1}.${5:2:1}"
+	local package_min_os_msg="${CHARS_BLANK}${package_min_os}"
 
 	case $1 in
 		muted)
 			package_name_msg="$(ColourTextDarkGrey "${CHARS_BLANK}$package_name")"
 			package_deps_msg="$(ColourTextDarkGrey "${CHARS_NORMAL}${package_deps}")"
+			package_min_ram_msg="$(ColourTextDarkGrey "${CHARS_BLANK}${package_min_ram}")"
+			package_min_os_msg="$(ColourTextDarkGrey "${CHARS_BLANK}${package_min_os}")"
 			;;
 		highlighted)
 			package_deps_msg="$(ColourTextBrightGreen "${CHARS_NORMAL}${package_deps}")"
@@ -3470,7 +3503,19 @@ DisplayAsHelpNameDeps()
 	# column 2: package repository
 
 	if [[ $maxcols -ge 2 && -n $package_deps_msg ]]; then
-		printf "%-$((PACKAGE_DEPS_COL_WIDTH+$(LenANSIDiff "$package_deps_msg")))s" "$package_deps_msg"
+		printf "%-$((PACKAGE_DEPENDENCIES_COL_WIDTH+$(LenANSIDiff "$package_deps_msg")))s" "$package_deps_msg"
+	fi
+
+	# column 3: minimum NAS RAM required
+
+	if [[ $maxcols -ge 3 && -n $package_min_ram_msg ]]; then
+		printf "%-$((PACKAGE_MIN_RAM_COL_WIDTH+$(LenANSIDiff "$package_min_ram_msg")))s" "$package_min_ram_msg"
+	fi
+
+	# column 4: minimum OS fimware version supported
+
+	if [[ $maxcols -ge 4 && -n $package_min_os_msg ]]; then
+		printf "%-$((PACKAGE_MIN_OS_COL_WIDTH+$(LenANSIDiff "$package_min_os_msg")))s" "$package_min_os_msg"
 	fi
 
 	printf '\n'
@@ -4684,13 +4729,13 @@ QPKGs.Abbreviations:Show()
 			abs=$(QPKG:GetAbbrvs "$package_name")
 
 			if [[ -n $abs ]]; then
-				if ! QPKG.URL "$package_name" &>/dev/null; then
+				if ! QPKG.URLOk "$package_name"; then
 					DisplayAsHelpNameAbs muted "$package_name" 'not installable (incompatible arch)'
-				elif ! QPKG.MinOSVer "$package_name" &>/dev/null; then
+				elif ! QPKG.MinOSVerOk "$package_name"; then
 					DisplayAsHelpNameAbs muted "$package_name" "not installable (incompatible $(GetQnapOS) version)"
-				elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
+				elif ! QPKG.MinRAMOk "$package_name"; then
 					DisplayAsHelpNameAbs muted "$package_name" 'not installable (insufficient RAM)'
-				elif QPKGs-ISmissing:Exist "$package_name" &>/dev/null; then
+				elif QPKGs-ISmissing:Exist "$package_name"; then
 					DisplayAsHelpNameAbs highlighted "$package_name" missing
 				elif QPKG.IsNtInstalled "$package_name"; then
 					DisplayAsHelpNameAbs muted "$package_name" "${abs// /, }"
@@ -4767,7 +4812,7 @@ QPKGs.Dependencies:Show()
 	Func:Entry
 	local package_name=''
 	local deps=''
-	maxcols=2
+	maxcols=4
 
 	DisableDebugToArchiveAndFile
 	DisplayWritingReport
@@ -4775,27 +4820,27 @@ QPKGs.Dependencies:Show()
 		{
 
 		DisplayAsHelpTitle "$(FormatAsTitle) will automatically install and start/stop dependencies as-required."
-		DisplayAsHelpTitleNameDeps
+		DisplayAsHelpTitleNameDepsMinRamMinOS
 
 		for package_name in $(QPKGs-SCall:Array); do
 			deps=$(QPKG:GetDependencies "$package_name")
 
 			if QPKGs-ISmissing:Exist "$package_name" &>/dev/null; then
-				DisplayAsHelpNameDeps highlighted "$package_name" missing
+				DisplayAsHelpNameDepsMinRamMinOS highlighted "$package_name" missing
 				continue
 			fi
 
 			if QPKG.IsNtInstalled "$package_name"; then
 				if [[ -n $deps ]]; then
-					DisplayAsHelpNameDeps muted "$package_name" "${deps// /, }"
+					DisplayAsHelpNameDepsMinRamMinOS muted "$package_name" "${deps// /, }" "$(QPKG.MinRAM "$package_name")" "$(QPKG.MinOSVer "$package_name")"
 				else
-					DisplayAsHelpNameDeps muted "$package_name" none
+					DisplayAsHelpNameDepsMinRamMinOS muted "$package_name" none "$(QPKG.MinRAM "$package_name")" "$(QPKG.MinOSVer "$package_name")"
 				fi
 			else
 				if [[ -n $deps ]]; then
-					DisplayAsHelpNameDeps highlighted "$package_name" "${deps// /, }"
+					DisplayAsHelpNameDepsMinRamMinOS highlighted "$package_name" "${deps// /, }" "$(QPKG.MinRAM "$package_name")" "$(QPKG.MinOSVer "$package_name")"
 				else
-					DisplayAsHelpNameDeps normal "$package_name" none
+					DisplayAsHelpNameDepsMinRamMinOS normal "$package_name" none "$(QPKG.MinRAM "$package_name")" "$(QPKG.MinOSVer "$package_name")"
 				fi
 			fi
 		done
@@ -4866,13 +4911,13 @@ QPKGs.Repos:Show()
 		DisplayAsHelpTitleNameDateRepo
 
 		for package_name in $(QPKGs-SCall:Array); do
-			if ! QPKG.URL "$package_name" &>/dev/null; then
+			if ! QPKG.URLOk "$package_name"; then
 				DisplayAsHelpNameDateRepo muted "$package_name" 'not installable (incompatible arch)'
-			elif ! QPKG.MinOSVer "$package_name" &>/dev/null; then
+			elif ! QPKG.MinOSVerOk "$package_name"; then
 				DisplayAsHelpNameDateRepo muted "$package_name" "not installable (incompatible $(GetQnapOS) version)"
-			elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
+			elif ! QPKG.MinRAMOk "$package_name"; then
 				DisplayAsHelpNameDateRepo muted "$package_name" 'not installable (insufficient RAM)'
-			elif QPKGs-ISmissing:Exist "$package_name" &>/dev/null; then
+			elif QPKGs-ISmissing:Exist "$package_name"; then
 				DisplayAsHelpNameDateRepo highlighted "$package_name" missing
 			elif QPKGs-ISNTinstalled:Exist "$package_name"; then
 				DisplayAsHelpNameDateRepo muted "$package_name" 'not installed'
@@ -4919,11 +4964,11 @@ QPKGs.Statuses:Show()
 
 		for package_name in $(QPKGs-SCall:Array); do
 			if QPKGs-ISNTinstalled:Exist "$package_name"; then
-				if ! QPKG.URL "$package_name" &>/dev/null; then
+				if ! QPKG.URLOk "$package_name"; then
 					DisplayAsHelpNameStatusVerPath muted "$package_name" 'not installable (incompatible arch)'
-				elif ! QPKG.MinOSVer "$package_name" &>/dev/null; then
+				elif ! QPKG.MinOSVerOk "$package_name"; then
 					DisplayAsHelpNameStatusVerPath muted "$package_name" "not installable (incompatible $(GetQnapOS) version)"
-				elif ! QPKG.MinRAM "$package_name" &>/dev/null; then
+				elif ! QPKG.MinRAMOk "$package_name"; then
 					DisplayAsHelpNameStatusVerPath muted "$package_name" 'not installable (insufficient RAM)'
 				else
 					DisplayAsHelpNameStatusVerPath muted "$package_name" 'not installed' '' '' "$(QPKG.Avail.Ver "$package_name")"
@@ -5835,7 +5880,7 @@ _QPKG:download_()
 	local -r LOG_PATHFILE=$LOGS_PATH/$LOCAL_FILENAME.$DOWNLOAD_LOG_FILE
 
 	if [[ -z $REMOTE_URL || -z $REMOTE_MD5 ]]; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" download skipped 'NAS is unsupported'
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" download skipped 'NAS arch is incompatible'
 		MarkThisActionForkAsSkipped
 		result_code=2
 	elif [[ -f $LOCAL_PATHFILE ]]; then
@@ -5906,13 +5951,13 @@ _QPKG:install_()
 	if QPKGs-ISinstalled:Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" install skipped 'already installed'
 		result_code=2
-	elif ! QPKG.URL "$PACKAGE_NAME" &>/dev/null; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" install skipped 'NAS is unsupported'
+	elif ! QPKG.URLOk "$PACKAGE_NAME"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" install skipped 'NAS arch is incompatible'
 		result_code=2
-	elif ! QPKG.MinOSVer "$PACKAGE_NAME" &>/dev/null; then
+	elif ! QPKG.MinOSVerOk "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" install skipped "$(GetQnapOS) version is incompatible"
 		result_code=2
-	elif ! QPKG.MinRAM "$PACKAGE_NAME" &>/dev/null; then
+	elif ! QPKG.MinRAMOk "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" install skipped 'NAS has insufficient RAM'
 		result_code=2
 	fi
@@ -6843,7 +6888,7 @@ _QPKG:status_()
 
 	DebugAsProc "statusing $(FormatAsPackName "$PACKAGE_NAME")"
 
-	if package_tests=$(QPKG.GetActiveTest "$PACKAGE_NAME"); then
+	if package_tests=$(QPKG:GetActiveTest "$PACKAGE_NAME"); then
 		eval "$package_tests" &>/dev/null
 		result_code=$?
 	else
@@ -6917,7 +6962,7 @@ QPKG.LastResultWasOk()
 	# input:
 	#   $PACKAGE_NAME (global) = QPKG name
 
-	[[ $(QPKG.GetServiceStatus "$PACKAGE_NAME") = ok ]]
+	[[ $(QPKG:GetServiceStatus "$PACKAGE_NAME") = ok ]]
 
 	}
 
@@ -6927,7 +6972,7 @@ QPKG.ServiceStatus:Log()
 	# input:
 	#   $PACKAGE_NAME (global) = QPKG name
 
-	if ! local status=$(QPKG.GetServiceStatus "$PACKAGE_NAME"); then
+	if ! local status=$(QPKG:GetServiceStatus "$PACKAGE_NAME"); then
 		DebugAsWarn "unable to get status of $(FormatAsPackName "$PACKAGE_NAME") service. It may be a non-sherpa package, or a sherpa package earlier than 200816c that doesn't support service results."
 		return 1
 	fi
@@ -7082,6 +7127,262 @@ QPKG.IsBackupExist()
 
 	}
 
+QPKG.IsDependent()
+	{
+
+	# Does this QPKG depend on any other QPKGs?
+
+	# input:
+	#   $1 = QPKG name
+
+	# output:
+	#   $? = 0 if true, 1 if false (first package found)
+
+	local -i index=0
+
+	for index in "${!QPKG_NAME[@]}"; do
+		if [[ ${QPKG_NAME[$index]} = "${1:?package name null}" ]]; then
+			if [[ -n ${QPKG_DEPENDS_ON[$index]} ]]; then
+				return 0
+			else
+				break
+			fi
+		fi
+	done
+
+	return 1
+
+	}
+
+QPKG.IsUpgradable()
+	{
+
+	# Does an upgraded QPKG exist?
+
+	# input:
+	#   $PACKAGE_NAME (global) = QPKG name (default)
+	#   $1 = if specified, use this as QPKG name instead
+
+	# output:
+	#   $? = 0 if true, 1 if false
+
+	local package=${PACKAGE_NAME:-}
+	[[ -n ${1:-} ]] && package=$1
+
+	QPKG.IsInstalled "$package" && [[ $(QPKG.Local.Ver "$package") != "$(QPKG.Avail.Ver "$package")" ]] && QPKG.URLOk "$package" && QPKG.MinOSVerOk "$package" && QPKG.MinRAMOk "$package"
+
+	}
+
+QPKG.OriginalPath()
+	{
+
+	# input:
+	#   $1 = QPKG name
+
+	# output:
+	#   stdout = the original installation path of this QPKG (even if it was migrated to another volume)
+	#   $? = 0 if successful, 1 if failed
+
+	local -i index=0
+
+	if [[ ${#QPKGs_were_installed_name[@]} -gt 0 ]]; then
+		for index in "${!QPKGs_were_installed_name[@]}"; do
+			if [[ ${QPKGs_were_installed_name[$index]} = "${1:?package name null}" ]]; then
+				echo "${QPKGs_were_installed_path[$index]}"
+				return 0
+			fi
+		done
+	fi
+
+	return 1
+
+	}
+
+QPKG.MatchAbbrv()
+	{
+
+	# input:
+	#   $1 = a potential package abbreviation supplied by user
+
+	# output:
+	#   stdout = matched installable package name (empty if unmatched)
+	#   $? = 0 (matched) or 1 (unmatched)
+
+	local -a abbs=()
+	local -i package_index=0
+	local -i abb_index=0
+	local -i result_code=1
+
+	for package_index in "${!QPKG_NAME[@]}"; do
+		abbs=(${QPKG_ABBRVS[$package_index]})
+
+		for abb_index in "${!abbs[@]}"; do
+			if [[ ${abbs[$abb_index]} = "$1" ]]; then
+				Display "${QPKG_NAME[$package_index]}"
+				result_code=0
+				break 2
+			fi
+		done
+	done
+
+	return $result_code
+
+	}
+
+QPKG.PathFilename()
+	{
+
+	# input:
+	#   $1 = QPKG name
+
+	# output:
+	#   stdout = QPKG local filename
+	#   $? = 0 if successful, 1 if failed
+
+	local url=$(QPKG.URL "${1:?package name null}")
+
+	[[ -n ${url:-} ]] || return
+	[[ $(Lowercase "${url##*.}") != qpkg ]] && url=${url%.*}.qpkg		# swap `zip` for `qpkg` here (only used for `QDK.zip`)
+
+	echo "$QPKG_DL_PATH/$($BASENAME_CMD "$url")"
+	return 0
+
+	}
+
+QPKG.MD5()
+	{
+
+	# input:
+	#   $1 = QPKG name
+
+	# output:
+	#   stdout = QPKG MD5, specific to this NAS arch
+	#   $? = 0 if successful, 1 if failed
+
+	local -i index=0
+
+	for index in "${!QPKG_NAME[@]}"; do
+		if [[ ${QPKG_NAME[$index]} = "${1:?package name null}" ]] && [[ ${QPKG_ARCH[$index]} = all || ${QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
+			echo "${QPKG_MD5[$index]}"
+			return 0
+		fi
+	done
+
+	return 1
+
+	}
+
+QPKG.URL()
+	{
+
+	# input:
+	#   $1 = QPKG name
+
+	# output:
+	#   stdout = QPKG remote URL, specific to this NAS arch
+	#   $? = 0 if successful, 1 if failed
+
+	local -i index=0
+
+	for index in "${!QPKG_NAME[@]}"; do
+		if [[ ${QPKG_NAME[$index]} = "${1:?package name null}" ]] && [[ ${QPKG_ARCH[$index]} = all || ${QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
+			echo "${QPKG_URL[$index]}"
+			return 0
+		fi
+	done
+
+	return 1
+
+	}
+
+QPKG.URLOk()
+	{
+
+	# input:
+	#   $1 = QPKG name
+
+	# output:
+	#   $? = 0 if this NAS arch is compatible with QPKG name, 1 if not
+
+	local min="$(QPKG.URL "${1:?package name null}")"
+	[[ -n $min && $min != none ]]
+
+	}
+
+QPKG.MinRAM()
+	{
+
+	# input:
+	#   $1 = QPKG name
+
+	# output:
+	#   stdout = minimum kB of installed RAM required by this QPKG (first package found)
+	#   $? = 0 if successful, 1 if failed
+
+	local -i index=0
+
+	for index in "${!QPKG_NAME[@]}"; do
+		if [[ ${QPKG_NAME[$index]} = "${1:?package name null}" ]]; then
+			echo "${QPKG_MIN_RAM_KB[$index]}"
+			return 0
+		fi
+	done
+
+	return 1
+
+	}
+
+QPKG.MinRAMOk()
+	{
+
+	# input:
+	#   $1 = QPKG name
+
+	# output:
+	#   $? = 0 if this NAS meets the minium RAM requirements for QPKG name, 1 if not
+
+	local min="$(QPKG.MinRAM "${1:?package name null}")"
+	[[ -n $min ]] && [[ $min = none || $NAS_RAM_KB -ge $min ]]
+
+	}
+
+QPKG.MinOSVer()
+	{
+
+	# input:
+	#   $1 = QPKG name
+
+	# output:
+	#   stdout = minimum QTS/QuTS version required by this QPKG (first package found)
+	#   $? = 0 if successful, 1 if failed
+
+	local -i index=0
+
+	for index in "${!QPKG_NAME[@]}"; do
+		if [[ ${QPKG_NAME[$index]} = "${1:?package name null}" ]]; then
+			echo "${QPKG_MIN_OS_VERSION[$index]}"
+			return 0
+		fi
+	done
+
+	return 1
+
+	}
+
+QPKG.MinOSVerOk()
+	{
+
+	# input:
+	#   $1 = QPKG name
+
+	# output:
+	#   $? = 0 if this NAS meets the minium OS firmware version requirements for QPKG name, 1 if not
+
+	local min="$(QPKG.MinOSVer "${1:?package name null}")"
+	[[ -n $min ]] && [[ $min = none || ${NAS_FIRMWARE_VER//.} -ge $min ]]
+
+	}
+
 QPKG.Author()
 	{
 
@@ -7132,33 +7433,126 @@ QPKG.AppAuthor()
 
 	}
 
-QPKG.GetActiveTest()
+QPKG.Desc()
 	{
-
-	# Return the tests required to determine if specified QPKG is active or not
 
 	# input:
 	#   $1 = QPKG name
 
 	# output:
-	#   stdout = bash tests
-	#   $? = 0 if found, !0 if not
+	#   stdout = QPKG description (first package found)
+	#   $? = 0 if successful, 1 if failed
 
 	local -i index=0
-	local buff=''
 
 	for index in "${!QPKG_NAME[@]}"; do
 		if [[ ${QPKG_NAME[$index]} = "${1:?package name null}" ]]; then
-			buff="${QPKG_TEST_FOR_ACTIVE[$index]}"
-
-			if [[ -n $buff ]]; then
-				echo "$buff"
-				return 0
-			else
-				break
-			fi
+			echo "${QPKG_DESC[$index]}"
+			return 0
 		fi
 	done
+
+	return 1
+
+	}
+
+QPKG.Note()
+	{
+
+	# return any additional notes to be prominently displayed
+
+	# input:
+	#   $1 = QPKG name
+
+	# output:
+	#   stdout = package note (first package found)
+	#   $? = 0 if found, !0 if not
+
+	local -i index=0
+
+	for index in "${!QPKG_NAME[@]}"; do
+		if [[ ${QPKG_NAME[$index]} = "${1:?package name null}" ]]; then
+			echo "${QPKG_NOTE[$index]}"
+			return 0
+		fi
+	done
+
+	return 1
+
+	}
+
+QPKG:GetAbbrvs()
+	{
+
+	# input:
+	#   $1 = QPKG name
+
+	# output:
+	#   stdout = list of abbreviations that may be used to specify this package (first package found)
+	#   $? = 0 if successful, 1 if failed
+
+	local -i index=0
+
+	for index in "${!QPKG_NAME[@]}"; do
+		if [[ ${QPKG_NAME[$index]} = "${1:?package name null}" ]]; then
+			echo "${QPKG_ABBRVS[$index]}"
+			return 0
+		fi
+	done
+
+	return 1
+
+	}
+
+QPKG:GetDependencies()
+	{
+
+	# input:
+	#   $1 = QPKG name
+
+	# output:
+	#   stdout = list of QPKGs this QPKG depends-upon (first package found)
+	#   $? = 0 if successful, 1 if failed
+
+	local -i index=0
+
+	for index in "${!QPKG_NAME[@]}"; do
+		if [[ ${QPKG_NAME[$index]} = "${1:?package name null}" ]]; then
+			echo "${QPKG_DEPENDS_ON[$index]}"
+			return 0
+		fi
+	done
+
+	return 1
+
+	}
+
+QPKG:GetDependents()
+	{
+
+	# input:
+	#   $1 = QPKG name
+
+	# output:
+	#   stdout = list of QPKGs that depend-upon this QPKG (first package found)
+	#   $? = 0 if successful, 1 if failed
+
+	local -i index=0
+	local -a acc=()
+	local re=\\b${1:-}\\b
+
+	if QPKGs-SCstandalone:Exist "$1"; then
+		for index in "${!QPKG_NAME[@]}"; do
+			if [[ ${QPKG_DEPENDS_ON[$index]} =~ $re ]]; then
+				[[ ${acc[*]:-} != "${QPKG_NAME[$index]}" ]] && acc+=(${QPKG_NAME[$index]})
+			fi
+		done
+	fi
+
+	if [[ ${#acc[@]} -gt 0 ]]; then
+		echo "${acc[@]}"
+		return 0
+	fi
 
 	return 1
 
@@ -7281,340 +7675,33 @@ QPKG.IsCanLog()
 
 	}
 
-QPKG.IsDependent()
+QPKG:GetActiveTest()
 	{
 
-	# Does this QPKG depend on any other QPKGs?
+	# Return the tests required to determine if specified QPKG is active or not
 
 	# input:
 	#   $1 = QPKG name
 
 	# output:
-	#   $? = 0 if true, 1 if false (first package found)
+	#   stdout = bash tests
+	#   $? = 0 if found, !0 if not
 
 	local -i index=0
+	local buff=''
 
 	for index in "${!QPKG_NAME[@]}"; do
 		if [[ ${QPKG_NAME[$index]} = "${1:?package name null}" ]]; then
-			if [[ -n ${QPKG_DEPENDS_ON[$index]} ]]; then
+			buff="${QPKG_TEST_FOR_ACTIVE[$index]}"
+
+			if [[ -n $buff ]]; then
+				echo "$buff"
 				return 0
 			else
 				break
 			fi
 		fi
 	done
-
-	return 1
-
-	}
-
-QPKG.IsUpgradable()
-	{
-
-	# Does an upgraded QPKG exist?
-
-	# input:
-	#   $PACKAGE_NAME (global) = QPKG name (default)
-	#   $1 = if specified, use this as QPKG name instead
-
-	# output:
-	#   $? = 0 if true, 1 if false
-
-	local package=${PACKAGE_NAME:-}
-	[[ -n ${1:-} ]] && package=$1
-
-	QPKG.IsInstalled "$package" && [[ $(QPKG.Local.Ver "$package") != "$(QPKG.Avail.Ver "$package")" ]] && QPKG.URL "$package" &>/dev/null && QPKG.MinOSVer "$package" &>/dev/null && QPKG.MinRAM "$package" &>/dev/null
-
-	}
-
-QPKG.OriginalPath()
-	{
-
-	# input:
-	#   $1 = QPKG name
-
-	# output:
-	#   stdout = the original installation path of this QPKG (even if it was migrated to another volume)
-	#   $? = 0 if successful, 1 if failed
-
-	local -i index=0
-
-	if [[ ${#QPKGs_were_installed_name[@]} -gt 0 ]]; then
-		for index in "${!QPKGs_were_installed_name[@]}"; do
-			if [[ ${QPKGs_were_installed_name[$index]} = "${1:?package name null}" ]]; then
-				echo "${QPKGs_were_installed_path[$index]}"
-				return 0
-			fi
-		done
-	fi
-
-	return 1
-
-	}
-
-QPKG:GetAbbrvs()
-	{
-
-	# input:
-	#   $1 = QPKG name
-
-	# output:
-	#   stdout = list of abbreviations that may be used to specify this package (first package found)
-	#   $? = 0 if successful, 1 if failed
-
-	local -i index=0
-
-	for index in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$index]} = "${1:?package name null}" ]]; then
-			echo "${QPKG_ABBRVS[$index]}"
-			return 0
-		fi
-	done
-
-	return 1
-
-	}
-
-QPKG.MatchAbbrv()
-	{
-
-	# input:
-	#   $1 = a potential package abbreviation supplied by user
-
-	# output:
-	#   stdout = matched installable package name (empty if unmatched)
-	#   $? = 0 (matched) or 1 (unmatched)
-
-	local -a abbs=()
-	local -i package_index=0
-	local -i abb_index=0
-	local -i result_code=1
-
-	for package_index in "${!QPKG_NAME[@]}"; do
-		abbs=(${QPKG_ABBRVS[$package_index]})
-
-		for abb_index in "${!abbs[@]}"; do
-			if [[ ${abbs[$abb_index]} = "$1" ]]; then
-				Display "${QPKG_NAME[$package_index]}"
-				result_code=0
-				break 2
-			fi
-		done
-	done
-
-	return $result_code
-
-	}
-
-QPKG.PathFilename()
-	{
-
-	# input:
-	#   $1 = QPKG name
-
-	# output:
-	#   stdout = QPKG local filename
-	#   $? = 0 if successful, 1 if failed
-
-	local url=$(QPKG.URL "${1:?package name null}")
-
-	[[ -n ${url:-} ]] || return
-	[[ $(Lowercase "${url##*.}") != qpkg ]] && url=${url%.*}.qpkg		# swap `zip` for `qpkg` here (only used for `QDK.zip`)
-
-	echo "$QPKG_DL_PATH/$($BASENAME_CMD "$url")"
-	return 0
-
-	}
-
-QPKG.URL()
-	{
-
-	# input:
-	#   $1 = QPKG name
-
-	# output:
-	#   stdout = QPKG remote URL, specific to this NAS arch
-	#   $? = 0 if successful, 1 if failed
-
-	local -i index=0
-
-	for index in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$index]} = "${1:?package name null}" ]] && [[ ${QPKG_ARCH[$index]} = all || ${QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
-			echo "${QPKG_URL[$index]}"
-			return 0
-		fi
-	done
-
-	return 1
-
-	}
-
-QPKG.Desc()
-	{
-
-	# input:
-	#   $1 = QPKG name
-
-	# output:
-	#   stdout = QPKG description (first package found)
-	#   $? = 0 if successful, 1 if failed
-
-	local -i index=0
-
-	for index in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$index]} = "${1:?package name null}" ]]; then
-			echo "${QPKG_DESC[$index]}"
-			return 0
-		fi
-	done
-
-	return 1
-
-	}
-
-QPKG.Note()
-	{
-
-	# return any additional notes to be prominently displayed
-
-	# input:
-	#   $1 = QPKG name
-
-	# output:
-	#   stdout = package note (first package found)
-	#   $? = 0 if found, !0 if not
-
-	local -i index=0
-
-	for index in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$index]} = "${1:?package name null}" ]]; then
-			echo "${QPKG_NOTE[$index]}"
-			return 0
-		fi
-	done
-
-	return 1
-
-	}
-
-QPKG.MD5()
-	{
-
-	# input:
-	#   $1 = QPKG name
-
-	# output:
-	#   stdout = QPKG MD5, specific to this NAS arch
-	#   $? = 0 if successful, 1 if failed
-
-	local -i index=0
-
-	for index in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$index]} = "${1:?package name null}" ]] && [[ ${QPKG_ARCH[$index]} = all || ${QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
-			echo "${QPKG_MD5[$index]}"
-			return 0
-		fi
-	done
-
-	return 1
-
-	}
-
-QPKG.MinRAM()
-	{
-
-	# input:
-	#   $1 = QPKG name
-
-	# output:
-	#   stdout = minimum kB of installed RAM required by this QPKG (first package found)
-	#   $? = 0 if successful, 1 if failed
-
-	local -i index=0
-
-	for index in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$index]} = "${1:?package name null}" ]] && [[ ${QPKG_MIN_RAM_KB[$index]} = none || $NAS_RAM_KB -ge ${QPKG_MIN_RAM_KB[$index]} ]]; then
-			echo "${QPKG_MIN_RAM_KB[$index]}"
-			return 0
-		fi
-	done
-
-	return 1
-
-	}
-
-QPKG.MinOSVer()
-	{
-
-	# input:
-	#   $1 = QPKG name
-
-	# output:
-	#   stdout = minimum QTS/QuTS version required by this QPKG (first package found)
-	#   $? = 0 if successful, 1 if failed
-
-	local -i index=0
-
-	for index in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$index]} = "${1:?package name null}" ]] && [[ ${QPKG_MIN_OS_VERSION[$index]} = none || ${NAS_FIRMWARE_VER//.} -ge ${QPKG_MIN_OS_VERSION[$index]} ]]; then
-			echo "${QPKG_MIN_OS_VERSION[$index]}"
-			return 0
-		fi
-	done
-
-	return 1
-
-	}
-
-QPKG:GetDependencies()
-	{
-
-	# input:
-	#   $1 = QPKG name
-
-	# output:
-	#   stdout = list of QPKGs this QPKG depends-upon (first package found)
-	#   $? = 0 if successful, 1 if failed
-
-	local -i index=0
-
-	for index in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$index]} = "${1:?package name null}" ]]; then
-			echo "${QPKG_DEPENDS_ON[$index]}"
-			return 0
-		fi
-	done
-
-	return 1
-
-	}
-
-QPKG:GetDependents()
-	{
-
-	# input:
-	#   $1 = QPKG name
-
-	# output:
-	#   stdout = list of QPKGs that depend-upon this QPKG (first package found)
-	#   $? = 0 if successful, 1 if failed
-
-	local -i index=0
-	local -a acc=()
-	local re=\\b${1:-}\\b
-
-	if QPKGs-SCstandalone:Exist "$1"; then
-		for index in "${!QPKG_NAME[@]}"; do
-			if [[ ${QPKG_DEPENDS_ON[$index]} =~ $re ]]; then
-				[[ ${acc[*]:-} != "${QPKG_NAME[$index]}" ]] && acc+=(${QPKG_NAME[$index]})
-			fi
-		done
-	fi
-
-	if [[ ${#acc[@]} -gt 0 ]]; then
-		echo "${acc[@]}"
-		return 0
-	fi
 
 	return 1
 
@@ -7659,7 +7746,7 @@ QPKG.IsEnabled()
 
 	}
 
-QPKG.GetServiceStatus()
+QPKG:GetServiceStatus()
 	{
 
 	# input:
