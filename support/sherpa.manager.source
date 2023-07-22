@@ -4780,16 +4780,23 @@ QPKGs.Dependencies:Show()
 		for package_name in $(QPKGs-SCall:Array); do
 			deps=$(QPKG:GetDependencies "$package_name")
 
-			if [[ -n $deps ]]; then
-				if QPKGs-ISmissing:Exist "$package_name" &>/dev/null; then
-					DisplayAsHelpNameDeps highlighted "$package_name" missing
-				elif QPKG.IsNtInstalled "$package_name"; then
+			if QPKGs-ISmissing:Exist "$package_name" &>/dev/null; then
+				DisplayAsHelpNameDeps highlighted "$package_name" missing
+				continue
+			fi
+
+			if QPKG.IsNtInstalled "$package_name"; then
+				if [[ -n $deps ]]; then
 					DisplayAsHelpNameDeps muted "$package_name" "${deps// /, }"
 				else
-					DisplayAsHelpNameDeps highlighted "$package_name" "${deps// /, }"
+					DisplayAsHelpNameDeps muted "$package_name" none
 				fi
 			else
-				DisplayAsHelpNameDeps normal "$package_name" none
+				if [[ -n $deps ]]; then
+					DisplayAsHelpNameDeps highlighted "$package_name" "${deps// /, }"
+				else
+					DisplayAsHelpNameDeps normal "$package_name" none
+				fi
 			fi
 		done
 
@@ -7572,11 +7579,9 @@ QPKG:GetDependencies()
 	local -i index=0
 
 	for index in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$index]} = "${1:?package name null}" ]] && [[ ${QPKG_ARCH[$index]} = all || ${QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
-			if [[ ${QPKG_DEPENDS_ON[$index]} != none ]]; then
-				echo "${QPKG_DEPENDS_ON[$index]}"
-				return 0
-			fi
+		if [[ ${QPKG_NAME[$index]} = "${1:?package name null}" ]]; then
+			echo "${QPKG_DEPENDS_ON[$index]}"
+			return 0
 		fi
 	done
 
