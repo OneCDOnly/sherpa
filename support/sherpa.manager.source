@@ -63,7 +63,7 @@ Self:Init()
 		Func:Exit 1; return
 	fi
 
-	if ! User.IsSu; then
+	if ! User.IsSU; then
 		if OS.IsSupportSudo; then
 			ShowAsError 'this utility must be run with superuser privileges. Try again as:'
 			echo "${CHARS_SUDO_PROMPT}sherpa $USER_ARGS_RAW" >&2
@@ -664,21 +664,20 @@ Self:LogEnv()
 	fi
 
 	DebugFirmware ok platform "$NAS_PLATFORM"
-	DebugUserspace ok 'OS uptime' "$(GetUptime)"
 
-	if OS.IsStarting; then
-		DebugUserspace warning 'OS startup' starting-up
-	else
-		DebugUserspace ok 'OS startup' complete
-	fi
+	case $(GetUpState) in
+		starting-up)
+			DebugFirmware warning 'OS state' starting-up
+			;;
+		shutting-down)
+			DebugFirmware warning 'OS state' shutting-down
+			;;
+		*)
+			DebugFirmware ok 'OS state' stable
+	esac
 
-	if OS.IsStopping; then
-		DebugUserspace warning 'OS shutdown' shutting-down
-	else
-		DebugUserspace ok 'OS shutdown' inactive
-	fi
-
-	DebugUserspace ok 'system load' "$(GetSysLoadAverages)"
+	DebugFirmware ok 'OS uptime' "$(GetUptime)"
+	DebugFirmware ok 'system load' "$(GetSysLoadAverages)"
 
 	if OS.IsSupportSudo; then
 		DebugUserspace ok '$SUDO_UID' "$(GetSudoUID)"
@@ -686,7 +685,7 @@ Self:LogEnv()
 		DebugUserspace ok '$SUDO_UID' 'N/A'
 	fi
 
-	if User.IsSu; then
+	if User.IsSU; then
 		DebugUserspace ok '$EUID' "$EUID"
 	else
 		DebugUserspace warning '$EUID' "$EUID"
@@ -716,7 +715,7 @@ Self:LogEnv()
 	DebugBinPathVerAndMinVer perl "$(GetPerlVer)" "$MIN_PERL_VER"
 	DebugScript 'logs path' "$LOGS_PATH"
 	DebugScript 'cache path' "$CACHE_PATH"
-	DebugQpkg detect 'action concurrency' "$CONCURRENCY"
+	DebugScript 'action concurrency' "$CONCURRENCY"
 
 	if OS.IsSupportSignedPackages; then
 		if OS.IsAllowUnsignedPackages; then
@@ -4853,7 +4852,7 @@ QPKGs.Dependencies:Show()
 		for package_name in $(QPKGs-SCall:Array); do
 			deps=$(QPKG:GetDependencies "$package_name")
 
-			if QPKGs-ISmissing.Exist "$package_name" &>/dev/null; then
+			if QPKGs-ISmissing.Exist "$package_name"; then
 				DisplayAsHelpNameDepsMinRamMinOS highlighted "$package_name" missing
 				continue
 			fi
@@ -5522,7 +5521,7 @@ OS.IsSupportSudo()
 
 	}
 
-User.IsSu()
+User.IsSU()
 	{
 
 	[[ $EUID -eq 0 ]]
@@ -5694,7 +5693,20 @@ GetEntwareType()
 GetSudoUID()
 	{
 
-	echo "${SUDO_UID:-<undefined>}"
+	echo "${SUDO_UID:-undefined}"
+
+	}
+
+GetUpState()
+	{
+
+	if OS.IsStarting; then
+		echo -n 'starting-up'
+	elif OS.IsStopping; then
+		echo -n 'shutting-down'
+	else
+		echo -n stable
+	fi
 
 	}
 
