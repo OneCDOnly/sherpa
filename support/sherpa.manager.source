@@ -3106,13 +3106,13 @@ DisplayAsHelpNameStatusVerPath()
 	#	$7 = package installation path (optional) - only if installed
 
 	local package_name=${2:-}
-	local package_name_msg=''
+	local package_name_msg="$CHARS_BLANK"
 	local package_status=${3:-}
 	local package_status_msg=''
 	local package_last_result=${4:-}
 	local package_last_result_msg=''
 	local package_installed_version=${5:-}
-	local package_version_msg=''
+	local package_version_msg="$CHARS_BLANK"
 	local package_upgrade_version=${6:-}
 	local package_upgrade_version_msg=''
 	local package_path=${7:-}
@@ -3121,8 +3121,6 @@ DisplayAsHelpNameStatusVerPath()
 
 	case $1 in
 		normal)
-			package_name_msg="${CHARS_BLANK}$package_name"
-
 			if [[ -n $package_status ]]; then
 				patt=\\benabled\\b
 				[[ $package_status =~ $patt ]] && package_status_msg+=" $(ColourTextBrightGreen enabled)"
@@ -3163,37 +3161,32 @@ DisplayAsHelpNameStatusVerPath()
 				package_status_msg="$(ColourTextBrightOrange "${CHARS_NOTE}unknown")"
 			fi
 
-			package_version_msg=${CHARS_BLANK}$package_installed_version
+			package_version_msg+=$package_installed_version
 
 			if [[ -n $package_upgrade_version ]]; then
 				package_version_msg+=" ($(ColourTextBrightOrange "$package_upgrade_version"))"
-				package_name_msg="${CHARS_BLANK}$(ColourTextBrightOrange "$package_name")"
+				package_name_msg+="$(ColourTextBrightOrange "$package_name")"
+			else
+				package_name_msg+="$package_name"
 			fi
 			;;
 		muted)
-			package_name_msg="${CHARS_BLANK}$(ColourTextDarkGrey "$package_name")"
-			package_version_msg="${CHARS_BLANK}$(ColourTextDarkGrey "$package_upgrade_version")"
+			package_name_msg+="$(ColourTextDarkGrey "$package_name")"
+			package_version_msg+="$(ColourTextDarkGrey "$package_upgrade_version")"
+			[[ -n $package_status && $package_status =~ 'not installable' ]] && package_version_msg=''
+			package_status_msg="$(ColourTextDarkGrey "${CHARS_NORMAL}${package_status}")"
 			package_path_msg=''
-
-			if [[ -n $package_status ]]; then
-				if [[ $package_status =~ 'not installable' ]]; then
-					package_status_msg="$(ColourTextDarkGrey "${CHARS_NORMAL}${package_status}")"
-					package_version_msg=''
-				else
-					package_status_msg="$(ColourTextDarkGrey "${CHARS_NORMAL}${package_status}")"
-				fi
-			fi
 			;;
 		highlighted)
 			patt=\\bmissing\\b
 
 			if [[ $package_status =~ $patt ]]; then
-				package_name_msg="${CHARS_BLANK}$(ColourTextBrightRed "$package_name")"
+				package_name_msg+="$(ColourTextBrightRed "$package_name")"
 				package_status_msg="$(ColourTextBrightRedBlink "${CHARS_ALERT}${package_status}")"
-				package_version_msg="${CHARS_BLANK}$(ColourTextBrightRedBlink "$package_installed_version")"
+				package_version_msg+="$(ColourTextBrightRedBlink "$package_installed_version")"
 				package_path_msg="${CHARS_BLANK}$(ColourTextBrightRedBlink "$package_path")"
 			else
-				package_name_msg="${CHARS_BLANK}$(ColourTextBrightOrange "$package_name")"
+				package_name_msg+="$(ColourTextBrightOrange "$package_name")"
 				package_status_msg="$(ColourTextBrightOrange "${CHARS_NOTE}${package_status}")"
 			fi
 	esac
@@ -3461,10 +3454,13 @@ DisplayAsHelpNameDepsMinRamMinOS()
 	#	$5 = minimum OS firmware version
 
 	local package_name="${2:-}"
-	local package_name_msg="${CHARS_BLANK}$package_name"
+	local package_name_msg="${CHARS_BLANK}"
 	local package_deps="${3:-}"
 	local package_deps_msg="${CHARS_NORMAL}${package_deps}"
 	local package_min_ram=''
+	local package_min_ram_msg="${CHARS_BLANK}"
+	local package_min_os="${5:0:1}.${5:1:1}.${5:2:1}"
+	local package_min_os_msg="${CHARS_BLANK}"
 
 	if [[ $4 = none ]]; then
 		package_min_ram="${4:-}"
@@ -3472,19 +3468,55 @@ DisplayAsHelpNameDepsMinRamMinOS()
 		package_min_ram="$(FormatAsThous "${4:-}")kB"
 	fi
 
-	local package_min_ram_msg="${CHARS_BLANK}${package_min_ram}"
-	local package_min_os="${5:0:1}.${5:1:1}.${5:2:1}"
-	local package_min_os_msg="${CHARS_BLANK}${package_min_os}"
-
 	case $1 in
+		normal)
+			package_name_msg+="$package_name"
+
+			if QPKG.MinRAMOk "$package_name"; then
+				package_min_ram_msg+="$(ColourTextBrightGreen "$package_min_ram")"
+			else
+				package_min_ram_msg+="$(ColourTextBrightRed "$package_min_ram")"
+			fi
+
+			if QPKG.MinOSVerOk "$package_name"; then
+				package_min_os_msg+="$(ColourTextBrightGreen "$package_min_os")"
+			else
+				package_min_os_msg+="$(ColourTextBrightRed "$package_min_os")"
+			fi
+
+			;;
 		muted)
-			package_name_msg="$(ColourTextDarkGrey "${CHARS_BLANK}$package_name")"
+			package_name_msg+="$(ColourTextDarkGrey "$package_name")"
 			package_deps_msg="$(ColourTextDarkGrey "${CHARS_NORMAL}${package_deps}")"
-			package_min_ram_msg="$(ColourTextDarkGrey "${CHARS_BLANK}${package_min_ram}")"
-			package_min_os_msg="$(ColourTextDarkGrey "${CHARS_BLANK}${package_min_os}")"
+
+			if QPKG.MinRAMOk "$package_name"; then
+				package_min_ram_msg+="$(ColourTextDarkGrey "$package_min_ram")"
+			else
+				package_min_ram_msg+="$(ColourTextBrightRed "$package_min_ram")"
+			fi
+
+			if QPKG.MinOSVerOk "$package_name"; then
+				package_min_os_msg+="$(ColourTextDarkGrey "$package_min_os")"
+			else
+				package_min_os_msg+="$(ColourTextBrightRed "$package_min_os")"
+			fi
+
 			;;
 		highlighted)
-			package_deps_msg="$(ColourTextBrightGreen "${CHARS_NORMAL}${package_deps}")"
+			package_name_msg+="$package_name"
+			package_deps_msg="${CHARS_NORMAL}$(ColourTextBrightGreen "$package_deps")"
+
+			if QPKG.MinRAMOk "$package_name"; then
+				package_min_ram_msg+="$(ColourTextBrightGreen "$package_min_ram")"
+			else
+				package_min_ram_msg+="$(ColourTextBrightRed "$package_min_ram")"
+			fi
+
+			if QPKG.MinOSVerOk "$package_name"; then
+				package_min_os_msg+="$(ColourTextBrightGreen "$package_min_os")"
+			else
+				package_min_os_msg+="$(ColourTextBrightRed "$package_min_os")"
+			fi
 	esac
 
 	# column 1: package name
