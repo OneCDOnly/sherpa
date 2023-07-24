@@ -8448,8 +8448,11 @@ FuncFork:Exit()
 	SendActionStatus ex
 	DebugAsFuncEx "${1:-0}" "$(FormatAsDuration "$(CalcMilliDifference "${!var_safe_name}" "$(/bin/date +%s%N)")")"
 
-	if [[ -n $sess_active_pathfile && -e $sess_active_pathfile && -s $sess_active_pathfile ]]; then
-		$CAT_CMD "$sess_active_pathfile" >> "$original_sess_active_pathfile"
+	if [[ -n $sess_active_pathfile && -e $sess_active_pathfile ]]; then
+		if [[ -s $sess_active_pathfile ]]; then
+			$CAT_CMD "$sess_active_pathfile" >> "$original_sess_active_pathfile"
+		fi
+
 		rm -f "$sess_active_pathfile"
 	fi
 
