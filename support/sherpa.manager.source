@@ -355,8 +355,8 @@ Consts:Load()
 	fi
 
 	# default values
-	readonly THIS_PACKAGE_PATH=$(QPKG.InstallationPath)
-	readonly THIS_PACKAGE_VER=$(QPKG.Local.Ver)
+	readonly THIS_PACKAGE_PATH=$(QPKG.GetInstallationPath)
+	readonly THIS_PACKAGE_VER=$(QPKG.Local.GetVer)
 	readonly THIS_SCRIPT_VER="<?today?>-$SOURCE_BRANCH"
 
 	readonly CACHE_PATH=$THIS_PACKAGE_PATH/cache
@@ -879,7 +879,7 @@ Self:Validate()
 	# KLUDGE: ensure old installs of Entware are reinstalled
 
 	if QPKG.IsInstalled Entware; then
-		local entware_install_date=$(QPKG.InstallDate Entware)
+		local entware_install_date=$(QPKG.GetInstallDate Entware)
 
 		if [[ ${entware_install_date//-/} -le 20230604 ]]; then
 			ShowAsInfo 'Entware will be reinstalled automatically (Entware packages were updated early June 2023)'
@@ -901,7 +901,7 @@ Self:Validate()
 
 	for action in upgrade reinstall install; do
 		for package in $(QPKGs-AC${action}-to:Array); do
-			for prospect in $(QPKG:GetDependencies "$package"); do
+			for prospect in $(QPKG.GetDependencies "$package"); do
 				QPKGs-ACinstall-to:Add "$prospect"
 			done
 		done
@@ -911,7 +911,7 @@ Self:Validate()
 
 	for package in $(QPKGs-ISinstalled:Array); do
 		if [[ $opts_check = true ]] || QPKGs-ACactivate-to.Exist "$package"; then
-			for prospect in $(QPKG:GetDependencies "$package"); do
+			for prospect in $(QPKG.GetDependencies "$package"); do
 				QPKGs-ISNTinstalled.Exist "$prospect" && QPKGs-ACinstall-to:Add "$prospect"
 			done
 		fi
@@ -921,7 +921,7 @@ Self:Validate()
 
 	for package in $(QPKGs-ACreinstall-to:Array) $(QPKGs-ACreactivate-to:Array); do
 		if QPKGs-SCstandalone.Exist "$package" && QPKGs-ISinstalled.Exist "$package"; then
-			for prospect in $(QPKG:GetDependents "$package"); do
+			for prospect in $(QPKG.GetDependents "$package"); do
 				if QPKGs-ISinstalled.Exist "$prospect"; then
 					QPKGs-ACdeactivate-to:Add "$prospect"
 					! QPKGs-ACuninstall-to.Exist "$prospect" && ! QPKGs-ACinstall-to.Exist "$prospect" && QPKGs-ACactivate-to:Add "$prospect"
@@ -934,7 +934,7 @@ Self:Validate()
 
 	for package in $(QPKGs-ACdeactivate-to:Array) $(QPKGs-ACuninstall-to:Array); do
 		if QPKGs-SCstandalone.Exist "$package" && QPKGs-ISinstalled.Exist "$package"; then
-			for prospect in $(QPKG:GetDependents "$package"); do
+			for prospect in $(QPKG.GetDependents "$package"); do
 				QPKGs-ISinstalled.Exist "$prospect" && QPKGs-ACdeactivate-to:Add "$prospect"
 			done
 		fi
@@ -945,7 +945,7 @@ Self:Validate()
 	for package in $(QPKGs-ACuninstall-to:Array); do
 		if QPKGs-SCstandalone.Exist "$package" && QPKGs-ISinstalled.Exist "$package"; then
 			if QPKGs-ACinstall-to.Exist "$package"; then
-				for prospect in $(QPKG:GetDependents "$package"); do
+				for prospect in $(QPKG.GetDependents "$package"); do
 					if QPKGs-ISinstalled.Exist "$prospect"; then
 						QPKGs-ACdeactivate-to:Add "$prospect"
 						! QPKGs-ACuninstall-to.Exist "$prospect" && ! QPKGs-ACinstall-to.Exist "$prospect" && QPKGs-ACactivate-to:Add "$prospect"
@@ -967,7 +967,7 @@ Self:Validate()
 
 	for action in reinstall install activate reactivate; do
 		for package in $(QPKGs-AC${action}-to:Array); do
-			for prospect in $(QPKG:GetDependencies "$package"); do
+			for prospect in $(QPKG.GetDependencies "$package"); do
 				QPKGs-ISinstalled.Exist "$prospect" && QPKGs-ACactivate-to:Add "$prospect"
 			done
 		done
@@ -1008,7 +1008,7 @@ Self:Validate()
 		for package in $(QPKGs-ACuninstall-to:Array); do
 			if QPKGs-ISinstalled.Exist "$package" && QPKGs-ACinstall-to.Exist "$package"; then
 				QPKGs_were_installed_name+=("$package")
-				QPKGs_were_installed_path+=("$($DIRNAME_CMD "$(QPKG.InstallationPath "$package")")")
+				QPKGs_were_installed_path+=("$($DIRNAME_CMD "$(QPKG.GetInstallationPath "$package")")")
 			fi
 		done
 	fi
@@ -2131,7 +2131,7 @@ PatchEntwareService()
 
 	local -r TAB=$'\t'
 	local -r PREFIX='# the following line was inserted by sherpa: https://git.io/sherpa'
-	local -r PACKAGE_INIT_PATHFILE=$(QPKG.ServicePathFile Entware)
+	local -r PACKAGE_INIT_PATHFILE=$(QPKG.GetServicePathFile Entware)
 	local find=''
 	local insert=''
 
@@ -3150,8 +3150,8 @@ DisplayAsStatusReportLine()
 			fi
 
 			package_status_msg="${CHARS_NORMAL}${package_status_msg}"
-			package_installed_version="$(QPKG.Local.Ver "$package_name")"
-			QPKG.IsUpgradable "$package_name" && package_upgrade_version="$(QPKG.Avail.Ver "$package_name")"
+			package_installed_version="$(QPKG.Local.GetVer "$package_name")"
+			QPKG.IsUpgradable "$package_name" && package_upgrade_version="$(QPKG.Avail.GetVer "$package_name")"
 			package_version_msg+="$package_installed_version"
 
 			if [[ -n $package_upgrade_version ]]; then
@@ -3161,7 +3161,7 @@ DisplayAsStatusReportLine()
 				package_name_msg+="$package_name"
 			fi
 
-			package_path_msg+="$(QPKG.InstallationPath "$package_name")"
+			package_path_msg+="$(QPKG.GetInstallationPath "$package_name")"
 			;;
 		muted)
 			package_name_msg+="$(ColourTextDarkGrey "$package_name")"
@@ -3184,9 +3184,9 @@ DisplayAsStatusReportLine()
 			package_name_msg+="$(ColourTextBrightRed "$package_name")"
 			package_status=missing
 			package_status_msg="$(ColourTextBrightRedBlink "${CHARS_ALERT}${package_status}")"
-			package_installed_version="$(QPKG.Local.Ver "$package_name")"
+			package_installed_version="$(QPKG.Local.GetVer "$package_name")"
 			package_version_msg+="$(ColourTextBrightRed "$package_installed_version")"
-			package_path_msg+="$(ColourTextBrightRedBlink "$(QPKG.InstallationPath "$package_name")")"
+			package_path_msg+="$(ColourTextBrightRedBlink "$(QPKG.GetInstallationPath "$package_name")")"
 	esac
 
 	# column 1: package name
@@ -3261,9 +3261,9 @@ DisplayAsReposReportLine()
 
 	local package_name="${1:?package name null}"
 	local package_name_msg="$CHARS_BLANK"
-	local package_install_date=$(QPKG.InstallDate "$package_name")
+	local package_install_date=$(QPKG.GetInstallDate "$package_name")
 	local package_install_date_msg="$CHARS_BLANK"
-	local package_store_id=$(QPKG.StoreID "$package_name")
+	local package_store_id=$(QPKG.GetStoreID "$package_name")
 	local assigned_repo="$(GetRepoURLFromStoreID "$package_store_id")"
 	local assigned_repo_msg="$CHARS_NORMAL"
 	local mode=''
@@ -3390,7 +3390,7 @@ DisplayAsAbsReportLine()
 		mode=normal
 	fi
 
-	package_abs=$(QPKG:GetAbbrvs "$package_name")
+	package_abs=$(QPKG.GetAbbrvs "$package_name")
 
 	if [[ -n $package_abs ]]; then
 		package_abs="$(Trim "$package_abs")"
@@ -3497,19 +3497,19 @@ DisplayAsDepsReportLine()
 	local package_name="${1:-}"
 	local package_name_msg="$CHARS_BLANK"
 
-	local package_deps=$(QPKG:GetDependencies "$package_name")
+	local package_deps=$(QPKG.GetDependencies "$package_name")
 	[[ -z $package_deps ]] && package_deps=none
 	package_deps="${package_deps// /, }"
 	local package_deps_msg="$CHARS_NORMAL"
 
-	local package_min_ram="$(QPKG.MinRAM "$package_name")"
+	local package_min_ram="$(QPKG.GetMinRAM "$package_name")"
 	local package_min_ram_msg="$CHARS_BLANK"
 
 	if [[ $package_min_ram != none ]]; then
 		package_min_ram="$(FormatAsThous "$package_min_ram")kB"
 	fi
 
-	local package_min_os="$(QPKG.MinOSVer "$package_name")"
+	local package_min_os="$(QPKG.GetMinOSVer "$package_name")"
 	package_min_os="${package_min_os:0:1}.${package_min_os:1:1}.${package_min_os:2:1}"
 	local package_min_os_msg="$CHARS_BLANK"
 
@@ -4942,11 +4942,11 @@ QPKGs:List:Show()
 
 		for package_name in $(QPKGs-SCall:Array); do
 			if QPKGs-ISmissing.Exist "$package_name" &>/dev/null; then
-				DisplayAsHelpNameAuthorDesc highlighted "$package_name" missing "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
+				DisplayAsHelpNameAuthorDesc highlighted "$package_name" missing "$(QPKG.GetDesc "$package_name")" "$(QPKG.GetNote "$package_name")"
 			elif QPKG.IsNtInstalled "$package_name"; then
-				DisplayAsHelpNameAuthorDesc muted "$package_name" "$(QPKG.Author "$package_name")" "$(QPKG.Desc "$package_name")" "$(QPKG.Note 	"$package_name")"
+				DisplayAsHelpNameAuthorDesc muted "$package_name" "$(QPKG.GetAuthor "$package_name")" "$(QPKG.GetDesc "$package_name")" "$(QPKG.GetNote 	"$package_name")"
 			else
-				DisplayAsHelpNameAuthorDesc normal "$package_name" "$(QPKG.Author "$package_name")" "$(QPKG.Desc "$package_name")" "$(QPKG.Note "$package_name")"
+				DisplayAsHelpNameAuthorDesc normal "$package_name" "$(QPKG.GetAuthor "$package_name")" "$(QPKG.GetDesc "$package_name")" "$(QPKG.GetNote "$package_name")"
 			fi
 		done
 
@@ -5848,7 +5848,7 @@ _QPKG:reassign_()
 	if ! QPKGs-ISinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reassign skipped 'not installed'
 		result_code=2
-	elif [[ $(QPKG.StoreID "$PACKAGE_NAME") = sherpa ]]; then
+	elif [[ $(QPKG.GetStoreID "$PACKAGE_NAME") = sherpa ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reassign skipped 'already assigned to sherpa'
 		result_code=2
 	fi
@@ -5892,9 +5892,9 @@ _QPKG:download_()
 
 	PACKAGE_NAME=${1:?package name null}
 	local -i result_code=0
-	local -r REMOTE_URL=$(QPKG.URL "$PACKAGE_NAME")
+	local -r REMOTE_URL=$(QPKG.GetURL "$PACKAGE_NAME")
 	local -r REMOTE_FILENAME=$($BASENAME_CMD "$REMOTE_URL")
-	local -r REMOTE_MD5=$(QPKG.MD5 "$PACKAGE_NAME")
+	local -r REMOTE_MD5=$(QPKG.GetMD5 "$PACKAGE_NAME")
 	local -r LOCAL_PATHFILE=$QPKG_DL_PATH/$REMOTE_FILENAME
 	local -r LOCAL_FILENAME=$($BASENAME_CMD "$LOCAL_PATHFILE")
 	local -r LOG_PATHFILE=$LOGS_PATH/$LOCAL_FILENAME.$DOWNLOAD_LOG_FILE
@@ -5987,7 +5987,7 @@ _QPKG:install_()
 		FuncFork:Exit $result_code
 	fi
 
-	local local_pathfile=$(QPKG.PathFilename "$PACKAGE_NAME")
+	local local_pathfile=$(QPKG.GetPathFilename "$PACKAGE_NAME")
 
 	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" install skipped-error 'no local file found for processing: please report this issue'
@@ -6011,7 +6011,7 @@ _QPKG:install_()
 	DebugAsProc "installing $(FormatAsPackName "$PACKAGE_NAME")"
 	[[ $opts_debug = true ]] && debug_cmd='DEBUG_QPKG=true '
 
-	[[ ${QPKGs_were_installed_name[*]:-} = *"$PACKAGE_NAME"* ]] && target_path="QINSTALL_PATH=$(QPKG.OriginalPath "$PACKAGE_NAME") "
+	[[ ${QPKGs_were_installed_name[*]:-} = *"$PACKAGE_NAME"* ]] && target_path="QINSTALL_PATH=$(QPKG.GetOriginalPath "$PACKAGE_NAME") "
 	RunAndLog "${debug_cmd}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$INSTALL_LOG_FILE" log:failure-only 10
 	result_code=$?
 
@@ -6025,7 +6025,7 @@ _QPKG:install_()
 			SendPackageStateChange ISNTenabled
 		fi
 
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" install ok "version $(QPKG.Local.Ver "$PACKAGE_NAME")"
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" install ok "version $(QPKG.Local.GetVer "$PACKAGE_NAME")"
 
 		if [[ $PACKAGE_NAME = Entware ]]; then
 			SendParentChangeEnv ModPathToEntware
@@ -6074,15 +6074,21 @@ _QPKG:reinstall_()
 	local debug_cmd=''
 
 	if ! QPKGs-ISinstalled.Exist "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" reinstall skipped "not installed, please use 'install' instead"
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" reinstall skipped "not installed, please use 'install' instead."
 		MarkThisActionForkAsSkipped
 		FuncFork:Exit 2
 	fi
 
-	local local_pathfile=$(QPKG.PathFilename "$PACKAGE_NAME")
+	local local_pathfile=$(QPKG.GetPathFilename "$PACKAGE_NAME")
 
 	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" reinstall skipped-error 'no local file found for processing, please report this issue'
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" reinstall skipped-error 'no local file found for processing, please report this issue.'
+		MarkThisActionForkAsSkippedError
+		FuncFork:Exit 2
+	fi
+
+	if ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" reinstall skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkippedError
 		FuncFork:Exit 2
 	fi
@@ -6092,7 +6098,7 @@ _QPKG:reinstall_()
 	DebugAsProc "reinstalling $(FormatAsPackName "$PACKAGE_NAME")"
 	[[ $opts_debug = true ]] && debug_cmd='DEBUG_QPKG=true '
 
-	QPKG.IsInstalled "$PACKAGE_NAME" && target_path="QINSTALL_PATH=$($DIRNAME_CMD "$(QPKG.InstallationPath $PACKAGE_NAME)") "
+	QPKG.IsInstalled "$PACKAGE_NAME" && target_path="QINSTALL_PATH=$($DIRNAME_CMD "$(QPKG.GetInstallationPath $PACKAGE_NAME)") "
 	RunAndLog "${debug_cmd}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$REINSTALL_LOG_FILE" log:failure-only 10
 	result_code=$?
 
@@ -6105,7 +6111,7 @@ _QPKG:reinstall_()
 			SendPackageStateChange ISNTenabled
 		fi
 
-		local current_ver=$(QPKG.Local.Ver "$PACKAGE_NAME")
+		local current_ver=$(QPKG.Local.GetVer "$PACKAGE_NAME")
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reinstall ok "version $current_ver"
 		SendParentChangeEnv "QPKGs-ACsign-to:Add $PACKAGE_NAME"
 		result_code=0   # remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK)
@@ -6148,9 +6154,10 @@ _QPKG:upgrade_()
 		result_code=2
 	fi
 
-	if [[ $(QPKG.StoreID "$PACKAGE_NAME") != sherpa ]]; then
+	if ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" upgrade skipped "assigned to another repository, please 'reassign' it first"
-		result_code=2
+		MarkThisActionForkAsSkippedError
+		FuncFork:Exit 2
 	fi
 
 	if [[ $result_code -gt 0 ]]; then
@@ -6158,7 +6165,7 @@ _QPKG:upgrade_()
 		FuncFork:Exit $result_code
 	fi
 
-	local local_pathfile=$(QPKG.PathFilename "$PACKAGE_NAME")
+	local local_pathfile=$(QPKG.GetPathFilename "$PACKAGE_NAME")
 
 	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" upgrade skipped-error 'no local file found for processing, please report this issue'
@@ -6166,13 +6173,13 @@ _QPKG:upgrade_()
 		FuncFork:Exit 2
 	fi
 
-	local prev_ver=$(QPKG.Local.Ver "$PACKAGE_NAME")
+	local prev_ver=$(QPKG.Local.GetVer "$PACKAGE_NAME")
 	local target_path=''
 
 	DebugAsProc "upgrading $(FormatAsPackName "$PACKAGE_NAME")"
 	[[ $opts_debug = true ]] && debug_cmd='DEBUG_QPKG=true '
 
-	QPKG.IsInstalled "$PACKAGE_NAME" && target_path="QINSTALL_PATH=$($DIRNAME_CMD "$(QPKG.InstallationPath "$PACKAGE_NAME")") "
+	QPKG.IsInstalled "$PACKAGE_NAME" && target_path="QINSTALL_PATH=$($DIRNAME_CMD "$(QPKG.GetInstallationPath "$PACKAGE_NAME")") "
 	RunAndLog "${debug_cmd}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$UPGRADE_LOG_FILE" log:failure-only 10
 	result_code=$?
 
@@ -6186,7 +6193,7 @@ _QPKG:upgrade_()
 			SendPackageStateChange ISNTenabled
 		fi
 
-		local current_ver=$(QPKG.Local.Ver "$PACKAGE_NAME")
+		local current_ver=$(QPKG.Local.GetVer "$PACKAGE_NAME")
 
 		if [[ $current_ver = "$prev_ver" ]]; then
 			SaveActionResultToLog QPKG "$PACKAGE_NAME" upgrade ok "version $current_ver"
@@ -6235,12 +6242,18 @@ _QPKG:uninstall_()
 		result_code=2
 	fi
 
+	if ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" uninstall skipped "assigned to another repository, please 'reassign' it first"
+		MarkThisActionForkAsSkippedError
+		FuncFork:Exit 2
+	fi
+
 	if [[ $result_code -gt 0 ]]; then
 		MarkThisActionForkAsSkipped
 		FuncFork:Exit $result_code
 	fi
 
-	local -r QPKG_UNINSTALLER_PATHFILE=$(QPKG.InstallationPath "$PACKAGE_NAME")/.uninstall.sh
+	local -r QPKG_UNINSTALLER_PATHFILE=$(QPKG.GetInstallationPath "$PACKAGE_NAME")/.uninstall.sh
 
 	[[ $PACKAGE_NAME = Entware ]] && SavePackageLists
 
@@ -6307,6 +6320,12 @@ _QPKG:activate_()
 		FuncFork:Exit 2
 	fi
 
+	if ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" activate skipped "assigned to another repository, please 'reassign' it first"
+		MarkThisActionForkAsSkippedError
+		FuncFork:Exit 2
+	fi
+
 	QPKG.ServiceStatus:Clear
 	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$ACTIVATE_LOG_FILE
 	local timeout=''
@@ -6316,13 +6335,13 @@ _QPKG:activate_()
 
 	if [[ $opts_debug = true ]]; then
 		debug_cmd='DEBUG_QPKG=true '
-		RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) start" "$LOG_PATHFILE" log:failure-only
+		RunAndLog "${debug_cmd}$(QPKG.GetServicePathFile) start" "$LOG_PATHFILE" log:failure-only
 		result_code=$?
 	elif QPKG.IsCanLog; then		# use `qpkg_service` if-possible, so package icon in App Center will dynamically update
 		RunAndLog "/sbin/qpkg_service${timeout} start $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
 		QPKG.LastResultWasOk && result_code=0 || result_code=1
 	else
-		RunAndLog "$(QPKG.ServicePathFile) start" "$LOG_PATHFILE" log:failure-only
+		RunAndLog "$(QPKG.GetServicePathFile) start" "$LOG_PATHFILE" log:failure-only
 		result_code=$?
 	fi
 
@@ -6374,6 +6393,12 @@ _QPKG:reactivate_()
 		FuncFork:Exit 2
 	fi
 
+	if ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" reactivate skipped "assigned to another repository, please 'reassign' it first"
+		MarkThisActionForkAsSkippedError
+		FuncFork:Exit 2
+	fi
+
 	QPKG.ServiceStatus:Clear
 	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$REACTIVATE_LOG_FILE
 	local timeout=''
@@ -6383,13 +6408,13 @@ _QPKG:reactivate_()
 
 	if [[ $opts_debug = true ]]; then
 		debug_cmd='DEBUG_QPKG=true '
-		RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) restart" "$LOG_PATHFILE" log:failure-only
+		RunAndLog "${debug_cmd}$(QPKG.GetServicePathFile) restart" "$LOG_PATHFILE" log:failure-only
 		result_code=$?
 	elif QPKG.IsCanLog; then		# use `qpkg_service` if-possible, so package icon in App Center will dynamically update
 		RunAndLog "/sbin/qpkg_service${timeout} restart $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
 		QPKG.LastResultWasOk && result_code=0 || result_code=1
 	else
-		RunAndLog "$(QPKG.ServicePathFile) restart" "$LOG_PATHFILE" log:failure-only
+		RunAndLog "$(QPKG.GetServicePathFile) restart" "$LOG_PATHFILE" log:failure-only
 		result_code=$?
 	fi
 
@@ -6434,6 +6459,12 @@ _QPKG:deactivate_()
 		result_code=2
 	fi
 
+	if ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" deactivate skipped "assigned to another repository, please 'reassign' it first"
+		MarkThisActionForkAsSkippedError
+		FuncFork:Exit 2
+	fi
+
 	if [[ $result_code -gt 0 ]]; then
 		MarkThisActionForkAsSkipped
 		FuncFork:Exit $result_code
@@ -6448,13 +6479,13 @@ _QPKG:deactivate_()
 
 	if [[ $opts_debug = true ]]; then
 		debug_cmd='DEBUG_QPKG=true '
-		RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) stop" "$LOG_PATHFILE" log:failure-only
+		RunAndLog "${debug_cmd}$(QPKG.GetServicePathFile) stop" "$LOG_PATHFILE" log:failure-only
 		result_code=$?
 	elif QPKG.IsCanLog; then		# use `qpkg_service` if-possible, so package icon in App Center will dynamically update
 		RunAndLog "/sbin/qpkg_service${timeout} stop $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
 		QPKG.LastResultWasOk && result_code=0 || result_code=1
 	else
-		RunAndLog "$(QPKG.ServicePathFile) stop" "$LOG_PATHFILE" log:failure-only
+		RunAndLog "$(QPKG.GetServicePathFile) stop" "$LOG_PATHFILE" log:failure-only
 		result_code=$?
 	fi
 
@@ -6505,6 +6536,12 @@ _QPKG:enable_()
 	elif QPKGs-ISenabled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" enable skipped 'already enabled'
 		result_code=2
+	fi
+
+	if ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" enable skipped "assigned to another repository, please 'reassign' it first"
+		MarkThisActionForkAsSkippedError
+		FuncFork:Exit 2
 	fi
 
 	if [[ $result_code -gt 0 ]]; then
@@ -6558,6 +6595,12 @@ _QPKG:disable_()
 		result_code=2
 	fi
 
+	if ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" disable skipped "assigned to another repository, please 'reassign' it first"
+		MarkThisActionForkAsSkippedError
+		FuncFork:Exit 2
+	fi
+
 	if [[ $result_code -gt 0 ]]; then
 		MarkThisActionForkAsSkipped
 		FuncFork:Exit $result_code
@@ -6607,6 +6650,12 @@ _QPKG:backup_()
 		result_code=2
 	fi
 
+	if ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" backup skipped "assigned to another repository, please 'reassign' it first"
+		MarkThisActionForkAsSkippedError
+		FuncFork:Exit 2
+	fi
+
 	if [[ $result_code -gt 0 ]]; then
 		MarkThisActionForkAsSkipped
 		FuncFork:Exit $result_code
@@ -6615,7 +6664,7 @@ _QPKG:backup_()
 	DebugAsProc "backing-up $(FormatAsPackName "$PACKAGE_NAME") configuration"
 	[[ $opts_debug = true ]] && debug_cmd='DEBUG_QPKG=true '
 
-	RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) backup" "$LOGS_PATH/$PACKAGE_NAME.$BACKUP_LOG_FILE" log:failure-only
+	RunAndLog "${debug_cmd}$(QPKG.GetServicePathFile) backup" "$LOGS_PATH/$PACKAGE_NAME.$BACKUP_LOG_FILE" log:failure-only
 	result_code=$?
 
 	if [[ $result_code -eq 0 ]]; then
@@ -6660,6 +6709,12 @@ _QPKG:restore_()
 		result_code=2
 	fi
 
+	if ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" restore skipped "assigned to another repository, please 'reassign' it first"
+		MarkThisActionForkAsSkippedError
+		FuncFork:Exit 2
+	fi
+
 	if [[ $result_code -gt 0 ]]; then
 		MarkThisActionForkAsSkipped
 		FuncFork:Exit $result_code
@@ -6668,7 +6723,7 @@ _QPKG:restore_()
 	DebugAsProc "restoring $(FormatAsPackName "$PACKAGE_NAME") configuration"
 	[[ $opts_debug = true ]] && debug_cmd='DEBUG_QPKG=true '
 
-	RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) restore" "$LOGS_PATH/$PACKAGE_NAME.$RESTORE_LOG_FILE" log:failure-only
+	RunAndLog "${debug_cmd}$(QPKG.GetServicePathFile) restore" "$LOGS_PATH/$PACKAGE_NAME.$RESTORE_LOG_FILE" log:failure-only
 	result_code=$?
 
 	if [[ $result_code -eq 0 ]]; then
@@ -6713,6 +6768,12 @@ _QPKG:clean_()
 		result_code=2
 	fi
 
+	if ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" clean skipped "assigned to another repository, please 'reassign' it first"
+		MarkThisActionForkAsSkippedError
+		FuncFork:Exit 2
+	fi
+
 	if [[ $result_code -gt 0 ]]; then
 		MarkThisActionForkAsSkipped
 		FuncFork:Exit $result_code
@@ -6721,7 +6782,7 @@ _QPKG:clean_()
 	DebugAsProc "cleaning $(FormatAsPackName "$PACKAGE_NAME")"
 	[[ $opts_debug = true ]] && debug_cmd='DEBUG_QPKG=true '
 
-	RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) clean" "$LOGS_PATH/$PACKAGE_NAME.$CLEAN_LOG_FILE" log:failure-only
+	RunAndLog "${debug_cmd}$(QPKG.GetServicePathFile) clean" "$LOGS_PATH/$PACKAGE_NAME.$CLEAN_LOG_FILE" log:failure-only
 	result_code=$?
 
 	if [[ $result_code -eq 0 ]]; then
@@ -6776,6 +6837,12 @@ _QPKG:sign_()
 	elif [[ ! -e $CERT_DB_PATHFILE ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped 'certificate database not found'
 		result_code=2
+	fi
+
+	if ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped "assigned to another repository, please 'reassign' it first"
+		MarkThisActionForkAsSkippedError
+		FuncFork:Exit 2
 	fi
 
 	if [[ $result_code -gt 0 ]]; then
@@ -6908,17 +6975,17 @@ _QPKG:status_()
 
 	DebugAsProc "statusing $(FormatAsPackName "$PACKAGE_NAME")"
 
-	if package_tests=$(QPKG:GetActiveTest "$PACKAGE_NAME"); then
+	if package_tests=$(QPKG.GetActiveTest "$PACKAGE_NAME"); then
 		eval "$package_tests" &>/dev/null
 		result_code=$?
 	else
 		[[ $opts_debug = true ]] && debug_cmd='DEBUG_QPKG=true '
 
 		if [[ -e $GNU_TIMEOUT_CMD ]]; then
-			$GNU_TIMEOUT_CMD "$QPKG_STATUS_CHECK_TIMEOUT_SECONDS" /bin/bash -c "${debug_cmd}$(QPKG.ServicePathFile) status"
+			$GNU_TIMEOUT_CMD "$QPKG_STATUS_CHECK_TIMEOUT_SECONDS" /bin/bash -c "${debug_cmd}$(QPKG.GetServicePathFile) status"
 			result_code=$?
 		else
-			RunAndLog "${debug_cmd}$(QPKG.ServicePathFile) status" "$LOGS_PATH/$PACKAGE_NAME.$STATUS_LOG_FILE" log:failure-only
+			RunAndLog "${debug_cmd}$(QPKG.GetServicePathFile) status" "$LOGS_PATH/$PACKAGE_NAME.$STATUS_LOG_FILE" log:failure-only
 			result_code=$?
 		fi
 	fi
@@ -6982,7 +7049,7 @@ QPKG.LastResultWasOk()
 	# input:
 	#   $PACKAGE_NAME (global) = QPKG name
 
-	[[ $(QPKG:GetServiceStatus "$PACKAGE_NAME") = ok ]]
+	[[ $(QPKG.GetServiceStatus "$PACKAGE_NAME") = ok ]]
 
 	}
 
@@ -6992,7 +7059,7 @@ QPKG.ServiceStatus:Log()
 	# input:
 	#   $PACKAGE_NAME (global) = QPKG name
 
-	if ! local status=$(QPKG:GetServiceStatus "$PACKAGE_NAME"); then
+	if ! local status=$(QPKG.GetServiceStatus "$PACKAGE_NAME"); then
 		DebugAsWarn "unable to get status of $(FormatAsPackName "$PACKAGE_NAME") service. It may be a non-sherpa package, or a sherpa package earlier than 200816c that doesn't support service results."
 		return 1
 	fi
@@ -7020,7 +7087,7 @@ QPKG.ServiceStatus:Log()
 
 	}
 
-QPKG.InstallationPath()
+QPKG.GetInstallationPath()
 	{
 
 	# input:
@@ -7034,7 +7101,7 @@ QPKG.InstallationPath()
 
 	}
 
-QPKG.ServicePathFile()
+QPKG.GetServicePathFile()
 	{
 
 	# input:
@@ -7052,7 +7119,7 @@ QPKG.ServicePathFile()
 
 	}
 
-QPKG.Avail.Ver()
+QPKG.Avail.GetVer()
 	{
 
 	# Returns the version number of an available QPKG.
@@ -7082,7 +7149,7 @@ QPKG.Avail.Ver()
 
 	}
 
-QPKG.Local.Ver()
+QPKG.Local.GetVer()
 	{
 
 	# Returns the version number of an installed QPKG.
@@ -7098,7 +7165,7 @@ QPKG.Local.Ver()
 
 	}
 
-QPKG.StoreID()
+QPKG.GetStoreID()
 	{
 
 	# Returns the presently assigned repository store ID of an installed QPKG.
@@ -7115,7 +7182,26 @@ QPKG.StoreID()
 
 	}
 
-QPKG.InstallDate()
+QPKG.IsRepoOk()
+	{
+
+	# Is this QPKG managable by sherpa?
+
+	# input:
+	#   $PACKAGE_NAME (global) = QPKG name (default)
+	#   $1 = if specified, use this as QPKG name instead
+
+	# output:
+	#   $? = 0 if true, 1 if false
+
+	local package=${PACKAGE_NAME:-}
+	[[ -n ${1:-} ]] && package=$1
+	local temp="$(QPKG.GetStoreID "${package:?package name null}")"
+	[[ -z $temp || $temp = sherpa ]]
+
+	}
+
+QPKG.GetInstallDate()
 	{
 
 	# Returns the date specified QPKG was installed.
@@ -7189,11 +7275,11 @@ QPKG.IsUpgradable()
 	local package=${PACKAGE_NAME:-}
 	[[ -n ${1:-} ]] && package=$1
 
-	QPKG.IsInstalled "$package" && [[ $(QPKG.Local.Ver "$package") != "$(QPKG.Avail.Ver "$package")" ]] && QPKG.IsArchOK "$package" && QPKG.IsMinOSVerOk "$package" && QPKG.IsMinRAMOk "$package"
+	QPKG.IsInstalled "$package" && QPKG.IsRepoOk "$package" && [[ $(QPKG.Local.GetVer "$package") != "$(QPKG.Avail.GetVer "$package")" ]] && QPKG.IsArchOK "$package" && QPKG.IsMinOSVerOk "$package" && QPKG.IsMinRAMOk "$package"
 
 	}
 
-QPKG.OriginalPath()
+QPKG.GetOriginalPath()
 	{
 
 	# input:
@@ -7249,7 +7335,7 @@ QPKG.MatchAbbrv()
 
 	}
 
-QPKG.PathFilename()
+QPKG.GetPathFilename()
 	{
 
 	# input:
@@ -7259,7 +7345,7 @@ QPKG.PathFilename()
 	#   stdout = QPKG local filename
 	#   $? = 0 if successful, 1 if failed
 
-	local url=$(QPKG.URL "${1:?package name null}")
+	local url=$(QPKG.GetURL "${1:?package name null}")
 
 	[[ -n ${url:-} ]] || return
 	[[ $(Lowercase "${url##*.}") != qpkg ]] && url=${url%.*}.qpkg		# swap `zip` for `qpkg` here (only used for `QDK.zip`)
@@ -7269,7 +7355,7 @@ QPKG.PathFilename()
 
 	}
 
-QPKG.MD5()
+QPKG.GetMD5()
 	{
 
 	# input:
@@ -7292,7 +7378,7 @@ QPKG.MD5()
 
 	}
 
-QPKG.URL()
+QPKG.GetURL()
 	{
 
 	# input:
@@ -7329,12 +7415,12 @@ QPKG.IsArchOK()
 
 	local package=${PACKAGE_NAME:-}
 	[[ -n ${1:-} ]] && package=$1
-	local temp="$(QPKG.URL "${package:?package name null}")"
+	local temp="$(QPKG.GetURL "${package:?package name null}")"
 	[[ -n $temp && $temp != none ]]
 
 	}
 
-QPKG.MinRAM()
+QPKG.GetMinRAM()
 	{
 
 	# input:
@@ -7366,12 +7452,12 @@ QPKG.IsMinRAMOk()
 	# output:
 	#   $? = 0 if this NAS meets the minium RAM requirements for QPKG name, 1 if not
 
-	local min="$(QPKG.MinRAM "${1:?package name null}")"
+	local min="$(QPKG.GetMinRAM "${1:?package name null}")"
 	[[ -n $min ]] && [[ $min = none || $NAS_RAM_KB -ge $min ]]
 
 	}
 
-QPKG.MinOSVer()
+QPKG.GetMinOSVer()
 	{
 
 	# input:
@@ -7403,12 +7489,12 @@ QPKG.IsMinOSVerOk()
 	# output:
 	#   $? = 0 if this NAS meets the minium OS firmware version requirements for QPKG name, 1 if not
 
-	local min="$(QPKG.MinOSVer "${1:?package name null}")"
+	local min="$(QPKG.GetMinOSVer "${1:?package name null}")"
 	[[ -n $min ]] && [[ $min = none || ${NAS_FIRMWARE_VER//.} -ge $min ]]
 
 	}
 
-QPKG.Author()
+QPKG.GetAuthor()
 	{
 
 	# Return the maintainer of the specified QPKG
@@ -7433,7 +7519,7 @@ QPKG.Author()
 
 	}
 
-QPKG.AppAuthor()
+QPKG.GetAppAuthor()
 	{
 
 	# Return the author of the application contained within the specified QPKG
@@ -7458,7 +7544,7 @@ QPKG.AppAuthor()
 
 	}
 
-QPKG.Desc()
+QPKG.GetDesc()
 	{
 
 	# input:
@@ -7481,7 +7567,7 @@ QPKG.Desc()
 
 	}
 
-QPKG.Note()
+QPKG.GetNote()
 	{
 
 	# return any additional notes to be prominently displayed
@@ -7506,7 +7592,7 @@ QPKG.Note()
 
 	}
 
-QPKG:GetAbbrvs()
+QPKG.GetAbbrvs()
 	{
 
 	# input:
@@ -7529,7 +7615,7 @@ QPKG:GetAbbrvs()
 
 	}
 
-QPKG:GetDependencies()
+QPKG.GetDependencies()
 	{
 
 	# input:
@@ -7552,7 +7638,7 @@ QPKG:GetDependencies()
 
 	}
 
-QPKG:GetDependents()
+QPKG.GetDependents()
 	{
 
 	# input:
@@ -7700,7 +7786,7 @@ QPKG.IsCanLog()
 
 	}
 
-QPKG:GetActiveTest()
+QPKG.GetActiveTest()
 	{
 
 	# Return the tests required to determine if specified QPKG is active or not
@@ -7767,7 +7853,7 @@ QPKG.IsMissing()
 	# output:
 	#   $? = 0 (true) or 1 (false)
 
-	path=$(QPKG.InstallationPath "${1:?package name null}")
+	path=$(QPKG.GetInstallationPath "${1:?package name null}")
 	[[ -n $path && ! -d $path ]]
 
 	}
@@ -7785,7 +7871,7 @@ QPKG.IsEnabled()
 
 	}
 
-QPKG:GetServiceStatus()
+QPKG.GetServiceStatus()
 	{
 
 	# input:
@@ -8760,7 +8846,7 @@ ShowAsActionLogDetail()
 		failed)
 			if [[ -n "${6:-}" ]]; then
 				if QPKG.IsCanLog "$2"; then
-					DisplayAsIndentPrefixActionResultDurationReason 'Unable to ' "$3" "$2" "$5" "For more information, please check the service log: /etc/init.d/$($BASENAME_CMD "$(QPKG.ServicePathFile "$2")") log"
+					DisplayAsIndentPrefixActionResultDurationReason 'Unable to ' "$3" "$2" "$5" "For more information, please check the service log: /etc/init.d/$($BASENAME_CMD "$(QPKG.GetServicePathFile "$2")") log"
 				else
 					DisplayAsIndentPrefixActionResultDurationReason 'Unable to ' "$3" "$2" "$5" "reason: $6"
 				fi
