@@ -2689,7 +2689,7 @@ WriteMsgInPlace()
 
 	# output:
 	#   stdout = "$1" with all whitespace squeezed.
-	#   $prev_clean_msg = the message provided in $1, but with all whitespace squeezed, and with ANSI codes removed.
+	#   $prev_clean_msg = the message provided in $1, but with all whitespace squeezed, and ANSI codes removed.
 
 	local -i blanking_length=0
 	local squeezed_msg=$(tr -s ' ' <<< "${1:-}")
@@ -2870,7 +2870,7 @@ LenANSIDiff()
 
 	}
 
-CalcMaxStatusColsToDisplay()
+CalcMaxStatusReportCols()
 	{
 
 	local col1_width=$((${#CHARS_SPECIAL}+PACKAGE_NAME_COL_WIDTH))
@@ -2953,7 +2953,7 @@ DisplayAsSynExam()
 
 	}
 
-DisplayAsHelpTitleNameAuthorDesc()
+DisplayAsPackagesReportTitleLine()
 	{
 
 	local package_name_msg=''
@@ -2983,31 +2983,39 @@ DisplayAsHelpTitleNameAuthorDesc()
 		printf "%-$((PACKAGE_DESCRIPTION_COL_WIDTH+2+$(LenANSIDiff "$package_description_msg")))s" "$package_description_msg"
 	fi
 
-	printf '\n'
-	linespace_visible=false
+	printf '\n'; linespace_visible=false
 
 	}
 
-DisplayAsHelpNameAuthorDesc()
+DisplayAsPackagesReportLine()
 	{
 
 	# input:
-	#	$1 = 'normal/highlighted/muted'
-	#	$2 = package name
-	#	$3 = author
-	#	$4 = description
-	#	$5 = notes (optional)
+	#	$1 = package name
 
-	local package_name=${2:-}
-	local package_name_msg="${CHARS_NORMAL}${package_name}"
-	local package_author=${3:-}
-	local package_author_msg="${CHARS_BLANK}${package_author}"
-	local package_description=${4:-}
-	local package_description_msg="${CHARS_BLANK}${package_description}"
-	local package_notes=${5:-}
+	local package_name="${1:?package name null}"
+	local package_name_msg="$CHARS_NORMAL"
+	local package_author="$(QPKG.GetAuthor "$package_name")"
+	local package_author_msg="$CHARS_BLANK"
+	local package_description="$(QPKG.GetDesc "$package_name")"
+	local package_description_msg="$CHARS_BLANK"
+	local package_notes="$(QPKG.GetNote "$package_name")"
 	local package_notes_msg="$(ColourTextCyan "${CHARS_NOTE}${package_notes}")"
+	local mode=''
 
-	case $1 in
+	if QPKG.IsMissing "$package_name"; then
+		mode=highlighted
+	elif QPKG.IsNtInstalled "$package_name"; then
+		mode=muted
+	else
+		mode=normal
+	fi
+
+	package_name_msg+="$package_name"
+	package_author_msg+="$package_author"
+	package_description_msg+="$package_description"
+
+	case $mode in
 		muted)
 			package_name_msg="$(ColourTextDarkGrey "$package_name_msg")"
 			package_author_msg="$(ColourTextDarkGrey "$package_author_msg")"
@@ -3040,8 +3048,7 @@ DisplayAsHelpNameAuthorDesc()
 		fi
 	fi
 
-	printf '\n'
-	linespace_visible=false
+	printf '\n'; linespace_visible=false
 
 	}
 
@@ -3086,8 +3093,7 @@ DisplayAsStatusReportTitleLine()
 		printf "%-$((PACKAGE_PATH_COL_WIDTH+2+$(LenANSIDiff "$package_path_msg")))s" "$package_path_msg"
 	fi
 
-	printf '\n'
-	linespace_visible=false
+	printf '\n'; linespace_visible=false
 
 	}
 
@@ -3213,8 +3219,7 @@ DisplayAsStatusReportLine()
 		printf "%-$((PACKAGE_PATH_COL_WIDTH+$(LenANSIDiff "$package_path_msg")))s" "$package_path_msg"
 	fi
 
-	printf '\n'
-	linespace_visible=false
+	printf '\n'; linespace_visible=false
 
 	}
 
@@ -3248,8 +3253,7 @@ DisplayAsReposReportTitleLine()
 		printf "%-$((PACKAGE_REPO_COL_WIDTH+2+$(LenANSIDiff "$package_repo_msg")))s" "$package_repo_msg"
 	fi
 
-	printf '\n'
-	linespace_visible=false
+	printf '\n'; linespace_visible=false
 
 	}
 
@@ -3338,8 +3342,7 @@ DisplayAsReposReportLine()
 		printf "%-$((PACKAGE_REPO_COL_WIDTH+$(LenANSIDiff "$assigned_repo_msg")))s" "$assigned_repo_msg"
 	fi
 
-	printf '\n'
-	linespace_visible=false
+	printf '\n'; linespace_visible=false
 
 	}
 
@@ -3365,8 +3368,7 @@ DisplayAsAbsReportTitleLine()
 		printf "%-$((PACKAGE_ABBS_COL_WIDTH+2+$(LenANSIDiff "$package_abs_msg")))s" "$package_abs_msg"
 	fi
 
-	printf '\n'
-	linespace_visible=false
+	printf '\n'; linespace_visible=false
 
 	}
 
@@ -3379,7 +3381,7 @@ DisplayAsAbsReportLine()
 	local package_name="${1:-}"
 	local package_name_msg="$CHARS_BLANK"
 	local package_abs=''
-	local package_abs_msg=''
+	local package_abs_msg="$CHARS_NORMAL"
 	local mode=''
 
 	if QPKG.IsMissing "$package_name"; then
@@ -3394,30 +3396,32 @@ DisplayAsAbsReportLine()
 
 	if [[ -n $package_abs ]]; then
 		package_abs="$(Trim "$package_abs")"
-		package_abs_msg+="${package_abs// /, }"	# insert separators
+		package_abs="${package_abs// /, }"	# insert separators
 	fi
 
 	case $mode in
 		normal)
 			package_name_msg+="$package_name"
-			package_abs_msg="${CHARS_NORMAL}${package_abs_msg}"
+			package_abs_msg+="$package_abs"
 			;;
 		muted)
 			package_name_msg+="$(ColourTextDarkGrey "$package_name")"
 
 			if ! QPKG.IsArchOK "$package_name"; then
-				package_abs_msg='(not installable: incompatible arch)'
+				package_abs_msg+='(not installable: incompatible arch)'
 			elif ! QPKG.IsMinOSVerOk "$package_name"; then
-				package_abs_msg="(not installable: incompatible $(GetQnapOS) version)"
+				package_abs_msg+="(not installable: incompatible $(GetQnapOS) version)"
 			elif ! QPKG.IsMinRAMOk "$package_name"; then
-				package_abs_msg='(not installable: insufficient RAM)'
+				package_abs_msg+='(not installable: insufficient RAM)'
+			else
+				package_abs_msg+="$package_abs"
 			fi
 
-			package_abs_msg="$(ColourTextDarkGrey "${CHARS_NORMAL}${package_abs_msg}")"
+			package_abs_msg="$(ColourTextDarkGrey "$package_abs_msg")"
 			;;
 		highlighted)
 			package_name_msg+="$(ColourTextBrightRed "$package_name")"
-			package_abs_msg="$(ColourTextBrightRedBlink "${CHARS_ALERT}${package_abs_msg}")"
+			package_abs_msg="$(ColourTextBrightRedBlink "${CHARS_ALERT}${package_abs}")"
 	esac
 
 	# column 1: package name
@@ -3432,8 +3436,7 @@ DisplayAsAbsReportLine()
 		printf "%-$((PACKAGE_ABBS_COL_WIDTH+$(LenANSIDiff "$package_abs_msg")))s" "$package_abs_msg"
 	fi
 
-	printf '\n'
-	linespace_visible=false
+	printf '\n'; linespace_visible=false
 
 	}
 
@@ -3483,8 +3486,7 @@ DisplayAsDepsReportTitleLine()
 		printf "%-$((PACKAGE_ARCH_COL_WIDTH+2+$(LenANSIDiff "$package_arch_msg")))s" "$package_arch_msg"
 	fi
 
-	printf '\n'
-	linespace_visible=false
+	printf '\n'; linespace_visible=false
 
 	}
 
@@ -3554,19 +3556,19 @@ DisplayAsDepsReportLine()
 			if QPKG.IsMinRAMOk "$package_name"; then
 				package_min_ram_msg+="$(ColourTextDarkGrey "$package_min_ram")"
 			else
-				package_min_ram_msg+="$(ColourTextBrightRed "$package_min_ram")"
+				package_min_ram_msg+="$(ColourTextBrightOrange "$package_min_ram")"
 			fi
 
 			if QPKG.IsMinOSVerOk "$package_name"; then
 				package_min_os_msg+="$(ColourTextDarkGrey "$package_min_os")"
 			else
-				package_min_os_msg+="$(ColourTextBrightRed "$package_min_os")"
+				package_min_os_msg+="$(ColourTextBrightOrange "$package_min_os")"
 			fi
 
 			if QPKG.IsArchOK "$package_name"; then
 				package_arch_msg+="$(ColourTextDarkGrey true)"
 			else
-				package_arch_msg+="$(ColourTextBrightRed false)"
+				package_arch_msg+="$(ColourTextBrightOrange false)"
 			fi
 			;;
 		highlighted)
@@ -3622,8 +3624,7 @@ DisplayAsDepsReportLine()
 		printf "%-$((PACKAGE_ARCH_COL_WIDTH+$(LenANSIDiff "$package_arch_msg")))s" "$package_arch_msg"
 	fi
 
-	printf '\n'
-	linespace_visible=false
+	printf '\n'; linespace_visible=false
 
 	}
 
@@ -3690,8 +3691,7 @@ DisplayAsIndentPrefixActionResultDurationReason()
 		printf "%s%s %s%s\n%${ACTION_RESULT_INDENT}s${CHARS_DROPEND}%s" "${1:-}" "$(Lowercase "${2:-}")" "${3:-}" "$([[ -n $duration ]] && printf ' in %s' "$duration")" '' "$5"
 	fi
 
-	printf '\n'
-	linespace_visible=false
+	printf '\n'; linespace_visible=false
 
 	}
 
@@ -4559,8 +4559,6 @@ QPKGs.Actions:ListAll()
 	DebugInfoMinSepr
 
 	for action in "${QPKG_ACTIONS[@]}"; do
-		[[ $action = enable || $action = disable ]] && continue  # no objects for these as `activate` and `stop` do the same jobs
-
 		for prefix in to ok er sk; do
 			if QPKGs-AC${action}-${prefix}.IsAny; then
 				DebugQpkg info "AC${action}=${prefix}" "($(QPKGs-AC${action}-${prefix}:Count)) $(QPKGs-AC${action}-${prefix}:ListCSV) "
@@ -4589,9 +4587,9 @@ QPKGs.States:List()
 	DebugInfoMinSepr
 
 	for state in "${QPKG_IS_STATES[@]}" "${QPKG_SERVICE_RESULTS[@]}"; do
-		if [[ $state = installed ]]; then
-			continue
-		elif [[ $state = unknown ]]; then
+		[[ $state = installed ]] && continue
+
+		if [[ $state = unknown ]]; then
 			QPKGs-IS${state}.IsAny && DebugQpkg warning "IS${state}" "($(QPKGs-IS${state}:Count)) $(QPKGs-IS${state}:ListCSV) "
 		else
 			QPKGs-IS${state}.IsAny && DebugQpkg info "IS${state}" "($(QPKGs-IS${state}:Count)) $(QPKGs-IS${state}:ListCSV) "
@@ -4599,9 +4597,9 @@ QPKGs.States:List()
 	done
 
 	for state in "${QPKG_ISNT_STATES[@]}" "${QPKG_SERVICE_RESULTS[@]}"; do
-		if [[ $state = installed ]]; then
-			continue
-		elif [[ $state = ok ]]; then
+		[[ $state = installed ]] && continue
+
+		if [[ $state = ok ]]; then
 			QPKGs-ISNT${state}.IsAny && DebugQpkg error "ISNT${state}" "($(QPKGs-ISNT${state}:Count)) $(QPKGs-ISNT${state}:ListCSV) "
 		elif [[ $state = backedup ]]; then
 			QPKGs-ISNT${state}.IsAny && DebugQpkg warning "ISNT${state}" "($(QPKGs-ISNT${state}:Count)) $(QPKGs-ISNT${state}:ListCSV) "
@@ -4938,16 +4936,10 @@ QPKGs:List:Show()
 
 		Help.Basic:Show
 		DisplayAsHelpTitle "One-or-more $(FormatAsPackages) may be specified at-once."
-		DisplayAsHelpTitleNameAuthorDesc
+		DisplayAsPackagesReportTitleLine
 
 		for package_name in $(QPKGs-SCall:Array); do
-			if QPKGs-ISmissing.Exist "$package_name" &>/dev/null; then
-				DisplayAsHelpNameAuthorDesc highlighted "$package_name" missing "$(QPKG.GetDesc "$package_name")" "$(QPKG.GetNote "$package_name")"
-			elif QPKG.IsNtInstalled "$package_name"; then
-				DisplayAsHelpNameAuthorDesc muted "$package_name" "$(QPKG.GetAuthor "$package_name")" "$(QPKG.GetDesc "$package_name")" "$(QPKG.GetNote 	"$package_name")"
-			else
-				DisplayAsHelpNameAuthorDesc normal "$package_name" "$(QPKG.GetAuthor "$package_name")" "$(QPKG.GetDesc "$package_name")" "$(QPKG.GetNote "$package_name")"
-			fi
+			DisplayAsPackagesReportLine "$package_name"
 		done
 
 		DisplayAsProjSynExam "abbreviations and aliases may also be used to specify $(FormatAsPackages). To list these" 'list abs'
@@ -4997,7 +4989,7 @@ QPKGs.Statuses:Show()
 	Func:Entry
 	local package_name=''
 
-	CalcMaxStatusColsToDisplay
+	CalcMaxStatusReportCols
 	QPKGs.States:Build
 	DisplayWritingReport
 
@@ -5442,79 +5434,6 @@ GetThisBinPath()
 
 	}
 
-OS.IsQNAP()
-	{
-
-	# is this a QNAP NAS?
-
-	[[ -e /etc/init.d/functions ]]
-
-	}
-
-OS.IsCompatibleWithSigned()
-	{
-
-	# QTS builds released over these 6 days don't allow unsigned QPKGs to run at-all
-	[[ $NAS_FIRMWARE_DATE -lt 20201015 || $NAS_FIRMWARE_DATE -gt 20201020 ]]
-
-	}
-
-OS.IsSupported()
-	{
-
-	[[ ${NAS_FIRMWARE_VER//.} -ge 400 ]]
-
-	}
-
-OS.IsSupportSecureDownload()
-	{
-
-	[[ ${NAS_FIRMWARE_VER//.} -ge 426 ]]
-
-	}
-
-OS.IsSupportQpkgTimeout()
-	{
-
-	[[ ${NAS_FIRMWARE_VER//.} -ge 430 ]]
-
-	}
-
-OS.IsSupportSignedPackages()
-	{
-
-	[[ ${NAS_FIRMWARE_VER//.} -ge 435 ]]
-
-	}
-
-OS.IsSupportSudo()
-	{
-
-	[[ -e /usr/bin/sudo ]]
-
-	}
-
-OS.IsAllowUnsignedPackages()
-	{
-
-	[[ $(/sbin/getcfg 'QPKG Management' Ignore_Cert) = TRUE ]]
-
-	}
-
-OS.IsStarting()
-	{
-
-	ps | $GREP_CMD -F '/bin/sh /etc/init.d/rcS' | $GREP_CMD -v grep
-
-	} &>/dev/null
-
-OS.IsStopping()
-	{
-
-	ps | $GREP_CMD -F '/bin/sh /etc/init.d/rcK' | $GREP_CMD -v grep
-
-	} &>/dev/null
-
 GetRepoURLFromStoreID()
 	{
 
@@ -5676,6 +5595,79 @@ GetUpState()
 
 	}
 
+OS.IsQNAP()
+	{
+
+	# is this a QNAP NAS?
+
+	[[ -e /etc/init.d/functions ]]
+
+	}
+
+OS.IsCompatibleWithSigned()
+	{
+
+	# QTS builds released over these 6 days don't allow unsigned QPKGs to run at-all
+	[[ $NAS_FIRMWARE_DATE -lt 20201015 || $NAS_FIRMWARE_DATE -gt 20201020 ]]
+
+	}
+
+OS.IsSupported()
+	{
+
+	[[ ${NAS_FIRMWARE_VER//.} -ge 400 ]]
+
+	}
+
+OS.IsSupportSecureDownload()
+	{
+
+	[[ ${NAS_FIRMWARE_VER//.} -ge 426 ]]
+
+	}
+
+OS.IsSupportQpkgTimeout()
+	{
+
+	[[ ${NAS_FIRMWARE_VER//.} -ge 430 ]]
+
+	}
+
+OS.IsSupportSignedPackages()
+	{
+
+	[[ ${NAS_FIRMWARE_VER//.} -ge 435 ]]
+
+	}
+
+OS.IsSupportSudo()
+	{
+
+	[[ -e /usr/bin/sudo ]]
+
+	}
+
+OS.IsAllowUnsignedPackages()
+	{
+
+	[[ $(/sbin/getcfg 'QPKG Management' Ignore_Cert) = TRUE ]]
+
+	}
+
+OS.IsStarting()
+	{
+
+	ps | $GREP_CMD -F '/bin/sh /etc/init.d/rcS' | $GREP_CMD -v grep
+
+	} &>/dev/null
+
+OS.IsStopping()
+	{
+
+	ps | $GREP_CMD -F '/bin/sh /etc/init.d/rcK' | $GREP_CMD -v grep
+
+	} &>/dev/null
+
 Self.Error:Set()
 	{
 
@@ -5708,11 +5700,7 @@ ShowZeroQpkgs()
 
 	for state in "${USER_QPKG_IS_STATES[@]}"; do
 		for action in "${USER_QPKG_ACTIONS[@]}"; do
-			case $action in
-				disable|enable|list)
-					continue	# action results lists are unavailable for these
-			esac
-
+			[[ $action = list ]] && continue	# action results lists are unavailable for these
 			QPKGs.AC${action}.IS${state}.IsSet && QPKGs-AC${action}-ok.IsNone && ShowAsWarn "no QPKGs were able to $(Lowercase "$action")"
 		done
 	done
