@@ -4684,7 +4684,7 @@ QPKGs.States:Build()
 	local prev=''
 	OS.IsStarting && ShowAsWarn "$(GetQnapOS) is still starting. QPKG statuses are in-flux. Try checking again in a few minutes."
 	OS.IsStopping && ShowAsWarn "$(GetQnapOS) is shutting-down. All QPKGs are in the process of being stopped."
-	ShowAsProc 'package states'
+	ShowAsProc 'QPKG states'
 
 	for index in "${!QPKG_NAME[@]}"; do
 		package="${QPKG_NAME[$index]}"
@@ -8448,8 +8448,11 @@ FuncFork:Exit()
 	SendActionStatus ex
 	DebugAsFuncEx "${1:-0}" "$(FormatAsDuration "$(CalcMilliDifference "${!var_safe_name}" "$(/bin/date +%s%N)")")"
 
-	if [[ -n $sess_active_pathfile && -e $sess_active_pathfile && -s $sess_active_pathfile ]]; then
-		$CAT_CMD "$sess_active_pathfile" >> "$original_sess_active_pathfile"
+	if [[ -n $sess_active_pathfile && -e $sess_active_pathfile ]]; then
+		if [[ -s $sess_active_pathfile ]]; then
+			$CAT_CMD "$sess_active_pathfile" >> "$original_sess_active_pathfile"
+		fi
+
 		rm -f "$sess_active_pathfile"
 	fi
 
@@ -9227,7 +9230,7 @@ Packages:Load()
 
 	if [[ ! -e $PWD/dont.refresh.packages ]]; then
 		if [[ ! -e $PACKAGES_PATHFILE ]] || ! IsThisFileRecent "$PACKAGES_PATHFILE" "$FILE_CHANGE_THRESHOLD_MINUTES"; then
-			ShowAsProc 'downloading package list'
+			ShowAsProc 'downloading QPKG list'
 
 			if $CURL_CMD --insecure --silent --fail "$PACKAGES_ARCHIVE_URL" > "$PACKAGES_ARCHIVE_PATHFILE"; then
 				$TAR_CMD --extract --gzip --file="$PACKAGES_ARCHIVE_PATHFILE" --directory="$CACHE_PATH"
@@ -9236,11 +9239,11 @@ Packages:Load()
 	fi
 
 	if [[ ! -e $PACKAGES_PATHFILE ]]; then
-		ShowAsAbort 'package list missing'
+		ShowAsAbort 'QPKG list missing'
 		Func:Exit 1; exit
 	fi
 
-	ShowAsProc 'loading package list'
+	ShowAsProc 'loading QPKG list'
 	. "$PACKAGES_PATHFILE"
 	packages_loaded=true
 
