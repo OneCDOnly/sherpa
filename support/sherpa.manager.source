@@ -408,12 +408,13 @@ Consts:Load()
 	readonly HELP_SYNTAX_INDENT=6
 
 	readonly PACKAGE_ABBS_COL_WIDTH=84
+	readonly PACKAGE_ARCH_COL_WIDTH=14
 	readonly PACKAGE_AUTHOR_COL_WIDTH=22
 	readonly PACKAGE_DEPENDENCIES_COL_WIDTH=28
 	readonly PACKAGE_DESCRIPTION_COL_WIDTH=100
 	readonly PACKAGE_INSTALL_DATE_COL_WIDTH=18
-	readonly PACKAGE_MIN_RAM_COL_WIDTH=19
-	readonly PACKAGE_MIN_OS_COL_WIDTH=14
+	readonly PACKAGE_MIN_RAM_COL_WIDTH=17
+	readonly PACKAGE_MIN_OS_COL_WIDTH=15
 	readonly PACKAGE_NAME_COL_WIDTH=21
 	readonly PACKAGE_PATH_COL_WIDTH=48
 	readonly PACKAGE_REPO_COL_WIDTH=40
@@ -493,7 +494,7 @@ Consts:Load()
 	readonly SCREEN_CMD=/usr/sbin/screen
 
 	if OS.IsSupportSudo; then
-		if [[ $(GetSudoUID) = '<undefined>' ]]; then
+		if [[ $(GetSudoUID) = undefined ]]; then
 			readonly HELP_SYNTAX_PREFIX="$CHARS_SUPER_PROMPT"
 			readonly HELP_SYNTAX_SUDO_PREFIX="$CHARS_SUPER_PROMPT"
 		else
@@ -2427,8 +2428,8 @@ IPKs:install()
 	else
 		for index in "${!QPKG_NAME[@]}"; do
 			if QPKGs-ACinstall-to.Exist "${QPKG_NAME[$index]}" || QPKGs-ISinstalled.Exist "${QPKG_NAME[$index]}" || QPKGs-ACreinstall-to.Exist "${QPKG_NAME[$index]}" || (QPKGs-ACactivate-to.Exist "${QPKG_NAME[$index]}" && (QPKGs-ACinstall-to.Exist "${QPKG_NAME[$index]}" || QPKGs-ISinstalled.Exist "${QPKG_NAME[$index]}" || QPKGs-ACreinstall-to.Exist "${QPKG_NAME[$index]}")); then
-				QPKG.MinOSVerOk "${QPKG_NAME[$index]}" || continue
-				QPKG.MinRAMOk "${QPKG_NAME[$index]}" || continue
+				QPKG.IsMinOSVerOk "${QPKG_NAME[$index]}" || continue
+				QPKG.IsMinRAMOk "${QPKG_NAME[$index]}" || continue
 				IPKs-ACinstall-to:Add "${QPKG_REQUIRES_IPKS[$index]}"
 			fi
 		done
@@ -2722,15 +2723,6 @@ KillActiveFork()
 
 	} &>/dev/null
 
-OS.IsQNAP()
-	{
-
-	# is this a QNAP NAS?
-
-	[[ -e /etc/init.d/functions ]]
-
-	}
-
 User.IsReset()
 	{
 
@@ -2779,6 +2771,13 @@ User.IsDebug()
 	done
 
 	return 1
+
+	}
+
+User.IsSU()
+	{
+
+	[[ $EUID -eq 0 ]]
 
 	}
 
@@ -3046,7 +3045,7 @@ DisplayAsHelpNameAuthorDesc()
 
 	}
 
-DisplayAsHelpTitleNameStatusVerPath()
+DisplayAsStatusReportTitleLine()
 	{
 
 	local package_name_msg=''
@@ -3092,75 +3091,68 @@ DisplayAsHelpTitleNameStatusVerPath()
 
 	}
 
-DisplayAsHelpNameStatusVerPath()
+DisplayAsStatusReportLine()
 	{
 
 	# input:
-	#	$1 = `normal/highlighted/muted`
-	#	$2 = package name
-	#	$3 = package status (optional) - only if installed
-	#	$4 = package last result (optional)
-	#	$5 = package current version number (optional) - only if installed
-	#	$6 = package avilable/upgradable version number (optional)
-	#	$7 = package installation path (optional) - only if installed
+	#	$1 = package name
 
-	local package_name=${2:-}
+	local package_name="${1:?package name null}"
 	local package_name_msg="$CHARS_BLANK"
-	local package_status=${3:-}
+ 	local package_status=''
 	local package_status_msg=''
-	local package_last_result=${4:-}
-	local package_last_result_msg=''
-	local package_installed_version=${5:-}
+ 	local package_installed_version=''
 	local package_version_msg="$CHARS_BLANK"
-	local package_upgrade_version=${6:-}
+ 	local package_upgrade_version=''
 	local package_upgrade_version_msg=''
-	local package_path=${7:-}
-	local package_path_msg="${CHARS_BLANK}${package_path}"
-	local patt=''
+	local package_path_msg="${CHARS_BLANK}"
+	local mode=''
 
-	case $1 in
+	if QPKG.IsMissing "$package_name"; then
+		mode=highlighted
+	elif QPKG.IsNtInstalled "$package_name"; then
+		mode=muted
+	else
+		mode=normal
+	fi
+
+	case $mode in
 		normal)
-			if [[ -n $package_status ]]; then
-				patt=\\benabled\\b
-				[[ $package_status =~ $patt ]] && package_status_msg+=" $(ColourTextBrightGreen enabled)"
-
-				patt=\\bdisabled\\b
-				[[ $package_status =~ $patt ]] && package_status_msg+=" $(ColourTextBrightRed disabled)"
-
-				patt=\\bactive\\b
-				[[ $package_status =~ $patt ]] && package_status_msg+=" $(ColourTextBrightGreen active)"
-
-				patt=\\bslow\\b
-				[[ $package_status =~ $patt ]] && package_status_msg+=" $(ColourTextBrightOrange slow)"
-
-				patt=\\binactive\\b
-				[[ $package_status =~ $patt ]] && package_status_msg+=" $(ColourTextBrightRed inactive)"
-
-				patt=\\bstart\\b
-				[[ $package_status =~ $patt ]] && package_status_msg+=" $(ColourTextBrightOrange starting)"
-
-				patt=\\bstop\\b
-				[[ $package_status =~ $patt ]] && package_status_msg+=" $(ColourTextBrightOrange stopping)"
-
-				patt=\\brestart\\b
-				[[ $package_status =~ $patt ]] && package_status_msg+=" $(ColourTextBrightOrange restarting)"
-
-				patt=\\bunknown\\b
-				[[ $package_status =~ $patt ]] && package_status_msg+=" $(ColourTextBrightOrange unknown)"
-
-				if [[ -n $package_status_msg ]]; then
-					package_status_msg="$(Trim "$package_status_msg")"
-					package_status_msg="${package_status_msg// /, }"	# insert separators
-				else
-					package_status_msg="$package_status"
-				fi
-
-				package_status_msg="${CHARS_NORMAL}${package_status_msg}"
+			if QPKGs-ISenabled.Exist "$package_name"; then
+				package_status+=" $(ColourTextBrightGreen enabled)"
 			else
-				package_status_msg="$(ColourTextBrightOrange "${CHARS_NOTE}unknown")"
+				package_status+=" $(ColourTextBrightRed disabled)"
 			fi
 
-			package_version_msg+=$package_installed_version
+			if QPKGs-ACstatus-ok.Exist "$package_name"; then
+				if QPKGs-ISactive.Exist "$package_name"; then
+					package_status+=" $(ColourTextBrightGreen active)"
+				elif QPKGs-ISslow.Exist "$package_name"; then
+					package_status+=" $(ColourTextBrightOrange slow)"
+				elif QPKGs-ISstarting.Exist "$package_name"; then
+					package_status+=" $(ColourTextBrightOrange starting)"
+				elif QPKGs-ISstopping.Exist "$package_name"; then
+					package_status+=" $(ColourTextBrightOrange stopping)"
+				elif QPKGs-ISrestarting.Exist "$package_name"; then
+					package_status+=" $(ColourTextBrightOrange restarting)"
+				elif QPKGs-ISunknown.Exist "$package_name"; then
+					package_status+=" $(ColourTextBrightOrange unknown)"
+				else
+					package_status+=" $(ColourTextBrightRed inactive)"
+				fi
+			else
+				package_status+=" $(ColourTextBrightOrange unknown)"
+			fi
+
+			if [[ -n $package_status ]]; then
+				package_status="$(Trim "$package_status")"
+				package_status_msg="${package_status// /, }"	# insert separators
+			fi
+
+			package_status_msg="${CHARS_NORMAL}${package_status_msg}"
+			package_installed_version="$(QPKG.Local.Ver "$package_name")"
+			QPKG.IsUpgradable "$package_name" && package_upgrade_version="$(QPKG.Avail.Ver "$package_name")"
+			package_version_msg+="$package_installed_version"
 
 			if [[ -n $package_upgrade_version ]]; then
 				package_version_msg+=" ($(ColourTextBrightOrange "$package_upgrade_version"))"
@@ -3168,37 +3160,44 @@ DisplayAsHelpNameStatusVerPath()
 			else
 				package_name_msg+="$package_name"
 			fi
+
+			package_path_msg+="$(QPKG.InstallationPath "$package_name")"
 			;;
 		muted)
 			package_name_msg+="$(ColourTextDarkGrey "$package_name")"
-			package_version_msg+="$(ColourTextDarkGrey "$package_upgrade_version")"
-			[[ -n $package_status && $package_status =~ 'not installable' ]] && package_version_msg=''
+
+			if ! QPKG.IsArchOK "$package_name"; then
+				package_status='not installable: incompatible arch'
+			elif ! QPKG.IsMinOSVerOk "$package_name"; then
+				package_status="not installable: incompatible $(GetQnapOS) version"
+			elif ! QPKG.IsMinRAMOk "$package_name"; then
+				package_status='not installable: insufficient RAM'
+			else
+				package_status='not installed'
+			fi
+
 			package_status_msg="$(ColourTextDarkGrey "${CHARS_NORMAL}${package_status}")"
+			package_version_msg=''
 			package_path_msg=''
 			;;
 		highlighted)
-			patt=\\bmissing\\b
-
-			if [[ $package_status =~ $patt ]]; then
-				package_name_msg+="$(ColourTextBrightRed "$package_name")"
-				package_status_msg="$(ColourTextBrightRedBlink "${CHARS_ALERT}${package_status}")"
-				package_version_msg+="$(ColourTextBrightRedBlink "$package_installed_version")"
-				package_path_msg="${CHARS_BLANK}$(ColourTextBrightRedBlink "$package_path")"
-			else
-				package_name_msg+="$(ColourTextBrightOrange "$package_name")"
-				package_status_msg="$(ColourTextBrightOrange "${CHARS_NOTE}${package_status}")"
-			fi
+			package_name_msg+="$(ColourTextBrightRed "$package_name")"
+			package_status=missing
+			package_status_msg="$(ColourTextBrightRedBlink "${CHARS_ALERT}${package_status}")"
+			package_installed_version="$(QPKG.Local.Ver "$package_name")"
+			package_version_msg+="$(ColourTextBrightRed "$package_installed_version")"
+			package_path_msg+="$(ColourTextBrightRedBlink "$(QPKG.InstallationPath "$package_name")")"
 	esac
 
 	# column 1: package name
 
-	if [[ $maxcols -ge 1 && -n $package_name ]]; then
+	if [[ $maxcols -ge 1 && -n $package_name_msg ]]; then
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
 	fi
 
 	# column 2: package statuses
 
-	if [[ $maxcols -ge 2 && -n $package_status ]]; then
+	if [[ $maxcols -ge 2 && -n $package_status_msg ]]; then
 		printf "%-$((PACKAGE_STATUS_COL_WIDTH+$(LenANSIDiff "$package_status_msg")))s" "$package_status_msg"
 	fi
 
@@ -3219,7 +3218,7 @@ DisplayAsHelpNameStatusVerPath()
 
 	}
 
-DisplayAsHelpTitleNameDateRepo()
+DisplayAsReposReportTitleLine()
 	{
 
 	local package_name_msg=''
@@ -3254,50 +3253,71 @@ DisplayAsHelpTitleNameDateRepo()
 
 	}
 
-DisplayAsHelpNameDateRepo()
+DisplayAsReposReportLine()
 	{
 
 	# input:
-	#	$1 = 'normal/highlighted/muted'
-	#	$2 = package name
-	#	$3 = assigned repository
-	#	$4 = package installation date
+	#	$1 = package name
 
-	local package_name=${2:-}
-	local package_name_msg=${CHARS_BLANK}$package_name
-	local assigned_repo=${3:-}
-	local assigned_repo_msg="${CHARS_NORMAL}${assigned_repo}"
-	local package_install_date=${4:-}
-	local package_install_date_msg=${CHARS_BLANK}$package_install_date
+	local package_name="${1:?package name null}"
+	local package_name_msg="$CHARS_BLANK"
+	local package_install_date=$(QPKG.InstallDate "$package_name")
+	local package_install_date_msg="$CHARS_BLANK"
+	local package_store_id=$(QPKG.StoreID "$package_name")
+	local assigned_repo="$(GetRepoURLFromStoreID "$package_store_id")"
+	local assigned_repo_msg="$CHARS_NORMAL"
+	local mode=''
 
-	case $1 in
+	if QPKG.IsMissing "$package_name"; then
+		mode=highlighted
+	elif QPKG.IsNtInstalled "$package_name"; then
+		mode=muted
+	else
+		mode=normal
+	fi
+
+	if [[ $package_store_id = sherpa ]]; then
+		assigned_repo=sherpa
+		assigned_repo_msg+="$(ColourTextBrightGreen "$assigned_repo")"
+	else
+		assigned_repo_msg+="$assigned_repo"
+	fi
+
+	case $mode in
 		normal)
-			case $assigned_repo in
+			package_name_msg+="$package_name"
+
+			case $package_install_date in
 				sherpa)
-					assigned_repo_msg="${CHARS_NORMAL}$(ColourTextBrightGreen "$assigned_repo")"
+					package_install_date_msg+="$(ColourTextBrightGreen "$package_install_date")"
 					;;
 				unassigned)
-					assigned_repo_msg="${CHARS_NORMAL}$(ColourTextBrightOrange "$assigned_repo")"
+					package_install_date_msg+="$(ColourTextBrightOrange "$package_install_date")"
+					;;
+				*)
+					package_install_date_msg+="$package_install_date"
 			esac
 			;;
 		muted)
-			package_name_msg="${CHARS_BLANK}$(ColourTextDarkGrey "$package_name")"
-			package_install_date_msg="${CHARS_BLANK}$(ColourTextDarkGrey "$assigned_repo")"
+			package_name_msg+="$(ColourTextDarkGrey "$package_name")"
+
+			if ! QPKG.IsArchOK "$package_name"; then
+				assigned_repo='not installable: incompatible arch'
+			elif ! QPKG.IsMinOSVerOk "$package_name"; then
+				assigned_repo="not installable: incompatible $(GetQnapOS) version"
+			elif ! QPKG.IsMinRAMOk "$package_name"; then
+				assigned_repo='not installable: insufficient RAM'
+			else
+				assigned_repo='not installed'
+			fi
+
+			package_install_date_msg+="$(ColourTextDarkGrey "$assigned_repo")"
+			assigned_repo=''
 			assigned_repo_msg=''
 			;;
 		highlighted)
-			if [[ -n $assigned_repo ]]; then
-				case $assigned_repo in
-					missing)
-						package_name_msg="${CHARS_BLANK}$(ColourTextBrightRed "$package_name")"
-						package_install_date_msg="${CHARS_BLANK}$(ColourTextBrightRedBlink "$assigned_repo")"
-						assigned_repo_msg="$(ColourTextBrightRedBlink "${CHARS_ALERT}${assigned_repo}")"
-						;;
-					*)
-						package_name_msg="${CHARS_BLANK}$(ColourTextBrightOrange "$package_name")"
-						assigned_repo_msg="$(ColourTextBrightOrange "${CHARS_NOTE}${assigned_repo}")"
-				esac
-			fi
+			package_name_msg+="$(ColourTextBrightRed "$package_name")"
+			package_install_date_msg+="$package_install_date"
 	esac
 
 	# column 1: package name
@@ -3323,7 +3343,7 @@ DisplayAsHelpNameDateRepo()
 
 	}
 
-DisplayAsHelpTitleNameAbs()
+DisplayAsAbsReportTitleLine()
 	{
 
 	local package_name_msg=''
@@ -3350,36 +3370,54 @@ DisplayAsHelpTitleNameAbs()
 
 	}
 
-DisplayAsHelpNameAbs()
+DisplayAsAbsReportLine()
 	{
 
 	# input:
-	#	$1 = 'normal/highlighted/muted'
-	#	$2 = package name
-	#	$3 = acceptable package abbreviations
+	#	$1 = package name
 
-	local package_name=${2:-}
-	local package_name_msg=${CHARS_BLANK}$package_name
-	local package_abs=${3:-}
-	local package_abs_msg="${CHARS_NORMAL}${package_abs}"
+	local package_name="${1:-}"
+	local package_name_msg="$CHARS_BLANK"
+	local package_abs=''
+	local package_abs_msg=''
+	local mode=''
 
-	case $1 in
+	if QPKG.IsMissing "$package_name"; then
+		mode=highlighted
+	elif QPKG.IsNtInstalled "$package_name"; then
+		mode=muted
+	else
+		mode=normal
+	fi
+
+	package_abs=$(QPKG:GetAbbrvs "$package_name")
+
+	if [[ -n $package_abs ]]; then
+		package_abs="$(Trim "$package_abs")"
+		package_abs_msg+="${package_abs// /, }"	# insert separators
+	fi
+
+	case $mode in
+		normal)
+			package_name_msg+="$package_name"
+			package_abs_msg="${CHARS_NORMAL}${package_abs_msg}"
+			;;
 		muted)
-			package_name_msg="$(ColourTextDarkGrey "${CHARS_BLANK}$package_name")"
-			package_abs_msg="$(ColourTextDarkGrey "${CHARS_NORMAL}${package_abs}")"
+			package_name_msg+="$(ColourTextDarkGrey "$package_name")"
+
+			if ! QPKG.IsArchOK "$package_name"; then
+				package_abs_msg='(not installable: incompatible arch)'
+			elif ! QPKG.IsMinOSVerOk "$package_name"; then
+				package_abs_msg="(not installable: incompatible $(GetQnapOS) version)"
+			elif ! QPKG.IsMinRAMOk "$package_name"; then
+				package_abs_msg='(not installable: insufficient RAM)'
+			fi
+
+			package_abs_msg="$(ColourTextDarkGrey "${CHARS_NORMAL}${package_abs_msg}")"
 			;;
 		highlighted)
-			if [[ -n $package_abs ]]; then
-				case $package_abs in
-					missing)
-						package_name_msg="$(ColourTextBrightRed "${CHARS_ALERT}${package_name}")"
-						package_abs_msg="$(ColourTextBrightRedBlink "${CHARS_ALERT}${package_abs}")"
-						;;
-					*)
-						package_name_msg="$(ColourTextBrightOrange "${CHARS_NORMAL}$package_name")"
-						package_abs_msg="$(ColourTextBrightOrange "${CHARS_NOTE}${package_abs}")"
-				esac
-			fi
+			package_name_msg+="$(ColourTextBrightRed "$package_name")"
+			package_abs_msg="$(ColourTextBrightRedBlink "${CHARS_ALERT}${package_abs_msg}")"
 	esac
 
 	# column 1: package name
@@ -3399,13 +3437,14 @@ DisplayAsHelpNameAbs()
 
 	}
 
-DisplayAsHelpTitleNameDepsMinRamMinOS()
+DisplayAsDepsReportTitleLine()
 	{
 
 	local package_name_msg=''
 	local package_deps_msg=''
 	local package_min_ram_msg=''
 	local package_min_os_msg=''
+	local package_arch_msg=''
 
 	DisplayLineSpaceIfNoneAlready
 
@@ -3426,15 +3465,22 @@ DisplayAsHelpTitleNameDepsMinRamMinOS()
 	# column 3: minimum NAS RAM required
 
 	if [[ $maxcols -ge 3 ]]; then
-		package_min_ram_msg="${CHARS_SPECIAL}minimum kB RAM:"
+		package_min_ram_msg="${CHARS_SPECIAL}minimum RAM:"
 		printf "%-$((PACKAGE_MIN_RAM_COL_WIDTH+2+$(LenANSIDiff "$package_min_ram_msg")))s" "$package_min_ram_msg"
 	fi
 
 	# column 4: minimum OS fimware version supported
 
 	if [[ $maxcols -ge 4 ]]; then
-		package_min_os_msg="${CHARS_SPECIAL}minimum OS version:"
+		package_min_os_msg="${CHARS_SPECIAL}minimum OS:"
 		printf "%-$((PACKAGE_MIN_OS_COL_WIDTH+2+$(LenANSIDiff "$package_min_os_msg")))s" "$package_min_os_msg"
+	fi
+
+	# column 5: arch is compatible
+
+	if [[ $maxcols -ge 5 ]]; then
+		package_arch_msg="${CHARS_SPECIAL}compatible arch?"
+		printf "%-$((PACKAGE_ARCH_COL_WIDTH+2+$(LenANSIDiff "$package_arch_msg")))s" "$package_arch_msg"
 	fi
 
 	printf '\n'
@@ -3442,79 +3488,107 @@ DisplayAsHelpTitleNameDepsMinRamMinOS()
 
 	}
 
-DisplayAsHelpNameDepsMinRamMinOS()
+DisplayAsDepsReportLine()
 	{
 
 	# input:
-	#	$1 = 'normal/highlighted/muted'
-	#	$2 = package name
-	#	$3 = package dependencies
-	#	$4 = minimum NAS RAM required
-	#	$5 = minimum OS firmware version
+	#	$1 = package name
 
-	local package_name="${2:-}"
-	local package_name_msg="${CHARS_BLANK}"
-	local package_deps="${3:-}"
-	local package_deps_msg="${CHARS_NORMAL}${package_deps}"
-	local package_min_ram=''
-	local package_min_ram_msg="${CHARS_BLANK}"
-	local package_min_os="${5:0:1}.${5:1:1}.${5:2:1}"
-	local package_min_os_msg="${CHARS_BLANK}"
+	local package_name="${1:-}"
+	local package_name_msg="$CHARS_BLANK"
 
-	if [[ $4 = none ]]; then
-		package_min_ram="${4:-}"
-	else
-		package_min_ram="$(FormatAsThous "${4:-}")kB"
+	local package_deps=$(QPKG:GetDependencies "$package_name")
+	[[ -z $package_deps ]] && package_deps=none
+	package_deps="${package_deps// /, }"
+	local package_deps_msg="$CHARS_NORMAL"
+
+	local package_min_ram="$(QPKG.MinRAM "$package_name")"
+	local package_min_ram_msg="$CHARS_BLANK"
+
+	if [[ $package_min_ram != none ]]; then
+		package_min_ram="$(FormatAsThous "$package_min_ram")kB"
 	fi
 
-	case $1 in
+	local package_min_os="$(QPKG.MinOSVer "$package_name")"
+	package_min_os="${package_min_os:0:1}.${package_min_os:1:1}.${package_min_os:2:1}"
+	local package_min_os_msg="$CHARS_BLANK"
+
+	local package_arch_msg="$CHARS_BLANK"
+	local mode=''
+
+	if QPKG.IsMissing "$package_name"; then
+		mode=highlighted
+	elif QPKG.IsNtInstalled "$package_name"; then
+		mode=muted
+	else
+		mode=normal
+	fi
+
+	case $mode in
 		normal)
 			package_name_msg+="$package_name"
+			package_deps_msg+="$(ColourTextBrightGreen "${package_deps}")"
 
-			if QPKG.MinRAMOk "$package_name"; then
+			if QPKG.IsMinRAMOk "$package_name"; then
 				package_min_ram_msg+="$(ColourTextBrightGreen "$package_min_ram")"
 			else
 				package_min_ram_msg+="$(ColourTextBrightRed "$package_min_ram")"
 			fi
 
-			if QPKG.MinOSVerOk "$package_name"; then
+			if QPKG.IsMinOSVerOk "$package_name"; then
 				package_min_os_msg+="$(ColourTextBrightGreen "$package_min_os")"
 			else
 				package_min_os_msg+="$(ColourTextBrightRed "$package_min_os")"
 			fi
 
+			if QPKG.IsArchOK "$package_name"; then
+				package_arch_msg+="$(ColourTextBrightGreen true)"
+			else
+				package_arch_msg+="$(ColourTextBrightRed false)"
+			fi
 			;;
 		muted)
 			package_name_msg+="$(ColourTextDarkGrey "$package_name")"
 			package_deps_msg="$(ColourTextDarkGrey "${CHARS_NORMAL}${package_deps}")"
 
-			if QPKG.MinRAMOk "$package_name"; then
+			if QPKG.IsMinRAMOk "$package_name"; then
 				package_min_ram_msg+="$(ColourTextDarkGrey "$package_min_ram")"
 			else
 				package_min_ram_msg+="$(ColourTextBrightRed "$package_min_ram")"
 			fi
 
-			if QPKG.MinOSVerOk "$package_name"; then
+			if QPKG.IsMinOSVerOk "$package_name"; then
 				package_min_os_msg+="$(ColourTextDarkGrey "$package_min_os")"
 			else
 				package_min_os_msg+="$(ColourTextBrightRed "$package_min_os")"
 			fi
 
+			if QPKG.IsArchOK "$package_name"; then
+				package_arch_msg+="$(ColourTextDarkGrey true)"
+			else
+				package_arch_msg+="$(ColourTextBrightRed false)"
+			fi
 			;;
 		highlighted)
-			package_name_msg+="$package_name"
-			package_deps_msg="${CHARS_NORMAL}$(ColourTextBrightGreen "$package_deps")"
+			package_name_msg+="$(ColourTextBrightRed "$package_name")"
+			package_deps_msg="$(ColourTextDarkGrey "${CHARS_NORMAL}${package_deps}")"
 
-			if QPKG.MinRAMOk "$package_name"; then
+			if QPKG.IsMinRAMOk "$package_name"; then
 				package_min_ram_msg+="$(ColourTextBrightGreen "$package_min_ram")"
 			else
 				package_min_ram_msg+="$(ColourTextBrightRed "$package_min_ram")"
 			fi
 
-			if QPKG.MinOSVerOk "$package_name"; then
+			if QPKG.IsMinOSVerOk "$package_name"; then
 				package_min_os_msg+="$(ColourTextBrightGreen "$package_min_os")"
 			else
 				package_min_os_msg+="$(ColourTextBrightRed "$package_min_os")"
+			fi
+
+			if QPKG.IsArchOK "$package_name"; then
+				package_arch_msg+="$(ColourTextBrightGreen true)"
+			else
+				package_arch_msg+="$(ColourTextBrightRed false)"
 			fi
 	esac
 
@@ -3540,6 +3614,12 @@ DisplayAsHelpNameDepsMinRamMinOS()
 
 	if [[ $maxcols -ge 4 && -n $package_min_os_msg ]]; then
 		printf "%-$((PACKAGE_MIN_OS_COL_WIDTH+$(LenANSIDiff "$package_min_os_msg")))s" "$package_min_os_msg"
+	fi
+
+	# column 5: arch is compatible
+
+	if [[ $maxcols -ge 5 && -n $package_arch_msg ]]; then
+		printf "%-$((PACKAGE_ARCH_COL_WIDTH+$(LenANSIDiff "$package_arch_msg")))s" "$package_arch_msg"
 	fi
 
 	printf '\n'
@@ -4615,7 +4695,7 @@ QPKGs.States:Build()
 		if QPKG.IsInstalled "$package"; then
 			QPKGs-ISinstalled:Add "$package"
 
-			if [[ ! -d $(QPKG.InstallationPath "$package") ]]; then
+			if QPKG.IsMissing "$package"; then
 				QPKGs-ISmissing:Add "$package"
 			fi
 
@@ -4740,7 +4820,6 @@ QPKGs.Abbreviations:Show()
 
 	Func:Entry
 	local package_name=''
-	local abs=''
 	maxcols=2
 
 	DisableDebugToArchiveAndFile
@@ -4750,26 +4829,10 @@ QPKGs.Abbreviations:Show()
 
 		Help.Basic:Show
 		DisplayAsHelpTitle "$(FormatAsTitle) can recognise various abbreviations and aliases as $(FormatAsPackages)."
-		DisplayAsHelpTitleNameAbs
+		DisplayAsAbsReportTitleLine
 
 		for package_name in $(QPKGs-SCall:Array); do
-			abs=$(QPKG:GetAbbrvs "$package_name")
-
-			if [[ -n $abs ]]; then
-				if ! QPKG.URLOk "$package_name"; then
-					DisplayAsHelpNameAbs muted "$package_name" 'not installable (incompatible arch)'
-				elif ! QPKG.MinOSVerOk "$package_name"; then
-					DisplayAsHelpNameAbs muted "$package_name" "not installable (incompatible $(GetQnapOS) version)"
-				elif ! QPKG.MinRAMOk "$package_name"; then
-					DisplayAsHelpNameAbs muted "$package_name" 'not installable (insufficient RAM)'
-				elif QPKGs-ISmissing.Exist "$package_name"; then
-					DisplayAsHelpNameAbs highlighted "$package_name" missing
-				elif QPKG.IsNtInstalled "$package_name"; then
-					DisplayAsHelpNameAbs muted "$package_name" "${abs// /, }"
-				else
-					DisplayAsHelpNameAbs normal "$package_name" "${abs// /, }"
-				fi
-			fi
+			DisplayAsAbsReportLine "$package_name"
 		done
 
 		DisplayAsProjSynExam "example: to install $(FormatAsPackName SABnzbd), $(FormatAsPackName Mylar3) and $(FormatAsPackName nzbToMedia) all-at-once" 'install sab my nzb2'
@@ -4838,8 +4901,7 @@ QPKGs.Dependencies:Show()
 
 	Func:Entry
 	local package_name=''
-	local deps=''
-	maxcols=4
+	maxcols=5
 
 	DisableDebugToArchiveAndFile
 	DisplayWritingReport
@@ -4847,29 +4909,10 @@ QPKGs.Dependencies:Show()
 		{
 
 		DisplayAsHelpTitle "$(FormatAsTitle) will automatically install and start/stop dependencies as-required."
-		DisplayAsHelpTitleNameDepsMinRamMinOS
+		DisplayAsDepsReportTitleLine
 
 		for package_name in $(QPKGs-SCall:Array); do
-			deps=$(QPKG:GetDependencies "$package_name")
-
-			if QPKGs-ISmissing.Exist "$package_name"; then
-				DisplayAsHelpNameDepsMinRamMinOS highlighted "$package_name" missing
-				continue
-			fi
-
-			if QPKG.IsNtInstalled "$package_name"; then
-				if [[ -n $deps ]]; then
-					DisplayAsHelpNameDepsMinRamMinOS muted "$package_name" "${deps// /, }" "$(QPKG.MinRAM "$package_name")" "$(QPKG.MinOSVer "$package_name")"
-				else
-					DisplayAsHelpNameDepsMinRamMinOS muted "$package_name" none "$(QPKG.MinRAM "$package_name")" "$(QPKG.MinOSVer "$package_name")"
-				fi
-			else
-				if [[ -n $deps ]]; then
-					DisplayAsHelpNameDepsMinRamMinOS highlighted "$package_name" "${deps// /, }" "$(QPKG.MinRAM "$package_name")" "$(QPKG.MinOSVer "$package_name")"
-				else
-					DisplayAsHelpNameDepsMinRamMinOS normal "$package_name" none "$(QPKG.MinRAM "$package_name")" "$(QPKG.MinOSVer "$package_name")"
-				fi
-			fi
+			DisplayAsDepsReportLine "$package_name"
 		done
 
 		} > "$REPORT_PATHFILE"
@@ -4925,9 +4968,6 @@ QPKGs.Repos:Show()
 
 	Func:Entry
 	local package_name=''
-	local package_store_id=''
-	local package_repo_URL=''
-	local package_install_date=''
 	maxcols=3
 
 	QPKGs.States:Build
@@ -4935,31 +4975,10 @@ QPKGs.Repos:Show()
 
 		{
 
-		DisplayAsHelpTitleNameDateRepo
+		DisplayAsReposReportTitleLine
 
 		for package_name in $(QPKGs-SCall:Array); do
-			if ! QPKG.URLOk "$package_name"; then
-				DisplayAsHelpNameDateRepo muted "$package_name" 'not installable (incompatible arch)'
-			elif ! QPKG.MinOSVerOk "$package_name"; then
-				DisplayAsHelpNameDateRepo muted "$package_name" "not installable (incompatible $(GetQnapOS) version)"
-			elif ! QPKG.MinRAMOk "$package_name"; then
-				DisplayAsHelpNameDateRepo muted "$package_name" 'not installable (insufficient RAM)'
-			elif QPKGs-ISmissing.Exist "$package_name"; then
-				DisplayAsHelpNameDateRepo highlighted "$package_name" missing
-			elif QPKGs-ISNTinstalled.Exist "$package_name"; then
-				DisplayAsHelpNameDateRepo muted "$package_name" 'not installed'
-			else
-				package_store_id=$(QPKG.StoreID "$package_name")
-				package_install_date=$(QPKG.InstallDate "$package_name")
-
-				if [[ -z $package_store_id ]]; then
-					DisplayAsHelpNameDateRepo normal "$package_name" unassigned "$package_install_date"
-				elif [[ $package_store_id = sherpa ]]; then
-					DisplayAsHelpNameDateRepo normal "$package_name" "$package_store_id" "$package_install_date"
-				else
-					DisplayAsHelpNameDateRepo highlighted "$package_name" "$(GetRepoURLFromStoreID "$package_store_id")" "$package_install_date"
-				fi
-			fi
+			DisplayAsReposReportLine "$package_name"
 		done
 
 		} > "$REPORT_PATHFILE"
@@ -4977,9 +4996,6 @@ QPKGs.Statuses:Show()
 
 	Func:Entry
 	local package_name=''
-	local package_status_msg=''
-	local package_result_msg=''
-	local package_upgrade_version=''
 
 	CalcMaxStatusColsToDisplay
 	QPKGs.States:Build
@@ -4987,62 +5003,10 @@ QPKGs.Statuses:Show()
 
 		{
 
-		DisplayAsHelpTitleNameStatusVerPath
+		DisplayAsStatusReportTitleLine
 
 		for package_name in $(QPKGs-SCall:Array); do
-			if QPKGs-ISNTinstalled.Exist "$package_name"; then
-				if ! QPKG.URLOk "$package_name"; then
-					DisplayAsHelpNameStatusVerPath muted "$package_name" 'not installable (incompatible arch)'
-				elif ! QPKG.MinOSVerOk "$package_name"; then
-					DisplayAsHelpNameStatusVerPath muted "$package_name" "not installable (incompatible $(GetQnapOS) version)"
-				elif ! QPKG.MinRAMOk "$package_name"; then
-					DisplayAsHelpNameStatusVerPath muted "$package_name" 'not installable (insufficient RAM)'
-				else
-					DisplayAsHelpNameStatusVerPath muted "$package_name" 'not installed' '' '' "$(QPKG.Avail.Ver "$package_name")"
-				fi
-			else
-				if QPKGs-ISmissing.Exist "$package_name"; then
-					DisplayAsHelpNameStatusVerPath highlighted "$package_name" missing '' "$(QPKG.Local.Ver "$package_name")" '' "$(QPKG.InstallationPath "$package_name")"
-				else
-					# state
-
-					if QPKGs-ISenabled.Exist "$package_name"; then
-						package_status_msg=enabled
-					elif QPKGs-ISNTenabled.Exist "$package_name"; then
-						package_status_msg=disabled
-					fi
-
-					# package/process: active/slow or inactive?
-
-					if QPKGs-ACstatus-ok.Exist "$package_name"; then
-						if QPKGs-ISactive.Exist "$package_name"; then
-							package_status_msg+=' active'
-						elif QPKGs-ISslow.Exist "$package_name"; then
-							package_status_msg+=' slow'
-						elif QPKGs-ISstarting.Exist "$package_name"; then
-							package_status_msg+=' start'
-						elif QPKGs-ISstopping.Exist "$package_name"; then
-							package_status_msg+=' stop'
-						elif QPKGs-ISrestarting.Exist "$package_name"; then
-							package_status_msg+=' restart'
-						elif QPKGs-ISunknown.Exist "$package_name"; then
-							package_status_msg+=' unknown'
-						else
-							package_status_msg+=' inactive'
-						fi
-					else
-						package_status_msg+=' unknown'
-					fi
-
-					QPKG.IsUpgradable "$package_name" && package_upgrade_version=$(QPKG.Avail.Ver "$package_name")
-
-					DisplayAsHelpNameStatusVerPath normal "$package_name" "$package_status_msg" "$package_result_msg" "$(QPKG.Local.Ver "$package_name")" "$package_upgrade_version" "$(QPKG.InstallationPath "$package_name")"
-				fi
-
-				package_status_msg=''
-				package_result_msg=''
-				package_upgrade_version=''
-			fi
+			DisplayAsStatusReportLine "$package_name"
 		done
 
 		} > "$REPORT_PATHFILE"
@@ -5478,6 +5442,15 @@ GetThisBinPath()
 
 	}
 
+OS.IsQNAP()
+	{
+
+	# is this a QNAP NAS?
+
+	[[ -e /etc/init.d/functions ]]
+
+	}
+
 OS.IsCompatibleWithSigned()
 	{
 
@@ -5518,13 +5491,6 @@ OS.IsSupportSudo()
 	{
 
 	[[ -e /usr/bin/sudo ]]
-
-	}
-
-User.IsSU()
-	{
-
-	[[ $EUID -eq 0 ]]
 
 	}
 
@@ -6005,13 +5971,13 @@ _QPKG:install_()
 	if QPKGs-ISinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" install skipped 'already installed'
 		result_code=2
-	elif ! QPKG.URLOk "$PACKAGE_NAME"; then
+	elif ! QPKG.IsArchOK "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" install skipped 'NAS arch is incompatible'
 		result_code=2
-	elif ! QPKG.MinOSVerOk "$PACKAGE_NAME"; then
+	elif ! QPKG.IsMinOSVerOk "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" install skipped "$(GetQnapOS) version is incompatible"
 		result_code=2
-	elif ! QPKG.MinRAMOk "$PACKAGE_NAME"; then
+	elif ! QPKG.IsMinRAMOk "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" install skipped 'NAS has insufficient RAM'
 		result_code=2
 	fi
@@ -7223,7 +7189,7 @@ QPKG.IsUpgradable()
 	local package=${PACKAGE_NAME:-}
 	[[ -n ${1:-} ]] && package=$1
 
-	QPKG.IsInstalled "$package" && [[ $(QPKG.Local.Ver "$package") != "$(QPKG.Avail.Ver "$package")" ]] && QPKG.URLOk "$package" && QPKG.MinOSVerOk "$package" && QPKG.MinRAMOk "$package"
+	QPKG.IsInstalled "$package" && [[ $(QPKG.Local.Ver "$package") != "$(QPKG.Avail.Ver "$package")" ]] && QPKG.IsArchOK "$package" && QPKG.IsMinOSVerOk "$package" && QPKG.IsMinRAMOk "$package"
 
 	}
 
@@ -7349,17 +7315,22 @@ QPKG.URL()
 
 	}
 
-QPKG.URLOk()
+QPKG.IsArchOK()
 	{
 
+	# Does an arch-compatible QPKG exist to suit this NAS?
+
 	# input:
-	#   $1 = QPKG name
+	#   $PACKAGE_NAME (global) = QPKG name (default)
+	#   $1 = if specified, use this as QPKG name instead
 
 	# output:
-	#   $? = 0 if this NAS arch is compatible with QPKG name, 1 if not
+	#   $? = 0 if true, 1 if false
 
-	local min="$(QPKG.URL "${1:?package name null}")"
-	[[ -n $min && $min != none ]]
+	local package=${PACKAGE_NAME:-}
+	[[ -n ${1:-} ]] && package=$1
+	local temp="$(QPKG.URL "${package:?package name null}")"
+	[[ -n $temp && $temp != none ]]
 
 	}
 
@@ -7386,7 +7357,7 @@ QPKG.MinRAM()
 
 	}
 
-QPKG.MinRAMOk()
+QPKG.IsMinRAMOk()
 	{
 
 	# input:
@@ -7423,7 +7394,7 @@ QPKG.MinOSVer()
 
 	}
 
-QPKG.MinOSVerOk()
+QPKG.IsMinOSVerOk()
 	{
 
 	# input:
@@ -7784,6 +7755,20 @@ QPKG.IsNtInstalled()
 	#   $? = 0 (true) or 1 (false)
 
 	! QPKG.IsInstalled "${1:?package name null}"
+
+	}
+
+QPKG.IsMissing()
+	{
+
+	# input:
+	#   $1 = QPKG name
+
+	# output:
+	#   $? = 0 (true) or 1 (false)
+
+	path=$(QPKG.InstallationPath "${1:?package name null}")
+	[[ -n $path && ! -d $path ]]
 
 	}
 
