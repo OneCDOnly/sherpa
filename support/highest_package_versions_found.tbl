@@ -1,7 +1,7 @@
 # checksum_filename                  qpkg_filename                    package_name         version      arch   md5
-ClamAV_230604.qpkg.md5               ClamAV_230604.qpkg               ClamAV               230604       all    44e5e3a3867d4492e386fb2d247f064f
-Deluge-server_230605.qpkg.md5        Deluge-server_230605.qpkg        Deluge-server        230605       all    4011e898562b3eb4b43254027b9eadb8
-Deluge-web_230605.qpkg.md5           Deluge-web_230605.qpkg           Deluge-web           230605       all    6f90f26a2de8e808146ec3d6e714c3b5
+ClamAV_230726.qpkg.md5               ClamAV_230726.qpkg               ClamAV               230726       all    0bdc6f7459ed6db93b2de7d9b88825fb
+Deluge-server_230726.qpkg.md5        Deluge-server_230726.qpkg        Deluge-server        230726       all    e76b41a75b569d962bc8def9288d2db2
+Deluge-web_230726.qpkg.md5           Deluge-web_230726.qpkg           Deluge-web           230726       all    0750a697c4a8502370f84623f827d22c
 duf_220809_arm_64.qpkg.md5           duf_220809_arm_64.qpkg           duf                  220809       a64    7684a8940ba63704b95cbc713cd55b35
 duf_220809_arm-x31.qpkg.md5          duf_220809_arm-x31.qpkg          duf                  220809       a31    5aa8aef6f515eb5ae1d28991bc1d4084
 duf_220809_arm-x41.qpkg.md5          duf_220809_arm-x41.qpkg          duf                  220809       a41    5dcac4470bf45f83342ba9275a740022
@@ -19,7 +19,7 @@ LazyLibrarian_230726_x86.qpkg.md5    LazyLibrarian_230726_x86.qpkg    LazyLibrar
 Mylar3_230726_arm_64.qpkg.md5        Mylar3_230726_arm_64.qpkg        Mylar3               230726       a64    de4635006e31b75094492809791a0c29
 Mylar3_230726_x86_64.qpkg.md5        Mylar3_230726_x86_64.qpkg        Mylar3               230726       i64    66d191eedead84c703b0bb167f6a840f
 Mylar3_230726_x86.qpkg.md5           Mylar3_230726_x86.qpkg           Mylar3               230726       i86    a8ea25f376bbb4b098bab9ee02001cbf
-NZBGet_230604.qpkg.md5               NZBGet_230604.qpkg               NZBGet               230604       all    2c9d7c8334274d23c835d189dfcc5155
+NZBGet_230726.qpkg.md5               NZBGet_230726.qpkg               NZBGet               230726       all    b8b01de0e9069e965ceb4b1b240fad8e
 NZBHydra2_230604_arm_64.qpkg.md5     NZBHydra2_230604_arm_64.qpkg     NZBHydra2            230604       a64    3ffb490264630cc933742a84db6b9362
 NZBHydra2_230604_x86_64.qpkg.md5     NZBHydra2_230604_x86_64.qpkg     NZBHydra2            230604       i64    4bd068815ccd208f527e073b8e948c88
 nzbToMedia_230604.qpkg.md5           nzbToMedia_230604.qpkg           nzbToMedia           230604       all    da9a8f8e2d2d25d2f8ca32cd6174a722
