@@ -845,11 +845,11 @@ Self:Validate()
 	# Decide if IPKs and PIPs should be installed/upgraded
 
 	if [[ $opts_check = true ]] || QPKGs-ACupgrade-to.Exist Entware || QPKGs-ACinstall-to.Exist Entware || QPKGs-ACreinstall-to.Exist Entware; then
-		ipks_upgrade=true
-		ipks_install=true
-		pips_install=true
-
 		if QPKG.IsEnabled Entware; then
+			ipks_upgrade=true
+			ipks_install=true
+			pips_install=true
+
 			if [[ -e $PYTHON3_CMD ]]; then
 				installed_ver=$(GetPython3Ver "$PYTHON3_CMD")
 
@@ -1118,6 +1118,7 @@ Actions:Proc()
 					if QPKGs-AC${action}-to.IsAny && QPKGs-ISenabled.Exist Entware; then
 						ipks_upgrade=true
 						ipks_install=true
+						pips_install=true
 						break
 					fi
 				done
@@ -1126,8 +1127,6 @@ Actions:Proc()
 					ModPathToEntware
 					Action:Proc upgrade $tier IPK upgrading upgraded
 					Action:Proc install $tier IPK installing installed
-
-					pips_install=true
 					Action:Proc install $tier PIP installing installed
 				fi
 		esac
@@ -1195,13 +1194,12 @@ Action:Proc()
 			total_count=${#target_packages[@]}
 			DebugVar total_count
 
-			ShowAsProc "$ACTION_PRESENT_MSG $([[ $TIER != all ]] && echo "$TIER ")$(Uppercase "$PACKAGE_TYPE")$(Pluralise "$total_count")"
-
 			if [[ $total_count -eq 0 ]]; then
 				DebugInfo 'nothing to process'
 				Func:Exit; return
 			fi
 
+			ShowAsProc "$ACTION_PRESENT_MSG $([[ $TIER != all ]] && echo "$TIER ")$(Uppercase "$PACKAGE_TYPE")$(Pluralise "$total_count")"
 			AdjustMaxForks "$TARGET_ACTION"
 			InitForkCounts
 			OpenActionMsgPipe
