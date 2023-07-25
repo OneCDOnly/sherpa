@@ -1,4 +1,5 @@
 * 'sherpa start inactive' fails to find any inactive packages.
+	needs to get status of each package first.
 
 * if package signing fails, the cert database is probably already open. Check for this and abort signing.
 	also, when signing fails, don't direct user to the QPKG service-script log: signing isn't a service action.

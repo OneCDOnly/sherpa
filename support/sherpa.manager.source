@@ -2280,6 +2280,8 @@ CalcIpkDepsToInstall()
 		fi
 	done
 
+	sleep 1
+
 	if [[ $complete = true ]]; then
 		DebugAsDone "dependency calculation complete in $iterations iteration$(Pluralise "$iterations")"
 	else
