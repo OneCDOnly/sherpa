@@ -20,7 +20,7 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=OWatcher3
-	readonly SCRIPT_VERSION=230720
+	readonly SCRIPT_VERSION=230726
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -50,6 +50,8 @@ Init()
 	ui_port=0
 	ui_port_secure=0
 	ui_listening_address=undefined
+	service_operation=unspecified
+	service_result=undefined
 
 	# specific to online-sourced applications only
 	readonly SOURCE_GIT_URL=https://github.com/barbequesauce/Watcher3.git
@@ -135,9 +137,9 @@ ShowHelp()
 
 	Display "$(ColourTextBrightWhite "$(/usr/bin/basename "$0")") $SCRIPT_VERSION • a service control script for the $(FormatAsPackageName $QPKG_NAME) QPKG"
 	Display
-	Display "Usage: $0 [OPTION]"
+	Display "Usage: $0 [ACTION]"
 	Display
-	Display '[OPTION] may be any one of the following:'
+	Display '[ACTION] may be any one of the following:'
 	Display
 	DisplayAsHelp start "activate $(FormatAsPackageName $QPKG_NAME) if not already active."
 	DisplayAsHelp stop "deactivate $(FormatAsPackageName $QPKG_NAME) if active."
@@ -322,7 +324,7 @@ InstallAddons()
 
 	if [[ $QPKG_NAME = OWatcher3 ]]; then
 		# need to install `m2r` PyPI module first
-		DisplayRunAndLog "KLUDGE: install 'm2r' PyPI module first" "$VENV_PIP_PATHFILE install${pip_deps} --no-input m2r" log:failure-only || SetError
+		DisplayRunAndLog "KLUDGE: install 'm2r' PyPI module first" "$VENV_PIP_PATHFILE install${pip_deps} --no-input m2r" log:failure-only
 	fi
 
 	# edit developer-provided Python module requirements files out-of-repo
@@ -1663,7 +1665,7 @@ IsNotVirtualEnvironmentExist()
 SetServiceAction()
 	{
 
-	service_operation="${1:-}"
+	service_operation="${1:-unspecified}"
 	CommitServiceStatus "$service_operation"
 	DisplayAndCommitActionToLog
 
@@ -1833,6 +1835,13 @@ IsNotStatus()
 
 	}
 
+IsUnsupported()
+	{
+
+	[[ $service_operation = unsupported ]]
+
+	}
+
 ShowAsError()
 	{
 
@@ -1957,14 +1966,18 @@ DisplayWait()
 DisplayAndCommitActionToLog()
 	{
 
+	[[ $service_operation = unspecified ]] && return
+
 	starttime="$(/bin/date +%s%N)"
 	local msg="source: $(/usr/bin/basename "$0"), action: $service_operation, datetime: $(date), package: $QPKG_VERSION, service: $SCRIPT_VERSION"
-
 	msg=$(/bin/tr -s ' ' <<< "$msg")
+	local target=DisplayCommitToLog
 
 	if IsNotStatus && IsNotLog && IsNotNone; then
+		IsUnsupported && target=CommitToLog
 		CommitToLog '•'
-		DisplayCommitToLog "$(ColourTextInverse "$msg")"
+
+		$target "$(ColourTextInverse "$msg")"
 	fi
 
 	}
@@ -1972,20 +1985,24 @@ DisplayAndCommitActionToLog()
 DisplayAndCommitStatusToLog()
 	{
 
-	local msg="source: $(/usr/bin/basename "$0"), action: $service_operation, datetime: $(date), result: $service_result, elapsed time: $(FormatAsDuration "$(CalcMilliDifference "$starttime" "$(/bin/date +%s%N)")")"
+	[[ $service_operation = unspecified ]] && return
 
+	local msg="source: $(/usr/bin/basename "$0"), action: $service_operation, datetime: $(date), result: $service_result, elapsed time: $(FormatAsDuration "$(CalcMilliDifference "$starttime" "$(/bin/date +%s%N)")")"
 	msg=$(/bin/tr -s ' ' <<< "$msg")
+	local target=DisplayCommitToLog
 
 	if IsNotStatus && IsNotLog && IsNotNone; then
+		IsUnsupported && target=CommitToLog
+
 		case $service_result in
 			ok)
-				DisplayCommitToLog "$(ColourTextBlackOnGreen "$msg")"
+				$target "$(ColourTextBlackOnGreen "$msg")"
 				;;
 			failed)
-				DisplayCommitToLog "$(ColourTextBlackOnRed "$msg")"
+				$target "$(ColourTextBlackOnRed "$msg")"
 				;;
 			*)
-				DisplayCommitToLog "$(ColourTextBlackOnYellow "$msg")"
+				$target "$(ColourTextBlackOnYellow "$msg")"
 		esac
 	fi
 
@@ -2113,7 +2130,10 @@ CalcMilliDifference()
 	# output:
 	#	stdout = difference in milliseconds
 
-	echo "$((($2-$1)/1000000))"
+	local start=${1:-0}
+	local end=${2:-1}
+
+	echo "$(((end-start)/1000000))"
 
 	}
 
@@ -2254,18 +2274,29 @@ IsSU()
 
 	}
 
+ShowUnsupportedAction()
+	{
+
+	ShowAsError "specified action '$1' is unsupported by this service script."
+	SetError
+	CommitToLog "specified action '$1' is unsupported."
+	Display
+	ShowHelp
+
+	}
+
 Init
 
 if IsNotError; then
 	case $1 in
 		start|--start)
 			IsSU ||	exit 1
+			SetServiceAction start
 
 			if IsNotQPKGEnabled; then
-				Display "The $(FormatAsPackageName "$QPKG_NAME") QPKG is disabled. Please enable it first with: qpkg_service enable $QPKG_NAME"
+				DisplayCommitToLog "$(FormatAsPackageName "$QPKG_NAME") QPKG is disabled. Please enable it first with: qpkg_service enable $QPKG_NAME"
 				SetError
 			else
-				SetServiceAction start
 				StartQPKG
 			fi
 			;;
@@ -2276,12 +2307,12 @@ if IsNotError; then
 			;;
 		r|-r|restart|--restart)
 			IsSU ||	exit 1
+			SetServiceAction restart
 
 			if IsNotQPKGEnabled; then
-				Display "The $(FormatAsPackageName "$QPKG_NAME") QPKG is disabled. Please enable it first with: qpkg_service enable $QPKG_NAME"
+				DisplayCommitToLog "$(FormatAsPackageName "$QPKG_NAME") QPKG is disabled. Please enable it first with: qpkg_service enable $QPKG_NAME"
 				SetError
 			else
-				SetServiceAction restart
 				StopQPKG && StartQPKG
 			fi
 			;;
@@ -2296,8 +2327,8 @@ if IsNotError; then
 				SetServiceAction backup
 				BackupConfig
 			else
-				SetServiceAction none
-				ShowHelp
+				SetServiceAction unsupported
+				ShowUnsupportedAction "$1"
 			fi
 			;;
 		reset-config|--reset-config)
@@ -2309,8 +2340,8 @@ if IsNotError; then
 				ResetConfig
 				StartQPKG
 			else
-				SetServiceAction none
-				ShowHelp
+				SetServiceAction unsupported
+				ShowUnsupportedAction "$1"
 			fi
 			;;
 		restore|--restore|restore-config|--restore-config)
@@ -2322,8 +2353,8 @@ if IsNotError; then
 				RestoreConfig
 				StartQPKG
 			else
-				SetServiceAction none
-				ShowHelp
+				SetServiceAction unsupported
+				ShowUnsupportedAction "$1"
 			fi
 			;;
 		clean|--clean)
@@ -2337,8 +2368,8 @@ if IsNotError; then
 				StartQPKG
 				[[ $QPKG_NAME = nzbToMedia ]] && RestoreConfig
 			else
-				SetServiceAction none
-				ShowHelp
+				SetServiceAction unsupported
+				ShowUnsupportedAction "$1"
 			fi
 			;;
 		l|-l|log|--log)
@@ -2347,25 +2378,41 @@ if IsNotError; then
 			;;
 		disable-auto-update|--disable-auto-update)
 			IsSU ||	exit 1
-			SetServiceAction disable-auto-update
-			DisableAutoUpdate
+
+			if IsSourcedOnline; then
+				SetServiceAction disable-auto-update
+				DisableAutoUpdate
+			else
+				SetServiceAction unsupported
+				ShowUnsupportedAction "$1"
+			fi
 			;;
 		enable-auto-update|--enable-auto-update)
 			IsSU ||	exit 1
-			SetServiceAction enable-auto-update
-			EnableAutoUpdate
+
+			if IsSourcedOnline; then
+				SetServiceAction enable-auto-update
+				EnableAutoUpdate
+			else
+				SetServiceAction unsupported
+				ShowUnsupportedAction "$1"
+			fi
 			;;
 		v|-v|version|--version)
 			SetServiceAction none
 			Display "package: $QPKG_VERSION"
 			Display "service: $SCRIPT_VERSION"
 			;;
-		remove)		# only called by the QDK .uninstall.sh script
+		remove)			# only called by the QDK '.uninstall.sh' script
 			SetServiceAction uninstall
 			;;
 		*)
-			SetServiceAction none
-			ShowHelp
+			if [[ -z $1 ]]; then
+				ShowHelp
+			else
+				SetServiceAction unsupported
+				ShowUnsupportedAction "$1"
+			fi
 	esac
 fi
 
