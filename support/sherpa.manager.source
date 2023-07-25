@@ -6922,7 +6922,7 @@ EOB
 		SendPackageStateChange ISsigned
 		MarkThisActionForkAsOk
 	else
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' failed "$result_code"
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' failed "($result_code) check the sherpa debug log for more information"
 		result_code=1   # remap to 1
 		MarkThisActionForkAsFailed
 	fi
