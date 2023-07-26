@@ -194,39 +194,67 @@ Self:Results()
 	display_last_action_datetime=false
 
 	if ARGs-unknown.IsNone; then
+		# action reports
+
 		if [[ $opts_show_abbreviations = true ]]; then
 			QPKGs.Abbreviations:Show
-		elif [[ $opts_show_actions = true ]]; then
+		fi
+
+		if [[ $opts_show_actions = true ]]; then
 			Help.Actions:Show
-		elif [[ $opts_show_reassign = true ]]; then
+		fi
+
+		if [[ $opts_show_reassign = true ]]; then
 			Help.Action.Reassign:Show
-		elif [[ $opts_show_actions_all = true ]]; then
+		fi
+
+		if [[ $opts_show_actions_all = true ]]; then
 			Help.ActionsAll:Show
-		elif [[ $opts_show_backups = true ]]; then
+		fi
+
+		if [[ $opts_show_backups = true ]]; then
 			QPKGs.Backups:Show
-		elif [[ $opts_show_groups = true ]]; then
+		fi
+
+		if [[ $opts_show_groups = true ]]; then
 			Help.Groups:Show
-		elif [[ $opts_show_dependencies = true ]]; then
+		fi
+
+		if [[ $opts_show_dependencies = true ]]; then
 			QPKGs.Dependencies:Show
-		elif [[ $opts_show_options = true ]]; then
+		fi
+
+		if [[ $opts_show_options = true ]]; then
 			Help.Options:Show
-		elif [[ $opts_show_packages = true ]]; then
+		fi
+
+		if [[ $opts_show_packages = true ]]; then
 			QPKGs:List:Show
-		elif [[ $opts_show_problems = true ]]; then
+		fi
+
+		if [[ $opts_show_problems = true ]]; then
 			Help.Problems:Show
-		elif [[ $opts_show_repos = true ]]; then
+		fi
+
+		if [[ $opts_show_repos = true ]]; then
 			QPKGs.Repos:Show
-		elif [[ $opts_show_results = true ]]; then
+		fi
+
+		if [[ $opts_show_results = true ]]; then
 			display_last_action_datetime=true
 			opts_show_packages_ok=true
 			opts_show_packages_skipped=true
 			opts_show_packages_failed=true
-		elif [[ $opts_show_status = true ]]; then
+		fi
+
+		if [[ $opts_show_status = true ]]; then
 			QPKGs.Statuses:Show
 			opts_show_packages_ok=false
 			opts_show_packages_skipped=false
 			opts_show_packages_failed=false
-		elif [[ $opts_show_tips = true ]]; then
+		fi
+
+		if [[ $opts_show_tips = true ]]; then
 			Help.Tips:Show
 		fi
 
@@ -272,6 +300,7 @@ Self:Results()
 		Help.Basic.Example:Show
 	fi
 
+	# action results
 	[[ $opts_show_packages_ok = true ]] && Actions.Results:Show ok
 	[[ $opts_show_packages_skipped = true ]] && Actions.Results:Show skipped
 	[[ $opts_show_packages_failed = true ]] && Actions.Results:Show failed
@@ -342,6 +371,8 @@ Vars:Load()
 	opts_show_status=false
 	opts_show_tips=false
 	opts_show_versions=false
+
+	proc_counts_path=''
 
 	}
 
@@ -605,7 +636,7 @@ Lists:Load()
 	local action=''
 
 	for action in "${QPKG_ACTIONS[@]}" check debug update; do
-		readonly "$(Uppercase "$action")"_LOG_FILE="$action".log
+		readonly "$(Uppercase "$action")"_LOG_FILE=$action.log
 	done
 
 	}
@@ -1160,8 +1191,11 @@ Action:Proc()
 	#   $5 = $ACTION_PAST_MSG				e.g. `activated` ...
 
 	Func:Entry
-	local -r PACKAGE_TYPE=${3:?null}
-	local -r TARGET_ACTION=${1:-null}
+	local -r TARGET_ACTION="${1:?${FUNCNAME[0]}'()': undefined}"
+	local -r TIER="${2:?${FUNCNAME[0]}'()': undefined}"
+	local -r PACKAGE_TYPE="${3:?${FUNCNAME[0]}'()': undefined}"
+	local -r ACTION_PRESENT_MSG="${4:?${FUNCNAME[0]}'()': undefined}"
+	local -r ACTION_PAST="${5:?${FUNCNAME[0]}'()': undefined}"
 	total_count=0
 	local package=''
 	local state=''
@@ -1172,16 +1206,13 @@ Action:Proc()
 	local msg2_value=''
 	local -i package_index=0
 	local -a target_packages=()
-	local -r TIER=${2:?null}
-	local -r ACTION_PRESENT_MSG=${4:?null}
-	local -r ACTION_PAST=${5:?null}
 	local original_colourful=$colourful
-	local -r ACTION_TIMES_PATHFILE="$ACTION_TIMES_PATH/$TARGET_ACTION.milliseconds"
+	local -r ACTION_TIMES_PATHFILE=$ACTION_TIMES_PATH/$TARGET_ACTION.milliseconds
 	local buffer=''
 
 	case $PACKAGE_TYPE in
 		QPKG)
-			TARGET_OBJECT_NAME="AC${TARGET_ACTION}-to"
+			TARGET_OBJECT_NAME=AC${TARGET_ACTION}-to
 
 			if [[ $TIER = all ]]; then  # process all tiers
 				target_packages=($(${PACKAGE_TYPE}s-$TARGET_OBJECT_NAME:Array))
@@ -1320,10 +1351,11 @@ Action:Proc()
 
 			;;
 		IPK|PIP)
-			ShowAsProc "$ACTION_PRESENT_MSG $([[ $TIER != all ]] && echo "$TIER ")$(Uppercase "$PACKAGE_TYPE")s"
-
-			InitForkCounts
-			${PACKAGE_TYPE}s:${TARGET_ACTION}	# only process these packages in groups, not individually
+			if [[ $ipks_upgrade = true || $ipks_install = true || $pips_install = true ]]; then
+				ShowAsProc "$ACTION_PRESENT_MSG $([[ $TIER != all ]] && echo "$TIER ")$(Uppercase "$PACKAGE_TYPE")s"
+				InitForkCounts
+				${PACKAGE_TYPE}s:${TARGET_ACTION}	# only process these packages in groups, not individually
+			fi
 	esac
 
 	EraseForkCountPaths
@@ -2106,7 +2138,7 @@ Quiz()
 	# output:
 	#   $? = 0 if "y", 1 if anything else
 
-	local prompt=${1:?null}
+	local prompt="${1:?${FUNCNAME[0]}'()': undefined}"
 	local response=''
 
 	ShowAsQuiz "$prompt"
@@ -2617,7 +2649,9 @@ _DirSize:Monitor_()
 	# output:
 	#   stdout = "percentage downloaded (downloaded bytes/total expected bytes)"
 
-	[[ -z ${1:?path null} || ! -d ${1:-} || -z ${2:?total bytes null} || ${2:-} -eq 0 ]] && exit
+	[[ -n ${1:?${FUNCNAME[0]}'()': undefined} ]] || exit
+	[[ -n ${2:?${FUNCNAME[0]}'()': undefined} ]] || exit
+	[[ -d $1 && $2 -gt 0 ]] || exit
 	IsSysFileExist $GNU_FIND_CMD || exit
 
 	local -i current_bytes=-1
@@ -2808,7 +2842,7 @@ DebugBinPathVerAndMinVer()
 	#	$2 = current version found
 	#	$3 = minimum version required
 
-	[[ -n ${1:-} ]] || return
+	[[ -n ${1:?${FUNCNAME[0]}'()': undefined} ]] || return
 
 	local bin_path=$(GetThisBinPath "$1")
 
@@ -2819,6 +2853,8 @@ DebugBinPathVerAndMinVer()
 	fi
 
 	if [[ -n ${2:-} ]]; then
+		[[ -n ${3:?${FUNCNAME[0]}'()': undefined} ]] || return
+
 		if [[ ${2//./} -ge ${3//./} ]]; then
 			DebugUserspace ok "'$1' version" "$2"
 		else
@@ -2841,7 +2877,9 @@ IsSysFileExist()
 	# output:
 	#   $? = 0 (exists) or 1 (not exists)
 
-	if ! [[ -f ${1:?pathfile null} || -L ${1:?pathfile null} ]]; then
+	[[ -n ${1:?${FUNCNAME[0]}'()': undefined} ]] || exit
+
+	if ! [[ -f $1 || -L $1 ]]; then
 		ShowAsAbort "a required NAS system file is missing $(FormatAsFileName "$1")"
 		return 1
 	fi
@@ -2859,15 +2897,18 @@ IsNtSysFileExist()
 	# output:
 	#   $? = 0 (not exists) or 1 (exists)
 
-	! IsSysFileExist "${1:?pathfile null}"
+	! IsSysFileExist "${1:?${FUNCNAME[0]}'()': undefined}"
 
 	}
 
 LenANSIDiff()
 	{
 
+	# input:
+	#   $1 = (optional) text to find length of
+
 	local stripped=$(StripANSI "${1:-}")
-	echo "$((${#1}-${#stripped}))"
+	echo "$((${#1:-}-${#stripped}))"
 
 	return 0
 
@@ -2996,7 +3037,7 @@ DisplayAsPackagesReportLine()
 	# input:
 	#	$1 = package name
 
-	local package_name="${1:?package name null}"
+	local package_name="${1:?${FUNCNAME[0]}'()': undefined}"
 	local package_name_msg="$CHARS_NORMAL"
 	local package_author="$(QPKG.GetAuthor "$package_name")"
 	local package_author_msg="$CHARS_BLANK"
@@ -3106,7 +3147,7 @@ DisplayAsStatusReportLine()
 	# input:
 	#	$1 = package name
 
-	local package_name="${1:?package name null}"
+	local package_name="${1:?${FUNCNAME[0]}'()': undefined}"
 	local package_name_msg="$CHARS_BLANK"
  	local package_status=''
 	local package_status_msg=''
@@ -3266,11 +3307,11 @@ DisplayAsReposReportLine()
 	# input:
 	#	$1 = package name
 
-	local package_name="${1:?package name null}"
+	local package_name="${1:?${FUNCNAME[0]}'()': undefined}"
 	local package_name_msg="$CHARS_BLANK"
-	local package_install_date=$(QPKG.GetInstallDate "$package_name")
+	local package_install_date="$(QPKG.GetInstallDate "$package_name")"
 	local package_install_date_msg="$CHARS_BLANK"
-	local package_store_id=$(QPKG.GetStoreID "$package_name")
+	local package_store_id="$(QPKG.GetStoreID "$package_name")"
 	local assigned_repo="$(GetRepoURLFromStoreID "$package_store_id")"
 	local assigned_repo_msg="$CHARS_NORMAL"
 	local mode=''
@@ -3381,7 +3422,7 @@ DisplayAsAbsReportLine()
 	# input:
 	#	$1 = package name
 
-	local package_name="${1:-}"
+	local package_name="${1:?${FUNCNAME[0]}'()': undefined}"
 	local package_name_msg="$CHARS_BLANK"
 	local package_abs=''
 	local package_abs_msg="$CHARS_NORMAL"
@@ -3499,14 +3540,12 @@ DisplayAsDepsReportLine()
 	# input:
 	#	$1 = package name
 
-	local package_name="${1:-}"
+	local package_name="${1:?${FUNCNAME[0]}'()': undefined}"
 	local package_name_msg="$CHARS_BLANK"
-
 	local package_deps=$(QPKG.GetDependencies "$package_name")
 	[[ -z $package_deps ]] && package_deps=none
 	package_deps="${package_deps// /, }"
 	local package_deps_msg="$CHARS_NORMAL"
-
 	local package_min_ram="$(QPKG.GetMinRAM "$package_name")"
 	local package_min_ram_msg="$CHARS_BLANK"
 
@@ -4250,17 +4289,17 @@ InitForkCounts()
 
 	# create directories so background processes can be monitored
 
-	PROC_COUNTS_PATH="$($MKTEMP_CMD -d /var/run/"${FUNCNAME[1]}"_XXXXXX)"
-	[[ -n ${PROC_COUNTS_PATH:?undefined proc counts path} ]] || return
+	proc_counts_path="$($MKTEMP_CMD -d /var/run/"${FUNCNAME[1]}"_XXXXXX)"
+	[[ -n $proc_counts_path ]] || return
 
 	EraseForkCountPaths
 
-	proc_fork_count_path="${PROC_COUNTS_PATH}/fork.count"
-	proc_ok_count_path="${PROC_COUNTS_PATH}/ok.count"
-	proc_skip_ok_count_path="${PROC_COUNTS_PATH}/skip.ok.count"
-	proc_skip_count_path="${PROC_COUNTS_PATH}/skip.count"
-	proc_skip_error_count_path="${PROC_COUNTS_PATH}/skip.error.count"
-	proc_fail_count_path="${PROC_COUNTS_PATH}/fail.count"
+	proc_fork_count_path="$proc_counts_path/fork.count"
+	proc_ok_count_path="$proc_counts_path/ok.count"
+	proc_skip_ok_count_path="$proc_counts_path/skip.ok.count"
+	proc_skip_count_path="$proc_counts_path/skip.count"
+	proc_skip_error_count_path="$proc_counts_path/skip.error.count"
+	proc_fail_count_path="$proc_counts_path/fail.count"
 
 	mkdir -p "$proc_fork_count_path"
 	mkdir -p "$proc_ok_count_path"
@@ -4303,7 +4342,7 @@ RefreshForkCounts()
 EraseForkCountPaths()
 	{
 
-	[[ -d ${PROC_COUNTS_PATH:?undefined proc counts path} ]] && rm -r "$PROC_COUNTS_PATH" &>/dev/null
+	[[ -n $proc_counts_path && -d $proc_counts_path ]] && rm -r "$proc_counts_path" &>/dev/null
 
 	}
 
@@ -4325,7 +4364,7 @@ UpdateForkProgress()
 	local msg=' '
 
 	RefreshForkCounts
-	[[ $opts_verbose = true ]] && return		# don't display progress, it's impossible to view it with so-many other writes to the screen
+	[[ $opts_verbose = true ]] && return		# don't display progress, it's difficult to read with so-many other writes to the screen
 	[[ ! -e $DISPLAY_INHIBIT_PATHFILE ]] || return
 
 	msg+="$(PercFrac "$ok_count" "$((skip_count+skip_ok_count+skip_error_count))" "$fail_count" "$total_count")"
@@ -5000,7 +5039,7 @@ QPKGs.Statuses:Show()
 
 		DisplayAsStatusReportTitleLine
 
-		for package_name in $(QPKGs-SCall:Array); do
+ 		for package_name in $(QPKGs-SCall:Array); do
 			DisplayAsStatusReportLine "$package_name"
 		done
 
@@ -5251,14 +5290,14 @@ FindNextFD()
 MarkThisActionForkAsStarted()
 	{
 
-	[[ -n ${proc_fork_pathfile:-} ]] && $TOUCH_CMD "$proc_fork_pathfile"
+	[[ -n $proc_fork_pathfile ]] && $TOUCH_CMD "$proc_fork_pathfile"
 
 	}
 
 MarkThisActionForkAsOk()
 	{
 
-	[[ -n ${proc_fork_pathfile:-} && -e $proc_fork_pathfile ]] && mv "$proc_fork_pathfile" "$proc_ok_pathfile"
+	[[ -n $proc_fork_pathfile && -e $proc_fork_pathfile ]] && mv "$proc_fork_pathfile" "$proc_ok_pathfile"
 	SendActionStatus ok
 
 	}
@@ -5266,7 +5305,7 @@ MarkThisActionForkAsOk()
 MarkThisActionForkAsSkippedOk()
 	{
 
-	[[ -n ${proc_fork_pathfile:-} && -e $proc_fork_pathfile ]] && mv "$proc_fork_pathfile" "$proc_skipok_pathfile"
+	[[ -n $proc_fork_pathfile && -e $proc_fork_pathfile ]] && mv "$proc_fork_pathfile" "$proc_skipok_pathfile"
 	SendActionStatus so
 
 	}
@@ -5274,7 +5313,7 @@ MarkThisActionForkAsSkippedOk()
 MarkThisActionForkAsSkipped()
 	{
 
-	[[ -n ${proc_fork_pathfile:-} && -e $proc_fork_pathfile ]] && mv "$proc_fork_pathfile" "$proc_skip_pathfile"
+	[[ -n $proc_fork_pathfile && -e $proc_fork_pathfile ]] && mv "$proc_fork_pathfile" "$proc_skip_pathfile"
 	SendActionStatus sk
 
 	}
@@ -5282,7 +5321,7 @@ MarkThisActionForkAsSkipped()
 MarkThisActionForkAsSkippedError()
 	{
 
-	[[ -n ${proc_fork_pathfile:-} && -e $proc_fork_pathfile ]] && mv "$proc_fork_pathfile" "$proc_skip_error_pathfile"
+	[[ -n $proc_fork_pathfile && -e $proc_fork_pathfile ]] && mv "$proc_fork_pathfile" "$proc_skip_error_pathfile"
 	SendActionStatus se
 
 	}
@@ -5290,7 +5329,7 @@ MarkThisActionForkAsSkippedError()
 MarkThisActionForkAsFailed()
 	{
 
-	[[ -n ${proc_fork_pathfile:-} && -e $proc_fork_pathfile ]] && mv "$proc_fork_pathfile" "$proc_fail_pathfile"
+	[[ -n $proc_fork_pathfile && -e $proc_fork_pathfile ]] && mv "$proc_fork_pathfile" "$proc_fail_pathfile"
 	SendActionStatus er
 
 	}
@@ -5323,7 +5362,7 @@ NoteIpkAcAsEr()
 
 	local msg="failing request to $2 $(FormatAsPackName "$1")"
 
-	[[ -n ${3:-} ]] && msg+=" as $3"
+	[[ -n $3 ]] && msg+=" as $3"
 	DebugAsError "$msg" >&2
 	IPKs-AC"$2"-to:Remove "$1"
 	IPKs-AC"$2"-er:Add "$1"
@@ -5435,7 +5474,7 @@ GetPerlVer()
 GetThisBinPath()
 	{
 
-	[[ -n ${1:?null} ]] && command -v "$1" 2>&1
+	[[ -n ${1:?${FUNCNAME[0]}'()': undefined} ]] && command -v "$1" 2>&1
 
 	}
 
@@ -5445,7 +5484,7 @@ GetRepoURLFromStoreID()
 	# input:
 	#	$1 = store ID to lookup repo URL for
 
-	[[ -n ${1:-} ]] || return
+	[[ -n $1 ]] || return
 
 	/sbin/getcfg "$1" u -d unknown -f /etc/config/3rd_pkg_v2.conf
 
@@ -5784,11 +5823,11 @@ SaveActionResultToLog()
 	local -r VAR_NAME=${FUNCNAME[1]}_STARTSECONDS
 	local var_safe_name=${VAR_NAME//[.-]/_}
 	var_safe_name=${var_safe_name//:/_}
-	local -r PACKAGE_TYPE=${1:?package type empty}
-	local -r PACKAGE_NAME=${2:?package name empty}
-	local -r ACTION=${3:?action empty}
+	local -r PACKAGE_TYPE=${1:?${FUNCNAME[0]}'()': undefined}
+	local -r PACKAGE_NAME=${2:?${FUNCNAME[0]}'()': undefined}
+	local -r ACTION=${3:?${FUNCNAME[0]}'()': undefined}
 	local -r CLEAN_ACTION=${ACTION//\"/}
-	local -r RESULT=${4:?result empty}
+	local -r RESULT=${4:?${FUNCNAME[0]}'()': undefined}
 	local -r REASON=${5:-}
 	local -r DURATION="$(CalcMilliDifference "${!var_safe_name}" "$(/bin/date +%s%N)")"
 	local -r ACTION_TIMES_PATHFILE="$ACTION_TIMES_PATH/$CLEAN_ACTION.milliseconds"
@@ -5835,7 +5874,7 @@ _QPKG:reassign_()
 	[[ $opts_verbose != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
-	PACKAGE_NAME=${1:?package name null}
+	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
 	local -i result_code=0
 
 	if ! QPKGs-ISinstalled.Exist "$PACKAGE_NAME"; then
@@ -5883,7 +5922,7 @@ _QPKG:download_()
 	[[ $opts_verbose != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
-	PACKAGE_NAME=${1:?package name null}
+	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
 	local -i result_code=0
 	local -r REMOTE_URL=$(QPKG.GetURL "$PACKAGE_NAME")
 	local -r REMOTE_FILENAME=$($BASENAME_CMD "$REMOTE_URL")
@@ -5957,7 +5996,7 @@ _QPKG:install_()
 	[[ $opts_verbose != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
-	PACKAGE_NAME=${1:?package name null}
+	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
 	local -i result_code=0
 	local debug_cmd=''
 
@@ -6062,7 +6101,7 @@ _QPKG:reinstall_()
 	[[ $opts_verbose != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
-	PACKAGE_NAME=${1:?package name null}
+	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
 	local -i result_code=0
 	local debug_cmd=''
 
@@ -6135,7 +6174,7 @@ _QPKG:upgrade_()
 	[[ $opts_verbose != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
-	PACKAGE_NAME=${1:?package name null}
+	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
 	local -i result_code=0
 	local debug_cmd=''
 
@@ -6223,7 +6262,7 @@ _QPKG:uninstall_()
 	[[ $opts_verbose != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
-	PACKAGE_NAME=${1:?package name null}
+	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
 	local -i result_code=0
 	local debug_cmd=''
 
@@ -6303,7 +6342,7 @@ _QPKG:activate_()
 	[[ $opts_verbose != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
-	PACKAGE_NAME=${1:?package name null}
+	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
 	local -i result_code=0
 	local debug_cmd=''
 
@@ -6376,7 +6415,7 @@ _QPKG:reactivate_()
 	[[ $opts_verbose != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
-	PACKAGE_NAME=${1:?package name null}
+	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
 	local -i result_code=0
 	local debug_cmd=''
 
@@ -6440,7 +6479,7 @@ _QPKG:deactivate_()
 	[[ $opts_verbose != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
-	PACKAGE_NAME=${1:?package name null}
+	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
 	local -i result_code=0
 	local debug_cmd=''
 
@@ -6519,7 +6558,7 @@ _QPKG:enable_()
 	[[ $opts_verbose != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
-	PACKAGE_NAME=${1:?package name null}
+	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
 	local -i result_code=0
 	local debug_cmd=''
 
@@ -6573,7 +6612,7 @@ _QPKG:disable_()
 	[[ $opts_verbose != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
-	PACKAGE_NAME=${1:?package name null}
+	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
 	local -i result_code=0
 	local debug_cmd=''
 
@@ -6631,7 +6670,7 @@ _QPKG:backup_()
 	[[ $opts_verbose != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
-	PACKAGE_NAME=${1:?package name null}
+	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
 	local -i result_code=0
 	local debug_cmd=''
 
@@ -6690,7 +6729,7 @@ _QPKG:restore_()
 	[[ $opts_verbose != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
-	PACKAGE_NAME=${1:?package name null}
+	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
 	local -i result_code=0
 	local debug_cmd=''
 
@@ -6749,7 +6788,7 @@ _QPKG:clean_()
 	[[ $opts_verbose != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
-	PACKAGE_NAME=${1:?package name null}
+	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
 	local -i result_code=0
 	local debug_cmd=''
 
@@ -6812,7 +6851,7 @@ _QPKG:sign_()
 	[[ $opts_verbose != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
-	local -r PACKAGE_NAME=${1:?package name null}
+	local -r PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
 	local -i result_code=0
 	local cert=''
 	local signature=''
@@ -6951,7 +6990,7 @@ _QPKG:status_()
 	[[ $opts_verbose != true ]] && exec &>/dev/null
 	FuncFork:Entry
 
-	PACKAGE_NAME=${1:?package name null}
+	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
 	local -i result_code=0
 	local package_tests=''
 	local debug_cmd=''
@@ -7099,7 +7138,7 @@ QPKG.GetServicePathFile()
 
 	# input:
 	#   $PACKAGE_NAME (global) = QPKG name (default)
-	#   $1 = if specified, use this as QPKG name instead
+	#   $1 = (optional) if specified, use this as QPKG name instead
 
 	# output:
 	#   stdout = service script pathfile
@@ -7123,6 +7162,8 @@ QPKG.Avail.GetVer()
 	# output:
 	#   stdout = package version
 	#   $? = 0 if found, !0 if not
+
+	[[ -n ${1:-} ]] || return
 
 	local -i index=0
 	local package=''
@@ -7168,8 +7209,7 @@ QPKG.GetStoreID()
 
 	# output:
 	#   stdout = package store ID
-
-	/sbin/getcfg "${1:?package name null}" store -d sherpa -f /etc/config/qpkg.conf
+	/sbin/getcfg "${1:?${FUNCNAME[0]}'()': undefined}" store -d sherpa -f /etc/config/qpkg.conf
 
 	return 0
 
@@ -7189,7 +7229,7 @@ QPKG.IsRepoOk()
 
 	local package=${PACKAGE_NAME:-}
 	[[ -n ${1:-} ]] && package=$1
-	local temp="$(QPKG.GetStoreID "${package:?package name null}")"
+	local temp="$(QPKG.GetStoreID "$package")"
 	[[ -z $temp || $temp = sherpa ]]
 
 	}
@@ -7205,7 +7245,7 @@ QPKG.GetInstallDate()
 	# output:
 	#   stdout = package store ID
 
-	/sbin/getcfg "${1:?package name null}" date -f /etc/config/qpkg.conf
+	/sbin/getcfg "${1:?${FUNCNAME[0]}'()': undefined}" date -f /etc/config/qpkg.conf
 
 	return 0
 
@@ -7222,7 +7262,7 @@ QPKG.IsBackupExist()
 	# output:
 	#   $? = 0 if true, 1 if false
 
-	[[ -e $QPKG_BU_PATH/${1:?package name null}.config.tar.gz ]]
+	[[ -e $QPKG_BU_PATH/${1:?${FUNCNAME[0]}'()': undefined}.config.tar.gz ]]
 
 	}
 
@@ -7240,7 +7280,7 @@ QPKG.IsDependent()
 	local -i index=0
 
 	for index in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$index]} = "${1:?package name null}" ]]; then
+		if [[ ${QPKG_NAME[$index]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
 			if [[ -n ${QPKG_DEPENDS_ON[$index]} ]]; then
 				return 0
 			else
@@ -7286,7 +7326,7 @@ QPKG.GetOriginalPath()
 
 	if [[ ${#QPKGs_were_installed_name[@]} -gt 0 ]]; then
 		for index in "${!QPKGs_were_installed_name[@]}"; do
-			if [[ ${QPKGs_were_installed_name[$index]} = "${1:?package name null}" ]]; then
+			if [[ ${QPKGs_were_installed_name[$index]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
 				echo "${QPKGs_were_installed_path[$index]}"
 				return 0
 			fi
@@ -7338,9 +7378,9 @@ QPKG.GetPathFilename()
 	#   stdout = QPKG local filename
 	#   $? = 0 if successful, 1 if failed
 
-	local url=$(QPKG.GetURL "${1:?package name null}")
+	local url=$(QPKG.GetURL "${1:?${FUNCNAME[0]}'()': undefined}")
 
-	[[ -n ${url:-} ]] || return
+	[[ -n $url ]] || return
 	[[ $(Lowercase "${url##*.}") != qpkg ]] && url=${url%.*}.qpkg		# swap `zip` for `qpkg` here (only used for `QDK.zip`)
 
 	echo "$QPKG_DL_PATH/$($BASENAME_CMD "$url")"
@@ -7361,7 +7401,7 @@ QPKG.GetMD5()
 	local -i index=0
 
 	for index in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$index]} = "${1:?package name null}" ]] && [[ ${QPKG_ARCH[$index]} = all || ${QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
+		if [[ ${QPKG_NAME[$index]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]] && [[ ${QPKG_ARCH[$index]} = all || ${QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
 			echo "${QPKG_MD5[$index]}"
 			return 0
 		fi
@@ -7384,7 +7424,7 @@ QPKG.GetURL()
 	local -i index=0
 
 	for index in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$index]} = "${1:?package name null}" ]] && [[ ${QPKG_ARCH[$index]} = all || ${QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
+		if [[ ${QPKG_NAME[$index]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]] && [[ ${QPKG_ARCH[$index]} = all || ${QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
 			echo "${QPKG_URL[$index]}"
 			return 0
 		fi
@@ -7401,14 +7441,14 @@ QPKG.IsArchOK()
 
 	# input:
 	#   $PACKAGE_NAME (global) = QPKG name (default)
-	#   $1 = if specified, use this as QPKG name instead
+	#   $1 = (optional) if specified, use this as QPKG name instead
 
 	# output:
 	#   $? = 0 if true, 1 if false
 
 	local package=${PACKAGE_NAME:-}
 	[[ -n ${1:-} ]] && package=$1
-	local temp="$(QPKG.GetURL "${package:?package name null}")"
+	local temp="$(QPKG.GetURL "$package")"
 	[[ -n $temp && $temp != none ]]
 
 	}
@@ -7426,7 +7466,7 @@ QPKG.GetMinRAM()
 	local -i index=0
 
 	for index in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$index]} = "${1:?package name null}" ]]; then
+		if [[ ${QPKG_NAME[$index]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
 			echo "${QPKG_MIN_RAM_KB[$index]}"
 			return 0
 		fi
@@ -7445,7 +7485,7 @@ QPKG.IsMinRAMOk()
 	# output:
 	#   $? = 0 if this NAS meets the minium RAM requirements for QPKG name, 1 if not
 
-	local min="$(QPKG.GetMinRAM "${1:?package name null}")"
+	local min="$(QPKG.GetMinRAM "${1:?${FUNCNAME[0]}'()': undefined}")"
 	[[ -n $min ]] && [[ $min = none || $NAS_RAM_KB -ge $min ]]
 
 	}
@@ -7463,7 +7503,7 @@ QPKG.GetMinOSVer()
 	local -i index=0
 
 	for index in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$index]} = "${1:?package name null}" ]]; then
+		if [[ ${QPKG_NAME[$index]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
 			echo "${QPKG_MIN_OS_VERSION[$index]}"
 			return 0
 		fi
@@ -7482,7 +7522,7 @@ QPKG.IsMinOSVerOk()
 	# output:
 	#   $? = 0 if this NAS meets the minium OS firmware version requirements for QPKG name, 1 if not
 
-	local min="$(QPKG.GetMinOSVer "${1:?package name null}")"
+	local min="$(QPKG.GetMinOSVer "${1:?${FUNCNAME[0]}'()': undefined}")"
 	[[ -n $min ]] && [[ $min = none || ${NAS_FIRMWARE_VER//.} -ge $min ]]
 
 	}
@@ -7502,7 +7542,7 @@ QPKG.GetAuthor()
 	local -i index=0
 
 	for index in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$index]} = "${1:?package name null}" ]]; then
+		if [[ ${QPKG_NAME[$index]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
 			echo "${QPKG_AUTHOR[$index]}"
 			return 0
 		fi
@@ -7527,7 +7567,7 @@ QPKG.GetAppAuthor()
 	local -i index=0
 
 	for index in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$index]} = "${1:?package name null}" ]]; then
+		if [[ ${QPKG_NAME[$index]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
 			echo "${QPKG_APP_AUTHOR[$index]}"
 			return 0
 		fi
@@ -7550,7 +7590,7 @@ QPKG.GetDesc()
 	local -i index=0
 
 	for index in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$index]} = "${1:?package name null}" ]]; then
+		if [[ ${QPKG_NAME[$index]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
 			echo "${QPKG_DESC[$index]}"
 			return 0
 		fi
@@ -7575,7 +7615,7 @@ QPKG.GetNote()
 	local -i index=0
 
 	for index in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$index]} = "${1:?package name null}" ]]; then
+		if [[ ${QPKG_NAME[$index]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
 			echo "${QPKG_NOTE[$index]}"
 			return 0
 		fi
@@ -7598,7 +7638,7 @@ QPKG.GetAbbrvs()
 	local -i index=0
 
 	for index in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$index]} = "${1:?package name null}" ]]; then
+		if [[ ${QPKG_NAME[$index]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
 			echo "${QPKG_ABBRVS[$index]}"
 			return 0
 		fi
@@ -7621,7 +7661,7 @@ QPKG.GetDependencies()
 	local -i index=0
 
 	for index in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$index]} = "${1:?package name null}" ]]; then
+		if [[ ${QPKG_NAME[$index]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
 			echo "${QPKG_DEPENDS_ON[$index]}"
 			return 0
 		fi
@@ -7676,7 +7716,7 @@ QPKG.IsCanBackup()
 
 	local -i index=0
 	local qpkg_name=${PACKAGE_NAME:-}
-	[[ -n ${1:-} ]] && qpkg_name=$1
+	[[ -n $1 ]] && qpkg_name=$1
 
 	for index in "${!QPKG_NAME[@]}"; do
 		if [[ ${QPKG_NAME[$index]} = "$qpkg_name" ]]; then
@@ -7706,7 +7746,7 @@ QPKG.IsCanRestartToUpdate()
 	local -i index=0
 
 	for index in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$index]} = "${1:?package name null}" ]]; then
+		if [[ ${QPKG_NAME[$index]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
 			if ${QPKG_CAN_RESTART_TO_UPDATE[$index]}; then
 				return 0
 			else
@@ -7733,7 +7773,7 @@ QPKG.IsCanClean()
 
 	local -i index=0
 	local qpkg_name=${PACKAGE_NAME:-}
-	[[ -n ${1:-} ]] && qpkg_name=$1
+	[[ -n $1 ]] && qpkg_name=$1
 
 	for index in "${!QPKG_NAME[@]}"; do
 		if [[ ${QPKG_NAME[$index]} = "$qpkg_name" ]]; then
@@ -7763,7 +7803,7 @@ QPKG.IsCanLog()
 
 	local -i index=0
 	local qpkg_name=${PACKAGE_NAME:-}
-	[[ -n ${1:-} ]] && qpkg_name=$1
+	[[ -n $1 ]] && qpkg_name=$1
 
 	for index in "${!QPKG_NAME[@]}"; do
 		if [[ ${QPKG_NAME[$index]} = "$qpkg_name" ]]; then
@@ -7795,7 +7835,7 @@ QPKG.GetActiveTest()
 	local buff=''
 
 	for index in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$index]} = "${1:?package name null}" ]]; then
+		if [[ ${QPKG_NAME[$index]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
 			buff="${QPKG_TEST_FOR_ACTIVE[$index]}"
 
 			if [[ -n $buff ]]; then
@@ -7820,7 +7860,7 @@ QPKG.IsInstalled()
 	# output:
 	#   $? = 0 (true) or 1 (false)
 
-	$GREP_CMD -q "^\[${1:?package name null}\]" /etc/config/qpkg.conf
+	$GREP_CMD -q "^\[${1:?${FUNCNAME[0]}'()': undefined}\]" /etc/config/qpkg.conf
 
 	}
 
@@ -7833,7 +7873,7 @@ QPKG.IsNtInstalled()
 	# output:
 	#   $? = 0 (true) or 1 (false)
 
-	! QPKG.IsInstalled "${1:?package name null}"
+	! QPKG.IsInstalled "${1:?${FUNCNAME[0]}'()': undefined}"
 
 	}
 
@@ -7846,7 +7886,7 @@ QPKG.IsMissing()
 	# output:
 	#   $? = 0 (true) or 1 (false)
 
-	path=$(QPKG.GetInstallationPath "${1:?package name null}")
+	path=$(QPKG.GetInstallationPath "${1:?${FUNCNAME[0]}'()': undefined}")
 	[[ -n $path && ! -d $path ]]
 
 	}
@@ -7860,7 +7900,7 @@ QPKG.IsEnabled()
 	# output:
 	#   $? = 0 (true) or 1 (false)
 
-	[[ $(/sbin/getcfg "${1:?package name null}" Enable -u -f /etc/config/qpkg.conf) = TRUE ]]
+	[[ $(/sbin/getcfg "${1:?${FUNCNAME[0]}'()': undefined}" Enable -u -f /etc/config/qpkg.conf) = TRUE ]]
 
 	}
 
@@ -7874,7 +7914,7 @@ QPKG.GetServiceStatus()
 	#   $stdout = last known package service status
 	#   $? = 0 if found, 1 if not found
 
-	local -r PACKAGE_NAME=${1:?package name null}
+	local -r PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
 
 	[[ -e /var/run/$PACKAGE_NAME.last.operation ]] && echo "$(</var/run/"$PACKAGE_NAME".last.operation)"
 
@@ -7887,8 +7927,11 @@ MakePath()
 	#   $1 = path to create
 	#   $2 = reason for this path
 
-	if ! mkdir -p "${1:?path null}"; then
-		ShowAsError "unable to create ${2:?null} path $(FormatAsFileName "$1") $(FormatAsExitcode "$?")"
+	[[ -n ${1:?${FUNCNAME[0]}'()': undefined} ]] || return
+	[[ -n ${2:?${FUNCNAME[0]}'()': undefined} ]] || return
+
+	if ! mkdir -p "$1"; then
+		ShowAsError "unable to create $2 path $(FormatAsFileName "$1") $(FormatAsExitcode "$?")"
 		show_suggest_raise_issue=true
 		return 1
 	fi
@@ -7916,8 +7959,10 @@ RunAndLog()
 	Func:Entry
 	local -r LOG_PATHFILE=$($MKTEMP_CMD /var/log/"${FUNCNAME[0]}"_XXXXXX)
 	local -i result_code=0
+	[[ -n ${1:?${FUNCNAME[0]}'()': undefined} ]] || return
+	[[ -n ${2:?${FUNCNAME[0]}'()': undefined} ]] || return
 
-	FormatAsCommand "${1:?null}" > "${2:?null}"
+	FormatAsCommand "$1" > "$2"
 	DebugAsProc "exec: '$1'"
 
 	if [[ $opts_verbose = true ]]; then
@@ -7953,7 +7998,7 @@ RunAndLog()
 DeDupeWords()
 	{
 
-	tr ' ' '\n' <<< "${1:-}" | $SORT_CMD | $UNIQ_CMD | tr '\n' ' ' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||'
+	tr ' ' '\n' <<< "${1:?${FUNCNAME[0]}'()': undefined}" | $SORT_CMD | $UNIQ_CMD | tr '\n' ' ' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||'
 
 	}
 
@@ -7964,7 +8009,7 @@ FileMatchesMD5()
 	#   $1 = pathfile to generate an MD5 checksum for
 	#   $2 = MD5 checksum to compare against
 
-	[[ $($MD5SUM_CMD "${1:?pathfile null}" | cut -f1 -d' ') = "${2:?comparison checksum null}" ]]
+	[[ $($MD5SUM_CMD "${1:?${FUNCNAME[0]}'()': undefined}" | cut -f1 -d' ') = "${2:?${FUNCNAME[0]}'()': undefined}" ]]
 
 	}
 
@@ -7980,6 +8025,7 @@ Capitalise()
 
 	# capitalise first character of $1
 
+	[[ -n ${1:-} ]] || return
 	echo "$(Uppercase ${1:0:1})${1:1}"
 
 	}
@@ -7987,14 +8033,14 @@ Capitalise()
 Uppercase()
 	{
 
-	tr 'a-z' 'A-Z' <<< "$1"
+	tr 'a-z' 'A-Z' <<< "${1:-}"
 
 	}
 
 Lowercase()
 	{
 
-	tr 'A-Z' 'a-z' <<< "$1"
+	tr 'A-Z' 'a-z' <<< "${1:-}"
 
 	}
 
@@ -8003,6 +8049,7 @@ LTrim()
 
 	# trim leading whitespace from $1
 
+	[[ -n ${1:-} ]] || return
 	(shopt -s extglob; echo -n "${1##+(' ')}")
 
 	}
@@ -8012,6 +8059,7 @@ RTrim()
 
 	# trim trailing whitespace from $1
 
+	[[ -n ${1:-} ]] || return
 	(shopt -s extglob; echo -n "${1%%+(' ')}")
 
 	}
@@ -8021,6 +8069,7 @@ Trim()
 
 	# trim leading and trailing whitespace from $1
 
+	[[ -n ${1:-} ]] || return
 	RTrim "$(LTrim "$1")"
 
 	}
@@ -8121,61 +8170,66 @@ FormatAsPackName()
 
 	# format as package name
 
-	echo "'${1:?package name null}'"
+	echo "'${1:?${FUNCNAME[0]}'()': undefined}'"
 
 	}
 
 FormatAsFileName()
 	{
 
-	echo "(${1:?filename null})"
+	echo "(${1:?${FUNCNAME[0]}'()': undefined})"
 
 	}
 
 FormatAsURL()
 	{
 
-	ColourTextUnderlinedCyan "${1:-}"
+	ColourTextUnderlinedCyan "${1:?${FUNCNAME[0]}'()': undefined}"
 
 	}
 
 FormatAsExitcode()
 	{
 
-	echo "[${1:?exitcode null}]"
+	echo "[${1:?${FUNCNAME[0]}'()': undefined}]"
 
 	}
 
 FormatAsLogFilename()
 	{
 
-	echo "${CHARS_RESULTS}log file: '${1:?filename null}'"
+	echo "${CHARS_RESULTS}log file: '${1:?${FUNCNAME[0]}'()': undefined}'"
 
 	}
 
 FormatAsCommand()
 	{
 
-	echo "${CHARS_RESULTS}command: '${1:?command null}'"
+	echo "${CHARS_RESULTS}command: '${1:?${FUNCNAME[0]}'()': undefined}'"
 
 	}
 
 FormatAsResult()
 	{
 
+	[[ -n ${1:-} ]] || return
 	local prefix="$CHARS_RESULTS"
 	[[ ${1:-0} -ne 0 ]] && prefix="$CHARS_ALERT"
-	echo "${prefix}result_code: $(FormatAsExitcode "${1:-}")"
+
+	echo "${prefix}result_code: $(FormatAsExitcode "$1")"
 
 	}
 
 FormatAsResultAndStdout()
 	{
 
+	[[ -n ${1:-} ]] || return
+	[[ -n ${2:-} ]] || return
 	local prefix="$CHARS_RESULTS"
 	[[ ${1:-0} -ne 0 ]] && prefix="$CHARS_ALERT"
-	echo "${prefix}result_code: $(FormatAsExitcode "${1:-}") ***** stdout/stderr begins below *****"
-	echo "${2:-}"
+
+	echo "${prefix}result_code: $(FormatAsExitcode "$1") ***** stdout/stderr begins below *****"
+	echo "$2"
 	echo "${prefix}***** stdout/stderr is complete *****"
 
 	}
@@ -8385,12 +8439,14 @@ DebugVar()
 DebugInfo()
 	{
 
+	[[ -n $1 ]] || return
+
 	if [[ ${2:-} = ' ' || ${2:-} = "'' " ]]; then	# if $2 has no usable content then print $1 with trailing colon and `none` as second field
-		DebugAsInfo "${1:-}: none"
+		DebugAsInfo "$1: none"
 	elif [[ -n ${2:-} ]]; then
-		DebugAsInfo "${1:-}: ${2:-}"
+		DebugAsInfo "$1: ${2:-}"
 	else
-		DebugAsInfo "${1:-}"
+		DebugAsInfo "$1"
 	fi
 
 	}
@@ -8513,65 +8569,65 @@ DebugAsFuncEx()
 DebugAsProc()
 	{
 
-	[[ -n ${1:-} ]] && DebugThis "(--) ${1:-}"
+	[[ -n $1 ]] && DebugThis "(--) $1"
 
 	}
 
 DebugAsDone()
 	{
 
-	[[ -n ${1:-} ]] && DebugThis "(==) ${1:-}"
+	[[ -n $1 ]] && DebugThis "(==) $1"
 
 	}
 
 DebugAsDetect()
 	{
 
-	[[ -n ${1:-} ]] && DebugThis "(**) ${1:-}"
+	[[ -n $1 ]] && DebugThis "(**) $1"
 
 	}
 
 DebugAsInfo()
 	{
 
-	[[ -n ${1:-} ]] && DebugThis "(II) ${1:-}"
+	[[ -n $1 ]] && DebugThis "(II) $1"
 
 	}
 
 DebugAsWarn()
 	{
 
-	[[ -n ${1:-} ]] && DebugThis "(WW) ${1:-}"
+	[[ -n $1 ]] && DebugThis "(WW) $1"
 
 	}
 
 DebugAsError()
 	{
 
-	[[ -n ${1:-} ]] && DebugThis "(EE) ${1:-}"
+	[[ -n $1 ]] && DebugThis "(EE) $1"
 
 	}
 
 DebugAsLog()
 	{
 
-	[[ -n ${1:-} ]] && DebugThis "(LL) ${1:-}"
+	[[ -n $1 ]] && DebugThis "(LL) $1"
 
 	}
 
 DebugAsVar()
 	{
 
-	[[ -n ${1:-} ]] && DebugThis "(vv) ${1:-}"
+	[[ -n $1 ]] && DebugThis "(vv) $1"
 
 	}
 
 DebugThis()
 	{
 
-	[[ -z ${1:-} ]] && return
-	[[ ${opts_verbose:-false} = true ]] && ShowAsDebug "${1:-}"
-	WriteToLog dbug "${1:-}"
+	[[ -n $1 ]] || return
+	[[ ${opts_verbose:-false} = true ]] && ShowAsDebug "$1"
+	WriteToLog dbug "$1"
 
 	}
 
@@ -8590,11 +8646,11 @@ AddExtLogToSessLog()
 
 	DebugAsLog 'adding external log to main log'
 	DebugExtLogMinSepr
-	DebugAsLog "$(FormatAsLogFilename "${1:?filename null}")"
+	DebugAsLog "$(FormatAsLogFilename "${1:?${FUNCNAME[0]}'()': undefined}")"
 
 	while read -r linebuff; do
 		DebugAsLog "$linebuff"
-	done < "${1:?filename null}"
+	done < "$1"
 
 	DebugExtLogMinSepr
 	opts_verbose=$original_verbose
@@ -8611,12 +8667,13 @@ ShowAsProcLong()
 ShowAsProc()
 	{
 
+	[[ -n $1 ]] || return
 	local suffix=''
+	[[ -n ${2:-} ]] && suffix=" ${2:-}"
 
-	[[ -n ${2:-} ]] && suffix=" $2"
 	EraseThisLine
-	WriteToDisplayWait "$(ColourTextBrightYellow proc)" "${1:-} ${CHARS_ELLIPSIS}${suffix}"
-	WriteToLog proc "${1:-}${suffix}"
+	WriteToDisplayWait "$(ColourTextBrightYellow proc)" "$1 ${CHARS_ELLIPSIS}${suffix}"
+	WriteToLog proc "${1}${suffix}"
 	[[ ${opts_verbose:=false} = true ]] && Display
 
 	} >&2
@@ -8624,7 +8681,9 @@ ShowAsProc()
 ShowAsDebug()
 	{
 
-	WriteToDisplayNew "$(ColourTextBlackOnCyan dbug)" "${1:-}"
+	[[ -n $1 ]] || return
+
+	WriteToDisplayNew "$(ColourTextBlackOnCyan dbug)" "$1"
 
 	}
 
@@ -8633,24 +8692,30 @@ ShowAsInfo()
 
 	# note to user
 
+	[[ -n $1 ]] || return
+
 	EraseThisLine
-	WriteToDisplayNew "$(ColourTextBrightYellow note)" "${1:-}"
-	WriteToLog note "${1:-}"
+	WriteToDisplayNew "$(ColourTextBrightYellow note)" "$1"
+	WriteToLog note "$1"
 
 	} >&2
 
 ShowAsQuiz()
 	{
 
-	WriteToDisplayWait "$(ColourTextBrightOrangeBlink quiz)" "${1:-}:"
-	WriteToLog quiz "${1:-}:"
+	[[ -n $1 ]] || return
+
+	WriteToDisplayWait "$(ColourTextBrightOrangeBlink quiz)" "$1:"
+	WriteToLog quiz "$1:"
 
 	}
 
 ShowAsQuizDone()
 	{
 
-	WriteToDisplayNew "$(ColourTextBrightOrange quiz)" "${1:-}"
+	[[ -n $1 ]] || return
+
+	WriteToDisplayNew "$(ColourTextBrightOrange quiz)" "$1"
 
 	}
 
@@ -8659,8 +8724,10 @@ ShowAsDone()
 
 	# process completed OK
 
+	[[ -n $1 ]] || return
+
 	EraseThisLine
-	WriteToDisplayNew "$(ColourTextBrightGreen 'done')" "${1:-}"
+	WriteToDisplayNew "$(ColourTextBrightGreen 'done')" "$1"
 	WriteToLog 'done' "$1"
 
 	} >&2
@@ -8670,8 +8737,10 @@ ShowAsWarn()
 
 	# warning only
 
+	[[ -n $1 ]] || return
+
 	EraseThisLine
-	WriteToDisplayNew "$(ColourTextBrightOrange warn)" "${1:-}"
+	WriteToDisplayNew "$(ColourTextBrightOrange warn)" "$1"
 	WriteToLog warn "$1"
 
 	} >&2
@@ -8681,7 +8750,9 @@ ShowAsAbort()
 
 	# fatal abort
 
-	WriteToDisplayNew "$(ColourTextBrightRed bort)" "${1:-}"
+	[[ -n $1 ]] || return
+
+	WriteToDisplayNew "$(ColourTextBrightRed bort)" "$1"
 	WriteToLog bort "$1"
 	Self.Error:Set
 
@@ -8692,7 +8763,8 @@ ShowAsFail()
 
 	# non-fatal error
 
-	local capitalised="$(Capitalise "${1:-}")"
+	[[ -n $1 ]] || return
+	local capitalised="$(Capitalise "$1")"
 
 	EraseThisLine
 	WriteToDisplayNew "$(ColourTextBrightRed fail)" "$capitalised"
@@ -8705,7 +8777,8 @@ ShowAsError()
 
 	# fatal error
 
-	local capitalised="$(Capitalise "${1:-}")"
+	[[ -n $1 ]] || return
+	local capitalised="$(Capitalise "$1")"
 
 	EraseThisLine
 	WriteToDisplayNew "$(ColourTextBrightRed derp)" "$capitalised"
@@ -8730,12 +8803,12 @@ ShowAsActionProgress()
 	#	$8 = expected action duration: `long` (optional)
 
 	local tier=''
-	local -r PACKAGE_TYPE=${2:?null}
+	local -r PACKAGE_TYPE="${2:?${FUNCNAME[0]}'()': undefined}"
 	declare -i -r OK_COUNT=${3:-0}
 	declare -i -r SKIP_COUNT=${4:-0}
 	declare -i -r FAIL_COUNT=${5:-0}
 	declare -i -r TOTAL_COUNT=${6:-0}
-	local -r ACTION_PRESENT_MSG=${7:?null}
+	local -r ACTION_PRESENT_MSG="${7:?${FUNCNAME[0]}'()': undefined}"
 	local -r DURATION=${8:-}
 	local progress_msg=''
 
@@ -8800,12 +8873,12 @@ ShowAsIncrementalProgress()
 	#	$5 = suffix2		"packages"
 	#	$6 = expected action duration: `long` (optional)
 
-	local -r ACTION=${1:?null}
+	local -r ACTION="${1:?${FUNCNAME[0]}'()': undefined}"
 	declare -i -r COUNT1=${2:-0}
-	local -r SUFFIX1=${3:?null}
+	local -r SUFFIX1="${3:?${FUNCNAME[0]}'()': undefined}"
 	declare -i -r COUNT2=${4:-0}
-	local -r SUFFIX2=${5:?null}
-	local -r DURATION=${6:-}
+	local -r SUFFIX2="${5:?${FUNCNAME[0]}'()': undefined}"
+	local -r DURATION="${6:?${FUNCNAME[0]}'()': undefined}"
 	local progress_msg=''
 
 	progress_msg="$(ColourTextBrightWhite "$COUNT1") ${SUFFIX1}$(Pluralise "$COUNT1"): $(ColourTextBrightWhite "$COUNT2") ${SUFFIX2}$(Pluralise "$COUNT2")"
@@ -8929,17 +9002,20 @@ WriteToLog()
 	#	$1 = pass/fail
 	#	$2 = message
 
-	[[ ${opts_debug:=false} = true && -n ${sess_active_pathfile:-} ]] && printf '%-4s: %s\n' "$(StripANSI "${1:-}")" "$(StripANSI "${2:-}")" >> "$sess_active_pathfile"
+	[[ -n $1 && -n $2 ]] || return
+	[[ ${opts_debug:=false} = true && -n $sess_active_pathfile ]] && printf '%-4s: %s\n' "$(StripANSI "$1")" "$(StripANSI "$2")" >> "$sess_active_pathfile"
 
 	}
 
 ColourTextBrightGreen()
 	{
 
+	[[ -n $1 ]] || return
+
 	if [[ $colourful = true ]]; then
-		printf '\033[1;32m%s\033[0m' "${1:-}"
+		printf '\033[1;32m%s\033[0m' "$1"
 	else
-		printf '%s' "${1:-}"
+		printf '%s' "$1"
 	fi
 
 	} 2>/dev/null
@@ -8947,10 +9023,12 @@ ColourTextBrightGreen()
 ColourTextBrightYellow()
 	{
 
+	[[ -n $1 ]] || return
+
 	if [[ $colourful = true ]]; then
-		printf '\033[1;33m%s\033[0m' "${1:-}"
+		printf '\033[1;33m%s\033[0m' "$1"
 	else
-		printf '%s' "${1:-}"
+		printf '%s' "$1"
 	fi
 
 	} 2>/dev/null
@@ -8958,10 +9036,12 @@ ColourTextBrightYellow()
 ColourTextBrightOrange()
 	{
 
+	[[ -n $1 ]] || return
+
 	if [[ $colourful = true ]]; then
-		printf '\033[1;38;5;214m%s\033[0m' "${1:-}"
+		printf '\033[1;38;5;214m%s\033[0m' "$1"
 	else
-		printf '%s' "${1:-}"
+		printf '%s' "$1"
 	fi
 
 	} 2>/dev/null
@@ -8969,10 +9049,12 @@ ColourTextBrightOrange()
 ColourTextBrightOrangeBlink()
 	{
 
+	[[ -n $1 ]] || return
+
 	if [[ $colourful = true ]]; then
-		printf '\033[1;5;38;5;214m%s\033[0m' "${1:-}"
+		printf '\033[1;5;38;5;214m%s\033[0m' "$1"
 	else
-		printf '%s' "${1:-}"
+		printf '%s' "$1"
 	fi
 
 	} 2>/dev/null
@@ -8980,10 +9062,12 @@ ColourTextBrightOrangeBlink()
 ColourTextBrightRed()
 	{
 
+	[[ -n $1 ]] || return
+
 	if [[ $colourful = true ]]; then
-		printf '\033[1;31m%s\033[0m' "${1:-}"
+		printf '\033[1;31m%s\033[0m' "$1"
 	else
-		printf '%s' "${1:-}"
+		printf '%s' "$1"
 	fi
 
 	} 2>/dev/null
@@ -8991,10 +9075,12 @@ ColourTextBrightRed()
 ColourTextBrightRedBlink()
 	{
 
+	[[ -n $1 ]] || return
+
 	if [[ $colourful = true ]]; then
-		printf '\033[1;5;31m%s\033[0m' "${1:-}"
+		printf '\033[1;5;31m%s\033[0m' "$1"
 	else
-		printf '%s' "${1:-}"
+		printf '%s' "$1"
 	fi
 
 	} 2>/dev/null
@@ -9002,10 +9088,12 @@ ColourTextBrightRedBlink()
 ColourTextCyan()
 	{
 
+	[[ -n $1 ]] || return
+
 	if [[ $colourful = true ]]; then
-		printf '\033[1;36m%s\033[0m' "${1:-}"
+		printf '\033[1;36m%s\033[0m' "$1"
 	else
-		printf '%s' "${1:-}"
+		printf '%s' "$1"
 	fi
 
 	} 2>/dev/null
@@ -9013,10 +9101,12 @@ ColourTextCyan()
 ColourTextDarkGrey()
 	{
 
+	[[ -n $1 ]] || return
+
 	if [[ $colourful = true ]]; then
-		printf '\033[1;90m%s\033[0m' "${1:-}"
+		printf '\033[1;90m%s\033[0m' "$1"
 	else
-		printf '%s' "${1:-}"
+		printf '%s' "$1"
 	fi
 
 	} 2>/dev/null
@@ -9024,10 +9114,12 @@ ColourTextDarkGrey()
 ColourTextUnderlinedCyan()
 	{
 
+	[[ -n $1 ]] || return
+
 	if [[ $colourful = true ]]; then
-		printf '\033[4;36m%s\033[0m' "${1:-}"
+		printf '\033[4;36m%s\033[0m' "$1"
 	else
-		printf '%s' "${1:-}"
+		printf '%s' "$1"
 	fi
 
 	} 2>/dev/null
@@ -9035,10 +9127,12 @@ ColourTextUnderlinedCyan()
 ColourTextBlackOnCyan()
 	{
 
+	[[ -n $1 ]] || return
+
 	if [[ $colourful = true ]]; then
-		printf '\033[30;46m%s\033[0m' "${1:-}"
+		printf '\033[30;46m%s\033[0m' "$1"
 	else
-		printf '%s' "${1:-}"
+		printf '%s' "$1"
 	fi
 
 	} 2>/dev/null
@@ -9046,10 +9140,12 @@ ColourTextBlackOnCyan()
 ColourTextBrightWhite()
 	{
 
+	[[ -n $1 ]] || return
+
 	if [[ $colourful = true ]]; then
-		printf '\033[1;97m%s\033[0m' "${1:-}"
+		printf '\033[1;97m%s\033[0m' "$1"
 	else
-		printf '%s' "${1:-}"
+		printf '%s' "$1"
 	fi
 
 	} 2>/dev/null
