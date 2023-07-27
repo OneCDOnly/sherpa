@@ -1,4 +1,4 @@
-PACKAGES_VER='<?today?>'
+PACKAGES_VER='<?thisdate?>'
 #*<?dontedit?>
 BASE_QPKG_CONFLICTS_WITH='TarMT'
 BASE_QPKG_WARNINGS='Qboost'

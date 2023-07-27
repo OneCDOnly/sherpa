@@ -16,7 +16,7 @@ buffer=$(<"$source_pathfile")
 
 buffer=$(sed "s|<?dontedit?>|$dontedit_msg|" <<< "$buffer")
 buffer=$(sed "s|<?thisyear?>|$thisyear|" <<< "$buffer")
-buffer=$(sed "s|<?today?>|$today|" <<< "$buffer")
+buffer=$(sed "s|<?thisdate?>|$thisdate|" <<< "$buffer")
 buffer=$(sed "s|<?cdn_sherpa_url?>|$cdn_sherpa_url|" <<< "$buffer")
 
 buffer=$(sed -e '/^#[[:space:]].*/d;/#$/d;s/[[:space:]]#[[:space:]].*//' <<< "$buffer")		# remove comment lines and line comments

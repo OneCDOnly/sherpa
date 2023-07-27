@@ -144,7 +144,7 @@ echo $public_function_name':Add()
 	}
 
 [[ -e $target_pathfile ]] && rm -f "$target_pathfile"
-echo "OBJECTS_VER='$today'" > "$target_pathfile"
+echo "OBJECTS_VER='$thisdate'" > "$target_pathfile"
 echo "#*$dontedit_msg" >> "$target_pathfile"
 
 # package action flag objects -----------------------------------------------------------------------------------------------------------------------------
