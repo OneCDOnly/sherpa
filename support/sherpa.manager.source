@@ -134,6 +134,7 @@ Self:Init()
 	readonly NAS_QPKG_ARCH=$(GetQpkgArch)
 	readonly ENTWARE_VER=$(GetEntwareType)
 	readonly CPU_CORES=$(GetCPUCores)
+	readonly NAS_UPSTATE=$(GetUpState)
 	readonly KERNEL_PAGESIZE=$(GetKernelPageSize)
 	readonly CONCURRENCY=$CPU_CORES		# maximum concurrent package actions to run. Should probably make this account for CPU speed too.
 	readonly LOG_TAIL_LINES=5000		# note: a full download and install of everything generates a session log of around 1600 lines, but include a bunch of opkg updates and it can get much longer
@@ -194,46 +195,34 @@ Self:Results()
 	display_last_action_datetime=false
 
 	if ARGs-unknown.IsNone; then
-		# action reports
-
 		if [[ $opts_show_abbreviations = true ]]; then
 			QPKGs.Abbreviations:Show
-		fi
-
-		if [[ $opts_show_actions = true ]]; then
+		elif [[ $opts_show_actions = true ]]; then
 			Help.Actions:Show
-		fi
-
-		if [[ $opts_show_reassign = true ]]; then
+		elif [[ $opts_show_reassign = true ]]; then
 			Help.Action.Reassign:Show
-		fi
-
-		if [[ $opts_show_actions_all = true ]]; then
+		elif [[ $opts_show_actions_all = true ]]; then
 			Help.ActionsAll:Show
+		elif [[ $opts_show_options = true ]]; then
+			Help.Options:Show
+		elif [[ $opts_show_problems = true ]]; then
+			Help.Problems:Show
+		elif [[ $opts_show_groups = true ]]; then
+			Help.Groups:Show
+		elif [[ $opts_show_versions = true ]]; then
+			Self.Vers:Show
 		fi
 
 		if [[ $opts_show_backups = true ]]; then
 			QPKGs.Backups:Show
 		fi
 
-		if [[ $opts_show_groups = true ]]; then
-			Help.Groups:Show
-		fi
-
 		if [[ $opts_show_dependencies = true ]]; then
 			QPKGs.Dependencies:Show
 		fi
 
-		if [[ $opts_show_options = true ]]; then
-			Help.Options:Show
-		fi
-
 		if [[ $opts_show_packages = true ]]; then
 			QPKGs.List:Show
-		fi
-
-		if [[ $opts_show_problems = true ]]; then
-			Help.Problems:Show
 		fi
 
 		if [[ $opts_show_repos = true ]]; then
@@ -268,8 +257,6 @@ Self:Results()
 		elif [[ $opts_show_log_tail = true ]]; then
 			Self.LockFile:Release
 			Log.Tail:View
-		elif [[ $opts_show_versions = true ]]; then
-			Self.Vers:Show
 		fi
 
 		if QPKGs.AClist.ISbackedup.IsSet; then
@@ -314,7 +301,7 @@ Self:Results()
 	DebugInfoMajSepr
 	Func:Exit
 
-	[[ ${self_archive_debug_afterward:=false} = true ]] && ArchiveActiveSessLog
+	[[ $self_archive_debug_afterward = true ]] && ArchiveActiveSessLog
 	ResetActiveSessLog
 
 	if [[ $opts_verbose = false ]]; then
@@ -386,10 +373,9 @@ Consts:Load()
 		local -r SOURCE_BRANCH=unstable
 	fi
 
-	# default values
 	readonly THIS_PACKAGE_PATH=$(QPKG.GetInstallationPath)
 	readonly THIS_PACKAGE_VER=$(QPKG.Local.GetVer)
-	readonly THIS_SCRIPT_VER="<?today?>-$SOURCE_BRANCH"
+	readonly THIS_SCRIPT_VER="<?thisdate?>-$SOURCE_BRANCH"
 
 	readonly CACHE_PATH=$THIS_PACKAGE_PATH/cache
 	readonly LOGS_PATH=$THIS_PACKAGE_PATH/logs
@@ -468,8 +454,8 @@ Consts:Load()
 	readonly CHARS_SUPER_PROMPT='# '
 
 	readonly DEBUG_LOG_FIRST_COL_WIDTH=9
-	readonly DEBUG_LOG_SECOND_COL_WIDTH=18
-	readonly DEBUG_LOG_THIRD_COL_WIDTH=68
+	readonly DEBUG_LOG_SECOND_COL_WIDTH=19
+	readonly DEBUG_LOG_THIRD_COL_WIDTH=67
 	readonly DEBUG_LOG_DATAWIDTH=$((DEBUG_LOG_FIRST_COL_WIDTH+DEBUG_LOG_SECOND_COL_WIDTH+DEBUG_LOG_THIRD_COL_WIDTH+4))
 
 	# cherry-pick Entware binaries
@@ -698,15 +684,12 @@ Self:LogEnv()
 
 	DebugFirmware ok platform "$NAS_PLATFORM"
 
-	case $(GetUpState) in
-		starting-up)
-			DebugFirmware warning 'OS state' starting-up
-			;;
-		shutting-down)
-			DebugFirmware warning 'OS state' shutting-down
+	case $NAS_UPSTATE in
+		starting-up|shutting-down)
+			DebugFirmware warning 'OS state' "$NAS_UPSTATE"
 			;;
 		*)
-			DebugFirmware ok 'OS state' stable
+			DebugFirmware ok 'OS state' "$NAS_UPSTATE"
 	esac
 
 	DebugFirmware ok 'OS uptime' "$(GetUptime)"
@@ -762,6 +745,7 @@ Self:LogEnv()
 
 	DebugQpkg detect architecture "$NAS_QPKG_ARCH"
 	DebugQpkg detect "$(FormatAsPackName Entware)" "$ENTWARE_VER"
+	DebugQpkg detect "$(FormatAsPackName Entware) installed" "$(QPKG.GetInstallDate Entware)"
 
 	if QPKG.IsInstalled SortMyQPKGs; then
 		DebugQpkg detect "$(FormatAsPackName SortMyQPKGs)" installed
