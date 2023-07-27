@@ -229,7 +229,7 @@ Self:Results()
 		fi
 
 		if [[ $opts_show_packages = true ]]; then
-			QPKGs:List:Show
+			QPKGs.List:Show
 		fi
 
 		if [[ $opts_show_problems = true ]]; then
@@ -1317,6 +1317,9 @@ Action:Proc()
 							ok|so|sk|se|er)
 								[[ $(type -t QPKGs-AC${TARGET_ACTION}-to:Init) = function ]] && QPKGs-AC${TARGET_ACTION}-to:Remove "$msg2_value"
 								[[ $(type -t QPKGs-AC${TARGET_ACTION}-${msg1_value}:Init) = function ]] && QPKGs-AC${TARGET_ACTION}-${msg1_value}:Add "$msg2_value"
+
+								# also add to 'done' list
+								[[ $(type -t QPKGs-AC${TARGET_ACTION}-dn:Init) = function ]] && QPKGs-AC${TARGET_ACTION}-dn:Add "$msg2_value"
 								;;
 							ex)		# action is about to exit
 								for package_index in "${!target_packages[@]}"; do
@@ -1953,7 +1956,7 @@ AllocGroupPacksToAcs()
 								DebugAsWarn "specified group $group has no handler for specified action $action"
 						esac
 						;;
-					install)
+					install|status)
 						case $group in
 							all|dependent|standalone)
 								found=true
@@ -1964,7 +1967,7 @@ AllocGroupPacksToAcs()
 								DebugAsWarn "specified group $group has no handler for specified action $action"
 						esac
 						;;
-					activate|deactivate|enable|disable|reactivate|status|stop|uninstall)
+					activate|deactivate|enable|disable|reactivate|stop|uninstall)
 						case $group in
 							all|dependent|standalone)
 								found=true
@@ -4967,7 +4970,7 @@ QPKGs.Dependencies:Show()
 
 	}
 
-QPKGs:List:Show()
+QPKGs.List:Show()
 	{
 
 	local package_name=''
@@ -5041,7 +5044,7 @@ QPKGs.Statuses:Show()
 
 		DisplayAsStatusReportTitleLine
 
- 		for package_name in $(QPKGs-SCall:Array); do
+		for package_name in $(QPKGs-ACstatus-dn:Array); do
 			DisplayAsStatusReportLine "$package_name"
 		done
 

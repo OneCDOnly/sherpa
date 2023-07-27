@@ -199,7 +199,7 @@ for action in "${QPKG_ACTIONS[@]}"; do
 			continue    # action result lists are not required for these
 	esac
 
-	for prefix in to ok er sk so se; do
+	for prefix in to ok er sk so se dn; do		# todo, done ok, done error, skipped, skipped-but-ok, skipped-with-error, done (all processed QPKGs are placed in the 'done' list, as-well as the regular exit status lists)
 		AddListObj "QPKGs-AC${action}-${prefix}"
 	done
 done
