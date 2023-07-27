@@ -112,7 +112,7 @@ ShowDone
 
 echo -n 'updating QPKG fields ... '
 
-buffer=$(sed "s|<?today?>|$today|" <<< "$buffer")
+buffer=$(sed "s|<?thisdate?>|$thisdate|" <<< "$buffer")
 buffer=$(sed "s|<?dontedit?>|$dontedit_msg|" <<< "$buffer")
 buffer=$(sed "s|<?cdn_sherpa_packages_url?>|$cdn_sherpa_packages_url|" <<< "$buffer")
 buffer=$(sed "s|<?cdn_qnap_dev_packages_url?>|$cdn_qnap_dev_packages_url|" <<< "$buffer")
