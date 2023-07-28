@@ -20,7 +20,7 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=OqBittorrent
-	readonly SCRIPT_VERSION=230726
+	readonly SCRIPT_VERSION=230729
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -60,7 +60,8 @@ Init()
 	# 'shallow' (depth 1) or 'single-branch' ... 'shallow' implies 'single-branch'
 	readonly SOURCE_GIT_BRANCH_DEPTH=''
 	readonly INTERPRETER=''
-	readonly VENV_INTERPRETER=''
+	readonly VENV_PYTHON_PATHFILE=''
+	readonly VENV_PIP_PATHFILE=''
 	readonly ALLOW_ACCESS_TO_SYS_PACKAGES=''
 	readonly INSTALL_PIP_DEPS=''
 
@@ -88,7 +89,7 @@ Init()
 
 	# specific to applications supporting version lookup only
 	readonly APP_VERSION_PATHFILE=$DAEMON_PATHFILE
-	readonly APP_VERSION_CMD="$DAEMON_PATHFILE --version | cut -f2 -d' '"
+	readonly APP_VERSION_CMD="$DAEMON_PATHFILE --version --profile=$QPKG_PATH/config | cut -f2 -d' '"
 
 	if [[ -z $LANG ]]; then
 		export LANG=en_US.UTF-8
