@@ -710,14 +710,14 @@ Self:LogEnv()
 	DebugUserspace ok 'time in shell' "$(GetTimeInShell)"
 	DebugUserspace ok '$BASH_VERSION' "$BASH_VERSION"
 	DebugUserspace ok 'default volume' "$(GetDefVol)"
-	DebugUserspace ok '/opt' "$($READLINK_CMD /opt 2>/dev/null || echo '<not present>')"
+	DebugUserspace ok '/opt' "$($READLINK_CMD /opt 2>/dev/null || echo 'not present')"
 
 	local public_share=$(/sbin/getcfg SHARE_DEF defPublic -d Qpublic -f /etc/config/def_share.info)
 
 	if [[ -L /share/$public_share ]]; then
 		DebugUserspace ok "'$public_share' share" "/share/$public_share"
 	else
-		DebugUserspace warning "'$public_share' share" '<not present>'
+		DebugUserspace warning "'$public_share' share" 'not present'
 	fi
 
 	if [[ ${#PATH} -le $DEBUG_LOG_THIRD_COL_WIDTH ]]; then
@@ -2837,7 +2837,7 @@ DebugBinPathVerAndMinVer()
 	if [[ -n $bin_path ]]; then
 		DebugUserspace ok "'$1' path" "$bin_path"
 	else
-		DebugUserspace warning "'$1' path" '<not present>'
+		DebugUserspace warning "'$1' path" 'not present'
 	fi
 
 	if [[ -n ${2:-} ]]; then
@@ -2849,7 +2849,7 @@ DebugBinPathVerAndMinVer()
 			DebugUserspace warning "'$1' version" "$2"
 		fi
 	else
-		DebugUserspace warning "'$1' version" '<unknown>'
+		DebugUserspace warning "'$1' version" 'unknown'
 	fi
 
 	return 0
