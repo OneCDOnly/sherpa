@@ -453,10 +453,10 @@ Consts:Load()
 	readonly CHARS_SUDO_PROMPT="${CHARS_REGULAR_PROMPT}sudo "
 	readonly CHARS_SUPER_PROMPT='# '
 
+	readonly DEBUG_LOG_DATAWIDTH=99
 	readonly DEBUG_LOG_FIRST_COL_WIDTH=9
-	readonly DEBUG_LOG_SECOND_COL_WIDTH=19
-	readonly DEBUG_LOG_THIRD_COL_WIDTH=67
-	readonly DEBUG_LOG_DATAWIDTH=$((DEBUG_LOG_FIRST_COL_WIDTH+DEBUG_LOG_SECOND_COL_WIDTH+DEBUG_LOG_THIRD_COL_WIDTH+4))
+	readonly DEBUG_LOG_SECOND_COL_WIDTH=22
+	readonly DEBUG_LOG_THIRD_COL_WIDTH=$((DEBUG_LOG_DATAWIDTH-DEBUG_LOG_FIRST_COL_WIDTH-DEBUG_LOG_SECOND_COL_WIDTH-4))
 
 	# cherry-pick Entware binaries
 	readonly OPKG_CMD=/opt/bin/opkg
@@ -694,6 +694,7 @@ Self:LogEnv()
 
 	DebugFirmware ok 'OS uptime' "$(GetUptime)"
 	DebugFirmware ok 'system load' "$(GetSysLoadAverages)"
+	DebugUserspace ok timezone "$(GetTimezone)"
 
 	if OS.IsSupportSudo; then
 		DebugUserspace ok '$SUDO_UID' "$(GetSudoUID)"
@@ -745,7 +746,7 @@ Self:LogEnv()
 
 	DebugQpkg detect architecture "$NAS_QPKG_ARCH"
 	DebugQpkg detect "$(FormatAsPackName Entware)" "$ENTWARE_VER"
-	DebugQpkg detect "$(FormatAsPackName Entware) installed" "$(QPKG.GetInstallDate Entware)"
+	DebugQpkg detect "$(FormatAsPackName Entware) install date" "$(QPKG.GetInstallDate Entware)"
 
 	if QPKG.IsInstalled SortMyQPKGs; then
 		DebugQpkg detect "$(FormatAsPackName SortMyQPKGs)" installed
@@ -5625,6 +5626,13 @@ GetUpState()
 	else
 		echo -n stable
 	fi
+
+	}
+
+GetTimezone()
+	{
+
+	/bin/date +%z
 
 	}
 
