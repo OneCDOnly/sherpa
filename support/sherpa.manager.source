@@ -4910,14 +4910,14 @@ QPKGs.Backups:Show()
 		DisplayAsHelpTitle "the location for $(FormatAsTitle) backups is: $QPKG_BU_PATH"
 
 		if [[ -e $GNU_FIND_CMD ]]; then
-			DisplayAsHelpTitle "backups are listed oldest-first, and those $(ColourTextBrightRed 'in red') were last updated more than $highlight_older_than."
+			DisplayAsHelpTitle "backups are listed oldest-first, and those shown in $(ColourTextBrightRed '!red') were last updated more than $highlight_older_than."
 			DisplayAsHelpTitleFileNamePlusSomething 'backup file' 'last backup date'
 
 			while read -r epochtime filename; do
 				[[ -z $epochtime || -z $filename ]] && break
 
 				if [[ ${epochtime%.*} -lt $(/bin/date --date="$highlight_older_than" +%s) ]]; then
-					format="$(ColourTextBrightRed "%${HELP_DESC_INDENT}s%-${FILE_NAME_COL_WIDTH}s - %s\n")"
+					format="$(ColourTextBrightRed "%${HELP_DESC_INDENT}s%-${FILE_NAME_COL_WIDTH}s - !%s\n")"
 				else
 					format="%${HELP_DESC_INDENT}s%-${FILE_NAME_COL_WIDTH}s - %s\n"
 				fi
