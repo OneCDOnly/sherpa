@@ -1,3 +1,13 @@
+* status table on TS-559Pro+ intermittently(?) shows Deluge packages out-of-order
+	[~] # sherpa s
+	sherpa 230729-stable • a mini-package-manager for QNAP NAS
+
+	• QPKG name:         • QPKG statuses:       • QPKG version:  • QPKG installation path:
+	ClamAV             - not installable: insufficient RAM
+	Deluge-server      - disabled, inactive     230726           /share/MD0_DATA/.qpkg/Deluge-server
+	duf                - enabled, active        220809           /share/MD0_DATA/.qpkg/duf
+	Deluge-web         - disabled, inactive     230726           /share/MD0_DATA/.qpkg/Deluge-web
+
 * 'sherpa start inactive' fails to find any inactive packages.
 	needs to get status of each package first.
 
