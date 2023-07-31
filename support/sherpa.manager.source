@@ -98,11 +98,11 @@ Self:Init()
 		ParseArgs
 	fi
 
-	EraseThisLine		# clear the "proc:" message shown earlier
+	WriteEraseThisLine		# clear the "proc:" message shown earlier
 
 	if [[ $hide_title = false && $opts_verbose = false ]]; then
 		Display "$(ShowTitle) $(ShowVersion) $(ShowDescription)"
-		DisplayLineSpaceIfNoneAlready
+		WriteEmptyLineIfNoneExists
 	fi
 
 	if ! QPKGs.Conflicts:Check; then
@@ -122,7 +122,6 @@ Self:Init()
 
 	ArgSuggestions:Show
 	Debug.Log:Env
-	QPKGs.States:Build
 	Self.Tasks:Check
 	Self:Validate
 
@@ -132,7 +131,6 @@ Self.Results:Show()
 	{
 
 	Func:Init
-
 	display_last_action_datetime=false
 
 	if ARGs-unknown.IsNone; then
@@ -163,7 +161,7 @@ Self.Results:Show()
 		fi
 
 		if [[ $opts_show_packages = true ]]; then
-			QPKGs.List:Show
+			QPKGs.Names:Show
 		fi
 
 		if [[ $opts_show_repos = true ]]; then
@@ -225,7 +223,7 @@ Self.Results:Show()
 
 	if [[ $opts_show_basic_help = true ]]; then
 		Help.Basic:Show
-		Help.Basic.Example:Show
+		Help.Basic.Examples:Show
 	fi
 
 	# action results
@@ -246,8 +244,8 @@ Self.Results:Show()
 	ResetActiveSessLog
 
 	if [[ $opts_verbose = false ]]; then
-		EraseThisLine
-		DisplayLineSpaceIfNoneAlready   # final on-screen linespace
+		WriteEraseThisLine
+		WriteEmptyLineIfNoneExists   # final on-screen linespace
 	fi
 
 	}
@@ -770,7 +768,6 @@ Self.Tasks:Check()
 	[[ $skip_package_actions = true ]] && return
 
 	Func:Init
-
 	local action=''
 	local group=''
 	local state=''
@@ -824,6 +821,7 @@ Self.Tasks:Check()
 		Func:Exit 1; return
 	fi
 
+	QPKGs.States:Build
 	Func:Exit
 
 	}
@@ -2929,7 +2927,7 @@ DisplayAsProjSynExam()
 	#	$1 = description
 	#	$2 = example syntax
 
-	DisplayLineSpaceIfNoneAlready
+	WriteEmptyLineIfNoneExists
 
 	printf "${CHARS_SPECIAL}%s" "$(Capitalise "${1:-}")"
 	[[ ${1: -1} != '!' ]] && printf ':'
@@ -2980,7 +2978,7 @@ DisplayAsPackagesReportTitleLine()
 	local package_author_msg=''
 	local package_description_msg=''
 
-	DisplayLineSpaceIfNoneAlready
+	WriteEmptyLineIfNoneExists
 
 	# column 1: package name
 
@@ -3080,7 +3078,7 @@ DisplayAsStatusReportTitleLine()
 	local package_version_msg=''
 	local package_path_msg=''
 
-	DisplayLineSpaceIfNoneAlready
+	WriteEmptyLineIfNoneExists
 
 	# column 1: package name
 
@@ -3250,7 +3248,7 @@ DisplayAsReposReportTitleLine()
 	local package_install_date_msg=''
 	local package_repo_msg=''
 
-	DisplayLineSpaceIfNoneAlready
+	WriteEmptyLineIfNoneExists
 
 	# column 1: package name
 
@@ -3372,7 +3370,7 @@ DisplayAsAbsReportTitleLine()
 	local package_name_msg=''
 	local package_abs_msg=''
 
-	DisplayLineSpaceIfNoneAlready
+	WriteEmptyLineIfNoneExists
 
 	# column 1: package name
 
@@ -3469,7 +3467,7 @@ DisplayAsDepsReportTitleLine()
 	local package_min_os_msg=''
 	local package_arch_msg=''
 
-	DisplayLineSpaceIfNoneAlready
+	WriteEmptyLineIfNoneExists
 
 	# column 1: package name
 
@@ -3669,7 +3667,7 @@ DisplayAsHelpTitleFileNamePlusSomething()
 	#	$1 = file name title
 	#	$2 = second column title
 
-	DisplayLineSpaceIfNoneAlready
+	WriteEmptyLineIfNoneExists
 
 	printf "${CHARS_SPECIAL}%-${FILE_NAME_COL_WIDTH}s ${CHARS_SPECIAL}%s\n" "$(Capitalise "${1:-}"):" "$(Capitalise "${2:-}"):"
 	linespace_visible=false
@@ -3682,7 +3680,7 @@ DisplayAsHelpTitle()
 	# input:
 	#	$1 = text
 
-	DisplayLineSpaceIfNoneAlready
+	WriteEmptyLineIfNoneExists
 
 	printf "${CHARS_SPECIAL}%s\n" "$(Capitalise "${1:-}" | tr -s ' ')"
 	linespace_visible=false
@@ -3695,7 +3693,7 @@ DisplayAsHelpTitleHighlighted()
 	# input:
 	#	$1 = text
 
-	DisplayLineSpaceIfNoneAlready
+	WriteEmptyLineIfNoneExists
 
 	# shellcheck disable=2059
 	printf "$(ColourTextBrightOrange "${CHARS_SPECIAL}%s\n")" "$(Capitalise "${1:-}")"
@@ -3729,7 +3727,7 @@ DisplayAsIndentPrefixActionResultDurationReason()
 
 	}
 
-EraseThisLine()
+WriteEraseThisLine()
 	{
 
 	# reset cursor to start-of-line, erasing entire line
@@ -3853,14 +3851,13 @@ Help.BackupLocation:Show()
 Help.Basic:Show()
 	{
 
-	EraseThisLine
-	DisplayAsHelpTitle "Usage: sherpa $(ShowAction) $(ShowPackages) $(ShowGroup) $(ShowOptions)"
+	DisplayAsHelpTitle "usage: sherpa $(ShowAction) $(ShowPackages) $(ShowGroup) $(ShowOptions)"
 
 	return 0
 
 	}
 
-Help.Basic.Example:Show()
+Help.Basic.Examples:Show()
 	{
 
 	DisplayAsProjSynIndentExam "to list available $(ShowAction)s" 'list actions'
@@ -3868,7 +3865,7 @@ Help.Basic.Example:Show()
 	DisplayAsProjSynIndentExam '' p
 	DisplayAsProjSynIndentExam "to list available $(ShowGroup)s" 'list groups'
 	DisplayAsProjSynIndentExam "or, for more $(ShowOptions)" 'list options'
-	DisplayAsHelpTitle "More in the wiki: $(ShowAsURL "https://github.com/OneCDOnly/sherpa/wiki")"
+	DisplayAsHelpTitle "more in the wiki: $(ShowAsURL "https://github.com/OneCDOnly/sherpa/wiki")"
 
 	return 0
 
@@ -3909,7 +3906,7 @@ Help.Issue:Show()
 	DisplayAsProjSynIndentExam "view only the most recent $(ShowTitle) session log" last
 	DisplayAsProjSynIndentExam "view the entire $(ShowTitle) session log" log
 	DisplayAsProjSynIndentExam "upload the most-recent $(FormatAsThous "$LOG_TAIL_LINES") lines in your $(ShowTitle) log to the $(ShowAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste log'
-	DisplayAsHelpTitleHighlighted "If you need help, please include a copy of your $(ShowTitle) $(ColourTextBrightOrange 'log for analysis!')"
+	DisplayAsHelpTitleHighlighted "if you need help, please include a copy of your $(ShowTitle) $(ColourTextBrightOrange 'log for analysis!')"
 
 	return 0
 
@@ -3976,7 +3973,7 @@ Actions.Results:Show()
 
 		} > "$REPORT_PATHFILE"
 
-	EraseThisLine		# clear the "proc:" message shown earlier
+	WriteEraseThisLine		# clear the "proc:" message shown earlier
 	[[ -e $REPORT_PATHFILE ]] && $CAT_CMD "$REPORT_PATHFILE"
 
 	return 0
@@ -4024,7 +4021,7 @@ Help.Problems:Show()
 	DisplayAsProjSynIndentExam "view the entire $(ShowTitle) session log" log
 	DisplayAsProjSynIndentExam "upload the most-recent session in your $(ShowTitle) log to the $(ShowAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste last'
 	DisplayAsProjSynIndentExam "upload the most-recent $(FormatAsThous "$LOG_TAIL_LINES") lines in your $(ShowTitle) log to the $(ShowAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste log'
-	DisplayAsHelpTitleHighlighted "If you need help, please include a copy of your $(ShowTitle) $(ColourTextBrightOrange "log for analysis!")"
+	DisplayAsHelpTitleHighlighted "if you need help, please include a copy of your $(ShowTitle) $(ColourTextBrightOrange "log for analysis!")"
 
 	return 0
 
@@ -4398,8 +4395,8 @@ QPKGs.Missing:Show()
 
 	[[ $(QPKGs-ISmissing:Count) -eq 0 ]] && return 1
 
-	EraseThisLine
-	DisplayLineSpaceIfNoneAlready
+	WriteEraseThisLine
+	WriteEmptyLineIfNoneExists
 
 	for package in $(QPKGs-ISmissing:Array); do
 		ShowAsFail "the $(ColourTextBrightOrange "$package") QPKG is missing or broken. Please reinstall it."
@@ -4864,10 +4861,9 @@ QPKGs.Abbreviations:Show()
 
 		} > "$REPORT_PATHFILE"
 
-	EraseThisLine		# clear the "proc:" message shown earlier
+	WriteEraseThisLine		# clear the "proc:" message shown earlier
 	[[ -e $REPORT_PATHFILE ]] && $CAT_CMD "$REPORT_PATHFILE"
 	linespace_visible=false
-
 	Func:Exit
 
 	}
@@ -4914,9 +4910,8 @@ QPKGs.Backups:Show()
 
 		} > "$REPORT_PATHFILE"
 
-	EraseThisLine		# clear the "proc:" message shown earlier
+	WriteEraseThisLine		# clear the "proc:" message shown earlier
 	[[ -e $REPORT_PATHFILE ]] && $CAT_CMD "$REPORT_PATHFILE"
-
 	Func:Exit
 
 	}
@@ -4944,15 +4939,14 @@ QPKGs.Dependencies:Show()
 
 		} > "$REPORT_PATHFILE"
 
-	EraseThisLine		# clear the "proc:" message shown earlier
+	WriteEraseThisLine		# clear the "proc:" message shown earlier
 	[[ -e $REPORT_PATHFILE ]] && $CAT_CMD "$REPORT_PATHFILE"
 	linespace_visible=false
-
 	Func:Exit
 
 	}
 
-QPKGs.List:Show()
+QPKGs.Names:Show()
 	{
 
 	local package_name=''
@@ -4964,7 +4958,7 @@ QPKGs.List:Show()
 		{
 
 		Help.Basic:Show
-		DisplayAsHelpTitle "One-or-more $(ShowPackages) may be specified at-once."
+		DisplayAsHelpTitle "one-or-more $(ShowPackages) may be specified at-once."
 		DisplayAsPackagesReportTitleLine
 
 		for package_name in $(QPKGs-SCall:Array); do
@@ -4976,7 +4970,7 @@ QPKGs.List:Show()
 
 		} > "$REPORT_PATHFILE"
 
-	EraseThisLine		# clear the "proc:" message shown earlier
+	WriteEraseThisLine		# clear the "proc:" message shown earlier
 	[[ -e $REPORT_PATHFILE ]] && $CAT_CMD "$REPORT_PATHFILE"
 	linespace_visible=false
 
@@ -5004,10 +4998,9 @@ QPKGs.Repos:Show()
 
 		} > "$REPORT_PATHFILE"
 
-	EraseThisLine		# clear the "proc:" message shown earlier
+	WriteEraseThisLine		# clear the "proc:" message shown earlier
 	[[ -e $REPORT_PATHFILE ]] && $CAT_CMD "$REPORT_PATHFILE"
 	QPKGs.States:List
-
 	Func:Exit
 
 	}
@@ -5019,7 +5012,7 @@ QPKGs.Statuses:Show()
 	local package_name=''
 
 	CalcMaxStatusReportCols
-	QPKGs.States:Build
+# 	QPKGs.States:Build
 	DisplayWritingReport
 
 		{
@@ -5032,10 +5025,9 @@ QPKGs.Statuses:Show()
 
 		} > "$REPORT_PATHFILE"
 
-	EraseThisLine		# clear the "proc:" message shown earlier
+	WriteEraseThisLine		# clear the "proc:" message shown earlier
 	[[ -e $REPORT_PATHFILE ]] && $CAT_CMD "$REPORT_PATHFILE"
 	QPKGs.States:List
-
 	Func:Exit
 
 	}
@@ -8257,7 +8249,7 @@ ShowAsResultAndStdout()
 
 	}
 
-DisplayLineSpaceIfNoneAlready()
+WriteEmptyLineIfNoneExists()
 	{
 
 	if [[ $linespace_visible = false && $hide_title = false ]]; then
@@ -8694,8 +8686,9 @@ ShowAsProc()
 	local suffix=''
 	[[ -n ${2:-} ]] && suffix=" ${2:-}"
 
-	EraseThisLine
-	WriteToDisplayWait "$(ColourTextBrightYellow proc)" "$1 ${CHARS_ELLIPSIS}${suffix}"
+# 	WriteEraseThisLine
+# 	WriteToDisplayThenWait "$(ColourTextBrightYellow proc)" "$1 ${CHARS_ELLIPSIS}${suffix}"
+	WriteToDisplayRewriteInPlaceThenWait "$(ColourTextBrightYellow proc)" "$1 ${CHARS_ELLIPSIS}${suffix}"
 	WriteToLog proc "${1}${suffix}"
 	[[ ${opts_verbose:=false} = true ]] && Display
 
@@ -8706,7 +8699,7 @@ ShowAsDebug()
 
 	[[ -n ${1:-} ]] || return
 
-	WriteToDisplayNew "$(ColourTextBlackOnCyan dbug)" "$1"
+	WriteToDisplay "$(ColourTextBlackOnCyan dbug)" "$1"
 
 	}
 
@@ -8717,8 +8710,8 @@ ShowAsInfo()
 
 	[[ -n ${1:-} ]] || return
 
-	EraseThisLine
-	WriteToDisplayNew "$(ColourTextBrightYellow note)" "$1"
+	WriteEraseThisLine
+	WriteToDisplay "$(ColourTextBrightYellow note)" "$1"
 	WriteToLog note "$1"
 
 	} >&2
@@ -8728,7 +8721,7 @@ ShowAsQuiz()
 
 	[[ -n ${1:-} ]] || return
 
-	WriteToDisplayWait "$(ColourTextBrightOrangeBlink quiz)" "$1:"
+	WriteToDisplayThenWait "$(ColourTextBrightOrangeBlink quiz)" "$1:"
 	WriteToLog quiz "$1:"
 
 	}
@@ -8738,7 +8731,7 @@ ShowAsQuizDone()
 
 	[[ -n ${1:-} ]] || return
 
-	WriteToDisplayNew "$(ColourTextBrightOrange quiz)" "$1"
+	WriteToDisplay "$(ColourTextBrightOrange quiz)" "$1"
 
 	}
 
@@ -8749,8 +8742,8 @@ ShowAsDone()
 
 	[[ -n ${1:-} ]] || return
 
-	EraseThisLine
-	WriteToDisplayNew "$(ColourTextBrightGreen 'done')" "$1"
+	WriteEraseThisLine
+	WriteToDisplay "$(ColourTextBrightGreen 'done')" "$1"
 	WriteToLog 'done' "$1"
 
 	} >&2
@@ -8762,8 +8755,8 @@ ShowAsWarn()
 
 	[[ -n ${1:-} ]] || return
 
-	EraseThisLine
-	WriteToDisplayNew "$(ColourTextBrightOrange warn)" "$1"
+	WriteEraseThisLine
+	WriteToDisplay "$(ColourTextBrightOrange warn)" "$1"
 	WriteToLog warn "$1"
 
 	} >&2
@@ -8775,7 +8768,7 @@ ShowAsAbort()
 
 	[[ -n ${1:-} ]] || return
 
-	WriteToDisplayNew "$(ColourTextBrightRed bort)" "$1"
+	WriteToDisplay "$(ColourTextBrightRed bort)" "$1"
 	WriteToLog bort "$1"
 	Self.Error:Set
 
@@ -8789,8 +8782,8 @@ ShowAsFail()
 	[[ -n ${1:-} ]] || return
 	local capitalised="$(Capitalise "$1")"
 
-	EraseThisLine
-	WriteToDisplayNew "$(ColourTextBrightRed fail)" "$capitalised"
+	WriteEraseThisLine
+	WriteToDisplay "$(ColourTextBrightRed fail)" "$capitalised"
 	WriteToLog fail "$capitalised"
 
 	} >&2
@@ -8803,8 +8796,8 @@ ShowAsError()
 	[[ -n ${1:-} ]] || return
 	local capitalised="$(Capitalise "$1")"
 
-	EraseThisLine
-	WriteToDisplayNew "$(ColourTextBrightRed derp)" "$capitalised"
+	WriteEraseThisLine
+	WriteToDisplay "$(ColourTextBrightRed derp)" "$capitalised"
 	WriteToLog derp "$capitalised"
 	Self.Error:Set
 
@@ -8952,7 +8945,7 @@ ShowAsActionLogDetail()
 
 	}
 
-WriteToDisplayWait()
+WriteToDisplayThenWait()
 	{
 
 	# Writes a new message without newline
@@ -8975,7 +8968,30 @@ WriteToDisplayWait()
 
 	}
 
-WriteToDisplayNew()
+WriteToDisplayRewriteInPlaceThenWait()
+	{
+
+	# Writes a new message from the beginning of the line and without a trailing newline
+
+	# input:
+	#	$1 = pass/fail
+	#	$2 = message
+
+	# output:
+	#	$prev_msg = (global) will be used again later
+
+	local -i width=4
+
+	[[ $colourful = true ]] && width=10		# allow extra length for ANSI codes
+	prev_msg=$(printf "%-${width}s: %s" "${1:-}" "${2:-}")
+
+	DisplayWait "$(printf '\033[2K\r')$prev_msg"
+
+	return 0
+
+	}
+
+WriteToDisplay()
 	{
 
 	# Updates the previous message
@@ -9412,7 +9428,7 @@ RunOnSIGINT()
 	{
 
 	$TOUCH_CMD "$DISPLAY_INHIBIT_PATHFILE"
-	EraseThisLine
+	WriteEraseThisLine
 	ShowAsAbort 'caught SIGINT'
 	KillActiveFork
 	CloseActionMsgPipe
