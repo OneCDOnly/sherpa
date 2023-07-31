@@ -4391,8 +4391,6 @@ QPKGs.Missing:Show()
 	local package=''
 
 	[[ $hide_title = false ]] || return
-	QPKGs.States:Build
-
 	[[ $(QPKGs-ISmissing:Count) -eq 0 ]] && return 1
 
 	WriteEraseThisLine
@@ -4422,7 +4420,6 @@ QPKGs.NewVers:Show()
 	local name_limit=3
 
 	[[ $hide_title = false ]] || return
-	QPKGs.States:Build
 
 	if [[ $(QPKGs-SCupgradable:Count) -eq 0 ]]; then
 		return 0
@@ -4689,6 +4686,7 @@ QPKGs.States:Build()
 	# input:
 	#	$1 (optional) = `rebuild` - clear existing lists and rebuild them from scratch
 
+	Func:Init
 	local state=''
 
 	if [[ ${1:-} = rebuild ]]; then
@@ -4708,9 +4706,11 @@ QPKGs.States:Build()
 		qpkgs_states_built=false
 	fi
 
-	[[ ${qpkgs_states_built:=false} = true ]] && return
+	if [[ ${qpkgs_states_built:=false} = true ]]; then
+		DebugAsDone "don't need to build states: already built"
+		Func:Exit; return
+	fi
 
-	Func:Init
 	local package=''
 	local prev=''
 	OS.IsStarting && ShowAsWarn "$(GetQnapOS) is still starting. QPKG statuses are in-flux. Try checking again in a few minutes."
@@ -5012,7 +5012,6 @@ QPKGs.Statuses:Show()
 	local package_name=''
 
 	CalcMaxStatusReportCols
-# 	QPKGs.States:Build
 	DisplayWritingReport
 
 		{
@@ -5037,7 +5036,6 @@ QPKGs.IsBackedUp:Show()
 
 	local package=''
 	DisableDebugToArchiveAndFile
-	QPKGs.States:Build
 
 	for package in $(QPKGs-ISbackedup:Array); do
 		Display "$package"
@@ -5051,7 +5049,6 @@ QPKGs.IsNtBackedUp:Show()
 	{
 
 	local package=''
-	QPKGs.States:Build
 	DisableDebugToArchiveAndFile
 
 	for package in $(QPKGs-ISNTbackedup:Array); do
@@ -5066,7 +5063,6 @@ QPKGs.IsInstalled:Show()
 	{
 
 	local package=''
-	QPKGs.States:Build
 	DisableDebugToArchiveAndFile
 
 	for package in $(QPKGs-ISinstalled:Array); do
@@ -5081,7 +5077,6 @@ QPKGs.ScInstallable:Show()
 	{
 
 	local package=''
-	QPKGs.States:Build
 	DisableDebugToArchiveAndFile
 
 	for package in $(QPKGs-SCinstallable:Array); do
@@ -5096,7 +5091,6 @@ QPKGs.IsNtInstalled:Show()
 	{
 
 	local package=''
-	QPKGs.States:Build
 	DisableDebugToArchiveAndFile
 
 	for package in $(QPKGs-ISNTinstalled:Array); do
@@ -5111,7 +5105,6 @@ QPKGs.IsActive:Show()
 	{
 
 	local package=''
-	QPKGs.States:Build
 	DisableDebugToArchiveAndFile
 
 	for package in $(QPKGs-ISactive:Array); do
@@ -5126,7 +5119,6 @@ QPKGs.IsNtActive:Show()
 	{
 
 	local package=''
-	QPKGs.States:Build
 	DisableDebugToArchiveAndFile
 
 	for package in $(QPKGs-ISNTactive:Array); do
@@ -5141,7 +5133,6 @@ QPKGs.ScUpgradable:Show()
 	{
 
 	local package=''
-	QPKGs.States:Build
 	DisableDebugToArchiveAndFile
 
 	for package in $(QPKGs-SCupgradable:Array); do
@@ -5156,7 +5147,6 @@ QPKGs.ScStandalone:Show()
 	{
 
 	local package=''
-	QPKGs.States:Build
 	DisableDebugToArchiveAndFile
 
 	for package in $(QPKGs-SCstandalone:Array); do
@@ -5171,7 +5161,6 @@ QPKGs.ScDependent:Show()
 	{
 
 	local package=''
-	QPKGs.States:Build
 	DisableDebugToArchiveAndFile
 
 	for package in $(QPKGs-SCdependent:Array); do
@@ -8686,8 +8675,6 @@ ShowAsProc()
 	local suffix=''
 	[[ -n ${2:-} ]] && suffix=" ${2:-}"
 
-# 	WriteEraseThisLine
-# 	WriteToDisplayThenWait "$(ColourTextBrightYellow proc)" "$1 ${CHARS_ELLIPSIS}${suffix}"
 	WriteToDisplayRewriteInPlaceThenWait "$(ColourTextBrightYellow proc)" "$1 ${CHARS_ELLIPSIS}${suffix}"
 	WriteToLog proc "${1}${suffix}"
 	[[ ${opts_verbose:=false} = true ]] && Display
