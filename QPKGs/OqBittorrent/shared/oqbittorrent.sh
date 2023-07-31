@@ -20,7 +20,7 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=OqBittorrent
-	readonly SCRIPT_VERSION=230729
+	readonly SCRIPT_VERSION=230731
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -88,8 +88,8 @@ Init()
 	readonly GET_UI_LISTENING_ADDRESS_CMD="echo '0.0.0.0'"
 
 	# specific to applications supporting version lookup only
-	readonly APP_VERSION_PATHFILE=$DAEMON_PATHFILE
-	readonly APP_VERSION_CMD="$DAEMON_PATHFILE --version --profile=$QPKG_PATH/config | cut -f2 -d' '"
+	readonly APP_VERSION_PATHFILE=''
+	readonly APP_VERSION_CMD=''
 
 	if [[ -z $LANG ]]; then
 		export LANG=en_US.UTF-8
