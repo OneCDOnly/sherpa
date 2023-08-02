@@ -509,57 +509,51 @@ Env:Load()
 		local -r SOURCE_BRANCH=unstable
 	fi
 
-	readonly THIS_PACKAGE_VER=$(QPKG.Local.GetVer)
-	readonly THIS_SCRIPT_VER="<?thisdate?>-$SOURCE_BRANCH"
-	readonly NAS_FIRMWARE_VER=$(GetFirmwareVer)
+	readonly CPU_CORES=$(GetCPUCores)
+		readonly CONCURRENCY=$CPU_CORES		# maximum concurrent package actions to run. Should probably make this account for CPU speed too.
+	readonly ENTWARE_VER=$(GetEntwareType)
+	readonly KERNEL_PAGESIZE=$(GetKernelPageSize)
+	readonly NAS_ARCH=$(GetArch)
 	readonly NAS_FIRMWARE_BUILD=$(GetFirmwareBuild)
 	readonly NAS_FIRMWARE_DATE=$(GetFirmwareDate)
-	readonly NAS_RAM_KB=$(GetInstalledRAM)
-	readonly NAS_ARCH=$(GetArch)
+	readonly NAS_FIRMWARE_VER=$(GetFirmwareVer)
 	readonly NAS_PLATFORM=$(GetPlatform)
 	readonly NAS_QPKG_ARCH=$(GetQpkgArch)
-	readonly ENTWARE_VER=$(GetEntwareType)
-	readonly CPU_CORES=$(GetCPUCores)
+	readonly NAS_RAM_KB=$(GetInstalledRAM)
 	readonly NAS_UPSTATE=$(GetUpState)
-	readonly KERNEL_PAGESIZE=$(GetKernelPageSize)
-	readonly CONCURRENCY=$CPU_CORES		# maximum concurrent package actions to run. Should probably make this account for CPU speed too.
-
+	readonly THIS_PACKAGE_VER=$(QPKG.Local.GetVer)
+	readonly THIS_SCRIPT_VER="<?thisdate?>-$SOURCE_BRANCH"
 	readonly THIS_PACKAGE_PATH=$(QPKG.GetInstallationPath)
-
-	readonly CACHE_PATH=$THIS_PACKAGE_PATH/cache
-	readonly LOGS_PATH=$THIS_PACKAGE_PATH/logs
-	readonly QPKG_DL_PATH=$CACHE_PATH/QPKGs.downloads
-	readonly QPKG_BU_PATH=$(GetDefVol)/.qpkg_config_backup
-	readonly CERT_DB_PATHFILE=/etc/config/nas_sign_qpkg.db
-	readonly IPK_DL_PATH=$CACHE_PATH/IPKs.downloads
-	readonly IPK_CACHE_PATH=$CACHE_PATH/IPKs
-	readonly PIP_CACHE_PATH=$CACHE_PATH/PIPs
-	readonly ACTION_TIMES_PATH=$CACHE_PATH/action.times
+		readonly CACHE_PATH=$THIS_PACKAGE_PATH/cache
+			readonly ACTION_TIMES_PATH=$CACHE_PATH/action.times
+			readonly DISPLAY_INHIBIT_PATHFILE=$CACHE_PATH/display.inhibit
+			readonly IPK_CACHE_PATH=$CACHE_PATH/IPKs
+			readonly IPK_DL_PATH=$CACHE_PATH/IPKs.downloads
+			readonly PIP_CACHE_PATH=$CACHE_PATH/PIPs
+			readonly OBJECTS_ARCHIVE_PATHFILE=$CACHE_PATH/objects.tar.gz
+			readonly OBJECTS_PATHFILE=$CACHE_PATH/objects
+			readonly PACKAGES_ARCHIVE_PATHFILE=$CACHE_PATH/packages.tar.gz
+			readonly PACKAGES_PATHFILE=$CACHE_PATH/packages
+			readonly PREV_IPK_LIST=$CACHE_PATH/ipk.prev.list
+			readonly PREV_PIP_LIST=$CACHE_PATH/pip.prev.list
+			readonly QPKG_DL_PATH=$CACHE_PATH/QPKGs.downloads
+		readonly LOGS_PATH=$THIS_PACKAGE_PATH/logs
+			readonly RAMDISKS_FREESPACE_PATHFILE=$LOGS_PATH/ramdisks.freespace
+			readonly REPORT_PATHFILE=$LOGS_PATH/report.ansi
+			readonly SCREEN_SESSIONS_PATHFILE=$LOGS_PATH/screen.sessions
+			readonly SESS_ACTIONS_RESULTS_PATHFILE=$LOGS_PATH/session.action.results.log
+			readonly SESS_ARCHIVE_PATHFILE=$LOGS_PATH/session.archive.log
+			readonly SESS_LAST_PATHFILE=$LOGS_PATH/session.last.log
+			readonly SESS_TAIL_PATHFILE=$LOGS_PATH/session.tail.log
 	readonly ACTION_MSG_PIPE=/var/run/sherpa.action.messages.pipe
-
-	readonly OBJECTS_PATHFILE=$CACHE_PATH/objects
+	readonly CERT_DB_PATHFILE=/etc/config/nas_sign_qpkg.db
 	readonly OBJECTS_ARCHIVE_URL='<?cdn_sherpa_url?>'/objects.tar.gz
-	readonly OBJECTS_ARCHIVE_PATHFILE=$CACHE_PATH/objects.tar.gz
-
-	readonly PACKAGES_PATHFILE=$CACHE_PATH/packages
 	readonly PACKAGES_ARCHIVE_URL='<?cdn_sherpa_url?>'/packages.tar.gz
-	readonly PACKAGES_ARCHIVE_PATHFILE=$CACHE_PATH/packages.tar.gz
+	readonly QPKG_BU_PATH=$(GetDefVol)/.qpkg_config_backup
 
 	# Entware
 	readonly EXTERNAL_PACKAGES_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
 	readonly EXTERNAL_PACKAGES_PATHFILE=$CACHE_PATH/Packages
-
-	readonly PREV_IPK_LIST=$CACHE_PATH/ipk.prev.list
-	readonly PREV_PIP_LIST=$CACHE_PATH/pip.prev.list
-
-	readonly SESS_ARCHIVE_PATHFILE=$LOGS_PATH/session.archive.log
-	readonly SESS_LAST_PATHFILE=$LOGS_PATH/session.last.log
-	readonly SESS_TAIL_PATHFILE=$LOGS_PATH/session.tail.log
-	readonly SESS_ACTIONS_RESULTS_PATHFILE=$LOGS_PATH/session.action.results.log
-	readonly REPORT_PATHFILE=$LOGS_PATH/report.ansi
-	readonly RAMDISKS_FREESPACE_PATHFILE=$LOGS_PATH/ramdisks.freespace
-	readonly SCREEN_SESSIONS_PATHFILE=$LOGS_PATH/screen.sessions
-	readonly DISPLAY_INHIBIT_PATHFILE=$CACHE_PATH/display.inhibit
 
 	}
 
@@ -834,7 +828,6 @@ Self:Validate()
 
 	Func:Init
 	ShowAsProc validating
-
 	local installed_ver=''
 	local package=''
 	local action=''
@@ -1433,9 +1426,8 @@ ParseArgs()
 	#   scriptname [action] [groups] [options]
 
 	Func:Init
-	DebugVar USER_ARGS_RAW
 	ShowAsProc arguments
-
+	DebugVar USER_ARGS_RAW
 	local user_args_fixed=$(Lowercase "${USER_ARGS_RAW//,/ }")
 	local -a user_args=(${user_args_fixed/--/})
 	local arg=''
@@ -1457,16 +1449,12 @@ ParseArgs()
 				arg_identified=true
 				group=''
 				group_identified=false
-				hide_title=false
-# 				skip_package_actions=false
 				;;
 			list)
 				action=list
 				arg_identified=true
 				group=''
 				group_identified=false
-				hide_title=false
-# 				skip_package_actions=true
 				;;
 			paste)
 				# shellcheck disable=2209
@@ -1474,8 +1462,6 @@ ParseArgs()
 				arg_identified=true
 				group=''
 				group_identified=false
-				hide_title=false
-# 				skip_package_actions=true
 				;;
 		# all cases below can use multiple words or chars to specify a single action
 			activate|start)
@@ -1483,72 +1469,54 @@ ParseArgs()
 				arg_identified=true
 				group=''
 				group_identified=false
-				hide_title=false
-# 				skip_package_actions=false
 				;;
 			add|install)
 				action=install
 				arg_identified=true
 				group=''
 				group_identified=false
-				hide_title=false
-# 				skip_package_actions=false
 				;;
 			c|check)
 				action=check
 				arg_identified=true
 				group=''
 				group_identified=false
-				hide_title=false
-# 				skip_package_actions=false
 				;;
 			deactivate|stop)
 				action=deactivate
 				arg_identified=true
 				group=''
 				group_identified=false
-				hide_title=false
-# 				skip_package_actions=false
 				;;
 			display|help|show|view)
 				action=help
 				arg_identified=true
 				group=''
 				group_identified=false
-				hide_title=false
-# 				skip_package_actions=true
 				;;
 			reactivate|restart)
 				action=reactivate
 				arg_identified=true
 				group=''
 				group_identified=false
-				hide_title=false
-# 				skip_package_actions=false
 				;;
 			rm|remove|uninstall)
 				action=uninstall
 				arg_identified=true
 				group=''
 				group_identified=false
-				hide_title=false
-# 				skip_package_actions=false
 				;;
 			s|status|statuses)
 				action=status
 				arg_identified=true
 				group=''
 				group_identified=false
-				hide_title=false
-#  				skip_package_actions=false
 				;;
 			update|upgrade)
 				action=upgrade
 				arg_identified=true
 				group=''
 				group_identified=false
-				hide_title=false
-# 				skip_package_actions=false
 		esac
 
 		# identify group in two stages: stage 1 for when user didn't supply an action before group, stage 2 is after an action has been defined.
@@ -1574,14 +1542,14 @@ ParseArgs()
 				backedup|installable|installed|missing|ok|problems|results|skipped|tail|tips)
 					group=${arg}
 					;;
+				failed)
+					group=NTok
+					;;
 				not-backedup)
 					group=NTbackedup
 					;;
 				not-installed)
 					group=NTinstalled
-					;;
-				failed)
-					group=NTok
 					;;
 			# all cases below can use multiple words or chars to specify a single group
 				a|abs|alias|aliases)
@@ -1623,6 +1591,9 @@ ParseArgs()
 				log|whole)
 					group=log
 					;;
+				new|updatable|updateable|upgradable)
+					group=upgradable
+					;;
 				o|option|options)
 					group=options
 					;;
@@ -1634,9 +1605,6 @@ ParseArgs()
 					;;
 				standalone|standalones|indeps|independent|independents)
 					group=standalone
-					;;
-				new|updatable|updateable|upgradable)
-					group=upgradable
 					;;
 				version|versions)
 					group=versions
@@ -1691,98 +1659,68 @@ ParseArgs()
 				case $group in
 					abs)
 						opts_show_abbreviations=true
-						skip_package_actions=true
 						;;
 					actions)
 						opts_show_actions=true
-						skip_package_actions=true
 						;;
 					all-actions|all)
 						opts_show_actions_all=true
-						skip_package_actions=true
 						;;
 					backups)
 						opts_show_backups=true
-						skip_package_actions=true
 						;;
 					dependencies)
 						opts_show_dependencies=true
-						skip_package_actions=true
 						;;
 					groups)
 						opts_show_groups=true
-						skip_package_actions=true
 						;;
 					last)
 						opts_show_log_last=true
-						hide_title=true
-						skip_package_actions=true
 						;;
 					log)
 						opts_show_log_tail=true
-						hide_title=true
-						skip_package_actions=true
 						;;
 					options)
 						opts_show_options=true
-						skip_package_actions=true
 						;;
 					packages)
 						opts_show_packages=true
-						skip_package_actions=true
 						;;
 					problems)
 						opts_show_problems=true
-						skip_package_actions=true
 						;;
 					reassign)
 						opts_show_reassign=true
-						skip_package_actions=true
 						;;
 					repos)
 						opts_show_repos=true
-						skip_package_actions=true
 						;;
 					results)
 						opts_show_results=true
-						skip_package_actions=true
 						;;
 					tips)
 						opts_show_tips=true
-						skip_package_actions=true
 				esac
+
+				skip_package_actions=true
 				;;
 			list)
 				case $group in
 					active|enabled|NTactive|NTenabled)
 						QPKGs.AClist.IS${group}:Set
-						hide_title=true
 						;;
 					backedup|installed|NTbackedup|NTinstalled)
 						QPKGs.AClist.IS${group}:Set
-						hide_title=true
 						;;
 					dependent|installable|standalone|upgradable)
 						QPKGs.AClist.SC${group}:Set
-						hide_title=true
-						;;
-					failed)
-						opts_show_packages_failed=true
-						hide_title=true
-						;;
-					ok)
-						opts_show_packages_ok=true
-						hide_title=true
-						;;
-					skipped)
-						opts_show_packages_skipped=true
-						hide_title=true
 						;;
 					versions)
 						opts_show_versions=true
-						hide_title=true
 				esac
 
+				hide_title=true
 				;;
 			paste)
 				case $group in
@@ -1798,8 +1736,6 @@ ParseArgs()
 				skip_package_actions=true
 				;;
 			status)
-				opts_show_status=true
-
 				case $group in
 					all|dependent|standalone|upgradable)
 						QPKGs.AC${action}.SC${group}:Set
@@ -1812,6 +1748,8 @@ ParseArgs()
 					*)
 						QPKGs-AC${action}-to:Add "$package"
 				esac
+
+				opts_show_status=true
 				;;
 			uninstall)
 				case $group in
@@ -1930,12 +1868,11 @@ AllocPackGroupsToAcs()
 	{
 
 	Func:Init
+	ShowAsProc 'matching QPKGs to actions'
 	local action=''
 	local group=''
 	local prospect=''
 	local found=false		# group has been found
-
-	ShowAsProc 'matching QPKGs to actions'
 
 	for action in "${USER_QPKG_ACTIONS[@]}"; do
 		# process group-based user-options
@@ -2053,12 +1990,11 @@ AllocPackStatesToAcs()
 	{
 
 	Func:Init
+	ShowAsProc 'matching QPKGs to actions'
 	local action=''
 	local state=''
 	local prospect=''
 	local found=false		# state has been found
-
-	ShowAsProc 'matching QPKGs to actions'
 
 	for action in "${USER_QPKG_ACTIONS[@]}"; do
 		# process state-based user-options
@@ -2144,12 +2080,11 @@ AllocPackageStatesToActionsPostStatus()
 	# must un this only after gathering statuses of installed QPKGs
 
 	Func:Init
+	ShowAsProc 'matching QPKGs to actions'
 	local action=''
 	local state=''
 	local prospect=''
 	local found=false		# state has been found
-
-	ShowAsProc 'matching QPKGs to actions'
 
 	for action in "${USER_QPKG_ACTIONS[@]}"; do
 		# process state-based user-options
@@ -2441,9 +2376,8 @@ CalcIpkDepsToInstall()
 	pre_exclude_count=$($WC_CMD -w <<< "$pre_exclude_list")
 
 	if [[ $pre_exclude_count -gt 0 ]]; then
-		DebugInfo "$pre_exclude_count IPK$(Pluralise "$pre_exclude_count") required (including dependencies)" "'$pre_exclude_list' "
-
 		ShowAsProc 'excluding IPKs already installed'
+		DebugInfo "$pre_exclude_count IPK$(Pluralise "$pre_exclude_count") required (including dependencies)" "'$pre_exclude_list' "
 
 		for element in $pre_exclude_list; do
 			# KLUDGE: silently exclude these packages from being installed:
