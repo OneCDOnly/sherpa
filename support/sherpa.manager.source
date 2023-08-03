@@ -132,37 +132,37 @@ Self.Results:Show()
 
 	if ARGs-unknown.IsNone; then
 		if [[ $opts_show_abbreviations = true ]]; then
-			QPKGs.Abbreviations:Show
+			Report.Abbreviations:Show
 		elif [[ $opts_show_actions = true ]]; then
-			Help.Actions:Show
+			Report.Actions:Show
 		elif [[ $opts_show_reassign = true ]]; then
 			Help.Action.Reassign:Show
 		elif [[ $opts_show_actions_all = true ]]; then
-			Help.ActionsAll:Show
+			Report.ActionsAll:Show
 		elif [[ $opts_show_options = true ]]; then
-			Help.Options:Show
+			Report.Options:Show
 		elif [[ $opts_show_problems = true ]]; then
-			Help.Problems:Show
+			Report.Problems:Show
 		elif [[ $opts_show_groups = true ]]; then
-			Help.Groups:Show
+			Report.Groups:Show
 		elif [[ $opts_show_versions = true ]]; then
 			Self.Vers:Show
 		fi
 
 		if [[ $opts_show_backups = true ]]; then
-			QPKGs.Backups:Show
+			Report.Backups:Show
 		fi
 
 		if [[ $opts_show_dependencies = true ]]; then
-			QPKGs.Dependencies:Show
+			Report.Dependencies:Show
 		fi
 
 		if [[ $opts_show_packages = true ]]; then
-			QPKGs.Names:Show
+			Report.Names:Show
 		fi
 
 		if [[ $opts_show_repos = true ]]; then
-			QPKGs.Repos:Show
+			Report.Repos:Show
 		fi
 
 		if [[ $opts_show_results = true ]]; then
@@ -173,14 +173,14 @@ Self.Results:Show()
 		fi
 
 		if [[ $opts_show_status = true ]]; then
-			QPKGs.Statuses:Show
+			Report.Statuses:Show
 			opts_show_packages_ok=false
 			opts_show_packages_skipped=false
 			opts_show_packages_failed=false
 		fi
 
 		if [[ $opts_show_tips = true ]]; then
-			Help.Tips:Show
+			Report.Tips:Show
 		fi
 
 		if [[ $opts_paste_log_last = true ]]; then
@@ -232,9 +232,9 @@ Self.Results:Show()
 	fi
 
 	# action results
-	[[ $opts_show_packages_ok = true ]] && Actions.Results:Show ok
-	[[ $opts_show_packages_skipped = true ]] && Actions.Results:Show skipped
-	[[ $opts_show_packages_failed = true ]] && Actions.Results:Show failed
+	[[ $opts_show_packages_ok = true ]] && Report.Results:Show ok
+	[[ $opts_show_packages_skipped = true ]] && Report.Results:Show skipped
+	[[ $opts_show_packages_failed = true ]] && Report.Results:Show failed
 	[[ $opts_show_backuploc = true ]] && Help.BackupLocation:Show
 	[[ $show_zero_qpkgs = true ]] && ShowZeroQpkgs
 	[[ $show_suggest_raise_issue = true ]] && Help.Issue:Show
@@ -249,7 +249,6 @@ Self.Results:Show()
 	ResetActiveSessLog
 
 	if [[ $opts_verbose = false ]]; then
-# 		WriteEraseThisLine
 		WriteEmptyLineIfNoneExists   # final on-screen linespace
 	fi
 
@@ -812,6 +811,8 @@ Self.Tasks:Check()
 	fi
 
 	if [[ $something_to_do = false ]]; then
+		hide_title=false
+		ShowTitleLine
 		ShowAsError "supplied arguments were incomplete, or didn't make sense. Please check the argument list again."
 		opts_show_basic_help=true
 		skip_package_actions=true
@@ -1529,7 +1530,7 @@ ParseArgs()
 
 		if [[ -z $action ]]; then
 			case $arg in
-				a|abs|action|actions|actions-all|active|alias|aliases|all-actions|b|backups|d|deps|dependencies|dependent|dependents|disabled|enabled|failed|groups|inactive|indeps|independent|independents|installable|installed|l|last|log|missing|new|not-active|not-installed|o|ok|option|options|p|package|packages|problems|r|repo|repos|results|skipped|standalone|standalones|stopped|tail|tips|updatable|updateable|upgradable|version|versions|whole)
+				a|abs|action|actions|actions-all|active|alias|aliases|all-actions|b|backups|d|deps|dependencies|dependent|dependents|disabled|enabled|failed|groups|inactive|indeps|independent|independents|l|last|log|missing|new|not-active|not-installed|o|ok|option|options|p|package|packages|problems|r|repo|repos|results|skipped|standalone|standalones|stopped|tail|tips|updatable|updateable|upgradable|version|versions|whole)
 					action=help
 					arg_identified=true
 					group=''
@@ -1796,6 +1797,7 @@ ParseArgs()
 		case $action in
 			help|paste)
 				opts_show_basic_help=true
+# 				hide_title=false
 		esac
 	fi
 
@@ -1818,53 +1820,63 @@ ArgSuggestions:Show()
 
 	Func:Init
 	local arg=''
+	local found=false
+	local reason=''
 
 	if ARGs-unknown.IsAny; then
-		ShowAsError "unknown argument$(Pluralise "$(ARGs-unknown:Count)"): \"$(ARGs-unknown:List)\". Please check the argument list again."
-
 		for arg in $(ARGs-unknown:Array); do
 			case $arg in
-				all)
-					DisplayAsProjSynExam "please provide a valid $(ShowAction) before 'all' like" 'activate all'
+				all|dependent|installed|installable|standalone)
+					reason=$(DisplayAsProjSynExam "please provide a valid $(ShowAction) before '$arg' like" "activate $arg")
 					opts_show_basic_help=false
-					;;
-				all-backup|backup-all)
-					DisplayAsProjSynExam 'to backup all installed package configurations, use' 'backup all'
-					opts_show_basic_help=false
-					;;
-				dependent)
-					DisplayAsProjSynExam "please provide a valid $(ShowAction) before 'dependent' like" 'activate dependents'
-					opts_show_basic_help=false
-					;;
-				all-reactivate|reactivate-all)
-					DisplayAsProjSynExam 'to reactivate all packages, use' 'reactivate all'
-					opts_show_basic_help=false
-					;;
-				all-restore|restore-all)
-					DisplayAsProjSynExam 'to restore all installed package configurations, use' 'restore all'
-					opts_show_basic_help=false
-					;;
-				standalone)
-					DisplayAsProjSynExam "please provide a valid $(ShowAction) before 'standalone' like" 'activate standalones'
-					opts_show_basic_help=false
+					found=true
 					;;
 				all-activate|activate-all)
-					DisplayAsProjSynExam 'to activate all packages, use' 'activate all'
+					reason=$(DisplayAsProjSynExam 'to activate all packages, use' 'activate all')
 					opts_show_basic_help=false
+					found=true
+					;;
+				all-backup|backup-all)
+					reason=$(DisplayAsProjSynExam 'to backup all installed package configurations, use' 'backup all')
+					opts_show_basic_help=false
+					found=true
+					;;
+				all-reactivate|reactivate-all)
+					reason=$(DisplayAsProjSynExam 'to reactivate all packages, use' 'reactivate all')
+					opts_show_basic_help=false
+					found=true
+					;;
+				all-restore|restore-all)
+					reason=$(DisplayAsProjSynExam 'to restore all installed package configurations, use' 'restore all')
+					opts_show_basic_help=false
+					found=true
 					;;
 				all-stop|stop-all)
-					DisplayAsProjSynExam 'to stop all packages, use' 'stop all'
+					reason=$(DisplayAsProjSynExam 'to stop all packages, use' 'stop all')
 					opts_show_basic_help=false
+					found=true
 					;;
 				all-uninstall|all-remove|uninstall-all|remove-all)
-					DisplayAsProjSynExam 'to uninstall all packages, use' 'force uninstall all'
+					reason=$(DisplayAsProjSynExam 'to uninstall all packages, use' 'force uninstall all')
 					opts_show_basic_help=false
+					found=true
 					;;
 				all-upgrade|upgrade-all)
-					DisplayAsProjSynExam 'to upgrade all packages, use' 'upgrade all'
+					reason=$(DisplayAsProjSynExam 'to upgrade all packages, use' 'upgrade all')
 					opts_show_basic_help=false
+					found=true
 			esac
+
+			[[ $found = true ]] && break
 		done
+
+		if [[ $found = true ]]; then
+			ShowAsError "supplied arguments were incomplete, or didn't make sense. Please check the argument list again."
+			Display
+			echo -e "$reason"
+		else
+			ShowAsError "unknown argument$(Pluralise "$(ARGs-unknown:Count)"): \"$(ARGs-unknown:List)\". Please check the argument list again."
+		fi
 	fi
 
 	Func:Exit
@@ -3031,7 +3043,6 @@ DisplayAsProjSynExam()
 	#	$2 = example syntax
 
 	WriteEmptyLineIfNoneExists
-
 	printf "${CHARS_SPECIAL}%s" "$(Capitalise "${1:-}")"
 	[[ ${1: -1} != '!' ]] && printf ':'
 
@@ -3080,7 +3091,6 @@ DisplayAsPackagesReportTitleLine()
 	local package_name_msg=''
 	local package_author_msg=''
 	local package_description_msg=''
-
 	WriteEmptyLineIfNoneExists
 
 	# column 1: package name
@@ -3180,7 +3190,6 @@ DisplayAsStatusReportTitleLine()
 	local package_status_msg=''
 	local package_version_msg=''
 	local package_path_msg=''
-
 	WriteEmptyLineIfNoneExists
 
 	# column 1: package name
@@ -3350,7 +3359,6 @@ DisplayAsReposReportTitleLine()
 	local package_name_msg=''
 	local package_install_date_msg=''
 	local package_repo_msg=''
-
 	WriteEmptyLineIfNoneExists
 
 	# column 1: package name
@@ -3472,7 +3480,6 @@ DisplayAsAbsReportTitleLine()
 
 	local package_name_msg=''
 	local package_abs_msg=''
-
 	WriteEmptyLineIfNoneExists
 
 	# column 1: package name
@@ -3569,7 +3576,6 @@ DisplayAsDepsReportTitleLine()
 	local package_min_ram_msg=''
 	local package_min_os_msg=''
 	local package_arch_msg=''
-
 	WriteEmptyLineIfNoneExists
 
 	# column 1: package name
@@ -3771,7 +3777,6 @@ DisplayAsHelpTitleFileNamePlusSomething()
 	#	$2 = second column title
 
 	WriteEmptyLineIfNoneExists
-
 	printf "${CHARS_SPECIAL}%-${FILE_NAME_COL_WIDTH}s ${CHARS_SPECIAL}%s\n" "$(Capitalise "${1:-}"):" "$(Capitalise "${2:-}"):"
 	linespace_visible=false
 
@@ -3784,7 +3789,6 @@ DisplayAsHelpTitle()
 	#	$1 = text
 
 	WriteEmptyLineIfNoneExists
-
 	printf "${CHARS_SPECIAL}%s\n" "$(Capitalise "${1:-}" | tr -s ' ')"
 	linespace_visible=false
 
@@ -3797,7 +3801,6 @@ DisplayAsHelpTitleHighlighted()
 	#	$1 = text
 
 	WriteEmptyLineIfNoneExists
-
 	# shellcheck disable=2059
 	printf "$(ColourTextBrightOrange "${CHARS_SPECIAL}%s\n")" "$(Capitalise "${1:-}")"
 	linespace_visible=false
@@ -3857,7 +3860,7 @@ DisplayWait()
 
 	}
 
-Help.Actions:Show()
+Report.Actions:Show()
 	{
 
 	DisableDebugToArchiveAndFile
@@ -3899,6 +3902,7 @@ Help.Actions:Show()
 		DisplayAsProjSynExam "$(ShowAction)s to affect all packages can be seen with" 'all-actions'
 		DisplayAsProjSynExam "multiple $(ShowAction)s are supported like this" "$(ShowAction) $(ShowPackages) $(ShowAction) $(ShowPackages)"
 		DisplayAsProjSynIndentExam '' 'install sabnzbd sickgear reactivate transmission uninstall lazy nzbget upgrade nzbtomedia'
+		Display
 
 		} > "$REPORT_PATHFILE"
 
@@ -3921,38 +3925,54 @@ Help.Action.Reassign:Show()
 
 	}
 
-Help.ActionsAll:Show()
+Report.ActionsAll:Show()
 	{
 
 	DisableDebugToArchiveAndFile
-	Help.Basic:Show
-	DisplayAsHelpTitle "the 'all' group applies to all installed packages. If $(ShowAction) is 'install all' then all available packages will be installed."
-	DisplayAsHelpTitle "$(ShowAction) $(ShowGroup) usage examples:"
-	DisplayAsProjSynIndentExam 'install everything!' 'install all'
-	DisplayAsProjSynIndentExam 'uninstall everything!' 'force uninstall all'
-	DisplayAsProjSynIndentExam 'reinstall all installed packages' 'reinstall all'
-	DisplayAsProjSynIndentExam "rebuild all packages with backups ('install' packages and 'restore' backups)" 'rebuild all'
-	DisplayAsProjSynIndentExam 'upgrade all installed packages (and internal applications where-supported)' 'upgrade all'
-	DisplayAsProjSynIndentExam 'enable all installed packages (allow them to activate on reboot)' 'enable all'
-	DisplayAsProjSynIndentExam 'disable all installed packages (prevent them activating on reboot)' 'disable all'
-	DisplayAsProjSynIndentExam 'enable, then activate all installed packages (this will upgrade internal applications where-supported)' 'activate all'
-	DisplayAsProjSynIndentExam '' 'start all'
-	DisplayAsProjSynIndentExam 'deactivate all installed packages' 'deactivate all'
-	DisplayAsProjSynIndentExam '' 'stop all'
-	DisplayAsProjSynIndentExam 'reactivate packages (this will upgrade internal applications where-supported)' 'reactivate all'
-	DisplayAsProjSynIndentExam '' 'restart all'
-	DisplayAsProjSynIndentExam 'clear local repository files from all packages' 'clean all'
-	DisplayAsProjSynIndentExam 'list all available packages' 'list all'
-	DisplayAsProjSynIndentExam 'list only installed packages' 'list installed'
-	DisplayAsProjSynIndentExam '' installed
-	DisplayAsProjSynIndentExam 'list only packages that can be installed' 'list installable'
-	DisplayAsProjSynIndentExam '' installable
-	DisplayAsProjSynIndentExam 'list only packages that are not installed' 'list not-installed'
-	DisplayAsProjSynIndentExam '' not-installed
-	DisplayAsProjSynIndentExam 'list only upgradable packages' 'list upgradable'
-	DisplayAsProjSynIndentExam '' upgradable
-	DisplayAsProjSynIndentExam 'backup all application configurations to the backup location' 'backup all'
-	DisplayAsProjSynIndentExam 'restore all application configurations from the backup location' 'restore all'
+	DisplayWritingReport
+
+		{
+
+		ShowTitleLine
+		Help.Basic:Show
+		DisplayAsHelpTitle "the 'all' group applies to all installed packages. If $(ShowAction) is 'install all' then all available packages will be installed."
+		DisplayAsHelpTitle "$(ShowAction) $(ShowGroup) usage examples:"
+		DisplayAsProjSynIndentExam 'install everything!' 'install all'
+		DisplayAsProjSynIndentExam 'uninstall everything!' 'force uninstall all'
+		DisplayAsProjSynIndentExam 'reinstall all installed packages' 'reinstall all'
+		DisplayAsProjSynIndentExam "rebuild all packages with backups ('install' packages and 'restore' backups)" 'rebuild all'
+		DisplayAsProjSynIndentExam 'upgrade all installed packages (and internal applications where-supported)' 'upgrade all'
+		DisplayAsProjSynIndentExam 'enable all installed packages (allow them to activate on reboot)' 'enable all'
+		DisplayAsProjSynIndentExam 'disable all installed packages (prevent them activating on reboot)' 'disable all'
+		DisplayAsProjSynIndentExam 'enable, then activate all installed packages (this will upgrade internal applications where-supported)' 'activate all'
+		DisplayAsProjSynIndentExam '' 'start all'
+		DisplayAsProjSynIndentExam 'deactivate all installed packages' 'deactivate all'
+		DisplayAsProjSynIndentExam '' 'stop all'
+		DisplayAsProjSynIndentExam 'reactivate packages (this will upgrade internal applications where-supported)' 'reactivate all'
+		DisplayAsProjSynIndentExam '' 'restart all'
+		DisplayAsProjSynIndentExam 'clear local repository files from all packages' 'clean all'
+		DisplayAsProjSynIndentExam 'list all available packages' 'list all'
+		DisplayAsProjSynIndentExam 'list only installed packages' 'list installed'
+		DisplayAsProjSynIndentExam '' installed
+		DisplayAsProjSynIndentExam 'list only packages that can be installed' 'list installable'
+		DisplayAsProjSynIndentExam '' installable
+		DisplayAsProjSynIndentExam 'list only packages that are not installed' 'list not-installed'
+		DisplayAsProjSynIndentExam '' not-installed
+		DisplayAsProjSynIndentExam 'list only upgradable packages' 'list upgradable'
+		DisplayAsProjSynIndentExam '' upgradable
+		DisplayAsProjSynIndentExam 'backup all application configurations to the backup location' 'backup all'
+		DisplayAsProjSynIndentExam 'restore all application configurations from the backup location' 'restore all'
+		Display
+
+		} > "$REPORT_PATHFILE"
+
+	WriteEraseThisLine		# clear the "proc:" message shown earlier
+
+	if [[ -e $REPORT_PATHFILE ]]; then
+		DisplayFileInWindow "$REPORT_PATHFILE"
+	else
+		ShowAsError 'no information to display'
+	fi
 
 	return 0
 
@@ -3990,28 +4010,44 @@ Help.Basic.Examples:Show()
 
 	}
 
-Help.Groups:Show()
+Report.Groups:Show()
 	{
 
 	DisableDebugToArchiveAndFile
-	Help.Basic:Show
-	DisplayAsHelpTitle "$(ShowGroup) usage examples:"
-	DisplayAsProjSynIndentExam 'select every package' "$(ShowAction) all"
-	DisplayAsProjSynIndentExam 'select only standalone packages (these do not depend on other QPKGs)' "$(ShowAction) standalone"
-	DisplayAsProjSynIndentExam '' "$(ShowAction) independents"
-	DisplayAsProjSynIndentExam 'select only dependent packages (these require another QPKG to be installed and active)' "$(ShowAction) dependent"
-	DisplayAsProjSynIndentExam 'select only active packages' "$(ShowAction) active"
-	DisplayAsProjSynIndentExam '' "$(ShowAction) started"
-	DisplayAsProjSynIndentExam 'select only inactive packages' "$(ShowAction) inactive"
-	DisplayAsProjSynIndentExam '' "$(ShowAction) stopped"
-	DisplayAsProjSynIndentExam 'select only installed packages' "$(ShowAction) installed"
-	DisplayAsProjSynIndentExam 'select only packages that are not installed' "$(ShowAction) not-installed"
-	DisplayAsProjSynIndentExam 'select only packages that are backed-up' "$(ShowAction) backedup"
-	DisplayAsProjSynIndentExam 'select only packages that are not backed-up' "$(ShowAction) not-backedup"
-	DisplayAsProjSynIndentExam 'select only packages that are upgradable' "$(ShowAction) upgradable"
-	DisplayAsProjSynIndentExam '' "$(ShowAction) new"
-	DisplayAsProjSynIndentExam 'select only missing packages (these are partly installed and broken)' "$(ShowAction) missing"
-	DisplayAsProjSynExam 'multiple groups are supported like this' "$(ShowAction) $(ShowGroup) $(ShowGroup)"
+	DisplayWritingReport
+
+		{
+
+		ShowTitleLine
+		Help.Basic:Show
+		DisplayAsHelpTitle "$(ShowGroup) usage examples:"
+		DisplayAsProjSynIndentExam 'select every package' "$(ShowAction) all"
+		DisplayAsProjSynIndentExam 'select only standalone packages (these do not depend on other QPKGs)' "$(ShowAction) standalone"
+		DisplayAsProjSynIndentExam '' "$(ShowAction) independents"
+		DisplayAsProjSynIndentExam 'select only dependent packages (these require another QPKG to be installed and active)' "$(ShowAction) dependent"
+		DisplayAsProjSynIndentExam 'select only active packages' "$(ShowAction) active"
+		DisplayAsProjSynIndentExam '' "$(ShowAction) started"
+		DisplayAsProjSynIndentExam 'select only inactive packages' "$(ShowAction) inactive"
+		DisplayAsProjSynIndentExam '' "$(ShowAction) stopped"
+		DisplayAsProjSynIndentExam 'select only installed packages' "$(ShowAction) installed"
+		DisplayAsProjSynIndentExam 'select only packages that are not installed' "$(ShowAction) not-installed"
+		DisplayAsProjSynIndentExam 'select only packages that are backed-up' "$(ShowAction) backedup"
+		DisplayAsProjSynIndentExam 'select only packages that are not backed-up' "$(ShowAction) not-backedup"
+		DisplayAsProjSynIndentExam 'select only packages that are upgradable' "$(ShowAction) upgradable"
+		DisplayAsProjSynIndentExam '' "$(ShowAction) new"
+		DisplayAsProjSynIndentExam 'select only missing packages (these are partly installed and broken)' "$(ShowAction) missing"
+		DisplayAsProjSynExam 'multiple groups are supported like this' "$(ShowAction) $(ShowGroup) $(ShowGroup)"
+		Display
+
+		} > "$REPORT_PATHFILE"
+
+	WriteEraseThisLine		# clear the "proc:" message shown earlier
+
+	if [[ -e $REPORT_PATHFILE ]]; then
+		DisplayFileInWindow "$REPORT_PATHFILE"
+	else
+		ShowAsError 'no information to display'
+	fi
 
 	return 0
 
@@ -4031,7 +4067,7 @@ Help.Issue:Show()
 
 	}
 
-Actions.Results:Show()
+Report.Results:Show()
 	{
 
 	# input:
@@ -4045,7 +4081,6 @@ Actions.Results:Show()
 	local reason=''
 	local package_type=''
 	local found=false
-
 	DisplayWritingReport
 
 		{
@@ -4090,34 +4125,57 @@ Actions.Results:Show()
 			esac
 		fi
 
+		Display
+
 		} > "$REPORT_PATHFILE"
 
 	WriteEraseThisLine		# clear the "proc:" message shown earlier
-	[[ -e $REPORT_PATHFILE ]] && $CAT_CMD "$REPORT_PATHFILE"
+
+	if [[ -e $REPORT_PATHFILE ]]; then
+		DisplayFileInWindow "$REPORT_PATHFILE"
+	else
+		ShowAsError 'no information to display'
+	fi
 
 	return 0
 
 	}
 
-Help.Options:Show()
+Report.Options:Show()
 	{
 
 	DisableDebugToArchiveAndFile
-	Help.Basic:Show
-	DisplayAsHelpTitle "$(ShowOptions) usage examples:"
-	DisplayAsProjSynIndentExam 'show package statuses' status
-	DisplayAsProjSynIndentExam '' s
-	DisplayAsProjSynIndentExam 'show package repositories' repos
-	DisplayAsProjSynIndentExam '' r
-	DisplayAsProjSynIndentExam 'show live debugging information, and record it to file' "$(ShowAction) $(ShowPackages) verbose"
-	DisplayAsProjSynIndentExam '' v
-	DisplayAsProjSynIndentExam 'record debugging information to file-only' "$(ShowAction) $(ShowPackages) debug"
+	DisplayWritingReport
+
+		{
+
+		ShowTitleLine
+		Help.Basic:Show
+		DisplayAsHelpTitle "$(ShowOptions) usage examples:"
+		DisplayAsProjSynIndentExam 'show package statuses' status
+		DisplayAsProjSynIndentExam '' s
+		DisplayAsProjSynIndentExam 'show package repositories' repos
+		DisplayAsProjSynIndentExam '' r
+		DisplayAsProjSynIndentExam 'show live debugging information, and record it to file' "$(ShowAction) $(ShowPackages) verbose"
+		DisplayAsProjSynIndentExam '' v
+		DisplayAsProjSynIndentExam 'record debugging information to file-only' "$(ShowAction) $(ShowPackages) debug"
+		Display
+
+		} > "$REPORT_PATHFILE"
+
+	WriteEraseThisLine		# clear the "proc:" message shown earlier
+
+	if [[ -e $REPORT_PATHFILE ]]; then
+		DisplayFileInWindow "$REPORT_PATHFILE"
+	else
+		ShowAsError 'no information to display'
+	fi
 
 	return 0
 
 	}
 
-Help.Problems:Show()
+Report.Problems:Show()
 	{
 
 	DisableDebugToArchiveAndFile
@@ -4146,6 +4204,7 @@ Help.Problems:Show()
 		DisplayAsProjSynIndentExam "upload the most-recent session in your $(ShowTitleName) log to the $(ShowAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste last'
 		DisplayAsProjSynIndentExam "upload the most-recent $(FormatAsThous "$LOG_TAIL_LINES") lines in your $(ShowTitleName) log to the $(ShowAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste log'
 		DisplayAsHelpTitleHighlighted "if you need help, please include a copy of your $(ShowTitleName) $(ColourTextBrightOrange "log for analysis!")"
+		Display
 
 		} > "$REPORT_PATHFILE"
 
@@ -4161,7 +4220,7 @@ Help.Problems:Show()
 
 	}
 
-Help.Tips:Show()
+Report.Tips:Show()
 	{
 
 	DisableDebugToArchiveAndFile
@@ -4182,7 +4241,7 @@ Help.Tips:Show()
 		DisplayAsProjSynIndentExam 'activate all inactive packages' 'activate inactive'
 		DisplayAsProjSynIndentExam 'upgrade the internal applications only' "reactivate $(ShowPackages)"
 		Help.BackupLocation:Show
-		echo
+		Display
 
 		} > "$REPORT_PATHFILE"
 
@@ -4265,7 +4324,7 @@ DisplayFileInWindow()
 	if [[ -e $GNU_LESS_CMD ]]; then
 		[[ $showlinenumbers = true ]] && showlinenumbers_msg=' --LINE-NUMBERS'
 		[[ $jumptoend = true ]] && jumptoend_msg=' +G'
-		LESSSECURE=1 ${GNU_LESS_CMD}${jumptoend_msg} --quit-on-intr --tilde${showlinenumbers_msg} --RAW-CONTROL-CHARS --prompt ' use arrow-keys to scroll up-down left-right, press Q to quit' "$filename"
+		LESSSECURE=1 ${GNU_LESS_CMD}${jumptoend_msg} --quit-on-intr --tilde${showlinenumbers_msg} --RAW-CONTROL-CHARS --prompt ' use arrow-keys to scroll up-down & left-right, press Q to quit ' "$filename"
 		return
 	fi
 
@@ -5043,13 +5102,12 @@ QPKGs.IsTimeoutsIncreased()
 
 	}
 
-QPKGs.Abbreviations:Show()
+Report.Abbreviations:Show()
 	{
 
 	Func:Init
 	local package_name=''
 	maxcols=2
-
 	DisableDebugToArchiveAndFile
 	DisplayWritingReport
 
@@ -5081,7 +5139,7 @@ QPKGs.Abbreviations:Show()
 
 	}
 
-QPKGs.Backups:Show()
+Report.Backups:Show()
 	{
 
 	Func:Init
@@ -5089,7 +5147,6 @@ QPKGs.Backups:Show()
 	local filename=''
 	local highlight_older_than='2 weeks ago'
 	local format=''
-
 	DisableDebugToArchiveAndFile
 	DisplayWritingReport
 
@@ -5129,13 +5186,12 @@ QPKGs.Backups:Show()
 
 	}
 
-QPKGs.Dependencies:Show()
+Report.Dependencies:Show()
 	{
 
 	Func:Init
 	local package_name=''
 	maxcols=5
-
 	DisableDebugToArchiveAndFile
 	DisplayWritingReport
 
@@ -5166,13 +5222,12 @@ QPKGs.Dependencies:Show()
 
 	}
 
-QPKGs.Names:Show()
+Report.Names:Show()
 	{
 
 	Func:Init
 	local package_name=''
 	maxcols=3
-
 	DisableDebugToArchiveAndFile
 	DisplayWritingReport
 
@@ -5205,13 +5260,12 @@ QPKGs.Names:Show()
 
 	}
 
-QPKGs.Repos:Show()
+Report.Repos:Show()
 	{
 
 	Func:Init
 	local package_name=''
 	maxcols=3
-
 	DisableDebugToArchiveAndFile
 	DisplayWritingReport
 
@@ -5240,12 +5294,11 @@ QPKGs.Repos:Show()
 
 	}
 
-QPKGs.Statuses:Show()
+Report.Statuses:Show()
 	{
 
 	Func:Init
 	local package_name=''
-
 	CalcMaxStatusReportCols
 	DisplayWritingReport
 
