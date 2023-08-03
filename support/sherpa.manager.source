@@ -146,7 +146,7 @@ Self.Results:Show()
 		elif [[ $opts_show_groups = true ]]; then
 			Report.Groups:Show
 		elif [[ $opts_show_versions = true ]]; then
-			Self.Vers:Show
+			Report.Versions:Show
 		fi
 
 		if [[ $opts_show_backups = true ]]; then
@@ -774,7 +774,7 @@ Self.Tasks:Check()
 	local state=''
 	local something_to_do=false
 
-	if [[ $opts_check = true || $opts_show_status = true ]]; then
+	if [[ $opts_check = true || $opts_show_status = true || $opts_show_versions ]]; then
 		something_to_do=true
 	else
 		for action in "${USER_QPKG_ACTIONS[@]}"; do
@@ -1530,20 +1530,27 @@ ParseArgs()
 
 		if [[ -z $action ]]; then
 			case $arg in
-				a|abs|action|actions|actions-all|active|alias|aliases|all-actions|b|backups|d|deps|dependencies|dependent|dependents|disabled|enabled|failed|groups|inactive|indeps|independent|independents|l|last|log|missing|new|not-active|not-installed|o|ok|option|options|p|package|packages|problems|r|repo|repos|results|skipped|standalone|standalones|stopped|tail|tips|updatable|updateable|upgradable|version|versions|whole)
+				a|abs|action|actions|actions-all|active|alias|aliases|all-actions|b|backups|d|deps|dependencies|dependent|dependents|disabled|enabled|failed|groups|inactive|indeps|independent|independents|l|last|log|missing|new|not-active|not-installed|o|ok|option|options|p|package|packages|problems|r|repo|repos|results|skipped|standalone|standalones|stopped|tail|tips|updatable|updateable|upgradable|whole)
 					action=help
 					arg_identified=true
 					group=''
 					group_identified=false
+					;;
+				version|versions)
+					action=list
+					arg_identified=true
+					group=versions
+					group_identified=true
 			esac
 
 			DebugVar action
 		fi
 
 		# stage 2
+
 		if [[ -n $action ]]; then
 			case $arg in
-			# these cases use only a single word or char to specify a single group
+			# these cases use only a single word or char to specify a single group.
 				backedup|installable|installed|missing|ok|problems|results|skipped|tail|tips)
 					group=${arg}
 					;;
@@ -1556,7 +1563,7 @@ ParseArgs()
 				not-installed)
 					group=NTinstalled
 					;;
-			# all cases below can use multiple words or chars to specify a single group
+			# all cases below can use multiple words or chars to specify a single group.
 				a|abs|alias|aliases)
 					group=abs
 					;;
@@ -1726,6 +1733,7 @@ ParseArgs()
 						;;
 					versions)
 						opts_show_versions=true
+						skip_package_actions=true
 				esac
 
 				hide_title=true
@@ -1761,7 +1769,7 @@ ParseArgs()
 				;;
 			uninstall)
 				case $group in
-					all)			# this group is dangerous, so make `force` a requirement
+					all)			# this group is dangerous, so make `force` a requirement.
 						if [[ $action_force = true ]]; then
 							QPKGs.AC${action}.SC${group}:Set
 							group=''
@@ -1773,7 +1781,7 @@ ParseArgs()
 						group=''
 						action_force=false
 						;;
-					installed)		# this group is dangerous, so make `force` a requirement
+					installed)		# this group is dangerous, so make `force` a requirement.
 						if [[ $action_force = true ]]; then
 							QPKGs.AC${action}.IS${group}:Set
 							group=''
@@ -1791,13 +1799,15 @@ ParseArgs()
 		esac
 	done
 
-	# when an action has been determined, but no group was found, then show default information. This will usually be the help screen.
+	# test if an action has been determined, but no target group has been found.
 
 	if [[ -n $action && $group_identified = false ]]; then
 		case $action in
-			help|paste)
+			help)
 				opts_show_basic_help=true
-# 				hide_title=false
+				;;
+			paste)
+				ARGs-unknown:Add "$arg"
 		esac
 	fi
 
@@ -1863,6 +1873,11 @@ ArgSuggestions:Show()
 					;;
 				all-upgrade|upgrade-all)
 					reason=$(DisplayAsProjSynExam 'to upgrade all packages, use' 'upgrade all')
+					opts_show_basic_help=false
+					found=true
+					;;
+				paste)
+					reason=$(DisplayAsProjSynExam 'to paste your log online, use' 'paste log')
 					opts_show_basic_help=false
 					found=true
 			esac
@@ -3999,11 +4014,11 @@ Help.Basic:Show()
 Help.Basic.Examples:Show()
 	{
 
-	DisplayAsProjSynIndentExam "to list available $(ShowAction)s" 'list actions'
-	DisplayAsProjSynIndentExam "to list available $(ShowPackages)" 'list packages'
+	DisplayAsProjSynIndentExam "to list available $(ShowAction)s" 'help actions'
+	DisplayAsProjSynIndentExam "to list available $(ShowPackages)" 'help packages'
 	DisplayAsProjSynIndentExam '' p
-	DisplayAsProjSynIndentExam "to list available $(ShowGroup)s" 'list groups'
-	DisplayAsProjSynIndentExam "or, for more $(ShowOptions)" 'list options'
+	DisplayAsProjSynIndentExam "to list available $(ShowGroup)s" 'help groups'
+	DisplayAsProjSynIndentExam "or, for more $(ShowOptions)" 'help options'
 	DisplayAsHelpTitle "more in the wiki: $(ShowAsURL "https://github.com/OneCDOnly/sherpa/wiki")"
 
 	return 0
@@ -4232,7 +4247,7 @@ Report.Tips:Show()
 		Help.Basic:Show
 		DisplayAsHelpTitle 'helpful tips and shortcuts:'
 		DisplayAsProjSynIndentExam "install all available $(ShowTitleName) packages" 'install all'
-		DisplayAsProjSynIndentExam 'package abbreviations and aliases also work. To see these' 'list abs'
+		DisplayAsProjSynIndentExam 'package abbreviations and aliases also work. To see these' 'help abs'
 		DisplayAsProjSynIndentExam '' a
 		DisplayAsProjSynIndentExam 'reactivate all installed packages (upgrades internal applications where-supported)' 'reactivate all'
 		DisplayAsProjSynIndentExam 'list only packages that can be installed' 'list installable'
@@ -4526,10 +4541,11 @@ ExtractTailFromLog()
 
 	}
 
-Self.Vers:Show()
+Report.Versions:Show()
 	{
 
 	DisableDebugToArchiveAndFile
+	WriteEraseThisLine
 
 	Display "QPKG: ${THIS_PACKAGE_VER:-unknown}"
 	Display "manager: ${THIS_SCRIPT_VER:-unknown}"
@@ -5241,7 +5257,7 @@ Report.Names:Show()
 			DisplayAsPackagesReportLine "$package_name"
 		done
 
-		DisplayAsProjSynExam "abbreviations and aliases may also be used to specify $(ShowPackages). To list these" 'list abs'
+		DisplayAsProjSynExam "abbreviations and aliases may also be used to specify $(ShowPackages). To list these" 'help abs'
 		DisplayAsProjSynIndentExam '' a
 
 		echo
