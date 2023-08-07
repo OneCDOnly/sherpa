@@ -27,7 +27,7 @@ IPK_STATES=(downloaded installed reinstalled upgraded)
 # ordered
 PIP_ACTIONS=(download uninstall upgrade reinstall install)
 IPK_ACTIONS=(download uninstall upgrade reinstall install)
-QPKG_ACTIONS=(status rebuild reassign download backup deactivate disable uninstall upgrade reinstall install restore clean enable activate reactivate sign)
+QPKG_ACTIONS=(status list rebuild reassign download backup deactivate disable uninstall upgrade reinstall install restore clean enable activate reactivate sign)
 
 # these actions, states and scopes may be specified by the user -----------------------------------------------------
 # sorted
@@ -194,11 +194,6 @@ for state in "${QPKG_ISNT_STATES[@]}" "${QPKG_STATES_TRANSIENT[@]}" "${QPKG_SERV
 done
 
 for action in "${QPKG_ACTIONS[@]}"; do
-	case $action in
-		list)
-			continue    # action result lists are not required for these
-	esac
-
 	for prefix in to ok er sk so se dn; do		# todo, done ok, done error, skipped, skipped-but-ok, skipped-with-error, done (all processed QPKGs are placed in the 'done' list, as-well as the regular exit status lists)
 		AddListObj "QPKGs-AC${action}-${prefix}"
 	done
