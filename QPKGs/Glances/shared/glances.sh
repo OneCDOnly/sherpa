@@ -20,7 +20,7 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=Glances
-	readonly SCRIPT_VERSION=230726
+	readonly SCRIPT_VERSION=230808
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -32,7 +32,7 @@ Init()
 	readonly APP_VERSION_STORE_PATHFILE=$QPKG_CONFIG_PATH/version.stored
 	readonly SERVICE_STATUS_PATHFILE=/var/run/$QPKG_NAME.last.operation
 	readonly DAEMON_PID_PATHFILE=/var/run/$QPKG_NAME.pid
-	readonly QPKG_REPO_PATH=$QPKG_PATH/repo-cache
+	readonly QPKG_REPO_PATH=''
 	readonly PIP_CACHE_PATH=$QPKG_PATH/pip-cache
 	readonly VENV_PATH=$QPKG_PATH/venv
 	readonly SERVICE_LOG_PATHFILE=/var/log/$QPKG_NAME.log
@@ -54,11 +54,11 @@ Init()
 	service_result=undefined
 
 	# specific to online-sourced applications only
-	readonly SOURCE_GIT_URL=https://github.com/nicolargo/glances.git
+	readonly SOURCE_GIT_URL=''
 	readonly SOURCE_ARCH=''
-	readonly SOURCE_GIT_BRANCH=master
+	readonly SOURCE_GIT_BRANCH=''
 	# 'shallow' (depth 1) or 'single-branch' ... 'shallow' implies 'single-branch'
-	readonly SOURCE_GIT_BRANCH_DEPTH=shallow
+	readonly SOURCE_GIT_BRANCH_DEPTH=''
 	readonly INTERPRETER=/opt/bin/python3
 	readonly VENV_PYTHON_PATHFILE=$VENV_PATH/bin/python3
 	readonly VENV_PIP_PATHFILE=$VENV_PATH/bin/pip
@@ -70,7 +70,7 @@ Init()
 
 	# specific to daemonised applications only
 	readonly DAEMON_PATHFILE=$VENV_PATH/bin/glances
-	readonly DAEMON_LAUNCH_CMD="$DAEMON_PATHFILE --webserver"
+	readonly DAEMON_LAUNCH_CMD="$VENV_PYTHON_PATHFILE $DAEMON_PATHFILE --webserver"
 	readonly RUN_DAEMON_IN_SCREEN_SESSION=true
 	readonly DAEMON_PROC_IS_NAME_ONLY=false
 	readonly PORT_CHECK_TIMEOUT_SECONDS=240
@@ -258,7 +258,7 @@ StopQPKG()
 
 		while true; do
 			while [[ -d /proc/$pid ]]; do
-				sleep 1
+				/bin/sleep 1
 				((acc++))
 				DisplayWait "$acc,"
 
@@ -278,7 +278,7 @@ StopQPKG()
 			CommitInfoToSysLog 'stop daemon: OK'
 			break
 		done
-
+		/bin/sleep 1		# let application shutdown complete
 		IsNotDaemonActive || { SetError; return 1 ;}
 	fi
 
@@ -289,12 +289,16 @@ StopQPKG()
 InstallAddons()
 	{
 
-	local default_requirements_pathfile=$QPKG_CONFIG_PATH/requirements.txt
-	local default_recommended_pathfile=$QPKG_CONFIG_PATH/optional-requirements.txt
-	local exclusions_pathfile=$QPKG_CONFIG_PATH/exclusions.txt
-	local rename_pathfile=$QPKG_CONFIG_PATH/rename.txt
-	local requirements_pathfile=$QPKG_REPO_PATH/requirements.txt
-	local recommended_pathfile=$QPKG_REPO_PATH/optional-requirements.txt
+	local default_essential_modules_pathfile=$QPKG_CONFIG_PATH/essential.txt
+	local default_requirements_modules_pathfile=$QPKG_CONFIG_PATH/requirements.txt
+	local default_recommended_modules_pathfile=$QPKG_CONFIG_PATH/recommended.txt
+
+	local essential_modules_pathfile=$QPKG_REPO_PATH/essential.txt
+	local requirements_modules_pathfile=$QPKG_REPO_PATH/requirements.txt
+	local recommended_modules_pathfile=$QPKG_REPO_PATH/recommended.txt
+	local excluded_modules_pathfile=$QPKG_CONFIG_PATH/exclusions.txt
+	local rename_modules_pathfile=$QPKG_CONFIG_PATH/rename.txt
+
 	local pyproject_pathfile=$QPKG_REPO_PATH/pyproject.toml
 	local pip_conf_pathfile=$VENV_PATH/pip.conf
 	local new_env=false
@@ -322,23 +326,26 @@ InstallAddons()
 
 	IsNotAutoUpdate && [[ $new_env = false ]] && return 0
 
+	[[ -e $essential_modules_pathfile && -d $(/usr/bin/dirname "$default_essential_modules_pathfile") ]] && cp -f "$essential_modules_pathfile" "$default_essential_modules_pathfile"
+	[[ -e $default_essential_modules_pathfile ]] && essential_modules_pathfile=$default_essential_modules_pathfile
+
 	# edit developer-provided Python module requirements files out-of-repo
 
-	[[ -e $requirements_pathfile ]] && cp -f "$requirements_pathfile" "$default_requirements_pathfile"
-	[[ -e $default_requirements_pathfile ]] && requirements_pathfile=$default_requirements_pathfile
+	[[ -e $requirements_modules_pathfile && -d $(/usr/bin/dirname "$default_requirements_modules_pathfile") ]] && cp -f "$requirements_modules_pathfile" "$default_requirements_modules_pathfile"
+	[[ -e $default_requirements_modules_pathfile ]] && requirements_modules_pathfile=$default_requirements_modules_pathfile
 
-	[[ -e $recommended_pathfile ]] && cp -f "$recommended_pathfile" "$default_recommended_pathfile"
-	[[ -e $default_recommended_pathfile ]] && recommended_pathfile=$default_recommended_pathfile
+	[[ -e $recommended_modules_pathfile && -d $(/usr/bin/dirname "$default_recommended_modules_pathfile") ]] && cp -f "$recommended_modules_pathfile" "$default_recommended_modules_pathfile"
+	[[ -e $default_recommended_modules_pathfile ]] && recommended_modules_pathfile=$default_recommended_modules_pathfile
 
 	# Must remove these modules from repo txt files, and use the ones installed via `opkg` instead (if available).
 	# If not, `pip` will attempt to compile these, which fails on early ARMv5 CPUs.
 
-	if [[ -e $exclusions_pathfile ]]; then
-		local module_exclusions=$(/bin/tr '\n' ' ' < "$exclusions_pathfile")
+	if [[ -e $excluded_modules_pathfile ]]; then
+		local module_exclusions=$(/bin/tr '\n' ' ' < "$excluded_modules_pathfile")
 		module_exclusions=${module_exclusions%* }
 		local module_exclusions_re="/^${module_exclusions// /\|^}"
 
-		for target in $requirements_pathfile $recommended_pathfile $pyproject_pathfile; do
+		for target in $essential_modules_pathfile $requirements_modules_pathfile $recommended_modules_pathfile $pyproject_pathfile; do
 			if [[ -e $target ]]; then
 				DisplayRunAndLog "exclude problem PyPI modules from '$(/usr/bin/basename "$target")'" "/bin/sed -i '${module_exclusions_re}/d' $target" log:failure-only
 			fi
@@ -347,17 +354,12 @@ InstallAddons()
 
 	# Install remaining PyPI modules
 
-	for target in $requirements_pathfile $recommended_pathfile; do
+	for target in $essential_modules_pathfile $requirements_modules_pathfile $recommended_modules_pathfile; do
 		if [[ -e $target ]]; then
 			DisplayRunAndLog "install PyPI modules from '$(/usr/bin/basename "$target")'" "$VENV_PIP_PATHFILE install${pip_deps} --no-input --upgrade pip -r $target" log:failure-only
 			no_pips_installed=false
 		fi
 	done
-
-	if [[ $QPKG_NAME = Glances && ! -e $DAEMON_PATHFILE ]]; then
-		DisplayRunAndLog "setup PyPI modules" "$VENV_PYTHON_PATHFILE setup.py install" log:failure-only
-		no_pips_installed=false
-	fi
 
 	# fallback to general installation method
 
@@ -370,8 +372,8 @@ InstallAddons()
 
 	# KLUDGE: `manytolinux2014` builds are problematic in QTS, so rename these locally
 
-	if [[ -e $rename_pathfile ]]; then
-		for module in $(<$rename_pathfile); do
+	if [[ -e $rename_modules_pathfile ]]; then
+		for module in $(<$rename_modules_pathfile); do
 			RenameSharedObjectFile "$module"
 		done
 	fi
@@ -528,6 +530,8 @@ PullGitRepo()
 	#   $SOURCE_GIT_BRANCH_DEPTH
 	#   $QPKG_REPO_PATH
 
+	IsSourcedGit || return 0
+
 	local branch_depth='--depth 1'
 	[[ $SOURCE_GIT_BRANCH_DEPTH = single-branch ]] && branch_depth='--single-branch'
 	local active_branch=$(GetPathGitBranch "$QPKG_REPO_PATH")
@@ -622,7 +626,7 @@ FindAndWritePIDFile()
 		# QTS `pidof` is unreliable and should be used as a last resort only
 		target_pid="$(/bin/pidof -s "$(/usr/bin/basename "$DAEMON_PATHFILE")")"
 	else
-		target_pid="$(ps | /bin/grep "$(GetLaunchTarget)" | /bin/grep -v grep)"
+		target_pid="$(/bin/ps | /bin/grep "$(GetLaunchTarget)" | /bin/grep -v grep)"
 		target_pid=${target_pid:0:5}
 		target_pid=$(/bin/tr -d ' ' <<< "$target_pid")
 	fi
@@ -645,7 +649,7 @@ WaitForPID()
 
 	if [[ $PIDFILE_IS_MANAGED_BY_APP = true ]]; then
 		if WaitForFileToAppear "$DAEMON_PID_PATHFILE" "$PIDFILE_APPEAR_TIMEOUT_SECONDS"; then
-			sleep 1		# wait one more second to allow file to have PID written into it
+			/bin/sleep 1		# wait one more second to allow file to have PID written into it
 		fi
 	fi
 
@@ -661,7 +665,7 @@ WaitForPID()
 		DisplayWaitCommitToLog "wait $PIDFILE_RECHECK_WAIT_SECONDS second$(Pluralise "$PIDFILE_RECHECK_WAIT_SECONDS") to recheck PID:"
 
 		for ((count=1; count<=PIDFILE_RECHECK_WAIT_SECONDS; count++)); do
-			sleep 1
+			/bin/sleep 1
 			DisplayWait "$count,"
 		done
 
@@ -713,7 +717,7 @@ WaitForDaemon()
 
 		(
 			for ((count=1; count<=MAX_SECONDS; count++)); do
-				sleep 1
+				/bin/sleep 1
 				DisplayWait "$count,"
 
 				if IsProcessActive "$target_proc" "$DAEMON_PID_PATHFILE"; then
@@ -765,7 +769,7 @@ WaitForFileToAppear()
 
 		(
 			for ((count=1; count<=MAX_SECONDS; count++)); do
-				sleep 1
+				/bin/sleep 1
 				DisplayWait "$count,"
 
 				if [[ -e $1 ]]; then
@@ -1130,16 +1134,23 @@ GetThisBinPath()
 RenameSharedObjectFile()
 	{
 
+	# need to check 3 possible module locations
+
 	[[ -n ${1:-} ]] || return
 
 	if [[ -e $(GetModulePath)/$(GetOriginalModuleSOFilename "_$1") ]]; then
 		mv "$(GetModulePath)/$(GetOriginalModuleSOFilename "_$1")" "$(GetModulePath)/$(GetFixedModuleSOFilename "_$1")"
-		echo "renamed module: _$1"
+		DisplayCommitToLog "renamed module: _$1"
 	fi
 
 	if [[ -e $(GetModulePath)/$1/$(GetOriginalModuleSOFilename "$1") ]]; then
 		mv "$(GetModulePath)/$1/$(GetOriginalModuleSOFilename "$1")" "$(GetModulePath)/$1/$(GetFixedModuleSOFilename "$1")"
-		echo "renamed module: $1/$1"
+		DisplayCommitToLog "renamed module: $1/$1"
+	fi
+
+	if [[ -e $(GetModulePath)/$(GetOriginalModuleSOFilename "$1") ]]; then
+		mv "$(GetModulePath)/$(GetOriginalModuleSOFilename "$1")" "$(GetModulePath)/$(GetFixedModuleSOFilename "$1")"
+		DisplayCommitToLog "renamed module: $1"
 	fi
 
 	return 0
@@ -1273,6 +1284,20 @@ IsNotSupportReset()
 	{
 
 	! IsSupportReset
+
+	}
+
+IsSourcedGit()
+	{
+
+	[[ -n ${SOURCE_GIT_URL:-} ]]
+
+	}
+
+IsNotSourcedGit()
+	{
+
+	! IsSourcedGit
 
 	}
 
@@ -1516,7 +1541,7 @@ IsPortResponds()
 				: 			# do nothing
 				;;
 			7)			# this code is returned immediately
-				sleep 1		# ... so let's wait here a bit
+				/bin/sleep 1		# ... so let's wait here a bit
 				;;
 			*)
 				: # do nothing
@@ -1587,7 +1612,7 @@ IsPortSecureResponds()
 				: 			# do nothing
 				;;
 			7)			# this code is returned immediately
-				sleep 1		# ... so let's wait here a bit
+				/bin/sleep 1		# ... so let's wait here a bit
 				;;
 			*)
 				: # do nothing
