@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-####################################################################################
+################################################################################################
 # webssh.sh
 #
 # Copyright (C) 2023 OneCD - one.cd.only@gmail.com
@@ -9,7 +9,7 @@
 # This is a type 6 service-script: https://github.com/OneCDOnly/sherpa/wiki/Service-Script-Types
 #
 # For more info: https://forum.qnap.com/viewtopic.php?f=320&t=132373
-####################################################################################
+################################################################################################
 
 readonly USER_ARGS_RAW=$*
 
@@ -20,7 +20,7 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=WebSSH
-	readonly SCRIPT_VERSION=230726
+	readonly SCRIPT_VERSION=230809
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -70,7 +70,7 @@ Init()
 
 	# specific to daemonised applications only
 	readonly DAEMON_PATHFILE=$VENV_PATH/bin/wssh
-	readonly DAEMON_LAUNCH_CMD="$DAEMON_PATHFILE --address='0.0.0.0' --port=8010 --encoding=850"
+	readonly DAEMON_LAUNCH_CMD="$VENV_PYTHON_PATHFILE $DAEMON_PATHFILE --address='0.0.0.0' --port=8010 --encoding=850"
 	readonly RUN_DAEMON_IN_SCREEN_SESSION=true
 	readonly DAEMON_PROC_IS_NAME_ONLY=false
 	readonly PORT_CHECK_TIMEOUT_SECONDS=240
@@ -117,7 +117,7 @@ Init()
 	DisableOpkgDaemonStart
 
 	IsSupportBackup && [[ -n ${BACKUP_PATH:-} && ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
-	[[ -n ${VENV_PATH:-} && ! -d $VENV_PATH ]] && mkdir -p "$VENV_PATH"
+	IsVirtualEnvironmentUsed && [[ ! -d $VENV_PATH ]] && mkdir -p "$VENV_PATH"
 	[[ -n ${PIP_CACHE_PATH:-} && ! -d $PIP_CACHE_PATH ]] && mkdir -p "$PIP_CACHE_PATH"
 
 	IsSourcedOnline && IsAutoUpdateMissing && EnableAutoUpdate >/dev/null
@@ -181,6 +181,7 @@ StartQPKG()
 	fi
 
 	MakePaths
+	PullGitRepo || { SetError; return 1 ;}
 	InstallAddons || { SetError; return 1 ;}
 	IsNotDaemon && return
 	WaitForLaunchTarget || { SetError; return 1 ;}
@@ -204,7 +205,7 @@ StartQPKG()
 		return 1
 	fi
 
-	if IsNotVirtualEnvironmentExist; then
+	if IsVirtualEnvironmentUsed && IsNotVirtualEnvironmentExist; then
 		DisplayErrCommitAllLogs 'unable to start daemon: virtual environment does not exist!'
 		SetError
 		return 1
@@ -257,7 +258,7 @@ StopQPKG()
 
 		while true; do
 			while [[ -d /proc/$pid ]]; do
-				sleep 1
+				/bin/sleep 1
 				((acc++))
 				DisplayWait "$acc,"
 
@@ -278,6 +279,7 @@ StopQPKG()
 			break
 		done
 
+		/bin/sleep 1		# let application shutdown complete
 		IsNotDaemonActive || { SetError; return 1 ;}
 	fi
 
@@ -288,12 +290,18 @@ StopQPKG()
 InstallAddons()
 	{
 
-	local default_requirements_pathfile=$QPKG_CONFIG_PATH/requirements.txt
-	local default_recommended_pathfile=$QPKG_CONFIG_PATH/recommended.txt
-	local exclusions_pathfile=$QPKG_CONFIG_PATH/exclusions.txt
-	local rename_pathfile=$QPKG_CONFIG_PATH/rename.txt
-	local requirements_pathfile=$QPKG_REPO_PATH/requirements.txt
-	local recommended_pathfile=$QPKG_REPO_PATH/recommended.txt
+	IsVirtualEnvironmentUsed || return 0
+
+	local default_essential_modules_pathfile=$QPKG_CONFIG_PATH/essential.txt
+	local default_requirements_modules_pathfile=$QPKG_CONFIG_PATH/requirements.txt
+	local default_recommended_modules_pathfile=$QPKG_CONFIG_PATH/recommended.txt
+
+	local essential_modules_pathfile=$QPKG_REPO_PATH/essential.txt
+	local requirements_modules_pathfile=$QPKG_REPO_PATH/requirements.txt
+	local recommended_modules_pathfile=$QPKG_REPO_PATH/recommended.txt
+	local excluded_modules_pathfile=$QPKG_CONFIG_PATH/exclusions.txt
+	local rename_modules_pathfile=$QPKG_CONFIG_PATH/rename.txt
+
 	local pyproject_pathfile=$QPKG_REPO_PATH/pyproject.toml
 	local pip_conf_pathfile=$VENV_PATH/pip.conf
 	local new_env=false
@@ -321,23 +329,26 @@ InstallAddons()
 
 	IsNotAutoUpdate && [[ $new_env = false ]] && return 0
 
-	# edit developer-provided Python module requirements files out-of-repo
+	[[ -e $essential_modules_pathfile && -d $(/usr/bin/dirname "$default_essential_modules_pathfile") ]] && cp -f "$essential_modules_pathfile" "$default_essential_modules_pathfile"
+	[[ -e $default_essential_modules_pathfile ]] && essential_modules_pathfile=$default_essential_modules_pathfile
 
-	[[ -e $requirements_pathfile ]] && cp -f "$requirements_pathfile" "$default_requirements_pathfile"
-	[[ -e $default_requirements_pathfile ]] && requirements_pathfile=$default_requirements_pathfile
+	# Edit developer-provided Python module requirements files out-of-repo
 
-	[[ -e $recommended_pathfile ]] && cp -f "$recommended_pathfile" "$default_recommended_pathfile"
-	[[ -e $default_recommended_pathfile ]] && recommended_pathfile=$default_recommended_pathfile
+	[[ -e $requirements_modules_pathfile && -d $(/usr/bin/dirname "$default_requirements_modules_pathfile") ]] && cp -f "$requirements_modules_pathfile" "$default_requirements_modules_pathfile"
+	[[ -e $default_requirements_modules_pathfile ]] && requirements_modules_pathfile=$default_requirements_modules_pathfile
+
+	[[ -e $recommended_modules_pathfile && -d $(/usr/bin/dirname "$default_recommended_modules_pathfile") ]] && cp -f "$recommended_modules_pathfile" "$default_recommended_modules_pathfile"
+	[[ -e $default_recommended_modules_pathfile ]] && recommended_modules_pathfile=$default_recommended_modules_pathfile
 
 	# Must remove these modules from repo txt files, and use the ones installed via `opkg` instead (if available).
 	# If not, `pip` will attempt to compile these, which fails on early ARMv5 CPUs.
 
-	if [[ -e $exclusions_pathfile ]]; then
-		local module_exclusions=$(/bin/tr '\n' ' ' < "$exclusions_pathfile")
+	if [[ -e $excluded_modules_pathfile ]]; then
+		local module_exclusions=$(/bin/tr '\n' ' ' < "$excluded_modules_pathfile")
 		module_exclusions=${module_exclusions%* }
 		local module_exclusions_re="/^${module_exclusions// /\|^}"
 
-		for target in $requirements_pathfile $recommended_pathfile $pyproject_pathfile; do
+		for target in $essential_modules_pathfile $requirements_modules_pathfile $recommended_modules_pathfile $pyproject_pathfile; do
 			if [[ -e $target ]]; then
 				DisplayRunAndLog "exclude problem PyPI modules from '$(/usr/bin/basename "$target")'" "/bin/sed -i '${module_exclusions_re}/d' $target" log:failure-only
 			fi
@@ -346,14 +357,14 @@ InstallAddons()
 
 	# Install remaining PyPI modules
 
-	for target in $requirements_pathfile $recommended_pathfile; do
+	for target in $essential_modules_pathfile $requirements_modules_pathfile $recommended_modules_pathfile; do
 		if [[ -e $target ]]; then
 			DisplayRunAndLog "install PyPI modules from '$(/usr/bin/basename "$target")'" "$VENV_PIP_PATHFILE install${pip_deps} --no-input --upgrade pip -r $target" log:failure-only
 			no_pips_installed=false
 		fi
 	done
 
-	# fallback to general installation method
+	# Fallback to general installation method
 
 	if [[ $no_pips_installed = true ]]; then
 		if [[ -e $QPKG_REPO_PATH/setup.py || -e $pyproject_pathfile ]]; then
@@ -364,8 +375,8 @@ InstallAddons()
 
 	# KLUDGE: `manytolinux2014` builds are problematic in QTS, so rename these locally
 
-	if [[ -e $rename_pathfile ]]; then
-		for module in $(<$rename_pathfile); do
+	if [[ -e $rename_modules_pathfile ]]; then
+		for module in $(<$rename_modules_pathfile); do
 			RenameSharedObjectFile "$module"
 		done
 	fi
@@ -415,7 +426,7 @@ MakePaths()
 	[[ -n ${BACKUP_PATH:-} && ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
 	[[ -n ${QPKG_REPO_PATH:-} && ! -d $QPKG_REPO_PATH ]] && mkdir -p "$QPKG_REPO_PATH"
 	[[ -n ${PIP_CACHE_PATH:-} && ! -d $PIP_CACHE_PATH ]] && mkdir -p "$PIP_CACHE_PATH"
-	[[ -n ${VENV_PATH:-} && ! -d $VENV_PATH ]] && mkdir -p "$VENV_PATH"
+	IsVirtualEnvironmentUsed && [[ ! -d $VENV_PATH ]] && mkdir -p "$VENV_PATH"
 	DisplayCommitToLog OK
 
 	}
@@ -444,7 +455,6 @@ LoadPorts()
 			DisplayErrCommitAllLogs "unable to load ports: action '$1' is unrecognised"
 			SetError
 			return 1
-			;;
 	esac
 
 	# Always read these from the application configuration
@@ -512,6 +522,53 @@ DisableOpkgDaemonStart()
 
 	}
 
+PullGitRepo()
+	{
+
+	# inputs (global):
+	#   $QPKG_NAME
+	#   $SOURCE_GIT_URL
+	#   $SOURCE_GIT_BRANCH
+	#   $SOURCE_GIT_BRANCH_DEPTH
+	#   $QPKG_REPO_PATH
+
+	IsGitBranch || return 0
+
+	local branch_depth='--depth 1'
+	[[ $SOURCE_GIT_BRANCH_DEPTH = single-branch ]] && branch_depth='--single-branch'
+	local active_branch=$(GetPathGitBranch "$QPKG_REPO_PATH")
+	local branch_switch=false
+
+	WaitForGit || return
+
+	if [[ -d $QPKG_REPO_PATH/.git ]]; then
+		if [[ $active_branch != "$SOURCE_GIT_BRANCH" ]]; then
+			branch_switch=true
+			DisplayCommitToLog "active git branch: '$active_branch', new git branch: '$SOURCE_GIT_BRANCH'"
+			[[ $QPKG_NAME = nzbToMedia ]] && BackupConfig
+			DisplayRunAndLog 'new git branch has been specified, so clean local repository' "cd /tmp; rm -r $QPKG_REPO_PATH" log:failure-only
+		fi
+	fi
+
+	if [[ ! -d $QPKG_REPO_PATH/.git ]]; then
+		DisplayRunAndLog "clone $(FormatAsPackageName "$QPKG_NAME") from remote repository" "cd /tmp; /opt/bin/git clone --branch $SOURCE_GIT_BRANCH $branch_depth -c advice.detachedHead=false $SOURCE_GIT_URL $QPKG_REPO_PATH" log:failure-only
+	else
+		if IsAutoUpdate; then
+			# latest effort at resolving local clone corruption: https://stackoverflow.com/a/10170195
+			DisplayRunAndLog "update $(FormatAsPackageName "$QPKG_NAME") from remote repository" "cd /tmp; /opt/bin/git -C $QPKG_REPO_PATH clean -f; /opt/bin/git -C $QPKG_REPO_PATH reset --hard origin/$SOURCE_GIT_BRANCH; /opt/bin/git -C $QPKG_REPO_PATH pull" log:failure-only
+		fi
+	fi
+
+	if IsAutoUpdate; then
+		DisplayCommitToLog "active git branch: '$(GetPathGitBranch "$QPKG_REPO_PATH")'"
+	fi
+
+	[[ $branch_switch = true && $QPKG_NAME = nzbToMedia ]] && RestoreConfig
+
+	return 0
+
+	}
+
 CleanLocalClone()
 	{
 
@@ -522,11 +579,11 @@ CleanLocalClone()
 		return 1
 	fi
 
-	DisplayRunAndLog 'clean local repository' "rm -rf \"$QPKG_REPO_PATH\"" log:failure-only
+	[[ -n $QPKG_REPO_PATH && -d $QPKG_REPO_PATH ]] && DisplayRunAndLog 'clean local repository' "rm -rf \"$QPKG_REPO_PATH\"" log:failure-only
 	[[ -n $QPKG_REPO_PATH && -d $(/usr/bin/dirname "$QPKG_REPO_PATH")/$QPKG_NAME ]] && DisplayRunAndLog 'KLUDGE: remove previous local repository' "rm -r \"$(/usr/bin/dirname "$QPKG_REPO_PATH")/$QPKG_NAME\"" log:failure-only
-	[[ -n $VENV_PATH && -d $VENV_PATH ]] && DisplayRunAndLog 'clean virtual environment' "rm -rf \"$VENV_PATH\"" log:failure-only
+	IsVirtualEnvironmentUsed && [[ -d $VENV_PATH ]] && DisplayRunAndLog 'clean virtual environment' "rm -rf \"$VENV_PATH\"" log:failure-only
 	[[ -n $PIP_CACHE_PATH && -d $PIP_CACHE_PATH ]] && DisplayRunAndLog 'clean PyPI cache' "rm -rf \"$PIP_CACHE_PATH\"" log:failure-only
-	[[ -e $APP_VERSION_STORE_PATHFILE ]] && DisplayRunAndLog 'remove application version' "rm -f \"$APP_VERSION_STORE_PATHFILE\"" log:failure-only
+	[[ -n $APP_VERSION_STORE_PATHFILE && -e $APP_VERSION_STORE_PATHFILE ]] && DisplayRunAndLog 'remove application version' "rm -f \"$APP_VERSION_STORE_PATHFILE\"" log:failure-only
 
 	}
 
@@ -571,7 +628,7 @@ FindAndWritePIDFile()
 		# QTS `pidof` is unreliable and should be used as a last resort only
 		target_pid="$(/bin/pidof -s "$(/usr/bin/basename "$DAEMON_PATHFILE")")"
 	else
-		target_pid="$(ps | /bin/grep "$(GetLaunchTarget)" | /bin/grep -v grep)"
+		target_pid="$(/bin/ps | /bin/grep "$(GetLaunchTarget)" | /bin/grep -v grep)"
 		target_pid=${target_pid:0:5}
 		target_pid=$(/bin/tr -d ' ' <<< "$target_pid")
 	fi
@@ -594,7 +651,7 @@ WaitForPID()
 
 	if [[ $PIDFILE_IS_MANAGED_BY_APP = true ]]; then
 		if WaitForFileToAppear "$DAEMON_PID_PATHFILE" "$PIDFILE_APPEAR_TIMEOUT_SECONDS"; then
-			sleep 1		# wait one more second to allow file to have PID written into it
+			/bin/sleep 1		# wait one more second to allow file to have PID written into it
 		fi
 	fi
 
@@ -610,7 +667,7 @@ WaitForPID()
 		DisplayWaitCommitToLog "wait $PIDFILE_RECHECK_WAIT_SECONDS second$(Pluralise "$PIDFILE_RECHECK_WAIT_SECONDS") to recheck PID:"
 
 		for ((count=1; count<=PIDFILE_RECHECK_WAIT_SECONDS; count++)); do
-			sleep 1
+			/bin/sleep 1
 			DisplayWait "$count,"
 		done
 
@@ -662,7 +719,7 @@ WaitForDaemon()
 
 		(
 			for ((count=1; count<=MAX_SECONDS; count++)); do
-				sleep 1
+				/bin/sleep 1
 				DisplayWait "$count,"
 
 				if IsProcessActive "$target_proc" "$DAEMON_PID_PATHFILE"; then
@@ -714,7 +771,7 @@ WaitForFileToAppear()
 
 		(
 			for ((count=1; count<=MAX_SECONDS; count++)); do
-				sleep 1
+				/bin/sleep 1
 				DisplayWait "$count,"
 
 				if [[ -e $1 ]]; then
@@ -1079,16 +1136,23 @@ GetThisBinPath()
 RenameSharedObjectFile()
 	{
 
+	# need to check 3 possible module locations
+
 	[[ -n ${1:-} ]] || return
 
 	if [[ -e $(GetModulePath)/$(GetOriginalModuleSOFilename "_$1") ]]; then
 		mv "$(GetModulePath)/$(GetOriginalModuleSOFilename "_$1")" "$(GetModulePath)/$(GetFixedModuleSOFilename "_$1")"
-		echo "renamed module: _$1"
+		DisplayCommitToLog "renamed module: _$1"
 	fi
 
 	if [[ -e $(GetModulePath)/$1/$(GetOriginalModuleSOFilename "$1") ]]; then
 		mv "$(GetModulePath)/$1/$(GetOriginalModuleSOFilename "$1")" "$(GetModulePath)/$1/$(GetFixedModuleSOFilename "$1")"
-		echo "renamed module: $1/$1"
+		DisplayCommitToLog "renamed module: $1/$1"
+	fi
+
+	if [[ -e $(GetModulePath)/$(GetOriginalModuleSOFilename "$1") ]]; then
+		mv "$(GetModulePath)/$(GetOriginalModuleSOFilename "$1")" "$(GetModulePath)/$(GetFixedModuleSOFilename "$1")"
+		DisplayCommitToLog "renamed module: $1"
 	fi
 
 	return 0
@@ -1117,6 +1181,34 @@ GetModulePath()
 	[[ -z $pyver ]] && pyver=$(GetPythonVer)
 	echo "$VENV_PATH/lib/python${pyver:0:1}.${pyver:1:2}/site-packages"
 
+	}
+
+parse_yaml()
+	{
+
+	# a nice bit of coding! https://stackoverflow.com/a/21189044
+
+	# input:
+	#   $1 = filename to parse
+
+	# output:
+	#   stdout = parsed YAML
+
+	local prefix=$2
+	local s='[[:space:]]*' w='[a-zA-Z0-9_]*' fs=$(echo @|tr @ '\034')
+
+	/bin/sed -ne "s|^\($s\):|\1|" \
+		-e "s|^\($s\)\($w\)$s:$s[\"']\(.*\)[\"']$s\$|\1$fs\2$fs\3|p" \
+		-e "s|^\($s\)\($w\)$s:$s\(.*\)$s\$|\1$fs\2$fs\3|p"  $1 |
+		/bin/awk -F$fs '{
+			indent = length($1)/2;
+			vname[indent] = $2;
+			for (i in vname) {if (i > indent) {delete vname[i]}}
+				if (length($3) > 0) {
+				vn=""; for (i=0; i<indent; i++) {vn=(vn)(vname[i])("_")}
+				printf("%s%s%s=\"%s\"\n", "'$prefix'",vn, $2, $3);
+				}
+			}'
 	}
 
 IsQNAP()
@@ -1222,6 +1314,34 @@ IsNotSupportReset()
 	{
 
 	! IsSupportReset
+
+	}
+
+IsGitBranch()
+	{
+
+	[[ -n ${SOURCE_GIT_BRANCH:-} ]]
+
+	}
+
+IsNotGitBranch()
+	{
+
+	! IsGitBranch
+
+	}
+
+IsVirtualEnvironmentUsed()
+	{
+
+	[[ -n $VENV_PATH ]]
+
+	}
+
+IsNotVirtualEnvironmentUsed()
+	{
+
+	! IsVirtualEnvironmentUsed
 
 	}
 
@@ -1465,7 +1585,7 @@ IsPortResponds()
 				: 			# do nothing
 				;;
 			7)			# this code is returned immediately
-				sleep 1		# ... so let's wait here a bit
+				/bin/sleep 1		# ... so let's wait here a bit
 				;;
 			*)
 				: # do nothing
@@ -1536,7 +1656,7 @@ IsPortSecureResponds()
 				: 			# do nothing
 				;;
 			7)			# this code is returned immediately
-				sleep 1		# ... so let's wait here a bit
+				/bin/sleep 1		# ... so let's wait here a bit
 				;;
 			*)
 				: # do nothing

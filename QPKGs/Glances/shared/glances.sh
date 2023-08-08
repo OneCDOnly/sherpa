@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
-####################################################################################
+################################################################################################
 # glances.sh
 #
 # Copyright (C) 2023 OneCD - one.cd.only@gmail.com
 #
 # so, blame OneCD if it all goes horribly wrong. ;)
 #
-# This is a type 1 service-script: https://github.com/OneCDOnly/sherpa/wiki/Service-Script-Types
+# This is a type 6 service-script: https://github.com/OneCDOnly/sherpa/wiki/Service-Script-Types
 #
 # For more info: https://forum.qnap.com/viewtopic.php?f=320&t=132373
-####################################################################################
+################################################################################################
 
 readonly USER_ARGS_RAW=$*
 
@@ -20,14 +20,14 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=Glances
-	readonly SCRIPT_VERSION=230808
+	readonly SCRIPT_VERSION=230809
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
 	readonly QPKG_VERSION=$(/sbin/getcfg $QPKG_NAME Version -d unknown -f /etc/config/qpkg.conf)
 	readonly QPKG_CONFIG_PATH=$QPKG_PATH/config
 	readonly SCREEN_CONF_PATHFILE=$QPKG_CONFIG_PATH/screen.conf
-	readonly QPKG_INI_PATHFILE=$QPKG_CONFIG_PATH/config.ini
+	readonly QPKG_INI_PATHFILE=''
 	readonly QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
 	readonly APP_VERSION_STORE_PATHFILE=$QPKG_CONFIG_PATH/version.stored
 	readonly SERVICE_STATUS_PATHFILE=/var/run/$QPKG_NAME.last.operation
@@ -117,7 +117,7 @@ Init()
 	DisableOpkgDaemonStart
 
 	IsSupportBackup && [[ -n ${BACKUP_PATH:-} && ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
-	[[ -n ${VENV_PATH:-} && ! -d $VENV_PATH ]] && mkdir -p "$VENV_PATH"
+	IsVirtualEnvironmentUsed && [[ ! -d $VENV_PATH ]] && mkdir -p "$VENV_PATH"
 	[[ -n ${PIP_CACHE_PATH:-} && ! -d $PIP_CACHE_PATH ]] && mkdir -p "$PIP_CACHE_PATH"
 
 	IsSourcedOnline && IsAutoUpdateMissing && EnableAutoUpdate >/dev/null
@@ -205,7 +205,7 @@ StartQPKG()
 		return 1
 	fi
 
-	if IsNotVirtualEnvironmentExist; then
+	if IsVirtualEnvironmentUsed && IsNotVirtualEnvironmentExist; then
 		DisplayErrCommitAllLogs 'unable to start daemon: virtual environment does not exist!'
 		SetError
 		return 1
@@ -278,6 +278,7 @@ StopQPKG()
 			CommitInfoToSysLog 'stop daemon: OK'
 			break
 		done
+
 		/bin/sleep 1		# let application shutdown complete
 		IsNotDaemonActive || { SetError; return 1 ;}
 	fi
@@ -288,6 +289,8 @@ StopQPKG()
 
 InstallAddons()
 	{
+
+	IsVirtualEnvironmentUsed || return 0
 
 	local default_essential_modules_pathfile=$QPKG_CONFIG_PATH/essential.txt
 	local default_requirements_modules_pathfile=$QPKG_CONFIG_PATH/requirements.txt
@@ -329,7 +332,7 @@ InstallAddons()
 	[[ -e $essential_modules_pathfile && -d $(/usr/bin/dirname "$default_essential_modules_pathfile") ]] && cp -f "$essential_modules_pathfile" "$default_essential_modules_pathfile"
 	[[ -e $default_essential_modules_pathfile ]] && essential_modules_pathfile=$default_essential_modules_pathfile
 
-	# edit developer-provided Python module requirements files out-of-repo
+	# Edit developer-provided Python module requirements files out-of-repo
 
 	[[ -e $requirements_modules_pathfile && -d $(/usr/bin/dirname "$default_requirements_modules_pathfile") ]] && cp -f "$requirements_modules_pathfile" "$default_requirements_modules_pathfile"
 	[[ -e $default_requirements_modules_pathfile ]] && requirements_modules_pathfile=$default_requirements_modules_pathfile
@@ -361,7 +364,7 @@ InstallAddons()
 		fi
 	done
 
-	# fallback to general installation method
+	# Fallback to general installation method
 
 	if [[ $no_pips_installed = true ]]; then
 		if [[ -e $QPKG_REPO_PATH/setup.py || -e $pyproject_pathfile ]]; then
@@ -423,7 +426,7 @@ MakePaths()
 	[[ -n ${BACKUP_PATH:-} && ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
 	[[ -n ${QPKG_REPO_PATH:-} && ! -d $QPKG_REPO_PATH ]] && mkdir -p "$QPKG_REPO_PATH"
 	[[ -n ${PIP_CACHE_PATH:-} && ! -d $PIP_CACHE_PATH ]] && mkdir -p "$PIP_CACHE_PATH"
-	[[ -n ${VENV_PATH:-} && ! -d $VENV_PATH ]] && mkdir -p "$VENV_PATH"
+	IsVirtualEnvironmentUsed && [[ ! -d $VENV_PATH ]] && mkdir -p "$VENV_PATH"
 	DisplayCommitToLog OK
 
 	}
@@ -452,7 +455,6 @@ LoadPorts()
 			DisplayErrCommitAllLogs "unable to load ports: action '$1' is unrecognised"
 			SetError
 			return 1
-			;;
 	esac
 
 	# Always read these from the application configuration
@@ -530,7 +532,7 @@ PullGitRepo()
 	#   $SOURCE_GIT_BRANCH_DEPTH
 	#   $QPKG_REPO_PATH
 
-	IsSourcedGit || return 0
+	IsGitBranch || return 0
 
 	local branch_depth='--depth 1'
 	[[ $SOURCE_GIT_BRANCH_DEPTH = single-branch ]] && branch_depth='--single-branch'
@@ -577,11 +579,11 @@ CleanLocalClone()
 		return 1
 	fi
 
-	DisplayRunAndLog 'clean local repository' "rm -rf \"$QPKG_REPO_PATH\"" log:failure-only
+	[[ -n $QPKG_REPO_PATH && -d $QPKG_REPO_PATH ]] && DisplayRunAndLog 'clean local repository' "rm -rf \"$QPKG_REPO_PATH\"" log:failure-only
 	[[ -n $QPKG_REPO_PATH && -d $(/usr/bin/dirname "$QPKG_REPO_PATH")/$QPKG_NAME ]] && DisplayRunAndLog 'KLUDGE: remove previous local repository' "rm -r \"$(/usr/bin/dirname "$QPKG_REPO_PATH")/$QPKG_NAME\"" log:failure-only
-	[[ -n $VENV_PATH && -d $VENV_PATH ]] && DisplayRunAndLog 'clean virtual environment' "rm -rf \"$VENV_PATH\"" log:failure-only
+	IsVirtualEnvironmentUsed && [[ -d $VENV_PATH ]] && DisplayRunAndLog 'clean virtual environment' "rm -rf \"$VENV_PATH\"" log:failure-only
 	[[ -n $PIP_CACHE_PATH && -d $PIP_CACHE_PATH ]] && DisplayRunAndLog 'clean PyPI cache' "rm -rf \"$PIP_CACHE_PATH\"" log:failure-only
-	[[ -e $APP_VERSION_STORE_PATHFILE ]] && DisplayRunAndLog 'remove application version' "rm -f \"$APP_VERSION_STORE_PATHFILE\"" log:failure-only
+	[[ -n $APP_VERSION_STORE_PATHFILE && -e $APP_VERSION_STORE_PATHFILE ]] && DisplayRunAndLog 'remove application version' "rm -f \"$APP_VERSION_STORE_PATHFILE\"" log:failure-only
 
 	}
 
@@ -1115,6 +1117,89 @@ CheckPorts()
 
 	}
 
+GetPyloadConfig()
+	{
+
+	# input:
+	#   $1 = pathfilename to read from
+	#   $2 = section name
+	#   $3 = variable name to return value for
+
+	# output:
+	#   $? = 0 : variable found
+	#   $? = 1 : file/section/variable not found
+	#   stdout = variable value
+
+	local source_pathfile=${1:?no pathfilename supplied}
+	local target_section_name=${2:?no section supplied}
+	local target_var_name=${3:?no variable supplied}
+
+	if [[ ! -e $source_pathfile ]]; then
+		echo false
+		return
+	fi
+
+	local result_line=''
+	local -i line_num=0
+	local section_raw=''
+	local blank=''
+	local section_description=''
+	local section_name=''
+	local -i start_line_num=0
+	local target_section=''
+	local end_line_num='$'
+
+	local raw_var_type=''
+	local raw_var_description=''
+	local value_raw=''
+	local var_type=''
+	local value=''
+
+	local var_found=false
+
+	while read -r result_line; do
+		IFS=':' read -r line_num section_raw <<< "$result_line"
+		IFS=' ' read -r section_name blank section_description <<< "$section_raw"
+
+		if [[ $section_name = $target_section_name ]]; then
+			[[ $start_line_num -eq 0 ]] && start_line_num=$((line_num+1))
+		else
+			if [[ $start_line_num -ne 0 ]]; then
+				end_line_num=$((line_num-2))
+				break
+			fi
+		fi
+	done <<< "$(/bin/grep '.*:$' -n "$source_pathfile")"
+
+	if [[ $start_line_num -eq 0 ]]; then
+		echo 'section match not found'
+		return 1
+	fi
+
+	target_section=$(/bin/sed -n "${start_line_num},${end_line_num}p" "$source_pathfile")
+
+	while read -r section_line; do
+		IFS=':' read -r raw_var_type raw_var_description <<< "$section_line"
+		read -r var_type var_name <<< "$raw_var_type"
+
+		[[ $var_name != $target_var_name ]] && continue
+
+		var_found=true
+		IFS='"' read -r blank var_description value_raw <<< "$raw_var_description"
+		IFS='=' read -r blank value <<< "$value_raw"
+		value=${value% }; value=${value# }
+		break
+	done <<< "$target_section"
+
+	if [[ $var_found = false ]]; then
+		echo 'variable match not found'
+		return 1
+	fi
+
+	echo "$value"
+
+	}
+
 GetPythonVer()
 	{
 
@@ -1179,6 +1264,34 @@ GetModulePath()
 	[[ -z $pyver ]] && pyver=$(GetPythonVer)
 	echo "$VENV_PATH/lib/python${pyver:0:1}.${pyver:1:2}/site-packages"
 
+	}
+
+parse_yaml()
+	{
+
+	# a nice bit of coding! https://stackoverflow.com/a/21189044
+
+	# input:
+	#   $1 = filename to parse
+
+	# output:
+	#   stdout = parsed YAML
+
+	local prefix=$2
+	local s='[[:space:]]*' w='[a-zA-Z0-9_]*' fs=$(echo @|tr @ '\034')
+
+	/bin/sed -ne "s|^\($s\):|\1|" \
+		-e "s|^\($s\)\($w\)$s:$s[\"']\(.*\)[\"']$s\$|\1$fs\2$fs\3|p" \
+		-e "s|^\($s\)\($w\)$s:$s\(.*\)$s\$|\1$fs\2$fs\3|p"  $1 |
+		/bin/awk -F$fs '{
+			indent = length($1)/2;
+			vname[indent] = $2;
+			for (i in vname) {if (i > indent) {delete vname[i]}}
+				if (length($3) > 0) {
+				vn=""; for (i=0; i<indent; i++) {vn=(vn)(vname[i])("_")}
+				printf("%s%s%s=\"%s\"\n", "'$prefix'",vn, $2, $3);
+				}
+			}'
 	}
 
 IsQNAP()
@@ -1287,17 +1400,31 @@ IsNotSupportReset()
 
 	}
 
-IsSourcedGit()
+IsGitBranch()
 	{
 
-	[[ -n ${SOURCE_GIT_URL:-} ]]
+	[[ -n ${SOURCE_GIT_BRANCH:-} ]]
 
 	}
 
-IsNotSourcedGit()
+IsNotGitBranch()
 	{
 
-	! IsSourcedGit
+	! IsGitBranch
+
+	}
+
+IsVirtualEnvironmentUsed()
+	{
+
+	[[ -n $VENV_PATH ]]
+
+	}
+
+IsNotVirtualEnvironmentUsed()
+	{
+
+	! IsVirtualEnvironmentUsed
 
 	}
 
