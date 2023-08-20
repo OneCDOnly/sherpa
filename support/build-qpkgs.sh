@@ -80,7 +80,7 @@ for d in "$qpkgs_path"/*; do
 			echo "service library: no link"
 		fi
 	else
-		datetime_change_reference_file="$(cd "$d/build"; ls -t1 --reverse | tail -n1)"
+		datetime_change_reference_file="$(cd "$d/build" || exit; ls -t1 --reverse | tail -n1)"
 
 		if [[ -n $datetime_change_reference_file ]]; then
 			echo "datetime reference file: $datetime_change_reference_file"
@@ -133,6 +133,6 @@ for d in "$qpkgs_path"/*; do
 		SwapTags "$d/$test_path/${service_script_file%.*}.source" "$d/$test_path/$service_script_file"
 	done
 
-	(cd "$d"; qbuild --exclude '*.source' &>/dev/null)
+	(cd "$d" || exit; qbuild --exclude '*.source' &>/dev/null)
 	echo "QPKG arches: rebuilt"
 done
