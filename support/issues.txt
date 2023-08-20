@@ -1,3 +1,9 @@
+* if a QPKG is upgradable and active, running a 'sherpa status' operation returns 'inactive'.
+
+* RunAndLog() should not concat command and result_code lines.
+
+* debug log doesn't show which action is being processed when there is "nothing to process".
+
 * status table on TS-559Pro+ intermittently(?) shows Deluge packages out-of-order
 	[~] # sherpa s
 	sherpa 230729-stable • a mini-package-manager for QNAP NAS
