@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
+#*<?dontedit?>
 ##########################################################################################
-# common-service-functions.sh
+# service-library
 #
 # Copyright (C) 2017-<?thisyear?> OneCD - one.cd.only@gmail.com
 #

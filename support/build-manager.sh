@@ -9,8 +9,8 @@ fi
 
 echo -n 'building management script ... '
 
-source_pathfile="$source_path"/sherpa.manager.source
-target_pathfile="$source_path"/sherpa.manager.sh
+source_pathfile="$source_path"/sherpa-manager.source
+target_pathfile="$source_path"/sherpa-manager.sh
 
 buffer=$(<"$source_pathfile")
 
