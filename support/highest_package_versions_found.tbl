@@ -1,5 +1,5 @@
 # checksum_filename                  qpkg_filename                    package_name         version      arch   md5
-ClamAV_230820.qpkg.md5               ClamAV_230820.qpkg               ClamAV               230820       all    33485e805858c4e51075377b685042da
+ClamAV_230820.qpkg.md5               ClamAV_230820.qpkg               ClamAV               230820       all    6eec3bd79456a5946ac39bcc83b139b3
 Deluge-server_230726.qpkg.md5        Deluge-server_230726.qpkg        Deluge-server        230726       all    e76b41a75b569d962bc8def9288d2db2
 Deluge-web_230726.qpkg.md5           Deluge-web_230726.qpkg           Deluge-web           230726       all    0750a697c4a8502370f84623f827d22c
 duf_220809_arm_64.qpkg.md5           duf_220809_arm_64.qpkg           duf                  220809       a64    7684a8940ba63704b95cbc713cd55b35
@@ -31,7 +31,7 @@ OliveTin_230809_x86_64.qpkg.md5      OliveTin_230809_x86_64.qpkg      OliveTin  
 OMedusa_230809.qpkg.md5              OMedusa_230809.qpkg              OMedusa              230809       all    0ae10f0f1e0dbf506eb8c8eddb1a62ed
 OqBittorrent_230731.qpkg.md5         OqBittorrent_230731.qpkg         OqBittorrent         230731       all    d097606362bdbfa74f9cab5a8e488517
 OSickGear_230809.qpkg.md5            OSickGear_230809.qpkg            OSickGear            230809       all    6fa65be2bdc19342f8afa5d1590dfdee
-OTransmission_230820.qpkg.md5        OTransmission_230820.qpkg        OTransmission        230820       all    1ab38df77fbe3383bb8f5a272f8f65a2
+OTransmission_230820.qpkg.md5        OTransmission_230820.qpkg        OTransmission        230820       all    1bd411238d05d72250d3f7260a2869ac
 OWatcher3_230809.qpkg.md5            OWatcher3_230809.qpkg            OWatcher3            230809       all    122ff55d220135daadc880519de79886
 Par2_0.8.1.1_arm_64.qpkg.md5         Par2_0.8.1.1_arm_64.qpkg         Par2                 0.8.1.1      a64    b8e89f295bdec56eecae88ec685d1e23
 Par2_0.8.1.1_arm-x19.qpkg.md5        Par2_0.8.1.1_arm-x19.qpkg        Par2                 0.8.1.1      a19    d312d8bd2dee43e62a720f0d209905f8
@@ -42,11 +42,11 @@ Par2_0.8.1.1_x86.qpkg.md5            Par2_0.8.1.1_x86.qpkg            Par2      
 pyLoad_230809.qpkg.md5               pyLoad_230809.qpkg               pyLoad               230809       all    01aa292bdc6882cbc8e23385061b9283
 QDK_2.3.13.zip.qpkg.md5              QDK_2.3.13.zip                   QDK                  2.3.13       all    0b003e703a29520e98a0aca41ed0e585
 RunLast_230224.qpkg.md5              RunLast_230224.qpkg              RunLast              230224       all    6cb5415fe56592ca1f4e8a4f2dcc5f17
-SABnzbd_230820.qpkg.md5              SABnzbd_230820.qpkg              SABnzbd              230820       all    e9ad82109909ddfe94382998f2f135e2
+SABnzbd_230820.qpkg.md5              SABnzbd_230820.qpkg              SABnzbd              230820       all    ce8f455dbdc931566b1606ecb76ba1ba
 sha3sum_230312_x86_64.qpkg.md5       sha3sum_230312_x86_64.qpkg       sha3sum              230312       i64    6ceba9116e0dbcbdb4e6112f0c02f8c0
 sha3sum_230312_x86.qpkg.md5          sha3sum_230312_x86.qpkg          sha3sum              230312       i86    fdba9d16b88a5b6e3b04483ca77706dd
-sherpa_230713.qpkg.md5               sherpa_230713.qpkg               sherpa               230713       all    42d9f264d7d539cb1002a654e211e6af
+sherpa_230820.qpkg.md5               sherpa_230820.qpkg               sherpa               230820       all    8fe4e874e97fd4d3160517c8d957ce5c
 SortMyQPKGs_230820.qpkg.md5          SortMyQPKGs_230820.qpkg          SortMyQPKGs          230820       all    5b9a6adfdf4c935d30543bc0e0b5fae3
-WebSSH_230820_arm_64.qpkg.md5        WebSSH_230820_arm_64.qpkg        WebSSH               230820       a64    62164b0d4fa1164585ddcab991d0fe4c
-WebSSH_230820_x86_64.qpkg.md5        WebSSH_230820_x86_64.qpkg        WebSSH               230820       i64    638cc70c65b7ee7e5304c56924b70b70
-WebSSH_230820_x86.qpkg.md5           WebSSH_230820_x86.qpkg           WebSSH               230820       i86    837f997d505680000729dd1b5c187e8d
+WebSSH_230820_arm_64.qpkg.md5        WebSSH_230820_arm_64.qpkg        WebSSH               230820       a64    6d0c54c2ae9ef624fce9678d8c308b9b
+WebSSH_230820_x86_64.qpkg.md5        WebSSH_230820_x86_64.qpkg        WebSSH               230820       i64    2a8acea9fa651555230bfccd586eb9b6
+WebSSH_230820_x86.qpkg.md5           WebSSH_230820_x86.qpkg           WebSSH               230820       i86    a044942bf1d8331383bdb4ce68e96236

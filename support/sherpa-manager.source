@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #*<?dontedit?>
 #
-#* sherpa.manager.sh
+#* sherpa-manager.sh
 #*  Copyright (C) 2017-<?thisyear?> OneCD - one.cd.only@gmail.com
 #
 #   So, blame OneCD if it all goes horribly wrong. ;)
