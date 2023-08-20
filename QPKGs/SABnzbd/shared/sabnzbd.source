@@ -81,7 +81,7 @@ Init()
 
 	}
 
-readonly SERVICE_FUNCTIONS_PATHFILE="$(/usr/bin/dirname "$(/usr/bin/readlink "$0")")"/service-library.sh
+readonly SERVICE_FUNCTIONS_PATHFILE="$(/usr/bin/dirname "$(/usr/bin/readlink "$0")")"/service-library
 
 if [[ -e $SERVICE_FUNCTIONS_PATHFILE ]]; then
 	. $SERVICE_FUNCTIONS_PATHFILE
