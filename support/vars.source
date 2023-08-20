@@ -150,7 +150,11 @@ colourful=true
 checksum_root_path="$HOME"/scripts/nas
 source_path="$HOME"/scripts/nas/sherpa/support
 target_path="$HOME"/scripts/nas/sherpa
+qpkgs_path="$HOME"/scripts/nas/sherpa/QPKGs
 wiki_path="$HOME"/documents/sherpa.wiki
+
+common_functions_source_file=service-library.source
+common_functions_file=service-library.sh
 
 stable_branch=stable
 unstable_branch=unstable
