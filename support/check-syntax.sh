@@ -20,10 +20,8 @@ exclusions+=(1087,1090,1117,2012,2015,2016,2018,2019,2034,2086,2119,2120,2128,21
 filenames+=(packages.source)
 exclusions+=(1009,1036,1072,1073,1088,2034)
 
-rm -f service-library.sh		# don't check this
-
 filenames+=('*.sh')
-exclusions+=(1036,1090,1091,2001,2006,2016,2028,2034,2054,2086,2154,2155)
+exclusions+=(1036,1090,1091,2001,2006,2012,2016,2028,2034,2054,2086,2154,2155)
 
 for index in "${!filenames[@]}"; do
 	echo -n "checking '${filenames[index]}' ... "
