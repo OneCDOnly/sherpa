@@ -7,8 +7,8 @@ fi
 
 . ./vars.source
 
-source_pathfile="$source_path"/packages.source
-target_pathfile="$source_path"/packages
+source_pathfile="$source_path/$packages_source_file"
+target_pathfile="$source_path/$packages_file"
 
 buffer=$(<"$source_pathfile")
 

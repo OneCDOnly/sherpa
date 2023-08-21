@@ -24,6 +24,7 @@ SwapTags()
 	if [[ -f "$1" ]]; then			# ignore symlinks
 		local buffer=$(<"$1")
 
+		buffer=$(sed "s|<?dontedit?>|$dontedit_msg|" <<< "$buffer")
 		buffer=$(sed "s|<?thisdate?>|$thisdate|" <<< "$buffer")
 		buffer=$(sed "s|<?thisyear?>|$thisyear|" <<< "$buffer")
 
@@ -32,8 +33,8 @@ SwapTags()
 
 	}
 
-source_pathfile=$source_path/$common_functions_source_file
-target_pathfile=$source_path/$common_functions_file
+source_pathfile=$source_path/$service_library_source_file
+target_pathfile=$source_path/$service_library_file
 datetime_change_reference_pathfile=$target_pathfile
 rebuild_functions=false
 rebuilt_functions=false
@@ -73,7 +74,7 @@ for d in "$qpkgs_path"/*; do
 	rebuild_package=false
 
 	if [[ $rebuilt_functions = true ]]; then		# only need to rebuild QPKGs using the service functions library
-		if [[ -n $(find -L "$d" -type f -iname "$common_functions_file") ]]; then
+		if [[ -n $(find -L "$d" -type f -iname "$service_library_file") ]]; then
 			echo "service library: link found, and functions have been updated, so must rebuild this QPKG"
 			rebuild_package=true
 		else
