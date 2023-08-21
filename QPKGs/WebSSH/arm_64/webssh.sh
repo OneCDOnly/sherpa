@@ -1,15 +1,18 @@
 #!/usr/bin/env bash
-################################################################################################
+#
 # webssh.sh
+#	Copyright (C) 2020-2023 OneCD - one.cd.only@gmail.com
 #
-# Copyright (C) 2017-2023 OneCD - one.cd.only@gmail.com
+# 	so, blame OneCD if it all goes horribly wrong. ;)
 #
-# so, blame OneCD if it all goes horribly wrong. ;)
+# Description:
+#	This is a type 6 service-script: https://github.com/OneCDOnly/sherpa/wiki/Service-Script-Types
 #
-# This is a type 6 service-script: https://github.com/OneCDOnly/sherpa/wiki/Service-Script-Types
+# Project:
+#	https://git.io/sherpa
 #
-# For more info: https://forum.qnap.com/viewtopic.php?f=320&t=132373
-################################################################################################
+# Forum:
+#	https://forum.qnap.com/viewtopic.php?f=320&t=132373
 
 readonly USER_ARGS_RAW=$*
 
@@ -18,7 +21,7 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=WebSSH
-	readonly SCRIPT_VERSION="230820"
+	readonly SCRIPT_VERSION="230821"
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -79,14 +82,21 @@ Init()
 
 	}
 
-readonly SERVICE_FUNCTIONS_PATHFILE="$(/usr/bin/dirname "$(/usr/bin/readlink "$0")")"/service-library
+LoadLib()
+	{
 
-if [[ -e $SERVICE_FUNCTIONS_PATHFILE ]]; then
-	. $SERVICE_FUNCTIONS_PATHFILE
-else
-	printf '\033[1;31m%s\033[0m: %s\n' 'derp' "sherpa service function library not found, can't continue."
-	exit 1
-fi
+	local library_path="$(/usr/bin/readlink "$0")"
+	[[ -z $library_path ]] && library_path="$0"
+	readonly SERVICE_LIBRARY_PATHFILE="$(/usr/bin/dirname "$library_path")"/service.lib
+
+	if [[ -e $SERVICE_LIBRARY_PATHFILE ]]; then
+		. $SERVICE_LIBRARY_PATHFILE
+	else
+		printf '\033[1;31m%s\033[0m: %s\n' 'derp' "QPKG service function library not found, can't continue."
+		exit 1
+	fi
+
+	}
 
 StartQPKG()
 	{
@@ -214,4 +224,5 @@ StopQPKG()
 
 	}
 
+LoadLib
 ProcessArgs

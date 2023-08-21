@@ -153,8 +153,11 @@ target_path="$HOME"/scripts/nas/sherpa
 qpkgs_path="$HOME"/scripts/nas/sherpa/QPKGs
 wiki_path="$HOME"/documents/sherpa.wiki
 
-common_functions_source_file=service-library.source
-common_functions_file=service-library
+packages_source_file=packages.source
+packages_file=packages
+
+service_library_source_file=service-library.source
+service_library_file=service.lib
 
 stable_branch=stable
 unstable_branch=unstable

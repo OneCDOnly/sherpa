@@ -1,73 +1,38 @@
 #!/usr/bin/env bash
-################################################################################################
+#*<?dontedit?>
+#
 # clamav.sh
+#	Copyright (C) 2020-<?thisyear?> OneCD - one.cd.only@gmail.com
 #
-# Copyright (C) 2021-<?thisyear?> OneCD - one.cd.only@gmail.com
+# 	so, blame OneCD if it all goes horribly wrong. ;)
 #
-# so, blame OneCD if it all goes horribly wrong. ;)
+# Description:
+#	This is a type 4 service-script: https://github.com/OneCDOnly/sherpa/wiki/Service-Script-Types
 #
-# This is a type 4 service-script: https://github.com/OneCDOnly/sherpa/wiki/Service-Script-Types
+# Project:
+#	https://git.io/sherpa
 #
-# For more info: https://forum.qnap.com/viewtopic.php?f=320&t=132373
-################################################################################################
+# Forum:
+#	https://forum.qnap.com/viewtopic.php?f=320&t=132373
 
 readonly USER_ARGS_RAW=$*
+readonly QPKG_NAME=ClamAV
+readonly SERVICE_SCRIPT_VERSION="<?thisdate?>"
 
 Init()
 	{
 
-	# service-script environment
-	readonly QPKG_NAME=ClamAV
-	readonly SCRIPT_VERSION="<?thisdate?>"
+	# modify library defaults
 
-	# general environment
-	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
-	readonly QPKG_VERSION=$(/sbin/getcfg $QPKG_NAME Version -d unknown -f /etc/config/qpkg.conf)
-	readonly QPKG_CONFIG_PATH=$QPKG_PATH/config
-	readonly QPKG_INI_PATHFILE=''
-	readonly QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
-	readonly DAEMON_PID_PATHFILE=/var/run/$QPKG_NAME.pid
-	readonly QPKG_REPO_PATH=''
-	readonly PIP_CACHE_PATH=''
-	readonly BACKUP_PATHFILE=''
+	allow_access_to_sys_packages=true
+	backup_pathfile=undefined
+	install_pip_deps=true
+	pip_cache_path=undefined
+	qpkg_ini_pathfile=undefined
+	qpkg_repo_path=undefined
 
-	local re=''
-	daemon_port=0
-	ui_port=0
-	ui_port_secure=0
-	ui_listening_address=undefined
-	service_operation=unspecified
-	service_result=undefined
-
-	# specific to online-sourced applications only
-	readonly SOURCE_GIT_URL=''
-	readonly SOURCE_ARCH=''
-	readonly SOURCE_GIT_BRANCH=''
-	# 'shallow' (depth 1) or 'single-branch' ... 'shallow' implies 'single-branch'
-	readonly SOURCE_GIT_BRANCH_DEPTH=''
-	readonly INTERPRETER=''
-	readonly VENV_PATH=$QPKG_PATH/venv
-	readonly VENV_PYTHON_PATHFILE=''
-	readonly VENV_PIP_PATHFILE=''
-	readonly ALLOW_ACCESS_TO_SYS_PACKAGES=true
-	readonly INSTALL_PIP_DEPS=true
-
-	# specific to Entware binaries only
 	readonly TARGET_SERVICE_PATHFILE=/etc/init.d/antivirus.sh
 	readonly BACKUP_SERVICE_PATHFILE=$TARGET_SERVICE_PATHFILE.bak
-
-	# specific to daemonised applications only
-	readonly DAEMON_PATHFILE=''
-	readonly DAEMON_LAUNCH_CMD=''
-	readonly RUN_DAEMON_IN_SCREEN_SESSION=false
-	readonly DAEMON_PROC_IS_NAME_ONLY=false
-	readonly PORT_CHECK_TIMEOUT_SECONDS=240
-	readonly DAEMON_CHECK_TIMEOUT_SECONDS=60
-	readonly DAEMON_STOP_TIMEOUT_SECONDS=120
-	readonly RECHECK_DAEMON_PID_AFTER_LAUNCH=true
-	readonly PIDFILE_APPEAR_TIMEOUT_SECONDS=60
-	readonly PIDFILE_RECHECK_WAIT_SECONDS=10
-	readonly PIDFILE_IS_MANAGED_BY_APP=true
 
 	readonly GET_DAEMON_PORT_CMD=''
 	readonly GET_UI_PORT_CMD=''
@@ -75,20 +40,23 @@ Init()
 	readonly GET_UI_PORT_SECURE_ENABLED_TEST_CMD=''
 	readonly GET_UI_LISTENING_ADDRESS_CMD=''
 
-	# specific to applications supporting version lookup only
-	readonly APP_VERSION_PATHFILE=''
-	readonly APP_VERSION_CMD=''
-
 	}
 
-readonly SERVICE_FUNCTIONS_PATHFILE="$(/usr/bin/dirname "$(/usr/bin/readlink "$0")")"/service-library
+LoadLib()
+	{
 
-if [[ -e $SERVICE_FUNCTIONS_PATHFILE ]]; then
-	. $SERVICE_FUNCTIONS_PATHFILE
-else
-	printf '\033[1;31m%s\033[0m: %s\n' 'derp' "sherpa service function library not found, can't continue."
-	exit 1
-fi
+	local library_path="$(/usr/bin/readlink "$0")"
+	[[ -z $library_path ]] && library_path="$0"
+	readonly SERVICE_LIBRARY_PATHFILE="$(/usr/bin/dirname "$library_path")"/service.lib
+
+	if [[ -e $SERVICE_LIBRARY_PATHFILE ]]; then
+		. $SERVICE_LIBRARY_PATHFILE
+	else
+		printf '\033[1;31m%s\033[0m: %s\n' 'derp' "QPKG service function library not found, can't continue."
+		exit 1
+	fi
+
+	}
 
 StartQPKG()
 	{
@@ -152,4 +120,5 @@ StatusQPKG()
 
 	}
 
+LoadLib
 ProcessArgs

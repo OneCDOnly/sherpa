@@ -1,219 +1,64 @@
 #!/usr/bin/env bash
-################################################################################################
+#*<?dontedit?>
+#
 # sabnzbd.sh
+#	Copyright (C) 2020-<?thisyear?> OneCD - one.cd.only@gmail.com
 #
-# Copyright (C) 2020-<?thisyear?> OneCD - one.cd.only@gmail.com
+# 	so, blame OneCD if it all goes horribly wrong. ;)
 #
-# so, blame OneCD if it all goes horribly wrong. ;)
+# Description:
+#	This is a type 1 service-script: https://github.com/OneCDOnly/sherpa/wiki/Service-Script-Types
 #
-# This is a type 1 service-script: https://github.com/OneCDOnly/sherpa/wiki/Service-Script-Types
+# Project:
+#	https://git.io/sherpa
 #
-# For more info: https://forum.qnap.com/viewtopic.php?f=320&t=132373
-################################################################################################
+# Forum:
+#	https://forum.qnap.com/viewtopic.php?f=320&t=132373
 
 readonly USER_ARGS_RAW=$*
+readonly QPKG_NAME=SABnzbd
+readonly SERVICE_SCRIPT_VERSION="<?thisdate?>"
 
 Init()
 	{
 
-	IsQNAP || return
+	# modify library defaults
 
-	# service-script environment
-	readonly QPKG_NAME=SABnzbd
-	readonly SCRIPT_VERSION="<?thisdate?>"
-
-	# general environment
-	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
-	readonly QPKG_VERSION=$(/sbin/getcfg $QPKG_NAME Version -d unknown -f /etc/config/qpkg.conf)
-	readonly QPKG_CONFIG_PATH=$QPKG_PATH/config
-	readonly QPKG_INI_PATHFILE=$QPKG_CONFIG_PATH/config.ini
-	readonly QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
-	readonly DAEMON_PID_PATHFILE=/var/run/$QPKG_NAME.pid
-	readonly QPKG_REPO_PATH=$QPKG_PATH/repo-cache
-	readonly PIP_CACHE_PATH=$QPKG_PATH/pip-cache
-	readonly BACKUP_PATHFILE=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
-
-	local re=''
-	daemon_port=0
-	ui_port=0
-	ui_port_secure=0
-	ui_listening_address=undefined
-	service_operation=unspecified
-	service_result=undefined
-
-	# specific to online-sourced applications only
-	readonly SOURCE_GIT_URL=https://github.com/sabnzbd/sabnzbd.git
-	readonly SOURCE_ARCH=''
-	readonly SOURCE_GIT_BRANCH=master
-	readonly SOURCE_GIT_BRANCH_DEPTH=shallow		# 'shallow' (depth 1) or 'single-branch' ... 'shallow' implies 'single-branch'
-	readonly INTERPRETER=/opt/bin/python3
-	readonly VENV_PATH=$QPKG_PATH/venv
-	readonly VENV_PYTHON_PATHFILE=$VENV_PATH/bin/python3
-	readonly VENV_PIP_PATHFILE=$VENV_PATH/bin/pip
-	readonly ALLOW_ACCESS_TO_SYS_PACKAGES=true
-	readonly INSTALL_PIP_DEPS=true
-
-	# specific to Entware binaries only
-	readonly ORIG_DAEMON_SERVICE_SCRIPT=''
-
-	# specific to daemonised applications only
-	readonly DAEMON_PATHFILE=$QPKG_REPO_PATH/SABnzbd.py
-	readonly DAEMON_LAUNCH_CMD="$VENV_PYTHON_PATHFILE $DAEMON_PATHFILE --daemon --browser 0 --config-file $QPKG_INI_PATHFILE --pidfile $DAEMON_PID_PATHFILE"
-	readonly RUN_DAEMON_IN_SCREEN_SESSION=false
-	readonly DAEMON_PROC_IS_NAME_ONLY=false
-	readonly PORT_CHECK_TIMEOUT_SECONDS=240
-	readonly DAEMON_CHECK_TIMEOUT_SECONDS=60
-	readonly DAEMON_STOP_TIMEOUT_SECONDS=120
-	readonly RECHECK_DAEMON_PID_AFTER_LAUNCH=true
-	readonly PIDFILE_APPEAR_TIMEOUT_SECONDS=60
-	readonly PIDFILE_RECHECK_WAIT_SECONDS=10
-	readonly PIDFILE_IS_MANAGED_BY_APP=true
+	allow_access_to_sys_packages=true
+	app_version_pathfile=$qpkg_repo_path/sabnzbd/version.py
+	app_version_cmd="/bin/grep '__version__ =' $app_version_pathfile | /bin/sed 's|^.*\"\(.*\)\"|\1|'"
+	daemon_pathfile=$qpkg_repo_path/SABnzbd.py
+	daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile --daemon --browser 0 --config-file $qpkg_ini_pathfile --pidfile $daemon_pid_pathfile"
+	install_pip_deps=true
+	interpreter=/opt/bin/python3
+	pidfile_is_managed_by_app=true
+	recheck_daemon_pid_after_launch=true
+	source_git_branch=master
+	source_git_url=https://github.com/sabnzbd/sabnzbd.git
 
 	readonly GET_DAEMON_PORT_CMD=''
-	readonly GET_UI_PORT_CMD="/sbin/getcfg misc port -d 0 -f $QPKG_INI_PATHFILE"
-	readonly GET_UI_PORT_SECURE_CMD="/sbin/getcfg misc https_port -d 0 -f $QPKG_INI_PATHFILE"
-	readonly GET_UI_PORT_SECURE_ENABLED_TEST_CMD='[[ $(/sbin/getcfg misc enable_https -d 0 -f '$QPKG_INI_PATHFILE') = 1 ]]'
-	readonly GET_UI_LISTENING_ADDRESS_CMD="/sbin/getcfg misc host -d undefined -f $QPKG_INI_PATHFILE"
-
-	# specific to applications supporting version lookup only
-	readonly APP_VERSION_PATHFILE=$QPKG_REPO_PATH/sabnzbd/version.py
-	readonly APP_VERSION_CMD="/bin/grep '__version__ =' $APP_VERSION_PATHFILE | /bin/sed 's|^.*\"\(.*\)\"|\1|'"
+	readonly GET_UI_LISTENING_ADDRESS_CMD="/sbin/getcfg misc host -d undefined -f $qpkg_ini_pathfile"
+	readonly GET_UI_PORT_CMD="/sbin/getcfg misc port -d 0 -f $qpkg_ini_pathfile"
+	readonly GET_UI_PORT_SECURE_CMD="/sbin/getcfg misc https_port -d 0 -f $qpkg_ini_pathfile"
+	readonly GET_UI_PORT_SECURE_ENABLED_TEST_CMD='[[ $(/sbin/getcfg misc enable_https -d 0 -f '$qpkg_ini_pathfile') = 1 ]]'
 
 	}
 
-readonly SERVICE_FUNCTIONS_PATHFILE="$(/usr/bin/dirname "$(/usr/bin/readlink "$0")")"/service-library
-
-if [[ -e $SERVICE_FUNCTIONS_PATHFILE ]]; then
-	. $SERVICE_FUNCTIONS_PATHFILE
-else
-	printf '\033[1;31m%s\033[0m: %s\n' 'derp' "sherpa service function library not found, can't continue."
-	exit 1
-fi
-
-StartQPKG()
+LoadLib()
 	{
 
-	IsError && return
+	local library_path="$(/usr/bin/readlink "$0")"
+	[[ -z $library_path ]] && library_path="$0"
+	readonly SERVICE_LIBRARY_PATHFILE="$(/usr/bin/dirname "$library_path")"/service.lib
 
-	if IsNotRestart && IsNotRestore && IsNotClean && IsNotReset; then
-		IsDaemonActive && return
-	fi
-
-	if IsRestore || IsClean || IsReset; then
-		IsNotRestartPending && return
-	fi
-
-	DisplayWaitCommitToLog 'auto-update:'
-
-	if IsAutoUpdate; then
-		DisplayCommitToLog true
+	if [[ -e $SERVICE_LIBRARY_PATHFILE ]]; then
+		. $SERVICE_LIBRARY_PATHFILE
 	else
-		DisplayCommitToLog false
+		printf '\033[1;31m%s\033[0m: %s\n' 'derp' "QPKG service function library not found, can't continue."
+		exit 1
 	fi
-
-	MakePaths
-	PullGitRepo || { SetError; return 1 ;}
-	InstallAddons || { SetError; return 1 ;}
-	IsNotDaemon && return
-	WaitForLaunchTarget || { SetError; return 1 ;}
-	EnsureConfigFileExists
-	LoadPorts app || { SetError; return 1 ;}
-
-	if [[ $daemon_port -le 0 && $ui_port -le 0 && $ui_port_secure -le 0 ]]; then
-		DisplayErrCommitAllLogs 'unable to start daemon: no port specified!'
-		SetError
-		return 1
-	elif IsNotPortAvailable $ui_port || IsNotPortAvailable $ui_port_secure; then
-		DisplayErrCommitAllLogs "unable to start daemon: ports $ui_port or $ui_port_secure are already in use!"
-
-		portpid=$(/usr/sbin/lsof -i :$ui_port -Fp)
-		DisplayErrCommitAllLogs "process details for port $ui_port: '$([[ -n ${portpid:-} ]] && /bin/tr '\000' ' ' </proc/"${portpid/p/}"/cmdline)'"
-
-		portpid=$(/usr/sbin/lsof -i :$ui_port_secure -Fp)
-		DisplayErrCommitAllLogs "process details for secure port $ui_port_secure: '$([[ -n ${portpid:-} ]] && /bin/tr '\000' ' ' </proc/"${portpid/p/}"/cmdline)'"
-
-		SetError
-		return 1
-	fi
-
-	if IsVirtualEnvironmentUsed && IsNotVirtualEnvironmentExist; then
-		DisplayErrCommitAllLogs 'unable to start daemon: virtual environment does not exist!'
-		SetError
-		return 1
-	fi
-
-	if ! DisplayRunAndLog 'start daemon' "$DAEMON_LAUNCH_CMD" log:failure-only "$RUN_DAEMON_IN_SCREEN_SESSION"; then
-		SetError
-		return 1
-	fi
-
-	WaitForDaemon
-	WaitForPID
-
-	if ! IsDaemonActive; then
-		DisplayErrCommitAllLogs 'IsDaemonActive() failed!'
-		SetError
-		return 1
-	fi
-
-	if ! CheckPorts; then
-		DisplayErrCommitAllLogs 'CheckPorts() failed!'
-		SetError
-		return 1
-	fi
-
-	return 0
 
 	}
 
-StopQPKG()
-	{
-
-	IsError && return
-
-	if IsDaemonActive; then
-		if IsRestart || IsRestore || IsClean || IsReset; then
-			SetRestartPending
-		fi
-
-		local acc=0
-		local pid=0
-		SetRestartPending
-
-		pid=$(<$DAEMON_PID_PATHFILE)
-		kill "$pid"
-		DisplayWaitCommitToLog "stop daemon PID ($pid) with SIGTERM:"
-		DisplayWait "(no-more than $DAEMON_STOP_TIMEOUT_SECONDS second$(Pluralise "$DAEMON_STOP_TIMEOUT_SECONDS")):"
-
-		while true; do
-			while [[ -d /proc/$pid ]]; do
-				/bin/sleep 1
-				((acc++))
-				DisplayWait "$acc,"
-
-				if [[ $acc -ge $DAEMON_STOP_TIMEOUT_SECONDS ]]; then
-					DisplayCommitToLog 'failed!'
-					DisplayCommitToLog "stop daemon PID ($pid) with SIGKILL:"
-					kill -9 "$pid" 2> /dev/null
-					[[ -f $DAEMON_PID_PATHFILE ]] && rm -f "$DAEMON_PID_PATHFILE"
-					break 2
-				fi
-			done
-
-			[[ -f $DAEMON_PID_PATHFILE ]] && rm -f "$DAEMON_PID_PATHFILE"
-			Display OK
-			CommitToLog "stopped in $acc second$(Pluralise "$acc")"
-
-			CommitInfoToSysLog 'stop daemon: OK'
-			break
-		done
-
-		/bin/sleep 1		# let application shutdown complete
-		IsNotDaemonActive || { SetError; return 1 ;}
-	fi
-
-	return 0
-
-	}
-
+LoadLib
 ProcessArgs

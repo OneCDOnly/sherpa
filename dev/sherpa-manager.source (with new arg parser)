@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #*<?dontedit?>
 #
-#* sherpa.manager.sh
+#* sherpa-manager.sh
 #*  Copyright (C) 2017-<?thisyear?> OneCD - one.cd.only@gmail.com
 #
 #   So, blame OneCD if it all goes horribly wrong. ;)
@@ -9553,8 +9553,8 @@ StripANSI()
 
 	# QTS 4.2.6 BusyBox `sed` doesn't fully support extended regexes, so code-stripping only works with a real `sed`
 
-	if [[ -e $GNU_SED_CMD && -L /opt/etc/passwd ]]; then	# try to ensure Entware is active before using this utility
-		$GNU_SED_CMD -r 's/\x1b\[[0-9;]*m//g' <<< "${1:-}"
+	if [[ -e /opt/bin/sed && -L /opt/etc/passwd ]]; then	# try to ensure Entware is active before using this utility
+		/opt/bin/sed -r 's/\x1b\[[0-9;]*m//g' <<< "${1:-}"
 	else
 		echo "${1:-}"		# can't strip, so pass thru original message unaltered
 	fi
