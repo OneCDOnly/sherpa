@@ -155,11 +155,11 @@ InitByType()
 		3)
 			backup_pathfile=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
 			daemon_pid_pathfile=/var/run/$QPKG_NAME.pid
-			pip_cache_path=$QPKG_PATH/pip-cache
+# 			pip_cache_path=$QPKG_PATH/pip-cache
 			qpkg_ini_pathfile=$QPKG_CONFIG_PATH/config.ini
-			venv_path=$QPKG_PATH/venv
-			venv_pip_pathfile=$venv_path/bin/pip
-			venv_python_pathfile=$venv_path/bin/python3
+# 			venv_path=$QPKG_PATH/venv
+# 			venv_pip_pathfile=$venv_path/bin/pip
+# 			venv_python_pathfile=$venv_path/bin/python3
 			;;
 		*)
 			:
