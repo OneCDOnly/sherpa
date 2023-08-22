@@ -4,10 +4,7 @@
 # sabnzbd.sh
 #	Copyright (C) 2020-2023 OneCD - one.cd.only@gmail.com
 #
-# 	so, blame OneCD if it all goes horribly wrong. ;)
-#
-# Description:
-#	This is a type 1 service-script: https://github.com/OneCDOnly/sherpa/wiki/Service-Script-Types
+# 	So, blame OneCD if it all goes horribly wrong. ;)
 #
 # Project:
 #	https://git.io/sherpa
@@ -17,30 +14,31 @@
 
 readonly USER_ARGS_RAW=$*
 readonly QPKG_NAME=SABnzbd
-readonly SERVICE_SCRIPT_VERSION="230821"
+readonly SERVICE_SCRIPT_VERSION="230822"
 
-Init()
+InitBasic()
 	{
 
-	# modify library defaults
-
 	allow_access_to_sys_packages=true
-	app_version_pathfile=$qpkg_repo_path/sabnzbd/version.py
-	app_version_cmd="/bin/grep '__version__ =' $app_version_pathfile | /bin/sed 's|^.*\"\(.*\)\"|\1|'"
-	daemon_pathfile=$qpkg_repo_path/SABnzbd.py
-	daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile --daemon --browser 0 --config-file $qpkg_ini_pathfile --pidfile $daemon_pid_pathfile"
-	install_pip_deps=true
-	interpreter=/opt/bin/python3
-	pidfile_is_managed_by_app=true
-	recheck_daemon_pid_after_launch=true
+	service_script_type=1
 	source_git_branch=master
 	source_git_url=https://github.com/sabnzbd/sabnzbd.git
 
-	readonly GET_DAEMON_PORT_CMD=''
-	readonly GET_UI_LISTENING_ADDRESS_CMD="/sbin/getcfg misc host -d undefined -f $qpkg_ini_pathfile"
-	readonly GET_UI_PORT_CMD="/sbin/getcfg misc port -d 0 -f $qpkg_ini_pathfile"
-	readonly GET_UI_PORT_SECURE_CMD="/sbin/getcfg misc https_port -d 0 -f $qpkg_ini_pathfile"
-	readonly GET_UI_PORT_SECURE_ENABLED_TEST_CMD='[[ $(/sbin/getcfg misc enable_https -d 0 -f '$qpkg_ini_pathfile') = 1 ]]'
+	}
+
+InitComplex()
+	{
+
+	app_version_pathfile=$qpkg_repo_path/sabnzbd/version.py
+	daemon_pathfile=$qpkg_repo_path/SABnzbd.py
+
+	daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile --daemon --browser 0 --config-file $qpkg_ini_pathfile --pidfile $daemon_pid_pathfile"
+	get_ui_listening_address_cmd="/sbin/getcfg misc host -d undefined -f $qpkg_ini_pathfile"
+	get_ui_port_cmd="/sbin/getcfg misc port -d 0 -f $qpkg_ini_pathfile"
+	get_ui_port_secure_cmd="/sbin/getcfg misc https_port -d 0 -f $qpkg_ini_pathfile"
+	get_ui_port_secure_enabled_test_cmd='[[ $(/sbin/getcfg misc enable_https -d 0 -f '$qpkg_ini_pathfile') = 1 ]]'
+
+	IsSupportGetAppVersion && app_version_cmd="/bin/grep '__version__ =' $app_version_pathfile | /bin/sed 's|^.*\"\(.*\)\"|\1|'"
 
 	}
 

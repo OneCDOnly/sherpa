@@ -17,12 +17,11 @@
 
 readonly USER_ARGS_RAW=$*
 readonly QPKG_NAME=OTransmission
-readonly SERVICE_SCRIPT_VERSION="230821"
+readonly SERVICE_SCRIPT_VERSION="230822"
+readonly -i SERVICE_SCRIPT_TYPE=3
 
 Init()
 	{
-
-	# modify library defaults
 
 	qpkg_ini_pathfile=$QPKG_CONFIG_PATH/settings.json
 

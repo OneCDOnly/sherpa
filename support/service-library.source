@@ -4,7 +4,7 @@
 # service.lib
 #  Copyright (C) 2017-<?thisyear?> OneCD - one.cd.only@gmail.com
 #
-# so, blame OneCD if it all goes horribly wrong. ;)
+#  So, blame OneCD if it all goes horribly wrong. ;)
 #
 # Description:
 #   A library of common bash functions used by many sherpa QPKG service-scripts.
@@ -49,25 +49,39 @@ InitLibrary()
 	allow_access_to_sys_packages=false
 	app_version_cmd=undefined
 	app_version_pathfile=undefined
+	backup_pathfile=undefined
 	daemon_launch_cmd=undefined
 	daemon_pathfile=undefined
+	daemon_pid_pathfile=undefined
 	daemon_port=0
 	daemon_proc_is_name_only=false
+	get_daemon_port_cmd=undefined
+	get_ui_listening_address_cmd=undefined
+	get_ui_port_cmd=undefined
+	get_ui_port_secure_cmd=undefined
+	get_ui_port_secure_enabled_test_cmd=undefined
 	install_pip_deps=false
 	interpreter=undefined
 	orig_daemon_service_script=undefined		# specific to Entware binaries only
 	pidfile_is_managed_by_app=false
+	pip_cache_path=undefined
+	qpkg_ini_pathfile=undefined
+	qpkg_repo_path=undefined
 	recheck_daemon_pid_after_launch=false
 	run_daemon_in_screen_session=false
 	service_operation=unspecified
 	service_result=undefined
+	service_script_type=0
 	source_arch=undefined
-	source_git_branch=main
-	source_git_branch_depth=shallow				# 'shallow' (depth 1) or 'single-branch' ... 'shallow' implies 'single-branch'
+	source_git_branch=undefined
+	source_git_branch_depth=undefined			# 'shallow' (depth 1) or 'single-branch' ... 'shallow' implies 'single-branch'
 	source_git_url=undefined
 	ui_listening_address=undefined
 	ui_port=0
 	ui_port_secure=0
+	venv_path=undefined
+	venv_pip_pathfile=undefined
+	venv_python_pathfile=undefined
 
 	readonly DAEMON_CHECK_TIMEOUT_SECONDS=60
 	readonly DAEMON_STOP_TIMEOUT_SECONDS=120
@@ -94,26 +108,19 @@ InitLibrary()
 	readonly APP_VERSION_STORE_PATHFILE=$QPKG_CONFIG_PATH/version.stored
 	readonly SCREEN_CONF_PATHFILE=$QPKG_CONFIG_PATH/screen.conf
 
-	backup_pathfile=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
-	daemon_pid_pathfile=/var/run/$QPKG_NAME.pid
-	pip_cache_path=$QPKG_PATH/pip-cache
-	qpkg_ini_pathfile=$QPKG_CONFIG_PATH/config.ini
-	qpkg_repo_path=$QPKG_PATH/repo-cache
-	venv_path=$QPKG_PATH/venv
-	venv_pip_pathfile=$venv_path/bin/pip
-	venv_python_pathfile=$venv_path/bin/python3
+	InitBasic		# located in parent service-script
 
+	InitByType
 	readonly QPKG_INI_DEFAULT_PATHFILE=$qpkg_ini_pathfile.def
 
-	# load QPKG-specific variables from the parent service-script
-	Init
+	InitComplex		# located in parent service-script
 
 	EnsureConfigFileExists
 	LoadAppVersion
 	DisableOpkgDaemonStart
-	IsSupportBackup && [[ -n ${BACKUP_PATH:-} && ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
+	IsSupportBackup && [[ ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
 	IsVirtualEnvironmentUsed && [[ ! -d $venv_path ]] && mkdir -p "$venv_path"
-	[[ -n ${pip_cache_path:-} && ! -d $pip_cache_path ]] && mkdir -p "$pip_cache_path"
+	IsUsePipCache && [[ ! -d $pip_cache_path ]] && mkdir -p "$pip_cache_path"
 	IsSourcedOnline && IsAutoUpdateMissing && EnableAutoUpdate >/dev/null
 
 	if [[ $run_daemon_in_screen_session = true && ! -e $SCREEN_CONF_PATHFILE ]]; then
@@ -121,6 +128,42 @@ InitLibrary()
 		echo 'logfile flush 1' >> "$SCREEN_CONF_PATHFILE"
 		echo 'log on' >> "$SCREEN_CONF_PATHFILE"
 	fi
+
+	}
+
+InitByType()
+	{
+
+	# definitions: https://github.com/OneCDOnly/sherpa/wiki/Service-Script-Types
+
+	case $service_script_type in
+		1)
+			backup_pathfile=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
+			daemon_pid_pathfile=/var/run/$QPKG_NAME.pid
+			install_pip_deps=true
+			interpreter=/opt/bin/python3
+			pidfile_is_managed_by_app=true
+			pip_cache_path=$QPKG_PATH/pip-cache
+			qpkg_ini_pathfile=$QPKG_CONFIG_PATH/config.ini
+			qpkg_repo_path=$QPKG_PATH/repo-cache
+			recheck_daemon_pid_after_launch=true
+			source_git_branch_depth=shallow
+			venv_path=$QPKG_PATH/venv
+			venv_pip_pathfile=$venv_path/bin/pip
+			venv_python_pathfile=$venv_path/bin/python3
+			;;
+		3)
+			backup_pathfile=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
+			daemon_pid_pathfile=/var/run/$QPKG_NAME.pid
+			pip_cache_path=$QPKG_PATH/pip-cache
+			qpkg_ini_pathfile=$QPKG_CONFIG_PATH/config.ini
+			venv_path=$QPKG_PATH/venv
+			venv_pip_pathfile=$venv_path/bin/pip
+			venv_python_pathfile=$venv_path/bin/python3
+			;;
+		*)
+			:
+	esac
 
 	}
 
@@ -374,7 +417,7 @@ InstallAddons()
 	if [[ $QPKG_NAME = SABnzbd ]]; then
 		LoadAppVersion
 
-		if [[ $new_env = false && $(<"$APP_VERSION_STORE_PATHFILE") != "$app_version" ]]; then
+		if [[ $new_env = false && -e $APP_VERSION_STORE_PATHFILE && $(<"$APP_VERSION_STORE_PATHFILE") != "$app_version" ]]; then
 			# remove existing .pyc files to prevent runtime errors
 			DisplayRunAndLog "clean Python bytecode files" "/opt/bin/find $qpkg_repo_path -type d -name '__pycache__' -print0 | xargs -I {} -0 rm -rf '{}'
 " log:failure-only
@@ -430,9 +473,9 @@ MakePaths()
 	{
 
 	DisplayWaitCommitToLog 'create paths:'
-	[[ -n ${BACKUP_PATH:-} && ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
-	[[ -n ${qpkg_repo_path:-} && ! -d $qpkg_repo_path ]] && mkdir -p "$qpkg_repo_path"
-	[[ -n ${pip_cache_path:-} && ! -d $pip_cache_path ]] && mkdir -p "$pip_cache_path"
+	[[ ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
+	IsGitApp && [[ ! -d $qpkg_repo_path ]] && mkdir -p "$qpkg_repo_path"
+	IsUsePipCache && [[ ! -d $pip_cache_path ]] && mkdir -p "$pip_cache_path"
 	IsVirtualEnvironmentUsed && [[ ! -d $venv_path ]] && mkdir -p "$venv_path"
 	DisplayCommitToLog OK
 
@@ -447,8 +490,8 @@ LoadPorts()
 		app)
 			# Read the current application UI ports from application configuration
 			DisplayWaitCommitToLog 'load ports from configuration file:'
-			[[ -n ${GET_UI_PORT_CMD:-} ]] && ui_port=$(eval "$GET_UI_PORT_CMD")
-			[[ -n ${GET_UI_PORT_SECURE_CMD:-} ]] && ui_port_secure=$(eval "$GET_UI_PORT_SECURE_CMD")
+			[[ $get_ui_port_cmd != undefined ]] && ui_port=$(eval "$get_ui_port_cmd")
+			[[ $get_ui_port_secure_cmd != undefined ]] && ui_port_secure=$(eval "$get_ui_port_secure_cmd")
 			DisplayCommitToLog OK
 			;;
 		qts)
@@ -465,8 +508,8 @@ LoadPorts()
 	esac
 
 	# Always read these from the application configuration
-	[[ -n ${GET_DAEMON_PORT_CMD:-} ]] && daemon_port=$(eval "$GET_DAEMON_PORT_CMD")
-	[[ -n ${GET_UI_LISTENING_ADDRESS_CMD:-} ]] && ui_listening_address=$(eval "$GET_UI_LISTENING_ADDRESS_CMD")
+	[[ $GET_DAEMON_PORT_CMD != undefined ]] && daemon_port=$(eval "$GET_DAEMON_PORT_CMD")
+	[[ $get_ui_listening_address_cmd != undefined ]] && ui_listening_address=$(eval "$get_ui_listening_address_cmd")
 
 	# validate port numbers
 	ui_port=${ui_port//[!0-9]/}					# strip everything not a numeral
@@ -479,7 +522,6 @@ LoadPorts()
 	[[ -z $daemon_port || $daemon_port -lt 0 || $daemon_port -gt 65535 ]] && daemon_port=0
 
 	[[ -z $ui_listening_address ]] && ui_listening_address=undefined
-
 	return 0
 
 	}
@@ -491,7 +533,7 @@ LoadAppVersion()
 	# creates a global var: $app_version
 	# this is the installed application version (not the QPKG version)
 
-	if [[ $app_version_pathfile != undefined && -e $app_version_pathfile ]]; then
+	if IsSupportGetAppVersion && [[ -e $app_version_pathfile ]]; then
 		app_version=$(eval "$app_version_cmd")
 		return 0
 	else
@@ -505,6 +547,14 @@ StatusQPKG()
 	{
 
 	IsNotError || return
+
+	DisplayWaitCommitToLog 'auto-update:'
+
+	if IsAutoUpdate; then
+		DisplayCommitToLog true
+	else
+		DisplayCommitToLog false
+	fi
 
 	if IsDaemonActive; then
 		if IsDaemon || IsSourcedOnline; then
@@ -522,7 +572,7 @@ StatusQPKG()
 DisableOpkgDaemonStart()
 	{
 
-	if [[ -n $orig_daemon_service_script && -x $orig_daemon_service_script ]]; then
+	if [[ $orig_daemon_service_script != undefined && -x $orig_daemon_service_script ]]; then
 		$orig_daemon_service_script stop		# stop default daemon
 		chmod -x "$orig_daemon_service_script"	# ... and ensure Entware doesn't re-launch it on startup
 	fi
@@ -539,7 +589,7 @@ PullGitRepo()
 	#   $source_git_branch_depth
 	#   $qpkg_repo_path
 
-	IsGitBranch || return 0
+	IsGitApp || return 0
 
 	local branch_depth='--depth 1'
 	[[ $source_git_branch_depth = single-branch ]] && branch_depth='--single-branch'
@@ -587,9 +637,9 @@ CleanLocalClone()
 	fi
 
 	DisplayRunAndLog 'clean local repository' "rm -rf \"$qpkg_repo_path\"" log:failure-only
-	[[ -n $qpkg_repo_path && -d $(/usr/bin/dirname "$qpkg_repo_path")/$QPKG_NAME ]] && DisplayRunAndLog 'KLUDGE: remove previous local repository' "rm -r \"$(/usr/bin/dirname "$qpkg_repo_path")/$QPKG_NAME\"" log:failure-only
+	IsGitApp && [[ -d $(/usr/bin/dirname "$qpkg_repo_path")/$QPKG_NAME ]] && DisplayRunAndLog 'KLUDGE: remove previous local repository' "rm -r \"$(/usr/bin/dirname "$qpkg_repo_path")/$QPKG_NAME\"" log:failure-only
 	IsVirtualEnvironmentUsed && [[ -d $venv_path ]] && DisplayRunAndLog 'clean virtual environment' "rm -rf \"$venv_path\"" log:failure-only
-	[[ -n $pip_cache_path && -d $pip_cache_path ]] && DisplayRunAndLog 'clean PyPI cache' "rm -rf \"$pip_cache_path\"" log:failure-only
+	IsUsePipCache && [[ -d $pip_cache_path ]] && DisplayRunAndLog 'clean PyPI cache' "rm -rf \"$pip_cache_path\"" log:failure-only
 	[[ -e $APP_VERSION_STORE_PATHFILE ]] && DisplayRunAndLog 'remove application version' "rm -f \"$APP_VERSION_STORE_PATHFILE\"" log:failure-only
 
 	}
@@ -609,7 +659,7 @@ WaitForGit()
 GetLaunchTarget()
 	{
 
-	if [[ -n ${venv_python_pathfile:-} ]]; then
+	if [[ $venv_python_pathfile != undefined ]]; then
 		echo "$venv_python_pathfile"
 	elif [[ $daemon_pathfile != undefined ]]; then
 		echo "$daemon_pathfile"
@@ -830,7 +880,7 @@ EnsureConfigFileExists()
 
 	if IsNotConfigFound && IsDefaultConfigFound; then
 		DisplayCommitToLog 'no configuration file found: using default'
-		cp "$QPKG_INI_DEFAULT_PATHFILE" "$qpkg_ini_pathfile"
+		cp "${QPKG_INI_DEFAULT_PATHFILE:?undefined}" "${qpkg_ini_pathfile:?undefined}"
 	fi
 
 	}
@@ -838,8 +888,7 @@ EnsureConfigFileExists()
 SaveAppVersion()
 	{
 
-	[[ -z $APP_VERSION_STORE_PATHFILE ]] && return
-	echo "$app_version" > "$APP_VERSION_STORE_PATHFILE"
+	[[ $APP_VERSION_STORE_PATHFILE != undefined ]] && echo "$app_version" > "$APP_VERSION_STORE_PATHFILE"
 
 	}
 
@@ -1063,7 +1112,7 @@ ReWriteUIPorts()
 
 	# If SSL is enabled, attempting to access with non-SSL via 'Web_Port' results in "connection was reset"
 
-	[[ -n ${GET_DAEMON_PORT_CMD:-} ]] && return		# dont need to rewrite QTS UI ports if this app has a daemon port, as UI ports are unused
+	[[ $GET_DAEMON_PORT_CMD != undefined ]] && return		# dont need to rewrite QTS UI ports if this app has a daemon port, as UI ports are unused
 
 	DisplayWaitCommitToLog 'update QPKG icon with UI ports:'
 	/sbin/setcfg $QPKG_NAME Web_Port "$ui_port" -f /etc/config/qpkg.conf
@@ -1324,17 +1373,17 @@ IsNotSupportReset()
 
 	}
 
-IsGitBranch()
+IsSupportGetAppVersion()
 	{
 
-	[[ $source_git_branch != undefined ]]
+	[[ $app_version_pathfile != undefined ]]
 
 	}
 
-IsNotGitBranch()
+IsNotSupportGetAppVersion()
 	{
 
-	! IsGitBranch
+	! IsSupportGetAppVersion
 
 	}
 
@@ -1352,10 +1401,40 @@ IsNotVirtualEnvironmentUsed()
 
 	}
 
+IsGitApp()
+	{
+
+	# is this application pulled from an online source with `git`?
+
+	[[ $source_git_url != undefined && $source_git_branch != undefined && $qpkg_repo_path != undefined ]]
+
+	}
+
+IsNotGitApp()
+	{
+
+	! IsGitApp
+
+	}
+
+IsUsePipCache()
+	{
+
+	[[ $pip_cache_path != undefined ]]
+
+	}
+
+IsNotUsePipCache()
+	{
+
+	! IsUsePipCache
+
+	}
+
 IsSourcedOnline()
 	{
 
-	[[ $source_git_url != undefined || $pip_cache_path != undefined ]]
+	IsGitApp || IsUsePipCache
 
 	}
 
@@ -1369,7 +1448,7 @@ IsNotSourcedOnline()
 IsSSLEnabled()
 	{
 
-	eval "$GET_UI_PORT_SECURE_ENABLED_TEST_CMD"
+	eval "$get_ui_port_secure_enabled_test_cmd"
 
 	}
 
@@ -1688,7 +1767,7 @@ IsConfigFound()
 
 	# Is there an application configuration file?
 
-	[[ -e $qpkg_ini_pathfile ]]
+	[[ $qpkg_ini_pathfile != undefined && -e $qpkg_ini_pathfile ]]
 
 	}
 
@@ -1704,7 +1783,7 @@ IsDefaultConfigFound()
 
 	# Is there a default application configuration file?
 
-	[[ -e $QPKG_INI_DEFAULT_PATHFILE ]]
+	[[ $QPKG_INI_DEFAULT_PATHFILE != undefined && -e $QPKG_INI_DEFAULT_PATHFILE ]]
 
 	}
 
@@ -1764,7 +1843,7 @@ CommitServiceStatus()
 	# $1 = result of operation to record
 
 	if IsNotStatus && IsNotLog && IsNotNone; then
-		[[ -n ${1:-} && -n ${SERVICE_STATUS_PATHFILE:-} ]] && echo "${1:-}" > "$SERVICE_STATUS_PATHFILE"
+		[[ -n ${1:-} && $SERVICE_STATUS_PATHFILE != undefined ]] && echo "${1:-}" > "$SERVICE_STATUS_PATHFILE"
 	fi
 
 	}

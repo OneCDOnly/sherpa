@@ -17,7 +17,7 @@
 
 readonly USER_ARGS_RAW=$*
 readonly QPKG_NAME=ClamAV
-readonly SERVICE_SCRIPT_VERSION="230821"
+readonly SERVICE_SCRIPT_VERSION="230822"
 
 Init()
 	{
