@@ -6,9 +6,6 @@
 #
 # 	so, blame OneCD if it all goes horribly wrong. ;)
 #
-# Description:
-#	This is a type 3 service-script: https://github.com/OneCDOnly/sherpa/wiki/Service-Script-Types
-#
 # Project:
 #	https://git.io/sherpa
 #
@@ -18,23 +15,27 @@
 readonly USER_ARGS_RAW=$*
 readonly QPKG_NAME=OTransmission
 readonly SERVICE_SCRIPT_VERSION="<?thisdate?>"
-readonly -i SERVICE_SCRIPT_TYPE=3
 
-Init()
+InitBasic()
+	{
+
+	daemon_pathfile=/opt/bin/transmission-daemon
+	orig_daemon_service_script=/opt/etc/init.d/S88transmission
+	service_script_type=3
+	readonly TRANSMISSION_WEB_HOME=/opt/share/transmission/web
+
+	}
+
+InitComplex()
 	{
 
 	qpkg_ini_pathfile=$QPKG_CONFIG_PATH/settings.json
 
-	daemon_pathfile=/opt/bin/transmission-daemon
 	daemon_launch_cmd="$daemon_pathfile --config-dir $(/usr/bin/dirname "$qpkg_ini_pathfile") --pid-file $daemon_pid_pathfile"
-	orig_daemon_service_script=/opt/etc/init.d/S88transmission
-
-	readonly GET_DAEMON_PORT_CMD=''
-	readonly GET_UI_PORT_CMD="/opt/bin/jq -r '.\"rpc-port\"' < "$qpkg_ini_pathfile""
-	readonly GET_UI_PORT_SECURE_CMD='echo 0'		# Transmission v3 doesn't appear to contain any SSL UI ability
-	readonly GET_UI_PORT_SECURE_ENABLED_TEST_CMD='false'
-	readonly GET_UI_LISTENING_ADDRESS_CMD="/opt/bin/jq -r '.\"rpc-bind-address\"' < $qpkg_ini_pathfile"
-	readonly TRANSMISSION_WEB_HOME=/opt/share/transmission/web
+	get_ui_listening_address_cmd="/opt/bin/jq -r '.\"rpc-bind-address\"' < $qpkg_ini_pathfile"
+	get_ui_port_cmd="/opt/bin/jq -r '.\"rpc-port\"' < "$qpkg_ini_pathfile""
+	get_ui_port_secure_cmd='echo 0'		# Transmission v3 doesn't appear to contain any SSL UI ability
+	get_ui_port_secure_enabled_test_cmd='false'
 
 	}
 
