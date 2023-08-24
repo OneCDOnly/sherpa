@@ -5330,7 +5330,7 @@ NoteIpkAcAsEr()
 
 	local msg="failing request to $2 $(ShowAsPackageName "$1")"
 
-	[[ -n $3 ]] && msg+=" as $3"
+	[[ -n ${3:-} ]] && msg+=" as $3"
 	DebugAsError "$msg" >&2
 	IPKs-AC"$2"-to:Remove "$1"
 	IPKs-AC"$2"-er:Add "$1"
