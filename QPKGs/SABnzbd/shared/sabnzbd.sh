@@ -14,7 +14,7 @@
 
 readonly USER_ARGS_RAW=$*
 readonly QPKG_NAME=SABnzbd
-readonly SERVICE_SCRIPT_VERSION="230822"
+readonly SERVICE_SCRIPT_VERSION="230825"
 
 InitBasic()
 	{

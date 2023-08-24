@@ -508,7 +508,7 @@ LoadPorts()
 	esac
 
 	# Always read these from the application configuration
-	[[ $GET_DAEMON_PORT_CMD != undefined ]] && daemon_port=$(eval "$GET_DAEMON_PORT_CMD")
+	[[ $get_daemon_port_cmd != undefined ]] && daemon_port=$(eval "$get_daemon_port_cmd")
 	[[ $get_ui_listening_address_cmd != undefined ]] && ui_listening_address=$(eval "$get_ui_listening_address_cmd")
 
 	# validate port numbers
@@ -1112,7 +1112,7 @@ ReWriteUIPorts()
 
 	# If SSL is enabled, attempting to access with non-SSL via 'Web_Port' results in "connection was reset"
 
-	[[ $GET_DAEMON_PORT_CMD != undefined ]] && return		# dont need to rewrite QTS UI ports if this app has a daemon port, as UI ports are unused
+	[[ $get_daemon_port_cmd != undefined ]] && return		# dont need to rewrite QTS UI ports if this app has a daemon port, as UI ports are unused
 
 	DisplayWaitCommitToLog 'update QPKG icon with UI ports:'
 	/sbin/setcfg $QPKG_NAME Web_Port "$ui_port" -f /etc/config/qpkg.conf
