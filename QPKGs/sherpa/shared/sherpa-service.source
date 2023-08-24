@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# sherpa.service.sh
-#	Copyright (C) 2020-2023 OneCD - one.cd.only@gmail.com
+# sherpa-service.sh
+#	Copyright (C) 2020-<?thisyear?> OneCD - one.cd.only@gmail.com
 
 #	So, blame OneCD if it all goes horribly wrong. ;)
 
@@ -36,7 +36,7 @@ Init()
 	local -r QPKG_PATH=$(/sbin/getcfg sherpa Install_Path -f /etc/config/qpkg.conf)
 	readonly REAL_LOG_PATHFILE=$QPKG_PATH/logs/session.archive.log
 	readonly GUI_LOG_PATHFILE=/home/httpd/sherpa.debug.log
-	readonly REAL_LOADER_SCRIPT_PATHNAME=$QPKG_PATH/sherpa.loader.sh
+	readonly REAL_LOADER_SCRIPT_PATHNAME=$QPKG_PATH/sherpa-loader.sh
 	readonly APPARENT_LOADER_SCRIPT_PATHNAME=/usr/sbin/sherpa
 	readonly SERVICE_STATUS_PATHFILE=/var/run/sherpa.last.operation
 

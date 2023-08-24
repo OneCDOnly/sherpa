@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# sherpa.loader.sh
+# sherpa-loader.sh
 #	Copyright (C) 2017-2023 OneCD - one.cd.only@gmail.com
 
 #	So, blame OneCD if it all goes horribly wrong. ;)
@@ -35,7 +35,7 @@ readonly USER_ARGS_RAW=$*
 Init()
 	{
 
-	export LOADER_SCRIPT_VER=230713
+	export LOADER_SCRIPT_VER="230820"
 	export LOADER_SCRIPT_PPID=$PPID
 
 	readonly CHARS_REGULAR_PROMPT='$ '
@@ -47,7 +47,7 @@ Init()
 
 	local -r WORK_PATH=$(/sbin/getcfg sherpa Install_Path -f /etc/config/qpkg.conf)/cache
 
-	local -r MANAGER_FILE=sherpa.manager.sh
+	local -r MANAGER_FILE=sherpa-manager.sh
 	local -r MANAGER_ARCHIVE_FILE=${MANAGER_FILE%.*}.tar.gz
 	readonly MANAGER_ARCHIVE_URL=https://raw.githubusercontent.com/OneCDOnly/sherpa/stable/$MANAGER_ARCHIVE_FILE
 	readonly MANAGER_ARCHIVE_PATHFILE=$WORK_PATH/$MANAGER_ARCHIVE_FILE

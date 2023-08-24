@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+#*<?dontedit?>
+#
+# webssh.sh
+#	Copyright (C) 2020-<?thisyear?> OneCD - one.cd.only@gmail.com
+#
+# 	so, blame OneCD if it all goes horribly wrong. ;)
+#
+# Description:
+#	This is a type 6 service-script: https://github.com/OneCDOnly/sherpa/wiki/Service-Script-Types
+#
+# Project:
+#	https://git.io/sherpa
+#
+# Forum:
+#	https://forum.qnap.com/viewtopic.php?f=320&t=132373
+
+readonly USER_ARGS_RAW=$*
+readonly QPKG_NAME=WebSSH
+readonly SCRIPT_VERSION="<?thisdate?>"
+
+Init()
+	{
+
+	# modify library defaults
+
+	allow_access_to_sys_packages=true
+	backup_pathfile=undefined
+	daemon_pathfile=$venv_path/bin/wssh
+	daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile --address='0.0.0.0' --port=8010 --encoding=850"
+	interpreter=/opt/bin/python3
+	qpkg_ini_pathfile=undefined
+	qpkg_repo_path=undefined
+	recheck_daemon_pid_after_launch=true
+	run_daemon_in_screen_session=true
+	venv_python_pathfile=$venv_path/bin/python		# WebSSH expects 'python', not 'python3'
+
+	readonly GET_DAEMON_PORT_CMD=undefined
+	readonly GET_UI_PORT_CMD='echo 8010'
+	readonly GET_UI_PORT_SECURE_CMD='echo 0'
+	readonly GET_UI_PORT_SECURE_ENABLED_TEST_CMD='false'
+	readonly GET_UI_LISTENING_ADDRESS_CMD='echo 0.0.0.0'
+
+	}
+
+LoadLib()
+	{
+
+	local library_path="$(/usr/bin/readlink "$0")"
+	[[ -z $library_path ]] && library_path="$0"
+	readonly SERVICE_LIBRARY_PATHFILE="$(/usr/bin/dirname "$library_path")"/service.lib
+
+	if [[ -e $SERVICE_LIBRARY_PATHFILE ]]; then
+		. $SERVICE_LIBRARY_PATHFILE
+	else
+		printf '\033[1;31m%s\033[0m: %s\n' 'derp' "QPKG service function library not found, can't continue."
+		exit 1
+	fi
+
+	}
+
+LoadLib
+ProcessArgs

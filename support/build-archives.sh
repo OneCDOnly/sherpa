@@ -21,8 +21,8 @@ target_pathfiles+=("$target_path"/objects.tar.gz)
 source_pathfiles+=("$source_path"/packages)
 target_pathfiles+=("$target_path"/packages.tar.gz)
 
-source_pathfiles+=("$source_path"/sherpa.manager.sh)
-target_pathfiles+=("$target_path"/sherpa.manager.tar.gz)
+source_pathfiles+=("$source_path"/sherpa-manager.sh)
+target_pathfiles+=("$target_path"/sherpa-manager.tar.gz)
 
 for index in "${!source_pathfiles[@]}"; do
 	[[ -e ${target_pathfiles[index]} ]] && rm -f "${target_pathfiles[index]}"

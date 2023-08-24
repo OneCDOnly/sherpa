@@ -7,8 +7,8 @@ fi
 
 . ./vars.source
 
-source_pathfile="$source_path"/packages.source
-target_pathfile="$source_path"/packages
+source_pathfile="$source_path/$packages_source_file"
+target_pathfile="$source_path/$packages_file"
 
 buffer=$(<"$source_pathfile")
 
@@ -138,7 +138,8 @@ ShowDone
 
 echo -n "building 'packages' ... "
 
-[[ -e $target_pathfile ]] && rm -f "$target_pathfile"
+[[ -e $target_pathfile ]] && chmod 666 "$target_pathfile"
+
 echo "$buffer" > "$target_pathfile"
 
 if [[ ! -e $target_pathfile ]]; then
@@ -146,7 +147,7 @@ if [[ ! -e $target_pathfile ]]; then
 	exit 1
 fi
 
-chmod 444 "$target_pathfile"
+[[ -e $target_pathfile ]] && chmod 444 "$target_pathfile"
 
 ShowDone
 

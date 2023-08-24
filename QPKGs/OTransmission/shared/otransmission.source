@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+#*<?dontedit?>
+#
+# otransmission.sh
+#	Copyright (C) 2020-<?thisyear?> OneCD - one.cd.only@gmail.com
+#
+# 	so, blame OneCD if it all goes horribly wrong. ;)
+#
+# Project:
+#	https://git.io/sherpa
+#
+# Forum:
+#	https://forum.qnap.com/viewtopic.php?f=320&t=132373
+
+readonly USER_ARGS_RAW=$*
+readonly QPKG_NAME=OTransmission
+readonly SERVICE_SCRIPT_VERSION="<?thisdate?>"
+
+InitBasic()
+	{
+
+	daemon_pathfile=/opt/bin/transmission-daemon
+	orig_daemon_service_script=/opt/etc/init.d/S88transmission
+	service_script_type=3
+	readonly TRANSMISSION_WEB_HOME=/opt/share/transmission/web
+
+	}
+
+InitComplex()
+	{
+
+	qpkg_ini_pathfile=$QPKG_CONFIG_PATH/settings.json
+
+	daemon_launch_cmd="$daemon_pathfile --config-dir $(/usr/bin/dirname "$qpkg_ini_pathfile") --pid-file $daemon_pid_pathfile"
+	get_ui_listening_address_cmd="/opt/bin/jq -r '.\"rpc-bind-address\"' < $qpkg_ini_pathfile"
+	get_ui_port_cmd="/opt/bin/jq -r '.\"rpc-port\"' < "$qpkg_ini_pathfile""
+	get_ui_port_secure_cmd='echo 0'		# Transmission v3 doesn't appear to contain any SSL UI ability
+	get_ui_port_secure_enabled_test_cmd='false'
+
+	}
+
+LoadLib()
+	{
+
+	local library_path="$(/usr/bin/readlink "$0")"
+	[[ -z $library_path ]] && library_path="$0"
+	readonly SERVICE_LIBRARY_PATHFILE="$(/usr/bin/dirname "$library_path")"/service.lib
+
+	if [[ -e $SERVICE_LIBRARY_PATHFILE ]]; then
+		. $SERVICE_LIBRARY_PATHFILE
+	else
+		printf '\033[1;31m%s\033[0m: %s\n' 'derp' "QPKG service function library not found, can't continue."
+		exit 1
+	fi
+
+	}
+
+LoadLib
+ProcessArgs
