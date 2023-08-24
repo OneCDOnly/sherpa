@@ -152,12 +152,16 @@ source_path="$HOME"/scripts/nas/sherpa/support
 target_path="$HOME"/scripts/nas/sherpa
 qpkgs_path="$HOME"/scripts/nas/sherpa/QPKGs
 wiki_path="$HOME"/documents/sherpa.wiki
+docs_path="$HOME"/scripts/nas/sherpa/docs
 
 packages_source_file=packages.source
 packages_file=packages
 
 service_library_source_file=service-library.source
 service_library_file=service.lib
+
+readme_source_file=README.source
+readme_file=README.md
 
 stable_branch=stable
 unstable_branch=unstable
