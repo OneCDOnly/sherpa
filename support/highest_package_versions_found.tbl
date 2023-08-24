@@ -45,7 +45,7 @@ RunLast_230224.qpkg.md5              RunLast_230224.qpkg              RunLast   
 SABnzbd_230825.qpkg.md5              SABnzbd_230825.qpkg              SABnzbd              230825       all    afb166028f9cee042b7eb316aadca149
 sha3sum_230312_x86_64.qpkg.md5       sha3sum_230312_x86_64.qpkg       sha3sum              230312       i64    6ceba9116e0dbcbdb4e6112f0c02f8c0
 sha3sum_230312_x86.qpkg.md5          sha3sum_230312_x86.qpkg          sha3sum              230312       i86    fdba9d16b88a5b6e3b04483ca77706dd
-sherpa_230825.qpkg.md5               sherpa_230825.qpkg               sherpa               230825       all    3a9d09de6bebb5b6c2225152e2c05d5b
+sherpa_230825.qpkg.md5               sherpa_230825.qpkg               sherpa               230825       all    9e0bbb9e2bb3659ff36d31f23dfefe6a
 SortMyQPKGs_230820.qpkg.md5          SortMyQPKGs_230820.qpkg          SortMyQPKGs          230820       all    5b9a6adfdf4c935d30543bc0e0b5fae3
 WebSSH_230820_arm_64.qpkg.md5        WebSSH_230820_arm_64.qpkg        WebSSH               230820       a64    6d0c54c2ae9ef624fce9678d8c308b9b
 WebSSH_230820_x86_64.qpkg.md5        WebSSH_230820_x86_64.qpkg        WebSSH               230820       i64    2a8acea9fa651555230bfccd586eb9b6
