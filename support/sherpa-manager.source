@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 #*<?dontedit?>
 #
-#* sherpa.manager.sh
-#*  Copyright (C) 2017-<?thisyear?> OneCD - one.cd.only@gmail.com
+#* sherpa-manager.sh
+#*	Copyright (C) 2017-<?thisyear?> OneCD - one.cd.only@gmail.com
 #
 #   So, blame OneCD if it all goes horribly wrong. ;)
 #
@@ -2402,7 +2402,7 @@ IPKs:install()
 	IPKs-ACinstall-to:Init
 	IPKs-ACdownload-to:Init
 
-	if QPKGs-ACinstall-ok.Exist Entware; then
+	if QPKGs-ACinstall-ok.Exist Entware || ([[ $opts_check = true ]] && QPKG.IsInstalled Entware); then
 		IPKs-ACinstall-to:Add "$ESSENTIAL_IPKS"
 
 # 		if [[ -e $PREV_IPK_LIST ]]; then
@@ -8002,7 +8002,9 @@ RunAndLog()
 DeDupeWords()
 	{
 
-	tr ' ' '\n' <<< "${1:?${FUNCNAME[0]}'()': undefined}" | $SORT_CMD | $UNIQ_CMD | tr '\n' ' ' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||'
+	[[ -n ${1:-} ]] || return
+
+	tr ' ' '\n' <<< "$1" | $SORT_CMD | $UNIQ_CMD | tr '\n' ' ' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||'
 
 	}
 

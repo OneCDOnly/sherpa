@@ -1,3 +1,7 @@
+* RunAndLog() should not concat command and result_code lines.
+
+* debug log doesn't show which action is being processed when there is "nothing to process".
+
 * status table on TS-559Pro+ intermittently(?) shows Deluge packages out-of-order
 	[~] # sherpa s
 	sherpa 230729-stable • a mini-package-manager for QNAP NAS
@@ -18,5 +22,5 @@
 
 * QPKG version sort is not correctly sorting version numbers followed by an alpha as later than non-alpha.
 
-* if a forked action hangs, it's not being killed by its caller.
+* if a forked action hangs, it might be killed by its caller.
 	need to confirm this.

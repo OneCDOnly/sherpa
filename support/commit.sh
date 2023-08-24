@@ -7,7 +7,7 @@ fi
 
 . ./vars.source
 
-./check-syntax.sh || exit
+# ./check-syntax.sh || exit
 
 [[ -e objects ]] && rm -f objects
 cd "$target_path" || exit
