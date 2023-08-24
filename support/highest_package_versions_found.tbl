@@ -31,7 +31,7 @@ OliveTin_230809_x86_64.qpkg.md5      OliveTin_230809_x86_64.qpkg      OliveTin  
 OMedusa_230809.qpkg.md5              OMedusa_230809.qpkg              OMedusa              230809       all    0ae10f0f1e0dbf506eb8c8eddb1a62ed
 OqBittorrent_230731.qpkg.md5         OqBittorrent_230731.qpkg         OqBittorrent         230731       all    d097606362bdbfa74f9cab5a8e488517
 OSickGear_230809.qpkg.md5            OSickGear_230809.qpkg            OSickGear            230809       all    6fa65be2bdc19342f8afa5d1590dfdee
-OTransmission_230825.qpkg.md5        OTransmission_230825.qpkg        OTransmission        230825       all    bbde9469118f117cc7c5b158848b6448
+OTransmission_230825.qpkg.md5        OTransmission_230825.qpkg        OTransmission        230825       all    97e5a01a1b120eaf92b05f8a752cfea6
 OWatcher3_230809.qpkg.md5            OWatcher3_230809.qpkg            OWatcher3            230809       all    122ff55d220135daadc880519de79886
 Par2_0.8.1.1_arm_64.qpkg.md5         Par2_0.8.1.1_arm_64.qpkg         Par2                 0.8.1.1      a64    b8e89f295bdec56eecae88ec685d1e23
 Par2_0.8.1.1_arm-x19.qpkg.md5        Par2_0.8.1.1_arm-x19.qpkg        Par2                 0.8.1.1      a19    d312d8bd2dee43e62a720f0d209905f8
@@ -42,10 +42,10 @@ Par2_0.8.1.1_x86.qpkg.md5            Par2_0.8.1.1_x86.qpkg            Par2      
 pyLoad_230809.qpkg.md5               pyLoad_230809.qpkg               pyLoad               230809       all    01aa292bdc6882cbc8e23385061b9283
 QDK_2.3.13.zip.qpkg.md5              QDK_2.3.13.zip                   QDK                  2.3.13       all    0b003e703a29520e98a0aca41ed0e585
 RunLast_230224.qpkg.md5              RunLast_230224.qpkg              RunLast              230224       all    6cb5415fe56592ca1f4e8a4f2dcc5f17
-SABnzbd_230825.qpkg.md5              SABnzbd_230825.qpkg              SABnzbd              230825       all    b62096e6cd91af6fe983ac2641eff3a5
+SABnzbd_230825.qpkg.md5              SABnzbd_230825.qpkg              SABnzbd              230825       all    afb166028f9cee042b7eb316aadca149
 sha3sum_230312_x86_64.qpkg.md5       sha3sum_230312_x86_64.qpkg       sha3sum              230312       i64    6ceba9116e0dbcbdb4e6112f0c02f8c0
 sha3sum_230312_x86.qpkg.md5          sha3sum_230312_x86.qpkg          sha3sum              230312       i86    fdba9d16b88a5b6e3b04483ca77706dd
-sherpa_230820.qpkg.md5               sherpa_230820.qpkg               sherpa               230820       all    8fe4e874e97fd4d3160517c8d957ce5c
+sherpa_230825.qpkg.md5               sherpa_230825.qpkg               sherpa               230825       all    3a9d09de6bebb5b6c2225152e2c05d5b
 SortMyQPKGs_230820.qpkg.md5          SortMyQPKGs_230820.qpkg          SortMyQPKGs          230820       all    5b9a6adfdf4c935d30543bc0e0b5fae3
 WebSSH_230820_arm_64.qpkg.md5        WebSSH_230820_arm_64.qpkg        WebSSH               230820       a64    6d0c54c2ae9ef624fce9678d8c308b9b
 WebSSH_230820_x86_64.qpkg.md5        WebSSH_230820_x86_64.qpkg        WebSSH               230820       i64    2a8acea9fa651555230bfccd586eb9b6
