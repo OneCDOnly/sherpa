@@ -877,7 +877,6 @@ Self:Validate()
 
 	if QPKGs-SCupgradable.Exist sherpa; then
 		QPKGs-ACupgrade-to:Add sherpa
-		QPKGs-ACreactivate-to:Add sherpa
 	fi
 
 	# KLUDGE: ensure old installs of Entware are reinstalled
@@ -1015,6 +1014,10 @@ Self:Validate()
 				QPKGs_were_installed_path+=("$($DIRNAME_CMD "$(QPKG.GetInstallationPath "$package")")")
 			fi
 		done
+	fi
+
+	if QPKGs-ACupgrade-to.Exist sherpa; then
+		QPKGs-ACreactivate-to:Add sherpa
 	fi
 
 	# Build list of required installation QPKGs
