@@ -2,7 +2,7 @@
 #*<?dontedit?>
 #
 #* sherpa-manager.sh
-#*  Copyright (C) 2017-<?thisyear?> OneCD - one.cd.only@gmail.com
+#*	Copyright (C) 2017-<?thisyear?> OneCD - one.cd.only@gmail.com
 #
 #   So, blame OneCD if it all goes horribly wrong. ;)
 #
@@ -426,6 +426,7 @@ CMDs:Load()
 	readonly MKNOD_CMD=/bin/mknod
 	readonly MKTEMP_CMD=/bin/mktemp
 	readonly MORE_CMD=/bin/more
+	readonly PS_CMD=/bin/ps
 	readonly SED_CMD=/bin/sed
 	readonly SH_CMD=/bin/sh
 	readonly QTS_SLEEP_CMD=/bin/sleep
@@ -467,6 +468,7 @@ CMDs.IsOk()
 	IsSysFileExist $MKNOD_CMD || return
 	IsSysFileExist $MKTEMP_CMD || return
 	# don't check for `/bin/more` because it's a very low-priority command, not essential.
+	IsSysFileExist $PS_CMD || return
 	IsSysFileExist $SED_CMD || return
 	IsSysFileExist $SH_CMD || return
 
@@ -1009,6 +1011,8 @@ Self:Validate()
 			fi
 		done
 	fi
+
+	QPKGs-ACupgrade-to.Exist sherpa && QPKGs-ACreactivate-to:Add sherpa
 
 	# Build list of required installation QPKGs
 	QPKGs-ACdownload-to:Add "$(QPKGs-ACupgrade-to:Array) $(QPKGs-ACreinstall-to:Array) $(QPKGs-ACinstall-to:Array)"
@@ -5693,7 +5697,7 @@ NoteIpkAcAsEr()
 
 	local msg="failing request to $2 $(ShowAsPackageName "$1")"
 
-	[[ -n $3 ]] && msg+=" as $3"
+	[[ -n ${3:-} ]] && msg+=" as $3"
 	DebugAsError "$msg" >&2
 	IPKs-AC"$2"-to:Remove "$1"
 	IPKs-AC"$2"-er:Add "$1"
@@ -5835,7 +5839,7 @@ GetTimeInShell()
 	local duration=0
 
 	if [[ -n ${LOADER_SCRIPT_PPID:-} ]]; then
-		duration=$(ps -o pid,etime | $GREP_CMD $LOADER_SCRIPT_PPID | $HEAD_CMD -n1)
+		duration=$($PS_CMD -o pid,etime | $GREP_CMD $LOADER_SCRIPT_PPID | $HEAD_CMD -n1)
 	fi
 
 	FormatLongMinutesSecs "${duration:6}"
@@ -6051,14 +6055,14 @@ OS.IsAllowUnsignedPackages()
 OS.IsStarting()
 	{
 
-	ps | $GREP_CMD -F '/bin/sh /etc/init.d/rcS' | $GREP_CMD -v grep
+	$PS_CMD | $GREP_CMD -F '/bin/sh /etc/init.d/rcS' | $GREP_CMD -v grep
 
 	} &>/dev/null
 
 OS.IsStopping()
 	{
 
-	ps | $GREP_CMD -F '/bin/sh /etc/init.d/rcK' | $GREP_CMD -v grep
+	$PS_CMD | $GREP_CMD -F '/bin/sh /etc/init.d/rcK' | $GREP_CMD -v grep
 
 	} &>/dev/null
 
@@ -8365,7 +8369,9 @@ RunAndLog()
 DeDupeWords()
 	{
 
-	tr ' ' '\n' <<< "${1:?${FUNCNAME[0]}'()': undefined}" | $SORT_CMD | $UNIQ_CMD | tr '\n' ' ' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||'
+	[[ -n ${1:-} ]] || return
+
+	tr ' ' '\n' <<< "$1" | $SORT_CMD | $UNIQ_CMD | tr '\n' ' ' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||'
 
 	}
 
