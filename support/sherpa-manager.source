@@ -414,13 +414,15 @@ CMDs:Load()
 	# cherry-pick QTS binaries
 	readonly AWK_CMD=/bin/awk
 	readonly CAT_CMD=/bin/cat
-	# don't assign a const for `/bin/date` as it's already been called before arriving here
+	# don't assign a const for `/bin/date` as it's already been called before arriving here.
 	readonly DF_CMD=/bin/df
 	readonly GREP_CMD=/bin/grep
 	readonly LESS_CMD=/bin/less
 	readonly MD5SUM_CMD=/bin/md5sum
 	readonly MKNOD_CMD=/bin/mknod
 	readonly MKTEMP_CMD=/bin/mktemp
+	readonly MORE_CMD=/bin/more
+	readonly PS_CMD=/bin/ps
 	readonly SED_CMD=/bin/sed
 	readonly SH_CMD=/bin/sh
 	readonly QTS_SLEEP_CMD=/bin/sleep
@@ -451,15 +453,18 @@ CMDs.IsOk()
 	{
 
 	# Confirm required binaries are present
+
 	IsSysFileExist $AWK_CMD || return
 	IsSysFileExist $CAT_CMD || return
-	# don't perform a check for `/bin/date` as it's already been called before arriving here
+	# don't perform a check for `/bin/date` as it's already been called before arriving here.
 	IsSysFileExist $DF_CMD || return
 	IsSysFileExist $GREP_CMD || return
-	# KLUDGE: don't perform a check for `/bin/less` because it's not always there
+	# don't perform a check for `/bin/less` because it's not always there.
 	IsSysFileExist $MD5SUM_CMD || return
 	IsSysFileExist $MKNOD_CMD || return
 	IsSysFileExist $MKTEMP_CMD || return
+	# don't check for `/bin/more` because it's a very low-priority command, not essential.
+	IsSysFileExist $PS_CMD || return
 	IsSysFileExist $SED_CMD || return
 	IsSysFileExist $SH_CMD || return
 
@@ -479,7 +484,7 @@ CMDs.IsOk()
 	IsSysFileExist $DU_CMD || return
 	IsSysFileExist $HEAD_CMD || return
 	IsSysFileExist $READLINK_CMD || return
-	[[ ! -e $SORT_CMD ]] && ln -s /bin/busybox "$SORT_CMD"	# KLUDGE: `/usr/bin/sort` randomly disappears from QTS
+	[[ ! -e $SORT_CMD ]] && ln -s /bin/busybox "$SORT_CMD"	# KLUDGE: `/usr/bin/sort` randomly disappears from QTS.
 	IsSysFileExist $TAIL_CMD || return
 	IsSysFileExist $TEE_CMD || return
 	IsSysFileExist $UNZIP_CMD || return
@@ -1016,9 +1021,7 @@ Self:Validate()
 		done
 	fi
 
-	if QPKGs-ACupgrade-to.Exist sherpa; then
-		QPKGs-ACreactivate-to:Add sherpa
-	fi
+	QPKGs-ACupgrade-to.Exist sherpa && QPKGs-ACreactivate-to:Add sherpa
 
 	# Build list of required installation QPKGs
 	QPKGs-ACdownload-to:Add "$(QPKGs-ACupgrade-to:Array) $(QPKGs-ACreinstall-to:Array) $(QPKGs-ACinstall-to:Array)"
@@ -1438,8 +1441,8 @@ ParseArgs()
 	#   scriptname [action] [groups] [options]
 
 	Func:Init
+	ShowAsProc arguments
 	DebugVar USER_ARGS_RAW
-
 	local user_args_fixed=$(Lowercase "${USER_ARGS_RAW//,/ }")
 	local -a user_args=(${user_args_fixed/--/})
 	local arg=''
@@ -1453,7 +1456,7 @@ ParseArgs()
 	for arg in "${user_args[@]}"; do
 		arg_identified=false
 
-		# identify action: every time action changes, must clear group too
+		# identify action: everytime action changes, must clear group.
 		case $arg in
 		# these cases use only a single word to specify a single action
 			backup|clean|enable|disable|reassign|rebuild|reinstall|restore)
@@ -1568,7 +1571,7 @@ ParseArgs()
 
 		if [[ -n $action ]]; then
 			case $arg in
-			# these cases use only a single word or char to specify a single group
+			# these cases use only a single word or char to specify a single group.
 				backedup|installable|installed|missing|ok|problems|results|skipped|tail|tips)
 					group=${arg}
 					;;
@@ -1643,8 +1646,8 @@ ParseArgs()
 		# identify options
 		case $arg in
 			v|debug|dbug|verbose)
-				arg_identified=true
 				group_identified=true
+				arg_identified=true
 				;;
 			force)
 				action_force=true
@@ -1769,8 +1772,6 @@ ParseArgs()
 				skip_package_actions=true
 				;;
 			status)
-				opts_show_status=true
-
 				case $group in
 					all|dependent|standalone|upgradable)
 						QPKGs.AC${action}.SC${group}:Set
@@ -1783,10 +1784,12 @@ ParseArgs()
 					*)
 						QPKGs-AC${action}-to:Add "$package"
 				esac
+
+				opts_show_status=true
 				;;
 			uninstall)
 				case $group in
-					all)		# this group is dangerous, so make `force` a requirement
+					all)			# this group is dangerous, so make `force` a requirement.
 						if [[ $action_force = true ]]; then
 							QPKGs.AC${action}.SC${group}:Set
 							group=''
@@ -1798,7 +1801,7 @@ ParseArgs()
 						group=''
 						action_force=false
 						;;
-					installed)	# this group is dangerous, so make `force` a requirement
+					installed)		# this group is dangerous, so make `force` a requirement.
 						if [[ $action_force = true ]]; then
 							QPKGs.AC${action}.IS${group}:Set
 							group=''
@@ -1905,7 +1908,7 @@ AllocGroupPacksToAcs()
 	local group=''
 	local state=''
 	local prospect=''
-	local found=false		# group or state has been found
+	local found=false		# group has been found
 
 	for action in "${USER_QPKG_ACTIONS[@]}"; do
 		# process group-based user-options
@@ -1925,7 +1928,7 @@ AllocGroupPacksToAcs()
 								done
 								;;
 							*)
-								DebugAsWarn "specified group $group has no handler for specified action $action"
+								DebugAsWarn "specified group '$group' has no handler for specified action '$action'"
 						esac
 						;;
 					install|status)
@@ -1936,7 +1939,7 @@ AllocGroupPacksToAcs()
 								QPKGs-AC${action}-to:Add "$(QPKGs-SC${group}:Array)"
 								;;
 							*)
-								DebugAsWarn "specified group $group has no handler for specified action $action"
+								DebugAsWarn "specified group '$group' has no handler for specified action '$action'"
 						esac
 						;;
 					activate|deactivate|enable|disable|reactivate|stop|uninstall)
@@ -1949,7 +1952,7 @@ AllocGroupPacksToAcs()
 								done
 								;;
 							*)
-								DebugAsWarn "specified group $group has no handler for specified action $action"
+								DebugAsWarn "specified group '$group' has no handler for specified action '$action'"
 						esac
 						;;
 					rebuild)
@@ -1962,7 +1965,7 @@ AllocGroupPacksToAcs()
 								done
 								;;
 							*)
-								DebugAsWarn "specified group $group has no handler for specified action $action"
+								DebugAsWarn "specified group '$group' has no handler for specified action '$action'"
 						esac
 						;;
 					upgrade)
@@ -1979,8 +1982,11 @@ AllocGroupPacksToAcs()
 								QPKGs-ACreactivate-to:Remove "$(QPKGs-ACupgrade-to:Array)"
 								;;
 							*)
-								DebugAsWarn "specified group $group has no handler for specified action $action"
+								DebugAsWarn "specified group '$group' has no handler for specified action '$action'"
 						esac
+						;;
+					*)
+						DebugAsWarn "specified action '$action' has no handler"
 				esac
 
 				if [[ $found = false ]]; then
@@ -2046,7 +2052,13 @@ AllocGroupPacksToAcs()
 							enabled|installed)
 								found=true
 								QPKGs-AC${action}-to:Add "$(QPKGs-ISNT${state}:Array)"
+								;;
+							*)
+								DebugAsWarn "specified state '$state' has no handler for specified action '$action'"
 						esac
+						;;
+					*)
+						DebugAsWarn "specified action '$action' has no handler"
 				esac
 
 				if [[ $found = false ]]; then
@@ -2054,7 +2066,7 @@ AllocGroupPacksToAcs()
 				fi
 
 				if QPKGs-AC${action}-to.IsAny; then
-					DebugAsDone "action: '$action', state: 'NT${state}': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
+					DebugAsDone "action: '$action', state: 'ISNT${state}': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
 				else
 					ShowAsWarn "unable to find any packages to $(Lowercase "$action")"
 				fi
@@ -2286,9 +2298,8 @@ CalcIpkDepsToInstall()
 	pre_exclude_count=$($WC_CMD -w <<< "$pre_exclude_list")
 
 	if [[ $pre_exclude_count -gt 0 ]]; then
-		DebugInfo "$pre_exclude_count IPK$(Pluralise "$pre_exclude_count") required (including dependencies)" "'$pre_exclude_list' "
-
 		ShowAsProc 'excluding IPKs already installed'
+		DebugInfo "$pre_exclude_count IPK$(Pluralise "$pre_exclude_count") required (including dependencies)" "'$pre_exclude_list' "
 
 		for element in $pre_exclude_list; do
 			# KLUDGE: silently exclude these packages from being installed:
@@ -2935,7 +2946,6 @@ DisplayAsProjSynExam()
 	#	$2 = example syntax
 
 	WriteEmptyLineIfNoneExists
-
 	printf "${CHARS_SPECIAL}%s" "$(Capitalise "${1:-}")"
 	[[ ${1: -1} != '!' ]] && printf ':'
 
@@ -2984,7 +2994,6 @@ DisplayAsPackagesReportTitleLine()
 	local package_name_msg=''
 	local package_author_msg=''
 	local package_description_msg=''
-
 	WriteEmptyLineIfNoneExists
 
 	# column 1: package name
@@ -3084,7 +3093,6 @@ DisplayAsStatusReportTitleLine()
 	local package_status_msg=''
 	local package_version_msg=''
 	local package_path_msg=''
-
 	WriteEmptyLineIfNoneExists
 
 	# column 1: package name
@@ -3254,7 +3262,6 @@ DisplayAsReposReportTitleLine()
 	local package_name_msg=''
 	local package_install_date_msg=''
 	local package_repo_msg=''
-
 	WriteEmptyLineIfNoneExists
 
 	# column 1: package name
@@ -3376,7 +3383,6 @@ DisplayAsAbsReportTitleLine()
 
 	local package_name_msg=''
 	local package_abs_msg=''
-
 	WriteEmptyLineIfNoneExists
 
 	# column 1: package name
@@ -3473,7 +3479,6 @@ DisplayAsDepsReportTitleLine()
 	local package_min_ram_msg=''
 	local package_min_os_msg=''
 	local package_arch_msg=''
-
 	WriteEmptyLineIfNoneExists
 
 	# column 1: package name
@@ -3675,7 +3680,6 @@ DisplayAsHelpTitleFileNamePlusSomething()
 	#	$2 = second column title
 
 	WriteEmptyLineIfNoneExists
-
 	printf "${CHARS_SPECIAL}%-${FILE_NAME_COL_WIDTH}s ${CHARS_SPECIAL}%s\n" "$(Capitalise "${1:-}"):" "$(Capitalise "${2:-}"):"
 	linespace_visible=false
 
@@ -3688,7 +3692,6 @@ DisplayAsHelpTitle()
 	#	$1 = text
 
 	WriteEmptyLineIfNoneExists
-
 	printf "${CHARS_SPECIAL}%s\n" "$(Capitalise "${1:-}" | tr -s ' ')"
 	linespace_visible=false
 
@@ -3701,7 +3704,6 @@ DisplayAsHelpTitleHighlighted()
 	#	$1 = text
 
 	WriteEmptyLineIfNoneExists
-
 	# shellcheck disable=2059
 	printf "$(ColourTextBrightOrange "${CHARS_SPECIAL}%s\n")" "$(Capitalise "${1:-}")"
 	linespace_visible=false
@@ -3933,7 +3935,6 @@ Actions.Results:Show()
 	local reason=''
 	local package_type=''
 	local found=false
-
 	DisplayWritingReport
 
 		{
@@ -4850,7 +4851,6 @@ QPKGs.Abbreviations:Show()
 	Func:Init
 	local package_name=''
 	maxcols=2
-
 	DisableDebugToArchiveAndFile
 	DisplayWritingReport
 
@@ -4883,7 +4883,6 @@ QPKGs.Backups:Show()
 	local filename=''
 	local highlight_older_than='2 weeks ago'
 	local format=''
-
 	DisableDebugToArchiveAndFile
 	DisplayWritingReport
 
@@ -4929,7 +4928,6 @@ QPKGs.Dependencies:Show()
 	Func:Init
 	local package_name=''
 	maxcols=5
-
 	DisableDebugToArchiveAndFile
 	DisplayWritingReport
 
@@ -4958,7 +4956,6 @@ QPKGs.Names:Show()
 
 	local package_name=''
 	maxcols=3
-
 	DisableDebugToArchiveAndFile
 	DisplayWritingReport
 
@@ -4991,7 +4988,6 @@ QPKGs.Repos:Show()
 	Func:Init
 	local package_name=''
 	maxcols=3
-
 	DisableDebugToArchiveAndFile
 	DisplayWritingReport
 
@@ -5017,7 +5013,6 @@ QPKGs.Statuses:Show()
 
 	Func:Init
 	local package_name=''
-
 	CalcMaxStatusReportCols
 	DisplayWritingReport
 
@@ -5479,7 +5474,7 @@ GetTimeInShell()
 	local duration=0
 
 	if [[ -n ${LOADER_SCRIPT_PPID:-} ]]; then
-		duration=$(ps -o pid,etime | $GREP_CMD $LOADER_SCRIPT_PPID | $HEAD_CMD -n1)
+		duration=$($PS_CMD -o pid,etime | $GREP_CMD $LOADER_SCRIPT_PPID | $HEAD_CMD -n1)
 	fi
 
 	FormatLongMinutesSecs "${duration:6}"
@@ -5695,14 +5690,14 @@ OS.IsAllowUnsignedPackages()
 OS.IsStarting()
 	{
 
-	ps | $GREP_CMD -F '/bin/sh /etc/init.d/rcS' | $GREP_CMD -v grep
+	$PS_CMD | $GREP_CMD -F '/bin/sh /etc/init.d/rcS' | $GREP_CMD -v grep
 
 	} &>/dev/null
 
 OS.IsStopping()
 	{
 
-	ps | $GREP_CMD -F '/bin/sh /etc/init.d/rcK' | $GREP_CMD -v grep
+	$PS_CMD | $GREP_CMD -F '/bin/sh /etc/init.d/rcK' | $GREP_CMD -v grep
 
 	} &>/dev/null
 
@@ -9190,8 +9185,8 @@ StripANSI()
 
 	# QTS 4.2.6 BusyBox `sed` doesn't fully support extended regexes, so code-stripping only works with a real `sed`
 
-	if [[ -e $GNU_SED_CMD && -L /opt/etc/passwd ]]; then	# try to ensure Entware is active before using this utility
-		$GNU_SED_CMD -r 's/\x1b\[[0-9;]*m//g' <<< "${1:-}"
+	if [[ -e /opt/bin/sed && -L /opt/etc/passwd ]]; then	# try to ensure Entware is active before using this utility
+		/opt/bin/sed -r 's/\x1b\[[0-9;]*m//g' <<< "${1:-}"
 	else
 		echo "${1:-}"		# can't strip, so pass thru original message unaltered
 	fi
@@ -9330,7 +9325,7 @@ Objects:Load()
 
 	Func:Init
 
-	if [[ ! -e $PWD/dont.refresh.objects ]]; then
+	if [[ ! -e $PWD/dont-refresh-objects ]]; then
 		if [[ ! -e $OBJECTS_PATHFILE ]] || ! IsThisFileRecent "$OBJECTS_PATHFILE" "$FILE_CHANGE_THRESHOLD_MINUTES"; then
 			ShowAsProc 'downloading objects'
 
@@ -9364,7 +9359,7 @@ Packages:Load()
 
 	Func:Init
 
-	if [[ ! -e $PWD/dont.refresh.packages ]]; then
+	if [[ ! -e $PWD/dont-refresh-packages ]]; then
 		if [[ ! -e $PACKAGES_PATHFILE ]] || ! IsThisFileRecent "$PACKAGES_PATHFILE" "$FILE_CHANGE_THRESHOLD_MINUTES"; then
 			ShowAsProc 'downloading QPKG list'
 
