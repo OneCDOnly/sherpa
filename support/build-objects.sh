@@ -22,11 +22,11 @@ QPKG_STATES_TRANSIENT=(starting stopping restarting)
 QPKG_SERVICE_RESULTS=(ok failed unknown)
 
 # sorted
-IPK_STATES=(downloaded installed reinstalled upgraded)
+IPK_STATES=(downgraded downloaded installed reinstalled upgraded)
 
 # ordered
 PIP_ACTIONS=(download uninstall upgrade reinstall install)
-IPK_ACTIONS=(download uninstall upgrade reinstall install)
+IPK_ACTIONS=(downgrade download uninstall upgrade reinstall install)
 QPKG_ACTIONS=(status list rebuild reassign download backup deactivate disable uninstall upgrade reinstall install restore clean enable activate reactivate sign)
 
 # these actions, states and scopes may be specified by the user -----------------------------------------------------
