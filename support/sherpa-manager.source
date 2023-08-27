@@ -339,6 +339,7 @@ Vars:Load()
 	backup_stdin_fd=none
 	colourful=true
 	hide_title=false
+	ipks_downgrade=false
 	ipks_install=false
 	ipks_upgrade=false
 	linespace_visible=false
@@ -531,8 +532,9 @@ Env:Load()
 	readonly QPKG_DL_PATH=$CACHE_PATH/QPKGs.downloads
 	readonly QPKG_BU_PATH=$(GetDefVol)/.qpkg_config_backup
 	readonly CERT_DB_PATHFILE=/etc/config/nas_sign_qpkg.db
-	readonly IPK_DL_PATH=$CACHE_PATH/IPKs.downloads
 	readonly IPK_CACHE_PATH=$CACHE_PATH/IPKs
+	readonly IPK_DL_PATH=$IPK_CACHE_PATH.downloads
+	readonly IPK_DOWNGRADE_DL_PATH=$CACHE_PATH/IPKs.downgrade
 	readonly PIP_CACHE_PATH=$CACHE_PATH/PIPs
 	readonly ACTION_TIMES_PATH=$CACHE_PATH/action.times
 	readonly ACTION_MSG_PIPE=/var/run/sherpa.action.messages.pipe
@@ -614,7 +616,7 @@ Lists:Load()
 
 	local action=''
 
-	for action in "${QPKG_ACTIONS[@]}" check debug update; do
+	for action in "${QPKG_ACTIONS[@]}" check debug downgrade update; do
 		readonly "$(Uppercase "$action")"_LOG_FILE=$action.log
 	done
 
@@ -631,8 +633,9 @@ CreatePaths()
 	MakePath "$CACHE_PATH" cache || return
 	MakePath "$LOGS_PATH" logs || return
 	MakePath "$QPKG_DL_PATH" 'QPKG download' || return
-	MakePath "$IPK_DL_PATH" 'IPK download' || return
 	MakePath "$IPK_CACHE_PATH" 'IPK cache' || return
+	MakePath "$IPK_DL_PATH" 'IPK download' || return
+	MakePath "$IPK_DOWNGRADE_DL_PATH" 'IPK downgrade' || return
 	MakePath "$PIP_CACHE_PATH" 'PIP cache' || return
 	MakePath "$ACTION_TIMES_PATH" 'action times' || return
 	MakePath "$QPKG_BU_PATH" 'QPKG backup' || return
@@ -669,7 +672,7 @@ Debug.Log:Env()
 
 	DebugFirmware ok 'kernel version' "$(GetKernelVersion)"
 
-	if [[ $KERNEL_PAGESIZE = '4kB' ]]; then
+	if [[ $KERNEL_PAGESIZE = 4kB ]]; then
 		DebugFirmware ok 'kernel page size' "$KERNEL_PAGESIZE"
 	else
 		DebugFirmware warning 'kernel page size' "$KERNEL_PAGESIZE"
@@ -870,6 +873,19 @@ Self:Validate()
 				if [[ ${installed_ver//./} -lt $MIN_PERL_VER ]]; then
 					ShowAsInfo 'the installed Perl environment will be upgraded'
 					IPKs-ACuninstall-to:Add 'perl*'
+				fi
+			fi
+
+			if [[ $KERNEL_PAGESIZE = 32kB ]]; then
+# 			if [[ $KERNEL_PAGESIZE = 4kB ]]; then
+				case $NAS_QPKG_ARCH in
+					a41|a64)
+						ipks_downgrade=true
+				esac
+
+				if [[ $ipks_downgrade = true ]]; then
+					ShowAsInfo "IPKs will be downgraded to suit $KERNEL_PAGESIZE kernel pagesize"
+					IPKs-ACdowngrade-to:Add 'ar binutils libbfd libctf libopcodes objdump'
 				fi
 			fi
 		fi
@@ -1134,6 +1150,7 @@ Actions:Proc()
 					ModPathToEntware
 					Action:Proc upgrade $tier IPK upgrading upgraded
 					Action:Proc install $tier IPK installing installed
+					Action:Proc downgrade $tier IPK downgrading downgraded
 					Action:Proc install $tier PIP installing installed
 				fi
 		esac
@@ -2369,6 +2386,7 @@ IPKs:upgrade()
 	IPKs-ACdownload-to:Init
 
 	IPKs-ACupgrade-to:Add "$($OPKG_CMD list-upgradable | cut -f1 -d' ')"
+	IPKs-ACupgrade-to:Remove "$(IPKs-ACdowngrade-to:Array)"		# don't upgrade IPKs that must remain downgraded
 	IPKs-ACdownload-to:Add "$(IPKs-ACupgrade-to:Array)"
 
 	CalcIpkDownloadSize
@@ -2396,6 +2414,82 @@ IPKs:upgrade()
 			ShowAsFail "upgrade $total_count IPK$(Pluralise "$total_count") failed $(ShowAsExitcode "$result_code")"
 			NoteIpkAcAsEr "$(IPKs-ACupgrade-to:Array)" upgrade
 			SaveActionResultToLog IPK "$desc" upgrade failed "$result_code"
+		fi
+	fi
+
+	Func:Exit $result_code
+
+	}
+
+IPKs:downgrade()
+	{
+
+	# downgrade specific installed IPKs
+
+	[[ $ipks_downgrade = true ]] || return
+	QPKGs-ISenabled.Exist Entware || return
+	UpdateEntwarePackageList
+	Self.Error.IsNt || return
+
+	Func:Init
+	local -i total_count=0
+	local -i result_code=0
+	local package_name=''
+	local remote_url=''
+	local desc=''
+	local log_pathfile=''
+	local url_prefix=''
+	local url_suffix=''
+	local target_version=''
+	IPKs-ACdownload-to:Init
+	total_count=$(IPKs-ACdowngrade-to:Count)
+
+	if [[ $total_count -gt 0 ]]; then
+		if [[ $KERNEL_PAGESIZE = 32kB ]]; then
+# 		if [[ $KERNEL_PAGESIZE = 4kB ]]; then
+			url_prefix=http://bin.entware.net
+			target_version=2.38-1
+			url_suffix=_$target_version
+
+			case $NAS_QPKG_ARCH in
+				a64)
+					url_prefix+='/aarch64-k3.10'
+					url_suffix+='_aarch64-3.10'
+					;;
+				a41)
+					url_prefix+='/armv7sf-k3.2'
+					url_suffix+='_armv7-3.2'
+			esac
+
+			url_prefix+=/archive/
+			url_suffix+=.ipk
+
+		fi
+
+		desc="$total_count IPK module$(Pluralise "$total_count")"
+		log_pathfile=$LOGS_PATH/ipks.$DOWNLOAD_LOG_FILE
+		ShowAsProc "downloading $desc"
+
+		for package_name in $(IPKs-ACdowngrade-to:Array); do
+			remote_url="${url_prefix}${package_name}${url_suffix}"
+			local_pathfile="$IPK_DOWNGRADE_DL_PATH/$($BASENAME_CMD "$remote_url")"
+			RunAndLog "$CURL_CMD${curl_insecure_arg} --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
+		done
+
+		log_pathfile=$LOGS_PATH/ipks.$DOWNGRADE_LOG_FILE
+		ShowAsProc "downgrading $desc"
+		RunAndLog "$OPKG_CMD install --force-downgrade --cache $IPK_CACHE_PATH --tmp-dir $IPK_DOWNGRADE_DL_PATH $IPK_DOWNGRADE_DL_PATH/*.ipk" "$log_pathfile" log:failure-only
+		result_code=$?
+
+		if [[ $result_code -eq 0 ]]; then
+			ok_count=$total_count		# assume they all passed
+			NoteIpkAcAsOk "$(IPKs-ACdowngrade-to:Array)" downgrade
+			DebugAsDone "downgraded $desc"
+			SaveActionResultToLog IPK "$desc" downgrade ok "$result_code"
+		else
+			ShowAsFail "downgrade $total_count IPK$(Pluralise "$total_count") failed $(ShowAsExitcode "$result_code")"
+			NoteIpkAcAsEr "$(IPKs-ACdowngrade-to:Array)" downgrade
+			SaveActionResultToLog IPK "$desc" downgrade failed "$result_code"
 		fi
 	fi
 
