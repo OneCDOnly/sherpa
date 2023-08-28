@@ -664,7 +664,7 @@ Debug.Log:Env()
 
 	DebugFirmware ok 'kernel version' "$(GetKernelVersion)"
 
-	if OS.IsKernelPagesizeStd; then
+	if OS.IsStdKernelPageSize; then
 		DebugFirmware ok 'kernel page size' "$KERNEL_PAGESIZE"
 	else
 		DebugFirmware warning 'kernel page size' "$KERNEL_PAGESIZE"
@@ -871,14 +871,14 @@ Self:Validate()
 
 	# Decide if IPKs should be uninstalled/downgraded
 
-	if OS.IsNotKernelPagesizeStd; then
+	if OS.IsNonStdKernelPageSize; then
 		case $NAS_QPKG_ARCH in
 			a41|a64)
 				ipks_downgrade=true
 		esac
 
 		if [[ $ipks_downgrade = true ]]; then
-			ShowAsInfo "IPKs will be downgraded to suit $KERNEL_PAGESIZE kernel pagesize"
+			DebugAsInfo "IPKs will be downgraded to suit $KERNEL_PAGESIZE kernel pagesize"
 			IPKs-ACdowngrade-to:Add 'ar binutils libbfd libctf libopcodes objdump'
 		fi
 	fi
@@ -2480,7 +2480,7 @@ IPKs:downgrade()
 		log_pathfile=$LOGS_PATH/ipks.$DOWNLOAD_LOG_FILE
 		ShowAsProc "downloading $desc"
 
-		if OS.IsNotKernelPagesizeStd; then
+		if OS.IsNonStdKernelPageSize; then
 			target_version=2.38-1
 
 			# test if downgraded version is already installed
@@ -6091,19 +6091,19 @@ OS.IsStopping()
 
 	} &>/dev/null
 
-OS.IsKernelPagesizeStd()
+OS.IsStdKernelPageSize()
 	{
 
-	# standard kernel pagesize for most QTS is 4kB. Non-standard size is 32kB (used on the TS-431XeU).
+	# Standard kernel pagesize for most NAS appears to be 4kB. Non-standard size is 32kB (used on the TS-431XeU).
 
 	[[ ${KERNEL_PAGESIZE:=$(GetKernelPageSize)} = 4kB ]]
 
 	}
 
-OS.IsNotKernelPagesizeStd()
+OS.IsNonStdKernelPageSize()
 	{
 
-	! OS.IsKernelPagesizeStd
+	! OS.IsStdKernelPageSize
 
 	}
 
