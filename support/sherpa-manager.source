@@ -877,7 +877,6 @@ Self:Validate()
 			fi
 
 			if [[ $KERNEL_PAGESIZE = 32kB ]]; then
-# 			if [[ $KERNEL_PAGESIZE = 4kB ]]; then
 				case $NAS_QPKG_ARCH in
 					a41|a64)
 						ipks_downgrade=true
@@ -1141,6 +1140,7 @@ Actions:Proc()
 					if QPKGs-AC${action}-to.IsAny && QPKGs-ISenabled.Exist Entware; then
 						ipks_upgrade=true
 						ipks_install=true
+						ipks_downgrade=true
 						pips_install=true
 						break
 					fi
@@ -2387,6 +2387,7 @@ IPKs:upgrade()
 
 	IPKs-ACupgrade-to:Add "$($OPKG_CMD list-upgradable | cut -f1 -d' ')"
 	IPKs-ACupgrade-to:Remove "$(IPKs-ACdowngrade-to:Array)"		# don't upgrade IPKs that must remain downgraded
+	IPKs-ACupgrade-to:Remove 'ar binutils libbfd libctf libopcodes objdump'		# KLUDGE: this list isn't being created during QPKG start action, so include it manually
 	IPKs-ACdownload-to:Add "$(IPKs-ACupgrade-to:Array)"
 
 	CalcIpkDownloadSize
@@ -2446,7 +2447,6 @@ IPKs:downgrade()
 
 	if [[ $total_count -gt 0 ]]; then
 		if [[ $KERNEL_PAGESIZE = 32kB ]]; then
-# 		if [[ $KERNEL_PAGESIZE = 4kB ]]; then
 			url_prefix=http://bin.entware.net
 			target_version=2.38-1
 			url_suffix=_$target_version
