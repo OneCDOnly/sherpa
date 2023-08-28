@@ -4478,13 +4478,13 @@ UpdateForkProgress()
 
 	# all input vars are global
 
-	local msg=' '
+	local msg=''
 
 	RefreshForkCounts
 	[[ $opts_verbose = true ]] && return		# don't display progress, it's difficult to read with so-many other writes to the screen
 	[[ ! -e $DISPLAY_INHIBIT_PATHFILE ]] || return
 
-	msg+="$(PercFrac "$ok_count" "$((skip_count+skip_ok_count+skip_error_count))" "$fail_count" "$total_count")"
+	msg="$(PercFrac "$ok_count" "$((skip_count+skip_ok_count+skip_error_count))" "$fail_count" "$total_count")"
 
 	if [[ $ok_count -gt 0 ]]; then
 		[[ -n $msg ]] && msg+=': '
@@ -8828,9 +8828,9 @@ ShowAsProc()
 
 	[[ -n ${1:-} ]] || return
 	local suffix=''
-	[[ -n ${2:-} ]] && suffix=" ${2:-}"
+	[[ -n ${2:-} ]] && suffix="${2:-}"
 
-	WriteToDisplayRewriteInPlaceThenWait "$(ColourTextBrightYellow proc)" "$1 ${CHARS_ELLIPSIS}${suffix}"
+	WriteToDisplayRewriteInPlaceThenWait "$(ColourTextBrightYellow proc)" "$1 $CHARS_ELLIPSIS $suffix"
 	WriteToLog proc "${1}${suffix}"
 	[[ ${opts_verbose:=false} = true ]] && Display
 
