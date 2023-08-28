@@ -6094,7 +6094,9 @@ OS.IsStopping()
 OS.IsStdKernelPageSize()
 	{
 
-	# Standard kernel pagesize for most NAS appears to be 4kB. Non-standard size is 32kB (used on the TS-431XeU).
+	# Standard kernel pagesize for most NAS appears to be 4kB.
+	# Non-standard size is 32kB (confirmed on the TS-431XeU, TS-431X3 & TS-1635). Maybe higher-end NAS with 32b CPU get the larger pagesize?
+	# This makes the TS-431XU, TS-831XU & TS-1231XU possibilities for the larger pagesize. Must check when able.
 
 	[[ ${KERNEL_PAGESIZE:=$(GetKernelPageSize)} = 4kB ]]
 
