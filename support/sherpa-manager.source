@@ -8619,7 +8619,7 @@ ShowAsLogFilename()
 ShowAsCommand()
 	{
 
-	echo -n "${CHARS_RESULTS}command: '${1:?${FUNCNAME[0]}'()': undefined}'"
+	echo "${CHARS_RESULTS}command: '${1:?${FUNCNAME[0]}'()': undefined}'"
 
 	}
 

@@ -2,8 +2,6 @@
 
 * dbug: (WW) unidentified change in message queue: 'IScleaned'
 
-* RunAndLog() should not concat command and result_code lines.
-
 * status table on TS-559Pro+ intermittently(?) shows Deluge packages out-of-order
 	[~] # sherpa s
 	sherpa 230729-stable • a mini-package-manager for QNAP NAS
