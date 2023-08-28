@@ -1,3 +1,7 @@
+* dbug: (WW) unidentified change in message queue: 'IScleaned'
+
+* when upgrading IPKs, onscreen ellipsis should be followed by a whitepace.
+
 * RunAndLog() should not concat command and result_code lines.
 
 * debug log doesn't show which action is being processed when there is "nothing to process".
