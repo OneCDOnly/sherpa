@@ -2466,7 +2466,7 @@ IPKs:downgrade()
 			# assume test package version is same as remaining package versions
 			installed_version=$($OPKG_CMD list-installed | $GREP_CMD "^${firstpack} *" | cut -d' ' -f3)
 
-			if [[ $installed_version = $target_version ]]; then
+			if [[ $installed_version = "$target_version" ]]; then
 				# IPKs have already been downgraded
 
 				skip_count=$total_count		# assume they were all skipped
