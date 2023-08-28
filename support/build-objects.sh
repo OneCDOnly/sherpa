@@ -205,7 +205,7 @@ for action in "${IPK_ACTIONS[@]}"; do
 			continue    # action result lists are not required for these
 	esac
 
-	for prefix in to ok er; do
+	for prefix in to ok er sk; do
 		AddListObj "IPKs-AC${action}-${prefix}"
 	done
 done
