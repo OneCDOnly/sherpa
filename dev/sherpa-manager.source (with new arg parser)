@@ -136,7 +136,7 @@ Self.Results:Show()
 		elif [[ $opts_show_actions = true ]]; then
 			Report.Actions:Show
 		elif [[ $opts_show_reassign = true ]]; then
-			Help.Action.Reassign:Show
+			Report.Action.Reassign:Show
 		elif [[ $opts_show_actions_all = true ]]; then
 			Report.ActionsAll:Show
 		elif [[ $opts_show_options = true ]]; then
@@ -343,6 +343,7 @@ Vars:Load()
 	backup_stdin_fd=none
 	colourful=true
 	hide_title=false
+	ipks_downgrade=false
 	ipks_install=false
 	ipks_upgrade=false
 	linespace_visible=false
@@ -513,6 +514,8 @@ Env:Load()
 		local -r SOURCE_BRANCH=unstable
 	fi
 
+	readonly ACTION_MSG_PIPE=/var/run/sherpa.action.messages.pipe
+	readonly CERT_DB_PATHFILE=/etc/config/nas_sign_qpkg.db
 	readonly CPU_CORES=$(GetCPUCores)
 		readonly CONCURRENCY=$CPU_CORES		# maximum concurrent package actions to run. Should probably make this account for CPU speed too.
 	readonly ENTWARE_VER=$(GetEntwareType)
@@ -525,6 +528,9 @@ Env:Load()
 	readonly NAS_QPKG_ARCH=$(GetQpkgArch)
 	readonly NAS_RAM_KB=$(GetInstalledRAM)
 	readonly NAS_UPSTATE=$(GetUpState)
+	readonly OBJECTS_ARCHIVE_URL='<?cdn_sherpa_url?>'/objects.tar.gz
+	readonly PACKAGES_ARCHIVE_URL='<?cdn_sherpa_url?>'/packages.tar.gz
+	readonly QPKG_BU_PATH=$(GetDefVol)/.qpkg_config_backup
 	readonly THIS_PACKAGE_VER=$(QPKG.Local.GetVer)
 	readonly THIS_SCRIPT_VER="<?thisdate?>-$SOURCE_BRANCH"
 	readonly THIS_PACKAGE_PATH=$(QPKG.GetInstallationPath)
@@ -533,6 +539,7 @@ Env:Load()
 			readonly DISPLAY_INHIBIT_PATHFILE=$CACHE_PATH/display.inhibit
 			readonly IPK_CACHE_PATH=$CACHE_PATH/IPKs
 			readonly IPK_DL_PATH=$CACHE_PATH/IPKs.downloads
+			readonly IPK_DOWNGRADE_DL_PATH=$CACHE_PATH/IPKs.downgrade
 			readonly PIP_CACHE_PATH=$CACHE_PATH/PIPs
 			readonly OBJECTS_ARCHIVE_PATHFILE=$CACHE_PATH/objects.tar.gz
 			readonly OBJECTS_PATHFILE=$CACHE_PATH/objects
@@ -549,11 +556,6 @@ Env:Load()
 			readonly SESS_ARCHIVE_PATHFILE=$LOGS_PATH/session.archive.log
 			readonly SESS_LAST_PATHFILE=$LOGS_PATH/session.last.log
 			readonly SESS_TAIL_PATHFILE=$LOGS_PATH/session.tail.log
-	readonly ACTION_MSG_PIPE=/var/run/sherpa.action.messages.pipe
-	readonly CERT_DB_PATHFILE=/etc/config/nas_sign_qpkg.db
-	readonly OBJECTS_ARCHIVE_URL='<?cdn_sherpa_url?>'/objects.tar.gz
-	readonly PACKAGES_ARCHIVE_URL='<?cdn_sherpa_url?>'/packages.tar.gz
-	readonly QPKG_BU_PATH=$(GetDefVol)/.qpkg_config_backup
 
 	# Entware
 	readonly EXTERNAL_PACKAGES_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
@@ -612,7 +614,7 @@ Lists:Load()
 
 	local action=''
 
-	for action in "${QPKG_ACTIONS[@]}" check debug update; do
+	for action in "${QPKG_ACTIONS[@]}" check debug downgrade update; do
 		readonly "$(Uppercase "$action")"_LOG_FILE=$action.log
 	done
 
@@ -629,8 +631,9 @@ CreatePaths()
 	MakePath "$CACHE_PATH" cache || return
 	MakePath "$LOGS_PATH" logs || return
 	MakePath "$QPKG_DL_PATH" 'QPKG download' || return
-	MakePath "$IPK_DL_PATH" 'IPK download' || return
 	MakePath "$IPK_CACHE_PATH" 'IPK cache' || return
+	MakePath "$IPK_DL_PATH" 'IPK download' || return
+	MakePath "$IPK_DOWNGRADE_DL_PATH" 'IPK downgrade' || return
 	MakePath "$PIP_CACHE_PATH" 'PIP cache' || return
 	MakePath "$ACTION_TIMES_PATH" 'action times' || return
 	MakePath "$QPKG_BU_PATH" 'QPKG backup' || return
@@ -667,7 +670,7 @@ Debug.Log:Env()
 
 	DebugFirmware ok 'kernel version' "$(GetKernelVersion)"
 
-	if [[ $KERNEL_PAGESIZE = '4kB' ]]; then
+	if OS.IsKernelPagesizeStd; then
 		DebugFirmware ok 'kernel page size' "$KERNEL_PAGESIZE"
 	else
 		DebugFirmware warning 'kernel page size' "$KERNEL_PAGESIZE"
@@ -842,29 +845,41 @@ Self:Validate()
 
 	# Decide if IPKs and PIPs should be installed/upgraded
 
-	if [[ $opts_check = true ]] || QPKGs-ACupgrade-to.Exist Entware || QPKGs-ACinstall-to.Exist Entware || QPKGs-ACreinstall-to.Exist Entware; then
-		if QPKG.IsEnabled Entware; then
-			ipks_upgrade=true
-			ipks_install=true
-			pips_install=true
+	if [[ $opts_check = true ]] || QPKGs-ACupgrade-to.Exist Entware; then
+		ipks_upgrade=true
+		ipks_install=true
+		pips_install=true
 
-			if [[ -e $PYTHON3_CMD ]]; then
-				installed_ver=$(GetPython3Ver "$PYTHON3_CMD")
+		if [[ -e $PYTHON3_CMD ]]; then
+			installed_ver=$(GetPython3Ver "$PYTHON3_CMD")
 
-				if [[ ${installed_ver//./} -lt $MIN_PYTHON_VER ]]; then
-					ShowAsInfo 'the installed Python environment will be upgraded'
-					IPKs-ACuninstall-to:Add 'python*'
-				fi
+			if [[ ${installed_ver//./} -lt $MIN_PYTHON_VER ]]; then
+				ShowAsInfo 'the installed Python environment will be upgraded'
+				IPKs-ACuninstall-to:Add 'python*'
 			fi
+		fi
 
-			if [[ -e $PERL_CMD ]]; then
-				installed_ver=$(GetPerlVer "$PERL_CMD")
+		if [[ -e $PERL_CMD ]]; then
+			installed_ver=$(GetPerlVer "$PERL_CMD")
 
-				if [[ ${installed_ver//./} -lt $MIN_PERL_VER ]]; then
-					ShowAsInfo 'the installed Perl environment will be upgraded'
-					IPKs-ACuninstall-to:Add 'perl*'
-				fi
+			if [[ ${installed_ver//./} -lt $MIN_PERL_VER ]]; then
+				ShowAsInfo 'the installed Perl environment will be upgraded'
+				IPKs-ACuninstall-to:Add 'perl*'
 			fi
+		fi
+	fi
+
+	# Decide if IPKs should be uninstalled/downgraded
+
+	if OS.IsNotKernelPagesizeStd; then
+		case $NAS_QPKG_ARCH in
+			a41|a64)
+				ipks_downgrade=true
+		esac
+
+		if [[ $ipks_downgrade = true ]]; then
+			ShowAsInfo "IPKs will be downgraded to suit $KERNEL_PAGESIZE kernel pagesize"
+			IPKs-ACdowngrade-to:Add 'ar binutils libbfd libctf libopcodes objdump'
 		fi
 	fi
 
@@ -1119,6 +1134,7 @@ Actions:Proc()
 					if QPKGs-AC${action}-to.IsAny && QPKGs-ISenabled.Exist Entware; then
 						ipks_upgrade=true
 						ipks_install=true
+						ipks_downgrade=true
 						pips_install=true
 						break
 					fi
@@ -1128,6 +1144,7 @@ Actions:Proc()
 					ModPathToEntware
 					Action:Proc upgrade $tier IPK upgrading upgraded
 					Action:Proc install $tier IPK installing installed
+					Action:Proc downgrade $tier IPK downgrading downgraded
 					Action:Proc install $tier PIP installing installed
 				fi
 		esac
@@ -1179,6 +1196,10 @@ Action:Proc()
 	local original_colourful=$colourful
 	local -r ACTION_TIMES_PATHFILE=$ACTION_TIMES_PATH/$TARGET_ACTION.milliseconds
 	local buffer=''
+
+	DebugVar TARGET_ACTION
+	DebugVar TIER
+	DebugVar PACKAGE_TYPE
 
 	case $PACKAGE_TYPE in
 		QPKG)
@@ -1324,7 +1345,7 @@ Action:Proc()
 
 			;;
 		IPK|PIP)
-			if [[ $ipks_upgrade = true || $ipks_install = true || $pips_install = true ]]; then
+			if [[ $ipks_upgrade = true || $ipks_install = true || $ipks_downgrade || $pips_install = true ]]; then
 				ShowAsProc "$ACTION_PRESENT_MSG $([[ $TIER != all ]] && echo "$TIER ")$(Uppercase "$PACKAGE_TYPE")s"
 				InitForkCounts
 				${PACKAGE_TYPE}s:${TARGET_ACTION}	# only process these packages in groups, not individually
@@ -1935,6 +1956,7 @@ AllocPackGroupsToAcs()
 	ShowAsProc 'matching QPKGs to actions'
 	local action=''
 	local group=''
+	local state=''
 	local prospect=''
 	local found=false		# group has been found
 
@@ -2511,6 +2533,7 @@ IPKs:upgrade()
 	IPKs-ACdownload-to:Init
 
 	IPKs-ACupgrade-to:Add "$($OPKG_CMD list-upgradable | cut -f1 -d' ')"
+	IPKs-ACupgrade-to:Remove "$(IPKs-ACdowngrade-to:Array)"		# don't upgrade IPKs that must remain downgraded
 	IPKs-ACdownload-to:Add "$(IPKs-ACupgrade-to:Array)"
 
 	CalcIpkDownloadSize
@@ -2545,6 +2568,103 @@ IPKs:upgrade()
 
 	}
 
+IPKs:downgrade()
+	{
+
+	# downgrade specific installed IPKs
+
+	[[ $ipks_downgrade = true ]] || return
+	QPKGs-ISenabled.Exist Entware || return
+	UpdateEntwarePackageList
+	Self.Error.IsNt || return
+
+	Func:Init
+	local -i total_count=0
+	local -i result_code=0
+	local package_name=''
+	local remote_url=''
+	local desc=''
+	local log_pathfile=''
+	local url_prefix=''
+	local url_suffix=''
+	local target_version=''
+	local firstpack=''
+	local installed_version=''
+	IPKs-ACdownload-to:Init
+	total_count=$(IPKs-ACdowngrade-to:Count)
+
+	if [[ $total_count -gt 0 ]]; then
+		desc="$total_count IPK module$(Pluralise "$total_count")"
+		log_pathfile=$LOGS_PATH/ipks.$DOWNLOAD_LOG_FILE
+		ShowAsProc "downloading $desc"
+
+		if OS.IsNotKernelPagesizeStd; then
+			target_version=2.38-1
+
+			# test if downgraded version is already installed
+
+			# only test first IPK name in array
+			firstpack=$(IPKs-ACdowngrade-to:Array | cut -d' ' -f1)
+
+			# assume test package version is same as remaining package versions
+			installed_version=$($OPKG_CMD list-installed | $GREP_CMD "^${firstpack} *" | cut -d' ' -f3)
+
+			if [[ $installed_version = "$target_version" ]]; then
+				# IPKs have already been downgraded
+
+				skip_count=$total_count		# assume they were all skipped
+				NoteIpkAcAsSk "$(IPKs-ACdowngrade-to:Array)" downgrade
+				DebugAsDone "skipped $desc"
+				SaveActionResultToLog IPK "$desc" downgrade sk "$result_code"
+
+				Func:Exit; return
+			fi
+
+			url_prefix=http://bin.entware.net
+			url_suffix=_$target_version
+
+			case $NAS_QPKG_ARCH in
+				a64)
+					url_prefix+='/aarch64-k3.10'
+					url_suffix+='_aarch64-3.10'
+					;;
+				a41)
+					url_prefix+='/armv7sf-k3.2'
+					url_suffix+='_armv7-3.2'
+			esac
+
+			url_prefix+=/archive/
+			url_suffix+=.ipk
+
+		fi
+
+		for package_name in $(IPKs-ACdowngrade-to:Array); do
+			remote_url="${url_prefix}${package_name}${url_suffix}"
+			local_pathfile="$IPK_DOWNGRADE_DL_PATH/$($BASENAME_CMD "$remote_url")"
+			RunAndLog "$CURL_CMD${curl_insecure_arg} --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
+		done
+
+		log_pathfile=$LOGS_PATH/ipks.$DOWNGRADE_LOG_FILE
+		ShowAsProc "downgrading $desc"
+		RunAndLog "$OPKG_CMD install --force-downgrade --cache $IPK_CACHE_PATH --tmp-dir $IPK_DOWNGRADE_DL_PATH $IPK_DOWNGRADE_DL_PATH/*.ipk" "$log_pathfile" log:failure-only
+		result_code=$?
+
+		if [[ $result_code -eq 0 ]]; then
+			ok_count=$total_count		# assume they all passed
+			NoteIpkAcAsOk "$(IPKs-ACdowngrade-to:Array)" downgrade
+			DebugAsDone "downgraded $desc"
+			SaveActionResultToLog IPK "$desc" downgrade ok "$result_code"
+		else
+			ShowAsFail "downgrade $total_count IPK$(Pluralise "$total_count") failed $(ShowAsExitcode "$result_code")"
+			NoteIpkAcAsEr "$(IPKs-ACdowngrade-to:Array)" downgrade
+			SaveActionResultToLog IPK "$desc" downgrade failed "$result_code"
+		fi
+	fi
+
+	Func:Exit $result_code
+
+	}
+
 IPKs:install()
 	{
 
@@ -2562,7 +2682,7 @@ IPKs:install()
 	IPKs-ACinstall-to:Init
 	IPKs-ACdownload-to:Init
 
-	if QPKGs-ACinstall-ok.Exist Entware; then
+	if QPKGs-ACinstall-ok.Exist Entware || ([[ $opts_check = true ]] && QPKG.IsInstalled Entware); then
 		IPKs-ACinstall-to:Add "$ESSENTIAL_IPKS"
 
 # 		if [[ -e $PREV_IPK_LIST ]]; then
@@ -3963,7 +4083,7 @@ Report.Actions:Show()
 
 	}
 
-Help.Action.Reassign:Show()
+Report.Action.Reassign:Show()
 	{
 
 	DisplayAsProjSynIndentExam "reassign packages to $(ShowTitleName). Use this action to detach QPKGs previously installed via an online repository from further management by that repository" "reassign $(ShowPackages)"
@@ -4664,13 +4784,13 @@ UpdateForkProgress()
 
 	# all input vars are global
 
-	local msg=' '
+	local msg=''
 
 	RefreshForkCounts
 	[[ $opts_verbose = true ]] && return		# don't display progress, it's difficult to read with so-many other writes to the screen
 	[[ ! -e $DISPLAY_INHIBIT_PATHFILE ]] || return
 
-	msg+="$(PercFrac "$ok_count" "$((skip_count+skip_ok_count+skip_error_count))" "$fail_count" "$total_count")"
+	msg="$(PercFrac "$ok_count" "$((skip_count+skip_ok_count+skip_error_count))" "$fail_count" "$total_count")"
 
 	if [[ $ok_count -gt 0 ]]; then
 		[[ -n $msg ]] && msg+=': '
@@ -5685,6 +5805,22 @@ NoteIpkAcAsOk()
 
 	}
 
+NoteIpkAcAsSk()
+	{
+
+	# move specified IPK package name from `to` action array into associated `sk` array
+
+	# input:
+	#   $1 = package name
+	#   $2 = action
+
+	IPKs-AC"$2"-to:Remove "$1"
+	IPKs-AC"$2"-sk:Add "$1"
+
+	return 0
+
+	}
+
 NoteIpkAcAsEr()
 	{
 
@@ -6065,6 +6201,22 @@ OS.IsStopping()
 	$PS_CMD | $GREP_CMD -F '/bin/sh /etc/init.d/rcK' | $GREP_CMD -v grep
 
 	} &>/dev/null
+
+OS.IsKernelPagesizeStd()
+	{
+
+	# standard kernel pagesize for most QTS is 4kB. Non-standard size is 32kB (used on the TS-431XeU).
+
+	[[ ${KERNEL_PAGESIZE:=$(GetKernelPageSize)} = 4kB ]]
+
+	}
+
+OS.IsNotKernelPagesizeStd()
+	{
+
+	! OS.IsKernelPagesizeStd
+
+	}
 
 Self.Error:Set()
 	{
@@ -9051,9 +9203,9 @@ ShowAsProc()
 
 	[[ -n ${1:-} ]] || return
 	local suffix=''
-	[[ -n ${2:-} ]] && suffix=" ${2:-}"
+	[[ -n ${2:-} ]] && suffix="${2:-}"
 
-	WriteToDisplayRewriteInPlaceThenWait "$(ColourTextBrightYellow proc)" "$1 ${CHARS_ELLIPSIS}${suffix}"
+	WriteToDisplayRewriteInPlaceThenWait "$(ColourTextBrightYellow proc)" "$1 $CHARS_ELLIPSIS $suffix"
 	WriteToLog proc "${1}${suffix}"
 	[[ ${opts_verbose:=false} = true ]] && Display
 
