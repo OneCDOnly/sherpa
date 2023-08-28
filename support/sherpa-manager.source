@@ -672,7 +672,7 @@ Debug.Log:Env()
 
 	DebugFirmware ok 'kernel version' "$(GetKernelVersion)"
 
-	if [[ $KERNEL_PAGESIZE = 4kB ]]; then
+	if OS.IsKernelPagesizeStd; then
 		DebugFirmware ok 'kernel page size' "$KERNEL_PAGESIZE"
 	else
 		DebugFirmware warning 'kernel page size' "$KERNEL_PAGESIZE"
@@ -852,41 +852,41 @@ Self:Validate()
 
 	# Decide if IPKs and PIPs should be installed/upgraded
 
-	if [[ $opts_check = true ]] || QPKGs-ACupgrade-to.Exist Entware || QPKGs-ACinstall-to.Exist Entware || QPKGs-ACreinstall-to.Exist Entware; then
-		if QPKG.IsEnabled Entware; then
-			ipks_upgrade=true
-			ipks_install=true
-			pips_install=true
+	if [[ $opts_check = true ]] || QPKGs-ACupgrade-to.Exist Entware; then
+		ipks_upgrade=true
+		ipks_install=true
+		pips_install=true
 
-			if [[ -e $PYTHON3_CMD ]]; then
-				installed_ver=$(GetPython3Ver "$PYTHON3_CMD")
+		if [[ -e $PYTHON3_CMD ]]; then
+			installed_ver=$(GetPython3Ver "$PYTHON3_CMD")
 
-				if [[ ${installed_ver//./} -lt $MIN_PYTHON_VER ]]; then
-					ShowAsInfo 'the installed Python environment will be upgraded'
-					IPKs-ACuninstall-to:Add 'python*'
-				fi
+			if [[ ${installed_ver//./} -lt $MIN_PYTHON_VER ]]; then
+				ShowAsInfo 'the installed Python environment will be upgraded'
+				IPKs-ACuninstall-to:Add 'python*'
 			fi
+		fi
 
-			if [[ -e $PERL_CMD ]]; then
-				installed_ver=$(GetPerlVer "$PERL_CMD")
+		if [[ -e $PERL_CMD ]]; then
+			installed_ver=$(GetPerlVer "$PERL_CMD")
 
-				if [[ ${installed_ver//./} -lt $MIN_PERL_VER ]]; then
-					ShowAsInfo 'the installed Perl environment will be upgraded'
-					IPKs-ACuninstall-to:Add 'perl*'
-				fi
+			if [[ ${installed_ver//./} -lt $MIN_PERL_VER ]]; then
+				ShowAsInfo 'the installed Perl environment will be upgraded'
+				IPKs-ACuninstall-to:Add 'perl*'
 			fi
+		fi
+	fi
 
-			if [[ $KERNEL_PAGESIZE = 32kB ]]; then
-				case $NAS_QPKG_ARCH in
-					a41|a64)
-						ipks_downgrade=true
-				esac
+	# Decide if IPKs should be uninstalled/downgraded
 
-				if [[ $ipks_downgrade = true ]]; then
-					ShowAsInfo "IPKs will be downgraded to suit $KERNEL_PAGESIZE kernel pagesize"
-					IPKs-ACdowngrade-to:Add 'ar binutils libbfd libctf libopcodes objdump'
-				fi
-			fi
+	if OS.IsNotKernelPagesizeStd; then
+		case $NAS_QPKG_ARCH in
+			a41|a64)
+				ipks_downgrade=true
+		esac
+
+		if [[ $ipks_downgrade = true ]]; then
+			ShowAsInfo "IPKs will be downgraded to suit $KERNEL_PAGESIZE kernel pagesize"
+			IPKs-ACdowngrade-to:Add 'ar binutils libbfd libctf libopcodes objdump'
 		fi
 	fi
 
@@ -1203,6 +1203,10 @@ Action:Proc()
 	local -r ACTION_TIMES_PATHFILE=$ACTION_TIMES_PATH/$TARGET_ACTION.milliseconds
 	local buffer=''
 
+	DebugVar TARGET_ACTION
+	DebugVar TIER
+	DebugVar PACKAGE_TYPE
+
 	case $PACKAGE_TYPE in
 		QPKG)
 			TARGET_OBJECT_NAME=AC${TARGET_ACTION}-to
@@ -1347,7 +1351,7 @@ Action:Proc()
 
 			;;
 		IPK|PIP)
-			if [[ $ipks_upgrade = true || $ipks_install = true || $pips_install = true ]]; then
+			if [[ $ipks_upgrade = true || $ipks_install = true || $ipks_downgrade || $pips_install = true ]]; then
 				ShowAsProc "$ACTION_PRESENT_MSG $([[ $TIER != all ]] && echo "$TIER ")$(Uppercase "$PACKAGE_TYPE")s"
 				InitForkCounts
 				${PACKAGE_TYPE}s:${TARGET_ACTION}	# only process these packages in groups, not individually
@@ -2387,7 +2391,6 @@ IPKs:upgrade()
 
 	IPKs-ACupgrade-to:Add "$($OPKG_CMD list-upgradable | cut -f1 -d' ')"
 	IPKs-ACupgrade-to:Remove "$(IPKs-ACdowngrade-to:Array)"		# don't upgrade IPKs that must remain downgraded
-	IPKs-ACupgrade-to:Remove 'ar binutils libbfd libctf libopcodes objdump'		# KLUDGE: this list isn't being created during QPKG start action, so include it manually
 	IPKs-ACdownload-to:Add "$(IPKs-ACupgrade-to:Array)"
 
 	CalcIpkDownloadSize
@@ -2442,13 +2445,39 @@ IPKs:downgrade()
 	local url_prefix=''
 	local url_suffix=''
 	local target_version=''
+	local firstpack=''
+	local installed_version=''
 	IPKs-ACdownload-to:Init
 	total_count=$(IPKs-ACdowngrade-to:Count)
 
 	if [[ $total_count -gt 0 ]]; then
-		if [[ $KERNEL_PAGESIZE = 32kB ]]; then
-			url_prefix=http://bin.entware.net
+		desc="$total_count IPK module$(Pluralise "$total_count")"
+		log_pathfile=$LOGS_PATH/ipks.$DOWNLOAD_LOG_FILE
+		ShowAsProc "downloading $desc"
+
+		if OS.IsNotKernelPagesizeStd; then
 			target_version=2.38-1
+
+			# test if downgraded version is already installed
+
+			# only test first IPK name in array
+			firstpack=$(IPKs-ACdowngrade-to:Array | cut -d' ' -f1)
+
+			# assume test package version is same as remaining package versions
+			installed_version=$($OPKG_CMD list-installed | $GREP_CMD "^${firstpack} *" | cut -d' ' -f3)
+
+			if [[ $installed_version = $target_version ]]; then
+				# IPKs have already been downgraded
+
+				skip_count=$total_count		# assume they were all skipped
+				NoteIpkAcAsSk "$(IPKs-ACdowngrade-to:Array)" downgrade
+				DebugAsDone "skipped $desc"
+				SaveActionResultToLog IPK "$desc" downgrade sk "$result_code"
+
+				Func:Exit; return
+			fi
+
+			url_prefix=http://bin.entware.net
 			url_suffix=_$target_version
 
 			case $NAS_QPKG_ARCH in
@@ -2465,10 +2494,6 @@ IPKs:downgrade()
 			url_suffix+=.ipk
 
 		fi
-
-		desc="$total_count IPK module$(Pluralise "$total_count")"
-		log_pathfile=$LOGS_PATH/ipks.$DOWNLOAD_LOG_FILE
-		ShowAsProc "downloading $desc"
 
 		for package_name in $(IPKs-ACdowngrade-to:Array); do
 			remote_url="${url_prefix}${package_name}${url_suffix}"
@@ -5414,6 +5439,22 @@ NoteIpkAcAsOk()
 
 	}
 
+NoteIpkAcAsSk()
+	{
+
+	# move specified IPK package name from `to` action array into associated `sk` array
+
+	# input:
+	#   $1 = package name
+	#   $2 = action
+
+	IPKs-AC"$2"-to:Remove "$1"
+	IPKs-AC"$2"-sk:Add "$1"
+
+	return 0
+
+	}
+
 NoteIpkAcAsEr()
 	{
 
@@ -5794,6 +5835,22 @@ OS.IsStopping()
 	$PS_CMD | $GREP_CMD -F '/bin/sh /etc/init.d/rcK' | $GREP_CMD -v grep
 
 	} &>/dev/null
+
+OS.IsKernelPagesizeStd()
+	{
+
+	# standard kernel pagesize for most QTS is 4kB. Non-standard size is 32kB (used on the TS-431XeU).
+
+	[[ ${KERNEL_PAGESIZE:=$(GetKernelPageSize)} = 4kB ]]
+
+	}
+
+OS.IsNotKernelPagesizeStd()
+	{
+
+	! OS.IsKernelPagesizeStd
+
+	}
 
 Self.Error:Set()
 	{
