@@ -19,7 +19,7 @@ PACKAGE_TIERS=(standalone addon dependent)
 QPKG_IS_STATES=(active backedup downloaded enabled installed missing signed slow unknown)
 QPKG_ISNT_STATES=(active backedup downloaded enabled installed signed)
 QPKG_STATES_TRANSIENT=(starting stopping restarting)
-QPKG_SERVICE_RESULTS=(ok failed unknown)
+QPKG_SERVICE_RESULTS=(ok failed)
 
 # sorted
 IPK_STATES=(downgraded downloaded installed reinstalled upgraded)
