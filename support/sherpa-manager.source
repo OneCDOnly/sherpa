@@ -568,7 +568,7 @@ Lists:Load()
 	QPKG_IS_STATES=(active backedup downloaded enabled installed missing signed slow unknown)
 	QPKG_ISNT_STATES=(active backedup downloaded enabled installed signed)
 	QPKG_STATES_TRANSIENT=(starting stopping restarting)
-	QPKG_SERVICE_RESULTS=(ok failed unknown)
+	QPKG_SERVICE_RESULTS=(ok failed)
 
 	# sorted
 	IPK_STATES=(downloaded installed reinstalled upgraded)
@@ -1157,7 +1157,6 @@ Actions:Proc()
 		QPKGs.Actions:List
 	fi
 
-	[[ $opts_verbose = true ]] && QPKGs.States:List rebuild		# rebuild these after processing QPKGs to get current states
 	Func:Exit
 
 	}
@@ -4365,6 +4364,16 @@ DisplayFileInWindow()
 		return 1
 	fi
 
+	if [[ $opts_verbose = true ]]; then
+		if [[ -e $CAT_CMD ]]; then
+			$CAT_CMD "$filename"
+			return
+		else
+			echo "$(<$1)"
+			return
+		fi
+	fi
+
 	if [[ -e $GNU_LESS_CMD ]]; then
 		[[ $showlinenumbers = true ]] && showlinenumbers_msg=' --LINE-NUMBERS'
 		[[ $jumptoend = true ]] && jumptoend_msg=' +G'
@@ -4390,7 +4399,7 @@ DisplayFileInWindow()
 			return
 		fi
 	else
-		# if linenumbers are not required, then prefer 'more' over 'cat' as 'more' can pause after each pageful of data.
+		# if linenumbers are not required, then prefer 'more' over 'cat', as 'more' can pause after each pageful of data.
 
 		if [[ -e $MORE_CMD ]]; then
 			$MORE_CMD "$filename"
@@ -7206,7 +7215,6 @@ _QPKG:clean_()
 	if [[ $result_code -eq 0 ]]; then
 		QPKG.ServiceStatus:Log
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" clean ok
-		SendPackageStateChange IScleaned
 		MarkThisActionForkAsOk
 	else
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" clean failed "$result_code"
