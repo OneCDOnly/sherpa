@@ -242,9 +242,9 @@ Self.Results:Show()
 	[[ $self_archive_debug_afterward = true ]] && ArchiveActiveSessLog
 	ResetActiveSessLog
 
-# 	if [[ $opts_verbose = false ]]; then
-# 		WriteEmptyLineIfNoneExists   # final on-screen linespace
-# 	fi
+	if [[ $opts_verbose = false ]]; then
+		WriteEmptyLineIfNoneExists   # final on-screen linespace
+	fi
 
 	}
 
@@ -4179,11 +4179,7 @@ Report.Results:Show()
 
 	WriteEraseThisLine		# clear the "proc:" message shown earlier
 
-	if [[ -e $REPORT_PATHFILE ]]; then
-		DisplayFileInWindow "$REPORT_PATHFILE"
-	else
-		ShowAsError 'no information to display'
-	fi
+	[[ -e $REPORT_PATHFILE ]] && $CAT_CMD "$REPORT_PATHFILE"
 
 	return 0
 
