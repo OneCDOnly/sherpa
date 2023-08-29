@@ -11,7 +11,7 @@ objects_built=false
 Objects:Load()
 	{
 
-	readonly OBJECTS_PATHFILE="$source_path"/objects
+	readonly OBJECTS_PATHFILE="$source_path/$objects_file"
 
 	if [[ ! -e $OBJECTS_PATHFILE ]]; then
 		./build-objects.sh &>/dev/null
@@ -32,7 +32,7 @@ Objects:Load()
 Packages:Load()
 	{
 
-	readonly PACKAGES_PATHFILE="$source_path"/packages.source
+	readonly PACKAGES_PATHFILE="$source_path/$packages_source_file"
 
 	if [[ ! -e $PACKAGES_PATHFILE ]]; then
 		echo 'package list missing'
