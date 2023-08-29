@@ -842,8 +842,7 @@ Self:Validate()
 	local package=''
 	local action=''
 	local prospect=''
-	local target_version=''
-	local test_package=''
+	local target_packages=''
 
 	# Decide if particular IPKs and PIPs should be installed/upgraded
 
@@ -876,18 +875,17 @@ Self:Validate()
 	if OS.IsNonStdKernelPageSize; then
 		case $NAS_QPKG_ARCH in
 			a41|a64)
-				target_version=2.38-1
-				test_package=ar
+				target_packages='ar binutils libbfd libctf libopcodes objdump'
 
-				# assume test package version is same as remaining package versions
-				installed_version=$($OPKG_CMD list-installed | $GREP_CMD "^${test_package} *" | cut -d' ' -f3)
+				# assume first package version is same as remaining package versions
+				installed_version=$($OPKG_CMD list-installed | $GREP_CMD "^${target_packages%% *} *" | cut -d' ' -f3 | cut -d'-' -f1)
 
-				if [[ $installed_version != "$target_version" ]]; then
+				if [[ ${installed_version//.} -gt 238 ]]; then
 					ipks_downgrade=true
 					ShowAsInfo "IPKs will be downgraded to suit $KERNEL_PAGESIZE kernel pagesize"
-					IPKs-ACdowngrade-to:Add 'ar binutils libbfd libctf libopcodes objdump'
+					IPKs-ACdowngrade-to:Add "$target_packages"
 				else
-					IPKs-ACdowngrade-sk:Add 'ar binutils libbfd libctf libopcodes objdump'
+					IPKs-ACdowngrade-sk:Add "$target_packages"
 				fi
 		esac
 	fi
@@ -3882,7 +3880,7 @@ EraseThisLine()
 	[[ ${opts_verbose:-false} = true ]] && return
 
 	printf '\033[2K\r'
- 	linespace_visible=true
+	linespace_visible=true
 
 	} >&2
 
@@ -6116,14 +6114,14 @@ Self.Error:Set()
 Self.Error.IsSet()
 	{
 
-	[[ ${_script_error_flag_:-} = true ]]
+	[[ ${_script_error_flag_:=false} = true ]]
 
 	}
 
 Self.Error.IsNt()
 	{
 
-	[[ ${_script_error_flag_:-} != true ]]
+	[[ ${_script_error_flag_:=false} != true ]]
 
 	}
 
