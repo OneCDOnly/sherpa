@@ -154,8 +154,16 @@ qpkgs_path="$HOME"/scripts/nas/sherpa/QPKGs
 wiki_path="$HOME"/documents/sherpa.wiki
 docs_path="$HOME"/scripts/nas/sherpa/docs
 
+management_source_file=sherpa-manager.source
+management_file=sherpa-manager.sh
+management_archive_file=sherpa-manager.tar.gz
+
+objects_file=objects
+objects_archive_file=objects.tar.gz
+
 packages_source_file=packages.source
 packages_file=packages
+packages_archive_file=packages.tar.gz
 
 service_library_source_file=service-library.source
 service_library_file=service.lib

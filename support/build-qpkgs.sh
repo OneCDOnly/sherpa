@@ -33,9 +33,9 @@ SwapTags()
 
 	}
 
-source_pathfile=$source_path/$service_library_source_file
-target_pathfile=$source_path/$service_library_file
-datetime_change_reference_pathfile=$target_pathfile
+source_pathfile="$source_path/$service_library_source_file"
+target_pathfile="$source_path/$service_library_file"
+datetime_change_reference_pathfile="$target_pathfile"
 rebuild_functions=false
 rebuilt_functions=false
 

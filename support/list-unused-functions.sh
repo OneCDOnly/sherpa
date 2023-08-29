@@ -7,13 +7,13 @@ fi
 
 . ./vars.source
 
-source_pathfile="$source_path"/sherpa.manager.source
+source_pathfile="$source_path/$management_source_file"
 target_func=''
 
 # shellcheck disable=SC2013
 for target_func in $(grep '()$' "$source_pathfile" | grep -v '=\|\$\|_(' | sed 's|()||g'); do
 	case $target_func in
-		IPKs:upgrade|IPKs:install|PIPs:install)		# called by constructing the function name with vars
+		IPKs:upgrade|IPKs:install|IPKs:downgrade|PIPs:install)		# called by constructing the function name with vars
 			continue
 			;;
 		QPKGs.Actions:ListAll|QPKG.GetAppAuthor)	# unused for-now
