@@ -10,9 +10,9 @@ fi
 declare -a source_pathfiles
 declare -i index=0
 
-source_pathfiles+=("$source_path"/objects)
-source_pathfiles+=("$source_path"/packages)
-source_pathfiles+=("$source_path"/sherpa-manager.sh)
+source_pathfiles+=("$source_path/$objects_file")
+source_pathfiles+=("$source_path/$packages_file")
+source_pathfiles+=("$source_path/$management_file")
 
 for index in "${!source_pathfiles[@]}"; do
 	[[ -e ${source_pathfiles[index]} ]] && rm -f "${source_pathfiles[index]}"
