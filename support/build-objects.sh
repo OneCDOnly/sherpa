@@ -9,7 +9,7 @@ fi
 
 echo -n "building 'objects' ... "
 
-target_pathfile="$source_path"/objects
+target_pathfile="$source_path/$objects_file"
 
 # these are used internally by sherpa -----------------------------------------------------
 # ordered
