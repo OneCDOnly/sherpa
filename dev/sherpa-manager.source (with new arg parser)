@@ -574,7 +574,7 @@ Lists:Load()
 	QPKG_IS_STATES=(active backedup downloaded enabled installed missing signed slow unknown)
 	QPKG_ISNT_STATES=(active backedup downloaded enabled installed signed)
 	QPKG_STATES_TRANSIENT=(starting stopping restarting)
-	QPKG_SERVICE_RESULTS=(ok failed unknown)
+	QPKG_SERVICE_RESULTS=(ok failed)
 
 	# sorted
 	IPK_STATES=(downloaded installed reinstalled upgraded)
@@ -670,7 +670,7 @@ Debug.Log:Env()
 
 	DebugFirmware ok 'kernel version' "$(GetKernelVersion)"
 
-	if OS.IsKernelPagesizeStd; then
+	if OS.IsStdKernelPageSize; then
 		DebugFirmware ok 'kernel page size' "$KERNEL_PAGESIZE"
 	else
 		DebugFirmware warning 'kernel page size' "$KERNEL_PAGESIZE"
@@ -842,8 +842,10 @@ Self:Validate()
 	local package=''
 	local action=''
 	local prospect=''
+	local target_version=''
+	local test_package=''
 
-	# Decide if IPKs and PIPs should be installed/upgraded
+	# Decide if particular IPKs and PIPs should be installed/upgraded
 
 	if [[ $opts_check = true ]] || QPKGs-ACupgrade-to.Exist Entware; then
 		ipks_upgrade=true
@@ -869,18 +871,25 @@ Self:Validate()
 		fi
 	fi
 
-	# Decide if IPKs should be uninstalled/downgraded
+	# Decide if particular IPKs should be uninstalled/downgraded
 
-	if OS.IsNotKernelPagesizeStd; then
+	if OS.IsNonStdKernelPageSize; then
 		case $NAS_QPKG_ARCH in
 			a41|a64)
-				ipks_downgrade=true
-		esac
+				target_version=2.38-1
+				test_package=ar
 
-		if [[ $ipks_downgrade = true ]]; then
-			ShowAsInfo "IPKs will be downgraded to suit $KERNEL_PAGESIZE kernel pagesize"
-			IPKs-ACdowngrade-to:Add 'ar binutils libbfd libctf libopcodes objdump'
-		fi
+				# assume test package version is same as remaining package versions
+				installed_version=$($OPKG_CMD list-installed | $GREP_CMD "^${test_package} *" | cut -d' ' -f3)
+
+				if [[ $installed_version != "$target_version" ]]; then
+					ipks_downgrade=true
+					ShowAsInfo "IPKs will be downgraded to suit $KERNEL_PAGESIZE kernel pagesize"
+					IPKs-ACdowngrade-to:Add 'ar binutils libbfd libctf libopcodes objdump'
+				else
+					IPKs-ACdowngrade-sk:Add 'ar binutils libbfd libctf libopcodes objdump'
+				fi
+		esac
 	fi
 
 	QPKGs.IsCanBackup:Build
@@ -1160,7 +1169,6 @@ Actions:Proc()
 		QPKGs.Actions:List
 	fi
 
-	[[ $opts_verbose = true ]] && QPKGs.States:List rebuild		# rebuild these after processing QPKGs to get current states
 	Func:Exit
 
 	}
@@ -1829,7 +1837,7 @@ ParseArgs()
 		[[ $arg_identified = false ]] && ARGs-unknown:Add "$arg"
 	done
 
-	# test if an action has been determined, but no target group has been found.
+	# when an action has been determined, but no group was found, then show default information. This will usually be the help screen.
 
 	if [[ -n $action && $group_identified = false ]]; then
 		case $action in
@@ -2429,7 +2437,7 @@ CalcIpkDepsToInstall()
 	DebugInfo "$requested_count IPK$(Pluralise "$requested_count") requested" "'$req_list' "
 
 	while [[ $iterations -lt $ITERATION_LIMIT ]]; do
-		ShowAsIncrementalProgress 'resolving IPK dependencies' "$iterations" iteration "${#dep_acc[@]}" package
+		ShowAsIterativeProgress 'resolving IPK dependencies' "$iterations" iteration "${#dep_acc[@]}" package
 
 		((iterations++))
 		local ipk_titles=$(printf '^Package: %s$\|' "${this_list[@]}")
@@ -2438,7 +2446,7 @@ CalcIpkDepsToInstall()
 		this_list=($($GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator '^Package:\|^Depends:' "$EXTERNAL_PACKAGES_PATHFILE" | $GNU_GREP_CMD -vG '^Section:\|^Version:' | $GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator "$ipk_titles" | $GNU_GREP_CMD -vG "$ipk_titles" | $GNU_GREP_CMD -vG '^Package: ' | $SED_CMD 's|^Depends: ||;s|, |\n|g' | $SORT_CMD | $UNIQ_CMD))
 
 		# update progress twice per loop
-		ShowAsIncrementalProgress 'resolving IPK dependencies' "$iterations" iteration "${#dep_acc[@]}" package
+		ShowAsIterativeProgress 'resolving IPK dependencies' "$iterations" iteration "${#dep_acc[@]}" package
 
 		if [[ ${#this_list[@]} -eq 0 ]]; then
 			complete=true
@@ -2533,7 +2541,11 @@ IPKs:upgrade()
 	IPKs-ACdownload-to:Init
 
 	IPKs-ACupgrade-to:Add "$($OPKG_CMD list-upgradable | cut -f1 -d' ')"
-	IPKs-ACupgrade-to:Remove "$(IPKs-ACdowngrade-to:Array)"		# don't upgrade IPKs that must remain downgraded
+
+	# don't upgrade IPKs that must remain downgraded
+	IPKs-ACupgrade-to:Remove "$(IPKs-ACdowngrade-to:Array)"
+	IPKs-ACupgrade-to:Remove "$(IPKs-ACdowngrade-sk:Array)"
+
 	IPKs-ACdownload-to:Add "$(IPKs-ACupgrade-to:Array)"
 
 	CalcIpkDownloadSize
@@ -2580,6 +2592,7 @@ IPKs:downgrade()
 
 	Func:Init
 	local -i total_count=0
+	local -i iterations=0
 	local -i result_code=0
 	local package_name=''
 	local remote_url=''
@@ -2587,9 +2600,6 @@ IPKs:downgrade()
 	local log_pathfile=''
 	local url_prefix=''
 	local url_suffix=''
-	local target_version=''
-	local firstpack=''
-	local installed_version=''
 	IPKs-ACdownload-to:Init
 	total_count=$(IPKs-ACdowngrade-to:Count)
 
@@ -2598,30 +2608,9 @@ IPKs:downgrade()
 		log_pathfile=$LOGS_PATH/ipks.$DOWNLOAD_LOG_FILE
 		ShowAsProc "downloading $desc"
 
-		if OS.IsNotKernelPagesizeStd; then
-			target_version=2.38-1
-
-			# test if downgraded version is already installed
-
-			# only test first IPK name in array
-			firstpack=$(IPKs-ACdowngrade-to:Array | cut -d' ' -f1)
-
-			# assume test package version is same as remaining package versions
-			installed_version=$($OPKG_CMD list-installed | $GREP_CMD "^${firstpack} *" | cut -d' ' -f3)
-
-			if [[ $installed_version = "$target_version" ]]; then
-				# IPKs have already been downgraded
-
-				skip_count=$total_count		# assume they were all skipped
-				NoteIpkAcAsSk "$(IPKs-ACdowngrade-to:Array)" downgrade
-				DebugAsDone "skipped $desc"
-				SaveActionResultToLog IPK "$desc" downgrade sk "$result_code"
-
-				Func:Exit; return
-			fi
-
+		if OS.IsNonStdKernelPageSize; then
 			url_prefix=http://bin.entware.net
-			url_suffix=_$target_version
+			url_suffix=_2.38-1
 
 			case $NAS_QPKG_ARCH in
 				a64)
@@ -2636,13 +2625,18 @@ IPKs:downgrade()
 			url_prefix+=/archive/
 			url_suffix+=.ipk
 
-		fi
+			for package_name in $(IPKs-ACdowngrade-to:Array); do
+				ShowAsPercentProgress '' 'IPK module' "$iterations" 0 0 "$total_count" downloading ''
+				((iterations++))
 
-		for package_name in $(IPKs-ACdowngrade-to:Array); do
-			remote_url="${url_prefix}${package_name}${url_suffix}"
-			local_pathfile="$IPK_DOWNGRADE_DL_PATH/$($BASENAME_CMD "$remote_url")"
-			RunAndLog "$CURL_CMD${curl_insecure_arg} --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
-		done
+				remote_url="${url_prefix}${package_name}${url_suffix}"
+				local_pathfile="$IPK_DOWNGRADE_DL_PATH/$($BASENAME_CMD "$remote_url")"
+				RunAndLog "$CURL_CMD${curl_insecure_arg} --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
+
+				# update progress twice per loop
+				ShowAsPercentProgress '' 'IPK module' "$iterations" 0 0 "$total_count" downloading ''
+			done
+		fi
 
 		log_pathfile=$LOGS_PATH/ipks.$DOWNGRADE_LOG_FILE
 		ShowAsProc "downgrading $desc"
@@ -2774,7 +2768,7 @@ PIPs:install()
 		local desc='addon PyPI modules'
 		local log_pathfile=$LOGS_PATH/pypi.$INSTALL_LOG_FILE
 
-		ShowAsActionProgress '' "$PACKAGE_TYPE" "$ok_count" "$skip_count" "$fail_count" "$total_count" installing "$RUNTIME"
+		ShowAsPercentProgress '' "$PACKAGE_TYPE" "$ok_count" "$skip_count" "$fail_count" "$total_count" installing "$RUNTIME"
 		RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
 		result_code=$?
 
@@ -2788,7 +2782,7 @@ PIPs:install()
 			SaveActionResultToLog PIP "$desc" install failed "$result_code"
 		fi
 
-		ShowAsActionProgress '' "$PACKAGE_TYPE" "$ok_count" "$skip_count" "$fail_count" "$total_count" installing "$RUNTIME"
+		ShowAsPercentProgress '' "$PACKAGE_TYPE" "$ok_count" "$skip_count" "$fail_count" "$total_count" installing "$RUNTIME"
 	fi
 
 	Func:Exit $result_code
@@ -3998,7 +3992,7 @@ DisplayAsIndentPrefixActionResultDurationReason()
 
 	}
 
-WriteEraseThisLine()
+EraseThisLine()
 	{
 
 	# reset cursor to start-of-line, erasing entire line
@@ -4057,7 +4051,7 @@ Report.Actions:Show()
 		DisplayAsProjSynIndentExam '' "stop $(ShowPackages)"
 		DisplayAsProjSynIndentExam 'reactivate these packages (this will upgrade internal applications where-supported)' "reactivate $(ShowPackages)"
 		DisplayAsProjSynIndentExam '' "restart $(ShowPackages)"
-		Help.Action.Reassign:Show
+		Report.Action.Reassign:Show
 		DisplayAsProjSynIndentExam 'clear local repository files from these packages' "clean $(ShowPackages)"
 		DisplayAsProjSynIndentExam 'backup these application configurations to the backup location' "backup $(ShowPackages)"
 		DisplayAsProjSynIndentExam 'restore these application configurations from the backup location' "restore $(ShowPackages)"
@@ -4071,7 +4065,7 @@ Report.Actions:Show()
 
 		} > "$REPORT_PATHFILE"
 
-	WriteEraseThisLine		# clear the "proc:" message shown earlier
+	EraseThisLine		# clear the "proc:" message shown earlier
 
 	if [[ -e $REPORT_PATHFILE ]]; then
 		DisplayFileInWindow "$REPORT_PATHFILE"
@@ -4131,7 +4125,7 @@ Report.ActionsAll:Show()
 
 		} > "$REPORT_PATHFILE"
 
-	WriteEraseThisLine		# clear the "proc:" message shown earlier
+	EraseThisLine		# clear the "proc:" message shown earlier
 
 	if [[ -e $REPORT_PATHFILE ]]; then
 		DisplayFileInWindow "$REPORT_PATHFILE"
@@ -4206,7 +4200,7 @@ Report.Groups:Show()
 
 		} > "$REPORT_PATHFILE"
 
-	WriteEraseThisLine		# clear the "proc:" message shown earlier
+	EraseThisLine		# clear the "proc:" message shown earlier
 
 	if [[ -e $REPORT_PATHFILE ]]; then
 		DisplayFileInWindow "$REPORT_PATHFILE"
@@ -4294,13 +4288,9 @@ Report.Results:Show()
 
 		} > "$REPORT_PATHFILE"
 
-	WriteEraseThisLine		# clear the "proc:" message shown earlier
+	EraseThisLine		# clear the "proc:" message shown earlier
 
-	if [[ -e $REPORT_PATHFILE ]]; then
-		DisplayFileInWindow "$REPORT_PATHFILE"
-	else
-		ShowAsError 'no information to display'
-	fi
+	[[ -e $REPORT_PATHFILE ]] && $CAT_CMD "$REPORT_PATHFILE"
 
 	return 0
 
@@ -4328,7 +4318,7 @@ Report.Options:Show()
 
 		} > "$REPORT_PATHFILE"
 
-	WriteEraseThisLine		# clear the "proc:" message shown earlier
+	EraseThisLine		# clear the "proc:" message shown earlier
 
 	if [[ -e $REPORT_PATHFILE ]]; then
 		DisplayFileInWindow "$REPORT_PATHFILE"
@@ -4373,7 +4363,7 @@ Report.Problems:Show()
 
 		} > "$REPORT_PATHFILE"
 
-	WriteEraseThisLine		# clear the "proc:" message shown earlier
+	EraseThisLine		# clear the "proc:" message shown earlier
 
 	if [[ -e $REPORT_PATHFILE ]]; then
 		DisplayFileInWindow "$REPORT_PATHFILE"
@@ -4389,7 +4379,7 @@ Report.Tips:Show()
 	{
 
 	DisableDebugToArchiveAndFile
- 	DisplayWritingReport
+	DisplayWritingReport
 
 		{
 
@@ -4410,7 +4400,7 @@ Report.Tips:Show()
 
 		} > "$REPORT_PATHFILE"
 
- 	WriteEraseThisLine		# clear the "proc:" message shown earlier
+	EraseThisLine		# clear the "proc:" message shown earlier
 
 	if [[ -e $REPORT_PATHFILE ]]; then
 		DisplayFileInWindow "$REPORT_PATHFILE"
@@ -4486,6 +4476,16 @@ DisplayFileInWindow()
 		return 1
 	fi
 
+	if [[ $opts_verbose = true ]]; then
+		if [[ -e $CAT_CMD ]]; then
+			$CAT_CMD "$filename"
+			return
+		else
+			echo "$(<$1)"
+			return
+		fi
+	fi
+
 	if [[ -e $GNU_LESS_CMD ]]; then
 		[[ $showlinenumbers = true ]] && showlinenumbers_msg=' --LINE-NUMBERS'
 		[[ $jumptoend = true ]] && jumptoend_msg=' +G'
@@ -4511,7 +4511,7 @@ DisplayFileInWindow()
 			return
 		fi
 	else
-		# if linenumbers are not required, then prefer 'more' over 'cat' as 'more' can pause after each pageful of data.
+		# if linenumbers are not required, then prefer 'more' over 'cat', as 'more' can pause after each pageful of data.
 
 		if [[ -e $MORE_CMD ]]; then
 			$MORE_CMD "$filename"
@@ -4695,7 +4695,7 @@ Report.Versions:Show()
 	{
 
 	DisableDebugToArchiveAndFile
-	WriteEraseThisLine
+	EraseThisLine
 
 	Display "QPKG: ${THIS_PACKAGE_VER:-unknown}"
 	Display "manager: ${THIS_SCRIPT_VER:-unknown}"
@@ -4826,7 +4826,7 @@ QPKGs.Missing:Show()
 	[[ $hide_title = false ]] || return
 	[[ $(QPKGs-ISmissing:Count) -eq 0 ]] && return 1
 
-	WriteEraseThisLine
+	EraseThisLine
 	WriteEmptyLineIfNoneExists
 
 	for package in $(QPKGs-ISmissing:Array); do
@@ -5289,11 +5289,11 @@ Report.Abbreviations:Show()
 
 		DisplayAsProjSynExam "example: to install $(ShowAsPackageName SABnzbd), $(ShowAsPackageName Mylar3) and $(ShowAsPackageName nzbToMedia) all-at-once" 'install sab my nzb2'
 
-		echo
+		Display
 
 		} > "$REPORT_PATHFILE"
 
- 	WriteEraseThisLine		# clear the "proc:" message shown earlier
+	EraseThisLine		# clear the "proc:" message shown earlier
 
 	if [[ -e $REPORT_PATHFILE ]]; then
 		DisplayFileInWindow "$REPORT_PATHFILE"
@@ -5346,7 +5346,7 @@ Report.Backups:Show()
 
 		} > "$REPORT_PATHFILE"
 
-	WriteEraseThisLine		# clear the "proc:" message shown earlier
+	EraseThisLine		# clear the "proc:" message shown earlier
 	[[ -e $REPORT_PATHFILE ]] && $CAT_CMD "$REPORT_PATHFILE"
 	Func:Exit
 
@@ -5372,11 +5372,11 @@ Report.Dependencies:Show()
 			DisplayAsDepsReportLine "$package_name"
 		done
 
-		echo
+		Display
 
 		} > "$REPORT_PATHFILE"
 
- 	WriteEraseThisLine		# clear the "proc:" message shown earlier
+	EraseThisLine		# clear the "proc:" message shown earlier
 
 	if [[ -e $REPORT_PATHFILE ]]; then
 		DisplayFileInWindow "$REPORT_PATHFILE"
@@ -5409,12 +5409,11 @@ Report.Names:Show()
 
 		DisplayAsProjSynExam "abbreviations and aliases may also be used to specify $(ShowPackages). To list these" 'help abs'
 		DisplayAsProjSynIndentExam '' a
-
-		echo
+		Display
 
 		} > "$REPORT_PATHFILE"
 
- 	WriteEraseThisLine		# clear the "proc:" message shown earlier
+	EraseThisLine		# clear the "proc:" message shown earlier
 
 	if [[ -e $REPORT_PATHFILE ]]; then
 		DisplayFileInWindow "$REPORT_PATHFILE"
@@ -5443,11 +5442,11 @@ Report.Repos:Show()
 			DisplayAsReposReportLine "$package_name"
 		done
 
-		echo
+		Display
 
 		} > "$REPORT_PATHFILE"
 
- 	WriteEraseThisLine		# clear the "proc:" message shown earlier
+	EraseThisLine		# clear the "proc:" message shown earlier
 
 	if [[ -e $REPORT_PATHFILE ]]; then
 		DisplayFileInWindow "$REPORT_PATHFILE"
@@ -5476,11 +5475,11 @@ Report.Statuses:Show()
 			DisplayAsStatusReportLine "$package_name"
 		done
 
-		echo
+		Display
 
 		} > "$REPORT_PATHFILE"
 
- 	WriteEraseThisLine		# clear the "proc:" message shown earlier
+	EraseThisLine		# clear the "proc:" message shown earlier
 
 	if [[ -e $REPORT_PATHFILE ]]; then
 		DisplayFileInWindow "$REPORT_PATHFILE"
@@ -5498,7 +5497,7 @@ QPKGs.IsBackedUp:Show()
 
 	local package=''
 	DisableDebugToArchiveAndFile
-	WriteEraseThisLine
+	EraseThisLine
 
 	for package in $(QPKGs-ISbackedup:Array); do
 		Display "$package"
@@ -5513,7 +5512,7 @@ QPKGs.IsNtBackedUp:Show()
 
 	local package=''
 	DisableDebugToArchiveAndFile
-	WriteEraseThisLine
+	EraseThisLine
 
 	for package in $(QPKGs-ISNTbackedup:Array); do
 		Display "$package"
@@ -5528,7 +5527,7 @@ QPKGs.IsInstalled:Show()
 
 	local package=''
 	DisableDebugToArchiveAndFile
-	WriteEraseThisLine
+	EraseThisLine
 
 	for package in $(QPKGs-ISinstalled:Array); do
 		Display "$package"
@@ -5543,7 +5542,7 @@ QPKGs.ScAll:Show()
 
 	local package=''
 	DisableDebugToArchiveAndFile
-	WriteEraseThisLine
+	EraseThisLine
 
 	for package in $(QPKGs-SCall:Array); do
 		Display "$package"
@@ -5558,7 +5557,7 @@ QPKGs.ScInstallable:Show()
 
 	local package=''
 	DisableDebugToArchiveAndFile
-	WriteEraseThisLine
+	EraseThisLine
 
 	for package in $(QPKGs-SCinstallable:Array); do
 		Display "$package"
@@ -5573,7 +5572,7 @@ QPKGs.IsNtInstalled:Show()
 
 	local package=''
 	DisableDebugToArchiveAndFile
-	WriteEraseThisLine
+	EraseThisLine
 
 	for package in $(QPKGs-ISNTinstalled:Array); do
 		Display "$package"
@@ -5588,7 +5587,7 @@ QPKGs.IsActive:Show()
 
 	local package=''
 	DisableDebugToArchiveAndFile
-	WriteEraseThisLine
+	EraseThisLine
 
 	for package in $(QPKGs-ISactive:Array); do
 		Display "$package"
@@ -5603,7 +5602,7 @@ QPKGs.IsNtActive:Show()
 
 	local package=''
 	DisableDebugToArchiveAndFile
-	WriteEraseThisLine
+	EraseThisLine
 
 	for package in $(QPKGs-ISNTactive:Array); do
 		Display "$package"
@@ -5618,7 +5617,7 @@ QPKGs.ScUpgradable:Show()
 
 	local package=''
 	DisableDebugToArchiveAndFile
-	WriteEraseThisLine
+	EraseThisLine
 
 	for package in $(QPKGs-SCupgradable:Array); do
 		Display "$package"
@@ -5633,7 +5632,7 @@ QPKGs.ScStandalone:Show()
 
 	local package=''
 	DisableDebugToArchiveAndFile
-	WriteEraseThisLine
+	EraseThisLine
 
 	for package in $(QPKGs-SCstandalone:Array); do
 		Display "$package"
@@ -5648,7 +5647,7 @@ QPKGs.ScDependent:Show()
 
 	local package=''
 	DisableDebugToArchiveAndFile
-	WriteEraseThisLine
+	EraseThisLine
 
 	for package in $(QPKGs-SCdependent:Array); do
 		Display "$package"
@@ -6202,19 +6201,21 @@ OS.IsStopping()
 
 	} &>/dev/null
 
-OS.IsKernelPagesizeStd()
+OS.IsStdKernelPageSize()
 	{
 
-	# standard kernel pagesize for most QTS is 4kB. Non-standard size is 32kB (used on the TS-431XeU).
+	# Standard kernel pagesize for most NAS appears to be 4kB.
+	# Non-standard size is 32kB (confirmed on the TS-431XeU, TS-431X3 & TS-1635). Maybe higher-end NAS with 32b CPU get the larger pagesize?
+	# This makes the TS-431XU, TS-831XU & TS-1231XU possibilities for the larger pagesize. Must check when able.
 
 	[[ ${KERNEL_PAGESIZE:=$(GetKernelPageSize)} = 4kB ]]
 
 	}
 
-OS.IsNotKernelPagesizeStd()
+OS.IsNonStdKernelPageSize()
 	{
 
-	! OS.IsKernelPagesizeStd
+	! OS.IsStdKernelPageSize
 
 	}
 
@@ -7326,7 +7327,6 @@ _QPKG:clean_()
 	if [[ $result_code -eq 0 ]]; then
 		QPKG.ServiceStatus:Log
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" clean ok
-		SendPackageStateChange IScleaned
 		MarkThisActionForkAsOk
 	else
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" clean failed "$result_code"
@@ -8644,7 +8644,7 @@ FormatAsIsoBytes()
 ShowTitleLine()
 	{
 
-	WriteEraseThisLine		# clear the "proc:" message shown earlier
+	EraseThisLine		# clear the "proc:" message shown earlier
 	Display "$(ShowTitleName) $(ShowVersion) $(ShowDescription)"
 	WriteEmptyLineIfNoneExists
 
@@ -8739,7 +8739,7 @@ ShowAsLogFilename()
 ShowAsCommand()
 	{
 
-	echo -n "${CHARS_RESULTS}command: '${1:?${FUNCNAME[0]}'()': undefined}'"
+	echo "${CHARS_RESULTS}command: '${1:?${FUNCNAME[0]}'()': undefined}'"
 
 	}
 
@@ -9227,7 +9227,7 @@ ShowAsInfo()
 
 	[[ -n ${1:-} ]] || return
 
-	WriteEraseThisLine
+	EraseThisLine
 	WriteToDisplay "$(ColourTextBrightYellow note)" "$1"
 	WriteToLog note "$1"
 
@@ -9259,7 +9259,7 @@ ShowAsDone()
 
 	[[ -n ${1:-} ]] || return
 
-	WriteEraseThisLine
+	EraseThisLine
 	WriteToDisplay "$(ColourTextBrightGreen 'done')" "$1"
 	WriteToLog 'done' "$1"
 
@@ -9272,7 +9272,7 @@ ShowAsWarn()
 
 	[[ -n ${1:-} ]] || return
 
-	WriteEraseThisLine
+	EraseThisLine
 	WriteToDisplay "$(ColourTextBrightOrange warn)" "$1"
 	WriteToLog warn "$1"
 
@@ -9299,7 +9299,7 @@ ShowAsFail()
 	[[ -n ${1:-} ]] || return
 	local capitalised="$(Capitalise "$1")"
 
-	WriteEraseThisLine
+	EraseThisLine
 	WriteToDisplay "$(ColourTextBrightRed fail)" "$capitalised"
 	WriteToLog fail "$capitalised"
 
@@ -9313,14 +9313,14 @@ ShowAsError()
 	[[ -n ${1:-} ]] || return
 	local capitalised="$(Capitalise "$1")"
 
-	WriteEraseThisLine
+	EraseThisLine
 	WriteToDisplay "$(ColourTextBrightRed derp)" "$capitalised"
 	WriteToLog derp "$capitalised"
 	Self.Error:Set
 
 	} >&2
 
-ShowAsActionProgress()
+ShowAsPercentProgress()
 	{
 
 	# Show single action package progress as percent-complete and a fraction of the total
@@ -9393,7 +9393,7 @@ PercFrac()
 
 	} 2>/dev/null
 
-ShowAsIncrementalProgress()
+ShowAsIterativeProgress()
 	{
 
 	# Show single action package progress as an incrementing amount with no limit
@@ -9945,7 +9945,7 @@ RunOnSIGINT()
 	{
 
 	$TOUCH_CMD "$DISPLAY_INHIBIT_PATHFILE"
-	WriteEraseThisLine
+	EraseThisLine
 	ShowAsAbort 'caught SIGINT'
 	KillActiveFork
 	CloseActionMsgPipe

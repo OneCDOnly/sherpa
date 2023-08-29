@@ -3882,7 +3882,7 @@ EraseThisLine()
 	[[ ${opts_verbose:-false} = true ]] && return
 
 	printf '\033[2K\r'
- 	linespace_visible=true
+	linespace_visible=true
 
 	} >&2
 
