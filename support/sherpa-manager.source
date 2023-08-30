@@ -98,7 +98,7 @@ Self:Init()
 		ParseArgs
 	fi
 
-	EraseThisLine		# clear the "proc:" message shown earlier
+	EraseThisLine
 
 	if [[ $hide_title = false && $opts_verbose = false ]]; then
 		ShowTitleLine
@@ -341,7 +341,7 @@ Vars:Load()
 	ipks_install=false
 	ipks_upgrade=false
 	linespace_visible=false
-	msg_pipe_fd=none
+	action_msg_pipe_fd=none
 	pips_install=false
 	qpkg_timeouts_increased=false
 	self_archive_debug_afterward=false
@@ -394,7 +394,6 @@ CMDs:Load()
 	{
 
 	# cherry-pick Entware binaries
-	readonly OPKG_CMD=/opt/bin/opkg
 	readonly GNU_FIND_CMD=/opt/bin/find
 	readonly GNU_GREP_CMD=/opt/bin/grep
 	readonly GNU_LESS_CMD=/opt/bin/less
@@ -404,11 +403,12 @@ CMDs:Load()
 	readonly GNU_SQLITE_CMD=/opt/bin/sqlite3
 	readonly GNU_STTY_CMD=/opt/bin/stty
 	readonly GNU_TIMEOUT_CMD=/opt/bin/timeout
+	readonly OPKG_CMD=/opt/bin/opkg
 
 	readonly PERL_CMD=/opt/bin/perl
 	readonly PYTHON_CMD=/opt/bin/python
 	readonly PYTHON3_CMD=/opt/bin/python3
-	readonly PIP_CMD="$PYTHON3_CMD -m pip"
+		readonly PIP_CMD="$PYTHON3_CMD -m pip"
 
 	# cherry-pick QTS binaries
 	readonly AWK_CMD=/bin/awk
@@ -424,7 +424,7 @@ CMDs:Load()
 	readonly PS_CMD=/bin/ps
 	readonly SED_CMD=/bin/sed
 	readonly SH_CMD=/bin/sh
-	readonly QTS_SLEEP_CMD=/bin/sleep
+	readonly SLEEP_CMD=/bin/sleep
 	readonly TAR_CMD=/bin/tar
 	readonly TOUCH_CMD=/bin/touch
 	readonly UNAME_CMD=/bin/uname
@@ -454,46 +454,43 @@ CMDs.IsOk()
 	# Confirm required binaries are present
 
 	IsSysFileExist $AWK_CMD || return
+	IsSysFileExist $BASENAME_CMD || return
 	IsSysFileExist $CAT_CMD || return
 	# don't perform a check for `/bin/date` as it's already been called before arriving here.
+	IsSysFileExist $CURL_CMD || return
 	IsSysFileExist $DF_CMD || return
+	IsSysFileExist $DIRNAME_CMD || return
+	IsSysFileExist $DU_CMD || return
 	IsSysFileExist $GREP_CMD || return
+	IsSysFileExist $HEAD_CMD || return
 	# don't perform a check for `/bin/less` because it's not always there.
 	IsSysFileExist $MD5SUM_CMD || return
 	IsSysFileExist $MKNOD_CMD || return
 	IsSysFileExist $MKTEMP_CMD || return
 	# don't check for `/bin/more` because it's a very low-priority command, not essential.
 	IsSysFileExist $PS_CMD || return
+	IsSysFileExist $READLINK_CMD || return
+	IsSysFileExist $SCREEN_CMD || return
 	IsSysFileExist $SED_CMD || return
 	IsSysFileExist $SH_CMD || return
-
-	if [[ ! -e $GNU_SLEEP_CMD ]]; then
-		IsSysFileExist $QTS_SLEEP_CMD || return
-	fi
-
+	IsSysFileExist $TAIL_CMD || return
 	IsSysFileExist $TAR_CMD || return
+	IsSysFileExist $TEE_CMD || return
 	IsSysFileExist $TOUCH_CMD || return
 	IsSysFileExist $UNAME_CMD || return
 	IsSysFileExist $UNIQ_CMD || return
-
-	IsSysFileExist $CURL_CMD || return
-
-	IsSysFileExist $BASENAME_CMD || return
-	IsSysFileExist $DIRNAME_CMD || return
-	IsSysFileExist $DU_CMD || return
-	IsSysFileExist $HEAD_CMD || return
-	IsSysFileExist $READLINK_CMD || return
-	[[ ! -e $SORT_CMD ]] && ln -s /bin/busybox "$SORT_CMD"	# KLUDGE: `/usr/bin/sort` randomly disappears from QTS.
-	IsSysFileExist $TAIL_CMD || return
-	IsSysFileExist $TEE_CMD || return
 	IsSysFileExist $UNZIP_CMD || return
 	IsSysFileExist $UPTIME_CMD || return
 	IsSysFileExist $WC_CMD || return
 
-	IsSysFileExist $SCREEN_CMD || return
+	if [[ ! -e $GNU_SLEEP_CMD ]]; then
+		IsSysFileExist $SLEEP_CMD || return
+	fi
+
+	[[ ! -e $SORT_CMD ]] && ln -s /bin/busybox "$SORT_CMD"	# KLUDGE: `/usr/bin/sort` randomly disappears from QTS.
 
 	# test if this QTS `sleep` can handle decimal seconds. Early QTS BusyBox versions cannot.
-	readonly DECIMAL_SLEEP_SECONDS_SUPPORTED=$($QTS_SLEEP_CMD .01 &>/dev/null && echo true || echo false)
+	readonly DECIMAL_SLEEP_SECONDS_SUPPORTED=$($SLEEP_CMD .01 &>/dev/null && echo true || echo false)
 
 	}
 
@@ -508,6 +505,7 @@ Env:Load()
 		local -r SOURCE_BRANCH=unstable
 	fi
 
+		readonly THIS_SCRIPT_VER="<?thisdate?>-$SOURCE_BRANCH"
 	readonly ACTION_MSG_PIPE=/var/run/sherpa.action.messages.pipe
 	readonly CERT_DB_PATHFILE=/etc/config/nas_sign_qpkg.db
 	readonly CPU_CORES=$(GetCPUCores)
@@ -526,7 +524,6 @@ Env:Load()
 	readonly PACKAGES_ARCHIVE_URL='<?cdn_sherpa_url?>'/packages.tar.gz
 	readonly QPKG_BU_PATH=$(GetDefVol)/.qpkg_config_backup
 	readonly THIS_PACKAGE_VER=$(QPKG.Local.GetVer)
-	readonly THIS_SCRIPT_VER="<?thisdate?>-$SOURCE_BRANCH"
 	readonly THIS_PACKAGE_PATH=$(QPKG.GetInstallationPath)
 		readonly CACHE_PATH=$THIS_PACKAGE_PATH/cache
 			readonly ACTION_TIMES_PATH=$CACHE_PATH/action.times
@@ -620,25 +617,25 @@ CreatePaths()
 	# KLUDGE: service scripts prior to 2022-12-08 would use these paths (by-default) to build/cache Python packages. This has been fixed, but still need to free-up these paths to prevent out-of-space issues.
 	rm -rf /root/.cache /root/.local/share/virtualenv
 
-	rm -rf "$IPK_DL_PATH" "$IPK_CACHE_PATH" "$PIP_CACHE_PATH"
+	rm -rf "$IPK_CACHE_PATH" "$IPK_DL_PATH" "$PIP_CACHE_PATH"
 
+	MakePath "$ACTION_TIMES_PATH" 'action times' || return
 	MakePath "$CACHE_PATH" cache || return
-	MakePath "$LOGS_PATH" logs || return
-	MakePath "$QPKG_DL_PATH" 'QPKG download' || return
 	MakePath "$IPK_CACHE_PATH" 'IPK cache' || return
 	MakePath "$IPK_DL_PATH" 'IPK download' || return
 	MakePath "$IPK_DOWNGRADE_DL_PATH" 'IPK downgrade' || return
+	MakePath "$LOGS_PATH" logs || return
 	MakePath "$PIP_CACHE_PATH" 'PIP cache' || return
-	MakePath "$ACTION_TIMES_PATH" 'action times' || return
 	MakePath "$QPKG_BU_PATH" 'QPKG backup' || return
+	MakePath "$QPKG_DL_PATH" 'QPKG download' || return
 
 	}
 
 Debug.Log:Env()
 	{
 
-	[[ $skip_package_actions = true ]] && return
-	[[ $opts_debug = false ]] && return
+	[[ $skip_package_actions = false ]] || return 0
+	[[ $opts_debug = true ]] || return 0
 
 	Func:Init
 	ShowAsProc 'logging environment'
@@ -765,7 +762,7 @@ Self.Tasks:Check()
 
 	# Establish whether there's something to-do
 
-	[[ $skip_package_actions = true ]] && return
+	[[ $skip_package_actions = false ]] || return 0
 
 	Func:Init
 	local action=''
@@ -834,7 +831,7 @@ Self:Validate()
 	# This function handles most of the high-level logic for package actions.
 	# If a package isn't being processed by the correct action, odds-are it's due to a logic error in this function.
 
-	[[ $skip_package_actions = true ]] && return
+	[[ $skip_package_actions = false ]] || return 0
 
 	Func:Init
 	ShowAsProc validating
@@ -1092,7 +1089,7 @@ Actions:Proc()
 
 	# Run all actions on selected packages in all tiers
 
-	[[ $skip_package_actions = true ]] && return
+	[[ $skip_package_actions = false ]] || return 0
 
 	Func:Init
 	local tier=''
@@ -1135,7 +1132,7 @@ Actions:Proc()
 				;;
 			addon)
 				for action in install reinstall upgrade activate; do
-					if QPKGs-AC${action}-to.IsAny && QPKGs-ISenabled.Exist Entware; then
+					if (QPKGs-ACinstall-ok.Exist Entware) || QPKGs-AC${action}-to.IsAny && QPKGs-ISenabled.Exist Entware; then
 						ipks_upgrade=true
 						ipks_install=true
 						ipks_downgrade=true
@@ -1377,11 +1374,11 @@ OpenActionMsgPipe()
 	eval "exec $backup_stdin_fd>&0"
 
 	# create another file descriptor to use in message pipe
-	msg_pipe_fd=$(FindNextFD)
-	DebugVar msg_pipe_fd
+	action_msg_pipe_fd=$(FindNextFD)
+	DebugVar action_msg_pipe_fd
 
 	# open a 2-way channel to message pipe
-	[[ $msg_pipe_fd != none ]] && eval "exec $msg_pipe_fd<>$ACTION_MSG_PIPE"
+	[[ $action_msg_pipe_fd != none ]] && eval "exec $action_msg_pipe_fd<>$ACTION_MSG_PIPE"
 
 	}
 
@@ -1397,7 +1394,7 @@ CloseActionMsgPipe()
 	[[ $backup_stdin_fd != none ]] && eval "exec $backup_stdin_fd>&-"
 
 	# release message pipe FD
-	[[ $msg_pipe_fd != none ]] && eval "exec $msg_pipe_fd>&-"
+	[[ $action_msg_pipe_fd != none ]] && eval "exec $action_msg_pipe_fd>&-"
 
 	# delete message pipe
 	[[ -p $ACTION_MSG_PIPE ]] && rm -f "$ACTION_MSG_PIPE"
@@ -2222,7 +2219,7 @@ UpdateEntwarePackageList()
 		return 1
 	fi
 
-	[[ ${ENTWARE_PACKAGE_LIST_UPTODATE:-false} = true ]] && return 0
+	[[ ${ENTWARE_PACKAGE_LIST_UPTODATE:-false} = false ]] || return 0
 
 	local -i result_code=0
 
@@ -2445,93 +2442,12 @@ IPKs:upgrade()
 		KillActiveFork
 
 		if [[ $result_code -eq 0 ]]; then
-			ok_count=$total_count		# assume they all passed
 			NoteIpkAcAsOk "$(IPKs-ACupgrade-to:Array)" upgrade
 			DebugAsDone "upgraded $desc"
 			SaveActionResultToLog IPK "$desc" upgrade ok "$result_code"
 		else
-			ShowAsFail "upgrade $total_count IPK$(Pluralise "$total_count") failed $(ShowAsExitcode "$result_code")"
 			NoteIpkAcAsEr "$(IPKs-ACupgrade-to:Array)" upgrade
 			SaveActionResultToLog IPK "$desc" upgrade failed "$result_code"
-		fi
-	fi
-
-	Func:Exit $result_code
-
-	}
-
-IPKs:downgrade()
-	{
-
-	# downgrade specific installed IPKs
-
-	[[ $ipks_downgrade = true ]] || return
-	QPKGs-ISenabled.Exist Entware || return
-	UpdateEntwarePackageList
-	Self.Error.IsNt || return
-
-	Func:Init
-	local -i total_count=0
-	local -i iterations=0
-	local -i result_code=0
-	local package_name=''
-	local remote_url=''
-	local desc=''
-	local log_pathfile=''
-	local url_prefix=''
-	local url_suffix=''
-	IPKs-ACdownload-to:Init
-	total_count=$(IPKs-ACdowngrade-to:Count)
-
-	if [[ $total_count -gt 0 ]]; then
-		desc="$total_count IPK module$(Pluralise "$total_count")"
-		log_pathfile=$LOGS_PATH/ipks.$DOWNLOAD_LOG_FILE
-		ShowAsProc "downloading $desc"
-
-		if OS.IsNonStdKernelPageSize; then
-			url_prefix=http://bin.entware.net
-			url_suffix=_2.38-1
-
-			case $NAS_QPKG_ARCH in
-				a64)
-					url_prefix+='/aarch64-k3.10'
-					url_suffix+='_aarch64-3.10'
-					;;
-				a41)
-					url_prefix+='/armv7sf-k3.2'
-					url_suffix+='_armv7-3.2'
-			esac
-
-			url_prefix+=/archive/
-			url_suffix+=.ipk
-
-			for package_name in $(IPKs-ACdowngrade-to:Array); do
-				ShowAsPercentProgress '' 'IPK module' "$iterations" 0 0 "$total_count" downloading ''
-				((iterations++))
-
-				remote_url="${url_prefix}${package_name}${url_suffix}"
-				local_pathfile="$IPK_DOWNGRADE_DL_PATH/$($BASENAME_CMD "$remote_url")"
-				RunAndLog "$CURL_CMD${curl_insecure_arg} --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
-
-				# update progress twice per loop
-				ShowAsPercentProgress '' 'IPK module' "$iterations" 0 0 "$total_count" downloading ''
-			done
-		fi
-
-		log_pathfile=$LOGS_PATH/ipks.$DOWNGRADE_LOG_FILE
-		ShowAsProc "downgrading $desc"
-		RunAndLog "$OPKG_CMD install --force-downgrade --cache $IPK_CACHE_PATH --tmp-dir $IPK_DOWNGRADE_DL_PATH $IPK_DOWNGRADE_DL_PATH/*.ipk" "$log_pathfile" log:failure-only
-		result_code=$?
-
-		if [[ $result_code -eq 0 ]]; then
-			ok_count=$total_count		# assume they all passed
-			NoteIpkAcAsOk "$(IPKs-ACdowngrade-to:Array)" downgrade
-			DebugAsDone "downgraded $desc"
-			SaveActionResultToLog IPK "$desc" downgrade ok "$result_code"
-		else
-			ShowAsFail "downgrade $total_count IPK$(Pluralise "$total_count") failed $(ShowAsExitcode "$result_code")"
-			NoteIpkAcAsEr "$(IPKs-ACdowngrade-to:Array)" downgrade
-			SaveActionResultToLog IPK "$desc" downgrade failed "$result_code"
 		fi
 	fi
 
@@ -2597,7 +2513,6 @@ IPKs:install()
 		KillActiveFork
 
 		if [[ $result_code -eq 0 ]]; then
-			ok_count=$total_count		# assume they all passed
 			NoteIpkAcAsOk "$(IPKs-ACdownload-to:Array)" install
 			DebugAsDone "installed $desc"
 			SaveActionResultToLog IPK "$desc" install ok "$result_code"
@@ -2608,8 +2523,6 @@ IPKs:install()
 # 				rm "$PREV_IPK_LIST.installing"
 # 			fi
 		else
-			fail_count=$total_count		# assume they all failed
-			ShowAsFail "install $desc failed $(ShowAsExitcode "$result_code")"
 			NoteIpkAcAsEr "$(IPKs-ACdownload-to:Array)" install
 			SaveActionResultToLog IPK "$desc" install failed "$result_code"
 
@@ -2617,6 +2530,96 @@ IPKs:install()
 # 				mv "$PREV_IPK_LIST.installing" "$PREV_IPK_LIST"
 # 			fi
 		fi
+	fi
+
+	Func:Exit $result_code
+
+	}
+
+IPKs:downgrade()
+	{
+
+	# downgrade specific installed IPKs
+
+	[[ $ipks_downgrade = true ]] || return
+	QPKGs-ISenabled.Exist Entware || return
+	UpdateEntwarePackageList
+	Self.Error.IsNt || return
+
+	Func:Init
+	local -i total_count=0
+	local -i ok_count=0
+	local -i fail_count=0
+	local -i result_code=0
+	local package_name=''
+	local remote_url=''
+	local desc=''
+	local log_pathfile=''
+	local url_prefix=''
+	local url_suffix=''
+	local package_type=''
+	IPKs-ACdownload-to:Init
+	total_count=$(IPKs-ACdowngrade-to:Count)
+
+	if [[ $total_count -gt 0 ]]; then
+		package_type='IPK module'
+		desc="$total_count ${package_type}$(Pluralise "$total_count")"
+		log_pathfile=$LOGS_PATH/ipks.$DOWNLOAD_LOG_FILE
+		ShowAsProc "downloading $desc"
+
+		if OS.IsNonStdKernelPageSize; then
+			url_prefix=http://bin.entware.net
+			url_suffix=_2.38-1
+
+			case $NAS_QPKG_ARCH in
+				a64)
+					url_prefix+='/aarch64-k3.10'
+					url_suffix+='_aarch64-3.10'
+					;;
+				a41)
+					url_prefix+='/armv7sf-k3.2'
+					url_suffix+='_armv7-3.2'
+			esac
+
+			url_prefix+=/archive/
+			url_suffix+=.ipk
+
+			for package_name in $(IPKs-ACdowngrade-to:Array); do
+				ShowAsPercentProgress '' "$package_type" "$ok_count" 0 0 "$total_count" downloading ''
+				((ok_count++))
+
+				remote_url="${url_prefix}${package_name}${url_suffix}"
+				local_pathfile="$IPK_DOWNGRADE_DL_PATH/$($BASENAME_CMD "$remote_url")"
+				RunAndLog "$CURL_CMD${curl_insecure_arg} --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
+
+			done
+
+			ShowAsPercentProgress '' "$package_type" "$ok_count" 0 0 "$total_count" downloading ''
+		fi
+
+		total_count=1
+		ok_count=0
+		fail_count=0
+		package_type='IPK group'
+		desc="$total_count ${package_type}$(Pluralise "$total_count")"
+		log_pathfile=$LOGS_PATH/ipks.$DOWNGRADE_LOG_FILE
+		ShowAsProc "downgrading $desc"
+		ShowAsPercentProgress '' "$package_type" "$ok_count" 0 "$fail_count" "$total_count" downgrading ''
+		RunAndLog "$OPKG_CMD install --force-downgrade --cache $IPK_CACHE_PATH --tmp-dir $IPK_DOWNGRADE_DL_PATH $IPK_DOWNGRADE_DL_PATH/*.ipk" "$log_pathfile" log:failure-only
+		result_code=$?
+
+		if [[ $result_code -eq 0 ]]; then
+			((ok_count++))
+			NoteIpkAcAsOk "$(IPKs-ACdowngrade-to:Array)" downgrade
+			DebugAsDone "downgraded $desc"
+			SaveActionResultToLog IPK "$desc" downgrade ok "$result_code"
+		else
+			((fail_count++))
+			NoteIpkAcAsEr "$(IPKs-ACdowngrade-to:Array)" downgrade
+			SaveActionResultToLog IPK "$desc" downgrade failed "$result_code"
+		fi
+
+		ShowAsPercentProgress '' "$package_type" "$ok_count" 0 "$fail_count" "$total_count" downgrading ''
 	fi
 
 	Func:Exit $result_code
@@ -2633,13 +2636,11 @@ PIPs:install()
 
 	Func:Init
 	local exec_cmd=''
-	local -i result_code=0
-	local -i ok_count=0
-	local -i skip_count=0
-	local -i fail_count=0
 	local -i total_count=0
-	local -r PACKAGE_TYPE='PyPI group'
-	local -r RUNTIME=long
+	local -i ok_count=0
+	local -i fail_count=0
+	local -i result_code=0
+	local package_type='PyPI group'
 
 	if [[ $opts_check = true ]] || IPKs-ACinstall-ok.Exist python3-pip; then
 		((total_count++))
@@ -2648,7 +2649,7 @@ PIPs:install()
 		local desc='addon PyPI modules'
 		local log_pathfile=$LOGS_PATH/pypi.$INSTALL_LOG_FILE
 
-		ShowAsPercentProgress '' "$PACKAGE_TYPE" "$ok_count" "$skip_count" "$fail_count" "$total_count" installing "$RUNTIME"
+		ShowAsPercentProgress '' "$package_type" "$ok_count" 0 "$fail_count" "$total_count" installing ''
 		RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
 		result_code=$?
 
@@ -2658,11 +2659,10 @@ PIPs:install()
 			SaveActionResultToLog PIP "$desc" install ok "$result_code"
 		else
 			((fail_count++))
-			ShowAsFail "install $desc failed $(ShowAsResult "$result_code")"
 			SaveActionResultToLog PIP "$desc" install failed "$result_code"
 		fi
 
-		ShowAsPercentProgress '' "$PACKAGE_TYPE" "$ok_count" "$skip_count" "$fail_count" "$total_count" installing "$RUNTIME"
+		ShowAsPercentProgress '' "$package_type" "$ok_count" 0 "$fail_count" "$total_count" installing ''
 	fi
 
 	Func:Exit $result_code
@@ -3280,7 +3280,7 @@ DisplayAsStatusReportLine()
 	local package_version_msg="$CHARS_BLANK"
  	local package_upgrade_version=''
 	local package_upgrade_version_msg=''
-	local package_path_msg="${CHARS_BLANK}"
+	local package_path_msg="$CHARS_BLANK"
 	local mode=''
 
 	if QPKG.IsMissing "$package_name"; then
@@ -3877,7 +3877,7 @@ EraseThisLine()
 
 	# reset cursor to start-of-line, erasing entire line
 
-	[[ ${opts_verbose:-false} = true ]] && return
+	[[ ${opts_verbose:-false} = false ]] || return 0
 
 	printf '\033[2K\r'
 	linespace_visible=true
@@ -3945,7 +3945,7 @@ Report.Actions:Show()
 
 		} > "$REPORT_PATHFILE"
 
-	EraseThisLine		# clear the "proc:" message shown earlier
+	EraseThisLine
 
 	if [[ -e $REPORT_PATHFILE ]]; then
 		DisplayFileInWindow "$REPORT_PATHFILE"
@@ -4005,7 +4005,7 @@ Report.ActionsAll:Show()
 
 		} > "$REPORT_PATHFILE"
 
-	EraseThisLine		# clear the "proc:" message shown earlier
+	EraseThisLine
 
 	if [[ -e $REPORT_PATHFILE ]]; then
 		DisplayFileInWindow "$REPORT_PATHFILE"
@@ -4080,7 +4080,7 @@ Report.Groups:Show()
 
 		} > "$REPORT_PATHFILE"
 
-	EraseThisLine		# clear the "proc:" message shown earlier
+	EraseThisLine
 
 	if [[ -e $REPORT_PATHFILE ]]; then
 		DisplayFileInWindow "$REPORT_PATHFILE"
@@ -4168,7 +4168,7 @@ Report.Results:Show()
 
 		} > "$REPORT_PATHFILE"
 
-	EraseThisLine		# clear the "proc:" message shown earlier
+	EraseThisLine
 
 	[[ -e $REPORT_PATHFILE ]] && $CAT_CMD "$REPORT_PATHFILE"
 
@@ -4198,7 +4198,7 @@ Report.Options:Show()
 
 		} > "$REPORT_PATHFILE"
 
-	EraseThisLine		# clear the "proc:" message shown earlier
+	EraseThisLine
 
 	if [[ -e $REPORT_PATHFILE ]]; then
 		DisplayFileInWindow "$REPORT_PATHFILE"
@@ -4243,7 +4243,7 @@ Report.Problems:Show()
 
 		} > "$REPORT_PATHFILE"
 
-	EraseThisLine		# clear the "proc:" message shown earlier
+	EraseThisLine
 
 	if [[ -e $REPORT_PATHFILE ]]; then
 		DisplayFileInWindow "$REPORT_PATHFILE"
@@ -4280,7 +4280,7 @@ Report.Tips:Show()
 
 		} > "$REPORT_PATHFILE"
 
-	EraseThisLine		# clear the "proc:" message shown earlier
+	EraseThisLine
 
 	if [[ -e $REPORT_PATHFILE ]]; then
 		DisplayFileInWindow "$REPORT_PATHFILE"
@@ -5175,7 +5175,7 @@ Report.Abbreviations:Show()
 
 		} > "$REPORT_PATHFILE"
 
-	EraseThisLine		# clear the "proc:" message shown earlier
+	EraseThisLine
 
 	if [[ -e $REPORT_PATHFILE ]]; then
 		DisplayFileInWindow "$REPORT_PATHFILE"
@@ -5228,7 +5228,7 @@ Report.Backups:Show()
 
 		} > "$REPORT_PATHFILE"
 
-	EraseThisLine		# clear the "proc:" message shown earlier
+	EraseThisLine
 	[[ -e $REPORT_PATHFILE ]] && $CAT_CMD "$REPORT_PATHFILE"
 	Func:Exit
 
@@ -5258,7 +5258,7 @@ Report.Dependencies:Show()
 
 		} > "$REPORT_PATHFILE"
 
-	EraseThisLine		# clear the "proc:" message shown earlier
+	EraseThisLine
 
 	if [[ -e $REPORT_PATHFILE ]]; then
 		DisplayFileInWindow "$REPORT_PATHFILE"
@@ -5295,7 +5295,7 @@ Report.Names:Show()
 
 		} > "$REPORT_PATHFILE"
 
-	EraseThisLine		# clear the "proc:" message shown earlier
+	EraseThisLine
 
 	if [[ -e $REPORT_PATHFILE ]]; then
 		DisplayFileInWindow "$REPORT_PATHFILE"
@@ -5328,7 +5328,7 @@ Report.Repos:Show()
 
 		} > "$REPORT_PATHFILE"
 
-	EraseThisLine		# clear the "proc:" message shown earlier
+	EraseThisLine
 
 	if [[ -e $REPORT_PATHFILE ]]; then
 		DisplayFileInWindow "$REPORT_PATHFILE"
@@ -5361,7 +5361,7 @@ Report.Statuses:Show()
 
 		} > "$REPORT_PATHFILE"
 
-	EraseThisLine		# clear the "proc:" message shown earlier
+	EraseThisLine
 
 	if [[ -e $REPORT_PATHFILE ]]; then
 		DisplayFileInWindow "$REPORT_PATHFILE"
@@ -5585,7 +5585,9 @@ WriteMsgToActionPipe()
 
 	# send a message into message stream to update sherpa parent shell environment
 
-	[[ $msg_pipe_fd != none && -e /proc/$$/fd/$msg_pipe_fd ]] && echo "$1|$2|$3|$4" >&$msg_pipe_fd
+	[[ $action_msg_pipe_fd != none && -e /proc/$$/fd/$action_msg_pipe_fd ]] && echo "$1|$2|$3|$4" >&$action_msg_pipe_fd
+
+	return 0
 
 	}
 
@@ -5597,13 +5599,13 @@ ReadMsgFromActionPipe()
 	local _msg2_key
 	local _msg2_value
 
-	IFS='|' read -r _msg1_key _msg1_value _msg2_key _msg2_value
+	IFS='|' read -r _msg1_key _msg1_value _msg2_key _msg2_value <&$action_msg_pipe_fd
 
 	eval "$1='$_msg1_key' $2='$_msg1_value' $3='$_msg2_key' $4='$_msg2_value'"
 
 	return 0
 
-	} <&$msg_pipe_fd
+	}
 
 FindNextFD()
 	{
@@ -8526,7 +8528,7 @@ FormatAsIsoBytes()
 ShowTitleLine()
 	{
 
-	EraseThisLine		# clear the "proc:" message shown earlier
+	EraseThisLine
 	Display "$(ShowTitleName) $(ShowVersion) $(ShowDescription)"
 	WriteEmptyLineIfNoneExists
 
@@ -8593,7 +8595,7 @@ ShowAsPackageName()
 ShowAsFileName()
 	{
 
-	echo -n "(${1:?${FUNCNAME[0]}'()': undefined})"
+	echo -n "${1:?${FUNCNAME[0]}'()': undefined}"
 
 	}
 
@@ -9716,9 +9718,9 @@ sleep()
 	if [[ -e $GNU_SLEEP_CMD && -L /opt/etc/passwd ]]; then  # try to ensure Entware is active before using this utility
 		$GNU_SLEEP_CMD "$wait"
 	elif [[ $DECIMAL_SLEEP_SECONDS_SUPPORTED = false ]]; then
-		$QTS_SLEEP_CMD "$((${wait%.*}+1))"					# ensure decimal seconds are rounded-up to next integer
+		$SLEEP_CMD "$((${wait%.*}+1))"					# ensure decimal seconds are rounded-up to next integer
 	else
-		$QTS_SLEEP_CMD "$wait"
+		$SLEEP_CMD "$wait"
 	fi
 
 	return 0
