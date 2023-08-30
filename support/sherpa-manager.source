@@ -1346,7 +1346,6 @@ Action:Proc()
 			;;
 		IPK|PIP)
 			if [[ $ipks_upgrade = true || $ipks_install = true || $ipks_downgrade || $pips_install = true ]]; then
-				ShowAsProc "$ACTION_PRESENT_MSG $([[ $TIER != all ]] && echo "$TIER ")$(Uppercase "$PACKAGE_TYPE")s"
 				InitForkCounts
 				${PACKAGE_TYPE}s:${TARGET_ACTION}	# only process these packages in groups, not individually
 			fi
