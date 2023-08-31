@@ -446,8 +446,6 @@ CMDs:Load()
 CMDs.IsOk()
 	{
 
-	local install_path=''
-
 	# Confirm required binaries are present
 
 	IsSysFileExist $AWK_CMD || return
@@ -491,18 +489,14 @@ CMDs.IsOk()
 
 	# try using an already available `sqlite3` binary if one exists.
 
-	if QPKG.IsInstalled HybridBackup; then
-		install_path=$(QPKG.GetInstallationPath HybridBackup)
+	if [[ -z ${SQLITE_CMD:-} ]] && QPKG.IsInstalled HybridBackup; then
+		SQLITE_CMD=$(QPKG.GetInstallationPath HybridBackup)/CloudConnector3/bin/sqlite3
+		[[ ! -e $SQLITE_CMD ]] && SQLITE_CMD=''
+	fi
 
-		if [[ -e $install_path/CloudConnector3/bin/sqlite3 ]]; then
-			SQLITE_CMD=$install_path/CloudConnector3/bin/sqlite3
-		fi
-	elif QPKG.IsInstalled CacheMount; then
-		install_path=$(QPKG.GetInstallationPath CacheMount)
-
-		if [[ -e $install_path/bin/sqlite3 ]]; then
-			SQLITE_CMD=$install_path/bin/sqlite3
-		fi
+	if [[ -z ${SQLITE_CMD:-} ]] && QPKG.IsInstalled CacheMount; then
+		SQLITE_CMD=$(QPKG.GetInstallationPath CacheMount)/bin/sqlite3
+		[[ ! -e $SQLITE_CMD ]] && SQLITE_CMD=''
 	fi
 
 	# if one doesn't exist, then use Entware-installed binary as a last-resort. Only works if Entware is installed.
