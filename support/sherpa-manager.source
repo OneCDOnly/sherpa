@@ -412,39 +412,36 @@ CMDs:Load()
 
 	# cherry-pick QTS binaries
 	readonly AWK_CMD=/bin/awk
+	readonly BASENAME_CMD=/usr/bin/basename
 	readonly CAT_CMD=/bin/cat
+	readonly CURL_CMD=/sbin/curl
 	# don't assign a const for `/bin/date` as it's already been called before arriving here.
 	readonly DF_CMD=/bin/df
+	readonly DIRNAME_CMD=/usr/bin/dirname
+	readonly DU_CMD=/usr/bin/du
 	readonly GREP_CMD=/bin/grep
+	readonly HEAD_CMD=/usr/bin/head
 	readonly LESS_CMD=/bin/less
 	readonly MD5SUM_CMD=/bin/md5sum
 	readonly MKNOD_CMD=/bin/mknod
 	readonly MKTEMP_CMD=/bin/mktemp
 	readonly MORE_CMD=/bin/more
 	readonly PS_CMD=/bin/ps
+	readonly READLINK_CMD=/usr/bin/readlink
+	readonly SCREEN_CMD=/usr/sbin/screen
 	readonly SED_CMD=/bin/sed
 	readonly SH_CMD=/bin/sh
 	readonly SLEEP_CMD=/bin/sleep
+	readonly SORT_CMD=/usr/bin/sort
+	readonly TAIL_CMD=/usr/bin/tail
 	readonly TAR_CMD=/bin/tar
+	readonly TEE_CMD=/usr/bin/tee
 	readonly TOUCH_CMD=/bin/touch
 	readonly UNAME_CMD=/bin/uname
 	readonly UNIQ_CMD=/bin/uniq
-
-	readonly CURL_CMD=/sbin/curl
-
-	readonly BASENAME_CMD=/usr/bin/basename
-	readonly DIRNAME_CMD=/usr/bin/dirname
-	readonly DU_CMD=/usr/bin/du
-	readonly HEAD_CMD=/usr/bin/head
-	readonly READLINK_CMD=/usr/bin/readlink
-	readonly SORT_CMD=/usr/bin/sort
-	readonly TAIL_CMD=/usr/bin/tail
-	readonly TEE_CMD=/usr/bin/tee
 	readonly UNZIP_CMD=/usr/bin/unzip
 	readonly UPTIME_CMD=/usr/bin/uptime
 	readonly WC_CMD=/usr/bin/wc
-
-	readonly SCREEN_CMD=/usr/sbin/screen
 
 	}
 
