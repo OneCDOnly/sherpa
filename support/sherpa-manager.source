@@ -400,11 +400,9 @@ CMDs:Load()
 	readonly GNU_SED_CMD=/opt/bin/sed
 	readonly GNU_SLEEP_CMD=/opt/bin/sleep
 	readonly GNU_SORT_CMD=/opt/bin/sort
-	readonly GNU_SQLITE_CMD=/opt/bin/sqlite3
 	readonly GNU_STTY_CMD=/opt/bin/stty
 	readonly GNU_TIMEOUT_CMD=/opt/bin/timeout
 	readonly OPKG_CMD=/opt/bin/opkg
-
 	readonly PERL_CMD=/opt/bin/perl
 	readonly PYTHON_CMD=/opt/bin/python
 	readonly PYTHON3_CMD=/opt/bin/python3
@@ -448,6 +446,8 @@ CMDs:Load()
 CMDs.IsOk()
 	{
 
+	local install_path=''
+
 	# Confirm required binaries are present
 
 	IsSysFileExist $AWK_CMD || return
@@ -488,6 +488,29 @@ CMDs.IsOk()
 
 	# test if this QTS `sleep` can handle decimal seconds. Early QTS BusyBox versions cannot.
 	readonly DECIMAL_SLEEP_SECONDS_SUPPORTED=$($SLEEP_CMD .01 &>/dev/null && echo true || echo false)
+
+	# try using an already available `sqlite3` binary if one exists.
+
+	if QPKG.IsInstalled HybridBackup; then
+		install_path=$(QPKG.GetInstallationPath HybridBackup)
+
+		if [[ -e $install_path/CloudConnector3/bin/sqlite3 ]]; then
+			SQLITE_CMD=$install_path/CloudConnector3/bin/sqlite3
+		fi
+	elif QPKG.IsInstalled CacheMount; then
+		install_path=$(QPKG.GetInstallationPath CacheMount)
+
+		if [[ -e $install_path/bin/sqlite3 ]]; then
+			SQLITE_CMD=$install_path/bin/sqlite3
+		fi
+	fi
+
+	# if one doesn't exist, then use Entware-installed binary as a last-resort. Only works if Entware is installed.
+	[[ -z ${SQLITE_CMD:-} ]] && SQLITE_CMD=/opt/bin/sqlite3
+
+	readonly SQLITE_CMD
+
+	return 0
 
 	}
 
@@ -7245,6 +7268,7 @@ _QPKG:sign_()
 	local cert=''
 	local signature=''
 	local cmd=''
+	DebugVar SQLITE_CMD
 
 	if ! OS.IsSupportSignedPackages; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped 'not required: firmware < 4.3.5'
@@ -7252,8 +7276,8 @@ _QPKG:sign_()
 	elif ! QPKGs-ISinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped 'not installed'
 		result_code=2
-	elif [[ ! -e $GNU_SQLITE_CMD ]]; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped 'sqlite3 not installed'
+	elif [[ ! -e $SQLITE_CMD ]]; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped 'sqlite3 unavailable'
 		result_code=2
 	elif [[ ! -e $CERT_DB_PATHFILE ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped 'certificate database not found'
@@ -7347,7 +7371,7 @@ EOB
 
 	cmd="DELETE FROM Certificate WHERE QpkgName = '$PACKAGE_NAME'; INSERT INTO Certificate (Type,QpkgName,Cert,DigitalSignature) VALUES ('qpkg','$PACKAGE_NAME','$cert','$signature');"
 
-	$GNU_SQLITE_CMD "$CERT_DB_PATHFILE" "$cmd"
+	$SQLITE_CMD "$CERT_DB_PATHFILE" "$cmd"
 	result_code=$?
 
 	if [[ $result_code -eq 0 ]]; then
