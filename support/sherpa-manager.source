@@ -400,11 +400,9 @@ CMDs:Load()
 	readonly GNU_SED_CMD=/opt/bin/sed
 	readonly GNU_SLEEP_CMD=/opt/bin/sleep
 	readonly GNU_SORT_CMD=/opt/bin/sort
-	readonly GNU_SQLITE_CMD=/opt/bin/sqlite3
 	readonly GNU_STTY_CMD=/opt/bin/stty
 	readonly GNU_TIMEOUT_CMD=/opt/bin/timeout
 	readonly OPKG_CMD=/opt/bin/opkg
-
 	readonly PERL_CMD=/opt/bin/perl
 	readonly PYTHON_CMD=/opt/bin/python
 	readonly PYTHON3_CMD=/opt/bin/python3
@@ -412,44 +410,43 @@ CMDs:Load()
 
 	# cherry-pick QTS binaries
 	readonly AWK_CMD=/bin/awk
+	readonly BASENAME_CMD=/usr/bin/basename
 	readonly CAT_CMD=/bin/cat
+	readonly CURL_CMD=/sbin/curl
 	# don't assign a const for `/bin/date` as it's already been called before arriving here.
 	readonly DF_CMD=/bin/df
+	readonly DIRNAME_CMD=/usr/bin/dirname
+	readonly DU_CMD=/usr/bin/du
 	readonly GREP_CMD=/bin/grep
+	readonly HEAD_CMD=/usr/bin/head
 	readonly LESS_CMD=/bin/less
 	readonly MD5SUM_CMD=/bin/md5sum
 	readonly MKNOD_CMD=/bin/mknod
 	readonly MKTEMP_CMD=/bin/mktemp
 	readonly MORE_CMD=/bin/more
 	readonly PS_CMD=/bin/ps
+	readonly READLINK_CMD=/usr/bin/readlink
+	readonly SCREEN_CMD=/usr/sbin/screen
 	readonly SED_CMD=/bin/sed
 	readonly SH_CMD=/bin/sh
 	readonly SLEEP_CMD=/bin/sleep
+	readonly SORT_CMD=/usr/bin/sort
+	readonly TAIL_CMD=/usr/bin/tail
 	readonly TAR_CMD=/bin/tar
+	readonly TEE_CMD=/usr/bin/tee
 	readonly TOUCH_CMD=/bin/touch
 	readonly UNAME_CMD=/bin/uname
 	readonly UNIQ_CMD=/bin/uniq
-
-	readonly CURL_CMD=/sbin/curl
-
-	readonly BASENAME_CMD=/usr/bin/basename
-	readonly DIRNAME_CMD=/usr/bin/dirname
-	readonly DU_CMD=/usr/bin/du
-	readonly HEAD_CMD=/usr/bin/head
-	readonly READLINK_CMD=/usr/bin/readlink
-	readonly SORT_CMD=/usr/bin/sort
-	readonly TAIL_CMD=/usr/bin/tail
-	readonly TEE_CMD=/usr/bin/tee
 	readonly UNZIP_CMD=/usr/bin/unzip
 	readonly UPTIME_CMD=/usr/bin/uptime
 	readonly WC_CMD=/usr/bin/wc
-
-	readonly SCREEN_CMD=/usr/sbin/screen
 
 	}
 
 CMDs.IsOk()
 	{
+
+	local install_path=''
 
 	# Confirm required binaries are present
 
@@ -492,6 +489,29 @@ CMDs.IsOk()
 	# test if this QTS `sleep` can handle decimal seconds. Early QTS BusyBox versions cannot.
 	readonly DECIMAL_SLEEP_SECONDS_SUPPORTED=$($SLEEP_CMD .01 &>/dev/null && echo true || echo false)
 
+	# try using an already available `sqlite3` binary if one exists.
+
+	if QPKG.IsInstalled HybridBackup; then
+		install_path=$(QPKG.GetInstallationPath HybridBackup)
+
+		if [[ -e $install_path/CloudConnector3/bin/sqlite3 ]]; then
+			SQLITE_CMD=$install_path/CloudConnector3/bin/sqlite3
+		fi
+	elif QPKG.IsInstalled CacheMount; then
+		install_path=$(QPKG.GetInstallationPath CacheMount)
+
+		if [[ -e $install_path/bin/sqlite3 ]]; then
+			SQLITE_CMD=$install_path/bin/sqlite3
+		fi
+	fi
+
+	# if one doesn't exist, then use Entware-installed binary as a last-resort. Only works if Entware is installed.
+	[[ -z ${SQLITE_CMD:-} ]] && SQLITE_CMD=/opt/bin/sqlite3
+
+	readonly SQLITE_CMD
+
+	return 0
+
 	}
 
 Env:Load()
@@ -511,7 +531,7 @@ Env:Load()
 	readonly CPU_CORES=$(GetCPUCores)
 		readonly CONCURRENCY=$CPU_CORES		# maximum concurrent package actions to run. Should probably make this account for CPU speed too.
 	readonly ENTWARE_VER=$(GetEntwareType)
-	readonly KERNEL_PAGESIZE=$(GetKernelPageSize)
+	readonly KERNEL_PAGE_SIZE=$(GetKernelPageSize)
 	readonly NAS_ARCH=$(GetArch)
 	readonly NAS_FIRMWARE_BUILD=$(GetFirmwareBuild)
 	readonly NAS_FIRMWARE_DATE=$(GetFirmwareDate)
@@ -662,9 +682,9 @@ Debug.Log:Env()
 	DebugFirmware ok 'kernel version' "$(GetKernelVersion)"
 
 	if OS.IsStdKernelPageSize; then
-		DebugFirmware ok 'kernel page size' "$KERNEL_PAGESIZE"
+		DebugFirmware ok 'kernel page size' "$KERNEL_PAGE_SIZE"
 	else
-		DebugFirmware warning 'kernel page size' "$KERNEL_PAGESIZE"
+		DebugFirmware warning 'kernel page size' "$KERNEL_PAGE_SIZE"
 	fi
 
 	DebugFirmware ok platform "$NAS_PLATFORM"
@@ -879,7 +899,7 @@ Self:Validate()
 
 				if [[ ${installed_version//.} -gt 238 ]]; then
 					ipks_downgrade=true
-					ShowAsInfo "IPKs will be downgraded to suit $KERNEL_PAGESIZE kernel pagesize"
+					ShowAsInfo "IPKs will be downgraded to suit $KERNEL_PAGE_SIZE kernel page size"
 					IPKs-ACdowngrade-to:Add "$target_packages"
 				else
 					IPKs-ACdowngrade-sk:Add "$target_packages"
@@ -3906,7 +3926,6 @@ Report.Actions:Show()
 
 		{
 
-		ShowTitleLine
 		Help.Basic:Show
 		DisplayAsHelpTitle "$(ShowAction) usage examples:"
 		DisplayAsProjSynIndentExam 'show package statuses' status
@@ -3971,7 +3990,6 @@ Report.ActionsAll:Show()
 
 		{
 
-		ShowTitleLine
 		Help.Basic:Show
 		DisplayAsHelpTitle "the 'all' group applies to all installed packages. If $(ShowAction) is 'install all' then all available packages will be installed."
 		DisplayAsHelpTitle "$(ShowAction) $(ShowPackageGroup) usage examples:"
@@ -4056,7 +4074,6 @@ Report.Groups:Show()
 
 		{
 
-		ShowTitleLine
 		Help.Basic:Show
 		DisplayAsHelpTitle "$(ShowPackageGroup) usage examples:"
 		DisplayAsProjSynIndentExam 'select every package' "$(ShowAction) all"
@@ -4183,7 +4200,6 @@ Report.Options:Show()
 
 		{
 
-		ShowTitleLine
 		Help.Basic:Show
 		DisplayAsHelpTitle "$(ShowOptions) usage examples:"
 		DisplayAsProjSynIndentExam 'show package statuses' status
@@ -4217,7 +4233,6 @@ Report.Problems:Show()
 
 		{
 
-		ShowTitleLine
 		Help.Basic:Show
 		DisplayAsHelpTitle 'usage examples for dealing with problems:'
 		DisplayAsProjSynIndentExam 'show package statuses' status
@@ -4262,7 +4277,6 @@ Report.Tips:Show()
 
 		{
 
-		ShowTitleLine
 		Help.Basic:Show
 		DisplayAsHelpTitle 'helpful tips and shortcuts:'
 		DisplayAsProjSynIndentExam "install all available $(ShowTitleName) packages" 'install all'
@@ -4331,29 +4345,37 @@ DisplayFileInWindow()
 	{
 
 	# $1 = pathfile to display
-	# $2/$3 (optional) = 'linenumbers' : display file contents with line numbers.
-	# 			       = 'jumptoend'   : display file contents scrolled to the last line.
+	# $2/$3/$4 (optional) = 'linenumbers' : display file contents with line numbers.
+	#					  = 'jumptoend'   : display file contents scrolled to the last line.
+	#					  = 'onescreen'   : quit `less` if only one screen of data.
 
 	local showlinenumbers=false
 	local showlinenumbers_msg=''
 	local jumptoend=false
 	local jumptoend_msg=''
+	local onescreen=false
+	local onescreen_msg=''
 	local filename="${1:-}"
 
+	if [[ ! -e $filename ]]; then
+		echo "filename '$filename' not found"
+		return 1
+	fi
+
 	case 'linenumbers' in
-		${2:-}|${3:-})
+		${2:-}|${3:-}|${4:-})
 			showlinenumbers=true
 	esac
 
 	case 'jumptoend' in
-		${2:-}|${3:-})
+		${2:-}|${3:-}|${4:-})
 			jumptoend=true
 	esac
 
-	if [[ ! -e $filename ]]; then
-		echo "filename ($filename) not found"
-		return 1
-	fi
+	case 'onescreen' in
+		${2:-}|${3:-}|${4:-})
+			onescreen=true
+	esac
 
 	if [[ $opts_verbose = true ]]; then
 		if [[ -e $CAT_CMD ]]; then
@@ -4368,7 +4390,8 @@ DisplayFileInWindow()
 	if [[ -e $GNU_LESS_CMD ]]; then
 		[[ $showlinenumbers = true ]] && showlinenumbers_msg=' --LINE-NUMBERS'
 		[[ $jumptoend = true ]] && jumptoend_msg=' +G'
-		LESSSECURE=1 ${GNU_LESS_CMD}${jumptoend_msg} --quit-on-intr --tilde${showlinenumbers_msg} --RAW-CONTROL-CHARS --prompt ' use arrow-keys to scroll up-down & left-right, press Q to quit ' "$filename"
+		[[ $onescreen = true ]] && onescreen_msg=' --quit-if-one-screen'
+		LESSSECURE=1 ${GNU_LESS_CMD}${jumptoend_msg}${onescreen_msg} --quit-on-intr --tilde${showlinenumbers_msg} --RAW-CONTROL-CHARS --prompt ' use arrow-keys to scroll up-down & left-right, press Q to quit ' "$filename"
 		return
 	fi
 
@@ -4379,7 +4402,7 @@ DisplayFileInWindow()
 	fi
 
 	if [[ $showlinenumbers = true ]]; then
-		# use 'cat' if-possible as 'cat' can display line numbers.
+		# use `cat` if-possible as `cat` can display line numbers.
 
 		if [[ -e $CAT_CMD ]]; then
 			[[ $showlinenumbers = true ]] && showlinenumbers_msg=' --number'
@@ -4390,7 +4413,7 @@ DisplayFileInWindow()
 			return
 		fi
 	else
-		# if linenumbers are not required, then prefer 'more' over 'cat', as 'more' can pause after each pageful of data.
+		# if linenumbers are not required, then prefer `more` over `cat`, as `more` can pause after each pageful of data.
 
 		if [[ -e $MORE_CMD ]]; then
 			$MORE_CMD "$filename"
@@ -6087,11 +6110,11 @@ OS.IsStopping()
 OS.IsStdKernelPageSize()
 	{
 
-	# Standard kernel pagesize for most NAS appears to be 4kB.
-	# Non-standard size is 32kB (confirmed on the TS-431XeU, TS-431X3 & TS-1635). Maybe higher-end NAS with 32b CPU get the larger pagesize?
-	# This makes the TS-431XU, TS-831XU & TS-1231XU possibilities for the larger pagesize. Must check when able.
+	# Standard kernel page size for most NAS appears to be 4kB.
+	# Non-standard size is 32kB (confirmed on the TS-431XeU, TS-431X3 & TS-1635). Maybe higher-end NAS with 32b CPU get the larger page size?
+	# This makes the TS-431XU, TS-831XU & TS-1231XU possibilities for the larger page size.
 
-	[[ ${KERNEL_PAGESIZE:=$(GetKernelPageSize)} = 4kB ]]
+	[[ ${KERNEL_PAGE_SIZE:=$(GetKernelPageSize)} = 4kB ]]
 
 	}
 
@@ -7245,6 +7268,7 @@ _QPKG:sign_()
 	local cert=''
 	local signature=''
 	local cmd=''
+	DebugVar SQLITE_CMD
 
 	if ! OS.IsSupportSignedPackages; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped 'not required: firmware < 4.3.5'
@@ -7252,8 +7276,8 @@ _QPKG:sign_()
 	elif ! QPKGs-ISinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped 'not installed'
 		result_code=2
-	elif [[ ! -e $GNU_SQLITE_CMD ]]; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped 'sqlite3 not installed'
+	elif [[ ! -e $SQLITE_CMD ]]; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped 'sqlite3 unavailable'
 		result_code=2
 	elif [[ ! -e $CERT_DB_PATHFILE ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped 'certificate database not found'
@@ -7347,7 +7371,7 @@ EOB
 
 	cmd="DELETE FROM Certificate WHERE QpkgName = '$PACKAGE_NAME'; INSERT INTO Certificate (Type,QpkgName,Cert,DigitalSignature) VALUES ('qpkg','$PACKAGE_NAME','$cert','$signature');"
 
-	$GNU_SQLITE_CMD "$CERT_DB_PATHFILE" "$cmd"
+	$SQLITE_CMD "$CERT_DB_PATHFILE" "$cmd"
 	result_code=$?
 
 	if [[ $result_code -eq 0 ]]; then
