@@ -511,7 +511,7 @@ Env:Load()
 	readonly CPU_CORES=$(GetCPUCores)
 		readonly CONCURRENCY=$CPU_CORES		# maximum concurrent package actions to run. Should probably make this account for CPU speed too.
 	readonly ENTWARE_VER=$(GetEntwareType)
-	readonly KERNEL_PAGESIZE=$(GetKernelPageSize)
+	readonly KERNEL_PAGE_SIZE=$(GetKernelPageSize)
 	readonly NAS_ARCH=$(GetArch)
 	readonly NAS_FIRMWARE_BUILD=$(GetFirmwareBuild)
 	readonly NAS_FIRMWARE_DATE=$(GetFirmwareDate)
@@ -662,9 +662,9 @@ Debug.Log:Env()
 	DebugFirmware ok 'kernel version' "$(GetKernelVersion)"
 
 	if OS.IsStdKernelPageSize; then
-		DebugFirmware ok 'kernel page size' "$KERNEL_PAGESIZE"
+		DebugFirmware ok 'kernel page size' "$KERNEL_PAGE_SIZE"
 	else
-		DebugFirmware warning 'kernel page size' "$KERNEL_PAGESIZE"
+		DebugFirmware warning 'kernel page size' "$KERNEL_PAGE_SIZE"
 	fi
 
 	DebugFirmware ok platform "$NAS_PLATFORM"
@@ -879,7 +879,7 @@ Self:Validate()
 
 				if [[ ${installed_version//.} -gt 238 ]]; then
 					ipks_downgrade=true
-					ShowAsInfo "IPKs will be downgraded to suit $KERNEL_PAGESIZE kernel pagesize"
+					ShowAsInfo "IPKs will be downgraded to suit $KERNEL_PAGE_SIZE kernel page size"
 					IPKs-ACdowngrade-to:Add "$target_packages"
 				else
 					IPKs-ACdowngrade-sk:Add "$target_packages"
@@ -6087,11 +6087,11 @@ OS.IsStopping()
 OS.IsStdKernelPageSize()
 	{
 
-	# Standard kernel pagesize for most NAS appears to be 4kB.
-	# Non-standard size is 32kB (confirmed on the TS-431XeU, TS-431X3 & TS-1635). Maybe higher-end NAS with 32b CPU get the larger pagesize?
-	# This makes the TS-431XU, TS-831XU & TS-1231XU possibilities for the larger pagesize. Must check when able.
+	# Standard kernel page size for most NAS appears to be 4kB.
+	# Non-standard size is 32kB (confirmed on the TS-431XeU, TS-431X3 & TS-1635). Maybe higher-end NAS with 32b CPU get the larger page size?
+	# This makes the TS-431XU, TS-831XU & TS-1231XU possibilities for the larger page size.
 
-	[[ ${KERNEL_PAGESIZE:=$(GetKernelPageSize)} = 4kB ]]
+	[[ ${KERNEL_PAGE_SIZE:=$(GetKernelPageSize)} = 4kB ]]
 
 	}
 
