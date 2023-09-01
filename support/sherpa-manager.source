@@ -242,7 +242,7 @@ Self.Results:Show()
 	[[ $self_archive_debug_afterward = true ]] && ArchiveActiveSessLog
 	ResetActiveSessLog
 
-	if [[ $opts_verbose = false ]]; then
+	if [[ $hide_title = false && $opts_verbose = false ]]; then
 		WriteEmptyLineIfNoneExists   # Final on-screen linespace
 	fi
 
@@ -739,7 +739,7 @@ Debug.Log:Env()
 	fi
 
 	DebugQpkg detect architecture "$NAS_QPKG_ARCH"
-	DebugQpkg detect "$(ShowAsPackageName Entware)" "$ENTWARE_VER"
+	DebugQpkg detect "$(ShowAsPackageName Entware) type" "$ENTWARE_VER"
 	DebugQpkg detect "$(ShowAsPackageName Entware) install date" "$(QPKG.GetInstallDate Entware)"
 
 	if QPKG.IsInstalled SortMyQPKGs; then
@@ -3001,7 +3001,7 @@ DebugBinPathVerAndMinVer()
 			DebugUserspace warning "'$1' version" "$2"
 		fi
 	else
-		DebugUserspace warning "'$1' version" 'unknown'
+		DebugUserspace warning "'$1' version" 'undefined'
 	fi
 
 	return 0
