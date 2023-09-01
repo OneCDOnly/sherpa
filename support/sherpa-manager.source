@@ -111,7 +111,7 @@ Self:Init()
 
 	QPKGs.Warnings:Check
 
-	# KLUDGE: remove all max QTS versions from /etc/config/qpkg.conf (these are not removed automatically when installing updated QPKGs without max version set)
+	# KLUDGE: remove all max QTS versions from /etc/config/qpkg.conf (these are not removed automatically when installing updated QPKGs without max version set).
 	# Retain this kludge for 12 months to give everyone time to update their installed sherpa QPKGs. Remove after 2023-09-22
 
 	if [[ $(/sbin/getcfg sherpa max_versions_cleared -d FALSE -f /etc/config/qpkg.conf) = FALSE ]]; then
@@ -243,7 +243,7 @@ Self.Results:Show()
 	ResetActiveSessLog
 
 	if [[ $opts_verbose = false ]]; then
-		WriteEmptyLineIfNoneExists   # final on-screen linespace
+		WriteEmptyLineIfNoneExists   # Final on-screen linespace
 	fi
 
 	}
@@ -275,7 +275,7 @@ Consts:Load()
 	readonly QPKG_STOP_TIMEOUT_SECONDS=300			# 5 minutes
 	readonly QPKG_ENABLE_TIMEOUT_SECONDS=10
 	readonly QPKG_DISABLE_TIMEOUT_SECONDS=10
-	readonly LOG_TAIL_LINES=5000					# note: a full download and install of everything generates a session log of around 1600 lines, but include a bunch of opkg updates and it can get much longer
+	readonly LOG_TAIL_LINES=5000					# NOTE: a full download and install of everything generates a session log of around 1600 lines, but include a bunch of opkg updates and it can get much longer
 
 	readonly ACTION_RESULT_INDENT=6
 	readonly FILE_NAME_COL_WIDTH=33
@@ -333,7 +333,7 @@ Consts:Load()
 Vars:Load()
 	{
 
-	# default values
+	# Default values
 	backup_stdin_fd=none
 	colourful=true
 	hide_title=false
@@ -349,7 +349,7 @@ Vars:Load()
 	show_zero_qpkgs=true
 	skip_package_actions=false
 
-	# user-selectable options
+	# User-selectable options
 	opts_check=false
 	opts_debug=false
 	opts_verbose=false
@@ -393,7 +393,7 @@ Vars:Load()
 CMDs:Load()
 	{
 
-	# cherry-pick Entware binaries
+	# Cherry-pick Entware binaries
 	readonly GNU_FIND_CMD=/opt/bin/find
 	readonly GNU_GREP_CMD=/opt/bin/grep
 	readonly GNU_LESS_CMD=/opt/bin/less
@@ -408,12 +408,12 @@ CMDs:Load()
 	readonly PYTHON3_CMD=/opt/bin/python3
 		readonly PIP_CMD="$PYTHON3_CMD -m pip"
 
-	# cherry-pick QTS binaries
+	# Cherry-pick QTS binaries
 	readonly AWK_CMD=/bin/awk
 	readonly BASENAME_CMD=/usr/bin/basename
 	readonly CAT_CMD=/bin/cat
 	readonly CURL_CMD=/sbin/curl
-	# don't assign a const for `/bin/date` as it's already been called before arriving here.
+	# Don't assign a const for `/bin/date` as it's already been called before arriving here.
 	readonly DF_CMD=/bin/df
 	readonly DIRNAME_CMD=/usr/bin/dirname
 	readonly DU_CMD=/usr/bin/du
@@ -451,18 +451,18 @@ CMDs.IsOk()
 	IsSysFileExist $AWK_CMD || return
 	IsSysFileExist $BASENAME_CMD || return
 	IsSysFileExist $CAT_CMD || return
-	# don't perform a check for `/bin/date` as it's already been called before arriving here.
+	# Don't perform a check for `/bin/date` as it's already been called before arriving here.
 	IsSysFileExist $CURL_CMD || return
 	IsSysFileExist $DF_CMD || return
 	IsSysFileExist $DIRNAME_CMD || return
 	IsSysFileExist $DU_CMD || return
 	IsSysFileExist $GREP_CMD || return
 	IsSysFileExist $HEAD_CMD || return
-	# don't perform a check for `/bin/less` because it's not always there.
+	# Don't perform a check for `/bin/less` because it's not always there.
 	IsSysFileExist $MD5SUM_CMD || return
 	IsSysFileExist $MKNOD_CMD || return
 	IsSysFileExist $MKTEMP_CMD || return
-	# don't check for `/bin/more` because it's a very low-priority command, not essential.
+	# Don't check for `/bin/more` because it's a very low-priority command, not essential.
 	IsSysFileExist $PS_CMD || return
 	IsSysFileExist $READLINK_CMD || return
 	IsSysFileExist $SCREEN_CMD || return
@@ -484,10 +484,10 @@ CMDs.IsOk()
 
 	[[ ! -e $SORT_CMD ]] && ln -s /bin/busybox "$SORT_CMD"	# KLUDGE: `/usr/bin/sort` randomly disappears from QTS.
 
-	# test if this QTS `sleep` can handle decimal seconds. Early QTS BusyBox versions cannot.
+	# Test if this QTS `sleep` can handle decimal seconds. Early QTS BusyBox versions cannot.
 	readonly DECIMAL_SLEEP_SECONDS_SUPPORTED=$($SLEEP_CMD .01 &>/dev/null && echo true || echo false)
 
-	# try using an already available `sqlite3` binary if one exists.
+	# Try using an already available `sqlite3` binary if one exists.
 
 	if [[ -z ${SQLITE_CMD:-} ]] && QPKG.IsInstalled HybridBackup; then
 		SQLITE_CMD=$(QPKG.GetInstallationPath HybridBackup)/CloudConnector3/bin/sqlite3
@@ -499,7 +499,7 @@ CMDs.IsOk()
 		[[ ! -e $SQLITE_CMD ]] && SQLITE_CMD=''
 	fi
 
-	# if one doesn't exist, then use Entware-installed binary as a last-resort. Only works if Entware is installed.
+	# If one doesn't exist, then use Entware-installed binary as a last-resort. Only works if Entware is installed.
 	[[ -z ${SQLITE_CMD:-} ]] && SQLITE_CMD=/opt/bin/sqlite3
 
 	readonly SQLITE_CMD
@@ -513,7 +513,7 @@ Env:Load()
 
 	ShowAsProc 'loading environment'
 
-	if ! /bin/grep -q "$(echo 'ZG9udGVkaXQK' | /usr/bin/openssl enc -base64 -d)" "$0"; then		# use encrypted search-string to prevent `grep` finding this code line
+	if ! /bin/grep -q "$(echo 'ZG9udGVkaXQK' | /usr/bin/openssl enc -base64 -d)" "$0"; then		# Use encrypted search-string to prevent `grep` finding this code line
 		local -r SOURCE_BRANCH=stable
 	else
 		local -r SOURCE_BRANCH=unstable
@@ -523,7 +523,7 @@ Env:Load()
 	readonly ACTION_MSG_PIPE=/var/run/sherpa.action.messages.pipe
 	readonly CERT_DB_PATHFILE=/etc/config/nas_sign_qpkg.db
 	readonly CPU_CORES=$(GetCPUCores)
-		readonly CONCURRENCY=$CPU_CORES		# maximum concurrent package actions to run. Should probably make this account for CPU speed too.
+		readonly CONCURRENCY=$CPU_CORES		# Maximum concurrent package actions to run. Should probably make this account for CPU speed too.
 	readonly ENTWARE_VER=$(GetEntwareType)
 	readonly KERNEL_PAGE_SIZE=$(GetKernelPageSize)
 	readonly NAS_ARCH=$(GetArch)
@@ -571,7 +571,7 @@ Env:Load()
 Lists:Load()
 	{
 
-	# these are used internally by sherpa
+	# These are used internally by sherpa.
 	# ordered
 	PACKAGE_TIERS=(standalone addon dependent)
 
@@ -589,7 +589,7 @@ Lists:Load()
 	IPK_ACTIONS=(download uninstall upgrade reinstall install)
 	QPKG_ACTIONS=(status rebuild reassign download backup deactivate disable uninstall upgrade reinstall install restore clean enable activate reactivate sign)
 
-	# these actions, states and scopes may be specified by the user
+	# These actions, states and scopes may be specified by the user.
 	# sorted
 	USER_QPKG_SC_GROUPS=(all canbackup canclean canrestarttoupdate dependent hasdependents installable standalone upgradable)
 	USER_QPKG_SCNT_GROUPS=(canclean installable upgradable)
@@ -888,7 +888,7 @@ Self:Validate()
 			a41|a64)
 				target_packages='ar binutils libbfd libctf libopcodes objdump'
 
-				# assume first package version is same as remaining package versions
+				# Assume first package version is same as remaining package versions
 				installed_version=$($OPKG_CMD list-installed | $GREP_CMD "^${target_packages%% *} *" | cut -d' ' -f3 | cut -d'-' -f1)
 
 				if [[ ${installed_version//.} -gt 238 ]]; then
@@ -1219,9 +1219,9 @@ Action:Proc()
 		QPKG)
 			TARGET_OBJECT_NAME=AC${TARGET_ACTION}-to
 
-			if [[ $TIER = all ]]; then  # process all tiers
+			if [[ $TIER = all ]]; then  # Process all tiers
 				target_packages=($(${PACKAGE_TYPE}s-$TARGET_OBJECT_NAME:Array))
-			else						# process a single tier only
+			else						# Process a single tier only
 				for package in $(${PACKAGE_TYPE}s-$TARGET_OBJECT_NAME:Array); do
 					${PACKAGE_TYPE}s-SC${TIER}.Exist "$package" && target_packages+=("$package")
 				done
@@ -1243,13 +1243,13 @@ Action:Proc()
 			re=\\bEntware\\b		# bash 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
 
 			if [[ $TARGET_ACTION = uninstall && ${target_packages[*]} =~ $re ]]; then
-				Keystrokes:Show		# enable this before removing Entware & GNU `stty`
+				Keystrokes:Show		# Enable this before removing Entware & GNU `stty`
 			fi
 
 			_ActionForks:Launch_ "_${PACKAGE_TYPE}:${TARGET_ACTION}_" "${target_packages[@]}" &
 			fork_pid=$!
 
-			# read message pipe and process QPKGs and actions as-per requests contained within
+			# Read message pipe and process QPKGs and actions as-per requests contained within
 			while [[ ${#target_packages[@]} -gt 0 ]]; do
 				ReadMsgFromActionPipe msg1_key msg1_value msg2_key msg2_value
 
@@ -4593,11 +4593,11 @@ Report.Versions:Show()
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	Display "QPKG: ${THIS_PACKAGE_VER:-unknown}"
-	Display "manager: ${THIS_SCRIPT_VER:-unknown}"
-	Display "loader: ${LOADER_SCRIPT_VER:-unknown}"
-	Display "objects: ${OBJECTS_VER:-unknown}"
-	Display "packages: ${PACKAGES_VER:-unknown}"
+	Display "QPKG: ${THIS_PACKAGE_VER:-undefined}"
+	Display "manager: ${THIS_SCRIPT_VER:-undefined}"
+	Display "loader: ${LOADER_SCRIPT_VER:-undefined}"
+	Display "objects: ${OBJECTS_VER:-undefined}"
+	Display "packages: ${PACKAGES_VER:-undefined}"
 
 	return 0
 
@@ -5809,14 +5809,14 @@ GetKernelPageSize()
 GetPlatform()
 	{
 
-	/sbin/getcfg '' Platform -d unknown -f /etc/platform.conf
+	/sbin/getcfg '' Platform -d undefined -f /etc/platform.conf
 
 	}
 
 GetDefVol()
 	{
 
-	/sbin/getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info
+	/sbin/getcfg SHARE_DEF defVolMP -d undefined -f /etc/config/def_share.info
 
 	}
 
@@ -5856,7 +5856,7 @@ GetRepoURLFromStoreID()
 
 	[[ -n ${1:-} ]] || return
 
-	/sbin/getcfg "$1" u -d unknown -f /etc/config/3rd_pkg_v2.conf
+	/sbin/getcfg "$1" u -d undefined -f /etc/config/3rd_pkg_v2.conf
 
 	}
 
@@ -5907,21 +5907,21 @@ GetInstalledRAM()
 GetFirmwareVer()
 	{
 
-	/sbin/getcfg System Version -d none -f /etc/config/uLinux.conf
+	/sbin/getcfg System Version -d undefined -f /etc/config/uLinux.conf
 
 	}
 
 GetFirmwareBuild()
 	{
 
-	/sbin/getcfg System Number -f /etc/config/uLinux.conf
+	/sbin/getcfg System Number -d undefined -f /etc/config/uLinux.conf
 
 	}
 
 GetFirmwareDate()
 	{
 
-	/sbin/getcfg System 'Build Number' -f /etc/config/uLinux.conf
+	/sbin/getcfg System 'Build Number' -d undefined -f /etc/config/uLinux.conf
 
 	}
 
@@ -5985,6 +5985,8 @@ GetEntwareType()
 		else
 			echo none
 		fi
+	else
+		echo undefined
 	fi
 
 	} 2>/dev/null
@@ -7536,7 +7538,7 @@ QPKG.GetInstallationPath()
 	#   stdout = the installation path to this QPKG
 	#   $? = 0 if found, !0 if not
 
-	/sbin/getcfg "${1:-sherpa}" Install_Path -f /etc/config/qpkg.conf
+	/sbin/getcfg "${1:-sherpa}" Install_Path -d undefined -f /etc/config/qpkg.conf
 
 	}
 
@@ -7554,7 +7556,7 @@ QPKG.GetServicePathFile()
 	local qpkg_name=${PACKAGE_NAME:-}
 	[[ -n ${1:-} ]] && qpkg_name=$1
 
-	/sbin/getcfg "$qpkg_name" Shell -d unknown -f /etc/config/qpkg.conf
+	/sbin/getcfg "$qpkg_name" Shell -d undefined -f /etc/config/qpkg.conf
 
 	}
 
@@ -7600,7 +7602,7 @@ QPKG.Local.GetVer()
 	#   stdout = package version
 	#   $? = 0 if found, !0 if not
 
-	/sbin/getcfg "${1:-sherpa}" Version -d unknown -f /etc/config/qpkg.conf
+	/sbin/getcfg "${1:-sherpa}" Version -d undefined -f /etc/config/qpkg.conf
 
 	}
 
@@ -7650,7 +7652,7 @@ QPKG.GetInstallDate()
 	# output:
 	#   stdout = package store ID
 
-	/sbin/getcfg "${1:?${FUNCNAME[0]}'()': undefined}" date -f /etc/config/qpkg.conf
+	/sbin/getcfg "${1:?${FUNCNAME[0]}'()': undefined}" date -d undefined -f /etc/config/qpkg.conf
 
 	return 0
 
@@ -8311,7 +8313,7 @@ QPKG.IsMissing()
 	#   $? = 0 (true) or 1 (false)
 
 	path=$(QPKG.GetInstallationPath "${1:?${FUNCNAME[0]}'()': undefined}")
-	[[ -n $path && ! -d $path ]]
+	[[ $path != undefined && ! -d $path ]]
 
 	}
 
@@ -8452,7 +8454,12 @@ Capitalise()
 	# capitalise first character of $1
 
 	[[ -n ${1:-} ]] || return
-	echo "$(Uppercase ${1:0:1})${1:1}"
+
+	if [[ $1 == sherpa* ]]; then
+		echo "$1"
+	else
+		echo "$(Uppercase ${1:0:1})${1:1}"
+	fi
 
 	}
 
