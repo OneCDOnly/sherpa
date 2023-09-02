@@ -15,6 +15,22 @@
 #
 # Forum:
 #   https://forum.qnap.com/viewtopic.php?f=320&t=132373
+#
+# Tested on:
+#	GNU bash, version 3.2.57(2)-release (i686-pc-linux-gnu)
+#	GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
+#	Copyright (C) 2007 Free Software Foundation, Inc.
+#
+# ... and periodically on:
+#	GNU bash, version 5.0.17(1)-release (aarch64-openwrt-linux-gnu)
+#	Copyright (C) 2019 Free Software Foundation, Inc.
+#
+# License:
+#	This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+#
+#	This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#
+#	You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 
 InitLibrary()
 	{
@@ -99,7 +115,7 @@ InitLibrary()
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
 	readonly QPKG_VERSION=$(/sbin/getcfg $QPKG_NAME Version -d unknown -f /etc/config/qpkg.conf)
 	readonly SCREEN_LOG_PATHFILE=/var/log/$QPKG_NAME.screen.log
-	readonly SERVICE_LIB_VERSION="230825"
+	readonly SERVICE_LIB_VERSION="230902"
 	readonly SERVICE_LOG_PATHFILE=/var/log/$QPKG_NAME.log
 	readonly SERVICE_STATUS_PATHFILE=/var/run/$QPKG_NAME.last.operation
 
