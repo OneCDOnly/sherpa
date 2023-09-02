@@ -663,6 +663,16 @@ CleanLocalClone()
 WaitForGit()
 	{
 
+	if IsNotQPKGInstalled Entware; then
+		DisplayErrCommitAllLogs "'git' unavailable: Entware is not installed!"
+		return 1
+	fi
+
+	if IsNotQPKGEnabled Entware; then
+		DisplayErrCommitAllLogs "'git' unavailable: Entware is not enabled!"
+		return 1
+	fi
+
 	if WaitForFileToAppear '/opt/bin/git' 300; then
 		export PATH="$OPKG_PATH:$(/bin/sed "s|$OPKG_PATH||" <<< "$PATH")"
 		return 0
