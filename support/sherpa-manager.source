@@ -6105,9 +6105,8 @@ OS.IsStopping()
 OS.IsStdKernelPageSize()
 	{
 
-	# Standard kernel page size for most NAS appears to be 4kB.
-	# Non-standard size is 32kB (confirmed on the TS-431XeU, TS-431X3 & TS-1635). Maybe higher-end NAS with 32b CPU get the larger page size?
-	# This makes the TS-431XU, TS-831XU & TS-1231XU possibilities for the larger page size.
+	# Standard kernel page size for most NAS is 4kB. Non-standard size is 32kB (confirmed on the TS-431XeU, TS-431X3 & TS-1635).
+	# https://www.qnap.com/en-us/how-to/faq/article/why-do-the-installed-third-party-containers-not-run-successfully-on-specific-32-bit-arm-devices
 
 	[[ ${KERNEL_PAGE_SIZE:=$(GetKernelPageSize)} = 4kB ]]
 
