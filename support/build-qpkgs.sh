@@ -123,6 +123,7 @@ for d in "$qpkgs_path"/*; do
 	fi
 
 	service_script_file=$(. $config_pathfile; echo "$QPKG_SERVICE_PROGRAM")
+	loader_script_file=$(. $config_pathfile; echo "$QPKG_LOADER_PROGRAM")
 
 	if [[ -z $service_script_file ]]; then
 		echo "service script file: unspecified"
@@ -132,6 +133,7 @@ for d in "$qpkgs_path"/*; do
 
 	for test_path in shared arm_64 arm-x19 arm-x31 arm-x41 x86_64 x86; do
 		SwapTags "$d/$test_path/${service_script_file%.*}.source" "$d/$test_path/$service_script_file"
+		SwapTags "$d/$test_path/${loader_script_file%.*}.source" "$d/$test_path/$loader_script_file"
 	done
 
 	(cd "$d" || exit; qbuild --exclude '*.source' &>/dev/null)
