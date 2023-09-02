@@ -296,18 +296,17 @@ Consts:Load()
 	readonly PACKAGE_STATUS_COL_WIDTH=23
 	readonly PACKAGE_VER_COL_WIDTH=17
 
-	readonly CHAR_SPACER=' '
-
-	readonly CHARS_ALERT=$CHAR_SPACER'! '
-	readonly CHARS_BLANK=$CHAR_SPACER'  '
 	readonly CHARS_DROPEND='└─ '
 	readonly CHARS_ELLIPSIS='...'
-	readonly CHARS_NORMAL=$CHAR_SPACER'- '
 	readonly CHARS_NOTE='* '
-	readonly CHARS_RESULTS='= '
 	readonly CHARS_REGULAR_PROMPT='$ '
+		readonly CHARS_SUDO_PROMPT="${CHARS_REGULAR_PROMPT}sudo "
+	readonly CHARS_RESULTS='= '
+	readonly CHAR_SPACER=' '
+		readonly CHARS_ALERT="${CHAR_SPACER}! "
+		readonly CHARS_BLANK="${CHAR_SPACER}  "
+		readonly CHARS_NORMAL="${CHAR_SPACER}- "
 	readonly CHARS_SPECIAL='• '
-	readonly CHARS_SUDO_PROMPT="${CHARS_REGULAR_PROMPT}sudo "
 	readonly CHARS_SUPER_PROMPT='# '
 
 	readonly DEBUG_LOG_DATAWIDTH=101
