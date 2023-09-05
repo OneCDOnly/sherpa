@@ -115,15 +115,15 @@ for d in "$qpkgs_path"/*; do
 		target="$d/$test_path/$service_script_file"
 		SwapTags "$source" "$target" >/dev/null
 		Squeeze "$target" "$target" >/dev/null
-		[[ -e "$source" ]] && chmod 644 "$source"
-		[[ -e "$target" ]] && chmod 554 "$target"
+		[[ -f "$source" ]] && chmod 644 "$source"
+		[[ -f "$target" ]] && chmod 554 "$target"
 
 		source="$d/$test_path/${loader_script_file%.*}.source"
 		target="$d/$test_path/$loader_script_file"
 		SwapTags "$source" "$target" >/dev/null
 		Squeeze "$target" "$target" >/dev/null
-		[[ -e "$source" ]] && chmod 644 "$source"
-		[[ -e "$target" ]] && chmod 554 "$target"
+		[[ -f "$source" ]] && chmod 644 "$source"
+		[[ -f "$target" ]] && chmod 554 "$target"
 	done
 
 	(cd "$d" || exit; qbuild --exclude '*.source' &>/dev/null)
