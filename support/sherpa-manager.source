@@ -554,7 +554,7 @@ Lists:Load()
 
 	# These are used internally by sherpa.
 	# ordered
-	PACKAGE_TIERS=(standalone addon dependent)
+	PACKAGE_TIERS=(standalone complementary dependent)
 
 	# sorted
 	QPKG_IS_STATES=(active backedup downloaded enabled installed missing signed slow unknown)
@@ -1126,7 +1126,7 @@ Actions:Proc()
 				Action:Proc reactivate $tier QPKG reactivating reactivated
 				Action:Proc activate $tier QPKG activating activated
 				;;
-			addon)
+			complementary)
 				for action in install reinstall upgrade activate; do
 					if (QPKGs-ACinstall-ok.Exist Entware) || QPKGs-AC${action}-to.IsAny && QPKGs-ISenabled.Exist Entware; then
 						ipks_upgrade=true
@@ -1168,7 +1168,7 @@ Action:Proc()
 
 	# input:
 	#   $1 = $TARGET_ACTION					e.g. `activate`, `reactivate` ...
-	#   $2 = $TIER							e.g. `standalone`, `dependent`, `addon`, `all`
+	#   $2 = $TIER							e.g. `standalone`, `dependent`, `complementary`, `all`
 	#   $3 = $PACKAGE_TYPE					e.g. `QPKG`, `IPK`, `PIP`
 	#   $4 = $ACTION_PRESENT_MSG			e.g. `activating` ...
 	#   $5 = $ACTION_PAST_MSG				e.g. `activated` ...
@@ -2495,7 +2495,7 @@ IPKs:install()
 	total_count=$(IPKs-ACdownload-to:Count)
 
 	if [[ $total_count -gt 0 ]]; then
-		local desc="$total_count addon IPK module$(Pluralise "$total_count")"
+		local desc="$total_count complementary IPK module$(Pluralise "$total_count")"
 		local log_pathfile=$LOGS_PATH/ipks.$INSTALL_LOG_FILE
 		ShowAsProc "installing $desc"
 
@@ -2641,7 +2641,7 @@ PIPs:install()
 		((total_count++))
 
 		exec_cmd="$PIP_CMD install --upgrade --no-input $ESSENTIAL_PIPS --cache-dir $PIP_CACHE_PATH 2> >($GREP_CMD -v \"Running pip as the 'root' user\") >&2"
-		local desc='addon PyPI modules'
+		local desc='complementary PyPI modules'
 		local log_pathfile=$LOGS_PATH/pypi.$INSTALL_LOG_FILE
 
 		ShowAsPercentProgress '' "$package_type" "$ok_count" 0 "$fail_count" "$total_count" installing ''
@@ -4960,7 +4960,7 @@ QPKGs.States:List()
 QPKGs.StandaloneDependent:Build()
 	{
 
-	# There are three tiers of package: `standalone`, `addon` and `dependent`.
+	# There are three tiers of package: `standalone`, `complementary` and `dependent`.
 	# ... but only two tiers of QPKG: `standalone` and `dependent`.
 
 	# `standalone` QPKGs don't depend-on other QPKGs, but may be required for other QPKGs. They should be installed/activated before any `dependent` QPKGs.
