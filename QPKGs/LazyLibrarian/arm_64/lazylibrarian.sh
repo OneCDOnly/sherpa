@@ -19,7 +19,7 @@
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 readonly USER_ARGS_RAW=$*
 readonly QPKG_NAME=LazyLibrarian
-readonly SERVICE_SCRIPT_VERSION='230905'
+readonly SERVICE_SCRIPT_VERSION='230906'
 InitBasic()
 {
 allow_access_to_sys_packages=true
@@ -33,10 +33,9 @@ app_version_pathfile=$qpkg_repo_path/lazylibrarian/version.py
 daemon_pathfile=$qpkg_repo_path/LazyLibrarian.py
 daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile --daemon --nolaunch --datadir $(/usr/bin/dirname "$QPKG_INI_PATHFILE") --config $QPKG_INI_PATHFILE --pidfile $DAEMON_PID_PATHFILE"
 get_ui_listening_address_cmd="/sbin/getcfg misc host -d undefined -f $QPKG_INI_PATHFILE"
-get_ui_port_cmd='/sbin/getcfg General http_port -d 5299 -f '$QPKG_INI_PATHFILE
-get_ui_port_secure_cmd='/sbin/getcfg General http_port -d 5299 -f '$QPKG_INI_PATHFILE
+get_ui_port_cmd="/sbin/getcfg General http_port -d 5299 -f $QPKG_INI_PATHFILE"
+get_ui_port_secure_cmd="/sbin/getcfg General http_port -d 5299 -f $QPKG_INI_PATHFILE"
 get_ui_port_secure_enabled_test_cmd='[[ $(/sbin/getcfg General https_enabled -d 0 -f '$QPKG_INI_PATHFILE') = 1 ]]'
-get_ui_listening_address_cmd='/sbin/getcfg General http_host -d undefined -f '$QPKG_INI_PATHFILE
 IsSupportGetAppVersion && app_version_cmd="/bin/grep '__version__ =' $APP_VERSION_PATHFILE | /bin/sed 's|^.*\"\(.*\)\"|\1|'"
 }
 LoadLib()
