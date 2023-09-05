@@ -7,7 +7,7 @@ fi
 
 . ./vars.source
 
-echo -n "building 'objects' ... "
+echo -n "building 'objects' file ... "
 
 target_pathfile="$source_path/$objects_file"
 
@@ -144,8 +144,8 @@ echo $public_function_name':Add()
 	}
 
 [[ -e $target_pathfile ]] && rm -f "$target_pathfile"
-echo "OBJECTS_VER='$thisdate'" > "$target_pathfile"
-echo "#*$dontedit_msg" >> "$target_pathfile"
+echo "OBJECTS_VER='<?thisdate?>'" > "$target_pathfile"
+echo "#* <?dontedit?>" >> "$target_pathfile"
 
 # package action flag objects -----------------------------------------------------------------------------------------------------------------------------
 
@@ -210,20 +210,16 @@ for action in "${IPK_ACTIONS[@]}"; do
 	done
 done
 
-buffer=$(<"$target_pathfile")
-buffer=$(sed -e '/^#[[:space:]].*/d;/#$/d;s/[[:space:]]#[[:space:]].*//' <<< "$buffer")		# remove comment lines and line comments
-buffer=$(sed -e 's/^[[:space:]]*//' <<< "$buffer")											# remove leading whitespace
-buffer=$(sed 's/[[:space:]]*$//' <<< "$buffer")												# remove trailing whitespace
-buffer=$(sed "/^$/d" <<< "$buffer")															# remove empty lines
-
-echo "$buffer" > "$target_pathfile"
-
 if [[ ! -e $target_pathfile ]]; then
 	ColourTextBrightRed "'$target_pathfile' was not written to disk"; echo
 	exit 1
+else
+	ShowDone
 fi
+
+SwapTags "$target_pathfile" "$target_pathfile"
+Squeeze "$target_pathfile" "$target_pathfile"
 
 chmod 444 "$target_pathfile"
 
-ShowDone
 exit 0
