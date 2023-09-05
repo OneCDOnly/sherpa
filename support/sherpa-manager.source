@@ -1027,6 +1027,7 @@ Self:Validate()
 	fi
 
 	QPKGs-ACupgrade-to.Exist sherpa && QPKGs-ACreactivate-to:Add sherpa
+	QPKGs-ACinstall-to.Exist Entware && QPKGs-ACreactivate-to:Add Entware
 
 	# Build list of required installation QPKGs.
 	QPKGs-ACdownload-to:Add "$(QPKGs-ACupgrade-to:Array) $(QPKGs-ACreinstall-to:Array) $(QPKGs-ACinstall-to:Array)"
