@@ -1,5 +1,5 @@
 PACKAGES_VER='<?thisdate?>'
-#*<?dontedit?>
+#* <?dontedit?>
 BASE_QPKG_CONFLICTS_WITH='TarMT'
 BASE_QPKG_WARNINGS='Qboost'
 ESSENTIAL_IPKS='ca-certificates coreutils-sleep coreutils-sort coreutils-stty coreutils-timeout findutils gcc git git-http grep less nano sed sqlite3-cli'

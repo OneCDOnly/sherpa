@@ -11,28 +11,6 @@ fi
 
 . ./vars.source
 
-SwapTags()
-	{
-
-	# input:
-	# 	$1 = input pathfile to process for tags. This always has a '.source' extension.
-	# 	$2 = output pathfile and extension
-
-	# output:
-	# 	$? = 0
-
-	if [[ -f "$1" ]]; then			# ignore symlinks
-		local buffer=$(<"$1")
-
-		buffer=$(sed "s|<?dontedit?>|$dontedit_msg|" <<< "$buffer")
-		buffer=$(sed "s|<?thisdate?>|$thisdate|" <<< "$buffer")
-		buffer=$(sed "s|<?thisyear?>|$thisyear|" <<< "$buffer")
-
-		echo "$buffer" > "$2"
-	fi
-
-	}
-
 source_pathfile="$source_path/$service_library_source_file"
 target_pathfile="$source_path/$service_library_file"
 datetime_change_reference_pathfile="$target_pathfile"
@@ -52,7 +30,8 @@ else
 fi
 
 if [[ $rebuild_functions = true ]]; then
-	SwapTags "$source_pathfile" "$target_pathfile"
+	SwapTags "$source_pathfile" "$target_pathfile" >/dev/null
+	Squeeze "$target_pathfile" "$target_pathfile" >/dev/null
 
 	if [[ -s "$target_pathfile" ]]; then
 		echo "service library: rebuilt"
@@ -114,7 +93,7 @@ for d in "$qpkgs_path"/*; do
 		continue
 	fi
 
-	SwapTags "$config_source_pathfile" "$config_pathfile"
+	SwapTags "$config_source_pathfile" "$config_pathfile" >/dev/null
 
 	if [[ ! -s "$config_pathfile" ]]; then
 		echo "config file: missing"
@@ -132,8 +111,11 @@ for d in "$qpkgs_path"/*; do
 	fi
 
 	for test_path in shared arm_64 arm-x19 arm-x31 arm-x41 x86_64 x86; do
-		SwapTags "$d/$test_path/${service_script_file%.*}.source" "$d/$test_path/$service_script_file"
-		SwapTags "$d/$test_path/${loader_script_file%.*}.source" "$d/$test_path/$loader_script_file"
+		SwapTags "$d/$test_path/${service_script_file%.*}.source" "$d/$test_path/$service_script_file" >/dev/null
+		Squeeze "$d/$test_path/$service_script_file" "$d/$test_path/$service_script_file" >/dev/null
+
+		SwapTags "$d/$test_path/${loader_script_file%.*}.source" "$d/$test_path/$loader_script_file" >/dev/null
+		Squeeze "$d/$test_path/$service_script_file" "$d/$test_path/$service_script_file" >/dev/null
 	done
 
 	(cd "$d" || exit; qbuild --exclude '*.source' &>/dev/null)
