@@ -1961,7 +1961,7 @@ AllocPackGroupsToAcs()
 								DebugAsWarn "specified group '$group' has no handler for specified action '$action'"
 						esac
 						;;
-					activate|deactivate|enable|disable|reactivate|stop|uninstall)
+					activate|deactivate|enable|disable|reactivate|reinstall|stop|uninstall)
 						case $group in
 							all|dependent|standalone)
 								found=true
