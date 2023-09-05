@@ -112,8 +112,6 @@ ShowDone
 
 echo -n 'updating QPKG fields ... '
 
-buffer=$(sed "s|<?thisdate?>|$thisdate|" <<< "$buffer")
-buffer=$(sed "s|<?dontedit?>|$dontedit_msg|" <<< "$buffer")
 buffer=$(sed "s|<?cdn_sherpa_packages_url?>|$cdn_sherpa_packages_url|" <<< "$buffer")
 buffer=$(sed "s|<?cdn_qnap_dev_packages_url?>|$cdn_qnap_dev_packages_url|" <<< "$buffer")
 buffer=$(sed "s|<?cdn_other_packages_url?>|$cdn_other_packages_url|" <<< "$buffer")
@@ -129,27 +127,24 @@ while read -r checksum_filename qpkg_filename package_name version arch md5; do
 	done
 done <<< "$(sort "$highest_package_versions_found_pathfile")"
 
-buffer=$(sed -e '/^#[[:space:]].*/d;s/[[:space:]]#[[:space:]].*//' <<< "$buffer")		# remove comment lines and line comments
-buffer=$(sed -e 's/^[[:space:]]*//' <<< "$buffer")										# remove leading whitespace
-buffer=$(sed 's/[[:space:]]*$//' <<< "$buffer")											# remove trailing whitespace
-buffer=$(sed "/^$/d" <<< "$buffer")														# remove empty lines
-
 ShowDone
 
-echo -n "building 'packages' ... "
+echo -n "building 'packages' file ... "
 
-[[ -e $target_pathfile ]] && chmod 666 "$target_pathfile"
-
+[[ -e $target_pathfile ]] && chmod +w "$target_pathfile"
 echo "$buffer" > "$target_pathfile"
 
 if [[ ! -e $target_pathfile ]]; then
 	ColourTextBrightRed "'$target_pathfile' was not written to disk"; echo
 	exit 1
+else
+	ShowDone
 fi
 
-[[ -e $target_pathfile ]] && chmod 444 "$target_pathfile"
+SwapTags "$target_pathfile" "$target_pathfile"
+Squeeze "$target_pathfile" "$target_pathfile"
 
-ShowDone
+chmod 444 "$target_pathfile"
 
 # sort and add header line for easier viewing
 printf '%-36s %-32s %-20s %-12s %-6s %s\n%s\n' '# checksum_filename' qpkg_filename package_name version arch md5 "$(sort "$highest_package_versions_found_pathfile")" > "$highest_package_versions_found_sorted_pathfile"

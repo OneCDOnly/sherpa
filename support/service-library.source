@@ -1,36 +1,18 @@
 #!/usr/bin/env bash
-#*<?dontedit?>
+#* <?dontedit?>
 #
-# service.lib
-#  Copyright (C) 2017-<?thisyear?> OneCD - one.cd.only@gmail.com
+#* service.lib
+#*   <?copyright?>
 #
-#  So, blame OneCD if it all goes horribly wrong. ;)
+#* Description:
+#*   A library of common bash functions used by many sherpa QPKG service-scripts.
+#*   Each QPKG has a copy for use only by that QPKG's service-script.
 #
-# Description:
-#   A library of common bash functions used by many sherpa QPKG service-scripts.
-#   Each QPKG has a copy for use only by that QPKG's service-script.
+#* <?project?>
 #
-# Project:
-#   https://git.io/sherpa
+#* <?tested?>
 #
-# Forum:
-#   https://forum.qnap.com/viewtopic.php?f=320&t=132373
-#
-# Tested on:
-#	GNU bash, version 3.2.57(2)-release (i686-pc-linux-gnu)
-#	GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
-#	Copyright (C) 2007 Free Software Foundation, Inc.
-#
-# ... and periodically on:
-#	GNU bash, version 5.0.17(1)-release (aarch64-openwrt-linux-gnu)
-#	Copyright (C) 2019 Free Software Foundation, Inc.
-#
-# License:
-#	This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
-#
-#	This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-#
-#	You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
+#* <?license?>
 
 InitLibrary()
 	{
@@ -68,7 +50,7 @@ InitLibrary()
 	backup_pathfile=undefined
 	daemon_launch_cmd=undefined
 	daemon_pathfile=undefined
-	daemon_pid_pathfile=undefined
+	DAEMON_PID_PATHFILE=undefined
 	daemon_port=0
 	daemon_proc_is_name_only=false
 	get_daemon_port_cmd=undefined
@@ -81,7 +63,8 @@ InitLibrary()
 	orig_daemon_service_script=undefined		# specific to Entware binaries only
 	pidfile_is_managed_by_app=false
 	pip_cache_path=undefined
-	qpkg_ini_pathfile=undefined
+	qpkg_ini_file=undefined
+	QPKG_INI_PATHFILE=undefined
 	qpkg_repo_path=undefined
 	recheck_daemon_pid_after_launch=false
 	run_daemon_in_screen_session=false
@@ -107,7 +90,7 @@ InitLibrary()
 
 	readonly BACKUP_PATH=$(/sbin/getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
 	readonly CHARS_REGULAR_PROMPT='$ '
-	readonly CHARS_SUDO_PROMPT="${CHARS_REGULAR_PROMPT}sudo "
+		readonly CHARS_SUDO_PROMPT="${CHARS_REGULAR_PROMPT}sudo "
 	readonly CHARS_SUPER_PROMPT='# '
 	readonly DEBUG_LOG_DATAWIDTH=100
 	readonly OPKG_PATH=/opt/bin:/opt/sbin
@@ -115,19 +98,22 @@ InitLibrary()
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
 	readonly QPKG_VERSION=$(/sbin/getcfg $QPKG_NAME Version -d unknown -f /etc/config/qpkg.conf)
 	readonly SCREEN_LOG_PATHFILE=/var/log/$QPKG_NAME.screen.log
-	readonly SERVICE_LIB_VERSION="<?thisdate?>"
+	readonly SERVICE_LIB_VERSION='<?thisdate?>'
 	readonly SERVICE_LOG_PATHFILE=/var/log/$QPKG_NAME.log
 	readonly SERVICE_STATUS_PATHFILE=/var/run/$QPKG_NAME.last.operation
-
 	readonly QPKG_CONFIG_PATH=$QPKG_PATH/config
+		readonly APP_VERSION_STORE_PATHFILE=$QPKG_CONFIG_PATH/version.stored
+		readonly SCREEN_CONF_PATHFILE=$QPKG_CONFIG_PATH/screen.conf
 
-	readonly APP_VERSION_STORE_PATHFILE=$QPKG_CONFIG_PATH/version.stored
-	readonly SCREEN_CONF_PATHFILE=$QPKG_CONFIG_PATH/screen.conf
+	qpkg_ini_file=config.ini
 
 	InitBasic		# located in parent service-script
 
 	InitByType
-	readonly QPKG_INI_DEFAULT_PATHFILE=$qpkg_ini_pathfile.def
+
+	readonly DAEMON_PID_PATHFILE=/var/run/$QPKG_NAME.pid
+	readonly QPKG_INI_PATHFILE=$QPKG_CONFIG_PATH/$qpkg_ini_file
+		readonly QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
 
 	InitComplex		# located in parent service-script
 
@@ -152,15 +138,14 @@ InitByType()
 
 	# definitions: https://github.com/OneCDOnly/sherpa/wiki/Service-Script-Types
 
+	backup_pathfile=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
+
 	case $service_script_type in
 		1)
-			backup_pathfile=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
-			daemon_pid_pathfile=/var/run/$QPKG_NAME.pid
 			install_pip_deps=true
 			interpreter=/opt/bin/python3
 			pidfile_is_managed_by_app=true
 			pip_cache_path=$QPKG_PATH/pip-cache
-			qpkg_ini_pathfile=$QPKG_CONFIG_PATH/config.ini
 			qpkg_repo_path=$QPKG_PATH/repo-cache
 			recheck_daemon_pid_after_launch=true
 			source_git_branch_depth=shallow
@@ -169,13 +154,7 @@ InitByType()
 			venv_python_pathfile=$venv_path/bin/python3
 			;;
 		3)
-			backup_pathfile=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
-			daemon_pid_pathfile=/var/run/$QPKG_NAME.pid
-# 			pip_cache_path=$QPKG_PATH/pip-cache
-			qpkg_ini_pathfile=$QPKG_CONFIG_PATH/config.ini
-# 			venv_path=$QPKG_PATH/venv
-# 			venv_pip_pathfile=$venv_path/bin/pip
-# 			venv_python_pathfile=$venv_path/bin/python3
+			:
 			;;
 		*)
 			:
@@ -300,7 +279,7 @@ StopQPKG()
 		local pid=0
 		SetRestartPending
 
-		pid=$(<$daemon_pid_pathfile)
+		pid=$(<$DAEMON_PID_PATHFILE)
 		kill "$pid"
 		DisplayWaitCommitToLog "stop daemon PID ($pid) with SIGTERM:"
 		DisplayWait "(no-more than $DAEMON_STOP_TIMEOUT_SECONDS second$(Pluralise "$DAEMON_STOP_TIMEOUT_SECONDS")):"
@@ -315,12 +294,12 @@ StopQPKG()
 					DisplayCommitToLog 'failed!'
 					DisplayCommitToLog "stop daemon PID ($pid) with SIGKILL:"
 					kill -9 "$pid" 2> /dev/null
-					[[ -f $daemon_pid_pathfile ]] && rm -f "$daemon_pid_pathfile"
+					[[ -f $DAEMON_PID_PATHFILE ]] && rm -f "$DAEMON_PID_PATHFILE"
 					break 2
 				fi
 			done
 
-			[[ -f $daemon_pid_pathfile ]] && rm -f "$daemon_pid_pathfile"
+			[[ -f $DAEMON_PID_PATHFILE ]] && rm -f "$DAEMON_PID_PATHFILE"
 			Display OK
 			CommitToLog "stopped in $acc second$(Pluralise "$acc")"
 
@@ -717,11 +696,11 @@ FindAndWritePIDFile()
 	fi
 
 	if [[ $target_pid -gt 0 ]]; then
-		echo "$target_pid" > "$daemon_pid_pathfile"
+		echo "$target_pid" > "$DAEMON_PID_PATHFILE"
 		return 0
 	fi
 
-	rm -f "$daemon_pid_pathfile"
+	rm -f "$DAEMON_PID_PATHFILE"
 
 	return 1
 
@@ -733,7 +712,7 @@ WaitForPID()
 	local -i count=0
 
 	if [[ $pidfile_is_managed_by_app = true ]]; then
-		if WaitForFileToAppear "$daemon_pid_pathfile" "$PIDFILE_APPEAR_TIMEOUT_SECONDS"; then
+		if WaitForFileToAppear "$DAEMON_PID_PATHFILE" "$PIDFILE_APPEAR_TIMEOUT_SECONDS"; then
 			/bin/sleep 1		# wait one more second to allow file to have PID written into it
 		fi
 	fi
@@ -742,7 +721,7 @@ WaitForPID()
 		DisplayWaitCommitToLog 'found daemon PID:'
 
 		if FindAndWritePIDFile; then
-			DisplayCommitToLog "$(<"$daemon_pid_pathfile")"
+			DisplayCommitToLog "$(<"$DAEMON_PID_PATHFILE")"
 		else
 			DisplayCommitToLog false
 		fi
@@ -760,7 +739,7 @@ WaitForPID()
 	DisplayWaitCommitToLog 'found daemon PID:'
 
 	if FindAndWritePIDFile; then
-		DisplayCommitToLog "$(<"$daemon_pid_pathfile")"
+		DisplayCommitToLog "$(<"$DAEMON_PID_PATHFILE")"
 	else
 		DisplayErrCommitAllLogs false
 		DisplayErrCommitAllLogs 'unable to locate active daemon process'
@@ -805,7 +784,7 @@ WaitForDaemon()
 				/bin/sleep 1
 				DisplayWait "$count,"
 
-				if IsProcessActive "$target_proc" "$daemon_pid_pathfile"; then
+				if IsProcessActive "$target_proc" "$DAEMON_PID_PATHFILE"; then
 					Display OK
 					CommitToLog "active after $count second$(Pluralise "$count")"
 					true
@@ -906,7 +885,7 @@ EnsureConfigFileExists()
 
 	if IsNotConfigFound && IsDefaultConfigFound; then
 		DisplayCommitToLog 'no configuration file found: using default'
-		cp "${QPKG_INI_DEFAULT_PATHFILE:?undefined}" "${qpkg_ini_pathfile:?undefined}"
+		cp "${QPKG_INI_DEFAULT_PATHFILE:?undefined}" "${QPKG_INI_PATHFILE:?undefined}"
 	fi
 
 	}
@@ -1168,6 +1147,7 @@ CheckPorts()
 		fi
 	else
 		DisplayWaitCommitToLog 'HTTPS port enabled:'
+
 		if IsSSLEnabled; then
 			DisplayCommitToLog true
 			DisplayCommitToLog "HTTPS port: $ui_port_secure"
@@ -1388,7 +1368,7 @@ IsNotSupportBackup()
 IsSupportReset()
 	{
 
-	[[ $qpkg_ini_pathfile != undefined ]]
+	[[ $QPKG_INI_PATHFILE != undefined ]]
 
 	}
 
@@ -1488,7 +1468,7 @@ IsNotSSLEnabled()
 IsDaemon()
 	{
 
-	[[ $daemon_pid_pathfile != undefined ]]
+	[[ $DAEMON_PID_PATHFILE != undefined ]]
 
 	}
 
@@ -1515,14 +1495,14 @@ IsDaemonActive()
 		target_proc="$(GetLaunchTarget)"
 	fi
 
-	if IsProcessActive "$target_proc" "$daemon_pid_pathfile"; then
+	if IsProcessActive "$target_proc" "$DAEMON_PID_PATHFILE"; then
 		DisplayCommitToLog true
-		DisplayCommitToLog "daemon PID: $(<"$daemon_pid_pathfile")"
+		DisplayCommitToLog "daemon PID: $(<"$DAEMON_PID_PATHFILE")"
 		return 0
 	fi
 
 	DisplayCommitToLog false
-	rm -f "$daemon_pid_pathfile"
+	rm -f "$DAEMON_PID_PATHFILE"
 	return 1
 
 	}
@@ -1680,7 +1660,7 @@ IsPortResponds()
 	fi
 
 	while true; do
-		if ! IsProcessActive "$target_proc" "$daemon_pid_pathfile"; then
+		if ! IsProcessActive "$target_proc" "$DAEMON_PID_PATHFILE"; then
 			DisplayCommitToLog 'process not active!'
 			break
 		fi
@@ -1693,14 +1673,14 @@ IsPortResponds()
 				CommitToLog "port responded after $acc second$(Pluralise "$acc")"
 				return 0
 				;;
-			28)			# timeout
+			28)			# timed-out
 				: 			# do nothing
 				;;
 			7)			# this code is returned immediately
 				/bin/sleep 1		# ... so let's wait here a bit
 				;;
 			*)
-				: # do nothing
+				: 			# do nothing
 		esac
 
 		((acc+=1))
@@ -1751,12 +1731,12 @@ IsPortSecureResponds()
 	fi
 
 	while true; do
-		if ! IsProcessActive "$target_proc" "$daemon_pid_pathfile"; then
+		if ! IsProcessActive "$target_proc" "$DAEMON_PID_PATHFILE"; then
 			DisplayCommitToLog 'process not active!'
 			break
 		fi
 
-		/sbin/curl --silent -insecure --fail --max-time 1 https://localhost:"$port" &>/dev/null
+		/sbin/curl --silent --insecure --fail --max-time 1 https://localhost:"$port" &>/dev/null
 
 		case $? in
 			0|22|52)	# accept these exitcodes as evidence of valid responses
@@ -1764,14 +1744,18 @@ IsPortSecureResponds()
 				CommitToLog "port responded after $acc second$(Pluralise "$acc")"
 				return 0
 				;;
-			28)			# timeout
+			35)
+				DisplayCommitToLog 'TLS inactive!'
+				break
+				;;
+			28)			# timed-out
 				: 			# do nothing
 				;;
 			7)			# this code is returned immediately
 				/bin/sleep 1		# ... so let's wait here a bit
 				;;
 			*)
-				: # do nothing
+				: 			# do nothing
 		esac
 
 		((acc+=1))
@@ -1793,7 +1777,7 @@ IsConfigFound()
 
 	# Is there an application configuration file?
 
-	[[ $qpkg_ini_pathfile != undefined && -e $qpkg_ini_pathfile ]]
+	[[ $QPKG_INI_PATHFILE != undefined && -e $QPKG_INI_PATHFILE ]]
 
 	}
 

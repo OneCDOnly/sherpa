@@ -7,33 +7,12 @@ fi
 
 . ./vars.source
 
-echo -n 'building management script ... '
-
 source_pathfile="$source_path/$management_source_file"
 target_pathfile="$source_path/$management_file"
 
-buffer=$(<"$source_pathfile")
+SwapTags "$source_pathfile" "$target_pathfile"
+Squeeze "$target_pathfile" "$target_pathfile"
 
-buffer=$(sed "s|<?dontedit?>|$dontedit_msg|" <<< "$buffer")
-buffer=$(sed "s|<?thisyear?>|$thisyear|" <<< "$buffer")
-buffer=$(sed "s|<?thisdate?>|$thisdate|" <<< "$buffer")
-buffer=$(sed "s|<?cdn_sherpa_url?>|$cdn_sherpa_url|" <<< "$buffer")
+[[ -e $target_pathfile ]] && chmod 554 "$target_pathfile"
 
-buffer=$(sed -e '/^#[[:space:]].*/d;/#$/d;s/[[:space:]]#[[:space:]].*//' <<< "$buffer")		# remove comment lines and line comments
-buffer=$(sed -e 's/^[[:space:]]*//' <<< "$buffer")											# remove leading whitespace
-buffer=$(sed 's/[[:space:]]*$//' <<< "$buffer")												# remove trailing whitespace
-buffer=$(sed "/^$/d" <<< "$buffer")															# remove empty lines
-buffer=$(sed "s|Content-Transfer-Encoding: base64|Content-Transfer-Encoding: base64\n|" <<< "$buffer")	# need to add a newline after this string so signature block is accepted by QTS
-
-[[ -e $target_pathfile ]] && rm -f "$target_pathfile"
-echo "$buffer" > "$target_pathfile"
-
-if [[ ! -e $target_pathfile ]]; then
-	ColourTextBrightRed "'$target_pathfile' was not written to disk"; echo
-	exit 1
-fi
-
-chmod 554 "$target_pathfile"
-
-ShowDone
 exit 0
