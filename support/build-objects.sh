@@ -13,7 +13,7 @@ target_pathfile="$source_path/$objects_file"
 
 # these are used internally by sherpa -----------------------------------------------------
 # ordered
-PACKAGE_TIERS=(standalone addon dependent)
+PACKAGE_TIERS=(standalone complementary dependent)
 
 # sorted
 QPKG_IS_STATES=(active backedup downloaded enabled installed missing signed slow unknown)
