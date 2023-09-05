@@ -144,10 +144,14 @@ fi
 SwapTags "$target_pathfile" "$target_pathfile"
 Squeeze "$target_pathfile" "$target_pathfile"
 
-chmod 444 "$target_pathfile"
+[[ -f $target_pathfile ]] && chmod 444 "$target_pathfile"
 
 # sort and add header line for easier viewing
+
+[[ -f $highest_package_versions_found_sorted_pathfile ]] && chmod 644 "$highest_package_versions_found_sorted_pathfile"
 printf '%-36s %-32s %-20s %-12s %-6s %s\n%s\n' '# checksum_filename' qpkg_filename package_name version arch md5 "$(sort "$highest_package_versions_found_pathfile")" > "$highest_package_versions_found_sorted_pathfile"
 rm -f "$highest_package_versions_found_pathfile"
+
+[[ -f $highest_package_versions_found_sorted_pathfile ]] && chmod 444 "$highest_package_versions_found_sorted_pathfile"
 
 exit 0

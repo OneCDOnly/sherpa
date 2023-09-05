@@ -32,6 +32,7 @@ fi
 if [[ $rebuild_functions = true ]]; then
 	SwapTags "$source_pathfile" "$target_pathfile" >/dev/null
 	Squeeze "$target_pathfile" "$target_pathfile" >/dev/null
+	[[ -f "$target_pathfile" ]] && chmod 444 "$target_pathfile"
 
 	if [[ -s "$target_pathfile" ]]; then
 		echo "service library: rebuilt"
@@ -113,16 +114,18 @@ for d in "$qpkgs_path"/*; do
 	for test_path in shared arm_64 arm-x19 arm-x31 arm-x41 x86_64 x86; do
 		source="$d/$test_path/${service_script_file%.*}.source"
 		target="$d/$test_path/$service_script_file"
+
+		[[ -f "$source" ]] && chmod 644 "$source"
 		SwapTags "$source" "$target" >/dev/null
 		Squeeze "$target" "$target" >/dev/null
-		[[ -f "$source" ]] && chmod 644 "$source"
 		[[ -f "$target" ]] && chmod 554 "$target"
 
 		source="$d/$test_path/${loader_script_file%.*}.source"
 		target="$d/$test_path/$loader_script_file"
+
+		[[ -f "$source" ]] && chmod 644 "$source"
 		SwapTags "$source" "$target" >/dev/null
 		Squeeze "$target" "$target" >/dev/null
-		[[ -f "$source" ]] && chmod 644 "$source"
 		[[ -f "$target" ]] && chmod 554 "$target"
 	done
 

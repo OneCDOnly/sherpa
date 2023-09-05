@@ -220,6 +220,6 @@ fi
 SwapTags "$target_pathfile" "$target_pathfile"
 Squeeze "$target_pathfile" "$target_pathfile"
 
-chmod 444 "$target_pathfile"
+[[ -f $target_pathfile ]] && chmod 444 "$target_pathfile"
 
 exit 0
