@@ -111,11 +111,19 @@ for d in "$qpkgs_path"/*; do
 	fi
 
 	for test_path in shared arm_64 arm-x19 arm-x31 arm-x41 x86_64 x86; do
-		SwapTags "$d/$test_path/${service_script_file%.*}.source" "$d/$test_path/$service_script_file" >/dev/null
-		Squeeze "$d/$test_path/$service_script_file" "$d/$test_path/$service_script_file" >/dev/null
+		source="$d/$test_path/${service_script_file%.*}.source"
+		target="$d/$test_path/$service_script_file"
+		SwapTags "$source" "$target" >/dev/null
+		Squeeze "$target" "$target" >/dev/null
+		[[ -f "$source" ]] && chmod 644 "$source"
+		[[ -f "$target" ]] && chmod 554 "$target"
 
-		SwapTags "$d/$test_path/${loader_script_file%.*}.source" "$d/$test_path/$loader_script_file" >/dev/null
-		Squeeze "$d/$test_path/$service_script_file" "$d/$test_path/$service_script_file" >/dev/null
+		source="$d/$test_path/${loader_script_file%.*}.source"
+		target="$d/$test_path/$loader_script_file"
+		SwapTags "$source" "$target" >/dev/null
+		Squeeze "$target" "$target" >/dev/null
+		[[ -f "$source" ]] && chmod 644 "$source"
+		[[ -f "$target" ]] && chmod 554 "$target"
 	done
 
 	(cd "$d" || exit; qbuild --exclude '*.source' &>/dev/null)

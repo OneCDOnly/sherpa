@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+#* <?dontedit?>
+#
+# lazylibrarian.sh
+#*	 <?copyright?>
+#
+#* <?project?>
+#
+#* <?tested?>
+#
+#* <?license?>
+
+readonly USER_ARGS_RAW=$*
+readonly QPKG_NAME=LazyLibrarian
+readonly SERVICE_SCRIPT_VERSION='<?thisdate?>'
+
+InitBasic()
+	{
+
+	allow_access_to_sys_packages=true
+	service_script_type=1
+	source_git_branch=master
+	source_git_url=https://gitlab.com/LazyLibrarian/LazyLibrarian.git
+
+	}
+
+InitComplex()
+	{
+
+	app_version_pathfile=$qpkg_repo_path/lazylibrarian/version.py
+	daemon_pathfile=$qpkg_repo_path/LazyLibrarian.py
+
+	daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile --daemon --nolaunch --datadir $(/usr/bin/dirname "$QPKG_INI_PATHFILE") --config $QPKG_INI_PATHFILE --pidfile $DAEMON_PID_PATHFILE"
+	get_ui_listening_address_cmd="/sbin/getcfg misc host -d undefined -f $QPKG_INI_PATHFILE"
+	# 5299 is the default value for LazyLibrarian, so it won't be found in config file. LL only stores non-default values.
+	get_ui_port_cmd='/sbin/getcfg General http_port -d 5299 -f '$QPKG_INI_PATHFILE
+	get_ui_port_secure_cmd='/sbin/getcfg General http_port -d 5299 -f '$QPKG_INI_PATHFILE
+	get_ui_port_secure_enabled_test_cmd='[[ $(/sbin/getcfg General https_enabled -d 0 -f '$QPKG_INI_PATHFILE') = 1 ]]'
+	get_ui_listening_address_cmd='/sbin/getcfg General http_host -d undefined -f '$QPKG_INI_PATHFILE
+
+	IsSupportGetAppVersion && app_version_cmd="/bin/grep '__version__ =' $APP_VERSION_PATHFILE | /bin/sed 's|^.*\"\(.*\)\"|\1|'"
+
+	}
+
+LoadLib()
+	{
+
+	local library_path="$(/usr/bin/readlink "$0")"
+	[[ -z $library_path ]] && library_path="$0"
+	readonly SERVICE_LIBRARY_PATHFILE="$(/usr/bin/dirname "$library_path")"/service.lib
+
+	if [[ -e $SERVICE_LIBRARY_PATHFILE ]]; then
+		. $SERVICE_LIBRARY_PATHFILE
+	else
+		printf '\033[1;31m%s\033[0m: %s\n' 'derp' "QPKG service function library not found, can't continue."
+		exit 1
+	fi
+
+	}
+
+LoadLib
+ProcessArgs
