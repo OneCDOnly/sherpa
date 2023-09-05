@@ -1,12 +1,12 @@
-QPKG_NAME="OTransmission"
-QPKG_VER="230905"
+QPKG_NAME="OWatcher3"
+QPKG_VER="<?thisdate?>"
 QPKG_AUTHOR="OneCD"
 QPKG_RC_NUM="100"
-QPKG_SERVICE_PROGRAM="otransmission.sh"
+QPKG_SERVICE_PROGRAM="owatcher3.sh"
 QPKG_WEBUI="/"
-QPKG_WEB_PORT="9991"
+QPKG_WEB_PORT="5070"
 QTS_MINI_VERSION="4.0.0"
-QPKG_DISPLAY_NAME="OTransmission (web)"
+QPKG_DISPLAY_NAME="OWatcher 3 (web)"
 QPKG_LICENSE="GPLV3"
 
 # Select volume
