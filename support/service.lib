@@ -296,6 +296,9 @@ if [[ ! -e $pip_conf_pathfile ]]; then
 DisplayRunAndLog "create global 'pip' config" "echo -e \"[global]\ncache-dir = $pip_cache_path\" > $pip_conf_pathfile" log:failure-only
 fi
 IsNotAutoUpdate && [[ $new_env = false ]] && return 0
+if [[ $QPKG_NAME = OWatcher3 ]]; then
+DisplayRunAndLog "KLUDGE: install 'm2r' PyPI module first" "$venv_pip_pathfile install${pip_deps} --no-input m2r" log:failure-only
+fi
 [[ -e $essential_modules_pathfile && -d $(/usr/bin/dirname "$default_essential_modules_pathfile") ]] && cp -f "$essential_modules_pathfile" "$default_essential_modules_pathfile"
 [[ -e $default_essential_modules_pathfile ]] && essential_modules_pathfile=$default_essential_modules_pathfile
 [[ -e $requirements_modules_pathfile && -d $(/usr/bin/dirname "$default_requirements_modules_pathfile") ]] && cp -f "$requirements_modules_pathfile" "$default_requirements_modules_pathfile"
