@@ -4160,7 +4160,6 @@ Report.Results:Show()
 		} > "$REPORT_PATHFILE"
 
 	EraseThisLine
-
 	[[ -e $REPORT_PATHFILE ]] && $CAT_CMD "$REPORT_PATHFILE"
 
 	return 0
