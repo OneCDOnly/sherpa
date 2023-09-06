@@ -10,7 +10,12 @@ fi
 source_pathfile="$source_path/$packages_source_file"
 target_pathfile="$source_path/$packages_file"
 
-buffer=$(<"$source_pathfile")
+[[ -e $target_pathfile ]] && chmod +w "$target_pathfile"
+
+SwapTags "$source_pathfile" "$target_pathfile"
+Squeeze "$target_pathfile" "$target_pathfile"
+
+buffer=$(<"$target_pathfile")
 
 highest_package_versions_found_pathfile="$source_path"/highest_package_versions_found.raw
 highest_package_versions_found_sorted_pathfile="$source_path"/highest_package_versions_found.tbl
@@ -131,7 +136,6 @@ ShowDone
 
 echo -n "building 'packages' file ... "
 
-[[ -e $target_pathfile ]] && chmod +w "$target_pathfile"
 echo "$buffer" > "$target_pathfile"
 
 if [[ ! -e $target_pathfile ]]; then
@@ -140,9 +144,6 @@ if [[ ! -e $target_pathfile ]]; then
 else
 	ShowDone
 fi
-
-SwapTags "$target_pathfile" "$target_pathfile"
-Squeeze "$target_pathfile" "$target_pathfile"
 
 [[ -f $target_pathfile ]] && chmod 444 "$target_pathfile"
 

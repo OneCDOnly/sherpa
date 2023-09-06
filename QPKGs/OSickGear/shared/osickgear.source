@@ -11,27 +11,27 @@
 #* <?license?>
 
 readonly USER_ARGS_RAW=$*
-readonly QPKG_NAME=Headphones
+readonly QPKG_NAME=OSickGear
 readonly SERVICE_SCRIPT_VERSION='<?thisdate?>'
 
 InitBasic()
 	{
 
 	service_script_type=1
-	source_git_url=https://github.com/rembo10/headphones.git
+	source_git_url=https://github.com/SickGear/SickGear.git
 
 	}
 
 InitComplex()
 	{
 
-	daemon_pathfile=$qpkg_repo_path/Headphones.py
-		daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile --daemon --nolaunch --datadir $(/usr/bin/dirname "$QPKG_INI_PATHFILE") --config $QPKG_INI_PATHFILE --pidfile $DAEMON_PID_PATHFILE"
+	daemon_pathfile=$qpkg_repo_path/sickgear.py
+		daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile --daemon --nolaunch --datadir $(/usr/bin/dirname "$QPKG_INI_PATHFILE") --pidfile $DAEMON_PID_PATHFILE"
 	get_ui_listening_address_cmd="/sbin/getcfg General web_host -d undefined -f $QPKG_INI_PATHFILE"
 	get_ui_port_cmd="/sbin/getcfg General web_port -d 0 -f $QPKG_INI_PATHFILE"
 	get_ui_port_secure_cmd="/sbin/getcfg General web_port -d 0 -f $QPKG_INI_PATHFILE"
 	get_ui_port_secure_enabled_test_cmd='[[ $(/sbin/getcfg General enable_https -d 0 -f '$QPKG_INI_PATHFILE') = 1 ]]'
-	source_git_branch=develop
+	source_git_branch_depth=single-branch
 
 	}
 
