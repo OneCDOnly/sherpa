@@ -36,7 +36,7 @@ get_ui_listening_address_cmd="/sbin/getcfg misc host -d undefined -f $QPKG_INI_P
 get_ui_port_cmd="/sbin/getcfg General http_port -d 5299 -f $QPKG_INI_PATHFILE"
 get_ui_port_secure_cmd="/sbin/getcfg General http_port -d 5299 -f $QPKG_INI_PATHFILE"
 get_ui_port_secure_enabled_test_cmd='[[ $(/sbin/getcfg General https_enabled -d 0 -f '$QPKG_INI_PATHFILE') = 1 ]]'
-IsSupportGetAppVersion && app_version_cmd="/bin/grep '__version__ =' $APP_VERSION_PATHFILE | /bin/sed 's|^.*\"\(.*\)\"|\1|'"
+IsSupportGetAppVersion && app_version_cmd="/bin/grep '__version__ =' $app_version_pathfile | /bin/sed 's|^.*\"\(.*\)\"|\1|'"
 }
 LoadLib()
 {
