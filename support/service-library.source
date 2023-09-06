@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #* <?dontedit?>
 #
-#* service.lib
+#* <?filename?>
 #*   <?copyright?>
 #
 #* Description:
@@ -142,16 +142,18 @@ InitByType()
 
 	case $service_script_type in
 		1)
+			allow_access_to_sys_packages=true
 			install_pip_deps=true
 			interpreter=/opt/bin/python3
 			pidfile_is_managed_by_app=true
 			pip_cache_path=$QPKG_PATH/pip-cache
 			qpkg_repo_path=$QPKG_PATH/repo-cache
 			recheck_daemon_pid_after_launch=true
+			source_git_branch=main
 			source_git_branch_depth=shallow
 			venv_path=$QPKG_PATH/venv
-			venv_pip_pathfile=$venv_path/bin/pip
-			venv_python_pathfile=$venv_path/bin/python3
+				venv_pip_pathfile=$venv_path/bin/pip
+				venv_python_pathfile=$venv_path/bin/python3
 			;;
 		3)
 			:
