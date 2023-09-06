@@ -13,9 +13,9 @@ Headphones_230809.qpkg.md5           Headphones_230809.qpkg           Headphones
 HideThatBanner_230503.qpkg.md5       HideThatBanner_230503.qpkg       HideThatBanner       230503       all    467c7c005e113d06b37bf467d4ba9019
 IncreaseTimeouts_230719.qpkg.md5     IncreaseTimeouts_230719.qpkg     IncreaseTimeouts     230719       all    446a1e07a05cd1832e992cbc58ba2b79
 inxi_230722.qpkg.md5                 inxi_230722.qpkg                 inxi                 230722       all    cb932b69b0d25ffd83f7529207624f9f
-LazyLibrarian_230906_arm_64.qpkg.md5 LazyLibrarian_230906_arm_64.qpkg LazyLibrarian        230906       a64    1caebf2a8dad7bbf9b34a10366437bc6
-LazyLibrarian_230906_x86_64.qpkg.md5 LazyLibrarian_230906_x86_64.qpkg LazyLibrarian        230906       i64    3f0d26e049bbd2dbd12c30355d191e47
-LazyLibrarian_230906_x86.qpkg.md5    LazyLibrarian_230906_x86.qpkg    LazyLibrarian        230906       i86    ad1fabd72e7f79e79231bc74382cdd6f
+LazyLibrarian_230906_arm_64.qpkg.md5 LazyLibrarian_230906_arm_64.qpkg LazyLibrarian        230906       a64    de74a15328175a13ff1d007000bc265f
+LazyLibrarian_230906_x86_64.qpkg.md5 LazyLibrarian_230906_x86_64.qpkg LazyLibrarian        230906       i64    9f980c410f2d03654b45c7e2615d54e2
+LazyLibrarian_230906_x86.qpkg.md5    LazyLibrarian_230906_x86.qpkg    LazyLibrarian        230906       i86    727feeee0785a3847df5c0219d6d59c7
 Mylar3_230809_arm_64.qpkg.md5        Mylar3_230809_arm_64.qpkg        Mylar3               230809       a64    c115b1526ddad82ce0fea8db8f3fa344
 Mylar3_230809_x86_64.qpkg.md5        Mylar3_230809_x86_64.qpkg        Mylar3               230809       i64    9d7f47896f232ebcae87e8bc3d6c0650
 Mylar3_230809_x86.qpkg.md5           Mylar3_230809_x86.qpkg           Mylar3               230809       i86    f2365418631c87943574f25f39d163eb
@@ -31,8 +31,8 @@ OliveTin_230809_x86_64.qpkg.md5      OliveTin_230809_x86_64.qpkg      OliveTin  
 OMedusa_230809.qpkg.md5              OMedusa_230809.qpkg              OMedusa              230809       all    0ae10f0f1e0dbf506eb8c8eddb1a62ed
 OqBittorrent_230731.qpkg.md5         OqBittorrent_230731.qpkg         OqBittorrent         230731       all    d097606362bdbfa74f9cab5a8e488517
 OSickGear_230809.qpkg.md5            OSickGear_230809.qpkg            OSickGear            230809       all    6fa65be2bdc19342f8afa5d1590dfdee
-OTransmission_230906.qpkg.md5        OTransmission_230906.qpkg        OTransmission        230906       all    79381c7a40bb5f11a536ea74cd060cf3
-OWatcher3_230906.qpkg.md5            OWatcher3_230906.qpkg            OWatcher3            230906       all    0aa3dffcb957d5c2abae5640d01b128d
+OTransmission_230906.qpkg.md5        OTransmission_230906.qpkg        OTransmission        230906       all    9218dd696f660c93c09f02a860948854
+OWatcher3_230906.qpkg.md5            OWatcher3_230906.qpkg            OWatcher3            230906       all    6e983508be0f15d23e3c6566c71e048e
 Par2_0.8.1.1_arm_64.qpkg.md5         Par2_0.8.1.1_arm_64.qpkg         Par2                 0.8.1.1      a64    b8e89f295bdec56eecae88ec685d1e23
 Par2_0.8.1.1_arm-x19.qpkg.md5        Par2_0.8.1.1_arm-x19.qpkg        Par2                 0.8.1.1      a19    d312d8bd2dee43e62a720f0d209905f8
 Par2_0.8.1.1_arm-x31.qpkg.md5        Par2_0.8.1.1_arm-x31.qpkg        Par2                 0.8.1.1      a31    fcf3a710e453cb38b14920e5ac2f2812
@@ -42,7 +42,7 @@ Par2_0.8.1.1_x86.qpkg.md5            Par2_0.8.1.1_x86.qpkg            Par2      
 pyLoad_230809.qpkg.md5               pyLoad_230809.qpkg               pyLoad               230809       all    01aa292bdc6882cbc8e23385061b9283
 QDK_2.3.13.zip.qpkg.md5              QDK_2.3.13.zip                   QDK                  2.3.13       all    0b003e703a29520e98a0aca41ed0e585
 RunLast_230224.qpkg.md5              RunLast_230224.qpkg              RunLast              230224       all    6cb5415fe56592ca1f4e8a4f2dcc5f17
-SABnzbd_230906.qpkg.md5              SABnzbd_230906.qpkg              SABnzbd              230906       all    4ffbfce4d5cdaf128194792e9c16981a
+SABnzbd_230906.qpkg.md5              SABnzbd_230906.qpkg              SABnzbd              230906       all    68868ff24e8ff3c75048747ccaee8055
 sha3sum_230312_x86_64.qpkg.md5       sha3sum_230312_x86_64.qpkg       sha3sum              230312       i64    6ceba9116e0dbcbdb4e6112f0c02f8c0
 sha3sum_230312_x86.qpkg.md5          sha3sum_230312_x86.qpkg          sha3sum              230312       i86    fdba9d16b88a5b6e3b04483ca77706dd
 sherpa_230906.qpkg.md5               sherpa_230906.qpkg               sherpa               230906       all    02cfed19f573bf5a113c07e4f8961189
