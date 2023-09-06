@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #* <?dontedit?>
 #
-#* sherpa-manager.sh
+#* <?filename?>
 #*	 <?copyright?>
 #
 #* Description:
@@ -26,7 +26,7 @@
 #				indents: 1 x tab
 #
 # Notes:
-#   If on-screen line-spacing is required, this should only be done by the next function that outputs to display.
+#   If on-screen line-spacing is required, this should only be done by the next function to print output.
 #   Display functions should never finish by putting an empty line on-screen for spacing.
 
 set -o nounset -o pipefail
@@ -866,7 +866,7 @@ Self:Validate()
 
 	if OS.IsNonStdKernelPageSize; then
 		case $NAS_QPKG_ARCH in
-			a41|a64)
+			a41|a64)			# aarch64 is included only for local testing.
 				target_packages='ar binutils libbfd libctf libopcodes objdump'
 
 				# Assume first package version is same as remaining package versions.
