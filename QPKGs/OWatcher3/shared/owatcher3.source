@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #* <?dontedit?>
 #
-#* owatcher3.sh
+#* <?filename?>
 #*	 <?copyright?>
 #
 #* <?project?>
@@ -17,9 +17,7 @@ readonly SERVICE_SCRIPT_VERSION='<?thisdate?>'
 InitBasic()
 	{
 
-	allow_access_to_sys_packages=true
 	service_script_type=1
-	source_git_branch=master
 	source_git_url=https://github.com/barbequesauce/Watcher3.git
 
 	}
@@ -29,12 +27,12 @@ InitComplex()
 
 	app_version_pathfile=$qpkg_repo_path/sabnzbd/version.py
 	daemon_pathfile=$qpkg_repo_path/watcher.py
-
-	daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile --daemon --userdata $(dirname "$QPKG_INI_PATHFILE") --conf $QPKG_INI_PATHFILE --pid $DAEMON_PID_PATHFILE"
+		daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile --daemon --userdata $(/usr/bin/dirname "$QPKG_INI_PATHFILE") --conf $QPKG_INI_PATHFILE --pid $DAEMON_PID_PATHFILE"
 	get_ui_listening_address_cmd="/opt/bin/jq -r .Server.serverhost < $QPKG_INI_PATHFILE"
 	get_ui_port_cmd="/opt/bin/jq -r .Server.serverport < $QPKG_INI_PATHFILE"
 	get_ui_port_secure_cmd="/opt/bin/jq -r .Server.serverport < $QPKG_INI_PATHFILE"
 	get_ui_port_secure_enabled_test_cmd=''
+	source_git_branch=master
 
 	}
 
