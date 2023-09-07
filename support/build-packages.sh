@@ -110,10 +110,13 @@ done <<< "$sorted" | uniq > "$highest_package_versions_found_pathfile"
 
 ShowDone
 
+[[ -e $target_pathfile ]] && chmod +w "$target_pathfile"
+echo "$buffer" > "$target_pathfile"
+SwapTags "$source_pathfile" "$target_pathfile"
+buffer=$(<"$target_pathfile")
+
 echo -n 'updating QPKG fields ... '
 
-buffer=$(sed "s|<?thisdate?>|$thisdate|" <<< "$buffer")
-buffer=$(sed "s|<?dontedit?>|$dontedit_msg|" <<< "$buffer")
 buffer=$(sed "s|<?cdn_sherpa_packages_url?>|$cdn_sherpa_packages_url|" <<< "$buffer")
 buffer=$(sed "s|<?cdn_qnap_dev_packages_url?>|$cdn_qnap_dev_packages_url|" <<< "$buffer")
 buffer=$(sed "s|<?cdn_other_packages_url?>|$cdn_other_packages_url|" <<< "$buffer")
@@ -129,32 +132,28 @@ while read -r checksum_filename qpkg_filename package_name version arch md5; do
 	done
 done <<< "$(sort "$highest_package_versions_found_pathfile")"
 
-buffer=$(sed -e '/^#[[:space:]].*/d;s/[[:space:]]#[[:space:]].*//' <<< "$buffer")		# remove comment lines and line comments
-buffer=$(sed -e 's/^[[:space:]]*//' <<< "$buffer")										# remove leading whitespace
-buffer=$(sed 's/[[:space:]]*$//' <<< "$buffer")											# remove trailing whitespace
-buffer=$(sed "/^$/d" <<< "$buffer")														# remove empty lines
-
 ShowDone
 
-echo -n "building 'packages' ... "
-
-[[ -e $target_pathfile ]] && chmod 666 "$target_pathfile"
+echo -n "building 'packages' file ... "
 
 echo "$buffer" > "$target_pathfile"
 
 if [[ ! -e $target_pathfile ]]; then
 	ColourTextBrightRed "'$target_pathfile' was not written to disk"; echo
 	exit 1
+else
+	ShowDone
 fi
 
-[[ -e $target_pathfile ]] && chmod 444 "$target_pathfile"
-
-ShowDone
+Squeeze "$target_pathfile" "$target_pathfile"
+[[ -f $target_pathfile ]] && chmod 444 "$target_pathfile"
 
 # sort and add header line for easier viewing
-[[ -f $highest_package_versions_found_sorted_pathfile ]] && chmod +w "$highest_package_versions_found_sorted_pathfile"
 
+[[ -f $highest_package_versions_found_sorted_pathfile ]] && chmod 644 "$highest_package_versions_found_sorted_pathfile"
 printf '%-36s %-32s %-20s %-12s %-6s %s\n%s\n' '# checksum_filename' qpkg_filename package_name version arch md5 "$(sort "$highest_package_versions_found_pathfile")" > "$highest_package_versions_found_sorted_pathfile"
+
 rm -f "$highest_package_versions_found_pathfile"
+[[ -f $highest_package_versions_found_sorted_pathfile ]] && chmod 444 "$highest_package_versions_found_sorted_pathfile"
 
 exit 0
