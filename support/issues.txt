@@ -1,4 +1,4 @@
-* additional linespace when in verbose mode:
+* additional linespace shown in verbose mode:
 	dbug: (>>) Self.Results:Show()
 	proc: writing report ...
 
