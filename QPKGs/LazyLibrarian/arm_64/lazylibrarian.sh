@@ -30,11 +30,11 @@ InitComplex()
 {
 app_version_pathfile=$qpkg_repo_path/lazylibrarian/version.py
 daemon_pathfile=$qpkg_repo_path/LazyLibrarian.py
-daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile --daemon --nolaunch --datadir $(/usr/bin/dirname "$QPKG_INI_PATHFILE") --config $QPKG_INI_PATHFILE --pidfile $DAEMON_PID_PATHFILE"
-get_ui_listening_address_cmd="/sbin/getcfg misc host -d undefined -f $QPKG_INI_PATHFILE"
-get_ui_port_cmd="/sbin/getcfg General http_port -d 5299 -f $QPKG_INI_PATHFILE"
-get_ui_port_secure_cmd="/sbin/getcfg General http_port -d 5299 -f $QPKG_INI_PATHFILE"
-get_ui_port_secure_enabled_test_cmd='[[ $(/sbin/getcfg General https_enabled -d 0 -f '$QPKG_INI_PATHFILE') = 1 ]]'
+daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile --daemon --nolaunch --datadir $(/usr/bin/dirname "$qpkg_ini_pathfile") --config $qpkg_ini_pathfile --pidfile $DAEMON_PID_PATHFILE"
+get_ui_listening_address_cmd="/sbin/getcfg misc host -d undefined -f $qpkg_ini_pathfile"
+get_ui_port_cmd="/sbin/getcfg General http_port -d 5299 -f $qpkg_ini_pathfile"
+get_ui_port_secure_cmd="/sbin/getcfg General http_port -d 5299 -f $qpkg_ini_pathfile"
+get_ui_port_secure_enabled_test_cmd='[[ $(/sbin/getcfg General https_enabled -d 0 -f '$qpkg_ini_pathfile') = 1 ]]'
 source_git_branch=master
 IsSupportGetAppVersion && app_version_cmd="/bin/grep '__version__ =' $app_version_pathfile | /bin/sed 's|^.*\"\(.*\)\"|\1|'"
 }

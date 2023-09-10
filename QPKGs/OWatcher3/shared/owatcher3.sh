@@ -30,10 +30,10 @@ InitComplex()
 {
 app_version_pathfile=$qpkg_repo_path/sabnzbd/version.py
 daemon_pathfile=$qpkg_repo_path/watcher.py
-daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile --daemon --userdata $(/usr/bin/dirname "$QPKG_INI_PATHFILE") --conf $QPKG_INI_PATHFILE --pid $DAEMON_PID_PATHFILE"
-get_ui_listening_address_cmd="/opt/bin/jq -r .Server.serverhost < $QPKG_INI_PATHFILE"
-get_ui_port_cmd="/opt/bin/jq -r .Server.serverport < $QPKG_INI_PATHFILE"
-get_ui_port_secure_cmd="/opt/bin/jq -r .Server.serverport < $QPKG_INI_PATHFILE"
+daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile --daemon --userdata $(/usr/bin/dirname "$qpkg_ini_pathfile") --conf $qpkg_ini_pathfile --pid $DAEMON_PID_PATHFILE"
+get_ui_listening_address_cmd="/opt/bin/jq -r .Server.serverhost < $qpkg_ini_pathfile"
+get_ui_port_cmd="/opt/bin/jq -r .Server.serverport < $qpkg_ini_pathfile"
+get_ui_port_secure_cmd="/opt/bin/jq -r .Server.serverport < $qpkg_ini_pathfile"
 get_ui_port_secure_enabled_test_cmd=''
 source_git_branch=master
 }
