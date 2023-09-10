@@ -31,9 +31,9 @@ qpkg_ini_file=settings.json
 }
 InitComplex()
 {
-daemon_launch_cmd="$daemon_pathfile --config-dir $(/usr/bin/dirname "$QPKG_INI_PATHFILE") --pid-file $DAEMON_PID_PATHFILE"
-get_ui_listening_address_cmd="/opt/bin/jq -r '.\"rpc-bind-address\"' < $QPKG_INI_PATHFILE"
-get_ui_port_cmd="/opt/bin/jq -r '.\"rpc-port\"' < "$QPKG_INI_PATHFILE""
+daemon_launch_cmd="$daemon_pathfile --config-dir $(/usr/bin/dirname "$qpkg_ini_pathfile") --pid-file $DAEMON_PID_PATHFILE"
+get_ui_listening_address_cmd="/opt/bin/jq -r '.\"rpc-bind-address\"' < $qpkg_ini_pathfile"
+get_ui_port_cmd="/opt/bin/jq -r '.\"rpc-port\"' < "$qpkg_ini_pathfile""
 get_ui_port_secure_cmd='echo 0'
 get_ui_port_secure_enabled_test_cmd='false'
 }
