@@ -30,7 +30,7 @@ match=false
 TranslateQPKGArch()
 	{
 
-	# translate arch from QPKG filename to sherpa
+	# translate arch from QPKG filename to sherpa.
 
 	case $1 in
 		i686|x86)
@@ -75,18 +75,18 @@ while read -r checksum_pathfilename; do
 
 	IFS='_' read -r package_name version arch tailend <<< "${checksum_filename//.qpkg.md5/}"
 
-	if [[ $arch = std ]]; then     			# make an exception for Entware
+	if [[ $arch = std ]]; then     			# an exception for Entware.
 		arch=''
 		tailend=''
 	fi
 
 	[[ -n $tailend ]] && arch+=_$tailend
 
-	if [[ ${version##*.} = zip ]]; then		# make an exception for QDK
+	if [[ ${version##*.} = zip ]]; then		# an exception for QDK.
 		version=${version%.*}
 	fi
 
-	if [[ ${qpkg_filename: -9} = .zip.qpkg ]]; then		# another exception for QDK
+	if [[ ${qpkg_filename: -9} = .zip.qpkg ]]; then		# another exception for QDK.
 		qpkg_filename=${qpkg_filename%.*}
 	fi
 
@@ -126,7 +126,7 @@ while read -r checksum_filename qpkg_filename package_name version arch md5; do
 		buffer=$(sed "/QPKG_NAME+=($package_name)/,/^$/{/QPKG_ARCH+=($arch)/,/$attribute.*/s/<?$attribute?>/${!attribute}/}" <<< "$buffer")
 
 		if [[ $package_name = QDK && $attribute = version ]]; then
-			# run this a second time as there are 2 version placeholders in packages.source for QDK
+			# run this a second time as there are 2 version placeholders in packages.source for QDK.
 			buffer=$(sed "/QPKG_NAME+=($package_name)/,/^$/{/QPKG_ARCH+=($arch)/,/$attribute.*/s/<?$attribute?>/${!attribute}/}" <<< "$buffer")
 		fi
 	done
@@ -148,7 +148,7 @@ fi
 Squeeze "$target_pathfile" "$target_pathfile"
 [[ -f $target_pathfile ]] && chmod 444 "$target_pathfile"
 
-# sort and add header line for easier viewing
+# sort and add header line for easier viewing.
 
 [[ -f $highest_package_versions_found_sorted_pathfile ]] && chmod 644 "$highest_package_versions_found_sorted_pathfile"
 printf '%-36s %-32s %-20s %-12s %-6s %s\n%s\n' '# checksum_filename' qpkg_filename package_name version arch md5 "$(sort "$highest_package_versions_found_pathfile")" > "$highest_package_versions_found_sorted_pathfile"

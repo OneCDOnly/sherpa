@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#* don't edit this file, it was built/modified programmatically with the 'build-qpkgs.sh' script. (source: headphones.source)
+#* don't edit this file, it was built/modified programmatically with the `build-qpkgs.sh` script. (source: headphones.source)
 #* headphones.sh
 #*	 Copyright (C) 2017-2023 OneCD - one.cd.only@gmail.com
 #*   So, blame OneCD if it all goes horribly wrong. ;)
@@ -20,7 +20,7 @@
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 readonly USER_ARGS_RAW=$*
 readonly QPKG_NAME=Headphones
-readonly SERVICE_SCRIPT_VERSION='230907'
+readonly SERVICE_SCRIPT_VERSION='230910'
 InitBasic()
 {
 service_script_type=1
@@ -38,7 +38,7 @@ source_git_branch=develop
 }
 LoadLib()
 {
-local library_path="$(/usr/bin/readlink "$0")"
+local library_path="$(/usr/bin/readlink "$0" 2>/dev/null)"
 [[ -z $library_path ]] && library_path="$0"
 readonly SERVICE_LIBRARY_PATHFILE="$(/usr/bin/dirname "$library_path")"/service.lib
 if [[ -e $SERVICE_LIBRARY_PATHFILE ]]; then

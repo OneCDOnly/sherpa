@@ -49,7 +49,7 @@ Packages:Load()
 	readonly MIN_PYTHON_VER
 	readonly MIN_PERL_VER
 
-	# package list arrays are now full, so lock them
+	# package list arrays are now full, so lock them.
 	readonly QPKG_NAME
 		readonly QPKG_ARCH
 		readonly QPKG_VERSION
@@ -79,11 +79,11 @@ QPKG.Abbrvs()
 	{
 
 	# input:
-	#   $1 = QPKG name
+	#   $1 = QPKG name.
 
 	# output:
-	#   stdout = list of abbreviations that may be used to specify this package (first package found)
-	#   $? = 0 if successful, 1 if failed
+	#   stdout = list of abbreviations that may be used to specify this package (first package found).
+	#   $? = 0 if successful, 1 if failed.
 
 	local -i index=0
 
@@ -103,7 +103,7 @@ echo -n "building wiki 'Package abbreviations' page ... "
 target_pathfile="$wiki_path"/Package-abbreviations.md
 
 Objects:Load
-Packages:Load 2>/dev/null	# packages source file throws a lot of syntax errors until it's processed - ignore these
+Packages:Load 2>/dev/null	# packages source file throws a lot of syntax errors until it's processed - ignore these.
 
 printf 'These abbreviations are recognised by **sherpa** and may be used in-place of each [package name](Packages):\n\n' > "$target_pathfile"
 echo '| package name | acceptable abbreviations |' >> "$target_pathfile"
