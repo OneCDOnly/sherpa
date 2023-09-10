@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# jump into each QPKG base dir
+# jump into each QPKG base dir.
 # check './build' path and find most-recent .qpkg file to use as a datetime reference.
 # check last changed datetime of all QPKG files, and if any are newer than the reference file, update date tags and run a 'qbuild'.
 
@@ -53,7 +53,7 @@ for d in "$qpkgs_path"/*; do
 	config_pathfile="$d/qpkg.cfg"
 	rebuild_package=false
 
-	if [[ $rebuilt_functions = true ]]; then		# only need to rebuild QPKGs using the service functions library
+	if [[ $rebuilt_functions = true ]]; then		# only need to rebuild QPKGs using the service functions library.
 		if [[ -n $(find -L "$d" -type f -iname "$service_library_file") ]]; then
 			echo "service library: link found, and functions have been updated, so must rebuild this QPKG"
 			rebuild_package=true
