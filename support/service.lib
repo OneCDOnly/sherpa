@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#* don't edit this file, it was built/modified programmatically with the 'build-qpkgs.sh' script. (source: service-library.source)
+#* don't edit this file, it was built/modified programmatically with the `build-qpkgs.sh` script. (source: service-library.source)
 #* service.lib
 #*   Copyright (C) 2017-2023 OneCD - one.cd.only@gmail.com
 #*   So, blame OneCD if it all goes horribly wrong. ;)
@@ -95,7 +95,7 @@ export PATH="$OPKG_PATH:$(/bin/sed "s|$OPKG_PATH||" <<< "$PATH")"
 readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
 readonly QPKG_VERSION=$(/sbin/getcfg $QPKG_NAME Version -d unknown -f /etc/config/qpkg.conf)
 readonly SCREEN_LOG_PATHFILE=/var/log/$QPKG_NAME.screen.log
-readonly SERVICE_LIB_VERSION='230906'
+readonly SERVICE_LIB_VERSION='230909'
 readonly SERVICE_LOG_PATHFILE=/var/log/$QPKG_NAME.log
 readonly SERVICE_STATUS_PATHFILE=/var/run/$QPKG_NAME.last.operation
 readonly QPKG_CONFIG_PATH=$QPKG_PATH/config
