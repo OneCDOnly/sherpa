@@ -39,7 +39,7 @@ InitComplex()
 LoadLib()
 	{
 
-	local library_path="$(/usr/bin/readlink "$0")"
+	local library_path="$(/usr/bin/readlink "$0" 2>/dev/null)"
 	[[ -z $library_path ]] && library_path="$0"
 	readonly SERVICE_LIBRARY_PATHFILE="$(/usr/bin/dirname "$library_path")"/service.lib
 

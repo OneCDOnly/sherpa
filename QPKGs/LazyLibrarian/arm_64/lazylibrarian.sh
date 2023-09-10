@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#* don't edit this file, it was built/modified programmatically with the 'build-qpkgs.sh' script. (source: lazylibrarian.source)
+#* don't edit this file, it was built/modified programmatically with the `build-qpkgs.sh` script. (source: lazylibrarian.source)
 #* lazylibrarian.sh
 #*	 Copyright (C) 2017-2023 OneCD - one.cd.only@gmail.com
 #*   So, blame OneCD if it all goes horribly wrong. ;)
@@ -20,7 +20,7 @@
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 readonly USER_ARGS_RAW=$*
 readonly QPKG_NAME=LazyLibrarian
-readonly SERVICE_SCRIPT_VERSION='230907'
+readonly SERVICE_SCRIPT_VERSION='230910'
 InitBasic()
 {
 service_script_type=1
@@ -40,7 +40,7 @@ IsSupportGetAppVersion && app_version_cmd="/bin/grep '__version__ =' $app_versio
 }
 LoadLib()
 {
-local library_path="$(/usr/bin/readlink "$0")"
+local library_path="$(/usr/bin/readlink "$0" 2>/dev/null)"
 [[ -z $library_path ]] && library_path="$0"
 readonly SERVICE_LIBRARY_PATHFILE="$(/usr/bin/dirname "$library_path")"/service.lib
 if [[ -e $SERVICE_LIBRARY_PATHFILE ]]; then
