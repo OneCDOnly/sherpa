@@ -40,9 +40,9 @@ USER_QPKG_ACTIONS=(activate backup clean enable deactivate disable install list 
 AddFlagObj()
 	{
 
-	# $1 = object name to create
-	# $2 = set flag state on init (optional) default is 'false'
-	# $3 = set 'log boolean changes' on init (optional) default is 'true'
+	# $1 = object name to create.
+	# $2 = set flag state on init (optional) default is 'false'.
+	# $3 = set 'log boolean changes' on init (optional) default is 'true'.
 
 	local public_function_name=${1:?no object name supplied}
 	local safe_function_name="$(tr '[:upper:]' '[:lower:]' <<< "${public_function_name//[.-]/_}")"
@@ -84,7 +84,7 @@ echo $public_function_name':Init()
 AddListObj()
 	{
 
-	# $1 = object name to create
+	# $1 = object name to create.
 
 	local public_function_name=${1:?no object name supplied}
 	local safe_function_name="$(tr '[:upper:]' '[:lower:]' <<< "${public_function_name//[.-]/_}")"
@@ -147,7 +147,7 @@ echo $public_function_name':Add()
 echo "OBJECTS_VER='<?thisdate?>'" > "$target_pathfile"
 echo "#* <?dontedit?>" >> "$target_pathfile"
 
-# package action flag objects -----------------------------------------------------------------------------------------------------------------------------
+# package action flag objects.
 
 for group in "${USER_QPKG_SC_GROUPS[@]}"; do
 	for action in "${USER_QPKG_ACTIONS[@]}"; do
@@ -173,7 +173,7 @@ for state in "${USER_QPKG_ISNT_STATES[@]}"; do
 	done
 done
 
-# session list objects ---------------------------------------------------------------------------------------------------------------------------------
+# session list objects.
 
 AddListObj ARGs-unknown
 
@@ -194,7 +194,7 @@ for state in "${QPKG_ISNT_STATES[@]}" "${QPKG_STATES_TRANSIENT[@]}" "${QPKG_SERV
 done
 
 for action in "${QPKG_ACTIONS[@]}"; do
-	for prefix in to ok er sk so se dn; do		# todo, done ok, done error, skipped, skipped-but-ok, skipped-with-error, done (all processed QPKGs are placed in the 'done' list, as-well as the regular exit status lists)
+	for prefix in to ok er sk so se dn; do		# todo, done ok, done error, skipped, skipped-but-ok, skipped-with-error, done (all processed QPKGs are placed in the 'done' list, as-well as the regular exit status lists).
 		AddListObj "QPKGs-AC${action}-${prefix}"
 	done
 done
@@ -202,7 +202,7 @@ done
 for action in "${IPK_ACTIONS[@]}"; do
 	case $action in
 		list)
-			continue    # action result lists are not required for these
+			continue    # action result lists are not required for these.
 	esac
 
 	for prefix in to ok er sk; do

@@ -5,24 +5,25 @@ SwapTags()
 
 	# input:
 	# 	$1 = input pathfile to process for tags. This always has a '.source' extension.
-	# 	$2 = output pathfile
+	# 	$2 = output pathfile.
 
 	# output:
 	# 	$? = 0
 
 	echo -n 'swapping tags ... '
 
-	if [[ -f "$1" ]]; then			# ignore symlinks
+	if [[ -f "$1" ]]; then			# ignore symlinks.
 		local buffer=$(<"$1")
 
 		buffer=$(sed "s|<?dontedit?>|$dontedit_msg (source: $(basename "$1"))|" <<< "$buffer")
 		buffer=$(sed "s|<?filename?>|$(basename "$2")|" <<< "$buffer")
-		buffer=$(sed "s|<?copyright?>|${copyright_msg//$'\n'/\\n}|" <<< "$buffer")	# escape newlines
-		buffer=$(sed "s|<?project?>|${project_msg//$'\n'/\\n}|" <<< "$buffer")		# escape newlines
-		buffer=$(sed "s|<?tested?>|${tested_msg//$'\n'/\\n}|" <<< "$buffer")		# escape newlines
-		buffer=$(sed "s|<?license?>|${license_msg//$'\n'/\\n}|" <<< "$buffer")		# escape newlines
+		buffer=$(sed "s|<?copyright?>|${copyright_msg//$'\n'/\\n}|" <<< "$buffer")	# escape newlines.
+		buffer=$(sed "s|<?project?>|${project_msg//$'\n'/\\n}|" <<< "$buffer")		# escape newlines.
+		buffer=$(sed "s|<?tested?>|${tested_msg//$'\n'/\\n}|" <<< "$buffer")		# escape newlines.
+		buffer=$(sed "s|<?license?>|${license_msg//$'\n'/\\n}|" <<< "$buffer")		# escape newlines.
 		buffer=$(sed "s|<?thisdate?>|$thisdate|" <<< "$buffer")
 		buffer=$(sed "s|<?thisyear?>|$thisyear|" <<< "$buffer")
+		buffer=$(sed "s|<?email?>|$email|" <<< "$buffer")
 		buffer=$(sed "s|<?cdn_sherpa_url?>|$cdn_sherpa_url|" <<< "$buffer")
 		buffer=$(sed "s|<?management_file?>|$management_file|" <<< "$buffer")
 
@@ -39,21 +40,21 @@ Squeeze()
 
 	# input:
 	# 	$1 = input pathfile to process for excess material.
-	# 	$2 = output pathfile
+	# 	$2 = output pathfile.
 
 	# output:
 	# 	$? = 0
 
 	echo -n 'squeezing ... '
 
-	if [[ -f "$1" ]]; then			# ignore symlinks
+	if [[ -f "$1" ]]; then			# ignore symlinks.
 		local buffer=$(<"$1")
 
-		buffer=$(sed -e '/^#[[:space:]].*/d;/#$/d;s/[[:space:]]#[[:space:]].*//' <<< "$buffer")		# remove comment lines and line comments
-		buffer=$(sed -e 's/^[[:space:]]*//' <<< "$buffer")											# remove leading whitespace
-		buffer=$(sed 's/[[:space:]]*$//' <<< "$buffer")												# remove trailing whitespace
-		buffer=$(sed "/^$/d" <<< "$buffer")															# remove empty lines
-		buffer=$(sed "s|Content-Transfer-Encoding: base64|Content-Transfer-Encoding: base64\n|" <<< "$buffer")	# need to add a newline after this string so signature block is accepted by QTS
+		buffer=$(sed -e '/^#[[:space:]].*/d;/#$/d;s/[[:space:]]#[[:space:]].*//' <<< "$buffer")		# remove comment lines and line comments.
+		buffer=$(sed -e 's/^[[:space:]]*//' <<< "$buffer")											# remove leading whitespace.
+		buffer=$(sed 's/[[:space:]]*$//' <<< "$buffer")												# remove trailing whitespace.
+		buffer=$(sed "/^$/d" <<< "$buffer")															# remove empty lines.
+		buffer=$(sed "s|Content-Transfer-Encoding: base64|Content-Transfer-Encoding: base64\n|" <<< "$buffer")	# need to add a newline after this string so signature block is accepted by QTS.
 
 		[[ -e $2 ]] && chmod +w "$2"
 		echo "$buffer" > "$2"
@@ -242,17 +243,18 @@ unstable_branch=unstable
 stable_branch_msg="$(ColourTextBrightGreen "$stable_branch")"
 unstable_branch_msg="$(ColourTextBrightRed "$unstable_branch")"
 
-dontedit_msg="don't edit this file, it was built/modified programmatically with the '$(basename "$0")' script."
+dontedit_msg="don't edit this file, it was built/modified programmatically with the \`$(basename "$0")\` script."
 cdn_onecd_url='https://raw.githubusercontent.com/OneCDOnly'
 cdn_sherpa_url="$cdn_onecd_url/sherpa/$stable_branch"
 cdn_sherpa_packages_url="$cdn_sherpa_url/QPKGs/<?package_name?>/build"
 cdn_qnap_dev_packages_url='https://github.com/qnap-dev/<?package_name?>/releases/download/v<?version?>'
 cdn_other_packages_url="$cdn_onecd_url/<?package_name?>/main/build"
+email=one.cd.only@gmail.com
 
-# don't forget to escape ampersand chars in blocks for compatibility with sed regex
+# don't forget to escape ampersand chars in read blocks for compatibility with `sed` regex.
 
 read -r -d '' copyright_msg << EOB
-Copyright (C) 2017-<?thisyear?> OneCD - one.cd.only@gmail.com
+Copyright (C) 2017-<?thisyear?> OneCD - <?email?>
 #
 #*   So, blame OneCD if it all goes horribly wrong. ;)
 EOB
