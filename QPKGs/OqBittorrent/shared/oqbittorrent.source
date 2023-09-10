@@ -11,27 +11,27 @@
 #* <?license?>
 
 readonly USER_ARGS_RAW=$*
-readonly QPKG_NAME=OTransmission
+readonly QPKG_NAME=OqBittorrent
 readonly SERVICE_SCRIPT_VERSION='<?thisdate?>'
 
 InitBasic()
 	{
 
-	daemon_pathfile=/opt/bin/transmission-daemon
-	orig_daemon_service_script=/opt/etc/init.d/S88transmission
+	daemon_pathfile=/opt/bin/qbittorrent-nox
+	orig_daemon_service_script=/opt/etc/init.d/S89qbittorrent
 	service_script_type=3
-	readonly TRANSMISSION_WEB_HOME=/opt/share/transmission/web
-	qpkg_ini_file=settings.json
+	qpkg_ini_file=qBittorrent.conf
 
 	}
 
 InitComplex()
 	{
 
-	daemon_launch_cmd="$daemon_pathfile --config-dir $(/usr/bin/dirname "$qpkg_ini_pathfile") --pid-file $DAEMON_PID_PATHFILE"
-	get_ui_listening_address_cmd="/opt/bin/jq -r '.\"rpc-bind-address\"' < $qpkg_ini_pathfile"
+	qpkg_ini_pathfile=$QPKG_CONFIG_PATH/qBittorrent/config/qBittorrent.conf
+		daemon_launch_cmd="$daemon_pathfile --config-dir $(/usr/bin/dirname "$qpkg_ini_pathfile") --pid-file $DAEMON_PID_PATHFILE"
+		get_ui_listening_address_cmd="/opt/bin/jq -r '.\"rpc-bind-address\"' < $qpkg_ini_pathfile"
 	get_ui_port_cmd="/opt/bin/jq -r '.\"rpc-port\"' < "$qpkg_ini_pathfile""
-	get_ui_port_secure_cmd='echo 0'		# Transmission v3 doesn't appear to contain any SSL UI ability.
+	get_ui_port_secure_cmd='echo 0'		# Transmission v3 doesn't appear to contain any SSL UI ability
 	get_ui_port_secure_enabled_test_cmd='false'
 
 	}
