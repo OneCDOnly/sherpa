@@ -63,7 +63,7 @@ orig_daemon_service_script=undefined
 pidfile_is_managed_by_app=false
 pip_cache_path=undefined
 qpkg_ini_file=undefined
-QPKG_INI_PATHFILE=undefined
+qpkg_ini_pathfile=undefined
 qpkg_repo_path=undefined
 recheck_daemon_pid_after_launch=false
 run_daemon_in_screen_session=false
@@ -103,11 +103,12 @@ readonly APP_VERSION_STORE_PATHFILE=$QPKG_CONFIG_PATH/version.stored
 readonly SCREEN_CONF_PATHFILE=$QPKG_CONFIG_PATH/screen.conf
 qpkg_ini_file=config.ini
 InitBasic
+backup_pathfile=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
+qpkg_ini_pathfile=$QPKG_CONFIG_PATH/$qpkg_ini_file
 InitByType
 readonly DAEMON_PID_PATHFILE=/var/run/$QPKG_NAME.pid
-readonly QPKG_INI_PATHFILE=$QPKG_CONFIG_PATH/$qpkg_ini_file
-readonly QPKG_INI_DEFAULT_PATHFILE=$QPKG_INI_PATHFILE.def
 InitComplex
+readonly QPKG_INI_DEFAULT_PATHFILE=$qpkg_ini_pathfile.def
 EnsureConfigFileExists
 LoadAppVersion
 DisableOpkgDaemonStart
@@ -123,7 +124,6 @@ fi
 }
 InitByType()
 {
-backup_pathfile=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
 case $service_script_type in
 1)
 allow_access_to_sys_packages=true
@@ -656,7 +656,7 @@ EnsureConfigFileExists()
 IsNotSupportReset && return
 if IsNotConfigFound && IsDefaultConfigFound; then
 DisplayCommitToLog 'no configuration file found: using default'
-cp "${QPKG_INI_DEFAULT_PATHFILE:?undefined}" "${QPKG_INI_PATHFILE:?undefined}"
+cp "${QPKG_INI_DEFAULT_PATHFILE:?undefined}" "${qpkg_ini_pathfile:?undefined}"
 fi
 }
 SaveAppVersion()
@@ -932,7 +932,7 @@ IsNotSupportBackup()
 }
 IsSupportReset()
 {
-[[ $QPKG_INI_PATHFILE != undefined ]]
+[[ $qpkg_ini_pathfile != undefined ]]
 }
 IsNotSupportReset()
 {
@@ -1175,7 +1175,7 @@ return 1
 }
 IsConfigFound()
 {
-[[ $QPKG_INI_PATHFILE != undefined && -e $QPKG_INI_PATHFILE ]]
+[[ $qpkg_ini_pathfile != undefined && -e $qpkg_ini_pathfile ]]
 }
 IsNotConfigFound()
 {
