@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# compiler for all sherpa archives
+# compiler for all sherpa archives.
 
 if [[ ! -e vars.source ]]; then
 	echo "'vars.source' not found"
