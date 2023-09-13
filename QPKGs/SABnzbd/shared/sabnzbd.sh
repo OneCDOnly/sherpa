@@ -20,7 +20,7 @@
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 readonly USER_ARGS_RAW=$*
 readonly QPKG_NAME=SABnzbd
-readonly SERVICE_SCRIPT_VERSION='230910'
+readonly SERVICE_SCRIPT_VERSION='230912'
 InitBasic()
 {
 service_script_type=1
@@ -30,7 +30,7 @@ InitComplex()
 {
 app_version_pathfile=$qpkg_repo_path/sabnzbd/version.py
 daemon_pathfile=$qpkg_repo_path/SABnzbd.py
-daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile --daemon --browser 0 --config-file $qpkg_ini_pathfile --pidfile $DAEMON_PID_PATHFILE"
+daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile --daemon --browser 0 --config-file $qpkg_ini_pathfile --pidfile $daemon_pid_pathfile"
 get_ui_listening_address_cmd="/sbin/getcfg misc host -d undefined -f $qpkg_ini_pathfile"
 get_ui_port_cmd="/sbin/getcfg misc port -d 0 -f $qpkg_ini_pathfile"
 get_ui_port_secure_cmd="/sbin/getcfg misc https_port -d 0 -f $qpkg_ini_pathfile"
@@ -38,9 +38,7 @@ get_ui_port_secure_enabled_test_cmd='[[ $(/sbin/getcfg misc enable_https -d 0 -f
 source_git_branch=master
 IsSupportGetAppVersion && app_version_cmd="/bin/grep '__version__ =' $app_version_pathfile | /bin/sed 's|^.*\"\(.*\)\"|\1|'"
 }
-LoadLib()
-{
-local library_path="$(/usr/bin/readlink "$0" 2>/dev/null)"
+library_path="$(/usr/bin/readlink "$0" 2>/dev/null)"
 [[ -z $library_path ]] && library_path="$0"
 readonly SERVICE_LIBRARY_PATHFILE="$(/usr/bin/dirname "$library_path")"/service.lib
 if [[ -e $SERVICE_LIBRARY_PATHFILE ]]; then
@@ -49,6 +47,4 @@ else
 printf '\033[1;31m%s\033[0m: %s\n' 'derp' "QPKG service function library not found, can't continue."
 exit 1
 fi
-}
-LoadLib
 ProcessArgs

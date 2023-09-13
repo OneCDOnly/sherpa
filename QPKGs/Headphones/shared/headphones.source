@@ -26,7 +26,7 @@ InitComplex()
 	{
 
 	daemon_pathfile=$qpkg_repo_path/Headphones.py
-		daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile --daemon --nolaunch --datadir $(/usr/bin/dirname "$qpkg_ini_pathfile") --config $qpkg_ini_pathfile --pidfile $DAEMON_PID_PATHFILE"
+		daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile --daemon --nolaunch --datadir $(/usr/bin/dirname "$qpkg_ini_pathfile") --config $qpkg_ini_pathfile --pidfile $daemon_pid_pathfile"
 	get_ui_listening_address_cmd="/sbin/getcfg General web_host -d undefined -f $qpkg_ini_pathfile"
 	get_ui_port_cmd="/sbin/getcfg General web_port -d 0 -f $qpkg_ini_pathfile"
 	get_ui_port_secure_cmd="/sbin/getcfg General web_port -d 0 -f $qpkg_ini_pathfile"
@@ -35,21 +35,15 @@ InitComplex()
 
 	}
 
-LoadLib()
-	{
+library_path="$(/usr/bin/readlink "$0" 2>/dev/null)"
+[[ -z $library_path ]] && library_path="$0"
+readonly SERVICE_LIBRARY_PATHFILE="$(/usr/bin/dirname "$library_path")"/service.lib
 
-	local library_path="$(/usr/bin/readlink "$0" 2>/dev/null)"
-	[[ -z $library_path ]] && library_path="$0"
-	readonly SERVICE_LIBRARY_PATHFILE="$(/usr/bin/dirname "$library_path")"/service.lib
+if [[ -e $SERVICE_LIBRARY_PATHFILE ]]; then
+	. $SERVICE_LIBRARY_PATHFILE
+else
+	printf '\033[1;31m%s\033[0m: %s\n' 'derp' "QPKG service function library not found, can't continue."
+	exit 1
+fi
 
-	if [[ -e $SERVICE_LIBRARY_PATHFILE ]]; then
-		. $SERVICE_LIBRARY_PATHFILE
-	else
-		printf '\033[1;31m%s\033[0m: %s\n' 'derp' "QPKG service function library not found, can't continue."
-		exit 1
-	fi
-
-	}
-
-LoadLib
 ProcessArgs

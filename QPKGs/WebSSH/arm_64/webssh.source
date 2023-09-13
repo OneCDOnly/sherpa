@@ -1,63 +1,56 @@
 #!/usr/bin/env bash
-#*<?dontedit?>
+#* <?dontedit?>
 #
-# webssh.sh
-#	Copyright (C) 2020-<?thisyear?> OneCD - one.cd.only@gmail.com
+#* <?filename?>
+#*	 <?copyright?>
 #
-# 	so, blame OneCD if it all goes horribly wrong. ;)
+#* <?project?>
 #
-# Description:
-#	This is a type 6 service-script: https://github.com/OneCDOnly/sherpa/wiki/Service-Script-Types
+#* <?tested?>
 #
-# Project:
-#	https://git.io/sherpa
-#
-# Forum:
-#	https://forum.qnap.com/viewtopic.php?f=320&t=132373
+#* <?license?>
 
 readonly USER_ARGS_RAW=$*
 readonly QPKG_NAME=WebSSH
-readonly SCRIPT_VERSION="<?thisdate?>"
+readonly SERVICE_SCRIPT_VERSION='<?thisdate?>'
 
-Init()
+InitBasic()
 	{
 
-	# modify library defaults
+ 	interpreter=/opt/bin/python3
+ 	qpkg_ini_pathfile=undefined
+ 	qpkg_repo_path=undefined
+ 	run_daemon_in_screen_session=true
+	service_script_type=6
+ 	venv_python_pathfile=$venv_path/bin/python		# WebSSH expects 'python', not 'python3'
 
-	allow_access_to_sys_packages=true
-	backup_pathfile=undefined
+	}
+
+InitComplex()
+	{
+
+ 	backup_pathfile=undefined
 	daemon_pathfile=$venv_path/bin/wssh
-	daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile --address='0.0.0.0' --port=8010 --encoding=850"
-	interpreter=/opt/bin/python3
-	qpkg_ini_pathfile=undefined
-	qpkg_repo_path=undefined
-	recheck_daemon_pid_after_launch=true
-	run_daemon_in_screen_session=true
-	venv_python_pathfile=$venv_path/bin/python		# WebSSH expects 'python', not 'python3'
+		daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile --address='0.0.0.0' --port=8010 --encoding=850"
+	get_ui_listening_address_cmd='echo 0.0.0.0'
+	get_ui_port_cmd='echo 8010'
+	get_ui_port_secure_cmd='echo 0'
+	get_ui_port_secure_enabled_test_cmd='false'
+	source_git_branch=master
 
-	readonly GET_DAEMON_PORT_CMD=undefined
-	readonly GET_UI_PORT_CMD='echo 8010'
-	readonly GET_UI_PORT_SECURE_CMD='echo 0'
-	readonly GET_UI_PORT_SECURE_ENABLED_TEST_CMD='false'
-	readonly GET_UI_LISTENING_ADDRESS_CMD='echo 0.0.0.0'
+	IsSupportGetAppVersion && app_version_cmd="/bin/grep '__version__ =' $app_version_pathfile | /bin/sed 's|^.*\"\(.*\)\"|\1|'"
 
 	}
 
-LoadLib()
-	{
+library_path="$(/usr/bin/readlink "$0" 2>/dev/null)"
+[[ -z $library_path ]] && library_path="$0"
+readonly SERVICE_LIBRARY_PATHFILE="$(/usr/bin/dirname "$library_path")"/service.lib
 
-	local library_path="$(/usr/bin/readlink "$0")"
-	[[ -z $library_path ]] && library_path="$0"
-	readonly SERVICE_LIBRARY_PATHFILE="$(/usr/bin/dirname "$library_path")"/service.lib
+if [[ -e $SERVICE_LIBRARY_PATHFILE ]]; then
+	. $SERVICE_LIBRARY_PATHFILE
+else
+	printf '\033[1;31m%s\033[0m: %s\n' 'derp' "QPKG service function library not found, can't continue."
+	exit 1
+fi
 
-	if [[ -e $SERVICE_LIBRARY_PATHFILE ]]; then
-		. $SERVICE_LIBRARY_PATHFILE
-	else
-		printf '\033[1;31m%s\033[0m: %s\n' 'derp' "QPKG service function library not found, can't continue."
-		exit 1
-	fi
-
-	}
-
-LoadLib
 ProcessArgs
