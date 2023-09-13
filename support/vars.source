@@ -243,6 +243,10 @@ unstable_branch=unstable
 stable_branch_msg="$(ColourTextBrightGreen "$stable_branch")"
 unstable_branch_msg="$(ColourTextBrightRed "$unstable_branch")"
 
+cdn_onecd_url='https://raw.githubusercontent.com/OneCDOnly'
+cdn_other_packages_url="$cdn_onecd_url/<?package_name?>/main/build"
+cdn_qnap_dev_packages_url='https://github.com/qnap-dev/<?package_name?>/releases/download/v<?version?>'
+
 dontedit_msg="don't edit this file, it was built/modified programmatically with the \`$(basename "$0")\` script."
 email=one.cd.only@gmail.com
 
