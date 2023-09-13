@@ -19,7 +19,7 @@ for index in "${!source_pathfiles[@]}"; do
 done
 
 ./check-syntax.sh || exit
-./build-qpkgs.sh || exit
+./build-qpkgs.sh "${1:-$unstable_branch}" || exit
 ./build-packages.sh "${1:-$unstable_branch}" || exit
 ./build-objects.sh || exit
 ./build-manager.sh "${1:-$unstable_branch}" || exit
