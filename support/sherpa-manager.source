@@ -269,6 +269,7 @@ Consts:Load()
 	readonly PACKAGE_AUTHOR_COL_WIDTH=22
 	readonly PACKAGE_DEPENDENCIES_COL_WIDTH=29
 	readonly PACKAGE_DESCRIPTION_COL_WIDTH=100
+	readonly PACKAGE_ENABLED_COL_WIDTH=17
 	readonly PACKAGE_INSTALL_DATE_COL_WIDTH=18
 	readonly PACKAGE_MIN_RAM_COL_WIDTH=18
 	readonly PACKAGE_MIN_OS_COL_WIDTH=15
@@ -3601,6 +3602,7 @@ DisplayAsDepsReportTitleLine()
 
 	local package_name_msg=''
 	local package_deps_msg=''
+	local package_enabled_msg=''
 	local package_min_ram_msg=''
 	local package_min_os_msg=''
 	local package_arch_msg=''
@@ -3620,23 +3622,30 @@ DisplayAsDepsReportTitleLine()
 		printf "%-$((PACKAGE_DEPENDENCIES_COL_WIDTH+2+$(LenANSIDiff "$package_deps_msg")))s" "$package_deps_msg"
 	fi
 
-	# column 3: minimum NAS RAM required
+	# column 3: QPKG is enabled
 
 	if [[ $maxcols -ge 3 ]]; then
+		package_enabled_msg="${CHARS_SPECIAL}QPKG enabled?"
+		printf "%-$((PACKAGE_ENABLED_COL_WIDTH+2+$(LenANSIDiff "$package_enabled_msg")))s" "$package_enabled_msg"
+	fi
+
+	# column 4: minimum NAS RAM required
+
+	if [[ $maxcols -ge 4 ]]; then
 		package_min_ram_msg="${CHARS_SPECIAL}minimum RAM:"
 		printf "%-$((PACKAGE_MIN_RAM_COL_WIDTH+2+$(LenANSIDiff "$package_min_ram_msg")))s" "$package_min_ram_msg"
 	fi
 
-	# column 4: minimum OS fimware version supported
+	# column 5: minimum OS fimware version supported
 
-	if [[ $maxcols -ge 4 ]]; then
+	if [[ $maxcols -ge 5 ]]; then
 		package_min_os_msg="${CHARS_SPECIAL}minimum OS:"
 		printf "%-$((PACKAGE_MIN_OS_COL_WIDTH+2+$(LenANSIDiff "$package_min_os_msg")))s" "$package_min_os_msg"
 	fi
 
-	# column 5: arch is compatible
+	# column 6: arch is compatible
 
-	if [[ $maxcols -ge 5 ]]; then
+	if [[ $maxcols -ge 6 ]]; then
 		package_arch_msg="${CHARS_SPECIAL}compatible arch?"
 		printf "%-$((PACKAGE_ARCH_COL_WIDTH+2+$(LenANSIDiff "$package_arch_msg")))s" "$package_arch_msg"
 	fi
@@ -3657,6 +3666,7 @@ DisplayAsDepsReportLine()
 	[[ -z $package_deps_raw ]] && package_deps_raw=none
 	local package_deps=''
 	local package_deps_msg="$CHARS_NORMAL"
+	local package_enabled_msg="$CHARS_BLANK"
 	local dep=''
 	local package_min_ram="$(QPKG.GetMinRAM "$package_name")"
 	local package_min_ram_msg="$CHARS_BLANK"
@@ -3712,6 +3722,12 @@ DisplayAsDepsReportLine()
 				package_min_os_msg+="$(ColourTextBrightRed "!$package_min_os")"
 			fi
 
+			if QPKG.IsEnabled "$package_name"; then
+				package_enabled_msg+="$(ColourTextBrightGreen true)"
+			else
+				package_enabled_msg+="$(ColourTextBrightRed '!false')"
+			fi
+
 			if QPKG.IsArchOK "$package_name"; then
 				package_arch_msg+="$(ColourTextBrightGreen true)"
 			else
@@ -3733,6 +3749,8 @@ DisplayAsDepsReportLine()
 			else
 				package_min_os_msg+="$(ColourTextBrightOrange "*$package_min_os")"
 			fi
+
+			package_enabled_msg+="$(ColourTextDarkGrey 'N/A')"
 
 			if QPKG.IsArchOK "$package_name"; then
 				package_arch_msg+="$(ColourTextDarkGrey true)"
@@ -3775,21 +3793,27 @@ DisplayAsDepsReportLine()
 		printf "%-$((PACKAGE_DEPENDENCIES_COL_WIDTH+$(LenANSIDiff "$package_deps_msg")))s" "$package_deps_msg"
 	fi
 
-	# column 3: minimum NAS RAM required
+	# column 3: package enabled?
 
-	if [[ $maxcols -ge 3 && -n $package_min_ram_msg ]]; then
+	if [[ $maxcols -ge 3 && -n $package_enabled_msg ]]; then
+		printf "%-$((PACKAGE_ENABLED_COL_WIDTH+$(LenANSIDiff "$package_enabled_msg")))s" "$package_enabled_msg"
+	fi
+
+	# column 4: minimum NAS RAM required
+
+	if [[ $maxcols -ge 4 && -n $package_min_ram_msg ]]; then
 		printf "%-$((PACKAGE_MIN_RAM_COL_WIDTH+$(LenANSIDiff "$package_min_ram_msg")))s" "$package_min_ram_msg"
 	fi
 
-	# column 4: minimum OS fimware version supported
+	# column 5: minimum OS fimware version supported
 
-	if [[ $maxcols -ge 4 && -n $package_min_os_msg ]]; then
+	if [[ $maxcols -ge 5 && -n $package_min_os_msg ]]; then
 		printf "%-$((PACKAGE_MIN_OS_COL_WIDTH+$(LenANSIDiff "$package_min_os_msg")))s" "$package_min_os_msg"
 	fi
 
-	# column 5: arch is compatible
+	# column 6: arch is compatible?
 
-	if [[ $maxcols -ge 5 && -n $package_arch_msg ]]; then
+	if [[ $maxcols -ge 6 && -n $package_arch_msg ]]; then
 		printf "%-$((PACKAGE_ARCH_COL_WIDTH+$(LenANSIDiff "$package_arch_msg")))s" "$package_arch_msg"
 	fi
 
@@ -5230,7 +5254,7 @@ Report.Dependencies:Show()
 
 	Func:Init
 	local package_name=''
-	maxcols=5
+	maxcols=6
 	DisableDebugToArchiveAndFile
 	DisplayWritingReport
 
