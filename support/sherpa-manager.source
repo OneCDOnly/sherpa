@@ -494,13 +494,7 @@ Env:Load()
 
 	ShowAsProc 'loading environment'
 
-	if ! /bin/grep -q "$(echo 'ZG9udGVkaXQK' | /usr/bin/openssl enc -base64 -d)" "$0"; then		# Use encrypted search-string to prevent `grep` finding this code line.
-		local -r SOURCE_BRANCH=stable
-	else
-		local -r SOURCE_BRANCH=unstable
-	fi
-
-		readonly THIS_SCRIPT_VER="<?thisdate?>-$SOURCE_BRANCH"
+	readonly THIS_SCRIPT_VER='<?thisdate?>-<?target_branch?>'
 	readonly ACTION_MSG_PIPE=/var/run/sherpa.action.messages.pipe
 	readonly CERT_DB_PATHFILE=/etc/config/nas_sign_qpkg.db
 	readonly CPU_CORES=$(GetCPUCores)
