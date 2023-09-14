@@ -3936,7 +3936,7 @@ Report.Actions:Show()
 	EraseThisLine
 
 	if [[ -e $REPORT_PATHFILE ]]; then
-		DisplayFileInWindow "$REPORT_PATHFILE"
+		DisplayFileInWindow "$REPORT_PATHFILE" onescreen
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -3995,7 +3995,7 @@ Report.ActionsAll:Show()
 	EraseThisLine
 
 	if [[ -e $REPORT_PATHFILE ]]; then
-		DisplayFileInWindow "$REPORT_PATHFILE"
+		DisplayFileInWindow "$REPORT_PATHFILE" onescreen
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -4069,7 +4069,7 @@ Report.Groups:Show()
 	EraseThisLine
 
 	if [[ -e $REPORT_PATHFILE ]]; then
-		DisplayFileInWindow "$REPORT_PATHFILE"
+		DisplayFileInWindow "$REPORT_PATHFILE" onescreen
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -4185,7 +4185,7 @@ Report.Options:Show()
 	EraseThisLine
 
 	if [[ -e $REPORT_PATHFILE ]]; then
-		DisplayFileInWindow "$REPORT_PATHFILE"
+		DisplayFileInWindow "$REPORT_PATHFILE" onescreen
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -4229,7 +4229,7 @@ Report.Problems:Show()
 	EraseThisLine
 
 	if [[ -e $REPORT_PATHFILE ]]; then
-		DisplayFileInWindow "$REPORT_PATHFILE"
+		DisplayFileInWindow "$REPORT_PATHFILE" onescreen
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -4265,7 +4265,7 @@ Report.Tips:Show()
 	EraseThisLine
 
 	if [[ -e $REPORT_PATHFILE ]]; then
-		DisplayFileInWindow "$REPORT_PATHFILE"
+		DisplayFileInWindow "$REPORT_PATHFILE" onescreen
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -4283,7 +4283,7 @@ Log.Last:View()
 	ExtractPrevSessFromTail
 
 	if [[ -e $SESS_LAST_PATHFILE ]]; then
-		DisplayFileInWindow "$SESS_LAST_PATHFILE" linenumbers
+		DisplayFileInWindow "$SESS_LAST_PATHFILE" linenumbers onescreen
 	else
 		ShowAsError 'no last session log to display'
 	fi
@@ -4301,7 +4301,7 @@ Log.Tail:View()
 	ExtractTailFromLog
 
 	if [[ -e $SESS_TAIL_PATHFILE ]]; then
-		DisplayFileInWindow "$SESS_TAIL_PATHFILE" linenumbers
+		DisplayFileInWindow "$SESS_TAIL_PATHFILE" linenumbers onescreen
 	else
 		ShowAsError 'no session log tail to display'
 	fi
@@ -5169,7 +5169,7 @@ Report.Abbreviations:Show()
 	EraseThisLine
 
 	if [[ -e $REPORT_PATHFILE ]]; then
-		DisplayFileInWindow "$REPORT_PATHFILE"
+		DisplayFileInWindow "$REPORT_PATHFILE" onescreen
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -5252,7 +5252,7 @@ Report.Dependencies:Show()
 	EraseThisLine
 
 	if [[ -e $REPORT_PATHFILE ]]; then
-		DisplayFileInWindow "$REPORT_PATHFILE"
+		DisplayFileInWindow "$REPORT_PATHFILE" onescreen
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -5289,7 +5289,7 @@ Report.Names:Show()
 	EraseThisLine
 
 	if [[ -e $REPORT_PATHFILE ]]; then
-		DisplayFileInWindow "$REPORT_PATHFILE"
+		DisplayFileInWindow "$REPORT_PATHFILE" onescreen
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -5322,7 +5322,7 @@ Report.Repos:Show()
 	EraseThisLine
 
 	if [[ -e $REPORT_PATHFILE ]]; then
-		DisplayFileInWindow "$REPORT_PATHFILE"
+		DisplayFileInWindow "$REPORT_PATHFILE" onescreen
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -5355,7 +5355,7 @@ Report.Statuses:Show()
 	EraseThisLine
 
 	if [[ -e $REPORT_PATHFILE ]]; then
-		DisplayFileInWindow "$REPORT_PATHFILE"
+		DisplayFileInWindow "$REPORT_PATHFILE" onescreen
 	else
 		ShowAsError 'no information to display'
 	fi
