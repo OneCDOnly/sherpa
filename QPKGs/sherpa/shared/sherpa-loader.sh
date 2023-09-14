@@ -23,7 +23,7 @@
 readonly USER_ARGS_RAW=$*
 Init()
 {
-export LOADER_SCRIPT_VER="230913"
+export LOADER_SCRIPT_VER="230915"
 export LOADER_SCRIPT_PPID=$PPID
 readonly CHARS_REGULAR_PROMPT='$ '
 readonly CHARS_SUPER_PROMPT='# '
