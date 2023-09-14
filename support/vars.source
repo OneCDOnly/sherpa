@@ -26,6 +26,7 @@ SwapTags()
 		buffer=$(sed "s|<?email?>|$email|" <<< "$buffer")
 		buffer=$(sed "s|<?cdn_sherpa_url?>|$cdn_sherpa_url|" <<< "$buffer")
 		buffer=$(sed "s|<?management_file?>|$management_file|" <<< "$buffer")
+		buffer=$(sed "s|<?target_branch?>|${target_branch:-$unstable_branch}|" <<< "$buffer")
 
 		[[ -e $2 ]] && chmod +w "$2"
 		echo "$buffer" > "$2"
