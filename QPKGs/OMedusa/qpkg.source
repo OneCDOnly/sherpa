@@ -1,5 +1,5 @@
 QPKG_NAME="OMedusa"
-QPKG_VER="<?thisdate?>"
+QPKG_VER="<?build_date?>"
 QPKG_AUTHOR="OneCD"
 QPKG_RC_NUM="100"
 QPKG_SERVICE_PROGRAM="omedusa.sh"

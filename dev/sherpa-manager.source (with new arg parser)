@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#*<?dontedit?>
+#*<?dont_edit?>
 #
 #* sherpa-manager.sh
 #*	Copyright (C) 2017-<?thisyear?> OneCD - one.cd.only@gmail.com
@@ -532,7 +532,7 @@ Env:Load()
 	readonly PACKAGES_ARCHIVE_URL='<?cdn_sherpa_url?>'/packages.tar.gz
 	readonly QPKG_BU_PATH=$(GetDefVol)/.qpkg_config_backup
 	readonly THIS_PACKAGE_VER=$(QPKG.Local.GetVer)
-	readonly THIS_SCRIPT_VER="<?thisdate?>-$SOURCE_BRANCH"
+	readonly THIS_SCRIPT_VER="<?build_date?>-$SOURCE_BRANCH"
 	readonly THIS_PACKAGE_PATH=$(QPKG.GetInstallationPath)
 		readonly CACHE_PATH=$THIS_PACKAGE_PATH/cache
 			readonly ACTION_TIMES_PATH=$CACHE_PATH/action.times

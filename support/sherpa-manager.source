@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#* <?dontedit?>
+#* <?dont_edit?>
 #
 #* <?filename?>
 #* <?copyright?>
@@ -535,7 +535,7 @@ Env:Load()
 			readonly SESS_LAST_PATHFILE=$LOGS_PATH/session.last.log
 			readonly SESS_TAIL_PATHFILE=$LOGS_PATH/session.tail.log
 	readonly THIS_PACKAGE_VER=$(QPKG.Local.GetVer)
-	readonly THIS_SCRIPT_VER='<?thisdate?>-<?target_branch?>'
+	readonly THIS_SCRIPT_VER='<?build_date?>-<?target_branch?>'
 
 	# Entware
 	readonly EXTERNAL_PACKAGES_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
@@ -5261,7 +5261,7 @@ Report.Dependencies:Show()
 
 		{
 
-		DisplayAsHelpTitle "$(ShowTitleName) will automatically install and start/stop dependencies as-required."
+		DisplayAsHelpTitle "$(ShowTitleName) will automatically install/start/stop dependencies as-required."
 		DisplayAsHelpTitle "requirements shown in $(ColourTextBrightOrange '*orange') will prevent a package being installed."
 		DisplayAsHelpTitle "those shown in $(ColourTextBrightRed '!red') are preventing an installed package from working correctly."
 		DisplayAsDepsReportTitleLine

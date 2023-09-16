@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#* <?dontedit?>
+#* <?dont_edit?>
 #
 #* <?filename?>
 #* <?copyright?>
@@ -12,7 +12,7 @@
 
 readonly USER_ARGS_RAW=$*
 readonly QPKG_NAME=Headphones
-readonly SERVICE_SCRIPT_VERSION='<?thisdate?>'
+readonly SERVICE_SCRIPT_VERSION='<?build_date?>'
 
 InitBasic()
 	{

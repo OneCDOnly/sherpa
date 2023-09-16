@@ -1,5 +1,5 @@
 QPKG_NAME="sherpa"
-QPKG_VER="<?thisdate?>"
+QPKG_VER="<?build_date?>"
 QPKG_AUTHOR="OneCD"
 QPKG_RC_NUM="500"
 QPKG_SERVICE_PROGRAM="sherpa-service.sh"

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#* <?dontedit?>
+#* <?dont_edit?>
 #
 #* <?filename?>
 #* <?copyright?>
@@ -14,7 +14,7 @@
 #
 #* <?license?>
 
-readonly SERVICE_LIB_VERSION='<?thisdate?>'
+readonly SERVICE_LIB_VERSION='<?build_date?>'
 
 InitLibrary()
 	{

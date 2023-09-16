@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#* <?dontedit?>
+#* <?dont_edit?>
 #
 #* <?filename?>
 #* <?copyright?>
@@ -18,7 +18,7 @@ readonly USER_ARGS_RAW=$*
 Init()
 	{
 
-	export LOADER_SCRIPT_VER='<?thisdate?>'
+	export LOADER_SCRIPT_VER='<?build_date?>'
 	export LOADER_SCRIPT_PPID=$PPID
 
 	readonly CHARS_REGULAR_PROMPT='$ '

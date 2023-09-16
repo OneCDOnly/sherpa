@@ -20,7 +20,7 @@
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 readonly USER_ARGS_RAW=$*
 readonly QPKG_NAME=OqBittorrent
-readonly SERVICE_SCRIPT_VERSION='230916'
+readonly SERVICE_SCRIPT_VERSION='230917'
 InitBasic()
 {
 daemon_pathfile=/opt/bin/qbittorrent-nox
