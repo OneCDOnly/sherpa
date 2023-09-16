@@ -41,6 +41,3 @@
 
 * include new integrated help screens for all actions?
 	like: `sherpa paste help`, `sherpa install help`, `sherpa reassign help`
-
-* add checks to all service scripts to examine $EUID?
-    find a way to run each service script without superuser access?
