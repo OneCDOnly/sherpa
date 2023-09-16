@@ -2,7 +2,7 @@
 #* <?dontedit?>
 #
 #* <?filename?>
-#*	 <?copyright?>
+#* <?copyright?>
 #
 #* <?project?>
 #
@@ -12,7 +12,7 @@
 
 readonly USER_ARGS_RAW=$*
 readonly QPKG_NAME=ClamAV
-readonly SERVICE_SCRIPT_VERSION="<?thisdate?>"
+readonly SERVICE_SCRIPT_VERSION='<?thisdate?>'
 
 Init()
 	{
@@ -23,6 +23,11 @@ Init()
 
 	allow_access_to_sys_packages=true
 	backup_pathfile=undefined
+	get_daemon_port_cmd=''
+	get_ui_listening_address_cmd=''
+	get_ui_port_cmd=''
+	get_ui_port_secure_cmd=''
+	get_ui_port_secure_enabled_test_cmd=''
 	install_pip_deps=true
 	pip_cache_path=undefined
 	qpkg_ini_pathfile=undefined
@@ -30,12 +35,6 @@ Init()
 
 	readonly TARGET_SERVICE_PATHFILE=/etc/init.d/antivirus.sh
 	readonly BACKUP_SERVICE_PATHFILE=$TARGET_SERVICE_PATHFILE.bak
-
-	readonly GET_DAEMON_PORT_CMD=''
-	readonly GET_UI_PORT_CMD=''
-	readonly GET_UI_PORT_SECURE_CMD=''
-	readonly GET_UI_PORT_SECURE_ENABLED_TEST_CMD=''
-	readonly GET_UI_LISTENING_ADDRESS_CMD=''
 
 	}
 
@@ -54,11 +53,11 @@ StartQPKG()
 		/bin/sed -i 's|/usr/local/bin/freshclam|/opt/sbin/freshclam|' "$TARGET_SERVICE_PATHFILE"
 
 		# disable dryrun. The new ClamAV engine (0.102.4) doesn't support the '--dryrun' or '--countfile=' options.
-		# match second occurrence only. First one is used by Mcafee. Solution here: https://unix.stackexchange.com/a/403272
+		# match second occurrence only. First one is used by McAfee. Solution here: https://unix.stackexchange.com/a/403272
 		/bin/sed -i ':a;N;$!ba; s|/bin/sh -c "$AV_SCAN_PATH $DRY_RUN_OPTIONS --dryrun|#/bin/sh -c "$AV_SCAN_PATH $DRY_RUN_OPTIONS --dryrun|2' "$TARGET_SERVICE_PATHFILE"
 
 		# mod 'clamscan' runtime options
-		# match second occurrence only. First one is used by Mcafee.
+		# match second occurrence only. First one is used by McAfee.
 		/bin/sed -i ':a;N;$!ba; s|OPTIONS="$OPTIONS --countfile=/tmp/antivirous.job.$job_id.scanning"|OPTIONS="$OPTIONS --database=$ANTIVIRUS_CLAMAV"|2' "$TARGET_SERVICE_PATHFILE"
 
 		# mod 'freshclam' runtime options

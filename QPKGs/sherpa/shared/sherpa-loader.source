@@ -2,7 +2,7 @@
 #* <?dontedit?>
 #
 #* <?filename?>
-#*	 <?copyright?>
+#* <?copyright?>
 #
 #* Description:
 #*	 This is the loader script for the sherpa mini-package-manager and is part of the `sherpa` QPKG.
@@ -18,7 +18,7 @@ readonly USER_ARGS_RAW=$*
 Init()
 	{
 
-	export LOADER_SCRIPT_VER="<?thisdate?>"
+	export LOADER_SCRIPT_VER='<?thisdate?>'
 	export LOADER_SCRIPT_PPID=$PPID
 
 	readonly CHARS_REGULAR_PROMPT='$ '

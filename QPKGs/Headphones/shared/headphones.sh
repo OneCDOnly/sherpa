@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #* don't edit this file, it was built/modified programmatically with the `build-qpkgs.sh` script. (source: headphones.source)
 #* headphones.sh
-#*	 Copyright (C) 2017-2023 OneCD - one.cd.only@gmail.com
+#* Copyright (C) 2017-2023 OneCD - one.cd.only@gmail.com
 #*   So, blame OneCD if it all goes horribly wrong. ;)
 #* Project:
 #*	 https://git.io/sherpa
@@ -20,7 +20,7 @@
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 readonly USER_ARGS_RAW=$*
 readonly QPKG_NAME=Headphones
-readonly SERVICE_SCRIPT_VERSION='230912'
+readonly SERVICE_SCRIPT_VERSION='230916'
 InitBasic()
 {
 service_script_type=1
