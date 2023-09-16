@@ -3895,9 +3895,7 @@ EraseThisLine()
 
 	# Reset cursor to start-of-line, erasing entire line.
 
-	[[ ${opts_verbose:-false} = false ]] || return 0
-
-	printf '\033[2K\r'
+	[[ ${opts_verbose:=false} = false ]] && printf '\033[2K\r'
 	linespace_visible=true
 
 	} >&2

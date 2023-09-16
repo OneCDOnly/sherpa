@@ -1,18 +1,3 @@
-* additional linespace shown in verbose mode:
-	dbug: (>>) Self.Results:Show()
-	proc: writing report ...
-
-	• These package actions completed OK:
-		install OWatcher3 in 2m:47s
-		"sign" OWatcher3 in 1 second
-
-
-	• These package actions were skipped:
-		install Entware
-		└─ reason: already installed
-
-	dbug: (II) -----------------------------------------------------------------------------------------------------
-
 * sherpa should not reactivate sab during 'check' action if it was already stopped.
 
 * status table intermittently(?) shows packages out-of-order:
