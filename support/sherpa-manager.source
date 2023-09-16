@@ -6,7 +6,7 @@
 #
 #* Description:
 #*   This is the management script for the sherpa mini-package-manager.
-#*   It's automatically downloaded via the `sherpa.loader.sh` script in the `sherpa` QPKG no-more than once-per-hour.
+#*   It's automatically downloaded via the `sherpa-loader.sh` script in the `sherpa` QPKG no-more than once-per-hour.
 #
 #* <?project?>
 #
@@ -21,7 +21,7 @@
 #			  variables: 'lowercase_with_inline_underscores'
 # flag "object" methods: 'Capitalised.CamelCase.With.Inline.Periods.And.Colon.Before:Method'
 # list "object" methods: 'Capitalised-CamelCase-With-Inline-Hyphens-And-Colon-Before:Method'
-#   "object" properties: '_lowercase_with_leading_and_inline_and_trailing_underscores_' (these should ONLY be managed via the object's methods)
+#   "object" properties: '_lowercase_with_leading_and_inline_and_trailing_underscores_' (these should be managed ONLY by the object's methods)
 #			  constants: 'UPPERCASE_WITH_INLINE_UNDERSCORES' (also set as readonly)
 #				indents: 1 x tab
 #
@@ -250,7 +250,7 @@ Debug.Log:Init()
 Consts:Load()
 	{
 
-	readonly FILE_CHANGE_THRESHOLD_MINUTES=60
+	# QPKG actions.
 	readonly QPKG_DISABLE_TIMEOUT_SECONDS=10
 	readonly QPKG_ENABLE_TIMEOUT_SECONDS=10
 	readonly QPKG_RESTART_TIMEOUT_SECONDS=1800		# 30 minutes
@@ -279,6 +279,7 @@ Consts:Load()
 	readonly PACKAGE_STATUS_COL_WIDTH=23
 	readonly PACKAGE_VER_COL_WIDTH=17
 
+	# For reports and onscreen display.
 	readonly CHARS_DROPEND='└─ '
 	readonly CHARS_ELLIPSIS='...'
 	readonly CHARS_NOTE='* '
@@ -310,6 +311,7 @@ Consts:Load()
 		readonly HELP_SYNTAX_SUDO_PREFIX="$CHARS_SUPER_PROMPT"
 	fi
 
+	readonly FILE_CHANGE_THRESHOLD_MINUTES=60
 	readonly LOG_TAIL_LINES=5000					# NOTE: a full download and install of everything generates a session log of around 1600 lines, but include a bunch of opkg updates and it can get much longer.
 
 	}
