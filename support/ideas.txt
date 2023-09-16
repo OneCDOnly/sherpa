@@ -3,8 +3,6 @@
 
 * compare .git/ORIG_HEAD before-and-after 'git pull'. If different, then remove *.pyc before starting application.
 
-* ensure all IPKs are reinstalled after reinstalling Entware, not just the ones required to support sherpa QPKGs.
-
 * add Gitea as new package?
 	https://docs.gitea.com/installation/install-from-binary
 
