@@ -1,20 +1,5 @@
 * sherpa should not reactivate sab during 'check' action if it was already stopped.
 
-* status table intermittently(?) shows packages out-of-order:
-	on TS-559Pro+:
-	• QPKG name:         • QPKG statuses:       • QPKG version:  • QPKG installation path:
-	ClamAV             - not installable: insufficient RAM
-	Deluge-server      - disabled, inactive     230726           /share/MD0_DATA/.qpkg/Deluge-server
-	duf                - enabled, active        220809           /share/MD0_DATA/.qpkg/duf
-	Deluge-web         - disabled, inactive     230726           /share/MD0_DATA/.qpkg/Deluge-web
-
-	on TS-230:
-	• QPKG name:         • QPKG statuses:       • QPKG version:  • QPKG installation path:
-	Deluge-server      - not installed
-	ClamAV             - enabled, active        230726           /share/CACHEDEV2_DATA/.qpkg/ClamAV
-	Deluge-web         - not installed
-	duf                - enabled, active        220809           /share/CACHEDEV2_DATA/.qpkg/duf
-
 * 'sherpa start inactive' fails to find any inactive packages.
 	needs to get status of each package first.
 
