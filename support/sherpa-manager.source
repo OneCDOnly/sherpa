@@ -5360,8 +5360,8 @@ Report.Statuses:Show()
 
 		DisplayAsStatusReportTitleLine
 
-		for package_name in $(QPKGs-ACstatus-dn:Array); do
-			DisplayAsStatusReportLine "$package_name"
+		for package_name in $(QPKGs-SCall:Array); do
+			QPKGs-ACstatus-dn.Exist "$package_name" && DisplayAsStatusReportLine "$package_name"
 		done
 
 		Display
