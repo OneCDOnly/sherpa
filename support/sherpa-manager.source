@@ -81,10 +81,7 @@ Self:Init()
 	fi
 
 	EraseThisLine
-
-	if [[ $hide_title = false && $opts_verbose = false ]]; then
-		ShowTitleLine
-	fi
+	[[ $hide_title = false && $opts_verbose = false ]] && ShowTitleLine
 
 	if ! QPKGs.Conflicts:Check; then
 		skip_package_actions=true
@@ -223,10 +220,7 @@ Self.Results:Show()
 
 	[[ $self_archive_debug_afterward = true ]] && ArchiveActiveSessLog
 	ResetActiveSessLog
-
-	if [[ $hide_title = false && $opts_verbose = false ]]; then
-		WriteEmptyLineIfNoneExists   # Final on-screen linespace.
-	fi
+	[[ $hide_title = false && $opts_verbose = false ]] && WriteEmptyLineIfNoneExists   # Final on-screen linespace.
 
 	}
 
@@ -2266,7 +2260,7 @@ IsThisFileRecent()
 
 	}
 
-SavePackageLists()
+SaveEntwarePackageList()
 	{
 
 	$PIP_CMD freeze > "$PREV_PIP_LIST"
@@ -2276,6 +2270,21 @@ SavePackageLists()
 	[[ -e $PREV_IPK_LIST ]] && DebugAsDone "saved current $(ShowAsPackageName Entware) IPK list to $(ShowAsFileName "$PREV_IPK_LIST")"
 
 	} 2>/dev/null
+
+LoadEntwarePackageList()
+	{
+
+	local packname=''
+	local sep=''
+	local version=''
+
+	if [[ -e $PREV_IPK_LIST ]]; then
+		while read -r packname sep version; do
+			IPKs-ACinstall-to:Add "$packname"
+		done < "$PREV_IPK_LIST"
+	fi
+
+	}
 
 CalcIpkDepsToInstall()
 	{
@@ -2470,10 +2479,10 @@ IPKs:install()
 	if QPKGs-ACinstall-ok.Exist Entware || ([[ $opts_check = true ]] && QPKG.IsInstalled Entware); then
 		IPKs-ACinstall-to:Add "$ESSENTIAL_IPKS"
 
-# 		if [[ -e $PREV_IPK_LIST ]]; then
-# 			add previously installed IPKs to install list
-# 			mv "$PREV_IPK_LIST" "$PREV_IPK_LIST.installing"
-# 		fi
+		if [[ -e $PREV_IPK_LIST ]]; then
+			LoadEntwarePackageList
+			mv "$PREV_IPK_LIST" "$PREV_IPK_LIST.installing"
+		fi
 	fi
 
 	if QPKGs.ACinstall.SCall.IsSet; then
@@ -2514,16 +2523,16 @@ IPKs:install()
 			Keystrokes:Hide
 			UpdateColourisation
 
-# 			if [[ -e $PREV_IPK_LIST.installing ]]; then
-# 				rm "$PREV_IPK_LIST.installing"
-# 			fi
+			if [[ -e $PREV_IPK_LIST.installing ]]; then
+				rm "$PREV_IPK_LIST.installing"
+			fi
 		else
 			NoteIpkAcAsEr "$(IPKs-ACdownload-to:Array)" install
 			SaveActionResultToLog IPK "$desc" install failed "$result_code"
 
-# 			if [[ -e $PREV_IPK_LIST.installing ]]; then
-# 				mv "$PREV_IPK_LIST.installing" "$PREV_IPK_LIST"
-# 			fi
+			if [[ -e $PREV_IPK_LIST.installing ]]; then
+				mv "$PREV_IPK_LIST.installing" "$PREV_IPK_LIST"
+			fi
 		fi
 	fi
 
@@ -6684,7 +6693,7 @@ _QPKG:uninstall_()
 
 	local -r QPKG_UNINSTALLER_PATHFILE=$(QPKG.GetInstallationPath "$PACKAGE_NAME")/.uninstall.sh
 
-	[[ $PACKAGE_NAME = Entware ]] && SavePackageLists
+	[[ $PACKAGE_NAME = Entware ]] && SaveEntwarePackageList
 
 	if [[ -e $QPKG_UNINSTALLER_PATHFILE ]]; then
 		DebugAsProc "uninstalling $(ShowAsPackageName "$PACKAGE_NAME")"
@@ -6837,13 +6846,13 @@ _QPKG:reactivate_()
 
 	if [[ $opts_debug = true ]]; then
 		debug_cmd='DEBUG_QPKG=true '
-		RunAndLog "${debug_cmd}$(QPKG.GetServicePathFile) restart" "$LOG_PATHFILE" log:failure-only
+		RunAndLog "${debug_cmd}$(QPKG.GetServicePathFile "$PACKAGE_NAME") restart" "$LOG_PATHFILE" log:failure-only
 		result_code=$?
 	elif QPKG.IsCanLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
 		RunAndLog "/sbin/qpkg_service${timeout} restart $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
 		QPKG.LastResultWasOk && result_code=0 || result_code=1
 	else
-		RunAndLog "$(QPKG.GetServicePathFile) restart" "$LOG_PATHFILE" log:failure-only
+		RunAndLog "$(QPKG.GetServicePathFile "$PACKAGE_NAME") restart" "$LOG_PATHFILE" log:failure-only
 		result_code=$?
 	fi
 
@@ -7520,13 +7529,14 @@ QPKG.GetInstallationPath()
 	{
 
 	# input:
-	#   $1 = QPKG name (optional) - default is `sherpa`
+	#   $PACKAGE_NAME (global) = QPKG name (default: sherpa)
+	#   $1 = (optional) if specified, use this as QPKG name
 
 	# output:
 	#   stdout = the installation path to this QPKG
 	#   $? = 0 if found, !0 if not
 
-	/sbin/getcfg "${1:-sherpa}" Install_Path -d undefined -f /etc/config/qpkg.conf
+	/sbin/getcfg "${1:-${PACKAGE_NAME:-sherpa}}" Install_Path -d undefined -f /etc/config/qpkg.conf
 
 	}
 
@@ -7534,14 +7544,14 @@ QPKG.GetServicePathFile()
 	{
 
 	# input:
-	#   $PACKAGE_NAME (global) = QPKG name (default)
-	#   $1 = (optional) if specified, use this as QPKG name instead
+	#   $PACKAGE_NAME (global) = QPKG name (default: sherpa)
+	#   $1 = (optional) if specified, use this as QPKG name
 
 	# output:
 	#   stdout = service script pathfile
 	#   $? = 0 if found, !0 if not
 
-	/sbin/getcfg "${1:-$PACKAGE_NAME}" Shell -d undefined -f /etc/config/qpkg.conf
+	/sbin/getcfg "${1:-${PACKAGE_NAME:-sherpa}}" Shell -d undefined -f /etc/config/qpkg.conf
 
 	}
 
@@ -7551,7 +7561,8 @@ QPKG.Avail.GetVer()
 	# Returns the version number of an available QPKG.
 
 	# input:
-	#   $1 = QPKG name (optional) - default is `sherpa`
+	#   $PACKAGE_NAME (global) = QPKG name (default: sherpa)
+	#   $1 = (optional) if specified, use this as QPKG name
 
 	# output:
 	#   stdout = package version
@@ -7565,7 +7576,7 @@ QPKG.Avail.GetVer()
 		package="${QPKG_NAME[$index]}"
 		[[ $package = "$prev" ]] && continue || prev=$package
 
-		if [[ ${1:-sherpa} = "$package" ]]; then
+		if [[ ${1:-${PACKAGE_NAME:-sherpa}} = "$package" ]]; then
 			echo "${QPKG_VERSION[$index]}"
 			return 0
 		fi
@@ -7581,13 +7592,14 @@ QPKG.Local.GetVer()
 	# Returns the version number of an installed QPKG.
 
 	# input:
-	#   $1 = QPKG name (optional) - default is `sherpa`
+	#   $PACKAGE_NAME (global) = QPKG name (default: sherpa)
+	#   $1 = (optional) if specified, use this as QPKG name
 
 	# output:
 	#   stdout = package version
 	#   $? = 0 if found, !0 if not
 
-	/sbin/getcfg "${1:-sherpa}" Version -d undefined -f /etc/config/qpkg.conf
+	/sbin/getcfg "${1:-${PACKAGE_NAME:-sherpa}}" Version -d undefined -f /etc/config/qpkg.conf
 
 	}
 
@@ -7597,11 +7609,12 @@ QPKG.GetStoreID()
 	# Returns the presently assigned repository store ID of an installed QPKG.
 
 	# input:
-	#   $1 = QPKG name
+	#   $PACKAGE_NAME (global) = QPKG name (default: sherpa)
+	#   $1 = (optional) if specified, use this as QPKG name
 
 	# output:
 	#   stdout = package store ID
-	/sbin/getcfg "${1:?${FUNCNAME[0]}'()': undefined}" store -d sherpa -f /etc/config/qpkg.conf
+	/sbin/getcfg "${1:-${PACKAGE_NAME:-sherpa}}" store -d sherpa -f /etc/config/qpkg.conf
 
 	return 0
 
@@ -7613,13 +7626,13 @@ QPKG.IsRepoOk()
 	# Is this QPKG managable by sherpa?
 
 	# input:
-	#   $PACKAGE_NAME (global) = QPKG name (default).
-	#   $1 = if specified, use this as QPKG name instead.
+	#   $PACKAGE_NAME (global) = QPKG name (default: sherpa)
+	#   $1 = (optional) if specified, use this as QPKG name
 
 	# output:
 	#   $? = 0 if true, 1 if false
 
-	local temp="$(QPKG.GetStoreID "${1:-$PACKAGE_NAME}")"
+	local temp="$(QPKG.GetStoreID "${1:-${PACKAGE_NAME:-sherpa}}")"
 	[[ -z $temp || $temp = sherpa ]]
 
 	}
@@ -7630,12 +7643,13 @@ QPKG.GetInstallDate()
 	# Returns the date specified QPKG was installed.
 
 	# input:
-	#   $1 = QPKG name
+	#   $PACKAGE_NAME (global) = QPKG name (default: sherpa)
+	#   $1 = (optional) if specified, use this as QPKG name
 
 	# output:
 	#   stdout = package store ID
 
-	/sbin/getcfg "${1:?${FUNCNAME[0]}'()': undefined}" date -d undefined -f /etc/config/qpkg.conf
+	/sbin/getcfg "${1:-${PACKAGE_NAME:-sherpa}}" date -d undefined -f /etc/config/qpkg.conf
 
 	return 0
 
@@ -7704,7 +7718,7 @@ QPKG.IsUpgradable()
 QPKG.IsInstallable()
 	{
 
-	# Can tis QPKG be installed?
+	# Can this QPKG be installed?
 
 	# input:
 	#   $PACKAGE_NAME (global) = QPKG name (default).
