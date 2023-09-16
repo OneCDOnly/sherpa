@@ -15,14 +15,14 @@ SwapTags()
 	if [[ -f "$1" ]]; then			# ignore symlinks.
 		local buffer=$(<"$1")
 
-		buffer=$(sed "s|<?dontedit?>|$dontedit_msg (source: $(basename "$1"))|" <<< "$buffer")
+		buffer=$(sed "s|<?dont_edit?>|$dont_edit_msg (source: $(basename "$1"))|" <<< "$buffer")
 		buffer=$(sed "s|<?filename?>|$(basename "$2")|" <<< "$buffer")
 		buffer=$(sed "s|<?copyright?>|${copyright_msg//$'\n'/\\n}|" <<< "$buffer")	# escape newlines.
 		buffer=$(sed "s|<?project?>|${project_msg//$'\n'/\\n}|" <<< "$buffer")		# escape newlines.
 		buffer=$(sed "s|<?tested?>|${tested_msg//$'\n'/\\n}|" <<< "$buffer")		# escape newlines.
 		buffer=$(sed "s|<?license?>|${license_msg//$'\n'/\\n}|" <<< "$buffer")		# escape newlines.
-		buffer=$(sed "s|<?thisdate?>|$thisdate|" <<< "$buffer")
-		buffer=$(sed "s|<?thisyear?>|$thisyear|" <<< "$buffer")
+		buffer=$(sed "s|<?build_date?>|$build_date|" <<< "$buffer")
+		buffer=$(sed "s|<?build_year?>|$build_year|" <<< "$buffer")
 		buffer=$(sed "s|<?email?>|$email|" <<< "$buffer")
 		buffer=$(sed "s|<?cdn_sherpa_url?>|$cdn_sherpa_url|" <<< "$buffer")
 		buffer=$(sed "s|<?management_file?>|$management_file|" <<< "$buffer")
@@ -210,8 +210,8 @@ ShowDone()
 
 	}
 
-thisdate=$(date '+%y%m%d')
-thisyear=$(date '+%Y')
+build_date=$(date '+%y%m%d')
+build_year=$(date '+%Y')
 colourful=true
 
 checksum_root_path="$HOME"/scripts/nas
@@ -248,13 +248,13 @@ cdn_onecd_url='https://raw.githubusercontent.com/OneCDOnly'
 cdn_other_packages_url="$cdn_onecd_url/<?package_name?>/main/build"
 cdn_qnap_dev_packages_url='https://github.com/qnap-dev/<?package_name?>/releases/download/v<?version?>'
 
-dontedit_msg="don't edit this file, it was built/modified programmatically with the \`$(basename "$0")\` script."
+dont_edit_msg="don't edit this file, it was built/modified programmatically with the \`$(basename "$0")\` script."
 email=one.cd.only@gmail.com
 
 # remember to escape ampersand chars in `read` blocks for compatibility with `sed` regex.
 
 read -r -d '' copyright_msg << EOB
-Copyright (C) 2017-<?thisyear?> OneCD - <?email?>
+Copyright (C) 2017-<?build_year?> OneCD - <?email?>
 #
 #*   So, blame OneCD if it all goes horribly wrong. ;)
 EOB
