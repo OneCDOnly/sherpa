@@ -2,7 +2,7 @@
 #* <?dontedit?>
 #
 #* <?filename?>
-#*   <?copyright?>
+#* <?copyright?>
 #
 #* Description:
 #*   A library of common bash functions used by many sherpa QPKG service-scripts.
