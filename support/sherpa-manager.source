@@ -953,7 +953,7 @@ Self:Validate()
 		if QPKGs-SCstandalone.Exist "$package" && QPKGs-ISinstalled.Exist "$package"; then
 			if QPKGs-ACinstall-to.Exist "$package"; then
 				for prospect in $(QPKG.GetDependents "$package"); do
-					if QPKGs-ISinstalled.Exist "$prospect"; then
+					if QPKGs-ISenabled.Exist "$prospect"; then
 						QPKGs-ACdeactivate-to:Add "$prospect"
 						! QPKGs-ACuninstall-to.Exist "$prospect" && ! QPKGs-ACinstall-to.Exist "$prospect" && QPKGs-ACactivate-to:Add "$prospect"
 					fi
