@@ -5261,9 +5261,9 @@ Report.Dependencies:Show()
 
 		{
 
-		DisplayAsHelpTitle "$(ShowTitleName) will automatically install/start/stop dependencies as-required."
-		DisplayAsHelpTitle "requirements shown in $(ColourTextBrightOrange '*orange') will prevent a package being installed."
-		DisplayAsHelpTitle "those shown in $(ColourTextBrightRed '!red') are preventing an installed package from working correctly."
+		DisplayAsHelpTitle "$(ShowTitleName) will automatically install/start/stop/restart package dependencies as-required."
+		DisplayAsHelpTitle "requirements shown in $(ColourTextBrightOrange '*orange') prevent the package being installed."
+		DisplayAsHelpTitle "those shown in $(ColourTextBrightRed '!red') are preventing the package from working correctly."
 		DisplayAsDepsReportTitleLine
 
 		for package_name in $(QPKGs-SCall:Array); do
