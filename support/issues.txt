@@ -1,4 +1,4 @@
-* sherpa should not reactivate sab during 'check' action if it was already stopped.
+* sherpa should not reactivate dep QPKGs during 'check' action if each dep QPKG was stopped.
 
 * 'sherpa start inactive' fails to find any inactive packages.
 	needs to get status of each package first.
@@ -10,5 +10,5 @@
 
 * QPKG version sort is not correctly sorting version numbers followed by an alpha as later than non-alpha.
 
-* if a forked action hangs, it might be killed by its caller.
+* if a forked action hangs, it might not be killed by its caller.
 	need to confirm this.
