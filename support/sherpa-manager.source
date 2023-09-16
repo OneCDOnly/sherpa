@@ -6544,7 +6544,6 @@ _QPKG:reinstall_()
 
 		local current_ver=$(QPKG.Local.GetVer "$PACKAGE_NAME")
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reinstall ok "version $current_ver"
-		SendParentChangeEnv "QPKGs-ACsign-to:Add $PACKAGE_NAME"
 		result_code=0   # Remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK).
 		MarkThisActionForkAsOk
 	else
@@ -6632,7 +6631,6 @@ _QPKG:upgrade_()
 			SaveActionResultToLog QPKG "$PACKAGE_NAME" upgrade ok "upgraded from version $prev_ver to version $current_ver"
 		fi
 
-		SendParentChangeEnv "QPKGs-ACsign-to:Add $PACKAGE_NAME"
 		result_code=0   # Remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK).
 		MarkThisActionForkAsOk
 	else
