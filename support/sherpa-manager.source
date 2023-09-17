@@ -858,7 +858,7 @@ Self:Validate()
 		fi
 	fi
 
-	# Decide if particular IPKs should be uninstalled/downgraded.
+	# Decide if specific IPKs should be uninstalled/downgraded.
 
 	if OS.IsNonStdKernelPageSize; then
 		case $NAS_QPKG_ARCH in
@@ -1717,6 +1717,8 @@ ParseArgs()
 						;;
 					dependencies)
 						opts_show_dependencies=true
+# 						QPKGs.ACstatus.ISinstalled:Set
+# 						opts_show_status=true
 						;;
 					dependent|installable|standalone|upgradable)
 						QPKGs.AClist.SC${group}:Set
@@ -3725,6 +3727,7 @@ DisplayAsDepsReportLine()
 					else
 						package_deps+="$(ColourTextBrightRed "$dep")"
 						package_deps_msg="$(ColourTextBrightRed "$CHARS_ALERT")"
+						package_name_msg="${CHARS_BLANK}$(ColourTextBrightRed "$package_name")"
 					fi
 				done
 			else
@@ -3744,6 +3747,7 @@ DisplayAsDepsReportLine()
 			else
 				package_enabled_msg="$(ColourTextBrightRed "$CHARS_ALERT")"
 				package_enabled_msg+="$(ColourTextBrightRed false)"
+				package_name_msg="${CHARS_BLANK}$(ColourTextBrightRed "$package_name")"
 			fi
 
 			if QPKG.IsMinRAMOk "$package_name"; then
@@ -3751,6 +3755,7 @@ DisplayAsDepsReportLine()
 			else
 				package_min_ram_msg="$(ColourTextBrightRed "$CHARS_ALERT")"
 				package_min_ram_msg+="$(ColourTextBrightRed "$package_min_ram")"
+				package_name_msg="${CHARS_BLANK}$(ColourTextBrightRed "$package_name")"
 			fi
 
 			if QPKG.IsMinOSVerOk "$package_name"; then
@@ -3758,6 +3763,7 @@ DisplayAsDepsReportLine()
 			else
 				package_min_os_msg="$(ColourTextBrightRed "$CHARS_ALERT")"
 				package_min_os_msg+="$(ColourTextBrightRed "$package_min_os")"
+				package_name_msg="${CHARS_BLANK}$(ColourTextBrightRed "$package_name")"
 			fi
 
 			if QPKG.IsArchOK "$package_name"; then
@@ -3765,6 +3771,7 @@ DisplayAsDepsReportLine()
 			else
 				package_arch_msg="$(ColourTextBrightRed "$CHARS_ALERT")"
 				package_arch_msg+="$(ColourTextBrightRed false)"
+				package_name_msg="${CHARS_BLANK}$(ColourTextBrightRed "$package_name")"
 			fi
 			;;
 		muted)
@@ -3789,6 +3796,7 @@ DisplayAsDepsReportLine()
 			else
 				package_min_ram_msg="$(ColourTextBrightOrange "$CHARS_ATTENTION")"
 				package_min_ram_msg+="$(ColourTextBrightOrange "$package_min_ram")"
+				package_name_msg="${CHARS_BLANK}$(ColourTextBrightOrange "$package_name")"
 			fi
 
 			if QPKG.IsMinOSVerOk "$package_name"; then
@@ -3796,6 +3804,7 @@ DisplayAsDepsReportLine()
 			else
 				package_min_os_msg="$(ColourTextBrightOrange "$CHARS_ATTENTION")"
 				package_min_os_msg+="$(ColourTextBrightOrange "$package_min_os")"
+				package_name_msg="${CHARS_BLANK}$(ColourTextBrightOrange "$package_name")"
 			fi
 
 			if QPKG.IsArchOK "$package_name"; then
@@ -3803,6 +3812,7 @@ DisplayAsDepsReportLine()
 			else
 				package_arch_msg="$(ColourTextBrightOrange "$CHARS_ATTENTION")"
 				package_arch_msg+="$(ColourTextBrightOrange false)"
+				package_name_msg="${CHARS_BLANK}$(ColourTextBrightOrange "$package_name")"
 			fi
 			;;
 		highlighted)
@@ -5120,6 +5130,8 @@ QPKGs.States:Build()
 
 			if QPKG.IsMissing "$package"; then
 				QPKGs-ISmissing:Add "$package"
+				QPKGs-ISNTok:Add "$package"
+				continue
 			fi
 
 			if QPKG.IsUpgradable "$package"; then
