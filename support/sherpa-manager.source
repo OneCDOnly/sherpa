@@ -263,10 +263,11 @@ Consts:Load()
 	readonly PACKAGE_AUTHOR_COL_WIDTH=22
 	readonly PACKAGE_DEPENDENCIES_COL_WIDTH=29
 	readonly PACKAGE_DESCRIPTION_COL_WIDTH=100
-	readonly PACKAGE_ENABLED_COL_WIDTH=17
+	readonly PACKAGE_ENABLED_COL_WIDTH=12
 	readonly PACKAGE_INSTALL_DATE_COL_WIDTH=18
+	readonly PACKAGE_INSTALLED_COL_WIDTH=14
 	readonly PACKAGE_MIN_OS_COL_WIDTH=15
-	readonly PACKAGE_MIN_RAM_COL_WIDTH=18
+	readonly PACKAGE_MIN_RAM_COL_WIDTH=16
 	readonly PACKAGE_NAME_COL_WIDTH=21
 	readonly PACKAGE_PATH_COL_WIDTH=48
 	readonly PACKAGE_REPO_COL_WIDTH=40
@@ -282,6 +283,7 @@ Consts:Load()
 	readonly CHARS_RESULTS='= '
 	readonly CHAR_SPACER=' '
 		readonly CHARS_ALERT="${CHAR_SPACER}! "
+		readonly CHARS_ATTENTION="${CHAR_SPACER}* "
 		readonly CHARS_BLANK="${CHAR_SPACER}  "
 		readonly CHARS_NORMAL="${CHAR_SPACER}- "
 	readonly CHARS_SPECIAL='• '
@@ -3329,9 +3331,8 @@ DisplayAsStatusReportLine()
 			fi
 
 			package_status_msg="${CHARS_NORMAL}${package_status_msg}"
-			package_installed_version="$(QPKG.Local.GetVer "$package_name")"
 			QPKG.IsUpgradable "$package_name" && package_upgrade_version="$(QPKG.Avail.GetVer "$package_name")"
-			package_version_msg+="$package_installed_version"
+			package_version_msg+="$(QPKG.Local.GetVer "$package_name")"
 
 			if [[ -n $package_upgrade_version ]]; then
 				package_version_msg+=" ($(ColourTextBrightOrange "$package_upgrade_version"))"
@@ -3361,11 +3362,9 @@ DisplayAsStatusReportLine()
 			;;
 		highlighted)
 			package_name_msg+="$(ColourTextBrightRed "$package_name")"
-			package_status=missing
-			package_status_msg="$(ColourTextBrightRedBlink "${CHARS_ALERT}${package_status}")"
-			package_installed_version="$(QPKG.Local.GetVer "$package_name")"
-			package_version_msg+="$(ColourTextBrightRed "$package_installed_version")"
-			package_path_msg+="$(ColourTextBrightRedBlink "$(QPKG.GetInstallationPath "$package_name")")"
+			package_status_msg="$(ColourTextBrightRedBlink "${CHARS_ALERT}missing")"
+			package_version_msg+="$(ColourTextBrightRed "$(QPKG.Local.GetVer "$package_name")")"
+			package_path_msg="$(ColourTextBrightRedBlink "${CHARS_ALERT}$(QPKG.GetInstallationPath "$package_name")")"
 	esac
 
 	# column 1: package name
@@ -3616,6 +3615,7 @@ DisplayAsDepsReportTitleLine()
 
 	local package_name_msg=''
 	local package_deps_msg=''
+	local package_installed_msg=''
 	local package_enabled_msg=''
 	local package_min_ram_msg=''
 	local package_min_os_msg=''
@@ -3636,30 +3636,37 @@ DisplayAsDepsReportTitleLine()
 		printf "%-$((PACKAGE_DEPENDENCIES_COL_WIDTH+2+$(LenANSIDiff "$package_deps_msg")))s" "$package_deps_msg"
 	fi
 
-	# column 3: QPKG is enabled
+	# column 3: QPKG is installed
 
 	if [[ $maxcols -ge 3 ]]; then
-		package_enabled_msg="${CHARS_SPECIAL}QPKG enabled?"
+		package_installed_msg="${CHARS_SPECIAL}installed?"
+		printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+2+$(LenANSIDiff "$package_installed_msg")))s" "$package_installed_msg"
+	fi
+
+	# column 4: QPKG is enabled
+
+	if [[ $maxcols -ge 4 ]]; then
+		package_enabled_msg="${CHARS_SPECIAL}enabled?"
 		printf "%-$((PACKAGE_ENABLED_COL_WIDTH+2+$(LenANSIDiff "$package_enabled_msg")))s" "$package_enabled_msg"
 	fi
 
-	# column 4: minimum NAS RAM required
+	# column 5: minimum NAS RAM required
 
-	if [[ $maxcols -ge 4 ]]; then
+	if [[ $maxcols -ge 5 ]]; then
 		package_min_ram_msg="${CHARS_SPECIAL}minimum RAM:"
 		printf "%-$((PACKAGE_MIN_RAM_COL_WIDTH+2+$(LenANSIDiff "$package_min_ram_msg")))s" "$package_min_ram_msg"
 	fi
 
-	# column 5: minimum OS fimware version supported
+	# column 6: minimum OS fimware version supported
 
-	if [[ $maxcols -ge 5 ]]; then
+	if [[ $maxcols -ge 6 ]]; then
 		package_min_os_msg="${CHARS_SPECIAL}minimum OS:"
 		printf "%-$((PACKAGE_MIN_OS_COL_WIDTH+2+$(LenANSIDiff "$package_min_os_msg")))s" "$package_min_os_msg"
 	fi
 
-	# column 6: arch is compatible
+	# column 7: arch is compatible
 
-	if [[ $maxcols -ge 6 ]]; then
+	if [[ $maxcols -ge 7 ]]; then
 		package_arch_msg="${CHARS_SPECIAL}compatible arch?"
 		printf "%-$((PACKAGE_ARCH_COL_WIDTH+2+$(LenANSIDiff "$package_arch_msg")))s" "$package_arch_msg"
 	fi
@@ -3681,6 +3688,7 @@ DisplayAsDepsReportLine()
 	local package_deps=''
 	local package_deps_msg="$CHARS_NORMAL"
 	local package_enabled_msg="$CHARS_BLANK"
+	local package_installed_msg="$CHARS_BLANK"
 	local dep=''
 	local package_min_ram="$(QPKG.GetMinRAM "$package_name")"
 	local package_min_ram_msg="$CHARS_BLANK"
@@ -3715,7 +3723,8 @@ DisplayAsDepsReportLine()
 					if QPKG.IsInstalled "$dep" && QPKG.IsEnabled "$dep"; then
 						package_deps+="$(ColourTextBrightGreen "$dep")"
 					else
-						package_deps+="$(ColourTextBrightRed "!$dep")"
+						package_deps+="$(ColourTextBrightRed "$dep")"
+						package_deps_msg="$(ColourTextBrightRed "$CHARS_ALERT")"
 					fi
 				done
 			else
@@ -3724,74 +3733,125 @@ DisplayAsDepsReportLine()
 
 			package_deps_msg+="${package_deps// /, }"
 
-			if QPKG.IsMinRAMOk "$package_name"; then
-				package_min_ram_msg+="$(ColourTextBrightGreen "$package_min_ram")"
+			if QPKG.IsInstalled "$package_name"; then
+				package_installed_msg+="$(ColourTextBrightGreen true)"
 			else
-				package_min_ram_msg+="$(ColourTextBrightRed "!$package_min_ram")"
-			fi
-
-			if QPKG.IsMinOSVerOk "$package_name"; then
-				package_min_os_msg+="$(ColourTextBrightGreen "$package_min_os")"
-			else
-				package_min_os_msg+="$(ColourTextBrightRed "!$package_min_os")"
+				package_installed_msg+=false
 			fi
 
 			if QPKG.IsEnabled "$package_name"; then
 				package_enabled_msg+="$(ColourTextBrightGreen true)"
 			else
-				package_enabled_msg+="$(ColourTextBrightRed '!false')"
+				package_enabled_msg="$(ColourTextBrightRed "$CHARS_ALERT")"
+				package_enabled_msg+="$(ColourTextBrightRed false)"
 			fi
-
-			if QPKG.IsArchOK "$package_name"; then
-				package_arch_msg+="$(ColourTextBrightGreen true)"
-			else
-				package_arch_msg+="$(ColourTextBrightRed '!false')"
-			fi
-			;;
-		muted)
-			package_name_msg+="$(ColourTextDarkGrey "$package_name")"
-			package_deps_msg="$(ColourTextDarkGrey "${CHARS_NORMAL}${package_deps_raw}")"
-
-			if QPKG.IsMinRAMOk "$package_name"; then
-				package_min_ram_msg+="$(ColourTextDarkGrey "$package_min_ram")"
-			else
-				package_min_ram_msg+="$(ColourTextBrightOrange "*$package_min_ram")"
-			fi
-
-			if QPKG.IsMinOSVerOk "$package_name"; then
-				package_min_os_msg+="$(ColourTextDarkGrey "$package_min_os")"
-			else
-				package_min_os_msg+="$(ColourTextBrightOrange "*$package_min_os")"
-			fi
-
-			package_enabled_msg+="$(ColourTextDarkGrey 'N/A')"
-
-			if QPKG.IsArchOK "$package_name"; then
-				package_arch_msg+="$(ColourTextDarkGrey true)"
-			else
-				package_arch_msg+="$(ColourTextBrightOrange '*false')"
-			fi
-			;;
-		highlighted)
-			package_name_msg+="$(ColourTextBrightRed "$package_name")"
-			package_deps_msg="$(ColourTextDarkGrey "${CHARS_NORMAL}${package_deps}")"
 
 			if QPKG.IsMinRAMOk "$package_name"; then
 				package_min_ram_msg+="$(ColourTextBrightGreen "$package_min_ram")"
 			else
-				package_min_ram_msg+="$(ColourTextBrightRed "!$package_min_ram")"
+				package_min_ram_msg="$(ColourTextBrightRed "$CHARS_ALERT")"
+				package_min_ram_msg+="$(ColourTextBrightRed "$package_min_ram")"
 			fi
 
 			if QPKG.IsMinOSVerOk "$package_name"; then
 				package_min_os_msg+="$(ColourTextBrightGreen "$package_min_os")"
 			else
-				package_min_os_msg+="$(ColourTextBrightRed "!$package_min_os")"
+				package_min_os_msg="$(ColourTextBrightRed "$CHARS_ALERT")"
+				package_min_os_msg+="$(ColourTextBrightRed "$package_min_os")"
 			fi
 
 			if QPKG.IsArchOK "$package_name"; then
 				package_arch_msg+="$(ColourTextBrightGreen true)"
 			else
-				package_arch_msg+="$(ColourTextBrightRed '!false')"
+				package_arch_msg="$(ColourTextBrightRed "$CHARS_ALERT")"
+				package_arch_msg+="$(ColourTextBrightRed false)"
+			fi
+			;;
+		muted)
+			package_name_msg+="$(ColourTextDarkGrey "$package_name")"
+			package_deps_msg="$(ColourTextDarkGrey "$CHARS_NORMAL")"
+
+			if [[ $package_deps_raw != none ]]; then
+				for dep in $package_deps_raw; do
+					[[ -n $package_deps ]] && package_deps+=' '
+					package_deps+="$(ColourTextDarkGrey "$dep")"
+				done
+			else
+				package_deps+="$(ColourTextDarkGrey "$package_deps_raw")"
+			fi
+
+			package_deps_msg+="${package_deps// /, }"
+			package_installed_msg+="$(ColourTextDarkGrey false)"
+			package_enabled_msg+="$(ColourTextDarkGrey 'N/A')"
+
+			if QPKG.IsMinRAMOk "$package_name"; then
+				package_min_ram_msg+="$(ColourTextDarkGrey "$package_min_ram")"
+			else
+				package_min_ram_msg="$(ColourTextBrightOrange "$CHARS_ATTENTION")"
+				package_min_ram_msg+="$(ColourTextBrightOrange "$package_min_ram")"
+			fi
+
+			if QPKG.IsMinOSVerOk "$package_name"; then
+				package_min_os_msg+="$(ColourTextDarkGrey "$package_min_os")"
+			else
+				package_min_os_msg="$(ColourTextBrightOrange "$CHARS_ATTENTION")"
+				package_min_os_msg+="$(ColourTextBrightOrange "$package_min_os")"
+			fi
+
+			if QPKG.IsArchOK "$package_name"; then
+				package_arch_msg+="$(ColourTextDarkGrey true)"
+			else
+				package_arch_msg="$(ColourTextBrightOrange "$CHARS_ATTENTION")"
+				package_arch_msg+="$(ColourTextBrightOrange false)"
+			fi
+			;;
+		highlighted)
+			package_name_msg+="$(ColourTextBrightRed "$package_name")"
+
+			if [[ $package_deps_raw != none ]]; then
+				for dep in $package_deps_raw; do
+					[[ -n $package_deps ]] && package_deps+=' '
+
+					if QPKG.IsInstalled "$dep" && QPKG.IsEnabled "$dep"; then
+						package_deps+="$(ColourTextBrightGreen "$dep")"
+					else
+						package_deps+="$(ColourTextBrightRed "$dep")"
+					fi
+				done
+			else
+				package_deps+="$(ColourTextBrightGreen "$package_deps_raw")"
+			fi
+
+			package_deps_msg+="${package_deps// /, }"
+			package_installed_msg="$(ColourTextBrightRedBlink "$CHARS_ALERT")"
+			package_installed_msg+="$(ColourTextBrightRedBlink 'missing')"
+
+			if QPKG.IsEnabled "$package_name"; then
+				package_enabled_msg+="$(ColourTextBrightGreen true)"
+			else
+				package_enabled_msg="$(ColourTextBrightRedBlink "$CHARS_ALERT")"
+				package_enabled_msg+="$(ColourTextBrightRed 'false')"
+			fi
+
+			if QPKG.IsMinRAMOk "$package_name"; then
+				package_min_ram_msg+="$(ColourTextBrightGreen "$package_min_ram")"
+			else
+				package_min_ram_msg="$(ColourTextBrightRed "$CHARS_ALERT")"
+				package_min_ram_msg+="$(ColourTextBrightRed "$package_min_ram")"
+			fi
+
+			if QPKG.IsMinOSVerOk "$package_name"; then
+				package_min_os_msg+="$(ColourTextBrightGreen "$package_min_os")"
+			else
+				package_min_os_msg="$(ColourTextBrightRed "$CHARS_ALERT")"
+				package_min_os_msg+="$(ColourTextBrightRed "$package_min_os")"
+			fi
+
+			if QPKG.IsArchOK "$package_name"; then
+				package_arch_msg+="$(ColourTextBrightGreen true)"
+			else
+				package_arch_msg="$(ColourTextBrightRed "$CHARS_ALERT")"
+				package_arch_msg+="$(ColourTextBrightRed false)"
 			fi
 	esac
 
@@ -3807,27 +3867,33 @@ DisplayAsDepsReportLine()
 		printf "%-$((PACKAGE_DEPENDENCIES_COL_WIDTH+$(LenANSIDiff "$package_deps_msg")))s" "$package_deps_msg"
 	fi
 
-	# column 3: package enabled?
+	# column 3: package installed?
 
-	if [[ $maxcols -ge 3 && -n $package_enabled_msg ]]; then
+	if [[ $maxcols -ge 3 && -n $package_installed_msg ]]; then
+		printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+$(LenANSIDiff "$package_installed_msg")))s" "$package_installed_msg"
+	fi
+
+	# column 4: package enabled?
+
+	if [[ $maxcols -ge 4 && -n $package_enabled_msg ]]; then
 		printf "%-$((PACKAGE_ENABLED_COL_WIDTH+$(LenANSIDiff "$package_enabled_msg")))s" "$package_enabled_msg"
 	fi
 
-	# column 4: minimum NAS RAM required
+	# column 5: minimum NAS RAM required
 
-	if [[ $maxcols -ge 4 && -n $package_min_ram_msg ]]; then
+	if [[ $maxcols -ge 5 && -n $package_min_ram_msg ]]; then
 		printf "%-$((PACKAGE_MIN_RAM_COL_WIDTH+$(LenANSIDiff "$package_min_ram_msg")))s" "$package_min_ram_msg"
 	fi
 
-	# column 5: minimum OS fimware version supported
+	# column 6: minimum OS fimware version supported
 
-	if [[ $maxcols -ge 5 && -n $package_min_os_msg ]]; then
+	if [[ $maxcols -ge 6 && -n $package_min_os_msg ]]; then
 		printf "%-$((PACKAGE_MIN_OS_COL_WIDTH+$(LenANSIDiff "$package_min_os_msg")))s" "$package_min_os_msg"
 	fi
 
-	# column 6: arch is compatible?
+	# column 7: arch is compatible?
 
-	if [[ $maxcols -ge 6 && -n $package_arch_msg ]]; then
+	if [[ $maxcols -ge 7 && -n $package_arch_msg ]]; then
 		printf "%-$((PACKAGE_ARCH_COL_WIDTH+$(LenANSIDiff "$package_arch_msg")))s" "$package_arch_msg"
 	fi
 
@@ -5255,15 +5321,15 @@ Report.Dependencies:Show()
 
 	Func:Init
 	local package_name=''
-	maxcols=6
+	maxcols=7
 	DisableDebugToArchiveAndFile
 	DisplayWritingReport
 
 		{
 
 		DisplayAsHelpTitle "$(ShowTitleName) will automatically install/start/stop/restart package dependencies as-required."
-		DisplayAsHelpTitle "requirements shown in $(ColourTextBrightOrange '*orange') prevent the package being installed."
-		DisplayAsHelpTitle "those shown in $(ColourTextBrightRed '!red') are preventing the package from working correctly."
+		DisplayAsHelpTitle "requirements shown in \"$(ColourTextBrightOrange '* orange')\" prevent the package being installed."
+		DisplayAsHelpTitle "those shown in \"$(ColourTextBrightRed '! red')\" are preventing the package from working correctly."
 		DisplayAsDepsReportTitleLine
 
 		for package_name in $(QPKGs-SCall:Array); do
