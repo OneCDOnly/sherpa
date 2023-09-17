@@ -14,27 +14,27 @@ readonly USER_ARGS_RAW=$*
 readonly QPKG_NAME=ClamAV
 readonly SERVICE_SCRIPT_VERSION='<?build_date?>'
 
-Init()
+InitBasic()
 	{
-
-	service_script_type=4
-
-	# modify library defaults
 
 	allow_access_to_sys_packages=true
 	backup_pathfile=undefined
-	get_daemon_port_cmd=''
-	get_ui_listening_address_cmd=''
-	get_ui_port_cmd=''
-	get_ui_port_secure_cmd=''
-	get_ui_port_secure_enabled_test_cmd=''
 	install_pip_deps=true
 	pip_cache_path=undefined
+	service_script_type=4
 	qpkg_ini_pathfile=undefined
 	qpkg_repo_path=undefined
 
 	readonly TARGET_SERVICE_PATHFILE=/etc/init.d/antivirus.sh
 	readonly BACKUP_SERVICE_PATHFILE=$TARGET_SERVICE_PATHFILE.bak
+
+	}
+
+InitComplex()
+	{
+
+	:
+
 
 	}
 
