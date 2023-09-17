@@ -8329,7 +8329,7 @@ QPKG.IsCanLog()
 	local -i index=0
 
 	for index in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$index]} = "$${1:-$PACKAGE_NAME}" ]]; then
+		if [[ ${QPKG_NAME[$index]} = "${1:-$PACKAGE_NAME}" ]]; then
 			if ${QPKG_CAN_LOG_SERVICE_OPERATIONS[$index]}; then
 				return 0
 			else
