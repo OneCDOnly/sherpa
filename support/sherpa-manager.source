@@ -2441,7 +2441,7 @@ IPKs:upgrade()
 	total_count=$(IPKs-ACdownload-to:Count)
 
 	if [[ $total_count -gt 0 ]]; then
-		local desc="$total_count IPK module$(Pluralise "$total_count")"
+		local desc="$total_count complementary IPK module$(Pluralise "$total_count")"
 		local log_pathfile=$LOGS_PATH/ipks.$UPGRADE_LOG_FILE
 		ShowAsProc "upgrading $desc"
 
@@ -2574,7 +2574,7 @@ IPKs:downgrade()
 	total_count=$(IPKs-ACdowngrade-to:Count)
 
 	if [[ $total_count -gt 0 ]]; then
-		package_type='IPK module'
+		package_type='complementary IPK module'
 		desc="$total_count ${package_type}$(Pluralise "$total_count")"
 		log_pathfile=$LOGS_PATH/ipks.$DOWNLOAD_LOG_FILE
 		ShowAsProc "downloading $desc"
@@ -2597,7 +2597,7 @@ IPKs:downgrade()
 			url_suffix+=.ipk
 
 			for package_name in $(IPKs-ACdowngrade-to:Array); do
-				ShowAsPercentProgress '' "$package_type" "$ok_count" 0 0 "$total_count" downloading ''
+				ShowAsPercentProgress "downloading $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 0 "$total_count"
 				((ok_count++))
 
 				remote_url="${url_prefix}${package_name}${url_suffix}"
@@ -2606,17 +2606,17 @@ IPKs:downgrade()
 
 			done
 
-			ShowAsPercentProgress '' "$package_type" "$ok_count" 0 0 "$total_count" downloading ''
+			ShowAsPercentProgress "downloading $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 "$fail_count" "$total_count"
 		fi
 
 		total_count=1
 		ok_count=0
 		fail_count=0
-		package_type='IPK group'
+		package_type='complementary IPK group'
 		desc="$total_count ${package_type}$(Pluralise "$total_count")"
 		log_pathfile=$LOGS_PATH/ipks.$DOWNGRADE_LOG_FILE
 		ShowAsProc "downgrading $desc"
-		ShowAsPercentProgress '' "$package_type" "$ok_count" 0 "$fail_count" "$total_count" downgrading ''
+		ShowAsPercentProgress "downgrading $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 "$fail_count" "$total_count"
 		RunAndLog "$OPKG_CMD install --force-downgrade --cache $IPK_CACHE_PATH --tmp-dir $IPK_DOWNGRADE_DL_PATH $IPK_DOWNGRADE_DL_PATH/*.ipk" "$log_pathfile" log:failure-only
 		result_code=$?
 
@@ -2631,7 +2631,7 @@ IPKs:downgrade()
 			SaveActionResultToLog IPK "$desc" downgrade failed "$result_code"
 		fi
 
-		ShowAsPercentProgress '' "$package_type" "$ok_count" 0 "$fail_count" "$total_count" downgrading ''
+		ShowAsPercentProgress "downgrading $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 "$fail_count" "$total_count"
 	fi
 
 	Func:Exit $result_code
@@ -2652,7 +2652,7 @@ PIPs:install()
 	local -i ok_count=0
 	local -i fail_count=0
 	local -i result_code=0
-	local package_type='PyPI group'
+	local package_type='complementary PyPI group'
 
 	if [[ $opts_check = true ]] || IPKs-ACinstall-ok.Exist python3-pip; then
 		((total_count++))
@@ -2661,7 +2661,7 @@ PIPs:install()
 		local desc='complementary PyPI modules'
 		local log_pathfile=$LOGS_PATH/pypi.$INSTALL_LOG_FILE
 
-		ShowAsPercentProgress '' "$package_type" "$ok_count" 0 "$fail_count" "$total_count" installing ''
+		ShowAsPercentProgress "installing $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 0 "$total_count"
 		RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
 		result_code=$?
 
@@ -2674,7 +2674,7 @@ PIPs:install()
 			SaveActionResultToLog PIP "$desc" install failed "$result_code"
 		fi
 
-		ShowAsPercentProgress '' "$package_type" "$ok_count" 0 "$fail_count" "$total_count" installing ''
+		ShowAsPercentProgress "installing $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 "$fail_count" "$total_count"
 	fi
 
 	Func:Exit $result_code
@@ -5443,8 +5443,9 @@ Report.Dependencies:Show()
 
 	Func:Init
 	local package_name=''
+	local -i element=0
+	local -i total=$(QPKGs-SCall:Count)
 	CalcMaxDepsReportCols
-	DisplayWritingReport
 
 		{
 
@@ -5454,6 +5455,8 @@ Report.Dependencies:Show()
 		DisplayAsDepsReportTitleLine
 
 		for package_name in $(QPKGs-SCall:Array); do
+			((element++))
+			ShowAsPercentProgress 'writing report' '' "$element" 0 0 "$total"
 			DisplayAsDepsReportLine "$package_name"
 		done
 
@@ -5516,14 +5519,17 @@ Report.Repos:Show()
 	Func:Init
 	local package_name=''
 	maxcols=3
+	local -i element=0
+	local -i total=$(QPKGs-SCall:Count)
 	DisableDebugToArchiveAndFile
-	DisplayWritingReport
 
 		{
 
 		DisplayAsReposReportTitleLine
 
 		for package_name in $(QPKGs-SCall:Array); do
+			((element++))
+			ShowAsPercentProgress 'writing report' '' "$element" 0 0 "$total"
 			DisplayAsReposReportLine "$package_name"
 		done
 
@@ -5549,14 +5555,17 @@ Report.Statuses:Show()
 
 	Func:Init
 	local package_name=''
+	local -i element=0
+	local -i total=$(QPKGs-SCall:Count)
 	CalcMaxStatusReportCols
-	DisplayWritingReport
 
 		{
 
 		DisplayAsStatusReportTitleLine
 
 		for package_name in $(QPKGs-SCall:Array); do
+			((element++))
+			ShowAsPercentProgress 'writing report' '' "$element" 0 0 "$total"
 			QPKGs-ACstatus-dn.Exist "$package_name" && DisplayAsStatusReportLine "$package_name"
 		done
 
@@ -9444,32 +9453,25 @@ ShowAsPercentProgress()
 	# Show single action package progress as percent-complete and a fraction of the total.
 
 	# input:
-	#	$1 = tier (optional)
-	#	$2 = package type		"qpkg", "ipk", "pip"
+	#	$1 = verb (present) (optional)
+	#	$2 = expected action duration: `long` (optional)
 	#	$3 = ok count
 	#	$4 = skip count
 	#	$5 = fail count
 	#	$6 = total count
-	#	$7 = verb (present)
-	#	$8 = expected action duration: `long` (optional)
 
-	local tier=''
-	local -r PACKAGE_TYPE="${2:?${FUNCNAME[0]}'()': undefined}"
+	local -r ACTION_PRESENT_MSG="${1:-}"
+	local -r DURATION=${2:-}
 	declare -i -r OK_COUNT=${3:-0}
 	declare -i -r SKIP_COUNT=${4:-0}
 	declare -i -r FAIL_COUNT=${5:-0}
 	declare -i -r TOTAL_COUNT=${6:-0}
-	local -r ACTION_PRESENT_MSG="${7:?${FUNCNAME[0]}'()': undefined}"
-	local -r DURATION=${8:-}
-	local progress_msg=''
-
-	[[ -n $1 && $1 != all ]] && tier=" $(Lowercase "$1")"
-	progress_msg="$(PercFrac "$OK_COUNT" "$SKIP_COUNT" "$FAIL_COUNT" "$TOTAL_COUNT")"
+	local -r PROGRESS_MSG="$(PercFrac "$OK_COUNT" "$SKIP_COUNT" "$FAIL_COUNT" "$TOTAL_COUNT")"
 
 	if [[ $DURATION != long ]]; then
-		ShowAsProc "$ACTION_PRESENT_MSG ${TOTAL_COUNT}${tier} ${PACKAGE_TYPE}$(Pluralise "$TOTAL_COUNT")" "$progress_msg"
+		ShowAsProc "$ACTION_PRESENT_MSG" "$PROGRESS_MSG"
 	else
-		ShowAsProcLong "$ACTION_PRESENT_MSG ${TOTAL_COUNT}${tier} ${PACKAGE_TYPE}$(Pluralise "$TOTAL_COUNT")" "$progress_msg"
+		ShowAsProcLong "$ACTION_PRESENT_MSG" "$PROGRESS_MSG"
 	fi
 
 	[[ $((OK_COUNT+SKIP_COUNT+FAIL_COUNT)) -ge $TOTAL_COUNT ]] && sleep 1
