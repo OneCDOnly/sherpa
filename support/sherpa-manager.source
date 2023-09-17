@@ -4793,19 +4793,50 @@ UpdateForkProgress()
 QPKGs.Missing:Show()
 	{
 
-	local package=''
+	# Check installed QPKGs and check if they're missing. If so, advise on-screen.
+
+	# output:
+	#	$? = 0 if no packages are missing
+	#	$? = 1 if one-or-more packages are missing
+
+	local -a packages=()
+	local -i index=0
+	local names_formatted=''
+	local msg=''
+	local name_limit=3
 
 	[[ $hide_title = false ]] || return
-	[[ $(QPKGs-ISmissing:Count) -eq 0 ]] && return 1
 
-	EraseThisLine
-	WriteEmptyLineIfNoneExists
+	if [[ $(QPKGs-ISmissing:Count) -eq 0 ]]; then
+		return 0
+	else
+		packages+=($(QPKGs-ISmissing:Array))
+	fi
 
-	for package in $(QPKGs-ISmissing:Array); do
-		ShowAsFail "the $(ColourTextBrightOrange "$package") QPKG is missing or broken. Please reinstall it."
+	# shellcheck disable=2322
+	for ((index=0; index<=((${#packages[@]}-1)); index++)); do
+		names_formatted+=$(ColourTextBrightRed "${packages[$index]}")
+
+		if [[ $((index+1)) -ge $name_limit && $((${#packages[@]}-name_limit)) -gt 0 ]]; then
+			names_formatted+=" & $(ColourTextBrightRed "$((${#packages[@]}-name_limit))") other$(Pluralise "$((${#packages[@]}-name_limit))")"
+			break
+		elif [[ $((index+2)) -lt ${#packages[@]} ]]; then
+			names_formatted+=', '
+		elif [[ $((index+2)) -eq ${#packages[@]} ]]; then
+			names_formatted+=' & '
+		fi
 	done
 
-	return 0
+	if [[ ${#packages[@]} -eq 1 ]]; then
+		premsg='QPKG is'
+		sufmsg='Please reinstall it'
+	else
+		premsg='QPKGs are'
+		sufmsg='Please reinstall them'
+	fi
+
+	ShowAsInfo "the $names_formatted $premsg missing or broken. $sufmsg."
+	return 1
 
 	}
 
@@ -4818,7 +4849,7 @@ QPKGs.NewVers:Show()
 	#	$? = 0 if all packages are up-to-date
 	#	$? = 1 if one-or-more packages can be upgraded
 
-	local -a upgradable_packages=()
+	local -a packages=()
 	local -i index=0
 	local names_formatted=''
 	local msg=''
@@ -4829,24 +4860,24 @@ QPKGs.NewVers:Show()
 	if [[ $(QPKGs-SCupgradable:Count) -eq 0 ]]; then
 		return 0
 	else
-		upgradable_packages+=($(QPKGs-SCupgradable:Array))
+		packages+=($(QPKGs-SCupgradable:Array))
 	fi
 
 	# shellcheck disable=2322
-	for ((index=0; index<=((${#upgradable_packages[@]}-1)); index++)); do
-		names_formatted+=$(ColourTextBrightOrange "${upgradable_packages[$index]}")
+	for ((index=0; index<=((${#packages[@]}-1)); index++)); do
+		names_formatted+=$(ColourTextBrightOrange "${packages[$index]}")
 
-		if [[ $((index+1)) -ge $name_limit && $((${#upgradable_packages[@]}-name_limit)) -gt 0 ]]; then
-			names_formatted+=" & $(ColourTextBrightOrange "$((${#upgradable_packages[@]}-name_limit))") other$(Pluralise "$((${#upgradable_packages[@]}-name_limit))")"
+		if [[ $((index+1)) -ge $name_limit && $((${#packages[@]}-name_limit)) -gt 0 ]]; then
+			names_formatted+=" & $(ColourTextBrightOrange "$((${#packages[@]}-name_limit))") other$(Pluralise "$((${#packages[@]}-name_limit))")"
 			break
-		elif [[ $((index+2)) -lt ${#upgradable_packages[@]} ]]; then
+		elif [[ $((index+2)) -lt ${#packages[@]} ]]; then
 			names_formatted+=', '
-		elif [[ $((index+2)) -eq ${#upgradable_packages[@]} ]]; then
+		elif [[ $((index+2)) -eq ${#packages[@]} ]]; then
 			names_formatted+=' & '
 		fi
 	done
 
-	if [[ ${#upgradable_packages[@]} -eq 1 ]]; then
+	if [[ ${#packages[@]} -eq 1 ]]; then
 		msg='a new QPKG is'
 	else
 		msg='new QPKGs are'
@@ -9197,10 +9228,11 @@ ShowAsInfo()
 	# Note to user.
 
 	[[ -n ${1:-} ]] || return
+	local capitalised="$(Capitalise "$1")"
 
 	EraseThisLine
-	WriteToDisplay "$(ColourTextBrightYellow note)" "$1"
-	WriteToLog note "$1"
+	WriteToDisplay "$(ColourTextBrightYellow note)" "$capitalised"
+	WriteToLog note "$capitalised"
 
 	} >&2
 
