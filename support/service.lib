@@ -367,12 +367,14 @@ return 0
 }
 MakePaths()
 {
+if [[ -d $QPKG_PATH ]]; then
 DisplayWaitCommitToLog 'create paths:'
 [[ ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
 IsGitApp && [[ ! -d $qpkg_repo_path ]] && mkdir -p "$qpkg_repo_path"
 IsUsePipCache && [[ ! -d $pip_cache_path ]] && mkdir -p "$pip_cache_path"
 IsVirtualEnvironmentUsed && [[ ! -d $venv_path ]] && mkdir -p "$venv_path"
 DisplayCommitToLog OK
+fi
 }
 LoadPorts()
 {
