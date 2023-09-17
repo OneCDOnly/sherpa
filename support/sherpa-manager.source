@@ -2312,6 +2312,7 @@ CalcIpkDepsToInstall()
 
 	# Remove duplicate entries.
 	req_list=$(DeDupeWords "$(IPKs-ACinstall-to:List)")
+	dep_acc=($req_list)
 	this_list=($req_list)
 	requested_count=$($WC_CMD -w <<< "$req_list")
 
@@ -2339,6 +2340,7 @@ CalcIpkDepsToInstall()
 			break
 		else
 			dep_acc+=(${this_list[*]})
+			dep_acc=($(DeDupeWords "${dep_acc[*]}"))
 		fi
 	done
 
@@ -2352,7 +2354,7 @@ CalcIpkDepsToInstall()
 	fi
 
 	# Exclude already installed IPKs.
-	pre_exclude_list=$(DeDupeWords "$req_list ${dep_acc[*]}")
+	pre_exclude_list="${dep_acc[*]}"
 	pre_exclude_count=$($WC_CMD -w <<< "$pre_exclude_list")
 
 	if [[ $pre_exclude_count -gt 0 ]]; then
