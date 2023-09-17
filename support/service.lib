@@ -21,7 +21,7 @@
 #*   This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 #*	 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
-readonly SERVICE_LIB_VERSION='230917'
+readonly SERVICE_LIB_VERSION='230918'
 InitLibrary()
 {
 IsQNAP || exit
@@ -456,7 +456,8 @@ if [[ $active_branch != "$source_git_branch" ]]; then
 branch_switch=true
 DisplayCommitToLog "active git branch: '$active_branch', new git branch: '$source_git_branch'"
 [[ $QPKG_NAME = nzbToMedia ]] && BackupConfig
-DisplayRunAndLog 'new git branch has been specified, so clean local repository' "cd /tmp; rm -r $qpkg_repo_path" log:failure-only
+DisplayCommitToLog 'new git branch has been specified, so must clean local repository'
+CleanLocalClone
 fi
 fi
 if [[ ! -d $qpkg_repo_path/.git ]]; then
