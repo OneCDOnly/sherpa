@@ -607,7 +607,8 @@ PullGitRepo()
 			branch_switch=true
 			DisplayCommitToLog "active git branch: '$active_branch', new git branch: '$source_git_branch'"
 			[[ $QPKG_NAME = nzbToMedia ]] && BackupConfig
-			DisplayRunAndLog 'new git branch has been specified, so clean local repository' "cd /tmp; rm -r $qpkg_repo_path" log:failure-only
+			DisplayCommitToLog 'new git branch has been specified, so must clean local repository'
+			CleanLocalClone
 		fi
 	fi
 
