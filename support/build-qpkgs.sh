@@ -11,6 +11,9 @@ fi
 
 . ./vars.source
 
+cdn_sherpa_url="$cdn_onecd_url/sherpa/${1:-$unstable_branch}"
+cdn_sherpa_packages_url="$cdn_sherpa_url/QPKGs/<?package_name?>/build"
+
 source_pathfile="$source_path/$service_library_source_file"
 target_pathfile="$source_path/$service_library_file"
 datetime_change_reference_pathfile="$target_pathfile"
