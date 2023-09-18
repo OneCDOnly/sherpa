@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #* don't edit this file, it was built/modified programmatically with the `build-qpkgs.sh` script. (source: sherpa-loader.source)
 #* sherpa-loader.sh
-#*	 Copyright (C) 2017-2023 OneCD - one.cd.only@gmail.com
+#* Copyright (C) 2017-2023 OneCD - one.cd.only@gmail.com
 #*   So, blame OneCD if it all goes horribly wrong. ;)
 #* Description:
 #*	 This is the loader script for the sherpa mini-package-manager and is part of the `sherpa` QPKG.
@@ -23,7 +23,7 @@
 readonly USER_ARGS_RAW=$*
 Init()
 {
-export LOADER_SCRIPT_VER="230910"
+export LOADER_SCRIPT_VER='230917'
 export LOADER_SCRIPT_PPID=$PPID
 readonly CHARS_REGULAR_PROMPT='$ '
 readonly CHARS_SUPER_PROMPT='# '
@@ -33,7 +33,7 @@ IsSU || return
 local -r WORK_PATH=$(/sbin/getcfg sherpa Install_Path -f /etc/config/qpkg.conf)/cache
 local -r MANAGER_FILE='sherpa-manager.sh'
 local -r MANAGER_ARCHIVE_FILE=${MANAGER_FILE%.*}.tar.gz
-readonly MANAGER_ARCHIVE_URL='https://raw.githubusercontent.com/OneCDOnly/sherpa/stable'/$MANAGER_ARCHIVE_FILE
+readonly MANAGER_ARCHIVE_URL='https://raw.githubusercontent.com/OneCDOnly/sherpa/unstable'/$MANAGER_ARCHIVE_FILE
 readonly MANAGER_ARCHIVE_PATHFILE=$WORK_PATH/$MANAGER_ARCHIVE_FILE
 readonly MANAGER_PATHFILE=$WORK_PATH/$MANAGER_FILE
 local -r NAS_FIRMWARE=$(/sbin/getcfg System Version -f /etc/config/uLinux.conf)

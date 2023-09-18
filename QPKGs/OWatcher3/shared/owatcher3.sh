@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #* don't edit this file, it was built/modified programmatically with the `build-qpkgs.sh` script. (source: owatcher3.source)
 #* owatcher3.sh
-#*	 Copyright (C) 2017-2023 OneCD - one.cd.only@gmail.com
+#* Copyright (C) 2017-2023 OneCD - one.cd.only@gmail.com
 #*   So, blame OneCD if it all goes horribly wrong. ;)
 #* Project:
 #*	 https://git.io/sherpa
@@ -20,7 +20,7 @@
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 readonly USER_ARGS_RAW=$*
 readonly QPKG_NAME=OWatcher3
-readonly SERVICE_SCRIPT_VERSION='230910'
+readonly SERVICE_SCRIPT_VERSION='230918'
 InitBasic()
 {
 service_script_type=1
@@ -30,16 +30,14 @@ InitComplex()
 {
 app_version_pathfile=$qpkg_repo_path/sabnzbd/version.py
 daemon_pathfile=$qpkg_repo_path/watcher.py
-daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile --daemon --userdata $(/usr/bin/dirname "$qpkg_ini_pathfile") --conf $qpkg_ini_pathfile --pid $DAEMON_PID_PATHFILE"
+daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile --daemon --userdata $(/usr/bin/dirname "$qpkg_ini_pathfile") --conf $qpkg_ini_pathfile --pid $daemon_pid_pathfile"
 get_ui_listening_address_cmd="/opt/bin/jq -r .Server.serverhost < $qpkg_ini_pathfile"
 get_ui_port_cmd="/opt/bin/jq -r .Server.serverport < $qpkg_ini_pathfile"
 get_ui_port_secure_cmd="/opt/bin/jq -r .Server.serverport < $qpkg_ini_pathfile"
 get_ui_port_secure_enabled_test_cmd=''
 source_git_branch=master
 }
-LoadLib()
-{
-local library_path="$(/usr/bin/readlink "$0" 2>/dev/null)"
+library_path="$(/usr/bin/readlink "$0" 2>/dev/null)"
 [[ -z $library_path ]] && library_path="$0"
 readonly SERVICE_LIBRARY_PATHFILE="$(/usr/bin/dirname "$library_path")"/service.lib
 if [[ -e $SERVICE_LIBRARY_PATHFILE ]]; then
@@ -48,6 +46,4 @@ else
 printf '\033[1;31m%s\033[0m: %s\n' 'derp' "QPKG service function library not found, can't continue."
 exit 1
 fi
-}
-LoadLib
 ProcessArgs

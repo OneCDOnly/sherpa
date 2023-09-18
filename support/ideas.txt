@@ -3,8 +3,6 @@
 
 * compare .git/ORIG_HEAD before-and-after 'git pull'. If different, then remove *.pyc before starting application.
 
-* ensure all IPKs are reinstalled after reinstalling Entware, not just the ones required to support sherpa QPKGs.
-
 * add Gitea as new package?
 	https://docs.gitea.com/installation/install-from-binary
 
@@ -43,6 +41,3 @@
 
 * include new integrated help screens for all actions?
 	like: `sherpa paste help`, `sherpa install help`, `sherpa reassign help`
-
-* add checks to all service scripts to examine $EUID?
-    find a way to run each service script without superuser access?

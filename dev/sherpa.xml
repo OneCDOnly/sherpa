@@ -2,7 +2,7 @@
 <plugins>
   <cachechk>202309031343</cachechk>
   <item>
-    <name>iPerf3</name>
+    <name>SortMyQPKGs</name>
     <changeLog>https://www.myqnap.org/?post_type=product&amp;p=155</changeLog>
     <type>Utilities</type>
     <icon80>https://www.myqnap.org/wp-content/uploads/iperf_logo-80x80.gif</icon80>

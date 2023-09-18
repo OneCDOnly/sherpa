@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-#* <?dontedit?>
+#* <?dont_edit?>
 #
-#* sherpa-service.sh
-#*	 <?copyright?>
+#* <?filename?>
+#
+#* <?copyright?>
 #
 #* Description:
 #*	 This is the service script for the sherpa mini-package-manager and is part of the `sherpa` QPKG.

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #* don't edit this file, it was built/modified programmatically with the `build-qpkgs.sh` script. (source: headphones.source)
 #* headphones.sh
-#*	 Copyright (C) 2017-2023 OneCD - one.cd.only@gmail.com
+#* Copyright (C) 2017-2023 OneCD - one.cd.only@gmail.com
 #*   So, blame OneCD if it all goes horribly wrong. ;)
 #* Project:
 #*	 https://git.io/sherpa
@@ -20,7 +20,7 @@
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 readonly USER_ARGS_RAW=$*
 readonly QPKG_NAME=Headphones
-readonly SERVICE_SCRIPT_VERSION='230910'
+readonly SERVICE_SCRIPT_VERSION='230918'
 InitBasic()
 {
 service_script_type=1
@@ -29,16 +29,14 @@ source_git_url=https://github.com/rembo10/headphones.git
 InitComplex()
 {
 daemon_pathfile=$qpkg_repo_path/Headphones.py
-daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile --daemon --nolaunch --datadir $(/usr/bin/dirname "$qpkg_ini_pathfile") --config $qpkg_ini_pathfile --pidfile $DAEMON_PID_PATHFILE"
+daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile --daemon --nolaunch --datadir $(/usr/bin/dirname "$qpkg_ini_pathfile") --config $qpkg_ini_pathfile --pidfile $daemon_pid_pathfile"
 get_ui_listening_address_cmd="/sbin/getcfg General web_host -d undefined -f $qpkg_ini_pathfile"
 get_ui_port_cmd="/sbin/getcfg General web_port -d 0 -f $qpkg_ini_pathfile"
 get_ui_port_secure_cmd="/sbin/getcfg General web_port -d 0 -f $qpkg_ini_pathfile"
 get_ui_port_secure_enabled_test_cmd='[[ $(/sbin/getcfg General enable_https -d 0 -f '$qpkg_ini_pathfile') = 1 ]]'
 source_git_branch=develop
 }
-LoadLib()
-{
-local library_path="$(/usr/bin/readlink "$0" 2>/dev/null)"
+library_path="$(/usr/bin/readlink "$0" 2>/dev/null)"
 [[ -z $library_path ]] && library_path="$0"
 readonly SERVICE_LIBRARY_PATHFILE="$(/usr/bin/dirname "$library_path")"/service.lib
 if [[ -e $SERVICE_LIBRARY_PATHFILE ]]; then
@@ -47,6 +45,4 @@ else
 printf '\033[1;31m%s\033[0m: %s\n' 'derp' "QPKG service function library not found, can't continue."
 exit 1
 fi
-}
-LoadLib
 ProcessArgs
