@@ -5900,22 +5900,6 @@ NoteIpkAcAsOk()
 
 	}
 
-NoteIpkAcAsSk()
-	{
-
-	# Move specified IPK package name from `to` action array into associated `sk` array.
-
-	# input:
-	#   $1 = package name
-	#   $2 = action
-
-	IPKs-AC"$2"-to:Remove "$1"
-	IPKs-AC"$2"-sk:Add "$1"
-
-	return 0
-
-	}
-
 NoteIpkAcAsEr()
 	{
 
@@ -8865,17 +8849,6 @@ ShowAsCommand()
 	{
 
 	echo "${CHARS_RESULTS}command: '${1:?${FUNCNAME[0]}'()': undefined}'"
-
-	}
-
-ShowAsResult()
-	{
-
-	[[ -n ${1:-} ]] || return
-	local prefix="$CHARS_RESULTS"
-	[[ ${1:-0} -ne 0 ]] && prefix="$CHARS_ALERT"
-
-	echo "${prefix}result_code: $(ShowAsExitcode "$1")"
 
 	}
 

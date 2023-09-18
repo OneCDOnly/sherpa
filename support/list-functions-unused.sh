@@ -16,7 +16,7 @@ for target_func in $(grep '()$' "$source_pathfile" | grep -v '=\|\$\|_(' | sed '
 		IPKs:upgrade|IPKs:install|IPKs:downgrade|PIPs:install)		# called by constructing the function name with vars.
 			continue
 			;;
-		QPKGs.Actions:ListAll|QPKG.GetAppAuthor)	# unused for-now.
+		QPKGs.Actions:ListAll|QPKGs.ScAll:Show|QPKG.GetAppAuthor)	# unused for-now.
 			continue
 	esac
 
