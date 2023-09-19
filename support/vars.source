@@ -253,13 +253,13 @@ email=one.cd.only@gmail.com
 
 # remember to escape ampersand chars in `read` blocks for compatibility with `sed` regex.
 
-read -r -d '' copyright_msg << EOB
+read -rd '' copyright_msg << EOB
 Copyright (C) 2017-<?build_year?> OneCD - <?email?>
 #
 #*   So, blame OneCD if it all goes horribly wrong. ;)
 EOB
 
-read -r -d '' project_msg << EOB
+read -rd '' project_msg << EOB
 Project:
 #*	 https://git.io/sherpa
 #
@@ -267,7 +267,7 @@ Project:
 #*	 https://forum.qnap.com/viewtopic.php?f=320\&t=132373
 EOB
 
-read -r -d '' tested_msg << EOB
+read -rd '' tested_msg << EOB
 Tested on:
 #*	 GNU bash, version 3.2.57(2)-release (i686-pc-linux-gnu)
 #*	 GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
@@ -278,7 +278,7 @@ Tested on:
 #*	   Copyright (C) 2019 Free Software Foundation, Inc.
 EOB
 
-read -r -d '' license_msg << EOB
+read -rd '' license_msg << EOB
 License:
 #*   This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 #
