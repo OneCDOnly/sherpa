@@ -527,8 +527,8 @@ Env:Load()
 			readonly OBJECTS_PATHFILE=$CACHE_PATH/objects
 			readonly PACKAGES_ARCHIVE_PATHFILE=$CACHE_PATH/packages.tar.gz
 			readonly PACKAGES_PATHFILE=$CACHE_PATH/packages
-			readonly PREV_IPK_LIST=$CACHE_PATH/ipk.prev.list
-			readonly PREV_PIP_LIST=$CACHE_PATH/pip.prev.list
+			readonly PREV_IPK_LIST=$CACHE_PATH/ipk.list.save
+			readonly PREV_PIP_LIST=$CACHE_PATH/pip.list.save
 			readonly QPKG_DL_PATH=$CACHE_PATH/QPKGs.downloads
 		readonly LOGS_PATH=$THIS_PACKAGE_PATH/logs
 			readonly RAMDISKS_FREESPACE_PATHFILE=$LOGS_PATH/ramdisks.freespace
