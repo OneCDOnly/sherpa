@@ -90,15 +90,6 @@ Self:Init()
 	fi
 
 	QPKGs.Warnings:Check
-
-	# KLUDGE: remove all max QTS versions from /etc/config/qpkg.conf (these are not removed automatically when installing updated QPKGs without max version set).
-	# Retain this kludge for 12 months to give everyone time to update their installed sherpa QPKGs. Remove after 2023-09-22.
-
-	if [[ $(/sbin/getcfg sherpa max_versions_cleared -d FALSE -f /etc/config/qpkg.conf) = FALSE ]]; then
-		$SED_CMD -i '/^FW_Ver_Max/d' /etc/config/qpkg.conf
-		/sbin/setcfg sherpa max_versions_cleared TRUE -f /etc/config/qpkg.conf
-	fi
-
 	ArgSuggestions:Show
 	Debug.Log:Env
 	Self.Tasks:Check
