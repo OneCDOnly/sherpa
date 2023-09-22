@@ -8,16 +8,16 @@ fi
 . ./vars.source
 
 target_branch=${1:-$unstable_branch}
-cdn_sherpa_url="$cdn_onecd_url/sherpa/$target_branch"
+cdn_sherpa_url=$cdn_onecd_url/sherpa/$target_branch
 cdn_sherpa_packages_url="$cdn_sherpa_url/QPKGs/<?package_name?>/build"
 
-source_pathfile="$source_path/$packages_source_file"
-target_pathfile="$source_path/$packages_file"
+source_pathfile=$source_path/$packages_source_file
+target_pathfile=$source_path/$packages_file
 
 buffer=$(<"$source_pathfile")
 
-highest_package_versions_found_pathfile="$source_path"/highest_package_versions_found.raw
-highest_package_versions_found_sorted_pathfile="$source_path"/highest_package_versions_found.tbl
+highest_package_versions_found_pathfile=$source_path/highest_package_versions_found.raw
+highest_package_versions_found_sorted_pathfile=$source_path/highest_package_versions_found.tbl
 
 checksum_pathfilename=''
 checksum_filename=''
@@ -75,7 +75,7 @@ echo -n 'extracting highest QPKG version numbers ... '
 
 while read -r checksum_pathfilename; do
 	checksum_filename=$(basename "$checksum_pathfilename")
-	qpkg_filename="${checksum_filename//.md5/}"
+	qpkg_filename=${checksum_filename//.md5/}
 
 	IFS='_' read -r package_name version arch tailend <<< "${checksum_filename//.qpkg.md5/}"
 

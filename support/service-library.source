@@ -698,9 +698,9 @@ FindAndWritePIDFile()
 
 	if [[ $daemon_proc_is_name_only = true ]]; then
 		# QTS `pidof` is unreliable and should be used as a last resort only
-		target_pid="$(/bin/pidof -s "$(/usr/bin/basename "$daemon_pathfile")")"
+		target_pid=$(/bin/pidof -s "$(/usr/bin/basename "$daemon_pathfile")")
 	else
-		target_pid="$(/bin/ps | /bin/grep "$(GetLaunchTarget)" | /bin/grep -v grep)"
+		target_pid=$(/bin/ps | /bin/grep "$(GetLaunchTarget)" | /bin/grep -v grep)
 		target_pid=${target_pid:0:5}
 		target_pid=$(/bin/tr -d ' ' <<< "$target_pid")
 	fi
@@ -786,7 +786,7 @@ WaitForDaemon()
 		if [[ $daemon_proc_is_name_only = true ]]; then
 			target_proc=$(/usr/bin/basename "$daemon_pathfile")
 		else
-			target_proc="$(GetLaunchTarget)"
+			target_proc=$(GetLaunchTarget)
 		fi
 
 		(
@@ -1502,7 +1502,7 @@ IsDaemonActive()
 	if [[ $daemon_proc_is_name_only = true ]]; then
 		target_proc=$(/usr/bin/basename "$(GetLaunchTarget)")
 	else
-		target_proc="$(GetLaunchTarget)"
+		target_proc=$(GetLaunchTarget)
 	fi
 
 	if IsProcessActive "$target_proc" "$daemon_pid_pathfile"; then
@@ -1666,7 +1666,7 @@ IsPortResponds()
 	if [[ $daemon_proc_is_name_only = true ]]; then
 		target_proc=$(/usr/bin/basename "$daemon_pathfile")
 	else
-		target_proc="$(GetLaunchTarget)"
+		target_proc=$(GetLaunchTarget)
 	fi
 
 	while true; do
@@ -1737,7 +1737,7 @@ IsPortSecureResponds()
 	if [[ $daemon_proc_is_name_only = true ]]; then
 		target_proc=$(/usr/bin/basename "$daemon_pathfile")
 	else
-		target_proc="$(GetLaunchTarget)"
+		target_proc=$(GetLaunchTarget)
 	fi
 
 	while true; do
@@ -1833,7 +1833,7 @@ IsNotVirtualEnvironmentExist()
 SetServiceAction()
 	{
 
-	service_operation="${1:-unspecified}"
+	service_operation=${1:-unspecified}
 	CommitServiceStatus "$service_operation"
 	DisplayAndCommitActionToLog
 
@@ -2015,7 +2015,7 @@ ShowAsError()
 
 	# fatal error
 
-	local capitalised="$(Capitalise "${1:-}")"
+	local capitalised=$(Capitalise "${1:-}")
 
 	Display "$(ColourTextBrightRed derp): $capitalised"
 
