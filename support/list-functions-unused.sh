@@ -7,7 +7,7 @@ fi
 
 . ./vars.source
 
-source_pathfile="$source_path/$management_source_file"
+source_pathfile=$source_path/$management_source_file
 target_func=''
 
 # shellcheck disable=SC2013

@@ -21,7 +21,7 @@
 #*   This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 #*	 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
-readonly SERVICE_LIB_VERSION='230918'
+readonly SERVICE_LIB_VERSION='230922'
 InitLibrary()
 {
 IsQNAP || exit
@@ -519,9 +519,9 @@ FindAndWritePIDFile()
 {
 local target_pid=''
 if [[ $daemon_proc_is_name_only = true ]]; then
-target_pid="$(/bin/pidof -s "$(/usr/bin/basename "$daemon_pathfile")")"
+target_pid=$(/bin/pidof -s "$(/usr/bin/basename "$daemon_pathfile")")
 else
-target_pid="$(/bin/ps | /bin/grep "$(GetLaunchTarget)" | /bin/grep -v grep)"
+target_pid=$(/bin/ps | /bin/grep "$(GetLaunchTarget)" | /bin/grep -v grep)
 target_pid=${target_pid:0:5}
 target_pid=$(/bin/tr -d ' ' <<< "$target_pid")
 fi
@@ -579,7 +579,7 @@ local target_proc=''
 if [[ $daemon_proc_is_name_only = true ]]; then
 target_proc=$(/usr/bin/basename "$daemon_pathfile")
 else
-target_proc="$(GetLaunchTarget)"
+target_proc=$(GetLaunchTarget)
 fi
 (
 for ((count=1; count<=MAX_SECONDS; count++)); do
@@ -1001,7 +1001,7 @@ local target_proc=''
 if [[ $daemon_proc_is_name_only = true ]]; then
 target_proc=$(/usr/bin/basename "$(GetLaunchTarget)")
 else
-target_proc="$(GetLaunchTarget)"
+target_proc=$(GetLaunchTarget)
 fi
 if IsProcessActive "$target_proc" "$daemon_pid_pathfile"; then
 DisplayCommitToLog true
@@ -1086,7 +1086,7 @@ local target_proc=''
 if [[ $daemon_proc_is_name_only = true ]]; then
 target_proc=$(/usr/bin/basename "$daemon_pathfile")
 else
-target_proc="$(GetLaunchTarget)"
+target_proc=$(GetLaunchTarget)
 fi
 while true; do
 if ! IsProcessActive "$target_proc" "$daemon_pid_pathfile"; then
@@ -1136,7 +1136,7 @@ local target_proc=''
 if [[ $daemon_proc_is_name_only = true ]]; then
 target_proc=$(/usr/bin/basename "$daemon_pathfile")
 else
-target_proc="$(GetLaunchTarget)"
+target_proc=$(GetLaunchTarget)
 fi
 while true; do
 if ! IsProcessActive "$target_proc" "$daemon_pid_pathfile"; then
@@ -1199,7 +1199,7 @@ IsNotVirtualEnvironmentExist()
 }
 SetServiceAction()
 {
-service_operation="${1:-unspecified}"
+service_operation=${1:-unspecified}
 CommitServiceStatus "$service_operation"
 DisplayAndCommitActionToLog
 }
@@ -1305,7 +1305,7 @@ IsUnsupported()
 }
 ShowAsError()
 {
-local capitalised="$(Capitalise "${1:-}")"
+local capitalised=$(Capitalise "${1:-}")
 Display "$(ColourTextBrightRed derp): $capitalised"
 } >&2
 DisplayErrCommitAllLogs()

@@ -2415,8 +2415,10 @@ IPKs:upgrade()
 	Self.Error.IsNt || return
 
 	Func:Init
-	local -i total_count=0
+	local desc=''
+	local log_pathfile=$LOGS_PATH/ipks.$UPGRADE_LOG_FILE
 	local -i result_code=0
+	local -i total_count=0
 	IPKs-ACupgrade-to:Init
 	IPKs-ACdownload-to:Init
 
@@ -2432,8 +2434,7 @@ IPKs:upgrade()
 	total_count=$(IPKs-ACdownload-to:Count)
 
 	if [[ $total_count -gt 0 ]]; then
-		local desc="$total_count complementary IPK module$(Pluralise "$total_count")"
-		local log_pathfile=$LOGS_PATH/ipks.$UPGRADE_LOG_FILE
+		desc="$total_count complementary IPK module$(Pluralise "$total_count")"
 		ShowAsProc "upgrading $desc"
 
 		_DirSize:Monitor_ "$IPK_DL_PATH" "$(IPKs-ACdownload-to:Size)" &
@@ -2469,9 +2470,11 @@ IPKs:install()
 	Self.Error.IsNt || return
 
 	Func:Init
+	local desc=''
 	local -i index=0
-	local -i total_count=0
+	local log_pathfile=$LOGS_PATH/ipks.$INSTALL_LOG_FILE
 	local -i result_code=0
+	local -i total_count=0
 	IPKs-ACinstall-to:Init
 	IPKs-ACdownload-to:Init
 
@@ -2503,8 +2506,7 @@ IPKs:install()
 	total_count=$(IPKs-ACdownload-to:Count)
 
 	if [[ $total_count -gt 0 ]]; then
-		local desc="$total_count complementary IPK module$(Pluralise "$total_count")"
-		local log_pathfile=$LOGS_PATH/ipks.$INSTALL_LOG_FILE
+		desc="$total_count complementary IPK module$(Pluralise "$total_count")"
 		ShowAsProc "installing $desc"
 
 		_DirSize:Monitor_ "$IPK_DL_PATH" "$(IPKs-ACdownload-to:Size)" &
@@ -2550,17 +2552,17 @@ IPKs:downgrade()
 	Self.Error.IsNt || return
 
 	Func:Init
-	local -i total_count=0
-	local -i ok_count=0
-	local -i fail_count=0
-	local -i result_code=0
-	local package_name=''
-	local remote_url=''
 	local desc=''
+	local -i fail_count=0
 	local log_pathfile=''
+	local -i ok_count=0
+	local package_name=''
+	local package_type=''
+	local remote_url=''
+	local -i result_code=0
+	local -i total_count=0
 	local url_prefix=''
 	local url_suffix=''
-	local package_type=''
 	IPKs-ACdownload-to:Init
 	total_count=$(IPKs-ACdowngrade-to:Count)
 
@@ -2638,19 +2640,20 @@ PIPs:install()
 	Self.Error.IsNt || return
 
 	Func:Init
+	local desc=''
 	local exec_cmd=''
-	local -i total_count=0
-	local -i ok_count=0
 	local -i fail_count=0
-	local -i result_code=0
+	local log_pathfile=$LOGS_PATH/pypi.$INSTALL_LOG_FILE
+	local -i ok_count=0
 	local package_type='complementary PyPI group'
+	local -i result_code=0
+	local -i total_count=0
 
 	if [[ $opts_check = true ]] || IPKs-ACinstall-ok.Exist python3-pip; then
 		((total_count++))
 
 		exec_cmd="$PIP_CMD install --upgrade --no-input $ESSENTIAL_PIPS --cache-dir $PIP_CACHE_PATH 2> >($GREP_CMD -v \"Running pip as the 'root' user\") >&2"
-		local desc='complementary PyPI modules'
-		local log_pathfile=$LOGS_PATH/pypi.$INSTALL_LOG_FILE
+		desc='complementary PyPI modules'
 
 		ShowAsPercentProgress "installing $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 0 "$total_count"
 		RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
@@ -3164,30 +3167,28 @@ DisplayAsSynExam()
 DisplayAsPackagesReportTitleLine()
 	{
 
-	local package_name_msg=''
-	local package_author_msg=''
-	local package_description_msg=''
+	local msg=''
 	WriteEmptyLineIfNoneExists
 
 	# column 1: package name
 
 	if [[ $maxcols -ge 1 ]]; then
-		package_name_msg="${CHARS_SPECIAL}QPKG name:"
-		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
+		msg="${CHARS_SPECIAL}QPKG name:"
+		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	# column 2: package author
 
 	if [[ $maxcols -ge 2 ]]; then
-		package_author_msg="${CHARS_SPECIAL}QPKG author:"
-		printf "%-$((PACKAGE_AUTHOR_COL_WIDTH+2+$(LenANSIDiff "$package_author_msg")))s" "$package_author_msg"
+		msg="${CHARS_SPECIAL}QPKG author:"
+		printf "%-$((PACKAGE_AUTHOR_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	# column 3: package description
 
 	if [[ $maxcols -ge 3 ]]; then
-		package_description_msg="${CHARS_SPECIAL}QPKG description:"
-		printf "%-$((PACKAGE_DESCRIPTION_COL_WIDTH+2+$(LenANSIDiff "$package_description_msg")))s" "$package_description_msg"
+		msg="${CHARS_SPECIAL}QPKG description:"
+		printf "%-$((PACKAGE_DESCRIPTION_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	printf '\n'; linespace_visible=false
@@ -3262,41 +3263,37 @@ DisplayAsPackagesReportLine()
 DisplayAsStatusReportTitleLine()
 	{
 
-	local package_name_msg=''
-	local package_status_msg=''
-	local package_version_msg=''
-	local package_path_msg=''
+	local msg=''
 	WriteEmptyLineIfNoneExists
 
 	# column 1: package name
 
 	if [[ $maxcols -ge 1 ]]; then
-		package_name_msg="${CHARS_SPECIAL}QPKG name:"
-		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
+		msg="${CHARS_SPECIAL}QPKG name:"
+		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	# column 2: package statuses
 
 	if [[ $maxcols -ge 2 ]]; then
-		package_status_msg="${CHARS_SPECIAL}QPKG statuses:"
-		printf "%-$((PACKAGE_STATUS_COL_WIDTH+2+$(LenANSIDiff "$package_status_msg")))s" "$package_status_msg"
+		msg="${CHARS_SPECIAL}QPKG statuses:"
+		printf "%-$((PACKAGE_STATUS_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	# column 3: package version
 
 	if [[ $maxcols -ge 3 ]]; then
-		package_version_msg="${CHARS_SPECIAL}QPKG version"
-		QPKGs-SCupgradable.IsAny && package_version_msg+=" ($(ColourTextBrightOrange new))"
-		package_version_msg+=':'
-
-		printf "%-$((package_ver_final_col_width+2+$(LenANSIDiff "$package_version_msg")))s" "$package_version_msg"
+		msg="${CHARS_SPECIAL}QPKG version"
+		QPKGs-SCupgradable.IsAny && msg+=" ($(ColourTextBrightOrange new))"
+		msg+=':'
+		printf "%-$((package_ver_final_col_width+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	# column 4: package installation path
 
 	if [[ $maxcols -ge 4 ]]; then
-		package_path_msg="${CHARS_SPECIAL}QPKG installation path:"
-		printf "%-$((PACKAGE_PATH_COL_WIDTH+2+$(LenANSIDiff "$package_path_msg")))s" "$package_path_msg"
+		msg="${CHARS_SPECIAL}QPKG installation path:"
+		printf "%-$((PACKAGE_PATH_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	printf '\n'; linespace_visible=false
@@ -3429,30 +3426,28 @@ DisplayAsStatusReportLine()
 DisplayAsReposReportTitleLine()
 	{
 
-	local package_name_msg=''
-	local package_install_date_msg=''
-	local package_repo_msg=''
+	local msg=''
 	WriteEmptyLineIfNoneExists
 
 	# column 1: package name
 
 	if [[ $maxcols -ge 1 ]]; then
-		package_name_msg="${CHARS_SPECIAL}QPKG name:"
-		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
+		msg="${CHARS_SPECIAL}QPKG name:"
+		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	# column 2: package installation date
 
 	if [[ $maxcols -ge 2 ]]; then
-		package_install_date_msg="${CHARS_SPECIAL}install date:"
-		printf "%-$((PACKAGE_INSTALL_DATE_COL_WIDTH+2+$(LenANSIDiff "$package_install_date_msg")))s" "$package_install_date_msg"
+		msg="${CHARS_SPECIAL}install date:"
+		printf "%-$((PACKAGE_INSTALL_DATE_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	# column 3: package repository
 
 	if [[ $maxcols -ge 3 ]]; then
-		package_repo_msg="${CHARS_SPECIAL}repository:"
-		printf "%-$((PACKAGE_REPO_COL_WIDTH+2+$(LenANSIDiff "$package_repo_msg")))s" "$package_repo_msg"
+		msg="${CHARS_SPECIAL}repository:"
+		printf "%-$((PACKAGE_REPO_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	printf '\n'; linespace_visible=false
@@ -3551,22 +3546,21 @@ DisplayAsReposReportLine()
 DisplayAsAbsReportTitleLine()
 	{
 
-	local package_name_msg=''
-	local package_abs_msg=''
+	local msg=''
 	WriteEmptyLineIfNoneExists
 
 	# column 1: package name
 
 	if [[ $maxcols -ge 1 ]]; then
-		package_name_msg="${CHARS_SPECIAL}QPKG name:"
-		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
+		msg="${CHARS_SPECIAL}QPKG name:"
+		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	# column 2: package abbreviations
 
 	if [[ $maxcols -ge 2 ]]; then
-		package_abs_msg="${CHARS_SPECIAL}acceptable QPKG name abbreviations and aliases:"
-		printf "%-$((PACKAGE_ABBS_COL_WIDTH+2+$(LenANSIDiff "$package_abs_msg")))s" "$package_abs_msg"
+		msg="${CHARS_SPECIAL}acceptable QPKG name abbreviations and aliases:"
+		printf "%-$((PACKAGE_ABBS_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	printf '\n'; linespace_visible=false
@@ -3644,70 +3638,63 @@ DisplayAsAbsReportLine()
 DisplayAsDepsReportTitleLine()
 	{
 
-	local package_name_msg=''
-	local package_deps_msg=''
-	local package_installed_msg=''
-	local package_enabled_msg=''
-	local package_min_ram_msg=''
-	local package_min_os_msg=''
-	local package_max_os_msg=''
-	local package_arch_msg=''
+	local msg=''
 	WriteEmptyLineIfNoneExists
 
 	# column 1: package name
 
 	if [[ $maxcols -ge 1 ]]; then
-		package_name_msg="${CHARS_SPECIAL}QPKG name:"
-		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
+		msg="${CHARS_SPECIAL}QPKG name:"
+		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	# column 2: package dependencies
 
 	if [[ $maxcols -ge 2 ]]; then
-		package_deps_msg="${CHARS_SPECIAL}dependencies:"
-		printf "%-$((PACKAGE_DEPENDENCIES_COL_WIDTH+2+$(LenANSIDiff "$package_deps_msg")))s" "$package_deps_msg"
+		msg="${CHARS_SPECIAL}dependencies:"
+		printf "%-$((PACKAGE_DEPENDENCIES_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	# column 3: QPKG is installed
 
 	if [[ $maxcols -ge 3 ]]; then
-		package_installed_msg="${CHARS_SPECIAL}installed?"
-		printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+2+$(LenANSIDiff "$package_installed_msg")))s" "$package_installed_msg"
+		msg="${CHARS_SPECIAL}installed?"
+		printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	# column 4: QPKG is enabled
 
 	if [[ $maxcols -ge 4 ]]; then
-		package_enabled_msg="${CHARS_SPECIAL}enabled?"
-		printf "%-$((PACKAGE_ENABLED_COL_WIDTH+2+$(LenANSIDiff "$package_enabled_msg")))s" "$package_enabled_msg"
+		msg="${CHARS_SPECIAL}enabled?"
+		printf "%-$((PACKAGE_ENABLED_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	# column 5: minimum NAS RAM required
 
 	if [[ $maxcols -ge 5 ]]; then
-		package_min_ram_msg="${CHARS_SPECIAL}min RAM:"
-		printf "%-$((PACKAGE_MIN_RAM_COL_WIDTH+2+$(LenANSIDiff "$package_min_ram_msg")))s" "$package_min_ram_msg"
+		msg="${CHARS_SPECIAL}min RAM:"
+		printf "%-$((PACKAGE_MIN_RAM_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	# column 6: minimum OS fimware version supported
 
 	if [[ $maxcols -ge 6 ]]; then
-		package_min_os_msg="${CHARS_SPECIAL}min OS:"
-		printf "%-$((PACKAGE_MIN_OS_COL_WIDTH+2+$(LenANSIDiff "$package_min_os_msg")))s" "$package_min_os_msg"
+		msg="${CHARS_SPECIAL}min OS:"
+		printf "%-$((PACKAGE_MIN_OS_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	# column 7: maximum OS fimware version supported
 
 	if [[ $maxcols -ge 7 ]]; then
-		package_max_os_msg="${CHARS_SPECIAL}max OS:"
-		printf "%-$((PACKAGE_MAX_OS_COL_WIDTH+2+$(LenANSIDiff "$package_max_os_msg")))s" "$package_max_os_msg"
+		msg="${CHARS_SPECIAL}max OS:"
+		printf "%-$((PACKAGE_MAX_OS_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	# column 8: arch is compatible
 
 	if [[ $maxcols -ge 8 ]]; then
-		package_arch_msg="${CHARS_SPECIAL}supported arch?"
-		printf "%-$((PACKAGE_ARCH_COL_WIDTH+2+$(LenANSIDiff "$package_arch_msg")))s" "$package_arch_msg"
+		msg="${CHARS_SPECIAL}supported arch?"
+		printf "%-$((PACKAGE_ARCH_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	printf '\n'; linespace_visible=false
@@ -5220,7 +5207,7 @@ QPKGs.States:Build()
 	local package=''
 	local prev=''
 	OS.IsStarting && ShowAsWarn "$(GetQnapOS) is still starting. QPKG statuses are in-flux. Try checking again in a few minutes."
-	OS.IsStopping && ShowAsWarn "$(GetQnapOS) is shutting-down. All QPKGs are in the process of being stopped."
+	OS.IsStopping && ShowAsWarn "$(GetQnapOS) is shutting-down. All QPKGs are being stopped."
 	ShowAsProc 'QPKG states'
 
 	for package in $(QPKGs-SCall:Array); do

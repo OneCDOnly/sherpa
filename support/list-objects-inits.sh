@@ -7,7 +7,7 @@ fi
 
 . ./vars.source
 
-source_pathfile="$source_path/$objects_file"
+source_pathfile=$source_path/$objects_file
 
 [[ ! -e $source_pathfile ]] && ./build-objects.sh
 

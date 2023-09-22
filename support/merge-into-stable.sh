@@ -21,12 +21,12 @@ esac
 
 ./make.sh "$stable_branch" || exit
 
-cd "$HOME"/scripts/nas/sherpa || exit
+cd $HOME/scripts/nas/sherpa || exit
 git add . && git commit -m '[pre-merge] update archives' && git push
 git checkout "$stable_branch"
 git merge --no-ff -m "[merge] from \`$unstable_branch\` into \`$stable_branch\`" "$unstable_branch" && git push
 git checkout "$unstable_branch"
 git merge "$stable_branch" && git push		# ensure remote 'unstable' is up-to-date with 'stable'
-cd "$HOME"/scripts/nas/sherpa/support || exit
+cd $HOME/scripts/nas/sherpa/support || exit
 
 exit 0
