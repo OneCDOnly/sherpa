@@ -1566,6 +1566,14 @@ ShowHelp
 }
 ProcessArgs()
 {
+if IsGitApp; then
+local test_branch=$(/sbin/getcfg $QPKG_NAME Git_Branch -d unknown -f /etc/config/qpkg.conf)
+if [[ $test_branch = unknown ]]; then
+/sbin/setcfg $QPKG_NAME Git_Branch $source_git_branch -f /etc/config/qpkg.conf
+else
+source_git_branch=$test_branch
+fi
+fi
 if IsNotError; then
 local user_arg=${USER_ARGS_RAW%% *}
 case $user_arg in
