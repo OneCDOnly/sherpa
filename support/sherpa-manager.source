@@ -3724,11 +3724,11 @@ DisplayAsDepsReportLine()
 	fi
 
 	local package_min_os=$(QPKG.GetMinOSVer "$package_name")
-	[[ -n $package_min_os && $package_min_os != none ]] && package_min_os="${package_min_os:0:1}.${package_min_os:1:1}.${package_min_os:2:1}"
+	[[ -n $package_min_os && $package_min_os != none && ${#package_min_os} -eq 3 ]] && package_min_os="${package_min_os:0:1}.${package_min_os:1:1}.${package_min_os:2:1}"
 	local package_min_os_msg=$CHARS_BLANK
 
 	local package_max_os=$(QPKG.GetMaxOSVer "$package_name")
-	[[ -n $package_max_os && $package_max_os != none ]] && package_max_os="${package_max_os:0:1}.${package_max_os:1:1}.${package_max_os:2:1}"
+	[[ -n $package_max_os && $package_max_os != none && ${#package_max_os} -eq 3 ]] && package_max_os="${package_max_os:0:1}.${package_max_os:1:1}.${package_max_os:2:1}"
 	local package_max_os_msg=$CHARS_BLANK
 
 	local package_arch_msg=$CHARS_BLANK
@@ -4885,14 +4885,14 @@ QPKGs.Missing:Show()
 	done
 
 	if [[ ${#packages[@]} -eq 1 ]]; then
-		premsg='QPKG is'
-		sufmsg='Please reinstall it'
+		premsg=' is'
+		sufmsg='it'
 	else
-		premsg='QPKGs are'
-		sufmsg='Please reinstall them'
+		premsg='s are'
+		sufmsg='them'
 	fi
 
-	ShowAsInfo "the $names_formatted $premsg missing or broken. $sufmsg."
+	ShowAsInfo "the $names_formatted QPKG${premsg} missing or broken. Please reinstall $sufmsg."
 	return 1
 
 	}
@@ -5385,7 +5385,7 @@ Report.Backups:Show()
 		DisplayAsHelpTitle "the location for $(ShowTitleName) backups is: $QPKG_BU_PATH"
 
 		if [[ -e $GNU_FIND_CMD ]]; then
-			DisplayAsHelpTitle "backups are listed oldest-first, and those shown in $(ColourTextBrightRed '!red') were last updated more than $highlight_older_than."
+			DisplayAsHelpTitle "backups are listed oldest-first, and those shown in $(ColourTextBrightRed '! red') were last updated more than $highlight_older_than."
 			DisplayAsHelpTitleFileNamePlusSomething 'backup file' 'last backup date'
 
 			while read -r epochtime filename; do
