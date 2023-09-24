@@ -3720,15 +3720,15 @@ DisplayAsDepsReportLine()
 	local package_min_ram_msg=$CHARS_BLANK
 
 	if [[ $package_min_ram != none ]]; then
-		package_min_ram="$(FormatAsThous "$package_min_ram")kB"
+		package_min_ram=$(FormatAsThous "$package_min_ram")kB
 	fi
 
 	local package_min_os=$(QPKG.GetMinOSVer "$package_name")
-	[[ -n $package_min_os && $package_min_os != none && ${#package_min_os} -eq 3 ]] && package_min_os="${package_min_os:0:1}.${package_min_os:1:1}.${package_min_os:2:1}"
+	[[ -n $package_min_os && $package_min_os != none && ${#package_min_os} -eq 3 ]] && package_min_os=${package_min_os:0:1}.${package_min_os:1:1}.${package_min_os:2:1}
 	local package_min_os_msg=$CHARS_BLANK
 
 	local package_max_os=$(QPKG.GetMaxOSVer "$package_name")
-	[[ -n $package_max_os && $package_max_os != none && ${#package_max_os} -eq 3 ]] && package_max_os="${package_max_os:0:1}.${package_max_os:1:1}.${package_max_os:2:1}"
+	[[ -n $package_max_os && $package_max_os != none && ${#package_max_os} -eq 3 ]] && package_max_os=${package_max_os:0:1}.${package_max_os:1:1}.${package_max_os:2:1}
 	local package_max_os_msg=$CHARS_BLANK
 
 	local package_arch_msg=$CHARS_BLANK
@@ -5908,7 +5908,7 @@ ModPathToEntware()
 	if QPKGs-ISenabled.Exist Entware; then
 		! [[ $PATH =~ $OPKG ]] || return
 		temp=$($SED_CMD "s|$OPKG:||" <<< "$PATH:")		# Append colon prior to searching, then remove existing Entware paths.
-		export PATH="$OPKG:${temp%:}"					# ... now prepend Entware paths and remove trailing colon
+		export PATH=$OPKG:${temp%:}						# ... now prepend Entware paths and remove trailing colon
 		DebugAsDone 'prepended Entware to $PATH'
 	else
 		[[ $PATH =~ $OPKG ]] || return
