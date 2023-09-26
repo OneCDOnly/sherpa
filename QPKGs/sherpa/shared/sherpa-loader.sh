@@ -23,7 +23,7 @@
 readonly USER_ARGS_RAW=$*
 Init()
 {
-export LOADER_SCRIPT_VER='230925'
+export LOADER_SCRIPT_VER='230927'
 export LOADER_SCRIPT_PPID=$PPID
 readonly CHARS_REGULAR_PROMPT='$ '
 readonly CHARS_SUPER_PROMPT='# '
@@ -96,7 +96,7 @@ return 0
 }
 ShowAsError()
 {
-local capitalised="$(Capitalise "${1:-}")"
+local capitalised=$(Capitalise "${1:-}")
 WriteToDisplay.New "$(ColourTextBrightRed derp)" "$capitalised"
 return 0
 }
