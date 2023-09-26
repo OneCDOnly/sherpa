@@ -21,7 +21,7 @@
 #*   This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 #*	 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
-readonly SERVICE_LIB_VERSION='230922'
+readonly SERVICE_LIB_VERSION='230927'
 InitLibrary()
 {
 IsQNAP || exit
@@ -92,7 +92,7 @@ readonly CHARS_SUDO_PROMPT="${CHARS_REGULAR_PROMPT}sudo "
 readonly CHARS_SUPER_PROMPT='# '
 readonly DEBUG_LOG_DATAWIDTH=100
 readonly OPKG_PATH=/opt/bin:/opt/sbin
-export PATH="$OPKG_PATH:$(/bin/sed "s|$OPKG_PATH||" <<< "$PATH")"
+export PATH=$OPKG_PATH:$(/bin/sed "s|$OPKG_PATH||" <<< "$PATH")
 readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
 readonly QPKG_VERSION=$(/sbin/getcfg $QPKG_NAME Version -d unknown -f /etc/config/qpkg.conf)
 readonly SCREEN_LOG_PATHFILE=/var/log/$QPKG_NAME.screen.log
@@ -496,7 +496,7 @@ DisplayErrCommitAllLogs "'git' unavailable: Entware is not enabled!"
 return 1
 fi
 if WaitForFileToAppear '/opt/bin/git' 300; then
-export PATH="$OPKG_PATH:$(/bin/sed "s|$OPKG_PATH||" <<< "$PATH")"
+export PATH=$OPKG_PATH:$(/bin/sed "s|$OPKG_PATH||" <<< "$PATH")
 return 0
 fi
 return 1
@@ -1378,7 +1378,7 @@ echo -n "${1:-} "
 DisplayAndCommitActionToLog()
 {
 [[ $service_operation = unspecified ]] && return
-starttime="$(/bin/date +%s%N)"
+starttime=$(/bin/date +%s%N)
 local msg="source: $(/usr/bin/basename "$0"), action: $service_operation, datetime: $(date)"
 msg=" $(/bin/tr -s ' ' <<< "$msg") "
 local target=DisplayCommitToLog

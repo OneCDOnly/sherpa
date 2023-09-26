@@ -142,7 +142,7 @@ ShowAsError()
 
 	# Fatal error.
 
-	local capitalised="$(Capitalise "${1:-}")"
+	local capitalised=$(Capitalise "${1:-}")
 
 	WriteToDisplay.New "$(ColourTextBrightRed derp)" "$capitalised"
 

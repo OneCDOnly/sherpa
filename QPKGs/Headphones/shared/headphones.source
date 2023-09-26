@@ -36,9 +36,9 @@ InitComplex()
 
 	}
 
-library_path="$(/usr/bin/readlink "$0" 2>/dev/null)"
-[[ -z $library_path ]] && library_path="$0"
-readonly SERVICE_LIBRARY_PATHFILE="$(/usr/bin/dirname "$library_path")"/service.lib
+library_path=$(/usr/bin/readlink "$0" 2>/dev/null)
+[[ -z $library_path ]] && library_path=$0
+readonly SERVICE_LIBRARY_PATHFILE=$(/usr/bin/dirname "$library_path")/service.lib
 
 if [[ -e $SERVICE_LIBRARY_PATHFILE ]]; then
 	. $SERVICE_LIBRARY_PATHFILE

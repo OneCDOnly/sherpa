@@ -20,7 +20,7 @@
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 readonly USER_ARGS_RAW=$*
 readonly QPKG_NAME=LazyLibrarian
-readonly SERVICE_SCRIPT_VERSION='230922'
+readonly SERVICE_SCRIPT_VERSION='230927'
 InitBasic()
 {
 service_script_type=1
@@ -38,9 +38,9 @@ get_ui_port_secure_enabled_test_cmd='[[ $(/sbin/getcfg General https_enabled -d 
 source_git_branch=master
 IsSupportGetAppVersion && app_version_cmd="/bin/grep '__version__ =' $app_version_pathfile | /bin/sed 's|^.*\"\(.*\)\"|\1|'"
 }
-library_path="$(/usr/bin/readlink "$0" 2>/dev/null)"
-[[ -z $library_path ]] && library_path="$0"
-readonly SERVICE_LIBRARY_PATHFILE="$(/usr/bin/dirname "$library_path")"/service.lib
+library_path=$(/usr/bin/readlink "$0" 2>/dev/null)
+[[ -z $library_path ]] && library_path=$0
+readonly SERVICE_LIBRARY_PATHFILE=$(/usr/bin/dirname "$library_path")/service.lib
 if [[ -e $SERVICE_LIBRARY_PATHFILE ]]; then
 . $SERVICE_LIBRARY_PATHFILE
 else
