@@ -97,7 +97,7 @@ InitLibrary()
 	readonly CHARS_SUPER_PROMPT='# '
 	readonly DEBUG_LOG_DATAWIDTH=100
 	readonly OPKG_PATH=/opt/bin:/opt/sbin
-	export PATH="$OPKG_PATH:$(/bin/sed "s|$OPKG_PATH||" <<< "$PATH")"
+	export PATH=$OPKG_PATH:$(/bin/sed "s|$OPKG_PATH||" <<< "$PATH")
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
 	readonly QPKG_VERSION=$(/sbin/getcfg $QPKG_NAME Version -d unknown -f /etc/config/qpkg.conf)
 	readonly SCREEN_LOG_PATHFILE=/var/log/$QPKG_NAME.screen.log
@@ -663,7 +663,7 @@ WaitForGit()
 	fi
 
 	if WaitForFileToAppear '/opt/bin/git' 300; then
-		export PATH="$OPKG_PATH:$(/bin/sed "s|$OPKG_PATH||" <<< "$PATH")"
+		export PATH=$OPKG_PATH:$(/bin/sed "s|$OPKG_PATH||" <<< "$PATH")
 		return 0
 	fi
 
@@ -2136,7 +2136,7 @@ DisplayAndCommitActionToLog()
 
 	[[ $service_operation = unspecified ]] && return
 
-	starttime="$(/bin/date +%s%N)"
+	starttime=$(/bin/date +%s%N)
 	local msg="source: $(/usr/bin/basename "$0"), action: $service_operation, datetime: $(date)"
 	msg=" $(/bin/tr -s ' ' <<< "$msg") "
 	local target=DisplayCommitToLog
