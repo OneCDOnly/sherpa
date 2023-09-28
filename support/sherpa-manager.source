@@ -8273,10 +8273,43 @@ QPKG.GetDependencies()
 	#   $? = 0 if successful, 1 if failed.
 
 	local -i index=0
+	local group=''
+	local name=''
+	local altname=''
+	local firstname=''
+	local oldIFS=$IFS
 
 	for index in "${!QPKG_NAME[@]}"; do
 		if [[ ${QPKG_NAME[$index]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
-			echo "${QPKG_DEPENDS_ON[$index]}"
+			group="${QPKG_DEPENDS_ON[$index]}"
+
+			if [[ $group =~ *.|.* ]]; then
+
+				# if buff contains a pipe character, then need to separately examine each name.
+				# 	read each name by word boundaries.
+				# 	if name contains pipe, then read name with IFS as pipe.
+				# 		test each alternative name for compatibility with this NAS. Only output the compatible one.
+				#		if none are compatible, then output first one.
+
+				while read -r name; do
+					if [[ $name =~ *.|.* ]]; then
+						IFS='|'
+
+						while read -r altname; do
+							[[ -z $firstname ]] && firstname=$altname
+
+							# test altname for compatibility
+
+
+						done <<< "$name"
+					fi
+
+					[[ $IFS != $oldIFS ]] && IFS=$oldIFS
+				done <<< "$group"
+			else
+				echo "$group"
+			fi
+
 			return 0
 		fi
 	done
