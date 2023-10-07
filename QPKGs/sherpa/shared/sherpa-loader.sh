@@ -23,17 +23,25 @@
 readonly USER_ARGS_RAW=$*
 Init()
 {
-export LOADER_SCRIPT_VER='231002'
+export LOADER_SCRIPT_VER='231008'
 export LOADER_SCRIPT_PPID=$PPID
+readonly QPKG_NAME=sherpa
 readonly CHARS_REGULAR_PROMPT='$ '
 readonly CHARS_SUPER_PROMPT='# '
 readonly CHARS_SUDO_PROMPT="${CHARS_REGULAR_PROMPT}sudo "
 IsQNAP || return
 IsSU || return
+local source_git_branch=stable
+local test_branch=$(/sbin/getcfg $QPKG_NAME Git_Branch -d unknown -f /etc/config/qpkg.conf)
+if [[ $test_branch = unknown ]]; then
+/sbin/setcfg $QPKG_NAME Git_Branch $source_git_branch -f /etc/config/qpkg.conf
+else
+source_git_branch=$test_branch
+fi
 local -r WORK_PATH=$(/sbin/getcfg sherpa Install_Path -f /etc/config/qpkg.conf)/cache
 local -r MANAGER_FILE='sherpa-manager.sh'
 local -r MANAGER_ARCHIVE_FILE=${MANAGER_FILE%.*}.tar.gz
-readonly MANAGER_ARCHIVE_URL='https://raw.githubusercontent.com/OneCDOnly/sherpa/unstable'/$MANAGER_ARCHIVE_FILE
+readonly MANAGER_ARCHIVE_URL='https://raw.githubusercontent.com/OneCDOnly/sherpa'/$source_git_branch/$MANAGER_ARCHIVE_FILE
 readonly MANAGER_ARCHIVE_PATHFILE=$WORK_PATH/$MANAGER_ARCHIVE_FILE
 readonly MANAGER_PATHFILE=$WORK_PATH/$MANAGER_FILE
 local -r NAS_FIRMWARE=$(/sbin/getcfg System Version -f /etc/config/uLinux.conf)
@@ -45,7 +53,7 @@ return 0
 }
 EnsureFileIsCurrent()
 {
-local CHANGE_THRESHOLD_MINUTES=60
+local -ir CHANGE_THRESHOLD_MINUTES=60
 if [[ -e $1 && -e $GNU_FIND_CMD ]]; then
 msgs=$($GNU_FIND_CMD "$1" -cmin +$CHANGE_THRESHOLD_MINUTES)
 else
