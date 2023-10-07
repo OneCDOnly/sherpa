@@ -45,7 +45,7 @@ AddFlagObj()
 	# $3 = set 'log boolean changes' on init (optional) default is 'true'.
 
 	local public_function_name=${1:?no object name supplied}
-	local safe_function_name="$(tr '[:upper:]' '[:lower:]' <<< "${public_function_name//[.-]/_}")"
+	local safe_function_name=$(tr '[:upper:]' '[:lower:]' <<< "${public_function_name//[.-]/_}")
 	local state_default=${2:-false}
 	local state_logmods=${3:-true}
 
@@ -87,7 +87,7 @@ AddListObj()
 	# $1 = object name to create.
 
 	local public_function_name=${1:?no object name supplied}
-	local safe_function_name="$(tr '[:upper:]' '[:lower:]' <<< "${public_function_name//[.-]/_}")"
+	local safe_function_name=$(tr '[:upper:]' '[:lower:]' <<< "${public_function_name//[.-]/_}")
 
 	_placeholder_size_=_ob_${safe_function_name}_sz_
 	_placeholder_array_=_ob_${safe_function_name}_ar_

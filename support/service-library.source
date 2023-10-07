@@ -97,7 +97,7 @@ InitLibrary()
 	readonly CHARS_SUPER_PROMPT='# '
 	readonly DEBUG_LOG_DATAWIDTH=100
 	readonly OPKG_PATH=/opt/bin:/opt/sbin
-	export PATH="$OPKG_PATH:$(/bin/sed "s|$OPKG_PATH||" <<< "$PATH")"
+	export PATH=$OPKG_PATH:$(/bin/sed "s|$OPKG_PATH||" <<< "$PATH")
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
 	readonly QPKG_VERSION=$(/sbin/getcfg $QPKG_NAME Version -d unknown -f /etc/config/qpkg.conf)
 	readonly SCREEN_LOG_PATHFILE=/var/log/$QPKG_NAME.screen.log
@@ -663,7 +663,7 @@ WaitForGit()
 	fi
 
 	if WaitForFileToAppear '/opt/bin/git' 300; then
-		export PATH="$OPKG_PATH:$(/bin/sed "s|$OPKG_PATH||" <<< "$PATH")"
+		export PATH=$OPKG_PATH:$(/bin/sed "s|$OPKG_PATH||" <<< "$PATH")
 		return 0
 	fi
 
@@ -698,9 +698,9 @@ FindAndWritePIDFile()
 
 	if [[ $daemon_proc_is_name_only = true ]]; then
 		# QTS `pidof` is unreliable and should be used as a last resort only
-		target_pid="$(/bin/pidof -s "$(/usr/bin/basename "$daemon_pathfile")")"
+		target_pid=$(/bin/pidof -s "$(/usr/bin/basename "$daemon_pathfile")")
 	else
-		target_pid="$(/bin/ps | /bin/grep "$(GetLaunchTarget)" | /bin/grep -v grep)"
+		target_pid=$(/bin/ps | /bin/grep "$(GetLaunchTarget)" | /bin/grep -v grep)
 		target_pid=${target_pid:0:5}
 		target_pid=$(/bin/tr -d ' ' <<< "$target_pid")
 	fi
@@ -786,7 +786,7 @@ WaitForDaemon()
 		if [[ $daemon_proc_is_name_only = true ]]; then
 			target_proc=$(/usr/bin/basename "$daemon_pathfile")
 		else
-			target_proc="$(GetLaunchTarget)"
+			target_proc=$(GetLaunchTarget)
 		fi
 
 		(
@@ -1502,7 +1502,7 @@ IsDaemonActive()
 	if [[ $daemon_proc_is_name_only = true ]]; then
 		target_proc=$(/usr/bin/basename "$(GetLaunchTarget)")
 	else
-		target_proc="$(GetLaunchTarget)"
+		target_proc=$(GetLaunchTarget)
 	fi
 
 	if IsProcessActive "$target_proc" "$daemon_pid_pathfile"; then
@@ -1666,7 +1666,7 @@ IsPortResponds()
 	if [[ $daemon_proc_is_name_only = true ]]; then
 		target_proc=$(/usr/bin/basename "$daemon_pathfile")
 	else
-		target_proc="$(GetLaunchTarget)"
+		target_proc=$(GetLaunchTarget)
 	fi
 
 	while true; do
@@ -1737,7 +1737,7 @@ IsPortSecureResponds()
 	if [[ $daemon_proc_is_name_only = true ]]; then
 		target_proc=$(/usr/bin/basename "$daemon_pathfile")
 	else
-		target_proc="$(GetLaunchTarget)"
+		target_proc=$(GetLaunchTarget)
 	fi
 
 	while true; do
@@ -1833,7 +1833,7 @@ IsNotVirtualEnvironmentExist()
 SetServiceAction()
 	{
 
-	service_operation="${1:-unspecified}"
+	service_operation=${1:-unspecified}
 	CommitServiceStatus "$service_operation"
 	DisplayAndCommitActionToLog
 
@@ -2015,7 +2015,7 @@ ShowAsError()
 
 	# fatal error
 
-	local capitalised="$(Capitalise "${1:-}")"
+	local capitalised=$(Capitalise "${1:-}")
 
 	Display "$(ColourTextBrightRed derp): $capitalised"
 
@@ -2136,7 +2136,7 @@ DisplayAndCommitActionToLog()
 
 	[[ $service_operation = unspecified ]] && return
 
-	starttime="$(/bin/date +%s%N)"
+	starttime=$(/bin/date +%s%N)
 	local msg="source: $(/usr/bin/basename "$0"), action: $service_operation, datetime: $(date)"
 	msg=" $(/bin/tr -s ' ' <<< "$msg") "
 	local target=DisplayCommitToLog
@@ -2456,6 +2456,16 @@ ShowUnsupportedAction()
 
 ProcessArgs()
 	{
+
+	if IsGitApp; then
+		local test_branch=$(/sbin/getcfg $QPKG_NAME Git_Branch -d unknown -f /etc/config/qpkg.conf)
+
+		if [[ $test_branch = unknown ]]; then
+			/sbin/setcfg $QPKG_NAME Git_Branch $source_git_branch -f /etc/config/qpkg.conf
+		else
+			source_git_branch=$test_branch
+		fi
+	fi
 
 	if IsNotError; then
 		local user_arg=${USER_ARGS_RAW%% *}		# only process first argument

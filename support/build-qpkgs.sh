@@ -11,12 +11,14 @@ fi
 
 . ./vars.source
 
-cdn_sherpa_url="$cdn_onecd_url/sherpa/${1:-$unstable_branch}"
+
+cdn_sherpa_base_url=$cdn_onecd_url/sherpa
+cdn_sherpa_url=$cdn_sherpa_base_url/${1:-$unstable_branch}
 cdn_sherpa_packages_url="$cdn_sherpa_url/QPKGs/<?package_name?>/build"
 
-source_pathfile="$source_path/$service_library_source_file"
-target_pathfile="$source_path/$service_library_file"
-datetime_change_reference_pathfile="$target_pathfile"
+source_pathfile=$source_path/$service_library_source_file
+target_pathfile=$source_path/$service_library_file
+datetime_change_reference_pathfile=$target_pathfile
 rebuild_functions=false
 rebuilt_functions=false
 
@@ -45,7 +47,7 @@ fi
 
 for d in "$qpkgs_path"/*; do
 	echo -e "\n$(ColourTextBrightWhite 'QPKG:') $(basename "$d")"
-	config_source_pathfile="$d/qpkg.source"
+	config_source_pathfile=$d/qpkg.source
 
 	if [[ ! -e $config_source_pathfile ]]; then
 		echo "config source: not found"
@@ -53,8 +55,10 @@ for d in "$qpkgs_path"/*; do
 		continue
 	fi
 
-	config_pathfile="$d/qpkg.cfg"
+	config_pathfile=$d/qpkg.cfg
 	rebuild_package=false
+
+	[[ $(basename "$d") = sherpa ]] && rebuild_package=true		# always rebuild the sherpa QPKG.
 
 	if [[ $rebuilt_functions = true ]]; then		# only need to rebuild QPKGs using the service functions library.
 		if [[ -n $(find -L "$d" -type f -iname "$service_library_file") ]]; then
@@ -64,11 +68,11 @@ for d in "$qpkgs_path"/*; do
 			echo "service library: no link"
 		fi
 	else
-		datetime_change_reference_file="$(cd "$d/build" || exit; ls -t1 --reverse | tail -n1)"
+		datetime_change_reference_file=$(cd "$d/build" || exit; ls -t1 --reverse | tail -n1)
 
 		if [[ -n $datetime_change_reference_file ]]; then
 			echo "datetime reference file: $datetime_change_reference_file"
-			datetime_change_reference_pathfile="$d/build/$datetime_change_reference_file"
+			datetime_change_reference_pathfile=$d/build/$datetime_change_reference_file
 		else
 			echo "datetime reference file: unspecified"
 			rebuild_package=true
@@ -77,7 +81,7 @@ for d in "$qpkgs_path"/*; do
 
 	if [[ $rebuild_package = false ]]; then
 		if [[ -e $datetime_change_reference_pathfile ]]; then
-			changed_file_list="$(find -L "$d" ! -type d -cnewer "$datetime_change_reference_pathfile")"
+			changed_file_list=$(find -L "$d" ! -type d -cnewer "$datetime_change_reference_pathfile")
 
 			if [[ -n $changed_file_list ]]; then
 				echo "package files: changed"
@@ -115,16 +119,16 @@ for d in "$qpkgs_path"/*; do
 	fi
 
 	for test_path in shared arm_64 arm-x19 arm-x31 arm-x41 x86_64 x86; do
-		source="$d/$test_path/${service_script_file%.*}.source"
-		target="$d/$test_path/$service_script_file"
+		source=$d/$test_path/${service_script_file%.*}.source
+		target=$d/$test_path/$service_script_file
 
 		[[ -f "$source" ]] && chmod 644 "$source"
 		SwapTags "$source" "$target" >/dev/null
 		Squeeze "$target" "$target" >/dev/null
 		[[ -f "$target" ]] && chmod 554 "$target"
 
-		source="$d/$test_path/${loader_script_file%.*}.source"
-		target="$d/$test_path/$loader_script_file"
+		source=$d/$test_path/${loader_script_file%.*}.source
+		target=$d/$test_path/$loader_script_file
 
 		[[ -f "$source" ]] && chmod 644 "$source"
 		SwapTags "$source" "$target" >/dev/null

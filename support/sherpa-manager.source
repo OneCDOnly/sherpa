@@ -90,15 +90,6 @@ Self:Init()
 	fi
 
 	QPKGs.Warnings:Check
-
-	# KLUDGE: remove all max QTS versions from /etc/config/qpkg.conf (these are not removed automatically when installing updated QPKGs without max version set).
-	# Retain this kludge for 12 months to give everyone time to update their installed sherpa QPKGs. Remove after 2023-09-22.
-
-	if [[ $(/sbin/getcfg sherpa max_versions_cleared -d FALSE -f /etc/config/qpkg.conf) = FALSE ]]; then
-		$SED_CMD -i '/^FW_Ver_Max/d' /etc/config/qpkg.conf
-		/sbin/setcfg sherpa max_versions_cleared TRUE -f /etc/config/qpkg.conf
-	fi
-
 	ArgSuggestions:Show
 	Debug.Log:Env
 	Self.Tasks:Check
@@ -298,15 +289,15 @@ Consts:Load()
 
 	if OS.IsSupportSudo; then
 		if [[ $(GetSudoUID) = undefined ]]; then
-			readonly HELP_SYNTAX_PREFIX="$CHARS_SUPER_PROMPT"
-			readonly HELP_SYNTAX_SUDO_PREFIX="$CHARS_SUPER_PROMPT"
+			readonly HELP_SYNTAX_PREFIX=$CHARS_SUPER_PROMPT
+			readonly HELP_SYNTAX_SUDO_PREFIX=$CHARS_SUPER_PROMPT
 		else
-			readonly HELP_SYNTAX_PREFIX="$CHARS_REGULAR_PROMPT"
-			readonly HELP_SYNTAX_SUDO_PREFIX="$CHARS_SUDO_PROMPT"
+			readonly HELP_SYNTAX_PREFIX=$CHARS_REGULAR_PROMPT
+			readonly HELP_SYNTAX_SUDO_PREFIX=$CHARS_SUDO_PROMPT
 		fi
 	else
-		readonly HELP_SYNTAX_PREFIX="$CHARS_SUPER_PROMPT"
-		readonly HELP_SYNTAX_SUDO_PREFIX="$CHARS_SUPER_PROMPT"
+		readonly HELP_SYNTAX_PREFIX=$CHARS_SUPER_PROMPT
+		readonly HELP_SYNTAX_SUDO_PREFIX=$CHARS_SUPER_PROMPT
 	fi
 
 	readonly FILE_CHANGE_THRESHOLD_MINUTES=60
@@ -527,8 +518,8 @@ Env:Load()
 			readonly OBJECTS_PATHFILE=$CACHE_PATH/objects
 			readonly PACKAGES_ARCHIVE_PATHFILE=$CACHE_PATH/packages.tar.gz
 			readonly PACKAGES_PATHFILE=$CACHE_PATH/packages
-			readonly PREV_IPK_LIST=$CACHE_PATH/ipk.prev.list
-			readonly PREV_PIP_LIST=$CACHE_PATH/pip.prev.list
+			readonly PREV_IPK_LIST=$CACHE_PATH/ipk.list.save
+			readonly PREV_PIP_LIST=$CACHE_PATH/pip.list.save
 			readonly QPKG_DL_PATH=$CACHE_PATH/QPKGs.downloads
 		readonly LOGS_PATH=$THIS_PACKAGE_PATH/logs
 			readonly RAMDISKS_FREESPACE_PATHFILE=$LOGS_PATH/ramdisks.freespace
@@ -1172,11 +1163,11 @@ Action:Proc()
 	#   $5 = $ACTION_PAST_MSG				e.g. `activated` ...
 
 	Func:Init
-	local -r TARGET_ACTION="${1:?${FUNCNAME[0]}'()': undefined}"
-	local -r TIER="${2:?${FUNCNAME[0]}'()': undefined}"
-	local -r PACKAGE_TYPE="${3:?${FUNCNAME[0]}'()': undefined}"
-	local -r ACTION_PRESENT_MSG="${4:?${FUNCNAME[0]}'()': undefined}"
-	local -r ACTION_PAST="${5:?${FUNCNAME[0]}'()': undefined}"
+	local -r TARGET_ACTION=${1:?${FUNCNAME[0]}'()': undefined}
+	local -r TIER=${2:?${FUNCNAME[0]}'()': undefined}
+	local -r PACKAGE_TYPE=${3:?${FUNCNAME[0]}'()': undefined}
+	local -r ACTION_PRESENT_MSG=${4:?${FUNCNAME[0]}'()': undefined}
+	local -r ACTION_PAST=${5:?${FUNCNAME[0]}'()': undefined}
 	total_count=0
 	local package=''
 	local state=''
@@ -1215,7 +1206,12 @@ Action:Proc()
 				Func:Exit; return
 			fi
 
-			ShowAsProc "$ACTION_PRESENT_MSG $([[ $TIER != all ]] && echo "$TIER ")$(Uppercase "$PACKAGE_TYPE")$(Pluralise "$total_count")"
+			if [[ $total_count -eq 1 ]]; then
+				ShowAsProc "$ACTION_PRESENT_MSG ${target_packages[0]}"
+			else
+				ShowAsProc "$ACTION_PRESENT_MSG $([[ $TIER != all ]] && echo "$TIER ")$(Uppercase "$PACKAGE_TYPE")$(Pluralise "$total_count")"
+			fi
+
 			AdjustMaxForks "$TARGET_ACTION"
 			InitForkCounts
 			OpenActionMsgPipe
@@ -2156,7 +2152,7 @@ Quiz()
 	# output:
 	#   $? = 0 if "y", 1 if anything else
 
-	local prompt="${1:?${FUNCNAME[0]}'()': undefined}"
+	local prompt=${1:?${FUNCNAME[0]}'()': undefined}
 	local response=''
 
 	ShowAsQuiz "$prompt"
@@ -2355,7 +2351,7 @@ CalcIpkDepsToInstall()
 	fi
 
 	# Exclude already installed IPKs.
-	pre_exclude_list="${dep_acc[*]}"
+	pre_exclude_list=${dep_acc[*]}
 	pre_exclude_count=$($WC_CMD -w <<< "$pre_exclude_list")
 
 	if [[ $pre_exclude_count -gt 0 ]]; then
@@ -2424,8 +2420,10 @@ IPKs:upgrade()
 	Self.Error.IsNt || return
 
 	Func:Init
-	local -i total_count=0
+	local desc=''
+	local log_pathfile=$LOGS_PATH/ipks.$UPGRADE_LOG_FILE
 	local -i result_code=0
+	local -i total_count=0
 	IPKs-ACupgrade-to:Init
 	IPKs-ACdownload-to:Init
 
@@ -2441,8 +2439,7 @@ IPKs:upgrade()
 	total_count=$(IPKs-ACdownload-to:Count)
 
 	if [[ $total_count -gt 0 ]]; then
-		local desc="$total_count complementary IPK module$(Pluralise "$total_count")"
-		local log_pathfile=$LOGS_PATH/ipks.$UPGRADE_LOG_FILE
+		desc="$total_count complementary IPK module$(Pluralise "$total_count")"
 		ShowAsProc "upgrading $desc"
 
 		_DirSize:Monitor_ "$IPK_DL_PATH" "$(IPKs-ACdownload-to:Size)" &
@@ -2478,9 +2475,11 @@ IPKs:install()
 	Self.Error.IsNt || return
 
 	Func:Init
+	local desc=''
 	local -i index=0
-	local -i total_count=0
+	local log_pathfile=$LOGS_PATH/ipks.$INSTALL_LOG_FILE
 	local -i result_code=0
+	local -i total_count=0
 	IPKs-ACinstall-to:Init
 	IPKs-ACdownload-to:Init
 
@@ -2512,8 +2511,7 @@ IPKs:install()
 	total_count=$(IPKs-ACdownload-to:Count)
 
 	if [[ $total_count -gt 0 ]]; then
-		local desc="$total_count complementary IPK module$(Pluralise "$total_count")"
-		local log_pathfile=$LOGS_PATH/ipks.$INSTALL_LOG_FILE
+		desc="$total_count complementary IPK module$(Pluralise "$total_count")"
 		ShowAsProc "installing $desc"
 
 		_DirSize:Monitor_ "$IPK_DL_PATH" "$(IPKs-ACdownload-to:Size)" &
@@ -2559,17 +2557,17 @@ IPKs:downgrade()
 	Self.Error.IsNt || return
 
 	Func:Init
-	local -i total_count=0
-	local -i ok_count=0
-	local -i fail_count=0
-	local -i result_code=0
-	local package_name=''
-	local remote_url=''
 	local desc=''
+	local -i fail_count=0
 	local log_pathfile=''
+	local -i ok_count=0
+	local package_name=''
+	local package_type=''
+	local remote_url=''
+	local -i result_code=0
+	local -i total_count=0
 	local url_prefix=''
 	local url_suffix=''
-	local package_type=''
 	IPKs-ACdownload-to:Init
 	total_count=$(IPKs-ACdowngrade-to:Count)
 
@@ -2600,8 +2598,8 @@ IPKs:downgrade()
 				ShowAsPercentProgress "downloading $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 0 "$total_count"
 				((ok_count++))
 
-				remote_url="${url_prefix}${package_name}${url_suffix}"
-				local_pathfile="$IPK_DOWNGRADE_DL_PATH/$($BASENAME_CMD "$remote_url")"
+				remote_url=${url_prefix}${package_name}${url_suffix}
+				local_pathfile=$IPK_DOWNGRADE_DL_PATH/$($BASENAME_CMD "$remote_url")
 				RunAndLog "$CURL_CMD${curl_insecure_arg} --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
 
 			done
@@ -2647,19 +2645,20 @@ PIPs:install()
 	Self.Error.IsNt || return
 
 	Func:Init
+	local desc=''
 	local exec_cmd=''
-	local -i total_count=0
-	local -i ok_count=0
 	local -i fail_count=0
-	local -i result_code=0
+	local log_pathfile=$LOGS_PATH/pypi.$INSTALL_LOG_FILE
+	local -i ok_count=0
 	local package_type='complementary PyPI group'
+	local -i result_code=0
+	local -i total_count=0
 
 	if [[ $opts_check = true ]] || IPKs-ACinstall-ok.Exist python3-pip; then
 		((total_count++))
 
 		exec_cmd="$PIP_CMD install --upgrade --no-input $ESSENTIAL_PIPS --cache-dir $PIP_CACHE_PATH 2> >($GREP_CMD -v \"Running pip as the 'root' user\") >&2"
-		local desc='complementary PyPI modules'
-		local log_pathfile=$LOGS_PATH/pypi.$INSTALL_LOG_FILE
+		desc='complementary PyPI modules'
 
 		ShowAsPercentProgress "installing $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 0 "$total_count"
 		RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
@@ -2808,7 +2807,7 @@ _DirSize:Monitor_()
 			if [[ $stall_seconds -lt 60 ]]; then
 				stall_msg+="$stall_seconds seconds"
 			else
-				stall_msg+="$(FormatSecsToHoursMinutesSecs "$stall_seconds")"
+				stall_msg+=$(FormatSecsToHoursMinutesSecs "$stall_seconds")
 			fi
 
 			# Add a suggestion to cancel if download has stalled for too long.
@@ -3046,8 +3045,8 @@ LenANSIDiff()
 	# input:
 	#   $1 = (optional) text to find length of
 
-	local original="${1:-}"
-	local stripped="$(StripANSI "$original")"
+	local original=${1:-}
+	local stripped=$(StripANSI "$original")
 	echo "$((${#original}-${#stripped}))"
 
 	return 0
@@ -3173,30 +3172,28 @@ DisplayAsSynExam()
 DisplayAsPackagesReportTitleLine()
 	{
 
-	local package_name_msg=''
-	local package_author_msg=''
-	local package_description_msg=''
+	local msg=''
 	WriteEmptyLineIfNoneExists
 
 	# column 1: package name
 
 	if [[ $maxcols -ge 1 ]]; then
-		package_name_msg="${CHARS_SPECIAL}QPKG name:"
-		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
+		msg="${CHARS_SPECIAL}QPKG name:"
+		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	# column 2: package author
 
 	if [[ $maxcols -ge 2 ]]; then
-		package_author_msg="${CHARS_SPECIAL}QPKG author:"
-		printf "%-$((PACKAGE_AUTHOR_COL_WIDTH+2+$(LenANSIDiff "$package_author_msg")))s" "$package_author_msg"
+		msg="${CHARS_SPECIAL}QPKG author:"
+		printf "%-$((PACKAGE_AUTHOR_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	# column 3: package description
 
 	if [[ $maxcols -ge 3 ]]; then
-		package_description_msg="${CHARS_SPECIAL}QPKG description:"
-		printf "%-$((PACKAGE_DESCRIPTION_COL_WIDTH+2+$(LenANSIDiff "$package_description_msg")))s" "$package_description_msg"
+		msg="${CHARS_SPECIAL}QPKG description:"
+		printf "%-$((PACKAGE_DESCRIPTION_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	printf '\n'; linespace_visible=false
@@ -3209,14 +3206,14 @@ DisplayAsPackagesReportLine()
 	# input:
 	#	$1 = package name
 
-	local package_name="${1:?${FUNCNAME[0]}'()': undefined}"
-	local package_name_msg="$CHARS_NORMAL"
-	local package_author="$(QPKG.GetAuthor "$package_name")"
-	local package_author_msg="$CHARS_BLANK"
-	local package_description="$(QPKG.GetDesc "$package_name")"
-	local package_description_msg="$CHARS_BLANK"
-	local package_notes="$(QPKG.GetNote "$package_name")"
-	local package_notes_msg="$(ColourTextCyan "${CHARS_NOTE}${package_notes}")"
+	local package_name=${1:?${FUNCNAME[0]}'()': undefined}
+	local package_name_msg=$CHARS_NORMAL
+	local package_author=$(QPKG.GetAuthor "$package_name")
+	local package_author_msg=$CHARS_BLANK
+	local package_description=$(QPKG.GetDesc "$package_name")
+	local package_description_msg=$CHARS_BLANK
+	local package_notes=$(QPKG.GetNote "$package_name")
+	local package_notes_msg=$(ColourTextCyan "${CHARS_NOTE}${package_notes}")
 	local mode=''
 
 	if QPKG.IsMissing "$package_name"; then
@@ -3227,19 +3224,19 @@ DisplayAsPackagesReportLine()
 		mode=normal
 	fi
 
-	package_name_msg+="$package_name"
-	package_author_msg+="$package_author"
-	package_description_msg+="$package_description"
+	package_name_msg+=$package_name
+	package_author_msg+=$package_author
+	package_description_msg+=$package_description
 
 	case $mode in
 		muted)
-			package_name_msg="$(ColourTextDarkGrey "$package_name_msg")"
-			package_author_msg="$(ColourTextDarkGrey "$package_author_msg")"
-			package_description_msg="$(ColourTextDarkGrey "$package_description_msg")"
+			package_name_msg=$(ColourTextDarkGrey "$package_name_msg")
+			package_author_msg=$(ColourTextDarkGrey "$package_author_msg")
+			package_description_msg=$(ColourTextDarkGrey "$package_description_msg")
 			;;
 		highlighted)
-			package_name_msg="$(ColourTextBrightRed "$package_name_msg")"
-			[[ $package_author = missing ]] && package_author_msg="$(ColourTextBrightRedBlink "${CHARS_ALERT}${package_author}")"
+			package_name_msg=$(ColourTextBrightRed "$package_name_msg")
+			[[ $package_author = missing ]] && package_author_msg=$(ColourTextBrightRedBlink "${CHARS_ALERT}${package_author}")
 	esac
 
 	# column 1: package name
@@ -3271,41 +3268,37 @@ DisplayAsPackagesReportLine()
 DisplayAsStatusReportTitleLine()
 	{
 
-	local package_name_msg=''
-	local package_status_msg=''
-	local package_version_msg=''
-	local package_path_msg=''
+	local msg=''
 	WriteEmptyLineIfNoneExists
 
 	# column 1: package name
 
 	if [[ $maxcols -ge 1 ]]; then
-		package_name_msg="${CHARS_SPECIAL}QPKG name:"
-		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
+		msg="${CHARS_SPECIAL}QPKG name:"
+		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	# column 2: package statuses
 
 	if [[ $maxcols -ge 2 ]]; then
-		package_status_msg="${CHARS_SPECIAL}QPKG statuses:"
-		printf "%-$((PACKAGE_STATUS_COL_WIDTH+2+$(LenANSIDiff "$package_status_msg")))s" "$package_status_msg"
+		msg="${CHARS_SPECIAL}QPKG statuses:"
+		printf "%-$((PACKAGE_STATUS_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	# column 3: package version
 
 	if [[ $maxcols -ge 3 ]]; then
-		package_version_msg="${CHARS_SPECIAL}QPKG version"
-		QPKGs-SCupgradable.IsAny && package_version_msg+=" ($(ColourTextBrightOrange new))"
-		package_version_msg+=':'
-
-		printf "%-$((package_ver_final_col_width+2+$(LenANSIDiff "$package_version_msg")))s" "$package_version_msg"
+		msg="${CHARS_SPECIAL}QPKG version"
+		QPKGs-SCupgradable.IsAny && msg+=" ($(ColourTextBrightOrange new))"
+		msg+=':'
+		printf "%-$((package_ver_final_col_width+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	# column 4: package installation path
 
 	if [[ $maxcols -ge 4 ]]; then
-		package_path_msg="${CHARS_SPECIAL}QPKG installation path:"
-		printf "%-$((PACKAGE_PATH_COL_WIDTH+2+$(LenANSIDiff "$package_path_msg")))s" "$package_path_msg"
+		msg="${CHARS_SPECIAL}QPKG installation path:"
+		printf "%-$((PACKAGE_PATH_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	printf '\n'; linespace_visible=false
@@ -3318,15 +3311,15 @@ DisplayAsStatusReportLine()
 	# input:
 	#	$1 = package name
 
-	local package_name="${1:?${FUNCNAME[0]}'()': undefined}"
-	local package_name_msg="$CHARS_BLANK"
+	local package_name=${1:?${FUNCNAME[0]}'()': undefined}
+	local package_name_msg=$CHARS_BLANK
  	local package_status=''
 	local package_status_msg=''
  	local package_installed_version=''
-	local package_version_msg="$CHARS_BLANK"
+	local package_version_msg=$CHARS_BLANK
  	local package_upgrade_version=''
 	local package_upgrade_version_msg=''
-	local package_path_msg="$CHARS_BLANK"
+	local package_path_msg=$CHARS_BLANK
 	local mode=''
 
 	if QPKG.IsMissing "$package_name"; then
@@ -3366,25 +3359,25 @@ DisplayAsStatusReportLine()
 			fi
 
 			if [[ -n $package_status ]]; then
-				package_status="$(Trim "$package_status")"
-				package_status_msg="${package_status// /, }"	# insert separators
+				package_status=$(Trim "$package_status")
+				package_status_msg=${package_status// /, }	# insert separators
 			fi
 
-			package_status_msg="${CHARS_NORMAL}${package_status_msg}"
-			QPKG.IsUpgradable "$package_name" && package_upgrade_version="$(QPKG.Avail.GetVer "$package_name")"
-			package_version_msg+="$(QPKG.Local.GetVer "$package_name")"
+			package_status_msg=${CHARS_NORMAL}${package_status_msg}
+			QPKG.IsUpgradable "$package_name" && package_upgrade_version=$(QPKG.Avail.GetVer "$package_name")
+			package_version_msg+=$(QPKG.Local.GetVer "$package_name")
 
 			if [[ -n $package_upgrade_version ]]; then
 				package_version_msg+=" ($(ColourTextBrightOrange "$package_upgrade_version"))"
-				package_name_msg+="$(ColourTextBrightOrange "$package_name")"
+				package_name_msg+=$(ColourTextBrightOrange "$package_name")
 			else
-				package_name_msg+="$package_name"
+				package_name_msg+=$package_name
 			fi
 
-			package_path_msg+="$(QPKG.GetInstallationPath "$package_name")"
+			package_path_msg+=$(QPKG.GetInstallationPath "$package_name")
 			;;
 		muted)
-			package_name_msg+="$(ColourTextDarkGrey "$package_name")"
+			package_name_msg+=$(ColourTextDarkGrey "$package_name")
 
 			if ! QPKG.IsArchOK "$package_name"; then
 				package_status='not installable: incompatible arch'
@@ -3396,15 +3389,15 @@ DisplayAsStatusReportLine()
 				package_status='not installed'
 			fi
 
-			package_status_msg="$(ColourTextDarkGrey "${CHARS_NORMAL}${package_status}")"
+			package_status_msg=$(ColourTextDarkGrey "${CHARS_NORMAL}${package_status}")
 			package_version_msg=''
 			package_path_msg=''
 			;;
 		highlighted)
-			package_name_msg+="$(ColourTextBrightRed "$package_name")"
-			package_status_msg="$(ColourTextBrightRedBlink "${CHARS_ALERT}missing")"
-			package_version_msg+="$(ColourTextBrightRed "$(QPKG.Local.GetVer "$package_name")")"
-			package_path_msg="$(ColourTextBrightRedBlink "${CHARS_ALERT}$(QPKG.GetInstallationPath "$package_name")")"
+			package_name_msg+=$(ColourTextBrightRed "$package_name")
+			package_status_msg=$(ColourTextBrightRedBlink "${CHARS_ALERT}missing")
+			package_version_msg+=$(ColourTextBrightRed "$(QPKG.Local.GetVer "$package_name")")
+			package_path_msg=$(ColourTextBrightRedBlink "${CHARS_ALERT}$(QPKG.GetInstallationPath "$package_name")")
 	esac
 
 	# column 1: package name
@@ -3438,30 +3431,28 @@ DisplayAsStatusReportLine()
 DisplayAsReposReportTitleLine()
 	{
 
-	local package_name_msg=''
-	local package_install_date_msg=''
-	local package_repo_msg=''
+	local msg=''
 	WriteEmptyLineIfNoneExists
 
 	# column 1: package name
 
 	if [[ $maxcols -ge 1 ]]; then
-		package_name_msg="${CHARS_SPECIAL}QPKG name:"
-		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
+		msg="${CHARS_SPECIAL}QPKG name:"
+		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	# column 2: package installation date
 
 	if [[ $maxcols -ge 2 ]]; then
-		package_install_date_msg="${CHARS_SPECIAL}install date:"
-		printf "%-$((PACKAGE_INSTALL_DATE_COL_WIDTH+2+$(LenANSIDiff "$package_install_date_msg")))s" "$package_install_date_msg"
+		msg="${CHARS_SPECIAL}install date:"
+		printf "%-$((PACKAGE_INSTALL_DATE_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	# column 3: package repository
 
 	if [[ $maxcols -ge 3 ]]; then
-		package_repo_msg="${CHARS_SPECIAL}repository:"
-		printf "%-$((PACKAGE_REPO_COL_WIDTH+2+$(LenANSIDiff "$package_repo_msg")))s" "$package_repo_msg"
+		msg="${CHARS_SPECIAL}repository:"
+		printf "%-$((PACKAGE_REPO_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	printf '\n'; linespace_visible=false
@@ -3474,13 +3465,13 @@ DisplayAsReposReportLine()
 	# input:
 	#	$1 = package name
 
-	local package_name="${1:?${FUNCNAME[0]}'()': undefined}"
-	local package_name_msg="$CHARS_BLANK"
-	local package_install_date="$(QPKG.GetInstallDate "$package_name")"
-	local package_install_date_msg="$CHARS_BLANK"
-	local package_store_id="$(QPKG.GetStoreID "$package_name")"
-	local assigned_repo="$(GetRepoURLFromStoreID "$package_store_id")"
-	local assigned_repo_msg="$CHARS_NORMAL"
+	local package_name=${1:?${FUNCNAME[0]}'()': undefined}
+	local package_name_msg=$CHARS_BLANK
+	local package_install_date=$(QPKG.GetInstallDate "$package_name")
+	local package_install_date_msg=$CHARS_BLANK
+	local package_store_id=$(QPKG.GetStoreID "$package_name")
+	local assigned_repo=$(GetRepoURLFromStoreID "$package_store_id")
+	local assigned_repo_msg=$CHARS_NORMAL
 	local mode=''
 
 	if QPKG.IsMissing "$package_name"; then
@@ -3493,28 +3484,28 @@ DisplayAsReposReportLine()
 
 	if [[ $package_store_id = sherpa ]]; then
 		assigned_repo=sherpa
-		assigned_repo_msg+="$(ColourTextBrightGreen "$assigned_repo")"
+		assigned_repo_msg+=$(ColourTextBrightGreen "$assigned_repo")
 	else
-		assigned_repo_msg+="$assigned_repo"
+		assigned_repo_msg+=$assigned_repo
 	fi
 
 	case $mode in
 		normal)
-			package_name_msg+="$package_name"
+			package_name_msg+=$package_name
 
 			case $package_install_date in
 				sherpa)
-					package_install_date_msg+="$(ColourTextBrightGreen "$package_install_date")"
+					package_install_date_msg+=$(ColourTextBrightGreen "$package_install_date")
 					;;
 				unassigned)
-					package_install_date_msg+="$(ColourTextBrightOrange "$package_install_date")"
+					package_install_date_msg+=$(ColourTextBrightOrange "$package_install_date")
 					;;
 				*)
-					package_install_date_msg+="$package_install_date"
+					package_install_date_msg+=$package_install_date
 			esac
 			;;
 		muted)
-			package_name_msg+="$(ColourTextDarkGrey "$package_name")"
+			package_name_msg+=$(ColourTextDarkGrey "$package_name")
 
 			if ! QPKG.IsArchOK "$package_name"; then
 				assigned_repo='not installable: incompatible arch'
@@ -3526,13 +3517,13 @@ DisplayAsReposReportLine()
 				assigned_repo='not installed'
 			fi
 
-			package_install_date_msg+="$(ColourTextDarkGrey "$assigned_repo")"
+			package_install_date_msg+=$(ColourTextDarkGrey "$assigned_repo")
 			assigned_repo=''
 			assigned_repo_msg=''
 			;;
 		highlighted)
-			package_name_msg+="$(ColourTextBrightRed "$package_name")"
-			package_install_date_msg+="$package_install_date"
+			package_name_msg+=$(ColourTextBrightRed "$package_name")
+			package_install_date_msg+=$package_install_date
 	esac
 
 	# column 1: package name
@@ -3560,22 +3551,21 @@ DisplayAsReposReportLine()
 DisplayAsAbsReportTitleLine()
 	{
 
-	local package_name_msg=''
-	local package_abs_msg=''
+	local msg=''
 	WriteEmptyLineIfNoneExists
 
 	# column 1: package name
 
 	if [[ $maxcols -ge 1 ]]; then
-		package_name_msg="${CHARS_SPECIAL}QPKG name:"
-		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
+		msg="${CHARS_SPECIAL}QPKG name:"
+		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	# column 2: package abbreviations
 
 	if [[ $maxcols -ge 2 ]]; then
-		package_abs_msg="${CHARS_SPECIAL}acceptable QPKG name abbreviations and aliases:"
-		printf "%-$((PACKAGE_ABBS_COL_WIDTH+2+$(LenANSIDiff "$package_abs_msg")))s" "$package_abs_msg"
+		msg="${CHARS_SPECIAL}acceptable QPKG name abbreviations and aliases:"
+		printf "%-$((PACKAGE_ABBS_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	printf '\n'; linespace_visible=false
@@ -3588,10 +3578,10 @@ DisplayAsAbsReportLine()
 	# input:
 	#	$1 = package name
 
-	local package_name="${1:?${FUNCNAME[0]}'()': undefined}"
-	local package_name_msg="$CHARS_BLANK"
+	local package_name=${1:?${FUNCNAME[0]}'()': undefined}
+	local package_name_msg=$CHARS_BLANK
 	local package_abs=''
-	local package_abs_msg="$CHARS_NORMAL"
+	local package_abs_msg=$CHARS_NORMAL
 	local mode=''
 
 	if QPKG.IsMissing "$package_name"; then
@@ -3605,17 +3595,17 @@ DisplayAsAbsReportLine()
 	package_abs=$(QPKG.GetAbbrvs "$package_name")
 
 	if [[ -n $package_abs ]]; then
-		package_abs="$(Trim "$package_abs")"
-		package_abs="${package_abs// /, }"	# insert separators
+		package_abs=$(Trim "$package_abs")
+		package_abs=${package_abs// /, }	# insert separators
 	fi
 
 	case $mode in
 		normal)
-			package_name_msg+="$package_name"
-			package_abs_msg+="$package_abs"
+			package_name_msg+=$package_name
+			package_abs_msg+=$package_abs
 			;;
 		muted)
-			package_name_msg+="$(ColourTextDarkGrey "$package_name")"
+			package_name_msg+=$(ColourTextDarkGrey "$package_name")
 
 			if ! QPKG.IsArchOK "$package_name"; then
 				package_abs_msg+='(not installable: incompatible arch)'
@@ -3624,14 +3614,14 @@ DisplayAsAbsReportLine()
 			elif ! QPKG.IsMinRAMOk "$package_name"; then
 				package_abs_msg+='(not installable: insufficient RAM)'
 			else
-				package_abs_msg+="$package_abs"
+				package_abs_msg+=$package_abs
 			fi
 
-			package_abs_msg="$(ColourTextDarkGrey "$package_abs_msg")"
+			package_abs_msg=$(ColourTextDarkGrey "$package_abs_msg")
 			;;
 		highlighted)
-			package_name_msg+="$(ColourTextBrightRed "$package_name")"
-			package_abs_msg="$(ColourTextBrightRedBlink "${CHARS_ALERT}${package_abs}")"
+			package_name_msg+=$(ColourTextBrightRed "$package_name")
+			package_abs_msg=$(ColourTextBrightRedBlink "${CHARS_ALERT}${package_abs}")
 	esac
 
 	# column 1: package name
@@ -3653,70 +3643,63 @@ DisplayAsAbsReportLine()
 DisplayAsDepsReportTitleLine()
 	{
 
-	local package_name_msg=''
-	local package_deps_msg=''
-	local package_installed_msg=''
-	local package_enabled_msg=''
-	local package_min_ram_msg=''
-	local package_min_os_msg=''
-	local package_max_os_msg=''
-	local package_arch_msg=''
+	local msg=''
 	WriteEmptyLineIfNoneExists
 
 	# column 1: package name
 
 	if [[ $maxcols -ge 1 ]]; then
-		package_name_msg="${CHARS_SPECIAL}QPKG name:"
-		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
+		msg="${CHARS_SPECIAL}QPKG name:"
+		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	# column 2: package dependencies
 
 	if [[ $maxcols -ge 2 ]]; then
-		package_deps_msg="${CHARS_SPECIAL}dependencies:"
-		printf "%-$((PACKAGE_DEPENDENCIES_COL_WIDTH+2+$(LenANSIDiff "$package_deps_msg")))s" "$package_deps_msg"
+		msg="${CHARS_SPECIAL}dependencies:"
+		printf "%-$((PACKAGE_DEPENDENCIES_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	# column 3: QPKG is installed
 
 	if [[ $maxcols -ge 3 ]]; then
-		package_installed_msg="${CHARS_SPECIAL}installed?"
-		printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+2+$(LenANSIDiff "$package_installed_msg")))s" "$package_installed_msg"
+		msg="${CHARS_SPECIAL}installed?"
+		printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	# column 4: QPKG is enabled
 
 	if [[ $maxcols -ge 4 ]]; then
-		package_enabled_msg="${CHARS_SPECIAL}enabled?"
-		printf "%-$((PACKAGE_ENABLED_COL_WIDTH+2+$(LenANSIDiff "$package_enabled_msg")))s" "$package_enabled_msg"
+		msg="${CHARS_SPECIAL}enabled?"
+		printf "%-$((PACKAGE_ENABLED_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	# column 5: minimum NAS RAM required
 
 	if [[ $maxcols -ge 5 ]]; then
-		package_min_ram_msg="${CHARS_SPECIAL}min RAM:"
-		printf "%-$((PACKAGE_MIN_RAM_COL_WIDTH+2+$(LenANSIDiff "$package_min_ram_msg")))s" "$package_min_ram_msg"
+		msg="${CHARS_SPECIAL}min RAM:"
+		printf "%-$((PACKAGE_MIN_RAM_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	# column 6: minimum OS fimware version supported
 
 	if [[ $maxcols -ge 6 ]]; then
-		package_min_os_msg="${CHARS_SPECIAL}min OS:"
-		printf "%-$((PACKAGE_MIN_OS_COL_WIDTH+2+$(LenANSIDiff "$package_min_os_msg")))s" "$package_min_os_msg"
+		msg="${CHARS_SPECIAL}min OS:"
+		printf "%-$((PACKAGE_MIN_OS_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	# column 7: maximum OS fimware version supported
 
 	if [[ $maxcols -ge 7 ]]; then
-		package_max_os_msg="${CHARS_SPECIAL}max OS:"
-		printf "%-$((PACKAGE_MAX_OS_COL_WIDTH+2+$(LenANSIDiff "$package_max_os_msg")))s" "$package_max_os_msg"
+		msg="${CHARS_SPECIAL}max OS:"
+		printf "%-$((PACKAGE_MAX_OS_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	# column 8: arch is compatible
 
 	if [[ $maxcols -ge 8 ]]; then
-		package_arch_msg="${CHARS_SPECIAL}supported arch?"
-		printf "%-$((PACKAGE_ARCH_COL_WIDTH+2+$(LenANSIDiff "$package_arch_msg")))s" "$package_arch_msg"
+		msg="${CHARS_SPECIAL}supported arch?"
+		printf "%-$((PACKAGE_ARCH_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	printf '\n'; linespace_visible=false
@@ -3729,31 +3712,31 @@ DisplayAsDepsReportLine()
 	# input:
 	#	$1 = package name
 
-	local package_name="${1:?${FUNCNAME[0]}'()': undefined}"
-	local package_name_msg="$CHARS_BLANK"
+	local package_name=${1:?${FUNCNAME[0]}'()': undefined}
+	local package_name_msg=$CHARS_BLANK
 	local package_deps_raw=$(QPKG.GetDependencies "$package_name")
 	[[ -z $package_deps_raw ]] && package_deps_raw=none
 	local package_deps=''
-	local package_deps_msg="$CHARS_NORMAL"
-	local package_enabled_msg="$CHARS_BLANK"
-	local package_installed_msg="$CHARS_BLANK"
+	local package_deps_msg=$CHARS_NORMAL
+	local package_enabled_msg=$CHARS_BLANK
+	local package_installed_msg=$CHARS_BLANK
 	local dep=''
-	local package_min_ram="$(QPKG.GetMinRAM "$package_name")"
-	local package_min_ram_msg="$CHARS_BLANK"
+	local package_min_ram=$(QPKG.GetMinRAM "$package_name")
+	local package_min_ram_msg=$CHARS_BLANK
 
 	if [[ $package_min_ram != none ]]; then
-		package_min_ram="$(FormatAsThous "$package_min_ram")kB"
+		package_min_ram=$(FormatAsThous "$package_min_ram")kB
 	fi
 
-	local package_min_os="$(QPKG.GetMinOSVer "$package_name")"
-	[[ -n $package_min_os && $package_min_os != none ]] && package_min_os="${package_min_os:0:1}.${package_min_os:1:1}.${package_min_os:2:1}"
-	local package_min_os_msg="$CHARS_BLANK"
+	local package_min_os=$(QPKG.GetMinOSVer "$package_name")
+	[[ -n $package_min_os && $package_min_os != none && ${#package_min_os} -eq 3 ]] && package_min_os=${package_min_os:0:1}.${package_min_os:1:1}.${package_min_os:2:1}
+	local package_min_os_msg=$CHARS_BLANK
 
-	local package_max_os="$(QPKG.GetMaxOSVer "$package_name")"
-	[[ -n $package_max_os && $package_max_os != none ]] && package_max_os="${package_max_os:0:1}.${package_max_os:1:1}.${package_max_os:2:1}"
-	local package_max_os_msg="$CHARS_BLANK"
+	local package_max_os=$(QPKG.GetMaxOSVer "$package_name")
+	[[ -n $package_max_os && $package_max_os != none && ${#package_max_os} -eq 3 ]] && package_max_os=${package_max_os:0:1}.${package_max_os:1:1}.${package_max_os:2:1}
+	local package_max_os_msg=$CHARS_BLANK
 
-	local package_arch_msg="$CHARS_BLANK"
+	local package_arch_msg=$CHARS_BLANK
 	local mode=''
 
 	if QPKG.IsMissing "$package_name"; then
@@ -3766,175 +3749,175 @@ DisplayAsDepsReportLine()
 
 	case $mode in
 		normal)
-			package_name_msg+="$package_name"
+			package_name_msg+=$package_name
 
 			if [[ $package_deps_raw != none ]]; then
 				for dep in $package_deps_raw; do
 					[[ -n $package_deps ]] && package_deps+=' '
 
 					if QPKG.IsInstalled "$dep" && QPKG.IsEnabled "$dep"; then
-						package_deps+="$(ColourTextBrightGreen "$dep")"
+						package_deps+=$(ColourTextBrightGreen "$dep")
 					else
-						package_deps+="$(ColourTextBrightRed "$dep")"
-						package_deps_msg="$(ColourTextBrightRed "$CHARS_ALERT")"
-						package_name_msg="${CHARS_BLANK}$(ColourTextBrightRed "$package_name")"
+						package_deps+=$(ColourTextBrightRed "$dep")
+						package_deps_msg=$(ColourTextBrightRed "$CHARS_ALERT")
+						package_name_msg=${CHARS_BLANK}$(ColourTextBrightRed "$package_name")
 					fi
 				done
 			else
-				package_deps+="$(ColourTextBrightGreen "$package_deps_raw")"
+				package_deps+=$(ColourTextBrightGreen "$package_deps_raw")
 			fi
 
-			package_deps_msg+="${package_deps// /, }"
+			package_deps_msg+=${package_deps// /, }
 
 			if QPKG.IsInstalled "$package_name"; then
-				package_installed_msg+="$(ColourTextBrightGreen true)"
+				package_installed_msg+=$(ColourTextBrightGreen true)
 			else
 				package_installed_msg+=false
 			fi
 
 			if QPKG.IsEnabled "$package_name"; then
-				package_enabled_msg+="$(ColourTextBrightGreen true)"
+				package_enabled_msg+=$(ColourTextBrightGreen true)
 			else
-				package_enabled_msg="$(ColourTextBrightRed "$CHARS_ALERT")"
-				package_enabled_msg+="$(ColourTextBrightRed false)"
-				package_name_msg="${CHARS_BLANK}$(ColourTextBrightRed "$package_name")"
+				package_enabled_msg=$(ColourTextBrightRed "$CHARS_ALERT")
+				package_enabled_msg+=$(ColourTextBrightRed false)
+				package_name_msg=${CHARS_BLANK}$(ColourTextBrightRed "$package_name")
 			fi
 
 			if QPKG.IsMinRAMOk "$package_name"; then
-				package_min_ram_msg+="$(ColourTextBrightGreen "$package_min_ram")"
+				package_min_ram_msg+=$(ColourTextBrightGreen "$package_min_ram")
 			else
-				package_min_ram_msg="$(ColourTextBrightRed "$CHARS_ALERT")"
-				package_min_ram_msg+="$(ColourTextBrightRed "$package_min_ram")"
-				package_name_msg="${CHARS_BLANK}$(ColourTextBrightRed "$package_name")"
+				package_min_ram_msg=$(ColourTextBrightRed "$CHARS_ALERT")
+				package_min_ram_msg+=$(ColourTextBrightRed "$package_min_ram")
+				package_name_msg=${CHARS_BLANK}$(ColourTextBrightRed "$package_name")
 			fi
 
 			if QPKG.IsMinOSVerOk "$package_name"; then
-				package_min_os_msg+="$(ColourTextBrightGreen "$package_min_os")"
+				package_min_os_msg+=$(ColourTextBrightGreen "$package_min_os")
 			else
-				package_min_os_msg="$(ColourTextBrightRed "$CHARS_ALERT")"
-				package_min_os_msg+="$(ColourTextBrightRed "$package_min_os")"
-				package_name_msg="${CHARS_BLANK}$(ColourTextBrightRed "$package_name")"
+				package_min_os_msg=$(ColourTextBrightRed "$CHARS_ALERT")
+				package_min_os_msg+=$(ColourTextBrightRed "$package_min_os")
+				package_name_msg=${CHARS_BLANK}$(ColourTextBrightRed "$package_name")
 			fi
 
 			if QPKG.IsMaxOSVerOk "$package_name"; then
-				package_max_os_msg+="$(ColourTextBrightGreen "$package_max_os")"
+				package_max_os_msg+=$(ColourTextBrightGreen "$package_max_os")
 			else
-				package_max_os_msg="$(ColourTextBrightRed "$CHARS_ALERT")"
-				package_max_os_msg+="$(ColourTextBrightRed "$package_max_os")"
-				package_name_msg="${CHARS_BLANK}$(ColourTextBrightRed "$package_name")"
+				package_max_os_msg=$(ColourTextBrightRed "$CHARS_ALERT")
+				package_max_os_msg+=$(ColourTextBrightRed "$package_max_os")
+				package_name_msg=${CHARS_BLANK}$(ColourTextBrightRed "$package_name")
 			fi
 
 			if QPKG.IsArchOK "$package_name"; then
-				package_arch_msg+="$(ColourTextBrightGreen true)"
+				package_arch_msg+=$(ColourTextBrightGreen true)
 			else
-				package_arch_msg="$(ColourTextBrightRed "$CHARS_ALERT")"
-				package_arch_msg+="$(ColourTextBrightRed false)"
-				package_name_msg="${CHARS_BLANK}$(ColourTextBrightRed "$package_name")"
+				package_arch_msg=$(ColourTextBrightRed "$CHARS_ALERT")
+				package_arch_msg+=$(ColourTextBrightRed false)
+				package_name_msg=${CHARS_BLANK}$(ColourTextBrightRed "$package_name")
 			fi
 			;;
 		muted)
-			package_name_msg+="$(ColourTextDarkGrey "$package_name")"
-			package_deps_msg="$(ColourTextDarkGrey "$CHARS_NORMAL")"
+			package_name_msg+=$(ColourTextDarkGrey "$package_name")
+			package_deps_msg=$(ColourTextDarkGrey "$CHARS_NORMAL")
 
 			if [[ $package_deps_raw != none ]]; then
 				for dep in $package_deps_raw; do
 					[[ -n $package_deps ]] && package_deps+=' '
-					package_deps+="$(ColourTextDarkGrey "$dep")"
+					package_deps+=$(ColourTextDarkGrey "$dep")
 				done
 			else
-				package_deps+="$(ColourTextDarkGrey "$package_deps_raw")"
+				package_deps+=$(ColourTextDarkGrey "$package_deps_raw")
 			fi
 
-			package_deps_msg+="${package_deps// /, }"
-			package_installed_msg+="$(ColourTextDarkGrey false)"
-			package_enabled_msg+="$(ColourTextDarkGrey 'N/A')"
+			package_deps_msg+=${package_deps// /, }
+			package_installed_msg+=$(ColourTextDarkGrey false)
+			package_enabled_msg+=$(ColourTextDarkGrey 'N/A')
 
 			if QPKG.IsMinRAMOk "$package_name"; then
-				package_min_ram_msg+="$(ColourTextDarkGrey "$package_min_ram")"
+				package_min_ram_msg+=$(ColourTextDarkGrey "$package_min_ram")
 			else
-				package_min_ram_msg="$(ColourTextBrightOrange "$CHARS_ATTENTION")"
-				package_min_ram_msg+="$(ColourTextBrightOrange "$package_min_ram")"
-				package_name_msg="${CHARS_BLANK}$(ColourTextBrightOrange "$package_name")"
+				package_min_ram_msg=$(ColourTextBrightOrange "$CHARS_ATTENTION")
+				package_min_ram_msg+=$(ColourTextBrightOrange "$package_min_ram")
+				package_name_msg=${CHARS_BLANK}$(ColourTextBrightOrange "$package_name")
 			fi
 
 			if QPKG.IsMinOSVerOk "$package_name"; then
-				package_min_os_msg+="$(ColourTextDarkGrey "$package_min_os")"
+				package_min_os_msg+=$(ColourTextDarkGrey "$package_min_os")
 			else
-				package_min_os_msg="$(ColourTextBrightOrange "$CHARS_ATTENTION")"
-				package_min_os_msg+="$(ColourTextBrightOrange "$package_min_os")"
-				package_name_msg="${CHARS_BLANK}$(ColourTextBrightOrange "$package_name")"
+				package_min_os_msg=$(ColourTextBrightOrange "$CHARS_ATTENTION")
+				package_min_os_msg+=$(ColourTextBrightOrange "$package_min_os")
+				package_name_msg=${CHARS_BLANK}$(ColourTextBrightOrange "$package_name")
 			fi
 
 			if QPKG.IsMaxOSVerOk "$package_name"; then
-				package_max_os_msg+="$(ColourTextDarkGrey "$package_max_os")"
+				package_max_os_msg+=$(ColourTextDarkGrey "$package_max_os")
 			else
-				package_max_os_msg="$(ColourTextBrightOrange "$CHARS_ATTENTION")"
-				package_max_os_msg+="$(ColourTextBrightOrange "$package_max_os")"
-				package_name_msg="${CHARS_BLANK}$(ColourTextBrightOrange "$package_name")"
+				package_max_os_msg=$(ColourTextBrightOrange "$CHARS_ATTENTION")
+				package_max_os_msg+=$(ColourTextBrightOrange "$package_max_os")
+				package_name_msg=${CHARS_BLANK}$(ColourTextBrightOrange "$package_name")
 			fi
 
 			if QPKG.IsArchOK "$package_name"; then
-				package_arch_msg+="$(ColourTextDarkGrey true)"
+				package_arch_msg+=$(ColourTextDarkGrey true)
 			else
-				package_arch_msg="$(ColourTextBrightOrange "$CHARS_ATTENTION")"
-				package_arch_msg+="$(ColourTextBrightOrange false)"
-				package_name_msg="${CHARS_BLANK}$(ColourTextBrightOrange "$package_name")"
+				package_arch_msg=$(ColourTextBrightOrange "$CHARS_ATTENTION")
+				package_arch_msg+=$(ColourTextBrightOrange false)
+				package_name_msg=${CHARS_BLANK}$(ColourTextBrightOrange "$package_name")
 			fi
 			;;
 		highlighted)
-			package_name_msg+="$(ColourTextBrightRed "$package_name")"
+			package_name_msg+=$(ColourTextBrightRed "$package_name")
 
 			if [[ $package_deps_raw != none ]]; then
 				for dep in $package_deps_raw; do
 					[[ -n $package_deps ]] && package_deps+=' '
 
 					if QPKG.IsInstalled "$dep" && QPKG.IsEnabled "$dep"; then
-						package_deps+="$(ColourTextBrightGreen "$dep")"
+						package_deps+=$(ColourTextBrightGreen "$dep")
 					else
-						package_deps+="$(ColourTextBrightRed "$dep")"
+						package_deps+=$(ColourTextBrightRed "$dep")
 					fi
 				done
 			else
-				package_deps+="$(ColourTextBrightGreen "$package_deps_raw")"
+				package_deps+=$(ColourTextBrightGreen "$package_deps_raw")
 			fi
 
-			package_deps_msg+="${package_deps// /, }"
-			package_installed_msg="$(ColourTextBrightRedBlink "$CHARS_ALERT")"
-			package_installed_msg+="$(ColourTextBrightRedBlink 'missing')"
+			package_deps_msg+=${package_deps// /, }
+			package_installed_msg=$(ColourTextBrightRedBlink "$CHARS_ALERT")
+			package_installed_msg+=$(ColourTextBrightRedBlink 'missing')
 
 			if QPKG.IsEnabled "$package_name"; then
-				package_enabled_msg+="$(ColourTextBrightGreen true)"
+				package_enabled_msg+=$(ColourTextBrightGreen true)
 			else
-				package_enabled_msg="$(ColourTextBrightRedBlink "$CHARS_ALERT")"
-				package_enabled_msg+="$(ColourTextBrightRed 'false')"
+				package_enabled_msg=$(ColourTextBrightRedBlink "$CHARS_ALERT")
+				package_enabled_msg+=$(ColourTextBrightRed 'false')
 			fi
 
 			if QPKG.IsMinRAMOk "$package_name"; then
-				package_min_ram_msg+="$(ColourTextBrightGreen "$package_min_ram")"
+				package_min_ram_msg+=$(ColourTextBrightGreen "$package_min_ram")
 			else
-				package_min_ram_msg="$(ColourTextBrightRed "$CHARS_ALERT")"
-				package_min_ram_msg+="$(ColourTextBrightRed "$package_min_ram")"
+				package_min_ram_msg=$(ColourTextBrightRed "$CHARS_ALERT")
+				package_min_ram_msg+=$(ColourTextBrightRed "$package_min_ram")
 			fi
 
 			if QPKG.IsMinOSVerOk "$package_name"; then
-				package_min_os_msg+="$(ColourTextBrightGreen "$package_min_os")"
+				package_min_os_msg+=$(ColourTextBrightGreen "$package_min_os")
 			else
-				package_min_os_msg="$(ColourTextBrightRed "$CHARS_ALERT")"
-				package_min_os_msg+="$(ColourTextBrightRed "$package_min_os")"
+				package_min_os_msg=$(ColourTextBrightRed "$CHARS_ALERT")
+				package_min_os_msg+=$(ColourTextBrightRed "$package_min_os")
 			fi
 
 			if QPKG.IsMaxOSVerOk "$package_name"; then
-				package_max_os_msg+="$(ColourTextBrightGreen "$package_max_os")"
+				package_max_os_msg+=$(ColourTextBrightGreen "$package_max_os")
 			else
-				package_max_os_msg="$(ColourTextBrightRed "$CHARS_ALERT")"
-				package_max_os_msg+="$(ColourTextBrightRed "$package_max_os")"
+				package_max_os_msg=$(ColourTextBrightRed "$CHARS_ALERT")
+				package_max_os_msg+=$(ColourTextBrightRed "$package_max_os")
 			fi
 
 			if QPKG.IsArchOK "$package_name"; then
-				package_arch_msg+="$(ColourTextBrightGreen true)"
+				package_arch_msg+=$(ColourTextBrightGreen true)
 			else
-				package_arch_msg="$(ColourTextBrightRed "$CHARS_ALERT")"
-				package_arch_msg+="$(ColourTextBrightRed false)"
+				package_arch_msg=$(ColourTextBrightRed "$CHARS_ALERT")
+				package_arch_msg+=$(ColourTextBrightRed false)
 			fi
 	esac
 
@@ -4040,7 +4023,7 @@ DisplayAsIndentPrefixActionResultDurationReason()
 
 	local duration=''
 
-	[[ -n ${4:-} ]] && duration="$(FormatMillisecsToMinutesSecs "$4")"
+	[[ -n ${4:-} ]] && duration=$(FormatMillisecsToMinutesSecs "$4")
 
 	printf "%${ACTION_RESULT_INDENT}s" ''
 
@@ -4514,7 +4497,7 @@ DisplayFileInWindow()
 	local onescreen=false
 	local options_msg=''
 	local prompt_msg=' use arrow-keys to scroll up-down & left-right, press Q to quit '
-	local filename="${1:-}"
+	local filename=${1:-}
 
 	if [[ ! -e $filename ]]; then
 		echo "filename '$filename' not found"
@@ -4763,17 +4746,17 @@ InitForkCounts()
 
 	# Create directories so background processes can be monitored.
 
-	proc_counts_path="$($MKTEMP_CMD -d /var/run/"${FUNCNAME[1]}"_XXXXXX)"
+	proc_counts_path=$($MKTEMP_CMD -d /var/run/"${FUNCNAME[1]}"_XXXXXX)
 	[[ -n ${proc_counts_path:?undefined proc counts path} ]] || return
 
 	EraseForkCountPaths
 
-	proc_fork_count_path="$proc_counts_path/fork.count"
-	proc_ok_count_path="$proc_counts_path/ok.count"
-	proc_skip_ok_count_path="$proc_counts_path/skip.ok.count"
-	proc_skip_count_path="$proc_counts_path/skip.count"
-	proc_skip_error_count_path="$proc_counts_path/skip.error.count"
-	proc_fail_count_path="$proc_counts_path/fail.count"
+	proc_fork_count_path=$proc_counts_path/fork.count
+	proc_ok_count_path=$proc_counts_path/ok.count
+	proc_skip_ok_count_path=$proc_counts_path/skip.ok.count
+	proc_skip_count_path=$proc_counts_path/skip.count
+	proc_skip_error_count_path=$proc_counts_path/skip.error.count
+	proc_fail_count_path=$proc_counts_path/fail.count
 
 	mkdir -p "$proc_fork_count_path"
 	mkdir -p "$proc_ok_count_path"
@@ -4790,26 +4773,26 @@ IncForkProgressIndex()
 	{
 
 	((progress_index++))
-	local formatted_index="$(printf '%02d' "$progress_index")"
+	local formatted_index=$(printf '%02d' "$progress_index")
 
-	proc_fork_pathfile="$proc_fork_count_path/$formatted_index"
-	proc_ok_pathfile="$proc_ok_count_path/$formatted_index"
-	proc_skipok_pathfile="$proc_skip_ok_count_path/$formatted_index"
-	proc_skip_pathfile="$proc_skip_count_path/$formatted_index"
-	proc_skip_error_pathfile="$proc_skip_error_count_path/$formatted_index"
-	proc_fail_pathfile="$proc_fail_count_path/$formatted_index"
+	proc_fork_pathfile=$proc_fork_count_path/$formatted_index
+	proc_ok_pathfile=$proc_ok_count_path/$formatted_index
+	proc_skipok_pathfile=$proc_skip_ok_count_path/$formatted_index
+	proc_skip_pathfile=$proc_skip_count_path/$formatted_index
+	proc_skip_error_pathfile=$proc_skip_error_count_path/$formatted_index
+	proc_fail_pathfile=$proc_fail_count_path/$formatted_index
 
 	}
 
 RefreshForkCounts()
 	{
 
-	fork_count="$(ls -A -1 "$proc_fork_count_path" 2>/dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')"
-	ok_count="$(ls -A -1 "$proc_ok_count_path" 2>/dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')"
-	skip_ok_count="$(ls -A -1 "$proc_skip_ok_count_path" 2>/dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')"
-	skip_count="$(ls -A -1 "$proc_skip_count_path" 2>/dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')"
-	skip_error_count="$(ls -A -1 "$proc_skip_error_count_path" 2>/dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')"
-	fail_count="$(ls -A -1 "$proc_fail_count_path" 2>/dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')"
+	fork_count=$(ls -A -1 "$proc_fork_count_path" 2>/dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
+	ok_count=$(ls -A -1 "$proc_ok_count_path" 2>/dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
+	skip_ok_count=$(ls -A -1 "$proc_skip_ok_count_path" 2>/dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
+	skip_count=$(ls -A -1 "$proc_skip_count_path" 2>/dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
+	skip_error_count=$(ls -A -1 "$proc_skip_error_count_path" 2>/dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
+	fail_count=$(ls -A -1 "$proc_fail_count_path" 2>/dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
 
 	} &>/dev/null
 
@@ -4841,7 +4824,7 @@ UpdateForkProgress()
 	[[ $opts_verbose = true ]] && return		# Don't display progress, it's difficult to read with so-many other writes to the screen.
 	[[ ! -e $DISPLAY_INHIBIT_PATHFILE ]] || return
 
-	msg="$(PercFrac "$ok_count" "$((skip_count+skip_ok_count+skip_error_count))" "$fail_count" "$total_count")"
+	msg=$(PercFrac "$ok_count" "$((skip_count+skip_ok_count+skip_error_count))" "$fail_count" "$total_count")
 
 	if [[ $ok_count -gt 0 ]]; then
 		[[ -n $msg ]] && msg+=': '
@@ -4907,14 +4890,14 @@ QPKGs.Missing:Show()
 	done
 
 	if [[ ${#packages[@]} -eq 1 ]]; then
-		premsg='QPKG is'
-		sufmsg='Please reinstall it'
+		premsg=' is'
+		sufmsg='it'
 	else
-		premsg='QPKGs are'
-		sufmsg='Please reinstall them'
+		premsg='s are'
+		sufmsg='them'
 	fi
 
-	ShowAsInfo "the $names_formatted $premsg missing or broken. $sufmsg."
+	ShowAsInfo "the $names_formatted QPKG${premsg} missing or broken. Please reinstall $sufmsg."
 	return 1
 
 	}
@@ -5229,7 +5212,7 @@ QPKGs.States:Build()
 	local package=''
 	local prev=''
 	OS.IsStarting && ShowAsWarn "$(GetQnapOS) is still starting. QPKG statuses are in-flux. Try checking again in a few minutes."
-	OS.IsStopping && ShowAsWarn "$(GetQnapOS) is shutting-down. All QPKGs are in the process of being stopped."
+	OS.IsStopping && ShowAsWarn "$(GetQnapOS) is shutting-down. All QPKGs are being stopped."
 	ShowAsProc 'QPKG states'
 
 	for package in $(QPKGs-SCall:Array); do
@@ -5407,14 +5390,14 @@ Report.Backups:Show()
 		DisplayAsHelpTitle "the location for $(ShowTitleName) backups is: $QPKG_BU_PATH"
 
 		if [[ -e $GNU_FIND_CMD ]]; then
-			DisplayAsHelpTitle "backups are listed oldest-first, and those shown in $(ColourTextBrightRed '!red') were last updated more than $highlight_older_than."
+			DisplayAsHelpTitle "backups are listed oldest-first, and those shown in $(ColourTextBrightRed '! red') were last updated more than $highlight_older_than."
 			DisplayAsHelpTitleFileNamePlusSomething 'backup file' 'last backup date'
 
 			while read -r epochtime filename; do
 				[[ -z $epochtime || -z $filename ]] && break
 
 				if [[ ${epochtime%.*} -lt $(/bin/date --date="$highlight_older_than" +%s) ]]; then
-					format="$(ColourTextBrightRed "%${HELP_DESC_INDENT}s%-${FILE_NAME_COL_WIDTH}s - !%s\n")"
+					format=$(ColourTextBrightRed "%${HELP_DESC_INDENT}s%-${FILE_NAME_COL_WIDTH}s - !%s\n")
 				else
 					format="%${HELP_DESC_INDENT}s%-${FILE_NAME_COL_WIDTH}s - %s\n"
 				fi
@@ -5900,22 +5883,6 @@ NoteIpkAcAsOk()
 
 	}
 
-NoteIpkAcAsSk()
-	{
-
-	# Move specified IPK package name from `to` action array into associated `sk` array.
-
-	# input:
-	#   $1 = package name
-	#   $2 = action
-
-	IPKs-AC"$2"-to:Remove "$1"
-	IPKs-AC"$2"-sk:Add "$1"
-
-	return 0
-
-	}
-
 NoteIpkAcAsEr()
 	{
 
@@ -5945,13 +5912,13 @@ ModPathToEntware()
 
 	if QPKGs-ISenabled.Exist Entware; then
 		! [[ $PATH =~ $OPKG ]] || return
-		temp="$($SED_CMD "s|$OPKG:||" <<< "$PATH:")"	# Append colon prior to searching, then remove existing Entware paths.
-		export PATH="$OPKG:${temp%:}"					# ... now prepend Entware paths and remove trailing colon
+		temp=$($SED_CMD "s|$OPKG:||" <<< "$PATH:")		# Append colon prior to searching, then remove existing Entware paths.
+		export PATH=$OPKG:${temp%:}						# ... now prepend Entware paths and remove trailing colon
 		DebugAsDone 'prepended Entware to $PATH'
 	else
 		[[ $PATH =~ $OPKG ]] || return
-		temp="$($SED_CMD "s|$OPKG:||" <<< "$PATH:")"	# Append colon prior to searching, then remove existing Entware paths.
-		export PATH="${temp%:}"							# ... now remove trailing colon
+		temp=$($SED_CMD "s|$OPKG:||" <<< "$PATH:")		# Append colon prior to searching, then remove existing Entware paths.
+		export PATH=${temp%:}							# ... now remove trailing colon
 		DebugAsDone 'removed Entware from $PATH'
 	fi
 
@@ -6433,8 +6400,8 @@ SaveActionResultToLog()
 	local -r CLEAN_ACTION=${ACTION//\"/}
 	local -r RESULT=${4:?${FUNCNAME[0]}'()': undefined}
 	local -r REASON=${5:-}
-	local -r DURATION="$(CalcMilliDifference "${!var_safe_name}" "$(/bin/date +%s%N)")"
-	local -r ACTION_TIMES_PATHFILE="$ACTION_TIMES_PATH/$CLEAN_ACTION.milliseconds"
+	local -r DURATION=$(CalcMilliDifference "${!var_safe_name}" "$(/bin/date +%s%N)")
+	local -r ACTION_TIMES_PATHFILE=$ACTION_TIMES_PATH/$CLEAN_ACTION.milliseconds
 
 	# Write new action results entry.
 	echo "$(/bin/date +%s)|$ACTION|$PACKAGE_NAME|$RESULT|$DURATION|$REASON|$PACKAGE_TYPE" >> "$SESS_ACTIONS_RESULTS_PATHFILE"
@@ -7769,7 +7736,7 @@ QPKG.Avail.GetVer()
 	local prev=''
 
 	for index in "${!QPKG_NAME[@]}"; do
-		package="${QPKG_NAME[$index]}"
+		package=${QPKG_NAME[$index]}
 		[[ $package = "$prev" ]] && continue || prev=$package
 
 		if [[ ${1:-${PACKAGE_NAME:-sherpa}} = "$package" ]]; then
@@ -7828,7 +7795,7 @@ QPKG.IsRepoOk()
 	# output:
 	#   $? = 0 if true, 1 if false
 
-	local temp="$(QPKG.GetStoreID "${1:-${PACKAGE_NAME:-sherpa}}")"
+	local temp=$(QPKG.GetStoreID "${1:-${PACKAGE_NAME:-sherpa}}")
 	[[ -z $temp || $temp = sherpa ]]
 
 	}
@@ -8063,7 +8030,7 @@ QPKG.IsArchOK()
 	# output:
 	#   $? = 0 if true, 1 if false.
 
-	local temp="$(QPKG.GetURL "${1:-$PACKAGE_NAME}")"
+	local temp=$(QPKG.GetURL "${1:-$PACKAGE_NAME}")
 	[[ -n $temp && $temp != none ]]
 
 	}
@@ -8100,7 +8067,7 @@ QPKG.IsMinRAMOk()
 	# output:
 	#   $? = 0 if this NAS meets the minium RAM requirements for QPKG name, 1 if not.
 
-	local min="$(QPKG.GetMinRAM "${1:?${FUNCNAME[0]}'()': undefined}")"
+	local min=$(QPKG.GetMinRAM "${1:?${FUNCNAME[0]}'()': undefined}")
 	[[ -n $min ]] && [[ $min = none || $NAS_RAM_KB -ge $min ]]
 
 	}
@@ -8137,7 +8104,7 @@ QPKG.IsMinOSVerOk()
 	# output:
 	#   $? = 0 if this NAS meets the minium OS firmware version requirements for QPKG name, 1 if not.
 
-	local min="$(QPKG.GetMinOSVer "${1:?${FUNCNAME[0]}'()': undefined}")"
+	local min=$(QPKG.GetMinOSVer "${1:?${FUNCNAME[0]}'()': undefined}")
 	[[ -n $min ]] && [[ $min = none || ${NAS_FIRMWARE_VER//.} -ge $min ]]
 
 	}
@@ -8174,7 +8141,7 @@ QPKG.IsMaxOSVerOk()
 	# output:
 	#   $? = 0 if this NAS meets the maximum OS firmware version requirements for QPKG name, 1 if not.
 
-	local max="$(QPKG.GetMaxOSVer "${1:?${FUNCNAME[0]}'()': undefined}")"
+	local max=$(QPKG.GetMaxOSVer "${1:?${FUNCNAME[0]}'()': undefined}")
 	[[ -n $max ]] && [[ $max = none || ${NAS_FIRMWARE_VER//.} -le $max ]]
 
 	}
@@ -8482,7 +8449,7 @@ QPKG.GetActiveTest()
 
 	for index in "${!QPKG_NAME[@]}"; do
 		if [[ ${QPKG_NAME[$index]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
-			buff="${QPKG_TEST_FOR_ACTIVE[$index]}"
+			buff=${QPKG_TEST_FOR_ACTIVE[$index]}
 			[[ -n $buff ]] || break
 
 			echo "$buff"
@@ -8600,7 +8567,7 @@ RunAndLog()
 	#   $? = result_code of commandstring.
 
 	Func:Init
-	local -r LOG_PATHFILE="$($MKTEMP_CMD /var/log/"${FUNCNAME[0]}"_XXXXXX)"
+	local -r LOG_PATHFILE=$($MKTEMP_CMD /var/log/"${FUNCNAME[0]}"_XXXXXX)
 	local -i result_code=0
 	[[ -n ${1:?${FUNCNAME[0]}'()': undefined} ]] || return
 	[[ -n ${2:?${FUNCNAME[0]}'()': undefined} ]] || return
@@ -8868,24 +8835,13 @@ ShowAsCommand()
 
 	}
 
-ShowAsResult()
-	{
-
-	[[ -n ${1:-} ]] || return
-	local prefix="$CHARS_RESULTS"
-	[[ ${1:-0} -ne 0 ]] && prefix="$CHARS_ALERT"
-
-	echo "${prefix}result_code: $(ShowAsExitcode "$1")"
-
-	}
-
 ShowAsResultAndStdout()
 	{
 
 	[[ -n ${1:-} ]] || return
 	[[ -n ${2:-} ]] || return
-	local prefix="$CHARS_RESULTS"
-	[[ ${1:-0} -ne 0 ]] && prefix="$CHARS_ALERT"
+	local prefix=$CHARS_RESULTS
+	[[ ${1:-0} -ne 0 ]] && prefix=$CHARS_ALERT
 
 	echo "${prefix}result_code: $(ShowAsExitcode "$1") ***** stdout/stderr begins below *****"
 	echo "$2"
@@ -9145,8 +9101,8 @@ FuncFork:Init()
 	# Debug forked function entry.
 
 	# Redirect debug output to a temporary log, then add it to session log before exiting. This will keep action log progress in-order.
-	original_sess_active_pathfile="$sess_active_pathfile"
-	sess_active_pathfile="$($MKTEMP_CMD /var/log/"${FUNCNAME[1]}"_XXXXXX)"
+	original_sess_active_pathfile=$sess_active_pathfile
+	sess_active_pathfile=$($MKTEMP_CMD /var/log/"${FUNCNAME[1]}"_XXXXXX)
 
 	local -r VAR_NAME=${FUNCNAME[1]}_STARTSECONDS
 	local var_safe_name=${VAR_NAME//[.-]/_}
@@ -9177,7 +9133,7 @@ FuncFork:Exit()
 		rm -f "$sess_active_pathfile"
 	fi
 
-	sess_active_pathfile="$original_sess_active_pathfile"
+	sess_active_pathfile=$original_sess_active_pathfile
 	original_sess_active_pathfile=''
 
 	exit ${1:-0}
@@ -9329,7 +9285,7 @@ ShowAsProc()
 
 	[[ -n ${1:-} ]] || return
 	local suffix=''
-	[[ -n ${2:-} ]] && suffix="${2:-}"
+	[[ -n ${2:-} ]] && suffix=${2:-}
 
 	WriteToDisplayRewriteInPlaceThenWait "$(ColourTextBrightYellow proc)" "$1 $CHARS_ELLIPSIS $suffix"
 	WriteToLog proc "${1}${suffix}"
@@ -9352,7 +9308,7 @@ ShowAsInfo()
 	# Note to user.
 
 	[[ -n ${1:-} ]] || return
-	local capitalised="$(Capitalise "$1")"
+	local capitalised=$(Capitalise "$1")
 
 	EraseThisLine
 	WriteToDisplay "$(ColourTextBrightYellow note)" "$capitalised"
@@ -9424,7 +9380,7 @@ ShowAsFail()
 	# Non-fatal error.
 
 	[[ -n ${1:-} ]] || return
-	local capitalised="$(Capitalise "$1")"
+	local capitalised=$(Capitalise "$1")
 
 	EraseThisLine
 	WriteToDisplay "$(ColourTextBrightRed fail)" "$capitalised"
@@ -9438,7 +9394,7 @@ ShowAsError()
 	# Fatal error.
 
 	[[ -n ${1:-} ]] || return
-	local capitalised="$(Capitalise "$1")"
+	local capitalised=$(Capitalise "$1")
 
 	EraseThisLine
 	WriteToDisplay "$(ColourTextBrightRed derp)" "$capitalised"
@@ -9460,13 +9416,13 @@ ShowAsPercentProgress()
 	#	$5 = fail count
 	#	$6 = total count
 
-	local -r ACTION_PRESENT_MSG="${1:-}"
+	local -r ACTION_PRESENT_MSG=${1:-}
 	local -r DURATION=${2:-}
 	declare -i -r OK_COUNT=${3:-0}
 	declare -i -r SKIP_COUNT=${4:-0}
 	declare -i -r FAIL_COUNT=${5:-0}
 	declare -i -r TOTAL_COUNT=${6:-0}
-	local -r PROGRESS_MSG="$(PercFrac "$OK_COUNT" "$SKIP_COUNT" "$FAIL_COUNT" "$TOTAL_COUNT")"
+	local -r PROGRESS_MSG=$(PercFrac "$OK_COUNT" "$SKIP_COUNT" "$FAIL_COUNT" "$TOTAL_COUNT")
 
 	if [[ $DURATION != long ]]; then
 		ShowAsProc "$ACTION_PRESENT_MSG" "$PROGRESS_MSG"
@@ -9495,7 +9451,7 @@ PercFrac()
 	declare -i -r SKIP_COUNT=${2:-0}
 	declare -i -r FAIL_COUNT=${3:-0}
 	declare -i -r TOTAL_COUNT=${4:-0}
-	local -i progress_count="$((OK_COUNT+SKIP_COUNT+FAIL_COUNT))"
+	local -i progress_count=$((OK_COUNT+SKIP_COUNT+FAIL_COUNT))
 	local perc_msg=''
 
 	[[ $TOTAL_COUNT -gt 0 ]] || return		# No-point calculating a fraction of zero.
@@ -9526,12 +9482,12 @@ ShowAsIterativeProgress()
 	#	$5 = suffix2		"packages"
 	#	$6 = expected action duration: `long` (optional)
 
-	local -r ACTION="${1:?${FUNCNAME[0]}'()': undefined}"
+	local -r ACTION=${1:?${FUNCNAME[0]}'()': undefined}
 	declare -i -r COUNT1=${2:-0}
-	local -r SUFFIX1="${3:?${FUNCNAME[0]}'()': undefined}"
+	local -r SUFFIX1=${3:?${FUNCNAME[0]}'()': undefined}
 	declare -i -r COUNT2=${4:-0}
-	local -r SUFFIX2="${5:?${FUNCNAME[0]}'()': undefined}"
-	local -r DURATION="${6:-short}"
+	local -r SUFFIX2=${5:?${FUNCNAME[0]}'()': undefined}
+	local -r DURATION=${6:-short}
 	local progress_msg=''
 
 	progress_msg="$(ColourTextBrightWhite "$COUNT1") ${SUFFIX1}$(Pluralise "$COUNT1"): $(ColourTextBrightWhite "$COUNT2") ${SUFFIX2}$(Pluralise "$COUNT2")"
