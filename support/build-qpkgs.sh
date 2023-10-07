@@ -11,7 +11,9 @@ fi
 
 . ./vars.source
 
-cdn_sherpa_url=$cdn_onecd_url/sherpa/${1:-$unstable_branch}
+
+cdn_sherpa_base_url=$cdn_onecd_url/sherpa
+cdn_sherpa_url=$cdn_sherpa_base_url/${1:-$unstable_branch}
 cdn_sherpa_packages_url="$cdn_sherpa_url/QPKGs/<?package_name?>/build"
 
 source_pathfile=$source_path/$service_library_source_file
@@ -55,6 +57,8 @@ for d in "$qpkgs_path"/*; do
 
 	config_pathfile=$d/qpkg.cfg
 	rebuild_package=false
+
+	[[ $(basename "$d") = sherpa ]] && rebuild_package=true		# always rebuild the sherpa QPKG.
 
 	if [[ $rebuilt_functions = true ]]; then		# only need to rebuild QPKGs using the service functions library.
 		if [[ -n $(find -L "$d" -type f -iname "$service_library_file") ]]; then
