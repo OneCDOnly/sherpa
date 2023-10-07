@@ -20,7 +20,7 @@
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 readonly USER_ARGS_RAW=$*
 readonly QPKG_NAME=OMedusa
-readonly SERVICE_SCRIPT_VERSION='230918'
+readonly SERVICE_SCRIPT_VERSION='231002'
 InitBasic()
 {
 service_script_type=1
@@ -39,9 +39,9 @@ source_git_branch=master
 source_git_branch_depth=single-branch
 IsSupportGetAppVersion && app_version_cmd="/bin/grep '^VERSION =' $app_version_pathfile | /bin/sed 's|^.*\"\(.*\)\"|\1|'"
 }
-library_path="$(/usr/bin/readlink "$0" 2>/dev/null)"
-[[ -z $library_path ]] && library_path="$0"
-readonly SERVICE_LIBRARY_PATHFILE="$(/usr/bin/dirname "$library_path")"/service.lib
+library_path=$(/usr/bin/readlink "$0" 2>/dev/null)
+[[ -z $library_path ]] && library_path=$0
+readonly SERVICE_LIBRARY_PATHFILE=$(/usr/bin/dirname "$library_path")/service.lib
 if [[ -e $SERVICE_LIBRARY_PATHFILE ]]; then
 . $SERVICE_LIBRARY_PATHFILE
 else

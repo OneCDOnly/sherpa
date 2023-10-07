@@ -20,7 +20,7 @@
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 readonly USER_ARGS_RAW=$*
 readonly QPKG_NAME=OTransmission
-readonly SERVICE_SCRIPT_VERSION='230918'
+readonly SERVICE_SCRIPT_VERSION='231002'
 InitBasic()
 {
 daemon_pathfile=/opt/bin/transmission-daemon
@@ -37,9 +37,9 @@ get_ui_port_cmd="/opt/bin/jq -r '.\"rpc-port\"' < "$qpkg_ini_pathfile""
 get_ui_port_secure_cmd='echo 0'
 get_ui_port_secure_enabled_test_cmd='false'
 }
-library_path="$(/usr/bin/readlink "$0" 2>/dev/null)"
-[[ -z $library_path ]] && library_path="$0"
-readonly SERVICE_LIBRARY_PATHFILE="$(/usr/bin/dirname "$library_path")"/service.lib
+library_path=$(/usr/bin/readlink "$0" 2>/dev/null)
+[[ -z $library_path ]] && library_path=$0
+readonly SERVICE_LIBRARY_PATHFILE=$(/usr/bin/dirname "$library_path")/service.lib
 if [[ -e $SERVICE_LIBRARY_PATHFILE ]]; then
 . $SERVICE_LIBRARY_PATHFILE
 else

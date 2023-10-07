@@ -11,7 +11,7 @@ objects_built=false
 Objects:Load()
 	{
 
-	readonly OBJECTS_PATHFILE="$source_path/$objects_file"
+	readonly OBJECTS_PATHFILE=$source_path/$objects_file
 
 	if [[ ! -e $OBJECTS_PATHFILE ]]; then
 		./build-objects.sh &>/dev/null
@@ -32,7 +32,7 @@ Objects:Load()
 Packages:Load()
 	{
 
-	readonly PACKAGES_PATHFILE="$source_path/$packages_source_file"
+	readonly PACKAGES_PATHFILE=$source_path/$packages_source_file
 
 	if [[ ! -e $PACKAGES_PATHFILE ]]; then
 		echo 'package list missing'
@@ -100,7 +100,7 @@ QPKG.Abbrvs()
 
 echo -n "building wiki 'Package abbreviations' page ... "
 
-target_pathfile="$wiki_path"/Package-abbreviations.md
+target_pathfile=$wiki_path/Package-abbreviations.md
 
 Objects:Load
 Packages:Load 2>/dev/null	# packages source file throws a lot of syntax errors until it's processed - ignore these.
