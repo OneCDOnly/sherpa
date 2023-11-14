@@ -9932,7 +9932,7 @@ Objects:Load()
 			ShowAsProc 'downloading objects'
 
 			if $CURL_CMD --insecure --silent --fail "$OBJECTS_ARCHIVE_URL" > "$OBJECTS_ARCHIVE_PATHFILE"; then
-				$TAR_CMD --extract --gzip --file="$OBJECTS_ARCHIVE_PATHFILE" --directory="$CACHE_PATH"
+				$TAR_CMD --extract --gzip --no-same-owner --file="$OBJECTS_ARCHIVE_PATHFILE" --directory="$CACHE_PATH"
 			fi
 		fi
 	fi
@@ -9966,7 +9966,7 @@ Packages:Load()
 			ShowAsProc 'downloading QPKG list'
 
 			if $CURL_CMD --insecure --silent --fail "$PACKAGES_ARCHIVE_URL" > "$PACKAGES_ARCHIVE_PATHFILE"; then
-				$TAR_CMD --extract --gzip --file="$PACKAGES_ARCHIVE_PATHFILE" --directory="$CACHE_PATH"
+				$TAR_CMD --extract --gzip --no-same-owner --file="$PACKAGES_ARCHIVE_PATHFILE" --directory="$CACHE_PATH"
 			fi
 		fi
 	fi

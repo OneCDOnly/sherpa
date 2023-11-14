@@ -85,7 +85,7 @@ for d in "$qpkgs_path"/*; do
 
 			if [[ -n $changed_file_list ]]; then
 				echo "package files: changed"
-# 				echo "file(s) more recent than reference file: $changed_file_list"
+				echo "file(s) more recent than reference file: $changed_file_list"
 				rebuild_package=true
 			else
 				echo "package files: not newer than reference file"

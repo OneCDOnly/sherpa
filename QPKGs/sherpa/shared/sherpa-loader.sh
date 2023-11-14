@@ -23,7 +23,7 @@
 readonly USER_ARGS_RAW=$*
 Init()
 {
-export LOADER_SCRIPT_VER='231008'
+export LOADER_SCRIPT_VER='231114'
 export LOADER_SCRIPT_PPID=$PPID
 readonly QPKG_NAME=sherpa
 readonly CHARS_REGULAR_PROMPT='$ '
@@ -63,7 +63,7 @@ if [[ -n $msgs ]]; then
 if ! (/sbin/curl"$curl_insecure_arg" --silent --fail "$2" > "$3"); then
 ShowAsWarn 'Remote file download failed'
 else
-/bin/tar --extract --gzip --file="$3" --directory="$(/usr/bin/dirname "$3")" 2>/dev/null
+/bin/tar --extract --gzip --no-same-owner --file="$3" --directory="$(/usr/bin/dirname "$3")" 2>/dev/null
 fi
 fi
 if [[ ! -e $1 ]]; then
