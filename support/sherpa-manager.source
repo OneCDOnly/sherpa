@@ -749,12 +749,13 @@ Self.Tasks:Check()
 	[[ $skip_package_actions = false ]] || return 0
 
 	Func:Init
+	ShowAsProc 'checking'
 	local action=''
 	local group=''
 	local state=''
 	local something_to_do=false
 
-	if [[ $opts_check = true || $opts_show_status = true || $opts_show_versions ]]; then
+	if [[ $opts_check = true || $opts_show_status = true || $opts_show_versions = true ]]; then
 		something_to_do=true
 	else
 		for action in "${USER_QPKG_ACTIONS[@]}"; do
@@ -876,7 +877,13 @@ Self:Validate()
 	QPKGs.IsCanClean:Build
 	AllocPackGroupsToAcs
 	AllocPackStatesToAcs
-	QPKGs-SCupgradable.Exist sherpa && QPKGs-ACupgrade-to:Add sherpa
+
+	if QPKGs-SCupgradable.Exist sherpa; then
+		ShowAsInfo 'the sherpa QPKG will be upgraded'
+		QPKGs-ACupgrade-to:Add sherpa
+	fi
+
+	ShowAsProc 'continuing validation'
 
 	# KLUDGE: ensure old installs of Entware are reinstalled.
 
@@ -1077,6 +1084,7 @@ Actions:Proc()
 	[[ $skip_package_actions = false ]] || return 0
 
 	Func:Init
+	ShowAsProc 'package actions'
 	local tier=''
 	local action=''
 	local -i tier_index=0
@@ -1919,7 +1927,7 @@ AllocPackGroupsToAcs()
 	{
 
 	Func:Init
-	ShowAsProc 'matching QPKGs to actions'
+	ShowAsProc 'matching QPKG groups to actions'
 	local action=''
 	local group=''
 	local state=''
@@ -2042,7 +2050,7 @@ AllocPackStatesToAcs()
 	{
 
 	Func:Init
-	ShowAsProc 'matching QPKGs to actions'
+	ShowAsProc 'matching QPKG states to actions'
 	local action=''
 	local state=''
 	local prospect=''
