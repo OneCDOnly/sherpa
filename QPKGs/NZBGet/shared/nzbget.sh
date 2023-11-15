@@ -20,7 +20,7 @@
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 readonly USER_ARGS_RAW=$*
 readonly QPKG_NAME=NZBGet
-readonly SERVICE_SCRIPT_VERSION='231010'
+readonly SERVICE_SCRIPT_VERSION='231116'
 InitBasic()
 {
 daemon_pathfile=/opt/bin/nzbget
