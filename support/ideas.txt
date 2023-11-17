@@ -1,6 +1,3 @@
-* check for the presence of /opt/bin/opkg after installing/reinstalling Entware.
-	use this as a basic check to see if installation worked correctly.
-
 * create new progress display mode with percentage-only.
 
 * create local sherpa App Center repository in UI.
