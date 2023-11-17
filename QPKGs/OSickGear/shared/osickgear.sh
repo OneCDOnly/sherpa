@@ -20,7 +20,7 @@
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 readonly USER_ARGS_RAW=$*
 readonly QPKG_NAME=OSickGear
-readonly SERVICE_SCRIPT_VERSION='231116'
+readonly SERVICE_SCRIPT_VERSION='231117'
 InitBasic()
 {
 service_script_type=1

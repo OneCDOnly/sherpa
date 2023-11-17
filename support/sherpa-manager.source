@@ -70,7 +70,7 @@ Self:Init()
 	Debug.Log:Init
 	Objects:Load || return
 
-	QPKG.IsInstalled Entware && [[ $ENTWARE_VER = none ]] && DebugAsWarn "$(ShowAsPackageName Entware) appears to be installed but is not visible"
+	QPKG.IsInstalled Entware && [[ $ENTWARE_VER = none ]] && DebugAsWarn "$(ShowAsPackageName Entware) appears to be installed but is inactive. Consider 'start'ing the Entware QPKG if-possible."
 
 	if [[ -z $USER_ARGS_RAW ]]; then
 		opts_show_basic_help=true
@@ -890,8 +890,8 @@ Self:Validate()
 	if QPKG.IsInstalled Entware; then
 		local entware_install_date=$(QPKG.GetInstallDate Entware)
 
-		if [[ ${entware_install_date//-/} -le 20230604 ]]; then
-			ShowAsInfo 'Entware will be reinstalled automatically (Entware packages were updated early June 2023)'
+		if [[ $entware_install_date = undefined || ${entware_install_date//[!0-9]/} -le 20230604 ]]; then
+			ShowAsInfo 'the Entware QPKG will be reinstalled (Entware packages were updated early June 2023)'
 			QPKGs-ACreinstall-to:Add Entware
 		fi
 	fi
@@ -6157,7 +6157,7 @@ GetEntwareType()
 			echo none
 		fi
 	else
-		echo undefined
+		echo 'not-installed'
 	fi
 
 	} 2>/dev/null
