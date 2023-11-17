@@ -837,7 +837,7 @@ Self:Validate()
 			installed_ver=$(GetPython3Ver "$PYTHON3_CMD")
 
 			if [[ ${installed_ver//./} -lt $MIN_PYTHON_VER ]]; then
-				ShowAsInfo 'the installed Python environment will be upgraded'
+				ShowAsInfo 'the installed Python environment will be upgraded.'
 				IPKs-ACuninstall-to:Add 'python*'
 			fi
 		fi
@@ -846,7 +846,7 @@ Self:Validate()
 			installed_ver=$(GetPerlVer "$PERL_CMD")
 
 			if [[ ${installed_ver//./} -lt $MIN_PERL_VER ]]; then
-				ShowAsInfo 'the installed Perl environment will be upgraded'
+				ShowAsInfo 'the installed Perl environment will be upgraded.'
 				IPKs-ACuninstall-to:Add 'perl*'
 			fi
 		fi
@@ -864,7 +864,7 @@ Self:Validate()
 
 				if [[ ${installed_version//.} -gt 238 ]]; then
 					ipks_downgrade=true
-					ShowAsInfo "IPKs will be downgraded to suit $KERNEL_PAGE_SIZE kernel page size"
+					ShowAsInfo "IPKs will be downgraded to suit $KERNEL_PAGE_SIZE kernel page size."
 					IPKs-ACdowngrade-to:Add "$target_packages"
 				else
 					IPKs-ACdowngrade-sk:Add "$target_packages"
@@ -879,7 +879,7 @@ Self:Validate()
 	AllocPackStatesToAcs
 
 	if QPKGs-SCupgradable.Exist sherpa; then
-		ShowAsInfo 'the sherpa QPKG will be upgraded'
+		ShowAsInfo 'the sherpa QPKG will be upgraded.'
 		QPKGs-ACupgrade-to:Add sherpa
 	fi
 
@@ -891,7 +891,7 @@ Self:Validate()
 		local entware_install_date=$(QPKG.GetInstallDate Entware)
 
 		if [[ $entware_install_date = undefined || ${entware_install_date//[!0-9]/} -le 20230604 ]]; then
-			ShowAsInfo 'the Entware QPKG will be reinstalled (Entware packages were updated early June 2023)'
+			ShowAsInfo 'the Entware QPKG will be reinstalled (Entware packages were updated early June 2023).'
 			QPKGs-ACreinstall-to:Add Entware
 		fi
 	fi
@@ -931,7 +931,7 @@ Self:Validate()
 	for package in $(QPKGs-ACreinstall-to:Array) $(QPKGs-ACreactivate-to:Array); do
 		if QPKGs-SCstandalone.Exist "$package" && QPKGs-ISinstalled.Exist "$package"; then
 			for prospect in $(QPKG.GetDependents "$package"); do
-				if QPKGs-ISinstalled.Exist "$prospect"; then
+				if QPKGs-ISenabled.Exist "$prospect"; then
 					QPKGs-ACdeactivate-to:Add "$prospect"
 					! QPKGs-ACuninstall-to.Exist "$prospect" && ! QPKGs-ACinstall-to.Exist "$prospect" && QPKGs-ACactivate-to:Add "$prospect"
 				fi
@@ -6652,7 +6652,7 @@ _QPKG:install_()
 		fi
 
 		SendParentChangeEnv "QPKGs-ACsign-to:Add $PACKAGE_NAME"
-		result_code=0   # Remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK).
+		result_code=0   # Remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK, but unfortunately will include installation aborts).
 		MarkThisActionForkAsOk
 	else
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" install failed "$result_code"
@@ -6724,7 +6724,7 @@ _QPKG:reinstall_()
 
 		local current_ver=$(QPKG.Local.GetVer "$PACKAGE_NAME")
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reinstall ok "version $current_ver"
-		result_code=0   # Remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK).
+		result_code=0   # Remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK, but unfortunately will include installation aborts).
 		MarkThisActionForkAsOk
 	else
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reinstall failed "$result_code"
@@ -6811,7 +6811,7 @@ _QPKG:upgrade_()
 			SaveActionResultToLog QPKG "$PACKAGE_NAME" upgrade ok "upgraded from version $prev_ver to version $current_ver"
 		fi
 
-		result_code=0   # Remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK).
+		result_code=0   # Remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK, but unfortunately will include installation aborts).
 		MarkThisActionForkAsOk
 	else
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" upgrade failed "$result_code"
