@@ -1,5 +1,3 @@
-* sherpa should not reactivate dep QPKGs during 'check' action if each dep QPKG was stopped.
-
 * 'sherpa start inactive' fails to find any inactive packages.
 	needs to get status of each package first.
 
