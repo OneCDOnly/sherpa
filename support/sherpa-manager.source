@@ -6626,6 +6626,8 @@ _QPKG:install_()
 	RunAndLog "${debug_cmd}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$INSTALL_LOG_FILE" log:failure-only 10
 	result_code=$?
 
+	[[ $PACKAGE_NAME = Entware ]] && IsNtSysFileExist $OPKG_CMD && result_code=1
+
 	if [[ $result_code -eq 0 || $result_code -eq 10 ]]; then
 		QPKG.ServiceStatus:Log
 		SendPackageStateChange ISinstalled
@@ -6713,6 +6715,8 @@ _QPKG:reinstall_()
 	RunAndLog "${debug_cmd}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$REINSTALL_LOG_FILE" log:failure-only 10
 	result_code=$?
 
+	[[ $PACKAGE_NAME = Entware ]] && IsNtSysFileExist $OPKG_CMD && result_code=1
+
 	if [[ $result_code -eq 0 || $result_code -eq 10 ]]; then
 		QPKG.ServiceStatus:Log
 
@@ -6792,6 +6796,8 @@ _QPKG:upgrade_()
 	QPKG.IsInstalled "$PACKAGE_NAME" && target_path="QINSTALL_PATH=$($DIRNAME_CMD "$(QPKG.GetInstallationPath "$PACKAGE_NAME")") "
 	RunAndLog "${debug_cmd}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$UPGRADE_LOG_FILE" log:failure-only 10
 	result_code=$?
+
+	[[ $PACKAGE_NAME = Entware ]] && IsNtSysFileExist $OPKG_CMD && result_code=1
 
 	if [[ $result_code -eq 0 || $result_code -eq 10 ]]; then
 		QPKG.ServiceStatus:Log
@@ -6908,7 +6914,7 @@ _QPKG:activate_()
 	{
 
 	# * This function runs autonomously *
-	# Starts/activates the service script for the QPKG named in $1.
+	# Activates/starts the service script for the QPKG named in $1.
 
 	# input:
 	#   $1 = QPKG name
@@ -6939,18 +6945,23 @@ _QPKG:activate_()
 	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$ACTIVATE_LOG_FILE
 	local timeout=''
 	OS.IsSupportQpkgTimeout && timeout=" -t $QPKG_START_TIMEOUT_SECONDS"
+	local service_pathfile=$(QPKG.GetServicePathFile "$PACKAGE_NAME")
 
 	DebugAsProc "activating $(ShowAsPackageName "$PACKAGE_NAME")"
 
-	if [[ $opts_debug = true ]]; then
+	if [[ $service_pathfile = undefined ]]; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" activate skipped "service script file undefined"
+		MarkThisActionForkAsSkippedError
+		FuncFork:Exit 2
+	elif [[ $opts_debug = true ]]; then
 		debug_cmd='DEBUG_QPKG=true '
-		RunAndLog "${debug_cmd}$(QPKG.GetServicePathFile) start" "$LOG_PATHFILE" log:failure-only
+		RunAndLog "${debug_cmd}${service_pathfile} start" "$LOG_PATHFILE" log:failure-only
 		result_code=$?
 	elif QPKG.IsCanLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
 		RunAndLog "/sbin/qpkg_service${timeout} start $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
 		QPKG.LastResultWasOk && result_code=0 || result_code=1
 	else
-		RunAndLog "$(QPKG.GetServicePathFile) start" "$LOG_PATHFILE" log:failure-only
+		RunAndLog "$service_pathfile start" "$LOG_PATHFILE" log:failure-only
 		result_code=$?
 	fi
 
@@ -6981,7 +6992,7 @@ _QPKG:reactivate_()
 	{
 
 	# * This function runs autonomously *
-	# Restarts/reactivates the service script for the QPKG named in $1.
+	# Reactivates/restarts the service script for the QPKG named in $1.
 
 	# input:
 	#   $1 = QPKG name
@@ -7012,18 +7023,23 @@ _QPKG:reactivate_()
 	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$REACTIVATE_LOG_FILE
 	local timeout=''
 	OS.IsSupportQpkgTimeout && timeout=" -t $QPKG_RESTART_TIMEOUT_SECONDS"
+	local service_pathfile=$(QPKG.GetServicePathFile "$PACKAGE_NAME")
 
 	DebugAsProc "reactivating $(ShowAsPackageName "$PACKAGE_NAME")"
 
-	if [[ $opts_debug = true ]]; then
+	if [[ $service_pathfile = undefined ]]; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" reactivate skipped "service script file undefined"
+		MarkThisActionForkAsSkippedError
+		FuncFork:Exit 2
+	elif [[ $opts_debug = true ]]; then
 		debug_cmd='DEBUG_QPKG=true '
-		RunAndLog "${debug_cmd}$(QPKG.GetServicePathFile "$PACKAGE_NAME") restart" "$LOG_PATHFILE" log:failure-only
+		RunAndLog "${debug_cmd}${service_pathfile} restart" "$LOG_PATHFILE" log:failure-only
 		result_code=$?
 	elif QPKG.IsCanLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
 		RunAndLog "/sbin/qpkg_service${timeout} restart $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
 		QPKG.LastResultWasOk && result_code=0 || result_code=1
 	else
-		RunAndLog "$(QPKG.GetServicePathFile "$PACKAGE_NAME") restart" "$LOG_PATHFILE" log:failure-only
+		RunAndLog "$service_pathfile restart" "$LOG_PATHFILE" log:failure-only
 		result_code=$?
 	fi
 
@@ -7045,7 +7061,7 @@ _QPKG:deactivate_()
 	{
 
 	# * This function runs autonomously *
-	# Stops/deactivates the service script for the QPKG named in $1.
+	# Deactivates/stops the service script for the QPKG named in $1.
 
 	# input:
 	#   $1 = QPKG name
@@ -7083,18 +7099,23 @@ _QPKG:deactivate_()
 	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$DEACTIVATE_LOG_FILE
 	local timeout=''
 	OS.IsSupportQpkgTimeout && timeout=" -t $QPKG_STOP_TIMEOUT_SECONDS"
+	local service_pathfile=$(QPKG.GetServicePathFile "$PACKAGE_NAME")
 
 	DebugAsProc "deactivating $(ShowAsPackageName "$PACKAGE_NAME")"
 
-	if [[ $opts_debug = true ]]; then
+	if [[ $service_pathfile = undefined ]]; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" deactivate skipped "service script file undefined"
+		MarkThisActionForkAsSkippedError
+		FuncFork:Exit 2
+	elif [[ $opts_debug = true ]]; then
 		debug_cmd='DEBUG_QPKG=true '
-		RunAndLog "${debug_cmd}$(QPKG.GetServicePathFile) stop" "$LOG_PATHFILE" log:failure-only
+		RunAndLog "${debug_cmd}${service_pathfile} stop" "$LOG_PATHFILE" log:failure-only
 		result_code=$?
 	elif QPKG.IsCanLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
 		RunAndLog "/sbin/qpkg_service${timeout} stop $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
 		QPKG.LastResultWasOk && result_code=0 || result_code=1
 	else
-		RunAndLog "$(QPKG.GetServicePathFile) stop" "$LOG_PATHFILE" log:failure-only
+		RunAndLog "$service_pathfile stop" "$LOG_PATHFILE" log:failure-only
 		result_code=$?
 	fi
 
