@@ -11,7 +11,6 @@ fi
 
 . ./vars.source
 
-
 cdn_sherpa_base_url=$cdn_onecd_url/sherpa
 cdn_sherpa_url=$cdn_sherpa_base_url/${1:-$unstable_branch}
 cdn_sherpa_packages_url="$cdn_sherpa_url/QPKGs/<?package_name?>/build"
