@@ -24,5 +24,6 @@ done
 ./build-objects.sh || exit
 ./build-manager.sh "${1:-$unstable_branch}" || exit
 ./build-archives.sh || exit
+./build-readme.sh "${1:-$unstable_branch}" || exit
 
 exit 0
