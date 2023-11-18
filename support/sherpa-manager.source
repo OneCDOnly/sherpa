@@ -964,7 +964,7 @@ Self:Validate()
 		fi
 	done
 
-	# Entware is a special case: complete removal and fresh install (to clear all installed IPKs).
+	# Entware is a special-case: perform complete removal and fresh install to clear all installed IPKs.
 
 	if QPKGs-ACreinstall-to.Exist Entware; then
 		QPKGs-ACreinstall-to:Remove Entware
@@ -972,7 +972,7 @@ Self:Validate()
 		QPKGs-ACinstall-to:Add Entware
 	fi
 
-	# If dependents have been selected for `reinstall`/`install`/`activate`/`reactivate, need to `activate` their standalone packages first.
+	# If dependents have been selected for `reinstall`/`install`/`activate`/`reactivate`, need to `activate` their standalone packages first.
 
 	for action in reinstall install activate reactivate; do
 		for package in $(QPKGs-AC${action}-to:Array); do
@@ -1009,7 +1009,7 @@ Self:Validate()
 	done
 
 	# Build a list of original storage paths for packages to be uninstalled, then installed again later this session (a "complex reinstall").
-	# This will ensure migrated packages end-up in their original locations.
+	# This will ensure migrated packages end-up in their target locations.
 	QPKGs_were_installed_name=()
 	QPKGs_were_installed_path=()
 
