@@ -9,7 +9,7 @@ fi
 
 [[ ! -e $highest_package_versions_found_sorted_pathfile ]] && ./build-packages.sh "${1:-$unstable_branch}"
 
-latest_release_version=$(echo $(grep ^sherpa_ "$highest_package_versions_found_sorted_pathfile") | cut -d' ' -f4)
+latest_release_version=$(grep ^sherpa_ "$highest_package_versions_found_sorted_pathfile" | tr -s ' ' | cut -d' ' -f4)
 echo "latest_release_version: [$latest_release_version]"
 
 source_pathfile=$docs_path/$readme_source_file

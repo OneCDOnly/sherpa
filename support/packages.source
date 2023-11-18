@@ -8,6 +8,7 @@ MIN_PYTHON_VER=3114					# keep this up-to-date with Entware Python3 version, so 
 MIN_PERL_VER=5281					# keep this up-to-date with Entware Perl version, so IPK upgrade notifier will work.
 
 # use pseudo-alpha-sorted QPKG name order (i.e. disregard character-case and leading 'O').
+# indent QPKGs with same name but different arch.
 
 # supported package details - parallel arrays.
 QPKG_NAME=()						# internal QPKG name.
