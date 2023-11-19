@@ -1,3 +1,6 @@
+* near the end of installing IPKs, monitored download path can remain at non-zero size while packages complete installation.
+	maybe include a separate progress message when dir size shrinks to almost zero.
+
 * 'sherpa start inactive' fails to find any inactive packages.
 	needs to get status of each package first.
 
