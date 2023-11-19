@@ -8307,10 +8307,62 @@ QPKG.GetDependencies()
 	#   $? = 0 if successful, 1 if failed.
 
 	local -i index=0
+	local group=''
+	local name=''
+	local altname=''
+	local firstname=''
+	local oldIFS=$IFS
+	local found=false
+	local output=''
 
 	for index in "${!QPKG_NAME[@]}"; do
 		if [[ ${QPKG_NAME[$index]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
-			echo "${QPKG_DEPENDS_ON[$index]}"
+			group="${QPKG_DEPENDS_ON[$index]}"
+
+			if [[ $group != *'|'* ]]; then
+				echo "$output"
+				return 0
+			fi
+
+			# if buffer contains a pipe character, then need to separately examine each name.
+			# 	read each name by word boundaries.
+			# 	if name contains pipe, then read name with IFS as pipe.
+			# 		test each alternative name for compatibility with this NAS. Only output the compatible one.
+			#		if none are compatible, then output first name found.
+
+			IFS=' '
+
+			for name in $group; do
+				found=false
+
+				if [[ $name != *'|'* ]]; then
+					output+=" $name"
+					continue
+				fi
+
+				IFS='|'
+
+				for altname in $name; do
+					[[ -z $firstname && -n $altname ]] && firstname=$altname
+
+					# test altname for compatibility
+
+					if QPKG.IsArchOK "$altname"; then
+						output+=" $altname"
+						found=true
+						break
+					fi
+				done
+
+				[[ $IFS != "$oldIFS" ]] && IFS=$oldIFS
+
+				if [[ $found = false ]]; then
+					output+=" $firstname"
+					firstname=''
+				fi
+			done
+
+			echo "$output"
 			return 0
 		fi
 	done

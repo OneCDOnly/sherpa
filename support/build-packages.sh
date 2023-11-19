@@ -17,9 +17,6 @@ target_pathfile=$source_path/$packages_file
 
 buffer=$(<"$source_pathfile")
 
-highest_package_versions_found_pathfile=$source_path/highest_package_versions_found.raw
-highest_package_versions_found_sorted_pathfile=$source_path/highest_package_versions_found.tbl
-
 checksum_pathfilename=''
 checksum_filename=''
 qpkg_filename=''

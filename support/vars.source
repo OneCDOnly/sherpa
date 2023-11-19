@@ -10,24 +10,25 @@ SwapTags()
 	# output:
 	# 	$? = 0
 
-	echo -n 'swapping tags ... '
+	echo -n "swapping tags (input: $(basename $1), output: $(basename $2)) ... "
 
 	if [[ -f "$1" ]]; then			# ignore symlinks.
 		local buffer=$(<"$1")
 
-		buffer=$(sed "s|<?dont_edit?>|$dont_edit_msg (source: $(basename "$1"))|" <<< "$buffer")
-		buffer=$(sed "s|<?filename?>|$(basename "$2")|" <<< "$buffer")
-		buffer=$(sed "s|<?copyright?>|${copyright_msg//$'\n'/\\n}|" <<< "$buffer")	# escape newlines.
-		buffer=$(sed "s|<?project?>|${project_msg//$'\n'/\\n}|" <<< "$buffer")		# escape newlines.
-		buffer=$(sed "s|<?tested?>|${tested_msg//$'\n'/\\n}|" <<< "$buffer")		# escape newlines.
-		buffer=$(sed "s|<?license?>|${license_msg//$'\n'/\\n}|" <<< "$buffer")		# escape newlines.
-		buffer=$(sed "s|<?build_date?>|$build_date|" <<< "$buffer")
-		buffer=$(sed "s|<?build_year?>|$build_year|" <<< "$buffer")
-		buffer=$(sed "s|<?email?>|$email|" <<< "$buffer")
-		buffer=$(sed "s|<?cdn_sherpa_base_url?>|$cdn_sherpa_base_url|" <<< "$buffer")
-		buffer=$(sed "s|<?cdn_sherpa_url?>|$cdn_sherpa_url|" <<< "$buffer")
-		buffer=$(sed "s|<?management_file?>|$management_file|" <<< "$buffer")
-		buffer=$(sed "s|<?target_branch?>|${target_branch:-$unstable_branch}|" <<< "$buffer")
+		buffer=$(sed "s|<?dont_edit?>|$dont_edit_msg (source: $(basename "$1"))|g" <<< "$buffer")
+		buffer=$(sed "s|<?filename?>|$(basename "$2")|g" <<< "$buffer")
+		buffer=$(sed "s|<?copyright?>|${copyright_msg//$'\n'/\\n}|g" <<< "$buffer")	# escape newlines.
+		buffer=$(sed "s|<?project?>|${project_msg//$'\n'/\\n}|g" <<< "$buffer")		# escape newlines.
+		buffer=$(sed "s|<?tested?>|${tested_msg//$'\n'/\\n}|g" <<< "$buffer")		# escape newlines.
+		buffer=$(sed "s|<?license?>|${license_msg//$'\n'/\\n}|g" <<< "$buffer")		# escape newlines.
+		buffer=$(sed "s|<?build_date?>|$build_date|g" <<< "$buffer")
+		buffer=$(sed "s|<?build_year?>|$build_year|g" <<< "$buffer")
+		buffer=$(sed "s|<?email?>|$email|g" <<< "$buffer")
+		buffer=$(sed "s|<?cdn_sherpa_base_url?>|$cdn_sherpa_base_url|g" <<< "$buffer")
+		buffer=$(sed "s|<?cdn_sherpa_url?>|$cdn_sherpa_url|g" <<< "$buffer")
+		buffer=$(sed "s|<?management_file?>|$management_file|g" <<< "$buffer")
+		buffer=$(sed "s|<?target_branch?>|${target_branch:-$unstable_branch}|g" <<< "$buffer")
+		buffer=$(sed "s|<?latest_release_version?>|${latest_release_version:-0}|g" <<< "$buffer")
 
 		[[ -e $2 ]] && chmod +w "$2"
 		echo "$buffer" > "$2"
@@ -232,6 +233,9 @@ objects_archive_file=objects.tar.gz
 packages_source_file=packages.source
 packages_file=packages
 packages_archive_file=packages.tar.gz
+
+highest_package_versions_found_pathfile=$source_path/highest_package_versions_found.raw
+highest_package_versions_found_sorted_pathfile=$source_path/highest_package_versions_found.tbl
 
 service_library_source_file=service-library.source
 service_library_file=service.lib
