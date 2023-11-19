@@ -10,7 +10,7 @@ SwapTags()
 	# output:
 	# 	$? = 0
 
-	echo -n 'swapping tags ... '
+	echo -n "swapping tags (input: $(basename $1), output: $(basename $2)) ... "
 
 	if [[ -f "$1" ]]; then			# ignore symlinks.
 		local buffer=$(<"$1")

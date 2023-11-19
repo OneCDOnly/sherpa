@@ -39,7 +39,7 @@ if [[ $rebuild_functions = true ]]; then
 	[[ -f "$target_pathfile" ]] && chmod 444 "$target_pathfile"
 
 	if [[ -s "$target_pathfile" ]]; then
-		echo "service library: rebuilt"
+		echo "service library: $(ColourTextBrightGreen rebuilt)"
 		rebuilt_functions=true
 	fi
 fi
@@ -136,5 +136,5 @@ for d in "$qpkgs_path"/*; do
 	done
 
 	(cd "$d" || exit; qbuild --exclude '*.source' &>/dev/null)
-	echo "QPKG arches: rebuilt"
+	echo "QPKG arches: $(ColourTextBrightGreen rebuilt)"
 done
