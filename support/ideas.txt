@@ -1,3 +1,6 @@
+* wrap package info description column text.
+	try the 'columns' util for this.
+
 * create new progress display mode with percentage-only.
 
 * create local sherpa App Center repository in UI.
