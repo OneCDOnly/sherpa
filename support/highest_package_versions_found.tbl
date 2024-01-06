@@ -8,7 +8,8 @@ duf_220809_arm-x41.qpkg.md5          duf_220809_arm-x41.qpkg          duf       
 duf_220809_x86_64.qpkg.md5           duf_220809_x86_64.qpkg           duf                  220809       i64    dac17d3e9f29f058f9e024e7f5ff4a4b
 duf_220809_x86.qpkg.md5              duf_220809_x86.qpkg              duf                  220809       i86    e351230ffde4a6040d423fe73d7ee5fc
 Entware_1.03a_std.qpkg.md5           Entware_1.03a_std.qpkg           Entware              1.03a        all    deb88a170716d39309d124ad77875b4d
-Glances_240107.qpkg.md5              Glances_240107.qpkg              Glances              240107       all    7a9b2d6c88c5518f75dd3370accbef14
+Glances_240107.qpkg.md5              Glances_240107.qpkg              Glances              240107       all    a22b299e9d3e0b541f110bbb653b26f4
+gpt-engineer_240107.qpkg.md5         gpt-engineer_240107.qpkg         gpt-engineer         240107       all    f5b80dfd0cfc53853a931b71cbef7f30
 Headphones_240107.qpkg.md5           Headphones_240107.qpkg           Headphones           240107       all    7a15d912c35d32ae3471974476c0d7bc
 HideThatBanner_230503.qpkg.md5       HideThatBanner_230503.qpkg       HideThatBanner       230503       all    467c7c005e113d06b37bf467d4ba9019
 IncreaseTimeouts_230719.qpkg.md5     IncreaseTimeouts_230719.qpkg     IncreaseTimeouts     230719       all    446a1e07a05cd1832e992cbc58ba2b79
@@ -45,7 +46,7 @@ RunLast_230224.qpkg.md5              RunLast_230224.qpkg              RunLast   
 SABnzbd_240107.qpkg.md5              SABnzbd_240107.qpkg              SABnzbd              240107       all    e51ffefba1aa61438fc628cb2e5b1975
 sha3sum_230312_x86_64.qpkg.md5       sha3sum_230312_x86_64.qpkg       sha3sum              230312       i64    6ceba9116e0dbcbdb4e6112f0c02f8c0
 sha3sum_230312_x86.qpkg.md5          sha3sum_230312_x86.qpkg          sha3sum              230312       i86    fdba9d16b88a5b6e3b04483ca77706dd
-sherpa_240107.qpkg.md5               sherpa_240107.qpkg               sherpa               240107       all    bdbecea2b45beb30575ed131b096a64e
+sherpa_240107.qpkg.md5               sherpa_240107.qpkg               sherpa               240107       all    9960d882ef96c92bdbe79d3767e41eaf
 SortMyQPKGs_231118.qpkg.md5          SortMyQPKGs_231118.qpkg          SortMyQPKGs          231118       all    9caef9e8995e8f674f7b95c2f3c12b3b
 WebSSH_230726_arm_64.qpkg.md5        WebSSH_230726_arm_64.qpkg        WebSSH               230726       a64    b4b48feb48085ea4cfa9101a22476bdc
 WebSSH_230726_x86_64.qpkg.md5        WebSSH_230726_x86_64.qpkg        WebSSH               230726       i64    a5ee830a60f28ad68792ed4580441ac6
