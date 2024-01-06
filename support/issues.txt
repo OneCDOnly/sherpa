@@ -1,3 +1,6 @@
+* dependency report doesn't show Entware for most dep QPKGs.
+	SABnzbd shows Entware correctly, but others like Headphones do not.
+
 * near the end of installing IPKs, monitored download path can remain at non-zero size while packages complete installation.
 	maybe include a separate progress message when dir size shrinks to almost zero.
 
