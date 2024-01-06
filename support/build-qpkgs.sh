@@ -4,12 +4,7 @@
 # check './build' path and find most-recent .qpkg file to use as a datetime reference.
 # check last changed datetime of all QPKG files, and if any are newer than the reference file, update date tags and run a 'qbuild'.
 
-if [[ ! -e vars.source ]]; then
-	echo "'vars.source' not found"
-	exit 1
-fi
-
-. ./vars.source
+. vars.source || exit
 
 source_pathfile=$source_path/$service_library_source_file
 target_pathfile=$source_path/$service_library_file
