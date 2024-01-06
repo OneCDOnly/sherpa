@@ -848,7 +848,7 @@ Self:Validate()
 			installed_ver=$(GetPython3Ver "$PYTHON3_CMD")
 
 			if [[ ${installed_ver//./} -lt $MIN_PYTHON_VER ]]; then
-				ShowAsInfo 'the installed Python environment will be upgraded.'
+				ShowAsInfo "the $(ColourTextBrightOrange Python) environment will be upgraded."
 				IPKs-ACuninstall-to:Add 'python*'
 			fi
 		fi
@@ -857,7 +857,7 @@ Self:Validate()
 			installed_ver=$(GetPerlVer "$PERL_CMD")
 
 			if [[ ${installed_ver//./} -lt $MIN_PERL_VER ]]; then
-				ShowAsInfo 'the installed Perl environment will be upgraded.'
+				ShowAsInfo "the $(ColourTextBrightOrange Perl) environment will be upgraded."
 				IPKs-ACuninstall-to:Add 'perl*'
 			fi
 		fi
@@ -890,7 +890,7 @@ Self:Validate()
 	AllocPackStatesToAcs
 
 	if QPKGs-SCupgradable.Exist sherpa; then
-		ShowAsInfo 'the sherpa QPKG will be upgraded.'
+		ShowAsInfo "the $(ColourTextBrightOrange sherpa) QPKG will be upgraded."
 		QPKGs-ACupgrade-to:Add sherpa
 	fi
 
@@ -902,7 +902,7 @@ Self:Validate()
 		local entware_install_date=$(QPKG.GetInstallDate Entware)
 
 		if [[ $entware_install_date = undefined || ${entware_install_date//[!0-9]/} -le 20230604 ]]; then
-			ShowAsInfo 'the Entware QPKG will be reinstalled (Entware packages were updated early June 2023).'
+			ShowAsInfo "the $(ColourTextBrightOrange Entware) QPKG will be reinstalled (Entware packages were updated early June 2023)."
 			QPKGs-ACreinstall-to:Add Entware
 		fi
 	fi
