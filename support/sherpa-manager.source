@@ -504,17 +504,17 @@ Env:Load()
 	readonly NAS_RAM_KB=$(GetInstalledRAM)
 	readonly NAS_UPSTATE=$(GetUpState)
 
-	local source_git_branch=stable		# default branch to follow
+	source_branch=stable		# default branch to follow
 	local test_branch=$(/sbin/getcfg sherpa Git_Branch -d unknown -f /etc/config/qpkg.conf)
 
 	if [[ $test_branch = unknown ]]; then
-		/sbin/setcfg sherpa Git_Branch $source_git_branch -f /etc/config/qpkg.conf
+		/sbin/setcfg sherpa Git_Branch $source_branch -f /etc/config/qpkg.conf
 	else
-		source_git_branch=$test_branch
+		source_branch=$test_branch
 	fi
 
-	readonly OBJECTS_ARCHIVE_URL='<?cdn_sherpa_base_url?>'/$source_git_branch/objects.tar.gz
-	readonly PACKAGES_ARCHIVE_URL='<?cdn_sherpa_base_url?>'/$source_git_branch/packages.tar.gz
+	readonly OBJECTS_ARCHIVE_URL='<?cdn_sherpa_base_url?>'/$source_branch/objects.tar.gz
+	readonly PACKAGES_ARCHIVE_URL='<?cdn_sherpa_base_url?>'/$source_branch/packages.tar.gz
 	readonly QPKG_BU_PATH=$(GetDefVol)/.qpkg_config_backup
 	readonly THIS_PACKAGE_PATH=$(QPKG.GetInstallationPath)
 		readonly CACHE_PATH=$THIS_PACKAGE_PATH/cache
@@ -540,7 +540,7 @@ Env:Load()
 			readonly SESS_LAST_PATHFILE=$LOGS_PATH/session.last.log
 			readonly SESS_TAIL_PATHFILE=$LOGS_PATH/session.tail.log
 	readonly THIS_PACKAGE_VER=$(QPKG.Local.GetVer)
-	readonly THIS_SCRIPT_VER='<?build_date?>'-$source_git_branch
+	readonly THIS_SCRIPT_VER='<?build_date?>'-$source_branch
 
 	# Entware
 	readonly EXTERNAL_PACKAGES_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
