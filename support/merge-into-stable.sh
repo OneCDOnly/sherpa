@@ -19,7 +19,7 @@ case ${response:0:1} in
 		exit 0
 esac
 
-./make.sh "$stable_branch" || exit
+./make.sh || exit
 
 cd $HOME/scripts/nas/sherpa || exit
 git add . && git commit -m '[pre-merge] update archives' && git push

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #* don't edit this file, it was built/modified programmatically with the `build-qpkgs.sh` script. (source: sherpa-loader.source)
 #* sherpa-loader.sh
-#* Copyright (C) 2017-2023 OneCD - one.cd.only@gmail.com
+#* Copyright (C) 2017-2024 OneCD - one.cd.only@gmail.com
 #*   So, blame OneCD if it all goes horribly wrong. ;)
 #* Description:
 #*	 This is the loader script for the sherpa mini-package-manager and is part of the `sherpa` QPKG.
@@ -23,7 +23,7 @@
 readonly USER_ARGS_RAW=$*
 Init()
 {
-export LOADER_SCRIPT_VER='231119'
+export LOADER_SCRIPT_VER='240106'
 export LOADER_SCRIPT_PPID=$PPID
 readonly QPKG_NAME=sherpa
 readonly CHARS_REGULAR_PROMPT='$ '
@@ -39,6 +39,7 @@ else
 source_git_branch=$test_branch
 fi
 local -r WORK_PATH=$(/sbin/getcfg sherpa Install_Path -f /etc/config/qpkg.conf)/cache
+[[ ! -d $WORK_PATH ]] && mkdir -p "$WORK_PATH"
 local -r MANAGER_FILE='sherpa-manager.sh'
 local -r MANAGER_ARCHIVE_FILE=${MANAGER_FILE%.*}.tar.gz
 readonly MANAGER_ARCHIVE_URL='https://raw.githubusercontent.com/OneCDOnly/sherpa'/$source_git_branch/$MANAGER_ARCHIVE_FILE
@@ -48,7 +49,6 @@ local -r NAS_FIRMWARE=$(/sbin/getcfg System Version -f /etc/config/uLinux.conf)
 [[ ${NAS_FIRMWARE//.} -lt 426 ]] && curl_insecure_arg=' --insecure' || curl_insecure_arg=''
 readonly GNU_FIND_CMD=/opt/bin/find
 previous_msg=''
-[[ ! -d $WORK_PATH ]] && mkdir -p "$WORK_PATH"
 return 0
 }
 EnsureFileIsCurrent()

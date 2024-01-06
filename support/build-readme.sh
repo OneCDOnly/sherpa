@@ -7,7 +7,7 @@ fi
 
 . ./vars.source
 
-[[ ! -e $highest_package_versions_found_sorted_pathfile ]] && ./build-packages.sh "${1:-$unstable_branch}"
+[[ ! -e $highest_package_versions_found_sorted_pathfile ]] && ./build-packages.sh
 
 latest_release_version=$(grep ^sherpa_ "$highest_package_versions_found_sorted_pathfile" | tr -s ' ' | cut -d' ' -f4)
 echo "latest release version: $latest_release_version"
