@@ -704,6 +704,7 @@ Debug.Log:Env()
 	DebugBinPathVerAndMinVer python "$(GetPythonVer)" "$MIN_PYTHON_VER"
 	DebugBinPathVerAndMinVer python3 "$(GetPython3Ver)" "$MIN_PYTHON_VER"
 	DebugBinPathVerAndMinVer perl "$(GetPerlVer)" "$MIN_PERL_VER"
+	DebugScript 'source branch' "$source_branch"
 	DebugScript 'logs path' "$LOGS_PATH"
 	DebugScript 'cache path' "$CACHE_PATH"
 	DebugScript 'action concurrency' "$CONCURRENCY"
