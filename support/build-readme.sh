@@ -1,11 +1,6 @@
 #!/usr/bin/env bash
 
-if [[ ! -e vars.source ]]; then
-	echo "'vars.source' not found"
-	exit 1
-fi
-
-. ./vars.source
+. vars.source || exit
 
 [[ ! -e $highest_package_versions_found_sorted_pathfile ]] && ./build-packages.sh
 
