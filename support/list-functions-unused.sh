@@ -24,3 +24,5 @@ for target_func in $(grep '()$' "$source_pathfile" | grep -v '=\|\$\|_(' | sed '
 		echo "$target_func()"
 	fi
 done
+
+exit 0
