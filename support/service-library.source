@@ -159,7 +159,11 @@ InitByType()
 				venv_python_pathfile=$venv_path/bin/python3
 			;;
 		6)
-			recheck_daemon_pid_after_launch=true
+			run_daemon_in_screen_session=true
+			interpreter=/opt/bin/python3
+			venv_path=$QPKG_PATH/venv
+				venv_pip_pathfile=$venv_path/bin/pip
+				venv_python_pathfile=$venv_path/bin/python3
 	esac
 
 	}
