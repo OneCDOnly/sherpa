@@ -540,7 +540,7 @@ Env:Load()
 			readonly SESS_LAST_PATHFILE=$LOGS_PATH/session.last.log
 			readonly SESS_TAIL_PATHFILE=$LOGS_PATH/session.tail.log
 	readonly THIS_PACKAGE_VER=$(QPKG.Local.GetVer)
-	readonly THIS_SCRIPT_VER='<?build_date?>-<?source_branch?>'
+	readonly THIS_SCRIPT_VER='<?build_date?>'-$source_git_branch
 
 	# Entware
 	readonly EXTERNAL_PACKAGES_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
