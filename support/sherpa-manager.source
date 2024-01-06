@@ -4049,7 +4049,8 @@ DisplayAsIndentPrefixActionResultDurationReason()
 	if [[ -z ${5:-} ]]; then
 		printf "%s%s %s%s" "${1:-}" "$(Lowercase "${2:-}")" "${3:-}" "$([[ -n $duration ]] && printf ' in %s' "$duration")"
 	else
-		printf "%s%s %s%s\n%${ACTION_RESULT_INDENT}s${CHARS_DROPEND}%s" "${1:-}" "$(Lowercase "${2:-}")" "${3:-}" "$([[ -n $duration ]] && printf ' in %s' "$duration")" '' "$5"
+# 		printf "%s%s %s%s\n%${ACTION_RESULT_INDENT}s${CHARS_DROPEND}%s" "${1:-}" "$(Lowercase "${2:-}")" "${3:-}" "$([[ -n $duration ]] && printf ' in %s' "$duration")" '' "$5"
+		printf "%s%s %s%s (%s)" "${1:-}" "$(Lowercase "${2:-}")" "${3:-}" "$([[ -n $duration ]] && printf ' in %s' "$duration")" "$5"
 	fi
 
 	printf '\n'; linespace_visible=false
@@ -9608,9 +9609,9 @@ ShowAsActionLogDetail()
 	case ${4:-} in
 		skipped|skipped-failed)
 			if [[ -n "${6:-}" ]]; then
-				DisplayAsIndentPrefixActionResultDurationReason '' "$3" "$2" '' "reason: $6"
+				DisplayAsIndentPrefixActionResultDurationReason '' "$3" "$2" '' "$6"
 			else
-				DisplayAsIndentPrefixActionResultDurationReason '' "$3" "$2" '' "no reason was provided by $(ShowTitleName)"
+				DisplayAsIndentPrefixActionResultDurationReason '' "$3" "$2" '' "no reason provided"
 			fi
 			;;
 		failed)
@@ -9618,10 +9619,10 @@ ShowAsActionLogDetail()
 				if QPKG.IsCanLog "$2"; then
 					DisplayAsIndentPrefixActionResultDurationReason 'Unable to ' "$3" "$2" "$5" "For more information, please check the service log: /etc/init.d/$($BASENAME_CMD "$(QPKG.GetServicePathFile "$2")") log"
 				else
-					DisplayAsIndentPrefixActionResultDurationReason 'Unable to ' "$3" "$2" "$5" "reason: $6"
+					DisplayAsIndentPrefixActionResultDurationReason 'Unable to ' "$3" "$2" "$5" "$6"
 				fi
 			else
-				DisplayAsIndentPrefixActionResultDurationReason 'Unable to ' "$3" "$2" "$5" 'no reason was provided by the service script'
+				DisplayAsIndentPrefixActionResultDurationReason 'Unable to ' "$3" "$2" "$5" 'no reason provided by the service script'
 			fi
 			;;
 		*)
