@@ -60,6 +60,7 @@ get_ui_port_secure_cmd=undefined
 get_ui_port_secure_enabled_test_cmd=undefined
 install_pip_deps=false
 interpreter=undefined
+launcher_pathfile=undefined
 orig_daemon_service_script=undefined
 pidfile_is_managed_by_app=false
 pip_cache_path=undefined
@@ -78,6 +79,7 @@ source_git_url=undefined
 ui_listening_address=undefined
 ui_port=0
 ui_port_secure=0
+userlink_pathfile=undefined
 venv_path=undefined
 venv_pip_pathfile=undefined
 venv_python_pathfile=undefined
@@ -106,7 +108,6 @@ InitBasic
 backup_pathfile=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
 qpkg_ini_pathfile=$QPKG_CONFIG_PATH/$qpkg_ini_file
 InitByType
-daemon_pid_pathfile=/var/run/$QPKG_NAME.pid
 InitComplex
 qpkg_ini_default_pathfile=$qpkg_ini_pathfile.def
 EnsureConfigFileExists
@@ -125,26 +126,28 @@ fi
 InitByType()
 {
 case $service_script_type in
+1|6)
+daemon_pid_pathfile=/var/run/$QPKG_NAME.pid
+esac
+case $service_script_type in
+1|6|7)
+interpreter=/opt/bin/python3
+pip_cache_path=$QPKG_PATH/pip-cache
+venv_path=$QPKG_PATH/venv
+venv_pip_pathfile=$venv_path/bin/pip
+venv_python_pathfile=$venv_path/bin/python3
+esac
+case $service_script_type in
 1)
 install_pip_deps=true
-interpreter=/opt/bin/python3
 pidfile_is_managed_by_app=true
-pip_cache_path=$QPKG_PATH/pip-cache
 qpkg_repo_path=$QPKG_PATH/repo-cache
 recheck_daemon_pid_after_launch=true
 source_git_branch=main
 source_git_branch_depth=shallow
-venv_path=$QPKG_PATH/venv
-venv_pip_pathfile=$venv_path/bin/pip
-venv_python_pathfile=$venv_path/bin/python3
 ;;
 6)
 run_daemon_in_screen_session=true
-interpreter=/opt/bin/python3
-pip_cache_path=$QPKG_PATH/pip-cache
-venv_path=$QPKG_PATH/venv
-venv_pip_pathfile=$venv_path/bin/pip
-venv_python_pathfile=$venv_path/bin/python3
 esac
 }
 ShowHelp()
@@ -189,7 +192,21 @@ fi
 MakePaths
 PullGitRepo || { SetError; return 1 ;}
 InstallAddons || { SetError; return 1 ;}
-IsNotDaemon && return
+if IsNotDaemon; then
+if [[ ! -L $userlink_pathfile && -e $launcher_pathfile ]]; then
+ln -s "$launcher_pathfile" "$userlink_pathfile"
+if [[ -L $userlink_pathfile ]]; then
+DisplayCommitToLog "symlink created: $userlink_pathfile"
+else
+DisplayErrCommitAllLogs "unable to create symlink to \'$QPKG_NAME\' launcher!"
+SetError
+return 1
+fi
+else
+DisplayCommitToLog "symlink exists: $userlink_pathfile"
+fi
+return
+fi
 WaitForLaunchTarget || { SetError; return 1 ;}
 EnsureConfigFileExists
 LoadPorts app || { SetError; return 1 ;}
@@ -232,6 +249,13 @@ return 0
 StopQPKG()
 {
 IsError && return
+if IsNotDaemon; then
+if [[ -L $userlink_pathfile ]]; then
+rm -f "$userlink_pathfile"
+DisplayCommitToLog "symlink removed: $userlink_pathfile"
+fi
+return
+fi
 if IsDaemonActive; then
 if IsRestart || IsRestore || IsClean || IsReset; then
 SetRestartPending

@@ -27,8 +27,8 @@ service_script_type=7
 }
 InitComplex()
 {
-daemon_pathfile=$venv_path/bin/gpte
-daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile --webserver"
+launcher_pathfile=$venv_path/bin/gpte
+userlink_pathfile=/usr/bin/gpte
 }
 library_path=$(/usr/bin/readlink "$0" 2>/dev/null)
 [[ -z $library_path ]] && library_path=$0
