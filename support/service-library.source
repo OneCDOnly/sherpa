@@ -1515,7 +1515,7 @@ IsNotSSLEnabled()
 IsDaemon()
 	{
 
-	[[ $daemon_pid_pathfile != undefined ]]
+	[[ $daemon_pathfile != undefined ]]
 
 	}
 
