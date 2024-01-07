@@ -114,13 +114,16 @@ buffer=$(sed "s|<?cdn_qnap_dev_packages_url?>|$cdn_qnap_dev_packages_url|" <<< "
 buffer=$(sed "s|<?cdn_other_packages_url?>|$cdn_other_packages_url|" <<< "$buffer")
 
 while read -r checksum_filename qpkg_filename package_name version arch md5; do
-	for attribute in version package_name qpkg_filename md5; do
-		buffer=$(sed "/QPKG_NAME+=($package_name)/,/^$/{/QPKG_ARCH+=($arch)/,/$attribute.*/s/<?$attribute?>/${!attribute}/}" <<< "$buffer")
+	for property in version package_name qpkg_filename md5; do
+		buffer=$(sed "/QPKG_NAME+=($package_name)/,/^$/{/QPKG_ARCH+=($arch)/,/$property.*/s/<?$property?>/${!property}/}" <<< "$buffer")
 
-		if [[ $package_name = QDK && $attribute = version ]]; then
+		if [[ $package_name = QDK && $property = version ]]; then
 			# run this a second time as there are 2 version placeholders in packages.source for QDK.
-			buffer=$(sed "/QPKG_NAME+=($package_name)/,/^$/{/QPKG_ARCH+=($arch)/,/$attribute.*/s/<?$attribute?>/${!attribute}/}" <<< "$buffer")
+			buffer=$(sed "/QPKG_NAME+=($package_name)/,/^$/{/QPKG_ARCH+=($arch)/,/$property.*/s/<?$property?>/${!property}/}" <<< "$buffer")
 		fi
+
+		# if arch = none then package is not to be installable. Write 'none' into all values.
+		buffer=$(sed "/QPKG_NAME+=($package_name)/,/^$/{/QPKG_ARCH+=(none)/,/$property.*/s/<?$property?>/none/}" <<< "$buffer")
 	done
 done <<< "$(sort "$highest_package_versions_found_pathfile")"
 

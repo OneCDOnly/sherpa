@@ -12,7 +12,7 @@ MIN_PERL_VER=5281					# keep this up-to-date with Entware Perl version, so IPK u
 
 # supported package details - parallel arrays.
 QPKG_NAME=()						# internal QPKG name.
-QPKG_ARCH=()						# QPKG supports this architecture. Use 'all' if every arch is supported.
+QPKG_ARCH=()						# QPKG supports this architecture. Use 'all' if every arch is supported. Use 'none' to disable installation.
 QPKG_VERSION=() 					# QPKG version.
 QPKG_MD5=() 						# remote QPKG MD5.
 QPKG_URL=() 						# remote QPKG URL.
@@ -255,7 +255,7 @@ QPKG_CAN_LOG_SERVICE_OPERATIONS+=(true)
 QPKG_TEST_FOR_ACTIVE+=('')
 
 QPKG_NAME+=(gpt-engineer)
-QPKG_ARCH+=(all)
+QPKG_ARCH+=(none)
 QPKG_VERSION+=(<?version?>)
 QPKG_MD5+=(<?md5?>)
 QPKG_URL+=(<?cdn_sherpa_packages_url?>/<?qpkg_filename?>)
