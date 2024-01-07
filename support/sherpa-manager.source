@@ -4049,8 +4049,7 @@ DisplayAsIndentPrefixActionResultDurationReason()
 	if [[ -z ${5:-} ]]; then
 		printf "%s%s %s%s" "${1:-}" "$(Lowercase "${2:-}")" "${3:-}" "$([[ -n $duration ]] && printf ' in %s' "$duration")"
 	else
-# 		printf "%s%s %s%s\n%${ACTION_RESULT_INDENT}s${CHARS_DROPEND}%s" "${1:-}" "$(Lowercase "${2:-}")" "${3:-}" "$([[ -n $duration ]] && printf ' in %s' "$duration")" '' "$5"
-		printf "%s%s %s%s (%s)" "${1:-}" "$(Lowercase "${2:-}")" "${3:-}" "$([[ -n $duration ]] && printf ' in %s' "$duration")" "$5"
+		printf "%s%s %s%s: %s" "${1:-}" "$(Lowercase "${2:-}")" "${3:-}" "$([[ -n $duration ]] && printf ' in %s' "$duration")" "$5"
 	fi
 
 	printf '\n'; linespace_visible=false
