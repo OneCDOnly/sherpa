@@ -3245,7 +3245,7 @@ DisplayAsPackagesReportLine()
 
 	package_name_msg+=$package_name
 	package_author_msg+=$package_author
-	package_description_msg+=$package_description
+	package_description_msg+=$(Capitalise "$package_description")
 
 	case $mode in
 		muted)
