@@ -131,7 +131,7 @@ Self.Results:Show()
 		fi
 
 		if [[ $opts_show_packages = true ]]; then
-			Report.Names:Show
+			Report.Packages:Show
 		fi
 
 		if [[ $opts_show_repos = true ]]; then
@@ -848,7 +848,7 @@ Self:Validate()
 			installed_ver=$(GetPython3Ver "$PYTHON3_CMD")
 
 			if [[ ${installed_ver//./} -lt $MIN_PYTHON_VER ]]; then
-				ShowAsInfo "the $(ColourTextBrightOrange Python) environment will be upgraded."
+				ShowAsInfo "the $(ColourTextBrightOrange Python) environment will be auto-upgraded."
 				IPKs-ACuninstall-to:Add 'python*'
 			fi
 		fi
@@ -857,7 +857,7 @@ Self:Validate()
 			installed_ver=$(GetPerlVer "$PERL_CMD")
 
 			if [[ ${installed_ver//./} -lt $MIN_PERL_VER ]]; then
-				ShowAsInfo "the $(ColourTextBrightOrange Perl) environment will be upgraded."
+				ShowAsInfo "the $(ColourTextBrightOrange Perl) environment will be auto-upgraded."
 				IPKs-ACuninstall-to:Add 'perl*'
 			fi
 		fi
@@ -890,7 +890,7 @@ Self:Validate()
 	AllocPackStatesToAcs
 
 	if QPKGs-SCupgradable.Exist sherpa; then
-		ShowAsInfo "the $(ColourTextBrightOrange sherpa) QPKG will be upgraded."
+		ShowAsInfo "the $(ColourTextBrightOrange sherpa) QPKG will be auto-upgraded."
 		QPKGs-ACupgrade-to:Add sherpa
 	fi
 
@@ -902,7 +902,7 @@ Self:Validate()
 		local entware_install_date=$(QPKG.GetInstallDate Entware)
 
 		if [[ $entware_install_date = undefined || ${entware_install_date//[!0-9]/} -le 20230604 ]]; then
-			ShowAsInfo "the $(ColourTextBrightOrange Entware) QPKG will be reinstalled (Entware packages were updated early June 2023)."
+			ShowAsInfo "the $(ColourTextBrightOrange Entware) QPKG will be auto-reinstalled (Entware packages were updated early June 2023)."
 			QPKGs-ACreinstall-to:Add Entware
 		fi
 	fi
@@ -3232,7 +3232,7 @@ DisplayAsPackagesReportLine()
 	local package_description=$(QPKG.GetDesc "$package_name")
 	local package_description_msg=$CHARS_BLANK
 	local package_notes=$(QPKG.GetNote "$package_name")
-	local package_notes_msg=$(ColourTextCyan "${CHARS_NOTE}${package_notes}")
+	local package_notes_msg=$(ColourTextCyan "${CHARS_NOTE}${package_notes}.")
 	local mode=''
 
 	if QPKG.IsMissing "$package_name"; then
@@ -3245,7 +3245,7 @@ DisplayAsPackagesReportLine()
 
 	package_name_msg+=$package_name
 	package_author_msg+=$package_author
-	package_description_msg+=$(Capitalise "$package_description")
+	package_description_msg+="$(Capitalise "$package_description")."
 
 	case $mode in
 		muted)
@@ -4959,9 +4959,9 @@ QPKGs.NewVers:Show()
 	done
 
 	if [[ ${#packages[@]} -eq 1 ]]; then
-		msg='a new QPKG is'
+		msg='a new QPKG version is'
 	else
-		msg='new QPKGs are'
+		msg='new QPKG versions are'
 	fi
 
 	ShowAsInfo "$msg available for $names_formatted."
@@ -5478,7 +5478,7 @@ Report.Dependencies:Show()
 
 	}
 
-Report.Names:Show()
+Report.Packages:Show()
 	{
 
 	Func:Init
