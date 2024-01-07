@@ -8332,7 +8332,7 @@ QPKG.GetDependencies()
 			group="${QPKG_DEPENDS_ON[$index]}"
 
 			if [[ $group != *'|'* ]]; then
-				echo "$output"
+				echo "$group"
 				return 0
 			fi
 
