@@ -20,9 +20,9 @@ InitBasic()
 
 	daemon_pathfile=/opt/bin/transmission-daemon
 	orig_daemon_service_script=/opt/etc/init.d/S88transmission
+	qpkg_ini_file=settings.json
 	service_script_type=3
 	readonly TRANSMISSION_WEB_HOME=/opt/share/transmission/web
-	qpkg_ini_file=settings.json
 
 	}
 
