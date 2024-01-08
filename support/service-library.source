@@ -145,7 +145,7 @@ InitByType()
 
 	# vars common to more-than a single type
 	case $service_script_type in
-		1|6)
+		1|3|6)
 			daemon_pid_pathfile=/var/run/$QPKG_NAME.pid
 	esac
 
