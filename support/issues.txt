@@ -1,3 +1,6 @@
+* was able to start 2 instances of sherpa running 'check'.
+	This shouldn't be possible.
+
 * near the end of installing IPKs, monitored download path can remain at non-zero size while packages complete installation.
 	maybe include a separate progress message when dir size shrinks to almost zero.
 
