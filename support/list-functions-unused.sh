@@ -1,11 +1,6 @@
 #!/usr/bin/env bash
 
-if [[ ! -e vars.source ]]; then
-	echo "'vars.source' not found"
-	exit 1
-fi
-
-. ./vars.source
+. vars.source || exit
 
 source_pathfile=$source_path/$management_source_file
 target_func=''
@@ -24,3 +19,5 @@ for target_func in $(grep '()$' "$source_pathfile" | grep -v '=\|\$\|_(' | sed '
 		echo "$target_func()"
 	fi
 done
+
+exit 0

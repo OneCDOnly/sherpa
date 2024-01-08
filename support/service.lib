@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #* don't edit this file, it was built/modified programmatically with the `build-qpkgs.sh` script. (source: service-library.source)
 #* service.lib
-#* Copyright (C) 2017-2023 OneCD - one.cd.only@gmail.com
+#* Copyright (C) 2017-2024 OneCD - one.cd.only@gmail.com
 #*   So, blame OneCD if it all goes horribly wrong. ;)
 #* Description:
 #*   A library of common bash functions used by many sherpa QPKG service-scripts.
@@ -21,7 +21,7 @@
 #*   This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 #*	 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
-readonly SERVICE_LIB_VERSION='230927'
+readonly SERVICE_LIB_VERSION='240108'
 InitLibrary()
 {
 IsQNAP || exit
@@ -44,7 +44,7 @@ fi
 done
 UnsetError
 UnsetRestartPending
-allow_access_to_sys_packages=false
+allow_access_to_sys_packages=true
 app_version_cmd=undefined
 app_version_pathfile=undefined
 backup_pathfile=undefined
@@ -60,6 +60,7 @@ get_ui_port_secure_cmd=undefined
 get_ui_port_secure_enabled_test_cmd=undefined
 install_pip_deps=false
 interpreter=undefined
+launcher_pathfile=undefined
 orig_daemon_service_script=undefined
 pidfile_is_managed_by_app=false
 pip_cache_path=undefined
@@ -78,6 +79,7 @@ source_git_url=undefined
 ui_listening_address=undefined
 ui_port=0
 ui_port_secure=0
+userlink_pathfile=undefined
 venv_path=undefined
 venv_pip_pathfile=undefined
 venv_python_pathfile=undefined
@@ -106,7 +108,6 @@ InitBasic
 backup_pathfile=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
 qpkg_ini_pathfile=$QPKG_CONFIG_PATH/$qpkg_ini_file
 InitByType
-daemon_pid_pathfile=/var/run/$QPKG_NAME.pid
 InitComplex
 qpkg_ini_default_pathfile=$qpkg_ini_pathfile.def
 EnsureConfigFileExists
@@ -125,22 +126,28 @@ fi
 InitByType()
 {
 case $service_script_type in
-1)
-allow_access_to_sys_packages=true
-install_pip_deps=true
+1|3|6)
+daemon_pid_pathfile=/var/run/$QPKG_NAME.pid
+esac
+case $service_script_type in
+1|6|7)
 interpreter=/opt/bin/python3
-pidfile_is_managed_by_app=true
 pip_cache_path=$QPKG_PATH/pip-cache
+venv_path=$QPKG_PATH/venv
+venv_pip_pathfile=$venv_path/bin/pip
+venv_python_pathfile=$venv_path/bin/python3
+esac
+case $service_script_type in
+1)
+install_pip_deps=true
+pidfile_is_managed_by_app=true
 qpkg_repo_path=$QPKG_PATH/repo-cache
 recheck_daemon_pid_after_launch=true
 source_git_branch=main
 source_git_branch_depth=shallow
-venv_path=$QPKG_PATH/venv
-venv_pip_pathfile=$venv_path/bin/pip
-venv_python_pathfile=$venv_path/bin/python3
 ;;
 6)
-recheck_daemon_pid_after_launch=true
+run_daemon_in_screen_session=true
 esac
 }
 ShowHelp()
@@ -185,7 +192,21 @@ fi
 MakePaths
 PullGitRepo || { SetError; return 1 ;}
 InstallAddons || { SetError; return 1 ;}
-IsNotDaemon && return
+if IsNotDaemon; then
+if [[ ! -L $userlink_pathfile && -e $launcher_pathfile ]]; then
+ln -s "$launcher_pathfile" "$userlink_pathfile"
+if [[ -L $userlink_pathfile ]]; then
+DisplayCommitToLog "symlink created: $userlink_pathfile"
+else
+DisplayErrCommitAllLogs "unable to create symlink to \'$QPKG_NAME\' launcher!"
+SetError
+return 1
+fi
+else
+DisplayCommitToLog "symlink exists: $userlink_pathfile"
+fi
+return
+fi
 WaitForLaunchTarget || { SetError; return 1 ;}
 EnsureConfigFileExists
 LoadPorts app || { SetError; return 1 ;}
@@ -228,6 +249,13 @@ return 0
 StopQPKG()
 {
 IsError && return
+if IsNotDaemon; then
+if [[ -L $userlink_pathfile ]]; then
+rm -f "$userlink_pathfile"
+DisplayCommitToLog "symlink removed: $userlink_pathfile"
+fi
+return
+fi
 if IsDaemonActive; then
 if IsRestart || IsRestore || IsClean || IsReset; then
 SetRestartPending
@@ -479,7 +507,7 @@ if [[ -z $QPKG_PATH || -z $QPKG_NAME ]] || IsNotSourcedOnline; then
 SetError
 return 1
 fi
-DisplayRunAndLog 'clean local repository' "rm -rf \"$qpkg_repo_path\"" log:failure-only
+IsGitApp && DisplayRunAndLog 'clean local repository' "rm -rf \"$qpkg_repo_path\"" log:failure-only
 IsGitApp && [[ -d $(/usr/bin/dirname "$qpkg_repo_path")/$QPKG_NAME ]] && DisplayRunAndLog 'KLUDGE: remove previous local repository' "rm -r \"$(/usr/bin/dirname "$qpkg_repo_path")/$QPKG_NAME\"" log:failure-only
 IsVirtualEnvironmentUsed && [[ -d $venv_path ]] && DisplayRunAndLog 'clean virtual environment' "rm -rf \"$venv_path\"" log:failure-only
 IsUsePipCache && [[ -d $pip_cache_path ]] && DisplayRunAndLog 'clean PyPI cache' "rm -rf \"$pip_cache_path\"" log:failure-only
@@ -972,7 +1000,7 @@ IsNotUsePipCache()
 }
 IsSourcedOnline()
 {
-IsGitApp || IsUsePipCache
+IsGitApp || IsUsePipCache || IsVirtualEnvironmentUsed
 }
 IsNotSourcedOnline()
 {
@@ -988,7 +1016,7 @@ IsNotSSLEnabled()
 }
 IsDaemon()
 {
-[[ $daemon_pid_pathfile != undefined ]]
+[[ $daemon_pathfile != undefined ]]
 }
 IsNotDaemon()
 {

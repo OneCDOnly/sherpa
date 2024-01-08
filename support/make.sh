@@ -1,11 +1,6 @@
 #!/usr/bin/env bash
 
-if [[ ! -e vars.source ]]; then
-	echo "'vars.source' not found"
-	exit 1
-fi
-
-. ./vars.source
+. vars.source || exit
 
 declare -a source_pathfiles
 declare -i index=0
@@ -19,11 +14,11 @@ for index in "${!source_pathfiles[@]}"; do
 done
 
 ./check-syntax.sh || exit
-./build-qpkgs.sh "${1:-$unstable_branch}" || exit
-./build-packages.sh "${1:-$unstable_branch}" || exit
+./build-qpkgs.sh || exit
+./build-packages.sh || exit
 ./build-objects.sh || exit
-./build-manager.sh "${1:-$unstable_branch}" || exit
+./build-manager.sh || exit
 ./build-archives.sh || exit
-./build-readme.sh "${1:-$unstable_branch}" || exit
+./build-readme.sh || exit
 
 exit 0

@@ -25,7 +25,6 @@ SwapTags()
 		buffer=$(sed "s|<?build_year?>|$build_year|g" <<< "$buffer")
 		buffer=$(sed "s|<?email?>|$email|g" <<< "$buffer")
 		buffer=$(sed "s|<?cdn_sherpa_base_url?>|$cdn_sherpa_base_url|g" <<< "$buffer")
-		buffer=$(sed "s|<?cdn_sherpa_url?>|$cdn_sherpa_url|g" <<< "$buffer")
 		buffer=$(sed "s|<?management_file?>|$management_file|g" <<< "$buffer")
 		buffer=$(sed "s|<?target_branch?>|${target_branch:-$unstable_branch}|g" <<< "$buffer")
 		buffer=$(sed "s|<?latest_release_version?>|${latest_release_version:-0}|g" <<< "$buffer")
@@ -250,6 +249,9 @@ stable_branch_msg="$(ColourTextBrightGreen "$stable_branch")"
 unstable_branch_msg="$(ColourTextBrightRed "$unstable_branch")"
 
 cdn_onecd_url='https://raw.githubusercontent.com/OneCDOnly'
+cdn_sherpa_base_url=$cdn_onecd_url/sherpa
+cdn_sherpa_url=$cdn_sherpa_base_url/'$source_branch'
+cdn_sherpa_packages_url="$cdn_sherpa_url/QPKGs/<?package_name?>/build"
 cdn_other_packages_url="$cdn_onecd_url/<?package_name?>/main/build"
 cdn_qnap_dev_packages_url='https://github.com/qnap-dev/<?package_name?>/releases/download/v<?version?>'
 
@@ -291,3 +293,5 @@ License:
 #
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 EOB
+
+true

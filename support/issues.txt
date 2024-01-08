@@ -1,10 +1,16 @@
+* was able to start 2 instances of sherpa running 'check'.
+	This shouldn't be possible.
+
+* near the end of installing IPKs, monitored download path can remain at non-zero size while packages complete installation.
+	maybe include a separate progress message when dir size shrinks to almost zero.
+
 * 'sherpa start inactive' fails to find any inactive packages.
 	needs to get status of each package first.
 
 * if package signing fails, the cert database is probably already open. Check for this and abort signing.
 	also, when signing fails, don't direct user to the QPKG service-script log: signing isn't a service action.
 
-* extend startup timeouts for Deluge QPKGs
+* extend startup timeouts for Deluge QPKGs.
 
 * QPKG version sort is not correctly sorting version numbers followed by an alpha as later than non-alpha.
 

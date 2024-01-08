@@ -131,7 +131,7 @@ Self.Results:Show()
 		fi
 
 		if [[ $opts_show_packages = true ]]; then
-			Report.Names:Show
+			Report.Packages:Show
 		fi
 
 		if [[ $opts_show_repos = true ]]; then
@@ -503,8 +503,18 @@ Env:Load()
 	readonly NAS_QPKG_ARCH=$(GetQpkgArch)
 	readonly NAS_RAM_KB=$(GetInstalledRAM)
 	readonly NAS_UPSTATE=$(GetUpState)
-	readonly OBJECTS_ARCHIVE_URL='<?cdn_sherpa_url?>'/objects.tar.gz
-	readonly PACKAGES_ARCHIVE_URL='<?cdn_sherpa_url?>'/packages.tar.gz
+
+	source_branch=stable		# default branch to follow
+	local test_branch=$(/sbin/getcfg sherpa Git_Branch -d unknown -f /etc/config/qpkg.conf)
+
+	if [[ $test_branch = unknown ]]; then
+		/sbin/setcfg sherpa Git_Branch $source_branch -f /etc/config/qpkg.conf
+	else
+		source_branch=$test_branch
+	fi
+
+	readonly OBJECTS_ARCHIVE_URL='<?cdn_sherpa_base_url?>'/$source_branch/objects.tar.gz
+	readonly PACKAGES_ARCHIVE_URL='<?cdn_sherpa_base_url?>'/$source_branch/packages.tar.gz
 	readonly QPKG_BU_PATH=$(GetDefVol)/.qpkg_config_backup
 	readonly THIS_PACKAGE_PATH=$(QPKG.GetInstallationPath)
 		readonly CACHE_PATH=$THIS_PACKAGE_PATH/cache
@@ -530,7 +540,7 @@ Env:Load()
 			readonly SESS_LAST_PATHFILE=$LOGS_PATH/session.last.log
 			readonly SESS_TAIL_PATHFILE=$LOGS_PATH/session.tail.log
 	readonly THIS_PACKAGE_VER=$(QPKG.Local.GetVer)
-	readonly THIS_SCRIPT_VER='<?build_date?>-<?target_branch?>'
+	readonly THIS_SCRIPT_VER='<?build_date?>'-$source_branch
 
 	# Entware
 	readonly EXTERNAL_PACKAGES_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
@@ -543,7 +553,7 @@ Lists:Load()
 
 	# These are used internally by sherpa.
 	# ordered
-	PACKAGE_TIERS=(standalone complementary dependent)
+	PACKAGE_TIERS=(standalone auxiliary dependent)
 
 	# sorted
 	QPKG_IS_STATES=(active backedup downloaded enabled installed missing signed slow unknown)
@@ -694,6 +704,7 @@ Debug.Log:Env()
 	DebugBinPathVerAndMinVer python "$(GetPythonVer)" "$MIN_PYTHON_VER"
 	DebugBinPathVerAndMinVer python3 "$(GetPython3Ver)" "$MIN_PYTHON_VER"
 	DebugBinPathVerAndMinVer perl "$(GetPerlVer)" "$MIN_PERL_VER"
+	DebugScript 'source branch' "$source_branch"
 	DebugScript 'logs path' "$LOGS_PATH"
 	DebugScript 'cache path' "$CACHE_PATH"
 	DebugScript 'action concurrency' "$CONCURRENCY"
@@ -837,7 +848,7 @@ Self:Validate()
 			installed_ver=$(GetPython3Ver "$PYTHON3_CMD")
 
 			if [[ ${installed_ver//./} -lt $MIN_PYTHON_VER ]]; then
-				ShowAsInfo 'the installed Python environment will be upgraded.'
+				ShowAsInfo "the $(ColourTextBrightOrange Python) environment will be auto-upgraded."
 				IPKs-ACuninstall-to:Add 'python*'
 			fi
 		fi
@@ -846,7 +857,7 @@ Self:Validate()
 			installed_ver=$(GetPerlVer "$PERL_CMD")
 
 			if [[ ${installed_ver//./} -lt $MIN_PERL_VER ]]; then
-				ShowAsInfo 'the installed Perl environment will be upgraded.'
+				ShowAsInfo "the $(ColourTextBrightOrange Perl) environment will be auto-upgraded."
 				IPKs-ACuninstall-to:Add 'perl*'
 			fi
 		fi
@@ -879,7 +890,7 @@ Self:Validate()
 	AllocPackStatesToAcs
 
 	if QPKGs-SCupgradable.Exist sherpa; then
-		ShowAsInfo 'the sherpa QPKG will be upgraded.'
+		ShowAsInfo "the $(ColourTextBrightOrange sherpa) QPKG will be auto-upgraded."
 		QPKGs-ACupgrade-to:Add sherpa
 	fi
 
@@ -891,7 +902,7 @@ Self:Validate()
 		local entware_install_date=$(QPKG.GetInstallDate Entware)
 
 		if [[ $entware_install_date = undefined || ${entware_install_date//[!0-9]/} -le 20230604 ]]; then
-			ShowAsInfo 'the Entware QPKG will be reinstalled (Entware packages were updated early June 2023).'
+			ShowAsInfo "the $(ColourTextBrightOrange Entware) QPKG will be auto-reinstalled (Entware packages were updated early June 2023)."
 			QPKGs-ACreinstall-to:Add Entware
 		fi
 	fi
@@ -1123,7 +1134,7 @@ Actions:Proc()
 				Action:Proc reactivate $tier QPKG reactivating reactivated
 				Action:Proc activate $tier QPKG activating activated
 				;;
-			complementary)
+			auxiliary)
 				for action in install reinstall upgrade activate; do
 					if (QPKGs-ACinstall-ok.Exist Entware) || QPKGs-AC${action}-to.IsAny && QPKGs-ISenabled.Exist Entware; then
 						ipks_upgrade=true
@@ -1165,7 +1176,7 @@ Action:Proc()
 
 	# input:
 	#   $1 = $TARGET_ACTION					e.g. `activate`, `reactivate` ...
-	#   $2 = $TIER							e.g. `standalone`, `dependent`, `complementary`, `all`
+	#   $2 = $TIER							e.g. `standalone`, `dependent`, `auxiliary`, `all`
 	#   $3 = $PACKAGE_TYPE					e.g. `QPKG`, `IPK`, `PIP`
 	#   $4 = $ACTION_PRESENT_MSG			e.g. `activating` ...
 	#   $5 = $ACTION_PAST_MSG				e.g. `activated` ...
@@ -2329,7 +2340,7 @@ CalcIpkDepsToInstall()
 	DebugInfo "$requested_count IPK$(Pluralise "$requested_count") requested" "'$req_list' "
 
 	while [[ $iterations -lt $ITERATION_LIMIT ]]; do
-		ShowAsIterativeProgress 'resolving IPK dependencies' "$iterations" iteration "${#dep_acc[@]}" package
+		ShowAsIterativeProgress 'resolving IPK dependencies' "$iterations" iteration "${#dep_acc[@]}" 'unique package'
 
 		((iterations++))
 		local ipk_titles=$(printf '^Package: %s$\|' "${this_list[@]}")
@@ -2338,7 +2349,7 @@ CalcIpkDepsToInstall()
 		this_list=($($GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator '^Package:\|^Depends:' "$EXTERNAL_PACKAGES_PATHFILE" | $GNU_GREP_CMD -vG '^Section:\|^Version:' | $GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator "$ipk_titles" | $GNU_GREP_CMD -vG "$ipk_titles" | $GNU_GREP_CMD -vG '^Package: ' | $SED_CMD 's|^Depends: ||;s|, |\n|g' | $SORT_CMD | $UNIQ_CMD))
 
 		# Update progress twice per loop.
-		ShowAsIterativeProgress 'resolving IPK dependencies' "$iterations" iteration "${#dep_acc[@]}" package
+		ShowAsIterativeProgress 'resolving IPK dependencies' "$iterations" iteration "${#dep_acc[@]}" 'unique package'
 
 		if [[ ${#this_list[@]} -eq 0 ]]; then
 			complete=true
@@ -2407,7 +2418,7 @@ CalcIpkDownloadSize()
 		size_array=($($GNU_GREP_CMD -w '^Package:\|^Size:' "$EXTERNAL_PACKAGES_PATHFILE" | $GNU_GREP_CMD --after-context 1 --no-group-separator ": $($SED_CMD 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKs-ACdownload-to:List)")" | $GREP_CMD '^Size:' | $SED_CMD 's|^Size: ||'))
 
 		# shellcheck disable=2283
-		IPKs-ACdownload-to:Size = "$(IFS=+; echo "$((${size_array[*]}))")"		# A nifty sizing shortcut found here https://stackoverflow.com/a/13635566/6182835
+		IPKs-ACdownload-to:Size = "$(IFS=+; echo "$((${size_array[*]}))")"		# nifty sizing shortcut found here https://stackoverflow.com/a/13635566/6182835
 		DebugAsDone "$(FormatAsThous "$(IPKs-ACdownload-to:Size)") bytes ($(FormatAsIsoBytes "$(IPKs-ACdownload-to:Size)")) to download"
 	else
 		DebugAsDone 'no IPKs to size'
@@ -2447,7 +2458,7 @@ IPKs:upgrade()
 	total_count=$(IPKs-ACdownload-to:Count)
 
 	if [[ $total_count -gt 0 ]]; then
-		desc="$total_count complementary IPK module$(Pluralise "$total_count")"
+		desc="$total_count auxiliary IPK module$(Pluralise "$total_count")"
 		ShowAsProc "upgrading $desc"
 
 		_DirSize:Monitor_ "$IPK_DL_PATH" "$(IPKs-ACdownload-to:Size)" &
@@ -2519,7 +2530,7 @@ IPKs:install()
 	total_count=$(IPKs-ACdownload-to:Count)
 
 	if [[ $total_count -gt 0 ]]; then
-		desc="$total_count complementary IPK module$(Pluralise "$total_count")"
+		desc="$total_count auxiliary IPK module$(Pluralise "$total_count")"
 		ShowAsProc "installing $desc"
 
 		_DirSize:Monitor_ "$IPK_DL_PATH" "$(IPKs-ACdownload-to:Size)" &
@@ -2580,7 +2591,7 @@ IPKs:downgrade()
 	total_count=$(IPKs-ACdowngrade-to:Count)
 
 	if [[ $total_count -gt 0 ]]; then
-		package_type='complementary IPK module'
+		package_type='auxiliary IPK module'
 		desc="$total_count ${package_type}$(Pluralise "$total_count")"
 		log_pathfile=$LOGS_PATH/ipks.$DOWNLOAD_LOG_FILE
 		ShowAsProc "downloading $desc"
@@ -2618,7 +2629,7 @@ IPKs:downgrade()
 		total_count=1
 		ok_count=0
 		fail_count=0
-		package_type='complementary IPK group'
+		package_type='auxiliary IPK group'
 		desc="$total_count ${package_type}$(Pluralise "$total_count")"
 		log_pathfile=$LOGS_PATH/ipks.$DOWNGRADE_LOG_FILE
 		ShowAsProc "downgrading $desc"
@@ -2658,7 +2669,7 @@ PIPs:install()
 	local -i fail_count=0
 	local log_pathfile=$LOGS_PATH/pypi.$INSTALL_LOG_FILE
 	local -i ok_count=0
-	local package_type='complementary PyPI group'
+	local package_type='auxiliary PyPI group'
 	local -i result_code=0
 	local -i total_count=0
 
@@ -2666,7 +2677,7 @@ PIPs:install()
 		((total_count++))
 
 		exec_cmd="$PIP_CMD install --upgrade --no-input $ESSENTIAL_PIPS --cache-dir $PIP_CACHE_PATH 2> >($GREP_CMD -v \"Running pip as the 'root' user\") >&2"
-		desc='complementary PyPI modules'
+		desc='auxiliary PyPI modules'
 
 		ShowAsPercentProgress "installing $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 0 "$total_count"
 		RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
@@ -3221,7 +3232,7 @@ DisplayAsPackagesReportLine()
 	local package_description=$(QPKG.GetDesc "$package_name")
 	local package_description_msg=$CHARS_BLANK
 	local package_notes=$(QPKG.GetNote "$package_name")
-	local package_notes_msg=$(ColourTextCyan "${CHARS_NOTE}${package_notes}")
+	local package_notes_msg=$(ColourTextCyan "${CHARS_NOTE}${package_notes}.")
 	local mode=''
 
 	if QPKG.IsMissing "$package_name"; then
@@ -3234,7 +3245,7 @@ DisplayAsPackagesReportLine()
 
 	package_name_msg+=$package_name
 	package_author_msg+=$package_author
-	package_description_msg+=$package_description
+	package_description_msg+="$(Capitalise "$package_description")."
 
 	case $mode in
 		muted)
@@ -4038,7 +4049,7 @@ DisplayAsIndentPrefixActionResultDurationReason()
 	if [[ -z ${5:-} ]]; then
 		printf "%s%s %s%s" "${1:-}" "$(Lowercase "${2:-}")" "${3:-}" "$([[ -n $duration ]] && printf ' in %s' "$duration")"
 	else
-		printf "%s%s %s%s\n%${ACTION_RESULT_INDENT}s${CHARS_DROPEND}%s" "${1:-}" "$(Lowercase "${2:-}")" "${3:-}" "$([[ -n $duration ]] && printf ' in %s' "$duration")" '' "$5"
+		printf "%s%s %s%s: %s" "${1:-}" "$(Lowercase "${2:-}")" "${3:-}" "$([[ -n $duration ]] && printf ' in %s' "$duration")" "$5"
 	fi
 
 	printf '\n'; linespace_visible=false
@@ -4835,22 +4846,22 @@ UpdateForkProgress()
 	msg=$(PercFrac "$ok_count" "$((skip_count+skip_ok_count+skip_error_count))" "$fail_count" "$total_count")
 
 	if [[ $ok_count -gt 0 ]]; then
-		[[ -n $msg ]] && msg+=': '
+		[[ -n $msg ]] && msg+=', '
 		msg+="$(ColourTextBrightGreen "$ok_count") OK"
 	fi
 
 	if [[ $skip_count -gt 0 || $skip_error_count -gt 0 ]]; then		# Don't include skipped packages that were OK.
-		[[ -n $msg ]] && msg+=': '
+		[[ -n $msg ]] && msg+=', '
 		msg+="$(ColourTextBrightOrange "$((skip_count+skip_error_count))") skipped"
 	fi
 
 	if [[ $fail_count -gt 0 ]]; then
-		[[ -n $msg ]] && msg+=': '
+		[[ -n $msg ]] && msg+=', '
 		msg+="$(ColourTextBrightRed "$fail_count") failed"
 	fi
 
 	if [[ $fork_count -gt 0 ]]; then
-		[[ -n $msg ]] && msg+=': '
+		[[ -n $msg ]] && msg+=', '
 		msg+="$(ColourTextBrightYellow "$fork_count") in-progress"
 	fi
 
@@ -4948,9 +4959,9 @@ QPKGs.NewVers:Show()
 	done
 
 	if [[ ${#packages[@]} -eq 1 ]]; then
-		msg='a new QPKG is'
+		msg='a new QPKG version is'
 	else
-		msg='new QPKGs are'
+		msg='new QPKG versions are'
 	fi
 
 	ShowAsInfo "$msg available for $names_formatted."
@@ -5156,7 +5167,7 @@ QPKGs.States:List()
 QPKGs.StandaloneDependent:Build()
 	{
 
-	# There are three tiers of package: `standalone`, `complementary` and `dependent`.
+	# There are three tiers of package: `standalone`, `auxiliary` and `dependent`.
 	# ... but only two tiers of QPKG: `standalone` and `dependent`.
 
 	# `standalone` QPKGs don't depend-on other QPKGs, but may be required for other QPKGs. They should be installed/activated before any `dependent` QPKGs.
@@ -5467,7 +5478,7 @@ Report.Dependencies:Show()
 
 	}
 
-Report.Names:Show()
+Report.Packages:Show()
 	{
 
 	Func:Init
@@ -8320,7 +8331,7 @@ QPKG.GetDependencies()
 			group="${QPKG_DEPENDS_ON[$index]}"
 
 			if [[ $group != *'|'* ]]; then
-				echo "$output"
+				echo "$group"
 				return 0
 			fi
 
@@ -9597,9 +9608,9 @@ ShowAsActionLogDetail()
 	case ${4:-} in
 		skipped|skipped-failed)
 			if [[ -n "${6:-}" ]]; then
-				DisplayAsIndentPrefixActionResultDurationReason '' "$3" "$2" '' "reason: $6"
+				DisplayAsIndentPrefixActionResultDurationReason '' "$3" "$2" '' "$6"
 			else
-				DisplayAsIndentPrefixActionResultDurationReason '' "$3" "$2" '' "no reason was provided by $(ShowTitleName)"
+				DisplayAsIndentPrefixActionResultDurationReason '' "$3" "$2" '' "no reason provided"
 			fi
 			;;
 		failed)
@@ -9607,10 +9618,10 @@ ShowAsActionLogDetail()
 				if QPKG.IsCanLog "$2"; then
 					DisplayAsIndentPrefixActionResultDurationReason 'Unable to ' "$3" "$2" "$5" "For more information, please check the service log: /etc/init.d/$($BASENAME_CMD "$(QPKG.GetServicePathFile "$2")") log"
 				else
-					DisplayAsIndentPrefixActionResultDurationReason 'Unable to ' "$3" "$2" "$5" "reason: $6"
+					DisplayAsIndentPrefixActionResultDurationReason 'Unable to ' "$3" "$2" "$5" "$6"
 				fi
 			else
-				DisplayAsIndentPrefixActionResultDurationReason 'Unable to ' "$3" "$2" "$5" 'no reason was provided by the service script'
+				DisplayAsIndentPrefixActionResultDurationReason 'Unable to ' "$3" "$2" "$5" 'no reason provided by the service script'
 			fi
 			;;
 		*)

@@ -1,16 +1,6 @@
 #!/usr/bin/env bash
 
-if [[ ! -e vars.source ]]; then
-	echo "'vars.source' not found"
-	exit 1
-fi
-
-. ./vars.source
-
-target_branch=${1:-$unstable_branch}
-cdn_sherpa_base_url=$cdn_onecd_url/sherpa
-cdn_sherpa_url=$cdn_sherpa_base_url/$target_branch
-cdn_sherpa_packages_url="$cdn_sherpa_url/QPKGs/<?package_name?>/build"
+. vars.source || exit
 
 source_pathfile=$source_path/$management_source_file
 target_pathfile=$source_path/$management_file
