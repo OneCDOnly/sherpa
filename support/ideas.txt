@@ -1,3 +1,6 @@
+* QDK looks like it will now write installation scripts that extract to unique paths.
+	Should now be able to install more than one QPKG simultaneously. https://github.com/qnap-dev/QDK/commit/f1eaf3bf0a9547d449592369e555cdfd6cc3c405
+
 * wrap package info description column text.
 	try the 'columns' util for this.
 
