@@ -6516,17 +6516,17 @@ _QPKG:download_()
 	local -i result_code=0
 	local -r REMOTE_URL=$(QPKG.GetURL "$PACKAGE_NAME")
 	local -r REMOTE_FILENAME=$($BASENAME_CMD "$REMOTE_URL")
-	local -r REMOTE_MD5=$(QPKG.GetMD5 "$PACKAGE_NAME")
+	local -r REMOTE_HASH=$(QPKG.GetHash "$PACKAGE_NAME")
 	local -r LOCAL_PATHFILE=$QPKG_DL_PATH/$REMOTE_FILENAME
 	local -r LOCAL_FILENAME=$($BASENAME_CMD "$LOCAL_PATHFILE")
 	local -r LOG_PATHFILE=$LOGS_PATH/$LOCAL_FILENAME.$DOWNLOAD_LOG_FILE
 
-	if [[ -z $REMOTE_URL || -z $REMOTE_MD5 ]]; then
+	if [[ -z $REMOTE_URL || -z $REMOTE_HASH ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" download skipped 'NAS arch is incompatible'
 		MarkThisActionForkAsSkipped
 		result_code=2
 	elif [[ -f $LOCAL_PATHFILE ]]; then
-		if FileMatchesMD5 "$LOCAL_PATHFILE" "$REMOTE_MD5"; then
+		if FileMatchesMD5 "$LOCAL_PATHFILE" "$REMOTE_HASH"; then
 			SaveActionResultToLog QPKG "$PACKAGE_NAME" download skipped-ok "existing file $(ShowAsFileName "$LOCAL_FILENAME") checksum correct"
 			MarkThisActionForkAsSkippedOk
 			FuncFork:Exit 0
@@ -6549,7 +6549,7 @@ _QPKG:download_()
 		result_code=$?
 
 		if [[ $result_code -eq 0 ]]; then
-			if FileMatchesMD5 "$LOCAL_PATHFILE" "$REMOTE_MD5"; then
+			if FileMatchesMD5 "$LOCAL_PATHFILE" "$REMOTE_HASH"; then
 				[[ $(Lowercase "${LOCAL_PATHFILE##*.}") = zip ]] && $UNZIP_CMD -nq "$LOCAL_PATHFILE" -d "$QPKG_DL_PATH"
 				SaveActionResultToLog QPKG "$PACKAGE_NAME" download ok
 				SendPackageStateChange ISdownloaded
@@ -8012,7 +8012,7 @@ QPKG.GetPathFilename()
 
 	}
 
-QPKG.GetMD5()
+QPKG.GetHash()
 	{
 
 	# input:
@@ -8026,7 +8026,7 @@ QPKG.GetMD5()
 
 	for index in "${!QPKG_NAME[@]}"; do
 		if [[ ${QPKG_NAME[$index]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]] && [[ ${QPKG_ARCH[$index]} = all || ${QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
-			echo "${QPKG_MD5[$index]}"
+			echo "${QPKG_HASH[$index]}"
 			return 0
 		fi
 	done
@@ -8227,7 +8227,7 @@ QPKG.GetAppAuthor()
 
 	for index in "${!QPKG_NAME[@]}"; do
 		if [[ ${QPKG_NAME[$index]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
-			echo "${QPKG_APP_AUTHOR[$index]}"
+			echo "${QPKG_APPLICATION_AUTHOR[$index]}"
 			return 0
 		fi
 	done
@@ -10082,7 +10082,7 @@ Packages:Load()
 
 	# Package list arrays are now full, so lock them.
 	readonly QPKG_ABBRVS
-	readonly QPKG_APP_AUTHOR
+	readonly QPKG_APPLICATION_AUTHOR
 	readonly QPKG_ARCH
 	readonly QPKG_AUTHOR
 	readonly QPKG_CAN_BACKUP
@@ -10092,7 +10092,7 @@ Packages:Load()
 	readonly QPKG_CONFLICTS_WITH
 	readonly QPKG_DEPENDS_ON
 	readonly QPKG_DESC
-	readonly QPKG_MD5
+	readonly QPKG_HASH
 	readonly QPKG_MAX_OS_VERSION
 	readonly QPKG_MIN_OS_VERSION
 	readonly QPKG_MIN_RAM_KB

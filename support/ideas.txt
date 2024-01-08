@@ -8,12 +8,6 @@
 
 * compare .git/ORIG_HEAD before-and-after 'git pull'. If different, then remove *.pyc before starting application.
 
-* add Gitea as new package?
-	https://docs.gitea.com/installation/install-from-binary
-
-* add NetBox as new package?
-	https://docs.netbox.dev/en/stable/installation/
-
 * check if QPKG has been signed before signing it again?
 	Don't check if QPKG has just been installed (assume package won't have been signed).
 
@@ -26,8 +20,6 @@
 
 * update IPKs automatically?
     Store a local checksum of the Entware package list. If this changes, assume it's been updated and all IPKs should be checked for upgrade status and upgraded. No-need to prompt user - just upgrade automatically.
-
-* see if *arr package can be supported? Sonarr, Lidarr, Radarr.
 
 * make Entware check for package updates early-on in background?
 

@@ -10,12 +10,12 @@ SwapTags()
 	# output:
 	# 	$? = 0
 
-	echo -n "swapping tags (input: $(basename $1), output: $(basename $2)) ... "
+	echo -n "swapping tags (input: '$(basename $1)', output: '$(basename $2)') ... "
 
 	if [[ -f "$1" ]]; then			# ignore symlinks.
 		local buffer=$(<"$1")
 
-		buffer=$(sed "s|<?dont_edit?>|$dont_edit_msg (source: $(basename "$1"))|g" <<< "$buffer")
+		buffer=$(sed "s|<?dont_edit?>|$dont_edit_msg (source: '$(basename "$1")')|g" <<< "$buffer")
 		buffer=$(sed "s|<?filename?>|$(basename "$2")|g" <<< "$buffer")
 		buffer=$(sed "s|<?copyright?>|${copyright_msg//$'\n'/\\n}|g" <<< "$buffer")	# escape newlines.
 		buffer=$(sed "s|<?project?>|${project_msg//$'\n'/\\n}|g" <<< "$buffer")		# escape newlines.
@@ -26,7 +26,6 @@ SwapTags()
 		buffer=$(sed "s|<?email?>|$email|g" <<< "$buffer")
 		buffer=$(sed "s|<?cdn_sherpa_base_url?>|$cdn_sherpa_base_url|g" <<< "$buffer")
 		buffer=$(sed "s|<?management_file?>|$management_file|g" <<< "$buffer")
-		buffer=$(sed "s|<?target_branch?>|${target_branch:-$unstable_branch}|g" <<< "$buffer")
 		buffer=$(sed "s|<?latest_release_version?>|${latest_release_version:-0}|g" <<< "$buffer")
 
 		[[ -e $2 ]] && chmod +w "$2"
@@ -255,7 +254,7 @@ cdn_sherpa_packages_url="$cdn_sherpa_url/QPKGs/<?package_name?>/build"
 cdn_other_packages_url="$cdn_onecd_url/<?package_name?>/main/build"
 cdn_qnap_dev_packages_url='https://github.com/qnap-dev/<?package_name?>/releases/download/v<?version?>'
 
-dont_edit_msg="don't edit this file, it was built/modified programmatically with the \`$(basename "$0")\` script."
+dont_edit_msg="don't edit this file, it was built/modified programmatically with the '$(basename "$0")' script."
 email=one.cd.only@gmail.com
 
 # remember to escape ampersand chars in `read` blocks for compatibility with `sed` regex.
