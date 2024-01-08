@@ -553,7 +553,7 @@ Lists:Load()
 
 	# These are used internally by sherpa.
 	# ordered
-	PACKAGE_TIERS=(standalone complementary dependent)
+	PACKAGE_TIERS=(standalone auxiliary dependent)
 
 	# sorted
 	QPKG_IS_STATES=(active backedup downloaded enabled installed missing signed slow unknown)
@@ -1134,7 +1134,7 @@ Actions:Proc()
 				Action:Proc reactivate $tier QPKG reactivating reactivated
 				Action:Proc activate $tier QPKG activating activated
 				;;
-			complementary)
+			auxiliary)
 				for action in install reinstall upgrade activate; do
 					if (QPKGs-ACinstall-ok.Exist Entware) || QPKGs-AC${action}-to.IsAny && QPKGs-ISenabled.Exist Entware; then
 						ipks_upgrade=true
@@ -1176,7 +1176,7 @@ Action:Proc()
 
 	# input:
 	#   $1 = $TARGET_ACTION					e.g. `activate`, `reactivate` ...
-	#   $2 = $TIER							e.g. `standalone`, `dependent`, `complementary`, `all`
+	#   $2 = $TIER							e.g. `standalone`, `dependent`, `auxiliary`, `all`
 	#   $3 = $PACKAGE_TYPE					e.g. `QPKG`, `IPK`, `PIP`
 	#   $4 = $ACTION_PRESENT_MSG			e.g. `activating` ...
 	#   $5 = $ACTION_PAST_MSG				e.g. `activated` ...
@@ -2458,7 +2458,7 @@ IPKs:upgrade()
 	total_count=$(IPKs-ACdownload-to:Count)
 
 	if [[ $total_count -gt 0 ]]; then
-		desc="$total_count complementary IPK module$(Pluralise "$total_count")"
+		desc="$total_count auxiliary IPK module$(Pluralise "$total_count")"
 		ShowAsProc "upgrading $desc"
 
 		_DirSize:Monitor_ "$IPK_DL_PATH" "$(IPKs-ACdownload-to:Size)" &
@@ -2530,7 +2530,7 @@ IPKs:install()
 	total_count=$(IPKs-ACdownload-to:Count)
 
 	if [[ $total_count -gt 0 ]]; then
-		desc="$total_count complementary IPK module$(Pluralise "$total_count")"
+		desc="$total_count auxiliary IPK module$(Pluralise "$total_count")"
 		ShowAsProc "installing $desc"
 
 		_DirSize:Monitor_ "$IPK_DL_PATH" "$(IPKs-ACdownload-to:Size)" &
@@ -2591,7 +2591,7 @@ IPKs:downgrade()
 	total_count=$(IPKs-ACdowngrade-to:Count)
 
 	if [[ $total_count -gt 0 ]]; then
-		package_type='complementary IPK module'
+		package_type='auxiliary IPK module'
 		desc="$total_count ${package_type}$(Pluralise "$total_count")"
 		log_pathfile=$LOGS_PATH/ipks.$DOWNLOAD_LOG_FILE
 		ShowAsProc "downloading $desc"
@@ -2629,7 +2629,7 @@ IPKs:downgrade()
 		total_count=1
 		ok_count=0
 		fail_count=0
-		package_type='complementary IPK group'
+		package_type='auxiliary IPK group'
 		desc="$total_count ${package_type}$(Pluralise "$total_count")"
 		log_pathfile=$LOGS_PATH/ipks.$DOWNGRADE_LOG_FILE
 		ShowAsProc "downgrading $desc"
@@ -2669,7 +2669,7 @@ PIPs:install()
 	local -i fail_count=0
 	local log_pathfile=$LOGS_PATH/pypi.$INSTALL_LOG_FILE
 	local -i ok_count=0
-	local package_type='complementary PyPI group'
+	local package_type='auxiliary PyPI group'
 	local -i result_code=0
 	local -i total_count=0
 
@@ -2677,7 +2677,7 @@ PIPs:install()
 		((total_count++))
 
 		exec_cmd="$PIP_CMD install --upgrade --no-input $ESSENTIAL_PIPS --cache-dir $PIP_CACHE_PATH 2> >($GREP_CMD -v \"Running pip as the 'root' user\") >&2"
-		desc='complementary PyPI modules'
+		desc='auxiliary PyPI modules'
 
 		ShowAsPercentProgress "installing $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 0 "$total_count"
 		RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
@@ -5167,7 +5167,7 @@ QPKGs.States:List()
 QPKGs.StandaloneDependent:Build()
 	{
 
-	# There are three tiers of package: `standalone`, `complementary` and `dependent`.
+	# There are three tiers of package: `standalone`, `auxiliary` and `dependent`.
 	# ... but only two tiers of QPKG: `standalone` and `dependent`.
 
 	# `standalone` QPKGs don't depend-on other QPKGs, but may be required for other QPKGs. They should be installed/activated before any `dependent` QPKGs.
