@@ -13,7 +13,7 @@ gpt-engineer_240108.qpkg.md5         gpt-engineer_240108.qpkg         gpt-engine
 Headphones_240108.qpkg.md5           Headphones_240108.qpkg           Headphones           240108       all    015eeb871a674b25757d300cc1190580
 HideThatBanner_230503.qpkg.md5       HideThatBanner_230503.qpkg       HideThatBanner       230503       all    467c7c005e113d06b37bf467d4ba9019
 IncreaseTimeouts_230719.qpkg.md5     IncreaseTimeouts_230719.qpkg     IncreaseTimeouts     230719       all    446a1e07a05cd1832e992cbc58ba2b79
-inxi_230722.qpkg.md5                 inxi_230722.qpkg                 inxi                 230722       all    cb932b69b0d25ffd83f7529207624f9f
+inxi_240108.qpkg.md5                 inxi_240108.qpkg                 inxi                 240108       all    adb5eef01a027c9478ae8ffc0e199c1b
 LazyLibrarian_240108_arm_64.qpkg.md5 LazyLibrarian_240108_arm_64.qpkg LazyLibrarian        240108       a64    36e98141c96944765c4b4669f7eb6950
 LazyLibrarian_240108_x86_64.qpkg.md5 LazyLibrarian_240108_x86_64.qpkg LazyLibrarian        240108       i64    8baab99fefd8fddcfb30837e4de11022
 LazyLibrarian_240108_x86.qpkg.md5    LazyLibrarian_240108_x86.qpkg    LazyLibrarian        240108       i86    10c2bf4a704afb81477d11a6859260af
@@ -46,7 +46,7 @@ RunLast_230224.qpkg.md5              RunLast_230224.qpkg              RunLast   
 SABnzbd_240108.qpkg.md5              SABnzbd_240108.qpkg              SABnzbd              240108       all    50ce9957a15a6e7e48dfdf32f5fcb5b2
 sha3sum_230312_x86_64.qpkg.md5       sha3sum_230312_x86_64.qpkg       sha3sum              230312       i64    6ceba9116e0dbcbdb4e6112f0c02f8c0
 sha3sum_230312_x86.qpkg.md5          sha3sum_230312_x86.qpkg          sha3sum              230312       i86    fdba9d16b88a5b6e3b04483ca77706dd
-sherpa_240108.qpkg.md5               sherpa_240108.qpkg               sherpa               240108       all    565652e5ca284e683f870c3a83b61208
+sherpa_240108.qpkg.md5               sherpa_240108.qpkg               sherpa               240108       all    b3043032e09bb70af8b37edb6644ee64
 SortMyQPKGs_231118.qpkg.md5          SortMyQPKGs_231118.qpkg          SortMyQPKGs          231118       all    9caef9e8995e8f674f7b95c2f3c12b3b
 WebSSH_230726_arm_64.qpkg.md5        WebSSH_230726_arm_64.qpkg        WebSSH               230726       a64    b4b48feb48085ea4cfa9101a22476bdc
 WebSSH_230726_x86_64.qpkg.md5        WebSSH_230726_x86_64.qpkg        WebSSH               230726       i64    a5ee830a60f28ad68792ed4580441ac6
