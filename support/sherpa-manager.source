@@ -4846,22 +4846,22 @@ UpdateForkProgress()
 	msg=$(PercFrac "$ok_count" "$((skip_count+skip_ok_count+skip_error_count))" "$fail_count" "$total_count")
 
 	if [[ $ok_count -gt 0 ]]; then
-		[[ -n $msg ]] && msg+=': '
+		[[ -n $msg ]] && msg+=', '
 		msg+="$(ColourTextBrightGreen "$ok_count") OK"
 	fi
 
 	if [[ $skip_count -gt 0 || $skip_error_count -gt 0 ]]; then		# Don't include skipped packages that were OK.
-		[[ -n $msg ]] && msg+=': '
+		[[ -n $msg ]] && msg+=', '
 		msg+="$(ColourTextBrightOrange "$((skip_count+skip_error_count))") skipped"
 	fi
 
 	if [[ $fail_count -gt 0 ]]; then
-		[[ -n $msg ]] && msg+=': '
+		[[ -n $msg ]] && msg+=', '
 		msg+="$(ColourTextBrightRed "$fail_count") failed"
 	fi
 
 	if [[ $fork_count -gt 0 ]]; then
-		[[ -n $msg ]] && msg+=': '
+		[[ -n $msg ]] && msg+=', '
 		msg+="$(ColourTextBrightYellow "$fork_count") in-progress"
 	fi
 
