@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+#* <?dont_edit?>
+#
+#* <?filename?>
+#
+#* <?copyright?>
+#
+#* <?project?>
+#
+#* <?tested?>
+#
+#* <?license?>
+
+readonly USER_ARGS_RAW=$*
+readonly QPKG_NAME=gpt-engineer
+readonly SERVICE_SCRIPT_VERSION='<?build_date?>'
+
+InitBasic()
+	{
+
+	service_script_type=7
+
+	}
+
+InitComplex()
+	{
+
+    # for on-call applications only
+    launcher_pathfile=$venv_path/bin/gpte
+    userlink_pathfile=/usr/bin/gpte
+
+	}
+
+library_path=$(/usr/bin/readlink "$0" 2>/dev/null)
+[[ -z $library_path ]] && library_path=$0
+readonly SERVICE_LIBRARY_PATHFILE=$(/usr/bin/dirname "$library_path")/service.lib
+
+if [[ -e $SERVICE_LIBRARY_PATHFILE ]]; then
+	. $SERVICE_LIBRARY_PATHFILE
+else
+	printf '\033[1;31m%s\033[0m: %s\n' 'derp' "QPKG service function library not found, can't continue."
+	exit 1
+fi
+
+ProcessArgs

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #* don't edit this file, it was built/modified programmatically with the `build-qpkgs.sh` script. (source: sherpa-service.source)
 #* sherpa-service.sh
-#* Copyright (C) 2017-2023 OneCD - one.cd.only@gmail.com
+#* Copyright (C) 2017-2024 OneCD - one.cd.only@gmail.com
 #*   So, blame OneCD if it all goes horribly wrong. ;)
 #* Description:
 #*	 This is the service script for the sherpa mini-package-manager and is part of the `sherpa` QPKG.

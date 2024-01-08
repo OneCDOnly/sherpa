@@ -4,16 +4,7 @@
 # check './build' path and find most-recent .qpkg file to use as a datetime reference.
 # check last changed datetime of all QPKG files, and if any are newer than the reference file, update date tags and run a 'qbuild'.
 
-if [[ ! -e vars.source ]]; then
-	echo "'vars.source' not found"
-	exit 1
-fi
-
-. ./vars.source
-
-cdn_sherpa_base_url=$cdn_onecd_url/sherpa
-cdn_sherpa_url=$cdn_sherpa_base_url/${1:-$unstable_branch}
-cdn_sherpa_packages_url="$cdn_sherpa_url/QPKGs/<?package_name?>/build"
+. vars.source || exit
 
 source_pathfile=$source_path/$service_library_source_file
 target_pathfile=$source_path/$service_library_file
@@ -138,3 +129,5 @@ for d in "$qpkgs_path"/*; do
 	(cd "$d" || exit; qbuild --exclude '*.source' &>/dev/null)
 	echo "QPKG arches: $(ColourTextBrightGreen rebuilt)"
 done
+
+exit 0

@@ -1,0 +1,134 @@
+#!/usr/bin/env bash
+#* <?dont_edit?>
+#
+#* <?filename?>
+#
+#* <?copyright?>
+#
+#* <?project?>
+#
+#* <?tested?>
+#
+#* <?license?>
+
+readonly USER_ARGS_RAW=$*
+readonly QPKG_NAME=pyLoad
+readonly SERVICE_SCRIPT_VERSION='<?build_date?>'
+
+InitBasic()
+	{
+
+	service_script_type=6
+
+	}
+
+InitComplex()
+	{
+
+	run_daemon_in_screen_session=false
+	qpkg_ini_pathfile=$QPKG_CONFIG_PATH/settings/pyload.cfg
+		qpkg_ini_default_pathfile=$qpkg_ini_pathfile.def
+		get_ui_listening_address_cmd="GetPyloadConfig $qpkg_ini_pathfile webui host"
+		get_ui_port_cmd="GetPyloadConfig $qpkg_ini_pathfile webui port"
+		get_ui_port_secure_cmd="GetPyloadConfig $qpkg_ini_pathfile webui port"
+		get_ui_port_secure_enabled_test_cmd="[[ $(GetPyloadConfig "$qpkg_ini_pathfile" webui use_ssl) = True ]]"
+	daemon_pathfile=$venv_path/bin/pyload
+		daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile --daemon --userdir $QPKG_PATH/config --pidfile $daemon_pid_pathfile"
+
+	}
+
+GetPyloadConfig()
+	{
+
+	# input:
+	#   $1 = pathfilename to read from
+	#   $2 = section name
+	#   $3 = variable name to return value for
+
+	# output:
+	#   $? = 0 : variable found
+	#   $? = 1 : file/section/variable not found
+	#   stdout = variable value
+
+	local source_pathfile=${1:?no pathfilename supplied}
+	local target_section_name=${2:?no section supplied}
+	local target_var_name=${3:?no variable supplied}
+
+	if [[ ! -e $source_pathfile ]]; then
+		echo false
+		return
+	fi
+
+	local result_line=''
+	local -i line_num=0
+	local section_raw=''
+	local blank=''
+	local section_description=''
+	local section_name=''
+	local -i start_line_num=0
+	local target_section=''
+	local end_line_num='$'
+
+	local raw_var_type=''
+	local raw_var_description=''
+	local value_raw=''
+	local var_type=''
+	local value=''
+
+	local var_found=false
+
+	while read -r result_line; do
+		IFS=':' read -r line_num section_raw <<< "$result_line"
+		IFS=' ' read -r section_name blank section_description <<< "$section_raw"
+
+		if [[ $section_name = "$target_section_name" ]]; then
+			[[ $start_line_num -eq 0 ]] && start_line_num=$((line_num+1))
+		else
+			if [[ $start_line_num -ne 0 ]]; then
+				end_line_num=$((line_num-2))
+				break
+			fi
+		fi
+	done <<< "$(/bin/grep '.*:$' -n "$source_pathfile")"
+
+	if [[ $start_line_num -eq 0 ]]; then
+		echo 'section match not found'
+		return 1
+	fi
+
+	target_section=$(/bin/sed -n "${start_line_num},${end_line_num}p" "$source_pathfile")
+
+	while read -r section_line; do
+		IFS=':' read -r raw_var_type raw_var_description <<< "$section_line"
+		read -r var_type var_name <<< "$raw_var_type"
+
+		[[ $var_name != "$target_var_name" ]] && continue
+
+		var_found=true
+		IFS='"' read -r blank var_description value_raw <<< "$raw_var_description"
+		IFS='=' read -r blank value <<< "$value_raw"
+		value=${value% }; value=${value# }
+		break
+	done <<< "$target_section"
+
+	if [[ $var_found = false ]]; then
+		echo 'variable match not found'
+		return 1
+	fi
+
+	echo "$value"
+
+	}
+
+library_path=$(/usr/bin/readlink "$0" 2>/dev/null)
+[[ -z $library_path ]] && library_path=$0
+readonly SERVICE_LIBRARY_PATHFILE=$(/usr/bin/dirname "$library_path")/service.lib
+
+if [[ -e $SERVICE_LIBRARY_PATHFILE ]]; then
+	. $SERVICE_LIBRARY_PATHFILE
+else
+	printf '\033[1;31m%s\033[0m: %s\n' 'derp' "QPKG service function library not found, can't continue."
+	exit 1
+fi
+
+ProcessArgs
