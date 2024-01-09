@@ -4507,13 +4507,16 @@ DisplayFileInWindow()
 	{
 
 	# $1 = pathfile to display
-	# $2/$3/$4 (optional) = 'linenumbers' : display file contents with line numbers.
-	#					  = 'jumptoend'   : display file contents scrolled to the last line.
-	#					  = 'onescreen'   : quit `less` if only one screen of data.
+	# $2/$3/$4/$5 (optional, and in any order)
+	#	= 'linenumbers' : display file contents with line numbers.
+	#	= 'jumptoend'   : display file contents scrolled to the last line.
+	#	= 'onescreen'   : quit `less` if only one screen of data.
+	#	= 'wrap'		: wrap lines of text to displayport.
 
 	local showlinenumbers=false
 	local jumptoend=false
 	local onescreen=false
+	local wraplines=false
 	local options_msg=''
 	local prompt_msg=' use arrow-keys to scroll up-down & left-right, press Q to quit '
 	local filename=${1:-}
@@ -4524,18 +4527,23 @@ DisplayFileInWindow()
 	fi
 
 	case 'linenumbers' in
-		${2:-}|${3:-}|${4:-})
+		${2:-}|${3:-}|${4:-}|${5:-})
 			showlinenumbers=true
 	esac
 
 	case 'jumptoend' in
-		${2:-}|${3:-}|${4:-})
+		${2:-}|${3:-}|${4:-}|${5:-})
 			jumptoend=true
 	esac
 
 	case 'onescreen' in
-		${2:-}|${3:-}|${4:-})
+		${2:-}|${3:-}|${4:-}|${5:-})
 			onescreen=true
+	esac
+
+	case 'wrap' in
+		${2:-}|${3:-}|${4:-}|${5:-})
+			wraplines=true
 	esac
 
 	if [[ $opts_verbose = true ]]; then
@@ -4550,7 +4558,8 @@ DisplayFileInWindow()
 
 	if [[ $($WC_CMD -l < "$filename") -ge $SESS_ROWS ]]; then
 		if [[ -e $GNU_LESS_CMD ]]; then
-			options_msg=' --quit-on-intr --tilde --mouse --RAW-CONTROL-CHARS'
+			options_msg=' --quit-on-intr --tilde --mouse --RAW-CONTROL-CHARS --shift 4'
+			[[ $wraplines = false ]] && options_msg+=' --chop-long-lines'
 			[[ $showlinenumbers = true ]] && options_msg+=' --LINE-NUMBERS'
 			[[ $jumptoend = true ]] && options_msg+=' +G'
 			[[ $onescreen = true ]] && options_msg+=' --quit-if-one-screen'
@@ -4560,6 +4569,7 @@ DisplayFileInWindow()
 
 		if [[ -e $LESS_CMD ]]; then
 			options_msg=' -~'
+			[[ $wraplines = false ]] && options_msg+='S'
 			[[ $showlinenumbers = true ]] && options_msg+='N'
 			${LESS_CMD}${options_msg} "$filename"
 			return
