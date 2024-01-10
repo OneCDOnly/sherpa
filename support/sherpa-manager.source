@@ -2514,12 +2514,12 @@ IPKs:install()
 
 	if QPKGs.ACinstall.SCall.IsSet; then
 		for i in "${!QPKG_NAME[@]}"; do
-			[[ $previous = "${QPKG_NAME[$i]}" ]] && continue || previous="${QPKG_NAME[$i]}"
+			[[ $previous = "${QPKG_NAME[$i]}" ]] && continue || previous=${QPKG_NAME[$i]}
 			IPKs-ACinstall-to:Add "$(QPKG.GetIPKs "${QPKG_NAME[$i]}" "$i")"
 		done
 	else
 		for i in "${!QPKG_NAME[@]}"; do
-			[[ $previous = "${QPKG_NAME[$i]}" ]] && continue || previous="${QPKG_NAME[$i]}"
+			[[ $previous = "${QPKG_NAME[$i]}" ]] && continue || previous=${QPKG_NAME[$i]}
 
 			if QPKGs-ACinstall-to.Exist "${QPKG_NAME[$i]}" || QPKGs-ISinstalled.Exist "${QPKG_NAME[$i]}" || QPKGs-ACreinstall-to.Exist "${QPKG_NAME[$i]}" || (QPKGs-ACactivate-to.Exist "${QPKG_NAME[$i]}" && (QPKGs-ACinstall-to.Exist "${QPKG_NAME[$i]}" || QPKGs-ISinstalled.Exist "${QPKG_NAME[$i]}" || QPKGs-ACreinstall-to.Exist "${QPKG_NAME[$i]}")); then
 				QPKG.IsMinOSVerOk "${QPKG_NAME[$i]}" || continue
@@ -8339,10 +8339,12 @@ QPKG.GetNote()
 	#   $? = 0 if found, !0 if not.
 
 	local -i i=0
+	local a=''
 
 	for i in "${!QPKG_NAME[@]}"; do
 		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
-			echo "${QPKG_NOTE[$i]}"
+			a=${QPKG_NOTE[$i]}
+			[[ $a != none ]] && echo "$a"
 			return 0
 		fi
 	done
