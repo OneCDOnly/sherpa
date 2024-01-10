@@ -277,7 +277,7 @@ QPKG_CAN_LOG_SERVICE_OPERATIONS+=(true)
 QPKG_TEST_FOR_ACTIVE+=(none)
 
 QPKG_NAME+=(gpt-engineer)
-QPKG_ARCH+=(all)
+QPKG_ARCH+=(none)
 QPKG_VERSION+=(<?version?>)
 QPKG_HASH+=(<?hash?>)
 QPKG_URL+=(<?cdn_sherpa_packages_url?>/<?qpkg_filename?>)
