@@ -61,7 +61,7 @@ for d in "$qpkgs_path"/*; do
 		datetime_change_reference_file=$(cd "$d/build" || exit; ls -t1 --reverse | tail -n1)
 
 		if [[ -n $datetime_change_reference_file ]]; then
-			echo "datetime reference file: $datetime_change_reference_file"
+			echo "datetime reference file: '$datetime_change_reference_file'"
 			datetime_change_reference_pathfile=$d/build/$datetime_change_reference_file
 		else
 			echo "datetime reference file: unspecified"
@@ -75,7 +75,7 @@ for d in "$qpkgs_path"/*; do
 
 			if [[ -n $changed_file_list ]]; then
 				echo "package files: changed"
-				echo "file(s) more recent than reference file: $changed_file_list"
+				echo "file(s) more recent than reference file: '$changed_file_list'"
 				rebuild_package=true
 			else
 				echo "package files: not newer than reference file"

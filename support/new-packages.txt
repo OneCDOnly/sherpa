@@ -1,3 +1,6 @@
+* gpt-engineer?
+	currently resolving python dependencies manually.
+
 * add Gitea?
 	https://docs.gitea.com/installation/install-from-binary
 
