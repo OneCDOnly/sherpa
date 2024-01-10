@@ -3205,16 +3205,16 @@ DisplayAsPackagesReportTitleLine()
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
-	# column 2: package author
+# 	# column 2: package author
+#
+# 	if [[ $maxcols -ge 2 ]]; then
+# 		msg="${CHARS_SPECIAL}QPKG author:"
+# 		printf "%-$((PACKAGE_AUTHOR_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
+# 	fi
+
+	# column 2: package description
 
 	if [[ $maxcols -ge 2 ]]; then
-		msg="${CHARS_SPECIAL}QPKG author:"
-		printf "%-$((PACKAGE_AUTHOR_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
-	fi
-
-	# column 3: package description
-
-	if [[ $maxcols -ge 3 ]]; then
 		msg="${CHARS_SPECIAL}QPKG description:"
 		printf "%-$((PACKAGE_DESCRIPTION_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
@@ -3231,8 +3231,8 @@ DisplayAsPackagesReportLine()
 
 	local package_name=${1:?${FUNCNAME[0]}'()': undefined}
 	local package_name_msg=$CHARS_NORMAL
-	local package_author=$(QPKG.GetAuthor "$package_name")
-	local package_author_msg=$CHARS_BLANK
+# 	local package_author=$(QPKG.GetAuthor "$package_name")
+# 	local package_author_msg=$CHARS_BLANK
 	local package_description=$(QPKG.GetDesc "$package_name")
 	local package_description_msg=$CHARS_BLANK
 	local package_notes=$(QPKG.GetNote "$package_name")
@@ -3248,18 +3248,18 @@ DisplayAsPackagesReportLine()
 	fi
 
 	package_name_msg+=$package_name
-	package_author_msg+=$package_author
+# 	package_author_msg+=$package_author
 	package_description_msg+="$(Capitalise "$package_description")."
 
 	case $mode in
 		muted)
 			package_name_msg=$(ColourTextDarkGrey "$package_name_msg")
-			package_author_msg=$(ColourTextDarkGrey "$package_author_msg")
+# 			package_author_msg=$(ColourTextDarkGrey "$package_author_msg")
 			package_description_msg=$(ColourTextDarkGrey "$package_description_msg")
 			;;
 		highlighted)
 			package_name_msg=$(ColourTextBrightRed "$package_name_msg")
-			[[ $package_author = missing ]] && package_author_msg=$(ColourTextBrightRedBlink "${CHARS_ALERT}${package_author}")
+# 			[[ $package_author = missing ]] && package_author_msg=$(ColourTextBrightRedBlink "${CHARS_ALERT}${package_author}")
 	esac
 
 	# column 1: package name
@@ -3268,19 +3268,20 @@ DisplayAsPackagesReportLine()
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
 	fi
 
-	# column 2: package author
+# 	# column 2: package author
+#
+# 	if [[ $maxcols -ge 2 && -n $package_author ]]; then
+# 		printf "%-$((PACKAGE_AUTHOR_COL_WIDTH+$(LenANSIDiff "$package_author_msg")))s" "$package_author_msg"
+# 	fi
 
-	if [[ $maxcols -ge 2 && -n $package_author ]]; then
-		printf "%-$((PACKAGE_AUTHOR_COL_WIDTH+$(LenANSIDiff "$package_author_msg")))s" "$package_author_msg"
-	fi
+	# column 2: package description
 
-	# column 3: package description
-
-	if [[ $maxcols -ge 3 && -n $package_description ]]; then
+	if [[ $maxcols -ge 2 && -n $package_description ]]; then
 		printf "%-$((PACKAGE_DESCRIPTION_COL_WIDTH+$(LenANSIDiff "$package_description_msg")))s" "$package_description_msg"
 
 		if [[ -n $package_notes ]]; then
-			printf "\n%$((${#CHARS_BLANK}+PACKAGE_NAME_COL_WIDTH+PACKAGE_AUTHOR_COL_WIDTH))s${CHARS_DROPEND}%s" '' "$package_notes_msg"
+# 			printf "\n%$((${#CHARS_BLANK}+PACKAGE_NAME_COL_WIDTH+PACKAGE_AUTHOR_COL_WIDTH))s${CHARS_DROPEND}%s" '' "$package_notes_msg"
+			printf "\n%$((${#CHARS_BLANK}+PACKAGE_NAME_COL_WIDTH))s${CHARS_DROPEND}%s" '' "$package_notes_msg"
 		fi
 	fi
 
