@@ -1034,7 +1034,7 @@ Self:Validate()
 	fi
 
 	QPKGs-ACupgrade-to.Exist sherpa && QPKGs-ACreactivate-to:Add sherpa
-	QPKGs-ACinstall-to.Exist Entware && QPKGs-ACreactivate-to:Add Entware
+	QPKGs-ACupgrade-to.Exist Entware && QPKGs-ACreactivate-to:Add Entware
 
 	# Build list of required installation QPKGs.
 	QPKGs-ACdownload-to:Add "$(QPKGs-ACupgrade-to:Array) $(QPKGs-ACreinstall-to:Array) $(QPKGs-ACinstall-to:Array)"
@@ -7902,14 +7902,14 @@ QPKG.IsDependent()
 	#   $? = 0 if true, 1 if false (first package found).
 
 	local -i i=0
+	local a=''
 
 	for i in "${!QPKG_NAME[@]}"; do
 		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
-			if [[ -n ${QPKG_DEPENDS_ON[$i]} ]]; then
-				return 0
-			else
-				break
-			fi
+			a=${QPKG_DEPENDS_ON[$i]}
+			[[ $a = default ]] && a=${QPKG_DEPENDS_ON[$(QPKG.GetDefaultArchIndex "${QPKG_NAME[$i]}")]}
+			[[ $a = none ]] && break
+			[[ -n $a ]] && return
 		fi
 	done
 
