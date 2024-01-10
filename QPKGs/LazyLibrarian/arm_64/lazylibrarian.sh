@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#* don't edit this file, it was built/modified programmatically with the `build-qpkgs.sh` script. (source: lazylibrarian.source)
+#* don't edit this file, it was built/modified programmatically with the 'build-qpkgs.sh' script. (source: 'lazylibrarian.source')
 #* lazylibrarian.sh
 #* Copyright (C) 2017-2024 OneCD - one.cd.only@gmail.com
 #*   So, blame OneCD if it all goes horribly wrong. ;)
@@ -20,7 +20,7 @@
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 readonly USER_ARGS_RAW=$*
 readonly QPKG_NAME=LazyLibrarian
-readonly SERVICE_SCRIPT_VERSION='240108'
+readonly SERVICE_SCRIPT_VERSION='240110'
 InitBasic()
 {
 service_script_type=1
@@ -31,7 +31,7 @@ InitComplex()
 app_version_pathfile=$qpkg_repo_path/lazylibrarian/version.py
 daemon_pathfile=$qpkg_repo_path/LazyLibrarian.py
 daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile --daemon --nolaunch --datadir $(/usr/bin/dirname "$qpkg_ini_pathfile") --config $qpkg_ini_pathfile --pidfile $daemon_pid_pathfile"
-get_ui_listening_address_cmd="/sbin/getcfg misc host -d undefined -f $qpkg_ini_pathfile"
+get_ui_listening_address_cmd="/sbin/getcfg misc host -d 0.0.0.0 -f $qpkg_ini_pathfile"
 get_ui_port_cmd="/sbin/getcfg General http_port -d 5299 -f $qpkg_ini_pathfile"
 get_ui_port_secure_cmd="/sbin/getcfg General http_port -d 5299 -f $qpkg_ini_pathfile"
 get_ui_port_secure_enabled_test_cmd='[[ $(/sbin/getcfg General https_enabled -d 0 -f '$qpkg_ini_pathfile') = 1 ]]'
