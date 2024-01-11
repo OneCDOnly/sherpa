@@ -34,3 +34,5 @@
 	ModuleNotFoundError: No module named 'pydantic_core._pydantic_core'
 
 Appears this is another module that requires a rust compiler.
+
+* need to rename _pydantic_core.so (ensure search and rename looks for a leading underscore).
