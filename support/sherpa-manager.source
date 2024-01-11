@@ -922,7 +922,7 @@ Self:Validate()
 	for action in upgrade reinstall install; do
 		for package in $(QPKGs-AC${action}-to:Array); do
 			for prospect in $(QPKG.GetDependencies "$package"); do
-				QPKGs-ACinstall-to:Add "$prospect"
+				QPKGs-ISNTinstalled.Exist "$prospect" && QPKGs-ACinstall-to:Add "$prospect"
 			done
 		done
 	done
@@ -7635,19 +7635,19 @@ _QPKG:status_()
 
 	package_tests=$(QPKG.GetActiveTest "$PACKAGE_NAME")
 
-	if [[ $package_tests != none ]]; then
-		eval "$package_tests" &>/dev/null
-		z=$?
-	else
+	if [[ $package_tests = builtin ]]; then
 		[[ $opts_debug = true ]] && debug_cmd='DEBUG_QPKG=true '
 
-		if [[ -e $GNU_TIMEOUT_CMD ]]; then
+		if [[ -e $GNU_TIMEOUT_CMD ]]; then		# run status query with a timeout if-possible.
 			$GNU_TIMEOUT_CMD "$QPKG_STATUS_CHECK_TIMEOUT_SECONDS" /bin/bash -c "${debug_cmd}$(QPKG.GetServicePathFile) status"
 			z=$?
 		else
 			RunAndLog "${debug_cmd}$(QPKG.GetServicePathFile) status" "$LOGS_PATH/$PACKAGE_NAME.$STATUS_LOG_FILE" log:failure-only
 			z=$?
 		fi
+	elif [[ $package_tests != none ]]; then
+		eval "$package_tests" &>/dev/null
+		z=$?
 	fi
 
 	DebugVar z
