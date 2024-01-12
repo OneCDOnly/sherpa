@@ -6433,13 +6433,15 @@ ShowZeroQpkgs()
 Self.LockFile:Claim()
 	{
 
-	readonly LOCK_PATHFILE=/var/run/sherpa.lock
-	local re=\\bsherpa.manager.sh\\b
+	readonly LOCK_PATHFILE=/var/run/sherpa.lock		# global
+	local a=''
 
-	if [[ -e $LOCK_PATHFILE && -d /proc/$(<"$LOCK_PATHFILE") && $(</proc/"$(<"$LOCK_PATHFILE")"/cmdline) =~ $re ]]; then
-		ShowAsAbort "another instance is running (PID: $(<"$LOCK_PATHFILE"))"
-		return 1
-	fi
+	for a in sherpa-manager.sh sherpa-manager.source; do
+		if [[ -e $LOCK_PATHFILE && -d /proc/$(<"$LOCK_PATHFILE") && $(</proc/"$(<"$LOCK_PATHFILE")"/cmdline) =~ $a ]]; then
+			ShowAsAbort "another sherpa instance was found (PID:$(<"$LOCK_PATHFILE")), can't continue."
+			return 1
+		fi
+	done
 
 	echo "$$" > "$LOCK_PATHFILE"
 	return 0
