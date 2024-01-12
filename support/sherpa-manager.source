@@ -52,7 +52,7 @@ Self:Init()
 	trap RunOnSIGINT INT
 
 	sess_active_pathfile=$THIS_PACKAGE_PATH/session.$$.active.log
-	rm -f "$REPORT_PATHFILE" "$RAMDISKS_FREESPACE_PATHFILE" "$DISPLAY_INHIBIT_PATHFILE"
+	rm -f "$REPORT_OUTPUT_PATHFILE" "$RAMDISKS_FREESPACE_PATHFILE" "$DISPLAY_INHIBIT_PATHFILE"
 
 	# KLUDGE: `/dev/fd` isn't always created by QTS during startup.
 	[[ ! -e /dev/fd ]] && ln -s /proc/self/fd /dev/fd
@@ -82,7 +82,7 @@ Self:Init()
 	fi
 
 	EraseThisLine
-	[[ $hide_title = false && $opts_verbose = false ]] && ShowTitleLine
+	ShowTitleLine
 
 	if ! QPKGs.Conflicts:Check; then
 		skip_package_actions=true
@@ -252,9 +252,9 @@ Consts:Load()
 
 	readonly PACKAGE_ABBS_COL_WIDTH=84
 	readonly PACKAGE_ARCH_COL_WIDTH=15
-	readonly PACKAGE_AUTHOR_COL_WIDTH=22
+	readonly PACKAGE_AUTHOR_COL_WIDTH=40
 	readonly PACKAGE_DEPENDENCIES_COL_WIDTH=29
-	readonly PACKAGE_DESCRIPTION_COL_WIDTH=100
+	readonly PACKAGE_DESCRIPTION_COL_WIDTH=10
 	readonly PACKAGE_ENABLED_COL_WIDTH=12
 	readonly PACKAGE_INSTALL_DATE_COL_WIDTH=18
 	readonly PACKAGE_INSTALLED_COL_WIDTH=14
@@ -323,6 +323,7 @@ Vars:Load()
 	show_suggest_raise_issue=false
 	show_zero_qpkgs=true
 	skip_package_actions=false
+	title_shown=false
 
 	# User-selectable options.
 	opts_check=false
@@ -533,12 +534,13 @@ Env:Load()
 			readonly QPKG_DL_PATH=$CACHE_PATH/QPKGs.downloads
 		readonly LOGS_PATH=$THIS_PACKAGE_PATH/logs
 			readonly RAMDISKS_FREESPACE_PATHFILE=$LOGS_PATH/ramdisks.freespace
-			readonly REPORT_PATHFILE=$LOGS_PATH/report.ansi
 			readonly SCREEN_SESSIONS_PATHFILE=$LOGS_PATH/screen.sessions
 			readonly SESS_ACTIONS_RESULTS_PATHFILE=$LOGS_PATH/session.action.results.log
 			readonly SESS_ARCHIVE_PATHFILE=$LOGS_PATH/session.archive.log
 			readonly SESS_LAST_PATHFILE=$LOGS_PATH/session.last.log
 			readonly SESS_TAIL_PATHFILE=$LOGS_PATH/session.tail.log
+		readonly REPORTS_PATH=$THIS_PACKAGE_PATH/reports
+				readonly REPORT_OUTPUT_PATHFILE=$REPORTS_PATH/report.ansi
 	readonly THIS_PACKAGE_VER=$(QPKG.Local.GetVer)
 	readonly THIS_SCRIPT_VER='<?build_date?>'-$source_branch
 
@@ -620,6 +622,7 @@ CreatePaths()
 	MakePath "$IPK_DOWNGRADE_DL_PATH" 'IPK downgrade' || return
 	MakePath "$LOGS_PATH" logs || return
 	MakePath "$PIP_CACHE_PATH" 'PIP cache' || return
+	MakePath "$REPORTS_PATH" reports || return
 	MakePath "$QPKG_BU_PATH" 'QPKG backup' || return
 	MakePath "$QPKG_DL_PATH" 'QPKG download' || return
 
@@ -705,8 +708,9 @@ Debug.Log:Env()
 	DebugBinPathVerAndMinVer python3 "$(GetPython3Ver)" "$MIN_PYTHON_VER"
 	DebugBinPathVerAndMinVer perl "$(GetPerlVer)" "$MIN_PERL_VER"
 	DebugScript 'source branch' "$source_branch"
-	DebugScript 'logs path' "$LOGS_PATH"
 	DebugScript 'cache path' "$CACHE_PATH"
+	DebugScript 'logs path' "$LOGS_PATH"
+	DebugScript 'reports path' "$REPORTS_PATH"
 	DebugScript 'action concurrency' "$CONCURRENCY"
 
 	if OS.IsSupportSignedPackages; then
@@ -808,8 +812,7 @@ Self.Tasks:Check()
 	fi
 
 	if [[ $something_to_do = false ]]; then
-		hide_title=false
-		ShowTitleLine
+		hide_title=false; ShowTitleLine
 		ShowAsError "supplied arguments were incomplete, or didn't make sense. Please check the argument list again."
 		opts_show_basic_help=true
 		skip_package_actions=true
@@ -922,7 +925,7 @@ Self:Validate()
 	for action in upgrade reinstall install; do
 		for package in $(QPKGs-AC${action}-to:Array); do
 			for prospect in $(QPKG.GetDependencies "$package"); do
-				QPKGs-ACinstall-to:Add "$prospect"
+				QPKGs-ISNTinstalled.Exist "$prospect" && QPKGs-ACinstall-to:Add "$prospect"
 			done
 		done
 	done
@@ -1034,7 +1037,7 @@ Self:Validate()
 	fi
 
 	QPKGs-ACupgrade-to.Exist sherpa && QPKGs-ACreactivate-to:Add sherpa
-	QPKGs-ACinstall-to.Exist Entware && QPKGs-ACreactivate-to:Add Entware
+	QPKGs-ACupgrade-to.Exist Entware && QPKGs-ACreactivate-to:Add Entware
 
 	# Build list of required installation QPKGs.
 	QPKGs-ACdownload-to:Add "$(QPKGs-ACupgrade-to:Array) $(QPKGs-ACreinstall-to:Array) $(QPKGs-ACinstall-to:Array)"
@@ -2162,6 +2165,18 @@ ResetCachePath()
 
 	}
 
+ResetReportsPath()
+	{
+
+	if [[ -n $REPORTS_PATH && -d $REPORTS_PATH ]]; then
+		rm -rf "${REPORTS_PATH:?}"/*
+		ShowAsDone 'reports cleared'
+	fi
+
+	return 0
+
+	}
+
 Quiz()
 	{
 
@@ -2231,7 +2246,7 @@ UpdateEntwarePackageList()
 
 	[[ ${ENTWARE_PACKAGE_LIST_UPTODATE:-false} = false ]] || return 0
 
-	local -i result_code=0
+	local -i z=0
 
 	# If Entware package list was recently updated, don't update again.
 
@@ -2239,13 +2254,13 @@ UpdateEntwarePackageList()
 		DebugAsProc "updating $(ShowAsPackageName Entware) package list"
 
 		RunAndLog "$OPKG_CMD update" "$LOGS_PATH/Entware.$UPDATE_LOG_FILE" log:failure-only
-		result_code=$?
+		z=$?
 
-		if [[ $result_code -eq 0 ]]; then
+		if [[ $z -eq 0 ]]; then
 			DebugAsDone "updated $(ShowAsPackageName Entware) package list"
 			CloseIpkArchive
 		else
-			DebugAsWarn "Unable to update $(ShowAsPackageName Entware) package list $(ShowAsExitcode "$result_code")"
+			DebugAsWarn "Unable to update $(ShowAsPackageName Entware) package list $(ShowAsExitcode "$z")"
 			# no-big-deal
 		fi
 	else
@@ -2441,7 +2456,7 @@ IPKs:upgrade()
 	Func:Init
 	local desc=''
 	local log_pathfile=$LOGS_PATH/ipks.$UPGRADE_LOG_FILE
-	local -i result_code=0
+	local -i z=0
 	local -i total_count=0
 	IPKs-ACupgrade-to:Init
 	IPKs-ACdownload-to:Init
@@ -2465,21 +2480,21 @@ IPKs:upgrade()
 		fork_pid=$!
 
 		RunAndLog "$OPKG_CMD upgrade --force-overwrite $(IPKs-ACdownload-to:List) --cache $IPK_CACHE_PATH --tmp-dir $IPK_DL_PATH" "$log_pathfile" log:failure-only
-		result_code=$?
+		z=$?
 
 		KillActiveFork
 
-		if [[ $result_code -eq 0 ]]; then
+		if [[ $z -eq 0 ]]; then
 			NoteIpkAcAsOk "$(IPKs-ACupgrade-to:Array)" upgrade
 			DebugAsDone "upgraded $desc"
-			SaveActionResultToLog IPK "$desc" upgrade ok "$result_code"
+			SaveActionResultToLog IPK "$desc" upgrade ok "$z"
 		else
 			NoteIpkAcAsEr "$(IPKs-ACupgrade-to:Array)" upgrade
-			SaveActionResultToLog IPK "$desc" upgrade failed "$result_code"
+			SaveActionResultToLog IPK "$desc" upgrade failed "$z"
 		fi
 	fi
 
-	Func:Exit $result_code
+	Func:Exit $z
 
 	}
 
@@ -2495,10 +2510,11 @@ IPKs:install()
 
 	Func:Init
 	local desc=''
-	local -i index=0
+	local -i i=0
 	local log_pathfile=$LOGS_PATH/ipks.$INSTALL_LOG_FILE
-	local -i result_code=0
+	local -i z=0
 	local -i total_count=0
+	local previous=''
 	IPKs-ACinstall-to:Init
 	IPKs-ACdownload-to:Init
 
@@ -2512,15 +2528,18 @@ IPKs:install()
 	fi
 
 	if QPKGs.ACinstall.SCall.IsSet; then
-		for index in "${!QPKG_NAME[@]}"; do
-			IPKs-ACinstall-to:Add "${QPKG_REQUIRES_IPKS[$index]}"
+		for i in "${!QPKG_NAME[@]}"; do
+			[[ $previous = "${QPKG_NAME[$i]}" ]] && continue || previous=${QPKG_NAME[$i]}
+			IPKs-ACinstall-to:Add "$(QPKG.GetIPKs "${QPKG_NAME[$i]}" "$i")"
 		done
 	else
-		for index in "${!QPKG_NAME[@]}"; do
-			if QPKGs-ACinstall-to.Exist "${QPKG_NAME[$index]}" || QPKGs-ISinstalled.Exist "${QPKG_NAME[$index]}" || QPKGs-ACreinstall-to.Exist "${QPKG_NAME[$index]}" || (QPKGs-ACactivate-to.Exist "${QPKG_NAME[$index]}" && (QPKGs-ACinstall-to.Exist "${QPKG_NAME[$index]}" || QPKGs-ISinstalled.Exist "${QPKG_NAME[$index]}" || QPKGs-ACreinstall-to.Exist "${QPKG_NAME[$index]}")); then
-				QPKG.IsMinOSVerOk "${QPKG_NAME[$index]}" || continue
-				QPKG.IsMinRAMOk "${QPKG_NAME[$index]}" || continue
-				IPKs-ACinstall-to:Add "${QPKG_REQUIRES_IPKS[$index]}"
+		for i in "${!QPKG_NAME[@]}"; do
+			[[ $previous = "${QPKG_NAME[$i]}" ]] && continue || previous=${QPKG_NAME[$i]}
+
+			if QPKGs-ACinstall-to.Exist "${QPKG_NAME[$i]}" || QPKGs-ISinstalled.Exist "${QPKG_NAME[$i]}" || QPKGs-ACreinstall-to.Exist "${QPKG_NAME[$i]}" || (QPKGs-ACactivate-to.Exist "${QPKG_NAME[$i]}" && (QPKGs-ACinstall-to.Exist "${QPKG_NAME[$i]}" || QPKGs-ISinstalled.Exist "${QPKG_NAME[$i]}" || QPKGs-ACreinstall-to.Exist "${QPKG_NAME[$i]}")); then
+				QPKG.IsMinOSVerOk "${QPKG_NAME[$i]}" || continue
+				QPKG.IsMinRAMOk "${QPKG_NAME[$i]}" || continue
+				IPKs-ACinstall-to:Add "$(QPKG.GetIPKs "${QPKG_NAME[$i]}" "$i")"
 			fi
 		done
 	fi
@@ -2537,14 +2556,14 @@ IPKs:install()
 		fork_pid=$!
 
 		RunAndLog "$OPKG_CMD install --force-overwrite $(IPKs-ACdownload-to:List) --cache $IPK_CACHE_PATH --tmp-dir $IPK_DL_PATH" "$log_pathfile" log:failure-only
-		result_code=$?
+		z=$?
 
 		KillActiveFork
 
-		if [[ $result_code -eq 0 ]]; then
+		if [[ $z -eq 0 ]]; then
 			NoteIpkAcAsOk "$(IPKs-ACdownload-to:Array)" install
 			DebugAsDone "installed $desc"
-			SaveActionResultToLog IPK "$desc" install ok "$result_code"
+			SaveActionResultToLog IPK "$desc" install ok "$z"
 			Keystrokes:Hide
 			UpdateColourisation
 
@@ -2553,7 +2572,7 @@ IPKs:install()
 			fi
 		else
 			NoteIpkAcAsEr "$(IPKs-ACdownload-to:Array)" install
-			SaveActionResultToLog IPK "$desc" install failed "$result_code"
+			SaveActionResultToLog IPK "$desc" install failed "$z"
 
 			if [[ -e $PREV_IPK_LIST.installing ]]; then
 				mv "$PREV_IPK_LIST.installing" "$PREV_IPK_LIST"
@@ -2561,7 +2580,7 @@ IPKs:install()
 		fi
 	fi
 
-	Func:Exit $result_code
+	Func:Exit $z
 
 	}
 
@@ -2583,7 +2602,7 @@ IPKs:downgrade()
 	local package_name=''
 	local package_type=''
 	local remote_url=''
-	local -i result_code=0
+	local -i z=0
 	local -i total_count=0
 	local url_prefix=''
 	local url_suffix=''
@@ -2635,23 +2654,23 @@ IPKs:downgrade()
 		ShowAsProc "downgrading $desc"
 		ShowAsPercentProgress "downgrading $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 "$fail_count" "$total_count"
 		RunAndLog "$OPKG_CMD install --force-downgrade --cache $IPK_CACHE_PATH --tmp-dir $IPK_DOWNGRADE_DL_PATH $IPK_DOWNGRADE_DL_PATH/*.ipk" "$log_pathfile" log:failure-only
-		result_code=$?
+		z=$?
 
-		if [[ $result_code -eq 0 ]]; then
+		if [[ $z -eq 0 ]]; then
 			((ok_count++))
 			NoteIpkAcAsOk "$(IPKs-ACdowngrade-to:Array)" downgrade
 			DebugAsDone "downgraded $desc"
-			SaveActionResultToLog IPK "$desc" downgrade ok "$result_code"
+			SaveActionResultToLog IPK "$desc" downgrade ok "$z"
 		else
 			((fail_count++))
 			NoteIpkAcAsEr "$(IPKs-ACdowngrade-to:Array)" downgrade
-			SaveActionResultToLog IPK "$desc" downgrade failed "$result_code"
+			SaveActionResultToLog IPK "$desc" downgrade failed "$z"
 		fi
 
 		ShowAsPercentProgress "downgrading $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 "$fail_count" "$total_count"
 	fi
 
-	Func:Exit $result_code
+	Func:Exit $z
 
 	}
 
@@ -2670,7 +2689,7 @@ PIPs:install()
 	local log_pathfile=$LOGS_PATH/pypi.$INSTALL_LOG_FILE
 	local -i ok_count=0
 	local package_type='auxiliary PyPI group'
-	local -i result_code=0
+	local -i z=0
 	local -i total_count=0
 
 	if [[ $opts_check = true ]] || IPKs-ACinstall-ok.Exist python3-pip; then
@@ -2681,21 +2700,21 @@ PIPs:install()
 
 		ShowAsPercentProgress "installing $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 0 "$total_count"
 		RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
-		result_code=$?
+		z=$?
 
-		if [[ $result_code -eq 0 ]]; then
+		if [[ $z -eq 0 ]]; then
 			((ok_count++))
 			DebugAsDone "installed $desc"
-			SaveActionResultToLog PIP "$desc" install ok "$result_code"
+			SaveActionResultToLog PIP "$desc" install ok "$z"
 		else
 			((fail_count++))
-			SaveActionResultToLog PIP "$desc" install failed "$result_code"
+			SaveActionResultToLog PIP "$desc" install failed "$z"
 		fi
 
 		ShowAsPercentProgress "installing $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 "$fail_count" "$total_count"
 	fi
 
-	Func:Exit $result_code
+	Func:Exit $z
 
 	}
 
@@ -2908,6 +2927,7 @@ EnableResetIfRequested()
 	if [[ $USER_ARGS_RAW =~ $re ]]; then
 		ResetArchivedLogs
 		ResetCachePath
+		ResetReportsPath
 		ArchiveActiveSessLog
 		ResetActiveSessLog
 		exit 0
@@ -3075,10 +3095,10 @@ LenANSIDiff()
 CalcMaxStatusReportCols()
 	{
 
-	local col1_width=$((${#CHARS_SPECIAL}+PACKAGE_NAME_COL_WIDTH))
-	local col2_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_STATUS_COL_WIDTH))
+# 	local col1_width=$((${#CHARS_SPECIAL}+PACKAGE_NAME_COL_WIDTH))
+# 	local col2_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_STATUS_COL_WIDTH))
 	local col3_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_VER_COL_WIDTH))
-	local col4_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_PATH_COL_WIDTH))
+# 	local col4_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_PATH_COL_WIDTH))
 
 	# Add width to include " (new)" string to QPKG version title.
 	if QPKGs-SCupgradable.IsAny; then
@@ -3088,53 +3108,53 @@ CalcMaxStatusReportCols()
 		package_ver_final_col_width=$PACKAGE_VER_COL_WIDTH
 	fi
 
-	if [[ $((col1_width+col2_width)) -ge $SESS_COLS ]]; then
-		maxcols=1
-	elif [[ $((col1_width+col2_width+col3_width)) -ge $SESS_COLS ]]; then
-		maxcols=2
-	elif [[ $((col1_width+col2_width+col3_width+col4_width)) -ge $SESS_COLS ]]; then
-		maxcols=3
-	else
-		maxcols=4
-	fi
+# 	if [[ $((col1_width+col2_width)) -ge $SESS_COLS ]]; then
+# 		maxcols=1
+# 	elif [[ $((col1_width+col2_width+col3_width)) -ge $SESS_COLS ]]; then
+# 		maxcols=2
+# 	elif [[ $((col1_width+col2_width+col3_width+col4_width)) -ge $SESS_COLS ]]; then
+# 		maxcols=3
+# 	else
+# 		maxcols=4
+# 	fi
 
 	return 0
 
 	}
 
-CalcMaxDepsReportCols()
-	{
-
-	local col1_width=$((${#CHARS_SPECIAL}+PACKAGE_NAME_COL_WIDTH))
-	local col2_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_DEPENDENCIES_COL_WIDTH))
-	local col3_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_INSTALLED_COL_WIDTH))
-	local col4_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_ENABLED_COL_WIDTH))
-	local col5_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_MIN_RAM_COL_WIDTH))
-	local col6_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_MIN_OS_COL_WIDTH))
-	local col7_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_MAX_OS_COL_WIDTH))
-	local col8_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_ARCH_COL_WIDTH))
-
-	if [[ $((col1_width+col2_width)) -ge $SESS_COLS ]]; then
-		maxcols=1
-	elif [[ $((col1_width+col2_width+col3_width)) -ge $SESS_COLS ]]; then
-		maxcols=2
-	elif [[ $((col1_width+col2_width+col3_width+col4_width)) -ge $SESS_COLS ]]; then
-		maxcols=3
-	elif [[ $((col1_width+col2_width+col3_width+col4_width+col5_width)) -ge $SESS_COLS ]]; then
-		maxcols=4
-	elif [[ $((col1_width+col2_width+col3_width+col4_width+col5_width+col6_width)) -ge $SESS_COLS ]]; then
-		maxcols=5
-	elif [[ $((col1_width+col2_width+col3_width+col4_width+col5_width+col6_width+col7_width)) -ge $SESS_COLS ]]; then
-		maxcols=6
-	elif [[ $((col1_width+col2_width+col3_width+col4_width+col5_width+col6_width+col7_width+col8_width)) -ge $SESS_COLS ]]; then
-		maxcols=7
-	else
-		maxcols=8
-	fi
-
-	return 0
-
-	}
+# CalcMaxDepsReportCols()
+# 	{
+#
+# 	local col1_width=$((${#CHARS_SPECIAL}+PACKAGE_NAME_COL_WIDTH))
+# 	local col2_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_DEPENDENCIES_COL_WIDTH))
+# 	local col3_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_INSTALLED_COL_WIDTH))
+# 	local col4_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_ENABLED_COL_WIDTH))
+# 	local col5_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_MIN_RAM_COL_WIDTH))
+# 	local col6_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_MIN_OS_COL_WIDTH))
+# 	local col7_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_MAX_OS_COL_WIDTH))
+# 	local col8_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_ARCH_COL_WIDTH))
+#
+# 	if [[ $((col1_width+col2_width)) -ge $SESS_COLS ]]; then
+# 		maxcols=1
+# 	elif [[ $((col1_width+col2_width+col3_width)) -ge $SESS_COLS ]]; then
+# 		maxcols=2
+# 	elif [[ $((col1_width+col2_width+col3_width+col4_width)) -ge $SESS_COLS ]]; then
+# 		maxcols=3
+# 	elif [[ $((col1_width+col2_width+col3_width+col4_width+col5_width)) -ge $SESS_COLS ]]; then
+# 		maxcols=4
+# 	elif [[ $((col1_width+col2_width+col3_width+col4_width+col5_width+col6_width)) -ge $SESS_COLS ]]; then
+# 		maxcols=5
+# 	elif [[ $((col1_width+col2_width+col3_width+col4_width+col5_width+col6_width+col7_width)) -ge $SESS_COLS ]]; then
+# 		maxcols=6
+# 	elif [[ $((col1_width+col2_width+col3_width+col4_width+col5_width+col6_width+col7_width+col8_width)) -ge $SESS_COLS ]]; then
+# 		maxcols=7
+# 	else
+# 		maxcols=8
+# 	fi
+#
+# 	return 0
+#
+# 	}
 
 DisplayAsProjSynExam()
 	{
@@ -3201,16 +3221,16 @@ DisplayAsPackagesReportTitleLine()
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
-	# column 2: package author
+# 	# column 2: package author
+#
+# 	if [[ $maxcols -ge 2 ]]; then
+# 		msg="${CHARS_SPECIAL}QPKG author:"
+# 		printf "%-$((PACKAGE_AUTHOR_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
+# 	fi
+
+	# column 2: package description
 
 	if [[ $maxcols -ge 2 ]]; then
-		msg="${CHARS_SPECIAL}QPKG author:"
-		printf "%-$((PACKAGE_AUTHOR_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
-	fi
-
-	# column 3: package description
-
-	if [[ $maxcols -ge 3 ]]; then
 		msg="${CHARS_SPECIAL}QPKG description:"
 		printf "%-$((PACKAGE_DESCRIPTION_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
@@ -3227,8 +3247,8 @@ DisplayAsPackagesReportLine()
 
 	local package_name=${1:?${FUNCNAME[0]}'()': undefined}
 	local package_name_msg=$CHARS_NORMAL
-	local package_author=$(QPKG.GetAuthor "$package_name")
-	local package_author_msg=$CHARS_BLANK
+# 	local package_author=$(QPKG.GetAuthor "$package_name")
+# 	local package_author_msg=$CHARS_BLANK
 	local package_description=$(QPKG.GetDesc "$package_name")
 	local package_description_msg=$CHARS_BLANK
 	local package_notes=$(QPKG.GetNote "$package_name")
@@ -3244,18 +3264,18 @@ DisplayAsPackagesReportLine()
 	fi
 
 	package_name_msg+=$package_name
-	package_author_msg+=$package_author
+# 	package_author_msg+=$package_author
 	package_description_msg+="$(Capitalise "$package_description")."
 
 	case $mode in
 		muted)
 			package_name_msg=$(ColourTextDarkGrey "$package_name_msg")
-			package_author_msg=$(ColourTextDarkGrey "$package_author_msg")
+# 			package_author_msg=$(ColourTextDarkGrey "$package_author_msg")
 			package_description_msg=$(ColourTextDarkGrey "$package_description_msg")
 			;;
 		highlighted)
 			package_name_msg=$(ColourTextBrightRed "$package_name_msg")
-			[[ $package_author = missing ]] && package_author_msg=$(ColourTextBrightRedBlink "${CHARS_ALERT}${package_author}")
+# 			[[ $package_author = missing ]] && package_author_msg=$(ColourTextBrightRedBlink "${CHARS_ALERT}${package_author}")
 	esac
 
 	# column 1: package name
@@ -3264,19 +3284,20 @@ DisplayAsPackagesReportLine()
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
 	fi
 
-	# column 2: package author
+# 	# column 2: package author
+#
+# 	if [[ $maxcols -ge 2 && -n $package_author ]]; then
+# 		printf "%-$((PACKAGE_AUTHOR_COL_WIDTH+$(LenANSIDiff "$package_author_msg")))s" "$package_author_msg"
+# 	fi
 
-	if [[ $maxcols -ge 2 && -n $package_author ]]; then
-		printf "%-$((PACKAGE_AUTHOR_COL_WIDTH+$(LenANSIDiff "$package_author_msg")))s" "$package_author_msg"
-	fi
+	# column 2: package description
 
-	# column 3: package description
-
-	if [[ $maxcols -ge 3 && -n $package_description ]]; then
+	if [[ $maxcols -ge 2 && -n $package_description ]]; then
 		printf "%-$((PACKAGE_DESCRIPTION_COL_WIDTH+$(LenANSIDiff "$package_description_msg")))s" "$package_description_msg"
 
 		if [[ -n $package_notes ]]; then
-			printf "\n%$((${#CHARS_BLANK}+PACKAGE_NAME_COL_WIDTH+PACKAGE_AUTHOR_COL_WIDTH))s${CHARS_DROPEND}%s" '' "$package_notes_msg"
+# 			printf "\n%$((${#CHARS_BLANK}+PACKAGE_NAME_COL_WIDTH+PACKAGE_AUTHOR_COL_WIDTH))s${CHARS_DROPEND}%s" '' "$package_notes_msg"
+			printf "\n%$((${#CHARS_BLANK}+PACKAGE_NAME_COL_WIDTH))s${CHARS_DROPEND}%s" '' "$package_notes_msg"
 		fi
 	fi
 
@@ -3304,7 +3325,7 @@ DisplayAsStatusReportTitleLine()
 		printf "%-$((PACKAGE_STATUS_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
-	# column 3: package version
+	# column 3: package version (variable-width)
 
 	if [[ $maxcols -ge 3 ]]; then
 		msg="${CHARS_SPECIAL}QPKG version"
@@ -3330,20 +3351,18 @@ DisplayAsStatusReportLine()
 	# input:
 	#	$1 = package name
 
-	local package_name=${1:?${FUNCNAME[0]}'()': undefined}
-	local package_name_msg=$CHARS_BLANK
- 	local package_status=''
-	local package_status_msg=''
- 	local package_installed_version=''
-	local package_version_msg=$CHARS_BLANK
- 	local package_upgrade_version=''
-	local package_upgrade_version_msg=''
-	local package_path_msg=$CHARS_BLANK
+	local name=${1:?${FUNCNAME[0]}'()': undefined}
+	local name_msg=$CHARS_BLANK
+	local status=''
+	local status_msg=''
+	local ver_msg=$CHARS_BLANK
+	local upgrade_ver=''
+	local path_msg=$CHARS_BLANK
 	local mode=''
 
-	if QPKG.IsMissing "$package_name"; then
+	if QPKG.IsMissing "$name"; then
 		mode=highlighted
-	elif QPKG.IsNtInstalled "$package_name"; then
+	elif QPKG.IsNtInstalled "$name"; then
 		mode=muted
 	else
 		mode=normal
@@ -3351,96 +3370,99 @@ DisplayAsStatusReportLine()
 
 	case $mode in
 		normal)
-			if QPKGs-ISenabled.Exist "$package_name"; then
-				package_status+=" $(ColourTextBrightGreen enabled)"
+			if QPKGs-ISenabled.Exist "$name"; then
+				status+=" $(ColourTextBrightGreen enabled)"
 			else
-				package_status+=" $(ColourTextBrightRed disabled)"
+				status+=" $(ColourTextBrightRed disabled)"
 			fi
 
-			if QPKGs-ACstatus-ok.Exist "$package_name"; then
-				if QPKGs-ISactive.Exist "$package_name"; then
-					package_status+=" $(ColourTextBrightGreen active)"
-				elif QPKGs-ISslow.Exist "$package_name"; then
-					package_status+=" $(ColourTextBrightOrange slow)"
-				elif QPKGs-ISstarting.Exist "$package_name"; then
-					package_status+=" $(ColourTextBrightOrange starting)"
-				elif QPKGs-ISstopping.Exist "$package_name"; then
-					package_status+=" $(ColourTextBrightOrange stopping)"
-				elif QPKGs-ISrestarting.Exist "$package_name"; then
-					package_status+=" $(ColourTextBrightOrange restarting)"
-				elif QPKGs-ISunknown.Exist "$package_name"; then
-					package_status+=" $(ColourTextBrightOrange unknown)"
+			if QPKGs-ACstatus-ok.Exist "$name"; then
+				if QPKGs-ISactive.Exist "$name"; then
+					status+=" $(ColourTextBrightGreen active)"
+				elif QPKGs-ISslow.Exist "$name"; then
+					status+=" $(ColourTextBrightOrange slow)"
+				elif QPKGs-ISstarting.Exist "$name"; then
+					status+=" $(ColourTextBrightOrange starting)"
+				elif QPKGs-ISstopping.Exist "$name"; then
+					status+=" $(ColourTextBrightOrange stopping)"
+				elif QPKGs-ISrestarting.Exist "$name"; then
+					status+=" $(ColourTextBrightOrange restarting)"
+				elif QPKGs-ISunknown.Exist "$name"; then
+					status+=" $(ColourTextBrightOrange unknown)"
 				else
-					package_status+=" $(ColourTextBrightRed inactive)"
+					status+=" $(ColourTextBrightRed inactive)"
 				fi
 			else
-				package_status+=" $(ColourTextBrightOrange unknown)"
+				status+=" $(ColourTextBrightOrange unknown)"
 			fi
 
-			if [[ -n $package_status ]]; then
-				package_status=$(Trim "$package_status")
-				package_status_msg=${package_status// /, }	# insert separators
+			if [[ -n $status ]]; then
+				status=$(Trim "$status")
+				status_msg=${status// /, }	# insert separators
 			fi
 
-			package_status_msg=${CHARS_NORMAL}${package_status_msg}
-			QPKG.IsUpgradable "$package_name" && package_upgrade_version=$(QPKG.Avail.GetVer "$package_name")
-			package_version_msg+=$(QPKG.Local.GetVer "$package_name")
+			status_msg=${CHARS_NORMAL}${status_msg}
+			QPKG.IsUpgradable "$name" && upgrade_ver=$(QPKG.Avail.GetVer "$name")
+			ver_msg+=$(QPKG.Local.GetVer "$name")
 
-			if [[ -n $package_upgrade_version ]]; then
-				package_version_msg+=" ($(ColourTextBrightOrange "$package_upgrade_version"))"
-				package_name_msg+=$(ColourTextBrightOrange "$package_name")
+			if [[ -n $upgrade_ver ]]; then
+				ver_msg+=" ($(ColourTextBrightOrange "$upgrade_ver"))"
+				name_msg+=$(ColourTextBrightOrange "$name")
 			else
-				package_name_msg+=$package_name
+				name_msg+=$name
 			fi
 
-			package_path_msg+=$(QPKG.GetInstallationPath "$package_name")
+			path_msg+=$(QPKG.GetInstallationPath "$name")
 			;;
 		muted)
-			package_name_msg+=$(ColourTextDarkGrey "$package_name")
+			name_msg+=$(ColourTextDarkGrey "$name")
 
-			if ! QPKG.IsArchOK "$package_name"; then
-				package_status='not installable: incompatible arch'
-			elif ! QPKG.IsMinOSVerOk "$package_name"; then
-				package_status="not installable: incompatible $(GetQnapOS) version"
-			elif ! QPKG.IsMinRAMOk "$package_name"; then
-				package_status='not installable: insufficient RAM'
+			if ! QPKG.IsArchOK "$name"; then
+				status='not installable: incompatible arch'
+				ver_msg=''
+			elif ! QPKG.IsMinOSVerOk "$name"; then
+				status="not installable: incompatible $(GetQnapOS) version"
+				ver_msg=''
+			elif ! QPKG.IsMinRAMOk "$name"; then
+				status='not installable: insufficient RAM'
+				ver_msg=''
 			else
-				package_status='not installed'
+				status='not installed'
+				ver_msg+=$(ColourTextDarkGrey "$(QPKG.Avail.GetVer "$name")")
 			fi
 
-			package_status_msg=$(ColourTextDarkGrey "${CHARS_NORMAL}${package_status}")
-			package_version_msg=''
-			package_path_msg=''
+			status_msg=$(ColourTextDarkGrey "${CHARS_NORMAL}${status}")
+			path_msg=''
 			;;
 		highlighted)
-			package_name_msg+=$(ColourTextBrightRed "$package_name")
-			package_status_msg=$(ColourTextBrightRedBlink "${CHARS_ALERT}missing")
-			package_version_msg+=$(ColourTextBrightRed "$(QPKG.Local.GetVer "$package_name")")
-			package_path_msg=$(ColourTextBrightRedBlink "${CHARS_ALERT}$(QPKG.GetInstallationPath "$package_name")")
+			name_msg+=$(ColourTextBrightRed "$name")
+			status_msg=$(ColourTextBrightRedBlink "${CHARS_ALERT}missing")
+			ver_msg+=$(ColourTextBrightRed "$(QPKG.Local.GetVer "$name")")
+			path_msg=$(ColourTextBrightRedBlink "${CHARS_ALERT}$(QPKG.GetInstallationPath "$name")")
 	esac
 
 	# column 1: package name
 
-	if [[ $maxcols -ge 1 && -n $package_name_msg ]]; then
-		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$package_name_msg")))s" "$package_name_msg"
+	if [[ $maxcols -ge 1 && -n $name_msg ]]; then
+		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 	fi
 
 	# column 2: package statuses
 
-	if [[ $maxcols -ge 2 && -n $package_status_msg ]]; then
-		printf "%-$((PACKAGE_STATUS_COL_WIDTH+$(LenANSIDiff "$package_status_msg")))s" "$package_status_msg"
+	if [[ $maxcols -ge 2 && -n $status_msg ]]; then
+		printf "%-$((PACKAGE_STATUS_COL_WIDTH+$(LenANSIDiff "$status_msg")))s" "$status_msg"
 	fi
 
-	# column 3: package version
+	# column 3: package version (variable-width)
 
-	if [[ $maxcols -ge 3 && -n $package_version_msg ]]; then
-		printf "%-$((package_ver_final_col_width+$(LenANSIDiff "$package_version_msg")))s" "$package_version_msg"
+	if [[ $maxcols -ge 3 && -n $ver_msg ]]; then
+		printf "%-$((package_ver_final_col_width+$(LenANSIDiff "$ver_msg")))s" "$ver_msg"
 	fi
 
 	# column 4: package installation path
 
-	if [[ $maxcols -ge 4 && -n $package_path_msg ]]; then
-		printf "%-$((PACKAGE_PATH_COL_WIDTH+$(LenANSIDiff "$package_path_msg")))s" "$package_path_msg"
+	if [[ $maxcols -ge 4 && -n $path_msg ]]; then
+		printf "%-$((PACKAGE_PATH_COL_WIDTH+$(LenANSIDiff "$path_msg")))s" "$path_msg"
 	fi
 
 	printf '\n'; linespace_visible=false
@@ -3847,7 +3869,8 @@ DisplayAsDepsReportLine()
 				package_deps+=$(ColourTextDarkGrey "$package_deps_raw")
 			fi
 
-			package_deps_msg+=${package_deps// /, }
+
+			package_deps_msg+=${package_deps// /$(ColourTextDarkGrey ', ')}
 			package_installed_msg+=$(ColourTextDarkGrey false)
 			package_enabled_msg+=$(ColourTextDarkGrey 'N/A')
 
@@ -4124,12 +4147,12 @@ Report.Actions:Show()
 		DisplayAsProjSynIndentExam '' 'install sabnzbd sickgear reactivate transmission uninstall lazy nzbget upgrade nzbtomedia'
 		Display
 
-		} > "$REPORT_PATHFILE"
+		} > "$REPORT_OUTPUT_PATHFILE"
 
 	EraseThisLine
 
-	if [[ -e $REPORT_PATHFILE ]]; then
-		DisplayFileInWindow "$REPORT_PATHFILE" onescreen
+	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
+		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE" onescreen
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -4183,12 +4206,12 @@ Report.ActionsAll:Show()
 		DisplayAsProjSynIndentExam 'restore all application configurations from the backup location' 'restore all'
 		Display
 
-		} > "$REPORT_PATHFILE"
+		} > "$REPORT_OUTPUT_PATHFILE"
 
 	EraseThisLine
 
-	if [[ -e $REPORT_PATHFILE ]]; then
-		DisplayFileInWindow "$REPORT_PATHFILE" onescreen
+	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
+		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE" onescreen
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -4257,12 +4280,12 @@ Report.Groups:Show()
 		DisplayAsProjSynExam 'multiple groups are supported like this' "$(ShowAction) $(ShowPackageGroup) $(ShowPackageGroup)"
 		Display
 
-		} > "$REPORT_PATHFILE"
+		} > "$REPORT_OUTPUT_PATHFILE"
 
 	EraseThisLine
 
-	if [[ -e $REPORT_PATHFILE ]]; then
-		DisplayFileInWindow "$REPORT_PATHFILE" onescreen
+	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
+		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE" onescreen
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -4345,10 +4368,10 @@ Report.Results:Show()
 
 		Display
 
-		} > "$REPORT_PATHFILE"
+		} > "$REPORT_OUTPUT_PATHFILE"
 
 	EraseThisLine
-	[[ -e $REPORT_PATHFILE ]] && $CAT_CMD "$REPORT_PATHFILE"
+	[[ -e $REPORT_OUTPUT_PATHFILE ]] && $CAT_CMD "$REPORT_OUTPUT_PATHFILE"
 
 	return 0
 
@@ -4373,12 +4396,12 @@ Report.Options:Show()
 		DisplayAsProjSynIndentExam 'record debugging information to file-only' "$(ShowAction) $(ShowPackages) debug"
 		Display
 
-		} > "$REPORT_PATHFILE"
+		} > "$REPORT_OUTPUT_PATHFILE"
 
 	EraseThisLine
 
-	if [[ -e $REPORT_PATHFILE ]]; then
-		DisplayFileInWindow "$REPORT_PATHFILE" onescreen
+	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
+		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE" onescreen
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -4417,12 +4440,12 @@ Report.Problems:Show()
 		DisplayAsHelpTitleHighlighted "if you need help, please include a copy of your $(ShowTitleName) $(ColourTextBrightOrange "log for analysis!")"
 		Display
 
-		} > "$REPORT_PATHFILE"
+		} > "$REPORT_OUTPUT_PATHFILE"
 
 	EraseThisLine
 
-	if [[ -e $REPORT_PATHFILE ]]; then
-		DisplayFileInWindow "$REPORT_PATHFILE" onescreen
+	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
+		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE" onescreen
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -4453,12 +4476,12 @@ Report.Tips:Show()
 		Help.BackupLocation:Show
 		Display
 
-		} > "$REPORT_PATHFILE"
+		} > "$REPORT_OUTPUT_PATHFILE"
 
 	EraseThisLine
 
-	if [[ -e $REPORT_PATHFILE ]]; then
-		DisplayFileInWindow "$REPORT_PATHFILE" onescreen
+	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
+		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE" onescreen
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -4476,7 +4499,7 @@ Log.Last:View()
 	ExtractPrevSessFromTail
 
 	if [[ -e $SESS_LAST_PATHFILE ]]; then
-		DisplayFileInWindow "$SESS_LAST_PATHFILE" linenumbers onescreen
+		DisplayFileInViewport "$SESS_LAST_PATHFILE" linenumbers onescreen
 	else
 		ShowAsError 'no last session log to display'
 	fi
@@ -4494,7 +4517,7 @@ Log.Tail:View()
 	ExtractTailFromLog
 
 	if [[ -e $SESS_TAIL_PATHFILE ]]; then
-		DisplayFileInWindow "$SESS_TAIL_PATHFILE" linenumbers onescreen
+		DisplayFileInViewport "$SESS_TAIL_PATHFILE" linenumbers onescreen
 	else
 		ShowAsError 'no session log tail to display'
 	fi
@@ -4503,19 +4526,22 @@ Log.Tail:View()
 
 	}
 
-DisplayFileInWindow()
+DisplayFileInViewport()
 	{
 
 	# $1 = pathfile to display
-	# $2/$3/$4 (optional) = 'linenumbers' : display file contents with line numbers.
-	#					  = 'jumptoend'   : display file contents scrolled to the last line.
-	#					  = 'onescreen'   : quit `less` if only one screen of data.
+	# $2/$3/$4/$5 (optional, and in any order)
+	#	= 'linenumbers' : display file contents with line numbers.
+	#	= 'jumptoend'   : display file contents scrolled to the last line.
+	#	= 'onescreen'   : quit `less` if only one screen of data.
+	#	= 'wrap'		: wrap lines of text to displayport.
 
 	local showlinenumbers=false
 	local jumptoend=false
 	local onescreen=false
-	local options_msg=''
-	local prompt_msg=' use arrow-keys to scroll up-down & left-right, press Q to quit '
+	local wraplines=false
+	local options=''
+	local prompt=' use arrow-keys to scroll up-down & left-right, press Q to quit '
 	local filename=${1:-}
 
 	if [[ ! -e $filename ]]; then
@@ -4524,18 +4550,23 @@ DisplayFileInWindow()
 	fi
 
 	case 'linenumbers' in
-		${2:-}|${3:-}|${4:-})
+		${2:-}|${3:-}|${4:-}|${5:-})
 			showlinenumbers=true
 	esac
 
 	case 'jumptoend' in
-		${2:-}|${3:-}|${4:-})
+		${2:-}|${3:-}|${4:-}|${5:-})
 			jumptoend=true
 	esac
 
 	case 'onescreen' in
-		${2:-}|${3:-}|${4:-})
+		${2:-}|${3:-}|${4:-}|${5:-})
 			onescreen=true
+	esac
+
+	case 'wrap' in
+		${2:-}|${3:-}|${4:-}|${5:-})
+			wraplines=true
 	esac
 
 	if [[ $opts_verbose = true ]]; then
@@ -4550,25 +4581,27 @@ DisplayFileInWindow()
 
 	if [[ $($WC_CMD -l < "$filename") -ge $SESS_ROWS ]]; then
 		if [[ -e $GNU_LESS_CMD ]]; then
-			options_msg=' --quit-on-intr --tilde --mouse --RAW-CONTROL-CHARS'
-			[[ $showlinenumbers = true ]] && options_msg+=' --LINE-NUMBERS'
-			[[ $jumptoend = true ]] && options_msg+=' +G'
-			[[ $onescreen = true ]] && options_msg+=' --quit-if-one-screen'
-			LESSSECURE=1 ${GNU_LESS_CMD}${options_msg} --prompt "$prompt_msg" "$filename"
+			options=' --quit-on-intr --tilde --mouse --RAW-CONTROL-CHARS --shift 4 --redraw-on-quit'
+			[[ $wraplines = false ]] && options+=' --chop-long-lines'
+			[[ $showlinenumbers = true ]] && options+=' --LINE-NUMBERS'
+			[[ $jumptoend = true ]] && options+=' +G'
+			[[ $onescreen = true ]] && options+=' --quit-if-one-screen'
+			LESSSECURE=1 ${GNU_LESS_CMD}${options} --prompt "$prompt" "$filename"
 			return
 		fi
 
 		if [[ -e $LESS_CMD ]]; then
-			options_msg=' -~'
-			[[ $showlinenumbers = true ]] && options_msg+='N'
-			${LESS_CMD}${options_msg} "$filename"
+			options=' -~'
+			[[ $wraplines = false ]] && options+='S'
+			[[ $showlinenumbers = true ]] && options+='N'
+			${LESS_CMD}${options} "$filename"
 			return
 		fi
 	fi
 
 	if [[ -e $CAT_CMD ]]; then
-		[[ $showlinenumbers = true ]] && options_msg+=' --number'
-		${CAT_CMD}${options_msg} "$filename"
+		[[ $showlinenumbers = true ]] && options+=' --number'
+		${CAT_CMD}${options} "$filename"
 		return
 	elif [[ -e $MORE_CMD ]]; then
 		$MORE_CMD "$filename"
@@ -4881,7 +4914,7 @@ QPKGs.Missing:Show()
 	#	$? = 1 if one-or-more packages are missing
 
 	local -a packages=()
-	local -i index=0
+	local -i i=0
 	local names_formatted=''
 	local msg=''
 	local name_limit=3
@@ -4895,15 +4928,15 @@ QPKGs.Missing:Show()
 	fi
 
 	# shellcheck disable=2322
-	for ((index=0; index<=((${#packages[@]}-1)); index++)); do
-		names_formatted+=$(ColourTextBrightRed "${packages[$index]}")
+	for ((i=0; i<=((${#packages[@]}-1)); i++)); do
+		names_formatted+=$(ColourTextBrightRed "${packages[$i]}")
 
-		if [[ $((index+1)) -ge $name_limit && $((${#packages[@]}-name_limit)) -gt 0 ]]; then
+		if [[ $((i+1)) -ge $name_limit && $((${#packages[@]}-name_limit)) -gt 0 ]]; then
 			names_formatted+=" & $(ColourTextBrightRed "$((${#packages[@]}-name_limit))") other$(Pluralise "$((${#packages[@]}-name_limit))")"
 			break
-		elif [[ $((index+2)) -lt ${#packages[@]} ]]; then
+		elif [[ $((i+2)) -lt ${#packages[@]} ]]; then
 			names_formatted+=', '
-		elif [[ $((index+2)) -eq ${#packages[@]} ]]; then
+		elif [[ $((i+2)) -eq ${#packages[@]} ]]; then
 			names_formatted+=' & '
 		fi
 	done
@@ -4931,7 +4964,7 @@ QPKGs.NewVers:Show()
 	#	$? = 1 if one-or-more packages can be upgraded
 
 	local -a packages=()
-	local -i index=0
+	local -i i=0
 	local names_formatted=''
 	local msg=''
 	local name_limit=3
@@ -4945,15 +4978,15 @@ QPKGs.NewVers:Show()
 	fi
 
 	# shellcheck disable=2322
-	for ((index=0; index<=((${#packages[@]}-1)); index++)); do
-		names_formatted+=$(ColourTextBrightOrange "${packages[$index]}")
+	for ((i=0; i<=((${#packages[@]}-1)); i++)); do
+		names_formatted+=$(ColourTextBrightOrange "${packages[$i]}")
 
-		if [[ $((index+1)) -ge $name_limit && $((${#packages[@]}-name_limit)) -gt 0 ]]; then
+		if [[ $((i+1)) -ge $name_limit && $((${#packages[@]}-name_limit)) -gt 0 ]]; then
 			names_formatted+=" & $(ColourTextBrightOrange "$((${#packages[@]}-name_limit))") other$(Pluralise "$((${#packages[@]}-name_limit))")"
 			break
-		elif [[ $((index+2)) -lt ${#packages[@]} ]]; then
+		elif [[ $((i+2)) -lt ${#packages[@]} ]]; then
 			names_formatted+=', '
-		elif [[ $((index+2)) -eq ${#packages[@]} ]]; then
+		elif [[ $((i+2)) -eq ${#packages[@]} ]]; then
 			names_formatted+=' & '
 		fi
 	done
@@ -5230,7 +5263,7 @@ QPKGs.States:Build()
 
 	local package=''
 	local prev=''
-	OS.IsStarting && ShowAsWarn "$(GetQnapOS) is still starting. QPKG statuses are in-flux. Try checking again in a few minutes."
+	OS.IsStarting && ShowAsWarn "$(GetQnapOS) is still starting and QPKGs are being started. Try checking again in a few minutes."
 	OS.IsStopping && ShowAsWarn "$(GetQnapOS) is shutting-down. All QPKGs are being stopped."
 	ShowAsProc 'QPKG states'
 
@@ -5360,10 +5393,14 @@ Report.Abbreviations:Show()
 	{
 
 	Func:Init
-	local package_name=''
+	local a=''
+	local -i n=0
 	maxcols=2
-	DisableDebugToArchiveAndFile
+	local -i t=$(QPKGs-SCall:Count)
+
 	DisplayWritingReport
+	DisableDebugToArchiveAndFile
+	[[ -n $REPORTS_PATH && -d $REPORTS_PATH ]] && rm -f "$REPORTS_PATH/*"
 
 		{
 
@@ -5371,24 +5408,42 @@ Report.Abbreviations:Show()
 		DisplayAsHelpTitle "$(ShowTitleName) can recognise various abbreviations and aliases as $(ShowPackages)."
 		DisplayAsAbsReportTitleLine
 
-		for package_name in $(QPKGs-SCall:Array); do
-			DisplayAsAbsReportLine "$package_name"
-		done
+		} >"$REPORT_OUTPUT_PATHFILE"
+
+	for a in $(QPKGs-SCall:Array); do
+		((n++))
+		DisplayAsAbsReportLine "$a" > "$REPORTS_PATH/$n" &
+	done
+
+	m=$n
+	wait 2>/dev/null
+
+	# load report lines from individual files.
+
+	for ((n=1; n<=m; n++)); do
+		f="$REPORTS_PATH/$n"
+		[[ -e $f ]] && ac+="$(<$f)\n"		# add newline to each imported report line
+	done
+
+	[[ -n $ac ]] && echo -e "$ac" >>"$REPORT_OUTPUT_PATHFILE"
+
+		{
 
 		DisplayAsProjSynExam "example: to install $(ShowAsPackageName SABnzbd), $(ShowAsPackageName Mylar3) and $(ShowAsPackageName nzbToMedia) all-at-once" 'install sab my nzb2'
 
 		Display
 
-		} > "$REPORT_PATHFILE"
+		} >> "$REPORT_OUTPUT_PATHFILE"
 
 	EraseThisLine
 
-	if [[ -e $REPORT_PATHFILE ]]; then
-		DisplayFileInWindow "$REPORT_PATHFILE" onescreen
+	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
+		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE" onescreen
 	else
 		ShowAsError 'no information to display'
 	fi
 
+	QPKGs.States:List
 	Func:Exit
 
 	}
@@ -5432,10 +5487,12 @@ Report.Backups:Show()
 			(cd "$QPKG_BU_PATH" && ls -1 ./*.config.tar.gz 2>/dev/null)
 		fi
 
-		} > "$REPORT_PATHFILE"
+		Display
+
+		} > "$REPORT_OUTPUT_PATHFILE"
 
 	EraseThisLine
-	[[ -e $REPORT_PATHFILE ]] && $CAT_CMD "$REPORT_PATHFILE"
+	[[ -e $REPORT_OUTPUT_PATHFILE ]] && $CAT_CMD "$REPORT_OUTPUT_PATHFILE"
 	Func:Exit
 
 	}
@@ -5444,10 +5501,14 @@ Report.Dependencies:Show()
 	{
 
 	Func:Init
-	local package_name=''
-	local -i element=0
-	local -i total=$(QPKGs-SCall:Count)
-	CalcMaxDepsReportCols
+	local a=''
+	local -i n=0
+	maxcols=8
+	local -i t=$(QPKGs-SCall:Count)
+
+	DisplayWritingReport
+	DisableDebugToArchiveAndFile
+	[[ -n $REPORTS_PATH && -d $REPORTS_PATH ]] && rm -f "$REPORTS_PATH/*"
 
 		{
 
@@ -5456,24 +5517,33 @@ Report.Dependencies:Show()
 		DisplayAsHelpTitle "those shown in \"$(ColourTextBrightRed '! red')\" are preventing the package from working correctly."
 		DisplayAsDepsReportTitleLine
 
-		for package_name in $(QPKGs-SCall:Array); do
-			((element++))
-			ShowAsPercentProgress 'writing report' '' "$element" 0 0 "$total"
-			DisplayAsDepsReportLine "$package_name"
-		done
+		} >"$REPORT_OUTPUT_PATHFILE"
 
-		Display
+	for a in $(QPKGs-SCall:Array); do
+		((n++))
+		DisplayAsDepsReportLine "$a" > "$REPORTS_PATH/$n" &
+	done
 
-		} > "$REPORT_PATHFILE"
+	m=$n
+	wait 2>/dev/null
 
+	# load report lines from individual files.
+
+	for ((n=1; n<=m; n++)); do
+		f="$REPORTS_PATH/$n"
+		[[ -e $f ]] && ac+="$(<$f)\n"		# add newline to each imported report line
+	done
+
+	[[ -n $ac ]] && echo -e "$ac" >>"$REPORT_OUTPUT_PATHFILE"
 	EraseThisLine
 
-	if [[ -e $REPORT_PATHFILE ]]; then
-		DisplayFileInWindow "$REPORT_PATHFILE" onescreen
+	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
+		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE" onescreen
 	else
 		ShowAsError 'no information to display'
 	fi
 
+	QPKGs.States:List
 	Func:Exit
 
 	}
@@ -5483,7 +5553,8 @@ Report.Packages:Show()
 
 	Func:Init
 	local package_name=''
-	maxcols=3
+	maxcols=2
+
 	DisableDebugToArchiveAndFile
 	DisplayWritingReport
 
@@ -5501,12 +5572,12 @@ Report.Packages:Show()
 		DisplayAsProjSynIndentExam '' a
 		Display
 
-		} > "$REPORT_PATHFILE"
+		} > "$REPORT_OUTPUT_PATHFILE"
 
 	EraseThisLine
 
-	if [[ -e $REPORT_PATHFILE ]]; then
-		DisplayFileInWindow "$REPORT_PATHFILE" onescreen
+	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
+		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE" onescreen
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -5519,30 +5590,36 @@ Report.Repos:Show()
 	{
 
 	Func:Init
-	local package_name=''
+	local a=''
+	local -i n=0
 	maxcols=3
-	local -i element=0
-	local -i total=$(QPKGs-SCall:Count)
+	local -i t=$(QPKGs-SCall:Count)
+
+	DisplayWritingReport
 	DisableDebugToArchiveAndFile
+	[[ -n $REPORTS_PATH && -d $REPORTS_PATH ]] && rm -f "$REPORTS_PATH/*"
+	DisplayAsReposReportTitleLine >"$REPORT_OUTPUT_PATHFILE"
 
-		{
+	for a in $(QPKGs-SCall:Array); do
+		((n++))
+		DisplayAsReposReportLine "$a" > "$REPORTS_PATH/$n" &
+	done
 
-		DisplayAsReposReportTitleLine
+	m=$n
+	wait 2>/dev/null
 
-		for package_name in $(QPKGs-SCall:Array); do
-			((element++))
-			ShowAsPercentProgress 'writing report' '' "$element" 0 0 "$total"
-			DisplayAsReposReportLine "$package_name"
-		done
+	# load report lines from individual files.
 
-		Display
+	for ((n=1; n<=m; n++)); do
+		f="$REPORTS_PATH/$n"
+		[[ -e $f ]] && ac+="$(<$f)\n"		# add newline to each imported report line
+	done
 
-		} > "$REPORT_PATHFILE"
-
+	[[ -n $ac ]] && echo -e "$ac" >>"$REPORT_OUTPUT_PATHFILE"
 	EraseThisLine
 
-	if [[ -e $REPORT_PATHFILE ]]; then
-		DisplayFileInWindow "$REPORT_PATHFILE" onescreen
+	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
+		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE" onescreen
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -5556,29 +5633,39 @@ Report.Statuses:Show()
 	{
 
 	Func:Init
-	local package_name=''
-	local -i element=0
-	local -i total=$(QPKGs-SCall:Count)
+	local a=''
+	local ac=''
+	local f=''
+	local -i n=0
+	local -i m=0
+	maxcols=4
+	local -i t=$(QPKGs-SCall:Count)
+
+	DisplayWritingReport
+	[[ -n $REPORTS_PATH && -d $REPORTS_PATH ]] && rm -f "$REPORTS_PATH/*"
 	CalcMaxStatusReportCols
+	DisplayAsStatusReportTitleLine >"$REPORT_OUTPUT_PATHFILE"
 
-		{
+	for a in $(QPKGs-SCall:Array); do
+		((n++))
+		DisplayAsStatusReportLine "$a" > "$REPORTS_PATH/$n" &
+	done
 
-		DisplayAsStatusReportTitleLine
+	m=$n
+	wait 2>/dev/null
 
-		for package_name in $(QPKGs-SCall:Array); do
-			((element++))
-			ShowAsPercentProgress 'writing report' '' "$element" 0 0 "$total"
-			QPKGs-ACstatus-dn.Exist "$package_name" && DisplayAsStatusReportLine "$package_name"
-		done
+	# load report lines from individual files.
 
-		Display
+	for ((n=1; n<=m; n++)); do
+		f="$REPORTS_PATH/$n"
+		[[ -e $f ]] && ac+="$(<$f)\n"		# add newline to each imported report line
+	done
 
-		} > "$REPORT_PATHFILE"
-
+	[[ -n $ac ]] && echo -e "$ac" >>"$REPORT_OUTPUT_PATHFILE"
 	EraseThisLine
 
-	if [[ -e $REPORT_PATHFILE ]]; then
-		DisplayFileInWindow "$REPORT_PATHFILE" onescreen
+	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
+		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE" onescreen
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -6346,13 +6433,15 @@ ShowZeroQpkgs()
 Self.LockFile:Claim()
 	{
 
-	readonly LOCK_PATHFILE=/var/run/sherpa.lock
-	local re=\\bsherpa.manager.sh\\b
+	readonly LOCK_PATHFILE=/var/run/sherpa.lock		# global
+	local a=''
 
-	if [[ -e $LOCK_PATHFILE && -d /proc/$(<"$LOCK_PATHFILE") && $(</proc/"$(<"$LOCK_PATHFILE")"/cmdline) =~ $re ]]; then
-		ShowAsAbort "another instance is running (PID: $(<"$LOCK_PATHFILE"))"
-		return 1
-	fi
+	for a in sherpa-manager.sh sherpa-manager.source; do
+		if [[ -e $LOCK_PATHFILE && -d /proc/$(<"$LOCK_PATHFILE") && $(</proc/"$(<"$LOCK_PATHFILE")"/cmdline) =~ $a ]]; then
+			ShowAsAbort "another sherpa instance was found (PID:$(<"$LOCK_PATHFILE")), can't continue."
+			return 1
+		fi
+	done
 
 	echo "$$" > "$LOCK_PATHFILE"
 	return 0
@@ -6465,35 +6554,35 @@ _QPKG:reassign_()
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
-	local -i result_code=0
+	local -i z=0
 
 	if ! QPKGs-ISinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reassign skipped 'not installed'
-		result_code=2
+		z=2
 	elif [[ $(QPKG.GetStoreID "$PACKAGE_NAME") = sherpa ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reassign skipped 'already assigned to sherpa'
-		result_code=2
+		z=2
 	fi
 
-	if [[ $result_code -gt 0 ]]; then
+	if [[ $z -gt 0 ]]; then
 		MarkThisActionForkAsSkipped
-		FuncFork:Exit $result_code
+		FuncFork:Exit $z
 	fi
 
 	DebugAsProc "reassigning $(ShowAsPackageName "$PACKAGE_NAME")"
 	RunAndLog "/sbin/setcfg -e $PACKAGE_NAME store -f /etc/config/qpkg.conf" "$LOGS_PATH/$PACKAGE_NAME.$REASSIGN_LOG_FILE" log:failure-only
-	result_code=$?
+	z=$?
 
-	if [[ $result_code -eq 0 ]]; then
+	if [[ $z -eq 0 ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reassign ok
 		MarkThisActionForkAsOk
 	else
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" reassign failed "$result_code"
-		result_code=1   # remap to 1
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" reassign failed "$z"
+		z=1   # remap to 1
 		MarkThisActionForkAsFailed
 	fi
 
-	FuncFork:Exit $result_code
+	FuncFork:Exit $z
 
 	}
 
@@ -6513,20 +6602,20 @@ _QPKG:download_()
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
-	local -i result_code=0
 	local -r REMOTE_URL=$(QPKG.GetURL "$PACKAGE_NAME")
 	local -r REMOTE_FILENAME=$($BASENAME_CMD "$REMOTE_URL")
-	local -r REMOTE_MD5=$(QPKG.GetMD5 "$PACKAGE_NAME")
+	local -r REMOTE_HASH=$(QPKG.GetHash "$PACKAGE_NAME")
 	local -r LOCAL_PATHFILE=$QPKG_DL_PATH/$REMOTE_FILENAME
 	local -r LOCAL_FILENAME=$($BASENAME_CMD "$LOCAL_PATHFILE")
 	local -r LOG_PATHFILE=$LOGS_PATH/$LOCAL_FILENAME.$DOWNLOAD_LOG_FILE
+	local -i z=0
 
-	if [[ -z $REMOTE_URL || -z $REMOTE_MD5 ]]; then
+	if [[ -z $REMOTE_URL || -z $REMOTE_HASH ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" download skipped 'NAS arch is incompatible'
 		MarkThisActionForkAsSkipped
-		result_code=2
+		z=2
 	elif [[ -f $LOCAL_PATHFILE ]]; then
-		if FileMatchesMD5 "$LOCAL_PATHFILE" "$REMOTE_MD5"; then
+		if FileMatchesMD5 "$LOCAL_PATHFILE" "$REMOTE_HASH"; then
 			SaveActionResultToLog QPKG "$PACKAGE_NAME" download skipped-ok "existing file $(ShowAsFileName "$LOCAL_FILENAME") checksum correct"
 			MarkThisActionForkAsSkippedOk
 			FuncFork:Exit 0
@@ -6536,8 +6625,8 @@ _QPKG:download_()
 		fi
 	fi
 
-	if [[ $result_code -gt 0 ]]; then
-		FuncFork:Exit $result_code
+	if [[ $z -gt 0 ]]; then
+		FuncFork:Exit $z
 	fi
 
 	if [[ ! -f $LOCAL_PATHFILE ]]; then
@@ -6546,10 +6635,10 @@ _QPKG:download_()
 		rm -f "$LOG_PATHFILE"
 
 		RunAndLog "$CURL_CMD${curl_insecure_arg} --location --output $LOCAL_PATHFILE $REMOTE_URL" "$LOG_PATHFILE" log:failure-only
-		result_code=$?
+		z=$?
 
-		if [[ $result_code -eq 0 ]]; then
-			if FileMatchesMD5 "$LOCAL_PATHFILE" "$REMOTE_MD5"; then
+		if [[ $z -eq 0 ]]; then
+			if FileMatchesMD5 "$LOCAL_PATHFILE" "$REMOTE_HASH"; then
 				[[ $(Lowercase "${LOCAL_PATHFILE##*.}") = zip ]] && $UNZIP_CMD -nq "$LOCAL_PATHFILE" -d "$QPKG_DL_PATH"
 				SaveActionResultToLog QPKG "$PACKAGE_NAME" download ok
 				SendPackageStateChange ISdownloaded
@@ -6557,17 +6646,17 @@ _QPKG:download_()
 			else
 				SaveActionResultToLog QPKG "$PACKAGE_NAME" download failed "downloaded file $(ShowAsFileName "$LOCAL_FILENAME") has incorrect checksum"
 				SendPackageStateChange ISNTdownloaded
-				result_code=1
+				z=1
 				MarkThisActionForkAsFailed
 			fi
 		else
-			SaveActionResultToLog QPKG "$PACKAGE_NAME" download failed "$result_code"
-			result_code=1   # remap to 1 (last time I checked, 'curl' had 92 return codes)
+			SaveActionResultToLog QPKG "$PACKAGE_NAME" download failed "$z"
+			z=1   # remap to 1 (last time I checked, 'curl' had 92 return codes)
 			MarkThisActionForkAsFailed
 		fi
 	fi
 
-	FuncFork:Exit $result_code
+	FuncFork:Exit $z
 
 	}
 
@@ -6587,26 +6676,26 @@ _QPKG:install_()
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
-	local -i result_code=0
-	local debug_cmd=''
+	local b=''
+	local -i z=0
 
 	if QPKGs-ISinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" install skipped 'already installed'
-		result_code=2
+		z=2
 	elif ! QPKG.IsArchOK "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" install skipped 'NAS arch is incompatible'
-		result_code=2
+		z=2
 	elif ! QPKG.IsMinOSVerOk "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" install skipped "$(GetQnapOS) version is incompatible"
-		result_code=2
+		z=2
 	elif ! QPKG.IsMinRAMOk "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" install skipped 'NAS has insufficient RAM'
-		result_code=2
+		z=2
 	fi
 
-	if [[ $result_code -gt 0 ]]; then
+	if [[ $z -gt 0 ]]; then
 		MarkThisActionForkAsSkipped
-		FuncFork:Exit $result_code
+		FuncFork:Exit $z
 	fi
 
 	local local_pathfile=$(QPKG.GetPathFilename "$PACKAGE_NAME")
@@ -6631,15 +6720,15 @@ _QPKG:install_()
 	local target_path=''
 
 	DebugAsProc "installing $(ShowAsPackageName "$PACKAGE_NAME")"
-	[[ $opts_debug = true ]] && debug_cmd='DEBUG_QPKG=true '
+	[[ $opts_debug = true ]] && b='DEBUG_QPKG=true '
 
 	[[ ${QPKGs_were_installed_name[*]:-} = *"$PACKAGE_NAME"* ]] && target_path="QINSTALL_PATH=$(QPKG.GetOriginalPath "$PACKAGE_NAME") "
-	RunAndLog "${debug_cmd}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$INSTALL_LOG_FILE" log:failure-only 10
-	result_code=$?
+	RunAndLog "${b}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$INSTALL_LOG_FILE" log:failure-only 10
+	z=$?
 
-	[[ $PACKAGE_NAME = Entware ]] && IsNtSysFileExist $OPKG_CMD && result_code=1
+	[[ $PACKAGE_NAME = Entware ]] && IsNtSysFileExist $OPKG_CMD && z=1
 
-	if [[ $result_code -eq 0 || $result_code -eq 10 ]]; then
+	if [[ $z -eq 0 || $z -eq 10 ]]; then
 		QPKG.ServiceStatus:Log
 		SendPackageStateChange ISinstalled
 
@@ -6665,16 +6754,16 @@ _QPKG:install_()
 		fi
 
 		SendParentChangeEnv "QPKGs-ACsign-to:Add $PACKAGE_NAME"
-		result_code=0   # Remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK, but unfortunately will include installation aborts).
+		z=0   # Remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK, but unfortunately will include installation aborts).
 		MarkThisActionForkAsOk
 	else
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" install failed "$result_code"
-		result_code=1   # Remap to 1.
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" install failed "$z"
+		z=1   # Remap to 1.
 		MarkThisActionForkAsFailed
 	fi
 
 	QPKG.AppCenterNotifier:Clear
-	FuncFork:Exit $result_code
+	FuncFork:Exit $z
 
 	}
 
@@ -6694,8 +6783,8 @@ _QPKG:reinstall_()
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
-	local -i result_code=0
-	local debug_cmd=''
+	local b=''
+	local -i z=0
 
 	if ! QPKGs-ISinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reinstall skipped "not installed, please use 'install' instead."
@@ -6720,15 +6809,15 @@ _QPKG:reinstall_()
 	local target_path=''
 
 	DebugAsProc "reinstalling $(ShowAsPackageName "$PACKAGE_NAME")"
-	[[ $opts_debug = true ]] && debug_cmd='DEBUG_QPKG=true '
+	[[ $opts_debug = true ]] && b='DEBUG_QPKG=true '
 
 	QPKG.IsInstalled "$PACKAGE_NAME" && target_path="QINSTALL_PATH=$($DIRNAME_CMD "$(QPKG.GetInstallationPath $PACKAGE_NAME)") "
-	RunAndLog "${debug_cmd}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$REINSTALL_LOG_FILE" log:failure-only 10
-	result_code=$?
+	RunAndLog "${b}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$REINSTALL_LOG_FILE" log:failure-only 10
+	z=$?
 
-	[[ $PACKAGE_NAME = Entware ]] && IsNtSysFileExist $OPKG_CMD && result_code=1
+	[[ $PACKAGE_NAME = Entware ]] && IsNtSysFileExist $OPKG_CMD && z=1
 
-	if [[ $result_code -eq 0 || $result_code -eq 10 ]]; then
+	if [[ $z -eq 0 || $z -eq 10 ]]; then
 		QPKG.ServiceStatus:Log
 
 		if QPKG.IsEnabled "$PACKAGE_NAME"; then
@@ -6739,16 +6828,16 @@ _QPKG:reinstall_()
 
 		local current_ver=$(QPKG.Local.GetVer "$PACKAGE_NAME")
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reinstall ok "version $current_ver"
-		result_code=0   # Remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK, but unfortunately will include installation aborts).
+		z=0   # Remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK, but unfortunately will include installation aborts).
 		MarkThisActionForkAsOk
 	else
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" reinstall failed "$result_code"
-		result_code=1   # Remap to 1.
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" reinstall failed "$z"
+		z=1   # Remap to 1.
 		MarkThisActionForkAsFailed
 	fi
 
 	QPKG.AppCenterNotifier:Clear
-	FuncFork:Exit $result_code
+	FuncFork:Exit $z
 
 	}
 
@@ -6768,15 +6857,15 @@ _QPKG:upgrade_()
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
-	local -i result_code=0
-	local debug_cmd=''
+	local b=''
+	local -i z=0
 
 	if ! QPKGs-ISinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" upgrade skipped 'not installed'
-		result_code=2
+		z=2
 	elif ! QPKGs-SCupgradable.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" upgrade skipped 'no new package is available'
-		result_code=2
+		z=2
 	fi
 
 	if ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
@@ -6785,9 +6874,9 @@ _QPKG:upgrade_()
 		FuncFork:Exit 2
 	fi
 
-	if [[ $result_code -gt 0 ]]; then
+	if [[ $z -gt 0 ]]; then
 		MarkThisActionForkAsSkipped
-		FuncFork:Exit $result_code
+		FuncFork:Exit $z
 	fi
 
 	local local_pathfile=$(QPKG.GetPathFilename "$PACKAGE_NAME")
@@ -6802,15 +6891,15 @@ _QPKG:upgrade_()
 	local target_path=''
 
 	DebugAsProc "upgrading $(ShowAsPackageName "$PACKAGE_NAME")"
-	[[ $opts_debug = true ]] && debug_cmd='DEBUG_QPKG=true '
+	[[ $opts_debug = true ]] && b='DEBUG_QPKG=true '
 
 	QPKG.IsInstalled "$PACKAGE_NAME" && target_path="QINSTALL_PATH=$($DIRNAME_CMD "$(QPKG.GetInstallationPath "$PACKAGE_NAME")") "
-	RunAndLog "${debug_cmd}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$UPGRADE_LOG_FILE" log:failure-only 10
-	result_code=$?
+	RunAndLog "${b}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$UPGRADE_LOG_FILE" log:failure-only 10
+	z=$?
 
-	[[ $PACKAGE_NAME = Entware ]] && IsNtSysFileExist $OPKG_CMD && result_code=1
+	[[ $PACKAGE_NAME = Entware ]] && IsNtSysFileExist $OPKG_CMD && z=1
 
-	if [[ $result_code -eq 0 || $result_code -eq 10 ]]; then
+	if [[ $z -eq 0 || $z -eq 10 ]]; then
 		QPKG.ServiceStatus:Log
 		SendPackageStateChange SCNTupgradable
 
@@ -6828,16 +6917,16 @@ _QPKG:upgrade_()
 			SaveActionResultToLog QPKG "$PACKAGE_NAME" upgrade ok "upgraded from version $prev_ver to version $current_ver"
 		fi
 
-		result_code=0   # Remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK, but unfortunately will include installation aborts).
+		z=0   # Remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK, but unfortunately will include installation aborts).
 		MarkThisActionForkAsOk
 	else
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" upgrade failed "$result_code"
-		result_code=1   # Remap to 1.
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" upgrade failed "$z"
+		z=1   # Remap to 1.
 		MarkThisActionForkAsFailed
 	fi
 
 	QPKG.AppCenterNotifier:Clear
-	FuncFork:Exit $result_code
+	FuncFork:Exit $z
 
 	}
 
@@ -6857,15 +6946,15 @@ _QPKG:uninstall_()
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
-	local -i result_code=0
-	local debug_cmd=''
+	local b=''
+	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" uninstall skipped 'not installed'
-		result_code=2
+		z=2
 	elif [[ $PACKAGE_NAME = sherpa ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" uninstall skipped "it's needed here! 😉"
-		result_code=2
+		z=2
 	fi
 
 	if ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
@@ -6874,9 +6963,9 @@ _QPKG:uninstall_()
 		FuncFork:Exit 2
 	fi
 
-	if [[ $result_code -gt 0 ]]; then
+	if [[ $z -gt 0 ]]; then
 		MarkThisActionForkAsSkipped
-		FuncFork:Exit $result_code
+		FuncFork:Exit $z
 	fi
 
 	local -r QPKG_UNINSTALLER_PATHFILE=$(QPKG.GetInstallationPath "$PACKAGE_NAME")/.uninstall.sh
@@ -6885,12 +6974,12 @@ _QPKG:uninstall_()
 
 	if [[ -e $QPKG_UNINSTALLER_PATHFILE ]]; then
 		DebugAsProc "uninstalling $(ShowAsPackageName "$PACKAGE_NAME")"
-		[[ $opts_debug = true ]] && debug_cmd='DEBUG_QPKG=true '
+		[[ $opts_debug = true ]] && b='DEBUG_QPKG=true '
 
-		RunAndLog "${debug_cmd}${SH_CMD} $QPKG_UNINSTALLER_PATHFILE" "$LOGS_PATH/$PACKAGE_NAME.$UNINSTALL_LOG_FILE" log:failure-only
-		result_code=$?
+		RunAndLog "${b}${SH_CMD} $QPKG_UNINSTALLER_PATHFILE" "$LOGS_PATH/$PACKAGE_NAME.$UNINSTALL_LOG_FILE" log:failure-only
+		z=$?
 
-		if [[ $result_code -eq 0 ]]; then
+		if [[ $z -eq 0 ]]; then
 			[[ -e /sbin/qpkg_cli ]] && /sbin/qpkg_cli --remove "$PACKAGE_NAME" &>/dev/null
 			SaveActionResultToLog QPKG "$PACKAGE_NAME" uninstall ok
 			/sbin/rmcfg "$PACKAGE_NAME" -f /etc/config/qpkg.conf
@@ -6906,9 +6995,9 @@ _QPKG:uninstall_()
 			SendPackageStateChange ISNTenabled
 			MarkThisActionForkAsOk
 		else
-			SaveActionResultToLog QPKG "$PACKAGE_NAME" uninstall failed "$result_code"
+			SaveActionResultToLog QPKG "$PACKAGE_NAME" uninstall failed "$z"
 
-			result_code=1   # Remap to 1.
+			z=1   # Remap to 1.
 			MarkThisActionForkAsFailed
 		fi
 	else
@@ -6917,7 +7006,7 @@ _QPKG:uninstall_()
 		MarkThisActionForkAsFailed
 	fi
 
-	FuncFork:Exit $result_code
+	FuncFork:Exit $z
 
 	}
 
@@ -6937,8 +7026,8 @@ _QPKG:activate_()
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
-	local -i result_code=0
-	local debug_cmd=''
+	local b=''
+	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" activate skipped 'not installed'
@@ -6965,18 +7054,18 @@ _QPKG:activate_()
 		MarkThisActionForkAsSkippedError
 		FuncFork:Exit 2
 	elif [[ $opts_debug = true ]]; then
-		debug_cmd='DEBUG_QPKG=true '
-		RunAndLog "${debug_cmd}${service_pathfile} start" "$LOG_PATHFILE" log:failure-only
-		result_code=$?
+		b='DEBUG_QPKG=true '
+		RunAndLog "${b}${service_pathfile} start" "$LOG_PATHFILE" log:failure-only
+		z=$?
 	elif QPKG.IsCanLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
 		RunAndLog "/sbin/qpkg_service${timeout} start $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
-		QPKG.LastResultWasOk && result_code=0 || result_code=1
+		QPKG.LastResultWasOk && z=0 || z=1
 	else
 		RunAndLog "$service_pathfile start" "$LOG_PATHFILE" log:failure-only
-		result_code=$?
+		z=$?
 	fi
 
-	if [[ $result_code -eq 0 ]]; then
+	if [[ $z -eq 0 ]]; then
 		QPKG.ServiceStatus:Log
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" activate ok
 
@@ -6988,14 +7077,14 @@ _QPKG:activate_()
 		SendPackageStateChange ISactive
 		MarkThisActionForkAsOk
 	else
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" activate failed "$result_code"
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" activate failed "$z"
 		SendPackageStateChange ISNTactive
-		result_code=1   # Remap to 1.
+		z=1   # Remap to 1.
 		MarkThisActionForkAsFailed
 	fi
 
 	QPKG.AppCenterNotifier:Clear
-	FuncFork:Exit $result_code
+	FuncFork:Exit $z
 
 	}
 
@@ -7015,8 +7104,8 @@ _QPKG:reactivate_()
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
-	local -i result_code=0
-	local debug_cmd=''
+	local b=''
+	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reactivate skipped 'not installed'
@@ -7043,28 +7132,28 @@ _QPKG:reactivate_()
 		MarkThisActionForkAsSkippedError
 		FuncFork:Exit 2
 	elif [[ $opts_debug = true ]]; then
-		debug_cmd='DEBUG_QPKG=true '
-		RunAndLog "${debug_cmd}${service_pathfile} restart" "$LOG_PATHFILE" log:failure-only
-		result_code=$?
+		b='DEBUG_QPKG=true '
+		RunAndLog "${b}${service_pathfile} restart" "$LOG_PATHFILE" log:failure-only
+		z=$?
 	elif QPKG.IsCanLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
 		RunAndLog "/sbin/qpkg_service${timeout} restart $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
-		QPKG.LastResultWasOk && result_code=0 || result_code=1
+		QPKG.LastResultWasOk && z=0 || z=1
 	else
 		RunAndLog "$service_pathfile restart" "$LOG_PATHFILE" log:failure-only
-		result_code=$?
+		z=$?
 	fi
 
-	if [[ $result_code -eq 0 ]]; then
+	if [[ $z -eq 0 ]]; then
 		QPKG.ServiceStatus:Log
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reactivate ok
 		MarkThisActionForkAsOk
 	else
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" reactivate failed "$result_code"
-		result_code=1   # remap to 1
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" reactivate failed "$z"
+		z=1   # remap to 1
 		MarkThisActionForkAsFailed
 	fi
 	QPKG.AppCenterNotifier:Clear
-	FuncFork:Exit $result_code
+	FuncFork:Exit $z
 
 	}
 
@@ -7084,15 +7173,15 @@ _QPKG:deactivate_()
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
-	local -i result_code=0
-	local debug_cmd=''
+	local b=''
+	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" deactivate skipped 'not installed'
-		result_code=2
+		z=2
 	elif [[ $PACKAGE_NAME = sherpa ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" deactivate skipped "it's needed here! 😉"
-		result_code=2
+		z=2
 	fi
 
 	if ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
@@ -7101,9 +7190,9 @@ _QPKG:deactivate_()
 		FuncFork:Exit 2
 	fi
 
-	if [[ $result_code -gt 0 ]]; then
+	if [[ $z -gt 0 ]]; then
 		MarkThisActionForkAsSkipped
-		FuncFork:Exit $result_code
+		FuncFork:Exit $z
 	fi
 
 	QPKG.ServiceStatus:Clear
@@ -7119,18 +7208,18 @@ _QPKG:deactivate_()
 		MarkThisActionForkAsSkippedError
 		FuncFork:Exit 2
 	elif [[ $opts_debug = true ]]; then
-		debug_cmd='DEBUG_QPKG=true '
-		RunAndLog "${debug_cmd}${service_pathfile} stop" "$LOG_PATHFILE" log:failure-only
-		result_code=$?
+		b='DEBUG_QPKG=true '
+		RunAndLog "${b}${service_pathfile} stop" "$LOG_PATHFILE" log:failure-only
+		z=$?
 	elif QPKG.IsCanLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
 		RunAndLog "/sbin/qpkg_service${timeout} stop $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
-		QPKG.LastResultWasOk && result_code=0 || result_code=1
+		QPKG.LastResultWasOk && z=0 || z=1
 	else
 		RunAndLog "$service_pathfile stop" "$LOG_PATHFILE" log:failure-only
-		result_code=$?
+		z=$?
 	fi
 
-	if [[ $result_code -eq 0 ]]; then
+	if [[ $z -eq 0 ]]; then
 		QPKG.ServiceStatus:Log
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" deactivate ok
 
@@ -7142,13 +7231,13 @@ _QPKG:deactivate_()
 		SendPackageStateChange ISNTactive
 		MarkThisActionForkAsOk
 	else
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" deactivate failed "$result_code"
-		result_code=1   # Remap to 1.
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" deactivate failed "$z"
+		z=1   # Remap to 1.
 		MarkThisActionForkAsFailed
 	fi
 
 	QPKG.AppCenterNotifier:Clear
-	FuncFork:Exit $result_code
+	FuncFork:Exit $z
 
 	}
 
@@ -7168,15 +7257,14 @@ _QPKG:enable_()
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
-	local -i result_code=0
-	local debug_cmd=''
+	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" enable skipped 'not installed'
-		result_code=2
+		z=2
 	elif QPKGs-ISenabled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" enable skipped 'already enabled'
-		result_code=2
+		z=2
 	fi
 
 	if ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
@@ -7185,9 +7273,9 @@ _QPKG:enable_()
 		FuncFork:Exit 2
 	fi
 
-	if [[ $result_code -gt 0 ]]; then
+	if [[ $z -gt 0 ]]; then
 		MarkThisActionForkAsSkipped
-		FuncFork:Exit $result_code
+		FuncFork:Exit $z
 	fi
 
 	QPKG.ServiceStatus:Clear
@@ -7202,7 +7290,7 @@ _QPKG:enable_()
 	QPKG.AppCenterNotifier:Clear
 	SaveActionResultToLog QPKG "$PACKAGE_NAME" enable ok
 	MarkThisActionForkAsOk
-	FuncFork:Exit $result_code
+	FuncFork:Exit $z
 
 	}
 
@@ -7222,18 +7310,17 @@ _QPKG:disable_()
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
-	local -i result_code=0
-	local debug_cmd=''
+	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" disable skipped 'not installed'
-		result_code=2
+		z=2
 	elif QPKGs-ISNTenabled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" disable skipped 'already disabled'
-		result_code=2
+		z=2
 	elif [[ $PACKAGE_NAME = sherpa ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" disable skipped "it's needed here! 😉"
-		result_code=2
+		z=2
 	fi
 
 	if ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
@@ -7242,9 +7329,9 @@ _QPKG:disable_()
 		FuncFork:Exit 2
 	fi
 
-	if [[ $result_code -gt 0 ]]; then
+	if [[ $z -gt 0 ]]; then
 		MarkThisActionForkAsSkipped
-		FuncFork:Exit $result_code
+		FuncFork:Exit $z
 	fi
 
 	QPKG.ServiceStatus:Clear
@@ -7260,7 +7347,7 @@ _QPKG:disable_()
 	QPKG.AppCenterNotifier:Clear
 	SaveActionResultToLog QPKG "$PACKAGE_NAME" disable ok
 	MarkThisActionForkAsOk
-	FuncFork:Exit $result_code
+	FuncFork:Exit $z
 
 	}
 
@@ -7280,15 +7367,15 @@ _QPKG:backup_()
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
-	local -i result_code=0
-	local debug_cmd=''
+	local b=''
+	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" backup skipped 'not installed'
-		result_code=2
+		z=2
 	elif ! QPKG.IsCanBackup; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" backup skipped 'does not support backup'
-		result_code=2
+		z=2
 	fi
 
 	if ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
@@ -7297,29 +7384,29 @@ _QPKG:backup_()
 		FuncFork:Exit 2
 	fi
 
-	if [[ $result_code -gt 0 ]]; then
+	if [[ $z -gt 0 ]]; then
 		MarkThisActionForkAsSkipped
-		FuncFork:Exit $result_code
+		FuncFork:Exit $z
 	fi
 
 	DebugAsProc "backing-up $(ShowAsPackageName "$PACKAGE_NAME") configuration"
-	[[ $opts_debug = true ]] && debug_cmd='DEBUG_QPKG=true '
+	[[ $opts_debug = true ]] && b='DEBUG_QPKG=true '
 
-	RunAndLog "${debug_cmd}$(QPKG.GetServicePathFile) backup" "$LOGS_PATH/$PACKAGE_NAME.$BACKUP_LOG_FILE" log:failure-only
-	result_code=$?
+	RunAndLog "${b}$(QPKG.GetServicePathFile) backup" "$LOGS_PATH/$PACKAGE_NAME.$BACKUP_LOG_FILE" log:failure-only
+	z=$?
 
-	if [[ $result_code -eq 0 ]]; then
+	if [[ $z -eq 0 ]]; then
 		QPKG.ServiceStatus:Log
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" backup ok
 		SendPackageStateChange ISbackedup
 		MarkThisActionForkAsOk
 	else
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" backup failed "$result_code"
-		result_code=1   # Remap to 1.
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" backup failed "$z"
+		z=1   # Remap to 1.
 		MarkThisActionForkAsFailed
 	fi
 
-	FuncFork:Exit $result_code
+	FuncFork:Exit $z
 
 	}
 
@@ -7339,15 +7426,15 @@ _QPKG:restore_()
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
-	local -i result_code=0
-	local debug_cmd=''
+	local b=''
+	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" restore skipped 'not installed'
-		result_code=2
+		z=2
 	elif ! QPKG.IsCanBackup; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" restore skipped 'does not support restore'
-		result_code=2
+		z=2
 	fi
 
 	if ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
@@ -7356,29 +7443,29 @@ _QPKG:restore_()
 		FuncFork:Exit 2
 	fi
 
-	if [[ $result_code -gt 0 ]]; then
+	if [[ $z -gt 0 ]]; then
 		MarkThisActionForkAsSkipped
-		FuncFork:Exit $result_code
+		FuncFork:Exit $z
 	fi
 
 	DebugAsProc "restoring $(ShowAsPackageName "$PACKAGE_NAME") configuration"
-	[[ $opts_debug = true ]] && debug_cmd='DEBUG_QPKG=true '
+	[[ $opts_debug = true ]] && b='DEBUG_QPKG=true '
 
-	RunAndLog "${debug_cmd}$(QPKG.GetServicePathFile) restore" "$LOGS_PATH/$PACKAGE_NAME.$RESTORE_LOG_FILE" log:failure-only
-	result_code=$?
+	RunAndLog "${b}$(QPKG.GetServicePathFile) restore" "$LOGS_PATH/$PACKAGE_NAME.$RESTORE_LOG_FILE" log:failure-only
+	z=$?
 
-	if [[ $result_code -eq 0 ]]; then
+	if [[ $z -eq 0 ]]; then
 		QPKG.ServiceStatus:Log
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" restore ok
 		SendPackageStateChange ISrestored
 		MarkThisActionForkAsOk
 	else
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" restore failed "$result_code"
-		result_code=1   # Remap to 1.
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" restore failed "$z"
+		z=1   # Remap to 1.
 		MarkThisActionForkAsFailed
 	fi
 
-	FuncFork:Exit $result_code
+	FuncFork:Exit $z
 
 	}
 
@@ -7398,15 +7485,15 @@ _QPKG:clean_()
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
-	local -i result_code=0
-	local debug_cmd=''
+	local b=''
+	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" clean skipped 'not installed'
-		result_code=2
+		z=2
 	elif ! QPKG.IsCanClean; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" clean skipped 'does not support cleaning'
-		result_code=2
+		z=2
 	fi
 
 	if ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
@@ -7415,28 +7502,28 @@ _QPKG:clean_()
 		FuncFork:Exit 2
 	fi
 
-	if [[ $result_code -gt 0 ]]; then
+	if [[ $z -gt 0 ]]; then
 		MarkThisActionForkAsSkipped
-		FuncFork:Exit $result_code
+		FuncFork:Exit $z
 	fi
 
 	DebugAsProc "cleaning $(ShowAsPackageName "$PACKAGE_NAME")"
-	[[ $opts_debug = true ]] && debug_cmd='DEBUG_QPKG=true '
+	[[ $opts_debug = true ]] && b='DEBUG_QPKG=true '
 
-	RunAndLog "${debug_cmd}$(QPKG.GetServicePathFile) clean" "$LOGS_PATH/$PACKAGE_NAME.$CLEAN_LOG_FILE" log:failure-only
-	result_code=$?
+	RunAndLog "${b}$(QPKG.GetServicePathFile) clean" "$LOGS_PATH/$PACKAGE_NAME.$CLEAN_LOG_FILE" log:failure-only
+	z=$?
 
-	if [[ $result_code -eq 0 ]]; then
+	if [[ $z -eq 0 ]]; then
 		QPKG.ServiceStatus:Log
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" clean ok
 		MarkThisActionForkAsOk
 	else
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" clean failed "$result_code"
-		result_code=1   # Remap to 1.
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" clean failed "$z"
+		z=1   # Remap to 1.
 		MarkThisActionForkAsFailed
 	fi
 
-	FuncFork:Exit $result_code
+	FuncFork:Exit $z
 
 	}
 
@@ -7460,24 +7547,25 @@ _QPKG:sign_()
 	FuncFork:Init
 
 	local -r PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
-	local -i result_code=0
 	local cert=''
-	local signature=''
 	local cmd=''
+	local signature=''
+	local -i z=0
+
 	DebugVar SQLITE_CMD
 
 	if ! OS.IsSupportSignedPackages; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped 'not required: firmware < 4.3.5'
-		result_code=2
+		z=2
 	elif ! QPKGs-ISinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped 'not installed'
-		result_code=2
+		z=2
 	elif [[ ! -e $SQLITE_CMD ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped 'sqlite3 unavailable'
-		result_code=2
+		z=2
 	elif [[ ! -e $CERT_DB_PATHFILE ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped 'certificate database not found'
-		result_code=2
+		z=2
 	fi
 
 	if ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
@@ -7486,9 +7574,9 @@ _QPKG:sign_()
 		FuncFork:Exit 2
 	fi
 
-	if [[ $result_code -gt 0 ]]; then
+	if [[ $z -gt 0 ]]; then
 		MarkThisActionForkAsSkipped
-		FuncFork:Exit $result_code
+		FuncFork:Exit $z
 	fi
 
 	DebugAsProc "\"signing\" $(ShowAsPackageName "$PACKAGE_NAME")"
@@ -7568,19 +7656,19 @@ EOB
 	cmd="DELETE FROM Certificate WHERE QpkgName = '$PACKAGE_NAME'; INSERT INTO Certificate (Type,QpkgName,Cert,DigitalSignature) VALUES ('qpkg','$PACKAGE_NAME','$cert','$signature');"
 
 	$SQLITE_CMD "$CERT_DB_PATHFILE" "$cmd"
-	result_code=$?
+	z=$?
 
-	if [[ $result_code -eq 0 ]]; then
+	if [[ $z -eq 0 ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' ok
 		SendPackageStateChange ISsigned
 		MarkThisActionForkAsOk
 	else
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' failed "($result_code) check the sherpa debug log for more information"
-		result_code=1   # Remap to 1.
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' failed "($z) check the sherpa debug log for more information"
+		z=1   # Remap to 1.
 		MarkThisActionForkAsFailed
 	fi
 
-	FuncFork:Exit $result_code
+	FuncFork:Exit $z
 
 	}
 
@@ -7600,40 +7688,42 @@ _QPKG:status_()
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
-	local -i result_code=0
-	local package_tests=''
-	local debug_cmd=''
+	local -i z=0
+	local a=''
+	local b=''
 
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" status skipped 'not installed'
-		result_code=2
+		z=2
 	fi
 
-	if [[ $result_code -gt 0 ]]; then
+	if [[ $z -gt 0 ]]; then
 		MarkThisActionForkAsSkipped
-		FuncFork:Exit $result_code
+		FuncFork:Exit $z
 	fi
 
 	DebugAsProc "statusing $(ShowAsPackageName "$PACKAGE_NAME")"
 
-	if package_tests=$(QPKG.GetActiveTest "$PACKAGE_NAME"); then
-		eval "$package_tests" &>/dev/null
-		result_code=$?
-	else
-		[[ $opts_debug = true ]] && debug_cmd='DEBUG_QPKG=true '
+	a=$(QPKG.GetActiveTest "$PACKAGE_NAME")
 
-		if [[ -e $GNU_TIMEOUT_CMD ]]; then
-			$GNU_TIMEOUT_CMD "$QPKG_STATUS_CHECK_TIMEOUT_SECONDS" /bin/bash -c "${debug_cmd}$(QPKG.GetServicePathFile) status"
-			result_code=$?
+	if [[ $a = builtin ]]; then
+		[[ $opts_debug = true ]] && b='DEBUG_QPKG=true '
+
+		if [[ -e $GNU_TIMEOUT_CMD ]]; then		# run status query with a timeout if-possible.
+			$GNU_TIMEOUT_CMD "$QPKG_STATUS_CHECK_TIMEOUT_SECONDS" /bin/bash -c "${b}$(QPKG.GetServicePathFile) status"
+			z=$?
 		else
-			RunAndLog "${debug_cmd}$(QPKG.GetServicePathFile) status" "$LOGS_PATH/$PACKAGE_NAME.$STATUS_LOG_FILE" log:failure-only
-			result_code=$?
+			RunAndLog "${b}$(QPKG.GetServicePathFile) status" "$LOGS_PATH/$PACKAGE_NAME.$STATUS_LOG_FILE" log:failure-only
+			z=$?
 		fi
+	elif [[ $a != none ]]; then
+		eval "$a" &>/dev/null
+		z=$?
 	fi
 
-	DebugVar result_code
+	DebugVar z
 
-	case $result_code in
+	case $z in
 		0)
 			SendPackageStateChange ISactive
 			;;
@@ -7700,14 +7790,14 @@ QPKG.ServiceStatus:Log()
 	# input:
 	#   $PACKAGE_NAME (global) = QPKG name
 
-	if ! local status=$(QPKG.GetServiceStatus "$PACKAGE_NAME"); then
+	if ! local a=$(QPKG.GetServiceStatus "$PACKAGE_NAME"); then
 		DebugAsWarn "unable to get status of $(ShowAsPackageName "$PACKAGE_NAME") service. It may be a non-sherpa package, or a sherpa package earlier than 200816c that doesn't support service results."
 		return 1
 	fi
 
-	case $status in
+	case $a in
 		start|stop|restart)
-			DebugInfo "$(ShowAsPackageName "$PACKAGE_NAME") service is $status"
+			DebugInfo "$(ShowAsPackageName "$PACKAGE_NAME") service is $a"
 			;;
 		ok)
 			DebugInfo "$(ShowAsPackageName "$PACKAGE_NAME") service action completed OK"
@@ -7771,16 +7861,16 @@ QPKG.Avail.GetVer()
 	#   stdout = package version
 	#   $? = 0 if found, !0 if not
 
-	local -i index=0
-	local package=''
-	local prev=''
+	local a=''
+	local b=''
+	local -i i=0
 
-	for index in "${!QPKG_NAME[@]}"; do
-		package=${QPKG_NAME[$index]}
-		[[ $package = "$prev" ]] && continue || prev=$package
+	for i in "${!QPKG_NAME[@]}"; do
+		a=${QPKG_NAME[$i]}
+		[[ $a = "$b" ]] && continue || b=$a
 
-		if [[ ${1:-${PACKAGE_NAME:-sherpa}} = "$package" ]]; then
-			echo "${QPKG_VERSION[$index]}"
+		if [[ ${1:-${PACKAGE_NAME:-sherpa}} = "$a" ]]; then
+			echo "${QPKG_VERSION[$i]}"
 			return 0
 		fi
 	done
@@ -7817,6 +7907,7 @@ QPKG.GetStoreID()
 
 	# output:
 	#   stdout = package store ID
+
 	/sbin/getcfg "${1:-${PACKAGE_NAME:-sherpa}}" store -d sherpa -f /etc/config/qpkg.conf
 
 	return 0
@@ -7835,8 +7926,9 @@ QPKG.IsRepoOk()
 	# output:
 	#   $? = 0 if true, 1 if false
 
-	local temp=$(QPKG.GetStoreID "${1:-${PACKAGE_NAME:-sherpa}}")
-	[[ -z $temp || $temp = sherpa ]]
+	local a=$(QPKG.GetStoreID "${1:-${PACKAGE_NAME:-sherpa}}")
+
+	[[ -z $a || $a = sherpa ]]
 
 	}
 
@@ -7884,15 +7976,15 @@ QPKG.IsDependent()
 	# output:
 	#   $? = 0 if true, 1 if false (first package found).
 
-	local -i index=0
+	local a=''
+	local -i i=0
 
-	for index in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$index]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
-			if [[ -n ${QPKG_DEPENDS_ON[$index]} ]]; then
-				return 0
-			else
-				break
-			fi
+	for i in "${!QPKG_NAME[@]}"; do
+		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
+			a=${QPKG_DEPENDS_ON[$i]}
+			[[ $a = default ]] && a=${QPKG_DEPENDS_ON[$(QPKG.GetDefaultArchIndex "${QPKG_NAME[$i]}")]}
+			[[ $a = none ]] && break
+			[[ -n $a ]] && return
 		fi
 	done
 
@@ -7912,9 +8004,9 @@ QPKG.IsUpgradable()
 	# output:
 	#   $? = 0 if true, 1 if false
 
-	local package=${1:-$PACKAGE_NAME}
+	local a=${1:-$PACKAGE_NAME}
 
-	QPKG.IsInstalled "$package" && QPKG.IsRepoOk "$package" && [[ $(QPKG.Local.GetVer "$package") != "$(QPKG.Avail.GetVer "$package")" ]] && QPKG.IsArchOK "$package" && QPKG.IsMinOSVerOk "$package" && QPKG.IsMinRAMOk "$package"
+	QPKG.IsInstalled "$a" && QPKG.IsRepoOk "$a" && [[ $(QPKG.Local.GetVer "$a") != "$(QPKG.Avail.GetVer "$a")" ]] && QPKG.IsArchOK "$a" && QPKG.IsMinOSVerOk "$a" && QPKG.IsMinRAMOk "$a"
 
 	}
 
@@ -7930,9 +8022,9 @@ QPKG.IsInstallable()
 	# output:
 	#   $? = 0 if true, 1 if false
 
-	local package=${1:-$PACKAGE_NAME}
+	local a=${1:-$PACKAGE_NAME}
 
-	! QPKG.IsInstalled "$package" && QPKG.IsRepoOk "$package" && QPKG.IsArchOK "$package" && QPKG.IsMinOSVerOk "$package" && QPKG.IsMinRAMOk "$package"
+	! QPKG.IsInstalled "$a" && QPKG.IsRepoOk "$a" && QPKG.IsArchOK "$a" && QPKG.IsMinOSVerOk "$a" && QPKG.IsMinRAMOk "$a"
 
 	}
 
@@ -7946,12 +8038,12 @@ QPKG.GetOriginalPath()
 	#   stdout = the original installation path of this QPKG (even if it was migrated to another volume).
 	#   $? = 0 if successful, 1 if failed
 
-	local -i index=0
+	local -i i=0
 
 	if [[ ${#QPKGs_were_installed_name[@]} -gt 0 ]]; then
-		for index in "${!QPKGs_were_installed_name[@]}"; do
-			if [[ ${QPKGs_were_installed_name[$index]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
-				echo "${QPKGs_were_installed_path[$index]}"
+		for i in "${!QPKGs_were_installed_name[@]}"; do
+			if [[ ${QPKGs_were_installed_name[$i]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
+				echo "${QPKGs_were_installed_path[$i]}"
 				return 0
 			fi
 		done
@@ -7971,24 +8063,24 @@ QPKG.MatchAbbrv()
 	#   stdout = matched installable package name (empty if unmatched).
 	#   $? = 0 (matched) or 1 (unmatched).
 
-	local -a abbs=()
-	local -i package_index=0
-	local -i abb_index=0
-	local -i result_code=1
+	local -a ar=()
+	local -i i=0
+	local -i j=0
+	local -i z=1			# default to unmatched
 
-	for package_index in "${!QPKG_NAME[@]}"; do
-		abbs=(${QPKG_ABBRVS[$package_index]})
+	for i in "${!QPKG_NAME[@]}"; do
+		ar=(${QPKG_ABBRVS[$i]})
 
-		for abb_index in "${!abbs[@]}"; do
-			if [[ ${abbs[$abb_index]} = "$1" ]]; then
-				Display "${QPKG_NAME[$package_index]}"
-				result_code=0
+		for j in "${!ar[@]}"; do
+			if [[ ${ar[$j]} = "$1" ]]; then
+				Display "${QPKG_NAME[$i]}"
+				z=0
 				break 2
 			fi
 		done
 	done
 
-	return $result_code
+	return $z
 
 	}
 
@@ -8002,17 +8094,17 @@ QPKG.GetPathFilename()
 	#   stdout = QPKG local filename.
 	#   $? = 0 if successful, 1 if failed.
 
-	local url=$(QPKG.GetURL "${1:?${FUNCNAME[0]}'()': undefined}")
+	local a=$(QPKG.GetURL "${1:?${FUNCNAME[0]}'()': undefined}")
 
-	[[ -n $url ]] || return
-	[[ $(Lowercase "${url##*.}") != qpkg ]] && url=${url%.*}.qpkg		# Swap `zip` for `qpkg` here (only used for `QDK.zip`).
+	[[ -n $a ]] || return
+	[[ $(Lowercase "${a##*.}") != qpkg ]] && a=${a%.*}.qpkg		# Swap `zip` for `qpkg` here (only for compatibilty with `QDK.zip`).
 
-	echo "$QPKG_DL_PATH/$($BASENAME_CMD "$url")"
+	echo "$QPKG_DL_PATH/$($BASENAME_CMD "$a")"
 	return 0
 
 	}
 
-QPKG.GetMD5()
+QPKG.GetHash()
 	{
 
 	# input:
@@ -8022,11 +8114,11 @@ QPKG.GetMD5()
 	#   stdout = QPKG MD5, specific to this NAS arch.
 	#   $? = 0 if successful, 1 if failed.
 
-	local -i index=0
+	local -i i=0
 
-	for index in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$index]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]] && [[ ${QPKG_ARCH[$index]} = all || ${QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
-			echo "${QPKG_MD5[$index]}"
+	for i in "${!QPKG_NAME[@]}"; do
+		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]] && [[ ${QPKG_ARCH[$i]} = all || ${QPKG_ARCH[$i]} = "$NAS_QPKG_ARCH" ]]; then
+			echo "${QPKG_HASH[$i]}"
 			return 0
 		fi
 	done
@@ -8045,11 +8137,11 @@ QPKG.GetURL()
 	#   stdout = QPKG remote URL, specific to this NAS arch.
 	#   $? = 0 if successful, 1 if failed.
 
-	local -i index=0
+	local -i i=0
 
-	for index in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$index]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]] && [[ ${QPKG_ARCH[$index]} = all || ${QPKG_ARCH[$index]} = "$NAS_QPKG_ARCH" ]]; then
-			echo "${QPKG_URL[$index]}"
+	for i in "${!QPKG_NAME[@]}"; do
+		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]] && [[ ${QPKG_ARCH[$i]} = all || ${QPKG_ARCH[$i]} = "$NAS_QPKG_ARCH" ]]; then
+			echo "${QPKG_URL[$i]}"
 			return 0
 		fi
 	done
@@ -8070,8 +8162,8 @@ QPKG.IsArchOK()
 	# output:
 	#   $? = 0 if true, 1 if false.
 
-	local temp=$(QPKG.GetURL "${1:-$PACKAGE_NAME}")
-	[[ -n $temp && $temp != none ]]
+	local a=$(QPKG.GetURL "${1:-$PACKAGE_NAME}")
+	[[ -n $a && $a != none ]]
 
 	}
 
@@ -8085,11 +8177,11 @@ QPKG.GetMinRAM()
 	#   stdout = minimum kB of installed RAM required by this QPKG (first package found).
 	#   $? = 0 if successful, 1 if failed.
 
-	local -i index=0
+	local -i i=0
 
-	for index in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$index]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
-			echo "${QPKG_MIN_RAM_KB[$index]}"
+	for i in "${!QPKG_NAME[@]}"; do
+		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
+			echo "${QPKG_MIN_RAM_KB[$i]}"
 			return 0
 		fi
 	done
@@ -8107,8 +8199,8 @@ QPKG.IsMinRAMOk()
 	# output:
 	#   $? = 0 if this NAS meets the minium RAM requirements for QPKG name, 1 if not.
 
-	local min=$(QPKG.GetMinRAM "${1:?${FUNCNAME[0]}'()': undefined}")
-	[[ -n $min ]] && [[ $min = none || $NAS_RAM_KB -ge $min ]]
+	local a=$(QPKG.GetMinRAM "${1:?${FUNCNAME[0]}'()': undefined}")
+	[[ -n $a ]] && [[ $a = none || $NAS_RAM_KB -ge $a ]]
 
 	}
 
@@ -8122,11 +8214,11 @@ QPKG.GetMinOSVer()
 	#   stdout = minimum QTS/QuTS version required by this QPKG (first package found).
 	#   $? = 0 if successful, 1 if failed.
 
-	local -i index=0
+	local -i i=0
 
-	for index in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$index]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
-			echo "${QPKG_MIN_OS_VERSION[$index]}"
+	for i in "${!QPKG_NAME[@]}"; do
+		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
+			echo "${QPKG_MIN_OS_VERSION[$i]}"
 			return 0
 		fi
 	done
@@ -8144,8 +8236,8 @@ QPKG.IsMinOSVerOk()
 	# output:
 	#   $? = 0 if this NAS meets the minium OS firmware version requirements for QPKG name, 1 if not.
 
-	local min=$(QPKG.GetMinOSVer "${1:?${FUNCNAME[0]}'()': undefined}")
-	[[ -n $min ]] && [[ $min = none || ${NAS_FIRMWARE_VER//.} -ge $min ]]
+	local a=$(QPKG.GetMinOSVer "${1:?${FUNCNAME[0]}'()': undefined}")
+	[[ -n $a ]] && [[ $a = none || ${NAS_FIRMWARE_VER//.} -ge $a ]]
 
 	}
 
@@ -8159,11 +8251,11 @@ QPKG.GetMaxOSVer()
 	#   stdout = maximum QTS/QuTS version required by this QPKG (first package found).
 	#   $? = 0 if successful, 1 if failed.
 
-	local -i index=0
+	local -i i=0
 
-	for index in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$index]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
-			echo "${QPKG_MAX_OS_VERSION[$index]}"
+	for i in "${!QPKG_NAME[@]}"; do
+		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
+			echo "${QPKG_MAX_OS_VERSION[$i]}"
 			return 0
 		fi
 	done
@@ -8181,8 +8273,9 @@ QPKG.IsMaxOSVerOk()
 	# output:
 	#   $? = 0 if this NAS meets the maximum OS firmware version requirements for QPKG name, 1 if not.
 
-	local max=$(QPKG.GetMaxOSVer "${1:?${FUNCNAME[0]}'()': undefined}")
-	[[ -n $max ]] && [[ $max = none || ${NAS_FIRMWARE_VER//.} -le $max ]]
+	local a=$(QPKG.GetMaxOSVer "${1:?${FUNCNAME[0]}'()': undefined}")
+
+	[[ -n $a ]] && [[ $a = none || ${NAS_FIRMWARE_VER//.} -le $a ]]
 
 	}
 
@@ -8198,11 +8291,36 @@ QPKG.GetAuthor()
 	#   stdout = QPKG author (first package found).
 	#   $? = 0 if found, !0 if not.
 
-	local -i index=0
+	local -i i=0
 
-	for index in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$index]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
-			echo "${QPKG_AUTHOR[$index]}"
+	for i in "${!QPKG_NAME[@]}"; do
+		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
+			echo "${QPKG_AUTHOR[$i]}"
+			return 0
+		fi
+	done
+
+	return 1
+
+	}
+
+QPKG.GetAuthorEmail()
+	{
+
+	# Return the email address for the maintainer of the specified QPKG.
+
+	# input:
+	#   $1 = QPKG name
+
+	# output:
+	#   stdout = QPKG author (first package found).
+	#   $? = 0 if found, !0 if not.
+
+	local -i i=0
+
+	for i in "${!QPKG_NAME[@]}"; do
+		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
+			echo "${QPKG_AUTHOR_EMAIL[$i]}"
 			return 0
 		fi
 	done
@@ -8223,11 +8341,36 @@ QPKG.GetAppAuthor()
 	#   stdout = application author (first package found).
 	#   $? = 0 if found, !0 if not.
 
-	local -i index=0
+	local -i i=0
 
-	for index in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$index]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
-			echo "${QPKG_APP_AUTHOR[$index]}"
+	for i in "${!QPKG_NAME[@]}"; do
+		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
+			echo "${QPKG_APPLICATION_AUTHOR[$i]}"
+			return 0
+		fi
+	done
+
+	return 1
+
+	}
+
+QPKG.GetAppAuthorEmail()
+	{
+
+	# Return the email address for the author of the application contained within the specified QPKG.
+
+	# input:
+	#   $1 = QPKG name
+
+	# output:
+	#   stdout = application author (first package found).
+	#   $? = 0 if found, !0 if not.
+
+	local -i i=0
+
+	for i in "${!QPKG_NAME[@]}"; do
+		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
+			echo "${QPKG_APPLICATION_AUTHOR_EMAIL[$i]}"
 			return 0
 		fi
 	done
@@ -8246,11 +8389,11 @@ QPKG.GetDesc()
 	#   stdout = QPKG description (first package found).
 	#   $? = 0 if successful, 1 if failed.
 
-	local -i index=0
+	local -i i=0
 
-	for index in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$index]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
-			echo "${QPKG_DESC[$index]}"
+	for i in "${!QPKG_NAME[@]}"; do
+		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
+			echo "${QPKG_DESC[$i]}"
 			return 0
 		fi
 	done
@@ -8271,11 +8414,13 @@ QPKG.GetNote()
 	#   stdout = package note (first package found).
 	#   $? = 0 if found, !0 if not.
 
-	local -i index=0
+	local a=''
+	local -i i=0
 
-	for index in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$index]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
-			echo "${QPKG_NOTE[$index]}"
+	for i in "${!QPKG_NAME[@]}"; do
+		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
+			a=${QPKG_NOTE[$i]}
+			[[ $a != none ]] && echo "$a"
 			return 0
 		fi
 	done
@@ -8294,15 +8439,69 @@ QPKG.GetAbbrvs()
 	#   stdout = list of abbreviations that may be used to specify this package (first package found).
 	#   $? = 0 if successful, 1 if failed.
 
-	local -i index=0
+	local -i i=0
 
-	for index in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$index]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
-			echo "${QPKG_ABBRVS[$index]}"
+	for i in "${!QPKG_NAME[@]}"; do
+		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
+			echo "${QPKG_ABBRVS[$i]}"
 			return 0
 		fi
 	done
 
+	return 1
+
+	}
+
+QPKG.GetArchIndex()
+	{
+
+	# Return the 0-based index of the named arch-specific QPKG in 'packages' file.
+
+	# input:
+	#   $1 = QPKG name.
+
+	# output:
+	#   stdout = QPKG index. '-1' if a compatible arch could not be found.
+	#   $? = 0 if successful, 1 if failed.
+
+	local -i i=-1			# default to not-found.
+
+	for i in "${!QPKG_NAME[@]}"; do
+		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
+			if [[ ${QPKG_ARCH[$i]} = all || ${QPKG_ARCH[$i]} = "$NAS_QPKG_ARCH" ]]; then
+				echo "$i"
+				return
+			fi
+		fi
+	done
+
+	echo "$i"		# matching arch was not found.
+	return 1
+
+	}
+
+QPKG.GetDefaultArchIndex()
+	{
+
+	# Return the 0-based index of the first-named QPKG in 'packages' file.
+
+	# input:
+	#   $1 = QPKG name.
+
+	# output:
+	#   stdout = QPKG index. '-1' if a compatible arch could not be found.
+	#   $? = 0 if successful, 1 if failed.
+
+	local -i i=-1			# default to not-found.
+
+	for i in "${!QPKG_NAME[@]}"; do
+		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
+			echo "$i"
+			return
+		fi
+	done
+
+	echo "$i"		# matching arch was not found.
 	return 1
 
 	}
@@ -8311,101 +8510,129 @@ QPKG.GetDependencies()
 	{
 
 	# input:
-	#   $1 = QPKG name
+	#   $1 = QPKG name.
 
 	# output:
-	#   stdout = list of QPKGs this QPKG depends-upon (first package found).
+	#   stdout = list of QPKGs this QPKG depends-upon.
 	#   $? = 0 if successful, 1 if failed.
 
-	local -i index=0
-	local group=''
-	local name=''
-	local altname=''
-	local firstname=''
-	local oldIFS=$IFS
+	local alt=''
+	local first=''
 	local found=false
-	local output=''
+	local g=''
+	local -i i=-1			# default to not-found.
+	local oldIFS=$IFS
+	local out=''
+	local x=''
 
-	for index in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$index]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
-			group="${QPKG_DEPENDS_ON[$index]}"
+	i=$(QPKG.GetArchIndex "$1")
+	[[ $i -ge 0 ]] || return
 
-			if [[ $group != *'|'* ]]; then
-				echo "$group"
-				return 0
+	g=${QPKG_DEPENDS_ON[$i]}
+	[[ $g = none ]] && return 1
+	[[ $g = default ]] && g=${QPKG_DEPENDS_ON[$(QPKG.GetDefaultArchIndex "$1")]}
+
+	if [[ $g != *'|'* ]]; then		# no alternatives were listed.
+		echo "$g"
+		return 0
+	fi
+
+	# if buffer contains a pipe character, then need to separately examine each name.
+	# 	read each name by word boundaries.
+	# 	if name contains pipe, then read name with IFS as pipe.
+	# 		test each alternative name for compatibility with this NAS. Only output the compatible one.
+	#		if none are compatible, then output first name found.
+
+	IFS=' '
+
+	for x in $g; do
+		found=false
+
+		if [[ $x != *'|'* ]]; then
+			out+=" $x"
+			continue
+		fi
+
+		IFS='|'
+
+		for alt in $x; do
+			[[ -z $first && -n $alt ]] && first=$alt
+
+			# test alternative for compatibility
+
+			if QPKG.IsArchOK "$alt"; then
+				out+=" $alt"
+				found=true
+				break
 			fi
+		done
 
-			# if buffer contains a pipe character, then need to separately examine each name.
-			# 	read each name by word boundaries.
-			# 	if name contains pipe, then read name with IFS as pipe.
-			# 		test each alternative name for compatibility with this NAS. Only output the compatible one.
-			#		if none are compatible, then output first name found.
+		[[ $IFS != "$oldIFS" ]] && IFS=$oldIFS
 
-			IFS=' '
-
-			for name in $group; do
-				found=false
-
-				if [[ $name != *'|'* ]]; then
-					output+=" $name"
-					continue
-				fi
-
-				IFS='|'
-
-				for altname in $name; do
-					[[ -z $firstname && -n $altname ]] && firstname=$altname
-
-					# test altname for compatibility
-
-					if QPKG.IsArchOK "$altname"; then
-						output+=" $altname"
-						found=true
-						break
-					fi
-				done
-
-				[[ $IFS != "$oldIFS" ]] && IFS=$oldIFS
-
-				if [[ $found = false ]]; then
-					output+=" $firstname"
-					firstname=''
-				fi
-			done
-
-			echo "$output"
-			return 0
+		if [[ $found = false ]]; then
+			out+=" $first"
+			first=''
 		fi
 	done
 
-	return 1
+	echo "$out"
+	return 0
+
+	}
+
+QPKG.GetIPKs()
+	{
+
+	# input: (must specify at-least one)
+	#   $1 = QPKG name
+	#   $2 = QPKG index in 'packages' (optional).
+
+	# output:
+	#   stdout = list of IPKs $1 depends-upon.
+	#   $? = 0 if successful, 1 if failed.
+
+	local -i i=-1			# default to not-found.
+	local a=''
+
+	[[ -n ${1:-} ]] || return
+	[[ -n ${2:-} ]] && i=$2 || i=$(QPKG.GetArchIndex "$1")
+	[[ $i -ge 0 ]] || return
+
+	a=${QPKG_REQUIRES_IPKS[$i]}
+
+	[[ $a = default ]] && a=${QPKG_REQUIRES_IPKS[$(QPKG.GetDefaultArchIndex "$1")]}
+	[[ $a = none ]] && return 1
+
+	echo "$a"
+	return 0
 
 	}
 
 QPKG.GetDependents()
 	{
 
-	# input:
+	# input: (must specify at-least one)
 	#   $1 = QPKG name
+	#   $2 = QPKG index in 'packages' (optional).
 
 	# output:
 	#   stdout = list of QPKGs that depend-upon this QPKG (first package found).
 	#   $? = 0 if successful, 1 if failed.
 
-	local -i index=0
-	local -a acc=()
+	local -a ar=()
+	local -i i=-1			# default to not-found.
 	local re=\\b${1:-}\\b
 
 	if QPKGs-SCstandalone.Exist "$1"; then
-		for index in "${!QPKG_NAME[@]}"; do
-			if [[ ${QPKG_DEPENDS_ON[$index]} =~ $re ]]; then
-				[[ ${acc[*]:-} != "${QPKG_NAME[$index]}" ]] && acc+=(${QPKG_NAME[$index]})
+		for i in "${!QPKG_NAME[@]}"; do
+			if [[ ${QPKG_DEPENDS_ON[$i]} =~ $re ]]; then
+				[[ ${ar[*]:-} != "${QPKG_NAME[$i]}" ]] && ar+=(${QPKG_NAME[$i]})
 			fi
 		done
 	fi
 
-	if [[ ${#acc[@]} -gt 0 ]]; then
-		echo "${acc[@]}"
+	if [[ ${#ar[@]} -gt 0 ]]; then
+		echo "${ar[@]}"
 		return 0
 	fi
 
@@ -8425,11 +8652,11 @@ QPKG.IsCanBackup()
 	# output:
 	#   $? = 0 if true, 1 if false (first package found).
 
-	local -i index=0
+	local -i i=0
 
-	for index in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$index]} = "${1:-$PACKAGE_NAME}" ]]; then
-			if ${QPKG_CAN_BACKUP[$index]}; then
+	for i in "${!QPKG_NAME[@]}"; do
+		if [[ ${QPKG_NAME[$i]} = "${1:-$PACKAGE_NAME}" ]]; then
+			if ${QPKG_CAN_BACKUP[$i]}; then
 				return 0
 			else
 				break
@@ -8452,11 +8679,11 @@ QPKG.IsCanRestartToUpdate()
 	# output:
 	#   $? = 0 if true, 1 if false (first package found).
 
-	local -i index=0
+	local -i i=0
 
-	for index in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$index]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
-			if ${QPKG_CAN_RESTART_TO_UPDATE[$index]}; then
+	for i in "${!QPKG_NAME[@]}"; do
+		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
+			if ${QPKG_CAN_RESTART_TO_UPDATE[$i]}; then
 				return 0
 			else
 				break
@@ -8480,11 +8707,11 @@ QPKG.IsCanClean()
 	# output:
 	#   $? = 0 if true, 1 if false (first package found).
 
-	local -i index=0
+	local -i i=0
 
-	for index in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$index]} = "${1:-$PACKAGE_NAME}" ]]; then
-			if ${QPKG_CAN_CLEAN[$index]}; then
+	for i in "${!QPKG_NAME[@]}"; do
+		if [[ ${QPKG_NAME[$i]} = "${1:-$PACKAGE_NAME}" ]]; then
+			if ${QPKG_CAN_CLEAN[$i]}; then
 				return 0
 			else
 				break
@@ -8508,11 +8735,11 @@ QPKG.IsCanLog()
 	# output:
 	#   $? = 0 if true, 1 if false (first package found).
 
-	local -i index=0
+	local -i i=0
 
-	for index in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$index]} = "${1:-$PACKAGE_NAME}" ]]; then
-			if ${QPKG_CAN_LOG_SERVICE_OPERATIONS[$index]}; then
+	for i in "${!QPKG_NAME[@]}"; do
+		if [[ ${QPKG_NAME[$i]} = "${1:-$PACKAGE_NAME}" ]]; then
+			if ${QPKG_CAN_LOG_SERVICE_OPERATIONS[$i]}; then
 				return 0
 			else
 				break
@@ -8527,7 +8754,7 @@ QPKG.IsCanLog()
 QPKG.GetActiveTest()
 	{
 
-	# Return the tests required to determine if specified QPKG is active or not.
+	# Return any custom commands required to determine if specified QPKG is active or not.
 
 	# input:
 	#   $1 = QPKG name
@@ -8536,15 +8763,15 @@ QPKG.GetActiveTest()
 	#   stdout = bash tests.
 	#   $? = 0 if found, !0 if not.
 
-	local -i index=0
-	local buff=''
+	local a=''
+	local -i i=0
 
-	for index in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$index]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
-			buff=${QPKG_TEST_FOR_ACTIVE[$index]}
-			[[ -n $buff ]] || break
+	for i in "${!QPKG_NAME[@]}"; do
+		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
+			a=${QPKG_TEST_FOR_ACTIVE[$i]}
+			[[ -n $a ]] || break
 
-			echo "$buff"
+			echo "$a"
 			return 0
 		fi
 	done
@@ -8588,8 +8815,8 @@ QPKG.IsMissing()
 	# output:
 	#   $? = 0 (true) or 1 (false).
 
-	path=$(QPKG.GetInstallationPath "${1:?${FUNCNAME[0]}'()': undefined}")
-	[[ $path != undefined && ! -d $path ]]
+	local a=$(QPKG.GetInstallationPath "${1:?${FUNCNAME[0]}'()': undefined}")
+	[[ $a != undefined && ! -d $a ]]
 
 	}
 
@@ -8616,9 +8843,9 @@ QPKG.GetServiceStatus()
 	#   $stdout = last known package service status.
 	#   $? = 0 if found, 1 if not found.
 
-	local -r PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
+	local a=${1:?${FUNCNAME[0]}'()': undefined}
 
-	[[ -e /var/run/$PACKAGE_NAME.last.operation ]] && echo "$(</var/run/"$PACKAGE_NAME".last.operation)"
+	[[ -e /var/run/$a.last.operation ]] && echo "$(</var/run/"$a".last.operation)"
 
 	}
 
@@ -8660,7 +8887,7 @@ RunAndLog()
 
 	Func:Init
 	local -r LOG_PATHFILE=$($MKTEMP_CMD /var/log/"${FUNCNAME[0]}"_XXXXXX)
-	local -i result_code=0
+	local -i z=0
 	[[ -n ${1:?${FUNCNAME[0]}'()': undefined} ]] || return
 	[[ -n ${2:?${FUNCNAME[0]}'()': undefined} ]] || return
 
@@ -8669,20 +8896,20 @@ RunAndLog()
 
 	if [[ $opts_verbose = true ]]; then
 		eval "$1 > >($TEE_CMD $LOG_PATHFILE) 2>&1"	# NOTE: `tee` buffers stdout here
-		result_code=$?
+		z=$?
 	else
 		eval "$1" > "$LOG_PATHFILE" 2>&1
-		result_code=$?
+		z=$?
 	fi
 
 	if [[ -e $LOG_PATHFILE ]]; then
-		ShowAsResultAndStdout "$result_code" "$(<"$LOG_PATHFILE")" >> "$2"
+		ShowAsResultAndStdout "$z" "$(<"$LOG_PATHFILE")" >> "$2"
 		rm -f "$LOG_PATHFILE"
 	else
-		ShowAsResultAndStdout "$result_code" '<null>' >> "$2"
+		ShowAsResultAndStdout "$z" '<null>' >> "$2"
 	fi
 
-	case $result_code in
+	case $z in
 		0|"${4:-}")
 			[[ ${3:-} != log:failure-only || $opts_debug = true ]] && AddExtLogToSessLog "$2"
 			DebugAsDone 'exec: complete'
@@ -8693,7 +8920,7 @@ RunAndLog()
 			DebugAsError 'exec: complete, but with errors'
 	esac
 
-	Func:Exit $result_code
+	Func:Exit $z
 
 	}
 
@@ -8793,27 +9020,27 @@ FormatAsThous()
 
 	# $1 = integer value
 
-	local rightside_group=''
-	local foutput=''
-	local remainder=$($SED_CMD 's/[^0-9]*//g' <<< "${1:-}")	# Strip everything not a numeral.
+	local a=$($SED_CMD 's/[^0-9]*//g' <<< "${1:-}")	# Strip everything not a numeral.
+	local b=''
+	local out=''
 
-	while [[ ${#remainder} -gt 0 ]]; do
-		rightside_group=${remainder:${#remainder}<3?0:-3}	# A nifty trick found here: https://stackoverflow.com/a/19858692
+	while [[ ${#a} -gt 0 ]]; do
+		b=${a:${#a}<3?0:-3}							# A nifty trick found here: https://stackoverflow.com/a/19858692
 
-		if [[ -z $foutput ]]; then
-			foutput=$rightside_group
+		if [[ -z $out ]]; then
+			out=$b
 		else
-			foutput=$rightside_group,$foutput
+			out=$b,$out
 		fi
 
-		if [[ ${#rightside_group} -eq 3 ]]; then
-			remainder=${remainder%???}						# Trim rightside 3 characters.
+		if [[ ${#b} -eq 3 ]]; then
+			a=${a%???}								# Trim rightside 3 characters.
 		else
 			break
 		fi
 	done
 
-	echo "$foutput"
+	echo "$out"
 	return 0
 
 	}
@@ -8828,8 +9055,12 @@ FormatAsIsoBytes()
 ShowTitleLine()
 	{
 
+	[[ $title_shown = false ]] || return
+	[[ $hide_title = false && $opts_verbose = false ]] || return
+
 	EraseThisLine
 	Display "$(ShowTitleName) $(ShowVersion) $(ShowDescription)"
+	title_shown=true
 	WriteEmptyLineIfNoneExists
 
 	}
@@ -8932,12 +9163,12 @@ ShowAsResultAndStdout()
 
 	[[ -n ${1:-} ]] || return
 	[[ -n ${2:-} ]] || return
-	local prefix=$CHARS_RESULTS
-	[[ ${1:-0} -ne 0 ]] && prefix=$CHARS_ALERT
+	local a=$CHARS_RESULTS
+	[[ ${1:-0} -ne 0 ]] && a=$CHARS_ALERT
 
-	echo "${prefix}result_code: $(ShowAsExitcode "$1") ***** stdout/stderr begins below *****"
+	echo "${a}result_code: $(ShowAsExitcode "$1") ***** stdout/stderr begins below *****"
 	echo "$2"
-	echo "${prefix}***** stdout/stderr is complete *****"
+	echo "${a}***** stdout/stderr is complete *****"
 
 	}
 
@@ -9522,7 +9753,7 @@ ShowAsPercentProgress()
 		ShowAsProcLong "$ACTION_PRESENT_MSG" "$PROGRESS_MSG"
 	fi
 
-	[[ $((OK_COUNT+SKIP_COUNT+FAIL_COUNT)) -ge $TOTAL_COUNT ]] && sleep 1
+	[[ $((OK_COUNT+SKIP_COUNT+FAIL_COUNT)) -ge $TOTAL_COUNT ]] && sleep 0.5
 
 	return 0
 
@@ -10082,9 +10313,11 @@ Packages:Load()
 
 	# Package list arrays are now full, so lock them.
 	readonly QPKG_ABBRVS
-	readonly QPKG_APP_AUTHOR
+	readonly QPKG_APPLICATION_AUTHOR
+	readonly QPKG_APPLICATION_AUTHOR_EMAIL
 	readonly QPKG_ARCH
 	readonly QPKG_AUTHOR
+	readonly QPKG_AUTHOR_EMAIL
 	readonly QPKG_CAN_BACKUP
 	readonly QPKG_CAN_CLEAN
 	readonly QPKG_CAN_LOG_SERVICE_OPERATIONS
@@ -10092,7 +10325,7 @@ Packages:Load()
 	readonly QPKG_CONFLICTS_WITH
 	readonly QPKG_DEPENDS_ON
 	readonly QPKG_DESC
-	readonly QPKG_MD5
+	readonly QPKG_HASH
 	readonly QPKG_MAX_OS_VERSION
 	readonly QPKG_MIN_OS_VERSION
 	readonly QPKG_MIN_RAM_KB

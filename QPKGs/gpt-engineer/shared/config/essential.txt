@@ -1,6 +1,7 @@
 SQLAlchemy
 aiohttp
 aiosignal
+annotated_types
 anyio
 backoff
 click
@@ -10,6 +11,7 @@ frozenlist
 gpt-engineer
 greenlet
 jsonpatch
+jsonpointer
 langchain
 langchain_community
 langchain_core
@@ -18,11 +20,12 @@ monotonic
 multidict
 numpy
 openai==0.28
-packaging
+packaging<24.0,>=23.2
 pydantic
-pydantic_core
+pydantic_core==2.14.6
 python-dotenv~=0.21.0
 rudder-sdk-python
+sniffio
 tabulate
 tenacity
 termcolor==2.3.0

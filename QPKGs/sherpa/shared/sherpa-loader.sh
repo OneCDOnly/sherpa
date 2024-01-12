@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#* don't edit this file, it was built/modified programmatically with the `build-qpkgs.sh` script. (source: sherpa-loader.source)
+#* don't edit this file, it was built/modified programmatically with the 'build-qpkgs.sh' script. (source: 'sherpa-loader.source')
 #* sherpa-loader.sh
 #* Copyright (C) 2017-2024 OneCD - one.cd.only@gmail.com
 #*   So, blame OneCD if it all goes horribly wrong. ;)
@@ -23,7 +23,7 @@
 readonly USER_ARGS_RAW=$*
 Init()
 {
-export LOADER_SCRIPT_VER='240108'
+export LOADER_SCRIPT_VER='240113'
 export LOADER_SCRIPT_PPID=$PPID
 readonly QPKG_NAME=sherpa
 readonly CHARS_REGULAR_PROMPT='$ '

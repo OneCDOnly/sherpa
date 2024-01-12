@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#* don't edit this file, it was built/modified programmatically with the `build-qpkgs.sh` script. (source: gpt-engineer.source)
+#* don't edit this file, it was built/modified programmatically with the 'build-qpkgs.sh' script. (source: 'gpt-engineer.source')
 #* gpt-engineer.sh
 #* Copyright (C) 2017-2024 OneCD - one.cd.only@gmail.com
 #*   So, blame OneCD if it all goes horribly wrong. ;)
@@ -20,7 +20,7 @@
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 readonly USER_ARGS_RAW=$*
 readonly QPKG_NAME=gpt-engineer
-readonly SERVICE_SCRIPT_VERSION='240108'
+readonly SERVICE_SCRIPT_VERSION='240111'
 InitBasic()
 {
 service_script_type=7

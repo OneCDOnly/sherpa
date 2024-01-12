@@ -1,0 +1,10 @@
+* gpt-engineer?
+	currently resolving python dependencies manually.
+
+* add Gitea?
+	https://docs.gitea.com/installation/install-from-binary
+
+* add NetBox?
+	https://docs.netbox.dev/en/stable/installation/
+
+* see if *arr applications can be supported? Sonarr, Lidarr, Radarr.

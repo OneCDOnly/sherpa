@@ -1,0 +1,38 @@
+* install OK, execute fails on aarch64.
+	[~] # gpte
+	Traceback (most recent call last):
+	File "/usr/bin/gpte", line 5, in <module>
+		from gpt_engineer.applications.cli.main import app
+	File "/share/CACHEDEV2_DATA/.qpkg/gpt-engineer/venv/lib/python3.11/site-packages/gpt_engineer/applications/cli/main.py", line 38, in <module>
+		from gpt_engineer.applications.cli.cli_agent import CliAgent
+	File "/share/CACHEDEV2_DATA/.qpkg/gpt-engineer/venv/lib/python3.11/site-packages/gpt_engineer/applications/cli/cli_agent.py", line 4, in <module>
+		from gpt_engineer.core.ai import AI
+	File "/share/CACHEDEV2_DATA/.qpkg/gpt-engineer/venv/lib/python3.11/site-packages/gpt_engineer/core/ai.py", line 12, in <module>
+		from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+	File "/share/CACHEDEV2_DATA/.qpkg/gpt-engineer/venv/lib/python3.11/site-packages/langchain/callbacks/__init__.py", line 13, in <module>
+		from langchain_core.callbacks import (
+	File "/share/CACHEDEV2_DATA/.qpkg/gpt-engineer/venv/lib/python3.11/site-packages/langchain_core/callbacks/__init__.py", line 13, in <module>
+		from langchain_core.callbacks.manager import (
+	File "/share/CACHEDEV2_DATA/.qpkg/gpt-engineer/venv/lib/python3.11/site-packages/langchain_core/callbacks/manager.py", line 29, in <module>
+		from langsmith.run_helpers import get_run_tree_context
+	File "/share/CACHEDEV2_DATA/.qpkg/gpt-engineer/venv/lib/python3.11/site-packages/langsmith/__init__.py", line 10, in <module>
+		from langsmith.client import Client
+	File "/share/CACHEDEV2_DATA/.qpkg/gpt-engineer/venv/lib/python3.11/site-packages/langsmith/client.py", line 43, in <module>
+		from langsmith.evaluation import evaluator as ls_evaluator
+	File "/share/CACHEDEV2_DATA/.qpkg/gpt-engineer/venv/lib/python3.11/site-packages/langsmith/evaluation/__init__.py", line 4, in <module>
+		from langsmith.evaluation.string_evaluator import StringEvaluator
+	File "/share/CACHEDEV2_DATA/.qpkg/gpt-engineer/venv/lib/python3.11/site-packages/langsmith/evaluation/string_evaluator.py", line 3, in <module>
+		from pydantic import BaseModel
+	File "/share/CACHEDEV2_DATA/.qpkg/gpt-engineer/venv/lib/python3.11/site-packages/pydantic/__init__.py", line 372, in __getattr__
+		module = import_module(module_name, package=package)
+				^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+	File "/opt/lib/python3.11/importlib/__init__.py", line 126, in import_module
+	File "/share/CACHEDEV2_DATA/.qpkg/gpt-engineer/venv/lib/python3.11/site-packages/pydantic/main.py", line 11, in <module>
+		import pydantic_core
+	File "/share/CACHEDEV2_DATA/.qpkg/gpt-engineer/venv/lib/python3.11/site-packages/pydantic_core/__init__.py", line 6, in <module>
+		from ._pydantic_core import (
+	ModuleNotFoundError: No module named 'pydantic_core._pydantic_core'
+
+Appears this is another module that requires a rust compiler.
+
+* need to rename _pydantic_core.so (ensure search and rename looks for a leading underscore).

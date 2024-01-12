@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#* don't edit this file, it was built/modified programmatically with the `build-qpkgs.sh` script. (source: sherpa-service.source)
+#* don't edit this file, it was built/modified programmatically with the 'build-qpkgs.sh' script. (source: 'sherpa-service.source')
 #* sherpa-service.sh
 #* Copyright (C) 2017-2024 OneCD - one.cd.only@gmail.com
 #*   So, blame OneCD if it all goes horribly wrong. ;)
@@ -24,9 +24,9 @@ Init()
 {
 local -r QPKG_PATH=$(/sbin/getcfg sherpa Install_Path -f /etc/config/qpkg.conf)
 readonly REAL_LOG_PATHFILE=$QPKG_PATH/logs/session.archive.log
-readonly GUI_LOG_PATHFILE=/home/httpd/sherpa.debug.log
 readonly REAL_LOADER_SCRIPT_PATHNAME=$QPKG_PATH/sherpa-loader.sh
 readonly APPARENT_LOADER_SCRIPT_PATHNAME=/usr/sbin/sherpa
+readonly GUI_LOG_PATHFILE=/home/httpd/sherpa.debug.log
 readonly SERVICE_STATUS_PATHFILE=/var/run/sherpa.last.operation
 [[ ! -d $(/usr/bin/dirname "$REAL_LOG_PATHFILE") ]] && mkdir -p "$(/usr/bin/dirname "$REAL_LOG_PATHFILE")"
 [[ ! -e $REAL_LOG_PATHFILE ]] && /bin/touch "$REAL_LOG_PATHFILE"

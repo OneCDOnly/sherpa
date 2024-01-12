@@ -1,18 +1,13 @@
-* wrap package info description column text.
-	try the 'columns' util for this.
+* include array for QPKG_APPLICATION_VERSION ?
 
-* create new progress display mode with percentage-only.
+* QDK looks like it will now write installation scripts that extract to unique paths.
+	Should now be able to install more than one QPKG simultaneously. https://github.com/qnap-dev/QDK/commit/f1eaf3bf0a9547d449592369e555cdfd6cc3c405
+	It will take time for this ability to make its way into all QPKGs, so will need to note which QPKGs can be installed this way.
 
 * create local sherpa App Center repository in UI.
 	place sherpa.xml in /home/httpd and add a 3rd-party repo to App Center with http://0.0.0.0:8080/sherpa.xml
 
 * compare .git/ORIG_HEAD before-and-after 'git pull'. If different, then remove *.pyc before starting application.
-
-* add Gitea as new package?
-	https://docs.gitea.com/installation/install-from-binary
-
-* add NetBox as new package?
-	https://docs.netbox.dev/en/stable/installation/
 
 * check if QPKG has been signed before signing it again?
 	Don't check if QPKG has just been installed (assume package won't have been signed).
@@ -26,8 +21,6 @@
 
 * update IPKs automatically?
     Store a local checksum of the Entware package list. If this changes, assume it's been updated and all IPKs should be checked for upgrade status and upgraded. No-need to prompt user - just upgrade automatically.
-
-* see if *arr package can be supported? Sonarr, Lidarr, Radarr.
 
 * make Entware check for package updates early-on in background?
 

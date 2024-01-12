@@ -104,7 +104,7 @@
 # the package is removed.
 ######################################################################
 PKG_POST_REMOVE="{
-    [[ -e /opt/bin/opkg ]] && /opt/bin/opkg remove transmission-web transmission-daemon-openssl > /dev/null 2>&1
+    [[ -e /opt/bin/opkg ]] && /opt/bin/opkg remove transmission-web transmission-daemon transmission-daemon-openssl > /dev/null 2>&1
 
     true
 }"
