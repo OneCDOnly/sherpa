@@ -44,27 +44,30 @@ Packages:Load()
 	readonly MIN_PYTHON_VER
 	readonly MIN_PERL_VER
 
-	# package list arrays are now full, so lock them.
+	# Package list arrays are now full, so lock them.
+	readonly QPKG_ABBRVS
+	readonly QPKG_APPLICATION_AUTHOR
+	readonly QPKG_APPLICATION_AUTHOR_EMAIL
+	readonly QPKG_ARCH
+	readonly QPKG_AUTHOR
+	readonly QPKG_AUTHOR_EMAIL
+	readonly QPKG_CAN_BACKUP
+	readonly QPKG_CAN_CLEAN
+	readonly QPKG_CAN_LOG_SERVICE_OPERATIONS
+	readonly QPKG_CAN_RESTART_TO_UPDATE
+	readonly QPKG_CONFLICTS_WITH
+	readonly QPKG_DEPENDS_ON
+	readonly QPKG_DESC
+	readonly QPKG_HASH
+	readonly QPKG_MAX_OS_VERSION
+	readonly QPKG_MIN_OS_VERSION
+	readonly QPKG_MIN_RAM_KB
 	readonly QPKG_NAME
-		readonly QPKG_ARCH
-		readonly QPKG_VERSION
-		readonly QPKG_MD5
-		readonly QPKG_URL
-		readonly QPKG_MIN_RAM_KB
-		readonly QPKG_MIN_OS_VERSION
-		readonly QPKG_AUTHOR
-		readonly QPKG_APP_AUTHOR
-		readonly QPKG_DESC
-		readonly QPKG_NOTE
-		readonly QPKG_ABBRVS
-		readonly QPKG_CONFLICTS_WITH
-		readonly QPKG_DEPENDS_ON
-		readonly QPKG_REQUIRES_IPKS
-		readonly QPKG_CAN_BACKUP
-		readonly QPKG_CAN_RESTART_TO_UPDATE
-		readonly QPKG_CAN_CLEAN
-		readonly QPKG_CAN_LOG_SERVICE_OPERATIONS
-		readonly QPKG_TEST_FOR_ACTIVE
+	readonly QPKG_NOTE
+	readonly QPKG_REQUIRES_IPKS
+	readonly QPKG_TEST_FOR_ACTIVE
+	readonly QPKG_URL
+	readonly QPKG_VERSION
 
 	QPKGs-SCall:Add "${QPKG_NAME[*]}"
 

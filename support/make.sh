@@ -17,6 +17,7 @@ done
 ./build-qpkgs.sh || exit
 ./build-packages.sh || exit
 ./build-objects.sh || exit
+./build-wiki-package-abbreviations.sh || exit
 ./build-manager.sh || exit
 ./build-archives.sh || exit
 ./build-readme.sh || exit

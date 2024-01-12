@@ -13,7 +13,7 @@ qpkg_filename=''
 package_name=''
 version=''
 arch=''
-md5=''
+hash=''
 previous_package_name=''
 previous_version=''
 previous_arch=''
@@ -113,8 +113,8 @@ buffer=$(sed "s|<?cdn_sherpa_packages_url?>|$cdn_sherpa_packages_url|" <<< "$buf
 buffer=$(sed "s|<?cdn_qnap_dev_packages_url?>|$cdn_qnap_dev_packages_url|" <<< "$buffer")
 buffer=$(sed "s|<?cdn_other_packages_url?>|$cdn_other_packages_url|" <<< "$buffer")
 
-while read -r checksum_filename qpkg_filename package_name version arch md5; do
-	for property in version package_name qpkg_filename md5; do
+while read -r checksum_filename qpkg_filename package_name version arch hash; do
+	for property in version package_name qpkg_filename hash; do
 		buffer=$(sed "/QPKG_NAME+=($package_name)/,/^$/{/QPKG_ARCH+=($arch)/,/$property.*/s/<?$property?>/${!property}/}" <<< "$buffer")
 
 		if [[ $package_name = QDK && $property = version ]]; then
@@ -146,7 +146,7 @@ Squeeze "$target_pathfile" "$target_pathfile"
 # sort and add header line for easier viewing.
 
 [[ -f $highest_package_versions_found_sorted_pathfile ]] && chmod 644 "$highest_package_versions_found_sorted_pathfile"
-printf '%-36s %-32s %-20s %-12s %-6s %s\n%s\n' '# checksum_filename' qpkg_filename package_name version arch md5 "$(sort "$highest_package_versions_found_pathfile")" > "$highest_package_versions_found_sorted_pathfile"
+printf '%-36s %-32s %-20s %-12s %-6s %s\n%s\n' '# checksum_filename' qpkg_filename package_name version arch hash "$(sort "$highest_package_versions_found_pathfile")" > "$highest_package_versions_found_sorted_pathfile"
 
 rm -f "$highest_package_versions_found_pathfile"
 [[ -f $highest_package_versions_found_sorted_pathfile ]] && chmod 444 "$highest_package_versions_found_sorted_pathfile"
