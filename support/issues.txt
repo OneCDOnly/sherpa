@@ -1,15 +1,5 @@
-* title line shown twice:
-	[~] # sherpa remove all
-	sherpa 240112-unstable • a mini-package-manager for QNAP NAS
-
-	sherpa 240112-unstable • a mini-package-manager for QNAP NAS
-
-	derp: Supplied arguments were incomplete, or didn't make sense. Please check the argument list again.
-
-	• Usage: sherpa [action] [packages] [package group] [options]
-
 * Glances: restart fails to recognise process as inactive.
-	looks like it's creating a new process during shutdown. Need to find and check-for this PID instead of main PID to confirm shutdown was successful.
+	looks like it's creating a new process during shutdown. Need to find and check-for this PID (then wait for it to die) instead of main PID to confirm shutdown was successful.
 
 * was able to start 2 instances of sherpa running 'check'.
 	this shouldn't be possible.
