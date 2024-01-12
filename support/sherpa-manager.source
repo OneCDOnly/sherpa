@@ -534,13 +534,13 @@ Env:Load()
 			readonly QPKG_DL_PATH=$CACHE_PATH/QPKGs.downloads
 		readonly LOGS_PATH=$THIS_PACKAGE_PATH/logs
 			readonly RAMDISKS_FREESPACE_PATHFILE=$LOGS_PATH/ramdisks.freespace
-			readonly REPORT_PATH=$LOGS_PATH/report
-				readonly REPORT_OUTPUT_PATHFILE=$REPORT_PATH/report.ansi
 			readonly SCREEN_SESSIONS_PATHFILE=$LOGS_PATH/screen.sessions
 			readonly SESS_ACTIONS_RESULTS_PATHFILE=$LOGS_PATH/session.action.results.log
 			readonly SESS_ARCHIVE_PATHFILE=$LOGS_PATH/session.archive.log
 			readonly SESS_LAST_PATHFILE=$LOGS_PATH/session.last.log
 			readonly SESS_TAIL_PATHFILE=$LOGS_PATH/session.tail.log
+		readonly REPORTS_PATH=$THIS_PACKAGE_PATH/reports
+				readonly REPORT_OUTPUT_PATHFILE=$REPORTS_PATH/report.ansi
 	readonly THIS_PACKAGE_VER=$(QPKG.Local.GetVer)
 	readonly THIS_SCRIPT_VER='<?build_date?>'-$source_branch
 
@@ -622,7 +622,7 @@ CreatePaths()
 	MakePath "$IPK_DOWNGRADE_DL_PATH" 'IPK downgrade' || return
 	MakePath "$LOGS_PATH" logs || return
 	MakePath "$PIP_CACHE_PATH" 'PIP cache' || return
-	MakePath "$REPORT_PATH" 'report path' || return
+	MakePath "$REPORTS_PATH" reports || return
 	MakePath "$QPKG_BU_PATH" 'QPKG backup' || return
 	MakePath "$QPKG_DL_PATH" 'QPKG download' || return
 
@@ -708,8 +708,9 @@ Debug.Log:Env()
 	DebugBinPathVerAndMinVer python3 "$(GetPython3Ver)" "$MIN_PYTHON_VER"
 	DebugBinPathVerAndMinVer perl "$(GetPerlVer)" "$MIN_PERL_VER"
 	DebugScript 'source branch' "$source_branch"
-	DebugScript 'logs path' "$LOGS_PATH"
 	DebugScript 'cache path' "$CACHE_PATH"
+	DebugScript 'logs path' "$LOGS_PATH"
+	DebugScript 'reports path' "$REPORTS_PATH"
 	DebugScript 'action concurrency' "$CONCURRENCY"
 
 	if OS.IsSupportSignedPackages; then
@@ -2164,6 +2165,18 @@ ResetCachePath()
 
 	}
 
+ResetReportsPath()
+	{
+
+	if [[ -n $REPORTS_PATH && -d $REPORTS_PATH ]]; then
+		rm -rf "${REPORTS_PATH:?}"/*
+		ShowAsDone 'reports cleared'
+	fi
+
+	return 0
+
+	}
+
 Quiz()
 	{
 
@@ -2914,6 +2927,7 @@ EnableResetIfRequested()
 	if [[ $USER_ARGS_RAW =~ $re ]]; then
 		ResetArchivedLogs
 		ResetCachePath
+		ResetReportsPath
 		ArchiveActiveSessLog
 		ResetActiveSessLog
 		exit 0
@@ -5385,7 +5399,7 @@ Report.Abbreviations:Show()
 
 	DisplayWritingReport
 	DisableDebugToArchiveAndFile
-	[[ -n $REPORT_PATH && -d $REPORT_PATH ]] && rm -f "$REPORT_PATH/*"
+	[[ -n $REPORTS_PATH && -d $REPORTS_PATH ]] && rm -f "$REPORTS_PATH/*"
 
 		{
 
@@ -5397,7 +5411,7 @@ Report.Abbreviations:Show()
 
 	for a in $(QPKGs-SCall:Array); do
 		((n++))
-		DisplayAsAbsReportLine "$a" > "$REPORT_PATH/$n" &
+		DisplayAsAbsReportLine "$a" > "$REPORTS_PATH/$n" &
 	done
 
 	m=$n
@@ -5406,7 +5420,7 @@ Report.Abbreviations:Show()
 	# load report lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		f="$REPORT_PATH/$n"
+		f="$REPORTS_PATH/$n"
 		[[ -e $f ]] && ac+="$(<$f)\n"		# add newline to each imported report line
 	done
 
@@ -5493,7 +5507,7 @@ Report.Dependencies:Show()
 
 	DisplayWritingReport
 	DisableDebugToArchiveAndFile
-	[[ -n $REPORT_PATH && -d $REPORT_PATH ]] && rm -f "$REPORT_PATH/*"
+	[[ -n $REPORTS_PATH && -d $REPORTS_PATH ]] && rm -f "$REPORTS_PATH/*"
 
 		{
 
@@ -5506,7 +5520,7 @@ Report.Dependencies:Show()
 
 	for a in $(QPKGs-SCall:Array); do
 		((n++))
-		DisplayAsDepsReportLine "$a" > "$REPORT_PATH/$n" &
+		DisplayAsDepsReportLine "$a" > "$REPORTS_PATH/$n" &
 	done
 
 	m=$n
@@ -5515,7 +5529,7 @@ Report.Dependencies:Show()
 	# load report lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		f="$REPORT_PATH/$n"
+		f="$REPORTS_PATH/$n"
 		[[ -e $f ]] && ac+="$(<$f)\n"		# add newline to each imported report line
 	done
 
@@ -5582,12 +5596,12 @@ Report.Repos:Show()
 
 	DisplayWritingReport
 	DisableDebugToArchiveAndFile
-	[[ -n $REPORT_PATH && -d $REPORT_PATH ]] && rm -f "$REPORT_PATH/*"
+	[[ -n $REPORTS_PATH && -d $REPORTS_PATH ]] && rm -f "$REPORTS_PATH/*"
 	DisplayAsReposReportTitleLine >"$REPORT_OUTPUT_PATHFILE"
 
 	for a in $(QPKGs-SCall:Array); do
 		((n++))
-		DisplayAsReposReportLine "$a" > "$REPORT_PATH/$n" &
+		DisplayAsReposReportLine "$a" > "$REPORTS_PATH/$n" &
 	done
 
 	m=$n
@@ -5596,7 +5610,7 @@ Report.Repos:Show()
 	# load report lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		f="$REPORT_PATH/$n"
+		f="$REPORTS_PATH/$n"
 		[[ -e $f ]] && ac+="$(<$f)\n"		# add newline to each imported report line
 	done
 
@@ -5627,13 +5641,13 @@ Report.Statuses:Show()
 	local -i t=$(QPKGs-SCall:Count)
 
 	DisplayWritingReport
-	[[ -n $REPORT_PATH && -d $REPORT_PATH ]] && rm -f "$REPORT_PATH/*"
+	[[ -n $REPORTS_PATH && -d $REPORTS_PATH ]] && rm -f "$REPORTS_PATH/*"
 	CalcMaxStatusReportCols
 	DisplayAsStatusReportTitleLine >"$REPORT_OUTPUT_PATHFILE"
 
 	for a in $(QPKGs-SCall:Array); do
 		((n++))
-		DisplayAsStatusReportLine "$a" > "$REPORT_PATH/$n" &
+		DisplayAsStatusReportLine "$a" > "$REPORTS_PATH/$n" &
 	done
 
 	m=$n
@@ -5642,7 +5656,7 @@ Report.Statuses:Show()
 	# load report lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		f="$REPORT_PATH/$n"
+		f="$REPORTS_PATH/$n"
 		[[ -e $f ]] && ac+="$(<$f)\n"		# add newline to each imported report line
 	done
 
