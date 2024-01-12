@@ -3078,69 +3078,69 @@ LenANSIDiff()
 
 	}
 
-CalcMaxStatusReportCols()
-	{
-
-	local col1_width=$((${#CHARS_SPECIAL}+PACKAGE_NAME_COL_WIDTH))
-	local col2_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_STATUS_COL_WIDTH))
-	local col3_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_VER_COL_WIDTH))
-	local col4_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_PATH_COL_WIDTH))
-
-	# Add width to include " (new)" string to QPKG version title.
-	if QPKGs-SCupgradable.IsAny; then
-		package_ver_final_col_width=$((PACKAGE_VER_COL_WIDTH+6))
-		((col3_width+6))
-	else
-		package_ver_final_col_width=$PACKAGE_VER_COL_WIDTH
-	fi
-
-	if [[ $((col1_width+col2_width)) -ge $SESS_COLS ]]; then
-		maxcols=1
-	elif [[ $((col1_width+col2_width+col3_width)) -ge $SESS_COLS ]]; then
-		maxcols=2
-	elif [[ $((col1_width+col2_width+col3_width+col4_width)) -ge $SESS_COLS ]]; then
-		maxcols=3
-	else
-		maxcols=4
-	fi
-
-	return 0
-
-	}
-
-CalcMaxDepsReportCols()
-	{
-
-	local col1_width=$((${#CHARS_SPECIAL}+PACKAGE_NAME_COL_WIDTH))
-	local col2_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_DEPENDENCIES_COL_WIDTH))
-	local col3_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_INSTALLED_COL_WIDTH))
-	local col4_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_ENABLED_COL_WIDTH))
-	local col5_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_MIN_RAM_COL_WIDTH))
-	local col6_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_MIN_OS_COL_WIDTH))
-	local col7_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_MAX_OS_COL_WIDTH))
-	local col8_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_ARCH_COL_WIDTH))
-
-	if [[ $((col1_width+col2_width)) -ge $SESS_COLS ]]; then
-		maxcols=1
-	elif [[ $((col1_width+col2_width+col3_width)) -ge $SESS_COLS ]]; then
-		maxcols=2
-	elif [[ $((col1_width+col2_width+col3_width+col4_width)) -ge $SESS_COLS ]]; then
-		maxcols=3
-	elif [[ $((col1_width+col2_width+col3_width+col4_width+col5_width)) -ge $SESS_COLS ]]; then
-		maxcols=4
-	elif [[ $((col1_width+col2_width+col3_width+col4_width+col5_width+col6_width)) -ge $SESS_COLS ]]; then
-		maxcols=5
-	elif [[ $((col1_width+col2_width+col3_width+col4_width+col5_width+col6_width+col7_width)) -ge $SESS_COLS ]]; then
-		maxcols=6
-	elif [[ $((col1_width+col2_width+col3_width+col4_width+col5_width+col6_width+col7_width+col8_width)) -ge $SESS_COLS ]]; then
-		maxcols=7
-	else
-		maxcols=8
-	fi
-
-	return 0
-
-	}
+# CalcMaxStatusReportCols()
+# 	{
+#
+# 	local col1_width=$((${#CHARS_SPECIAL}+PACKAGE_NAME_COL_WIDTH))
+# 	local col2_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_STATUS_COL_WIDTH))
+# 	local col3_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_VER_COL_WIDTH))
+# 	local col4_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_PATH_COL_WIDTH))
+#
+# 	# Add width to include " (new)" string to QPKG version title.
+# 	if QPKGs-SCupgradable.IsAny; then
+# 		package_ver_final_col_width=$((PACKAGE_VER_COL_WIDTH+6))
+# 		((col3_width+6))
+# 	else
+# 		package_ver_final_col_width=$PACKAGE_VER_COL_WIDTH
+# 	fi
+#
+# 	if [[ $((col1_width+col2_width)) -ge $SESS_COLS ]]; then
+# 		maxcols=1
+# 	elif [[ $((col1_width+col2_width+col3_width)) -ge $SESS_COLS ]]; then
+# 		maxcols=2
+# 	elif [[ $((col1_width+col2_width+col3_width+col4_width)) -ge $SESS_COLS ]]; then
+# 		maxcols=3
+# 	else
+# 		maxcols=4
+# 	fi
+#
+# 	return 0
+#
+# 	}
+#
+# CalcMaxDepsReportCols()
+# 	{
+#
+# 	local col1_width=$((${#CHARS_SPECIAL}+PACKAGE_NAME_COL_WIDTH))
+# 	local col2_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_DEPENDENCIES_COL_WIDTH))
+# 	local col3_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_INSTALLED_COL_WIDTH))
+# 	local col4_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_ENABLED_COL_WIDTH))
+# 	local col5_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_MIN_RAM_COL_WIDTH))
+# 	local col6_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_MIN_OS_COL_WIDTH))
+# 	local col7_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_MAX_OS_COL_WIDTH))
+# 	local col8_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_ARCH_COL_WIDTH))
+#
+# 	if [[ $((col1_width+col2_width)) -ge $SESS_COLS ]]; then
+# 		maxcols=1
+# 	elif [[ $((col1_width+col2_width+col3_width)) -ge $SESS_COLS ]]; then
+# 		maxcols=2
+# 	elif [[ $((col1_width+col2_width+col3_width+col4_width)) -ge $SESS_COLS ]]; then
+# 		maxcols=3
+# 	elif [[ $((col1_width+col2_width+col3_width+col4_width+col5_width)) -ge $SESS_COLS ]]; then
+# 		maxcols=4
+# 	elif [[ $((col1_width+col2_width+col3_width+col4_width+col5_width+col6_width)) -ge $SESS_COLS ]]; then
+# 		maxcols=5
+# 	elif [[ $((col1_width+col2_width+col3_width+col4_width+col5_width+col6_width+col7_width)) -ge $SESS_COLS ]]; then
+# 		maxcols=6
+# 	elif [[ $((col1_width+col2_width+col3_width+col4_width+col5_width+col6_width+col7_width+col8_width)) -ge $SESS_COLS ]]; then
+# 		maxcols=7
+# 	else
+# 		maxcols=8
+# 	fi
+#
+# 	return 0
+#
+# 	}
 
 DisplayAsProjSynExam()
 	{
@@ -5378,10 +5378,14 @@ Report.Abbreviations:Show()
 	{
 
 	Func:Init
-	local package_name=''
+	local a=''
+	local -i n=0
 	maxcols=2
-	DisableDebugToArchiveAndFile
+	local -i t=$(QPKGs-SCall:Count)
+
 	DisplayWritingReport
+	DisableDebugToArchiveAndFile
+	[[ -n $REPORT_PATH && -d $REPORT_PATH ]] && rm -f "$REPORT_PATH/*"
 
 		{
 
@@ -5389,15 +5393,32 @@ Report.Abbreviations:Show()
 		DisplayAsHelpTitle "$(ShowTitleName) can recognise various abbreviations and aliases as $(ShowPackages)."
 		DisplayAsAbsReportTitleLine
 
-		for package_name in $(QPKGs-SCall:Array); do
-			DisplayAsAbsReportLine "$package_name"
-		done
+		} >"$REPORT_OUTPUT_PATHFILE"
+
+	for a in $(QPKGs-SCall:Array); do
+		((n++))
+		DisplayAsAbsReportLine "$a" > "$REPORT_PATH/$n" &
+	done
+
+	m=$n
+	wait 2>/dev/null
+
+	# load report lines from individual files.
+
+	for ((n=1; n<=m; n++)); do
+		f="$REPORT_PATH/$n"
+		[[ -e $f ]] && ac+="$(<$f)\n"		# add newline to each imported report line
+	done
+
+	[[ -n $ac ]] && echo -e "$ac" >>"$REPORT_OUTPUT_PATHFILE"
+
+		{
 
 		DisplayAsProjSynExam "example: to install $(ShowAsPackageName SABnzbd), $(ShowAsPackageName Mylar3) and $(ShowAsPackageName nzbToMedia) all-at-once" 'install sab my nzb2'
 
 		Display
 
-		} > "$REPORT_OUTPUT_PATHFILE"
+		} >> "$REPORT_OUTPUT_PATHFILE"
 
 	EraseThisLine
 
@@ -5407,6 +5428,7 @@ Report.Abbreviations:Show()
 		ShowAsError 'no information to display'
 	fi
 
+	QPKGs.States:List
 	Func:Exit
 
 	}
@@ -5450,6 +5472,8 @@ Report.Backups:Show()
 			(cd "$QPKG_BU_PATH" && ls -1 ./*.config.tar.gz 2>/dev/null)
 		fi
 
+		Display
+
 		} > "$REPORT_OUTPUT_PATHFILE"
 
 	EraseThisLine
@@ -5462,10 +5486,14 @@ Report.Dependencies:Show()
 	{
 
 	Func:Init
-	local package_name=''
-	local -i element=0
-	local -i total=$(QPKGs-SCall:Count)
-	CalcMaxDepsReportCols
+	local a=''
+	local -i n=0
+	maxcols=8
+	local -i t=$(QPKGs-SCall:Count)
+
+	DisplayWritingReport
+	DisableDebugToArchiveAndFile
+	[[ -n $REPORT_PATH && -d $REPORT_PATH ]] && rm -f "$REPORT_PATH/*"
 
 		{
 
@@ -5474,16 +5502,24 @@ Report.Dependencies:Show()
 		DisplayAsHelpTitle "those shown in \"$(ColourTextBrightRed '! red')\" are preventing the package from working correctly."
 		DisplayAsDepsReportTitleLine
 
-		for package_name in $(QPKGs-SCall:Array); do
-			((element++))
-			ShowAsPercentProgress 'writing report' '' "$element" 0 0 "$total"
-			DisplayAsDepsReportLine "$package_name"
-		done
+		} >"$REPORT_OUTPUT_PATHFILE"
 
-		Display
+	for a in $(QPKGs-SCall:Array); do
+		((n++))
+		DisplayAsDepsReportLine "$a" > "$REPORT_PATH/$n" &
+	done
 
-		} > "$REPORT_OUTPUT_PATHFILE"
+	m=$n
+	wait 2>/dev/null
 
+	# load report lines from individual files.
+
+	for ((n=1; n<=m; n++)); do
+		f="$REPORT_PATH/$n"
+		[[ -e $f ]] && ac+="$(<$f)\n"		# add newline to each imported report line
+	done
+
+	[[ -n $ac ]] && echo -e "$ac" >>"$REPORT_OUTPUT_PATHFILE"
 	EraseThisLine
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
@@ -5492,6 +5528,7 @@ Report.Dependencies:Show()
 		ShowAsError 'no information to display'
 	fi
 
+	QPKGs.States:List
 	Func:Exit
 
 	}
@@ -5501,7 +5538,8 @@ Report.Packages:Show()
 
 	Func:Init
 	local package_name=''
-	maxcols=3
+	maxcols=2
+
 	DisableDebugToArchiveAndFile
 	DisplayWritingReport
 
@@ -5585,10 +5623,10 @@ Report.Statuses:Show()
 	local f=''
 	local -i n=0
 	local -i m=0
+	maxcols=4
 	local -i t=$(QPKGs-SCall:Count)
 
 	DisplayWritingReport
-	CalcMaxStatusReportCols
 	[[ -n $REPORT_PATH && -d $REPORT_PATH ]] && rm -f "$REPORT_PATH/*"
 	DisplayAsStatusReportTitleLine >"$REPORT_OUTPUT_PATHFILE"
 
