@@ -3078,22 +3078,22 @@ LenANSIDiff()
 
 	}
 
-# CalcMaxStatusReportCols()
-# 	{
-#
+CalcMaxStatusReportCols()
+	{
+
 # 	local col1_width=$((${#CHARS_SPECIAL}+PACKAGE_NAME_COL_WIDTH))
 # 	local col2_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_STATUS_COL_WIDTH))
-# 	local col3_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_VER_COL_WIDTH))
+	local col3_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_VER_COL_WIDTH))
 # 	local col4_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_PATH_COL_WIDTH))
-#
-# 	# Add width to include " (new)" string to QPKG version title.
-# 	if QPKGs-SCupgradable.IsAny; then
-# 		package_ver_final_col_width=$((PACKAGE_VER_COL_WIDTH+6))
-# 		((col3_width+6))
-# 	else
-# 		package_ver_final_col_width=$PACKAGE_VER_COL_WIDTH
-# 	fi
-#
+
+	# Add width to include " (new)" string to QPKG version title.
+	if QPKGs-SCupgradable.IsAny; then
+		package_ver_final_col_width=$((PACKAGE_VER_COL_WIDTH+6))
+		((col3_width+6))
+	else
+		package_ver_final_col_width=$PACKAGE_VER_COL_WIDTH
+	fi
+
 # 	if [[ $((col1_width+col2_width)) -ge $SESS_COLS ]]; then
 # 		maxcols=1
 # 	elif [[ $((col1_width+col2_width+col3_width)) -ge $SESS_COLS ]]; then
@@ -3103,11 +3103,11 @@ LenANSIDiff()
 # 	else
 # 		maxcols=4
 # 	fi
-#
-# 	return 0
-#
-# 	}
-#
+
+	return 0
+
+	}
+
 # CalcMaxDepsReportCols()
 # 	{
 #
@@ -3311,7 +3311,7 @@ DisplayAsStatusReportTitleLine()
 		printf "%-$((PACKAGE_STATUS_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
-	# column 3: package version
+	# column 3: package version (variable-width)
 
 	if [[ $maxcols -ge 3 ]]; then
 		msg="${CHARS_SPECIAL}QPKG version"
@@ -3439,7 +3439,7 @@ DisplayAsStatusReportLine()
 		printf "%-$((PACKAGE_STATUS_COL_WIDTH+$(LenANSIDiff "$status_msg")))s" "$status_msg"
 	fi
 
-	# column 3: package version
+	# column 3: package version (variable-width)
 
 	if [[ $maxcols -ge 3 && -n $ver_msg ]]; then
 		printf "%-$((package_ver_final_col_width+$(LenANSIDiff "$ver_msg")))s" "$ver_msg"
@@ -5628,6 +5628,7 @@ Report.Statuses:Show()
 
 	DisplayWritingReport
 	[[ -n $REPORT_PATH && -d $REPORT_PATH ]] && rm -f "$REPORT_PATH/*"
+	CalcMaxStatusReportCols
 	DisplayAsStatusReportTitleLine >"$REPORT_OUTPUT_PATHFILE"
 
 	for a in $(QPKGs-SCall:Array); do
