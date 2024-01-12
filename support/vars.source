@@ -241,6 +241,9 @@ service_library_file=service.lib
 readme_source_file=README.source
 readme_file=README.md
 
+forum_source_file=QNAP-forum-announcement.bbcode.source
+forum_file=QNAP-forum-announcement.bbcode
+
 stable_branch=stable
 unstable_branch=unstable
 

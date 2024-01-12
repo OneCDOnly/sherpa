@@ -1,5 +1,5 @@
-* Glances: restart fails to recognise process as inactive.
-	looks like it's creating a new process during shutdown. Need to find and check-for this PID (then wait for it to die) instead of main PID to confirm shutdown was successful.
+* progress display percentage and messages shouldn't be captured by fd1.
+	all progress display messages should use fd2 only.
 
 * near the end of installing IPKs, monitored download path can remain at non-zero size while packages complete installation.
 	maybe include a separate progress message when dir size shrinks to almost zero.
