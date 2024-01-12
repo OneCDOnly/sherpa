@@ -3869,7 +3869,8 @@ DisplayAsDepsReportLine()
 				package_deps+=$(ColourTextDarkGrey "$package_deps_raw")
 			fi
 
-			package_deps_msg+=${package_deps// /, }
+
+			package_deps_msg+=${package_deps// /$(ColourTextDarkGrey ', ')}
 			package_installed_msg+=$(ColourTextDarkGrey false)
 			package_enabled_msg+=$(ColourTextDarkGrey 'N/A')
 
