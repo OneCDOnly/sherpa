@@ -3253,7 +3253,7 @@ DisplayAsPackagesReportLine()
 	local description=$(QPKG.GetDesc "$name")
 	local description_msg=$CHARS_BLANK
 	local notes=$(QPKG.GetNote "$name")
-	local notes_msg=$(ColourTextCyan "${CHARS_NOTE}${notes}.")
+	local notes_msg=$(ColourTextBrightWhite "${CHARS_NOTE}${notes}.")
 	local mode=''
 
 	if QPKG.IsMissing "$name"; then
@@ -9176,8 +9176,6 @@ ShowOptions()
 ShowAsPackageName()
 	{
 
-	# Format as package name.
-
 	echo -n "'${1:?${FUNCNAME[0]}'()': undefined}'"
 
 	}
@@ -9234,7 +9232,6 @@ ShowAsResultAndStdout()
 WriteEmptyLineIfNoneExists()
 	{
 
-# 	if [[ $linespace_visible = false && $hide_title = false ]]; then
 	if [[ $linespace_visible = false ]]; then
 		echo
 		linespace_visible=true
