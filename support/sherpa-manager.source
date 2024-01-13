@@ -4902,7 +4902,7 @@ UpdateForkProgress()
 
 	return 0
 
-	}
+	} >&2
 
 QPKGs.Missing:Show()
 	{
@@ -9601,7 +9601,7 @@ ShowAsProcLong()
 
 	ShowAsProc "${1:-} (might take a while)" "${2:-}"
 
-	}
+	} >&2
 
 ShowAsProc()
 	{
@@ -9757,7 +9757,7 @@ ShowAsPercentProgress()
 
 	return 0
 
-	}
+	} >&2
 
 PercFrac()
 	{
