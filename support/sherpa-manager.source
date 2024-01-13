@@ -251,6 +251,7 @@ Consts:Load()
 	readonly HELP_SYNTAX_INDENT=6
 
 	readonly PACKAGE_ABBS_COL_WIDTH=84
+	readonly PACKAGE_APP_VER_COL_WIDTH=24
 	readonly PACKAGE_ARCH_COL_WIDTH=15
 	readonly PACKAGE_AUTHOR_COL_WIDTH=40
 	readonly PACKAGE_DEPENDENCIES_COL_WIDTH=29
@@ -279,7 +280,7 @@ Consts:Load()
 		readonly CHARS_ATTENTION="${CHAR_SPACER}* "
 		readonly CHARS_BLANK="${CHAR_SPACER}  "
 		readonly CHARS_NORMAL="${CHAR_SPACER}- "
-	readonly CHARS_SPECIAL='• '
+	readonly CHARS_BULLET='• '
 	readonly CHARS_SUPER_PROMPT='# '
 
 	readonly DEBUG_LOG_DATAWIDTH=101
@@ -3094,10 +3095,10 @@ LenANSIDiff()
 CalcMaxStatusReportCols()
 	{
 
-# 	local col1_width=$((${#CHARS_SPECIAL}+PACKAGE_NAME_COL_WIDTH))
-# 	local col2_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_STATUS_COL_WIDTH))
-	local col3_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_VER_COL_WIDTH))
-# 	local col4_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_PATH_COL_WIDTH))
+# 	local col1_width=$((${#CHARS_BULLET}+PACKAGE_NAME_COL_WIDTH))
+# 	local col2_width=$((${#CHAR_SPACER}+${#CHARS_BULLET}+PACKAGE_STATUS_COL_WIDTH))
+	local col3_width=$((${#CHAR_SPACER}+${#CHARS_BULLET}+PACKAGE_VER_COL_WIDTH))
+# 	local col4_width=$((${#CHAR_SPACER}+${#CHARS_BULLET}+PACKAGE_PATH_COL_WIDTH))
 
 	# Add width to include " (new)" string to QPKG version title.
 	if QPKGs-SCupgradable.IsAny; then
@@ -3124,14 +3125,14 @@ CalcMaxStatusReportCols()
 # CalcMaxDepsReportCols()
 # 	{
 #
-# 	local col1_width=$((${#CHARS_SPECIAL}+PACKAGE_NAME_COL_WIDTH))
-# 	local col2_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_DEPENDENCIES_COL_WIDTH))
-# 	local col3_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_INSTALLED_COL_WIDTH))
-# 	local col4_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_ENABLED_COL_WIDTH))
-# 	local col5_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_MIN_RAM_COL_WIDTH))
-# 	local col6_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_MIN_OS_COL_WIDTH))
-# 	local col7_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_MAX_OS_COL_WIDTH))
-# 	local col8_width=$((${#CHAR_SPACER}+${#CHARS_SPECIAL}+PACKAGE_ARCH_COL_WIDTH))
+# 	local col1_width=$((${#CHARS_BULLET}+PACKAGE_NAME_COL_WIDTH))
+# 	local col2_width=$((${#CHAR_SPACER}+${#CHARS_BULLET}+PACKAGE_DEPENDENCIES_COL_WIDTH))
+# 	local col3_width=$((${#CHAR_SPACER}+${#CHARS_BULLET}+PACKAGE_INSTALLED_COL_WIDTH))
+# 	local col4_width=$((${#CHAR_SPACER}+${#CHARS_BULLET}+PACKAGE_ENABLED_COL_WIDTH))
+# 	local col5_width=$((${#CHAR_SPACER}+${#CHARS_BULLET}+PACKAGE_MIN_RAM_COL_WIDTH))
+# 	local col6_width=$((${#CHAR_SPACER}+${#CHARS_BULLET}+PACKAGE_MIN_OS_COL_WIDTH))
+# 	local col7_width=$((${#CHAR_SPACER}+${#CHARS_BULLET}+PACKAGE_MAX_OS_COL_WIDTH))
+# 	local col8_width=$((${#CHAR_SPACER}+${#CHARS_BULLET}+PACKAGE_ARCH_COL_WIDTH))
 #
 # 	if [[ $((col1_width+col2_width)) -ge $SESS_COLS ]]; then
 # 		maxcols=1
@@ -3165,7 +3166,7 @@ DisplayAsProjSynExam()
 	#	$2 = example syntax
 
 	WriteEmptyLineIfNoneExists
-	printf "${CHARS_SPECIAL}%s" "$(Capitalise "${1:-}")"
+	printf "${CHARS_BULLET}%s" "$(Capitalise "${1:-}")"
 	[[ ${1: -1} != '!' ]] && printf ':'
 
 	printf "\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_SUDO_PREFIX}%s\n" '' "sherpa ${2:-}"
@@ -3202,7 +3203,7 @@ DisplayAsSynExam()
 	#	$1 = description
 	#	$2 = example syntax
 
-	printf "\n${CHARS_SPECIAL}%s:\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" "$(Capitalise "${1:-}")" '' "${2:-}"
+	printf "\n${CHARS_BULLET}%s:\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" "$(Capitalise "${1:-}")" '' "${2:-}"
 	linespace_visible=false
 
 	}
@@ -3216,21 +3217,21 @@ DisplayAsPackagesReportTitleLine()
 	# column 1: package name
 
 	if [[ $maxcols -ge 1 ]]; then
-		msg="${CHARS_SPECIAL}QPKG name:"
+		msg="${CHARS_BULLET}QPKG name:"
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 # 	# column 2: package author
 #
 # 	if [[ $maxcols -ge 2 ]]; then
-# 		msg="${CHARS_SPECIAL}QPKG author:"
+# 		msg="${CHARS_BULLET}QPKG author:"
 # 		printf "%-$((PACKAGE_AUTHOR_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 # 	fi
 
 	# column 2: package description
 
 	if [[ $maxcols -ge 2 ]]; then
-		msg="${CHARS_SPECIAL}QPKG description:"
+		msg="${CHARS_BULLET}QPKG description:"
 		printf "%-$((PACKAGE_DESCRIPTION_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
@@ -3313,30 +3314,37 @@ DisplayAsStatusReportTitleLine()
 	# column 1: package name
 
 	if [[ $maxcols -ge 1 ]]; then
-		msg="${CHARS_SPECIAL}QPKG name:"
+		msg="${CHARS_BULLET}QPKG name:"
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	# column 2: package statuses
 
 	if [[ $maxcols -ge 2 ]]; then
-		msg="${CHARS_SPECIAL}QPKG statuses:"
+		msg="${CHARS_BULLET}QPKG statuses:"
 		printf "%-$((PACKAGE_STATUS_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	# column 3: package version (variable-width)
 
 	if [[ $maxcols -ge 3 ]]; then
-		msg="${CHARS_SPECIAL}QPKG version"
+		msg="${CHARS_BULLET}QPKG version"
 		QPKGs-SCupgradable.IsAny && msg+=" ($(ColourTextBrightOrange new))"
 		msg+=':'
 		printf "%-$((package_ver_final_col_width+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
-	# column 4: package installation path
+	# column 4: application version
 
 	if [[ $maxcols -ge 4 ]]; then
-		msg="${CHARS_SPECIAL}QPKG installation path:"
+		msg="${CHARS_BULLET}Application version:"
+		printf "%-$((PACKAGE_APP_VER_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
+	fi
+
+	# column 5: package installation path
+
+	if [[ $maxcols -ge 5 ]]; then
+		msg="${CHARS_BULLET}QPKG installation path:"
 		printf "%-$((PACKAGE_PATH_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
@@ -3354,6 +3362,7 @@ DisplayAsStatusReportLine()
 	local name_msg=$CHARS_BLANK
 	local status=''
 	local status_msg=''
+	local app_ver_msg=$CHARS_BLANK
 	local ver_msg=$CHARS_BLANK
 	local upgrade_ver=''
 	local path_msg=$CHARS_BLANK
@@ -3411,6 +3420,8 @@ DisplayAsStatusReportLine()
 				name_msg+=$name
 			fi
 
+			app_ver_msg+='undefined'
+
 			path_msg+=$(QPKG.GetInstallationPath "$name")
 			;;
 		muted)
@@ -3458,9 +3469,15 @@ DisplayAsStatusReportLine()
 		printf "%-$((package_ver_final_col_width+$(LenANSIDiff "$ver_msg")))s" "$ver_msg"
 	fi
 
-	# column 4: package installation path
+	# column 4: application version
 
-	if [[ $maxcols -ge 4 && -n $path_msg ]]; then
+	if [[ $maxcols -ge 4 && -n $app_ver_msg ]]; then
+		printf "%-$((PACKAGE_APP_VER_COL_WIDTH+$(LenANSIDiff "$app_ver_msg")))s" "$app_ver_msg"
+	fi
+
+	# column 5: package installation path
+
+	if [[ $maxcols -ge 5 && -n $path_msg ]]; then
 		printf "%-$((PACKAGE_PATH_COL_WIDTH+$(LenANSIDiff "$path_msg")))s" "$path_msg"
 	fi
 
@@ -3477,21 +3494,21 @@ DisplayAsReposReportTitleLine()
 	# column 1: package name
 
 	if [[ $maxcols -ge 1 ]]; then
-		msg="${CHARS_SPECIAL}QPKG name:"
+		msg="${CHARS_BULLET}QPKG name:"
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	# column 2: package installation date
 
 	if [[ $maxcols -ge 2 ]]; then
-		msg="${CHARS_SPECIAL}install date:"
+		msg="${CHARS_BULLET}install date:"
 		printf "%-$((PACKAGE_INSTALL_DATE_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	# column 3: package repository
 
 	if [[ $maxcols -ge 3 ]]; then
-		msg="${CHARS_SPECIAL}repository:"
+		msg="${CHARS_BULLET}repository:"
 		printf "%-$((PACKAGE_REPO_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
@@ -3597,14 +3614,14 @@ DisplayAsAbsReportTitleLine()
 	# column 1: package name
 
 	if [[ $maxcols -ge 1 ]]; then
-		msg="${CHARS_SPECIAL}QPKG name:"
+		msg="${CHARS_BULLET}QPKG name:"
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	# column 2: package abbreviations
 
 	if [[ $maxcols -ge 2 ]]; then
-		msg="${CHARS_SPECIAL}acceptable QPKG name abbreviations and aliases:"
+		msg="${CHARS_BULLET}acceptable QPKG name abbreviations and aliases:"
 		printf "%-$((PACKAGE_ABBS_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
@@ -3689,56 +3706,56 @@ DisplayAsDepsReportTitleLine()
 	# column 1: package name
 
 	if [[ $maxcols -ge 1 ]]; then
-		msg="${CHARS_SPECIAL}QPKG name:"
+		msg="${CHARS_BULLET}QPKG name:"
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	# column 2: package dependencies
 
 	if [[ $maxcols -ge 2 ]]; then
-		msg="${CHARS_SPECIAL}dependencies:"
+		msg="${CHARS_BULLET}dependencies:"
 		printf "%-$((PACKAGE_DEPENDENCIES_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	# column 3: QPKG is installed
 
 	if [[ $maxcols -ge 3 ]]; then
-		msg="${CHARS_SPECIAL}installed?"
+		msg="${CHARS_BULLET}installed?"
 		printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	# column 4: QPKG is enabled
 
 	if [[ $maxcols -ge 4 ]]; then
-		msg="${CHARS_SPECIAL}enabled?"
+		msg="${CHARS_BULLET}enabled?"
 		printf "%-$((PACKAGE_ENABLED_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	# column 5: minimum NAS RAM required
 
 	if [[ $maxcols -ge 5 ]]; then
-		msg="${CHARS_SPECIAL}min RAM:"
+		msg="${CHARS_BULLET}min RAM:"
 		printf "%-$((PACKAGE_MIN_RAM_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	# column 6: minimum OS fimware version supported
 
 	if [[ $maxcols -ge 6 ]]; then
-		msg="${CHARS_SPECIAL}min OS:"
+		msg="${CHARS_BULLET}min OS:"
 		printf "%-$((PACKAGE_MIN_OS_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	# column 7: maximum OS fimware version supported
 
 	if [[ $maxcols -ge 7 ]]; then
-		msg="${CHARS_SPECIAL}max OS:"
+		msg="${CHARS_BULLET}max OS:"
 		printf "%-$((PACKAGE_MAX_OS_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
 	# column 8: arch is compatible
 
 	if [[ $maxcols -ge 8 ]]; then
-		msg="${CHARS_SPECIAL}supported arch?"
+		msg="${CHARS_BULLET}supported arch?"
 		printf "%-$((PACKAGE_ARCH_COL_WIDTH+2+$(LenANSIDiff "$msg")))s" "$msg"
 	fi
 
@@ -4022,7 +4039,7 @@ DisplayAsHelpTitleFileNamePlusSomething()
 	#	$2 = second column title
 
 	WriteEmptyLineIfNoneExists
-	printf "${CHARS_SPECIAL}%-${FILE_NAME_COL_WIDTH}s ${CHARS_SPECIAL}%s\n" "$(Capitalise "${1:-}"):" "$(Capitalise "${2:-}"):"
+	printf "${CHARS_BULLET}%-${FILE_NAME_COL_WIDTH}s ${CHARS_BULLET}%s\n" "$(Capitalise "${1:-}"):" "$(Capitalise "${2:-}"):"
 	linespace_visible=false
 
 	}
@@ -4034,7 +4051,7 @@ DisplayAsHelpTitle()
 	#	$1 = text
 
 	WriteEmptyLineIfNoneExists
-	printf "${CHARS_SPECIAL}%s\n" "$(Capitalise "${1:-}" | tr -s ' ')"
+	printf "${CHARS_BULLET}%s\n" "$(Capitalise "${1:-}" | tr -s ' ')"
 	linespace_visible=false
 
 	}
@@ -4047,7 +4064,7 @@ DisplayAsHelpTitleHighlighted()
 
 	WriteEmptyLineIfNoneExists
 	# shellcheck disable=2059
-	printf "$(ColourTextBrightOrange "${CHARS_SPECIAL}%s\n")" "$(Capitalise "${1:-}")"
+	printf "$(ColourTextBrightOrange "${CHARS_BULLET}%s\n")" "$(Capitalise "${1:-}")"
 	linespace_visible=false
 
 	}
@@ -5632,7 +5649,7 @@ Report.Statuses:Show()
 	local f=''
 	local -i n=0
 	local -i m=0
-	maxcols=4
+	maxcols=5
 	local -i t=$(QPKGs-SCall:Count)
 
 	DisplayWritingReport
@@ -9085,7 +9102,7 @@ ShowVersion()
 ShowDescription()
 	{
 
-	echo -n "${CHARS_SPECIAL}a mini-package-manager for QNAP NAS"
+	echo -n "${CHARS_BULLET}a mini-package-manager for QNAP NAS"
 
 	}
 
