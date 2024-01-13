@@ -7900,7 +7900,6 @@ QPKG.App.GetVer()
 
 	[[ $a = default ]] && a=${QPKG_APPLICATION_VERSION[$(QPKG.GetDefaultArchIndex "$1")]}
 	[[ $a = version ]] && a=${QPKG_VERSION[$(QPKG.GetDefaultArchIndex "$1")]}
-	[[ $a = none ]] && return 1
 
 	echo "$a"
 	return 0
