@@ -5282,7 +5282,7 @@ QPKGs.States:Build()
 
 	local package=''
 	local prev=''
-	OS.IsStarting && ShowAsWarn "$(GetQnapOS) is still starting and QPKGs are being started. Try checking again in a few minutes."
+	OS.IsStarting && ShowAsWarn "$(GetQnapOS) is starting QPKGs. Try checking again in a few minutes."
 	OS.IsStopping && ShowAsWarn "$(GetQnapOS) is shutting-down. All QPKGs are being stopped."
 	ShowAsProc 'QPKG states'
 
