@@ -2147,7 +2147,7 @@ ResetArchivedLogs()
 	if [[ -n $LOGS_PATH && -d $LOGS_PATH ]]; then
 		rm -rf "${LOGS_PATH:?}"/*
 		echo 'log reset' > "$sess_active_pathfile"
-		ShowAsDone 'all logs cleared'
+		ShowAsDone 'logs cleared'
 	fi
 
 	return 0
@@ -2925,9 +2925,9 @@ EnableResetIfRequested()
 	re=\\breset\\b		# bash 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
 
 	if [[ $USER_ARGS_RAW =~ $re ]]; then
-		ResetArchivedLogs
 		ResetCachePath
 		ResetReportsPath
+		ResetArchivedLogs
 		ArchiveActiveSessLog
 		ResetActiveSessLog
 		exit 0
