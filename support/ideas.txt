@@ -1,6 +1,3 @@
-* when any QPKGs status returns 'slow', include possible explanation below statuses.
-	will usually occur because application has been page-swapped to disk.
-
 * include array for QPKG_APPLICATION_VERSION ?
 
 * QDK looks like it will now write installation scripts that extract to unique paths.
