@@ -2,7 +2,7 @@
 ################################################################################################
 # olivetin.sh
 #
-# Copyright (C) 2023 OneCD - one.cd.only@gmail.com
+# Copyright (C) 2023-2024 OneCD - one.cd.only@gmail.com
 #
 # so, blame OneCD if it all goes horribly wrong. ;)
 #
@@ -20,7 +20,7 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=OliveTin
-	readonly SCRIPT_VERSION=230809
+	readonly SCRIPT_VERSION=240113
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -55,7 +55,7 @@ Init()
 
 	# specific to online-sourced applications only
 	readonly SOURCE_GIT_URL=https://api.github.com/repos/OliveTin/OliveTin/releases/latest
-	readonly SOURCE_ARCH=linux-arm32v5
+	readonly SOURCE_ARCH=linux-arm5
 	readonly SOURCE_GIT_BRANCH=''
 	# 'shallow' (depth 1) or 'single-branch' ... 'shallow' implies 'single-branch'
 	readonly SOURCE_GIT_BRANCH_DEPTH=''
