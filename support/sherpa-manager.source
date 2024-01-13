@@ -3362,8 +3362,8 @@ DisplayAsStatusReportLine()
 	local name_msg=$CHARS_BLANK
 	local status=''
 	local status_msg=''
-	local app_ver_msg=$CHARS_BLANK
 	local ver_msg=$CHARS_BLANK
+	local app_ver_msg=$CHARS_BLANK
 	local upgrade_ver=''
 	local path_msg=$CHARS_BLANK
 	local mode=''
@@ -3420,8 +3420,7 @@ DisplayAsStatusReportLine()
 				name_msg+=$name
 			fi
 
-			app_ver_msg+='undefined'
-
+			app_ver_msg+=$(QPKG.App.GetVer "$name")
 			path_msg+=$(QPKG.GetInstallationPath "$name")
 			;;
 		muted)
@@ -3430,15 +3429,19 @@ DisplayAsStatusReportLine()
 			if ! QPKG.IsArchOK "$name"; then
 				status='not installable: incompatible arch'
 				ver_msg=''
+				app_ver_msg=''
 			elif ! QPKG.IsMinOSVerOk "$name"; then
 				status="not installable: incompatible $(GetQnapOS) version"
 				ver_msg=''
+				app_ver_msg=''
 			elif ! QPKG.IsMinRAMOk "$name"; then
 				status='not installable: insufficient RAM'
 				ver_msg=''
+				app_ver_msg=''
 			else
 				status='not installed'
 				ver_msg+=$(ColourTextDarkGrey "$(QPKG.Avail.GetVer "$name")")
+				app_ver_msg+=$(ColourTextDarkGrey "$(QPKG.App.GetVer "$name")")
 			fi
 
 			status_msg=$(ColourTextDarkGrey "${CHARS_NORMAL}${status}")
@@ -3448,6 +3451,7 @@ DisplayAsStatusReportLine()
 			name_msg+=$(ColourTextBrightRed "$name")
 			status_msg=$(ColourTextBrightRedBlink "${CHARS_ALERT}missing")
 			ver_msg+=$(ColourTextBrightRed "$(QPKG.Local.GetVer "$name")")
+			app_ver_msg+=$(ColourTextBrightRed "$(QPKG.App.GetVer "$name")")
 			path_msg=$(ColourTextBrightRedBlink "${CHARS_ALERT}$(QPKG.GetInstallationPath "$name")")
 	esac
 
@@ -7873,29 +7877,29 @@ QPKG.App.GetVer()
 
 	# Returns the version number of the application contained within a QPKG.
 
-	# input:
-	#   $PACKAGE_NAME (global) = QPKG name (default: sherpa)
-	#   $1 = (optional) if specified, use this as QPKG name
+	# input: (must specify at-least one)
+	#   $1 = QPKG name
+	#   $2 = QPKG index in 'packages' (optional).
 
 	# output:
 	#   stdout = application version
 	#   $? = 0 if found, !0 if not
 
+	local -i i=-1			# default to not-found.
 	local a=''
-	local b=''
-	local -i i=0
 
-	for i in "${!QPKG_NAME[@]}"; do
-		a=${QPKG_NAME[$i]}
-		[[ $a = "$b" ]] && continue || b=$a
+	[[ -n ${1:-} ]] || return
+	[[ -n ${2:-} ]] && i=$2 || i=$(QPKG.GetArchIndex "$1")
+	[[ $i -ge 0 ]] || return
 
-		if [[ ${1:-${PACKAGE_NAME:-sherpa}} = "$a" ]]; then
-			echo "${QPKG_APPLICATION_VERSION[$i]}"
-			return 0
-		fi
-	done
+	a=${QPKG_APPLICATION_VERSION[$i]}
 
-	return 1
+	[[ $a = default ]] && a=${QPKG_APPLICATION_VERSION[$(QPKG.GetDefaultArchIndex "$1")]}
+	[[ $a = version ]] && a=${QPKG_VERSION[$(QPKG.GetDefaultArchIndex "$1")]}
+	[[ $a = none ]] && return 1
+
+	echo "$a"
+	return 0
 
 	}
 
