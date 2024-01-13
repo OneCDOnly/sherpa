@@ -4152,7 +4152,7 @@ Report.Actions:Show()
 	EraseThisLine
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
-		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE" onescreen
+		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -4211,7 +4211,7 @@ Report.ActionsAll:Show()
 	EraseThisLine
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
-		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE" onescreen
+		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -4285,7 +4285,7 @@ Report.Groups:Show()
 	EraseThisLine
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
-		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE" onescreen
+		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -4401,7 +4401,7 @@ Report.Options:Show()
 	EraseThisLine
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
-		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE" onescreen
+		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -4445,7 +4445,7 @@ Report.Problems:Show()
 	EraseThisLine
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
-		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE" onescreen
+		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -4481,7 +4481,7 @@ Report.Tips:Show()
 	EraseThisLine
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
-		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE" onescreen
+		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -4499,7 +4499,7 @@ Log.Last:View()
 	ExtractPrevSessFromTail
 
 	if [[ -e $SESS_LAST_PATHFILE ]]; then
-		DisplayFileInViewport "$SESS_LAST_PATHFILE" linenumbers onescreen
+		DisplayFileInViewport "$SESS_LAST_PATHFILE" linenumbers
 	else
 		ShowAsError 'no last session log to display'
 	fi
@@ -4517,7 +4517,7 @@ Log.Tail:View()
 	ExtractTailFromLog
 
 	if [[ -e $SESS_TAIL_PATHFILE ]]; then
-		DisplayFileInViewport "$SESS_TAIL_PATHFILE" linenumbers onescreen
+		DisplayFileInViewport "$SESS_TAIL_PATHFILE" linenumbers
 	else
 		ShowAsError 'no session log tail to display'
 	fi
@@ -4530,15 +4530,13 @@ DisplayFileInViewport()
 	{
 
 	# $1 = pathfile to display
-	# $2/$3/$4/$5 (optional, and in any order)
+	# $2/$3/$4 (optional, and in any order)
 	#	= 'linenumbers' : display file contents with line numbers.
 	#	= 'jumptoend'   : display file contents scrolled to the last line.
-	#	= 'onescreen'   : quit `less` if only one screen of data.
 	#	= 'wrap'		: wrap lines of text to displayport.
 
 	local showlinenumbers=false
 	local jumptoend=false
-	local onescreen=false
 	local wraplines=false
 	local options=''
 	local prompt=' use arrow-keys to scroll up-down & left-right, press Q to quit '
@@ -4550,22 +4548,17 @@ DisplayFileInViewport()
 	fi
 
 	case 'linenumbers' in
-		${2:-}|${3:-}|${4:-}|${5:-})
+		${2:-}|${3:-}|${4:-})
 			showlinenumbers=true
 	esac
 
 	case 'jumptoend' in
-		${2:-}|${3:-}|${4:-}|${5:-})
+		${2:-}|${3:-}|${4:-})
 			jumptoend=true
 	esac
 
-	case 'onescreen' in
-		${2:-}|${3:-}|${4:-}|${5:-})
-			onescreen=true
-	esac
-
 	case 'wrap' in
-		${2:-}|${3:-}|${4:-}|${5:-})
+		${2:-}|${3:-}|${4:-})
 			wraplines=true
 	esac
 
@@ -4581,11 +4574,10 @@ DisplayFileInViewport()
 
 	if [[ $($WC_CMD -l < "$filename") -ge $SESS_ROWS ]]; then
 		if [[ -e $GNU_LESS_CMD ]]; then
-			options=' --quit-on-intr --tilde --mouse --RAW-CONTROL-CHARS --shift 4 --redraw-on-quit'
+			options=' --quit-on-intr --tilde --mouse --RAW-CONTROL-CHARS --shift 4 --redraw-on-quit --quit-if-one-screen'
 			[[ $wraplines = false ]] && options+=' --chop-long-lines'
 			[[ $showlinenumbers = true ]] && options+=' --LINE-NUMBERS'
 			[[ $jumptoend = true ]] && options+=' +G'
-			[[ $onescreen = true ]] && options+=' --quit-if-one-screen'
 			LESSSECURE=1 ${GNU_LESS_CMD}${options} --prompt "$prompt" "$filename"
 			return
 		fi
@@ -5438,7 +5430,7 @@ Report.Abbreviations:Show()
 	EraseThisLine
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
-		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE" onescreen
+		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -5538,7 +5530,7 @@ Report.Dependencies:Show()
 	EraseThisLine
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
-		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE" onescreen
+		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -5577,7 +5569,7 @@ Report.Packages:Show()
 	EraseThisLine
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
-		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE" onescreen
+		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -5619,7 +5611,7 @@ Report.Repos:Show()
 	EraseThisLine
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
-		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE" onescreen
+		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -5674,7 +5666,7 @@ Report.Statuses:Show()
 	fi
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
-		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE" onescreen
+		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
 	else
 		ShowAsError 'no information to display'
 	fi
