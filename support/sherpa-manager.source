@@ -2375,7 +2375,7 @@ CalcIpkDepsToInstall()
 		fi
 	done
 
-	sleep 1
+	sleep .5
 
 	if [[ $complete = true ]]; then
 		DebugAsDone "dependency calculation complete in $iterations iteration$(Pluralise "$iterations")"
@@ -2777,7 +2777,7 @@ _ActionForks:Launch_()
 		done
 
 		IncForkProgressIndex
-		MarkThisActionForkAsStarted 	# Must create runfile here, as it takes too long to happen in background function.
+		MarkThisActionForkAsStarted 	# Must create runfile here, as it takes too-long to happen in background function.
 		$target_function "$package" &
 		DebugAsDone "forked $target_function() for '$package'"
 		UpdateForkProgress
@@ -2791,7 +2791,6 @@ _ActionForks:Launch_()
 	done
 
 	# All forks have exited.
-	sleep 1
 
 	}
 
@@ -2848,7 +2847,7 @@ _DirSize:Monitor_()
 				stall_msg+=$(FormatSecsToHoursMinutesSecs "$stall_seconds")
 			fi
 
-			# Add a suggestion to cancel if download has stalled for too long.
+			# Add a suggestion to cancel if download has stalled for too-long.
 
 			if [[ $stall_seconds -ge 90 ]]; then
 				stall_msg+=': cancel with CTRL+C and try again later'
@@ -2869,7 +2868,7 @@ _DirSize:Monitor_()
 
 		[[ ! -e $DISPLAY_INHIBIT_PATHFILE ]] || return
 		WriteMsgInPlace "$progress_msg"
-		sleep 1
+		sleep .5
 	done
 
 	[[ -n $progress_msg ]] && WriteMsgInPlace 'done!'
