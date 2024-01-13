@@ -5662,7 +5662,16 @@ Report.Statuses:Show()
 	done
 
 	[[ -n $ac ]] && echo -e "$ac" >>"$REPORT_OUTPUT_PATHFILE"
+
 	EraseThisLine
+
+	if QPKGs-ISslow.IsAny; then
+		{
+
+		DisplayAsHelpTitle "statuses shown as '$(ColourTextBrightOrange slow)' are usually because the application has been page-swapped to disk and needs to be reloaded into RAM to respond to a status request. Requesting the application status again shortly afterward should return a useful status result."
+
+		} >>"$REPORT_OUTPUT_PATHFILE"
+	fi
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
 		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE" onescreen
