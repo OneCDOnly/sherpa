@@ -4321,6 +4321,9 @@ Report.Results:Show()
 	local reason=''
 	local package_type=''
 	local found=false
+	local singular='this action'
+	local plural='these action(s)'
+
 	DisplayWritingReport
 
 		{
@@ -4330,20 +4333,20 @@ Report.Results:Show()
 
 			while read -r datetime action package_name result duration reason package_type; do
 				if [[ $display_last_action_datetime = true ]]; then
-					DisplayAsHelpTitle "the following package actions were run: $(/bin/date -d @"$datetime")"
+					DisplayAsHelpTitle "the following package action(s) were run: $(/bin/date -d @"$datetime")"
 					display_last_action_datetime=false
 				fi
 
 				if [[ $result = "$1" ]] || [[ $1 = skipped && $result = 'skipped-error' ]]; then
 					case $result in
 						ok)
-							[[ $found = false ]] && DisplayAsHelpTitle "these package actions completed $(ColourTextBrightGreen OK):"
+							[[ $found = false ]] && DisplayAsHelpTitle "$plural completed $(ColourTextBrightGreen OK):"
 							;;
 						skipped|skipped-ok|skipped-error)
-							[[ $found = false ]] && DisplayAsHelpTitle "these package actions were $(ColourTextBrightOrange skipped):"
+							[[ $found = false ]] && DisplayAsHelpTitle "$plural were $(ColourTextBrightOrange skipped):"
 							;;
 						failed)
-							[[ $found = false ]] && DisplayAsHelpTitle "these package actions $(ColourTextBrightRed failed):"
+							[[ $found = false ]] && DisplayAsHelpTitle "$plural $(ColourTextBrightRed failed):"
 					esac
 
 					ShowAsActionLogDetail "$datetime" "$package_name" "$action" "$result" "$duration" "$reason"
