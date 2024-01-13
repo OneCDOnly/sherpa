@@ -31,7 +31,8 @@ OliveTin_240113_arm-x41.qpkg.md5     OliveTin_240113_arm-x41.qpkg     OliveTin  
 OliveTin_240113_x86_64.qpkg.md5      OliveTin_240113_x86_64.qpkg      OliveTin             240113       i64    3677774130644b0d80ddae1a9497c784
 OMedusa_240108.qpkg.md5              OMedusa_240108.qpkg              OMedusa              240108       all    8ac5462734d05eb10a5d9aeca24369c4
 OqBittorrent_240108.qpkg.md5         OqBittorrent_240108.qpkg         OqBittorrent         240108       all    3065be2bf6cb3ae42c5d4b047d3d7e1b
-OSickGear_240108.qpkg.md5            OSickGear_240108.qpkg            OSickGear            240108       all    89952e321510955e1b5def6e41a7574b
+OSickGear_240113_x86_64.qpkg.md5     OSickGear_240113_x86_64.qpkg     OSickGear            240113       i64    3e4b4066a5d4d391439b0f903709aae7
+OSickGear_240113_x86.qpkg.md5        OSickGear_240113_x86.qpkg        OSickGear            240113       i86    e9d54b631b9ebd94c54f7ac8d79553f0
 OTransmission_240113.qpkg.md5        OTransmission_240113.qpkg        OTransmission        240113       all    eb5ce25e067ca2e7267158ae37d55a56
 OWatcher3_240108.qpkg.md5            OWatcher3_240108.qpkg            OWatcher3            240108       all    a6456e05eeeb230d6400a62ee2aca8f6
 Par2_0.8.1.1_arm-x19.qpkg.md5        Par2_0.8.1.1_arm-x19.qpkg        Par2                 0.8.1.1      a19    d312d8bd2dee43e62a720f0d209905f8
@@ -51,7 +52,7 @@ SABnzbd_240113_x86_64.qpkg.md5       SABnzbd_240113_x86_64.qpkg       SABnzbd   
 SABnzbd_240113_x86.qpkg.md5          SABnzbd_240113_x86.qpkg          SABnzbd              240113       i86    8f64f03a6400e666484ebff03a644734
 sha3sum_230312_x86_64.qpkg.md5       sha3sum_230312_x86_64.qpkg       sha3sum              230312       i64    6ceba9116e0dbcbdb4e6112f0c02f8c0
 sha3sum_230312_x86.qpkg.md5          sha3sum_230312_x86.qpkg          sha3sum              230312       i86    fdba9d16b88a5b6e3b04483ca77706dd
-sherpa_240113.qpkg.md5               sherpa_240113.qpkg               sherpa               240113       all    3cd611e16040390d66ca32f0686a7703
+sherpa_240113.qpkg.md5               sherpa_240113.qpkg               sherpa               240113       all    e64d100a70c7181e23e7f9d7626f2307
 SortMyQPKGs_240112.qpkg.md5          SortMyQPKGs_240112.qpkg          SortMyQPKGs          240112       all    0fa5518749bd72c76da040162a0be3d6
 Unrar_6.2.5_arm_64.qpkg.md5          Unrar_6.2.5_arm_64.qpkg          Unrar                6.2.5        a64    e2382b80908fc9549bbb00058968082a
 Unrar_6.2.5_arm-x41.qpkg.md5         Unrar_6.2.5_arm-x41.qpkg         Unrar                6.2.5        a41    ac1ff1149258db5e4c0b8165774eda37
