@@ -9850,7 +9850,7 @@ ShowAsActionLogDetail()
 		failed)
 			if [[ -n "${6:-}" ]]; then
 				if QPKG.IsCanLog "$2"; then
-					DisplayAsIndentPrefixActionResultDurationReason 'Unable to ' "$3" "$2" "$5" "For more information, please check the service log: /etc/init.d/$($BASENAME_CMD "$(QPKG.GetServicePathFile "$2")") log"
+					DisplayAsIndentPrefixActionResultDurationReason 'Unable to ' "$3" "$2" "$5" "For more information: /etc/init.d/$($BASENAME_CMD "$(QPKG.GetServicePathFile "$2")") log"
 				else
 					DisplayAsIndentPrefixActionResultDurationReason 'Unable to ' "$3" "$2" "$5" "$6"
 				fi
