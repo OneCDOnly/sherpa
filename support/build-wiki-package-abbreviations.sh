@@ -48,6 +48,7 @@ Packages:Load()
 	readonly QPKG_ABBRVS
 	readonly QPKG_APPLICATION_AUTHOR
 	readonly QPKG_APPLICATION_AUTHOR_EMAIL
+	readonly QPKG_APPLICATION_VERSION
 	readonly QPKG_ARCH
 	readonly QPKG_AUTHOR
 	readonly QPKG_AUTHOR_EMAIL

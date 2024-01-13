@@ -7868,6 +7868,37 @@ QPKG.GetServicePathFile()
 
 	}
 
+QPKG.App.GetVer()
+	{
+
+	# Returns the version number of the application contained within a QPKG.
+
+	# input:
+	#   $PACKAGE_NAME (global) = QPKG name (default: sherpa)
+	#   $1 = (optional) if specified, use this as QPKG name
+
+	# output:
+	#   stdout = application version
+	#   $? = 0 if found, !0 if not
+
+	local a=''
+	local b=''
+	local -i i=0
+
+	for i in "${!QPKG_NAME[@]}"; do
+		a=${QPKG_NAME[$i]}
+		[[ $a = "$b" ]] && continue || b=$a
+
+		if [[ ${1:-${PACKAGE_NAME:-sherpa}} = "$a" ]]; then
+			echo "${QPKG_APPLICATION_VERSION[$i]}"
+			return 0
+		fi
+	done
+
+	return 1
+
+	}
+
 QPKG.Avail.GetVer()
 	{
 
@@ -10335,6 +10366,7 @@ Packages:Load()
 	readonly QPKG_ABBRVS
 	readonly QPKG_APPLICATION_AUTHOR
 	readonly QPKG_APPLICATION_AUTHOR_EMAIL
+	readonly QPKG_APPLICATION_VERSION
 	readonly QPKG_ARCH
 	readonly QPKG_AUTHOR
 	readonly QPKG_AUTHOR_EMAIL

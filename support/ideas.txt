@@ -1,4 +1,4 @@
-* results report shold be shown in file viewport.
+* results report should be shown in file viewport.
 
 * results report text should account for single QPKG actions
 	don't pluralise "package actions" when there was only one.
