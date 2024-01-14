@@ -115,6 +115,7 @@ InitLibrary()
 
 	InitByServiceType
 	InitService									# located in parent service-script
+	MakePaths
 	EnsureConfigFileExists
 	LoadAppVersion
 	DisableOpkgDaemonStart
