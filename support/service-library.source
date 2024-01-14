@@ -258,30 +258,22 @@ StartQPKG()
 	fi
 
 	if IsOnlineArchive; then
+		local target_url_pathfile=$qpkg_repo_path/source.url
+		local update=false
 
-# 					[[ -n ${QPKG_REPO_PATH:-} && ! -d $QPKG_REPO_PATH ]] && mkdir -p "$QPKG_REPO_PATH"
+		if [[ ! -e $target_url_pathfile || $(<$target_url_pathfile) != "$remote_url" ]]; then
+			echo "$remote_url" > "$target_url_pathfile"
+			update=true
+		fi
 
-# 					remote_archive_url="${SOURCE_GIT_URL}${SOURCE_ARCH}"
-					local target_url_pathfile=$qpkg_repo_path/source.url
-					local update=false
+		if [[ ! -e $source_archive_pathfile || $update = true ]]; then	# download latest release archive & extract all files
 
-					if [[ ! -e $target_url_pathfile || $(<$target_url_pathfile) != $remote_url ]]; then
-						echo "$remote_url" > "$target_url_pathfile"
-						update=true
-					fi
+			DisplayRunAndLog 'download source archive' '/sbin/curl${curl_insecure_arg} --show-error --location --output $source_archive_pathfile $(<$target_url_pathfile)' || { SetError; return 1 ;}
+		fi
 
-# 					local source_archive_pathfile="$QPKG_PATH/$QPKG_NAME.tar.gz"
-
-					if [[ ! -e $source_archive_pathfile || $update = true ]]; then	# download latest release archive & extract all files
-# 						readonly NAS_FIRMWARE_VER=$(/sbin/getcfg System Version -f /etc/config/uLinux.conf)
-# 						[[ ${NAS_FIRMWARE_VER//.} -lt 426 ]] && curl_insecure_arg=' --insecure' || curl_insecure_arg=''
-
-						DisplayRunAndLog 'download source archive' '/sbin/curl${curl_insecure_arg} --show-error --location --output $source_archive_pathfile $(<$target_url_pathfile)' || { SetError; return 1 ;}
-					fi
-
-					if [[ ! -e $daemon_pathfile || $update = true ]]; then	# extract from latest release archive
-						DisplayRunAndLog 'extract from archive' "/bin/tar -zxvf $source_archive_pathfile --directory=$qpkg_repo_path" || { SetError; return 1 ;}
-					fi
+		if [[ ! -e $daemon_pathfile || $update = true ]]; then	# extract from latest release archive
+			DisplayRunAndLog 'extract from archive' "/bin/tar -zxvf $source_archive_pathfile --directory=$qpkg_repo_path" || { SetError; return 1 ;}
+		fi
 	fi
 
 	WaitForLaunchTarget || { SetError; return 1 ;}
