@@ -109,6 +109,7 @@ venv_pip_pathfile=undefined
 venv_python_pathfile=undefined
 InitByServiceType
 InitService
+MakePaths
 EnsureConfigFileExists
 LoadAppVersion
 DisableOpkgDaemonStart
