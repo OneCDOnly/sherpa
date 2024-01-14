@@ -233,7 +233,7 @@ fi
 if IsOnlineArchive; then
 local target_url_pathfile=$qpkg_repo_path/source.url
 local update=false
-if [[ ! -e $target_url_pathfile || $(<$target_url_pathfile) != $remote_url ]]; then
+if [[ ! -e $target_url_pathfile || $(<$target_url_pathfile) != "$remote_url" ]]; then
 echo "$remote_url" > "$target_url_pathfile"
 update=true
 fi
