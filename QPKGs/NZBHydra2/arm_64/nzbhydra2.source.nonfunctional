@@ -35,12 +35,11 @@ InitService()
 
 
 
-
+# need to obtain latest online package URL from website, then download file.
 
 
 	remote_url='https://services.sonarr.tv/v1/download/main/latest?version=4&os=linux&'
 		remote_url+='arch=arm64'
-	run_daemon_in_screen_session=true
 
 	}
 

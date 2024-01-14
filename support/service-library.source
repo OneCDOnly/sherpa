@@ -114,13 +114,13 @@ InitLibrary()
 	venv_python_pathfile=undefined
 
 	InitByServiceType
-	InitService									# located in parent service-script
+	InitService									# located in parent service-script. Service-script vars can override vars set here.
 	MakePaths
 	EnsureConfigFileExists
 	LoadAppVersion
 	DisableOpkgDaemonStart
 	IsSupportBackup && [[ ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
-	IsVirtualEnvironmentUsed && [[ ! -d $venv_path ]] && mkdir -p "$venv_path"
+	IsUseVirtualPythonEnv && [[ ! -d $venv_path ]] && mkdir -p "$venv_path"
 	IsUsePipCache && [[ ! -d $pip_cache_path ]] && mkdir -p "$pip_cache_path"
 	IsSourcedOnline && IsAutoUpdateMissing && EnableAutoUpdate >/dev/null
 
@@ -296,7 +296,7 @@ StartQPKG()
 		return 1
 	fi
 
-	if IsVirtualEnvironmentUsed && IsNotVirtualEnvironmentExist; then
+	if IsUseVirtualPythonEnv && IsNotVirtualEnvironmentExist; then
 		DisplayErrCommitAllLogs 'unable to start daemon: virtual environment does not exist!'
 		SetError
 		return 1
@@ -388,7 +388,7 @@ StopQPKG()
 InstallAddons()
 	{
 
-	IsVirtualEnvironmentUsed || return 0
+	IsUseVirtualPythonEnv || return 0
 
 	local default_essential_modules_pathfile=$QPKG_CONFIG_PATH/essential.txt
 	local default_requirements_modules_pathfile=$QPKG_CONFIG_PATH/requirements.txt
@@ -546,7 +546,7 @@ MakePaths()
 		[[ ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
 		IsSourcedOnline && [[ ! -d $qpkg_repo_path ]] && mkdir -p "$qpkg_repo_path"
 		IsUsePipCache && [[ ! -d $pip_cache_path ]] && mkdir -p "$pip_cache_path"
-		IsVirtualEnvironmentUsed && [[ ! -d $venv_path ]] && mkdir -p "$venv_path"
+		IsUseVirtualPythonEnv && [[ ! -d $venv_path ]] && mkdir -p "$venv_path"
 		DisplayCommitToLog OK
 	fi
 
@@ -710,7 +710,7 @@ CleanLocalRepo()
 
 	(IsGitApp || IsOnlineArchive) && DisplayRunAndLog 'clean local repository' "rm -rf \"$qpkg_repo_path\"" log:failure-only
 	IsGitApp && [[ -d $(/usr/bin/dirname "$qpkg_repo_path")/$QPKG_NAME ]] && DisplayRunAndLog 'KLUDGE: remove previous local repository' "rm -r \"$(/usr/bin/dirname "$qpkg_repo_path")/$QPKG_NAME\"" log:failure-only
-	IsVirtualEnvironmentUsed && [[ -d $venv_path ]] && DisplayRunAndLog 'clean virtual environment' "rm -rf \"$venv_path\"" log:failure-only
+	IsUseVirtualPythonEnv && [[ -d $venv_path ]] && DisplayRunAndLog 'clean virtual environment' "rm -rf \"$venv_path\"" log:failure-only
 	IsUsePipCache && [[ -d $pip_cache_path ]] && DisplayRunAndLog 'clean PyPI cache' "rm -rf \"$pip_cache_path\"" log:failure-only
 	[[ -e $APP_VERSION_STORE_PATHFILE ]] && DisplayRunAndLog 'remove application version' "rm -f \"$APP_VERSION_STORE_PATHFILE\"" log:failure-only
 
@@ -1470,7 +1470,7 @@ IsNotSupportGetAppVersion()
 
 	}
 
-IsVirtualEnvironmentUsed()
+IsUseVirtualPythonEnv()
 	{
 
 	[[ $venv_path != undefined ]]
@@ -1480,7 +1480,7 @@ IsVirtualEnvironmentUsed()
 IsNotVirtualEnvironmentUsed()
 	{
 
-	! IsVirtualEnvironmentUsed
+	! IsUseVirtualPythonEnv
 
 	}
 
@@ -1531,7 +1531,7 @@ IsNotOnlineArchive()
 IsSourcedOnline()
 	{
 
-	IsGitApp || IsUsePipCache || IsVirtualEnvironmentUsed || IsOnlineArchive
+	IsGitApp || IsUsePipCache || IsUseVirtualPythonEnv || IsOnlineArchive
 
 	}
 
