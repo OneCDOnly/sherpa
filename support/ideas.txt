@@ -1,3 +1,5 @@
+* show QPKG hashes on packages report.
+
 * find all QPKG states concurrently.
 
 * wrap column text in packages report.
