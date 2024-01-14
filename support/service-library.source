@@ -268,8 +268,7 @@ StartQPKG()
 		fi
 
 		if [[ ! -e $source_archive_pathfile || $update = true ]]; then	# download latest release archive & extract all files
-
-			DisplayRunAndLog 'download source archive' '/sbin/curl${curl_insecure_arg} --show-error --location --output $source_archive_pathfile $(<$target_url_pathfile)' || { SetError; return 1 ;}
+			DisplayRunAndLog 'download source archive' '/sbin/curl${curl_insecure_arg} --show-error --location --output '$source_archive_pathfile' $(<'$target_url_pathfile')' || { SetError; return 1 ;}
 		fi
 
 		if [[ ! -e $daemon_pathfile || $update = true ]]; then	# extract from latest release archive

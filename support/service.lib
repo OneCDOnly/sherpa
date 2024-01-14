@@ -239,7 +239,7 @@ echo "$remote_url" > "$target_url_pathfile"
 update=true
 fi
 if [[ ! -e $source_archive_pathfile || $update = true ]]; then
-DisplayRunAndLog 'download source archive' '/sbin/curl${curl_insecure_arg} --show-error --location --output $source_archive_pathfile $(<$target_url_pathfile)' || { SetError; return 1 ;}
+DisplayRunAndLog 'download source archive' '/sbin/curl${curl_insecure_arg} --show-error --location --output '$source_archive_pathfile' $(<'$target_url_pathfile')' || { SetError; return 1 ;}
 fi
 if [[ ! -e $daemon_pathfile || $update = true ]]; then
 DisplayRunAndLog 'extract from archive' "/bin/tar -zxvf $source_archive_pathfile --directory=$qpkg_repo_path" || { SetError; return 1 ;}
