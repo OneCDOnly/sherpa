@@ -14,26 +14,23 @@
 readonly USER_ARGS_RAW=$*
 readonly QPKG_NAME=OTransmission
 readonly SERVICE_SCRIPT_VERSION='<?build_date?>'
+readonly SERVICE_SCRIPT_TYPE=3
 
-InitBasic()
+InitService()
 	{
+
+	qpkg_ini_file=settings.json
+		qpkg_ini_pathfile=$QPKG_CONFIG_PATH/$qpkg_ini_file
+			get_ui_listening_address_cmd="/opt/bin/jq -r '.\"rpc-bind-address\"' < $qpkg_ini_pathfile"
+			get_ui_port_cmd="/opt/bin/jq -r '.\"rpc-port\"' < "$qpkg_ini_pathfile""
+			qpkg_ini_default_pathfile=$qpkg_ini_pathfile.def
 
 	daemon_pathfile=/opt/bin/transmission-daemon
-	orig_daemon_service_script=/opt/etc/init.d/S88transmission
-	qpkg_ini_file=settings.json
-	service_script_type=3
-	readonly TRANSMISSION_WEB_HOME=/opt/share/transmission/web
-
-	}
-
-InitComplex()
-	{
-
-	daemon_launch_cmd="$daemon_pathfile --config-dir $(/usr/bin/dirname "$qpkg_ini_pathfile") --pid-file $daemon_pid_pathfile"
-	get_ui_listening_address_cmd="/opt/bin/jq -r '.\"rpc-bind-address\"' < $qpkg_ini_pathfile"
-	get_ui_port_cmd="/opt/bin/jq -r '.\"rpc-port\"' < "$qpkg_ini_pathfile""
-	get_ui_port_secure_cmd='echo 0'		# Transmission v3 doesn't appear to contain any SSL UI ability.
+		daemon_launch_cmd="$daemon_pathfile --config-dir $(/usr/bin/dirname "$qpkg_ini_pathfile") --pid-file $daemon_pid_pathfile"
+	get_ui_port_secure_cmd='echo 0'				# Transmission v3 doesn't appear to contain any SSL UI ability. Need to check this on v4.
 	get_ui_port_secure_enabled_test_cmd='false'
+	orig_daemon_service_script=/opt/etc/init.d/S88transmission
+	readonly TRANSMISSION_WEB_HOME=/opt/share/transmission/web
 
 	}
 

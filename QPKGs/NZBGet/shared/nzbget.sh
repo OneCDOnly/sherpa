@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#* don't edit this file, it was built/modified programmatically with the `build-qpkgs.sh` script. (source: nzbget.source)
+#* Please don't edit this file directly, it was built/modified programmatically with the 'build-qpkgs.sh' script. (source: 'nzbget.source')
 #* nzbget.sh
 #* Copyright (C) 2017-2024 OneCD - one.cd.only@gmail.com
 #*   So, blame OneCD if it all goes horribly wrong. ;)
@@ -20,23 +20,20 @@
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 readonly USER_ARGS_RAW=$*
 readonly QPKG_NAME=NZBGet
-readonly SERVICE_SCRIPT_VERSION='240108'
-InitBasic()
+readonly SERVICE_SCRIPT_VERSION='240115'
+readonly SERVICE_SCRIPT_TYPE=3
+InitService()
 {
 daemon_pathfile=/opt/bin/nzbget
 app_version_pathfile=$daemon_pathfile
 app_version_cmd="$daemon_pathfile --version 2>&1 | /bin/sed 's|nzbget version: ||'"
-daemon_pid_pathfile=/opt/var/lock/nzbget.lock
-orig_daemon_service_script=/opt/etc/init.d/S75nzbget
-service_script_type=3
-}
-InitComplex()
-{
 daemon_launch_cmd="$daemon_pathfile --daemon --configfile $qpkg_ini_pathfile"
+daemon_pid_pathfile=/opt/var/lock/nzbget.lock
 get_ui_listening_address_cmd="/sbin/getcfg '' ControlIP -f $qpkg_ini_pathfile"
 get_ui_port_cmd="/sbin/getcfg '' ControlPort -d 0 -f $qpkg_ini_pathfile"
 get_ui_port_secure_cmd="/sbin/getcfg '' SecurePort -d 0 -f $qpkg_ini_pathfile"
 get_ui_port_secure_enabled_test_cmd='[[ $(/sbin/getcfg "" SecureControl -d no -f '$qpkg_ini_pathfile') = yes ]]'
+orig_daemon_service_script=/opt/etc/init.d/S75nzbget
 }
 library_path=$(/usr/bin/readlink "$0" 2>/dev/null)
 [[ -z $library_path ]] && library_path=$0

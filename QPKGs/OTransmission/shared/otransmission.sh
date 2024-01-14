@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#* don't edit this file, it was built/modified programmatically with the 'build-qpkgs.sh' script. (source: 'otransmission.source')
+#* Please don't edit this file directly, it was built/modified programmatically with the 'build-qpkgs.sh' script. (source: 'otransmission.source')
 #* otransmission.sh
 #* Copyright (C) 2017-2024 OneCD - one.cd.only@gmail.com
 #*   So, blame OneCD if it all goes horribly wrong. ;)
@@ -20,22 +20,21 @@
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 readonly USER_ARGS_RAW=$*
 readonly QPKG_NAME=OTransmission
-readonly SERVICE_SCRIPT_VERSION='240113'
-InitBasic()
+readonly SERVICE_SCRIPT_VERSION='240115'
+readonly SERVICE_SCRIPT_TYPE=3
+InitService()
 {
-daemon_pathfile=/opt/bin/transmission-daemon
-orig_daemon_service_script=/opt/etc/init.d/S88transmission
 qpkg_ini_file=settings.json
-service_script_type=3
-readonly TRANSMISSION_WEB_HOME=/opt/share/transmission/web
-}
-InitComplex()
-{
-daemon_launch_cmd="$daemon_pathfile --config-dir $(/usr/bin/dirname "$qpkg_ini_pathfile") --pid-file $daemon_pid_pathfile"
+qpkg_ini_pathfile=$QPKG_CONFIG_PATH/$qpkg_ini_file
 get_ui_listening_address_cmd="/opt/bin/jq -r '.\"rpc-bind-address\"' < $qpkg_ini_pathfile"
 get_ui_port_cmd="/opt/bin/jq -r '.\"rpc-port\"' < "$qpkg_ini_pathfile""
+qpkg_ini_default_pathfile=$qpkg_ini_pathfile.def
+daemon_pathfile=/opt/bin/transmission-daemon
+daemon_launch_cmd="$daemon_pathfile --config-dir $(/usr/bin/dirname "$qpkg_ini_pathfile") --pid-file $daemon_pid_pathfile"
 get_ui_port_secure_cmd='echo 0'
 get_ui_port_secure_enabled_test_cmd='false'
+orig_daemon_service_script=/opt/etc/init.d/S88transmission
+readonly TRANSMISSION_WEB_HOME=/opt/share/transmission/web
 }
 library_path=$(/usr/bin/readlink "$0" 2>/dev/null)
 [[ -z $library_path ]] && library_path=$0

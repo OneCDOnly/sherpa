@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#* don't edit this file, it was built/modified programmatically with the `build-qpkgs.sh` script. (source: omedusa.source)
+#* Please don't edit this file directly, it was built/modified programmatically with the 'build-qpkgs.sh' script. (source: 'omedusa.source')
 #* omedusa.sh
 #* Copyright (C) 2017-2024 OneCD - one.cd.only@gmail.com
 #*   So, blame OneCD if it all goes horribly wrong. ;)
@@ -20,13 +20,9 @@
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 readonly USER_ARGS_RAW=$*
 readonly QPKG_NAME=OMedusa
-readonly SERVICE_SCRIPT_VERSION='240108'
-InitBasic()
-{
-service_script_type=1
-source_git_url=https://github.com/pymedusa/Medusa.git
-}
-InitComplex()
+readonly SERVICE_SCRIPT_VERSION='240115'
+readonly SERVICE_SCRIPT_TYPE=1
+InitService()
 {
 app_version_pathfile=$qpkg_repo_path/medusa/common.py
 daemon_pathfile=$qpkg_repo_path/start.py
@@ -37,6 +33,7 @@ get_ui_port_secure_cmd="/sbin/getcfg general web_port -d 0 -f $qpkg_ini_pathfile
 get_ui_port_secure_enabled_test_cmd='[[ $(/sbin/getcfg general enable_https -d 0 -f '$qpkg_ini_pathfile') = 1 ]]'
 source_git_branch=master
 source_git_branch_depth=single-branch
+source_git_url=https://github.com/pymedusa/Medusa.git
 IsSupportGetAppVersion && app_version_cmd="/bin/grep '^VERSION =' $app_version_pathfile | /bin/sed 's|^.*\"\(.*\)\"|\1|'"
 }
 library_path=$(/usr/bin/readlink "$0" 2>/dev/null)

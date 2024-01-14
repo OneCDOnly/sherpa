@@ -14,23 +14,15 @@
 readonly USER_ARGS_RAW=$*
 readonly QPKG_NAME=WebSSH
 readonly SERVICE_SCRIPT_VERSION='<?build_date?>'
+readonly SERVICE_SCRIPT_TYPE=6
 
-InitBasic()
+InitService()
 	{
 
- 	interpreter=/opt/bin/python3
- 	qpkg_ini_pathfile=undefined
- 	qpkg_repo_path=undefined
- 	run_daemon_in_screen_session=true
-	service_script_type=6
+	app_version_cmd="/bin/grep '__version__ =' $app_version_pathfile | /bin/sed 's|^.*\"\(.*\)\"|\1|'"
+	run_daemon_in_screen_session=true
  	venv_python_pathfile=$venv_path/bin/python		# WebSSH expects 'python', not 'python3'
 
-	}
-
-InitComplex()
-	{
-
- 	backup_pathfile=undefined
 	daemon_pathfile=$venv_path/bin/wssh
 		daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile --address='0.0.0.0' --port=8010 --encoding=850"
 	get_ui_listening_address_cmd='echo 0.0.0.0'
@@ -38,8 +30,6 @@ InitComplex()
 	get_ui_port_secure_cmd='echo 0'
 	get_ui_port_secure_enabled_test_cmd='false'
 	source_git_branch=master
-
-	IsSupportGetAppVersion && app_version_cmd="/bin/grep '__version__ =' $app_version_pathfile | /bin/sed 's|^.*\"\(.*\)\"|\1|'"
 
 	}
 

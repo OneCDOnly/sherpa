@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#* don't edit this file, it was built/modified programmatically with the `build-qpkgs.sh` script. (source: service-library.source)
+#* Please don't edit this file directly, it was built/modified programmatically with the 'build-qpkgs.sh' script. (source: 'service-library.source')
 #* service.lib
 #* Copyright (C) 2017-2024 OneCD - one.cd.only@gmail.com
 #*   So, blame OneCD if it all goes horribly wrong. ;)
@@ -21,7 +21,7 @@
 #*   This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 #*	 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
-readonly SERVICE_LIB_VERSION='240108'
+readonly SERVICE_LIB_VERSION='240115'
 InitLibrary()
 {
 IsQNAP || exit
@@ -44,10 +44,31 @@ fi
 done
 UnsetError
 UnsetRestartPending
+readonly DAEMON_CHECK_TIMEOUT_SECONDS=60
+readonly DAEMON_STOP_TIMEOUT_SECONDS=120
+readonly PIDFILE_APPEAR_TIMEOUT_SECONDS=60
+readonly PIDFILE_RECHECK_WAIT_SECONDS=10
+readonly PORT_CHECK_TIMEOUT_SECONDS=240
+readonly BACKUP_PATH=$(/sbin/getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
+readonly CHARS_REGULAR_PROMPT='$ '
+readonly CHARS_SUDO_PROMPT="${CHARS_REGULAR_PROMPT}sudo "
+readonly CHARS_SUPER_PROMPT='# '
+readonly DEBUG_LOG_DATAWIDTH=100
+readonly NAS_FIRMWARE_VER=$(/sbin/getcfg System Version -f /etc/config/uLinux.conf)
+readonly OPKG_PATH=/opt/bin:/opt/sbin
+export PATH=$OPKG_PATH:$(/bin/sed "s|$OPKG_PATH||" <<< "$PATH")
+readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
+readonly QPKG_CONFIG_PATH=$QPKG_PATH/config
+readonly APP_VERSION_STORE_PATHFILE=$QPKG_CONFIG_PATH/version.stored
+readonly SCREEN_CONF_PATHFILE=$QPKG_CONFIG_PATH/screen.conf
+readonly QPKG_VERSION=$(/sbin/getcfg $QPKG_NAME Version -d unknown -f /etc/config/qpkg.conf)
+readonly SCREEN_LOG_PATHFILE=/var/log/$QPKG_NAME.screen.log
+readonly SERVICE_LOG_PATHFILE=/var/log/$QPKG_NAME.log
+readonly SERVICE_STATUS_PATHFILE=/var/run/$QPKG_NAME.last.operation
 allow_access_to_sys_packages=true
 app_version_cmd=undefined
 app_version_pathfile=undefined
-backup_pathfile=undefined
+[[ ${NAS_FIRMWARE_VER//.} -lt 426 ]] && curl_insecure_arg=' --insecure' || curl_insecure_arg=''
 daemon_launch_cmd=undefined
 daemon_pathfile=undefined
 daemon_pid_pathfile=undefined
@@ -64,15 +85,18 @@ launcher_pathfile=undefined
 orig_daemon_service_script=undefined
 pidfile_is_managed_by_app=false
 pip_cache_path=undefined
-qpkg_ini_file=undefined
-qpkg_ini_pathfile=undefined
+qpkg_backup_pathfile=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
+qpkg_ini_file=config.ini
+qpkg_ini_pathfile=$QPKG_CONFIG_PATH/$qpkg_ini_file
+qpkg_ini_default_pathfile=$qpkg_ini_pathfile.def
 qpkg_repo_path=undefined
 recheck_daemon_pid_after_launch=false
+remote_url=undefined
 run_daemon_in_screen_session=false
 service_operation=unspecified
 service_result=undefined
-service_script_type=0
 source_arch=undefined
+source_archive_pathfile=undefined
 source_git_branch=undefined
 source_git_branch_depth=undefined
 source_git_url=undefined
@@ -83,33 +107,8 @@ userlink_pathfile=undefined
 venv_path=undefined
 venv_pip_pathfile=undefined
 venv_python_pathfile=undefined
-readonly DAEMON_CHECK_TIMEOUT_SECONDS=60
-readonly DAEMON_STOP_TIMEOUT_SECONDS=120
-readonly PIDFILE_APPEAR_TIMEOUT_SECONDS=60
-readonly PIDFILE_RECHECK_WAIT_SECONDS=10
-readonly PORT_CHECK_TIMEOUT_SECONDS=240
-readonly BACKUP_PATH=$(/sbin/getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
-readonly CHARS_REGULAR_PROMPT='$ '
-readonly CHARS_SUDO_PROMPT="${CHARS_REGULAR_PROMPT}sudo "
-readonly CHARS_SUPER_PROMPT='# '
-readonly DEBUG_LOG_DATAWIDTH=100
-readonly OPKG_PATH=/opt/bin:/opt/sbin
-export PATH=$OPKG_PATH:$(/bin/sed "s|$OPKG_PATH||" <<< "$PATH")
-readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
-readonly QPKG_VERSION=$(/sbin/getcfg $QPKG_NAME Version -d unknown -f /etc/config/qpkg.conf)
-readonly SCREEN_LOG_PATHFILE=/var/log/$QPKG_NAME.screen.log
-readonly SERVICE_LOG_PATHFILE=/var/log/$QPKG_NAME.log
-readonly SERVICE_STATUS_PATHFILE=/var/run/$QPKG_NAME.last.operation
-readonly QPKG_CONFIG_PATH=$QPKG_PATH/config
-readonly APP_VERSION_STORE_PATHFILE=$QPKG_CONFIG_PATH/version.stored
-readonly SCREEN_CONF_PATHFILE=$QPKG_CONFIG_PATH/screen.conf
-qpkg_ini_file=config.ini
-InitBasic
-backup_pathfile=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
-qpkg_ini_pathfile=$QPKG_CONFIG_PATH/$qpkg_ini_file
-InitByType
-InitComplex
-qpkg_ini_default_pathfile=$qpkg_ini_pathfile.def
+InitByServiceType
+InitService
 EnsureConfigFileExists
 LoadAppVersion
 DisableOpkgDaemonStart
@@ -123,31 +122,55 @@ echo 'logfile flush 1' >> "$SCREEN_CONF_PATHFILE"
 echo 'log on' >> "$SCREEN_CONF_PATHFILE"
 fi
 }
-InitByType()
+InitByServiceType()
 {
-case $service_script_type in
-1|3|6)
+case $SERVICE_SCRIPT_TYPE in
+1)
 daemon_pid_pathfile=/var/run/$QPKG_NAME.pid
-esac
-case $service_script_type in
-1|6|7)
+install_pip_deps=true
+interpreter=/opt/bin/python3
+pidfile_is_managed_by_app=true
+pip_cache_path=$QPKG_PATH/pip-cache
+qpkg_repo_path=$QPKG_PATH/repo-cache
+recheck_daemon_pid_after_launch=true
+source_git_branch=main
+source_git_branch_depth=shallow
+venv_path=$QPKG_PATH/venv
+venv_pip_pathfile=$venv_path/bin/pip
+venv_python_pathfile=$venv_path/bin/python3
+;;
+2)
+:
+;;
+3)
+daemon_pid_pathfile=/var/run/$QPKG_NAME.pid
+;;
+4)
+:
+;;
+5)
+daemon_pid_pathfile=/var/run/$QPKG_NAME.pid
+qpkg_repo_path=$QPKG_PATH/repo-cache
+source_archive_pathfile="$qpkg_repo_path/$QPKG_NAME.tar.gz"
+;;
+6)
+daemon_pid_pathfile=/var/run/$QPKG_NAME.pid
+interpreter=/opt/bin/python3
+pip_cache_path=$QPKG_PATH/pip-cache
+qpkg_backup_pathfile=undefined
+qpkg_ini_pathfile=undefined
+qpkg_repo_path=undefined
+run_daemon_in_screen_session=true
+venv_path=$QPKG_PATH/venv
+venv_pip_pathfile=$venv_path/bin/pip
+venv_python_pathfile=$venv_path/bin/python3
+;;
+7)
 interpreter=/opt/bin/python3
 pip_cache_path=$QPKG_PATH/pip-cache
 venv_path=$QPKG_PATH/venv
 venv_pip_pathfile=$venv_path/bin/pip
 venv_python_pathfile=$venv_path/bin/python3
-esac
-case $service_script_type in
-1)
-install_pip_deps=true
-pidfile_is_managed_by_app=true
-qpkg_repo_path=$QPKG_PATH/repo-cache
-recheck_daemon_pid_after_launch=true
-source_git_branch=main
-source_git_branch_depth=shallow
-;;
-6)
-run_daemon_in_screen_session=true
 esac
 }
 ShowHelp()
@@ -190,7 +213,7 @@ else
 DisplayCommitToLog false
 fi
 MakePaths
-PullGitRepo || { SetError; return 1 ;}
+CloneGitRepo || { SetError; return 1 ;}
 InstallAddons || { SetError; return 1 ;}
 if IsNotDaemon; then
 if [[ ! -L $userlink_pathfile && -e $launcher_pathfile ]]; then
@@ -206,6 +229,20 @@ else
 DisplayCommitToLog "symlink exists: $userlink_pathfile"
 fi
 return
+fi
+if IsOnlineArchive; then
+local target_url_pathfile=$qpkg_repo_path/source.url
+local update=false
+if [[ ! -e $target_url_pathfile || $(<$target_url_pathfile) != $remote_url ]]; then
+echo "$remote_url" > "$target_url_pathfile"
+update=true
+fi
+if [[ ! -e $source_archive_pathfile || $update = true ]]; then
+DisplayRunAndLog 'download source archive' '/sbin/curl${curl_insecure_arg} --show-error --location --output $source_archive_pathfile $(<$target_url_pathfile)' || { SetError; return 1 ;}
+fi
+if [[ ! -e $daemon_pathfile || $update = true ]]; then
+DisplayRunAndLog 'extract from archive' "/bin/tar -zxvf $source_archive_pathfile --directory=$qpkg_repo_path" || { SetError; return 1 ;}
+fi
 fi
 WaitForLaunchTarget || { SetError; return 1 ;}
 EnsureConfigFileExists
@@ -375,17 +412,17 @@ return 0
 BackupConfig()
 {
 MakePaths
-DisplayRunAndLog 'update configuration backup' "/bin/tar --create --gzip --file=$backup_pathfile --directory=$QPKG_PATH/config ." || SetError
+DisplayRunAndLog 'update configuration backup' "/bin/tar --create --gzip --file=$qpkg_backup_pathfile --directory=$QPKG_PATH/config ." || SetError
 return 0
 }
 RestoreConfig()
 {
-if [[ ! -f $backup_pathfile ]]; then
+if [[ ! -f $qpkg_backup_pathfile ]]; then
 DisplayErrCommitAllLogs 'unable to restore configuration: no backup file was found!'
 SetError
 return 1
 fi
-DisplayRunAndLog 'restore configuration backup' "/bin/tar --extract --gzip --file=$backup_pathfile --directory=$QPKG_PATH/config" || SetError
+DisplayRunAndLog 'restore configuration backup' "/bin/tar --extract --gzip --file=$qpkg_backup_pathfile --directory=$QPKG_PATH/config" || SetError
 return 0
 }
 ResetConfig()
@@ -398,7 +435,7 @@ MakePaths()
 if [[ -d $QPKG_PATH ]]; then
 DisplayWaitCommitToLog 'create paths:'
 [[ ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
-IsGitApp && [[ ! -d $qpkg_repo_path ]] && mkdir -p "$qpkg_repo_path"
+IsSourcedOnline && [[ ! -d $qpkg_repo_path ]] && mkdir -p "$qpkg_repo_path"
 IsUsePipCache && [[ ! -d $pip_cache_path ]] && mkdir -p "$pip_cache_path"
 IsVirtualEnvironmentUsed && [[ ! -d $venv_path ]] && mkdir -p "$venv_path"
 DisplayCommitToLog OK
@@ -471,7 +508,7 @@ $orig_daemon_service_script stop
 chmod -x "$orig_daemon_service_script"
 fi
 }
-PullGitRepo()
+CloneGitRepo()
 {
 IsGitApp || return 0
 local branch_depth='--depth 1'
@@ -485,7 +522,7 @@ branch_switch=true
 DisplayCommitToLog "active git branch: '$active_branch', new git branch: '$source_git_branch'"
 [[ $QPKG_NAME = nzbToMedia ]] && BackupConfig
 DisplayCommitToLog 'new git branch has been specified, so must clean local repository'
-CleanLocalClone
+CleanLocalRepo
 fi
 fi
 if [[ ! -d $qpkg_repo_path/.git ]]; then
@@ -501,13 +538,13 @@ fi
 [[ $branch_switch = true && $QPKG_NAME = nzbToMedia ]] && RestoreConfig
 return 0
 }
-CleanLocalClone()
+CleanLocalRepo()
 {
 if [[ -z $QPKG_PATH || -z $QPKG_NAME ]] || IsNotSourcedOnline; then
 SetError
 return 1
 fi
-IsGitApp && DisplayRunAndLog 'clean local repository' "rm -rf \"$qpkg_repo_path\"" log:failure-only
+(IsGitApp || IsOnlineArchive) && DisplayRunAndLog 'clean local repository' "rm -rf \"$qpkg_repo_path\"" log:failure-only
 IsGitApp && [[ -d $(/usr/bin/dirname "$qpkg_repo_path")/$QPKG_NAME ]] && DisplayRunAndLog 'KLUDGE: remove previous local repository' "rm -r \"$(/usr/bin/dirname "$qpkg_repo_path")/$QPKG_NAME\"" log:failure-only
 IsVirtualEnvironmentUsed && [[ -d $venv_path ]] && DisplayRunAndLog 'clean virtual environment' "rm -rf \"$venv_path\"" log:failure-only
 IsUsePipCache && [[ -d $pip_cache_path ]] && DisplayRunAndLog 'clean PyPI cache' "rm -rf \"$pip_cache_path\"" log:failure-only
@@ -952,7 +989,7 @@ IsNotQPKGEnabled()
 }
 IsSupportBackup()
 {
-[[ $backup_pathfile != undefined ]]
+[[ $qpkg_backup_pathfile != undefined ]]
 }
 IsNotSupportBackup()
 {
@@ -968,7 +1005,7 @@ IsNotSupportReset()
 }
 IsSupportGetAppVersion()
 {
-[[ $app_version_pathfile != undefined ]]
+[[ $app_version_cmd != undefined && $app_version_pathfile != undefined ]]
 }
 IsNotSupportGetAppVersion()
 {
@@ -998,9 +1035,17 @@ IsNotUsePipCache()
 {
 ! IsUsePipCache
 }
+IsOnlineArchive()
+{
+[[ $remote_url != undefined ]]
+}
+IsNotOnlineArchive()
+{
+! IsOnlineArchive
+}
 IsSourcedOnline()
 {
-IsGitApp || IsUsePipCache || IsVirtualEnvironmentUsed
+IsGitApp || IsUsePipCache || IsVirtualEnvironmentUsed || IsOnlineArchive
 }
 IsNotSourcedOnline()
 {
@@ -1652,10 +1697,6 @@ DisplayCommitToLog "$(FormatAsPackageName "$QPKG_NAME") disable failed."
 SetError
 fi
 ;;
-s|-s|status|--status)
-SetServiceAction status
-StatusQPKG
-;;
 b|-b|backup|--backup|backup-config|--backup-config)
 IsSU ||	exit 1
 if IsSupportBackup; then
@@ -1696,7 +1737,7 @@ if IsSourcedOnline; then
 SetServiceAction clean
 StopQPKG
 [[ $QPKG_NAME = nzbToMedia ]] && BackupConfig
-CleanLocalClone
+CleanLocalRepo
 StartQPKG
 [[ $QPKG_NAME = nzbToMedia ]] && RestoreConfig
 else
@@ -1736,6 +1777,10 @@ Display "library: $SERVICE_LIB_VERSION"
 ;;
 remove)
 SetServiceAction uninstall
+;;
+s|-s|status|--status)
+SetServiceAction status
+StatusQPKG
 ;;
 debug|help|verbose)
 ShowHelp

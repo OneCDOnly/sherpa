@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#* don't edit this file, it was built/modified programmatically with the 'build-qpkgs.sh' script. (source: 'sabnzbd.source')
+#* Please don't edit this file directly, it was built/modified programmatically with the 'build-qpkgs.sh' script. (source: 'sabnzbd.source')
 #* sabnzbd.sh
 #* Copyright (C) 2017-2024 OneCD - one.cd.only@gmail.com
 #*   So, blame OneCD if it all goes horribly wrong. ;)
@@ -20,15 +20,12 @@
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 readonly USER_ARGS_RAW=$*
 readonly QPKG_NAME=SABnzbd
-readonly SERVICE_SCRIPT_VERSION='240113'
-InitBasic()
-{
-service_script_type=1
-source_git_url=https://github.com/sabnzbd/sabnzbd.git
-}
-InitComplex()
+readonly SERVICE_SCRIPT_VERSION='240115'
+readonly SERVICE_SCRIPT_TYPE=1
+InitService()
 {
 app_version_pathfile=$qpkg_repo_path/sabnzbd/version.py
+app_version_cmd="/bin/grep '__version__ =' $app_version_pathfile | /bin/sed 's|^.*\"\(.*\)\"|\1|'"
 daemon_pathfile=$qpkg_repo_path/SABnzbd.py
 daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile --daemon --browser 0 --config-file $qpkg_ini_pathfile --pidfile $daemon_pid_pathfile"
 get_ui_listening_address_cmd="/sbin/getcfg misc host -d undefined -f $qpkg_ini_pathfile"
@@ -36,7 +33,7 @@ get_ui_port_cmd="/sbin/getcfg misc port -d 0 -f $qpkg_ini_pathfile"
 get_ui_port_secure_cmd="/sbin/getcfg misc https_port -d 0 -f $qpkg_ini_pathfile"
 get_ui_port_secure_enabled_test_cmd='[[ $(/sbin/getcfg misc enable_https -d 0 -f '$qpkg_ini_pathfile') = 1 ]]'
 source_git_branch=master
-IsSupportGetAppVersion && app_version_cmd="/bin/grep '__version__ =' $app_version_pathfile | /bin/sed 's|^.*\"\(.*\)\"|\1|'"
+source_git_url=https://github.com/sabnzbd/sabnzbd.git
 }
 library_path=$(/usr/bin/readlink "$0" 2>/dev/null)
 [[ -z $library_path ]] && library_path=$0

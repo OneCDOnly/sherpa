@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-#* don't edit this file, it was built/modified programmatically with the `build-qpkgs.sh` script. (source: mylar3.source)
-#* mylar3.sh
+#* Please don't edit this file directly, it was built/modified programmatically with the 'build-qpkgs.sh' script. (source: 'lazylibrarian.source')
+#* lazylibrarian.sh
 #* Copyright (C) 2017-2024 OneCD - one.cd.only@gmail.com
 #*   So, blame OneCD if it all goes horribly wrong. ;)
 #* Project:
@@ -19,22 +19,21 @@
 #*	 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 readonly USER_ARGS_RAW=$*
-readonly QPKG_NAME=Mylar3
-readonly SERVICE_SCRIPT_VERSION='240108'
-InitBasic()
+readonly QPKG_NAME=LazyLibrarian
+readonly SERVICE_SCRIPT_VERSION='240115'
+readonly SERVICE_SCRIPT_TYPE=1
+InitService()
 {
-service_script_type=1
-source_git_url=https://github.com/mylar3/mylar3.git
-}
-InitComplex()
-{
-daemon_pathfile=$qpkg_repo_path/Mylar.py
+app_version_pathfile=$qpkg_repo_path/lazylibrarian/version.py
+daemon_pathfile=$qpkg_repo_path/LazyLibrarian.py
 daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile --daemon --nolaunch --datadir $(/usr/bin/dirname "$qpkg_ini_pathfile") --config $qpkg_ini_pathfile --pidfile $daemon_pid_pathfile"
-get_ui_listening_address_cmd="/sbin/getcfg interface http_host -d undefined -f $qpkg_ini_pathfile"
-get_ui_port_cmd="/sbin/getcfg interface http_port -d 0 -f $qpkg_ini_pathfile"
-get_ui_port_secure_cmd="/sbin/getcfg interface http_port -d 0 -f $qpkg_ini_pathfile"
-get_ui_port_secure_enabled_test_cmd='[[ $(/sbin/getcfg interface enable_https -d 0 -f '$qpkg_ini_pathfile') = 1 ]]'
+get_ui_listening_address_cmd="/sbin/getcfg misc host -d 0.0.0.0 -f $qpkg_ini_pathfile"
+get_ui_port_cmd="/sbin/getcfg General http_port -d 5299 -f $qpkg_ini_pathfile"
+get_ui_port_secure_cmd="/sbin/getcfg General http_port -d 5299 -f $qpkg_ini_pathfile"
+get_ui_port_secure_enabled_test_cmd='[[ $(/sbin/getcfg General https_enabled -d 0 -f '$qpkg_ini_pathfile') = 1 ]]'
 source_git_branch=master
+source_git_url=https://gitlab.com/LazyLibrarian/LazyLibrarian.git
+IsSupportGetAppVersion && app_version_cmd="/bin/grep '__version__ =' $app_version_pathfile | /bin/sed 's|^.*\"\(.*\)\"|\1|'"
 }
 library_path=$(/usr/bin/readlink "$0" 2>/dev/null)
 [[ -z $library_path ]] && library_path=$0

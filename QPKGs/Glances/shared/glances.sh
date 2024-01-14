@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#* don't edit this file, it was built/modified programmatically with the `build-qpkgs.sh` script. (source: glances.source)
+#* Please don't edit this file directly, it was built/modified programmatically with the 'build-qpkgs.sh' script. (source: 'glances.source')
 #* glances.sh
 #* Copyright (C) 2017-2024 OneCD - one.cd.only@gmail.com
 #*   So, blame OneCD if it all goes horribly wrong. ;)
@@ -20,12 +20,9 @@
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 readonly USER_ARGS_RAW=$*
 readonly QPKG_NAME=Glances
-readonly SERVICE_SCRIPT_VERSION='240108'
-InitBasic()
-{
-service_script_type=6
-}
-InitComplex()
+readonly SERVICE_SCRIPT_VERSION='240115'
+readonly SERVICE_SCRIPT_TYPE=6
+InitService()
 {
 daemon_pathfile=$venv_path/bin/glances
 daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile --webserver"

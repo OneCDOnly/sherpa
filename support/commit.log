@@ -1,0 +1,300 @@
+447107ea39e143b5f93139f4cc91d20dd7b5b28d update comments
+3419777e78527ec301db0c85afdf3df01ef739b2 don't rebuild sherpa QPKG on every make
+a3a7265c2060178d7726608bb9ead22a891cbd86 [update] archives
+3e9846b914857093654789e744080ee5f33ae740 fix shellcheck pickups
+116536ed0ef98a49cae48757effa3051b91ab396 rename 'standalone' tier as 'independent'
+145e39dc81937d9dece6e2bc2893f6ed0578cec1 allow for changing archive filename
+516aa6ac47e8392d5ee6c75c3e21d16034257ee3 [update] archives
+d72b906c98302a915afaa3a948d645a936c486da initial upload of prototype Sonarr QPKGs
+846e8dcccd3e758b55cb67e97089086fb4901676 [update] archives
+0614d18a0e8e4e0299ca6b09d1017e75256317fc update arch notes
+d20305e1015cde1c6a30cfdb3ee8c6c6b36a10d4 [update] archives
+15635c3f966b190335483862272b4e7ef5cc8a51 [update] archives
+4e256bd7d2dad67e98f3bd8e07cb23549acb84b5 [update] archives
+b4ec4701d9c588498542ca987b5576060e6c2978 SickGear no-longer compatible with armv5 & armv7 - see package compatibility-notes.txt fir details.
+b85fd1199d875a7b8c2890b061076e1b5a69a957 [update] archives
+db4f479e0ce5c7ddd9cd6b258b5465070522b3ba update Olivetin armv5 and armv7 source filenames
+3edc66de54c9b9dbd477e484735c57a8feadaa7e [update] archives
+a46a62bf32c63a59124489c38a466e7742aa16b1 allow application versions of 'none' to be shown
+29a7805c4da0cd3afc956291b8f4405bd89b8c1e use white for package notes instead of cyan
+fc1e2440c29118d0de1726f4f44401f3ca53a079 [update] archives
+ab21ae8f1dcf622474f780a46f55c6f0fee31100 include application versions in packages report
+ab79f9ac1c6bde362ae8db118d11c7ccdd4f5d3d minor message fixup
+142b01060287e7a0a33f613092d24fdf9e281566 [update] archives
+f3a839140c1e73ca7db26f7e76aa4f073a074336 include application versions in status report
+2a1b60733b35e50a2b183ac96a7634553089f89b include QPKG field for application version
+0b55048ad905380a2b8ba78e8d1e8fd6402296ec include status table column for application versions
+e3e1e008ef31b55022775d766bc82d9b81f9617a [update] archives
+379112795facae30d0b53f0549287a66e910385c use shorter action failure message
+fadae737e8911ca9b349b34f1cd2e95229578299 improve results report messages
+037e5480c42cf2eac6906a1c55073ee41eef1078 reduce sleep times at 100% progress - minor speedup.
+6846204cffe0308e34f4d6715636697e2b70cf51 make 'onescreen' the default option for all file viewports
+716388599495c01c2ded0099e2227d73eeabd665 include explanation of 'slow' QPKG status meaning when required
+049bae5871ee8fb7391ff283c6dedabee76eda04 ensure progress displays use fd2
+07d97ad1da6e65569f4e8947682e2b5180655ebb update comments
+2826702b89d0fd817eff0ee7917da314df883ee4 [update] archives
+251e076e399f9faa6d0b0a8fcbfb54efc12188c3 update notes
+f1e1c378e0a87a05b989b432008c62956b96708b [update] archives
+fb588e42e7b8921f0fd8d5d5d3fcafaab4358657 ensure only a single instance of sherpa can be started
+501ea1486b3fea479e9538f65ad6f9c6da9a57ec [update] archives
+9f84f98b2f1a254d4d6cdfc36615fc6b9964215b fix minor colour formatting on dependencies report
+f4d1d8a9566009093a68a506b5f6d8a964598cab update global array names
+c7430d741c6bfd43da7af284e19832bc8da9c666 [update] archives
+d5c3fc19341a7a56aeb723acc3244ff42ffb8783 ensure uninstall of OTransmission also uninstalls binaries - `transmission-daemon` will be auto-removed on uninstallation of this QPKG.
+374c9780531a33a7e15bdd350174a389f8577df2 give 'reports' its own path
+f9f2db28b9deb4286b7e4925f9088ed0ab2b8e9e [update] archives
+7f4f52ab68bece44fdf84ad2598415fecc5a0e1a only show main title once when arg error found
+6e15758fc829ecf2ba34f15b4e2e2b297d81a47e update comments
+d7510e85747977142495363df00b0b26d480927e [update] archives
+95975db93588822412e7818eb72f74081bb4b7fe [update] archives
+174687d1466756c9d9ebcac81d6c1c3c285c047b redraw file viewport contents on quit
+ef05e352b7cefa108968f49ad25a766ede881515 [update] archives
+08946a12b3c69c6ebaf9c995f8f7939aff8e544f update archives
+f69f3f7ceefdf44003b9e101535b83365c8cf793 fix QPKG version column width in status report table
+393204440a381a3d2f45a0353461e3a6682adb04 use report line generator concurrency for other slow reports
+715b8fc0c602571c4c86d49803dc34b53bfdfa50 update archives
+b2da53b24283a8093d591751f7353bb07ca6d430 reduce 'status' and 'repo' report generation time - launch generators for all reports lines concurrently.
+63a1cf5b02aa381e32f61c79b3b0180761648f71 build archives
+73c07dafe7a708363173a02ff2f207bf221281de don't atempt to install QPKGs already installed - also, QPKG database now uses 'builtin' to indicate QPKG service script has its own status query function.
+7cb1a58869f29a6afedf771a092c48e7a1083d37 upadte comments
+d678ea02a7736f6db0747cab84e042f2151096fa update archives
+acc344362156d0f508492bd12eb259fbb4ca6ce1 show available QPKG version for 'not installed' QPKGs in status report
+4a7663845d1e32a7cfd95edc08bd6385cb23208c don't show QPKG author in packages report - will re-add this later, possibly as a new line under each package description.
+eb6c52dfc4366d4f88bce875b004604c057a6b35 update archives
+27fe09dc44ee0bfa573ecdb28ebd94067ff37eca disable installation of `gpt-engineer` - appears 'pydantic' needs to be compiled in rust. Not available at the moment.
+0c189e8f766599a08444b9e26654dcb86135168e update archives
+bbe114253b88ff4e651eedb3007faad2a275c11e ensure dependent QPKGs are detected as-such
+b487f7c0b6474dc043d6b0f4f0346feccda592e1 update contact info for application authors
+c85b25cbfaaf4a4ea0abb48d1e62428f1e719bf0 update comments
+9f63e0e01c812025cf465ca6e15022c0886b8765 update archives
+ebcd3c10d6aa582dfa5dc81cbcdf0091b095a7e3 dont show QPKG notes with 'none' as value
+beeb888a98f2ca4963138039cbcba20e7dfd2a84 ensure default listening address is returned in LazyLibrarian
+b3c264b8d7309c47a2b093dbba0f1375b27ffb28 improve handling of properties common to same QPKG name
+e2f6ade0c9a71bf7b08b2c5f47129ca1519567df update archives
+2cf9b18e7f8dbc0f7c721ee11f2bc9fa220d3f2d fix SABnzbd URL links
+5aed16217f0b5b71d6b67e5ed4cfd9ea505f6e12 don't wrap lines in report displays - also, only jump left/right by 4 characters at-a-time (GNU 'less' only).
+2db9916323be7a740f3aff68ac0ee95e08cc6e5c remove diacritics from author names - extra bytes used messes-up string length.
+25427614c7248d168a72e489b42e632af04a8b1e fix faulty package field names - also update names and addresses.
+f127e36ac6d549dc9c4fef51ea27559d424b58bd update author emailss
+e796be86dc51ecfd743102deb716bacd2758610f support for QPKG maintainer and application dev email addresses
+d1ff3b570b16db9f65f0ffc1e16fade7cda79ca5 build separate SABnzbd QPKGs for each arch
+e542dddbc898532acce421942fcf5029183b5574 add Unrar as installable package - nightly push only
+ff1b1023e11c2d4851c299e612fe6b37f3f2d0a4 [post-merge] writeback
+29c71bb2259202621f342f32cdbc75bab0507294 [merge] from `unstable` into `stable`
+23b3ce4374a19565146e7bee69a888783b709cfd remove superseded QPKGs
+a61b571c4810da5887d44fdba0a5f5843f6f72fb rename 'complementary' IPKs as 'auxiliary' IPKs
+559fa82ce79ed749cde1433f0863c8b9d5266d5c update archives
+70cea118bbb9d39a3ea5c5649ef3a01c158aa3f2 include Unrar as dev package
+70d3be24f67d06a561d79d6494842391d31dcb60 improve action display progress
+1a8ac70df5f320851b95b2caa812b56ba9ba25dd update link to new inxi QPKG version
+dd3fb67874a90109932c56c2fac56ed7ec9e757d fix type 3 script starts
+2078c75095ff2c5dbe8e61558d9e6680aea49582 fix daemon detection
+62d622af526b02ee7e97a67fb6c18a49bdb7fde3 include minor display wording and punctuation tweaks
+85133f07e9528b1beefbd702147756678c8815eb update archives
+58c3c5970df8b088c047724acd380ca7fc75c1ec improve QPKG description display
+5a38fbaae33d5ae0a4375dc21214d8fc8ee9235a allow 'none' to be specified as arch - to prevent QPKGs being installed.
+696183b55fc90fa69cf35d2dbec8332c55e2a7bf update PyPI deps for gpt-engineer
+3d1cb39c7a4177e8176494c19b1a50fed9dd81d9 update archives
+6a2a953052d3bc898bdc300e411eaa8ff69afa42 improve action result reason display
+b90069884cd5399187b6399515247257eee90f65 ensure dependency report correctly shows all QPKG dependencies
+3b6752734b38ee2f2859d9b765195ef2fd9a2159 remove unrequired quotes
+4dc595473b2376528ceea7a04c11b9d32339e9af update comments
+d16c33daac320226e43644d2e132f5e0c070231b fix dependency required for Glances - and build an initial gpt-engineer QPKG
+d50912672c6e62e1b24e235788c8b00ee2ce3170 ensure type 1 & type 6 QPKGs have access to sys python packages
+31b971f9c255fcc23aa111ed5a278bf1475ec4ab make pyLoad use more shared library functions
+0768f8de7bca1380089d97b637cd6bd1764a0f80 make Glances use more shared library functions
+f61864934268799ba2a03ad44501dd6bd543dbd8 don't use 2 lines for skipped and failed action details
+96453311034400fb41e53094b26a04553e78227d enhance display of single package names
+e3d55a7dd4baef4be4183d7f7024cd5d4d0bfc15 switch Headphones to follow 'master' branch again
+ed4b0e3b54ccaff24e85d0262f6b067a24eaabee update archives
+5374fa7bae4fbcbcf2a58521dce51031dc12d045 improve progress message
+e998ec2d2e830bb734b9b6559e75c1020fe5e597 simplify sourcing of common build vars
+e4cbbb94e63352e498b656160607f6c5eb2d8468 include source branch in debug log
+4960b3c3c745c54b1293fcc7d335e75cf8ef1f24 ensure source_branch is global
+8aef0b35b2c6cfdf91c7849ed767510322fb52be correctly set management source branch var at runtime
+1e694bc325e3a6c4a91ce48f31fc14859ed9dbcf calculate source branch at runtime
+1932f1ff736ba951d08696fbb0a74686688cc632 update comments
+ef14a120d29ff1770169468126ac2bd12819f7da update with unstable branch links
+444fa347717b5c6a050b01949ac3a0691f739ef2 update comments
+59eaa6357b5c1474e6af7a7f8ab2dc12c159d5f5 [post-merge] writeback
+d192247ef781592fc52a3641beca4c5757a47ed8 [merge] from `unstable` into `stable`
+114bd19a62d664c19e2858da97fa9a3a90f88906 [pre-merge] update archives
+f3dd72b517aeb68ca34e73a7b02e01269699d49f update build process
+98ba6893c8b0bd36bd44c69a03015c937e75a056 support alternative dependent QPKG installations
+4e01f2cb81d4a8a3f72319fa3fe24f72459f4e2c ensure unstable links are to unstable branch
+c209acbb67d03160ab208965c9c75cda74d30935 automate sherpa version update in README.md
+9f8a4d5a20008d5e44ef991172424204da208748 [post-merge] writeback
+45486ef1352c94861a0471e6f67bbbc4cd8deed0 [merge] from `unstable` into `stable`
+d4a4fd75fb0fb3899e38c2973edcdcf1ce865ac2 [pre-merge] update archives
+d12ede606401b2e158410496efc4e468d9e20020 update latest release version
+572c0e4df909adb99fad3f81df0069d21f70d1dc [post-merge] writeback
+8cf7ffab8cd85344ae9f0d954f3865d49ba00421 [merge] from `unstable` into `stable`
+fe4e2fc79ddf55542ca1c763517724db712066a0 [pre-merge] update archives
+f67681fd77ca961e564133a62c3ac1aa6deb2240 [post-merge] writeback
+d1fe79cb33ff9739b83e1e6e8455a90d683ccece [merge] from `unstable` into `stable`
+87652d4c03f07106a1fda1c9de1c968cb70e3525 [pre-merge] update archives
+3fffb4ba7a5bce564756a371d24a413235e5c04f update message formatting
+fb2b1bb4a0077a6d766896aaf9b5dc3bd877cc66 [merge] from `unstable` into `stable`
+2642ff21a6a69cbb6bdfd632672150a05ed2d252 [pre-merge] update archives
+16a5565aa1fe14f37231312b2858a1a5340fad1a packages rebuilt
+dde1950419eb963b968b6a5df082aaa29cb60eca check for `opkg` command after installing Entware - perform a basic check for this file. If not present, then installation failed. - also check for target QPKGs installed service script file before attempting to call it.
+c4d906f7e132e3677013ba0a6d8e1547c7d7f283 only reactivate QPKGs that were previously enabled - don't blindly reactivate all QPKGs, should only reactivate those that were enabled (at-least) and preferably running (not checked for due to length of time it takes).
+40b0d869649a9bcb1831fa3e56a20f91266bb3e6 update comments
+4ad83dbf0562bbd100d68f2f87d4c5cfc90a8f76 [merge] from `unstable` into `stable`
+e02bf6d3300d0264f4ee220c3851f8a9021f6235 [pre-merge] update archives
+a3b1d47af5dd72e8cd510784d71f87e9cd31a9b5 ensure Entware installed date check does not crash - also, improve progress messages.
+75cc8118d45482ed9ae2f54bdef3b6be34fb83ab [merge] from `unstable` into `stable`
+cb14a5b448d5b8a0486c352bae35cb00c2397748 [pre-merge] update archives
+8c49ffd3c9151418e6695f7fa0100db9f49b7624 fix incorrect var check - script now correctly aborts when no actions are specified (only `debug` or `verbose`).
+44b726685f96907d34bb8954db2d897361daaf75 [merge] from `unstable` into `stable`
+6b909d46d58424110c8f41df9fa9222861d94151 [pre-merge] update archives
+315b8daff340c7b8b0ffce26cb196a949739beb6 tidyup for Par2 arches
+5d9a954dead35662396a4bbe4848e47466dffa72 Merge branch 'stable' into unstable
+67c2e37844301e042ca81b3547ea85ddec863575 [merge] from `unstable` into `stable`
+345f4dba9c8aaea12ca9877a417cecef2f066b47 [pre-merge] update archives
+f8c6d072ebd1ed85428c1661a48fe76c8a0a1532 temp removal of Par2 QPKG as dependency
+2e0f5b1b762dbaafb94c2c1b1014e26d07ed878d Merge branch 'stable' into unstable
+f88211b3717ba9d389965f0ce57e6671554d826e [merge] from `unstable` into `stable`
+bdff8e5b125df25592465d36349410672a552a21 [pre-merge] update archives
+aa8a75261bbac1889bf1e508b8d410b91d37e6a0 esnure sherpa loader follows correct source branch
+5bfb5a419ffa51bf152fbaeeade12110ac5aef2e when only a single QPKG will be actioned, display its name
+4ff639ebb0c13e9c937d691720ca525e7063345c prefer 'unstable' over 'stable' when merging
+5afb4b5eea3cac7df25838e76778ce4168fb95d9 Merge branch 'stable' into unstable
+1e309aaccc77bb3ebed308bebbb3b31c8f16b7b4 apply correction for 'packages' file
+9693d66e09015e26dcf93268345337803146ade3 version bump for SortMyQPKGs
+5b6ab5ffd9f3f23c2f6444fd2105d9683e4f5227 include initial support for alternative dep QPKGs
+231a5913dbaff033d9adf2a800af02e8923111f2 fix par2 active tests
+875b4bd8ac2329714886445d4dd25dfd7a0a0586 update comments
+ecd737ebb54314629574596e1b2b04c16a6f6a9d fix active test for 'par2' - test will now check for specific QPKG symlink.
+bec572ad4f06acee43cb01b23d178771af611320 add 'Par2tubo' as downloadable QPKG
+0a3d75ed70fc61d686b9ae650b4818df88059df9 remove unrequired quotes
+57adb8b003201d6dfc5db4b99c7e0c1384a6f363 tweak quotes
+f197ac2153d829d99019492ac753012f357afa25 minor format tweaks
+1156bf8b030682cf24a985129c1278db2a7e61d5 include source git branch for each QPKG in qpkg.conf - needed when source branch has been changed by user, then QPKG is reinstalled.
+58722ef833549a14402142cd567071f21b6c2ad4 remove unrequired quotes
+3d5327820ad2428d693dfa7a7e3786d6a62c297e remove kludge to clear all installed QPKG max versions
+a4c1767c15e4b20e368fcad6ce6587ee2a825286 remove unrequired quotes
+4eee3fa1a6f55a0d1b3934c6a2a6f364d836a8dd condense command args
+020f894dc0590ed7a14fb7bcdffc7daef634265d user clearer naming for saved package lists
+97326ada5fc470910a6d2ce86caa917544085588 remove unused functions
+e84495ebdc86152c9ca361b9dec4548b6e8351b1 [merge] from `unstable` into `stable`
+ee8f6d77c0a91d5d1a24f682ef5603da82ff7258 [pre-merge] update archives
+4ce26fe91dd4058db6602cd78e8b5f6e9175130c update comments
+b0c0b02c5d818397f6bcf500f914ce1d1a7fbbfc ensure saved app version is removed when cleaning local repo
+1bc8d48f6d9b378be35f781bca4d79022f9c3686 display report writing progress when required
+29416bbc37aaca1e49e0c8dbc8917ae1ae0c453f update comments
+33510ec9678bc120c39cef15d4b8c810dc79a6b5 add support for QPKG max firmware version
+c866f0336d68fe7b79230d665b71f499d1fecfd5 fix IPK dep count progress
+7896d28ad80cd22816c98a38b2acaefe76c28f0c fix error when starting QPKGs
+451b51bfbccf6359d1a361246a8ca3a252f5b767 minor code format tweaks
+8495e94da7c0aeaacc91b7694b69591ed4e8b903 add support for display of multiple missing QPKGs
+d4b369a4addd278cdbe1306b0fb140393291ef25 improve reports display
+db89eda389c7ee0a336d193a9143e291abc9aaf9 improve dependency report
+ddf428b14c949a22a747a49fc7d1d34448348320 only create QPKG sub-dirs if main dir exists
+80410b5b8e1e5dd9b76a7977eccebfd775f521ad update comments
+f55289c6aa92ac5810707ae40d0ec7b17758bf07 update comments
+fbc9292b692fd05b7878b29e89f0b368fe632627 improve dependency report messages
+40c3f9a9704ab84dd931458ac6ed78a0fbedc6e8 improve embedded tag names
+8dcf068f64aceb48d7e3450c9a4512b13bb5d937 update archives
+c33d2272ceeeddc1b1eed762444c6c4208787e1b only restart enabled deps when running a `check`
+d2d9f699be40b49136be94ce5ad69fa1fdf5763c reinstall all IPKs previously installed when reinstalling Entware - fixes: https://github.com/OneCDOnly/sherpa/issues/273
+fed93827ccb0f8007807efcba740c4e7a8092c80 don't sign QPKGs when reinstalling or upgrading - not needed.
+b66826d6406756dc5bf0a6bc9840ff60df0c03e4 reformat copyright message
+f15011a641d68fe0f88d89bcc7001896d5ec318e display QPKGs in original order in status report table
+e85e09c946f1be9f34883727a52c410353174d7f don't include double linespaces in verbose mode
+ae50d5e25ca303df9a319e2038619fb6b309e5ad update archives
+b28c8ed2ffc70663d1ed15b23c5137370933ed4c don't pad end of reports to fill screen when viewing
+4fc69c015482b84f80a9431d74145d0e7dd81dea minor comment fixes
+7706caeaf0377a8b5791fb68614248b2bbfb3f5c sort var names
+131478539e374a205c6da266ff8682465e074503 add QPKG enabled status to dependency report table
+897ede823fbeeef6706a39e8518738382dd0f475 prefer list displays to be shown on onescreen if-possible
+55b6e2b7905ca386bf454a6e2ef87efeeec0689d update archives
+94c87ba470087d64b95f332171f83dda2e066bca code source branch into management script
+ebab3b520da4c60ff8e0d8c4df5ee11916f54149 ensure sherpa-loader also follows selected source branch
+01300847f23e23f36b6ba3ac49a114f4cb9c8079 add support for running live from `unstable` branch
+ff7d0affc0d422ee2fd3047bfdf01a9432114b75 [merge] from `unstable` into `stable`
+d2b4686746557b718864bb1768444419a679e614 [pre-merge] update archives
+bc4423cc60db91250fa025f42ee1e4d9e29cfcae remove obsolete packages
+4649e32a6bcd51ffd50aebca5eabe6e7a38aefb5 [merge] from `unstable` into `stable`
+4a636acc573ecb957e8344583db59dc2d10633e6 [pre-merge] update archives
+777d904cd0b82e469f3b018b2d7eac418293d65d minor library tweak
+1c6fc98f054f5c8bb9fe067ffe67ab5604486bce [merge] from `unstable` into `stable`
+5eeb1be504b1f9cce3c39de4b0641e24afd88df6 [pre-merge] update archives
+fa9b9cb17a63481466eedc91b054b3c8f3a55c24 shift a few vars in service library
+f2b668cf79875b227f49307d15a5da0744c00d6c [merge] from `unstable` into `stable`
+2e58fbe96205e8d9eb3b7f08c616bf8474ba3b06 [pre-merge] update archives
+1939fb0c12a60d683d5429a1a0625ede3e650c3f rebuild QPKGs with fixed service function library symlink
+d18cdda27ea80c0433b7643c431dc37820e92a8c update release link
+388c9da45bb8f2d0d0432712ff9fda05e0ee346a [merge] from `unstable` into `stable`
+785e0947105c959ec79a9420f3b6dc1a84eb2593 [pre-merge] update archives
+655b8100485b918b0c44ef27067a357a72ee08eb update release link
+f20d11b1a9145b1f732fa3b63f4502c8430d3eb1 [merge] from `unstable` into `stable`
+b4b691daf0ee1d2bc868caefd644cce3e4781415 [pre-merge] update archives
+abd92cf7d577832c32e619ecfec016498d388251 remove obsolete QPKG versions
+65549958db31cac590bad91d2bd2245ab3655068 update comments
+dfe5dae1769575e2467878c8c77ffe71283ebe67 update comments
+73c6c8cf23ebec15f55227123186fee307acff92 include 'email' as replaceable tag
+58b8057b3ea9ac14450da9bf4b1f872d692d4847 update comments
+0023b37474637520e7f9bbfd27a145a7a215f792 [merge] from `unstable` into `stable`
+f4d536b4be7b9b041827ec963cfdf29bcef069e4 [pre-merge] update archives
+fa74ff843ebe07f832278f15609ee1cbac64c495 fix tag-swapping in 'packages'
+5bd8c018987d3d0c6de6e858794eb8560311a297 update comments
+7f429f6525d3e5f51b3c81ce4030c62bee030796 update comments
+b7c3c881a38fc803441a1dd73c3c7bcac1a76e5e [merge] from `unstable` into `stable`
+0e090a293c40f45268f07096601faf4c4f568874 [pre-merge] update archives
+495c7856e29a2709308a2023d147335f4d5580e7 temp revert build-packages.sh
+af3b010c0b6c0e7012358f702f4b9782bd158824 [merge] from `unstable` into `stable`
+5db391a15c8db08641f557f54dfb93c115e98fe7 [pre-merge] update archives
+ad8643b26ddea3b91f5944bd2cb07a2e85171776 switch OMedusa & OSickgear to use service function library - service library has been updated so rebuild QPKGs.
+957080d19f81deaa3ffe8164671c83973c205d5a move a couple of service script type-specific vars into library
+60a859ae1dd2d575fee27531b8a3a99c53aa33a7 ensure original filename is written correctly
+eaddd401c78f90034d9205652cf8545deabd935d update comments
+fa0eb400f45ebe7321aee45477a5c3854bb853bb add 'filename' as replaceable tag - update 'dontedit' message.
+2e75b5f697c61c3c5e7ecf2a0e9e580869a8fe1f [merge] from `unstable` into `stable`
+8fafa6197c79dc51cfb63aa15f80289958c2741a [pre-merge] update archives
+a706872bd949423d7f44d067fd229198335a669d switch Mylar3 to use service function library
+f98086f472b34ea9f10ef15a3c85ef927882482c [merge] from `unstable` into `stable`
+859eb418981b89fda9ec59bd3905c2bfdf9bda24 [pre-merge] update archives
+68aa35e05e94a6e41bbb000cb1b3506d7fee9c09 switch Headphones to use service function library
+9982ad426db9858f930f3aeadd5a778bead4acc5 [merge] from `unstable` into `stable`
+84f7de8d6a917bac1596bcf83c74e7d5ea5e8d28 [pre-merge] update archives
+bff6f7b19b5a616b2cdaec3eb0e7c67c3827dfd4 [merge] from `unstable` into `stable`
+89fadc006a0b9b2be6daac3585e52b149b8a57b8 [pre-merge] update archives
+a0a911fd7b64da4e28ee9463a1db2edcb48b5906 switch LazyLibrarian to use service function library
+8a3bf34c77fb1f6df435897033737ffa87bae392 rename utilities
+34efd10bdd8999c9571e633f9196d1cf9d31607a [merge] from `unstable` into `stable`
+016e3c81222c74392c69a64694b8de6034563a3b [pre-merge] update archives
+2cd926948fa0c41e2b62fee856cca09f10b6730d tweak permissions
+8945bb369996e1c87cc12b7d2de0bb910d0ed953 [merge] from `unstable` into `stable`
+a261a68432717fc944e727516e4948aedd060736 [pre-merge] update archives
+eec1b39a30a24db4a8f7ecf14f9acd4dea654aa2 reword 'addon' as 'complementary'
+cc5ed2c280387c4a53435534a1ddb08d6b77448e restart Entware after installing/reinstalling
+a00ada594e70fec8d14b8d72d22b903442d6ff0b [merge] from `unstable` into `stable`
+58f98914a478b1c97d41942ec8ee72f50b8cf404 [pre-merge] update archives
+2d56dc41b4a3f7a4cf7151698abe358005008bae update tracked Python version
+06d4c844557e8fc6cb4b7e7ad4dbcbe99223ad55 [merge] from `unstable` into `stable`
+4646d657823c47552864b44ec3ed264c58e31367 [pre-merge] update archives
+87f86465cf1d9559e540758823b5fd24b30f268d minor tweaks
+ec41f7b1901cdf93a26041d039a1fae3fbff1927 update comments
+910af756cb54b93ccf8e703d2453721fcaba74e5 update comments
+0059063e9184e5783907234549f4ebf1bf2d497a [merge] from `unstable` into `stable`
+b07a57efedf9e4c386c542a69624a8fa0aeaa1ef [pre-merge] update archives
+79d2bc0dee8f6dea7c7e8baab6eac09d2ea823ca ensure 'm2r' PyPI module is installed for Watcher3
+136e0ebf74970756b81b75576730809cf0a49168 [merge] from `unstable` into `stable`
+1baac08b20954f3b4da846d9b0a27e2f3ab32320 [pre-merge] update archives
+b5d47e72dbd243ffa40203e0b90691f6f7bb3e77 fix permissions
+c93be3b249cc1274c87fc51d854fc5b0cec1d656 [pre-merge] update archives
+aad91763c3138177899589ef7ee012675a66716e set scripts as executable
+f8e0463f5ccc0b4d6d0a8120cb9ea413643e8114 [merge] from `unstable` into `stable`
+bc8279aa7932aef1926b352b4e670298bbbd4682 [pre-merge] update archives
+2684928bceeca996aeb607ac1e6904c03392dd2f only select installed QPKGs when reinstalling
+7060c357a7e16a78a038fc34a465c5268baf9d2a [merge] from `unstable` into `stable`
+84f8f69eec17183e399cab6301c266d7ceef7cb8 [pre-merge] update archives
+477e976cde06d58fa3b35004fc3424d0f1c27c28 rename service library - also, push 3 QPKGs for testing with service.lib: SABnzbd, OTransmission & OWatcher3.
+8a8eec52b5f5ad5b59ddcb47b4998c001fa2a96d update comments
+6cbaa1654f5a156fdb42dc0a2c59bc906012ae1e [merge] from `unstable` into `stable`
+571550b6d3d754454a6321f3d6906e61712662b4 [pre-merge] update archives
+af33d38a06e593ec1a54510668a5a35897fe07cf check for Entware status before looking for `git` binary
+37c6e87ec0cc1a2682876bf7c006cf187634a18e [merge] from `unstable` into `stable`
+59853d298d68ecf462940f74e16655260f711ca0 [pre-merge] update archives
+c392870fde63619aee6eec25134b32f6004ee4c1 remove obsolete QPKG versions

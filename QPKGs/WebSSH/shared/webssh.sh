@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-#* don't edit this file, it was built/modified programmatically with the 'build-qpkgs.sh' script. (source: 'lazylibrarian.source')
-#* lazylibrarian.sh
+#* Please don't edit this file directly, it was built/modified programmatically with the 'build-qpkgs.sh' script. (source: 'webssh.source')
+#* webssh.sh
 #* Copyright (C) 2017-2024 OneCD - one.cd.only@gmail.com
 #*   So, blame OneCD if it all goes horribly wrong. ;)
 #* Project:
@@ -19,24 +19,21 @@
 #*	 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 readonly USER_ARGS_RAW=$*
-readonly QPKG_NAME=LazyLibrarian
-readonly SERVICE_SCRIPT_VERSION='240113'
-InitBasic()
+readonly QPKG_NAME=WebSSH
+readonly SERVICE_SCRIPT_VERSION='240115'
+readonly SERVICE_SCRIPT_TYPE=6
+InitService()
 {
-service_script_type=1
-source_git_url=https://gitlab.com/LazyLibrarian/LazyLibrarian.git
-}
-InitComplex()
-{
-app_version_pathfile=$qpkg_repo_path/lazylibrarian/version.py
-daemon_pathfile=$qpkg_repo_path/LazyLibrarian.py
-daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile --daemon --nolaunch --datadir $(/usr/bin/dirname "$qpkg_ini_pathfile") --config $qpkg_ini_pathfile --pidfile $daemon_pid_pathfile"
-get_ui_listening_address_cmd="/sbin/getcfg misc host -d 0.0.0.0 -f $qpkg_ini_pathfile"
-get_ui_port_cmd="/sbin/getcfg General http_port -d 5299 -f $qpkg_ini_pathfile"
-get_ui_port_secure_cmd="/sbin/getcfg General http_port -d 5299 -f $qpkg_ini_pathfile"
-get_ui_port_secure_enabled_test_cmd='[[ $(/sbin/getcfg General https_enabled -d 0 -f '$qpkg_ini_pathfile') = 1 ]]'
+app_version_cmd="/bin/grep '__version__ =' $app_version_pathfile | /bin/sed 's|^.*\"\(.*\)\"|\1|'"
+run_daemon_in_screen_session=true
+venv_python_pathfile=$venv_path/bin/python
+daemon_pathfile=$venv_path/bin/wssh
+daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile --address='0.0.0.0' --port=8010 --encoding=850"
+get_ui_listening_address_cmd='echo 0.0.0.0'
+get_ui_port_cmd='echo 8010'
+get_ui_port_secure_cmd='echo 0'
+get_ui_port_secure_enabled_test_cmd='false'
 source_git_branch=master
-IsSupportGetAppVersion && app_version_cmd="/bin/grep '__version__ =' $app_version_pathfile | /bin/sed 's|^.*\"\(.*\)\"|\1|'"
 }
 library_path=$(/usr/bin/readlink "$0" 2>/dev/null)
 [[ -z $library_path ]] && library_path=$0
