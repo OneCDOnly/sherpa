@@ -213,7 +213,6 @@ DisplayCommitToLog true
 else
 DisplayCommitToLog false
 fi
-MakePaths
 CloneGitRepo || { SetError; return 1 ;}
 InstallAddons || { SetError; return 1 ;}
 if IsNotDaemon; then
@@ -412,7 +411,6 @@ return 0
 }
 BackupConfig()
 {
-MakePaths
 DisplayRunAndLog 'update configuration backup' "/bin/tar --create --gzip --file=$qpkg_backup_pathfile --directory=$QPKG_PATH/config ." || SetError
 return 0
 }
@@ -434,7 +432,7 @@ return 0
 MakePaths()
 {
 if [[ -d $QPKG_PATH ]]; then
-DisplayWaitCommitToLog 'create paths:'
+DisplayWaitCommitToLog 'ensure package paths exist:'
 [[ ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
 IsSourcedOnline && [[ ! -d $qpkg_repo_path ]] && mkdir -p "$qpkg_repo_path"
 IsUsePipCache && [[ ! -d $pip_cache_path ]] && mkdir -p "$pip_cache_path"
