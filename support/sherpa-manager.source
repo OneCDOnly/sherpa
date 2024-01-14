@@ -184,8 +184,8 @@ Self.Results:Show()
 			QPKGs.ScInstallable:Show
 		elif QPKGs.AClist.SCupgradable.IsSet; then
 			QPKGs.ScUpgradable:Show
-		elif QPKGs.AClist.SCstandalone.IsSet; then
-			QPKGs.ScStandalone:Show
+		elif QPKGs.AClist.SCindependent.IsSet; then
+			QPKGs.ScIndependent:Show
 		elif QPKGs.AClist.SCdependent.IsSet; then
 			QPKGs.ScDependent:Show
 		fi
@@ -556,7 +556,7 @@ Lists:Load()
 
 	# These are used internally by sherpa.
 	# ordered
-	PACKAGE_TIERS=(standalone auxiliary dependent)
+	PACKAGE_TIERS=(independent auxiliary dependent)
 
 	# sorted
 	QPKG_IS_STATES=(active backedup downloaded enabled installed missing signed slow unknown)
@@ -574,7 +574,7 @@ Lists:Load()
 
 	# These actions, states and scopes may be specified by the user.
 	# sorted
-	USER_QPKG_SC_GROUPS=(all canbackup canclean canrestarttoupdate dependent hasdependents installable standalone upgradable)
+	USER_QPKG_SC_GROUPS=(all canbackup canclean canrestarttoupdate dependent hasdependents installable independent upgradable)
 	USER_QPKG_SCNT_GROUPS=(canclean installable upgradable)
 	USER_QPKG_IS_STATES=(active backedup enabled installed missing)
 	USER_QPKG_ISNT_STATES=(active backedup enabled installed)
@@ -921,7 +921,7 @@ Self:Validate()
 		done
 	fi
 
-	# Ensure standalone packages are also installed when processing these specific actions.
+	# Ensure independent packages are also installed when processing these specific actions.
 
 	for action in upgrade reinstall install; do
 		for package in $(QPKGs-AC${action}-to:Array); do
@@ -931,7 +931,7 @@ Self:Validate()
 		done
 	done
 
-	# Install standalones for installed dependents.
+	# Install independents for installed dependents.
 
 	for package in $(QPKGs-ISinstalled:Array); do
 		if [[ $opts_check = true ]] || QPKGs-ACactivate-to.Exist "$package"; then
@@ -941,10 +941,10 @@ Self:Validate()
 		fi
 	done
 
-	# If a standalone has been selected for `reinstall`/`reactivate`, need to `deactivate` its dependents first, and `activate` them again later.
+	# If a independent has been selected for `reinstall`/`reactivate`, need to `deactivate` its dependents first, and `activate` them again later.
 
 	for package in $(QPKGs-ACreinstall-to:Array) $(QPKGs-ACreactivate-to:Array); do
-		if QPKGs-SCstandalone.Exist "$package" && QPKGs-ISinstalled.Exist "$package"; then
+		if QPKGs-SCindependent.Exist "$package" && QPKGs-ISinstalled.Exist "$package"; then
 			for prospect in $(QPKG.GetDependents "$package"); do
 				if QPKGs-ISenabled.Exist "$prospect"; then
 					QPKGs-ACdeactivate-to:Add "$prospect"
@@ -954,20 +954,20 @@ Self:Validate()
 		fi
 	done
 
-	# If a standalone has been selected for `deactivate`/`uninstall`, need to `deactivate` its dependents first.
+	# If a independent has been selected for `deactivate`/`uninstall`, need to `deactivate` its dependents first.
 
 	for package in $(QPKGs-ACdeactivate-to:Array) $(QPKGs-ACuninstall-to:Array); do
-		if QPKGs-SCstandalone.Exist "$package" && QPKGs-ISinstalled.Exist "$package"; then
+		if QPKGs-SCindependent.Exist "$package" && QPKGs-ISinstalled.Exist "$package"; then
 			for prospect in $(QPKG.GetDependents "$package"); do
 				QPKGs-ISinstalled.Exist "$prospect" && QPKGs-ACdeactivate-to:Add "$prospect"
 			done
 		fi
 	done
 
-	# If a standalone has been selected for `uninstall`, then `install`, need to `deactivate` its dependents first, and `activate` them again later.
+	# If a independent has been selected for `uninstall`, then `install`, need to `deactivate` its dependents first, and `activate` them again later.
 
 	for package in $(QPKGs-ACuninstall-to:Array); do
-		if QPKGs-SCstandalone.Exist "$package" && QPKGs-ISinstalled.Exist "$package"; then
+		if QPKGs-SCindependent.Exist "$package" && QPKGs-ISinstalled.Exist "$package"; then
 			if QPKGs-ACinstall-to.Exist "$package"; then
 				for prospect in $(QPKG.GetDependents "$package"); do
 					if QPKGs-ISenabled.Exist "$prospect"; then
@@ -987,7 +987,7 @@ Self:Validate()
 		QPKGs-ACinstall-to:Add Entware
 	fi
 
-	# If dependents have been selected for `reinstall`/`install`/`activate`/`reactivate`, need to `activate` their standalone packages first.
+	# If dependents have been selected for `reinstall`/`install`/`activate`/`reactivate`, need to `activate` their independent packages first.
 
 	for action in reinstall install activate reactivate; do
 		for package in $(QPKGs-AC${action}-to:Array); do
@@ -1067,18 +1067,18 @@ Self:Validate()
 #
 #	6. stop/deactivate dependents
 #	7. disable dependents
-#	8. stop/deactivate standalones
-#	9. disable standalones
+#	8. stop/deactivate independents
+#	9. disable independents
 #  10. uninstall all
 #
-#  11. upgrade standalones
-#  12. reinstall standalones
-#  13. install standalones
-#  14. restore standalones
-#  15. clean standalones
-#  16. enable standalones
-#  17. restart/reactivate standalones
-#  18. start/activate standalones
+#  11. upgrade independents
+#  12. reinstall independents
+#  13. install independents
+#  14. restore independents
+#  15. clean independents
+#  16. enable independents
+#  17. restart/reactivate independents
+#  18. start/activate independents
 #
 #  19. upgrade dependents
 #  20. reinstall dependents
@@ -1117,7 +1117,7 @@ Actions:Proc()
 		tier=${PACKAGE_TIERS[$tier_index]}
 
 		case $tier in
-			standalone|dependent)
+			independent|dependent)
 				Action:Proc deactivate $tier QPKG deactivating deactivated
 				Action:Proc disable $tier QPKG disabling disabled
 				Action:Proc uninstall $tier QPKG uninstalling uninstalled
@@ -1128,7 +1128,7 @@ Actions:Proc()
 
 	for tier in "${PACKAGE_TIERS[@]}"; do
 		case $tier in
-			standalone|dependent)
+			independent|dependent)
 				Action:Proc upgrade $tier QPKG upgrading upgraded
 				Action:Proc reinstall $tier QPKG reinstalling reinstalled
 				Action:Proc install $tier QPKG installing installed
@@ -1180,7 +1180,7 @@ Action:Proc()
 
 	# input:
 	#   $1 = $TARGET_ACTION					e.g. `activate`, `reactivate` ...
-	#   $2 = $TIER							e.g. `standalone`, `dependent`, `auxiliary`, `all`
+	#   $2 = $TIER							e.g. `independent`, `dependent`, `auxiliary`, `all`
 	#   $3 = $PACKAGE_TYPE					e.g. `QPKG`, `IPK`, `PIP`
 	#   $4 = $ACTION_PRESENT_MSG			e.g. `activating` ...
 	#   $5 = $ACTION_PAST_MSG				e.g. `activated` ...
@@ -1586,7 +1586,7 @@ ParseArgs()
 
 		if [[ -z $action ]]; then
 			case $arg in
-				a|abs|action|actions|actions-all|alias|aliases|all-actions|b|backups|d|deps|dependencies|dependent|dependents|disabled|enabled|failed|groups|inactive|indeps|independent|independents|installable|installed|l|last|log|missing|new|not-installed|o|ok|option|options|p|package|packages|problems|r|repo|repos|results|skipped|standalone|standalones|stopped|tail|tips|updatable|updateable|upgradable|version|versions|whole)
+				a|abs|action|actions|actions-all|alias|aliases|all-actions|b|backups|d|deps|dependencies|dependent|dependents|disabled|enabled|failed|groups|inactive|indeps|independent|independents|installable|installed|l|last|log|missing|new|not-installed|o|ok|option|options|p|package|packages|problems|r|repo|repos|results|skipped|independent|independents|stopped|tail|tips|updatable|updateable|upgradable|version|versions|whole)
 					action=help
 					arg_identified=true
 					group=''
@@ -1666,8 +1666,8 @@ ParseArgs()
 				r|repo|repos)
 					group=repos
 					;;
-				standalone|standalones|indeps|independent|independents)
-					group=standalone
+				independent|independents|indeps|independent|independents)
+					group=independent
 					;;
 				version|versions)
 					group=versions
@@ -1703,7 +1703,7 @@ ParseArgs()
 		case $action in
 			activate|backup|clean|deactivate|disable|enable|install|reactivate|reassign|rebuild|reinstall|restore|upgrade)
 				case $group in
-					all|dependent|standalone|upgradable)
+					all|dependent|independent|upgradable)
 						QPKGs.AC${action}.SC${group}:Set
 						group=''
 						;;
@@ -1741,7 +1741,7 @@ ParseArgs()
 # 						QPKGs.ACstatus.ISinstalled:Set
 # 						opts_show_status=true
 						;;
-					dependent|installable|standalone|upgradable)
+					dependent|installable|independent|upgradable)
 						QPKGs.AClist.SC${group}:Set
 						hide_title=true
 						;;
@@ -1811,7 +1811,7 @@ ParseArgs()
 				;;
 			status)
 				case $group in
-					all|dependent|standalone|upgradable)
+					all|dependent|independent|upgradable)
 						QPKGs.AC${action}.SC${group}:Set
 						group=''
 						;;
@@ -1834,7 +1834,7 @@ ParseArgs()
 							action_force=false
 						fi
 						;;
-					dependent|standalone)
+					dependent|independent)
 						QPKGs.AC${action}.SC${group}:Set
 						group=''
 						action_force=false
@@ -1911,8 +1911,8 @@ ArgSuggestions:Show()
 					DisplayAsProjSynExam 'to restore all installed package configurations, use' 'restore all'
 					opts_show_basic_help=false
 					;;
-				standalone)
-					DisplayAsProjSynExam "please provide a valid $(ShowAction) before 'standalone' like" 'activate standalones'
+				independent)
+					DisplayAsProjSynExam "please provide a valid $(ShowAction) before 'independent' like" 'activate independents'
 					opts_show_basic_help=false
 					;;
 				all-activate|activate-all)
@@ -1959,7 +1959,7 @@ AllocPackGroupsToAcs()
 				case $action in
 					clean)
 						case $group in
-							all|dependent|standalone)
+							all|dependent|independent)
 								found=true
 
 								for prospect in $(QPKGs-SC${group}:Array); do
@@ -1972,7 +1972,7 @@ AllocPackGroupsToAcs()
 						;;
 					install|status)
 						case $group in
-							all|dependent|standalone)
+							all|dependent|independent)
 								found=true
 
 								QPKGs-AC${action}-to:Add "$(QPKGs-SC${group}:Array)"
@@ -1983,7 +1983,7 @@ AllocPackGroupsToAcs()
 						;;
 					activate|deactivate|enable|disable|reactivate|reinstall|stop|uninstall)
 						case $group in
-							all|dependent|standalone)
+							all|dependent|independent)
 								found=true
 
 								for prospect in $(QPKGs-SC${group}:Array); do
@@ -1996,7 +1996,7 @@ AllocPackGroupsToAcs()
 						;;
 					rebuild)
 						case $group in
-							all|dependent|standalone)
+							all|dependent|independent)
 								found=true
 
 								for prospect in $(QPKGs-SC${group}:Array); do
@@ -2009,7 +2009,7 @@ AllocPackGroupsToAcs()
 						;;
 					upgrade)
 						case $group in
-							all|dependent|standalone|upgradable)
+							all|dependent|independent|upgradable)
 								found=true
 
 								QPKGs-AC${action}-to:Add "$(QPKGs-SCupgradable:Array)"
@@ -4286,7 +4286,7 @@ Report.Groups:Show()
 		Help.Basic:Show
 		DisplayAsHelpTitle "$(ShowPackageGroup) usage examples:"
 		DisplayAsProjSynIndentExam 'select every package' "$(ShowAction) all"
-		DisplayAsProjSynIndentExam 'select only standalone packages (these do not depend on other QPKGs)' "$(ShowAction) standalone"
+		DisplayAsProjSynIndentExam 'select only independent packages (these do not depend on other QPKGs)' "$(ShowAction) independent"
 		DisplayAsProjSynIndentExam '' "$(ShowAction) independents"
 		DisplayAsProjSynIndentExam 'select only dependent packages (these require another QPKG to be installed and active)' "$(ShowAction) dependent"
 		DisplayAsProjSynIndentExam 'select only active packages' "$(ShowAction) active"
@@ -5216,14 +5216,14 @@ QPKGs.States:List()
 
 	}
 
-QPKGs.StandaloneDependent:Build()
+QPKGs.IndependentDependent:Build()
 	{
 
-	# There are three tiers of package: `standalone`, `auxiliary` and `dependent`.
-	# ... but only two tiers of QPKG: `standalone` and `dependent`.
+	# There are three tiers of package: `independent`, `auxiliary` and `dependent`.
+	# ... but only two tiers of QPKG: `independent` and `dependent`.
 
-	# `standalone` QPKGs don't depend-on other QPKGs, but may be required for other QPKGs. They should be installed/activated before any `dependent` QPKGs.
-	# `dependent` QPKGs depend-on other QPKGs. They should be installed/activated after all `standalone` QPKGs.
+	# `independent` QPKGs don't depend-on other QPKGs, but may be required for other QPKGs. They should be installed/activated before any `dependent` QPKGs.
+	# `dependent` QPKGs depend-on other QPKGs. They should be installed/activated after all `independent` QPKGs.
 
 	local package=''
 
@@ -5231,7 +5231,7 @@ QPKGs.StandaloneDependent:Build()
 		if QPKG.IsDependent "$package"; then
 			QPKGs-SCdependent:Add "$package"
 		else
-			QPKGs-SCstandalone:Add "$package"
+			QPKGs-SCindependent:Add "$package"
 		fi
 	done
 
@@ -5838,14 +5838,14 @@ QPKGs.ScUpgradable:Show()
 
 	}
 
-QPKGs.ScStandalone:Show()
+QPKGs.ScIndependent:Show()
 	{
 
 	local package=''
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	for package in $(QPKGs-SCstandalone:Array); do
+	for package in $(QPKGs-SCindependent:Array); do
 		Display "$package"
 	done
 
@@ -8681,7 +8681,7 @@ QPKG.GetDependents()
 	local -i i=-1			# default to not-found.
 	local re=\\b${1:-}\\b
 
-	if QPKGs-SCstandalone.Exist "$1"; then
+	if QPKGs-SCindependent.Exist "$1"; then
 		for i in "${!QPKG_NAME[@]}"; do
 			if [[ ${QPKG_DEPENDS_ON[$i]} =~ $re ]]; then
 				[[ ${ar[*]:-} != "${QPKG_NAME[$i]}" ]] && ar+=(${QPKG_NAME[$i]})
@@ -10394,7 +10394,7 @@ Packages:Load()
 
 	DebugVar PACKAGES_VER
 	QPKGs-SCall:Add "${QPKG_NAME[*]}"
-	QPKGs.StandaloneDependent:Build
+	QPKGs.IndependentDependent:Build
 	Func:Exit
 
 	}
