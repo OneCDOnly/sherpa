@@ -184,9 +184,7 @@ StartQPKG()
 
 	[[ -n ${QPKG_REPO_PATH:-} && ! -d $QPKG_REPO_PATH ]] && mkdir -p "$QPKG_REPO_PATH"
 
-# 	remote_archive_url=$(/sbin/curl${curl_insecure_arg} --silent "$SOURCE_GIT_URL" | /bin/grep browser_download_url | cut -d\" -f4 | /bin/grep "$SOURCE_ARCH")
 	remote_archive_url="${SOURCE_GIT_URL}${SOURCE_ARCH}"
-
 	source_url_pathfile=$QPKG_REPO_PATH/source.url
 	local update=false
 
@@ -195,14 +193,11 @@ StartQPKG()
 		update=true
 	fi
 
-	local_archive_pathfile="$QPKG_PATH/Sonarr.main.4.0.0.748.linux-$SOURCE_ARCH.tar.gz"
+	local_archive_pathfile="$QPKG_PATH/$QPKG_NAME.tar.gz"
 
 	if [[ ! -e $local_archive_pathfile || $update = true ]]; then	# download latest release archive & extract all files
 		readonly NAS_FIRMWARE_VER=$(/sbin/getcfg System Version -f /etc/config/uLinux.conf)
 		[[ ${NAS_FIRMWARE_VER//.} -lt 426 ]] && curl_insecure_arg=' --insecure' || curl_insecure_arg=''
-
-		# https://gist.github.com/steinwaywhw/a4cd19cda655b8249d908261a62687f8
-# 		remote_archive_url=$(/sbin/curl${curl_insecure_arg} --silent "$SOURCE_GIT_URL" | /bin/grep browser_download_url | cut -d\" -f4 | /bin/grep "$SOURCE_ARCH")
 
 		DisplayRunAndLog 'download source archive' '/sbin/curl${curl_insecure_arg} --show-error --location --output $local_archive_pathfile $(<$source_url_pathfile)' || { SetError; return 1 ;}
 	fi

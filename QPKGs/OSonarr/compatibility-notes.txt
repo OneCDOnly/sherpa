@@ -1,0 +1,86 @@
+* arm distribution runtime fails on armv5tel (TS-220) with QTS 4.3.3, armv7 (TS-231P2) with QTS 5.1.4
+
+	armv5tel (TS-220) with QTS 4.3.3
+		# ./Sonarr
+		-sh: ./Sonarr: No such file or directory
+
+		# readelf -a ./Sonarr | grep interpreter
+			[Requesting program interpreter: /lib/ld-linux-armhf.so.3]
+
+		# ll /lib/ld-*
+		-rwxr-xr-x    1 admin    administ    119.8k Dec  4  2008 /lib/ld-2.5.so*
+		lrwxrwxrwx    1 admin    administ         9 Nov 24  2022 /lib/ld-linux.so.2 -> ld-2.5.so*
+		lrwxrwxrwx    1 admin    administ         9 Nov 24  2022 /lib/ld-linux.so.3 -> ld-2.5.so*
+
+		[/lib] # ln -s ld-2.5.so ld-linux-armhf.so.3
+
+		# ./Sonarr
+		./Sonarr: /usr/lib/libstdc++.so.6: version `GLIBCXX_3.4.11' not found (required by ./Sonarr)
+		./Sonarr: /usr/lib/libstdc++.so.6: version `GLIBCXX_3.4.20' not found (required by ./Sonarr)
+		./Sonarr: /usr/lib/libstdc++.so.6: version `GLIBCXX_3.4.21' not found (required by ./Sonarr)
+
+		# ll /usr/lib/libstdc++*
+		lrwxrwxrwx    1 admin    administ        14 Nov 24  2022 /usr/lib/libstdc++.so -> libstdc++.so.6
+		lrwxrwxrwx    1 admin    administ        18 Nov 24  2022 /usr/lib/libstdc++.so.6 -> libstdc++.so.6.0.9
+		-rw-r--r--    1 admin    administ    846.9k Nov 24  2022 /usr/lib/libstdc++.so.6.0.9
+
+		# strings /usr/lib/libstdc++.so.6 | grep GLIBCXX
+		GLIBCXX_3.4
+		GLIBCXX_3.4.1
+		GLIBCXX_3.4.2
+		GLIBCXX_3.4.3
+		GLIBCXX_3.4.4
+		GLIBCXX_3.4.5
+		GLIBCXX_3.4.6
+		GLIBCXX_3.4.7
+		GLIBCXX_3.4.8
+		GLIBCXX_3.4.9
+		GLIBCXX_FORCE_NEW
+
+		# ll /lib/libc*
+		-rwxr-xr-x    1 admin    administ      1.2M Dec  4  2008 /lib/libc-2.5.so*
+		lrwxrwxrwx    1 admin    administ        11 Nov 24  2022 /lib/libc.so.6 -> libc-2.5.so*
+
+	armv7 (TS-231P2) with QTS 5.1.4
+		# ./Sonarr
+		./Sonarr: /usr/lib/libstdc++.so.6: version `GLIBCXX_3.4.20' not found (required by ./Sonarr)
+		./Sonarr: /usr/lib/libstdc++.so.6: version `GLIBCXX_3.4.21' not found (required by ./Sonarr)
+
+		# ll /usr/lib/libstdc++*
+		lrwxrwxrwx    1 admin    administ        14 Jan 14  2024 /usr/lib/libstdc++.so -> libstdc++.so.6
+		lrwxrwxrwx    1 admin    administ        19 Jan 14  2024 /usr/lib/libstdc++.so.6 -> libstdc++.so.6.0.18
+		-rw-r--r--    1 admin    administ    618.0k Nov 28 09:26 /usr/lib/libstdc++.so.6.0.18
+
+		# strings /usr/lib/libstdc++.so.6 | grep GLIBCXX
+		GLIBCXX_3.4
+		GLIBCXX_3.4.1
+		GLIBCXX_3.4.2
+		GLIBCXX_3.4.3
+		GLIBCXX_3.4.4
+		GLIBCXX_3.4.5
+		GLIBCXX_3.4.6
+		GLIBCXX_3.4.7
+		GLIBCXX_3.4.8
+		GLIBCXX_3.4.9
+		GLIBCXX_3.4.10
+		GLIBCXX_3.4.11
+		GLIBCXX_3.4.12
+		GLIBCXX_3.4.13
+		GLIBCXX_3.4.14
+		GLIBCXX_3.4.15
+		GLIBCXX_3.4.16
+		GLIBCXX_3.4.17
+		GLIBCXX_3.4.18
+		GLIBCXX_3.4.19
+		GLIBCXX_DEBUG_MESSAGE_LENGTH
+
+		# ll /lib/ld-*
+		-rwxr-xr-x    1 admin    administ     95.3k Nov 27  2013 /lib/ld-2.17.so*
+		lrwxrwxrwx    1 admin    administ        10 Jan 14  2024 /lib/ld-linux-armhf.so.3 -> ld-2.17.so*
+		lrwxrwxrwx    1 admin    administ        19 Jan 14  2024 /lib/ld-linux.so.3 -> ld-linux-armhf.so.3*
+
+		# ll /lib/libc*
+		-rwxr-xr-x    1 admin    administ    873.3k Mar 23  2015 /lib/libc-2.17.so*
+		lrwxrwxrwx    1 admin    administ        12 Jan 14  2024 /lib/libc.so.6 -> libc-2.17.so*
+
+	Appears 'glibc' version is too-old in these NAS models.

@@ -159,7 +159,7 @@ if [[ ! -e $source_url_pathfile || $(<$source_url_pathfile) != $remote_archive_u
 echo "$remote_archive_url" > "$source_url_pathfile"
 update=true
 fi
-local_archive_pathfile="$QPKG_PATH/Sonarr.main.4.0.0.748.linux-$SOURCE_ARCH.tar.gz"
+local_archive_pathfile="$QPKG_PATH/$QPKG_NAME.tar.gz"
 if [[ ! -e $local_archive_pathfile || $update = true ]]; then
 readonly NAS_FIRMWARE_VER=$(/sbin/getcfg System Version -f /etc/config/uLinux.conf)
 [[ ${NAS_FIRMWARE_VER//.} -lt 426 ]] && curl_insecure_arg=' --insecure' || curl_insecure_arg=''
