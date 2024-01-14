@@ -1,3 +1,8 @@
+* find all QPKG states concurrently.
+
+* wrap column text in packages report.
+	makybe use 'columns' for this?
+
 * results report should be shown in file viewport.
 
 * results report text should account for single QPKG actions
