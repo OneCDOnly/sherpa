@@ -26,6 +26,8 @@ InitService()
 	get_ui_port_secure_cmd='grep "<SslPort>" $qpkg_ini_pathfile | sed "s/.*<SslPort>\(.*\)<\/SslPort>.*/\1/"'
 	get_ui_port_secure_enabled_test_cmd='[[ $(grep "<EnableSsl>" $qpkg_ini_pathfile | sed "s/.*<EnableSsl>\(.*\)<\/EnableSsl>.*/\1/") = True ]]'
 	qpkg_ini_file=config.xml
+		qpkg_ini_pathfile=$QPKG_CONFIG_PATH/$qpkg_ini_file
+			qpkg_ini_default_pathfile=$qpkg_ini_pathfile.def
 	remote_url='https://services.sonarr.tv/v1/download/main/latest?version=4&os=linux&'
 		remote_url+='arch=x64'
 	run_daemon_in_screen_session=true
