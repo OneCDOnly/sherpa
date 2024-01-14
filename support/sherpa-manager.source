@@ -5687,7 +5687,7 @@ Report.Statuses:Show()
 	if QPKGs-ISslow.IsAny; then
 		{
 
-		DisplayAsHelpTitle "statuses shown as '$(ColourTextBrightOrange slow)' are usually because the application has been page-swapped to disk and needs to be reloaded into RAM to respond to a status request. Requesting the application status again shortly afterward should return a useful status result."
+		DisplayAsHelpTitle "statuses shown as '$(ColourTextBrightOrange slow)' are usually because the application has been page-swapped to disk and must be reloaded into RAM to respond to a status request. Requesting the QPKG status again shortly afterward should return a useful status result."
 
 		} >>"$REPORT_OUTPUT_PATHFILE"
 	fi
@@ -10167,7 +10167,7 @@ StripANSI()
 	# QTS 4.2.6 BusyBox `sed` doesn't fully support extended regexes, so code-stripping only works with a real `sed`.
 
 	if [[ -e /opt/bin/sed && -L /opt/etc/passwd ]]; then	# Try to ensure Entware is active before using this utility.
-		/opt/bin/sed -r 's/\x1b\[[0-9;]*m//g' <<< "${1:-}"
+		/opt/bin/sed -r 's/\x1b\[[0-9;]*m//g' <<< "${1:-}"	# https://superuser.com/a/380778
 	else
 		echo "${1:-}"		# Can't strip, so pass thru original message unaltered.
 	fi
