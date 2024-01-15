@@ -251,7 +251,7 @@ Consts:Load()
 	readonly HELP_SYNTAX_INDENT=6
 
 	readonly PACKAGE_ABBS_COL_WIDTH=84
-	readonly PACKAGE_APP_VER_COL_WIDTH=24
+	readonly PACKAGE_APP_VER_COL_WIDTH=16
 	readonly PACKAGE_ARCH_COL_WIDTH=15
 	readonly PACKAGE_AUTHOR_COL_WIDTH=40
 	readonly PACKAGE_DEPENDENCIES_COL_WIDTH=29
@@ -3224,7 +3224,7 @@ DisplayAsPackagesReportTitleLine()
 	# column 2: application version
 
 	if [[ $maxcols -ge 2 ]]; then
-		a="${CHARS_BULLET}Application version:"
+		a="${CHARS_BULLET}App version:"
 		printf "%-$((PACKAGE_APP_VER_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -3340,7 +3340,7 @@ DisplayAsStatusReportTitleLine()
 	# column 4: application version
 
 	if [[ $maxcols -ge 4 ]]; then
-		a="${CHARS_BULLET}Application version:"
+		a="${CHARS_BULLET}App version:"
 		printf "%-$((PACKAGE_APP_VER_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -7897,9 +7897,9 @@ QPKG.App.GetVer()
 	[[ -n ${2:-} ]] && i=$2 || i=$(QPKG.GetArchIndex "$1")
 	[[ $i -ge 0 ]] || return
 
-	a=${QPKG_APPLICATION_VERSION[$i]}
+	a=${QPKG_APP_VERSION[$i]}
 
-	[[ $a = default ]] && a=${QPKG_APPLICATION_VERSION[$(QPKG.GetDefaultArchIndex "$1")]}
+	[[ $a = default ]] && a=${QPKG_APP_VERSION[$(QPKG.GetDefaultArchIndex "$1")]}
 	[[ $a = version ]] && a=${QPKG_VERSION[$(QPKG.GetDefaultArchIndex "$1")]}
 
 	echo "$a"
@@ -8404,7 +8404,7 @@ QPKG.GetAppAuthor()
 
 	for i in "${!QPKG_NAME[@]}"; do
 		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
-			echo "${QPKG_APPLICATION_AUTHOR[$i]}"
+			echo "${QPKG_APP_AUTHOR[$i]}"
 			return 0
 		fi
 	done
@@ -8429,7 +8429,7 @@ QPKG.GetAppAuthorEmail()
 
 	for i in "${!QPKG_NAME[@]}"; do
 		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
-			echo "${QPKG_APPLICATION_AUTHOR_EMAIL[$i]}"
+			echo "${QPKG_APP_AUTHOR_EMAIL[$i]}"
 			return 0
 		fi
 	done
@@ -10369,9 +10369,9 @@ Packages:Load()
 
 	# Package list arrays are now full, so lock them.
 	readonly QPKG_ABBRVS
-	readonly QPKG_APPLICATION_AUTHOR
-	readonly QPKG_APPLICATION_AUTHOR_EMAIL
-	readonly QPKG_APPLICATION_VERSION
+	readonly QPKG_APP_AUTHOR
+	readonly QPKG_APP_AUTHOR_EMAIL
+	readonly QPKG_APP_VERSION
 	readonly QPKG_ARCH
 	readonly QPKG_AUTHOR
 	readonly QPKG_AUTHOR_EMAIL
