@@ -5282,8 +5282,8 @@ QPKGs.States:Build()
 
 	local package=''
 	local prev=''
-	OS.IsStarting && ShowAsWarn "$(GetQnapOS) is starting QPKGs. Check again in a few minutes."
-	OS.IsStopping && ShowAsWarn "$(GetQnapOS) is shutting-down. All QPKGs are being stopped."
+	OS.IsStarting && ShowAsWarn "$(GetQnapOS) is starting QPKGs ... check again in a few minutes."
+	OS.IsStopping && ShowAsWarn "$(GetQnapOS) is shutting-down and all QPKGs are stopping."
 	ShowAsProc 'QPKG states'
 
 	for package in $(QPKGs-SCall:Array); do
