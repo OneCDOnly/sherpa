@@ -121,9 +121,6 @@ InitLibrary()
 	EnsureConfigFileExists
 	LoadAppVersion
 	DisableOpkgDaemonStart
-	IsSupportBackup && [[ ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
-	IsUseVirtualPythonEnv && [[ ! -d $venv_path ]] && mkdir -p "$venv_path"
-	IsUsePipCache && [[ ! -d $pip_cache_path ]] && mkdir -p "$pip_cache_path"
 	IsSourcedOnline && IsAutoUpdateMissing && EnableAutoUpdate >/dev/null
 
 	if [[ $run_daemon_in_screen_session = true && ! -e $SCREEN_CONF_PATHFILE ]]; then
@@ -560,9 +557,9 @@ MakePaths()
 
 	if [[ -d $QPKG_PATH ]]; then
 		[[ ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
-		IsSourcedOnline && [[ ! -d $qpkg_repo_path ]] && mkdir -p "$qpkg_repo_path"
-		IsUsePipCache && [[ ! -d $pip_cache_path ]] && mkdir -p "$pip_cache_path"
-		IsUseVirtualPythonEnv && [[ ! -d $venv_path ]] && mkdir -p "$venv_path"
+		IsSourcedOnline && [[ $qpkg_repo_path != undefined && ! -d $qpkg_repo_path ]] && mkdir -p "$qpkg_repo_path"
+		IsUsePipCache && [[ $pip_cache_path != undefined && ! -d $pip_cache_path ]] && mkdir -p "$pip_cache_path"
+		IsUseVirtualPythonEnv && [[ $venv_path != undefined && ! -d $venv_path ]] && mkdir -p "$venv_path"
 	fi
 
 	}
