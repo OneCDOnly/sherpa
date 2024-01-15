@@ -38,7 +38,7 @@ pidfile_is_managed_by_app=true
 recheck_daemon_pid_after_launch=true
 daemon_pathfile=$qpkg_repo_path/nzbhydra2wrapperPy3.py
 daemon_launch_cmd="$interpreter $daemon_pathfile --nobrowser --daemon --datafolder $QPKG_CONFIG_PATH --pidfile $daemon_pid_pathfile"
-remote_arch=amd64-linux
+remote_arch=arm64-linux
 remote_url='https://api.github.com/repos/theotherp/nzbhydra2/releases/latest'
 resolve_remote_url=true
 }
