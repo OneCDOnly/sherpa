@@ -14,6 +14,9 @@ Headphones_240115.qpkg.md5           Headphones_240115.qpkg           Headphones
 HideThatBanner_230503.qpkg.md5       HideThatBanner_230503.qpkg       HideThatBanner       230503       all    467c7c005e113d06b37bf467d4ba9019
 IncreaseTimeouts_230719.qpkg.md5     IncreaseTimeouts_230719.qpkg     IncreaseTimeouts     230719       all    446a1e07a05cd1832e992cbc58ba2b79
 inxi_240108.qpkg.md5                 inxi_240108.qpkg                 inxi                 240108       all    adb5eef01a027c9478ae8ffc0e199c1b
+Kapowarr_240115_arm_64.qpkg.md5      Kapowarr_240115_arm_64.qpkg      Kapowarr             240115       a64    2207416cc11ec5900cbc687235c9d335
+Kapowarr_240115_x86_64.qpkg.md5      Kapowarr_240115_x86_64.qpkg      Kapowarr             240115       i64    d8f69370403f3a0581834353f3b8ffdb
+Kapowarr_240115_x86.qpkg.md5         Kapowarr_240115_x86.qpkg         Kapowarr             240115       i86    d8fdc2430f4c040e26d360eea9b10485
 LazyLibrarian_240115_arm_64.qpkg.md5 LazyLibrarian_240115_arm_64.qpkg LazyLibrarian        240115       a64    4a3bb4b4538475e5975b7662423e38e9
 LazyLibrarian_240115_x86_64.qpkg.md5 LazyLibrarian_240115_x86_64.qpkg LazyLibrarian        240115       i64    e84243ef6173ef1f32de40113aa247f0
 LazyLibrarian_240115_x86.qpkg.md5    LazyLibrarian_240115_x86.qpkg    LazyLibrarian        240115       i86    544c69c7d03e378a8af9691e68c89ef6
