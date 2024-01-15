@@ -24,6 +24,8 @@ NZBGet_240115.qpkg.md5               NZBGet_240115.qpkg               NZBGet    
 NZBHydra2_240115_arm_64.qpkg.md5     NZBHydra2_240115_arm_64.qpkg     NZBHydra2            240115       a64    4db4dfc160349a7358595ade45b5d9a4
 NZBHydra2_240115_x86_64.qpkg.md5     NZBHydra2_240115_x86_64.qpkg     NZBHydra2            240115       i64    1c8c1e6d7142e66b51245ddc471fe503
 nzbToMedia_230604.qpkg.md5           nzbToMedia_230604.qpkg           nzbToMedia           230604       all    da9a8f8e2d2d25d2f8ca32cd6174a722
+OLidarr_240115_arm_64.qpkg.md5       OLidarr_240115_arm_64.qpkg       OLidarr              240115       a64    705b83152d13e9ef8793a4566a791df5
+OLidarr_240115_x86_64.qpkg.md5       OLidarr_240115_x86_64.qpkg       OLidarr              240115       i64    6cc5459e7d5ce1c9ed830c9d971b57cc
 OliveTin_240113_arm_64.qpkg.md5      OliveTin_240113_arm_64.qpkg      OliveTin             240113       a64    95b065aebcad47d6cfb00720badeafce
 OliveTin_240113_arm-x19.qpkg.md5     OliveTin_240113_arm-x19.qpkg     OliveTin             240113       a19    f0db82371295f0970a12d97214e98364
 OliveTin_240113_arm-x31.qpkg.md5     OliveTin_240113_arm-x31.qpkg     OliveTin             240113       a31    f097b9b3a6d44272fcba9cebdf78b043
