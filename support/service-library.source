@@ -95,8 +95,10 @@ InitLibrary()
 		qpkg_ini_pathfile=$QPKG_CONFIG_PATH/$qpkg_ini_file
 			qpkg_ini_default_pathfile=$qpkg_ini_pathfile.def
 	qpkg_repo_path=undefined
-	recheck_daemon_pid_after_launch=false
+	recheck_daemon_pid_after_launch=false		# if true, application PID is reconfirmed shortly after initial launch. Needed as some applications launch with one PID, then switch to another.
+	remote_arch=undefined
 	remote_url=undefined
+	resolve_remote_url=false					# if 'true', URL must be retrieved from remote first, then parsed to get final URL.
 	run_daemon_in_screen_session=false
 	service_operation=unspecified
 	service_result=undefined
@@ -258,20 +260,35 @@ StartQPKG()
 	fi
 
 	if IsOnlineArchive; then
+		local source_archive_pathfile=$qpkg_repo_path/source.archive
 		local target_url_pathfile=$qpkg_repo_path/source.url
 		local update=false
+		touch "$target_url_pathfile"
 
-		if [[ ! -e $target_url_pathfile || $(<$target_url_pathfile) != "$remote_url" ]]; then
+		if [[ $resolve_remote_url = true ]]; then
+			DisplayWaitCommitToLog 'checking remote archive:'
+			# https://gist.github.com/steinwaywhw/a4cd19cda655b8249d908261a62687f8
+			remote_url=$(/sbin/curl${curl_insecure_arg} --silent "$remote_url" | /bin/grep browser_download_url | cut -d\" -f4 | /bin/grep "$remote_arch")
+			DisplayCommitToLog OK
+		fi
+
+		DisplayWaitCommitToLog 'local archive update:'
+
+		if [[ $(<$target_url_pathfile) != "$remote_url" || ! -e $source_archive_pathfile ]]; then
 			echo "$remote_url" > "$target_url_pathfile"
 			update=true
+			DisplayCommitToLog required
+		else
+			DisplayCommitToLog 'not required'
 		fi
 
-		if [[ ! -e $source_archive_pathfile || $update = true ]]; then	# download latest release archive & extract all files
-			DisplayRunAndLog 'download source archive' '/sbin/curl${curl_insecure_arg} --show-error --location --output '$source_archive_pathfile' $(<'$target_url_pathfile')' || { SetError; return 1 ;}
+		if [[ $update = true ]]; then	# download latest release archive.
+			DisplayRunAndLog 'download remote archive' '/sbin/curl'$curl_insecure_arg' --show-error --location --output '$source_archive_pathfile' $(<'$target_url_pathfile')' || { SetError; return 1 ;}
 		fi
 
-		if [[ ! -e $daemon_pathfile || $update = true ]]; then	# extract from latest release archive
-			DisplayRunAndLog 'extract from archive' "/bin/tar -zxvf $source_archive_pathfile --directory=$qpkg_repo_path" || { SetError; return 1 ;}
+		if [[ ! -e $daemon_pathfile || $update = true ]]; then			# extract from latest release archive.
+			# try '.zip' first, then '.tar.gz'
+			DisplayRunAndLog 'extract from local archive' "/usr/bin/unzip -o $source_archive_pathfile -d $qpkg_repo_path || /bin/tar --extract --verbose --gzip --file=$source_archive_pathfile --directory=$qpkg_repo_path" || { SetError; return 1 ;}
 		fi
 	fi
 
@@ -542,12 +559,10 @@ MakePaths()
 	{
 
 	if [[ -d $QPKG_PATH ]]; then
-		DisplayWaitCommitToLog 'ensure package paths exist:'
 		[[ ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
 		IsSourcedOnline && [[ ! -d $qpkg_repo_path ]] && mkdir -p "$qpkg_repo_path"
 		IsUsePipCache && [[ ! -d $pip_cache_path ]] && mkdir -p "$pip_cache_path"
 		IsUseVirtualPythonEnv && [[ ! -d $venv_path ]] && mkdir -p "$venv_path"
-		DisplayCommitToLog OK
 	fi
 
 	}
