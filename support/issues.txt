@@ -1,3 +1,5 @@
+* management source script is creating an empty 'undefined' subdirectory in current directory when status report is requested.
+
 * 'sherpa list installed' not listing anything, even though some independent QPKGs are installed.
 
 * near the end of installing IPKs, monitored download path can remain at non-zero size while packages complete installation.
