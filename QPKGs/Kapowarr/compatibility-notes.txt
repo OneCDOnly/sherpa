@@ -1,3 +1,0 @@
-* install fails on armv5tel, armv7
-	pydantic-core==2.3.0 (from pydantic>=1.9.1->inflect->jaraco.text->jaraco.collections->cherrypy-> -r requirements.txt (line 3))
-	'maturin' PyPI module can't be compiled: no Rust compiler available
