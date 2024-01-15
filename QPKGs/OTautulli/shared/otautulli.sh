@@ -32,7 +32,6 @@ get_ui_port_secure_cmd="/sbin/getcfg General http_port -d 8181 -f $qpkg_ini_path
 get_ui_port_secure_enabled_test_cmd='[[ $(/sbin/getcfg General https_enabled -d 0 -f '$qpkg_ini_pathfile') = 1 ]]'
 source_git_branch=master
 source_git_url=https://github.com/Tautulli/Tautulli.git
-IsSupportGetAppVersion && app_version_cmd="/bin/grep '__version__ =' $app_version_pathfile | /bin/sed 's|^.*\"\(.*\)\"|\1|'"
 }
 library_path=$(/usr/bin/readlink "$0" 2>/dev/null)
 [[ -z $library_path ]] && library_path=$0
