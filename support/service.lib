@@ -21,7 +21,7 @@
 #*   This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 #*	 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
-readonly SERVICE_LIB_VERSION='240115'
+readonly SERVICE_LIB_VERSION='240116'
 InitLibrary()
 {
 IsQNAP || exit
@@ -115,9 +115,6 @@ MakePaths
 EnsureConfigFileExists
 LoadAppVersion
 DisableOpkgDaemonStart
-IsSupportBackup && [[ ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
-IsUseVirtualPythonEnv && [[ ! -d $venv_path ]] && mkdir -p "$venv_path"
-IsUsePipCache && [[ ! -d $pip_cache_path ]] && mkdir -p "$pip_cache_path"
 IsSourcedOnline && IsAutoUpdateMissing && EnableAutoUpdate >/dev/null
 if [[ $run_daemon_in_screen_session = true && ! -e $SCREEN_CONF_PATHFILE ]]; then
 echo "logfile $SCREEN_LOG_PATHFILE" > "$SCREEN_CONF_PATHFILE"
@@ -446,9 +443,9 @@ MakePaths()
 {
 if [[ -d $QPKG_PATH ]]; then
 [[ ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
-IsSourcedOnline && [[ ! -d $qpkg_repo_path ]] && mkdir -p "$qpkg_repo_path"
-IsUsePipCache && [[ ! -d $pip_cache_path ]] && mkdir -p "$pip_cache_path"
-IsUseVirtualPythonEnv && [[ ! -d $venv_path ]] && mkdir -p "$venv_path"
+IsSourcedOnline && [[ $qpkg_repo_path != undefined && ! -d $qpkg_repo_path ]] && mkdir -p "$qpkg_repo_path"
+IsUsePipCache && [[ $pip_cache_path != undefined && ! -d $pip_cache_path ]] && mkdir -p "$pip_cache_path"
+IsUseVirtualPythonEnv && [[ $venv_path != undefined && ! -d $venv_path ]] && mkdir -p "$venv_path"
 fi
 }
 LoadPorts()
