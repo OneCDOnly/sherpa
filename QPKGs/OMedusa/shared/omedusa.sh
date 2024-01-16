@@ -24,7 +24,6 @@ readonly SERVICE_SCRIPT_VERSION='240116'
 readonly SERVICE_SCRIPT_TYPE=1
 InitService()
 {
-app_version_pathfile=$qpkg_repo_path/medusa/common.py
 daemon_pathfile=$qpkg_repo_path/start.py
 daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile --daemon --nolaunch --datadir $(/usr/bin/dirname "$qpkg_ini_pathfile") --config $qpkg_ini_pathfile --pidfile $daemon_pid_pathfile"
 get_ui_listening_address_cmd="/sbin/getcfg general web_host -d undefined -f $qpkg_ini_pathfile"
@@ -34,7 +33,6 @@ get_ui_port_secure_enabled_test_cmd='[[ $(/sbin/getcfg general enable_https -d 0
 source_git_branch=master
 source_git_branch_depth=single-branch
 source_git_url=https://github.com/pymedusa/Medusa.git
-IsSupportGetAppVersion && app_version_cmd="/bin/grep '^VERSION =' $app_version_pathfile | /bin/sed 's|^.*\"\(.*\)\"|\1|'"
 }
 library_path=$(/usr/bin/readlink "$0" 2>/dev/null)
 [[ -z $library_path ]] && library_path=$0
