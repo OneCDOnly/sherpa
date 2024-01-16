@@ -24,7 +24,6 @@ readonly SERVICE_SCRIPT_VERSION='240116'
 readonly SERVICE_SCRIPT_TYPE=6
 InitService()
 {
-app_version_cmd="/bin/grep '__version__ =' $app_version_pathfile | /bin/sed 's|^.*\"\(.*\)\"|\1|'"
 run_daemon_in_screen_session=true
 venv_python_pathfile=$venv_path/bin/python
 daemon_pathfile=$venv_path/bin/wssh
