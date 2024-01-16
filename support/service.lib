@@ -772,7 +772,7 @@ Display "exec (in screen session): '$1'"
 fi
 else
 if [[ ${5:-false} = false ]]; then
-(eval "$1" > "$LOG_PATHFILE" 2>&1)
+(eval "$1 > $LOG_PATHFILE 2>&1")
 result_code=$?
 fi
 fi
