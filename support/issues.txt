@@ -1,4 +1,7 @@
-* 'sherpa list installed' not listing anything, even though some independent QPKGs are installed.
+* progress display text sometimes desyncs during installation of OMedusa QPKG.
+	example: proc: reinstalling dependent QPKGs ... 36% (7/21), 7 OK36% (7/21), 7 OK, 1 in-progress
+
+* 'sherpa list installed' & 'not-installed' not listing anything.
 
 * near the end of installing IPKs, monitored download path can remain at non-zero size while packages complete installation.
 	maybe include a separate progress message when dir size shrinks to almost zero.
