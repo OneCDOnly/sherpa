@@ -48,6 +48,8 @@ OTautulli_240116_x86_64.qpkg.md5     OTautulli_240116_x86_64.qpkg     OTautulli 
 OTautulli_240116_x86.qpkg.md5        OTautulli_240116_x86.qpkg        OTautulli            240116       i86    749732a0dec7a8d461222b05a2d0d41b
 OTransmission_240116.qpkg.md5        OTransmission_240116.qpkg        OTransmission        240116       all    ba7f419d3b5d06dd12d210eb77c394e5
 OWatcher3_240116.qpkg.md5            OWatcher3_240116.qpkg            OWatcher3            240116       all    a0757dc29c19736c198736da6cbdb066
+OWhisparr_240116_arm_64.qpkg.md5     OWhisparr_240116_arm_64.qpkg     OWhisparr            240116       a64    8609ca45d70dd050e01ffda0d0c9693e
+OWhisparr_240116_x86_64.qpkg.md5     OWhisparr_240116_x86_64.qpkg     OWhisparr            240116       i64    581024d5fb2f97421c5230ca97b97df1
 Par2_0.8.1.1_arm-x19.qpkg.md5        Par2_0.8.1.1_arm-x19.qpkg        Par2                 0.8.1.1      a19    d312d8bd2dee43e62a720f0d209905f8
 Par2_0.8.1.1_x86.qpkg.md5            Par2_0.8.1.1_x86.qpkg            Par2                 0.8.1.1      i86    6c685f4d0571467afbf00f5371c9ac68
 Par2turbo_1.1.0_arm_64.qpkg.md5      Par2turbo_1.1.0_arm_64.qpkg      Par2turbo            1.1.0        a64    2617e5739f17ff557b817a20c2ae38e9
