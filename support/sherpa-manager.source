@@ -4843,14 +4843,14 @@ IncForkProgressIndex()
 	{
 
 	((progress_index++))
-	local formatted_index=$(printf '%02d' "$progress_index")
+	local a=$(printf '%02d' "$progress_index")
 
-	proc_fork_pathfile=$proc_fork_count_path/$formatted_index
-	proc_ok_pathfile=$proc_ok_count_path/$formatted_index
-	proc_skipok_pathfile=$proc_skip_ok_count_path/$formatted_index
-	proc_skip_pathfile=$proc_skip_count_path/$formatted_index
-	proc_skip_error_pathfile=$proc_skip_error_count_path/$formatted_index
-	proc_fail_pathfile=$proc_fail_count_path/$formatted_index
+	proc_fork_pathfile=$proc_fork_count_path/$a
+	proc_ok_pathfile=$proc_ok_count_path/$a
+	proc_skipok_pathfile=$proc_skip_ok_count_path/$a
+	proc_skip_pathfile=$proc_skip_count_path/$a
+	proc_skip_error_pathfile=$proc_skip_error_count_path/$a
+	proc_fail_pathfile=$proc_fail_count_path/$a
 
 	}
 
@@ -8957,7 +8957,9 @@ RunAndLog()
 		eval "$1 > >($TEE_CMD $LOG_PATHFILE) 2>&1"	# NOTE: `tee` buffers stdout here
 		z=$?
 	else
-		eval "$1" > "$LOG_PATHFILE" 2>&1
+#  		eval "$1" > "$LOG_PATHFILE" 2>&1
+		(eval "$1" > "$LOG_PATHFILE" 2>&1)					# run in a subshell to suppress 'Terminated' message later
+# 		eval "$1 > $LOG_PATHFILE 2>&1"
 		z=$?
 	fi
 
