@@ -20,7 +20,7 @@
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 readonly USER_ARGS_RAW=$*
 readonly QPKG_NAME=OMedusa
-readonly SERVICE_SCRIPT_VERSION='240116'
+readonly SERVICE_SCRIPT_VERSION='240117'
 readonly SERVICE_SCRIPT_TYPE=1
 InitService()
 {
@@ -30,6 +30,7 @@ get_ui_listening_address_cmd="/sbin/getcfg general web_host -d undefined -f $qpk
 get_ui_port_cmd="/sbin/getcfg general web_port -d 0 -f $qpkg_ini_pathfile"
 get_ui_port_secure_cmd="/sbin/getcfg general web_port -d 0 -f $qpkg_ini_pathfile"
 get_ui_port_secure_enabled_test_cmd='[[ $(/sbin/getcfg general enable_https -d 0 -f '$qpkg_ini_pathfile') = 1 ]]'
+run_daemon_in_screen_session=true
 source_git_branch=master
 source_git_branch_depth=single-branch
 source_git_url=https://github.com/pymedusa/Medusa.git
