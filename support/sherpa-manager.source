@@ -2869,7 +2869,7 @@ _DirSize:Monitor_()
 
 		[[ ! -e $DISPLAY_INHIBIT_PATHFILE ]] || return
 		WriteMsgInPlace "$progress_msg"
-		sleep .5
+		sleep 1
 	done
 
 	[[ -n $progress_msg ]] && WriteMsgInPlace 'done!'
@@ -3101,6 +3101,7 @@ CalcMaxStatusReportCols()
 # 	local col4_width=$((${#CHAR_SPACER}+${#CHARS_BULLET}+PACKAGE_PATH_COL_WIDTH))
 
 	# Add width to include " (new)" string to QPKG version title.
+
 	if QPKGs-SCupgradable.IsAny; then
 		package_ver_final_col_width=$((PACKAGE_VER_COL_WIDTH+6))
 		((col3_width+6))
