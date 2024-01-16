@@ -3254,7 +3254,7 @@ DisplayAsPackagesReportLine()
 	local description=$(QPKG.GetDesc "$name")
 	local description_msg=$CHARS_BLANK
 	local notes=$(QPKG.GetNote "$name")
-	local notes_msg=$(ColourTextBrightWhite "${CHARS_NOTE}${notes}.")
+	local notes_msg="${notes}."
 	local mode=''
 
 	if QPKG.IsMissing "$name"; then
@@ -3300,12 +3300,12 @@ DisplayAsPackagesReportLine()
 		printf "%-$((PACKAGE_DESCRIPTION_COL_WIDTH+$(LenANSIDiff "$description_msg")))s" "$description_msg"
 
 		if [[ -n $notes ]]; then
-# 			printf "\n%$((${#CHARS_BLANK}+PACKAGE_NAME_COL_WIDTH+PACKAGE_AUTHOR_COL_WIDTH))s${CHARS_DROPEND}%s" '' "$notes_msg"
-			printf "\n%$((${#CHARS_BLANK}+PACKAGE_NAME_COL_WIDTH+PACKAGE_APP_VER_COL_WIDTH))s${CHARS_DROPEND}%s" '' "$notes_msg"
+			printf "\n%$((${#CHARS_BLANK}+PACKAGE_NAME_COL_WIDTH+PACKAGE_APP_VER_COL_WIDTH))s$(ColourTextBrightOrange "${CHARS_DROPEND}${CHARS_NOTE}")%s" '' "$notes_msg"
 		fi
 	fi
 
 	printf '\n'; linespace_visible=false
+	WriteEmptyLineIfNoneExists
 
 	}
 
@@ -10130,6 +10130,19 @@ ColourTextDarkGrey()
 
 	if [[ ${colourful:=true} = true ]]; then
 		printf '\033[1;90m%s\033[0m' "$1"
+	else
+		printf '%s' "$1"
+	fi
+
+	} 2>/dev/null
+
+ColourTextUnderlined()
+	{
+
+	[[ -n ${1:-} ]] || return
+
+	if [[ ${colourful:=true} = true ]]; then
+		printf '\033[4m%s\033[0m' "$1"
 	else
 		printf '%s' "$1"
 	fi
