@@ -183,6 +183,9 @@ InitByServiceType()
 			venv_path=$QPKG_PATH/venv
 				venv_pip_pathfile=$venv_path/bin/pip
 				venv_python_pathfile=$venv_path/bin/python3
+			;;
+		*)
+			:
 	esac
 
 	}

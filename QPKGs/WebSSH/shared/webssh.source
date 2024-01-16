@@ -19,7 +19,7 @@ readonly SERVICE_SCRIPT_TYPE=6
 InitService()
 	{
 
-	app_version_cmd="/bin/grep '__version__ =' $app_version_pathfile | /bin/sed 's|^.*\"\(.*\)\"|\1|'"
+# 	app_version_cmd="/bin/grep '__version__ =' $app_version_pathfile | /bin/sed 's|^.*\"\(.*\)\"|\1|'"
 	run_daemon_in_screen_session=true
  	venv_python_pathfile=$venv_path/bin/python		# WebSSH expects 'python', not 'python3'
 
