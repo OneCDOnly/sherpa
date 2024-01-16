@@ -4340,7 +4340,7 @@ Report.Results:Show()
 
 	local -i datetime=0
 	local action=''
-	local name=''
+	local package_name=''
 	local result=''
 	local -i duration=0
 	local reason=''
@@ -4356,7 +4356,7 @@ Report.Results:Show()
 		if [[ -e $SESS_ACTIONS_RESULTS_PATHFILE ]]; then
 			local IFS='|'
 
-			while read -r datetime action name result duration reason package_type; do
+			while read -r datetime action package_name result duration reason package_type; do
 				if [[ $display_last_action_datetime = true ]]; then
 					DisplayAsHelpTitle "the following package action(s) were run: $(/bin/date -d @"$datetime")"
 					display_last_action_datetime=false
@@ -4374,7 +4374,7 @@ Report.Results:Show()
 							[[ $found = false ]] && DisplayAsHelpTitle "$plural $(ColourTextBrightRed failed):"
 					esac
 
-					ShowAsActionLogDetail "$datetime" "$name" "$action" "$result" "$duration" "$reason"
+					ShowAsActionLogDetail "$datetime" "$package_name" "$action" "$result" "$duration" "$reason"
 					found=true
 				fi
 			done < "$SESS_ACTIONS_RESULTS_PATHFILE"
@@ -6539,6 +6539,11 @@ SaveActionResultToLog()
 	local -r REASON=${5:-}
 	local -r DURATION=$(CalcMilliDifference "${!var_safe_name}" "$(/bin/date +%s%N)")
 	local -r ACTION_TIMES_PATHFILE=$ACTION_TIMES_PATH/$CLEAN_ACTION.milliseconds
+
+	if [[ $2 = undefined ]]; then
+		ShowAsError "${FUNCNAME[0]}() was provided an undefined value for \$2"
+		return 1
+	fi
 
 	# Write new action results entry.
 	echo "$(/bin/date +%s)|$ACTION|$PACKAGE_NAME|$RESULT|$DURATION|$REASON|$PACKAGE_TYPE" >> "$SESS_ACTIONS_RESULTS_PATHFILE"
@@ -9895,6 +9900,11 @@ ShowAsActionLogDetail()
 	#   $4 = result							`ok`, `skipped-ok`, `skipped`, `failed`
 	#   $5 = duration in milliseconds
 	#   $6 = reason (optional)				"file already exists in local cache"
+
+	if [[ $2 = undefined ]]; then
+		ShowAsError "${FUNCNAME[0]}() was provided an undefined value for \$2"
+		return 1
+	fi
 
 	case ${4:-} in
 		skipped|skipped-failed)
