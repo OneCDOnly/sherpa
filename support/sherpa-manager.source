@@ -2768,17 +2768,17 @@ _ActionForks:Launch_()
 	local package=''
 	local target_function=${1:-function null}
 
-	shift   # `shift` all arguments one position to the left.
+	shift   											# `shift` all arguments one position to the left.
 	local -a target_packages=("$@")
 
 	for package in "${target_packages[@]}"; do
-		while [[ $fork_count -ge $max_forks ]]; do  # Don't fork until an empty spot becomes available.
+		while [[ $fork_count -ge $max_forks ]]; do  	# Don't fork until an empty spot becomes available.
 			sleep .2
 			UpdateForkProgress
 		done
 
 		IncForkProgressIndex
-		MarkThisActionForkAsStarted 	# Must create runfile here, as it takes too-long to happen in background function.
+		MarkThisActionForkAsStarted 					# Must create runfile here, as it takes too-long to happen in background function.
 		$target_function "$package" &
 		DebugAsDone "forked $target_function() for '$package'"
 		UpdateForkProgress
@@ -2788,7 +2788,7 @@ _ActionForks:Launch_()
 
 	while [[ $fork_count -gt 0 ]]; do
 		sleep .2
-		UpdateForkProgress	# Update display while running forks complete.
+		UpdateForkProgress								# Update display while running forks complete.
 	done
 
 	# All forks have exited.
