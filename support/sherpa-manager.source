@@ -852,7 +852,7 @@ Self:Validate()
 			installed_ver=$(GetPython3Ver "$PYTHON3_CMD")
 
 			if [[ ${installed_ver//./} -lt $MIN_PYTHON_VER ]]; then
-				ShowAsInfo "the $(ColourTextBrightOrange Python) environment will be auto-upgraded."
+				ShowAsInfo "the $(TextBrightOrange Python) environment will be auto-upgraded."
 				IPKs-ACuninstall-to:Add 'python*'
 			fi
 		fi
@@ -861,7 +861,7 @@ Self:Validate()
 			installed_ver=$(GetPerlVer "$PERL_CMD")
 
 			if [[ ${installed_ver//./} -lt $MIN_PERL_VER ]]; then
-				ShowAsInfo "the $(ColourTextBrightOrange Perl) environment will be auto-upgraded."
+				ShowAsInfo "the $(TextBrightOrange Perl) environment will be auto-upgraded."
 				IPKs-ACuninstall-to:Add 'perl*'
 			fi
 		fi
@@ -894,7 +894,7 @@ Self:Validate()
 	AllocPackStatesToAcs
 
 	if QPKGs-SCupgradable.Exist sherpa; then
-		ShowAsInfo "the $(ColourTextBrightOrange sherpa) QPKG will be auto-upgraded."
+		ShowAsInfo "the $(TextBrightOrange sherpa) QPKG will be auto-upgraded."
 		QPKGs-ACupgrade-to:Add sherpa
 	fi
 
@@ -906,7 +906,7 @@ Self:Validate()
 		local entware_install_date=$(QPKG.GetInstallDate Entware)
 
 		if [[ $entware_install_date = undefined || ${entware_install_date//[!0-9]/} -le 20230604 ]]; then
-			ShowAsInfo "the $(ColourTextBrightOrange Entware) QPKG will be auto-reinstalled (Entware packages were updated early June 2023)."
+			ShowAsInfo "the $(TextBrightOrange Entware) QPKG will be auto-reinstalled (Entware packages were updated early June 2023)."
 			QPKGs-ACreinstall-to:Add Entware
 		fi
 	fi
@@ -1203,7 +1203,6 @@ Action:Proc()
 	local -a target_packages=()
 	local original_colourful=$colourful
 	local -r ACTION_TIMES_PATHFILE=$ACTION_TIMES_PATH/$TARGET_ACTION.milliseconds
-	local buffer=''
 
 	DebugVar TARGET_ACTION
 	DebugVar TIER
@@ -1352,8 +1351,7 @@ Action:Proc()
 			# Sort QPKG action times - longest duration first.
 
 			if [[ -e $ACTION_TIMES_PATHFILE && -e $GNU_SORT_CMD && -L /opt/etc/passwd ]]; then	# Try to ensure Entware is active before using this utility.
-				buffer=$($GNU_SORT_CMD -t'|' -k2 -r -h < "$ACTION_TIMES_PATHFILE")
-				echo "$buffer" > "$ACTION_TIMES_PATHFILE"
+				$GNU_SORT_CMD -t'|' -k2 -r -h < "$ACTION_TIMES_PATHFILE" > "$ACTION_TIMES_PATHFILE"
 			fi
 
 			;;
@@ -2836,7 +2834,7 @@ _DirSize:Monitor_()
 
 		perc_msg="$((200*(current_bytes)/(total_bytes)%2+100*(current_bytes)/(total_bytes)))%"
 		[[ $current_bytes -lt $total_bytes && $perc_msg = '100%' ]] && perc_msg='99%'	# ensure we don't hit 100% until the last byte is downloaded
-		progress_msg="$perc_msg ($(ColourTextBrightWhite "$(FormatAsIsoBytes "$current_bytes")")/$(ColourTextBrightWhite "$(FormatAsIsoBytes "$total_bytes")"))"
+		progress_msg="$perc_msg ($(TextBrightWhite "$(FormatAsIsoBytes "$current_bytes")")/$(TextBrightWhite "$(FormatAsIsoBytes "$total_bytes")"))"
 
 		if [[ $stall_seconds -ge $stall_seconds_threshold ]]; then
 			# Append a message showing stalled time.
@@ -2857,11 +2855,11 @@ _DirSize:Monitor_()
 			# Colourise as-required.
 
 			if [[ $stall_seconds -ge 90 ]]; then
-				stall_msg=$(ColourTextBrightRed "$stall_msg")
+				stall_msg=$(TextBrightRed "$stall_msg")
 			elif [[ $stall_seconds -ge 45 ]]; then
-				stall_msg=$(ColourTextBrightOrange "$stall_msg")
+				stall_msg=$(TextBrightOrange "$stall_msg")
 			elif [[ $stall_seconds -ge 20 ]]; then
-				stall_msg=$(ColourTextBrightYellow "$stall_msg")
+				stall_msg=$(TextBrightYellow "$stall_msg")
 			fi
 
 			progress_msg+=$stall_msg
@@ -2888,7 +2886,7 @@ WriteMsgInPlace()
 
 	local -i blanking_length=0
 	local squeezed_msg=$(tr -s ' ' <<< "${1:-}")
-	local clean_msg=$(StripANSI "$squeezed_msg")
+	local clean_msg=$(StripANSICodes "$squeezed_msg")
 
 	if [[ $clean_msg != "$prev_clean_msg" ]]; then
 		if [[ ${#clean_msg} -lt ${#prev_clean_msg} ]]; then
@@ -3085,7 +3083,7 @@ LenANSIDiff()
 	#   $1 = (optional) text to find length of
 
 	local original=${1:-}
-	local stripped=$(StripANSI "$original")
+	local stripped=$(StripANSICodes "$original")
 	echo "$((${#original}-${#stripped}))"
 
 	return 0
@@ -3272,14 +3270,14 @@ DisplayAsPackagesReportLine()
 
 	case $mode in
 		muted)
-			name_msg=$(ColourTextDarkGrey "$name_msg")
-# 			author_msg=$(ColourTextDarkGrey "$author_msg")
-			app_ver_msg=$(ColourTextDarkGrey "$app_ver_msg")
-			description_msg=$(ColourTextDarkGrey "$description_msg")
+			name_msg=$(TextDarkGrey "$name_msg")
+# 			author_msg=$(TextDarkGrey "$author_msg")
+			app_ver_msg=$(TextDarkGrey "$app_ver_msg")
+			description_msg=$(TextDarkGrey "$description_msg")
 			;;
 		highlighted)
-			name_msg=$(ColourTextBrightRed "$name_msg")
-# 			[[ $author = missing ]] && author_msg=$(ColourTextBrightRedBlink "${CHARS_ALERT}${author}")
+			name_msg=$(TextBrightRed "$name_msg")
+# 			[[ $author = missing ]] && author_msg=$(TextBrightRedBlink "${CHARS_ALERT}${author}")
 	esac
 
 	# column 1: package name
@@ -3300,7 +3298,7 @@ DisplayAsPackagesReportLine()
 		printf "%-$((PACKAGE_DESCRIPTION_COL_WIDTH+$(LenANSIDiff "$description_msg")))s" "$description_msg"
 
 		if [[ -n $notes ]]; then
-			printf "\n%$((${#CHARS_BLANK}+PACKAGE_NAME_COL_WIDTH+PACKAGE_APP_VER_COL_WIDTH))s$(ColourTextBrightOrange "${CHARS_DROPEND}${CHARS_NOTE}")%s" '' "$notes_msg"
+			printf "\n%$((${#CHARS_BLANK}+PACKAGE_NAME_COL_WIDTH+PACKAGE_APP_VER_COL_WIDTH))s$(TextBrightOrange "${CHARS_DROPEND}${CHARS_NOTE}")%s" '' "$notes_msg"
 		fi
 	fi
 
@@ -3333,7 +3331,7 @@ DisplayAsStatusReportTitleLine()
 
 	if [[ $maxcols -ge 3 ]]; then
 		a="${CHARS_BULLET}QPKG version"
-		QPKGs-SCupgradable.IsAny && a+=" ($(ColourTextBrightOrange new))"
+		QPKGs-SCupgradable.IsAny && a+=" ($(TextBrightOrange new))"
 		a+=':'
 		printf "%-$((package_ver_final_col_width+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
@@ -3383,29 +3381,29 @@ DisplayAsStatusReportLine()
 	case $mode in
 		normal)
 			if QPKGs-ISenabled.Exist "$name"; then
-				status+=" $(ColourTextBrightGreen enabled)"
+				status+=" $(TextBrightGreen enabled)"
 			else
-				status+=" $(ColourTextBrightRed disabled)"
+				status+=" $(TextBrightRed disabled)"
 			fi
 
 			if QPKGs-ACstatus-ok.Exist "$name"; then
 				if QPKGs-ISactive.Exist "$name"; then
-					status+=" $(ColourTextBrightGreen active)"
+					status+=" $(TextBrightGreen active)"
 				elif QPKGs-ISslow.Exist "$name"; then
-					status+=" $(ColourTextBrightOrange slow)"
+					status+=" $(TextBrightOrange slow)"
 				elif QPKGs-ISstarting.Exist "$name"; then
-					status+=" $(ColourTextBrightOrange starting)"
+					status+=" $(TextBrightOrange starting)"
 				elif QPKGs-ISstopping.Exist "$name"; then
-					status+=" $(ColourTextBrightOrange stopping)"
+					status+=" $(TextBrightOrange stopping)"
 				elif QPKGs-ISrestarting.Exist "$name"; then
-					status+=" $(ColourTextBrightOrange restarting)"
+					status+=" $(TextBrightOrange restarting)"
 				elif QPKGs-ISunknown.Exist "$name"; then
-					status+=" $(ColourTextBrightOrange unknown)"
+					status+=" $(TextBrightOrange unknown)"
 				else
-					status+=" $(ColourTextBrightRed inactive)"
+					status+=" $(TextBrightRed inactive)"
 				fi
 			else
-				status+=" $(ColourTextBrightOrange unknown)"
+				status+=" $(TextBrightOrange unknown)"
 			fi
 
 			if [[ -n $status ]]; then
@@ -3418,8 +3416,8 @@ DisplayAsStatusReportLine()
 			ver_msg+=$(QPKG.Local.GetVer "$name")
 
 			if [[ -n $upgrade_ver ]]; then
-				ver_msg+=" ($(ColourTextBrightOrange "$upgrade_ver"))"
-				name_msg+=$(ColourTextBrightOrange "$name")
+				ver_msg+=" ($(TextBrightOrange "$upgrade_ver"))"
+				name_msg+=$(TextBrightOrange "$name")
 			else
 				name_msg+=$name
 			fi
@@ -3428,35 +3426,35 @@ DisplayAsStatusReportLine()
 			path_msg+=$(QPKG.GetInstallationPath "$name")
 			;;
 		muted)
-			name_msg+=$(ColourTextDarkGrey "$name")
+			name_msg+=$(TextDarkGrey "$name")
 
 			if ! QPKG.IsArchOK "$name"; then
-				status='not installable: incompatible arch'
+				status='incompatible arch'
 				ver_msg=''
 				app_ver_msg=''
 			elif ! QPKG.IsMinOSVerOk "$name"; then
-				status="not installable: incompatible $(GetQnapOS) version"
+				status="incompatible $(GetQnapOS) version"
 				ver_msg=''
 				app_ver_msg=''
 			elif ! QPKG.IsMinRAMOk "$name"; then
-				status='not installable: insufficient RAM'
+				status='insufficient RAM'
 				ver_msg=''
 				app_ver_msg=''
 			else
 				status='not installed'
-				ver_msg+=$(ColourTextDarkGrey "$(QPKG.Avail.GetVer "$name")")
-				app_ver_msg+=$(ColourTextDarkGrey "$(QPKG.App.GetVer "$name")")
+				ver_msg+=$(TextDarkGrey "$(QPKG.Avail.GetVer "$name")")
+				app_ver_msg+=$(TextDarkGrey "$(QPKG.App.GetVer "$name")")
 			fi
 
-			status_msg=$(ColourTextDarkGrey "${CHARS_NORMAL}${status}")
+			status_msg=$(TextDarkGrey "${CHARS_NORMAL}${status}")
 			path_msg=''
 			;;
 		highlighted)
-			name_msg+=$(ColourTextBrightRed "$name")
-			status_msg=$(ColourTextBrightRedBlink "${CHARS_ALERT}missing")
-			ver_msg+=$(ColourTextBrightRed "$(QPKG.Local.GetVer "$name")")
-			app_ver_msg+=$(ColourTextBrightRed "$(QPKG.App.GetVer "$name")")
-			path_msg=$(ColourTextBrightRedBlink "${CHARS_ALERT}$(QPKG.GetInstallationPath "$name")")
+			name_msg+=$(TextBrightRed "$name")
+			status_msg=$(TextBrightRedBlink "${CHARS_ALERT}missing")
+			ver_msg+=$(TextBrightRed "$(QPKG.Local.GetVer "$name")")
+			app_ver_msg+=$(TextBrightRed "$(QPKG.App.GetVer "$name")")
+			path_msg=$(TextBrightRedBlink "${CHARS_ALERT}$(QPKG.GetInstallationPath "$name")")
 	esac
 
 	# column 1: package name
@@ -3549,7 +3547,7 @@ DisplayAsReposReportLine()
 
 	if [[ $store_id = sherpa ]]; then
 		assigned_repo=sherpa
-		assigned_repo_msg+=$(ColourTextBrightGreen "$assigned_repo")
+		assigned_repo_msg+=$(TextBrightGreen "$assigned_repo")
 	else
 		assigned_repo_msg+=$assigned_repo
 	fi
@@ -3560,34 +3558,34 @@ DisplayAsReposReportLine()
 
 			case $install_date in
 				sherpa)
-					install_date_msg+=$(ColourTextBrightGreen "$install_date")
+					install_date_msg+=$(TextBrightGreen "$install_date")
 					;;
 				unassigned)
-					install_date_msg+=$(ColourTextBrightOrange "$install_date")
+					install_date_msg+=$(TextBrightOrange "$install_date")
 					;;
 				*)
 					install_date_msg+=$install_date
 			esac
 			;;
 		muted)
-			name_msg+=$(ColourTextDarkGrey "$name")
+			name_msg+=$(TextDarkGrey "$name")
 
 			if ! QPKG.IsArchOK "$name"; then
-				assigned_repo='not installable: incompatible arch'
+				assigned_repo='incompatible arch'
 			elif ! QPKG.IsMinOSVerOk "$name"; then
-				assigned_repo="not installable: incompatible $(GetQnapOS) version"
+				assigned_repo="incompatible $(GetQnapOS) version"
 			elif ! QPKG.IsMinRAMOk "$name"; then
-				assigned_repo='not installable: insufficient RAM'
+				assigned_repo='insufficient RAM'
 			else
 				assigned_repo='not installed'
 			fi
 
-			install_date_msg+=$(ColourTextDarkGrey "$assigned_repo")
+			install_date_msg+=$(TextDarkGrey "$assigned_repo")
 			assigned_repo=''
 			assigned_repo_msg=''
 			;;
 		highlighted)
-			name_msg+=$(ColourTextBrightRed "$name")
+			name_msg+=$(TextBrightRed "$name")
 			install_date_msg+=$install_date
 	esac
 
@@ -3670,23 +3668,23 @@ DisplayAsAbsReportLine()
 			abs_msg+=$abs
 			;;
 		muted)
-			name_msg+=$(ColourTextDarkGrey "$name")
+			name_msg+=$(TextDarkGrey "$name")
 
 			if ! QPKG.IsArchOK "$name"; then
-				abs_msg+='(not installable: incompatible arch)'
+				abs_msg+='(incompatible arch)'
 			elif ! QPKG.IsMinOSVerOk "$name"; then
-				abs_msg+="(not installable: incompatible $(GetQnapOS) version)"
+				abs_msg+="(incompatible $(GetQnapOS) version)"
 			elif ! QPKG.IsMinRAMOk "$name"; then
-				abs_msg+='(not installable: insufficient RAM)'
+				abs_msg+='(insufficient RAM)'
 			else
 				abs_msg+=$abs
 			fi
 
-			abs_msg=$(ColourTextDarkGrey "$abs_msg")
+			abs_msg=$(TextDarkGrey "$abs_msg")
 			;;
 		highlighted)
-			name_msg+=$(ColourTextBrightRed "$name")
-			abs_msg=$(ColourTextBrightRedBlink "${CHARS_ALERT}${abs}")
+			name_msg+=$(TextBrightRed "$name")
+			abs_msg=$(TextBrightRedBlink "${CHARS_ALERT}${abs}")
 	esac
 
 	# column 1: package name
@@ -3821,169 +3819,169 @@ DisplayAsDepsReportLine()
 					[[ -n $package_deps ]] && package_deps+=' '
 
 					if QPKG.IsInstalled "$dep" && QPKG.IsEnabled "$dep"; then
-						package_deps+=$(ColourTextBrightGreen "$dep")
+						package_deps+=$(TextBrightGreen "$dep")
 					else
-						package_deps+=$(ColourTextBrightRed "$dep")
-						package_deps_msg=$(ColourTextBrightRed "$CHARS_ALERT")
-						name_msg=${CHARS_BLANK}$(ColourTextBrightRed "$name")
+						package_deps+=$(TextBrightRed "$dep")
+						package_deps_msg=$(TextBrightRed "$CHARS_ALERT")
+						name_msg=${CHARS_BLANK}$(TextBrightRed "$name")
 					fi
 				done
 			else
-				package_deps+=$(ColourTextBrightGreen "$package_deps_raw")
+				package_deps+=$(TextBrightGreen "$package_deps_raw")
 			fi
 
 			package_deps_msg+=${package_deps// /, }
 
 			if QPKG.IsInstalled "$name"; then
-				package_installed_msg+=$(ColourTextBrightGreen true)
+				package_installed_msg+=$(TextBrightGreen true)
 			else
 				package_installed_msg+=false
 			fi
 
 			if QPKG.IsEnabled "$name"; then
-				package_enabled_msg+=$(ColourTextBrightGreen true)
+				package_enabled_msg+=$(TextBrightGreen true)
 			else
-				package_enabled_msg=$(ColourTextBrightRed "$CHARS_ALERT")
-				package_enabled_msg+=$(ColourTextBrightRed false)
-				name_msg=${CHARS_BLANK}$(ColourTextBrightRed "$name")
+				package_enabled_msg=$(TextBrightRed "$CHARS_ALERT")
+				package_enabled_msg+=$(TextBrightRed false)
+				name_msg=${CHARS_BLANK}$(TextBrightRed "$name")
 			fi
 
 			if QPKG.IsMinRAMOk "$name"; then
-				package_min_ram_msg+=$(ColourTextBrightGreen "$package_min_ram")
+				package_min_ram_msg+=$(TextBrightGreen "$package_min_ram")
 			else
-				package_min_ram_msg=$(ColourTextBrightRed "$CHARS_ALERT")
-				package_min_ram_msg+=$(ColourTextBrightRed "$package_min_ram")
-				name_msg=${CHARS_BLANK}$(ColourTextBrightRed "$name")
+				package_min_ram_msg=$(TextBrightRed "$CHARS_ALERT")
+				package_min_ram_msg+=$(TextBrightRed "$package_min_ram")
+				name_msg=${CHARS_BLANK}$(TextBrightRed "$name")
 			fi
 
 			if QPKG.IsMinOSVerOk "$name"; then
-				package_min_os_msg+=$(ColourTextBrightGreen "$package_min_os")
+				package_min_os_msg+=$(TextBrightGreen "$package_min_os")
 			else
-				package_min_os_msg=$(ColourTextBrightRed "$CHARS_ALERT")
-				package_min_os_msg+=$(ColourTextBrightRed "$package_min_os")
-				name_msg=${CHARS_BLANK}$(ColourTextBrightRed "$name")
+				package_min_os_msg=$(TextBrightRed "$CHARS_ALERT")
+				package_min_os_msg+=$(TextBrightRed "$package_min_os")
+				name_msg=${CHARS_BLANK}$(TextBrightRed "$name")
 			fi
 
 			if QPKG.IsMaxOSVerOk "$name"; then
-				package_max_os_msg+=$(ColourTextBrightGreen "$package_max_os")
+				package_max_os_msg+=$(TextBrightGreen "$package_max_os")
 			else
-				package_max_os_msg=$(ColourTextBrightRed "$CHARS_ALERT")
-				package_max_os_msg+=$(ColourTextBrightRed "$package_max_os")
-				name_msg=${CHARS_BLANK}$(ColourTextBrightRed "$name")
+				package_max_os_msg=$(TextBrightRed "$CHARS_ALERT")
+				package_max_os_msg+=$(TextBrightRed "$package_max_os")
+				name_msg=${CHARS_BLANK}$(TextBrightRed "$name")
 			fi
 
 			if QPKG.IsArchOK "$name"; then
-				package_arch_msg+=$(ColourTextBrightGreen true)
+				package_arch_msg+=$(TextBrightGreen true)
 			else
-				package_arch_msg=$(ColourTextBrightRed "$CHARS_ALERT")
-				package_arch_msg+=$(ColourTextBrightRed false)
-				name_msg=${CHARS_BLANK}$(ColourTextBrightRed "$name")
+				package_arch_msg=$(TextBrightRed "$CHARS_ALERT")
+				package_arch_msg+=$(TextBrightRed false)
+				name_msg=${CHARS_BLANK}$(TextBrightRed "$name")
 			fi
 			;;
 		muted)
-			name_msg+=$(ColourTextDarkGrey "$name")
-			package_deps_msg=$(ColourTextDarkGrey "$CHARS_NORMAL")
+			name_msg+=$(TextDarkGrey "$name")
+			package_deps_msg=$(TextDarkGrey "$CHARS_NORMAL")
 
 			if [[ $package_deps_raw != none ]]; then
 				for dep in $package_deps_raw; do
 					[[ -n $package_deps ]] && package_deps+=' '
-					package_deps+=$(ColourTextDarkGrey "$dep")
+					package_deps+=$(TextDarkGrey "$dep")
 				done
 			else
-				package_deps+=$(ColourTextDarkGrey "$package_deps_raw")
+				package_deps+=$(TextDarkGrey "$package_deps_raw")
 			fi
 
 
-			package_deps_msg+=${package_deps// /$(ColourTextDarkGrey ', ')}
-			package_installed_msg+=$(ColourTextDarkGrey false)
-			package_enabled_msg+=$(ColourTextDarkGrey 'N/A')
+			package_deps_msg+=${package_deps// /$(TextDarkGrey ', ')}
+			package_installed_msg+=$(TextDarkGrey false)
+			package_enabled_msg+=$(TextDarkGrey 'N/A')
 
 			if QPKG.IsMinRAMOk "$name"; then
-				package_min_ram_msg+=$(ColourTextDarkGrey "$package_min_ram")
+				package_min_ram_msg+=$(TextDarkGrey "$package_min_ram")
 			else
-				package_min_ram_msg=$(ColourTextBrightOrange "$CHARS_ATTENTION")
-				package_min_ram_msg+=$(ColourTextBrightOrange "$package_min_ram")
-				name_msg=${CHARS_BLANK}$(ColourTextBrightOrange "$name")
+				package_min_ram_msg=$(TextBrightOrange "$CHARS_ATTENTION")
+				package_min_ram_msg+=$(TextBrightOrange "$package_min_ram")
+				name_msg=${CHARS_BLANK}$(TextBrightOrange "$name")
 			fi
 
 			if QPKG.IsMinOSVerOk "$name"; then
-				package_min_os_msg+=$(ColourTextDarkGrey "$package_min_os")
+				package_min_os_msg+=$(TextDarkGrey "$package_min_os")
 			else
-				package_min_os_msg=$(ColourTextBrightOrange "$CHARS_ATTENTION")
-				package_min_os_msg+=$(ColourTextBrightOrange "$package_min_os")
-				name_msg=${CHARS_BLANK}$(ColourTextBrightOrange "$name")
+				package_min_os_msg=$(TextBrightOrange "$CHARS_ATTENTION")
+				package_min_os_msg+=$(TextBrightOrange "$package_min_os")
+				name_msg=${CHARS_BLANK}$(TextBrightOrange "$name")
 			fi
 
 			if QPKG.IsMaxOSVerOk "$name"; then
-				package_max_os_msg+=$(ColourTextDarkGrey "$package_max_os")
+				package_max_os_msg+=$(TextDarkGrey "$package_max_os")
 			else
-				package_max_os_msg=$(ColourTextBrightOrange "$CHARS_ATTENTION")
-				package_max_os_msg+=$(ColourTextBrightOrange "$package_max_os")
-				name_msg=${CHARS_BLANK}$(ColourTextBrightOrange "$name")
+				package_max_os_msg=$(TextBrightOrange "$CHARS_ATTENTION")
+				package_max_os_msg+=$(TextBrightOrange "$package_max_os")
+				name_msg=${CHARS_BLANK}$(TextBrightOrange "$name")
 			fi
 
 			if QPKG.IsArchOK "$name"; then
-				package_arch_msg+=$(ColourTextDarkGrey true)
+				package_arch_msg+=$(TextDarkGrey true)
 			else
-				package_arch_msg=$(ColourTextBrightOrange "$CHARS_ATTENTION")
-				package_arch_msg+=$(ColourTextBrightOrange false)
-				name_msg=${CHARS_BLANK}$(ColourTextBrightOrange "$name")
+				package_arch_msg=$(TextBrightOrange "$CHARS_ATTENTION")
+				package_arch_msg+=$(TextBrightOrange false)
+				name_msg=${CHARS_BLANK}$(TextBrightOrange "$name")
 			fi
 			;;
 		highlighted)
-			name_msg+=$(ColourTextBrightRed "$name")
+			name_msg+=$(TextBrightRed "$name")
 
 			if [[ $package_deps_raw != none ]]; then
 				for dep in $package_deps_raw; do
 					[[ -n $package_deps ]] && package_deps+=' '
 
 					if QPKG.IsInstalled "$dep" && QPKG.IsEnabled "$dep"; then
-						package_deps+=$(ColourTextBrightGreen "$dep")
+						package_deps+=$(TextBrightGreen "$dep")
 					else
-						package_deps+=$(ColourTextBrightRed "$dep")
+						package_deps+=$(TextBrightRed "$dep")
 					fi
 				done
 			else
-				package_deps+=$(ColourTextBrightGreen "$package_deps_raw")
+				package_deps+=$(TextBrightGreen "$package_deps_raw")
 			fi
 
 			package_deps_msg+=${package_deps// /, }
-			package_installed_msg=$(ColourTextBrightRedBlink "$CHARS_ALERT")
-			package_installed_msg+=$(ColourTextBrightRedBlink 'missing')
+			package_installed_msg=$(TextBrightRedBlink "$CHARS_ALERT")
+			package_installed_msg+=$(TextBrightRedBlink 'missing')
 
 			if QPKG.IsEnabled "$name"; then
-				package_enabled_msg+=$(ColourTextBrightGreen true)
+				package_enabled_msg+=$(TextBrightGreen true)
 			else
-				package_enabled_msg=$(ColourTextBrightRedBlink "$CHARS_ALERT")
-				package_enabled_msg+=$(ColourTextBrightRed 'false')
+				package_enabled_msg=$(TextBrightRedBlink "$CHARS_ALERT")
+				package_enabled_msg+=$(TextBrightRed 'false')
 			fi
 
 			if QPKG.IsMinRAMOk "$name"; then
-				package_min_ram_msg+=$(ColourTextBrightGreen "$package_min_ram")
+				package_min_ram_msg+=$(TextBrightGreen "$package_min_ram")
 			else
-				package_min_ram_msg=$(ColourTextBrightRed "$CHARS_ALERT")
-				package_min_ram_msg+=$(ColourTextBrightRed "$package_min_ram")
+				package_min_ram_msg=$(TextBrightRed "$CHARS_ALERT")
+				package_min_ram_msg+=$(TextBrightRed "$package_min_ram")
 			fi
 
 			if QPKG.IsMinOSVerOk "$name"; then
-				package_min_os_msg+=$(ColourTextBrightGreen "$package_min_os")
+				package_min_os_msg+=$(TextBrightGreen "$package_min_os")
 			else
-				package_min_os_msg=$(ColourTextBrightRed "$CHARS_ALERT")
-				package_min_os_msg+=$(ColourTextBrightRed "$package_min_os")
+				package_min_os_msg=$(TextBrightRed "$CHARS_ALERT")
+				package_min_os_msg+=$(TextBrightRed "$package_min_os")
 			fi
 
 			if QPKG.IsMaxOSVerOk "$name"; then
-				package_max_os_msg+=$(ColourTextBrightGreen "$package_max_os")
+				package_max_os_msg+=$(TextBrightGreen "$package_max_os")
 			else
-				package_max_os_msg=$(ColourTextBrightRed "$CHARS_ALERT")
-				package_max_os_msg+=$(ColourTextBrightRed "$package_max_os")
+				package_max_os_msg=$(TextBrightRed "$CHARS_ALERT")
+				package_max_os_msg+=$(TextBrightRed "$package_max_os")
 			fi
 
 			if QPKG.IsArchOK "$name"; then
-				package_arch_msg+=$(ColourTextBrightGreen true)
+				package_arch_msg+=$(TextBrightGreen true)
 			else
-				package_arch_msg=$(ColourTextBrightRed "$CHARS_ALERT")
-				package_arch_msg+=$(ColourTextBrightRed false)
+				package_arch_msg=$(TextBrightRed "$CHARS_ALERT")
+				package_arch_msg+=$(TextBrightRed false)
 			fi
 	esac
 
@@ -4072,7 +4070,7 @@ DisplayAsHelpTitleHighlighted()
 
 	WriteEmptyLineIfNoneExists
 	# shellcheck disable=2059
-	printf "$(ColourTextBrightOrange "${CHARS_BULLET}%s\n")" "$(Capitalise "${1:-}")"
+	printf "$(TextBrightOrange "${CHARS_BULLET}%s\n")" "$(Capitalise "${1:-}")"
 	linespace_visible=false
 
 	}
@@ -4326,7 +4324,7 @@ Help.Issue:Show()
 	DisplayAsProjSynIndentExam "view only the most recent $(ShowTitleName) session log" last
 	DisplayAsProjSynIndentExam "view the entire $(ShowTitleName) session log" log
 	DisplayAsProjSynIndentExam "upload the most-recent $(FormatAsThous "$LOG_TAIL_LINES") lines in your $(ShowTitleName) log to the $(ShowAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste log'
-	DisplayAsHelpTitleHighlighted "if you need help, please include a copy of your $(ShowTitleName) $(ColourTextBrightOrange 'log for analysis!')"
+	DisplayAsHelpTitleHighlighted "if you need help, please include a copy of your $(ShowTitleName) $(TextBrightOrange 'log for analysis!')"
 
 	return 0
 
@@ -4365,13 +4363,13 @@ Report.Results:Show()
 				if [[ $result = "$1" ]] || [[ $1 = skipped && $result = 'skipped-error' ]]; then
 					case $result in
 						ok)
-							[[ $found = false ]] && DisplayAsHelpTitle "$plural completed $(ColourTextBrightGreen OK):"
+							[[ $found = false ]] && DisplayAsHelpTitle "$plural completed $(TextBrightGreen OK):"
 							;;
 						skipped|skipped-ok|skipped-error)
-							[[ $found = false ]] && DisplayAsHelpTitle "$plural were $(ColourTextBrightOrange skipped):"
+							[[ $found = false ]] && DisplayAsHelpTitle "$plural were $(TextBrightOrange skipped):"
 							;;
 						failed)
-							[[ $found = false ]] && DisplayAsHelpTitle "$plural $(ColourTextBrightRed failed):"
+							[[ $found = false ]] && DisplayAsHelpTitle "$plural $(TextBrightRed failed):"
 					esac
 
 					ShowAsActionLogDetail "$datetime" "$package_name" "$action" "$result" "$duration" "$reason"
@@ -4383,13 +4381,13 @@ Report.Results:Show()
 		if [[ $found = false ]]; then
 			case $1 in
 				ok)
-					DisplayAsHelpTitle "no package actions completed $(ColourTextBrightGreen OK)."
+					DisplayAsHelpTitle "no package actions completed $(TextBrightGreen OK)."
 					;;
 				skipped)
-					DisplayAsHelpTitle "no package actions were $(ColourTextBrightOrange skipped)."
+					DisplayAsHelpTitle "no package actions were $(TextBrightOrange skipped)."
 					;;
 				failed)
-					DisplayAsHelpTitle "no package actions $(ColourTextBrightRed failed)."
+					DisplayAsHelpTitle "no package actions $(TextBrightRed failed)."
 			esac
 		fi
 
@@ -4464,7 +4462,7 @@ Report.Problems:Show()
 		DisplayAsProjSynIndentExam "view the entire $(ShowTitleName) session log" log
 		DisplayAsProjSynIndentExam "upload the most-recent session in your $(ShowTitleName) log to the $(ShowAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste last'
 		DisplayAsProjSynIndentExam "upload the most-recent $(FormatAsThous "$LOG_TAIL_LINES") lines in your $(ShowTitleName) log to the $(ShowAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste log'
-		DisplayAsHelpTitleHighlighted "if you need help, please include a copy of your $(ShowTitleName) $(ColourTextBrightOrange "log for analysis!")"
+		DisplayAsHelpTitleHighlighted "if you need help, please include a copy of your $(ShowTitleName) $(TextBrightOrange "log for analysis!")"
 		Display
 
 		} > "$REPORT_OUTPUT_PATHFILE"
@@ -4899,22 +4897,22 @@ UpdateForkProgress()
 
 	if [[ $ok_count -gt 0 ]]; then
 		[[ -n $a ]] && a+=', '
-		a+="$(ColourTextBrightGreen "$ok_count") OK"
+		a+="$(TextBrightGreen "$ok_count") OK"
 	fi
 
 	if [[ $skip_count -gt 0 || $skip_error_count -gt 0 ]]; then		# Don't include skipped packages that were OK.
 		[[ -n $a ]] && a+=', '
-		a+="$(ColourTextBrightOrange "$((skip_count+skip_error_count))") skipped"
+		a+="$(TextBrightOrange "$((skip_count+skip_error_count))") skipped"
 	fi
 
 	if [[ $fail_count -gt 0 ]]; then
 		[[ -n $a ]] && a+=', '
-		a+="$(ColourTextBrightRed "$fail_count") failed"
+		a+="$(TextBrightRed "$fail_count") failed"
 	fi
 
 	if [[ $fork_count -gt 0 ]]; then
 		[[ -n $a ]] && a+=', '
-		a+="$(ColourTextBrightYellow "$fork_count") in-progress"
+		a+="$(TextBrightYellow "$fork_count") in-progress"
 	fi
 
 	[[ -n $a ]] && WriteMsgInPlace "$a"
@@ -4949,10 +4947,10 @@ QPKGs.Missing:Show()
 
 	# shellcheck disable=2322
 	for ((i=0; i<=((${#packages[@]}-1)); i++)); do
-		names_formatted+=$(ColourTextBrightRed "${packages[$i]}")
+		names_formatted+=$(TextBrightRed "${packages[$i]}")
 
 		if [[ $((i+1)) -ge $name_limit && $((${#packages[@]}-name_limit)) -gt 0 ]]; then
-			names_formatted+=" & $(ColourTextBrightRed "$((${#packages[@]}-name_limit))") other$(Pluralise "$((${#packages[@]}-name_limit))")"
+			names_formatted+=" & $(TextBrightRed "$((${#packages[@]}-name_limit))") other$(Pluralise "$((${#packages[@]}-name_limit))")"
 			break
 		elif [[ $((i+2)) -lt ${#packages[@]} ]]; then
 			names_formatted+=', '
@@ -4999,10 +4997,10 @@ QPKGs.NewVers:Show()
 
 	# shellcheck disable=2322
 	for ((i=0; i<=((${#packages[@]}-1)); i++)); do
-		names_formatted+=$(ColourTextBrightOrange "${packages[$i]}")
+		names_formatted+=$(TextBrightOrange "${packages[$i]}")
 
 		if [[ $((i+1)) -ge $name_limit && $((${#packages[@]}-name_limit)) -gt 0 ]]; then
-			names_formatted+=" & $(ColourTextBrightOrange "$((${#packages[@]}-name_limit))") other$(Pluralise "$((${#packages[@]}-name_limit))")"
+			names_formatted+=" & $(TextBrightOrange "$((${#packages[@]}-name_limit))") other$(Pluralise "$((${#packages[@]}-name_limit))")"
 			break
 		elif [[ $((i+2)) -lt ${#packages[@]} ]]; then
 			names_formatted+=', '
@@ -5484,14 +5482,14 @@ Report.Backups:Show()
 		DisplayAsHelpTitle "the location for $(ShowTitleName) backups is: $QPKG_BU_PATH"
 
 		if [[ -e $GNU_FIND_CMD ]]; then
-			DisplayAsHelpTitle "backups are listed oldest-first, and those shown in $(ColourTextBrightRed '! red') were last updated more than $highlight_older_than."
+			DisplayAsHelpTitle "backups are listed oldest-first, and those shown in $(TextBrightRed '! red') were last updated more than $highlight_older_than."
 			DisplayAsHelpTitleFileNamePlusSomething 'backup file' 'last backup date'
 
 			while read -r epochtime filename; do
 				[[ -z $epochtime || -z $filename ]] && break
 
 				if [[ ${epochtime%.*} -lt $(/bin/date --date="$highlight_older_than" +%s) ]]; then
-					format=$(ColourTextBrightRed "%${HELP_DESC_INDENT}s%-${FILE_NAME_COL_WIDTH}s - !%s\n")
+					format=$(TextBrightRed "%${HELP_DESC_INDENT}s%-${FILE_NAME_COL_WIDTH}s - !%s\n")
 				else
 					format="%${HELP_DESC_INDENT}s%-${FILE_NAME_COL_WIDTH}s - %s\n"
 				fi
@@ -5533,8 +5531,8 @@ Report.Dependencies:Show()
 		{
 
 		DisplayAsHelpTitle "$(ShowTitleName) will automatically install/start/stop/restart package dependencies as-required."
-		DisplayAsHelpTitle "requirements shown in \"$(ColourTextBrightOrange '* orange')\" prevent the package being installed."
-		DisplayAsHelpTitle "those shown in \"$(ColourTextBrightRed '! red')\" are preventing the package from working correctly."
+		DisplayAsHelpTitle "requirements shown in \"$(TextBrightOrange '* orange')\" prevent the package being installed."
+		DisplayAsHelpTitle "those shown in \"$(TextBrightRed '! red')\" are preventing the package from working correctly."
 		DisplayAsDepsReportTitleLine
 
 		} >"$REPORT_OUTPUT_PATHFILE"
@@ -5688,7 +5686,7 @@ Report.Statuses:Show()
 	if QPKGs-ISslow.IsAny; then
 		{
 
-		DisplayAsHelpTitle "statuses shown as '$(ColourTextBrightOrange slow)' are usually because the application has been page-swapped to disk and must be reloaded into RAM to respond to a status request. Requesting the QPKG status again shortly afterward should return a useful status result."
+		DisplayAsHelpTitle "statuses shown as '$(TextBrightOrange slow)' are usually because the application has been page-swapped to disk and must be reloaded into RAM to respond to a status request. Requesting the QPKG status again shortly afterward should return a useful status result."
 
 		} >>"$REPORT_OUTPUT_PATHFILE"
 	fi
@@ -9136,7 +9134,7 @@ ShowTitleLine()
 ShowTitleName()
 	{
 
-	ColourTextBrightWhite sherpa
+	TextBrightWhite sherpa
 
 	}
 
@@ -9157,28 +9155,28 @@ ShowDescription()
 ShowAction()
 	{
 
-	ColourTextBrightYellow '[action]'
+	TextBrightYellow '[action]'
 
 	}
 
 ShowPackages()
 	{
 
-	ColourTextBrightOrange '[packages]'
+	TextBrightOrange '[packages]'
 
 	}
 
 ShowPackageGroup()
 	{
 
-	ColourTextBrightOrange '[package group]'
+	TextBrightOrange '[package group]'
 
 	}
 
 ShowOptions()
 	{
 
-	ColourTextBrightRed '[options]'
+	TextBrightRed '[options]'
 
 	}
 
@@ -9199,7 +9197,7 @@ ShowAsFileName()
 ShowAsURL()
 	{
 
-	ColourTextUnderlinedCyan "${1:?${FUNCNAME[0]}'()': undefined}"
+	TextUnderlinedCyan "${1:?${FUNCNAME[0]}'()': undefined}"
 
 	}
 
@@ -9675,7 +9673,7 @@ ShowAsProc()
 	local suffix=''
 	[[ -n ${2:-} ]] && suffix=${2:-}
 
-	WriteToDisplayRewriteInPlaceThenWait "$(ColourTextBrightYellow proc)" "$1 $CHARS_ELLIPSIS $suffix"
+	OpStepRewriteWait "$(TextBrightYellow proc)" "$1 $CHARS_ELLIPSIS $suffix"
 	WriteToLog proc "${1}${suffix}"
 	[[ ${opts_verbose:=false} = true ]] && Display
 
@@ -9686,7 +9684,7 @@ ShowAsDebug()
 
 	[[ -n ${1:-} ]] || return
 
-	WriteToDisplay "$(ColourTextBlackOnCyan dbug)" "$1"
+	OpStep "$(TextBlackOnCyan dbug)" "$1"
 
 	}
 
@@ -9699,7 +9697,7 @@ ShowAsInfo()
 	local capitalised=$(Capitalise "$1")
 
 	EraseThisLine
-	WriteToDisplay "$(ColourTextBrightYellow note)" "$capitalised"
+	OpStep "$(TextBrightYellow note)" "$capitalised"
 	WriteToLog note "$capitalised"
 
 	} >&2
@@ -9709,7 +9707,7 @@ ShowAsQuiz()
 
 	[[ -n ${1:-} ]] || return
 
-	WriteToDisplayThenWait "$(ColourTextBrightOrangeBlink quiz)" "$1:"
+	OpStepWait "$(TextBrightOrangeBlink quiz)" "$1:"
 	WriteToLog quiz "$1:"
 
 	}
@@ -9719,7 +9717,7 @@ ShowAsQuizDone()
 
 	[[ -n ${1:-} ]] || return
 
-	WriteToDisplay "$(ColourTextBrightOrange quiz)" "$1"
+	OpStep "$(TextBrightOrange quiz)" "$1"
 
 	}
 
@@ -9731,7 +9729,7 @@ ShowAsDone()
 	[[ -n ${1:-} ]] || return
 
 	EraseThisLine
-	WriteToDisplay "$(ColourTextBrightGreen 'done')" "$1"
+	OpStep "$(TextBrightGreen 'done')" "$1"
 	WriteToLog 'done' "$1"
 
 	} >&2
@@ -9744,7 +9742,7 @@ ShowAsWarn()
 	[[ -n ${1:-} ]] || return
 
 	EraseThisLine
-	WriteToDisplay "$(ColourTextBrightOrange warn)" "$1"
+	OpStep "$(TextBrightOrange warn)" "$1"
 	WriteToLog warn "$1"
 
 	} >&2
@@ -9756,7 +9754,7 @@ ShowAsAbort()
 
 	[[ -n ${1:-} ]] || return
 
-	WriteToDisplay "$(ColourTextBrightRed bort)" "$1"
+	OpStep "$(TextBrightRed bort)" "$1"
 	WriteToLog bort "$1"
 	Self.Error:Set
 
@@ -9771,7 +9769,7 @@ ShowAsFail()
 	local capitalised=$(Capitalise "$1")
 
 	EraseThisLine
-	WriteToDisplay "$(ColourTextBrightRed fail)" "$capitalised"
+	OpStep "$(TextBrightRed fail)" "$capitalised"
 	WriteToLog fail "$capitalised"
 
 	} >&2
@@ -9785,7 +9783,7 @@ ShowAsError()
 	local capitalised=$(Capitalise "$1")
 
 	EraseThisLine
-	WriteToDisplay "$(ColourTextBrightRed derp)" "$capitalised"
+	OpStep "$(TextBrightRed derp)" "$capitalised"
 	WriteToLog derp "$capitalised"
 	Self.Error:Set
 
@@ -9851,7 +9849,7 @@ PercFrac()
 		perc_msg="$((200*(progress_count+1)/(TOTAL_COUNT+1)%2+100*(progress_count+1)/(TOTAL_COUNT+1)))%"
 	fi
 
-	echo "$perc_msg ($(ColourTextBrightWhite "$progress_count")/$(ColourTextBrightWhite "$TOTAL_COUNT"))"
+	echo "$perc_msg ($(TextBrightWhite "$progress_count")/$(TextBrightWhite "$TOTAL_COUNT"))"
 
 	return 0
 
@@ -9878,7 +9876,7 @@ ShowAsIterativeProgress()
 	local -r DURATION=${6:-short}
 	local progress_msg=''
 
-	progress_msg="$(ColourTextBrightWhite "$COUNT1") ${SUFFIX1}$(Pluralise "$COUNT1"): $(ColourTextBrightWhite "$COUNT2") ${SUFFIX2}$(Pluralise "$COUNT2")"
+	progress_msg="$(TextBrightWhite "$COUNT1") ${SUFFIX1}$(Pluralise "$COUNT1"): $(TextBrightWhite "$COUNT2") ${SUFFIX2}$(Pluralise "$COUNT2")"
 
 	if [[ $DURATION != long ]]; then
 		ShowAsProc "$ACTION" "$progress_msg"
@@ -9931,45 +9929,22 @@ ShowAsActionLogDetail()
 
 	}
 
-WriteToDisplayThenWait()
+OpStepRewriteWait()
 	{
 
-	# Writes a new message without newline.
+	# Displays new script operation step message from beginning of line, and remains on this line.
 
 	# input:
 	#	$1 = pass/fail
 	#	$2 = message
 
 	# output:
-	#	$prev_msg = (global) will be used again later
+	#	$prev_msg = (global) will be used again later.
 
-	local -i width=4
+	local -i typewidth=4			# width of the message type.
 
-	[[ $colourful = true ]] && width=10		# allow extra length for ANSI codes
-	prev_msg=$(printf "%-${width}s: %s" "${1:-}" "${2:-}")
-
-	DisplayWait "$prev_msg"
-
-	return 0
-
-	}
-
-WriteToDisplayRewriteInPlaceThenWait()
-	{
-
-	# Writes a new message from the beginning of the line and without a trailing newline.
-
-	# input:
-	#	$1 = pass/fail
-	#	$2 = message
-
-	# output:
-	#	$prev_msg = (global) will be used again later
-
-	local -i width=4
-
-	[[ $colourful = true ]] && width=10		# allow extra length for ANSI codes
-	prev_msg=$(printf "%-${width}s: %s" "${1:-}" "${2:-}")
+	[[ $colourful = true ]] && typewidth=10		# allow extra length for ANSI codes in message type.
+	prev_msg=$(printf "%-${typewidth}s: %s" "${1:-}" "${2:-}")
 
 	DisplayWait "$(printf '\033[2K\r')$prev_msg"
 
@@ -9977,43 +9952,66 @@ WriteToDisplayRewriteInPlaceThenWait()
 
 	}
 
-WriteToDisplay()
+OpStepWait()
 	{
 
-	# Updates the previous message.
+	# Displays script operation step message, remains on this line, and leaves cursor at end.
 
 	# input:
 	#	$1 = pass/fail
 	#	$2 = message
 
 	# output:
-	#	stdout = overwrites previous message with updated message.
-	#	$prev_length
+	#	$prev_msg = (global) will be used again later.
 
-	local -i width=4
+	local -i typewidth=4			# width of the message type.
+
+	[[ $colourful = true ]] && typewidth=10		# allow extra length for ANSI codes in message type.
+	prev_msg=$(printf "%-${typewidth}s: %s" "${1:-}" "${2:-}")
+
+	DisplayWait "$prev_msg"
+
+	return 0
+
+	}
+
+OpStep()
+	{
+
+	# Displays script operation step message (overwriting previous message), and remains on this line.
+
+	# input:
+	#	$1 = pass/fail
+	#	$2 = message
+
+	# output:
+	#	stdout = new message.
+	#	$prev_length = (global) will be used again later.
+
+	local -i typewidth=4			# width of the message type.
 	local -i length=0
 	local -i blanking_length=0
 	local msg=''
-	local strbuffer=''
+	local str=''
 
-	[[ ${colourful:=true} = true ]] && width=10  	# allow extra length for ANSI codes
-	msg=$(printf "%-${width}s: %s" "${1:-}" "${2:-}")
+	[[ ${colourful:=true} = true ]] && typewidth=10  	# allow extra length for ANSI codes in message type.
+	msg=$(printf "%-${typewidth}s: %s" "${1:-}" "${2:-}")
 
 	if [[ $msg != "${prev_msg:=''}" ]]; then
 		prev_length=$((${#prev_msg}+1))
 		length=$((${#msg}+1))
 
 		# Jump to start of line, print new msg.
-		strbuffer=$(echo -en "\r$msg ")
+		str=$(echo -en "\r$msg ")
 
 		# If new msg is shorter then add spaces to end to cover previous msg.
 
 		if [[ $length -lt $prev_length ]]; then
 			blanking_length=$((length-prev_length))
-			strbuffer+=$(printf "%${blanking_length}s")
+			str+=$(printf "%${blanking_length}s")
 		fi
 
-		Display "$strbuffer"
+		Display "$str"
 	fi
 
 	return 0
@@ -10028,11 +10026,11 @@ WriteToLog()
 	#	$2 = message
 
 	[[ -n ${1:-} && -n ${2:-} ]] || return
-	[[ ${opts_debug:=false} = true && -n $sess_active_pathfile ]] && printf '%-4s: %s\n' "$(StripANSI "$1")" "$(StripANSI "$2")" >> "$sess_active_pathfile"
+	[[ ${opts_debug:=false} = true && -n $sess_active_pathfile ]] && printf '%-4s: %s\n' "$(StripANSICodes "$1")" "$(StripANSICodes "$2")" >> "$sess_active_pathfile"
 
 	}
 
-ColourTextBrightGreen()
+TextBrightGreen()
 	{
 
 	[[ -n ${1:-} ]] || return
@@ -10045,7 +10043,7 @@ ColourTextBrightGreen()
 
 	} 2>/dev/null
 
-ColourTextBrightYellow()
+TextBrightYellow()
 	{
 
 	[[ -n ${1:-} ]] || return
@@ -10058,7 +10056,7 @@ ColourTextBrightYellow()
 
 	} 2>/dev/null
 
-ColourTextBrightOrange()
+TextBrightOrange()
 	{
 
 	[[ -n ${1:-} ]] || return
@@ -10071,7 +10069,7 @@ ColourTextBrightOrange()
 
 	} 2>/dev/null
 
-ColourTextBrightOrangeBlink()
+TextBrightOrangeBlink()
 	{
 
 	[[ -n ${1:-} ]] || return
@@ -10084,7 +10082,7 @@ ColourTextBrightOrangeBlink()
 
 	} 2>/dev/null
 
-ColourTextBrightRed()
+TextBrightRed()
 	{
 
 	[[ -n ${1:-} ]] || return
@@ -10097,7 +10095,7 @@ ColourTextBrightRed()
 
 	} 2>/dev/null
 
-ColourTextBrightRedBlink()
+TextBrightRedBlink()
 	{
 
 	[[ -n ${1:-} ]] || return
@@ -10110,7 +10108,7 @@ ColourTextBrightRedBlink()
 
 	} 2>/dev/null
 
-ColourTextCyan()
+TextCyan()
 	{
 
 	[[ -n ${1:-} ]] || return
@@ -10123,7 +10121,7 @@ ColourTextCyan()
 
 	} 2>/dev/null
 
-ColourTextDarkGrey()
+TextDarkGrey()
 	{
 
 	[[ -n ${1:-} ]] || return
@@ -10136,7 +10134,7 @@ ColourTextDarkGrey()
 
 	} 2>/dev/null
 
-ColourTextUnderlined()
+TextUnderlined()
 	{
 
 	[[ -n ${1:-} ]] || return
@@ -10149,7 +10147,7 @@ ColourTextUnderlined()
 
 	} 2>/dev/null
 
-ColourTextUnderlinedCyan()
+TextUnderlinedCyan()
 	{
 
 	[[ -n ${1:-} ]] || return
@@ -10162,7 +10160,7 @@ ColourTextUnderlinedCyan()
 
 	} 2>/dev/null
 
-ColourTextBlackOnCyan()
+TextBlackOnCyan()
 	{
 
 	[[ -n ${1:-} ]] || return
@@ -10175,7 +10173,7 @@ ColourTextBlackOnCyan()
 
 	} 2>/dev/null
 
-ColourTextBrightWhite()
+TextBrightWhite()
 	{
 
 	[[ -n ${1:-} ]] || return
@@ -10188,7 +10186,7 @@ ColourTextBrightWhite()
 
 	} 2>/dev/null
 
-StripANSI()
+StripANSICodes()
 	{
 
 	# QTS 4.2.6 BusyBox `sed` doesn't fully support extended regexes, so code-stripping only works with a real `sed`.
