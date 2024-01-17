@@ -505,7 +505,7 @@ InstallAddons()
 	# KLUDGE: `manytolinux2014` builds are problematic in QTS, so rename these locally.
 
 	if [[ -e $rename_modules_pathfile ]]; then
-		for module in "$(StripComments "$(<"$rename_modules_pathfile")")"; do
+		for module in $(StripComments "$(<"$rename_modules_pathfile")"); do
 			RenameSharedObjectFile "$module"
 		done
 	fi
