@@ -1,6 +1,3 @@
-* WebSSH is creating /root/.cache
-	is the pip conf path env variable present in the screen session?
-
 * progress display text sometimes desyncs during installation of OMedusa QPKG.
 	example: proc: reinstalling dependent QPKGs ... 36% (7/21), 7 OK36% (7/21), 7 OK, 1 in-progress
 
