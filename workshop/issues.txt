@@ -1,3 +1,12 @@
+* ClamAV not starting, but showing 'start' as OK.
+	[~] # /etc/init.d/clamav.sh start debug
+	source: clamav.sh, action: start, datetime: Thu Jan 18 08:37:35 EST 2024
+	package: 240118, service: 240118, library: 240118
+	daemon active: false
+	auto-update: false
+	symlink exists: undefined
+	source: clamav.sh, action: start, datetime: Thu Jan 18 08:37:35 EST 2024, result: ok, elapsed time: 81ms
+
 * progress display text sometimes desyncs during installation of OMedusa QPKG.
 	example: proc: reinstalling dependent QPKGs ... 36% (7/21), 7 OK36% (7/21), 7 OK, 1 in-progress
 	suspect Medusa (or service script) is outputting something to stderr.
