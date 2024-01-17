@@ -413,7 +413,7 @@ no_pips_installed=false
 fi
 fi
 if [[ -e $rename_modules_pathfile ]]; then
-for module in "$(StripComments "$(<"$rename_modules_pathfile")")"; do
+for module in $(StripComments "$(<"$rename_modules_pathfile")"); do
 RenameSharedObjectFile "$module"
 done
 fi
