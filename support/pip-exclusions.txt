@@ -1,0 +1,20 @@
+# don't install these modules via 'pip', use the Python3 modules installed via Entware instead. Recompiling these after installaiton via 'pip' causes problems.
+Levenshtein
+Pillow
+cassandra-driver
+cffi
+cryptography
+dateutil
+defusedxml
+lxml
+mako
+packaging
+psutil
+pysnmp
+python-dateutil
+pyzmq
+requests
+six
+urllib3
+wifi
+zeroconf

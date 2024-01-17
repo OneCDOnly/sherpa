@@ -414,8 +414,8 @@ InstallAddons()
 	local essential_modules_pathfile=$qpkg_repo_path/essential.txt
 	local requirements_modules_pathfile=$qpkg_repo_path/requirements.txt
 	local recommended_modules_pathfile=$qpkg_repo_path/recommended.txt
-	local excluded_modules_pathfile=$QPKG_CONFIG_PATH/exclusions.txt
-	local rename_modules_pathfile=$QPKG_CONFIG_PATH/rename.txt
+	local excluded_modules_pathfile=$QPKG_CONFIG_PATH/pip-exclusions.txt
+	local rename_modules_pathfile=$QPKG_CONFIG_PATH/pip-rename.txt
 
 	local pyproject_pathfile=$qpkg_repo_path/pyproject.toml
 	local pip_conf_pathfile=$venv_path/pip.conf

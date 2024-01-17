@@ -1,0 +1,6 @@
+# these are 'many2linux' module builds that are not seen in Python unless each module shared object file is renamed.
+brotli
+rpds
+sabctools
+sabyenc3
+ujson
