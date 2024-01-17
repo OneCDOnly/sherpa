@@ -8950,13 +8950,10 @@ RunAndLog()
 	DebugAsProc "exec: '$1'"
 
 	if [[ $opts_verbose = true ]]; then
-		eval "$1 > >($TEE_CMD $LOG_PATHFILE) 2>&1"	# NOTE: `tee` buffers stdout here
+		eval "$1 > >($TEE_CMD $LOG_PATHFILE) 2>&1"		# NOTE: `tee` buffers stdout here
 		z=$?
 	else
-#  		eval "$1" > "$LOG_PATHFILE" 2>&1
  		(eval "$1" > "$LOG_PATHFILE" 2>&1)				# run in a subshell to suppress 'Terminated' message later
-# 		eval "$1 > $LOG_PATHFILE 2>&1"
-# 		(eval "$1 > $LOG_PATHFILE 2>&1")
 		z=$?
 	fi
 
