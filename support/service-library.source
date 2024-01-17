@@ -119,7 +119,7 @@ InitLibrary()
 	InitService									# located in parent service-script. Service-script vars can override vars set here.
 	MakePaths
 	EnsureConfigFileExists
-	LoadAppVersion
+	GetAppVersion
 	DisableOpkgDaemonStart
 	IsSourcedOnline && IsAutoUpdateMissing && EnableAutoUpdate >/dev/null
 
@@ -394,7 +394,7 @@ StopQPKG()
 			break
 		done
 
-		/bin/sleep 1		# let application shutdown complete
+		/bin/sleep 1		# let application shutdown complete.
 		IsNotDaemonActive || { SetError; return 1 ;}
 	fi
 
@@ -423,6 +423,9 @@ InstallAddons()
 	local sys_packages=' --system-site-packages'
 	local no_pips_installed=true
 	local pip_deps=' --no-deps'
+	local module_exclusions=''
+	local re=''
+	local cmd=''
 
 	[[ $allow_access_to_sys_packages != true ]] && sys_packages=''
 	[[ $install_pip_deps = true ]] && pip_deps=''
@@ -464,13 +467,19 @@ InstallAddons()
 	# If not, `pip` will attempt to compile these, which fails on early ARMv5 CPUs.
 
 	if [[ -e $excluded_modules_pathfile ]]; then
-		local module_exclusions=$(/bin/tr '\n' ' ' < "$excluded_modules_pathfile")
+		module_exclusions=$(/bin/tr '\n' ' ' <<< "$(StripComments "$(<"$excluded_modules_pathfile")")")
 		module_exclusions=${module_exclusions%* }
-		local module_exclusions_re="/^${module_exclusions// /\|^}"
+		re="/^${module_exclusions// /\|^}"
 
 		for target in $essential_modules_pathfile $requirements_modules_pathfile $recommended_modules_pathfile $pyproject_pathfile; do
 			if [[ -e $target ]]; then
-				DisplayRunAndLog "exclude problem PyPI modules from '$(/usr/bin/basename "$target")'" "/bin/sed -i '${module_exclusions_re}/d' $target" log:failure-only
+				if [[ -e /opt/bin/sed ]]; then
+					cmd="/opt/bin/sed -i '${re}/Id' $target"		# perform case-insensitive match only if GNU `sed` exists.
+				else
+					cmd="/bin/sed -i '${re}/d' $target"				# eh, hope for the best.
+				fi
+
+				DisplayRunAndLog "exclude problem PyPI modules from '$(/usr/bin/basename "$target")'" "$cmd" log:failure-only
 			fi
 		done
 	fi
@@ -493,16 +502,16 @@ InstallAddons()
 		fi
 	fi
 
-	# KLUDGE: `manytolinux2014` builds are problematic in QTS, so rename these locally
+	# KLUDGE: `manytolinux2014` builds are problematic in QTS, so rename these locally.
 
 	if [[ -e $rename_modules_pathfile ]]; then
-		for module in $(<$rename_modules_pathfile); do
+		for module in "$(StripComments "$(<"$rename_modules_pathfile")")"; do
 			RenameSharedObjectFile "$module"
 		done
 	fi
 
-	if [[ $QPKG_NAME = SABnzbd ]]; then
-		LoadAppVersion
+	if IsSupportGetAppVersion; then
+		GetAppVersion
 
 		if [[ $new_env = false && -e $APP_VERSION_STORE_PATHFILE && $(<"$APP_VERSION_STORE_PATHFILE") != "$app_version" ]]; then
 			# remove existing .pyc files to prevent runtime errors
@@ -519,6 +528,30 @@ InstallAddons()
 	fi
 
 	return 0
+
+	}
+
+StripComments()
+	{
+
+	# input:
+	#   $1 = string to strip comment lines, empty lines, and so-on.
+
+	# output:
+	#   stdout = stripped string.
+
+	local a=''
+
+	[[ -n $1 ]] || return
+
+	a="$1"
+
+	a=$(/bin/sed -e '/^#[[:space:]].*/d;/#$/d;s/[[:space:]]#[[:space:]].*//' <<< "$a")		# remove comment lines and line comments.
+	a=$(/bin/sed -e 's/^[[:space:]]*//' <<< "$a")											# remove leading whitespace.
+	a=$(/bin/sed 's/[[:space:]]*$//' <<< "$a")												# remove trailing whitespace.
+	a=$(/bin/sed "/^$/d" <<< "$a")															# remove empty lines.
+
+	echo "$a"
 
 	}
 
@@ -561,8 +594,8 @@ MakePaths()
 	if [[ -d $QPKG_PATH ]]; then
 		[[ ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
 		IsSourcedOnline && [[ $qpkg_repo_path != undefined && ! -d $qpkg_repo_path ]] && mkdir -p "$qpkg_repo_path"
-		IsUsePipCache && [[ $pip_cache_path != undefined && ! -d $pip_cache_path ]] && mkdir -p "$pip_cache_path"
-		IsUseVirtualPythonEnv && [[ $venv_path != undefined && ! -d $venv_path ]] && mkdir -p "$venv_path"
+		IsUsePipCache && [[ ! -d $pip_cache_path ]] && mkdir -p "$pip_cache_path"
+		IsUseVirtualPythonEnv && [[ ! -d $venv_path ]] && mkdir -p "$venv_path"
 	fi
 
 	}
@@ -612,7 +645,7 @@ LoadPorts()
 
 	}
 
-LoadAppVersion()
+GetAppVersion()
 	{
 
 	# Find the application's internal version number
@@ -724,7 +757,7 @@ CleanLocalRepo()
 	fi
 
 	(IsGitApp || IsOnlineArchive) && DisplayRunAndLog 'clean local repository' "rm -rf \"$qpkg_repo_path\"" log:failure-only
-	IsGitApp && [[ -d $(/usr/bin/dirname "$qpkg_repo_path")/$QPKG_NAME ]] && DisplayRunAndLog 'KLUDGE: remove previous local repository' "rm -r \"$(/usr/bin/dirname "$qpkg_repo_path")/$QPKG_NAME\"" log:failure-only
+# 	IsGitApp && [[ -d $(/usr/bin/dirname "$qpkg_repo_path")/$QPKG_NAME ]] && DisplayRunAndLog 'KLUDGE: remove previous local repository' "rm -r \"$(/usr/bin/dirname "$qpkg_repo_path")/$QPKG_NAME\"" log:failure-only
 	IsUseVirtualPythonEnv && [[ -d $venv_path ]] && DisplayRunAndLog 'clean virtual environment' "rm -rf \"$venv_path\"" log:failure-only
 	IsUsePipCache && [[ -d $pip_cache_path ]] && DisplayRunAndLog 'clean PyPI cache' "rm -rf \"$pip_cache_path\"" log:failure-only
 	[[ -e $APP_VERSION_STORE_PATHFILE ]] && DisplayRunAndLog 'remove application version' "rm -f \"$APP_VERSION_STORE_PATHFILE\"" log:failure-only
@@ -1318,7 +1351,7 @@ GetOriginalModuleSOFilename()
 	{
 
 	[[ -z $pyver ]] && pyver=$(GetPythonVer)
-	[[ -n ${1:-} ]] && echo "$1.cpython-$pyver-$(uname -m)-linux-gnu.so"
+	[[ -n ${1:-} ]] && echo "$1.cpython-$pyver-$(/bin/uname -m)-linux-gnu.so"
 
 	}
 
