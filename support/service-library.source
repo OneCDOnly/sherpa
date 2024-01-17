@@ -193,7 +193,7 @@ InitByServiceType()
 ShowHelp()
 	{
 
-	Display "$(ColourTextBrightWhite "$(/usr/bin/basename "$0")") $SERVICE_SCRIPT_VERSION • a service control script for the $(FormatAsPackageName $QPKG_NAME) QPKG"
+	Display "$(TextBrightWhite "$(/usr/bin/basename "$0")") $SERVICE_SCRIPT_VERSION • a service control script for the $(FormatAsPackageName $QPKG_NAME) QPKG"
 	Display
 	Display "Usage: $0 [ACTION]"
 	Display
@@ -1154,16 +1154,16 @@ WriteToLog()
 	#   $1 = pass/fail
 	#   $2 = message
 
-	printf "%-4s: %s\n" "$(StripANSI "${1:-}")" "$(StripANSI "${2:-}")" >> "$SERVICE_LOG_PATHFILE"
+	printf "%-4s: %s\n" "$(StripANSICodes "${1:-}")" "$(StripANSICodes "${2:-}")" >> "$SERVICE_LOG_PATHFILE"
 
 	}
 
-StripANSI()
+StripANSICodes()
 	{
 
 	# QTS 4.2.6 BusyBox 'sed' doesn't fully support extended regexes, so this only works with a real 'sed'
 
-	if [[ -e /opt/bin/sed ]]; then
+	if [[ -e /opt/bin/sed && -L /opt/etc/passwd ]]; then	# Try to ensure Entware is active before using this utility.
 		/opt/bin/sed -r 's/\x1b\[[0-9;]*m//g' <<< "${1:-}"
 	else
 		echo "${1:-}"		# can't strip, so pass thru original message unaltered
@@ -2114,7 +2114,7 @@ ShowAsError()
 
 	local capitalised=$(Capitalise "${1:-}")
 
-	Display "$(ColourTextBrightRed derp): $capitalised"
+	Display "$(TextBrightRed derp): $capitalised"
 
 	} >&2
 
@@ -2242,7 +2242,7 @@ DisplayAndCommitActionToLog()
 		IsUnsupported && target=CommitToLog
 		CommitToLog '•'
 
-		$target "$(ColourTextInverse "$msg")"
+		$target "$(TextInverse "$msg")"
 		$target "package: $QPKG_VERSION, service: $SERVICE_SCRIPT_VERSION, library: $SERVICE_LIB_VERSION"
 	fi
 
@@ -2262,13 +2262,13 @@ DisplayAndCommitStatusToLog()
 
 		case $service_result in
 			ok)
-				$target "$(ColourTextBlackOnGreen "$msg")"
+				$target "$(TextBlackOnGreen "$msg")"
 				;;
 			failed)
-				$target "$(ColourTextBlackOnRed "$msg")"
+				$target "$(TextBlackOnRed "$msg")"
 				;;
 			*)
-				$target "$(ColourTextBlackOnYellow "$msg")"
+				$target "$(TextBlackOnYellow "$msg")"
 		esac
 	fi
 
@@ -2337,42 +2337,42 @@ CommitSysLog()
 
 	}
 
-ColourTextBrightWhite()
+TextBrightWhite()
 	{
 
 	printf '\033[1;97m%s\033[0m' "${1:-}"
 
 	} 2>/dev/null
 
-ColourTextBrightRed()
+TextBrightRed()
 	{
 
 	printf '\033[1;31m%s\033[0m' "${1:-}"
 
 	} 2>/dev/null
 
-ColourTextBlackOnGreen()
+TextBlackOnGreen()
 	{
 
 	printf '\033[30;42m%s\033[0m' "${1:-}"
 
 	} 2>/dev/null
 
-ColourTextBlackOnRed()
+TextBlackOnRed()
 	{
 
 	printf '\033[30;41m%s\033[0m' "${1:-}"
 
 	} 2>/dev/null
 
-ColourTextBlackOnYellow()
+TextBlackOnYellow()
 	{
 
 	printf '\033[30;43m%s\033[0m' "${1:-}"
 
 	} 2>/dev/null
 
-ColourTextInverse()
+TextInverse()
 	{
 
 	printf '\033[7m%s\033[0m' "${1:-}"
