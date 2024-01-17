@@ -113,7 +113,7 @@ InitByServiceType
 InitService
 MakePaths
 EnsureConfigFileExists
-LoadAppVersion
+GetAppVersion
 DisableOpkgDaemonStart
 IsSourcedOnline && IsAutoUpdateMissing && EnableAutoUpdate >/dev/null
 if [[ $run_daemon_in_screen_session = true && ! -e $SCREEN_CONF_PATHFILE ]]; then
@@ -358,6 +358,9 @@ local new_env=false
 local sys_packages=' --system-site-packages'
 local no_pips_installed=true
 local pip_deps=' --no-deps'
+local module_exclusions=''
+local re=''
+local cmd=''
 [[ $allow_access_to_sys_packages != true ]] && sys_packages=''
 [[ $install_pip_deps = true ]] && pip_deps=''
 if IsNotVirtualEnvironmentExist; then
@@ -383,12 +386,17 @@ fi
 [[ -e $recommended_modules_pathfile && -d $(/usr/bin/dirname "$default_recommended_modules_pathfile") ]] && cp -f "$recommended_modules_pathfile" "$default_recommended_modules_pathfile"
 [[ -e $default_recommended_modules_pathfile ]] && recommended_modules_pathfile=$default_recommended_modules_pathfile
 if [[ -e $excluded_modules_pathfile ]]; then
-local module_exclusions=$(/bin/tr '\n' ' ' < "$excluded_modules_pathfile")
+module_exclusions=$(/bin/tr '\n' ' ' <<< "$(StripComments "$(<"$excluded_modules_pathfile")")")
 module_exclusions=${module_exclusions%* }
-local module_exclusions_re="/^${module_exclusions// /\|^}"
+re="/^${module_exclusions// /\|^}"
 for target in $essential_modules_pathfile $requirements_modules_pathfile $recommended_modules_pathfile $pyproject_pathfile; do
 if [[ -e $target ]]; then
-DisplayRunAndLog "exclude problem PyPI modules from '$(/usr/bin/basename "$target")'" "/bin/sed -i '${module_exclusions_re}/d' $target" log:failure-only
+if [[ -e /opt/bin/sed ]]; then
+cmd="/opt/bin/sed -i '${re}/Id' $target"
+else
+cmd="/bin/sed -i '${re}/d' $target"
+fi
+DisplayRunAndLog "exclude problem PyPI modules from '$(/usr/bin/basename "$target")'" "$cmd" log:failure-only
 fi
 done
 fi
@@ -405,12 +413,12 @@ no_pips_installed=false
 fi
 fi
 if [[ -e $rename_modules_pathfile ]]; then
-for module in $(<$rename_modules_pathfile); do
+for module in "$(StripComments "$(<"$rename_modules_pathfile")")"; do
 RenameSharedObjectFile "$module"
 done
 fi
-if [[ $QPKG_NAME = SABnzbd ]]; then
-LoadAppVersion
+if IsSupportGetAppVersion; then
+GetAppVersion
 if [[ $new_env = false && -e $APP_VERSION_STORE_PATHFILE && $(<"$APP_VERSION_STORE_PATHFILE") != "$app_version" ]]; then
 DisplayRunAndLog "clean Python bytecode files" "/opt/bin/find $qpkg_repo_path -type d -name '__pycache__' -print0 | xargs -I {} -0 rm -rf '{}'
 " log:failure-only
@@ -421,6 +429,17 @@ fi
 SaveAppVersion
 fi
 return 0
+}
+StripComments()
+{
+local a=''
+[[ -n $1 ]] || return
+a="$1"
+a=$(/bin/sed -e '/^#[[:space:]].*/d;/#$/d;s/[[:space:]]#[[:space:]].*//' <<< "$a")
+a=$(/bin/sed -e 's/^[[:space:]]*//' <<< "$a")
+a=$(/bin/sed 's/[[:space:]]*$//' <<< "$a")
+a=$(/bin/sed "/^$/d" <<< "$a")
+echo "$a"
 }
 BackupConfig()
 {
@@ -447,8 +466,8 @@ MakePaths()
 if [[ -d $QPKG_PATH ]]; then
 [[ ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
 IsSourcedOnline && [[ $qpkg_repo_path != undefined && ! -d $qpkg_repo_path ]] && mkdir -p "$qpkg_repo_path"
-IsUsePipCache && [[ $pip_cache_path != undefined && ! -d $pip_cache_path ]] && mkdir -p "$pip_cache_path"
-IsUseVirtualPythonEnv && [[ $venv_path != undefined && ! -d $venv_path ]] && mkdir -p "$venv_path"
+IsUsePipCache && [[ ! -d $pip_cache_path ]] && mkdir -p "$pip_cache_path"
+IsUseVirtualPythonEnv && [[ ! -d $venv_path ]] && mkdir -p "$venv_path"
 fi
 }
 LoadPorts()
@@ -482,7 +501,7 @@ daemon_port=${daemon_port//[!0-9]/}
 [[ -z $ui_listening_address ]] && ui_listening_address=undefined
 return 0
 }
-LoadAppVersion()
+GetAppVersion()
 {
 if IsSupportGetAppVersion && [[ -e $app_version_pathfile ]]; then
 app_version=$(eval "$app_version_cmd")
@@ -555,7 +574,6 @@ SetError
 return 1
 fi
 (IsGitApp || IsOnlineArchive) && DisplayRunAndLog 'clean local repository' "rm -rf \"$qpkg_repo_path\"" log:failure-only
-IsGitApp && [[ -d $(/usr/bin/dirname "$qpkg_repo_path")/$QPKG_NAME ]] && DisplayRunAndLog 'KLUDGE: remove previous local repository' "rm -r \"$(/usr/bin/dirname "$qpkg_repo_path")/$QPKG_NAME\"" log:failure-only
 IsUseVirtualPythonEnv && [[ -d $venv_path ]] && DisplayRunAndLog 'clean virtual environment' "rm -rf \"$venv_path\"" log:failure-only
 IsUsePipCache && [[ -d $pip_cache_path ]] && DisplayRunAndLog 'clean PyPI cache' "rm -rf \"$pip_cache_path\"" log:failure-only
 [[ -e $APP_VERSION_STORE_PATHFILE ]] && DisplayRunAndLog 'remove application version' "rm -f \"$APP_VERSION_STORE_PATHFILE\"" log:failure-only
@@ -933,7 +951,7 @@ return 0
 GetOriginalModuleSOFilename()
 {
 [[ -z $pyver ]] && pyver=$(GetPythonVer)
-[[ -n ${1:-} ]] && echo "$1.cpython-$pyver-$(uname -m)-linux-gnu.so"
+[[ -n ${1:-} ]] && echo "$1.cpython-$pyver-$(/bin/uname -m)-linux-gnu.so"
 }
 GetFixedModuleSOFilename()
 {

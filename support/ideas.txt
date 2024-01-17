@@ -3,7 +3,7 @@
 * find all QPKG states concurrently.
 
 * wrap description column text in packages report.
-	maybe use 'columns' for this?
+	maybe use 'GNU column' for this?
 
 * show QPKG hashes on packages report.
 	need to wrap description column first.
