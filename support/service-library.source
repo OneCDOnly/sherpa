@@ -407,11 +407,11 @@ InstallAddons()
 
 	IsUseVirtualPythonEnv || return 0
 
-	local default_essential_modules_pathfile=$QPKG_CONFIG_PATH/essential.txt
+	local default_essential_modules_pathfile=$QPKG_CONFIG_PATH/pip-essential.txt
 	local default_requirements_modules_pathfile=$QPKG_CONFIG_PATH/requirements.txt
 	local default_recommended_modules_pathfile=$QPKG_CONFIG_PATH/recommended.txt
 
-	local essential_modules_pathfile=$qpkg_repo_path/essential.txt
+	local essential_modules_pathfile=$qpkg_repo_path/pip-essential.txt
 	local requirements_modules_pathfile=$qpkg_repo_path/requirements.txt
 	local recommended_modules_pathfile=$qpkg_repo_path/recommended.txt
 	local excluded_modules_pathfile=$QPKG_CONFIG_PATH/pip-exclusions.txt
