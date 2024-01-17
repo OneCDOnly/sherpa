@@ -1202,7 +1202,6 @@ Action:Proc()
 	local -i package_index=0
 	local -a target_packages=()
 	local original_colourful=$colourful
-	local -r ACTION_TIMES_PATHFILE=$ACTION_TIMES_PATH/$TARGET_ACTION.milliseconds
 
 	DebugVar TARGET_ACTION
 	DebugVar TIER
@@ -1347,13 +1346,6 @@ Action:Proc()
 			[[ ${#target_packages[@]} -gt 0 ]] && KillActiveFork		# Should only be needed if an action fork didn't exit properly.
 			wait 2>/dev/null
 			CloseActionMsgPipe
-
-			# Sort QPKG action times - longest duration first.
-
-			if [[ -e $ACTION_TIMES_PATHFILE && -e $GNU_SORT_CMD && -L /opt/etc/passwd ]]; then	# Try to ensure Entware is active before using this utility.
-				$GNU_SORT_CMD -t'|' -k2 -r -h < "$ACTION_TIMES_PATHFILE" > "$ACTION_TIMES_PATHFILE"
-			fi
-
 			;;
 		IPK|PIP)
 			if [[ $ipks_upgrade = true || $ipks_install = true || $ipks_downgrade || $pips_install = true ]]; then
