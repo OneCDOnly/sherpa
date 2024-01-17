@@ -1,0 +1,4 @@
+OliveTin
+nzbtomedia
+deluge-web
+deluge-server
