@@ -21,7 +21,7 @@
 #*   This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 #*	 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
-readonly SERVICE_LIB_VERSION='240116'
+readonly SERVICE_LIB_VERSION='240117'
 InitLibrary()
 {
 IsQNAP || exit
@@ -178,7 +178,7 @@ esac
 }
 ShowHelp()
 {
-Display "$(ColourTextBrightWhite "$(/usr/bin/basename "$0")") $SERVICE_SCRIPT_VERSION • a service control script for the $(FormatAsPackageName $QPKG_NAME) QPKG"
+Display "$(TextBrightWhite "$(/usr/bin/basename "$0")") $SERVICE_SCRIPT_VERSION • a service control script for the $(FormatAsPackageName $QPKG_NAME) QPKG"
 Display
 Display "Usage: $0 [ACTION]"
 Display
@@ -350,8 +350,8 @@ local default_recommended_modules_pathfile=$QPKG_CONFIG_PATH/recommended.txt
 local essential_modules_pathfile=$qpkg_repo_path/essential.txt
 local requirements_modules_pathfile=$qpkg_repo_path/requirements.txt
 local recommended_modules_pathfile=$qpkg_repo_path/recommended.txt
-local excluded_modules_pathfile=$QPKG_CONFIG_PATH/exclusions.txt
-local rename_modules_pathfile=$QPKG_CONFIG_PATH/rename.txt
+local excluded_modules_pathfile=$QPKG_CONFIG_PATH/pip-exclusions.txt
+local rename_modules_pathfile=$QPKG_CONFIG_PATH/pip-rename.txt
 local pyproject_pathfile=$qpkg_repo_path/pyproject.toml
 local pip_conf_pathfile=$venv_path/pip.conf
 local new_env=false
@@ -833,11 +833,11 @@ WriteToLog dbug "${1:-}"
 }
 WriteToLog()
 {
-printf "%-4s: %s\n" "$(StripANSI "${1:-}")" "$(StripANSI "${2:-}")" >> "$SERVICE_LOG_PATHFILE"
+printf "%-4s: %s\n" "$(StripANSICodes "${1:-}")" "$(StripANSICodes "${2:-}")" >> "$SERVICE_LOG_PATHFILE"
 }
-StripANSI()
+StripANSICodes()
 {
-if [[ -e /opt/bin/sed ]]; then
+if [[ -e /opt/bin/sed && -L /opt/etc/passwd ]]; then
 /opt/bin/sed -r 's/\x1b\[[0-9;]*m//g' <<< "${1:-}"
 else
 echo "${1:-}"
@@ -1389,7 +1389,7 @@ IsUnsupported()
 ShowAsError()
 {
 local capitalised=$(Capitalise "${1:-}")
-Display "$(ColourTextBrightRed derp): $capitalised"
+Display "$(TextBrightRed derp): $capitalised"
 } >&2
 DisplayErrCommitAllLogs()
 {
@@ -1468,7 +1468,7 @@ local target=DisplayCommitToLog
 if IsNotStatus && IsNotLog && IsNotNone; then
 IsUnsupported && target=CommitToLog
 CommitToLog '•'
-$target "$(ColourTextInverse "$msg")"
+$target "$(TextInverse "$msg")"
 $target "package: $QPKG_VERSION, service: $SERVICE_SCRIPT_VERSION, library: $SERVICE_LIB_VERSION"
 fi
 }
@@ -1482,13 +1482,13 @@ if IsNotStatus && IsNotLog && IsNotNone; then
 IsUnsupported && target=CommitToLog
 case $service_result in
 ok)
-$target "$(ColourTextBlackOnGreen "$msg")"
+$target "$(TextBlackOnGreen "$msg")"
 ;;
 failed)
-$target "$(ColourTextBlackOnRed "$msg")"
+$target "$(TextBlackOnRed "$msg")"
 ;;
 *)
-$target "$(ColourTextBlackOnYellow "$msg")"
+$target "$(TextBlackOnYellow "$msg")"
 esac
 fi
 }
@@ -1526,27 +1526,27 @@ fi
 /sbin/write_log "[$QPKG_NAME] $1" "$2"
 fi
 }
-ColourTextBrightWhite()
+TextBrightWhite()
 {
 printf '\033[1;97m%s\033[0m' "${1:-}"
 } 2>/dev/null
-ColourTextBrightRed()
+TextBrightRed()
 {
 printf '\033[1;31m%s\033[0m' "${1:-}"
 } 2>/dev/null
-ColourTextBlackOnGreen()
+TextBlackOnGreen()
 {
 printf '\033[30;42m%s\033[0m' "${1:-}"
 } 2>/dev/null
-ColourTextBlackOnRed()
+TextBlackOnRed()
 {
 printf '\033[30;41m%s\033[0m' "${1:-}"
 } 2>/dev/null
-ColourTextBlackOnYellow()
+TextBlackOnYellow()
 {
 printf '\033[30;43m%s\033[0m' "${1:-}"
 } 2>/dev/null
-ColourTextInverse()
+TextInverse()
 {
 printf '\033[7m%s\033[0m' "${1:-}"
 } 2>/dev/null
