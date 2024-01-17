@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-#* don't edit this file, it was built/modified programmatically with the `build-qpkgs.sh` script. (source: clamav.source)
+#* Please don't edit this file directly, it was built/modified programmatically with the 'build-qpkgs.sh' script. (source: 'clamav.source')
 #* clamav.sh
-#* Copyright (C) 2017-2023 OneCD - one.cd.only@gmail.com
+#* Copyright (C) 2017-2024 OneCD - one.cd.only@gmail.com
 #*   So, blame OneCD if it all goes horribly wrong. ;)
 #* Project:
 #*	 https://git.io/sherpa
@@ -20,22 +20,17 @@
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 readonly USER_ARGS_RAW=$*
 readonly QPKG_NAME=ClamAV
-readonly SERVICE_SCRIPT_VERSION='230917'
-InitBasic()
+readonly SERVICE_SCRIPT_VERSION='240118'
+readonly SERVICE_SCRIPT_TYPE=4
+InitService()
 {
-allow_access_to_sys_packages=true
-backup_pathfile=undefined
+qpkg_backup_pathfile=undefined
 install_pip_deps=true
-pip_cache_path=undefined
-service_script_type=4
-qpkg_ini_pathfile=undefined
-qpkg_repo_path=undefined
+qpkg_ini_file=undefined
+qpkg_ini_pathfile=$QPKG_CONFIG_PATH/$qpkg_ini_file
+qpkg_ini_default_pathfile=$qpkg_ini_pathfile.def
 readonly TARGET_SERVICE_PATHFILE=/etc/init.d/antivirus.sh
 readonly BACKUP_SERVICE_PATHFILE=$TARGET_SERVICE_PATHFILE.bak
-}
-InitComplex()
-{
-:
 }
 StartQPKG()
 {
@@ -71,9 +66,9 @@ StatusQPKG()
 IsNotError || return
 IsPackageActive && exit 0 || exit 1
 }
-library_path="$(/usr/bin/readlink "$0" 2>/dev/null)"
-[[ -z $library_path ]] && library_path="$0"
-readonly SERVICE_LIBRARY_PATHFILE="$(/usr/bin/dirname "$library_path")"/service.lib
+library_path=$(/usr/bin/readlink "$0" 2>/dev/null)
+[[ -z $library_path ]] && library_path=$0
+readonly SERVICE_LIBRARY_PATHFILE=$(/usr/bin/dirname "$library_path")/service.lib
 if [[ -e $SERVICE_LIBRARY_PATHFILE ]]; then
 . $SERVICE_LIBRARY_PATHFILE
 else

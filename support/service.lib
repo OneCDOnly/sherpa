@@ -21,7 +21,7 @@
 #*   This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 #*	 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
-readonly SERVICE_LIB_VERSION='240117'
+readonly SERVICE_LIB_VERSION='240118'
 InitLibrary()
 {
 IsQNAP || exit
@@ -344,10 +344,10 @@ return 0
 InstallAddons()
 {
 IsUseVirtualPythonEnv || return 0
-local default_essential_modules_pathfile=$QPKG_CONFIG_PATH/essential.txt
+local default_essential_modules_pathfile=$QPKG_CONFIG_PATH/pip-essential.txt
 local default_requirements_modules_pathfile=$QPKG_CONFIG_PATH/requirements.txt
 local default_recommended_modules_pathfile=$QPKG_CONFIG_PATH/recommended.txt
-local essential_modules_pathfile=$qpkg_repo_path/essential.txt
+local essential_modules_pathfile=$qpkg_repo_path/pip-essential.txt
 local requirements_modules_pathfile=$qpkg_repo_path/requirements.txt
 local recommended_modules_pathfile=$qpkg_repo_path/recommended.txt
 local excluded_modules_pathfile=$QPKG_CONFIG_PATH/pip-exclusions.txt
