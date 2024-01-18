@@ -220,6 +220,17 @@ ShowHelp()
 StartQPKG()
 	{
 
+	if [[ $(type -t StartQPKGCustom) = function ]]; then
+		StartQPKGCustom
+	else
+		StartQPKGLibrary
+	fi
+
+	}
+
+StartQPKGLibrary()
+	{
+
 	IsError && return
 
 	if IsNotRestart && IsNotRestore && IsNotClean && IsNotReset; then
@@ -242,21 +253,23 @@ StartQPKG()
 	InstallAddons || { SetError; return 1 ;}
 
 	if IsNotDaemon; then
-		if [[ ! -L $userlink_pathfile && -e $launcher_pathfile ]]; then
-			ln -s "$launcher_pathfile" "$userlink_pathfile"
+		if [[ $userlink_pathfile != undefined ]]; then
+			if [[ ! -L $userlink_pathfile && -e $launcher_pathfile ]]; then
+				ln -s "$launcher_pathfile" "$userlink_pathfile"
 
-			if [[ -L $userlink_pathfile ]]; then
-				DisplayCommitToLog "symlink created: $userlink_pathfile"
+				if [[ -L $userlink_pathfile ]]; then
+					DisplayCommitToLog "symlink created: $userlink_pathfile"
+				else
+					DisplayErrCommitAllLogs "unable to create symlink to \'$QPKG_NAME\' launcher!"
+					SetError
+					return 1
+				fi
 			else
-				DisplayErrCommitAllLogs "unable to create symlink to \'$QPKG_NAME\' launcher!"
-				SetError
-				return 1
+				DisplayCommitToLog "symlink exists: $userlink_pathfile"
 			fi
-		else
-			DisplayCommitToLog "symlink exists: $userlink_pathfile"
-		fi
 
-		return
+			return
+		fi
 	fi
 
 	if IsOnlineArchive; then
@@ -344,6 +357,17 @@ StartQPKG()
 	}
 
 StopQPKG()
+	{
+
+	if [[ $(type -t StopQPKGCustom) = function ]]; then
+		StopQPKGCustom
+	else
+		StopQPKGLibrary
+	fi
+
+	}
+
+StopQPKGLibrary()
 	{
 
 	IsError && return
@@ -663,6 +687,17 @@ GetAppVersion()
 	}
 
 StatusQPKG()
+	{
+
+	if [[ $(type -t StatusQPKGCustom) = function ]]; then
+		StatusQPKGCustom
+	else
+		StatusQPKGLibrary
+	fi
+
+	}
+
+StatusQPKGLibrary()
 	{
 
 	IsNotError || return
