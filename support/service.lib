@@ -149,6 +149,7 @@ daemon_pid_pathfile=/var/run/$QPKG_NAME.pid
 :
 ;;
 5)
+allow_access_to_sys_packages=false
 daemon_pid_pathfile=/var/run/$QPKG_NAME.pid
 qpkg_repo_path=$QPKG_PATH/repo-cache
 source_archive_pathfile="$qpkg_repo_path/$QPKG_NAME.tar.gz"
@@ -202,6 +203,14 @@ Display
 }
 StartQPKG()
 {
+if [[ $(type -t StartQPKGCustom) = function ]]; then
+StartQPKGCustom
+else
+StartQPKGLibrary
+fi
+}
+StartQPKGLibrary()
+{
 IsError && return
 if IsNotRestart && IsNotRestore && IsNotClean && IsNotReset; then
 IsDaemonActive && return
@@ -218,6 +227,7 @@ fi
 CloneGitRepo || { SetError; return 1 ;}
 InstallAddons || { SetError; return 1 ;}
 if IsNotDaemon; then
+if [[ $userlink_pathfile != undefined ]]; then
 if [[ ! -L $userlink_pathfile && -e $launcher_pathfile ]]; then
 ln -s "$launcher_pathfile" "$userlink_pathfile"
 if [[ -L $userlink_pathfile ]]; then
@@ -231,6 +241,7 @@ else
 DisplayCommitToLog "symlink exists: $userlink_pathfile"
 fi
 return
+fi
 fi
 if IsOnlineArchive; then
 local source_archive_pathfile=$qpkg_repo_path/source.archive
@@ -297,6 +308,14 @@ fi
 return 0
 }
 StopQPKG()
+{
+if [[ $(type -t StopQPKGCustom) = function ]]; then
+StopQPKGCustom
+else
+StopQPKGLibrary
+fi
+}
+StopQPKGLibrary()
 {
 IsError && return
 if IsNotDaemon; then
@@ -512,6 +531,14 @@ return 1
 fi
 }
 StatusQPKG()
+{
+if [[ $(type -t StatusQPKGCustom) = function ]]; then
+StatusQPKGCustom
+else
+StatusQPKGLibrary
+fi
+}
+StatusQPKGLibrary()
 {
 IsNotError || return
 DisplayWaitCommitToLog 'auto-update:'
