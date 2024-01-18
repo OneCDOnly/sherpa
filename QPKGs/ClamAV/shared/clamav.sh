@@ -32,7 +32,7 @@ qpkg_ini_default_pathfile=$qpkg_ini_pathfile.def
 readonly TARGET_SERVICE_PATHFILE=/etc/init.d/antivirus.sh
 readonly BACKUP_SERVICE_PATHFILE=$TARGET_SERVICE_PATHFILE.bak
 }
-StartQPKG()
+StartQPKGCustom()
 {
 IsError && return
 MakePaths
@@ -50,7 +50,7 @@ fi
 DisplayCommitToLog 'start: OK'
 return 0
 }
-StopQPKG()
+StopQPKGCustom()
 {
 IsError && return
 if [[ -e $BACKUP_SERVICE_PATHFILE ]]; then
@@ -61,7 +61,7 @@ fi
 DisplayCommitToLog 'stop: OK'
 return 0
 }
-StatusQPKG()
+StatusQPKGCustom()
 {
 IsNotError || return
 IsPackageActive && exit 0 || exit 1

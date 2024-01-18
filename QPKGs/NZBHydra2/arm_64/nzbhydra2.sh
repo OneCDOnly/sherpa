@@ -24,8 +24,6 @@ readonly SERVICE_SCRIPT_VERSION='240118'
 readonly SERVICE_SCRIPT_TYPE=5
 InitService()
 {
-allow_access_to_sys_packages=false
-daemon_pid_pathfile=/var/run/$QPKG_NAME.pid
 qpkg_ini_file=nzbhydra.yml
 qpkg_ini_pathfile=$QPKG_CONFIG_PATH/$qpkg_ini_file
 qpkg_ini_default_pathfile=$qpkg_ini_pathfile.def
