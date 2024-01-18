@@ -161,6 +161,7 @@ InitByServiceType()
 			:
 			;;
 		5)
+			allow_access_to_sys_packages=false
 			daemon_pid_pathfile=/var/run/$QPKG_NAME.pid
 			qpkg_repo_path=$QPKG_PATH/repo-cache
 				source_archive_pathfile="$qpkg_repo_path/$QPKG_NAME.tar.gz"
