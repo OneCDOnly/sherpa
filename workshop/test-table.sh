@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-column --table --output-width=90 --separator='|' \
+/opt/bin/column --table --output-width=90 --separator='|' \
 	--table-column name=epoch \
 	--table-column name=status \
 	--table-column name=name \

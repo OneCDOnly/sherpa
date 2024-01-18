@@ -2,12 +2,6 @@
 
 * find all QPKG states concurrently.
 
-* wrap description column text in packages report.
-	maybe use 'GNU column' for this?
-
-* show QPKG hashes on packages report.
-	need to wrap description column first.
-
 * results report should be shown in file viewport.
 
 * results report text should account for single QPKG actions
@@ -45,6 +39,12 @@
 		- 'longest': QPKGs that take a long time to execute are processed first, in-order, down to the shortest time to execute.
 		- 'shortest': QPKGs that take a short time to execute are processed first, in-order, up to the longest time to execute.
 		- 'balanced': QPKGs are processed as a mix of longest, then shortest, then next longest, then next shortest, and so-on.
+
+* wrap description column text in packages report.
+	maybe use 'GNU column' for this?
+
+* show QPKG hashes on packages report.
+	need to wrap description column first.
 
 * autowidth display columns?
 
