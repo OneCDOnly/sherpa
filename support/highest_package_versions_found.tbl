@@ -32,11 +32,11 @@ OFlexGet_240118_x86_64.qpkg.md5      OFlexGet_240118_x86_64.qpkg      OFlexGet  
 OFlexGet_240118_x86.qpkg.md5         OFlexGet_240118_x86.qpkg         OFlexGet             240118       i86    f5195dfc64d0dfa76f53857e39d0e8a2
 OLidarr_240118_arm_64.qpkg.md5       OLidarr_240118_arm_64.qpkg       OLidarr              240118       a64    86671a4c5d4976fc6149c7801c114b45
 OLidarr_240118_x86_64.qpkg.md5       OLidarr_240118_x86_64.qpkg       OLidarr              240118       i64    c5493a2700f670aeb910f2a26422d535
-OliveTin_240118_arm_64.qpkg.md5      OliveTin_240118_arm_64.qpkg      OliveTin             240118       a64    20a8dd80b73336914d3d3af6dd09e88e
-OliveTin_240118_arm-x19.qpkg.md5     OliveTin_240118_arm-x19.qpkg     OliveTin             240118       a19    fd13b1785f0c5fdee5fb49e3664d3e60
-OliveTin_240118_arm-x31.qpkg.md5     OliveTin_240118_arm-x31.qpkg     OliveTin             240118       a31    aa7b9961f0c3a06d278cc3664dd5e171
-OliveTin_240118_arm-x41.qpkg.md5     OliveTin_240118_arm-x41.qpkg     OliveTin             240118       a41    ddf71903b97fff24b7608081136cdf4b
-OliveTin_240118_x86_64.qpkg.md5      OliveTin_240118_x86_64.qpkg      OliveTin             240118       i64    d915bdb2aac3e3123284f646da39d93a
+OliveTin_240119_arm_64.qpkg.md5      OliveTin_240119_arm_64.qpkg      OliveTin             240119       a64    565eeda3e6d38c7c82d2e3985f38ef91
+OliveTin_240119_arm-x19.qpkg.md5     OliveTin_240119_arm-x19.qpkg     OliveTin             240119       a19    510e3a5b3ad0078e3a2230656f722ae0
+OliveTin_240119_arm-x31.qpkg.md5     OliveTin_240119_arm-x31.qpkg     OliveTin             240119       a31    4c2d378a1b3277a6c2bb070b20e13b73
+OliveTin_240119_arm-x41.qpkg.md5     OliveTin_240119_arm-x41.qpkg     OliveTin             240119       a41    d5b92f06d999693b8b68c55b08a8b383
+OliveTin_240119_x86_64.qpkg.md5      OliveTin_240119_x86_64.qpkg      OliveTin             240119       i64    e06bbd622abf8c456888732ea568e38f
 OMedusa_240118.qpkg.md5              OMedusa_240118.qpkg              OMedusa              240118       all    d7204ec5aef898380bf2809e73223a06
 OqBittorrent_240118.qpkg.md5         OqBittorrent_240118.qpkg         OqBittorrent         240118       all    59307ad7f61fd962fd2b3e70a108d595
 OReadarr_240118_arm_64.qpkg.md5      OReadarr_240118_arm_64.qpkg      OReadarr             240118       a64    916210dd6436122470b2f27eec965e18

@@ -20,7 +20,7 @@
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 readonly USER_ARGS_RAW=$*
 readonly QPKG_NAME=OliveTin
-readonly SERVICE_SCRIPT_VERSION='240118'
+readonly SERVICE_SCRIPT_VERSION='240119'
 readonly SERVICE_SCRIPT_TYPE=5
 InitService()
 {
@@ -34,9 +34,9 @@ get_ui_port_secure_enabled_test_cmd='false'
 pidfile_is_managed_by_app=false
 recheck_daemon_pid_after_launch=true
 run_daemon_in_screen_session=true
-daemon_pathfile=$qpkg_repo_path/OliveTin
+remote_arch=linux-arm5
+daemon_pathfile=$qpkg_repo_path/OliveTin-$remote_arch/OliveTin
 daemon_launch_cmd="cd $qpkg_repo_path && $daemon_pathfile -configdir $QPKG_CONFIG_PATH"
-remote_arch=linux-armv5
 remote_url='https://api.github.com/repos/OliveTin/OliveTin/releases/latest'
 resolve_remote_url=true
 }
