@@ -1,5 +1,3 @@
-* OliveTin not starting since upgrade to use service script library functions.
-
 * Glances 'stop' does kill main PID, but then a second PID is found by service script, so it reports the 'stop' as failed.
 
 * ClamAV not starting, but showing 'start' as OK.
