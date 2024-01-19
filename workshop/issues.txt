@@ -10,23 +10,23 @@
 	source: clamav.sh, action: start, datetime: Thu Jan 18 08:37:35 EST 2024, result: ok, elapsed time: 81ms
 
 * progress display text sometimes desyncs during installation of OMedusa QPKG.
-	example: proc: reinstalling dependent QPKGs ... 36% (7/21), 7 OK36% (7/21), 7 OK, 1 in-progress
-	suspect Medusa (or service script) is outputting something to stderr.
+	- example: proc: reinstalling dependent QPKGs ... 36% (7/21), 7 OK36% (7/21), 7 OK, 1 in-progress
+	- suspect Medusa (or service script) is outputting something to stderr.
 
 * 'sherpa list installed' & 'not-installed' not listing anything.
 
 * near the end of installing IPKs, monitored download path can remain at non-zero size while packages complete installation.
-	maybe include a separate progress message when dir size shrinks to almost zero.
+	- maybe include a separate progress message when dir size shrinks to almost zero.
 
 * 'sherpa start inactive' fails to find any inactive packages.
-	must get status of each package first.
+	- must get status of each package first.
 
 * if package signing fails, the cert database is probably already open. Check for this and abort signing.
-	also, when signing fails, don't direct user to the QPKG service-script log: signing isn't a service action.
+	- also, when signing fails, don't direct user to the QPKG service-script log: signing isn't a service action.
 
 * extend startup timeouts for Deluge QPKGs.
 
 * QPKG version sort is not correctly sorting version numbers followed by an alpha as later than non-alpha.
 
 * if a forked action hangs, it might not be killed by its caller.
-	need to confirm this.
+	- need to confirm this.
