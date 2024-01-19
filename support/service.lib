@@ -21,7 +21,7 @@
 #*   This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 #*	 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
-readonly SERVICE_LIB_VERSION='240118'
+readonly SERVICE_LIB_VERSION='240119'
 InitLibrary()
 {
 IsQNAP || exit
@@ -604,6 +604,7 @@ fi
 IsUseVirtualPythonEnv && [[ -d $venv_path ]] && DisplayRunAndLog 'clean virtual environment' "rm -rf \"$venv_path\"" log:failure-only
 IsUsePipCache && [[ -d $pip_cache_path ]] && DisplayRunAndLog 'clean PyPI cache' "rm -rf \"$pip_cache_path\"" log:failure-only
 [[ -e $APP_VERSION_STORE_PATHFILE ]] && DisplayRunAndLog 'remove application version' "rm -f \"$APP_VERSION_STORE_PATHFILE\"" log:failure-only
+MakePaths
 }
 WaitForGit()
 {
@@ -1705,82 +1706,11 @@ fi
 if IsNotError; then
 local user_arg=${USER_ARGS_RAW%% *}
 case $user_arg in
-start|--start)
-IsSU ||	exit 1
-SetServiceAction start
-if IsNotQPKGEnabled; then
-DisplayCommitToLog "$(FormatAsPackageName "$QPKG_NAME") QPKG is disabled. Please enable it first with: $0 enable"
-SetError
-else
-StartQPKG
-fi
-;;
-stop|--stop)
-IsSU ||	exit 1
-SetServiceAction stop
-StopQPKG
-;;
-r|-r|restart|--restart)
-IsSU ||	exit 1
-SetServiceAction restart
-if IsNotQPKGEnabled; then
-DisplayCommitToLog "$(FormatAsPackageName "$QPKG_NAME") QPKG is disabled. Please enable it first with: $0 enable"
-SetError
-else
-StopQPKG && StartQPKG
-fi
-;;
-enable)
-IsSU ||	exit 1
-SetServiceAction enable
-/sbin/qpkg_service enable "$QPKG_NAME"
-if IsQPKGEnabled; then
-DisplayCommitToLog "$(FormatAsPackageName "$QPKG_NAME") is enabled."
-else
-DisplayCommitToLog "$(FormatAsPackageName "$QPKG_NAME") enable failed."
-SetError
-fi
-;;
-disable)
-IsSU ||	exit 1
-SetServiceAction disable
-/sbin/qpkg_service disable "$QPKG_NAME"
-if IsNotQPKGEnabled; then
-DisplayCommitToLog "$(FormatAsPackageName "$QPKG_NAME") is disabled."
-else
-DisplayCommitToLog "$(FormatAsPackageName "$QPKG_NAME") disable failed."
-SetError
-fi
-;;
 b|-b|backup|--backup|backup-config|--backup-config)
 IsSU ||	exit 1
 if IsSupportBackup; then
 SetServiceAction backup
 BackupConfig
-else
-SetServiceAction unsupported
-ShowUnsupportedAction "$user_arg"
-fi
-;;
-reset-config|--reset-config)
-IsSU ||	exit 1
-if IsSupportReset; then
-SetServiceAction reset
-StopQPKG
-ResetConfig
-StartQPKG
-else
-SetServiceAction unsupported
-ShowUnsupportedAction "$user_arg"
-fi
-;;
-restore|--restore|restore-config|--restore-config)
-IsSU ||	exit 1
-if IsSupportBackup; then
-SetServiceAction restore
-StopQPKG
-RestoreConfig
-StartQPKG
 else
 SetServiceAction unsupported
 ShowUnsupportedAction "$user_arg"
@@ -1800,9 +1730,19 @@ SetServiceAction unsupported
 ShowUnsupportedAction "$user_arg"
 fi
 ;;
-l|-l|log|--log)
-SetServiceAction log
-ViewLog
+debug|help|verbose)
+ShowHelp
+;;
+disable)
+IsSU ||	exit 1
+SetServiceAction disable
+/sbin/qpkg_service disable "$QPKG_NAME"
+if IsNotQPKGEnabled; then
+DisplayCommitToLog "$(FormatAsPackageName "$QPKG_NAME") is disabled."
+else
+DisplayCommitToLog "$(FormatAsPackageName "$QPKG_NAME") disable failed."
+SetError
+fi
 ;;
 disable-auto-update|--disable-auto-update)
 IsSU ||	exit 1
@@ -1812,6 +1752,17 @@ DisableAutoUpdate
 else
 SetServiceAction unsupported
 ShowUnsupportedAction "$user_arg"
+fi
+;;
+enable)
+IsSU ||	exit 1
+SetServiceAction enable
+/sbin/qpkg_service enable "$QPKG_NAME"
+if IsQPKGEnabled; then
+DisplayCommitToLog "$(FormatAsPackageName "$QPKG_NAME") is enabled."
+else
+DisplayCommitToLog "$(FormatAsPackageName "$QPKG_NAME") enable failed."
+SetError
 fi
 ;;
 enable-auto-update|--enable-auto-update)
@@ -1824,21 +1775,71 @@ SetServiceAction unsupported
 ShowUnsupportedAction "$user_arg"
 fi
 ;;
-v|-v|version|--version)
-SetServiceAction none
-Display "package: $QPKG_VERSION"
-Display "service: $SERVICE_SCRIPT_VERSION"
-Display "library: $SERVICE_LIB_VERSION"
+l|-l|log|--log)
+SetServiceAction log
+ViewLog
 ;;
 remove)
 SetServiceAction uninstall
+;;
+reset-config|--reset-config)
+IsSU ||	exit 1
+if IsSupportReset; then
+SetServiceAction reset
+StopQPKG
+ResetConfig
+StartQPKG
+else
+SetServiceAction unsupported
+ShowUnsupportedAction "$user_arg"
+fi
+;;
+r|-r|restart|--restart)
+IsSU ||	exit 1
+SetServiceAction restart
+if IsNotQPKGEnabled; then
+DisplayCommitToLog "$(FormatAsPackageName "$QPKG_NAME") QPKG is disabled. Please enable it first with: $0 enable"
+SetError
+else
+StopQPKG && StartQPKG
+fi
+;;
+restore|--restore|restore-config|--restore-config)
+IsSU ||	exit 1
+if IsSupportBackup; then
+SetServiceAction restore
+StopQPKG
+RestoreConfig
+StartQPKG
+else
+SetServiceAction unsupported
+ShowUnsupportedAction "$user_arg"
+fi
+;;
+start|--start)
+IsSU ||	exit 1
+SetServiceAction start
+if IsNotQPKGEnabled; then
+DisplayCommitToLog "$(FormatAsPackageName "$QPKG_NAME") QPKG is disabled. Please enable it first with: $0 enable"
+SetError
+else
+StartQPKG
+fi
 ;;
 s|-s|status|--status)
 SetServiceAction status
 StatusQPKG
 ;;
-debug|help|verbose)
-ShowHelp
+stop|--stop)
+IsSU ||	exit 1
+SetServiceAction stop
+StopQPKG
+;;
+v|-v|version|--version)
+SetServiceAction none
+Display "package: $QPKG_VERSION"
+Display "service: $SERVICE_SCRIPT_VERSION"
+Display "library: $SERVICE_LIB_VERSION"
 ;;
 *)
 if [[ -z $user_arg ]]; then
