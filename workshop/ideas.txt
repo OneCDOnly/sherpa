@@ -4,7 +4,7 @@
 
 * results report should be shown in file viewport.
 
-* results report text should account for single QPKG actions
+* results report text should account for single QPKG actions.
 	don't pluralise "package actions" when there was only one.
 
 * QDK looks like it will now write installation scripts that extract to unique paths.
@@ -46,7 +46,7 @@
 * show QPKG hashes on packages report.
 	need to wrap description column first.
 
-* autowidth display columns?
+* autowidth display columns.
 
 * BASH completion?
 
