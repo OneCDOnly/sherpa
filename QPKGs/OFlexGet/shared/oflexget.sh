@@ -25,8 +25,15 @@ readonly SERVICE_SCRIPT_TYPE=6
 InitService()
 {
 :
+qpkg_ini_file=config.yml
+qpkg_ini_pathfile=$QPKG_CONFIG_PATH/$qpkg_ini_file
+qpkg_ini_default_pathfile=$qpkg_ini_pathfile.def
 daemon_pathfile=$venv_path/bin/flexget
-daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile"
+daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile -c $qpkg_in_pathfile"
+get_ui_listening_address_cmd='echo 0.0.0.0'
+get_ui_port_cmd='echo 5050'
+get_ui_port_secure_cmd='echo 0'
+get_ui_port_secure_enabled_test_cmd='false'
 }
 library_path=$(/usr/bin/readlink "$0" 2>/dev/null)
 [[ -z $library_path ]] && library_path=$0
