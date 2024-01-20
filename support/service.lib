@@ -21,7 +21,7 @@
 #*   This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 #*	 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
-readonly SERVICE_LIB_VERSION='240119'
+readonly SERVICE_LIB_VERSION='240121'
 InitLibrary()
 {
 IsQNAP || exit
@@ -47,7 +47,7 @@ UnsetRestartPending
 readonly DAEMON_CHECK_TIMEOUT_SECONDS=60
 readonly DAEMON_STOP_TIMEOUT_SECONDS=120
 readonly PIDFILE_APPEAR_TIMEOUT_SECONDS=60
-readonly PIDFILE_RECHECK_WAIT_SECONDS=10
+readonly PID_RECHECK_WAIT_SECONDS=10
 readonly PORT_CHECK_TIMEOUT_SECONDS=240
 readonly BACKUP_PATH=$(/sbin/getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
 readonly CHARS_REGULAR_PROMPT='$ '
@@ -91,6 +91,7 @@ qpkg_ini_pathfile=$QPKG_CONFIG_PATH/$qpkg_ini_file
 qpkg_ini_default_pathfile=$qpkg_ini_pathfile.def
 qpkg_repo_path=undefined
 recheck_daemon_pid_after_launch=false
+recheck_daemon_pid_after_kill=false
 remote_arch=undefined
 remote_url=undefined
 resolve_remote_url=false
@@ -294,7 +295,7 @@ SetError
 return 1
 fi
 WaitForDaemon
-WaitForPID
+WaitForStartPID
 if ! IsDaemonActive; then
 DisplayErrCommitAllLogs 'IsDaemonActive() failed!'
 SetError
@@ -355,7 +356,7 @@ CommitToLog "stopped in $acc second$(Pluralise "$acc")"
 CommitInfoToSysLog 'stop daemon: OK'
 break
 done
-/bin/sleep 1
+WaitForKillPID
 IsNotDaemonActive || { SetError; return 1 ;}
 fi
 return 0
@@ -653,41 +654,40 @@ fi
 rm -f "$daemon_pid_pathfile"
 return 1
 }
-WaitForPID()
+WaitForStartPID()
 {
-local -i count=0
+local -i i=0
 if [[ $pidfile_is_managed_by_app = true ]]; then
 if WaitForFileToAppear "$daemon_pid_pathfile" "$PIDFILE_APPEAR_TIMEOUT_SECONDS"; then
 /bin/sleep 1
 fi
 fi
 if [[ $recheck_daemon_pid_after_launch = true ]]; then
-DisplayWaitCommitToLog 'found daemon PID:'
-if FindAndWritePIDFile; then
-DisplayCommitToLog "$(<"$daemon_pid_pathfile")"
-else
-DisplayCommitToLog false
-fi
-DisplayWaitCommitToLog "wait $PIDFILE_RECHECK_WAIT_SECONDS second$(Pluralise "$PIDFILE_RECHECK_WAIT_SECONDS") to recheck PID:"
-for ((count=1; count<=PIDFILE_RECHECK_WAIT_SECONDS; count++)); do
+DisplayWaitCommitToLog "wait $PID_RECHECK_WAIT_SECONDS second$(Pluralise "$PID_RECHECK_WAIT_SECONDS") to recheck PID:"
+for ((i=1; i<=PID_RECHECK_WAIT_SECONDS; i++)); do
 /bin/sleep 1
-DisplayWait "$count,"
+DisplayWait "$i,"
 done
 DisplayCommitToLog 'done'
 fi
-DisplayWaitCommitToLog 'found daemon PID:'
-if FindAndWritePIDFile; then
-DisplayCommitToLog "$(<"$daemon_pid_pathfile")"
-else
-DisplayErrCommitAllLogs false
-DisplayErrCommitAllLogs 'unable to locate active daemon process'
-return 1
+FindAndWritePIDFile || return
+}
+WaitForKillPID()
+{
+local -i i=0
+if [[ $recheck_daemon_pid_after_kill = true ]]; then
+DisplayWaitCommitToLog "wait $PID_RECHECK_WAIT_SECONDS second$(Pluralise "$PID_RECHECK_WAIT_SECONDS") to recheck PID:"
+for ((i=1; i<=PID_RECHECK_WAIT_SECONDS; i++)); do
+/bin/sleep 1
+DisplayWait "$i,"
+done
+DisplayCommitToLog 'done'
 fi
-return 0
+! FindAndWritePIDFile || return
 }
 WaitForDaemon()
 {
-local -i count=0
+local -i i=0
 if [[ -n $1 ]]; then
 MAX_SECONDS=$1
 else
@@ -703,12 +703,12 @@ else
 target_proc=$(GetLaunchTarget)
 fi
 (
-for ((count=1; count<=MAX_SECONDS; count++)); do
+for ((i=1; i<=MAX_SECONDS; i++)); do
 /bin/sleep 1
-DisplayWait "$count,"
+DisplayWait "$i,"
 if IsProcessActive "$target_proc" "$daemon_pid_pathfile"; then
 Display OK
-CommitToLog "active after $count second$(Pluralise "$count")"
+CommitToLog "active after $i second$(Pluralise "$i")"
 true
 exit
 fi
@@ -726,6 +726,7 @@ return 0
 }
 WaitForFileToAppear()
 {
+local -i i=0
 [[ -n $1 ]] || return
 if [[ -n $2 ]]; then
 MAX_SECONDS=$2
@@ -736,12 +737,12 @@ if [[ ! -e $1 ]]; then
 DisplayWaitCommitToLog "wait for $1 to appear:"
 DisplayWait "(no-more than $MAX_SECONDS second$(Pluralise "$MAX_SECONDS")):"
 (
-for ((count=1; count<=MAX_SECONDS; count++)); do
+for ((i=1; i<=MAX_SECONDS; i++)); do
 /bin/sleep 1
-DisplayWait "$count,"
+DisplayWait "$i,"
 if [[ -e $1 ]]; then
 Display OK
-CommitToLog "visible after $count second$(Pluralise "$count")"
+CommitToLog "visible after $i second$(Pluralise "$i")"
 true
 exit
 fi
