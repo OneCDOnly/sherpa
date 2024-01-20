@@ -59,9 +59,11 @@ Par2turbo_1.1.0_arm_64.qpkg.md5      Par2turbo_1.1.0_arm_64.qpkg      Par2turbo 
 Par2turbo_1.1.0_arm-x31.qpkg.md5     Par2turbo_1.1.0_arm-x31.qpkg     Par2turbo            1.1.0        a31    fafa50f9fe67d7798e2261ec8408cf1a
 Par2turbo_1.1.0_arm-x41.qpkg.md5     Par2turbo_1.1.0_arm-x41.qpkg     Par2turbo            1.1.0        a41    da1a48d4674453c5116870ad35c0b899
 Par2turbo_1.1.0_x86_64.qpkg.md5      Par2turbo_1.1.0_x86_64.qpkg      Par2turbo            1.1.0        i64    574f2d84284fe1c1f2e66d104e16ae8b
-pyLoad_240121.qpkg.md5               pyLoad_240121.qpkg               pyLoad               240121       all    9d9fd7af4d0aa870aef1877511913a1f
-pyLoad_240121_x86_64.qpkg.md5        pyLoad_240121_x86_64.qpkg        pyLoad               240121       i64    2db40547c906b5ad70bbe30507589491
-pyLoad_240121_x86.qpkg.md5           pyLoad_240121_x86.qpkg           pyLoad               240121       i86    d53af0d624e7dd46292b508b4f6e969b
+pyLoad_240121_arm_64.qpkg.md5        pyLoad_240121_arm_64.qpkg        pyLoad               240121       a64    32f27b85d88a533cad50f9f31ae7246c
+pyLoad_240121_arm-x19.qpkg.md5       pyLoad_240121_arm-x19.qpkg       pyLoad               240121       a19    ba6df9ff86fcc64dd6c9e6a9daefb679
+pyLoad_240121_arm-x41.qpkg.md5       pyLoad_240121_arm-x41.qpkg       pyLoad               240121       a41    839a11f7231dded6da068246a6317cd4
+pyLoad_240121_x86_64.qpkg.md5        pyLoad_240121_x86_64.qpkg        pyLoad               240121       i64    41019b0fe2bbd6d2c492d15b0c7c8e39
+pyLoad_240121_x86.qpkg.md5           pyLoad_240121_x86.qpkg           pyLoad               240121       i86    3018bcf7afdafad01296be85323f8595
 QDK_2.3.13.zip.qpkg.md5              QDK_2.3.13.zip                   QDK                  2.3.13       all    0b003e703a29520e98a0aca41ed0e585
 RunLast_230224.qpkg.md5              RunLast_230224.qpkg              RunLast              230224       all    6cb5415fe56592ca1f4e8a4f2dcc5f17
 SABnzbd_240121_arm_64.qpkg.md5       SABnzbd_240121_arm_64.qpkg       SABnzbd              240121       a64    5c67d6e0dac8e7b2aaaefab9c7efd270
