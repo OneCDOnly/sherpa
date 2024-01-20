@@ -36,7 +36,7 @@ recheck_daemon_pid_after_launch=true
 run_daemon_in_screen_session=true
 remote_arch=linux-amd64
 daemon_pathfile=$qpkg_repo_path/OliveTin-$remote_arch/OliveTin
-daemon_launch_cmd="cd $qpkg_repo_path && $daemon_pathfile -configdir $QPKG_CONFIG_PATH"
+daemon_launch_cmd="cd $qpkg_repo_path/OliveTin-$remote_arch && $daemon_pathfile -configdir $QPKG_CONFIG_PATH"
 remote_url='https://api.github.com/repos/OliveTin/OliveTin/releases/latest'
 resolve_remote_url=true
 }
