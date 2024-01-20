@@ -20,7 +20,7 @@
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 readonly USER_ARGS_RAW=$*
 readonly QPKG_NAME=Glances
-readonly SERVICE_SCRIPT_VERSION='240119'
+readonly SERVICE_SCRIPT_VERSION='240121'
 readonly SERVICE_SCRIPT_TYPE=6
 InitService()
 {
@@ -30,6 +30,7 @@ get_ui_listening_address_cmd='echo 0.0.0.0'
 get_ui_port_cmd='echo 61208'
 get_ui_port_secure_cmd='echo 0'
 get_ui_port_secure_enabled_test_cmd='false'
+recheck_daemon_pid_after_kill=true
 }
 library_path=$(/usr/bin/readlink "$0" 2>/dev/null)
 [[ -z $library_path ]] && library_path=$0
