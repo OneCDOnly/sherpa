@@ -1,5 +1,3 @@
-* Glances 'stop' does kill main PID, but then a second PID is found by service script, so it reports the 'stop' as failed.
-
 * ClamAV not starting, but showing 'start' as OK.
 	[~] # /etc/init.d/clamav.sh start debug
 	source: clamav.sh, action: start, datetime: Thu Jan 18 08:37:35 EST 2024
