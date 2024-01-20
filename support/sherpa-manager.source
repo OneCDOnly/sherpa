@@ -1017,9 +1017,9 @@ Self:Validate()
 		QPKGs-ACdisable-to:Remove "$(QPKGs-ACuninstall-to:Array)"
 	fi
 
-	# No-need to `activate` packages that are to be upgraded/reinstalled/installed/reactivated.
+	# No-need to `activate` packages that are to be reinstalled/installed/reactivated.
 
-	for action in upgrade reinstall install reactivate; do
+	for action in reinstall install reactivate; do
 		QPKGs-ACactivate-to:Remove "$(QPKGs-AC${action}-to:Array)"
 	done
 
@@ -4924,10 +4924,10 @@ QPKGs.Missing:Show()
 
 	local -a packages=()
 	local -i i=0
-	local names_formatted=''
+	local a=''
 	local premsg=''
 	local sufmsg=''
-	local name_limit=3
+	local name_limit=2
 
 	[[ $hide_title = false ]] || return
 
@@ -4939,15 +4939,15 @@ QPKGs.Missing:Show()
 
 	# shellcheck disable=2322
 	for ((i=0; i<=((${#packages[@]}-1)); i++)); do
-		names_formatted+=$(TextBrightRed "${packages[$i]}")
+		a+=$(TextBrightRed "${packages[$i]}")
 
 		if [[ $((i+1)) -ge $name_limit && $((${#packages[@]}-name_limit)) -gt 0 ]]; then
-			names_formatted+=" & $(TextBrightRed "$((${#packages[@]}-name_limit))") other$(Pluralise "$((${#packages[@]}-name_limit))")"
+			a+=" & $(TextBrightRed "$((${#packages[@]}-name_limit))") other$(Pluralise "$((${#packages[@]}-name_limit))")"
 			break
 		elif [[ $((i+2)) -lt ${#packages[@]} ]]; then
-			names_formatted+=', '
+			a+=', '
 		elif [[ $((i+2)) -eq ${#packages[@]} ]]; then
-			names_formatted+=' & '
+			a+=' & '
 		fi
 	done
 
@@ -4959,7 +4959,7 @@ QPKGs.Missing:Show()
 		sufmsg='them'
 	fi
 
-	ShowAsInfo "the $names_formatted QPKG${premsg} missing or broken. Please reinstall $sufmsg."
+	ShowAsInfo "$a QPKG${premsg} missing or broken. Please reinstall $sufmsg."
 	return 1
 
 	}
@@ -4975,9 +4975,8 @@ QPKGs.NewVers:Show()
 
 	local -a packages=()
 	local -i i=0
-	local names_formatted=''
-	local msg=''
-	local name_limit=3
+	local a=''
+	local name_limit=2
 
 	[[ $hide_title = false ]] || return
 
@@ -4989,25 +4988,19 @@ QPKGs.NewVers:Show()
 
 	# shellcheck disable=2322
 	for ((i=0; i<=((${#packages[@]}-1)); i++)); do
-		names_formatted+=$(TextBrightOrange "${packages[$i]}")
+		a+=$(TextBrightOrange "${packages[$i]}")
 
 		if [[ $((i+1)) -ge $name_limit && $((${#packages[@]}-name_limit)) -gt 0 ]]; then
-			names_formatted+=" & $(TextBrightOrange "$((${#packages[@]}-name_limit))") other$(Pluralise "$((${#packages[@]}-name_limit))")"
+			a+=" & $(TextBrightOrange "$((${#packages[@]}-name_limit))") other$(Pluralise "$((${#packages[@]}-name_limit))")"
 			break
 		elif [[ $((i+2)) -lt ${#packages[@]} ]]; then
-			names_formatted+=', '
+			a+=', '
 		elif [[ $((i+2)) -eq ${#packages[@]} ]]; then
-			names_formatted+=' & '
+			a+=' & '
 		fi
 	done
 
-	if [[ ${#packages[@]} -eq 1 ]]; then
-		msg='a new QPKG version is'
-	else
-		msg='new QPKG versions are'
-	fi
-
-	ShowAsInfo "$msg available for $names_formatted."
+	ShowAsInfo "new QPKG version$(Pluralise "${#packages[@]}") available for $a."
 	return 1
 
 	}
