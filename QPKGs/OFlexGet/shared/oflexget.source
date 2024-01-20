@@ -24,12 +24,17 @@ InitService()
 # 	run_daemon_in_screen_session=true
 #  	venv_python_pathfile=$venv_path/bin/python		# WebSSH expects 'python', not 'python3'
 
+	qpkg_ini_file=config.yml
+		qpkg_ini_pathfile=$QPKG_CONFIG_PATH/$qpkg_ini_file
+			qpkg_ini_default_pathfile=$qpkg_ini_pathfile.def
+
+
 	daemon_pathfile=$venv_path/bin/flexget
-		daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile"
-# 	get_ui_listening_address_cmd='echo 0.0.0.0'
-# 	get_ui_port_cmd='echo 8010'
-# 	get_ui_port_secure_cmd='echo 0'
-# 	get_ui_port_secure_enabled_test_cmd='false'
+		daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile -c $qpkg_in_pathfile"
+	get_ui_listening_address_cmd='echo 0.0.0.0'
+	get_ui_port_cmd='echo 5050'
+	get_ui_port_secure_cmd='echo 0'
+	get_ui_port_secure_enabled_test_cmd='false'
 # 	source_git_branch=master
 
 	}
