@@ -25,6 +25,7 @@ InitService()
 	get_ui_port_cmd='echo 61208'
 	get_ui_port_secure_cmd='echo 0'
 	get_ui_port_secure_enabled_test_cmd='false'
+	recheck_daemon_pid_after_kill=true
 
 	}
 

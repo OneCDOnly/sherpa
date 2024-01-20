@@ -49,7 +49,7 @@ InitLibrary()
 	readonly DAEMON_CHECK_TIMEOUT_SECONDS=60
 	readonly DAEMON_STOP_TIMEOUT_SECONDS=120
 	readonly PIDFILE_APPEAR_TIMEOUT_SECONDS=60
-	readonly PIDFILE_RECHECK_WAIT_SECONDS=10
+	readonly PID_RECHECK_WAIT_SECONDS=10
 	readonly PORT_CHECK_TIMEOUT_SECONDS=240
 
 	readonly BACKUP_PATH=$(/sbin/getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
@@ -95,7 +95,8 @@ InitLibrary()
 		qpkg_ini_pathfile=$QPKG_CONFIG_PATH/$qpkg_ini_file
 			qpkg_ini_default_pathfile=$qpkg_ini_pathfile.def
 	qpkg_repo_path=undefined
-	recheck_daemon_pid_after_launch=false		# if true, application PID is reconfirmed shortly after initial launch. Needed as some applications launch with one PID, then switch to another.
+	recheck_daemon_pid_after_launch=false		# if true, application PID is reconfirmed shortly after initial launch. Some applications launch with one PID, then switch to another.
+	recheck_daemon_pid_after_kill=false			# if true, application PID is reconfirmed shortly after kill confirmed. Some applications kill their main PID, then switch to another during shutdown.
 	remote_arch=undefined
 	remote_url=undefined
 	resolve_remote_url=false					# if 'true', URL must be retrieved from remote first, then parsed to get final URL.
@@ -339,7 +340,7 @@ StartQPKGLibrary()
 	fi
 
 	WaitForDaemon
-	WaitForPID
+	WaitForStartPID
 
 	if ! IsDaemonActive; then
 		DisplayErrCommitAllLogs 'IsDaemonActive() failed!'
@@ -419,7 +420,8 @@ StopQPKGLibrary()
 			break
 		done
 
-		/bin/sleep 1		# let application shutdown complete.
+# 		/bin/sleep 1		# let application shutdown complete.
+		WaitForKillPID
 		IsNotDaemonActive || { SetError; return 1 ;}
 	fi
 
@@ -849,7 +851,7 @@ FindAndWritePIDFile()
 	local target_pid=''
 
 	if [[ $daemon_proc_is_name_only = true ]]; then
-		# QTS `pidof` is unreliable and should be used as a last resort only
+		# QTS `pidof` is unreliable and should be used only as a last resort
 		target_pid=$(/bin/pidof -s "$(/usr/bin/basename "$daemon_pathfile")")
 	else
 		target_pid=$(/bin/ps | /bin/grep "$(GetLaunchTarget)" | /bin/grep -v grep)
@@ -868,10 +870,10 @@ FindAndWritePIDFile()
 
 	}
 
-WaitForPID()
+WaitForStartPID()
 	{
 
-	local -i count=0
+	local -i i=0
 
 	if [[ $pidfile_is_managed_by_app = true ]]; then
 		if WaitForFileToAppear "$daemon_pid_pathfile" "$PIDFILE_APPEAR_TIMEOUT_SECONDS"; then
@@ -880,35 +882,37 @@ WaitForPID()
 	fi
 
 	if [[ $recheck_daemon_pid_after_launch = true ]]; then
-		DisplayWaitCommitToLog 'found daemon PID:'
+		DisplayWaitCommitToLog "wait $PID_RECHECK_WAIT_SECONDS second$(Pluralise "$PID_RECHECK_WAIT_SECONDS") to recheck PID:"
 
-		if FindAndWritePIDFile; then
-			DisplayCommitToLog "$(<"$daemon_pid_pathfile")"
-		else
-			DisplayCommitToLog false
-		fi
-
-		DisplayWaitCommitToLog "wait $PIDFILE_RECHECK_WAIT_SECONDS second$(Pluralise "$PIDFILE_RECHECK_WAIT_SECONDS") to recheck PID:"
-
-		for ((count=1; count<=PIDFILE_RECHECK_WAIT_SECONDS; count++)); do
+		for ((i=1; i<=PID_RECHECK_WAIT_SECONDS; i++)); do
 			/bin/sleep 1
-			DisplayWait "$count,"
+			DisplayWait "$i,"
 		done
 
 		DisplayCommitToLog 'done'
 	fi
 
-	DisplayWaitCommitToLog 'found daemon PID:'
+	FindAndWritePIDFile || return
 
-	if FindAndWritePIDFile; then
-		DisplayCommitToLog "$(<"$daemon_pid_pathfile")"
-	else
-		DisplayErrCommitAllLogs false
-		DisplayErrCommitAllLogs 'unable to locate active daemon process'
-		return 1
+	}
+
+WaitForKillPID()
+	{
+
+	local -i i=0
+
+	if [[ $recheck_daemon_pid_after_kill = true ]]; then
+		DisplayWaitCommitToLog "wait $PID_RECHECK_WAIT_SECONDS second$(Pluralise "$PID_RECHECK_WAIT_SECONDS") to recheck PID:"
+
+		for ((i=1; i<=PID_RECHECK_WAIT_SECONDS; i++)); do
+			/bin/sleep 1
+			DisplayWait "$i,"
+		done
+
+		DisplayCommitToLog 'done'
 	fi
 
-	return 0
+	! FindAndWritePIDFile || return
 
 	}
 
@@ -921,7 +925,7 @@ WaitForDaemon()
 	# output:
 	#   $? = 0 (file was found) or 1 (file not found: timeout)
 
-	local -i count=0
+	local -i i=0
 
 	if [[ -n $1 ]]; then
 		MAX_SECONDS=$1
@@ -942,13 +946,13 @@ WaitForDaemon()
 		fi
 
 		(
-			for ((count=1; count<=MAX_SECONDS; count++)); do
+			for ((i=1; i<=MAX_SECONDS; i++)); do
 				/bin/sleep 1
-				DisplayWait "$count,"
+				DisplayWait "$i,"
 
 				if IsProcessActive "$target_proc" "$daemon_pid_pathfile"; then
 					Display OK
-					CommitToLog "active after $count second$(Pluralise "$count")"
+					CommitToLog "active after $i second$(Pluralise "$i")"
 					true
 					exit	# only this sub-shell
 				fi
@@ -981,6 +985,8 @@ WaitForFileToAppear()
 	#   $? = 0 : file was found
 	#   $? = 1 : file not found/timeout
 
+	local -i i=0
+
 	[[ -n $1 ]] || return
 
 	if [[ -n $2 ]]; then
@@ -994,13 +1000,13 @@ WaitForFileToAppear()
 		DisplayWait "(no-more than $MAX_SECONDS second$(Pluralise "$MAX_SECONDS")):"
 
 		(
-			for ((count=1; count<=MAX_SECONDS; count++)); do
+			for ((i=1; i<=MAX_SECONDS; i++)); do
 				/bin/sleep 1
-				DisplayWait "$count,"
+				DisplayWait "$i,"
 
 				if [[ -e $1 ]]; then
 					Display OK
-					CommitToLog "visible after $count second$(Pluralise "$count")"
+					CommitToLog "visible after $i second$(Pluralise "$i")"
 					true
 					exit	# only this sub-shell
 				fi
