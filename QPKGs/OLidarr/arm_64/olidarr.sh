@@ -24,8 +24,9 @@ readonly SERVICE_SCRIPT_VERSION='240123'
 readonly SERVICE_SCRIPT_TYPE=5
 InitService()
 {
+local_temp_path=$QPKG_PATH/tmp
 daemon_pathfile=$qpkg_repo_path/Lidarr/Lidarr
-daemon_launch_cmd="export DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1; $daemon_pathfile --nobrowser --data=$QPKG_CONFIG_PATH"
+daemon_launch_cmd="export DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1 TMPDIR=$local_temp_path; $daemon_pathfile --nobrowser --data=$QPKG_CONFIG_PATH"
 get_ui_listening_address_cmd='echo 0.0.0.0'
 get_ui_port_cmd='grep "<Port>" $qpkg_ini_pathfile | sed "s/.*<Port>\(.*\)<\/Port>.*/\1/"'
 get_ui_port_secure_cmd='grep "<SslPort>" $qpkg_ini_pathfile | sed "s/.*<SslPort>\(.*\)<\/SslPort>.*/\1/"'
