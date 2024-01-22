@@ -86,7 +86,8 @@ InitLibrary()
 	get_ui_port_secure_enabled_test_cmd=undefined
 	install_pip_deps=false
 	interpreter=undefined
-    launcher_pathfile=undefined					# on-call executables only
+	launcher_pathfile=undefined					# on-call executables only
+	local_temp_path=undefined
 	orig_daemon_service_script=undefined		# specific to Entware binaries only
 	pidfile_is_managed_by_app=false
 	pip_cache_path=undefined
@@ -619,11 +620,13 @@ MakePaths()
 	{
 
 	if [[ -d $QPKG_PATH ]]; then
-		[[ ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
-		IsSourcedOnline && [[ $qpkg_repo_path != undefined && ! -d $qpkg_repo_path ]] && mkdir -p "$qpkg_repo_path"
+		IsUseTemp && [[ ! -d $local_temp_path ]] && mkdir -p "$local_temp_path"
+		IsSourcedOnline && [[ ! -d $qpkg_repo_path ]] && mkdir -p "$qpkg_repo_path"
 		IsUsePipCache && [[ ! -d $pip_cache_path ]] && mkdir -p "$pip_cache_path"
 		IsUseVirtualPythonEnv && [[ ! -d $venv_path ]] && mkdir -p "$venv_path"
 	fi
+
+	IsSupportBackup && [[ ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
 
 	}
 
@@ -798,6 +801,7 @@ CleanLocalRepo()
 	IsUseVirtualPythonEnv && [[ -d $venv_path ]] && DisplayRunAndLog 'clean virtual environment' "rm -rf \"$venv_path\"" log:failure-only
 	IsUsePipCache && [[ -d $pip_cache_path ]] && DisplayRunAndLog 'clean PyPI cache' "rm -rf \"$pip_cache_path\"" log:failure-only
 	[[ -e $APP_VERSION_STORE_PATHFILE ]] && DisplayRunAndLog 'remove application version' "rm -f \"$APP_VERSION_STORE_PATHFILE\"" log:failure-only
+	IsUseTemp && [[ -d $local_temp_path ]] && DisplayRunAndLog 'clean temp path' "rm -rf \"$local_temp_path\"" log:failure-only
 
 	MakePaths
 
@@ -1630,6 +1634,20 @@ IsNotSourcedOnline()
 	{
 
 	! IsSourcedOnline
+
+	}
+
+IsUseTemp()
+	{
+
+	[[ $local_temp_path != undefined ]]
+
+	}
+
+IsNotUseTemp()
+	{
+
+	! IsUseTemp
 
 	}
 
