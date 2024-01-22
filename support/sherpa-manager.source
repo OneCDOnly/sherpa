@@ -2275,6 +2275,9 @@ IsThisFileRecent()
 	# output:
 	#   $? = true/false
 
+# update to use stat-only:
+# https://stackoverflow.com/a/55622661
+
 	# Examine `change` time as this is updated even if file content isn't modified.
 
 	if [[ -e $1 && -e $GNU_FIND_CMD ]]; then
@@ -2283,7 +2286,7 @@ IsThisFileRecent()
 		fi
 	fi
 
-	return 1	# File not found, GNU `find` unavailable or file `change` time was more than $2 minutes ago.
+	return 1	# File not found: GNU `find` unavailable, or file `change` time was more than $2 minutes ago.
 
 	}
 
