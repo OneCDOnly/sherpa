@@ -4337,7 +4337,7 @@ Report.Results:Show()
 	local package_type=''
 	local found=false
 	local singular='this action'
-	local plural='these action(s)'
+	local plural='these actions'
 
 	DisplayWritingReport
 
@@ -4348,7 +4348,7 @@ Report.Results:Show()
 
 			while read -r datetime action package_name result duration reason package_type; do
 				if [[ $display_last_action_datetime = true ]]; then
-					DisplayAsHelpTitle "the following package action(s) were run: $(/bin/date -d @"$datetime")"
+					DisplayAsHelpTitle "the following package actions were run: $(/bin/date -d @"$datetime")"
 					display_last_action_datetime=false
 				fi
 
