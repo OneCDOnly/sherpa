@@ -21,7 +21,7 @@
 #*   This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 #*	 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
-readonly SERVICE_LIB_VERSION='240121'
+readonly SERVICE_LIB_VERSION='240123'
 InitLibrary()
 {
 IsQNAP || exit
@@ -82,6 +82,7 @@ get_ui_port_secure_enabled_test_cmd=undefined
 install_pip_deps=false
 interpreter=undefined
 launcher_pathfile=undefined
+local_temp_path=undefined
 orig_daemon_service_script=undefined
 pidfile_is_managed_by_app=false
 pip_cache_path=undefined
@@ -484,11 +485,12 @@ return 0
 MakePaths()
 {
 if [[ -d $QPKG_PATH ]]; then
-[[ ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
-IsSourcedOnline && [[ $qpkg_repo_path != undefined && ! -d $qpkg_repo_path ]] && mkdir -p "$qpkg_repo_path"
+IsUseTemp && [[ ! -d $local_temp_path ]] && mkdir -p "$local_temp_path"
+IsSourcedOnline && [[ ! -d $qpkg_repo_path ]] && mkdir -p "$qpkg_repo_path"
 IsUsePipCache && [[ ! -d $pip_cache_path ]] && mkdir -p "$pip_cache_path"
 IsUseVirtualPythonEnv && [[ ! -d $venv_path ]] && mkdir -p "$venv_path"
 fi
+IsSupportBackup && [[ ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
 }
 LoadPorts()
 {
@@ -605,6 +607,7 @@ fi
 IsUseVirtualPythonEnv && [[ -d $venv_path ]] && DisplayRunAndLog 'clean virtual environment' "rm -rf \"$venv_path\"" log:failure-only
 IsUsePipCache && [[ -d $pip_cache_path ]] && DisplayRunAndLog 'clean PyPI cache' "rm -rf \"$pip_cache_path\"" log:failure-only
 [[ -e $APP_VERSION_STORE_PATHFILE ]] && DisplayRunAndLog 'remove application version' "rm -f \"$APP_VERSION_STORE_PATHFILE\"" log:failure-only
+IsUseTemp && [[ -d $local_temp_path ]] && DisplayRunAndLog 'clean temp path' "rm -rf \"$local_temp_path\"" log:failure-only
 MakePaths
 }
 WaitForGit()
@@ -1107,6 +1110,14 @@ IsGitApp || IsUsePipCache || IsUseVirtualPythonEnv || IsOnlineArchive
 IsNotSourcedOnline()
 {
 ! IsSourcedOnline
+}
+IsUseTemp()
+{
+[[ $local_temp_path != undefined ]]
+}
+IsNotUseTemp()
+{
+! IsUseTemp
 }
 IsSSLEnabled()
 {

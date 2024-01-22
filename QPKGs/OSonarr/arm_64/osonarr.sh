@@ -20,12 +20,13 @@
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 readonly USER_ARGS_RAW=$*
 readonly QPKG_NAME=OSonarr
-readonly SERVICE_SCRIPT_VERSION='240121'
+readonly SERVICE_SCRIPT_VERSION='240123'
 readonly SERVICE_SCRIPT_TYPE=5
 InitService()
 {
+local_temp_path=$qpkg_repo_path/tmp
 daemon_pathfile=$qpkg_repo_path/Sonarr/Sonarr
-daemon_launch_cmd="export DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1; $daemon_pathfile --nobrowser --data=$QPKG_CONFIG_PATH"
+daemon_launch_cmd="export DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1; export TMPDIR=$local_temp_path; $daemon_pathfile --nobrowser --data=$QPKG_CONFIG_PATH"
 get_ui_listening_address_cmd='echo 0.0.0.0'
 get_ui_port_cmd='grep "<Port>" $qpkg_ini_pathfile | sed "s/.*<Port>\(.*\)<\/Port>.*/\1/"'
 get_ui_port_secure_cmd='grep "<SslPort>" $qpkg_ini_pathfile | sed "s/.*<SslPort>\(.*\)<\/SslPort>.*/\1/"'
