@@ -4,10 +4,10 @@
 
 * find all QPKG states concurrently.
 
-* results report should be shown in file viewport.
+* show results report in file viewport.
 
 * results report text should account for single QPKG actions.
-	- don't pluralise "package actions" when there was only one.
+	- Don't pluralise "package actions" when there was only one.
 
 * QDK looks like it will now write installation scripts that extract to unique paths.
 	- Should now be able to install more than one QPKG simultaneously. https://github.com/qnap-dev/QDK/commit/f1eaf3bf0a9547d449592369e555cdfd6cc3c405
@@ -15,7 +15,7 @@
 	- Will also apply to reinstalls and upgrades.
 
 * create local sherpa App Center repository in UI.
-	- place sherpa.xml in /home/httpd and add a 3rd-party repo to App Center with 'http://0.0.0.0:8080/sherpa.xml'
+	- Place sherpa.xml in /home/httpd and add a 3rd-party repo to App Center with 'http://0.0.0.0:8080/sherpa.xml'
 
 * compare .git/ORIG_HEAD before-and-after 'git pull'. If different, then remove *.pyc before starting application.
 
@@ -37,21 +37,21 @@
 * download QPKG updates in background when running sherpa for any reason?
 
 * keep track of each package's action times and process the longest ones first next time?
-	- add a new "launch policy" setting: 'none', 'longest', 'shortest', 'balanced'.
+	- Add a new "launch policy" setting: 'none', 'longest', 'shortest', 'balanced'.
 		- 'none': QPKGs are processed in the same order they appear in 'packages'.
 		- 'longest': QPKGs that take a long time to execute are processed first, in-order, down to the shortest time to execute.
 		- 'shortest': QPKGs that take a short time to execute are processed first, in-order, up to the longest time to execute.
 		- 'balanced': QPKGs are processed as a mix of longest, then shortest, then next longest, then next shortest, and so-on.
 
 * wrap description column text in packages report.
-	- maybe use 'GNU column' for this?
+	- Use 'GNU column' for this?
 
 * show QPKG hashes on packages report.
-	- need to wrap description column first.
+	- Need to wrap description column first.
 
 * autowidth display columns.
 
 * BASH completion?
 
 * include new integrated help screens for all actions?
-	- like: `sherpa paste help`, `sherpa install help`, `sherpa reassign help`
+	- Like: `sherpa paste help`, `sherpa install help`, `sherpa reassign help`
