@@ -282,13 +282,13 @@ StartQPKGLibrary()
 		touch "$target_url_pathfile"
 
 		if [[ $resolve_remote_url = true ]]; then
-			DisplayWaitCommitToLog 'checking remote archive:'
+			DisplayWaitCommitToLog 'check release package:'
 			# https://gist.github.com/steinwaywhw/a4cd19cda655b8249d908261a62687f8
 			remote_url=$(/sbin/curl${curl_insecure_arg} --silent "$remote_url" | /bin/grep browser_download_url | cut -d\" -f4 | /bin/grep "$remote_arch")
 			DisplayCommitToLog OK
 		fi
 
-		DisplayWaitCommitToLog 'local archive update:'
+		DisplayWaitCommitToLog 'update release package:'
 
 		if [[ $(<$target_url_pathfile) != "$remote_url" || ! -e $source_archive_pathfile ]]; then
 			echo "$remote_url" > "$target_url_pathfile"
@@ -299,12 +299,12 @@ StartQPKGLibrary()
 		fi
 
 		if [[ $update = true ]]; then	# download latest release archive.
-			DisplayRunAndLog 'download remote archive' '/sbin/curl'$curl_insecure_arg' --show-error --location --output '$source_archive_pathfile' $(<'$target_url_pathfile')' || { SetError; return 1 ;}
+			DisplayRunAndLog 'download release package' '/sbin/curl'$curl_insecure_arg' --show-error --location --output '$source_archive_pathfile' $(<'$target_url_pathfile')' || { SetError; return 1 ;}
 		fi
 
 		if [[ ! -e $daemon_pathfile || $update = true ]]; then			# extract from latest release archive.
 			# try '.zip' first, then '.tar.gz'
-			DisplayRunAndLog 'extract from local archive' "/usr/bin/unzip -o $source_archive_pathfile -d $qpkg_repo_path || /bin/tar --extract --verbose --gzip --file=$source_archive_pathfile --directory=$qpkg_repo_path" || { SetError; return 1 ;}
+			DisplayRunAndLog 'extract release package' "/usr/bin/unzip -o $source_archive_pathfile -d $qpkg_repo_path || /bin/tar --extract --verbose --gzip --file=$source_archive_pathfile --directory=$qpkg_repo_path" || { SetError; return 1 ;}
 		fi
 	fi
 
