@@ -246,28 +246,32 @@ return
 fi
 fi
 if IsOnlineArchive; then
+local download_quiet=''
+local download_opts=''
 local source_archive_pathfile=$qpkg_repo_path/source.archive
-local target_url_pathfile=$qpkg_repo_path/source.url
-local update=false
-touch "$target_url_pathfile"
+local tar_extract_verbose=''
+local tar_extract_opts=''
+local unzip_extract_verbose=''
+local unzip_extract_opts=''
+if [[ $debug = false ]]; then
+download_quiet=' --silent'
+else
+tar_extract_verbose=' --verbose'
+unzip_extract_verbose=' -v'
+fi
+download_opts="${curl_insecure_arg}${download_quiet}"
 if [[ $resolve_remote_url = true ]]; then
 DisplayWaitCommitToLog 'check release package:'
-remote_url=$(/sbin/curl${curl_insecure_arg} --silent "$remote_url" | /bin/grep browser_download_url | cut -d\" -f4 | /bin/grep "$remote_arch")
+remote_url=$(/sbin/curl${download_opts} "$remote_url" | /bin/grep browser_download_url | cut -d\" -f4 | /bin/grep "$remote_arch")
 DisplayCommitToLog OK
 fi
-DisplayWaitCommitToLog 'update release package:'
-if [[ $(<$target_url_pathfile) != "$remote_url" || ! -e $source_archive_pathfile ]]; then
-echo "$remote_url" > "$target_url_pathfile"
-update=true
-DisplayCommitToLog required
-else
-DisplayCommitToLog 'not required'
-fi
-if [[ $update = true ]]; then
-DisplayRunAndLog 'download release package' '/sbin/curl'$curl_insecure_arg' --show-error --location --output '$source_archive_pathfile' $(<'$target_url_pathfile')' || { SetError; return 1 ;}
-fi
-if [[ ! -e $daemon_pathfile || $update = true ]]; then
-DisplayRunAndLog 'extract release package' "/usr/bin/unzip -o $source_archive_pathfile -d $qpkg_repo_path || /bin/tar --extract --verbose --gzip --file=$source_archive_pathfile --directory=$qpkg_repo_path" || { SetError; return 1 ;}
+[[ -e $source_archive_pathfile ]] && download_opts+=" --time-cond $source_archive_pathfile"
+download_opts+=" --show-error --location --output $source_archive_pathfile"
+DisplayRunAndLog 'refresh release package' "/sbin/curl${download_opts} '$remote_url'" || { SetError; return 1 ;}
+if [[ ! -e $daemon_pathfile || ! -e $source_archive_pathfile || $(($(/bin/date +%s)-$(/usr/bin/stat "$source_archive_pathfile" -c %Y))) -lt 60 ]]; then
+tar_extract_opts="$tar_extract_verbose --extract --gzip --file=$source_archive_pathfile --directory=$qpkg_repo_path"
+unzip_extract_opts="$unzip_extract_verbose -o $source_archive_pathfile -d $qpkg_repo_path"
+DisplayRunAndLog 'extract release package' "/usr/bin/unzip${unzip_extract_opts} || /bin/tar${tar_extract_opts}" || { SetError; return 1 ;}
 fi
 fi
 WaitForLaunchTarget || { SetError; return 1 ;}
