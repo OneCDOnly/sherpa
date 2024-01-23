@@ -1,4 +1,4 @@
-# these are 'many2linux' module builds that are not seen in Python unless each module shared object file is renamed.
+# these 'many2linux' module builds are not seen in Python unless each module shared object file is renamed.
 brotli
 rpds
 sabctools
