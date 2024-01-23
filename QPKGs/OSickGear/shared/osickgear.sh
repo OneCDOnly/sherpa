@@ -32,6 +32,14 @@ get_ui_port_secure_cmd="/sbin/getcfg General web_port -d 0 -f $qpkg_ini_pathfile
 get_ui_port_secure_enabled_test_cmd='[[ $(/sbin/getcfg General enable_https -d 0 -f '$qpkg_ini_pathfile') = 1 ]]'
 source_git_branch_depth=single-branch
 source_git_url=https://github.com/SickGear/SickGear.git
+if [[ -e $qpkg_ini_default_pathfile ]]; then
+/sbin/setcfg General log_dir "$QPKG_CONFIG_PATH"/logs -f "$qpkg_ini_default_pathfile"
+/sbin/setcfg General cache_dir "$QPKG_CONFIG_PATH"/cache -f "$qpkg_ini_default_pathfile"
+fi
+if [[ -e $qpkg_ini_pathfile ]]; then
+/sbin/setcfg General log_dir "$QPKG_CONFIG_PATH"/logs -f "$qpkg_ini_pathfile"
+/sbin/setcfg General cache_dir "$QPKG_CONFIG_PATH"/cache -f "$qpkg_ini_pathfile"
+fi
 }
 library_path=$(/usr/bin/readlink "$0" 2>/dev/null)
 [[ -z $library_path ]] && library_path=$0

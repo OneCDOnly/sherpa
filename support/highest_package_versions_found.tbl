@@ -37,13 +37,13 @@ OliveTin_240123_arm-x19.qpkg.md5     OliveTin_240123_arm-x19.qpkg     OliveTin  
 OliveTin_240123_arm-x31.qpkg.md5     OliveTin_240123_arm-x31.qpkg     OliveTin             240123       a31    7bd46164f673d7add2f4ed668b827bae
 OliveTin_240123_arm-x41.qpkg.md5     OliveTin_240123_arm-x41.qpkg     OliveTin             240123       a41    a14d7455fe5db66c8d45b52d597a37e4
 OliveTin_240123_x86_64.qpkg.md5      OliveTin_240123_x86_64.qpkg      OliveTin             240123       i64    3f8a951cecf2ec092412340a22390209
-OMedusa_240124.qpkg.md5              OMedusa_240124.qpkg              OMedusa              240124       all    b6f9cae5092333ed995a55a3f0bc1fd5
+OMedusa_240124.qpkg.md5              OMedusa_240124.qpkg              OMedusa              240124       all    17ba68b13501e71ba4feb9fa7c9b4b2f
 OqBittorrent_240123.qpkg.md5         OqBittorrent_240123.qpkg         OqBittorrent         240123       all    a0c363f37e1c8040f0ce63257090ce49
 OReadarr_240123_arm_64.qpkg.md5      OReadarr_240123_arm_64.qpkg      OReadarr             240123       a64    f3f976ad093538f8d20a52c897ae0ea6
 OReadarr_240123_x86_64.qpkg.md5      OReadarr_240123_x86_64.qpkg      OReadarr             240123       i64    5bea8f5f3db76b93b7dd8bc15f7dea6f
-OSickGear_240124_arm_64.qpkg.md5     OSickGear_240124_arm_64.qpkg     OSickGear            240124       a64    bd7f23c17d482872a4bb54b0fed07f70
-OSickGear_240124_x86_64.qpkg.md5     OSickGear_240124_x86_64.qpkg     OSickGear            240124       i64    2cede5e4600aa1593d2ac02f83b042d5
-OSickGear_240124_x86.qpkg.md5        OSickGear_240124_x86.qpkg        OSickGear            240124       i86    8db5ed5fe0a10cbaa4a528776f42c8be
+OSickGear_240124_arm_64.qpkg.md5     OSickGear_240124_arm_64.qpkg     OSickGear            240124       a64    8a4344dc1bf8bc39ce9d898129690abe
+OSickGear_240124_x86_64.qpkg.md5     OSickGear_240124_x86_64.qpkg     OSickGear            240124       i64    d489d6b3109d68ee4a9d6c9c144ad3eb
+OSickGear_240124_x86.qpkg.md5        OSickGear_240124_x86.qpkg        OSickGear            240124       i86    3852ae575afe3ec126b58b903dce3a7d
 OSonarr_240123_arm_64.qpkg.md5       OSonarr_240123_arm_64.qpkg       OSonarr              240123       a64    0a645234c7efc28c93b9122c540b47af
 OSonarr_240123_x86_64.qpkg.md5       OSonarr_240123_x86_64.qpkg       OSonarr              240123       i64    3d8672bc69669ab3c65d99fcc5a73db5
 OTautulli_240124_arm_64.qpkg.md5     OTautulli_240124_arm_64.qpkg     OTautulli            240124       a64    a1ab05ce4f23348b809201df703056f3

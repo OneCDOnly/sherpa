@@ -34,6 +34,14 @@ get_ui_port_secure_enabled_test_cmd='[[ $(/sbin/getcfg general enable_https -d 0
 source_git_branch=master
 source_git_branch_depth=single-branch
 source_git_url=https://github.com/pymedusa/Medusa.git
+if [[ -e $qpkg_ini_default_pathfile ]]; then
+/sbin/setcfg General log_dir "$QPKG_CONFIG_PATH"/logs -f "$qpkg_ini_default_pathfile"
+/sbin/setcfg General cache_dir "$QPKG_CONFIG_PATH"/cache -f "$qpkg_ini_default_pathfile"
+fi
+if [[ -e $qpkg_ini_pathfile ]]; then
+/sbin/setcfg General log_dir "$QPKG_CONFIG_PATH"/logs -f "$qpkg_ini_pathfile"
+/sbin/setcfg General cache_dir "$QPKG_CONFIG_PATH"/cache -f "$qpkg_ini_pathfile"
+fi
 IsSupportGetAppVersion && app_version_cmd="/bin/grep '^VERSION =' $app_version_pathfile | /bin/sed 's|^.*\"\(.*\)\"|\1|'"
 }
 library_path=$(/usr/bin/readlink "$0" 2>/dev/null)
