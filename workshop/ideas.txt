@@ -48,6 +48,7 @@
 
 * wrap description column text in packages report.
 	- Use 'GNU column' for this?
+	- Nope, column can't wrap text containing ANSI codes. Won't show a wrapped column in colour.
 
 * show QPKG hashes on packages report.
 	- Need to wrap description column first.
