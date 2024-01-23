@@ -1,3 +1,5 @@
+* running 'sherpa status' creates an empty 'undefined' directory in CWD.
+
 * 'sherpa install all start all' doesn't start deactivated QPKGs.
 
 * progress display text sometimes desyncs during installation of OMedusa QPKG.
