@@ -1,0 +1,35 @@
+[~] # /share/CACHEDEV2_DATA/.qpkg/OFlexGet/venv/bin/python3 /share/CACHEDEV2_DATA/.qpkg/OFlexGet/venv/bin/flexget -c /share/CACHEDEV2_DATA/.qpkg/OFlexGet/config/config.yml daemon start
+2024-01-23 09:55:43 INFO     scheduler                     No schedules defined in config. Defaulting to run all tasks on a 1 hour interval.
+2024-01-23 09:55:43 INFO     scheduler                     Starting scheduler
+Traceback (most recent call last):
+  File "/share/CACHEDEV2_DATA/.qpkg/OFlexGet/venv/bin/flexget", line 8, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/share/CACHEDEV2_DATA/.qpkg/OFlexGet/venv/lib/python3.11/site-packages/flexget/__init__.py", line 55, in main
+    manager.start()
+  File "/share/CACHEDEV2_DATA/.qpkg/OFlexGet/venv/lib/python3.11/site-packages/flexget/manager.py", line 366, in start
+    self.handle_cli()
+  File "/share/CACHEDEV2_DATA/.qpkg/OFlexGet/venv/lib/python3.11/site-packages/flexget/manager.py", line 392, in handle_cli
+    self.daemon_command(command_options)
+  File "/share/CACHEDEV2_DATA/.qpkg/OFlexGet/venv/lib/python3.11/site-packages/flexget/manager.py", line 489, in daemon_command
+    run_daemon()
+  File "/share/CACHEDEV2_DATA/.qpkg/OFlexGet/venv/lib/python3.11/site-packages/flexget/manager.py", line 470, in run_daemon
+    fire_event('manager.daemon.started', self)
+  File "/share/CACHEDEV2_DATA/.qpkg/OFlexGet/venv/lib/python3.11/site-packages/flexget/event.py", line 108, in fire_event
+    result = event(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^
+  File "/share/CACHEDEV2_DATA/.qpkg/OFlexGet/venv/lib/python3.11/site-packages/flexget/event.py", line 20, in __call__
+    return self.func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/share/CACHEDEV2_DATA/.qpkg/OFlexGet/venv/lib/python3.11/site-packages/flexget/components/scheduler/scheduler.py", line 128, in setup_scheduler
+    setup_jobs(manager)
+  File "/share/CACHEDEV2_DATA/.qpkg/OFlexGet/venv/lib/python3.11/site-packages/flexget/components/scheduler/scheduler.py", line 171, in setup_jobs
+    scheduler.add_job(
+  File "/share/CACHEDEV2_DATA/.qpkg/OFlexGet/venv/lib/python3.11/site-packages/apscheduler/schedulers/base.py", line 457, in add_job
+    self._real_add_job(job, jobstore, replace_existing)
+  File "/share/CACHEDEV2_DATA/.qpkg/OFlexGet/venv/lib/python3.11/site-packages/apscheduler/schedulers/base.py", line 881, in _real_add_job
+    store.add_job(job)
+  File "/share/CACHEDEV2_DATA/.qpkg/OFlexGet/venv/lib/python3.11/site-packages/apscheduler/jobstores/sqlalchemy.py", line 97, in add_job
+    'job_state': pickle.dumps(job.__getstate__(), self.pickle_protocol)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_pickle.PicklingError: Cannot pickle a ZoneInfo file from a file stream.
