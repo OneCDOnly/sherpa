@@ -2275,18 +2275,10 @@ IsThisFileRecent()
 	# output:
 	#   $? = true/false
 
-# update to use stat-only:
-# https://stackoverflow.com/a/55622661
-
 	# Examine `change` time as this is updated even if file content isn't modified.
 
-	if [[ -e $1 && -e $GNU_FIND_CMD ]]; then
-		if [[ -z $($GNU_FIND_CMD "$1" -cmin +${2:-1440}) ]]; then	# No-output if last `change` was less than $2 minutes ago.
-			return 0
-		fi
-	fi
-
-	return 1	# File not found: GNU `find` unavailable, or file `change` time was more than $2 minutes ago.
+	# https://stackoverflow.com/a/55622661
+	[[ -e ${1:-} && $((($(/bin/date +%s)-$(/usr/bin/stat "$1" -c %Y))/60)) -le ${2:-1440} ]]
 
 	}
 
