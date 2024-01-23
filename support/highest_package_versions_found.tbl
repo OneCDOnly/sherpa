@@ -27,9 +27,9 @@ NZBGet_240123.qpkg.md5               NZBGet_240123.qpkg               NZBGet    
 NZBHydra2_240123_arm_64.qpkg.md5     NZBHydra2_240123_arm_64.qpkg     NZBHydra2            240123       a64    29619be2362b2ed7d53692e8876c689d
 NZBHydra2_240123_x86_64.qpkg.md5     NZBHydra2_240123_x86_64.qpkg     NZBHydra2            240123       i64    5a28319eaf0c8746f0f5a0830c79cbee
 nzbToMedia_230604.qpkg.md5           nzbToMedia_230604.qpkg           nzbToMedia           230604       all    da9a8f8e2d2d25d2f8ca32cd6174a722
-OFlexGet_240123_arm_64.qpkg.md5      OFlexGet_240123_arm_64.qpkg      OFlexGet             240123       a64    df66662ca1d1c83240ef015f64fea89d
-OFlexGet_240123_x86_64.qpkg.md5      OFlexGet_240123_x86_64.qpkg      OFlexGet             240123       i64    55bbab6b037ca2fb8c679e61e2aa3ceb
-OFlexGet_240123_x86.qpkg.md5         OFlexGet_240123_x86.qpkg         OFlexGet             240123       i86    42048db39fce539eb56f8fb0e8aaf0c9
+OFlexGet_240123_arm_64.qpkg.md5      OFlexGet_240123_arm_64.qpkg      OFlexGet             240123       a64    1c42b5b118e83ab1f8c6f8acf0ced442
+OFlexGet_240123_x86_64.qpkg.md5      OFlexGet_240123_x86_64.qpkg      OFlexGet             240123       i64    8e106534d91fa868a20edcf933d3cdac
+OFlexGet_240123_x86.qpkg.md5         OFlexGet_240123_x86.qpkg         OFlexGet             240123       i86    78691c735f2f7a19b5b9e9745804975c
 OLidarr_240123_arm_64.qpkg.md5       OLidarr_240123_arm_64.qpkg       OLidarr              240123       a64    02f7cbce78239d18528156c3fd4d4d9c
 OLidarr_240123_x86_64.qpkg.md5       OLidarr_240123_x86_64.qpkg       OLidarr              240123       i64    1840500492657ab62b648e701a99042f
 OliveTin_240123_arm_64.qpkg.md5      OliveTin_240123_arm_64.qpkg      OliveTin             240123       a64    2ec6b756365264ef40a52749106806c2
@@ -44,8 +44,8 @@ OReadarr_240123_x86_64.qpkg.md5      OReadarr_240123_x86_64.qpkg      OReadarr  
 OSickGear_240123_arm_64.qpkg.md5     OSickGear_240123_arm_64.qpkg     OSickGear            240123       a64    46c3da9dea5f882173dc7c6bdc0b4847
 OSickGear_240123_x86_64.qpkg.md5     OSickGear_240123_x86_64.qpkg     OSickGear            240123       i64    fe10ff5995ccbc07f11b15bbdcc7360c
 OSickGear_240123_x86.qpkg.md5        OSickGear_240123_x86.qpkg        OSickGear            240123       i86    f13cdb01de2c050e2f1f1c0faceaca22
-OSonarr_240123_arm_64.qpkg.md5       OSonarr_240123_arm_64.qpkg       OSonarr              240123       a64    04d3390a0450effaddadbe036e88605a
-OSonarr_240123_x86_64.qpkg.md5       OSonarr_240123_x86_64.qpkg       OSonarr              240123       i64    5f9a48ef59ab9b7fb47a53b162527da5
+OSonarr_240123_arm_64.qpkg.md5       OSonarr_240123_arm_64.qpkg       OSonarr              240123       a64    0a645234c7efc28c93b9122c540b47af
+OSonarr_240123_x86_64.qpkg.md5       OSonarr_240123_x86_64.qpkg       OSonarr              240123       i64    3d8672bc69669ab3c65d99fcc5a73db5
 OTautulli_240123_arm_64.qpkg.md5     OTautulli_240123_arm_64.qpkg     OTautulli            240123       a64    58b8221b00a5b414a81eebe4a465f327
 OTautulli_240123_x86_64.qpkg.md5     OTautulli_240123_x86_64.qpkg     OTautulli            240123       i64    f135543db04248ae26a669e5a5bed2b6
 OTautulli_240123_x86.qpkg.md5        OTautulli_240123_x86.qpkg        OTautulli            240123       i86    7b18afc8b15a41878f24676c8d164180
@@ -74,7 +74,7 @@ SABnzbd_240123_x86_64.qpkg.md5       SABnzbd_240123_x86_64.qpkg       SABnzbd   
 SABnzbd_240123_x86.qpkg.md5          SABnzbd_240123_x86.qpkg          SABnzbd              240123       i86    ba0c16f004165f679bb54f44a6dcdc4f
 sha3sum_230312_x86_64.qpkg.md5       sha3sum_230312_x86_64.qpkg       sha3sum              230312       i64    6ceba9116e0dbcbdb4e6112f0c02f8c0
 sha3sum_230312_x86.qpkg.md5          sha3sum_230312_x86.qpkg          sha3sum              230312       i86    fdba9d16b88a5b6e3b04483ca77706dd
-sherpa_240114.qpkg.md5               sherpa_240114.qpkg               sherpa               240114       all    4b6e21f24d571a1e963ebf7a1d7bb91d
+sherpa_240123.qpkg.md5               sherpa_240123.qpkg               sherpa               240123       all    96ddacda7c9709cbf221f377ac8cba73
 SortMyQPKGs_240112.qpkg.md5          SortMyQPKGs_240112.qpkg          SortMyQPKGs          240112       all    0fa5518749bd72c76da040162a0be3d6
 Unrar_6.2.5_arm_64.qpkg.md5          Unrar_6.2.5_arm_64.qpkg          Unrar                6.2.5        a64    e2382b80908fc9549bbb00058968082a
 Unrar_6.2.5_arm-x41.qpkg.md5         Unrar_6.2.5_arm-x41.qpkg         Unrar                6.2.5        a41    ac1ff1149258db5e4c0b8165774eda37
