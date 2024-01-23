@@ -1,3 +1,6 @@
+* sherpa 'stable' should only update once per-day.
+	- 'unstable' should update once per 10 minutes.
+
 * examine TS-231 QTS executables with 'file'.
 	- In what way are they different to x41 executables?
 

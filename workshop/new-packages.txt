@@ -1,8 +1,8 @@
 * gpt-engineer?
 	currently resolving python dependencies manually.
 
-* add Gitea?
+* Gitea?
 	https://docs.gitea.com/installation/install-from-binary
 
-* add NetBox?
+* NetBox?
 	https://docs.netbox.dev/en/stable/installation/
