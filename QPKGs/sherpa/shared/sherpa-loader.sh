@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#* don't edit this file, it was built/modified programmatically with the 'build-qpkgs.sh' script. (source: 'sherpa-loader.source')
+#* Please don't edit this file directly, it was built/modified programmatically with the 'build-qpkgs.sh' script. (source: 'sherpa-loader.source')
 #* sherpa-loader.sh
 #* Copyright (C) 2017-2024 OneCD - one.cd.only@gmail.com
 #*   So, blame OneCD if it all goes horribly wrong. ;)
@@ -23,7 +23,7 @@
 readonly USER_ARGS_RAW=$*
 Init()
 {
-export LOADER_SCRIPT_VER='240114'
+export LOADER_SCRIPT_VER='240123'
 export LOADER_SCRIPT_PPID=$PPID
 readonly QPKG_NAME=sherpa
 readonly CHARS_REGULAR_PROMPT='$ '
@@ -53,23 +53,17 @@ return 0
 }
 EnsureFileIsCurrent()
 {
-local -ir CHANGE_THRESHOLD_MINUTES=60
-if [[ -e $1 && -e $GNU_FIND_CMD ]]; then
-msgs=$($GNU_FIND_CMD "$1" -cmin +$CHANGE_THRESHOLD_MINUTES)
-else
-msgs="this is either a new installation, or GNU 'find' was not found"
-fi
-if [[ -n $msgs ]]; then
+if [[ ! -e $1 ]] || ! IsThisFileRecent "$1" 60; then
 if ! (/sbin/curl"$curl_insecure_arg" --silent --fail "$2" > "$3"); then
 ShowAsWarn 'Remote file download failed'
 else
 /bin/tar --extract --gzip --no-same-owner --file="$3" --directory="$(/usr/bin/dirname "$3")" 2>/dev/null
 fi
 fi
-if [[ ! -e $1 ]]; then
-ShowAsAbort 'Unable to find target file'
-exit 1
-fi
+}
+IsThisFileRecent()
+{
+[[ -e ${1:-} && $((($(/bin/date +%s)-$(/usr/bin/stat "$1" -c %Y))/60)) -le ${2:-1440} ]]
 }
 IsQNAP()
 {
