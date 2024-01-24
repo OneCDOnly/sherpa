@@ -4,6 +4,18 @@
 * examine TS-231 QTS executables with 'file'.
 	- In what way are they different to x41 executables?
 
+	x31:
+		[/sbin] # file getcfg
+		getcfg: ELF 32-bit LSB executable, ARM, EABI5 version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux.so.3, for GNU/Linux 2.6.16, stripped
+		[/sbin] # cat /etc/platform.conf
+		Platform = ARM_MS
+
+	x41:
+		[/sbin] # file getcfg
+		getcfg: ELF 32-bit LSB executable, ARM, EABI5 version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux-armhf.so.3, for GNU/Linux 3.1.1, BuildID[sha1]=5ffd3652ef380f1a3665b325f0a171e3e34fca7a, stripped
+		[/sbin] # cat /etc/platform.conf
+		Platform = ARM_AL
+
 * download management, objects and packages archive in one go. Maybe package them together?
 
 * update QPKG display names and change "QTS" to "OS".
