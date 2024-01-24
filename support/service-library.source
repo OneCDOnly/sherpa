@@ -626,13 +626,13 @@ MakePaths()
 	{
 
 	if [[ -d $QPKG_PATH ]]; then
-		IsUseTemp && [[ ! -d $local_temp_path ]] && mkdir -p "$local_temp_path"
-		IsSourcedOnline && [[ ! -d $qpkg_repo_path ]] && mkdir -p "$qpkg_repo_path"
-		IsUsePipCache && [[ ! -d $pip_cache_path ]] && mkdir -p "$pip_cache_path"
-		IsUseVirtualPythonEnv && [[ ! -d $venv_path ]] && mkdir -p "$venv_path"
+		[[ ! -d $local_temp_path && $local_temp_path != undefined ]] && mkdir -p "$local_temp_path"
+		[[ ! -d $qpkg_repo_path && $qpkg_repo_path != undefined ]] && mkdir -p "$qpkg_repo_path"
+		[[ ! -d $pip_cache_path && $pip_cache_path != undefined ]] && mkdir -p "$pip_cache_path"
+		[[ ! -d $venv_path && $venv_path != undefined ]] && mkdir -p "$venv_path"
 	fi
 
-	IsSupportBackup && [[ ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
+	[[ ! -d $BACKUP_PATH && $BACKUP_PATH != undefined ]] && mkdir -p "$BACKUP_PATH"
 
 	}
 
