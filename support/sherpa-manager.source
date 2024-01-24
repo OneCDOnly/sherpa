@@ -6085,12 +6085,18 @@ GetKernelPageSize()
 GetPlatform()
 	{
 
+	# output:
+	#   $? = 0 if found, 250 if not
+
 	/sbin/getcfg '' Platform -d undefined -f /etc/platform.conf
 
 	}
 
 GetDefVol()
 	{
+
+	# output:
+	#   $? = 0 if found, 250 if not
 
 	/sbin/getcfg SHARE_DEF defVolMP -d undefined -f /etc/config/def_share.info
 
@@ -6129,6 +6135,9 @@ GetRepoURLFromStoreID()
 
 	# input:
 	#	$1 = store ID to lookup repo URL for
+
+	# output:
+	#   $? = 0 if found, 250 if not
 
 	[[ -n ${1:-} ]] || return
 
@@ -6183,6 +6192,9 @@ GetInstalledRAM()
 GetFirmwareVer()
 	{
 
+	# output:
+	#   $? = 0 if found, 250 if not
+
 	/sbin/getcfg System Version -d undefined -f /etc/config/uLinux.conf
 
 	}
@@ -6190,12 +6202,18 @@ GetFirmwareVer()
 GetFirmwareBuild()
 	{
 
+	# output:
+	#   $? = 0 if found, 250 if not
+
 	/sbin/getcfg System Number -d undefined -f /etc/config/uLinux.conf
 
 	}
 
 GetFirmwareDate()
 	{
+
+	# output:
+	#   $? = 0 if found, 250 if not
 
 	/sbin/getcfg System 'Build Number' -d undefined -f /etc/config/uLinux.conf
 
@@ -7840,7 +7858,7 @@ QPKG.GetInstallationPath()
 
 	# output:
 	#   stdout = the installation path to this QPKG
-	#   $? = 0 if found, !0 if not
+	#   $? = 0 if found, 250 if not
 
 	/sbin/getcfg "${1:-${PACKAGE_NAME:-sherpa}}" Install_Path -d undefined -f /etc/config/qpkg.conf
 
@@ -7855,7 +7873,7 @@ QPKG.GetServicePathFile()
 
 	# output:
 	#   stdout = service script pathfile
-	#   $? = 0 if found, !0 if not
+	#   $? = 0 if found, 250 if not
 
 	/sbin/getcfg "${1:-${PACKAGE_NAME:-sherpa}}" Shell -d undefined -f /etc/config/qpkg.conf
 
@@ -7933,7 +7951,7 @@ QPKG.Local.GetVer()
 
 	# output:
 	#   stdout = package version
-	#   $? = 0 if found, !0 if not
+	#   $? = 0 if found, 250 if not
 
 	/sbin/getcfg "${1:-${PACKAGE_NAME:-sherpa}}" Version -d undefined -f /etc/config/qpkg.conf
 
@@ -7950,10 +7968,9 @@ QPKG.GetStoreID()
 
 	# output:
 	#   stdout = package store ID
+	#   $? = 0 if found, 250 if not
 
 	/sbin/getcfg "${1:-${PACKAGE_NAME:-sherpa}}" store -d sherpa -f /etc/config/qpkg.conf
-
-	return 0
 
 	}
 
@@ -7986,10 +8003,9 @@ QPKG.GetInstallDate()
 
 	# output:
 	#   stdout = package store ID
+	#   $? = 0 if found, 250 if not
 
 	/sbin/getcfg "${1:-${PACKAGE_NAME:-sherpa}}" date -d undefined -f /etc/config/qpkg.conf
-
-	return 0
 
 	}
 

@@ -1,4 +1,5 @@
 * running 'sherpa status' creates an empty 'undefined' directory in CWD.
+	- Only happens when requesting status of Glances QPKG.
 
 * 'sherpa install all start all' doesn't start deactivated QPKGs.
 
