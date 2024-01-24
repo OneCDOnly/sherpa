@@ -1,5 +1,3 @@
-* 'sherpa list installed' & 'not-installed' not listing anything.
-
 * 'sherpa install all start all' doesn't start deactivated QPKGs.
 
 * progress display text sometimes desyncs during installation of OMedusa QPKG.
