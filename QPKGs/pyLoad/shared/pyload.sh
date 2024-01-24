@@ -32,6 +32,7 @@ get_ui_listening_address_cmd="GetPyloadConfig $qpkg_ini_pathfile webui host"
 get_ui_port_cmd="GetPyloadConfig $qpkg_ini_pathfile webui port"
 get_ui_port_secure_cmd="GetPyloadConfig $qpkg_ini_pathfile webui port"
 get_ui_port_secure_enabled_test_cmd="[[ $(GetPyloadConfig "$qpkg_ini_pathfile" webui use_ssl) = True ]]"
+qpkg_repo_path=undefined
 run_daemon_in_screen_session=false
 }
 GetPyloadConfig()

@@ -35,6 +35,7 @@ get_ui_listening_address_cmd='echo 0.0.0.0'
 get_ui_port_cmd='echo 5050'
 get_ui_port_secure_cmd='echo 0'
 get_ui_port_secure_enabled_test_cmd='false'
+qpkg_repo_path=undefined
 }
 library_path=$(/usr/bin/readlink "$0" 2>/dev/null)
 [[ -z $library_path ]] && library_path=$0
