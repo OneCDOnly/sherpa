@@ -174,7 +174,7 @@ InitByServiceType()
 			pip_cache_path=$QPKG_PATH/pip-cache
 			qpkg_backup_pathfile=undefined					# backup is unsupported
 			qpkg_ini_pathfile=undefined						# app config is unsupported
-			qpkg_repo_path=undefined						# don't create a repo path (not needed)
+			qpkg_repo_path=$QPKG_PATH/repo-cache
 			run_daemon_in_screen_session=true
 			venv_path=$QPKG_PATH/venv
 				venv_pip_pathfile=$venv_path/bin/pip
