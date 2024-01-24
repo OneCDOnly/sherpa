@@ -626,13 +626,13 @@ MakePaths()
 	{
 
 	if [[ -d $QPKG_PATH ]]; then
-		[[ ! -d $local_temp_path && $local_temp_path != undefined ]] && mkdir -p "$local_temp_path"
-		[[ ! -d $qpkg_repo_path && $qpkg_repo_path != undefined ]] && mkdir -p "$qpkg_repo_path"
-		[[ ! -d $pip_cache_path && $pip_cache_path != undefined ]] && mkdir -p "$pip_cache_path"
-		[[ ! -d $venv_path && $venv_path != undefined ]] && mkdir -p "$venv_path"
+		[[ $local_temp_path != undefined && ! -d $local_temp_path ]] && mkdir -p "$local_temp_path"
+		[[ $qpkg_repo_path != undefined && ! -d $qpkg_repo_path ]] && mkdir -p "$qpkg_repo_path"
+		[[ $pip_cache_path != undefined && ! -d $pip_cache_path ]] && mkdir -p "$pip_cache_path"
+		[[ $venv_path != undefined && ! -d $venv_path ]] && mkdir -p "$venv_path"
 	fi
 
-	[[ ! -d $BACKUP_PATH && $BACKUP_PATH != undefined ]] && mkdir -p "$BACKUP_PATH"
+	[[ $BACKUP_PATH != undefined && ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
 
 	}
 
