@@ -212,7 +212,7 @@ Self.Results:Show()
 
 	[[ $self_archive_debug_afterward = true ]] && ArchiveActiveSessLog
 	ResetActiveSessLog
-	[[ $hide_title = false && $opts_verbose = false ]] && WriteEmptyLineIfNoneExists   # Final on-screen linespace.
+	[[ $show_bland = false && $opts_verbose = false ]] && WriteEmptyLineIfNoneExists   # Final on-screen linespace.
 
 	}
 
@@ -313,7 +313,6 @@ Vars:Load()
 	action_msg_pipe_fd=none
 	backup_stdin_fd=none
 	colourful=true
-	hide_title=false
 	ipks_downgrade=false
 	ipks_install=false
 	ipks_upgrade=false
@@ -321,6 +320,7 @@ Vars:Load()
 	pips_install=false
 	qpkg_timeouts_increased=false
 	self_archive_debug_afterward=false
+	show_bland=false
 	show_suggest_raise_issue=false
 	show_zero_qpkgs=true
 	skip_package_actions=false
@@ -762,21 +762,18 @@ Self.Tasks:Check()
 
 	# Establish whether there's something to-do.
 
-	[[ $skip_package_actions = false ]] || return 0
-
 	Func:Init
 	ShowAsProc 'checking'
 	local action=''
 	local group=''
 	local state=''
 	local something_to_do=false
+	local build_states=false
 
-	if [[ $opts_check = true || $opts_show_status = true || $opts_show_versions = true ]]; then
+	if [[ $opts_check = true || $opts_paste_log_last = true || $opts_paste_log_tail = true || $opts_show_abbreviations = true || $opts_show_actions = true || $opts_show_actions_all = true || $opts_show_backups = true || $opts_show_dependencies = true || $opts_show_groups = true || $opts_show_log_last = true || $opts_show_log_tail = true || $opts_show_options = true || $opts_show_packages = true || $opts_show_packages_failed = true || $opts_show_packages_ok = true || $opts_show_packages_skipped = true || $opts_show_problems = true || $opts_show_reassign = true || $opts_show_repos = true || $opts_show_results = true || $opts_show_status = true || $opts_show_tips = true || $opts_show_versions = true ]]; then
 		something_to_do=true
 	else
 		for action in "${USER_QPKG_ACTIONS[@]}"; do
-			[[ $action = list ]] && continue
-
 			if QPKGs-AC${action}-to.IsAny; then
 				something_to_do=true
 				break
@@ -785,6 +782,7 @@ Self.Tasks:Check()
 			for group in "${USER_QPKG_SC_GROUPS[@]}"; do
 				if QPKGs.AC${action}.SC${group}.IsSet; then
 					something_to_do=true
+					build_states=true
 					break 2
 				fi
 			done
@@ -792,6 +790,7 @@ Self.Tasks:Check()
 			for group in "${USER_QPKG_SCNT_GROUPS[@]}"; do
 				if QPKGs.AC${action}.SCNT${group}.IsSet; then
 					something_to_do=true
+					build_states=true
 					break 2
 				fi
 			done
@@ -799,6 +798,7 @@ Self.Tasks:Check()
 			for state in "${USER_QPKG_IS_STATES[@]}"; do
 				if QPKGs.AC${action}.IS${state}.IsSet; then
 					something_to_do=true
+					build_states=true
 					break 2
 				fi
 			done
@@ -806,21 +806,26 @@ Self.Tasks:Check()
 			for state in "${USER_QPKG_ISNT_STATES[@]}"; do
 				if QPKGs.AC${action}.ISNT${state}.IsSet; then
 					something_to_do=true
+					build_states=true
 					break 2
 				fi
 			done
 		done
 	fi
 
+	if [[ $opts_check = true || $opts_show_status = true ]]; then
+		build_states=true
+	fi
+
 	if [[ $something_to_do = false ]]; then
-		hide_title=false; ShowTitleLine
+		show_bland=false; ShowTitleLine
 		ShowAsError "supplied arguments were incomplete, or didn't make sense. Please check the argument list again."
 		opts_show_basic_help=true
 		skip_package_actions=true
 		Func:Exit 1; return
 	fi
 
-	QPKGs.States:Build
+	[[ $build_states = true ]] && QPKGs.States:Build
 	Func:Exit
 
 	}
@@ -1482,18 +1487,19 @@ ParseArgs()
 				group=''
 				group_identified=false
 				;;
-# 			list)
-# 				action=list
-# 				arg_identified=true
-# 				group=''
-# 				group_identified=false
-# 				;;
+			list)
+				action=list
+				arg_identified=true
+				group=''
+				group_identified=false
+				show_bland=true
+				;;
 			paste)
 				action=paste
 				arg_identified=true
 				group=''
 				group_identified=false
-				hide_title=false
+				show_bland=false
 				skip_package_actions=true
 				;;
 		# All cases below can use multiple words or chars to specify a single action.
@@ -1502,7 +1508,7 @@ ParseArgs()
 				arg_identified=true
 				group=''
 				group_identified=false
-				hide_title=false
+				show_bland=false
 				skip_package_actions=false
 				;;
 			add|install)
@@ -1510,7 +1516,7 @@ ParseArgs()
 				arg_identified=true
 				group=''
 				group_identified=false
-				hide_title=false
+				show_bland=false
 				skip_package_actions=false
 				;;
 			c|check)
@@ -1518,7 +1524,7 @@ ParseArgs()
 				arg_identified=true
 				group=''
 				group_identified=false
-				hide_title=false
+				show_bland=false
 				skip_package_actions=false
 				;;
 			deactivate|stop)
@@ -1526,15 +1532,15 @@ ParseArgs()
 				arg_identified=true
 				group=''
 				group_identified=false
-				hide_title=false
+				show_bland=false
 				skip_package_actions=false
 				;;
-			display|help|list|show|view)
+			display|help|show|view)
 				action=help
 				arg_identified=true
 				group=''
 				group_identified=false
-				hide_title=false
+				show_bland=false
 				skip_package_actions=true
 				;;
 			reactivate|restart)
@@ -1542,7 +1548,7 @@ ParseArgs()
 				arg_identified=true
 				group=''
 				group_identified=false
-				hide_title=false
+				show_bland=false
 				skip_package_actions=false
 				;;
 			rm|remove|uninstall)
@@ -1550,7 +1556,7 @@ ParseArgs()
 				arg_identified=true
 				group=''
 				group_identified=false
-				hide_title=false
+				show_bland=false
 				skip_package_actions=false
 				;;
 			s|status|statuses)
@@ -1558,7 +1564,7 @@ ParseArgs()
 				arg_identified=true
 				group=''
 				group_identified=false
-				hide_title=false
+				show_bland=false
  				skip_package_actions=false
 				;;
 			update|upgrade)
@@ -1566,7 +1572,7 @@ ParseArgs()
 				arg_identified=true
 				group=''
 				group_identified=false
-				hide_title=false
+				show_bland=false
 				skip_package_actions=false
 		esac
 
@@ -1576,12 +1582,19 @@ ParseArgs()
 
 		if [[ -z $action ]]; then
 			case $arg in
-				a|abs|action|actions|actions-all|alias|aliases|all-actions|b|backups|d|deps|dependencies|dependent|dependents|disabled|enabled|failed|groups|inactive|indeps|independent|independents|installable|installed|l|last|log|missing|new|not-installed|o|ok|option|options|p|package|packages|problems|r|repo|repos|results|skipped|stopped|tail|tips|updatable|updateable|upgradable|version|versions|whole)
+				a|abs|action|actions|actions-all|alias|aliases|all-actions|b|backups|d|deps|dependencies|groups|l|last|log|new|option|options|p|package|packages|problems|r|repo|repos|results|tail|tips|whole)
 					action=help
 					arg_identified=true
 					group=''
 					group_identified=false
-					skip_package_actions=true
+					show_bland=false
+					;;
+				dependent|dependents|disabled|enabled|failed|inactive|indeps|independent|independents|installable|installed|missing|not-installed|o|ok|skipped|stopped|updatable|updateable|upgradable|version|versions)
+					action=list
+					arg_identified=true
+					group=''
+					group_identified=false
+					show_bland=true
 			esac
 
 			DebugVar action
@@ -1709,6 +1722,8 @@ ParseArgs()
 				opts_check=true
 				;;
 			help)
+				skip_package_actions=true
+
 				case $group in
 					abs)
 						opts_show_abbreviations=true
@@ -1719,38 +1734,22 @@ ParseArgs()
 					all-actions|all)
 						opts_show_actions_all=true
 						;;
-					backedup|installed|NTbackedup|NTinstalled)
-						QPKGs.AClist.IS${group}:Set
-						hide_title=true
-						;;
 					backups)
 						opts_show_backups=true
 						;;
 					dependencies)
 						opts_show_dependencies=true
-# 						QPKGs.ACstatus.ISinstalled:Set
-# 						opts_show_status=true
-						;;
-					dependent|installable|independent|upgradable)
-						QPKGs.AClist.SC${group}:Set
-						hide_title=true
-						;;
-					failed)
-						opts_show_packages_failed=true
 						;;
 					groups)
 						opts_show_groups=true
 						;;
 					last)
 						opts_show_log_last=true
-						hide_title=true
+						show_bland=true
 						;;
 					log)
 						opts_show_log_tail=true
-						hide_title=true
-						;;
-					ok)
-						opts_show_packages_ok=true
+						show_bland=true
 						;;
 					options)
 						opts_show_options=true
@@ -1770,23 +1769,39 @@ ParseArgs()
 					results)
 						opts_show_results=true
 						;;
-					skipped)
-						opts_show_packages_skipped=true
-						;;
 					status)
 						opts_show_status=true
 						;;
 					tips)
 						opts_show_tips=true
+				esac
+				;;
+			list)
+				skip_package_actions=true
+
+				case $group in
+					backedup|installed|NTbackedup|NTinstalled)
+						QPKGs.AClist.IS${group}:Set
+						;;
+					dependent|disabled|installable|independent|upgradable)
+						QPKGs.AClist.SC${group}:Set
+						;;
+					failed)
+						opts_show_packages_failed=true
+						;;
+					ok)
+						opts_show_packages_ok=true
+						;;
+					skipped)
+						opts_show_packages_skipped=true
 						;;
 					versions)
 						opts_show_versions=true
-						hide_title=true
 				esac
-
-				skip_package_actions=true
 				;;
 			paste)
+				skip_package_actions=true
+
 				case $group in
 					all|log|tail)
 						opts_paste_log_tail=true
@@ -1796,10 +1811,10 @@ ParseArgs()
 						opts_paste_log_last=true
 						action=''
 				esac
-
-				skip_package_actions=true
 				;;
 			status)
+				opts_show_status=true
+
 				case $group in
 					all|dependent|independent|upgradable)
 						QPKGs.AC${action}.SC${group}:Set
@@ -1812,8 +1827,6 @@ ParseArgs()
 					*)
 						QPKGs-AC${action}-to:Add "$package"
 				esac
-
-				opts_show_status=true
 				;;
 			uninstall)
 				case $group in
@@ -1863,7 +1876,7 @@ ParseArgs()
 	if ARGs-unknown.IsAny; then
 		opts_show_basic_help=true
 		skip_package_actions=true
-		hide_title=false
+		show_bland=false
 	fi
 
 	Func:Exit
@@ -4924,7 +4937,7 @@ QPKGs.Missing:Show()
 	local sufmsg=''
 	local name_limit=2
 
-	[[ $hide_title = false ]] || return
+	[[ $show_bland = false ]] || return
 
 	if [[ $(QPKGs-ISmissing:Count) -eq 0 ]]; then
 		return 0
@@ -4973,7 +4986,7 @@ QPKGs.NewVers:Show()
 	local a=''
 	local name_limit=2
 
-	[[ $hide_title = false ]] || return
+	[[ $show_bland = false ]] || return
 
 	if [[ $(QPKGs-SCupgradable:Count) -eq 0 ]]; then
 		return 0
@@ -9115,7 +9128,7 @@ ShowTitleLine()
 	{
 
 	[[ $title_shown = false ]] || return
-	[[ $hide_title = false && $opts_verbose = false ]] || return
+	[[ $show_bland = false && $opts_verbose = false ]] || return
 
 	EraseThisLine
 	Display "$(ShowTitleName) $(ShowVersion) $(ShowDescription)"
