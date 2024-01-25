@@ -1,3 +1,7 @@
+* Removing OMedusa QPKG via sherpa didn't update App Center 'live' (icon remained until App Center refreshed).
+
+* Upgrading QPKGs via sherpa didn't update App Center icons 'live'.
+
 * Deluge-server and Headphones didn't report 'stop' as successful.
 	- • These actions failed:
 		Unable to deactivate Deluge-server in 5m:52s: For more information: /etc/init.d/deluge-server.sh log
@@ -18,7 +22,7 @@
 
 * 'sherpa install all start all' doesn't start deactivated QPKGs.
 
-* progress display text sometimes desyncs during installation of OMedusa QPKG.
+* progress display text sometimes desyncs during installation/start of OMedusa QPKG.
 	- Example: proc: reinstalling dependent QPKGs ... 36% (7/21), 7 OK36% (7/21), 7 OK, 1 in-progress
 	- Suspect Medusa application (or service script) is outputting something to stderr.
 
