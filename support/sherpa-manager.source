@@ -75,13 +75,13 @@ Self:Init()
 	if [[ -z $USER_ARGS_RAW ]]; then
 		opts_show_basic_help=true
 		skip_package_actions=true
+		task_check=false
 		DisableDebugToArchiveAndFile
 	else
 		Packages:Load || return
 		ParseArgs
 	fi
 
-	EraseThisLine
 	ShowTitleLine
 
 	if ! QPKGs.Conflicts:Check; then
@@ -324,6 +324,7 @@ Vars:Load()
 	show_suggest_raise_issue=false
 	show_zero_qpkgs=true
 	skip_package_actions=false
+	task_check=true
 	title_shown=false
 
 	# User-selectable options.
@@ -761,6 +762,8 @@ Self.Tasks:Check()
 	{
 
 	# Establish whether there's something to-do.
+
+	[[ $task_check = true ]] || return
 
 	Func:Init
 	ShowAsProc 'checking'
@@ -1891,6 +1894,7 @@ ArgSuggestions:Show()
 
 	if ARGs-unknown.IsAny; then
 		ShowAsError "unknown argument$(Pluralise "$(ARGs-unknown:Count)"): \"$(ARGs-unknown:List)\". Please check the argument list again."
+		task_check=false
 
 		for arg in $(ARGs-unknown:Array); do
 			case $arg in
