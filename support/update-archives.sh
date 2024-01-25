@@ -2,7 +2,7 @@
 
 . vars.source || exit
 
-./make.sh || exit
+./build-all.sh || exit
 
 [[ -e $objects_file ]] && rm -f "$objects_file"
 cd "$target_path" || exit
