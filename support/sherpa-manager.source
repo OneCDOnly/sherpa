@@ -5293,18 +5293,22 @@ QPKGs.States:Build()
 				QPKGs-ISNTok:Add "$package"
 				continue
 			fi
+			# adds 0.5s on TS-230
 
 			if QPKG.IsUpgradable "$package"; then
 				QPKGs-SCupgradable:Add "$package"
 			else
 				QPKGs-SCNTupgradable:Add "$package"
 			fi
+			# adds 1.9s on TS-230
+			# run upgradable check first, separately and concurrent for all QPKGs?
 
 			if QPKG.IsEnabled "$package"; then
 				QPKGs-ISenabled:Add "$package"
 			else
 				QPKGs-ISNTenabled:Add "$package"
 			fi
+			# adds 0.5s on TS-230
 
 			if [[ -e /var/run/$package.last.operation ]]; then
 				case $(</var/run/$package.last.operation) in
@@ -5345,7 +5349,7 @@ QPKGs.States:Build()
 		QPKGs.NewVers:Show
 	fi
 
-	Func:Exit
+	Func:Exit		# total time is 4.3s on TS-230
 
 	}
 

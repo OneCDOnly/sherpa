@@ -22,7 +22,7 @@
 
 * 'sherpa install all start all' doesn't start deactivated QPKGs.
 
-* progress display text sometimes desyncs during installation/start of OMedusa QPKG.
+* progress display text sometimes desyncs during 'install' or 'start' of OMedusa QPKG.
 	- Example: proc: reinstalling dependent QPKGs ... 36% (7/21), 7 OK36% (7/21), 7 OK, 1 in-progress
 	- Suspect Medusa application (or service script) is outputting something to stderr.
 
