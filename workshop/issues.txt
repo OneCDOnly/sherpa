@@ -1,3 +1,21 @@
+* Deluge-server and Headphones didn't report 'stop' as successful.
+	- • These actions failed:
+		Unable to deactivate Deluge-server in 5m:52s: For more information: /etc/init.d/deluge-server.sh log
+		Unable to deactivate Headphones in 5m:51s: For more information: /etc/init.d/headphones.sh log
+
+		24 source: deluge-server.sh, action: stop, datetime: Thu Jan 25 06:51:29 EST 2024, package: 230726, service: 230726
+		25 daemon active: true
+		26 daemon PID: 21177
+		27 stop daemon PID (21177) with SIGTERM:
+
+		37 source: headphones.sh, action: stop, datetime: Thu Jan 25 06:51:31 EST 2024
+		38 package: 240125, service: 240125, library: 240125
+		39 daemon active: true
+		40 daemon PID: 24189
+		41 stop daemon PID (24189) with SIGTERM: stopped in 45 seconds
+
+	- Both applications were dead.
+
 * 'sherpa install all start all' doesn't start deactivated QPKGs.
 
 * progress display text sometimes desyncs during installation of OMedusa QPKG.
