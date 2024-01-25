@@ -18,8 +18,6 @@
 
 * download management, objects and packages archive in one go. Maybe package them together?
 
-* update QPKG display names and change "QTS" to "OS".
-
 * find all QPKG states concurrently.
 
 * show results report in file viewport.
