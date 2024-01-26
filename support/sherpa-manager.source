@@ -3416,7 +3416,7 @@ DisplayAsStatusReportLine()
 			fi
 
 			status_msg=${CHARS_NORMAL}${status_msg}
-			QPKG.IsUpgradable "$name" && upgrade_ver=$(QPKG.Avail.GetVer "$name")
+			QPKGs-SCupgradable.Exist "$name" && upgrade_ver=$(QPKG.Avail.GetVer "$name")
 			ver_msg+=$(QPKG.Local.GetVer "$name")
 
 			if [[ -n $upgrade_ver ]]; then
@@ -5278,7 +5278,7 @@ QPKGs.States:Build()
 
 	local package=''
 	local prev=''
-	OS.IsStarting && ShowAsWarn "$(GetQnapOS) is starting QPKGs ... check again in a few minutes."
+	OS.IsStarting && ShowAsWarn "$(GetQnapOS) is starting all enabled QPKGs ... check again in a few minutes."
 	OS.IsStopping && ShowAsWarn "$(GetQnapOS) is shutting-down and all QPKGs are stopping."
 	ShowAsProc 'QPKG states'
 
