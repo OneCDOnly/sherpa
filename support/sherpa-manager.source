@@ -69,6 +69,7 @@ Self:Init()
 	TerminalDimensions:Load
 	Debug.Log:Init
 	Objects:Load || return
+	QPKGs.States:Clear
 
 	QPKG.IsInstalled Entware && [[ $ENTWARE_VER = none ]] && DebugAsWarn "$(ShowAsPackageName Entware) appears to be installed but is inactive. Consider 'start'ing the Entware QPKG if-possible."
 
@@ -543,6 +544,7 @@ Env:Load()
 			readonly SESS_TAIL_PATHFILE=$LOGS_PATH/session.tail.log
 		readonly REPORTS_PATH=$THIS_PACKAGE_PATH/reports
 				readonly REPORT_OUTPUT_PATHFILE=$REPORTS_PATH/report.ansi
+		readonly STATES_PATH=$THIS_PACKAGE_PATH/states
 	readonly THIS_PACKAGE_VER=$(QPKG.Local.GetVer)
 	readonly THIS_SCRIPT_VER='<?build_date?>'-$source_branch
 
@@ -612,10 +614,9 @@ Lists:Load()
 CreatePaths()
 	{
 
-	# KLUDGE: service scripts prior to 2022-12-08 would use these paths (by-default) to build/cache Python packages. This has been fixed, but still need to free-up these paths to prevent out-of-space issues.
-	rm -rf /root/.cache /root/.local/share/virtualenv
-
-	rm -rf "$IPK_CACHE_PATH" "$IPK_DL_PATH" "$PIP_CACHE_PATH"
+	ClearPath "$CACHE_PATH" "$IPK_CACHE_PATH"
+	ClearPath "$CACHE_PATH" "$IPK_DL_PATH"
+	ClearPath "$CACHE_PATH" "$PIP_CACHE_PATH"
 
 	MakePath "$ACTION_TIMES_PATH" 'action times' || return
 	MakePath "$CACHE_PATH" cache || return
@@ -773,12 +774,16 @@ Self.Tasks:Check()
 	local something_to_do=false
 	local build_states=false
 
-	if [[ $opts_check = true || $opts_paste_log_last = true || $opts_paste_log_tail = true || $opts_show_abbreviations = true || $opts_show_actions = true || $opts_show_actions_all = true || $opts_show_backups = true || $opts_show_dependencies = true || $opts_show_groups = true || $opts_show_log_last = true || $opts_show_log_tail = true || $opts_show_options = true || $opts_show_packages = true || $opts_show_packages_failed = true || $opts_show_packages_ok = true || $opts_show_packages_skipped = true || $opts_show_problems = true || $opts_show_reassign = true || $opts_show_repos = true || $opts_show_results = true || $opts_show_status = true || $opts_show_tips = true || $opts_show_versions = true ]]; then
+	if [[ $opts_paste_log_last = true || $opts_paste_log_tail = true || $opts_show_abbreviations = true || $opts_show_actions = true || $opts_show_actions_all = true || $opts_show_backups = true || $opts_show_groups = true || $opts_show_log_last = true || $opts_show_log_tail = true || $opts_show_options = true || $opts_show_problems = true || $opts_show_results = true || $opts_show_tips = true || $opts_show_versions = true ]]; then
 		something_to_do=true
+	elif [[ $opts_check = true || $opts_show_dependencies = true || $opts_show_packages = true || $opts_show_packages_failed = true || $opts_show_packages_ok = true || $opts_show_packages_skipped = true || $opts_show_reassign = true || $opts_show_repos = true || $opts_show_status = true ]]; then
+		something_to_do=true
+		build_states=true
 	else
 		for action in "${USER_QPKG_ACTIONS[@]}"; do
 			if QPKGs-AC${action}-to.IsAny; then
 				something_to_do=true
+				build_states=true
 				break
 			fi
 
@@ -814,10 +819,6 @@ Self.Tasks:Check()
 				fi
 			done
 		done
-	fi
-
-	if [[ $opts_check = true || $opts_show_status = true ]]; then
-		build_states=true
 	fi
 
 	if [[ $something_to_do = false ]]; then
@@ -2152,7 +2153,7 @@ ResetArchivedLogs()
 	{
 
 	if [[ -n $LOGS_PATH && -d $LOGS_PATH ]]; then
-		rm -rf "${LOGS_PATH:?}"/*
+		ClearPath "$THIS_PACKAGE_PATH" "$LOGS_PATH"
 		echo 'log reset' > "$sess_active_pathfile"
 		ShowAsDone 'logs cleared'
 	fi
@@ -2165,7 +2166,7 @@ ResetCachePath()
 	{
 
 	if [[ -n $CACHE_PATH && -d $CACHE_PATH ]]; then
-		rm -rf "${CACHE_PATH:?}"/*
+		ClearPath "$THIS_PACKAGE_PATH" "$CACHE_PATH"
 		ShowAsDone 'package cache cleared'
 	fi
 
@@ -2177,7 +2178,7 @@ ResetReportsPath()
 	{
 
 	if [[ -n $REPORTS_PATH && -d $REPORTS_PATH ]]; then
-		rm -rf "${REPORTS_PATH:?}"/*
+		ClearPath "$THIS_PACKAGE_PATH" "$REPORTS_PATH"
 		ShowAsDone 'reports cleared'
 	fi
 
@@ -4872,7 +4873,7 @@ RefreshForkCounts()
 EraseForkCountPaths()
 	{
 
-	[[ -n $proc_counts_path && -d $proc_counts_path ]] && rm -r "$proc_counts_path"
+	[[ -n $proc_counts_path && -d $proc_counts_path ]] && ClearPath /var/run "$proc_counts_path"
 
 	} &>/dev/null
 
@@ -5175,7 +5176,6 @@ QPKGs.States:List()
 
 	Func:Init
 	local state=''
-	local prefix=''
 
 	QPKGs.States:Build "${1:-}"
 	DebugInfoMinSepr
@@ -5252,94 +5252,170 @@ QPKGs.States:Build()
 	#	$1 (optional) = `rebuild` - clear existing lists and rebuild them from scratch
 
 	Func:Init
-	local state=''
+	local a=''
+	local b=''
+	local c=''
+	local f=''
 
-	if [[ ${1:-} = rebuild ]]; then
-		DebugAsProc 'clearing existing state lists'
-
-		for state in "${USER_QPKG_IS_STATES[@]}" "${QPKG_STATES_TRANSIENT[@]}"; do
-			[[ $state = active ]] && continue		# don't reset
-			QPKGs-IS${state}:Init
-		done
-
-		for state in "${USER_QPKG_ISNT_STATES[@]}"; do
-			[[ $state = active ]] && continue		# don't reset
-			QPKGs-ISNT${state}:Init
-		done
-
-		DebugAsDone 'cleared existing state lists'
-		qpkgs_states_built=false
-	fi
+	[[ ${1:-} = rebuild ]] && QPKGs.States:Clear
 
 	if [[ ${qpkgs_states_built:=false} = true ]]; then
 		DebugAsDone "don't need to build states: already built"
 		Func:Exit; return
 	fi
 
-	local package=''
-	local prev=''
 	OS.IsStarting && ShowAsWarn "$(GetQnapOS) is starting all enabled QPKGs ... check again in a few minutes."
 	OS.IsStopping && ShowAsWarn "$(GetQnapOS) is shutting-down and all QPKGs are stopping."
+
 	ShowAsProc 'QPKG states'
+	MakePath "$STATES_PATH" states || return
 
-	for package in $(QPKGs-SCall:Array); do
-		[[ $package = "$prev" ]] && continue || prev=$package
+	# Faster to launch several concurrent loops in the background, than a single loop. Launch those requiring more processing-time first.
 
-		if QPKG.IsInstalled "$package"; then
-			QPKGs-ISinstalled:Add "$package"
+	for a in $(QPKGs-SCall:Array); do
+		[[ $a = "$b" ]] && continue || b=$a
 
-			if QPKG.IsMissing "$package"; then
-				QPKGs-ISmissing:Add "$package"
-				QPKGs-ISNTok:Add "$package"
-				continue
-			fi
-			# adds 0.5s on TS-230
-
-			if QPKG.IsUpgradable "$package"; then
-				QPKGs-SCupgradable:Add "$package"
-			else
-				QPKGs-SCNTupgradable:Add "$package"
-			fi
-			# adds 1.9s on TS-230
-			# run upgradable check first, separately and concurrent for all QPKGs?
-
-			if QPKG.IsEnabled "$package"; then
-				QPKGs-ISenabled:Add "$package"
-			else
-				QPKGs-ISNTenabled:Add "$package"
-			fi
-			# adds 0.5s on TS-230
-
-			if [[ -e /var/run/$package.last.operation ]]; then
-				case $(</var/run/$package.last.operation) in
-					start)
-						QPKGs-ISstarting:Add "$package"
-						;;
-					restart)
-						QPKGs-ISrestarting:Add "$package"
-						;;
-					stop)
-						QPKGs-ISstopping:Add "$package"
-						;;
-					failed)
-						QPKGs-ISNTok:Add "$package"
-						;;
-					ok)
-						QPKGs-ISok:Add "$package"
-				esac
-			fi
+		if QPKG.IsInstallable "$a"; then
+			echo installable
 		else
-			QPKGs-ISNTinstalled:Add "$package"
-			QPKG.IsInstallable "$package" && QPKGs-SCinstallable:Add "$package"
+			echo notinstallable
+		fi >> "$STATES_PATH/$a"
+	done &
+
+	for a in $(QPKGs-SCall:Array); do
+		[[ $a = "$b" ]] && continue || b=$a
+
+		if QPKG.IsUpgradable "$a"; then
+			echo upgradable
+		else
+			echo notupgradable
+		fi >> "$STATES_PATH/$a"
+	done &
+
+	for a in $(QPKGs-SCall:Array); do
+		[[ $a = "$b" ]] && continue || b=$a
+
+		if QPKG.IsCanBackup "$a"; then
+			echo backupable
+
+			if QPKG.IsBackupExist "$a"; then
+				echo backedup
+			else
+				echo notbackedup
+			fi >> "$STATES_PATH/$a"
+		else
+			echo notbackupable
+		fi >> "$STATES_PATH/$a"
+	done &
+
+	for a in $(QPKGs-SCall:Array); do
+		[[ $a = "$b" ]] && continue || b=$a
+
+		if QPKG.IsMissing "$a"; then
+			echo missing
+		else
+			echo notmissing
+		fi >> "$STATES_PATH/$a"
+	done &
+
+	for a in $(QPKGs-SCall:Array); do
+		[[ $a = "$b" ]] && continue || b=$a
+
+		if QPKG.IsEnabled "$a"; then
+			echo enabled
+		else
+			echo notenabled
+		fi >> "$STATES_PATH/$a"
+	done &
+
+	for a in $(QPKGs-SCall:Array); do
+		[[ $a = "$b" ]] && continue || b=$a
+
+		if QPKG.IsInstalled "$a"; then
+			echo installed
+		else
+			echo notinstalled
+		fi >> "$STATES_PATH/$a"
+	done &
+
+	wait 2>/dev/null
+
+	# Load status lines from individual files.
+
+	for a in $(QPKGs-SCall:Array); do
+		[[ $a = "$b" ]] && continue || b=$a
+
+		f=/var/run/$a.last.operation
+
+		if [[ -e $f ]]; then
+			case $(<$f) in
+				start)
+					QPKGs-ISstarting:Add "$a"
+					;;
+				restart)
+					QPKGs-ISrestarting:Add "$a"
+					;;
+				stop)
+					QPKGs-ISstopping:Add "$a"
+					;;
+				failed)
+					QPKGs-ISNTok:Add "$a"
+					;;
+				ok)
+					QPKGs-ISok:Add "$a"
+			esac
 		fi
 
-		if QPKG.IsCanBackup "$package"; then
-			if QPKG.IsBackupExist "$package"; then
-				QPKGs-ISbackedup:Add "$package"
-			else
-				QPKGs-ISNTbackedup:Add "$package"
-			fi
-		fi
+		f="$STATES_PATH/$a"
+		[[ -e $f ]] || continue
+
+		for c in $(<$f); do
+			case $c in
+				backedup)
+					QPKGs-ISbackedup:Add "$a"
+					;;
+				notbackedup)
+					QPKGs-ISNTbackedup:Add "$a"
+					;;
+				backupable)
+					: # ignore for now.
+					;;
+				notbackupable)
+					: # ignore for now.
+					;;
+				enabled)
+					QPKGs-ISenabled:Add "$a"
+					;;
+				notenabled)
+					QPKGs-ISNTenabled:Add "$a"
+					;;
+				installable)
+					QPKGs-SCinstallable:Add "$a"
+					;;
+				notinstallable)
+					QPKGs-SCNTinstallable:Add "$a"
+					;;
+				installed)
+					QPKGs-ISinstalled:Add "$a"
+					;;
+				notinstalled)
+					QPKGs-ISNTinstalled:Add "$a"
+					;;
+				mising)
+					QPKGs-ISmissing:Add "$a"
+					QPKGs-ISok:Remove "$a"
+					QPKGs-ISNTok:Add "$a"
+					;;
+				notmising)
+					QPKGs-ISNTmissing:Remove "$a"
+					;;
+				upgradable)
+					QPKGs-SCupgradable:Add "$a"
+					;;
+				notupgradable)
+					QPKGs-SCNTupgradable:Add "$a"
+			esac
+		done
 	done
 
 	qpkgs_states_built=true
@@ -5349,7 +5425,34 @@ QPKGs.States:Build()
 		QPKGs.NewVers:Show
 	fi
 
-	Func:Exit		# total time is 4.3s on TS-230
+	Func:Exit
+
+	}
+
+QPKGs.States:Clear()
+	{
+
+	# Clears in-memory state list objects
+
+	Func:Init
+	local a=''
+
+	DebugAsProc 'clearing existing state lists'
+
+	for a in "${USER_QPKG_IS_STATES[@]}" "${QPKG_STATES_TRANSIENT[@]}"; do
+		[[ $a = active ]] && continue		# don't reset.
+		QPKGs-IS${a}:Init
+	done
+
+	for a in "${USER_QPKG_ISNT_STATES[@]}"; do
+		[[ $a = active ]] && continue		# don't reset.
+		QPKGs-ISNT${a}:Init
+	done
+
+	ClearPath "$THIS_PACKAGE_PATH" "$STATES_PATH"
+
+	DebugAsDone 'cleared existing state lists'
+	qpkgs_states_built=false
 
 	}
 
@@ -5413,13 +5516,14 @@ Report.Abbreviations:Show()
 
 	Func:Init
 	local a=''
+	local b=''
 	local -i n=0
 	maxcols=2
 	local -i t=$(QPKGs-SCall:Count)
 
 	DisplayWritingReport
 	DisableDebugToArchiveAndFile
-	[[ -n $REPORTS_PATH && -d $REPORTS_PATH ]] && rm -f "$REPORTS_PATH/*"
+	[[ -n $REPORTS_PATH && -d $REPORTS_PATH ]] && ClearPath "$THIS_PACKAGE_PATH" "$REPORTS_PATH"
 
 		{
 
@@ -5441,10 +5545,10 @@ Report.Abbreviations:Show()
 
 	for ((n=1; n<=m; n++)); do
 		f="$REPORTS_PATH/$n"
-		[[ -e $f ]] && ac+="$(<$f)\n"		# add newline to each imported report line
+		[[ -e $f ]] && b+="$(<$f)\n"		# add newline to each imported report line
 	done
 
-	[[ -n $ac ]] && echo -e "$ac" >>"$REPORT_OUTPUT_PATHFILE"
+	[[ -n $b ]] && echo -e "$b" >>"$REPORT_OUTPUT_PATHFILE"
 
 		{
 
@@ -5521,13 +5625,14 @@ Report.Dependencies:Show()
 
 	Func:Init
 	local a=''
+	local b=''
 	local -i n=0
 	maxcols=8
 	local -i t=$(QPKGs-SCall:Count)
 
 	DisplayWritingReport
 	DisableDebugToArchiveAndFile
-	[[ -n $REPORTS_PATH && -d $REPORTS_PATH ]] && rm -f "$REPORTS_PATH/*"
+	[[ -n $REPORTS_PATH && -d $REPORTS_PATH ]] && ClearPath "$THIS_PACKAGE_PATH" "$REPORTS_PATH"
 
 		{
 
@@ -5550,10 +5655,10 @@ Report.Dependencies:Show()
 
 	for ((n=1; n<=m; n++)); do
 		f="$REPORTS_PATH/$n"
-		[[ -e $f ]] && ac+="$(<$f)\n"		# add newline to each imported report line
+		[[ -e $f ]] && b+="$(<$f)\n"		# add newline to each imported report line
 	done
 
-	[[ -n $ac ]] && echo -e "$ac" >>"$REPORT_OUTPUT_PATHFILE"
+	[[ -n $b ]] && echo -e "$b" >>"$REPORT_OUTPUT_PATHFILE"
 	EraseThisLine
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
@@ -5610,13 +5715,14 @@ Report.Repos:Show()
 
 	Func:Init
 	local a=''
+	local b=''
 	local -i n=0
 	maxcols=3
 	local -i t=$(QPKGs-SCall:Count)
 
 	DisplayWritingReport
 	DisableDebugToArchiveAndFile
-	[[ -n $REPORTS_PATH && -d $REPORTS_PATH ]] && rm -f "$REPORTS_PATH/*"
+	[[ -n $REPORTS_PATH && -d $REPORTS_PATH ]] && ClearPath "$THIS_PACKAGE_PATH" "$REPORTS_PATH"
 	DisplayAsReposReportTitleLine >"$REPORT_OUTPUT_PATHFILE"
 
 	for a in $(QPKGs-SCall:Array); do
@@ -5631,10 +5737,10 @@ Report.Repos:Show()
 
 	for ((n=1; n<=m; n++)); do
 		f="$REPORTS_PATH/$n"
-		[[ -e $f ]] && ac+="$(<$f)\n"		# add newline to each imported report line
+		[[ -e $f ]] && b+="$(<$f)\n"		# add newline to each imported report line
 	done
 
-	[[ -n $ac ]] && echo -e "$ac" >>"$REPORT_OUTPUT_PATHFILE"
+	[[ -n $b ]] && echo -e "$b" >>"$REPORT_OUTPUT_PATHFILE"
 	EraseThisLine
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
@@ -5653,7 +5759,7 @@ Report.Statuses:Show()
 
 	Func:Init
 	local a=''
-	local ac=''
+	local b=''
 	local f=''
 	local -i n=0
 	local -i m=0
@@ -5661,7 +5767,7 @@ Report.Statuses:Show()
 	local -i t=$(QPKGs-SCall:Count)
 
 	DisplayWritingReport
-	[[ -n $REPORTS_PATH && -d $REPORTS_PATH ]] && rm -f "$REPORTS_PATH/*"
+	[[ -n $REPORTS_PATH && -d $REPORTS_PATH ]] && ClearPath "$THIS_PACKAGE_PATH" "$REPORTS_PATH"
 	CalcMaxStatusReportCols
 	DisplayAsStatusReportTitleLine >"$REPORT_OUTPUT_PATHFILE"
 
@@ -5677,10 +5783,10 @@ Report.Statuses:Show()
 
 	for ((n=1; n<=m; n++)); do
 		f="$REPORTS_PATH/$n"
-		[[ -e $f ]] && ac+="$(<$f)\n"		# add newline to each imported report line
+		[[ -e $f ]] && b+="$(<$f)\n"		# add newline to each imported report line
 	done
 
-	[[ -n $ac ]] && echo -e "$ac" >>"$REPORT_OUTPUT_PATHFILE"
+	[[ -n $b ]] && echo -e "$b" >>"$REPORT_OUTPUT_PATHFILE"
 
 	EraseThisLine
 
@@ -6799,7 +6905,7 @@ _QPKG:install_()
 
 			if [[ -L ${OPT_PATH:-} && -d ${OPT_BU_PATH:-} ]]; then
 				DebugAsProc 'restoring original /opt'
-				mv "$OPT_BU_PATH"/* "$OPT_PATH" && rm -rf "$OPT_BU_PATH"
+				mv "$OPT_BU_PATH"/* "$OPT_PATH" && ClearPath / "$OPT_BU_PATH"
 				DebugAsDone complete
 			fi
 		fi
@@ -7820,7 +7926,7 @@ QPKG.ServiceStatus:Clear()
 	# input:
 	#   $PACKAGE_NAME (global) = QPKG name
 
-	rm -f "/var/run/$PACKAGE_NAME.last.operation"
+	rm -f /var/run/"$PACKAGE_NAME".last.operation
 
 	}
 
@@ -8877,7 +8983,7 @@ QPKG.IsNtInstalled()
 	{
 
 	# input:
-	#   $1 = QPKG name
+	#   $1 = QPKG name.
 
 	# output:
 	#   $? = 0 (true) or 1 (false)
@@ -8890,7 +8996,7 @@ QPKG.IsMissing()
 	{
 
 	# input:
-	#   $1 = QPKG name
+	#   $1 = QPKG name.
 
 	# output:
 	#   $? = 0 (true) or 1 (false).
@@ -8904,7 +9010,7 @@ QPKG.IsEnabled()
 	{
 
 	# input:
-	#   $1 = QPKG name
+	#   $1 = QPKG name.
 
 	# output:
 	#   $? = 0 (true) or 1 (false).
@@ -8917,7 +9023,7 @@ QPKG.GetServiceStatus()
 	{
 
 	# input:
-	#   $1 = QPKG name
+	#   $1 = QPKG name.
 
 	# output:
 	#   $stdout = last known package service status.
@@ -8933,19 +9039,37 @@ MakePath()
 	{
 
 	# input:
-	#   $1 = path to create
-	#   $2 = reason for this path
+	#   $1 = path to create.
+	#   $2 = reason for this path.
 
-	[[ -n ${1:?${FUNCNAME[0]}'()': undefined} ]] || return
-	[[ -n ${2:?${FUNCNAME[0]}'()': undefined} ]] || return
+	[[ -n ${1:?${FUNCNAME[0]}'()': undefined} && -n ${2:?${FUNCNAME[0]}'()': undefined} ]] || return
 
-	if ! mkdir -p "$1"; then
+	if [[ $1 != undefined ]] && ! mkdir -p "$1"; then
 		ShowAsError "unable to create $2 path $(ShowAsFileName "$1") $(ShowAsExitcode "$?")"
 		show_suggest_raise_issue=true
 		return 1
 	fi
 
 	return 0
+
+	}
+
+ClearPath()
+	{
+
+	# Clear (empty) an existing directory, but don't delete the directory.
+	# Delete files in a relatively safe manner. Parent of directory to clear MUST be specified to avoid an 'rm -rf /*' situation through empty args.
+
+	# input:
+	#	$1 = parent of directory to clear.
+	#   $2 = directory to clear.
+
+	[[ -n ${1:?${FUNCNAME[0]}'()': undefined} && -n ${2:?${FUNCNAME[0]}'()': undefined} ]] || return
+
+	local parent=${1:-undefined}
+	local target=$($BASENAME_CMD "${2:-undefined}")
+
+	[[ -n $parent && $parent != undefined && -n $target && $target != undefined && -d $parent/$target ]] && rm -rf "$parent/$target"/*
 
 	}
 
@@ -8965,11 +9089,11 @@ RunAndLog()
 	#   pathfile (specified as $2) = stdout and stderr from commandstring (specified as $1).
 	#   $? = result_code of commandstring.
 
+	[[ -n ${1:?${FUNCNAME[0]}'()': undefined} && -n ${2:?${FUNCNAME[0]}'()': undefined} ]] || return
+
 	Func:Init
 	local -r LOG_PATHFILE=$($MKTEMP_CMD /var/log/"${FUNCNAME[0]}"_XXXXXX)
 	local -i z=0
-	[[ -n ${1:?${FUNCNAME[0]}'()': undefined} ]] || return
-	[[ -n ${2:?${FUNCNAME[0]}'()': undefined} ]] || return
 
 	ShowAsCommand "$1" > "$2"
 	DebugAsProc "exec: '$1'"
@@ -9135,8 +9259,7 @@ FormatAsIsoBytes()
 ShowTitleLine()
 	{
 
-	[[ $title_shown = false ]] || return
-	[[ $show_bland = false && $opts_verbose = false ]] || return
+	[[ $title_shown = false && $show_bland = false && $opts_verbose = false ]] || return
 
 	EraseThisLine
 	Display "$(ShowTitleName) $(ShowVersion) $(ShowDescription)"
