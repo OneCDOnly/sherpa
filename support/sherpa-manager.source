@@ -9069,7 +9069,7 @@ ClearPath()
 	local parent=${1:-undefined}
 	local target=$($BASENAME_CMD "${2:-undefined}")
 
-	[[ -n $parent && $parent != undefined && -n $target && $target != undefined && -d $parent/$target ]] && rm -rf "$parent/$target"/*
+	[[ -n $parent && $parent != undefined && -n $target && $target != undefined && -d $parent/$target ]] && rm -rf "${parent:?}/${target:?}"/*
 
 	}
 
