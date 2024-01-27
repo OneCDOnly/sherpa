@@ -20,7 +20,7 @@
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 readonly USER_ARGS_RAW=$*
 readonly QPKG_NAME=Mylar3
-readonly SERVICE_SCRIPT_VERSION='240125'
+readonly SERVICE_SCRIPT_VERSION='240128'
 readonly SERVICE_SCRIPT_TYPE=1
 InitService()
 {
@@ -32,6 +32,12 @@ get_ui_port_secure_cmd="/sbin/getcfg interface http_port -d 0 -f $qpkg_ini_pathf
 get_ui_port_secure_enabled_test_cmd='[[ $(/sbin/getcfg interface enable_https -d 0 -f '$qpkg_ini_pathfile') = 1 ]]'
 source_git_branch=master
 source_git_url=https://github.com/mylar3/mylar3.git
+if [[ -e $qpkg_ini_default_pathfile ]]; then
+/sbin/setcfg Metatagging ct_settingspath "$QPKG_CONFIG_PATH"/ComicTagger -f "$qpkg_ini_default_pathfile"
+fi
+if [[ -e $qpkg_ini_pathfile ]]; then
+/sbin/setcfg Metatagging ct_settingspath "$QPKG_CONFIG_PATH"/ComicTagger -f "$qpkg_ini_pathfile"
+fi
 }
 library_path=$(/usr/bin/readlink "$0" 2>/dev/null)
 [[ -z $library_path ]] && library_path=$0
