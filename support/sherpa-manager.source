@@ -9058,11 +9058,11 @@ ClearPath()
 	{
 
 	# Clear (empty) an existing directory, but don't delete the directory.
-	# Delete files in a relatively safe manner. Parent of directory to clear MUST be specified to avoid an 'rm -rf /*' situation through empty args.
+	# Delete files in a relatively safe manner. Parent of directory MUST be specified to avoid an 'rm -rf /*' situation through empty args.
 
 	# input:
-	#	$1 = parent of directory to clear.
-	#   $2 = directory to clear.
+	#	$1 = full path to parent of directory name to clear.
+	#   $2 = directory name to clear.
 
 	[[ -n ${1:?${FUNCNAME[0]}'()': undefined} && -n ${2:?${FUNCNAME[0]}'()': undefined} ]] || return
 
