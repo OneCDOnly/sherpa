@@ -1,3 +1,6 @@
+* function durations can become incorrect when functions with the same name are called recursively.
+	- Need to make var holding start-time unique.
+
 * Removing OMedusa QPKG via sherpa didn't update App Center 'live' (icon remained until App Center refreshed).
 
 * Upgrading QPKGs via sherpa didn't update App Center icons 'live'.
