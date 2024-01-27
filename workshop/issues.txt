@@ -1,7 +1,7 @@
 * function durations can become incorrect when functions with the same name are called recursively.
 	- Need to make var holding start-time unique.
 
-* Removing OMedusa QPKG via sherpa didn't update App Center 'live' (icon remained until App Center refreshed).
+* Removing OMedusa QPKG via sherpa didn't update App Center 'live' (icon remained until App Center was manually refreshed).
 
 * Upgrading QPKGs via sherpa didn't update App Center icons 'live'.
 
@@ -28,6 +28,7 @@
 * progress display text sometimes desyncs during 'install' or 'start' of OMedusa QPKG.
 	- Example: proc: reinstalling dependent QPKGs ... 36% (7/21), 7 OK36% (7/21), 7 OK, 1 in-progress
 	- Suspect Medusa application (or service script) is outputting something to stderr.
+	- OK, it's not just Medusa. :(
 
 * near the end of installing IPKs, monitored download path can remain at non-zero size while packages complete installation.
 	- Maybe include a separate progress message when dir size shrinks to almost zero?
