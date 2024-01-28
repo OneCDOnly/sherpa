@@ -23,8 +23,6 @@
 
 	- Both applications were dead.
 
-* 'sherpa install all start all' doesn't start deactivated QPKGs.
-
 * near the end of installing IPKs, monitored download path can remain at non-zero size while packages complete installation.
 	- Maybe include a separate progress message when dir size shrinks to almost zero?
 
