@@ -949,7 +949,7 @@ Self:Validate()
 		fi
 	done
 
-	# If a independent has been selected for `reinstall`/`reactivate`, need to `deactivate` its dependents first, and `activate` them again later.
+	# If an independent has been selected for `reinstall`/`reactivate`, need to `deactivate` its dependents first, and `activate` them again later.
 
 	for package in $(QPKGs-ACreinstall-to:Array) $(QPKGs-ACreactivate-to:Array); do
 		if QPKGs-SCindependent.Exist "$package" && QPKGs-ISinstalled.Exist "$package"; then
@@ -962,7 +962,7 @@ Self:Validate()
 		fi
 	done
 
-	# If a independent has been selected for `deactivate`/`uninstall`, need to `deactivate` its dependents first.
+	# If an independent has been selected for `deactivate`/`uninstall`, need to `deactivate` its dependents first.
 
 	for package in $(QPKGs-ACdeactivate-to:Array) $(QPKGs-ACuninstall-to:Array); do
 		if QPKGs-SCindependent.Exist "$package" && QPKGs-ISinstalled.Exist "$package"; then
@@ -972,7 +972,7 @@ Self:Validate()
 		fi
 	done
 
-	# If a independent has been selected for `uninstall`, then `install`, need to `deactivate` its dependents first, and `activate` them again later.
+	# If an independent has been selected for `uninstall`, then `install`, need to `deactivate` its dependents first, and `activate` them again later.
 
 	for package in $(QPKGs-ACuninstall-to:Array); do
 		if QPKGs-SCindependent.Exist "$package" && QPKGs-ISinstalled.Exist "$package"; then
@@ -1032,7 +1032,7 @@ Self:Validate()
 	done
 
 	# Build a list of original storage paths for packages to be uninstalled, then installed again later this session (a "complex reinstall").
-	# This will ensure migrated packages end-up in their target locations.
+	# This will ensure migrated packages end-up in the correct locations.
 	QPKGs_were_installed_name=()
 	QPKGs_were_installed_path=()
 
@@ -1051,7 +1051,7 @@ Self:Validate()
 	# Build list of required installation QPKGs.
 	QPKGs-ACdownload-to:Add "$(QPKGs-ACupgrade-to:Array) $(QPKGs-ACreinstall-to:Array) $(QPKGs-ACinstall-to:Array)"
 
-	# Check all items
+	# Check all items.
 
 	if [[ $opts_check = true ]]; then
 		QPKGs-ACsign-to:Add "$(QPKGs-ISinstalled:Array)"
@@ -1462,7 +1462,7 @@ AdjustMaxForks()
 ParseArgs()
 	{
 
-	# basic argument syntax:
+	# Basic argument syntax:
 	#   scriptname [action] [groups] [options]
 
 	Func:Init
@@ -1482,6 +1482,7 @@ ParseArgs()
 		arg_identified=false
 
 		# Identify action: everytime action changes, must clear group.
+
 		case $arg in
 		# These cases use only a single word to specify a single action.
 			backup|clean|enable|disable|reassign|rebuild|reinstall|restore)
@@ -1686,6 +1687,7 @@ ParseArgs()
 		fi
 
 		# Identify options.
+
 		case $arg in
 			v|debug|dbug|verbose)
 				group_identified=true
@@ -1872,7 +1874,7 @@ ParseArgs()
 		esac
 	fi
 
-	if [[ $opts_show_status = true ]] && QPKGs-ACstatus-to.IsNone; then		# If user specifies `status` without a scope, then scope is `all`.
+	if [[ $opts_show_status = true ]] && QPKGs-ACstatus-to.IsNone; then		# If `status` is specified without a scope, then scope is `all`.
 		QPKGs.ACstatus.SCall:Set
 	fi
 
@@ -2767,13 +2769,13 @@ _ActionForks:Launch_()
 	#   $fork_count = number of currently running forks.
 	#   $max_forks = maximum number of permitted concurrent forks given the current environment.
 
-	local package=''
+	local a=''
 	local target_function=${1:-function null}
 
 	shift   											# `shift` all arguments one position to the left.
 	local -a target_packages=("$@")
 
-	for package in "${target_packages[@]}"; do
+	for a in "${target_packages[@]}"; do
 		while [[ $fork_count -ge $max_forks ]]; do  	# Don't fork until an empty spot becomes available.
 			sleep .2
 			UpdateForkProgress
@@ -2781,8 +2783,8 @@ _ActionForks:Launch_()
 
 		IncForkProgressIndex
 		MarkThisActionForkAsStarted 					# Must create runfile here, as it takes too-long to happen in background function.
-		$target_function "$package" &
-		DebugAsDone "forked $target_function() for '$package'"
+		$target_function "$a" &
+		DebugAsDone "forked $target_function() for '$a'"
 		UpdateForkProgress
 	done
 
@@ -3023,10 +3025,10 @@ DebugBinPathVerAndMinVer()
 
 	[[ -n ${1:?${FUNCNAME[0]}'()': undefined} ]] || return
 
-	local bin_path=$(GetThisBinPath "$1")
+	local a=$(GetThisBinPath "$1")
 
-	if [[ -n $bin_path ]]; then
-		DebugUserspace ok "'$1' path" "$bin_path"
+	if [[ -n $a ]]; then
+		DebugUserspace ok "'$1' path" "$a"
 	else
 		DebugUserspace warning "'$1' path" 'not present'
 	fi
@@ -4735,12 +4737,12 @@ ArchivePriorSessLogs()
 
 	# Check for incomplete previous session logs (crashed, interrupted?) and save to archive.
 
-	local log_pathfile=''
+	local f=''
 
-	for log_pathfile in "$THIS_PACKAGE_PATH/session."*".active.log"; do
-		if [[ -f $log_pathfile && $log_pathfile != "$sess_active_pathfile" ]]; then
-			$CAT_CMD "$log_pathfile" >> "$SESS_ARCHIVE_PATHFILE"
-			rm -f "$log_pathfile"
+	for f in "$THIS_PACKAGE_PATH/session."*".active.log"; do
+		if [[ -f $f && $f != "$sess_active_pathfile" ]]; then
+			$CAT_CMD "$f" >> "$SESS_ARCHIVE_PATHFILE"
+			rm -f "$f"
 		fi
 	done
 
@@ -5020,13 +5022,13 @@ QPKGs.NewVers:Show()
 QPKGs.Conflicts:Check()
 	{
 
-	local package=''
+	local a=''
 
 	if [[ -n ${BASE_QPKG_CONFLICTS_WITH:-} ]]; then
 		# shellcheck disable=2068
-		for package in "${BASE_QPKG_CONFLICTS_WITH[@]}"; do
-			if QPKG.IsEnabled "$package"; then
-				ShowAsError "the '$package' QPKG is enabled. $(ShowTitleName) is incompatible with this package. Please consider 'stop'ing this QPKG in your App Center."
+		for a in "${BASE_QPKG_CONFLICTS_WITH[@]}"; do
+			if QPKG.IsEnabled "$a"; then
+				ShowAsError "the '$a' QPKG is enabled. $(ShowTitleName) is incompatible with this package. Please consider 'stop'ing this QPKG in your App Center."
 				return 1
 			fi
 		done
@@ -5039,13 +5041,13 @@ QPKGs.Conflicts:Check()
 QPKGs.Warnings:Check()
 	{
 
-	local package=''
+	local a=''
 
 	if [[ -n ${BASE_QPKG_WARNINGS:-} ]]; then
 		# shellcheck disable=2068
-		for package in "${BASE_QPKG_WARNINGS[@]}"; do
-			if QPKG.IsEnabled "$package"; then
-				ShowAsWarn "the '$package' QPKG is enabled. This may cause problems with $(ShowTitleName) applications. Please consider 'stop'ing this QPKG in your App Center."
+		for a in "${BASE_QPKG_WARNINGS[@]}"; do
+			if QPKG.IsEnabled "$a"; then
+				ShowAsWarn "the '$a' QPKG is enabled. This may cause problems with $(ShowTitleName) applications. Please consider 'stop'ing this QPKG in your App Center."
 			fi
 		done
 	fi
@@ -5060,12 +5062,12 @@ PIPs.Actions:List()
 	[[ $opts_debug = true ]] || return
 
 	Func:Init
-	local action=''
+	local a=''
 	DebugInfoMinSepr
 
-	for action in "${PIP_ACTIONS[@]}"; do
-		PIPs-AC${action}-ok.IsAny && DebugPipInfo "AC${action}-ok" "($(PIPs-AC${action}-ok:Count)) $(PIPs-AC${action}-ok:ListCSV) "
-		PIPs-AC${action}-er.IsAny && DebugPipError "AC${action}-er" "($(PIPs-AC${action}-er:Count)) $(PIPs-AC${action}-er:ListCSV) "
+	for a in "${PIP_ACTIONS[@]}"; do
+		PIPs-AC${a}-ok.IsAny && DebugPipInfo "AC${a}-ok" "($(PIPs-AC${a}-ok:Count)) $(PIPs-AC${a}-ok:ListCSV) "
+		PIPs-AC${a}-er.IsAny && DebugPipError "AC${a}-er" "($(PIPs-AC${a}-er:Count)) $(PIPs-AC${a}-er:ListCSV) "
 	done
 
 	DebugInfoMinSepr
@@ -5079,24 +5081,24 @@ IPKs.Actions:List()
 	[[ $opts_debug = true ]] || return
 
 	Func:Init
-	local action=''
+	local a=''
 	local border_shown=false
 
-	for action in "${IPK_ACTIONS[@]}"; do
-		if IPKs-AC${action}-ok.IsAny; then
+	for a in "${IPK_ACTIONS[@]}"; do
+		if IPKs-AC${a}-ok.IsAny; then
 			if [[ $border_shown = false ]]; then
 				DebugInfoMinSepr
 				border_shown=true
 			fi
-			DebugIpk info "AC${action}-ok" "($(IPKs-AC${action}-ok:Count)) $(IPKs-AC${action}-ok:ListCSV) "
+			DebugIpk info "AC${a}-ok" "($(IPKs-AC${a}-ok:Count)) $(IPKs-AC${a}-ok:ListCSV) "
 		fi
 
-		if IPKs-AC${action}-er.IsAny; then
+		if IPKs-AC${a}-er.IsAny; then
 			if [[ $border_shown = false ]]; then
 				DebugInfoMinSepr
 				border_shown=true
 			fi
-			DebugIpk error "AC${action}-er" "($(IPKs-AC${action}-er:Count)) $(IPKs-AC${action}-er:ListCSV) "
+			DebugIpk error "AC${a}-er" "($(IPKs-AC${a}-er:Count)) $(IPKs-AC${a}-er:ListCSV) "
 		fi
 	done
 
@@ -5111,27 +5113,27 @@ QPKGs.Actions:List()
 	[[ $opts_debug = true ]] || return
 
 	Func:Init
-	local action=''
-	local prefix=''
+	local a=''
+	local b=''
 	local border_shown=false
 
-	for action in "${QPKG_ACTIONS[@]}"; do
-		for prefix in ok er sk; do
-			if QPKGs-AC${action}-${prefix}.IsAny; then
+	for a in "${QPKG_ACTIONS[@]}"; do
+		for b in ok er sk; do
+			if QPKGs-AC${a}-${b}.IsAny; then
 				if [[ $border_shown = false ]]; then
 					DebugInfoMinSepr
 					border_shown=true
 				fi
 
-				case $prefix in
+				case $b in
 					ok)
-						DebugQpkg info "AC${action}-${prefix}" "($(QPKGs-AC${action}-${prefix}:Count)) $(QPKGs-AC${action}-${prefix}:ListCSV) "
+						DebugQpkg info "AC${a}-${b}" "($(QPKGs-AC${a}-${b}:Count)) $(QPKGs-AC${a}-${b}:ListCSV) "
 						;;
 					sk)
-						DebugQpkg warning "AC${action}-${prefix}" "($(QPKGs-AC${action}-${prefix}:Count)) $(QPKGs-AC${action}-${prefix}:ListCSV) "
+						DebugQpkg warning "AC${a}-${b}" "($(QPKGs-AC${a}-${b}:Count)) $(QPKGs-AC${a}-${b}:ListCSV) "
 						;;
 					er)
-						DebugQpkg error "AC${action}-${prefix}" "($(QPKGs-AC${action}-${prefix}:Count)) $(QPKGs-AC${action}-${prefix}:ListCSV) "
+						DebugQpkg error "AC${a}-${b}" "($(QPKGs-AC${a}-${b}:Count)) $(QPKGs-AC${a}-${b}:ListCSV) "
 				esac
 			fi
 		done
@@ -5148,14 +5150,14 @@ QPKGs.Actions:ListAll()
 	# Only used when debugging.
 
 	Func:Init
-	local action=''
-	local prefix=''
+	local a=''
+	local b=''
 	DebugInfoMinSepr
 
-	for action in "${QPKG_ACTIONS[@]}"; do
-		for prefix in to ok er sk; do
-			if QPKGs-AC${action}-${prefix}.IsAny; then
-				DebugQpkg info "AC${action}=${prefix}" "($(QPKGs-AC${action}-${prefix}:Count)) $(QPKGs-AC${action}-${prefix}:ListCSV) "
+	for a in "${QPKG_ACTIONS[@]}"; do
+		for b in to ok er sk; do
+			if QPKGs-AC${a}-${b}.IsAny; then
+				DebugQpkg info "AC${a}=${b}" "($(QPKGs-AC${a}-${b}:Count)) $(QPKGs-AC${a}-${b}:ListCSV) "
 			fi
 		done
 	done
@@ -5174,36 +5176,36 @@ QPKGs.States:List()
 	[[ $opts_debug = true ]] || return
 
 	Func:Init
-	local state=''
+	local a=''
 
 	QPKGs.States:Build "${1:-}"
 	DebugInfoMinSepr
 
-	for state in "${QPKG_IS_STATES[@]}" "${QPKG_SERVICE_RESULTS[@]}"; do
-		[[ $state = installed ]] && continue
+	for a in "${QPKG_IS_STATES[@]}" "${QPKG_SERVICE_RESULTS[@]}"; do
+		[[ $a = installed ]] && continue
 
-		if [[ $state = unknown ]]; then
-			QPKGs-IS${state}.IsAny && DebugQpkg warning "IS${state}" "($(QPKGs-IS${state}:Count)) $(QPKGs-IS${state}:ListCSV) "
+		if [[ $a = unknown ]]; then
+			QPKGs-IS${a}.IsAny && DebugQpkg warning "IS${a}" "($(QPKGs-IS${a}:Count)) $(QPKGs-IS${a}:ListCSV) "
 		else
-			QPKGs-IS${state}.IsAny && DebugQpkg info "IS${state}" "($(QPKGs-IS${state}:Count)) $(QPKGs-IS${state}:ListCSV) "
+			QPKGs-IS${a}.IsAny && DebugQpkg info "IS${a}" "($(QPKGs-IS${a}:Count)) $(QPKGs-IS${a}:ListCSV) "
 		fi
 	done
 
-	for state in "${QPKG_ISNT_STATES[@]}" "${QPKG_SERVICE_RESULTS[@]}"; do
-		[[ $state = installed ]] && continue
+	for a in "${QPKG_ISNT_STATES[@]}" "${QPKG_SERVICE_RESULTS[@]}"; do
+		[[ $a = installed ]] && continue
 
-		if [[ $state = ok ]]; then
-			QPKGs-ISNT${state}.IsAny && DebugQpkg error "ISNT${state}" "($(QPKGs-ISNT${state}:Count)) $(QPKGs-ISNT${state}:ListCSV) "
-		elif [[ $state = backedup ]]; then
-			QPKGs-ISNT${state}.IsAny && DebugQpkg warning "ISNT${state}" "($(QPKGs-ISNT${state}:Count)) $(QPKGs-ISNT${state}:ListCSV) "
+		if [[ $a = ok ]]; then
+			QPKGs-ISNT${a}.IsAny && DebugQpkg error "ISNT${a}" "($(QPKGs-ISNT${a}:Count)) $(QPKGs-ISNT${a}:ListCSV) "
+		elif [[ $a = backedup ]]; then
+			QPKGs-ISNT${a}.IsAny && DebugQpkg warning "ISNT${a}" "($(QPKGs-ISNT${a}:Count)) $(QPKGs-ISNT${a}:ListCSV) "
 		else
-			QPKGs-ISNT${state}.IsAny && DebugQpkg info "ISNT${state}" "($(QPKGs-ISNT${state}:Count)) $(QPKGs-ISNT${state}:ListCSV) "
+			QPKGs-ISNT${a}.IsAny && DebugQpkg info "ISNT${a}" "($(QPKGs-ISNT${a}:Count)) $(QPKGs-ISNT${a}:ListCSV) "
 		fi
 	done
 
-	for state in "${QPKG_STATES_TRANSIENT[@]}"; do
+	for a in "${QPKG_STATES_TRANSIENT[@]}"; do
 		# shellcheck disable=2043
-		QPKGs-IS${state}.IsAny && DebugQpkg info "IS${state}" "($(QPKGs-IS${state}:Count)) $(QPKGs-IS${state}:ListCSV) "
+		QPKGs-IS${a}.IsAny && DebugQpkg info "IS${a}" "($(QPKGs-IS${a}:Count)) $(QPKGs-IS${a}:ListCSV) "
 	done
 
 	DebugInfoMinSepr
@@ -5220,13 +5222,13 @@ QPKGs.IndependentDependent:Build()
 	# `independent` QPKGs don't depend-on other QPKGs, but may be required for other QPKGs. They should be installed/activated before any `dependent` QPKGs.
 	# `dependent` QPKGs depend-on other QPKGs. They should be installed/activated after all `independent` QPKGs.
 
-	local package=''
+	local a=''
 
-	for package in "${QPKG_NAME[@]}"; do
-		if QPKG.IsDependent "$package"; then
-			QPKGs-SCdependent:Add "$package"
+	for a in "${QPKG_NAME[@]}"; do
+		if QPKG.IsDependent "$a"; then
+			QPKGs-SCdependent:Add "$a"
 		else
-			QPKGs-SCindependent:Add "$package"
+			QPKGs-SCindependent:Add "$a"
 		fi
 	done
 
@@ -5461,10 +5463,10 @@ QPKGs.IsCanBackup:Build()
 	# Build a list of QPKGs that support `backup` and `restore` actions.
 
 	Func:Init
-	local package=''
+	local a=''
 
-	for package in $(QPKGs-SCall:Array); do
-		QPKG.IsCanBackup "$package" && QPKGs-SCcanbackup:Add "$package"
+	for a in $(QPKGs-SCall:Array); do
+		QPKG.IsCanBackup "$a" && QPKGs-SCcanbackup:Add "$a"
 	done
 
 	Func:Exit
@@ -5477,10 +5479,10 @@ QPKGs.IsCanRestartToUpdate:Build()
 	# Build a list of QPKGs that support application update on QPKG restart.
 
 	Func:Init
-	local package=''
+	local a=''
 
-	for package in $(QPKGs-SCall:Array); do
-		QPKG.IsCanRestartToUpdate "$package" && QPKGs-SCcanrestarttoupdate:Add "$package"
+	for a in $(QPKGs-SCall:Array); do
+		QPKG.IsCanRestartToUpdate "$a" && QPKGs-SCcanrestarttoupdate:Add "$a"
 	done
 
 	Func:Exit
@@ -5493,10 +5495,10 @@ QPKGs.IsCanClean:Build()
 	# Build a list of QPKGs that support `clean` actions.
 
 	Func:Init
-	local package=''
+	local a=''
 
-	for package in $(QPKGs-SCall:Array); do
-		QPKG.IsCanClean "$package" && QPKGs-SCcanclean:Add "$package"
+	for a in $(QPKGs-SCall:Array); do
+		QPKG.IsCanClean "$a" && QPKGs-SCcanclean:Add "$a"
 	done
 
 	Func:Exit
@@ -5675,7 +5677,7 @@ Report.Packages:Show()
 	{
 
 	Func:Init
-	local name=''
+	local a=''
 	maxcols=3
 
 	DisableDebugToArchiveAndFile
@@ -5687,8 +5689,8 @@ Report.Packages:Show()
 		DisplayAsHelpTitle "one-or-more $(ShowPackages) may be specified at-once."
 		DisplayAsPackagesReportTitleLine
 
-		for name in $(QPKGs-SCall:Array); do
-			DisplayAsPackagesReportLine "$name"
+		for a in $(QPKGs-SCall:Array); do
+			DisplayAsPackagesReportLine "$a"
 		done
 
 		DisplayAsProjSynExam "abbreviations and aliases may also be used to specify $(ShowPackages). To list these" 'help abs'
@@ -5811,12 +5813,12 @@ Report.Statuses:Show()
 QPKGs.IsBackedUp:Show()
 	{
 
-	local package=''
+	local a=''
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	for package in $(QPKGs-ISbackedup:Array); do
-		Display "$package"
+	for a in $(QPKGs-ISbackedup:Array); do
+		Display "$a"
 	done
 
 	return 0
@@ -5826,12 +5828,12 @@ QPKGs.IsBackedUp:Show()
 QPKGs.IsNtBackedUp:Show()
 	{
 
-	local package=''
+	local a=''
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	for package in $(QPKGs-ISNTbackedup:Array); do
-		Display "$package"
+	for a in $(QPKGs-ISNTbackedup:Array); do
+		Display "$a"
 	done
 
 	return 0
@@ -5841,12 +5843,12 @@ QPKGs.IsNtBackedUp:Show()
 QPKGs.IsInstalled:Show()
 	{
 
-	local package=''
+	local a=''
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	for package in $(QPKGs-ISinstalled:Array); do
-		Display "$package"
+	for a in $(QPKGs-ISinstalled:Array); do
+		Display "$a"
 	done
 
 	return 0
@@ -5856,12 +5858,12 @@ QPKGs.IsInstalled:Show()
 QPKGs.ScAll:Show()
 	{
 
-	local package=''
+	local a=''
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	for package in $(QPKGs-SCall:Array); do
-		Display "$package"
+	for a in $(QPKGs-SCall:Array); do
+		Display "$a"
 	done
 
 	return 0
@@ -5871,12 +5873,12 @@ QPKGs.ScAll:Show()
 QPKGs.ScInstallable:Show()
 	{
 
-	local package=''
+	local a=''
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	for package in $(QPKGs-SCinstallable:Array); do
-		Display "$package"
+	for a in $(QPKGs-SCinstallable:Array); do
+		Display "$a"
 	done
 
 	return 0
@@ -5886,12 +5888,12 @@ QPKGs.ScInstallable:Show()
 QPKGs.IsNtInstalled:Show()
 	{
 
-	local package=''
+	local a=''
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	for package in $(QPKGs-ISNTinstalled:Array); do
-		Display "$package"
+	for a in $(QPKGs-ISNTinstalled:Array); do
+		Display "$a"
 	done
 
 	return 0
@@ -5901,12 +5903,12 @@ QPKGs.IsNtInstalled:Show()
 QPKGs.IsActive:Show()
 	{
 
-	local package=''
+	local a=''
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	for package in $(QPKGs-ISactive:Array); do
-		Display "$package"
+	for a in $(QPKGs-ISactive:Array); do
+		Display "$a"
 	done
 
 	return 0
@@ -5916,12 +5918,12 @@ QPKGs.IsActive:Show()
 QPKGs.IsNtActive:Show()
 	{
 
-	local package=''
+	local a=''
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	for package in $(QPKGs-ISNTactive:Array); do
-		Display "$package"
+	for a in $(QPKGs-ISNTactive:Array); do
+		Display "$a"
 	done
 
 	return 0
@@ -5931,12 +5933,12 @@ QPKGs.IsNtActive:Show()
 QPKGs.ScUpgradable:Show()
 	{
 
-	local package=''
+	local a=''
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	for package in $(QPKGs-SCupgradable:Array); do
-		Display "$package"
+	for a in $(QPKGs-SCupgradable:Array); do
+		Display "$a"
 	done
 
 	return 0
@@ -5946,12 +5948,12 @@ QPKGs.ScUpgradable:Show()
 QPKGs.ScIndependent:Show()
 	{
 
-	local package=''
+	local a=''
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	for package in $(QPKGs-SCindependent:Array); do
-		Display "$package"
+	for a in $(QPKGs-SCindependent:Array); do
+		Display "$a"
 	done
 
 	return 0
@@ -5961,12 +5963,12 @@ QPKGs.ScIndependent:Show()
 QPKGs.ScDependent:Show()
 	{
 
-	local package=''
+	local a=''
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	for package in $(QPKGs-SCdependent:Array); do
-		Display "$package"
+	for a in $(QPKGs-SCdependent:Array); do
+		Display "$a"
 	done
 
 	return 0
@@ -6132,10 +6134,10 @@ NoteIpkAcAsEr()
 	#   $2 = action
 	#   $3 = reason (optional)
 
-	local msg="failing request to $2 $(ShowAsPackageName "$1")"
+	local a="failing request to $2 $(ShowAsPackageName "$1")"
 
-	[[ -n ${3:-} ]] && msg+=" as $3"
-	DebugAsError "$msg" >&2
+	[[ -n ${3:-} ]] && a+=" as $3"
+	DebugAsError "$a" >&2
 	IPKs-AC"$2"-to:Remove "$1"
 	IPKs-AC"$2"-er:Add "$1"
 
@@ -6147,17 +6149,17 @@ ModPathToEntware()
 	{
 
 	local -r OPKG=/opt/bin:/opt/sbin
-	local temp=''
+	local a=''
 
 	if QPKGs-ISenabled.Exist Entware; then
 		! [[ $PATH =~ $OPKG ]] || return
-		temp=$($SED_CMD "s|$OPKG:||" <<< "$PATH:")		# Append colon prior to searching, then remove existing Entware paths.
-		export PATH=$OPKG:${temp%:}						# ... now prepend Entware paths and remove trailing colon
+		a=$($SED_CMD "s|$OPKG:||" <<< "$PATH:")		# Append colon prior to searching, then remove existing Entware paths.
+		export PATH=$OPKG:${a%:}						# ... now prepend Entware paths and remove trailing colon
 		DebugAsDone 'prepended Entware to $PATH'
 	else
 		[[ $PATH =~ $OPKG ]] || return
-		temp=$($SED_CMD "s|$OPKG:||" <<< "$PATH:")		# Append colon prior to searching, then remove existing Entware paths.
-		export PATH=${temp%:}							# ... now remove trailing colon
+		a=$($SED_CMD "s|$OPKG:||" <<< "$PATH:")		# Append colon prior to searching, then remove existing Entware paths.
+		export PATH=${a%:}							# ... now remove trailing colon
 		DebugAsDone 'removed Entware from $PATH'
 	fi
 
@@ -6274,21 +6276,22 @@ GetRepoURLFromStoreID()
 GetUptime()
 	{
 
-	raw=$(</proc/uptime)
-	FormatSecsToHoursMinutesSecs "${raw%%.*}"
+	local n=$(</proc/uptime)
+
+	FormatSecsToHoursMinutesSecs "${n%%.*}"
 
 	}
 
 GetTimeInShell()
 	{
 
-	local duration=0
+	local n=0
 
 	if [[ -n ${LOADER_SCRIPT_PPID:-} ]]; then
-		duration=$($PS_CMD -o pid,etime | $GREP_CMD $LOADER_SCRIPT_PPID | $HEAD_CMD -n1)
+		n=$($PS_CMD -o pid,etime | $GREP_CMD $LOADER_SCRIPT_PPID | $HEAD_CMD -n1)
 	fi
 
-	FormatLongMinutesSecs "${duration:6}"
+	FormatLongMinutesSecs "${n:6}"
 
 	}
 
@@ -6302,9 +6305,11 @@ GetSysLoadAverages()
 GetCPUCores()
 	{
 
-	local num=$($GREP_CMD -c '^processor' /proc/cpuinfo)
-	[[ $num -eq 0 ]] && num=$($GREP_CMD -c '^Processor' /proc/cpuinfo)
-	echo "$num"
+	local n=$($GREP_CMD -c '^processor' /proc/cpuinfo)
+
+	[[ $n -eq 0 ]] && n=$($GREP_CMD -c '^Processor' /proc/cpuinfo)
+
+	echo "$n"
 
 	}
 
@@ -6463,6 +6468,7 @@ OS.IsCompatibleWithSigned()
 	{
 
 	# QTS builds released over these 6 days don't allow unsigned QPKGs to run at-all.
+
 	[[ $NAS_FIRMWARE_DATE -lt 20201015 || $NAS_FIRMWARE_DATE -gt 20201020 ]]
 
 	}
@@ -6567,13 +6573,14 @@ Self.Error.IsNt()
 ShowZeroQpkgs()
 	{
 
-	local state=''
-	local action=''
+	local a=''
+	local b=''
 
-	for state in "${USER_QPKG_IS_STATES[@]}"; do
-		for action in "${USER_QPKG_ACTIONS[@]}"; do
-			[[ $action = list ]] && continue	# action results lists are unavailable for these
-			QPKGs.AC${action}.IS${state}.IsSet && QPKGs-AC${action}-ok.IsNone && ShowAsWarn "no QPKGs were able to $(Lowercase "$action")"
+	for a in "${USER_QPKG_IS_STATES[@]}"; do
+		for b in "${USER_QPKG_ACTIONS[@]}"; do
+			[[ $b = list ]] && continue			# action results lists are unavailable for these
+
+			QPKGs.AC${b}.IS${a}.IsSet && QPKGs-AC${b}-ok.IsNone && ShowAsWarn "no QPKGs were able to $(Lowercase "$b")"
 		done
 	done
 
@@ -6590,11 +6597,13 @@ Self.LockFile:Claim()
 	for a in sherpa-manager.sh sherpa-manager.source; do
 		if [[ -e $LOCK_PATHFILE && -d /proc/$(<"$LOCK_PATHFILE") && $(</proc/"$(<"$LOCK_PATHFILE")"/cmdline) =~ $a ]]; then
 			ShowAsAbort "another sherpa instance was found (PID:$(<"$LOCK_PATHFILE")), can't continue."
+
 			return 1
 		fi
 	done
 
 	echo "$$" > "$LOCK_PATHFILE"
+
 	return 0
 
 	}
@@ -8018,8 +8027,8 @@ QPKG.App.GetVer()
 	#   stdout = application version
 	#   $? = 0 if found, !0 if not
 
-	local -i i=-1			# default to not-found.
 	local a=''
+	local -i i=-1			# default to not-found.
 
 	[[ -n ${1:-} ]] || return
 	[[ -n ${2:-} ]] && i=$2 || i=$(QPKG.GetArchIndex "$1")
@@ -8285,6 +8294,7 @@ QPKG.GetPathFilename()
 	[[ $(Lowercase "${a##*.}") != qpkg ]] && a=${a%.*}.qpkg		# Swap `zip` for `qpkg` here (only for compatibilty with `QDK.zip`).
 
 	echo "$QPKG_DL_PATH/$($BASENAME_CMD "$a")"
+
 	return 0
 
 	}
@@ -8661,6 +8671,7 @@ QPKG.GetArchIndex()
 	done
 
 	echo "$i"		# matching arch was not found.
+
 	return 1
 
 	}
@@ -8687,6 +8698,7 @@ QPKG.GetDefaultArchIndex()
 	done
 
 	echo "$i"		# matching arch was not found.
+
 	return 1
 
 	}
@@ -8776,8 +8788,8 @@ QPKG.GetIPKs()
 	#   stdout = list of IPKs $1 depends-upon.
 	#   $? = 0 if successful, 1 if failed.
 
-	local -i i=-1			# default to not-found.
 	local a=''
+	local -i i=-1			# default to not-found.
 
 	[[ -n ${1:-} ]] || return
 	[[ -n ${2:-} ]] && i=$2 || i=$(QPKG.GetArchIndex "$1")
@@ -9225,15 +9237,15 @@ FormatAsThous()
 
 	local a=$($SED_CMD 's/[^0-9]*//g' <<< "${1:-}")	# Strip everything not a numeral.
 	local b=''
-	local out=''
+	local c=''
 
 	while [[ ${#a} -gt 0 ]]; do
 		b=${a:${#a}<3?0:-3}							# A nifty trick found here: https://stackoverflow.com/a/19858692
 
-		if [[ -z $out ]]; then
-			out=$b
+		if [[ -z $c ]]; then
+			c=$b
 		else
-			out=$b,$out
+			c=$b,$c
 		fi
 
 		if [[ ${#b} -eq 3 ]]; then
@@ -9243,7 +9255,7 @@ FormatAsThous()
 		fi
 	done
 
-	echo "$out"
+	echo "$c"
 	return 0
 
 	}
@@ -9363,6 +9375,7 @@ ShowAsResultAndStdout()
 
 	[[ -n ${1:-} ]] || return
 	[[ -n ${2:-} ]] || return
+
 	local a=$CHARS_RESULTS
 	[[ ${1:-0} -ne 0 ]] && a=$CHARS_ALERT
 
@@ -9774,7 +9787,7 @@ AddExtLogToSessLog()
 
 	# Add the contents of pathfile $1 to the session debug log, with each line formatted as an external log entry.
 
-	local linebuff=''
+	local a=''
 	local original_verbose=false
 
 	if [[ $opts_verbose = true ]]; then   # Prevent external log contents appearing onscreen again, because they've already been seen "live".
@@ -9786,8 +9799,8 @@ AddExtLogToSessLog()
 	DebugExtLogMinSepr
 	DebugAsLog "$(ShowAsLogFilename "${1:?${FUNCNAME[0]}'()': undefined}")"
 
-	while read -r linebuff; do
-		DebugAsLog "$linebuff"
+	while read -r a; do
+		DebugAsLog "$a"
 	done < "$1"
 
 	DebugExtLogMinSepr
@@ -10069,10 +10082,10 @@ OpStepClearWait()
 	#	$1 = a 4 character string such as `info`, `proc`, `done`, `derp`.
 	#	$2 = detailed message.
 
-	local -i typewidth=4			# Width of the message type.
-	[[ ${colourful:=true} = true ]] && typewidth=10  	# Allow extra length for ANSI codes in message type.
+	local -i n=4			# Width of the message type.
+	[[ ${colourful:=true} = true ]] && n=10  	# Allow extra length for ANSI codes in message type.
 
-	DisplayWait "$(printf "\033[2K\r%-${typewidth}s: %s" "${1:-}" "${2:-}")"
+	DisplayWait "$(printf "\033[2K\r%-${n}s: %s" "${1:-}" "${2:-}")"
 
 	return 0
 
@@ -10087,10 +10100,10 @@ OpStepClear()
 	#	$1 = a 4 character string such as `info`, `proc`, `done`, `derp`.
 	#	$2 = detailed message.
 
-	local -i typewidth=4			# Width of the message type.
-	[[ ${colourful:=true} = true ]] && typewidth=10  	# Allow extra length for ANSI codes in message type.
+	local -i n=4			# Width of the message type.
+	[[ ${colourful:=true} = true ]] && n=10  	# Allow extra length for ANSI codes in message type.
 
-	Display "$(printf "\033[2K\r%-${typewidth}s: %s" "${1:-}" "${2:-}")"
+	Display "$(printf "\033[2K\r%-${n}s: %s" "${1:-}" "${2:-}")"
 
 	return 0
 
@@ -10384,16 +10397,16 @@ sleep()
 	# input:
 	#	$1 = seconds to sleep (decimal or integer) (optional), default is 1 second.
 
-	local wait=${1:-}
+	local n=${1:-}
 
-	[[ ${wait//.} -eq 0 ]] && wait=1
+	[[ ${n//.} -eq 0 ]] && n=1
 
 	if [[ -e $GNU_SLEEP_CMD && -L /opt/etc/passwd ]]; then  # Try to ensure Entware is active before using this utility.
-		$GNU_SLEEP_CMD "$wait"
+		$GNU_SLEEP_CMD "$n"
 	elif [[ $DECIMAL_SLEEP_SECONDS_SUPPORTED = false ]]; then
-		$SLEEP_CMD "$((${wait%.*}+1))"						# Ensure decimal seconds are rounded-up to next integer.
+		$SLEEP_CMD "$((${n%.*}+1))"						# Ensure decimal seconds are rounded-up to next integer.
 	else
-		$SLEEP_CMD "$wait"
+		$SLEEP_CMD "$n"
 	fi
 
 	return 0
