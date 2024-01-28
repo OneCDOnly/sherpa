@@ -1,3 +1,6 @@
+* show ASCII title once-per-day only.
+	- ASCII art is nice, but it takes-up room.
+
 * sherpa 'stable' should only update once per-day.
 	- 'unstable' should update once per 10 minutes.
 
