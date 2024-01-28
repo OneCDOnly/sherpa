@@ -25,11 +25,6 @@
 
 * 'sherpa install all start all' doesn't start deactivated QPKGs.
 
-* progress display text sometimes desyncs during 'install' or 'start' of OMedusa QPKG.
-	- Example: proc: reinstalling dependent QPKGs ... 36% (7/21), 7 OK36% (7/21), 7 OK, 1 in-progress
-	- Suspect Medusa application (or service script) is outputting something to stderr.
-	- OK, it's not just Medusa. :(
-
 * near the end of installing IPKs, monitored download path can remain at non-zero size while packages complete installation.
 	- Maybe include a separate progress message when dir size shrinks to almost zero?
 
