@@ -522,6 +522,7 @@ Env:Load()
 	readonly THIS_PACKAGE_PATH=$(QPKG.GetInstallationPath)
 		readonly CACHE_PATH=$THIS_PACKAGE_PATH/cache
 			readonly ACTION_TIMES_PATH=$CACHE_PATH/action.times
+			readonly DAY_OF_YEAR_PATHFILE=$CACHE_PATH/previous.day.of.year
 			readonly DISPLAY_INHIBIT_PATHFILE=$CACHE_PATH/display.inhibit
 			readonly IPK_CACHE_PATH=$CACHE_PATH/IPKs
 			readonly IPK_DL_PATH=$CACHE_PATH/IPKs.downloads
@@ -1025,11 +1026,14 @@ Self:Validate()
 		QPKGs-ACdisable-to:Remove "$(QPKGs-ACuninstall-to:Array)"
 	fi
 
+	# No-need to `activate` packages that are to be reactivated.
+	QPKGs-ACactivate-to:Remove "$(QPKGs-ACreactivate-to:Array)"
+
 	# No-need to `activate` packages that are to be reinstalled/installed/reactivated.
 
-	for action in reinstall install reactivate; do
-		QPKGs-ACactivate-to:Remove "$(QPKGs-AC${action}-to:Array)"
-	done
+# 	for action in reinstall install reactivate; do
+# 		QPKGs-ACactivate-to:Remove "$(QPKGs-AC${action}-to:Array)"
+# 	done
 
 	# Build a list of original storage paths for packages to be uninstalled, then installed again later this session (a "complex reinstall").
 	# This will ensure migrated packages end-up in the correct locations.
@@ -1236,10 +1240,12 @@ Action:Proc()
 			fi
 
 			if [[ $total_count -eq 1 ]]; then
-				ShowAsProc "$ACTION_PRESENT_MSG ${target_packages[0]}"
+				fork_progress_prefix="$ACTION_PRESENT_MSG ${target_packages[0]}"
 			else
-				ShowAsProc "$ACTION_PRESENT_MSG $([[ $TIER != all ]] && echo "$TIER ")$(Uppercase "$PACKAGE_TYPE")$(Pluralise "$total_count")"
+				fork_progress_prefix="$ACTION_PRESENT_MSG $([[ $TIER != all ]] && echo "$TIER ")$(Uppercase "$PACKAGE_TYPE")$(Pluralise "$total_count")"
 			fi
+
+			ShowAsProc "$fork_progress_prefix"
 
 			AdjustMaxForks "$TARGET_ACTION"
 			InitForkCounts
@@ -4896,8 +4902,7 @@ UpdateForkProgress()
 	local a=''
 
 	RefreshForkCounts
-	[[ $opts_verbose = true ]] && return		# Don't display progress, it's difficult to read with so-many other writes to the screen.
-	[[ ! -e $DISPLAY_INHIBIT_PATHFILE ]] || return
+	[[ $opts_verbose = false && ! -e $DISPLAY_INHIBIT_PATHFILE ]] || return		# Don't display progress, it's difficult to read with so-many other writes to the screen.
 
 	a=$(PercFrac "$ok_count" "$((skip_count+skip_ok_count+skip_error_count))" "$fail_count" "$total_count")
 
@@ -4921,7 +4926,7 @@ UpdateForkProgress()
 		a+="$(TextBrightYellow "$fork_count") in-progress"
 	fi
 
-	[[ -n $a ]] && WriteMsgInPlace "$a"
+	[[ -n $a ]] && ShowAsProc "${fork_progress_prefix:-}" "$a"
 
 	return 0
 
@@ -9272,8 +9277,24 @@ ShowTitleLine()
 
 	[[ $title_shown = false && $show_bland = false && $opts_verbose = false ]] || return
 
+	local a=false
+
 	EraseThisLine
-	Display "$(ShowTitleName) $(ShowVersion) $(ShowDescription)"
+
+	# Only show ASCII title on first execution of the day.
+	[[ ! -e $DAY_OF_YEAR_PATHFILE ]] && a=true
+	[[ -e $DAY_OF_YEAR_PATHFILE && $((10#$(/bin/date +%j))) -ne $((10#$(<$DAY_OF_YEAR_PATHFILE))) ]] && a=true
+
+	if [[ $a = true ]]; then
+		Display "$(ShowTitleArt)"
+		Display "$(ShowVersion) $(ShowDescription)"
+		/bin/date +%j > "$DAY_OF_YEAR_PATHFILE" &
+	else
+		Display "$(ShowTitleName) $(ShowVersion) $(ShowDescription)"
+	fi
+
+	wait 2>/dev/null
+
 	title_shown=true
 	WriteEmptyLineIfNoneExists
 
@@ -9283,6 +9304,22 @@ ShowTitleName()
 	{
 
 	TextBrightWhite sherpa
+
+	}
+
+ShowTitleArt()
+	{
+
+	local a=''
+
+	a+='     _\n'
+	a+=' ___| |__   ___ _ __ _ __   __ _\n'
+	a+="/ __| '_ \ / _ \ '__| '_ \ / _\` |\n"
+	a+='\__ \ | | |  __/ |  | |_) | (_| |\n'
+	a+='|___/_| |_|\___|_|  | .__/ \__,_|\n'
+	a+='                    |_|\n'
+
+	TextBrightOrange "$a"
 
 	}
 
@@ -9818,12 +9855,19 @@ ShowAsProcLong()
 ShowAsProc()
 	{
 
-	[[ -n ${1:-} ]] || return
-	local suffix=''
-	[[ -n ${2:-} ]] && suffix=${2:-}
+	local a=''
+	local b=''
 
-	OpStepClearWait "$(TextBrightYellow proc)" "$1 $CHARS_ELLIPSIS $suffix"
-	WriteToLog proc "${1}${suffix}"
+	if [[ -n ${1:-} ]]; then
+		a="${1:-} "
+	else
+		return
+	fi
+
+	[[ -n ${2:-} ]] && b=${2:-}
+
+	OpStepClearWait "$(TextBrightYellow proc)" "${a}${CHARS_ELLIPSIS} ${b}"
+	WriteToLog proc "${a}${b}"
 	[[ ${opts_verbose:=false} = true ]] && Display
 
 	} >&2
