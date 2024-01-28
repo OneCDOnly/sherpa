@@ -1472,7 +1472,6 @@ ParseArgs()
 	#   scriptname [action] [groups] [options]
 
 	Func:Init
-	ShowAsProc arguments
 	DebugVar USER_ARGS_RAW
 	local user_args_fixed=$(Lowercase "${USER_ARGS_RAW//,/ }")
 	local -a user_args=(${user_args_fixed/--/})
