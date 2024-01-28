@@ -361,7 +361,6 @@ Vars:Load()
 
 	fork_pid=''
 	package_ver_final_col_width=0
-	prev_msg=' '
 	proc_counts_path=''
 
 	OS.IsSupportSecureDownload && curl_insecure_arg='' || curl_insecure_arg=' --insecure'
@@ -9810,7 +9809,7 @@ ShowAsProc()
 	local suffix=''
 	[[ -n ${2:-} ]] && suffix=${2:-}
 
-	OpStepRewriteWait "$(TextBrightYellow proc)" "$1 $CHARS_ELLIPSIS $suffix"
+	OpStepClearWait "$(TextBrightYellow proc)" "$1 $CHARS_ELLIPSIS $suffix"
 	WriteToLog proc "${1}${suffix}"
 	[[ ${opts_verbose:=false} = true ]] && Display
 
@@ -9821,7 +9820,7 @@ ShowAsDebug()
 
 	[[ -n ${1:-} ]] || return
 
-	OpStep "$(TextBlackOnCyan dbug)" "$1"
+	OpStepClear "$(TextBlackOnCyan dbug)" "$1"
 
 	}
 
@@ -9833,8 +9832,7 @@ ShowAsInfo()
 	[[ -n ${1:-} ]] || return
 	local capitalised=$(Capitalise "$1")
 
-	EraseThisLine
-	OpStep "$(TextBrightYellow note)" "$capitalised"
+	OpStepClear "$(TextBrightYellow note)" "$capitalised"
 	WriteToLog note "$capitalised"
 
 	} >&2
@@ -9844,7 +9842,7 @@ ShowAsQuiz()
 
 	[[ -n ${1:-} ]] || return
 
-	OpStepWait "$(TextBrightOrangeBlink quiz)" "$1:"
+	OpStepClearWait "$(TextBrightOrangeBlink quiz)" "$1:"
 	WriteToLog quiz "$1:"
 
 	}
@@ -9854,7 +9852,7 @@ ShowAsQuizDone()
 
 	[[ -n ${1:-} ]] || return
 
-	OpStep "$(TextBrightOrange quiz)" "$1"
+	OpStepClear "$(TextBrightOrange quiz)" "$1"
 
 	}
 
@@ -9865,8 +9863,7 @@ ShowAsDone()
 
 	[[ -n ${1:-} ]] || return
 
-	EraseThisLine
-	OpStep "$(TextBrightGreen 'done')" "$1"
+	OpStepClear "$(TextBrightGreen 'done')" "$1"
 	WriteToLog 'done' "$1"
 
 	} >&2
@@ -9878,8 +9875,7 @@ ShowAsWarn()
 
 	[[ -n ${1:-} ]] || return
 
-	EraseThisLine
-	OpStep "$(TextBrightOrange warn)" "$1"
+	OpStepClear "$(TextBrightOrange warn)" "$1"
 	WriteToLog warn "$1"
 
 	} >&2
@@ -9891,7 +9887,7 @@ ShowAsAbort()
 
 	[[ -n ${1:-} ]] || return
 
-	OpStep "$(TextBrightRed bort)" "$1"
+	OpStepClear "$(TextBrightRed bort)" "$1"
 	WriteToLog bort "$1"
 	Self.Error:Set
 
@@ -9905,8 +9901,7 @@ ShowAsFail()
 	[[ -n ${1:-} ]] || return
 	local capitalised=$(Capitalise "$1")
 
-	EraseThisLine
-	OpStep "$(TextBrightRed fail)" "$capitalised"
+	OpStepClear "$(TextBrightRed fail)" "$capitalised"
 	WriteToLog fail "$capitalised"
 
 	} >&2
@@ -9919,8 +9914,7 @@ ShowAsError()
 	[[ -n ${1:-} ]] || return
 	local capitalised=$(Capitalise "$1")
 
-	EraseThisLine
-	OpStep "$(TextBrightRed derp)" "$capitalised"
+	OpStepClear "$(TextBrightRed derp)" "$capitalised"
 	WriteToLog derp "$capitalised"
 	Self.Error:Set
 
@@ -10066,90 +10060,37 @@ ShowAsActionLogDetail()
 
 	}
 
-OpStepRewriteWait()
+OpStepClearWait()
 	{
 
-	# Displays new script operation step message from beginning of line, and remains on this line.
+	# Displays script operation message from beginning of line, remain on this line, and leave cursor at end.
 
 	# input:
-	#	$1 = pass/fail
-	#	$2 = message
+	#	$1 = a 4 character string such as `info`, `proc`, `done`, `derp`.
+	#	$2 = detailed message.
 
-	# output:
-	#	$prev_msg = (global) will be used again later.
+	local -i typewidth=4			# Width of the message type.
+	[[ ${colourful:=true} = true ]] && typewidth=10  	# Allow extra length for ANSI codes in message type.
 
-	local -i typewidth=4			# width of the message type.
-
-	[[ $colourful = true ]] && typewidth=10		# allow extra length for ANSI codes in message type.
-	prev_msg=$(printf "%-${typewidth}s: %s" "${1:-}" "${2:-}")
-
-	DisplayWait "$(printf '\033[2K\r')$prev_msg"
+	DisplayWait "$(printf "\033[2K\r%-${typewidth}s: %s" "${1:-}" "${2:-}")"
 
 	return 0
 
 	}
 
-OpStepWait()
+OpStepClear()
 	{
 
-	# Displays script operation step message, remains on this line, and leaves cursor at end.
+	# Displays script operation message from beginning of line, jump down a line, and leave cursor at start.
 
 	# input:
-	#	$1 = pass/fail
-	#	$2 = message
+	#	$1 = a 4 character string such as `info`, `proc`, `done`, `derp`.
+	#	$2 = detailed message.
 
-	# output:
-	#	$prev_msg = (global) will be used again later.
+	local -i typewidth=4			# Width of the message type.
+	[[ ${colourful:=true} = true ]] && typewidth=10  	# Allow extra length for ANSI codes in message type.
 
-	local -i typewidth=4			# width of the message type.
-
-	[[ $colourful = true ]] && typewidth=10		# allow extra length for ANSI codes in message type.
-	prev_msg=$(printf "%-${typewidth}s: %s" "${1:-}" "${2:-}")
-
-	DisplayWait "$prev_msg"
-
-	return 0
-
-	}
-
-OpStep()
-	{
-
-	# Displays script operation step message (overwriting previous message), and remains on this line.
-
-	# input:
-	#	$1 = pass/fail
-	#	$2 = message
-
-	# output:
-	#	stdout = new message.
-	#	$prev_length = (global) will be used again later.
-
-	local -i typewidth=4			# width of the message type.
-	local -i length=0
-	local -i blanking_length=0
-	local msg=''
-	local str=''
-
-	[[ ${colourful:=true} = true ]] && typewidth=10  	# allow extra length for ANSI codes in message type.
-	msg=$(printf "%-${typewidth}s: %s" "${1:-}" "${2:-}")
-
-	if [[ $msg != "${prev_msg:=''}" ]]; then
-		prev_length=$((${#prev_msg}+1))
-		length=$((${#msg}+1))
-
-		# Jump to start of line, print new msg.
-		str=$(echo -en "\r$msg ")
-
-		# If new msg is shorter then add spaces to end to cover previous msg.
-
-		if [[ $length -lt $prev_length ]]; then
-			blanking_length=$((length-prev_length))
-			str+=$(printf "%${blanking_length}s")
-		fi
-
-		Display "$str"
-	fi
+	Display "$(printf "\033[2K\r%-${typewidth}s: %s" "${1:-}" "${2:-}")"
 
 	return 0
 
