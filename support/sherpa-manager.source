@@ -3192,7 +3192,7 @@ DisplayAsProjSynExam()
 
 	WriteEmptyLineIfNoneExists
 	printf "${CHARS_BULLET}%s" "$(Capitalise "${1:-}")"
-	[[ ${1: -1} != '!' ]] && printf ':'
+	[[ ${1: -1} != '!' ]] && echo -n ':'
 
 	printf "\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_SUDO_PREFIX}%s\n" '' "sherpa ${2:-}"
 	linespace_visible=false
@@ -3210,7 +3210,7 @@ DisplayAsProjSynIndentExam()
 
 	if [[ -n $1	]]; then
 		printf "\n%${HELP_DESC_INDENT}s%s" '' "$(Capitalise "${1:-}")"
-		[[ ${1: -1} != '!' ]] && printf ':'
+		[[ ${1: -1} != '!' ]] && echo -n ':'
 		printf '\n'
 	fi
 
@@ -4140,7 +4140,7 @@ EraseThisLine()
 Display()
 	{
 
-	echo -e "${1:-}"
+	printf '%s\n' "${1:-}"
 	linespace_visible=false
 
 	}
@@ -6463,11 +6463,11 @@ GetUpState()
 	{
 
 	if OS.IsStarting; then
-		printf 'starting-up'
+		echo -n 'starting-up'
 	elif OS.IsStopping; then
-		printf 'shutting-down'
+		echo -n 'shutting-down'
 	else
-		printf stable
+		echo -n stable
 	fi
 
 	}
@@ -9230,7 +9230,7 @@ LTrim()
 	# Trim leading whitespace from $1.
 
 	[[ -n ${1:-} ]] || return
-	(shopt -s extglob; printf "${1##+(' ')}")
+	(shopt -s extglob; printf '%s' "${1##+(' ')}")
 
 	}
 
@@ -9240,7 +9240,7 @@ RTrim()
 	# Trim trailing whitespace from $1.
 
 	[[ -n ${1:-} ]] || return
-	(shopt -s extglob; printf "${1%%+(' ')}")
+	(shopt -s extglob; printf '%s' "${1%%+(' ')}")
 
 	}
 
@@ -9345,14 +9345,14 @@ ShowTitleArt()
 ShowVersion()
 	{
 
-	printf "$THIS_SCRIPT_VER"
+	printf '%s' "$THIS_SCRIPT_VER"
 
 	}
 
 ShowDescription()
 	{
 
-	printf '<?title_description?>'
+	printf '%s' '<?title_description?>'
 
 	}
 
@@ -9387,14 +9387,14 @@ ShowOptions()
 ShowAsPackageName()
 	{
 
-	printf "${1:?${FUNCNAME[0]}'()': undefined}"
+	printf '%s' "${1:?${FUNCNAME[0]}'()': undefined}"
 
 	}
 
 ShowAsFileName()
 	{
 
-	printf "${1:?${FUNCNAME[0]}'()': undefined}"
+	printf '%s' "${1:?${FUNCNAME[0]}'()': undefined}"
 
 	}
 
@@ -9408,14 +9408,14 @@ ShowAsURL()
 ShowAsExitcode()
 	{
 
-	printf "[${1:?${FUNCNAME[0]}'()': undefined}]"
+	printf '%s' "[${1:?${FUNCNAME[0]}'()': undefined}]"
 
 	}
 
 ShowAsLogFilename()
 	{
 
-	printf "${CHARS_RESULTS}log file: '${1:?${FUNCNAME[0]}'()': undefined}'"
+	printf '%s' "${CHARS_RESULTS}log file: '${1:?${FUNCNAME[0]}'()': undefined}'"
 
 	}
 
@@ -10016,7 +10016,7 @@ AddPeriod()
 
 	[[ -n ${1:-} ]] || return
 
-	[[ ${1: -1} != ':' && ${1: -1} != '?' && ${1: -1} != '.' ]] && printf "${1}." || printf "$1"
+	[[ ${1: -1} != ':' && ${1: -1} != '?' && ${1: -1} != '.' ]] && printf '%s' "${1}." || printf '%s' "$1"
 
 	}
 
@@ -10372,7 +10372,7 @@ StripANSICodes()
 	if [[ -e /opt/bin/sed && -L /opt/etc/passwd ]]; then	# Try to ensure Entware is active before using this utility.
 		/opt/bin/sed -r 's/\x1b\[[0-9;]*m//g' <<< "${1:-}"	# https://superuser.com/a/380778
 	else
-		echo "${1:-}"		# Can't strip, so pass thru original message unaltered.
+		printf '%s' "${1:-}"		# Can't strip, so pass thru original message unaltered.
 	fi
 
 	} 2>/dev/null
