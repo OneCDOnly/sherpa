@@ -850,6 +850,8 @@ Self:Validate()
 	local prospect=''
 	local target_packages=''
 
+	UpdateEntwarePackageList &			# Let's try launching this early.
+
 	# Decide if particular IPKs and PIPs should be installed/upgraded.
 
 	if [[ $opts_check = true ]] || QPKGs-ACupgrade-to.Exist Entware; then
@@ -950,9 +952,9 @@ Self:Validate()
 		fi
 	done
 
-	# If an independent has been selected for `reinstall`/`reactivate`, need to `deactivate` its dependents first, and `activate` them again later.
+	# If an independent has been selected for `reinstall`/`reactivate`/`upgrade`, need to `deactivate` its dependents first, and `activate` them again later.
 
-	for package in $(QPKGs-ACreinstall-to:Array) $(QPKGs-ACreactivate-to:Array); do
+	for package in $(QPKGs-ACreinstall-to:Array) $(QPKGs-ACreactivate-to:Array) $(QPKGs-ACupgrade-to:Array); do
 		if QPKGs-SCindependent.Exist "$package" && QPKGs-ISinstalled.Exist "$package"; then
 			for prospect in $(QPKG.GetDependents "$package"); do
 				if QPKGs-ISenabled.Exist "$prospect"; then
@@ -1029,14 +1031,8 @@ Self:Validate()
 	# No-need to `activate` packages that are to be reactivated.
 	QPKGs-ACactivate-to:Remove "$(QPKGs-ACreactivate-to:Array)"
 
-	# No-need to `activate` packages that are to be reinstalled/installed/reactivated.
-
-# 	for action in reinstall install reactivate; do
-# 		QPKGs-ACactivate-to:Remove "$(QPKGs-AC${action}-to:Array)"
-# 	done
-
 	# Build a list of original storage paths for packages to be uninstalled, then installed again later this session (a "complex reinstall").
-	# This will ensure migrated packages end-up in the correct locations.
+	# This will ensure user-migrated packages end-up in the correct locations.
 	QPKGs_were_installed_name=()
 	QPKGs_were_installed_path=()
 
@@ -1064,6 +1060,8 @@ Self:Validate()
 			QPKGs-ISenabled.Exist "$package" && QPKGs-ACreactivate-to:Add "$package"
 		done
 	fi
+
+	wait 2>/dev/null			# ensure Entware package updater completes before continuing.
 
 	Func:Exit
 
