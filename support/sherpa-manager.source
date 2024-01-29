@@ -712,9 +712,7 @@ Debug.Log:Env()
 	DebugBinPathVerAndMinVer python3 "$(GetPython3Ver)" "$MIN_PYTHON_VER"
 	DebugBinPathVerAndMinVer perl "$(GetPerlVer)" "$MIN_PERL_VER"
 	DebugScript 'source branch' "$source_branch"
-	DebugScript 'cache path' "$CACHE_PATH"
 	DebugScript 'logs path' "$LOGS_PATH"
-	DebugScript 'reports path' "$REPORTS_PATH"
 	DebugScript 'action concurrency' "$CONCURRENCY"
 
 	if OS.IsSupportSignedPackages; then
