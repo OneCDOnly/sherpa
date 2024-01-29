@@ -9336,7 +9336,7 @@ ShowTitleArt()
 	Display "$(TextBrightOrange '     _')"
 	Display "$(TextBrightOrange ' ___| |__   ___ _ __ _ __   __ _')"
 	Display "$(TextBrightOrange "/ __| '_ \ / _ \ '__| '_ \ / _\` |")  $(ShowVersion)"
-	Display "$(TextBrightOrange '\__ \ | | |  __/ |  | |_) | (_| |')"
+	Display "$(TextBrightOrange '\__ \ | | |  __/ |  | |_) | (_| |')  $(ShowCopyrightBasic)"
 	Display "$(TextBrightOrange '|___/_| |_|\___|_|  | .__/ \__,_|')  $(ShowDescription)"
 	Display "$(TextBrightOrange '                    |_|')"
 
@@ -9346,6 +9346,19 @@ ShowVersion()
 	{
 
 	printf '%s' "$THIS_SCRIPT_VER"
+
+	}
+
+ShowCopyrightBasic()
+	{
+
+	printf '%s' '<?copyright_basic?>'
+
+	}
+ShowEmail()
+	{
+
+	printf '%s' '<?email?>'
 
 	}
 
