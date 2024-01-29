@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+#* <?dont_edit?>
+#
+#* <?filename?>
+#
+#* <?copyright?>
+#
+#* <?project?>
+#
+#* <?tested?>
+#
+#* <?license?>
+
+readonly USER_ARGS_RAW=$*
+readonly QPKG_NAME=OTautulli
+readonly SERVICE_SCRIPT_VERSION='<?build_date?>'
+readonly SERVICE_SCRIPT_TYPE=1
+
+InitService()
+	{
+
+	daemon_pathfile=$qpkg_repo_path/Tautulli.py
+		daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile --daemon --nolaunch --datadir $(/usr/bin/dirname "$qpkg_ini_pathfile") --config $qpkg_ini_pathfile --pidfile $daemon_pid_pathfile"
+
+	get_ui_listening_address_cmd="/sbin/getcfg misc host -d 0.0.0.0 -f $qpkg_ini_pathfile"
+	get_ui_port_cmd="/sbin/getcfg General http_port -d 4141 -f $qpkg_ini_pathfile"
+	get_ui_port_secure_cmd="/sbin/getcfg General http_port -d 4141 -f $qpkg_ini_pathfile"
+	get_ui_port_secure_enabled_test_cmd='[[ $(/sbin/getcfg General https_enabled -d 0 -f '$qpkg_ini_pathfile') = 1 ]]'
+	source_git_branch=master
+	source_git_url=https://github.com/Tautulli/Tautulli.git
+
+	}
+
+library_path=$(/usr/bin/readlink "$0" 2>/dev/null)
+[[ -z $library_path ]] && library_path=$0
+readonly SERVICE_LIBRARY_PATHFILE=$(/usr/bin/dirname "$library_path")/service.lib
+
+if [[ -e $SERVICE_LIBRARY_PATHFILE ]]; then
+	. $SERVICE_LIBRARY_PATHFILE
+else
+	printf '\033[1;31m%s\033[0m: %s\n' 'derp' "QPKG service function library not found, can't continue."
+	exit 1
+fi
+
+ProcessArgs

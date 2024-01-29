@@ -1,0 +1,7 @@
+[General]
+http_basic_auth = 0
+http_environment = production
+http_host = 0.0.0.0
+http_port = 4141
+launch_browser = 0
+sys_tray_icon = 0

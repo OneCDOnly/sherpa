@@ -1,1 +1,0 @@
-../arm_64/lazylibrarian.sh

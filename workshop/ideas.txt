@@ -1,0 +1,72 @@
+* When showing port already in-use, should note PID as-well as process details.
+
+* sherpa 'stable' branch should only update once per-day.
+	- 'unstable' should update once per 10 minutes.
+
+* Examine TS-231 QTS executables with 'file'.
+	- In what way are they different to x41 executables?
+
+	x31:
+		[/sbin] # file getcfg
+		getcfg: ELF 32-bit LSB executable, ARM, EABI5 version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux.so.3, for GNU/Linux 2.6.16, stripped
+		[/sbin] # cat /etc/platform.conf
+		Platform = ARM_MS
+
+	x41:
+		[/sbin] # file getcfg
+		getcfg: ELF 32-bit LSB executable, ARM, EABI5 version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux-armhf.so.3, for GNU/Linux 3.1.1, BuildID[sha1]=5ffd3652ef380f1a3665b325f0a171e3e34fca7a, stripped
+		[/sbin] # cat /etc/platform.conf
+		Platform = ARM_AL
+
+* Download management, objects and packages archive in one go. Maybe package them together?
+
+* Show results report in file viewport.
+
+* Results report text should account for single QPKG actions.
+	- Don't pluralise "package actions" when there was only one.
+
+* QDK looks like it will now write installation scripts that extract to unique paths.
+	- Should now be able to install more than one QPKG simultaneously. https://github.com/qnap-dev/QDK/commit/f1eaf3bf0a9547d449592369e555cdfd6cc3c405
+	- It will take time for this ability to make its way into all QPKGs, so will need to note which QPKGs can be installed this way. 'packages' file will need an extra field to note this.
+	- Will also apply to reinstalls and upgrades.
+
+* Create local sherpa App Center repository in UI.
+	- Place sherpa.xml in /home/httpd and add a 3rd-party repo to App Center with 'http://0.0.0.0:8080/sherpa.xml'
+
+* Compare .git/ORIG_HEAD before-and-after 'git pull'. If different, then remove *.pyc before starting application.
+
+* Check if QPKG has been signed before signing it again?
+	- Don't check if QPKG has just been installed (assume package won't have been signed).
+
+* Add mini rolling CPU utilitisation graph to progress display while installing QPKGs?
+    while true; do top -b -n 2 -d 0.2 -p 1621 | tail -1 | awk '{print $9}'; done
+    while true; do /usr/bin/top -b -n2 -d1 | grep 20744 | tail -1 | awk '{print $7}'; done
+
+* Create a troubleshooting page for the wiki?
+    - This should include explanations of various actions like 'clean' and 'check', so users will have a better idea which action to run when things go wrong.
+
+* Upgrade IPKs automatically?
+    - Store a local checksum of the Entware package list. If this changes, assume it's been updated and all IPKs should be checked for upgrade status and upgraded. No-need to prompt user - just upgrade automatically.
+
+* Download QPKG updates in background when running sherpa for any reason?
+
+* Keep track of each package's action times and process the longest ones first next time?
+	- Add a new "launch policy" setting: 'none', 'longest', 'shortest', 'balanced'.
+		- 'none': QPKGs are processed in the same order they appear in 'packages'.
+		- 'longest': QPKGs that take a long time to execute are processed first, in-order, down to the shortest time to execute.
+		- 'shortest': QPKGs that take a short time to execute are processed first, in-order, up to the longest time to execute.
+		- 'balanced': QPKGs are processed as a mix of longest, then shortest, then next longest, then next shortest, and so-on.
+
+* Wrap description column text in packages report.
+	- Use 'GNU column' for this?
+	- Nope, column can't wrap text containing ANSI codes. Won't show a wrapped column in colour.
+
+* Show QPKG hashes on packages report.
+	- Need to wrap description column first.
+
+* Autowidth display columns.
+
+* BASH completion?
+
+* Include new integrated help screens for all actions?
+	- Like: `sherpa paste help`, `sherpa install help`, `sherpa reassign help`

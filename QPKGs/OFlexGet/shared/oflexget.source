@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+#* <?dont_edit?>
+#
+#* <?filename?>
+#
+#* <?copyright?>
+#
+#* <?project?>
+#
+#* <?tested?>
+#
+#* <?license?>
+
+readonly USER_ARGS_RAW=$*
+readonly QPKG_NAME=OFlexGet
+readonly SERVICE_SCRIPT_VERSION='<?build_date?>'
+readonly SERVICE_SCRIPT_TYPE=6
+
+InitService()
+	{
+
+	:
+# 	app_version_cmd="/bin/grep '__version__ =' $app_version_pathfile | /bin/sed 's|^.*\"\(.*\)\"|\1|'"
+# 	run_daemon_in_screen_session=true
+#  	venv_python_pathfile=$venv_path/bin/python		# WebSSH expects 'python', not 'python3'
+
+	install_pip_deps=true
+	qpkg_ini_file=config.yml
+		qpkg_ini_pathfile=$QPKG_CONFIG_PATH/$qpkg_ini_file
+			qpkg_ini_default_pathfile=$qpkg_ini_pathfile.def
+
+
+	daemon_pathfile=$venv_path/bin/flexget
+		daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile -c $qpkg_ini_pathfile daemon start"
+	get_ui_listening_address_cmd='echo 0.0.0.0'
+	get_ui_port_cmd='echo 5050'
+	get_ui_port_secure_cmd='echo 0'
+	get_ui_port_secure_enabled_test_cmd='false'
+	qpkg_repo_path=undefined
+# 	source_git_branch=master
+
+	}
+
+library_path=$(/usr/bin/readlink "$0" 2>/dev/null)
+[[ -z $library_path ]] && library_path=$0
+readonly SERVICE_LIBRARY_PATHFILE=$(/usr/bin/dirname "$library_path")/service.lib
+
+if [[ -e $SERVICE_LIBRARY_PATHFILE ]]; then
+	. $SERVICE_LIBRARY_PATHFILE
+else
+	printf '\033[1;31m%s\033[0m: %s\n' 'derp' "QPKG service function library not found, can't continue."
+	exit 1
+fi
+
+ProcessArgs

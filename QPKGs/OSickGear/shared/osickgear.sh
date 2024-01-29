@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#* don't edit this file, it was built/modified programmatically with the `build-qpkgs.sh` script. (source: osickgear.source)
+#* Please don't edit this file directly, it was built/modified programmatically with the 'build-qpkgs.sh' script. (source: 'osickgear.source')
 #* osickgear.sh
 #* Copyright (C) 2017-2024 OneCD - one.cd.only@gmail.com
 #*   So, blame OneCD if it all goes horribly wrong. ;)
@@ -20,13 +20,9 @@
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 readonly USER_ARGS_RAW=$*
 readonly QPKG_NAME=OSickGear
-readonly SERVICE_SCRIPT_VERSION='240108'
-InitBasic()
-{
-service_script_type=1
-source_git_url=https://github.com/SickGear/SickGear.git
-}
-InitComplex()
+readonly SERVICE_SCRIPT_VERSION='240129'
+readonly SERVICE_SCRIPT_TYPE=1
+InitService()
 {
 daemon_pathfile=$qpkg_repo_path/sickgear.py
 daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile --daemon --nolaunch --datadir $(/usr/bin/dirname "$qpkg_ini_pathfile") --pidfile $daemon_pid_pathfile"
@@ -35,6 +31,15 @@ get_ui_port_cmd="/sbin/getcfg General web_port -d 0 -f $qpkg_ini_pathfile"
 get_ui_port_secure_cmd="/sbin/getcfg General web_port -d 0 -f $qpkg_ini_pathfile"
 get_ui_port_secure_enabled_test_cmd='[[ $(/sbin/getcfg General enable_https -d 0 -f '$qpkg_ini_pathfile') = 1 ]]'
 source_git_branch_depth=single-branch
+source_git_url=https://github.com/SickGear/SickGear.git
+if [[ -e $qpkg_ini_default_pathfile ]]; then
+/sbin/setcfg General log_dir "$QPKG_CONFIG_PATH"/logs -f "$qpkg_ini_default_pathfile"
+/sbin/setcfg General cache_dir "$QPKG_CONFIG_PATH"/cache -f "$qpkg_ini_default_pathfile"
+fi
+if [[ -e $qpkg_ini_pathfile ]]; then
+/sbin/setcfg General log_dir "$QPKG_CONFIG_PATH"/logs -f "$qpkg_ini_pathfile"
+/sbin/setcfg General cache_dir "$QPKG_CONFIG_PATH"/cache -f "$qpkg_ini_pathfile"
+fi
 }
 library_path=$(/usr/bin/readlink "$0" 2>/dev/null)
 [[ -z $library_path ]] && library_path=$0

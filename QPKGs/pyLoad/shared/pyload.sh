@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#* don't edit this file, it was built/modified programmatically with the `build-qpkgs.sh` script. (source: pyload.source)
+#* Please don't edit this file directly, it was built/modified programmatically with the 'build-qpkgs.sh' script. (source: 'pyload.source')
 #* pyload.sh
 #* Copyright (C) 2017-2024 OneCD - one.cd.only@gmail.com
 #*   So, blame OneCD if it all goes horribly wrong. ;)
@@ -20,22 +20,20 @@
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 readonly USER_ARGS_RAW=$*
 readonly QPKG_NAME=pyLoad
-readonly SERVICE_SCRIPT_VERSION='240108'
-InitBasic()
+readonly SERVICE_SCRIPT_VERSION='240129'
+readonly SERVICE_SCRIPT_TYPE=6
+InitService()
 {
-service_script_type=6
-}
-InitComplex()
-{
-run_daemon_in_screen_session=false
+daemon_pathfile=$venv_path/bin/pyload
+daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile --daemon --userdir $QPKG_PATH/config --pidfile $daemon_pid_pathfile"
 qpkg_ini_pathfile=$QPKG_CONFIG_PATH/settings/pyload.cfg
 qpkg_ini_default_pathfile=$qpkg_ini_pathfile.def
 get_ui_listening_address_cmd="GetPyloadConfig $qpkg_ini_pathfile webui host"
 get_ui_port_cmd="GetPyloadConfig $qpkg_ini_pathfile webui port"
 get_ui_port_secure_cmd="GetPyloadConfig $qpkg_ini_pathfile webui port"
 get_ui_port_secure_enabled_test_cmd="[[ $(GetPyloadConfig "$qpkg_ini_pathfile" webui use_ssl) = True ]]"
-daemon_pathfile=$venv_path/bin/pyload
-daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile --daemon --userdir $QPKG_PATH/config --pidfile $daemon_pid_pathfile"
+qpkg_repo_path=undefined
+run_daemon_in_screen_session=false
 }
 GetPyloadConfig()
 {

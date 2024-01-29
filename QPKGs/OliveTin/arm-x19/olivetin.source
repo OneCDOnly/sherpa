@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+#* <?dont_edit?>
+#
+#* <?filename?>
+#
+#* <?copyright?>
+#
+#* <?project?>
+#
+#* <?tested?>
+#
+#* <?license?>
+
+readonly USER_ARGS_RAW=$*
+readonly QPKG_NAME=OliveTin
+readonly SERVICE_SCRIPT_VERSION='<?build_date?>'
+readonly SERVICE_SCRIPT_TYPE=5
+
+InitService()
+	{
+
+	qpkg_ini_file=config.yaml
+		qpkg_ini_pathfile=$QPKG_CONFIG_PATH/$qpkg_ini_file
+			qpkg_ini_default_pathfile=$qpkg_ini_pathfile.def
+		get_ui_listening_address_cmd='parse_yaml '$qpkg_ini_pathfile' | /bin/grep listenAddressSingleHTTPFrontend | cut -d= -f2 | cut -d: -f1 | /bin/sed "s|\"||"'
+		get_ui_port_cmd='parse_yaml '$qpkg_ini_pathfile' | /bin/grep listenAddressSingleHTTPFrontend | cut -d= -f2 | cut -d: -f2 | /bin/sed "s| .*$||"'
+		get_ui_port_secure_cmd='echo 0'
+		get_ui_port_secure_enabled_test_cmd='false'
+
+	pidfile_is_managed_by_app=false
+	recheck_daemon_pid_after_launch=true
+	run_daemon_in_screen_session=true
+
+	remote_arch=linux-arm5
+		daemon_pathfile=$qpkg_repo_path/OliveTin-$remote_arch/OliveTin
+			daemon_launch_cmd="cd $qpkg_repo_path/OliveTin-$remote_arch && $daemon_pathfile -configdir $QPKG_CONFIG_PATH"
+
+	remote_url='https://api.github.com/repos/OliveTin/OliveTin/releases/latest'
+	resolve_remote_url=true		# URL must be retrieved first, then parsed to get final URL.
+
+	}
+
+library_path=$(/usr/bin/readlink "$0" 2>/dev/null)
+[[ -z $library_path ]] && library_path=$0
+readonly SERVICE_LIBRARY_PATHFILE=$(/usr/bin/dirname "$library_path")/service.lib
+
+if [[ -e $SERVICE_LIBRARY_PATHFILE ]]; then
+	. $SERVICE_LIBRARY_PATHFILE
+else
+	printf '\033[1;31m%s\033[0m: %s\n' 'derp' "QPKG service function library not found, can't continue."
+	exit 1
+fi
+
+ProcessArgs

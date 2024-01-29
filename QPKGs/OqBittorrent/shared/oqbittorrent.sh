@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#* don't edit this file, it was built/modified programmatically with the `build-qpkgs.sh` script. (source: oqbittorrent.source)
+#* Please don't edit this file directly, it was built/modified programmatically with the 'build-qpkgs.sh' script. (source: 'oqbittorrent.source')
 #* oqbittorrent.sh
 #* Copyright (C) 2017-2024 OneCD - one.cd.only@gmail.com
 #*   So, blame OneCD if it all goes horribly wrong. ;)
@@ -20,22 +20,20 @@
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 readonly USER_ARGS_RAW=$*
 readonly QPKG_NAME=OqBittorrent
-readonly SERVICE_SCRIPT_VERSION='240108'
-InitBasic()
+readonly SERVICE_SCRIPT_VERSION='240129'
+readonly SERVICE_SCRIPT_TYPE=3
+InitService()
 {
 daemon_pathfile=/opt/bin/qbittorrent-nox
-orig_daemon_service_script=/opt/etc/init.d/S89qbittorrent
-service_script_type=3
-qpkg_ini_file=qBittorrent.conf
-}
-InitComplex()
-{
 daemon_launch_cmd="$daemon_pathfile --profile=$QPKG_PATH/config --daemon"
 get_ui_listening_address_cmd="echo '0.0.0.0'"
 get_ui_port_secure_enabled_test_cmd='false'
+orig_daemon_service_script=/opt/etc/init.d/S89qbittorrent
+qpkg_ini_file=qBittorrent.conf
 qpkg_ini_pathfile=$QPKG_CONFIG_PATH/qBittorrent/config/$qpkg_ini_file
 get_ui_port_cmd="/sbin/getcfg Preferences 'WebUI\Port' -d 0 -f $qpkg_ini_pathfile"
 get_ui_port_secure_cmd="/sbin/getcfg Preferences 'WebUI\Port' -d 0 -f $qpkg_ini_pathfile"
+qpkg_ini_default_pathfile=$qpkg_ini_pathfile.def
 }
 library_path=$(/usr/bin/readlink "$0" 2>/dev/null)
 [[ -z $library_path ]] && library_path=$0

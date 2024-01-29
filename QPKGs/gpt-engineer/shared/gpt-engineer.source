@@ -14,18 +14,11 @@
 readonly USER_ARGS_RAW=$*
 readonly QPKG_NAME=gpt-engineer
 readonly SERVICE_SCRIPT_VERSION='<?build_date?>'
+readonly SERVICE_SCRIPT_TYPE=7
 
-InitBasic()
+InitService()
 	{
 
-	service_script_type=7
-
-	}
-
-InitComplex()
-	{
-
-    # for on-call applications only
     launcher_pathfile=$venv_path/bin/gpte
     userlink_pathfile=/usr/bin/gpte
 

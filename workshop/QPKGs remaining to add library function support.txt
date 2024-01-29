@@ -1,0 +1,3 @@
+nzbtomedia
+deluge-web
+deluge-server

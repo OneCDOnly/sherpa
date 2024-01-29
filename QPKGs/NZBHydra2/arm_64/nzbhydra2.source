@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+#* <?dont_edit?>
+#
+#* <?filename?>
+#
+#* <?copyright?>
+#
+#* <?project?>
+#
+#* <?tested?>
+#
+#* <?license?>
+
+readonly USER_ARGS_RAW=$*
+readonly QPKG_NAME=NZBHydra2
+readonly SERVICE_SCRIPT_VERSION='<?build_date?>'
+readonly SERVICE_SCRIPT_TYPE=5
+
+InitService()
+	{
+
+	qpkg_ini_file=nzbhydra.yml
+		qpkg_ini_pathfile=$QPKG_CONFIG_PATH/$qpkg_ini_file
+			qpkg_ini_default_pathfile=$qpkg_ini_pathfile.def
+		get_ui_listening_address_cmd='parse_yaml '$qpkg_ini_pathfile' | /bin/grep main_host= | cut -d\" -f2'
+		get_ui_port_cmd='parse_yaml '$qpkg_ini_pathfile' | /bin/grep main_port= | cut -d\" -f2'
+		get_ui_port_secure_cmd='parse_yaml '$qpkg_ini_pathfile' | /bin/grep main_port= | cut -d\" -f2'
+		get_ui_port_secure_enabled_test_cmd='[[ $(parse_yaml '$qpkg_ini_pathfile' | /bin/grep main_ssl= | cut -d\" -f2) = true ]]'
+
+	interpreter=/opt/bin/python3
+	pidfile_is_managed_by_app=true
+	recheck_daemon_pid_after_launch=true
+
+	daemon_pathfile=$qpkg_repo_path/nzbhydra2wrapperPy3.py
+		daemon_launch_cmd="$interpreter $daemon_pathfile --nobrowser --daemon --datafolder $QPKG_CONFIG_PATH --pidfile $daemon_pid_pathfile"
+
+	remote_arch=arm64-linux
+	remote_url='https://api.github.com/repos/theotherp/nzbhydra2/releases/latest'
+	resolve_remote_url=true		# URL must be retrieved first, then parsed to get final URL.
+
+	}
+
+library_path=$(/usr/bin/readlink "$0" 2>/dev/null)
+[[ -z $library_path ]] && library_path=$0
+readonly SERVICE_LIBRARY_PATHFILE=$(/usr/bin/dirname "$library_path")/service.lib
+
+if [[ -e $SERVICE_LIBRARY_PATHFILE ]]; then
+	. $SERVICE_LIBRARY_PATHFILE
+else
+	printf '\033[1;31m%s\033[0m: %s\n' 'derp' "QPKG service function library not found, can't continue."
+	exit 1
+fi
+
+ProcessArgs

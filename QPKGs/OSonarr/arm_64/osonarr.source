@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+#* <?dont_edit?>
+#
+#* <?filename?>
+#
+#* <?copyright?>
+#
+#* <?project?>
+#
+#* <?tested?>
+#
+#* <?license?>
+
+readonly USER_ARGS_RAW=$*
+readonly QPKG_NAME=OSonarr
+readonly SERVICE_SCRIPT_VERSION='<?build_date?>'
+readonly SERVICE_SCRIPT_TYPE=5
+
+InitService()
+	{
+
+	local_temp_path=$QPKG_PATH/tmp
+
+	daemon_pathfile=$qpkg_repo_path/Sonarr/Sonarr
+		daemon_launch_cmd="export DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1 TMPDIR=$local_temp_path; $daemon_pathfile --nobrowser --data=$QPKG_CONFIG_PATH"
+	get_ui_listening_address_cmd='echo 0.0.0.0'
+	get_ui_port_cmd='grep "<Port>" $qpkg_ini_pathfile | sed "s/.*<Port>\(.*\)<\/Port>.*/\1/"'
+	get_ui_port_secure_cmd='grep "<SslPort>" $qpkg_ini_pathfile | sed "s/.*<SslPort>\(.*\)<\/SslPort>.*/\1/"'
+	get_ui_port_secure_enabled_test_cmd='[[ $(grep "<EnableSsl>" $qpkg_ini_pathfile | sed "s/.*<EnableSsl>\(.*\)<\/EnableSsl>.*/\1/") = True ]]'
+	qpkg_ini_file=config.xml
+		qpkg_ini_pathfile=$QPKG_CONFIG_PATH/$qpkg_ini_file
+			qpkg_ini_default_pathfile=$qpkg_ini_pathfile.def
+	remote_url='https://services.sonarr.tv/v1/download/main/latest?version=4&os=linux&'
+		remote_url+='arch=arm64'
+	run_daemon_in_screen_session=true
+
+	}
+
+library_path=$(/usr/bin/readlink "$0" 2>/dev/null)
+[[ -z $library_path ]] && library_path=$0
+readonly SERVICE_LIBRARY_PATHFILE=$(/usr/bin/dirname "$library_path")/service.lib
+
+if [[ -e $SERVICE_LIBRARY_PATHFILE ]]; then
+	. $SERVICE_LIBRARY_PATHFILE
+else
+	printf '\033[1;31m%s\033[0m: %s\n' 'derp' "QPKG service function library not found, can't continue."
+	exit 1
+fi
+
+ProcessArgs

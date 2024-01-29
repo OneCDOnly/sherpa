@@ -14,26 +14,21 @@
 readonly USER_ARGS_RAW=$*
 readonly QPKG_NAME=pyLoad
 readonly SERVICE_SCRIPT_VERSION='<?build_date?>'
+readonly SERVICE_SCRIPT_TYPE=6
 
-InitBasic()
+InitService()
 	{
 
-	service_script_type=6
-
-	}
-
-InitComplex()
-	{
-
-	run_daemon_in_screen_session=false
+	daemon_pathfile=$venv_path/bin/pyload
+		daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile --daemon --userdir $QPKG_PATH/config --pidfile $daemon_pid_pathfile"
 	qpkg_ini_pathfile=$QPKG_CONFIG_PATH/settings/pyload.cfg
 		qpkg_ini_default_pathfile=$qpkg_ini_pathfile.def
 		get_ui_listening_address_cmd="GetPyloadConfig $qpkg_ini_pathfile webui host"
 		get_ui_port_cmd="GetPyloadConfig $qpkg_ini_pathfile webui port"
 		get_ui_port_secure_cmd="GetPyloadConfig $qpkg_ini_pathfile webui port"
 		get_ui_port_secure_enabled_test_cmd="[[ $(GetPyloadConfig "$qpkg_ini_pathfile" webui use_ssl) = True ]]"
-	daemon_pathfile=$venv_path/bin/pyload
-		daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile --daemon --userdir $QPKG_PATH/config --pidfile $daemon_pid_pathfile"
+	qpkg_repo_path=undefined
+	run_daemon_in_screen_session=false
 
 	}
 
