@@ -1,3 +1,9 @@
+* Create a new warning message when 1 minute system load-average is unusually high at sherpa startup.
+	- advise processing will take longer.
+
+* Use new nzbget fork?
+	- https://github.com/nzbgetcom/nzbget
+
 * sherpa 'stable' branch should only update once per-day.
 	- 'unstable' should update once per 10 minutes.
 
