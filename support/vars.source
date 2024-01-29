@@ -17,10 +17,11 @@ SwapTags()
 
 		buffer=$(sed "s|<?dont_edit?>|$dont_edit_msg (source: '$(basename "$1")')|g" <<< "$buffer")
 		buffer=$(sed "s|<?filename?>|$(basename "$2")|g" <<< "$buffer")
-		buffer=$(sed "s|<?copyright?>|${copyright_msg//$'\n'/\\n}|g" <<< "$buffer")	# escape newlines.
-		buffer=$(sed "s|<?project?>|${project_msg//$'\n'/\\n}|g" <<< "$buffer")		# escape newlines.
-		buffer=$(sed "s|<?tested?>|${tested_msg//$'\n'/\\n}|g" <<< "$buffer")		# escape newlines.
-		buffer=$(sed "s|<?license?>|${license_msg//$'\n'/\\n}|g" <<< "$buffer")		# escape newlines.
+		buffer=$(sed "s|<?copyright?>|${copyright_msg//$'\n'/\\n}|g" <<< "$buffer")			# escape newlines.
+		buffer=$(sed "s|<?copyright_basic?>|${copyright_basic//$'\n'/\\n}|g" <<< "$buffer")	# escape newlines.
+		buffer=$(sed "s|<?project?>|${project_msg//$'\n'/\\n}|g" <<< "$buffer")				# escape newlines.
+		buffer=$(sed "s|<?tested?>|${tested_msg//$'\n'/\\n}|g" <<< "$buffer")				# escape newlines.
+		buffer=$(sed "s|<?license?>|${license_msg//$'\n'/\\n}|g" <<< "$buffer")				# escape newlines.
 		buffer=$(sed "s|<?build_date?>|$build_date|g" <<< "$buffer")
 		buffer=$(sed "s|<?build_year?>|$build_year|g" <<< "$buffer")
 		buffer=$(sed "s|<?email?>|$email|g" <<< "$buffer")
@@ -214,7 +215,7 @@ ShowDone()
 build_date=$(date '+%y%m%d')
 build_year=$(date '+%Y')
 colourful=true
-title_description='A mini-package-manager for QNAP NAS'
+title_description='A mini-package-manager for QNAP® NAS'
 
 checksum_root_path="$HOME"/scripts/nas
 source_path="$HOME"/scripts/nas/sherpa/support
@@ -259,15 +260,18 @@ cdn_sherpa_packages_url="$cdn_sherpa_url/QPKGs/<?package_name?>/build"
 cdn_other_packages_url="$cdn_onecd_url/<?package_name?>/main/build"
 cdn_qnap_dev_packages_url='https://github.com/qnap-dev/<?package_name?>/releases/download/v<?version?>'
 
+email='<?email?>'
+copyright_basic='Copyright (C) 2017-<?build_year?> OneCD'
 dont_edit_msg="Please don't edit this file directly, it was built/modified programmatically with the '$(basename "$0")' script."
 email=one.cd.only@gmail.com
 
-# remember to escape ampersand chars in `read` blocks for compatibility with `sed` regex.
+# Must escape ampersand chars in `read` blocks for compatibility with `sed` regex.
 
 read -rd '' copyright_msg << EOB
-Copyright (C) 2017-<?build_year?> OneCD - <?email?>
+<?copyright_basic?>.
 #
-#*   So, blame OneCD if it all goes horribly wrong. ;)
+#* Contact:
+#*   <?email?>
 EOB
 
 read -rd '' project_msg << EOB
@@ -284,7 +288,7 @@ Tested on:
 #*	 GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
 #*	   Copyright (C) 2007 Free Software Foundation, Inc.
 #
-#* ... and periodically on:
+#*   ... and periodically on:
 #*	 GNU bash, version 5.0.17(1)-release (aarch64-openwrt-linux-gnu)
 #*	   Copyright (C) 2019 Free Software Foundation, Inc.
 EOB
