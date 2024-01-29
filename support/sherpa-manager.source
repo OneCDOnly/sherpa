@@ -83,7 +83,7 @@ Self:Init()
 		ParseArgs
 	fi
 
-	ShowTitleLine
+	ShowTitle
 
 	if ! QPKGs.Conflicts:Check; then
 		skip_package_actions=true
@@ -822,7 +822,7 @@ Self.Tasks:Check()
 	fi
 
 	if [[ $something_to_do = false ]]; then
-		show_bland=false; ShowTitleLine
+		show_bland=false; ShowTitle
 		ShowAsError "supplied arguments were incomplete, or didn't make sense. Please check the argument list again"
 		opts_show_basic_help=true
 		skip_package_actions=true
@@ -9269,7 +9269,7 @@ FormatAsIsoBytes()
 
 	}
 
-ShowTitleLine()
+ShowTitle()
 	{
 
 	[[ $title_shown = false && $show_bland = false && $opts_verbose = false ]] || return
@@ -9284,10 +9284,9 @@ ShowTitleLine()
 
 	if [[ $a = true ]]; then
 		Display "$(ShowTitleArt)"
-		Display "$(ShowVersion) $(ShowDescription)"
 		/bin/date +%j > "$DAY_OF_YEAR_PATHFILE" &
 	else
-		Display "$(ShowTitleName) $(ShowVersion) $(ShowDescription)"
+		Display "$(ShowTitleName) $(ShowVersion) ${CHARS_BULLET}$(ShowDescription)"
 	fi
 
 	wait 2>/dev/null
@@ -9307,16 +9306,12 @@ ShowTitleName()
 ShowTitleArt()
 	{
 
-	local a=''
-
-	a+='     _\n'
-	a+=' ___| |__   ___ _ __ _ __   __ _\n'
-	a+="/ __| '_ \ / _ \ '__| '_ \ / _\` |\n"
-	a+='\__ \ | | |  __/ |  | |_) | (_| |\n'
-	a+='|___/_| |_|\___|_|  | .__/ \__,_|\n'
-	a+='                    |_|\n'
-
-	TextBrightOrange "$a"
+	Display "$(TextBrightOrange '     _')"
+	Display "$(TextBrightOrange ' ___| |__   ___ _ __ _ __   __ _')"
+	Display "$(TextBrightOrange "/ __| '_ \ / _ \ '__| '_ \ / _\` |")  $(ShowVersion)"
+	Display "$(TextBrightOrange '\__ \ | | |  __/ |  | |_) | (_| |')"
+	Display "$(TextBrightOrange '|___/_| |_|\___|_|  | .__/ \__,_|')  $(ShowDescription)"
+	Display "$(TextBrightOrange '                    |_|')"
 
 	}
 
@@ -9330,7 +9325,7 @@ ShowVersion()
 ShowDescription()
 	{
 
-	echo -n "${CHARS_BULLET}a mini-package-manager for QNAP NAS"
+	echo -n 'a mini-package-manager for QNAP NAS'
 
 	}
 
