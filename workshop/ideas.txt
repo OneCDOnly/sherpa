@@ -1,4 +1,8 @@
-* When showing port already in-use, should note PID as-well as process details.
+* Create a new warning message when 1 minute system load-average is unusually high at sherpa startup.
+	- advise processing will take longer.
+
+* Use new nzbget fork?
+	- https://github.com/nzbgetcom/nzbget
 
 * sherpa 'stable' branch should only update once per-day.
 	- 'unstable' should update once per 10 minutes.
@@ -36,7 +40,6 @@
 * Compare .git/ORIG_HEAD before-and-after 'git pull'. If different, then remove *.pyc before starting application.
 
 * Check if QPKG has been signed before signing it again?
-	- Don't check if QPKG has just been installed (assume package won't have been signed).
 
 * Add mini rolling CPU utilitisation graph to progress display while installing QPKGs?
     while true; do top -b -n 2 -d 0.2 -p 1621 | tail -1 | awk '{print $9}'; done
@@ -60,9 +63,6 @@
 * Wrap description column text in packages report.
 	- Use 'GNU column' for this?
 	- Nope, column can't wrap text containing ANSI codes. Won't show a wrapped column in colour.
-
-* Show QPKG hashes on packages report.
-	- Need to wrap description column first.
 
 * Autowidth display columns.
 

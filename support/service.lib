@@ -21,7 +21,7 @@
 #*   This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 #*	 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
-readonly SERVICE_LIB_VERSION='240129'
+readonly SERVICE_LIB_VERSION='240130'
 InitLibrary()
 {
 IsQNAP || exit
@@ -281,11 +281,11 @@ DisplayErrCommitAllLogs 'unable to start daemon: no port specified!'
 SetError
 return 1
 elif IsNotPortAvailable $ui_port || IsNotPortAvailable $ui_port_secure; then
-DisplayErrCommitAllLogs "unable to start daemon: ports $ui_port or $ui_port_secure are already in use!"
+DisplayErrCommitAllLogs "unable to start daemon: ports $ui_port or $ui_port_secure are already in-use!"
 portpid=$(/usr/sbin/lsof -i :$ui_port -Fp)
-DisplayErrCommitAllLogs "process details for port $ui_port: '$([[ -n ${portpid:-} ]] && /bin/tr '\000' ' ' </proc/"${portpid/p/}"/cmdline)'"
+DisplayErrCommitAllLogs "process details for port $ui_port: PID${portpid}: '$([[ -n ${portpid:-} ]] && /bin/tr '\000' ' ' </proc/"${portpid/p/}"/cmdline)'"
 portpid=$(/usr/sbin/lsof -i :$ui_port_secure -Fp)
-DisplayErrCommitAllLogs "process details for secure port $ui_port_secure: '$([[ -n ${portpid:-} ]] && /bin/tr '\000' ' ' </proc/"${portpid/p/}"/cmdline)'"
+DisplayErrCommitAllLogs "process details for secure port $ui_port_secure: PID${portpid}: '$([[ -n ${portpid:-} ]] && /bin/tr '\000' ' ' </proc/"${portpid/p/}"/cmdline)'"
 SetError
 return 1
 fi
@@ -339,7 +339,7 @@ local pid=0
 SetRestartPending
 pid=$(<$daemon_pid_pathfile)
 kill "$pid"
-DisplayWaitCommitToLog "stop daemon PID ($pid) with SIGTERM:"
+DisplayWaitCommitToLog "stop daemon PID${pid} with SIGTERM:"
 DisplayWait "(no-more than $DAEMON_STOP_TIMEOUT_SECONDS second$(Pluralise "$DAEMON_STOP_TIMEOUT_SECONDS")):"
 while true; do
 while [[ -d /proc/$pid ]]; do
@@ -348,7 +348,7 @@ while [[ -d /proc/$pid ]]; do
 DisplayWait "$acc,"
 if [[ $acc -ge $DAEMON_STOP_TIMEOUT_SECONDS ]]; then
 DisplayCommitToLog 'failed!'
-DisplayCommitToLog "stop daemon PID ($pid) with SIGKILL:"
+DisplayCommitToLog "stop daemon PID${pid} with SIGKILL:"
 kill -9 "$pid" 2> /dev/null
 [[ -f $daemon_pid_pathfile ]] && rm -f "$daemon_pid_pathfile"
 break 2
@@ -1149,7 +1149,7 @@ target_proc=$(GetLaunchTarget)
 fi
 if IsProcessActive "$target_proc" "$daemon_pid_pathfile"; then
 DisplayCommitToLog true
-DisplayCommitToLog "daemon PID: $(<"$daemon_pid_pathfile")"
+DisplayCommitToLog "daemon: PID$(<"$daemon_pid_pathfile")"
 return 0
 fi
 DisplayCommitToLog false
