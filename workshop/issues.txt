@@ -1,4 +1,4 @@
-* function durations can become incorrect when functions with the same name are called recursively.
+* Function durations can become incorrect when functions with the same name are called recursively.
 	- Need to make var holding start-time unique.
 
 * Removing OMedusa QPKG via sherpa didn't update App Center 'live' (icon remained until App Center was manually refreshed).
@@ -23,18 +23,18 @@
 
 	- Both applications were dead.
 
-* near the end of installing IPKs, monitored download path can remain at non-zero size while packages complete installation.
+* Near the end of installing IPKs, monitored download path can remain at non-zero size while packages complete installation.
 	- Maybe include a separate progress message when dir size shrinks to almost zero?
 
 * 'sherpa start inactive' fails to find any inactive packages.
 	- Must get status of each package first.
 
-* if package signing fails, the cert database is probably already open. Check for this and abort signing.
+* If package signing fails, the cert database is probably already open. Check for this and abort signing.
 	- Also, when signing fails, don't direct user to the QPKG service-script log: signing isn't a service action.
 
-* extend startup timeouts for Deluge QPKGs.
+* Extend startup timeouts for Deluge QPKGs.
 
 * QPKG version sort is not correctly sorting version numbers followed by an alpha as later than non-alpha.
 
-* if a forked action hangs, it might not be killed by its caller.
-	- Need to confirm this.
+* If a forked action hangs, it might not be killed by its caller.
+	- Need to test this.
