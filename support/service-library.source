@@ -288,7 +288,7 @@ StartQPKGLibrary()
 			download_quiet=' --silent'
 		else
 			tar_extract_verbose=' --verbose'
-			unzip_extract_verbose=' -v'
+# 			unzip_extract_verbose=' -v'			# Don't enable this, seems to prevent actual file extraction from occurring.
 		fi
 
 		download_opts="${curl_insecure_arg}${download_quiet}"
@@ -305,11 +305,11 @@ StartQPKGLibrary()
 
 		DisplayRunAndLog 'refresh release package' "/sbin/curl${download_opts} '$remote_url'" || { SetError; return 1 ;}
 
-		if [[ ! -e $daemon_pathfile || ! -e $source_archive_pathfile || $(($(/bin/date +%s)-$(/usr/bin/stat "$source_archive_pathfile" -c %Y))) -lt 60 ]]; then			# extract from latest release archive.
+		if [[ ! -e $daemon_pathfile || ! -e $source_archive_pathfile || $(($(/bin/date +%s)-$(/usr/bin/stat "$source_archive_pathfile" -c %Y))) -lt 60 ]]; then			# Extract from latest release archive.
 			tar_extract_opts="$tar_extract_verbose --extract --gzip --file=$source_archive_pathfile --directory=$qpkg_repo_path"
 			unzip_extract_opts="$unzip_extract_verbose -o $source_archive_pathfile -d $qpkg_repo_path"
 
-			# try '.zip' first, then '.tar.gz'
+			# Try '.zip' first, then '.tar.gz'
 			DisplayRunAndLog 'extract release package' "/usr/bin/unzip${unzip_extract_opts} || /bin/tar${tar_extract_opts}" || { SetError; return 1 ;}
 		fi
 	fi
