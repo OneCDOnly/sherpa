@@ -6463,11 +6463,11 @@ GetUpState()
 	{
 
 	if OS.IsStarting; then
-		echo -n 'starting-up'
+		printf 'starting-up'
 	elif OS.IsStopping; then
-		echo -n 'shutting-down'
+		printf 'shutting-down'
 	else
-		echo -n stable
+		printf stable
 	fi
 
 	}
@@ -9230,7 +9230,7 @@ LTrim()
 	# Trim leading whitespace from $1.
 
 	[[ -n ${1:-} ]] || return
-	(shopt -s extglob; echo -n "${1##+(' ')}")
+	(shopt -s extglob; printf "${1##+(' ')}")
 
 	}
 
@@ -9240,7 +9240,7 @@ RTrim()
 	# Trim trailing whitespace from $1.
 
 	[[ -n ${1:-} ]] || return
-	(shopt -s extglob; echo -n "${1%%+(' ')}")
+	(shopt -s extglob; printf "${1%%+(' ')}")
 
 	}
 
@@ -9345,14 +9345,14 @@ ShowTitleArt()
 ShowVersion()
 	{
 
-	echo -n "$THIS_SCRIPT_VER"
+	printf "$THIS_SCRIPT_VER"
 
 	}
 
 ShowDescription()
 	{
 
-	echo -n '<?title_description?>'
+	printf '<?title_description?>'
 
 	}
 
@@ -9387,14 +9387,14 @@ ShowOptions()
 ShowAsPackageName()
 	{
 
-	echo -n "'${1:?${FUNCNAME[0]}'()': undefined}'"
+	printf "${1:?${FUNCNAME[0]}'()': undefined}"
 
 	}
 
 ShowAsFileName()
 	{
 
-	echo -n "${1:?${FUNCNAME[0]}'()': undefined}"
+	printf "${1:?${FUNCNAME[0]}'()': undefined}"
 
 	}
 
@@ -9408,14 +9408,14 @@ ShowAsURL()
 ShowAsExitcode()
 	{
 
-	echo -n "[${1:?${FUNCNAME[0]}'()': undefined}]"
+	printf "[${1:?${FUNCNAME[0]}'()': undefined}]"
 
 	}
 
 ShowAsLogFilename()
 	{
 
-	echo -n "${CHARS_RESULTS}log file: '${1:?${FUNCNAME[0]}'()': undefined}'"
+	printf "${CHARS_RESULTS}log file: '${1:?${FUNCNAME[0]}'()': undefined}'"
 
 	}
 
@@ -10016,7 +10016,7 @@ AddPeriod()
 
 	[[ -n ${1:-} ]] || return
 
-	[[ ${1: -1} != ':' && ${1: -1} != '?' && ${1: -1} != '.' ]] && echo -n "${1}." || echo -n "$1"
+	[[ ${1: -1} != ':' && ${1: -1} != '?' && ${1: -1} != '.' ]] && printf "${1}." || printf "$1"
 
 	}
 
