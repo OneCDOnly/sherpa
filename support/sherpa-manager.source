@@ -183,6 +183,8 @@ Self.Results:Show()
 			QPKGs.IsNtActive:Show
 		elif QPKGs.AClist.SCinstallable.IsSet; then
 			QPKGs.ScInstallable:Show
+		elif QPKGs.AClist.SCNTinstallable.IsSet; then
+			QPKGs.ScNtInstallable:Show
 		elif QPKGs.AClist.SCupgradable.IsSet; then
 			QPKGs.ScUpgradable:Show
 		elif QPKGs.AClist.SCindependent.IsSet; then
@@ -909,7 +911,7 @@ Self:Validate()
 		QPKGs-ACupgrade-to:Add sherpa
 	fi
 
-	ShowAsProc 'continuing validation'
+	ShowAsProc 'continue validating'
 
 	# KLUDGE: ensure old installs of Entware are reinstalled.
 
@@ -1596,7 +1598,7 @@ ParseArgs()
 					group_identified=false
 					show_bland=false
 					;;
-				dependent|dependents|disabled|enabled|failed|inactive|indeps|independent|independents|installable|installed|missing|not-installed|o|ok|skipped|stopped|updatable|updateable|upgradable|version|versions)
+				dependent|dependents|disabled|enabled|failed|inactive|indeps|independent|independents|installable|installed|missing|not-installable|not-installed|o|ok|skipped|stopped|updatable|updateable|upgradable|version|versions)
 					action=list
 					arg_identified=true
 					group=''
@@ -1620,6 +1622,9 @@ ParseArgs()
 					;;
 				not-backedup)
 					group=NTbackedup
+					;;
+				not-installable)
+					group=NTinstallable
 					;;
 				not-installed)
 					group=NTinstalled
@@ -1791,7 +1796,7 @@ ParseArgs()
 					backedup|installed|NTbackedup|NTinstalled)
 						QPKGs.AClist.IS${group}:Set
 						;;
-					dependent|disabled|installable|independent|upgradable)
+					dependent|disabled|installable|independent|NTinstallable|upgradable)
 						QPKGs.AClist.SC${group}:Set
 						;;
 					failed)
@@ -5278,11 +5283,13 @@ QPKGs.States:Build()
 	for a in $(QPKGs-SCall:Array); do
 		[[ $a = "$b" ]] && continue || b=$a
 
-		if QPKG.IsInstallable "$a"; then
-			echo installable
-		else
-			echo notinstallable
-		fi >> "$STATES_PATH/$a"
+		if QPKG.IsNtInstalled "$a"; then
+			if QPKG.IsInstallable "$a"; then
+				echo installable
+			else
+				echo notinstallable
+			fi >> "$STATES_PATH/$a"
+		fi
 	done &
 
 	for a in $(QPKGs-SCall:Array); do
@@ -5857,6 +5864,21 @@ QPKGs.IsInstalled:Show()
 
 	}
 
+QPKGs.IsNtInstalled:Show()
+	{
+
+	local a=''
+	DisableDebugToArchiveAndFile
+	EraseThisLine
+
+	for a in $(QPKGs-ISNTinstalled:Array); do
+		Display "$a"
+	done
+
+	return 0
+
+	}
+
 QPKGs.ScAll:Show()
 	{
 
@@ -5887,14 +5909,14 @@ QPKGs.ScInstallable:Show()
 
 	}
 
-QPKGs.IsNtInstalled:Show()
+QPKGs.ScNtInstallable:Show()
 	{
 
 	local a=''
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	for a in $(QPKGs-ISNTinstalled:Array); do
+	for a in $(QPKGs-SCNTinstallable:Array); do
 		Display "$a"
 	done
 
