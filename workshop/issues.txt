@@ -1,3 +1,7 @@
+* nzbhydra unable to recognise that its already running.
+
+* upgrading Entware QPKG doesn't 'activate' previously activated dependent QPKGs afterward.
+
 * function durations can become incorrect when functions with the same name are called recursively.
 	- Need to make var holding start-time unique.
 
