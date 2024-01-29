@@ -323,13 +323,13 @@ StartQPKGLibrary()
 		SetError
 		return 1
 	elif IsNotPortAvailable $ui_port || IsNotPortAvailable $ui_port_secure; then
-		DisplayErrCommitAllLogs "unable to start daemon: ports $ui_port or $ui_port_secure are already in use!"
+		DisplayErrCommitAllLogs "unable to start daemon: ports $ui_port or $ui_port_secure are already in-use!"
 
 		portpid=$(/usr/sbin/lsof -i :$ui_port -Fp)
-		DisplayErrCommitAllLogs "process details for port $ui_port: '$([[ -n ${portpid:-} ]] && /bin/tr '\000' ' ' </proc/"${portpid/p/}"/cmdline)'"
+		DisplayErrCommitAllLogs "process details for port $ui_port: PID${portpid}: '$([[ -n ${portpid:-} ]] && /bin/tr '\000' ' ' </proc/"${portpid/p/}"/cmdline)'"
 
 		portpid=$(/usr/sbin/lsof -i :$ui_port_secure -Fp)
-		DisplayErrCommitAllLogs "process details for secure port $ui_port_secure: '$([[ -n ${portpid:-} ]] && /bin/tr '\000' ' ' </proc/"${portpid/p/}"/cmdline)'"
+		DisplayErrCommitAllLogs "process details for secure port $ui_port_secure: PID${portpid}: '$([[ -n ${portpid:-} ]] && /bin/tr '\000' ' ' </proc/"${portpid/p/}"/cmdline)'"
 
 		SetError
 		return 1
@@ -401,7 +401,7 @@ StopQPKGLibrary()
 
 		pid=$(<$daemon_pid_pathfile)
 		kill "$pid"
-		DisplayWaitCommitToLog "stop daemon PID ($pid) with SIGTERM:"
+		DisplayWaitCommitToLog "stop daemon PID${pid} with SIGTERM:"
 		DisplayWait "(no-more than $DAEMON_STOP_TIMEOUT_SECONDS second$(Pluralise "$DAEMON_STOP_TIMEOUT_SECONDS")):"
 
 		while true; do
@@ -412,7 +412,7 @@ StopQPKGLibrary()
 
 				if [[ $acc -ge $DAEMON_STOP_TIMEOUT_SECONDS ]]; then
 					DisplayCommitToLog 'failed!'
-					DisplayCommitToLog "stop daemon PID ($pid) with SIGKILL:"
+					DisplayCommitToLog "stop daemon PID${pid} with SIGKILL:"
 					kill -9 "$pid" 2> /dev/null
 					[[ -f $daemon_pid_pathfile ]] && rm -f "$daemon_pid_pathfile"
 					break 2
@@ -420,6 +420,7 @@ StopQPKGLibrary()
 			done
 
 			[[ -f $daemon_pid_pathfile ]] && rm -f "$daemon_pid_pathfile"
+
 			Display OK
 			CommitToLog "stopped in $acc second$(Pluralise "$acc")"
 
@@ -427,7 +428,6 @@ StopQPKGLibrary()
 			break
 		done
 
-# 		/bin/sleep 1		# let application shutdown complete.
 		WaitForKillPID
 		IsNotDaemonActive || { SetError; return 1 ;}
 	fi
@@ -1703,7 +1703,7 @@ IsDaemonActive()
 
 	if IsProcessActive "$target_proc" "$daemon_pid_pathfile"; then
 		DisplayCommitToLog true
-		DisplayCommitToLog "daemon PID: $(<"$daemon_pid_pathfile")"
+		DisplayCommitToLog "daemon: PID$(<"$daemon_pid_pathfile")"
 		return 0
 	fi
 
