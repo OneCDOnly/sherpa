@@ -1,3 +1,5 @@
+* When showing port already in-use, should note PID as-well as process details.
+
 * sherpa 'stable' branch should only update once per-day.
 	- 'unstable' should update once per 10 minutes.
 
@@ -47,8 +49,6 @@
 
 * update IPKs automatically?
     - Store a local checksum of the Entware package list. If this changes, assume it's been updated and all IPKs should be checked for upgrade status and upgraded. No-need to prompt user - just upgrade automatically.
-
-* make Entware check for package updates early-on in background?
 
 * download QPKG updates in background when running sherpa for any reason?
 
