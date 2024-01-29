@@ -5047,7 +5047,7 @@ QPKGs.Conflicts:Check()
 		# shellcheck disable=2068
 		for a in "${BASE_QPKG_CONFLICTS_WITH[@]}"; do
 			if QPKG.IsEnabled "$a"; then
-				ShowAsError "the '$a' QPKG is enabled. $(ShowTitleName) is incompatible with this package. Please consider 'stop'ing this QPKG in your App Center"
+				ShowAsError "the '$a' QPKG is enabled. $(ShowTitleName) is incompatible with this package. Please consider stopping this QPKG in your App Center"
 				return 1
 			fi
 		done
@@ -5066,7 +5066,7 @@ QPKGs.Warnings:Check()
 		# shellcheck disable=2068
 		for a in "${BASE_QPKG_WARNINGS[@]}"; do
 			if QPKG.IsEnabled "$a"; then
-				ShowAsWarn "the '$a' QPKG is enabled. This may cause problems with $(ShowTitleName) applications. Please consider 'stop'ing this QPKG in your App Center"
+				ShowAsWarn "the '$a' QPKG is enabled. This may cause problems with $(ShowTitleName) applications. Please consider stopping this QPKG in your App Center"
 			fi
 		done
 	fi
@@ -5280,7 +5280,7 @@ QPKGs.States:Build()
 	[[ ${1:-} = rebuild ]] && QPKGs.States:Clear
 
 	if [[ ${qpkgs_states_built:=false} = true ]]; then
-		DebugAsDone "don't need to build states: already built"
+		DebugAsDone "don't build states: they're already built"
 		Func:Exit; return
 	fi
 
