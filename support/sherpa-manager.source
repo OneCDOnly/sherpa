@@ -5293,7 +5293,7 @@ QPKGs.States:Build()
 	if OS.IsLoadAverageInsane; then
 		ShowAsWarn "the NAS currently has an exceptionally-high system load ... maybe abort and try again later?"
 	elif OS.IsLoadAverageHigh; then
-		ShowAsWarn "$(GetQnapOS) currently has an unusually-high system load ... this will take a while"
+		ShowAsWarn "the NAS currently has an unusually-high system load ... this will take a while"
 	elif OS.IsLoadAverageElevated; then
 		ShowAsWarn "the NAS currently has an elevated system load ... this will take a little longer than usual"
 	fi
