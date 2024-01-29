@@ -823,7 +823,7 @@ Self.Tasks:Check()
 
 	if [[ $something_to_do = false ]]; then
 		show_bland=false; ShowTitleLine
-		ShowAsError "supplied arguments were incomplete, or didn't make sense. Please check the argument list again."
+		ShowAsError "supplied arguments were incomplete, or didn't make sense. Please check the argument list again"
 		opts_show_basic_help=true
 		skip_package_actions=true
 		Func:Exit 1; return
@@ -863,7 +863,7 @@ Self:Validate()
 			installed_ver=$(GetPython3Ver "$PYTHON3_CMD")
 
 			if [[ ${installed_ver//./} -lt $MIN_PYTHON_VER ]]; then
-				ShowAsInfo "the $(TextBrightOrange Python) environment will be auto-upgraded."
+				ShowAsInfo "the $(TextBrightOrange Python) environment will be auto-upgraded"
 				IPKs-ACuninstall-to:Add 'python*'
 			fi
 		fi
@@ -872,7 +872,7 @@ Self:Validate()
 			installed_ver=$(GetPerlVer "$PERL_CMD")
 
 			if [[ ${installed_ver//./} -lt $MIN_PERL_VER ]]; then
-				ShowAsInfo "the $(TextBrightOrange Perl) environment will be auto-upgraded."
+				ShowAsInfo "the $(TextBrightOrange Perl) environment will be auto-upgraded"
 				IPKs-ACuninstall-to:Add 'perl*'
 			fi
 		fi
@@ -890,7 +890,7 @@ Self:Validate()
 
 				if [[ ${installed_version//.} -gt 238 ]]; then
 					ipks_downgrade=true
-					ShowAsInfo "IPKs will be downgraded to suit $KERNEL_PAGE_SIZE kernel page size."
+					ShowAsInfo "IPKs will be downgraded to suit $KERNEL_PAGE_SIZE kernel page size"
 					IPKs-ACdowngrade-to:Add "$target_packages"
 				else
 					IPKs-ACdowngrade-sk:Add "$target_packages"
@@ -905,7 +905,7 @@ Self:Validate()
 	AllocPackStatesToAcs
 
 	if QPKGs-SCupgradable.Exist sherpa; then
-		ShowAsInfo "the $(TextBrightOrange sherpa) QPKG will be auto-upgraded."
+		ShowAsInfo "the $(TextBrightOrange sherpa) QPKG will be auto-upgraded"
 		QPKGs-ACupgrade-to:Add sherpa
 	fi
 
@@ -917,7 +917,7 @@ Self:Validate()
 		local entware_install_date=$(QPKG.GetInstallDate Entware)
 
 		if [[ $entware_install_date = undefined || ${entware_install_date//[!0-9]/} -le 20230604 ]]; then
-			ShowAsInfo "the $(TextBrightOrange Entware) QPKG will be auto-reinstalled (Entware packages were updated early June 2023)."
+			ShowAsInfo "the $(TextBrightOrange Entware) QPKG will be auto-reinstalled (Entware packages were updated early June 2023)"
 			QPKGs-ACreinstall-to:Add Entware
 		fi
 	fi
@@ -1898,7 +1898,7 @@ ArgSuggestions:Show()
 	local arg=''
 
 	if ARGs-unknown.IsAny; then
-		ShowAsError "unknown argument$(Pluralise "$(ARGs-unknown:Count)"): \"$(ARGs-unknown:List)\". Please check the argument list again."
+		ShowAsError "unknown argument$(Pluralise "$(ARGs-unknown:Count)"): \"$(ARGs-unknown:List)\". Please check the argument list again"
 		task_check=false
 
 		for arg in $(ARGs-unknown:Array); do
@@ -2985,7 +2985,7 @@ User.IsOk()
 			ShowAsError 'this utility must be run with superuser privileges. Try again as:'
 			echo "${CHARS_SUDO_PROMPT}sherpa $USER_ARGS_RAW" >&2
 		else
-			ShowAsError "this utility must be run as the 'admin' user. Please login via SSH as 'admin' and try again."
+			ShowAsError "this utility must be run as the 'admin' user. Please login via SSH as 'admin' and try again"
 		fi
 
 		return 1
@@ -4654,7 +4654,7 @@ Log.Last:Paste()
 			link=$($CAT_CMD --number "$SESS_LAST_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
 
 			if [[ $? -eq 0 ]]; then
-				ShowAsDone "your $(ShowTitleName) log is now online at $(ShowAsURL "$link") and will be deleted in 1 month."
+				ShowAsDone "your $(ShowTitleName) log is now online at $(ShowAsURL "$link") and will be deleted in 1 month"
 			else
 				ShowAsFail "a link could not be generated. Most likely a problem occurred when talking with $(ShowAsURL 'https://termbin.com')"
 			fi
@@ -4665,7 +4665,7 @@ Log.Last:Paste()
 			return 1
 		fi
 	else
-		ShowAsError 'no last session log found.'
+		ShowAsError 'no last session log found'
 	fi
 
 	return 0
@@ -4686,7 +4686,7 @@ Log.Tail:Paste()
 			link=$($CAT_CMD --number "$SESS_TAIL_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
 
 			if [[ $? -eq 0 ]]; then
-				ShowAsDone "your $(ShowTitleName) log is now online at $(ShowAsURL "$link") and will be deleted in 1 month."
+				ShowAsDone "your $(ShowTitleName) log is now online at $(ShowAsURL "$link") and will be deleted in 1 month"
 			else
 				ShowAsFail "a link could not be generated. Most likely a problem occurred when talking with $(ShowAsURL 'https://termbin.com')"
 			fi
@@ -4697,7 +4697,7 @@ Log.Tail:Paste()
 			return 1
 		fi
 	else
-		ShowAsError 'no session log tail found.'
+		ShowAsError 'no session log tail found'
 	fi
 
 	return 0
@@ -4975,7 +4975,7 @@ QPKGs.Missing:Show()
 		sufmsg='them'
 	fi
 
-	ShowAsInfo "$a QPKG${premsg} missing or broken. Please reinstall $sufmsg."
+	ShowAsInfo "$a QPKG${premsg} missing or broken. Please reinstall $sufmsg"
 	return 1
 
 	}
@@ -5016,7 +5016,7 @@ QPKGs.NewVers:Show()
 		fi
 	done
 
-	ShowAsInfo "new QPKG version$(Pluralise "${#packages[@]}") available for $a."
+	ShowAsInfo "new QPKG version$(Pluralise "${#packages[@]}") available for $a"
 	return 1
 
 	}
@@ -5030,7 +5030,7 @@ QPKGs.Conflicts:Check()
 		# shellcheck disable=2068
 		for a in "${BASE_QPKG_CONFLICTS_WITH[@]}"; do
 			if QPKG.IsEnabled "$a"; then
-				ShowAsError "the '$a' QPKG is enabled. $(ShowTitleName) is incompatible with this package. Please consider 'stop'ing this QPKG in your App Center."
+				ShowAsError "the '$a' QPKG is enabled. $(ShowTitleName) is incompatible with this package. Please consider 'stop'ing this QPKG in your App Center"
 				return 1
 			fi
 		done
@@ -5049,7 +5049,7 @@ QPKGs.Warnings:Check()
 		# shellcheck disable=2068
 		for a in "${BASE_QPKG_WARNINGS[@]}"; do
 			if QPKG.IsEnabled "$a"; then
-				ShowAsWarn "the '$a' QPKG is enabled. This may cause problems with $(ShowTitleName) applications. Please consider 'stop'ing this QPKG in your App Center."
+				ShowAsWarn "the '$a' QPKG is enabled. This may cause problems with $(ShowTitleName) applications. Please consider 'stop'ing this QPKG in your App Center"
 			fi
 		done
 	fi
@@ -5267,8 +5267,8 @@ QPKGs.States:Build()
 		Func:Exit; return
 	fi
 
-	OS.IsStarting && ShowAsWarn "$(GetQnapOS) is starting all enabled QPKGs ... check again in a few minutes."
-	OS.IsStopping && ShowAsWarn "$(GetQnapOS) is shutting-down and all QPKGs are stopping."
+	OS.IsStarting && ShowAsWarn "$(GetQnapOS) is starting all enabled QPKGs ... check again in a few minutes"
+	OS.IsStopping && ShowAsWarn "$(GetQnapOS) is shutting-down and all QPKGs are stopping"
 
 	ShowAsProc 'QPKG states'
 	MakePath "$STATES_PATH" states || return
@@ -6598,7 +6598,7 @@ Self.LockFile:Claim()
 
 	for a in sherpa-manager.sh sherpa-manager.source; do
 		if [[ -e $LOCK_PATHFILE && -d /proc/$(<"$LOCK_PATHFILE") && $(</proc/"$(<"$LOCK_PATHFILE")"/cmdline) =~ $a ]]; then
-			ShowAsAbort "another sherpa instance was found (PID:$(<"$LOCK_PATHFILE")), can't continue."
+			ShowAsAbort "another sherpa instance was found (PID:$(<"$LOCK_PATHFILE")), can't continue"
 
 			return 1
 		fi
@@ -9884,10 +9884,89 @@ ShowAsInfo()
 	# Note to user.
 
 	[[ -n ${1:-} ]] || return
-	local capitalised=$(Capitalise "$1")
 
-	OpStepClear "$(TextBrightYellow note)" "$capitalised"
-	WriteToLog note "$capitalised"
+	local a=$(Capitalise "$1")
+	a=$(AddPeriod "$a")
+
+	OpStepClear "$(TextBrightYellow note)" "$a"
+	WriteToLog note "$a"
+
+	} >&2
+
+ShowAsDone()
+	{
+
+	# Process completed OK.
+
+	[[ -n ${1:-} ]] || return
+
+	local a=$1
+	a=$(AddPeriod "$a")
+
+	OpStepClear "$(TextBrightGreen 'done')" "$a"
+	WriteToLog 'done' "$a"
+
+	} >&2
+
+ShowAsWarn()
+	{
+
+	# Warning only.
+
+	[[ -n ${1:-} ]] || return
+
+	local a=$1
+	a=$(AddPeriod "$a")
+
+	OpStepClear "$(TextBrightOrange warn)" "$a"
+	WriteToLog warn "$a"
+
+	} >&2
+
+ShowAsAbort()
+	{
+
+	# Fatal abort.
+
+	[[ -n ${1:-} ]] || return
+
+	local a=$1
+	a=$(AddPeriod "$a")
+
+	OpStepClear "$(TextBrightRed bort)" "$a"
+	WriteToLog bort "$a"
+	Self.Error:Set
+
+	} >&2
+
+ShowAsFail()
+	{
+
+	# Non-fatal error.
+
+	[[ -n ${1:-} ]] || return
+
+	local a=$(Capitalise "$1")
+	a=$(AddPeriod "$a")
+
+	OpStepClear "$(TextBrightRed fail)" "$a"
+	WriteToLog fail "$a"
+
+	} >&2
+
+ShowAsError()
+	{
+
+	# Fatal error.
+
+	[[ -n ${1:-} ]] || return
+
+	local a=$(Capitalise "$1")
+	a=$(AddPeriod "$a")
+
+	OpStepClear "$(TextBrightRed derp)" "$a"
+	WriteToLog derp "$a"
+	Self.Error:Set
 
 	} >&2
 
@@ -9910,69 +9989,14 @@ ShowAsQuizDone()
 
 	}
 
-ShowAsDone()
+AddPeriod()
 	{
-
-	# Process completed OK.
 
 	[[ -n ${1:-} ]] || return
 
-	OpStepClear "$(TextBrightGreen 'done')" "$1"
-	WriteToLog 'done' "$1"
+	[[ ${1: -1} != ':' && ${1: -1} != '?' && ${1: -1} != '.' ]] && echo -n "${1}." || echo -n "$1"
 
-	} >&2
-
-ShowAsWarn()
-	{
-
-	# Warning only.
-
-	[[ -n ${1:-} ]] || return
-
-	OpStepClear "$(TextBrightOrange warn)" "$1"
-	WriteToLog warn "$1"
-
-	} >&2
-
-ShowAsAbort()
-	{
-
-	# Fatal abort.
-
-	[[ -n ${1:-} ]] || return
-
-	OpStepClear "$(TextBrightRed bort)" "$1"
-	WriteToLog bort "$1"
-	Self.Error:Set
-
-	} >&2
-
-ShowAsFail()
-	{
-
-	# Non-fatal error.
-
-	[[ -n ${1:-} ]] || return
-	local capitalised=$(Capitalise "$1")
-
-	OpStepClear "$(TextBrightRed fail)" "$capitalised"
-	WriteToLog fail "$capitalised"
-
-	} >&2
-
-ShowAsError()
-	{
-
-	# Fatal error.
-
-	[[ -n ${1:-} ]] || return
-	local capitalised=$(Capitalise "$1")
-
-	OpStepClear "$(TextBrightRed derp)" "$capitalised"
-	WriteToLog derp "$capitalised"
-	Self.Error:Set
-
-	} >&2
+	}
 
 ShowAsPercentProgress()
 	{
