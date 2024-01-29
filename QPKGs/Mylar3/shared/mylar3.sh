@@ -20,7 +20,7 @@
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 readonly USER_ARGS_RAW=$*
 readonly QPKG_NAME=Mylar3
-readonly SERVICE_SCRIPT_VERSION='240128'
+readonly SERVICE_SCRIPT_VERSION='240129'
 readonly SERVICE_SCRIPT_TYPE=1
 InitService()
 {
