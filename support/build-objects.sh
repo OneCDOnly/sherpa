@@ -8,7 +8,7 @@ target_pathfile="$source_path/$objects_file"
 
 # these are used internally by sherpa -----------------------------------------------------
 # ordered
-PACKAGE_TIERS=(standalone complementary dependent)
+PACKAGE_TIERS=(independent auxiliary dependent)
 
 # sorted
 QPKG_IS_STATES=(active backedup downloaded enabled installed missing signed slow unknown)
@@ -26,7 +26,7 @@ QPKG_ACTIONS=(status list rebuild reassign download backup deactivate disable un
 
 # these actions, states and scopes may be specified by the user -----------------------------------------------------
 # sorted
-USER_QPKG_SC_GROUPS=(all canbackup canclean canrestarttoupdate dependent hasdependents installable standalone upgradable)
+USER_QPKG_SC_GROUPS=(all canbackup canclean canrestarttoupdate dependent hasdependents installable independent upgradable)
 USER_QPKG_SCNT_GROUPS=(canclean installable upgradable)
 USER_QPKG_IS_STATES=(active backedup enabled installed missing)
 USER_QPKG_ISNT_STATES=(active backedup enabled installed)

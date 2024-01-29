@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-. vars.source || exit
+source_path="$HOME"/scripts/nas/sherpa/support
+. $source_path/vars.source || exit
 
 [[ -e $objects_file ]] && rm -f "$objects_file"
 cd "$target_path" || exit

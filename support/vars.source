@@ -241,6 +241,9 @@ service_library_file=service.lib
 readme_source_file=README.source
 readme_file=README.md
 
+forum_source_file=QNAP-forum-announcement.bbcode.source
+forum_file=QNAP-forum-announcement.bbcode
+
 stable_branch=stable
 unstable_branch=unstable
 
@@ -254,7 +257,7 @@ cdn_sherpa_packages_url="$cdn_sherpa_url/QPKGs/<?package_name?>/build"
 cdn_other_packages_url="$cdn_onecd_url/<?package_name?>/main/build"
 cdn_qnap_dev_packages_url='https://github.com/qnap-dev/<?package_name?>/releases/download/v<?version?>'
 
-dont_edit_msg="don't edit this file, it was built/modified programmatically with the '$(basename "$0")' script."
+dont_edit_msg="Please don't edit this file directly, it was built/modified programmatically with the '$(basename "$0")' script."
 email=one.cd.only@gmail.com
 
 # remember to escape ampersand chars in `read` blocks for compatibility with `sed` regex.

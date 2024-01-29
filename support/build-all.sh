@@ -21,5 +21,6 @@ done
 ./build-manager.sh || exit
 ./build-archives.sh || exit
 ./build-readme.sh || exit
+./build-forum-announcement.sh || exit
 
 exit 0

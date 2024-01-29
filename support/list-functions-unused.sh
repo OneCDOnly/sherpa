@@ -10,9 +10,9 @@ for target_func in $(grep '()$' "$source_pathfile" | grep -v '=\|\$\|_(' | sed '
 	case $target_func in
 		IPKs:upgrade|IPKs:install|IPKs:downgrade|PIPs:install)		# called by constructing the function name with vars.
 			continue
-			;;
-		QPKGs.Actions:ListAll|QPKGs.ScAll:Show|QPKG.GetAppAuthor)	# unused for-now.
-			continue
+# 			;;
+# 		QPKGs.Actions:ListAll|QPKGs.ScAll:Show|QPKG.GetAppAuthor)	# unused for-now.
+# 			continue
 	esac
 
 	if [[ $(grep -ow "$target_func" < "$source_pathfile" | wc -l) -eq 1 ]]; then

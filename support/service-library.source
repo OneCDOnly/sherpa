@@ -46,11 +46,34 @@ InitLibrary()
 	UnsetError
 	UnsetRestartPending
 
+	readonly DAEMON_CHECK_TIMEOUT_SECONDS=60
+	readonly DAEMON_STOP_TIMEOUT_SECONDS=120
+	readonly PIDFILE_APPEAR_TIMEOUT_SECONDS=60
+	readonly PID_RECHECK_WAIT_SECONDS=10
+	readonly PORT_CHECK_TIMEOUT_SECONDS=240
+
+	readonly BACKUP_PATH=$(/sbin/getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
+	readonly CHARS_REGULAR_PROMPT='$ '
+		readonly CHARS_SUDO_PROMPT="${CHARS_REGULAR_PROMPT}sudo "
+	readonly CHARS_SUPER_PROMPT='# '
+	readonly DEBUG_LOG_DATAWIDTH=100
+	readonly NAS_FIRMWARE_VER=$(/sbin/getcfg System Version -f /etc/config/uLinux.conf)
+	readonly OPKG_PATH=/opt/bin:/opt/sbin
+		export PATH=$OPKG_PATH:$(/bin/sed "s|$OPKG_PATH||" <<< "$PATH")
+	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
+		readonly QPKG_CONFIG_PATH=$QPKG_PATH/config
+			readonly APP_VERSION_STORE_PATHFILE=$QPKG_CONFIG_PATH/version.stored
+			readonly SCREEN_CONF_PATHFILE=$QPKG_CONFIG_PATH/screen.conf
+	readonly QPKG_VERSION=$(/sbin/getcfg $QPKG_NAME Version -d unknown -f /etc/config/qpkg.conf)
+	readonly SCREEN_LOG_PATHFILE=/var/log/$QPKG_NAME.screen.log
+	readonly SERVICE_LOG_PATHFILE=/var/log/$QPKG_NAME.log
+	readonly SERVICE_STATUS_PATHFILE=/var/run/$QPKG_NAME.last.operation
+
 	# default values
 	allow_access_to_sys_packages=true
 	app_version_cmd=undefined
 	app_version_pathfile=undefined
-	backup_pathfile=undefined
+	[[ ${NAS_FIRMWARE_VER//.} -lt 426 ]] && curl_insecure_arg=' --insecure' || curl_insecure_arg=''
 	daemon_launch_cmd=undefined
 	daemon_pathfile=undefined
 	daemon_pid_pathfile=undefined
@@ -63,19 +86,26 @@ InitLibrary()
 	get_ui_port_secure_enabled_test_cmd=undefined
 	install_pip_deps=false
 	interpreter=undefined
-    launcher_pathfile=undefined					# on-call executables only
+	launcher_pathfile=undefined					# on-call executables only
+	local_temp_path=undefined
 	orig_daemon_service_script=undefined		# specific to Entware binaries only
 	pidfile_is_managed_by_app=false
 	pip_cache_path=undefined
-	qpkg_ini_file=undefined
-	qpkg_ini_pathfile=undefined
+	qpkg_backup_pathfile=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
+	qpkg_ini_file=config.ini
+		qpkg_ini_pathfile=$QPKG_CONFIG_PATH/$qpkg_ini_file
+			qpkg_ini_default_pathfile=$qpkg_ini_pathfile.def
 	qpkg_repo_path=undefined
-	recheck_daemon_pid_after_launch=false
+	recheck_daemon_pid_after_launch=false		# if true, application PID is reconfirmed shortly after initial launch. Some applications launch with one PID, then switch to another.
+	recheck_daemon_pid_after_kill=false			# if true, application PID is reconfirmed shortly after kill confirmed. Some applications kill their main PID, then switch to another during shutdown.
+	remote_arch=undefined
+	remote_url=undefined
+	resolve_remote_url=false					# if 'true', URL must be retrieved from remote first, then parsed to get final URL.
 	run_daemon_in_screen_session=false
 	service_operation=unspecified
 	service_result=undefined
-	service_script_type=0
 	source_arch=undefined
+	source_archive_pathfile=undefined
 	source_git_branch=undefined
 	source_git_branch_depth=undefined			# 'shallow' (depth 1) or 'single-branch' ... 'shallow' implies 'single-branch'
 	source_git_url=undefined
@@ -87,47 +117,12 @@ InitLibrary()
 	venv_pip_pathfile=undefined
 	venv_python_pathfile=undefined
 
-	readonly DAEMON_CHECK_TIMEOUT_SECONDS=60
-	readonly DAEMON_STOP_TIMEOUT_SECONDS=120
-	readonly PIDFILE_APPEAR_TIMEOUT_SECONDS=60
-	readonly PIDFILE_RECHECK_WAIT_SECONDS=10
-	readonly PORT_CHECK_TIMEOUT_SECONDS=240
-
-	readonly BACKUP_PATH=$(/sbin/getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
-	readonly CHARS_REGULAR_PROMPT='$ '
-		readonly CHARS_SUDO_PROMPT="${CHARS_REGULAR_PROMPT}sudo "
-	readonly CHARS_SUPER_PROMPT='# '
-	readonly DEBUG_LOG_DATAWIDTH=100
-	readonly OPKG_PATH=/opt/bin:/opt/sbin
-	export PATH=$OPKG_PATH:$(/bin/sed "s|$OPKG_PATH||" <<< "$PATH")
-	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
-	readonly QPKG_VERSION=$(/sbin/getcfg $QPKG_NAME Version -d unknown -f /etc/config/qpkg.conf)
-	readonly SCREEN_LOG_PATHFILE=/var/log/$QPKG_NAME.screen.log
-	readonly SERVICE_LOG_PATHFILE=/var/log/$QPKG_NAME.log
-	readonly SERVICE_STATUS_PATHFILE=/var/run/$QPKG_NAME.last.operation
-	readonly QPKG_CONFIG_PATH=$QPKG_PATH/config
-		readonly APP_VERSION_STORE_PATHFILE=$QPKG_CONFIG_PATH/version.stored
-		readonly SCREEN_CONF_PATHFILE=$QPKG_CONFIG_PATH/screen.conf
-
-	qpkg_ini_file=config.ini
-
-	InitBasic		# located in parent service-script
-
-	backup_pathfile=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
-	qpkg_ini_pathfile=$QPKG_CONFIG_PATH/$qpkg_ini_file
-
-	InitByType
-
-	InitComplex		# located in parent service-script
-
-	qpkg_ini_default_pathfile=$qpkg_ini_pathfile.def
-
+	InitByServiceType
+	InitService									# located in parent service-script. Service-script vars can override vars set here.
+	MakePaths
 	EnsureConfigFileExists
-	LoadAppVersion
+	GetAppVersion
 	DisableOpkgDaemonStart
-	IsSupportBackup && [[ ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
-	IsVirtualEnvironmentUsed && [[ ! -d $venv_path ]] && mkdir -p "$venv_path"
-	IsUsePipCache && [[ ! -d $pip_cache_path ]] && mkdir -p "$pip_cache_path"
 	IsSourcedOnline && IsAutoUpdateMissing && EnableAutoUpdate >/dev/null
 
 	if [[ $run_daemon_in_screen_session = true && ! -e $SCREEN_CONF_PATHFILE ]]; then
@@ -138,38 +133,62 @@ InitLibrary()
 
 	}
 
-InitByType()
+InitByServiceType()
 	{
 
 	# definitions: https://github.com/OneCDOnly/sherpa/wiki/Service-Script-Types
 
-	# vars common to more-than a single type
-	case $service_script_type in
-		1|3|6)
+	case $SERVICE_SCRIPT_TYPE in
+		1)
 			daemon_pid_pathfile=/var/run/$QPKG_NAME.pid
-	esac
-
-	case $service_script_type in
-		1|6|7)
+			install_pip_deps=true
+			interpreter=/opt/bin/python3
+			pidfile_is_managed_by_app=true
+			pip_cache_path=$QPKG_PATH/pip-cache
+			qpkg_repo_path=$QPKG_PATH/repo-cache
+			recheck_daemon_pid_after_launch=true
+			source_git_branch=main
+			source_git_branch_depth=shallow
+			venv_path=$QPKG_PATH/venv
+				venv_pip_pathfile=$venv_path/bin/pip
+				venv_python_pathfile=$venv_path/bin/python3
+			;;
+		2)
+			:
+			;;
+		3)
+			daemon_pid_pathfile=/var/run/$QPKG_NAME.pid
+			;;
+		4)
+			:
+			;;
+		5)
+			allow_access_to_sys_packages=false
+			daemon_pid_pathfile=/var/run/$QPKG_NAME.pid
+			qpkg_repo_path=$QPKG_PATH/repo-cache
+				source_archive_pathfile="$qpkg_repo_path/$QPKG_NAME.tar.gz"
+			;;
+		6)
+			daemon_pid_pathfile=/var/run/$QPKG_NAME.pid
+			interpreter=/opt/bin/python3
+			pip_cache_path=$QPKG_PATH/pip-cache
+			qpkg_backup_pathfile=undefined					# backup is unsupported
+			qpkg_ini_pathfile=undefined						# app config is unsupported
+			qpkg_repo_path=$QPKG_PATH/repo-cache
+			run_daemon_in_screen_session=true
+			venv_path=$QPKG_PATH/venv
+				venv_pip_pathfile=$venv_path/bin/pip
+				venv_python_pathfile=$venv_path/bin/python3
+			;;
+		7)
 			interpreter=/opt/bin/python3
 			pip_cache_path=$QPKG_PATH/pip-cache
 			venv_path=$QPKG_PATH/venv
 				venv_pip_pathfile=$venv_path/bin/pip
 				venv_python_pathfile=$venv_path/bin/python3
-	esac
-
-	# vars for single types only
-	case $service_script_type in
-		1)
-			install_pip_deps=true
-			pidfile_is_managed_by_app=true
-			qpkg_repo_path=$QPKG_PATH/repo-cache
-			recheck_daemon_pid_after_launch=true
-			source_git_branch=main
-			source_git_branch_depth=shallow
 			;;
-		6)
-			run_daemon_in_screen_session=true
+		*)
+			:
 	esac
 
 	}
@@ -177,7 +196,7 @@ InitByType()
 ShowHelp()
 	{
 
-	Display "$(ColourTextBrightWhite "$(/usr/bin/basename "$0")") $SERVICE_SCRIPT_VERSION • a service control script for the $(FormatAsPackageName $QPKG_NAME) QPKG"
+	Display "$(TextBrightWhite "$(/usr/bin/basename "$0")") $SERVICE_SCRIPT_VERSION • a service control script for the $(FormatAsPackageName $QPKG_NAME) QPKG"
 	Display
 	Display "Usage: $0 [ACTION]"
 	Display
@@ -204,6 +223,17 @@ ShowHelp()
 StartQPKG()
 	{
 
+	if [[ $(type -t StartQPKGCustom) = function ]]; then
+		StartQPKGCustom
+	else
+		StartQPKGLibrary
+	fi
+
+	}
+
+StartQPKGLibrary()
+	{
+
 	IsError && return
 
 	if IsNotRestart && IsNotRestore && IsNotClean && IsNotReset; then
@@ -222,26 +252,66 @@ StartQPKG()
 		DisplayCommitToLog false
 	fi
 
-	MakePaths
-	PullGitRepo || { SetError; return 1 ;}
+	CloneGitRepo || { SetError; return 1 ;}
 	InstallAddons || { SetError; return 1 ;}
 
 	if IsNotDaemon; then
-		if [[ ! -L $userlink_pathfile && -e $launcher_pathfile ]]; then
-			ln -s "$launcher_pathfile" "$userlink_pathfile"
+		if [[ $userlink_pathfile != undefined ]]; then
+			if [[ ! -L $userlink_pathfile && -e $launcher_pathfile ]]; then
+				ln -s "$launcher_pathfile" "$userlink_pathfile"
 
-			if [[ -L $userlink_pathfile ]]; then
-				DisplayCommitToLog "symlink created: $userlink_pathfile"
+				if [[ -L $userlink_pathfile ]]; then
+					DisplayCommitToLog "symlink created: $userlink_pathfile"
+				else
+					DisplayErrCommitAllLogs "unable to create symlink to \'$QPKG_NAME\' launcher!"
+					SetError
+					return 1
+				fi
 			else
-				DisplayErrCommitAllLogs "unable to create symlink to \'$QPKG_NAME\' launcher!"
-				SetError
-				return 1
+				DisplayCommitToLog "symlink exists: $userlink_pathfile"
 			fi
+
+			return
+		fi
+	fi
+
+	if IsOnlineArchive; then
+		local download_quiet=''
+		local download_opts=''
+		local source_archive_pathfile=$qpkg_repo_path/source.archive
+		local tar_extract_verbose=''
+		local tar_extract_opts=''
+		local unzip_extract_verbose=''
+		local unzip_extract_opts=''
+
+		if [[ $debug = false ]]; then
+			download_quiet=' --silent'
 		else
-			DisplayCommitToLog "symlink exists: $userlink_pathfile"
+			tar_extract_verbose=' --verbose'
+# 			unzip_extract_verbose=' -v'			# Don't enable this, seems to prevent actual file extraction from occurring.
 		fi
 
-		return
+		download_opts="${curl_insecure_arg}${download_quiet}"
+
+		if [[ $resolve_remote_url = true ]]; then
+			DisplayWaitCommitToLog 'check release package:'
+			# https://gist.github.com/steinwaywhw/a4cd19cda655b8249d908261a62687f8
+			remote_url=$(/sbin/curl${download_opts} "$remote_url" | /bin/grep browser_download_url | cut -d\" -f4 | /bin/grep "$remote_arch")
+			DisplayCommitToLog OK
+		fi
+
+		[[ -e $source_archive_pathfile ]] && download_opts+=" --time-cond $source_archive_pathfile"
+		download_opts+=" --show-error --location --output $source_archive_pathfile"
+
+		DisplayRunAndLog 'refresh release package' "/sbin/curl${download_opts} '$remote_url'" || { SetError; return 1 ;}
+
+		if [[ ! -e $daemon_pathfile || ! -e $source_archive_pathfile || $(($(/bin/date +%s)-$(/usr/bin/stat "$source_archive_pathfile" -c %Y))) -lt 60 ]]; then			# Extract from latest release archive.
+			tar_extract_opts="$tar_extract_verbose --extract --gzip --file=$source_archive_pathfile --directory=$qpkg_repo_path"
+			unzip_extract_opts="$unzip_extract_verbose -o $source_archive_pathfile -d $qpkg_repo_path"
+
+			# Try '.zip' first, then '.tar.gz'
+			DisplayRunAndLog 'extract release package' "/usr/bin/unzip${unzip_extract_opts} || /bin/tar${tar_extract_opts}" || { SetError; return 1 ;}
+		fi
 	fi
 
 	WaitForLaunchTarget || { SetError; return 1 ;}
@@ -265,7 +335,7 @@ StartQPKG()
 		return 1
 	fi
 
-	if IsVirtualEnvironmentUsed && IsNotVirtualEnvironmentExist; then
+	if IsUseVirtualPythonEnv && IsNotVirtualEnvironmentExist; then
 		DisplayErrCommitAllLogs 'unable to start daemon: virtual environment does not exist!'
 		SetError
 		return 1
@@ -277,7 +347,7 @@ StartQPKG()
 	fi
 
 	WaitForDaemon
-	WaitForPID
+	WaitForStartPID
 
 	if ! IsDaemonActive; then
 		DisplayErrCommitAllLogs 'IsDaemonActive() failed!'
@@ -296,6 +366,17 @@ StartQPKG()
 	}
 
 StopQPKG()
+	{
+
+	if [[ $(type -t StopQPKGCustom) = function ]]; then
+		StopQPKGCustom
+	else
+		StopQPKGLibrary
+	fi
+
+	}
+
+StopQPKGLibrary()
 	{
 
 	IsError && return
@@ -346,7 +427,8 @@ StopQPKG()
 			break
 		done
 
-		/bin/sleep 1		# let application shutdown complete
+# 		/bin/sleep 1		# let application shutdown complete.
+		WaitForKillPID
 		IsNotDaemonActive || { SetError; return 1 ;}
 	fi
 
@@ -357,17 +439,17 @@ StopQPKG()
 InstallAddons()
 	{
 
-	IsVirtualEnvironmentUsed || return 0
+	IsUseVirtualPythonEnv || return 0
 
-	local default_essential_modules_pathfile=$QPKG_CONFIG_PATH/essential.txt
+	local default_essential_modules_pathfile=$QPKG_CONFIG_PATH/pip-essential.txt
 	local default_requirements_modules_pathfile=$QPKG_CONFIG_PATH/requirements.txt
 	local default_recommended_modules_pathfile=$QPKG_CONFIG_PATH/recommended.txt
 
-	local essential_modules_pathfile=$qpkg_repo_path/essential.txt
+	local essential_modules_pathfile=$qpkg_repo_path/pip-essential.txt
 	local requirements_modules_pathfile=$qpkg_repo_path/requirements.txt
 	local recommended_modules_pathfile=$qpkg_repo_path/recommended.txt
-	local excluded_modules_pathfile=$QPKG_CONFIG_PATH/exclusions.txt
-	local rename_modules_pathfile=$QPKG_CONFIG_PATH/rename.txt
+	local excluded_modules_pathfile=$QPKG_CONFIG_PATH/pip-exclusions.txt
+	local rename_modules_pathfile=$QPKG_CONFIG_PATH/pip-rename.txt
 
 	local pyproject_pathfile=$qpkg_repo_path/pyproject.toml
 	local pip_conf_pathfile=$venv_path/pip.conf
@@ -375,6 +457,9 @@ InstallAddons()
 	local sys_packages=' --system-site-packages'
 	local no_pips_installed=true
 	local pip_deps=' --no-deps'
+	local module_exclusions=''
+	local re=''
+	local cmd=''
 
 	[[ $allow_access_to_sys_packages != true ]] && sys_packages=''
 	[[ $install_pip_deps = true ]] && pip_deps=''
@@ -416,13 +501,19 @@ InstallAddons()
 	# If not, `pip` will attempt to compile these, which fails on early ARMv5 CPUs.
 
 	if [[ -e $excluded_modules_pathfile ]]; then
-		local module_exclusions=$(/bin/tr '\n' ' ' < "$excluded_modules_pathfile")
+		module_exclusions=$(/bin/tr '\n' ' ' <<< "$(StripComments "$(<"$excluded_modules_pathfile")")")
 		module_exclusions=${module_exclusions%* }
-		local module_exclusions_re="/^${module_exclusions// /\|^}"
+		re="/^${module_exclusions// /\|^}"
 
 		for target in $essential_modules_pathfile $requirements_modules_pathfile $recommended_modules_pathfile $pyproject_pathfile; do
 			if [[ -e $target ]]; then
-				DisplayRunAndLog "exclude problem PyPI modules from '$(/usr/bin/basename "$target")'" "/bin/sed -i '${module_exclusions_re}/d' $target" log:failure-only
+				if [[ -e /opt/bin/sed ]]; then
+					cmd="/opt/bin/sed -i '${re}/Id' $target"		# perform case-insensitive match only if GNU `sed` exists.
+				else
+					cmd="/bin/sed -i '${re}/d' $target"				# eh, hope for the best.
+				fi
+
+				DisplayRunAndLog "exclude problem PyPI modules from '$(/usr/bin/basename "$target")'" "$cmd" log:failure-only
 			fi
 		done
 	fi
@@ -445,16 +536,16 @@ InstallAddons()
 		fi
 	fi
 
-	# KLUDGE: `manytolinux2014` builds are problematic in QTS, so rename these locally
+	# KLUDGE: `manytolinux2014` builds are problematic in QTS, so rename these locally.
 
 	if [[ -e $rename_modules_pathfile ]]; then
-		for module in $(<$rename_modules_pathfile); do
+		for module in $(StripComments "$(<"$rename_modules_pathfile")"); do
 			RenameSharedObjectFile "$module"
 		done
 	fi
 
-	if [[ $QPKG_NAME = SABnzbd ]]; then
-		LoadAppVersion
+	if IsSupportGetAppVersion; then
+		GetAppVersion
 
 		if [[ $new_env = false && -e $APP_VERSION_STORE_PATHFILE && $(<"$APP_VERSION_STORE_PATHFILE") != "$app_version" ]]; then
 			# remove existing .pyc files to prevent runtime errors
@@ -474,11 +565,34 @@ InstallAddons()
 
 	}
 
+StripComments()
+	{
+
+	# input:
+	#   $1 = string to strip comment lines, empty lines, and so-on.
+
+	# output:
+	#   stdout = stripped string.
+
+	local a=''
+
+	[[ -n $1 ]] || return
+
+	a="$1"
+
+	a=$(/bin/sed -e '/^#[[:space:]].*/d;/#$/d;s/[[:space:]]#[[:space:]].*//' <<< "$a")		# remove comment lines and line comments.
+	a=$(/bin/sed -e 's/^[[:space:]]*//' <<< "$a")											# remove leading whitespace.
+	a=$(/bin/sed 's/[[:space:]]*$//' <<< "$a")												# remove trailing whitespace.
+	a=$(/bin/sed "/^$/d" <<< "$a")															# remove empty lines.
+
+	echo "$a"
+
+	}
+
 BackupConfig()
 	{
 
-	MakePaths
-	DisplayRunAndLog 'update configuration backup' "/bin/tar --create --gzip --file=$backup_pathfile --directory=$QPKG_PATH/config ." || SetError
+	DisplayRunAndLog 'update configuration backup' "/bin/tar --create --gzip --file=$qpkg_backup_pathfile --directory=$QPKG_PATH/config ." || SetError
 
 	return 0
 
@@ -487,13 +601,13 @@ BackupConfig()
 RestoreConfig()
 	{
 
-	if [[ ! -f $backup_pathfile ]]; then
+	if [[ ! -f $qpkg_backup_pathfile ]]; then
 		DisplayErrCommitAllLogs 'unable to restore configuration: no backup file was found!'
 		SetError
 		return 1
 	fi
 
-	DisplayRunAndLog 'restore configuration backup' "/bin/tar --extract --gzip --file=$backup_pathfile --directory=$QPKG_PATH/config" || SetError
+	DisplayRunAndLog 'restore configuration backup' "/bin/tar --extract --gzip --file=$qpkg_backup_pathfile --directory=$QPKG_PATH/config" || SetError
 
 	return 0
 
@@ -512,13 +626,13 @@ MakePaths()
 	{
 
 	if [[ -d $QPKG_PATH ]]; then
-		DisplayWaitCommitToLog 'create paths:'
-		[[ ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
-		IsGitApp && [[ ! -d $qpkg_repo_path ]] && mkdir -p "$qpkg_repo_path"
-		IsUsePipCache && [[ ! -d $pip_cache_path ]] && mkdir -p "$pip_cache_path"
-		IsVirtualEnvironmentUsed && [[ ! -d $venv_path ]] && mkdir -p "$venv_path"
-		DisplayCommitToLog OK
+		[[ $local_temp_path != undefined && ! -d $local_temp_path ]] && mkdir -p "$local_temp_path"
+		[[ $qpkg_repo_path != undefined && ! -d $qpkg_repo_path ]] && mkdir -p "$qpkg_repo_path"
+		[[ $pip_cache_path != undefined && ! -d $pip_cache_path ]] && mkdir -p "$pip_cache_path"
+		[[ $venv_path != undefined && ! -d $venv_path ]] && mkdir -p "$venv_path"
 	fi
+
+	[[ $BACKUP_PATH != undefined && ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
 
 	}
 
@@ -567,7 +681,7 @@ LoadPorts()
 
 	}
 
-LoadAppVersion()
+GetAppVersion()
 	{
 
 	# Find the application's internal version number
@@ -585,6 +699,17 @@ LoadAppVersion()
 	}
 
 StatusQPKG()
+	{
+
+	if [[ $(type -t StatusQPKGCustom) = function ]]; then
+		StatusQPKGCustom
+	else
+		StatusQPKGLibrary
+	fi
+
+	}
+
+StatusQPKGLibrary()
 	{
 
 	IsNotError || return
@@ -620,7 +745,7 @@ DisableOpkgDaemonStart()
 
 	}
 
-PullGitRepo()
+CloneGitRepo()
 	{
 
 	# inputs (global):
@@ -645,7 +770,7 @@ PullGitRepo()
 			DisplayCommitToLog "active git branch: '$active_branch', new git branch: '$source_git_branch'"
 			[[ $QPKG_NAME = nzbToMedia ]] && BackupConfig
 			DisplayCommitToLog 'new git branch has been specified, so must clean local repository'
-			CleanLocalClone
+			CleanLocalRepo
 		fi
 	fi
 
@@ -668,7 +793,7 @@ PullGitRepo()
 
 	}
 
-CleanLocalClone()
+CleanLocalRepo()
 	{
 
 	# for occasions where the local repo needs to be deleted and cloned again from source.
@@ -678,11 +803,13 @@ CleanLocalClone()
 		return 1
 	fi
 
-	IsGitApp && DisplayRunAndLog 'clean local repository' "rm -rf \"$qpkg_repo_path\"" log:failure-only
-	IsGitApp && [[ -d $(/usr/bin/dirname "$qpkg_repo_path")/$QPKG_NAME ]] && DisplayRunAndLog 'KLUDGE: remove previous local repository' "rm -r \"$(/usr/bin/dirname "$qpkg_repo_path")/$QPKG_NAME\"" log:failure-only
-	IsVirtualEnvironmentUsed && [[ -d $venv_path ]] && DisplayRunAndLog 'clean virtual environment' "rm -rf \"$venv_path\"" log:failure-only
+	(IsGitApp || IsOnlineArchive) && DisplayRunAndLog 'clean local repository' "rm -rf \"$qpkg_repo_path\"" log:failure-only
+	IsUseVirtualPythonEnv && [[ -d $venv_path ]] && DisplayRunAndLog 'clean virtual environment' "rm -rf \"$venv_path\"" log:failure-only
 	IsUsePipCache && [[ -d $pip_cache_path ]] && DisplayRunAndLog 'clean PyPI cache' "rm -rf \"$pip_cache_path\"" log:failure-only
 	[[ -e $APP_VERSION_STORE_PATHFILE ]] && DisplayRunAndLog 'remove application version' "rm -f \"$APP_VERSION_STORE_PATHFILE\"" log:failure-only
+	IsUseTemp && [[ -d $local_temp_path ]] && DisplayRunAndLog 'clean temp path' "rm -rf \"$local_temp_path\"" log:failure-only
+
+	MakePaths
 
 	}
 
@@ -734,7 +861,7 @@ FindAndWritePIDFile()
 	local target_pid=''
 
 	if [[ $daemon_proc_is_name_only = true ]]; then
-		# QTS `pidof` is unreliable and should be used as a last resort only
+		# QTS `pidof` is unreliable and should be used only as a last resort
 		target_pid=$(/bin/pidof -s "$(/usr/bin/basename "$daemon_pathfile")")
 	else
 		target_pid=$(/bin/ps | /bin/grep "$(GetLaunchTarget)" | /bin/grep -v grep)
@@ -753,10 +880,10 @@ FindAndWritePIDFile()
 
 	}
 
-WaitForPID()
+WaitForStartPID()
 	{
 
-	local -i count=0
+	local -i i=0
 
 	if [[ $pidfile_is_managed_by_app = true ]]; then
 		if WaitForFileToAppear "$daemon_pid_pathfile" "$PIDFILE_APPEAR_TIMEOUT_SECONDS"; then
@@ -765,35 +892,37 @@ WaitForPID()
 	fi
 
 	if [[ $recheck_daemon_pid_after_launch = true ]]; then
-		DisplayWaitCommitToLog 'found daemon PID:'
+		DisplayWaitCommitToLog "wait $PID_RECHECK_WAIT_SECONDS second$(Pluralise "$PID_RECHECK_WAIT_SECONDS") to recheck PID:"
 
-		if FindAndWritePIDFile; then
-			DisplayCommitToLog "$(<"$daemon_pid_pathfile")"
-		else
-			DisplayCommitToLog false
-		fi
-
-		DisplayWaitCommitToLog "wait $PIDFILE_RECHECK_WAIT_SECONDS second$(Pluralise "$PIDFILE_RECHECK_WAIT_SECONDS") to recheck PID:"
-
-		for ((count=1; count<=PIDFILE_RECHECK_WAIT_SECONDS; count++)); do
+		for ((i=1; i<=PID_RECHECK_WAIT_SECONDS; i++)); do
 			/bin/sleep 1
-			DisplayWait "$count,"
+			DisplayWait "$i,"
 		done
 
 		DisplayCommitToLog 'done'
 	fi
 
-	DisplayWaitCommitToLog 'found daemon PID:'
+	FindAndWritePIDFile || return
 
-	if FindAndWritePIDFile; then
-		DisplayCommitToLog "$(<"$daemon_pid_pathfile")"
-	else
-		DisplayErrCommitAllLogs false
-		DisplayErrCommitAllLogs 'unable to locate active daemon process'
-		return 1
+	}
+
+WaitForKillPID()
+	{
+
+	local -i i=0
+
+	if [[ $recheck_daemon_pid_after_kill = true ]]; then
+		DisplayWaitCommitToLog "wait $PID_RECHECK_WAIT_SECONDS second$(Pluralise "$PID_RECHECK_WAIT_SECONDS") to recheck PID:"
+
+		for ((i=1; i<=PID_RECHECK_WAIT_SECONDS; i++)); do
+			/bin/sleep 1
+			DisplayWait "$i,"
+		done
+
+		DisplayCommitToLog 'done'
 	fi
 
-	return 0
+	! FindAndWritePIDFile || return
 
 	}
 
@@ -806,7 +935,7 @@ WaitForDaemon()
 	# output:
 	#   $? = 0 (file was found) or 1 (file not found: timeout)
 
-	local -i count=0
+	local -i i=0
 
 	if [[ -n $1 ]]; then
 		MAX_SECONDS=$1
@@ -827,13 +956,13 @@ WaitForDaemon()
 		fi
 
 		(
-			for ((count=1; count<=MAX_SECONDS; count++)); do
+			for ((i=1; i<=MAX_SECONDS; i++)); do
 				/bin/sleep 1
-				DisplayWait "$count,"
+				DisplayWait "$i,"
 
 				if IsProcessActive "$target_proc" "$daemon_pid_pathfile"; then
 					Display OK
-					CommitToLog "active after $count second$(Pluralise "$count")"
+					CommitToLog "active after $i second$(Pluralise "$i")"
 					true
 					exit	# only this sub-shell
 				fi
@@ -866,6 +995,8 @@ WaitForFileToAppear()
 	#   $? = 0 : file was found
 	#   $? = 1 : file not found/timeout
 
+	local -i i=0
+
 	[[ -n $1 ]] || return
 
 	if [[ -n $2 ]]; then
@@ -879,13 +1010,13 @@ WaitForFileToAppear()
 		DisplayWait "(no-more than $MAX_SECONDS second$(Pluralise "$MAX_SECONDS")):"
 
 		(
-			for ((count=1; count<=MAX_SECONDS; count++)); do
+			for ((i=1; i<=MAX_SECONDS; i++)); do
 				/bin/sleep 1
-				DisplayWait "$count,"
+				DisplayWait "$i,"
 
 				if [[ -e $1 ]]; then
 					Display OK
-					CommitToLog "visible after $count second$(Pluralise "$count")"
+					CommitToLog "visible after $i second$(Pluralise "$i")"
 					true
 					exit	# only this sub-shell
 				fi
@@ -1108,16 +1239,16 @@ WriteToLog()
 	#   $1 = pass/fail
 	#   $2 = message
 
-	printf "%-4s: %s\n" "$(StripANSI "${1:-}")" "$(StripANSI "${2:-}")" >> "$SERVICE_LOG_PATHFILE"
+	printf "%-4s: %s\n" "$(StripANSICodes "${1:-}")" "$(StripANSICodes "${2:-}")" >> "$SERVICE_LOG_PATHFILE"
 
 	}
 
-StripANSI()
+StripANSICodes()
 	{
 
 	# QTS 4.2.6 BusyBox 'sed' doesn't fully support extended regexes, so this only works with a real 'sed'
 
-	if [[ -e /opt/bin/sed ]]; then
+	if [[ -e /opt/bin/sed && -L /opt/etc/passwd ]]; then	# Try to ensure Entware is active before using this utility.
 		/opt/bin/sed -r 's/\x1b\[[0-9;]*m//g' <<< "${1:-}"
 	else
 		echo "${1:-}"		# can't strip, so pass thru original message unaltered
@@ -1272,7 +1403,7 @@ GetOriginalModuleSOFilename()
 	{
 
 	[[ -z $pyver ]] && pyver=$(GetPythonVer)
-	[[ -n ${1:-} ]] && echo "$1.cpython-$pyver-$(uname -m)-linux-gnu.so"
+	[[ -n ${1:-} ]] && echo "$1.cpython-$pyver-$(/bin/uname -m)-linux-gnu.so"
 
 	}
 
@@ -1401,7 +1532,7 @@ IsNotQPKGEnabled()
 IsSupportBackup()
 	{
 
-	[[ $backup_pathfile != undefined ]]
+	[[ $qpkg_backup_pathfile != undefined ]]
 
 	}
 
@@ -1429,7 +1560,7 @@ IsNotSupportReset()
 IsSupportGetAppVersion()
 	{
 
-	[[ $app_version_pathfile != undefined ]]
+	[[ $app_version_cmd != undefined && $app_version_pathfile != undefined ]]
 
 	}
 
@@ -1440,7 +1571,7 @@ IsNotSupportGetAppVersion()
 
 	}
 
-IsVirtualEnvironmentUsed()
+IsUseVirtualPythonEnv()
 	{
 
 	[[ $venv_path != undefined ]]
@@ -1450,7 +1581,7 @@ IsVirtualEnvironmentUsed()
 IsNotVirtualEnvironmentUsed()
 	{
 
-	! IsVirtualEnvironmentUsed
+	! IsUseVirtualPythonEnv
 
 	}
 
@@ -1484,10 +1615,24 @@ IsNotUsePipCache()
 
 	}
 
+IsOnlineArchive()
+	{
+
+	[[ $remote_url != undefined ]]
+
+	}
+
+IsNotOnlineArchive()
+	{
+
+	! IsOnlineArchive
+
+	}
+
 IsSourcedOnline()
 	{
 
-	IsGitApp || IsUsePipCache || IsVirtualEnvironmentUsed
+	IsGitApp || IsUsePipCache || IsUseVirtualPythonEnv || IsOnlineArchive
 
 	}
 
@@ -1495,6 +1640,20 @@ IsNotSourcedOnline()
 	{
 
 	! IsSourcedOnline
+
+	}
+
+IsUseTemp()
+	{
+
+	[[ $local_temp_path != undefined ]]
+
+	}
+
+IsNotUseTemp()
+	{
+
+	! IsUseTemp
 
 	}
 
@@ -2054,7 +2213,7 @@ ShowAsError()
 
 	local capitalised=$(Capitalise "${1:-}")
 
-	Display "$(ColourTextBrightRed derp): $capitalised"
+	Display "$(TextBrightRed derp): $capitalised"
 
 	} >&2
 
@@ -2182,7 +2341,7 @@ DisplayAndCommitActionToLog()
 		IsUnsupported && target=CommitToLog
 		CommitToLog '•'
 
-		$target "$(ColourTextInverse "$msg")"
+		$target "$(TextInverse "$msg")"
 		$target "package: $QPKG_VERSION, service: $SERVICE_SCRIPT_VERSION, library: $SERVICE_LIB_VERSION"
 	fi
 
@@ -2202,13 +2361,13 @@ DisplayAndCommitStatusToLog()
 
 		case $service_result in
 			ok)
-				$target "$(ColourTextBlackOnGreen "$msg")"
+				$target "$(TextBlackOnGreen "$msg")"
 				;;
 			failed)
-				$target "$(ColourTextBlackOnRed "$msg")"
+				$target "$(TextBlackOnRed "$msg")"
 				;;
 			*)
-				$target "$(ColourTextBlackOnYellow "$msg")"
+				$target "$(TextBlackOnYellow "$msg")"
 		esac
 	fi
 
@@ -2277,42 +2436,42 @@ CommitSysLog()
 
 	}
 
-ColourTextBrightWhite()
+TextBrightWhite()
 	{
 
 	printf '\033[1;97m%s\033[0m' "${1:-}"
 
 	} 2>/dev/null
 
-ColourTextBrightRed()
+TextBrightRed()
 	{
 
 	printf '\033[1;31m%s\033[0m' "${1:-}"
 
 	} 2>/dev/null
 
-ColourTextBlackOnGreen()
+TextBlackOnGreen()
 	{
 
 	printf '\033[30;42m%s\033[0m' "${1:-}"
 
 	} 2>/dev/null
 
-ColourTextBlackOnRed()
+TextBlackOnRed()
 	{
 
 	printf '\033[30;41m%s\033[0m' "${1:-}"
 
 	} 2>/dev/null
 
-ColourTextBlackOnYellow()
+TextBlackOnYellow()
 	{
 
 	printf '\033[30;43m%s\033[0m' "${1:-}"
 
 	} 2>/dev/null
 
-ColourTextInverse()
+TextInverse()
 	{
 
 	printf '\033[7m%s\033[0m' "${1:-}"
@@ -2508,31 +2667,56 @@ ProcessArgs()
 		local user_arg=${USER_ARGS_RAW%% *}		# only process first argument
 
 		case $user_arg in
-			start|--start)
+			b|-b|backup|--backup|backup-config|--backup-config)
 				IsSU ||	exit 1
-				SetServiceAction start
 
-				if IsNotQPKGEnabled; then
-					DisplayCommitToLog "$(FormatAsPackageName "$QPKG_NAME") QPKG is disabled. Please enable it first with: $0 enable"
-					SetError
+				if IsSupportBackup; then
+					SetServiceAction backup
+					BackupConfig
 				else
-					StartQPKG
+					SetServiceAction unsupported
+					ShowUnsupportedAction "$user_arg"
 				fi
 				;;
-			stop|--stop)
+			clean|--clean)
 				IsSU ||	exit 1
-				SetServiceAction stop
-				StopQPKG
+
+				if IsSourcedOnline; then
+					SetServiceAction clean
+					StopQPKG
+					[[ $QPKG_NAME = nzbToMedia ]] && BackupConfig
+					CleanLocalRepo
+					StartQPKG
+					[[ $QPKG_NAME = nzbToMedia ]] && RestoreConfig
+				else
+					SetServiceAction unsupported
+					ShowUnsupportedAction "$user_arg"
+				fi
 				;;
-			r|-r|restart|--restart)
+			debug|help|verbose)
+				ShowHelp
+				;;
+			disable)
 				IsSU ||	exit 1
-				SetServiceAction restart
+				SetServiceAction disable
+				/sbin/qpkg_service disable "$QPKG_NAME"
 
 				if IsNotQPKGEnabled; then
-					DisplayCommitToLog "$(FormatAsPackageName "$QPKG_NAME") QPKG is disabled. Please enable it first with: $0 enable"
-					SetError
+					DisplayCommitToLog "$(FormatAsPackageName "$QPKG_NAME") is disabled."
 				else
-					StopQPKG && StartQPKG
+					DisplayCommitToLog "$(FormatAsPackageName "$QPKG_NAME") disable failed."
+					SetError
+				fi
+				;;
+			disable-auto-update|--disable-auto-update)
+				IsSU ||	exit 1
+
+				if IsSourcedOnline; then
+					SetServiceAction disable-auto-update
+					DisableAutoUpdate
+				else
+					SetServiceAction unsupported
+					ShowUnsupportedAction "$user_arg"
 				fi
 				;;
 			enable)
@@ -2547,32 +2731,23 @@ ProcessArgs()
 					SetError
 				fi
 				;;
-			disable)
-				IsSU ||	exit 1
-				SetServiceAction disable
-				/sbin/qpkg_service disable "$QPKG_NAME"
-
-				if IsNotQPKGEnabled; then
-					DisplayCommitToLog "$(FormatAsPackageName "$QPKG_NAME") is disabled."
-				else
-					DisplayCommitToLog "$(FormatAsPackageName "$QPKG_NAME") disable failed."
-					SetError
-				fi
-				;;
-			s|-s|status|--status)
-				SetServiceAction status
-				StatusQPKG
-				;;
-			b|-b|backup|--backup|backup-config|--backup-config)
+			enable-auto-update|--enable-auto-update)
 				IsSU ||	exit 1
 
-				if IsSupportBackup; then
-					SetServiceAction backup
-					BackupConfig
+				if IsSourcedOnline; then
+					SetServiceAction enable-auto-update
+					EnableAutoUpdate
 				else
 					SetServiceAction unsupported
 					ShowUnsupportedAction "$user_arg"
 				fi
+				;;
+			l|-l|log|--log)
+				SetServiceAction log
+				ViewLog
+				;;
+			remove)			# only called by the QDK '.uninstall.sh' script
+				SetServiceAction uninstall
 				;;
 			reset-config|--reset-config)
 				IsSU ||	exit 1
@@ -2585,6 +2760,17 @@ ProcessArgs()
 				else
 					SetServiceAction unsupported
 					ShowUnsupportedAction "$user_arg"
+				fi
+				;;
+			r|-r|restart|--restart)
+				IsSU ||	exit 1
+				SetServiceAction restart
+
+				if IsNotQPKGEnabled; then
+					DisplayCommitToLog "$(FormatAsPackageName "$QPKG_NAME") QPKG is disabled. Please enable it first with: $0 enable"
+					SetError
+				else
+					StopQPKG && StartQPKG
 				fi
 				;;
 			restore|--restore|restore-config|--restore-config)
@@ -2600,58 +2786,31 @@ ProcessArgs()
 					ShowUnsupportedAction "$user_arg"
 				fi
 				;;
-			clean|--clean)
+			start|--start)
 				IsSU ||	exit 1
+				SetServiceAction start
 
-				if IsSourcedOnline; then
-					SetServiceAction clean
-					StopQPKG
-					[[ $QPKG_NAME = nzbToMedia ]] && BackupConfig
-					CleanLocalClone
+				if IsNotQPKGEnabled; then
+					DisplayCommitToLog "$(FormatAsPackageName "$QPKG_NAME") QPKG is disabled. Please enable it first with: $0 enable"
+					SetError
+				else
 					StartQPKG
-					[[ $QPKG_NAME = nzbToMedia ]] && RestoreConfig
-				else
-					SetServiceAction unsupported
-					ShowUnsupportedAction "$user_arg"
 				fi
 				;;
-			l|-l|log|--log)
-				SetServiceAction log
-				ViewLog
+			s|-s|status|--status)
+				SetServiceAction status
+				StatusQPKG
 				;;
-			disable-auto-update|--disable-auto-update)
+			stop|--stop)
 				IsSU ||	exit 1
-
-				if IsSourcedOnline; then
-					SetServiceAction disable-auto-update
-					DisableAutoUpdate
-				else
-					SetServiceAction unsupported
-					ShowUnsupportedAction "$user_arg"
-				fi
-				;;
-			enable-auto-update|--enable-auto-update)
-				IsSU ||	exit 1
-
-				if IsSourcedOnline; then
-					SetServiceAction enable-auto-update
-					EnableAutoUpdate
-				else
-					SetServiceAction unsupported
-					ShowUnsupportedAction "$user_arg"
-				fi
+				SetServiceAction stop
+				StopQPKG
 				;;
 			v|-v|version|--version)
 				SetServiceAction none
 				Display "package: $QPKG_VERSION"
 				Display "service: $SERVICE_SCRIPT_VERSION"
 				Display "library: $SERVICE_LIB_VERSION"
-				;;
-			remove)			# only called by the QDK '.uninstall.sh' script
-				SetServiceAction uninstall
-				;;
-			debug|help|verbose)
-				ShowHelp
 				;;
 			*)
 				if [[ -z $user_arg ]]; then
