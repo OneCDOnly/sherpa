@@ -1446,9 +1446,10 @@ AdjustMaxForks()
 	max_forks=$CONCURRENCY
 	local reason=''
 
-	# No-point running actions async in debug mode: their stdout will make a confusing mess of the screen.
-
-	if [[ $opts_debug = true ]]; then
+	if [[ $opts_verbose = true ]]; then 			# No-point running actions async in verbose mode: stdout will be a confusing mess.
+		max_forks=1
+		reason='verbose mode is active'
+	elif [[ $opts_debug = true ]]; then 			# Same goes for debug mode: logs will be a mess.
 		max_forks=1
 		reason='debug mode is active'
 	else
@@ -1465,11 +1466,11 @@ AdjustMaxForks()
 				max_forks=1
 				reason="'$1'"
 				;;
-			backup|deactivate|download|uninstall)	# Low-resource actions, so force multiple forks, even on ARMv5.
+			backup|deactivate|download|uninstall)	# Low-resource actions, so allow multiple forks, even on ARMv5.
 				max_forks=4
 				reason="'$1'"
 				;;
-			disable|enable|status)					# Really low-resource actions.
+			disable|enable|status)					# Really-low-resource actions.
 				max_forks=8
 				reason="'$1'"
 		esac
@@ -5671,7 +5672,7 @@ Report.Dependencies:Show()
 
 		{
 
-		DisplayAsHelpTitle "$(ShowTitleName) will automatically install/start/stop/restart package dependencies as-required."
+		DisplayAsHelpTitle "package dependencies are automatically installed/started/stopped/restarted as-required."
 		DisplayAsHelpTitle "requirements shown in \"$(TextBrightOrange '* orange')\" prevent the package being installed."
 		DisplayAsHelpTitle "those shown in \"$(TextBrightRed '! red')\" are preventing the package from working correctly."
 		DisplayAsDepsReportTitleLine
