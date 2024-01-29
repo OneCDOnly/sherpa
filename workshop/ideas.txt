@@ -1,8 +1,5 @@
 * check Entware package archive isn't being extracted in every session.
-	- Should only do this once-per archive update.
-
-* Create a new warning message when 1 minute system load-average is unusually high at sherpa startup.
-	- advise processing will take longer.
+	- Should only do this once-per original archive update.
 
 * Use new nzbget fork?
 	- https://github.com/nzbgetcom/nzbget
