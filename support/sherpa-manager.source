@@ -695,7 +695,12 @@ Debug.Log:Env()
 	esac
 
 	DebugFirmware ok 'OS uptime' "$(GetUptime)"
-	DebugFirmware ok 'system load' "$(GetSysLoadAverages)"
+
+	if OS.IsLoadAverageElevated; then
+		DebugFirmware warning 'system load' "$(GetSysLoadAverages)"
+	else
+		DebugFirmware ok 'system load' "$(GetSysLoadAverages)"
+	fi
 
 	if OS.IsSupportSudo; then
 		DebugUserspace ok '$SUDO_UID' "$(GetSudoUID)"
@@ -5284,6 +5289,14 @@ QPKGs.States:Build()
 		Func:Exit; return
 	fi
 
+	if OS.IsLoadAverageInsane; then
+		ShowAsWarn "the NAS currently has an exceptionally-high system load ... maybe abort and try again later?"
+	elif OS.IsLoadAverageHigh; then
+		ShowAsWarn "$(GetQnapOS) currently has an unusually-high system load ... this will take a while"
+	elif OS.IsLoadAverageElevated; then
+		ShowAsWarn "the NAS currently has an elevated system load ... this will take a little longer than usual"
+	fi
+
 	OS.IsStarting && ShowAsWarn "$(GetQnapOS) is starting all enabled QPKGs ... check again in a few minutes"
 	OS.IsStopping && ShowAsWarn "$(GetQnapOS) is shutting-down and all QPKGs are stopping"
 
@@ -6338,6 +6351,13 @@ GetSysLoadAverages()
 
 	}
 
+GetSysLoad1MinAverage()
+	{
+
+	$UPTIME_CMD | $SED_CMD 's|.*load average: ||' | $AWK_CMD -F', ' '{print $1}'
+
+	}
+
 GetCPUCores()
 	{
 
@@ -6561,7 +6581,7 @@ OS.IsStopping()
 OS.IsStdKernelPageSize()
 	{
 
-	# Standard kernel page size for most NAS is 4kB. Non-standard size is 32kB (confirmed on the TS-431XeU, TS-431X3 & TS-1635).
+	# Standard kernel page size for most QNAP NAS is 4kB. Non-standard size is 32kB (confirmed on the TS-431XeU, TS-431X3 & TS-1635).
 	# https://www.qnap.com/en-us/how-to/faq/article/why-do-the-installed-third-party-containers-not-run-successfully-on-specific-32-bit-arm-devices
 
 	[[ ${KERNEL_PAGE_SIZE:=$(GetKernelPageSize)} = 4kB ]]
@@ -6572,6 +6592,36 @@ OS.IsNonStdKernelPageSize()
 	{
 
 	! OS.IsStdKernelPageSize
+
+	}
+
+OS.IsLoadAverageElevated()
+	{
+
+	local a=$(GetSysLoad1MinAverage); a=${a/./}
+	local b=$((CPU_CORES*2*100))
+
+	[[ $a -ge $b ]]
+
+	}
+
+OS.IsLoadAverageHigh()
+	{
+
+	local a=$(GetSysLoad1MinAverage); a=${a/./}
+	local b=$((CPU_CORES*4*100))
+
+	[[ $a -ge $b ]]
+
+	}
+
+OS.IsLoadAverageInsane()
+	{
+
+	local a=$(GetSysLoad1MinAverage); a=${a/./}
+	local b=$((CPU_CORES*8*100))
+
+	[[ $a -ge $b ]]
 
 	}
 
@@ -9935,7 +9985,7 @@ ShowAsDone()
 
 	[[ -n ${1:-} ]] || return
 
-	local a=$1
+	local a=$(Capitalise "$1")
 	a=$(AddPeriod "$a")
 
 	OpStepClear "$(TextBrightGreen 'done')" "$a"
@@ -9950,7 +10000,7 @@ ShowAsWarn()
 
 	[[ -n ${1:-} ]] || return
 
-	local a=$1
+	local a=$(Capitalise "$1")
 	a=$(AddPeriod "$a")
 
 	OpStepClear "$(TextBrightOrange warn)" "$a"
@@ -9965,7 +10015,7 @@ ShowAsAbort()
 
 	[[ -n ${1:-} ]] || return
 
-	local a=$1
+	local a=$(Capitalise "$1")
 	a=$(AddPeriod "$a")
 
 	OpStepClear "$(TextBrightRed bort)" "$a"
