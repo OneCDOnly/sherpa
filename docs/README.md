@@ -5,7 +5,7 @@
 
 ## Description
 
-A mini-package-manager for QNAP NAS.
+A mini-package-manager for QNAP® NAS.
 
 Package management via **sherpa** provides extra features like easy application backup, upgrading, service and daemon management, self-checking and repair, and all operations may be automated via cron.
 
