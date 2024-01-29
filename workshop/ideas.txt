@@ -1,5 +1,3 @@
-* When showing port already in-use, should note PID as-well as process details.
-
 * sherpa 'stable' branch should only update once per-day.
 	- 'unstable' should update once per 10 minutes.
 
