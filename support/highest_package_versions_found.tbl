@@ -79,6 +79,6 @@ SortMyQPKGs_240112.qpkg.md5          SortMyQPKGs_240112.qpkg          SortMyQPKG
 Unrar_6.2.5_arm_64.qpkg.md5          Unrar_6.2.5_arm_64.qpkg          Unrar                6.2.5        a64    e2382b80908fc9549bbb00058968082a
 Unrar_6.2.5_arm-x41.qpkg.md5         Unrar_6.2.5_arm-x41.qpkg         Unrar                6.2.5        a41    ac1ff1149258db5e4c0b8165774eda37
 Unrar_6.2.5_x86_64.qpkg.md5          Unrar_6.2.5_x86_64.qpkg          Unrar                6.2.5        i64    f29dc4c271a0a1341d2dad78eb34d2ca
-WebSSH_240130_arm_64.qpkg.md5        WebSSH_240130_arm_64.qpkg        WebSSH               240130       a64    7e4d44d2b66d9c6f6851572baf5057dc
-WebSSH_240130_x86_64.qpkg.md5        WebSSH_240130_x86_64.qpkg        WebSSH               240130       i64    99675788bfde008e9d2a8ab0e5be1e3c
-WebSSH_240130_x86.qpkg.md5           WebSSH_240130_x86.qpkg           WebSSH               240130       i86    5b38a69f33c68fcce8c874419825c787
+WebSSH_240130_arm_64.qpkg.md5        WebSSH_240130_arm_64.qpkg        WebSSH               240130       a64    334121cbe22d0316d7fa3f4313733919
+WebSSH_240130_x86_64.qpkg.md5        WebSSH_240130_x86_64.qpkg        WebSSH               240130       i64    f00b48c820c4d557cb5e2aede00119b3
+WebSSH_240130_x86.qpkg.md5           WebSSH_240130_x86.qpkg           WebSSH               240130       i86    bc51847394a30a5d7d70fc230f96d739
