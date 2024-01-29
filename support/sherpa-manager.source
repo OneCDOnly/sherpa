@@ -681,7 +681,6 @@ Debug.Log:Env()
 
 	DebugFirmware ok 'OS uptime' "$(GetUptime)"
 	DebugFirmware ok 'system load' "$(GetSysLoadAverages)"
-	DebugUserspace ok timezone "$(GetTimezone)"
 
 	if OS.IsSupportSudo; then
 		DebugUserspace ok '$SUDO_UID' "$(GetSudoUID)"
@@ -769,14 +768,14 @@ Self.Tasks:Check()
 	[[ $task_check = true ]] || return
 
 	Func:Init
-	ShowAsProc 'checking'
+	ShowAsProc checking
 	local action=''
 	local group=''
 	local state=''
 	local something_to_do=false
 	local build_states=false
 
-	if [[ $opts_paste_log_last = true || $opts_paste_log_tail = true || $opts_show_abbreviations = true || $opts_show_actions = true || $opts_show_actions_all = true || $opts_show_backups = true || $opts_show_groups = true || $opts_show_log_last = true || $opts_show_log_tail = true || $opts_show_options = true || $opts_show_problems = true || $opts_show_results = true || $opts_show_tips = true || $opts_show_versions = true ]]; then
+	if [[ $opts_debug = true || $opts_paste_log_last = true || $opts_paste_log_tail = true || $opts_show_abbreviations = true || $opts_show_actions = true || $opts_show_actions_all = true || $opts_show_backups = true || $opts_show_groups = true || $opts_show_log_last = true || $opts_show_log_tail = true || $opts_show_options = true || $opts_show_problems = true || $opts_show_results = true || $opts_show_tips = true || $opts_show_versions = true || $opts_verbose = true ]]; then
 		something_to_do=true
 	elif [[ $opts_check = true || $opts_show_dependencies = true || $opts_show_packages = true || $opts_show_packages_failed = true || $opts_show_packages_ok = true || $opts_show_packages_skipped = true || $opts_show_reassign = true || $opts_show_repos = true || $opts_show_status = true ]]; then
 		something_to_do=true
@@ -911,7 +910,7 @@ Self:Validate()
 		QPKGs-ACupgrade-to:Add sherpa
 	fi
 
-	ShowAsProc 'continue validating'
+	ShowAsProc validating
 
 	# KLUDGE: ensure old installs of Entware are reinstalled.
 
@@ -6457,13 +6456,6 @@ GetUpState()
 	else
 		echo -n stable
 	fi
-
-	}
-
-GetTimezone()
-	{
-
-	/bin/date +%z
 
 	}
 
