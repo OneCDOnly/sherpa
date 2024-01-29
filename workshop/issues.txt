@@ -1,5 +1,3 @@
-* NZBHydra2 unable to recognise it's already running.
-
 * function durations can become incorrect when functions with the same name are called recursively.
 	- Need to make var holding start-time unique.
 
