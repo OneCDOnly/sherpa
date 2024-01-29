@@ -1,4 +1,4 @@
-* nzbhydra unable to recognise that its already running.
+* NZBHydra2 unable to recognise it's already running.
 
 * upgrading Entware QPKG doesn't 'activate' previously activated dependent QPKGs afterward.
 
