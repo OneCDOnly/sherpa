@@ -9352,7 +9352,7 @@ ShowVersion()
 ShowDescription()
 	{
 
-	echo -n 'a mini-package-manager for QNAP NAS'
+	echo -n '<?title_description?>'
 
 	}
 
