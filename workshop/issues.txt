@@ -1,3 +1,5 @@
+* Don't show 'suppplied args were incomplete' message when requesting `sherpa v`.
+
 * Function durations can become incorrect when functions with the same name are called recursively.
 	- Need to make var holding start-time unique.
 
