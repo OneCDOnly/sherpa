@@ -1,0 +1,95 @@
+unable to install on x41:
+
+(venv) [~] # pip install pynacl
+Collecting pynacl
+  Downloading PyNaCl-1.5.0.tar.gz (3.4 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.4/3.4 MB 4.9 MB/s eta 0:00:00
+  Installing build dependencies ... error
+  error: subprocess-exited-with-error
+
+  × pip subprocess to install build dependencies did not run successfully.
+  │ exit code: 1
+  ╰─> [73 lines of output]
+      Collecting setuptools>=40.8.0
+        Using cached setuptools-69.0.3-py3-none-any.whl.metadata (6.3 kB)
+      Collecting wheel
+        Using cached wheel-0.42.0-py3-none-any.whl.metadata (2.2 kB)
+      Collecting cffi>=1.4.1
+        Downloading cffi-1.16.0.tar.gz (512 kB)
+           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 512.9/512.9 kB 2.6 MB/s eta 0:00:00
+        Installing build dependencies: started
+        Installing build dependencies: finished with status 'done'
+        Getting requirements to build wheel: started
+        Getting requirements to build wheel: finished with status 'done'
+        Installing backend dependencies: started
+        Installing backend dependencies: finished with status 'done'
+        Preparing metadata (pyproject.toml): started
+        Preparing metadata (pyproject.toml): finished with status 'done'
+      Collecting pycparser (from cffi>=1.4.1)
+        Downloading pycparser-2.21-py2.py3-none-any.whl (118 kB)
+           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 118.7/118.7 kB 1.5 MB/s eta 0:00:00
+      Using cached setuptools-69.0.3-py3-none-any.whl (819 kB)
+      Using cached wheel-0.42.0-py3-none-any.whl (65 kB)
+      Building wheels for collected packages: cffi
+        Building wheel for cffi (pyproject.toml): started
+        Building wheel for cffi (pyproject.toml): finished with status 'error'
+        error: subprocess-exited-with-error
+
+        × Building wheel for cffi (pyproject.toml) did not run successfully.
+        │ exit code: 1
+        ╰─> [39 lines of output]
+            running bdist_wheel
+            running build
+            running build_py
+            creating build
+            creating build/lib.linux-armv7l-cpython-311
+            creating build/lib.linux-armv7l-cpython-311/cffi
+            copying src/cffi/__init__.py -> build/lib.linux-armv7l-cpython-311/cffi
+            copying src/cffi/_imp_emulation.py -> build/lib.linux-armv7l-cpython-311/cffi
+            copying src/cffi/_shimmed_dist_utils.py -> build/lib.linux-armv7l-cpython-311/cffi
+            copying src/cffi/api.py -> build/lib.linux-armv7l-cpython-311/cffi
+            copying src/cffi/backend_ctypes.py -> build/lib.linux-armv7l-cpython-311/cffi
+            copying src/cffi/cffi_opcode.py -> build/lib.linux-armv7l-cpython-311/cffi
+            copying src/cffi/commontypes.py -> build/lib.linux-armv7l-cpython-311/cffi
+            copying src/cffi/cparser.py -> build/lib.linux-armv7l-cpython-311/cffi
+            copying src/cffi/error.py -> build/lib.linux-armv7l-cpython-311/cffi
+            copying src/cffi/ffiplatform.py -> build/lib.linux-armv7l-cpython-311/cffi
+            copying src/cffi/lock.py -> build/lib.linux-armv7l-cpython-311/cffi
+            copying src/cffi/model.py -> build/lib.linux-armv7l-cpython-311/cffi
+            copying src/cffi/pkgconfig.py -> build/lib.linux-armv7l-cpython-311/cffi
+            copying src/cffi/recompiler.py -> build/lib.linux-armv7l-cpython-311/cffi
+            copying src/cffi/setuptools_ext.py -> build/lib.linux-armv7l-cpython-311/cffi
+            copying src/cffi/vengine_cpy.py -> build/lib.linux-armv7l-cpython-311/cffi
+            copying src/cffi/vengine_gen.py -> build/lib.linux-armv7l-cpython-311/cffi
+            copying src/cffi/verifier.py -> build/lib.linux-armv7l-cpython-311/cffi
+            copying src/cffi/_cffi_include.h -> build/lib.linux-armv7l-cpython-311/cffi
+            copying src/cffi/parse_c_type.h -> build/lib.linux-armv7l-cpython-311/cffi
+            copying src/cffi/_embedding.h -> build/lib.linux-armv7l-cpython-311/cffi
+            copying src/cffi/_cffi_errors.h -> build/lib.linux-armv7l-cpython-311/cffi
+            running build_ext
+            building '_cffi_backend' extension
+            creating build/temp.linux-armv7l-cpython-311
+            creating build/temp.linux-armv7l-cpython-311/src
+            creating build/temp.linux-armv7l-cpython-311/src/c
+            gcc -DNDEBUG -g -fwrapv -O3 -Wall -O2 -pipe -mtune=cortex-a9 -fno-caller-saves -fhonour-copts -mfloat-abi=soft -pthread -O2 -pipe -mtune=cortex-a9 -fno-caller-saves -fhonour-copts -mfloat-abi=soft -pthread -I/opt/usr/include -I/opt/include -fPIC -DFFI_BUILDING=1 -DUSE__THREAD -DHAVE_SYNC_SYNCHRONIZE -I/usr/include/ffi -I/usr/include/libffi -I/share/CACHEDEV1_DATA/.qpkg/WebSSH/venv/include -I/opt/include/python3.11 -c src/c/_cffi_backend.c -o build/temp.linux-armv7l-cpython-311/src/c/_cffi_backend.o
+            src/c/_cffi_backend.c:15:10: fatal error: ffi.h: No such file or directory
+             #include <ffi.h>
+                      ^~~~~~~
+            compilation terminated.
+            error: command '/opt/bin/gcc' failed with exit code 1
+            [end of output]
+
+        note: This error originates from a subprocess, and is likely not a problem with pip.
+        ERROR: Failed building wheel for cffi
+      Failed to build cffi
+      ERROR: Could not build wheels for cffi, which is required to install pyproject.toml-based projects
+      [end of output]
+
+  note: This error originates from a subprocess, and is likely not a problem with pip.
+error: subprocess-exited-with-error
+
+× pip subprocess to install build dependencies did not run successfully.
+│ exit code: 1
+╰─> See above for output.
+
+note: This error originates from a subprocess, and is likely not a problem with pip.

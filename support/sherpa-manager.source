@@ -183,6 +183,8 @@ Self.Results:Show()
 			QPKGs.IsNtActive:Show
 		elif QPKGs.AClist.SCinstallable.IsSet; then
 			QPKGs.ScInstallable:Show
+		elif QPKGs.AClist.SCNTinstallable.IsSet; then
+			QPKGs.ScNtInstallable:Show
 		elif QPKGs.AClist.SCupgradable.IsSet; then
 			QPKGs.ScUpgradable:Show
 		elif QPKGs.AClist.SCindependent.IsSet; then
@@ -465,21 +467,36 @@ CMDs.IsOk()
 	# Test if this QTS `sleep` can handle decimal seconds. Early QTS BusyBox versions cannot.
 	readonly DECIMAL_SLEEP_SECONDS_SUPPORTED=$($SLEEP_CMD .01 &>/dev/null && echo true || echo false)
 
-	# Try using an already available `sqlite3` binary if one exists.
+	# Prefer Entware-installed `sqlite3`.
 
-	if [[ -z ${SQLITE_CMD:-} ]] && QPKG.IsInstalled HybridBackup; then
+	if [[ -z ${SQLITE_CMD:-} ]] && QPKG.IsInstalled Entware; then
+		SQLITE_CMD=/opt/bin/sqlite3
+		[[ ! -e $SQLITE_CMD ]] && SQLITE_CMD=''
+	fi
+
+	# Then try several other locations.
+
+	if [[ -z ${SQLITE_CMD:-} ]] && QPKG.IsInstalled HybridBackup; then			# `Hybrid Backup Sync`
 		SQLITE_CMD=$(QPKG.GetInstallationPath HybridBackup)/CloudConnector3/bin/sqlite3
 		[[ ! -e $SQLITE_CMD ]] && SQLITE_CMD=''
 	fi
 
-	if [[ -z ${SQLITE_CMD:-} ]] && QPKG.IsInstalled CacheMount; then
+	if [[ -z ${SQLITE_CMD:-} ]] && QPKG.IsInstalled CacheMount; then			# `HybridMount`
 		SQLITE_CMD=$(QPKG.GetInstallationPath CacheMount)/bin/sqlite3
 		[[ ! -e $SQLITE_CMD ]] && SQLITE_CMD=''
 	fi
 
-	# If one doesn't exist, then use Entware-installed binary as a last-resort. Only works if Entware is installed.
+	if [[ -z ${SQLITE_CMD:-} ]] && QPKG.IsInstalled container-station; then		# `Container Station`
+		SQLITE_CMD=$(QPKG.GetInstallationPath container-station)/usr/bin/sqlite3
+		[[ ! -e $SQLITE_CMD ]] && SQLITE_CMD=''
+	fi
 
-	[[ -z ${SQLITE_CMD:-} ]] && SQLITE_CMD=/opt/bin/sqlite3
+	if [[ -z ${SQLITE_CMD:-} ]] && QPKG.IsInstalled qmiixagent; then			# `Qmiix Agent`
+		SQLITE_CMD=$(QPKG.GetInstallationPath qmiixagent)/bin/sqlite3
+		[[ ! -e $SQLITE_CMD ]] && SQLITE_CMD=''
+	fi
+
+	[[ -z $SQLITE_CMD ]] && SQLITE_CMD=/opt/bin/sqlite3							# last resort, hope Entware is installed this session.
 
 	readonly SQLITE_CMD
 
@@ -679,7 +696,6 @@ Debug.Log:Env()
 
 	DebugFirmware ok 'OS uptime' "$(GetUptime)"
 	DebugFirmware ok 'system load' "$(GetSysLoadAverages)"
-	DebugUserspace ok timezone "$(GetTimezone)"
 
 	if OS.IsSupportSudo; then
 		DebugUserspace ok '$SUDO_UID' "$(GetSudoUID)"
@@ -711,9 +727,7 @@ Debug.Log:Env()
 	DebugBinPathVerAndMinVer python3 "$(GetPython3Ver)" "$MIN_PYTHON_VER"
 	DebugBinPathVerAndMinVer perl "$(GetPerlVer)" "$MIN_PERL_VER"
 	DebugScript 'source branch' "$source_branch"
-	DebugScript 'cache path' "$CACHE_PATH"
 	DebugScript 'logs path' "$LOGS_PATH"
-	DebugScript 'reports path' "$REPORTS_PATH"
 	DebugScript 'action concurrency' "$CONCURRENCY"
 
 	if OS.IsSupportSignedPackages; then
@@ -767,18 +781,18 @@ Self.Tasks:Check()
 	[[ $task_check = true ]] || return
 
 	Func:Init
-	ShowAsProc 'checking'
+	ShowAsProc checking
 	local action=''
 	local group=''
 	local state=''
 	local something_to_do=false
 	local build_states=false
 
-	if [[ $opts_paste_log_last = true || $opts_paste_log_tail = true || $opts_show_abbreviations = true || $opts_show_actions = true || $opts_show_actions_all = true || $opts_show_backups = true || $opts_show_groups = true || $opts_show_log_last = true || $opts_show_log_tail = true || $opts_show_options = true || $opts_show_problems = true || $opts_show_results = true || $opts_show_tips = true || $opts_show_versions = true ]]; then
-		something_to_do=true
-	elif [[ $opts_check = true || $opts_show_dependencies = true || $opts_show_packages = true || $opts_show_packages_failed = true || $opts_show_packages_ok = true || $opts_show_packages_skipped = true || $opts_show_reassign = true || $opts_show_repos = true || $opts_show_status = true ]]; then
+	if [[ $opts_check = true || $opts_show_dependencies = true || $opts_show_packages = true || $opts_show_packages_failed = true || $opts_show_packages_ok = true || $opts_show_packages_skipped = true || $opts_show_reassign = true || $opts_show_repos = true || $opts_show_status = true ]]; then
 		something_to_do=true
 		build_states=true
+	elif [[ $opts_debug = true || $opts_paste_log_last = true || $opts_paste_log_tail = true || $opts_show_abbreviations = true || $opts_show_actions = true || $opts_show_actions_all = true || $opts_show_backups = true || $opts_show_groups = true || $opts_show_log_last = true || $opts_show_log_tail = true || $opts_show_options = true || $opts_show_problems = true || $opts_show_results = true || $opts_show_tips = true || $opts_show_versions = true || $opts_verbose = true ]]; then
+		something_to_do=true
 	else
 		for action in "${USER_QPKG_ACTIONS[@]}"; do
 			if QPKGs-AC${action}-to.IsAny; then
@@ -909,7 +923,7 @@ Self:Validate()
 		QPKGs-ACupgrade-to:Add sherpa
 	fi
 
-	ShowAsProc 'continuing validation'
+	ShowAsProc validating
 
 	# KLUDGE: ensure old installs of Entware are reinstalled.
 
@@ -1596,7 +1610,7 @@ ParseArgs()
 					group_identified=false
 					show_bland=false
 					;;
-				dependent|dependents|disabled|enabled|failed|inactive|indeps|independent|independents|installable|installed|missing|not-installed|o|ok|skipped|stopped|updatable|updateable|upgradable|version|versions)
+				dependent|dependents|disabled|enabled|failed|inactive|indeps|independent|independents|installable|installed|missing|not-installable|not-installed|o|ok|skipped|stopped|updatable|updateable|upgradable|version|versions)
 					action=list
 					arg_identified=true
 					group=''
@@ -1620,6 +1634,9 @@ ParseArgs()
 					;;
 				not-backedup)
 					group=NTbackedup
+					;;
+				not-installable)
+					group=NTinstallable
 					;;
 				not-installed)
 					group=NTinstalled
@@ -1791,7 +1808,7 @@ ParseArgs()
 					backedup|installed|NTbackedup|NTinstalled)
 						QPKGs.AClist.IS${group}:Set
 						;;
-					dependent|disabled|installable|independent|upgradable)
+					dependent|disabled|installable|independent|NTinstallable|upgradable)
 						QPKGs.AClist.SC${group}:Set
 						;;
 					failed)
@@ -5030,7 +5047,7 @@ QPKGs.Conflicts:Check()
 		# shellcheck disable=2068
 		for a in "${BASE_QPKG_CONFLICTS_WITH[@]}"; do
 			if QPKG.IsEnabled "$a"; then
-				ShowAsError "the '$a' QPKG is enabled. $(ShowTitleName) is incompatible with this package. Please consider 'stop'ing this QPKG in your App Center"
+				ShowAsError "the '$a' QPKG is enabled. $(ShowTitleName) is incompatible with this package. Please consider stopping this QPKG in your App Center"
 				return 1
 			fi
 		done
@@ -5049,7 +5066,7 @@ QPKGs.Warnings:Check()
 		# shellcheck disable=2068
 		for a in "${BASE_QPKG_WARNINGS[@]}"; do
 			if QPKG.IsEnabled "$a"; then
-				ShowAsWarn "the '$a' QPKG is enabled. This may cause problems with $(ShowTitleName) applications. Please consider 'stop'ing this QPKG in your App Center"
+				ShowAsWarn "the '$a' QPKG is enabled. This may cause problems with $(ShowTitleName) applications. Please consider stopping this QPKG in your App Center"
 			fi
 		done
 	fi
@@ -5263,7 +5280,7 @@ QPKGs.States:Build()
 	[[ ${1:-} = rebuild ]] && QPKGs.States:Clear
 
 	if [[ ${qpkgs_states_built:=false} = true ]]; then
-		DebugAsDone "don't need to build states: already built"
+		DebugAsDone "don't build states: they're already built"
 		Func:Exit; return
 	fi
 
@@ -5278,11 +5295,13 @@ QPKGs.States:Build()
 	for a in $(QPKGs-SCall:Array); do
 		[[ $a = "$b" ]] && continue || b=$a
 
-		if QPKG.IsInstallable "$a"; then
-			echo installable
-		else
-			echo notinstallable
-		fi >> "$STATES_PATH/$a"
+		if QPKG.IsNtInstalled "$a"; then
+			if QPKG.IsInstallable "$a"; then
+				echo installable
+			else
+				echo notinstallable
+			fi >> "$STATES_PATH/$a"
+		fi
 	done &
 
 	for a in $(QPKGs-SCall:Array); do
@@ -5857,6 +5876,21 @@ QPKGs.IsInstalled:Show()
 
 	}
 
+QPKGs.IsNtInstalled:Show()
+	{
+
+	local a=''
+	DisableDebugToArchiveAndFile
+	EraseThisLine
+
+	for a in $(QPKGs-ISNTinstalled:Array); do
+		Display "$a"
+	done
+
+	return 0
+
+	}
+
 QPKGs.ScAll:Show()
 	{
 
@@ -5887,14 +5921,14 @@ QPKGs.ScInstallable:Show()
 
 	}
 
-QPKGs.IsNtInstalled:Show()
+QPKGs.ScNtInstallable:Show()
 	{
 
 	local a=''
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	for a in $(QPKGs-ISNTinstalled:Array); do
+	for a in $(QPKGs-SCNTinstallable:Array); do
 		Display "$a"
 	done
 
@@ -6435,13 +6469,6 @@ GetUpState()
 	else
 		echo -n stable
 	fi
-
-	}
-
-GetTimezone()
-	{
-
-	/bin/date +%z
 
 	}
 
