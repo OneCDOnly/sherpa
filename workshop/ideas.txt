@@ -1,4 +1,5 @@
-* Add 'sign' as new user action.
+* Add 'sign' as new user action?
+	- Not sure about this. If a 'sign' action is added, then need to support signing of unsigned QPKGs, which means must check their current signed status first (slow).
 
 * Use new nzbget fork?
 	- https://github.com/nzbgetcom/nzbget
