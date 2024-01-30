@@ -1,6 +1,3 @@
-* Move QPKG signing certificate blocks into a new function, and only run it once per session.
-	- Shouldn't be 'read'ing those large blocks of base64 for every QPKG signing process.
-
 * Add 'sign' as new user action.
 
 * Use new nzbget fork?
