@@ -2323,7 +2323,7 @@ IsThisFileRecent()
 	# Examine `change` time as this is updated even if file content isn't modified.
 
 	# https://stackoverflow.com/a/55622661
-	[[ -e ${1:-} && $((($(/bin/date +%s)-$(/usr/bin/stat "$1" -c %Y))/60)) -le ${2:-1440} ]]
+	[[ -e ${1:-} && $((($(/bin/date +%s)-$(/usr/bin/stat "$1" -c %Z))/60)) -le ${2:-1440} ]]
 
 	}
 

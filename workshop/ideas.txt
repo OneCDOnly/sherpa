@@ -1,7 +1,3 @@
-* check Entware package archive isn't being extracted in every session.
-	- Should only do this once-per original archive update.
-	- Suspect the file age checking logic broke when GNU `find` was replaced with QTS `stat`.
-
 * Use new nzbget fork?
 	- https://github.com/nzbgetcom/nzbget
 
