@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 #* Please don't edit this file directly, it was built/modified programmatically with the 'build-qpkgs.sh' script. (source: 'service-library.source')
 #* service.lib
-#* Copyright (C) 2017-2024 OneCD - one.cd.only@gmail.com
-#*   So, blame OneCD if it all goes horribly wrong. ;)
+#* Copyright (C) 2017-2024 OneCD.
+#* Contact:
+#*   one.cd.only@gmail.com
 #* Description:
 #*   A library of common bash functions used by many sherpa QPKG service-scripts.
 #*   Each QPKG has a copy for use only by that QPKG's service-script.
@@ -14,7 +15,7 @@
 #*	 GNU bash, version 3.2.57(2)-release (i686-pc-linux-gnu)
 #*	 GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
 #*	   Copyright (C) 2007 Free Software Foundation, Inc.
-#* ... and periodically on:
+#*   ... and periodically on:
 #*	 GNU bash, version 5.0.17(1)-release (aarch64-openwrt-linux-gnu)
 #*	   Copyright (C) 2019 Free Software Foundation, Inc.
 #* License:
@@ -119,9 +120,7 @@ GetAppVersion
 DisableOpkgDaemonStart
 IsSourcedOnline && IsAutoUpdateMissing && EnableAutoUpdate >/dev/null
 if [[ $run_daemon_in_screen_session = true && ! -e $SCREEN_CONF_PATHFILE ]]; then
-echo "logfile $SCREEN_LOG_PATHFILE" > "$SCREEN_CONF_PATHFILE"
-echo 'logfile flush 1' >> "$SCREEN_CONF_PATHFILE"
-echo 'log on' >> "$SCREEN_CONF_PATHFILE"
+echo -e "logfile ${SCREEN_LOG_PATHFILE}\nlogfile flush 1\nlog on" > "$SCREEN_CONF_PATHFILE"
 fi
 }
 InitByServiceType()
@@ -379,16 +378,16 @@ local rename_modules_pathfile=$QPKG_CONFIG_PATH/pip-rename.txt
 local pyproject_pathfile=$qpkg_repo_path/pyproject.toml
 local pip_conf_pathfile=$venv_path/pip.conf
 local new_env=false
-local sys_packages=' --system-site-packages'
+local allow_sys_packages=' --system-site-packages'
 local no_pips_installed=true
-local pip_deps=' --no-deps'
+local no_pip_deps=' --no-deps'
 local module_exclusions=''
 local re=''
 local cmd=''
-[[ $allow_access_to_sys_packages != true ]] && sys_packages=''
-[[ $install_pip_deps = true ]] && pip_deps=''
+[[ $allow_access_to_sys_packages != true ]] && allow_sys_packages=''
+[[ $install_pip_deps = true ]] && no_pip_deps=''
 if IsNotVirtualEnvironmentExist; then
-DisplayRunAndLog 'create new virtual Python environment' "export PIP_CACHE_DIR=$pip_cache_path VIRTUALENV_OVERRIDE_APP_DATA=$pip_cache_path; $interpreter -m virtualenv ${venv_path}${sys_packages}" log:failure-only
+DisplayRunAndLog 'create new virtual Python environment' "export PIP_CACHE_DIR=$pip_cache_path VIRTUALENV_OVERRIDE_APP_DATA=$pip_cache_path; $interpreter -m virtualenv ${venv_path}${allow_sys_packages}" log:failure-only
 new_env=true
 fi
 if IsNotVirtualEnvironmentExist; then
@@ -401,7 +400,7 @@ DisplayRunAndLog "create global 'pip' config" "echo -e \"[global]\ncache-dir = $
 fi
 IsNotAutoUpdate && [[ $new_env = false ]] && return 0
 if [[ $QPKG_NAME = OWatcher3 ]]; then
-DisplayRunAndLog "KLUDGE: install 'm2r' PyPI module first" "$venv_pip_pathfile install${pip_deps} --no-input m2r" log:failure-only
+DisplayRunAndLog "KLUDGE: install 'm2r' PyPI module first" "$venv_pip_pathfile install${no_pip_deps} --no-input m2r" log:failure-only
 fi
 [[ -e $essential_modules_pathfile && -d $(/usr/bin/dirname "$default_essential_modules_pathfile") ]] && cp -f "$essential_modules_pathfile" "$default_essential_modules_pathfile"
 [[ -e $default_essential_modules_pathfile ]] && essential_modules_pathfile=$default_essential_modules_pathfile
@@ -426,13 +425,13 @@ done
 fi
 for target in $essential_modules_pathfile $requirements_modules_pathfile $recommended_modules_pathfile; do
 if [[ -e $target ]]; then
-DisplayRunAndLog "install PyPI modules from '$(/usr/bin/basename "$target")'" "$venv_pip_pathfile install${pip_deps} --no-input --upgrade pip -r $target" log:failure-only
+DisplayRunAndLog "install PyPI modules from '$(/usr/bin/basename "$target")'" "$venv_pip_pathfile install${no_pip_deps} --no-input --upgrade pip -r $target" log:failure-only
 no_pips_installed=false
 fi
 done
 if [[ $no_pips_installed = true ]]; then
 if [[ -e $qpkg_repo_path/setup.py || -e $pyproject_pathfile ]]; then
-DisplayRunAndLog "install PyPI modules from '$(/usr/bin/basename "$target")'" "$venv_pip_pathfile install${pip_deps} --no-input --upgrade pip $qpkg_repo_path" log:failure-only
+DisplayRunAndLog "install PyPI modules from '$(/usr/bin/basename "$target")'" "$venv_pip_pathfile install${no_pip_deps} --no-input --upgrade pip $qpkg_repo_path" log:failure-only
 no_pips_installed=false
 fi
 fi
@@ -456,9 +455,8 @@ return 0
 }
 StripComments()
 {
-local a=''
 [[ -n $1 ]] || return
-a="$1"
+local a="$1"
 a=$(/bin/sed -e '/^#[[:space:]].*/d;/#$/d;s/[[:space:]]#[[:space:]].*//' <<< "$a")
 a=$(/bin/sed -e 's/^[[:space:]]*//' <<< "$a")
 a=$(/bin/sed 's/[[:space:]]*$//' <<< "$a")
