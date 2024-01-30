@@ -6602,7 +6602,7 @@ OS.IsLoadAverageElevated()
 	local a=$(GetSysLoad1MinAverage); a=${a/./}
 	local b=$((CPU_CORES*2*100))
 
-	[[ $a -ge $b ]]
+	[[ $((10#$a)) -ge $((10#$b)) ]]
 
 	}
 
@@ -6612,7 +6612,7 @@ OS.IsLoadAverageHigh()
 	local a=$(GetSysLoad1MinAverage); a=${a/./}
 	local b=$((CPU_CORES*4*100))
 
-	[[ $a -ge $b ]]
+	[[ $((10#$a)) -ge $((10#$b)) ]]
 
 	}
 
@@ -6622,7 +6622,7 @@ OS.IsLoadAverageInsane()
 	local a=$(GetSysLoad1MinAverage); a=${a/./}
 	local b=$((CPU_CORES*8*100))
 
-	[[ $a -ge $b ]]
+	[[ $((10#$a)) -ge $((10#$b)) ]]
 
 	}
 
