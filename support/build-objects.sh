@@ -22,7 +22,7 @@ IPK_STATES=(downgraded downloaded installed reinstalled upgraded)
 # ordered
 PIP_ACTIONS=(download uninstall upgrade reinstall install)
 IPK_ACTIONS=(downgrade download uninstall upgrade reinstall install)
-QPKG_ACTIONS=(status list rebuild reassign download backup deactivate disable uninstall upgrade reinstall install restore clean enable activate reactivate sign)
+QPKG_ACTIONS=(status list rebuild reassign download backup deactivate disable uninstall upgrade reinstall install sign restore clean enable activate reactivate)
 
 # these actions, states and scopes may be specified by the user -----------------------------------------------------
 # sorted

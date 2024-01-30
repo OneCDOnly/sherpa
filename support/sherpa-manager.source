@@ -590,7 +590,7 @@ Lists:Load()
 	# ordered
 	PIP_ACTIONS=(download uninstall upgrade reinstall install)
 	IPK_ACTIONS=(download uninstall upgrade reinstall install)
-	QPKG_ACTIONS=(status rebuild reassign download backup deactivate disable uninstall upgrade reinstall install restore clean enable activate reactivate sign)
+	QPKG_ACTIONS=(status rebuild reassign download backup deactivate disable uninstall upgrade reinstall install sign restore clean enable activate reactivate)
 
 	# These actions, states and scopes may be specified by the user.
 	# sorted
@@ -1103,22 +1103,23 @@ Self:Validate()
 #  11. upgrade independents
 #  12. reinstall independents
 #  13. install independents
-#  14. restore independents
-#  15. clean independents
-#  16. enable independents
-#  17. restart/reactivate independents
-#  18. start/activate independents
+#  14. "sign" independents
+#  15. restore independents
+#  16. clean independents
+#  17. enable independents
+#  18. restart/reactivate independents
+#  19. start/activate independents
 #
-#  19. upgrade dependents
-#  20. reinstall dependents
-#  21. install dependents
-#  22. restore dependents
-#  23. clean dependents			(supported by most dependent packages, but not all)
-#  24. enable dependents
-#  25. restart/reactivate dependents
-#  26. start/activate dependents
+#  20. upgrade dependents
+#  21. reinstall dependents
+#  22. install dependents
+#  23. "sign" dependents
+#  24. restore dependents
+#  25. clean dependents			(supported by most dependent packages, but not all)
+#  26. enable dependents
+#  27. restart/reactivate dependents
+#  28. start/activate dependents
 #
-#  27. "sign" all
 
 Actions:Proc()
 	{
@@ -1166,6 +1167,10 @@ Actions:Proc()
 				Action:Proc enable $tier QPKG enabling enabled
 				Action:Proc reactivate $tier QPKG reactivating reactivated
 				Action:Proc activate $tier QPKG activating activated
+
+				if OS.IsSupportSignedPackages; then
+					Action:Proc sign $tier QPKG '"signing"' '"signed"'
+				fi
 				;;
 			auxiliary)
 				for action in install reinstall upgrade activate; do
@@ -1187,10 +1192,6 @@ Actions:Proc()
 				fi
 		esac
 	done
-
-	if OS.IsSupportSignedPackages; then
-		Action:Proc sign all QPKG '"signing"' '"signed"'
-	fi
 
 	if [[ $opts_debug = true ]]; then
 #		PIPs.Actions:List
