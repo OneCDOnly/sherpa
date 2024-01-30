@@ -34,7 +34,7 @@ Observed issues:
 		- Must get status of each package first.
 
 	* Extend startup timeouts for Deluge QPKGs?
-		- Deluge-web is a colossal PITA. Consider removing support for this as a QPKG.
+		- Frankly, Deluge-web is a colossal PITA. Consider removing support for this as a QPKG.
 
 	* QPKG version sort is not correctly sorting version numbers followed by an alpha as later than non-alpha.
 
