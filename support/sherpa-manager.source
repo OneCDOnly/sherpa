@@ -5290,16 +5290,16 @@ QPKGs.States:Build()
 		Func:Exit; return
 	fi
 
-	if OS.IsLoadAverageInsane; then
-		ShowAsWarn "the NAS currently has an exceptionally-high system load ... maybe abort and try again later?"
-	elif OS.IsLoadAverageHigh; then
-		ShowAsWarn "the NAS currently has an unusually-high system load ... this will take a while"
-	elif OS.IsLoadAverageElevated; then
-		ShowAsWarn "the NAS currently has an elevated system load ... this will take a little longer than usual"
-	fi
-
 	OS.IsStarting && ShowAsWarn "$(GetQnapOS) is starting all enabled QPKGs ... check again in a few minutes"
 	OS.IsStopping && ShowAsWarn "$(GetQnapOS) is shutting-down and all QPKGs are stopping"
+
+	if OS.IsLoadAverageInsane; then
+		ShowAsWarn "the NAS currently has an exceptionally-high system-load ... maybe abort and try again later?"
+	elif OS.IsLoadAverageHigh; then
+		ShowAsWarn "the NAS currently has an unusually-high system-load ... this will take a while"
+	elif OS.IsLoadAverageElevated; then
+		ShowAsWarn "the NAS currently has an elevated system-load ... this will take a little longer than usual"
+	fi
 
 	ShowAsProc 'QPKG states'
 	MakePath "$STATES_PATH" states || return
@@ -9356,7 +9356,7 @@ ShowTitle()
 
 	EraseThisLine
 
-	# Only show ASCII title on first execution of the day.
+	# Only show ASCII title on first run of the day, or first run after a `reset`.
 	[[ ! -e $DAY_OF_YEAR_PATHFILE ]] && a=true
 	[[ -e $DAY_OF_YEAR_PATHFILE && $((10#$(/bin/date +%j))) -ne $((10#$(<$DAY_OF_YEAR_PATHFILE))) ]] && a=true
 
@@ -9364,13 +9364,13 @@ ShowTitle()
 		Display "$(ShowTitleArt)"
 		/bin/date +%j > "$DAY_OF_YEAR_PATHFILE" &
 	else
-		Display "$(ShowTitleName) $(ShowVersion) ${CHARS_BULLET}$(ShowDescription)"
+		Display "$(ShowTitleName) $(ShowVersion)"
 	fi
-
-	wait 2>/dev/null
 
 	title_shown=true
 	WriteEmptyLineIfNoneExists
+
+	wait 2>/dev/null
 
 	}
 
@@ -9386,9 +9386,9 @@ ShowTitleArt()
 
 	Display "$(TextBrightOrange '     _')"
 	Display "$(TextBrightOrange ' ___| |__   ___ _ __ _ __   __ _')"
-	Display "$(TextBrightOrange "/ __| '_ \ / _ \ '__| '_ \ / _\` |")  $(ShowVersion)"
+	Display "$(TextBrightOrange "/ __| '_ \ / _ \ '__| '_ \ / _\` |")  $(ShowDescription)"
 	Display "$(TextBrightOrange '\__ \ | | |  __/ |  | |_) | (_| |')  $(ShowCopyrightBasic)"
-	Display "$(TextBrightOrange '|___/_| |_|\___|_|  | .__/ \__,_|')  $(ShowDescription)"
+	Display "$(TextBrightOrange '|___/_| |_|\___|_|  | .__/ \__,_|')  $(ShowVersion)"
 	Display "$(TextBrightOrange '                    |_|')"
 
 	}
