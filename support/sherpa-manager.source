@@ -2280,7 +2280,7 @@ UpdateEntwarePackageList()
 		return 1
 	fi
 
-	[[ ${ENTWARE_PACKAGE_LIST_UPTODATE:-false} = false ]] || return 0
+	[[ ${ENTWARE_PACKAGE_LIST_UPTODATE:-false} = false ]] || return
 
 	local -i z=0
 
