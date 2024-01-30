@@ -71,7 +71,7 @@ Self:Init()
 	Objects:Load || return
 	QPKGs.States:Clear
 
-	QPKG.IsInstalled Entware && [[ $ENTWARE_VER = none ]] && DebugAsWarn "$(ShowAsPackageName Entware) appears to be installed but is inactive. Consider 'start'ing the Entware QPKG if-possible."
+	QPKG.IsInstalled Entware && [[ $ENTWARE_VER = none ]] && DebugAsWarn "$(ShowAsPackageName Entware) appears to be installed but is inactive. Please consider starting the $(ShowAsPackageName Entware) QPKG."
 
 	if [[ -z $USER_ARGS_RAW ]]; then
 		opts_show_basic_help=true
@@ -6059,7 +6059,7 @@ SendActionStatus()
 	{
 
 	# Send a message into message stream to update sherpa parent environment with the status of this action for $PACKAGE_NAME.
-	# This can be: `ok`, `skipped`, `failed`, `exit`.
+	# This can be: `ok`, `so`, `sk`, `se`, `er`, `ex`.
 	# This function is only called from within background functions.
 
 	# input:
@@ -7838,7 +7838,8 @@ _QPKG:sign_()
 		SendPackageStateChange ISsigned
 		MarkThisActionForkAsOk
 	else
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' failed "($z) check the sherpa debug log for more information"
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' failed "($z) but don't know why. Please report this as a bug"
+		SendParentChangeEnv 'show_suggest_raise_issue=true'
 		z=1   # Remap to 1.
 		MarkThisActionForkAsFailed
 	fi

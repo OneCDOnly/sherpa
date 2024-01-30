@@ -30,7 +30,6 @@
 	- Must get status of each package first.
 
 * If package signing fails, the cert database is probably already open. Check for this and abort signing.
-	- Also, when signing fails, don't direct user to the QPKG service-script log: signing isn't a service action.
 
 * Extend startup timeouts for Deluge QPKGs.
 
