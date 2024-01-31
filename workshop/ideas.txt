@@ -1,3 +1,6 @@
+* Create new action fork result "skippedfatal"?
+	- Means don't launch any further forks attempting the same action, as they will definitely fail.
+
 * Update SABnzbd docs to 4.2.2
 
 * Add 'sign' as new user action?

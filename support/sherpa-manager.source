@@ -7796,61 +7796,53 @@ _QPKG:sign_()
 	FuncFork:Init
 
 	local -r PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
-	local cmd=''
+	local a=''
+	local b=''
 	local -i z=0
 
 	DebugVar SQLITE_CMD
 
 	if ! OS.IsSupportSignedPackages; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped 'not required: firmware < 4.3.5'
+		MarkThisActionForkAsSkipped
 		z=2
 	elif ! QPKGs-ISinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped 'not installed'
+		MarkThisActionForkAsSkipped
 		z=2
 	elif [[ ! -e $SQLITE_CMD ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped 'sqlite3 unavailable'
+		MarkThisActionForkAsSkippedError
 		z=2
 	elif [[ ! -e $CERT_DB_PATHFILE ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped 'certificate database not found'
-		z=2
-	fi
-
-	if ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkippedError
-		FuncFork:Exit 2
+		z=2
+	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped "assigned to another repository, please 'reassign' it first"
+		MarkThisActionForkAsSkipped
+		z=2
+	else
+		a="SELECT 1 FROM Certificate WHERE QpkgName = '$PACKAGE_NAME' LIMIT 1;"
+		b=$($SQLITE_CMD "$CERT_DB_PATHFILE" "$a")
+
+		if [[ $b = 1 ]]; then
+			SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped 'already signed'
+			MarkThisActionForkAsSkipped
+			z=2
+		fi
 	fi
 
-	if [[ $z -gt 0 ]]; then
-		MarkThisActionForkAsSkipped
-		FuncFork:Exit $z
-	fi
+	[[ $z -eq 0 ]] || FuncFork:Exit $z
 
 	DebugAsProc "\"signing\" $(ShowAsPackageName "$PACKAGE_NAME")"
 
-# 	cmd="DELETE FROM Certificate WHERE QpkgName = '$PACKAGE_NAME'; INSERT INTO Certificate (Type,QpkgName,Cert,DigitalSignature) VALUES ('qpkg','$PACKAGE_NAME','$QPKG_CERTIFICATE','$QPKG_SIGNATURE');"
+# 	a="DELETE FROM Certificate WHERE QpkgName = '$PACKAGE_NAME'; INSERT INTO Certificate (Type,QpkgName,Cert,DigitalSignature) VALUES ('qpkg','$PACKAGE_NAME','$QPKG_CERTIFICATE','$QPKG_SIGNATURE');"
 
-# 	INSERT INTO Certificate (Type, QpkgName, Cert, DigitalSignature)
-# 	SELECT 'qpkg', 'duff', 'QPKG_CERTIFICATE', 'QPKG_SIGNATURE'
-# 		WHERE NOT EXISTS (SELECT * FROM Certificate WHERE QpkgName = 'duff');
+#	a="INSERT INTO Certificate (Type, QpkgName, Cert, DigitalSignature) SELECT 'qpkg','$PACKAGE_NAME','$QPKG_CERTIFICATE','$QPKG_SIGNATURE' WHERE NOT EXISTS (SELECT * FROM Certificate WHERE QpkgName = '$PACKAGE_NAME');"
 
-#	cmd="INSERT INTO Certificate (Type, QpkgName, Cert, DigitalSignature) SELECT 'qpkg','$PACKAGE_NAME','$QPKG_CERTIFICATE','$QPKG_SIGNATURE' WHERE NOT EXISTS (SELECT * FROM Certificate WHERE QpkgName = '$PACKAGE_NAME');"
-
-	cmd="SELECT 1 FROM Certificate WHERE QpkgName = '$PACKAGE_NAME');"
-	output=$($SQLITE_CMD "$CERT_DB_PATHFILE" "$cmd")
-
-	if $output = 1; then
-		# package is already signed
-	else
-		# OK to sign package
-		cmd="INSERT INTO Certificate (Type,QpkgName,Cert,DigitalSignature) VALUES ('qpkg','$PACKAGE_NAME','$QPKG_CERTIFICATE','$QPKG_SIGNATURE');"
-		$SQLITE_CMD "$CERT_DB_PATHFILE" "$cmd"
-	fi
-
-
-
-
-	$SQLITE_CMD "$CERT_DB_PATHFILE" "$cmd"
+	a="INSERT INTO Certificate (Type,QpkgName,Cert,DigitalSignature) VALUES ('qpkg','$PACKAGE_NAME','$QPKG_CERTIFICATE','$QPKG_SIGNATURE');"
+	$SQLITE_CMD "$CERT_DB_PATHFILE" "$a"
 	z=$?
 
 	if [[ $z -eq 0 ]]; then
@@ -7884,9 +7876,9 @@ _QPKG:status_()
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
-	local -i z=0
 	local a=''
 	local b=''
+	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" status skipped 'not installed'
