@@ -4,17 +4,17 @@
 * calibre?
 	- https://github.com/kovidgoyal/calibre
 
-* gpt-engineer?
-	- Currently resolving python dependencies manually.
-
 * Gitea?
 	- https://docs.gitea.com/installation/install-from-binary
 
 * NetBox?
 	- https://docs.netbox.dev/en/stable/installation/
 
-* Use new nzbget fork?
+* new nzbget fork?
 	- https://github.com/nzbgetcom/nzbget
 
+* gpt-engineer?
+	- See compatibility-notes.txt
+
 * FlexGet?
-	- Having a few issues with installation.
+	- See compatibility-notes.txt
