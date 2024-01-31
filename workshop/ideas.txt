@@ -1,3 +1,6 @@
+* Rearrange progress display components.
+	- Example: "40% (4/10), 3 in-progress, 1 OK, 2 skipped, 1 failed"
+
 * Create new action fork result "skippedfatal"?
 	- Means don't launch any further forks attempting the same action, as they will definitely fail.
 
