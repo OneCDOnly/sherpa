@@ -1,3 +1,7 @@
+* it-tools?
+	- https://github.com/CorentinTh/it-tools
+	- already available as a static QPKG here: https://github.com/Jay-Young/qpkg/tree/master/it-tools (runs in Apache).
+
 * BlendFarm?
 	- https://github.com/LogicReinc/LogicReinc.BlendFarm
 
