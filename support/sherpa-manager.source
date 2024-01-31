@@ -7828,7 +7828,27 @@ _QPKG:sign_()
 
 	DebugAsProc "\"signing\" $(ShowAsPackageName "$PACKAGE_NAME")"
 
-	cmd="DELETE FROM Certificate WHERE QpkgName = '$PACKAGE_NAME'; INSERT INTO Certificate (Type,QpkgName,Cert,DigitalSignature) VALUES ('qpkg','$PACKAGE_NAME','$QPKG_CERTIFICATE','$QPKG_SIGNATURE');"
+# 	cmd="DELETE FROM Certificate WHERE QpkgName = '$PACKAGE_NAME'; INSERT INTO Certificate (Type,QpkgName,Cert,DigitalSignature) VALUES ('qpkg','$PACKAGE_NAME','$QPKG_CERTIFICATE','$QPKG_SIGNATURE');"
+
+# 	INSERT INTO Certificate (Type, QpkgName, Cert, DigitalSignature)
+# 	SELECT 'qpkg', 'duff', 'QPKG_CERTIFICATE', 'QPKG_SIGNATURE'
+# 		WHERE NOT EXISTS (SELECT * FROM Certificate WHERE QpkgName = 'duff');
+
+#	cmd="INSERT INTO Certificate (Type, QpkgName, Cert, DigitalSignature) SELECT 'qpkg','$PACKAGE_NAME','$QPKG_CERTIFICATE','$QPKG_SIGNATURE' WHERE NOT EXISTS (SELECT * FROM Certificate WHERE QpkgName = '$PACKAGE_NAME');"
+
+	cmd="SELECT 1 FROM Certificate WHERE QpkgName = '$PACKAGE_NAME');"
+	output=$($SQLITE_CMD "$CERT_DB_PATHFILE" "$cmd")
+
+	if $output = 1; then
+		# package is already signed
+	else
+		# OK to sign package
+		cmd="INSERT INTO Certificate (Type,QpkgName,Cert,DigitalSignature) VALUES ('qpkg','$PACKAGE_NAME','$QPKG_CERTIFICATE','$QPKG_SIGNATURE');"
+		$SQLITE_CMD "$CERT_DB_PATHFILE" "$cmd"
+	fi
+
+
+
 
 	$SQLITE_CMD "$CERT_DB_PATHFILE" "$cmd"
 	z=$?

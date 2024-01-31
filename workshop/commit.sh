@@ -12,7 +12,7 @@ cd "$source_path" || exit
 
 cd "$target_path" || exit
 
-git add . && git commit -m '[update] workshop' && git push
+git add ./* && git commit -m '[update] workshop' && git push
 
 cd "$this_path" || exit
 
