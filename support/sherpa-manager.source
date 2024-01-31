@@ -207,6 +207,14 @@ Self.Results:Show()
 	[[ $show_zero_qpkgs = true ]] && ShowZeroQpkgs
 	[[ $show_suggest_raise_issue = true ]] && Help.Issue:Show
 
+	if [[ $opts_check = true ]]; then
+		if Self.Error.IsNt; then
+			ShowAsDone 'check completed'
+		else
+			ShowAsFail 'check completed'
+		fi
+	fi
+
 	DebugInfoMinSepr
 	DebugScript finished "$(/bin/date)"
 	DebugScript 'elapsed time' "$(FormatSecsToHoursMinutesSecs "$(($(/bin/date +%s)-SCRIPT_STARTSECONDS))")"
@@ -2484,7 +2492,6 @@ IPKs:upgrade()
 
 	[[ $ipks_upgrade = true ]] || return
 	QPKGs-ISenabled.Exist Entware || return
-# 	UpdateEntwarePackageList
 	Self.Error.IsNt || return
 
 	Func:Init
@@ -2539,7 +2546,6 @@ IPKs:install()
 
 	[[ $ipks_install = true ]] || return
 	QPKGs-ISenabled.Exist Entware || return
-# 	UpdateEntwarePackageList
 	Self.Error.IsNt || return
 
 	Func:Init
@@ -2625,7 +2631,6 @@ IPKs:downgrade()
 
 	[[ $ipks_downgrade = true ]] || return
 	QPKGs-ISenabled.Exist Entware || return
-# 	UpdateEntwarePackageList
 	Self.Error.IsNt || return
 
 	Func:Init
@@ -7805,7 +7810,7 @@ _QPKG:sign_()
 
 		if [[ $b = 1 ]]; then
 			SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped 'already signed'
-			MarkThisActionForkAsSkipped
+			MarkThisActionForkAsSkippedOk
 			z=2
 		fi
 	fi
