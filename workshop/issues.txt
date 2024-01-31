@@ -1,5 +1,7 @@
 Observed issues:
 
+	* Entware package archive is being opened on every 'check' run.
+
 	* Function durations can become incorrect when functions with the same name are called recursively.
 		- Need to make var holding start-time unique.
 
