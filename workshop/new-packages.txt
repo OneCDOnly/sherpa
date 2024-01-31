@@ -5,13 +5,16 @@
 	- https://github.com/kovidgoyal/calibre
 
 * gpt-engineer?
-	currently resolving python dependencies manually.
+	- Currently resolving python dependencies manually.
 
 * Gitea?
-	https://docs.gitea.com/installation/install-from-binary
+	- https://docs.gitea.com/installation/install-from-binary
 
 * NetBox?
-	https://docs.netbox.dev/en/stable/installation/
+	- https://docs.netbox.dev/en/stable/installation/
 
 * Use new nzbget fork?
 	- https://github.com/nzbgetcom/nzbget
+
+* FlexGet?
+	- Having a few issues with installation.
