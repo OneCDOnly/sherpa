@@ -1,8 +1,6 @@
 * Create new action fork result "skippedfatal"?
 	- Means don't launch any further forks attempting the same action, as they will definitely fail.
 
-* Update SABnzbd docs to 4.2.2
-
 * Add 'sign' as new user action?
 	- Not sure about this. If a 'sign' action is added, then need to support signing of unsigned QPKGs, which means must check their current signed status first (slow).
 
