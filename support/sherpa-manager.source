@@ -4562,6 +4562,7 @@ Log.Last:View()
 
 	DisableDebugToArchiveAndFile
 	ExtractPrevSessFromTail
+	EraseThisLine
 
 	if [[ -e $SESS_LAST_PATHFILE ]]; then
 		DisplayFileInViewport "$SESS_LAST_PATHFILE" linenumbers
@@ -4580,6 +4581,7 @@ Log.Tail:View()
 
 	DisableDebugToArchiveAndFile
 	ExtractTailFromLog
+	EraseThisLine
 
 	if [[ -e $SESS_TAIL_PATHFILE ]]; then
 		DisplayFileInViewport "$SESS_TAIL_PATHFILE" linenumbers
