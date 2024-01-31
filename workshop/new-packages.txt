@@ -1,3 +1,9 @@
+* BlendFarm?
+	- https://github.com/LogicReinc/LogicReinc.BlendFarm
+
+* calibre?
+	- https://github.com/kovidgoyal/calibre
+
 * gpt-engineer?
 	currently resolving python dependencies manually.
 
@@ -6,3 +12,6 @@
 
 * NetBox?
 	https://docs.netbox.dev/en/stable/installation/
+
+* Use new nzbget fork?
+	- https://github.com/nzbgetcom/nzbget
