@@ -870,7 +870,6 @@ Self:Validate()
 	[[ $skip_package_actions = false ]] || return 0
 
 	Func:Init
-	ShowAsProc validating
 	local installed_ver=''
 	local package=''
 	local action=''
