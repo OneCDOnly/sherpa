@@ -295,13 +295,20 @@ StartQPKGLibrary()
 			DisplayWaitCommitToLog 'check release package:'
 			# https://gist.github.com/steinwaywhw/a4cd19cda655b8249d908261a62687f8
 			remote_url=$(/sbin/curl${download_opts} "$remote_url" | /bin/grep browser_download_url | cut -d\" -f4 | /bin/grep "$remote_arch")
-			DisplayCommitToLog OK
+
+			if [[ -n $remote_url ]]; then
+				DisplayCommitToLog OK
+			else
+				DisplayErrCommitAllLogs 'unable to calculate remote URL'
+			fi
 		fi
 
-		[[ -e $source_archive_pathfile ]] && download_opts+=" --time-cond $source_archive_pathfile"
-		download_opts+=" --show-error --location --output $source_archive_pathfile"
+		if [[ -n $remote_url ]]; then
+			[[ -e $source_archive_pathfile ]] && download_opts+=" --time-cond $source_archive_pathfile"
+			download_opts+=" --show-error --location --output $source_archive_pathfile"
 
-		DisplayRunAndLog 'refresh release package' "/sbin/curl${download_opts} '$remote_url'" || { SetError; return 1 ;}
+			DisplayRunAndLog 'refresh release package' "/sbin/curl${download_opts} '$remote_url'" || { SetError; return 1 ;}
+		fi
 
 		if [[ ! -e $daemon_pathfile || ! -e $source_archive_pathfile || $(($(/bin/date +%s)-$(/usr/bin/stat "$source_archive_pathfile" -c %Y))) -lt 60 ]]; then			# Extract from latest release archive.
 			tar_extract_opts="$tar_extract_verbose --extract --gzip --file=$source_archive_pathfile --directory=$qpkg_repo_path"
