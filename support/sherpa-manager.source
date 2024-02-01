@@ -4782,7 +4782,7 @@ ArchivePriorSessLogs()
 
 	local f=''
 
-	for f in "$THIS_PACKAGE_PATH/session."*".active.log"; do
+	for f in "$THIS_PACKAGE_PATH"/session.*.active.log; do
 		if [[ -f $f && $f != "$sess_active_pathfile" ]]; then
 			$CAT_CMD "$f" >> "$SESS_ARCHIVE_PATHFILE"
 			rm -f "$f"
