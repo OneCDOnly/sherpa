@@ -1,8 +1,5 @@
 Observed issues:
 
-	* Entware archive is always unpacked when running sherpa in verbose mode.
-		- Last mod datetime not being checked?
-
 	* Function durations can become incorrect when functions with the same name are called recursively.
 		- Need to make var holding start-time unique.
 

@@ -1,3 +1,7 @@
+* pigallery2?
+	- https://github.com/bpatrik/pigallery2
+	- requires Node.js
+
 * it-tools?
 	- https://github.com/CorentinTh/it-tools
 	- already available as a static QPKG here: https://github.com/Jay-Young/qpkg/tree/master/it-tools (runs in Apache).
