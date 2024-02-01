@@ -1,5 +1,8 @@
 Observed issues:
 
+	* OWatcher3 QPKG records an error in QTS system log because PyPI module installation failed, even though 'start' action succeeded.
+		- This should be a QTS log warning-only.
+
 	* OliveTin release check fails to return anything during QTS startup.
 
 	* Function durations can become incorrect when functions with the same name are called recursively.
