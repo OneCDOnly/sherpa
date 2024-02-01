@@ -1,5 +1,7 @@
 Observed issues:
 
+	* OliveTin release check fails to return anything during QTS startup.
+
 	* Function durations can become incorrect when functions with the same name are called recursively.
 		- Need to make var holding start-time unique.
 
