@@ -6723,6 +6723,8 @@ EnableDebugToArchiveAndFile()
 	opts_debug=true
 	DebugVar opts_debug
 
+	ShowAsInfo "debug mode activated, $(ShowTitleName) will run a little slower than usual"
+
 	self_archive_debug_afterward=true
 	DebugVar self_archive_debug_afterward
 
