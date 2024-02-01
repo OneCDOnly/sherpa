@@ -189,7 +189,7 @@ for state in "${QPKG_ISNT_STATES[@]}" "${QPKG_STATES_TRANSIENT[@]}" "${QPKG_SERV
 done
 
 for action in "${QPKG_ACTIONS[@]}"; do
-	for prefix in to ok er sk so se dn; do		# todo, done ok, done error, skipped, skipped-but-ok, skipped-with-error, done (all processed QPKGs are placed in the 'done' list, as-well as the regular exit status lists).
+	for prefix in to ok er sk so se sa dn; do		# todo, done ok, done error, skipped, skipped-but-ok, skipped-with-error, skipped-with-abort, done (all processed QPKGs are placed in the 'done' list, as-well as the regular exit status lists).
 		AddListObj "QPKGs-AC${action}-${prefix}"
 	done
 done

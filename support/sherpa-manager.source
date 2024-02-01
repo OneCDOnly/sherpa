@@ -517,6 +517,7 @@ Env:Load()
 
 	ShowAsProc 'loading environment'
 
+	readonly ACTION_ABORT_PATHFILE=/var/run/abort.action
 	readonly ACTION_MSG_PIPE=/var/run/sherpa.action.messages.pipe
 	readonly CERT_DB_PATHFILE=/etc/config/nas_sign_qpkg.db
 	readonly CPU_CORES=$(GetCPUCores)
@@ -1284,7 +1285,7 @@ Action:Proc()
 				Keystrokes:Show		# Enable this before removing Entware & GNU `stty`.
 			fi
 
-			_ActionForks:Launch_ "_${PACKAGE_TYPE}:${TARGET_ACTION}_" "${target_packages[@]}" &
+			_LaunchSingleActionWithManyForks_ "_${PACKAGE_TYPE}:${TARGET_ACTION}_" "${target_packages[@]}" &
 			fork_pid=$!
 
 			# Read message pipe and process QPKGs and actions as-per requests contained within.
@@ -1339,24 +1340,29 @@ Action:Proc()
 						;;
 					status)			# Update the status of a single action fork in the parent shell.
 						case $msg1_value in
-							ok)		# completed OK (wonderful).
+							ok)		# Completed OK (wonderful).
 								((ok_count++))
 								;;
-							so)		# action was skipped, but this is normal (no-big-deal).
+							so)		# Action was skipped, but this is normal (no-big-deal).
 								((skip_ok_count++))
 								;;
-							sk)		# action was skipped (and there's a good reason for it).
+							sk)		# Action was skipped (and there's a good reason for it).
 								((skip_count++))
 								;;
-							se)		# action was skipped due to error prior to action being tried (might be a big-deal).
+							se)		# Action was skipped due to error prior to action being attempted (might be a big-deal).
 								((skip_error_count++))
 								;;
-							er)		# action failed (uh-oh).
+							sa)		# Action was skipped and must immediately abort (don't attempt this action again).
+								((skip_abort_count++))
+								[[ ! -e $ACTION_ABORT_PATHFILE ]] && $TOUCH_CMD "$ACTION_ABORT_PATHFILE"
+								break
+								;;
+							er)		# Action failed (uh-oh).
 								((fail_count++))
 						esac
 
 						case $msg1_value in
-							ok|so|sk|se|er)
+							ok|so|sk|se|sa|er)
 								[[ $(type -t QPKGs-AC${TARGET_ACTION}-to:Init) = function ]] && QPKGs-AC${TARGET_ACTION}-to:Remove "$msg2_value"
 								[[ $(type -t QPKGs-AC${TARGET_ACTION}-${msg1_value}:Init) = function ]] && QPKGs-AC${TARGET_ACTION}-${msg1_value}:Add "$msg2_value"
 
@@ -1381,7 +1387,7 @@ Action:Proc()
 			done
 
 			[[ $ok_count -gt 0 ]] && opts_show_packages_ok=true
-			[[ $skip_count -gt 0 || $skip_error_count -gt 0 ]] && opts_show_packages_skipped=true
+			[[ $skip_count -gt 0 || $skip_error_count -gt 0 || $skip_abort_count -gt 0 ]] && opts_show_packages_skipped=true
 			[[ $fail_count -gt 0 ]] && opts_show_packages_failed=true
 
 			[[ ${#target_packages[@]} -gt 0 ]] && KillActiveFork		# Should only be needed if an action fork didn't exit properly.
@@ -2516,7 +2522,7 @@ IPKs:upgrade()
 		desc="$total_count auxiliary IPK module$(Pluralise "$total_count")"
 		ShowAsProc "upgrading $desc"
 
-		_DirSize:Monitor_ "$IPK_DL_PATH" "$(IPKs-ACdownload-to:Size)" &
+		_DirSizeMonitor_ "$IPK_DL_PATH" "$(IPKs-ACdownload-to:Size)" &
 		fork_pid=$!
 
 		RunAndLog "$OPKG_CMD upgrade --force-overwrite $(IPKs-ACdownload-to:List) --cache $IPK_CACHE_PATH --tmp-dir $IPK_DL_PATH" "$log_pathfile" log:failure-only
@@ -2591,7 +2597,7 @@ IPKs:install()
 		desc="$total_count auxiliary IPK module$(Pluralise "$total_count")"
 		ShowAsProc "installing $desc"
 
-		_DirSize:Monitor_ "$IPK_DL_PATH" "$(IPKs-ACdownload-to:Size)" &
+		_DirSizeMonitor_ "$IPK_DL_PATH" "$(IPKs-ACdownload-to:Size)" &
 		fork_pid=$!
 
 		RunAndLog "$OPKG_CMD install --force-overwrite $(IPKs-ACdownload-to:List) --cache $IPK_CACHE_PATH --tmp-dir $IPK_DL_PATH" "$log_pathfile" log:failure-only
@@ -2787,7 +2793,7 @@ CloseIpkArchive()
 
 	}
 
-_ActionForks:Launch_()
+_LaunchSingleActionWithManyForks_()
 	{
 
 	# Execute actions concurrently, but only as many as $max_forks will allow given the circumstances.
@@ -2809,10 +2815,12 @@ _ActionForks:Launch_()
 	local -a target_packages=("$@")
 
 	for a in "${target_packages[@]}"; do
-		while [[ $fork_count -ge $max_forks ]]; do  	# Don't fork until an empty spot becomes available.
+		while [[ $fork_count -ge $max_forks && ! -e $ACTION_ABORT_PATHFILE ]]; do  	# Don't fork until an empty spot becomes available.
 			sleep .2
 			UpdateForkProgress
 		done
+
+		[[ -e $ACTION_ABORT_PATHFILE ]] && exit
 
 		IncForkProgressIndex
 		MarkThisActionForkAsStarted 					# Must create runfile here, as it takes too-long to happen in background function.
@@ -2832,7 +2840,7 @@ _ActionForks:Launch_()
 
 	}
 
-_DirSize:Monitor_()
+_DirSizeMonitor_()
 	{
 
 	# * This function runs autonomously *
@@ -4399,12 +4407,12 @@ Report.Results:Show()
 					display_last_action_datetime=false
 				fi
 
-				if [[ $result = "$1" ]] || [[ $1 = skipped && $result = 'skipped-error' ]]; then
+				if [[ $result = "$1" ]] || [[ $1 = skipped && ($result = 'skipped-error' || $result = 'skipped-abort') ]]; then
 					case $result in
 						ok)
 							[[ $found = false ]] && DisplayAsHelpTitle "$plural completed $(TextBrightGreen OK):"
 							;;
-						skipped|skipped-ok|skipped-error)
+						skipped|skipped-ok|skipped-error|skipped-abort)
 							[[ $found = false ]] && DisplayAsHelpTitle "$plural were $(TextBrightOrange skipped):"
 							;;
 						failed)
@@ -4866,6 +4874,7 @@ InitForkCounts()
 	proc_skip_ok_count_path=$proc_counts_path/skip.ok.count
 	proc_skip_count_path=$proc_counts_path/skip.count
 	proc_skip_error_count_path=$proc_counts_path/skip.error.count
+	proc_skip_abort_count_path=$proc_counts_path/skip.abort.count
 	proc_fail_count_path=$proc_counts_path/fail.count
 
 	mkdir -p "$proc_fork_count_path"
@@ -4873,6 +4882,7 @@ InitForkCounts()
 	mkdir -p "$proc_skip_ok_count_path"
 	mkdir -p "$proc_skip_count_path"
 	mkdir -p "$proc_skip_error_count_path"
+	mkdir -p "$proc_skip_abort_count_path"
 	mkdir -p "$proc_fail_count_path"
 
 	InitProgress
@@ -4887,9 +4897,10 @@ IncForkProgressIndex()
 
 	proc_fork_pathfile=$proc_fork_count_path/$a
 	proc_ok_pathfile=$proc_ok_count_path/$a
-	proc_skipok_pathfile=$proc_skip_ok_count_path/$a
+	proc_skip_ok_pathfile=$proc_skip_ok_count_path/$a
 	proc_skip_pathfile=$proc_skip_count_path/$a
 	proc_skip_error_pathfile=$proc_skip_error_count_path/$a
+	proc_skip_abort_pathfile=$proc_skip_abort_count_path/$a
 	proc_fail_pathfile=$proc_fail_count_path/$a
 
 	}
@@ -4902,6 +4913,7 @@ RefreshForkCounts()
 	skip_ok_count=$(ls -A -1 "$proc_skip_ok_count_path" 2>/dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
 	skip_count=$(ls -A -1 "$proc_skip_count_path" 2>/dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
 	skip_error_count=$(ls -A -1 "$proc_skip_error_count_path" 2>/dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
+	skip_abort_count=$(ls -A -1 "$proc_skip_abort_count_path" 2>/dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
 	fail_count=$(ls -A -1 "$proc_fail_count_path" 2>/dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
 
 	} &>/dev/null
@@ -4910,6 +4922,7 @@ EraseForkCountPaths()
 	{
 
 	[[ -n $proc_counts_path && -d $proc_counts_path ]] && ClearPath /var/run "$proc_counts_path"
+	[[ -e $ACTION_ABORT_PATHFILE ]] && rm -f "$ACTION_ABORT_PATHFILE"
 
 	} &>/dev/null
 
@@ -4933,16 +4946,16 @@ UpdateForkProgress()
 	RefreshForkCounts
 	[[ $opts_verbose = false && ! -e $DISPLAY_INHIBIT_PATHFILE ]] || return		# Don't display progress, it's difficult to read with so-many other writes to the screen.
 
-	a=$(PercFrac "$ok_count" "$((skip_count+skip_ok_count+skip_error_count))" "$fail_count" "$total_count")
+	a=$(PercFrac "$ok_count" "$((skip_count+skip_ok_count+skip_error_count+skip_abort_count))" "$fail_count" "$total_count")
 
 	if [[ $ok_count -gt 0 ]]; then
 		[[ -n $a ]] && a+=', '
 		a+="$(TextBrightGreen "$ok_count") OK"
 	fi
 
-	if [[ $skip_count -gt 0 || $skip_error_count -gt 0 ]]; then		# Don't include skipped packages that were OK.
+	if [[ $skip_count -gt 0 || $skip_error_count -gt 0 || $skip_abort_count -gt 0 ]]; then		# Don't include skipped packages that were OK.
 		[[ -n $a ]] && a+=', '
-		a+="$(TextBrightOrange "$((skip_count+skip_error_count))") skipped"
+		a+="$(TextBrightOrange "$((skip_count+skip_error_count+skip_abort_count))") skipped"
 	fi
 
 	if [[ $fail_count -gt 0 ]]; then
@@ -6065,7 +6078,7 @@ SendActionStatus()
 	{
 
 	# Send a message into message stream to update sherpa parent environment with the status of this action for $PACKAGE_NAME.
-	# This can be: `ok`, `so`, `sk`, `se`, `er`, `ex`.
+	# This can be: `ok`, `so`, `sk`, `se`, `er`, `ex`. `ab`.
 	# This function is only called from within background functions.
 
 	# input:
@@ -6140,7 +6153,7 @@ MarkThisActionForkAsSkippedOk()
 
 	# This is a "silent" skip. Skipped action is unimportant, so no-need to show this in results table.
 
-	[[ -n $proc_fork_pathfile && -e $proc_fork_pathfile ]] && mv "$proc_fork_pathfile" "$proc_skipok_pathfile"
+	[[ -n $proc_fork_pathfile && -e $proc_fork_pathfile ]] && mv "$proc_fork_pathfile" "$proc_skip_ok_pathfile"
 	SendActionStatus so
 
 	}
@@ -6158,6 +6171,14 @@ MarkThisActionForkAsSkippedError()
 
 	[[ -n $proc_fork_pathfile && -e $proc_fork_pathfile ]] && mv "$proc_fork_pathfile" "$proc_skip_error_pathfile"
 	SendActionStatus se
+
+	}
+
+MarkThisActionForkAsSkippedAbort()
+	{
+
+	[[ -n $proc_fork_pathfile && -e $proc_fork_pathfile ]] && mv "$proc_fork_pathfile" "$proc_skip_abort_pathfile"
+	SendActionStatus sa
 
 	}
 
@@ -6788,7 +6809,7 @@ SaveActionResultToLog()
 		skipped)
 			DebugAsWarn "$REASON"
 			;;
-		failed|skipped-error)
+		failed|skipped-error|skipped-abort)
 			DebugAsError "$REASON"
 	esac
 
@@ -7775,7 +7796,7 @@ _QPKG:sign_()
 	#   $1 = QPKG name
 
 	# output:
-	#   $? = none, this function executes in the background.
+	#   $? = none, this function executes in the background. But an exitcode is recorded in the debug log.
 
 	[[ $opts_verbose != true ]] && exec &>/dev/null
 	FuncFork:Init
@@ -7784,6 +7805,12 @@ _QPKG:sign_()
 	local a=''
 	local b=''
 	local -i z=0
+
+	if [[ -e $ACTION_ABORT_PATHFILE ]]; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped-abort 'abort requested, unable to continue'
+		MarkThisActionForkAsSkippedAbort
+		FuncFork:Exit 3
+	fi
 
 	DebugVar SQLITE_CMD
 
@@ -7796,13 +7823,13 @@ _QPKG:sign_()
 		MarkThisActionForkAsSkipped
 		z=2
 	elif [[ ! -e $SQLITE_CMD ]]; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped 'sqlite3 unavailable'
-		MarkThisActionForkAsSkippedError
-		z=2
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped-abort 'sqlite3 unavailable'
+		MarkThisActionForkAsSkippedAbort
+		z=3
 	elif [[ ! -e $CERT_DB_PATHFILE ]]; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped 'certificate database not found'
-		MarkThisActionForkAsSkippedError
-		z=2
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped-abort "$(GetQnapOS) certificate database not found"
+		MarkThisActionForkAsSkippedAbort
+		z=3
 	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkipped
@@ -10208,7 +10235,7 @@ ShowAsActionLogDetail()
 	fi
 
 	case ${4:-} in
-		skipped|skipped-failed)
+		skipped|skipped-failed|skipped-abort)
 			if [[ -n "${6:-}" ]]; then
 				DisplayAsIndentPrefixActionResultDurationReason '' "$3" "$2" '' "$6"
 			else
