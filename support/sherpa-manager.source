@@ -1753,7 +1753,7 @@ ParseArgs()
 		case $action in
 			activate|backup|clean|deactivate|disable|enable|install|reactivate|reassign|rebuild|reinstall|restore|upgrade)
 				case $group in
-					all|dependent|independent|upgradable)
+					all|dependent|disabled|installable|independent|NTinstallable|upgradable)
 						QPKGs.AC${action}.SC${group}:Set
 						group=''
 						;;
