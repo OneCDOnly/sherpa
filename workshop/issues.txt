@@ -1,40 +1,52 @@
-* Function durations can become incorrect when functions with the same name are called recursively.
-	- Need to make var holding start-time unique.
+Observed issues:
 
-* Removing OMedusa QPKG via sherpa didn't update App Center 'live' (icon remained until App Center was manually refreshed).
+	* OWatcher3 QPKG records an error in QTS system log because PyPI module installation failed, even though 'start' action succeeded.
+		- This should be a QTS log warning-only.
 
-* Upgrading QPKGs via sherpa didn't update App Center icons 'live'.
+	* OliveTin release check fails to return anything during QTS startup.
 
-* Deluge-server and Headphones didn't report 'stop' as successful.
-	- • These actions failed:
-		Unable to deactivate Deluge-server in 5m:52s: For more information: /etc/init.d/deluge-server.sh log
-		Unable to deactivate Headphones in 5m:51s: For more information: /etc/init.d/headphones.sh log
+	* Function durations can become incorrect when functions with the same name are called recursively.
+		- Need to make var holding start-time unique.
 
-		24 source: deluge-server.sh, action: stop, datetime: Thu Jan 25 06:51:29 EST 2024, package: 230726, service: 230726
-		25 daemon active: true
-		26 daemon PID: 21177
-		27 stop daemon PID (21177) with SIGTERM:
+	* Removing OMedusa QPKG via sherpa didn't update App Center 'live' (icon remained until App Center was manually refreshed).
 
-		37 source: headphones.sh, action: stop, datetime: Thu Jan 25 06:51:31 EST 2024
-		38 package: 240125, service: 240125, library: 240125
-		39 daemon active: true
-		40 daemon PID: 24189
-		41 stop daemon PID (24189) with SIGTERM: stopped in 45 seconds
+	* Upgrading QPKGs via sherpa didn't update App Center icons 'live'.
 
-	- Both applications were dead.
+	* Deluge-server and Headphones didn't report 'stop' as successful.
+		- • These actions failed:
+			Unable to deactivate Deluge-server in 5m:52s: For more information: /etc/init.d/deluge-server.sh log
+			Unable to deactivate Headphones in 5m:51s: For more information: /etc/init.d/headphones.sh log
 
-* Near the end of installing IPKs, monitored download path can remain at non-zero size while packages complete installation.
-	- Maybe include a separate progress message when dir size shrinks to almost zero?
+			24 source: deluge-server.sh, action: stop, datetime: Thu Jan 25 06:51:29 EST 2024, package: 230726, service: 230726
+			25 daemon active: true
+			26 daemon PID: 21177
+			27 stop daemon PID (21177) with SIGTERM:
+		log ended here like process had been killed.
 
-* 'sherpa start inactive' fails to find any inactive packages.
-	- Must get status of each package first.
+			37 source: headphones.sh, action: stop, datetime: Thu Jan 25 06:51:31 EST 2024
+			38 package: 240125, service: 240125, library: 240125
+			39 daemon active: true
+			40 daemon PID: 24189
+			41 stop daemon PID (24189) with SIGTERM: stopped in 45 seconds
+		log ended here like process had been killed.
 
-* If package signing fails, the cert database is probably already open. Check for this and abort signing.
-	- Also, when signing fails, don't direct user to the QPKG service-script log: signing isn't a service action.
+		- Both applications were dead.
 
-* Extend startup timeouts for Deluge QPKGs.
+	* Near the end of installing IPKs, monitored download path can remain at non-zero size while packages complete installation.
+		- Maybe include a separate progress message when dir size shrinks to almost zero?
 
-* QPKG version sort is not correctly sorting version numbers followed by an alpha as later than non-alpha.
+	* 'sherpa start inactive' fails to find any inactive packages.
+		- Must get status of each package first.
 
-* If a forked action hangs, it might not be killed by its caller.
-	- Need to test this.
+	* Extend startup timeouts for Deluge QPKGs?
+		- Frankly, Deluge-web is a colossal PITA. Consider removing support for this as a QPKG.
+
+	* QPKG version sort is not correctly sorting version numbers followed by an alpha as later than non-alpha.
+
+Hypothetical issues:
+
+	* If package signing fails, the cert database might already be open.
+		- Check for this and abort signing.
+
+	* If a forked action hangs, it might not be killed by its caller.
+		- Need to test this.

@@ -5,7 +5,7 @@
 
 ## Description
 
-A mini-package-manager for QNAP NAS.
+A mini-package-manager for QNAP® NAS.
 
 Package management via **sherpa** provides extra features like easy application backup, upgrading, service and daemon management, self-checking and repair, and all operations may be automated via cron.
 
@@ -18,7 +18,7 @@ That said: the majority of development is now complete, and I'm currently workin
 
 ## Installation
 
-1) [Click here to download the **sherpa** QPKG](https://github.com/OneCDOnly/sherpa/releases/download/v240130/sherpa_240129.qpkg).
+1) [Click here to download the **sherpa** QPKG](https://github.com/OneCDOnly/sherpa/releases/download/v240202/sherpa_240130.qpkg).
 
 2) Install the QPKG manually through your QTS App Center UI. This QPKG is not digitally signed, so you'll need to allow unsigned packages to be installed in your App Center before installing it. It can "sign" itself (and all supported QPKGs) after installation.
 

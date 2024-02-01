@@ -126,9 +126,7 @@ InitLibrary()
 	IsSourcedOnline && IsAutoUpdateMissing && EnableAutoUpdate >/dev/null
 
 	if [[ $run_daemon_in_screen_session = true && ! -e $SCREEN_CONF_PATHFILE ]]; then
-		echo "logfile $SCREEN_LOG_PATHFILE" > "$SCREEN_CONF_PATHFILE"
-		echo 'logfile flush 1' >> "$SCREEN_CONF_PATHFILE"
-		echo 'log on' >> "$SCREEN_CONF_PATHFILE"
+		echo -e "logfile ${SCREEN_LOG_PATHFILE}\nlogfile flush 1\nlog on" > "$SCREEN_CONF_PATHFILE"
 	fi
 
 	}
@@ -136,7 +134,7 @@ InitLibrary()
 InitByServiceType()
 	{
 
-	# definitions: https://github.com/OneCDOnly/sherpa/wiki/Service-Script-Types
+	# Definitions: https://github.com/OneCDOnly/sherpa/wiki/Service-Script-Types
 
 	case $SERVICE_SCRIPT_TYPE in
 		1)
@@ -288,7 +286,7 @@ StartQPKGLibrary()
 			download_quiet=' --silent'
 		else
 			tar_extract_verbose=' --verbose'
-# 			unzip_extract_verbose=' -v'			# Don't enable this, seems to prevent actual file extraction from occurring.
+# 			unzip_extract_verbose=' -v'			# Don't enable this, it seems to prevent actual file extraction from occurring.
 		fi
 
 		download_opts="${curl_insecure_arg}${download_quiet}"
@@ -297,13 +295,20 @@ StartQPKGLibrary()
 			DisplayWaitCommitToLog 'check release package:'
 			# https://gist.github.com/steinwaywhw/a4cd19cda655b8249d908261a62687f8
 			remote_url=$(/sbin/curl${download_opts} "$remote_url" | /bin/grep browser_download_url | cut -d\" -f4 | /bin/grep "$remote_arch")
-			DisplayCommitToLog OK
+
+			if [[ -n $remote_url ]]; then
+				DisplayCommitToLog OK
+			else
+				DisplayErrCommitAllLogs 'unable to calculate remote URL'
+			fi
 		fi
 
-		[[ -e $source_archive_pathfile ]] && download_opts+=" --time-cond $source_archive_pathfile"
-		download_opts+=" --show-error --location --output $source_archive_pathfile"
+		if [[ -n $remote_url ]]; then
+			[[ -e $source_archive_pathfile ]] && download_opts+=" --time-cond $source_archive_pathfile"
+			download_opts+=" --show-error --location --output $source_archive_pathfile"
 
-		DisplayRunAndLog 'refresh release package' "/sbin/curl${download_opts} '$remote_url'" || { SetError; return 1 ;}
+			DisplayRunAndLog 'refresh release package' "/sbin/curl${download_opts} '$remote_url'" || { SetError; return 1 ;}
+		fi
 
 		if [[ ! -e $daemon_pathfile || ! -e $source_archive_pathfile || $(($(/bin/date +%s)-$(/usr/bin/stat "$source_archive_pathfile" -c %Y))) -lt 60 ]]; then			# Extract from latest release archive.
 			tar_extract_opts="$tar_extract_verbose --extract --gzip --file=$source_archive_pathfile --directory=$qpkg_repo_path"
@@ -454,18 +459,18 @@ InstallAddons()
 	local pyproject_pathfile=$qpkg_repo_path/pyproject.toml
 	local pip_conf_pathfile=$venv_path/pip.conf
 	local new_env=false
-	local sys_packages=' --system-site-packages'
+	local allow_sys_packages=' --system-site-packages'
 	local no_pips_installed=true
-	local pip_deps=' --no-deps'
+	local no_pip_deps=' --no-deps'
 	local module_exclusions=''
 	local re=''
 	local cmd=''
 
-	[[ $allow_access_to_sys_packages != true ]] && sys_packages=''
-	[[ $install_pip_deps = true ]] && pip_deps=''
+	[[ $allow_access_to_sys_packages != true ]] && allow_sys_packages=''
+	[[ $install_pip_deps = true ]] && no_pip_deps=''
 
 	if IsNotVirtualEnvironmentExist; then
-		DisplayRunAndLog 'create new virtual Python environment' "export PIP_CACHE_DIR=$pip_cache_path VIRTUALENV_OVERRIDE_APP_DATA=$pip_cache_path; $interpreter -m virtualenv ${venv_path}${sys_packages}" log:failure-only
+		DisplayRunAndLog 'create new virtual Python environment' "export PIP_CACHE_DIR=$pip_cache_path VIRTUALENV_OVERRIDE_APP_DATA=$pip_cache_path; $interpreter -m virtualenv ${venv_path}${allow_sys_packages}" log:failure-only
 		new_env=true
 	fi
 
@@ -483,7 +488,7 @@ InstallAddons()
 
 	if [[ $QPKG_NAME = OWatcher3 ]]; then
 		# need to install `m2r` PyPI module first
-		DisplayRunAndLog "KLUDGE: install 'm2r' PyPI module first" "$venv_pip_pathfile install${pip_deps} --no-input m2r" log:failure-only
+		DisplayRunAndLog "KLUDGE: install 'm2r' PyPI module first" "$venv_pip_pathfile install${no_pip_deps} --no-input m2r" log:failure-only
 	fi
 
 	[[ -e $essential_modules_pathfile && -d $(/usr/bin/dirname "$default_essential_modules_pathfile") ]] && cp -f "$essential_modules_pathfile" "$default_essential_modules_pathfile"
@@ -498,7 +503,7 @@ InstallAddons()
 	[[ -e $default_recommended_modules_pathfile ]] && recommended_modules_pathfile=$default_recommended_modules_pathfile
 
 	# Must remove these modules from repo txt files, and use the ones installed via `opkg` instead (if available).
-	# If not, `pip` will attempt to compile these, which fails on early ARMv5 CPUs.
+	# If not, `pip` will attempt to compile these, which fails on early ARMv5 and some ARMv7 CPUs.
 
 	if [[ -e $excluded_modules_pathfile ]]; then
 		module_exclusions=$(/bin/tr '\n' ' ' <<< "$(StripComments "$(<"$excluded_modules_pathfile")")")
@@ -522,7 +527,7 @@ InstallAddons()
 
 	for target in $essential_modules_pathfile $requirements_modules_pathfile $recommended_modules_pathfile; do
 		if [[ -e $target ]]; then
-			DisplayRunAndLog "install PyPI modules from '$(/usr/bin/basename "$target")'" "$venv_pip_pathfile install${pip_deps} --no-input --upgrade pip -r $target" log:failure-only
+			DisplayRunAndLog "install PyPI modules from '$(/usr/bin/basename "$target")'" "$venv_pip_pathfile install${no_pip_deps} --no-input --upgrade pip -r $target" log:failure-only
 			no_pips_installed=false
 		fi
 	done
@@ -531,7 +536,7 @@ InstallAddons()
 
 	if [[ $no_pips_installed = true ]]; then
 		if [[ -e $qpkg_repo_path/setup.py || -e $pyproject_pathfile ]]; then
-			DisplayRunAndLog "install PyPI modules from '$(/usr/bin/basename "$target")'" "$venv_pip_pathfile install${pip_deps} --no-input --upgrade pip $qpkg_repo_path" log:failure-only
+			DisplayRunAndLog "install PyPI modules from '$(/usr/bin/basename "$target")'" "$venv_pip_pathfile install${no_pip_deps} --no-input --upgrade pip $qpkg_repo_path" log:failure-only
 			no_pips_installed=false
 		fi
 	fi
@@ -574,11 +579,9 @@ StripComments()
 	# output:
 	#   stdout = stripped string.
 
-	local a=''
-
 	[[ -n $1 ]] || return
 
-	a="$1"
+	local a="$1"
 
 	a=$(/bin/sed -e '/^#[[:space:]].*/d;/#$/d;s/[[:space:]]#[[:space:]].*//' <<< "$a")		# remove comment lines and line comments.
 	a=$(/bin/sed -e 's/^[[:space:]]*//' <<< "$a")											# remove leading whitespace.

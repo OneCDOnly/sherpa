@@ -71,7 +71,7 @@ Self:Init()
 	Objects:Load || return
 	QPKGs.States:Clear
 
-	QPKG.IsInstalled Entware && [[ $ENTWARE_VER = none ]] && DebugAsWarn "$(ShowAsPackageName Entware) appears to be installed but is inactive. Consider 'start'ing the Entware QPKG if-possible."
+	QPKG.IsInstalled Entware && [[ $ENTWARE_VER = none ]] && DebugAsWarn "$(ShowAsPackageName Entware) appears to be installed but is inactive. Please consider starting the $(ShowAsPackageName Entware) QPKG."
 
 	if [[ -z $USER_ARGS_RAW ]]; then
 		opts_show_basic_help=true
@@ -206,6 +206,14 @@ Self.Results:Show()
 	[[ $opts_show_backuploc = true ]] && Help.BackupLocation:Show
 	[[ $show_zero_qpkgs = true ]] && ShowZeroQpkgs
 	[[ $show_suggest_raise_issue = true ]] && Help.Issue:Show
+
+	if [[ $opts_check = true ]]; then
+		if Self.Error.IsNt; then
+			ShowAsDone 'check completed'
+		else
+			ShowAsFail 'check completed'
+		fi
+	fi
 
 	DebugInfoMinSepr
 	DebugScript finished "$(/bin/date)"
@@ -509,6 +517,7 @@ Env:Load()
 
 	ShowAsProc 'loading environment'
 
+	readonly ACTION_ABORT_PATHFILE=/var/run/abort.action
 	readonly ACTION_MSG_PIPE=/var/run/sherpa.action.messages.pipe
 	readonly CERT_DB_PATHFILE=/etc/config/nas_sign_qpkg.db
 	readonly CPU_CORES=$(GetCPUCores)
@@ -590,7 +599,7 @@ Lists:Load()
 	# ordered
 	PIP_ACTIONS=(download uninstall upgrade reinstall install)
 	IPK_ACTIONS=(download uninstall upgrade reinstall install)
-	QPKG_ACTIONS=(status rebuild reassign download backup deactivate disable uninstall upgrade reinstall install restore clean enable activate reactivate sign)
+	QPKG_ACTIONS=(status rebuild reassign download backup deactivate disable uninstall upgrade reinstall install sign restore clean enable activate reactivate)
 
 	# These actions, states and scopes may be specified by the user.
 	# sorted
@@ -695,7 +704,12 @@ Debug.Log:Env()
 	esac
 
 	DebugFirmware ok 'OS uptime' "$(GetUptime)"
-	DebugFirmware ok 'system load' "$(GetSysLoadAverages)"
+
+	if OS.IsLoadAverageElevated; then
+		DebugFirmware warning 'system load' "$(GetSysLoadAverages)"
+	else
+		DebugFirmware ok 'system load' "$(GetSysLoadAverages)"
+	fi
 
 	if OS.IsSupportSudo; then
 		DebugUserspace ok '$SUDO_UID' "$(GetSudoUID)"
@@ -857,7 +871,6 @@ Self:Validate()
 	[[ $skip_package_actions = false ]] || return 0
 
 	Func:Init
-	ShowAsProc validating
 	local installed_ver=''
 	local package=''
 	local action=''
@@ -1075,6 +1088,8 @@ Self:Validate()
 		done
 	fi
 
+	QPKGs-ACsign-to.IsAny && QPKG.Signing:Load
+
 	wait 2>/dev/null			# ensure Entware package updater completes before continuing.
 
 	Func:Exit
@@ -1098,22 +1113,23 @@ Self:Validate()
 #  11. upgrade independents
 #  12. reinstall independents
 #  13. install independents
-#  14. restore independents
-#  15. clean independents
-#  16. enable independents
-#  17. restart/reactivate independents
-#  18. start/activate independents
+#  14. "sign" independents
+#  15. restore independents
+#  16. clean independents
+#  17. enable independents
+#  18. restart/reactivate independents
+#  19. start/activate independents
 #
-#  19. upgrade dependents
-#  20. reinstall dependents
-#  21. install dependents
-#  22. restore dependents
-#  23. clean dependents			(supported by most dependent packages, but not all)
-#  24. enable dependents
-#  25. restart/reactivate dependents
-#  26. start/activate dependents
+#  20. upgrade dependents
+#  21. reinstall dependents
+#  22. install dependents
+#  23. "sign" dependents
+#  24. restore dependents
+#  25. clean dependents			(supported by most dependent packages, but not all)
+#  26. enable dependents
+#  27. restart/reactivate dependents
+#  28. start/activate dependents
 #
-#  27. "sign" all
 
 Actions:Proc()
 	{
@@ -1161,6 +1177,10 @@ Actions:Proc()
 				Action:Proc enable $tier QPKG enabling enabled
 				Action:Proc reactivate $tier QPKG reactivating reactivated
 				Action:Proc activate $tier QPKG activating activated
+
+				if OS.IsSupportSignedPackages; then
+					Action:Proc sign $tier QPKG '"signing"' '"signed"'
+				fi
 				;;
 			auxiliary)
 				for action in install reinstall upgrade activate; do
@@ -1182,10 +1202,6 @@ Actions:Proc()
 				fi
 		esac
 	done
-
-	if OS.IsSupportSignedPackages; then
-		Action:Proc sign all QPKG '"signing"' '"signed"'
-	fi
 
 	if [[ $opts_debug = true ]]; then
 #		PIPs.Actions:List
@@ -1269,7 +1285,7 @@ Action:Proc()
 				Keystrokes:Show		# Enable this before removing Entware & GNU `stty`.
 			fi
 
-			_ActionForks:Launch_ "_${PACKAGE_TYPE}:${TARGET_ACTION}_" "${target_packages[@]}" &
+			_LaunchSingleActionWithManyForks_ "_${PACKAGE_TYPE}:${TARGET_ACTION}_" "${target_packages[@]}" &
 			fork_pid=$!
 
 			# Read message pipe and process QPKGs and actions as-per requests contained within.
@@ -1324,24 +1340,29 @@ Action:Proc()
 						;;
 					status)			# Update the status of a single action fork in the parent shell.
 						case $msg1_value in
-							ok)		# completed OK (wonderful).
+							ok)		# Completed OK (wonderful).
 								((ok_count++))
 								;;
-							so)		# action was skipped, but this is normal (no-big-deal).
+							so)		# Action was skipped, but this is normal (no-big-deal).
 								((skip_ok_count++))
 								;;
-							sk)		# action was skipped (and there's a good reason for it).
+							sk)		# Action was skipped (and there's a good reason for it).
 								((skip_count++))
 								;;
-							se)		# action was skipped due to error prior to action being tried (might be a big-deal).
+							se)		# Action was skipped due to error prior to action being attempted (might be a big-deal).
 								((skip_error_count++))
 								;;
-							er)		# action failed (uh-oh).
+							sa)		# Action was skipped and must immediately abort (don't attempt this action again).
+								((skip_abort_count++))
+								[[ ! -e $ACTION_ABORT_PATHFILE ]] && $TOUCH_CMD "$ACTION_ABORT_PATHFILE"
+								break
+								;;
+							er)		# Action failed (uh-oh).
 								((fail_count++))
 						esac
 
 						case $msg1_value in
-							ok|so|sk|se|er)
+							ok|so|sk|se|sa|er)
 								[[ $(type -t QPKGs-AC${TARGET_ACTION}-to:Init) = function ]] && QPKGs-AC${TARGET_ACTION}-to:Remove "$msg2_value"
 								[[ $(type -t QPKGs-AC${TARGET_ACTION}-${msg1_value}:Init) = function ]] && QPKGs-AC${TARGET_ACTION}-${msg1_value}:Add "$msg2_value"
 
@@ -1366,7 +1387,7 @@ Action:Proc()
 			done
 
 			[[ $ok_count -gt 0 ]] && opts_show_packages_ok=true
-			[[ $skip_count -gt 0 || $skip_error_count -gt 0 ]] && opts_show_packages_skipped=true
+			[[ $skip_count -gt 0 || $skip_error_count -gt 0 || $skip_abort_count -gt 0 ]] && opts_show_packages_skipped=true
 			[[ $fail_count -gt 0 ]] && opts_show_packages_failed=true
 
 			[[ ${#target_packages[@]} -gt 0 ]] && KillActiveFork		# Should only be needed if an action fork didn't exit properly.
@@ -1441,9 +1462,10 @@ AdjustMaxForks()
 	max_forks=$CONCURRENCY
 	local reason=''
 
-	# No-point running actions async in debug mode: their stdout will make a confusing mess of the screen.
-
-	if [[ $opts_debug = true ]]; then
+	if [[ $opts_verbose = true ]]; then 			# No-point running actions async in verbose mode: stdout will be a confusing mess.
+		max_forks=1
+		reason='verbose mode is active'
+	elif [[ $opts_debug = true ]]; then 			# Same goes for debug mode: logs will be a mess.
 		max_forks=1
 		reason='debug mode is active'
 	else
@@ -1460,11 +1482,11 @@ AdjustMaxForks()
 				max_forks=1
 				reason="'$1'"
 				;;
-			backup|deactivate|download|uninstall)	# Low-resource actions, so force multiple forks, even on ARMv5.
+			backup|deactivate|download|uninstall)	# Low-resource actions, so allow multiple forks, even on ARMv5.
 				max_forks=4
 				reason="'$1'"
 				;;
-			disable|enable|status)					# Really low-resource actions.
+			disable|enable|status)					# Really-low-resource actions.
 				max_forks=8
 				reason="'$1'"
 		esac
@@ -1731,7 +1753,7 @@ ParseArgs()
 		case $action in
 			activate|backup|clean|deactivate|disable|enable|install|reactivate|reassign|rebuild|reinstall|restore|upgrade)
 				case $group in
-					all|dependent|independent|upgradable)
+					all|dependent|disabled|installable|independent|NTinstallable|upgradable)
 						QPKGs.AC${action}.SC${group}:Set
 						group=''
 						;;
@@ -2274,7 +2296,7 @@ UpdateEntwarePackageList()
 		return 1
 	fi
 
-	[[ ${ENTWARE_PACKAGE_LIST_UPTODATE:-false} = false ]] || return 0
+	[[ ${ENTWARE_PACKAGE_LIST_UPTODATE:-false} = false ]] || return
 
 	local -i z=0
 
@@ -2317,7 +2339,7 @@ IsThisFileRecent()
 	# Examine `change` time as this is updated even if file content isn't modified.
 
 	# https://stackoverflow.com/a/55622661
-	[[ -e ${1:-} && $((($(/bin/date +%s)-$(/usr/bin/stat "$1" -c %Y))/60)) -le ${2:-1440} ]]
+	[[ -e ${1:-} && $((($(/bin/date +%s)-$(/usr/bin/stat "$1" -c %Z))/60)) -le ${2:-1440} ]]
 
 	}
 
@@ -2475,7 +2497,6 @@ IPKs:upgrade()
 
 	[[ $ipks_upgrade = true ]] || return
 	QPKGs-ISenabled.Exist Entware || return
-# 	UpdateEntwarePackageList
 	Self.Error.IsNt || return
 
 	Func:Init
@@ -2501,7 +2522,7 @@ IPKs:upgrade()
 		desc="$total_count auxiliary IPK module$(Pluralise "$total_count")"
 		ShowAsProc "upgrading $desc"
 
-		_DirSize:Monitor_ "$IPK_DL_PATH" "$(IPKs-ACdownload-to:Size)" &
+		_DirSizeMonitor_ "$IPK_DL_PATH" "$(IPKs-ACdownload-to:Size)" &
 		fork_pid=$!
 
 		RunAndLog "$OPKG_CMD upgrade --force-overwrite $(IPKs-ACdownload-to:List) --cache $IPK_CACHE_PATH --tmp-dir $IPK_DL_PATH" "$log_pathfile" log:failure-only
@@ -2530,7 +2551,6 @@ IPKs:install()
 
 	[[ $ipks_install = true ]] || return
 	QPKGs-ISenabled.Exist Entware || return
-# 	UpdateEntwarePackageList
 	Self.Error.IsNt || return
 
 	Func:Init
@@ -2577,7 +2597,7 @@ IPKs:install()
 		desc="$total_count auxiliary IPK module$(Pluralise "$total_count")"
 		ShowAsProc "installing $desc"
 
-		_DirSize:Monitor_ "$IPK_DL_PATH" "$(IPKs-ACdownload-to:Size)" &
+		_DirSizeMonitor_ "$IPK_DL_PATH" "$(IPKs-ACdownload-to:Size)" &
 		fork_pid=$!
 
 		RunAndLog "$OPKG_CMD install --force-overwrite $(IPKs-ACdownload-to:List) --cache $IPK_CACHE_PATH --tmp-dir $IPK_DL_PATH" "$log_pathfile" log:failure-only
@@ -2616,7 +2636,6 @@ IPKs:downgrade()
 
 	[[ $ipks_downgrade = true ]] || return
 	QPKGs-ISenabled.Exist Entware || return
-# 	UpdateEntwarePackageList
 	Self.Error.IsNt || return
 
 	Func:Init
@@ -2774,7 +2793,7 @@ CloseIpkArchive()
 
 	}
 
-_ActionForks:Launch_()
+_LaunchSingleActionWithManyForks_()
 	{
 
 	# Execute actions concurrently, but only as many as $max_forks will allow given the circumstances.
@@ -2796,10 +2815,12 @@ _ActionForks:Launch_()
 	local -a target_packages=("$@")
 
 	for a in "${target_packages[@]}"; do
-		while [[ $fork_count -ge $max_forks ]]; do  	# Don't fork until an empty spot becomes available.
+		while [[ $fork_count -ge $max_forks && ! -e $ACTION_ABORT_PATHFILE ]]; do  	# Don't fork until an empty spot becomes available.
 			sleep .2
 			UpdateForkProgress
 		done
+
+		[[ -e $ACTION_ABORT_PATHFILE ]] && exit
 
 		IncForkProgressIndex
 		MarkThisActionForkAsStarted 					# Must create runfile here, as it takes too-long to happen in background function.
@@ -2819,7 +2840,7 @@ _ActionForks:Launch_()
 
 	}
 
-_DirSize:Monitor_()
+_DirSizeMonitor_()
 	{
 
 	# * This function runs autonomously *
@@ -3192,7 +3213,7 @@ DisplayAsProjSynExam()
 
 	WriteEmptyLineIfNoneExists
 	printf "${CHARS_BULLET}%s" "$(Capitalise "${1:-}")"
-	[[ ${1: -1} != '!' ]] && printf ':'
+	[[ ${1: -1} != '!' ]] && echo -n ':'
 
 	printf "\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_SUDO_PREFIX}%s\n" '' "sherpa ${2:-}"
 	linespace_visible=false
@@ -3210,7 +3231,7 @@ DisplayAsProjSynIndentExam()
 
 	if [[ -n $1	]]; then
 		printf "\n%${HELP_DESC_INDENT}s%s" '' "$(Capitalise "${1:-}")"
-		[[ ${1: -1} != '!' ]] && printf ':'
+		[[ ${1: -1} != '!' ]] && echo -n ':'
 		printf '\n'
 	fi
 
@@ -4140,7 +4161,7 @@ EraseThisLine()
 Display()
 	{
 
-	echo -e "${1:-}"
+	printf '%s\n' "${1:-}"
 	linespace_visible=false
 
 	}
@@ -4386,12 +4407,12 @@ Report.Results:Show()
 					display_last_action_datetime=false
 				fi
 
-				if [[ $result = "$1" ]] || [[ $1 = skipped && $result = 'skipped-error' ]]; then
+				if [[ $result = "$1" ]] || [[ $1 = skipped && ($result = 'skipped-error' || $result = 'skipped-abort') ]]; then
 					case $result in
 						ok)
 							[[ $found = false ]] && DisplayAsHelpTitle "$plural completed $(TextBrightGreen OK):"
 							;;
-						skipped|skipped-ok|skipped-error)
+						skipped|skipped-ok|skipped-error|skipped-abort)
 							[[ $found = false ]] && DisplayAsHelpTitle "$plural were $(TextBrightOrange skipped):"
 							;;
 						failed)
@@ -4548,6 +4569,7 @@ Log.Last:View()
 
 	DisableDebugToArchiveAndFile
 	ExtractPrevSessFromTail
+	EraseThisLine
 
 	if [[ -e $SESS_LAST_PATHFILE ]]; then
 		DisplayFileInViewport "$SESS_LAST_PATHFILE" linenumbers
@@ -4566,6 +4588,7 @@ Log.Tail:View()
 
 	DisableDebugToArchiveAndFile
 	ExtractTailFromLog
+	EraseThisLine
 
 	if [[ -e $SESS_TAIL_PATHFILE ]]; then
 		DisplayFileInViewport "$SESS_TAIL_PATHFILE" linenumbers
@@ -4851,6 +4874,7 @@ InitForkCounts()
 	proc_skip_ok_count_path=$proc_counts_path/skip.ok.count
 	proc_skip_count_path=$proc_counts_path/skip.count
 	proc_skip_error_count_path=$proc_counts_path/skip.error.count
+	proc_skip_abort_count_path=$proc_counts_path/skip.abort.count
 	proc_fail_count_path=$proc_counts_path/fail.count
 
 	mkdir -p "$proc_fork_count_path"
@@ -4858,6 +4882,7 @@ InitForkCounts()
 	mkdir -p "$proc_skip_ok_count_path"
 	mkdir -p "$proc_skip_count_path"
 	mkdir -p "$proc_skip_error_count_path"
+	mkdir -p "$proc_skip_abort_count_path"
 	mkdir -p "$proc_fail_count_path"
 
 	InitProgress
@@ -4872,9 +4897,10 @@ IncForkProgressIndex()
 
 	proc_fork_pathfile=$proc_fork_count_path/$a
 	proc_ok_pathfile=$proc_ok_count_path/$a
-	proc_skipok_pathfile=$proc_skip_ok_count_path/$a
+	proc_skip_ok_pathfile=$proc_skip_ok_count_path/$a
 	proc_skip_pathfile=$proc_skip_count_path/$a
 	proc_skip_error_pathfile=$proc_skip_error_count_path/$a
+	proc_skip_abort_pathfile=$proc_skip_abort_count_path/$a
 	proc_fail_pathfile=$proc_fail_count_path/$a
 
 	}
@@ -4887,6 +4913,7 @@ RefreshForkCounts()
 	skip_ok_count=$(ls -A -1 "$proc_skip_ok_count_path" 2>/dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
 	skip_count=$(ls -A -1 "$proc_skip_count_path" 2>/dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
 	skip_error_count=$(ls -A -1 "$proc_skip_error_count_path" 2>/dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
+	skip_abort_count=$(ls -A -1 "$proc_skip_abort_count_path" 2>/dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
 	fail_count=$(ls -A -1 "$proc_fail_count_path" 2>/dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
 
 	} &>/dev/null
@@ -4895,6 +4922,7 @@ EraseForkCountPaths()
 	{
 
 	[[ -n $proc_counts_path && -d $proc_counts_path ]] && ClearPath /var/run "$proc_counts_path"
+	[[ -e $ACTION_ABORT_PATHFILE ]] && rm -f "$ACTION_ABORT_PATHFILE"
 
 	} &>/dev/null
 
@@ -4918,16 +4946,16 @@ UpdateForkProgress()
 	RefreshForkCounts
 	[[ $opts_verbose = false && ! -e $DISPLAY_INHIBIT_PATHFILE ]] || return		# Don't display progress, it's difficult to read with so-many other writes to the screen.
 
-	a=$(PercFrac "$ok_count" "$((skip_count+skip_ok_count+skip_error_count))" "$fail_count" "$total_count")
+	a=$(PercFrac "$ok_count" "$((skip_count+skip_ok_count+skip_error_count+skip_abort_count))" "$fail_count" "$total_count")
 
 	if [[ $ok_count -gt 0 ]]; then
 		[[ -n $a ]] && a+=', '
 		a+="$(TextBrightGreen "$ok_count") OK"
 	fi
 
-	if [[ $skip_count -gt 0 || $skip_error_count -gt 0 ]]; then		# Don't include skipped packages that were OK.
+	if [[ $skip_count -gt 0 || $skip_error_count -gt 0 || $skip_abort_count -gt 0 ]]; then		# Don't include skipped packages that were OK.
 		[[ -n $a ]] && a+=', '
-		a+="$(TextBrightOrange "$((skip_count+skip_error_count))") skipped"
+		a+="$(TextBrightOrange "$((skip_count+skip_error_count+skip_abort_count))") skipped"
 	fi
 
 	if [[ $fail_count -gt 0 ]]; then
@@ -5286,6 +5314,14 @@ QPKGs.States:Build()
 
 	OS.IsStarting && ShowAsWarn "$(GetQnapOS) is starting all enabled QPKGs ... check again in a few minutes"
 	OS.IsStopping && ShowAsWarn "$(GetQnapOS) is shutting-down and all QPKGs are stopping"
+
+	if OS.IsLoadAverageInsane; then
+		ShowAsWarn "the NAS currently has an exceptionally-high system-load, recommend aborting and trying again later"
+	elif OS.IsLoadAverageHigh; then
+		ShowAsWarn "the NAS currently has an unusually-high system-load, so this will take a while"
+	elif OS.IsLoadAverageElevated; then
+		ShowAsInfo "the NAS currently has an elevated system-load, this will take a little longer than usual"
+	fi
 
 	ShowAsProc 'QPKG states'
 	MakePath "$STATES_PATH" states || return
@@ -5658,7 +5694,7 @@ Report.Dependencies:Show()
 
 		{
 
-		DisplayAsHelpTitle "$(ShowTitleName) will automatically install/start/stop/restart package dependencies as-required."
+		DisplayAsHelpTitle "package dependencies are automatically installed/started/stopped/restarted as-required."
 		DisplayAsHelpTitle "requirements shown in \"$(TextBrightOrange '* orange')\" prevent the package being installed."
 		DisplayAsHelpTitle "those shown in \"$(TextBrightRed '! red')\" are preventing the package from working correctly."
 		DisplayAsDepsReportTitleLine
@@ -6042,7 +6078,7 @@ SendActionStatus()
 	{
 
 	# Send a message into message stream to update sherpa parent environment with the status of this action for $PACKAGE_NAME.
-	# This can be: `ok`, `skipped`, `failed`, `exit`.
+	# This can be: `ok`, `so`, `sk`, `se`, `er`, `ex`. `ab`.
 	# This function is only called from within background functions.
 
 	# input:
@@ -6115,7 +6151,9 @@ MarkThisActionForkAsOk()
 MarkThisActionForkAsSkippedOk()
 	{
 
-	[[ -n $proc_fork_pathfile && -e $proc_fork_pathfile ]] && mv "$proc_fork_pathfile" "$proc_skipok_pathfile"
+	# This is a "silent" skip. Skipped action is unimportant, so no-need to show this in results table.
+
+	[[ -n $proc_fork_pathfile && -e $proc_fork_pathfile ]] && mv "$proc_fork_pathfile" "$proc_skip_ok_pathfile"
 	SendActionStatus so
 
 	}
@@ -6133,6 +6171,14 @@ MarkThisActionForkAsSkippedError()
 
 	[[ -n $proc_fork_pathfile && -e $proc_fork_pathfile ]] && mv "$proc_fork_pathfile" "$proc_skip_error_pathfile"
 	SendActionStatus se
+
+	}
+
+MarkThisActionForkAsSkippedAbort()
+	{
+
+	[[ -n $proc_fork_pathfile && -e $proc_fork_pathfile ]] && mv "$proc_fork_pathfile" "$proc_skip_abort_pathfile"
+	SendActionStatus sa
 
 	}
 
@@ -6335,6 +6381,13 @@ GetSysLoadAverages()
 	{
 
 	$UPTIME_CMD | $SED_CMD 's|.*load average: ||' | $AWK_CMD -F', ' '{print "1m:"$1", 5m:"$2", 15m:"$3}'
+
+	}
+
+GetSysLoad1MinAverage()
+	{
+
+	$UPTIME_CMD | $SED_CMD 's|.*load average: ||' | $AWK_CMD -F', ' '{print $1}'
 
 	}
 
@@ -6561,7 +6614,7 @@ OS.IsStopping()
 OS.IsStdKernelPageSize()
 	{
 
-	# Standard kernel page size for most NAS is 4kB. Non-standard size is 32kB (confirmed on the TS-431XeU, TS-431X3 & TS-1635).
+	# Standard kernel page size for most QNAP NAS is 4kB. Non-standard size is 32kB (confirmed on the TS-431XeU, TS-431X3 & TS-1635).
 	# https://www.qnap.com/en-us/how-to/faq/article/why-do-the-installed-third-party-containers-not-run-successfully-on-specific-32-bit-arm-devices
 
 	[[ ${KERNEL_PAGE_SIZE:=$(GetKernelPageSize)} = 4kB ]]
@@ -6572,6 +6625,36 @@ OS.IsNonStdKernelPageSize()
 	{
 
 	! OS.IsStdKernelPageSize
+
+	}
+
+OS.IsLoadAverageElevated()
+	{
+
+	local a=$(GetSysLoad1MinAverage); a=${a/./}
+	local b=$((CPU_CORES*2*100))
+
+	[[ $((10#$a)) -ge $((10#$b)) ]]
+
+	}
+
+OS.IsLoadAverageHigh()
+	{
+
+	local a=$(GetSysLoad1MinAverage); a=${a/./}
+	local b=$((CPU_CORES*4*100))
+
+	[[ $((10#$a)) -ge $((10#$b)) ]]
+
+	}
+
+OS.IsLoadAverageInsane()
+	{
+
+	local a=$(GetSysLoad1MinAverage); a=${a/./}
+	local b=$((CPU_CORES*8*100))
+
+	[[ $((10#$a)) -ge $((10#$b)) ]]
 
 	}
 
@@ -6661,6 +6744,8 @@ EnableDebugToArchiveAndFile()
 	opts_debug=true
 	DebugVar opts_debug
 
+	ShowAsInfo "debug mode activated, $(ShowTitleName) will run a little slower than usual"
+
 	self_archive_debug_afterward=true
 	DebugVar self_archive_debug_afterward
 
@@ -6724,7 +6809,7 @@ SaveActionResultToLog()
 		skipped)
 			DebugAsWarn "$REASON"
 			;;
-		failed|skipped-error)
+		failed|skipped-error|skipped-abort)
 			DebugAsError "$REASON"
 	esac
 
@@ -6752,16 +6837,15 @@ _QPKG:reassign_()
 
 	if ! QPKGs-ISinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reassign skipped 'not installed'
+		MarkThisActionForkAsSkipped
 		z=2
 	elif [[ $(QPKG.GetStoreID "$PACKAGE_NAME") = sherpa ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reassign skipped 'already assigned to sherpa'
+		MarkThisActionForkAsSkipped
 		z=2
 	fi
 
-	if [[ $z -gt 0 ]]; then
-		MarkThisActionForkAsSkipped
-		FuncFork:Exit $z
-	fi
+	[[ $z -eq 0 ]] || FuncFork:Exit $z
 
 	DebugAsProc "reassigning $(ShowAsPackageName "$PACKAGE_NAME")"
 	RunAndLog "/sbin/setcfg -e $PACKAGE_NAME store -f /etc/config/qpkg.conf" "$LOGS_PATH/$PACKAGE_NAME.$REASSIGN_LOG_FILE" log:failure-only
@@ -6772,8 +6856,8 @@ _QPKG:reassign_()
 		MarkThisActionForkAsOk
 	else
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reassign failed "$z"
-		z=1   # remap to 1
 		MarkThisActionForkAsFailed
+		z=1   # remap to 1
 	fi
 
 	FuncFork:Exit $z
@@ -6819,9 +6903,7 @@ _QPKG:download_()
 		fi
 	fi
 
-	if [[ $z -gt 0 ]]; then
-		FuncFork:Exit $z
-	fi
+	[[ $z -eq 0 ]] || FuncFork:Exit $z
 
 	if [[ ! -f $LOCAL_PATHFILE ]]; then
 		DebugAsProc "downloading $(ShowAsFileName "$REMOTE_FILENAME")"
@@ -6840,13 +6922,13 @@ _QPKG:download_()
 			else
 				SaveActionResultToLog QPKG "$PACKAGE_NAME" download failed "downloaded file $(ShowAsFileName "$LOCAL_FILENAME") has incorrect checksum"
 				SendPackageStateChange ISNTdownloaded
-				z=1
 				MarkThisActionForkAsFailed
+				z=1
 			fi
 		else
 			SaveActionResultToLog QPKG "$PACKAGE_NAME" download failed "$z"
-			z=1   # remap to 1 (last time I checked, 'curl' had 92 return codes)
 			MarkThisActionForkAsFailed
+			z=1   # remap to 1 (last time I checked, 'curl' had 92 return codes)
 		fi
 	fi
 
@@ -6870,27 +6952,28 @@ _QPKG:install_()
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
-	local b=''
+	local a=''
 	local -i z=0
 
 	if QPKGs-ISinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" install skipped 'already installed'
+		MarkThisActionForkAsSkipped
 		z=2
 	elif ! QPKG.IsArchOK "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" install skipped 'NAS arch is incompatible'
+		MarkThisActionForkAsSkipped
 		z=2
 	elif ! QPKG.IsMinOSVerOk "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" install skipped "$(GetQnapOS) version is incompatible"
+		MarkThisActionForkAsSkipped
 		z=2
 	elif ! QPKG.IsMinRAMOk "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" install skipped 'NAS has insufficient RAM'
+		MarkThisActionForkAsSkipped
 		z=2
 	fi
 
-	if [[ $z -gt 0 ]]; then
-		MarkThisActionForkAsSkipped
-		FuncFork:Exit $z
-	fi
+	[[ $z -eq 0 ]] || FuncFork:Exit $z
 
 	local local_pathfile=$(QPKG.GetPathFilename "$PACKAGE_NAME")
 
@@ -6914,10 +6997,10 @@ _QPKG:install_()
 	local target_path=''
 
 	DebugAsProc "installing $(ShowAsPackageName "$PACKAGE_NAME")"
-	[[ $opts_debug = true ]] && b='DEBUG_QPKG=true '
+	[[ $opts_debug = true ]] && a='DEBUG_QPKG=true '
 
 	[[ ${QPKGs_were_installed_name[*]:-} = *"$PACKAGE_NAME"* ]] && target_path="QINSTALL_PATH=$(QPKG.GetOriginalPath "$PACKAGE_NAME") "
-	RunAndLog "${b}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$INSTALL_LOG_FILE" log:failure-only 10
+	RunAndLog "${a}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$INSTALL_LOG_FILE" log:failure-only 10
 	z=$?
 
 	[[ $PACKAGE_NAME = Entware ]] && IsNtSysFileExist $OPKG_CMD && z=1
@@ -6948,12 +7031,12 @@ _QPKG:install_()
 		fi
 
 		SendParentChangeEnv "QPKGs-ACsign-to:Add $PACKAGE_NAME"
-		z=0   # Remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK, but unfortunately will include installation aborts).
 		MarkThisActionForkAsOk
+		z=0   # Remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK, but unfortunately will include installation aborts).
 	else
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" install failed "$z"
-		z=1   # Remap to 1.
 		MarkThisActionForkAsFailed
+		z=1   # Remap to 1.
 	fi
 
 	QPKG.AppCenterNotifier:Clear
@@ -6977,36 +7060,38 @@ _QPKG:reinstall_()
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
-	local b=''
+	local a=''
 	local -i z=0
 
 	if ! QPKGs-ISinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reinstall skipped "not installed, please use 'install' instead."
 		MarkThisActionForkAsSkipped
-		FuncFork:Exit 2
+		z=2
 	fi
+
+	[[ $z -eq 0 ]] || FuncFork:Exit $z
 
 	local local_pathfile=$(QPKG.GetPathFilename "$PACKAGE_NAME")
 
 	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reinstall skipped-error 'no local file found for processing, please report this issue.'
 		MarkThisActionForkAsSkippedError
-		FuncFork:Exit 2
-	fi
-
-	if ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
+		z=2
+	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reinstall skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkippedError
-		FuncFork:Exit 2
+		z=2
 	fi
+
+	[[ $z -eq 0 ]] || FuncFork:Exit $z
 
 	local target_path=''
 
 	DebugAsProc "reinstalling $(ShowAsPackageName "$PACKAGE_NAME")"
-	[[ $opts_debug = true ]] && b='DEBUG_QPKG=true '
+	[[ $opts_debug = true ]] && a='DEBUG_QPKG=true '
 
 	QPKG.IsInstalled "$PACKAGE_NAME" && target_path="QINSTALL_PATH=$($DIRNAME_CMD "$(QPKG.GetInstallationPath $PACKAGE_NAME)") "
-	RunAndLog "${b}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$REINSTALL_LOG_FILE" log:failure-only 10
+	RunAndLog "${a}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$REINSTALL_LOG_FILE" log:failure-only 10
 	z=$?
 
 	[[ $PACKAGE_NAME = Entware ]] && IsNtSysFileExist $OPKG_CMD && z=1
@@ -7022,12 +7107,12 @@ _QPKG:reinstall_()
 
 		local current_ver=$(QPKG.Local.GetVer "$PACKAGE_NAME")
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reinstall ok "version $current_ver"
-		z=0   # Remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK, but unfortunately will include installation aborts).
 		MarkThisActionForkAsOk
+		z=0   # Remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK, but unfortunately will include installation aborts).
 	else
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reinstall failed "$z"
-		z=1   # Remap to 1.
 		MarkThisActionForkAsFailed
+		z=1   # Remap to 1.
 	fi
 
 	QPKG.AppCenterNotifier:Clear
@@ -7051,27 +7136,24 @@ _QPKG:upgrade_()
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
-	local b=''
+	local a=''
 	local -i z=0
 
 	if ! QPKGs-ISinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" upgrade skipped 'not installed'
+		MarkThisActionForkAsSkipped
 		z=2
 	elif ! QPKGs-SCupgradable.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" upgrade skipped 'no new package is available'
+		MarkThisActionForkAsSkipped
+		z=2
+	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" upgrade skipped "assigned to another repository, please 'reassign' it first"
+		MarkThisActionForkAsSkippedError
 		z=2
 	fi
 
-	if ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" upgrade skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisActionForkAsSkippedError
-		FuncFork:Exit 2
-	fi
-
-	if [[ $z -gt 0 ]]; then
-		MarkThisActionForkAsSkipped
-		FuncFork:Exit $z
-	fi
+	[[ $z -eq 0 ]] || FuncFork:Exit $z
 
 	local local_pathfile=$(QPKG.GetPathFilename "$PACKAGE_NAME")
 
@@ -7085,10 +7167,10 @@ _QPKG:upgrade_()
 	local target_path=''
 
 	DebugAsProc "upgrading $(ShowAsPackageName "$PACKAGE_NAME")"
-	[[ $opts_debug = true ]] && b='DEBUG_QPKG=true '
+	[[ $opts_debug = true ]] && a='DEBUG_QPKG=true '
 
 	QPKG.IsInstalled "$PACKAGE_NAME" && target_path="QINSTALL_PATH=$($DIRNAME_CMD "$(QPKG.GetInstallationPath "$PACKAGE_NAME")") "
-	RunAndLog "${b}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$UPGRADE_LOG_FILE" log:failure-only 10
+	RunAndLog "${a}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$UPGRADE_LOG_FILE" log:failure-only 10
 	z=$?
 
 	[[ $PACKAGE_NAME = Entware ]] && IsNtSysFileExist $OPKG_CMD && z=1
@@ -7111,12 +7193,12 @@ _QPKG:upgrade_()
 			SaveActionResultToLog QPKG "$PACKAGE_NAME" upgrade ok "upgraded from version $prev_ver to version $current_ver"
 		fi
 
-		z=0   # Remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK, but unfortunately will include installation aborts).
 		MarkThisActionForkAsOk
+		z=0   # Remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK, but unfortunately will include installation aborts).
 	else
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" upgrade failed "$z"
-		z=1   # Remap to 1.
 		MarkThisActionForkAsFailed
+		z=1   # Remap to 1.
 	fi
 
 	QPKG.AppCenterNotifier:Clear
@@ -7140,27 +7222,24 @@ _QPKG:uninstall_()
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
-	local b=''
+	local a=''
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" uninstall skipped 'not installed'
+		MarkThisActionForkAsSkipped
 		z=2
 	elif [[ $PACKAGE_NAME = sherpa ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" uninstall skipped "it's needed here! 😉"
+		MarkThisActionForkAsSkipped
+		z=2
+	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" uninstall skipped "assigned to another repository, please 'reassign' it first"
+		MarkThisActionForkAsSkippedError
 		z=2
 	fi
 
-	if ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" uninstall skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisActionForkAsSkippedError
-		FuncFork:Exit 2
-	fi
-
-	if [[ $z -gt 0 ]]; then
-		MarkThisActionForkAsSkipped
-		FuncFork:Exit $z
-	fi
+	[[ $z -eq 0 ]] || FuncFork:Exit $z
 
 	local -r QPKG_UNINSTALLER_PATHFILE=$(QPKG.GetInstallationPath "$PACKAGE_NAME")/.uninstall.sh
 
@@ -7168,9 +7247,9 @@ _QPKG:uninstall_()
 
 	if [[ -e $QPKG_UNINSTALLER_PATHFILE ]]; then
 		DebugAsProc "uninstalling $(ShowAsPackageName "$PACKAGE_NAME")"
-		[[ $opts_debug = true ]] && b='DEBUG_QPKG=true '
+		[[ $opts_debug = true ]] && a='DEBUG_QPKG=true '
 
-		RunAndLog "${b}${SH_CMD} $QPKG_UNINSTALLER_PATHFILE" "$LOGS_PATH/$PACKAGE_NAME.$UNINSTALL_LOG_FILE" log:failure-only
+		RunAndLog "${a}${SH_CMD} $QPKG_UNINSTALLER_PATHFILE" "$LOGS_PATH/$PACKAGE_NAME.$UNINSTALL_LOG_FILE" log:failure-only
 		z=$?
 
 		if [[ $z -eq 0 ]]; then
@@ -7191,9 +7270,8 @@ _QPKG:uninstall_()
 			MarkThisActionForkAsOk
 		else
 			SaveActionResultToLog QPKG "$PACKAGE_NAME" uninstall failed "$z"
-
-			z=1   # Remap to 1.
 			MarkThisActionForkAsFailed
+			z=1   # Remap to 1.
 		fi
 	else
 		# Standard QPKG `.uninstall.sh` was not found, so can't continue with uninstallation (maybe force this instead with `rm -r` ?).
@@ -7221,20 +7299,20 @@ _QPKG:activate_()
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
-	local b=''
+	local a=''
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" activate skipped 'not installed'
 		MarkThisActionForkAsSkipped
-		FuncFork:Exit 2
-	fi
-
-	if ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
+		z=2
+	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" activate skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkippedError
-		FuncFork:Exit 2
+		z=2
 	fi
+
+	[[ $z -eq 0 ]] || FuncFork:Exit $z
 
 	QPKG.ServiceStatus:Clear
 	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$ACTIVATE_LOG_FILE
@@ -7249,8 +7327,8 @@ _QPKG:activate_()
 		MarkThisActionForkAsSkippedError
 		FuncFork:Exit 2
 	elif [[ $opts_debug = true ]]; then
-		b='DEBUG_QPKG=true '
-		RunAndLog "${b}${service_pathfile} start" "$LOG_PATHFILE" log:failure-only
+		a='DEBUG_QPKG=true '
+		RunAndLog "${a}${service_pathfile} start" "$LOG_PATHFILE" log:failure-only
 		z=$?
 	elif QPKG.IsCanLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
 		RunAndLog "/sbin/qpkg_service${timeout} start $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
@@ -7274,8 +7352,8 @@ _QPKG:activate_()
 	else
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" activate failed "$z"
 		SendPackageStateChange ISNTactive
-		z=1   # Remap to 1.
 		MarkThisActionForkAsFailed
+		z=1   # Remap to 1.
 	fi
 
 	QPKG.AppCenterNotifier:Clear
@@ -7299,20 +7377,19 @@ _QPKG:reactivate_()
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
-	local b=''
+	local a=''
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reactivate skipped 'not installed'
 		MarkThisActionForkAsSkipped
-		FuncFork:Exit 2
-	fi
-
-	if ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
+	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reactivate skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkippedError
-		FuncFork:Exit 2
+		z=2
 	fi
+
+	[[ $z -eq 0 ]] || FuncFork:Exit $z
 
 	QPKG.ServiceStatus:Clear
 	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$REACTIVATE_LOG_FILE
@@ -7327,8 +7404,8 @@ _QPKG:reactivate_()
 		MarkThisActionForkAsSkippedError
 		FuncFork:Exit 2
 	elif [[ $opts_debug = true ]]; then
-		b='DEBUG_QPKG=true '
-		RunAndLog "${b}${service_pathfile} restart" "$LOG_PATHFILE" log:failure-only
+		a='DEBUG_QPKG=true '
+		RunAndLog "${a}${service_pathfile} restart" "$LOG_PATHFILE" log:failure-only
 		z=$?
 	elif QPKG.IsCanLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
 		RunAndLog "/sbin/qpkg_service${timeout} restart $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
@@ -7344,8 +7421,8 @@ _QPKG:reactivate_()
 		MarkThisActionForkAsOk
 	else
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reactivate failed "$z"
-		z=1   # remap to 1
 		MarkThisActionForkAsFailed
+		z=1   # remap to 1
 	fi
 	QPKG.AppCenterNotifier:Clear
 	FuncFork:Exit $z
@@ -7368,27 +7445,24 @@ _QPKG:deactivate_()
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
-	local b=''
+	local a=''
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" deactivate skipped 'not installed'
+		MarkThisActionForkAsSkipped
 		z=2
 	elif [[ $PACKAGE_NAME = sherpa ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" deactivate skipped "it's needed here! 😉"
+		MarkThisActionForkAsSkipped
+		z=2
+	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" deactivate skipped "assigned to another repository, please 'reassign' it first"
+		MarkThisActionForkAsSkippedError
 		z=2
 	fi
 
-	if ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" deactivate skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisActionForkAsSkippedError
-		FuncFork:Exit 2
-	fi
-
-	if [[ $z -gt 0 ]]; then
-		MarkThisActionForkAsSkipped
-		FuncFork:Exit $z
-	fi
+	[[ $z -eq 0 ]] || FuncFork:Exit $z
 
 	QPKG.ServiceStatus:Clear
 	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$DEACTIVATE_LOG_FILE
@@ -7403,8 +7477,8 @@ _QPKG:deactivate_()
 		MarkThisActionForkAsSkippedError
 		FuncFork:Exit 2
 	elif [[ $opts_debug = true ]]; then
-		b='DEBUG_QPKG=true '
-		RunAndLog "${b}${service_pathfile} stop" "$LOG_PATHFILE" log:failure-only
+		a='DEBUG_QPKG=true '
+		RunAndLog "${a}${service_pathfile} stop" "$LOG_PATHFILE" log:failure-only
 		z=$?
 	elif QPKG.IsCanLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
 		RunAndLog "/sbin/qpkg_service${timeout} stop $PACKAGE_NAME" "$LOG_PATHFILE" log:failure-only
@@ -7427,8 +7501,8 @@ _QPKG:deactivate_()
 		MarkThisActionForkAsOk
 	else
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" deactivate failed "$z"
-		z=1   # Remap to 1.
 		MarkThisActionForkAsFailed
+		z=1   # Remap to 1.
 	fi
 
 	QPKG.AppCenterNotifier:Clear
@@ -7456,22 +7530,19 @@ _QPKG:enable_()
 
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" enable skipped 'not installed'
+		MarkThisActionForkAsSkipped
 		z=2
 	elif QPKGs-ISenabled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" enable skipped 'already enabled'
+		MarkThisActionForkAsSkipped
+		z=2
+	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" enable skipped "assigned to another repository, please 'reassign' it first"
+		MarkThisActionForkAsSkippedError
 		z=2
 	fi
 
-	if ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" enable skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisActionForkAsSkippedError
-		FuncFork:Exit 2
-	fi
-
-	if [[ $z -gt 0 ]]; then
-		MarkThisActionForkAsSkipped
-		FuncFork:Exit $z
-	fi
+	[[ $z -eq 0 ]] || FuncFork:Exit $z
 
 	QPKG.ServiceStatus:Clear
 	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$ENABLE_LOG_FILE
@@ -7509,25 +7580,23 @@ _QPKG:disable_()
 
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" disable skipped 'not installed'
+		MarkThisActionForkAsSkipped
 		z=2
 	elif QPKGs-ISNTenabled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" disable skipped 'already disabled'
+		MarkThisActionForkAsSkipped
 		z=2
 	elif [[ $PACKAGE_NAME = sherpa ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" disable skipped "it's needed here! 😉"
+		MarkThisActionForkAsSkipped
+		z=2
+	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" disable skipped "assigned to another repository, please 'reassign' it first"
+		MarkThisActionForkAsSkippedError
 		z=2
 	fi
 
-	if ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" disable skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisActionForkAsSkippedError
-		FuncFork:Exit 2
-	fi
-
-	if [[ $z -gt 0 ]]; then
-		MarkThisActionForkAsSkipped
-		FuncFork:Exit $z
-	fi
+	[[ $z -eq 0 ]] || FuncFork:Exit $z
 
 	QPKG.ServiceStatus:Clear
 	local -r LOG_PATHFILE=$LOGS_PATH/$PACKAGE_NAME.$DISABLE_LOG_FILE
@@ -7562,32 +7631,29 @@ _QPKG:backup_()
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
-	local b=''
+	local a=''
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" backup skipped 'not installed'
+		MarkThisActionForkAsSkipped
 		z=2
 	elif ! QPKG.IsCanBackup; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" backup skipped 'does not support backup'
+		MarkThisActionForkAsSkipped
+		z=2
+	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" backup skipped "assigned to another repository, please 'reassign' it first"
+		MarkThisActionForkAsSkippedError
 		z=2
 	fi
 
-	if ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" backup skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisActionForkAsSkippedError
-		FuncFork:Exit 2
-	fi
-
-	if [[ $z -gt 0 ]]; then
-		MarkThisActionForkAsSkipped
-		FuncFork:Exit $z
-	fi
+	[[ $z -eq 0 ]] || FuncFork:Exit $z
 
 	DebugAsProc "backing-up $(ShowAsPackageName "$PACKAGE_NAME") configuration"
-	[[ $opts_debug = true ]] && b='DEBUG_QPKG=true '
+	[[ $opts_debug = true ]] && a='DEBUG_QPKG=true '
 
-	RunAndLog "${b}$(QPKG.GetServicePathFile) backup" "$LOGS_PATH/$PACKAGE_NAME.$BACKUP_LOG_FILE" log:failure-only
+	RunAndLog "${a}$(QPKG.GetServicePathFile) backup" "$LOGS_PATH/$PACKAGE_NAME.$BACKUP_LOG_FILE" log:failure-only
 	z=$?
 
 	if [[ $z -eq 0 ]]; then
@@ -7597,8 +7663,8 @@ _QPKG:backup_()
 		MarkThisActionForkAsOk
 	else
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" backup failed "$z"
-		z=1   # Remap to 1.
 		MarkThisActionForkAsFailed
+		z=1   # Remap to 1.
 	fi
 
 	FuncFork:Exit $z
@@ -7621,32 +7687,29 @@ _QPKG:restore_()
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
-	local b=''
+	local a=''
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" restore skipped 'not installed'
+		MarkThisActionForkAsSkipped
 		z=2
 	elif ! QPKG.IsCanBackup; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" restore skipped 'does not support restore'
+		MarkThisActionForkAsSkipped
+		z=2
+	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" restore skipped "assigned to another repository, please 'reassign' it first"
+		MarkThisActionForkAsSkippedError
 		z=2
 	fi
 
-	if ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" restore skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisActionForkAsSkippedError
-		FuncFork:Exit 2
-	fi
-
-	if [[ $z -gt 0 ]]; then
-		MarkThisActionForkAsSkipped
-		FuncFork:Exit $z
-	fi
+	[[ $z -eq 0 ]] || FuncFork:Exit $z
 
 	DebugAsProc "restoring $(ShowAsPackageName "$PACKAGE_NAME") configuration"
-	[[ $opts_debug = true ]] && b='DEBUG_QPKG=true '
+	[[ $opts_debug = true ]] && a='DEBUG_QPKG=true '
 
-	RunAndLog "${b}$(QPKG.GetServicePathFile) restore" "$LOGS_PATH/$PACKAGE_NAME.$RESTORE_LOG_FILE" log:failure-only
+	RunAndLog "${a}$(QPKG.GetServicePathFile) restore" "$LOGS_PATH/$PACKAGE_NAME.$RESTORE_LOG_FILE" log:failure-only
 	z=$?
 
 	if [[ $z -eq 0 ]]; then
@@ -7656,8 +7719,8 @@ _QPKG:restore_()
 		MarkThisActionForkAsOk
 	else
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" restore failed "$z"
-		z=1   # Remap to 1.
 		MarkThisActionForkAsFailed
+		z=1   # Remap to 1.
 	fi
 
 	FuncFork:Exit $z
@@ -7680,32 +7743,29 @@ _QPKG:clean_()
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
-	local b=''
+	local a=''
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" clean skipped 'not installed'
+		MarkThisActionForkAsSkipped
 		z=2
 	elif ! QPKG.IsCanClean; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" clean skipped 'does not support cleaning'
+		MarkThisActionForkAsSkipped
+		z=2
+	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" clean skipped "assigned to another repository, please 'reassign' it first"
+		MarkThisActionForkAsSkipped
 		z=2
 	fi
 
-	if ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" clean skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisActionForkAsSkippedError
-		FuncFork:Exit 2
-	fi
-
-	if [[ $z -gt 0 ]]; then
-		MarkThisActionForkAsSkipped
-		FuncFork:Exit $z
-	fi
+	[[ $z -eq 0 ]] || FuncFork:Exit $z
 
 	DebugAsProc "cleaning $(ShowAsPackageName "$PACKAGE_NAME")"
-	[[ $opts_debug = true ]] && b='DEBUG_QPKG=true '
+	[[ $opts_debug = true ]] && a='DEBUG_QPKG=true '
 
-	RunAndLog "${b}$(QPKG.GetServicePathFile) clean" "$LOGS_PATH/$PACKAGE_NAME.$CLEAN_LOG_FILE" log:failure-only
+	RunAndLog "${a}$(QPKG.GetServicePathFile) clean" "$LOGS_PATH/$PACKAGE_NAME.$CLEAN_LOG_FILE" log:failure-only
 	z=$?
 
 	if [[ $z -eq 0 ]]; then
@@ -7714,8 +7774,8 @@ _QPKG:clean_()
 		MarkThisActionForkAsOk
 	else
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" clean failed "$z"
-		z=1   # Remap to 1.
 		MarkThisActionForkAsFailed
+		z=1   # Remap to 1.
 	fi
 
 	FuncFork:Exit $z
@@ -7736,121 +7796,65 @@ _QPKG:sign_()
 	#   $1 = QPKG name
 
 	# output:
-	#   $? = none, this function executes in the background.
+	#   $? = none, this function executes in the background. But an exitcode is recorded in the debug log.
 
 	[[ $opts_verbose != true ]] && exec &>/dev/null
 	FuncFork:Init
 
 	local -r PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
-	local cert=''
-	local cmd=''
-	local signature=''
+	local a=''
+	local b=''
 	local -i z=0
+
+	if [[ -e $ACTION_ABORT_PATHFILE ]]; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped-abort 'abort requested, unable to continue'
+		MarkThisActionForkAsSkippedAbort
+		FuncFork:Exit 3
+	fi
 
 	DebugVar SQLITE_CMD
 
 	if ! OS.IsSupportSignedPackages; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped 'not required: firmware < 4.3.5'
+		MarkThisActionForkAsSkipped
 		z=2
 	elif ! QPKGs-ISinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped 'not installed'
+		MarkThisActionForkAsSkipped
 		z=2
 	elif [[ ! -e $SQLITE_CMD ]]; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped 'sqlite3 unavailable'
-		z=2
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped-abort 'sqlite3 unavailable'
+		MarkThisActionForkAsSkippedAbort
+		z=3
 	elif [[ ! -e $CERT_DB_PATHFILE ]]; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped 'certificate database not found'
-		z=2
-	fi
-
-	if ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped-abort "$(GetQnapOS) certificate database not found"
+		MarkThisActionForkAsSkippedAbort
+		z=3
+	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisActionForkAsSkippedError
-		FuncFork:Exit 2
+		MarkThisActionForkAsSkipped
+		z=2
+	else
+		a="SELECT 1 FROM Certificate WHERE QpkgName = '$PACKAGE_NAME' LIMIT 1;"
+		b=$($SQLITE_CMD "$CERT_DB_PATHFILE" "$a")
+
+		if [[ $b = 1 ]]; then
+			SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped 'already signed'
+			MarkThisActionForkAsSkippedOk
+			z=2
+		fi
 	fi
 
-	if [[ $z -gt 0 ]]; then
-		MarkThisActionForkAsSkipped
-		FuncFork:Exit $z
-	fi
+	[[ $z -eq 0 ]] || FuncFork:Exit $z
 
 	DebugAsProc "\"signing\" $(ShowAsPackageName "$PACKAGE_NAME")"
 
-	# This certificate block is the same used by QNAP for LicenseCenter.
-	read -r -d '' cert << EOB
------BEGIN CERTIFICATE-----
-MIIDwzCCAqugAwIBAgIFALhDVuwwDQYJKoZIhvcNAQELBQAwgYAxCzAJBgNVBAYT
-AlRXMQ8wDQYDVQQIDAZUYWl3YW4xDzANBgNVBAcMBlRhaXBlaTENMAsGA1UECgwE
-UU5BUDEMMAoGA1UECwwDTkFTMRAwDgYDVQQDDAdRTkFQX0NBMSAwHgYJKoZIhvcN
-AQkBFhFzZWN1cml0eUBxbmFwLmNvbTAeFw0yMjAzMTgwNzM5MTRaFw0yNTAzMTcw
-NzM5MTRaMIGGMQswCQYDVQQGEwJUVzEPMA0GA1UECAwGVGFpd2FuMQ8wDQYDVQQH
-DAZUYWlwZWkxDTALBgNVBAoMBFFOQVAxDDAKBgNVBAsMA05BUzEWMBQGA1UEAwwN
-TGljZW5zZUNlbnRlcjEgMB4GCSqGSIb3DQEJARYRc2VjdXJpdHlAcW5hcC5jb20w
-ggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC/bAgbZryVvBXfpBHNUKQV
-sAkAfvDXjKnxa7lKHrRIcFcOnf+voUZcP1Ly9qWb782gB2eUHsUS1Xqj4CF/dUJf
-FEnOBrQUo9+Q9B3x4oTRpMdky7acP4dxAbt4T92swgaReQXAewy9s9//a52HIBca
-1dAA4JPwplqiZ/oh18GDCKxh84Iu9Gcu2J5e+VXEI/KUxCwKUd22aDTpv128MSoq
-dYexCerCJtQbgM3cwkkMiDnFpjrsta5iFpyrNKdLoBJ7YbY3d5Onkqy4DjE8hwR7
-0j7Qd+3xbMqv3FOCKeLLLn6N03IXHKP/big/MdXKY1dJQVA3/ks/knPH8mhcOM0d
-AgMBAAGjPDA6MDgGA1UdHwQxMC8wLaAroCmGJ2h0dHA6Ly9kb3dubG9hZC5xbmFw
-LmNvbS9jcmwvcXRzX3YxLmNybDANBgkqhkiG9w0BAQsFAAOCAQEAWlT1GDH6v8G3
-laIAs2/RdxhPgtKX4aL+fnTEFNF5V2yH0G4luyq5tHQw+VCHtDM6Z3GXWhciKPAR
-upbRcHq744JCFaUb6i8z1w1KVJDaQ38EVE5+JtpoPMrrnb+hKB/gGmi4PoMSpnvX
-VCxLbCbBnwi19o6t/MnPbz0shvUB2NDngnal6lYQFw/F8Sr6cSjV6GAY4TOZotdu
-+gunwqQtYUycEVfNyiWVk/flgED8R8oxTPl9ZoDGen+OgjkZrvgynKnqPLHyxZSd
-hYSoWyWcZWkMCQ+69kOgJVvrRa7z9F9y30uAHXIUrsLV2d/dImVjApMHbZ60iALG
-AVIlas0e4g==
------END CERTIFICATE-----
-EOB
+# 	a="DELETE FROM Certificate WHERE QpkgName = '$PACKAGE_NAME'; INSERT INTO Certificate (Type,QpkgName,Cert,DigitalSignature) VALUES ('qpkg','$PACKAGE_NAME','$QPKG_CERTIFICATE','$QPKG_SIGNATURE');"
 
-	# This digital signature block is the same used by QNAP for LicenseCenter.
-	read -r -d '' signature << EOB
-MIME-Version: 1.0
-Content-Disposition: attachment; filename="smime.p7m"
-Content-Type: application/pkcs7-mime; smime-type=signed-data; name="smime.p7m"
-Content-Transfer-Encoding: base64
+#	a="INSERT INTO Certificate (Type, QpkgName, Cert, DigitalSignature) SELECT 'qpkg','$PACKAGE_NAME','$QPKG_CERTIFICATE','$QPKG_SIGNATURE' WHERE NOT EXISTS (SELECT * FROM Certificate WHERE QpkgName = '$PACKAGE_NAME');"
 
-MIIGtAYJKoZIhvcNAQcCoIIGpTCCBqECAQExDTALBglghkgBZQMEAgEwIwYJKoZI
-hvcNAQcBoBYEFAkoseBaFir08zCz63r2YA82DXzxoIIDxzCCA8MwggKroAMCAQIC
-BQC4Q1bsMA0GCSqGSIb3DQEBCwUAMIGAMQswCQYDVQQGEwJUVzEPMA0GA1UECAwG
-VGFpd2FuMQ8wDQYDVQQHDAZUYWlwZWkxDTALBgNVBAoMBFFOQVAxDDAKBgNVBAsM
-A05BUzEQMA4GA1UEAwwHUU5BUF9DQTEgMB4GCSqGSIb3DQEJARYRc2VjdXJpdHlA
-cW5hcC5jb20wHhcNMjIwMzE4MDczOTE0WhcNMjUwMzE3MDczOTE0WjCBhjELMAkG
-A1UEBhMCVFcxDzANBgNVBAgMBlRhaXdhbjEPMA0GA1UEBwwGVGFpcGVpMQ0wCwYD
-VQQKDARRTkFQMQwwCgYDVQQLDANOQVMxFjAUBgNVBAMMDUxpY2Vuc2VDZW50ZXIx
-IDAeBgkqhkiG9w0BCQEWEXNlY3VyaXR5QHFuYXAuY29tMIIBIjANBgkqhkiG9w0B
-AQEFAAOCAQ8AMIIBCgKCAQEAv2wIG2a8lbwV36QRzVCkFbAJAH7w14yp8Wu5Sh60
-SHBXDp3/r6FGXD9S8valm+/NoAdnlB7FEtV6o+Ahf3VCXxRJzga0FKPfkPQd8eKE
-0aTHZMu2nD+HcQG7eE/drMIGkXkFwHsMvbPf/2udhyAXGtXQAOCT8KZaomf6IdfB
-gwisYfOCLvRnLtieXvlVxCPylMQsClHdtmg06b9dvDEqKnWHsQnqwibUG4DN3MJJ
-DIg5xaY67LWuYhacqzSnS6ASe2G2N3eTp5KsuA4xPIcEe9I+0Hft8WzKr9xTgini
-yy5+jdNyFxyj/24oPzHVymNXSUFQN/5LP5Jzx/JoXDjNHQIDAQABozwwOjA4BgNV
-HR8EMTAvMC2gK6AphidodHRwOi8vZG93bmxvYWQucW5hcC5jb20vY3JsL3F0c192
-MS5jcmwwDQYJKoZIhvcNAQELBQADggEBAFpU9Rgx+r/Bt5WiALNv0XcYT4LSl+Gi
-/n50xBTReVdsh9BuJbsqubR0MPlQh7QzOmdxl1oXIijwEbqW0XB6u+OCQhWlG+ov
-M9cNSlSQ2kN/BFROfibaaDzK652/oSgf4BpouD6DEqZ711QsS2wmwZ8ItfaOrfzJ
-z289LIb1AdjQ54J2pepWEBcPxfEq+nEo1ehgGOEzmaLXbvoLp8KkLWFMnBFXzcol
-lZP35YBA/EfKMUz5fWaAxnp/joI5Ga74Mpyp6jyx8sWUnYWEqFslnGVpDAkPuvZD
-oCVb60Wu8/Rfct9LgB1yFK7C1dnf3SJlYwKTB22etIgCxgFSJWrNHuIxggKbMIIC
-lwIBATCBijCBgDELMAkGA1UEBhMCVFcxDzANBgNVBAgMBlRhaXdhbjEPMA0GA1UE
-BwwGVGFpcGVpMQ0wCwYDVQQKDARRTkFQMQwwCgYDVQQLDANOQVMxEDAOBgNVBAMM
-B1FOQVBfQ0ExIDAeBgkqhkiG9w0BCQEWEXNlY3VyaXR5QHFuYXAuY29tAgUAuENW
-7DALBglghkgBZQMEAgGggeQwGAYJKoZIhvcNAQkDMQsGCSqGSIb3DQEHATAcBgkq
-hkiG9w0BCQUxDxcNMjIxMjAyMDMwOTE3WjAvBgkqhkiG9w0BCQQxIgQgvtdZSm+m
-c7QevdJma9Em5ycFr3I7Wo4aG40Vcx/mT5IweQYJKoZIhvcNAQkPMWwwajALBglg
-hkgBZQMEASowCwYJYIZIAWUDBAEWMAsGCWCGSAFlAwQBAjAKBggqhkiG9w0DBzAO
-BggqhkiG9w0DAgICAIAwDQYIKoZIhvcNAwICAUAwBwYFKw4DAgcwDQYIKoZIhvcN
-AwICASgwDQYJKoZIhvcNAQEBBQAEggEAuInAOUj+ebOkTqlqg3cf7v2FdKeCvZZn
-cunx1xRnHJRVAAvcH/UZ3t7RF6MV5NmEQdVN79NBZl0KU1x7K3zyvcXnkacNuHnI
-t+6neKKKkxJmB4hh4ljeYtx9a1RBgwH+PiYyH8+58S7+MF3MVhSH8jEiomgSbvsK
-BroOCFQDoYWk14K/VIXW1scmvpNvFNBWwm19pYwi977rF+lPWzMHx/0jVXspFSEd
-U48h9xKvPg6CsIlyfuKetHBjZZI6iSCvh2FZOWsD1/W2oGYkkY9Hdff24B34/res
-cKXk/K9/JFAONWBbXUpxtzpBCeVJlZS1wQgu4Q+Fr6imaBXJkiyiNg==
-EOB
-
-	cmd="DELETE FROM Certificate WHERE QpkgName = '$PACKAGE_NAME'; INSERT INTO Certificate (Type,QpkgName,Cert,DigitalSignature) VALUES ('qpkg','$PACKAGE_NAME','$cert','$signature');"
-
-	$SQLITE_CMD "$CERT_DB_PATHFILE" "$cmd"
+	a="INSERT INTO Certificate (Type,QpkgName,Cert,DigitalSignature) VALUES ('qpkg','$PACKAGE_NAME','$QPKG_CERTIFICATE','$QPKG_SIGNATURE');"
+	$SQLITE_CMD "$CERT_DB_PATHFILE" "$a"
 	z=$?
 
 	if [[ $z -eq 0 ]]; then
@@ -7858,9 +7862,10 @@ EOB
 		SendPackageStateChange ISsigned
 		MarkThisActionForkAsOk
 	else
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' failed "($z) check the sherpa debug log for more information"
-		z=1   # Remap to 1.
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' failed "($z) but don't know why. Please report this as a bug"
+		SendParentChangeEnv 'show_suggest_raise_issue=true'
 		MarkThisActionForkAsFailed
+		z=1   # Remap to 1.
 	fi
 
 	FuncFork:Exit $z
@@ -7883,19 +7888,17 @@ _QPKG:status_()
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
-	local -i z=0
 	local a=''
 	local b=''
+	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" status skipped 'not installed'
+		MarkThisActionForkAsSkipped
 		z=2
 	fi
 
-	if [[ $z -gt 0 ]]; then
-		MarkThisActionForkAsSkipped
-		FuncFork:Exit $z
-	fi
+	[[ $z -eq 0 ]] || FuncFork:Exit $z
 
 	DebugAsProc "statusing $(ShowAsPackageName "$PACKAGE_NAME")"
 
@@ -9075,6 +9078,89 @@ QPKG.GetServiceStatus()
 
 	}
 
+QPKG.Signing:Load()
+	{
+
+	QPKG_CERTIFICATE=''
+	QPKG_SIGNATURE=''
+
+	# This certificate block is the same used by QNAP for LicenseCenter.
+	read -r -d '' QPKG_CERTIFICATE << EOB
+-----BEGIN CERTIFICATE-----
+MIIDwzCCAqugAwIBAgIFALhDVuwwDQYJKoZIhvcNAQELBQAwgYAxCzAJBgNVBAYT
+AlRXMQ8wDQYDVQQIDAZUYWl3YW4xDzANBgNVBAcMBlRhaXBlaTENMAsGA1UECgwE
+UU5BUDEMMAoGA1UECwwDTkFTMRAwDgYDVQQDDAdRTkFQX0NBMSAwHgYJKoZIhvcN
+AQkBFhFzZWN1cml0eUBxbmFwLmNvbTAeFw0yMjAzMTgwNzM5MTRaFw0yNTAzMTcw
+NzM5MTRaMIGGMQswCQYDVQQGEwJUVzEPMA0GA1UECAwGVGFpd2FuMQ8wDQYDVQQH
+DAZUYWlwZWkxDTALBgNVBAoMBFFOQVAxDDAKBgNVBAsMA05BUzEWMBQGA1UEAwwN
+TGljZW5zZUNlbnRlcjEgMB4GCSqGSIb3DQEJARYRc2VjdXJpdHlAcW5hcC5jb20w
+ggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC/bAgbZryVvBXfpBHNUKQV
+sAkAfvDXjKnxa7lKHrRIcFcOnf+voUZcP1Ly9qWb782gB2eUHsUS1Xqj4CF/dUJf
+FEnOBrQUo9+Q9B3x4oTRpMdky7acP4dxAbt4T92swgaReQXAewy9s9//a52HIBca
+1dAA4JPwplqiZ/oh18GDCKxh84Iu9Gcu2J5e+VXEI/KUxCwKUd22aDTpv128MSoq
+dYexCerCJtQbgM3cwkkMiDnFpjrsta5iFpyrNKdLoBJ7YbY3d5Onkqy4DjE8hwR7
+0j7Qd+3xbMqv3FOCKeLLLn6N03IXHKP/big/MdXKY1dJQVA3/ks/knPH8mhcOM0d
+AgMBAAGjPDA6MDgGA1UdHwQxMC8wLaAroCmGJ2h0dHA6Ly9kb3dubG9hZC5xbmFw
+LmNvbS9jcmwvcXRzX3YxLmNybDANBgkqhkiG9w0BAQsFAAOCAQEAWlT1GDH6v8G3
+laIAs2/RdxhPgtKX4aL+fnTEFNF5V2yH0G4luyq5tHQw+VCHtDM6Z3GXWhciKPAR
+upbRcHq744JCFaUb6i8z1w1KVJDaQ38EVE5+JtpoPMrrnb+hKB/gGmi4PoMSpnvX
+VCxLbCbBnwi19o6t/MnPbz0shvUB2NDngnal6lYQFw/F8Sr6cSjV6GAY4TOZotdu
++gunwqQtYUycEVfNyiWVk/flgED8R8oxTPl9ZoDGen+OgjkZrvgynKnqPLHyxZSd
+hYSoWyWcZWkMCQ+69kOgJVvrRa7z9F9y30uAHXIUrsLV2d/dImVjApMHbZ60iALG
+AVIlas0e4g==
+-----END CERTIFICATE-----
+EOB
+
+	# This digital signature block is the same used by QNAP for LicenseCenter.
+	read -r -d '' QPKG_SIGNATURE << EOB
+MIME-Version: 1.0
+Content-Disposition: attachment; filename="smime.p7m"
+Content-Type: application/pkcs7-mime; smime-type=signed-data; name="smime.p7m"
+Content-Transfer-Encoding: base64
+
+MIIGtAYJKoZIhvcNAQcCoIIGpTCCBqECAQExDTALBglghkgBZQMEAgEwIwYJKoZI
+hvcNAQcBoBYEFAkoseBaFir08zCz63r2YA82DXzxoIIDxzCCA8MwggKroAMCAQIC
+BQC4Q1bsMA0GCSqGSIb3DQEBCwUAMIGAMQswCQYDVQQGEwJUVzEPMA0GA1UECAwG
+VGFpd2FuMQ8wDQYDVQQHDAZUYWlwZWkxDTALBgNVBAoMBFFOQVAxDDAKBgNVBAsM
+A05BUzEQMA4GA1UEAwwHUU5BUF9DQTEgMB4GCSqGSIb3DQEJARYRc2VjdXJpdHlA
+cW5hcC5jb20wHhcNMjIwMzE4MDczOTE0WhcNMjUwMzE3MDczOTE0WjCBhjELMAkG
+A1UEBhMCVFcxDzANBgNVBAgMBlRhaXdhbjEPMA0GA1UEBwwGVGFpcGVpMQ0wCwYD
+VQQKDARRTkFQMQwwCgYDVQQLDANOQVMxFjAUBgNVBAMMDUxpY2Vuc2VDZW50ZXIx
+IDAeBgkqhkiG9w0BCQEWEXNlY3VyaXR5QHFuYXAuY29tMIIBIjANBgkqhkiG9w0B
+AQEFAAOCAQ8AMIIBCgKCAQEAv2wIG2a8lbwV36QRzVCkFbAJAH7w14yp8Wu5Sh60
+SHBXDp3/r6FGXD9S8valm+/NoAdnlB7FEtV6o+Ahf3VCXxRJzga0FKPfkPQd8eKE
+0aTHZMu2nD+HcQG7eE/drMIGkXkFwHsMvbPf/2udhyAXGtXQAOCT8KZaomf6IdfB
+gwisYfOCLvRnLtieXvlVxCPylMQsClHdtmg06b9dvDEqKnWHsQnqwibUG4DN3MJJ
+DIg5xaY67LWuYhacqzSnS6ASe2G2N3eTp5KsuA4xPIcEe9I+0Hft8WzKr9xTgini
+yy5+jdNyFxyj/24oPzHVymNXSUFQN/5LP5Jzx/JoXDjNHQIDAQABozwwOjA4BgNV
+HR8EMTAvMC2gK6AphidodHRwOi8vZG93bmxvYWQucW5hcC5jb20vY3JsL3F0c192
+MS5jcmwwDQYJKoZIhvcNAQELBQADggEBAFpU9Rgx+r/Bt5WiALNv0XcYT4LSl+Gi
+/n50xBTReVdsh9BuJbsqubR0MPlQh7QzOmdxl1oXIijwEbqW0XB6u+OCQhWlG+ov
+M9cNSlSQ2kN/BFROfibaaDzK652/oSgf4BpouD6DEqZ711QsS2wmwZ8ItfaOrfzJ
+z289LIb1AdjQ54J2pepWEBcPxfEq+nEo1ehgGOEzmaLXbvoLp8KkLWFMnBFXzcol
+lZP35YBA/EfKMUz5fWaAxnp/joI5Ga74Mpyp6jyx8sWUnYWEqFslnGVpDAkPuvZD
+oCVb60Wu8/Rfct9LgB1yFK7C1dnf3SJlYwKTB22etIgCxgFSJWrNHuIxggKbMIIC
+lwIBATCBijCBgDELMAkGA1UEBhMCVFcxDzANBgNVBAgMBlRhaXdhbjEPMA0GA1UE
+BwwGVGFpcGVpMQ0wCwYDVQQKDARRTkFQMQwwCgYDVQQLDANOQVMxEDAOBgNVBAMM
+B1FOQVBfQ0ExIDAeBgkqhkiG9w0BCQEWEXNlY3VyaXR5QHFuYXAuY29tAgUAuENW
+7DALBglghkgBZQMEAgGggeQwGAYJKoZIhvcNAQkDMQsGCSqGSIb3DQEHATAcBgkq
+hkiG9w0BCQUxDxcNMjIxMjAyMDMwOTE3WjAvBgkqhkiG9w0BCQQxIgQgvtdZSm+m
+c7QevdJma9Em5ycFr3I7Wo4aG40Vcx/mT5IweQYJKoZIhvcNAQkPMWwwajALBglg
+hkgBZQMEASowCwYJYIZIAWUDBAEWMAsGCWCGSAFlAwQBAjAKBggqhkiG9w0DBzAO
+BggqhkiG9w0DAgICAIAwDQYIKoZIhvcNAwICAUAwBwYFKw4DAgcwDQYIKoZIhvcN
+AwICASgwDQYJKoZIhvcNAQEBBQAEggEAuInAOUj+ebOkTqlqg3cf7v2FdKeCvZZn
+cunx1xRnHJRVAAvcH/UZ3t7RF6MV5NmEQdVN79NBZl0KU1x7K3zyvcXnkacNuHnI
+t+6neKKKkxJmB4hh4ljeYtx9a1RBgwH+PiYyH8+58S7+MF3MVhSH8jEiomgSbvsK
+BroOCFQDoYWk14K/VIXW1scmvpNvFNBWwm19pYwi977rF+lPWzMHx/0jVXspFSEd
+U48h9xKvPg6CsIlyfuKetHBjZZI6iSCvh2FZOWsD1/W2oGYkkY9Hdff24B34/res
+cKXk/K9/JFAONWBbXUpxtzpBCeVJlZS1wQgu4Q+Fr6imaBXJkiyiNg==
+EOB
+
+	readonly QPKG_CERTIFICATE
+	readonly QPKG_SIGNATURE
+
+	}
+
 MakePath()
 	{
 
@@ -9230,7 +9316,7 @@ LTrim()
 	# Trim leading whitespace from $1.
 
 	[[ -n ${1:-} ]] || return
-	(shopt -s extglob; echo -n "${1##+(' ')}")
+	(shopt -s extglob; printf '%s' "${1##+(' ')}")
 
 	}
 
@@ -9240,7 +9326,7 @@ RTrim()
 	# Trim trailing whitespace from $1.
 
 	[[ -n ${1:-} ]] || return
-	(shopt -s extglob; echo -n "${1%%+(' ')}")
+	(shopt -s extglob; printf '%s' "${1%%+(' ')}")
 
 	}
 
@@ -9305,7 +9391,7 @@ ShowTitle()
 
 	EraseThisLine
 
-	# Only show ASCII title on first execution of the day.
+	# Only show ASCII title on first run of the day, or first run after a `reset`.
 	[[ ! -e $DAY_OF_YEAR_PATHFILE ]] && a=true
 	[[ -e $DAY_OF_YEAR_PATHFILE && $((10#$(/bin/date +%j))) -ne $((10#$(<$DAY_OF_YEAR_PATHFILE))) ]] && a=true
 
@@ -9313,13 +9399,13 @@ ShowTitle()
 		Display "$(ShowTitleArt)"
 		/bin/date +%j > "$DAY_OF_YEAR_PATHFILE" &
 	else
-		Display "$(ShowTitleName) $(ShowVersion) ${CHARS_BULLET}$(ShowDescription)"
+		Display "$(ShowTitleName) $(ShowVersion)"
 	fi
-
-	wait 2>/dev/null
 
 	title_shown=true
 	WriteEmptyLineIfNoneExists
+
+	wait 2>/dev/null
 
 	}
 
@@ -9335,9 +9421,9 @@ ShowTitleArt()
 
 	Display "$(TextBrightOrange '     _')"
 	Display "$(TextBrightOrange ' ___| |__   ___ _ __ _ __   __ _')"
-	Display "$(TextBrightOrange "/ __| '_ \ / _ \ '__| '_ \ / _\` |")  $(ShowVersion)"
-	Display "$(TextBrightOrange '\__ \ | | |  __/ |  | |_) | (_| |')"
-	Display "$(TextBrightOrange '|___/_| |_|\___|_|  | .__/ \__,_|')  $(ShowDescription)"
+	Display "$(TextBrightOrange "/ __| '_ \ / _ \ '__| '_ \ / _\` |")  $(ShowDescription)"
+	Display "$(TextBrightOrange '\__ \ | | |  __/ |  | |_) | (_| |')  $(ShowCopyrightBasic)"
+	Display "$(TextBrightOrange '|___/_| |_|\___|_|  | .__/ \__,_|')  $(ShowVersion)"
 	Display "$(TextBrightOrange '                    |_|')"
 
 	}
@@ -9345,14 +9431,27 @@ ShowTitleArt()
 ShowVersion()
 	{
 
-	echo -n "$THIS_SCRIPT_VER"
+	printf '%s' "v$THIS_SCRIPT_VER"
+
+	}
+
+ShowCopyrightBasic()
+	{
+
+	printf '%s' '<?copyright_basic?>'
+
+	}
+ShowEmail()
+	{
+
+	printf '%s' '<?email?>'
 
 	}
 
 ShowDescription()
 	{
 
-	echo -n 'a mini-package-manager for QNAP NAS'
+	printf '%s' '<?title_description?>'
 
 	}
 
@@ -9387,14 +9486,14 @@ ShowOptions()
 ShowAsPackageName()
 	{
 
-	echo -n "'${1:?${FUNCNAME[0]}'()': undefined}'"
+	printf '%s' "${1:?${FUNCNAME[0]}'()': undefined}"
 
 	}
 
 ShowAsFileName()
 	{
 
-	echo -n "${1:?${FUNCNAME[0]}'()': undefined}"
+	printf '%s' "${1:?${FUNCNAME[0]}'()': undefined}"
 
 	}
 
@@ -9408,14 +9507,14 @@ ShowAsURL()
 ShowAsExitcode()
 	{
 
-	echo -n "[${1:?${FUNCNAME[0]}'()': undefined}]"
+	printf '%s' "[${1:?${FUNCNAME[0]}'()': undefined}]"
 
 	}
 
 ShowAsLogFilename()
 	{
 
-	echo -n "${CHARS_RESULTS}log file: '${1:?${FUNCNAME[0]}'()': undefined}'"
+	printf '%s' "${CHARS_RESULTS}log file: '${1:?${FUNCNAME[0]}'()': undefined}'"
 
 	}
 
@@ -9922,7 +10021,7 @@ ShowAsDone()
 
 	[[ -n ${1:-} ]] || return
 
-	local a=$1
+	local a=$(Capitalise "$1")
 	a=$(AddPeriod "$a")
 
 	OpStepClear "$(TextBrightGreen 'done')" "$a"
@@ -9937,7 +10036,7 @@ ShowAsWarn()
 
 	[[ -n ${1:-} ]] || return
 
-	local a=$1
+	local a=$(Capitalise "$1")
 	a=$(AddPeriod "$a")
 
 	OpStepClear "$(TextBrightOrange warn)" "$a"
@@ -9952,7 +10051,7 @@ ShowAsAbort()
 
 	[[ -n ${1:-} ]] || return
 
-	local a=$1
+	local a=$(Capitalise "$1")
 	a=$(AddPeriod "$a")
 
 	OpStepClear "$(TextBrightRed bort)" "$a"
@@ -10016,7 +10115,7 @@ AddPeriod()
 
 	[[ -n ${1:-} ]] || return
 
-	[[ ${1: -1} != ':' && ${1: -1} != '?' && ${1: -1} != '.' ]] && echo -n "${1}." || echo -n "$1"
+	[[ ${1: -1} != ':' && ${1: -1} != '?' && ${1: -1} != '.' ]] && printf '%s' "${1}." || printf '%s' "$1"
 
 	}
 
@@ -10136,7 +10235,7 @@ ShowAsActionLogDetail()
 	fi
 
 	case ${4:-} in
-		skipped|skipped-failed)
+		skipped|skipped-failed|skipped-abort)
 			if [[ -n "${6:-}" ]]; then
 				DisplayAsIndentPrefixActionResultDurationReason '' "$3" "$2" '' "$6"
 			else
@@ -10372,7 +10471,7 @@ StripANSICodes()
 	if [[ -e /opt/bin/sed && -L /opt/etc/passwd ]]; then	# Try to ensure Entware is active before using this utility.
 		/opt/bin/sed -r 's/\x1b\[[0-9;]*m//g' <<< "${1:-}"	# https://superuser.com/a/380778
 	else
-		echo "${1:-}"		# Can't strip, so pass thru original message unaltered.
+		printf '%s' "${1:-}"		# Can't strip, so pass thru original message unaltered.
 	fi
 
 	} 2>/dev/null
