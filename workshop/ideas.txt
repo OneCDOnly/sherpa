@@ -1,7 +1,14 @@
+* Service-scripts launching applications in screen sessions should include screen.log in service-script log when 'start' fails.
+	- Better than having to separately go and find the screen log.
+
+* Automate generation of Packages.md in wiki using details from packages.source ?
+	- Would need to store full application description, port numbers, application source.
+	- Maybe consider another local source file, that builds packages.source first?
+
 * Don't start deactivated QPKGs (unless requested) during 'install all'.
 
-* Create new action fork result "skippedfatal"?
-	- Means don't launch any further forks attempting the same action, as they will definitely fail.
+* Create new action fork status "abort"?
+	- Means don't launch any further forks attempting the same action, as they will certainly fail. This will be reported by the first one-or-two forks to attempt processing.
 
 * Add 'sign' as new user action?
 	- Not sure about this. If a 'sign' action is added, then need to support signing of unsigned QPKGs, which means must check their current signed status first (slow).
