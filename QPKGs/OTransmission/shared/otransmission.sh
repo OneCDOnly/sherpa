@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 #* Please don't edit this file directly, it was built/modified programmatically with the 'build-qpkgs.sh' script. (source: 'otransmission.source')
 #* otransmission.sh
-#* Copyright (C) 2017-2024 OneCD - one.cd.only@gmail.com
-#*   So, blame OneCD if it all goes horribly wrong. ;)
+#* Copyright (C) 2017-2024 OneCD.
+#* Contact:
+#*   one.cd.only@gmail.com
 #* Project:
 #*	 https://git.io/sherpa
 #* Forum:
@@ -11,7 +12,7 @@
 #*	 GNU bash, version 3.2.57(2)-release (i686-pc-linux-gnu)
 #*	 GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
 #*	   Copyright (C) 2007 Free Software Foundation, Inc.
-#* ... and periodically on:
+#*   ... and periodically on:
 #*	 GNU bash, version 5.0.17(1)-release (aarch64-openwrt-linux-gnu)
 #*	   Copyright (C) 2019 Free Software Foundation, Inc.
 #* License:
@@ -20,7 +21,7 @@
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 readonly USER_ARGS_RAW=$*
 readonly QPKG_NAME=OTransmission
-readonly SERVICE_SCRIPT_VERSION='240130'
+readonly SERVICE_SCRIPT_VERSION='240202'
 readonly SERVICE_SCRIPT_TYPE=3
 InitService()
 {
@@ -30,7 +31,7 @@ orig_daemon_service_script=/opt/etc/init.d/S88transmission
 qpkg_ini_file=settings.json
 qpkg_ini_pathfile=$QPKG_CONFIG_PATH/$qpkg_ini_file
 daemon_pathfile=/opt/bin/transmission-daemon
-daemon_launch_cmd="export TRANSMISSION_WEB_HOME=/opt/share/transmission/web; $daemon_pathfile --config-dir $(/usr/bin/dirname "$qpkg_ini_pathfile") --pid-file $daemon_pid_pathfile"
+daemon_launch_cmd="$daemon_pathfile --config-dir $(/usr/bin/dirname "$qpkg_ini_pathfile") --pid-file $daemon_pid_pathfile"
 get_ui_listening_address_cmd="/opt/bin/jq -r '.\"rpc-bind-address\"' < $qpkg_ini_pathfile"
 get_ui_port_cmd="/opt/bin/jq -r '.\"rpc-port\"' < "$qpkg_ini_pathfile""
 qpkg_ini_default_pathfile=$qpkg_ini_pathfile.def

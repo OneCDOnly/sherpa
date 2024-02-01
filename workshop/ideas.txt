@@ -1,8 +1,16 @@
-* Create a new warning message when 1 minute system load-average is unusually high at sherpa startup.
-	- advise processing will take longer.
+* Only show ASCII title when running sherpa without args.
 
-* Use new nzbget fork?
-	- https://github.com/nzbgetcom/nzbget
+* Service-scripts launching applications in screen sessions should include screen.log in service-script log when 'start' fails.
+	- Better than having to separately go and find the screen log.
+
+* Automate generation of Packages.md in wiki using details from packages.source ?
+	- Would need to store full application description, port numbers, application source.
+	- Maybe consider another local source file, that builds packages.source first?
+
+* Don't start deactivated QPKGs (unless requested) during 'install all'.
+
+* Add 'sign' as new user action?
+	- Not sure about this. If a 'sign' action is added, then need to support signing of unsigned QPKGs, which means must check their current signed status first (slow).
 
 * sherpa 'stable' branch should only update once per-day.
 	- 'unstable' should update once per 10 minutes.
@@ -38,8 +46,6 @@
 	- Place sherpa.xml in /home/httpd and add a 3rd-party repo to App Center with 'http://0.0.0.0:8080/sherpa.xml'
 
 * Compare .git/ORIG_HEAD before-and-after 'git pull'. If different, then remove *.pyc before starting application.
-
-* Check if QPKG has been signed before signing it again?
 
 * Add mini rolling CPU utilitisation graph to progress display while installing QPKGs?
     while true; do top -b -n 2 -d 0.2 -p 1621 | tail -1 | awk '{print $9}'; done

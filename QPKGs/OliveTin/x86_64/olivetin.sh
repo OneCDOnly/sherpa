@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 #* Please don't edit this file directly, it was built/modified programmatically with the 'build-qpkgs.sh' script. (source: 'olivetin.source')
 #* olivetin.sh
-#* Copyright (C) 2017-2024 OneCD - one.cd.only@gmail.com
-#*   So, blame OneCD if it all goes horribly wrong. ;)
+#* Copyright (C) 2017-2024 OneCD.
+#* Contact:
+#*   one.cd.only@gmail.com
 #* Project:
 #*	 https://git.io/sherpa
 #* Forum:
@@ -11,7 +12,7 @@
 #*	 GNU bash, version 3.2.57(2)-release (i686-pc-linux-gnu)
 #*	 GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
 #*	   Copyright (C) 2007 Free Software Foundation, Inc.
-#* ... and periodically on:
+#*   ... and periodically on:
 #*	 GNU bash, version 5.0.17(1)-release (aarch64-openwrt-linux-gnu)
 #*	   Copyright (C) 2019 Free Software Foundation, Inc.
 #* License:
@@ -20,7 +21,7 @@
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 readonly USER_ARGS_RAW=$*
 readonly QPKG_NAME=OliveTin
-readonly SERVICE_SCRIPT_VERSION='240130'
+readonly SERVICE_SCRIPT_VERSION='240202'
 readonly SERVICE_SCRIPT_TYPE=5
 InitService()
 {

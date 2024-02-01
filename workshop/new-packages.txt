@@ -1,8 +1,28 @@
-* gpt-engineer?
-	currently resolving python dependencies manually.
+* pigallery2?
+	- https://github.com/bpatrik/pigallery2
+	- requires Node.js
+
+* it-tools?
+	- https://github.com/CorentinTh/it-tools
+	- already available as a static QPKG here: https://github.com/Jay-Young/qpkg/tree/master/it-tools (runs in Apache).
+
+* BlendFarm?
+	- https://github.com/LogicReinc/LogicReinc.BlendFarm
+
+* calibre?
+	- https://github.com/kovidgoyal/calibre
 
 * Gitea?
-	https://docs.gitea.com/installation/install-from-binary
+	- https://docs.gitea.com/installation/install-from-binary
 
 * NetBox?
-	https://docs.netbox.dev/en/stable/installation/
+	- https://docs.netbox.dev/en/stable/installation/
+
+* new nzbget fork?
+	- https://github.com/nzbgetcom/nzbget
+
+* gpt-engineer?
+	- See compatibility-notes.txt
+
+* FlexGet?
+	- See compatibility-notes.txt
