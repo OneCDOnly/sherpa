@@ -7,9 +7,6 @@
 
 * Don't start deactivated QPKGs (unless requested) during 'install all'.
 
-* Create new action fork status "abort"?
-	- Means don't launch any further forks attempting the same action, as they will certainly fail. This will be reported by the first one-or-two forks to attempt processing.
-
 * Add 'sign' as new user action?
 	- Not sure about this. If a 'sign' action is added, then need to support signing of unsigned QPKGs, which means must check their current signed status first (slow).
 
