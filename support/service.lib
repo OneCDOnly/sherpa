@@ -22,7 +22,7 @@
 #*   This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 #*	 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
-readonly SERVICE_LIB_VERSION='240202'
+readonly SERVICE_LIB_VERSION='240203'
 InitLibrary()
 {
 IsQNAP || exit
@@ -69,7 +69,7 @@ readonly SERVICE_STATUS_PATHFILE=/var/run/$QPKG_NAME.last.operation
 allow_access_to_sys_packages=true
 app_version_cmd=undefined
 app_version_pathfile=undefined
-[[ ${NAS_FIRMWARE_VER//.} -lt 426 ]] && curl_insecure_arg=' --insecure' || curl_insecure_arg=''
+OS.IsSupportSecureDownload && curl_insecure_arg='' || curl_insecure_arg=' --insecure'
 daemon_launch_cmd=undefined
 daemon_pathfile=undefined
 daemon_pid_pathfile=undefined
@@ -245,19 +245,10 @@ return
 fi
 fi
 if IsOnlineArchive; then
-local download_quiet=''
-local download_opts=''
 local source_archive_pathfile=$qpkg_repo_path/source.archive
-local tar_extract_verbose=''
-local tar_extract_opts=''
-local unzip_extract_verbose=''
-local unzip_extract_opts=''
-if [[ $debug = false ]]; then
-download_quiet=' --silent'
-else
-tar_extract_verbose=' --verbose'
-fi
-download_opts="${curl_insecure_arg}${download_quiet}"
+if IsAutoUpdate; then
+local download_opts="$curl_insecure_arg"
+[[ $debug = false ]] && download_opts+=' --silent'
 if [[ $resolve_remote_url = true ]]; then
 DisplayWaitCommitToLog 'check release package:'
 remote_url=$(/sbin/curl${download_opts} "$remote_url" | /bin/grep browser_download_url | cut -d\" -f4 | /bin/grep "$remote_arch")
@@ -271,6 +262,14 @@ if [[ -n $remote_url ]]; then
 [[ -e $source_archive_pathfile ]] && download_opts+=" --time-cond $source_archive_pathfile"
 download_opts+=" --show-error --location --output $source_archive_pathfile"
 DisplayRunAndLog 'refresh release package' "/sbin/curl${download_opts} '$remote_url'" || { SetError; return 1 ;}
+fi
+fi
+local tar_extract_verbose=''
+local tar_extract_opts=''
+local unzip_extract_verbose=''
+local unzip_extract_opts=''
+if [[ $debug = true ]]; then
+tar_extract_verbose=' --verbose'
 fi
 if [[ ! -e $daemon_pathfile || ! -e $source_archive_pathfile || $(($(/bin/date +%s)-$(/usr/bin/stat "$source_archive_pathfile" -c %Y))) -lt 60 ]]; then
 tar_extract_opts="$tar_extract_verbose --extract --gzip --file=$source_archive_pathfile --directory=$qpkg_repo_path"
@@ -1344,6 +1343,10 @@ IsVirtualEnvironmentExist()
 IsNotVirtualEnvironmentExist()
 {
 ! IsVirtualEnvironmentExist
+}
+OS.IsSupportSecureDownload()
+{
+[[ ${NAS_FIRMWARE_VER//.} -ge 500 ]]
 }
 SetServiceAction()
 {
