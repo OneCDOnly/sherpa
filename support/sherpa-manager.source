@@ -548,7 +548,6 @@ Env:Load()
 	readonly THIS_PACKAGE_PATH=$(QPKG.GetInstallationPath)
 		readonly CACHE_PATH=$THIS_PACKAGE_PATH/cache
 			readonly ACTION_TIMES_PATH=$CACHE_PATH/action.times
-			readonly DAY_OF_YEAR_PATHFILE=$CACHE_PATH/previous.day.of.year
 			readonly DISPLAY_INHIBIT_PATHFILE=$CACHE_PATH/display.inhibit
 			readonly IPK_CACHE_PATH=$CACHE_PATH/IPKs
 			readonly IPK_DL_PATH=$CACHE_PATH/IPKs.downloads
@@ -1770,6 +1769,7 @@ ParseArgs()
 				;;
 			help)
 				skip_package_actions=true
+				task_check=false
 
 				case $group in
 					abs)
@@ -9389,15 +9389,13 @@ ShowTitle()
 
 	local a=false
 
-	EraseThisLine
+	# Only show ASCII title when no other arguments have been specified.
+	[[ $opts_show_basic_help = true && $skip_package_actions = true && $task_check = false ]] && a=true
 
-	# Only show ASCII title on first run of the day, or first run after a `reset`.
-	[[ ! -e $DAY_OF_YEAR_PATHFILE ]] && a=true
-	[[ -e $DAY_OF_YEAR_PATHFILE && $((10#$(/bin/date +%j))) -ne $((10#$(<$DAY_OF_YEAR_PATHFILE))) ]] && a=true
+	EraseThisLine
 
 	if [[ $a = true ]]; then
 		Display "$(ShowTitleArt)"
-		/bin/date +%j > "$DAY_OF_YEAR_PATHFILE" &
 	else
 		Display "$(ShowTitleName) $(ShowVersion)"
 	fi
