@@ -73,7 +73,7 @@ InitLibrary()
 	allow_access_to_sys_packages=true
 	app_version_cmd=undefined
 	app_version_pathfile=undefined
-	[[ ${NAS_FIRMWARE_VER//.} -lt 426 ]] && curl_insecure_arg=' --insecure' || curl_insecure_arg=''
+	OS.IsSupportSecureDownload && curl_insecure_arg='' || curl_insecure_arg=' --insecure'
 	daemon_launch_cmd=undefined
 	daemon_pathfile=undefined
 	daemon_pid_pathfile=undefined
@@ -259,14 +259,14 @@ StartQPKGLibrary()
 				ln -s "$launcher_pathfile" "$userlink_pathfile"
 
 				if [[ -L $userlink_pathfile ]]; then
-					DisplayCommitToLog "symlink created: $userlink_pathfile"
+					DisplayCommitToLog "symlink created: '$userlink_pathfile'"
 				else
-					DisplayErrCommitAllLogs "unable to create symlink to \'$QPKG_NAME\' launcher!"
+					DisplayErrCommitAllLogs "unable to create symlink to '$QPKG_NAME' launcher"
 					SetError
 					return 1
 				fi
 			else
-				DisplayCommitToLog "symlink exists: $userlink_pathfile"
+				DisplayCommitToLog "symlink exists: '$userlink_pathfile'"
 			fi
 
 			return
@@ -274,40 +274,40 @@ StartQPKGLibrary()
 	fi
 
 	if IsOnlineArchive; then
-		local download_quiet=''
-		local download_opts=''
 		local source_archive_pathfile=$qpkg_repo_path/source.archive
+
+		if IsAutoUpdate || [[ ! -e $source_archive_pathfile ]]; then		# Get remote source archive, even when auto-update is disabled.
+			local download_opts="$curl_insecure_arg"
+			[[ $debug = false ]] && download_opts+=' --silent'
+
+			if [[ $resolve_remote_url = true && -n $remote_url && $remote_url != undefined ]]; then
+				DisplayWaitCommitToLog 'check release package:'
+				# https://gist.github.com/steinwaywhw/a4cd19cda655b8249d908261a62687f8
+				remote_url=$(/sbin/curl${download_opts} "$remote_url" | /bin/grep browser_download_url | cut -d\" -f4 | /bin/grep "$remote_arch")
+
+				if [[ -n $remote_url && $remote_url != undefined ]]; then
+					DisplayCommitToLog OK
+				else
+					DisplayErrCommitAllLogs "'unable to calculate remote URL'"
+				fi
+			fi
+
+			if [[ -n $remote_url ]]; then
+				[[ -e $source_archive_pathfile ]] && download_opts+=" --time-cond $source_archive_pathfile"
+				download_opts+=" --show-error --location --output $source_archive_pathfile"
+
+				DisplayRunAndLog 'refresh release package' "/sbin/curl${download_opts} '$remote_url'" || { SetError; return 1 ;}
+			fi
+		fi
+
 		local tar_extract_verbose=''
 		local tar_extract_opts=''
 		local unzip_extract_verbose=''
 		local unzip_extract_opts=''
 
-		if [[ $debug = false ]]; then
-			download_quiet=' --silent'
-		else
+		if [[ $debug = true ]]; then
 			tar_extract_verbose=' --verbose'
 # 			unzip_extract_verbose=' -v'			# Don't enable this, it seems to prevent actual file extraction from occurring.
-		fi
-
-		download_opts="${curl_insecure_arg}${download_quiet}"
-
-		if [[ $resolve_remote_url = true ]]; then
-			DisplayWaitCommitToLog 'check release package:'
-			# https://gist.github.com/steinwaywhw/a4cd19cda655b8249d908261a62687f8
-			remote_url=$(/sbin/curl${download_opts} "$remote_url" | /bin/grep browser_download_url | cut -d\" -f4 | /bin/grep "$remote_arch")
-
-			if [[ -n $remote_url ]]; then
-				DisplayCommitToLog OK
-			else
-				DisplayErrCommitAllLogs 'unable to calculate remote URL'
-			fi
-		fi
-
-		if [[ -n $remote_url ]]; then
-			[[ -e $source_archive_pathfile ]] && download_opts+=" --time-cond $source_archive_pathfile"
-			download_opts+=" --show-error --location --output $source_archive_pathfile"
-
-			DisplayRunAndLog 'refresh release package' "/sbin/curl${download_opts} '$remote_url'" || { SetError; return 1 ;}
 		fi
 
 		if [[ ! -e $daemon_pathfile || ! -e $source_archive_pathfile || $(($(/bin/date +%s)-$(/usr/bin/stat "$source_archive_pathfile" -c %Y))) -lt 60 ]]; then			# Extract from latest release archive.
@@ -324,24 +324,24 @@ StartQPKGLibrary()
 	LoadPorts app || { SetError; return 1 ;}
 
 	if [[ $daemon_port -le 0 && $ui_port -le 0 && $ui_port_secure -le 0 ]]; then
-		DisplayErrCommitAllLogs 'unable to start daemon: no port specified!'
+		DisplayErrCommitAllLogs "unable to start daemon: 'no port specified'"
 		SetError
 		return 1
 	elif IsNotPortAvailable $ui_port || IsNotPortAvailable $ui_port_secure; then
-		DisplayErrCommitAllLogs "unable to start daemon: ports $ui_port or $ui_port_secure are already in-use!"
+		DisplayErrCommitAllLogs "unable to start daemon: ports '$ui_port' or '$ui_port_secure' are already in-use"
 
 		portpid=$(/usr/sbin/lsof -i :$ui_port -Fp)
-		DisplayErrCommitAllLogs "process details for port $ui_port: PID${portpid}: '$([[ -n ${portpid:-} ]] && /bin/tr '\000' ' ' </proc/"${portpid/p/}"/cmdline)'"
+		DisplayErrCommitAllLogs "process details for port '$ui_port': '${portpid}': PID '$([[ -n ${portpid:-} ]] && /bin/tr '\000' ' ' </proc/"${portpid/p/}"/cmdline)'"
 
 		portpid=$(/usr/sbin/lsof -i :$ui_port_secure -Fp)
-		DisplayErrCommitAllLogs "process details for secure port $ui_port_secure: PID${portpid}: '$([[ -n ${portpid:-} ]] && /bin/tr '\000' ' ' </proc/"${portpid/p/}"/cmdline)'"
+		DisplayErrCommitAllLogs "process details for secure port '$ui_port_secure': PID '${portpid}': '$([[ -n ${portpid:-} ]] && /bin/tr '\000' ' ' </proc/"${portpid/p/}"/cmdline)'"
 
 		SetError
 		return 1
 	fi
 
 	if IsUseVirtualPythonEnv && IsNotVirtualEnvironmentExist; then
-		DisplayErrCommitAllLogs 'unable to start daemon: virtual environment does not exist!'
+		DisplayErrCommitAllLogs "unable to start daemon: 'virtual environment does not exist'"
 		SetError
 		return 1
 	fi
@@ -389,7 +389,7 @@ StopQPKGLibrary()
 	if IsNotDaemon; then
 		if [[ -L $userlink_pathfile ]]; then
 			rm -f "$userlink_pathfile"
-			DisplayCommitToLog "symlink removed: $userlink_pathfile"
+			DisplayCommitToLog "symlink removed: '$userlink_pathfile'"
 		fi
 
 		return
@@ -406,7 +406,7 @@ StopQPKGLibrary()
 
 		pid=$(<$daemon_pid_pathfile)
 		kill "$pid"
-		DisplayWaitCommitToLog "stop daemon PID${pid} with SIGTERM:"
+		DisplayWaitCommitToLog "stop daemon PID '${pid}' with SIGTERM:"
 		DisplayWait "(no-more than $DAEMON_STOP_TIMEOUT_SECONDS second$(Pluralise "$DAEMON_STOP_TIMEOUT_SECONDS")):"
 
 		while true; do
@@ -417,7 +417,7 @@ StopQPKGLibrary()
 
 				if [[ $acc -ge $DAEMON_STOP_TIMEOUT_SECONDS ]]; then
 					DisplayCommitToLog 'failed!'
-					DisplayCommitToLog "stop daemon PID${pid} with SIGKILL:"
+					DisplayCommitToLog "stop daemon PID '${pid}' with SIGKILL:"
 					kill -9 "$pid" 2> /dev/null
 					[[ -f $daemon_pid_pathfile ]] && rm -f "$daemon_pid_pathfile"
 					break 2
@@ -475,7 +475,7 @@ InstallAddons()
 	fi
 
 	if IsNotVirtualEnvironmentExist; then
-		DisplayErrCommitAllLogs 'unable to install addons: virtual environment does not exist!'
+		DisplayErrCommitAllLogs "unable to install addons: 'virtual environment does not exist'"
 		SetError
 		return 1
 	fi
@@ -605,7 +605,7 @@ RestoreConfig()
 	{
 
 	if [[ ! -f $qpkg_backup_pathfile ]]; then
-		DisplayErrCommitAllLogs 'unable to restore configuration: no backup file was found!'
+		DisplayErrCommitAllLogs "unable to restore configuration: 'no backup file was found'"
 		SetError
 		return 1
 	fi
@@ -820,12 +820,12 @@ WaitForGit()
 	{
 
 	if IsNotQPKGInstalled Entware; then
-		DisplayErrCommitAllLogs "'git' unavailable: Entware is not installed!"
+		DisplayErrCommitAllLogs "'git' unavailable: 'Entware is not installed'"
 		return 1
 	fi
 
 	if IsNotQPKGEnabled Entware; then
-		DisplayErrCommitAllLogs "'git' unavailable: Entware is not enabled!"
+		DisplayErrCommitAllLogs "'git' unavailable: 'Entware is not enabled'"
 		return 1
 	fi
 
@@ -1034,7 +1034,7 @@ WaitForFileToAppear()
 		fi
 	fi
 
-	DisplayCommitToLog "file $1: exists"
+	DisplayCommitToLog "file '$1': exists"
 
 	return 0
 
@@ -1318,38 +1318,38 @@ CheckPorts()
 
 	local msg=''
 
-	DisplayCommitToLog "daemon listening address: $ui_listening_address"
+	DisplayCommitToLog "daemon listening address: '$ui_listening_address'"
 
 	if [[ $daemon_port -ne 0 ]]; then
-		DisplayCommitToLog "daemon port: $daemon_port"
+		DisplayCommitToLog "daemon port: '$daemon_port'"
 
 		if IsPortResponds $daemon_port; then
-			msg="daemon port $daemon_port"
+			msg="daemon port '$daemon_port'"
 		fi
 	else
 		DisplayWaitCommitToLog 'HTTPS port enabled:'
 
 		if IsSSLEnabled; then
 			DisplayCommitToLog true
-			DisplayCommitToLog "HTTPS port: $ui_port_secure"
+			DisplayCommitToLog "HTTPS port: '$ui_port_secure'"
 
 			if IsPortSecureResponds $ui_port_secure; then
-				msg="HTTPS port $ui_port_secure"
+				msg="HTTPS port '$ui_port_secure'"
 			fi
 		else
 			DisplayCommitToLog false
 		fi
 
-		DisplayCommitToLog "HTTP port: $ui_port"
+		DisplayCommitToLog "HTTP port: '$ui_port'"
 
 		if IsPortResponds $ui_port; then
 			[[ -n $msg ]] && msg+=' and '
-			msg+="HTTP port $ui_port"
+			msg+="HTTP port '$ui_port'"
 		fi
 	fi
 
 	if [[ -z $msg ]]; then
-		DisplayErrCommitAllLogs 'no response on configured port(s)!'
+		DisplayErrCommitAllLogs 'no response on configured port(s)'
 		SetError
 		return 1
 	else
@@ -1706,7 +1706,7 @@ IsDaemonActive()
 
 	if IsProcessActive "$target_proc" "$daemon_pid_pathfile"; then
 		DisplayCommitToLog true
-		DisplayCommitToLog "daemon: PID$(<"$daemon_pid_pathfile")"
+		DisplayCommitToLog "daemon: PID '$(<"$daemon_pid_pathfile")'"
 		return 0
 	fi
 
@@ -1781,7 +1781,7 @@ IsSysFilePresent()
 	fi
 
 	if [[ ! -e $1 ]]; then
-		Display "A required NAS system file is missing: $1"
+		Display "A required NAS system file is missing: '$1'"
 		SetError
 		return 1
 	else
@@ -1851,13 +1851,13 @@ IsPortResponds()
 		Display 'empty port: not testing for response'
 		return 1
 	elif [[ $port -eq 0 ]]; then
-		Display 'port 0: not testing for response'
+		Display "port '0': not testing for response"
 		return 1
 	fi
 
 	local acc=0
 
-	DisplayWaitCommitToLog "test for port $port response:"
+	DisplayWaitCommitToLog "test for port '$port' response:"
 	DisplayWait "(no-more than $PORT_CHECK_TIMEOUT_SECONDS second$(Pluralise "$PORT_CHECK_TIMEOUT_SECONDS")):"
 
 	local target_proc=''
@@ -1870,7 +1870,7 @@ IsPortResponds()
 
 	while true; do
 		if ! IsProcessActive "$target_proc" "$daemon_pid_pathfile"; then
-			DisplayCommitToLog 'process not active!'
+			DisplayCommitToLog 'process not active'
 			break
 		fi
 
@@ -1897,7 +1897,7 @@ IsPortResponds()
 
 		if [[ $acc -ge $PORT_CHECK_TIMEOUT_SECONDS ]]; then
 			DisplayCommitToLog 'failed!'
-			CommitErrToSysLog "port $port failed to respond after $acc second$(Pluralise "$acc")!"
+			CommitErrToSysLog "port '$port' failed to respond after $acc second$(Pluralise "$acc")!"
 			break
 		fi
 	done
@@ -1922,13 +1922,13 @@ IsPortSecureResponds()
 		Display 'empty port: not testing for response'
 		return 1
 	elif [[ $port -eq 0 ]]; then
-		Display 'port 0: not testing for response'
+		Display "port '0': not testing for response"
 		return 1
 	fi
 
 	local acc=0
 
-	DisplayWaitCommitToLog "test for secure port $port response:"
+	DisplayWaitCommitToLog "test for secure port '$port' response:"
 	DisplayWait "(no-more than $PORT_CHECK_TIMEOUT_SECONDS second$(Pluralise "$PORT_CHECK_TIMEOUT_SECONDS")):"
 
 	local target_proc=''
@@ -1941,7 +1941,7 @@ IsPortSecureResponds()
 
 	while true; do
 		if ! IsProcessActive "$target_proc" "$daemon_pid_pathfile"; then
-			DisplayCommitToLog 'process not active!'
+			DisplayCommitToLog 'process not active'
 			break
 		fi
 
@@ -1954,7 +1954,7 @@ IsPortSecureResponds()
 				return 0
 				;;
 			35)
-				DisplayCommitToLog 'TLS inactive!'
+				DisplayCommitToLog 'TLS inactive'
 				break
 				;;
 			28)			# timed-out
@@ -1971,8 +1971,8 @@ IsPortSecureResponds()
 		DisplayWait "$acc,"
 
 		if [[ $acc -ge $PORT_CHECK_TIMEOUT_SECONDS ]]; then
-			DisplayCommitToLog 'failed!'
-			CommitErrToSysLog "secure port $port failed to respond after $acc second$(Pluralise "$acc")!"
+			DisplayCommitToLog 'failed'
+			CommitErrToSysLog "secure port '$port' failed to respond after $acc second$(Pluralise "$acc")!"
 			break
 		fi
 	done
@@ -2026,6 +2026,13 @@ IsNotVirtualEnvironmentExist()
 	{
 
 	! IsVirtualEnvironmentExist
+
+	}
+
+OS.IsSupportSecureDownload()
+	{
+
+	[[ ${NAS_FIRMWARE_VER//.} -ge 500 ]]
 
 	}
 
@@ -2811,9 +2818,9 @@ ProcessArgs()
 				;;
 			v|-v|version|--version)
 				SetServiceAction none
-				Display "package: $QPKG_VERSION"
-				Display "service: $SERVICE_SCRIPT_VERSION"
-				Display "library: $SERVICE_LIB_VERSION"
+				Display "package: '$QPKG_VERSION'"
+				Display "service: '$SERVICE_SCRIPT_VERSION'"
+				Display "library: '$SERVICE_LIB_VERSION'"
 				;;
 			*)
 				if [[ -z $user_arg ]]; then

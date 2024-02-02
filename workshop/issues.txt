@@ -1,12 +1,43 @@
+Reported issues:
+
 Observed issues:
+
+	* Running 'sherpa debug' should show something better than this:
+		[/share/Public] # ./sherpa-manager.source debug
+		note: Debug mode activated, sherpa will run a little slower than usual.
+		sherpa v<?build_date?>-unstable
+
+		proc: package actions ... [/share/Public] #
+
+		[/share/Public] # ./sherpa-manager.source help debug
+		note: Debug mode activated, sherpa will run a little slower than usual.
+		sherpa v<?build_date?>-unstable
+
+		[/share/Public] #
+
+	* OliveTin release check fails to return anything during QTS startup.
+		- A manual 'start' afterward works fine.
+			[~] # cat /var/log/olivetest.log
+			$remote_arch: [linux-arm7]
+			$remote_url: [https://api.github.com/repos/OliveTin/OliveTin/releases/latest]
+			$download_opts: [ --silent]
+			$a: []
+			$b: []
+			$c: []
+			$d: []
+			running curl cmd...
+			* Closing connection -1
+			curl: (3) URL using bad/illegal format or missing URL
+			result is: [3]
+
+	* 'sherpa start inactive' fails to find any inactive packages.
+		- Must get status of each package first.
 
 	* OWatcher3 QPKG records an error in QTS system log because PyPI module installation failed, even though 'start' action succeeded.
 		- This should be a QTS log warning-only.
 
-	* OliveTin release check fails to return anything during QTS startup.
-
 	* Function durations can become incorrect when functions with the same name are called recursively.
-		- Need to make var holding start-time unique.
+		- Need to make vars holding start-times unique. Maybe measure nest depth?
 
 	* Removing OMedusa QPKG via sherpa didn't update App Center 'live' (icon remained until App Center was manually refreshed).
 
@@ -34,9 +65,6 @@ Observed issues:
 
 	* Near the end of installing IPKs, monitored download path can remain at non-zero size while packages complete installation.
 		- Maybe include a separate progress message when dir size shrinks to almost zero?
-
-	* 'sherpa start inactive' fails to find any inactive packages.
-		- Must get status of each package first.
 
 	* Extend startup timeouts for Deluge QPKGs?
 		- Frankly, Deluge-web is a colossal PITA. Consider removing support for this as a QPKG.
