@@ -276,16 +276,16 @@ StartQPKGLibrary()
 	if IsOnlineArchive; then
 		local source_archive_pathfile=$qpkg_repo_path/source.archive
 
-		if IsAutoUpdate; then
+		if IsAutoUpdate || [[ ! -e $source_archive_pathfile ]]; then		# Get remote source archive, even when auto-update is disabled.
 			local download_opts="$curl_insecure_arg"
 			[[ $debug = false ]] && download_opts+=' --silent'
 
-			if [[ $resolve_remote_url = true ]]; then
+			if [[ $resolve_remote_url = true && -n $remote_url && $remote_url != undefined ]]; then
 				DisplayWaitCommitToLog 'check release package:'
 				# https://gist.github.com/steinwaywhw/a4cd19cda655b8249d908261a62687f8
 				remote_url=$(/sbin/curl${download_opts} "$remote_url" | /bin/grep browser_download_url | cut -d\" -f4 | /bin/grep "$remote_arch")
 
-				if [[ -n $remote_url ]]; then
+				if [[ -n $remote_url && $remote_url != undefined ]]; then
 					DisplayCommitToLog OK
 				else
 					DisplayErrCommitAllLogs 'unable to calculate remote URL'
