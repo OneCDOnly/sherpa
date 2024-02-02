@@ -1,5 +1,3 @@
-* Only show ASCII title when running sherpa without args.
-
 * Service-scripts launching applications in screen sessions should include screen.log in service-script log when 'start' fails.
 	- Better than having to separately go and find the screen log.
 
