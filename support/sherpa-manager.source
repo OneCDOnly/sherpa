@@ -4412,7 +4412,7 @@ Report.Results:Show()
 						ok)
 							[[ $found = false ]] && DisplayAsHelpTitle "$plural completed $(TextBrightGreen OK):"
 							;;
-						skipped|skipped-ok|skipped-error|skipped-abort)
+						skipped|skipped-error|skipped-abort)
 							[[ $found = false ]] && DisplayAsHelpTitle "$plural were $(TextBrightOrange skipped):"
 							;;
 						failed)
