@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 #* Please don't edit this file directly, it was built/modified programmatically with the 'build-qpkgs.sh' script. (source: 'sherpa-loader.source')
 #* sherpa-loader.sh
-#* Copyright (C) 2017-2024 OneCD - one.cd.only@gmail.com
-#*   So, blame OneCD if it all goes horribly wrong. ;)
+#* Copyright (C) 2017-2024 OneCD.
+#* Contact:
+#*   one.cd.only@gmail.com
 #* Description:
 #*	 This is the loader script for the sherpa mini-package-manager and is part of the `sherpa` QPKG.
 #* Project:
@@ -13,7 +14,7 @@
 #*	 GNU bash, version 3.2.57(2)-release (i686-pc-linux-gnu)
 #*	 GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
 #*	   Copyright (C) 2007 Free Software Foundation, Inc.
-#* ... and periodically on:
+#*   ... and periodically on:
 #*	 GNU bash, version 5.0.17(1)-release (aarch64-openwrt-linux-gnu)
 #*	   Copyright (C) 2019 Free Software Foundation, Inc.
 #* License:
@@ -23,7 +24,7 @@
 readonly USER_ARGS_RAW=$*
 Init()
 {
-export LOADER_SCRIPT_VER='240130'
+export LOADER_SCRIPT_VER='240202'
 export LOADER_SCRIPT_PPID=$PPID
 readonly QPKG_NAME=sherpa
 readonly CHARS_REGULAR_PROMPT='$ '
