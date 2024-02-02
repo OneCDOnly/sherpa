@@ -2682,7 +2682,7 @@ IPKs:downgrade()
 
 				remote_url=${url_prefix}${name}${url_suffix}
 				local_pathfile=$IPK_DOWNGRADE_DL_PATH/$($BASENAME_CMD "$remote_url")
-				RunAndLog "$CURL_CMD${curl_insecure_arg} --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
+				RunAndLog "${CURL_CMD}${curl_insecure_arg} --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
 
 			done
 
@@ -6565,7 +6565,7 @@ OS.IsSupported()
 OS.IsSupportSecureDownload()
 	{
 
-	[[ ${NAS_FIRMWARE_VER//.} -ge 426 ]]
+	[[ ${NAS_FIRMWARE_VER//.} -ge 500 ]]
 
 	}
 
@@ -6910,7 +6910,7 @@ _QPKG:download_()
 
 		rm -f "$LOG_PATHFILE"
 
-		RunAndLog "$CURL_CMD${curl_insecure_arg} --location --output $LOCAL_PATHFILE $REMOTE_URL" "$LOG_PATHFILE" log:failure-only
+		RunAndLog "${CURL_CMD}${curl_insecure_arg} --location --output $LOCAL_PATHFILE $REMOTE_URL" "$LOG_PATHFILE" log:failure-only
 		z=$?
 
 		if [[ $z -eq 0 ]]; then
@@ -10610,7 +10610,7 @@ Objects:Load()
 		if [[ ! -e $OBJECTS_PATHFILE ]] || ! IsThisFileRecent "$OBJECTS_PATHFILE" "$FILE_CHANGE_THRESHOLD_MINUTES"; then
 			ShowAsProc 'downloading objects'
 
-			if $CURL_CMD --insecure --silent --fail "$OBJECTS_ARCHIVE_URL" > "$OBJECTS_ARCHIVE_PATHFILE"; then
+			if ${CURL_CMD}${curl_insecure_arg} --silent --fail "$OBJECTS_ARCHIVE_URL" > "$OBJECTS_ARCHIVE_PATHFILE"; then
 				$TAR_CMD --extract --gzip --no-same-owner --file="$OBJECTS_ARCHIVE_PATHFILE" --directory="$CACHE_PATH"
 			fi
 		fi
@@ -10644,7 +10644,7 @@ Packages:Load()
 		if [[ ! -e $PACKAGES_PATHFILE ]] || ! IsThisFileRecent "$PACKAGES_PATHFILE" "$FILE_CHANGE_THRESHOLD_MINUTES"; then
 			ShowAsProc 'downloading QPKG list'
 
-			if $CURL_CMD --insecure --silent --fail "$PACKAGES_ARCHIVE_URL" > "$PACKAGES_ARCHIVE_PATHFILE"; then
+			if ${CURL_CMD}${curl_insecure_arg} --silent --fail "$PACKAGES_ARCHIVE_URL" > "$PACKAGES_ARCHIVE_PATHFILE"; then
 				$TAR_CMD --extract --gzip --no-same-owner --file="$PACKAGES_ARCHIVE_PATHFILE" --directory="$CACHE_PATH"
 			fi
 		fi
