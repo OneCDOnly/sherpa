@@ -1,5 +1,3 @@
-* Only show ASCII title when running sherpa without args.
-
 * Service-scripts launching applications in screen sessions should include screen.log in service-script log when 'start' fails.
 	- Better than having to separately go and find the screen log.
 
@@ -21,12 +19,14 @@
 	x31:
 		[/sbin] # file getcfg
 		getcfg: ELF 32-bit LSB executable, ARM, EABI5 version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux.so.3, for GNU/Linux 2.6.16, stripped
+
 		[/sbin] # cat /etc/platform.conf
 		Platform = ARM_MS
 
 	x41:
 		[/sbin] # file getcfg
 		getcfg: ELF 32-bit LSB executable, ARM, EABI5 version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux-armhf.so.3, for GNU/Linux 3.1.1, BuildID[sha1]=5ffd3652ef380f1a3665b325f0a171e3e34fca7a, stripped
+
 		[/sbin] # cat /etc/platform.conf
 		Platform = ARM_AL
 
@@ -52,10 +52,10 @@
     while true; do /usr/bin/top -b -n2 -d1 | grep 20744 | tail -1 | awk '{print $7}'; done
 
 * Create a troubleshooting page for the wiki?
-    - This should include explanations of various actions like 'clean' and 'check', so users will have a better idea which action to run when things go wrong.
+    - Include explanations of various actions like 'clean' and 'check', so users will have a better idea which action to run when things go wrong.
 
 * Upgrade IPKs automatically?
-    - Store a local checksum of the Entware package list. If this changes, assume it's been updated and all IPKs should be checked for upgrade status and upgraded. No-need to prompt user - just upgrade automatically.
+    - Store a local checksum of the Entware package list. If this changes, assume it's been updated and all IPKs should be checked for upgrade status and upgraded. No-need to prompt user, just upgrade automatically.
 
 * Download QPKG updates in background when running sherpa for any reason?
 
@@ -68,7 +68,7 @@
 
 * Wrap description column text in packages report.
 	- Use 'GNU column' for this?
-	- Nope, column can't wrap text containing ANSI codes. Won't show a wrapped column in colour.
+	- Nope, 'column' can't wrap text containing ANSI codes. Won't show a wrapped column in colour. :(
 
 * Autowidth display columns.
 
