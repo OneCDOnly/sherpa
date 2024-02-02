@@ -1,8 +1,5 @@
 Reported issues:
 
-	* TS-870 Pro looks like it will need to run curl insecure:
-		https://forum.qnap.com/viewtopic.php?p=858659#p858659
-
 Observed issues:
 
 	* Running 'sherpa debug' should show something better than this:

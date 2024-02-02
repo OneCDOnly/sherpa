@@ -73,7 +73,7 @@ InitLibrary()
 	allow_access_to_sys_packages=true
 	app_version_cmd=undefined
 	app_version_pathfile=undefined
-	[[ ${NAS_FIRMWARE_VER//.} -lt 426 ]] && curl_insecure_arg=' --insecure' || curl_insecure_arg=''
+	OS.IsSupportSecureDownload && curl_insecure_arg='' || curl_insecure_arg=' --insecure'
 	daemon_launch_cmd=undefined
 	daemon_pathfile=undefined
 	daemon_pid_pathfile=undefined
@@ -2026,6 +2026,13 @@ IsNotVirtualEnvironmentExist()
 	{
 
 	! IsVirtualEnvironmentExist
+
+	}
+
+OS.IsSupportSecureDownload()
+	{
+
+	[[ ${NAS_FIRMWARE_VER//.} -ge 500 ]]
 
 	}
 
