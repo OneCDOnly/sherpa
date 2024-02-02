@@ -1,7 +1,37 @@
+Reported issues:
+
+	* TS-870 Pro looks like it will need to run curl insecure:
+		https://forum.qnap.com/viewtopic.php?p=858659#p858659
+
 Observed issues:
+
+	* Running 'sherpa debug' should show something better than this:
+		[/share/Public] # ./sherpa-manager.source debug
+		note: Debug mode activated, sherpa will run a little slower than usual.
+		sherpa v<?build_date?>-unstable
+
+		proc: package actions ... [/share/Public] #
+
+		[/share/Public] # ./sherpa-manager.source help debug
+		note: Debug mode activated, sherpa will run a little slower than usual.
+		sherpa v<?build_date?>-unstable
+
+		[/share/Public] #
 
 	* OliveTin release check fails to return anything during QTS startup.
 		- A manual 'start' afterward works fine.
+			[~] # cat /var/log/olivetest.log
+			$remote_arch: [linux-arm7]
+			$remote_url: [https://api.github.com/repos/OliveTin/OliveTin/releases/latest]
+			$download_opts: [ --silent]
+			$a: []
+			$b: []
+			$c: []
+			$d: []
+			running curl cmd...
+			* Closing connection -1
+			curl: (3) URL using bad/illegal format or missing URL
+			result is: [3]
 
 	* 'sherpa start inactive' fails to find any inactive packages.
 		- Must get status of each package first.
