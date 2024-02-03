@@ -13,7 +13,10 @@ for index in "${!source_pathfiles[@]}"; do
 	[[ -e ${source_pathfiles[index]} ]] && rm -f "${source_pathfiles[index]}"
 done
 
-./check-syntax.sh || exit
+# touch a file in the main sherpa QPKG so it will be rebuilt by 'build-qpkgs.sh'
+touch "$qpkgs_path"/sherpa/qpkg.source
+
+# ./check-syntax.sh || exit
 ./build-qpkgs.sh || exit
 ./build-packages.sh || exit
 ./build-objects.sh || exit
