@@ -1,3 +1,5 @@
+* Service scripts should show current auto-update setting when displaying basic help.
+
 * When launching sherpa in basic help mode only, skip loading objects and packages.
 
 * Service-scripts launching applications in screen sessions should include screen.log in service-script log when 'start' fails.
