@@ -48,7 +48,7 @@ for d in "$qpkgs_path"/*; do
 	config_pathfile=$d/qpkg.cfg
 	rebuild_package=false
 
-# 	[[ $(basename "$d") = sherpa ]] && rebuild_package=true		# always rebuild the sherpa QPKG.
+	[[ $(basename "$d") = sherpa && ${1:-} = sherpa ]] && rebuild_package=true
 
 	if [[ $rebuilt_functions = true ]]; then		# only need to rebuild QPKGs using the service functions library.
 		if [[ -n $(find -L "$d" -type f -iname "$service_library_file") ]]; then
