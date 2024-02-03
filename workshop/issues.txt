@@ -15,18 +15,15 @@ Observed issues:
 
 	* OliveTin release check fails to return anything during QTS startup.
 		- A manual 'start' afterward works fine.
-			[~] # cat /var/log/olivetest.log
-			$remote_arch: [linux-arm7]
-			$remote_url: [https://api.github.com/repos/OliveTin/OliveTin/releases/latest]
-			$download_opts: [ --silent]
-			$a: []
-			$b: []
-			$c: []
-			$d: []
-			running curl cmd...
-			* Closing connection -1
-			curl: (3) URL using bad/illegal format or missing URL
-			result is: [3]
+
+			[/var/log] # cat curlstderrout.txt
+			% Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+											Dload  Upload   Total   Spent    Left  Speed
+			0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0* Could not resolve host: api.github.com
+			* Closing connection 0
+			curl: (6) Could not resolve host: api.github.com
+
+		- might need to add a retry or two in there.
 
 	* 'sherpa start inactive' fails to find any inactive packages.
 		- Must get status of each package first.
