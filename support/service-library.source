@@ -277,45 +277,33 @@ StartQPKGLibrary()
 		local source_archive_pathfile=$qpkg_repo_path/source.archive
 
 		if IsAutoUpdate || [[ ! -e $source_archive_pathfile ]]; then		# Get remote source archive, even when auto-update is disabled.
-			local download_opts="$curl_insecure_arg"
+			local release_url=''
+			local download_opts=$curl_insecure_arg
 			[[ $debug = false ]] && download_opts+=' --silent'
 
-			if [[ $resolve_remote_url = true && -n $remote_url && $remote_url != undefined ]]; then
+			if [[ $resolve_remote_url = true ]]; then
 				DisplayWaitCommitToLog 'check release package:'
 
-				# Test if remote site is reachable.
-				local reachable=false
-				local site=$(cut -d'/' -f3 <<< $remote_url | cut -d':' -f1)
+				if IsSiteUp "$remote_url"; then
+					release_url=$(RequestLatestRelease "$remote_url" "$remote_arch")
 
-				for ((n=0; n<20; n++)); do
-					if ! /bin/ping -c 1 -w 1 "$site" &>/dev/null; then
-						/bin/sleep 5
-						continue
-					else
-						reachable=true
-						break
-					fi
-				done
-
-				if [[ $reachable = false ]]; then
-					DisplayErrCommitAllLogs "'unable to access remote URL'"
-				else
-					# https://gist.github.com/steinwaywhw/a4cd19cda655b8249d908261a62687f8
-					remote_url=$(/sbin/curl${download_opts} "$remote_url" | /bin/grep browser_download_url | cut -d\" -f4 | /bin/grep "$remote_arch")
-
-					if [[ -n $remote_url && $remote_url != undefined ]]; then
+					if [[ -n $release_url && $release_url != undefined ]]; then
 						DisplayCommitToLog OK
 					else
 						DisplayErrCommitAllLogs "'unable to calculate remote URL'"
 					fi
+				else
+					DisplayErrCommitAllLogs "'unable to access remote site'"
 				fi
+			else
+				release_url=$remote_url
 			fi
 
-			if [[ -n $remote_url ]]; then
+			if [[ -n $release_url ]]; then
 				[[ -e $source_archive_pathfile ]] && download_opts+=" --time-cond $source_archive_pathfile"
 				download_opts+=" --show-error --location --output $source_archive_pathfile"
 
-				DisplayRunAndLog 'refresh release package' "/sbin/curl${download_opts} '$remote_url'" || { SetError; return 1 ;}
+				DisplayRunAndLog 'refresh release package' "/sbin/curl${download_opts} '$release_url'" || { SetError; return 1 ;}
 			fi
 		fi
 
@@ -2055,6 +2043,43 @@ OS.IsSupportSecureDownload()
 	[[ ${NAS_FIRMWARE_VER//.} -ge 500 ]]
 
 	}
+
+IsSiteUp()
+	{
+
+	# Test if remote site is reachable.
+
+	# input:
+	#   $1 = URL to check.
+
+	local site=$(cut -d'/' -f3 <<< ${1:-} | cut -d':' -f1)
+	[[ -n $site && $site != undefined ]] || return
+
+	for ((n=0; n<20; n++)); do
+		/bin/ping -c 1 -w 1 "$site" && return 0
+		/bin/sleep 5
+	done
+
+	return 1
+
+	} &>/dev/null
+
+RequestLatestRelease()
+	{
+
+	# Request latest release URL from remote site.
+
+	# input:
+	#   $1 = URL to check.
+	#   $1 = arch to match.
+
+	[[ -n $1 && $1 != undefined ]] || return
+	[[ -n $2 && $2 != undefined ]] || return
+
+	# https://gist.github.com/steinwaywhw/a4cd19cda655b8249d908261a62687f8
+	/sbin/curl${download_opts} "$1" | /bin/grep browser_download_url | cut -d\" -f4 | /bin/grep "$2"
+
+	} 2>/dev/null
 
 SetServiceAction()
 	{
