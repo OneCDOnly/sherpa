@@ -1,5 +1,23 @@
 Observed issues:
 
+	* Suggestion shouldn't point to service script log for details on a 'download' action failure.
+		[~] # sherpa reinstall read
+		sherpa v240203-stable
+
+		• These actions completed OK:
+			reinstall OReadarr in 30 seconds
+
+		• These actions failed:
+			Unable to download OReadarr in 1 second: For more information: /etc/init.d/oreadarr.sh log
+
+	* Needs improvement.
+		[~] # sherpa install installable
+		sherpa v240203-stable
+
+		warn: Unable to find any packages to install.
+		proc: package actions ...
+		[~] #
+
 	* Running 'sherpa debug' should show something more helpful than this:
 		[/share/Public] # ./sherpa-manager.source debug
 		note: Debug mode activated, sherpa will run a little slower than usual.
