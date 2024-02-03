@@ -13,7 +13,11 @@ cd "$source_path" || exit
 
 cd "$target_path" || exit
 
-git add . && git commit && git push
+if [[ -z ${1:-} ]]; then
+	git add . && git commit && git push || exit
+else
+	git add . && git commit -m "$1" && git push || exit
+fi
 
 cd "$this_path" || exit
 

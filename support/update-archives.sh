@@ -6,14 +6,7 @@ this_path=$PWD
 
 cd "$source_path" || exit
 ./build-all.sh || exit
-
-[[ -e $objects_file ]] && rm -f "$objects_file"
-[[ -e $management_file ]] && rm -f "$management_file"
-[[ -e $packages_file ]] && rm -f "$packages_file"
-
-cd "$target_path" || exit
-
-git add . && git commit -m '[update] archives' && git push
+./commit.sh '[update] archives' || exit
 
 cd "$this_path" || exit
 
