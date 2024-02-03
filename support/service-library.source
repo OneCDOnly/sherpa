@@ -282,13 +282,32 @@ StartQPKGLibrary()
 
 			if [[ $resolve_remote_url = true && -n $remote_url && $remote_url != undefined ]]; then
 				DisplayWaitCommitToLog 'check release package:'
-				# https://gist.github.com/steinwaywhw/a4cd19cda655b8249d908261a62687f8
-				remote_url=$(/sbin/curl${download_opts} "$remote_url" | /bin/grep browser_download_url | cut -d\" -f4 | /bin/grep "$remote_arch")
 
-				if [[ -n $remote_url && $remote_url != undefined ]]; then
-					DisplayCommitToLog OK
+				# Test if remote site is reachable.
+				local reachable=false
+				local site=$(cut -d'/' -f3 <<< $remote_url | cut -d':' -f1)
+
+				for ((n=0; n<20; n++)); do
+					if ! /bin/ping -c 1 -w 1 "$site" &>/dev/null; then
+						/bin/sleep 5
+						continue
+					else
+						reachable=true
+						break
+					fi
+				done
+
+				if [[ $reachable = false ]]; then
+					DisplayErrCommitAllLogs "'unable to access remote URL'"
 				else
-					DisplayErrCommitAllLogs "'unable to calculate remote URL'"
+					# https://gist.github.com/steinwaywhw/a4cd19cda655b8249d908261a62687f8
+					remote_url=$(/sbin/curl${download_opts} "$remote_url" | /bin/grep browser_download_url | cut -d\" -f4 | /bin/grep "$remote_arch")
+
+					if [[ -n $remote_url && $remote_url != undefined ]]; then
+						DisplayCommitToLog OK
+					else
+						DisplayErrCommitAllLogs "'unable to calculate remote URL'"
+					fi
 				fi
 			fi
 
@@ -628,11 +647,12 @@ ResetConfig()
 MakePaths()
 	{
 
+	local a=''
+
 	if [[ -d $QPKG_PATH ]]; then
-		[[ $local_temp_path != undefined && ! -d $local_temp_path ]] && mkdir -p "$local_temp_path"
-		[[ $qpkg_repo_path != undefined && ! -d $qpkg_repo_path ]] && mkdir -p "$qpkg_repo_path"
-		[[ $pip_cache_path != undefined && ! -d $pip_cache_path ]] && mkdir -p "$pip_cache_path"
-		[[ $venv_path != undefined && ! -d $venv_path ]] && mkdir -p "$venv_path"
+		for a in "$local_temp_path" "$qpkg_repo_path" "$pip_cache_path" "$venv_path"; do
+			[[ $a != undefined && ! -d $a ]] && mkdir -p "$a"
+		done
 	fi
 
 	[[ $BACKUP_PATH != undefined && ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
