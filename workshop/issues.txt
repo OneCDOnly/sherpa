@@ -1,8 +1,6 @@
-Reported issues:
-
 Observed issues:
 
-	* Running 'sherpa debug' should show something better than this:
+	* Running 'sherpa debug' should show something more helpful than this:
 		[/share/Public] # ./sherpa-manager.source debug
 		note: Debug mode activated, sherpa will run a little slower than usual.
 		sherpa v<?build_date?>-unstable
@@ -70,6 +68,8 @@ Observed issues:
 		- Frankly, Deluge-web is a colossal PITA. Consider removing support for this as a QPKG.
 
 	* QPKG version sort is not correctly sorting version numbers followed by an alpha as later than non-alpha.
+
+Reported issues:
 
 Hypothetical issues:
 
