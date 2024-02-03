@@ -1,8 +1,24 @@
-Reported issues:
-
 Observed issues:
 
-	* Running 'sherpa debug' should show something better than this:
+	* Suggestion shouldn't point to service script log for details on a 'download' action failure.
+		[~] # sherpa reinstall read
+		sherpa v240203-stable
+
+		• These actions completed OK:
+			reinstall OReadarr in 30 seconds
+
+		• These actions failed:
+			Unable to download OReadarr in 1 second: For more information: /etc/init.d/oreadarr.sh log
+
+	* Needs improvement.
+		[~] # sherpa install installable
+		sherpa v240203-stable
+
+		warn: Unable to find any packages to install.
+		proc: package actions ...
+		[~] #
+
+	* Running 'sherpa debug' should show something more helpful than this:
 		[/share/Public] # ./sherpa-manager.source debug
 		note: Debug mode activated, sherpa will run a little slower than usual.
 		sherpa v<?build_date?>-unstable
@@ -17,18 +33,15 @@ Observed issues:
 
 	* OliveTin release check fails to return anything during QTS startup.
 		- A manual 'start' afterward works fine.
-			[~] # cat /var/log/olivetest.log
-			$remote_arch: [linux-arm7]
-			$remote_url: [https://api.github.com/repos/OliveTin/OliveTin/releases/latest]
-			$download_opts: [ --silent]
-			$a: []
-			$b: []
-			$c: []
-			$d: []
-			running curl cmd...
-			* Closing connection -1
-			curl: (3) URL using bad/illegal format or missing URL
-			result is: [3]
+
+			[/var/log] # cat curlstderrout.txt
+			% Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+											Dload  Upload   Total   Spent    Left  Speed
+			0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0* Could not resolve host: api.github.com
+			* Closing connection 0
+			curl: (6) Could not resolve host: api.github.com
+
+		- might need to add a retry or two in there.
 
 	* 'sherpa start inactive' fails to find any inactive packages.
 		- Must get status of each package first.
@@ -70,6 +83,8 @@ Observed issues:
 		- Frankly, Deluge-web is a colossal PITA. Consider removing support for this as a QPKG.
 
 	* QPKG version sort is not correctly sorting version numbers followed by an alpha as later than non-alpha.
+
+Reported issues:
 
 Hypothetical issues:
 

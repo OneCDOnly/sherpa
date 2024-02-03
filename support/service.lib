@@ -22,7 +22,7 @@
 #*   This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 #*	 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
-readonly SERVICE_LIB_VERSION='240203'
+readonly SERVICE_LIB_VERSION='240204'
 InitLibrary()
 {
 IsQNAP || exit
@@ -247,21 +247,28 @@ fi
 if IsOnlineArchive; then
 local source_archive_pathfile=$qpkg_repo_path/source.archive
 if IsAutoUpdate || [[ ! -e $source_archive_pathfile ]]; then
-local download_opts="$curl_insecure_arg"
+local release_url=''
+local download_opts=$curl_insecure_arg
 [[ $debug = false ]] && download_opts+=' --silent'
-if [[ $resolve_remote_url = true && -n $remote_url && $remote_url != undefined ]]; then
+if [[ $resolve_remote_url = true ]]; then
 DisplayWaitCommitToLog 'check release package:'
-remote_url=$(/sbin/curl${download_opts} "$remote_url" | /bin/grep browser_download_url | cut -d\" -f4 | /bin/grep "$remote_arch")
-if [[ -n $remote_url && $remote_url != undefined ]]; then
+if IsSiteUp "$remote_url"; then
+release_url=$(RequestLatestRelease "$remote_url" "$remote_arch")
+if [[ -n $release_url && $release_url != undefined ]]; then
 DisplayCommitToLog OK
 else
 DisplayErrCommitAllLogs "'unable to calculate remote URL'"
 fi
+else
+DisplayErrCommitAllLogs "'unable to access remote site'"
 fi
-if [[ -n $remote_url ]]; then
+else
+release_url=$remote_url
+fi
+if [[ -n $release_url ]]; then
 [[ -e $source_archive_pathfile ]] && download_opts+=" --time-cond $source_archive_pathfile"
 download_opts+=" --show-error --location --output $source_archive_pathfile"
-DisplayRunAndLog 'refresh release package' "/sbin/curl${download_opts} '$remote_url'" || { SetError; return 1 ;}
+DisplayRunAndLog 'refresh release package' "/sbin/curl${download_opts} '$release_url'" || { SetError; return 1 ;}
 fi
 fi
 local tar_extract_verbose=''
@@ -274,7 +281,7 @@ fi
 if [[ ! -e $daemon_pathfile || ! -e $source_archive_pathfile || $(($(/bin/date +%s)-$(/usr/bin/stat "$source_archive_pathfile" -c %Y))) -lt 60 ]]; then
 tar_extract_opts="$tar_extract_verbose --extract --gzip --file=$source_archive_pathfile --directory=$qpkg_repo_path"
 unzip_extract_opts="$unzip_extract_verbose -o $source_archive_pathfile -d $qpkg_repo_path"
-DisplayRunAndLog 'extract release package' "/usr/bin/unzip${unzip_extract_opts} || /bin/tar${tar_extract_opts}" || { SetError; return 1 ;}
+DisplayRunAndLog 'extract release package' "/usr/bin/unzip${unzip_extract_opts} 2>/dev/null || /bin/tar${tar_extract_opts}" || { SetError; return 1 ;}
 fi
 fi
 WaitForLaunchTarget || { SetError; return 1 ;}
@@ -490,11 +497,11 @@ return 0
 }
 MakePaths()
 {
+local a=''
 if [[ -d $QPKG_PATH ]]; then
-[[ $local_temp_path != undefined && ! -d $local_temp_path ]] && mkdir -p "$local_temp_path"
-[[ $qpkg_repo_path != undefined && ! -d $qpkg_repo_path ]] && mkdir -p "$qpkg_repo_path"
-[[ $pip_cache_path != undefined && ! -d $pip_cache_path ]] && mkdir -p "$pip_cache_path"
-[[ $venv_path != undefined && ! -d $venv_path ]] && mkdir -p "$venv_path"
+for a in "$local_temp_path" "$qpkg_repo_path" "$pip_cache_path" "$venv_path"; do
+[[ $a != undefined && ! -d $a ]] && mkdir -p "$a"
+done
 fi
 [[ $BACKUP_PATH != undefined && ! -d $BACKUP_PATH ]] && mkdir -p "$BACKUP_PATH"
 }
@@ -1348,6 +1355,22 @@ OS.IsSupportSecureDownload()
 {
 [[ ${NAS_FIRMWARE_VER//.} -ge 500 ]]
 }
+IsSiteUp()
+{
+local site=$(cut -d'/' -f3 <<< ${1:-} | cut -d':' -f1)
+[[ -n $site && $site != undefined ]] || return
+for ((n=0; n<20; n++)); do
+/bin/ping -c 1 -w 1 "$site" && return 0
+/bin/sleep 5
+done
+return 1
+} &>/dev/null
+RequestLatestRelease()
+{
+[[ -n $1 && $1 != undefined ]] || return
+[[ -n $2 && $2 != undefined ]] || return
+/sbin/curl${download_opts} "$1" | /bin/grep browser_download_url | cut -d\" -f4 | /bin/grep "$2"
+} 2>/dev/null
 SetServiceAction()
 {
 service_operation=${1:-unspecified}

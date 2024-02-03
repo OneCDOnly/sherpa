@@ -2,7 +2,7 @@
 
 . vars.source || exit
 
-echo -en "ready to merge '$unstable_branch_msg' branch into '$stable_branch_msg' branch: proceed? "
+echo -en "ready to merge the current '$unstable_branch_msg' branch into '$stable_branch_msg' branch: proceed? "
 read -rn1 response
 echo
 
@@ -14,14 +14,18 @@ case ${response:0:1} in
 		exit 0
 esac
 
+cd $HOME/scripts/nas/sherpa/support || exit
+./update-archives.sh || exit
+
 cd $HOME/scripts/nas/sherpa || exit
 
-# git add . && git commit -m '[pre-merge] update archives' && git push
 git checkout "$stable_branch" || exit
-git merge --no-ff -m "[merge] from \`$unstable_branch\` into \`$stable_branch\`" "$unstable_branch" && git push
+git merge --no-ff -m "[merge] from \`$unstable_branch\` into \`$stable_branch\`" "$unstable_branch" && git push || exit
 git checkout "$unstable_branch" || exit
-# git merge "$stable_branch" --strategy=ours -m '[post-merge] writeback' && git push		# ensure remote 'unstable' is up-to-date with 'stable'
 
 cd $HOME/scripts/nas/sherpa/support || exit
+
+./build-qpkgs.sh || exit
+./commit.sh '[rebuild] post-merge' || exit
 
 exit 0

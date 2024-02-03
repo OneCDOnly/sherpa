@@ -2,6 +2,10 @@
 	- https://github.com/bpatrik/pigallery2
 	- requires Node.js
 
+* VueTorrent?
+	- https://github.com/VueTorrent/VueTorrent
+	- already available as a static QPKG here: https://github.com/Jay-Young/qpkg/tree/master/vuetorrent
+
 * it-tools?
 	- https://github.com/CorentinTh/it-tools
 	- already available as a static QPKG here: https://github.com/Jay-Young/qpkg/tree/master/it-tools (runs in Apache).
