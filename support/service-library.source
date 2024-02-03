@@ -322,7 +322,7 @@ StartQPKGLibrary()
 			unzip_extract_opts="$unzip_extract_verbose -o $source_archive_pathfile -d $qpkg_repo_path"
 
 			# Try '.zip' first, then '.tar.gz'
-			DisplayRunAndLog 'extract release package' "/usr/bin/unzip${unzip_extract_opts} || /bin/tar${tar_extract_opts}" || { SetError; return 1 ;}
+			DisplayRunAndLog 'extract release package' "/usr/bin/unzip${unzip_extract_opts} 2>/dev/null || /bin/tar${tar_extract_opts}" || { SetError; return 1 ;}
 		fi
 	fi
 

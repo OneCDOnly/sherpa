@@ -1,8 +1,5 @@
 Observed issues:
 
-	* Hide stderr when extracting release archive.
-		Two methods are tried, one will always fail.
-
 	* Suggestion shouldn't point to service script log for details on a 'download' action failure.
 		[~] # sherpa reinstall read
 		sherpa v240203-stable
