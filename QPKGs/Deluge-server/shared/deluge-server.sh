@@ -2,7 +2,7 @@
 ####################################################################################
 # deluge-server.sh
 #
-# Copyright (C) 2020-2023 OneCD - one.cd.only@gmail.com
+# Copyright (C) 2020-2024 OneCD - one.cd.only@gmail.com
 #
 # so, blame OneCD if it all goes horribly wrong. ;)
 #
@@ -20,7 +20,7 @@ Init()
 
 	# service-script environment
 	readonly QPKG_NAME=Deluge-server
-	readonly SCRIPT_VERSION=230726
+	readonly SCRIPT_VERSION=240205
 
 	# general environment
 	readonly QPKG_PATH=$(/sbin/getcfg $QPKG_NAME Install_Path -f /etc/config/qpkg.conf)
@@ -109,6 +109,9 @@ Init()
 			break
 		fi
 	done
+
+	# KLUDGE: `/dev/fd` isn't always created by QTS.
+	ln -fns /proc/self/fd /dev/fd
 
 	UnsetError
 	UnsetRestartPending
