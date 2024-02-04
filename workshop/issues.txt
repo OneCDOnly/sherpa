@@ -30,23 +30,8 @@ Observed issues:
 
 		[/share/Public] #
 
-	* OliveTin release check fails to return anything during QTS startup.
-		- A manual 'start' afterward works fine.
-
-			[/var/log] # cat curlstderrout.txt
-			% Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-											Dload  Upload   Total   Spent    Left  Speed
-			0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0* Could not resolve host: api.github.com
-			* Closing connection 0
-			curl: (6) Could not resolve host: api.github.com
-
-		- might need to add a retry or two in there.
-
 	* 'sherpa start inactive' fails to find any inactive packages.
 		- Must get status of each package first.
-
-	* OWatcher3 QPKG records an error in QTS system log because PyPI module installation failed, even though 'start' action succeeded.
-		- This should be a QTS log warning-only.
 
 	* Function durations can become incorrect when functions with the same name are called recursively.
 		- Need to make vars holding start-times unique. Maybe measure nest depth?
