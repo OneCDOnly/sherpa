@@ -887,7 +887,19 @@ debug=$debug_was_set
 }
 DebugExtLogMinorSeparator()
 {
-DebugAsLog "$(eval printf '%0.s-' "{1..$DEBUG_LOG_DATAWIDTH}")"
+DebugAsLog "$(DebugMinorSeparator)"
+}
+DebugBulletSeparatorWithText()
+{
+local a=''
+[[ -n ${1:-} ]] && a=" ${1:-} "
+local b=$(((DEBUG_LOG_DATAWIDTH-${#a})/2))
+local c=$((DEBUG_LOG_DATAWIDTH-${#a}-b))
+eval printf '%0.s•' "{1..$b}"; echo -n "$a"; eval printf '%0.s•' "{1..$c}"; echo
+}
+DebugMinorSeparator()
+{
+eval printf '%0.s-' "{1..$DEBUG_LOG_DATAWIDTH}"
 }
 DebugAsLog()
 {
@@ -1530,12 +1542,13 @@ Display "result: $(FormatAsExitcode "${1:-}")"
 FormatAsResultAndStdout()
 {
 if [[ ${1:-0} -eq 0 ]]; then
-echo "= result_code: $(FormatAsExitcode "$1") ***** stdout/stderr begins below *****"
+echo "= result_code: $(FormatAsExitcode "$1")"
 else
-echo "! result_code: $(FormatAsExitcode "$1") ***** stdout/stderr begins below *****"
+echo "! result_code: $(FormatAsExitcode "$1")"
 fi
+DebugBulletSeparatorWithText 'stdout & stderr begins below'
 echo "${2:-}"
-echo '= ***** stdout/stderr is complete *****'
+DebugBulletSeparatorWithText 'stdout & stderr is complete'
 }
 FormatAsFuncMessages()
 {
