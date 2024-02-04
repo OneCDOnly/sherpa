@@ -1,6 +1,7 @@
 Observed issues:
 
 	* Suggestion shouldn't point to service script log for details on a 'download' action failure.
+		-------------------------------------------------------------------------------------------------------------------------
 		[~] # sherpa reinstall read
 		sherpa v240203-stable
 
@@ -9,26 +10,29 @@ Observed issues:
 
 		• These actions failed:
 			Unable to download OReadarr in 1 second: For more information: /etc/init.d/oreadarr.sh log
+		-------------------------------------------------------------------------------------------------------------------------
 
 	* Needs improvement.
+		-------------------------------------------------------------------------------------------------------------------------
 		[~] # sherpa install installable
 		sherpa v240203-stable
 
 		warn: Unable to find any packages to install.
 		proc: package actions ...
 		[~] #
-
+		-------------------------------------------------------------------------------------------------------------------------
 		[/share/Public] # ./sherpa-manager.source debug
 		note: Debug mode activated, sherpa will run a little slower than usual.
 		sherpa v<?build_date?>-unstable
 
 		proc: package actions ... [/share/Public] #
-
+		-------------------------------------------------------------------------------------------------------------------------
 		[/share/Public] # ./sherpa-manager.source help debug
 		note: Debug mode activated, sherpa will run a little slower than usual.
 		sherpa v<?build_date?>-unstable
 
 		[/share/Public] #
+		-------------------------------------------------------------------------------------------------------------------------
 
 	* 'sherpa start inactive' fails to find any inactive packages.
 		- Must get status of each package first.
@@ -41,6 +45,7 @@ Observed issues:
 	* Upgrading QPKGs via sherpa didn't update App Center icons 'live'.
 
 	* Deluge-server and Headphones didn't report 'stop' as successful.
+		-------------------------------------------------------------------------------------------------------------------------
 		- • These actions failed:
 			Unable to deactivate Deluge-server in 5m:52s: For more information: /etc/init.d/deluge-server.sh log
 			Unable to deactivate Headphones in 5m:51s: For more information: /etc/init.d/headphones.sh log
@@ -49,13 +54,16 @@ Observed issues:
 			25 daemon active: true
 			26 daemon PID: 21177
 			27 stop daemon PID (21177) with SIGTERM:
+		-------------------------------------------------------------------------------------------------------------------------
 		log ended here like process had been killed.
 
+		-------------------------------------------------------------------------------------------------------------------------
 			37 source: headphones.sh, action: stop, datetime: Thu Jan 25 06:51:31 EST 2024
 			38 package: 240125, service: 240125, library: 240125
 			39 daemon active: true
 			40 daemon PID: 24189
 			41 stop daemon PID (24189) with SIGTERM: stopped in 45 seconds
+		-------------------------------------------------------------------------------------------------------------------------
 		log ended here like process had been killed.
 
 		- Both applications were dead.
@@ -69,6 +77,8 @@ Observed issues:
 	* QPKG version sort is not correctly sorting version numbers followed by an alpha as later than non-alpha.
 
 Reported issues:
+
+	* none.
 
 Hypothetical issues:
 
