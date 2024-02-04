@@ -52,7 +52,7 @@ InitLibrary()
 	readonly DAEMON_CHECK_TIMEOUT_SECONDS=60
 	readonly DAEMON_STOP_TIMEOUT_SECONDS=120
 	readonly PIDFILE_APPEAR_TIMEOUT_SECONDS=60
-	readonly PID_RECHECK_WAIT_SECONDS=10
+	readonly PID_RECHECK_WAIT_SECONDS=10			# Adaptive. This value is for a single-core CPU and 1m load average of 1.0
 	readonly PORT_CHECK_TIMEOUT_SECONDS=240
 
 	readonly BACKUP_PATH=$(/sbin/getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
