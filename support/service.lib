@@ -101,6 +101,7 @@ resolve_remote_url=false
 run_daemon_in_screen_session=false
 service_operation=unspecified
 service_result=undefined
+silence_pypi_errors=true
 source_arch=undefined
 source_archive_pathfile=undefined
 source_git_branch=undefined
@@ -322,6 +323,7 @@ DisplayErrCommitAllLogs 'CheckPorts() failed!'
 SetError
 return 1
 fi
+CommitInfoToSysLog 'start daemon: OK'
 return 0
 }
 StopQPKG()
@@ -414,6 +416,9 @@ fi
 IsNotAutoUpdate && [[ $new_env = false ]] && return 0
 if [[ $QPKG_NAME = OWatcher3 ]]; then
 DisplayRunAndLog "KLUDGE: install 'm2r' PyPI module first" "$venv_pip_pathfile install${no_pip_deps} --no-input m2r" log:failure-only
+if [[ $? -gt 0 && $silence_pypi_errors = false ]]; then
+CommitWarnToSysLog "'mr2' PyPI module installation failed."
+fi
 fi
 [[ -e $essential_modules_pathfile && -d $(/usr/bin/dirname "$default_essential_modules_pathfile") ]] && cp -f "$essential_modules_pathfile" "$default_essential_modules_pathfile"
 [[ -e $default_essential_modules_pathfile ]] && essential_modules_pathfile=$default_essential_modules_pathfile
@@ -439,12 +444,18 @@ fi
 for target in $essential_modules_pathfile $requirements_modules_pathfile $recommended_modules_pathfile; do
 if [[ -e $target ]]; then
 DisplayRunAndLog "install PyPI modules from '$(/usr/bin/basename "$target")'" "$venv_pip_pathfile install${no_pip_deps} --no-input --upgrade pip -r $target" log:failure-only
+if [[ $? -gt 0 && $silence_pypi_errors = false ]]; then
+CommitWarnToSysLog 'PyPI module installation failed.'
+fi
 no_pips_installed=false
 fi
 done
 if [[ $no_pips_installed = true ]]; then
 if [[ -e $qpkg_repo_path/setup.py || -e $pyproject_pathfile ]]; then
 DisplayRunAndLog "install PyPI modules from '$(/usr/bin/basename "$target")'" "$venv_pip_pathfile install${no_pip_deps} --no-input --upgrade pip $qpkg_repo_path" log:failure-only
+if [[ $? -gt 0 && $silence_pypi_errors = false ]]; then
+CommitWarnToSysLog 'PyPI module installation failed.'
+fi
 no_pips_installed=false
 fi
 fi
@@ -733,7 +744,6 @@ done
 false
 )
 if [[ $? -ne 0 ]]; then
-DisplayCommitToLog 'failed!'
 DisplayErrCommitAllLogs "daemon not found! (exceeded timeout: $MAX_SECONDS second$(Pluralise "$MAX_SECONDS"))"
 return 1
 fi
@@ -767,7 +777,6 @@ done
 false
 )
 if [[ $? -ne 0 ]]; then
-DisplayCommitToLog 'failed!'
 DisplayErrCommitAllLogs "$1 not found! (exceeded timeout: $MAX_SECONDS second$(Pluralise "$MAX_SECONDS"))"
 return 1
 fi
@@ -805,62 +814,61 @@ SaveAppVersion()
 DisplayRunAndLog()
 {
 local -r LOG_PATHFILE=$(/bin/mktemp /var/log/"${FUNCNAME[0]}"_XXXXXX)
-local -i result_code=0
+local -i z=0
 DisplayWaitCommitToLog "$1:"
 RunAndLog "${2:?empty}" "$LOG_PATHFILE" "${3:-}" '' "${4:-false}"
-result_code=$?
-if [[ $result_code -eq 0 ]]; then
-[[ ${3:-} != log:failure-only ]] && CommitInfoToSysLog "${1:?empty}: OK"
+z=$?
+if [[ $z -eq 0 ]]; then
 DisplayCommitToLog OK
 else
-DisplayErrCommitAllLogs 'failed!'
+DisplayCommitToLog failed
 fi
-if [[ $result_code -eq 0 ]]; then
+if [[ $z -eq 0 ]]; then
 [[ ${3:-} != log:failure-only ]] && AddFileToDebug "$LOG_PATHFILE"
 else
-[[ $result_code -ne ${4:-} ]] && AddFileToDebug "$LOG_PATHFILE"
+[[ $z -ne ${4:-} ]] && AddFileToDebug "$LOG_PATHFILE"
 fi
 [[ -e $LOG_PATHFILE ]] && rm -f "$LOG_PATHFILE"
-return $result_code
+return $z
 }
 RunAndLog()
 {
 local -r LOG_PATHFILE=$(/bin/mktemp /var/log/"${FUNCNAME[0]}"_XXXXXX)
-local -i result_code=0
+local -i z=0
 FormatAsCommand "${1:?empty}" > "${2:?empty}"
 if [[ $debug = true ]]; then
 Display
 if [[ ${5:-false} = false ]]; then
 Display "exec: '$1'"
 eval "$1 > >(/usr/bin/tee $LOG_PATHFILE) 2>&1"
-result_code=${PIPESTATUS[0]}
+z=${PIPESTATUS[0]}
 else
 Display "exec (in screen session): '$1'"
 fi
 else
 if [[ ${5:-false} = false ]]; then
 (eval "$1" > "$LOG_PATHFILE" 2>&1)
-result_code=$?
+z=$?
 fi
 fi
 if [[ ${5:-false} = true ]]; then
 /usr/sbin/screen -c "$SCREEN_CONF_PATHFILE" -dmLS "$QPKG_NAME" bash -c "$1"
-result_code=$?
+z=$?
 fi
 if [[ -e $LOG_PATHFILE ]]; then
-FormatAsResultAndStdout "$result_code" "$(<"$LOG_PATHFILE")" >> "$2"
+FormatAsResultAndStdout "$z" "$(<"$LOG_PATHFILE")" >> "$2"
 else
-FormatAsResultAndStdout "$result_code" '<null>' >> "$2"
+FormatAsResultAndStdout "$z" '<null>' >> "$2"
 fi
 if [[ $debug = true ]]; then
-if [[ $result_code -eq 0 ]]; then
+if [[ $z -eq 0 ]]; then
 Display 'exec: completed OK'
 else
 Display 'exec: completed, but with errors'
 fi
 fi
 [[ -e $LOG_PATHFILE ]] && rm -f "$LOG_PATHFILE"
-return $result_code
+return $z
 }
 AddFileToDebug()
 {
@@ -1483,11 +1491,6 @@ ShowAsError()
 local capitalised=$(Capitalise "${1:-}")
 Display "$(TextBrightRed derp): $capitalised"
 } >&2
-DisplayErrCommitAllLogs()
-{
-DisplayCommitToLog "${1:-}"
-CommitErrToSysLog "${1:-}"
-}
 DisplayCommitToLog()
 {
 Display "${1:-}"
@@ -1497,6 +1500,16 @@ DisplayWaitCommitToLog()
 {
 DisplayWait "${1:-}"
 CommitToLogWait "${1:-}"
+}
+DisplayWarnCommitAllLogs()
+{
+DisplayCommitToLog "${1:-}"
+CommitWarnToSysLog "${1:-}"
+}
+DisplayErrCommitAllLogs()
+{
+DisplayCommitToLog "${1:-}"
+CommitErrToSysLog "${1:-}"
 }
 FormatAsLogFilename()
 {
@@ -1590,7 +1603,7 @@ CommitSysLog "${1:-}" 4
 }
 CommitWarnToSysLog()
 {
-CommitSysLog "${1:-}" 2
+CommitSysLog "${1:-} Please check the service log for more information." 2
 }
 CommitErrToSysLog()
 {
