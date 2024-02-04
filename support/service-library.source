@@ -43,6 +43,9 @@ InitLibrary()
 		fi
 	done
 
+	# KLUDGE: `/dev/fd` isn't always created by QTS.
+	ln -fns /proc/self/fd /dev/fd
+
 	UnsetError
 	UnsetRestartPending
 

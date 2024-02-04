@@ -54,8 +54,8 @@ Self:Init()
 	sess_active_pathfile=$THIS_PACKAGE_PATH/session.$$.active.log
 	rm -f "$REPORT_OUTPUT_PATHFILE" "$RAMDISKS_FREESPACE_PATHFILE" "$DISPLAY_INHIBIT_PATHFILE"
 
-	# KLUDGE: `/dev/fd` isn't always created by QTS during startup.
-	[[ ! -e /dev/fd ]] && ln -s /proc/self/fd /dev/fd
+	# KLUDGE: `/dev/fd` isn't always created by QTS.
+	ln -fns /proc/self/fd /dev/fd
 
 	# KLUDGE: just in-case `python` has disappeared again ... ¯\_(ツ)_/¯
 	[[ -e $PYTHON3_CMD && ! -L $PYTHON_CMD ]] && ln -s "$PYTHON3_CMD" "$PYTHON_CMD"
