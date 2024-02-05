@@ -4153,7 +4153,7 @@ DisplayAsIndentActionResultDurationReason()
 	if [[ -z ${4:-} ]]; then
 		printf "%s %s%s" "$(Lowercase "${1:-}")" "${2:-}" "$([[ -n $duration ]] && printf ' in %s' "$duration")."
 	else
-		printf "%s %s%s: %s" "$(Lowercase "${1:-}")" "${2:-}" "$([[ -n $duration ]] && printf ' in %s' "$duration")." "$4"
+		printf "%s %s%s: %s" "$(Lowercase "${1:-}")" "${2:-}" "$([[ -n $duration ]] && printf ' in %s' "$duration")" "$4"
 	fi
 
 	printf '\n'; linespace_visible=false
