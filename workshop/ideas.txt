@@ -1,3 +1,5 @@
+* Service scripts should note in service log if deamon is being launched in a screen session.
+
 * Include skipped-ok count in progress display?
 
 * Service scripts should show current auto-update setting when displaying basic help.
