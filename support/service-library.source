@@ -307,7 +307,7 @@ StartQPKGLibrary()
 				[[ -e $source_archive_pathfile ]] && download_opts+=" --time-cond $source_archive_pathfile"
 				download_opts+=" --show-error --location --output $source_archive_pathfile"
 
-				DisplayRunAndLog 'refresh release package' "/sbin/curl${download_opts} '$release_url'" || { SetError; return 1 ;}
+				DisplayRunAndLog 'refresh release package' "/sbin/curl${download_opts} '$release_url'" log:failure-only || { SetError; return 1 ;}
 			fi
 		fi
 
@@ -326,7 +326,7 @@ StartQPKGLibrary()
 			unzip_extract_opts="$unzip_extract_verbose -o $source_archive_pathfile -d $qpkg_repo_path"
 
 			# Try '.zip' first, then '.tar.gz'
-			DisplayRunAndLog 'extract release package' "/usr/bin/unzip${unzip_extract_opts} 2>/dev/null || /bin/tar${tar_extract_opts}" || { SetError; return 1 ;}
+			DisplayRunAndLog 'extract release package' "/usr/bin/unzip${unzip_extract_opts} 2>/dev/null || /bin/tar${tar_extract_opts}" log:failure-only || { SetError; return 1 ;}
 		fi
 	fi
 
@@ -622,7 +622,7 @@ StripComments()
 BackupConfig()
 	{
 
-	DisplayRunAndLog 'update configuration backup' "/bin/tar --create --gzip --file=$qpkg_backup_pathfile --directory=$QPKG_PATH/config ." || SetError
+	DisplayRunAndLog 'update configuration backup' "/bin/tar --create --gzip --file=$qpkg_backup_pathfile --directory=$QPKG_PATH/config ." log:failure-only || SetError
 
 	return 0
 
@@ -637,7 +637,7 @@ RestoreConfig()
 		return 1
 	fi
 
-	DisplayRunAndLog 'restore configuration backup' "/bin/tar --extract --gzip --file=$qpkg_backup_pathfile --directory=$QPKG_PATH/config" || SetError
+	DisplayRunAndLog 'restore configuration backup' "/bin/tar --extract --gzip --file=$qpkg_backup_pathfile --directory=$QPKG_PATH/config" log:failure-only || SetError
 
 	return 0
 
@@ -646,7 +646,7 @@ RestoreConfig()
 ResetConfig()
 	{
 
-	DisplayRunAndLog 'reset configuration' "mv $qpkg_ini_default_pathfile $QPKG_PATH; rm -rf $QPKG_PATH/config/*; mv $QPKG_PATH/$(/usr/bin/basename "$qpkg_ini_default_pathfile") $qpkg_ini_default_pathfile" || SetError
+	DisplayRunAndLog 'reset configuration' "mv $qpkg_ini_default_pathfile $QPKG_PATH; rm -rf $QPKG_PATH/config/*; mv $QPKG_PATH/$(/usr/bin/basename "$qpkg_ini_default_pathfile") $qpkg_ini_default_pathfile" log:failure-only || SetError
 
 	return 0
 
