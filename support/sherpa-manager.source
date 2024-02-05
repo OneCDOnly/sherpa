@@ -54,8 +54,8 @@ Self:Init()
 	sess_active_pathfile=$THIS_PACKAGE_PATH/session.$$.active.log
 	rm -f "$REPORT_OUTPUT_PATHFILE" "$RAMDISKS_FREESPACE_PATHFILE" "$DISPLAY_INHIBIT_PATHFILE"
 
-	# KLUDGE: `/dev/fd` isn't always created by QTS during startup.
-	[[ ! -e /dev/fd ]] && ln -s /proc/self/fd /dev/fd
+	# KLUDGE: `/dev/fd` isn't always created by QTS.
+	ln -fns /proc/self/fd /dev/fd
 
 	# KLUDGE: just in-case `python` has disappeared again ... ¯\_(ツ)_/¯
 	[[ -e $PYTHON3_CMD && ! -L $PYTHON_CMD ]] && ln -s "$PYTHON3_CMD" "$PYTHON_CMD"
@@ -206,14 +206,6 @@ Self.Results:Show()
 	[[ $opts_show_backuploc = true ]] && Help.BackupLocation:Show
 	[[ $show_zero_qpkgs = true ]] && ShowZeroQpkgs
 	[[ $show_suggest_raise_issue = true ]] && Help.Issue:Show
-
-	if [[ $opts_check = true ]]; then
-		if Self.Error.IsNt; then
-			ShowAsDone 'check completed'
-		else
-			ShowAsFail 'check completed'
-		fi
-	fi
 
 	DebugInfoMinSepr
 	DebugScript finished "$(/bin/date)"
@@ -1208,6 +1200,14 @@ Actions:Proc()
 		QPKGs.Actions:List
 	fi
 
+	if [[ $show_bland = false && $skip_package_actions = false ]]; then
+		if Self.Error.IsNt; then
+			ShowAsDone 'processing complete'
+		else
+			ShowAsFail 'processing complete'
+		fi
+	fi
+
 	Func:Exit
 
 	}
@@ -2003,6 +2003,8 @@ AllocPackGroupsToAcs()
 	for action in "${USER_QPKG_ACTIONS[@]}"; do
 		# Process group-based user-options.
 
+		# Positive groups.
+
 		for group in "${USER_QPKG_SC_GROUPS[@]}"; do
 			found=false
 
@@ -2018,7 +2020,7 @@ AllocPackGroupsToAcs()
 								done
 								;;
 							*)
-								DebugAsWarn "specified group '$group' has no handler for specified action '$action'"
+								DebugAsWarn "group 'SC$group' has no positive allocation handler for action '$action'"
 						esac
 						;;
 					install|status)
@@ -2029,7 +2031,7 @@ AllocPackGroupsToAcs()
 								QPKGs-AC${action}-to:Add "$(QPKGs-SC${group}:Array)"
 								;;
 							*)
-								DebugAsWarn "specified group '$group' has no handler for specified action '$action'"
+								DebugAsWarn "group 'SC$group' has no positive allocation handler for action '$action'"
 						esac
 						;;
 					activate|deactivate|enable|disable|reactivate|reinstall|stop|uninstall)
@@ -2042,7 +2044,7 @@ AllocPackGroupsToAcs()
 								done
 								;;
 							*)
-								DebugAsWarn "specified group '$group' has no handler for specified action '$action'"
+								DebugAsWarn "group 'SC$group' has no positive allocation handler for action '$action'"
 						esac
 						;;
 					rebuild)
@@ -2055,7 +2057,7 @@ AllocPackGroupsToAcs()
 								done
 								;;
 							*)
-								DebugAsWarn "specified group '$group' has no handler for specified action '$action'"
+								DebugAsWarn "group 'SC$group' has no positive allocation handler for action '$action'"
 						esac
 						;;
 					upgrade)
@@ -2072,11 +2074,11 @@ AllocPackGroupsToAcs()
 								QPKGs-ACreactivate-to:Remove "$(QPKGs-ACupgrade-to:Array)"
 								;;
 							*)
-								DebugAsWarn "specified group '$group' has no handler for specified action '$action'"
+								DebugAsWarn "group 'SC$group' has no positive allocation handler for action '$action'"
 						esac
 						;;
 					*)
-						DebugAsWarn "specified action '$action' has no handler"
+						DebugAsWarn "action '$action' has no positive allocation handler"
 				esac
 
 				if [[ $found = false ]]; then
@@ -2084,25 +2086,32 @@ AllocPackGroupsToAcs()
 				fi
 
 				if QPKGs-AC${action}-to.IsAny; then
-					DebugAsDone "action: '$action', group: '$group': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
+					DebugAsDone "action: '$action', group: 'SC$group': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
 				else
-					ShowAsWarn "unable to find any packages to $(Lowercase "$action")"
+					ShowAsWarn "unable to find any packages to '$(Lowercase "$action")'"
 				fi
 			fi
 		done
+
+		# Negative groups.
 
 		for group in "${USER_QPKG_SCNT_GROUPS[@]}"; do
 			found=false
 
 			if QPKGs.AC${action}.SCNT${group}.IsSet; then
+				case $action in
+					*)
+						DebugAsWarn "action '$action' has no negative allocation handler"
+				esac
+
 				if [[ $found = false ]]; then
 					QPKGs-AC${action}-to:Add "$(QPKGs-SCNT${group}:Array)"
 				fi
 
 				if QPKGs-AC${action}-to.IsAny; then
-					DebugAsDone "action: '$action', group: 'NT${group}': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
+					DebugAsDone "action: '$action', group: 'SCNT${group}': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
 				else
-					ShowAsWarn "unable to find any packages to $(Lowercase "$action")"
+					ShowAsWarn "unable to find any packages to '$(Lowercase "$action")'"
 				fi
 			fi
 		done
@@ -2125,6 +2134,8 @@ AllocPackStatesToAcs()
 	for action in "${USER_QPKG_ACTIONS[@]}"; do
 		# Process state-based user-options.
 
+		# Positive states.
+
 		for state in "${USER_QPKG_IS_STATES[@]}"; do
 			found=false
 
@@ -2137,11 +2148,11 @@ AllocPackStatesToAcs()
 								QPKGs-AC${action}-to:Add "$(QPKGs-IS${state}:Array)"
 								;;
 							*)
-								DebugAsWarn "specified state '$state' has no handler for specified action '$action'"
+								DebugAsWarn "state 'IS$state' has no positive allocation handler for action '$action'"
 						esac
 						;;
 					*)
-						DebugAsWarn "specified action '$action' has no handler"
+						DebugAsWarn "action '$action' has no positive allocation handler"
 				esac
 
 				if [[ $found = false ]]; then
@@ -2151,10 +2162,12 @@ AllocPackStatesToAcs()
 				if QPKGs-AC${action}-to.IsAny; then
 					DebugAsDone "action: '$action', state: 'IS${state}': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
 				else
-					DebugAsWarn "unable to find any packages to $(Lowercase "$action")"
+					DebugAsWarn "unable to find any packages to '$(Lowercase "$action")'"
 				fi
 			fi
 		done
+
+		# Negative states.
 
 		for state in "${USER_QPKG_ISNT_STATES[@]}"; do
 			found=false
@@ -2163,16 +2176,16 @@ AllocPackStatesToAcs()
 				case $action in
 					activate|backup|clean|install|uninstall)
 						case $state in
-							enabled|installed)
+							active|enabled|installed)
 								found=true
 								QPKGs-AC${action}-to:Add "$(QPKGs-ISNT${state}:Array)"
 								;;
 							*)
-								DebugAsWarn "specified state '$state' has no handler for specified action '$action'"
+								DebugAsWarn "state 'ISNT$state' has no negative allocation handler for action '$action'"
 						esac
 						;;
 					*)
-						DebugAsWarn "specified action '$action' has no handler"
+						DebugAsWarn "action '$action' has no negative allocation handler"
 				esac
 
 				if [[ $found = false ]]; then
@@ -2182,7 +2195,7 @@ AllocPackStatesToAcs()
 				if QPKGs-AC${action}-to.IsAny; then
 					DebugAsDone "action: '$action', state: 'ISNT${state}': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
 				else
-					ShowAsWarn "unable to find any packages to $(Lowercase "$action")"
+					ShowAsWarn "unable to find any packages to '$(Lowercase "$action")'"
 				fi
 			fi
 		done
@@ -4122,26 +4135,25 @@ DisplayAsHelpTitleHighlighted()
 
 	}
 
-DisplayAsIndentPrefixActionResultDurationReason()
+DisplayAsIndentActionResultDurationReason()
 	{
 
 	# input:
-	#	$1 = prefix message (optional)
-	#	$2 = action
-	#	$3 = result message
-	#	$4 = duration in milliseconds (optional)
-	#	$5 = reason message (optional)
+	#	$1 = action
+	#	$2 = result message
+	#	$3 = duration in milliseconds (optional)
+	#	$4 = reason message (optional)
 
 	local duration=''
 
-	[[ -n ${4:-} ]] && duration=$(FormatMillisecsToMinutesSecs "$4")
+	[[ -n ${3:-} ]] && duration=$(FormatMillisecsToMinutesSecs "$3")
 
 	printf "%${ACTION_RESULT_INDENT}s" ''
 
-	if [[ -z ${5:-} ]]; then
-		printf "%s%s %s%s" "${1:-}" "$(Lowercase "${2:-}")" "${3:-}" "$([[ -n $duration ]] && printf ' in %s' "$duration")"
+	if [[ -z ${4:-} ]]; then
+		printf "%s %s%s" "$(Lowercase "${1:-}")" "${2:-}" "$([[ -n $duration ]] && printf ' in %s' "$duration")."
 	else
-		printf "%s%s %s%s: %s" "${1:-}" "$(Lowercase "${2:-}")" "${3:-}" "$([[ -n $duration ]] && printf ' in %s' "$duration")" "$5"
+		printf "%s %s%s: %s" "$(Lowercase "${1:-}")" "${2:-}" "$([[ -n $duration ]] && printf ' in %s' "$duration")." "$4"
 	fi
 
 	printf '\n'; linespace_visible=false
@@ -6920,7 +6932,7 @@ _QPKG:download_()
 				SendPackageStateChange ISdownloaded
 				MarkThisActionForkAsOk
 			else
-				SaveActionResultToLog QPKG "$PACKAGE_NAME" download failed "downloaded file $(ShowAsFileName "$LOCAL_FILENAME") has incorrect checksum"
+				SaveActionResultToLog QPKG "$PACKAGE_NAME" download failed "cache file $(ShowAsFileName "$LOCAL_FILENAME") has incorrect checksum"
 				SendPackageStateChange ISNTdownloaded
 				MarkThisActionForkAsFailed
 				z=1
@@ -6980,8 +6992,14 @@ _QPKG:install_()
 	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" install skipped-error 'no local file found for processing: please report this issue'
 		MarkThisActionForkAsSkippedError
-		FuncFork:Exit 2
+		z=4
+	elif ! FileMatchesMD5 "$local_pathfile" "$(QPKG.GetHash "$PACKAGE_NAME")"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" install skipped-error "cache file $(ShowAsFileName "$($BASENAME_CMD "$local_pathfile")") has incorrect checksum"
+		MarkThisActionForkAsSkippedError
+		z=4
 	fi
+
+	[[ $z -eq 0 ]] || FuncFork:Exit $z
 
 	if [[ $PACKAGE_NAME = Entware ]] && ! QPKGs-ISinstalled.Exist Entware && QPKGs-ACinstall-to.Exist Entware; then
 		local -r OPT_PATH=/opt
@@ -7067,6 +7085,10 @@ _QPKG:reinstall_()
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reinstall skipped "not installed, please use 'install' instead."
 		MarkThisActionForkAsSkipped
 		z=2
+	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" reinstall skipped "assigned to another repository, please 'reassign' it first"
+		MarkThisActionForkAsSkippedError
+		z=2
 	fi
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
@@ -7076,11 +7098,11 @@ _QPKG:reinstall_()
 	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reinstall skipped-error 'no local file found for processing, please report this issue.'
 		MarkThisActionForkAsSkippedError
-		z=2
-	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" reinstall skipped "assigned to another repository, please 'reassign' it first"
+		z=4
+	elif ! FileMatchesMD5 "$local_pathfile" "$(QPKG.GetHash "$PACKAGE_NAME")"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" reinstall skipped-error "cache file $(ShowAsFileName "$($BASENAME_CMD "$local_pathfile")") has incorrect checksum"
 		MarkThisActionForkAsSkippedError
-		z=2
+		z=4
 	fi
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
@@ -7160,8 +7182,14 @@ _QPKG:upgrade_()
 	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" upgrade skipped-error 'no local file found for processing, please report this issue'
 		MarkThisActionForkAsSkippedError
-		FuncFork:Exit 2
+		z=4
+	elif ! FileMatchesMD5 "$local_pathfile" "$(QPKG.GetHash "$PACKAGE_NAME")"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" upgrade skipped-error "cache file $(ShowAsFileName "$($BASENAME_CMD "$local_pathfile")") has incorrect checksum"
+		MarkThisActionForkAsSkippedError
+		z=4
 	fi
+
+	[[ $z -eq 0 ]] || FuncFork:Exit $z
 
 	local prev_ver=$(QPKG.Local.GetVer "$PACKAGE_NAME")
 	local target_path=''
@@ -7814,12 +7842,16 @@ _QPKG:sign_()
 
 	DebugVar SQLITE_CMD
 
-	if ! OS.IsSupportSignedPackages; then
+	if ! QPKGs-ISinstalled.Exist "$PACKAGE_NAME"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped 'not installed'
+		MarkThisActionForkAsSkipped
+		z=2
+	elif ! OS.IsSupportSignedPackages; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped 'not required: firmware < 4.3.5'
 		MarkThisActionForkAsSkipped
 		z=2
-	elif ! QPKGs-ISinstalled.Exist "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped 'not installed'
+	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkipped
 		z=2
 	elif [[ ! -e $SQLITE_CMD ]]; then
@@ -7830,10 +7862,6 @@ _QPKG:sign_()
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped-abort "$(GetQnapOS) certificate database not found"
 		MarkThisActionForkAsSkippedAbort
 		z=3
-	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisActionForkAsSkipped
-		z=2
 	else
 		a="SELECT 1 FROM Certificate WHERE QpkgName = '$PACKAGE_NAME' LIMIT 1;"
 		b=$($SQLITE_CMD "$CERT_DB_PATHFILE" "$a")
@@ -9491,7 +9519,7 @@ ShowAsPackageName()
 ShowAsFileName()
 	{
 
-	printf '%s' "${1:?${FUNCNAME[0]}'()': undefined}"
+	printf '%s' "'${1:?${FUNCNAME[0]}'()': undefined}'"
 
 	}
 
@@ -10233,26 +10261,34 @@ ShowAsActionLogDetail()
 	fi
 
 	case ${4:-} in
-		skipped|skipped-failed|skipped-abort)
-			if [[ -n "${6:-}" ]]; then
-				DisplayAsIndentPrefixActionResultDurationReason '' "$3" "$2" '' "$6"
-			else
-				DisplayAsIndentPrefixActionResultDurationReason '' "$3" "$2" '' "no reason provided"
-			fi
-			;;
 		failed)
 			if [[ -n "${6:-}" ]]; then
-				if QPKG.IsCanLog "$2"; then
-					DisplayAsIndentPrefixActionResultDurationReason 'Unable to ' "$3" "$2" "$5" "For more information: /etc/init.d/$($BASENAME_CMD "$(QPKG.GetServicePathFile "$2")") log"
-				else
-					DisplayAsIndentPrefixActionResultDurationReason 'Unable to ' "$3" "$2" "$5" "$6"
-				fi
+				# Must use different behaviours depending on action.
+
+				case $3 in
+					download|reassign|sign|uninstall)
+						DisplayAsIndentActionResultDurationReason "$3" "$2" "$5" "$6."
+						;;
+					*)
+						if QPKG.IsCanLog "$2"; then
+							DisplayAsIndentActionResultDurationReason "$3" "$2" "$5" "For more information: /etc/init.d/$($BASENAME_CMD "$(QPKG.GetServicePathFile "$2")") log"
+						else
+							DisplayAsIndentActionResultDurationReason "$3" "$2" "$5" "$6."
+						fi
+				esac
 			else
-				DisplayAsIndentPrefixActionResultDurationReason 'Unable to ' "$3" "$2" "$5" 'no reason provided by the service script'
+				DisplayAsIndentActionResultDurationReason "$3" "$2" "$5" 'no reason was provided by the service script.'
+			fi
+			;;
+		skipped|skipped-failed|skipped-abort)
+			if [[ -n "${6:-}" ]]; then
+				DisplayAsIndentActionResultDurationReason "$3" "$2" '' "$6."
+			else
+				DisplayAsIndentActionResultDurationReason "$3" "$2" '' "no reason provided."
 			fi
 			;;
 		*)
-			DisplayAsIndentPrefixActionResultDurationReason '' "$3" "$2" "$5"
+			DisplayAsIndentActionResultDurationReason "$3" "$2" "$5"
 	esac
 
 	}

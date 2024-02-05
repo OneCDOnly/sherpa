@@ -1,4 +1,8 @@
-* When launching sherpa in basic help mode only, skip loading objects and packages.
+* Include skipped-ok count in progress display?
+
+* Service scripts should show current auto-update setting when displaying basic help.
+
+* When launching sherpa in basic help mode only, skip loading objects and packages?
 
 * Service-scripts launching applications in screen sessions should include screen.log in service-script log when 'start' fails.
 	- Better than having to separately go and find the screen log.
@@ -10,7 +14,7 @@
 * Don't start deactivated QPKGs (unless requested) during 'install all'.
 
 * Add 'sign' as new user action?
-	- Not sure about this. If a 'sign' action is added, then need to support signing of unsigned QPKGs, which means must check their current signed status first (slow).
+	- Not sure about this. If a 'sign' action is added, then need to support signing of unsigned QPKGs as a group, which means must check their current signed status first (slow).
 
 * sherpa 'stable' branch should only update once per-day.
 	- 'unstable' should update once per 10 minutes.
@@ -19,18 +23,22 @@
 	- In what way are they different to x41 executables?
 
 	x31:
+		-------------------------------------------------------------------------------------------------------------------------
 		[/sbin] # file getcfg
 		getcfg: ELF 32-bit LSB executable, ARM, EABI5 version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux.so.3, for GNU/Linux 2.6.16, stripped
-
+		-------------------------------------------------------------------------------------------------------------------------
 		[/sbin] # cat /etc/platform.conf
 		Platform = ARM_MS
+		-------------------------------------------------------------------------------------------------------------------------
 
 	x41:
+		-------------------------------------------------------------------------------------------------------------------------
 		[/sbin] # file getcfg
 		getcfg: ELF 32-bit LSB executable, ARM, EABI5 version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux-armhf.so.3, for GNU/Linux 3.1.1, BuildID[sha1]=5ffd3652ef380f1a3665b325f0a171e3e34fca7a, stripped
-
+		-------------------------------------------------------------------------------------------------------------------------
 		[/sbin] # cat /etc/platform.conf
 		Platform = ARM_AL
+		-------------------------------------------------------------------------------------------------------------------------
 
 * Download management, objects and packages archive in one go. Maybe package them together?
 
