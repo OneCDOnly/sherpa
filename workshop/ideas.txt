@@ -4,9 +4,6 @@
 
 * When launching sherpa in basic help mode only, skip loading objects and packages?
 
-* Service-scripts launching applications in screen sessions should include screen.log in service-script log when 'start' fails.
-	- Better than having to separately go and find the screen log.
-
 * Automate generation of Packages.md in wiki using details from packages.source ?
 	- Would need to store full application description, port numbers, application source.
 	- Maybe consider another local source file, that builds packages.source first?

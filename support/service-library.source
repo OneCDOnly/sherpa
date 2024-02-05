@@ -358,7 +358,11 @@ StartQPKGLibrary()
 	fi
 
 	local msg='start daemon'
-	[[ $run_daemon_in_screen_session = true ]] && msg+=' (in screen session)'
+
+	if [[ $run_daemon_in_screen_session = true ]]; then
+		msg+=' (in screen session)'
+		rm -f "${SCREEN_LOG_PATHFILE:?}"
+	fi
 
 	if ! DisplayRunAndLog "$msg" "$daemon_launch_cmd" log:failure-only "$run_daemon_in_screen_session"; then
 		SetError
@@ -371,12 +375,14 @@ StartQPKGLibrary()
 	if ! IsDaemonActive; then
 		DisplayErrCommitAllLogs 'IsDaemonActive() failed!'
 		SetError
+		[[ $run_daemon_in_screen_session = true ]] && AddFileToDebug "$SCREEN_LOG_PATHFILE"
 		return 1
 	fi
 
 	if ! CheckPorts; then
 		DisplayErrCommitAllLogs 'CheckPorts() failed!'
 		SetError
+		[[ $run_daemon_in_screen_session = true ]] && AddFileToDebug "$SCREEN_LOG_PATHFILE"
 		return 1
 	fi
 
