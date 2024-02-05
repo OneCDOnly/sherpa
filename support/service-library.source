@@ -357,7 +357,10 @@ StartQPKGLibrary()
 		return 1
 	fi
 
-	if ! DisplayRunAndLog 'start daemon' "$daemon_launch_cmd" log:failure-only "$run_daemon_in_screen_session"; then
+	local msg='start daemon'
+	[[ $run_daemon_in_screen_session = true ]] && msg+=' (in screen session)'
+
+	if ! DisplayRunAndLog "$msg" "$daemon_launch_cmd" log:failure-only "$run_daemon_in_screen_session"; then
 		SetError
 		return 1
 	fi
@@ -415,11 +418,12 @@ StopQPKGLibrary()
 
 		local acc=0
 		local pid=0
-		SetRestartPending
+		local msg='stop daemon'
+		[[ $run_daemon_in_screen_session = true ]] && msg+=' (in screen session)'
 
 		pid=$(<$daemon_pid_pathfile)
 		kill "$pid"
-		DisplayWaitCommitToLog "stop daemon PID '${pid}' with SIGTERM:"
+		DisplayWaitCommitToLog "$msg PID '${pid}' with SIGTERM:"
 		DisplayWait "(no-more than $DAEMON_STOP_TIMEOUT_SECONDS second$(Pluralise "$DAEMON_STOP_TIMEOUT_SECONDS")):"
 
 		while true; do
@@ -430,7 +434,7 @@ StopQPKGLibrary()
 
 				if [[ $acc -ge $DAEMON_STOP_TIMEOUT_SECONDS ]]; then
 					DisplayCommitToLog 'failed!'
-					DisplayCommitToLog "stop daemon PID '${pid}' with SIGKILL:"
+					DisplayCommitToLog "$msg PID '${pid}' with SIGKILL:"
 					kill -9 "$pid" 2> /dev/null
 					[[ -f $daemon_pid_pathfile ]] && rm -f "$daemon_pid_pathfile"
 					break 2
@@ -442,7 +446,7 @@ StopQPKGLibrary()
 			Display OK
 			CommitToLog "stopped in $acc second$(Pluralise "$acc")"
 
-			CommitInfoToSysLog 'stop daemon: OK'
+			CommitInfoToSysLog "$msg: OK"
 			break
 		done
 
