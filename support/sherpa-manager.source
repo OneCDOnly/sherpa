@@ -2003,6 +2003,8 @@ AllocPackGroupsToAcs()
 	for action in "${USER_QPKG_ACTIONS[@]}"; do
 		# Process group-based user-options.
 
+		# Positive groups.
+
 		for group in "${USER_QPKG_SC_GROUPS[@]}"; do
 			found=false
 
@@ -2018,7 +2020,7 @@ AllocPackGroupsToAcs()
 								done
 								;;
 							*)
-								DebugAsWarn "specified group '$group' has no handler for specified action '$action'"
+								DebugAsWarn "group 'SC$group' has no positive allocation handler for action '$action'"
 						esac
 						;;
 					install|status)
@@ -2029,7 +2031,7 @@ AllocPackGroupsToAcs()
 								QPKGs-AC${action}-to:Add "$(QPKGs-SC${group}:Array)"
 								;;
 							*)
-								DebugAsWarn "specified group '$group' has no handler for specified action '$action'"
+								DebugAsWarn "group 'SC$group' has no positive allocation handler for action '$action'"
 						esac
 						;;
 					activate|deactivate|enable|disable|reactivate|reinstall|stop|uninstall)
@@ -2042,7 +2044,7 @@ AllocPackGroupsToAcs()
 								done
 								;;
 							*)
-								DebugAsWarn "specified group '$group' has no handler for specified action '$action'"
+								DebugAsWarn "group 'SC$group' has no positive allocation handler for action '$action'"
 						esac
 						;;
 					rebuild)
@@ -2055,7 +2057,7 @@ AllocPackGroupsToAcs()
 								done
 								;;
 							*)
-								DebugAsWarn "specified group '$group' has no handler for specified action '$action'"
+								DebugAsWarn "group 'SC$group' has no positive allocation handler for action '$action'"
 						esac
 						;;
 					upgrade)
@@ -2072,11 +2074,11 @@ AllocPackGroupsToAcs()
 								QPKGs-ACreactivate-to:Remove "$(QPKGs-ACupgrade-to:Array)"
 								;;
 							*)
-								DebugAsWarn "specified group '$group' has no handler for specified action '$action'"
+								DebugAsWarn "group 'SC$group' has no positive allocation handler for action '$action'"
 						esac
 						;;
 					*)
-						DebugAsWarn "specified action '$action' has no handler"
+						DebugAsWarn "action '$action' has no positive allocation handler"
 				esac
 
 				if [[ $found = false ]]; then
@@ -2084,25 +2086,32 @@ AllocPackGroupsToAcs()
 				fi
 
 				if QPKGs-AC${action}-to.IsAny; then
-					DebugAsDone "action: '$action', group: '$group': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
+					DebugAsDone "action: '$action', group: 'SC$group': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
 				else
-					ShowAsWarn "unable to find any packages to $(Lowercase "$action")"
+					ShowAsWarn "unable to find any packages to '$(Lowercase "$action")'"
 				fi
 			fi
 		done
+
+		# Negative groups.
 
 		for group in "${USER_QPKG_SCNT_GROUPS[@]}"; do
 			found=false
 
 			if QPKGs.AC${action}.SCNT${group}.IsSet; then
+				case $action in
+					*)
+						DebugAsWarn "action '$action' has no negative allocation handler"
+				esac
+
 				if [[ $found = false ]]; then
 					QPKGs-AC${action}-to:Add "$(QPKGs-SCNT${group}:Array)"
 				fi
 
 				if QPKGs-AC${action}-to.IsAny; then
-					DebugAsDone "action: '$action', group: 'NT${group}': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
+					DebugAsDone "action: '$action', group: 'SCNT${group}': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
 				else
-					ShowAsWarn "unable to find any packages to $(Lowercase "$action")"
+					ShowAsWarn "unable to find any packages to '$(Lowercase "$action")'"
 				fi
 			fi
 		done
@@ -2139,11 +2148,11 @@ AllocPackStatesToAcs()
 								QPKGs-AC${action}-to:Add "$(QPKGs-IS${state}:Array)"
 								;;
 							*)
-								DebugAsWarn "state '$state' has no handler for specified action '$action'"
+								DebugAsWarn "state 'IS$state' has no positive allocation handler for action '$action'"
 						esac
 						;;
 					*)
-						DebugAsWarn "action '$action' has no handler"
+						DebugAsWarn "action '$action' has no positive allocation handler"
 				esac
 
 				if [[ $found = false ]]; then
@@ -2153,7 +2162,7 @@ AllocPackStatesToAcs()
 				if QPKGs-AC${action}-to.IsAny; then
 					DebugAsDone "action: '$action', state: 'IS${state}': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
 				else
-					DebugAsWarn "unable to find any packages to $(Lowercase "$action")"
+					DebugAsWarn "unable to find any packages to '$(Lowercase "$action")'"
 				fi
 			fi
 		done
@@ -2172,11 +2181,11 @@ AllocPackStatesToAcs()
 								QPKGs-AC${action}-to:Add "$(QPKGs-ISNT${state}:Array)"
 								;;
 							*)
-								DebugAsWarn "state 'ISNT$state' has no handler for specified action '$action'"
+								DebugAsWarn "state 'ISNT$state' has no negative allocation handler for action '$action'"
 						esac
 						;;
 					*)
-						DebugAsWarn "action '$action' has no handler"
+						DebugAsWarn "action '$action' has no negative allocation handler"
 				esac
 
 				if [[ $found = false ]]; then
@@ -2186,7 +2195,7 @@ AllocPackStatesToAcs()
 				if QPKGs-AC${action}-to.IsAny; then
 					DebugAsDone "action: '$action', state: 'ISNT${state}': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
 				else
-					ShowAsWarn "unable to find any packages to $(Lowercase "$action")"
+					ShowAsWarn "unable to find any packages to '$(Lowercase "$action")'"
 				fi
 			fi
 		done
