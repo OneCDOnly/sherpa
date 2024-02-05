@@ -1202,9 +1202,9 @@ Actions:Proc()
 
 	if [[ $show_bland = false && $skip_package_actions = false ]]; then
 		if Self.Error.IsNt; then
-			ShowAsDone finished
+			ShowAsDone 'processing complete'
 		else
-			ShowAsFail finished
+			ShowAsFail 'processing complete'
 		fi
 	fi
 
@@ -4151,9 +4151,9 @@ DisplayAsIndentActionResultDurationReason()
 	printf "%${ACTION_RESULT_INDENT}s" ''
 
 	if [[ -z ${4:-} ]]; then
-		printf "%s %s%s" "$(Lowercase "${1:-}")" "${2:-}" "$([[ -n $duration ]] && printf ' in %s' "$duration")"
+		printf "%s %s%s" "$(Lowercase "${1:-}")" "${2:-}" "$([[ -n $duration ]] && printf ' in %s' "$duration")."
 	else
-		printf "%s %s%s: %s" "$(Lowercase "${1:-}")" "${2:-}" "$([[ -n $duration ]] && printf ' in %s' "$duration")" "$4"
+		printf "%s %s%s: %s" "$(Lowercase "${1:-}")" "${2:-}" "$([[ -n $duration ]] && printf ' in %s' "$duration")." "$4"
 	fi
 
 	printf '\n'; linespace_visible=false
@@ -10267,24 +10267,24 @@ ShowAsActionLogDetail()
 
 				case $3 in
 					download|reassign|sign|uninstall)
-						DisplayAsIndentActionResultDurationReason "$3" "$2" "$5" "$6"
+						DisplayAsIndentActionResultDurationReason "$3" "$2" "$5" "$6."
 						;;
 					*)
 						if QPKG.IsCanLog "$2"; then
 							DisplayAsIndentActionResultDurationReason "$3" "$2" "$5" "For more information: /etc/init.d/$($BASENAME_CMD "$(QPKG.GetServicePathFile "$2")") log"
 						else
-							DisplayAsIndentActionResultDurationReason "$3" "$2" "$5" "$6"
+							DisplayAsIndentActionResultDurationReason "$3" "$2" "$5" "$6."
 						fi
 				esac
 			else
-				DisplayAsIndentActionResultDurationReason "$3" "$2" "$5" 'no reason was provided by the service script'
+				DisplayAsIndentActionResultDurationReason "$3" "$2" "$5" 'no reason was provided by the service script.'
 			fi
 			;;
 		skipped|skipped-failed|skipped-abort)
 			if [[ -n "${6:-}" ]]; then
-				DisplayAsIndentActionResultDurationReason "$3" "$2" '' "$6"
+				DisplayAsIndentActionResultDurationReason "$3" "$2" '' "$6."
 			else
-				DisplayAsIndentActionResultDurationReason "$3" "$2" '' "no reason provided"
+				DisplayAsIndentActionResultDurationReason "$3" "$2" '' "no reason provided."
 			fi
 			;;
 		*)
