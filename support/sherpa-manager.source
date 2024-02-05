@@ -207,14 +207,6 @@ Self.Results:Show()
 	[[ $show_zero_qpkgs = true ]] && ShowZeroQpkgs
 	[[ $show_suggest_raise_issue = true ]] && Help.Issue:Show
 
-	if [[ $show_bland = false && $skip_package_actions = false ]]; then
-		if Self.Error.IsNt; then
-			ShowAsDone finished
-		else
-			ShowAsFail finished
-		fi
-	fi
-
 	DebugInfoMinSepr
 	DebugScript finished "$(/bin/date)"
 	DebugScript 'elapsed time' "$(FormatSecsToHoursMinutesSecs "$(($(/bin/date +%s)-SCRIPT_STARTSECONDS))")"
@@ -1206,6 +1198,14 @@ Actions:Proc()
 #		PIPs.Actions:List
 		IPKs.Actions:List
 		QPKGs.Actions:List
+	fi
+
+	if [[ $show_bland = false && $skip_package_actions = false ]]; then
+		if Self.Error.IsNt; then
+			ShowAsDone finished
+		else
+			ShowAsFail finished
+		fi
 	fi
 
 	Func:Exit
