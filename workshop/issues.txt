@@ -2,18 +2,11 @@ Observed issues:
 
 	* Needs improvement.
 		-------------------------------------------------------------------------------------------------------------------------
-		[~] # sherpa install installable
-		sherpa v240203-stable
-
-		warn: Unable to find any packages to install.
-		proc: package actions ...
-		[~] #
-		-------------------------------------------------------------------------------------------------------------------------
 		[/share/Public] # ./sherpa-manager.source debug
 		note: Debug mode activated, sherpa will run a little slower than usual.
 		sherpa v<?build_date?>-unstable
 
-		proc: package actions ... [/share/Public] #
+		done: Finished.
 		-------------------------------------------------------------------------------------------------------------------------
 		[/share/Public] # ./sherpa-manager.source help debug
 		note: Debug mode activated, sherpa will run a little slower than usual.
@@ -23,7 +16,7 @@ Observed issues:
 		-------------------------------------------------------------------------------------------------------------------------
 
 	* 'sherpa start inactive' fails to find any inactive packages.
-		- Must get status of each package first.
+		- Must get 'status' of each package first.
 
 	* Function durations can become incorrect when functions with the same name are called recursively.
 		- Need to make vars holding start-times unique. Maybe measure nest depth?

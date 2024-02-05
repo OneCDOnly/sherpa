@@ -207,11 +207,11 @@ Self.Results:Show()
 	[[ $show_zero_qpkgs = true ]] && ShowZeroQpkgs
 	[[ $show_suggest_raise_issue = true ]] && Help.Issue:Show
 
-	if [[ $opts_check = true ]]; then
+	if [[ $show_bland = false && $skip_package_actions = false ]]; then
 		if Self.Error.IsNt; then
-			ShowAsDone 'check completed'
+			ShowAsDone finished
 		else
-			ShowAsFail 'check completed'
+			ShowAsFail finished
 		fi
 	fi
 
@@ -2125,6 +2125,8 @@ AllocPackStatesToAcs()
 	for action in "${USER_QPKG_ACTIONS[@]}"; do
 		# Process state-based user-options.
 
+		# Positive states.
+
 		for state in "${USER_QPKG_IS_STATES[@]}"; do
 			found=false
 
@@ -2137,11 +2139,11 @@ AllocPackStatesToAcs()
 								QPKGs-AC${action}-to:Add "$(QPKGs-IS${state}:Array)"
 								;;
 							*)
-								DebugAsWarn "specified state '$state' has no handler for specified action '$action'"
+								DebugAsWarn "state '$state' has no handler for specified action '$action'"
 						esac
 						;;
 					*)
-						DebugAsWarn "specified action '$action' has no handler"
+						DebugAsWarn "action '$action' has no handler"
 				esac
 
 				if [[ $found = false ]]; then
@@ -2156,6 +2158,8 @@ AllocPackStatesToAcs()
 			fi
 		done
 
+		# Negative states.
+
 		for state in "${USER_QPKG_ISNT_STATES[@]}"; do
 			found=false
 
@@ -2163,16 +2167,16 @@ AllocPackStatesToAcs()
 				case $action in
 					activate|backup|clean|install|uninstall)
 						case $state in
-							enabled|installed)
+							active|enabled|installed)
 								found=true
 								QPKGs-AC${action}-to:Add "$(QPKGs-ISNT${state}:Array)"
 								;;
 							*)
-								DebugAsWarn "specified state '$state' has no handler for specified action '$action'"
+								DebugAsWarn "state 'ISNT$state' has no handler for specified action '$action'"
 						esac
 						;;
 					*)
-						DebugAsWarn "specified action '$action' has no handler"
+						DebugAsWarn "action '$action' has no handler"
 				esac
 
 				if [[ $found = false ]]; then
