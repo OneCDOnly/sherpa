@@ -43,13 +43,16 @@ InitLibrary()
 		fi
 	done
 
+	# KLUDGE: `/dev/fd` isn't always created by QTS.
+	ln -fns /proc/self/fd /dev/fd
+
 	UnsetError
 	UnsetRestartPending
 
 	readonly DAEMON_CHECK_TIMEOUT_SECONDS=60
 	readonly DAEMON_STOP_TIMEOUT_SECONDS=120
 	readonly PIDFILE_APPEAR_TIMEOUT_SECONDS=60
-	readonly PID_RECHECK_WAIT_SECONDS=10
+	readonly PID_RECHECK_WAIT_SECONDS=10		# Adaptive. This value is for a single-core CPU and 1m load average of 1.0
 	readonly PORT_CHECK_TIMEOUT_SECONDS=240
 
 	readonly BACKUP_PATH=$(/sbin/getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
@@ -104,6 +107,7 @@ InitLibrary()
 	run_daemon_in_screen_session=false
 	service_operation=unspecified
 	service_result=undefined
+	silence_pypi_errors=true					# if true, PyPI package processing errors won't be shown in system log.
 	source_arch=undefined
 	source_archive_pathfile=undefined
 	source_git_branch=undefined
@@ -373,6 +377,8 @@ StartQPKGLibrary()
 		return 1
 	fi
 
+	CommitInfoToSysLog 'start daemon: OK'
+
 	return 0
 
 	}
@@ -496,6 +502,10 @@ InstallAddons()
 	if [[ $QPKG_NAME = OWatcher3 ]]; then
 		# need to install `m2r` PyPI module first
 		DisplayRunAndLog "KLUDGE: install 'm2r' PyPI module first" "$venv_pip_pathfile install${no_pip_deps} --no-input m2r" log:failure-only
+
+		if [[ $? -gt 0 && $silence_pypi_errors = false ]]; then
+			CommitWarnToSysLog "'mr2' PyPI module installation failed."
+		fi
 	fi
 
 	[[ -e $essential_modules_pathfile && -d $(/usr/bin/dirname "$default_essential_modules_pathfile") ]] && cp -f "$essential_modules_pathfile" "$default_essential_modules_pathfile"
@@ -535,6 +545,11 @@ InstallAddons()
 	for target in $essential_modules_pathfile $requirements_modules_pathfile $recommended_modules_pathfile; do
 		if [[ -e $target ]]; then
 			DisplayRunAndLog "install PyPI modules from '$(/usr/bin/basename "$target")'" "$venv_pip_pathfile install${no_pip_deps} --no-input --upgrade pip -r $target" log:failure-only
+
+			if [[ $? -gt 0 && $silence_pypi_errors = false ]]; then
+				CommitWarnToSysLog 'PyPI module installation failed.'
+			fi
+
 			no_pips_installed=false
 		fi
 	done
@@ -544,6 +559,11 @@ InstallAddons()
 	if [[ $no_pips_installed = true ]]; then
 		if [[ -e $qpkg_repo_path/setup.py || -e $pyproject_pathfile ]]; then
 			DisplayRunAndLog "install PyPI modules from '$(/usr/bin/basename "$target")'" "$venv_pip_pathfile install${no_pip_deps} --no-input --upgrade pip $qpkg_repo_path" log:failure-only
+
+			if [[ $? -gt 0 && $silence_pypi_errors = false ]]; then
+				CommitWarnToSysLog 'PyPI module installation failed.'
+			fi
+
 			no_pips_installed=false
 		fi
 	fi
@@ -983,7 +1003,7 @@ WaitForDaemon()
 		)
 
 		if [[ $? -ne 0 ]]; then
-			DisplayCommitToLog 'failed!'
+# 			DisplayCommitToLog 'failed!'
 			DisplayErrCommitAllLogs "daemon not found! (exceeded timeout: $MAX_SECONDS second$(Pluralise "$MAX_SECONDS"))"
 			return 1
 		fi
@@ -1036,7 +1056,7 @@ WaitForFileToAppear()
 		)
 
 		if [[ $? -ne 0 ]]; then
-			DisplayCommitToLog 'failed!'
+# 			DisplayCommitToLog 'failed!'
 			DisplayErrCommitAllLogs "$1 not found! (exceeded timeout: $MAX_SECONDS second$(Pluralise "$MAX_SECONDS"))"
 			return 1
 		fi
@@ -1095,32 +1115,31 @@ DisplayRunAndLog()
 	# input:
 	#   $1 = processing message
 	#   $2 = commandstring to execute
-	#   $3 = 'log:failure-only' (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed. default is to always record stdout & stderr.
+	#   $3 = 'log:failure-only' (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed. Default is to always record stdout & stderr.
 	#   $4 = true/false (optional) - if true, run command in a screen session
 
 	local -r LOG_PATHFILE=$(/bin/mktemp /var/log/"${FUNCNAME[0]}"_XXXXXX)
-	local -i result_code=0
+	local -i z=0
 
 	DisplayWaitCommitToLog "$1:"
 
 	RunAndLog "${2:?empty}" "$LOG_PATHFILE" "${3:-}" '' "${4:-false}"
-	result_code=$?
+	z=$?
 
-	if [[ $result_code -eq 0 ]]; then
-		[[ ${3:-} != log:failure-only ]] && CommitInfoToSysLog "${1:?empty}: OK"
+	if [[ $z -eq 0 ]]; then
 		DisplayCommitToLog OK
 	else
-		DisplayErrCommitAllLogs 'failed!'
+		DisplayCommitToLog failed
 	fi
 
-	if [[ $result_code -eq 0 ]]; then
+	if [[ $z -eq 0 ]]; then
 		[[ ${3:-} != log:failure-only ]] && AddFileToDebug "$LOG_PATHFILE"
 	else
-		[[ $result_code -ne ${4:-} ]] && AddFileToDebug "$LOG_PATHFILE"
+		[[ $z -ne ${4:-} ]] && AddFileToDebug "$LOG_PATHFILE"
 	fi
 
 	[[ -e $LOG_PATHFILE ]] && rm -f "$LOG_PATHFILE"
-	return $result_code
+	return $z
 
 	}
 
@@ -1132,7 +1151,7 @@ RunAndLog()
 	# input:
 	#   $1 = commandstring to execute
 	#   $2 = log pathfile to record stdout and stderr for commandstring
-	#   $3 = 'log:failure-only' (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed. default is to always record stdout & stderr.
+	#   $3 = 'log:failure-only' (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed. Default is to always record stdout & stderr.
 	#   $4 = e.g. '10' (optional) - an additional acceptable result code. Any other result from command (other than zero) will be considered a failure
 	#   $5 = true/false (optional) - if true, run command in a screen session
 
@@ -1142,7 +1161,7 @@ RunAndLog()
 	#   $? : $result_code of commandstring
 
 	local -r LOG_PATHFILE=$(/bin/mktemp /var/log/"${FUNCNAME[0]}"_XXXXXX)
-	local -i result_code=0
+	local -i z=0
 
 	FormatAsCommand "${1:?empty}" > "${2:?empty}"
 
@@ -1152,30 +1171,30 @@ RunAndLog()
 		if [[ ${5:-false} = false ]]; then
 			Display "exec: '$1'"
 			eval "$1 > >(/usr/bin/tee $LOG_PATHFILE) 2>&1"		# NOTE: 'tee' buffers stdout here
-			result_code=${PIPESTATUS[0]}						# must use $PIPESTATUS after `tee` to get returncode of previous command: https://stackoverflow.com/questions/1221833/pipe-output-and-capture-exit-status-in-bash
+			z=${PIPESTATUS[0]}						# must use $PIPESTATUS after `tee` to get returncode of previous command: https://stackoverflow.com/questions/1221833/pipe-output-and-capture-exit-status-in-bash
 		else
 			Display "exec (in screen session): '$1'"
 		fi
 	else
 		if [[ ${5:-false} = false ]]; then
 			(eval "$1" > "$LOG_PATHFILE" 2>&1)					# run in a subshell to suppress 'Terminated' message later
-			result_code=$?
+			z=$?
 		fi
 	fi
 
 	if [[ ${5:-false} = true ]]; then
 		/usr/sbin/screen -c "$SCREEN_CONF_PATHFILE" -dmLS "$QPKG_NAME" bash -c "$1"
-		result_code=$?
+		z=$?
 	fi
 
 	if [[ -e $LOG_PATHFILE ]]; then
-		FormatAsResultAndStdout "$result_code" "$(<"$LOG_PATHFILE")" >> "$2"
+		FormatAsResultAndStdout "$z" "$(<"$LOG_PATHFILE")" >> "$2"
 	else
-		FormatAsResultAndStdout "$result_code" '<null>' >> "$2"
+		FormatAsResultAndStdout "$z" '<null>' >> "$2"
 	fi
 
 	if [[ $debug = true ]]; then
-		if [[ $result_code -eq 0 ]]; then
+		if [[ $z -eq 0 ]]; then
 			Display 'exec: completed OK'
 		else
 			Display 'exec: completed, but with errors'
@@ -1183,7 +1202,7 @@ RunAndLog()
 	fi
 
 	[[ -e $LOG_PATHFILE ]] && rm -f "$LOG_PATHFILE"
-	return $result_code
+	return $z
 
 	}
 
@@ -1215,7 +1234,30 @@ AddFileToDebug()
 DebugExtLogMinorSeparator()
 	{
 
-	DebugAsLog "$(eval printf '%0.s-' "{1..$DEBUG_LOG_DATAWIDTH}")"		# 'seq' is unavailable in QTS, so must resort to 'eval' trickery instead
+	DebugAsLog "$(DebugMinorSeparator)"
+
+	}
+
+DebugBulletSeparatorWithText()
+	{
+
+	# input:
+	#   $1 = text to center in separator line
+
+	local a=''
+	[[ -n ${1:-} ]] && a=" ${1:-} "
+
+	local b=$(((DEBUG_LOG_DATAWIDTH-${#a})/2))
+	local c=$((DEBUG_LOG_DATAWIDTH-${#a}-b))
+
+	eval printf '%0.s•' "{1..$b}"; echo -n "$a"; eval printf '%0.s•' "{1..$c}"; echo 	# `seq` is unavailable in QTS, so must resort to `eval` trickery instead
+
+	}
+
+DebugMinorSeparator()
+	{
+
+	eval printf '%0.s-' "{1..$DEBUG_LOG_DATAWIDTH}"		# `seq` is unavailable in QTS, so must resort to `eval` trickery instead
 
 	}
 
@@ -2272,14 +2314,6 @@ ShowAsError()
 
 	} >&2
 
-DisplayErrCommitAllLogs()
-	{
-
-	DisplayCommitToLog "${1:-}"
-	CommitErrToSysLog "${1:-}"
-
-	}
-
 DisplayCommitToLog()
 	{
 
@@ -2293,6 +2327,22 @@ DisplayWaitCommitToLog()
 
 	DisplayWait "${1:-}"
 	CommitToLogWait "${1:-}"
+
+	}
+
+DisplayWarnCommitAllLogs()
+	{
+
+	DisplayCommitToLog "${1:-}"
+	CommitWarnToSysLog "${1:-}"
+
+	}
+
+DisplayErrCommitAllLogs()
+	{
+
+	DisplayCommitToLog "${1:-}"
+	CommitErrToSysLog "${1:-}"
 
 	}
 
@@ -2328,13 +2378,14 @@ FormatAsResultAndStdout()
 	{
 
 	if [[ ${1:-0} -eq 0 ]]; then
-		echo "= result_code: $(FormatAsExitcode "$1") ***** stdout/stderr begins below *****"
+		echo "= result_code: $(FormatAsExitcode "$1")"
 	else
-		echo "! result_code: $(FormatAsExitcode "$1") ***** stdout/stderr begins below *****"
+		echo "! result_code: $(FormatAsExitcode "$1")"
 	fi
 
+	DebugBulletSeparatorWithText 'stdout & stderr begins below'
 	echo "${2:-}"
-	echo '= ***** stdout/stderr is complete *****'
+	DebugBulletSeparatorWithText 'stdout & stderr is complete'
 
 	}
 
@@ -2438,7 +2489,7 @@ CommitInfoToSysLog()
 CommitWarnToSysLog()
 	{
 
-	CommitSysLog "${1:-}" 2
+	CommitSysLog "${1:-} Please check the service log for more information." 2
 
 	}
 
