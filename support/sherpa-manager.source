@@ -590,7 +590,7 @@ Lists:Load()
 	# ordered
 	PIP_ACTIONS=(download uninstall upgrade reinstall install)
 	IPK_ACTIONS=(download uninstall upgrade reinstall install)
-	QPKG_ACTIONS=(status rebuild reassign download backup deactivate disable uninstall upgrade reinstall install sign restore clean enable activate reactivate)
+	QPKG_ACTIONS=(status list rebuild reassign download backup deactivate disable uninstall upgrade reinstall install enableau disableau sign restore clean enable activate reactivate)
 
 	# These actions, states and scopes may be specified by the user.
 	# sorted
@@ -598,7 +598,7 @@ Lists:Load()
 	USER_QPKG_SCNT_GROUPS=(canclean installable upgradable)
 	USER_QPKG_IS_STATES=(active backedup enabled installed missing)
 	USER_QPKG_ISNT_STATES=(active backedup enabled installed)
-	USER_QPKG_ACTIONS=(activate backup clean enable deactivate disable install list reactivate reassign rebuild reinstall restore status uninstall upgrade)
+	USER_QPKG_ACTIONS=(activate backup clean deactivate disable disableau enable enableau install list reactivate reassign rebuild reinstall restore status uninstall upgrade)
 
 	# KLUDGE: for some reason, setting `readonly` while populating arrays causes their scope to become local, so need to set as `readonly` afterward to ensure global scope. GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
 	readonly PACKAGE_TIERS
@@ -793,51 +793,53 @@ Self.Tasks:Check()
 	local something_to_do=false
 	local build_states=false
 
-	if [[ $opts_check = true || $opts_show_dependencies = true || $opts_show_packages = true || $opts_show_packages_failed = true || $opts_show_packages_ok = true || $opts_show_packages_skipped = true || $opts_show_reassign = true || $opts_show_repos = true || $opts_show_status = true ]]; then
-		something_to_do=true
-		build_states=true
-	elif [[ $opts_debug = true || $opts_paste_log_last = true || $opts_paste_log_tail = true || $opts_show_abbreviations = true || $opts_show_actions = true || $opts_show_actions_all = true || $opts_show_backups = true || $opts_show_groups = true || $opts_show_log_last = true || $opts_show_log_tail = true || $opts_show_options = true || $opts_show_problems = true || $opts_show_results = true || $opts_show_tips = true || $opts_show_versions = true || $opts_verbose = true ]]; then
-		something_to_do=true
-	else
-		for action in "${USER_QPKG_ACTIONS[@]}"; do
-			if QPKGs-AC${action}-to.IsAny; then
+	for action in "${USER_QPKG_ACTIONS[@]}"; do
+		if QPKGs-AC${action}-to.IsAny; then
+			something_to_do=true
+			build_states=true
+			break
+		fi
+
+		for group in "${USER_QPKG_SC_GROUPS[@]}"; do
+			if QPKGs.AC${action}.SC${group}.IsSet; then
 				something_to_do=true
 				build_states=true
-				break
+				break 2
 			fi
-
-			for group in "${USER_QPKG_SC_GROUPS[@]}"; do
-				if QPKGs.AC${action}.SC${group}.IsSet; then
-					something_to_do=true
-					build_states=true
-					break 2
-				fi
-			done
-
-			for group in "${USER_QPKG_SCNT_GROUPS[@]}"; do
-				if QPKGs.AC${action}.SCNT${group}.IsSet; then
-					something_to_do=true
-					build_states=true
-					break 2
-				fi
-			done
-
-			for state in "${USER_QPKG_IS_STATES[@]}"; do
-				if QPKGs.AC${action}.IS${state}.IsSet; then
-					something_to_do=true
-					build_states=true
-					break 2
-				fi
-			done
-
-			for state in "${USER_QPKG_ISNT_STATES[@]}"; do
-				if QPKGs.AC${action}.ISNT${state}.IsSet; then
-					something_to_do=true
-					build_states=true
-					break 2
-				fi
-			done
 		done
+
+		for group in "${USER_QPKG_SCNT_GROUPS[@]}"; do
+			if QPKGs.AC${action}.SCNT${group}.IsSet; then
+				something_to_do=true
+				build_states=true
+				break 2
+			fi
+		done
+
+		for state in "${USER_QPKG_IS_STATES[@]}"; do
+			if QPKGs.AC${action}.IS${state}.IsSet; then
+				something_to_do=true
+				build_states=true
+				break 2
+			fi
+		done
+
+		for state in "${USER_QPKG_ISNT_STATES[@]}"; do
+			if QPKGs.AC${action}.ISNT${state}.IsSet; then
+				something_to_do=true
+				build_states=true
+				break 2
+			fi
+		done
+	done
+
+	if [[ $something_to_do = false ]]; then
+		if [[ $opts_check = true || $opts_show_dependencies = true || $opts_show_packages = true || $opts_show_packages_failed = true || $opts_show_packages_ok = true || $opts_show_packages_skipped = true || $opts_show_reassign = true || $opts_show_repos = true || $opts_show_status = true ]]; then
+			something_to_do=true
+			build_states=true
+		elif [[ $opts_debug = true || $opts_paste_log_last = true || $opts_paste_log_tail = true || $opts_show_abbreviations = true || $opts_show_actions = true || $opts_show_actions_all = true || $opts_show_backups = true || $opts_show_groups = true || $opts_show_log_last = true || $opts_show_log_tail = true || $opts_show_options = true || $opts_show_problems = true || $opts_show_results = true || $opts_show_tips = true || $opts_show_versions = true || $opts_verbose = true ]]; then
+			something_to_do=true
+		fi
 	fi
 
 	if [[ $something_to_do = false ]]; then
@@ -1167,15 +1169,19 @@ Actions:Proc()
 				Action:Proc upgrade $tier QPKG upgrading upgraded
 				Action:Proc reinstall $tier QPKG reinstalling reinstalled
 				Action:Proc install $tier QPKG installing installed
+				Action:Proc enableau $tier QPKG 'enabling auto-update' 'enabled auto-update'
+				Action:Proc disableau $tier QPKG 'disabling auto-update' 'disabled auto-update'
+
+				if OS.IsSupportSignedPackages; then
+					Action:Proc sign $tier QPKG '"signing"' '"signed"'
+				fi
+
 				Action:Proc restore $tier QPKG restoring restored
 				Action:Proc clean $tier QPKG cleaning cleaned
 				Action:Proc enable $tier QPKG enabling enabled
 				Action:Proc reactivate $tier QPKG reactivating reactivated
 				Action:Proc activate $tier QPKG activating activated
 
-				if OS.IsSupportSignedPackages; then
-					Action:Proc sign $tier QPKG '"signing"' '"signed"'
-				fi
 				;;
 			auxiliary)
 				for action in install reinstall upgrade activate; do
@@ -1489,7 +1495,7 @@ AdjustMaxForks()
 				max_forks=4
 				reason="'$1'"
 				;;
-			disable|enable|status)					# Really-low-resource actions.
+			disable|disableau|enable|enableau|status)	# Really-low-resource actions.
 				max_forks=8
 				reason="'$1'"
 		esac
@@ -1529,6 +1535,18 @@ ParseArgs()
 		# These cases use only a single word to specify a single action.
 			backup|clean|enable|disable|reassign|rebuild|reinstall|restore)
 				action=${arg}
+				arg_identified=true
+				group=''
+				group_identified=false
+				;;
+			disable-auto-update)
+				action=disableau
+				arg_identified=true
+				group=''
+				group_identified=false
+				;;
+			enable-auto-update)
+				action=enableau
 				arg_identified=true
 				group=''
 				group_identified=false
@@ -1754,7 +1772,7 @@ ParseArgs()
 		[[ $arg_identified = false ]] && ARGs-unknown:Add "$arg"
 
 		case $action in
-			activate|backup|clean|deactivate|disable|enable|install|reactivate|reassign|rebuild|reinstall|restore|upgrade)
+			activate|backup|clean|deactivate|disable|disableau|enable|enableau|install|reactivate|reassign|rebuild|reinstall|restore|upgrade)
 				case $group in
 					all|dependent|disabled|installable|independent|NTinstallable|upgradable)
 						QPKGs.AC${action}.SC${group}:Set
@@ -2038,7 +2056,7 @@ AllocPackGroupsToAcs()
 								DebugAsWarn "group 'SC$group' has no positive allocation handler for action '$action'"
 						esac
 						;;
-					activate|deactivate|enable|disable|reactivate|reinstall|stop|uninstall)
+					activate|deactivate|disable|diableau|enable|enableau|reactivate|reinstall|stop|uninstall)
 						case $group in
 							all|dependent|independent)
 								found=true
@@ -2092,7 +2110,7 @@ AllocPackGroupsToAcs()
 				if QPKGs-AC${action}-to.IsAny; then
 					DebugAsDone "action: '$action', group: 'SC$group': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
 				else
-					ShowAsWarn "unable to find any packages to '$(Lowercase "$action")'"
+					ShowAsWarn "unable to find any packages to '$(Lowercase "$action")': positive allocation handler"
 				fi
 			fi
 		done
@@ -2115,7 +2133,7 @@ AllocPackGroupsToAcs()
 				if QPKGs-AC${action}-to.IsAny; then
 					DebugAsDone "action: '$action', group: 'SCNT${group}': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
 				else
-					ShowAsWarn "unable to find any packages to '$(Lowercase "$action")'"
+					ShowAsWarn "unable to find any packages to '$(Lowercase "$action")': negative allocation handler"
 				fi
 			fi
 		done
@@ -2178,7 +2196,7 @@ AllocPackStatesToAcs()
 
 			if QPKGs.AC${action}.ISNT${state}.IsSet; then
 				case $action in
-					activate|backup|clean|install|uninstall)
+					activate|backup|clean|disableau|enableau|install|uninstall)
 						case $state in
 							active|enabled|installed)
 								found=true
@@ -4148,16 +4166,30 @@ DisplayAsIndentActionResultDurationReason()
 	#	$3 = duration in milliseconds (optional)
 	#	$4 = reason message (optional)
 
+	[[ -n ${1:-} && -n ${2:-} ]] || return
+
+	local action=''
 	local duration=''
+
+	case $1 in
+		enableau)
+			action='enable auto-update'
+			;;
+		disableau)
+			action='disable auto-update'
+			;;
+		*)
+			action=$1
+	esac
 
 	[[ -n ${3:-} ]] && duration=$(FormatMillisecsToMinutesSecs "$3")
 
 	printf "%${ACTION_RESULT_INDENT}s" ''
 
 	if [[ -z ${4:-} ]]; then
-		printf "%s %s%s" "$(Lowercase "${1:-}")" "${2:-}" "$([[ -n $duration ]] && printf ' in %s' "$duration")."
+		printf "%s %s%s" "$(Lowercase "$action")" "$2" "$([[ -n $duration ]] && printf ' in %s' "$duration")."
 	else
-		printf "%s %s%s: %s" "$(Lowercase "${1:-}")" "${2:-}" "$([[ -n $duration ]] && printf ' in %s' "$duration")" "$4"
+		printf "%s %s%s: %s" "$(Lowercase "$action")" "$2" "$([[ -n $duration ]] && printf ' in %s' "$duration")" "$4"
 	fi
 
 	printf '\n'; linespace_visible=false
@@ -4222,6 +4254,8 @@ Report.Actions:Show()
 		DisplayAsProjSynIndentExam '' "restart $(ShowPackages)"
 		Report.Action.Reassign:Show
 		DisplayAsProjSynIndentExam 'clear local repository files from these packages' "clean $(ShowPackages)"
+		DisplayAsProjSynIndentExam 'disable auto-updating the application on QPKG reactivation (where supported)' "disable-auto-update $(ShowPackages)"
+		DisplayAsProjSynIndentExam 'enable auto-updating the application on QPKG reactivation (where supported)' "enable-auto-update $(ShowPackages)"
 		DisplayAsProjSynIndentExam 'backup these application configurations to the backup location' "backup $(ShowPackages)"
 		DisplayAsProjSynIndentExam 'restore these application configurations from the backup location' "restore $(ShowPackages)"
 		DisplayAsProjSynIndentExam 'show application backup files' 'list backups'
@@ -7643,6 +7677,116 @@ _QPKG:disable_()
 	QPKG.AppCenterNotifier:Clear
 	SaveActionResultToLog QPKG "$PACKAGE_NAME" disable ok
 	MarkThisActionForkAsOk
+	FuncFork:Exit $z
+
+	}
+
+_QPKG:enableau_()
+	{
+
+	# * This function runs autonomously *
+	# Enables auto-updating of the QPKG named in $1.
+
+	# input:
+	#   $1 = QPKG name
+
+	# output:
+	#   $? = none, this function executes in the background.
+
+	[[ $opts_verbose != true ]] && exec &>/dev/null
+	FuncFork:Init
+
+	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
+	local a=''
+	local -i z=0
+
+	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" enableau skipped 'not installed'
+		MarkThisActionForkAsSkipped
+		z=2
+	elif ! QPKG.IsCanRestartToUpdate "$PACKAGE_NAME"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" enableau skipped 'does not support auto-updating'
+		MarkThisActionForkAsSkipped
+		z=2
+	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" enableau skipped "assigned to another repository, please 'reassign' it first"
+		MarkThisActionForkAsSkipped
+		z=2
+	fi
+
+	[[ $z -eq 0 ]] || FuncFork:Exit $z
+
+	DebugAsProc "enabling auto-update $(ShowAsPackageName "$PACKAGE_NAME")"
+	[[ $opts_debug = true ]] && a='DEBUG_QPKG=true '
+
+	RunAndLog "${a}$(QPKG.GetServicePathFile) enable-auto-update" "$LOGS_PATH/$PACKAGE_NAME.$ENABLEAU_LOG_FILE" log:failure-only
+	z=$?
+
+	if [[ $z -eq 0 ]]; then
+		QPKG.ServiceStatus:Log
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" enableau ok
+		MarkThisActionForkAsOk
+	else
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" enableau failed "$z"
+		MarkThisActionForkAsFailed
+		z=1   # Remap to 1.
+	fi
+
+	FuncFork:Exit $z
+
+	}
+
+_QPKG:disableau_()
+	{
+
+	# * This function runs autonomously *
+	# Disables auto-updating of the QPKG named in $1.
+
+	# input:
+	#   $1 = QPKG name
+
+	# output:
+	#   $? = none, this function executes in the background.
+
+	[[ $opts_verbose != true ]] && exec &>/dev/null
+	FuncFork:Init
+
+	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
+	local a=''
+	local -i z=0
+
+	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" disableau skipped 'not installed'
+		MarkThisActionForkAsSkipped
+		z=2
+	elif ! QPKG.IsCanRestartToUpdate "$PACKAGE_NAME"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" disableau skipped 'does not support auto-updating'
+		MarkThisActionForkAsSkipped
+		z=2
+	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" disableau skipped "assigned to another repository, please 'reassign' it first"
+		MarkThisActionForkAsSkipped
+		z=2
+	fi
+
+	[[ $z -eq 0 ]] || FuncFork:Exit $z
+
+	DebugAsProc "disabling auto-update $(ShowAsPackageName "$PACKAGE_NAME")"
+	[[ $opts_debug = true ]] && a='DEBUG_QPKG=true '
+
+	RunAndLog "${a}$(QPKG.GetServicePathFile) disable-auto-update" "$LOGS_PATH/$PACKAGE_NAME.$DISABLEAU_LOG_FILE" log:failure-only
+	z=$?
+
+	if [[ $z -eq 0 ]]; then
+		QPKG.ServiceStatus:Log
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" disableau ok
+		MarkThisActionForkAsOk
+	else
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" disableau failed "$z"
+		MarkThisActionForkAsFailed
+		z=1   # Remap to 1.
+	fi
+
 	FuncFork:Exit $z
 
 	}
