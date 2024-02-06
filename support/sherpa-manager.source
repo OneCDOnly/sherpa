@@ -10002,7 +10002,7 @@ ShowAsProc()
 	local a=''
 	local b=''
 
-	[[ -n ${1:-} ]] && a=$(Capitalise "$1") || return
+	[[ -n ${1:-} ]] && a=$1 || return
 	[[ -n ${2:-} ]] && b=${2:-}
 
 	OpStepClearWait "$(TextBrightYellow proc)" "${a} ${CHARS_ELLIPSIS} ${b}"
@@ -10027,7 +10027,7 @@ ShowAsNote()
 
 	local a=''
 
-	[[ -n ${1:-} ]] && a=$(Capitalise "$(AddPeriod "$1")") || return
+	[[ -n ${1:-} ]] && a=$(AddPeriod "$1") || return
 
 	OpStepClear "$(TextBrightYellow note)" "$a"
 	WriteToLog note "$a"
@@ -10041,7 +10041,7 @@ ShowAsDone()
 
 	local a=''
 
-	[[ -n ${1:-} ]] && a=$(Capitalise "$(AddPeriod "$1")") || return
+	[[ -n ${1:-} ]] && a=$(AddPeriod "$1") || return
 
 	OpStepClear "$(TextBrightGreen 'done')" "$a"
 	WriteToLog 'done' "$a"
@@ -10055,7 +10055,7 @@ ShowAsWarn()
 
 	local a=''
 
-	[[ -n ${1:-} ]] && a=$(Capitalise "$(AddPeriod "$1")") || return
+	[[ -n ${1:-} ]] && a=$(AddPeriod "$1") || return
 
 	OpStepClear "$(TextBrightOrange warn)" "$a"
 	WriteToLog warn "$a"
@@ -10069,7 +10069,7 @@ ShowAsAbort()
 
 	local a=''
 
-	[[ -n ${1:-} ]] && a=$(Capitalise "$(AddPeriod "$1")") || return
+	[[ -n ${1:-} ]] && a=$(AddPeriod "$1") || return
 
 	OpStepClear "$(TextBrightRed bort)" "$a"
 	WriteToLog bort "$a"
@@ -10084,7 +10084,7 @@ ShowAsFail()
 
 	local a=''
 
-	[[ -n ${1:-} ]] && a=$(Capitalise "$(AddPeriod "$1")") || return
+	[[ -n ${1:-} ]] && a=$(AddPeriod "$1") || return
 
 	OpStepClear "$(TextBrightRed fail)" "$a"
 	WriteToLog fail "$a"
@@ -10098,7 +10098,7 @@ ShowAsError()
 
 	local a=''
 
-	[[ -n ${1:-} ]] && a=$(Capitalise "$(AddPeriod "$1")") || return
+	[[ -n ${1:-} ]] && a=$(AddPeriod "$1") || return
 
 	OpStepClear "$(TextBrightRed derp)" "$a"
 	WriteToLog derp "$a"
