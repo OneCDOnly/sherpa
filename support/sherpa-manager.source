@@ -881,7 +881,7 @@ Self:Validate()
 			installed_ver=$(GetPython3Ver "$PYTHON3_CMD")
 
 			if [[ ${installed_ver//./} -lt $MIN_PYTHON_VER ]]; then
-				ShowAsInfo "the $(TextBrightOrange Python) environment will be auto-upgraded"
+				ShowAsNote "the $(TextBrightOrange Python) environment will be auto-upgraded"
 				IPKs-ACuninstall-to:Add 'python*'
 			fi
 		fi
@@ -890,7 +890,7 @@ Self:Validate()
 			installed_ver=$(GetPerlVer "$PERL_CMD")
 
 			if [[ ${installed_ver//./} -lt $MIN_PERL_VER ]]; then
-				ShowAsInfo "the $(TextBrightOrange Perl) environment will be auto-upgraded"
+				ShowAsNote "the $(TextBrightOrange Perl) environment will be auto-upgraded"
 				IPKs-ACuninstall-to:Add 'perl*'
 			fi
 		fi
@@ -908,7 +908,7 @@ Self:Validate()
 
 				if [[ ${installed_version//.} -gt 238 ]]; then
 					ipks_downgrade=true
-					ShowAsInfo "IPKs will be downgraded to suit $KERNEL_PAGE_SIZE kernel page size"
+					ShowAsNote "IPKs will be downgraded to suit $KERNEL_PAGE_SIZE kernel page size"
 					IPKs-ACdowngrade-to:Add "$target_packages"
 				else
 					IPKs-ACdowngrade-sk:Add "$target_packages"
@@ -923,7 +923,7 @@ Self:Validate()
 	AllocPackStatesToAcs
 
 	if QPKGs-SCupgradable.Exist sherpa; then
-		ShowAsInfo "the $(TextBrightOrange sherpa) QPKG will be auto-upgraded"
+		ShowAsNote "the $(TextBrightOrange sherpa) QPKG will be auto-upgraded"
 		QPKGs-ACupgrade-to:Add sherpa
 	fi
 
@@ -935,7 +935,7 @@ Self:Validate()
 		local entware_install_date=$(QPKG.GetInstallDate Entware)
 
 		if [[ $entware_install_date = undefined || ${entware_install_date//[!0-9]/} -le 20230604 ]]; then
-			ShowAsInfo "the $(TextBrightOrange Entware) QPKG will be auto-reinstalled (Entware packages were updated early June 2023)"
+			ShowAsNote "the $(TextBrightOrange Entware) QPKG will be auto-reinstalled (Entware packages were updated early June 2023)"
 			QPKGs-ACreinstall-to:Add Entware
 		fi
 	fi
@@ -5032,7 +5032,7 @@ QPKGs.Missing:Show()
 		sufmsg='them'
 	fi
 
-	ShowAsInfo "$a QPKG${premsg} missing or broken. Please reinstall $sufmsg"
+	ShowAsNote "$a QPKG${premsg} missing or broken. Please reinstall $sufmsg"
 	return 1
 
 	}
@@ -5073,7 +5073,7 @@ QPKGs.NewVers:Show()
 		fi
 	done
 
-	ShowAsInfo "new QPKG version$(Pluralise "${#packages[@]}") available for $a"
+	ShowAsNote "new QPKG version$(Pluralise "${#packages[@]}") available for $a"
 	return 1
 
 	}
@@ -5332,7 +5332,7 @@ QPKGs.States:Build()
 	elif OS.IsLoadAverageHigh; then
 		ShowAsWarn "the NAS currently has an unusually-high system-load, so this will take a while"
 	elif OS.IsLoadAverageElevated; then
-		ShowAsInfo "the NAS currently has an elevated system-load, this will take a little longer than usual"
+		ShowAsNote "the NAS currently has an elevated system-load, this will take a little longer than usual"
 	fi
 
 	ShowAsProc 'QPKG states'
@@ -6756,7 +6756,7 @@ EnableDebugToArchiveAndFile()
 	opts_debug=true
 	DebugVar opts_debug
 
-	ShowAsInfo "debug mode activated, $(ShowTitleName) will run a little slower than usual"
+	ShowAsNote "debug mode activated, $(ShowTitleName) will run a little slower than usual"
 
 	self_archive_debug_afterward=true
 	DebugVar self_archive_debug_afterward
@@ -10002,15 +10002,10 @@ ShowAsProc()
 	local a=''
 	local b=''
 
-	if [[ -n ${1:-} ]]; then
-		a="${1:-} "
-	else
-		return
-	fi
-
+	[[ -n ${1:-} ]] && a=$(Capitalise "$1") || return
 	[[ -n ${2:-} ]] && b=${2:-}
 
-	OpStepClearWait "$(TextBrightYellow proc)" "${a}${CHARS_ELLIPSIS} ${b}"
+	OpStepClearWait "$(TextBrightYellow proc)" "${a} ${CHARS_ELLIPSIS} ${b}"
 	WriteToLog proc "${a}${b}"
 	[[ ${opts_verbose:=false} = true ]] && Display
 
@@ -10025,15 +10020,14 @@ ShowAsDebug()
 
 	}
 
-ShowAsInfo()
+ShowAsNote()
 	{
 
 	# Note to user.
 
-	[[ -n ${1:-} ]] || return
+	local a=''
 
-	local a=$(Capitalise "$1")
-	a=$(AddPeriod "$a")
+	[[ -n ${1:-} ]] && a=$(Capitalise "$(AddPeriod "$1")") || return
 
 	OpStepClear "$(TextBrightYellow note)" "$a"
 	WriteToLog note "$a"
@@ -10045,10 +10039,9 @@ ShowAsDone()
 
 	# Process completed OK.
 
-	[[ -n ${1:-} ]] || return
+	local a=''
 
-	local a=$(Capitalise "$1")
-	a=$(AddPeriod "$a")
+	[[ -n ${1:-} ]] && a=$(Capitalise "$(AddPeriod "$1")") || return
 
 	OpStepClear "$(TextBrightGreen 'done')" "$a"
 	WriteToLog 'done' "$a"
@@ -10060,10 +10053,9 @@ ShowAsWarn()
 
 	# Warning only.
 
-	[[ -n ${1:-} ]] || return
+	local a=''
 
-	local a=$(Capitalise "$1")
-	a=$(AddPeriod "$a")
+	[[ -n ${1:-} ]] && a=$(Capitalise "$(AddPeriod "$1")") || return
 
 	OpStepClear "$(TextBrightOrange warn)" "$a"
 	WriteToLog warn "$a"
@@ -10075,10 +10067,9 @@ ShowAsAbort()
 
 	# Fatal abort.
 
-	[[ -n ${1:-} ]] || return
+	local a=''
 
-	local a=$(Capitalise "$1")
-	a=$(AddPeriod "$a")
+	[[ -n ${1:-} ]] && a=$(Capitalise "$(AddPeriod "$1")") || return
 
 	OpStepClear "$(TextBrightRed bort)" "$a"
 	WriteToLog bort "$a"
@@ -10091,10 +10082,9 @@ ShowAsFail()
 
 	# Non-fatal error.
 
-	[[ -n ${1:-} ]] || return
+	local a=''
 
-	local a=$(Capitalise "$1")
-	a=$(AddPeriod "$a")
+	[[ -n ${1:-} ]] && a=$(Capitalise "$(AddPeriod "$1")") || return
 
 	OpStepClear "$(TextBrightRed fail)" "$a"
 	WriteToLog fail "$a"
@@ -10106,10 +10096,9 @@ ShowAsError()
 
 	# Fatal error.
 
-	[[ -n ${1:-} ]] || return
+	local a=''
 
-	local a=$(Capitalise "$1")
-	a=$(AddPeriod "$a")
+	[[ -n ${1:-} ]] && a=$(Capitalise "$(AddPeriod "$1")") || return
 
 	OpStepClear "$(TextBrightRed derp)" "$a"
 	WriteToLog derp "$a"

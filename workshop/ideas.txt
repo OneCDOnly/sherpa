@@ -1,4 +1,4 @@
-* Include run command in screen log.
+* Include service run command in screen log.
 
 * Include skipped-ok count in progress display?
 
