@@ -1104,22 +1104,26 @@ Self:Validate()
 #  11. upgrade independents
 #  12. reinstall independents
 #  13. install independents
-#  14. "sign" independents
-#  15. restore independents
-#  16. clean independents
-#  17. enable independents
-#  18. restart/reactivate independents
-#  19. start/activate independents
+#  14. enable-auto-update independents
+#  15. disable-auto-update independents
+#  16. "sign" independents
+#  17. restore independents
+#  18. clean independents
+#  19. enable independents
+#  20. restart/reactivate independents
+#  21. start/activate independents
 #
-#  20. upgrade dependents
-#  21. reinstall dependents
-#  22. install dependents
-#  23. "sign" dependents
-#  24. restore dependents
-#  25. clean dependents			(supported by most dependent packages, but not all)
-#  26. enable dependents
-#  27. restart/reactivate dependents
-#  28. start/activate dependents
+#  22. upgrade dependents
+#  23. reinstall dependents
+#  24. install dependents
+#  25. enable-auto-update dependents
+#  26. disable-auto-update dependents
+#  27. "sign" dependents
+#  28. restore dependents
+#  29. clean dependents			(supported by most dependent packages, but not all)
+#  30. enable dependents
+#  31. restart/reactivate dependents
+#  32. start/activate dependents
 #
 
 Actions:Proc()
