@@ -38,45 +38,31 @@ Self:Init()
 	{
 
 	OS.IsOk || return
+	User.IsOk || return
 	Consts:Load
 	Vars:Load
-	User.IsOk || return
 	CMDs:Load
 	CMDs.IsOk || return
 	Keystrokes:Hide
 	Cursor:Hide
 	Env:Load
 	Self.LockFile:Claim || return
-
-	trap RunOnEXIT EXIT
-	trap RunOnSIGINT INT
-
-	sess_active_pathfile=$THIS_PACKAGE_PATH/session.$$.active.log
-	rm -f "$REPORT_OUTPUT_PATHFILE" "$RAMDISKS_FREESPACE_PATHFILE" "$DISPLAY_INHIBIT_PATHFILE"
-
-	# KLUDGE: `/dev/fd` isn't always created by QTS.
-	ln -fns /proc/self/fd /dev/fd
-
-	# KLUDGE: just in-case `python` has disappeared again ... ¯\_(ツ)_/¯
-	[[ -e $PYTHON3_CMD && ! -L $PYTHON_CMD ]] && ln -s "$PYTHON3_CMD" "$PYTHON_CMD"
-
-	EnableVerboseIfRequested
-	EnableDebugIfRequested
+	SetTraps
+	CheckAndEnableVerbose
+	CheckAndEnableDebug
 	Lists:Load
 	CreatePaths || return
 	ArchivePriorSessLogs
-	EnableResetIfRequested
+	CheckAndEnableReset
 	TerminalDimensions:Load
 	Debug.Log:Init
 	Objects:Load || return
 	QPKGs.States:Clear
 
-	QPKG.IsInstalled Entware && [[ $ENTWARE_VER = none ]] && DebugAsWarn "$(ShowAsPackageName Entware) appears to be installed but is inactive. Please consider starting the $(ShowAsPackageName Entware) QPKG."
-
 	if [[ -z $USER_ARGS_RAW ]]; then
 		opts_show_basic_help=true
 		skip_package_actions=true
-		task_check=false
+		check_tasks=false
 		DisableDebugToArchiveAndFile
 	else
 		Packages:Load || return
@@ -327,7 +313,7 @@ Vars:Load()
 	show_suggest_raise_issue=false
 	show_zero_qpkgs=true
 	skip_package_actions=false
-	task_check=true
+	check_tasks=true
 	title_shown=false
 
 	# User-selectable options.
@@ -525,7 +511,8 @@ Env:Load()
 	readonly NAS_RAM_KB=$(GetInstalledRAM)
 	readonly NAS_UPSTATE=$(GetUpState)
 
-	source_branch=stable		# default branch to follow
+	source_branches=(stable unstable)		# Branches available.
+	source_branch=stable					# Default branch.
 	local test_branch=$(/sbin/getcfg sherpa Git_Branch -d unknown -f /etc/config/qpkg.conf)
 
 	if [[ $test_branch = unknown ]]; then
@@ -561,6 +548,7 @@ Env:Load()
 			readonly SESS_TAIL_PATHFILE=$LOGS_PATH/session.tail.log
 		readonly REPORTS_PATH=$THIS_PACKAGE_PATH/reports
 				readonly REPORT_OUTPUT_PATHFILE=$REPORTS_PATH/report.ansi
+		sess_active_pathfile=$THIS_PACKAGE_PATH/session.$$.active.log
 		readonly STATES_PATH=$THIS_PACKAGE_PATH/states
 	readonly THIS_PACKAGE_VER=$(QPKG.Local.GetVer)
 	readonly THIS_SCRIPT_VER='<?build_date?>'-$source_branch
@@ -568,6 +556,14 @@ Env:Load()
 	# Entware
 	readonly EXTERNAL_PACKAGES_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
 	readonly EXTERNAL_PACKAGES_PATHFILE=$CACHE_PATH/Packages
+
+	# KLUDGE: `/dev/fd` isn't always created by QTS.
+	ln -fns /proc/self/fd /dev/fd
+
+	# KLUDGE: just in-case `python` has disappeared again ... ¯\_(ツ)_/¯
+	[[ -e $PYTHON3_CMD && ! -L $PYTHON_CMD ]] && ln -s "$PYTHON3_CMD" "$PYTHON_CMD"
+
+	rm -f "$REPORT_OUTPUT_PATHFILE" "$RAMDISKS_FREESPACE_PATHFILE" "$DISPLAY_INHIBIT_PATHFILE"
 
 	}
 
@@ -783,7 +779,7 @@ Self.Tasks:Check()
 
 	# Establish whether there's something to-do.
 
-	[[ $task_check = true ]] || return
+	[[ $check_tasks = true ]] || return
 
 	Func:Init
 	ShowAsProc checking
@@ -869,6 +865,8 @@ Self:Validate()
 	local action=''
 	local prospect=''
 	local target_packages=''
+
+	QPKG.IsInstalled Entware && [[ $ENTWARE_VER = none ]] && DebugAsWarn "$(ShowAsPackageName Entware) appears to be installed but is inactive. Please consider starting the $(ShowAsPackageName Entware) QPKG."
 
 	UpdateEntwarePackageList &			# Let's try launching this early.
 
@@ -1791,7 +1789,7 @@ ParseArgs()
 				;;
 			help)
 				skip_package_actions=true
-				task_check=false
+				check_tasks=false
 
 				case $group in
 					abs)
@@ -1960,7 +1958,7 @@ ArgSuggestions:Show()
 
 	if ARGs-unknown.IsAny; then
 		ShowAsError "unknown argument$(Pluralise "$(ARGs-unknown:Count)"): \"$(ARGs-unknown:List)\". Please check the argument list again"
-		task_check=false
+		check_tasks=false
 
 		for arg in $(ARGs-unknown:Array); do
 			case $arg in
@@ -2998,7 +2996,7 @@ KillActiveFork()
 
 	} &>/dev/null
 
-EnableResetIfRequested()
+CheckAndEnableReset()
 	{
 
 	local re=''
@@ -3017,7 +3015,7 @@ EnableResetIfRequested()
 
 	}
 
-EnableVerboseIfRequested()
+CheckAndEnableVerbose()
 	{
 
 	local re=''
@@ -3034,7 +3032,7 @@ EnableVerboseIfRequested()
 
 	}
 
-EnableDebugIfRequested()
+CheckAndEnableDebug()
 	{
 
 	local re=''
@@ -9566,7 +9564,7 @@ ShowTitle()
 	local a=false
 
 	# Only show ASCII title when no other arguments have been specified.
-	[[ $opts_show_basic_help = true && $skip_package_actions = true && $task_check = false ]] && a=true
+	[[ $opts_show_basic_help = true && $skip_package_actions = true && $check_tasks = false ]] && a=true
 
 	EraseThisLine
 
@@ -10870,6 +10868,14 @@ Packages:Load()
 	QPKGs-SCall:Add "${QPKG_NAME[*]}"
 	QPKGs.IndependentDependent:Build
 	Func:Exit
+
+	}
+
+SetTraps()
+	{
+
+	trap RunOnEXIT EXIT
+	trap RunOnSIGINT INT
 
 	}
 
