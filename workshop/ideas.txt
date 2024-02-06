@@ -1,4 +1,16 @@
-* Include service run command in screen log.
+* In addition to the usual QPKG actions, there should be:
+	- help: actions, tips, options, groups, about(?),
+	- report: status, results, dependencies, backups, packages, repositories, log, last,
+	- list: installed, not-installed, installable, upgradable, versions, missing, etc....
+	- check (really a QPKG action)
+	- reset
+
+* Add new QPKG action called "clean".
+
+* Add new QPKG actions called "enable-auto-update" and "disable-auto-update".
+
+* Add new action called "branch", like 'sherpa branch unstable'.
+	- switches sherpa to specified branch, then runs a 'reset'.
 
 * Include skipped-ok count in progress display?
 
