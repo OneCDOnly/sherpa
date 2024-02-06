@@ -8,8 +8,6 @@
 	- 'verbose'
 	- 'branch': stable, unstable (see below)
 
-* Add new QPKG actions called "enable-auto-update" and "disable-auto-update".
-
 * Add new action called "branch", like 'sherpa branch unstable'.
 	- switches sherpa to specified branch, then runs a 'reset'.
 
