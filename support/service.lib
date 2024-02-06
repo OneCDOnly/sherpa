@@ -360,9 +360,8 @@ local pid=0
 local msg='stop daemon'
 [[ $run_daemon_in_screen_session = true ]] && msg+=' (in screen session)'
 pid=$(<$daemon_pid_pathfile)
+DisplayWaitCommitToLog "$msg (PID:${pid}) with SIGTERM (no-more than $DAEMON_STOP_TIMEOUT_SECONDS second$(Pluralise "$DAEMON_STOP_TIMEOUT_SECONDS")):"
 kill "$pid"
-DisplayWaitCommitToLog "$msg PID '${pid}' with SIGTERM:"
-DisplayWait "(no-more than $DAEMON_STOP_TIMEOUT_SECONDS second$(Pluralise "$DAEMON_STOP_TIMEOUT_SECONDS")):"
 while true; do
 while [[ -d /proc/$pid ]]; do
 /bin/sleep 1
@@ -370,7 +369,7 @@ while [[ -d /proc/$pid ]]; do
 DisplayWait "$acc,"
 if [[ $acc -ge $DAEMON_STOP_TIMEOUT_SECONDS ]]; then
 DisplayCommitToLog 'failed!'
-DisplayCommitToLog "$msg PID '${pid}' with SIGKILL:"
+DisplayCommitToLog "$msg (PID:${pid}) with SIGKILL:"
 kill -9 "$pid" 2> /dev/null
 [[ -f $daemon_pid_pathfile ]] && rm -f "$daemon_pid_pathfile"
 break 2
@@ -744,7 +743,7 @@ for ((i=1; i<=MAX_SECONDS; i++)); do
 DisplayWait "$i,"
 if IsProcessActive "$target_proc" "$daemon_pid_pathfile"; then
 Display OK
-CommitToLog "active after $i second$(Pluralise "$i")"
+CommitToLog "appeared in $i second$(Pluralise "$i")"
 true
 exit
 fi
@@ -860,6 +859,7 @@ z=$?
 fi
 fi
 if [[ ${5:-false} = true ]]; then
+FormatAsCommand "$1" >> "$SCREEN_LOG_PATHFILE"
 /usr/sbin/screen -c "$SCREEN_CONF_PATHFILE" -dmLS "$QPKG_NAME" bash -c "$1"
 z=$?
 fi
@@ -1179,7 +1179,7 @@ IsNotDaemon()
 }
 IsDaemonActive()
 {
-DisplayWaitCommitToLog 'daemon active:'
+DisplayWaitCommitToLog 'daemon:'
 local target_proc=''
 if [[ $daemon_proc_is_name_only = true ]]; then
 target_proc=$(/usr/bin/basename "$(GetLaunchTarget)")
@@ -1187,11 +1187,10 @@ else
 target_proc=$(GetLaunchTarget)
 fi
 if IsProcessActive "$target_proc" "$daemon_pid_pathfile"; then
-DisplayCommitToLog true
-DisplayCommitToLog "daemon: PID '$(<"$daemon_pid_pathfile")'"
+DisplayCommitToLog "active (PID:$(<"$daemon_pid_pathfile"))"
 return 0
 fi
-DisplayCommitToLog false
+DisplayCommitToLog inactive
 rm -f "$daemon_pid_pathfile"
 return 1
 }
@@ -1263,8 +1262,7 @@ Display "port '0': not testing for response"
 return 1
 fi
 local acc=0
-DisplayWaitCommitToLog "test for port '$port' response:"
-DisplayWait "(no-more than $PORT_CHECK_TIMEOUT_SECONDS second$(Pluralise "$PORT_CHECK_TIMEOUT_SECONDS")):"
+DisplayWaitCommitToLog "test for port '$port' response (no-more than $PORT_CHECK_TIMEOUT_SECONDS second$(Pluralise "$PORT_CHECK_TIMEOUT_SECONDS")):"
 local target_proc=''
 if [[ $daemon_proc_is_name_only = true ]]; then
 target_proc=$(/usr/bin/basename "$daemon_pathfile")
@@ -1280,7 +1278,7 @@ fi
 case $? in
 0|22|52)
 Display OK
-CommitToLog "port responded after $acc second$(Pluralise "$acc")"
+CommitToLog "responded in $acc second$(Pluralise "$acc")"
 return 0
 ;;
 28)
