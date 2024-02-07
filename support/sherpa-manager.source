@@ -48,6 +48,7 @@ Init()
 	Env:Load
 	LockFile:Claim || return
 	Traps:Set
+# new pre-arg processor should go here
 	CheckAndEnableVerbose
 	CheckAndEnableDebug
 	Lists:Load
@@ -69,6 +70,7 @@ Init()
 		ParseArgs
 	fi
 
+	CheckAndFollowBranch || return
 	Title:Show
 
 	if ! QPKGs.Conflicts:Check; then
@@ -511,13 +513,12 @@ Env:Load()
 	OS.IsSupportSecureDownload || CURL_CMD+=' --insecure'
 	readonly CURL_CMD
 
-	readonly SOURCE_BRANCHES=(stable unstable)		# Branches available.
 	source_branch=stable							# Default branch.
 
 	local test_branch=$(/sbin/getcfg sherpa Git_Branch -d unknown -f /etc/config/qpkg.conf)
 
 	if [[ $test_branch = unknown ]]; then
-		/sbin/setcfg sherpa Git_Branch $source_branch -f /etc/config/qpkg.conf
+		/sbin/setcfg sherpa Git_Branch "$source_branch" -f /etc/config/qpkg.conf
 	else
 		source_branch=$test_branch
 	fi
@@ -1676,7 +1677,7 @@ ParseArgs()
 		if [[ -n $action ]]; then
 			case $arg in
 			# These cases use only a single word or char to specify a single group.
-				backedup|installable|installed|missing|ok|problems|results|skipped|tail|tips)
+				backedup|follow|installable|installed|missing|ok|problems|results|skipped|tail|tips)
 					group=${arg}
 					;;
 				failed)
@@ -1797,17 +1798,11 @@ ParseArgs()
 				opts_check=true
 				;;
 			follow)
+				source_branch=$arg
 				skip_package_actions=true
 				check_tasks=false
-
-				case $group in
-					stable|unstable)
-						source_branch=$group
-						opts_switch_follow_branch=true
-						;;
-					*)
-						: # ignore any others
-				esac
+				opts_switch_follow_branch=true
+				group=''
 				;;
 			help)
 				skip_package_actions=true
@@ -3024,16 +3019,21 @@ CheckAndEnableReset()
 	local re=''
 	re=\\breset\\b		# bash 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
 
-	if [[ $USER_ARGS_RAW =~ $re ]]; then
-		ResetCachePath
-		ResetReportsPath
-		ResetArchivedLogs
-		ArchiveActiveSessLog
-		ResetActiveSessLog
-		exit 0
-	fi
+	[[ $USER_ARGS_RAW =~ $re ]] && Reset
 
 	return 1
+
+	}
+
+Reset()
+	{
+
+	ResetCachePath
+	ResetReportsPath
+	ResetArchivedLogs
+	ArchiveActiveSessLog
+	ResetActiveSessLog
+	exit 0
 
 	}
 
@@ -3067,6 +3067,28 @@ CheckAndEnableDebug()
 	done
 
 	return 1
+
+	}
+
+CheckAndFollowBranch()
+	{
+
+	if [[ $opts_switch_follow_branch = true && -n $source_branch ]]; then
+		# Validate $source_branch before writing.
+
+		readonly SOURCE_BRANCHES=(stable unstable)		# Branches available.
+		local re=\\b$source_branch\\b					# bash 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
+
+		if [[ ${SOURCE_BRANCHES[*]} =~ $re ]]; then
+			/sbin/setcfg sherpa Git_Branch "$source_branch" -f /etc/config/qpkg.conf
+			ShowAsDone "now following the '$source_branch' branch"
+			Reset
+		else
+			ShowAsAbort "'$source_branch' is not a valid branch to follow"
+			skip_package_actions=true
+			return 1
+		fi
+	fi
 
 	}
 
