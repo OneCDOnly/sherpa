@@ -30,7 +30,7 @@ USER_QPKG_SC_GROUPS=(all canbackup canclean canrestarttoupdate dependent hasdepe
 USER_QPKG_SCNT_GROUPS=(canclean installable upgradable)
 USER_QPKG_IS_STATES=(active backedup enabled installed missing)
 USER_QPKG_ISNT_STATES=(active backedup enabled installed)
-USER_QPKG_ACTIONS=(activate backup clean deactivate disable disableau enable enableau install list reactivate reassign rebuild reinstall restore status uninstall upgrade)
+USER_QPKG_ACTIONS=(activate backup clean deactivate disable disableau enable enableau install list reactivate reassign rebuild reinstall restore sign status uninstall upgrade)
 
 AddFlagObj()
 	{

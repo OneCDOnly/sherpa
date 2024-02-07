@@ -18,9 +18,6 @@
 
 * Don't start deactivated QPKGs (unless requested) during 'install all'.
 
-* Add 'sign' as new user action?
-	- Not sure about this. If a 'sign' action is added, then probably should support signing of unsigned QPKGs as a group, which means must check their current signed status first (slow).
-
 * sherpa 'stable' branch should only update once per-day.
 	- 'unstable' should update once per 10 minutes.
 
