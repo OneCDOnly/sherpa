@@ -4,14 +4,15 @@
 	- These should be removed from the argument list before sending to the main parser.
 
 * In addition to the usual QPKG actions, there should be:
-	- 'help': actions, tips, options, groups, about(?),
-	- 'report': status, results, dependencies, backups, packages, repositories, log, last,
-	- 'list': installed, not-installed, installable, upgradable, versions, missing, etc....
-	- 'check' (ultimately, a QPKG & IPK action)
-	- 'reset'
 	- 'debug'
 	- 'verbose'
-	- 'follow': stable, unstable (see below)
+	- 'follow': stable, unstable
+	- 'reset'
+	- 'check'
+
+	- 'help': actions, tips, options, groups, about(?),
+	- 'list': installed, not-installed, installable, upgradable, versions, missing, etc....
+	- 'report': status, results, dependencies, backups, packages, repositories, log, last,
 
 * Include skipped-ok count in progress display?
 
