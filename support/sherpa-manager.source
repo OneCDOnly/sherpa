@@ -4423,7 +4423,7 @@ Help.Basic.Examples:Show()
 	DisplayAsProjSynIndentExam '' p
 	DisplayAsProjSynIndentExam "to list available $(ShowPackageGroup)s" 'help groups'
 	DisplayAsProjSynIndentExam "or, for more $(ShowOptions)" 'help options'
-	DisplayAsHelpTitle "more in the wiki: $(ShowAsURL "https://github.com/OneCDOnly/sherpa/wiki")"
+	DisplayAsHelpTitle "more in the wiki: $(ShowAsURL 'https://github.com/OneCDOnly/sherpa/wiki')"
 
 	return 0
 
@@ -4474,8 +4474,8 @@ Report.Groups:Show()
 Help.Issue:Show()
 	{
 
-	DisplayAsHelpTitle "please consider creating a new issue for this on GitHub:\n\thttps://github.com/OneCDOnly/sherpa/issues."
-	DisplayAsHelpTitle "alternatively, post on the QNAP NAS Community Forum:\n\thttps://forum.qnap.com/viewtopic.php?f=320&t=132373"
+	DisplayAsHelpTitle "please consider creating a new issue for this on GitHub: $(ShowAsURL 'https://github.com/OneCDOnly/sherpa/issues')"
+	DisplayAsHelpTitle "alternatively, post on the QNAP NAS Community Forum: $(ShowAsURL 'https://forum.qnap.com/viewtopic.php?f=320&t=132373')"
 	DisplayAsProjSynIndentExam "view only the most recent $(ShowTitleName) session log" last
 	DisplayAsProjSynIndentExam "view the entire $(ShowTitleName) session log" log
 	DisplayAsProjSynIndentExam "upload the most-recent $(FormatAsThous "$LOG_TAIL_LINES") lines in your $(ShowTitleName) log to the $(ShowAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste log'
