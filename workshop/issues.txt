@@ -1,17 +1,5 @@
 Observed issues:
 
-	* Don't show progress after SIGINT.
-		-------------------------------------------------------------------------------------------------------------------------
-		[/share/Public] # ./sherpa-manager.source s
-		sherpa v<?build_date?>-stable
-
-		note: new QPKG versions available for ClamAV, Glances & 21 others.
-		note: the sherpa QPKG will be auto-upgraded.
-		bort: caught SIGINT.
-		proc: statusing QPKGs ... 31% (11/38), 11 OK, 4 in-progress
-		[/share/Public] #
-		-------------------------------------------------------------------------------------------------------------------------
-
 	* 'sherpa start inactive' fails to find any inactive packages.
 		- Must get 'status' of each package first.
 
