@@ -1,22 +1,18 @@
-* Create new pre-arg parser?
-	- This one only processes 'reset', 'debug', 'verbose', 'follow', 'check' arguments and does-so before the main parser.
-	- Runs before packages are loaded.
-	- These should be removed from the argument list before sending to the main parser.
+* Test if able to sign QPKGs concurrently.
 
 * In addition to the usual QPKG actions, there should be:
-	- 'debug'
-	- 'verbose'
+	- 'debug' (dbug)
+	- 'verbose' (v)
 	- 'follow': stable, unstable
 	- 'reset'
-	- 'check'
+	- 'check' (c)
+	- 'paste': last (l), log
 
 	- 'help': actions, tips, options, groups, about(?),
 	- 'list': installed, not-installed, installable, upgradable, versions, missing, etc....
-	- 'report': status, results, dependencies, backups, packages, repositories, log, last,
+	- 'report': status (s), results, dependencies (d), backups, packages (p), repositories (r), log, last,
 
 * Service scripts should show current auto-update setting when displaying basic help.
-
-* When launching sherpa in basic help mode only, skip loading objects and packages?
 
 * Automate generation of Packages.md in wiki using details from packages.source ?
 	- Would need to store full application description, port numbers, application source.
@@ -55,7 +51,7 @@
 
 * Show results report in file viewport.
 
-* Results report text should account for single QPKG actions.
+* Results report wording should account for single QPKG actions.
 	- Don't pluralise "package actions" when there was only one.
 
 * QDK looks like it will now write installation scripts that extract to unique paths.
