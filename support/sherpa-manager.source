@@ -1290,7 +1290,7 @@ Action:Proc()
 				Keystrokes:Show		# Enable this before removing Entware & GNU `stty`.
 			fi
 
-			_LaunchSingleActionWithManyForks_ "_${PACKAGE_TYPE}:${TARGET_ACTION}_" "${target_packages[@]}" &
+			_LaunchOneActionWithManyForks_ "_${PACKAGE_TYPE}:${TARGET_ACTION}_" "${target_packages[@]}" &
 			fork_pid=$!
 
 			# Read message pipe and process QPKGs and actions as-per requests contained within.
@@ -1392,7 +1392,7 @@ Action:Proc()
 			done
 
 			[[ $ok_count -gt 0 ]] && opts_show_packages_ok=true
-			[[ $skip_count -gt 0 || $skip_error_count -gt 0 || $skip_abort_count -gt 0 ]] && opts_show_packages_skipped=true
+			[[ $skip_count -gt 0 || $skip_ok_count -gt 0 || $skip_error_count -gt 0 || $skip_abort_count -gt 0 ]] && opts_show_packages_skipped=true
 			[[ $fail_count -gt 0 ]] && opts_show_packages_failed=true
 
 			[[ ${#target_packages[@]} -gt 0 ]] && KillActiveFork		# Should only be needed if an action fork didn't exit properly.
@@ -2839,7 +2839,7 @@ CloseIpkArchive()
 
 	}
 
-_LaunchSingleActionWithManyForks_()
+_LaunchOneActionWithManyForks_()
 	{
 
 	# Execute actions concurrently, but only as many as $max_forks will allow given the circumstances.
@@ -4497,12 +4497,12 @@ Report.Results:Show()
 					display_last_action_datetime=false
 				fi
 
-				if [[ $result = "$1" ]] || [[ $1 = skipped && ($result = 'skipped-error' || $result = 'skipped-abort') ]]; then
+				if [[ $result = "$1" ]] || [[ $1 = skipped && ($result = 'skipped-ok' || $result = 'skipped-error' || $result = 'skipped-abort') ]]; then
 					case $result in
 						ok)
 							[[ $found = false ]] && DisplayAsHelpTitle "$plural completed $(TextBrightGreen OK):"
 							;;
-						skipped|skipped-error|skipped-abort)
+						skipped*)
 							[[ $found = false ]] && DisplayAsHelpTitle "$plural were $(TextBrightOrange skipped):"
 							;;
 						failed)
@@ -4961,16 +4961,16 @@ InitForkCounts()
 
 	proc_fork_count_path=$proc_counts_path/fork.count
 	proc_ok_count_path=$proc_counts_path/ok.count
-	proc_skip_ok_count_path=$proc_counts_path/skip.ok.count
 	proc_skip_count_path=$proc_counts_path/skip.count
+	proc_skip_ok_count_path=$proc_counts_path/skip.ok.count
 	proc_skip_error_count_path=$proc_counts_path/skip.error.count
 	proc_skip_abort_count_path=$proc_counts_path/skip.abort.count
 	proc_fail_count_path=$proc_counts_path/fail.count
 
 	mkdir -p "$proc_fork_count_path"
 	mkdir -p "$proc_ok_count_path"
-	mkdir -p "$proc_skip_ok_count_path"
 	mkdir -p "$proc_skip_count_path"
+	mkdir -p "$proc_skip_ok_count_path"
 	mkdir -p "$proc_skip_error_count_path"
 	mkdir -p "$proc_skip_abort_count_path"
 	mkdir -p "$proc_fail_count_path"
@@ -4987,8 +4987,8 @@ IncForkProgressIndex()
 
 	proc_fork_pathfile=$proc_fork_count_path/$a
 	proc_ok_pathfile=$proc_ok_count_path/$a
-	proc_skip_ok_pathfile=$proc_skip_ok_count_path/$a
 	proc_skip_pathfile=$proc_skip_count_path/$a
+	proc_skip_ok_pathfile=$proc_skip_ok_count_path/$a
 	proc_skip_error_pathfile=$proc_skip_error_count_path/$a
 	proc_skip_abort_pathfile=$proc_skip_abort_count_path/$a
 	proc_fail_pathfile=$proc_fail_count_path/$a
@@ -5000,8 +5000,8 @@ RefreshForkCounts()
 
 	fork_count=$(ls -A -1 "$proc_fork_count_path" 2>/dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
 	ok_count=$(ls -A -1 "$proc_ok_count_path" 2>/dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
-	skip_ok_count=$(ls -A -1 "$proc_skip_ok_count_path" 2>/dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
 	skip_count=$(ls -A -1 "$proc_skip_count_path" 2>/dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
+	skip_ok_count=$(ls -A -1 "$proc_skip_ok_count_path" 2>/dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
 	skip_error_count=$(ls -A -1 "$proc_skip_error_count_path" 2>/dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
 	skip_abort_count=$(ls -A -1 "$proc_skip_abort_count_path" 2>/dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
 	fail_count=$(ls -A -1 "$proc_fail_count_path" 2>/dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
@@ -5032,33 +5032,35 @@ UpdateForkProgress()
 	# All input vars are global.
 
 	local a=''
+	local b=''
 
 	RefreshForkCounts
 	[[ $opts_verbose = false && ! -e $DISPLAY_INHIBIT_PATHFILE ]] || return		# Don't display progress, it's difficult to read with so-many other writes to the screen.
 
-	a=$(PercFrac "$ok_count" "$((skip_count+skip_ok_count+skip_error_count+skip_abort_count))" "$fail_count" "$total_count")
+	a=$((skip_count+skip_ok_count+skip_error_count+skip_abort_count))
+	b=$(PercFrac "$ok_count" "$a" "$fail_count" "$total_count")
 
 	if [[ $ok_count -gt 0 ]]; then
-		[[ -n $a ]] && a+=', '
-		a+="$(TextBrightGreen "$ok_count") OK"
+		[[ -n $b ]] && b+=', '
+		b+="$(TextBrightGreen "$ok_count") OK"
 	fi
 
-	if [[ $skip_count -gt 0 || $skip_error_count -gt 0 || $skip_abort_count -gt 0 ]]; then		# Don't include skipped packages that were OK.
-		[[ -n $a ]] && a+=', '
-		a+="$(TextBrightOrange "$((skip_count+skip_error_count+skip_abort_count))") skipped"
+	if [[ $a -gt 0 ]]; then
+		[[ -n $b ]] && b+=', '
+		b+="$(TextBrightOrange "$a") skipped"
 	fi
 
 	if [[ $fail_count -gt 0 ]]; then
-		[[ -n $a ]] && a+=', '
-		a+="$(TextBrightRed "$fail_count") failed"
+		[[ -n $b ]] && b+=', '
+		b+="$(TextBrightRed "$fail_count") failed"
 	fi
 
 	if [[ $fork_count -gt 0 ]]; then
-		[[ -n $a ]] && a+=', '
-		a+="$(TextBrightYellow "$fork_count") in-progress"
+		[[ -n $b ]] && b+=', '
+		b+="$(TextBrightYellow "$fork_count") in-progress"
 	fi
 
-	[[ -n $a ]] && ShowAsProc "${fork_progress_prefix:-}" "$a"
+	[[ -n $b ]] && ShowAsProc "${fork_progress_prefix:-}" "$b"
 
 	return 0
 
@@ -8057,7 +8059,7 @@ _QPKG:sign_()
 		b=$($SQLITE_CMD "$CERT_DB_PATHFILE" "$a")
 
 		if [[ $b = 1 ]]; then
-			SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped 'already signed'
+			SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped-ok 'already signed'
 			MarkThisActionForkAsSkippedOk
 			z=2
 		fi
@@ -10459,7 +10461,7 @@ ShowAsActionLogDetail()
 				DisplayAsIndentActionResultDurationReason "$3" "$2" "$5" 'no reason was provided by the service script.'
 			fi
 			;;
-		skipped|skipped-failed|skipped-abort)
+		skipped*)
 			if [[ -n "${6:-}" ]]; then
 				DisplayAsIndentActionResultDurationReason "$3" "$2" '' "$6."
 			else
