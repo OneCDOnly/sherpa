@@ -5078,7 +5078,7 @@ UpdateForkProgress()
 		b+="$(TextBrightYellow "$fork_count") in-progress"
 	fi
 
-	[[ -n $b ]] && ShowAsProc "${fork_progress_prefix:-}" "$b"
+	[[ -n $b && ! -e $DISPLAY_INHIBIT_PATHFILE ]] && ShowAsProc "${fork_progress_prefix:-}" "$b"
 
 	return 0
 
