@@ -73,11 +73,7 @@ Init()
 	CheckAndFollowBranch || return
 	Title:Show
 
-	if ! QPKGs.Conflicts:Check; then
-		skip_package_actions=true
-		return 1
-	fi
-
+	QPKGs.Conflicts:Check || return
 	QPKGs.Warnings:Check
 	ArgSuggestions:Show
 	Debug.Log:Env
@@ -5170,6 +5166,7 @@ QPKGs.Conflicts:Check()
 		for a in "${BASE_QPKG_CONFLICTS_WITH[@]}"; do
 			if QPKG.IsEnabled "$a"; then
 				ShowAsError "the '$a' QPKG is enabled. $(ShowTitleName) is incompatible with this package. Please consider stopping this QPKG in your App Center"
+				skip_package_actions=true
 				return 1
 			fi
 		done
@@ -5189,6 +5186,7 @@ QPKGs.Warnings:Check()
 		for a in "${BASE_QPKG_WARNINGS[@]}"; do
 			if QPKG.IsEnabled "$a"; then
 				ShowAsWarn "the '$a' QPKG is enabled. This may cause problems with $(ShowTitleName) applications. Please consider stopping this QPKG in your App Center"
+				return 1
 			fi
 		done
 	fi
