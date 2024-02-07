@@ -1483,15 +1483,11 @@ AdjustMaxForks()
 				max_forks=1
 				reason="'$1'"
 				;;
-			sign)									# Precautionary: don't create multiple writes to the certificate database at the same time.
-				max_forks=1
-				reason="'$1'"
-				;;
 			backup|deactivate|download|uninstall)	# Low-resource actions, so allow multiple forks, even on ARMv5.
 				max_forks=4
 				reason="'$1'"
 				;;
-			disable|disableau|enable|enableau|status)	# Really-low-resource actions.
+			disable|disableau|enable|enableau|sign|status)	# Really-low-resource actions.
 				max_forks=8
 				reason="'$1'"
 		esac
@@ -8095,8 +8091,19 @@ _QPKG:sign_()
 #	a="INSERT INTO Certificate (Type, QpkgName, Cert, DigitalSignature) SELECT 'qpkg','$PACKAGE_NAME','$QPKG_CERTIFICATE','$QPKG_SIGNATURE' WHERE NOT EXISTS (SELECT * FROM Certificate WHERE QpkgName = '$PACKAGE_NAME');"
 
 	a="INSERT INTO Certificate (Type,QpkgName,Cert,DigitalSignature) VALUES ('qpkg','$PACKAGE_NAME','$QPKG_CERTIFICATE','$QPKG_SIGNATURE');"
-	$SQLITE_CMD "$CERT_DB_PATHFILE" "$a"
-	z=$?
+
+	for ((retries=0; retries<10; retries++)); do
+		$SQLITE_CMD "$CERT_DB_PATHFILE" "$a"
+		z=$?
+
+		case $z in
+			5) 		# SQLITE_BUSY
+				sleep 0.5
+				;;
+			*)
+				break
+		esac
+	done
 
 	if [[ $z -eq 0 ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' ok
