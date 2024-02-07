@@ -170,8 +170,6 @@ done
 
 # session list objects.
 
-AddListObj ARGs-unknown
-
 for group in "${USER_QPKG_SC_GROUPS[@]}"; do
 	AddListObj QPKGs-SC"$group"
 done
