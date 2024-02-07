@@ -13,9 +13,6 @@
 	- 'verbose'
 	- 'follow': stable, unstable (see below)
 
-* Add new action called "follow", like 'sherpa follow unstable'.
-	- switches sherpa to specified branch (, then runs a 'reset'?)
-
 * Include skipped-ok count in progress display?
 
 * Service scripts should show current auto-update setting when displaying basic help.
