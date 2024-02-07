@@ -1,7 +1,5 @@
 Observed issues:
 
-	* Suggest issue message display isn't line-wrapped.
-
 	* Don't add QPKGs to ISNTok if they're also ISNTenabled.
 
 	* Don't show progress after SIGINT.
