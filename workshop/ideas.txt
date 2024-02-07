@@ -1,8 +1,13 @@
+* Create new pre-arg parser?
+	- This one only processes 'reset', 'debug', 'verbose', 'follow', 'check' arguments and does-so before the main parser.
+	- Runs before packages are loaded.
+	- These should be removed from the argument list before sending to the main parser.
+
 * In addition to the usual QPKG actions, there should be:
 	- 'help': actions, tips, options, groups, about(?),
 	- 'report': status, results, dependencies, backups, packages, repositories, log, last,
 	- 'list': installed, not-installed, installable, upgradable, versions, missing, etc....
-	- 'check' (really a QPKG & IPK action)
+	- 'check' (ultimately, a QPKG & IPK action)
 	- 'reset'
 	- 'debug'
 	- 'verbose'
