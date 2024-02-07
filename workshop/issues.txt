@@ -1,7 +1,5 @@
 Observed issues:
 
-	* Don't add QPKGs to ISNTok if they're also ISNTenabled.
-
 	* Don't show progress after SIGINT.
 		-------------------------------------------------------------------------------------------------------------------------
 		[/share/Public] # ./sherpa-manager.source s
@@ -61,9 +59,6 @@ Reported issues:
 	* none.
 
 Hypothetical issues:
-
-	* If package signing fails, the cert database might already be open.
-		- Check for this and abort signing.
 
 	* If a forked action hangs, it might not be killed by its caller.
 		- Need to test this.
