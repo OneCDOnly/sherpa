@@ -592,7 +592,7 @@ Lists:Load()
 	USER_QPKG_SCNT_GROUPS=(canclean installable upgradable)
 	USER_QPKG_IS_STATES=(active backedup enabled installed missing)
 	USER_QPKG_ISNT_STATES=(active backedup enabled installed)
-	USER_QPKG_ACTIONS=(activate backup clean deactivate disable disableau enable enableau install list reactivate reassign rebuild reinstall restore status uninstall upgrade)
+	USER_QPKG_ACTIONS=(activate backup clean deactivate disable disableau enable enableau install list reactivate reassign rebuild reinstall restore sign status uninstall upgrade)
 
 	# KLUDGE: for some reason, setting `readonly` while populating arrays causes their scope to become local, so need to set as `readonly` afterward to ensure global scope. GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
 	readonly PACKAGE_TIERS
@@ -1625,7 +1625,7 @@ ParseActionArgs()
 
 		case $arg in
 		# These cases use only a single word to specify a single action.
-			backup|clean|enable|disable|reassign|rebuild|reinstall|restore)
+			backup|clean|enable|disable|reassign|rebuild|reinstall|restore|sign)
 				action=${arg}
 				arg_identified=true
 				group=''
@@ -1838,7 +1838,7 @@ ParseActionArgs()
 		[[ $arg_identified = false ]] && args_unknown+=("$arg")
 
 		case $action in
-			activate|backup|clean|deactivate|disable|disableau|enable|enableau|install|reactivate|reassign|rebuild|reinstall|restore|upgrade)
+			activate|backup|clean|deactivate|disable|disableau|enable|enableau|install|reactivate|reassign|rebuild|reinstall|restore|sign|upgrade)
 				case $group in
 					all|dependent|disabled|installable|independent|NTinstallable|upgradable)
 						QPKGs.AC${action}.SC${group}:Set
@@ -4284,36 +4284,41 @@ Report.Actions:Show()
 
 		Help.Basic:Show
 		DisplayAsHelpTitle "$(ShowAction) usage examples:"
-		DisplayAsProjSynIndentExam 'show package statuses' status
-		DisplayAsProjSynIndentExam '' s
-		DisplayAsProjSynIndentExam 'show current package repository assignments' repos
-		DisplayAsProjSynIndentExam '' r
-		DisplayAsProjSynIndentExam 'ensure all application dependencies are installed' check
-		DisplayAsProjSynIndentExam '' c
-		DisplayAsProjSynIndentExam 'show QPKG dependencies' dependencies
-		DisplayAsProjSynIndentExam '' d
-		DisplayAsProjSynIndentExam 'install these packages' "install $(ShowPackages)"
-		DisplayAsProjSynIndentExam 'uninstall these packages' "uninstall $(ShowPackages)"
-		DisplayAsProjSynIndentExam 'reinstall these packages' "reinstall $(ShowPackages)"
-		DisplayAsProjSynIndentExam "rebuild these packages ('install' packages, then 'restore' configuration backups)" "rebuild $(ShowPackages)"
-		DisplayAsProjSynIndentExam 'upgrade these packages (this will upgrade internal applications where-supported)' "upgrade $(ShowPackages)"
-		DisplayAsProjSynIndentExam 'enable these packages' "enable $(ShowPackages)"
-		DisplayAsProjSynIndentExam 'disable these packages (disabling will prevent them activating on reboot)' "disable $(ShowPackages)"
-		DisplayAsProjSynIndentExam 'enable, then activate these packages (this will upgrade internal applications where-supported)' "activate $(ShowPackages)"
+		DisplayAsProjSynIndentExam 'activate these packages, enabling them first (this will upgrade internal applications where-supported)' "activate $(ShowPackages)"
 		DisplayAsProjSynIndentExam '' "start $(ShowPackages)"
+		DisplayAsProjSynIndentExam 'backup these application configurations to the backup location' "backup $(ShowPackages)"
+		DisplayAsProjSynIndentExam 'check all application dependencies are installed' check
+		DisplayAsProjSynIndentExam '' c
+		DisplayAsProjSynIndentExam 'clean local repository files from these packages (your config is safe, application files will be downloaded again)' "clean $(ShowPackages)"
 		DisplayAsProjSynIndentExam 'deactivate these packages' "deactivate $(ShowPackages)"
 		DisplayAsProjSynIndentExam '' "stop $(ShowPackages)"
-		DisplayAsProjSynIndentExam 'reactivate these packages (this will upgrade internal applications where-supported)' "reactivate $(ShowPackages)"
-		DisplayAsProjSynIndentExam '' "restart $(ShowPackages)"
-		Report.Action.Reassign:Show
-		DisplayAsProjSynIndentExam 'clear local repository files from these packages' "clean $(ShowPackages)"
-		DisplayAsProjSynIndentExam 'disable auto-updating the application on QPKG reactivation (where supported)' "disable-auto-update $(ShowPackages)"
-		DisplayAsProjSynIndentExam 'enable auto-updating the application on QPKG reactivation (where supported)' "enable-auto-update $(ShowPackages)"
-		DisplayAsProjSynIndentExam 'backup these application configurations to the backup location' "backup $(ShowPackages)"
-		DisplayAsProjSynIndentExam 'restore these application configurations from the backup location' "restore $(ShowPackages)"
+		DisplayAsProjSynIndentExam 'generate QPKG dependencies report' dependencies
+		DisplayAsProjSynIndentExam '' d
+		DisplayAsProjSynIndentExam 'disable these packages (this will prevent them activating/starting on reboot)' "disable $(ShowPackages)"
+		DisplayAsProjSynIndentExam 'disable auto-updating the application on QPKG activation (where-supported)' "disable-auto-update $(ShowPackages)"
+		DisplayAsProjSynIndentExam 'enable these packages' "enable $(ShowPackages)"
+		DisplayAsProjSynIndentExam 'enable auto-updating the application on QPKG activation (where-supported)' "enable-auto-update $(ShowPackages)"
+		DisplayAsProjSynIndentExam 'install these packages' "install $(ShowPackages)"
+		DisplayAsProjSynIndentExam '' "add $(ShowPackages)"
 		DisplayAsProjSynIndentExam 'show application backup files' 'list backups'
 		DisplayAsProjSynIndentExam '' b
 		DisplayAsProjSynIndentExam "list $(ShowTitleName) object version numbers" 'list versions'
+		DisplayAsProjSynIndentExam "rebuild these packages ('install' packages, then 'restore' configuration backups)" "rebuild $(ShowPackages)"
+		DisplayAsProjSynIndentExam 'reinstall these packages' "reinstall $(ShowPackages)"
+		DisplayAsProjSynIndentExam 'reactivate these packages (this will upgrade internal applications where-supported)' "reactivate $(ShowPackages)"
+		DisplayAsProjSynIndentExam '' "restart $(ShowPackages)"
+		Report.Action.Reassign:Show
+		DisplayAsProjSynIndentExam 'generate QPKG repository assignments report' repos
+		DisplayAsProjSynIndentExam '' r
+		DisplayAsProjSynIndentExam 'restore these application configurations from the backup location' "restore $(ShowPackages)"
+		DisplayAsProjSynIndentExam 'digitally "sign" these QPKGs' "sign $(ShowPackages)"
+		DisplayAsProjSynIndentExam 'generate QPKG status report' status
+		DisplayAsProjSynIndentExam '' s
+		DisplayAsProjSynIndentExam 'uninstall these packages' "uninstall $(ShowPackages)"
+		DisplayAsProjSynIndentExam '' "remove $(ShowPackages)"
+		DisplayAsProjSynIndentExam '' "rm $(ShowPackages)"
+		DisplayAsProjSynIndentExam 'upgrade these packages (this will upgrade internal applications where-supported)' "upgrade $(ShowPackages)"
+
 		DisplayAsProjSynExam "$(ShowAction)s to affect all packages can be seen with" 'all-actions'
 		DisplayAsProjSynExam "multiple $(ShowAction)s are supported like this" "$(ShowAction) $(ShowPackages) $(ShowAction) $(ShowPackages)"
 		DisplayAsProjSynIndentExam '' 'install sabnzbd sickgear reactivate transmission uninstall lazy nzbget upgrade nzbtomedia'
