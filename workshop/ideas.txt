@@ -1,5 +1,3 @@
-* Test if able to sign QPKGs concurrently.
-
 * In addition to the usual QPKG actions, there should be:
 	- 'debug' (dbug)
 	- 'verbose' (v)
