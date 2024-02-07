@@ -31,7 +31,7 @@
 #   Display functions should never finish by putting an empty line on-screen for spacing.
 
 set -o nounset -o pipefail
-readonly USER_ARGS_RAW=$*
+readonly ARGS_USER_RAW=$*
 readonly SCRIPT_STARTSECONDS=$(/bin/date +%s)
 
 Init()
@@ -48,29 +48,23 @@ Init()
 	Env:Load
 	LockFile:Claim || return
 	Traps:Set
-# new pre-arg processor should go here
-	CheckAndEnableVerbose
-	CheckAndEnableDebug
+	ParseOptionArgs || return
 	Lists:Load
 	Paths:Create || return
 	ArchivePriorSessLogs
-	CheckAndEnableReset
 	TerminalDimensions:Load
 	Debug.Log:Init
-	Objects:Load || return
-	QPKGs.States:Clear
 
-	if [[ -z $USER_ARGS_RAW ]]; then
-		opts_show_basic_help=true
-		skip_package_actions=true
-		check_tasks=false
-		DisableDebugToArchiveAndFile
-	else
-		Packages:Load || return
-		ParseArgs
+	if [[ $load_objects = true ]]; then
+		Objects:Load || return
 	fi
 
-	CheckAndFollowBranch || return
+	if [[ $load_packages = true ]]; then
+		QPKGs.States:Clear
+		Packages:Load || return
+		ParseActionArgs
+	fi
+
 	Title:Show
 
 	QPKGs.Conflicts:Check || return
@@ -88,7 +82,7 @@ Results:Show()
 	Func:Init
 	display_last_action_datetime=false
 
-	if ARGs-unknown.IsNone; then
+	if [[ ${#args_unknown[@]} -eq 0 ]]; then
 		if [[ $opts_show_abbreviations = true ]]; then
 			Report.Abbreviations:Show
 		elif [[ $opts_show_actions = true ]]; then
@@ -153,28 +147,30 @@ Results:Show()
 			Log.Tail:View
 		fi
 
-		if QPKGs.AClist.ISbackedup.IsSet; then
-			QPKGs.IsBackedUp:Show
-		elif QPKGs.AClist.ISNTbackedup.IsSet; then
-			QPKGs.IsNtBackedUp:Show
-		elif QPKGs.AClist.ISinstalled.IsSet; then
-			QPKGs.IsInstalled:Show
-		elif QPKGs.AClist.ISNTinstalled.IsSet; then
-			QPKGs.IsNtInstalled:Show
-		elif QPKGs.AClist.ISactive.IsSet; then
-			QPKGs.IsActive:Show
-		elif QPKGs.AClist.ISNTactive.IsSet; then
-			QPKGs.IsNtActive:Show
-		elif QPKGs.AClist.SCinstallable.IsSet; then
-			QPKGs.ScInstallable:Show
-		elif QPKGs.AClist.SCNTinstallable.IsSet; then
-			QPKGs.ScNtInstallable:Show
-		elif QPKGs.AClist.SCupgradable.IsSet; then
-			QPKGs.ScUpgradable:Show
-		elif QPKGs.AClist.SCindependent.IsSet; then
-			QPKGs.ScIndependent:Show
-		elif QPKGs.AClist.SCdependent.IsSet; then
-			QPKGs.ScDependent:Show
+		if [[ $load_packages = true ]]; then
+			if QPKGs.AClist.ISbackedup.IsSet; then
+				QPKGs.IsBackedUp:Show
+			elif QPKGs.AClist.ISNTbackedup.IsSet; then
+				QPKGs.IsNtBackedUp:Show
+			elif QPKGs.AClist.ISinstalled.IsSet; then
+				QPKGs.IsInstalled:Show
+			elif QPKGs.AClist.ISNTinstalled.IsSet; then
+				QPKGs.IsNtInstalled:Show
+			elif QPKGs.AClist.ISactive.IsSet; then
+				QPKGs.IsActive:Show
+			elif QPKGs.AClist.ISNTactive.IsSet; then
+				QPKGs.IsNtActive:Show
+			elif QPKGs.AClist.SCinstallable.IsSet; then
+				QPKGs.ScInstallable:Show
+			elif QPKGs.AClist.SCNTinstallable.IsSet; then
+				QPKGs.ScNtInstallable:Show
+			elif QPKGs.AClist.SCupgradable.IsSet; then
+				QPKGs.ScUpgradable:Show
+			elif QPKGs.AClist.SCindependent.IsSet; then
+				QPKGs.ScIndependent:Show
+			elif QPKGs.AClist.SCdependent.IsSet; then
+				QPKGs.ScDependent:Show
+			fi
 		fi
 	fi
 
@@ -190,7 +186,6 @@ Results:Show()
 	[[ $opts_show_backuploc = true ]] && Help.BackupLocation:Show
 	[[ $show_zero_qpkgs = true ]] && ShowZeroQpkgs
 	[[ $show_suggest_raise_issue = true ]] && Help.Issue:Show
-
 	DebugInfoMinSepr
 	DebugScript finished "$(/bin/date)"
 	DebugScript 'elapsed time' "$(FormatSecsToHoursMinutesSecs "$(($(/bin/date +%s)-SCRIPT_STARTSECONDS))")"
@@ -307,6 +302,8 @@ Vars:Load()
 	ipks_install=false
 	ipks_upgrade=false
 	linespace_visible=false
+	load_objects=true
+	load_packages=true
 	package_ver_final_col_width=0
 	pips_install=false
 	proc_counts_path=''
@@ -509,7 +506,10 @@ Env:Load()
 	OS.IsSupportSecureDownload || CURL_CMD+=' --insecure'
 	readonly CURL_CMD
 
-	source_branch=stable							# Default branch.
+	args_user=()					# command-line argument array.
+	args_incomplete=()
+	args_unknown=()
+	source_branch=stable			# Default branch.
 
 	local test_branch=$(/sbin/getcfg sherpa Git_Branch -d unknown -f /etc/config/qpkg.conf)
 
@@ -838,7 +838,7 @@ Tasks:Check()
 
 	if [[ $something_to_do = false ]]; then
 		show_bland=false; Title:Show
-		ShowAsError "supplied arguments were incomplete, or didn't make sense. Please check the argument list again"
+		ShowAsError "supplied arguments didn't make sense. Please check the argument list again"
 		opts_show_basic_help=true
 		skip_package_actions=true
 		Func:Exit 1; return
@@ -1295,7 +1295,7 @@ Action:Proc()
 
 			# Read message pipe and process QPKGs and actions as-per requests contained within.
 			while [[ ${#target_packages[@]} -gt 0 ]]; do
-				ReadMsgFromActionPipe msg1_key msg1_value msg2_key msg2_value
+				ReadFromActionMsgPipe msg1_key msg1_value msg2_key msg2_value
 
 				case $msg1_key in
 					env)			# Change the state of the sherpa environment.
@@ -1504,16 +1504,114 @@ AdjustMaxForks()
 
 	}
 
-ParseArgs()
+ParseOptionArgs()
+	{
+
+	# Basic argument syntax:
+	#   scriptname [action] [groups] [options]
+
+	# output:
+	#   $args_user (global)
+	#   $args_incomplete (global)
+
+	local user_args_fixed=$(Lowercase "${ARGS_USER_RAW//,/ }")
+	local -a user_args_trimmed=(${user_args_fixed/--/})
+	local -a user_args_filtered=()
+	local arg=''
+	local awaiting_follow_branch=false
+	local awaiting_paste_source=false
+	local something_to_do=false
+
+	if [[ -n ${user_args_trimmed[*]:-} ]]; then
+		for arg in "${user_args_trimmed[@]}"; do
+			case $arg in
+				c|check)
+					opts_check=true
+					skip_package_actions=false
+					something_to_do=true
+					;;
+				debug|dbug)
+					EnableDebugToArchiveAndFile
+					;;
+				follow)
+					awaiting_follow_branch=true
+					load_objects=false
+					load_packages=false
+					skip_package_actions=true
+					check_tasks=false
+					something_to_do=true
+					# Assume next arg will be specified branch.
+					;;
+				paste)
+					awaiting_paste_source=true
+					load_objects=false
+					load_packages=false
+					skip_package_actions=true
+					check_tasks=false
+					something_to_do=true
+					# Assume next arg will be paste source.
+					;;
+				reset)
+					Reset
+					;;
+				v|verbose)
+					Verbose:Enable
+					EnableDebugToArchiveAndFile
+					;;
+				*)
+					if [[ $opts_switch_follow_branch = true ]]; then
+						source_branch=$arg
+						opts_switch_follow_branch=true
+						awaiting_follow_branch=false
+						SwitchSourceBranch || return
+					elif [[ $awaiting_paste_source = true ]]; then
+						case $arg in
+							all|log|tail)
+								opts_paste_log_tail=true
+								awaiting_paste_source=false
+								;;
+							l|last)
+								opts_paste_log_last=true
+								awaiting_paste_source=false
+						esac
+					else
+						user_args_filtered+=($arg)
+					fi
+
+					something_to_do=true
+			esac
+		done
+	fi
+
+	[[ $awaiting_follow_branch = true ]] && args_incomplete+=(follow)
+	[[ $awaiting_paste_source = true ]] && args_incomplete+=(paste)
+
+	args_user=(${user_args_filtered[@]:-})
+
+	if [[ $something_to_do = false ]]; then
+		load_objects=false
+		load_packages=false
+		skip_package_actions=true
+		check_tasks=false
+		opts_show_basic_help=true
+		opts_show_packages_ok=false
+		opts_show_packages_skipped=false
+		opts_show_packages_failed=false
+		DisableDebugToArchiveAndFile
+	fi
+
+	return 0
+
+	}
+
+ParseActionArgs()
 	{
 
 	# Basic argument syntax:
 	#   scriptname [action] [groups] [options]
 
 	Func:Init
-	DebugVar USER_ARGS_RAW
-	local user_args_fixed=$(Lowercase "${USER_ARGS_RAW//,/ }")
-	local -a user_args=(${user_args_fixed/--/})
+
 	local arg=''
 	local arg_identified=false
 	local action=''
@@ -1522,7 +1620,9 @@ ParseArgs()
 	local group_identified=false
 	local package=''
 
-	for arg in "${user_args[@]}"; do
+	for arg in "${args_user[@]:-}"; do
+		[[ -n $arg ]] || continue
+
 		arg_identified=false
 
 		# Identify action: everytime action changes, must clear group.
@@ -1547,28 +1647,12 @@ ParseArgs()
 				group=''
 				group_identified=false
 				;;
-			follow)
-				action=follow
-				arg_identified=true
-				group=''
-				group_identified=false
-				show_bland=false
-				skip_package_actions=true
-				;;
 			list)
 				action=list
 				arg_identified=true
 				group=''
 				group_identified=false
 				show_bland=true
-				;;
-			paste)
-				action=paste
-				arg_identified=true
-				group=''
-				group_identified=false
-				show_bland=false
-				skip_package_actions=true
 				;;
 		# All cases below can use multiple words or chars to specify a single action.
 			activate|start)
@@ -1581,14 +1665,6 @@ ParseArgs()
 				;;
 			add|install)
 				action=install
-				arg_identified=true
-				group=''
-				group_identified=false
-				show_bland=false
-				skip_package_actions=false
-				;;
-			c|check)
-				action=check
 				arg_identified=true
 				group=''
 				group_identified=false
@@ -1722,12 +1798,6 @@ ParseArgs()
 				inactive|not-active|stopped)
 					group=NTactive
 					;;
-				l|last)
-					group=last
-					;;
-				log)
-					group=log
-					;;
 				new|updatable|updateable|upgradable)
 					group=upgradable
 					;;
@@ -1756,10 +1826,6 @@ ParseArgs()
 		# Identify options.
 
 		case $arg in
-			v|debug|dbug|verbose)
-				group_identified=true
-				arg_identified=true
-				;;
 			force)
 				action_force=true
 				arg_identified=true
@@ -1773,7 +1839,7 @@ ParseArgs()
 			arg_identified=true
 		fi
 
-		[[ $arg_identified = false ]] && ARGs-unknown:Add "$arg"
+		[[ $arg_identified = false ]] && args_unknown+=("$arg")
 
 		case $action in
 			activate|backup|clean|deactivate|disable|disableau|enable|enableau|install|reactivate|reassign|rebuild|reinstall|restore|upgrade)
@@ -1789,16 +1855,6 @@ ParseArgs()
 					*)
 						QPKGs-AC${action}-to:Add "$package"
 				esac
-				;;
-			check)
-				opts_check=true
-				;;
-			follow)
-				source_branch=$arg
-				skip_package_actions=true
-				check_tasks=false
-				opts_switch_follow_branch=true
-				group=''
 				;;
 			help)
 				skip_package_actions=true
@@ -1879,19 +1935,6 @@ ParseArgs()
 						opts_show_versions=true
 				esac
 				;;
-			paste)
-				skip_package_actions=true
-
-				case $group in
-					all|log|tail)
-						opts_paste_log_tail=true
-						action=''
-						;;
-					last)
-						opts_paste_log_last=true
-						action=''
-				esac
-				;;
 			status)
 				opts_show_status=true
 
@@ -1944,7 +1987,7 @@ ParseArgs()
 
 	if [[ -n $action && $group_identified = false ]]; then
 		case $action in
-			help|paste)
+			help)
 				opts_show_basic_help=true
 		esac
 	fi
@@ -1953,10 +1996,9 @@ ParseArgs()
 		QPKGs.ACstatus.SCall:Set
 	fi
 
-	if ARGs-unknown.IsAny; then
+	if [[ -n ${args_incomplete[*]:-} || -n ${args_unknown[*]:-} ]]; then
 		opts_show_basic_help=true
 		skip_package_actions=true
-		show_bland=false
 	fi
 
 	Func:Exit
@@ -1969,11 +2011,30 @@ ArgSuggestions:Show()
 	Func:Init
 	local arg=''
 
-	if ARGs-unknown.IsAny; then
-		ShowAsError "unknown argument$(Pluralise "$(ARGs-unknown:Count)"): \"$(ARGs-unknown:List)\". Please check the argument list again"
+	if [[ ${#args_incomplete[@]} -gt 0 ]]; then
+		ShowAsError "incomplete argument$(Pluralise "${#args_incomplete[@]}"): \"${args_incomplete[*]}\". Please check the argument list again"
 		check_tasks=false
 
-		for arg in $(ARGs-unknown:Array); do
+		for arg in "${args_incomplete[@]}"; do
+			case $arg in
+				paste)
+					DisplayAsProjSynExam "please provide a valid source to paste online after 'paste' like" 'paste log'
+					DisplayAsProjSynIndentExam '' 'paste last'
+					opts_show_basic_help=false
+					;;
+				follow)
+					DisplayAsProjSynExam "please provide a valid source branch to track after 'follow' like" 'follow stable'
+					DisplayAsProjSynIndentExam '' 'follow unstable'
+					opts_show_basic_help=false
+			esac
+		done
+	fi
+
+	if [[ ${#args_unknown[@]} -gt 0 ]]; then
+		ShowAsError "unknown argument$(Pluralise "${#args_unknown[@]}"): \"${args_unknown[*]}\". Please check the argument list again"
+		check_tasks=false
+
+		for arg in "${args_unknown[@]}"; do
 			case $arg in
 				all)
 					DisplayAsProjSynExam "please provide a valid $(ShowAction) before 'all' like" 'activate all'
@@ -3009,18 +3070,6 @@ KillActiveFork()
 
 	} &>/dev/null
 
-CheckAndEnableReset()
-	{
-
-	local re=''
-	re=\\breset\\b		# bash 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
-
-	[[ $USER_ARGS_RAW =~ $re ]] && Reset
-
-	return 1
-
-	}
-
 Reset()
 	{
 
@@ -3033,58 +3082,26 @@ Reset()
 
 	}
 
-CheckAndEnableVerbose()
-	{
-
-	local re=''
-
-	for re in \\bverbose\\b \\bv\\b; do
-		if [[ $USER_ARGS_RAW =~ $re ]]; then
-			Verbose:Enable
-			EnableDebugToArchiveAndFile
-			return 0
-		fi
-	done
-
-	return 1
-
-	}
-
-CheckAndEnableDebug()
-	{
-
-	local re=''
-
-	for re in \\bdebug\\b \\bdbug\\b; do
-		if [[ $USER_ARGS_RAW =~ $re ]]; then
-			EnableDebugToArchiveAndFile
-			return 0
-		fi
-	done
-
-	return 1
-
-	}
-
-CheckAndFollowBranch()
+SwitchSourceBranch()
 	{
 
 	if [[ $opts_switch_follow_branch = true && -n $source_branch ]]; then
 		# Validate $source_branch before writing.
 
-		readonly SOURCE_BRANCHES=(stable unstable)		# Branches available.
-		local re=\\b$source_branch\\b					# bash 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
+		for branch in stable unstable; do
+			[[ $branch != "$source_branch" ]] && continue
 
-		if [[ ${SOURCE_BRANCHES[*]} =~ $re ]]; then
 			/sbin/setcfg sherpa Git_Branch "$source_branch" -f /etc/config/qpkg.conf
 			ShowAsDone "now following the '$source_branch' branch"
 			Reset
-		else
-			ShowAsAbort "'$source_branch' is not a valid branch to follow"
-			skip_package_actions=true
-			return 1
-		fi
+		done
+
+		ShowAsAbort "'$source_branch' is not a valid branch to follow"
+		skip_package_actions=true
+		return 1
 	fi
+
+	return
 
 	}
 
@@ -3094,7 +3111,7 @@ User.IsOk()
 	if ! User.IsSU; then
 		if OS.IsSupportSudo; then
 			ShowAsError 'this utility must be run with superuser privileges. Try again as:'
-			echo "${CHARS_SUDO_PROMPT}sherpa $USER_ARGS_RAW" >&2
+			echo "${CHARS_SUDO_PROMPT}sherpa $ARGS_USER_RAW" >&2
 		else
 			ShowAsError "this utility must be run as the 'admin' user. Please login via SSH as 'admin' and try again"
 		fi
@@ -5161,6 +5178,8 @@ QPKGs.NewVers:Show()
 QPKGs.Conflicts:Check()
 	{
 
+	[[ $skip_package_actions = true ]] || return 0
+
 	local a=''
 
 	if [[ -n ${BASE_QPKG_CONFLICTS_WITH:-} ]]; then
@@ -6150,7 +6169,7 @@ SendParentChangeEnv()
 	# input:
 	#   $1 = action request
 
-	WriteMsgToActionPipe env "$1" '' ''
+	WriteToActionMsgPipe env "$1" '' ''
 
 	}
 
@@ -6164,7 +6183,7 @@ SendPackageStateChange()
 	# input:
 	#   $1 = action request
 
-	WriteMsgToActionPipe change "$1" package "$PACKAGE_NAME"
+	WriteToActionMsgPipe change "$1" package "$PACKAGE_NAME"
 
 	}
 
@@ -6178,11 +6197,11 @@ SendActionStatus()
 	# input:
 	#   $1 = status update
 
-	WriteMsgToActionPipe status "$1" package "$PACKAGE_NAME"
+	WriteToActionMsgPipe status "$1" package "$PACKAGE_NAME"
 
 	}
 
-WriteMsgToActionPipe()
+WriteToActionMsgPipe()
 	{
 
 	# Send a message into message stream to update sherpa parent shell environment.
@@ -6193,7 +6212,7 @@ WriteMsgToActionPipe()
 
 	}
 
-ReadMsgFromActionPipe()
+ReadFromActionMsgPipe()
 	{
 
 	local _msg1_key
@@ -6492,7 +6511,7 @@ GetCPUCores()
 
 	[[ $n -eq 0 ]] && n=$($GREP_CMD -c '^Processor' /proc/cpuinfo)
 
-	echo "$n"
+	echo -n "$n"
 
 	}
 
@@ -6537,9 +6556,9 @@ GetQnapOS()
 	{
 
 	if $GREP_CMD -q zfs /proc/filesystems; then
-		echo 'QuTS hero'
+		printf 'QuTS hero'
 	else
-		echo QTS
+		printf QTS
 	fi
 
 	}
@@ -6551,31 +6570,31 @@ GetQpkgArch()
 
 	case $NAS_ARCH in
 		x86_64)
-			[[ ${NAS_FIRMWARE_VER//.} -ge 430 ]] && echo i64 || echo i86
+			[[ ${NAS_FIRMWARE_VER//.} -ge 430 ]] && printf i64 || printf i86
 			;;
 		i686|x86)
-			echo i86
+			printf i86
 			;;
 		armv5tel)
-			echo a19
+			printf a19
 			;;
 		armv7l)
 			case $NAS_PLATFORM in
 				ARM_MS)
-					echo a31
+					printf a31
 					;;
 				ARM_AL)
-					echo a41
+					printf a41
 					;;
 				*)
-					echo none
+					printf none
 			esac
 			;;
 		aarch64)
-			echo a64
+			printf a64
 			;;
 		*)
-			echo none
+			printf none
 	esac
 
 	}
@@ -6586,15 +6605,15 @@ GetEntwareType()
 	if QPKG.IsInstalled Entware; then
 		if [[ -e /opt/etc/passwd ]]; then
 			if [[ -L /opt/etc/passwd ]]; then
-				echo std
+				printf std
 			else
-				echo alt
+				printf alt
 			fi
 		else
-			echo none
+			printf none
 		fi
 	else
-		echo 'not-installed'
+		printf 'not-installed'
 	fi
 
 	} 2>/dev/null
@@ -6610,11 +6629,11 @@ GetUpState()
 	{
 
 	if OS.IsStarting; then
-		echo -n 'starting-up'
+		printf 'starting-up'
 	elif OS.IsStopping; then
-		echo -n 'shutting-down'
+		printf 'shutting-down'
 	else
-		echo -n stable
+		printf stable
 	fi
 
 	}
@@ -6781,6 +6800,8 @@ ShowZeroQpkgs()
 
 	local a=''
 	local b=''
+
+	[[ $load_packages = true ]] || return
 
 	for a in "${USER_QPKG_IS_STATES[@]}"; do
 		for b in "${USER_QPKG_ACTIONS[@]}"; do
@@ -8291,7 +8312,7 @@ QPKG.App.GetVer()
 	[[ $a = default ]] && a=${QPKG_APP_VERSION[$(QPKG.GetDefaultArchIndex "$1")]}
 	[[ $a = version ]] && a=${QPKG_VERSION[$(QPKG.GetDefaultArchIndex "$1")]}
 
-	echo "$a"
+	echo -n "$a"
 	return 0
 
 	}
@@ -8867,7 +8888,7 @@ QPKG.GetNote()
 	for i in "${!QPKG_NAME[@]}"; do
 		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined}" ]]; then
 			a=${QPKG_NOTE[$i]}
-			[[ $a != none ]] && echo "$a"
+			[[ $a != none ]] && echo -n "$a"
 			return 0
 		fi
 	done
@@ -9607,14 +9628,11 @@ Title:Show()
 
 	[[ $title_shown = false && $show_bland = false && $opts_verbose = false ]] || return
 
-	local a=false
-
-	# Only show ASCII title when no other arguments have been specified.
-	[[ $opts_show_basic_help = true && $skip_package_actions = true && $check_tasks = false ]] && a=true
-
 	EraseThisLine
 
-	if [[ $a = true ]]; then
+	# Only show ASCII title when no arguments have been specified.
+
+	if [[ -z ${ARGS_USER_RAW[*]:-} ]]; then
 		Display "$(ShowTitleArt)"
 	else
 		Display "$(ShowTitleName) $(ShowVersion)"
