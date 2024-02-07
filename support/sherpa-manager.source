@@ -1559,7 +1559,7 @@ ParseOptionArgs()
 					EnableDebugToArchiveAndFile
 					;;
 				*)
-					if [[ $opts_switch_follow_branch = true ]]; then
+					if [[ $awaiting_follow_branch = true ]]; then
 						source_branch=$arg
 						opts_switch_follow_branch=true
 						awaiting_follow_branch=false
