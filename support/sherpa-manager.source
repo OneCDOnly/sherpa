@@ -52,7 +52,6 @@ Init()
 	Lists:Load
 	Paths:Create || return
 	ArchivePriorSessLogs
-	TerminalDimensions:Load
 	Debug.Log:Init
 
 	if [[ $load_objects = true ]]; then
@@ -562,6 +561,15 @@ Env:Load()
 	[[ -e $PYTHON3_CMD && ! -L $PYTHON_CMD ]] && ln -s "$PYTHON3_CMD" "$PYTHON_CMD"
 
 	rm -f "$REPORT_OUTPUT_PATHFILE" "$RAMDISKS_FREESPACE_PATHFILE" "$DISPLAY_INHIBIT_PATHFILE"
+
+	if [[ -e $GNU_STTY_CMD && -t 0 ]]; then
+		local terminal_dimensions=$($GNU_STTY_CMD size)
+		readonly SESS_ROWS=${terminal_dimensions% *}
+		readonly SESS_COLS=${terminal_dimensions#* }
+	else
+		readonly SESS_ROWS=40
+		readonly SESS_COLS=156
+	fi
 
 	}
 
@@ -3123,22 +3131,6 @@ User.IsSU()
 	{
 
 	[[ $EUID -eq 0 ]]
-
-	}
-
-TerminalDimensions:Load()
-	{
-
-	if [[ -e $GNU_STTY_CMD && -t 0 ]]; then
-		local terminal_dimensions=$($GNU_STTY_CMD size)
-		readonly SESS_ROWS=${terminal_dimensions% *}
-		readonly SESS_COLS=${terminal_dimensions#* }
-	else
-		readonly SESS_ROWS=40
-		readonly SESS_COLS=156
-	fi
-
-	return 0
 
 	}
 
@@ -10835,7 +10827,7 @@ sleep()
 	if [[ -e $GNU_SLEEP_CMD && -L /opt/etc/passwd ]]; then  # Try to ensure Entware is active before using this utility.
 		$GNU_SLEEP_CMD "$n"
 	elif [[ $DECIMAL_SLEEP_SECONDS_SUPPORTED = false ]]; then
-		$SLEEP_CMD "$((${n%.*}+1))"						# Ensure decimal seconds are rounded-up to next integer.
+		$SLEEP_CMD "$((${n%.*}+1))"							# Ensure decimal seconds are rounded-up to next integer.
 	else
 		$SLEEP_CMD "$n"
 	fi
