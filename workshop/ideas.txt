@@ -1,3 +1,5 @@
+* BASH completion.
+
 * In addition to the usual QPKG actions, there should be:
 	- 'debug' (dbug)
 	- 'verbose' (v)
@@ -83,8 +85,6 @@
 	- Nope, 'column' can't wrap text containing ANSI codes. Won't show a wrapped column in colour. :(
 
 * Autowidth display columns.
-
-* BASH completion?
 
 * Include new integrated help screens for all actions?
 	- Like: `sherpa paste help`, `sherpa install help`, `sherpa reassign help`
