@@ -86,8 +86,6 @@ Results:Show()
 			Report.Abbreviations:Show
 		elif [[ $opts_show_actions = true ]]; then
 			Report.Actions:Show
-		elif [[ $opts_show_reassign = true ]]; then
-			Report.Action.Reassign:Show
 		elif [[ $opts_show_actions_all = true ]]; then
 			Report.ActionsAll:Show
 		elif [[ $opts_show_options = true ]]; then
@@ -334,7 +332,6 @@ Vars:Load()
 	opts_show_packages_ok=false
 	opts_show_packages_skipped=false
 	opts_show_problems=false
-	opts_show_reassign=false
 	opts_show_repos=false
 	opts_show_results=false
 	opts_show_status=false
@@ -836,7 +833,7 @@ Tasks:Check()
 	done
 
 	if [[ $something_to_do = false ]]; then
-		if [[ $opts_check = true || $opts_show_dependencies = true || $opts_show_packages = true || $opts_show_packages_failed = true || $opts_show_packages_ok = true || $opts_show_packages_skipped = true || $opts_show_reassign = true || $opts_show_repos = true || $opts_show_status = true ]]; then
+		if [[ $opts_check = true || $opts_show_dependencies = true || $opts_show_packages = true || $opts_show_packages_failed = true || $opts_show_packages_ok = true || $opts_show_packages_skipped = true || $opts_show_repos = true || $opts_show_status = true ]]; then
 			something_to_do=true
 			build_states=true
 		elif [[ $opts_debug = true || $opts_paste_log_last = true || $opts_paste_log_tail = true || $opts_show_abbreviations = true || $opts_show_actions = true || $opts_show_actions_all = true || $opts_show_backups = true || $opts_show_groups = true || $opts_show_log_last = true || $opts_show_log_tail = true || $opts_show_options = true || $opts_show_problems = true || $opts_show_results = true || $opts_show_tips = true || $opts_show_versions = true || $opts_verbose = true ]]; then
@@ -1900,9 +1897,6 @@ ParseActionArgs()
 						;;
 					problems)
 						opts_show_problems=true
-						;;
-					reassign)
-						opts_show_reassign=true
 						;;
 					repos)
 						opts_show_repos=true
@@ -4288,31 +4282,32 @@ Report.Actions:Show()
 		DisplayAsProjSynIndentExam 'generate QPKG dependencies report' dependencies
 		DisplayAsProjSynIndentExam '' d
 		DisplayAsProjSynIndentExam 'disable these packages (this will prevent them activating/starting on reboot)' "disable $(ShowPackages)"
-		DisplayAsProjSynIndentExam 'disable auto-updating the application on QPKG activation (where-supported)' "disable-auto-update $(ShowPackages)"
+		DisplayAsProjSynIndentExam 'disable auto-updating the application on package activation (where-supported)' "disable-auto-update $(ShowPackages)"
 		DisplayAsProjSynIndentExam 'enable these packages' "enable $(ShowPackages)"
-		DisplayAsProjSynIndentExam 'enable auto-updating the application on QPKG activation (where-supported)' "enable-auto-update $(ShowPackages)"
+		DisplayAsProjSynIndentExam 'enable auto-updating the application on package activation (where-supported)' "enable-auto-update $(ShowPackages)"
 		DisplayAsProjSynIndentExam 'install these packages' "install $(ShowPackages)"
 		DisplayAsProjSynIndentExam '' "add $(ShowPackages)"
-		DisplayAsProjSynIndentExam 'show application backup files' 'list backups'
-		DisplayAsProjSynIndentExam '' b
-		DisplayAsProjSynIndentExam "list $(ShowTitleName) object version numbers" 'list versions'
-		DisplayAsProjSynIndentExam "rebuild these packages ('install' packages, then 'restore' configuration backups)" "rebuild $(ShowPackages)"
-		DisplayAsProjSynIndentExam 'reinstall these packages' "reinstall $(ShowPackages)"
+# 		DisplayAsProjSynIndentExam 'show application backup files' 'list backups'
+# 		DisplayAsProjSynIndentExam '' b
+# 		DisplayAsProjSynIndentExam "list $(ShowTitleName) object version numbers" 'list versions'
 		DisplayAsProjSynIndentExam 'reactivate these packages (this will upgrade internal applications where-supported)' "reactivate $(ShowPackages)"
 		DisplayAsProjSynIndentExam '' "restart $(ShowPackages)"
-		Report.Action.Reassign:Show
-		DisplayAsProjSynIndentExam 'generate QPKG repository assignments report' repos
-		DisplayAsProjSynIndentExam '' r
+		DisplayAsProjSynIndentExam "reassign packages to $(ShowTitleName). Detach packages previously installed via an online repository from further management by that repository" "reassign $(ShowPackages)"
+		DisplayAsProjSynIndentExam "rebuild these packages ('install' packages, then 'restore' configuration backups)" "rebuild $(ShowPackages)"
+		DisplayAsProjSynIndentExam 'reinstall these packages' "reinstall $(ShowPackages)"
+# 		DisplayAsProjSynIndentExam 'generate QPKG repository assignments report' repos
+# 		DisplayAsProjSynIndentExam '' r
 		DisplayAsProjSynIndentExam 'restore these application configurations from the backup location' "restore $(ShowPackages)"
 		DisplayAsProjSynIndentExam 'digitally "sign" these QPKGs' "sign $(ShowPackages)"
-		DisplayAsProjSynIndentExam 'generate QPKG status report' status
-		DisplayAsProjSynIndentExam '' s
+# 		DisplayAsProjSynIndentExam 'generate QPKG status report' status
+# 		DisplayAsProjSynIndentExam '' s
 		DisplayAsProjSynIndentExam 'uninstall these packages' "uninstall $(ShowPackages)"
 		DisplayAsProjSynIndentExam '' "remove $(ShowPackages)"
 		DisplayAsProjSynIndentExam '' "rm $(ShowPackages)"
 		DisplayAsProjSynIndentExam 'upgrade these packages (this will upgrade internal applications where-supported)' "upgrade $(ShowPackages)"
 
 		DisplayAsProjSynExam "$(ShowAction)s to affect all packages can be seen with" 'all-actions'
+		DisplayAsProjSynIndentExam '' 'actions-all'
 		DisplayAsProjSynExam "multiple $(ShowAction)s are supported like this" "$(ShowAction) $(ShowPackages) $(ShowAction) $(ShowPackages)"
 		DisplayAsProjSynIndentExam '' 'install sabnzbd sickgear reactivate transmission uninstall lazy nzbget upgrade nzbtomedia'
 		Display
@@ -4331,13 +4326,6 @@ Report.Actions:Show()
 
 	}
 
-Report.Action.Reassign:Show()
-	{
-
-	DisplayAsProjSynIndentExam "reassign packages to $(ShowTitleName). Use this action to detach QPKGs previously installed via an online repository from further management by that repository" "reassign $(ShowPackages)"
-
-	}
-
 Report.ActionsAll:Show()
 	{
 
@@ -4349,31 +4337,35 @@ Report.ActionsAll:Show()
 		Help.Basic:Show
 		DisplayAsHelpTitle "the 'all' group applies to all installed packages. If $(ShowAction) is 'install all' then all available packages will be installed."
 		DisplayAsHelpTitle "$(ShowAction) $(ShowPackageGroup) usage examples:"
-		DisplayAsProjSynIndentExam 'install everything!' 'install all'
-		DisplayAsProjSynIndentExam 'uninstall everything!' 'force uninstall all'
-		DisplayAsProjSynIndentExam 'reinstall all installed packages' 'reinstall all'
-		DisplayAsProjSynIndentExam "rebuild all packages with backups ('install' packages and 'restore' backups)" 'rebuild all'
-		DisplayAsProjSynIndentExam 'upgrade all installed packages (and internal applications where-supported)' 'upgrade all'
-		DisplayAsProjSynIndentExam 'enable all installed packages (allow them to activate on reboot)' 'enable all'
-		DisplayAsProjSynIndentExam 'disable all installed packages (prevent them activating on reboot)' 'disable all'
-		DisplayAsProjSynIndentExam 'enable, then activate all installed packages (this will upgrade internal applications where-supported)' 'activate all'
+		DisplayAsProjSynIndentExam 'activate all installed packages, enabling them first (this will upgrade internal applications where-supported)' 'activate all'
 		DisplayAsProjSynIndentExam '' 'start all'
+		DisplayAsProjSynIndentExam 'backup all application configurations to the backup location' 'backup all'
+		DisplayAsProjSynIndentExam 'clean local repository files from all packages (your configs are safe, application files will be downloaded again)' 'clean all'
 		DisplayAsProjSynIndentExam 'deactivate all installed packages' 'deactivate all'
 		DisplayAsProjSynIndentExam '' 'stop all'
+		DisplayAsProjSynIndentExam 'disable all installed packages (prevent them activating on reboot)' 'disable all'
+		DisplayAsProjSynIndentExam 'disable auto-updating all applications on package activation (where-supported)' 'disable-auto-update all'
+		DisplayAsProjSynIndentExam 'enable all installed packages (allow them to activate on reboot)' 'enable all'
+		DisplayAsProjSynIndentExam 'enable auto-updating all applications on package activation (where-supported)' 'enable-auto-update all'
+		DisplayAsProjSynIndentExam 'install everything!' 'install all'
+# 		DisplayAsProjSynIndentExam 'list all available packages' 'list all'
+# 		DisplayAsProjSynIndentExam 'list only installed packages' 'list installed'
+# 		DisplayAsProjSynIndentExam '' installed
+# 		DisplayAsProjSynIndentExam 'list only packages that can be installed' 'list installable'
+# 		DisplayAsProjSynIndentExam '' installable
+# 		DisplayAsProjSynIndentExam 'list only packages that are not installed' 'list not-installed'
+# 		DisplayAsProjSynIndentExam '' not-installed
+# 		DisplayAsProjSynIndentExam 'list only upgradable packages' 'list upgradable'
+# 		DisplayAsProjSynIndentExam '' upgradable
 		DisplayAsProjSynIndentExam 'reactivate packages (this will upgrade internal applications where-supported)' 'reactivate all'
 		DisplayAsProjSynIndentExam '' 'restart all'
-		DisplayAsProjSynIndentExam 'clear local repository files from all packages' 'clean all'
-		DisplayAsProjSynIndentExam 'list all available packages' 'list all'
-		DisplayAsProjSynIndentExam 'list only installed packages' 'list installed'
-		DisplayAsProjSynIndentExam '' installed
-		DisplayAsProjSynIndentExam 'list only packages that can be installed' 'list installable'
-		DisplayAsProjSynIndentExam '' installable
-		DisplayAsProjSynIndentExam 'list only packages that are not installed' 'list not-installed'
-		DisplayAsProjSynIndentExam '' not-installed
-		DisplayAsProjSynIndentExam 'list only upgradable packages' 'list upgradable'
-		DisplayAsProjSynIndentExam '' upgradable
-		DisplayAsProjSynIndentExam 'backup all application configurations to the backup location' 'backup all'
+		DisplayAsProjSynIndentExam "reassign all packages to $(ShowTitleName). Detach packages previously installed via an online repository from further management by that repository" 'reassign all'
+		DisplayAsProjSynIndentExam "rebuild all packages where backup files exist ('install' packages and 'restore' backups)" 'rebuild all'
+		DisplayAsProjSynIndentExam 'reinstall all installed packages' 'reinstall all'
 		DisplayAsProjSynIndentExam 'restore all application configurations from the backup location' 'restore all'
+		DisplayAsProjSynIndentExam 'digitally "sign" all packages' 'sign all'
+		DisplayAsProjSynIndentExam 'uninstall everything!' 'force uninstall all'
+		DisplayAsProjSynIndentExam 'upgrade all installed packages (and internal applications where-supported)' 'upgrade all'
 		Display
 
 		} > "$REPORT_OUTPUT_PATHFILE"
@@ -6665,12 +6657,23 @@ OS.IsCompatibleWithSigned()
 OS.IsSupported()
 	{
 
+	# Unable to test firmwares any earlier than 4.2.6 (but still have 4.2.0 available for TS-559Pro+)
+
 	[[ ${NAS_FIRMWARE_VER//.} -ge 400 ]]
 
 	}
 
 OS.IsSupportSecureDownload()
 	{
+
+	# `curl` with SSL certificate verification enabled:
+	#	fails in:
+	# 		QTS 4.2.6
+	# 		QTS 4.4.1
+	# 		QTS 4.5.1
+	# 		QTS 4.5.4.1715
+	#	works in:
+	# 		QTS 4.5.4.2627
 
 	[[ ${NAS_FIRMWARE_VER//.} -ge 500 ]]
 
