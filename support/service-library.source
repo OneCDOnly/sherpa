@@ -307,7 +307,7 @@ StartQPKGLibrary()
 				[[ -e $source_archive_pathfile ]] && download_opts+=" --time-cond $source_archive_pathfile"
 				download_opts+=" --show-error --location --output $source_archive_pathfile"
 
-				DisplayRunAndLog 'refresh release package' "/sbin/curl${download_opts} '$release_url'" || { SetError; return 1 ;}
+				DisplayRunAndLog 'refresh release package' "/sbin/curl${download_opts} '$release_url'" log:failure-only || { SetError; return 1 ;}
 			fi
 		fi
 
@@ -326,7 +326,7 @@ StartQPKGLibrary()
 			unzip_extract_opts="$unzip_extract_verbose -o $source_archive_pathfile -d $qpkg_repo_path"
 
 			# Try '.zip' first, then '.tar.gz'
-			DisplayRunAndLog 'extract release package' "/usr/bin/unzip${unzip_extract_opts} 2>/dev/null || /bin/tar${tar_extract_opts}" || { SetError; return 1 ;}
+			DisplayRunAndLog 'extract release package' "/usr/bin/unzip${unzip_extract_opts} 2>/dev/null || /bin/tar${tar_extract_opts}" log:failure-only || { SetError; return 1 ;}
 		fi
 	fi
 
@@ -357,7 +357,14 @@ StartQPKGLibrary()
 		return 1
 	fi
 
-	if ! DisplayRunAndLog 'start daemon' "$daemon_launch_cmd" log:failure-only "$run_daemon_in_screen_session"; then
+	local msg='start daemon'
+
+	if [[ $run_daemon_in_screen_session = true ]]; then
+		msg+=' (in screen session)'
+		rm -f "${SCREEN_LOG_PATHFILE:?}"
+	fi
+
+	if ! DisplayRunAndLog "$msg" "$daemon_launch_cmd" log:failure-only "$run_daemon_in_screen_session"; then
 		SetError
 		return 1
 	fi
@@ -368,12 +375,14 @@ StartQPKGLibrary()
 	if ! IsDaemonActive; then
 		DisplayErrCommitAllLogs 'IsDaemonActive() failed!'
 		SetError
+		[[ $run_daemon_in_screen_session = true ]] && AddFileToDebug "$SCREEN_LOG_PATHFILE"
 		return 1
 	fi
 
 	if ! CheckPorts; then
 		DisplayErrCommitAllLogs 'CheckPorts() failed!'
 		SetError
+		[[ $run_daemon_in_screen_session = true ]] && AddFileToDebug "$SCREEN_LOG_PATHFILE"
 		return 1
 	fi
 
@@ -415,12 +424,14 @@ StopQPKGLibrary()
 
 		local acc=0
 		local pid=0
-		SetRestartPending
+		local msg='stop daemon'
+		[[ $run_daemon_in_screen_session = true ]] && msg+=' (in screen session)'
 
 		pid=$(<$daemon_pid_pathfile)
+
+		DisplayWaitCommitToLog "$msg (PID:${pid}) with SIGTERM (no-more than $DAEMON_STOP_TIMEOUT_SECONDS second$(Pluralise "$DAEMON_STOP_TIMEOUT_SECONDS")):"
+
 		kill "$pid"
-		DisplayWaitCommitToLog "stop daemon PID '${pid}' with SIGTERM:"
-		DisplayWait "(no-more than $DAEMON_STOP_TIMEOUT_SECONDS second$(Pluralise "$DAEMON_STOP_TIMEOUT_SECONDS")):"
 
 		while true; do
 			while [[ -d /proc/$pid ]]; do
@@ -430,8 +441,10 @@ StopQPKGLibrary()
 
 				if [[ $acc -ge $DAEMON_STOP_TIMEOUT_SECONDS ]]; then
 					DisplayCommitToLog 'failed!'
-					DisplayCommitToLog "stop daemon PID '${pid}' with SIGKILL:"
+					DisplayCommitToLog "$msg (PID:${pid}) with SIGKILL:"
+
 					kill -9 "$pid" 2> /dev/null
+
 					[[ -f $daemon_pid_pathfile ]] && rm -f "$daemon_pid_pathfile"
 					break 2
 				fi
@@ -442,7 +455,7 @@ StopQPKGLibrary()
 			Display OK
 			CommitToLog "stopped in $acc second$(Pluralise "$acc")"
 
-			CommitInfoToSysLog 'stop daemon: OK'
+			CommitInfoToSysLog "$msg: OK"
 			break
 		done
 
@@ -622,7 +635,7 @@ StripComments()
 BackupConfig()
 	{
 
-	DisplayRunAndLog 'update configuration backup' "/bin/tar --create --gzip --file=$qpkg_backup_pathfile --directory=$QPKG_PATH/config ." || SetError
+	DisplayRunAndLog 'update configuration backup' "/bin/tar --create --gzip --file=$qpkg_backup_pathfile --directory=$QPKG_PATH/config ." log:failure-only || SetError
 
 	return 0
 
@@ -637,7 +650,7 @@ RestoreConfig()
 		return 1
 	fi
 
-	DisplayRunAndLog 'restore configuration backup' "/bin/tar --extract --gzip --file=$qpkg_backup_pathfile --directory=$QPKG_PATH/config" || SetError
+	DisplayRunAndLog 'restore configuration backup' "/bin/tar --extract --gzip --file=$qpkg_backup_pathfile --directory=$QPKG_PATH/config" log:failure-only || SetError
 
 	return 0
 
@@ -646,7 +659,7 @@ RestoreConfig()
 ResetConfig()
 	{
 
-	DisplayRunAndLog 'reset configuration' "mv $qpkg_ini_default_pathfile $QPKG_PATH; rm -rf $QPKG_PATH/config/*; mv $QPKG_PATH/$(/usr/bin/basename "$qpkg_ini_default_pathfile") $qpkg_ini_default_pathfile" || SetError
+	DisplayRunAndLog 'reset configuration' "mv $qpkg_ini_default_pathfile $QPKG_PATH; rm -rf $QPKG_PATH/config/*; mv $QPKG_PATH/$(/usr/bin/basename "$qpkg_ini_default_pathfile") $qpkg_ini_default_pathfile" log:failure-only || SetError
 
 	return 0
 
@@ -993,7 +1006,7 @@ WaitForDaemon()
 
 				if IsProcessActive "$target_proc" "$daemon_pid_pathfile"; then
 					Display OK
-					CommitToLog "active after $i second$(Pluralise "$i")"
+					CommitToLog "appeared in $i second$(Pluralise "$i")"
 					true
 					exit	# only this sub-shell
 				fi
@@ -1183,6 +1196,7 @@ RunAndLog()
 	fi
 
 	if [[ ${5:-false} = true ]]; then
+		FormatAsCommand "$1" >> "$SCREEN_LOG_PATHFILE"
 		/usr/sbin/screen -c "$SCREEN_CONF_PATHFILE" -dmLS "$QPKG_NAME" bash -c "$1"
 		z=$?
 	fi
@@ -1744,7 +1758,7 @@ IsDaemonActive()
 	# $? = 0 : $daemon_pathfile is in memory
 	# $? = 1 : $daemon_pathfile is not in memory
 
-	DisplayWaitCommitToLog 'daemon active:'
+	DisplayWaitCommitToLog 'daemon:'
 
 	local target_proc=''
 
@@ -1755,12 +1769,11 @@ IsDaemonActive()
 	fi
 
 	if IsProcessActive "$target_proc" "$daemon_pid_pathfile"; then
-		DisplayCommitToLog true
-		DisplayCommitToLog "daemon: PID '$(<"$daemon_pid_pathfile")'"
+		DisplayCommitToLog "active (PID:$(<"$daemon_pid_pathfile"))"
 		return 0
 	fi
 
-	DisplayCommitToLog false
+	DisplayCommitToLog inactive
 	rm -f "$daemon_pid_pathfile"
 	return 1
 
@@ -1907,8 +1920,7 @@ IsPortResponds()
 
 	local acc=0
 
-	DisplayWaitCommitToLog "test for port '$port' response:"
-	DisplayWait "(no-more than $PORT_CHECK_TIMEOUT_SECONDS second$(Pluralise "$PORT_CHECK_TIMEOUT_SECONDS")):"
+	DisplayWaitCommitToLog "test for port '$port' response (no-more than $PORT_CHECK_TIMEOUT_SECONDS second$(Pluralise "$PORT_CHECK_TIMEOUT_SECONDS")):"
 
 	local target_proc=''
 
@@ -1929,7 +1941,7 @@ IsPortResponds()
 		case $? in
 			0|22|52)	# accept these exitcodes as evidence of valid responses
 				Display OK
-				CommitToLog "port responded after $acc second$(Pluralise "$acc")"
+				CommitToLog "responded in $acc second$(Pluralise "$acc")"
 				return 0
 				;;
 			28)			# timed-out

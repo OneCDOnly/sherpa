@@ -22,7 +22,7 @@ IPK_STATES=(downgraded downloaded installed reinstalled upgraded)
 # ordered
 PIP_ACTIONS=(download uninstall upgrade reinstall install)
 IPK_ACTIONS=(downgrade download uninstall upgrade reinstall install)
-QPKG_ACTIONS=(status list rebuild reassign download backup deactivate disable uninstall upgrade reinstall install sign restore clean enable activate reactivate)
+QPKG_ACTIONS=(status list rebuild reassign download backup deactivate disable uninstall upgrade reinstall install enableau disableau sign restore clean enable activate reactivate)
 
 # these actions, states and scopes may be specified by the user -----------------------------------------------------
 # sorted
@@ -30,7 +30,7 @@ USER_QPKG_SC_GROUPS=(all canbackup canclean canrestarttoupdate dependent hasdepe
 USER_QPKG_SCNT_GROUPS=(canclean installable upgradable)
 USER_QPKG_IS_STATES=(active backedup enabled installed missing)
 USER_QPKG_ISNT_STATES=(active backedup enabled installed)
-USER_QPKG_ACTIONS=(activate backup clean enable deactivate disable install list reactivate reassign rebuild reinstall restore status uninstall upgrade)
+USER_QPKG_ACTIONS=(activate backup clean deactivate disable disableau enable enableau install list reactivate reassign rebuild reinstall restore sign status uninstall upgrade)
 
 AddFlagObj()
 	{
@@ -169,8 +169,6 @@ for state in "${USER_QPKG_ISNT_STATES[@]}"; do
 done
 
 # session list objects.
-
-AddListObj ARGs-unknown
 
 for group in "${USER_QPKG_SC_GROUPS[@]}"; do
 	AddListObj QPKGs-SC"$group"
