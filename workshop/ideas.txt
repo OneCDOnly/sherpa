@@ -1,7 +1,5 @@
 * BASH completion.
 
-* Must reorder the all-actions help screen by action.
-
 * In addition to the usual QPKG actions, there should be:
 	- 'debug' (dbug)
 	- 'verbose' (v)
