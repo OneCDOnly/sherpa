@@ -1737,7 +1737,7 @@ ParseActionArgs()
 					group_identified=false
 					show_bland=false
 					;;
-				dependent|dependents|disabled|enabled|failed|inactive|indeps|independent|independents|installable|installed|missing|not-installable|not-installed|o|ok|skipped|stopped|updatable|updateable|upgradable|version|versions)
+				dependent|dependents|disabled|enabled|failed|inactive|indeps|independent|independents|installable|installed|missing|non-installable|not-installable|not-installed|o|ok|skipped|stopped|updatable|updateable|upgradable|version|versions)
 					action=list
 					arg_identified=true
 					group=''
@@ -1761,9 +1761,6 @@ ParseActionArgs()
 					;;
 				not-backedup)
 					group=NTbackedup
-					;;
-				not-installable)
-					group=NTinstallable
 					;;
 				not-installed)
 					group=NTinstalled
@@ -1804,6 +1801,9 @@ ParseActionArgs()
 					;;
 				new|updatable|updateable|upgradable)
 					group=upgradable
+					;;
+				non-installable|not-installable)
+					group=NTinstallable
 					;;
 				o|option|options)
 					group=options
