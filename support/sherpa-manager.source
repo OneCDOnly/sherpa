@@ -31,7 +31,7 @@
 #   Display functions should never finish by putting an empty line on-screen for spacing.
 
 set -o nounset -o pipefail
-readonly ARGS_USER_RAW=$*
+readonly ARGS_RAW=$*
 readonly SCRIPT_STARTSECONDS=$(/bin/date +%s)
 
 Init()
@@ -48,7 +48,7 @@ Init()
 	Env:Load
 	LockFile:Claim || return
 	Traps:Set
-	ParseOptionArgs || return
+	ParseManagementArgs || return
 	Lists:Load
 	Paths:Create || return
 	ArchivePriorSessLogs
@@ -502,7 +502,7 @@ Env:Load()
 	OS.IsSupportSecureDownload || CURL_CMD+=' --insecure'
 	readonly CURL_CMD
 
-	args_user=()					# command-line argument array.
+	args=()					# command-line argument array.
 	args_incomplete=()
 	args_unknown=()
 	source_branch=stable			# Default branch.
@@ -1506,26 +1506,26 @@ AdjustMaxForks()
 
 	}
 
-ParseOptionArgs()
+ParseManagementArgs()
 	{
 
 	# Basic argument syntax:
 	#   scriptname [action] [groups] [options]
 
 	# output:
-	#   $args_user (global)
+	#   $args (global)
 	#   $args_incomplete (global)
 
-	local user_args_fixed=$(Lowercase "${ARGS_USER_RAW//,/ }")
-	local -a user_args_trimmed=(${user_args_fixed/--/})
-	local -a user_args_filtered=()
+	local args_fixed=$(Lowercase "${ARGS_RAW//,/ }")
+	local -a args_trimmed=(${args_fixed/--/})
+	args=()
 	local arg=''
 	local awaiting_follow_branch=false
 	local awaiting_paste_source=false
 	local something_to_do=false
 
-	if [[ -n ${user_args_trimmed[*]:-} ]]; then
-		for arg in "${user_args_trimmed[@]}"; do
+	if [[ -n ${args_trimmed[*]:-} ]]; then
+		for arg in "${args_trimmed[@]}"; do
 			case $arg in
 				c|check)
 					opts_check=true
@@ -1542,7 +1542,7 @@ ParseOptionArgs()
 					skip_package_actions=true
 					check_tasks=false
 					something_to_do=true
-					# Assume next arg will be specified branch.
+					# Assume next arg will be the source branch to track.
 					;;
 				paste)
 					awaiting_paste_source=true
@@ -1551,7 +1551,7 @@ ParseOptionArgs()
 					skip_package_actions=true
 					check_tasks=false
 					something_to_do=true
-					# Assume next arg will be paste source.
+					# Assume next arg will be the paste source.
 					;;
 				reset)
 					Reset
@@ -1577,7 +1577,7 @@ ParseOptionArgs()
 								awaiting_paste_source=false
 						esac
 					else
-						user_args_filtered+=($arg)
+						args+=($arg)
 					fi
 
 					something_to_do=true
@@ -1587,8 +1587,6 @@ ParseOptionArgs()
 
 	[[ $awaiting_follow_branch = true ]] && args_incomplete+=(follow)
 	[[ $awaiting_paste_source = true ]] && args_incomplete+=(paste)
-
-	args_user=(${user_args_filtered[@]:-})
 
 	if [[ $something_to_do = false ]]; then
 		load_objects=false
@@ -1622,7 +1620,7 @@ ParseActionArgs()
 	local group_identified=false
 	local package=''
 
-	for arg in "${args_user[@]:-}"; do
+	for arg in "${args[@]:-}"; do
 		[[ -n $arg ]] || continue
 
 		arg_identified=false
@@ -3110,7 +3108,7 @@ User.IsOk()
 	if ! User.IsSU; then
 		if OS.IsSupportSudo; then
 			ShowAsError 'this utility must be run with superuser privileges. Try again as:'
-			echo "${CHARS_SUDO_PROMPT}sherpa $ARGS_USER_RAW" >&2
+			echo "${CHARS_SUDO_PROMPT}sherpa $ARGS_RAW" >&2
 		else
 			ShowAsError "this utility must be run as the 'admin' user. Please login via SSH as 'admin' and try again"
 		fi
@@ -9640,7 +9638,7 @@ Title:Show()
 
 	# Only show ASCII title when no arguments have been specified.
 
-	if [[ -z ${ARGS_USER_RAW[*]:-} ]]; then
+	if [[ -z ${ARGS_RAW[*]:-} ]]; then
 		Display "$(ShowTitleArt)"
 	else
 		Display "$(ShowTitleName) $(ShowVersion)"

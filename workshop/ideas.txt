@@ -1,9 +1,9 @@
 * BASH completion.
 
-* In addition to the usual QPKG actions, there should be:
+* In addition to the usual QPKG actions, there should also be management actions:
 	- 'debug' (dbug)
 	- 'verbose' (v)
-	- 'follow': stable, unstable
+	- 'follow': stable, unstable (this will be an undocumented action)
 	- 'reset'
 	- 'check' (c)
 	- 'paste': last (l), log
