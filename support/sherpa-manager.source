@@ -1103,8 +1103,10 @@ Validate()
 #
 #	6. stop/deactivate dependents
 #	7. disable dependents
+#
 #	8. stop/deactivate independents
 #	9. disable independents
+#
 #  10. uninstall all
 #
 #  11. upgrade independents
@@ -1126,11 +1128,10 @@ Validate()
 #  26. disable-auto-update dependents
 #  27. "sign" dependents
 #  28. restore dependents
-#  29. clean dependents			(supported by most dependent packages, but not all)
+#  29. clean dependents
 #  30. enable dependents
 #  31. restart/reactivate dependents
 #  32. start/activate dependents
-#
 
 Actions:Proc()
 	{
