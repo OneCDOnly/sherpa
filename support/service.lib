@@ -22,7 +22,7 @@
 #*   This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 #*	 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
-readonly SERVICE_LIB_VERSION='240205'
+readonly SERVICE_LIB_VERSION='240206'
 InitLibrary()
 {
 IsQNAP || exit
@@ -270,7 +270,7 @@ fi
 if [[ -n $release_url ]]; then
 [[ -e $source_archive_pathfile ]] && download_opts+=" --time-cond $source_archive_pathfile"
 download_opts+=" --show-error --location --output $source_archive_pathfile"
-DisplayRunAndLog 'refresh release package' "/sbin/curl${download_opts} '$release_url'" || { SetError; return 1 ;}
+DisplayRunAndLog 'refresh release package' "/sbin/curl${download_opts} '$release_url'" log:failure-only || { SetError; return 1 ;}
 fi
 fi
 local tar_extract_verbose=''
@@ -283,7 +283,7 @@ fi
 if [[ ! -e $daemon_pathfile || ! -e $source_archive_pathfile || $(($(/bin/date +%s)-$(/usr/bin/stat "$source_archive_pathfile" -c %Y))) -lt 60 ]]; then
 tar_extract_opts="$tar_extract_verbose --extract --gzip --file=$source_archive_pathfile --directory=$qpkg_repo_path"
 unzip_extract_opts="$unzip_extract_verbose -o $source_archive_pathfile -d $qpkg_repo_path"
-DisplayRunAndLog 'extract release package' "/usr/bin/unzip${unzip_extract_opts} 2>/dev/null || /bin/tar${tar_extract_opts}" || { SetError; return 1 ;}
+DisplayRunAndLog 'extract release package' "/usr/bin/unzip${unzip_extract_opts} 2>/dev/null || /bin/tar${tar_extract_opts}" log:failure-only || { SetError; return 1 ;}
 fi
 fi
 WaitForLaunchTarget || { SetError; return 1 ;}
@@ -307,7 +307,12 @@ DisplayErrCommitAllLogs "unable to start daemon: 'virtual environment does not e
 SetError
 return 1
 fi
-if ! DisplayRunAndLog 'start daemon' "$daemon_launch_cmd" log:failure-only "$run_daemon_in_screen_session"; then
+local msg='start daemon'
+if [[ $run_daemon_in_screen_session = true ]]; then
+msg+=' (in screen session)'
+rm -f "${SCREEN_LOG_PATHFILE:?}"
+fi
+if ! DisplayRunAndLog "$msg" "$daemon_launch_cmd" log:failure-only "$run_daemon_in_screen_session"; then
 SetError
 return 1
 fi
@@ -316,11 +321,13 @@ WaitForStartPID
 if ! IsDaemonActive; then
 DisplayErrCommitAllLogs 'IsDaemonActive() failed!'
 SetError
+[[ $run_daemon_in_screen_session = true ]] && AddFileToDebug "$SCREEN_LOG_PATHFILE"
 return 1
 fi
 if ! CheckPorts; then
 DisplayErrCommitAllLogs 'CheckPorts() failed!'
 SetError
+[[ $run_daemon_in_screen_session = true ]] && AddFileToDebug "$SCREEN_LOG_PATHFILE"
 return 1
 fi
 CommitInfoToSysLog 'start daemon: OK'
@@ -350,11 +357,11 @@ SetRestartPending
 fi
 local acc=0
 local pid=0
-SetRestartPending
+local msg='stop daemon'
+[[ $run_daemon_in_screen_session = true ]] && msg+=' (in screen session)'
 pid=$(<$daemon_pid_pathfile)
+DisplayWaitCommitToLog "$msg (PID:${pid}) with SIGTERM (no-more than $DAEMON_STOP_TIMEOUT_SECONDS second$(Pluralise "$DAEMON_STOP_TIMEOUT_SECONDS")):"
 kill "$pid"
-DisplayWaitCommitToLog "stop daemon PID '${pid}' with SIGTERM:"
-DisplayWait "(no-more than $DAEMON_STOP_TIMEOUT_SECONDS second$(Pluralise "$DAEMON_STOP_TIMEOUT_SECONDS")):"
 while true; do
 while [[ -d /proc/$pid ]]; do
 /bin/sleep 1
@@ -362,7 +369,7 @@ while [[ -d /proc/$pid ]]; do
 DisplayWait "$acc,"
 if [[ $acc -ge $DAEMON_STOP_TIMEOUT_SECONDS ]]; then
 DisplayCommitToLog 'failed!'
-DisplayCommitToLog "stop daemon PID '${pid}' with SIGKILL:"
+DisplayCommitToLog "$msg (PID:${pid}) with SIGKILL:"
 kill -9 "$pid" 2> /dev/null
 [[ -f $daemon_pid_pathfile ]] && rm -f "$daemon_pid_pathfile"
 break 2
@@ -371,7 +378,7 @@ done
 [[ -f $daemon_pid_pathfile ]] && rm -f "$daemon_pid_pathfile"
 Display OK
 CommitToLog "stopped in $acc second$(Pluralise "$acc")"
-CommitInfoToSysLog 'stop daemon: OK'
+CommitInfoToSysLog "$msg: OK"
 break
 done
 WaitForKillPID
@@ -489,7 +496,7 @@ echo "$a"
 }
 BackupConfig()
 {
-DisplayRunAndLog 'update configuration backup' "/bin/tar --create --gzip --file=$qpkg_backup_pathfile --directory=$QPKG_PATH/config ." || SetError
+DisplayRunAndLog 'update configuration backup' "/bin/tar --create --gzip --file=$qpkg_backup_pathfile --directory=$QPKG_PATH/config ." log:failure-only || SetError
 return 0
 }
 RestoreConfig()
@@ -499,12 +506,12 @@ DisplayErrCommitAllLogs "unable to restore configuration: 'no backup file was fo
 SetError
 return 1
 fi
-DisplayRunAndLog 'restore configuration backup' "/bin/tar --extract --gzip --file=$qpkg_backup_pathfile --directory=$QPKG_PATH/config" || SetError
+DisplayRunAndLog 'restore configuration backup' "/bin/tar --extract --gzip --file=$qpkg_backup_pathfile --directory=$QPKG_PATH/config" log:failure-only || SetError
 return 0
 }
 ResetConfig()
 {
-DisplayRunAndLog 'reset configuration' "mv $qpkg_ini_default_pathfile $QPKG_PATH; rm -rf $QPKG_PATH/config/*; mv $QPKG_PATH/$(/usr/bin/basename "$qpkg_ini_default_pathfile") $qpkg_ini_default_pathfile" || SetError
+DisplayRunAndLog 'reset configuration' "mv $qpkg_ini_default_pathfile $QPKG_PATH; rm -rf $QPKG_PATH/config/*; mv $QPKG_PATH/$(/usr/bin/basename "$qpkg_ini_default_pathfile") $qpkg_ini_default_pathfile" log:failure-only || SetError
 return 0
 }
 MakePaths()
@@ -736,7 +743,7 @@ for ((i=1; i<=MAX_SECONDS; i++)); do
 DisplayWait "$i,"
 if IsProcessActive "$target_proc" "$daemon_pid_pathfile"; then
 Display OK
-CommitToLog "active after $i second$(Pluralise "$i")"
+CommitToLog "appeared in $i second$(Pluralise "$i")"
 true
 exit
 fi
@@ -852,6 +859,7 @@ z=$?
 fi
 fi
 if [[ ${5:-false} = true ]]; then
+FormatAsCommand "$1" >> "$SCREEN_LOG_PATHFILE"
 /usr/sbin/screen -c "$SCREEN_CONF_PATHFILE" -dmLS "$QPKG_NAME" bash -c "$1"
 z=$?
 fi
@@ -1171,7 +1179,7 @@ IsNotDaemon()
 }
 IsDaemonActive()
 {
-DisplayWaitCommitToLog 'daemon active:'
+DisplayWaitCommitToLog 'daemon:'
 local target_proc=''
 if [[ $daemon_proc_is_name_only = true ]]; then
 target_proc=$(/usr/bin/basename "$(GetLaunchTarget)")
@@ -1179,11 +1187,10 @@ else
 target_proc=$(GetLaunchTarget)
 fi
 if IsProcessActive "$target_proc" "$daemon_pid_pathfile"; then
-DisplayCommitToLog true
-DisplayCommitToLog "daemon: PID '$(<"$daemon_pid_pathfile")'"
+DisplayCommitToLog "active (PID:$(<"$daemon_pid_pathfile"))"
 return 0
 fi
-DisplayCommitToLog false
+DisplayCommitToLog inactive
 rm -f "$daemon_pid_pathfile"
 return 1
 }
@@ -1255,8 +1262,7 @@ Display "port '0': not testing for response"
 return 1
 fi
 local acc=0
-DisplayWaitCommitToLog "test for port '$port' response:"
-DisplayWait "(no-more than $PORT_CHECK_TIMEOUT_SECONDS second$(Pluralise "$PORT_CHECK_TIMEOUT_SECONDS")):"
+DisplayWaitCommitToLog "test for port '$port' response (no-more than $PORT_CHECK_TIMEOUT_SECONDS second$(Pluralise "$PORT_CHECK_TIMEOUT_SECONDS")):"
 local target_proc=''
 if [[ $daemon_proc_is_name_only = true ]]; then
 target_proc=$(/usr/bin/basename "$daemon_pathfile")
@@ -1272,7 +1278,7 @@ fi
 case $? in
 0|22|52)
 Display OK
-CommitToLog "port responded after $acc second$(Pluralise "$acc")"
+CommitToLog "responded in $acc second$(Pluralise "$acc")"
 return 0
 ;;
 28)
