@@ -1,3 +1,5 @@
+* Need distinct arg parsers for: management, 'help', actions, 'list', 'report'.
+
 * BASH completion.
 
 * In addition to the usual QPKG actions, there should also be management actions:
@@ -8,8 +10,10 @@
 	- 'check' (c)
 	- 'paste': last (l), log
 
-	- 'help': actions, tips, options, groups, about(?),
+	- 'help': actions, tips, options, groups, lists, about(?),
+
 	- 'list': installed, not-installed, installable, upgradable, versions, missing, etc....
+
 	- 'report': status (s), results, dependencies (d), backups, packages (p), repositories (r), log, last,
 
 * Service scripts should show current auto-update setting when displaying basic help.
