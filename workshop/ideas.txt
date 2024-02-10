@@ -9,14 +9,18 @@
 
 	... 'help':
 		actions, tips, options, groups, lists, about(?),
+		- all these write reports.
 
-	... the usual QPKG actions
+	... the usual QPKG actions.
+		- all these write reports.
 
 	... 'list':
-		installed, not-installed, installable, upgradable, versions, missing, etc....
+		installed, not-installed, installable, upgradable, versions, missing, etc...
+		- all these write reports.
 
 	... 'report':
 		status (s), results, dependencies (d), backups, packages (p), repositories (r), log, last,
+		- all these write reports.
 
 * BASH completion.
 
