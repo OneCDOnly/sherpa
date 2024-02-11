@@ -1,5 +1,5 @@
-*  There should be arg parsers for
-	... 'management':
+*  There should be distinct argument parsers for:
+	- script management functions:
 		'debug' (dbug)
 		'verbose' (v)
 		'follow': stable, unstable (this will be an undocumented action)
@@ -7,20 +7,20 @@
 		'check' (c)
 		'paste': last (l), log
 
-	... 'help':
-		actions, tips, options, groups, lists, about(?),
-		- all these write reports.
+	- 'help':
+		actions, tips, options, groups, lists, about/info(?), abbreviations (a),
+		- (and display pre-generated reports).
 
-	... the usual QPKG actions.
-		- all these write reports.
-
-	... 'list':
+	- 'list':
 		installed, not-installed, installable, upgradable, versions, missing, etc...
-		- all these write reports.
+		- (and generate basic reports with no heading).
 
-	... 'report':
+	- 'show':
 		status (s), results, dependencies (d), backups, packages (p), repositories (r), log, last,
-		- all these write reports.
+		- (and generate full reports).
+
+	- the usual QPKG actions:
+		- (and generate full reports).
 
 * BASH completion.
 
