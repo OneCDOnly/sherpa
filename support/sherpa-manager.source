@@ -481,7 +481,7 @@ CMDs.IsOk()
 		[[ ! -e $SQLITE_CMD ]] && SQLITE_CMD=''
 	fi
 
-	[[ -z $SQLITE_CMD ]] && SQLITE_CMD=/opt/bin/sqlite3							# last resort, hope Entware is installed this session.
+	[[ -z ${SQLITE_CMD:-} ]] && SQLITE_CMD=/opt/bin/sqlite3						# last resort, hope Entware is installed this session.
 
 	readonly SQLITE_CMD
 
