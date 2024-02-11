@@ -1,14 +1,28 @@
-* In addition to the usual QPKG actions, there should be:
-	- 'debug' (dbug)
-	- 'verbose' (v)
-	- 'follow': stable, unstable
-	- 'reset'
-	- 'check' (c)
-	- 'paste': last (l), log
+*  There should be arg parsers for
+	... 'management':
+		'debug' (dbug)
+		'verbose' (v)
+		'follow': stable, unstable (this will be an undocumented action)
+		'reset'
+		'check' (c)
+		'paste': last (l), log
 
-	- 'help': actions, tips, options, groups, about(?),
-	- 'list': installed, not-installed, installable, upgradable, versions, missing, etc....
-	- 'report': status (s), results, dependencies (d), backups, packages (p), repositories (r), log, last,
+	... 'help':
+		actions, tips, options, groups, lists, about(?),
+		- all these write reports.
+
+	... the usual QPKG actions.
+		- all these write reports.
+
+	... 'list':
+		installed, not-installed, installable, upgradable, versions, missing, etc...
+		- all these write reports.
+
+	... 'report':
+		status (s), results, dependencies (d), backups, packages (p), repositories (r), log, last,
+		- all these write reports.
+
+* BASH completion.
 
 * Service scripts should show current auto-update setting when displaying basic help.
 
@@ -83,8 +97,6 @@
 	- Nope, 'column' can't wrap text containing ANSI codes. Won't show a wrapped column in colour. :(
 
 * Autowidth display columns.
-
-* BASH completion?
 
 * Include new integrated help screens for all actions?
 	- Like: `sherpa paste help`, `sherpa install help`, `sherpa reassign help`
