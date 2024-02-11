@@ -45,7 +45,7 @@ Init()
 	CMDs.IsOk || return
 	Keystrokes:Hide
 	Cursor:Hide
-	Env:Load
+	Env:Load || return
 	LockFile:Claim || return
 	Traps:Set
 	PrepareArgs
@@ -530,31 +530,39 @@ Env:Load()
 	readonly PACKAGES_ARCHIVE_URL='<?cdn_sherpa_base_url?>'/$source_branch/packages.tar.gz
 	readonly QPKG_BU_PATH=$(GetDefVol)/.qpkg_config_backup
 	readonly THIS_PACKAGE_PATH=$(QPKG.GetInstallationPath)
-		readonly CACHE_PATH=$THIS_PACKAGE_PATH/cache
-			readonly ACTION_TIMES_PATH=$CACHE_PATH/action.times
-			readonly DISPLAY_INHIBIT_PATHFILE=$CACHE_PATH/display.inhibit
-			readonly IPK_CACHE_PATH=$CACHE_PATH/IPKs
-			readonly IPK_DL_PATH=$CACHE_PATH/IPKs.downloads
-			readonly IPK_DOWNGRADE_DL_PATH=$CACHE_PATH/IPKs.downgrade
-			readonly PIP_CACHE_PATH=$CACHE_PATH/PIPs
-			readonly OBJECTS_ARCHIVE_PATHFILE=$CACHE_PATH/objects.tar.gz
-			readonly OBJECTS_PATHFILE=$CACHE_PATH/objects
-			readonly PACKAGES_ARCHIVE_PATHFILE=$CACHE_PATH/packages.tar.gz
-			readonly PACKAGES_PATHFILE=$CACHE_PATH/packages
-			readonly PREV_IPK_LIST=$CACHE_PATH/ipk.list.save
-			readonly PREV_PIP_LIST=$CACHE_PATH/pip.list.save
-			readonly QPKG_DL_PATH=$CACHE_PATH/QPKGs.downloads
-		readonly LOGS_PATH=$THIS_PACKAGE_PATH/logs
-			readonly RAMDISKS_FREESPACE_PATHFILE=$LOGS_PATH/ramdisks.freespace
-			readonly SCREEN_SESSIONS_PATHFILE=$LOGS_PATH/screen.sessions
-			readonly SESS_ACTIONS_RESULTS_PATHFILE=$LOGS_PATH/session.action.results.log
-			readonly SESS_ARCHIVE_PATHFILE=$LOGS_PATH/session.archive.log
-			readonly SESS_LAST_PATHFILE=$LOGS_PATH/session.last.log
-			readonly SESS_TAIL_PATHFILE=$LOGS_PATH/session.tail.log
-		readonly REPORTS_PATH=$THIS_PACKAGE_PATH/reports
-				readonly REPORT_OUTPUT_PATHFILE=$REPORTS_PATH/report.ansi
-		sess_active_pathfile=$THIS_PACKAGE_PATH/session.$$.active.log
-		readonly STATES_PATH=$THIS_PACKAGE_PATH/states
+
+	if [[ -z $THIS_PACKAGE_PATH || $THIS_PACKAGE_PATH = undefined || ! -d $THIS_PACKAGE_PATH ]]; then
+		ShowAsError "$(ShowTitleName) installation path not found. Please reinstall the sherpa QPKG"
+		show_suggest_raise_issue=true
+		return 1
+	fi
+
+	readonly CACHE_PATH=$THIS_PACKAGE_PATH/cache
+		readonly ACTION_TIMES_PATH=$CACHE_PATH/action.times
+		readonly DISPLAY_INHIBIT_PATHFILE=$CACHE_PATH/display.inhibit
+		readonly IPK_CACHE_PATH=$CACHE_PATH/IPKs
+		readonly IPK_DL_PATH=$CACHE_PATH/IPKs.downloads
+		readonly IPK_DOWNGRADE_DL_PATH=$CACHE_PATH/IPKs.downgrade
+		readonly PIP_CACHE_PATH=$CACHE_PATH/PIPs
+		readonly OBJECTS_ARCHIVE_PATHFILE=$CACHE_PATH/objects.tar.gz
+		readonly OBJECTS_PATHFILE=$CACHE_PATH/objects
+		readonly PACKAGES_ARCHIVE_PATHFILE=$CACHE_PATH/packages.tar.gz
+		readonly PACKAGES_PATHFILE=$CACHE_PATH/packages
+		readonly PREV_IPK_LIST=$CACHE_PATH/ipk.list.save
+		readonly PREV_PIP_LIST=$CACHE_PATH/pip.list.save
+		readonly QPKG_DL_PATH=$CACHE_PATH/QPKGs.downloads
+	readonly LOGS_PATH=$THIS_PACKAGE_PATH/logs
+		readonly RAMDISKS_FREESPACE_PATHFILE=$LOGS_PATH/ramdisks.freespace
+		readonly SCREEN_SESSIONS_PATHFILE=$LOGS_PATH/screen.sessions
+		readonly SESS_ACTIONS_RESULTS_PATHFILE=$LOGS_PATH/session.action.results.log
+		readonly SESS_ARCHIVE_PATHFILE=$LOGS_PATH/session.archive.log
+		readonly SESS_LAST_PATHFILE=$LOGS_PATH/session.last.log
+		readonly SESS_TAIL_PATHFILE=$LOGS_PATH/session.tail.log
+	readonly REPORTS_PATH=$THIS_PACKAGE_PATH/reports
+			readonly REPORT_OUTPUT_PATHFILE=$REPORTS_PATH/report.ansi
+	sess_active_pathfile=$THIS_PACKAGE_PATH/session.$$.active.log
+	readonly STATES_PATH=$THIS_PACKAGE_PATH/states
+
 	readonly THIS_PACKAGE_VER=$(QPKG.Local.GetVer)
 	readonly THIS_SCRIPT_VER='<?build_date?>'-$source_branch
 
@@ -879,9 +887,13 @@ Validate()
 	local prospect=''
 	local target_packages=''
 
-	QPKG.IsInstalled Entware && [[ $ENTWARE_VER = none ]] && DebugAsWarn "$(ShowAsPackageName Entware) appears to be installed but is inactive. Please consider starting the $(ShowAsPackageName Entware) QPKG."
-
-	UpdateEntwarePackageList &			# Let's try launching this early.
+	if QPKG.IsInstalled Entware; then
+		if [[ $ENTWARE_VER != none ]]; then
+			UpdateEntwarePackageList &			# Let's try launching this early.
+		else
+			DebugAsWarn "$(ShowAsPackageName Entware) appears to be installed but is inactive. Please consider starting the $(ShowAsPackageName Entware) QPKG."
+		fi
+	fi
 
 	# Decide if particular IPKs and PIPs should be installed/upgraded.
 
