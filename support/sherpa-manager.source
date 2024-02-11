@@ -53,6 +53,9 @@ Init()
 	ParseHelpArgs || return
 	Lists:Load
 	Paths:Create || return
+
+	[[ $opts_switch_follow_branch = true ]] && SwitchSourceBranch
+
 	ArchivePriorSessLogs
 	Debug.Log:Init
 
@@ -70,14 +73,13 @@ Init()
 	Title:Show
 
 	ParseShowArgs || return
-	# loop through remaining args here, and look for chances to assign them to 'help', 'list', 'action' or 'show'.
+	# loop through remaining args here, and look for second-chances(?) to assign them to 'help', 'list', 'action' or 'show'.
 	ArgSuggestions:Show
 	QPKGs.Conflicts:Check || return
 	QPKGs.Warnings:Check
 	Debug.Log:Env
 	Tasks:Check
 	Validate
-	[[ $opts_switch_follow_branch = true ]] && SwitchSourceBranch
 
 	return 0
 
