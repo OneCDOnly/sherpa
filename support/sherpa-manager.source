@@ -1109,8 +1109,9 @@ Validate()
 		done
 	fi
 
-	QPKGs-ACupgrade-to.Exist sherpa && QPKGs-ACreactivate-to:Add sherpa
-	QPKGs-ACupgrade-to.Exist Entware && QPKGs-ACreactivate-to:Add Entware
+	for package in sherpa Entware; do
+		QPKGs-ACupgrade-to.Exist "$package" && QPKGs-ACreactivate-to:Add "$package"
+	done
 
 	# Build list of required installation QPKGs.
 	QPKGs-ACdownload-to:Add "$(QPKGs-ACupgrade-to:Array) $(QPKGs-ACreinstall-to:Array) $(QPKGs-ACinstall-to:Array)"
@@ -1125,7 +1126,9 @@ Validate()
 		done
 	fi
 
-	QPKGs-ACsign-to.IsAny && QPKG.Signing:Load
+	if QPKGs-ACsign-to.IsAny || QPKGs-ACinstall-to.IsAny; then
+		QPKG.Signing:Load
+	fi
 
 	wait 2>/dev/null			# ensure Entware package updater completes before continuing.
 
