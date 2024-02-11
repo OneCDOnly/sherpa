@@ -88,7 +88,7 @@ Results:Show()
 	Func:Init
 	display_last_action_datetime=false
 
-	if [[ $generate_report = true ]]; then
+	if [[ $write_report = true ]]; then
 		if [[ $opts_show_abbreviations = true ]]; then
 			Report.Abbreviations:Show
 		elif [[ $opts_show_actions = true ]]; then
@@ -297,14 +297,13 @@ Consts:Load()
 Vars:Load()
 	{
 
-	# Default values.
+	# Default flags and values.
 	action_msg_pipe_fd=none
 	archive_debug_afterward=false
 	backup_stdin_fd=none
 	check_tasks=true
 	colourful=true
 	fork_pid=''
-	generate_report=false
 	ipks_downgrade=false
 	ipks_install=false
 	ipks_upgrade=false
@@ -320,6 +319,7 @@ Vars:Load()
 	show_zero_qpkgs=true
 	skip_package_actions=false
 	title_shown=false
+	write_report=false
 
 	# User-selectable options.
 	opts_check=false
@@ -858,7 +858,7 @@ Tasks:Check()
 		Func:Exit 1; return
 	fi
 
-	generate_report=$something_to_do
+	write_report=$something_to_do
 	[[ $build_states = true ]] && QPKGs.States:Build
 	Func:Exit
 
@@ -1661,6 +1661,7 @@ ParseHelpArgs()
 	local action=''
 	local group=''
 	local group_identified=false
+	local something_to_do=false
 
 	if [[ -n ${args[*]:-} ]]; then
 		for arg in "${args[@]:-}"; do
@@ -1777,7 +1778,7 @@ ParseHelpArgs()
 		done
 	fi
 
-	generate_report=$something_to_do
+	write_report=$something_to_do
 
 	# When an action has been determined, but no group was found, then show default information. This will usually be the help screen.
 
@@ -4618,8 +4619,8 @@ Report.Actions:Show()
 		DisplayAsProjSynIndentExam '' "rm $(ShowPackages)"
 		DisplayAsProjSynIndentExam 'upgrade these packages (this will upgrade internal applications where-supported)' "upgrade $(ShowPackages)"
 
-		DisplayAsProjSynExam "$(ShowAction)s to affect all packages can be seen with" 'all-actions'
-		DisplayAsProjSynIndentExam '' 'actions-all'
+		DisplayAsProjSynExam "$(ShowAction)s to affect all packages can be seen with" 'help all-actions'
+		DisplayAsProjSynIndentExam '' 'help actions-all'
 		DisplayAsProjSynExam "multiple $(ShowAction)s are supported like this" "$(ShowAction) $(ShowPackages) $(ShowAction) $(ShowPackages)"
 		DisplayAsProjSynIndentExam '' 'install sabnzbd sickgear reactivate transmission uninstall lazy nzbget upgrade nzbtomedia'
 		Display
