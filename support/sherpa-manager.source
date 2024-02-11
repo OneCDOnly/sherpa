@@ -2331,7 +2331,7 @@ ArgSuggestions:Show()
 
 	if [[ ${#args[@]} -gt 0 ]]; then
 		WriteEmptyLineIfNoneExists
-		ShowAsError "unknown argument$(Pluralise "${#args[@]}"): \"${args[*]}\". Please check the argument list again"
+		ShowAsError "unknown argument$(Pluralise "${#args[@]}"): \"${args[*]}\". Please check the arguments again"
 		check_tasks=false
 		skip_package_actions=true
 
