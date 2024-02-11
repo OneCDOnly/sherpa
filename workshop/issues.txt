@@ -1,14 +1,5 @@
 Observed issues:
 
-	* don't show title when running 'follow' action.
-		[~] # sherpa follow unstable
-		sherpa v240211-stable
-
-		done: now following the 'unstable' branch.
-		done: package cache cleared.
-		done: reports cleared.
-		done: logs cleared.
-
 	* 'sherpa start inactive' fails to find any inactive packages.
 		- Must get 'status' of each package first.
 
