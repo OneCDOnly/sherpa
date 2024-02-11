@@ -452,6 +452,15 @@ CMDs.IsOk()
 	# Test if this QTS `sleep` can handle decimal seconds. Early QTS BusyBox versions cannot.
 	readonly DECIMAL_SLEEP_SECONDS_SUPPORTED=$($SLEEP_CMD .01 &>/dev/null && echo true || echo false)
 
+	LocateSQLiteBinary
+
+	return 0
+
+	}
+
+LocateSQLiteBinary()
+	{
+
 	# Prefer Entware-installed `sqlite3`.
 
 	if [[ -z ${SQLITE_CMD:-} ]] && QPKG.IsInstalled Entware; then
@@ -459,7 +468,7 @@ CMDs.IsOk()
 		[[ ! -e $SQLITE_CMD ]] && SQLITE_CMD=''
 	fi
 
-	# Then try several other locations.
+	# If that can't be found, then try several other locations.
 
 	if [[ -z ${SQLITE_CMD:-} ]] && QPKG.IsInstalled HybridBackup; then			# `Hybrid Backup Sync`
 		SQLITE_CMD=$(QPKG.GetInstallationPath HybridBackup)/CloudConnector3/bin/sqlite3
@@ -481,11 +490,24 @@ CMDs.IsOk()
 		[[ ! -e $SQLITE_CMD ]] && SQLITE_CMD=''
 	fi
 
-	[[ -z ${SQLITE_CMD:-} ]] && SQLITE_CMD=/opt/bin/sqlite3						# last resort, hope Entware is installed this session.
+	if [[ -z ${SQLITE_CMD:-} ]] && QPKG.IsInstalled img2pdf; then				# `Image2PDF`
+		SQLITE_CMD="LD_LIBRARY_PATH=$(QPKG.GetInstallationPath img2pdf)/lib $(QPKG.GetInstallationPath img2pdf)/bin/sqlite3"
+		[[ ! -e $SQLITE_CMD ]] && SQLITE_CMD=''
+	fi
+
+	if [[ -z ${SQLITE_CMD:-} ]] && QPKG.IsInstalled Qsirch; then				# `Qsirch`
+		SQLITE_CMD="LD_LIBRARY_PATH=$(QPKG.GetInstallationPath Qsirch)/lib $(QPKG.GetInstallationPath Qsirch)/bin/sqlite3"
+		[[ ! -e $SQLITE_CMD ]] && SQLITE_CMD=''
+	fi
+
+	if [[ -z ${SQLITE_CMD:-} ]] && QPKG.IsInstalled OCR_Converter; then			# `OCR Converter`
+		SQLITE_CMD="LD_LIBRARY_PATH=$(QPKG.GetInstallationPath OCR_Converter)/lib $(QPKG.GetInstallationPath OCR_Converter)/bin/sqlite3"
+		[[ ! -e $SQLITE_CMD ]] && SQLITE_CMD=''
+	fi
+
+	[[ -z ${SQLITE_CMD:-} ]] && SQLITE_CMD=/opt/bin/sqlite3						# last-resort, hope Entware will be installed this session.
 
 	readonly SQLITE_CMD
-
-	return 0
 
 	}
 
@@ -533,7 +555,6 @@ Env:Load()
 
 	if [[ -z $THIS_PACKAGE_PATH || $THIS_PACKAGE_PATH = undefined || ! -d $THIS_PACKAGE_PATH ]]; then
 		ShowAsError "$(ShowTitleName) installation path not found. Please reinstall the sherpa QPKG"
-		show_suggest_raise_issue=true
 		return 1
 	fi
 
@@ -1672,7 +1693,6 @@ ParseHelpArgs()
 	local arg_identified=false
 	local action=''
 	local group=''
-	local group_identified=false
 	local something_to_do=false
 
 	if [[ -n ${args[*]:-} ]]; then
@@ -1689,7 +1709,6 @@ ParseHelpArgs()
 					action=help
 					arg_identified=true
 					group=''
-					group_identified=false
 					show_title=true
 					skip_package_actions=true
 			esac
@@ -1718,7 +1737,6 @@ ParseHelpArgs()
 				esac
 
 				if [[ -n $group ]]; then
-					group_identified=true
 					arg_identified=true
 				fi
 			fi
@@ -1794,7 +1812,7 @@ ParseHelpArgs()
 
 	# When an action has been determined, but no group was found, then show default information. This will usually be the help screen.
 
-	if [[ -n $action && $group_identified = false ]]; then
+	if [[ -n $action && -z $group ]]; then
 		case $action in
 			help)
 				opts_show_basic_help=true
@@ -1827,7 +1845,6 @@ ParseListArgs()
 	local arg_identified=false
 	local action=''
 	local group=''
-	local group_identified=false
 	local awaiting_list_source=false
 
 	if [[ -n ${args[*]:-} ]]; then
@@ -1844,7 +1861,6 @@ ParseListArgs()
 					action=list
 					arg_identified=true
 					group=''
-					group_identified=false
 					awaiting_list_source=true
 			esac
 
@@ -1858,7 +1874,6 @@ ParseListArgs()
 						action=list
 						arg_identified=true
 						group=''
-						group_identified=false
 						awaiting_list_source=true
 				esac
 
@@ -1928,10 +1943,7 @@ ParseListArgs()
 						awaiting_list_source=false
 				esac
 
-				if [[ -n $group ]]; then
-					group_identified=true
-					arg_identified=true
-				fi
+				[[ -n $group ]] && arg_identified=true
 			fi
 
 			# Identify options.
@@ -1982,7 +1994,6 @@ ParseActionArgs()
 	local arg_identified=false
 	local action=''
 	local group=''
-	local group_identified=false
 	local package=''
 
 	if [[ -n ${args[*]:-} ]]; then
@@ -1999,26 +2010,22 @@ ParseActionArgs()
 					action=${arg}
 					arg_identified=true
 					group=''
-					group_identified=false
 					;;
 				disable-auto-update)
 					action=disableau
 					arg_identified=true
 					group=''
-					group_identified=false
 					;;
 				enable-auto-update)
 					action=enableau
 					arg_identified=true
 					group=''
-					group_identified=false
 					;;
 			# All cases below can use multiple words or chars to specify a single action.
 				activate|start)
 					action=activate
 					arg_identified=true
 					group=''
-					group_identified=false
 					show_title=true
 					skip_package_actions=false
 					;;
@@ -2026,7 +2033,6 @@ ParseActionArgs()
 					action=install
 					arg_identified=true
 					group=''
-					group_identified=false
 					show_title=true
 					skip_package_actions=false
 					;;
@@ -2034,7 +2040,6 @@ ParseActionArgs()
 					action=deactivate
 					arg_identified=true
 					group=''
-					group_identified=false
 					show_title=true
 					skip_package_actions=false
 					;;
@@ -2042,7 +2047,6 @@ ParseActionArgs()
 					action=reactivate
 					arg_identified=true
 					group=''
-					group_identified=false
 					show_title=true
 					skip_package_actions=false
 					;;
@@ -2050,7 +2054,6 @@ ParseActionArgs()
 					action=uninstall
 					arg_identified=true
 					group=''
-					group_identified=false
 					show_title=true
 					skip_package_actions=false
 					;;
@@ -2058,7 +2061,6 @@ ParseActionArgs()
 					action=status
 					arg_identified=true
 					group=''
-					group_identified=false
 					show_title=true
 					skip_package_actions=false
 					;;
@@ -2066,7 +2068,6 @@ ParseActionArgs()
 					action=upgrade
 					arg_identified=true
 					group=''
-					group_identified=false
 					show_title=true
 					skip_package_actions=false
 			esac
@@ -2097,10 +2098,7 @@ ParseActionArgs()
 						group=repos
 				esac
 
-				if [[ -n $group ]]; then
-					group_identified=true
-					arg_identified=true
-				fi
+				[[ -n $group ]] && arg_identified=true
 			fi
 
 			# Identify options.
@@ -2108,10 +2106,9 @@ ParseActionArgs()
 			# Identify package.
 			package=$(QPKG.MatchAbbrv "$arg")
 
-			if [[ -n $package ]]; then
-				group_identified=true
-				arg_identified=true
-			fi
+			[[ -n $package ]] && arg_identified=true
+
+			[[ $arg_identified = false ]] && args_filtered+=("$arg")
 
 			case $action in
 				activate|backup|clean|deactivate|disable|disableau|enable|enableau|install|reactivate|reassign|rebuild|reinstall|restore|sign|upgrade)
@@ -2151,6 +2148,8 @@ ParseActionArgs()
 		QPKGs.ACstatus.SCall:Set
 	fi
 
+	args=(${args_filtered[@]:-})
+
 	Func:Exit
 
 	}
@@ -2176,7 +2175,6 @@ ParseReportArgs()
 	local action=''
 	local action_force=false
 	local group=''
-	local group_identified=false
 	local package=''
 
 	if [[ -n ${args[*]:-} ]]; then
@@ -2192,7 +2190,6 @@ ParseReportArgs()
 					action=status
 					arg_identified=true
 					group=''
-					group_identified=false
 					show_title=true
 					skip_package_actions=false
 					;;
@@ -2275,10 +2272,7 @@ ParseReportArgs()
 						group=versions
 				esac
 
-				if [[ -n $group ]]; then
-					group_identified=true
-					arg_identified=true
-				fi
+				[[ -n $group ]] && arg_identified=true
 			fi
 
 			# Identify options.
@@ -2286,10 +2280,7 @@ ParseReportArgs()
 			# Identify package.
 			package=$(QPKG.MatchAbbrv "$arg")
 
-			if [[ -n $package ]]; then
-				group_identified=true
-				arg_identified=true
-			fi
+			[[ -n $package ]] && arg_identified=true
 
 			[[ $arg_identified = false ]] && args_filtered+=("$arg")
 
@@ -8902,7 +8893,7 @@ QPKG.MatchAbbrv()
 
 		for j in "${!ar[@]}"; do
 			if [[ ${ar[$j]} = "$1" ]]; then
-				Display "${QPKG_NAME[$i]}"
+				echo -n "${QPKG_NAME[$i]}"
 				z=0
 				break 2
 			fi
