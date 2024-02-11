@@ -52,7 +52,6 @@ Init()
 	ParseManagementArgs || return
 	ParseHelpArgs || return
 	Lists:Load
-	ParseListArgs || return
 	Paths:Create || return
 	ArchivePriorSessLogs
 	Debug.Log:Init
@@ -64,12 +63,14 @@ Init()
 	if [[ $load_packages = true ]]; then
 		QPKGs.States:Clear
 		Packages:Load || return
+# 		ParseListArgs
 		ParseActionArgs
 	fi
 
 	Title:Show
 
-	ParseReportArgs || return
+	ParseShowArgs || return
+	# loop through remaining args here, and look for chances to assign them to 'help', 'list', 'action' or 'show'.
 	ArgSuggestions:Show
 	QPKGs.Conflicts:Check || return
 	QPKGs.Warnings:Check
@@ -535,10 +536,9 @@ Env:Load()
 	OS.IsSupportSecureDownload || CURL_CMD+=' --insecure'
 	readonly CURL_CMD
 
-	args=()					# command-line argument array.
+	args=()						# command-line argument array.
 	args_incomplete=()
-	args_unknown=()
-	source_branch=stable			# Default branch.
+	source_branch=stable		# Default branch.
 
 	local test_branch=$(/sbin/getcfg sherpa Git_Branch -d unknown -f /etc/config/qpkg.conf)
 
@@ -1581,7 +1581,7 @@ ParseManagementArgs()
 	#   $args (global)
 	#   $args_incomplete (global)
 
-	local -a args_filtered=()
+	local -a args_remaining=()
 	local arg=''
 	local awaiting_follow_branch=false
 	local awaiting_paste_source=false
@@ -1644,7 +1644,7 @@ ParseManagementArgs()
 								awaiting_paste_source=false
 						esac
 					else
-						args_filtered+=($arg)
+						args_remaining+=($arg)
 					fi
 
 					something_to_do=true
@@ -1655,7 +1655,7 @@ ParseManagementArgs()
 	[[ $awaiting_follow_branch = true ]] && args_incomplete+=(follow)
 	[[ $awaiting_paste_source = true ]] && args_incomplete+=(paste)
 
-	if [[ $something_to_do = false ]]; then
+	if [[ $something_to_do = false && ${#args_remaining[@]} -eq 0 ]]; then
 		load_objects=false
 		load_packages=false
 		skip_package_actions=true
@@ -1667,7 +1667,7 @@ ParseManagementArgs()
 		DisableDebugToArchiveAndFile
 	fi
 
-	args=(${args_filtered[@]:-})
+	args=(${args_remaining[@]:-})
 
 	return 0
 
@@ -1688,7 +1688,7 @@ ParseHelpArgs()
 
 	Func:Init
 
-	local -a args_filtered=()
+	local -a args_remaining=()
 	local arg=''
 	local arg_identified=false
 	local action=''
@@ -1705,7 +1705,7 @@ ParseHelpArgs()
 
 			case $arg in
 			# All cases below can use multiple words or chars to specify a single action.
-				display|help|show|view)
+				help)
 					action=help
 					arg_identified=true
 					group=''
@@ -1741,7 +1741,7 @@ ParseHelpArgs()
 				fi
 			fi
 
-			[[ $arg_identified = false ]] && args_filtered+=("$arg")
+			[[ $arg_identified = false ]] && args_remaining+=("$arg")
 
 			# Identify options.
 
@@ -1812,14 +1812,9 @@ ParseHelpArgs()
 
 	# When an action has been determined, but no group was found, then show default information. This will usually be the help screen.
 
-	if [[ -n $action && -z $group ]]; then
-		case $action in
-			help)
-				opts_show_basic_help=true
-		esac
-	fi
+	[[ -n $action && $action = help && -z $group ]] && opts_show_basic_help=true
 
-	args=(${args_filtered[@]:-})
+	args=(${args_remaining[@]:-})
 
 	Func:Exit
 
@@ -1840,7 +1835,7 @@ ParseListArgs()
 
 	Func:Init
 
-	local -a args_filtered=()
+	local -a args_remaining=()
 	local arg=''
 	local arg_identified=false
 	local action=''
@@ -1870,7 +1865,7 @@ ParseListArgs()
 
 			if [[ -z $action ]]; then
 				case $arg in
-					dependent|dependents|disabled|enabled|inactive|indeps|independent|independents|installable|installed|missing|non-installable|not-installable|not-installed|o|stopped|updatable|updateable|upgradable|version|versions)
+					dependent|dependents|disabled|enabled|inactive|indeps|independent|independents|installable|installed|missing|non-installable|not-installable|not-installed|stopped|updatable|updateable|upgradable|version|versions)
 						action=list
 						arg_identified=true
 						group=''
@@ -1918,10 +1913,6 @@ ParseListArgs()
 						group=NTenabled
 						awaiting_list_source=false
 						;;
-					group|groups)
-						group=groups
-						awaiting_list_source=false
-						;;
 					inactive|not-active|stopped)
 						group=NTactive
 						awaiting_list_source=false
@@ -1946,32 +1937,31 @@ ParseListArgs()
 				[[ -n $group ]] && arg_identified=true
 			fi
 
-			# Identify options.
+			[[ $arg_identified = false ]] && args_remaining+=("$arg")
 
-			[[ $arg_identified = false ]] && args_filtered+=("$arg")
+			if [[ $action = list ]]; then
+				show_title=false
 
-			case $action in
-				list)
-					case $group in
-						backedup|installed|NTbackedup|NTinstalled)
-							QPKGs.AClist.IS${group}:Set
-							awaiting_list_source=false
-							;;
-						dependent|disabled|installable|independent|NTinstallable|upgradable)
-							QPKGs.AClist.SC${group}:Set
-							awaiting_list_source=false
-							;;
-						versions)
-							opts_show_versions=true
-							awaiting_list_source=false
-					esac
-			esac
+				case $group in
+					backedup|installed|NTbackedup|NTinstalled)
+						QPKGs.AClist.IS${group}:Set
+						awaiting_list_source=false
+						;;
+					dependent|disabled|installable|independent|NTinstallable|upgradable)
+						QPKGs.AClist.SC${group}:Set
+						awaiting_list_source=false
+						;;
+					versions)
+						opts_show_versions=true
+						awaiting_list_source=false
+				esac
+			fi
 		done
 	fi
 
 	[[ $awaiting_list_source = true ]] && args_incomplete+=(list)
 
-	args=(${args_filtered[@]:-})
+	args=(${args_remaining[@]:-})
 
 	Func:Exit
 
@@ -1989,7 +1979,7 @@ ParseActionArgs()
 
 	Func:Init
 
-	local -a args_filtered=()
+	local -a args_remaining=()
 	local arg=''
 	local arg_identified=false
 	local action=''
@@ -2026,51 +2016,39 @@ ParseActionArgs()
 					action=activate
 					arg_identified=true
 					group=''
-					show_title=true
-					skip_package_actions=false
 					;;
 				add|install)
 					action=install
 					arg_identified=true
 					group=''
-					show_title=true
-					skip_package_actions=false
 					;;
 				deactivate|stop)
 					action=deactivate
 					arg_identified=true
 					group=''
-					show_title=true
-					skip_package_actions=false
 					;;
 				reactivate|restart)
 					action=reactivate
 					arg_identified=true
 					group=''
-					show_title=true
-					skip_package_actions=false
 					;;
 				rm|remove|uninstall)
 					action=uninstall
 					arg_identified=true
 					group=''
-					show_title=true
-					skip_package_actions=false
 					;;
 				s|status|statuses)
 					action=status
 					arg_identified=true
 					group=''
-					show_title=true
-					skip_package_actions=false
 					;;
 				update|upgrade)
 					action=upgrade
 					arg_identified=true
 					group=''
-					show_title=true
-					skip_package_actions=false
 			esac
+
+			[[ $arg_identified = true ]] && skip_package_actions=false
 
 			# Identify group in two stages:
 
@@ -2081,21 +2059,39 @@ ParseActionArgs()
 			if [[ -n $action ]]; then
 				case $arg in
 				# These cases use only a single word or char to specify a single group.
-					results)
+					backedup|installable|installed|missing)
 						group=${arg}
 						;;
+					not-backedup)
+						group=NTbackedup
+						;;
+					not-installed)
+						group=NTinstalled
+						;;
 				# All cases below can use multiple words or chars to specify a single group.
-					a|abs|alias|aliases)
-						group=abs
+					active|started)
+						group=active
 						;;
-					d|dependencies)
-						group=dependencies
+					all|entire|everything)
+						group=all
 						;;
-					p|package|packages)
-						group=packages
+					deps|dependent|dependents)
+						group=dependent
 						;;
-					r|repo|repos)
-						group=repos
+					disabled)
+						group=NTenabled
+						;;
+					inactive|not-active|stopped)
+						group=NTactive
+						;;
+					new|updatable|updateable|upgradable)
+						group=upgradable
+						;;
+					non-installable|not-installable)
+						group=NTinstallable
+						;;
+					independent|independents|indeps)
+						group=independent
 				esac
 
 				[[ -n $group ]] && arg_identified=true
@@ -2108,32 +2104,18 @@ ParseActionArgs()
 
 			[[ -n $package ]] && arg_identified=true
 
-			[[ $arg_identified = false ]] && args_filtered+=("$arg")
+			[[ $arg_identified = false ]] && args_remaining+=("$arg")
 
 			case $action in
-				activate|backup|clean|deactivate|disable|disableau|enable|enableau|install|reactivate|reassign|rebuild|reinstall|restore|sign|upgrade)
+				activate|backup|clean|deactivate|disable|disableau|enable|enableau|install|reactivate|reassign|rebuild|reinstall|restore|sign|status|uninstall|upgrade)
+					[[ $action = status ]] && opts_show_status=true
+
 					case $group in
 						all|dependent|disabled|installable|independent|NTinstallable|upgradable)
 							QPKGs.AC${action}.SC${group}:Set
 							group=''
 							;;
 						installed|NTinstalled|active|NTactive)
-							QPKGs.AC${action}.IS${group}:Set
-							group=''
-							;;
-						*)
-							QPKGs-AC${action}-to:Add "$package"
-					esac
-					;;
-				status)
-					opts_show_status=true
-
-					case $group in
-						all|dependent|independent|upgradable)
-							QPKGs.AC${action}.SC${group}:Set
-							group=''
-							;;
-						installed)
 							QPKGs.AC${action}.IS${group}:Set
 							group=''
 							;;
@@ -2148,13 +2130,13 @@ ParseActionArgs()
 		QPKGs.ACstatus.SCall:Set
 	fi
 
-	args=(${args_filtered[@]:-})
+	args=(${args_remaining[@]:-})
 
 	Func:Exit
 
 	}
 
-ParseReportArgs()
+ParseShowArgs()
 	{
 
 	# Basic argument syntax:
@@ -2169,7 +2151,7 @@ ParseReportArgs()
 
 	Func:Init
 
-	local -a args_filtered=()
+	local -a args_remaining=()
 	local arg=''
 	local arg_identified=false
 	local action=''
@@ -2186,14 +2168,19 @@ ParseReportArgs()
 			# Identify action: each time action changes, must clear group.
 
 			case $arg in
-				s|status|statuses)
-					action=status
+				show)
+					action=show
 					arg_identified=true
 					group=''
-					show_title=true
-					skip_package_actions=false
 					;;
+# 				s|status|statuses)
+# 					action=status
+# 					arg_identified=true
+# 					group=''
+# 					;;
 			esac
+
+			[[ $arg_identified = true ]] && skip_package_actions=false
 
 			# Identify group in two stages:
 
@@ -2282,7 +2269,7 @@ ParseReportArgs()
 
 			[[ -n $package ]] && arg_identified=true
 
-			[[ $arg_identified = false ]] && args_filtered+=("$arg")
+			[[ $arg_identified = false ]] && args_remaining+=("$arg")
 
 			case $action in
 				status)
@@ -2304,7 +2291,7 @@ ParseReportArgs()
 		done
 	fi
 
-	args=(${args_filtered[@]:-})
+	args=(${args_remaining[@]:-})
 
 	Func:Exit
 
@@ -2341,7 +2328,6 @@ ArgSuggestions:Show()
 			esac
 		done
 	fi
-
 
 	if [[ ${#args[@]} -gt 0 ]]; then
 		WriteEmptyLineIfNoneExists
@@ -2497,7 +2483,7 @@ AllocPackGroupsToAcs()
 				if QPKGs-AC${action}-to.IsAny; then
 					DebugAsDone "action: '$action', group: 'SC$group': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
 				else
-					ShowAsWarn "unable to find any packages to '$(Lowercase "$action")': positive allocation handler"
+					ShowAsWarn "unable to find any packages to '$(Lowercase "$action")'"
 				fi
 			fi
 		done
@@ -2520,7 +2506,7 @@ AllocPackGroupsToAcs()
 				if QPKGs-AC${action}-to.IsAny; then
 					DebugAsDone "action: '$action', group: 'SCNT${group}': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
 				else
-					ShowAsWarn "unable to find any packages to '$(Lowercase "$action")': negative allocation handler"
+					ShowAsWarn "unable to find any packages to '$(Lowercase "$action")'"
 				fi
 			fi
 		done
@@ -2571,7 +2557,7 @@ AllocPackStatesToAcs()
 				if QPKGs-AC${action}-to.IsAny; then
 					DebugAsDone "action: '$action', state: 'IS${state}': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
 				else
-					DebugAsWarn "unable to find any packages to '$(Lowercase "$action")'"
+					ShowAsWarn "unable to find any packages to '$(Lowercase "$action")'"
 				fi
 			fi
 		done
@@ -7353,7 +7339,7 @@ _QPKG:download_()
 		if FileMatchesMD5 "$LOCAL_PATHFILE" "$REMOTE_HASH"; then
 			SaveActionResultToLog QPKG "$PACKAGE_NAME" download skipped-ok "existing file $(ShowAsFileName "$LOCAL_FILENAME") checksum correct"
 			MarkThisActionForkAsSkippedOk
-			FuncFork:Exit 0
+# 			FuncFork:Exit 0
 		else
 			DebugInfo "deleting $(ShowAsFileName "$LOCAL_FILENAME") as checksum is incorrect"
 			rm -f "$LOCAL_PATHFILE"
@@ -7856,6 +7842,7 @@ _QPKG:reactivate_()
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reactivate skipped 'not installed'
 		MarkThisActionForkAsSkipped
+		z=2
 	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reactivate skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkippedError
@@ -8392,8 +8379,10 @@ _QPKG:sign_()
 	if [[ -e $ACTION_ABORT_PATHFILE ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped-abort 'abort requested, unable to continue'
 		MarkThisActionForkAsSkippedAbort
-		FuncFork:Exit 3
+		z=3
 	fi
+
+	[[ $z -eq 0 ]] || FuncFork:Exit $z
 
 	DebugVar SQLITE_CMD
 
