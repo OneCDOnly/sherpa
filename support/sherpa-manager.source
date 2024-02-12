@@ -1984,156 +1984,154 @@ ParseActionArgs()
 
 	Func:Init
 
-	local -a args_remaining=()
-	local arg=''
-	local arg_identified=false
 	local action=''
+	local arg=''
+	local -a args_remaining=()
+	local awaiting_group=false
 	local group=''
-	local package=''
+	local new_action=''
 
 	if [[ -n ${args[*]:-} ]]; then
 		for arg in "${args[@]:-}"; do
 			[[ -n $arg ]] || continue
 
-			arg_identified=false
-
-			# Identify action: each time action changes, must clear group.
+			# Identify action: (whenever action changes, must clear group).
 
 			case $arg in
 			# These cases use only a single word to specify a single action.
 				backup|clean|enable|disable|reassign|rebuild|reinstall|restore|sign)
-					action=${arg}
-					arg_identified=true
-					group=''
+					new_action=${arg}
 					;;
 				disable-auto-update)
-					action=disableau
-					arg_identified=true
-					group=''
+					new_action=disableau
 					;;
 				enable-auto-update)
-					action=enableau
-					arg_identified=true
-					group=''
+					new_action=enableau
 					;;
 			# All cases below can use multiple words or chars to specify a single action.
 				activate|start)
-					action=activate
-					arg_identified=true
-					group=''
+					new_action=activate
 					;;
 				add|install)
-					action=install
-					arg_identified=true
-					group=''
+					new_action=install
 					;;
 				deactivate|stop)
-					action=deactivate
-					arg_identified=true
-					group=''
+					new_action=deactivate
 					;;
 				reactivate|restart)
-					action=reactivate
-					arg_identified=true
-					group=''
+					new_action=reactivate
 					;;
 				rm|remove|uninstall)
-					action=uninstall
-					arg_identified=true
-					group=''
+					new_action=uninstall
 					;;
 				s|status|statuses)
-					action=status
-					arg_identified=true
-					group=''
+					new_action=status
+					opts_show_status=true
 					;;
 				update|upgrade)
-					action=upgrade
-					arg_identified=true
-					group=''
+					new_action=upgrade
+					;;
+				*)
+					new_action=''
 			esac
 
-			[[ $arg_identified = true ]] && skip_package_actions=false
+			if [[ -n $new_action && $new_action != "$action" ]]; then
+				[[ $awaiting_group = true ]] && args_incomplete+=($action)
+				action=$new_action
+				awaiting_group=true
+				group=''
+				continue
+			fi
 
 			# Identify group in two stages:
 
 			# Stage 1: when user didn't supply an action before group.
+			# N/A in this function.
 
 			# Stage 2: after an action has been defined.
 
-			if [[ -n $action && $action != "$arg" ]]; then
-				case $arg in
-				# These cases use only a single word or char to specify a single group.
-					backedup|installable|installed|missing)
-						group=${arg}
-						;;
-					not-backedup)
-						group=NTbackedup
-						;;
-					not-installed)
-						group=NTinstalled
-						;;
-				# All cases below can use multiple words or chars to specify a single group.
-					active|started)
-						group=active
-						;;
-					all|entire|everything)
-						group=all
-						;;
-					deps|dependent|dependents)
-						group=dependent
-						;;
-					disabled)
-						group=NTenabled
-						;;
-					inactive|not-active|stopped)
-						group=NTactive
-						;;
-					new|updatable|updateable|upgradable)
-						group=upgradable
-						;;
-					non-installable|not-installable)
-						group=NTinstallable
-						;;
-					independent|independents|indeps)
-						group=independent
-				esac
+			case $arg in
+			# These cases use only a single word or char to specify a single group.
+				backedup|installable|installed|missing)
+					group=${arg}
+					;;
+				not-backedup)
+					group=NTbackedup
+					;;
+				not-installed)
+					group=NTinstalled
+					;;
+			# All cases below can use multiple words or chars to specify a single group.
+				active|started)
+					group=active
+					;;
+				all|entire|everything)
+					group=all
+					;;
+				deps|dependent|dependents)
+					group=dependent
+					;;
+				disabled)
+					group=NTenabled
+					;;
+				inactive|not-active|stopped)
+					group=NTactive
+					;;
+				new|updatable|updateable|upgradable)
+					group=upgradable
+					;;
+				non-installable|not-installable)
+					group=NTinstallable
+					;;
+				independent|independents|indeps)
+					group=independent
+					;;
+				*)
+					group=$(QPKG.MatchAbbrv "$arg")
 
-				[[ -n $group ]] && arg_identified=true
-			fi
+					if [[ -z $group ]]; then
+						args_remaining+=("$arg")
+						continue
+					fi
+			esac
 
 			# Identify options.
+			# N/A in this function.
 
-			# Identify package.
-			package=$(QPKG.MatchAbbrv "$arg")
-
-			[[ -n $package ]] && arg_identified=true
-
-			[[ $arg_identified = false ]] && args_remaining+=("$arg")
+			# Match group to action.
 
 			case $action in
 				activate|backup|clean|deactivate|disable|disableau|enable|enableau|install|reactivate|reassign|rebuild|reinstall|restore|sign|status|uninstall|upgrade)
-					[[ $action = status ]] && opts_show_status=true
+					skip_package_actions=false
 
 					case $group in
 						all|dependent|disabled|installable|independent|NTinstallable|upgradable)
 							QPKGs.AC${action}.SC${group}:Set
-							group=''
+							awaiting_group=false
 							;;
 						installed|NTinstalled|active|NTactive)
 							QPKGs.AC${action}.IS${group}:Set
-							group=''
+							awaiting_group=false
+							;;
+						'')				# Group was not provided, so action is incomplete.
+							args_incomplete+=($action)
+							action=''
+							continue
 							;;
 						*)
-							QPKGs-AC${action}-to:Add "$package"
+							QPKGs-AC${action}-to:Add "$group"
+							awaiting_group=false
 					esac
+					;;
+				*)
+					args_remaining+=($arg)
 			esac
+
+			[[ -z $action && -z $group ]] && args_remaining+=("$arg")
 		done
 	fi
 
-	if [[ $opts_show_status = true ]] && QPKGs-ACstatus-to.IsNone; then		# If `status` is specified without a scope, then scope is `all`.
-		QPKGs.ACstatus.SCall:Set
-	fi
+	[[ $awaiting_group = true ]] && args_incomplete+=($action)		# This is only in-case the last action specified was not followed by a group.
 
 	args=(${args_remaining[@]:-})
 
@@ -2308,22 +2306,39 @@ ArgSuggestions:Show()
 	Func:Init
 
 	local arg=''
+	local -a args_remaining=()
 
-	if [[ ${#args_incomplete[@]} -gt 0 ]]; then
-		WriteEmptyLineIfNoneExists
-		ShowAsError "incomplete argument$(Pluralise "${#args_incomplete[@]}"): \"${args_incomplete[*]}\""
-		check_tasks=false
-		skip_package_actions=true
+	if [[ ${#args_incomplete[@]:-} -gt 0 ]]; then
+		for arg in "${args_incomplete[@]}"; do
+			case $arg in
+				status)			# If `status` is specified without a scope, then scope is `all`.
+					QPKGs.ACstatus.SCall:Set
+					;;
+				*)
+					args_remaining+=($arg)
+			esac
+		done
+
+		if [[ ${#args_remaining[@]:-} -gt 0 ]]; then
+			WriteEmptyLineIfNoneExists
+			ShowAsError "incomplete argument$(Pluralise "${#args_remaining[@]}"): \"${args_remaining[*]}\""
+			check_tasks=false
+			skip_package_actions=true
+		fi
 
 		for arg in "${args_incomplete[@]}"; do
 			case $arg in
+				activate|uninstall)
+					DisplayAsProjSynExam "please provide valid $(ShowPackages) or a $(ShowPackageGroup) after '$arg' like" "$arg installed"
+					opts_show_basic_help=false
+					;;
 				follow)
 					DisplayAsProjSynExam "please provide a valid source branch to track after 'follow' like" 'follow stable'
 					DisplayAsProjSynIndentExam '' 'follow unstable'
 					opts_show_basic_help=false
 					;;
 				list)
-					DisplayAsProjSynExam "please provide a valid source to show after 'list' like" 'list installable'
+					DisplayAsProjSynExam "please provide a valid source after 'list' like" 'list installable'
 					opts_show_basic_help=false
 					;;
 				paste)
@@ -2334,7 +2349,7 @@ ArgSuggestions:Show()
 		done
 	fi
 
-	if [[ ${#args[@]} -gt 0 ]]; then
+	if [[ ${#args[@]:-} -gt 0 ]]; then
 		WriteEmptyLineIfNoneExists
 		ShowAsError "unknown argument$(Pluralise "${#args[@]}"): \"${args[*]}\". Please check the arguments again"
 		check_tasks=false
