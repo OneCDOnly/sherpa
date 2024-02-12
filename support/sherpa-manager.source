@@ -2061,7 +2061,7 @@ ParseActionArgs()
 
 			# Stage 2: after an action has been defined.
 
-			if [[ -n $action ]]; then
+			if [[ -n $action && $action != "$arg" ]]; then
 				case $arg in
 				# These cases use only a single word or char to specify a single group.
 					backedup|installable|installed|missing)
@@ -4888,10 +4888,10 @@ Report.Options:Show()
 
 		Help.Basic:Show
 		DisplayAsHelpTitle "$(ShowOptions) usage examples:"
-		DisplayAsProjSynIndentExam 'show package statuses' status
-		DisplayAsProjSynIndentExam '' s
-		DisplayAsProjSynIndentExam 'show package repositories' repos
-		DisplayAsProjSynIndentExam '' r
+# 		DisplayAsProjSynIndentExam 'show package statuses' status
+# 		DisplayAsProjSynIndentExam '' s
+# 		DisplayAsProjSynIndentExam 'show package repositories' repos
+# 		DisplayAsProjSynIndentExam '' r
 		DisplayAsProjSynIndentExam 'show live debugging information, and record it to file' "$(ShowAction) $(ShowPackages) verbose"
 		DisplayAsProjSynIndentExam '' v
 		DisplayAsProjSynIndentExam 'record debugging information to file-only' "$(ShowAction) $(ShowPackages) debug"
