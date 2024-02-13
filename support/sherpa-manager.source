@@ -1998,8 +1998,8 @@ ParseActionArgs()
 			# Identify action.
 
 			case $arg in
-			# These cases use only a single word to specify a single action.
-				backup|clean|enable|disable|reassign|rebuild|reinstall|restore|sign)
+			# These cases use only a single user-provided word to specify a single action.
+				backup|clean|disable|enable|reassign|rebuild|reinstall|restore|sign)
 					new_action=${arg}
 					;;
 				disable-auto-update)
@@ -2008,7 +2008,7 @@ ParseActionArgs()
 				enable-auto-update)
 					new_action=enableau
 					;;
-			# All cases below can use multiple words or chars to specify a single action.
+			# All cases below can use multiple user-provided words or chars to specify a single action.
 				activate|start)
 					new_action=activate
 					;;
@@ -2051,7 +2051,7 @@ ParseActionArgs()
 			# Stage 2: after an action has been defined.
 
 			case $arg in
-			# These cases use only a single word or char to specify a single group.
+			# These cases use only a single user-provided word or char to specify a single group.
 				backedup|installable|installed|missing)
 					group=${arg}
 					;;
@@ -2061,11 +2061,11 @@ ParseActionArgs()
 				not-installed)
 					group=NTinstalled
 					;;
-			# All cases below can use multiple words or chars to specify a single group.
+			# All cases below can use multiple user-provided words or chars to specify a single group.
 				active|started)
 					group=active
 					;;
-				all|entire|everything)
+				all|everything)
 					group=all
 					;;
 				deps|dependent|dependents)
@@ -2093,26 +2093,21 @@ ParseActionArgs()
 			# Match group to action.
 
 			if [[ -n $action && -n $group ]]; then
-				skip_package_actions=false
-
 				case $group in
-					all|dependent|disabled|installable|independent|NTinstallable|upgradable)
+					all|canbackup|canclean|canrestarttoupdate|dependent|hasdependents|independent|installable|upgradable|NTcanclean|NTinstallable|NTupgradable)
 						QPKGs.AC${action}.SC${group}:Set
 						awaiting_group=false
 						;;
-					installed|NTinstalled|active|NTactive)
+					active|backedup|enabled|installed|missing|NTactive|NTbackedup|NTenabled|NTinstalled)
 						QPKGs.AC${action}.IS${group}:Set
 						awaiting_group=false
-						;;
-					'')				# Valid package group was not provided, so action is incomplete.
-						args_incomplete+=($action)
-						action=''
-						continue
 						;;
 					*)
 						QPKGs-AC${action}-to:Add "$group"
 						awaiting_group=false
 				esac
+
+				[[ $awaiting_group = false ]] && skip_package_actions=false
 			else
 				args_remaining+=("$arg")
 			fi
