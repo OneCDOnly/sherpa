@@ -1,3 +1,6 @@
+* Add 'colour true' and 'colour false' as management options saved to qpkg.conf
+	- allow for different spelling.
+
 *  There should be distinct argument parsers for:
 	- script management functions:
 		'debug' (dbug)
