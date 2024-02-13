@@ -54,7 +54,7 @@ Init()
 	Lists:Load
 	Paths:Create || return
 
-	[[ $opts_switch_follow_branch = true ]] && SwitchSourceBranch
+	[[ $useropt_switch_branch = true ]] && SwitchSourceBranch
 
 	ArchivePriorSessLogs
 	Debug.Log:Init
@@ -92,66 +92,66 @@ Results:Show()
 	display_last_action_datetime=false
 
 	if [[ $write_report = true ]]; then
-		if [[ $opts_show_abbreviations = true ]]; then
+		if [[ $useropt_show_abbreviations = true ]]; then
 			Report.Abbreviations:Show
-		elif [[ $opts_show_actions = true ]]; then
+		elif [[ $useropt_show_actions = true ]]; then
 			Report.Actions:Show
-		elif [[ $opts_show_actions_all = true ]]; then
+		elif [[ $useropt_show_actions_all = true ]]; then
 			Report.ActionsAll:Show
-		elif [[ $opts_show_lists = true ]]; then
+		elif [[ $useropt_show_lists = true ]]; then
 			Report.Lists:Show
-		elif [[ $opts_show_options = true ]]; then
+		elif [[ $useropt_show_options = true ]]; then
 			Report.Options:Show
-		elif [[ $opts_show_problems = true ]]; then
+		elif [[ $useropt_show_problems = true ]]; then
 			Report.Problems:Show
-		elif [[ $opts_show_groups = true ]]; then
+		elif [[ $useropt_show_groups = true ]]; then
 			Report.Groups:Show
-		elif [[ $opts_show_versions = true ]]; then
+		elif [[ $useropt_show_versions = true ]]; then
 			Report.Versions:Show
 		fi
 
-		if [[ $opts_show_backups = true ]]; then
+		if [[ $useropt_show_backups = true ]]; then
 			Report.Backups:Show
 		fi
 
-		if [[ $opts_show_dependencies = true ]]; then
+		if [[ $useropt_show_dependencies = true ]]; then
 			Report.Dependencies:Show
 		fi
 
-		if [[ $opts_show_packages = true ]]; then
+		if [[ $useropt_show_packages = true ]]; then
 			Report.Packages:Show
 		fi
 
-		if [[ $opts_show_repos = true ]]; then
+		if [[ $useropt_show_repos = true ]]; then
 			Report.Repos:Show
 		fi
 
-		if [[ $opts_show_results = true ]]; then
+		if [[ $useropt_show_results = true ]]; then
 			display_last_action_datetime=true
-			opts_show_packages_ok=true
-			opts_show_packages_skipped=true
-			opts_show_packages_failed=true
+			show_package_actions_ok=true
+			show_package_actions_skipped=true
+			show_package_actions_failed=true
 		fi
 
-		if [[ $opts_show_status = true ]]; then
+		if [[ $useropt_show_status = true ]]; then
 			Report.Statuses:Show
-			opts_show_packages_ok=false
-			opts_show_packages_skipped=false
-			opts_show_packages_failed=false
+			show_package_actions_ok=false
+			show_package_actions_skipped=false
+			show_package_actions_failed=false
 		fi
 
-		if [[ $opts_show_tips = true ]]; then
+		if [[ $useropt_show_tips = true ]]; then
 			Report.Tips:Show
 		fi
 
-		if [[ $opts_paste_log_last = true ]]; then
+		if [[ $useropt_paste_log_last = true ]]; then
 			Log.Last:Paste
-		elif [[ $opts_paste_log_tail = true ]]; then
+		elif [[ $useropt_paste_log_tail = true ]]; then
 			Log.Tail:Paste
-		elif [[ $opts_show_log_last = true ]]; then
+		elif [[ $useropt_show_log_last = true ]]; then
 			LockFile:Release
 			Log.Last:View
-		elif [[ $opts_show_log_tail = true ]]; then
+		elif [[ $useropt_show_log_tail = true ]]; then
 			LockFile:Release
 			Log.Tail:View
 		fi
@@ -183,16 +183,16 @@ Results:Show()
 		fi
 	fi
 
-	if [[ $opts_show_basic_help = true ]]; then
+	if [[ $useropt_show_basic_help = true ]]; then
 		Help.Basic:Show
 		Help.Basic.Examples:Show
 	fi
 
 	# Action results.
-	[[ $opts_show_packages_ok = true ]] && Report.Results:Show ok
-	[[ $opts_show_packages_skipped = true ]] && Report.Results:Show skipped
-	[[ $opts_show_packages_failed = true ]] && Report.Results:Show failed
-	[[ $opts_show_backuploc = true ]] && Help.BackupLocation:Show
+	[[ $show_package_actions_ok = true ]] && Report.Results:Show ok
+	[[ $show_package_actions_skipped = true ]] && Report.Results:Show skipped
+	[[ $show_package_actions_failed = true ]] && Report.Results:Show failed
+	[[ $show_backuploc = true ]] && Help.BackupLocation:Show
 	[[ $show_zero_qpkgs = true ]] && ShowZeroQpkgs
 	[[ $show_suggest_raise_issue = true ]] && Help.Issue:Show
 	DebugInfoMinSepr
@@ -203,7 +203,7 @@ Results:Show()
 
 	[[ $archive_debug_afterward = true ]] && ArchiveActiveSessLog
 	ResetActiveSessLog
-	[[ $title_shown = true && $opts_verbose = false ]] && WriteEmptyLineIfNoneExists   # Final on-screen linespace.
+	[[ $title_shown = true && $useropt_verbose = false ]] && WriteEmptyLineIfNoneExists   # Final on-screen linespace.
 
 	}
 
@@ -304,6 +304,7 @@ Vars:Load()
 	action_msg_pipe_fd=none
 	archive_debug_afterward=false
 	backup_stdin_fd=none
+	bypass_package_actions=false
 	check_tasks=true
 	colourful=true
 	fork_pid=''
@@ -317,42 +318,41 @@ Vars:Load()
 	pips_install=false
 	proc_counts_path=''
 	qpkg_timeouts_increased=false
+	show_backuploc=false
+	show_package_actions_failed=false
+	show_package_actions_ok=false
+	show_package_actions_skipped=false
 	show_suggest_raise_issue=false
 	show_title=true
 	show_zero_qpkgs=true
-	skip_package_actions=false
 	title_shown=false
 	write_report=false
 
 	# User-selectable options.
-	opts_check=false
-	opts_debug=false
-	opts_paste_log_last=false
-	opts_paste_log_tail=false
-	opts_show_abbreviations=false
-	opts_show_actions=false
-	opts_show_actions_all=false
-	opts_show_backuploc=false
-	opts_show_backups=false
-	opts_show_basic_help=false
-	opts_show_dependencies=false
-	opts_show_groups=false
-	opts_show_lists=false
-	opts_show_log_last=false
-	opts_show_log_tail=false
-	opts_show_options=false
-	opts_show_packages=false
-	opts_show_packages_failed=false
-	opts_show_packages_ok=false
-	opts_show_packages_skipped=false
-	opts_show_problems=false
-	opts_show_repos=false
-	opts_show_results=false
-	opts_show_status=false
-	opts_show_tips=false
-	opts_show_versions=false
-	opts_switch_follow_branch=false
-	opts_verbose=false
+	useropt_check=false
+	useropt_debug=false
+	useropt_paste_log_last=false
+	useropt_paste_log_tail=false
+	useropt_show_abbreviations=false
+	useropt_show_actions=false
+	useropt_show_actions_all=false
+	useropt_show_backups=false
+	useropt_show_basic_help=false
+	useropt_show_dependencies=false
+	useropt_show_groups=false
+	useropt_show_lists=false
+	useropt_show_log_last=false
+	useropt_show_log_tail=false
+	useropt_show_options=false
+	useropt_show_packages=false
+	useropt_show_problems=false
+	useropt_show_repos=false
+	useropt_show_results=false
+	useropt_show_status=false
+	useropt_show_tips=false
+	useropt_show_versions=false
+	useropt_switch_branch=false
+	useropt_verbose=false
 
 	UpdateColourisation
 
@@ -692,8 +692,8 @@ Paths:Create()
 Debug.Log:Env()
 	{
 
-	[[ $skip_package_actions = false ]] || return 0
-	[[ $opts_debug = true ]] || return 0
+	[[ $bypass_package_actions = false ]] || return 0
+	[[ $useropt_debug = true ]] || return 0
 
 	Func:Init
 	ShowAsProc 'logging environment'
@@ -831,19 +831,19 @@ Tasks:Check()
 	local action=''
 	local group=''
 	local state=''
-	local something_to_do=false
+	local to_do=false
 	local build_states=false
 
 	for action in "${USER_QPKG_ACTIONS[@]}"; do
 		if QPKGs-AC${action}-to.IsAny; then
-			something_to_do=true
+			to_do=true
 			build_states=true
 			break
 		fi
 
 		for group in "${USER_QPKG_SC_GROUPS[@]}"; do
 			if QPKGs.AC${action}.SC${group}.IsSet; then
-				something_to_do=true
+				to_do=true
 				build_states=true
 				break 2
 			fi
@@ -851,7 +851,7 @@ Tasks:Check()
 
 		for group in "${USER_QPKG_SCNT_GROUPS[@]}"; do
 			if QPKGs.AC${action}.SCNT${group}.IsSet; then
-				something_to_do=true
+				to_do=true
 				build_states=true
 				break 2
 			fi
@@ -859,7 +859,7 @@ Tasks:Check()
 
 		for state in "${USER_QPKG_IS_STATES[@]}"; do
 			if QPKGs.AC${action}.IS${state}.IsSet; then
-				something_to_do=true
+				to_do=true
 				build_states=true
 				break 2
 			fi
@@ -867,29 +867,32 @@ Tasks:Check()
 
 		for state in "${USER_QPKG_ISNT_STATES[@]}"; do
 			if QPKGs.AC${action}.ISNT${state}.IsSet; then
-				something_to_do=true
+				to_do=true
 				build_states=true
 				break 2
 			fi
 		done
 	done
 
-	if [[ $something_to_do = false ]]; then
-		if [[ $opts_check = true || $opts_show_dependencies = true || $opts_show_packages = true || $opts_show_packages_failed = true || $opts_show_packages_ok = true || $opts_show_packages_skipped = true || $opts_show_repos = true || $opts_show_status = true ]]; then
-			something_to_do=true
+	if [[ $to_do = false ]]; then
+		if [[ $useropt_check = true || $useropt_show_dependencies = true || $useropt_show_packages = true || $show_package_actions_failed = true || $show_package_actions_ok = true || $show_package_actions_skipped = true || $useropt_show_repos = true || $useropt_show_status = true ]]; then
+			to_do=true
 			build_states=true
-		elif [[ $opts_debug = true || $opts_paste_log_last = true || $opts_paste_log_tail = true || $opts_show_abbreviations = true || $opts_show_actions = true || $opts_show_actions_all = true || $opts_show_backups = true || $opts_show_groups = true || $opts_show_log_last = true || $opts_show_lists = true || $opts_show_log_tail = true || $opts_show_options = true || $opts_show_problems = true || $opts_show_results = true || $opts_show_tips = true || $opts_show_versions = true || $opts_verbose = true ]]; then
-			something_to_do=true
+		elif [[ $useropt_debug = true || $useropt_paste_log_last = true || $useropt_paste_log_tail = true || $useropt_show_abbreviations = true || $useropt_show_actions = true || $useropt_show_actions_all = true || $useropt_show_backups = true || $useropt_show_groups = true || $useropt_show_log_last = true || $useropt_show_lists = true || $useropt_show_log_tail = true || $useropt_show_options = true || $useropt_show_problems = true || $useropt_show_results = true || $useropt_show_tips = true || $useropt_show_versions = true || $useropt_verbose = true ]]; then
+			to_do=true
+		elif [[ $show_package_actions_failed = true || $show_package_actions_ok = true || $show_package_actions_skipped = true ]]; then
+			to_do=true
+			build_states=true
 		fi
 	fi
 
-	if [[ $something_to_do = false ]]; then
-		opts_show_basic_help=true
-		skip_package_actions=true
+	if [[ $to_do = false ]]; then
+		useropt_show_basic_help=true
+		bypass_package_actions=true
 		Func:Exit 1; return
 	fi
 
-	write_report=$something_to_do
+	write_report=$to_do
 	[[ $build_states = true ]] && QPKGs.States:Build
 	Func:Exit
 
@@ -901,7 +904,7 @@ Validate()
 	# This function handles most of the high-level logic for package actions.
 	# If a package isn't being processed by the correct action, odds-are it's due to a logic error in this function.
 
-	[[ $skip_package_actions = false ]] || return 0
+	[[ $bypass_package_actions = false ]] || return 0
 
 	Func:Init
 	local installed_ver=''
@@ -920,7 +923,7 @@ Validate()
 
 	# Decide if particular IPKs and PIPs should be installed/upgraded.
 
-	if [[ $opts_check = true ]] || QPKGs-ACupgrade-to.Exist Entware; then
+	if [[ $useropt_check = true ]] || QPKGs-ACupgrade-to.Exist Entware; then
 		ipks_upgrade=true
 		ipks_install=true
 		pips_install=true
@@ -1011,7 +1014,7 @@ Validate()
 	# Install independents for installed dependents.
 
 	for package in $(QPKGs-ISinstalled:Array); do
-		if [[ $opts_check = true ]] || QPKGs-ACactivate-to.Exist "$package"; then
+		if [[ $useropt_check = true ]] || QPKGs-ACactivate-to.Exist "$package"; then
 			for prospect in $(QPKG.GetDependencies "$package"); do
 				QPKGs-ISNTinstalled.Exist "$prospect" && QPKGs-ACinstall-to:Add "$prospect"
 			done
@@ -1120,7 +1123,7 @@ Validate()
 
 	# Check all items.
 
-	if [[ $opts_check = true ]]; then
+	if [[ $useropt_check = true ]]; then
 		QPKGs-ACsign-to:Add "$(QPKGs-ISinstalled:Array)"
 
 		for package in $(QPKGs-SCdependent:Array); do
@@ -1183,7 +1186,7 @@ Actions:Proc()
 
 	# Run all actions on selected packages in all tiers.
 
-	[[ $skip_package_actions = false ]] || return
+	[[ $bypass_package_actions = false ]] || return
 
 	Func:Init
 	ShowAsProc 'package actions'
@@ -1254,13 +1257,13 @@ Actions:Proc()
 		esac
 	done
 
-	if [[ $opts_debug = true ]]; then
+	if [[ $useropt_debug = true ]]; then
 #		PIPs.Actions:List
 		IPKs.Actions:List
 		QPKGs.Actions:List
 	fi
 
-	if [[ $title_shown = true && $skip_package_actions = false ]]; then
+	if [[ $title_shown = true && $bypass_package_actions = false ]]; then
 		if Error.IsNt; then
 			ShowAsDone 'processing complete'
 		else
@@ -1445,9 +1448,9 @@ Action:Proc()
 				esac
 			done
 
-			[[ $ok_count -gt 0 ]] && opts_show_packages_ok=true
-			[[ $skip_count -gt 0 || $skip_ok_count -gt 0 || $skip_error_count -gt 0 || $skip_abort_count -gt 0 ]] && opts_show_packages_skipped=true
-			[[ $fail_count -gt 0 ]] && opts_show_packages_failed=true
+			[[ $ok_count -gt 0 ]] && show_package_actions_ok=true
+			[[ $skip_count -gt 0 || $skip_ok_count -gt 0 || $skip_error_count -gt 0 || $skip_abort_count -gt 0 ]] && show_package_actions_skipped=true
+			[[ $fail_count -gt 0 ]] && show_package_actions_failed=true
 
 			[[ ${#target_packages[@]} -gt 0 ]] && KillActiveFork		# Should only be needed if an action fork didn't exit properly.
 			wait 2>/dev/null
@@ -1521,10 +1524,10 @@ AdjustMaxForks()
 	max_forks=$CONCURRENCY
 	local reason=''
 
-	if [[ $opts_verbose = true ]]; then 			# No-point running actions async in verbose mode: stdout will be a confusing mess.
+	if [[ $useropt_verbose = true ]]; then 			# No-point running actions async in verbose mode: stdout will be a confusing mess.
 		max_forks=1
 		reason='verbose mode is active'
-	elif [[ $opts_debug = true ]]; then 			# Same goes for debug mode: logs will be a mess.
+	elif [[ $useropt_debug = true ]]; then 			# Same goes for debug mode: logs will be a mess.
 		max_forks=1
 		reason='debug mode is active'
 	else
@@ -1586,89 +1589,123 @@ ParseManagementArgs()
 	#   $args (global)
 	#   $args_incomplete (global)
 
+	local action=''
 	local -a args_remaining=()
 	local arg=''
-	local awaiting_follow_branch=false
-	local awaiting_paste_source=false
-	local something_to_do=false
+	local awaiting_group=false
+	local new_action=''
+	local to_do=false
 
 	if [[ -n ${args[*]:-} ]]; then
-		for arg in "${args[@]}"; do
+		for arg in "${args[@]:-}"; do
 			[[ -n $arg ]] || continue
 
+			# Identify action.
+
 			case $arg in
-				c|check)
-					opts_check=true
-					skip_package_actions=false
-					something_to_do=true
-					;;
-				debug|dbug)
-					EnableDebugToArchiveAndFile
-					;;
-				follow)
-					awaiting_follow_branch=true
+			# These cases use only a single user-provided word to specify a single action.
+				follow|paste)
+					awaiting_group=true
+# 					bypass_package_actions=true
+					check_tasks=false
 					load_objects=false
 					load_packages=false
-					skip_package_actions=true
-					check_tasks=false
-					something_to_do=true
-					# Assume next arg will be the source branch to track.
-					;;
-				paste)
-					awaiting_paste_source=true
-					load_objects=false
-					load_packages=false
-					skip_package_actions=true
-					check_tasks=false
-					something_to_do=true
-					# Assume next arg will be the paste source.
+					new_action=$arg
 					;;
 				reset)
+					new_action=reset
 					Reset
 					;;
+			# All cases below can use multiple user-provided words or chars to specify a single action.
+				c|check)
+					bypass_package_actions=false
+					new_action=check
+					to_do=true
+					useropt_check=true
+					;;
+				debug|dbug)
+					new_action=debug
+					EnableDebugToArchiveAndFile
+					;;
 				v|verbose)
+					new_action=verbose
 					Verbose:Enable
 					EnableDebugToArchiveAndFile
 					;;
 				*)
-					if [[ $awaiting_follow_branch = true ]]; then
-						case $arg in
-							stable|unstable)
-								source_branch=$arg
-								opts_switch_follow_branch=true
-								awaiting_follow_branch=false
-						esac
-					elif [[ $awaiting_paste_source = true ]]; then
-						case $arg in
-							all|log|tail)
-								opts_paste_log_tail=true
-								awaiting_paste_source=false
-								;;
-							l|last)
-								opts_paste_log_last=true
-								awaiting_paste_source=false
-						esac
-					else
-						args_remaining+=($arg)
-					fi
-
-					something_to_do=true
+					new_action=''
 			esac
+
+			if [[ -n $new_action && $new_action != "$action" ]]; then
+				[[ $awaiting_group = true ]] && args_incomplete+=($action)
+				action=$new_action
+				group=''	 			# When action changes, must clear group.
+				continue
+			fi
+
+			# Identify group in two stages:
+
+			# Stage 1: when user didn't supply an action before group.
+			# N/A in this function.
+
+			# Stage 2: after an action has been defined.
+
+			case $arg in
+			# These cases use only a single user-provided word or char to specify a single group.
+				stable|unstable)
+					group=$arg
+					;;
+			# All cases below can use multiple user-provided words or chars to specify a single group.
+				all|log|tail)
+					group=tail
+					;;
+				l|last)
+					group=last
+			esac
+
+			# Pair action with group.
+
+			if [[ -n $action && -n $group ]]; then
+				case $action in
+					follow)
+						case $group in
+							stable|unstable)
+								awaiting_group=false
+								source_branch=$group
+								useropt_switch_branch=true
+						esac
+						;;
+					paste)
+						case $group in
+							last)
+								awaiting_group=false
+								useropt_paste_log_last=true
+								;;
+							tail)
+								awaiting_group=false
+								useropt_paste_log_tail=true
+						esac
+				esac
+
+				[[ $awaiting_group = false ]] && to_do=true
+			else
+				args_remaining+=("$arg")
+			fi
 		done
 	fi
 
-	[[ $awaiting_follow_branch = true ]] && args_incomplete+=(follow)
-	[[ $awaiting_paste_source = true ]] && args_incomplete+=(paste)
+	[[ $awaiting_group = true ]] && args_incomplete+=($action)		# This is only if the last action specified was not followed by a group.
 
-	if [[ $something_to_do = false && ${#args_remaining[@]} -eq 0 ]]; then
+	if [[ $to_do = false && ${#args_remaining[@]} -eq 0 ]]; then
+		bypass_package_actions=true
+		check_tasks=false
 		load_objects=false
 		load_packages=false
-		skip_package_actions=true
-		check_tasks=false
-		opts_show_basic_help=true
-		opts_show_packages_ok=false
-		opts_show_packages_skipped=false
-		opts_show_packages_failed=false
+		show_package_actions_failed=false
+		show_package_actions_ok=false
+		show_package_actions_skipped=false
+		useropt_show_basic_help=true
+
 		DisableDebugToArchiveAndFile
 	fi
 
@@ -1698,7 +1735,7 @@ ParseHelpArgs()
 	local arg_identified=false
 	local action=''
 	local group=''
-	local something_to_do=false
+	local to_do=false
 
 	if [[ -n ${args[*]:-} ]]; then
 		for arg in "${args[@]:-}"; do
@@ -1715,7 +1752,7 @@ ParseHelpArgs()
 					arg_identified=true
 					group=''
 					show_title=true
-					skip_package_actions=true
+					bypass_package_actions=true
 			esac
 
 			# Identify group in two stages:
@@ -1754,70 +1791,70 @@ ParseHelpArgs()
 				help)
 					load_objects=false
 					load_packages=false
-					skip_package_actions=true
+					bypass_package_actions=true
 					check_tasks=false
-					something_to_do=true
+					to_do=true
 
 					case $group in
 						abs)
-							opts_show_abbreviations=true
+							useropt_show_abbreviations=true
 							;;
 						actions)
-							opts_show_actions=true
+							useropt_show_actions=true
 							;;
 						all-actions|all)
-							opts_show_actions_all=true
+							useropt_show_actions_all=true
 							;;
 						backups)
-							opts_show_backups=true
+							useropt_show_backups=true
 							;;
 						dependencies)
-							opts_show_dependencies=true
+							useropt_show_dependencies=true
 							;;
 						groups)
-							opts_show_groups=true
+							useropt_show_groups=true
 							;;
 						last)
-							opts_show_log_last=true
+							useropt_show_log_last=true
 							show_title=false
 							;;
 						list|lists)
-							opts_show_lists=true
+							useropt_show_lists=true
 							;;
 						log)
-							opts_show_log_tail=true
+							useropt_show_log_tail=true
 							show_title=false
 							;;
 						options)
-							opts_show_options=true
+							useropt_show_options=true
 							;;
 						packages)
-							opts_show_packages=true
+							useropt_show_packages=true
 							;;
 						problems)
-							opts_show_problems=true
+							useropt_show_problems=true
 							;;
 						repos)
-							opts_show_repos=true
+							useropt_show_repos=true
 							;;
 						results)
-							opts_show_results=true
+							useropt_show_results=true
 							;;
 						status)
-							opts_show_status=true
+							useropt_show_status=true
 							;;
 						tips)
-							opts_show_tips=true
+							useropt_show_tips=true
 					esac
 			esac
 		done
 	fi
 
-	write_report=$something_to_do
+	write_report=$to_do
 
 	# When an action has been determined, but no group was found, then show default information. This will usually be the help screen.
 
-	[[ -n $action && $action = help && -z $group ]] && opts_show_basic_help=true
+	[[ -n $action && $action = help && -z $group ]] && useropt_show_basic_help=true
 
 	args=(${args_remaining[@]:-})
 
@@ -1957,7 +1994,7 @@ ParseListArgs()
 						awaiting_list_source=false
 						;;
 					versions)
-						opts_show_versions=true
+						useropt_show_versions=true
 						awaiting_list_source=false
 				esac
 			fi
@@ -2000,7 +2037,7 @@ ParseActionArgs()
 			case $arg in
 			# These cases use only a single user-provided word to specify a single action.
 				backup|clean|disable|enable|reassign|rebuild|reinstall|restore|sign)
-					new_action=${arg}
+					new_action=$arg
 					;;
 				disable-auto-update)
 					new_action=disableau
@@ -2026,7 +2063,7 @@ ParseActionArgs()
 					;;
 				s|status|statuses)
 					new_action=status
-					opts_show_status=true
+					useropt_show_status=true
 					;;
 				update|upgrade)
 					new_action=upgrade
@@ -2053,7 +2090,7 @@ ParseActionArgs()
 			case $arg in
 			# These cases use only a single user-provided word or char to specify a single group.
 				backedup|installable|installed|missing)
-					group=${arg}
+					group=$arg
 					;;
 				not-backedup)
 					group=NTbackedup
@@ -2090,7 +2127,7 @@ ParseActionArgs()
 					group=$(QPKG.MatchAbbrv "$arg")
 			esac
 
-			# Match group to action.
+			# Pair action with group.
 
 			if [[ -n $action && -n $group ]]; then
 				case $group in
@@ -2107,7 +2144,7 @@ ParseActionArgs()
 						awaiting_group=false
 				esac
 
-				[[ $awaiting_group = false ]] && skip_package_actions=false
+				[[ $awaiting_group = false ]] && bypass_package_actions=false
 			else
 				args_remaining+=("$arg")
 			fi
@@ -2166,7 +2203,7 @@ ParseShowArgs()
 # 					;;
 			esac
 
-			[[ $arg_identified = true ]] && skip_package_actions=false
+			[[ $arg_identified = true ]] && bypass_package_actions=false
 
 			# Identify group in two stages:
 
@@ -2259,7 +2296,7 @@ ParseShowArgs()
 
 			case $action in
 				status)
-					opts_show_status=true
+					useropt_show_status=true
 
 					case $group in
 						all|dependent|independent|upgradable)
@@ -2306,32 +2343,32 @@ ArgSuggestions:Show()
 			WriteEmptyLineIfNoneExists
 			ShowAsError "incomplete argument$(Pluralise "${#args_remaining[@]}"): \"${args_remaining[*]}\""
 			check_tasks=false
-			skip_package_actions=true
+			bypass_package_actions=true
 		fi
 
 		for arg in "${args_incomplete[@]}"; do
 			case $arg in
 				activate|uninstall)
 					DisplayAsProjSynExam "please provide valid $(ShowPackages) or a $(ShowPackageGroup) after '$arg' like" "$arg installed"
-					opts_show_basic_help=false
+					useropt_show_basic_help=false
 					;;
 				follow)
 					DisplayAsProjSynExam "please provide a valid source branch to track after 'follow' like" 'follow stable'
 					DisplayAsProjSynIndentExam '' 'follow unstable'
-					opts_show_basic_help=false
+					useropt_show_basic_help=false
 					;;
 				list)
 					DisplayAsProjSynExam "please provide a valid source after 'list' like" 'list installable'
-					opts_show_basic_help=false
+					useropt_show_basic_help=false
 					;;
 				paste)
 					DisplayAsProjSynExam "please provide a valid source to paste online after 'paste' like" 'paste log'
 					DisplayAsProjSynIndentExam '' 'paste last'
-					opts_show_basic_help=false
+					useropt_show_basic_help=false
 					;;
 				show)
 					DisplayAsProjSynExam "please provide a valid source after 'show' like" 'show statuses'
-					opts_show_basic_help=false
+					useropt_show_basic_help=false
 			esac
 		done
 	fi
@@ -2340,49 +2377,49 @@ ArgSuggestions:Show()
 		WriteEmptyLineIfNoneExists
 		ShowAsError "unknown argument$(Pluralise "${#args[@]}"): \"${args[*]}\". Please check the arguments again"
 		check_tasks=false
-		skip_package_actions=true
+		bypass_package_actions=true
 
 		for arg in "${args[@]}"; do
 			case $arg in
 				all)
 					DisplayAsProjSynExam "please provide a valid $(ShowAction) before 'all' like" 'activate all'
-					opts_show_basic_help=false
+					useropt_show_basic_help=false
 					;;
 				all-backup|backup-all)
 					DisplayAsProjSynExam 'to backup all installed package configurations, use' 'backup all'
-					opts_show_basic_help=false
+					useropt_show_basic_help=false
 					;;
 				dependent)
 					DisplayAsProjSynExam "please provide a valid $(ShowAction) before 'dependent' like" 'activate dependents'
-					opts_show_basic_help=false
+					useropt_show_basic_help=false
 					;;
 				all-reactivate|reactivate-all)
 					DisplayAsProjSynExam 'to reactivate all packages, use' 'reactivate all'
-					opts_show_basic_help=false
+					useropt_show_basic_help=false
 					;;
 				all-restore|restore-all)
 					DisplayAsProjSynExam 'to restore all installed package configurations, use' 'restore all'
-					opts_show_basic_help=false
+					useropt_show_basic_help=false
 					;;
 				independent)
 					DisplayAsProjSynExam "please provide a valid $(ShowAction) before 'independent' like" 'activate independents'
-					opts_show_basic_help=false
+					useropt_show_basic_help=false
 					;;
 				all-activate|activate-all)
 					DisplayAsProjSynExam 'to activate all packages, use' 'activate all'
-					opts_show_basic_help=false
+					useropt_show_basic_help=false
 					;;
 				all-stop|stop-all)
 					DisplayAsProjSynExam 'to stop all packages, use' 'stop all'
-					opts_show_basic_help=false
+					useropt_show_basic_help=false
 					;;
 				all-uninstall|all-remove|uninstall-all|remove-all)
 					DisplayAsProjSynExam 'to uninstall all packages, use' 'force uninstall all'
-					opts_show_basic_help=false
+					useropt_show_basic_help=false
 					;;
 				all-upgrade|upgrade-all)
 					DisplayAsProjSynExam 'to upgrade all packages, use' 'upgrade all'
-					opts_show_basic_help=false
+					useropt_show_basic_help=false
 			esac
 		done
 	fi
@@ -2717,7 +2754,7 @@ UpdateEntwarePackageList()
 
 	# If Entware package list was recently updated, don't update again.
 
-	if ! IsThisFileRecent "$EXTERNAL_PACKAGES_ARCHIVE_PATHFILE" "$FILE_CHANGE_THRESHOLD_MINUTES" || [[ ! -f $EXTERNAL_PACKAGES_ARCHIVE_PATHFILE || $opts_check = true ]]; then
+	if ! IsThisFileRecent "$EXTERNAL_PACKAGES_ARCHIVE_PATHFILE" "$FILE_CHANGE_THRESHOLD_MINUTES" || [[ ! -f $EXTERNAL_PACKAGES_ARCHIVE_PATHFILE || $useropt_check = true ]]; then
 		DebugAsProc "updating $(ShowAsPackageName Entware) package list"
 
 		RunAndLog "$OPKG_CMD update" "$LOGS_PATH/Entware.$UPDATE_LOG_FILE" log:failure-only
@@ -2978,7 +3015,7 @@ IPKs:install()
 	IPKs-ACinstall-to:Init
 	IPKs-ACdownload-to:Init
 
-	if QPKGs-ACinstall-ok.Exist Entware || ([[ $opts_check = true ]] && QPKG.IsInstalled Entware); then
+	if QPKGs-ACinstall-ok.Exist Entware || ([[ $useropt_check = true ]] && QPKG.IsInstalled Entware); then
 		IPKs-ACinstall-to:Add "$ESSENTIAL_IPKS"
 
 		if [[ -e $PREV_IPK_LIST ]]; then
@@ -3151,7 +3188,7 @@ PIPs:install()
 	local -i z=0
 	local -i total_count=0
 
-	if [[ $opts_check = true ]] || IPKs-ACinstall-ok.Exist python3-pip; then
+	if [[ $useropt_check = true ]] || IPKs-ACinstall-ok.Exist python3-pip; then
 		((total_count++))
 
 		exec_cmd="$PIP_CMD install --upgrade --no-input $ESSENTIAL_PIPS --cache-dir $PIP_CACHE_PATH 2> >($GREP_CMD -v \"Running pip as the 'root' user\") >&2"
@@ -3393,7 +3430,7 @@ Reset()
 SwitchSourceBranch()
 	{
 
-	if [[ $opts_switch_follow_branch = true && -n $source_branch ]]; then
+	if [[ $useropt_switch_branch = true && -n $source_branch ]]; then
 		# Validate $source_branch before writing.
 
 		for branch in stable unstable; do
@@ -3405,7 +3442,7 @@ SwitchSourceBranch()
 		done
 
 		ShowAsAbort "'$source_branch' is not a valid branch to follow"
-		skip_package_actions=true
+		bypass_package_actions=true
 		return 1
 	fi
 
@@ -4550,7 +4587,7 @@ EraseThisLine()
 
 	# Reset cursor to start-of-line, erasing entire line.
 
-	[[ ${opts_verbose:=false} = false ]] && printf '\033[2K\r'
+	[[ ${useropt_verbose:=false} = false ]] && printf '\033[2K\r'
 	linespace_visible=true
 
 	} >&2
@@ -5067,7 +5104,7 @@ DisplayFileInViewport()
 			wraplines=true
 	esac
 
-	if [[ $opts_verbose = true ]]; then
+	if [[ $useropt_verbose = true ]]; then
 		if [[ -e $CAT_CMD ]]; then
 			$CAT_CMD "$filename"
 			return
@@ -5376,7 +5413,7 @@ UpdateForkProgress()
 	local b=''
 
 	RefreshForkCounts
-	[[ $opts_verbose = false && ! -e $DISPLAY_INHIBIT_PATHFILE ]] || return		# Don't display progress, it's difficult to read with so-many other writes to the screen.
+	[[ $useropt_verbose = false && ! -e $DISPLAY_INHIBIT_PATHFILE ]] || return		# Don't display progress, it's difficult to read with so-many other writes to the screen.
 
 	a=$((skip_count+skip_ok_count+skip_error_count+skip_abort_count))
 	b=$(PercFrac "$ok_count" "$a" "$fail_count" "$total_count")
@@ -5502,7 +5539,7 @@ QPKGs.NewVers:Show()
 QPKGs.Conflicts:Check()
 	{
 
-	[[ $skip_package_actions = true ]] || return 0
+	[[ $bypass_package_actions = true ]] || return 0
 
 	local a=''
 
@@ -5511,7 +5548,7 @@ QPKGs.Conflicts:Check()
 		for a in "${BASE_QPKG_CONFLICTS_WITH[@]}"; do
 			if QPKG.IsEnabled "$a"; then
 				ShowAsError "the '$a' QPKG is enabled. $(ShowTitleName) is incompatible with this package. Please consider stopping this QPKG in your App Center"
-				skip_package_actions=true
+				bypass_package_actions=true
 				return 1
 			fi
 		done
@@ -5543,7 +5580,7 @@ QPKGs.Warnings:Check()
 PIPs.Actions:List()
 	{
 
-	[[ $opts_debug = true ]] || return
+	[[ $useropt_debug = true ]] || return
 
 	Func:Init
 	local a=''
@@ -5562,7 +5599,7 @@ PIPs.Actions:List()
 IPKs.Actions:List()
 	{
 
-	[[ $opts_debug = true ]] || return
+	[[ $useropt_debug = true ]] || return
 
 	Func:Init
 	local a=''
@@ -5594,7 +5631,7 @@ IPKs.Actions:List()
 QPKGs.Actions:List()
 	{
 
-	[[ $opts_debug = true ]] || return
+	[[ $useropt_debug = true ]] || return
 
 	Func:Init
 	local a=''
@@ -5657,7 +5694,7 @@ QPKGs.States:List()
 	# input:
 	#	$1 (optional passthrough) = `rebuild` - clear existing lists and rebuild them from scratch.
 
-	[[ $opts_debug = true ]] || return
+	[[ $useropt_debug = true ]] || return
 
 	Func:Init
 	local a=''
@@ -7109,7 +7146,7 @@ OS.IsLoadAverageInsane()
 Error:Set()
 	{
 
-	skip_package_actions=true
+	bypass_package_actions=true
 	Error.IsSet && return
 	_script_error_flag_=true
 	DebugVar _script_error_flag_
@@ -7180,8 +7217,8 @@ LockFile:Release()
 Verbose:Enable()
 	{
 
-	opts_verbose=true
-	DebugVar opts_verbose
+	useropt_verbose=true
+	DebugVar useropt_verbose
 
 	Keystrokes:Show
 	Cursor:Show
@@ -7191,8 +7228,8 @@ Verbose:Enable()
 EnableDebugToArchiveAndFile()
 	{
 
-	opts_debug=true
-	DebugVar opts_debug
+	useropt_debug=true
+	DebugVar useropt_debug
 
 	ShowAsNote "debug mode activated, $(ShowTitleName) will run a little slower than usual"
 
@@ -7204,7 +7241,7 @@ EnableDebugToArchiveAndFile()
 DisableDebugToArchiveAndFile()
 	{
 
-	opts_debug=false
+	useropt_debug=false
 	archive_debug_afterward=false
 
 	}
@@ -7279,7 +7316,7 @@ _QPKG:reassign_()
 	# output:
 	#   $? = none, this function executes in the background.
 
-	[[ $opts_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &>/dev/null
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
@@ -7326,7 +7363,7 @@ _QPKG:download_()
 	# output:
 	#   $? = none, this function executes in the background.
 
-	[[ $opts_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &>/dev/null
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
@@ -7398,7 +7435,7 @@ _QPKG:install_()
 	# output:
 	#   $? = none, this function executes in the background.
 
-	[[ $opts_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &>/dev/null
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
@@ -7453,7 +7490,7 @@ _QPKG:install_()
 	local target_path=''
 
 	DebugAsProc "installing $(ShowAsPackageName "$PACKAGE_NAME")"
-	[[ $opts_debug = true ]] && a='DEBUG_QPKG=true '
+	[[ $useropt_debug = true ]] && a='DEBUG_QPKG=true '
 
 	[[ ${QPKGs_were_installed_name[*]:-} = *"$PACKAGE_NAME"* ]] && target_path="QINSTALL_PATH=$(QPKG.GetOriginalPath "$PACKAGE_NAME") "
 	RunAndLog "${a}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$INSTALL_LOG_FILE" log:failure-only 10
@@ -7512,7 +7549,7 @@ _QPKG:reinstall_()
 	# output:
 	#   $? = none, this function executes in the background.
 
-	[[ $opts_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &>/dev/null
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
@@ -7548,7 +7585,7 @@ _QPKG:reinstall_()
 	local target_path=''
 
 	DebugAsProc "reinstalling $(ShowAsPackageName "$PACKAGE_NAME")"
-	[[ $opts_debug = true ]] && a='DEBUG_QPKG=true '
+	[[ $useropt_debug = true ]] && a='DEBUG_QPKG=true '
 
 	QPKG.IsInstalled "$PACKAGE_NAME" && target_path="QINSTALL_PATH=$($DIRNAME_CMD "$(QPKG.GetInstallationPath $PACKAGE_NAME)") "
 	RunAndLog "${a}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$REINSTALL_LOG_FILE" log:failure-only 10
@@ -7592,7 +7629,7 @@ _QPKG:upgrade_()
 	# output:
 	#   $? = none, this function executes in the background.
 
-	[[ $opts_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &>/dev/null
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
@@ -7633,7 +7670,7 @@ _QPKG:upgrade_()
 	local target_path=''
 
 	DebugAsProc "upgrading $(ShowAsPackageName "$PACKAGE_NAME")"
-	[[ $opts_debug = true ]] && a='DEBUG_QPKG=true '
+	[[ $useropt_debug = true ]] && a='DEBUG_QPKG=true '
 
 	QPKG.IsInstalled "$PACKAGE_NAME" && target_path="QINSTALL_PATH=$($DIRNAME_CMD "$(QPKG.GetInstallationPath "$PACKAGE_NAME")") "
 	RunAndLog "${a}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$UPGRADE_LOG_FILE" log:failure-only 10
@@ -7684,7 +7721,7 @@ _QPKG:uninstall_()
 	# output:
 	#   $? = none, this function executes in the background.
 
-	[[ $opts_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &>/dev/null
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
@@ -7713,7 +7750,7 @@ _QPKG:uninstall_()
 
 	if [[ -e $QPKG_UNINSTALLER_PATHFILE ]]; then
 		DebugAsProc "uninstalling $(ShowAsPackageName "$PACKAGE_NAME")"
-		[[ $opts_debug = true ]] && a='DEBUG_QPKG=true '
+		[[ $useropt_debug = true ]] && a='DEBUG_QPKG=true '
 
 		RunAndLog "${a}${SH_CMD} $QPKG_UNINSTALLER_PATHFILE" "$LOGS_PATH/$PACKAGE_NAME.$UNINSTALL_LOG_FILE" log:failure-only
 		z=$?
@@ -7761,7 +7798,7 @@ _QPKG:activate_()
 	# output:
 	#   $? = none, this function executes in the background.
 
-	[[ $opts_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &>/dev/null
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
@@ -7792,7 +7829,7 @@ _QPKG:activate_()
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" activate skipped "service script file undefined"
 		MarkThisActionForkAsSkippedError
 		FuncFork:Exit 2
-	elif [[ $opts_debug = true ]]; then
+	elif [[ $useropt_debug = true ]]; then
 		a='DEBUG_QPKG=true '
 		RunAndLog "${a}${service_pathfile} start" "$LOG_PATHFILE" log:failure-only
 		z=$?
@@ -7839,7 +7876,7 @@ _QPKG:reactivate_()
 	# output:
 	#   $? = none, this function executes in the background.
 
-	[[ $opts_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &>/dev/null
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
@@ -7870,7 +7907,7 @@ _QPKG:reactivate_()
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reactivate skipped "service script file undefined"
 		MarkThisActionForkAsSkippedError
 		FuncFork:Exit 2
-	elif [[ $opts_debug = true ]]; then
+	elif [[ $useropt_debug = true ]]; then
 		a='DEBUG_QPKG=true '
 		RunAndLog "${a}${service_pathfile} restart" "$LOG_PATHFILE" log:failure-only
 		z=$?
@@ -7908,7 +7945,7 @@ _QPKG:deactivate_()
 	# output:
 	#   $? = none, this function executes in the background.
 
- 	[[ $opts_verbose != true ]] && exec &>/dev/null
+ 	[[ $useropt_verbose != true ]] && exec &>/dev/null
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
@@ -7943,7 +7980,7 @@ _QPKG:deactivate_()
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" deactivate skipped "service script file undefined"
 		MarkThisActionForkAsSkippedError
 		FuncFork:Exit 2
-	elif [[ $opts_debug = true ]]; then
+	elif [[ $useropt_debug = true ]]; then
 		a='DEBUG_QPKG=true '
 		RunAndLog "${a}${service_pathfile} stop" "$LOG_PATHFILE" log:failure-only
 		z=$?
@@ -7989,7 +8026,7 @@ _QPKG:enable_()
 	# output:
 	#   $? = none, this function executes in the background.
 
-	[[ $opts_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &>/dev/null
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
@@ -8039,7 +8076,7 @@ _QPKG:disable_()
 	# output:
 	#   $? = none, this function executes in the background.
 
-	[[ $opts_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &>/dev/null
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
@@ -8094,7 +8131,7 @@ _QPKG:enableau_()
 	# output:
 	#   $? = none, this function executes in the background.
 
-	[[ $opts_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &>/dev/null
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
@@ -8118,7 +8155,7 @@ _QPKG:enableau_()
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
 
 	DebugAsProc "enabling auto-update $(ShowAsPackageName "$PACKAGE_NAME")"
-	[[ $opts_debug = true ]] && a='DEBUG_QPKG=true '
+	[[ $useropt_debug = true ]] && a='DEBUG_QPKG=true '
 
 	RunAndLog "${a}$(QPKG.GetServicePathFile) enable-auto-update" "$LOGS_PATH/$PACKAGE_NAME.$ENABLEAU_LOG_FILE" log:failure-only
 	z=$?
@@ -8149,7 +8186,7 @@ _QPKG:disableau_()
 	# output:
 	#   $? = none, this function executes in the background.
 
-	[[ $opts_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &>/dev/null
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
@@ -8173,7 +8210,7 @@ _QPKG:disableau_()
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
 
 	DebugAsProc "disabling auto-update $(ShowAsPackageName "$PACKAGE_NAME")"
-	[[ $opts_debug = true ]] && a='DEBUG_QPKG=true '
+	[[ $useropt_debug = true ]] && a='DEBUG_QPKG=true '
 
 	RunAndLog "${a}$(QPKG.GetServicePathFile) disable-auto-update" "$LOGS_PATH/$PACKAGE_NAME.$DISABLEAU_LOG_FILE" log:failure-only
 	z=$?
@@ -8204,7 +8241,7 @@ _QPKG:backup_()
 	# output:
 	#   $? = none, this function executes in the background.
 
-	[[ $opts_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &>/dev/null
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
@@ -8228,7 +8265,7 @@ _QPKG:backup_()
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
 
 	DebugAsProc "backing-up $(ShowAsPackageName "$PACKAGE_NAME") configuration"
-	[[ $opts_debug = true ]] && a='DEBUG_QPKG=true '
+	[[ $useropt_debug = true ]] && a='DEBUG_QPKG=true '
 
 	RunAndLog "${a}$(QPKG.GetServicePathFile) backup" "$LOGS_PATH/$PACKAGE_NAME.$BACKUP_LOG_FILE" log:failure-only
 	z=$?
@@ -8260,7 +8297,7 @@ _QPKG:restore_()
 	# output:
 	#   $? = none, this function executes in the background.
 
-	[[ $opts_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &>/dev/null
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
@@ -8284,7 +8321,7 @@ _QPKG:restore_()
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
 
 	DebugAsProc "restoring $(ShowAsPackageName "$PACKAGE_NAME") configuration"
-	[[ $opts_debug = true ]] && a='DEBUG_QPKG=true '
+	[[ $useropt_debug = true ]] && a='DEBUG_QPKG=true '
 
 	RunAndLog "${a}$(QPKG.GetServicePathFile) restore" "$LOGS_PATH/$PACKAGE_NAME.$RESTORE_LOG_FILE" log:failure-only
 	z=$?
@@ -8316,7 +8353,7 @@ _QPKG:clean_()
 	# output:
 	#   $? = none, this function executes in the background.
 
-	[[ $opts_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &>/dev/null
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
@@ -8340,7 +8377,7 @@ _QPKG:clean_()
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
 
 	DebugAsProc "cleaning $(ShowAsPackageName "$PACKAGE_NAME")"
-	[[ $opts_debug = true ]] && a='DEBUG_QPKG=true '
+	[[ $useropt_debug = true ]] && a='DEBUG_QPKG=true '
 
 	RunAndLog "${a}$(QPKG.GetServicePathFile) clean" "$LOGS_PATH/$PACKAGE_NAME.$CLEAN_LOG_FILE" log:failure-only
 	z=$?
@@ -8375,7 +8412,7 @@ _QPKG:sign_()
 	# output:
 	#   $? = none, this function executes in the background. But an exitcode is recorded in the debug log.
 
-	[[ $opts_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &>/dev/null
 	FuncFork:Init
 
 	local -r PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
@@ -8474,7 +8511,7 @@ _QPKG:status_()
 	# output:
 	#   $? = none, this function executes in the background.
 
-	[[ $opts_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &>/dev/null
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
@@ -8495,7 +8532,7 @@ _QPKG:status_()
 	a=$(QPKG.GetActiveTest "$PACKAGE_NAME")
 
 	if [[ $a = builtin ]]; then
-		[[ $opts_debug = true ]] && b='DEBUG_QPKG=true '
+		[[ $useropt_debug = true ]] && b='DEBUG_QPKG=true '
 
 		if [[ -e $GNU_TIMEOUT_CMD ]]; then		# run status query with a timeout if-possible.
 			$GNU_TIMEOUT_CMD "$QPKG_STATUS_CHECK_TIMEOUT_SECONDS" /bin/bash -c "${b}$(QPKG.GetServicePathFile) status"
@@ -9814,7 +9851,7 @@ RunAndLog()
 	ShowAsCommand "$1" > "$2"
 	DebugAsProc "exec: '$1'"
 
-	if [[ $opts_verbose = true ]]; then
+	if [[ $useropt_verbose = true ]]; then
 		eval "$1 > >($TEE_CMD $LOG_PATHFILE) 2>&1"		# NOTE: `tee` buffers stdout here
 		z=$?
 	else
@@ -9831,9 +9868,9 @@ RunAndLog()
 
 	case $z in
 		0|"${4:-}")
-			[[ ${3:-} != log:failure-only || $opts_debug = true ]] && AddExtLogToSessLog "$2"
+			[[ ${3:-} != log:failure-only || $useropt_debug = true ]] && AddExtLogToSessLog "$2"
 			DebugAsDone 'exec: complete'
-			[[ $opts_debug = false ]] && rm -f "$2"
+			[[ $useropt_debug = false ]] && rm -f "$2"
 			;;
 		*)
 			AddExtLogToSessLog "$2"
@@ -9975,7 +10012,7 @@ FormatAsIsoBytes()
 Title:Show()
 	{
 
-	[[ $show_title = true && $title_shown = false && $opts_verbose = false ]] || return
+	[[ $show_title = true && $title_shown = false && $useropt_verbose = false ]] || return
 
 	EraseThisLine
 
@@ -10515,7 +10552,7 @@ DebugThis()
 	{
 
 	[[ -n ${1:-} ]] || return
-	[[ ${opts_verbose:-false} = true ]] && ShowAsDebug "$1"
+	[[ ${useropt_verbose:-false} = true ]] && ShowAsDebug "$1"
 	WriteToLog dbug "$1"
 
 	}
@@ -10528,9 +10565,9 @@ AddExtLogToSessLog()
 	local a=''
 	local original_verbose=false
 
-	if [[ $opts_verbose = true ]]; then   # Prevent external log contents appearing onscreen again, because they've already been seen "live".
+	if [[ $useropt_verbose = true ]]; then   # Prevent external log contents appearing onscreen again, because they've already been seen "live".
 		original_verbose=true
-		opts_verbose=false
+		useropt_verbose=false
 	fi
 
 	DebugAsLog 'adding external log to main log'
@@ -10542,7 +10579,7 @@ AddExtLogToSessLog()
 	done < "$1"
 
 	DebugExtLogMinSepr
-	opts_verbose=$original_verbose
+	useropt_verbose=$original_verbose
 
 	}
 
@@ -10564,7 +10601,7 @@ ShowAsProc()
 
 	OpStepClearWait "$(TextBrightYellow proc)" "${a} ${CHARS_ELLIPSIS} ${b}"
 	WriteToLog proc "${a}${b}"
-	[[ ${opts_verbose:=false} = true ]] && Display
+	[[ ${useropt_verbose:=false} = true ]] && Display
 
 	} >&2
 
@@ -10883,7 +10920,7 @@ WriteToLog()
 	#	$2 = message
 
 	[[ -n ${1:-} && -n ${2:-} ]] || return
-	[[ ${opts_debug:=false} = true && -n $sess_active_pathfile ]] && printf '%-4s: %s\n' "$(StripANSICodes "$1")" "$(StripANSICodes "$2")" >> "$sess_active_pathfile"
+	[[ ${useropt_debug:=false} = true && -n $sess_active_pathfile ]] && printf '%-4s: %s\n' "$(StripANSICodes "$1")" "$(StripANSICodes "$2")" >> "$sess_active_pathfile"
 
 	}
 
@@ -11072,7 +11109,7 @@ UpdateColourisation()
 Cursor:Hide()
 	{
 
-	[[ $opts_verbose = false ]] && printf '\033[?25l'
+	[[ $useropt_verbose = false ]] && printf '\033[?25l'
 
 	}
 
@@ -11086,7 +11123,7 @@ Cursor:Show()
 Keystrokes:Hide()
 	{
 
-	[[ $opts_verbose = false && -e $GNU_STTY_CMD && -t 0 ]] && $GNU_STTY_CMD '-echo'
+	[[ $useropt_verbose = false && -e $GNU_STTY_CMD && -t 0 ]] && $GNU_STTY_CMD '-echo'
 
 	}
 
