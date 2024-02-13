@@ -1,28 +1,5 @@
 Observed issues:
 
-	* Not showing QPKG list.
-		-------------------------------------------------------------------------------------------------------------------------
-		[/share/Public] # ./sherpa-manager.source show packages
-		sherpa v<?build_date?>-unstable
-
-		proc: checking ... • Usage: sherpa [action] [packages] [package group] [options]
-
-		To see available [action]s:
-			# sherpa help actions
-
-		To see available [packages]:
-			# sherpa help packages
-			# sherpa p
-
-		To see available [package group]s:
-			# sherpa help groups
-
-		Or, for more [options]:
-			# sherpa help options
-
-		• More in the wiki: https://github.com/OneCDOnly/sherpa/wiki
-		-------------------------------------------------------------------------------------------------------------------------
-
 	* 'sherpa start inactive' fails to find any inactive packages.
 		- Must get 'status' of each package first.
 

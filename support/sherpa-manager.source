@@ -60,7 +60,6 @@ Init()
 	ParseActionArgs || return
 
 	Title:Show
-
 	ArgSuggestions:Show
 	QPKGs.Conflicts:Check || return
 	QPKGs.Warnings:Check
@@ -91,19 +90,19 @@ Results:Show()
 			Log.Tail:View
 		elif [[ $useropt_show_backups = true ]]; then
 			Report.Backups:Show
-		elif [[ $useropt_show_abbreviations = true ]]; then
+		elif [[ $useropt_help_abbreviations = true ]]; then
 			Report.Abbreviations:Show
-		elif [[ $useropt_show_actions = true ]]; then
+		elif [[ $useropt_help_actions = true ]]; then
 			Report.Actions:Show
-		elif [[ $useropt_show_actions_all = true ]]; then
+		elif [[ $useropt_help_actions_all = true ]]; then
 			Report.ActionsAll:Show
-		elif [[ $useropt_show_lists = true ]]; then
+		elif [[ $useropt_help_lists = true ]]; then
 			Report.Lists:Show
-		elif [[ $useropt_show_options = true ]]; then
+		elif [[ $useropt_help_options = true ]]; then
 			Report.Options:Show
-		elif [[ $useropt_show_problems = true ]]; then
+		elif [[ $useropt_help_problems = true ]]; then
 			Report.Problems:Show
-		elif [[ $useropt_show_groups = true ]]; then
+		elif [[ $useropt_help_groups = true ]]; then
 			Report.Groups:Show
 		elif [[ $useropt_show_versions = true ]]; then
 			Report.Versions:Show
@@ -135,7 +134,7 @@ Results:Show()
 			show_package_actions_failed=false
 		fi
 
-		if [[ $useropt_show_tips = true ]]; then
+		if [[ $useropt_help_tips = true ]]; then
 			Report.Tips:Show
 		fi
 
@@ -165,8 +164,8 @@ Results:Show()
 			fi
 		fi
 	fi
-
-	if [[ $useropt_show_basic_help = true ]]; then
+set +x
+	if [[ $useropt_help_basic = true ]]; then
 		Help.Basic:Show
 		Help.Basic.Examples:Show
 	fi
@@ -314,25 +313,25 @@ Vars:Load()
 	# User-selectable options.
 	useropt_check=false
 	useropt_debug=false
+	useropt_help_abbreviations=false
+	useropt_help_actions=false
+	useropt_help_actions_all=false
+	useropt_help_basic=false
+	useropt_help_groups=false
+	useropt_help_lists=false
+	useropt_help_options=false
+	useropt_help_problems=false
+	useropt_help_tips=false
 	useropt_paste_log_last=false
 	useropt_paste_log_tail=false
-	useropt_show_abbreviations=false
-	useropt_show_actions=false
-	useropt_show_actions_all=false
 	useropt_show_backups=false
-	useropt_show_basic_help=false
 	useropt_show_dependencies=false
-	useropt_show_groups=false
-	useropt_show_lists=false
 	useropt_show_log_last=false
 	useropt_show_log_tail=false
-	useropt_show_options=false
 	useropt_show_packages=false
-	useropt_show_problems=false
 	useropt_show_repos=false
 	useropt_show_results=false
 	useropt_show_status=false
-	useropt_show_tips=false
 	useropt_show_versions=false
 	useropt_switch_branch=false
 	useropt_verbose=false
@@ -821,8 +820,8 @@ Tasks:Check()
 	local state=''
 	local z=0
 
-	Objects:Load
-	Packages:Load
+	Objects:Load forced
+	Packages:Load forced
 
 	for action in "${USER_QPKG_ACTIONS[@]}"; do
 		if QPKGs-AC${action}-to.IsAny; then
@@ -859,22 +858,19 @@ Tasks:Check()
 		done
 	done
 
-# 	if [[ $build_states = false ]]; then
-		if [[ $useropt_check = true || $useropt_show_dependencies = true || $useropt_show_packages = true || $show_package_actions_failed = true || $show_package_actions_ok = true || $show_package_actions_skipped = true || $useropt_show_repos = true || $useropt_show_status = true ]]; then
-			build_states=true
-			write_report=true
-		elif [[ $useropt_debug = true || $useropt_paste_log_last = true || $useropt_paste_log_tail = true || $useropt_show_abbreviations = true || $useropt_show_actions = true || $useropt_show_actions_all = true || $useropt_show_backups = true || $useropt_show_groups = true || $useropt_show_log_last = true || $useropt_show_lists = true || $useropt_show_log_tail = true || $useropt_show_options = true || $useropt_show_problems = true || $useropt_show_results = true || $useropt_show_tips = true || $useropt_show_versions = true || $useropt_verbose = true ]]; then
-			write_report=true
-		elif [[ $show_package_actions_failed = true || $show_package_actions_ok = true || $show_package_actions_skipped = true ]]; then
-# 			build_states=true
-			write_report=true
-		fi
-# 	fi
+	if [[ $useropt_check = true || $useropt_show_dependencies = true || $useropt_show_packages = true || $show_package_actions_failed = true || $show_package_actions_ok = true || $show_package_actions_skipped = true || $useropt_show_repos = true || $useropt_show_status = true ]]; then
+		build_states=true
+		write_report=true
+	elif [[ $useropt_debug = true || $useropt_paste_log_last = true || $useropt_paste_log_tail = true || $useropt_help_abbreviations = true || $useropt_help_actions = true || $useropt_help_actions_all = true || $useropt_show_backups = true || $useropt_help_groups = true || $useropt_show_log_last = true || $useropt_help_lists = true || $useropt_show_log_tail = true || $useropt_help_options = true || $useropt_help_problems = true || $useropt_show_results = true || $useropt_help_tips = true || $useropt_show_versions = true || $useropt_verbose = true ]]; then
+		write_report=true
+	elif [[ $show_package_actions_failed = true || $show_package_actions_ok = true || $show_package_actions_skipped = true ]]; then
+		write_report=true
+	fi
 
 	if [[ $build_states = true ]]; then
 		QPKGs.States:Build
 	elif [[ $write_report = false ]]; then
-		useropt_show_basic_help=true
+		useropt_help_basic=true
 		bypass_package_actions=true
 		z=1
 	fi
@@ -1680,14 +1676,13 @@ ParseManagementArgs()
 	[[ $awaiting_group = true ]] && args_incomplete+=($action)		# This is only if the last action specified was not followed by a group.
 
 	if [[ $to_do = false && ${#args_remaining[@]} -eq 0 ]]; then
+		bypass_arg_parsing=true
 		bypass_package_actions=true
 		check_tasks=false
-		load_objects=false
-		load_packages=false
 		show_package_actions_failed=false
 		show_package_actions_ok=false
 		show_package_actions_skipped=false
-		useropt_show_basic_help=true
+		useropt_help_basic=true
 
 		DisableDebugToArchiveAndFile
 	fi
@@ -1711,133 +1706,156 @@ ParseHelpArgs()
 	#   $args (global)
 	#   various global flags
 
+	[[ ${bypass_arg_parsing:=false} = false ]] || return 0
+
 	Func:Init
 
-	local -a args_remaining=()
-	local arg=''
-	local arg_identified=false
 	local action=''
+	local arg=''
+	local -a args_remaining=()
+	local awaiting_group=false
 	local group=''
-	local to_do=false
+	local new_action=''
 
 	if [[ -n ${args[*]:-} ]]; then
 		for arg in "${args[@]:-}"; do
 			[[ -n $arg ]] || continue
 
-			arg_identified=false
-
-			# Identify action: each time action changes, must clear group.
+			# Identify action.
 
 			case $arg in
 			# All cases below can use multiple words or chars to specify a single action.
 				help)
-					action=help
-					arg_identified=true
-					group=''
-					show_title=true
-					bypass_package_actions=true
+					new_action=help
+					;;
+				*)
+					new_action=''
 			esac
 
-			# Identify group in two stages:
-
-			# Stage 1: when user didn't supply an action before group.
-
-			# Stage 2: after an action has been defined.
-
-			if [[ -n $action ]]; then
-				case $arg in
-				# These cases use only a single word or char to specify a single group.
-					actions-all|all-actions)
-						group=all-actions
-						;;
-					action|actions)
-						group=actions
-						;;
-					group|groups)
-						group=groups
-						;;
-					o|option|options)
-						group=options
-						;;
-				esac
-
-				if [[ -n $group ]]; then
-					arg_identified=true
-				fi
+			if [[ -n $new_action && $new_action != "$action" ]]; then
+				[[ $awaiting_group = true ]] && args_incomplete+=($action)
+				action=$new_action
+				awaiting_group=true
+				group=''	 			# When action changes, must clear group.
+				continue
 			fi
 
-			[[ $arg_identified = false ]] && args_remaining+=("$arg")
+			# Identify group. Include action assignment when action hasn't been previously specified.
 
-			# Identify options.
-
-			case $action in
-				help)
-					load_objects=false
-					load_packages=false
-					bypass_package_actions=true
-					check_tasks=false
-					to_do=true
-
-					case $group in
-						abs)
-							useropt_show_abbreviations=true
-							;;
-						actions)
-							useropt_show_actions=true
-							;;
-						all-actions|all)
-							useropt_show_actions_all=true
-							;;
-# 						backups)
-# 							useropt_show_backups=true
-# 							;;
-# 						dependencies)
-# 							useropt_show_dependencies=true
-# 							;;
-						groups)
-							useropt_show_groups=true
-							;;
-# 						last)
-# 							useropt_show_log_last=true
-# 							show_title=false
-# 							;;
-						list|lists)
-							useropt_show_lists=true
-							;;
-# 						log)
-# 							useropt_show_log_tail=true
-# 							show_title=false
-# 							;;
-						options)
-							useropt_show_options=true
-							;;
-# 						packages)
-# 							useropt_show_packages=true
-# 							;;
-						problems)
-							useropt_show_problems=true
-							;;
-# 						repos)
-# 							useropt_show_repos=true
-# 							;;
-# 						results)
-# 							useropt_show_results=true
-# 							;;
-# 						status)
-# 							useropt_show_status=true
-# 							;;
-						tips)
-							useropt_show_tips=true
-					esac
+			case $arg in
+			# These cases use only a single word or char to specify a single group.
+				problems)
+					[[ -z $action ]] && action=help
+					group=problems
+					;;
+				tips)
+					[[ -z $action ]] && action=help
+					group=tips
+					;;
+			# All cases below can use multiple user-provided words or chars to specify a single group.
+				a|abs|abbreviations)
+					[[ -z $action ]] && action=help
+					group=abs
+					;;
+				action|actions)
+					[[ -z $action ]] && action=help
+					group=actions
+					;;
+				all|actions-all|all-actions)
+					[[ -z $action ]] && action=help
+					group=all-actions
+					;;
+				group|groups)
+					[[ -z $action ]] && action=help
+					group=groups
+					;;
+				lists)
+					[[ -z $action ]] && action=help
+					group=lists
+					;;
+				o|option|options)
+					[[ -z $action ]] && action=help
+					group=options
 			esac
+
+			# Pair action with group.
+
+			if [[ -n $action && -n $group ]]; then
+				case $action in
+					help)
+						load_objects=false
+						load_packages=false
+
+						case $group in
+							abs)
+								awaiting_group=false
+								bypass_package_actions=true
+								check_tasks=false
+								useropt_help_abbreviations=true
+								write_report=true
+								;;
+							actions)
+								awaiting_group=false
+								bypass_package_actions=true
+								check_tasks=false
+								useropt_help_actions=true
+								write_report=true
+								;;
+							all-actions)
+								awaiting_group=false
+								bypass_package_actions=true
+								check_tasks=false
+								useropt_help_actions_all=true
+								write_report=true
+								;;
+							groups)
+								awaiting_group=false
+								bypass_package_actions=true
+								check_tasks=false
+								useropt_help_groups=true
+								write_report=true
+								;;
+							lists)
+								awaiting_group=false
+								bypass_package_actions=true
+								check_tasks=false
+								useropt_help_lists=true
+								write_report=true
+								;;
+							options)
+								awaiting_group=false
+								bypass_package_actions=true
+								check_tasks=false
+								useropt_help_options=true
+								write_report=true
+								;;
+							problems)
+								awaiting_group=false
+								bypass_package_actions=true
+								check_tasks=false
+								useropt_help_problems=true
+								write_report=true
+								;;
+							tips)
+								awaiting_group=false
+								bypass_package_actions=true
+								check_tasks=false
+								useropt_help_tips=true
+								write_report=true
+						esac
+				esac
+			else
+				args_remaining+=("$arg")
+			fi
 		done
 	fi
 
-# 	write_report=$to_do
-
-	# When an action has been determined, but no group was found, then show default information. This will usually be the help screen.
-
-	[[ -n $action && $action = help && -z $group ]] && useropt_show_basic_help=true
+	if [[ $action = help && -z $group ]]; then
+		bypass_arg_parsing=true
+		bypass_package_actions=true
+		check_tasks=false
+		useropt_help_basic=true		# Show default information. This will usually be the help screen.
+	fi
 
 	args=(${args_remaining[@]:-})
 
@@ -1857,6 +1875,8 @@ ParseListArgs()
 	# output:
 	#   $args (global)
 	#   various global flags
+
+	[[ ${bypass_arg_parsing:=false} = false ]] || return 0
 
 	Func:Init
 
@@ -2003,6 +2023,8 @@ ParseActionArgs()
 	# output:
 	#   $args (global)
 	#   various global flags
+
+	[[ ${bypass_arg_parsing:=false} = false ]] || return 0
 
 	Func:Init
 
@@ -2155,6 +2177,8 @@ ParseShowArgs()
 	#   $args (global)
 	#   various global flags
 
+	[[ ${bypass_arg_parsing:=false} = false ]] || return 0
+
 	Func:Init
 
 	local action=''
@@ -2242,6 +2266,7 @@ ParseShowArgs()
 								load_objects=false
 								load_packages=false
 								useropt_show_log_last=true
+								write_report=true
 								;;
 							tail)
 								awaiting_group=false
@@ -2250,6 +2275,7 @@ ParseShowArgs()
 								load_objects=false
 								load_packages=false
 								useropt_show_log_tail=true
+								write_report=true
 								;;
 							packages)
 								awaiting_group=false
@@ -2312,25 +2338,25 @@ ArgSuggestions:Show()
 			case $arg in
 				activate|uninstall)
 					DisplayAsProjSynExam "please provide valid $(ShowPackages) or a $(ShowPackageGroup) after '$arg' like" "$arg installed"
-					useropt_show_basic_help=false
+					useropt_help_basic=false
 					;;
 				follow)
 					DisplayAsProjSynExam "please provide a valid source branch to track after 'follow' like" 'follow stable'
 					DisplayAsProjSynIndentExam '' 'follow unstable'
-					useropt_show_basic_help=false
+					useropt_help_basic=false
 					;;
 				list)
 					DisplayAsProjSynExam "please provide a valid source after 'list' like" 'list installable'
-					useropt_show_basic_help=false
+					useropt_help_basic=false
 					;;
 				paste)
 					DisplayAsProjSynExam "please provide a valid source to paste online after 'paste' like" 'paste log'
 					DisplayAsProjSynIndentExam '' 'paste last'
-					useropt_show_basic_help=false
+					useropt_help_basic=false
 					;;
 				show)
 					DisplayAsProjSynExam "please provide a valid source after 'show' like" 'show packages'
-					useropt_show_basic_help=false
+					useropt_help_basic=false
 			esac
 		done
 	fi
@@ -2345,43 +2371,43 @@ ArgSuggestions:Show()
 			case $arg in
 				all)
 					DisplayAsProjSynExam "please provide a valid $(ShowAction) before 'all' like" 'activate all'
-					useropt_show_basic_help=false
+					useropt_help_basic=false
 					;;
 				all-backup|backup-all)
 					DisplayAsProjSynExam 'to backup all installed package configurations, use' 'backup all'
-					useropt_show_basic_help=false
+					useropt_help_basic=false
 					;;
 				dependent)
 					DisplayAsProjSynExam "please provide a valid $(ShowAction) before 'dependent' like" 'activate dependents'
-					useropt_show_basic_help=false
+					useropt_help_basic=false
 					;;
 				all-reactivate|reactivate-all)
 					DisplayAsProjSynExam 'to reactivate all packages, use' 'reactivate all'
-					useropt_show_basic_help=false
+					useropt_help_basic=false
 					;;
 				all-restore|restore-all)
 					DisplayAsProjSynExam 'to restore all installed package configurations, use' 'restore all'
-					useropt_show_basic_help=false
+					useropt_help_basic=false
 					;;
 				independent)
 					DisplayAsProjSynExam "please provide a valid $(ShowAction) before 'independent' like" 'activate independents'
-					useropt_show_basic_help=false
+					useropt_help_basic=false
 					;;
 				all-activate|activate-all)
 					DisplayAsProjSynExam 'to activate all packages, use' 'activate all'
-					useropt_show_basic_help=false
+					useropt_help_basic=false
 					;;
 				all-stop|stop-all)
 					DisplayAsProjSynExam 'to stop all packages, use' 'stop all'
-					useropt_show_basic_help=false
+					useropt_help_basic=false
 					;;
 				all-uninstall|all-remove|uninstall-all|remove-all)
 					DisplayAsProjSynExam 'to uninstall all packages, use' 'force uninstall all'
-					useropt_show_basic_help=false
+					useropt_help_basic=false
 					;;
 				all-upgrade|upgrade-all)
 					DisplayAsProjSynExam 'to upgrade all packages, use' 'upgrade all'
-					useropt_show_basic_help=false
+					useropt_help_basic=false
 			esac
 		done
 	fi
@@ -5769,9 +5795,9 @@ QPKGs.States:Build()
 
 		if QPKG.IsNtInstalled "$a"; then
 			if QPKG.IsInstallable "$a"; then
-				echo installable
+				printf installable
 			else
-				echo notinstallable
+				printf notinstallable
 			fi >> "$STATES_PATH/$a"
 		fi
 	done &
@@ -5780,9 +5806,9 @@ QPKGs.States:Build()
 		[[ $a = "$b" ]] && continue || b=$a
 
 		if QPKG.IsUpgradable "$a"; then
-			echo upgradable
+			printf upgradable
 		else
-			echo notupgradable
+			printf notupgradable
 		fi >> "$STATES_PATH/$a"
 	done &
 
@@ -5790,15 +5816,15 @@ QPKGs.States:Build()
 		[[ $a = "$b" ]] && continue || b=$a
 
 		if QPKG.IsCanBackup "$a"; then
-			echo backupable
+			printf backupable
 
 			if QPKG.IsBackupExist "$a"; then
-				echo backedup
+				printf backedup
 			else
-				echo notbackedup
+				printf notbackedup
 			fi >> "$STATES_PATH/$a"
 		else
-			echo notbackupable
+			printf notbackupable
 		fi >> "$STATES_PATH/$a"
 	done &
 
@@ -5806,9 +5832,9 @@ QPKGs.States:Build()
 		[[ $a = "$b" ]] && continue || b=$a
 
 		if QPKG.IsMissing "$a"; then
-			echo missing
+			printf missing
 		else
-			echo notmissing
+			printf notmissing
 		fi >> "$STATES_PATH/$a"
 	done &
 
@@ -5816,9 +5842,9 @@ QPKGs.States:Build()
 		[[ $a = "$b" ]] && continue || b=$a
 
 		if QPKG.IsEnabled "$a"; then
-			echo enabled
+			printf enabled
 		else
-			echo notenabled
+			printf notenabled
 		fi >> "$STATES_PATH/$a"
 	done &
 
@@ -5826,9 +5852,9 @@ QPKGs.States:Build()
 		[[ $a = "$b" ]] && continue || b=$a
 
 		if QPKG.IsInstalled "$a"; then
-			echo installed
+			printf installed
 		else
-			echo notinstalled
+			printf notinstalled
 		fi >> "$STATES_PATH/$a"
 	done &
 
@@ -5931,7 +5957,7 @@ QPKGs.States:Clear()
 	Func:Init
 	local a=''
 
-	[[ ${objects_loaded:=false} = true ]] || Objects:Load || return
+	Objects:Load forced || return
 
 	DebugAsProc 'clearing existing state lists'
 
@@ -6014,6 +6040,8 @@ Report.Abbreviations:Show()
 	local b=''
 	local -i n=0
 	maxcols=2
+	Objects:Load forced
+	Packages:Load forced
 	local -i t=$(QPKGs-SCall:Count)
 
 	DisplayWritingReport
@@ -7136,10 +7164,10 @@ ShowZeroQpkgs()
 	local a=''
 	local b=''
 
-	[[ $load_packages = true ]] || return
+	[[ ${packages_loaded:=false} = true ]] || return
 
-	for a in "${USER_QPKG_IS_STATES[@]}"; do
-		for b in "${USER_QPKG_ACTIONS[@]}"; do
+	for a in "${USER_QPKG_IS_STATES[@]:-}"; do
+		for b in "${USER_QPKG_ACTIONS[@]:-}"; do
 			[[ $b = list ]] && continue			# action results lists are unavailable for these
 
 			QPKGs.AC${b}.IS${a}.IsSet && QPKGs-AC${b}-ok.IsNone && ShowAsWarn "no QPKGs were able to $(Lowercase "$b")"
@@ -11184,7 +11212,11 @@ Objects:Load()
 
 	# Ensure `objects` in the local cache is up-to-date, then source it.
 
+	# input:
+	#	$1 = 'forced' (optional) set objects as loadable and load them.
+
 	[[ ${objects_loaded:=false} = false ]] || return 0
+	[[ ${1:-} = forced ]] && load_objects=true
 	[[ ${load_objects:=true} = true ]] || return
 	[[ ${lists_loaded:=false} = true ]] || Lists:Load
 
@@ -11220,7 +11252,11 @@ Packages:Load()
 
 	# Ensure `packages` in the local cache is up-to-date, then source it.
 
+	# input:
+	#	$1 = 'forced' (optional) set objects as loadable and load them.
+
 	[[ ${packages_loaded:=false} = false ]] || return 0
+	[[ ${1:-} = forced ]] && load_packages=true
 	[[ ${load_packages:=true} = true ]] || return
 	[[ ${lists_loaded:=false} = true ]] || Lists:Load
 
