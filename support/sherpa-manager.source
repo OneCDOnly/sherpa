@@ -1995,7 +1995,7 @@ ParseActionArgs()
 		for arg in "${args[@]:-}"; do
 			[[ -n $arg ]] || continue
 
-			# Identify action: (whenever action changes, must clear group).
+			# Identify action.
 
 			case $arg in
 			# These cases use only a single word to specify a single action.
@@ -2039,7 +2039,7 @@ ParseActionArgs()
 				[[ $awaiting_group = true ]] && args_incomplete+=($action)
 				action=$new_action
 				awaiting_group=true
-				group=''
+				group=''	 			# When action changes, must clear group.
 				continue
 			fi
 
@@ -2088,50 +2088,38 @@ ParseActionArgs()
 					;;
 				*)
 					group=$(QPKG.MatchAbbrv "$arg")
-
-					if [[ -z $group ]]; then
-						args_remaining+=("$arg")
-						continue
-					fi
 			esac
-
-			# Identify options.
-			# N/A in this function.
 
 			# Match group to action.
 
-			case $action in
-				activate|backup|clean|deactivate|disable|disableau|enable|enableau|install|reactivate|reassign|rebuild|reinstall|restore|sign|status|uninstall|upgrade)
-					skip_package_actions=false
+			if [[ -n $action && -n $group ]]; then
+				skip_package_actions=false
 
-					case $group in
-						all|dependent|disabled|installable|independent|NTinstallable|upgradable)
-							QPKGs.AC${action}.SC${group}:Set
-							awaiting_group=false
-							;;
-						installed|NTinstalled|active|NTactive)
-							QPKGs.AC${action}.IS${group}:Set
-							awaiting_group=false
-							;;
-						'')				# Group was not provided, so action is incomplete.
-							args_incomplete+=($action)
-							action=''
-							continue
-							;;
-						*)
-							QPKGs-AC${action}-to:Add "$group"
-							awaiting_group=false
-					esac
-					;;
-				*)
-					args_remaining+=($arg)
-			esac
-
-			[[ -z $action && -z $group ]] && args_remaining+=("$arg")
+				case $group in
+					all|dependent|disabled|installable|independent|NTinstallable|upgradable)
+						QPKGs.AC${action}.SC${group}:Set
+						awaiting_group=false
+						;;
+					installed|NTinstalled|active|NTactive)
+						QPKGs.AC${action}.IS${group}:Set
+						awaiting_group=false
+						;;
+					'')				# Valid package group was not provided, so action is incomplete.
+						args_incomplete+=($action)
+						action=''
+						continue
+						;;
+					*)
+						QPKGs-AC${action}-to:Add "$group"
+						awaiting_group=false
+				esac
+			else
+				args_remaining+=("$arg")
+			fi
 		done
 	fi
 
-	[[ $awaiting_group = true ]] && args_incomplete+=($action)		# This is only in-case the last action specified was not followed by a group.
+	[[ $awaiting_group = true ]] && args_incomplete+=($action)		# This is only if the last action specified was not followed by a group.
 
 	args=(${args_remaining[@]:-})
 
@@ -2344,6 +2332,10 @@ ArgSuggestions:Show()
 				paste)
 					DisplayAsProjSynExam "please provide a valid source to paste online after 'paste' like" 'paste log'
 					DisplayAsProjSynIndentExam '' 'paste last'
+					opts_show_basic_help=false
+					;;
+				show)
+					DisplayAsProjSynExam "please provide a valid source after 'show' like" 'show statuses'
 					opts_show_basic_help=false
 			esac
 		done
