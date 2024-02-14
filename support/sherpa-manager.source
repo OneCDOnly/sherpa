@@ -102,6 +102,8 @@ Results:Show()
 			Report.Options:Show
 		elif [[ $useropt_help_problems = true ]]; then
 			Report.Problems:Show
+		elif [[ $useropt_help_upgrades = true ]]; then
+			Report.Upgrades:Show
 		elif [[ $useropt_help_groups = true ]]; then
 			Report.Groups:Show
 		elif [[ $useropt_show_versions = true ]]; then
@@ -322,6 +324,7 @@ Vars:Load()
 	useropt_help_options=false
 	useropt_help_problems=false
 	useropt_help_tips=false
+	useropt_help_upgrades=false
 	useropt_paste_log_last=false
 	useropt_paste_log_tail=false
 	useropt_show_backups=false
@@ -861,7 +864,7 @@ Tasks:Check()
 	if [[ $useropt_check = true || $useropt_show_dependencies = true || $useropt_show_packages = true || $show_package_actions_failed = true || $show_package_actions_ok = true || $show_package_actions_skipped = true || $useropt_show_repos = true || $useropt_show_status = true ]]; then
 		build_states=true
 		write_report=true
-	elif [[ $useropt_debug = true || $useropt_paste_log_last = true || $useropt_paste_log_tail = true || $useropt_help_abbreviations = true || $useropt_help_actions = true || $useropt_help_actions_all = true || $useropt_show_backups = true || $useropt_help_groups = true || $useropt_show_log_last = true || $useropt_help_lists = true || $useropt_show_log_tail = true || $useropt_help_options = true || $useropt_help_problems = true || $useropt_show_results = true || $useropt_help_tips = true || $useropt_show_versions = true || $useropt_verbose = true ]]; then
+	elif [[ $useropt_debug = true || $useropt_paste_log_last = true || $useropt_paste_log_tail = true || $useropt_help_abbreviations = true || $useropt_help_actions = true || $useropt_help_actions_all = true || $useropt_show_backups = true || $useropt_help_groups = true || $useropt_show_log_last = true || $useropt_help_lists = true || $useropt_help_upgrades = true || $useropt_show_log_tail = true || $useropt_help_options = true || $useropt_help_problems = true || $useropt_show_results = true || $useropt_help_tips = true || $useropt_show_versions = true || $useropt_verbose = true ]]; then
 		write_report=true
 	elif [[ $show_package_actions_failed = true || $show_package_actions_ok = true || $show_package_actions_skipped = true ]]; then
 		write_report=true
@@ -1761,7 +1764,10 @@ ParseHelpArgs()
 					[[ -z $action ]] && action=help
 					group=actions
 					;;
-				all|actions-all|all-actions)
+				all)								# This word may also be used as a package group, so don't assign 'help' as an action.
+					group=all-actions
+					;;
+				actions-all|all-actions)
 					[[ -z $action ]] && action=help
 					group=all-actions
 					;;
@@ -1776,6 +1782,13 @@ ParseHelpArgs()
 				o|option|options)
 					[[ -z $action ]] && action=help
 					group=options
+					;;
+				upgrade)							# This word may also be used as a package action, so don't assign 'help' as an action.
+					group=upgrades
+					;;
+				upgrades|upgrading)
+ 					[[ -z $action ]] && action=help
+					group=upgrades
 			esac
 
 			# Pair action with group.
@@ -1841,6 +1854,13 @@ ParseHelpArgs()
 								bypass_package_actions=true
 								check_tasks=false
 								useropt_help_tips=true
+								write_report=true
+								;;
+							upgrades)
+								awaiting_group=false
+								bypass_package_actions=true
+								check_tasks=false
+								useropt_help_upgrades=true
 								write_report=true
 						esac
 				esac
@@ -4915,10 +4935,6 @@ Report.Options:Show()
 
 		Help.Basic:Show
 		DisplayAsHelpTitle "$(ShowOptions) usage examples:"
-# 		DisplayAsProjSynIndentExam 'show package statuses' status
-# 		DisplayAsProjSynIndentExam '' s
-# 		DisplayAsProjSynIndentExam 'show package repositories' repos
-# 		DisplayAsProjSynIndentExam '' r
 		DisplayAsProjSynIndentExam 'show live debugging information, and record it to file' "$(ShowAction) $(ShowPackages) verbose"
 		DisplayAsProjSynIndentExam '' v
 		DisplayAsProjSynIndentExam 'record debugging information to file-only' "$(ShowAction) $(ShowPackages) debug"
@@ -4948,7 +4964,7 @@ Report.Problems:Show()
 
 		Help.Basic:Show
 		DisplayAsHelpTitle 'usage examples for dealing with problems:'
-		DisplayAsProjSynIndentExam 'show package statuses' status
+		DisplayAsProjSynIndentExam 'show package statuses' 'show status'
 		DisplayAsProjSynIndentExam '' s
 		DisplayAsProjSynIndentExam 'show live debugging information, and record it to file' "$(ShowAction) $(ShowPackages) verbose"
 		DisplayAsProjSynIndentExam '' v
@@ -4966,6 +4982,38 @@ Report.Problems:Show()
 		DisplayAsProjSynIndentExam "upload the most-recent session in your $(ShowTitleName) log to the $(ShowAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste last'
 		DisplayAsProjSynIndentExam "upload the most-recent $(FormatAsThous "$LOG_TAIL_LINES") lines in your $(ShowTitleName) log to the $(ShowAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste log'
 		DisplayAsHelpTitleHighlighted "if you need help, please include a copy of your $(ShowTitleName) $(TextBrightOrange "log for analysis!")"
+		Display
+
+		} > "$REPORT_OUTPUT_PATHFILE"
+
+	EraseThisLine
+
+	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
+		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
+	else
+		ShowAsError 'no information to display'
+	fi
+
+	return 0
+
+	}
+
+Report.Upgrades:Show()
+	{
+
+	DisableDebugToArchiveAndFile
+	DisplayWritingReport
+
+		{
+
+		Help.Basic:Show
+		DisplayAsHelpTitle 'usage examples for upgrading your packages:'
+		DisplayAsProjSynIndentExam 'upgrade only the upgradable packages' 'upgrade upgradable'
+		DisplayAsProjSynIndentExam '' 'upgrade new'
+		DisplayAsProjSynIndentExam 'show a list of upgradable packages' 'list upgradable'
+		DisplayAsProjSynIndentExam '' 'list new'
+		DisplayAsProjSynIndentExam 'show package statuses' 'show status'
+		DisplayAsProjSynIndentExam '' s
 		Display
 
 		} > "$REPORT_OUTPUT_PATHFILE"
