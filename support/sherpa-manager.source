@@ -56,17 +56,17 @@ Init()
 	ArchivePriorSessLogs
 	Debug.Log:Init
 	ParseShowArgs || return
-# 	ParseListArgs || return
+	ParseListArgs || return
 	ParseActionArgs || return
 
 	Title:Show
+
 	ArgSuggestions:Show
 	QPKGs.Conflicts:Check || return
 	QPKGs.Warnings:Check
 	Debug.Log:Env
 	Tasks:Check
 	Validate
-
 	return 0
 
 	}
@@ -77,99 +77,95 @@ Results:Show()
 	Func:Init
 	display_last_action_datetime=false
 
-	if [[ $write_report = true ]]; then
-		if [[ $useropt_paste_log_last = true ]]; then
-			Log.Last:Paste
-		elif [[ $useropt_paste_log_tail = true ]]; then
-			Log.Tail:Paste
-		elif [[ $useropt_show_log_last = true ]]; then
-			LockFile:Release
-			Log.Last:View
-		elif [[ $useropt_show_log_tail = true ]]; then
-			LockFile:Release
-			Log.Tail:View
-		elif [[ $useropt_show_backups = true ]]; then
-			Report.Backups:Show
-		elif [[ $useropt_help_abbreviations = true ]]; then
-			Report.Abbreviations:Show
-		elif [[ $useropt_help_actions = true ]]; then
-			Report.Actions:Show
-		elif [[ $useropt_help_actions_all = true ]]; then
-			Report.ActionsAll:Show
-		elif [[ $useropt_help_lists = true ]]; then
-			Report.Lists:Show
-		elif [[ $useropt_help_options = true ]]; then
-			Report.Options:Show
-		elif [[ $useropt_help_problems = true ]]; then
-			Report.Problems:Show
-		elif [[ $useropt_help_upgrades = true ]]; then
-			Report.Upgrades:Show
-		elif [[ $useropt_help_groups = true ]]; then
-			Report.Groups:Show
-		elif [[ $useropt_show_versions = true ]]; then
-			Report.Versions:Show
-		fi
+	if [[ $useropt_show_log_last = true ]]; then
+		LockFile:Release
+		Log.Last:View
+	elif [[ $useropt_show_log_tail = true ]]; then
+		LockFile:Release
+		Log.Tail:View
+	elif [[ $useropt_show_backups = true ]]; then
+		Report.Backups:Show
+	elif [[ $useropt_show_versions = true ]]; then
+		Report.Versions:Show
+	fi
 
-		if [[ $useropt_show_dependencies = true ]]; then
-			Report.Dependencies:Show
-		fi
+	if [[ $useropt_show_dependencies = true ]]; then
+		Report.Dependencies:Show
+	elif [[ $useropt_show_packages = true ]]; then
+		Report.Packages:Show
+	elif [[ $useropt_show_repos = true ]]; then
+		Report.Repos:Show
+	fi
 
-		if [[ $useropt_show_packages = true ]]; then
-			Report.Packages:Show
-		fi
+	if [[ $useropt_show_results = true ]]; then
+		display_last_action_datetime=true
+		show_package_actions_ok=true
+		show_package_actions_skipped=true
+		show_package_actions_failed=true
+	fi
 
-		if [[ $useropt_show_repos = true ]]; then
-			Report.Repos:Show
-		fi
+	if [[ $useropt_show_status = true ]]; then
+		Report.Statuses:Show
+		show_package_actions_ok=false
+		show_package_actions_skipped=false
+		show_package_actions_failed=false
+	fi
 
-		if [[ $useropt_show_results = true ]]; then
-			display_last_action_datetime=true
-			show_package_actions_ok=true
-			show_package_actions_skipped=true
-			show_package_actions_failed=true
-		fi
-
-		if [[ $useropt_show_status = true ]]; then
-			Report.Statuses:Show
-			show_package_actions_ok=false
-			show_package_actions_skipped=false
-			show_package_actions_failed=false
-		fi
-
-		if [[ $useropt_help_tips = true ]]; then
-			Report.Tips:Show
-		fi
-
-		if [[ ${packages_loaded:=false} = true ]]; then
-			if QPKGs.AClist.ISbackedup.IsSet; then
-				QPKGs.IsBackedUp:Show
-			elif QPKGs.AClist.ISNTbackedup.IsSet; then
-				QPKGs.IsNtBackedUp:Show
-			elif QPKGs.AClist.ISinstalled.IsSet; then
-				QPKGs.IsInstalled:Show
-			elif QPKGs.AClist.ISNTinstalled.IsSet; then
-				QPKGs.IsNtInstalled:Show
-			elif QPKGs.AClist.ISactive.IsSet; then
-				QPKGs.IsActive:Show
-			elif QPKGs.AClist.ISNTactive.IsSet; then
-				QPKGs.IsNtActive:Show
-			elif QPKGs.AClist.SCinstallable.IsSet; then
-				QPKGs.ScInstallable:Show
-			elif QPKGs.AClist.SCNTinstallable.IsSet; then
-				QPKGs.ScNtInstallable:Show
-			elif QPKGs.AClist.SCupgradable.IsSet; then
-				QPKGs.ScUpgradable:Show
-			elif QPKGs.AClist.SCindependent.IsSet; then
-				QPKGs.ScIndependent:Show
-			elif QPKGs.AClist.SCdependent.IsSet; then
-				QPKGs.ScDependent:Show
-			fi
+	if [[ ${packages_loaded:=false} = true ]]; then
+		if QPKGs.AClist.ISbackedup.IsSet; then
+			QPKGs.IsBackedUp:Show
+		elif QPKGs.AClist.ISNTbackedup.IsSet; then
+			QPKGs.IsNtBackedUp:Show
+		elif QPKGs.AClist.ISinstalled.IsSet; then
+			QPKGs.IsInstalled:Show
+		elif QPKGs.AClist.ISNTinstalled.IsSet; then
+			QPKGs.IsNtInstalled:Show
+		elif QPKGs.AClist.ISactive.IsSet; then
+			QPKGs.IsActive:Show
+		elif QPKGs.AClist.ISNTactive.IsSet; then
+			QPKGs.IsNtActive:Show
+		elif QPKGs.AClist.SCinstallable.IsSet; then
+			QPKGs.ScInstallable:Show
+		elif QPKGs.AClist.SCNTinstallable.IsSet; then
+			QPKGs.ScNtInstallable:Show
+		elif QPKGs.AClist.SCupgradable.IsSet; then
+			QPKGs.ScUpgradable:Show
+		elif QPKGs.AClist.SCindependent.IsSet; then
+			QPKGs.ScIndependent:Show
+		elif QPKGs.AClist.SCdependent.IsSet; then
+			QPKGs.ScDependent:Show
 		fi
 	fi
-set +x
+
+	if [[ $useropt_paste_log_last = true ]]; then
+		Log.Last:Paste
+	elif [[ $useropt_paste_log_tail = true ]]; then
+		Log.Tail:Paste
+	fi
+
 	if [[ $useropt_help_basic = true ]]; then
 		Help.Basic:Show
 		Help.Basic.Examples:Show
+	fi
+
+	if [[ $useropt_help_tips = true ]]; then
+		Report.Tips:Show
+	elif [[ $useropt_help_abbreviations = true ]]; then
+		Report.Abbreviations:Show
+	elif [[ $useropt_help_actions = true ]]; then
+		Report.Actions:Show
+	elif [[ $useropt_help_actions_all = true ]]; then
+		Report.ActionsAll:Show
+	elif [[ $useropt_help_lists = true ]]; then
+		Report.Lists:Show
+	elif [[ $useropt_help_options = true ]]; then
+		Report.Options:Show
+	elif [[ $useropt_help_problems = true ]]; then
+		Report.Problems:Show
+	elif [[ $useropt_help_upgrades = true ]]; then
+		Report.Upgrades:Show
+	elif [[ $useropt_help_groups = true ]]; then
+		Report.Groups:Show
 	fi
 
 	# Action results.
@@ -183,6 +179,7 @@ set +x
 	DebugScript finished "$(/bin/date)"
 	DebugScript 'elapsed time' "$(FormatSecsToHoursMinutesSecs "$(($(/bin/date +%s)-SCRIPT_STARTSECONDS))")"
 	DebugInfoMajSepr
+
 	Func:Exit
 
 	[[ $archive_debug_afterward = true ]] && ArchiveActiveSessLog
@@ -289,15 +286,12 @@ Vars:Load()
 	archive_debug_afterward=false
 	backup_stdin_fd=none
 	bypass_package_actions=false
-	check_tasks=true
 	colourful=true
 	fork_pid=''
 	ipks_downgrade=false
 	ipks_install=false
 	ipks_upgrade=false
 	linespace_visible=false
-	load_objects=true
-	load_packages=true
 	package_ver_final_col_width=0
 	pips_install=false
 	proc_counts_path=''
@@ -308,7 +302,7 @@ Vars:Load()
 	show_package_actions_skipped=false
 	show_suggest_raise_issue=false
 	show_title=true
-	show_zero_qpkgs=true
+	show_zero_qpkgs=false
 	title_shown=false
 	write_report=false
 
@@ -813,67 +807,73 @@ Tasks:Check()
 
 	# Establish whether there's something to-do.
 
-	[[ $check_tasks = true ]] || return
+	[[ $useropt_help_basic = false && $bypass_package_actions = false ]] || return 0			# No-need to check for tasks if only showing help.
 
 	Func:Init
-	ShowAsProc checking
 	local action=''
 	local build_states=false
 	local group=''
+	local show_help=false
 	local state=''
 	local z=0
-
-	Objects:Load forced
-	Packages:Load forced
-
-	for action in "${USER_QPKG_ACTIONS[@]}"; do
-		if QPKGs-AC${action}-to.IsAny; then
-			build_states=true
-			break
-		fi
-
-		for group in "${USER_QPKG_SC_GROUPS[@]}"; do
-			if QPKGs.AC${action}.SC${group}.IsSet; then
-				build_states=true
-				break 2
-			fi
-		done
-
-		for group in "${USER_QPKG_SCNT_GROUPS[@]}"; do
-			if QPKGs.AC${action}.SCNT${group}.IsSet; then
-				build_states=true
-				break 2
-			fi
-		done
-
-		for state in "${USER_QPKG_IS_STATES[@]}"; do
-			if QPKGs.AC${action}.IS${state}.IsSet; then
-				build_states=true
-				break 2
-			fi
-		done
-
-		for state in "${USER_QPKG_ISNT_STATES[@]}"; do
-			if QPKGs.AC${action}.ISNT${state}.IsSet; then
-				build_states=true
-				break 2
-			fi
-		done
-	done
 
 	if [[ $useropt_check = true || $useropt_show_dependencies = true || $useropt_show_packages = true || $show_package_actions_failed = true || $show_package_actions_ok = true || $show_package_actions_skipped = true || $useropt_show_repos = true || $useropt_show_status = true ]]; then
 		build_states=true
 		write_report=true
-	elif [[ $useropt_debug = true || $useropt_paste_log_last = true || $useropt_paste_log_tail = true || $useropt_help_abbreviations = true || $useropt_help_actions = true || $useropt_help_actions_all = true || $useropt_show_backups = true || $useropt_help_groups = true || $useropt_show_log_last = true || $useropt_help_lists = true || $useropt_help_upgrades = true || $useropt_show_log_tail = true || $useropt_help_options = true || $useropt_help_problems = true || $useropt_show_results = true || $useropt_help_tips = true || $useropt_show_versions = true || $useropt_verbose = true ]]; then
+	elif [[ $useropt_debug = true || $useropt_paste_log_last = true || $useropt_paste_log_tail = true || $useropt_show_backups = true || $useropt_show_log_last = true || $useropt_show_log_tail = true || $useropt_show_results = true || $useropt_show_versions = true || $useropt_verbose = true ]]; then
 		write_report=true
+	elif [[ $useropt_help_abbreviations = true || $useropt_help_actions = true || $useropt_help_actions_all = true || $useropt_help_groups = true || $useropt_help_lists = true || $useropt_help_upgrades = true || $useropt_help_options = true || $useropt_help_problems = true || $useropt_help_tips = true ]]; then
+		show_help=true
+		useropt_help_basic=false
 	elif [[ $show_package_actions_failed = true || $show_package_actions_ok = true || $show_package_actions_skipped = true ]]; then
 		write_report=true
 	fi
 
+	if [[ $build_states = false && $show_help = false && $write_report = false ]]; then
+		Objects:Load
+		Packages:Load
+
+		for action in "${USER_QPKG_ACTIONS[@]}"; do
+			if QPKGs-AC${action}-to.IsAny; then
+				build_states=true
+				break
+			fi
+
+			for group in "${USER_QPKG_SC_GROUPS[@]}"; do
+				if QPKGs.AC${action}.SC${group}.IsSet; then
+					build_states=true
+					break 2
+				fi
+			done
+
+			for group in "${USER_QPKG_SCNT_GROUPS[@]}"; do
+				if QPKGs.AC${action}.SCNT${group}.IsSet; then
+					build_states=true
+					break 2
+				fi
+			done
+
+			for state in "${USER_QPKG_IS_STATES[@]}"; do
+				if QPKGs.AC${action}.IS${state}.IsSet; then
+					build_states=true
+					break 2
+				fi
+			done
+
+			for state in "${USER_QPKG_ISNT_STATES[@]}"; do
+				if QPKGs.AC${action}.ISNT${state}.IsSet; then
+					build_states=true
+					break 2
+				fi
+			done
+		done
+	fi
+
 	if [[ $build_states = true ]]; then
 		QPKGs.States:Build
-	elif [[ $write_report = false ]]; then
-		useropt_help_basic=true
+	fi
+
+	if [[ $show_help = true ]]; then
 		bypass_package_actions=true
 		z=1
 	fi
@@ -1558,6 +1558,11 @@ PrepareArgs()
 	local a=$(Lowercase "${ARGS_RAW//,/ }")
 	args=(${a/--/})
 
+	if [[ -z $ARGS_RAW ]]; then
+		bypass_package_actions=true
+		useropt_help_basic=true
+	fi
+
 	}
 
 ParseManagementArgs()
@@ -1573,126 +1578,123 @@ ParseManagementArgs()
 	#   $args (global)
 	#   $args_incomplete (global)
 
+	Func:Init
+
 	local action=''
 	local -a args_remaining=()
 	local arg=''
 	local awaiting_group=false
 	local new_action=''
-	local to_do=false
+	local requires_group=false
 
-	if [[ -n ${args[*]:-} ]]; then
-		for arg in "${args[@]:-}"; do
-			[[ -n $arg ]] || continue
+	for arg in "${args[@]:-}"; do
+		[[ -n $arg ]] || continue
 
-			# Identify action.
+		# Identify action.
 
-			case $arg in
-			# These cases use only a single user-provided word to specify a single action.
-				follow|paste)
-					awaiting_group=true
-					new_action=$arg
+		case $arg in
+		# These cases use only a single user-provided word to specify a single action.
+			follow|paste)
+				new_action=$arg
+				requires_group=true
+				;;
+			reset)
+				new_action=reset
+				requires_group=false
+				Reset					# <-- Processing will terminate in this function (no-return).
+				;;
+		# All cases below can use multiple user-provided words or chars to specify a single action.
+			c|check)
+				new_action=check
+				requires_group=false
+				useropt_check=true
+				;;
+			debug|dbug)
+				EnableDebugToArchiveAndFile
+				new_action=debug
+				requires_group=false
+				;;
+			v|verbose)
+				Verbose:Enable
+				EnableDebugToArchiveAndFile
+				new_action=verbose
+				requires_group=false
+				;;
+			*)
+				new_action=''
+		esac
+
+		if [[ -n $new_action && $new_action != "$action" ]]; then
+			[[ $awaiting_group = true ]] && args_incomplete+=("$action")
+			[[ $requires_group = false ]] && awaiting_group=false || awaiting_group=true
+			action=$new_action
+			group=''	 			# When action changes, must clear group.
+			continue
+		fi
+
+		# Identify group.
+
+		case $arg in
+		# These cases use only a single user-provided word or char to specify a single group.
+			stable|unstable)
+				[[ -z $action ]] && action=follow
+				group=$arg
+				;;
+		# All cases below can use multiple user-provided words or chars to specify a single group.
+			all|log|tail)
+				# Don't set a default action for this group, it should prompt user instead.
+				group=tail
+				;;
+			l|last)
+				# Don't set a default action for this group, it should prompt user instead.
+				group=last
+		esac
+
+		# Pair action with group.
+
+		if [[ -n $action && -n $group ]]; then
+			case $action in
+				follow)
+					case $group in
+						stable|unstable)
+							awaiting_group=false
+							bypass_package_actions=true
+							source_branch=$group
+							useropt_switch_branch=true
+							;;
+						*)
+							args_remaining+=("$arg")
+					esac
 					;;
-				reset)
-					new_action=reset
-					Reset
-					;;
-			# All cases below can use multiple user-provided words or chars to specify a single action.
-				c|check)
-					bypass_package_actions=false
-					new_action=check
-					to_do=true
-					useropt_check=true
-					;;
-				debug|dbug)
-					new_action=debug
-					EnableDebugToArchiveAndFile
-					;;
-				v|verbose)
-					new_action=verbose
-					Verbose:Enable
-					EnableDebugToArchiveAndFile
-					;;
-				*)
-					new_action=''
+				paste)
+					case $group in
+						last)
+							awaiting_group=false
+							bypass_package_actions=true
+							useropt_paste_log_last=true
+							;;
+						tail)
+							awaiting_group=false
+							bypass_package_actions=true
+							useropt_paste_log_tail=true
+							;;
+						*)
+							args_remaining+=("$arg")
+					esac
 			esac
+		else
+			args_remaining+=("$arg")
+		fi
+	done
 
-			if [[ -n $new_action && $new_action != "$action" ]]; then
-				[[ $awaiting_group = true ]] && args_incomplete+=($action)
-				action=$new_action
-				group=''	 			# When action changes, must clear group.
-				continue
-			fi
-
-			# Identify group.
-
-			case $arg in
-			# These cases use only a single user-provided word or char to specify a single group.
-				stable|unstable)
-					[[ -z $action ]] && action=follow
-					group=$arg
-					;;
-			# All cases below can use multiple user-provided words or chars to specify a single group.
-				all)
-					# Don't set a default action for this group, it should prompt user instead.
-					group=tail
-					;;
-				log|tail)
-					# Don't set a default action for this group, it should prompt user instead.
-					group=tail
-					;;
-				l|last)
-					# Don't set a default action for this group, it should prompt user instead.
-					group=last
-			esac
-
-			# Pair action with group.
-
-			if [[ -n $action && -n $group ]]; then
-				case $action in
-					follow)
-						case $group in
-							stable|unstable)
-								awaiting_group=false
-								source_branch=$group
-								useropt_switch_branch=true
-						esac
-						;;
-					paste)
-						case $group in
-							last)
-								awaiting_group=false
-								useropt_paste_log_last=true
-								;;
-							tail)
-								awaiting_group=false
-								useropt_paste_log_tail=true
-						esac
-				esac
-
-				[[ $awaiting_group = false ]] && to_do=true
-			else
-				args_remaining+=("$arg")
-			fi
-		done
-	fi
-
-	[[ $awaiting_group = true ]] && args_incomplete+=($action)		# This is only if the last action specified was not followed by a group.
-
-	if [[ $to_do = false && ${#args_remaining[@]} -eq 0 ]]; then
-		bypass_arg_parsing=true
+	if [[ $requires_group = true && $awaiting_group = true ]]; then
+		args_incomplete+=("$action")		# This is only if the last action specified was not followed by a group.
 		bypass_package_actions=true
-		check_tasks=false
-		show_package_actions_failed=false
-		show_package_actions_ok=false
-		show_package_actions_skipped=false
-		useropt_help_basic=true
-
-		DisableDebugToArchiveAndFile
 	fi
 
 	args=(${args_remaining[@]:-})
 
-	return 0
+	Func:Exit
 
 	}
 
@@ -1709,7 +1711,170 @@ ParseHelpArgs()
 	#   $args (global)
 	#   various global flags
 
-	[[ ${bypass_arg_parsing:=false} = false ]] || return 0
+	Func:Init
+
+	local action=''
+	local arg=''
+	local -a args_remaining=()
+	local awaiting_group=false
+	local group=''
+	local new_action=''
+	local requires_group=false
+
+	for arg in "${args[@]:-}"; do
+		[[ -n $arg ]] || continue
+
+		# Identify action.
+
+		case $arg in
+		# All cases below can use multiple words or chars to specify a single action.
+			help)
+				new_action=help
+				requires_group=true
+				;;
+			*)
+				new_action=''
+		esac
+
+		if [[ -n $new_action && $new_action != "$action" ]]; then
+			[[ $awaiting_group = true ]] && args_incomplete+=("$action")
+			[[ $requires_group = false ]] && awaiting_group=false || awaiting_group=true
+			action=$new_action
+			group=''	 			# When action changes, must clear group.
+			continue
+		fi
+
+		# Identify group. Include action assignment when action hasn't been previously specified.
+
+		case $arg in
+		# These cases use only a single word or char to specify a single group.
+			problems)
+				[[ -z $action ]] && action=help
+				group=problems
+				;;
+			tips)
+				[[ -z $action ]] && action=help
+				group=tips
+				;;
+		# All cases below can use multiple user-provided words or chars to specify a single group.
+			a|abs|abbreviations)
+				[[ -z $action ]] && action=help
+				group=abs
+				;;
+			action|actions)
+				[[ -z $action ]] && action=help
+				group=actions
+				;;
+			all)
+				# Don't set a default action for this group, this group is used for multiple actions.
+				group=all-actions
+				;;
+			actions-all|all-actions)
+				[[ -z $action ]] && action=help
+				group=all-actions
+				;;
+			group|groups)
+				[[ -z $action ]] && action=help
+				group=groups
+				;;
+			lists)
+				[[ -z $action ]] && action=help
+				group=lists
+				;;
+			o|option|options)
+				[[ -z $action ]] && action=help
+				group=options
+				;;
+			upgrade)
+				# Don't set a default action for this group, this group is used for multiple actions.
+				group=upgrades
+				;;
+			upgrades|upgrading)
+				[[ -z $action ]] && action=help
+				group=upgrades
+		esac
+
+		# Pair action with group.
+
+		if [[ -n $action && -n $group ]]; then
+			case $action in
+				help)
+					case $group in
+						abs)
+							awaiting_group=false
+							useropt_help_abbreviations=true
+							write_report=true
+							;;
+						actions)
+							awaiting_group=false
+							useropt_help_actions=true
+							write_report=true
+							;;
+						all-actions)
+							awaiting_group=false
+							useropt_help_actions_all=true
+							write_report=true
+							;;
+						groups)
+							awaiting_group=false
+							useropt_help_groups=true
+							write_report=true
+							;;
+						lists)
+							awaiting_group=false
+							useropt_help_lists=true
+							write_report=true
+							;;
+						options)
+							awaiting_group=false
+							useropt_help_options=true
+							write_report=true
+							;;
+						problems)
+							awaiting_group=false
+							useropt_help_problems=true
+							write_report=true
+							;;
+						tips)
+							awaiting_group=false
+							useropt_help_tips=true
+							write_report=true
+							;;
+						upgrades)
+							awaiting_group=false
+							useropt_help_upgrades=true
+							write_report=true
+					esac
+			esac
+		else
+			args_remaining+=("$arg")
+		fi
+	done
+
+	if [[ $requires_group = true && $awaiting_group = true ]]; then
+		args_incomplete+=("$action")		# This is only if the last action specified was not followed by a group.
+		bypass_package_actions=true
+		useropt_help_basic=true
+	fi
+
+	args=(${args_remaining[@]:-})
+
+	Func:Exit
+
+	}
+
+ParseShowArgs()
+	{
+
+	# Basic argument syntax:
+	#   scriptname [action] [groups] [options]
+
+	# input:
+	#   $args (global)
+
+	# output:
+	#   $args (global)
+	#   various global flags
 
 	Func:Init
 
@@ -1719,162 +1884,110 @@ ParseHelpArgs()
 	local awaiting_group=false
 	local group=''
 	local new_action=''
+	local requires_group=false
 
-	if [[ -n ${args[*]:-} ]]; then
-		for arg in "${args[@]:-}"; do
-			[[ -n $arg ]] || continue
+	for arg in "${args[@]:-}"; do
+		[[ -n $arg ]] || continue
 
-			# Identify action.
+		# Identify action.
 
-			case $arg in
-			# All cases below can use multiple words or chars to specify a single action.
-				help)
-					new_action=help
-					;;
-				*)
-					new_action=''
+		case $arg in
+			show)
+				new_action=show
+				requires_group=true
+				;;
+			*)
+				new_action=''
+		esac
+
+		if [[ -n $new_action && $new_action != "$action" ]]; then
+			[[ $awaiting_group = true ]] && args_incomplete+=("$action")
+			[[ $requires_group = false ]] && awaiting_group=false || awaiting_group=true
+			action=$new_action
+			group=''	 			# When action changes, must clear group.
+			continue
+		fi
+
+		# Identify group. Include action assignment when action hasn't been previously specified.
+
+		case $arg in
+		# These cases use only a single user-provided word or char to specify a single group.
+			backups|results)
+				[[ -z $action ]] && action=show
+				group=$arg
+				;;
+		# All cases below can use multiple user-provided words or chars to specify a single group.
+			deps)
+				# Don't set a default action for this group, this group is used for multiple actions.
+				group=dependencies
+				;;
+			d|dependencies)
+				[[ -z $action ]] && action=show
+				group=dependencies
+				;;
+			l|last)
+				[[ -z $action ]] && action=show
+				group=last
+				;;
+			log|tail)
+				[[ -z $action ]] && action=show
+				group=tail
+				;;
+			p|packages)
+				[[ -z $action ]] && action=show
+				group=packages
+				;;
+			r|repos|repositories)
+				[[ -z $action ]] && action=show
+				group=repositories
+		esac
+
+		# Pair action with group.
+
+		if [[ -n $action && -n $group ]]; then
+			case $action in
+				show)
+					case $group in
+						backups)
+							awaiting_group=false
+							useropt_show_backups=true
+							write_report=true
+							;;
+						dependencies)
+							awaiting_group=false
+							useropt_show_dependencies=true
+							;;
+						last)
+							awaiting_group=false
+							useropt_show_log_last=true
+							write_report=true
+							;;
+						tail)
+							awaiting_group=false
+							useropt_show_log_tail=true
+							write_report=true
+							;;
+						packages)
+							awaiting_group=false
+							useropt_show_packages=true
+							;;
+						repositories)
+							awaiting_group=false
+							useropt_show_repos=true
+							;;
+						results)
+							awaiting_group=false
+							useropt_show_results=true
+					esac
 			esac
+		else
+			args_remaining+=("$arg")
+		fi
+	done
 
-			if [[ -n $new_action && $new_action != "$action" ]]; then
-				[[ $awaiting_group = true ]] && args_incomplete+=($action)
-				action=$new_action
-				awaiting_group=true
-				group=''	 			# When action changes, must clear group.
-				continue
-			fi
-
-			# Identify group. Include action assignment when action hasn't been previously specified.
-
-			case $arg in
-			# These cases use only a single word or char to specify a single group.
-				problems)
-					[[ -z $action ]] && action=help
-					group=problems
-					;;
-				tips)
-					[[ -z $action ]] && action=help
-					group=tips
-					;;
-			# All cases below can use multiple user-provided words or chars to specify a single group.
-				a|abs|abbreviations)
-					[[ -z $action ]] && action=help
-					group=abs
-					;;
-				action|actions)
-					[[ -z $action ]] && action=help
-					group=actions
-					;;
-				all)								# This word may also be used as a package group, so don't assign 'help' as an action.
-					group=all-actions
-					;;
-				actions-all|all-actions)
-					[[ -z $action ]] && action=help
-					group=all-actions
-					;;
-				group|groups)
-					[[ -z $action ]] && action=help
-					group=groups
-					;;
-				lists)
-					[[ -z $action ]] && action=help
-					group=lists
-					;;
-				o|option|options)
-					[[ -z $action ]] && action=help
-					group=options
-					;;
-				upgrade)							# This word may also be used as a package action, so don't assign 'help' as an action.
-					group=upgrades
-					;;
-				upgrades|upgrading)
- 					[[ -z $action ]] && action=help
-					group=upgrades
-			esac
-
-			# Pair action with group.
-
-			if [[ -n $action && -n $group ]]; then
-				case $action in
-					help)
-						load_objects=false
-						load_packages=false
-
-						case $group in
-							abs)
-								awaiting_group=false
-								bypass_package_actions=true
-								check_tasks=false
-								useropt_help_abbreviations=true
-								write_report=true
-								;;
-							actions)
-								awaiting_group=false
-								bypass_package_actions=true
-								check_tasks=false
-								useropt_help_actions=true
-								write_report=true
-								;;
-							all-actions)
-								awaiting_group=false
-								bypass_package_actions=true
-								check_tasks=false
-								useropt_help_actions_all=true
-								write_report=true
-								;;
-							groups)
-								awaiting_group=false
-								bypass_package_actions=true
-								check_tasks=false
-								useropt_help_groups=true
-								write_report=true
-								;;
-							lists)
-								awaiting_group=false
-								bypass_package_actions=true
-								check_tasks=false
-								useropt_help_lists=true
-								write_report=true
-								;;
-							options)
-								awaiting_group=false
-								bypass_package_actions=true
-								check_tasks=false
-								useropt_help_options=true
-								write_report=true
-								;;
-							problems)
-								awaiting_group=false
-								bypass_package_actions=true
-								check_tasks=false
-								useropt_help_problems=true
-								write_report=true
-								;;
-							tips)
-								awaiting_group=false
-								bypass_package_actions=true
-								check_tasks=false
-								useropt_help_tips=true
-								write_report=true
-								;;
-							upgrades)
-								awaiting_group=false
-								bypass_package_actions=true
-								check_tasks=false
-								useropt_help_upgrades=true
-								write_report=true
-						esac
-				esac
-			else
-				args_remaining+=("$arg")
-			fi
-		done
-	fi
-
-	if [[ $action = help && -z $group ]]; then
-		bypass_arg_parsing=true
+	if [[ $requires_group = true && $awaiting_group = true ]]; then
+		args_incomplete+=("$action")		# This is only if the last action specified was not followed by a group.
 		bypass_package_actions=true
-		check_tasks=false
-		useropt_help_basic=true		# Show default information. This will usually be the help screen.
 	fi
 
 	args=(${args_remaining[@]:-})
@@ -1896,137 +2009,113 @@ ParseListArgs()
 	#   $args (global)
 	#   various global flags
 
-	[[ ${bypass_arg_parsing:=false} = false ]] || return 0
-
 	Func:Init
 
-	local -a args_remaining=()
-	local arg=''
-	local arg_identified=false
 	local action=''
+	local arg=''
+	local -a args_remaining=()
+	local awaiting_group=false
 	local group=''
-	local awaiting_list_source=false
+	local new_action=''
 
-	Objects:Load
+	for arg in "${args[@]:-}"; do
+		[[ -n $arg ]] || continue
 
-	if [[ -n ${args[*]:-} ]]; then
-		for arg in "${args[@]:-}"; do
-			[[ -n $arg ]] || continue
+		# Identify action. All require a group.
 
-			arg_identified=false
+		case $arg in
+		# These cases use only a single word to specify a single action.
+			list)
+				new_action=$arg
+				group=''
+				;;
+			*)
+				new_action=''
+		esac
 
-			# Identify action: each time action changes, must clear group.
+		if [[ -n $new_action && $new_action != "$action" ]]; then
+			[[ $awaiting_group = true ]] && args_incomplete+=("$action")
+			action=$new_action
+			awaiting_group=true
+			group=''	 			# When action changes, must clear group.
+			continue
+		fi
 
-			case $arg in
-			# These cases use only a single word to specify a single action.
-				list)
-					action=list
-					arg_identified=true
-					group=''
-					awaiting_list_source=true
+		# Identify group.
+
+		case $arg in
+		# These cases use only a single user-provided word to specify a single action.
+			backedup|installable|installed|missing|results)
+				group=${arg}
+				;;
+			not-backedup)
+				group=NTbackedup
+				;;
+			not-installed)
+				group=NTinstalled
+				;;
+		# All cases below can use multiple user-provided words or chars to specify a single action.
+			active|started)
+				group=active
+				;;
+			all|entire|everything)
+				group=all
+				;;
+			b|backups)
+				group=backups
+				;;
+			deps|dependent|dependents)
+				group=dependent
+				;;
+			disabled)
+				group=NTenabled
+				;;
+			inactive|not-active|stopped)
+				group=NTactive
+				;;
+			new|updatable|updateable|upgradable)
+				group=upgradable
+				;;
+			non-installable|not-installable)
+				group=NTinstallable
+				;;
+			independent|independents|indeps)
+				group=independent
+				;;
+			version|versions)
+				group=versions
+		esac
+
+		# Pair action with group.
+
+		if [[ -n $action && -n $group ]]; then
+			case $group in
+				backedup|installed|NTbackedup|NTinstalled)
+					Objects:Load
+					QPKGs.AClist.IS${group}:Set
+					awaiting_group=false
+					show_title=false
+					;;
+				dependent|disabled|installable|independent|NTinstallable|upgradable)
+					Objects:Load
+					QPKGs.AClist.SC${group}:Set
+					awaiting_group=false
+					show_title=false
+					;;
+				versions)
+					awaiting_group=false
+					show_title=false
+					useropt_show_versions=true
+					;;
+				*)
+					args_remaining+=("$arg")
 			esac
+		else
+			args_remaining+=("$arg")
+		fi
+	done
 
-			# Identify group in two stages:
-
-			# Stage 1: when user didn't supply an action before group.
-
-			if [[ -z $action ]]; then
-				case $arg in
-					dependent|dependents|disabled|enabled|inactive|indeps|independent|independents|installable|installed|missing|non-installable|not-installable|not-installed|stopped|updatable|updateable|upgradable|version|versions)
-						action=list
-						arg_identified=true
-						group=''
-						awaiting_list_source=true
-				esac
-
-				DebugVar action
-			fi
-
-			# Stage 2: after an action has been defined.
-
-			if [[ -n $action ]]; then
-				case $arg in
-				# These cases use only a single word or char to specify a single group.
-					backedup|installable|installed|missing|results)
-						group=${arg}
-						awaiting_list_source=false
-						;;
-					not-backedup)
-						group=NTbackedup
-						awaiting_list_source=false
-						;;
-					not-installed)
-						group=NTinstalled
-						awaiting_list_source=false
-						;;
-				# All cases below can use multiple words or chars to specify a single group.
-					active|started)
-						group=active
-						awaiting_list_source=false
-						;;
-					all|entire|everything)
-						group=all
-						awaiting_list_source=false
-						;;
-					b|backups)
-						group=backups
-						awaiting_list_source=false
-						;;
-					deps|dependent|dependents)
-						group=dependent
-						awaiting_list_source=false
-						;;
-					disabled)
-						group=NTenabled
-						awaiting_list_source=false
-						;;
-					inactive|not-active|stopped)
-						group=NTactive
-						awaiting_list_source=false
-						;;
-					new|updatable|updateable|upgradable)
-						group=upgradable
-						awaiting_list_source=false
-						;;
-					non-installable|not-installable)
-						group=NTinstallable
-						awaiting_list_source=false
-						;;
-					independent|independents|indeps)
-						group=independent
-						awaiting_list_source=false
-						;;
-					version|versions)
-						group=versions
-						awaiting_list_source=false
-				esac
-
-				[[ -n $group ]] && arg_identified=true
-			fi
-
-			[[ $arg_identified = false ]] && args_remaining+=("$arg")
-
-			if [[ $action = list ]]; then
-				show_title=false
-
-				case $group in
-					backedup|installed|NTbackedup|NTinstalled)
-						QPKGs.AClist.IS${group}:Set
-						awaiting_list_source=false
-						;;
-					dependent|disabled|installable|independent|NTinstallable|upgradable)
-						QPKGs.AClist.SC${group}:Set
-						awaiting_list_source=false
-						;;
-					versions)
-						useropt_show_versions=true
-						awaiting_list_source=false
-				esac
-			fi
-		done
-	fi
-
-	[[ $awaiting_list_source = true ]] && args_incomplete+=(list)
+	[[ $awaiting_group = true ]] && args_incomplete+=("$action")		# This is only if the last action specified was not followed by a group.
 
 	args=(${args_remaining[@]:-})
 
@@ -2044,161 +2133,6 @@ ParseActionArgs()
 	#   $args (global)
 	#   various global flags
 
-	[[ ${bypass_arg_parsing:=false} = false ]] || return 0
-
-	Func:Init
-
-	local action=''
-	local arg=''
-	local -a args_remaining=()
-	local awaiting_group=false
-	local group=''
-	local new_action=''
-
-	Objects:Load
-	Packages:Load
-
-	if [[ -n ${args[*]:-} ]]; then
-		for arg in "${args[@]:-}"; do
-			[[ -n $arg ]] || continue
-
-			# Identify action.
-
-			case $arg in
-			# These cases use only a single user-provided word to specify a single action.
-				backup|clean|disable|enable|reassign|rebuild|reinstall|restore|sign)
-					new_action=$arg
-					;;
-				disable-auto-update)
-					new_action=disableau
-					;;
-				enable-auto-update)
-					new_action=enableau
-					;;
-			# All cases below can use multiple user-provided words or chars to specify a single action.
-				activate|start)
-					new_action=activate
-					;;
-				add|install)
-					new_action=install
-					;;
-				deactivate|stop)
-					new_action=deactivate
-					;;
-				reactivate|restart)
-					new_action=reactivate
-					;;
-				rm|remove|uninstall)
-					new_action=uninstall
-					;;
-				s|status|statuses)
-					new_action=status
-					useropt_show_status=true
-					;;
-				update|upgrade)
-					new_action=upgrade
-					;;
-				*)
-					new_action=''
-			esac
-
-			if [[ -n $new_action && $new_action != "$action" ]]; then
-				[[ $awaiting_group = true ]] && args_incomplete+=($action)
-				action=$new_action
-				awaiting_group=true
-				group=''	 			# When action changes, must clear group.
-				continue
-			fi
-
-			# Identify group.
-
-			case $arg in
-			# These cases use only a single user-provided word or char to specify a single group.
-				backedup|installable|installed|missing)
-					group=$arg
-					;;
-				not-backedup)
-					group=NTbackedup
-					;;
-				not-installed)
-					group=NTinstalled
-					;;
-			# All cases below can use multiple user-provided words or chars to specify a single group.
-				active|started)
-					group=active
-					;;
-				all|everything)
-					group=all
-					;;
-				deps|dependent|dependents)
-					group=dependent
-					;;
-				disabled)
-					group=NTenabled
-					;;
-				inactive|not-active|stopped)
-					group=NTactive
-					;;
-				new|updatable|updateable|upgradable)
-					group=upgradable
-					;;
-				non-installable|not-installable)
-					group=NTinstallable
-					;;
-				independent|independents|indeps)
-					group=independent
-					;;
-				*)
-					group=$(QPKG.MatchAbbrv "$arg")
-			esac
-
-			# Pair action with group.
-
-			if [[ -n $action && -n $group ]]; then
-				case $group in
-					all|canbackup|canclean|canrestarttoupdate|dependent|hasdependents|independent|installable|upgradable|NTcanclean|NTinstallable|NTupgradable)
-						QPKGs.AC${action}.SC${group}:Set
-						awaiting_group=false
-						;;
-					active|backedup|enabled|installed|missing|NTactive|NTbackedup|NTenabled|NTinstalled)
-						QPKGs.AC${action}.IS${group}:Set
-						awaiting_group=false
-						;;
-					*)
-						QPKGs-AC${action}-to:Add "$group"
-						awaiting_group=false
-				esac
-
-				[[ $awaiting_group = false ]] && bypass_package_actions=false
-			else
-				args_remaining+=("$arg")
-			fi
-		done
-	fi
-
-	[[ $awaiting_group = true ]] && args_incomplete+=($action)		# This is only if the last action specified was not followed by a group.
-
-	args=(${args_remaining[@]:-})
-
-	Func:Exit
-
-	}
-
-ParseShowArgs()
-	{
-
-	# Basic argument syntax:
-	#   scriptname [action] [groups] [options]
-
-	# input:
-	#   $args (global)
-
-	# output:
-	#   $args (global)
-	#   various global flags
-
-	[[ ${bypass_arg_parsing:=false} = false ]] || return 0
-
 	Func:Init
 
 	local action=''
@@ -2209,118 +2143,134 @@ ParseShowArgs()
 	local new_action=''
 
 	if [[ -n ${args[*]:-} ]]; then
-		for arg in "${args[@]:-}"; do
-			[[ -n $arg ]] || continue
-
-			# Identify action.
-
-			case $arg in
-				show)
-					new_action=show
-					;;
-				*)
-					new_action=''
-			esac
-
-			if [[ -n $new_action && $new_action != "$action" ]]; then
-				[[ $awaiting_group = true ]] && args_incomplete+=($action)
-				action=$new_action
-				awaiting_group=true
-				group=''	 			# When action changes, must clear group.
-				continue
-			fi
-
-			# Identify group. Include action assignment when action hasn't been previously specified.
-
-			case $arg in
-			# These cases use only a single user-provided word or char to specify a single group.
-				backups|results)
-					[[ -z $action ]] && action=show
-					group=$arg
-					;;
-			# All cases below can use multiple user-provided words or chars to specify a single group.
-				d|dependencies)
-					[[ -z $action ]] && action=show
-					group=dependencies
-					;;
-				l|last)
-					[[ -z $action ]] && action=show
-					group=last
-					;;
-				log|tail)
-					[[ -z $action ]] && action=show
-					group=tail
-					;;
-				p|packages)
-					[[ -z $action ]] && action=show
-					group=packages
-					;;
-				r|repos|repositories)
-					[[ -z $action ]] && action=show
-					group=repositories
-			esac
-
-			# Pair action with group.
-
-			if [[ -n $action && -n $group ]]; then
-				case $action in
-					show)
-						case $group in
-							backups)
-								awaiting_group=false
-								bypass_package_actions=true
-								check_tasks=false
-								load_objects=false
-								load_packages=false
-								useropt_show_backups=true
-								write_report=true
-								;;
-							dependencies)
-								awaiting_group=false
-								useropt_show_dependencies=true
-								;;
-							last)
-								awaiting_group=false
-								bypass_package_actions=true
-								check_tasks=false
-								load_objects=false
-								load_packages=false
-								useropt_show_log_last=true
-								write_report=true
-								;;
-							tail)
-								awaiting_group=false
-								bypass_package_actions=true
-								check_tasks=false
-								load_objects=false
-								load_packages=false
-								useropt_show_log_tail=true
-								write_report=true
-								;;
-							packages)
-								awaiting_group=false
-								bypass_package_actions=true
-								useropt_show_packages=true
-								;;
-							repositories)
-								awaiting_group=false
-								bypass_package_actions=true
-								useropt_show_repos=true
-								;;
-							results)
-								awaiting_group=false
-								bypass_package_actions=true
-								load_packages=false
-								useropt_show_results=true
-						esac
-				esac
-			else
-				args_remaining+=("$arg")
-			fi
-		done
+		Objects:Load
+		Packages:Load
 	fi
 
-	[[ $awaiting_group = true ]] && args_incomplete+=($action)		# This is only if the last action specified was not followed by a group.
+	for arg in "${args[@]:-}"; do
+		[[ -n $arg ]] || continue
+
+		# Identify action. All require a group.
+
+		case $arg in
+		# These cases use only a single user-provided word to specify a single action.
+			backup|clean|disable|enable|reassign|rebuild|reinstall|restore|sign)
+				new_action=$arg
+				;;
+			disable-auto-update)
+				new_action=disableau
+				;;
+			enable-auto-update)
+				new_action=enableau
+				;;
+		# All cases below can use multiple user-provided words or chars to specify a single action.
+			activate|start)
+				new_action=activate
+				;;
+			add|install)
+				new_action=install
+				;;
+			deactivate|stop)
+				new_action=deactivate
+				;;
+			reactivate|restart)
+				new_action=reactivate
+				;;
+			rm|remove|uninstall)
+				new_action=uninstall
+				;;
+			s|status|statuses)
+				new_action=status
+				useropt_show_status=true
+				;;
+			update|upgrade)
+				new_action=upgrade
+				;;
+			*)
+				new_action=''
+		esac
+
+		if [[ -n $new_action && $new_action != "$action" ]]; then
+			[[ $awaiting_group = true ]] && args_incomplete+=("$action")
+			action=$new_action
+			awaiting_group=true
+			group=''	 			# When action changes, must clear group.
+			continue
+		fi
+
+		# Identify group.
+
+		case $arg in
+		# These cases use only a single user-provided word or char to specify a single group.
+			backedup|installable|installed|missing)
+				group=$arg
+				;;
+			not-backedup)
+				group=NTbackedup
+				;;
+			not-installed)
+				group=NTinstalled
+				;;
+		# All cases below can use multiple user-provided words or chars to specify a single group.
+			active|started)
+				group=active
+				;;
+			all|everything)
+				group=all
+				;;
+			deps|dependent|dependents)
+				group=dependent
+				;;
+			disabled)
+				group=NTenabled
+				;;
+			inactive|not-active|stopped)
+				group=NTactive
+				;;
+			new|updatable|updateable|upgradable)
+				group=upgradable
+				;;
+			non-installable|not-installable)
+				group=NTinstallable
+				;;
+			independent|independents|indeps)
+				group=independent
+				;;
+			*)
+				group=$(QPKG.MatchAbbrv "$arg")
+		esac
+
+		# Pair action with group.
+
+		if [[ -n $action && -n $group ]]; then
+			case $group in
+				all|canbackup|canclean|canrestarttoupdate|dependent|hasdependents|independent|installable|upgradable|NTcanclean|NTinstallable|NTupgradable)
+					QPKGs.AC${action}.SC${group}:Set
+					awaiting_group=false
+					;;
+				active|backedup|enabled|installed|missing|NTactive|NTbackedup|NTenabled|NTinstalled)
+					QPKGs.AC${action}.IS${group}:Set
+					awaiting_group=false
+					;;
+				*)
+					QPKGs-AC${action}-to:Add "$group"
+					awaiting_group=false
+			esac
+
+			[[ $awaiting_group = false ]] && bypass_package_actions=false
+		else
+			args_remaining+=("$arg")
+		fi
+	done
+
+	[[ $awaiting_group = true ]] && args_incomplete+=("$action")		# This is only if the last action specified was not followed by a group.
+
+	for arg in "${args_incomplete[@]:-}"; do
+		case $arg in
+			status)			# If `status` is specified without a scope, then scope is `all`.
+				QPKGs.ACstatus.SCall:Set
+		esac
+	done
 
 	args=(${args_remaining[@]:-})
 
@@ -2337,26 +2287,16 @@ ArgSuggestions:Show()
 	local -a args_remaining=()
 
 	if [[ ${#args_incomplete[@]:-} -gt 0 ]]; then
-		for arg in "${args_incomplete[@]}"; do
-			case $arg in
-				status)			# If `status` is specified without a scope, then scope is `all`.
-					QPKGs.ACstatus.SCall:Set
-					;;
-				*)
-					args_remaining+=($arg)
-			esac
-		done
+		bypass_package_actions=true
 
 		if [[ ${#args_remaining[@]:-} -gt 0 ]]; then
 			WriteEmptyLineIfNoneExists
 			ShowAsError "incomplete argument$(Pluralise "${#args_remaining[@]}"): \"${args_remaining[*]}\""
-			check_tasks=false
-			bypass_package_actions=true
 		fi
 
 		for arg in "${args_incomplete[@]}"; do
 			case $arg in
-				activate|uninstall)
+				activate|backup|uninstall)
 					DisplayAsProjSynExam "please provide valid $(ShowPackages) or a $(ShowPackageGroup) after '$arg' like" "$arg installed"
 					useropt_help_basic=false
 					;;
@@ -2384,7 +2324,7 @@ ArgSuggestions:Show()
 	if [[ ${#args[@]:-} -gt 0 ]]; then
 		WriteEmptyLineIfNoneExists
 		ShowAsError "unknown argument$(Pluralise "${#args[@]}"): \"${args[*]}\". Please check the arguments again"
-		check_tasks=false
+		useropt_help_basic=true
 		bypass_package_actions=true
 
 		for arg in "${args[@]}"; do
@@ -4749,7 +4689,7 @@ Help.Basic.Examples:Show()
 	{
 
 	DisplayAsProjSynIndentExam "to see available $(ShowAction)s" 'help actions'
-	DisplayAsProjSynIndentExam "to see available $(ShowPackages)" 'help packages'
+	DisplayAsProjSynIndentExam "to see available $(ShowPackages)" 'show packages'
 	DisplayAsProjSynIndentExam '' p
 	DisplayAsProjSynIndentExam "to see available $(ShowPackageGroup)s" 'help groups'
 	DisplayAsProjSynIndentExam "or, for more $(ShowOptions)" 'help options'
@@ -5815,6 +5755,9 @@ QPKGs.States:Build()
 	local c=''
 	local f=''
 
+	Objects:Load
+	Packages:Load
+
 	[[ ${1:-} = rebuild ]] && QPKGs.States:Clear
 
 	if [[ ${qpkgs_states_built:=false} = true ]]; then
@@ -6005,7 +5948,7 @@ QPKGs.States:Clear()
 	Func:Init
 	local a=''
 
-	Objects:Load forced || return
+	Objects:Load || return
 
 	DebugAsProc 'clearing existing state lists'
 
@@ -6088,8 +6031,10 @@ Report.Abbreviations:Show()
 	local b=''
 	local -i n=0
 	maxcols=2
-	Objects:Load forced
-	Packages:Load forced
+
+	Objects:Load
+	Packages:Load
+
 	local -i t=$(QPKGs-SCall:Count)
 
 	DisplayWritingReport
@@ -11260,15 +11205,10 @@ Objects:Load()
 
 	# Ensure `objects` in the local cache is up-to-date, then source it.
 
-	# input:
-	#	$1 = 'forced' (optional) set objects as loadable and load them.
-
 	[[ ${objects_loaded:=false} = false ]] || return 0
-	[[ ${1:-} = forced ]] && load_objects=true
-	[[ ${load_objects:=true} = true ]] || return
-	[[ ${lists_loaded:=false} = true ]] || Lists:Load
 
 	Func:Init
+	Lists:Load
 
 	if [[ ! -e $PWD/dont-refresh-objects ]]; then
 		if [[ ! -e $OBJECTS_PATHFILE ]] || ! IsThisFileRecent "$OBJECTS_PATHFILE" "$FILE_CHANGE_THRESHOLD_MINUTES"; then
@@ -11300,15 +11240,10 @@ Packages:Load()
 
 	# Ensure `packages` in the local cache is up-to-date, then source it.
 
-	# input:
-	#	$1 = 'forced' (optional) set objects as loadable and load them.
-
 	[[ ${packages_loaded:=false} = false ]] || return 0
-	[[ ${1:-} = forced ]] && load_packages=true
-	[[ ${load_packages:=true} = true ]] || return
-	[[ ${lists_loaded:=false} = true ]] || Lists:Load
 
 	Func:Init
+	Lists:Load
 
 	if [[ ! -e $PWD/dont-refresh-packages ]]; then
 		if [[ ! -e $PACKAGES_PATHFILE ]] || ! IsThisFileRecent "$PACKAGES_PATHFILE" "$FILE_CHANGE_THRESHOLD_MINUTES"; then
