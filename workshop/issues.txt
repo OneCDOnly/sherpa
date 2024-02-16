@@ -1,5 +1,39 @@
 Observed issues:
 
+	* Incorrect.
+		-------------------------------------------------------------------------------------------------------------------------
+		[/share/Public] # ./sherpa-manager.source help packages
+		sherpa v<?build_date?>-stable
+
+		proc: writing report ... ./sherpa-manager.source: line 6193: QPKGs-SCall:Array: command not found
+		• Usage: sherpa [action] [packages] [package group] [options]
+
+		• One-or-more [packages] may be specified at-once.
+
+		• QPKG name:         • App version:  • Description:
+
+		• Abbreviations and aliases may also be used to specify [packages]. To list these:
+			# sherpa help abs
+			# sherpa a
+
+		• Usage: sherpa [action] [packages] [package group] [options]
+
+		To see available [action]s:
+			# sherpa help actions
+
+		To see available [packages]:
+			# sherpa help packages
+			# sherpa p
+
+		To see available [package group]s:
+			# sherpa help groups
+
+		Or, for more [options]:
+			# sherpa help options
+
+		• More in the wiki: https://github.com/OneCDOnly/sherpa/wiki
+		-------------------------------------------------------------------------------------------------------------------------
+
 	* 'sherpa start inactive' fails to find any inactive packages.
 		- Must get 'status' of each package first.
 
