@@ -830,7 +830,6 @@ Tasks:Check()
 	fi
 
 	if [[ $build_states = false && $show_help = false && $write_report = false ]]; then
-		Objects:Load
 		Packages:Load
 
 		for action in "${USER_QPKG_ACTIONS[@]}"; do
@@ -869,9 +868,7 @@ Tasks:Check()
 		done
 	fi
 
-	if [[ $build_states = true ]]; then
-		QPKGs.States:Build
-	fi
+	[[ $build_states = true ]] && QPKGs.States:Build
 
 	if [[ $show_help = true ]]; then
 		bypass_package_actions=true
@@ -1968,7 +1965,9 @@ ParseShowArgs()
 							write_report=true
 							;;
 						packages)
+							Packages:Load
 							awaiting_group=false
+							bypass_package_actions=true
 							useropt_show_packages=true
 							;;
 						repositories)
@@ -2142,10 +2141,7 @@ ParseActionArgs()
 	local group=''
 	local new_action=''
 
-	if [[ -n ${args[*]:-} ]]; then
-		Objects:Load
-		Packages:Load
-	fi
+	[[ -n ${args[*]:-} ]] && Packages:Load
 
 	for arg in "${args[@]:-}"; do
 		[[ -n $arg ]] || continue
@@ -2247,14 +2243,17 @@ ParseActionArgs()
 				all|canbackup|canclean|canrestarttoupdate|dependent|hasdependents|independent|installable|upgradable|NTcanclean|NTinstallable|NTupgradable)
 					QPKGs.AC${action}.SC${group}:Set
 					awaiting_group=false
+					bypass_package_actions=false
 					;;
 				active|backedup|enabled|installed|missing|NTactive|NTbackedup|NTenabled|NTinstalled)
 					QPKGs.AC${action}.IS${group}:Set
 					awaiting_group=false
+					bypass_package_actions=false
 					;;
 				*)
 					QPKGs-AC${action}-to:Add "$group"
 					awaiting_group=false
+					bypass_package_actions=false
 			esac
 
 			[[ $awaiting_group = false ]] && bypass_package_actions=false
@@ -2287,35 +2286,39 @@ ArgSuggestions:Show()
 	local -a args_remaining=()
 
 	if [[ ${#args_incomplete[@]:-} -gt 0 ]]; then
-		bypass_package_actions=true
-
 		if [[ ${#args_remaining[@]:-} -gt 0 ]]; then
 			WriteEmptyLineIfNoneExists
 			ShowAsError "incomplete argument$(Pluralise "${#args_remaining[@]}"): \"${args_remaining[*]}\""
+			bypass_package_actions=true
 		fi
 
 		for arg in "${args_incomplete[@]}"; do
 			case $arg in
 				activate|backup|uninstall)
 					DisplayAsProjSynExam "please provide valid $(ShowPackages) or a $(ShowPackageGroup) after '$arg' like" "$arg installed"
+					bypass_package_actions=true
 					useropt_help_basic=false
 					;;
 				follow)
 					DisplayAsProjSynExam "please provide a valid source branch to track after 'follow' like" 'follow stable'
 					DisplayAsProjSynIndentExam '' 'follow unstable'
+					bypass_package_actions=true
 					useropt_help_basic=false
 					;;
 				list)
 					DisplayAsProjSynExam "please provide a valid source after 'list' like" 'list installable'
+					bypass_package_actions=true
 					useropt_help_basic=false
 					;;
 				paste)
 					DisplayAsProjSynExam "please provide a valid source to paste online after 'paste' like" 'paste log'
 					DisplayAsProjSynIndentExam '' 'paste last'
+					bypass_package_actions=true
 					useropt_help_basic=false
 					;;
 				show)
 					DisplayAsProjSynExam "please provide a valid source after 'show' like" 'show packages'
+					bypass_package_actions=true
 					useropt_help_basic=false
 			esac
 		done
@@ -2324,8 +2327,8 @@ ArgSuggestions:Show()
 	if [[ ${#args[@]:-} -gt 0 ]]; then
 		WriteEmptyLineIfNoneExists
 		ShowAsError "unknown argument$(Pluralise "${#args[@]}"): \"${args[*]}\". Please check the arguments again"
-		useropt_help_basic=true
 		bypass_package_actions=true
+		useropt_help_basic=true
 
 		for arg in "${args[@]}"; do
 			case $arg in
@@ -5755,7 +5758,6 @@ QPKGs.States:Build()
 	local c=''
 	local f=''
 
-	Objects:Load
 	Packages:Load
 
 	[[ ${1:-} = rebuild ]] && QPKGs.States:Clear
@@ -6032,7 +6034,6 @@ Report.Abbreviations:Show()
 	local -i n=0
 	maxcols=2
 
-	Objects:Load
 	Packages:Load
 
 	local -i t=$(QPKGs-SCall:Count)
@@ -11243,7 +11244,7 @@ Packages:Load()
 	[[ ${packages_loaded:=false} = false ]] || return 0
 
 	Func:Init
-	Lists:Load
+	Objects:Load
 
 	if [[ ! -e $PWD/dont-refresh-packages ]]; then
 		if [[ ! -e $PACKAGES_PATHFILE ]] || ! IsThisFileRecent "$PACKAGES_PATHFILE" "$FILE_CHANGE_THRESHOLD_MINUTES"; then
