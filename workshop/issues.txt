@@ -1,5 +1,9 @@
 Observed issues:
 
+	* Showing enabled packages as disabled in status report.
+
+	* Not auto-upgrading sherpa QPKG when checking all status.
+
 	* Incorrect.
 		-------------------------------------------------------------------------------------------------------------------------
 		[/share/Public] # ./sherpa-manager.source help packages
