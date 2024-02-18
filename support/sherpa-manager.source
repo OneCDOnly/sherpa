@@ -525,25 +525,7 @@ Env:Load()
 	args=()						# command-line argument array.
 	args_incomplete=()
 
-	source_branch=stable		# Default branch.
-
-	local test_branch=$(/sbin/getcfg sherpa Git_Branch -d unknown -f /etc/config/qpkg.conf)
-
-	if [[ $test_branch = unknown ]]; then
-		/sbin/setcfg sherpa Git_Branch "$source_branch" -f /etc/config/qpkg.conf
-	else
-		source_branch=$test_branch
-	fi
-
-# 	colourful=false
-#
-# 	local test_colourful=$(/sbin/getcfg sherpa Colourful -d unknown -f /etc/config/qpkg.conf)
-#
-# 	if [[ $test_colourful = unknown ]]; then
-# 		/sbin/setcfg sherpa Colourful "$colourful" -f /etc/config/qpkg.conf
-# 	else
-# 		colourful=$test_colourful
-# 	fi
+	source_branch=$(/sbin/getcfg sherpa Git_Branch -d stable -f /etc/config/qpkg.conf)
 
 	readonly OBJECTS_ARCHIVE_URL='<?cdn_sherpa_base_url?>'/$source_branch/objects.tar.gz
 	readonly PACKAGES_ARCHIVE_URL='<?cdn_sherpa_base_url?>'/$source_branch/packages.tar.gz
@@ -3427,7 +3409,11 @@ SwitchSourceBranch()
 
 			AssignSourceBranch "$user_switch_branch"
 			ShowAsDone "'Git_Branch' is now set to '$source_branch'"
-			Reset					# <-- Processing will terminate in this function (no-return).
+			Reset					# <-- Processing will terminate in this function (no-return). The following lines are only used for debugging.
+			# shellcheck disable=2317
+			show_title=false
+			# shellcheck disable=2317
+			return
 		done
 
 		ShowAsAbort "'$user_switch_branch' is not a valid branch"
@@ -3459,11 +3445,15 @@ AssignSourceBranch()
 		for b in unstable stable; do
 			[[ $b = "$1" ]] && break
 		done
+
+		source_branch=$b
+	else
+		source_branch=$a
 	fi
 
-	[[ $b != "$a" ]] && source_branch=$b || source_branch=$a
-
 	/sbin/setcfg sherpa Git_Branch "$source_branch" -f /etc/config/qpkg.conf
+
+	return 0
 
 	}
 
@@ -3513,13 +3503,15 @@ AssignColourful()
 		for b in true false; do
 			[[ $b = "$1" ]] && break
 		done
-	fi
 
-	[[ $b != "$a" ]] && colourful=$b || colourful=$a
+		colourful=$b
+	else
+		colourful=$a
+	fi
 
 	/sbin/setcfg sherpa Colourful "$(Uppercase "$colourful")" -f /etc/config/qpkg.conf
 
-	return
+	return 0
 
 	}
 
