@@ -7,7 +7,6 @@ declare -i index=0
 
 filenames+=("$management_source_file")
 # filenames+=("$service_library_source_file")
-# filenames+=('*.sh')
 
 for index in "${!filenames[@]}"; do
 	echo -n "cleaning code '${filenames[index]}' ... "

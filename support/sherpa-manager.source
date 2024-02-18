@@ -59,15 +59,14 @@ Init()
 	ParseShowArgs || return
 	ParseListArgs || return
 	ParseActionArgs || return
-
 	Title:Show
-
 	ArgSuggestions:Show
 	QPKGs.Conflicts:Check || return
 	QPKGs.Warnings:Check
 	Debug.Log:Env
 	Tasks:Check
 	Validate
+
 	return 0
 
 	}
@@ -536,7 +535,7 @@ Env:Load()
 	readonly THIS_PACKAGE_PATH=$(QPKG.GetInstallationPath)
 
 	if [[ -z $THIS_PACKAGE_PATH || $THIS_PACKAGE_PATH = undefined || ! -d $THIS_PACKAGE_PATH ]]; then
-		ShowAsError "$(ShowTitleName) installation path not found. Please reinstall the sherpa QPKG"
+		ShowAsError "$(ShowTitleName) installation path not found. Please reinstall the $(ShowTitleName) QPKG"
 		return 1
 	fi
 
@@ -1249,7 +1248,7 @@ Actions:Proc()
 		if Error.IsNt; then
 			ShowAsDone 'processing complete'
 		else
-			ShowAsFail 'processing complete'
+			ShowAsFail 'processing complete with errors'
 		fi
 	fi
 
@@ -1384,7 +1383,7 @@ Action:Proc()
 						;;
 					status)			# Update the status of a single action fork in the parent shell.
 						case $msg1_value in
-							ok)		# Completed OK (wonderful).
+							ok)		# Completed OK (wonderful!).
 								((ok_count++))
 								;;
 							so)		# Action was skipped, but this is normal (no-big-deal).
@@ -1551,7 +1550,7 @@ PrepareArgs()
 	#   $ARGS_RAW (global)
 
 	# output:
-	#   $args (global)
+	#   $args[] (global)
 
 	local a=$(Lowercase "${ARGS_RAW//,/ }")
 	args=(${a/--/})
@@ -1570,11 +1569,12 @@ ParseManagementArgs()
 	#   scriptname [action] [groups] [options]
 
 	# input:
-	#   $args (global)
+	#   $args[] (global)
+	#   $args_incomplete[] (global)
 
 	# output:
-	#   $args (global)
-	#   $args_incomplete (global)
+	#   $args[] (global)
+	#   $args_incomplete[] (global)
 
 	Func:Init
 
@@ -1723,10 +1723,12 @@ ParseHelpArgs()
 	#   scriptname [action] [groups] [options]
 
 	# input:
-	#   $args (global)
+	#   $args[] (global)
+	#   $args_incomplete[] (global)
 
 	# output:
-	#   $args (global)
+	#   $args[] (global)
+	#   $args_incomplete[] (global)
 	#   various global flags
 
 	Func:Init
@@ -1897,10 +1899,12 @@ ParseShowArgs()
 	#   scriptname [action] [groups] [options]
 
 	# input:
-	#   $args (global)
+	#   $args[] (global)
+	#   $args_incomplete[] (global)
 
 	# output:
-	#   $args (global)
+	#   $args[] (global)
+	#   $args_incomplete[] (global)
 	#   various global flags
 
 	Func:Init
@@ -2032,10 +2036,12 @@ ParseListArgs()
 	#   scriptname [action] [groups] [options]
 
 	# input:
-	#   $args (global)
+	#   $args[] (global)
+	#   $args_incomplete[] (global)
 
 	# output:
-	#   $args (global)
+	#   $args[] (global)
+	#   $args_incomplete[] (global)
 	#   various global flags
 
 	Func:Init
@@ -2156,10 +2162,12 @@ ParseActionArgs()
 	{
 
 	# input:
-	#   $args (global)
+	#   $args[] (global)
+	#   $args_incomplete[] (global)
 
 	# output:
-	#   $args (global)
+	#   $args[] (global)
+	#   $args_incomplete[] (global)
 	#   various global flags
 
 	Func:Init
@@ -2310,6 +2318,13 @@ ParseActionArgs()
 
 ArgSuggestions:Show()
 	{
+
+	# input:
+	#   $args[] (global)
+	#   $args_incomplete[] (global)
+
+	# output:
+	#   various global flags
 
 	Func:Init
 
