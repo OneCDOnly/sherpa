@@ -5881,12 +5881,12 @@ QPKGs.States:Build()
 
 	Packages:Load
 
-	[[ ${1:-} = rebuild ]] && QPKGs.States:Clear
-
-	if [[ ${qpkgs_states_built:=false} = true ]]; then
+	if [[ ${qpkgs_states_built:=false} = true && ${1:-} != rebuild ]]; then
 		DebugAsDone "don't build states: they're already built"
 		Func:Exit; return
 	fi
+
+	QPKGs.States:Init
 
 	OS.IsStarting && ShowAsWarn "$(GetQnapOS) is starting all enabled QPKGs ... check again in a few minutes"
 	OS.IsStopping && ShowAsWarn "$(GetQnapOS) is shutting-down and all QPKGs are stopping"
@@ -5909,9 +5909,9 @@ QPKGs.States:Build()
 
 		if QPKG.IsNtInstalled "$a"; then
 			if QPKG.IsInstallable "$a"; then
-				printf installable
+				echo installable
 			else
-				printf notinstallable
+				echo notinstallable
 			fi >> "$STATES_PATH/$a"
 		fi
 	done &
@@ -5920,9 +5920,9 @@ QPKGs.States:Build()
 		[[ $a = "$b" ]] && continue || b=$a
 
 		if QPKG.IsUpgradable "$a"; then
-			printf upgradable
+			echo upgradable
 		else
-			printf notupgradable
+			echo notupgradable
 		fi >> "$STATES_PATH/$a"
 	done &
 
@@ -5930,15 +5930,15 @@ QPKGs.States:Build()
 		[[ $a = "$b" ]] && continue || b=$a
 
 		if QPKG.IsCanBackup "$a"; then
-			printf backupable
+			echo backupable
 
 			if QPKG.IsBackupExist "$a"; then
-				printf backedup
+				echo backedup
 			else
-				printf notbackedup
+				echo notbackedup
 			fi >> "$STATES_PATH/$a"
 		else
-			printf notbackupable
+			echo notbackupable
 		fi >> "$STATES_PATH/$a"
 	done &
 
@@ -5946,9 +5946,9 @@ QPKGs.States:Build()
 		[[ $a = "$b" ]] && continue || b=$a
 
 		if QPKG.IsMissing "$a"; then
-			printf missing
+			echo missing
 		else
-			printf notmissing
+			echo notmissing
 		fi >> "$STATES_PATH/$a"
 	done &
 
@@ -5956,9 +5956,9 @@ QPKGs.States:Build()
 		[[ $a = "$b" ]] && continue || b=$a
 
 		if QPKG.IsEnabled "$a"; then
-			printf enabled
+			echo enabled
 		else
-			printf notenabled
+			echo notenabled
 		fi >> "$STATES_PATH/$a"
 	done &
 
@@ -5966,9 +5966,9 @@ QPKGs.States:Build()
 		[[ $a = "$b" ]] && continue || b=$a
 
 		if QPKG.IsInstalled "$a"; then
-			printf installed
+			echo installed
 		else
-			printf notinstalled
+			echo notinstalled
 		fi >> "$STATES_PATH/$a"
 	done &
 
@@ -6063,7 +6063,7 @@ QPKGs.States:Build()
 
 	}
 
-QPKGs.States:Clear()
+QPKGs.States:Init()
 	{
 
 	# Clears in-memory state list objects
@@ -6073,7 +6073,7 @@ QPKGs.States:Clear()
 
 	Objects:Load || return
 
-	DebugAsProc 'clearing existing state lists'
+	DebugAsProc 'initialising state lists'
 
 	for a in "${USER_QPKG_IS_STATES[@]:-}" "${QPKG_STATES_TRANSIENT[@]:-}"; do
 		[[ $a = active ]] && continue		# don't reset.
@@ -6086,7 +6086,7 @@ QPKGs.States:Clear()
 
 	ClearPath "$THIS_PACKAGE_PATH" "$STATES_PATH"
 
-	DebugAsDone 'cleared existing state lists'
+	DebugAsDone 'initialised state lists'
 	qpkgs_states_built=false
 
 	}
