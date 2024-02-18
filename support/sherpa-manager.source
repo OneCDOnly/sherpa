@@ -150,19 +150,21 @@ Results:Show()
 	fi
 
 	if [[ $useropt_help_tips = true ]]; then
-		Report.Tips:Show
+		Help.Tips:Show
 	elif [[ $useropt_help_abbreviations = true ]]; then
 		Report.Abbreviations:Show
 	elif [[ $useropt_help_actions = true ]]; then
-		Report.Actions:Show
+		Help.Actions:Show
 	elif [[ $useropt_help_actions_all = true ]]; then
 		Report.ActionsAll:Show
 	elif [[ $useropt_help_lists = true ]]; then
 		Report.Lists:Show
 	elif [[ $useropt_help_options = true ]]; then
-		Report.Options:Show
+		Help.Options:Show
+	elif [[ $useropt_help_packages = true ]]; then
+		Help.Packages:Show
 	elif [[ $useropt_help_problems = true ]]; then
-		Report.Problems:Show
+		Help.Problems:Show
 	elif [[ $useropt_help_upgrades = true ]]; then
 		Report.Upgrades:Show
 	elif [[ $useropt_help_groups = true ]]; then
@@ -320,6 +322,7 @@ Vars:Load()
 	useropt_help_groups=false
 	useropt_help_lists=false
 	useropt_help_options=false
+	useropt_help_packages=false
 	useropt_help_problems=false
 	useropt_help_tips=false
 	useropt_help_upgrades=false
@@ -820,7 +823,7 @@ Tasks:Check()
 		write_report=true
 	elif [[ $useropt_debug = true || $useropt_paste_log_last = true || $useropt_paste_log_tail = true || $useropt_show_backups = true || $useropt_show_log_last = true || $useropt_show_log_tail = true || $useropt_show_results = true || $useropt_show_versions = true || $useropt_verbose = true ]]; then
 		write_report=true
-	elif [[ $useropt_help_abbreviations = true || $useropt_help_actions = true || $useropt_help_actions_all = true || $useropt_help_groups = true || $useropt_help_lists = true || $useropt_help_upgrades = true || $useropt_help_options = true || $useropt_help_problems = true || $useropt_help_tips = true ]]; then
+	elif [[ $useropt_help_abbreviations = true || $useropt_help_actions = true || $useropt_help_actions_all = true || $useropt_help_groups = true || $useropt_help_lists = true || $useropt_help_upgrades = true || $useropt_help_packages = true || $useropt_help_options = true || $useropt_help_problems = true || $useropt_help_tips = true ]]; then
 		show_help=true
 		useropt_help_basic=false
 	elif [[ $show_package_actions_failed = true || $show_package_actions_ok = true || $show_package_actions_skipped = true ]]; then
@@ -1763,6 +1766,14 @@ ParseHelpArgs()
 
 		case $arg in
 		# These cases use only a single word or char to specify a single group.
+			lists)
+				[[ -z $action ]] && action=help
+				group=lists
+				;;
+			packages)
+				# Don't set a default action for this group, this group is used for multiple actions.
+				group=packages
+				;;
 			problems)
 				[[ -z $action ]] && action=help
 				group=problems
@@ -1791,10 +1802,6 @@ ParseHelpArgs()
 			group|groups)
 				[[ -z $action ]] && action=help
 				group=groups
-				;;
-			lists)
-				[[ -z $action ]] && action=help
-				group=lists
 				;;
 			o|option|options)
 				[[ -z $action ]] && action=help
@@ -1843,6 +1850,11 @@ ParseHelpArgs()
 						options)
 							awaiting_group=false
 							useropt_help_options=true
+							write_report=true
+							;;
+						packages)
+							awaiting_group=false
+							useropt_help_packages=true
 							write_report=true
 							;;
 						problems)
@@ -2305,7 +2317,6 @@ ArgSuggestions:Show()
 	local -a args_remaining=()
 
 	if [[ ${#args_incomplete[@]:-} -gt 0 ]]; then
-
 		if [[ ${#args_remaining[@]:-} -gt 0 ]]; then
 			WriteEmptyLineIfNoneExists
 			ShowAsError "incomplete argument$(Pluralise "${#args_remaining[@]}"): \"${args_remaining[*]}\""
@@ -4679,7 +4690,7 @@ DisplayWait()
 
 	}
 
-Report.Actions:Show()
+Help.Actions:Show()
 	{
 
 	DisableDebugToArchiveAndFile
@@ -4989,7 +5000,7 @@ Report.Results:Show()
 
 	}
 
-Report.Options:Show()
+Help.Options:Show()
 	{
 
 	DisableDebugToArchiveAndFile
@@ -5018,7 +5029,33 @@ Report.Options:Show()
 
 	}
 
-Report.Problems:Show()
+Help.Packages:Show()
+	{
+
+	DisableDebugToArchiveAndFile
+	DisplayWritingReport
+
+		{
+
+		Help.Basic:Show
+		DisplayAsHelpTitle 'usage examples for packages:'
+		Display
+
+		} > "$REPORT_OUTPUT_PATHFILE"
+
+	EraseThisLine
+
+	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
+		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
+	else
+		ShowAsError 'no information to display'
+	fi
+
+	return 0
+
+	}
+
+Help.Problems:Show()
 	{
 
 	DisableDebugToArchiveAndFile
@@ -5094,7 +5131,7 @@ Report.Upgrades:Show()
 
 	}
 
-Report.Tips:Show()
+Help.Tips:Show()
 	{
 
 	DisableDebugToArchiveAndFile

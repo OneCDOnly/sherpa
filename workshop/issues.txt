@@ -1,5 +1,7 @@
 Observed issues:
 
+	* 'sherpa list packages' should not process package actions.
+
 	* Incorrect.
 		-------------------------------------------------------------------------------------------------------------------------
 		[/share/Public] # ./sherpa-manager.source help packages
