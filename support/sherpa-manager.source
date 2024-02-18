@@ -1703,7 +1703,7 @@ ParseManagementArgs()
 	done
 
 	if [[ $requires_group = true && $awaiting_group = true ]]; then
-		args_incomplete+=("$action")		# This is only if the last action specified was not followed by a group.
+		args_incomplete+=("$action")		# Only if the last action specified was not followed by a group.
 		bypass_package_actions=true
 	fi
 
@@ -1867,7 +1867,7 @@ ParseHelpArgs()
 	done
 
 	if [[ $requires_group = true && $awaiting_group = true ]]; then
-		args_incomplete+=("$action")		# This is only if the last action specified was not followed by a group.
+		args_incomplete+=("$action")		# Only if the last action specified was not followed by a group.
 		bypass_package_actions=true
 		useropt_help_basic=true
 	fi
@@ -2003,7 +2003,7 @@ ParseShowArgs()
 	done
 
 	if [[ $requires_group = true && $awaiting_group = true ]]; then
-		args_incomplete+=("$action")		# This is only if the last action specified was not followed by a group.
+		args_incomplete+=("$action")		# Only if the last action specified was not followed by a group.
 		bypass_package_actions=true
 	fi
 
@@ -2132,7 +2132,7 @@ ParseListArgs()
 		fi
 	done
 
-	[[ $awaiting_group = true ]] && args_incomplete+=("$action")		# This is only if the last action specified was not followed by a group.
+	[[ $awaiting_group = true ]] && args_incomplete+=("$action")		# Only if the last action specified was not followed by a group.
 
 	args=(${args_remaining[@]:-})
 
@@ -2280,12 +2280,13 @@ ParseActionArgs()
 		fi
 	done
 
-	[[ $awaiting_group = true ]] && args_incomplete+=("$action")		# This is only if the last action specified was not followed by a group.
+	[[ $awaiting_group = true ]] && args_incomplete+=("$action")		# Only if the last action specified was not followed by a group.
 
 	for arg in "${args_incomplete[@]:-}"; do
 		case $arg in
 			status)			# If `status` is specified without a scope, then scope is `all`.
 				QPKGs.ACstatus.SCall:Set
+				bypass_package_actions=false
 		esac
 	done
 
@@ -2304,40 +2305,46 @@ ArgSuggestions:Show()
 	local -a args_remaining=()
 
 	if [[ ${#args_incomplete[@]:-} -gt 0 ]]; then
-		bypass_package_actions=true
 
 		if [[ ${#args_remaining[@]:-} -gt 0 ]]; then
 			WriteEmptyLineIfNoneExists
 			ShowAsError "incomplete argument$(Pluralise "${#args_remaining[@]}"): \"${args_remaining[*]}\""
+			bypass_package_actions=true
 		fi
 
 		for arg in "${args_incomplete[@]}"; do
 			case $arg in
 				activate|backup|uninstall)
 					DisplayAsProjSynExam "please provide valid $(ShowPackages) or a $(ShowPackageGroup) after '$arg' like" "$arg installed"
+					bypass_package_actions=true
 					useropt_help_basic=false
 					;;
 				colour)
 					DisplayAsProjSynExam "please provide a valid boolean after 'colour' like" 'colour true'
 					DisplayAsProjSynIndentExam '' 'colour false'
+					bypass_package_actions=true
 					useropt_help_basic=false
 					;;
 				follow)
 					DisplayAsProjSynExam "please provide a valid source branch to track after 'follow' like" 'follow stable'
 					DisplayAsProjSynIndentExam '' 'follow unstable'
+					bypass_package_actions=true
 					useropt_help_basic=false
 					;;
 				list)
 					DisplayAsProjSynExam "please provide a valid source after 'list' like" 'list installable'
+					bypass_package_actions=true
 					useropt_help_basic=false
 					;;
 				paste)
 					DisplayAsProjSynExam "please provide a valid source to paste online after 'paste' like" 'paste log'
 					DisplayAsProjSynIndentExam '' 'paste last'
+					bypass_package_actions=true
 					useropt_help_basic=false
 					;;
 				show)
 					DisplayAsProjSynExam "please provide a valid source after 'show' like" 'show packages'
+					bypass_package_actions=true
 					useropt_help_basic=false
 			esac
 		done
