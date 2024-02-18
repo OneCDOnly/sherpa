@@ -2322,45 +2322,40 @@ ArgSuggestions:Show()
 	local -a args_remaining=()
 
 	if [[ ${#args_incomplete[@]:-} -gt 0 ]]; then
+		bypass_package_actions=true
+
 		if [[ ${#args_remaining[@]:-} -gt 0 ]]; then
 			WriteEmptyLineIfNoneExists
 			ShowAsError "incomplete argument$(Pluralise "${#args_remaining[@]}"): \"${args_remaining[*]}\""
-			bypass_package_actions=true
 		fi
 
 		for arg in "${args_incomplete[@]}"; do
 			case $arg in
 				activate|backup|uninstall)
 					DisplayAsProjSynExam "please provide valid $(ShowPackages) or a $(ShowPackageGroup) after '$arg' like" "$arg installed"
-					bypass_package_actions=true
 					useropt_help_basic=false
 					;;
 				colour)
 					DisplayAsProjSynExam "please provide a valid boolean after 'colour' like" 'colour true'
 					DisplayAsProjSynIndentExam '' 'colour false'
-					bypass_package_actions=true
 					useropt_help_basic=false
 					;;
 				follow)
 					DisplayAsProjSynExam "please provide a valid source branch to track after 'follow' like" 'follow stable'
 					DisplayAsProjSynIndentExam '' 'follow unstable'
-					bypass_package_actions=true
 					useropt_help_basic=false
 					;;
 				list)
 					DisplayAsProjSynExam "please provide a valid source after 'list' like" 'list installable'
-					bypass_package_actions=true
 					useropt_help_basic=false
 					;;
 				paste)
 					DisplayAsProjSynExam "please provide a valid source to paste online after 'paste' like" 'paste log'
 					DisplayAsProjSynIndentExam '' 'paste last'
-					bypass_package_actions=true
 					useropt_help_basic=false
 					;;
 				show)
 					DisplayAsProjSynExam "please provide a valid source after 'show' like" 'show packages'
-					bypass_package_actions=true
 					useropt_help_basic=false
 			esac
 		done
@@ -2370,7 +2365,6 @@ ArgSuggestions:Show()
 		WriteEmptyLineIfNoneExists
 		ShowAsError "unknown argument$(Pluralise "${#args[@]}"): \"${args[*]}\". Please check the arguments again"
 		bypass_package_actions=true
-		useropt_help_basic=true
 
 		for arg in "${args[@]}"; do
 			case $arg in
