@@ -77,27 +77,27 @@ Results:Show()
 	Func:Init
 	display_last_action_datetime=false
 
-	if [[ $useropt_show_log_last = true ]]; then
-		LockFile:Release
-		Log.Last:View
-	elif [[ $useropt_show_log_tail = true ]]; then
-		LockFile:Release
-		Log.Tail:View
-	elif [[ $useropt_show_backups = true ]]; then
-		Report.Backups:Show
-	elif [[ $useropt_show_versions = true ]]; then
-		Report.Versions:Show
-	fi
-
-	if [[ $useropt_show_dependencies = true ]]; then
-		Report.Dependencies:Show
-	elif [[ $useropt_show_packages = true ]]; then
-		Report.Packages:Show
-	elif [[ $useropt_show_repos = true ]]; then
-		Report.Repos:Show
-	fi
-
 	if [[ $generate_show_report = true ]]; then
+		if [[ $useropt_show_log_last = true ]]; then
+			LockFile:Release
+			Log.Last:View
+		elif [[ $useropt_show_log_tail = true ]]; then
+			LockFile:Release
+			Log.Tail:View
+		elif [[ $useropt_show_backups = true ]]; then
+			Report.Backups:Show
+		elif [[ $useropt_show_versions = true ]]; then
+			Report.Versions:Show
+		fi
+
+		if [[ $useropt_show_dependencies = true ]]; then
+			Report.Dependencies:Show
+		elif [[ $useropt_show_packages = true ]]; then
+			Report.Packages:Show
+		elif [[ $useropt_show_repos = true ]]; then
+			Report.Repos:Show
+		fi
+
 		if [[ $useropt_show_results = true ]]; then
 			display_last_action_datetime=true
 			show_package_actions_ok=true
@@ -113,29 +113,31 @@ Results:Show()
 		fi
 	fi
 
-	if [[ ${packages_loaded:=false} = true ]]; then
-		if QPKGs.AClist.ISbackedup.IsSet; then
-			QPKGs.IsBackedUp:Show
-		elif QPKGs.AClist.ISNTbackedup.IsSet; then
-			QPKGs.IsNtBackedUp:Show
-		elif QPKGs.AClist.ISinstalled.IsSet; then
-			QPKGs.IsInstalled:Show
-		elif QPKGs.AClist.ISNTinstalled.IsSet; then
-			QPKGs.IsNtInstalled:Show
-		elif QPKGs.AClist.ISactive.IsSet; then
-			QPKGs.IsActive:Show
-		elif QPKGs.AClist.ISNTactive.IsSet; then
-			QPKGs.IsNtActive:Show
-		elif QPKGs.AClist.SCinstallable.IsSet; then
-			QPKGs.ScInstallable:Show
-		elif QPKGs.AClist.SCNTinstallable.IsSet; then
-			QPKGs.ScNtInstallable:Show
-		elif QPKGs.AClist.SCupgradable.IsSet; then
-			QPKGs.ScUpgradable:Show
-		elif QPKGs.AClist.SCindependent.IsSet; then
-			QPKGs.ScIndependent:Show
-		elif QPKGs.AClist.SCdependent.IsSet; then
-			QPKGs.ScDependent:Show
+	if [[ $generate_list_report = true ]]; then
+		if [[ ${packages_loaded:=false} = true ]]; then
+			if QPKGs.AClist.ISbackedup.IsSet; then
+				QPKGs.IsBackedUp:Show
+			elif QPKGs.AClist.ISNTbackedup.IsSet; then
+				QPKGs.IsNtBackedUp:Show
+			elif QPKGs.AClist.ISinstalled.IsSet; then
+				QPKGs.IsInstalled:Show
+			elif QPKGs.AClist.ISNTinstalled.IsSet; then
+				QPKGs.IsNtInstalled:Show
+			elif QPKGs.AClist.ISactive.IsSet; then
+				QPKGs.IsActive:Show
+			elif QPKGs.AClist.ISNTactive.IsSet; then
+				QPKGs.IsNtActive:Show
+			elif QPKGs.AClist.SCinstallable.IsSet; then
+				QPKGs.ScInstallable:Show
+			elif QPKGs.AClist.SCNTinstallable.IsSet; then
+				QPKGs.ScNtInstallable:Show
+			elif QPKGs.AClist.SCupgradable.IsSet; then
+				QPKGs.ScUpgradable:Show
+			elif QPKGs.AClist.SCindependent.IsSet; then
+				QPKGs.ScIndependent:Show
+			elif QPKGs.AClist.SCdependent.IsSet; then
+				QPKGs.ScDependent:Show
+			fi
 		fi
 	fi
 
@@ -150,35 +152,40 @@ Results:Show()
 		Help.Basic.Examples:Show
 	fi
 
-	if [[ $useropt_help_tips = true ]]; then
-		Help.Tips:Show
-	elif [[ $useropt_help_abbreviations = true ]]; then
-		Report.Abbreviations:Show
-	elif [[ $useropt_help_actions = true ]]; then
-		Help.Actions:Show
-	elif [[ $useropt_help_actions_all = true ]]; then
-		Report.ActionsAll:Show
-	elif [[ $useropt_help_lists = true ]]; then
-		Report.Lists:Show
-	elif [[ $useropt_help_options = true ]]; then
-		Help.Options:Show
-	elif [[ $useropt_help_packages = true ]]; then
-		Help.Packages:Show
-	elif [[ $useropt_help_problems = true ]]; then
-		Help.Problems:Show
-	elif [[ $useropt_help_upgrades = true ]]; then
-		Report.Upgrades:Show
-	elif [[ $useropt_help_groups = true ]]; then
-		Report.Groups:Show
+	if [[ $generate_help_report = true ]]; then
+		if [[ $useropt_help_tips = true ]]; then
+			Help.Tips:Show
+		elif [[ $useropt_help_abbreviations = true ]]; then
+			Help.Abbreviations:Show
+		elif [[ $useropt_help_actions = true ]]; then
+			Help.Actions:Show
+		elif [[ $useropt_help_actions_all = true ]]; then
+			Help.ActionsAll:Show
+		elif [[ $useropt_help_lists = true ]]; then
+			Help.Lists:Show
+		elif [[ $useropt_help_options = true ]]; then
+			Help.Options:Show
+		elif [[ $useropt_help_packages = true ]]; then
+			Help.Packages:Show
+		elif [[ $useropt_help_problems = true ]]; then
+			Help.Problems:Show
+		elif [[ $useropt_help_upgrades = true ]]; then
+			Help.Upgrades:Show
+		elif [[ $useropt_help_groups = true ]]; then
+			Help.Groups:Show
+		fi
 	fi
 
-	# Action results.
-	[[ $show_package_actions_ok = true ]] && Report.Results:Show ok
-	[[ $show_package_actions_skipped = true ]] && Report.Results:Show skipped
-	[[ $show_package_actions_failed = true ]] && Report.Results:Show failed
+	if [[ $generate_action_report = true ]]; then
+		[[ $show_package_actions_ok = true ]] && Report.Results:Show ok
+		[[ $show_package_actions_skipped = true ]] && Report.Results:Show skipped
+		[[ $show_package_actions_failed = true ]] && Report.Results:Show failed
+		[[ $show_zero_qpkgs = true ]] && ShowZeroQpkgs
+	fi
+
 	[[ $show_backuploc = true ]] && Help.BackupLocation:Show
-	[[ $show_zero_qpkgs = true ]] && ShowZeroQpkgs
 	[[ $show_suggest_raise_issue = true ]] && Help.Issue:Show
+
 	DebugInfoMinSepr
 	DebugScript finished "$(/bin/date)"
 	DebugScript 'elapsed time' "$(FormatSecsToHoursMinutesSecs "$(($(/bin/date +%s)-SCRIPT_STARTSECONDS))")"
@@ -291,6 +298,7 @@ Vars:Load()
 	backup_stdin_fd=none
 	bypass_package_actions=false
 	fork_pid=''
+	generate_action_report=false
 	generate_help_report=false
 	generate_list_report=false
 	generate_show_report=false
@@ -1638,7 +1646,7 @@ ParseManagementArgs()
 			continue
 		fi
 
-		# Identify group.
+		# Identify group. Include action assignment when action hasn't been previously specified.
 
 		case $arg in
 		# These cases use only a single user-provided word or char to specify a single group.
@@ -2087,26 +2095,33 @@ ParseListArgs()
 	local awaiting_group=false
 	local group=''
 	local new_action=''
+	local requires_group=false
 
 	for arg in "${args[@]:-}"; do
 		[[ -n $arg ]] || continue
 
-		# Identify action. All require a group.
+		# Identify action.
 
 		case $arg in
 		# These cases use only a single word to specify a single action.
 			list)
 				new_action=$arg
 				group=''
+				requires_group=true
 				;;
 			*)
 				new_action=''
 		esac
 
 		if [[ -n $new_action && $new_action != "$action" ]]; then
-			[[ $awaiting_group = true ]] && args_incomplete+=("$action")
+			if [[ $awaiting_group = true ]]; then
+				args_incomplete+=("$action")
+				bypass_package_actions=true
+				generate_list_report=false
+			fi
+
+			[[ $requires_group = false ]] && awaiting_group=false || awaiting_group=true
 			action=$new_action
-			awaiting_group=true
 			group=''	 			# When action changes, must clear group.
 			continue
 		fi
@@ -2164,16 +2179,19 @@ ParseListArgs()
 					Objects:Load
 					QPKGs.AClist.IS${group}:Set
 					awaiting_group=false
+					generate_list_report=true
 					show_title=false
 					;;
 				dependent|disabled|installable|independent|NTinstallable|upgradable)
 					Objects:Load
 					QPKGs.AClist.SC${group}:Set
 					awaiting_group=false
+					generate_list_report=true
 					show_title=false
 					;;
 				versions)
 					awaiting_group=false
+					generate_list_report=true
 					show_title=false
 					useropt_show_versions=true
 					;;
@@ -2185,7 +2203,11 @@ ParseListArgs()
 		fi
 	done
 
-	[[ $awaiting_group = true ]] && args_incomplete+=("$action")		# Only if the last action specified was not followed by a group.
+	if [[ $requires_group = true && $awaiting_group = true ]]; then			# Only if the last action specified was not followed by a group.
+		args_incomplete+=("$action")
+		bypass_package_actions=true
+		generate_list_report=false
+	fi
 
 	args=(${args_remaining[@]:-})
 
@@ -2213,56 +2235,72 @@ ParseActionArgs()
 	local awaiting_group=false
 	local group=''
 	local new_action=''
+	local requires_group=false
 
 	[[ -n ${args[*]:-} ]] && Packages:Load
 
 	for arg in "${args[@]:-}"; do
 		[[ -n $arg ]] || continue
 
-		# Identify action. All require a group.
+		# Identify action.
 
 		case $arg in
 		# These cases use only a single user-provided word to specify a single action.
 			backup|clean|disable|enable|reassign|rebuild|reinstall|restore|sign)
 				new_action=$arg
+				requires_group=true
 				;;
 			disable-auto-update)
 				new_action=disableau
+				requires_group=true
 				;;
 			enable-auto-update)
 				new_action=enableau
+				requires_group=true
 				;;
 		# All cases below can use multiple user-provided words or chars to specify a single action.
 			activate|start)
 				new_action=activate
+				requires_group=true
 				;;
 			add|install)
 				new_action=install
+				requires_group=true
 				;;
 			deactivate|stop)
 				new_action=deactivate
+				requires_group=true
 				;;
 			reactivate|restart)
 				new_action=reactivate
+				requires_group=true
 				;;
 			rm|remove|uninstall)
 				new_action=uninstall
+				requires_group=true
 				;;
 			s|status|statuses)
 				new_action=status
+				requires_group=true
 				useropt_show_status=true
 				;;
 			update|upgrade)
 				new_action=upgrade
+				requires_group=true
 				;;
 			*)
 				new_action=''
 		esac
 
 		if [[ -n $new_action && $new_action != "$action" ]]; then
-			[[ $awaiting_group = true ]] && args_incomplete+=("$action")
+			if [[ $awaiting_group = true ]]; then
+				args_incomplete+=("$action")
+				bypass_package_actions=true
+				generate_action_report=false
+			fi
+
+			[[ $requires_group = false ]] && awaiting_group=false || awaiting_group=true
 			action=$new_action
-			awaiting_group=true
 			group=''	 			# When action changes, must clear group.
 			continue
 		fi
@@ -2317,16 +2355,19 @@ ParseActionArgs()
 					QPKGs.AC${action}.SC${group}:Set
 					awaiting_group=false
 					bypass_package_actions=false
+					generate_action_report=true
 					;;
 				active|backedup|enabled|installed|missing|NTactive|NTbackedup|NTenabled|NTinstalled)
 					QPKGs.AC${action}.IS${group}:Set
 					awaiting_group=false
 					bypass_package_actions=false
+					generate_action_report=true
 					;;
 				*)
 					QPKGs-AC${action}-to:Add "$group"
 					awaiting_group=false
 					bypass_package_actions=false
+					generate_action_report=true
 			esac
 
 			[[ $awaiting_group = false ]] && bypass_package_actions=false
@@ -2335,13 +2376,18 @@ ParseActionArgs()
 		fi
 	done
 
-	[[ $awaiting_group = true ]] && args_incomplete+=("$action")		# Only if the last action specified was not followed by a group.
+	if [[ $requires_group = true && $awaiting_group = true ]]; then			# Only if the last action specified was not followed by a group.
+		args_incomplete+=("$action")
+		bypass_package_actions=true
+		generate_action_report=false
+	fi
 
 	for arg in "${args_incomplete[@]:-}"; do
 		case $arg in
 			status)			# If `status` is specified without a scope, then scope is `all`.
 				QPKGs.ACstatus.SCall:Set
 				bypass_package_actions=false
+				generate_action_report=true
 		esac
 	done
 
@@ -4805,7 +4851,7 @@ Help.Actions:Show()
 
 	}
 
-Report.ActionsAll:Show()
+Help.ActionsAll:Show()
 	{
 
 	DisableDebugToArchiveAndFile
@@ -4884,7 +4930,7 @@ Help.Basic.Examples:Show()
 
 	}
 
-Report.Groups:Show()
+Help.Groups:Show()
 	{
 
 	DisableDebugToArchiveAndFile
@@ -4940,7 +4986,7 @@ Help.Issue:Show()
 
 	}
 
-Report.Lists:Show()
+Help.Lists:Show()
 	{
 
 	DisableDebugToArchiveAndFile
@@ -5149,7 +5195,7 @@ Help.Problems:Show()
 
 	}
 
-Report.Upgrades:Show()
+Help.Upgrades:Show()
 	{
 
 	DisableDebugToArchiveAndFile
@@ -6233,7 +6279,7 @@ QPKGs.IsTimeoutsIncreased()
 
 	}
 
-Report.Abbreviations:Show()
+Help.Abbreviations:Show()
 	{
 
 	Func:Init
