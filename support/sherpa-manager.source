@@ -97,18 +97,20 @@ Results:Show()
 		Report.Repos:Show
 	fi
 
-	if [[ $useropt_show_results = true ]]; then
-		display_last_action_datetime=true
-		show_package_actions_ok=true
-		show_package_actions_skipped=true
-		show_package_actions_failed=true
-	fi
+	if [[ $generate_show_report = true ]]; then
+		if [[ $useropt_show_results = true ]]; then
+			display_last_action_datetime=true
+			show_package_actions_ok=true
+			show_package_actions_skipped=true
+			show_package_actions_failed=true
+		fi
 
-	if [[ $useropt_show_status = true ]]; then
-		Report.Statuses:Show
-		show_package_actions_ok=false
-		show_package_actions_skipped=false
-		show_package_actions_failed=false
+		if [[ $useropt_show_status = true ]]; then
+			Report.Statuses:Show
+			show_package_actions_ok=false
+			show_package_actions_skipped=false
+			show_package_actions_failed=false
+		fi
 	fi
 
 	if [[ ${packages_loaded:=false} = true ]]; then
@@ -289,6 +291,9 @@ Vars:Load()
 	backup_stdin_fd=none
 	bypass_package_actions=false
 	fork_pid=''
+	generate_help_report=false
+	generate_list_report=false
+	generate_show_report=false
 	ipks_downgrade=false
 	ipks_install=false
 	ipks_upgrade=false
@@ -305,11 +310,6 @@ Vars:Load()
 	show_title=true
 	show_zero_qpkgs=false
 	title_shown=false
-	write_report=false
-
-	# User-selectable values.
-	user_switch_branch=stable
-	user_switch_colourful=false
 
 	# User-selectable options.
 	useropt_check=false
@@ -339,6 +339,10 @@ Vars:Load()
 	useropt_switch_branch=false
 	useropt_switch_colour=false
 	useropt_verbose=false
+
+	# User-selectable values.
+	user_switch_branch=stable
+	user_switch_colourful=false
 
 	UpdateColourisation
 
@@ -819,17 +823,17 @@ Tasks:Check()
 
 	if [[ $useropt_check = true || $useropt_show_dependencies = true || $useropt_show_packages = true || $show_package_actions_failed = true || $show_package_actions_ok = true || $show_package_actions_skipped = true || $useropt_show_repos = true || $useropt_show_status = true ]]; then
 		build_states=true
-		write_report=true
+		generate_help_report=true
 	elif [[ $useropt_debug = true || $useropt_paste_log_last = true || $useropt_paste_log_tail = true || $useropt_show_backups = true || $useropt_show_log_last = true || $useropt_show_log_tail = true || $useropt_show_results = true || $useropt_show_versions = true || $useropt_verbose = true ]]; then
-		write_report=true
+		generate_help_report=true
 	elif [[ $useropt_help_abbreviations = true || $useropt_help_actions = true || $useropt_help_actions_all = true || $useropt_help_groups = true || $useropt_help_lists = true || $useropt_help_upgrades = true || $useropt_help_packages = true || $useropt_help_options = true || $useropt_help_problems = true || $useropt_help_tips = true ]]; then
 		show_help=true
 		useropt_help_basic=false
 	elif [[ $show_package_actions_failed = true || $show_package_actions_ok = true || $show_package_actions_skipped = true ]]; then
-		write_report=true
+		generate_help_report=true
 	fi
 
-	if [[ $build_states = false && $show_help = false && $write_report = false ]]; then
+	if [[ $build_states = false && $show_help = false && $generate_help_report = false ]]; then
 		Packages:Load
 
 		for action in "${USER_QPKG_ACTIONS[@]}"; do
@@ -1699,6 +1703,9 @@ ParseManagementArgs()
 						*)
 							args_remaining+=("$arg")
 					esac
+					;;
+				*)
+					args_remaining+=("$arg")
 			esac
 		else
 			args_remaining+=("$arg")
@@ -1757,7 +1764,12 @@ ParseHelpArgs()
 		esac
 
 		if [[ -n $new_action && $new_action != "$action" ]]; then
-			[[ $awaiting_group = true ]] && args_incomplete+=("$action")
+			if [[ $awaiting_group = true ]]; then
+				args_incomplete+=("$action")
+				bypass_package_actions=true
+				generate_help_report=false
+			fi
+
 			[[ $requires_group = false ]] && awaiting_group=false || awaiting_group=true
 			action=$new_action
 			group=''	 			# When action changes, must clear group.
@@ -1826,63 +1838,70 @@ ParseHelpArgs()
 					case $group in
 						abs)
 							awaiting_group=false
+							generate_help_report=true
 							useropt_help_abbreviations=true
-							write_report=true
 							;;
 						actions)
 							awaiting_group=false
+							generate_help_report=true
 							useropt_help_actions=true
-							write_report=true
 							;;
 						all-actions)
 							awaiting_group=false
+							generate_help_report=true
 							useropt_help_actions_all=true
-							write_report=true
 							;;
 						groups)
 							awaiting_group=false
+							generate_help_report=true
 							useropt_help_groups=true
-							write_report=true
 							;;
 						lists)
 							awaiting_group=false
+							generate_help_report=true
 							useropt_help_lists=true
-							write_report=true
 							;;
 						options)
 							awaiting_group=false
+							generate_help_report=true
 							useropt_help_options=true
-							write_report=true
 							;;
 						packages)
 							awaiting_group=false
+							generate_help_report=true
 							useropt_help_packages=true
-							write_report=true
 							;;
 						problems)
 							awaiting_group=false
+							generate_help_report=true
 							useropt_help_problems=true
-							write_report=true
 							;;
 						tips)
 							awaiting_group=false
+							generate_help_report=true
 							useropt_help_tips=true
-							write_report=true
 							;;
 						upgrades)
 							awaiting_group=false
+							generate_help_report=true
 							useropt_help_upgrades=true
-							write_report=true
+							;;
+						*)
+							args_remaining+=("$arg")
 					esac
+					;;
+				*)
+					args_remaining+=("$arg")
 			esac
 		else
 			args_remaining+=("$arg")
 		fi
 	done
 
-	if [[ $requires_group = true && $awaiting_group = true ]]; then
-		args_incomplete+=("$action")		# Only if the last action specified was not followed by a group.
+	if [[ $requires_group = true && $awaiting_group = true ]]; then			# Only if the last action specified was not followed by a group.
+		args_incomplete+=("$action")
 		bypass_package_actions=true
+		generate_help_report=false
 		useropt_help_basic=true
 	fi
 
@@ -1932,7 +1951,12 @@ ParseShowArgs()
 		esac
 
 		if [[ -n $new_action && $new_action != "$action" ]]; then
-			[[ $awaiting_group = true ]] && args_incomplete+=("$action")
+			if [[ $awaiting_group = true ]]; then
+				args_incomplete+=("$action")
+				bypass_package_actions=true
+				generate_show_report=false
+			fi
+
 			[[ $requires_group = false ]] && awaiting_group=false || awaiting_group=true
 			action=$new_action
 			group=''	 			# When action changes, must clear group.
@@ -1981,46 +2005,57 @@ ParseShowArgs()
 					case $group in
 						backups)
 							awaiting_group=false
+							generate_show_report=true
 							useropt_show_backups=true
-							write_report=true
 							;;
 						dependencies)
 							awaiting_group=false
+							generate_show_report=true
 							useropt_show_dependencies=true
 							;;
 						last)
 							awaiting_group=false
+							generate_show_report=true
 							useropt_show_log_last=true
-							write_report=true
 							;;
 						tail)
 							awaiting_group=false
+							generate_show_report=true
 							useropt_show_log_tail=true
-							write_report=true
 							;;
 						packages)
 							Packages:Load
 							awaiting_group=false
 							bypass_package_actions=true
+							generate_show_report=true
 							useropt_show_packages=true
 							;;
 						repositories)
 							awaiting_group=false
+							generate_show_report=true
 							useropt_show_repos=true
 							;;
 						results)
 							awaiting_group=false
+							generate_show_report=true
 							useropt_show_results=true
+							;;
+						*)
+							args_remaining+=("$arg")
 					esac
+					;;
+				*)
+					args_remaining+=("$arg")
 			esac
 		else
 			args_remaining+=("$arg")
 		fi
 	done
 
-	if [[ $requires_group = true && $awaiting_group = true ]]; then
-		args_incomplete+=("$action")		# Only if the last action specified was not followed by a group.
+	if [[ $requires_group = true && $awaiting_group = true ]]; then			# Only if the last action specified was not followed by a group.
+		args_incomplete+=("$action")
 		bypass_package_actions=true
+		generate_show_report=false
 	fi
 
 	args=(${args_remaining[@]:-})
