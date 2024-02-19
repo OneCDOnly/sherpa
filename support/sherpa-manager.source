@@ -2455,10 +2455,15 @@ ArgSuggestions:Show()
 					useropt_help_basic=false
 					;;
 				*)
-					WriteEmptyLineIfNoneExists
-					ShowAsError "incomplete argument$(Pluralise "${#args_remaining[@]}"): \"${args_remaining[*]}\""
+					args_remaining+=("$arg")
 			esac
 		done
+
+		if [[ ${#args_remaining[@]:-} -gt 0 ]]; then
+			WriteEmptyLineIfNoneExists
+			ShowAsError "incomplete argument$(Pluralise "${#args_remaining[@]}"): \"${args_remaining[*]}\". Please check the arguments again"
+			args_remaining=()
+		fi
 	fi
 
 	if [[ ${#args[@]:-} -gt 0 ]]; then
@@ -2511,10 +2516,14 @@ ArgSuggestions:Show()
 					useropt_help_basic=false
 					;;
 				*)
-					WriteEmptyLineIfNoneExists
-					ShowAsError "unknown argument$(Pluralise "${#args[@]}"): \"${args[*]}\". Please check the arguments again"
+					args_remaining+=("$arg")
 			esac
 		done
+
+		if [[ ${#args_remaining[@]:-} -gt 0 ]]; then
+			WriteEmptyLineIfNoneExists
+			ShowAsError "unknown argument$(Pluralise "${#args_remaining[@]}"): \"${args_remaining[*]}\". Please check the arguments again"
+		fi
 	fi
 
 	Func:Exit
