@@ -5183,6 +5183,7 @@ Help.Problems:Show()
 		DisplayAsProjSynIndentExam 'reactivate all installed packages (upgrades internal applications where-supported)' 'reactivate all'
 		DisplayAsProjSynIndentExam 'enable then activate these packages' "activate $(ShowPackages)"
 		DisplayAsProjSynIndentExam 'stop then disable these packages (disabling will prevent them starting on reboot)' "stop $(ShowPackages)"
+		DisplayAsProjSynIndentExam "increase the default 'qpkg_service' timeouts from 3 minutes to 30 minutes" 'install increasetimeouts'
 		DisplayAsProjSynIndentExam "view only the most recent $(ShowTitleName) session log" last
 		DisplayAsProjSynIndentExam '' l
 		DisplayAsProjSynIndentExam "view the entire $(ShowTitleName) session log" log
