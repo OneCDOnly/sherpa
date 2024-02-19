@@ -1659,13 +1659,17 @@ ParseManagementArgs()
 				# Don't set a default action for this group, it should prompt user instead.
 				group=tail
 				;;
+			false|off|disable)
+				# Don't set a default action for this group, it should prompt user instead.
+				group=false
+				;;
 			l|last)
 				# Don't set a default action for this group, it should prompt user instead.
 				group=last
 				;;
-			true|false)
+			true|on|enable)
 				# Don't set a default action for this group, it should prompt user instead.
-				group=$arg
+				group=true
 		esac
 
 		# Pair action with group.
@@ -2413,11 +2417,7 @@ ArgSuggestions:Show()
 	local -a args_remaining=()
 
 	if [[ ${#args_incomplete[@]:-} -gt 0 ]]; then
-		if [[ ${#args_remaining[@]:-} -gt 0 ]]; then
-			WriteEmptyLineIfNoneExists
-			ShowAsError "incomplete argument$(Pluralise "${#args_remaining[@]}"): \"${args_remaining[*]}\""
-			bypass_package_actions=true
-		fi
+		bypass_package_actions=true
 
 		for arg in "${args_incomplete[@]}"; do
 			case $arg in
@@ -2453,17 +2453,23 @@ ArgSuggestions:Show()
 					DisplayAsProjSynExam "please provide a valid source after 'show' like" 'show packages'
 					bypass_package_actions=true
 					useropt_help_basic=false
+					;;
+				*)
+					WriteEmptyLineIfNoneExists
+					ShowAsError "incomplete argument$(Pluralise "${#args_remaining[@]}"): \"${args_remaining[*]}\""
 			esac
 		done
 	fi
 
 	if [[ ${#args[@]:-} -gt 0 ]]; then
-		WriteEmptyLineIfNoneExists
-		ShowAsError "unknown argument$(Pluralise "${#args[@]}"): \"${args[*]}\". Please check the arguments again"
 		bypass_package_actions=true
 
 		for arg in "${args[@]}"; do
 			case $arg in
+				false|off|on|true)
+					DisplayAsProjSynExam "please provide a valid setting before '$arg' like" "colour $arg"
+					useropt_help_basic=false
+					;;
 				all)
 					DisplayAsProjSynExam "please provide a valid $(ShowAction) before 'all' like" 'activate all'
 					useropt_help_basic=false
@@ -2503,6 +2509,10 @@ ArgSuggestions:Show()
 				all-upgrade|upgrade-all)
 					DisplayAsProjSynExam 'to upgrade all packages, use' 'upgrade all'
 					useropt_help_basic=false
+					;;
+				*)
+					WriteEmptyLineIfNoneExists
+					ShowAsError "unknown argument$(Pluralise "${#args[@]}"): \"${args[*]}\". Please check the arguments again"
 			esac
 		done
 	fi
@@ -3522,7 +3532,7 @@ SwitchSourceBranch()
 			[[ $a != "$user_switch_branch" ]] && continue
 
 			AssignSourceBranch "$user_switch_branch"
-			ShowAsDone "'Git_Branch' is now set to '$source_branch'"
+			ShowAsDone "'Git_Branch = $source_branch' has been written as a persistent setting"
 			Reset					# <-- Processing will terminate in this function (no-return). The following lines are only used for debugging.
 			# shellcheck disable=2317
 			show_title=false
@@ -3583,7 +3593,7 @@ SwitchColourful()
 			[[ $a != "$user_switch_colourful" ]] && continue
 
 			AssignColourful "$user_switch_colourful"
-			ShowAsDone "'Colourful' is now set to '$colourful'"
+			ShowAsDone "'Colourful = $colourful' has been written as a persistent setting"
 			show_title=false
 			return
 		done
