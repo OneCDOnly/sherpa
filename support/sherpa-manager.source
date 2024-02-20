@@ -77,7 +77,7 @@ Results:Show()
 	Func:Init
 	display_last_action_datetime=false
 
-	if [[ $generate_show_report = true ]]; then
+	if [[ $generate_show_report = true && $arg_problem = false ]]; then
 		if [[ $useropt_show_log_last = true ]]; then
 			LockFile:Release
 			Log.Last:View
@@ -113,7 +113,7 @@ Results:Show()
 		fi
 	fi
 
-	if [[ $generate_list_report = true ]]; then
+	if [[ $generate_list_report = true && $arg_problem = false ]]; then
 		if [[ ${packages_loaded:=false} = true ]]; then
 			if QPKGs.AClist.ISbackedup.IsSet; then
 				QPKGs.IsBackedUp:Show
@@ -141,9 +141,9 @@ Results:Show()
 		fi
 	fi
 
-	if [[ $useropt_paste_log_last = true ]]; then
+	if [[ $useropt_paste_log_last = true && $arg_problem = false ]]; then
 		Log.Last:Paste
-	elif [[ $useropt_paste_log_tail = true ]]; then
+	elif [[ $useropt_paste_log_tail = true && $arg_problem = false ]]; then
 		Log.Tail:Paste
 	fi
 
@@ -152,7 +152,7 @@ Results:Show()
 		Help.Basic.Examples:Show
 	fi
 
-	if [[ $generate_help_report = true ]]; then
+	if [[ $generate_help_report = true && $arg_problem = false ]]; then
 		if [[ $useropt_help_tips = true ]]; then
 			Help.Tips:Show
 		elif [[ $useropt_help_abbreviations = true ]]; then
@@ -176,7 +176,7 @@ Results:Show()
 		fi
 	fi
 
-	if [[ $generate_action_report = true ]]; then
+	if [[ $generate_action_report = true && $arg_problem = false ]]; then
 		[[ $show_package_actions_ok = true ]] && Report.Results:Show ok
 		[[ $show_package_actions_skipped = true ]] && Report.Results:Show skipped
 		[[ $show_package_actions_failed = true ]] && Report.Results:Show failed
@@ -301,6 +301,7 @@ Vars:Load()
 	generate_action_report=false
 	generate_help_report=false
 	generate_list_report=false
+	generate_log_report=false
 	generate_show_report=false
 	ipks_downgrade=false
 	ipks_install=false
@@ -819,7 +820,7 @@ Tasks:Check()
 
 	# Establish whether there's something to-do.
 
-	[[ $useropt_help_basic = false && $bypass_package_actions = false ]] || return 0			# No-need to check for tasks if only showing help.
+	[[ $arg_problem = false && $useropt_help_basic = false && $bypass_package_actions = false ]] || return 0		# No-need to check for tasks if only showing help.
 
 	Func:Init
 	local action=''
@@ -1566,6 +1567,7 @@ PrepareArgs()
 
 	local a=$(Lowercase "${ARGS_RAW//,/ }")
 	args=(${a/--/})
+	arg_problem=false
 
 	if [[ -z $ARGS_RAW ]]; then
 		bypass_package_actions=true
@@ -1954,7 +1956,7 @@ ParseShowArgs()
 		# Identify action.
 
 		case $arg in
-			show)
+			show|view)
 				new_action=show
 				requires_group=true
 				;;
@@ -2027,11 +2029,13 @@ ParseShowArgs()
 							;;
 						last)
 							awaiting_group=false
+							bypass_package_actions=true
 							generate_show_report=true
 							useropt_show_log_last=true
 							;;
 						tail)
 							awaiting_group=false
+							bypass_package_actions=true
 							generate_show_report=true
 							useropt_show_log_tail=true
 							;;
@@ -2418,40 +2422,38 @@ ArgSuggestions:Show()
 
 	if [[ ${#args_incomplete[@]:-} -gt 0 ]]; then
 		bypass_package_actions=true
+		arg_problem=true
 
 		for arg in "${args_incomplete[@]}"; do
 			case $arg in
 				activate|backup|uninstall)
 					DisplayAsProjSynExam "please provide valid $(ShowPackages) or a $(ShowPackageGroup) after '$arg' like" "$arg installed"
-					bypass_package_actions=true
 					useropt_help_basic=false
 					;;
 				colour)
 					DisplayAsProjSynExam "please provide a valid boolean after 'colour' like" 'colour true'
 					DisplayAsProjSynIndentExam '' 'colour false'
-					bypass_package_actions=true
 					useropt_help_basic=false
 					;;
 				follow)
 					DisplayAsProjSynExam "please provide a valid source branch to track after 'follow' like" 'follow stable'
 					DisplayAsProjSynIndentExam '' 'follow unstable'
-					bypass_package_actions=true
 					useropt_help_basic=false
+					;;
+				help)			# May be specified with a group or without, so don't show failure when a group wasn't supplied.
+					useropt_help_basic=true
 					;;
 				list)
 					DisplayAsProjSynExam "please provide a valid source after 'list' like" 'list installable'
-					bypass_package_actions=true
 					useropt_help_basic=false
 					;;
 				paste)
 					DisplayAsProjSynExam "please provide a valid source to paste online after 'paste' like" 'paste log'
 					DisplayAsProjSynIndentExam '' 'paste last'
-					bypass_package_actions=true
 					useropt_help_basic=false
 					;;
 				show)
 					DisplayAsProjSynExam "please provide a valid source after 'show' like" 'show packages'
-					bypass_package_actions=true
 					useropt_help_basic=false
 					;;
 				*)
@@ -2468,6 +2470,7 @@ ArgSuggestions:Show()
 
 	if [[ ${#args[@]:-} -gt 0 ]]; then
 		bypass_package_actions=true
+		arg_problem=true
 
 		for arg in "${args[@]}"; do
 			case $arg in
