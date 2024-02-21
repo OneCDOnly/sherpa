@@ -77,7 +77,7 @@ Results:Show()
 	Func:Init
 	display_last_action_datetime=false
 
-	if [[ $generate_show_report = true && $arg_problem = false ]]; then
+	if [[ $generate_show_report = true ]]; then
 		if [[ $useropt_show_log_last = true ]]; then
 			LockFile:Release
 			Log.Last:View
@@ -88,9 +88,7 @@ Results:Show()
 			Report.Backups:Show
 		elif [[ $useropt_show_versions = true ]]; then
 			Report.Versions:Show
-		fi
-
-		if [[ $useropt_show_dependencies = true ]]; then
+		elif [[ $useropt_show_dependencies = true ]]; then
 			Report.Dependencies:Show
 		elif [[ $useropt_show_packages = true ]]; then
 			Report.Packages:Show
@@ -113,7 +111,7 @@ Results:Show()
 		fi
 	fi
 
-	if [[ $generate_list_report = true && $arg_problem = false ]]; then
+	if [[ $generate_list_report = true ]]; then
 		if [[ ${packages_loaded:=false} = true ]]; then
 			if QPKGs.AClist.ISbackedup.IsSet; then
 				QPKGs.IsBackedUp:Show
@@ -141,9 +139,9 @@ Results:Show()
 		fi
 	fi
 
-	if [[ $useropt_paste_log_last = true && $arg_problem = false ]]; then
+	if [[ $useropt_paste_log_last = true ]]; then
 		Log.Last:Paste
-	elif [[ $useropt_paste_log_tail = true && $arg_problem = false ]]; then
+	elif [[ $useropt_paste_log_tail = true ]]; then
 		Log.Tail:Paste
 	fi
 
@@ -152,7 +150,7 @@ Results:Show()
 		Help.Basic.Examples:Show
 	fi
 
-	if [[ $generate_help_report = true && $arg_problem = false ]]; then
+	if [[ $generate_help_report = true ]]; then
 		if [[ $useropt_help_tips = true ]]; then
 			Help.Tips:Show
 		elif [[ $useropt_help_abbreviations = true ]]; then
@@ -176,7 +174,7 @@ Results:Show()
 		fi
 	fi
 
-	if [[ $generate_action_report = true && $arg_problem = false ]]; then
+	if [[ $generate_action_report = true || $generate_show_report = true ]]; then
 		[[ $show_package_actions_ok = true ]] && Report.Results:Show ok
 		[[ $show_package_actions_skipped = true ]] && Report.Results:Show skipped
 		[[ $show_package_actions_failed = true ]] && Report.Results:Show failed
@@ -301,7 +299,6 @@ Vars:Load()
 	generate_action_report=false
 	generate_help_report=false
 	generate_list_report=false
-	generate_log_report=false
 	generate_show_report=false
 	ipks_downgrade=false
 	ipks_install=false
@@ -820,29 +817,26 @@ Tasks:Check()
 
 	# Establish whether there's something to-do.
 
-	[[ $arg_problem = false && $useropt_help_basic = false && $bypass_package_actions = false ]] || return 0		# No-need to check for tasks if only showing help.
+	if [[ $bypass_package_actions = true ]]; then
+		return
+	fi
+
+	if [[ $arg_problem = true || $useropt_help_basic = true ]]; then
+		bypass_package_actions=true
+		return
+	fi
 
 	Func:Init
 	local action=''
 	local build_states=false
 	local group=''
-	local show_help=false
 	local state=''
-	local z=0
 
-	if [[ $useropt_check = true || $useropt_show_dependencies = true || $useropt_show_packages = true || $show_package_actions_failed = true || $show_package_actions_ok = true || $show_package_actions_skipped = true || $useropt_show_repos = true || $useropt_show_status = true ]]; then
+	if [[ $useropt_check = true || $useropt_show_dependencies = true || $useropt_show_packages = true || $useropt_show_repos = true || $useropt_show_status = true ]]; then
 		build_states=true
-		generate_help_report=true
-	elif [[ $useropt_debug = true || $useropt_paste_log_last = true || $useropt_paste_log_tail = true || $useropt_show_backups = true || $useropt_show_log_last = true || $useropt_show_log_tail = true || $useropt_show_results = true || $useropt_show_versions = true || $useropt_verbose = true ]]; then
-		generate_help_report=true
-	elif [[ $useropt_help_abbreviations = true || $useropt_help_actions = true || $useropt_help_actions_all = true || $useropt_help_groups = true || $useropt_help_lists = true || $useropt_help_upgrades = true || $useropt_help_packages = true || $useropt_help_options = true || $useropt_help_problems = true || $useropt_help_tips = true ]]; then
-		show_help=true
-		useropt_help_basic=false
-	elif [[ $show_package_actions_failed = true || $show_package_actions_ok = true || $show_package_actions_skipped = true ]]; then
-		generate_help_report=true
-	fi
-
-	if [[ $build_states = false && $show_help = false && $generate_help_report = false ]]; then
+	elif [[ $useropt_show_results = true || $useropt_help_tips = true ]]; then
+		: # don't do anything
+	else
 		Packages:Load
 
 		for action in "${USER_QPKG_ACTIONS[@]}"; do
@@ -883,12 +877,7 @@ Tasks:Check()
 
 	[[ $build_states = true ]] && QPKGs.States:Build
 
-	if [[ $show_help = true ]]; then
-		bypass_package_actions=true
-		z=1
-	fi
-
-	Func:Exit $z
+	Func:Exit
 
 	}
 
@@ -1728,7 +1717,6 @@ ParseManagementArgs()
 
 	if [[ $requires_group = true && $awaiting_group = true ]]; then
 		args_incomplete+=("$action")		# Only if the last action specified was not followed by a group.
-		bypass_package_actions=true
 	fi
 
 	args=(${args_remaining[@]:-})
@@ -1778,12 +1766,7 @@ ParseHelpArgs()
 		esac
 
 		if [[ -n $new_action && $new_action != "$action" ]]; then
-			if [[ $awaiting_group = true ]]; then
-				args_incomplete+=("$action")
-				bypass_package_actions=true
-				generate_help_report=false
-			fi
-
+			[[ $awaiting_group = true ]] && args_incomplete+=("$action")
 			[[ $requires_group = false ]] && awaiting_group=false || awaiting_group=true
 			action=$new_action
 			group=''	 			# When action changes, must clear group.
@@ -1812,7 +1795,7 @@ ParseHelpArgs()
 				;;
 		# All cases below can use multiple user-provided words or chars to specify a single group.
 			a|abs|abbreviations)
-				[[ -z $action ]] && action=help
+				# Don't set a default action for this group, this group is used for multiple actions.
 				group=abs
 				;;
 			action|actions)
@@ -1852,51 +1835,61 @@ ParseHelpArgs()
 					case $group in
 						abs)
 							awaiting_group=false
+							bypass_package_actions=true
 							generate_help_report=true
 							useropt_help_abbreviations=true
 							;;
 						actions)
 							awaiting_group=false
+							bypass_package_actions=true
 							generate_help_report=true
 							useropt_help_actions=true
 							;;
 						all-actions)
 							awaiting_group=false
+							bypass_package_actions=true
 							generate_help_report=true
 							useropt_help_actions_all=true
 							;;
 						groups)
 							awaiting_group=false
+							bypass_package_actions=true
 							generate_help_report=true
 							useropt_help_groups=true
 							;;
 						lists)
 							awaiting_group=false
+							bypass_package_actions=true
 							generate_help_report=true
 							useropt_help_lists=true
 							;;
 						options)
 							awaiting_group=false
+							bypass_package_actions=true
 							generate_help_report=true
 							useropt_help_options=true
 							;;
 						packages)
 							awaiting_group=false
+							bypass_package_actions=true
 							generate_help_report=true
 							useropt_help_packages=true
 							;;
 						problems)
 							awaiting_group=false
+							bypass_package_actions=true
 							generate_help_report=true
 							useropt_help_problems=true
 							;;
 						tips)
 							awaiting_group=false
+							bypass_package_actions=true
 							generate_help_report=true
 							useropt_help_tips=true
 							;;
 						upgrades)
 							awaiting_group=false
+							bypass_package_actions=true
 							generate_help_report=true
 							useropt_help_upgrades=true
 							;;
@@ -1914,10 +1907,30 @@ ParseHelpArgs()
 
 	if [[ $requires_group = true && $awaiting_group = true ]]; then			# Only if the last action specified was not followed by a group.
 		args_incomplete+=("$action")
-		bypass_package_actions=true
-		generate_help_report=false
-		useropt_help_basic=true
 	fi
+
+	for arg in "${args_incomplete[@]:-}"; do
+		case $arg in
+			help)							# If `help` is specified without a valid group, then show basic help.
+				bypass_package_actions=true
+				useropt_help_basic=true
+				# Remove this arg from incomplete array.
+				local a=''
+				local tmp=()
+
+				for a in "${args_incomplete[@]}"; do
+					[[ $a != "$arg" ]] && tmp+=($a)
+				done
+
+				if [[ ${#tmp[@]:-} -eq 0 ]]; then
+					args_incomplete=()
+				else
+					args_incomplete=("${tmp[@]}")
+				fi
+
+				unset tmp
+		esac
+	done
 
 	args=(${args_remaining[@]:-})
 
@@ -1965,12 +1978,7 @@ ParseShowArgs()
 		esac
 
 		if [[ -n $new_action && $new_action != "$action" ]]; then
-			if [[ $awaiting_group = true ]]; then
-				args_incomplete+=("$action")
-				bypass_package_actions=true
-				generate_show_report=false
-			fi
-
+			[[ $awaiting_group = true ]] && args_incomplete+=("$action")
 			[[ $requires_group = false ]] && awaiting_group=false || awaiting_group=true
 			action=$new_action
 			group=''	 			# When action changes, must clear group.
@@ -1986,6 +1994,10 @@ ParseShowArgs()
 				group=$arg
 				;;
 		# All cases below can use multiple user-provided words or chars to specify a single group.
+			a|abs|abbreviations)
+				# Don't set a default action for this group, this group is used for multiple actions.
+				group=abs
+				;;
 			deps)
 				# Don't set a default action for this group, this group is used for multiple actions.
 				group=dependencies
@@ -2009,6 +2021,11 @@ ParseShowArgs()
 			r|repos|repositories)
 				[[ -z $action ]] && action=show
 				group=repositories
+				;;
+			s|status|statuses)
+				# Don't set a default action for this group, this group is used for multiple actions.
+				group=status
+				;;
 		esac
 
 		# Pair action with group.
@@ -2017,13 +2034,22 @@ ParseShowArgs()
 			case $action in
 				show)
 					case $group in
+						abs)
+							awaiting_group=false
+							bypass_package_actions=true
+							generate_help_report=true
+							useropt_help_abbreviations=true
+							;;
 						backups)
 							awaiting_group=false
+							bypass_package_actions=true
 							generate_show_report=true
 							useropt_show_backups=true
 							;;
 						dependencies)
+							Packages:Load
 							awaiting_group=false
+							bypass_package_actions=true
 							generate_show_report=true
 							useropt_show_dependencies=true
 							;;
@@ -2033,12 +2059,6 @@ ParseShowArgs()
 							generate_show_report=true
 							useropt_show_log_last=true
 							;;
-						tail)
-							awaiting_group=false
-							bypass_package_actions=true
-							generate_show_report=true
-							useropt_show_log_tail=true
-							;;
 						packages)
 							Packages:Load
 							awaiting_group=false
@@ -2047,14 +2067,30 @@ ParseShowArgs()
 							useropt_show_packages=true
 							;;
 						repositories)
+							Packages:Load
 							awaiting_group=false
+							bypass_package_actions=true
 							generate_show_report=true
 							useropt_show_repos=true
 							;;
 						results)
 							awaiting_group=false
+							bypass_package_actions=true
 							generate_show_report=true
 							useropt_show_results=true
+							;;
+						status)
+							Objects:Load
+							QPKGs.ACstatus.SCall:Set
+							awaiting_group=false
+							generate_show_report=true
+							useropt_show_status=true
+							;;
+						tail)
+							awaiting_group=false
+							bypass_package_actions=true
+							generate_show_report=true
+							useropt_show_log_tail=true
 							;;
 						*)
 							args_remaining+=("$arg")
@@ -2070,8 +2106,6 @@ ParseShowArgs()
 
 	if [[ $requires_group = true && $awaiting_group = true ]]; then			# Only if the last action specified was not followed by a group.
 		args_incomplete+=("$action")
-		bypass_package_actions=true
-		generate_show_report=false
 	fi
 
 	args=(${args_remaining[@]:-})
@@ -2122,12 +2156,7 @@ ParseListArgs()
 		esac
 
 		if [[ -n $new_action && $new_action != "$action" ]]; then
-			if [[ $awaiting_group = true ]]; then
-				args_incomplete+=("$action")
-				bypass_package_actions=true
-				generate_list_report=false
-			fi
-
+			[[ $awaiting_group = true ]] && args_incomplete+=("$action")
 			[[ $requires_group = false ]] && awaiting_group=false || awaiting_group=true
 			action=$new_action
 			group=''	 			# When action changes, must clear group.
@@ -2148,6 +2177,10 @@ ParseListArgs()
 				group=NTinstalled
 				;;
 		# All cases below can use multiple user-provided words or chars to specify a single action.
+			a|abs|abbreviations)
+				# Don't set a default action for this group, this group is used for multiple actions.
+				group=abs
+				;;
 			active|started)
 				group=active
 				;;
@@ -2182,26 +2215,40 @@ ParseListArgs()
 		# Pair action with group.
 
 		if [[ -n $action && -n $group ]]; then
-			case $group in
-				backedup|installed|NTbackedup|NTinstalled)
-					Objects:Load
-					QPKGs.AClist.IS${group}:Set
-					awaiting_group=false
-					generate_list_report=true
-					show_title=false
-					;;
-				dependent|disabled|installable|independent|NTinstallable|upgradable)
-					Objects:Load
-					QPKGs.AClist.SC${group}:Set
-					awaiting_group=false
-					generate_list_report=true
-					show_title=false
-					;;
-				versions)
-					awaiting_group=false
-					generate_list_report=true
-					show_title=false
-					useropt_show_versions=true
+			case $action in
+				list)
+					case $group in
+						abs)
+							awaiting_group=false
+							bypass_package_actions=true
+							generate_help_report=true
+							useropt_help_abbreviations=true
+							;;
+						backedup|installed|NTbackedup|NTinstalled)
+							Objects:Load
+							QPKGs.AClist.IS${group}:Set
+							awaiting_group=false
+							bypass_package_actions=true
+							generate_list_report=true
+							show_title=false
+							;;
+						dependent|disabled|installable|independent|NTinstallable|upgradable)
+							Objects:Load
+							QPKGs.AClist.SC${group}:Set
+							awaiting_group=false
+							bypass_package_actions=true
+							generate_list_report=true
+							show_title=false
+							;;
+						versions)
+							awaiting_group=false
+							generate_list_report=true
+							show_title=false
+							useropt_show_versions=true
+							;;
+						*)
+							args_remaining+=("$arg")
+					esac
 					;;
 				*)
 					args_remaining+=("$arg")
@@ -2213,8 +2260,6 @@ ParseListArgs()
 
 	if [[ $requires_group = true && $awaiting_group = true ]]; then			# Only if the last action specified was not followed by a group.
 		args_incomplete+=("$action")
-		bypass_package_actions=true
-		generate_list_report=false
 	fi
 
 	args=(${args_remaining[@]:-})
@@ -2301,12 +2346,7 @@ ParseActionArgs()
 		esac
 
 		if [[ -n $new_action && $new_action != "$action" ]]; then
-			if [[ $awaiting_group = true ]]; then
-				args_incomplete+=("$action")
-				bypass_package_actions=true
-				generate_action_report=false
-			fi
-
+			[[ $awaiting_group = true ]] && args_incomplete+=("$action")
 			[[ $requires_group = false ]] && awaiting_group=false || awaiting_group=true
 			action=$new_action
 			group=''	 			# When action changes, must clear group.
@@ -2362,23 +2402,18 @@ ParseActionArgs()
 				all|canbackup|canclean|canrestarttoupdate|dependent|hasdependents|independent|installable|upgradable|NTcanclean|NTinstallable|NTupgradable)
 					QPKGs.AC${action}.SC${group}:Set
 					awaiting_group=false
-					bypass_package_actions=false
 					generate_action_report=true
 					;;
 				active|backedup|enabled|installed|missing|NTactive|NTbackedup|NTenabled|NTinstalled)
 					QPKGs.AC${action}.IS${group}:Set
 					awaiting_group=false
-					bypass_package_actions=false
 					generate_action_report=true
 					;;
 				*)
 					QPKGs-AC${action}-to:Add "$group"
 					awaiting_group=false
-					bypass_package_actions=false
 					generate_action_report=true
 			esac
-
-			[[ $awaiting_group = false ]] && bypass_package_actions=false
 		else
 			args_remaining+=("$arg")
 		fi
@@ -2386,16 +2421,29 @@ ParseActionArgs()
 
 	if [[ $requires_group = true && $awaiting_group = true ]]; then			# Only if the last action specified was not followed by a group.
 		args_incomplete+=("$action")
-		bypass_package_actions=true
-		generate_action_report=false
 	fi
 
 	for arg in "${args_incomplete[@]:-}"; do
 		case $arg in
-			status)			# If `status` is specified without a scope, then scope is `all`.
+			status)							# If `status` is specified without a valid group, then group is `all`.
 				QPKGs.ACstatus.SCall:Set
-				bypass_package_actions=false
-				generate_action_report=true
+				generate_show_report=true
+
+				# Remove this arg from incomplete array.
+				local a=''
+				local tmp=()
+
+				for a in "${args_incomplete[@]}"; do
+					[[ $a != "$arg" ]] && tmp+=($a)
+				done
+
+				if [[ ${#tmp[@]:-} -eq 0 ]]; then
+					args_incomplete=()
+				else
+					args_incomplete=("${tmp[@]}")
+				fi
+
+				unset tmp
 		esac
 	done
 
@@ -2422,41 +2470,44 @@ ArgSuggestions:Show()
 
 	if [[ ${#args_incomplete[@]:-} -gt 0 ]]; then
 		bypass_package_actions=true
-		arg_problem=true
 
 		for arg in "${args_incomplete[@]}"; do
 			case $arg in
 				activate|backup|uninstall)
 					DisplayAsProjSynExam "please provide valid $(ShowPackages) or a $(ShowPackageGroup) after '$arg' like" "$arg installed"
+					arg_problem=true
 					useropt_help_basic=false
 					;;
 				colour)
 					DisplayAsProjSynExam "please provide a valid boolean after 'colour' like" 'colour true'
 					DisplayAsProjSynIndentExam '' 'colour false'
+					arg_problem=true
 					useropt_help_basic=false
 					;;
 				follow)
-					DisplayAsProjSynExam "please provide a valid source branch to track after 'follow' like" 'follow stable'
+					DisplayAsProjSynExam "please provide a valid source branch to 'follow' like" 'follow stable'
 					DisplayAsProjSynIndentExam '' 'follow unstable'
+					arg_problem=true
 					useropt_help_basic=false
 					;;
-				help)			# May be specified with a group or without, so don't show failure when a group wasn't supplied.
-					useropt_help_basic=true
-					;;
 				list)
-					DisplayAsProjSynExam "please provide a valid source after 'list' like" 'list installable'
+					DisplayAsProjSynExam "please provide a valid source to 'list' like" 'list installable'
+					arg_problem=true
 					useropt_help_basic=false
 					;;
 				paste)
-					DisplayAsProjSynExam "please provide a valid source to paste online after 'paste' like" 'paste log'
+					DisplayAsProjSynExam "please provide a valid source to 'paste' online like" 'paste log'
 					DisplayAsProjSynIndentExam '' 'paste last'
+					arg_problem=true
 					useropt_help_basic=false
 					;;
 				show)
 					DisplayAsProjSynExam "please provide a valid source after 'show' like" 'show packages'
+					arg_problem=true
 					useropt_help_basic=false
 					;;
 				*)
+					arg_problem=true
 					args_remaining+=("$arg")
 			esac
 		done
@@ -2464,61 +2515,73 @@ ArgSuggestions:Show()
 		if [[ ${#args_remaining[@]:-} -gt 0 ]]; then
 			WriteEmptyLineIfNoneExists
 			ShowAsError "incomplete argument$(Pluralise "${#args_remaining[@]}"): \"${args_remaining[*]}\". Please check the arguments again"
+			arg_problem=true
 			args_remaining=()
 		fi
 	fi
 
 	if [[ ${#args[@]:-} -gt 0 ]]; then
 		bypass_package_actions=true
-		arg_problem=true
 
 		for arg in "${args[@]}"; do
 			case $arg in
 				false|off|on|true)
 					DisplayAsProjSynExam "please provide a valid setting before '$arg' like" "colour $arg"
+					arg_problem=true
 					useropt_help_basic=false
 					;;
 				all)
 					DisplayAsProjSynExam "please provide a valid $(ShowAction) before 'all' like" 'activate all'
+					arg_problem=true
 					useropt_help_basic=false
 					;;
 				all-backup|backup-all)
 					DisplayAsProjSynExam 'to backup all installed package configurations, use' 'backup all'
+					arg_problem=true
 					useropt_help_basic=false
 					;;
 				dependent)
 					DisplayAsProjSynExam "please provide a valid $(ShowAction) before 'dependent' like" 'activate dependents'
+					arg_problem=true
 					useropt_help_basic=false
 					;;
 				all-reactivate|reactivate-all)
 					DisplayAsProjSynExam 'to reactivate all packages, use' 'reactivate all'
+					arg_problem=true
 					useropt_help_basic=false
 					;;
 				all-restore|restore-all)
 					DisplayAsProjSynExam 'to restore all installed package configurations, use' 'restore all'
+					arg_problem=true
 					useropt_help_basic=false
 					;;
 				independent)
 					DisplayAsProjSynExam "please provide a valid $(ShowAction) before 'independent' like" 'activate independents'
+					arg_problem=true
 					useropt_help_basic=false
 					;;
 				all-activate|activate-all)
 					DisplayAsProjSynExam 'to activate all packages, use' 'activate all'
+					arg_problem=true
 					useropt_help_basic=false
 					;;
 				all-stop|stop-all)
 					DisplayAsProjSynExam 'to stop all packages, use' 'stop all'
+					arg_problem=true
 					useropt_help_basic=false
 					;;
 				all-uninstall|all-remove|uninstall-all|remove-all)
 					DisplayAsProjSynExam 'to uninstall all packages, use' 'force uninstall all'
+					arg_problem=true
 					useropt_help_basic=false
 					;;
 				all-upgrade|upgrade-all)
 					DisplayAsProjSynExam 'to upgrade all packages, use' 'upgrade all'
+					arg_problem=true
 					useropt_help_basic=false
 					;;
 				*)
+					arg_problem=true
 					args_remaining+=("$arg")
 			esac
 		done
@@ -2526,6 +2589,8 @@ ArgSuggestions:Show()
 		if [[ ${#args_remaining[@]:-} -gt 0 ]]; then
 			WriteEmptyLineIfNoneExists
 			ShowAsError "unknown argument$(Pluralise "${#args_remaining[@]}"): \"${args_remaining[*]}\". Please check the arguments again"
+			arg_problem=true
+			useropt_help_basic=false
 		fi
 	fi
 
