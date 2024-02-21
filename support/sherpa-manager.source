@@ -4877,7 +4877,7 @@ Help.Actions:Show()
 	{
 
 	DisableDebugToArchiveAndFile
-	DisplayWritingReport
+	DisplayProcReport actions
 
 		{
 
@@ -4942,7 +4942,7 @@ Help.ActionsAll:Show()
 	{
 
 	DisableDebugToArchiveAndFile
-	DisplayWritingReport
+	DisplayProcReport 'all actions'
 
 		{
 
@@ -5021,7 +5021,7 @@ Help.Groups:Show()
 	{
 
 	DisableDebugToArchiveAndFile
-	DisplayWritingReport
+	DisplayProcReport groups
 
 		{
 
@@ -5077,7 +5077,7 @@ Help.Lists:Show()
 	{
 
 	DisableDebugToArchiveAndFile
-	DisplayWritingReport
+	DisplayProcReport lists
 
 		{
 
@@ -5128,7 +5128,7 @@ Report.Results:Show()
 	local singular='this action'
 	local plural='these actions'
 
-	DisplayWritingReport
+	DisplayProcReport results
 
 		{
 
@@ -5187,7 +5187,7 @@ Help.Options:Show()
 	{
 
 	DisableDebugToArchiveAndFile
-	DisplayWritingReport
+	DisplayProcReport options
 
 		{
 
@@ -5216,7 +5216,7 @@ Help.Packages:Show()
 	{
 
 	DisableDebugToArchiveAndFile
-	DisplayWritingReport
+	DisplayProcReport packages
 
 		{
 
@@ -5242,7 +5242,7 @@ Help.Problems:Show()
 	{
 
 	DisableDebugToArchiveAndFile
-	DisplayWritingReport
+	DisplayProcReport problems
 
 		{
 
@@ -5287,7 +5287,7 @@ Help.Upgrades:Show()
 	{
 
 	DisableDebugToArchiveAndFile
-	DisplayWritingReport
+	DisplayProcReport upgrades
 
 		{
 
@@ -5319,7 +5319,7 @@ Help.Tips:Show()
 	{
 
 	DisableDebugToArchiveAndFile
-	DisplayWritingReport
+	DisplayProcReport tips
 
 		{
 
@@ -6380,7 +6380,7 @@ Help.Abbreviations:Show()
 
 	local -i t=$(QPKGs-SCall:Count)
 
-	DisplayWritingReport
+	DisplayProcReport abbreviations
 	DisableDebugToArchiveAndFile
 	[[ -n $REPORTS_PATH && -d $REPORTS_PATH ]] && ClearPath "$THIS_PACKAGE_PATH" "$REPORTS_PATH"
 
@@ -6439,7 +6439,7 @@ Report.Backups:Show()
 	local highlight_older_than='2 weeks ago'
 	local format=''
 	DisableDebugToArchiveAndFile
-	DisplayWritingReport
+	DisplayProcReport backups
 
 		{
 
@@ -6489,7 +6489,7 @@ Report.Dependencies:Show()
 	maxcols=8
 	local -i t=$(QPKGs-SCall:Count)
 
-	DisplayWritingReport
+	DisplayProcReport dependency
 	DisableDebugToArchiveAndFile
 	[[ -n $REPORTS_PATH && -d $REPORTS_PATH ]] && ClearPath "$THIS_PACKAGE_PATH" "$REPORTS_PATH"
 
@@ -6539,7 +6539,7 @@ Report.Packages:Show()
 	maxcols=3
 
 	DisableDebugToArchiveAndFile
-	DisplayWritingReport
+	DisplayProcReport package
 
 		{
 
@@ -6579,7 +6579,7 @@ Report.Repos:Show()
 	maxcols=3
 	local -i t=$(QPKGs-SCall:Count)
 
-	DisplayWritingReport
+	DisplayProcReport repository
 	DisableDebugToArchiveAndFile
 	[[ -n $REPORTS_PATH && -d $REPORTS_PATH ]] && ClearPath "$THIS_PACKAGE_PATH" "$REPORTS_PATH"
 	DisplayAsReposReportTitleLine >"$REPORT_OUTPUT_PATHFILE"
@@ -6625,7 +6625,7 @@ Report.Statuses:Show()
 	maxcols=5
 	local -i t=$(QPKGs-SCall:Count)
 
-	DisplayWritingReport
+	DisplayProcReport status
 	[[ -n $REPORTS_PATH && -d $REPORTS_PATH ]] && ClearPath "$THIS_PACKAGE_PATH" "$REPORTS_PATH"
 	CalcMaxStatusReportCols
 	DisplayAsStatusReportTitleLine >"$REPORT_OUTPUT_PATHFILE"
@@ -10499,13 +10499,19 @@ WriteEmptyLineIfNoneExists()
 
 	}
 
-DisplayWritingReport()
+DisplayProcReport()
 	{
 
-	if [[ ${report_title_shown:=false} = false ]]; then
-		ShowAsProc 'writing report'
-		report_title_shown=true
-	fi
+	# input:
+	#	$1 = report type (optional)
+
+	[[ ${report_title_shown:=false} = false ]] || return
+
+	local a=''
+	[[ -n ${1:-} ]] && a="$1 "
+
+	ShowAsProc "${a}report"
+	report_title_shown=true
 
 	}
 
