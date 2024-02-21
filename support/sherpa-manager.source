@@ -96,13 +96,6 @@ Results:Show()
 			Report.Repos:Show
 		fi
 
-		if [[ $useropt_show_results = true ]]; then
-			display_last_action_datetime=true
-			show_package_actions_ok=true
-			show_package_actions_skipped=true
-			show_package_actions_failed=true
-		fi
-
 		if [[ $useropt_show_status = true ]]; then
 			Report.Statuses:Show
 			show_package_actions_ok=false
@@ -172,6 +165,13 @@ Results:Show()
 		elif [[ $useropt_help_groups = true ]]; then
 			Help.Groups:Show
 		fi
+	fi
+
+	if [[ $useropt_show_results = true ]]; then
+		display_last_action_datetime=true
+		show_package_actions_ok=true
+		show_package_actions_skipped=true
+		show_package_actions_failed=true
 	fi
 
 	if [[ $generate_action_report = true || $generate_show_report = true ]]; then
@@ -978,9 +978,14 @@ Validate()
 
 	if QPKGs-ACrebuild-to.IsAny; then
 		for package in $(QPKGs-ACrebuild-to:Array); do
-			QPKGs-ACinstall-to:Add "$package"
-			QPKGs-ACrestore-to:Add "$package"
-			QPKGs-ACrebuild-to:Remove "$package"
+			if QPKG.IsBackupExist "$package"; then
+				QPKGs-ACinstall-to:Add "$package"
+				QPKGs-ACrestore-to:Add "$package"
+				QPKGs-ACrebuild-to:Remove "$package"
+			else
+				QPKGs-ACrebuild-to:Remove "$package"
+				QPKGs-ACrebuild-sk:Add "$package"
+			fi
 		done
 	fi
 
@@ -1781,7 +1786,7 @@ ParseHelpArgs()
 				[[ -z $action ]] && action=help
 				group=lists
 				;;
-			packages)
+			packages|qpkgs)
 				# Don't set a default action for this group, this group is used for multiple actions.
 				group=packages
 				;;
@@ -2014,7 +2019,7 @@ ParseShowArgs()
 				[[ -z $action ]] && action=show
 				group=tail
 				;;
-			p|packages)
+			p|packages|qpkgs)
 				[[ -z $action ]] && action=show
 				group=packages
 				;;
