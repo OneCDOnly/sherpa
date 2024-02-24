@@ -1,7 +1,3 @@
-* Shift 'states' directory into /var/run/sherpa
-
-* Shift 'reports' directory into /var/log/sherpa
-
 *  There should be distinct argument parsers for:
 	- script management functions:
 		'debug' (dbug)

@@ -515,8 +515,6 @@ Env:Load()
 
 	ShowAsProc 'loading environment'
 
-	readonly ACTION_ABORT_PATHFILE=/var/run/abort.action
-	readonly ACTION_MSG_PIPE=/var/run/sherpa.action.messages.pipe
 	readonly CERT_DB_PATHFILE=/etc/config/nas_sign_qpkg.db
 	readonly CPU_CORES=$(GetCPUCores)
 		readonly CONCURRENCY=$CPU_CORES		# Maximum concurrent package actions to run. Should probably make this account for CPU speed too.
@@ -536,44 +534,45 @@ Env:Load()
 
 	args=()						# command-line argument array.
 	args_incomplete=()
-
 	source_branch=$(/sbin/getcfg sherpa Git_Branch -d stable -f /etc/config/qpkg.conf)
-
-	readonly OBJECTS_ARCHIVE_URL='<?cdn_sherpa_base_url?>'/$source_branch/objects.tar.gz
-	readonly PACKAGES_ARCHIVE_URL='<?cdn_sherpa_base_url?>'/$source_branch/packages.tar.gz
+		readonly OBJECTS_ARCHIVE_URL='<?cdn_sherpa_base_url?>'/$source_branch/objects.tar.gz
+		readonly PACKAGES_ARCHIVE_URL='<?cdn_sherpa_base_url?>'/$source_branch/packages.tar.gz
 	readonly QPKG_BU_PATH=$(GetDefVol)/.qpkg_config_backup
 	readonly THIS_PACKAGE_PATH=$(QPKG.GetInstallationPath)
+		if [[ -z $THIS_PACKAGE_PATH || $THIS_PACKAGE_PATH = undefined || ! -d $THIS_PACKAGE_PATH ]]; then
+			ShowAsError "$(ShowTitleName) installation path not found. Please reinstall the $(ShowTitleName) QPKG"
+			return 1
+		fi
 
-	if [[ -z $THIS_PACKAGE_PATH || $THIS_PACKAGE_PATH = undefined || ! -d $THIS_PACKAGE_PATH ]]; then
-		ShowAsError "$(ShowTitleName) installation path not found. Please reinstall the $(ShowTitleName) QPKG"
-		return 1
-	fi
+		readonly CACHE_PATH=$THIS_PACKAGE_PATH/cache
+			readonly ACTION_TIMES_PATH=$CACHE_PATH/action.times
+			readonly DISPLAY_INHIBIT_PATHFILE=$CACHE_PATH/display.inhibit
+			readonly IPK_CACHE_PATH=$CACHE_PATH/IPKs
+			readonly IPK_DL_PATH=$CACHE_PATH/IPKs.downloads
+			readonly IPK_DOWNGRADE_DL_PATH=$CACHE_PATH/IPKs.downgrade
+			readonly PIP_CACHE_PATH=$CACHE_PATH/PIPs
+			readonly OBJECTS_ARCHIVE_PATHFILE=$CACHE_PATH/objects.tar.gz
+			readonly OBJECTS_PATHFILE=$CACHE_PATH/objects
+			readonly PACKAGES_ARCHIVE_PATHFILE=$CACHE_PATH/packages.tar.gz
+			readonly PACKAGES_PATHFILE=$CACHE_PATH/packages
+			readonly PREV_IPK_LIST=$CACHE_PATH/ipk.list.save
+			readonly PREV_PIP_LIST=$CACHE_PATH/pip.list.save
+			readonly QPKG_DL_PATH=$CACHE_PATH/QPKGs.downloads
+		readonly LOGS_PATH=$THIS_PACKAGE_PATH/logs
+			readonly RAMDISKS_FREESPACE_PATHFILE=$LOGS_PATH/ramdisks.freespace
+			readonly SCREEN_SESSIONS_PATHFILE=$LOGS_PATH/screen.sessions
+			readonly SESS_ACTIONS_RESULTS_PATHFILE=$LOGS_PATH/session.action.results.log
+			readonly SESS_ARCHIVE_PATHFILE=$LOGS_PATH/session.archive.log
+			readonly SESS_LAST_PATHFILE=$LOGS_PATH/session.last.log
+			readonly SESS_TAIL_PATHFILE=$LOGS_PATH/session.tail.log
+		sess_active_pathfile=$THIS_PACKAGE_PATH/session.$$.active.log
 
-	readonly CACHE_PATH=$THIS_PACKAGE_PATH/cache
-		readonly ACTION_TIMES_PATH=$CACHE_PATH/action.times
-		readonly DISPLAY_INHIBIT_PATHFILE=$CACHE_PATH/display.inhibit
-		readonly IPK_CACHE_PATH=$CACHE_PATH/IPKs
-		readonly IPK_DL_PATH=$CACHE_PATH/IPKs.downloads
-		readonly IPK_DOWNGRADE_DL_PATH=$CACHE_PATH/IPKs.downgrade
-		readonly PIP_CACHE_PATH=$CACHE_PATH/PIPs
-		readonly OBJECTS_ARCHIVE_PATHFILE=$CACHE_PATH/objects.tar.gz
-		readonly OBJECTS_PATHFILE=$CACHE_PATH/objects
-		readonly PACKAGES_ARCHIVE_PATHFILE=$CACHE_PATH/packages.tar.gz
-		readonly PACKAGES_PATHFILE=$CACHE_PATH/packages
-		readonly PREV_IPK_LIST=$CACHE_PATH/ipk.list.save
-		readonly PREV_PIP_LIST=$CACHE_PATH/pip.list.save
-		readonly QPKG_DL_PATH=$CACHE_PATH/QPKGs.downloads
-	readonly LOGS_PATH=$THIS_PACKAGE_PATH/logs
-		readonly RAMDISKS_FREESPACE_PATHFILE=$LOGS_PATH/ramdisks.freespace
-		readonly SCREEN_SESSIONS_PATHFILE=$LOGS_PATH/screen.sessions
-		readonly SESS_ACTIONS_RESULTS_PATHFILE=$LOGS_PATH/session.action.results.log
-		readonly SESS_ARCHIVE_PATHFILE=$LOGS_PATH/session.archive.log
-		readonly SESS_LAST_PATHFILE=$LOGS_PATH/session.last.log
-		readonly SESS_TAIL_PATHFILE=$LOGS_PATH/session.tail.log
-	readonly REPORTS_PATH=$THIS_PACKAGE_PATH/reports
+	# Ephemeral
+	readonly REPORTS_PATH=/var/log/sherpa/reports
 			readonly REPORT_OUTPUT_PATHFILE=$REPORTS_PATH/report.ansi
-	sess_active_pathfile=$THIS_PACKAGE_PATH/session.$$.active.log
-	readonly STATES_PATH=$THIS_PACKAGE_PATH/states
+	readonly STATES_PATH=/var/run/sherpa/states
+		readonly ACTION_ABORT_PATHFILE=$STATES_PATH/abort.action
+		readonly ACTION_MSG_PIPE=$STATES_PATH/action.messages.pipe
 
 	readonly THIS_PACKAGE_VER=$(QPKG.Local.GetVer)
 	readonly THIS_SCRIPT_VER='<?build_date?>'-$source_branch
@@ -2845,7 +2844,7 @@ ResetReportsPath()
 	{
 
 	if [[ -n $REPORTS_PATH && -d $REPORTS_PATH ]]; then
-		ClearPath "$THIS_PACKAGE_PATH" "$REPORTS_PATH"
+		ClearPath /var/log/sherpa "$REPORTS_PATH"
 		ShowAsDone 'reports cleared'
 	fi
 
@@ -6307,7 +6306,7 @@ QPKGs.States:Init()
 		QPKGs-ISNT${a}:Init
 	done
 
-	ClearPath "$THIS_PACKAGE_PATH" "$STATES_PATH"
+	ClearPath /var/run/sherpa "$STATES_PATH"
 
 	DebugAsDone 'initialised state lists'
 	qpkgs_states_built=false
@@ -6384,7 +6383,7 @@ Help.Abbreviations:Show()
 
 	DisplayProcReport abbreviations
 	DisableDebugToArchiveAndFile
-	[[ -n $REPORTS_PATH && -d $REPORTS_PATH ]] && ClearPath "$THIS_PACKAGE_PATH" "$REPORTS_PATH"
+	[[ -n $REPORTS_PATH && -d $REPORTS_PATH ]] && ClearPath /var/log/sherpa "$REPORTS_PATH"
 
 		{
 
@@ -6493,7 +6492,7 @@ Report.Dependencies:Show()
 
 	DisplayProcReport dependency
 	DisableDebugToArchiveAndFile
-	[[ -n $REPORTS_PATH && -d $REPORTS_PATH ]] && ClearPath "$THIS_PACKAGE_PATH" "$REPORTS_PATH"
+	[[ -n $REPORTS_PATH && -d $REPORTS_PATH ]] && ClearPath /var/log/sherpa "$REPORTS_PATH"
 
 		{
 
@@ -6583,7 +6582,7 @@ Report.Repos:Show()
 
 	DisplayProcReport repository
 	DisableDebugToArchiveAndFile
-	[[ -n $REPORTS_PATH && -d $REPORTS_PATH ]] && ClearPath "$THIS_PACKAGE_PATH" "$REPORTS_PATH"
+	[[ -n $REPORTS_PATH && -d $REPORTS_PATH ]] && ClearPath /var/log/sherpa "$REPORTS_PATH"
 	DisplayAsReposReportTitleLine >"$REPORT_OUTPUT_PATHFILE"
 
 	for a in $(QPKGs-SCall:Array); do
@@ -6628,7 +6627,7 @@ Report.Statuses:Show()
 	local -i t=$(QPKGs-SCall:Count)
 
 	DisplayProcReport status
-	[[ -n $REPORTS_PATH && -d $REPORTS_PATH ]] && ClearPath "$THIS_PACKAGE_PATH" "$REPORTS_PATH"
+	[[ -n $REPORTS_PATH && -d $REPORTS_PATH ]] && ClearPath /var/log/sherpa "$REPORTS_PATH"
 	CalcMaxStatusReportCols
 	DisplayAsStatusReportTitleLine >"$REPORT_OUTPUT_PATHFILE"
 
