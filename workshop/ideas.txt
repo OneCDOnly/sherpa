@@ -1,3 +1,5 @@
+* If string ends with "it's needed here! 😉", don't include trailing period.
+
 *  There should be distinct argument parsers for:
 	- script management functions:
 		'debug' (dbug)

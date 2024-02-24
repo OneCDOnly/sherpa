@@ -66,7 +66,7 @@ Init()
 	Debug.Log:Env
 	Tasks:Check
 	Env:Validate
-	QPKGs:Assign
+	QPKGs:AssignToActions
 
 	return 0
 
@@ -893,9 +893,6 @@ Env:Validate()
 
 	Func:Init
 	local installed_ver=''
-	local package=''
-	local action=''
-	local prospect=''
 	local target_packages=''
 
 	ShowAsProc 'validate environment'
@@ -971,12 +968,15 @@ Env:Validate()
 
 	}
 
-QPKGs:Assign()
+QPKGs:AssignToActions()
 	{
 
 	[[ $bypass_package_actions = false ]] || return 0
 
 	Func:Init
+	local action=''
+	local package=''
+	local prospect=''
 
 	ShowAsProc 'QPKG assignment'
 
@@ -1124,7 +1124,7 @@ QPKGs:Assign()
 
 	# Check all items.
 
-	if [[ $useropt_check = true ]]; then
+	if [[ $useropt_check = true ]] && OS.IsSupportSignedPackages; then
 		QPKGs-ACsign-to:Add "$(QPKGs-ISinstalled:Array)"
 
 		for package in $(QPKGs-SCdependent:Array); do
@@ -1150,35 +1150,35 @@ QPKGs:Assign()
 #
 #	6. stop/deactivate dependents
 #	7. disable dependents
+#   8. uninstall dependents
 #
-#	8. stop/deactivate independents
-#	9. disable independents
+#	9. stop/deactivate independents
+#  10. disable independents
+#  11. uninstall independents
 #
-#  10. uninstall all
+#  12. upgrade independents
+#  13. reinstall independents
+#  14. install independents
+#  15. enable-auto-update independents
+#  16. disable-auto-update independents
+#  17. "sign" independents
+#  18. restore independents
+#  19. clean independents
+#  20. enable independents
+#  21. restart/reactivate independents
+#  22. start/activate independents
 #
-#  11. upgrade independents
-#  12. reinstall independents
-#  13. install independents
-#  14. enable-auto-update independents
-#  15. disable-auto-update independents
-#  16. "sign" independents
-#  17. restore independents
-#  18. clean independents
-#  19. enable independents
-#  20. restart/reactivate independents
-#  21. start/activate independents
-#
-#  22. upgrade dependents
-#  23. reinstall dependents
-#  24. install dependents
-#  25. enable-auto-update dependents
-#  26. disable-auto-update dependents
-#  27. "sign" dependents
-#  28. restore dependents
-#  29. clean dependents
-#  30. enable dependents
-#  31. restart/reactivate dependents
-#  32. start/activate dependents
+#  23. upgrade dependents
+#  24. reinstall dependents
+#  25. install dependents
+#  26. enable-auto-update dependents
+#  27. disable-auto-update dependents
+#  28. "sign" dependents
+#  29. restore dependents
+#  30. clean dependents
+#  31. enable dependents
+#  32. restart/reactivate dependents
+#  33. start/activate dependents
 
 Actions:Proc()
 	{
@@ -1224,11 +1224,7 @@ Actions:Proc()
 				Action:Proc install $tier QPKG installing installed
 				Action:Proc enableau $tier QPKG 'enabling auto-update' 'enabled auto-update'
 				Action:Proc disableau $tier QPKG 'disabling auto-update' 'disabled auto-update'
-
-				if OS.IsSupportSignedPackages; then
-					Action:Proc sign $tier QPKG '"signing"' '"signed"'
-				fi
-
+				Action:Proc sign $tier QPKG '"signing"' '"signed"'
 				Action:Proc restore $tier QPKG restoring restored
 				Action:Proc clean $tier QPKG cleaning cleaned
 				Action:Proc enable $tier QPKG enabling enabled
@@ -1396,7 +1392,7 @@ Action:Proc()
 								esac
 							done
 
-							DebugAsWarn "unidentified change in message queue: '$msg1_value'"
+							DebugAsWarn "unidentified change request in message queue: '$msg1_value'"
 							break
 						done
 						;;
@@ -1416,7 +1412,7 @@ Action:Proc()
 								;;
 							sa)		# Action was skipped and must immediately abort (don't attempt this action again).
 								((skip_abort_count++))
-								[[ ! -e $ACTION_ABORT_PATHFILE ]] && $TOUCH_CMD "$ACTION_ABORT_PATHFILE"
+								$TOUCH_CMD "$ACTION_ABORT_PATHFILE"
 								break
 								;;
 							er)		# Action failed (uh-oh).
@@ -1452,7 +1448,7 @@ Action:Proc()
 			[[ $skip_count -gt 0 || $skip_ok_count -gt 0 || $skip_error_count -gt 0 || $skip_abort_count -gt 0 ]] && show_package_actions_skipped=true
 			[[ $fail_count -gt 0 ]] && show_package_actions_failed=true
 
-			[[ ${#target_packages[@]} -gt 0 ]] && KillActiveFork		# Should only be needed if an action fork didn't exit properly.
+			[[ ${#target_packages[@]} -gt 0 ]] && KillActiveFork		# Only needed if an action fork didn't exit properly.
 			wait 2>/dev/null
 			CloseActionMsgPipe
 			;;
@@ -1536,7 +1532,7 @@ AdjustMaxForks()
 				max_forks=$(((max_forks+1)/2))
 				reason="'$1'"
 				;;
-			install|reinstall|upgrade)				# Don't execute these actions async: installer for each package eventually aborts (looks like QPKGs can only be managed one-at-a-time, else packages overwrite each other, and package source files end-up in the wrong install paths).
+			install|reinstall|upgrade)				# Don't execute these actions async: installer for each package eventually aborts (QPKGs can only be managed one-at-a-time, else packages overwrite each other, and package source files end-up in the wrong install paths).
 				max_forks=1
 				reason="'$1'"
 				;;
@@ -1544,7 +1540,7 @@ AdjustMaxForks()
 				max_forks=4
 				reason="'$1'"
 				;;
-			disable|disableau|enable|enableau|sign|status)	# Really-low-resource actions.
+			disable|disableau|enable|enableau|rebuild|sign|status)	# Really-low-resource actions.
 				max_forks=8
 				reason="'$1'"
 		esac
@@ -1931,6 +1927,7 @@ ParseHelpArgs()
 			help)							# If `help` is specified without a valid group, then show basic help.
 				bypass_package_actions=true
 				useropt_help_basic=true
+
 				# Remove this arg from incomplete array.
 				local a=''
 				local tmp=()
@@ -2622,7 +2619,6 @@ AllocPackGroupsToAcs()
 	ShowAsProc 'matching QPKG groups to actions'
 	local action=''
 	local group=''
-	local state=''
 	local prospect=''
 	local found=false		# Group has been found.
 
@@ -2754,7 +2750,6 @@ AllocPackStatesToAcs()
 	ShowAsProc 'matching QPKG states to actions'
 	local action=''
 	local state=''
-	local prospect=''
 	local found=false		# State has been found.
 
 	for action in "${USER_QPKG_ACTIONS[@]}"; do
@@ -2996,13 +2991,13 @@ SaveEntwarePackageList()
 LoadEntwarePackageList()
 	{
 
-	local packname=''
-	local sep=''
+	local name=''
+	local separator=''
 	local version=''
 
 	if [[ -e $PREV_IPK_LIST ]]; then
-		while read -r packname sep version; do
-			IPKs-ACinstall-to:Add "$packname"
+		while read -r name separator version; do
+			IPKs-ACinstall-to:Add "$name"
 		done < "$PREV_IPK_LIST"
 	fi
 
@@ -3141,8 +3136,8 @@ IPKs:upgrade()
 	Func:Init
 	local desc=''
 	local log_pathfile=$LOGS_PATH/ipks.$UPGRADE_LOG_FILE
-	local -i z=0
 	local -i total_count=0
+	local -i z=0
 	IPKs-ACupgrade-to:Init
 	IPKs-ACdownload-to:Init
 
@@ -3196,9 +3191,9 @@ IPKs:install()
 	local desc=''
 	local -i i=0
 	local log_pathfile=$LOGS_PATH/ipks.$INSTALL_LOG_FILE
-	local -i z=0
-	local -i total_count=0
 	local previous=''
+	local -i total_count=0
+	local -i z=0
 	IPKs-ACinstall-to:Init
 	IPKs-ACdownload-to:Init
 
@@ -3281,14 +3276,14 @@ IPKs:downgrade()
 	local desc=''
 	local -i fail_count=0
 	local log_pathfile=''
-	local -i ok_count=0
 	local name=''
+	local -i ok_count=0
 	local package_type=''
 	local remote_url=''
-	local -i z=0
 	local -i total_count=0
 	local url_prefix=''
 	local url_suffix=''
+	local -i z=0
 	IPKs-ACdownload-to:Init
 	total_count=$(IPKs-ACdowngrade-to:Count)
 
@@ -3372,8 +3367,8 @@ PIPs:install()
 	local log_pathfile=$LOGS_PATH/pypi.$INSTALL_LOG_FILE
 	local -i ok_count=0
 	local package_type='auxiliary PyPI group'
-	local -i z=0
 	local -i total_count=0
+	local -i z=0
 
 	if [[ $useropt_check = true ]] || IPKs-ACinstall-ok.Exist python3-pip; then
 		((total_count++))
@@ -6112,13 +6107,12 @@ QPKGs.States:Build()
 	local c=''
 	local f=''
 
-	Packages:Load
-
-	if [[ ${qpkgs_states_built:=false} = true && ${1:-} != rebuild ]]; then
+	if [[ ${qpkgs_states_built:=false} = true ]]; then
 		DebugAsDone "don't build states: they're already built"
 		Func:Exit; return
 	fi
 
+	Packages:Load
 	QPKGs.States:Init
 
 	OS.IsStarting && ShowAsWarn "$(GetQnapOS) is starting all enabled QPKGs ... check again in a few minutes"
@@ -7640,6 +7634,13 @@ SaveActionResultToLog()
 
 	}
 
+# * Action return codes (only recorded in debug log).
+# 	0 = ok
+# 	1 = skipped
+# 	2 = skipped-ok
+# 	3 = skipped-abort
+# 	4 = skipped-error
+
 _QPKG:reassign_()
 	{
 
@@ -7661,11 +7662,11 @@ _QPKG:reassign_()
 	if ! QPKGs-ISinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reassign skipped 'not installed'
 		MarkThisActionForkAsSkipped
-		z=2
+		z=1
 	elif [[ $(QPKG.GetStoreID "$PACKAGE_NAME") = sherpa ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reassign skipped 'already assigned to sherpa'
 		MarkThisActionForkAsSkipped
-		z=2
+		z=1
 	fi
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
@@ -7714,7 +7715,7 @@ _QPKG:download_()
 	if [[ -z $REMOTE_URL || -z $REMOTE_HASH ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" download skipped 'NAS arch is incompatible'
 		MarkThisActionForkAsSkipped
-		z=2
+		z=1
 	elif [[ -f $LOCAL_PATHFILE ]]; then
 		if FileMatchesMD5 "$LOCAL_PATHFILE" "$REMOTE_HASH"; then
 			SaveActionResultToLog QPKG "$PACKAGE_NAME" download skipped-ok "existing file $(ShowAsFileName "$LOCAL_FILENAME") checksum correct"
@@ -7781,19 +7782,19 @@ _QPKG:install_()
 	if QPKGs-ISinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" install skipped 'already installed'
 		MarkThisActionForkAsSkipped
-		z=2
+		z=1
 	elif ! QPKG.IsArchOK "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" install skipped 'NAS arch is incompatible'
 		MarkThisActionForkAsSkipped
-		z=2
+		z=1
 	elif ! QPKG.IsMinOSVerOk "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" install skipped "$(GetQnapOS) version is incompatible"
 		MarkThisActionForkAsSkipped
-		z=2
+		z=1
 	elif ! QPKG.IsMinRAMOk "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" install skipped 'NAS has insufficient RAM'
 		MarkThisActionForkAsSkipped
-		z=2
+		z=1
 	fi
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
@@ -7895,11 +7896,11 @@ _QPKG:reinstall_()
 	if ! QPKGs-ISinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reinstall skipped "not installed, please use 'install' instead."
 		MarkThisActionForkAsSkipped
-		z=2
+		z=1
 	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reinstall skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisActionForkAsSkippedError
-		z=4
+		MarkThisActionForkAsSkipped
+		z=1
 	fi
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
@@ -7974,15 +7975,15 @@ _QPKG:rebuild_()
 	if ! QPKG.IsCanBackup; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" meta-rebuild skipped 'does not support rebuild'
 		MarkThisActionForkAsSkipped
-		z=2
+		z=1
 	elif ! QPKG.IsBackupExist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" meta-rebuild skipped 'backup does not exist'
 		MarkThisActionForkAsSkipped
-		z=2
+		z=1
 	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" meta-rebuild skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisActionForkAsSkippedError
-		z=4
+		MarkThisActionForkAsSkipped
+		z=1
 	fi
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
@@ -8019,15 +8020,15 @@ _QPKG:upgrade_()
 	if ! QPKGs-ISinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" upgrade skipped 'not installed'
 		MarkThisActionForkAsSkipped
-		z=2
+		z=1
 	elif ! QPKGs-SCupgradable.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" upgrade skipped 'no new package is available'
 		MarkThisActionForkAsSkipped
-		z=2
+		z=1
 	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" upgrade skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisActionForkAsSkippedError
-		z=4
+		MarkThisActionForkAsSkipped
+		z=1
 	fi
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
@@ -8111,15 +8112,15 @@ _QPKG:uninstall_()
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" uninstall skipped 'not installed'
 		MarkThisActionForkAsSkipped
-		z=2
+		z=1
 	elif [[ $PACKAGE_NAME = sherpa ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" uninstall skipped "it's needed here! 😉"
 		MarkThisActionForkAsSkipped
-		z=2
+		z=1
 	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" uninstall skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisActionForkAsSkippedError
-		z=4
+		MarkThisActionForkAsSkipped
+		z=1
 	fi
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
@@ -8188,11 +8189,11 @@ _QPKG:activate_()
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" activate skipped 'not installed'
 		MarkThisActionForkAsSkipped
-		z=2
+		z=1
 	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" activate skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisActionForkAsSkippedError
-		z=4
+		MarkThisActionForkAsSkipped
+		z=1
 	fi
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
@@ -8206,7 +8207,7 @@ _QPKG:activate_()
 	DebugAsProc "activating $(ShowAsPackageName "$PACKAGE_NAME")"
 
 	if [[ $service_pathfile = undefined ]]; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" activate skipped "service script file undefined"
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" activate skipped-error 'service script file undefined'
 		MarkThisActionForkAsSkippedError
 		FuncFork:Exit 4
 	elif [[ $useropt_debug = true ]]; then
@@ -8266,11 +8267,11 @@ _QPKG:reactivate_()
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reactivate skipped 'not installed'
 		MarkThisActionForkAsSkipped
-		z=2
+		z=1
 	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reactivate skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisActionForkAsSkippedError
-		z=4
+		MarkThisActionForkAsSkipped
+		z=1
 	fi
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
@@ -8284,7 +8285,7 @@ _QPKG:reactivate_()
 	DebugAsProc "reactivating $(ShowAsPackageName "$PACKAGE_NAME")"
 
 	if [[ $service_pathfile = undefined ]]; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" reactivate skipped "service script file undefined"
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" reactivate skipped-error 'service script file undefined'
 		MarkThisActionForkAsSkippedError
 		FuncFork:Exit 4
 	elif [[ $useropt_debug = true ]]; then
@@ -8335,15 +8336,15 @@ _QPKG:deactivate_()
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" deactivate skipped 'not installed'
 		MarkThisActionForkAsSkipped
-		z=2
+		z=1
 	elif [[ $PACKAGE_NAME = sherpa ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" deactivate skipped "it's needed here! 😉"
 		MarkThisActionForkAsSkipped
-		z=2
+		z=1
 	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" deactivate skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisActionForkAsSkippedError
-		z=4
+		MarkThisActionForkAsSkipped
+		z=1
 	fi
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
@@ -8357,7 +8358,7 @@ _QPKG:deactivate_()
 	DebugAsProc "deactivating $(ShowAsPackageName "$PACKAGE_NAME")"
 
 	if [[ $service_pathfile = undefined ]]; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" deactivate skipped "service script file undefined"
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" deactivate skipped-error 'service script file undefined'
 		MarkThisActionForkAsSkippedError
 		FuncFork:Exit 4
 	elif [[ $useropt_debug = true ]]; then
@@ -8415,15 +8416,15 @@ _QPKG:enable_()
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" enable skipped 'not installed'
 		MarkThisActionForkAsSkipped
-		z=2
+		z=1
 	elif QPKGs-ISenabled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" enable skipped 'already enabled'
 		MarkThisActionForkAsSkipped
-		z=2
+		z=1
 	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" enable skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisActionForkAsSkippedError
-		z=4
+		MarkThisActionForkAsSkipped
+		z=1
 	fi
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
@@ -8465,19 +8466,19 @@ _QPKG:disable_()
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" disable skipped 'not installed'
 		MarkThisActionForkAsSkipped
-		z=2
+		z=1
 	elif QPKGs-ISNTenabled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" disable skipped 'already disabled'
 		MarkThisActionForkAsSkipped
-		z=2
+		z=1
 	elif [[ $PACKAGE_NAME = sherpa ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" disable skipped "it's needed here! 😉"
 		MarkThisActionForkAsSkipped
-		z=2
+		z=1
 	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" disable skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisActionForkAsSkippedError
-		z=4
+		MarkThisActionForkAsSkipped
+		z=1
 	fi
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
@@ -8521,15 +8522,15 @@ _QPKG:enableau_()
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" enableau skipped 'not installed'
 		MarkThisActionForkAsSkipped
-		z=2
+		z=1
 	elif ! QPKG.IsCanRestartToUpdate "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" enableau skipped 'does not support auto-updating'
 		MarkThisActionForkAsSkipped
-		z=2
+		z=1
 	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" enableau skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkipped
-		z=2
+		z=1
 	fi
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
@@ -8576,15 +8577,15 @@ _QPKG:disableau_()
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" disableau skipped 'not installed'
 		MarkThisActionForkAsSkipped
-		z=2
+		z=1
 	elif ! QPKG.IsCanRestartToUpdate "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" disableau skipped 'does not support auto-updating'
 		MarkThisActionForkAsSkipped
-		z=2
+		z=1
 	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" disableau skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkipped
-		z=2
+		z=1
 	fi
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
@@ -8631,15 +8632,15 @@ _QPKG:backup_()
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" backup skipped 'not installed'
 		MarkThisActionForkAsSkipped
-		z=2
+		z=1
 	elif ! QPKG.IsCanBackup; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" backup skipped 'does not support backup'
 		MarkThisActionForkAsSkipped
-		z=2
+		z=1
 	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" backup skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisActionForkAsSkippedError
-		z=4
+		MarkThisActionForkAsSkipped
+		z=1
 	fi
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
@@ -8687,19 +8688,19 @@ _QPKG:restore_()
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" restore skipped 'not installed'
 		MarkThisActionForkAsSkipped
-		z=2
+		z=1
 	elif ! QPKG.IsCanBackup; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" restore skipped 'does not support restore'
 		MarkThisActionForkAsSkipped
-		z=2
+		z=1
 	elif ! QPKG.IsBackupExist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" restore skipped 'backup does not exist'
 		MarkThisActionForkAsSkipped
-		z=2
+		z=1
 	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" restore skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisActionForkAsSkippedError
-		z=4
+		MarkThisActionForkAsSkipped
+		z=1
 	fi
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
@@ -8747,15 +8748,15 @@ _QPKG:clean_()
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" clean skipped 'not installed'
 		MarkThisActionForkAsSkipped
-		z=2
+		z=1
 	elif ! QPKG.IsCanClean; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" clean skipped 'does not support cleaning'
 		MarkThisActionForkAsSkipped
-		z=2
+		z=1
 	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" clean skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkipped
-		z=2
+		z=1
 	fi
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
@@ -8817,15 +8818,15 @@ _QPKG:sign_()
 	if ! QPKGs-ISinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped 'not installed'
 		MarkThisActionForkAsSkipped
-		z=2
+		z=1
 	elif ! OS.IsSupportSignedPackages; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped 'not required: firmware < 4.3.5'
 		MarkThisActionForkAsSkipped
-		z=2
+		z=1
 	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkipped
-		z=2
+		z=1
 	elif [[ ! -e $SQLITE_CMD ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped-abort 'sqlite3 unavailable'
 		MarkThisActionForkAsSkippedAbort
@@ -8906,7 +8907,7 @@ _QPKG:status_()
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" status skipped 'not installed'
 		MarkThisActionForkAsSkipped
-		z=2
+		z=1
 	fi
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
