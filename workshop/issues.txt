@@ -1,15 +1,4 @@
 Observed issues:
-
-	* When skipping rebuild for a non-backedup QPKG, need to display why.
-		-------------------------------------------------------------------------------------------------------------------------
-		[/share/Public] # ./sherpa-manager.source rebuild sab
-		sherpa v<?build_date?>-unstable
-
-		done: processing complete.
-
-		[/share/Public] #
-		-------------------------------------------------------------------------------------------------------------------------
-
 	* 'sherpa start inactive' fails to find any inactive packages.
 		- Must get 'status' of each package first.
 
