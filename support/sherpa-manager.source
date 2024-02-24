@@ -65,7 +65,8 @@ Init()
 	QPKGs.Warnings:Check
 	Debug.Log:Env
 	Tasks:Check
-	Validate
+	Env:Validate
+	QPKGs:Assign
 
 	return 0
 
@@ -819,12 +820,11 @@ Tasks:Check()
 
 	# Establish whether there's something to-do.
 
-	if [[ $bypass_package_actions = true ]]; then
-		return
-	fi
-
 	if [[ $arg_problem = true || $useropt_help_basic = true ]]; then
 		bypass_package_actions=true
+	fi
+
+	if [[ $bypass_package_actions = true ]]; then
 		return
 	fi
 
@@ -883,7 +883,7 @@ Tasks:Check()
 
 	}
 
-Validate()
+Env:Validate()
 	{
 
 	# This function handles most of the high-level logic for package actions.
@@ -897,6 +897,8 @@ Validate()
 	local action=''
 	local prospect=''
 	local target_packages=''
+
+	ShowAsProc 'validate environment'
 
 	if QPKG.IsInstalled Entware; then
 		if [[ $ENTWARE_VER != none ]]; then
@@ -963,7 +965,20 @@ Validate()
 		QPKGs-ACupgrade-to:Add sherpa
 	fi
 
-	ShowAsProc validating
+	wait 2>/dev/null			# Ensure Entware package updater completes before continuing.
+
+	Func:Exit
+
+	}
+
+QPKGs:Assign()
+	{
+
+	[[ $bypass_package_actions = false ]] || return 0
+
+	Func:Init
+
+	ShowAsProc 'QPKG assignment'
 
 	# KLUDGE: ensure old installs of Entware are reinstalled.
 
@@ -1120,8 +1135,6 @@ Validate()
 	if QPKGs-ACsign-to.IsAny || QPKGs-ACinstall-to.IsAny; then
 		QPKG.Signing:Load
 	fi
-
-	wait 2>/dev/null			# ensure Entware package updater completes before continuing.
 
 	Func:Exit
 
@@ -5835,7 +5848,7 @@ QPKGs.NewVers:Show()
 	local a=''
 	local name_limit=2
 
-	[[ $title_shown = false ]] || return
+# 	[[ $title_shown = false ]] || return
 
 	if [[ $(QPKGs-SCupgradable:Count) -eq 0 ]]; then
 		return 0
@@ -6017,15 +6030,12 @@ QPKGs.Actions:ListAll()
 QPKGs.States:List()
 	{
 
-	# input:
-	#	$1 (optional passthrough) = `rebuild` - clear existing lists and rebuild them from scratch.
-
 	[[ $useropt_debug = true ]] || return
 
 	Func:Init
 	local a=''
 
-	QPKGs.States:Build "${1:-}"
+	QPKGs.States:Build
 	DebugInfoMinSepr
 
 	for a in "${QPKG_IS_STATES[@]}" "${QPKG_SERVICE_RESULTS[@]}"; do
@@ -6095,9 +6105,6 @@ QPKGs.States:Build()
 	#   - have backup files in backup location
 	#   - have config blocks in [/etc/config/qpkg.conf], but no files on-disk
 	#   - those in the process of starting, stopping, or restarting
-
-	# input:
-	#	$1 (optional) = `rebuild` - clear existing lists and rebuild them from scratch
 
 	Func:Init
 	local a=''
@@ -6279,11 +6286,8 @@ QPKGs.States:Build()
 	done
 
 	qpkgs_states_built=true
-
-	if [[ ${1:-} != rebuild ]]; then
-		QPKGs.Missing:Show
-		QPKGs.NewVers:Show
-	fi
+	QPKGs.Missing:Show
+	QPKGs.NewVers:Show
 
 	Func:Exit
 
@@ -7984,7 +7988,7 @@ _QPKG:rebuild_()
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
 
 	DebugAsProc "meta-rebuilding $(ShowAsPackageName "$PACKAGE_NAME")"
-	# Nothing-to-do here, real QPKG actions have already been assigned in Validate().
+	# Nothing-to-do here, real QPKG actions have already been assigned in Env:Validate().
 
 	SaveActionResultToLog QPKG "$PACKAGE_NAME" meta-rebuild ok
 	MarkThisActionForkAsOk

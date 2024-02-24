@@ -1,4 +1,5 @@
 Observed issues:
+
 	* 'sherpa start inactive' fails to find any inactive packages.
 		- Must get 'status' of each package first.
 
