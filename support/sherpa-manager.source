@@ -974,17 +974,13 @@ Validate()
 		fi
 	fi
 
-	# Meta-action pre-processing.
+	# Meta-action pre-processing. Perform check for backup file here, to determine if QPKG should be downloaded and installed.
 
 	if QPKGs-ACrebuild-to.IsAny; then
 		for package in $(QPKGs-ACrebuild-to:Array); do
 			if QPKG.IsBackupExist "$package"; then
 				QPKGs-ACinstall-to:Add "$package"
 				QPKGs-ACrestore-to:Add "$package"
-				QPKGs-ACrebuild-to:Remove "$package"
-			else
-				QPKGs-ACrebuild-to:Remove "$package"
-				QPKGs-ACrebuild-sk:Add "$package"
 			fi
 		done
 	fi
@@ -1132,7 +1128,7 @@ Validate()
 # QPKG action processing shall be conducted in this order:
 #
 #	1. status all
-#	2. rebuild all				(meta-action: `install` QPKG and `restore` config, but only if package has an existing backup file)
+#	2. rebuild all				(meta-action: `download`, `install` & `restore` QPKG, but only if package has an existing backup file)
 #	3. reassign all
 #	4. download all
 #	5. backup all
@@ -1185,6 +1181,7 @@ Actions:Proc()
 	rm -f "$SESS_ACTIONS_RESULTS_PATHFILE"
 
 	Action:Proc status all QPKG statusing statused
+	Action:Proc rebuild all QPKG meta-rebuilding meta-rebuilt
 	Action:Proc reassign all QPKG reassigning reassigned
 	Action:Proc download all QPKG downloading downloaded
 	Action:Proc backup all QPKG backing-up backed-up
@@ -7715,7 +7712,7 @@ _QPKG:download_()
 		if FileMatchesMD5 "$LOCAL_PATHFILE" "$REMOTE_HASH"; then
 			SaveActionResultToLog QPKG "$PACKAGE_NAME" download skipped-ok "existing file $(ShowAsFileName "$LOCAL_FILENAME") checksum correct"
 			MarkThisActionForkAsSkippedOk
-# 			FuncFork:Exit 0
+			z=2
 		else
 			DebugInfo "deleting $(ShowAsFileName "$LOCAL_FILENAME") as checksum is incorrect"
 			rm -f "$LOCAL_PATHFILE"
@@ -7895,7 +7892,7 @@ _QPKG:reinstall_()
 	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reinstall skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkippedError
-		z=2
+		z=4
 	fi
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
@@ -7949,6 +7946,50 @@ _QPKG:reinstall_()
 
 	}
 
+_QPKG:rebuild_()
+	{
+
+	# * This function runs autonomously *
+	# Meta-action: rebuilds the QPKG named in $1. This is a `download`, `install` and `restore`, but only if a backup file exists for this QPKG.
+
+	# input:
+	#   $1 = QPKG name
+
+	# output:
+	#   $? = none, this function executes in the background.
+
+	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	FuncFork:Init
+
+	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined}
+	local -i z=0
+
+	if ! QPKG.IsCanBackup; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" meta-rebuild skipped 'does not support rebuild'
+		MarkThisActionForkAsSkipped
+		z=2
+	elif ! QPKG.IsBackupExist "$PACKAGE_NAME"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" meta-rebuild skipped 'backup does not exist'
+		MarkThisActionForkAsSkipped
+		z=2
+	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" meta-rebuild skipped "assigned to another repository, please 'reassign' it first"
+		MarkThisActionForkAsSkippedError
+		z=4
+	fi
+
+	[[ $z -eq 0 ]] || FuncFork:Exit $z
+
+	DebugAsProc "meta-rebuilding $(ShowAsPackageName "$PACKAGE_NAME")"
+	# Nothing-to-do here, real QPKG actions have already been assigned in Validate().
+
+	SaveActionResultToLog QPKG "$PACKAGE_NAME" meta-rebuild ok
+	MarkThisActionForkAsOk
+	QPKG.AppCenterNotifier:Clear
+	FuncFork:Exit $z
+
+	}
+
 _QPKG:upgrade_()
 	{
 
@@ -7979,7 +8020,7 @@ _QPKG:upgrade_()
 	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" upgrade skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkippedError
-		z=2
+		z=4
 	fi
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
@@ -8071,7 +8112,7 @@ _QPKG:uninstall_()
 	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" uninstall skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkippedError
-		z=2
+		z=4
 	fi
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
@@ -8144,7 +8185,7 @@ _QPKG:activate_()
 	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" activate skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkippedError
-		z=2
+		z=4
 	fi
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
@@ -8160,7 +8201,7 @@ _QPKG:activate_()
 	if [[ $service_pathfile = undefined ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" activate skipped "service script file undefined"
 		MarkThisActionForkAsSkippedError
-		FuncFork:Exit 2
+		FuncFork:Exit 4
 	elif [[ $useropt_debug = true ]]; then
 		a='DEBUG_QPKG=true '
 		RunAndLog "${a}${service_pathfile} start" "$LOG_PATHFILE" log:failure-only
@@ -8222,7 +8263,7 @@ _QPKG:reactivate_()
 	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reactivate skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkippedError
-		z=2
+		z=4
 	fi
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
@@ -8238,7 +8279,7 @@ _QPKG:reactivate_()
 	if [[ $service_pathfile = undefined ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reactivate skipped "service script file undefined"
 		MarkThisActionForkAsSkippedError
-		FuncFork:Exit 2
+		FuncFork:Exit 4
 	elif [[ $useropt_debug = true ]]; then
 		a='DEBUG_QPKG=true '
 		RunAndLog "${a}${service_pathfile} restart" "$LOG_PATHFILE" log:failure-only
@@ -8295,7 +8336,7 @@ _QPKG:deactivate_()
 	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" deactivate skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkippedError
-		z=2
+		z=4
 	fi
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
@@ -8311,7 +8352,7 @@ _QPKG:deactivate_()
 	if [[ $service_pathfile = undefined ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" deactivate skipped "service script file undefined"
 		MarkThisActionForkAsSkippedError
-		FuncFork:Exit 2
+		FuncFork:Exit 4
 	elif [[ $useropt_debug = true ]]; then
 		a='DEBUG_QPKG=true '
 		RunAndLog "${a}${service_pathfile} stop" "$LOG_PATHFILE" log:failure-only
@@ -8375,7 +8416,7 @@ _QPKG:enable_()
 	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" enable skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkippedError
-		z=2
+		z=4
 	fi
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
@@ -8429,7 +8470,7 @@ _QPKG:disable_()
 	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" disable skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkippedError
-		z=2
+		z=4
 	fi
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
@@ -8591,7 +8632,7 @@ _QPKG:backup_()
 	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" backup skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkippedError
-		z=2
+		z=4
 	fi
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
@@ -8644,10 +8685,14 @@ _QPKG:restore_()
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" restore skipped 'does not support restore'
 		MarkThisActionForkAsSkipped
 		z=2
+	elif ! QPKG.IsBackupExist "$PACKAGE_NAME"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" restore skipped 'backup does not exist'
+		MarkThisActionForkAsSkipped
+		z=2
 	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" restore skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkippedError
-		z=2
+		z=4
 	fi
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
