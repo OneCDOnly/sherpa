@@ -76,6 +76,7 @@ Results:Show()
 	{
 
 	Func:Init
+
 	display_last_action_datetime=false
 
 	if [[ $generate_show_report = true ]]; then
@@ -95,9 +96,7 @@ Results:Show()
 			Report.Packages:Show
 		elif [[ $useropt_show_repos = true ]]; then
 			Report.Repos:Show
-		fi
-
-		if [[ $useropt_show_status = true ]]; then
+		elif [[ $useropt_show_status = true ]]; then
 			Report.Statuses:Show
 			show_package_actions_ok=false
 			show_package_actions_skipped=false
@@ -208,7 +207,6 @@ Debug.Log:Init()
 	DebugInfo 'Markers: (**) detected, (II) information, (WW) warning, (EE) error, (LL) log file, (--) processing,'
 	DebugInfo '(==) done, (>>) f entry, (<<) f exit, (vv) variable name & value, ($1) positional argument value'
 	DebugInfoMinSepr
-
 	DebugVar THIS_PACKAGE_VER
 	DebugVar THIS_SCRIPT_VER
 	DebugVar LOADER_SCRIPT_VER
@@ -296,6 +294,7 @@ Vars:Load()
 	archive_debug_afterward=false
 	backup_stdin_fd=none
 	bypass_package_actions=false
+	bypass_package_states=false
 	fork_pid=''
 	generate_action_report=false
 	generate_help_report=false
@@ -692,7 +691,9 @@ Debug.Log:Env()
 	[[ $useropt_debug = true ]] || return 0
 
 	Func:Init
+
 	ShowAsProc 'logging environment'
+
 	DebugInfoMinSepr
 	DebugHardware ok model "$(get_display_name)"
 	DebugHardware ok CPU "$(GetCPUInfo)"
@@ -811,6 +812,7 @@ Debug.Log:Env()
 	DebugInfoMinSepr
 	RunAndLog "$SCREEN_CMD -ls" "$SCREEN_SESSIONS_PATHFILE" '' 1
 	DebugInfoMinSepr
+
 	Func:Exit
 
 	}
@@ -822,20 +824,25 @@ Tasks:Check()
 
 	if [[ $arg_problem = true || $useropt_help_basic = true ]]; then
 		bypass_package_actions=true
+		bypass_package_states=true
 	fi
 
-	if [[ $bypass_package_actions = true ]]; then
+	if [[ $bypass_package_states = true ]]; then
 		return
 	fi
 
 	Func:Init
+
 	local action=''
 	local build_states=false
 	local group=''
 	local state=''
 
-	if [[ $useropt_check = true || $useropt_show_dependencies = true || $useropt_show_packages = true || $useropt_show_repos = true || $useropt_show_status = true ]]; then
+	if [[ $useropt_check = true || $useropt_show_status = true ]]; then
 		build_states=true
+	elif [[ $useropt_show_dependencies = true || $useropt_show_packages = true || $useropt_show_repos = true ]]; then
+		build_states=true
+# 		bypass_package_actions=true
 	elif [[ $useropt_show_results = true || $useropt_help_tips = true ]]; then
 		: # don't do anything
 	else
@@ -892,6 +899,7 @@ Env:Validate()
 	[[ $bypass_package_actions = false ]] || return 0
 
 	Func:Init
+
 	local installed_ver=''
 	local target_packages=''
 
@@ -974,6 +982,7 @@ QPKGs:AssignToActions()
 	[[ $bypass_package_actions = false ]] || return 0
 
 	Func:Init
+
 	local action=''
 	local package=''
 	local prospect=''
@@ -1188,7 +1197,9 @@ Actions:Proc()
 	[[ $bypass_package_actions = false ]] || return
 
 	Func:Init
+
 	ShowAsProc 'package actions'
+
 	local tier=''
 	local action=''
 	local -i tier_index=0
@@ -1230,7 +1241,6 @@ Actions:Proc()
 				Action:Proc enable $tier QPKG enabling enabled
 				Action:Proc reactivate $tier QPKG reactivating reactivated
 				Action:Proc activate $tier QPKG activating activated
-
 				;;
 			auxiliary)
 				for action in install reinstall upgrade activate; do
@@ -1259,11 +1269,11 @@ Actions:Proc()
 		QPKGs.Actions:List
 	fi
 
-	if [[ $title_shown = true && $bypass_package_actions = false ]]; then
+	if [[ $title_shown = true ]]; then
 		if Error.IsNt; then
-			ShowAsDone 'processing complete'
+			ShowAsDone 'actions complete'
 		else
-			ShowAsFail 'processing complete with errors'
+			ShowAsFail 'actions complete with errors'
 		fi
 	fi
 
@@ -1284,6 +1294,7 @@ Action:Proc()
 	#   $5 = $ACTION_PAST_MSG				e.g. `activated` ...
 
 	Func:Init
+
 	local -r TARGET_ACTION=${1:?${FUNCNAME[0]}'()': undefined action}
 	local -r TIER=${2:?${FUNCNAME[0]}'()': undefined tier}
 	local -r PACKAGE_TYPE=${3:?${FUNCNAME[0]}'()': undefined package type}
@@ -1460,7 +1471,9 @@ Action:Proc()
 	esac
 
 	EraseForkCountPaths
+
 	Func:Exit
+
 	Error.IsNt
 
 	}
@@ -2051,12 +2064,14 @@ ParseShowArgs()
 						abs)
 							awaiting_group=false
 							bypass_package_actions=true
+							bypass_package_states=true
 							generate_help_report=true
 							useropt_help_abbreviations=true
 							;;
 						backups)
 							awaiting_group=false
 							bypass_package_actions=true
+							bypass_package_states=true
 							generate_show_report=true
 							useropt_show_backups=true
 							;;
@@ -2070,6 +2085,7 @@ ParseShowArgs()
 						last)
 							awaiting_group=false
 							bypass_package_actions=true
+							bypass_package_states=true
 							generate_show_report=true
 							useropt_show_log_last=true
 							;;
@@ -2077,6 +2093,7 @@ ParseShowArgs()
 							Packages:Load
 							awaiting_group=false
 							bypass_package_actions=true
+							bypass_package_states=true
 							generate_show_report=true
 							useropt_show_packages=true
 							;;
@@ -2090,6 +2107,7 @@ ParseShowArgs()
 						results)
 							awaiting_group=false
 							bypass_package_actions=true
+							bypass_package_states=true
 							generate_show_report=true
 							useropt_show_results=true
 							;;
@@ -2103,6 +2121,7 @@ ParseShowArgs()
 						tail)
 							awaiting_group=false
 							bypass_package_actions=true
+							bypass_package_states=true
 							generate_show_report=true
 							useropt_show_log_tail=true
 							;;
@@ -2616,7 +2635,9 @@ AllocPackGroupsToAcs()
 	{
 
 	Func:Init
+
 	ShowAsProc 'matching QPKG groups to actions'
+
 	local action=''
 	local group=''
 	local prospect=''
@@ -2747,7 +2768,9 @@ AllocPackStatesToAcs()
 	{
 
 	Func:Init
+
 	ShowAsProc 'matching QPKG states to actions'
+
 	local action=''
 	local state=''
 	local found=false		# State has been found.
@@ -3071,6 +3094,7 @@ CalcIpkDepsToInstall()
 
 	if [[ $pre_exclude_count -gt 0 ]]; then
 		ShowAsProc 'excluding IPKs already installed'
+
 		DebugInfo "$pre_exclude_count IPK$(Pluralise "$pre_exclude_count") required (including dependencies)" "'$pre_exclude_list' "
 
 		for element in $pre_exclude_list; do
@@ -3110,6 +3134,7 @@ CalcIpkDownloadSize()
 
 	if [[ $size_count -gt 0 ]]; then
 		ShowAsProc "calculating size of IPK$(Pluralise "$size_count") to download"
+
 		DebugAsDone "$size_count IPK$(Pluralise "$size_count") to download: '$(IPKs-ACdownload-to:List)'"
 		size_array=($($GNU_GREP_CMD -w '^Package:\|^Size:' "$EXTERNAL_PACKAGES_PATHFILE" | $GNU_GREP_CMD --after-context 1 --no-group-separator ": $($SED_CMD 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKs-ACdownload-to:List)")" | $GREP_CMD '^Size:' | $SED_CMD 's|^Size: ||'))
 
@@ -3154,6 +3179,7 @@ IPKs:upgrade()
 
 	if [[ $total_count -gt 0 ]]; then
 		desc="$total_count auxiliary IPK module$(Pluralise "$total_count")"
+
 		ShowAsProc "upgrading $desc"
 
 		_DirSizeMonitor_ "$IPK_DL_PATH" "$(IPKs-ACdownload-to:Size)" &
@@ -3229,6 +3255,7 @@ IPKs:install()
 
 	if [[ $total_count -gt 0 ]]; then
 		desc="$total_count auxiliary IPK module$(Pluralise "$total_count")"
+
 		ShowAsProc "installing $desc"
 
 		_DirSizeMonitor_ "$IPK_DL_PATH" "$(IPKs-ACdownload-to:Size)" &
@@ -3291,6 +3318,7 @@ IPKs:downgrade()
 		package_type='auxiliary IPK module'
 		desc="$total_count ${package_type}$(Pluralise "$total_count")"
 		log_pathfile=$LOGS_PATH/ipks.$DOWNLOAD_LOG_FILE
+
 		ShowAsProc "downloading $desc"
 
 		if OS.IsNonStdKernelPageSize; then
@@ -3329,7 +3357,9 @@ IPKs:downgrade()
 		package_type='auxiliary IPK group'
 		desc="$total_count ${package_type}$(Pluralise "$total_count")"
 		log_pathfile=$LOGS_PATH/ipks.$DOWNGRADE_LOG_FILE
+
 		ShowAsProc "downgrading $desc"
+
 		ShowAsPercentProgress "downgrading $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 "$fail_count" "$total_count"
 		RunAndLog "$OPKG_CMD install --force-downgrade --cache $IPK_CACHE_PATH --tmp-dir $IPK_DOWNGRADE_DL_PATH $IPK_DOWNGRADE_DL_PATH/*.ipk" "$log_pathfile" log:failure-only
 		z=$?
@@ -5493,6 +5523,7 @@ Log.Last:Paste()
 	if [[ -e $SESS_LAST_PATHFILE ]]; then
 		if Quiz "Press 'Y' to post the most-recent session in your $(ShowTitleName) log to a public pastebin, or any other key to abort"; then
 			ShowAsProc "uploading $(ShowTitleName) log"
+
 			# with thanks to https://github.com/solusipse/fiche
 			link=$($CAT_CMD --number "$SESS_LAST_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
 
@@ -5525,6 +5556,7 @@ Log.Tail:Paste()
 	if [[ -e $SESS_TAIL_PATHFILE ]]; then
 		if Quiz "Press 'Y' to post the most-recent $(FormatAsThous "$LOG_TAIL_LINES") lines in your $(ShowTitleName) log to a public pastebin, or any other key to abort"; then
 			ShowAsProc "uploading $(ShowTitleName) log"
+
 			# with thanks to https://github.com/solusipse/fiche
 			link=$($CAT_CMD --number "$SESS_TAIL_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
 
@@ -5789,14 +5821,12 @@ QPKGs.Missing:Show()
 	#	$? = 0 if no packages are missing
 	#	$? = 1 if one-or-more packages are missing
 
-	local -a packages=()
-	local -i i=0
 	local a=''
-	local premsg=''
-	local sufmsg=''
+	local b=''
+	local c=''
+	local -i i=0
 	local name_limit=2
-
-	[[ $title_shown = false ]] || return
+	local -a packages=()
 
 	if [[ $(QPKGs-ISmissing:Count) -eq 0 ]]; then
 		return 0
@@ -5819,14 +5849,15 @@ QPKGs.Missing:Show()
 	done
 
 	if [[ ${#packages[@]} -eq 1 ]]; then
-		premsg=' is'
-		sufmsg='it'
+		b=' is'
+		c='it'
 	else
-		premsg='s are'
-		sufmsg='them'
+		b='s are'
+		c='them'
 	fi
 
-	ShowAsNote "$a QPKG${premsg} missing or broken. Please reinstall $sufmsg"
+	ShowAsNote "the $a QPKG${b} missing or broken. Please reinstall $c"
+
 	return 1
 
 	}
@@ -5840,12 +5871,12 @@ QPKGs.NewVers:Show()
 	#	$? = 0 if all packages are up-to-date
 	#	$? = 1 if one-or-more packages can be upgraded
 
-	local -a packages=()
-	local -i i=0
 	local a=''
+	local b=''
+	local c=''
+	local -i i=0
 	local name_limit=2
-
-# 	[[ $title_shown = false ]] || return
+	local -a packages=()
 
 	if [[ $(QPKGs-SCupgradable:Count) -eq 0 ]]; then
 		return 0
@@ -5867,7 +5898,15 @@ QPKGs.NewVers:Show()
 		fi
 	done
 
-	ShowAsNote "new QPKG version$(Pluralise "${#packages[@]}") available for $a"
+	if [[ ${#packages[@]} -eq 1 ]]; then
+		b='a '
+		c='version is'
+	else
+		c="version$(Pluralise "${#packages[@]}") are"
+	fi
+
+	ShowAsNote "${b}new QPKG $c available for $a"
+
 	return 1
 
 	}
@@ -5919,6 +5958,7 @@ PIPs.Actions:List()
 	[[ $useropt_debug = true ]] || return
 
 	Func:Init
+
 	local a=''
 	DebugInfoMinSepr
 
@@ -5928,6 +5968,7 @@ PIPs.Actions:List()
 	done
 
 	DebugInfoMinSepr
+
 	Func:Exit
 
 	}
@@ -5938,6 +5979,7 @@ IPKs.Actions:List()
 	[[ $useropt_debug = true ]] || return
 
 	Func:Init
+
 	local a=''
 	local border_shown=false
 
@@ -5960,6 +6002,7 @@ IPKs.Actions:List()
 	done
 
 	[[ $border_shown = true ]] && DebugInfoMinSepr
+
 	Func:Exit
 
 	}
@@ -5970,6 +6013,7 @@ QPKGs.Actions:List()
 	[[ $useropt_debug = true ]] || return
 
 	Func:Init
+
 	local a=''
 	local b=''
 	local border_shown=false
@@ -5997,6 +6041,7 @@ QPKGs.Actions:List()
 	done
 
 	[[ $border_shown = true ]] && DebugInfoMinSepr
+
 	Func:Exit
 
 	}
@@ -6007,6 +6052,7 @@ QPKGs.Actions:ListAll()
 	# Only used when debugging.
 
 	Func:Init
+
 	local a=''
 	local b=''
 	DebugInfoMinSepr
@@ -6020,6 +6066,7 @@ QPKGs.Actions:ListAll()
 	done
 
 	DebugInfoMinSepr
+
 	Func:Exit
 
 	}
@@ -6030,6 +6077,7 @@ QPKGs.States:List()
 	[[ $useropt_debug = true ]] || return
 
 	Func:Init
+
 	local a=''
 
 	QPKGs.States:Build
@@ -6063,6 +6111,7 @@ QPKGs.States:List()
 	done
 
 	DebugInfoMinSepr
+
 	Func:Exit
 
 	}
@@ -6104,6 +6153,7 @@ QPKGs.States:Build()
 	#   - those in the process of starting, stopping, or restarting
 
 	Func:Init
+
 	local a=''
 	local b=''
 	local c=''
@@ -6111,6 +6161,7 @@ QPKGs.States:Build()
 
 	if [[ ${qpkgs_states_built:=false} = true ]]; then
 		DebugAsDone "don't build states: they're already built"
+
 		Func:Exit; return
 	fi
 
@@ -6129,6 +6180,7 @@ QPKGs.States:Build()
 	fi
 
 	ShowAsProc 'QPKG states'
+
 	MakePath "$QPKG_STATES_PATH" states || return
 
 	# Faster to launch several concurrent loops in the background, than a single loop. Launch those requiring more processing-time first.
@@ -6264,13 +6316,15 @@ QPKGs.States:Build()
 				notinstalled)
 					QPKGs-ISNTinstalled:Add "$a"
 					;;
-				mising)
+				missing)
 					QPKGs-ISmissing:Add "$a"
+
+					# Also mark as not OK.
 					QPKGs-ISok:Remove "$a"
 					QPKGs-ISNTok:Add "$a"
 					;;
-				notmising)
-					QPKGs-ISNTmissing:Remove "$a"
+				notmissing)
+					QPKGs-ISNTmissing:Add "$a"
 					;;
 				upgradable)
 					QPKGs-SCupgradable:Add "$a"
@@ -6294,10 +6348,11 @@ QPKGs.States:Init()
 
 	# Clears in-memory state list objects
 
-	Func:Init
-	local a=''
-
 	Objects:Load || return
+
+	Func:Init
+
+	local a=''
 
 	DebugAsProc 'initialising state lists'
 
@@ -6305,6 +6360,7 @@ QPKGs.States:Init()
 		[[ $a = active ]] && continue		# don't reset.
 		QPKGs-IS${a}:Init
 	done
+
 	for a in "${USER_QPKG_ISNT_STATES[@]:-}"; do
 		[[ $a = active ]] && continue		# don't reset.
 		QPKGs-ISNT${a}:Init
@@ -6315,6 +6371,8 @@ QPKGs.States:Init()
 	DebugAsDone 'initialised state lists'
 	qpkgs_states_built=false
 
+	Func:Exit
+
 	}
 
 QPKGs.IsCanBackup:Build()
@@ -6323,6 +6381,7 @@ QPKGs.IsCanBackup:Build()
 	# Build a list of QPKGs that support `backup` and `restore` actions.
 
 	Func:Init
+
 	local a=''
 
 	for a in $(QPKGs-SCall:Array); do
@@ -6339,6 +6398,7 @@ QPKGs.IsCanRestartToUpdate:Build()
 	# Build a list of QPKGs that support application update on QPKG restart.
 
 	Func:Init
+
 	local a=''
 
 	for a in $(QPKGs-SCall:Array); do
@@ -6355,6 +6415,7 @@ QPKGs.IsCanClean:Build()
 	# Build a list of QPKGs that support `clean` actions.
 
 	Func:Init
+
 	local a=''
 
 	for a in $(QPKGs-SCall:Array); do
@@ -6376,6 +6437,7 @@ Help.Abbreviations:Show()
 	{
 
 	Func:Init
+
 	local a=''
 	local b=''
 	local -i n=0
@@ -6431,6 +6493,7 @@ Help.Abbreviations:Show()
 	fi
 
 	QPKGs.States:List
+
 	Func:Exit
 
 	}
@@ -6439,6 +6502,7 @@ Report.Backups:Show()
 	{
 
 	Func:Init
+
 	local epochtime=0	# Allow float as seconds have a fractional component.
 	local filename=''
 	local highlight_older_than='2 weeks ago'
@@ -6480,6 +6544,7 @@ Report.Backups:Show()
 
 	EraseThisLine
 	[[ -e $REPORT_OUTPUT_PATHFILE ]] && $CAT_CMD "$REPORT_OUTPUT_PATHFILE"
+
 	Func:Exit
 
 	}
@@ -6488,6 +6553,7 @@ Report.Dependencies:Show()
 	{
 
 	Func:Init
+
 	local a=''
 	local b=''
 	local -i n=0
@@ -6532,6 +6598,7 @@ Report.Dependencies:Show()
 	fi
 
 	QPKGs.States:List
+
 	Func:Exit
 
 	}
@@ -6540,6 +6607,7 @@ Report.Packages:Show()
 	{
 
 	Func:Init
+
 	local a=''
 	maxcols=3
 
@@ -6578,6 +6646,7 @@ Report.Repos:Show()
 	{
 
 	Func:Init
+
 	local a=''
 	local b=''
 	local -i n=0
@@ -6614,6 +6683,7 @@ Report.Repos:Show()
 	fi
 
 	QPKGs.States:List
+
 	Func:Exit
 
 	}
@@ -6622,6 +6692,7 @@ Report.Statuses:Show()
 	{
 
 	Func:Init
+
 	local a=''
 	local b=''
 	local f=''
@@ -6651,7 +6722,6 @@ Report.Statuses:Show()
 	done
 
 	[[ -n $b ]] && echo -e "$b" >>"$REPORT_OUTPUT_PATHFILE"
-
 	EraseThisLine
 
 	if QPKGs-ISslow.IsAny; then
@@ -6669,6 +6739,7 @@ Report.Statuses:Show()
 	fi
 
 	QPKGs.States:List
+
 	Func:Exit
 
 	}
@@ -10572,6 +10643,7 @@ DisplayProcReport()
 	[[ -n ${1:-} ]] && a="$1 "
 
 	ShowAsProc "${a}report"
+
 	report_title_shown=true
 
 	}
@@ -11637,6 +11709,7 @@ Objects:Load()
 	fi
 
 	ShowAsProc 'loading objects'
+
 	. "$OBJECTS_PATHFILE"
 	objects_loaded=true
 
@@ -11672,6 +11745,7 @@ Packages:Load()
 	fi
 
 	ShowAsProc 'loading QPKG list'
+
 	. "$PACKAGES_PATHFILE"
 	packages_loaded=true
 
