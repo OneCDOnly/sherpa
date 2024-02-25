@@ -3662,11 +3662,7 @@ SwitchSourceBranch()
 
 			AssignSourceBranch "$user_switch_branch"
 			ShowAsDone "'Git_Branch = $source_branch' has been written as a persistent setting"
-			Reset					# <-- Processing will terminate in this function (no-return). The following lines are only used for debugging.
-			# shellcheck disable=2317
-			show_title=false
-			# shellcheck disable=2317
-			return
+			Reset					# <-- Processing will terminate in this function (no-return).
 		done
 
 		ShowAsAbort "'$user_switch_branch' is not a valid branch"
@@ -3723,8 +3719,7 @@ SwitchColourful()
 
 			AssignColourful "$user_switch_colourful"
 			ShowAsDone "'Colourful = $colourful' has been written as a persistent setting"
-			show_title=false
-			return
+			exit
 		done
 
 		ShowAsAbort "'$user_switch_colourful' is not 'true' or 'false'"
