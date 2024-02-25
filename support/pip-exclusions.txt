@@ -16,6 +16,5 @@ pyzmq
 requests
 setuptools
 six
-urllib3
 wifi
 zeroconf
