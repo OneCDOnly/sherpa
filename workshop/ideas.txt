@@ -1,3 +1,6 @@
+* • These actions were skipped (and why):
+      download Entware: (existing file 'Entware_1.03a_std.qpkg' checksum correct).
+
 *  There should be distinct argument parsers for:
 	- script management functions:
 		'debug' (dbug)
