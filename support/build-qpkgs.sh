@@ -13,8 +13,8 @@ rebuild_functions=false
 rebuilt_functions=false
 
 if [[ -e $datetime_change_reference_pathfile ]]; then
-	if [[ -n $(find -L "$source_pathfile" -cnewer "$datetime_change_reference_pathfile") ]]; then
-		echo "service library source: updated"
+	if [[ -n $(find -L "$source_pathfile" -newer "$datetime_change_reference_pathfile") ]]; then
+		echo "service library source: modified"
 		rebuild_functions=true
 	else
 		echo "service library: not newer than reference file"
