@@ -1286,7 +1286,7 @@ Action:Proc()
 
 	# Run a single action on an entire tier of packages, asynchronously where possible.
 
-	# input:
+	# Input:
 	#   $1 = $TARGET_ACTION					e.g. `activate`, `reactivate` ...
 	#   $2 = $TIER							e.g. `independent`, `dependent`, `auxiliary`, `all`
 	#   $3 = $PACKAGE_TYPE					e.g. `QPKG`, `IPK`, `PIP`
@@ -1525,10 +1525,10 @@ CloseActionMsgPipe()
 AdjustMaxForks()
 	{
 
-	# input:
+	# Input:
 	#   $1 = action
 
-	# output:
+	# Output:
 	#   $max_forks (global)
 
 	max_forks=$CONCURRENCY
@@ -1575,10 +1575,10 @@ PrepareArgs()
 	# Basic argument syntax:
 	#   scriptname [action] [groups] [options]
 
-	# input:
+	# Input:
 	#   $ARGS_RAW (global)
 
-	# output:
+	# Output:
 	#   $args[] (global)
 
 	local a=$(Lowercase "${ARGS_RAW//,/ }")
@@ -1598,11 +1598,11 @@ ParseManagementArgs()
 	# Basic argument syntax:
 	#   scriptname [action] [groups] [options]
 
-	# input:
+	# Input:
 	#   $args[] (global)
 	#   $args_incomplete[] (global)
 
-	# output:
+	# Output:
 	#   $args[] (global)
 	#   $args_incomplete[] (global)
 
@@ -1759,11 +1759,11 @@ ParseHelpArgs()
 	# Basic argument syntax:
 	#   scriptname [action] [groups] [options]
 
-	# input:
+	# Input:
 	#   $args[] (global)
 	#   $args_incomplete[] (global)
 
-	# output:
+	# Output:
 	#   $args[] (global)
 	#   $args_incomplete[] (global)
 	#   various global flags
@@ -1973,11 +1973,11 @@ ParseShowArgs()
 	# Basic argument syntax:
 	#   scriptname [action] [groups] [options]
 
-	# input:
+	# Input:
 	#   $args[] (global)
 	#   $args_incomplete[] (global)
 
-	# output:
+	# Output:
 	#   $args[] (global)
 	#   $args_incomplete[] (global)
 	#   various global flags
@@ -2155,11 +2155,11 @@ ParseListArgs()
 	# Basic argument syntax:
 	#   scriptname [action] [groups] [options]
 
-	# input:
+	# Input:
 	#   $args[] (global)
 	#   $args_incomplete[] (global)
 
-	# output:
+	# Output:
 	#   $args[] (global)
 	#   $args_incomplete[] (global)
 	#   various global flags
@@ -2313,11 +2313,11 @@ ParseListArgs()
 ParseActionArgs()
 	{
 
-	# input:
+	# Input:
 	#   $args[] (global)
 	#   $args_incomplete[] (global)
 
-	# output:
+	# Output:
 	#   $args[] (global)
 	#   $args_incomplete[] (global)
 	#   various global flags
@@ -2498,11 +2498,11 @@ ParseActionArgs()
 ArgSuggestions:Show()
 	{
 
-	# input:
+	# Input:
 	#   $args[] (global)
 	#   $args_incomplete[] (global)
 
-	# output:
+	# Output:
 	#   various global flags
 
 	Func:Init
@@ -2898,10 +2898,10 @@ ResetReportsPath()
 Quiz()
 	{
 
-	# input:
+	# Input:
 	#   $1 = prompt
 
-	# output:
+	# Output:
 	#   $? = 0 if "y", 1 if anything else
 
 	local prompt=${1:?${FUNCNAME[0]}'()': undefined prompt}
@@ -2995,11 +2995,11 @@ UpdateEntwarePackageList()
 IsThisFileRecent()
 	{
 
-	# input:
+	# Input:
 	#   $1 = pathfilename: file to examine change time of.
 	#   $2 = integer (optional): threshold in minutes - default is `1440` = 1 day.
 
-	# output:
+	# Output:
 	#   $? = true/false
 
 	# Examine `change` time as this is updated even if file content isn't modified.
@@ -3043,6 +3043,7 @@ CalcIpkDepsToInstall()
 	IsSysFileExist $GNU_GREP_CMD || return
 
 	Func:Init
+
 	local -a this_list=()
 	local -a dep_acc=()
 	local -i requested_count=0
@@ -3138,6 +3139,7 @@ CalcIpkDownloadSize()
 	# Calculate size of required IPKs.
 
 	Func:Init
+
 	local -a size_array=()
 	local -i size_count=0
 	size_count=$(IPKs-ACdownload-to:Count)
@@ -3169,10 +3171,12 @@ IPKs:upgrade()
 	Error.IsNt || return
 
 	Func:Init
+
 	local desc=''
 	local log_pathfile=$LOGS_PATH/ipks.$UPGRADE_LOG_FILE
 	local -i total_count=0
 	local -i z=0
+
 	IPKs-ACupgrade-to:Init
 	IPKs-ACdownload-to:Init
 
@@ -3224,12 +3228,14 @@ IPKs:install()
 	Error.IsNt || return
 
 	Func:Init
+
 	local desc=''
 	local -i i=0
 	local log_pathfile=$LOGS_PATH/ipks.$INSTALL_LOG_FILE
 	local previous=''
 	local -i total_count=0
 	local -i z=0
+
 	IPKs-ACinstall-to:Init
 	IPKs-ACdownload-to:Init
 
@@ -3310,6 +3316,7 @@ IPKs:downgrade()
 	Error.IsNt || return
 
 	Func:Init
+
 	local desc=''
 	local -i fail_count=0
 	local log_pathfile=''
@@ -3321,6 +3328,7 @@ IPKs:downgrade()
 	local url_prefix=''
 	local url_suffix=''
 	local -i z=0
+
 	IPKs-ACdownload-to:Init
 	total_count=$(IPKs-ACdowngrade-to:Count)
 
@@ -3401,6 +3409,7 @@ PIPs:install()
 	Error.IsNt || return
 
 	Func:Init
+
 	local desc=''
 	local exec_cmd=''
 	local -i fail_count=0
@@ -3441,7 +3450,7 @@ OpenIpkArchive()
 
 	# Unpack the package list file used by `opkg`.
 
-	# output:
+	# Output:
 	#   $? = 0 if successful or 1 if failed
 
 	if [[ ! -e $EXTERNAL_PACKAGES_ARCHIVE_PATHFILE ]]; then
@@ -3519,11 +3528,11 @@ _DirSizeMonitor_()
 
 	# * This function runs autonomously *
 
-	# input:
+	# Input:
 	#   $1 = directory to monitor the size of.
 	#   $2 = total target bytes (100%) for specified path.
 
-	# output:
+	# Output:
 	#   stdout = "percentage downloaded (downloaded bytes/total expected bytes)".
 
 	[[ -n ${1:?${FUNCNAME[0]}'()': undefined path} ]] || exit
@@ -3598,10 +3607,10 @@ _DirSizeMonitor_()
 WriteMsgInPlace()
 	{
 
-	# input:
+	# Input:
 	#   $1 = message to display.
 
-	# output:
+	# Output:
 	#   stdout = "$1" with all whitespace squeezed.
 	#   $prev_clean_msg = the message provided in $1, but with all whitespace squeezed, and ANSI codes removed.
 
@@ -3679,10 +3688,10 @@ AssignSourceBranch()
 
 	# Set current branch to follow. Default is loaded from `qpkg.conf`, then $1 is used if-supplied.
 
-	# input:
+	# Input:
 	#   $1 = new branch to follow (optional) = `stable`, `unstable`
 
-	# output:
+	# Output:
 	#   $source_branch (global) = `stable`, `unstable`
 
 	local a=stable		# Stored setting.
@@ -3736,10 +3745,10 @@ AssignColourful()
 
 	# Set current colourful status. Default is loaded from `qpkg.conf`, then $1 is used if-supplied.
 
-	# input:
+	# Input:
 	#   $1 = new state to apply (optional) = `true`, `false`
 
-	# output:
+	# Output:
 	#   $colourful (global) = `true`, `false`
 
 	local a=false		# Stored setting.
@@ -3791,7 +3800,7 @@ User.IsSU()
 DebugBinPathVerAndMinVer()
 	{
 
-	# input:
+	# Input:
 	#	$1 = binary filename
 	#	$2 = current version found
 	#	$3 = minimum version required
@@ -3825,10 +3834,10 @@ DebugBinPathVerAndMinVer()
 IsSysFileExist()
 	{
 
-	# input:
+	# Input:
 	#   $1 = pathfile to check
 
-	# output:
+	# Output:
 	#   $? = 0 (exists) or 1 (not exists)
 
 	[[ -n ${1:?${FUNCNAME[0]}'()': undefined pathfile} ]] || exit
@@ -3847,10 +3856,10 @@ IsSysFileExist()
 IsNtSysFileExist()
 	{
 
-	# input:
+	# Input:
 	#   $1 = pathfile to check
 
-	# output:
+	# Output:
 	#   $? = 0 (not exists) or 1 (exists)
 
 	! IsSysFileExist "${1:?${FUNCNAME[0]}'()': undefined pathfile}"
@@ -3860,7 +3869,7 @@ IsNtSysFileExist()
 LenANSIDiff()
 	{
 
-	# input:
+	# Input:
 	#   $1 = (optional) text to find length of
 
 	local original=${1:-}
@@ -3889,13 +3898,13 @@ CalcMaxStatusReportCols()
 	fi
 
 # 	if [[ $((col1_width+col2_width)) -ge $SESS_COLS ]]; then
-# 		maxcols=1
+# 		max_cols=1
 # 	elif [[ $((col1_width+col2_width+col3_width)) -ge $SESS_COLS ]]; then
-# 		maxcols=2
+# 		max_cols=2
 # 	elif [[ $((col1_width+col2_width+col3_width+col4_width)) -ge $SESS_COLS ]]; then
-# 		maxcols=3
+# 		max_cols=3
 # 	else
-# 		maxcols=4
+# 		max_cols=4
 # 	fi
 
 	return 0
@@ -3915,21 +3924,21 @@ CalcMaxStatusReportCols()
 # 	local col8_width=$((${#CHAR_SPACER}+${#CHARS_BULLET}+PACKAGE_ARCH_COL_WIDTH))
 #
 # 	if [[ $((col1_width+col2_width)) -ge $SESS_COLS ]]; then
-# 		maxcols=1
+# 		max_cols=1
 # 	elif [[ $((col1_width+col2_width+col3_width)) -ge $SESS_COLS ]]; then
-# 		maxcols=2
+# 		max_cols=2
 # 	elif [[ $((col1_width+col2_width+col3_width+col4_width)) -ge $SESS_COLS ]]; then
-# 		maxcols=3
+# 		max_cols=3
 # 	elif [[ $((col1_width+col2_width+col3_width+col4_width+col5_width)) -ge $SESS_COLS ]]; then
-# 		maxcols=4
+# 		max_cols=4
 # 	elif [[ $((col1_width+col2_width+col3_width+col4_width+col5_width+col6_width)) -ge $SESS_COLS ]]; then
-# 		maxcols=5
+# 		max_cols=5
 # 	elif [[ $((col1_width+col2_width+col3_width+col4_width+col5_width+col6_width+col7_width)) -ge $SESS_COLS ]]; then
-# 		maxcols=6
+# 		max_cols=6
 # 	elif [[ $((col1_width+col2_width+col3_width+col4_width+col5_width+col6_width+col7_width+col8_width)) -ge $SESS_COLS ]]; then
-# 		maxcols=7
+# 		max_cols=7
 # 	else
-# 		maxcols=8
+# 		max_cols=8
 # 	fi
 #
 # 	return 0
@@ -3941,7 +3950,7 @@ DisplayAsProjSynExam()
 
 	# Display as project syntax example.
 
-	# input:
+	# Input:
 	#	$1 = description
 	#	$2 = example syntax
 
@@ -3959,7 +3968,7 @@ DisplayAsProjSynIndentExam()
 
 	# Display as project syntax indented example.
 
-	# input:
+	# Input:
 	#	$1 = description
 	#	$2 = example syntax
 
@@ -3979,7 +3988,7 @@ DisplayAsSynExam()
 
 	# Display as syntax example.
 
-	# input:
+	# Input:
 	#	$1 = description
 	#	$2 = example syntax
 
@@ -3995,21 +4004,21 @@ DisplayAsPackagesReportTitleLine()
 
 	# column 1: package name
 
-	if [[ $maxcols -ge 1 ]]; then
+	if [[ $max_cols -ge 1 ]]; then
 		a="${CHARS_BULLET}QPKG name:"
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 2: application version
 
-	if [[ $maxcols -ge 2 ]]; then
+	if [[ $max_cols -ge 2 ]]; then
 		a="${CHARS_BULLET}App version:"
 		printf "%-$((PACKAGE_APP_VER_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 3: package description
 
-	if [[ $maxcols -ge 3 ]]; then
+	if [[ $max_cols -ge 3 ]]; then
 		a="${CHARS_BULLET}Description:"
 		printf "%-$((PACKAGE_DESCRIPTION_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
@@ -4021,7 +4030,7 @@ DisplayAsPackagesReportTitleLine()
 DisplayAsPackagesReportLine()
 	{
 
-	# input:
+	# Input:
 	#	$1 = package name
 
 	local name=${1:?${FUNCNAME[0]}'()': undefined packagename}
@@ -4062,19 +4071,19 @@ DisplayAsPackagesReportLine()
 
 	# column 1: package name
 
-	if [[ $maxcols -ge 1 && -n $name_msg ]]; then
+	if [[ $max_cols -ge 1 && -n $name_msg ]]; then
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 	fi
 
 	# column 2: application version
 
-	if [[ $maxcols -ge 2 && -n $app_ver_msg ]]; then
+	if [[ $max_cols -ge 2 && -n $app_ver_msg ]]; then
 		printf "%-$((PACKAGE_APP_VER_COL_WIDTH+$(LenANSIDiff "$app_ver_msg")))s" "$app_ver_msg"
 	fi
 
 	# column 3: package description
 
-	if [[ $maxcols -ge 3 && -n $description ]]; then
+	if [[ $max_cols -ge 3 && -n $description ]]; then
 		printf "%-$((PACKAGE_DESCRIPTION_COL_WIDTH+$(LenANSIDiff "$description_msg")))s" "$description_msg"
 
 		if [[ -n $notes ]]; then
@@ -4094,21 +4103,21 @@ DisplayAsStatusReportTitleLine()
 
 	# column 1: package name
 
-	if [[ $maxcols -ge 1 ]]; then
+	if [[ $max_cols -ge 1 ]]; then
 		a="${CHARS_BULLET}QPKG name:"
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 2: package statuses
 
-	if [[ $maxcols -ge 2 ]]; then
+	if [[ $max_cols -ge 2 ]]; then
 		a="${CHARS_BULLET}QPKG statuses:"
 		printf "%-$((PACKAGE_STATUS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 3: package version (variable-width)
 
-	if [[ $maxcols -ge 3 ]]; then
+	if [[ $max_cols -ge 3 ]]; then
 		a="${CHARS_BULLET}QPKG version"
 		QPKGs-SCupgradable.IsAny && a+=" ($(TextBrightOrange new))"
 		a+=':'
@@ -4117,14 +4126,14 @@ DisplayAsStatusReportTitleLine()
 
 	# column 4: application version
 
-	if [[ $maxcols -ge 4 ]]; then
+	if [[ $max_cols -ge 4 ]]; then
 		a="${CHARS_BULLET}App version:"
 		printf "%-$((PACKAGE_APP_VER_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 5: package installation path
 
-	if [[ $maxcols -ge 5 ]]; then
+	if [[ $max_cols -ge 5 ]]; then
 		a="${CHARS_BULLET}QPKG installation path:"
 		printf "%-$((PACKAGE_PATH_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
@@ -4136,7 +4145,7 @@ DisplayAsStatusReportTitleLine()
 DisplayAsStatusReportLine()
 	{
 
-	# input:
+	# Input:
 	#	$1 = package name
 
 	local name=${1:?${FUNCNAME[0]}'()': undefined packagename}
@@ -4238,31 +4247,31 @@ DisplayAsStatusReportLine()
 
 	# column 1: package name
 
-	if [[ $maxcols -ge 1 && -n $name_msg ]]; then
+	if [[ $max_cols -ge 1 && -n $name_msg ]]; then
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 	fi
 
 	# column 2: package statuses
 
-	if [[ $maxcols -ge 2 && -n $status_msg ]]; then
+	if [[ $max_cols -ge 2 && -n $status_msg ]]; then
 		printf "%-$((PACKAGE_STATUS_COL_WIDTH+$(LenANSIDiff "$status_msg")))s" "$status_msg"
 	fi
 
 	# column 3: package version (variable-width)
 
-	if [[ $maxcols -ge 3 && -n $ver_msg ]]; then
+	if [[ $max_cols -ge 3 && -n $ver_msg ]]; then
 		printf "%-$((package_ver_final_col_width+$(LenANSIDiff "$ver_msg")))s" "$ver_msg"
 	fi
 
 	# column 4: application version
 
-	if [[ $maxcols -ge 4 && -n $app_ver_msg ]]; then
+	if [[ $max_cols -ge 4 && -n $app_ver_msg ]]; then
 		printf "%-$((PACKAGE_APP_VER_COL_WIDTH+$(LenANSIDiff "$app_ver_msg")))s" "$app_ver_msg"
 	fi
 
 	# column 5: package installation path
 
-	if [[ $maxcols -ge 5 && -n $path_msg ]]; then
+	if [[ $max_cols -ge 5 && -n $path_msg ]]; then
 		printf "%-$((PACKAGE_PATH_COL_WIDTH+$(LenANSIDiff "$path_msg")))s" "$path_msg"
 	fi
 
@@ -4277,21 +4286,21 @@ DisplayAsReposReportTitleLine()
 
 	# column 1: package name
 
-	if [[ $maxcols -ge 1 ]]; then
+	if [[ $max_cols -ge 1 ]]; then
 		a="${CHARS_BULLET}QPKG name:"
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 2: package installation date
 
-	if [[ $maxcols -ge 2 ]]; then
+	if [[ $max_cols -ge 2 ]]; then
 		a="${CHARS_BULLET}install date:"
 		printf "%-$((PACKAGE_INSTALL_DATE_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 3: package repository
 
-	if [[ $maxcols -ge 3 ]]; then
+	if [[ $max_cols -ge 3 ]]; then
 		a="${CHARS_BULLET}repository:"
 		printf "%-$((PACKAGE_REPO_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
@@ -4303,7 +4312,7 @@ DisplayAsReposReportTitleLine()
 DisplayAsReposReportLine()
 	{
 
-	# input:
+	# Input:
 	#	$1 = package name
 
 	local name=${1:?${FUNCNAME[0]}'()': undefined packagename}
@@ -4369,19 +4378,19 @@ DisplayAsReposReportLine()
 
 	# column 1: package name
 
-	if [[ $maxcols -ge 1 && -n $name_msg ]]; then
+	if [[ $max_cols -ge 1 && -n $name_msg ]]; then
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 	fi
 
 	# column 2: package installation date
 
-	if [[ $maxcols -ge 2 && -n $install_date_msg ]]; then
+	if [[ $max_cols -ge 2 && -n $install_date_msg ]]; then
 		printf "%-$((PACKAGE_INSTALL_DATE_COL_WIDTH+$(LenANSIDiff "$install_date_msg")))s" "$install_date_msg"
 	fi
 
 	# column 3: package repository
 
-	if [[ $maxcols -ge 3 && -n $assigned_repo_msg ]]; then
+	if [[ $max_cols -ge 3 && -n $assigned_repo_msg ]]; then
 		printf "%-$((PACKAGE_REPO_COL_WIDTH+$(LenANSIDiff "$assigned_repo_msg")))s" "$assigned_repo_msg"
 	fi
 
@@ -4396,14 +4405,14 @@ DisplayAsAbsReportTitleLine()
 
 	# column 1: package name
 
-	if [[ $maxcols -ge 1 ]]; then
+	if [[ $max_cols -ge 1 ]]; then
 		a="${CHARS_BULLET}QPKG name:"
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 2: package abbreviations
 
-	if [[ $maxcols -ge 2 ]]; then
+	if [[ $max_cols -ge 2 ]]; then
 		a="${CHARS_BULLET}acceptable QPKG name abbreviations and aliases:"
 		printf "%-$((PACKAGE_ABBS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
@@ -4415,7 +4424,7 @@ DisplayAsAbsReportTitleLine()
 DisplayAsAbsReportLine()
 	{
 
-	# input:
+	# Input:
 	#	$1 = package name
 
 	local name=${1:?${FUNCNAME[0]}'()': undefined packagename}
@@ -4466,13 +4475,13 @@ DisplayAsAbsReportLine()
 
 	# column 1: package name
 
-	if [[ $maxcols -ge 1 && -n $name_msg ]]; then
+	if [[ $max_cols -ge 1 && -n $name_msg ]]; then
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 	fi
 
 	# column 2: package repository
 
-	if [[ $maxcols -ge 2 && -n $abs_msg ]]; then
+	if [[ $max_cols -ge 2 && -n $abs_msg ]]; then
 		printf "%-$((PACKAGE_ABBS_COL_WIDTH+$(LenANSIDiff "$abs_msg")))s" "$abs_msg"
 	fi
 
@@ -4487,56 +4496,56 @@ DisplayAsDepsReportTitleLine()
 
 	# column 1: package name
 
-	if [[ $maxcols -ge 1 ]]; then
+	if [[ $max_cols -ge 1 ]]; then
 		a="${CHARS_BULLET}QPKG name:"
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 2: package dependencies
 
-	if [[ $maxcols -ge 2 ]]; then
+	if [[ $max_cols -ge 2 ]]; then
 		a="${CHARS_BULLET}dependencies:"
 		printf "%-$((PACKAGE_DEPENDENCIES_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 3: QPKG is installed
 
-	if [[ $maxcols -ge 3 ]]; then
+	if [[ $max_cols -ge 3 ]]; then
 		a="${CHARS_BULLET}installed?"
 		printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 4: QPKG is enabled
 
-	if [[ $maxcols -ge 4 ]]; then
+	if [[ $max_cols -ge 4 ]]; then
 		a="${CHARS_BULLET}enabled?"
 		printf "%-$((PACKAGE_ENABLED_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 5: minimum NAS RAM required
 
-	if [[ $maxcols -ge 5 ]]; then
+	if [[ $max_cols -ge 5 ]]; then
 		a="${CHARS_BULLET}min RAM:"
 		printf "%-$((PACKAGE_MIN_RAM_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 6: minimum OS fimware version supported
 
-	if [[ $maxcols -ge 6 ]]; then
+	if [[ $max_cols -ge 6 ]]; then
 		a="${CHARS_BULLET}min OS:"
 		printf "%-$((PACKAGE_MIN_OS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 7: maximum OS fimware version supported
 
-	if [[ $maxcols -ge 7 ]]; then
+	if [[ $max_cols -ge 7 ]]; then
 		a="${CHARS_BULLET}max OS:"
 		printf "%-$((PACKAGE_MAX_OS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 8: arch is compatible
 
-	if [[ $maxcols -ge 8 ]]; then
+	if [[ $max_cols -ge 8 ]]; then
 		a="${CHARS_BULLET}supported arch?"
 		printf "%-$((PACKAGE_ARCH_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
@@ -4548,7 +4557,7 @@ DisplayAsDepsReportTitleLine()
 DisplayAsDepsReportLine()
 	{
 
-	# input:
+	# Input:
 	#	$1 = package name
 
 	local name=${1:?${FUNCNAME[0]}'()': undefined packagename}
@@ -4763,49 +4772,49 @@ DisplayAsDepsReportLine()
 
 	# column 1: package name
 
-	if [[ $maxcols -ge 1 && -n $name_msg ]]; then
+	if [[ $max_cols -ge 1 && -n $name_msg ]]; then
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 	fi
 
 	# column 2: package repository
 
-	if [[ $maxcols -ge 2 && -n $package_deps_msg ]]; then
+	if [[ $max_cols -ge 2 && -n $package_deps_msg ]]; then
 		printf "%-$((PACKAGE_DEPENDENCIES_COL_WIDTH+$(LenANSIDiff "$package_deps_msg")))s" "$package_deps_msg"
 	fi
 
 	# column 3: package installed?
 
-	if [[ $maxcols -ge 3 && -n $package_installed_msg ]]; then
+	if [[ $max_cols -ge 3 && -n $package_installed_msg ]]; then
 		printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+$(LenANSIDiff "$package_installed_msg")))s" "$package_installed_msg"
 	fi
 
 	# column 4: package enabled?
 
-	if [[ $maxcols -ge 4 && -n $package_enabled_msg ]]; then
+	if [[ $max_cols -ge 4 && -n $package_enabled_msg ]]; then
 		printf "%-$((PACKAGE_ENABLED_COL_WIDTH+$(LenANSIDiff "$package_enabled_msg")))s" "$package_enabled_msg"
 	fi
 
 	# column 5: minimum NAS RAM required
 
-	if [[ $maxcols -ge 5 && -n $package_min_ram_msg ]]; then
+	if [[ $max_cols -ge 5 && -n $package_min_ram_msg ]]; then
 		printf "%-$((PACKAGE_MIN_RAM_COL_WIDTH+$(LenANSIDiff "$package_min_ram_msg")))s" "$package_min_ram_msg"
 	fi
 
 	# column 6: minimum OS fimware version supported
 
-	if [[ $maxcols -ge 6 && -n $package_min_os_msg ]]; then
+	if [[ $max_cols -ge 6 && -n $package_min_os_msg ]]; then
 		printf "%-$((PACKAGE_MIN_OS_COL_WIDTH+$(LenANSIDiff "$package_min_os_msg")))s" "$package_min_os_msg"
 	fi
 
 	# column 7: maximum OS fimware version supported
 
-	if [[ $maxcols -ge 7 && -n $package_max_os_msg ]]; then
+	if [[ $max_cols -ge 7 && -n $package_max_os_msg ]]; then
 		printf "%-$((PACKAGE_MAX_OS_COL_WIDTH+$(LenANSIDiff "$package_max_os_msg")))s" "$package_max_os_msg"
 	fi
 
 	# column 8: arch is compatible?
 
-	if [[ $maxcols -ge 8 && -n $package_arch_msg ]]; then
+	if [[ $max_cols -ge 8 && -n $package_arch_msg ]]; then
 		printf "%-$((PACKAGE_ARCH_COL_WIDTH+$(LenANSIDiff "$package_arch_msg")))s" "$package_arch_msg"
 	fi
 
@@ -4816,7 +4825,7 @@ DisplayAsDepsReportLine()
 DisplayAsHelpTitleFileNamePlusSomething()
 	{
 
-	# input:
+	# Input:
 	#	$1 = file name title
 	#	$2 = second column title
 
@@ -4827,7 +4836,7 @@ DisplayAsHelpTitleFileNamePlusSomething()
 DisplayAsHelpTitle()
 	{
 
-	# input:
+	# Input:
 	#	$1 = text
 
 	printf "\n${CHARS_BULLET}%s\n" "$(Capitalise "${1:-}" | tr -s ' ')"
@@ -4837,7 +4846,7 @@ DisplayAsHelpTitle()
 DisplayAsHelpTitleHighlighted()
 	{
 
-	# input:
+	# Input:
 	#	$1 = text
 
 	# shellcheck disable=2059
@@ -4848,7 +4857,7 @@ DisplayAsHelpTitleHighlighted()
 DisplayAsIndentActionResultDurationReason()
 	{
 
-	# input:
+	# Input:
 	#	$1 = action
 	#	$2 = result message
 	#	$3 = duration in milliseconds (optional)
@@ -5152,7 +5161,7 @@ Help.Lists:Show()
 Report.Results:Show()
 	{
 
-	# input:
+	# Input:
 	#	$1 = `ok`, `skipped`, `failed`
 
 	local -i datetime=0
@@ -5578,7 +5587,7 @@ Log.Tail:Paste()
 GetLogSessStartLine()
 	{
 
-	# input:
+	# Input:
 	#	$1 = how many sessions back? (optional) default = 1
 
 	local -i linenum=$(($($GREP_CMD -n 'SCRIPT:.*started:' "$SESS_TAIL_PATHFILE" | $TAIL_CMD -n${1:-1} | $HEAD_CMD -n1 | cut -d':' -f1)-1))
@@ -5590,7 +5599,7 @@ GetLogSessStartLine()
 GetLogSessFinishLine()
 	{
 
-	# input:
+	# Input:
 	#	$1 = how many sessions back? (optional) default = 1
 
 	local -i linenum=$(($($GREP_CMD -n 'SCRIPT:.*finished:' "$SESS_TAIL_PATHFILE" | $TAIL_CMD -n${1:-1} | cut -d':' -f1)+2))
@@ -5813,7 +5822,7 @@ QPKGs.Missing:Show()
 
 	# Check installed QPKGs and check if they're missing. If so, advise on-screen.
 
-	# output:
+	# Output:
 	#	$? = 0 if no packages are missing
 	#	$? = 1 if one-or-more packages are missing
 
@@ -5863,7 +5872,7 @@ QPKGs.NewVers:Show()
 
 	# Check installed QPKGs and compare versions against upgradable array. If new versions are available, advise on-screen.
 
-	# output:
+	# Output:
 	#	$? = 0 if all packages are up-to-date
 	#	$? = 1 if one-or-more packages can be upgraded
 
@@ -6432,12 +6441,16 @@ QPKGs.IsTimeoutsIncreased()
 Help.Abbreviations:Show()
 	{
 
+	# Output:
+	#   $max_cols (global)
+
 	Func:Init
 
 	local a=''
 	local b=''
+	max_cols=2
+	local -i m=0
 	local -i n=0
-	maxcols=2
 
 	Packages:Load
 
@@ -6499,10 +6512,11 @@ Report.Backups:Show()
 
 	Func:Init
 
-	local epochtime=0	# Allow float as seconds have a fractional component.
+	local epochtime=0		# Allow float as seconds have a fractional component.
 	local filename=''
-	local highlight_older_than='2 weeks ago'
 	local format=''
+	local highlight_older_than='2 weeks ago'
+
 	DisableDebugToArchiveAndFile
 	DisplayProcReport backups
 
@@ -6548,12 +6562,16 @@ Report.Backups:Show()
 Report.Dependencies:Show()
 	{
 
+	# Output:
+	#   $max_cols (global)
+
 	Func:Init
 
 	local a=''
 	local b=''
+	max_cols=8
+	local -i m=0
 	local -i n=0
-	maxcols=8
 	local -i t=$(QPKGs-SCall:Count)
 
 	DisplayProcReport dependency
@@ -6604,10 +6622,13 @@ Report.Dependencies:Show()
 Report.Packages:Show()
 	{
 
+	# Output:
+	#   $max_cols (global)
+
 	Func:Init
 
 	local a=''
-	maxcols=3
+	max_cols=3
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport package
@@ -6643,12 +6664,16 @@ Report.Packages:Show()
 Report.Repos:Show()
 	{
 
+	# Output:
+	#   $max_cols (global)
+
 	Func:Init
 
 	local a=''
 	local b=''
+	max_cols=3
+	local -i m=0
 	local -i n=0
-	maxcols=3
 	local -i t=$(QPKGs-SCall:Count)
 
 	DisplayProcReport repository
@@ -6690,14 +6715,17 @@ Report.Repos:Show()
 Report.Statuses:Show()
 	{
 
+	# Output:
+	#   $max_cols (global)
+
 	Func:Init
 
 	local a=''
 	local b=''
 	local f=''
-	local -i n=0
+	max_cols=5
 	local -i m=0
-	maxcols=5
+	local -i n=0
 	local -i t=$(QPKGs-SCall:Count)
 
 	DisplayProcReport status
@@ -6749,6 +6777,7 @@ QPKGs.IsBackedUp:Show()
 	{
 
 	local a=''
+
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
@@ -6764,6 +6793,7 @@ QPKGs.IsNtBackedUp:Show()
 	{
 
 	local a=''
+
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
@@ -6779,6 +6809,7 @@ QPKGs.IsInstalled:Show()
 	{
 
 	local a=''
+
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
@@ -6794,6 +6825,7 @@ QPKGs.IsNtInstalled:Show()
 	{
 
 	local a=''
+
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
@@ -6809,6 +6841,7 @@ QPKGs.ScAll:Show()
 	{
 
 	local a=''
+
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
@@ -6824,6 +6857,7 @@ QPKGs.ScInstallable:Show()
 	{
 
 	local a=''
+
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
@@ -6839,6 +6873,7 @@ QPKGs.ScNtInstallable:Show()
 	{
 
 	local a=''
+
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
@@ -6854,6 +6889,7 @@ QPKGs.IsActive:Show()
 	{
 
 	local a=''
+
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
@@ -6869,6 +6905,7 @@ QPKGs.IsNtActive:Show()
 	{
 
 	local a=''
+
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
@@ -6884,6 +6921,7 @@ QPKGs.ScUpgradable:Show()
 	{
 
 	local a=''
+
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
@@ -6899,6 +6937,7 @@ QPKGs.ScIndependent:Show()
 	{
 
 	local a=''
+
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
@@ -6914,6 +6953,7 @@ QPKGs.ScDependent:Show()
 	{
 
 	local a=''
+
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
@@ -6931,7 +6971,7 @@ SendParentChangeEnv()
 	# Send a message into message stream to change a sherpa parent environment variable or variables.
 	# This function is only called from within background functions.
 
-	# input:
+	# Input:
 	#   $1 = action request
 
 	WriteToActionMsgPipe env "$1" '' ''
@@ -6945,7 +6985,7 @@ SendPackageStateChange()
 	# This might be: `isinstalled`, `isntenabled`, `isstarted`, `scntupgradable`, etc ...
 	# This function is only called from within background functions.
 
-	# input:
+	# Input:
 	#   $1 = action request
 
 	WriteToActionMsgPipe change "$1" package "$PACKAGE_NAME"
@@ -6959,7 +6999,7 @@ SendActionStatus()
 	# This can be: `ok`, `so`, `sk`, `se`, `er`, `ex`. `ab`.
 	# This function is only called from within background functions.
 
-	# input:
+	# Input:
 	#   $1 = status update
 
 	WriteToActionMsgPipe status "$1" package "$PACKAGE_NAME"
@@ -7029,8 +7069,6 @@ MarkThisActionForkAsOk()
 MarkThisActionForkAsSkippedOk()
 	{
 
-	# This is a "silent" skip. Skipped action is unimportant, so no-need to show this in results table.
-
 	[[ -n $proc_fork_pathfile && -e $proc_fork_pathfile ]] && mv "$proc_fork_pathfile" "$proc_skip_ok_pathfile"
 	SendActionStatus so
 
@@ -7073,7 +7111,7 @@ NoteIpkAcAsOk()
 
 	# Move specified IPK package name from `to` action array into associated `ok` array.
 
-	# input:
+	# Input:
 	#   $1 = package name
 	#   $2 = action
 
@@ -7089,7 +7127,7 @@ NoteIpkAcAsEr()
 
 	# Move specified IPK package name from `to` action array into associated `er` array.
 
-	# input:
+	# Input:
 	#   $1 = package name
 	#   $2 = action
 	#   $3 = reason (optional)
@@ -7108,17 +7146,17 @@ NoteIpkAcAsEr()
 ModPathToEntware()
 	{
 
-	local -r OPKG=/opt/bin:/opt/sbin
 	local a=''
+	local b=/opt/bin:/opt/sbin
 
 	if QPKGs-ISenabled.Exist Entware; then
-		! [[ $PATH =~ $OPKG ]] || return
-		a=$($SED_CMD "s|$OPKG:||" <<< "$PATH:")		# Append colon prior to searching, then remove existing Entware paths.
-		export PATH=$OPKG:${a%:}						# ... now prepend Entware paths and remove trailing colon
+		! [[ $PATH =~ $b ]] || return
+		a=$($SED_CMD "s|${b}:||" <<< "$PATH:")		# Append colon prior to searching, then remove existing Entware paths.
+		export PATH=$b:${a%:}						# ... now prepend Entware paths and remove trailing colon
 		DebugAsDone 'prepended Entware to $PATH'
 	else
-		[[ $PATH =~ $OPKG ]] || return
-		a=$($SED_CMD "s|$OPKG:||" <<< "$PATH:")		# Append colon prior to searching, then remove existing Entware paths.
+		[[ $PATH =~ $b ]] || return
+		a=$($SED_CMD "s|${b}:||" <<< "$PATH:")		# Append colon prior to searching, then remove existing Entware paths.
 		export PATH=${a%:}							# ... now remove trailing colon
 		DebugAsDone 'removed Entware from $PATH'
 	fi
@@ -7173,7 +7211,7 @@ GetKernelPageSize()
 GetPlatform()
 	{
 
-	# output:
+	# Output:
 	#   $? = 0 if found, 250 if not
 
 	/sbin/getcfg '' Platform -d undefined -f /etc/platform.conf
@@ -7183,7 +7221,7 @@ GetPlatform()
 GetDefVol()
 	{
 
-	# output:
+	# Output:
 	#   $? = 0 if found, 250 if not
 
 	/sbin/getcfg SHARE_DEF defVolMP -d undefined -f /etc/config/def_share.info
@@ -7221,10 +7259,10 @@ GetThisBinPath()
 GetRepoURLFromStoreID()
 	{
 
-	# input:
+	# Input:
 	#	$1 = store ID to lookup repo URL for
 
-	# output:
+	# Output:
 	#   $? = 0 if found, 250 if not
 
 	[[ -n ${1:-} ]] || return
@@ -7290,7 +7328,7 @@ GetInstalledRAM()
 GetFirmwareVer()
 	{
 
-	# output:
+	# Output:
 	#   $? = 0 if found, 250 if not
 
 	/sbin/getcfg System Version -d undefined -f /etc/config/uLinux.conf
@@ -7300,7 +7338,7 @@ GetFirmwareVer()
 GetFirmwareBuild()
 	{
 
-	# output:
+	# Output:
 	#   $? = 0 if found, 250 if not
 
 	/sbin/getcfg System Number -d undefined -f /etc/config/uLinux.conf
@@ -7310,7 +7348,7 @@ GetFirmwareBuild()
 GetFirmwareDate()
 	{
 
-	# output:
+	# Output:
 	#   $? = 0 if found, 250 if not
 
 	/sbin/getcfg System 'Build Number' -d undefined -f /etc/config/uLinux.conf
@@ -7574,10 +7612,10 @@ Error.IsNt()
 ShowZeroQpkgs()
 	{
 
+	[[ ${packages_loaded:=false} = true ]] || return
+
 	local a=''
 	local b=''
-
-	[[ ${packages_loaded:=false} = true ]] || return
 
 	for a in "${USER_QPKG_IS_STATES[@]:-}"; do
 		for b in "${USER_QPKG_ACTIONS[@]:-}"; do
@@ -7594,8 +7632,8 @@ ShowZeroQpkgs()
 LockFile:Claim()
 	{
 
-	readonly LOCK_PATHFILE=/var/run/sherpa.lock		# global
 	local a=''
+	readonly LOCK_PATHFILE=/var/run/sherpa.lock		# global
 
 	for a in sherpa-manager.sh sherpa-manager.source; do
 		if [[ -e $LOCK_PATHFILE && -d /proc/$(<"$LOCK_PATHFILE") && $(</proc/"$(<"$LOCK_PATHFILE")"/cmdline) =~ $a ]]; then
@@ -7645,8 +7683,8 @@ EnableDebugToArchiveAndFile()
 DisableDebugToArchiveAndFile()
 	{
 
-	useropt_debug=false
 	archive_debug_afterward=false
+	useropt_debug=false
 
 	}
 
@@ -7655,7 +7693,7 @@ SaveActionResultToLog()
 
 	# Write package type, package name, datetime in seconds, action, result, reason to actions logfile, and into actions durations file.
 
-	# input:						example:
+	# Input:						example:
 	#   $1 = package type			`QPKG`, `IPK`, `PIP`
 	#   $2 = package or group name	`SABnzbd`, `essential`
 	#   $3 = action					`download`, `activate`
@@ -7721,13 +7759,14 @@ _QPKG:reassign_()
 	# * This function runs autonomously *
 	# Removes the `storeid` assignment for the QPKG named in $1.
 
-	# input:
+	# Input:
 	#   $1 = QPKG name
 
-	# output:
+	# Output:
 	#   $? = none, this function executes in the background.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
+
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined packagename}
@@ -7768,13 +7807,14 @@ _QPKG:download_()
 	# * This function runs autonomously *
 	# Downloads the QPKG named in $1.
 
-	# input:
+	# Input:
 	#   $1 = QPKG name
 
-	# output:
+	# Output:
 	#   $? = none, this function executes in the background.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
+
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined packagename}
@@ -7840,13 +7880,14 @@ _QPKG:install_()
 	# * This function runs autonomously *
 	# Installs the QPKG named in $1.
 
-	# input:
+	# Input:
 	#   $1 = QPKG name
 
-	# output:
+	# Output:
 	#   $? = none, this function executes in the background.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
+
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined packagename}
@@ -7944,6 +7985,7 @@ _QPKG:install_()
 	fi
 
 	QPKG.AppCenterNotifier:Clear
+
 	FuncFork:Exit $z
 
 	}
@@ -7954,13 +7996,14 @@ _QPKG:reinstall_()
 	# * This function runs autonomously *
 	# Reinstalls the QPKG named in $1.
 
-	# input:
+	# Input:
 	#   $1 = QPKG name
 
-	# output:
+	# Output:
 	#   $? = none, this function executes in the background.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
+
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined packagename}
@@ -8024,6 +8067,7 @@ _QPKG:reinstall_()
 	fi
 
 	QPKG.AppCenterNotifier:Clear
+
 	FuncFork:Exit $z
 
 	}
@@ -8034,13 +8078,14 @@ _QPKG:rebuild_()
 	# * This function runs autonomously *
 	# Meta-action: rebuilds the QPKG named in $1. This is a `download`, `install` and `restore`, but only if a backup file exists for this QPKG.
 
-	# input:
+	# Input:
 	#   $1 = QPKG name
 
-	# output:
+	# Output:
 	#   $? = none, this function executes in the background.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
+
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined packagename}
@@ -8068,6 +8113,7 @@ _QPKG:rebuild_()
 	SaveActionResultToLog QPKG "$PACKAGE_NAME" meta-rebuild ok
 	MarkThisActionForkAsOk
 	QPKG.AppCenterNotifier:Clear
+
 	FuncFork:Exit $z
 
 	}
@@ -8078,13 +8124,14 @@ _QPKG:upgrade_()
 	# * This function runs autonomously *
 	# Upgrades the QPKG named in $1.
 
-	# input:
+	# Input:
 	#   $1 = QPKG name
 
-	# output:
+	# Output:
 	#   $? = none, this function executes in the background.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
+
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined packagename}
@@ -8160,6 +8207,7 @@ _QPKG:upgrade_()
 	fi
 
 	QPKG.AppCenterNotifier:Clear
+
 	FuncFork:Exit $z
 
 	}
@@ -8170,13 +8218,14 @@ _QPKG:uninstall_()
 	# * This function runs autonomously *
 	# Uninstalls the QPKG named in $1.
 
-	# input:
+	# Input:
 	#   $1 = QPKG name
 
-	# output:
+	# Output:
 	#   $? = none, this function executes in the background.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
+
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined packagename}
@@ -8247,13 +8296,14 @@ _QPKG:activate_()
 	# * This function runs autonomously *
 	# Activates/starts the service script for the QPKG named in $1.
 
-	# input:
+	# Input:
 	#   $1 = QPKG name
 
-	# output:
+	# Output:
 	#   $? = none, this function executes in the background.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
+
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined packagename}
@@ -8283,6 +8333,7 @@ _QPKG:activate_()
 	if [[ $service_pathfile = undefined ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" activate skipped-error 'service script file undefined'
 		MarkThisActionForkAsSkippedError
+
 		FuncFork:Exit 4
 	elif [[ $useropt_debug = true ]]; then
 		a='DEBUG_QPKG=true '
@@ -8315,6 +8366,7 @@ _QPKG:activate_()
 	fi
 
 	QPKG.AppCenterNotifier:Clear
+
 	FuncFork:Exit $z
 
 	}
@@ -8325,13 +8377,14 @@ _QPKG:reactivate_()
 	# * This function runs autonomously *
 	# Reactivates/restarts the service script for the QPKG named in $1.
 
-	# input:
+	# Input:
 	#   $1 = QPKG name
 
-	# output:
+	# Output:
 	#   $? = none, this function executes in the background.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
+
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined packagename}
@@ -8361,6 +8414,7 @@ _QPKG:reactivate_()
 	if [[ $service_pathfile = undefined ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reactivate skipped-error 'service script file undefined'
 		MarkThisActionForkAsSkippedError
+
 		FuncFork:Exit 4
 	elif [[ $useropt_debug = true ]]; then
 		a='DEBUG_QPKG=true '
@@ -8383,7 +8437,9 @@ _QPKG:reactivate_()
 		MarkThisActionForkAsFailed
 		z=1   # remap to 1
 	fi
+
 	QPKG.AppCenterNotifier:Clear
+
 	FuncFork:Exit $z
 
 	}
@@ -8394,13 +8450,14 @@ _QPKG:deactivate_()
 	# * This function runs autonomously *
 	# Deactivates/stops the service script for the QPKG named in $1.
 
-	# input:
+	# Input:
 	#   $1 = QPKG name
 
-	# output:
+	# Output:
 	#   $? = none, this function executes in the background.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
+
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined packagename}
@@ -8434,6 +8491,7 @@ _QPKG:deactivate_()
 	if [[ $service_pathfile = undefined ]]; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" deactivate skipped-error 'service script file undefined'
 		MarkThisActionForkAsSkippedError
+
 		FuncFork:Exit 4
 	elif [[ $useropt_debug = true ]]; then
 		a='DEBUG_QPKG=true '
@@ -8465,6 +8523,7 @@ _QPKG:deactivate_()
 	fi
 
 	QPKG.AppCenterNotifier:Clear
+
 	FuncFork:Exit $z
 
 	}
@@ -8475,13 +8534,14 @@ _QPKG:enable_()
 	# * This function runs autonomously *
 	# Enables the QPKG named in $1.
 
-	# input:
+	# Input:
 	#   $1 = QPKG name
 
-	# output:
+	# Output:
 	#   $? = none, this function executes in the background.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
+
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined packagename}
@@ -8515,6 +8575,7 @@ _QPKG:enable_()
 	QPKG.AppCenterNotifier:Clear
 	SaveActionResultToLog QPKG "$PACKAGE_NAME" enable ok
 	MarkThisActionForkAsOk
+
 	FuncFork:Exit $z
 
 	}
@@ -8525,13 +8586,14 @@ _QPKG:disable_()
 	# * This function runs autonomously *
 	# Disabled the QPKG named in $1.
 
-	# input:
+	# Input:
 	#   $1 = QPKG name
 
-	# output:
+	# Output:
 	#   $? = none, this function executes in the background.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
+
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined packagename}
@@ -8570,6 +8632,7 @@ _QPKG:disable_()
 	QPKG.AppCenterNotifier:Clear
 	SaveActionResultToLog QPKG "$PACKAGE_NAME" disable ok
 	MarkThisActionForkAsOk
+
 	FuncFork:Exit $z
 
 	}
@@ -8580,13 +8643,14 @@ _QPKG:enableau_()
 	# * This function runs autonomously *
 	# Enables auto-updating of the QPKG named in $1.
 
-	# input:
+	# Input:
 	#   $1 = QPKG name
 
-	# output:
+	# Output:
 	#   $? = none, this function executes in the background.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
+
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined packagename}
@@ -8635,13 +8699,14 @@ _QPKG:disableau_()
 	# * This function runs autonomously *
 	# Disables auto-updating of the QPKG named in $1.
 
-	# input:
+	# Input:
 	#   $1 = QPKG name
 
-	# output:
+	# Output:
 	#   $? = none, this function executes in the background.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
+
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined packagename}
@@ -8690,13 +8755,14 @@ _QPKG:backup_()
 	# * This function runs autonomously *
 	# Calls the service script for the QPKG named in $1 and runs a `backup` action.
 
-	# input:
+	# Input:
 	#   $1 = QPKG name
 
-	# output:
+	# Output:
 	#   $? = none, this function executes in the background.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
+
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined packagename}
@@ -8746,13 +8812,14 @@ _QPKG:restore_()
 	# * This function runs autonomously *
 	# Calls the service script for the QPKG named in $1 and runs a `restore` action.
 
-	# input:
+	# Input:
 	#   $1 = QPKG name
 
-	# output:
+	# Output:
 	#   $? = none, this function executes in the background.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
+
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined packagename}
@@ -8806,13 +8873,14 @@ _QPKG:clean_()
 	# * This function runs autonomously *
 	# Calls the service script for the QPKG named in $1 and runs a `clean` action.
 
-	# input:
+	# Input:
 	#   $1 = QPKG name
 
-	# output:
+	# Output:
 	#   $? = none, this function executes in the background.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
+
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined packagename}
@@ -8865,13 +8933,14 @@ _QPKG:sign_()
 
 	# Should only be required for QTS 4.3.5-and-later firmwares.
 
-	# input:
+	# Input:
 	#   $1 = QPKG name
 
-	# output:
+	# Output:
 	#   $? = none, this function executes in the background. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
+
 	FuncFork:Init
 
 	local -r PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined packagename}
@@ -8964,13 +9033,14 @@ _QPKG:status_()
 	# * This function runs autonomously *
 	# Query a QPKG for its 'status'. Each compatible QPKG will return 0 if application process is active or ready-to-run, 0 if not.
 
-	# input:
+	# Input:
 	#   $1 = QPKG name
 
-	# output:
+	# Output:
 	#   $? = none, this function executes in the background.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
+
 	FuncFork:Init
 
 	PACKAGE_NAME=${1:?${FUNCNAME[0]}'()': undefined packagename}
@@ -9031,7 +9101,7 @@ _QPKG:status_()
 QPKG.AppCenterNotifier:Clear()
 	{
 
-	# input:
+	# Input:
 	#   $PACKAGE_NAME (global) = QPKG name to clear from notifier list.
 
 	# KLUDGE: `clean` QTS 4.5.1+ App Center notifier status
@@ -9049,7 +9119,7 @@ QPKG.AppCenterNotifier:Clear()
 QPKG.ServiceStatus:Clear()
 	{
 
-	# input:
+	# Input:
 	#   $PACKAGE_NAME (global) = QPKG name
 
 	rm -f /var/run/"$PACKAGE_NAME".last.operation
@@ -9061,7 +9131,7 @@ QPKG.LastResultWasOk()
 
 	# Returns true if last operation for this package is `ok`.
 
-	# input:
+	# Input:
 	#   $PACKAGE_NAME (global) = QPKG name
 
 	[[ $(QPKG.GetServiceStatus "$PACKAGE_NAME") = ok ]]
@@ -9071,7 +9141,7 @@ QPKG.LastResultWasOk()
 QPKG.ServiceStatus:Log()
 	{
 
-	# input:
+	# Input:
 	#   $PACKAGE_NAME (global) = QPKG name
 
 	if ! local a=$(QPKG.GetServiceStatus "$PACKAGE_NAME"); then
@@ -9105,11 +9175,11 @@ QPKG.ServiceStatus:Log()
 QPKG.GetInstallationPath()
 	{
 
-	# input:
+	# Input:
 	#   $PACKAGE_NAME (global) = QPKG name (default: sherpa)
 	#   $1 = (optional) if specified, use this as QPKG name
 
-	# output:
+	# Output:
 	#   stdout = the installation path to this QPKG
 	#   $? = 0 if found, 250 if not
 
@@ -9120,11 +9190,11 @@ QPKG.GetInstallationPath()
 QPKG.GetServicePathFile()
 	{
 
-	# input:
+	# Input:
 	#   $PACKAGE_NAME (global) = QPKG name (default: sherpa)
 	#   $1 = (optional) if specified, use this as QPKG name
 
-	# output:
+	# Output:
 	#   stdout = service script pathfile
 	#   $? = 0 if found, 250 if not
 
@@ -9137,11 +9207,11 @@ QPKG.App.GetVer()
 
 	# Returns the version number of the application contained within a QPKG.
 
-	# input: (must specify at-least one)
+	# Input: (must specify at-least one)
 	#   $1 = QPKG name
 	#   $2 = QPKG index in 'packages' (optional).
 
-	# output:
+	# Output:
 	#   stdout = application version
 	#   $? = 0 if found, !0 if not
 
@@ -9167,11 +9237,11 @@ QPKG.Avail.GetVer()
 
 	# Returns the version number of an available QPKG.
 
-	# input:
+	# Input:
 	#   $PACKAGE_NAME (global) = QPKG name (default: sherpa)
 	#   $1 = (optional) if specified, use this as QPKG name
 
-	# output:
+	# Output:
 	#   stdout = package version
 	#   $? = 0 if found, !0 if not
 
@@ -9198,11 +9268,11 @@ QPKG.Local.GetVer()
 
 	# Returns the version number of an installed QPKG.
 
-	# input:
+	# Input:
 	#   $PACKAGE_NAME (global) = QPKG name (default: sherpa)
 	#   $1 = (optional) if specified, use this as QPKG name
 
-	# output:
+	# Output:
 	#   stdout = package version
 	#   $? = 0 if found, 250 if not
 
@@ -9215,11 +9285,11 @@ QPKG.GetStoreID()
 
 	# Returns the presently assigned repository store ID of an installed QPKG.
 
-	# input:
+	# Input:
 	#   $PACKAGE_NAME (global) = QPKG name (default: sherpa)
 	#   $1 = (optional) if specified, use this as QPKG name
 
-	# output:
+	# Output:
 	#   stdout = package store ID
 	#   $? = 0 if found, 250 if not
 
@@ -9232,11 +9302,11 @@ QPKG.IsRepoOk()
 
 	# Is this QPKG managable by sherpa?
 
-	# input:
+	# Input:
 	#   $PACKAGE_NAME (global) = QPKG name (default: sherpa)
 	#   $1 = (optional) if specified, use this as QPKG name
 
-	# output:
+	# Output:
 	#   $? = 0 if true, 1 if false
 
 	local a=$(QPKG.GetStoreID "${1:-${PACKAGE_NAME:-sherpa}}")
@@ -9250,11 +9320,11 @@ QPKG.GetInstallDate()
 
 	# Returns the date specified QPKG was installed.
 
-	# input:
+	# Input:
 	#   $PACKAGE_NAME (global) = QPKG name (default: sherpa)
 	#   $1 = (optional) if specified, use this as QPKG name
 
-	# output:
+	# Output:
 	#   stdout = package store ID
 	#   $? = 0 if found, 250 if not
 
@@ -9267,10 +9337,10 @@ QPKG.IsBackupExist()
 
 	# Does this QPKG have an existing `backup` file?
 
-	# input:
+	# Input:
 	#   $1 = QPKG name
 
-	# output:
+	# Output:
 	#   $? = 0 if true, 1 if false
 
 	[[ -e $QPKG_BU_PATH/${1:?${FUNCNAME[0]}'()': undefined packagename}.config.tar.gz ]]
@@ -9282,10 +9352,10 @@ QPKG.IsDependent()
 
 	# Does this QPKG depend on any other QPKGs?
 
-	# input:
+	# Input:
 	#   $1 = QPKG name
 
-	# output:
+	# Output:
 	#   $? = 0 if true, 1 if false (first package found).
 
 	local a=''
@@ -9309,11 +9379,11 @@ QPKG.IsUpgradable()
 
 	# Does an upgraded QPKG exist?
 
-	# input:
+	# Input:
 	#   $PACKAGE_NAME (global) = QPKG name (default).
 	#   $1 = if specified, use this as QPKG name instead.
 
-	# output:
+	# Output:
 	#   $? = 0 if true, 1 if false
 
 	local a=${1:-$PACKAGE_NAME}
@@ -9327,11 +9397,11 @@ QPKG.IsInstallable()
 
 	# Can this QPKG be installed?
 
-	# input:
+	# Input:
 	#   $PACKAGE_NAME (global) = QPKG name (default).
 	#   $1 = if specified, use this as QPKG name instead.
 
-	# output:
+	# Output:
 	#   $? = 0 if true, 1 if false
 
 	local a=${1:-$PACKAGE_NAME}
@@ -9343,10 +9413,10 @@ QPKG.IsInstallable()
 QPKG.GetOriginalPath()
 	{
 
-	# input:
+	# Input:
 	#   $1 = QPKG name
 
-	# output:
+	# Output:
 	#   stdout = the original installation path of this QPKG (even if it was migrated to another volume).
 	#   $? = 0 if successful, 1 if failed
 
@@ -9368,10 +9438,10 @@ QPKG.GetOriginalPath()
 QPKG.MatchAbbrv()
 	{
 
-	# input:
+	# Input:
 	#   $1 = a potential package abbreviation supplied by user.
 
-	# output:
+	# Output:
 	#   stdout = matched installable package name (empty if unmatched).
 	#   $? = 0 (matched) or 1 (unmatched).
 
@@ -9399,10 +9469,10 @@ QPKG.MatchAbbrv()
 QPKG.GetPathFilename()
 	{
 
-	# input:
+	# Input:
 	#   $1 = QPKG name
 
-	# output:
+	# Output:
 	#   stdout = QPKG local filename.
 	#   $? = 0 if successful, 1 if failed.
 
@@ -9420,10 +9490,10 @@ QPKG.GetPathFilename()
 QPKG.GetHash()
 	{
 
-	# input:
+	# Input:
 	#   $1 = QPKG name
 
-	# output:
+	# Output:
 	#   stdout = QPKG MD5, specific to this NAS arch.
 	#   $? = 0 if successful, 1 if failed.
 
@@ -9443,10 +9513,10 @@ QPKG.GetHash()
 QPKG.GetURL()
 	{
 
-	# input:
+	# Input:
 	#   $1 = QPKG name
 
-	# output:
+	# Output:
 	#   stdout = QPKG remote URL, specific to this NAS arch.
 	#   $? = 0 if successful, 1 if failed.
 
@@ -9468,11 +9538,11 @@ QPKG.IsArchOK()
 
 	# Does an arch-compatible QPKG exist to suit this NAS?
 
-	# input:
+	# Input:
 	#   $PACKAGE_NAME (global) = QPKG name (default).
 	#   $1 = (optional) if specified, use this as QPKG name instead.
 
-	# output:
+	# Output:
 	#   $? = 0 if true, 1 if false.
 
 	local a=$(QPKG.GetURL "${1:-$PACKAGE_NAME}")
@@ -9483,10 +9553,10 @@ QPKG.IsArchOK()
 QPKG.GetMinRAM()
 	{
 
-	# input:
+	# Input:
 	#   $1 = QPKG name
 
-	# output:
+	# Output:
 	#   stdout = minimum kB of installed RAM required by this QPKG (first package found).
 	#   $? = 0 if successful, 1 if failed.
 
@@ -9506,10 +9576,10 @@ QPKG.GetMinRAM()
 QPKG.IsMinRAMOk()
 	{
 
-	# input:
+	# Input:
 	#   $1 = QPKG name
 
-	# output:
+	# Output:
 	#   $? = 0 if this NAS meets the minium RAM requirements for QPKG name, 1 if not.
 
 	local a=$(QPKG.GetMinRAM "${1:?${FUNCNAME[0]}'()': undefined packagename}")
@@ -9520,10 +9590,10 @@ QPKG.IsMinRAMOk()
 QPKG.GetMinOSVer()
 	{
 
-	# input:
+	# Input:
 	#   $1 = QPKG name
 
-	# output:
+	# Output:
 	#   stdout = minimum QTS/QuTS version required by this QPKG (first package found).
 	#   $? = 0 if successful, 1 if failed.
 
@@ -9543,10 +9613,10 @@ QPKG.GetMinOSVer()
 QPKG.IsMinOSVerOk()
 	{
 
-	# input:
+	# Input:
 	#   $1 = QPKG name
 
-	# output:
+	# Output:
 	#   $? = 0 if this NAS meets the minium OS firmware version requirements for QPKG name, 1 if not.
 
 	local a=$(QPKG.GetMinOSVer "${1:?${FUNCNAME[0]}'()': undefined packagename}")
@@ -9557,10 +9627,10 @@ QPKG.IsMinOSVerOk()
 QPKG.GetMaxOSVer()
 	{
 
-	# input:
+	# Input:
 	#   $1 = QPKG name
 
-	# output:
+	# Output:
 	#   stdout = maximum QTS/QuTS version required by this QPKG (first package found).
 	#   $? = 0 if successful, 1 if failed.
 
@@ -9580,10 +9650,10 @@ QPKG.GetMaxOSVer()
 QPKG.IsMaxOSVerOk()
 	{
 
-	# input:
+	# Input:
 	#   $1 = QPKG name
 
-	# output:
+	# Output:
 	#   $? = 0 if this NAS meets the maximum OS firmware version requirements for QPKG name, 1 if not.
 
 	local a=$(QPKG.GetMaxOSVer "${1:?${FUNCNAME[0]}'()': undefined packagename}")
@@ -9597,10 +9667,10 @@ QPKG.GetAuthor()
 
 	# Return the maintainer of the specified QPKG.
 
-	# input:
+	# Input:
 	#   $1 = QPKG name
 
-	# output:
+	# Output:
 	#   stdout = QPKG author (first package found).
 	#   $? = 0 if found, !0 if not.
 
@@ -9622,10 +9692,10 @@ QPKG.GetAuthorEmail()
 
 	# Return the email address for the maintainer of the specified QPKG.
 
-	# input:
+	# Input:
 	#   $1 = QPKG name
 
-	# output:
+	# Output:
 	#   stdout = QPKG author (first package found).
 	#   $? = 0 if found, !0 if not.
 
@@ -9647,10 +9717,10 @@ QPKG.GetAppAuthor()
 
 	# Return the author of the application contained within the specified QPKG.
 
-	# input:
+	# Input:
 	#   $1 = QPKG name
 
-	# output:
+	# Output:
 	#   stdout = application author (first package found).
 	#   $? = 0 if found, !0 if not.
 
@@ -9672,10 +9742,10 @@ QPKG.GetAppAuthorEmail()
 
 	# Return the email address for the author of the application contained within the specified QPKG.
 
-	# input:
+	# Input:
 	#   $1 = QPKG name
 
-	# output:
+	# Output:
 	#   stdout = application author (first package found).
 	#   $? = 0 if found, !0 if not.
 
@@ -9695,10 +9765,10 @@ QPKG.GetAppAuthorEmail()
 QPKG.GetDesc()
 	{
 
-	# input:
+	# Input:
 	#   $1 = QPKG name
 
-	# output:
+	# Output:
 	#   stdout = QPKG description (first package found).
 	#   $? = 0 if successful, 1 if failed.
 
@@ -9720,10 +9790,10 @@ QPKG.GetNote()
 
 	# return any additional notes to be prominently displayed.
 
-	# input:
+	# Input:
 	#   $1 = QPKG name
 
-	# output:
+	# Output:
 	#   stdout = package note (first package found).
 	#   $? = 0 if found, !0 if not.
 
@@ -9745,10 +9815,10 @@ QPKG.GetNote()
 QPKG.GetAbbrvs()
 	{
 
-	# input:
+	# Input:
 	#   $1 = QPKG name
 
-	# output:
+	# Output:
 	#   stdout = list of abbreviations that may be used to specify this package (first package found).
 	#   $? = 0 if successful, 1 if failed.
 
@@ -9770,10 +9840,10 @@ QPKG.GetArchIndex()
 
 	# Return the 0-based index of the named arch-specific QPKG in 'packages' file.
 
-	# input:
+	# Input:
 	#   $1 = QPKG name.
 
-	# output:
+	# Output:
 	#   stdout = QPKG index. '-1' if a compatible arch could not be found.
 	#   $? = 0 if successful, 1 if failed.
 
@@ -9799,10 +9869,10 @@ QPKG.GetDefaultArchIndex()
 
 	# Return the 0-based index of the first-named QPKG in 'packages' file.
 
-	# input:
+	# Input:
 	#   $1 = QPKG name.
 
-	# output:
+	# Output:
 	#   stdout = QPKG index. '-1' if a compatible arch could not be found.
 	#   $? = 0 if successful, 1 if failed.
 
@@ -9824,10 +9894,10 @@ QPKG.GetDefaultArchIndex()
 QPKG.GetDependencies()
 	{
 
-	# input:
+	# Input:
 	#   $1 = QPKG name.
 
-	# output:
+	# Output:
 	#   stdout = list of QPKGs this QPKG depends-upon.
 	#   $? = 0 if successful, 1 if failed.
 
@@ -9898,11 +9968,11 @@ QPKG.GetDependencies()
 QPKG.GetIPKs()
 	{
 
-	# input: (must specify at-least one)
+	# Input: (must specify at-least one)
 	#   $1 = QPKG name
 	#   $2 = QPKG index in 'packages' (optional).
 
-	# output:
+	# Output:
 	#   stdout = list of IPKs $1 depends-upon.
 	#   $? = 0 if successful, 1 if failed.
 
@@ -9926,11 +9996,11 @@ QPKG.GetIPKs()
 QPKG.GetDependents()
 	{
 
-	# input: (must specify at-least one)
+	# Input: (must specify at-least one)
 	#   $1 = QPKG name
 	#   $2 = QPKG index in 'packages' (optional).
 
-	# output:
+	# Output:
 	#   stdout = list of QPKGs that depend-upon this QPKG (first package found).
 	#   $? = 0 if successful, 1 if failed.
 
@@ -9960,11 +10030,11 @@ QPKG.IsCanBackup()
 
 	# Does this QPKG service-script support `backup` and `restore` actions?
 
-	# input:
+	# Input:
 	#   $PACKAGE_NAME (global) = QPKG name (default).
 	#   $1 = if specified, use this as QPKG name instead.
 
-	# output:
+	# Output:
 	#   $? = 0 if true, 1 if false (first package found).
 
 	local -i i=0
@@ -9988,10 +10058,10 @@ QPKG.IsCanRestartToUpdate()
 
 	# Does this QPKG service-script support updating the internal application when the QPKG is restarted?
 
-	# input:
+	# Input:
 	#   $1 = QPKG name
 
-	# output:
+	# Output:
 	#   $? = 0 if true, 1 if false (first package found).
 
 	local -i i=0
@@ -10015,11 +10085,11 @@ QPKG.IsCanClean()
 
 	# Does this QPKG service-script support cleaning of the internal application?
 
-	# input:
+	# Input:
 	#   $PACKAGE_NAME (global) = QPKG name (default).
 	#   $1 = if specified, use this as QPKG name instead.
 
-	# output:
+	# Output:
 	#   $? = 0 if true, 1 if false (first package found).
 
 	local -i i=0
@@ -10043,11 +10113,11 @@ QPKG.IsCanLog()
 
 	# Does this QPKG service-script support logging of operations? When an action fails, this means user can be directed to check the service script log.
 
-	# input:
+	# Input:
 	#   $PACKAGE_NAME (global) = QPKG name (default).
 	#   $1 = if specified, use this as QPKG name instead.
 
-	# output:
+	# Output:
 	#   $? = 0 if true, 1 if false (first package found).
 
 	local -i i=0
@@ -10071,10 +10141,10 @@ QPKG.GetActiveTest()
 
 	# Return any custom commands required to determine if specified QPKG is active or not.
 
-	# input:
+	# Input:
 	#   $1 = QPKG name
 
-	# output:
+	# Output:
 	#   stdout = bash tests.
 	#   $? = 0 if found, !0 if not.
 
@@ -10098,10 +10168,10 @@ QPKG.GetActiveTest()
 QPKG.IsInstalled()
 	{
 
-	# input:
+	# Input:
 	#   $1 = QPKG name
 
-	# output:
+	# Output:
 	#   $? = 0 (true) or 1 (false)
 
 	$GREP_CMD -q "^\[${1:?${FUNCNAME[0]}'()': undefined packagename}\]" /etc/config/qpkg.conf
@@ -10111,10 +10181,10 @@ QPKG.IsInstalled()
 QPKG.IsNtInstalled()
 	{
 
-	# input:
+	# Input:
 	#   $1 = QPKG name.
 
-	# output:
+	# Output:
 	#   $? = 0 (true) or 1 (false)
 
 	! QPKG.IsInstalled "${1:?${FUNCNAME[0]}'()': undefined packagename}"
@@ -10124,10 +10194,10 @@ QPKG.IsNtInstalled()
 QPKG.IsMissing()
 	{
 
-	# input:
+	# Input:
 	#   $1 = QPKG name.
 
-	# output:
+	# Output:
 	#   $? = 0 (true) or 1 (false).
 
 	local a=$(QPKG.GetInstallationPath "${1:?${FUNCNAME[0]}'()': undefined packagename}")
@@ -10138,10 +10208,10 @@ QPKG.IsMissing()
 QPKG.IsEnabled()
 	{
 
-	# input:
+	# Input:
 	#   $1 = QPKG name.
 
-	# output:
+	# Output:
 	#   $? = 0 (true) or 1 (false).
 
 	[[ $(/sbin/getcfg "${1:?${FUNCNAME[0]}'()': undefined packagename}" Enable -u -f /etc/config/qpkg.conf) = TRUE ]]
@@ -10151,10 +10221,10 @@ QPKG.IsEnabled()
 QPKG.GetServiceStatus()
 	{
 
-	# input:
+	# Input:
 	#   $1 = QPKG name.
 
-	# output:
+	# Output:
 	#   $stdout = last known package service status.
 	#   $? = 0 if found, 1 if not found.
 
@@ -10250,7 +10320,7 @@ EOB
 MakePath()
 	{
 
-	# input:
+	# Input:
 	#   $1 = path to create.
 	#   $2 = reason for this path.
 
@@ -10272,7 +10342,7 @@ ClearPath()
 	# Clear (empty) an existing directory, but don't delete the directory.
 	# Delete files in a relatively safe manner. Parent of directory MUST be specified to avoid an 'rm -rf /*' situation through empty args.
 
-	# input:
+	# Input:
 	#	$1 = full path to parent of directory name to clear.
 	#   $2 = directory name to clear.
 
@@ -10290,13 +10360,13 @@ RunAndLog()
 
 	# Run a commandstring, log the results, and show onscreen if required.
 
-	# input:
+	# Input:
 	#   $1 = commandstring to execute.
 	#   $2 = pathfile to record stdout and stderr for commandstring.
 	#   $3 = `log:failure-only` (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed. default is to always record stdout & stderr.
 	#   $4 = e.g. `10` (optional) - an additional acceptable result code. Any other result from command (other than zero) will be considered a failure.
 
-	# output:
+	# Output:
 	#   stdout = commandstring stdout and stderr if script is in `debug` mode.
 	#   pathfile (specified as $2) = stdout and stderr from commandstring (specified as $1).
 	#   $? = result_code of commandstring.
@@ -10304,6 +10374,7 @@ RunAndLog()
 	[[ -n ${1:?${FUNCNAME[0]}'()': undefined commandstring} && -n ${2:?${FUNCNAME[0]}'()': undefined pathfile} ]] || return
 
 	Func:Init
+
 	MakePath "$RUN_LOGS_PATH" 'runtime logs'
 	local -r LOG_PATHFILE=$($MKTEMP_CMD "$RUN_LOGS_PATH"/"${FUNCNAME[0]}"_XXXXXX)
 	local -i z=0
@@ -10353,7 +10424,7 @@ DeDupeWords()
 FileMatchesMD5()
 	{
 
-	# input:
+	# Input:
 	#   $1 = pathfile to generate an MD5 checksum for.
 	#   $2 = MD5 checksum to compare against.
 
@@ -10631,7 +10702,7 @@ WriteEmptyLineIfNoneExists()
 DisplayProcReport()
 	{
 
-	# input:
+	# Input:
 	#	$1 = report type (optional)
 
 	[[ ${report_title_shown:=false} = false ]] || return
@@ -10917,11 +10988,11 @@ FuncFork:Exit()
 CalcMilliDifference()
 	{
 
-	# input:
+	# Input:
 	#	$1 = starttime in epoch nanoseconds
 	#	$2 = endtime in epoch nanoseconds
 
-	# output:
+	# Output:
 	#	stdout = difference in milliseconds
 
 	echo "$((($2-$1)/1000000))"
@@ -10931,7 +11002,7 @@ CalcMilliDifference()
 ShowAsDuration()
 	{
 
-	# input:
+	# Input:
 	#	$1 = duration in milliseconds
 
 	if [[ ${1:-0} -lt 30000 ]]; then
@@ -11197,7 +11268,7 @@ ShowAsPercentProgress()
 
 	# Show single action package progress as percent-complete and a fraction of the total.
 
-	# input:
+	# Input:
 	#	$1 = verb (present) (optional)
 	#	$2 = expected action duration: `long` (optional)
 	#	$3 = ok count
@@ -11230,7 +11301,7 @@ PercFrac()
 
 	# Calculate percent-complete and a fraction of the total.
 
-	# input:
+	# Input:
 	#	$1 = ok count
 	#	$2 = skip count
 	#	$3 = fail count
@@ -11263,7 +11334,7 @@ ShowAsIterativeProgress()
 
 	# Show single action package progress as an incrementing amount with no limit.
 
-	# input:
+	# Input:
 	#	$1 = operation 		"calculating"
 	#	$2 = count1			15
 	#	$3 = suffix1		"iterations"
@@ -11294,7 +11365,7 @@ ShowAsIterativeProgress()
 ShowAsActionLogDetail()
 	{
 
-	# input:								example:
+	# Input:								example:
 	#   $1 = datetime in seconds (unused)
 	#   $2 = package or group name			`SABnzbd`, `essential`
 	#   $3 = action							`download`, 'downloaded'
@@ -11345,7 +11416,7 @@ OpStepClearWait()
 
 	# Displays script operation message from beginning of line, remain on this line, and leave cursor at end.
 
-	# input:
+	# Input:
 	#	$1 = a 4 character string such as `info`, `proc`, `done`, `derp`.
 	#	$2 = detailed message.
 
@@ -11363,7 +11434,7 @@ OpStepClear()
 
 	# Displays script operation message from beginning of line, jump down a line, and leave cursor at start.
 
-	# input:
+	# Input:
 	#	$1 = a 4 character string such as `info`, `proc`, `done`, `derp`.
 	#	$2 = detailed message.
 
@@ -11379,7 +11450,7 @@ OpStepClear()
 WriteToLog()
 	{
 
-	# input:
+	# Input:
 	#	$1 = pass/fail
 	#	$2 = message
 
@@ -11603,7 +11674,7 @@ FormatMillisecsToMinutesSecs()
 
 	# http://stackoverflow.com/questions/12199631/convert-seconds-to-hours-minutes-seconds
 
-	# input:
+	# Input:
 	#	$1 = a time in milliseconds to convert to `S seconds` or `Mm:SSs`.
 
 	local seconds=$((${1:-0}/1000))
@@ -11629,7 +11700,7 @@ FormatSecsToHoursMinutesSecs()
 
 	# http://stackoverflow.com/questions/12199631/convert-seconds-to-hours-minutes-seconds
 
-	# input:
+	# Input:
 	#	$1 = a time in seconds to convert to `HHh:MMm:SSs`.
 
 	((h=${1:-0}/3600))
@@ -11643,7 +11714,7 @@ FormatSecsToHoursMinutesSecs()
 FormatLongMinutesSecs()
 	{
 
-	# input:
+	# Input:
 	#	$1 = a time in long minutes and seconds to convert to `MMMm:SSs`.
 
 	# separate minutes from seconds
@@ -11661,7 +11732,7 @@ FormatLongMinutesSecs()
 sleep()
 	{
 
-	# input:
+	# Input:
 	#	$1 = seconds to sleep (decimal or integer) (optional), default is 1 second.
 
 	local n=${1:-}
@@ -11688,6 +11759,7 @@ Objects:Load()
 	[[ ${objects_loaded:=false} = false ]] || return 0
 
 	Func:Init
+
 	Lists:Load
 
 	if [[ ! -e $PWD/dont-refresh-objects ]]; then
@@ -11726,6 +11798,7 @@ Packages:Load()
 	[[ ${packages_loaded:=false} = false ]] || return 0
 
 	Func:Init
+
 	Objects:Load
 
 	if [[ ! -e $PWD/dont-refresh-packages ]]; then
