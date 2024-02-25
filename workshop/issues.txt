@@ -1,5 +1,25 @@
 Observed issues:
 
+	* 'check' didn't show action results afterward.
+		-------------------------------------------------------------------------------------------------------------------------
+		[/share/Public] # ./sherpa-manager.source c
+		sherpa v<?build_date?>-unstable
+		done: actions complete.
+
+		-------------------------------------------------------------------------------------------------------------------------
+
+	* QDK not installing:
+		-------------------------------------------------------------------------------------------------------------------------
+		[/share/Public] # ./sherpa-manager.source add qdk
+		sherpa v<?build_date?>-unstable
+
+		done: actions complete.
+
+		• These actions were skipped:
+			download QDK: existing file 'QDK_2.3.13.zip' checksum correct.
+			install QDK: cache file 'QDK_2.3.13.qpkg' has incorrect checksum.
+		-------------------------------------------------------------------------------------------------------------------------
+
 	* Extra linespace before report:
 		-------------------------------------------------------------------------------------------------------------------------
 		[/share/Public] # ./sherpa-manager.source d
