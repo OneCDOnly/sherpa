@@ -1,5 +1,58 @@
 Observed issues:
 
+	* Extra linespace before report:
+		-------------------------------------------------------------------------------------------------------------------------
+		[/share/Public] # ./sherpa-manager.source d
+		sherpa v<?build_date?>-unstable
+
+
+		• Package dependencies are automatically installed/started/stopped/restarted as-required.
+
+		• Requirements shown in "* orange" prevent the package being installed.
+
+		• Those shown in "! red" are preventing the package from working correctly.
+
+		• QPKG name:         • dependencies:              • installed?  • enabled?  • min RAM:      • min OS:  • max OS:  • supported arch?
+		ClamAV             - Entware                      false         N/A         1,572,864kB     4.0.0      none       true
+		Deluge-server      - Entware                      false         N/A         none            4.0.0      none       true
+		Deluge-web         - Entware, Deluge-server       false         N/A         none            4.0.0      none       true
+		duf                - none                         true          true        none            4.0.0      none       true
+		Entware            - none                         true          true        none            4.0.0      none       true
+		Glances            - Entware                      false         N/A         none            4.0.0      none       true
+		Headphones         - Entware                      false         N/A         none            4.0.0      none       true
+		HideThatBanner     - none                         false         N/A         none            4.0.0      none       true
+		IncreaseTimeouts   - none                         true          true        none            4.3.0      none       true
+		inxi               - Entware                      false         N/A         none            4.0.0      none       true
+		Kapowarr           - Entware                      false         N/A         none            4.0.0      none       true
+		LazyLibrarian      - Entware                      false         N/A         none            4.0.0      none       true
+		OLidarr            - none                         false         N/A         none            4.4.1      none       true
+		OMedusa            - Entware                      false         N/A         none            4.0.0      none       true
+		Mylar3             - Entware                      false         N/A         none            4.0.0      none       true
+		NZBGet             - Entware                      false         N/A         none            4.0.0      none       true
+		NZBHydra2          - Entware                      false         N/A         none            4.0.0      none       true
+		nzbToMedia         - Entware                      false         N/A         none            4.0.0      none       true
+		OliveTin           - none                         false         N/A         none            4.0.0      none       true
+		Par2               - none                         false         N/A         none            4.2.5      none     * false
+		Par2turbo          - none                       ! missing       true        none            4.2.5      none       true
+		pyLoad             - Entware                      false         N/A         none            4.0.0      none       true
+		OqBittorrent       - Entware                      false         N/A         none            4.0.0      none       true
+		QDK                - none                         false         N/A         none            4.0.0      none       true
+		OReadarr           - none                         false         N/A         none            4.4.1      none       true
+		RunLast            - none                         false         N/A         none            4.0.0      none       true
+		SABnzbd            - Entware, Par2turbo, Unrar    true          true        none            4.0.0      none       true
+		sha3sum            - none                         false         N/A         none            4.0.0      none     * false
+		sherpa             - none                         true          true        none            4.0.0      none       true
+		OSickGear          - Entware                      false         N/A         none            4.0.0      none       true
+		OSonarr            - none                         false         N/A         none            4.4.1      none       true
+		SortMyQPKGs        - none                         false         N/A         none            4.0.0      none       true
+		OTautulli          - Entware                      false         N/A         none            4.0.0      none       true
+		OTransmission      - Entware                      false         N/A         none            4.0.0      none       true
+		Unrar              - none                       ! missing       true        none            4.3.3      none       true
+		OWatcher3          - Entware                      false         N/A         none            4.0.0      none       true
+		WebSSH             - Entware                      false         N/A         none            4.0.0      none       true
+		OWhisparr          - none                         false         N/A         none            4.4.1      none       true
+		-------------------------------------------------------------------------------------------------------------------------
+
 	* 'sherpa start inactive' fails to find any inactive packages.
 		- Must get 'status' of each package first.
 
