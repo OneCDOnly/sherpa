@@ -8377,7 +8377,7 @@ _QPKG:reactivate_()
 		RunAndLog "$service_pathfile restart" "$LOG_PATHFILE" log:failure-only
 		z=$?
 	fi
-z=1
+
 	if [[ $z -eq 0 ]]; then
 		QPKG.ServiceStatus:Log
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reactivate ok
