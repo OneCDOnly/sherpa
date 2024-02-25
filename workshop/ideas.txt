@@ -58,8 +58,6 @@
 		Platform = ARM_AL
 		-------------------------------------------------------------------------------------------------------------------------
 
-* Download management, objects and packages archive in one go. Maybe package them together?
-
 * Show results report in file viewport.
 
 * Results report wording should account for single QPKG actions.
