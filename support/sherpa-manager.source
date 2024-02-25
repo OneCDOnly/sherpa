@@ -4879,11 +4879,9 @@ DisplayAsIndentActionResultDurationReason()
 	printf "%${ACTION_RESULT_INDENT}s" ''
 
 	if [[ -z ${4:-} ]]; then
-		printf "%s %s%s" "$(Lowercase "$action")" "$2" "$([[ -n $duration ]] && printf ' in %s' "$duration")."
-	elif [[ ${4: -1} = "😉" ]]; then
-		printf "%s %s%s: %s" "$(Lowercase "$action")" "$2" "$([[ -n $duration ]] && printf ' in %s' "$duration")" "$4"
+		printf "%s %s%s" "$(Lowercase "$action")" "$2" "$([[ -n $duration ]] && printf ' in %s' "$duration")"
 	else
-		printf "%s %s%s: %s" "$(Lowercase "$action")" "$2" "$([[ -n $duration ]] && printf ' in %s' "$duration")" "$4."
+		printf "%s %s%s (%s)" "$(Lowercase "$action")" "$2" "$([[ -n $duration ]] && printf ' in %s' "$duration")" "$4"
 	fi
 
 	printf '\n'; linespace_visible=false
@@ -5189,10 +5187,10 @@ Report.Results:Show()
 							[[ $found = false ]] && DisplayAsHelpTitle "$plural completed $(TextBrightGreen OK):"
 							;;
 						skipped*)
-							[[ $found = false ]] && DisplayAsHelpTitle "$plural were $(TextBrightOrange skipped):"
+							[[ $found = false ]] && DisplayAsHelpTitle "$plural were $(TextBrightOrange skipped) (and why):"
 							;;
 						failed)
-							[[ $found = false ]] && DisplayAsHelpTitle "$plural $(TextBrightRed failed):"
+							[[ $found = false ]] && DisplayAsHelpTitle "$plural $(TextBrightRed failed) (and why):"
 					esac
 
 					ShowAsActionLogDetail "$datetime" "$package_name" "$action" "$result" "$duration" "$reason"
@@ -8379,7 +8377,7 @@ _QPKG:reactivate_()
 		RunAndLog "$service_pathfile restart" "$LOG_PATHFILE" log:failure-only
 		z=$?
 	fi
-
+z=1
 	if [[ $z -eq 0 ]]; then
 		QPKG.ServiceStatus:Log
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reactivate ok
