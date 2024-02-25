@@ -1,12 +1,5 @@
 Observed issues:
 
-	* Unwanted exit:
-		-------------------------------------------------------------------------------------------------------------------------
-		[/share/Public] # sherpa colour on
-		done: 'Colourful = true' has been written as a persistent setting.
-		proc: loading QPKG list ... [/share/Public] #
-		-------------------------------------------------------------------------------------------------------------------------
-
 	* QDK not installing:
 		-------------------------------------------------------------------------------------------------------------------------
 		[/share/Public] # ./sherpa-manager.source add qdk
