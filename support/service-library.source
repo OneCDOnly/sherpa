@@ -52,7 +52,8 @@ InitLibrary()
 	readonly DAEMON_CHECK_TIMEOUT_SECONDS=60
 	readonly DAEMON_STOP_TIMEOUT_SECONDS=120
 	readonly PIDFILE_APPEAR_TIMEOUT_SECONDS=60
-	readonly PID_RECHECK_WAIT_SECONDS=10		# Adaptive. This value is for a single-core CPU and 1m load average of 1.0
+	readonly PID_START_RECHECK_WAIT_SECONDS=10		# Must make this adaptive. This value is for a single-core CPU and 1m load average of 1.0
+	readonly PID_STOP_RECHECK_WAIT_SECONDS=10		# Must make this adaptive. This value is for a single-core CPU and 1m load average of 1.0
 	readonly PORT_CHECK_TIMEOUT_SECONDS=240
 
 	readonly BACKUP_PATH=$(/sbin/getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
@@ -936,9 +937,9 @@ WaitForStartPID()
 	fi
 
 	if [[ $recheck_daemon_pid_after_launch = true ]]; then
-		DisplayWaitCommitToLog "wait $PID_RECHECK_WAIT_SECONDS second$(Pluralise "$PID_RECHECK_WAIT_SECONDS") to recheck PID:"
+		DisplayWaitCommitToLog "wait $PID_START_RECHECK_WAIT_SECONDS second$(Pluralise "$PID_START_RECHECK_WAIT_SECONDS") to recheck PID:"
 
-		for ((i=1; i<=PID_RECHECK_WAIT_SECONDS; i++)); do
+		for ((i=1; i<=PID_START_RECHECK_WAIT_SECONDS; i++)); do
 			/bin/sleep 1
 			DisplayWait "$i,"
 		done
@@ -956,9 +957,9 @@ WaitForKillPID()
 	local -i i=0
 
 	if [[ $recheck_daemon_pid_after_kill = true ]]; then
-		DisplayWaitCommitToLog "wait $PID_RECHECK_WAIT_SECONDS second$(Pluralise "$PID_RECHECK_WAIT_SECONDS") to recheck PID:"
+		DisplayWaitCommitToLog "wait $PID_STOP_RECHECK_WAIT_SECONDS second$(Pluralise "$PID_STOP_RECHECK_WAIT_SECONDS") to recheck PID:"
 
-		for ((i=1; i<=PID_RECHECK_WAIT_SECONDS; i++)); do
+		for ((i=1; i<=PID_STOP_RECHECK_WAIT_SECONDS; i++)); do
 			/bin/sleep 1
 			DisplayWait "$i,"
 		done
