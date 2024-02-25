@@ -1333,6 +1333,7 @@ Action:Proc()
 
 			if [[ $total_count -eq 0 ]]; then
 				DebugInfo 'nothing to process'
+
 				Func:Exit; return
 			fi
 
@@ -2249,6 +2250,13 @@ ParseListArgs()
 
 		if [[ -n $action && -n $group ]]; then
 			case $action in
+				show)
+					awaiting_group=false
+					bypass_package_actions=true
+					bypass_package_states=true
+					generate_show_report=true
+					useropt_show_backups=true
+					;;
 				list)
 					case $group in
 						abs)
@@ -3053,6 +3061,7 @@ CalcIpkDepsToInstall()
 
 	if [[ $requested_count -eq 0 ]]; then
 		DebugAsWarn 'no IPKs requested'
+
 		Func:Exit 1; return
 	fi
 
@@ -4815,9 +4824,7 @@ DisplayAsHelpTitleFileNamePlusSomething()
 	#	$1 = file name title
 	#	$2 = second column title
 
-	WriteEmptyLineIfNoneExists
 	printf "${CHARS_BULLET}%-${FILE_NAME_COL_WIDTH}s ${CHARS_BULLET}%s\n" "$(Capitalise "${1:-}"):" "$(Capitalise "${2:-}"):"
-	linespace_visible=false
 
 	}
 
@@ -4827,9 +4834,7 @@ DisplayAsHelpTitle()
 	# input:
 	#	$1 = text
 
-	WriteEmptyLineIfNoneExists
-	printf "${CHARS_BULLET}%s\n" "$(Capitalise "${1:-}" | tr -s ' ')"
-	linespace_visible=false
+	printf "\n${CHARS_BULLET}%s\n" "$(Capitalise "${1:-}" | tr -s ' ')"
 
 	}
 
@@ -4839,10 +4844,8 @@ DisplayAsHelpTitleHighlighted()
 	# input:
 	#	$1 = text
 
-	WriteEmptyLineIfNoneExists
 	# shellcheck disable=2059
 	printf "$(TextBrightOrange "${CHARS_BULLET}%s\n")" "$(Capitalise "${1:-}")"
-	linespace_visible=false
 
 	}
 
@@ -4890,18 +4893,20 @@ DisplayAsIndentActionResultDurationReason()
 EraseThisLine()
 	{
 
-	# Reset cursor to start-of-line, erasing entire line.
+	# Reset cursor to start-of-line, erasing entire line, and stay on this line.
 
 	[[ ${useropt_verbose:=false} = false ]] && printf '\033[2K\r'
-# 	linespace_visible=true
 
 	} >&2
 
 Display()
 	{
 
-	printf '%s\n' "${1:-}"
-	linespace_visible=false
+	if [[ -z ${1:-} ]]; then
+		printf '\n'
+	else
+		printf '%s\n' "$1"; linespace_visible=false
+	fi
 
 	}
 
@@ -5167,8 +5172,6 @@ Report.Results:Show()
 	local singular='this action'
 	local plural='these actions'
 
-	DisplayProcReport results
-
 		{
 
 		if [[ -e $SESS_ACTIONS_RESULTS_PATHFILE ]]; then
@@ -5211,12 +5214,11 @@ Report.Results:Show()
 			esac
 		fi
 
-		Display
-
 		} > "$REPORT_OUTPUT_PATHFILE"
 
-	EraseThisLine
-	[[ -e $REPORT_OUTPUT_PATHFILE ]] && $CAT_CMD "$REPORT_OUTPUT_PATHFILE"
+	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
+		$CAT_CMD "$REPORT_OUTPUT_PATHFILE"
+	fi
 
 	return 0
 
@@ -5481,6 +5483,7 @@ DisplayFileInViewport()
 			[[ $showlinenumbers = true ]] && options+=' --LINE-NUMBERS'
 			[[ $jumptoend = true ]] && options+=' +G'
 			LESSSECURE=1 ${GNU_LESS_CMD}${options} --prompt "$prompt" "$filename"
+			linespace_visible=false
 			return
 		fi
 
@@ -5489,6 +5492,7 @@ DisplayFileInViewport()
 			[[ $wraplines = false ]] && options+='S'
 			[[ $showlinenumbers = true ]] && options+='N'
 			${LESS_CMD}${options} "$filename"
+			linespace_visible=false
 			return
 		fi
 	fi
@@ -5496,15 +5500,18 @@ DisplayFileInViewport()
 	if [[ -e $CAT_CMD ]]; then
 		[[ $showlinenumbers = true ]] && options+=' --number'
 		${CAT_CMD}${options} "$filename"
+		linespace_visible=false
 		return
 	elif [[ -e $MORE_CMD ]]; then
 		$MORE_CMD "$filename"
+		linespace_visible=false
 		return
 	fi
 
 	# and, when there's no-better-option ...
 
 	echo "$(<$1)"
+	linespace_visible=false
 
 	}
 
@@ -6469,7 +6476,7 @@ Help.Abbreviations:Show()
 		[[ -e $f ]] && b+="$(<$f)\n"		# add newline to each imported report line
 	done
 
-	[[ -n $b ]] && echo -e "$b" >>"$REPORT_OUTPUT_PATHFILE"
+	[[ -n $b ]] && echo -en "$b" >>"$REPORT_OUTPUT_PATHFILE"
 
 		{
 
@@ -6564,6 +6571,7 @@ Report.Dependencies:Show()
 		DisplayAsHelpTitle "package dependencies are automatically installed/started/stopped/restarted as-required."
 		DisplayAsHelpTitle "requirements shown in \"$(TextBrightOrange '* orange')\" prevent the package being installed."
 		DisplayAsHelpTitle "those shown in \"$(TextBrightRed '! red')\" are preventing the package from working correctly."
+		Display
 		DisplayAsDepsReportTitleLine
 
 		} >"$REPORT_OUTPUT_PATHFILE"
@@ -6583,7 +6591,8 @@ Report.Dependencies:Show()
 		[[ -e $f ]] && b+="$(<$f)\n"		# add newline to each imported report line
 	done
 
-	[[ -n $b ]] && echo -e "$b" >>"$REPORT_OUTPUT_PATHFILE"
+	[[ -n $b ]] && echo -en "$b" >>"$REPORT_OUTPUT_PATHFILE"
+
 	EraseThisLine
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
@@ -6668,9 +6677,9 @@ Report.Repos:Show()
 		[[ -e $f ]] && b+="$(<$f)\n"		# add newline to each imported report line
 	done
 
-	[[ -n $b ]] && echo -e "$b" >>"$REPORT_OUTPUT_PATHFILE"
+	[[ -n $b ]] && echo -en "$b" >>"$REPORT_OUTPUT_PATHFILE"
+
 	EraseThisLine
-	WriteEmptyLineIfNoneExists
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
 		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
@@ -6717,8 +6726,10 @@ Report.Statuses:Show()
 		[[ -e $f ]] && b+="$(<$f)\n"		# add newline to each imported report line
 	done
 
-	[[ -n $b ]] && echo -e "$b" >>"$REPORT_OUTPUT_PATHFILE"
+	[[ -n $b ]] && echo -en "$b" >>"$REPORT_OUTPUT_PATHFILE"
+
 	EraseThisLine
+	WriteEmptyLineIfNoneExists				# Need this to separate the "done: actions complete" message shown earlier.
 
 	if QPKGs-ISslow.IsAny; then
 		{
@@ -10480,7 +10491,6 @@ Title:Show()
 	fi
 
 	title_shown=true
-	WriteEmptyLineIfNoneExists
 
 	}
 
@@ -10619,10 +10629,7 @@ WriteEmptyLineIfNoneExists()
 	{
 
 	if [[ $linespace_visible = false ]]; then
-		echo
-		linespace_visible=true
-	else
-		linespace_visible=false
+		echo; linespace_visible=true
 	fi
 
 	}
@@ -11701,6 +11708,7 @@ Objects:Load()
 
 	if [[ ! -e $OBJECTS_PATHFILE ]]; then
 		ShowAsAbort 'objects missing'
+
 		Func:Exit 1; exit
 	fi
 
@@ -11711,6 +11719,7 @@ Objects:Load()
 
 	readonly OBJECTS_VER
 	DebugVar OBJECTS_VER
+
 	Func:Exit
 
 	}
@@ -11737,6 +11746,7 @@ Packages:Load()
 
 	if [[ ! -e $PACKAGES_PATHFILE ]]; then
 		ShowAsAbort 'QPKG list missing'
+
 		Func:Exit 1; exit
 	fi
 
@@ -11782,6 +11792,7 @@ Packages:Load()
 	DebugVar PACKAGES_VER
 	QPKGs-SCall:Add "${QPKG_NAME[*]}"
 	QPKGs.IndependentDependent:Build
+
 	Func:Exit
 
 	}
