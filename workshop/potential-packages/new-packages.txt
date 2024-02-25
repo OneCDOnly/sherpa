@@ -1,3 +1,6 @@
+* bitmagnet?
+	- https://bitmagnet.io
+
 * Tdarr?
 	- https://docs.tdarr.io/docs/installation/windows-linux-macos
 

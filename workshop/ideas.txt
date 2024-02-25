@@ -1,3 +1,6 @@
+* • These actions were skipped (and why):
+      download Entware: (existing file 'Entware_1.03a_std.qpkg' checksum correct).
+
 *  There should be distinct argument parsers for:
 	- script management functions:
 		'debug' (dbug)
@@ -16,8 +19,10 @@
 		- (and generate basic reports with no heading).
 
 	- 'show':
-		results, dependencies (d), backups, packages (p), repositories (r), log, last,
+		results, dependencies (d), backups, packages (p), repositories (r),
 		- (and generate full reports).
+		log, last,
+		- (and generate dull reports).
 
 	- the usual QPKG actions:
 		- activate, status (s), (and generate full reports).
