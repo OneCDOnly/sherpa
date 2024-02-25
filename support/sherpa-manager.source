@@ -1633,6 +1633,7 @@ ParseManagementArgs()
 				;;
 		# All cases below can use multiple user-provided words or chars to specify a single action.
 			c|check)
+				generate_show_report=true
 				new_action=check
 				requires_group=false
 				useropt_check=true
