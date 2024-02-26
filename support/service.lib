@@ -1775,14 +1775,12 @@ ShowHelp
 CalcAdaptiveSeconds()
 {
 local a=$(GetSysLoad1MinAverage); a=${a/./}
-local b=$((10#$(GetCPUCores)*100))
+local b=$(($(GetCPUCores)*100))
 local c=$((10#$a/10#$b))
 local d=$((10#${1:-1}))
-if [[ $c -gt 1 ]]; then
-echo -n "$((c*d))"
-else
+[[ $((10#$c)) -gt 1 ]] && d=$((c*d))
+[[ $((10#$d)) -gt 1800 ]] && d=1800
 echo -n "$d"
-fi
 }
 GetSysLoad1MinAverage()
 {
