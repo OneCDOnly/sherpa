@@ -6636,7 +6636,6 @@ Report.Dependencies:Show()
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
 		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
-		Display
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -6680,7 +6679,6 @@ Report.Packages:Show()
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
 		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
-		Display
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -6730,7 +6728,6 @@ Report.Repos:Show()
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
 		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
-		Display
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -6791,7 +6788,6 @@ Report.Statuses:Show()
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
 		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
-		Display
 	else
 		ShowAsError 'no information to display'
 	fi
