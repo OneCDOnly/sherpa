@@ -7920,10 +7920,10 @@ _QPKG:install_()
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" install skipped-error 'no local file found for processing: please report this issue'
 		MarkThisActionForkAsSkippedError
 		z=4
-	elif ! FileMatchesMD5 "$local_pathfile" "$(QPKG.GetHash "$PACKAGE_NAME")"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" install skipped-error "cache file $(ShowAsFileName "$($BASENAME_CMD "$local_pathfile")") has incorrect checksum"
-		MarkThisActionForkAsSkippedError
-		z=4
+# 	elif ! FileMatchesMD5 "$local_pathfile" "$(QPKG.GetHash "$PACKAGE_NAME")"; then
+# 		SaveActionResultToLog QPKG "$PACKAGE_NAME" install skipped-error "cache file $(ShowAsFileName "$($BASENAME_CMD "$local_pathfile")") has incorrect checksum"
+# 		MarkThisActionForkAsSkippedError
+# 		z=4
 	fi
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
@@ -8028,10 +8028,10 @@ _QPKG:reinstall_()
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reinstall skipped-error 'no local file found for processing, please report this issue.'
 		MarkThisActionForkAsSkippedError
 		z=4
-	elif ! FileMatchesMD5 "$local_pathfile" "$(QPKG.GetHash "$PACKAGE_NAME")"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" reinstall skipped-error "cache file $(ShowAsFileName "$($BASENAME_CMD "$local_pathfile")") has incorrect checksum"
-		MarkThisActionForkAsSkippedError
-		z=4
+# 	elif ! FileMatchesMD5 "$local_pathfile" "$(QPKG.GetHash "$PACKAGE_NAME")"; then
+# 		SaveActionResultToLog QPKG "$PACKAGE_NAME" reinstall skipped-error "cache file $(ShowAsFileName "$($BASENAME_CMD "$local_pathfile")") has incorrect checksum"
+# 		MarkThisActionForkAsSkippedError
+# 		z=4
 	fi
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
@@ -8160,10 +8160,10 @@ _QPKG:upgrade_()
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" upgrade skipped-error 'no local file found for processing, please report this issue'
 		MarkThisActionForkAsSkippedError
 		z=4
-	elif ! FileMatchesMD5 "$local_pathfile" "$(QPKG.GetHash "$PACKAGE_NAME")"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" upgrade skipped-error "cache file $(ShowAsFileName "$($BASENAME_CMD "$local_pathfile")") has incorrect checksum"
-		MarkThisActionForkAsSkippedError
-		z=4
+# 	elif ! FileMatchesMD5 "$local_pathfile" "$(QPKG.GetHash "$PACKAGE_NAME")"; then
+# 		SaveActionResultToLog QPKG "$PACKAGE_NAME" upgrade skipped-error "cache file $(ShowAsFileName "$($BASENAME_CMD "$local_pathfile")") has incorrect checksum"
+# 		MarkThisActionForkAsSkippedError
+# 		z=4
 	fi
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
