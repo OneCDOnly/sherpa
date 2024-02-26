@@ -842,7 +842,7 @@ Tasks:Check()
 		build_states=true
 	elif [[ $useropt_show_dependencies = true || $useropt_show_packages = true || $useropt_show_repos = true ]]; then
 		build_states=true
-	elif [[ $useropt_help_actions = true || $useropt_help_actions_all = true || $useropt_help_groups = true || $useropt_help_lists = true || $useropt_help_packages = true || $useropt_help_problems = true || $useropt_help_tips = true || $useropt_help_upgrades = true || $useropt_show_results = true ]]; then
+	elif [[ $useropt_help_actions = true || $useropt_help_actions_all = true || $useropt_help_groups = true || $useropt_help_lists = true || $useropt_help_options = true || $useropt_help_packages = true || $useropt_help_problems = true || $useropt_help_tips = true || $useropt_help_upgrades = true || $useropt_show_results = true ]]; then
 		: # don't do anything
 	else
 		Packages:Load
