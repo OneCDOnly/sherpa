@@ -179,6 +179,7 @@ Results:Show()
 		[[ $show_package_actions_skipped = true ]] && Report.Results:Show skipped
 		[[ $show_package_actions_failed = true ]] && Report.Results:Show failed
 		[[ $show_zero_qpkgs = true ]] && ShowZeroQpkgs
+		Display
 	fi
 
 	[[ $show_backuploc = true ]] && Help.BackupLocation:Show
@@ -1620,10 +1621,6 @@ ParseManagementArgs()
 
 		case $arg in
 		# These cases use only a single user-provided word to specify a single action.
-			follow|paste)
-				new_action=$arg
-				requires_group=true
-				;;
 			reset)
 				new_action=reset
 				requires_group=false
@@ -1636,7 +1633,7 @@ ParseManagementArgs()
 				requires_group=false
 				useropt_check=true
 				;;
-			color|colour|colorful|colourful)
+			color|colour|colorful|colourful|follow|paste)
 				new_action=$arg
 				requires_group=true
 				;;
@@ -2327,6 +2324,7 @@ ParseActionArgs()
 	local awaiting_group=false
 	local group=''
 	local new_action=''
+	local real_action=''
 	local requires_group=false
 
 	[[ -n ${args[*]:-} ]] && Packages:Load
@@ -2351,20 +2349,12 @@ ParseActionArgs()
 				requires_group=true
 				;;
 		# All cases below can use multiple user-provided words or chars to specify a single action.
-			activate|start)
-				new_action=activate
+			activate|deactivate|reactivate|restart|start|stop)
+				new_action=$arg
 				requires_group=true
 				;;
 			add|install)
 				new_action=install
-				requires_group=true
-				;;
-			deactivate|stop)
-				new_action=deactivate
-				requires_group=true
-				;;
-			reactivate|restart)
-				new_action=reactivate
 				requires_group=true
 				;;
 			rm|remove|uninstall)
@@ -2391,6 +2381,22 @@ ParseActionArgs()
 			group=''	 			# When action changes, must clear group.
 			continue
 		fi
+
+		# Reassign action variants to base action.
+
+		case $action in
+			activate|start)
+				real_action=activate
+				;;
+			deactivate|stop)
+				real_action=deactivate
+				;;
+			reactivate|restart)
+				real_action=reactivate
+				;;
+			*)
+				real_action=$action
+		esac
 
 		# Identify group.
 
@@ -2436,20 +2442,20 @@ ParseActionArgs()
 
 		# Pair action with group.
 
-		if [[ -n $action && -n $group ]]; then
+		if [[ -n $real_action && -n $group ]]; then
 			case $group in
 				all|canbackup|canclean|canrestarttoupdate|dependent|hasdependents|independent|installable|upgradable|NTcanclean|NTinstallable|NTupgradable)
-					QPKGs.AC${action}.SC${group}:Set
+					QPKGs.AC${real_action}.SC${group}:Set
 					awaiting_group=false
 					generate_action_report=true
 					;;
 				active|backedup|enabled|installed|missing|NTactive|NTbackedup|NTenabled|NTinstalled)
-					QPKGs.AC${action}.IS${group}:Set
+					QPKGs.AC${real_action}.IS${group}:Set
 					awaiting_group=false
 					generate_action_report=true
 					;;
 				*)
-					QPKGs-AC${action}-to:Add "$group"
+					QPKGs-AC${real_action}-to:Add "$group"
 					awaiting_group=false
 					generate_action_report=true
 			esac
@@ -2512,7 +2518,7 @@ ArgSuggestions:Show()
 
 		for arg in "${args_incomplete[@]}"; do
 			case $arg in
-				activate|backup|uninstall)
+				activate|backup|deactivate|restart|reactivate|start|stop|uninstall)
 					DisplayAsProjSynExam "please provide valid $(ShowPackages) or a $(ShowPackageGroup) after '$arg' like" "$arg installed"
 					arg_problem=true
 					useropt_help_basic=false
