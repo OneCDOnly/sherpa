@@ -1,3 +1,7 @@
+* Add 'terse on/off' as a user option.
+	- Might need to manually disable it in UpdateForkProgress() to reduce screen clutter.
+	- First add an optional arg to ShowAsProc() to force terse mode (ignore current $useropt_terse setting).
+
 * If sherpa QPKG is auto-upgraded, should auto-show an action report.
 
 *  There should be distinct argument parsers for:
