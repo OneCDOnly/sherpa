@@ -52,8 +52,8 @@ InitLibrary()
 	readonly DAEMON_CHECK_TIMEOUT_SECONDS=60
 	readonly DAEMON_STOP_TIMEOUT_SECONDS=120
 	readonly PIDFILE_APPEAR_TIMEOUT_SECONDS=60
-	readonly PID_START_RECHECK_WAIT_SECONDS=10		# Must make this adaptive. This value is for a single-core CPU and 1m load average of 1.0
-	readonly PID_STOP_RECHECK_WAIT_SECONDS=10		# Must make this adaptive. This value is for a single-core CPU and 1m load average of 1.0
+	readonly PID_START_RECHECK_WAIT_SECONDS=$(CalcAdaptiveSeconds 10)	# This value is for a single-core CPU and 1m load average of 1.0
+	readonly PID_STOP_RECHECK_WAIT_SECONDS=$(CalcAdaptiveSeconds 10)	# This value is for a single-core CPU and 1m load average of 1.0
 	readonly PORT_CHECK_TIMEOUT_SECONDS=240
 
 	readonly BACKUP_PATH=$(/sbin/getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
@@ -2766,6 +2766,46 @@ ShowUnsupportedAction()
 	CommitToLog "specified action '$1' is unsupported."
 	Display
 	ShowHelp
+
+	}
+
+CalcAdaptiveSeconds()
+	{
+
+	# Input:
+	# 	$1 = integer of base seconds (to suit 1m load average of 1.0 on a single-core CPU).
+
+	# Output:
+	#   stdout = integer of adapted seconds based-on present 1 minute load average.
+
+	local a=$(GetSysLoad1MinAverage); a=${a/./}		# Convert to hundreds.
+	local b=$((10#$(GetCPUCores)*100))				# Match conversion amount for $a.
+	local c=$((10#$a/10#$b))
+	local d=$((10#${1:-1}))
+
+	if [[ $c -gt 1 ]]; then
+		echo -n "$((c*d))"
+	else
+		echo -n "$d"
+	fi
+
+	}
+
+GetSysLoad1MinAverage()
+	{
+
+	/usr/bin/uptime | /bin/sed 's|.*load average: ||' | /bin/awk -F', ' '{print $1}'
+
+	}
+
+GetCPUCores()
+	{
+
+	local n=$(/bin/grep -c '^processor' /proc/cpuinfo)
+
+	[[ $n -eq 0 ]] && n=$(/bin/grep -c '^Processor' /proc/cpuinfo)
+
+	echo -n "$n"
 
 	}
 
