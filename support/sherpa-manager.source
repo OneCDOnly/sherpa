@@ -842,7 +842,7 @@ Tasks:Check()
 		build_states=true
 	elif [[ $useropt_show_dependencies = true || $useropt_show_packages = true || $useropt_show_repos = true ]]; then
 		build_states=true
-	elif [[ $useropt_show_results = true || $useropt_help_tips = true ]]; then
+	elif [[ $useropt_help_actions = true || $useropt_help_actions_all = true || $useropt_help_groups = true || $useropt_help_lists = true || $useropt_help_packages = true || $useropt_help_problems = true || $useropt_help_tips = true || $useropt_help_upgrades = true || $useropt_show_results = true ]]; then
 		: # don't do anything
 	else
 		Packages:Load
@@ -3160,7 +3160,7 @@ CalcIpkDownloadSize()
 		size_array=($($GNU_GREP_CMD -w '^Package:\|^Size:' "$EXTERNAL_PACKAGES_PATHFILE" | $GNU_GREP_CMD --after-context 1 --no-group-separator ": $($SED_CMD 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKs-ACdownload-to:List)")" | $GREP_CMD '^Size:' | $SED_CMD 's|^Size: ||'))
 
 		# shellcheck disable=2283
-		IPKs-ACdownload-to:Size = "$(IFS=+; echo "$((${size_array[*]}))")"		# nifty sizing shortcut found here https://stackoverflow.com/a/13635566/6182835
+		IPKs-ACdownload-to:Size = "$(IFS=+; echo "$((${size_array[*]:-}))")"		# nifty sizing shortcut found here https://stackoverflow.com/a/13635566/6182835
 		DebugAsDone "$(FormatAsThous "$(IPKs-ACdownload-to:Size)") bytes ($(FormatAsIsoBytes "$(IPKs-ACdownload-to:Size)")) to download"
 	else
 		DebugAsDone 'no IPKs to size'
@@ -3547,12 +3547,11 @@ _DirSizeMonitor_()
 	#   stdout = "percentage downloaded (downloaded bytes/total expected bytes)".
 
 	[[ -n ${1:?${FUNCNAME[0]}'()': undefined path} ]] || exit
-	[[ -n ${2:?${FUNCNAME[0]}'()': undefined total bytes} ]] || exit
-	[[ -d $1 && $2 -gt 0 ]] || exit
+	[[ -d $1 && ${2:-0} -gt 0 ]] || exit
 	IsSysFileExist $GNU_FIND_CMD || exit
 
 	local -i current_bytes=-1
-	local -i total_bytes=$2
+	local -i total_bytes=${2:-0}
 	local -i last_bytes=0
 	local -i stall_seconds=0
 	local -i stall_seconds_threshold=4
