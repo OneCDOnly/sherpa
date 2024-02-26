@@ -447,7 +447,7 @@ CMDs.IsOk()
 	[[ ! -e $SORT_CMD ]] && ln -s /bin/busybox "$SORT_CMD"	# KLUDGE: `/usr/bin/sort` randomly disappears from QTS.
 
 	# Test if this QTS `sleep` can handle decimal seconds. Early QTS BusyBox versions cannot.
-	readonly DECIMAL_SLEEP_SECONDS_SUPPORTED=$($SLEEP_CMD .01 &>/dev/null && echo true || echo false)
+	readonly DECIMAL_SLEEP_SECONDS_SUPPORTED=$($SLEEP_CMD .01 &>/dev/null && printf true || printf false)
 
 	LocateSQLiteBinary
 
@@ -539,6 +539,7 @@ Env:Load()
 	readonly THIS_PACKAGE_PATH=$(QPKG.GetInstallationPath)
 		if [[ -z $THIS_PACKAGE_PATH || $THIS_PACKAGE_PATH = undefined || ! -d $THIS_PACKAGE_PATH ]]; then
 			ShowAsError "$(ShowTitleName) installation path not found. Please reinstall the $(ShowTitleName) QPKG"
+
 			return 1
 		fi
 
@@ -748,7 +749,7 @@ Debug.Log:Env()
 	DebugUserspace ok 'time in shell' "$(GetTimeInShell)"
 	DebugUserspace ok '$BASH_VERSION' "$BASH_VERSION"
 	DebugUserspace ok 'default volume' "$(GetDefVol)"
-	DebugUserspace ok '/opt' "$($READLINK_CMD /opt 2>/dev/null || echo 'not present')"
+	DebugUserspace ok '/opt' "$($READLINK_CMD /opt 2>/dev/null || printf 'not present')"
 
 	local public_share=$(/sbin/getcfg SHARE_DEF defPublic -d Qpublic -f /etc/config/def_share.info)
 
@@ -764,9 +765,9 @@ Debug.Log:Env()
 		DebugUserspace ok '$PATH (LHS-only)' "${PATH:0:$((DEBUG_LOG_THIRD_COL_WIDTH-${#CHARS_ELLIPSIS}))}${CHARS_ELLIPSIS}"
 	fi
 
-	DebugBinPathVerAndMinVer python "$(GetPythonVer)" "$MIN_PYTHON_VER"
-	DebugBinPathVerAndMinVer python3 "$(GetPython3Ver)" "$MIN_PYTHON_VER"
-	DebugBinPathVerAndMinVer perl "$(GetPerlVer)" "$MIN_PERL_VER"
+	DebugBinPathVerAndMinVer python "$(GetPythonVer)" "${MIN_PYTHON_VER:-undefined}"
+	DebugBinPathVerAndMinVer python3 "$(GetPython3Ver)" "${MIN_PYTHON_VER:-undefined}"
+	DebugBinPathVerAndMinVer perl "$(GetPerlVer)" "${MIN_PERL_VER:-undefined}"
 	DebugScript 'source branch' "$source_branch"
 	DebugScript 'logs path' "$LOGS_PATH"
 	DebugScript 'action concurrency' "$CONCURRENCY"
@@ -840,7 +841,6 @@ Tasks:Check()
 		build_states=true
 	elif [[ $useropt_show_dependencies = true || $useropt_show_packages = true || $useropt_show_repos = true ]]; then
 		build_states=true
-# 		bypass_package_actions=true
 	elif [[ $useropt_show_results = true || $useropt_help_tips = true ]]; then
 		: # don't do anything
 	else
@@ -1676,7 +1676,7 @@ ParseManagementArgs()
 				# Don't set a default action for this group, it should prompt user instead.
 				group=tail
 				;;
-			false|off|disable)
+			disable|false|no|off)
 				# Don't set a default action for this group, it should prompt user instead.
 				group=false
 				;;
@@ -1684,7 +1684,7 @@ ParseManagementArgs()
 				# Don't set a default action for this group, it should prompt user instead.
 				group=last
 				;;
-			true|on|enable)
+			enable|on|true|yes)
 				# Don't set a default action for this group, it should prompt user instead.
 				group=true
 		esac
@@ -2959,6 +2959,7 @@ UpdateEntwarePackageList()
 
 	if IsNtSysFileExist $OPKG_CMD; then
 		DisplayAsProjSynExam 'try reactivating Entware' 'reactivate ew'
+
 		return 1
 	fi
 
@@ -3455,6 +3456,7 @@ OpenIpkArchive()
 
 	if [[ ! -e $EXTERNAL_PACKAGES_ARCHIVE_PATHFILE ]]; then
 		ShowAsError 'unable to locate the IPK list file'
+
 		return 1
 	fi
 
@@ -3462,6 +3464,7 @@ OpenIpkArchive()
 
 	if [[ ! -e $EXTERNAL_PACKAGES_PATHFILE ]]; then
 		ShowAsError 'unable to open the IPK list file'
+
 		return 1
 	fi
 
@@ -3676,6 +3679,7 @@ SwitchSourceBranch()
 
 		ShowAsAbort "'$user_switch_branch' is not a valid branch"
 		bypass_package_actions=true
+
 		return 1
 	fi
 
@@ -3733,6 +3737,7 @@ SwitchColourful()
 
 		ShowAsAbort "'$user_switch_colourful' is not 'true' or 'false'"
 		bypass_package_actions=true
+
 		return 1
 	fi
 
@@ -3815,8 +3820,8 @@ DebugBinPathVerAndMinVer()
 		DebugUserspace warning "'$1' path" 'not present'
 	fi
 
-	if [[ -n ${2:-} ]]; then
-		[[ -n ${3:?${FUNCNAME[0]}'()': undefined version} ]] || return
+	if [[ -n ${2:-} && ${2:-undefined} != undefined ]]; then
+		[[ -n ${3:-} && ${3:-undefined} != undefined ]] || return
 
 		if [[ ${2//./} -ge ${3//./} ]]; then
 			DebugUserspace ok "'$1' version" "$2"
@@ -3846,6 +3851,7 @@ IsSysFileExist()
 
 	if ! [[ -f $a || -L $a ]]; then
 		ShowAsAbort "a required NAS system file is missing $(ShowAsFileName "$a")"
+
 		return 1
 	fi
 
@@ -3874,7 +3880,7 @@ LenANSIDiff()
 
 	local original=${1:-}
 	local stripped=$(StripANSICodes "$original")
-	echo "$((${#original}-${#stripped}))"
+	echo -n "$((${#original}-${#stripped}))"
 
 	return 0
 
@@ -3955,7 +3961,7 @@ DisplayAsProjSynExam()
 	#	$2 = example syntax
 
 	printf "\n${CHARS_BULLET}%s" "$(Capitalise "${1:-}")"
-	[[ ${1: -1} != '!' ]] && echo -n ':'
+	[[ ${1: -1} != '!' ]] && printf ':'
 
 	printf "\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_SUDO_PREFIX}%s\n" '' "sherpa ${2:-}"
 
@@ -3972,7 +3978,7 @@ DisplayAsProjSynIndentExam()
 
 	if [[ -n $1	]]; then
 		printf "\n%${HELP_DESC_INDENT}s%s" '' "$(Capitalise "${1:-}")"
-		[[ ${1: -1} != '!' ]] && echo -n ':'
+		[[ ${1: -1} != '!' ]] && printf ':'
 		printf '\n'
 	fi
 
@@ -3997,6 +4003,8 @@ DisplayAsPackagesReportTitleLine()
 	{
 
 	local a=''
+
+	printf '\n'
 
 	# column 1: package name
 
@@ -4095,6 +4103,8 @@ DisplayAsStatusReportTitleLine()
 	{
 
 	local a=''
+
+	printf '\n'
 
 	# column 1: package name
 
@@ -4279,6 +4289,8 @@ DisplayAsReposReportTitleLine()
 
 	local a=''
 
+	printf '\n'
+
 	# column 1: package name
 
 	if [[ $max_cols -ge 1 ]]; then
@@ -4398,6 +4410,8 @@ DisplayAsAbsReportTitleLine()
 
 	local a=''
 
+	printf '\n'
+
 	# column 1: package name
 
 	if [[ $max_cols -ge 1 ]]; then
@@ -4488,6 +4502,8 @@ DisplayAsDepsReportTitleLine()
 	{
 
 	local a=''
+
+	printf '\n'
 
 	# column 1: package name
 
@@ -4824,7 +4840,7 @@ DisplayAsHelpTitleFileNamePlusSomething()
 	#	$1 = file name title
 	#	$2 = second column title
 
-	printf "${CHARS_BULLET}%-${FILE_NAME_COL_WIDTH}s ${CHARS_BULLET}%s\n" "$(Capitalise "${1:-}"):" "$(Capitalise "${2:-}"):"
+	printf "\n${CHARS_BULLET}%-${FILE_NAME_COL_WIDTH}s ${CHARS_BULLET}%s\n" "$(Capitalise "${1:-}"):" "$(Capitalise "${2:-}"):"
 
 	}
 
@@ -4972,6 +4988,7 @@ Help.Actions:Show()
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
 		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
+		Display
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -5019,6 +5036,7 @@ Help.ActionsAll:Show()
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
 		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
+		Display
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -5094,6 +5112,7 @@ Help.Groups:Show()
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
 		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
+		Display
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -5146,6 +5165,7 @@ Help.Lists:Show()
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
 		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
+		Display
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -5244,6 +5264,7 @@ Help.Options:Show()
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
 		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
+		Display
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -5270,6 +5291,7 @@ Help.Packages:Show()
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
 		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
+		Display
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -5315,6 +5337,7 @@ Help.Problems:Show()
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
 		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
+		Display
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -5347,6 +5370,7 @@ Help.Upgrades:Show()
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
 		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
+		Display
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -5383,6 +5407,7 @@ Help.Tips:Show()
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
 		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
+		Display
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -5402,6 +5427,7 @@ Log.Last:View()
 
 	if [[ -e $SESS_LAST_PATHFILE ]]; then
 		DisplayFileInViewport "$SESS_LAST_PATHFILE" linenumbers
+		Display
 	else
 		ShowAsError 'no last session log to display'
 	fi
@@ -5421,6 +5447,7 @@ Log.Tail:View()
 
 	if [[ -e $SESS_TAIL_PATHFILE ]]; then
 		DisplayFileInViewport "$SESS_TAIL_PATHFILE" linenumbers
+		Display
 	else
 		ShowAsError 'no session log tail to display'
 	fi
@@ -5447,6 +5474,7 @@ DisplayFileInViewport()
 
 	if [[ ! -e $filename ]]; then
 		echo "filename '$filename' not found"
+
 		return 1
 	fi
 
@@ -5468,9 +5496,11 @@ DisplayFileInViewport()
 	if [[ $useropt_verbose = true ]]; then
 		if [[ -e $CAT_CMD ]]; then
 			$CAT_CMD "$filename"
+
 			return
 		else
 			echo "$(<$1)"
+
 			return
 		fi
 	fi
@@ -5482,6 +5512,7 @@ DisplayFileInViewport()
 			[[ $showlinenumbers = true ]] && options+=' --LINE-NUMBERS'
 			[[ $jumptoend = true ]] && options+=' +G'
 			LESSSECURE=1 ${GNU_LESS_CMD}${options} --prompt "$prompt" "$filename"
+
 			return
 		fi
 
@@ -5490,6 +5521,7 @@ DisplayFileInViewport()
 			[[ $wraplines = false ]] && options+='S'
 			[[ $showlinenumbers = true ]] && options+='N'
 			${LESS_CMD}${options} "$filename"
+
 			return
 		fi
 	fi
@@ -5497,9 +5529,11 @@ DisplayFileInViewport()
 	if [[ -e $CAT_CMD ]]; then
 		[[ $showlinenumbers = true ]] && options+=' --number'
 		${CAT_CMD}${options} "$filename"
+
 		return
 	elif [[ -e $MORE_CMD ]]; then
 		$MORE_CMD "$filename"
+
 		return
 	fi
 
@@ -5532,6 +5566,7 @@ Log.Last:Paste()
 			DebugInfoMinSepr
 			DebugScript 'user abort'
 			show_zero_qpkgs=false
+
 			return 1
 		fi
 	else
@@ -5565,6 +5600,7 @@ Log.Tail:Paste()
 			DebugInfoMinSepr
 			DebugScript 'user abort'
 			show_zero_qpkgs=false
+
 			return 1
 		fi
 	else
@@ -5583,7 +5619,7 @@ GetLogSessStartLine()
 
 	local -i linenum=$(($($GREP_CMD -n 'SCRIPT:.*started:' "$SESS_TAIL_PATHFILE" | $TAIL_CMD -n${1:-1} | $HEAD_CMD -n1 | cut -d':' -f1)-1))
 	[[ $linenum -lt 1 ]] && linenum=1
-	echo $linenum
+	echo -n "$linenum"
 
 	}
 
@@ -5595,7 +5631,7 @@ GetLogSessFinishLine()
 
 	local -i linenum=$(($($GREP_CMD -n 'SCRIPT:.*finished:' "$SESS_TAIL_PATHFILE" | $TAIL_CMD -n${1:-1} | cut -d':' -f1)+2))
 	[[ $linenum -eq 2 ]] && linenum=3
-	echo $linenum
+	echo -n "$linenum"
 
 	}
 
@@ -5920,6 +5956,7 @@ QPKGs.Conflicts:Check()
 			if QPKG.IsEnabled "$a"; then
 				ShowAsError "the '$a' QPKG is enabled. $(ShowTitleName) is incompatible with this package. Please consider stopping this QPKG in your App Center"
 				bypass_package_actions=true
+
 				return 1
 			fi
 		done
@@ -5939,6 +5976,7 @@ QPKGs.Warnings:Check()
 		for a in "${BASE_QPKG_WARNINGS[@]}"; do
 			if QPKG.IsEnabled "$a"; then
 				ShowAsWarn "the '$a' QPKG is enabled. This may cause problems with $(ShowTitleName) applications. Please consider stopping this QPKG in your App Center"
+
 				return 1
 			fi
 		done
@@ -6164,7 +6202,7 @@ QPKGs.States:Build()
 	Packages:Load
 	QPKGs.States:Init
 
-	OS.IsStarting && ShowAsWarn "$(GetQnapOS) is starting all enabled QPKGs ... check again in a few minutes"
+	OS.IsStarting && ShowAsWarn "$(GetQnapOS) is starting all enabled QPKGs $CHARS_ELLIPSIS check again in a few minutes"
 	OS.IsStopping && ShowAsWarn "$(GetQnapOS) is shutting-down and all QPKGs are stopping"
 
 	if OS.IsLoadAverageInsane; then
@@ -6455,7 +6493,6 @@ Help.Abbreviations:Show()
 
 		Help.Basic:Show
 		DisplayAsHelpTitle "$(ShowTitleName) can recognise various abbreviations and aliases as $(ShowPackages)."
-		Display
 		DisplayAsAbsReportTitleLine
 
 		} >"$REPORT_OUTPUT_PATHFILE"
@@ -6517,7 +6554,6 @@ Report.Backups:Show()
 
 		if [[ -e $GNU_FIND_CMD ]]; then
 			DisplayAsHelpTitle "backups are listed oldest-first, and those shown in $(TextBrightRed '! red') were last updated more than $highlight_older_than."
-			echo
 			DisplayAsHelpTitleFileNamePlusSomething 'backup file' 'last backup date'
 
 			while read -r epochtime filename; do
@@ -6573,7 +6609,6 @@ Report.Dependencies:Show()
 		DisplayAsHelpTitle "package dependencies are automatically installed/started/stopped/restarted as-required."
 		DisplayAsHelpTitle "requirements shown in \"$(TextBrightOrange '* orange')\" prevent the package being installed."
 		DisplayAsHelpTitle "those shown in \"$(TextBrightRed '! red')\" are preventing the package from working correctly."
-		Display
 		DisplayAsDepsReportTitleLine
 
 		} >"$REPORT_OUTPUT_PATHFILE"
@@ -6636,7 +6671,6 @@ Report.Packages:Show()
 
 		DisplayAsProjSynExam "abbreviations and aliases may also be used to specify $(ShowPackages). To list these" 'help abs'
 		DisplayAsProjSynIndentExam '' a
-		Display
 
 		} > "$REPORT_OUTPUT_PATHFILE"
 
@@ -6644,6 +6678,7 @@ Report.Packages:Show()
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
 		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
+		Display
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -6692,7 +6727,6 @@ Report.Repos:Show()
 	EraseThisLine
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
-		Display
 		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
 		Display
 	else
@@ -6754,7 +6788,6 @@ Report.Statuses:Show()
 	EraseThisLine
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
-		Display
 		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
 		Display
 	else
@@ -7036,7 +7069,8 @@ FindNextFD()
 
 	for fd in {10..100}; do
 		if [[ ! -e /proc/$$/fd/$fd ]]; then
-			echo "$fd"
+			echo -n "$fd"
+
 			return 0
 		fi
 	done
@@ -7171,7 +7205,8 @@ GetCPUInfo()
 	elif $GREP_CMD -q '^Processor name' /proc/cpuinfo; then
 		$GREP_CMD '^Processor name' /proc/cpuinfo | $HEAD_CMD -n1 | $SED_CMD 's|^.*: ||' | tr -s ' '
 	else
-		echo unknown
+		printf unknown
+
 		return 1
 	fi
 
@@ -7418,7 +7453,7 @@ GetEntwareType()
 GetSudoUID()
 	{
 
-	echo "${SUDO_UID:-undefined}"
+	echo -n "${SUDO_UID:-undefined}"
 
 	}
 
@@ -7440,6 +7475,7 @@ OS.IsOk()
 
 	if ! OS.IsQNAP; then
 		ShowAsAbort 'QNAP shell functions not found ... is this a QNAP NAS?'
+
 		return 1
 	fi
 
@@ -7710,6 +7746,7 @@ SaveActionResultToLog()
 
 	if [[ $2 = undefined ]]; then
 		ShowAsError "${FUNCNAME[0]}() was provided an undefined value for \$2"
+
 		return 1
 	fi
 
@@ -9140,6 +9177,7 @@ QPKG.ServiceStatus:Log()
 
 	if ! local a=$(QPKG.GetServiceStatus "$PACKAGE_NAME"); then
 		DebugAsWarn "unable to get status of $(ShowAsPackageName "$PACKAGE_NAME") service. It may be a non-sherpa package, or a sherpa package earlier than 200816c that doesn't support service results."
+
 		return 1
 	fi
 
@@ -9222,6 +9260,7 @@ QPKG.App.GetVer()
 	[[ $a = version ]] && a=${QPKG_VERSION[$(QPKG.GetDefaultArchIndex "$1")]}
 
 	echo -n "$a"
+
 	return 0
 
 	}
@@ -9248,7 +9287,8 @@ QPKG.Avail.GetVer()
 		[[ $a = "$b" ]] && continue || b=$a
 
 		if [[ ${1:-${PACKAGE_NAME:-sherpa}} = "$a" ]]; then
-			echo "${QPKG_VERSION[$i]}"
+			echo -n "${QPKG_VERSION[$i]}"
+
 			return 0
 		fi
 	done
@@ -9419,7 +9459,8 @@ QPKG.GetOriginalPath()
 	if [[ ${#QPKGs_were_installed_name[@]} -gt 0 ]]; then
 		for i in "${!QPKGs_were_installed_name[@]}"; do
 			if [[ ${QPKGs_were_installed_name[$i]} = "${1:?${FUNCNAME[0]}'()': undefined packagename}" ]]; then
-				echo "${QPKGs_were_installed_path[$i]}"
+				echo -n "${QPKGs_were_installed_path[$i]}"
+
 				return 0
 			fi
 		done
@@ -9475,7 +9516,7 @@ QPKG.GetPathFilename()
 	[[ -n $a ]] || return
 	[[ $(Lowercase "${a##*.}") != qpkg ]] && a=${a%.*}.qpkg		# Swap `zip` for `qpkg` here (only for compatibilty with `QDK.zip`).
 
-	echo "$QPKG_DL_PATH/$($BASENAME_CMD "$a")"
+	echo -n "$QPKG_DL_PATH/$($BASENAME_CMD "$a")"
 
 	return 0
 
@@ -9495,7 +9536,8 @@ QPKG.GetHash()
 
 	for i in "${!QPKG_NAME[@]}"; do
 		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined packagename}" ]] && [[ ${QPKG_ARCH[$i]} = all || ${QPKG_ARCH[$i]} = "$NAS_QPKG_ARCH" ]]; then
-			echo "${QPKG_HASH[$i]}"
+			echo -n "${QPKG_HASH[$i]}"
+
 			return 0
 		fi
 	done
@@ -9518,7 +9560,8 @@ QPKG.GetURL()
 
 	for i in "${!QPKG_NAME[@]}"; do
 		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined packagename}" ]] && [[ ${QPKG_ARCH[$i]} = all || ${QPKG_ARCH[$i]} = "$NAS_QPKG_ARCH" ]]; then
-			echo "${QPKG_URL[$i]}"
+			echo -n "${QPKG_URL[$i]}"
+
 			return 0
 		fi
 	done
@@ -9558,7 +9601,8 @@ QPKG.GetMinRAM()
 
 	for i in "${!QPKG_NAME[@]}"; do
 		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined packagename}" ]]; then
-			echo "${QPKG_MIN_RAM_KB[$i]}"
+			echo -n "${QPKG_MIN_RAM_KB[$i]}"
+
 			return 0
 		fi
 	done
@@ -9595,7 +9639,8 @@ QPKG.GetMinOSVer()
 
 	for i in "${!QPKG_NAME[@]}"; do
 		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined packagename}" ]]; then
-			echo "${QPKG_MIN_OS_VERSION[$i]}"
+			echo -n "${QPKG_MIN_OS_VERSION[$i]}"
+
 			return 0
 		fi
 	done
@@ -9632,7 +9677,8 @@ QPKG.GetMaxOSVer()
 
 	for i in "${!QPKG_NAME[@]}"; do
 		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined packagename}" ]]; then
-			echo "${QPKG_MAX_OS_VERSION[$i]}"
+			echo -n "${QPKG_MAX_OS_VERSION[$i]}"
+
 			return 0
 		fi
 	done
@@ -9672,7 +9718,8 @@ QPKG.GetAuthor()
 
 	for i in "${!QPKG_NAME[@]}"; do
 		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined packagename}" ]]; then
-			echo "${QPKG_AUTHOR[$i]}"
+			echo -n "${QPKG_AUTHOR[$i]}"
+
 			return 0
 		fi
 	done
@@ -9697,7 +9744,8 @@ QPKG.GetAuthorEmail()
 
 	for i in "${!QPKG_NAME[@]}"; do
 		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined packagename}" ]]; then
-			echo "${QPKG_AUTHOR_EMAIL[$i]}"
+			echo -n "${QPKG_AUTHOR_EMAIL[$i]}"
+
 			return 0
 		fi
 	done
@@ -9722,7 +9770,8 @@ QPKG.GetAppAuthor()
 
 	for i in "${!QPKG_NAME[@]}"; do
 		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined packagename}" ]]; then
-			echo "${QPKG_APP_AUTHOR[$i]}"
+			echo -n "${QPKG_APP_AUTHOR[$i]}"
+
 			return 0
 		fi
 	done
@@ -9747,7 +9796,8 @@ QPKG.GetAppAuthorEmail()
 
 	for i in "${!QPKG_NAME[@]}"; do
 		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined packagename}" ]]; then
-			echo "${QPKG_APP_AUTHOR_EMAIL[$i]}"
+			echo -n "${QPKG_APP_AUTHOR_EMAIL[$i]}"
+
 			return 0
 		fi
 	done
@@ -9770,7 +9820,8 @@ QPKG.GetDesc()
 
 	for i in "${!QPKG_NAME[@]}"; do
 		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined packagename}" ]]; then
-			echo "${QPKG_DESC[$i]}"
+			echo -n "${QPKG_DESC[$i]}"
+
 			return 0
 		fi
 	done
@@ -9798,6 +9849,7 @@ QPKG.GetNote()
 		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined packagename}" ]]; then
 			a=${QPKG_NOTE[$i]}
 			[[ $a != none ]] && echo -n "$a"
+
 			return 0
 		fi
 	done
@@ -9820,7 +9872,8 @@ QPKG.GetAbbrvs()
 
 	for i in "${!QPKG_NAME[@]}"; do
 		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined packagename}" ]]; then
-			echo "${QPKG_ABBRVS[$i]}"
+			echo -n "${QPKG_ABBRVS[$i]}"
+
 			return 0
 		fi
 	done
@@ -9846,13 +9899,14 @@ QPKG.GetArchIndex()
 	for i in "${!QPKG_NAME[@]}"; do
 		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined packagename}" ]]; then
 			if [[ ${QPKG_ARCH[$i]} = all || ${QPKG_ARCH[$i]} = "$NAS_QPKG_ARCH" ]]; then
-				echo "$i"
+				echo -n "$i"
+
 				return
 			fi
 		fi
 	done
 
-	echo "$i"		# matching arch was not found.
+	echo -n "$i"		# matching arch was not found.
 
 	return 1
 
@@ -9874,12 +9928,13 @@ QPKG.GetDefaultArchIndex()
 
 	for i in "${!QPKG_NAME[@]}"; do
 		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined packagename}" ]]; then
-			echo "$i"
+			echo -n "$i"
+
 			return
 		fi
 	done
 
-	echo "$i"		# matching arch was not found.
+	echo -n "$i"		# matching arch was not found.
 
 	return 1
 
@@ -9912,7 +9967,8 @@ QPKG.GetDependencies()
 	[[ $g = default ]] && g=${QPKG_DEPENDS_ON[$(QPKG.GetDefaultArchIndex "$1")]}
 
 	if [[ $g != *'|'* ]]; then		# no alternatives were listed.
-		echo "$g"
+		echo -n "$g"
+
 		return 0
 	fi
 
@@ -9954,7 +10010,8 @@ QPKG.GetDependencies()
 		fi
 	done
 
-	echo "$out"
+	echo -n "$out"
+
 	return 0
 
 	}
@@ -9982,7 +10039,8 @@ QPKG.GetIPKs()
 	[[ $a = default ]] && a=${QPKG_REQUIRES_IPKS[$(QPKG.GetDefaultArchIndex "$1")]}
 	[[ $a = none ]] && return 1
 
-	echo "$a"
+	echo -n "$a"
+
 	return 0
 
 	}
@@ -10011,7 +10069,8 @@ QPKG.GetDependents()
 	fi
 
 	if [[ ${#ar[@]} -gt 0 ]]; then
-		echo "${ar[@]}"
+		echo -n "${ar[@]}"
+
 		return 0
 	fi
 
@@ -10150,7 +10209,8 @@ QPKG.GetActiveTest()
 			a=${QPKG_TEST_FOR_ACTIVE[$i]}
 			[[ -n $a ]] || break
 
-			echo "$a"
+			echo -n "$a"
+
 			return 0
 		fi
 	done
@@ -10323,6 +10383,7 @@ MakePath()
 	if [[ $1 != undefined ]] && ! mkdir -p "$1"; then
 		ShowAsError "unable to create $2 path $(ShowAsFileName "$1") $(ShowAsExitcode "$?")"
 		show_suggest_raise_issue=true
+
 		return 1
 	fi
 
@@ -10429,7 +10490,7 @@ FileMatchesMD5()
 Pluralise()
 	{
 
-	[[ ${1:-0} -ne 1 ]] && echo s
+	[[ ${1:-0} -ne 1 ]] && printf s
 
 	}
 
@@ -10441,9 +10502,9 @@ Capitalise()
 	[[ -n ${1:-} ]] || return
 
 	if [[ $1 == sherpa* ]]; then
-		echo "$1"
+		echo -n "$1"
 	else
-		echo "$(Uppercase ${1:0:1})${1:1}"
+		echo -n "$(Uppercase ${1:0:1})${1:1}"
 	fi
 
 	}
@@ -10522,7 +10583,8 @@ FormatAsThous()
 		fi
 	done
 
-	echo "$c"
+	echo -n "$c"
+
 	return 0
 
 	}
@@ -10920,6 +10982,7 @@ Func:Exit()
 	var_safe_name=${var_safe_name//:/_}
 
 	DebugAsFuncEx "${1:-0}" "$(ShowAsDuration "$(CalcMilliDifference "${!var_safe_name}" "$(/bin/date +%s%N)")")"
+
 	return ${1:-0}
 
 	}
@@ -10980,7 +11043,7 @@ CalcMilliDifference()
 	# Output:
 	#	stdout = difference in milliseconds
 
-	echo "$((($2-$1)/1000000))"
+	echo -n "$((($2-$1)/1000000))"
 
 	}
 
@@ -10991,7 +11054,7 @@ ShowAsDuration()
 	#	$1 = duration in milliseconds
 
 	if [[ ${1:-0} -lt 30000 ]]; then
-		echo "$(FormatAsThous "${1:-0}")ms"
+		echo -n "$(FormatAsThous "${1:-0}")ms"
 	else
 		FormatSecsToHoursMinutesSecs "$(($1/1000))"
 	fi
@@ -11119,7 +11182,7 @@ ShowAsProc()
 	[[ -n ${1:-} ]] && a=$1 || return
 	[[ -n ${2:-} ]] && b=${2:-}
 
-	OpStepClearWait "$(TextBrightYellow proc)" "${a} ${CHARS_ELLIPSIS} ${b}"
+	OpStepClearWait "$(TextBrightYellow proc)" "$a $CHARS_ELLIPSIS $b"
 	WriteToLog proc "${a}${b}"
 	[[ ${useropt_verbose:=false} = true ]] && Display
 
@@ -11308,7 +11371,7 @@ PercFrac()
 		perc_msg="$((200*(progress_count+1)/(TOTAL_COUNT+1)%2+100*(progress_count+1)/(TOTAL_COUNT+1)))%"
 	fi
 
-	echo "$perc_msg ($(TextBrightWhite "$progress_count")/$(TextBrightWhite "$TOTAL_COUNT"))"
+	echo -n "$perc_msg ($(TextBrightWhite "$progress_count")/$(TextBrightWhite "$TOTAL_COUNT"))"
 
 	return 0
 
@@ -11360,6 +11423,7 @@ ShowAsActionLogDetail()
 
 	if [[ $2 = undefined ]]; then
 		ShowAsError "${FUNCNAME[0]}() was provided an undefined value for \$2"
+
 		return 1
 	fi
 
