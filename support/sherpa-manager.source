@@ -2522,6 +2522,8 @@ ArgSuggestions:Show()
 					DisplayAsProjSynIndentExam '' "$arg false"
 					DisplayAsProjSynIndentExam '' "$arg on"
 					DisplayAsProjSynIndentExam '' "$arg off"
+					DisplayAsProjSynIndentExam '' "$arg yes"
+					DisplayAsProjSynIndentExam '' "$arg no"
 					arg_problem=true
 					useropt_help_basic=false
 					;;
@@ -4980,7 +4982,6 @@ Help.Actions:Show()
 		DisplayAsProjSynIndentExam '' 'help actions-all'
 		DisplayAsProjSynExam "multiple $(ShowAction)s are supported like this" "$(ShowAction) $(ShowPackages) $(ShowAction) $(ShowPackages)"
 		DisplayAsProjSynIndentExam '' 'install sabnzbd sickgear reactivate transmission uninstall lazy nzbget upgrade nzbtomedia'
-		Display
 
 		} > "$REPORT_OUTPUT_PATHFILE"
 
@@ -5028,7 +5029,6 @@ Help.ActionsAll:Show()
 		DisplayAsProjSynIndentExam 'digitally "sign" all packages' 'sign all'
 		DisplayAsProjSynIndentExam 'uninstall everything!' 'force uninstall all'
 		DisplayAsProjSynIndentExam 'upgrade all installed packages (and internal applications where-supported)' 'upgrade all'
-		Display
 
 		} > "$REPORT_OUTPUT_PATHFILE"
 
@@ -5072,6 +5072,7 @@ Help.Basic.Examples:Show()
 	DisplayAsProjSynIndentExam "to see available $(ShowPackageGroup)s" 'help groups'
 	DisplayAsProjSynIndentExam "or, for more $(ShowOptions)" 'help options'
 	DisplayAsHelpTitle "more in the wiki: $(ShowAsURL 'https://github.com/OneCDOnly/sherpa/wiki')"
+
 	Display
 
 	return 0
@@ -5104,7 +5105,6 @@ Help.Groups:Show()
 		DisplayAsProjSynIndentExam '' "$(ShowAction) new"
 		DisplayAsProjSynIndentExam 'select only missing packages (these are partly installed and broken)' "$(ShowAction) missing"
 		DisplayAsProjSynExam 'multiple groups are supported like this' "$(ShowAction) $(ShowPackageGroup) $(ShowPackageGroup)"
-		Display
 
 		} > "$REPORT_OUTPUT_PATHFILE"
 
@@ -5130,6 +5130,8 @@ Help.Issue:Show()
 	DisplayAsProjSynIndentExam "view the entire $(ShowTitleName) session log" log
 	DisplayAsProjSynIndentExam "upload the most-recent $(FormatAsThous "$LOG_TAIL_LINES") lines in your $(ShowTitleName) log to the $(ShowAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste log'
 	DisplayAsHelpTitleHighlighted "if you need help, please include a copy of your $(ShowTitleName) $(TextBrightOrange 'log for analysis!')"
+
+	Display
 
 	return 0
 
@@ -5157,7 +5159,6 @@ Help.Lists:Show()
 		DisplayAsProjSynIndentExam 'list only upgradable packages' 'list upgradable'
 		DisplayAsProjSynIndentExam '' upgradable
 		DisplayAsProjSynIndentExam "list $(ShowTitleName) object version numbers" 'list versions'
-		Display
 
 		} > "$REPORT_OUTPUT_PATHFILE"
 
@@ -5256,7 +5257,6 @@ Help.Options:Show()
 		DisplayAsProjSynIndentExam 'show live debugging information, and record it to file' "$(ShowAction) $(ShowPackages) verbose"
 		DisplayAsProjSynIndentExam '' v
 		DisplayAsProjSynIndentExam 'record debugging information to file-only' "$(ShowAction) $(ShowPackages) debug"
-		Display
 
 		} > "$REPORT_OUTPUT_PATHFILE"
 
@@ -5282,8 +5282,7 @@ Help.Packages:Show()
 		{
 
 		Help.Basic:Show
-		DisplayAsHelpTitle 'usage examples for packages:'
-		Display
+		DisplayAsHelpTitle 'usage examples for packages will go here:'
 
 		} > "$REPORT_OUTPUT_PATHFILE"
 
@@ -5329,7 +5328,6 @@ Help.Problems:Show()
 		DisplayAsProjSynIndentExam "upload the most-recent session in your $(ShowTitleName) log to the $(ShowAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste last'
 		DisplayAsProjSynIndentExam "upload the most-recent $(FormatAsThous "$LOG_TAIL_LINES") lines in your $(ShowTitleName) log to the $(ShowAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste log'
 		DisplayAsHelpTitleHighlighted "if you need help, please include a copy of your $(ShowTitleName) $(TextBrightOrange "log for analysis!")"
-		Display
 
 		} > "$REPORT_OUTPUT_PATHFILE"
 
@@ -5362,7 +5360,6 @@ Help.Upgrades:Show()
 		DisplayAsProjSynIndentExam '' 'list new'
 		DisplayAsProjSynIndentExam 'show package statuses' 'show status'
 		DisplayAsProjSynIndentExam '' s
-		Display
 
 		} > "$REPORT_OUTPUT_PATHFILE"
 
@@ -5399,7 +5396,6 @@ Help.Tips:Show()
 		DisplayAsProjSynIndentExam 'activate all inactive packages' 'activate inactive'
 		DisplayAsProjSynIndentExam 'upgrade the internal applications only' "reactivate $(ShowPackages)"
 		Help.BackupLocation:Show
-		Display
 
 		} > "$REPORT_OUTPUT_PATHFILE"
 
