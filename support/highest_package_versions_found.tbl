@@ -50,7 +50,7 @@ OTautulli_240226_arm_64.qpkg.md5     OTautulli_240226_arm_64.qpkg     OTautulli 
 OTautulli_240226_x86_64.qpkg.md5     OTautulli_240226_x86_64.qpkg     OTautulli            240226       i64    9c036a025919e2df403e1adf6d777d23
 OTautulli_240226_x86.qpkg.md5        OTautulli_240226_x86.qpkg        OTautulli            240226       i86    68d86fa882214e6912397e08ba741e9f
 OTransmission_240226.qpkg.md5        OTransmission_240226.qpkg        OTransmission        240226       all    5fac4d5bb472ad1fde2f0ca0c8544539
-OWatcher3_240226.qpkg.md5            OWatcher3_240226.qpkg            OWatcher3            240226       all    fc81d580bb1eb3f72f7b304bc2177e0d
+OWatcher3_240227.qpkg.md5            OWatcher3_240227.qpkg            OWatcher3            240227       all    73cb1a19bb5887efe8336f970d1c410f
 OWhisparr_240226_arm_64.qpkg.md5     OWhisparr_240226_arm_64.qpkg     OWhisparr            240226       a64    f7e2c020d4ae5541820056bbc72e8287
 OWhisparr_240226_x86_64.qpkg.md5     OWhisparr_240226_x86_64.qpkg     OWhisparr            240226       i64    598beece2e6fac00b6db738e775f73ea
 Par2_0.8.1.1_arm-x19.qpkg.md5        Par2_0.8.1.1_arm-x19.qpkg        Par2                 0.8.1.1      a19    d312d8bd2dee43e62a720f0d209905f8
@@ -74,7 +74,7 @@ SABnzbd_240226_x86_64.qpkg.md5       SABnzbd_240226_x86_64.qpkg       SABnzbd   
 SABnzbd_240226_x86.qpkg.md5          SABnzbd_240226_x86.qpkg          SABnzbd              240226       i86    3f692e9cb14fdd0f10d25f26af3f6377
 sha3sum_230312_x86_64.qpkg.md5       sha3sum_230312_x86_64.qpkg       sha3sum              230312       i64    6ceba9116e0dbcbdb4e6112f0c02f8c0
 sha3sum_230312_x86.qpkg.md5          sha3sum_230312_x86.qpkg          sha3sum              230312       i86    fdba9d16b88a5b6e3b04483ca77706dd
-sherpa_240226.qpkg.md5               sherpa_240226.qpkg               sherpa               240226       all    cad36b8eba12311351f7ef2b0ec679d0
+sherpa_240227.qpkg.md5               sherpa_240227.qpkg               sherpa               240227       all    8a17ec70f24461830c29c055caa7e8c7
 SortMyQPKGs_240225.qpkg.md5          SortMyQPKGs_240225.qpkg          SortMyQPKGs          240225       all    44643edd1a10db13caa48a46f0a8d3c5
 Unrar_6.2.5_arm_64.qpkg.md5          Unrar_6.2.5_arm_64.qpkg          Unrar                6.2.5        a64    e2382b80908fc9549bbb00058968082a
 Unrar_6.2.5_arm-x41.qpkg.md5         Unrar_6.2.5_arm-x41.qpkg         Unrar                6.2.5        a41    ac1ff1149258db5e4c0b8165774eda37
