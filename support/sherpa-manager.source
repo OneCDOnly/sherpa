@@ -193,7 +193,6 @@ Results:Show()
 
 	[[ $archive_debug_afterward = true ]] && ArchiveActiveSessLog
 	ResetActiveSessLog
-	[[ $title_shown = true && $useropt_verbose = false ]] && WriteEmptyLineIfNoneExists   # Final on-screen linespace.
 
 	}
 
@@ -282,7 +281,7 @@ Consts:Load()
 	fi
 
 	readonly FILE_CHANGE_THRESHOLD_MINUTES=60
-	readonly LOG_TAIL_LINES=5000					# NOTE: a full download and install of everything generates a session log of around 1600 lines, but include a bunch of opkg updates and it can get much longer.
+	readonly LOG_TAIL_LINES=5000
 
 	}
 
@@ -303,7 +302,6 @@ Vars:Load()
 	ipks_downgrade=false
 	ipks_install=false
 	ipks_upgrade=false
-	linespace_visible=false
 	package_ver_final_col_width=0
 	pips_install=false
 	proc_counts_path=''
@@ -1639,7 +1637,7 @@ ParseManagementArgs()
 				useropt_check=true
 				;;
 			color|colour|colorful|colourful)
-				new_action=colour
+				new_action=$arg
 				requires_group=true
 				;;
 			debug|dbug)
@@ -1695,7 +1693,7 @@ ParseManagementArgs()
 
 		if [[ -n $action && -n $group ]]; then
 			case $action in
-				colour)
+				color|colour|colorful|colourful)
 					case $group in
 						true|false)
 							awaiting_group=false
@@ -1704,7 +1702,7 @@ ParseManagementArgs()
 							useropt_switch_colour=true
 							;;
 						*)
-							args_remaining+=("$arg")
+							args_remaining+=("$action")
 					esac
 					;;
 				follow)
@@ -1823,7 +1821,7 @@ ParseHelpArgs()
 				;;
 		# All cases below can use multiple user-provided words or chars to specify a single group.
 			a|abs|abbreviations)
-				# Don't set a default action for this group, this group is used for multiple actions.
+				[[ -z $action ]] && action=help
 				group=abs
 				;;
 			action|actions)
@@ -2213,7 +2211,6 @@ ParseListArgs()
 				;;
 		# All cases below can use multiple user-provided words or chars to specify a single action.
 			a|abs|abbreviations)
-				# Don't set a default action for this group, this group is used for multiple actions.
 				group=abs
 				;;
 			active|started)
@@ -2520,9 +2517,11 @@ ArgSuggestions:Show()
 					arg_problem=true
 					useropt_help_basic=false
 					;;
-				colour)
-					DisplayAsProjSynExam "please provide a valid boolean after 'colour' like" 'colour true'
-					DisplayAsProjSynIndentExam '' 'colour false'
+				color|colour|colorful|colourful)
+					DisplayAsProjSynExam "please provide a valid boolean after '$arg' like" "$arg true"
+					DisplayAsProjSynIndentExam '' "$arg false"
+					DisplayAsProjSynIndentExam '' "$arg on"
+					DisplayAsProjSynIndentExam '' "$arg off"
 					arg_problem=true
 					useropt_help_basic=false
 					;;
@@ -2555,8 +2554,7 @@ ArgSuggestions:Show()
 		done
 
 		if [[ ${#args_remaining[@]:-} -gt 0 ]]; then
-			WriteEmptyLineIfNoneExists
-			ShowAsError "incomplete argument$(Pluralise "${#args_remaining[@]}"): \"${args_remaining[*]}\". Please check the arguments again"
+			ShowAsError "incomplete argument$(Pluralise "${#args_remaining[@]}") \"${args_remaining[*]}\". Please check the arguments again"
 			arg_problem=true
 			args_remaining=()
 		fi
@@ -2629,12 +2627,14 @@ ArgSuggestions:Show()
 		done
 
 		if [[ ${#args_remaining[@]:-} -gt 0 ]]; then
-			WriteEmptyLineIfNoneExists
-			ShowAsError "unknown argument$(Pluralise "${#args_remaining[@]}"): \"${args_remaining[*]}\". Please check the arguments again"
+			[[ ${#args_incomplete[@]:-} -gt 0 ]] && echo
+			ShowAsError "unknown argument$(Pluralise "${#args_remaining[@]}") \"${args_remaining[*]}\". Please check the arguments again"
 			arg_problem=true
 			useropt_help_basic=false
 		fi
 	fi
+
+	[[ $arg_problem = true ]] && echo
 
 	Func:Exit
 
@@ -3670,7 +3670,7 @@ SwitchSourceBranch()
 			[[ $a != "$user_switch_branch" ]] && continue
 
 			AssignSourceBranch "$user_switch_branch"
-			ShowAsDone "'Git_Branch = $source_branch' has been written as a persistent setting"
+			ShowAsDone "'Git_Branch = $source_branch' has been saved as a persistent setting"
 			Reset					# <-- Processing will terminate in this function (no-return).
 		done
 
@@ -3727,7 +3727,7 @@ SwitchColourful()
 			[[ $a != "$user_switch_colourful" ]] && continue
 
 			AssignColourful "$user_switch_colourful"
-			ShowAsDone "'Colourful = $colourful' has been written as a persistent setting"
+			ShowAsDone "'Colourful = $colourful' has been saved as a persistent setting"
 			exit
 		done
 
@@ -3954,12 +3954,10 @@ DisplayAsProjSynExam()
 	#	$1 = description
 	#	$2 = example syntax
 
-	WriteEmptyLineIfNoneExists
-	printf "${CHARS_BULLET}%s" "$(Capitalise "${1:-}")"
+	printf "\n${CHARS_BULLET}%s" "$(Capitalise "${1:-}")"
 	[[ ${1: -1} != '!' ]] && echo -n ':'
 
 	printf "\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_SUDO_PREFIX}%s\n" '' "sherpa ${2:-}"
-	linespace_visible=false
 
 	}
 
@@ -3979,7 +3977,6 @@ DisplayAsProjSynIndentExam()
 	fi
 
 	printf "%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_SUDO_PREFIX}%s\n" '' "sherpa ${2:-}"
-	linespace_visible=false
 
 	}
 
@@ -3993,7 +3990,6 @@ DisplayAsSynExam()
 	#	$2 = example syntax
 
 	printf "\n${CHARS_BULLET}%s:\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_PREFIX}%s\n" "$(Capitalise "${1:-}")" '' "${2:-}"
-	linespace_visible=false
 
 	}
 
@@ -4023,7 +4019,7 @@ DisplayAsPackagesReportTitleLine()
 		printf "%-$((PACKAGE_DESCRIPTION_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
-	printf '\n'; linespace_visible=false
+	printf '\n'
 
 	}
 
@@ -4091,8 +4087,7 @@ DisplayAsPackagesReportLine()
 		fi
 	fi
 
-	printf '\n'; linespace_visible=false
-	WriteEmptyLineIfNoneExists
+	printf '\n'
 
 	}
 
@@ -4138,7 +4133,7 @@ DisplayAsStatusReportTitleLine()
 		printf "%-$((PACKAGE_PATH_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
-	printf '\n'; linespace_visible=false
+	printf '\n'
 
 	}
 
@@ -4275,7 +4270,7 @@ DisplayAsStatusReportLine()
 		printf "%-$((PACKAGE_PATH_COL_WIDTH+$(LenANSIDiff "$path_msg")))s" "$path_msg"
 	fi
 
-	printf '\n'; linespace_visible=false
+	printf '\n'
 
 	}
 
@@ -4305,7 +4300,7 @@ DisplayAsReposReportTitleLine()
 		printf "%-$((PACKAGE_REPO_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
-	printf '\n'; linespace_visible=false
+	printf '\n'
 
 	}
 
@@ -4394,7 +4389,7 @@ DisplayAsReposReportLine()
 		printf "%-$((PACKAGE_REPO_COL_WIDTH+$(LenANSIDiff "$assigned_repo_msg")))s" "$assigned_repo_msg"
 	fi
 
-	printf '\n'; linespace_visible=false
+	printf '\n'
 
 	}
 
@@ -4417,7 +4412,7 @@ DisplayAsAbsReportTitleLine()
 		printf "%-$((PACKAGE_ABBS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
-	printf '\n'; linespace_visible=false
+	printf '\n'
 
 	}
 
@@ -4485,7 +4480,7 @@ DisplayAsAbsReportLine()
 		printf "%-$((PACKAGE_ABBS_COL_WIDTH+$(LenANSIDiff "$abs_msg")))s" "$abs_msg"
 	fi
 
-	printf '\n'; linespace_visible=false
+	printf '\n'
 
 	}
 
@@ -4550,7 +4545,7 @@ DisplayAsDepsReportTitleLine()
 		printf "%-$((PACKAGE_ARCH_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
-	printf '\n'; linespace_visible=false
+	printf '\n'
 
 	}
 
@@ -4818,7 +4813,7 @@ DisplayAsDepsReportLine()
 		printf "%-$((PACKAGE_ARCH_COL_WIDTH+$(LenANSIDiff "$package_arch_msg")))s" "$package_arch_msg"
 	fi
 
-	printf '\n'; linespace_visible=false
+	printf '\n'
 
 	}
 
@@ -4850,7 +4845,7 @@ DisplayAsHelpTitleHighlighted()
 	#	$1 = text
 
 	# shellcheck disable=2059
-	printf "$(TextBrightOrange "${CHARS_BULLET}%s\n")" "$(Capitalise "${1:-}")"
+	printf "\n$(TextBrightOrange "${CHARS_BULLET}%s\n")" "$(Capitalise "${1:-}")"
 
 	}
 
@@ -4889,7 +4884,7 @@ DisplayAsIndentActionResultDurationReason()
 		printf "%s %s%s (%s)" "$(Lowercase "$action")" "$2" "$([[ -n $duration ]] && printf ' in %s' "$duration")" "$4"
 	fi
 
-	printf '\n'; linespace_visible=false
+	printf '\n'
 
 	}
 
@@ -4908,7 +4903,7 @@ Display()
 	if [[ -z ${1:-} ]]; then
 		printf '\n'
 	else
-		printf '%s\n' "$1"; linespace_visible=false
+		printf '%s\n' "$1"
 	fi
 
 	}
@@ -5059,6 +5054,7 @@ Help.Basic.Examples:Show()
 	DisplayAsProjSynIndentExam "to see available $(ShowPackageGroup)s" 'help groups'
 	DisplayAsProjSynIndentExam "or, for more $(ShowOptions)" 'help options'
 	DisplayAsHelpTitle "more in the wiki: $(ShowAsURL 'https://github.com/OneCDOnly/sherpa/wiki')"
+	Display
 
 	return 0
 
@@ -5486,7 +5482,6 @@ DisplayFileInViewport()
 			[[ $showlinenumbers = true ]] && options+=' --LINE-NUMBERS'
 			[[ $jumptoend = true ]] && options+=' +G'
 			LESSSECURE=1 ${GNU_LESS_CMD}${options} --prompt "$prompt" "$filename"
-			linespace_visible=false
 			return
 		fi
 
@@ -5495,7 +5490,6 @@ DisplayFileInViewport()
 			[[ $wraplines = false ]] && options+='S'
 			[[ $showlinenumbers = true ]] && options+='N'
 			${LESS_CMD}${options} "$filename"
-			linespace_visible=false
 			return
 		fi
 	fi
@@ -5503,18 +5497,15 @@ DisplayFileInViewport()
 	if [[ -e $CAT_CMD ]]; then
 		[[ $showlinenumbers = true ]] && options+=' --number'
 		${CAT_CMD}${options} "$filename"
-		linespace_visible=false
 		return
 	elif [[ -e $MORE_CMD ]]; then
 		$MORE_CMD "$filename"
-		linespace_visible=false
 		return
 	fi
 
 	# and, when there's no-better-option ...
 
 	echo "$(<$1)"
-	linespace_visible=false
 
 	}
 
@@ -6464,6 +6455,7 @@ Help.Abbreviations:Show()
 
 		Help.Basic:Show
 		DisplayAsHelpTitle "$(ShowTitleName) can recognise various abbreviations and aliases as $(ShowPackages)."
+		Display
 		DisplayAsAbsReportTitleLine
 
 		} >"$REPORT_OUTPUT_PATHFILE"
@@ -6489,14 +6481,13 @@ Help.Abbreviations:Show()
 
 		DisplayAsProjSynExam "example: to install $(ShowAsPackageName SABnzbd), $(ShowAsPackageName Mylar3) and $(ShowAsPackageName nzbToMedia) all-at-once" 'install sab my nzb2'
 
-		Display
-
 		} >> "$REPORT_OUTPUT_PATHFILE"
 
 	EraseThisLine
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
 		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
+		Display
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -6517,8 +6508,8 @@ Report.Backups:Show()
 	local format=''
 	local highlight_older_than='2 weeks ago'
 
-	DisableDebugToArchiveAndFile
 	DisplayProcReport backups
+	DisableDebugToArchiveAndFile
 
 		{
 
@@ -6526,6 +6517,7 @@ Report.Backups:Show()
 
 		if [[ -e $GNU_FIND_CMD ]]; then
 			DisplayAsHelpTitle "backups are listed oldest-first, and those shown in $(TextBrightRed '! red') were last updated more than $highlight_older_than."
+			echo
 			DisplayAsHelpTitleFileNamePlusSomething 'backup file' 'last backup date'
 
 			while read -r epochtime filename; do
@@ -6543,12 +6535,10 @@ Report.Backups:Show()
 
 		else
 			DisplayAsHelpTitle 'backups are listed oldest-first.'
-			Display
+			echo
 
 			(cd "$QPKG_BU_PATH" && ls -1 ./*.config.tar.gz 2>/dev/null)
 		fi
-
-		Display
 
 		} > "$REPORT_OUTPUT_PATHFILE"
 
@@ -6609,6 +6599,7 @@ Report.Dependencies:Show()
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
 		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
+		Display
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -6630,8 +6621,8 @@ Report.Packages:Show()
 	local a=''
 	max_cols=3
 
-	DisableDebugToArchiveAndFile
 	DisplayProcReport package
+	DisableDebugToArchiveAndFile
 
 		{
 
@@ -6701,7 +6692,9 @@ Report.Repos:Show()
 	EraseThisLine
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
+		Display
 		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
+		Display
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -6750,9 +6743,6 @@ Report.Statuses:Show()
 
 	[[ -n $b ]] && echo -en "$b" >>"$REPORT_OUTPUT_PATHFILE"
 
-	EraseThisLine
-	WriteEmptyLineIfNoneExists				# Need this to separate the "done: actions complete" message shown earlier.
-
 	if QPKGs-ISslow.IsAny; then
 		{
 
@@ -6761,8 +6751,12 @@ Report.Statuses:Show()
 		} >>"$REPORT_OUTPUT_PATHFILE"
 	fi
 
+	EraseThisLine
+
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
+		Display
 		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
+		Display
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -10687,15 +10681,6 @@ ShowAsResultAndStdout()
 	echo "${a}result_code: $(ShowAsExitcode "$1") ***** stdout/stderr begins below *****"
 	echo "$2"
 	echo "${a}***** stdout/stderr is complete *****"
-
-	}
-
-WriteEmptyLineIfNoneExists()
-	{
-
-	if [[ $linespace_visible = false ]]; then
-		echo; linespace_visible=true
-	fi
 
 	}
 
