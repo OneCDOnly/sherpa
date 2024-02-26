@@ -1,5 +1,61 @@
 Observed issues:
 
+	* Unbound var error:
+		-------------------------------------------------------------------------------------------------------------------------
+		[~] # sherpa verbose
+		dbug: (vv) $useropt_verbose : 'true'
+		dbug: (vv) $useropt_debug : 'true'
+		note: debug mode activated, sherpa will run a little slower than usual.
+		dbug: (vv) $archive_debug_afterward : 'true'
+		dbug: (<<) ParseManagementArgs|0|82ms
+		dbug: (>>) ParseHelpArgs()
+		dbug: (<<) ParseHelpArgs|0|24ms
+		dbug: (II) =====================================================================================================
+		dbug: (**)    SCRIPT:                started: Mon Feb 26 15:14:17 EST 2024
+		dbug: (**)    SCRIPT:                    PID: 12443
+		dbug: (II) -----------------------------------------------------------------------------------------------------
+		dbug: (II) Markers: (**) detected, (II) information, (WW) warning, (EE) error, (LL) log file, (--) processing,
+		dbug: (II) (==) done, (>>) f entry, (<<) f exit, (vv) variable name & value, ($1) positional argument value
+		dbug: (II) -----------------------------------------------------------------------------------------------------
+		dbug: (vv) $THIS_PACKAGE_VER : '240226'
+		dbug: (vv) $THIS_SCRIPT_VER : '240226-unstable'
+		dbug: (vv) $LOADER_SCRIPT_VER : '240226'
+		dbug: (>>) ParseShowArgs()
+		dbug: (<<) ParseShowArgs|0|19ms
+		dbug: (>>) ParseListArgs()
+		dbug: (<<) ParseListArgs|0|19ms
+		dbug: (>>) ParseActionArgs()
+		dbug: (<<) ParseActionArgs|0|19ms
+		dbug: (>>) ArgSuggestions:Show()
+		dbug: (<<) ArgSuggestions:Show|0|19ms
+		dbug: (>>) Debug.Log:Env()
+		proc: logging environment ...
+		dbug: (II) -----------------------------------------------------------------------------------------------------
+		dbug: (**)  HARDWARE:                  model: TS-231P2
+		dbug: (**)  HARDWARE:                    CPU: Annapurna Labs Alpine AL314 Quad-core ARM Cortex-A15 CPU @ 1.70GHz
+		dbug: (**)  HARDWARE:              CPU cores: 4
+		dbug: (**)  HARDWARE:       CPU architecture: armv7l
+		dbug: (**)  HARDWARE:                    RAM: 1,024,328kiB
+		dbug: (**)  FIRMWARE:                     OS: QTS
+		dbug: (**)  FIRMWARE:                version: 5.1.5.2645
+		dbug: (**)  FIRMWARE:             build date: 20240116
+		dbug: (**)  FIRMWARE:         kernel version: 4.2.8
+		dbug: (**)  FIRMWARE:       kernel page size: 4kB
+		dbug: (**)  FIRMWARE:               platform: ARM_AL
+		dbug: (**)  FIRMWARE:               OS state: stable
+		dbug: (**)  FIRMWARE:              OS uptime: 1h:22m:18s
+		dbug: (**)  FIRMWARE:            system load: 1m:1.60, 5m:1.89, 15m:2.14
+		dbug: (**) USERSPACE:              $SUDO_UID: undefined
+		dbug: (**) USERSPACE:                  $EUID: 0
+		dbug: (**) USERSPACE:          time in shell: 0m:00s
+		dbug: (**) USERSPACE:          $BASH_VERSION: 3.2.57(3)-release
+		dbug: (**) USERSPACE:         default volume: /share/CACHEDEV1_DATA
+		dbug: (**) USERSPACE:                   /opt: /share/CACHEDEV1_DATA/.qpkg/Entware
+		dbug: (**) USERSPACE:         'Public' share: /share/Public
+		dbug: (**) USERSPACE:       $PATH (LHS-only): /opt/bin:/opt/sbin:/share/CACHEDEV1_DATA/.qpkg/container-statio...
+		/share/CACHEDEV1_DATA/.qpkg/sherpa/cache/sherpa-manager.sh: line 614: MIN_PYTHON_VER: unbound variable
+		-------------------------------------------------------------------------------------------------------------------------
+
 	* 'sherpa start inactive' fails to find any inactive packages.
 		- Must get 'status' of each package first.
 
