@@ -6024,7 +6024,7 @@ QPKGs.Actions:List()
 	local border_shown=false
 
 	for a in "${QPKG_ACTIONS[@]}"; do
-		for b in ok er sk; do
+		for b in ok er sk so se sa; do
 			if QPKGs-AC${a}-${b}.IsAny; then
 				if [[ $border_shown = false ]]; then
 					DebugInfoMinSepr
@@ -6035,7 +6035,7 @@ QPKGs.Actions:List()
 					ok)
 						DebugQpkg info "AC${a}-${b}" "($(QPKGs-AC${a}-${b}:Count)) $(QPKGs-AC${a}-${b}:ListCSV) "
 						;;
-					sk)
+					sk|so|se|sa)
 						DebugQpkg warning "AC${a}-${b}" "($(QPKGs-AC${a}-${b}:Count)) $(QPKGs-AC${a}-${b}:ListCSV) "
 						;;
 					er)
@@ -6063,7 +6063,7 @@ QPKGs.Actions:ListAll()
 	DebugInfoMinSepr
 
 	for a in "${QPKG_ACTIONS[@]}"; do
-		for b in to ok er sk; do
+		for b in to ok er sk so se sa; do
 			if QPKGs-AC${a}-${b}.IsAny; then
 				DebugQpkg info "AC${a}=${b}" "($(QPKGs-AC${a}-${b}:Count)) $(QPKGs-AC${a}-${b}:ListCSV) "
 			fi
