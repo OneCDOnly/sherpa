@@ -2776,18 +2776,17 @@ CalcAdaptiveSeconds()
 	# 	$1 = integer of base seconds (to suit 1m load average of 1.0 on a single-core CPU).
 
 	# Output:
-	#   stdout = integer of adapted seconds based-on present 1 minute load average.
+	#   stdout = integer of adapted seconds based-on present 1 minute load average. Maximum of 1800.
 
 	local a=$(GetSysLoad1MinAverage); a=${a/./}		# Convert to hundreds.
-	local b=$((10#$(GetCPUCores)*100))				# Match conversion amount for $a.
+	local b=$(($(GetCPUCores)*100))					# Match conversion amount for $a.
 	local c=$((10#$a/10#$b))
 	local d=$((10#${1:-1}))
 
-	if [[ $c -gt 1 ]]; then
-		echo -n "$((c*d))"
-	else
-		echo -n "$d"
-	fi
+	[[ $((10#$c)) -gt 1 ]] && d=$((c*d))
+	[[ $((10#$d)) -gt 1800 ]] && d=1800
+
+	echo -n "$d"
 
 	}
 
