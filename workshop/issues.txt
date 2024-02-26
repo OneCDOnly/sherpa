@@ -1,5 +1,8 @@
 Observed issues:
 
+	* Not showing installed Python and Perl versions during 'sherpa v' as packages file isn't loaded.
+		- But shouldn't need this anyway, as packages is only loaded to determine if minimum installed Python and Perl versions are valid.
+
 	* 'sherpa start inactive' fails to find any inactive packages.
 		- Must get 'status' of each package first.
 
