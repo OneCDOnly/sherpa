@@ -1,17 +1,5 @@
 Observed issues:
 
-	* QDK not installing:
-		-------------------------------------------------------------------------------------------------------------------------
-		[/share/Public] # ./sherpa-manager.source add qdk
-		sherpa v<?build_date?>-unstable
-
-		done: actions complete.
-
-		• These actions were skipped:
-			download QDK: existing file 'QDK_2.3.13.zip' checksum correct.
-			install QDK: cache file 'QDK_2.3.13.qpkg' has incorrect checksum.
-		-------------------------------------------------------------------------------------------------------------------------
-
 	* 'sherpa start inactive' fails to find any inactive packages.
 		- Must get 'status' of each package first.
 
