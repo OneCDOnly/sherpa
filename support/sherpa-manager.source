@@ -291,6 +291,8 @@ Vars:Load()
 	action_msg_pipe_fd=none
 	archive_debug_afterward=false
 	backup_stdin_fd=none
+	branch_default=stable
+	colourful_default=true
 	fork_pid=''
 	generate_action_report=false
 	generate_help_report=false
@@ -300,7 +302,6 @@ Vars:Load()
 	ipks_downgrade=false
 	ipks_install=false
 	ipks_upgrade=false
-	package_ver_final_col_width=0
 	pips_install=false
 	proc_counts_path=''
 	qpkg_timeouts_increased=false
@@ -312,24 +313,19 @@ Vars:Load()
 	show_suggest_raise_issue=false
 	show_title=true
 	show_zero_qpkgs=false
-	title_shown=false
-
-	# User-default values.
-	branch_default=stable
-	colourful_default=true
+	switch_colour=false
+	switch_branch=false
+	switch_terse=false
 	terse_default=true
-
-	# User-selectable values.
+	title_shown=false
 	user_branch_value=''
 	user_colourful_value=''
 	user_terse_value=''
 
 	# User-selectable options.
 	useropt_branch=$(LoadSetting Git_Branch "$branch_default")
-	useropt_colourful=$(LoadSetting Colourful "$colourful_default")
-	useropt_terse=$(LoadSetting Terse "$terse_default")
-
 	useropt_check=false
+	useropt_colourful=$(LoadSetting Colourful "$colourful_default")
 	useropt_debug=false
 	useropt_help_abbreviations=false
 	useropt_help_actions=false
@@ -353,9 +349,7 @@ Vars:Load()
 	useropt_show_results=false
 	useropt_show_status=false
 	useropt_show_versions=false
-	useropt_switch_colour=false
-	useropt_switch_branch=false
-	useropt_switch_terse=false
+	useropt_terse=$(LoadSetting Terse "$terse_default")
 	useropt_verbose=false
 
 	}
@@ -1709,7 +1703,7 @@ ParseManagementArgs()
 							action=''
 							awaiting_group=false
 							user_colourful_value=$group
-							useropt_switch_colour=true
+							switch_colour=true
 							UpdateColourful
 							;;
 						*)
@@ -1723,8 +1717,8 @@ ParseManagementArgs()
 							awaiting_group=false
 							run_package_actions=false
 							user_branch_value=$group
-							useropt_switch_branch=true
-							UpdateSourceBranch
+							switch_branch=true
+							UpdateBranch
 							;;
 						*)
 							args_remaining+=("$arg")
@@ -1754,7 +1748,7 @@ ParseManagementArgs()
 							action=''
 							awaiting_group=false
 							user_terse_value=$group
-							useropt_switch_terse=true
+							switch_terse=true
 							UpdateTerse
 							;;
 						*)
@@ -3702,11 +3696,11 @@ UpdateColourful()
 	{
 
 	# Input:
-	# 	$1 = silent (optional) don't announce setting save.
+	# 	$1 = silent (optional): don't announce setting save.
 
 	local a=''
 
-	if [[ $useropt_switch_colour = true && -n $user_colourful_value ]]; then
+	if [[ $switch_colour = true && -n $user_colourful_value ]]; then
 		# Validate before saving.
 
 		for a in true false; do
@@ -3720,7 +3714,7 @@ UpdateColourful()
 				SaveSetting Colourful "$useropt_colourful" announce
 			fi
 
-			useropt_switch_colour=false
+			switch_colour=false
 
 			return
 		done
@@ -3733,15 +3727,15 @@ UpdateColourful()
 
 	}
 
-UpdateSourceBranch()
+UpdateBranch()
 	{
 
 	# Input:
-	# 	$1 = silent (optional) don't announce setting save.
+	# 	$1 = silent (optional): don't announce setting save.
 
 	local a=''
 
-	if [[ $useropt_switch_branch = true && -n $user_branch_value ]]; then
+	if [[ $switch_branch = true && -n $user_branch_value ]]; then
 		# Validate before saving.
 
 		for a in unstable stable; do
@@ -3757,7 +3751,8 @@ UpdateSourceBranch()
 				Reset					# <-- Processing will terminate in this function (no-return).
 			fi
 
-			useropt_switch_branch=false
+			switch_branch=false
+
 			return
 		done
 
@@ -3773,11 +3768,11 @@ UpdateTerse()
 	{
 
 	# Input:
-	# 	$1 = silent (optional) don't announce setting save.
+	# 	$1 = silent (optional): don't announce setting save.
 
 	local a=''
 
-	if [[ $useropt_switch_terse = true && -n $user_terse_value ]]; then
+	if [[ $switch_terse = true && -n $user_terse_value ]]; then
 		# Validate before saving.
 
 		for a in true false; do
@@ -3791,7 +3786,8 @@ UpdateTerse()
 				SaveSetting Terse "$useropt_terse" announce
 			fi
 
-			useropt_switch_terse=false
+			switch_terse=false
+
 			return
 		done
 
@@ -3806,19 +3802,19 @@ UpdateTerse()
 SaveSetting()
 	{
 
-	# Save setting named as $1 with a value of $2 to persistent storage (/etc/config/qpkg.conf)
+	# Save setting named as $1 with a value of $2 to persistent storage: /etc/config/qpkg.conf
 
 	# Input:
 	#   $1 = name
 	# 	$2 = value
-	# 	$3 = 'announce' (optional) display on-screen that setting has been saved or not.
+	# 	$3 = 'announce' (optional): display on-screen when setting has been saved.
 
 	local a=${1:?${FUNCNAME[0]}'()': undefined name}
 	local b=$(Lowercase "${2:?${FUNCNAME[0]}'()': undefined value}")
 
 	case $b in
 		true|false)
-			b=$(Uppercase "$b")		# convert these to uppercase to match QNAP-convention.
+			b=$(Uppercase "$b")		# Convert these to uppercase to match QNAP-convention.
 	esac
 
 	/sbin/setcfg sherpa "$a" "$b" -f /etc/config/qpkg.conf
@@ -3830,7 +3826,7 @@ SaveSetting()
 LoadSetting()
 	{
 
-	# Load setting named as $1 with a default value of $2 from persistent storage (/etc/config/qpkg.conf)
+	# Load setting named as $1 (with a default value of $2) from persistent storage: /etc/config/qpkg.conf
 
 	# Input:
 	#   $1 = name
@@ -4193,7 +4189,7 @@ DisplayAsStatusReportTitleLine()
 		a="${CHARS_BULLET}QPKG version"
 		QPKGs-SCupgradable.IsAny && a+=" ($(TextBrightOrange new))"
 		a+=':'
-		printf "%-$((package_ver_final_col_width+2+$(LenANSIDiff "$a")))s" "$a"
+		printf "%-$((${package_ver_final_col_width:=0}+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 4: application version
@@ -4332,7 +4328,7 @@ DisplayAsStatusReportLine()
 	# column 3: package version (variable-width)
 
 	if [[ $max_cols -ge 3 && -n $ver_msg ]]; then
-		printf "%-$((package_ver_final_col_width+$(LenANSIDiff "$ver_msg")))s" "$ver_msg"
+		printf "%-$((${package_ver_final_col_width:=0}+$(LenANSIDiff "$ver_msg")))s" "$ver_msg"
 	fi
 
 	# column 4: application version
