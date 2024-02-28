@@ -887,7 +887,6 @@ Tasks:Check()
 	fi
 
 	if [[ $build_states = true ]]; then
-		run_package_actions=true
 		QPKGs.States:Build
 	else
 		get_package_states=false
@@ -2285,6 +2284,7 @@ ParseListArgs()
 						abs)
 							awaiting_group=false
 							generate_help_report=true
+							get_package_states=true
 							run_package_actions=false
 							useropt_help_abbreviations=true
 							;;
@@ -2293,6 +2293,7 @@ ParseListArgs()
 							QPKGs.AClist.IS${group}:Set
 							awaiting_group=false
 							generate_list_report=true
+							get_package_states=true
 							run_package_actions=false
 							show_title=false
 							;;
@@ -2301,6 +2302,7 @@ ParseListArgs()
 							QPKGs.AClist.SC${group}:Set
 							awaiting_group=false
 							generate_list_report=true
+							get_package_states=true
 							run_package_actions=false
 							show_title=false
 							;;
@@ -2476,18 +2478,21 @@ ParseActionArgs()
 					QPKGs.AC${real_action}.SC${group}:Set
 					awaiting_group=false
 					generate_action_report=true
+					get_package_states=true
 					run_package_actions=true
 					;;
 				active|backedup|enabled|installed|missing|NTactive|NTbackedup|NTenabled|NTinstalled)
 					QPKGs.AC${real_action}.IS${group}:Set
 					awaiting_group=false
 					generate_action_report=true
+					get_package_states=true
 					run_package_actions=true
 					;;
 				*)
 					QPKGs-AC${real_action}-to:Add "$group"
 					awaiting_group=false
 					generate_action_report=true
+					get_package_states=true
 					run_package_actions=true
 			esac
 		else
@@ -2504,6 +2509,7 @@ ParseActionArgs()
 			status)							# If `status` is specified without a valid group, then group is `all`.
 				QPKGs.ACstatus.SCall:Set
 				generate_show_report=true
+				get_package_states=true
 				run_package_actions=true
 
 				# Remove this arg from incomplete array.
