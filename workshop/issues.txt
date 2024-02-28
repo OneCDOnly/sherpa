@@ -1,7 +1,5 @@
 Observed issues:
 
-	* Not getting qpkg states before status report.
-
 	* Mylar QPKG was disabled:
 		-------------------------------------------------------------------------------------------------------------------------
 		[/share/Public] # ./sherpa-manager.source start my
