@@ -1630,6 +1630,9 @@ ParseManagementArgs()
 			reset)
 				new_action=reset
 				requires_group=false
+				DeleteSetting Colourful
+				DeleteSetting Git_Branch
+				DeleteSetting Terse
 
 				Reset					# <-- Processing will terminate in this function (no-return).
 				;;
@@ -3836,6 +3839,20 @@ LoadSetting()
 	local b=$(Lowercase "${2:?${FUNCNAME[0]}'()': undefined default value}")
 
 	Lowercase "$(/sbin/getcfg sherpa "$a" -d "$b" -f /etc/config/qpkg.conf)"
+
+	}
+
+DeleteSetting()
+	{
+
+	# Remove a setting named as $1 from persistent storage: /etc/config/qpkg.conf
+
+	# Input:
+	#   $1 = name
+
+	local a=${1:?${FUNCNAME[0]}'()': undefined name}
+
+	/sbin/setcfg -e sherpa "$a" -f /etc/config/qpkg.conf
 
 	}
 
