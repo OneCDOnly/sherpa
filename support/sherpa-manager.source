@@ -11253,13 +11253,17 @@ ShowAsProcLong()
 ShowAsProc()
 	{
 
+	# Input:
+	#	$1 = task being carried-out.
+	#	$2 = trailing task (after the ellipsis) (optional). If specified, $useropt_terse will be ignored.
+
 	local a=''
 	local b=''
 
 	[[ -n ${1:-} ]] && a=$1 || return
 	[[ -n ${2:-} ]] && b=${2:-}
 
-	if [[ ${useropt_verbose:=false} = false && ${useropt_terse:=true} = true ]]; then
+	if [[ ${useropt_verbose:=false} = false && ${useropt_terse:=true} = true ]] || [[ ${useropt_verbose:=false} = false && -n ${2:-} ]]; then
 		OpStepClearWait "$(TextBrightYellow proc)" "$a $CHARS_ELLIPSIS $b"
 	else
 		OpStepClear "$(TextBrightYellow proc)" "$a $CHARS_ELLIPSIS $b"
