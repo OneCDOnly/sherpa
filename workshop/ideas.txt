@@ -1,8 +1,6 @@
-* Add backup file sizes to backup report.
+* add "about" user arg to display current environment.
 
-* Add 'terse on/off' as a user option.
-	- Might need to manually disable it in UpdateForkProgress() to reduce screen clutter.
-	- First add an optional arg to ShowAsProc() to force terse mode (ignore current $useropt_terse setting).
+* Add backup file sizes to backup report.
 
 * If sherpa QPKG is auto-upgraded, should auto-show an action report.
 
