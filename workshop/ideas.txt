@@ -1,3 +1,5 @@
+* Add backup file sizes to backup report.
+
 * Add 'terse on/off' as a user option.
 	- Might need to manually disable it in UpdateForkProgress() to reduce screen clutter.
 	- First add an optional arg to ShowAsProc() to force terse mode (ignore current $useropt_terse setting).
