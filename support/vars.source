@@ -255,7 +255,7 @@ unstable_branch_msg="$(ColourTextBrightRed "$unstable_branch")"
 
 cdn_onecd_url='https://raw.githubusercontent.com/OneCDOnly'
 cdn_sherpa_base_url=$cdn_onecd_url/sherpa
-cdn_sherpa_url=$cdn_sherpa_base_url/'$source_branch'
+cdn_sherpa_url=$cdn_sherpa_base_url/'$useropt_branch'
 cdn_sherpa_packages_url="$cdn_sherpa_url/QPKGs/<?package_name?>/build"
 cdn_other_packages_url="$cdn_onecd_url/<?package_name?>/main/build"
 cdn_qnap_dev_packages_url='https://github.com/qnap-dev/<?package_name?>/releases/download/v<?version?>'
