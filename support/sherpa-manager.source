@@ -3120,6 +3120,8 @@ CalcIpkDepsToInstall()
 
 	DebugInfo "$requested_count IPK$(Pluralise "$requested_count") requested" "'$req_list' "
 
+	ShowAsProc 'resolving IPK dependencies'
+
 	while [[ $iterations -lt $ITERATION_LIMIT ]]; do
 		ShowAsIterativeProgress 'resolving IPK dependencies' "$iterations" iteration "${#dep_acc[@]}" 'unique package'
 
@@ -3470,6 +3472,8 @@ PIPs:install()
 
 		exec_cmd="$PIP_CMD install --upgrade --no-input $ESSENTIAL_PIPS --cache-dir $PIP_CACHE_PATH 2> >($GREP_CMD -v \"Running pip as the 'root' user\") >&2"
 		desc='auxiliary PyPI modules'
+
+		ShowAsProc "installing $total_count ${package_type}$(Pluralise "$total_count")"
 
 		ShowAsPercentProgress "installing $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 0 "$total_count"
 		RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
