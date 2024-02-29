@@ -1,4 +1,6 @@
-* add "about" user arg to display current environment.
+* Don't show sherpa title shen viewing log.
+
+* Add "about" user arg to display current environment.
 
 * If sherpa QPKG is auto-upgraded, should auto-show an action report.
 
