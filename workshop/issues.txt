@@ -1,21 +1,5 @@
 Observed issues:
 
-	* Mylar QPKG was disabled:
-		-------------------------------------------------------------------------------------------------------------------------
-		[/share/Public] # ./sherpa-manager.source start my
-		sherpa v<?build_date?>-unstable
-		done: actions complete.
-
-		• These actions failed (and why):
-			activate Mylar3 in 1 second (For more information: /etc/init.d/mylar3.sh log)
-
-		[/share/Public] #
-		-------------------------------------------------------------------------------------------------------------------------
-		- Should auto-enable first.
-
-	* Not showing installed Python and Perl versions during 'sherpa v' as packages file isn't loaded.
-		- But shouldn't need this anyway, as packages is only loaded to determine if minimum installed Python and Perl versions are valid.
-
 	* 'sherpa start inactive' fails to find any inactive packages.
 		- Must get 'status' of each package first.
 
