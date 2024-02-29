@@ -1640,8 +1640,10 @@ ParseManagementArgs()
 		# All cases below can use multiple user-provided words or chars to specify a single action.
 			c|check)
 				generate_show_report=true
+				get_package_states=true
 				new_action=check
 				requires_group=false
+				run_package_actions=true
 				useropt_check=true
 				;;
 			color|colour|colorful|colourful|follow|paste|terse)
