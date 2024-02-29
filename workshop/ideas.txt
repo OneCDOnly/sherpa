@@ -1,7 +1,5 @@
 * add "about" user arg to display current environment.
 
-* Add backup file sizes to backup report.
-
 * If sherpa QPKG is auto-upgraded, should auto-show an action report.
 
 *  There should be distinct argument parsers for:
