@@ -11,7 +11,7 @@ Observed issues:
 
 		[/share/Public] #
 		-------------------------------------------------------------------------------------------------------------------------
-		- Should test for QPKG enabled status first, then error verbosely ("QPKG not enabled, please enable it") when QPKG isn't enabled.
+		- Should auto-enable first.
 
 	* Not showing installed Python and Perl versions during 'sherpa v' as packages file isn't loaded.
 		- But shouldn't need this anyway, as packages is only loaded to determine if minimum installed Python and Perl versions are valid.
