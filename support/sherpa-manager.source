@@ -224,7 +224,8 @@ Consts:Load()
 
 	# Report formatting.
 	readonly ACTION_RESULT_INDENT=6
-	readonly FILE_NAME_COL_WIDTH=33
+	readonly FILE_BYTES_COL_WIDTH=18
+	readonly FILE_CHANGE_DATE_COL_WIDTH=60
 	readonly HELP_DESC_INDENT=3
 	readonly HELP_SYNTAX_INDENT=6
 
@@ -241,6 +242,7 @@ Consts:Load()
 	readonly PACKAGE_MIN_OS_COL_WIDTH=11
 	readonly PACKAGE_MIN_RAM_COL_WIDTH=16
 	readonly PACKAGE_NAME_COL_WIDTH=21
+		readonly FILE_NAME_COL_WIDTH=$((PACKAGE_NAME_COL_WIDTH+14))
 	readonly PACKAGE_PATH_COL_WIDTH=48
 	readonly PACKAGE_REPO_COL_WIDTH=40
 	readonly PACKAGE_STATUS_COL_WIDTH=23
@@ -4913,14 +4915,93 @@ DisplayAsDepsReportLine()
 
 	}
 
-DisplayAsHelpTitleFileNamePlusSomething()
+DisplayAsBackupsReportTitleLine()
+	{
+
+	local a=''
+
+	printf '\n'
+
+	# column 1: backup filename
+
+	if [[ $max_cols -ge 1 ]]; then
+		a="${CHARS_BULLET}Backup file:"
+		printf "%-$((FILE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
+	fi
+
+	# column 2: filesize in bytes
+
+	if [[ $max_cols -ge 2 ]]; then
+		a="${CHARS_BULLET}size in bytes:"
+		printf "%-$((FILE_BYTES_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
+	fi
+
+	# column 3: last backup date
+
+	if [[ $max_cols -ge 3 ]]; then
+		a="${CHARS_BULLET}last backup date:"
+		printf "%-$((FILE_CHANGE_DATE_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
+	fi
+
+	printf '\n'
+
+	}
+
+DisplayAsBackupsReportLine()
 	{
 
 	# Input:
-	#	$1 = file name title
-	#	$2 = second column title
+	#	$1 = last backup date in epoch seconds
+	#	$2 = backup filename
+	#	$3 = filesize in bytes
+	#	$4 = age threshold to highlight (optional) '1 week ago' (default)		e.g. '2 days ago', '2 weeks ago', etc..
 
-	printf "\n${CHARS_BULLET}%-${FILE_NAME_COL_WIDTH}s ${CHARS_BULLET}%s\n" "$(Capitalise "${1:-}"):" "$(Capitalise "${2:-}"):"
+	local epoch_time=${1:-0}
+	local epoch_time_msg=$CHARS_NORMAL
+	local file_bytes=${3:-0}
+	local file_bytes_msg=$CHARS_BLANK
+	local file_name=${2:-}
+	local file_name_msg=$CHARS_BLANK
+	local highlight_older_than=${4:-'1 week ago'}
+	local mode=''
+
+	if [[ ${epoch_time%.*} -lt $(/bin/date --date="$highlight_older_than" +%s) ]]; then
+		mode=highlighted
+	else
+		mode=normal
+	fi
+
+	case $mode in
+		normal)
+			epoch_time_msg+=$(/bin/date -d @"$epoch_time" +%c)
+			file_bytes_msg+=$file_bytes
+			file_name_msg+=$file_name
+			;;
+		highlighted)
+			epoch_time_msg+=$(TextBrightRed "$(/bin/date -d @"$epoch_time" +%c)")
+			file_bytes_msg+=$(TextBrightRed "$file_bytes")
+			file_name_msg+=$(TextBrightRed "$file_name")
+	esac
+
+	# column 1: backup filename
+
+	if [[ $max_cols -ge 1 && -n $file_name_msg ]]; then
+		printf "%-$((FILE_NAME_COL_WIDTH+$(LenANSIDiff "$file_name_msg")))s" "$file_name_msg"
+	fi
+
+	# column 2: filesize in bytes
+
+	if [[ $max_cols -ge 2 && -n $file_bytes_msg ]]; then
+		printf "%-$((FILE_BYTES_COL_WIDTH+$(LenANSIDiff "$file_bytes_msg")))s" "$file_bytes_msg"
+	fi
+
+	# column 3: last backup date
+
+	if [[ $max_cols -ge 3 && -n $epoch_time_msg ]]; then
+		printf "%-$((FILE_CHANGE_DATE_COL_WIDTH+$(LenANSIDiff "$epoch_time_msg")))s" "$epoch_time_msg"
+	fi
+
+	printf '\n'
 
 	}
 
@@ -6615,10 +6696,11 @@ Report.Backups:Show()
 
 	Func:Init
 
-	local epochtime=0		# Allow float as seconds have a fractional component.
-	local filename=''
-	local format=''
+	local epoch_time=0		# Allow float as seconds have a fractional component.
+	local file_bytes=0
+	local file_name=''
 	local highlight_older_than='2 weeks ago'
+	max_cols=3
 
 	DisplayProcReport backups
 	DisableDebugToArchiveAndFile
@@ -6628,25 +6710,17 @@ Report.Backups:Show()
 		DisplayAsHelpTitle "the location for $(ShowTitleName) backups is: $QPKG_BU_PATH"
 
 		if [[ -e $GNU_FIND_CMD ]]; then
-			DisplayAsHelpTitle "backups are listed oldest-first, and those shown in $(TextBrightRed '! red') were last updated more than $highlight_older_than."
-			DisplayAsHelpTitleFileNamePlusSomething 'backup file' 'last backup date'
+			DisplayAsHelpTitle "backups are listed oldest-first, and those shown in $(TextBrightRed '! red') were last updated more-than $highlight_older_than."
+			DisplayAsBackupsReportTitleLine
 
-			while read -r epochtime filename; do
-				[[ -z $epochtime || -z $filename ]] && break
+			while read -r epoch_time file_name file_bytes; do
+				[[ -z $epoch_time || -z $file_name ]] && break
 
-				if [[ ${epochtime%.*} -lt $(/bin/date --date="$highlight_older_than" +%s) ]]; then
-					format=$(TextBrightRed "%${HELP_DESC_INDENT}s%-${FILE_NAME_COL_WIDTH}s - !%s\n")
-				else
-					format="%${HELP_DESC_INDENT}s%-${FILE_NAME_COL_WIDTH}s - %s\n"
-				fi
-
-				# shellcheck disable=2059
-				printf "$format" '' "$filename" "$(/bin/date -d @"$epochtime" +%c)"
-			done <<< "$($GNU_FIND_CMD "$QPKG_BU_PATH"/*.config.tar.gz -maxdepth 1 -printf '%C@ %f\n' 2>/dev/null | $SORT_CMD)"
-
+				DisplayAsBackupsReportLine "$epoch_time" "$file_name" "$file_bytes" "$highlight_older_than"
+			done <<< "$($GNU_FIND_CMD "$QPKG_BU_PATH"/*.config.tar.gz -maxdepth 1 -printf '%C@ %f %s\n' 2>/dev/null | $SORT_CMD)"
 		else
 			DisplayAsHelpTitle 'backups are listed oldest-first.'
-			echo
+			Display
 
 			(cd "$QPKG_BU_PATH" && ls -1 ./*.config.tar.gz 2>/dev/null)
 		fi
@@ -6654,7 +6728,12 @@ Report.Backups:Show()
 		} > "$REPORT_OUTPUT_PATHFILE"
 
 	EraseThisLine
-	[[ -e $REPORT_OUTPUT_PATHFILE ]] && $CAT_CMD "$REPORT_OUTPUT_PATHFILE"
+
+	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
+		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
+	else
+		ShowAsError 'no information to display'
+	fi
 
 	Func:Exit
 
