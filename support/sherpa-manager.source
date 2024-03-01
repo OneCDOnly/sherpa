@@ -116,16 +116,16 @@ Results:Show()
 				QPKGs.IsActive:Show
 			elif QPKGs.AClist.ISNTactive.IsSet; then
 				QPKGs.IsNtActive:Show
-			elif QPKGs.AClist.SCinstallable.IsSet; then
-				QPKGs.ScInstallable:Show
-			elif QPKGs.AClist.SCNTinstallable.IsSet; then
-				QPKGs.ScNtInstallable:Show
-			elif QPKGs.AClist.SCupgradable.IsSet; then
-				QPKGs.ScUpgradable:Show
-			elif QPKGs.AClist.SCindependent.IsSet; then
-				QPKGs.ScIndependent:Show
-			elif QPKGs.AClist.SCdependent.IsSet; then
-				QPKGs.ScDependent:Show
+			elif QPKGs.AClist.GRinstallable.IsSet; then
+				QPKGs.GrInstallable:Show
+			elif QPKGs.AClist.GRNTinstallable.IsSet; then
+				QPKGs.GrNtInstallable:Show
+			elif QPKGs.AClist.GRupgradable.IsSet; then
+				QPKGs.GrUpgradable:Show
+			elif QPKGs.AClist.GRindependent.IsSet; then
+				QPKGs.GrIndependent:Show
+			elif QPKGs.AClist.GRdependent.IsSet; then
+				QPKGs.GrDependent:Show
 			fi
 		fi
 	fi
@@ -300,7 +300,8 @@ Vars:Load()
 	generate_help_report=false
 	generate_list_report=false
 	generate_show_report=false
-	get_package_states=false
+	get_qpkg_active_status=false
+	get_qpkg_states=false
 	ipks_downgrade=false
 	ipks_install=false
 	ipks_upgrade=false
@@ -617,25 +618,25 @@ Lists:Load()
 
 	# sorted
 	QPKG_IS_STATES=(active backedup downloaded enabled installed missing signed slow unknown)
-	QPKG_ISNT_STATES=(active backedup downloaded enabled installed signed)
+	QPKG_ISNT_STATES=(active backedup downloaded enabled installed missing signed)
 	QPKG_STATES_TRANSIENT=(starting stopping restarting)
 	QPKG_SERVICE_RESULTS=(ok failed)
 
 	# sorted
-	IPK_STATES=(downloaded installed reinstalled upgraded)
+	IPK_STATES=(downgraded downloaded installed reinstalled upgraded)
 
 	# ordered
-	PIP_ACTIONS=(download uninstall upgrade reinstall install)
-	IPK_ACTIONS=(download uninstall upgrade reinstall install)
 	QPKG_ACTIONS=(status list rebuild reassign download backup deactivate disable uninstall upgrade reinstall install enableau disableau sign restore clean enable activate reactivate)
+	IPK_ACTIONS=(downgrade download uninstall upgrade reinstall install)
+	PIP_ACTIONS=(download uninstall upgrade reinstall install)
 
-	# These actions, states and scopes may be specified by the user.
+	# These actions, states and groups may be specified by the user.
 	# sorted
-	USER_QPKG_SC_GROUPS=(all canbackup canclean canrestarttoupdate dependent hasdependents installable independent upgradable)
-	USER_QPKG_SCNT_GROUPS=(canclean installable upgradable)
-	USER_QPKG_IS_STATES=(active backedup enabled installed missing)
-	USER_QPKG_ISNT_STATES=(active backedup enabled installed)
 	USER_QPKG_ACTIONS=(activate backup clean deactivate disable disableau enable enableau install list reactivate reassign rebuild reinstall restore sign status uninstall upgrade)
+	USER_QPKG_IS_STATES=(active backedup enabled installed missing)
+	USER_QPKG_ISNT_STATES=(active backedup enabled installed missing)
+	USER_QPKG_IS_GROUPS=(all canbackup canclean canrestarttoupdate dependent hasdependents independent installable upgradable)
+	USER_QPKG_ISNT_GROUPS=(canclean installable upgradable)
 
 	# KLUDGE: for some reason, setting `readonly` while populating arrays causes their scope to become local, so need to set as `readonly` afterward to ensure global scope. GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
 	readonly PACKAGE_TIERS
@@ -647,15 +648,15 @@ Lists:Load()
 
 	readonly IPK_STATES
 
-	readonly PIP_ACTIONS
-	readonly IPK_ACTIONS
 	readonly QPKG_ACTIONS
+	readonly IPK_ACTIONS
+	readonly PIP_ACTIONS
 
-	readonly USER_QPKG_SC_GROUPS
-	readonly USER_QPKG_SCNT_GROUPS
+	readonly USER_QPKG_ACTIONS
 	readonly USER_QPKG_IS_STATES
 	readonly USER_QPKG_ISNT_STATES
-	readonly USER_QPKG_ACTIONS
+	readonly USER_QPKG_IS_GROUPS
+	readonly USER_QPKG_ISNT_GROUPS
 
 	local action=''
 
@@ -830,11 +831,12 @@ Tasks:Check()
 		generate_help_report=false
 		generate_list_report=false
 		generate_show_report=false
-		get_package_states=false
+		get_qpkg_active_status=false
+		get_qpkg_states=false
 		run_package_actions=false
 	fi
 
-	[[ $get_package_states = true ]] || return 0
+	[[ $get_qpkg_states = true ]] || return 0
 
 	Func:Init
 
@@ -858,15 +860,15 @@ Tasks:Check()
 				break
 			fi
 
-			for group in "${USER_QPKG_SC_GROUPS[@]}"; do
-				if QPKGs.AC${action}.SC${group}.IsSet; then
+			for group in "${USER_QPKG_IS_GROUPS[@]}"; do
+				if QPKGs.AC${action}.GR${group}.IsSet; then
 					build_states=true
 					break 2
 				fi
 			done
 
-			for group in "${USER_QPKG_SCNT_GROUPS[@]}"; do
-				if QPKGs.AC${action}.SCNT${group}.IsSet; then
+			for group in "${USER_QPKG_ISNT_GROUPS[@]}"; do
+				if QPKGs.AC${action}.GRNT${group}.IsSet; then
 					build_states=true
 					break 2
 				fi
@@ -891,7 +893,7 @@ Tasks:Check()
 	if [[ $build_states = true ]]; then
 		QPKGs.States:Build
 	else
-		get_package_states=false
+		get_qpkg_states=false
 		run_package_actions=false
 	fi
 
@@ -974,7 +976,7 @@ Env:Validate()
 	AllocPackGroupsToAcs
 	AllocPackStatesToAcs
 
-	if QPKGs-SCupgradable.Exist sherpa; then
+	if QPKGs-GRupgradable.Exist sherpa; then
 		ShowAsNote "the $(TextBrightOrange sherpa) QPKG will be auto-upgraded"
 		QPKGs-ACupgrade-to:Add sherpa
 	fi
@@ -1043,7 +1045,7 @@ QPKGs:AssignToActions()
 	# If an independent has been selected for `reinstall`/`reactivate`/`upgrade`, need to `deactivate` its dependents first, and `activate` them again later.
 
 	for package in $(QPKGs-ACreinstall-to:Array) $(QPKGs-ACreactivate-to:Array) $(QPKGs-ACupgrade-to:Array); do
-		if QPKGs-SCindependent.Exist "$package" && QPKGs-ISinstalled.Exist "$package"; then
+		if QPKGs-GRindependent.Exist "$package" && QPKGs-ISinstalled.Exist "$package"; then
 			for prospect in $(QPKG.GetDependents "$package"); do
 				if QPKGs-ISenabled.Exist "$prospect"; then
 					QPKGs-ACdeactivate-to:Add "$prospect"
@@ -1056,7 +1058,7 @@ QPKGs:AssignToActions()
 	# If an independent has been selected for `deactivate`/`uninstall`, need to `deactivate` its dependents first.
 
 	for package in $(QPKGs-ACdeactivate-to:Array) $(QPKGs-ACuninstall-to:Array); do
-		if QPKGs-SCindependent.Exist "$package" && QPKGs-ISinstalled.Exist "$package"; then
+		if QPKGs-GRindependent.Exist "$package" && QPKGs-ISinstalled.Exist "$package"; then
 			for prospect in $(QPKG.GetDependents "$package"); do
 				QPKGs-ISinstalled.Exist "$prospect" && QPKGs-ACdeactivate-to:Add "$prospect"
 			done
@@ -1066,7 +1068,7 @@ QPKGs:AssignToActions()
 	# If an independent has been selected for `uninstall`, then `install`, need to `deactivate` its dependents first, and `activate` them again later.
 
 	for package in $(QPKGs-ACuninstall-to:Array); do
-		if QPKGs-SCindependent.Exist "$package" && QPKGs-ISinstalled.Exist "$package"; then
+		if QPKGs-GRindependent.Exist "$package" && QPKGs-ISinstalled.Exist "$package"; then
 			if QPKGs-ACinstall-to.Exist "$package"; then
 				for prospect in $(QPKG.GetDependents "$package"); do
 					if QPKGs-ISenabled.Exist "$prospect"; then
@@ -1106,7 +1108,7 @@ QPKGs:AssignToActions()
 
 	# No-need to `deactivate`/`reactivate`/`disable` packages that are to be uninstalled.
 
-	if QPKGs.ACuninstall.SCall.IsSet; then
+	if QPKGs.ACuninstall.GRall.IsSet; then
 		QPKGs-ACdeactivate-to:Init
 		QPKGs-ACreactivate-to:Init
 		QPKGs-ACdisable-to:Init
@@ -1145,7 +1147,7 @@ QPKGs:AssignToActions()
 	if [[ $useropt_check = true ]] && OS.IsSupportSignedPackages; then
 		QPKGs-ACsign-to:Add "$(QPKGs-ISinstalled:Array)"
 
-		for package in $(QPKGs-SCdependent:Array); do
+		for package in $(QPKGs-GRdependent:Array); do
 			QPKGs-ISenabled.Exist "$package" && QPKGs-ACreactivate-to:Add "$package"
 		done
 	fi
@@ -1333,7 +1335,7 @@ Action:Proc()
 				target_packages=($(${PACKAGE_TYPE}s-$TARGET_OBJECT_NAME:Array))
 			else						# Process a single tier only.
 				for package in $(${PACKAGE_TYPE}s-$TARGET_OBJECT_NAME:Array); do
-					${PACKAGE_TYPE}s-SC${TIER}.Exist "$package" && target_packages+=("$package")
+					${PACKAGE_TYPE}s-GR${TIER}.Exist "$package" && target_packages+=("$package")
 				done
 			fi
 
@@ -1377,20 +1379,20 @@ Action:Proc()
 						;;
 					change)			# Change the state of a single QPKG in the parent shell.
 						while true; do
-							for group in "${USER_QPKG_SC_GROUPS[@]}"; do
+							for group in "${USER_QPKG_IS_GROUPS[@]}"; do
 								case $msg1_value in
 									"SC${group}")
-										[[ $(type -t QPKGs-SCNT${group}:Init) = function ]] && QPKGs-SCNT${group}:Remove "$msg2_value"
-										[[ $(type -t QPKGs-SC${group}:Init) = function ]] && QPKGs-SC${group}:Add "$msg2_value"
+										[[ $(type -t QPKGs-GRNT${group}:Init) = function ]] && QPKGs-GRNT${group}:Remove "$msg2_value"
+										[[ $(type -t QPKGs-GR${group}:Init) = function ]] && QPKGs-GR${group}:Add "$msg2_value"
 										break 2
 								esac
 							done
 
-							for group in "${USER_QPKG_SCNT_GROUPS[@]}"; do
+							for group in "${USER_QPKG_ISNT_GROUPS[@]}"; do
 								case $msg1_value in
-									"SCNT${group}")
-										[[ $(type -t QPKGs-SC${group}:Init) = function ]] && QPKGs-SC${group}:Remove "$msg2_value"
-										[[ $(type -t QPKGs-SCNT${group}:Init) = function ]] && QPKGs-SCNT${group}:Add "$msg2_value"
+									"GRNT${group}")
+										[[ $(type -t QPKGs-GR${group}:Init) = function ]] && QPKGs-GR${group}:Remove "$msg2_value"
+										[[ $(type -t QPKGs-GRNT${group}:Init) = function ]] && QPKGs-GRNT${group}:Add "$msg2_value"
 										break 2
 								esac
 							done
@@ -1640,7 +1642,7 @@ ParseManagementArgs()
 		# All cases below can use multiple user-provided words or chars to specify a single action.
 			c|check)
 				generate_show_report=true
-				get_package_states=true
+				get_qpkg_states=true
 				new_action=check
 				requires_group=false
 				run_package_actions=true
@@ -2092,14 +2094,14 @@ ParseShowArgs()
 						abs)
 							awaiting_group=false
 							generate_help_report=true
-							get_package_states=false
+							get_qpkg_states=false
 							run_package_actions=false
 							useropt_help_abbreviations=true
 							;;
 						backups)
 							awaiting_group=false
 							generate_show_report=true
-							get_package_states=false
+							get_qpkg_states=false
 							run_package_actions=false
 							useropt_show_backups=true
 							;;
@@ -2113,7 +2115,7 @@ ParseShowArgs()
 						last)
 							awaiting_group=false
 							generate_show_report=true
-							get_package_states=false
+							get_qpkg_states=false
 							run_package_actions=false
 							useropt_show_log_last=true
 							;;
@@ -2121,7 +2123,7 @@ ParseShowArgs()
 							Packages:Load
 							awaiting_group=false
 							generate_show_report=true
-							get_package_states=false
+							get_qpkg_states=false
 							run_package_actions=false
 							useropt_show_packages=true
 							;;
@@ -2135,13 +2137,13 @@ ParseShowArgs()
 						results)
 							awaiting_group=false
 							generate_show_report=true
-							get_package_states=false
+							get_qpkg_states=false
 							run_package_actions=false
 							useropt_show_results=true
 							;;
 						status)
 							Objects:Load
-							QPKGs.ACstatus.SCall:Set
+							QPKGs.ACstatus.GRall:Set
 							awaiting_group=false
 							generate_show_report=true
 							useropt_show_status=true
@@ -2149,7 +2151,7 @@ ParseShowArgs()
 						tail)
 							awaiting_group=false
 							generate_show_report=true
-							get_package_states=false
+							get_qpkg_states=false
 							run_package_actions=false
 							useropt_show_log_tail=true
 							;;
@@ -2279,7 +2281,7 @@ ParseListArgs()
 				show)
 					awaiting_group=false
 					generate_show_report=true
-					get_package_states=false
+					get_qpkg_states=false
 					run_package_actions=false
 					useropt_show_backups=true
 					;;
@@ -2288,7 +2290,7 @@ ParseListArgs()
 						abs)
 							awaiting_group=false
 							generate_help_report=true
-							get_package_states=true
+							get_qpkg_states=true
 							run_package_actions=false
 							useropt_help_abbreviations=true
 							;;
@@ -2297,16 +2299,16 @@ ParseListArgs()
 							QPKGs.AClist.IS${group}:Set
 							awaiting_group=false
 							generate_list_report=true
-							get_package_states=true
+							get_qpkg_states=true
 							run_package_actions=false
 							show_title=false
 							;;
 						dependent|disabled|installable|independent|NTinstallable|upgradable)
 							Objects:Load
-							QPKGs.AClist.SC${group}:Set
+							QPKGs.AClist.GR${group}:Set
 							awaiting_group=false
 							generate_list_report=true
-							get_package_states=true
+							get_qpkg_states=true
 							run_package_actions=false
 							show_title=false
 							;;
@@ -2478,25 +2480,34 @@ ParseActionArgs()
 
 		if [[ -n $real_action && -n $group ]]; then
 			case $group in
-				all|canbackup|canclean|canrestarttoupdate|dependent|hasdependents|independent|installable|upgradable|NTcanclean|NTinstallable|NTupgradable)
-					QPKGs.AC${real_action}.SC${group}:Set
-					awaiting_group=false
-					generate_action_report=true
-					get_package_states=true
-					run_package_actions=true
-					;;
-				active|backedup|enabled|installed|missing|NTactive|NTbackedup|NTenabled|NTinstalled)
+				active|NTactive)
 					QPKGs.AC${real_action}.IS${group}:Set
 					awaiting_group=false
 					generate_action_report=true
-					get_package_states=true
+					get_qpkg_active_status=false
+					get_qpkg_states=true
+					run_package_actions=true
+					;;
+				all|canbackup|canclean|canrestarttoupdate|dependent|hasdependents|independent|installable|upgradable|NTcanclean|NTinstallable|NTupgradable)
+					QPKGs.AC${real_action}.GR${group}:Set
+					awaiting_group=false
+					generate_action_report=true
+					get_qpkg_active_status=false
+					get_qpkg_states=true
+					run_package_actions=true
+					;;
+				backedup|enabled|installed|missing|NTbackedup|NTenabled|NTinstalled)
+					QPKGs.AC${real_action}.IS${group}:Set
+					awaiting_group=false
+					generate_action_report=true
+					get_qpkg_states=true
 					run_package_actions=true
 					;;
 				*)
 					QPKGs-AC${real_action}-to:Add "$group"
 					awaiting_group=false
 					generate_action_report=true
-					get_package_states=true
+# 					get_qpkg_states=true
 					run_package_actions=true
 			esac
 		else
@@ -2511,9 +2522,9 @@ ParseActionArgs()
 	for arg in "${args_incomplete[@]:-}"; do
 		case $arg in
 			status)							# If `status` is specified without a valid group, then group is `all`.
-				QPKGs.ACstatus.SCall:Set
+				QPKGs.ACstatus.GRall:Set
 				generate_show_report=true
-				get_package_states=true
+				get_qpkg_states=true
 				run_package_actions=true
 
 				# Remove this arg from incomplete array.
@@ -2707,17 +2718,17 @@ AllocPackGroupsToAcs()
 
 		# Positive groups.
 
-		for group in "${USER_QPKG_SC_GROUPS[@]}"; do
+		for group in "${USER_QPKG_IS_GROUPS[@]}"; do
 			found=false
 
-			if QPKGs.AC${action}.SC${group}.IsSet; then
+			if QPKGs.AC${action}.GR${group}.IsSet; then
 				case $action in
 					clean)
 						case $group in
 							all|dependent|independent)
 								found=true
 
-								for prospect in $(QPKGs-SC${group}:Array); do
+								for prospect in $(QPKGs-GR${group}:Array); do
 									QPKG.IsCanClean "$prospect" && QPKGs-AC${action}-to:Add "$prospect"
 								done
 								;;
@@ -2730,7 +2741,7 @@ AllocPackGroupsToAcs()
 							all|dependent|independent)
 								found=true
 
-								QPKGs-AC${action}-to:Add "$(QPKGs-SC${group}:Array)"
+								QPKGs-AC${action}-to:Add "$(QPKGs-GR${group}:Array)"
 								;;
 							*)
 								DebugAsWarn "group 'SC$group' has no positive allocation handler for action '$action'"
@@ -2741,7 +2752,7 @@ AllocPackGroupsToAcs()
 							all|dependent|independent)
 								found=true
 
-								for prospect in $(QPKGs-SC${group}:Array); do
+								for prospect in $(QPKGs-GR${group}:Array); do
 									QPKGs-ISinstalled.Exist "$prospect" && QPKGs-AC${action}-to:Add "$prospect"
 								done
 								;;
@@ -2754,8 +2765,8 @@ AllocPackGroupsToAcs()
 							all|dependent|independent)
 								found=true
 
-								for prospect in $(QPKGs-SC${group}:Array); do
-									QPKGs-SCcanbackup.Exist "$prospect" && QPKGs-AC${action}-to:Add "$prospect"
+								for prospect in $(QPKGs-GR${group}:Array); do
+									QPKGs-GRcanbackup.Exist "$prospect" && QPKGs-AC${action}-to:Add "$prospect"
 								done
 								;;
 							*)
@@ -2767,10 +2778,10 @@ AllocPackGroupsToAcs()
 							all|dependent|independent|upgradable)
 								found=true
 
-								QPKGs-AC${action}-to:Add "$(QPKGs-SCupgradable:Array)"
+								QPKGs-AC${action}-to:Add "$(QPKGs-GRupgradable:Array)"
 
-								for prospect in $(QPKGs-SC${group}:Array); do
-									QPKGs-SCcanrestarttoupdate.Exist "$prospect" && QPKGs-AC${action}-to:Add "$prospect"
+								for prospect in $(QPKGs-GR${group}:Array); do
+									QPKGs-GRcanrestarttoupdate.Exist "$prospect" && QPKGs-AC${action}-to:Add "$prospect"
 								done
 
 								QPKGs-ACreactivate-to:Remove "$(QPKGs-ACupgrade-to:Array)"
@@ -2784,7 +2795,7 @@ AllocPackGroupsToAcs()
 				esac
 
 				if [[ $found = false ]]; then
-					QPKGs-AC${action}-to:Add "$(QPKGs-SC${group}:Array)"
+					QPKGs-AC${action}-to:Add "$(QPKGs-GR${group}:Array)"
 				fi
 
 				if QPKGs-AC${action}-to.IsAny; then
@@ -2797,21 +2808,21 @@ AllocPackGroupsToAcs()
 
 		# Negative groups.
 
-		for group in "${USER_QPKG_SCNT_GROUPS[@]}"; do
+		for group in "${USER_QPKG_ISNT_GROUPS[@]}"; do
 			found=false
 
-			if QPKGs.AC${action}.SCNT${group}.IsSet; then
+			if QPKGs.AC${action}.GRNT${group}.IsSet; then
 				case $action in
 					*)
 						DebugAsWarn "action '$action' has no negative allocation handler"
 				esac
 
 				if [[ $found = false ]]; then
-					QPKGs-AC${action}-to:Add "$(QPKGs-SCNT${group}:Array)"
+					QPKGs-AC${action}-to:Add "$(QPKGs-GRNT${group}:Array)"
 				fi
 
 				if QPKGs-AC${action}-to.IsAny; then
-					DebugAsDone "action: '$action', group: 'SCNT${group}': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
+					DebugAsDone "action: '$action', group: 'GRNT${group}': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
 				else
 					ShowAsWarn "unable to find any packages to '$(Lowercase "$action")'"
 				fi
@@ -3301,7 +3312,7 @@ IPKs:install()
 		fi
 	fi
 
-	if QPKGs.ACinstall.SCall.IsSet; then
+	if QPKGs.ACinstall.GRall.IsSet; then
 		for i in "${!QPKG_NAME[@]}"; do
 			[[ $previous = "${QPKG_NAME[$i]}" ]] && continue || previous=${QPKG_NAME[$i]}
 			IPKs-ACinstall-to:Add "$(QPKG.GetIPKs "${QPKG_NAME[$i]}" "$i")"
@@ -3990,7 +4001,7 @@ CalcMaxStatusReportCols()
 
 	# Add width to include " (new)" string to QPKG version title.
 
-	if QPKGs-SCupgradable.IsAny; then
+	if QPKGs-GRupgradable.IsAny; then
 		package_ver_final_col_width=$((PACKAGE_VER_COL_WIDTH+6))
 		((col3_width+6))
 	else
@@ -4218,7 +4229,7 @@ DisplayAsStatusReportTitleLine()
 
 	if [[ $max_cols -ge 3 ]]; then
 		a="${CHARS_BULLET}QPKG version"
-		QPKGs-SCupgradable.IsAny && a+=" ($(TextBrightOrange new))"
+		QPKGs-GRupgradable.IsAny && a+=" ($(TextBrightOrange new))"
 		a+=':'
 		printf "%-$((${package_ver_final_col_width:=0}+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
@@ -4299,7 +4310,7 @@ DisplayAsStatusReportLine()
 			fi
 
 			status_msg=${CHARS_NORMAL}${status_msg}
-			QPKGs-SCupgradable.Exist "$name" && upgrade_ver=$(QPKG.Avail.GetVer "$name")
+			QPKGs-GRupgradable.Exist "$name" && upgrade_ver=$(QPKG.Avail.GetVer "$name")
 			ver_msg+=$(QPKG.Local.GetVer "$name")
 
 			if [[ -n $upgrade_ver ]]; then
@@ -6072,10 +6083,10 @@ QPKGs.NewVers:Show()
 	local name_limit=2
 	local -a packages=()
 
-	if [[ $(QPKGs-SCupgradable:Count) -eq 0 ]]; then
+	if [[ $(QPKGs-GRupgradable:Count) -eq 0 ]]; then
 		return 0
 	else
-		packages+=($(QPKGs-SCupgradable:Array))
+		packages+=($(QPKGs-GRupgradable:Array))
 	fi
 
 	# shellcheck disable=2322
@@ -6325,9 +6336,9 @@ QPKGs.IndependentDependent:Build()
 
 	for a in "${QPKG_NAME[@]}"; do
 		if QPKG.IsDependent "$a"; then
-			QPKGs-SCdependent:Add "$a"
+			QPKGs-GRdependent:Add "$a"
 		else
-			QPKGs-SCindependent:Add "$a"
+			QPKGs-GRindependent:Add "$a"
 		fi
 	done
 
@@ -6381,7 +6392,7 @@ QPKGs.States:Build()
 
 	# Faster to launch several concurrent loops in the background, than a single loop. Launch those requiring more processing-time first.
 
-	for a in $(QPKGs-SCall:Array); do
+	for a in $(QPKGs-GRall:Array); do
 		[[ $a = "$b" ]] && continue || b=$a
 
 		if QPKG.IsNtInstalled "$a"; then
@@ -6393,7 +6404,7 @@ QPKGs.States:Build()
 		fi
 	done &
 
-	for a in $(QPKGs-SCall:Array); do
+	for a in $(QPKGs-GRall:Array); do
 		[[ $a = "$b" ]] && continue || b=$a
 
 		if QPKG.IsUpgradable "$a"; then
@@ -6403,7 +6414,7 @@ QPKGs.States:Build()
 		fi >> "$QPKG_STATES_PATH/$a"
 	done &
 
-	for a in $(QPKGs-SCall:Array); do
+	for a in $(QPKGs-GRall:Array); do
 		[[ $a = "$b" ]] && continue || b=$a
 
 		if QPKG.IsCanBackup "$a"; then
@@ -6419,7 +6430,7 @@ QPKGs.States:Build()
 		fi >> "$QPKG_STATES_PATH/$a"
 	done &
 
-	for a in $(QPKGs-SCall:Array); do
+	for a in $(QPKGs-GRall:Array); do
 		[[ $a = "$b" ]] && continue || b=$a
 
 		if QPKG.IsMissing "$a"; then
@@ -6429,7 +6440,7 @@ QPKGs.States:Build()
 		fi >> "$QPKG_STATES_PATH/$a"
 	done &
 
-	for a in $(QPKGs-SCall:Array); do
+	for a in $(QPKGs-GRall:Array); do
 		[[ $a = "$b" ]] && continue || b=$a
 
 		if QPKG.IsEnabled "$a"; then
@@ -6439,7 +6450,7 @@ QPKGs.States:Build()
 		fi >> "$QPKG_STATES_PATH/$a"
 	done &
 
-	for a in $(QPKGs-SCall:Array); do
+	for a in $(QPKGs-GRall:Array); do
 		[[ $a = "$b" ]] && continue || b=$a
 
 		if QPKG.IsInstalled "$a"; then
@@ -6453,7 +6464,7 @@ QPKGs.States:Build()
 
 	# Load status lines from individual files.
 
-	for a in $(QPKGs-SCall:Array); do
+	for a in $(QPKGs-GRall:Array); do
 		[[ $a = "$b" ]] && continue || b=$a
 
 		f=/var/run/$a.last.operation
@@ -6501,10 +6512,10 @@ QPKGs.States:Build()
 					QPKGs-ISNTenabled:Add "$a"
 					;;
 				installable)
-					QPKGs-SCinstallable:Add "$a"
+					QPKGs-GRinstallable:Add "$a"
 					;;
 				notinstallable)
-					QPKGs-SCNTinstallable:Add "$a"
+					QPKGs-GRNTinstallable:Add "$a"
 					;;
 				installed)
 					QPKGs-ISinstalled:Add "$a"
@@ -6523,10 +6534,10 @@ QPKGs.States:Build()
 					QPKGs-ISNTmissing:Add "$a"
 					;;
 				upgradable)
-					QPKGs-SCupgradable:Add "$a"
+					QPKGs-GRupgradable:Add "$a"
 					;;
 				notupgradable)
-					QPKGs-SCNTupgradable:Add "$a"
+					QPKGs-GRNTupgradable:Add "$a"
 			esac
 		done
 	done
@@ -6580,8 +6591,8 @@ QPKGs.IsCanBackup:Build()
 
 	local a=''
 
-	for a in $(QPKGs-SCall:Array); do
-		QPKG.IsCanBackup "$a" && QPKGs-SCcanbackup:Add "$a"
+	for a in $(QPKGs-GRall:Array); do
+		QPKG.IsCanBackup "$a" && QPKGs-GRcanbackup:Add "$a"
 	done
 
 	Func:Exit
@@ -6597,8 +6608,8 @@ QPKGs.IsCanRestartToUpdate:Build()
 
 	local a=''
 
-	for a in $(QPKGs-SCall:Array); do
-		QPKG.IsCanRestartToUpdate "$a" && QPKGs-SCcanrestarttoupdate:Add "$a"
+	for a in $(QPKGs-GRall:Array); do
+		QPKG.IsCanRestartToUpdate "$a" && QPKGs-GRcanrestarttoupdate:Add "$a"
 	done
 
 	Func:Exit
@@ -6614,8 +6625,8 @@ QPKGs.IsCanClean:Build()
 
 	local a=''
 
-	for a in $(QPKGs-SCall:Array); do
-		QPKG.IsCanClean "$a" && QPKGs-SCcanclean:Add "$a"
+	for a in $(QPKGs-GRall:Array); do
+		QPKG.IsCanClean "$a" && QPKGs-GRcanclean:Add "$a"
 	done
 
 	Func:Exit
@@ -6645,7 +6656,7 @@ Help.Abbreviations:Show()
 
 	Packages:Load
 
-	local -i t=$(QPKGs-SCall:Count)
+	local -i t=$(QPKGs-GRall:Count)
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport abbreviations
@@ -6659,7 +6670,7 @@ Help.Abbreviations:Show()
 
 		} >"$REPORT_OUTPUT_PATHFILE"
 
-	for a in $(QPKGs-SCall:Array); do
+	for a in $(QPKGs-GRall:Array); do
 		((n++))
 		DisplayAsAbsReportLine "$a" > "$REPORTS_PATH/$n" &
 	done
@@ -6765,7 +6776,7 @@ Report.Dependencies:Show()
 	max_cols=8
 	local -i m=0
 	local -i n=0
-	local -i t=$(QPKGs-SCall:Count)
+	local -i t=$(QPKGs-GRall:Count)
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport dependency
@@ -6780,7 +6791,7 @@ Report.Dependencies:Show()
 
 		} >"$REPORT_OUTPUT_PATHFILE"
 
-	for a in $(QPKGs-SCall:Array); do
+	for a in $(QPKGs-GRall:Array); do
 		((n++))
 		DisplayAsDepsReportLine "$a" > "$REPORTS_PATH/$n" &
 	done
@@ -6831,7 +6842,7 @@ Report.Packages:Show()
 		DisplayAsHelpTitle "one-or-more $(ShowPackages) may be specified at-once."
 		DisplayAsPackagesReportTitleLine
 
-		for a in $(QPKGs-SCall:Array); do
+		for a in $(QPKGs-GRall:Array); do
 			DisplayAsPackagesReportLine "$a"
 		done
 
@@ -6865,14 +6876,14 @@ Report.Repos:Show()
 	max_cols=3
 	local -i m=0
 	local -i n=0
-	local -i t=$(QPKGs-SCall:Count)
+	local -i t=$(QPKGs-GRall:Count)
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport repository
 	ResetReportsPath &>/dev/null
 	DisplayAsReposReportTitleLine >"$REPORT_OUTPUT_PATHFILE"
 
-	for a in $(QPKGs-SCall:Array); do
+	for a in $(QPKGs-GRall:Array); do
 		((n++))
 		DisplayAsReposReportLine "$a" > "$REPORTS_PATH/$n" &
 	done
@@ -6917,7 +6928,7 @@ Report.Statuses:Show()
 	max_cols=5
 	local -i m=0
 	local -i n=0
-	local -i t=$(QPKGs-SCall:Count)
+	local -i t=$(QPKGs-GRall:Count)
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport status
@@ -6925,7 +6936,7 @@ Report.Statuses:Show()
 	CalcMaxStatusReportCols
 	DisplayAsStatusReportTitleLine >"$REPORT_OUTPUT_PATHFILE"
 
-	for a in $(QPKGs-SCall:Array); do
+	for a in $(QPKGs-GRall:Array); do
 		((n++))
 		DisplayAsStatusReportLine "$a" > "$REPORTS_PATH/$n" &
 	done
@@ -7028,7 +7039,7 @@ QPKGs.IsNtInstalled:Show()
 
 	}
 
-QPKGs.ScAll:Show()
+QPKGs.GrAll:Show()
 	{
 
 	local a=''
@@ -7036,7 +7047,7 @@ QPKGs.ScAll:Show()
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	for a in $(QPKGs-SCall:Array); do
+	for a in $(QPKGs-GRall:Array); do
 		Display "$a"
 	done
 
@@ -7044,7 +7055,7 @@ QPKGs.ScAll:Show()
 
 	}
 
-QPKGs.ScInstallable:Show()
+QPKGs.GrInstallable:Show()
 	{
 
 	local a=''
@@ -7052,7 +7063,7 @@ QPKGs.ScInstallable:Show()
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	for a in $(QPKGs-SCinstallable:Array); do
+	for a in $(QPKGs-GRinstallable:Array); do
 		Display "$a"
 	done
 
@@ -7060,7 +7071,7 @@ QPKGs.ScInstallable:Show()
 
 	}
 
-QPKGs.ScNtInstallable:Show()
+QPKGs.GrNtInstallable:Show()
 	{
 
 	local a=''
@@ -7068,7 +7079,7 @@ QPKGs.ScNtInstallable:Show()
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	for a in $(QPKGs-SCNTinstallable:Array); do
+	for a in $(QPKGs-GRNTinstallable:Array); do
 		Display "$a"
 	done
 
@@ -7108,7 +7119,7 @@ QPKGs.IsNtActive:Show()
 
 	}
 
-QPKGs.ScUpgradable:Show()
+QPKGs.GrUpgradable:Show()
 	{
 
 	local a=''
@@ -7116,7 +7127,7 @@ QPKGs.ScUpgradable:Show()
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	for a in $(QPKGs-SCupgradable:Array); do
+	for a in $(QPKGs-GRupgradable:Array); do
 		Display "$a"
 	done
 
@@ -7124,7 +7135,7 @@ QPKGs.ScUpgradable:Show()
 
 	}
 
-QPKGs.ScIndependent:Show()
+QPKGs.GrIndependent:Show()
 	{
 
 	local a=''
@@ -7132,7 +7143,7 @@ QPKGs.ScIndependent:Show()
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	for a in $(QPKGs-SCindependent:Array); do
+	for a in $(QPKGs-GRindependent:Array); do
 		Display "$a"
 	done
 
@@ -7140,7 +7151,7 @@ QPKGs.ScIndependent:Show()
 
 	}
 
-QPKGs.ScDependent:Show()
+QPKGs.GrDependent:Show()
 	{
 
 	local a=''
@@ -7148,7 +7159,7 @@ QPKGs.ScDependent:Show()
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	for a in $(QPKGs-SCdependent:Array); do
+	for a in $(QPKGs-GRdependent:Array); do
 		Display "$a"
 	done
 
@@ -8337,7 +8348,7 @@ _QPKG:upgrade_()
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" upgrade skipped 'not installed'
 		MarkThisActionForkAsSkipped
 		z=1
-	elif ! QPKGs-SCupgradable.Exist "$PACKAGE_NAME"; then
+	elif ! QPKGs-GRupgradable.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" upgrade skipped 'no new package is available'
 		MarkThisActionForkAsSkipped
 		z=1
@@ -8377,7 +8388,7 @@ _QPKG:upgrade_()
 
 	if [[ $z -eq 0 || $z -eq 10 ]]; then
 		QPKG.ServiceStatus:Log
-		SendPackageStateChange SCNTupgradable
+		SendPackageStateChange GRNTupgradable
 
 		if QPKG.IsEnabled "$PACKAGE_NAME"; then
 			SendPackageStateChange ISenabled
@@ -10227,7 +10238,7 @@ QPKG.GetDependents()
 	local -i i=-1			# default to not-found.
 	local re=\\b${1:-}\\b
 
-	if QPKGs-SCindependent.Exist "$1"; then
+	if QPKGs-GRindependent.Exist "$1"; then
 		for i in "${!QPKG_NAME[@]}"; do
 			if [[ ${QPKG_DEPENDS_ON[$i]} =~ $re ]]; then
 				[[ ${ar[*]:-} != "${QPKG_NAME[$i]}" ]] && ar+=(${QPKG_NAME[$i]})
@@ -12090,7 +12101,7 @@ Packages:Load()
 	readonly QPKG_VERSION
 
 	DebugVar PACKAGES_VER
-	QPKGs-SCall:Add "${QPKG_NAME[*]}"
+	QPKGs-GRall:Add "${QPKG_NAME[*]}"
 	QPKGs.IndependentDependent:Build
 
 	Func:Exit

@@ -1,11 +1,3 @@
-* Add new global flag:
-	get_qpkg_active_status=false
-
-* Rename:
-	get_package_states=false as get_qpkg_states=false
-
-* Rename "scopes" as "groups". 'SC' will become 'GR'.
-
 * Don't show sherpa title when viewing log.
 
 * Add "about" user arg to display current environment.
