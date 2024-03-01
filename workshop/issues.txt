@@ -2,6 +2,7 @@ Observed issues:
 
 	* 'sherpa start inactive' fails to find any inactive packages.
 		- Must get 'status' of each package first.
+		- Same for 'sherpa list inactive'.
 
 	* Function durations can become incorrect when functions with the same name are called recursively.
 		- Need to make vars holding start-times unique. Maybe measure nest depth?
