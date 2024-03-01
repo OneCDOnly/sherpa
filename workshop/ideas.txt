@@ -1,4 +1,4 @@
-* Don't show sherpa title shen viewing log.
+* Don't show sherpa title when viewing log.
 
 * Add "about" user arg to display current environment.
 
