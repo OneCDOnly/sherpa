@@ -6647,8 +6647,8 @@ Help.Abbreviations:Show()
 
 	local -i t=$(QPKGs-SCall:Count)
 
-	DisplayProcReport abbreviations
 	DisableDebugToArchiveAndFile
+	DisplayProcReport abbreviations
 	ResetReportsPath &>/dev/null
 
 		{
@@ -6704,31 +6704,38 @@ Report.Backups:Show()
 
 	local epoch_time=0		# Allow float as seconds have a fractional component.
 	local file_bytes=0
+	local file_date=''
 	local file_name=''
+	local file_time=''
 	local highlight_older_than='2 weeks ago'
 	max_cols=3
 
-	DisplayProcReport backups
 	DisableDebugToArchiveAndFile
+	DisplayProcReport backups
 
 		{
 
 		DisplayAsHelpTitle "the location for $(ShowTitleName) backups is: $QPKG_BU_PATH"
 
-		if [[ -e $GNU_FIND_CMD ]]; then
-			DisplayAsHelpTitle "backups are listed oldest-first, and those shown in $(TextBrightRed '! red') were last updated more-than $highlight_older_than."
-			DisplayAsBackupsReportTitleLine
+		DisplayAsHelpTitle "backups are listed oldest-first, and those shown in $(TextBrightRed '! red') were last updated more-than $highlight_older_than."
 
+		DisplayAsBackupsReportTitleLine
+
+		if [[ -e $GNU_FIND_CMD ]]; then				# Prefer GNU `find` for this.
 			while read -r epoch_time file_name file_bytes; do
 				[[ -z $epoch_time || -z $file_name ]] && break
 
 				DisplayAsBackupsReportLine "$epoch_time" "$file_name" "$file_bytes" "$highlight_older_than"
 			done <<< "$($GNU_FIND_CMD "$QPKG_BU_PATH"/*.config.tar.gz -maxdepth 1 -printf '%C@ %f %s\n' 2>/dev/null | $SORT_CMD)"
-		else
-			DisplayAsHelpTitle 'backups are listed oldest-first.'
-			Display
+		else										# If GNU `find` isn't available, do-it the hard-way.
+			while read -r file_date file_time file_name file_bytes; do
+				[[ -z $file_date || -z $file_name ]] && break
 
-			(cd "$QPKG_BU_PATH" && ls -1 ./*.config.tar.gz 2>/dev/null)
+				epoch_time=$(/bin/date -d "$file_date $file_time" +"%s")
+				file_name=$($BASENAME_CMD "$file_name")
+
+				DisplayAsBackupsReportLine "$epoch_time" "$file_name" "$file_bytes" "$highlight_older_than"
+			done <<< "$(cd "$QPKG_BU_PATH" && ls -l1tr --time-style=+"%Y-%m-%d %H:%M:%S" ./*.config.tar.gz 2>/dev/null | $AWK_CMD '{print $6" "$7" "$8" "$5}')"
 		fi
 
 		} > "$REPORT_OUTPUT_PATHFILE"
@@ -6760,8 +6767,8 @@ Report.Dependencies:Show()
 	local -i n=0
 	local -i t=$(QPKGs-SCall:Count)
 
-	DisplayProcReport dependency
 	DisableDebugToArchiveAndFile
+	DisplayProcReport dependency
 	ResetReportsPath &>/dev/null
 
 		{
@@ -6815,8 +6822,8 @@ Report.Packages:Show()
 	local a=''
 	max_cols=3
 
-	DisplayProcReport package
 	DisableDebugToArchiveAndFile
+	DisplayProcReport package
 
 		{
 
@@ -6860,8 +6867,8 @@ Report.Repos:Show()
 	local -i n=0
 	local -i t=$(QPKGs-SCall:Count)
 
-	DisplayProcReport repository
 	DisableDebugToArchiveAndFile
+	DisplayProcReport repository
 	ResetReportsPath &>/dev/null
 	DisplayAsReposReportTitleLine >"$REPORT_OUTPUT_PATHFILE"
 
@@ -6912,6 +6919,7 @@ Report.Statuses:Show()
 	local -i n=0
 	local -i t=$(QPKGs-SCall:Count)
 
+	DisableDebugToArchiveAndFile
 	DisplayProcReport status
 	ResetReportsPath &>/dev/null
 	CalcMaxStatusReportCols
