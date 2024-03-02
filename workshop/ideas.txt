@@ -2,8 +2,6 @@
 
 * Add "about" user arg to display current environment.
 
-* If sherpa QPKG is auto-upgraded, should auto-show an action report.
-
 *  There should be distinct argument parsers for:
 	- script management functions:
 		'debug' (dbug)
