@@ -1016,7 +1016,7 @@ QPKGs:AssignToActions()
 
 	if QPKGs-ACrebuild-to.IsAny; then
 		for package in $(QPKGs-ACrebuild-to:Array); do
-			if QPKG.IsBackupExist "$package"; then
+			if QPKGs-ISNTinstalled.Exist "$package" && QPKG.IsBackupExist "$package"; then
 				QPKGs-ACinstall-to:Add "$package"
 				QPKGs-ACrestore-to:Add "$package"
 			fi
