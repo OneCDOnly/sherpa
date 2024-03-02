@@ -15,7 +15,11 @@ case ${response:0:1} in
 esac
 
 cd $HOME/scripts/nas/sherpa/support || exit
-./update-archives.sh || exit
+
+./build-all.sh || exit
+./build-readme.sh || exit
+./build-forum-announcement.sh || exit
+./commit.sh '[update] archives [pre-merge]' || exit
 
 cd $HOME/scripts/nas/sherpa || exit
 
@@ -26,6 +30,6 @@ git checkout "$unstable_branch" || exit
 cd $HOME/scripts/nas/sherpa/support || exit
 
 ./build-qpkgs.sh || exit
-./commit.sh '[rebuild] post-merge' || exit
+./commit.sh '[update] QPKGs rebuild [post-merge]' || exit
 
 exit 0
