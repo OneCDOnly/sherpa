@@ -70,7 +70,7 @@ Packages:Load()
 	readonly QPKG_URL
 	readonly QPKG_VERSION
 
-	QPKGs-SCall:Add "${QPKG_NAME[*]}"
+	QPKGs-GRall:Add "${QPKG_NAME[*]}"
 
 	}
 
@@ -108,7 +108,7 @@ printf 'These abbreviations are recognised by **sherpa** and may be used in-plac
 echo '| package name | acceptable abbreviations |' >> "$target_pathfile"
 echo '| ---: | :--- |' >> "$target_pathfile"
 
-for package_name in $(QPKGs-SCall:Array); do
+for package_name in $(QPKGs-GRall:Array); do
 	abs=$(QPKG.Abbrvs "$package_name")
 	echo "| $package_name | \`${abs// /\` \`}\` |" >> "$target_pathfile"
 done
