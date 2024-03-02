@@ -1,6 +1,14 @@
 Observed issues:
 
 	* 'sherpa start inactive' fails to find any inactive packages.
+		-------------------------------------------------------------------------------------------------------------------------
+		[/share/Public] # ./sherpa-manager.source start inactive
+		sherpa v<?build_date?>-unstable
+		warn: unable to find any packages to 'activate'.
+		done: actions complete.
+
+		[/share/Public] #
+		-------------------------------------------------------------------------------------------------------------------------
 		- Must get 'status' of each package first.
 		- Same for 'sherpa list inactive'.
 
