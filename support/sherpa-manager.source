@@ -773,7 +773,7 @@ Debug.Log:Env()
 	DebugBinPathVerAndMinVer python "$(GetPythonVer)" "${MIN_PYTHON_VER:-undefined}"
 	DebugBinPathVerAndMinVer python3 "$(GetPython3Ver)" "${MIN_PYTHON_VER:-undefined}"
 	DebugBinPathVerAndMinVer perl "$(GetPerlVer)" "${MIN_PERL_VER:-undefined}"
-	DebugScript 'source branch' "$useropt_branch"
+	DebugScript 'git branch' "$useropt_branch"
 	DebugScript 'logs path' "$LOGS_PATH"
 	DebugScript 'action concurrency' "$CONCURRENCY"
 
@@ -2588,7 +2588,7 @@ ArgSuggestions:Show()
 					useropt_help_basic=false
 					;;
 				follow)
-					DisplayAsProjSynExam "please provide a valid source branch to 'follow' like" 'follow stable'
+					DisplayAsProjSynExam "please provide a valid git branch to 'follow' like" 'follow stable'
 					DisplayAsProjSynIndentExam '' 'follow unstable'
 					arg_problem=true
 					useropt_help_basic=false
@@ -2616,6 +2616,7 @@ ArgSuggestions:Show()
 		done
 
 		if [[ ${#args_remaining[@]:-} -gt 0 ]]; then
+			[[ $arg_problem = true ]] && echo
 			ShowAsError "incomplete argument$(Pluralise "${#args_remaining[@]}") \"${args_remaining[*]}\". Please check the arguments again"
 			arg_problem=true
 			args_remaining=()
@@ -2689,7 +2690,7 @@ ArgSuggestions:Show()
 		done
 
 		if [[ ${#args_remaining[@]:-} -gt 0 ]]; then
-			[[ ${#args_incomplete[@]:-} -gt 0 ]] && echo
+			[[ $arg_problem = true ]] && echo
 			ShowAsError "unknown argument$(Pluralise "${#args_remaining[@]}") \"${args_remaining[*]}\". Please check the arguments again"
 			arg_problem=true
 			useropt_help_basic=false
