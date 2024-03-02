@@ -1099,12 +1099,13 @@ QPKGs:AssignToActions()
 	done
 
 	# Check for packages that must be enabled first, because `activate`/`reactivate` was requested.
+	# I've disabled this. Make user `enable` target packages first. Let's see how this goes...
 
-	for action in activate reactivate; do
-		for package in $(QPKGs-AC${action}-to:Array); do
-			QPKGs-ISinstalled.Exist "$package" && QPKGs-ISNTenabled.Exist "$package" && QPKGs-ACenable-to:Add "$package"
-		done
-	done
+# 	for action in activate reactivate; do
+# 		for package in $(QPKGs-AC${action}-to:Array); do
+# 			QPKGs-ISinstalled.Exist "$package" && QPKGs-ISNTenabled.Exist "$package" && QPKGs-ACenable-to:Add "$package"
+# 		done
+# 	done
 
 	# No-need to `deactivate`/`reactivate`/`disable` packages that are to be uninstalled.
 
@@ -2507,7 +2508,7 @@ ParseActionArgs()
 					QPKGs-AC${real_action}-to:Add "$group"
 					awaiting_group=false
 					generate_action_report=true
-# 					get_qpkg_states=true
+					get_qpkg_states=true
 					run_package_actions=true
 			esac
 		else
@@ -5119,7 +5120,7 @@ Help.Actions:Show()
 
 		Help.Basic:Show
 		DisplayAsHelpTitle "$(ShowAction) usage examples:"
-		DisplayAsProjSynIndentExam 'activate these packages, enabling them first (this will upgrade internal applications where-supported)' "activate $(ShowPackages)"
+		DisplayAsProjSynIndentExam 'activate these packages (this will upgrade internal applications where-supported)' "activate $(ShowPackages)"
 		DisplayAsProjSynIndentExam '' "start $(ShowPackages)"
 		DisplayAsProjSynIndentExam 'backup these application configurations to the backup location' "backup $(ShowPackages)"
 		DisplayAsProjSynIndentExam 'check all application dependencies are installed' check
@@ -5129,9 +5130,9 @@ Help.Actions:Show()
 		DisplayAsProjSynIndentExam '' "stop $(ShowPackages)"
 		DisplayAsProjSynIndentExam 'generate QPKG dependencies report' dependencies
 		DisplayAsProjSynIndentExam '' d
-		DisplayAsProjSynIndentExam 'disable these packages (this will prevent them activating/starting on reboot)' "disable $(ShowPackages)"
+		DisplayAsProjSynIndentExam 'disable these packages. This will prevent them being started' "disable $(ShowPackages)"
 		DisplayAsProjSynIndentExam 'disable auto-updating the application on package activation (where-supported)' "disable-auto-update $(ShowPackages)"
-		DisplayAsProjSynIndentExam 'enable these packages' "enable $(ShowPackages)"
+		DisplayAsProjSynIndentExam 'enable these packages. Packages must be enabled before they can be activated' "enable $(ShowPackages)"
 		DisplayAsProjSynIndentExam 'enable auto-updating the application on package activation (where-supported)' "enable-auto-update $(ShowPackages)"
 		DisplayAsProjSynIndentExam 'install these packages' "install $(ShowPackages)"
 		DisplayAsProjSynIndentExam '' "add $(ShowPackages)"
@@ -5185,15 +5186,15 @@ Help.ActionsAll:Show()
 		Help.Basic:Show
 		DisplayAsHelpTitle "the 'all' group applies to all installed packages. If $(ShowAction) is 'install all' then all available packages will be installed."
 		DisplayAsHelpTitle "$(ShowAction) $(ShowPackageGroup) usage examples:"
-		DisplayAsProjSynIndentExam 'activate all installed packages, enabling them first (this will upgrade internal applications where-supported)' 'activate all'
+		DisplayAsProjSynIndentExam 'activate all installed packages (this will upgrade internal applications where-supported)' 'activate all'
 		DisplayAsProjSynIndentExam '' 'start all'
 		DisplayAsProjSynIndentExam 'backup all application configurations to the backup location' 'backup all'
 		DisplayAsProjSynIndentExam 'clean local repository files from all packages (your configs are safe, application files will be downloaded again)' 'clean all'
 		DisplayAsProjSynIndentExam 'deactivate all installed packages' 'deactivate all'
 		DisplayAsProjSynIndentExam '' 'stop all'
-		DisplayAsProjSynIndentExam 'disable all installed packages (prevent them activating on reboot)' 'disable all'
+		DisplayAsProjSynIndentExam 'disable all installed packages. This will prevent them being started' 'disable all'
 		DisplayAsProjSynIndentExam 'disable auto-updating all applications on package activation (where-supported)' 'disable-auto-update all'
-		DisplayAsProjSynIndentExam 'enable all installed packages (allow them to activate on reboot)' 'enable all'
+		DisplayAsProjSynIndentExam 'enable all installed packages. Packages must be enabled before they can be started' 'enable all'
 		DisplayAsProjSynIndentExam 'enable auto-updating all applications on package activation (where-supported)' 'enable-auto-update all'
 		DisplayAsProjSynIndentExam 'install everything!' 'install all'
 		DisplayAsProjSynIndentExam 'reactivate packages (this will upgrade internal applications where-supported)' 'reactivate all'
@@ -7979,11 +7980,11 @@ _QPKG:reassign_()
 	local -i z=0
 
 	if ! QPKGs-ISinstalled.Exist "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" reassign skipped 'not installed'
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" reassign skipped 'QPKG is not installed'
 		MarkThisActionForkAsSkipped
 		z=1
 	elif [[ $(QPKG.GetStoreID "$PACKAGE_NAME") = sherpa ]]; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" reassign skipped 'already assigned to sherpa'
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" reassign skipped 'QPKG is already assigned to sherpa'
 		MarkThisActionForkAsSkipped
 		z=1
 	fi
@@ -8101,7 +8102,7 @@ _QPKG:install_()
 	local -i z=0
 
 	if QPKGs-ISinstalled.Exist "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" install skipped 'already installed'
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" install skipped 'QPKG is already installed'
 		MarkThisActionForkAsSkipped
 		z=1
 	elif ! QPKG.IsArchOK "$PACKAGE_NAME"; then
@@ -8217,11 +8218,11 @@ _QPKG:reinstall_()
 	local -i z=0
 
 	if ! QPKGs-ISinstalled.Exist "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" reinstall skipped "not installed, please use 'install' instead."
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" reinstall skipped "QPKG is not installed, please use 'install' instead."
 		MarkThisActionForkAsSkipped
 		z=1
 	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" reinstall skipped "assigned to another repository, please 'reassign' it first"
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" reinstall skipped "QPKG is assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkipped
 		z=1
 	fi
@@ -8298,15 +8299,19 @@ _QPKG:rebuild_()
 	local -i z=0
 
 	if ! QPKG.IsCanBackup; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" meta-rebuild skipped 'does not support rebuild'
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" meta-rebuild skipped 'QPKG does not support rebuild'
+		MarkThisActionForkAsSkipped
+		z=1
+	elif QPKGs-ISinstalled.Exist "$PACKAGE_NAME"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" meta-rebuild skipped "QPKG is already installed, please use 'restore' instead"
 		MarkThisActionForkAsSkipped
 		z=1
 	elif ! QPKG.IsBackupExist "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" meta-rebuild skipped 'backup does not exist'
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" meta-rebuild skipped 'QPKG backup does not exist'
 		MarkThisActionForkAsSkipped
 		z=1
 	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" meta-rebuild skipped "assigned to another repository, please 'reassign' it first"
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" meta-rebuild skipped "QPKG is assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkipped
 		z=1
 	fi
@@ -8345,15 +8350,15 @@ _QPKG:upgrade_()
 	local -i z=0
 
 	if ! QPKGs-ISinstalled.Exist "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" upgrade skipped 'not installed'
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" upgrade skipped 'QPKG is not installed'
 		MarkThisActionForkAsSkipped
 		z=1
 	elif ! QPKGs-GRupgradable.Exist "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" upgrade skipped 'no new package is available'
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" upgrade skipped 'no new QPKG is available'
 		MarkThisActionForkAsSkipped
 		z=1
 	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" upgrade skipped "assigned to another repository, please 'reassign' it first"
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" upgrade skipped "QPKG is assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkipped
 		z=1
 	fi
@@ -8439,7 +8444,7 @@ _QPKG:uninstall_()
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" uninstall skipped 'not installed'
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" uninstall skipped 'QPKG is not installed'
 		MarkThisActionForkAsSkipped
 		z=1
 	elif [[ $PACKAGE_NAME = sherpa ]]; then
@@ -8447,7 +8452,7 @@ _QPKG:uninstall_()
 		MarkThisActionForkAsSkipped
 		z=1
 	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" uninstall skipped "assigned to another repository, please 'reassign' it first"
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" uninstall skipped "QPKG is assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkipped
 		z=1
 	fi
@@ -8517,11 +8522,15 @@ _QPKG:activate_()
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" activate skipped 'not installed'
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" activate skipped 'QPKG is not installed'
+		MarkThisActionForkAsSkipped
+		z=1
+	elif QPKGs-ISNTenabled.Exist "$PACKAGE_NAME"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" activate skipped "QPKG is not enabled, please 'enable' it first"
 		MarkThisActionForkAsSkipped
 		z=1
 	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" activate skipped "assigned to another repository, please 'reassign' it first"
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" activate skipped "QPKG is assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkipped
 		z=1
 	fi
@@ -8537,7 +8546,7 @@ _QPKG:activate_()
 	DebugAsProc "activating $(ShowAsPackageName "$PACKAGE_NAME")"
 
 	if [[ $service_pathfile = undefined ]]; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" activate skipped-error 'service script file undefined'
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" activate skipped-error 'QPKG service script file undefined'
 		MarkThisActionForkAsSkippedError
 
 		FuncFork:Exit 4
@@ -8598,11 +8607,15 @@ _QPKG:reactivate_()
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" reactivate skipped 'not installed'
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" reactivate skipped 'QPKG is not installed'
+		MarkThisActionForkAsSkipped
+		z=1
+	elif QPKGs-ISNTenabled.Exist "$PACKAGE_NAME"; then
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" reactivate skipped "QPKG is not enabled, please 'enable' it first"
 		MarkThisActionForkAsSkipped
 		z=1
 	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" reactivate skipped "assigned to another repository, please 'reassign' it first"
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" reactivate skipped "QPKG is assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkipped
 		z=1
 	fi
@@ -8618,7 +8631,7 @@ _QPKG:reactivate_()
 	DebugAsProc "reactivating $(ShowAsPackageName "$PACKAGE_NAME")"
 
 	if [[ $service_pathfile = undefined ]]; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" reactivate skipped-error 'service script file undefined'
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" reactivate skipped-error 'QPKG service script file undefined'
 		MarkThisActionForkAsSkippedError
 
 		FuncFork:Exit 4
@@ -8671,7 +8684,7 @@ _QPKG:deactivate_()
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" deactivate skipped 'not installed'
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" deactivate skipped 'QPKG is not installed'
 		MarkThisActionForkAsSkipped
 		z=1
 	elif [[ $PACKAGE_NAME = sherpa ]]; then
@@ -8679,7 +8692,7 @@ _QPKG:deactivate_()
 		MarkThisActionForkAsSkipped
 		z=1
 	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" deactivate skipped "assigned to another repository, please 'reassign' it first"
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" deactivate skipped "QPKG is assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkipped
 		z=1
 	fi
@@ -8695,7 +8708,7 @@ _QPKG:deactivate_()
 	DebugAsProc "deactivating $(ShowAsPackageName "$PACKAGE_NAME")"
 
 	if [[ $service_pathfile = undefined ]]; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" deactivate skipped-error 'service script file undefined'
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" deactivate skipped-error 'QPKG service script file undefined'
 		MarkThisActionForkAsSkippedError
 
 		FuncFork:Exit 4
@@ -8754,15 +8767,15 @@ _QPKG:enable_()
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" enable skipped 'not installed'
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" enable skipped 'QPKG is not installed'
 		MarkThisActionForkAsSkipped
 		z=1
 	elif QPKGs-ISenabled.Exist "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" enable skipped 'already enabled'
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" enable skipped 'QPKG is already enabled'
 		MarkThisActionForkAsSkipped
 		z=1
 	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" enable skipped "assigned to another repository, please 'reassign' it first"
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" enable skipped "QPKG is assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkipped
 		z=1
 	fi
@@ -8806,11 +8819,11 @@ _QPKG:disable_()
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" disable skipped 'not installed'
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" disable skipped 'QPKG is not installed'
 		MarkThisActionForkAsSkipped
 		z=1
 	elif QPKGs-ISNTenabled.Exist "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" disable skipped 'already disabled'
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" disable skipped 'QPKG is already disabled'
 		MarkThisActionForkAsSkipped
 		z=1
 	elif [[ $PACKAGE_NAME = sherpa ]]; then
@@ -8818,7 +8831,7 @@ _QPKG:disable_()
 		MarkThisActionForkAsSkipped
 		z=1
 	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" disable skipped "assigned to another repository, please 'reassign' it first"
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" disable skipped "QPKG is assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkipped
 		z=1
 	fi
@@ -8864,15 +8877,15 @@ _QPKG:enableau_()
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" enableau skipped 'not installed'
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" enableau skipped 'QPKG is not installed'
 		MarkThisActionForkAsSkipped
 		z=1
 	elif ! QPKG.IsCanRestartToUpdate "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" enableau skipped 'does not support auto-updating'
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" enableau skipped 'QPKG does not support auto-updating'
 		MarkThisActionForkAsSkipped
 		z=1
 	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" enableau skipped "assigned to another repository, please 'reassign' it first"
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" enableau skipped "QPKG is assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkipped
 		z=1
 	fi
@@ -8920,15 +8933,15 @@ _QPKG:disableau_()
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" disableau skipped 'not installed'
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" disableau skipped 'QPKG is not installed'
 		MarkThisActionForkAsSkipped
 		z=1
 	elif ! QPKG.IsCanRestartToUpdate "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" disableau skipped 'does not support auto-updating'
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" disableau skipped 'QPKG does not support auto-updating'
 		MarkThisActionForkAsSkipped
 		z=1
 	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" disableau skipped "assigned to another repository, please 'reassign' it first"
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" disableau skipped "QPKG is assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkipped
 		z=1
 	fi
@@ -8976,15 +8989,15 @@ _QPKG:backup_()
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" backup skipped 'not installed'
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" backup skipped 'QPKG is not installed'
 		MarkThisActionForkAsSkipped
 		z=1
 	elif ! QPKG.IsCanBackup; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" backup skipped 'does not support backup'
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" backup skipped 'QPKG does not support backup'
 		MarkThisActionForkAsSkipped
 		z=1
 	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" backup skipped "assigned to another repository, please 'reassign' it first"
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" backup skipped "QPKG is assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkipped
 		z=1
 	fi
@@ -9033,19 +9046,19 @@ _QPKG:restore_()
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" restore skipped 'not installed'
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" restore skipped 'QPKG is not installed'
 		MarkThisActionForkAsSkipped
 		z=1
 	elif ! QPKG.IsCanBackup; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" restore skipped 'does not support restore'
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" restore skipped 'QPKG does not support restore'
 		MarkThisActionForkAsSkipped
 		z=1
 	elif ! QPKG.IsBackupExist "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" restore skipped 'backup does not exist'
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" restore skipped 'QPKG backup does not exist'
 		MarkThisActionForkAsSkipped
 		z=1
 	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" restore skipped "assigned to another repository, please 'reassign' it first"
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" restore skipped "QPKG is assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkipped
 		z=1
 	fi
@@ -9094,15 +9107,15 @@ _QPKG:clean_()
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" clean skipped 'not installed'
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" clean skipped 'QPKG is not installed'
 		MarkThisActionForkAsSkipped
 		z=1
 	elif ! QPKG.IsCanClean; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" clean skipped 'does not support cleaning'
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" clean skipped 'QPKG does not support cleaning'
 		MarkThisActionForkAsSkipped
 		z=1
 	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" clean skipped "assigned to another repository, please 'reassign' it first"
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" clean skipped "QPKG is assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkipped
 		z=1
 	fi
@@ -9165,7 +9178,7 @@ _QPKG:sign_()
 	DebugVar SQLITE_CMD
 
 	if ! QPKGs-ISinstalled.Exist "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped 'not installed'
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped 'QPKG is not installed'
 		MarkThisActionForkAsSkipped
 		z=1
 	elif ! OS.IsSupportSignedPackages; then
@@ -9173,7 +9186,7 @@ _QPKG:sign_()
 		MarkThisActionForkAsSkipped
 		z=1
 	elif ! QPKG.IsRepoOk "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped "assigned to another repository, please 'reassign' it first"
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped "QPKG is assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkipped
 		z=1
 	elif [[ ! -e $SQLITE_CMD ]]; then
@@ -9189,7 +9202,7 @@ _QPKG:sign_()
 		b=$($SQLITE_CMD "$CERT_DB_PATHFILE" "$a")
 
 		if [[ $b = 1 ]]; then
-			SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped-ok 'already signed'
+			SaveActionResultToLog QPKG "$PACKAGE_NAME" '"sign"' skipped-ok 'QPKG is already signed'
 			MarkThisActionForkAsSkippedOk
 			z=2
 		fi
@@ -9255,7 +9268,7 @@ _QPKG:status_()
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$PACKAGE_NAME"; then
-		SaveActionResultToLog QPKG "$PACKAGE_NAME" status skipped 'not installed'
+		SaveActionResultToLog QPKG "$PACKAGE_NAME" status skipped 'QPKG is not installed'
 		MarkThisActionForkAsSkipped
 		z=1
 	fi
