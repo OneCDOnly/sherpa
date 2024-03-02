@@ -1219,6 +1219,8 @@ Actions:Proc()
 
 	rm -f "$SESS_ACTIONS_RESULTS_PATHFILE"
 
+	# -> package preparation phase begins here <-
+
 	Action:Proc status all QPKG statusing statused
 	Action:Proc rebuild all QPKG meta-rebuilding meta-rebuilt
 	Action:Proc reassign all QPKG reassigning reassigned
@@ -1840,7 +1842,7 @@ ParseHelpArgs()
 				group=lists
 				;;
 			packages|qpkgs)
-				# Don't set a default action for this group, this group is used for multiple actions.
+				# Don't set a default action for this group, this group is used for multiple actions. Set a default in the last parsing function.
 				group=packages
 				;;
 			problems)
@@ -1853,7 +1855,7 @@ ParseHelpArgs()
 				;;
 		# All cases below can use multiple user-provided words or chars to specify a single group.
 			a|abs|abbreviations)
-				[[ -z $action ]] && action=help
+				# Don't set a default action for this group, this group is used for multiple actions. Set a default in the last parsing function.
 				group=abs
 				;;
 			action|actions)
@@ -1861,7 +1863,7 @@ ParseHelpArgs()
 				group=actions
 				;;
 			all)
-				# Don't set a default action for this group, this group is used for multiple actions.
+				# Don't set a default action for this group, this group is used for multiple actions. Set a default in the last parsing function.
 				group=all-actions
 				;;
 			actions-all|all-actions)
@@ -1877,7 +1879,7 @@ ParseHelpArgs()
 				group=options
 				;;
 			upgrade)
-				# Don't set a default action for this group, this group is used for multiple actions.
+				# Don't set a default action for this group, this group is used for multiple actions. Set a default in the last parsing function.
 				group=upgrades
 				;;
 			upgrades|upgrading)
@@ -2054,11 +2056,11 @@ ParseShowArgs()
 				;;
 		# All cases below can use multiple user-provided words or chars to specify a single group.
 			a|abs|abbreviations)
-				# Don't set a default action for this group, this group is used for multiple actions.
+				# Don't set a default action for this group, this group is used for multiple actions. Set a default in the last parsing function.
 				group=abs
 				;;
 			deps)
-				# Don't set a default action for this group, this group is used for multiple actions.
+				# Don't set a default action for this group, this group is used for multiple actions. Set a default in the last parsing function.
 				group=dependencies
 				;;
 			d|dependencies)
@@ -2082,7 +2084,7 @@ ParseShowArgs()
 				group=repositories
 				;;
 			s|status|statuses)
-				# Don't set a default action for this group, this group is used for multiple actions.
+				# Don't set a default action for this group, this group is used for multiple actions. Set a default in the last parsing function.
 				group=status
 				;;
 		esac
@@ -2243,6 +2245,7 @@ ParseListArgs()
 				;;
 		# All cases below can use multiple user-provided words or chars to specify a single action.
 			a|abs|abbreviations)
+				[[ -z $action ]] && action=list
 				group=abs
 				;;
 			active|started)
@@ -2301,10 +2304,11 @@ ParseListArgs()
 							QPKGs.AClist.IS${group}:Set
 							QPKGs.ACstatus.ISinstalled:Set
 							awaiting_group=false
-							generate_action_report=false
+							generate_list_report=true
 							get_qpkg_active_status=true
 							get_qpkg_states=true
 							run_package_actions=true
+							show_title=false
 							;;
 						backedup|installed|NTbackedup|NTinstalled)
 							Objects:Load
@@ -2766,7 +2770,7 @@ AllocPackGroupsToAcs()
 								DebugAsWarn "group 'SC$group' has no positive allocation handler for action '$action'"
 						esac
 						;;
-					activate|deactivate|disable|diableau|enable|enableau|reactivate|reinstall|stop|uninstall)
+					activate|deactivate|disable|disableau|enable|enableau|reactivate|reinstall|stop|uninstall)
 						case $group in
 							all|dependent|independent)
 								found=true
@@ -2820,7 +2824,7 @@ AllocPackGroupsToAcs()
 				if QPKGs-AC${action}-to.IsAny; then
 					DebugAsDone "action: '$action', group: 'SC$group': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
 				else
-					ShowAsWarn "unable to find any packages to '$(Lowercase "$action")'"
+					ShowAsWarn "unable to find any GR packages to '$(Lowercase "$action")'"
 				fi
 			fi
 		done
@@ -2843,7 +2847,7 @@ AllocPackGroupsToAcs()
 				if QPKGs-AC${action}-to.IsAny; then
 					DebugAsDone "action: '$action', group: 'GRNT${group}': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
 				else
-					ShowAsWarn "unable to find any packages to '$(Lowercase "$action")'"
+					ShowAsWarn "unable to find any GRNT packages to '$(Lowercase "$action")'"
 				fi
 			fi
 		done
@@ -2861,6 +2865,7 @@ AllocPackStatesToAcs()
 	ShowAsProc 'matching QPKG states to actions'
 
 	local action=''
+	local check_later=false
 	local found=false
 	local state=''
 
@@ -2871,6 +2876,7 @@ AllocPackStatesToAcs()
 
 		for state in "${USER_QPKG_IS_STATES[@]}"; do
 			found=false
+			check_later=false
 
 			if QPKGs.AC${action}.IS${state}.IsSet; then
 				case $action in
@@ -2884,6 +2890,10 @@ AllocPackStatesToAcs()
 								DebugAsWarn "state 'IS$state' has no positive allocation handler for action '$action'"
 						esac
 						;;
+					list)
+						check_later=true
+						found=true
+						;;
 					*)
 						DebugAsWarn "action '$action' has no positive allocation handler"
 				esac
@@ -2894,8 +2904,10 @@ AllocPackStatesToAcs()
 
 				if QPKGs-AC${action}-to.IsAny; then
 					DebugAsDone "action: '$action', state: 'IS${state}': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
+				elif [[ $check_later = true ]]; then
+					DebugAsDone "action: '$action', state: 'IS${state}': will add filtered-packages later after 'status' has been determined"
 				else
-					ShowAsWarn "unable to find any packages to '$(Lowercase "$action")'"
+					ShowAsWarn "unable to find any IS packages to '$(Lowercase "$action")'"
 				fi
 			fi
 		done
@@ -2904,6 +2916,7 @@ AllocPackStatesToAcs()
 
 		for state in "${USER_QPKG_ISNT_STATES[@]}"; do
 			found=false
+			check_later=false
 
 			if QPKGs.AC${action}.ISNT${state}.IsSet; then
 				case $action in
@@ -2917,6 +2930,10 @@ AllocPackStatesToAcs()
 								DebugAsWarn "state 'ISNT$state' has no negative allocation handler for action '$action'"
 						esac
 						;;
+					list)
+						check_later=true
+						found=true
+						;;
 					*)
 						DebugAsWarn "action '$action' has no negative allocation handler"
 				esac
@@ -2927,8 +2944,10 @@ AllocPackStatesToAcs()
 
 				if QPKGs-AC${action}-to.IsAny; then
 					DebugAsDone "action: '$action', state: 'ISNT${state}': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
+				elif [[ $check_later = true ]]; then
+					DebugAsDone "action: '$action', state: 'ISNT${state}': will add filtered-packages later after 'status' has been determined"
 				else
-					ShowAsWarn "unable to find any packages to '$(Lowercase "$action")'"
+					ShowAsWarn "unable to find any ISNT packages to '$(Lowercase "$action")'"
 				fi
 			fi
 		done
