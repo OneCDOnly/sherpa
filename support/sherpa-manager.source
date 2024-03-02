@@ -5130,7 +5130,7 @@ Help.Actions:Show()
 		DisplayAsProjSynIndentExam '' "stop $(ShowPackages)"
 		DisplayAsProjSynIndentExam 'generate QPKG dependencies report' dependencies
 		DisplayAsProjSynIndentExam '' d
-		DisplayAsProjSynIndentExam 'disable these packages. This will prevent them being started' "disable $(ShowPackages)"
+		DisplayAsProjSynIndentExam 'disable these packages. This will prevent them being activated' "disable $(ShowPackages)"
 		DisplayAsProjSynIndentExam 'disable auto-updating the application on package activation (where-supported)' "disable-auto-update $(ShowPackages)"
 		DisplayAsProjSynIndentExam 'enable these packages. Packages must be enabled before they can be activated' "enable $(ShowPackages)"
 		DisplayAsProjSynIndentExam 'enable auto-updating the application on package activation (where-supported)' "enable-auto-update $(ShowPackages)"
@@ -5192,7 +5192,7 @@ Help.ActionsAll:Show()
 		DisplayAsProjSynIndentExam 'clean local repository files from all packages (your configs are safe, application files will be downloaded again)' 'clean all'
 		DisplayAsProjSynIndentExam 'deactivate all installed packages' 'deactivate all'
 		DisplayAsProjSynIndentExam '' 'stop all'
-		DisplayAsProjSynIndentExam 'disable all installed packages. This will prevent them being started' 'disable all'
+		DisplayAsProjSynIndentExam 'disable all installed packages. This will prevent them being activated' 'disable all'
 		DisplayAsProjSynIndentExam 'disable auto-updating all applications on package activation (where-supported)' 'disable-auto-update all'
 		DisplayAsProjSynIndentExam 'enable all installed packages. Packages must be enabled before they can be started' 'enable all'
 		DisplayAsProjSynIndentExam 'enable auto-updating all applications on package activation (where-supported)' 'enable-auto-update all'
