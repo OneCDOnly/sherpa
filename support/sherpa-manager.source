@@ -543,7 +543,7 @@ Env:Load()
 	readonly QPKG_BU_PATH=$(GetDefVol)/.qpkg_config_backup
 	readonly THIS_PACKAGE_PATH=$(QPKG.GetInstallationPath)
 		if [[ -z $THIS_PACKAGE_PATH || $THIS_PACKAGE_PATH = undefined || ! -d $THIS_PACKAGE_PATH ]]; then
-			ShowAsError "$(ShowTitleName) installation path not found. Please reinstall the $(ShowTitleName) QPKG"
+			ShowAsError "$(ShowAsTitleName) installation path not found. Please reinstall the $(ShowAsTitleName) QPKG"
 
 			return 1
 		fi
@@ -2295,6 +2295,16 @@ ParseListArgs()
 							run_package_actions=false
 							useropt_help_abbreviations=true
 							;;
+						active|NTactive)
+							Objects:Load
+							QPKGs.AClist.IS${group}:Set
+							QPKGs.ACstatus.ISinstalled:Set
+							awaiting_group=false
+							generate_action_report=false
+							get_qpkg_active_status=true
+							get_qpkg_states=true
+							run_package_actions=true
+							;;
 						backedup|installed|NTbackedup|NTinstalled)
 							Objects:Load
 							QPKGs.AClist.IS${group}:Set
@@ -2482,14 +2492,17 @@ ParseActionArgs()
 		if [[ -n $real_action && -n $group ]]; then
 			case $group in
 				active|NTactive)
+					Objects:Load
 					QPKGs.AC${real_action}.IS${group}:Set
+					QPKGs.ACstatus.GRinstalled:Set
 					awaiting_group=false
 					generate_action_report=true
-					get_qpkg_active_status=false
+					get_qpkg_active_status=true
 					get_qpkg_states=true
 					run_package_actions=true
 					;;
 				all|canbackup|canclean|canrestarttoupdate|dependent|hasdependents|independent|installable|upgradable|NTcanclean|NTinstallable|NTupgradable)
+					Objects:Load
 					QPKGs.AC${real_action}.GR${group}:Set
 					awaiting_group=false
 					generate_action_report=true
@@ -2498,6 +2511,7 @@ ParseActionArgs()
 					run_package_actions=true
 					;;
 				backedup|enabled|installed|missing|NTbackedup|NTenabled|NTinstalled)
+					Objects:Load
 					QPKGs.AC${real_action}.IS${group}:Set
 					awaiting_group=false
 					generate_action_report=true
@@ -2505,6 +2519,7 @@ ParseActionArgs()
 					run_package_actions=true
 					;;
 				*)
+					Objects:Load
 					QPKGs-AC${real_action}-to:Add "$group"
 					awaiting_group=false
 					generate_action_report=true
@@ -2523,6 +2538,7 @@ ParseActionArgs()
 	for arg in "${args_incomplete[@]:-}"; do
 		case $arg in
 			status)							# If `status` is specified without a valid group, then group is `all`.
+				Objects:Load
 				QPKGs.ACstatus.GRall:Set
 				generate_show_report=true
 				get_qpkg_states=true
@@ -2573,7 +2589,7 @@ ArgSuggestions:Show()
 		for arg in "${args_incomplete[@]}"; do
 			case $arg in
 				activate|backup|deactivate|restart|reactivate|start|stop|uninstall)
-					DisplayAsProjSynExam "please provide valid $(ShowPackages) or a $(ShowPackageGroup) after '$arg' like" "$arg installed"
+					DisplayAsProjSynExam "please provide valid $(ShowAsPackages) or a $(ShowAsPackageGroup) after '$arg' like" "$arg installed"
 					arg_problem=true
 					useropt_help_basic=false
 					;;
@@ -2634,7 +2650,7 @@ ArgSuggestions:Show()
 					useropt_help_basic=false
 					;;
 				all)
-					DisplayAsProjSynExam "please provide a valid $(ShowAction) before 'all' like" 'activate all'
+					DisplayAsProjSynExam "please provide a valid $(ShowAsAction) before 'all' like" 'activate all'
 					arg_problem=true
 					useropt_help_basic=false
 					;;
@@ -2644,7 +2660,7 @@ ArgSuggestions:Show()
 					useropt_help_basic=false
 					;;
 				dependent)
-					DisplayAsProjSynExam "please provide a valid $(ShowAction) before 'dependent' like" 'activate dependents'
+					DisplayAsProjSynExam "please provide a valid $(ShowAsAction) before 'dependent' like" 'activate dependents'
 					arg_problem=true
 					useropt_help_basic=false
 					;;
@@ -2659,7 +2675,7 @@ ArgSuggestions:Show()
 					useropt_help_basic=false
 					;;
 				independent)
-					DisplayAsProjSynExam "please provide a valid $(ShowAction) before 'independent' like" 'activate independents'
+					DisplayAsProjSynExam "please provide a valid $(ShowAsAction) before 'independent' like" 'activate independents'
 					arg_problem=true
 					useropt_help_basic=false
 					;;
@@ -5120,45 +5136,45 @@ Help.Actions:Show()
 		{
 
 		Help.Basic:Show
-		DisplayAsHelpTitle "$(ShowAction) usage examples:"
-		DisplayAsProjSynIndentExam 'activate these packages (this will upgrade internal applications where-supported)' "activate $(ShowPackages)"
-		DisplayAsProjSynIndentExam '' "start $(ShowPackages)"
-		DisplayAsProjSynIndentExam 'backup these application configurations to the backup location' "backup $(ShowPackages)"
+		DisplayAsHelpTitle "$(ShowAsAction) usage examples:"
+		DisplayAsProjSynIndentExam 'activate these packages (this will upgrade internal applications where-supported)' "activate $(ShowAsPackages)"
+		DisplayAsProjSynIndentExam '' "start $(ShowAsPackages)"
+		DisplayAsProjSynIndentExam 'backup these application configurations to the backup location' "backup $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam 'check all application dependencies are installed' check
 		DisplayAsProjSynIndentExam '' c
-		DisplayAsProjSynIndentExam 'clean local repository files from these packages (your config is safe, application files will be downloaded again)' "clean $(ShowPackages)"
-		DisplayAsProjSynIndentExam 'deactivate these packages' "deactivate $(ShowPackages)"
-		DisplayAsProjSynIndentExam '' "stop $(ShowPackages)"
+		DisplayAsProjSynIndentExam 'clean local repository files from these packages (your config is safe, application files will be downloaded again)' "clean $(ShowAsPackages)"
+		DisplayAsProjSynIndentExam 'deactivate these packages' "deactivate $(ShowAsPackages)"
+		DisplayAsProjSynIndentExam '' "stop $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam 'generate QPKG dependencies report' dependencies
 		DisplayAsProjSynIndentExam '' d
-		DisplayAsProjSynIndentExam 'disable these packages. This will prevent them being activated' "disable $(ShowPackages)"
-		DisplayAsProjSynIndentExam 'disable auto-updating the application on package activation (where-supported)' "disable-auto-update $(ShowPackages)"
-		DisplayAsProjSynIndentExam 'enable these packages. Packages must be enabled before they can be activated' "enable $(ShowPackages)"
-		DisplayAsProjSynIndentExam 'enable auto-updating the application on package activation (where-supported)' "enable-auto-update $(ShowPackages)"
-		DisplayAsProjSynIndentExam 'install these packages' "install $(ShowPackages)"
-		DisplayAsProjSynIndentExam '' "add $(ShowPackages)"
+		DisplayAsProjSynIndentExam 'disable these packages. This will prevent them being activated' "disable $(ShowAsPackages)"
+		DisplayAsProjSynIndentExam 'disable auto-updating the application on package activation (where-supported)' "disable-auto-update $(ShowAsPackages)"
+		DisplayAsProjSynIndentExam 'enable these packages. Packages must be enabled before they can be activated' "enable $(ShowAsPackages)"
+		DisplayAsProjSynIndentExam 'enable auto-updating the application on package activation (where-supported)' "enable-auto-update $(ShowAsPackages)"
+		DisplayAsProjSynIndentExam 'install these packages' "install $(ShowAsPackages)"
+		DisplayAsProjSynIndentExam '' "add $(ShowAsPackages)"
 # 		DisplayAsProjSynIndentExam 'show application backup files' 'list backups'
 # 		DisplayAsProjSynIndentExam '' b
-# 		DisplayAsProjSynIndentExam "list $(ShowTitleName) object version numbers" 'list versions'
-		DisplayAsProjSynIndentExam 'reactivate these packages (this will upgrade internal applications where-supported)' "reactivate $(ShowPackages)"
-		DisplayAsProjSynIndentExam '' "restart $(ShowPackages)"
-		DisplayAsProjSynIndentExam "reassign packages to $(ShowTitleName). Detach packages previously installed via an online repository from further management by that repository" "reassign $(ShowPackages)"
-		DisplayAsProjSynIndentExam "rebuild these packages ('install' packages, then 'restore' configuration backups)" "rebuild $(ShowPackages)"
-		DisplayAsProjSynIndentExam 'reinstall these packages' "reinstall $(ShowPackages)"
+# 		DisplayAsProjSynIndentExam "list $(ShowAsTitleName) object version numbers" 'list versions'
+		DisplayAsProjSynIndentExam 'reactivate these packages (this will upgrade internal applications where-supported)' "reactivate $(ShowAsPackages)"
+		DisplayAsProjSynIndentExam '' "restart $(ShowAsPackages)"
+		DisplayAsProjSynIndentExam "reassign packages to $(ShowAsTitleName). Detach packages previously installed via an online repository from further management by that repository" "reassign $(ShowAsPackages)"
+		DisplayAsProjSynIndentExam "rebuild these packages ('install' packages, then 'restore' configuration backups)" "rebuild $(ShowAsPackages)"
+		DisplayAsProjSynIndentExam 'reinstall these packages' "reinstall $(ShowAsPackages)"
 # 		DisplayAsProjSynIndentExam 'generate QPKG repository assignments report' repos
 # 		DisplayAsProjSynIndentExam '' r
-		DisplayAsProjSynIndentExam 'restore these application configurations from the backup location' "restore $(ShowPackages)"
-		DisplayAsProjSynIndentExam 'digitally "sign" these QPKGs' "sign $(ShowPackages)"
+		DisplayAsProjSynIndentExam 'restore these application configurations from the backup location' "restore $(ShowAsPackages)"
+		DisplayAsProjSynIndentExam 'digitally "sign" these QPKGs' "sign $(ShowAsPackages)"
 # 		DisplayAsProjSynIndentExam 'generate QPKG status report' status
 # 		DisplayAsProjSynIndentExam '' s
-		DisplayAsProjSynIndentExam 'uninstall these packages' "uninstall $(ShowPackages)"
-		DisplayAsProjSynIndentExam '' "remove $(ShowPackages)"
-		DisplayAsProjSynIndentExam '' "rm $(ShowPackages)"
-		DisplayAsProjSynIndentExam 'upgrade these packages (this will upgrade internal applications where-supported)' "upgrade $(ShowPackages)"
+		DisplayAsProjSynIndentExam 'uninstall these packages' "uninstall $(ShowAsPackages)"
+		DisplayAsProjSynIndentExam '' "remove $(ShowAsPackages)"
+		DisplayAsProjSynIndentExam '' "rm $(ShowAsPackages)"
+		DisplayAsProjSynIndentExam 'upgrade these packages (this will upgrade internal applications where-supported)' "upgrade $(ShowAsPackages)"
 
-		DisplayAsProjSynExam "$(ShowAction)s to affect all packages can be seen with" 'help all-actions'
+		DisplayAsProjSynExam "$(ShowAsAction)s to affect all packages can be seen with" 'help all-actions'
 		DisplayAsProjSynIndentExam '' 'help actions-all'
-		DisplayAsProjSynExam "multiple $(ShowAction)s are supported like this" "$(ShowAction) $(ShowPackages) $(ShowAction) $(ShowPackages)"
+		DisplayAsProjSynExam "multiple $(ShowAsAction)s are supported like this" "$(ShowAsAction) $(ShowAsPackages) $(ShowAsAction) $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam '' 'install sabnzbd sickgear reactivate transmission uninstall lazy nzbget upgrade nzbtomedia'
 
 		} > "$REPORT_OUTPUT_PATHFILE"
@@ -5185,8 +5201,8 @@ Help.ActionsAll:Show()
 		{
 
 		Help.Basic:Show
-		DisplayAsHelpTitle "the 'all' group applies to all installed packages. If $(ShowAction) is 'install all' then all available packages will be installed."
-		DisplayAsHelpTitle "$(ShowAction) $(ShowPackageGroup) usage examples:"
+		DisplayAsHelpTitle "the 'all' group applies to all installed packages. If $(ShowAsAction) is 'install all' then all available packages will be installed."
+		DisplayAsHelpTitle "$(ShowAsAction) $(ShowAsPackageGroup) usage examples:"
 		DisplayAsProjSynIndentExam 'activate all installed packages (this will upgrade internal applications where-supported)' 'activate all'
 		DisplayAsProjSynIndentExam '' 'start all'
 		DisplayAsProjSynIndentExam 'backup all application configurations to the backup location' 'backup all'
@@ -5200,7 +5216,7 @@ Help.ActionsAll:Show()
 		DisplayAsProjSynIndentExam 'install everything!' 'install all'
 		DisplayAsProjSynIndentExam 'reactivate packages (this will upgrade internal applications where-supported)' 'reactivate all'
 		DisplayAsProjSynIndentExam '' 'restart all'
-		DisplayAsProjSynIndentExam "reassign all packages to $(ShowTitleName). Detach packages previously installed via an online repository from further management by that repository" 'reassign all'
+		DisplayAsProjSynIndentExam "reassign all packages to $(ShowAsTitleName). Detach packages previously installed via an online repository from further management by that repository" 'reassign all'
 		DisplayAsProjSynIndentExam "rebuild all packages where backup files exist ('install' packages and 'restore' backups)" 'rebuild all'
 		DisplayAsProjSynIndentExam 'reinstall all installed packages' 'reinstall all'
 		DisplayAsProjSynIndentExam 'restore all application configurations from the backup location' 'restore all'
@@ -5235,7 +5251,7 @@ Help.BackupLocation:Show()
 Help.Basic:Show()
 	{
 
-	DisplayAsHelpTitle "usage: sherpa $(ShowAction) $(ShowPackages) $(ShowPackageGroup) $(ShowOptions)"
+	DisplayAsHelpTitle "usage: sherpa $(ShowAsAction) $(ShowAsPackages) $(ShowAsPackageGroup) $(ShowAsOptions)"
 
 	return 0
 
@@ -5244,11 +5260,11 @@ Help.Basic:Show()
 Help.Basic.Examples:Show()
 	{
 
-	DisplayAsProjSynIndentExam "to see available $(ShowAction)s" 'help actions'
-	DisplayAsProjSynIndentExam "to see available $(ShowPackages)" 'show packages'
+	DisplayAsProjSynIndentExam "to see available $(ShowAsAction)s" 'help actions'
+	DisplayAsProjSynIndentExam "to see available $(ShowAsPackages)" 'show packages'
 	DisplayAsProjSynIndentExam '' p
-	DisplayAsProjSynIndentExam "to see available $(ShowPackageGroup)s" 'help groups'
-	DisplayAsProjSynIndentExam "or, for more $(ShowOptions)" 'help options'
+	DisplayAsProjSynIndentExam "to see available $(ShowAsPackageGroup)s" 'help groups'
+	DisplayAsProjSynIndentExam "or, for more $(ShowAsOptions)" 'help options'
 	DisplayAsHelpTitle "more in the wiki: $(ShowAsURL 'https://github.com/OneCDOnly/sherpa/wiki')"
 
 	Display
@@ -5266,23 +5282,23 @@ Help.Groups:Show()
 		{
 
 		Help.Basic:Show
-		DisplayAsHelpTitle "$(ShowPackageGroup) usage examples:"
-		DisplayAsProjSynIndentExam 'select every package' "$(ShowAction) all"
-		DisplayAsProjSynIndentExam 'select only independent packages (these do not depend on other QPKGs)' "$(ShowAction) independent"
-		DisplayAsProjSynIndentExam '' "$(ShowAction) independents"
-		DisplayAsProjSynIndentExam 'select only dependent packages (these require another QPKG to be installed and active)' "$(ShowAction) dependent"
-		DisplayAsProjSynIndentExam 'select only active packages' "$(ShowAction) active"
-		DisplayAsProjSynIndentExam '' "$(ShowAction) started"
-		DisplayAsProjSynIndentExam 'select only inactive packages' "$(ShowAction) inactive"
-		DisplayAsProjSynIndentExam '' "$(ShowAction) stopped"
-		DisplayAsProjSynIndentExam 'select only installed packages' "$(ShowAction) installed"
-		DisplayAsProjSynIndentExam 'select only packages that are not installed' "$(ShowAction) not-installed"
-		DisplayAsProjSynIndentExam 'select only packages that are backed-up' "$(ShowAction) backedup"
-		DisplayAsProjSynIndentExam 'select only packages that are not backed-up' "$(ShowAction) not-backedup"
-		DisplayAsProjSynIndentExam 'select only packages that are upgradable' "$(ShowAction) upgradable"
-		DisplayAsProjSynIndentExam '' "$(ShowAction) new"
-		DisplayAsProjSynIndentExam 'select only missing packages (these are partly installed and broken)' "$(ShowAction) missing"
-		DisplayAsProjSynExam 'multiple groups are supported like this' "$(ShowAction) $(ShowPackageGroup) $(ShowPackageGroup)"
+		DisplayAsHelpTitle "$(ShowAsPackageGroup) usage examples:"
+		DisplayAsProjSynIndentExam 'select every package' "$(ShowAsAction) all"
+		DisplayAsProjSynIndentExam 'select only independent packages (these do not depend on other QPKGs)' "$(ShowAsAction) independent"
+		DisplayAsProjSynIndentExam '' "$(ShowAsAction) independents"
+		DisplayAsProjSynIndentExam 'select only dependent packages (these require another QPKG to be installed and active)' "$(ShowAsAction) dependent"
+		DisplayAsProjSynIndentExam 'select only active packages' "$(ShowAsAction) active"
+		DisplayAsProjSynIndentExam '' "$(ShowAsAction) started"
+		DisplayAsProjSynIndentExam 'select only inactive packages' "$(ShowAsAction) inactive"
+		DisplayAsProjSynIndentExam '' "$(ShowAsAction) stopped"
+		DisplayAsProjSynIndentExam 'select only installed packages' "$(ShowAsAction) installed"
+		DisplayAsProjSynIndentExam 'select only packages that are not installed' "$(ShowAsAction) not-installed"
+		DisplayAsProjSynIndentExam 'select only packages that are backed-up' "$(ShowAsAction) backedup"
+		DisplayAsProjSynIndentExam 'select only packages that are not backed-up' "$(ShowAsAction) not-backedup"
+		DisplayAsProjSynIndentExam 'select only packages that are upgradable' "$(ShowAsAction) upgradable"
+		DisplayAsProjSynIndentExam '' "$(ShowAsAction) new"
+		DisplayAsProjSynIndentExam 'select only missing packages (these are partly installed and broken)' "$(ShowAsAction) missing"
+		DisplayAsProjSynExam 'multiple groups are supported like this' "$(ShowAsAction) $(ShowAsPackageGroup) $(ShowAsPackageGroup)"
 
 		} > "$REPORT_OUTPUT_PATHFILE"
 
@@ -5304,10 +5320,10 @@ Help.Issue:Show()
 
 	DisplayAsHelpTitle "please consider creating a new issue for this on GitHub: $(ShowAsURL 'https://github.com/OneCDOnly/sherpa/issues')"
 	DisplayAsHelpTitle "alternatively, post on the QNAP NAS Community Forum: $(ShowAsURL 'https://forum.qnap.com/viewtopic.php?f=320&t=132373')"
-	DisplayAsProjSynIndentExam "view only the most recent $(ShowTitleName) session log" last
-	DisplayAsProjSynIndentExam "view the entire $(ShowTitleName) session log" log
-	DisplayAsProjSynIndentExam "upload the most-recent $(FormatAsThous "$LOG_TAIL_LINES") lines in your $(ShowTitleName) log to the $(ShowAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste log'
-	DisplayAsHelpTitleHighlighted "if you need help, please include a copy of your $(ShowTitleName) $(TextBrightOrange 'log for analysis!')"
+	DisplayAsProjSynIndentExam "view only the most recent $(ShowAsTitleName) session log" last
+	DisplayAsProjSynIndentExam "view the entire $(ShowAsTitleName) session log" log
+	DisplayAsProjSynIndentExam "upload the most-recent $(FormatAsThous "$LOG_TAIL_LINES") lines in your $(ShowAsTitleName) log to the $(ShowAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste log'
+	DisplayAsHelpTitleHighlighted "if you need help, please include a copy of your $(ShowAsTitleName) $(TextBrightOrange 'log for analysis!')"
 
 	Display
 
@@ -5336,7 +5352,7 @@ Help.Lists:Show()
 		DisplayAsProjSynIndentExam '' not-installed
 		DisplayAsProjSynIndentExam 'list only upgradable packages' 'list upgradable'
 		DisplayAsProjSynIndentExam '' upgradable
-		DisplayAsProjSynIndentExam "list $(ShowTitleName) object version numbers" 'list versions'
+		DisplayAsProjSynIndentExam "list $(ShowAsTitleName) object version numbers" 'list versions'
 
 		} > "$REPORT_OUTPUT_PATHFILE"
 
@@ -5431,10 +5447,10 @@ Help.Options:Show()
 		{
 
 		Help.Basic:Show
-		DisplayAsHelpTitle "$(ShowOptions) usage examples:"
-		DisplayAsProjSynIndentExam 'show live debugging information, and record it to file' "$(ShowAction) $(ShowPackages) verbose"
+		DisplayAsHelpTitle "$(ShowAsOptions) usage examples:"
+		DisplayAsProjSynIndentExam 'show live debugging information, and record it to file' "$(ShowAsAction) $(ShowAsPackages) verbose"
 		DisplayAsProjSynIndentExam '' v
-		DisplayAsProjSynIndentExam 'record debugging information to file-only' "$(ShowAction) $(ShowPackages) debug"
+		DisplayAsProjSynIndentExam 'record debugging information to file-only' "$(ShowAsAction) $(ShowAsPackages) debug"
 
 		} > "$REPORT_OUTPUT_PATHFILE"
 
@@ -5489,23 +5505,23 @@ Help.Problems:Show()
 		DisplayAsHelpTitle 'usage examples for dealing with problems:'
 		DisplayAsProjSynIndentExam 'show package statuses' 'show status'
 		DisplayAsProjSynIndentExam '' s
-		DisplayAsProjSynIndentExam 'show live debugging information, and record it to file' "$(ShowAction) $(ShowPackages) verbose"
+		DisplayAsProjSynIndentExam 'show live debugging information, and record it to file' "$(ShowAsAction) $(ShowAsPackages) verbose"
 		DisplayAsProjSynIndentExam '' v
-		DisplayAsProjSynIndentExam 'record debugging information to file-only' "$(ShowAction) $(ShowPackages) debug"
+		DisplayAsProjSynIndentExam 'record debugging information to file-only' "$(ShowAsAction) $(ShowAsPackages) debug"
 		DisplayAsProjSynIndentExam 'ensure all dependencies exist for installed packages' check
 		DisplayAsProjSynIndentExam '' c
-		DisplayAsProjSynIndentExam 'clear local repository files from these packages' "clean $(ShowPackages)"
-		DisplayAsProjSynIndentExam "remove all cached $(ShowTitleName) items and logs" reset
+		DisplayAsProjSynIndentExam 'clear local repository files from these packages' "clean $(ShowAsPackages)"
+		DisplayAsProjSynIndentExam "remove all cached $(ShowAsTitleName) items and logs" reset
 		DisplayAsProjSynIndentExam 'reactivate all installed packages (upgrades internal applications where-supported)' 'reactivate all'
-		DisplayAsProjSynIndentExam 'enable then activate these packages' "activate $(ShowPackages)"
-		DisplayAsProjSynIndentExam 'stop then disable these packages (disabling will prevent them starting on reboot)' "stop $(ShowPackages)"
+		DisplayAsProjSynIndentExam 'enable then activate these packages' "activate $(ShowAsPackages)"
+		DisplayAsProjSynIndentExam 'stop then disable these packages (disabling will prevent them starting on reboot)' "stop $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam "increase the default 'qpkg_service' timeouts from 3 minutes to 30 minutes" 'install increasetimeouts'
-		DisplayAsProjSynIndentExam "view only the most recent $(ShowTitleName) session log" last
+		DisplayAsProjSynIndentExam "view only the most recent $(ShowAsTitleName) session log" last
 		DisplayAsProjSynIndentExam '' l
-		DisplayAsProjSynIndentExam "view the entire $(ShowTitleName) session log" log
-		DisplayAsProjSynIndentExam "upload the most-recent session in your $(ShowTitleName) log to the $(ShowAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste last'
-		DisplayAsProjSynIndentExam "upload the most-recent $(FormatAsThous "$LOG_TAIL_LINES") lines in your $(ShowTitleName) log to the $(ShowAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste log'
-		DisplayAsHelpTitleHighlighted "if you need help, please include a copy of your $(ShowTitleName) $(TextBrightOrange "log for analysis!")"
+		DisplayAsProjSynIndentExam "view the entire $(ShowAsTitleName) session log" log
+		DisplayAsProjSynIndentExam "upload the most-recent session in your $(ShowAsTitleName) log to the $(ShowAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste last'
+		DisplayAsProjSynIndentExam "upload the most-recent $(FormatAsThous "$LOG_TAIL_LINES") lines in your $(ShowAsTitleName) log to the $(ShowAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste log'
+		DisplayAsHelpTitleHighlighted "if you need help, please include a copy of your $(ShowAsTitleName) $(TextBrightOrange "log for analysis!")"
 
 		} > "$REPORT_OUTPUT_PATHFILE"
 
@@ -5564,15 +5580,15 @@ Help.Tips:Show()
 
 		Help.Basic:Show
 		DisplayAsHelpTitle 'helpful tips and shortcuts:'
-		DisplayAsProjSynIndentExam "install all available $(ShowTitleName) packages" 'install all'
+		DisplayAsProjSynIndentExam "install all available $(ShowAsTitleName) packages" 'install all'
 		DisplayAsProjSynIndentExam 'package abbreviations and aliases also work. To see these' 'help abs'
 		DisplayAsProjSynIndentExam '' a
 		DisplayAsProjSynIndentExam 'reactivate all installed packages (upgrades internal applications where-supported)' 'reactivate all'
 		DisplayAsProjSynIndentExam 'list only packages that can be installed' 'list installable'
-		DisplayAsProjSynIndentExam "view only the most recent $(ShowTitleName) session log" last
+		DisplayAsProjSynIndentExam "view only the most recent $(ShowAsTitleName) session log" last
 		DisplayAsProjSynIndentExam '' l
 		DisplayAsProjSynIndentExam 'activate all inactive packages' 'activate inactive'
-		DisplayAsProjSynIndentExam 'upgrade the internal applications only' "reactivate $(ShowPackages)"
+		DisplayAsProjSynIndentExam 'upgrade the internal applications only' "reactivate $(ShowAsPackages)"
 		Help.BackupLocation:Show
 
 		} > "$REPORT_OUTPUT_PATHFILE"
@@ -5727,14 +5743,14 @@ Log.Last:Paste()
 	ExtractPrevSessFromTail
 
 	if [[ -e $SESS_LAST_PATHFILE ]]; then
-		if Quiz "Press 'Y' to post the most-recent session in your $(ShowTitleName) log to a public pastebin, or any other key to abort"; then
-			ShowAsProc "uploading $(ShowTitleName) log"
+		if Quiz "Press 'Y' to post the most-recent session in your $(ShowAsTitleName) log to a public pastebin, or any other key to abort"; then
+			ShowAsProc "uploading $(ShowAsTitleName) log"
 
 			# with thanks to https://github.com/solusipse/fiche
 			link=$($CAT_CMD --number "$SESS_LAST_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
 
 			if [[ $? -eq 0 ]]; then
-				ShowAsDone "your $(ShowTitleName) log is now online at $(ShowAsURL "$link") and will be deleted in 1 month"
+				ShowAsDone "your $(ShowAsTitleName) log is now online at $(ShowAsURL "$link") and will be deleted in 1 month"
 			else
 				ShowAsFail "a link could not be generated. Most likely a problem occurred when talking with $(ShowAsURL 'https://termbin.com')"
 			fi
@@ -5762,14 +5778,14 @@ Log.Tail:Paste()
 	ExtractTailFromLog
 
 	if [[ -e $SESS_TAIL_PATHFILE ]]; then
-		if Quiz "Press 'Y' to post the most-recent $(FormatAsThous "$LOG_TAIL_LINES") lines in your $(ShowTitleName) log to a public pastebin, or any other key to abort"; then
-			ShowAsProc "uploading $(ShowTitleName) log"
+		if Quiz "Press 'Y' to post the most-recent $(FormatAsThous "$LOG_TAIL_LINES") lines in your $(ShowAsTitleName) log to a public pastebin, or any other key to abort"; then
+			ShowAsProc "uploading $(ShowAsTitleName) log"
 
 			# with thanks to https://github.com/solusipse/fiche
 			link=$($CAT_CMD --number "$SESS_TAIL_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
 
 			if [[ $? -eq 0 ]]; then
-				ShowAsDone "your $(ShowTitleName) log is now online at $(ShowAsURL "$link") and will be deleted in 1 month"
+				ShowAsDone "your $(ShowAsTitleName) log is now online at $(ShowAsURL "$link") and will be deleted in 1 month"
 			else
 				ShowAsFail "a link could not be generated. Most likely a problem occurred when talking with $(ShowAsURL 'https://termbin.com')"
 			fi
@@ -6129,7 +6145,7 @@ QPKGs.Conflicts:Check()
 		# shellcheck disable=2068
 		for a in "${BASE_QPKG_CONFLICTS_WITH[@]}"; do
 			if QPKG.IsEnabled "$a"; then
-				ShowAsError "the '$a' QPKG is enabled. $(ShowTitleName) is incompatible with this package. Please consider stopping this QPKG in your App Center"
+				ShowAsError "the '$a' QPKG is enabled. $(ShowAsTitleName) is incompatible with this package. Please consider stopping this QPKG in your App Center"
 				run_package_actions=false
 
 				return 1
@@ -6150,7 +6166,7 @@ QPKGs.Warnings:Check()
 		# shellcheck disable=2068
 		for a in "${BASE_QPKG_WARNINGS[@]}"; do
 			if QPKG.IsEnabled "$a"; then
-				ShowAsWarn "the '$a' QPKG is enabled. This may cause problems with $(ShowTitleName) applications. Please consider stopping this QPKG in your App Center"
+				ShowAsWarn "the '$a' QPKG is enabled. This may cause problems with $(ShowAsTitleName) applications. Please consider stopping this QPKG in your App Center"
 
 				return 1
 			fi
@@ -6667,7 +6683,7 @@ Help.Abbreviations:Show()
 		{
 
 		Help.Basic:Show
-		DisplayAsHelpTitle "$(ShowTitleName) can recognise various abbreviations and aliases as $(ShowPackages)."
+		DisplayAsHelpTitle "$(ShowAsTitleName) can recognise various abbreviations and aliases as $(ShowAsPackages)."
 		DisplayAsAbsReportTitleLine
 
 		} >"$REPORT_OUTPUT_PATHFILE"
@@ -6728,7 +6744,7 @@ Report.Backups:Show()
 
 		{
 
-		DisplayAsHelpTitle "the location for $(ShowTitleName) backups is: $QPKG_BU_PATH"
+		DisplayAsHelpTitle "the location for $(ShowAsTitleName) backups is: $QPKG_BU_PATH"
 
 		DisplayAsHelpTitle "backups are listed oldest-first, and those shown in $(TextBrightRed '! red') were last updated more-than $highlight_older_than."
 
@@ -6841,14 +6857,14 @@ Report.Packages:Show()
 		{
 
 		Help.Basic:Show
-		DisplayAsHelpTitle "one-or-more $(ShowPackages) may be specified at-once."
+		DisplayAsHelpTitle "one-or-more $(ShowAsPackages) may be specified at-once."
 		DisplayAsPackagesReportTitleLine
 
 		for a in $(QPKGs-GRall:Array); do
 			DisplayAsPackagesReportLine "$a"
 		done
 
-		DisplayAsProjSynExam "abbreviations and aliases may also be used to specify $(ShowPackages). To list these" 'help abs'
+		DisplayAsProjSynExam "abbreviations and aliases may also be used to specify $(ShowAsPackages). To list these" 'help abs'
 		DisplayAsProjSynIndentExam '' a
 
 		} > "$REPORT_OUTPUT_PATHFILE"
@@ -7880,7 +7896,7 @@ EnableDebugToArchiveAndFile()
 	useropt_debug=true
 	DebugVar useropt_debug
 
-	ShowAsNote "debug mode activated, $(ShowTitleName) will run a little slower than usual"
+	ShowAsNote "debug mode activated, $(ShowAsTitleName) will run a little slower than usual"
 
 	archive_debug_afterward=true
 	DebugVar archive_debug_afterward
@@ -10805,14 +10821,14 @@ Title:Show()
 	if [[ -z ${ARGS_RAW[*]:-} ]]; then
 		Display "$(ShowTitleArt)"
 	else
-		Display "$(ShowTitleName) $(ShowVersion)"
+		Display "$(ShowAsTitleName) $(ShowAsVersion)"
 	fi
 
 	title_shown=true
 
 	}
 
-ShowTitleName()
+ShowAsTitleName()
 	{
 
 	TextBrightWhite sherpa
@@ -10824,26 +10840,27 @@ ShowTitleArt()
 
 	Display "$(TextBrightOrange '     _')"
 	Display "$(TextBrightOrange ' ___| |__   ___ _ __ _ __   __ _')"
-	Display "$(TextBrightOrange "/ __| '_ \ / _ \ '__| '_ \ / _\` |")  $(ShowDescription)"
-	Display "$(TextBrightOrange '\__ \ | | |  __/ |  | |_) | (_| |')  $(ShowCopyrightBasic)"
-	Display "$(TextBrightOrange '|___/_| |_|\___|_|  | .__/ \__,_|')  $(ShowVersion)"
+	Display "$(TextBrightOrange "/ __| '_ \ / _ \ '__| '_ \ / _\` |")  $(ShowAsDescription)"
+	Display "$(TextBrightOrange '\__ \ | | |  __/ |  | |_) | (_| |')  $(ShowAsCopyrightBasic)"
+	Display "$(TextBrightOrange '|___/_| |_|\___|_|  | .__/ \__,_|')  $(ShowAsVersion)"
 	Display "$(TextBrightOrange '                    |_|')"
 
 	}
 
-ShowVersion()
+ShowAsVersion()
 	{
 
 	printf '%s' "v$THIS_SCRIPT_VER"
 
 	}
 
-ShowCopyrightBasic()
+ShowAsCopyrightBasic()
 	{
 
 	printf '%s' '<?copyright_basic?>'
 
 	}
+
 ShowEmail()
 	{
 
@@ -10851,35 +10868,35 @@ ShowEmail()
 
 	}
 
-ShowDescription()
+ShowAsDescription()
 	{
 
 	printf '%s' '<?title_description?>'
 
 	}
 
-ShowAction()
+ShowAsAction()
 	{
 
 	TextBrightYellow '[action]'
 
 	}
 
-ShowPackages()
+ShowAsPackages()
 	{
 
 	TextBrightOrange '[packages]'
 
 	}
 
-ShowPackageGroup()
+ShowAsPackageGroup()
 	{
 
 	TextBrightOrange '[package group]'
 
 	}
 
-ShowOptions()
+ShowAsOptions()
 	{
 
 	TextBrightRed '[options]'
