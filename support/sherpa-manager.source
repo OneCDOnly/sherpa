@@ -4085,7 +4085,7 @@ CalcMaxStatusReportCols()
 
 	}
 
-# CalcMaxDepsReportCols()
+#CalcMaxDepsReportCols()
 # 	{
 #
 # 	local col1_width=$((${#CHARS_BULLET}+PACKAGE_NAME_COL_WIDTH))
@@ -4167,7 +4167,7 @@ DisplayAsSynExam()
 
 	}
 
-DisplayAsPackagesReportTitleLine()
+DisplayAsPacksReportTitleLine()
 	{
 
 	local a=''
@@ -4201,7 +4201,7 @@ DisplayAsPackagesReportTitleLine()
 
 	}
 
-DisplayAsPackagesReportLine()
+DisplayAsPacksReportItemLine()
 	{
 
 	# Input:
@@ -4323,7 +4323,7 @@ DisplayAsStatusReportTitleLine()
 
 	}
 
-DisplayAsStatusReportLine()
+DisplayAsStatusReportItemLine()
 	{
 
 	# Input:
@@ -4498,7 +4498,7 @@ DisplayAsReposReportTitleLine()
 
 	}
 
-DisplayAsReposReportLine()
+DisplayAsReposReportItemLine()
 	{
 
 	# Input:
@@ -4615,7 +4615,7 @@ DisplayAsAbsReportTitleLine()
 
 	}
 
-DisplayAsAbsReportLine()
+DisplayAsAbsReportItemLine()
 	{
 
 	# Input:
@@ -4757,7 +4757,7 @@ DisplayAsDepsReportTitleLine()
 
 	}
 
-DisplayAsDepsReportLine()
+DisplayAsDepsReportItemLine()
 	{
 
 	# Input:
@@ -5027,7 +5027,7 @@ DisplayAsDepsReportLine()
 
 	}
 
-DisplayAsBackupsReportTitleLine()
+DisplayAsBacksReportTitleLine()
 	{
 
 	local a=''
@@ -5061,7 +5061,7 @@ DisplayAsBackupsReportTitleLine()
 
 	}
 
-DisplayAsBackupsReportLine()
+DisplayAsBacksReportItemLine()
 	{
 
 	# Input:
@@ -6354,30 +6354,30 @@ QPKGs.Actions:List()
 
 	}
 
-QPKGs.Actions:ListAll()
-	{
-
-	# Only used when debugging.
-
-	Func:Init
-
-	local a=''
-	local b=''
-	DebugInfoMinSepr
-
-	for a in "${QPKG_ACTIONS[@]}"; do
-		for b in to ok er sk so se sa; do
-			if QPKGs-AC${a}-${b}.IsAny; then
-				DebugQpkg info "AC${a}=${b}" "($(QPKGs-AC${a}-${b}:Count)) $(QPKGs-AC${a}-${b}:ListCSV) "
-			fi
-		done
-	done
-
-	DebugInfoMinSepr
-
-	Func:Exit
-
-	}
+#QPKGs.Actions:ListAll()
+# 	{
+#
+# 	# Only used when debugging.
+#
+# 	Func:Init
+#
+# 	local a=''
+# 	local b=''
+# 	DebugInfoMinSepr
+#
+# 	for a in "${QPKG_ACTIONS[@]}"; do
+# 		for b in to ok er sk so se sa; do
+# 			if QPKGs-AC${a}-${b}.IsAny; then
+# 				DebugQpkg info "AC${a}=${b}" "($(QPKGs-AC${a}-${b}:Count)) $(QPKGs-AC${a}-${b}:ListCSV) "
+# 			fi
+# 		done
+# 	done
+#
+# 	DebugInfoMinSepr
+#
+# 	Func:Exit
+#
+# 	}
 
 QPKGs.States:List()
 	{
@@ -6773,7 +6773,7 @@ Help.Abbreviations:Show()
 
 	for a in $(QPKGs-GRall:Array); do
 		((n++))
-		DisplayAsAbsReportLine "$a" > "$REPORTS_PATH/$n" &
+		DisplayAsAbsReportItemLine "$a" > "$REPORTS_PATH/$n" &
 	done
 
 	m=$n
@@ -6831,13 +6831,13 @@ Report.Backups:Show()
 
 		DisplayAsHelpTitle "backups are listed oldest-first, and those shown in $(TextBrightRed '! red') were last updated more-than $highlight_older_than."
 
-		DisplayAsBackupsReportTitleLine
+		DisplayAsBacksReportTitleLine
 
 		if [[ -e $GNU_FIND_CMD ]]; then				# Prefer GNU `find` for this.
 			while read -r epoch_time file_name file_bytes; do
 				[[ -z $epoch_time || -z $file_name ]] && break
 
-				DisplayAsBackupsReportLine "$epoch_time" "$file_name" "$file_bytes" "$highlight_older_than"
+				DisplayAsBacksReportItemLine "$epoch_time" "$file_name" "$file_bytes" "$highlight_older_than"
 			done <<< "$($GNU_FIND_CMD "$QPKG_BU_PATH"/*.config.tar.gz -maxdepth 1 -printf '%C@ %f %s\n' 2>/dev/null | $SORT_CMD)"
 		else										# If GNU `find` isn't available, do-it the hard-way.
 			while read -r file_date file_time file_name file_bytes; do
@@ -6846,7 +6846,7 @@ Report.Backups:Show()
 				epoch_time=$(/bin/date -d "$file_date $file_time" +"%s")
 				file_name=$($BASENAME_CMD "$file_name")
 
-				DisplayAsBackupsReportLine "$epoch_time" "$file_name" "$file_bytes" "$highlight_older_than"
+				DisplayAsBacksReportItemLine "$epoch_time" "$file_name" "$file_bytes" "$highlight_older_than"
 			done <<< "$(cd "$QPKG_BU_PATH" && ls -l1tr --time-style=+"%Y-%m-%d %H:%M:%S" ./*.config.tar.gz 2>/dev/null | $AWK_CMD '{print $6" "$7" "$8" "$5}')"
 		fi
 
@@ -6894,7 +6894,7 @@ Report.Dependencies:Show()
 
 	for a in $(QPKGs-GRall:Array); do
 		((n++))
-		DisplayAsDepsReportLine "$a" > "$REPORTS_PATH/$n" &
+		DisplayAsDepsReportItemLine "$a" > "$REPORTS_PATH/$n" &
 	done
 
 	m=$n
@@ -6941,10 +6941,10 @@ Report.Packages:Show()
 
 		Help.Basic:Show
 		DisplayAsHelpTitle "one-or-more $(ShowAsPackages) may be specified at-once."
-		DisplayAsPackagesReportTitleLine
+		DisplayAsPacksReportTitleLine
 
 		for a in $(QPKGs-GRall:Array); do
-			DisplayAsPackagesReportLine "$a"
+			DisplayAsPacksReportItemLine "$a"
 		done
 
 		DisplayAsProjSynExam "abbreviations and aliases may also be used to specify $(ShowAsPackages). To list these" 'help abs'
@@ -6986,7 +6986,7 @@ Report.Repos:Show()
 
 	for a in $(QPKGs-GRall:Array); do
 		((n++))
-		DisplayAsReposReportLine "$a" > "$REPORTS_PATH/$n" &
+		DisplayAsReposReportItemLine "$a" > "$REPORTS_PATH/$n" &
 	done
 
 	m=$n
@@ -7039,7 +7039,7 @@ Report.Statuses:Show()
 
 	for a in $(QPKGs-GRall:Array); do
 		((n++))
-		DisplayAsStatusReportLine "$a" > "$REPORTS_PATH/$n" &
+		DisplayAsStatusReportItemLine "$a" > "$REPORTS_PATH/$n" &
 	done
 
 	m=$n
@@ -7140,21 +7140,21 @@ QPKGs.IsNtInstalled:Show()
 
 	}
 
-QPKGs.GrAll:Show()
-	{
-
-	local a=''
-
-	DisableDebugToArchiveAndFile
-	EraseThisLine
-
-	for a in $(QPKGs-GRall:Array); do
-		Display "$a"
-	done
-
-	return 0
-
-	}
+#QPKGs.GrAll:Show()
+# 	{
+#
+# 	local a=''
+#
+# 	DisableDebugToArchiveAndFile
+# 	EraseThisLine
+#
+# 	for a in $(QPKGs-GRall:Array); do
+# 		Display "$a"
+# 	done
+#
+# 	return 0
+#
+# 	}
 
 QPKGs.GrInstallable:Show()
 	{
@@ -10019,83 +10019,83 @@ QPKG.GetAuthor()
 
 	}
 
-QPKG.GetAuthorEmail()
-	{
+#QPKG.GetAuthorEmail()
+# 	{
+#
+# 	# Return the email address for the maintainer of the specified QPKG.
+#
+# 	# Input:
+# 	#   $1 = QPKG name
+#
+# 	# Output:
+# 	#   stdout = QPKG author (first package found).
+# 	#   $? = 0 if found, !0 if not.
+#
+# 	local -i i=0
+#
+# 	for i in "${!QPKG_NAME[@]}"; do
+# 		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]]; then
+# 			echo -n "${QPKG_AUTHOR_EMAIL[$i]}"
+#
+# 			return 0
+# 		fi
+# 	done
+#
+# 	return 1
+#
+# 	}
 
-	# Return the email address for the maintainer of the specified QPKG.
+#QPKG.GetAppAuthor()
+# 	{
+#
+# 	# Return the author of the application contained within the specified QPKG.
+#
+# 	# Input:
+# 	#   $1 = QPKG name
+#
+# 	# Output:
+# 	#   stdout = application author (first package found).
+# 	#   $? = 0 if found, !0 if not.
+#
+# 	local -i i=0
+#
+# 	for i in "${!QPKG_NAME[@]}"; do
+# 		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]]; then
+# 			echo -n "${QPKG_APP_AUTHOR[$i]}"
+#
+# 			return 0
+# 		fi
+# 	done
+#
+# 	return 1
+#
+# 	}
 
-	# Input:
-	#   $1 = QPKG name
-
-	# Output:
-	#   stdout = QPKG author (first package found).
-	#   $? = 0 if found, !0 if not.
-
-	local -i i=0
-
-	for i in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]]; then
-			echo -n "${QPKG_AUTHOR_EMAIL[$i]}"
-
-			return 0
-		fi
-	done
-
-	return 1
-
-	}
-
-QPKG.GetAppAuthor()
-	{
-
-	# Return the author of the application contained within the specified QPKG.
-
-	# Input:
-	#   $1 = QPKG name
-
-	# Output:
-	#   stdout = application author (first package found).
-	#   $? = 0 if found, !0 if not.
-
-	local -i i=0
-
-	for i in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]]; then
-			echo -n "${QPKG_APP_AUTHOR[$i]}"
-
-			return 0
-		fi
-	done
-
-	return 1
-
-	}
-
-QPKG.GetAppAuthorEmail()
-	{
-
-	# Return the email address for the author of the application contained within the specified QPKG.
-
-	# Input:
-	#   $1 = QPKG name
-
-	# Output:
-	#   stdout = application author (first package found).
-	#   $? = 0 if found, !0 if not.
-
-	local -i i=0
-
-	for i in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]]; then
-			echo -n "${QPKG_APP_AUTHOR_EMAIL[$i]}"
-
-			return 0
-		fi
-	done
-
-	return 1
-
-	}
+#QPKG.GetAppAuthorEmail()
+# 	{
+#
+# 	# Return the email address for the author of the application contained within the specified QPKG.
+#
+# 	# Input:
+# 	#   $1 = QPKG name
+#
+# 	# Output:
+# 	#   stdout = application author (first package found).
+# 	#   $? = 0 if found, !0 if not.
+#
+# 	local -i i=0
+#
+# 	for i in "${!QPKG_NAME[@]}"; do
+# 		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]]; then
+# 			echo -n "${QPKG_APP_AUTHOR_EMAIL[$i]}"
+#
+# 			return 0
+# 		fi
+# 	done
+#
+# 	return 1
+#
+# 	}
 
 QPKG.GetDesc()
 	{
@@ -10930,10 +10930,10 @@ ShowTitleArt()
 
 	}
 
-ShowAsVersion()
+ShowAsDescription()
 	{
 
-	printf '%s' "v$THIS_SCRIPT_VER"
+	printf '%s' '<?title_description?>'
 
 	}
 
@@ -10944,19 +10944,20 @@ ShowAsCopyrightBasic()
 
 	}
 
-ShowEmail()
+ShowAsVersion()
 	{
 
-	printf '%s' '<?email?>'
+	printf '%s' "v$THIS_SCRIPT_VER"
 
 	}
 
-ShowAsDescription()
-	{
-
-	printf '%s' '<?title_description?>'
-
-	}
+#ShowAsEmail()
+# 	{
+#
+# # 	printf '%s' '<?email?>'
+# 	TextUnderlinedCyan '<?email?>'
+#
+# 	}
 
 ShowAsAction()
 	{
@@ -11893,18 +11894,18 @@ TextBrightRedBlink()
 
 	} 2>/dev/null
 
-TextCyan()
-	{
-
-	[[ -n ${1:-} ]] || return
-
-	if [[ ${useropt_colourful:=false} = true ]]; then
-		printf '\033[1;36m%s\033[0m' "$1"
-	else
-		printf '%s' "$1"
-	fi
-
-	} 2>/dev/null
+#TextCyan()
+# 	{
+#
+# 	[[ -n ${1:-} ]] || return
+#
+# 	if [[ ${useropt_colourful:=false} = true ]]; then
+# 		printf '\033[1;36m%s\033[0m' "$1"
+# 	else
+# 		printf '%s' "$1"
+# 	fi
+#
+# 	} 2>/dev/null
 
 TextDarkGrey()
 	{
@@ -11919,18 +11920,18 @@ TextDarkGrey()
 
 	} 2>/dev/null
 
-TextUnderlined()
-	{
-
-	[[ -n ${1:-} ]] || return
-
-	if [[ ${useropt_colourful:=false} = true ]]; then
-		printf '\033[4m%s\033[0m' "$1"
-	else
-		printf '%s' "$1"
-	fi
-
-	} 2>/dev/null
+#TextUnderlined()
+# 	{
+#
+# 	[[ -n ${1:-} ]] || return
+#
+# 	if [[ ${useropt_colourful:=false} = true ]]; then
+# 		printf '\033[4m%s\033[0m' "$1"
+# 	else
+# 		printf '%s' "$1"
+# 	fi
+#
+# 	} 2>/dev/null
 
 TextUnderlinedCyan()
 	{
