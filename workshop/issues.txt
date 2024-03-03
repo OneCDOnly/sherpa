@@ -1,16 +1,5 @@
 Observed issues:
 
-	* 'sherpa start inactive' fails to find any inactive packages.
-		-------------------------------------------------------------------------------------------------------------------------
-		[/share/Public] # ./sherpa-manager.source start inactive
-		sherpa v<?build_date?>-unstable
-		warn: unable to find any packages to 'activate'.
-		done: actions complete.
-
-		[/share/Public] #
-		-------------------------------------------------------------------------------------------------------------------------
-		- Must get 'status' of each package first.
-
 	* Function durations can become incorrect when functions with the same name are called recursively.
 		- Need to make vars holding start-times unique. Maybe measure nest depth?
 
