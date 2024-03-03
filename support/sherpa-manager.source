@@ -566,7 +566,7 @@ Env:Load()
 		readonly LOGS_PATH=$THIS_PACKAGE_PATH/logs
 			readonly RAMDISKS_FREESPACE_PATHFILE=$LOGS_PATH/ramdisks.freespace
 			readonly SCREEN_SESSIONS_PATHFILE=$LOGS_PATH/screen.sessions
-			readonly SESS_ACTIONS_RESULTS_PATHFILE=$LOGS_PATH/session.action.results.log
+			readonly SESS_ACTION_RESULTS_PATHFILE=$LOGS_PATH/session.action.results.log
 			readonly SESS_ARCHIVE_PATHFILE=$LOGS_PATH/session.archive.log
 			readonly SESS_LAST_PATHFILE=$LOGS_PATH/session.last.log
 			readonly SESS_TAIL_PATHFILE=$LOGS_PATH/session.tail.log
@@ -1218,26 +1218,25 @@ Actions:Proc()
 	local state=''
 	local -i tier_index=0
 
-	rm -f "$SESS_ACTIONS_RESULTS_PATHFILE"
+	rm -f "$SESS_ACTION_RESULTS_PATHFILE"
 
 	# -> package preparation phase begins here <-
 
 	Action:Proc status all QPKG statusing statused
 
-	ShowAsProc 'assigning packages by status'
+	if [[ $useropt_show_status = false ]]; then
+		ShowAsProc 'assigning QPKGs by status'
 
-	for action in "${USER_QPKG_ACTIONS[@]}"; do		# Update action lists based-on QPKG `status`.
-		case $action in
-			activate|backup|clean|deactivate|disable|enable|reactivate|reinstall|restore|sign|uninstall|upgrade)
-				for state in "${USER_QPKG_IS_STATES[@]}"; do
-					QPKGs.AC${action}.IS${state}.IsSet && QPKGs-AC${action}-to:Add "$(QPKGs-IS${state}:Array)"
-				done
+		for action in "${USER_QPKG_ACTIONS[@]}"; do			# Update action lists based-on QPKG `status`.
+			for state in "${USER_QPKG_IS_STATES[@]}"; do
+				QPKGs.AC${action}.IS${state}.IsSet && QPKGs-AC${action}-to:Add "$(QPKGs-IS${state}:Array)"
+			done
 
-				for state in "${USER_QPKG_ISNT_STATES[@]}"; do
-					QPKGs.AC${action}.ISNT${state}.IsSet && QPKGs-AC${action}-to:Add "$(QPKGs-ISNT${state}:Array)"
-				done
-		esac
-	done
+			for state in "${USER_QPKG_ISNT_STATES[@]}"; do
+				QPKGs.AC${action}.ISNT${state}.IsSet && QPKGs-AC${action}-to:Add "$(QPKGs-ISNT${state}:Array)"
+			done
+		done
+	fi
 
 	Action:Proc rebuild all QPKG meta-rebuilding meta-rebuilt
 	Action:Proc reassign all QPKG reassigning reassigned
@@ -2620,7 +2619,7 @@ ArgSuggestions:Show()
 					arg_problem=true
 					useropt_help_basic=false
 					;;
-				color|colour|colorful|colourful)
+				color|colour|colorful|colourful|terse)
 					DisplayAsProjSynExam "please provide a valid boolean after '$arg' like" "$arg true"
 					DisplayAsProjSynIndentExam '' "$arg false"
 					DisplayAsProjSynIndentExam '' "$arg on"
@@ -2631,7 +2630,7 @@ ArgSuggestions:Show()
 					useropt_help_basic=false
 					;;
 				follow)
-					DisplayAsProjSynExam "please provide a valid git branch to 'follow' like" 'follow stable'
+					DisplayAsProjSynExam "please provide a valid $(ShowAsTitleName) git branch to 'follow' like" 'follow stable'
 					DisplayAsProjSynIndentExam '' 'follow unstable'
 					arg_problem=true
 					useropt_help_basic=false
@@ -3811,7 +3810,7 @@ UpdateColourful()
 			return
 		done
 
-		ShowAsAbort "'$user_colourful_value' is not 'true' or 'false'"
+		ShowAsAbort "user setting '$user_colourful_value' is not 'true' or 'false'"
 		run_package_actions=false
 
 		return 1
@@ -3848,7 +3847,7 @@ UpdateBranch()
 			return
 		done
 
-		ShowAsAbort "'$user_branch_value' is not 'unstable' or 'stable'"
+		ShowAsAbort "user setting '$user_branch_value' is not 'unstable' or 'stable'"
 		run_package_actions=false
 
 		return 1
@@ -3883,7 +3882,7 @@ UpdateTerse()
 			return
 		done
 
-		ShowAsAbort "'$user_terse_value' is not 'true' or 'false'"
+		ShowAsAbort "user setting '$user_terse_value' is not 'true' or 'false'"
 		run_package_actions=false
 
 		return 1
@@ -3911,7 +3910,7 @@ SaveSetting()
 
 	/sbin/setcfg sherpa "$a" "$b" -f /etc/config/qpkg.conf
 
-	[[ ${3:-} = announce ]] && ShowAsDone "'$a = $b' has been saved as a persistent setting"
+	[[ ${3:-} = announce ]] && ShowAsDone "user setting '$a = $b' has been saved"
 
 	}
 
@@ -5470,7 +5469,7 @@ Report.Results:Show()
 
 		{
 
-		if [[ -e $SESS_ACTIONS_RESULTS_PATHFILE ]]; then
+		if [[ -e $SESS_ACTION_RESULTS_PATHFILE ]]; then
 			local IFS='|'
 
 			while read -r datetime action package_name result duration reason package_type; do
@@ -5496,7 +5495,7 @@ Report.Results:Show()
 					ShowAsActionLogDetail "$datetime" "$package_name" "$action" "$result" "$duration" "$reason"
 					found=true
 				fi
-			done < "$SESS_ACTIONS_RESULTS_PATHFILE"
+			done < "$SESS_ACTION_RESULTS_PATHFILE"
 		fi
 
 		if [[ $found = false ]]; then
@@ -8028,7 +8027,7 @@ SaveActionResultToLog()
 	fi
 
 	# Write new action results entry.
-	echo "$(/bin/date +%s)|$ACTION|$PACKAGE_NAME|$RESULT|$DURATION|$REASON|$PACKAGE_TYPE" >> "$SESS_ACTIONS_RESULTS_PATHFILE"
+	echo "$(/bin/date +%s)|$ACTION|$PACKAGE_NAME|$RESULT|$DURATION|$REASON|$PACKAGE_TYPE" >> "$SESS_ACTION_RESULTS_PATHFILE"
 
 	# Remove previous action duration entry if one exists.
 
