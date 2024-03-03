@@ -5,7 +5,7 @@ this_path=$PWD
 . $source_path/vars.source || exit
 
 cd "$source_path" || exit
-./cleanup-code.sh
+./clean-source.sh
 ./check-syntax.sh || exit
 
 [[ -e $objects_file ]] && rm -f "$objects_file"

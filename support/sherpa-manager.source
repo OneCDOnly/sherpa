@@ -167,9 +167,9 @@ Results:Show()
 
 	if [[ $useropt_show_results = true ]]; then
 		display_last_action_datetime=true
+		show_package_actions_failed=true
 		show_package_actions_ok=true
 		show_package_actions_skipped=true
-		show_package_actions_failed=true
 	fi
 
 	if [[ $generate_action_report = true || $generate_show_report = true ]]; then
@@ -1215,6 +1215,7 @@ Actions:Proc()
 
 	local tier=''
 	local action=''
+	local state=''
 	local -i tier_index=0
 
 	rm -f "$SESS_ACTIONS_RESULTS_PATHFILE"
@@ -1222,6 +1223,22 @@ Actions:Proc()
 	# -> package preparation phase begins here <-
 
 	Action:Proc status all QPKG statusing statused
+
+	ShowAsProc 'assigning packages by status'
+
+	for action in "${USER_QPKG_ACTIONS[@]}"; do		# Update action lists based-on QPKG `status`.
+		case $action in
+			activate|backup|clean|deactivate|disable|enable|reactivate|reinstall|restore|sign|uninstall|upgrade)
+				for state in "${USER_QPKG_IS_STATES[@]}"; do
+					QPKGs.AC${action}.IS${state}.IsSet && QPKGs-AC${action}-to:Add "$(QPKGs-IS${state}:Array)"
+				done
+
+				for state in "${USER_QPKG_ISNT_STATES[@]}"; do
+					QPKGs.AC${action}.ISNT${state}.IsSet && QPKGs-AC${action}-to:Add "$(QPKGs-ISNT${state}:Array)"
+				done
+		esac
+	done
+
 	Action:Proc rebuild all QPKG meta-rebuilding meta-rebuilt
 	Action:Proc reassign all QPKG reassigning reassigned
 	Action:Proc download all QPKG downloading downloaded
@@ -1426,7 +1443,7 @@ Action:Proc()
 					status)			# Update the status of a single action fork in the parent shell.
 						case $msg1_value in
 							ok)		# Completed OK (wonderful!).
-								((ok_count++))
+								[[ $TARGET_ACTION != status ]] && ((ok_count++))		# Don't need to count the result of `status` checks.
 								;;
 							so)		# Action was skipped, but this is normal (no-big-deal).
 								((skip_ok_count++))
@@ -1471,9 +1488,9 @@ Action:Proc()
 				esac
 			done
 
+			[[ $fail_count -gt 0 ]] && show_package_actions_failed=true
 			[[ $ok_count -gt 0 ]] && show_package_actions_ok=true
 			[[ $skip_count -gt 0 || $skip_ok_count -gt 0 || $skip_error_count -gt 0 || $skip_abort_count -gt 0 ]] && show_package_actions_skipped=true
-			[[ $fail_count -gt 0 ]] && show_package_actions_failed=true
 
 			[[ ${#target_packages[@]} -gt 0 ]] && KillActiveFork		# Only needed if an action fork didn't exit properly.
 			wait 2>/dev/null
@@ -2495,17 +2512,22 @@ ParseActionArgs()
 		# Pair action with group.
 
 		if [[ -n $real_action && -n $group ]]; then
+			case $real_action in
+				activate|backup|clean|deactivate|disable|enable|reactivate|reinstall|restore|sign|uninstall|upgrade)
+					case $group in
+						active|NTactive)
+							Objects:Load
+							QPKGs.AC${real_action}.IS${group}:Set
+							QPKGs.ACstatus.ISinstalled:Set
+							awaiting_group=false
+							generate_action_report=true
+							get_qpkg_active_status=true
+							get_qpkg_states=true
+							run_package_actions=true
+					esac
+			esac
+
 			case $group in
-				active|NTactive)
-					Objects:Load
-					QPKGs.AC${real_action}.IS${group}:Set
-					QPKGs.ACstatus.GRinstalled:Set
-					awaiting_group=false
-					generate_action_report=true
-					get_qpkg_active_status=true
-					get_qpkg_states=true
-					run_package_actions=true
-					;;
 				all|canbackup|canclean|canrestarttoupdate|dependent|hasdependents|independent|installable|upgradable|NTcanclean|NTinstallable|NTupgradable)
 					Objects:Load
 					QPKGs.AC${real_action}.GR${group}:Set
@@ -2756,7 +2778,7 @@ AllocPackGroupsToAcs()
 								done
 								;;
 							*)
-								DebugAsWarn "group 'SC$group' has no positive allocation handler for action '$action'"
+								DebugAsWarn "group 'GR$group' has no positive allocation handler for action '$action'"
 						esac
 						;;
 					install|status)
@@ -2767,7 +2789,7 @@ AllocPackGroupsToAcs()
 								QPKGs-AC${action}-to:Add "$(QPKGs-GR${group}:Array)"
 								;;
 							*)
-								DebugAsWarn "group 'SC$group' has no positive allocation handler for action '$action'"
+								DebugAsWarn "group 'GR$group' has no positive allocation handler for action '$action'"
 						esac
 						;;
 					activate|deactivate|disable|disableau|enable|enableau|reactivate|reinstall|stop|uninstall)
@@ -2780,7 +2802,7 @@ AllocPackGroupsToAcs()
 								done
 								;;
 							*)
-								DebugAsWarn "group 'SC$group' has no positive allocation handler for action '$action'"
+								DebugAsWarn "group 'GR$group' has no positive allocation handler for action '$action'"
 						esac
 						;;
 					rebuild)
@@ -2793,7 +2815,7 @@ AllocPackGroupsToAcs()
 								done
 								;;
 							*)
-								DebugAsWarn "group 'SC$group' has no positive allocation handler for action '$action'"
+								DebugAsWarn "group 'GR$group' has no positive allocation handler for action '$action'"
 						esac
 						;;
 					upgrade)
@@ -2810,11 +2832,11 @@ AllocPackGroupsToAcs()
 								QPKGs-ACreactivate-to:Remove "$(QPKGs-ACupgrade-to:Array)"
 								;;
 							*)
-								DebugAsWarn "group 'SC$group' has no positive allocation handler for action '$action'"
+								DebugAsWarn "group 'GR$group' has no positive allocation handler for action '$action'"
 						esac
 						;;
 					*)
-						DebugAsWarn "action '$action' has no positive allocation handler"
+						DebugAsWarn "action '$action' has no positive group allocation handler"
 				esac
 
 				if [[ $found = false ]]; then
@@ -2822,7 +2844,7 @@ AllocPackGroupsToAcs()
 				fi
 
 				if QPKGs-AC${action}-to.IsAny; then
-					DebugAsDone "action: '$action', group: 'SC$group': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
+					DebugAsDone "action: '$action', group: 'GR$group': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
 				else
 					ShowAsWarn "unable to find any GR packages to '$(Lowercase "$action")'"
 				fi
@@ -2837,7 +2859,7 @@ AllocPackGroupsToAcs()
 			if QPKGs.AC${action}.GRNT${group}.IsSet; then
 				case $action in
 					*)
-						DebugAsWarn "action '$action' has no negative allocation handler"
+						DebugAsWarn "action '$action' has no negative group allocation handler"
 				esac
 
 				if [[ $found = false ]]; then
@@ -2895,7 +2917,7 @@ AllocPackStatesToAcs()
 						found=true
 						;;
 					*)
-						DebugAsWarn "action '$action' has no positive allocation handler"
+						DebugAsWarn "action '$action' has no positive state allocation handler"
 				esac
 
 				if [[ $found = false ]]; then
@@ -2922,7 +2944,11 @@ AllocPackStatesToAcs()
 				case $action in
 					activate|backup|clean|disableau|enableau|install|uninstall)
 						case $state in
-							active|enabled|installed)
+							active|inactive)
+								check_later=true
+								found=true
+								;;
+							enabled|installed)
 								found=true
 								QPKGs-AC${action}-to:Add "$(QPKGs-ISNT${state}:Array)"
 								;;
@@ -2935,7 +2961,7 @@ AllocPackStatesToAcs()
 						found=true
 						;;
 					*)
-						DebugAsWarn "action '$action' has no negative allocation handler"
+						DebugAsWarn "action '$action' has no negative state allocation handler"
 				esac
 
 				if [[ $found = false ]]; then
@@ -5454,6 +5480,8 @@ Report.Results:Show()
 				fi
 
 				if [[ $result = "$1" ]] || [[ $1 = skipped && ($result = 'skipped-ok' || $result = 'skipped-error' || $result = 'skipped-abort') ]]; then
+					[[ $action != status ]] || continue				# Don't need to see the result of `status` checks.
+
 					case $result in
 						ok)
 							[[ $found = false ]] && DisplayAsHelpTitle "$plural completed $(TextBrightGreen OK):"
