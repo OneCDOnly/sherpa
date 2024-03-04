@@ -1369,7 +1369,7 @@ Action:Proc()
 			fi
 
 			if [[ $total_count -eq 1 ]]; then
-				fork_progress_prefix="$ACTION_PRESENT_MSG ${target_packages[0]}"
+				fork_progress_prefix="$ACTION_PRESENT_MSG $(TextBrightOrange "${target_packages[0]}")"
 			else
 				fork_progress_prefix="$ACTION_PRESENT_MSG $([[ $TIER != all ]] && echo "$TIER ")$(Uppercase "$PACKAGE_TYPE")$(Pluralise "$total_count")"
 			fi
