@@ -19,12 +19,12 @@
 #*	   Copyright (C) 2019 Free Software Foundation, Inc.
 #* License:
 #*   This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
-#*	 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#*	 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY, without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 readonly USER_ARGS_RAW=$*
 Init()
 {
-export LOADER_SCRIPT_VER='240225'
+export LOADER_SCRIPT_VER='240305'
 export LOADER_SCRIPT_PPID=$PPID
 readonly QPKG_NAME=sherpa
 readonly CHARS_REGULAR_PROMPT='$ '
@@ -34,7 +34,7 @@ IsQNAP || return
 IsSU || return
 local source_git_branch=stable
 local test_branch=$(/sbin/getcfg $QPKG_NAME Git_Branch -d unknown -f /etc/config/qpkg.conf)
-if [[ $test_branch = unknown ]]; then
+if [[ $test_branch = unknown ]];then
 /sbin/setcfg $QPKG_NAME Git_Branch $source_git_branch -f /etc/config/qpkg.conf
 else
 source_git_branch=$test_branch
@@ -54,8 +54,8 @@ return 0
 }
 EnsureFileIsCurrent()
 {
-if [[ ! -e $1 ]] || ! IsThisFileRecent "$1" 60; then
-if ! (/sbin/curl"$curl_insecure_arg" --silent --fail "$2" > "$3"); then
+if [[ ! -e $1 ]] || ! IsThisFileRecent "$1" 60;then
+if ! (/sbin/curl"$curl_insecure_arg" --silent --fail "$2" > "$3");then
 ShowAsWarn 'Remote file download failed'
 else
 /bin/tar --extract --gzip --no-same-owner --file="$3" --directory="$(/usr/bin/dirname "$3")" 2>/dev/null
@@ -68,7 +68,7 @@ IsThisFileRecent()
 }
 IsQNAP()
 {
-if [[ ! -e /etc/init.d/functions ]]; then
+if [[ ! -e /etc/init.d/functions ]];then
 ShowAsAbort 'QNAP functions not found ... is this a QNAP NAS?'
 return 1
 fi
@@ -76,8 +76,8 @@ return 0
 }
 IsSU()
 {
-if [[ $EUID -ne 0 ]]; then
-if [[ -e /usr/bin/sudo ]]; then
+if [[ $EUID -ne 0 ]];then
+if [[ -e /usr/bin/sudo ]];then
 ShowAsError 'this utility must be run with superuser privileges. Try again as:'
 echo "${CHARS_SUDO_PROMPT}sherpa $USER_ARGS_RAW" >&2
 else
@@ -117,11 +117,11 @@ local new_message=''
 local strbuffer=''
 local new_length=0
 new_message=$(printf '%-10s: %s' "$1" "$2")
-if [[ $new_message != "$previous_msg" ]]; then
+if [[ $new_message != "$previous_msg" ]];then
 previous_length=$((${#previous_msg}+1))
 new_length=$((${#new_message}+1))
 strbuffer=$(echo -en "\r$new_message ")
-if [[ $new_length -lt $previous_length ]]; then
+if [[ $new_length -lt $previous_length ]];then
 appended_length=$((new_length-previous_length))
 strbuffer+=$(printf "%${appended_length}s")
 fi

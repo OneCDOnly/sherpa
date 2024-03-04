@@ -1,5 +1,6 @@
-* • These actions were skipped (and why):
-      download Entware: (existing file 'Entware_1.03a_std.qpkg' checksum correct).
+* Don't show sherpa title when viewing log.
+
+* Add "about" user arg to display current environment.
 
 *  There should be distinct argument parsers for:
 	- script management functions:
@@ -60,8 +61,6 @@
 		[/sbin] # cat /etc/platform.conf
 		Platform = ARM_AL
 		-------------------------------------------------------------------------------------------------------------------------
-
-* Download management, objects and packages archive in one go. Maybe package them together?
 
 * Show results report in file viewport.
 
