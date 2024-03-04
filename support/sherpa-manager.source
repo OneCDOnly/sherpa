@@ -522,7 +522,7 @@ LocateSQLiteBinary()
 Env:Load()
 	{
 
-	ShowAsProc 'loading environment'
+	ShowAsProc 'environment'
 
 	readonly CERT_DB_PATHFILE=/etc/config/nas_sign_qpkg.db
 	readonly CPU_CORES=$(GetCPUCores)
@@ -12266,7 +12266,7 @@ Objects:Load()
 		Func:Exit 1; exit
 	fi
 
-	ShowAsProc 'loading objects'
+	ShowAsProc 'objects'
 
 	. "$OBJECTS_PATHFILE"
 	objects_loaded=true
@@ -12305,7 +12305,7 @@ Packages:Load()
 		Func:Exit 1; exit
 	fi
 
-	ShowAsProc 'loading QPKG list'
+	ShowAsProc 'QPKG list'
 
 	. "$PACKAGES_PATHFILE"
 	packages_loaded=true
