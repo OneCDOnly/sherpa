@@ -455,7 +455,7 @@ CMDs.IsOk()
 		IsSysFileExist $SLEEP_CMD || return
 	fi
 
-	[[ ! -e $SORT_CMD ]] && ln -s /bin/busybox "$SORT_CMD"	# KLUDGE: `/usr/bin/sort` randomly disappears from QTS.
+	[[ ! -e $SORT_CMD ]] && ln -s /bin/busybox "$SORT_CMD"		# KLUDGE: `/usr/bin/sort` randomly disappears from QTS.
 
 	# Test if this QTS `sleep` can handle decimal seconds. Early QTS BusyBox versions cannot.
 	readonly DECIMAL_SLEEP_SECONDS_SUPPORTED=$($SLEEP_CMD .01 &>/dev/null && printf true || printf false)
@@ -526,7 +526,7 @@ Env:Load()
 
 	readonly CERT_DB_PATHFILE=/etc/config/nas_sign_qpkg.db
 	readonly CPU_CORES=$(GetCPUCores)
-		readonly CONCURRENCY=$CPU_CORES		# Maximum concurrent package actions to run. Should probably make this account for CPU speed too.
+		readonly CONCURRENCY=$CPU_CORES				# Maximum concurrent package actions to run. Should probably make this account for CPU speed too.
 	readonly ENTWARE_VER=$(GetEntwareType)
 	readonly KERNEL_PAGE_SIZE=$(GetKernelPageSize)
 	readonly NAS_ARCH=$(GetArch)
@@ -1570,23 +1570,23 @@ AdjustMaxForks()
 	max_forks=$CONCURRENCY
 	local reason=''
 
-	if [[ $useropt_verbose = true ]]; then 			# No-point running actions async in verbose mode: stdout will be a confusing mess.
+	if [[ $useropt_verbose = true ]]; then 					# No-point running actions async in verbose mode: stdout will be a confusing mess.
 		max_forks=1
 		reason='verbose mode is active'
-	elif [[ $useropt_debug = true ]]; then 			# Same goes for debug mode: logs will be a mess.
+	elif [[ $useropt_debug = true ]]; then 					# Same goes for debug mode: logs will be a mess.
 		max_forks=1
 		reason='debug mode is active'
 	else
 		case ${1:-} in
-			clean)									# Precautionary: don't make too-many calls to PyPI at the same time.
+			clean)											# Precautionary: don't make too-many calls to PyPI at the same time.
 				max_forks=$(((max_forks+1)/2))
 				reason="'$1'"
 				;;
-			+(in|re)stall|upgrade)				# Don't execute these actions async: installer for each package eventually aborts (QPKGs can only be managed one-at-a-time, else packages overwrite each other, and package source files end-up in the wrong install paths).
+			@(in|re)stall|upgrade)							# Don't execute these actions async: installer for each package eventually aborts (QPKGs can only be managed one-at-a-time, else packages overwrite each other, and package source files end-up in the wrong install paths).
 				max_forks=1
 				reason="'$1'"
 				;;
-			backup|deactivate|download|uninstall)	# Low-resource actions, so allow multiple forks, even on ARMv5.
+			backup|deactivate|download|uninstall)			# Low-resource actions, so allow multiple forks, even on ARMv5.
 				max_forks=4
 				reason="'$1'"
 				;;
@@ -2268,16 +2268,16 @@ ParseListArgs()
 			backedup|installable|installed|missing|results)
 				group=${arg}
 				;;
-			no+(n|t)-back?(ed)up)
+			no@(n|t)-back?(ed)up)
 				group=NTbackedup
 				;;
-			no+(n|t)-installable)
+			no@(n|t)-installable)
 				group=NTinstallable
 				;;
-			no+(n|t)-installed)
+			no@(n|t)-installed)
 				group=NTinstalled
 				;;
-			no+(n|t)-missing)
+			no@(n|t)-missing)
 				group=NTmissing
 				;;
 		# All cases below can use multiple user-provided words or chars to specify a single action.
@@ -2285,7 +2285,7 @@ ParseListArgs()
 				[[ -z $action ]] && action=list
 				group=abs
 				;;
-			active|no+(n|t)-inactive|no+(n|t)-stopped|started)
+			active|no@(n|t)-inactive|no@(n|t)-stopped|started)
 				group=active
 				;;
 			all|entire|everything)
@@ -2300,7 +2300,7 @@ ParseListArgs()
 			disabled)
 				group=NTenabled
 				;;
-			inactive|no+(n|t)-active|no+(n|t)-started|stopped)
+			inactive|no@(n|t)-active|no@(n|t)-started|stopped)
 				group=NTactive
 				;;
 			independent?(s)|indeps)
@@ -2309,7 +2309,7 @@ ParseListArgs()
 			new|updat?(e)able|upgradable)
 				group=upgradable
 				;;
-			no+(n|t)-installable)
+			no@(n|t)-installable)
 				group=NTinstallable
 				;;
 			version?(s))
@@ -2423,7 +2423,7 @@ ParseActionArgs()
 
 		case $arg in
 		# These cases are for a user-provided word to specify a single action.
-			backup|clean|+(dis|en)able|reassign|rebuild|reinstall|restore|sign)
+			backup|clean|@(dis|en)able|reassign|rebuild|reinstall|restore|sign)
 				action=$arg
 				requires_group=true
 				user_action=$arg
@@ -2511,13 +2511,13 @@ ParseActionArgs()
 			disabled)
 				group=NTenabled
 				;;
-			+(in|not)-active|stopped)
+			@(in|not)-active|stopped)
 				group=NTactive
 				;;
 			new|updat?(e)able|upgradable)
 				group=upgradable
 				;;
-			no+(n|t)-installable)
+			no@(n|t)-installable)
 				group=NTinstallable
 				;;
 			independent?(s)|indeps)
@@ -2531,7 +2531,7 @@ ParseActionArgs()
 
 		if [[ -n $action && -n $group ]]; then
 			case $action in
-				?(de|re)activate|backup|clean|+(dis|en)able|+(re|un)install|restore|sign|upgrade)
+				?(de|re)activate|backup|clean|@(dis|en)able|@(re|un)install|restore|sign|upgrade)
 					case $group in
 						?(NT)active)
 							Objects:Load
@@ -2633,7 +2633,7 @@ ArgSuggestions:Show()
 
 		for arg in "${args_incomplete[@]}"; do
 			case $arg in
-				?(de|re)activate|backup|clean|+(dis|en)able|+(dis|en)able-auto-update|reassign|+(re|un)install|?(re)start|restore|sign|stop|upgrade)
+				?(de|re)activate|backup|clean|@(dis|en)able|@(dis|en)able-auto-update|reassign|@(re|un)install|?(re)start|restore|sign|stop|upgrade)
 					DisplayAsProjSynExam "please provide valid $(ShowAsPackages) or a $(ShowAsPackageGroup) after '$arg' like" "$arg installed"
 					arg_problem=true
 					useropt_help_basic=false
@@ -2745,7 +2745,7 @@ ArgSuggestions:Show()
 					arg_problem=true
 					useropt_help_basic=false
 					;;
-				+(dis|en)able|false|off|no|on|true|yes)
+				@(dis|en)able|false|off|no|on|true|yes)
 					DisplayAsProjSynExam "please provide a valid setting before '$arg' like" "colour $arg"
 					DisplayAsProjSynIndentExam '' "terse $arg"
 					arg_problem=true
@@ -2827,7 +2827,7 @@ AllocPackGroupsToAcs()
 								DebugAsWarn "group 'GR$group' has no positive allocation handler for action '$action'"
 						esac
 						;;
-					?(de|re)activate|disable?(au)|enable?(au)|+(re|un)install|stop)
+					?(de|re)activate|disable?(au)|enable?(au)|@(re|un)install|stop)
 						case $group in
 							all|?(in)dependent)
 								found=true
@@ -2977,7 +2977,7 @@ AllocPackStatesToAcs()
 
 			if QPKGs.AC${action}.ISNT${state}.IsSet; then
 				case $action in
-					activate|backup|clean|+(dis|en)ableau|?(un)install)
+					activate|backup|clean|@(dis|en)ableau|?(un)install)
 						case $state in
 							?(in)active)
 								check_later=true
@@ -8169,7 +8169,7 @@ SaveActionResultToLog()
 		skipped)
 			DebugAsWarn "$REASON"
 			;;
-		failed|skipped-+(error|abort))
+		failed|skipped-@(error|abort))
 			DebugAsError "$REASON"
 	esac
 
