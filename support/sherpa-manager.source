@@ -2511,7 +2511,7 @@ ParseActionArgs()
 			disabled)
 				group=NTenabled
 				;;
-			@(in|not)-active|stopped)
+			@(in|not-)active|stopped)
 				group=NTactive
 				;;
 			new|updat?(e)able|upgradable)
@@ -2751,7 +2751,7 @@ ArgSuggestions:Show()
 					arg_problem=true
 					useropt_help_basic=false
 					;;
-				?(in)dependent?(s))
+				@(in|not-)active|?(in)dependent?(s)|started|stopped)
 					DisplayAsProjSynExam "please provide a valid $(ShowAsAction) before '$arg' like" "activate $arg"
 					arg_problem=true
 					useropt_help_basic=false
