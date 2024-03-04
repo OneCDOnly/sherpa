@@ -1254,7 +1254,7 @@ Actions:Proc()
 		tier=${PACKAGE_TIERS[$tier_index]}
 
 		case $tier in
-			independent|dependent)
+			?(in)dependent)
 				Action:Proc deactivate $tier QPKG deactivating deactivated
 				Action:Proc disable $tier QPKG disabling disabled
 				Action:Proc uninstall $tier QPKG uninstalling uninstalled
@@ -1265,7 +1265,7 @@ Actions:Proc()
 
 	for tier in "${PACKAGE_TIERS[@]}"; do
 		case $tier in
-			independent|dependent)
+			?(in)dependent)
 				Action:Proc upgrade $tier QPKG upgrading upgraded
 				Action:Proc reinstall $tier QPKG reinstalling reinstalled
 				Action:Proc install $tier QPKG installing installed
@@ -1582,7 +1582,7 @@ AdjustMaxForks()
 				max_forks=$(((max_forks+1)/2))
 				reason="'$1'"
 				;;
-			install|reinstall|upgrade)				# Don't execute these actions async: installer for each package eventually aborts (QPKGs can only be managed one-at-a-time, else packages overwrite each other, and package source files end-up in the wrong install paths).
+			+(in|re)stall|upgrade)				# Don't execute these actions async: installer for each package eventually aborts (QPKGs can only be managed one-at-a-time, else packages overwrite each other, and package source files end-up in the wrong install paths).
 				max_forks=1
 				reason="'$1'"
 				;;
@@ -1590,7 +1590,7 @@ AdjustMaxForks()
 				max_forks=4
 				reason="'$1'"
 				;;
-			disable|disableau|enable|enableau|rebuild|sign|status)	# Really-low-resource actions.
+			disable?(au)|enable?(au)|rebuild|sign|status)	# Really-low-resource actions.
 				max_forks=8
 				reason="'$1'"
 		esac
@@ -2977,9 +2977,9 @@ AllocPackStatesToAcs()
 
 			if QPKGs.AC${action}.ISNT${state}.IsSet; then
 				case $action in
-					activate|backup|clean|disableau|enableau|install|uninstall)
+					activate|backup|clean|+(dis|en)ableau|?(un)install)
 						case $state in
-							active|inactive)
+							?(in)active)
 								check_later=true
 								found=true
 								;;
@@ -8169,7 +8169,7 @@ SaveActionResultToLog()
 		skipped)
 			DebugAsWarn "$REASON"
 			;;
-		failed|skipped-error|skipped-abort)
+		failed|skipped-+(error|abort))
 			DebugAsError "$REASON"
 	esac
 
@@ -9594,7 +9594,7 @@ QPKG.ServiceStatus:Log()
 	fi
 
 	case $a in
-		start|stop|restart)
+		?(re)start|stop)
 			DebugInfo "$(ShowAsPackageName "$PACKAGE_NAME") service is $a"
 			;;
 		ok)
@@ -11862,7 +11862,7 @@ ShowAsActionLogDetail()
 				# Must use different behaviours depending on action.
 
 				case $3 in
-					download|reassign|sign|uninstall)
+					download|?(reas)sign|uninstall)
 						DisplayAsIndentActionResultDurationReason "$3" "$2" "$5" "$6"
 						;;
 					*)
