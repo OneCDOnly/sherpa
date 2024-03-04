@@ -31,6 +31,7 @@
 #   Display functions should never finish by putting an empty line on-screen for spacing.
 
 set -o nounset -o pipefail
+shopt -s extglob
 readonly ARGS_RAW=$*
 readonly SCRIPT_STARTSECONDS=$(/bin/date +%s)
 
@@ -104,7 +105,21 @@ Results:Show()
 
 	if [[ $generate_list_report = true ]]; then
 		if [[ ${packages_loaded:=false} = true ]]; then
-			if QPKGs.AClist.ISbackedup.IsSet; then
+			if QPKGs.AClist.GRdependent.IsSet; then
+				QPKGs.GrDependent:Show
+			elif QPKGs.AClist.GRindependent.IsSet; then
+				QPKGs.GrIndependent:Show
+			elif QPKGs.AClist.GRinstallable.IsSet; then
+				QPKGs.GrInstallable:Show
+			elif QPKGs.AClist.GRNTinstallable.IsSet; then
+				QPKGs.GrNtInstallable:Show
+			elif QPKGs.AClist.GRupgradable.IsSet; then
+				QPKGs.GrUpgradable:Show
+			elif QPKGs.AClist.ISactive.IsSet; then
+				QPKGs.IsActive:Show
+			elif QPKGs.AClist.ISNTactive.IsSet; then
+				QPKGs.IsNtActive:Show
+			elif QPKGs.AClist.ISbackedup.IsSet; then
 				QPKGs.IsBackedUp:Show
 			elif QPKGs.AClist.ISNTbackedup.IsSet; then
 				QPKGs.IsNtBackedUp:Show
@@ -112,20 +127,10 @@ Results:Show()
 				QPKGs.IsInstalled:Show
 			elif QPKGs.AClist.ISNTinstalled.IsSet; then
 				QPKGs.IsNtInstalled:Show
-			elif QPKGs.AClist.ISactive.IsSet; then
-				QPKGs.IsActive:Show
-			elif QPKGs.AClist.ISNTactive.IsSet; then
-				QPKGs.IsNtActive:Show
-			elif QPKGs.AClist.GRinstallable.IsSet; then
-				QPKGs.GrInstallable:Show
-			elif QPKGs.AClist.GRNTinstallable.IsSet; then
-				QPKGs.GrNtInstallable:Show
-			elif QPKGs.AClist.GRupgradable.IsSet; then
-				QPKGs.GrUpgradable:Show
-			elif QPKGs.AClist.GRindependent.IsSet; then
-				QPKGs.GrIndependent:Show
-			elif QPKGs.AClist.GRdependent.IsSet; then
-				QPKGs.GrDependent:Show
+			elif QPKGs.AClist.ISmissing.IsSet; then
+				QPKGs.IsMissing:Show
+			elif QPKGs.AClist.ISNTmissing.IsSet; then
+				QPKGs.IsNtMissing:Show
 			fi
 		fi
 	fi
@@ -1669,12 +1674,12 @@ ParseManagementArgs()
 				user_action=$arg
 				useropt_check=true
 				;;
-			color|colour|colorful|colourful|follow|paste|terse)
+			colo?(u)r?(ful)|follow|paste|terse)
 				action=$arg
 				requires_group=true
 				user_action=$arg
 				;;
-			debug|dbug)
+			d?(e)bug)
 				action=debug
 				requires_group=false
 				user_action=$arg
@@ -1700,7 +1705,7 @@ ParseManagementArgs()
 
 		case $arg in
 		# These cases use only a single user-provided word or char to specify a single group.
-			stable|unstable)
+			?(un)stable)
 				group=$arg
 				;;
 		# All cases below can use multiple user-provided words or chars to specify a single group.
@@ -1721,7 +1726,7 @@ ParseManagementArgs()
 
 		if [[ -n $action && -n $group ]]; then
 			case $action in
-				color|colour|colorful|colourful)
+				colo?(u)r?(ful))
 					case $group in
 						true|false)
 							action=''
@@ -1736,7 +1741,7 @@ ParseManagementArgs()
 					;;
 				follow)
 					case $group in
-						stable|unstable)
+						?(un)stable)
 							action=''
 							awaiting_group=false
 							run_package_actions=false
@@ -1847,19 +1852,19 @@ ParseHelpArgs()
 
 		case $arg in
 		# These cases use only a single user-provided word or char to specify a single group.
-			lists)
-				[[ -z $action ]] && action=help
+			list?(s))
+				# Don't set a default action for this group, this group is used for multiple actions. Set a default in the last parsing function.
 				group=lists
 				;;
-			packages|qpkgs)
+			package?(s)|qpkg?(s))
 				# Don't set a default action for this group, this group is used for multiple actions. Set a default in the last parsing function.
 				group=packages
 				;;
-			problems)
+			problem?(s))
 				[[ -z $action ]] && action=help
 				group=problems
 				;;
-			tips)
+			tip?(s))
 				[[ -z $action ]] && action=help
 				group=tips
 				;;
@@ -1868,7 +1873,7 @@ ParseHelpArgs()
 				# Don't set a default action for this group, this group is used for multiple actions. Set a default in the last parsing function.
 				group=abs
 				;;
-			action|actions)
+			action?(s))
 				[[ -z $action ]] && action=help
 				group=actions
 				;;
@@ -1876,15 +1881,15 @@ ParseHelpArgs()
 				# Don't set a default action for this group, this group is used for multiple actions. Set a default in the last parsing function.
 				group=all-actions
 				;;
-			actions-all|all-actions)
+			action?(s)-all|all-action?(s))
 				[[ -z $action ]] && action=help
 				group=all-actions
 				;;
-			group|groups)
+			group?(s))
 				[[ -z $action ]] && action=help
 				group=groups
 				;;
-			o|option|options)
+			o|option?(s))
 				[[ -z $action ]] && action=help
 				group=options
 				;;
@@ -2094,7 +2099,7 @@ ParseShowArgs()
 				[[ -z $action ]] && action=show
 				group=tail
 				;;
-			p|packages|qpkgs)
+			p|package?(s)|qpkg?(s))
 				[[ -z $action ]] && action=show
 				group=packages
 				;;
@@ -2102,7 +2107,7 @@ ParseShowArgs()
 				[[ -z $action ]] && action=show
 				group=repositories
 				;;
-			s|status|statuses)
+			s|status?(es))
 				# Don't set a default action for this group, this group is used for multiple actions. Set a default in the last parsing function.
 				group=status
 		esac
@@ -2263,18 +2268,24 @@ ParseListArgs()
 			backedup|installable|installed|missing|results)
 				group=${arg}
 				;;
-			not-backedup)
+			no+(n|t)-back?(ed)up)
 				group=NTbackedup
 				;;
-			not-installed)
+			no+(n|t)-installable)
+				group=NTinstallable
+				;;
+			no+(n|t)-installed)
 				group=NTinstalled
+				;;
+			no+(n|t)-missing)
+				group=NTmissing
 				;;
 		# All cases below can use multiple user-provided words or chars to specify a single action.
 			a|abs|abbreviations)
 				[[ -z $action ]] && action=list
 				group=abs
 				;;
-			active|started)
+			active|no+(n|t)-inactive|no+(n|t)-stopped|started)
 				group=active
 				;;
 			all|entire|everything)
@@ -2283,25 +2294,25 @@ ParseListArgs()
 			b|backups)
 				group=backups
 				;;
-			deps|dependent|dependents)
+			deps|dependent?(s))
 				group=dependent
 				;;
 			disabled)
 				group=NTenabled
 				;;
-			inactive|not-active|stopped)
+			inactive|no+(n|t)-active|no+(n|t)-started|stopped)
 				group=NTactive
 				;;
-			new|updatable|updateable|upgradable)
-				group=upgradable
-				;;
-			non-installable|not-installable)
-				group=NTinstallable
-				;;
-			independent|independents|indeps)
+			independent?(s)|indeps)
 				group=independent
 				;;
-			version|versions)
+			new|updat?(e)able|upgradable)
+				group=upgradable
+				;;
+			no+(n|t)-installable)
+				group=NTinstallable
+				;;
+			version?(s))
 				group=versions
 		esac
 
@@ -2319,7 +2330,7 @@ ParseListArgs()
 							run_package_actions=false
 							useropt_help_abbreviations=true
 							;;
-						active|NTactive)
+						?(NT)active)
 							Objects:Load
 							QPKGs.AClist.IS${group}:Set
 							QPKGs.ACstatus.ISinstalled:Set
@@ -2331,7 +2342,7 @@ ParseListArgs()
 							run_package_actions=true
 							show_title=false
 							;;
-						backedup|installed|NTbackedup|NTinstalled)
+						?(NT)backedup|?(NT)installed|?(NT)missing)
 							Objects:Load
 							QPKGs.AClist.IS${group}:Set
 							action=''
@@ -2341,7 +2352,7 @@ ParseListArgs()
 							run_package_actions=false
 							show_title=false
 							;;
-						dependent|disabled|installable|independent|NTinstallable|upgradable)
+						?(in)dependent|disabled|?(NT)installable|?(NT)upgradable)
 							Objects:Load
 							QPKGs.AClist.GR${group}:Set
 							action=''
@@ -2412,7 +2423,7 @@ ParseActionArgs()
 
 		case $arg in
 		# These cases are for a user-provided word to specify a single action.
-			backup|clean|disable|enable|reassign|rebuild|reinstall|restore|sign)
+			backup|clean|+(dis|en)able|reassign|rebuild|reinstall|restore|sign)
 				action=$arg
 				requires_group=true
 				user_action=$arg
@@ -2454,7 +2465,7 @@ ParseActionArgs()
 				requires_group=true
 				user_action=$arg
 				;;
-			s|status|statuses)
+			s|status?(es))
 				action=status
 				requires_group=true
 				useropt_show_status=true
@@ -2494,22 +2505,22 @@ ParseActionArgs()
 			all|everything)
 				group=all
 				;;
-			deps|dependent|dependents)
+			deps|dependent?(s))
 				group=dependent
 				;;
 			disabled)
 				group=NTenabled
 				;;
-			inactive|not-active|stopped)
+			+(in|not)-active|stopped)
 				group=NTactive
 				;;
-			new|updatable|updateable|upgradable)
+			new|updat?(e)able|upgradable)
 				group=upgradable
 				;;
-			non-installable|not-installable)
+			no+(n|t)-installable)
 				group=NTinstallable
 				;;
-			independent|independents|indeps)
+			independent?(s)|indeps)
 				group=independent
 				;;
 			*)
@@ -2520,9 +2531,9 @@ ParseActionArgs()
 
 		if [[ -n $action && -n $group ]]; then
 			case $action in
-				activate|backup|clean|deactivate|disable|enable|reactivate|reinstall|restore|sign|uninstall|upgrade)
+				?(de|re)activate|backup|clean|+(dis|en)able|+(re|un)install|restore|sign|upgrade)
 					case $group in
-						active|NTactive)
+						?(NT)active)
 							Objects:Load
 							QPKGs.AC${action}.IS${group}:Set
 							QPKGs.ACstatus.ISinstalled:Set
@@ -2535,7 +2546,7 @@ ParseActionArgs()
 			esac
 
 			case $group in
-				all|canbackup|canclean|canrestarttoupdate|dependent|hasdependents|independent|installable|upgradable|NTcanclean|NTinstallable|NTupgradable)
+				all|canbackup|?(NT)canclean|canrestarttoupdate|?(in)dependent|hasdependents|?(NT)installable|?(NT)upgradable)
 					Objects:Load
 					QPKGs.AC${action}.GR${group}:Set
 					awaiting_group=false
@@ -2544,7 +2555,7 @@ ParseActionArgs()
 					get_qpkg_states=true
 					run_package_actions=true
 					;;
-				backedup|enabled|installed|missing|NTbackedup|NTenabled|NTinstalled)
+				?(NT)backedup|?(NT)enabled|?(NT)installed|?(NT)missing)
 					Objects:Load
 					QPKGs.AC${action}.IS${group}:Set
 					awaiting_group=false
@@ -2571,7 +2582,7 @@ ParseActionArgs()
 
 	for arg in "${args_incomplete[@]:-}"; do
 		case $arg in
-			s|status|statuses)				# If status is specified without a group, then group is `all`.
+			s|status?(es))				# If status is specified without a group, then group is `all`.
 				Objects:Load
 				QPKGs.ACstatus.GRall:Set
 				generate_show_report=true
@@ -2622,12 +2633,12 @@ ArgSuggestions:Show()
 
 		for arg in "${args_incomplete[@]}"; do
 			case $arg in
-				activate|backup|clean|deactivate|disable|disable-auto-update|enable|enable-auto-update|reactivate|reassign|reinstall|restart|restore|sign|start|stop|uninstall|upgrade)
+				?(de|re)activate|backup|clean|+(dis|en)able|+(dis|en)able-auto-update|reassign|+(re|un)install|?(re)start|restore|sign|stop|upgrade)
 					DisplayAsProjSynExam "please provide valid $(ShowAsPackages) or a $(ShowAsPackageGroup) after '$arg' like" "$arg installed"
 					arg_problem=true
 					useropt_help_basic=false
 					;;
-				color|colour|colorful|colourful|terse)
+				colo?(u)r?(ful)|terse)
 					DisplayAsProjSynExam "please provide a valid boolean after '$arg' like" "$arg true"
 					DisplayAsProjSynIndentExam '' "$arg false"
 					DisplayAsProjSynIndentExam '' "$arg on"
@@ -2734,18 +2745,18 @@ ArgSuggestions:Show()
 					arg_problem=true
 					useropt_help_basic=false
 					;;
-				enable|disable|false|off|no|on|true|yes)
+				+(dis|en)able|false|off|no|on|true|yes)
 					DisplayAsProjSynExam "please provide a valid setting before '$arg' like" "colour $arg"
 					DisplayAsProjSynIndentExam '' "terse $arg"
 					arg_problem=true
 					useropt_help_basic=false
 					;;
-				dependent|dependents|independent|independents)
+				?(in)dependent?(s))
 					DisplayAsProjSynExam "please provide a valid $(ShowAsAction) before '$arg' like" "activate $arg"
 					arg_problem=true
 					useropt_help_basic=false
 					;;
-				stable|unstable)
+				?(un)stable)
 					DisplayAsProjSynExam "please provide a valid $(ShowAsAction) before '$arg' like" "follow $arg"
 					arg_problem=true
 					useropt_help_basic=false
@@ -2794,7 +2805,7 @@ AllocPackGroupsToAcs()
 				case $action in
 					clean)
 						case $group in
-							all|dependent|independent)
+							all|?(in)dependent)
 								found=true
 
 								for prospect in $(QPKGs-GR${group}:Array); do
@@ -2807,7 +2818,7 @@ AllocPackGroupsToAcs()
 						;;
 					install|status)
 						case $group in
-							all|dependent|independent)
+							all|?(in)dependent)
 								found=true
 
 								QPKGs-AC${action}-to:Add "$(QPKGs-GR${group}:Array)"
@@ -2816,9 +2827,9 @@ AllocPackGroupsToAcs()
 								DebugAsWarn "group 'GR$group' has no positive allocation handler for action '$action'"
 						esac
 						;;
-					activate|deactivate|disable|disableau|enable|enableau|reactivate|reinstall|stop|uninstall)
+					?(de|re)activate|disable?(au)|enable?(au)|+(re|un)install|stop)
 						case $group in
-							all|dependent|independent)
+							all|?(in)dependent)
 								found=true
 
 								for prospect in $(QPKGs-GR${group}:Array); do
@@ -2831,7 +2842,7 @@ AllocPackGroupsToAcs()
 						;;
 					rebuild)
 						case $group in
-							all|dependent|independent)
+							all|?(in)dependent)
 								found=true
 
 								for prospect in $(QPKGs-GR${group}:Array); do
@@ -2844,7 +2855,7 @@ AllocPackGroupsToAcs()
 						;;
 					upgrade)
 						case $group in
-							all|dependent|independent|upgradable)
+							all|?(in)dependent|upgradable)
 								found=true
 
 								QPKGs-AC${action}-to:Add "$(QPKGs-GRupgradable:Array)"
@@ -2870,7 +2881,7 @@ AllocPackGroupsToAcs()
 				if QPKGs-AC${action}-to.IsAny; then
 					DebugAsDone "action: '$action', group: 'GR$group': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
 				else
-					ShowAsWarn "unable to find any 'is $group' QPKGs to '$(Lowercase "$action")'"
+					ShowAsWarn "unable to find any '$group' QPKGs to '$(Lowercase "$action")'"
 				fi
 			fi
 		done
@@ -2893,7 +2904,7 @@ AllocPackGroupsToAcs()
 				if QPKGs-AC${action}-to.IsAny; then
 					DebugAsDone "action: '$action', group: 'GRNT${group}': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
 				else
-					ShowAsWarn "unable to find any 'is not $group' QPKGs to '$(Lowercase "$action")'"
+					ShowAsWarn "unable to find any 'not $group' QPKGs to '$(Lowercase "$action")'"
 				fi
 			fi
 		done
@@ -2953,7 +2964,7 @@ AllocPackStatesToAcs()
 				elif [[ $check_later = true ]]; then
 					DebugAsDone "action: '$action', state: 'IS${state}': will add filtered-packages later after 'status' has been determined"
 				else
-					ShowAsWarn "unable to find any 'is $state' QPKGs to '$(Lowercase "$action")'"
+					ShowAsWarn "unable to find any '$state' QPKGs to '$(Lowercase "$action")'"
 				fi
 			fi
 		done
@@ -2997,7 +3008,7 @@ AllocPackStatesToAcs()
 				elif [[ $check_later = true ]]; then
 					DebugAsDone "action: '$action', state: 'ISNT${state}': will add filtered-packages later after 'status' has been determined"
 				else
-					ShowAsWarn "unable to find any 'is not $state' QPKGs to '$(Lowercase "$action")'"
+					ShowAsWarn "unable to find any 'not $state' QPKGs to '$(Lowercase "$action")'"
 				fi
 			fi
 		done
@@ -7235,6 +7246,46 @@ QPKGs.GrNtInstallable:Show()
 		done
 	else
 		ShowAsWarn "unable to find any 'not installable' QPKGs"
+	fi
+
+	return 0
+
+	}
+
+QPKGs.IsMissing:Show()
+	{
+
+	local a=''
+
+	DisableDebugToArchiveAndFile
+	EraseThisLine
+
+	if QPKGs-ISmissing.IsAny; then
+		for a in $(QPKGs-ISmissing:Array); do
+			Display "$a"
+		done
+	else
+		ShowAsWarn "unable to find any 'missing' QPKGs"
+	fi
+
+	return 0
+
+	}
+
+QPKGs.IsNtMissing:Show()
+	{
+
+	local a=''
+
+	DisableDebugToArchiveAndFile
+	EraseThisLine
+
+	if QPKGs-ISNTmissing.IsAny; then
+		for a in $(QPKGs-ISNTmissing:Array); do
+			Display "$a"
+		done
+	else
+		ShowAsWarn "unable to find any 'not missing' QPKGs"
 	fi
 
 	return 0
