@@ -1640,8 +1640,10 @@ ParseManagementArgs()
 	local arg=''
 	local -a args_remaining=()
 	local awaiting_group=false
-	local new_action=''
+	local current_action=''
+	local group=''
 	local requires_group=false
+	local user_action=''
 
 	for arg in "${args[@]:-}"; do
 		[[ -n $arg ]] || continue
@@ -1649,48 +1651,47 @@ ParseManagementArgs()
 		# Identify action.
 
 		case $arg in
-		# These cases use only a single user-provided word to specify a single action.
+		# These cases are for a user-provided word to specify a single action.
 			reset)
-				new_action=reset
-				requires_group=false
 				DeleteSetting Colourful
 				DeleteSetting Git_Branch
 				DeleteSetting Terse
 
 				Reset					# <-- Processing will terminate in this function (no-return).
 				;;
-		# All cases below can use multiple user-provided words or chars to specify a single action.
+		# All cases below are for multiple user-provided words or chars to specify a single action.
 			c|check)
+				action=check
 				generate_show_report=true
 				get_qpkg_states=true
-				new_action=check
 				requires_group=false
 				run_package_actions=true
+				user_action=$arg
 				useropt_check=true
 				;;
 			color|colour|colorful|colourful|follow|paste|terse)
-				new_action=$arg
+				action=$arg
 				requires_group=true
+				user_action=$arg
 				;;
 			debug|dbug)
-				new_action=debug
+				action=debug
 				requires_group=false
+				user_action=$arg
 				EnableDebugToArchiveAndFile
 				;;
 			v|verbose)
-				new_action=verbose
+				action=verbose
 				requires_group=false
+				user_action=$arg
 				Verbose:Enable
 				EnableDebugToArchiveAndFile
-				;;
-			*)
-				new_action=''
 		esac
 
-		if [[ -n $new_action && $new_action != "$action" ]]; then
-			[[ $awaiting_group = true ]] && args_incomplete+=("$action")
-			[[ $requires_group = false ]] && awaiting_group=false || awaiting_group=true
-			action=$new_action
+		if [[ -n $user_action && $user_action != "$current_action" ]]; then
+			[[ $awaiting_group = true ]] && args_incomplete+=("$user_action")
+			awaiting_group=$requires_group
+			current_action=$user_action
 			group=''	 			# When action changes, must clear group.
 			continue
 		fi
@@ -1700,24 +1701,19 @@ ParseManagementArgs()
 		case $arg in
 		# These cases use only a single user-provided word or char to specify a single group.
 			stable|unstable)
-				[[ -z $action ]] && action=follow
 				group=$arg
 				;;
 		# All cases below can use multiple user-provided words or chars to specify a single group.
 			all|log|tail)
-				# Don't set a default action for this group, it should prompt user instead.
 				group=tail
 				;;
 			disable|false|no|off)
-				# Don't set a default action for this group, it should prompt user instead.
 				group=false
 				;;
 			l|last)
-				# Don't set a default action for this group, it should prompt user instead.
 				group=last
 				;;
 			enable|on|true|yes)
-				# Don't set a default action for this group, it should prompt user instead.
 				group=true
 		esac
 
@@ -1730,8 +1726,8 @@ ParseManagementArgs()
 						true|false)
 							action=''
 							awaiting_group=false
-							user_colourful_value=$group
 							switch_colour=true
+							user_colourful_value=$group
 							UpdateColourful
 							;;
 						*)
@@ -1744,12 +1740,12 @@ ParseManagementArgs()
 							action=''
 							awaiting_group=false
 							run_package_actions=false
-							user_branch_value=$group
 							switch_branch=true
+							user_branch_value=$group
 							UpdateBranch
 							;;
 						*)
-							args_remaining+=("$arg")
+							args_remaining+=("$action")
 					esac
 					;;
 				paste)
@@ -1767,7 +1763,7 @@ ParseManagementArgs()
 							useropt_paste_log_tail=true
 							;;
 						*)
-							args_remaining+=("$arg")
+							args_remaining+=("$action")
 					esac
 					;;
 				terse)
@@ -1775,8 +1771,8 @@ ParseManagementArgs()
 						true|false)
 							action=''
 							awaiting_group=false
-							user_terse_value=$group
 							switch_terse=true
+							user_terse_value=$group
 							UpdateTerse
 							;;
 						*)
@@ -1791,8 +1787,8 @@ ParseManagementArgs()
 		fi
 	done
 
-	if [[ $requires_group = true && $awaiting_group = true ]]; then
-		args_incomplete+=("$action")		# Only if the last action specified was not followed by a group.
+	if [[ $requires_group = true && $awaiting_group = true ]]; then			# Only if the last action specified was not followed by a group.
+		args_incomplete+=("$user_action")									# Save the actual action word, phrase or char specified by the user.
 	fi
 
 	args=(${args_remaining[@]:-})
@@ -1822,9 +1818,10 @@ ParseHelpArgs()
 	local arg=''
 	local -a args_remaining=()
 	local awaiting_group=false
+	local current_action=''
 	local group=''
-	local new_action=''
 	local requires_group=false
+	local user_action=''
 
 	for arg in "${args[@]:-}"; do
 		[[ -n $arg ]] || continue
@@ -1832,19 +1829,16 @@ ParseHelpArgs()
 		# Identify action.
 
 		case $arg in
-		# All cases below can use multiple words or chars to specify a single action.
 			help)
-				new_action=help
+				action=$arg
 				requires_group=true
-				;;
-			*)
-				new_action=''
+				user_action=$arg
 		esac
 
-		if [[ -n $new_action && $new_action != "$action" ]]; then
-			[[ $awaiting_group = true ]] && args_incomplete+=("$action")
-			[[ $requires_group = false ]] && awaiting_group=false || awaiting_group=true
-			action=$new_action
+		if [[ -n $user_action && $user_action != "$current_action" ]]; then
+			[[ $awaiting_group = true ]] && args_incomplete+=("$user_action")
+			awaiting_group=$requires_group
+			current_action=$user_action
 			group=''	 			# When action changes, must clear group.
 			continue
 		fi
@@ -1852,7 +1846,7 @@ ParseHelpArgs()
 		# Identify group. Include action assignment when action hasn't been previously specified.
 
 		case $arg in
-		# These cases use only a single word or char to specify a single group.
+		# These cases use only a single user-provided word or char to specify a single group.
 			lists)
 				[[ -z $action ]] && action=help
 				group=lists
@@ -1910,67 +1904,77 @@ ParseHelpArgs()
 				help)
 					case $group in
 						abs)
+							action=''
 							awaiting_group=false
 							generate_help_report=true
 							run_package_actions=false
 							useropt_help_abbreviations=true
 							;;
 						actions)
+							action=''
 							awaiting_group=false
 							generate_help_report=true
 							run_package_actions=false
 							useropt_help_actions=true
 							;;
 						all-actions)
+							action=''
 							awaiting_group=false
 							generate_help_report=true
 							run_package_actions=false
 							useropt_help_actions_all=true
 							;;
 						groups)
+							action=''
 							awaiting_group=false
 							generate_help_report=true
 							run_package_actions=false
 							useropt_help_groups=true
 							;;
 						lists)
+							action=''
 							awaiting_group=false
 							generate_help_report=true
 							run_package_actions=false
 							useropt_help_lists=true
 							;;
 						options)
+							action=''
 							awaiting_group=false
 							generate_help_report=true
 							run_package_actions=false
 							useropt_help_options=true
 							;;
 						packages)
+							action=''
 							awaiting_group=false
 							generate_help_report=true
 							run_package_actions=false
 							useropt_help_packages=true
 							;;
 						problems)
+							action=''
 							awaiting_group=false
 							generate_help_report=true
 							run_package_actions=false
 							useropt_help_problems=true
 							;;
 						tips)
+							action=''
 							awaiting_group=false
 							generate_help_report=true
 							run_package_actions=false
 							useropt_help_tips=true
 							;;
 						upgrades)
+							action=''
 							awaiting_group=false
 							generate_help_report=true
 							run_package_actions=false
 							useropt_help_upgrades=true
 							;;
 						*)
-							args_remaining+=("$arg")
+							args_remaining+=("$action")
 					esac
 					;;
 				*)
@@ -1982,7 +1986,7 @@ ParseHelpArgs()
 	done
 
 	if [[ $requires_group = true && $awaiting_group = true ]]; then			# Only if the last action specified was not followed by a group.
-		args_incomplete+=("$action")
+		args_incomplete+=("$user_action")									# Save the actual action word, phrase or char specified by the user.
 	fi
 
 	for arg in "${args_incomplete[@]:-}"; do
@@ -2036,9 +2040,10 @@ ParseShowArgs()
 	local arg=''
 	local -a args_remaining=()
 	local awaiting_group=false
+	local current_action=''
 	local group=''
-	local new_action=''
 	local requires_group=false
+	local user_action=''
 
 	for arg in "${args[@]:-}"; do
 		[[ -n $arg ]] || continue
@@ -2047,17 +2052,15 @@ ParseShowArgs()
 
 		case $arg in
 			show|view)
-				new_action=show
+				action=show
 				requires_group=true
-				;;
-			*)
-				new_action=''
+				user_action=$arg
 		esac
 
-		if [[ -n $new_action && $new_action != "$action" ]]; then
-			[[ $awaiting_group = true ]] && args_incomplete+=("$action")
-			[[ $requires_group = false ]] && awaiting_group=false || awaiting_group=true
-			action=$new_action
+		if [[ -n $user_action && $user_action != "$current_action" ]]; then
+			[[ $awaiting_group = true ]] && args_incomplete+=("$user_action")
+			awaiting_group=$requires_group
+			current_action=$user_action
 			group=''	 			# When action changes, must clear group.
 			continue
 		fi
@@ -2102,7 +2105,6 @@ ParseShowArgs()
 			s|status|statuses)
 				# Don't set a default action for this group, this group is used for multiple actions. Set a default in the last parsing function.
 				group=status
-				;;
 		esac
 
 		# Pair action with group.
@@ -2112,6 +2114,7 @@ ParseShowArgs()
 				show)
 					case $group in
 						abs)
+							action=''
 							awaiting_group=false
 							generate_help_report=true
 							get_qpkg_states=false
@@ -2119,6 +2122,7 @@ ParseShowArgs()
 							useropt_help_abbreviations=true
 							;;
 						backups)
+							action=''
 							awaiting_group=false
 							generate_show_report=true
 							get_qpkg_states=false
@@ -2127,12 +2131,14 @@ ParseShowArgs()
 							;;
 						dependencies)
 							Packages:Load
+							action=''
 							awaiting_group=false
 							generate_show_report=true
 							run_package_actions=false
 							useropt_show_dependencies=true
 							;;
 						last)
+							action=''
 							awaiting_group=false
 							generate_show_report=true
 							get_qpkg_states=false
@@ -2141,6 +2147,7 @@ ParseShowArgs()
 							;;
 						packages)
 							Packages:Load
+							action=''
 							awaiting_group=false
 							generate_show_report=true
 							get_qpkg_states=false
@@ -2149,12 +2156,14 @@ ParseShowArgs()
 							;;
 						repositories)
 							Packages:Load
+							action=''
 							awaiting_group=false
 							generate_show_report=true
 							run_package_actions=false
 							useropt_show_repos=true
 							;;
 						results)
+							action=''
 							awaiting_group=false
 							generate_show_report=true
 							get_qpkg_states=false
@@ -2164,11 +2173,15 @@ ParseShowArgs()
 						status)
 							Objects:Load
 							QPKGs.ACstatus.GRall:Set
+							action=''
 							awaiting_group=false
 							generate_show_report=true
+							get_qpkg_states=true
+							run_package_actions=true
 							useropt_show_status=true
 							;;
 						tail)
+							action=''
 							awaiting_group=false
 							generate_show_report=true
 							get_qpkg_states=false
@@ -2176,7 +2189,7 @@ ParseShowArgs()
 							useropt_show_log_tail=true
 							;;
 						*)
-							args_remaining+=("$arg")
+							args_remaining+=("$action")
 					esac
 					;;
 				*)
@@ -2188,7 +2201,7 @@ ParseShowArgs()
 	done
 
 	if [[ $requires_group = true && $awaiting_group = true ]]; then			# Only if the last action specified was not followed by a group.
-		args_incomplete+=("$action")
+		args_incomplete+=("$user_action")									# Save the actual action word, phrase or char specified by the user.
 	fi
 
 	args=(${args_remaining[@]:-})
@@ -2218,9 +2231,10 @@ ParseListArgs()
 	local arg=''
 	local -a args_remaining=()
 	local awaiting_group=false
+	local current_action=''
 	local group=''
-	local new_action=''
 	local requires_group=false
+	local user_action=''
 
 	for arg in "${args[@]:-}"; do
 		[[ -n $arg ]] || continue
@@ -2228,25 +2242,21 @@ ParseListArgs()
 		# Identify action.
 
 		case $arg in
-		# These cases use only a single word to specify a single action.
 			list)
-				new_action=$arg
-				group=''
+				action=$arg
 				requires_group=true
-				;;
-			*)
-				new_action=''
+				user_action=$arg
 		esac
 
-		if [[ -n $new_action && $new_action != "$action" ]]; then
-			[[ $awaiting_group = true ]] && args_incomplete+=("$action")
-			[[ $requires_group = false ]] && awaiting_group=false || awaiting_group=true
-			action=$new_action
+		if [[ -n $user_action && $user_action != "$current_action" ]]; then
+			[[ $awaiting_group = true ]] && args_incomplete+=("$user_action")
+			awaiting_group=$requires_group
+			current_action=$user_action
 			group=''	 			# When action changes, must clear group.
 			continue
 		fi
 
-		# Identify group.
+		# Identify group. Include action assignment when action hasn't been previously specified.
 
 		case $arg in
 		# These cases use only a single user-provided word to specify a single action.
@@ -2299,16 +2309,10 @@ ParseListArgs()
 
 		if [[ -n $action && -n $group ]]; then
 			case $action in
-				show)
-					awaiting_group=false
-					generate_show_report=true
-					get_qpkg_states=false
-					run_package_actions=false
-					useropt_show_backups=true
-					;;
 				list)
 					case $group in
 						abs)
+							action=''
 							awaiting_group=false
 							generate_help_report=true
 							get_qpkg_states=true
@@ -2319,6 +2323,7 @@ ParseListArgs()
 							Objects:Load
 							QPKGs.AClist.IS${group}:Set
 							QPKGs.ACstatus.ISinstalled:Set
+							action=''
 							awaiting_group=false
 							generate_list_report=true
 							get_qpkg_active_status=true
@@ -2329,6 +2334,7 @@ ParseListArgs()
 						backedup|installed|NTbackedup|NTinstalled)
 							Objects:Load
 							QPKGs.AClist.IS${group}:Set
+							action=''
 							awaiting_group=false
 							generate_list_report=true
 							get_qpkg_states=true
@@ -2338,6 +2344,7 @@ ParseListArgs()
 						dependent|disabled|installable|independent|NTinstallable|upgradable)
 							Objects:Load
 							QPKGs.AClist.GR${group}:Set
+							action=''
 							awaiting_group=false
 							generate_list_report=true
 							get_qpkg_states=true
@@ -2345,13 +2352,14 @@ ParseListArgs()
 							show_title=false
 							;;
 						versions)
+							action=''
 							awaiting_group=false
 							generate_list_report=true
 							show_title=false
 							useropt_show_versions=true
 							;;
 						*)
-							args_remaining+=("$arg")
+							args_remaining+=("$action")
 					esac
 					;;
 				*)
@@ -2363,7 +2371,7 @@ ParseListArgs()
 	done
 
 	if [[ $requires_group = true && $awaiting_group = true ]]; then			# Only if the last action specified was not followed by a group.
-		args_incomplete+=("$action")
+		args_incomplete+=("$user_action")									# Save the actual action word, phrase or char specified by the user.
 	fi
 
 	args=(${args_remaining[@]:-})
@@ -2390,10 +2398,10 @@ ParseActionArgs()
 	local arg=''
 	local -a args_remaining=()
 	local awaiting_group=false
+	local current_action=''
 	local group=''
-	local new_action=''
-	local real_action=''
 	local requires_group=false
+	local user_action=''
 
 	[[ -n ${args[*]:-} ]] && Packages:Load
 
@@ -2403,68 +2411,68 @@ ParseActionArgs()
 		# Identify action.
 
 		case $arg in
-		# These cases use only a single user-provided word to specify a single action.
+		# These cases are for a user-provided word to specify a single action.
 			backup|clean|disable|enable|reassign|rebuild|reinstall|restore|sign)
-				new_action=$arg
+				action=$arg
 				requires_group=true
+				user_action=$arg
 				;;
+		# These cases are for a user-provided word or phrase to specify a single action.
 			disable-auto-update)
-				new_action=disableau
+				action=disableau
 				requires_group=true
+				user_action=$arg
 				;;
 			enable-auto-update)
-				new_action=enableau
+				action=enableau
 				requires_group=true
+				user_action=$arg
 				;;
-		# All cases below can use multiple user-provided words or chars to specify a single action.
-			activate|deactivate|reactivate|restart|start|stop)
-				new_action=$arg
+		# All cases below are for multiple user-provided words or chars to specify a single action.
+			activate|start)
+				action=activate
 				requires_group=true
+				user_action=$arg
 				;;
 			add|install)
-				new_action=install
+				action=install
 				requires_group=true
+				user_action=$arg
 				;;
-			rm|remove|uninstall)
-				new_action=uninstall
+			deactivate|stop)
+				action=deactivate
 				requires_group=true
+				user_action=$arg
+				;;
+			reactivate|restart)
+				action=reactivate
+				requires_group=true
+				user_action=$arg
+				;;
+			remove|rm|uninstall)
+				action=uninstall
+				requires_group=true
+				user_action=$arg
 				;;
 			s|status|statuses)
-				new_action=status
+				action=status
 				requires_group=true
 				useropt_show_status=true
+				user_action=$arg
 				;;
 			update|upgrade)
-				new_action=upgrade
+				action=upgrade
 				requires_group=true
-				;;
-			*)
-				new_action=''
+				user_action=$arg
 		esac
 
-		if [[ -n $new_action && $new_action != "$action" ]]; then
-			[[ $awaiting_group = true ]] && args_incomplete+=("$action")
-			[[ $requires_group = false ]] && awaiting_group=false || awaiting_group=true
-			action=$new_action
+		if [[ -n $user_action && $user_action != "$current_action" ]]; then
+			[[ $awaiting_group = true ]] && args_incomplete+=("$user_action")
+			awaiting_group=$requires_group
+			current_action=$user_action
 			group=''	 			# When action changes, must clear group.
 			continue
 		fi
-
-		# Reassign action variants to base action.
-
-		case $action in
-			activate|start)
-				real_action=activate
-				;;
-			deactivate|stop)
-				real_action=deactivate
-				;;
-			reactivate|restart)
-				real_action=reactivate
-				;;
-			*)
-				real_action=$action
-		esac
 
 		# Identify group.
 
@@ -2510,13 +2518,13 @@ ParseActionArgs()
 
 		# Pair action with group.
 
-		if [[ -n $real_action && -n $group ]]; then
-			case $real_action in
+		if [[ -n $action && -n $group ]]; then
+			case $action in
 				activate|backup|clean|deactivate|disable|enable|reactivate|reinstall|restore|sign|uninstall|upgrade)
 					case $group in
 						active|NTactive)
 							Objects:Load
-							QPKGs.AC${real_action}.IS${group}:Set
+							QPKGs.AC${action}.IS${group}:Set
 							QPKGs.ACstatus.ISinstalled:Set
 							awaiting_group=false
 							generate_action_report=true
@@ -2529,7 +2537,7 @@ ParseActionArgs()
 			case $group in
 				all|canbackup|canclean|canrestarttoupdate|dependent|hasdependents|independent|installable|upgradable|NTcanclean|NTinstallable|NTupgradable)
 					Objects:Load
-					QPKGs.AC${real_action}.GR${group}:Set
+					QPKGs.AC${action}.GR${group}:Set
 					awaiting_group=false
 					generate_action_report=true
 					get_qpkg_active_status=false
@@ -2538,7 +2546,7 @@ ParseActionArgs()
 					;;
 				backedup|enabled|installed|missing|NTbackedup|NTenabled|NTinstalled)
 					Objects:Load
-					QPKGs.AC${real_action}.IS${group}:Set
+					QPKGs.AC${action}.IS${group}:Set
 					awaiting_group=false
 					generate_action_report=true
 					get_qpkg_states=true
@@ -2546,7 +2554,7 @@ ParseActionArgs()
 					;;
 				*)
 					Objects:Load
-					QPKGs-AC${real_action}-to:Add "$group"
+					QPKGs-AC${action}-to:Add "$group"
 					awaiting_group=false
 					generate_action_report=true
 					get_qpkg_states=true
@@ -2558,12 +2566,12 @@ ParseActionArgs()
 	done
 
 	if [[ $requires_group = true && $awaiting_group = true ]]; then			# Only if the last action specified was not followed by a group.
-		args_incomplete+=("$action")
+		args_incomplete+=("$user_action")									# Save the actual action word, phrase or char specified by the user.
 	fi
 
 	for arg in "${args_incomplete[@]:-}"; do
 		case $arg in
-			status)							# If `status` is specified without a valid group, then group is `all`.
+			s|status|statuses)				# If status is specified without a group, then group is `all`.
 				Objects:Load
 				QPKGs.ACstatus.GRall:Set
 				generate_show_report=true
@@ -2614,7 +2622,7 @@ ArgSuggestions:Show()
 
 		for arg in "${args_incomplete[@]}"; do
 			case $arg in
-				activate|backup|deactivate|restart|reactivate|start|stop|uninstall)
+				activate|backup|clean|deactivate|disable|disable-auto-update|enable|enable-auto-update|reactivate|reassign|reinstall|restart|restore|sign|start|stop|uninstall|upgrade)
 					DisplayAsProjSynExam "please provide valid $(ShowAsPackages) or a $(ShowAsPackageGroup) after '$arg' like" "$arg installed"
 					arg_problem=true
 					useropt_help_basic=false
@@ -2626,28 +2634,39 @@ ArgSuggestions:Show()
 					DisplayAsProjSynIndentExam '' "$arg off"
 					DisplayAsProjSynIndentExam '' "$arg yes"
 					DisplayAsProjSynIndentExam '' "$arg no"
+					DisplayAsProjSynIndentExam '' "$arg enable"
+					DisplayAsProjSynIndentExam '' "$arg disable"
 					arg_problem=true
 					useropt_help_basic=false
 					;;
 				follow)
-					DisplayAsProjSynExam "please provide a valid $(ShowAsTitleName) git branch to 'follow' like" 'follow stable'
-					DisplayAsProjSynIndentExam '' 'follow unstable'
+					DisplayAsProjSynExam "please provide a valid $(ShowAsTitleName) git branch to '$arg' like" "$arg stable"
+					DisplayAsProjSynIndentExam '' "$arg unstable"
+					arg_problem=true
+					useropt_help_basic=false
+					;;
+				install|rebuild)
+					DisplayAsProjSynExam "please provide valid $(ShowAsPackages) or a $(ShowAsPackageGroup) after '$arg' like" "$arg all"
 					arg_problem=true
 					useropt_help_basic=false
 					;;
 				list)
-					DisplayAsProjSynExam "please provide a valid source to 'list' like" 'list installable'
+					DisplayAsProjSynExam "please provide a valid source to '$arg' like" "$arg installable"
+					DisplayAsProjSynIndentExam '' "$arg new"
 					arg_problem=true
 					useropt_help_basic=false
 					;;
 				paste)
-					DisplayAsProjSynExam "please provide a valid source to 'paste' online like" 'paste log'
-					DisplayAsProjSynIndentExam '' 'paste last'
+					DisplayAsProjSynExam "please provide a valid source to '$arg' online like" "$arg log"
+					DisplayAsProjSynIndentExam '' "$arg last"
 					arg_problem=true
 					useropt_help_basic=false
 					;;
 				show)
-					DisplayAsProjSynExam "please provide a valid source after 'show' like" 'show packages'
+					DisplayAsProjSynExam "please provide a valid source after '$arg' like" "$arg abs"
+					DisplayAsProjSynIndentExam '' "$arg log"
+					DisplayAsProjSynIndentExam '' "$arg packages"
+					DisplayAsProjSynIndentExam '' "$arg results"
 					arg_problem=true
 					useropt_help_basic=false
 					;;
@@ -2670,23 +2689,18 @@ ArgSuggestions:Show()
 
 		for arg in "${args[@]}"; do
 			case $arg in
-				false|off|on|true)
-					DisplayAsProjSynExam "please provide a valid setting before '$arg' like" "colour $arg"
-					arg_problem=true
-					useropt_help_basic=false
-					;;
 				all)
 					DisplayAsProjSynExam "please provide a valid $(ShowAsAction) before 'all' like" 'activate all'
 					arg_problem=true
 					useropt_help_basic=false
 					;;
-				all-backup|backup-all)
-					DisplayAsProjSynExam 'to backup all installed package configurations, use' 'backup all'
+				all-activate|activate-all)
+					DisplayAsProjSynExam 'to activate all packages, use' 'activate all'
 					arg_problem=true
 					useropt_help_basic=false
 					;;
-				dependent)
-					DisplayAsProjSynExam "please provide a valid $(ShowAsAction) before 'dependent' like" 'activate dependents'
+				all-backup|backup-all)
+					DisplayAsProjSynExam 'to backup all installed package configurations, use' 'backup all'
 					arg_problem=true
 					useropt_help_basic=false
 					;;
@@ -2697,16 +2711,6 @@ ArgSuggestions:Show()
 					;;
 				all-restore|restore-all)
 					DisplayAsProjSynExam 'to restore all installed package configurations, use' 'restore all'
-					arg_problem=true
-					useropt_help_basic=false
-					;;
-				independent)
-					DisplayAsProjSynExam "please provide a valid $(ShowAsAction) before 'independent' like" 'activate independents'
-					arg_problem=true
-					useropt_help_basic=false
-					;;
-				all-activate|activate-all)
-					DisplayAsProjSynExam 'to activate all packages, use' 'activate all'
 					arg_problem=true
 					useropt_help_basic=false
 					;;
@@ -2722,6 +2726,27 @@ ArgSuggestions:Show()
 					;;
 				all-upgrade|upgrade-all)
 					DisplayAsProjSynExam 'to upgrade all packages, use' 'upgrade all'
+					arg_problem=true
+					useropt_help_basic=false
+					;;
+				download)
+					ShowAsError "'$arg' is not a manual action"
+					arg_problem=true
+					useropt_help_basic=false
+					;;
+				enable|disable|false|off|no|on|true|yes)
+					DisplayAsProjSynExam "please provide a valid setting before '$arg' like" "colour $arg"
+					DisplayAsProjSynIndentExam '' "terse $arg"
+					arg_problem=true
+					useropt_help_basic=false
+					;;
+				dependent|dependents|independent|independents)
+					DisplayAsProjSynExam "please provide a valid $(ShowAsAction) before '$arg' like" "activate $arg"
+					arg_problem=true
+					useropt_help_basic=false
+					;;
+				stable|unstable)
+					DisplayAsProjSynExam "please provide a valid $(ShowAsAction) before '$arg' like" "follow $arg"
 					arg_problem=true
 					useropt_help_basic=false
 					;;
