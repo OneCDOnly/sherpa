@@ -2751,7 +2751,12 @@ ArgSuggestions:Show()
 					arg_problem=true
 					useropt_help_basic=false
 					;;
-				@(in|not-)active|?(in)dependent?(s)|started|stopped)
+				active|started)
+					DisplayAsProjSynExam "please provide a valid $(ShowAsAction) before '$arg' like" "deactivate $arg"
+					arg_problem=true
+					useropt_help_basic=false
+					;;
+				@(in|not-)active|?(in)dependent?(s)|stopped)
 					DisplayAsProjSynExam "please provide a valid $(ShowAsAction) before '$arg' like" "activate $arg"
 					arg_problem=true
 					useropt_help_basic=false
