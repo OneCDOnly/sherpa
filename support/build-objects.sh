@@ -6,7 +6,7 @@ echo -n "building 'objects' file ... "
 
 target_pathfile="$source_path/$objects_file"
 
-# these are used internally by sherpa -----------------------------------------------------
+# These are used internally by sherpa.
 # ordered
 PACKAGE_TIERS=(independent auxiliary dependent)
 
@@ -20,17 +20,17 @@ QPKG_SERVICE_RESULTS=(ok failed)
 IPK_STATES=(downgraded downloaded installed reinstalled upgraded)
 
 # ordered
-PIP_ACTIONS=(download uninstall upgrade reinstall install)
-IPK_ACTIONS=(downgrade download uninstall upgrade reinstall install)
 QPKG_ACTIONS=(status list rebuild reassign download backup deactivate disable uninstall upgrade reinstall install enableau disableau sign restore clean enable activate reactivate)
+IPK_ACTIONS=(downgrade download uninstall upgrade reinstall install)
+PIP_ACTIONS=(download uninstall upgrade reinstall install)
 
-# these actions, states and scopes may be specified by the user -----------------------------------------------------
+# These actions, states and groups may be specified by the user.
 # sorted
-USER_QPKG_SC_GROUPS=(all canbackup canclean canrestarttoupdate dependent hasdependents independent installable upgradable)
-USER_QPKG_SCNT_GROUPS=(canclean installable upgradable)
+USER_QPKG_ACTIONS=(activate backup clean deactivate disable disableau enable enableau install list reactivate reassign rebuild reinstall restore sign status uninstall upgrade)
 USER_QPKG_IS_STATES=(active backedup enabled installed missing)
 USER_QPKG_ISNT_STATES=(active backedup enabled installed missing)
-USER_QPKG_ACTIONS=(activate backup clean deactivate disable disableau enable enableau install list reactivate reassign rebuild reinstall restore sign status uninstall upgrade)
+USER_QPKG_IS_GROUPS=(all canbackup canclean canrestarttoupdate dependent hasdependents independent installable upgradable)
+USER_QPKG_ISNT_GROUPS=(canclean installable upgradable)
 
 AddFlagObj()
 	{
@@ -144,18 +144,6 @@ echo "#* <?dont_edit?>" >> "$target_pathfile"
 
 # package action flag objects.
 
-for group in "${USER_QPKG_SC_GROUPS[@]}"; do
-	for action in "${USER_QPKG_ACTIONS[@]}"; do
-		AddFlagObj QPKGs.AC"$action".SC"$group"
-	done
-done
-
-for group in "${USER_QPKG_SCNT_GROUPS[@]}"; do
-	for action in "${USER_QPKG_ACTIONS[@]}"; do
-		AddFlagObj QPKGs.AC"$action".SCNT"$group"
-	done
-done
-
 for state in "${USER_QPKG_IS_STATES[@]}"; do
 	for action in "${USER_QPKG_ACTIONS[@]}"; do
 		AddFlagObj QPKGs.AC"$action".IS"$state"
@@ -168,14 +156,24 @@ for state in "${USER_QPKG_ISNT_STATES[@]}"; do
 	done
 done
 
-# session list objects.
-
-for group in "${USER_QPKG_SC_GROUPS[@]}"; do
-	AddListObj QPKGs-SC"$group"
+for group in "${USER_QPKG_IS_GROUPS[@]}"; do
+	for action in "${USER_QPKG_ACTIONS[@]}"; do
+		AddFlagObj QPKGs.AC"$action".GR"$group"
+	done
 done
 
-for group in "${USER_QPKG_SCNT_GROUPS[@]}"; do
-	AddListObj QPKGs-SCNT"$group"
+for group in "${USER_QPKG_ISNT_GROUPS[@]}"; do
+	for action in "${USER_QPKG_ACTIONS[@]}"; do
+		AddFlagObj QPKGs.AC"$action".GRNT"$group"
+	done
+done
+
+# session list objects.
+
+for action in "${QPKG_ACTIONS[@]}"; do
+	for prefix in to ok er sk so se sa dn; do		# todo, done ok, done error, skipped, skipped-but-ok, skipped-with-error, skipped-with-abort, done (all processed QPKGs are placed in the 'done' list, as-well as the regular exit status lists).
+		AddListObj "QPKGs-AC${action}-${prefix}"
+	done
 done
 
 for state in "${QPKG_IS_STATES[@]}" "${QPKG_STATES_TRANSIENT[@]}" "${QPKG_SERVICE_RESULTS[@]}"; do
@@ -186,10 +184,12 @@ for state in "${QPKG_ISNT_STATES[@]}" "${QPKG_STATES_TRANSIENT[@]}" "${QPKG_SERV
 	AddListObj QPKGs-ISNT"$state"
 done
 
-for action in "${QPKG_ACTIONS[@]}"; do
-	for prefix in to ok er sk so se sa dn; do		# todo, done ok, done error, skipped, skipped-but-ok, skipped-with-error, skipped-with-abort, done (all processed QPKGs are placed in the 'done' list, as-well as the regular exit status lists).
-		AddListObj "QPKGs-AC${action}-${prefix}"
-	done
+for group in "${USER_QPKG_IS_GROUPS[@]}"; do
+	AddListObj QPKGs-GR"$group"
+done
+
+for group in "${USER_QPKG_ISNT_GROUPS[@]}"; do
+	AddListObj QPKGs-GRNT"$group"
 done
 
 for action in "${IPK_ACTIONS[@]}"; do

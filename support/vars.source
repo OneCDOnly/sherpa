@@ -56,7 +56,14 @@ Squeeze()
 		buffer=$(sed -e '/^#[[:space:]].*/d;/#$/d;s/[[:space:]]#[[:space:]].*//' <<< "$buffer")		# remove comment lines and line comments.
 		buffer=$(sed -e 's/^[[:space:]]*//' <<< "$buffer")											# remove leading whitespace.
 		buffer=$(sed 's/[[:space:]]*$//' <<< "$buffer")												# remove trailing whitespace.
-		buffer=$(sed "/^$/d" <<< "$buffer")															# remove empty lines.
+		buffer=$(sed '/^$/d' <<< "$buffer")															# remove empty lines.
+		buffer=$(sed 's/\;[[:space:]]/;/' <<< "$buffer")											# remove whitespace after semicolons.
+
+# 		buffer=$(sed ':a;N;$!ba;s/\(\)\n{/{/g' <<< "$buffer")										# remove newline between '()' and '{'
+# 		buffer=$(sed ':a;N;$!ba;s/\(\){\n/{ /g' <<< "$buffer")										# remove newline after '(){' and add '{ '.
+
+		# single lines with only '}' should be merged with previous line.
+
 		buffer=$(sed "s|Content-Transfer-Encoding: base64|Content-Transfer-Encoding: base64\n|" <<< "$buffer")	# need to add a newline after this string so signature block is accepted by QTS.
 
 		[[ -e $2 ]] && chmod +w "$2"
@@ -255,7 +262,7 @@ unstable_branch_msg="$(ColourTextBrightRed "$unstable_branch")"
 
 cdn_onecd_url='https://raw.githubusercontent.com/OneCDOnly'
 cdn_sherpa_base_url=$cdn_onecd_url/sherpa
-cdn_sherpa_url=$cdn_sherpa_base_url/'$source_branch'
+cdn_sherpa_url=$cdn_sherpa_base_url/'$useropt_branch'
 cdn_sherpa_packages_url="$cdn_sherpa_url/QPKGs/<?package_name?>/build"
 cdn_other_packages_url="$cdn_onecd_url/<?package_name?>/main/build"
 cdn_qnap_dev_packages_url='https://github.com/qnap-dev/<?package_name?>/releases/download/v<?version?>'
@@ -297,7 +304,7 @@ read -rd '' license_msg << EOB
 License:
 #*   This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 #
-#*	 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#*	 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY, without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 EOB

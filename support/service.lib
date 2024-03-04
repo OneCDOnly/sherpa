@@ -22,7 +22,7 @@
 #*   This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 #*	 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
-readonly SERVICE_LIB_VERSION='240219'
+readonly SERVICE_LIB_VERSION='240226'
 InitLibrary()
 {
 IsQNAP || exit
@@ -49,7 +49,8 @@ UnsetRestartPending
 readonly DAEMON_CHECK_TIMEOUT_SECONDS=60
 readonly DAEMON_STOP_TIMEOUT_SECONDS=120
 readonly PIDFILE_APPEAR_TIMEOUT_SECONDS=60
-readonly PID_RECHECK_WAIT_SECONDS=10
+readonly PID_START_RECHECK_WAIT_SECONDS=$(CalcAdaptiveSeconds 10)
+readonly PID_STOP_RECHECK_WAIT_SECONDS=$(CalcAdaptiveSeconds 10)
 readonly PORT_CHECK_TIMEOUT_SECONDS=240
 readonly BACKUP_PATH=$(/sbin/getcfg SHARE_DEF defVolMP -f /etc/config/def_share.info)/.qpkg_config_backup
 readonly CHARS_REGULAR_PROMPT='$ '
@@ -698,8 +699,8 @@ if WaitForFileToAppear "$daemon_pid_pathfile" "$PIDFILE_APPEAR_TIMEOUT_SECONDS";
 fi
 fi
 if [[ $recheck_daemon_pid_after_launch = true ]]; then
-DisplayWaitCommitToLog "wait $PID_RECHECK_WAIT_SECONDS second$(Pluralise "$PID_RECHECK_WAIT_SECONDS") to recheck PID:"
-for ((i=1; i<=PID_RECHECK_WAIT_SECONDS; i++)); do
+DisplayWaitCommitToLog "wait $PID_START_RECHECK_WAIT_SECONDS second$(Pluralise "$PID_START_RECHECK_WAIT_SECONDS") to recheck PID:"
+for ((i=1; i<=PID_START_RECHECK_WAIT_SECONDS; i++)); do
 /bin/sleep 1
 DisplayWait "$i,"
 done
@@ -711,8 +712,8 @@ WaitForKillPID()
 {
 local -i i=0
 if [[ $recheck_daemon_pid_after_kill = true ]]; then
-DisplayWaitCommitToLog "wait $PID_RECHECK_WAIT_SECONDS second$(Pluralise "$PID_RECHECK_WAIT_SECONDS") to recheck PID:"
-for ((i=1; i<=PID_RECHECK_WAIT_SECONDS; i++)); do
+DisplayWaitCommitToLog "wait $PID_STOP_RECHECK_WAIT_SECONDS second$(Pluralise "$PID_STOP_RECHECK_WAIT_SECONDS") to recheck PID:"
+for ((i=1; i<=PID_STOP_RECHECK_WAIT_SECONDS; i++)); do
 /bin/sleep 1
 DisplayWait "$i,"
 done
@@ -1770,6 +1771,26 @@ SetError
 CommitToLog "specified action '$1' is unsupported."
 Display
 ShowHelp
+}
+CalcAdaptiveSeconds()
+{
+local a=$(GetSysLoad1MinAverage); a=${a/./}
+local b=$(($(GetCPUCores)*100))
+local c=$((10#$a/10#$b))
+local d=$((10#${1:-1}))
+[[ $((10#$c)) -gt 1 ]] && d=$((c*d))
+[[ $((10#$d)) -gt 1800 ]] && d=1800
+echo -n "$d"
+}
+GetSysLoad1MinAverage()
+{
+/usr/bin/uptime | /bin/sed 's|.*load average: ||' | /bin/awk -F', ' '{print $1}'
+}
+GetCPUCores()
+{
+local n=$(/bin/grep -c '^processor' /proc/cpuinfo)
+[[ $n -eq 0 ]] && n=$(/bin/grep -c '^Processor' /proc/cpuinfo)
+echo -n "$n"
 }
 ProcessArgs()
 {
