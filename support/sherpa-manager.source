@@ -2870,7 +2870,7 @@ AllocPackGroupsToAcs()
 				if QPKGs-AC${action}-to.IsAny; then
 					DebugAsDone "action: '$action', group: 'GR$group': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
 				else
-					ShowAsWarn "unable to find any GR packages to '$(Lowercase "$action")'"
+					ShowAsWarn "unable to find any 'is $group' QPKGs to '$(Lowercase "$action")'"
 				fi
 			fi
 		done
@@ -2893,7 +2893,7 @@ AllocPackGroupsToAcs()
 				if QPKGs-AC${action}-to.IsAny; then
 					DebugAsDone "action: '$action', group: 'GRNT${group}': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
 				else
-					ShowAsWarn "unable to find any GRNT packages to '$(Lowercase "$action")'"
+					ShowAsWarn "unable to find any 'is not $group' QPKGs to '$(Lowercase "$action")'"
 				fi
 			fi
 		done
@@ -2953,7 +2953,7 @@ AllocPackStatesToAcs()
 				elif [[ $check_later = true ]]; then
 					DebugAsDone "action: '$action', state: 'IS${state}': will add filtered-packages later after 'status' has been determined"
 				else
-					ShowAsWarn "unable to find any IS packages to '$(Lowercase "$action")'"
+					ShowAsWarn "unable to find any 'is $state' QPKGs to '$(Lowercase "$action")'"
 				fi
 			fi
 		done
@@ -2997,7 +2997,7 @@ AllocPackStatesToAcs()
 				elif [[ $check_later = true ]]; then
 					DebugAsDone "action: '$action', state: 'ISNT${state}': will add filtered-packages later after 'status' has been determined"
 				else
-					ShowAsWarn "unable to find any ISNT packages to '$(Lowercase "$action")'"
+					ShowAsWarn "unable to find any 'is not $state' QPKGs to '$(Lowercase "$action")'"
 				fi
 			fi
 		done
@@ -7109,9 +7109,13 @@ QPKGs.IsBackedUp:Show()
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	for a in $(QPKGs-ISbackedup:Array); do
-		Display "$a"
-	done
+	if QPKGs-ISbackedup.IsAny; then
+		for a in $(QPKGs-ISbackedup:Array); do
+			Display "$a"
+		done
+	else
+		ShowAsWarn "unable to find any 'backed-up' QPKGs"
+	fi
 
 	return 0
 
@@ -7125,9 +7129,13 @@ QPKGs.IsNtBackedUp:Show()
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	for a in $(QPKGs-ISNTbackedup:Array); do
-		Display "$a"
-	done
+	if QPKGs-ISNTbackedup.IsAny; then
+		for a in $(QPKGs-ISNTbackedup:Array); do
+			Display "$a"
+		done
+	else
+		ShowAsWarn "unable to find any 'not backed-up' QPKGs"
+	fi
 
 	return 0
 
@@ -7141,9 +7149,13 @@ QPKGs.IsInstalled:Show()
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	for a in $(QPKGs-ISinstalled:Array); do
-		Display "$a"
-	done
+	if QPKGs-ISinstalled.IsAny; then
+		for a in $(QPKGs-ISinstalled:Array); do
+			Display "$a"
+		done
+	else
+		ShowAsWarn "unable to find any 'installed' QPKGs"
+	fi
 
 	return 0
 
@@ -7157,9 +7169,13 @@ QPKGs.IsNtInstalled:Show()
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	for a in $(QPKGs-ISNTinstalled:Array); do
-		Display "$a"
-	done
+	if QPKGs-ISNTinstalled.IsAny; then
+		for a in $(QPKGs-ISNTinstalled:Array); do
+			Display "$a"
+		done
+	else
+		ShowAsWarn "unable to find any 'not installed' QPKGs"
+	fi
 
 	return 0
 
@@ -7173,9 +7189,13 @@ QPKGs.IsNtInstalled:Show()
 # 	DisableDebugToArchiveAndFile
 # 	EraseThisLine
 #
-# 	for a in $(QPKGs-GRall:Array); do
-# 		Display "$a"
-# 	done
+# 	if QPKGs-GRall.IsAny; then
+# 		for a in $(QPKGs-GRall:Array); do
+# 			Display "$a"
+# 		done
+# 	else
+# 		ShowAsWarn "unable to find any QPKGs"
+# 	fi
 #
 # 	return 0
 #
@@ -7189,9 +7209,13 @@ QPKGs.GrInstallable:Show()
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	for a in $(QPKGs-GRinstallable:Array); do
-		Display "$a"
-	done
+	if QPKGs-GRinstallable.IsAny; then
+		for a in $(QPKGs-GRinstallable:Array); do
+			Display "$a"
+		done
+	else
+		ShowAsWarn "unable to find any 'installable' QPKGs"
+	fi
 
 	return 0
 
@@ -7205,9 +7229,13 @@ QPKGs.GrNtInstallable:Show()
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	for a in $(QPKGs-GRNTinstallable:Array); do
-		Display "$a"
-	done
+	if QPKGs-GRNTinstallable.IsAny; then
+		for a in $(QPKGs-GRNTinstallable:Array); do
+			Display "$a"
+		done
+	else
+		ShowAsWarn "unable to find any 'not installable' QPKGs"
+	fi
 
 	return 0
 
@@ -7221,9 +7249,13 @@ QPKGs.IsActive:Show()
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	for a in $(QPKGs-ISactive:Array); do
-		Display "$a"
-	done
+	if QPKGs-ISactive.IsAny; then
+		for a in $(QPKGs-ISactive:Array); do
+			Display "$a"
+		done
+	else
+		ShowAsWarn "unable to find any 'active' QPKGs"
+	fi
 
 	return 0
 
@@ -7237,9 +7269,13 @@ QPKGs.IsNtActive:Show()
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	for a in $(QPKGs-ISNTactive:Array); do
-		Display "$a"
-	done
+	if QPKGs-ISNTactive.IsAny; then
+		for a in $(QPKGs-ISNTactive:Array); do
+			Display "$a"
+		done
+	else
+		ShowAsWarn "unable to find any 'inactive' QPKGs"
+	fi
 
 	return 0
 
@@ -7253,9 +7289,13 @@ QPKGs.GrUpgradable:Show()
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	for a in $(QPKGs-GRupgradable:Array); do
-		Display "$a"
-	done
+	if QPKGs-GRupgradable.IsAny; then
+		for a in $(QPKGs-GRupgradable:Array); do
+			Display "$a"
+		done
+	else
+		ShowAsWarn "unable to find any 'upgradable' QPKGs"
+	fi
 
 	return 0
 
@@ -7269,9 +7309,13 @@ QPKGs.GrIndependent:Show()
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	for a in $(QPKGs-GRindependent:Array); do
-		Display "$a"
-	done
+	if QPKGs-GRindependent.IsAny; then
+		for a in $(QPKGs-GRindependent:Array); do
+			Display "$a"
+		done
+	else
+		ShowAsWarn "unable to find any 'independent' QPKGs"
+	fi
 
 	return 0
 
@@ -7285,9 +7329,13 @@ QPKGs.GrDependent:Show()
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	for a in $(QPKGs-GRdependent:Array); do
-		Display "$a"
-	done
+	if QPKGs-GRdependent.IsAny; then
+		for a in $(QPKGs-GRdependent:Array); do
+			Display "$a"
+		done
+	else
+		ShowAsWarn "unable to find any 'dependent' QPKGs"
+	fi
 
 	return 0
 
