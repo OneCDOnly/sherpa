@@ -1,5 +1,16 @@
 Observed issues:
 
+	* Some QPKGs won't 'start' because app is already runing.
+		- When QPKGs start, should run full status check first to ensure existing PID file is accurate.
+		- Don't just run a basic daemon/process check.
+
+	* When Entware is reinstalled during status check due to old install (and IPKs upgraded), PIPs are not being installed.
+		- Must check if all IPKs are being installed too.
+
+	* 'ujson' for Glances not found on Sarah and Milla.
+
+	* 'curl-config' for pyLoad not found on Sarah and Bella.
+
 	* Function durations can become incorrect when functions with the same name are called recursively.
 		- Need to make vars holding start-times unique. Maybe measure nest depth?
 
