@@ -1718,13 +1718,13 @@ ParseManagementArgs()
 			all|log|tail)
 				group=tail
 				;;
-			disable|false|no|off)
+			disable|false|no|off|unset)
 				group=false
 				;;
 			l|last)
 				group=last
 				;;
-			enable|on|true|yes)
+			enable|on|set|true|yes)
 				group=true
 		esac
 
@@ -12335,7 +12335,7 @@ Objects:Load()
 		Func:Exit 1; exit
 	fi
 
-	ShowAsProc objs
+	ShowAsProc objects
 
 	. "$OBJECTS_PATHFILE"
 	objects_loaded=true
