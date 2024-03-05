@@ -42,6 +42,7 @@ Init()
 	User.IsOk || return
 	Consts:Load
 	Vars:Load
+	UpdateColourisation
 	CMDs:Load
 	CMDs.IsOk || return
 	Keystrokes:Hide
@@ -8461,6 +8462,7 @@ _QPKG:install_()
 
 		if [[ $PACKAGE_NAME = Entware ]]; then
 			SendParentChangeEnv ModPathToEntware
+			SendParentChangeEnv UpdateEntwarePackageList
 			PatchEntwareService
 
 			# Shift all files from original [/opt] into new [/opt]
@@ -8769,6 +8771,7 @@ _QPKG:uninstall_()
 
 			if [[ $PACKAGE_NAME = Entware ]]; then
 				SendParentChangeEnv ModPathToEntware
+				SendParentChangeEnv UpdateColourisation
 				UpdateColourisation
 			fi
 
@@ -8858,6 +8861,7 @@ _QPKG:activate_()
 
 		if [[ $PACKAGE_NAME = Entware ]]; then
 			SendParentChangeEnv ModPathToEntware
+			SendParentChangeEnv UpdateColourisation
 			UpdateColourisation
 		fi
 
@@ -9020,6 +9024,7 @@ _QPKG:deactivate_()
 
 		if [[ $PACKAGE_NAME = Entware ]]; then
 			SendParentChangeEnv ModPathToEntware
+			SendParentChangeEnv UpdateColourisation
 			UpdateColourisation
 		fi
 
