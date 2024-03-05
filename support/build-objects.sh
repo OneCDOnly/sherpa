@@ -16,13 +16,10 @@ QPKG_ISNT_STATES=(active backedup downloaded enabled installed missing signed)
 QPKG_STATES_TRANSIENT=(starting stopping restarting)
 QPKG_SERVICE_RESULTS=(ok failed)
 
-# sorted
-IPK_STATES=(downgraded downloaded installed reinstalled upgraded)
-
 # ordered
 QPKG_ACTIONS=(status list rebuild reassign download backup deactivate disable uninstall upgrade reinstall install enableau disableau sign restore clean enable activate reactivate)
-IPK_ACTIONS=(downgrade download uninstall upgrade reinstall install)
-PIP_ACTIONS=(download uninstall upgrade reinstall install)
+IPK_ACTIONS=(downgrade download uninstall upgrade install)
+PIP_ACTIONS=(uninstall upgrade install)
 
 # These actions, states and groups may be specified by the user.
 # sorted
@@ -193,13 +190,18 @@ for group in "${USER_QPKG_ISNT_GROUPS[@]}"; do
 done
 
 for action in "${IPK_ACTIONS[@]}"; do
-	case $action in
-		list)
-			continue    # action result lists are not required for these.
-	esac
+	[[ $action != list ]] || continue
 
 	for prefix in to ok er sk; do
 		AddListObj "IPKs-AC${action}-${prefix}"
+	done
+done
+
+for action in "${PIP_ACTIONS[@]}"; do
+	[[ $action != list ]] || continue
+
+	for prefix in to ok er; do
+		AddListObj "PIPs-AC${action}-${prefix}"
 	done
 done
 
