@@ -1,35 +1,7 @@
 * Perform manual test of available 'sed' binaries for one that handles extended regexes for StripANSICodes().
 	- Might not need to wait for GNU 'sed' to be installed via Entware.
 
-* Don't show sherpa title when viewing log.
-
 * Add "about" user arg to display current environment.
-
-*  There should be distinct argument parsers for:
-	- script management functions:
-		'debug' (dbug)
-		'verbose' (v)
-		'follow': stable, unstable (this will be an undocumented action)
-		'reset'
-		'check' (c)
-		'paste': last (l), log
-
-	- 'help':
-		actions, tips, options, groups, lists, about/info(?), abbreviations (a),
-		- (and display pre-generated reports).
-
-	- 'list':
-		installed, not-installed, installable, upgradable, versions, missing, etc...
-		- (and generate basic reports with no heading).
-
-	- 'show':
-		results, dependencies (d), backups, packages (p), repositories (r),
-		- (and generate full reports).
-		log, last,
-		- (and generate dull reports).
-
-	- the usual QPKG actions:
-		- activate, status (s), (and generate full reports).
 
 * BASH completion.
 
