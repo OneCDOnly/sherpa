@@ -2473,6 +2473,8 @@ ParseActionArgs()
 				;;
 			s|status?(es))
 				action=status
+				generate_show_report=true
+				get_qpkg_states=true
 				requires_group=true
 				useropt_show_status=true
 				user_action=$arg
@@ -7129,10 +7131,9 @@ Report.Statuses:Show()
 	local a=''
 	local b=''
 	local f=''
-	max_cols=5
 	local -i m=0
+	max_cols=5
 	local -i n=0
-	local -i t=$(QPKGs-GRall:Count)
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport status
@@ -7140,7 +7141,7 @@ Report.Statuses:Show()
 	CalcMaxStatusReportCols
 	DisplayAsStatusReportTitleLine >"$REPORT_OUTPUT_PATHFILE"
 
-	for a in $(QPKGs-GRall:Array); do
+	for a in $(QPKGs-ACstatus-dn:Array); do
 		((n++))
 		DisplayAsStatusReportItemLine "$a" > "$REPORTS_PATH/$n" &
 	done
