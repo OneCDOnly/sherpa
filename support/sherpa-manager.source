@@ -5585,7 +5585,7 @@ Report.Results:Show()
 				fi
 
 				if [[ $result = "$1" ]] || [[ $1 = skipped && ($result = 'skipped-ok' || $result = 'skipped-error' || $result = 'skipped-abort') ]]; then
-					[[ $action != status ]] || continue				# Don't need to see the result of `status` checks.
+					[[ $action = status && $useropt_show_results = false ]] && continue		# Don't need to see the result of `status` checks unless a 'results' report has been requested.
 
 					case $result in
 						ok)
