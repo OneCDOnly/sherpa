@@ -1,5 +1,3 @@
 # These 'many2linux' module builds are not seen in Python unless each module shared object file is renamed.
-# 'ujson' is listed to make Glances work.
 rpds
 sabyenc3
-ujson
