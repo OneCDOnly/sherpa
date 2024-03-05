@@ -2512,7 +2512,7 @@ ParseActionArgs()
 
 		case $arg in
 		# These cases use only a single user-provided word or char to specify a single group.
-			backedup|installable|installed|missing)
+			backedup|canbackup|installable|installed|missing)
 				group=$arg
 				;;
 			not-backedup)
@@ -2822,99 +2822,21 @@ AllocPackGroupsToAcs()
 	ShowAsProc 'match QPKG groups to actions'
 
 	local action=''
-	local found=false
 	local group=''
-	local prospect=''
 
 	for action in "${USER_QPKG_ACTIONS[@]}"; do
-		# Process group-based user-options.
+		# Process group-based user-actions.
 
 		# Positive groups.
 
 		for group in "${USER_QPKG_IS_GROUPS[@]}"; do
-			found=false
-
 			if QPKGs.AC${action}.GR${group}.IsSet; then
-				case $action in
-					clean)
-						case $group in
-							all|?(in)dependent)
-								found=true
-
-								for prospect in $(QPKGs-GR${group}:Array); do
-									QPKG.IsCanClean "$prospect" && QPKGs-AC${action}-to:Add "$prospect"
-								done
-								;;
-							*)
-								DebugAsWarn "group 'GR$group' has no positive allocation handler for action '$action'"
-						esac
-						;;
-					install|status)
-						case $group in
-							all|?(in)dependent)
-								found=true
-
-								QPKGs-AC${action}-to:Add "$(QPKGs-GR${group}:Array)"
-								;;
-							*)
-								DebugAsWarn "group 'GR$group' has no positive allocation handler for action '$action'"
-						esac
-						;;
-					?(de|re)activate|@(dis|en)able?(au)|@(re|un)install|stop)
-						case $group in
-							all|?(in)dependent)
-								found=true
-
-								for prospect in $(QPKGs-GR${group}:Array); do
-									QPKGs-ISinstalled.Exist "$prospect" && QPKGs-AC${action}-to:Add "$prospect"
-								done
-								;;
-							*)
-								DebugAsWarn "group 'GR$group' has no positive allocation handler for action '$action'"
-						esac
-						;;
-					rebuild)
-						case $group in
-							all|?(in)dependent)
-								found=true
-
-								for prospect in $(QPKGs-GR${group}:Array); do
-									QPKGs-GRcanbackup.Exist "$prospect" && QPKGs-AC${action}-to:Add "$prospect"
-								done
-								;;
-							*)
-								DebugAsWarn "group 'GR$group' has no positive allocation handler for action '$action'"
-						esac
-						;;
-					upgrade)
-						case $group in
-							all|?(in)dependent|upgradable)
-								found=true
-
-								QPKGs-AC${action}-to:Add "$(QPKGs-GRupgradable:Array)"
-
-								for prospect in $(QPKGs-GR${group}:Array); do
-									QPKGs-GRcanrestarttoupdate.Exist "$prospect" && QPKGs-AC${action}-to:Add "$prospect"
-								done
-
-								QPKGs-ACreactivate-to:Remove "$(QPKGs-ACupgrade-to:Array)"
-								;;
-							*)
-								DebugAsWarn "group 'GR$group' has no positive allocation handler for action '$action'"
-						esac
-						;;
-					*)
-						DebugAsWarn "action '$action' has no positive group allocation handler"
-				esac
-
-				if [[ $found = false ]]; then
-					QPKGs-AC${action}-to:Add "$(QPKGs-GR${group}:Array)"
-				fi
+				QPKGs-AC${action}-to:Add "$(QPKGs-GR${group}:Array)"
 
 				if QPKGs-AC${action}-to.IsAny; then
-					DebugAsDone "action: '$action', group: 'GR$group': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
+					DebugAsDone "action: '$action', group: 'GR${group}': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
 				else
-					ShowAsWarn "unable to find any '$group' QPKGs to '$(Lowercase "$action")'"
+					ShowAsWarn "unable to find any 'GR$group' QPKGs to '$(Lowercase "$action")'"
 				fi
 			fi
 		done
@@ -2922,22 +2844,13 @@ AllocPackGroupsToAcs()
 		# Negative groups.
 
 		for group in "${USER_QPKG_ISNT_GROUPS[@]}"; do
-			found=false
-
 			if QPKGs.AC${action}.GRNT${group}.IsSet; then
-				case $action in
-					*)
-						DebugAsWarn "action '$action' has no negative group allocation handler"
-				esac
-
-				if [[ $found = false ]]; then
-					QPKGs-AC${action}-to:Add "$(QPKGs-GRNT${group}:Array)"
-				fi
+				QPKGs-AC${action}-to:Add "$(QPKGs-GRNT${group}:Array)"
 
 				if QPKGs-AC${action}-to.IsAny; then
 					DebugAsDone "action: '$action', group: 'GRNT${group}': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
 				else
-					ShowAsWarn "unable to find any 'not $group' QPKGs to '$(Lowercase "$action")'"
+					ShowAsWarn "unable to find any 'GRNT$group' QPKGs to '$(Lowercase "$action")'"
 				fi
 			fi
 		done
@@ -2956,43 +2869,20 @@ AllocPackStatesToAcs()
 
 	local action=''
 	local check_later=false
-	local found=false
 	local state=''
 
 	for action in "${USER_QPKG_ACTIONS[@]}"; do
-		# Process state-based user-options.
+		# Process state-based user-actions.
 
 		# Positive states.
 
 		for state in "${USER_QPKG_IS_STATES[@]}"; do
 			check_later=false
-			found=false
 
 			if QPKGs.AC${action}.IS${state}.IsSet; then
-				case $action in
-					?(de|re)activate|backup|clean|@(dis|en)able?(au)|?(re|un)install|upgrade)
-						case $state in
-							?(in)active)
-								check_later=true
-								found=true
-								;;
-							backedup|cleaned|downloaded|enabled|installed)
-								found=true
-								QPKGs-AC${action}-to:Add "$(QPKGs-IS${state}:Array)"
-								;;
-							*)
-								DebugAsWarn "state 'IS$state' has no positive allocation handler for action '$action'"
-						esac
-						;;
-					list)
-						check_later=true
-						found=true
-						;;
-					*)
-						DebugAsWarn "action '$action' has no positive state allocation handler"
-				esac
-
-				if [[ $found = false ]]; then
+				if [[ $action = list ]]; then
+					check_later=true
+				else
 					QPKGs-AC${action}-to:Add "$(QPKGs-IS${state}:Array)"
 				fi
 
@@ -3010,33 +2900,11 @@ AllocPackStatesToAcs()
 
 		for state in "${USER_QPKG_ISNT_STATES[@]}"; do
 			check_later=false
-			found=false
 
 			if QPKGs.AC${action}.ISNT${state}.IsSet; then
-				case $action in
-					?(de|re)activate|backup|clean|@(dis|en)able?(au)|?(re|un)install|upgrade)
-						case $state in
-							?(in)active)
-								check_later=true
-								found=true
-								;;
-							backedup|cleaned|downloaded|enabled|installed)
-								found=true
-								QPKGs-AC${action}-to:Add "$(QPKGs-ISNT${state}:Array)"
-								;;
-							*)
-								DebugAsWarn "state 'ISNT$state' has no negative allocation handler for action '$action'"
-						esac
-						;;
-					list)
-						check_later=true
-						found=true
-						;;
-					*)
-						DebugAsWarn "action '$action' has no negative state allocation handler"
-				esac
-
-				if [[ $found = false ]]; then
+				if [[ $action = list ]]; then
+					check_later=true
+				else
 					QPKGs-AC${action}-to:Add "$(QPKGs-ISNT${state}:Array)"
 				fi
 
@@ -5415,7 +5283,7 @@ Help.ActionsAll:Show()
 		DisplayAsProjSynIndentExam 'enable all QPKGs. QPKGs must be enabled before they can be started' 'enable all'
 		DisplayAsProjSynIndentExam 'enable auto-updating all applications on QPKG activation (where-supported)' 'enable-auto-update all'
 		DisplayAsProjSynIndentExam 'install everything!' 'install all'
-		DisplayAsProjSynIndentExam 'reactivate QPKGs (this will upgrade internal applications where-supported)' 'reactivate all'
+		DisplayAsProjSynIndentExam 'reactivate installed QPKGs (this will upgrade internal applications where-supported)' 'reactivate all'
 		DisplayAsProjSynIndentExam '' 'restart all'
 		DisplayAsProjSynIndentExam "reassign all QPKGs to $(ShowAsTitleName). Detach QPKGs previously installed via an online repository from further management by that repository" 'reassign all'
 		DisplayAsProjSynIndentExam "rebuild all QPKGs where backup files exist ('install' QPKGs and 'restore' backups)" 'rebuild all'
@@ -5657,10 +5525,10 @@ Help.Show:Show()
 		DisplayAsProjSynIndentExam '' a
 		DisplayAsProjSynIndentExam 'show application backup files' 'show backups'
 		DisplayAsProjSynIndentExam '' b
-		DisplayAsProjSynIndentExam 'generate QPKG dependencies report' 'show dependencies'
+		DisplayAsProjSynIndentExam 'show QPKG dependency report' 'show dependencies'
 		DisplayAsProjSynIndentExam '' 'show deps'
 		DisplayAsProjSynIndentExam '' d
-		DisplayAsProjSynIndentExam 'generate QPKG repository assignments report' 'show repositories'
+		DisplayAsProjSynIndentExam 'show QPKG repository assignments report' 'show repositories'
 		DisplayAsProjSynIndentExam '' 'show repos'
 		DisplayAsProjSynIndentExam '' r
 		DisplayAsProjSynIndentExam 'show last session action results' 'show results'
@@ -5759,7 +5627,7 @@ Help.Problems:Show()
 		DisplayAsProjSynIndentExam "view the entire $(ShowAsTitleName) session log" log
 		DisplayAsProjSynIndentExam "upload the most-recent session in your $(ShowAsTitleName) log to the $(ShowAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste last'
 		DisplayAsProjSynIndentExam "upload the most-recent $(FormatAsThous "$LOG_TAIL_LINES") lines in your $(ShowAsTitleName) log to the $(ShowAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste log'
-		DisplayAsProjSynIndentExam 'reactivate all installed QPKGs (upgrades internal applications where-supported)' 'reactivate all'
+		DisplayAsProjSynIndentExam 'reactivate installed QPKGs (upgrades internal applications where-supported)' 'reactivate all'
 		DisplayAsProjSynIndentExam "remove all cached $(ShowAsTitleName) items and logs" reset
 		DisplayAsProjSynIndentExam 'find the live status of each application in these QPKGs' "status $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam '' "s $(ShowAsPackages)"
