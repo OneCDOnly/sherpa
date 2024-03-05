@@ -1,5 +1,3 @@
-* Sort QPKG names in status report.
-
 * Perform manual test of available 'sed' binaries for one that handles extended regexes for StripANSICodes().
 	- Might not need to wait for GNU 'sed' to be installed via Entware.
 

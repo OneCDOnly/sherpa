@@ -4177,13 +4177,13 @@ CalcMaxStatusReportCols()
 	fi
 
 # 	if [[ $((col1_width+col2_width)) -ge $SESS_COLS ]]; then
-# 		max_cols=1
+# 		report_max_cols=1
 # 	elif [[ $((col1_width+col2_width+col3_width)) -ge $SESS_COLS ]]; then
-# 		max_cols=2
+# 		report_max_cols=2
 # 	elif [[ $((col1_width+col2_width+col3_width+col4_width)) -ge $SESS_COLS ]]; then
-# 		max_cols=3
+# 		report_max_cols=3
 # 	else
-# 		max_cols=4
+# 		report_max_cols=4
 # 	fi
 
 	return 0
@@ -4203,21 +4203,21 @@ CalcMaxStatusReportCols()
 # 	local col8_width=$((${#CHAR_SPACER}+${#CHARS_BULLET}+PACKAGE_ARCH_COL_WIDTH))
 #
 # 	if [[ $((col1_width+col2_width)) -ge $SESS_COLS ]]; then
-# 		max_cols=1
+# 		report_max_cols=1
 # 	elif [[ $((col1_width+col2_width+col3_width)) -ge $SESS_COLS ]]; then
-# 		max_cols=2
+# 		report_max_cols=2
 # 	elif [[ $((col1_width+col2_width+col3_width+col4_width)) -ge $SESS_COLS ]]; then
-# 		max_cols=3
+# 		report_max_cols=3
 # 	elif [[ $((col1_width+col2_width+col3_width+col4_width+col5_width)) -ge $SESS_COLS ]]; then
-# 		max_cols=4
+# 		report_max_cols=4
 # 	elif [[ $((col1_width+col2_width+col3_width+col4_width+col5_width+col6_width)) -ge $SESS_COLS ]]; then
-# 		max_cols=5
+# 		report_max_cols=5
 # 	elif [[ $((col1_width+col2_width+col3_width+col4_width+col5_width+col6_width+col7_width)) -ge $SESS_COLS ]]; then
-# 		max_cols=6
+# 		report_max_cols=6
 # 	elif [[ $((col1_width+col2_width+col3_width+col4_width+col5_width+col6_width+col7_width+col8_width)) -ge $SESS_COLS ]]; then
-# 		max_cols=7
+# 		report_max_cols=7
 # 	else
-# 		max_cols=8
+# 		report_max_cols=8
 # 	fi
 #
 # 	return 0
@@ -4281,14 +4281,14 @@ DisplayAsPacksReportTitleLine()
 
 	# column 1: package name
 
-	if [[ $max_cols -ge 1 ]]; then
+	if [[ $report_max_cols -ge 1 ]]; then
 		a="${CHARS_BULLET}QPKG name:"
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 2: application version
 
-	if [[ $max_cols -ge 2 ]]; then
+	if [[ $report_max_cols -ge 2 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}App version:"
 		printf "%-$((PACKAGE_APP_VER_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -4296,7 +4296,7 @@ DisplayAsPacksReportTitleLine()
 
 	# column 3: package description
 
-	if [[ $max_cols -ge 3 ]]; then
+	if [[ $report_max_cols -ge 3 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Description:"
 		printf "%-$((PACKAGE_DESCRIPTION_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -4350,20 +4350,20 @@ DisplayAsPacksReportItemLine()
 
 	# column 1: package name
 
-	if [[ $max_cols -ge 1 ]]; then
+	if [[ $report_max_cols -ge 1 ]]; then
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 	fi
 
 	# column 2: application version
 
-	if [[ $max_cols -ge 2 ]]; then
+	if [[ $report_max_cols -ge 2 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_APP_VER_COL_WIDTH+$(LenANSIDiff "$app_ver_msg")))s" "$app_ver_msg"
 	fi
 
 	# column 3: package description
 
-	if [[ $max_cols -ge 3 ]]; then
+	if [[ $report_max_cols -ge 3 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_DESCRIPTION_COL_WIDTH+$(LenANSIDiff "$description_msg")))s" "$description_msg"
 
@@ -4385,14 +4385,14 @@ DisplayAsStatusReportTitleLine()
 
 	# column 1: package name
 
-	if [[ $max_cols -ge 1 ]]; then
+	if [[ $report_max_cols -ge 1 ]]; then
 		a="${CHARS_BULLET}QPKG name:"
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 2: package statuses
 
-	if [[ $max_cols -ge 2 ]]; then
+	if [[ $report_max_cols -ge 2 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}QPKG statuses:"
 		printf "%-$((PACKAGE_STATUS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -4400,7 +4400,7 @@ DisplayAsStatusReportTitleLine()
 
 	# column 3: package version (variable-width)
 
-	if [[ $max_cols -ge 3 ]]; then
+	if [[ $report_max_cols -ge 3 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}QPKG version"
 		QPKGs-GRupgradable.IsAny && a+=" ($(TextBrightOrange new))"
@@ -4410,7 +4410,7 @@ DisplayAsStatusReportTitleLine()
 
 	# column 4: application version
 
-	if [[ $max_cols -ge 4 ]]; then
+	if [[ $report_max_cols -ge 4 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}App version:"
 		printf "%-$((PACKAGE_APP_VER_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -4418,7 +4418,7 @@ DisplayAsStatusReportTitleLine()
 
 	# column 5: package installation path
 
-	if [[ $max_cols -ge 5 ]]; then
+	if [[ $report_max_cols -ge 5 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}QPKG installation path:"
 		printf "%-$((PACKAGE_PATH_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -4533,34 +4533,34 @@ DisplayAsStatusReportItemLine()
 
 	# column 1: package name
 
-	if [[ $max_cols -ge 1 ]]; then
+	if [[ $report_max_cols -ge 1 ]]; then
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 	fi
 
 	# column 2: package statuses
 
-	if [[ $max_cols -ge 2 ]]; then
+	if [[ $report_max_cols -ge 2 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_STATUS_COL_WIDTH+$(LenANSIDiff "$status_msg")))s" "$status_msg"
 	fi
 
 	# column 3: package version (variable-width)
 
-	if [[ $max_cols -ge 3 ]]; then
+	if [[ $report_max_cols -ge 3 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((${package_ver_final_col_width:=0}+$(LenANSIDiff "$ver_msg")))s" "$ver_msg"
 	fi
 
 	# column 4: application version
 
-	if [[ $max_cols -ge 4 ]]; then
+	if [[ $report_max_cols -ge 4 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_APP_VER_COL_WIDTH+$(LenANSIDiff "$app_ver_msg")))s" "$app_ver_msg"
 	fi
 
 	# column 5: package installation path
 
-	if [[ $max_cols -ge 5 ]]; then
+	if [[ $report_max_cols -ge 5 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_PATH_COL_WIDTH+$(LenANSIDiff "$path_msg")))s" "$path_msg"
 	fi
@@ -4578,14 +4578,14 @@ DisplayAsReposReportTitleLine()
 
 	# column 1: package name
 
-	if [[ $max_cols -ge 1 ]]; then
+	if [[ $report_max_cols -ge 1 ]]; then
 		a="${CHARS_BULLET}QPKG name:"
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 2: package installation date
 
-	if [[ $max_cols -ge 2 ]]; then
+	if [[ $report_max_cols -ge 2 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}install date:"
 		printf "%-$((PACKAGE_INSTALL_DATE_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -4593,7 +4593,7 @@ DisplayAsReposReportTitleLine()
 
 	# column 3: package repository
 
-	if [[ $max_cols -ge 3 ]]; then
+	if [[ $report_max_cols -ge 3 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}repository:"
 		printf "%-$((PACKAGE_REPO_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -4672,20 +4672,20 @@ DisplayAsReposReportItemLine()
 
 	# column 1: package name
 
-	if [[ $max_cols -ge 1 ]]; then
+	if [[ $report_max_cols -ge 1 ]]; then
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 	fi
 
 	# column 2: package installation date
 
-	if [[ $max_cols -ge 2 ]]; then
+	if [[ $report_max_cols -ge 2 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_INSTALL_DATE_COL_WIDTH+$(LenANSIDiff "$install_date_msg")))s" "$install_date_msg"
 	fi
 
 	# column 3: package repository
 
-	if [[ $max_cols -ge 3 ]]; then
+	if [[ $report_max_cols -ge 3 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_REPO_COL_WIDTH+$(LenANSIDiff "$assigned_repo_msg")))s" "$assigned_repo_msg"
 	fi
@@ -4703,14 +4703,14 @@ DisplayAsAbsReportTitleLine()
 
 	# column 1: package name
 
-	if [[ $max_cols -ge 1 ]]; then
+	if [[ $report_max_cols -ge 1 ]]; then
 		a="${CHARS_BULLET}QPKG name:"
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 2: package abbreviations
 
-	if [[ $max_cols -ge 2 ]]; then
+	if [[ $report_max_cols -ge 2 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}acceptable QPKG name abbreviations and aliases:"
 		printf "%-$((PACKAGE_ABBS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -4773,13 +4773,13 @@ DisplayAsAbsReportItemLine()
 
 	# column 1: package name
 
-	if [[ $max_cols -ge 1 ]]; then
+	if [[ $report_max_cols -ge 1 ]]; then
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 	fi
 
 	# column 2: package repository
 
-	if [[ $max_cols -ge 2 ]]; then
+	if [[ $report_max_cols -ge 2 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_ABBS_COL_WIDTH+$(LenANSIDiff "$abs_msg")))s" "$abs_msg"
 	fi
@@ -4797,14 +4797,14 @@ DisplayAsDepsReportTitleLine()
 
 	# column 1: package name
 
-	if [[ $max_cols -ge 1 ]]; then
+	if [[ $report_max_cols -ge 1 ]]; then
 		a="${CHARS_BULLET}QPKG name:"
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 2: package dependencies
 
-	if [[ $max_cols -ge 2 ]]; then
+	if [[ $report_max_cols -ge 2 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}dependencies:"
 		printf "%-$((PACKAGE_DEPENDENCIES_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -4812,7 +4812,7 @@ DisplayAsDepsReportTitleLine()
 
 	# column 3: QPKG is installed
 
-	if [[ $max_cols -ge 3 ]]; then
+	if [[ $report_max_cols -ge 3 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}installed?"
 		printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -4820,7 +4820,7 @@ DisplayAsDepsReportTitleLine()
 
 	# column 4: QPKG is enabled
 
-	if [[ $max_cols -ge 4 ]]; then
+	if [[ $report_max_cols -ge 4 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}enabled?"
 		printf "%-$((PACKAGE_ENABLED_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -4828,7 +4828,7 @@ DisplayAsDepsReportTitleLine()
 
 	# column 5: minimum NAS RAM required
 
-	if [[ $max_cols -ge 5 ]]; then
+	if [[ $report_max_cols -ge 5 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}min RAM:"
 		printf "%-$((PACKAGE_MIN_RAM_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -4836,7 +4836,7 @@ DisplayAsDepsReportTitleLine()
 
 	# column 6: minimum OS fimware version supported
 
-	if [[ $max_cols -ge 6 ]]; then
+	if [[ $report_max_cols -ge 6 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}min OS:"
 		printf "%-$((PACKAGE_MIN_OS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -4844,7 +4844,7 @@ DisplayAsDepsReportTitleLine()
 
 	# column 7: maximum OS fimware version supported
 
-	if [[ $max_cols -ge 7 ]]; then
+	if [[ $report_max_cols -ge 7 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}max OS:"
 		printf "%-$((PACKAGE_MAX_OS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -4852,7 +4852,7 @@ DisplayAsDepsReportTitleLine()
 
 	# column 8: arch is compatible
 
-	if [[ $max_cols -ge 8 ]]; then
+	if [[ $report_max_cols -ge 8 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}supported arch?"
 		printf "%-$((PACKAGE_ARCH_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -5075,55 +5075,55 @@ DisplayAsDepsReportItemLine()
 
 	# column 1: package name
 
-	if [[ $max_cols -ge 1 ]]; then
+	if [[ $report_max_cols -ge 1 ]]; then
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 	fi
 
 	# column 2: package repository
 
-	if [[ $max_cols -ge 2 ]]; then
+	if [[ $report_max_cols -ge 2 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_DEPENDENCIES_COL_WIDTH+$(LenANSIDiff "$package_deps_msg")))s" "$package_deps_msg"
 	fi
 
 	# column 3: package installed?
 
-	if [[ $max_cols -ge 3 ]]; then
+	if [[ $report_max_cols -ge 3 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+$(LenANSIDiff "$package_installed_msg")))s" "$package_installed_msg"
 	fi
 
 	# column 4: package enabled?
 
-	if [[ $max_cols -ge 4 ]]; then
+	if [[ $report_max_cols -ge 4 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_ENABLED_COL_WIDTH+$(LenANSIDiff "$package_enabled_msg")))s" "$package_enabled_msg"
 	fi
 
 	# column 5: minimum NAS RAM required
 
-	if [[ $max_cols -ge 5 ]]; then
+	if [[ $report_max_cols -ge 5 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_MIN_RAM_COL_WIDTH+$(LenANSIDiff "$package_min_ram_msg")))s" "$package_min_ram_msg"
 	fi
 
 	# column 6: minimum OS fimware version supported
 
-	if [[ $max_cols -ge 6 ]]; then
+	if [[ $report_max_cols -ge 6 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_MIN_OS_COL_WIDTH+$(LenANSIDiff "$package_min_os_msg")))s" "$package_min_os_msg"
 	fi
 
 	# column 7: maximum OS fimware version supported
 
-	if [[ $max_cols -ge 7 ]]; then
+	if [[ $report_max_cols -ge 7 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_MAX_OS_COL_WIDTH+$(LenANSIDiff "$package_max_os_msg")))s" "$package_max_os_msg"
 	fi
 
 	# column 8: arch is compatible?
 
-	if [[ $max_cols -ge 8 ]]; then
+	if [[ $report_max_cols -ge 8 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_ARCH_COL_WIDTH+$(LenANSIDiff "$package_arch_msg")))s" "$package_arch_msg"
 	fi
@@ -5141,14 +5141,14 @@ DisplayAsBacksReportTitleLine()
 
 	# column 1: backup filename
 
-	if [[ $max_cols -ge 1 ]]; then
+	if [[ $report_max_cols -ge 1 ]]; then
 		a="${CHARS_BULLET}Backup file:"
 		printf "%-$((FILE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 2: filesize in bytes
 
-	if [[ $max_cols -ge 2 ]]; then
+	if [[ $report_max_cols -ge 2 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}size in bytes:"
 		printf "%-$((FILE_BYTES_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -5156,7 +5156,7 @@ DisplayAsBacksReportTitleLine()
 
 	# column 3: last backup date
 
-	if [[ $max_cols -ge 3 ]]; then
+	if [[ $report_max_cols -ge 3 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}last backup date:"
 		printf "%-$((FILE_CHANGE_DATE_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -5204,20 +5204,20 @@ DisplayAsBacksReportItemLine()
 
 	# column 1: backup filename
 
-	if [[ $max_cols -ge 1 ]]; then
+	if [[ $report_max_cols -ge 1 ]]; then
 		printf "%-$((FILE_NAME_COL_WIDTH+$(LenANSIDiff "$file_name_msg")))s" "$file_name_msg"
 	fi
 
 	# column 2: filesize in bytes
 
-	if [[ $max_cols -ge 2 ]]; then
+	if [[ $report_max_cols -ge 2 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%$((FILE_BYTES_COL_WIDTH+$(LenANSIDiff "$file_bytes_msg")))s" "$file_bytes_msg "	# append 1 x whitespace char to force right-justified numbers to the left a bit. Looks nicer.
 	fi
 
 	# column 3: last backup date
 
-	if [[ $max_cols -ge 3 ]]; then
+	if [[ $report_max_cols -ge 3 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((FILE_CHANGE_DATE_COL_WIDTH+$(LenANSIDiff "$epoch_time_msg")))s" "$epoch_time_msg"
 	fi
@@ -6852,13 +6852,13 @@ Help.Abbreviations:Show()
 	{
 
 	# Output:
-	#   $max_cols (global)
+	#   $report_max_cols (global)
 
 	Func:Init
 
 	local a=''
 	local b=''
-	max_cols=2
+	report_max_cols=2
 	local -i m=0
 	local -i n=0
 
@@ -6927,7 +6927,7 @@ Report.Backups:Show()
 	local file_name=''
 	local file_time=''
 	local highlight_older_than='2 weeks ago'
-	max_cols=3
+	report_max_cols=3
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport backups
@@ -6975,13 +6975,13 @@ Report.Dependencies:Show()
 	{
 
 	# Output:
-	#   $max_cols (global)
+	#   $report_max_cols (global)
 
 	Func:Init
 
 	local a=''
 	local b=''
-	max_cols=8
+	report_max_cols=8
 	local -i m=0
 	local -i n=0
 	local -i t=$(QPKGs-GRall:Count)
@@ -7034,12 +7034,12 @@ Report.Packages:Show()
 	{
 
 	# Output:
-	#   $max_cols (global)
+	#   $report_max_cols (global)
 
 	Func:Init
 
 	local a=''
-	max_cols=3
+	report_max_cols=3
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport package
@@ -7075,13 +7075,13 @@ Report.Repos:Show()
 	{
 
 	# Output:
-	#   $max_cols (global)
+	#   $report_max_cols (global)
 
 	Func:Init
 
 	local a=''
 	local b=''
-	max_cols=3
+	report_max_cols=3
 	local -i m=0
 	local -i n=0
 	local -i t=$(QPKGs-GRall:Count)
@@ -7126,7 +7126,7 @@ Report.Statuses:Show()
 	{
 
 	# Output:
-	#   $max_cols (global)
+	#   $report_max_cols (global)
 
 	Func:Init
 
@@ -7134,7 +7134,7 @@ Report.Statuses:Show()
 	local b=''
 	local f=''
 	local -i m=0
-	max_cols=5
+	report_max_cols=5
 	local -i n=0
 
 	DisableDebugToArchiveAndFile
@@ -7143,7 +7143,8 @@ Report.Statuses:Show()
 	CalcMaxStatusReportCols
 	DisplayAsStatusReportTitleLine >"$REPORT_OUTPUT_PATHFILE"
 
-	for a in $(QPKGs-ACstatus-dn:Array); do
+	for a in $(QPKGs-GRall:Array); do
+		QPKGs-ACstatus-dn.Exist $a || continue
 		((n++))
 		DisplayAsStatusReportItemLine "$a" > "$REPORTS_PATH/$n" &
 	done
@@ -7151,7 +7152,7 @@ Report.Statuses:Show()
 	m=$n
 	wait 2>/dev/null
 
-	# load report lines from individual files.
+	# Load report lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
 		f="$REPORTS_PATH/$n"
