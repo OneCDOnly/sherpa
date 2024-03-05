@@ -6385,10 +6385,10 @@ QPKGs.Actions:List()
 				fi
 
 				case $b in
-					ok)
+					ok|sk|so)
 						DebugQpkg info "AC${a}-${b}" "($(QPKGs-AC${a}-${b}:Count)) $(QPKGs-AC${a}-${b}:ListCSV) "
 						;;
-					sk|so|se|sa)
+					se|sa)
 						DebugQpkg warning "AC${a}-${b}" "($(QPKGs-AC${a}-${b}:Count)) $(QPKGs-AC${a}-${b}:ListCSV) "
 						;;
 					er)
