@@ -107,31 +107,31 @@ Results:Show()
 	if [[ $generate_list_report = true ]]; then
 		if [[ ${packages_loaded:=false} = true ]]; then
 			if QPKGs.AClist.GRdependent.IsSet; then
-				QPKGs.GrDependent:Show
+				QPKGs.GRdependent:Show
 			elif QPKGs.AClist.GRindependent.IsSet; then
-				QPKGs.GrIndependent:Show
+				QPKGs.GRindependent:Show
 			elif QPKGs.AClist.GRinstallable.IsSet; then
-				QPKGs.GrInstallable:Show
+				QPKGs.GRinstallable:Show
 			elif QPKGs.AClist.GRNTinstallable.IsSet; then
-				QPKGs.GrNtInstallable:Show
+				QPKGs.GRNTinstallable:Show
 			elif QPKGs.AClist.GRupgradable.IsSet; then
-				QPKGs.GrUpgradable:Show
+				QPKGs.GRupgradable:Show
 			elif QPKGs.AClist.ISactive.IsSet; then
-				QPKGs.IsActive:Show
+				QPKGs.ISactive:Show
 			elif QPKGs.AClist.ISNTactive.IsSet; then
-				QPKGs.IsNtActive:Show
+				QPKGs.ISNTactive:Show
 			elif QPKGs.AClist.ISbackedup.IsSet; then
-				QPKGs.IsBackedUp:Show
+				QPKGs.ISbackedup:Show
 			elif QPKGs.AClist.ISNTbackedup.IsSet; then
-				QPKGs.IsNtBackedUp:Show
+				QPKGs.ISNTbackedup:Show
 			elif QPKGs.AClist.ISinstalled.IsSet; then
-				QPKGs.IsInstalled:Show
+				QPKGs.ISinstalled:Show
 			elif QPKGs.AClist.ISNTinstalled.IsSet; then
-				QPKGs.IsNtInstalled:Show
+				QPKGs.ISNTinstalled:Show
 			elif QPKGs.AClist.ISmissing.IsSet; then
-				QPKGs.IsMissing:Show
+				QPKGs.ISmissing:Show
 			elif QPKGs.AClist.ISNTmissing.IsSet; then
-				QPKGs.IsNtMissing:Show
+				QPKGs.ISNTmissing:Show
 			fi
 		fi
 	fi
@@ -523,7 +523,7 @@ LocateSQLiteBinary()
 Env:Load()
 	{
 
-	ShowAsProc 'environment'
+	ShowAsProc env
 
 	readonly CERT_DB_PATHFILE=/etc/config/nas_sign_qpkg.db
 	readonly CPU_CORES=$(GetCPUCores)
@@ -700,7 +700,7 @@ Debug.Log:Env()
 
 	Func:Init
 
-	ShowAsProc 'log environment'
+	ShowAsProc 'log env'
 
 	DebugInfoMinSepr
 	DebugHardware ok model "$(get_display_name)"
@@ -915,7 +915,7 @@ Env:Check()
 
 	Func:Init
 
-	ShowAsProc 'check environment'
+	ShowAsProc 'check env'
 
 	local installed_ver=''
 	local target_packages=''
@@ -2590,9 +2590,9 @@ ParseActionArgs()
 
 	for arg in "${args_incomplete[@]:-}"; do
 		case $arg in
-			s|status?(es))				# If status is specified without a group, then group is `all`.
+			s|status?(es))
 				Objects:Load
-				QPKGs.ACstatus.GRall:Set
+				QPKGs.ACstatus.ISinstalled:Set								# If status is specified without a group, then group is `installed`.
 				generate_show_report=true
 				get_qpkg_states=true
 				run_package_actions=true
@@ -5387,28 +5387,29 @@ Help.ActionsAll:Show()
 		{
 
 		Help.Basic:Show
-		DisplayAsHelpTitle "the 'all' group applies to all installed packages. If $(ShowAsAction) is 'install all' then all available packages will be installed."
+		DisplayAsHelpTitle "the 'all' group applies to all QPKGs. If $(ShowAsAction) is 'install all' then all available QPKGs will be installed."
 		DisplayAsHelpTitle "$(ShowAsAction) $(ShowAsPackageGroup) usage examples:"
-		DisplayAsProjSynIndentExam 'activate all installed packages (this will upgrade internal applications where-supported)' 'activate all'
+		DisplayAsProjSynIndentExam 'activate all QPKGs (this will upgrade internal applications where-supported)' 'activate all'
 		DisplayAsProjSynIndentExam '' 'start all'
 		DisplayAsProjSynIndentExam 'backup all application configurations to the backup location' 'backup all'
-		DisplayAsProjSynIndentExam 'clean local repository files from all packages (your configs are safe, application files will be downloaded again)' 'clean all'
-		DisplayAsProjSynIndentExam 'deactivate all installed packages' 'deactivate all'
+		DisplayAsProjSynIndentExam 'clean local repository files from all QPKGs (your configs are safe, application files will be downloaded again)' 'clean all'
+		DisplayAsProjSynIndentExam 'deactivate all QPKGs' 'deactivate all'
 		DisplayAsProjSynIndentExam '' 'stop all'
-		DisplayAsProjSynIndentExam 'disable all installed packages. This will prevent them being activated' 'disable all'
-		DisplayAsProjSynIndentExam 'disable auto-updating all applications on package activation (where-supported)' 'disable-auto-update all'
-		DisplayAsProjSynIndentExam 'enable all installed packages. Packages must be enabled before they can be started' 'enable all'
-		DisplayAsProjSynIndentExam 'enable auto-updating all applications on package activation (where-supported)' 'enable-auto-update all'
+		DisplayAsProjSynIndentExam 'disable all QPKGs. This will prevent them being activated' 'disable all'
+		DisplayAsProjSynIndentExam 'disable auto-updating all applications on QPKG activation (where-supported)' 'disable-auto-update all'
+		DisplayAsProjSynIndentExam 'enable all QPKGs. QPKGs must be enabled before they can be started' 'enable all'
+		DisplayAsProjSynIndentExam 'enable auto-updating all applications on QPKG activation (where-supported)' 'enable-auto-update all'
 		DisplayAsProjSynIndentExam 'install everything!' 'install all'
-		DisplayAsProjSynIndentExam 'reactivate packages (this will upgrade internal applications where-supported)' 'reactivate all'
+		DisplayAsProjSynIndentExam 'reactivate QPKGs (this will upgrade internal applications where-supported)' 'reactivate all'
 		DisplayAsProjSynIndentExam '' 'restart all'
-		DisplayAsProjSynIndentExam "reassign all packages to $(ShowAsTitleName). Detach packages previously installed via an online repository from further management by that repository" 'reassign all'
-		DisplayAsProjSynIndentExam "rebuild all packages where backup files exist ('install' packages and 'restore' backups)" 'rebuild all'
-		DisplayAsProjSynIndentExam 'reinstall all installed packages' 'reinstall all'
+		DisplayAsProjSynIndentExam "reassign all QPKGs to $(ShowAsTitleName). Detach QPKGs previously installed via an online repository from further management by that repository" 'reassign all'
+		DisplayAsProjSynIndentExam "rebuild all QPKGs where backup files exist ('install' QPKGs and 'restore' backups)" 'rebuild all'
+		DisplayAsProjSynIndentExam 'reinstall all QPKGs' 'reinstall all'
 		DisplayAsProjSynIndentExam 'restore all application configurations from the backup location' 'restore all'
-		DisplayAsProjSynIndentExam 'digitally "sign" all packages' 'sign all'
+		DisplayAsProjSynIndentExam 'digitally "sign" all QPKGs' 'sign all'
+		DisplayAsProjSynIndentExam 'find the live status of the applications in all QPKGs' 'status all'
 		DisplayAsProjSynIndentExam 'uninstall everything!' 'force uninstall all'
-		DisplayAsProjSynIndentExam 'upgrade all installed packages (and internal applications where-supported)' 'upgrade all'
+		DisplayAsProjSynIndentExam 'upgrade all QPKGs (and internal applications where-supported)' 'upgrade all'
 
 		} > "$REPORT_OUTPUT_PATHFILE"
 
@@ -5470,20 +5471,20 @@ Help.Groups:Show()
 		Help.Basic:Show
 		DisplayAsHelpTitle "$(ShowAsPackageGroup) usage examples:"
 		DisplayAsProjSynIndentExam 'select every package' "$(ShowAsAction) all"
-		DisplayAsProjSynIndentExam 'select only independent packages (these do not depend on other QPKGs)' "$(ShowAsAction) independent"
+		DisplayAsProjSynIndentExam 'select only independent QPKGs (these do not depend on other QPKGs)' "$(ShowAsAction) independent"
 		DisplayAsProjSynIndentExam '' "$(ShowAsAction) independents"
-		DisplayAsProjSynIndentExam 'select only dependent packages (these require another QPKG to be installed and active)' "$(ShowAsAction) dependent"
-		DisplayAsProjSynIndentExam 'select only active packages' "$(ShowAsAction) active"
+		DisplayAsProjSynIndentExam 'select only dependent QPKGs (these require another QPKG to be installed and active)' "$(ShowAsAction) dependent"
+		DisplayAsProjSynIndentExam 'select only active QPKGs' "$(ShowAsAction) active"
 		DisplayAsProjSynIndentExam '' "$(ShowAsAction) started"
-		DisplayAsProjSynIndentExam 'select only inactive packages' "$(ShowAsAction) inactive"
+		DisplayAsProjSynIndentExam 'select only inactive QPKGs' "$(ShowAsAction) inactive"
 		DisplayAsProjSynIndentExam '' "$(ShowAsAction) stopped"
-		DisplayAsProjSynIndentExam 'select only installed packages' "$(ShowAsAction) installed"
-		DisplayAsProjSynIndentExam 'select only packages that are not installed' "$(ShowAsAction) not-installed"
-		DisplayAsProjSynIndentExam 'select only packages that are backed-up' "$(ShowAsAction) backedup"
-		DisplayAsProjSynIndentExam 'select only packages that are not backed-up' "$(ShowAsAction) not-backedup"
-		DisplayAsProjSynIndentExam 'select only packages that are upgradable' "$(ShowAsAction) upgradable"
+		DisplayAsProjSynIndentExam 'select only installed QPKGs' "$(ShowAsAction) installed"
+		DisplayAsProjSynIndentExam 'select only QPKGs that are not installed' "$(ShowAsAction) not-installed"
+		DisplayAsProjSynIndentExam 'select only QPKGs that are backed-up' "$(ShowAsAction) backedup"
+		DisplayAsProjSynIndentExam 'select only QPKGs that are not backed-up' "$(ShowAsAction) not-backedup"
+		DisplayAsProjSynIndentExam 'select only QPKGs that are upgradable' "$(ShowAsAction) upgradable"
 		DisplayAsProjSynIndentExam '' "$(ShowAsAction) new"
-		DisplayAsProjSynIndentExam 'select only missing packages (these are partly installed and broken)' "$(ShowAsAction) missing"
+		DisplayAsProjSynIndentExam 'select only missing QPKGs (these are partly installed and broken)' "$(ShowAsAction) missing"
 		DisplayAsProjSynExam 'multiple groups are supported like this' "$(ShowAsAction) $(ShowAsPackageGroup) $(ShowAsPackageGroup)"
 
 		} > "$REPORT_OUTPUT_PATHFILE"
@@ -5527,16 +5528,16 @@ Help.Lists:Show()
 
 		Help.Basic:Show
 		DisplayAsHelpTitle "'list' usage examples:"
-		DisplayAsProjSynIndentExam 'list all available packages' 'list all'
+		DisplayAsProjSynIndentExam 'list all available QPKGs' 'list all'
 		DisplayAsProjSynIndentExam 'list package backup files' 'list backups'
 		DisplayAsProjSynIndentExam '' b
-		DisplayAsProjSynIndentExam 'list only packages that can be installed' 'list installable'
+		DisplayAsProjSynIndentExam 'list only QPKGs that can be installed' 'list installable'
 		DisplayAsProjSynIndentExam '' installable
-		DisplayAsProjSynIndentExam 'list only installed packages' 'list installed'
+		DisplayAsProjSynIndentExam 'list only installed QPKGs' 'list installed'
 		DisplayAsProjSynIndentExam '' installed
-		DisplayAsProjSynIndentExam 'list only packages that are not installed' 'list not-installed'
+		DisplayAsProjSynIndentExam 'list only QPKGs that are not installed' 'list not-installed'
 		DisplayAsProjSynIndentExam '' not-installed
-		DisplayAsProjSynIndentExam 'list only upgradable packages' 'list upgradable'
+		DisplayAsProjSynIndentExam 'list only upgradable QPKGs' 'list upgradable'
 		DisplayAsProjSynIndentExam '' upgradable
 		DisplayAsProjSynIndentExam "list $(ShowAsTitleName) object version numbers" 'list versions'
 
@@ -5664,7 +5665,7 @@ Help.Packages:Show()
 		{
 
 		Help.Basic:Show
-		DisplayAsHelpTitle 'usage examples for packages will go here:'
+		DisplayAsHelpTitle 'usage examples for QPKGs will go here:'
 
 		} > "$REPORT_OUTPUT_PATHFILE"
 
@@ -5691,24 +5692,24 @@ Help.Problems:Show()
 
 		Help.Basic:Show
 		DisplayAsHelpTitle 'usage examples for dealing with problems:'
-		DisplayAsProjSynIndentExam 'show package statuses' 'show status'
-		DisplayAsProjSynIndentExam '' s
-		DisplayAsProjSynIndentExam 'show live debugging information, and record it to file' "$(ShowAsAction) $(ShowAsPackages) verbose"
-		DisplayAsProjSynIndentExam '' v
-		DisplayAsProjSynIndentExam 'record debugging information to file-only' "$(ShowAsAction) $(ShowAsPackages) debug"
-		DisplayAsProjSynIndentExam 'ensure all dependencies exist for installed packages' check
+		DisplayAsProjSynIndentExam 'activate these QPKGs' "activate $(ShowAsPackages)"
+		DisplayAsProjSynIndentExam 'ensure all dependencies exist for installed QPKGs' check
 		DisplayAsProjSynIndentExam '' c
-		DisplayAsProjSynIndentExam 'clear local repository files from these packages' "clean $(ShowAsPackages)"
-		DisplayAsProjSynIndentExam "remove all cached $(ShowAsTitleName) items and logs" reset
-		DisplayAsProjSynIndentExam 'reactivate all installed packages (upgrades internal applications where-supported)' 'reactivate all'
-		DisplayAsProjSynIndentExam 'enable then activate these packages' "activate $(ShowAsPackages)"
-		DisplayAsProjSynIndentExam 'stop then disable these packages (disabling will prevent them starting on reboot)' "stop $(ShowAsPackages)"
+		DisplayAsProjSynIndentExam 'clear local repository files from these QPKGs' "clean $(ShowAsPackages)"
+		DisplayAsProjSynIndentExam 'deactivate these QPKGs' "deactivate $(ShowAsPackages)"
+		DisplayAsProjSynIndentExam 'record debugging information to file-only' "$(ShowAsAction) $(ShowAsPackages) debug"
 		DisplayAsProjSynIndentExam "increase the default 'qpkg_service' timeouts from 3 minutes to 30 minutes" 'install increasetimeouts'
 		DisplayAsProjSynIndentExam "view only the most recent $(ShowAsTitleName) session log" last
 		DisplayAsProjSynIndentExam '' l
 		DisplayAsProjSynIndentExam "view the entire $(ShowAsTitleName) session log" log
 		DisplayAsProjSynIndentExam "upload the most-recent session in your $(ShowAsTitleName) log to the $(ShowAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste last'
 		DisplayAsProjSynIndentExam "upload the most-recent $(FormatAsThous "$LOG_TAIL_LINES") lines in your $(ShowAsTitleName) log to the $(ShowAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste log'
+		DisplayAsProjSynIndentExam 'reactivate all installed QPKGs (upgrades internal applications where-supported)' 'reactivate all'
+		DisplayAsProjSynIndentExam "remove all cached $(ShowAsTitleName) items and logs" reset
+		DisplayAsProjSynIndentExam 'find the live status of the applications in these QPKGs' "status $(ShowAsPackages)"
+		DisplayAsProjSynIndentExam '' "s $(ShowAsPackages)"
+		DisplayAsProjSynIndentExam 'show live debugging information, and record it to file' "$(ShowAsAction) $(ShowAsPackages) verbose"
+		DisplayAsProjSynIndentExam '' v
 		DisplayAsHelpTitleHighlighted "if you need help, please include a copy of your $(ShowAsTitleName) $(TextBrightOrange "log for analysis!")"
 
 		} > "$REPORT_OUTPUT_PATHFILE"
@@ -5735,13 +5736,14 @@ Help.Upgrades:Show()
 		{
 
 		Help.Basic:Show
-		DisplayAsHelpTitle 'usage examples for upgrading your packages:'
-		DisplayAsProjSynIndentExam 'upgrade only the upgradable packages' 'upgrade upgradable'
+		DisplayAsHelpTitle 'usage examples for upgrading your QPKGs:'
+		DisplayAsProjSynIndentExam 'upgrade only the upgradable QPKGs' 'upgrade upgradable'
 		DisplayAsProjSynIndentExam '' 'upgrade new'
-		DisplayAsProjSynIndentExam 'show a list of upgradable packages' 'list upgradable'
+		DisplayAsProjSynIndentExam 'show a list of upgradable QPKGs' 'list upgradable'
 		DisplayAsProjSynIndentExam '' 'list new'
-		DisplayAsProjSynIndentExam 'show package statuses' 'show status'
-		DisplayAsProjSynIndentExam '' s
+		DisplayAsProjSynIndentExam 'find the live application status of upgradable QPKGs' 'status upgradable'
+		DisplayAsProjSynIndentExam '' 's upgradable'
+		DisplayAsProjSynIndentExam '' 's new'
 
 		} > "$REPORT_OUTPUT_PATHFILE"
 
@@ -5768,14 +5770,14 @@ Help.Tips:Show()
 
 		Help.Basic:Show
 		DisplayAsHelpTitle 'helpful tips and shortcuts:'
-		DisplayAsProjSynIndentExam "install all available $(ShowAsTitleName) packages" 'install all'
+		DisplayAsProjSynIndentExam "install all available $(ShowAsTitleName) QPKGs" 'install all'
 		DisplayAsProjSynIndentExam 'package abbreviations and aliases also work. To see these' 'help abs'
 		DisplayAsProjSynIndentExam '' a
-		DisplayAsProjSynIndentExam 'reactivate all installed packages (upgrades internal applications where-supported)' 'reactivate all'
-		DisplayAsProjSynIndentExam 'list only packages that can be installed' 'list installable'
+		DisplayAsProjSynIndentExam 'reactivate all QPKGs (upgrades internal applications where-supported)' 'reactivate all'
+		DisplayAsProjSynIndentExam 'list only QPKGs that can be installed' 'list installable'
 		DisplayAsProjSynIndentExam "view only the most recent $(ShowAsTitleName) session log" last
 		DisplayAsProjSynIndentExam '' l
-		DisplayAsProjSynIndentExam 'activate all inactive packages' 'activate inactive'
+		DisplayAsProjSynIndentExam 'activate all inactive QPKGs' 'activate inactive'
 		DisplayAsProjSynIndentExam 'upgrade the internal applications only' "reactivate $(ShowAsPackages)"
 		Help.BackupLocation:Show
 
@@ -7180,7 +7182,7 @@ Report.Statuses:Show()
 
 	}
 
-QPKGs.IsBackedUp:Show()
+QPKGs.ISbackedup:Show()
 	{
 
 	local a=''
@@ -7200,7 +7202,7 @@ QPKGs.IsBackedUp:Show()
 
 	}
 
-QPKGs.IsNtBackedUp:Show()
+QPKGs.ISNTbackedup:Show()
 	{
 
 	local a=''
@@ -7220,7 +7222,7 @@ QPKGs.IsNtBackedUp:Show()
 
 	}
 
-QPKGs.IsInstalled:Show()
+QPKGs.ISinstalled:Show()
 	{
 
 	local a=''
@@ -7240,7 +7242,7 @@ QPKGs.IsInstalled:Show()
 
 	}
 
-QPKGs.IsNtInstalled:Show()
+QPKGs.ISNTinstalled:Show()
 	{
 
 	local a=''
@@ -7260,7 +7262,7 @@ QPKGs.IsNtInstalled:Show()
 
 	}
 
-#QPKGs.GrAll:Show()
+#QPKGs.GRall:Show()
 # 	{
 #
 # 	local a=''
@@ -7280,7 +7282,7 @@ QPKGs.IsNtInstalled:Show()
 #
 # 	}
 
-QPKGs.GrInstallable:Show()
+QPKGs.GRinstallable:Show()
 	{
 
 	local a=''
@@ -7300,7 +7302,7 @@ QPKGs.GrInstallable:Show()
 
 	}
 
-QPKGs.GrNtInstallable:Show()
+QPKGs.GRNTinstallable:Show()
 	{
 
 	local a=''
@@ -7320,7 +7322,7 @@ QPKGs.GrNtInstallable:Show()
 
 	}
 
-QPKGs.IsMissing:Show()
+QPKGs.ISmissing:Show()
 	{
 
 	local a=''
@@ -7340,7 +7342,7 @@ QPKGs.IsMissing:Show()
 
 	}
 
-QPKGs.IsNtMissing:Show()
+QPKGs.ISNTmissing:Show()
 	{
 
 	local a=''
@@ -7360,7 +7362,7 @@ QPKGs.IsNtMissing:Show()
 
 	}
 
-QPKGs.IsActive:Show()
+QPKGs.ISactive:Show()
 	{
 
 	local a=''
@@ -7380,7 +7382,7 @@ QPKGs.IsActive:Show()
 
 	}
 
-QPKGs.IsNtActive:Show()
+QPKGs.ISNTactive:Show()
 	{
 
 	local a=''
@@ -7400,7 +7402,7 @@ QPKGs.IsNtActive:Show()
 
 	}
 
-QPKGs.GrUpgradable:Show()
+QPKGs.GRupgradable:Show()
 	{
 
 	local a=''
@@ -7420,7 +7422,7 @@ QPKGs.GrUpgradable:Show()
 
 	}
 
-QPKGs.GrIndependent:Show()
+QPKGs.GRindependent:Show()
 	{
 
 	local a=''
@@ -7440,7 +7442,7 @@ QPKGs.GrIndependent:Show()
 
 	}
 
-QPKGs.GrDependent:Show()
+QPKGs.GRdependent:Show()
 	{
 
 	local a=''
@@ -12333,7 +12335,7 @@ Objects:Load()
 		Func:Exit 1; exit
 	fi
 
-	ShowAsProc 'objects'
+	ShowAsProc objs
 
 	. "$OBJECTS_PATHFILE"
 	objects_loaded=true
@@ -12372,7 +12374,7 @@ Packages:Load()
 		Func:Exit 1; exit
 	fi
 
-	ShowAsProc 'QPKG list'
+	ShowAsProc QPKGs
 
 	. "$PACKAGES_PATHFILE"
 	packages_loaded=true
