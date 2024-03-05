@@ -162,6 +162,8 @@ Results:Show()
 			Help.Options:Show
 		elif [[ $useropt_help_packages = true ]]; then
 			Help.Packages:Show
+		elif [[ $useropt_help_show = true ]]; then
+			Help.Show:Show
 		elif [[ $useropt_help_problems = true ]]; then
 			Help.Problems:Show
 		elif [[ $useropt_help_upgrades = true ]]; then
@@ -346,6 +348,7 @@ Vars:Load()
 	useropt_help_options=false
 	useropt_help_packages=false
 	useropt_help_problems=false
+	useropt_help_show=false
 	useropt_help_tips=false
 	useropt_help_upgrades=false
 	useropt_paste_log_last=false
@@ -1899,6 +1902,10 @@ ParseHelpArgs()
 				[[ -z $action ]] && action=help
 				group=options
 				;;
+			show)
+				# Don't set a default action for this group, this group is used for multiple actions. Set a default in the last parsing function.
+				group=show
+				;;
 			upgrade)
 				# Don't set a default action for this group, this group is used for multiple actions. Set a default in the last parsing function.
 				group=upgrades
@@ -1969,6 +1976,13 @@ ParseHelpArgs()
 							generate_help_report=true
 							run_package_actions=false
 							useropt_help_problems=true
+							;;
+						show)
+							action=''
+							awaiting_group=false
+							generate_help_report=true
+							run_package_actions=false
+							useropt_help_show=true
 							;;
 						tips)
 							action=''
@@ -2080,7 +2094,7 @@ ParseShowArgs()
 
 		case $arg in
 		# These cases use only a single user-provided word or char to specify a single group.
-			backups|results)
+			results)
 				[[ -z $action ]] && action=show
 				group=$arg
 				;;
@@ -2088,6 +2102,10 @@ ParseShowArgs()
 			a|abs|abbreviations)
 				# Don't set a default action for this group, this group is used for multiple actions. Set a default in the last parsing function.
 				group=abs
+				;;
+			b|backups)
+				[[ -z $action ]] && action=show
+				group=backups
 				;;
 			deps)
 				# Don't set a default action for this group, this group is used for multiple actions. Set a default in the last parsing function.
@@ -2296,9 +2314,6 @@ ParseListArgs()
 				;;
 			all|entire|everything)
 				group=all
-				;;
-			b|backups)
-				group=backups
 				;;
 			deps|dependent?(s))
 				group=dependent
@@ -2749,7 +2764,7 @@ ArgSuggestions:Show()
 					useropt_help_basic=false
 					;;
 				all-uninstall|all-remove|uninstall-all|remove-all)
-					DisplayAsProjSynExam 'to uninstall all QPKGs, use' 'force uninstall all'
+					DisplayAsProjSynExam 'to uninstall all QPKGs, use' 'uninstall all'
 					arg_problem=true
 					useropt_help_basic=false
 					;;
@@ -5339,8 +5354,8 @@ Help.Actions:Show()
 		DisplayAsProjSynIndentExam 'enable auto-updating the application on package activation (where-supported)' "enable-auto-update $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam 'install these packages' "install $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam '' "add $(ShowAsPackages)"
-# 		DisplayAsProjSynIndentExam 'show application backup files' 'list backups'
-# 		DisplayAsProjSynIndentExam '' b
+		DisplayAsProjSynIndentExam 'show application backup files' 'show backups'
+		DisplayAsProjSynIndentExam '' b
 # 		DisplayAsProjSynIndentExam "list $(ShowAsTitleName) object version numbers" 'list versions'
 		DisplayAsProjSynIndentExam 'reactivate these packages (this will upgrade internal applications where-supported)' "reactivate $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam '' "restart $(ShowAsPackages)"
@@ -5407,8 +5422,8 @@ Help.ActionsAll:Show()
 		DisplayAsProjSynIndentExam 'reinstall all QPKGs' 'reinstall all'
 		DisplayAsProjSynIndentExam 'restore all application configurations from the backup location' 'restore all'
 		DisplayAsProjSynIndentExam 'digitally "sign" all QPKGs' 'sign all'
-		DisplayAsProjSynIndentExam 'find the live status of the applications in all QPKGs' 'status all'
-		DisplayAsProjSynIndentExam 'uninstall everything!' 'force uninstall all'
+		DisplayAsProjSynIndentExam 'find the live status of each application in all QPKGs' 'status all'
+		DisplayAsProjSynIndentExam 'uninstall all QPKGs' 'uninstall all'
 		DisplayAsProjSynIndentExam 'upgrade all QPKGs (and internal applications where-supported)' 'upgrade all'
 
 		} > "$REPORT_OUTPUT_PATHFILE"
@@ -5529,8 +5544,8 @@ Help.Lists:Show()
 		Help.Basic:Show
 		DisplayAsHelpTitle "'list' usage examples:"
 		DisplayAsProjSynIndentExam 'list all available QPKGs' 'list all'
-		DisplayAsProjSynIndentExam 'list package backup files' 'list backups'
-		DisplayAsProjSynIndentExam '' b
+# 		DisplayAsProjSynIndentExam 'list package backup files' 'list backups'
+# 		DisplayAsProjSynIndentExam '' b
 		DisplayAsProjSynIndentExam 'list only QPKGs that can be installed' 'list installable'
 		DisplayAsProjSynIndentExam '' installable
 		DisplayAsProjSynIndentExam 'list only installed QPKGs' 'list installed'
@@ -5627,6 +5642,46 @@ Report.Results:Show()
 
 	}
 
+Help.Show:Show()
+	{
+
+	DisableDebugToArchiveAndFile
+	DisplayProcReport show
+
+		{
+
+		Help.Basic:Show
+		DisplayAsHelpTitle "'show' usage examples:"
+		DisplayAsProjSynIndentExam 'show QPKG abbreviations' 'show abbreviations'
+		DisplayAsProjSynIndentExam '' 'show abs'
+		DisplayAsProjSynIndentExam '' a
+		DisplayAsProjSynIndentExam 'show application backup files' 'show backups'
+		DisplayAsProjSynIndentExam '' b
+		DisplayAsProjSynIndentExam 'generate QPKG dependencies report' 'show dependencies'
+		DisplayAsProjSynIndentExam '' 'show deps'
+		DisplayAsProjSynIndentExam '' d
+		DisplayAsProjSynIndentExam 'generate QPKG repository assignments report' 'show repositories'
+		DisplayAsProjSynIndentExam '' 'show repos'
+		DisplayAsProjSynIndentExam '' r
+		DisplayAsProjSynIndentExam 'show last session action results' 'show results'
+		DisplayAsProjSynIndentExam '' results
+		DisplayAsProjSynIndentExam 'find the live status of each application in all QPKGs' 'show status'
+
+		} > "$REPORT_OUTPUT_PATHFILE"
+
+	EraseThisLine
+
+	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
+		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
+		Display
+	else
+		ShowAsError 'no information to display'
+	fi
+
+	return 0
+
+	}
+
 Help.Options:Show()
 	{
 
@@ -5706,7 +5761,7 @@ Help.Problems:Show()
 		DisplayAsProjSynIndentExam "upload the most-recent $(FormatAsThous "$LOG_TAIL_LINES") lines in your $(ShowAsTitleName) log to the $(ShowAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste log'
 		DisplayAsProjSynIndentExam 'reactivate all installed QPKGs (upgrades internal applications where-supported)' 'reactivate all'
 		DisplayAsProjSynIndentExam "remove all cached $(ShowAsTitleName) items and logs" reset
-		DisplayAsProjSynIndentExam 'find the live status of the applications in these QPKGs' "status $(ShowAsPackages)"
+		DisplayAsProjSynIndentExam 'find the live status of each application in these QPKGs' "status $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam '' "s $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam 'show live debugging information, and record it to file' "$(ShowAsAction) $(ShowAsPackages) verbose"
 		DisplayAsProjSynIndentExam '' v
