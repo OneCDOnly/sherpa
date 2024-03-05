@@ -1259,8 +1259,8 @@ Actions:Proc()
 			auxiliary)
 				if QPKGs-ISenabled.Exist Entware; then
 					ModPathToEntware
-					Action:Proc uninstall $tier PIP uninstall uninstalled
-					Action:Proc uninstall $tier IPK uninstall uninstalled
+					PIPs:uninstall
+					IPKs:uninstall
 				fi
 		esac
 	done
@@ -1295,11 +1295,11 @@ Actions:Proc()
 
 				if QPKGs-ISenabled.Exist Entware; then
 					ModPathToEntware
-					Action:Proc upgrade $tier IPK upgrade upgraded
-					Action:Proc install $tier IPK install installed
-					Action:Proc downgrade $tier IPK downgrade downgraded
-					Action:Proc upgrade $tier PIP upgrade upgraded
-					Action:Proc install $tier PIP install installed
+					IPKs:upgrade
+					IPKs:install
+					IPKs:downgrade
+					PIPs:upgrade
+					PIPs:install
 				fi
 		esac
 	done
@@ -2638,7 +2638,7 @@ ArgSuggestions:Show()
 
 		for arg in "${args_incomplete[@]}"; do
 			case $arg in
-				?(de|re)activate|backup|clean|@(dis|en)able|@(dis|en)able-auto-update|reassign|@(re|un)install|?(re)start|restore|sign|stop|upgrade)
+				?(de|re)activate|backup|clean|@(dis|en)able|@(dis|en)able-auto-update|reassign|@(re|un)install|?(re)start|restore|rm|sign|stop|upgrade)
 					DisplayAsProjSynExam "please provide valid $(ShowAsPackages) or a $(ShowAsPackageGroup) after '$arg' like" "$arg installed"
 					arg_problem=true
 					useropt_help_basic=false
