@@ -10,6 +10,7 @@ lxml
 mako
 packaging
 psutil
+pycurl
 pysnmp
 python-dateutil
 pyzmq
