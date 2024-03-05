@@ -1,7 +1,5 @@
 Observed issues:
 
-	* 'sherpa rm all' didn't prompt for force arg.
-
 	* Some QPKGs won't 'start' because app is already runing.
 		- When QPKGs start, should run full status check first to ensure existing PID file is accurate.
 		- Don't just run a basic daemon/process check.
