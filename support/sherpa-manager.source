@@ -64,7 +64,7 @@ Init()
 	QPKGs.Warnings:Check
 	Debug.Log:Env
 	Tasks:Check
-	Env:Validate
+	Env:Check
 	QPKGs:AssignToActions
 
 	return 0
@@ -628,13 +628,10 @@ Lists:Load()
 	QPKG_STATES_TRANSIENT=(starting stopping restarting)
 	QPKG_SERVICE_RESULTS=(ok failed)
 
-	# sorted
-	IPK_STATES=(downgraded downloaded installed reinstalled upgraded)
-
 	# ordered
 	QPKG_ACTIONS=(status list rebuild reassign download backup deactivate disable uninstall upgrade reinstall install enableau disableau sign restore clean enable activate reactivate)
-	IPK_ACTIONS=(downgrade download uninstall upgrade reinstall install)
-	PIP_ACTIONS=(download uninstall upgrade reinstall install)
+	IPK_ACTIONS=(downgrade download uninstall upgrade install)
+	PIP_ACTIONS=(uninstall upgrade install)
 
 	# These actions, states and groups may be specified by the user.
 	# sorted
@@ -702,7 +699,7 @@ Debug.Log:Env()
 
 	Func:Init
 
-	ShowAsProc 'logging environment'
+	ShowAsProc 'log environment'
 
 	DebugInfoMinSepr
 	DebugHardware ok model "$(get_display_name)"
@@ -907,7 +904,7 @@ Tasks:Check()
 
 	}
 
-Env:Validate()
+Env:Check()
 	{
 
 	# This function handles most of the high-level logic for package actions.
@@ -917,7 +914,7 @@ Env:Validate()
 
 	Func:Init
 
-	ShowAsProc 'validate environment'
+	ShowAsProc 'check environment'
 
 	local installed_ver=''
 	local target_packages=''
@@ -928,52 +925,52 @@ Env:Validate()
 		else
 			DebugAsWarn "$(ShowAsPackageName Entware) appears to be installed but is inactive. Please consider starting the $(ShowAsPackageName Entware) QPKG."
 		fi
-	fi
 
-	# Decide if particular IPKs and PIPs should be installed/upgraded.
+		# Decide if specific IPKs and PIPs should be installed/upgraded.
 
-	if [[ $useropt_check = true ]] || QPKGs-ACupgrade-to.Exist Entware; then
-		ipks_upgrade=true
-		ipks_install=true
-		pips_install=true
+		if [[ $useropt_check = true ]] || QPKGs-ACupgrade-to.Exist Entware; then
+			ipks_install=true
+			ipks_upgrade=true
+			pips_install=true
 
-		if [[ -e $PYTHON3_CMD ]]; then
-			installed_ver=$(GetPython3Ver "$PYTHON3_CMD")
+			if [[ -e $PYTHON3_CMD ]]; then
+				installed_ver=$(GetPython3Ver "$PYTHON3_CMD")
 
-			if [[ ${installed_ver//./} -lt $MIN_PYTHON_VER ]]; then
-				ShowAsNote "the $(TextBrightOrange Python) environment will be auto-upgraded"
-				IPKs-ACuninstall-to:Add 'python*'
-			fi
-		fi
-
-		if [[ -e $PERL_CMD ]]; then
-			installed_ver=$(GetPerlVer "$PERL_CMD")
-
-			if [[ ${installed_ver//./} -lt $MIN_PERL_VER ]]; then
-				ShowAsNote "the $(TextBrightOrange Perl) environment will be auto-upgraded"
-				IPKs-ACuninstall-to:Add 'perl*'
-			fi
-		fi
-	fi
-
-	# Decide if specific IPKs should be uninstalled/downgraded.
-
-	if OS.IsNonStdKernelPageSize; then
-		case $NAS_QPKG_ARCH in
-			a41)
-				target_packages='ar binutils libbfd libctf libopcodes objdump'
-
-				# Assume first package version is same as remaining package versions.
-				installed_version=$($OPKG_CMD list-installed | $GREP_CMD "^${target_packages%% *} *" | cut -d' ' -f3 | cut -d'-' -f1)
-
-				if [[ ${installed_version//.} -gt 238 ]]; then
-					ipks_downgrade=true
-					ShowAsNote "IPKs will be downgraded to suit $KERNEL_PAGE_SIZE kernel page size"
-					IPKs-ACdowngrade-to:Add "$target_packages"
-				else
-					IPKs-ACdowngrade-sk:Add "$target_packages"
+				if [[ ${installed_ver//./} -lt $MIN_PYTHON_VER ]]; then
+					ShowAsNote "the $(TextBrightOrange Python) environment will be auto-upgraded"
+					IPKs-ACuninstall-to:Add 'python*'
 				fi
-		esac
+			fi
+
+			if [[ -e $PERL_CMD ]]; then
+				installed_ver=$(GetPerlVer "$PERL_CMD")
+
+				if [[ ${installed_ver//./} -lt $MIN_PERL_VER ]]; then
+					ShowAsNote "the $(TextBrightOrange Perl) environment will be auto-upgraded"
+					IPKs-ACuninstall-to:Add 'perl*'
+				fi
+			fi
+		fi
+
+		# Decide if specific IPKs should be uninstalled/downgraded.
+
+		if OS.IsNonStdKernelPageSize; then
+			case $NAS_QPKG_ARCH in
+				a41)
+					target_packages='ar binutils libbfd libctf libopcodes objdump'
+
+					# Assume first package version is same as remaining package versions.
+					installed_version=$($OPKG_CMD list-installed | $GREP_CMD "^${target_packages%% *} *" | cut -d' ' -f3 | cut -d'-' -f1)
+
+					if [[ ${installed_version//.} -gt 238 ]]; then
+						ipks_downgrade=true
+						ShowAsNote "IPKs will be downgraded to suit $KERNEL_PAGE_SIZE kernel page size"
+						IPKs-ACdowngrade-to:Add "$target_packages"
+					else
+						IPKs-ACdowngrade-sk:Add "$target_packages"
+					fi
+			esac
+		fi
 	fi
 
 	QPKGs.IsCanBackup:Build
@@ -1227,12 +1224,12 @@ Actions:Proc()
 
 	# -> package preparation phase begins here <-
 
-	Action:Proc status all QPKG statusing statused
+	Action:Proc status all QPKG status statused
 
 	if [[ $useropt_show_status = false ]]; then
-		ShowAsProc 'assigning QPKGs by status'
+		ShowAsProc 'assign QPKGs by status'				# Update action lists based-on QPKG `status`.
 
-		for action in "${USER_QPKG_ACTIONS[@]}"; do			# Update action lists based-on QPKG `status`.
+		for action in "${USER_QPKG_ACTIONS[@]}"; do
 			for state in "${USER_QPKG_IS_STATES[@]}"; do
 				QPKGs.AC${action}.IS${state}.IsSet && QPKGs-AC${action}-to:Add "$(QPKGs-IS${state}:Array)"
 			done
@@ -1243,21 +1240,28 @@ Actions:Proc()
 		done
 	fi
 
-	Action:Proc rebuild all QPKG meta-rebuilding meta-rebuilt
-	Action:Proc reassign all QPKG reassigning reassigned
-	Action:Proc download all QPKG downloading downloaded
-	Action:Proc backup all QPKG backing-up backed-up
+	Action:Proc rebuild all QPKG meta-rebuild meta-rebuilt
+	Action:Proc reassign all QPKG reassign reassigned
+	Action:Proc download all QPKG download downloaded
+	Action:Proc backup all QPKG backup backed-up
 
 	# -> package removal phase begins here <-
 
-	for ((tier_index=${#PACKAGE_TIERS[@]}-1; tier_index>=0; tier_index--)); do	# process tiers in-reverse
+	for ((tier_index=${#PACKAGE_TIERS[@]}-1; tier_index>=0; tier_index--)); do	# Process tiers in-reverse
 		tier=${PACKAGE_TIERS[$tier_index]}
 
 		case $tier in
 			?(in)dependent)
-				Action:Proc deactivate $tier QPKG deactivating deactivated
-				Action:Proc disable $tier QPKG disabling disabled
-				Action:Proc uninstall $tier QPKG uninstalling uninstalled
+				Action:Proc deactivate $tier QPKG deactivate deactivated
+				Action:Proc disable $tier QPKG disable disabled
+				Action:Proc uninstall $tier QPKG uninstall uninstalled
+				;;
+			auxiliary)
+				if QPKGs-ISenabled.Exist Entware; then
+					ModPathToEntware
+					Action:Proc uninstall $tier PIP uninstall uninstalled
+					Action:Proc uninstall $tier IPK uninstall uninstalled
+				fi
 		esac
 	done
 
@@ -1266,24 +1270,24 @@ Actions:Proc()
 	for tier in "${PACKAGE_TIERS[@]}"; do
 		case $tier in
 			?(in)dependent)
-				Action:Proc upgrade $tier QPKG upgrading upgraded
-				Action:Proc reinstall $tier QPKG reinstalling reinstalled
-				Action:Proc install $tier QPKG installing installed
-				Action:Proc enableau $tier QPKG 'enabling auto-update' 'enabled auto-update'
-				Action:Proc disableau $tier QPKG 'disabling auto-update' 'disabled auto-update'
-				Action:Proc sign $tier QPKG '"signing"' '"signed"'
-				Action:Proc restore $tier QPKG restoring restored
-				Action:Proc clean $tier QPKG cleaning cleaned
-				Action:Proc enable $tier QPKG enabling enabled
-				Action:Proc reactivate $tier QPKG reactivating reactivated
-				Action:Proc activate $tier QPKG activating activated
+				Action:Proc upgrade $tier QPKG upgrade upgraded
+				Action:Proc reinstall $tier QPKG reinstall reinstalled
+				Action:Proc install $tier QPKG install installed
+				Action:Proc enableau $tier QPKG 'enable auto-update' 'enabled auto-update'
+				Action:Proc disableau $tier QPKG 'disable auto-update' 'disabled auto-update'
+				Action:Proc sign $tier QPKG '"sign"' '"signed"'
+				Action:Proc restore $tier QPKG restore restored
+				Action:Proc clean $tier QPKG clean cleaned
+				Action:Proc enable $tier QPKG enable enabled
+				Action:Proc reactivate $tier QPKG reactivate reactivated
+				Action:Proc activate $tier QPKG activate activated
 				;;
 			auxiliary)
-				for action in install reinstall upgrade activate; do
+				for action in status install reinstall upgrade activate; do
 					if (QPKGs-ACinstall-ok.Exist Entware) || QPKGs-AC${action}-to.IsAny && QPKGs-ISenabled.Exist Entware; then
-						ipks_upgrade=true
-						ipks_install=true
 						ipks_downgrade=true
+						ipks_install=true
+						ipks_upgrade=true
 						pips_install=true
 						break
 					fi
@@ -1291,18 +1295,19 @@ Actions:Proc()
 
 				if QPKGs-ISenabled.Exist Entware; then
 					ModPathToEntware
-					Action:Proc upgrade $tier IPK upgrading upgraded
-					Action:Proc install $tier IPK installing installed
-					Action:Proc downgrade $tier IPK downgrading downgraded
-					Action:Proc install $tier PIP installing installed
+					Action:Proc upgrade $tier IPK upgrade upgraded
+					Action:Proc install $tier IPK install installed
+					Action:Proc downgrade $tier IPK downgrade downgraded
+					Action:Proc upgrade $tier PIP upgrade upgraded
+					Action:Proc install $tier PIP install installed
 				fi
 		esac
 	done
 
 	if [[ $useropt_debug = true ]]; then
-#		PIPs.Actions:List
-		IPKs.Actions:List
 		QPKGs.Actions:List
+		IPKs.Actions:List
+		PIPs.Actions:List
 	fi
 
 	if [[ $title_shown = true ]]; then
@@ -1501,7 +1506,7 @@ Action:Proc()
 			CloseActionMsgPipe
 			;;
 		IPK|PIP)
-			if [[ $ipks_upgrade = true || $ipks_install = true || $ipks_downgrade || $pips_install = true ]]; then
+			if [[ $ipks_downgrade = true || $ipks_install = true || $ipks_upgrade = true || $pips_install = true ]]; then
 				InitForkCounts
 				${PACKAGE_TYPE}s:${TARGET_ACTION}	# Only process these packages in groups, not individually.
 			fi
@@ -2700,23 +2705,33 @@ ArgSuggestions:Show()
 
 		for arg in "${args[@]}"; do
 			case $arg in
+				active|started)
+					DisplayAsProjSynExam "please provide a valid $(ShowAsAction) before '$arg' like" "deactivate $arg"
+					arg_problem=true
+					useropt_help_basic=false
+					;;
 				all)
 					DisplayAsProjSynExam "please provide a valid $(ShowAsAction) before 'all' like" 'activate all'
 					arg_problem=true
 					useropt_help_basic=false
 					;;
 				all-activate|activate-all)
-					DisplayAsProjSynExam 'to activate all packages, use' 'activate all'
+					DisplayAsProjSynExam 'to activate all QPKGs, use' 'activate all'
 					arg_problem=true
 					useropt_help_basic=false
 					;;
 				all-backup|backup-all)
-					DisplayAsProjSynExam 'to backup all installed package configurations, use' 'backup all'
+					DisplayAsProjSynExam 'to backup all installed QPKG configurations, use' 'backup all'
+					arg_problem=true
+					useropt_help_basic=false
+					;;
+				all-deactivate|deactivate-all)
+					DisplayAsProjSynExam 'to deactivate all QPKGs, use' 'deactivate all'
 					arg_problem=true
 					useropt_help_basic=false
 					;;
 				all-reactivate|reactivate-all)
-					DisplayAsProjSynExam 'to reactivate all packages, use' 'reactivate all'
+					DisplayAsProjSynExam 'to reactivate all QPKGs, use' 'reactivate all'
 					arg_problem=true
 					useropt_help_basic=false
 					;;
@@ -2726,22 +2741,17 @@ ArgSuggestions:Show()
 					useropt_help_basic=false
 					;;
 				all-stop|stop-all)
-					DisplayAsProjSynExam 'to stop all packages, use' 'stop all'
+					DisplayAsProjSynExam 'to stop all QPKGs, use' 'stop all'
 					arg_problem=true
 					useropt_help_basic=false
 					;;
 				all-uninstall|all-remove|uninstall-all|remove-all)
-					DisplayAsProjSynExam 'to uninstall all packages, use' 'force uninstall all'
+					DisplayAsProjSynExam 'to uninstall all QPKGs, use' 'force uninstall all'
 					arg_problem=true
 					useropt_help_basic=false
 					;;
 				all-upgrade|upgrade-all)
-					DisplayAsProjSynExam 'to upgrade all packages, use' 'upgrade all'
-					arg_problem=true
-					useropt_help_basic=false
-					;;
-				download)
-					ShowAsError "'$arg' is not a manual action"
+					DisplayAsProjSynExam 'to upgrade all QPKGs, use' 'upgrade all'
 					arg_problem=true
 					useropt_help_basic=false
 					;;
@@ -2751,8 +2761,8 @@ ArgSuggestions:Show()
 					arg_problem=true
 					useropt_help_basic=false
 					;;
-				active|started)
-					DisplayAsProjSynExam "please provide a valid $(ShowAsAction) before '$arg' like" "deactivate $arg"
+				download)
+					ShowAsError "'$arg' is not a manual action"
 					arg_problem=true
 					useropt_help_basic=false
 					;;
@@ -2791,7 +2801,7 @@ AllocPackGroupsToAcs()
 
 	Func:Init
 
-	ShowAsProc 'matching QPKG groups to actions'
+	ShowAsProc 'match QPKG groups to actions'
 
 	local action=''
 	local found=false
@@ -2832,7 +2842,7 @@ AllocPackGroupsToAcs()
 								DebugAsWarn "group 'GR$group' has no positive allocation handler for action '$action'"
 						esac
 						;;
-					?(de|re)activate|disable?(au)|enable?(au)|@(re|un)install|stop)
+					?(de|re)activate|@(dis|en)able?(au)|@(re|un)install|stop)
 						case $group in
 							all|?(in)dependent)
 								found=true
@@ -2924,7 +2934,7 @@ AllocPackStatesToAcs()
 
 	Func:Init
 
-	ShowAsProc 'matching QPKG states to actions'
+	ShowAsProc 'match QPKG states to actions'
 
 	local action=''
 	local check_later=false
@@ -2937,13 +2947,17 @@ AllocPackStatesToAcs()
 		# Positive states.
 
 		for state in "${USER_QPKG_IS_STATES[@]}"; do
-			found=false
 			check_later=false
+			found=false
 
 			if QPKGs.AC${action}.IS${state}.IsSet; then
 				case $action in
-					backup|clean|uninstall|upgrade)
+					?(de|re)activate|backup|clean|@(dis|en)able?(au)|?(re|un)install|upgrade)
 						case $state in
+							?(in)active)
+								check_later=true
+								found=true
+								;;
 							backedup|cleaned|downloaded|enabled|installed)
 								found=true
 								QPKGs-AC${action}-to:Add "$(QPKGs-IS${state}:Array)"
@@ -2967,7 +2981,7 @@ AllocPackStatesToAcs()
 				if QPKGs-AC${action}-to.IsAny; then
 					DebugAsDone "action: '$action', state: 'IS${state}': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
 				elif [[ $check_later = true ]]; then
-					DebugAsDone "action: '$action', state: 'IS${state}': will add filtered-packages later after 'status' has been determined"
+					DebugAsDone "action: '$action', state: 'IS${state}': will add filtered-QPKGs later after 'status' has been determined"
 				else
 					ShowAsWarn "unable to find any '$state' QPKGs to '$(Lowercase "$action")'"
 				fi
@@ -2977,18 +2991,18 @@ AllocPackStatesToAcs()
 		# Negative states.
 
 		for state in "${USER_QPKG_ISNT_STATES[@]}"; do
-			found=false
 			check_later=false
+			found=false
 
 			if QPKGs.AC${action}.ISNT${state}.IsSet; then
 				case $action in
-					activate|backup|clean|@(dis|en)ableau|?(un)install)
+					?(de|re)activate|backup|clean|@(dis|en)able?(au)|?(re|un)install|upgrade)
 						case $state in
 							?(in)active)
 								check_later=true
 								found=true
 								;;
-							enabled|installed)
+							backedup|cleaned|downloaded|enabled|installed)
 								found=true
 								QPKGs-AC${action}-to:Add "$(QPKGs-ISNT${state}:Array)"
 								;;
@@ -3011,7 +3025,7 @@ AllocPackStatesToAcs()
 				if QPKGs-AC${action}-to.IsAny; then
 					DebugAsDone "action: '$action', state: 'ISNT${state}': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
 				elif [[ $check_later = true ]]; then
-					DebugAsDone "action: '$action', state: 'ISNT${state}': will add filtered-packages later after 'status' has been determined"
+					DebugAsDone "action: '$action', state: 'ISNT${state}': will add filtered-QPKGs later after 'status' has been determined"
 				else
 					ShowAsWarn "unable to find any 'not $state' QPKGs to '$(Lowercase "$action")'"
 				fi
@@ -3175,7 +3189,7 @@ IsThisFileRecent()
 
 	}
 
-SaveEntwarePackageList()
+SaveIpkAndPipList()
 	{
 
 	$PIP_CMD freeze > "$PREV_PIP_LIST"
@@ -3186,7 +3200,7 @@ SaveEntwarePackageList()
 
 	} 2>/dev/null
 
-LoadEntwarePackageList()
+LoadIpkList()
 	{
 
 	local name=''
@@ -3194,9 +3208,28 @@ LoadEntwarePackageList()
 	local version=''
 
 	if [[ -e $PREV_IPK_LIST ]]; then
+		DebugInfo "IPKs are being loaded from $(ShowAsFileName "$PREV_IPK_LIST")"
+
 		while read -r name separator version; do
 			IPKs-ACinstall-to:Add "$name"
 		done < "$PREV_IPK_LIST"
+	fi
+
+	}
+
+LoadPipList()
+	{
+
+	local name=''
+	local separator=''
+	local version=''
+
+	if [[ -e $PREV_PIP_LIST ]]; then
+		DebugInfo "PIPs are being loaded from $(ShowAsFileName "$PREV_PIP_LIST")"
+
+		while read -r name separator version; do
+			PIPs-ACinstall-to:Add "$name"
+		done < "$PREV_PIP_LIST"
 	fi
 
 	}
@@ -3235,10 +3268,10 @@ CalcIpkDepsToInstall()
 
 	DebugInfo "$requested_count IPK$(Pluralise "$requested_count") requested" "'$req_list' "
 
-	ShowAsProc 'resolving IPK dependencies'
+	ShowAsProc 'resolve IPK dependencies'
 
 	while [[ $iterations -lt $ITERATION_LIMIT ]]; do
-		ShowAsIterativeProgress 'resolving IPK dependencies' "$iterations" iteration "${#dep_acc[@]}" 'unique package'
+		ShowAsIterativeProgress 'resolve IPK dependencies' "$iterations" iteration "${#dep_acc[@]}" 'unique package'
 
 		((iterations++))
 		local ipk_titles=$(printf '^Package: %s$\|' "${this_list[@]}")
@@ -3247,7 +3280,7 @@ CalcIpkDepsToInstall()
 		this_list=($($GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator '^Package:\|^Depends:' "$EXTERNAL_PACKAGES_PATHFILE" | $GNU_GREP_CMD -vG '^Section:\|^Version:' | $GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator "$ipk_titles" | $GNU_GREP_CMD -vG "$ipk_titles" | $GNU_GREP_CMD -vG '^Package: ' | $SED_CMD 's|^Depends: ||;s|, |\n|g' | $SORT_CMD | $UNIQ_CMD))
 
 		# Update progress twice per loop.
-		ShowAsIterativeProgress 'resolving IPK dependencies' "$iterations" iteration "${#dep_acc[@]}" 'unique package'
+		ShowAsIterativeProgress 'resolve IPK dependencies' "$iterations" iteration "${#dep_acc[@]}" 'unique package'
 
 		if [[ ${#this_list[@]} -eq 0 ]]; then
 			complete=true
@@ -3272,7 +3305,7 @@ CalcIpkDepsToInstall()
 	pre_exclude_count=$($WC_CMD -w <<< "$pre_exclude_list")
 
 	if [[ $pre_exclude_count -gt 0 ]]; then
-		ShowAsProc 'excluding IPKs already installed'
+		ShowAsProc 'exclude IPKs already installed'
 
 		DebugInfo "$pre_exclude_count IPK$(Pluralise "$pre_exclude_count") required (including dependencies)" "'$pre_exclude_list' "
 
@@ -3313,7 +3346,7 @@ CalcIpkDownloadSize()
 	size_count=$(IPKs-ACdownload-to:Count)
 
 	if [[ $size_count -gt 0 ]]; then
-		ShowAsProc "calculating size of IPK$(Pluralise "$size_count") to download"
+		ShowAsProc "calculate size of IPK$(Pluralise "$size_count") to download"
 
 		DebugAsDone "$size_count IPK$(Pluralise "$size_count") to download: '$(IPKs-ACdownload-to:List)'"
 		size_array=($($GNU_GREP_CMD -w '^Package:\|^Size:' "$EXTERNAL_PACKAGES_PATHFILE" | $GNU_GREP_CMD --after-context 1 --no-group-separator ": $($SED_CMD 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKs-ACdownload-to:List)")" | $GREP_CMD '^Size:' | $SED_CMD 's|^Size: ||'))
@@ -3362,7 +3395,7 @@ IPKs:upgrade()
 	if [[ $total_count -gt 0 ]]; then
 		desc="$total_count auxiliary IPK module$(Pluralise "$total_count")"
 
-		ShowAsProc "upgrading $desc"
+		ShowAsProc "upgrade $desc"
 
 		_DirSizeMonitor_ "$IPK_DL_PATH" "$(IPKs-ACdownload-to:Size)" &
 		fork_pid=$!
@@ -3410,8 +3443,8 @@ IPKs:install()
 	if QPKGs-ACinstall-ok.Exist Entware || ([[ $useropt_check = true ]] && QPKG.IsInstalled Entware); then
 		IPKs-ACinstall-to:Add "$ESSENTIAL_IPKS"
 
-		if [[ -e $PREV_IPK_LIST ]]; then
-			LoadEntwarePackageList
+		if [[ -e $PREV_IPK_LIST && $useropt_check = false ]]; then		# Don't load previous IPK list during 'check'.
+			LoadIpkList
 			mv "$PREV_IPK_LIST" "$PREV_IPK_LIST.installing"
 		fi
 	fi
@@ -3440,7 +3473,7 @@ IPKs:install()
 	if [[ $total_count -gt 0 ]]; then
 		desc="$total_count auxiliary IPK module$(Pluralise "$total_count")"
 
-		ShowAsProc "installing $desc"
+		ShowAsProc "install $desc"
 
 		_DirSizeMonitor_ "$IPK_DL_PATH" "$(IPKs-ACdownload-to:Size)" &
 		fork_pid=$!
@@ -3505,7 +3538,7 @@ IPKs:downgrade()
 		desc="$total_count ${package_type}$(Pluralise "$total_count")"
 		log_pathfile=$LOGS_PATH/ipks.$DOWNLOAD_LOG_FILE
 
-		ShowAsProc "downloading $desc"
+		ShowAsProc "download $desc"
 
 		if OS.IsNonStdKernelPageSize; then
 			url_prefix=http://bin.entware.net
@@ -3539,7 +3572,7 @@ IPKs:downgrade()
 		desc="$total_count ${package_type}$(Pluralise "$total_count")"
 		log_pathfile=$LOGS_PATH/ipks.$DOWNGRADE_LOG_FILE
 
-		ShowAsProc "downgrading $desc"
+		ShowAsProc "downgrade $desc"
 
 		ShowAsPercentProgress "downgrading $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 "$fail_count" "$total_count"
 		RunAndLog "$OPKG_CMD install --force-downgrade --cache $IPK_CACHE_PATH --tmp-dir $IPK_DOWNGRADE_DL_PATH $IPK_DOWNGRADE_DL_PATH/*.ipk" "$log_pathfile" log:failure-only
@@ -3563,6 +3596,20 @@ IPKs:downgrade()
 
 	}
 
+IPKs:uninstall()
+	{
+
+	:	# Placeholder function
+
+	}
+
+PIPs:upgrade()
+	{
+
+	:	# Placeholder function
+
+	}
+
 PIPs:install()
 	{
 
@@ -3583,12 +3630,19 @@ PIPs:install()
 	local -i z=0
 
 	if [[ $useropt_check = true ]] || IPKs-ACinstall-ok.Exist python3-pip; then
+		PIPs-ACinstall-to:Add "$ESSENTIAL_PIPS"
+
+		if [[ -e $PREV_PIP_LIST && $useropt_check = false ]]; then		# Don't load previous PIP list during 'check'.
+			LoadPipList
+			mv "$PREV_PIP_LIST" "$PREV_PIP_LIST.installing"
+		fi
+
 		((total_count++))
 
-		exec_cmd="$PIP_CMD install --upgrade --no-input $ESSENTIAL_PIPS --cache-dir $PIP_CACHE_PATH 2> >($GREP_CMD -v \"Running pip as the 'root' user\") >&2"
+		exec_cmd="$PIP_CMD install --upgrade --no-input $(PIPs-ACinstall-to:List) --cache-dir $PIP_CACHE_PATH 2> >($GREP_CMD -v \"Running pip as the 'root' user\") >&2"
 		desc='auxiliary PyPI modules'
 
-		ShowAsProc "installing $total_count ${package_type}$(Pluralise "$total_count")"
+		ShowAsProc "install $total_count ${package_type}$(Pluralise "$total_count")"
 
 		ShowAsPercentProgress "installing $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 0 "$total_count"
 		RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
@@ -3607,6 +3661,13 @@ PIPs:install()
 	fi
 
 	Func:Exit $z
+
+	}
+
+PIPs:uninstall()
+	{
+
+	:	# Placeholder function
 
 	}
 
@@ -5868,7 +5929,7 @@ Log.Last:Paste()
 
 	if [[ -e $SESS_LAST_PATHFILE ]]; then
 		if Quiz "Press 'Y' to post the most-recent session in your $(ShowAsTitleName) log to a public pastebin, or any other key to abort"; then
-			ShowAsProc "uploading $(ShowAsTitleName) log"
+			ShowAsProc "upload $(ShowAsTitleName) log"
 
 			# with thanks to https://github.com/solusipse/fiche
 			link=$($CAT_CMD --number "$SESS_LAST_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
@@ -5903,7 +5964,7 @@ Log.Tail:Paste()
 
 	if [[ -e $SESS_TAIL_PATHFILE ]]; then
 		if Quiz "Press 'Y' to post the most-recent $(FormatAsThous "$LOG_TAIL_LINES") lines in your $(ShowAsTitleName) log to a public pastebin, or any other key to abort"; then
-			ShowAsProc "uploading $(ShowAsTitleName) log"
+			ShowAsProc "upload $(ShowAsTitleName) log"
 
 			# with thanks to https://github.com/solusipse/fiche
 			link=$($CAT_CMD --number "$SESS_TAIL_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
@@ -6301,7 +6362,7 @@ QPKGs.Warnings:Check()
 
 	}
 
-PIPs.Actions:List()
+QPKGs.Actions:List()
 	{
 
 	[[ $useropt_debug = true ]] || return
@@ -6309,14 +6370,32 @@ PIPs.Actions:List()
 	Func:Init
 
 	local a=''
-	DebugInfoMinSepr
+	local b=''
+	local border_shown=false
 
-	for a in "${PIP_ACTIONS[@]}"; do
-		PIPs-AC${a}-ok.IsAny && DebugPipInfo "AC${a}-ok" "($(PIPs-AC${a}-ok:Count)) $(PIPs-AC${a}-ok:ListCSV) "
-		PIPs-AC${a}-er.IsAny && DebugPipError "AC${a}-er" "($(PIPs-AC${a}-er:Count)) $(PIPs-AC${a}-er:ListCSV) "
+	for a in "${QPKG_ACTIONS[@]}"; do
+		for b in ok er sk so se sa; do
+			if QPKGs-AC${a}-${b}.IsAny; then
+				if [[ $border_shown = false ]]; then
+					DebugInfoMinSepr
+					border_shown=true
+				fi
+
+				case $b in
+					ok)
+						DebugQpkg info "AC${a}-${b}" "($(QPKGs-AC${a}-${b}:Count)) $(QPKGs-AC${a}-${b}:ListCSV) "
+						;;
+					sk|so|se|sa)
+						DebugQpkg warning "AC${a}-${b}" "($(QPKGs-AC${a}-${b}:Count)) $(QPKGs-AC${a}-${b}:ListCSV) "
+						;;
+					er)
+						DebugQpkg error "AC${a}-${b}" "($(QPKGs-AC${a}-${b}:Count)) $(QPKGs-AC${a}-${b}:ListCSV) "
+				esac
+			fi
+		done
 	done
 
-	DebugInfoMinSepr
+	[[ $border_shown = true ]] && DebugInfoMinSepr
 
 	Func:Exit
 
@@ -6356,7 +6435,7 @@ IPKs.Actions:List()
 
 	}
 
-QPKGs.Actions:List()
+PIPs.Actions:List()
 	{
 
 	[[ $useropt_debug = true ]] || return
@@ -6364,32 +6443,14 @@ QPKGs.Actions:List()
 	Func:Init
 
 	local a=''
-	local b=''
-	local border_shown=false
+	DebugInfoMinSepr
 
-	for a in "${QPKG_ACTIONS[@]}"; do
-		for b in ok er sk so se sa; do
-			if QPKGs-AC${a}-${b}.IsAny; then
-				if [[ $border_shown = false ]]; then
-					DebugInfoMinSepr
-					border_shown=true
-				fi
-
-				case $b in
-					ok)
-						DebugQpkg info "AC${a}-${b}" "($(QPKGs-AC${a}-${b}:Count)) $(QPKGs-AC${a}-${b}:ListCSV) "
-						;;
-					sk|so|se|sa)
-						DebugQpkg warning "AC${a}-${b}" "($(QPKGs-AC${a}-${b}:Count)) $(QPKGs-AC${a}-${b}:ListCSV) "
-						;;
-					er)
-						DebugQpkg error "AC${a}-${b}" "($(QPKGs-AC${a}-${b}:Count)) $(QPKGs-AC${a}-${b}:ListCSV) "
-				esac
-			fi
-		done
+	for a in "${PIP_ACTIONS[@]}"; do
+		PIPs-AC${a}-ok.IsAny && DebugPipInfo "AC${a}-ok" "($(PIPs-AC${a}-ok:Count)) $(PIPs-AC${a}-ok:ListCSV) "
+		PIPs-AC${a}-er.IsAny && DebugPipError "AC${a}-er" "($(PIPs-AC${a}-er:Count)) $(PIPs-AC${a}-er:ListCSV) "
 	done
 
-	[[ $border_shown = true ]] && DebugInfoMinSepr
+	DebugInfoMinSepr
 
 	Func:Exit
 
@@ -8548,7 +8609,7 @@ _QPKG:rebuild_()
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
 
 	DebugAsProc "meta-rebuilding $(ShowAsPackageName "$PACKAGE_NAME")"
-	# Nothing-to-do here, real QPKG actions have already been assigned in Env:Validate().
+	# Nothing-to-do here, real QPKG actions have already been assigned in Env:Check().
 
 	SaveActionResultToLog QPKG "$PACKAGE_NAME" meta-rebuild ok
 	MarkThisActionForkAsOk
@@ -8690,7 +8751,7 @@ _QPKG:uninstall_()
 
 	local -r QPKG_UNINSTALLER_PATHFILE=$(QPKG.GetInstallationPath "$PACKAGE_NAME")/.uninstall.sh
 
-	[[ $PACKAGE_NAME = Entware ]] && SaveEntwarePackageList
+	[[ $PACKAGE_NAME = Entware ]] && SaveIpkAndPipList
 
 	if [[ -e $QPKG_UNINSTALLER_PATHFILE ]]; then
 		DebugAsProc "uninstalling $(ShowAsPackageName "$PACKAGE_NAME")"
@@ -9504,7 +9565,7 @@ _QPKG:status_()
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
 
-	DebugAsProc "statusing $(ShowAsPackageName "$PACKAGE_NAME")"
+	DebugAsProc "status $(ShowAsPackageName "$PACKAGE_NAME")"
 
 	a=$(QPKG.GetActiveTest "$PACKAGE_NAME")
 
@@ -12252,7 +12313,7 @@ Objects:Load()
 
 	if [[ ! -e $PWD/dont-refresh-objects ]]; then
 		if [[ ! -e $OBJECTS_PATHFILE ]] || ! IsThisFileRecent "$OBJECTS_PATHFILE" "$FILE_CHANGE_THRESHOLD_MINUTES"; then
-			ShowAsProc 'downloading objects'
+			ShowAsProc 'download objects'
 
 			if $CURL_CMD --silent --fail "$OBJECTS_ARCHIVE_URL" > "$OBJECTS_ARCHIVE_PATHFILE"; then
 				$TAR_CMD --extract --gzip --no-same-owner --file="$OBJECTS_ARCHIVE_PATHFILE" --directory="$CACHE_PATH"
@@ -12291,7 +12352,7 @@ Packages:Load()
 
 	if [[ ! -e $PWD/dont-refresh-packages ]]; then
 		if [[ ! -e $PACKAGES_PATHFILE ]] || ! IsThisFileRecent "$PACKAGES_PATHFILE" "$FILE_CHANGE_THRESHOLD_MINUTES"; then
-			ShowAsProc 'downloading QPKG list'
+			ShowAsProc 'download QPKG list'
 
 			if $CURL_CMD --silent --fail "$PACKAGES_ARCHIVE_URL" > "$PACKAGES_ARCHIVE_PATHFILE"; then
 				$TAR_CMD --extract --gzip --no-same-owner --file="$PACKAGES_ARCHIVE_PATHFILE" --directory="$CACHE_PATH"
