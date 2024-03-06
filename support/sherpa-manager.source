@@ -1601,7 +1601,7 @@ AdjustMaxForks()
 				max_forks=4
 				reason="'$1'"
 				;;
-			disable?(au)|enable?(au)|rebuild|sign|status)	# Really-low-resource actions.
+			@(dis|en)able?(au)|rebuild|sign|status)			# Really-low-resource actions.
 				max_forks=8
 				reason="'$1'"
 		esac
@@ -1632,6 +1632,8 @@ PrepareArgs()
 	args=(${a/--/})
 	arg_problem=false
 
+	DebugArray args "${args[*]:-}"
+
 	[[ -z $ARGS_RAW ]] && useropt_help_basic=true
 
 	}
@@ -1652,65 +1654,72 @@ ParseManagementArgs()
 
 	Func:Init
 
-	local action=''
+	local action=''						# Internal, nice, simple, action name. Only one per-action.
 	local arg=''
 	local -a args_remaining=()
 	local awaiting_group=false
 	local current_action=''
 	local group=''
+	local potential_action=''			# A user arg that might be an action.
 	local requires_group=false
-	local user_action=''
+	local user_action=''				# The original user argument, detected as an action. There may be many variants per-action.
 
 	for arg in "${args[@]:-}"; do
 		[[ -n $arg ]] || continue
 
 		# Identify action.
 
-		action=$(TranslateIntoAction "$arg")
+		potential_action=$(TranslateIntoAction "$arg"); DebugVar potential_action
 
-		case $action in
-			check)
-				generate_show_report=true
-				get_qpkg_states=true
-				requires_group=false
-				run_package_actions=true
-				user_action=$arg
-				useropt_check=true
-				;;
-			colo?(u)r?(ful)|follow|paste|terse)
-				requires_group=true
-				user_action=$arg
-				;;
-			debug)
-				requires_group=false
-				user_action=$arg
-				EnableDebugToArchiveAndFile
-				;;
-			reset)
-				DeleteSetting Colourful
-				DeleteSetting Git_Branch
-				DeleteSetting Terse
+		if [[ -n $potential_action ]]; then
+			action=$potential_action; DebugVar action
+			potential_action=''
 
-				Reset					# <-- Processing will terminate in this function (no-return).
-				;;
-			verbose)
-				requires_group=false
-				user_action=$arg
-				Verbose:Enable
-				EnableDebugToArchiveAndFile
-		esac
+			case $action in
+				check)
+					generate_show_report=true
+					get_qpkg_states=true
+					requires_group=false
+					run_package_actions=true
+					user_action=$arg
+					useropt_check=true
+					;;
+				colo?(u)r?(ful)|follow|paste|terse)
+					requires_group=true
+					user_action=$arg
+					;;
+				debug)
+					requires_group=false
+					user_action=$arg
+					EnableDebugToArchiveAndFile
+					;;
+				reset)
+					DeleteSetting Colourful
+					DeleteSetting Git_Branch
+					DeleteSetting Terse
 
-		if [[ -n $user_action && $user_action != "$current_action" ]]; then
-			[[ $awaiting_group = true ]] && args_incomplete+=("$user_action")
-			awaiting_group=$requires_group
-			current_action=$user_action
-			group=''	 			# When action changes, must clear group.
-			continue
+					Reset					# <-- Processing will terminate in this function (no-return).
+					;;
+				verbose)
+					requires_group=false
+					user_action=$arg
+					Verbose:Enable
+					EnableDebugToArchiveAndFile
+			esac
+
+			if [[ -n $user_action && $user_action != "$current_action" ]]; then
+				[[ $awaiting_group = true ]] && args_incomplete+=("$user_action")
+				awaiting_group=$requires_group
+				current_action=$user_action
+				group=''	 			# When action changes, must clear group.
+				continue
+			fi
 		fi
 
-		# Identify group. Include action assignment when action hasn't been previously specified.
+		# Identify group.
 
 		group=$(TranslateIntoGroup "$arg")
+		DebugVar group
 
 		# Pair action with group.
 
@@ -1786,7 +1795,10 @@ ParseManagementArgs()
 		args_incomplete+=("$user_action")									# Save the actual action word, phrase or char specified by the user.
 	fi
 
+	DebugArray args_incomplete "${args_incomplete[*]:-}"
+
 	args=(${args_remaining[@]:-})
+	DebugArray args "${args[*]:-}"
 
 	Func:Exit
 
@@ -1809,91 +1821,52 @@ ParseHelpArgs()
 
 	Func:Init
 
-	local action=''
+	local action=''						# Internal, nice, simple, action name. Only one per-action.
 	local arg=''
 	local -a args_remaining=()
 	local awaiting_group=false
 	local current_action=''
 	local group=''
+	local potential_action=''			# A user arg that might be an action.
 	local requires_group=false
-	local user_action=''
+	local user_action=''				# The original user argument, detected as an action. There may be many variants per-action.
 
 	for arg in "${args[@]:-}"; do
 		[[ -n $arg ]] || continue
 
 		# Identify action.
 
-		case $arg in
-			help)
-				action=$arg
-				requires_group=true
-				user_action=$arg
-		esac
+		potential_action=$(TranslateIntoAction "$arg"); DebugVar potential_action
 
-		if [[ -n $user_action && $user_action != "$current_action" ]]; then
-			[[ $awaiting_group = true ]] && args_incomplete+=("$user_action")
-			awaiting_group=$requires_group
-			current_action=$user_action
-			group=''	 			# When action changes, must clear group.
-			continue
+		if [[ -n $potential_action ]]; then
+			action=$potential_action; DebugVar action
+			potential_action=''
+
+			case $action in
+				help)
+					requires_group=true
+					user_action=$arg
+			esac
+
+			if [[ -n $user_action && $user_action != "$current_action" ]]; then
+				[[ $awaiting_group = true ]] && args_incomplete+=("$user_action")
+				awaiting_group=$requires_group
+				current_action=$user_action
+				group=''	 			# When action changes, must clear group.
+				continue
+			fi
 		fi
 
-		# Identify group. Include action assignment when action hasn't been previously specified.
+		# Identify group.
 
-		case $arg in
-		# These cases use only a single user-provided word or char to specify a single group.
-			list?(s))
-				# Don't set a default action for this group, this group is used for multiple actions. Set a default in the last parsing function.
-				group=lists
-				;;
-			package?(s)|qpkg?(s))
-				# Don't set a default action for this group, this group is used for multiple actions. Set a default in the last parsing function.
-				group=packages
-				;;
-			problem?(s))
+		group=$(TranslateIntoGroup "$arg")
+		DebugVar group
+
+		# Include action assignment when action hasn't been previously specified.
+
+		case $group in
+			abs|actions|all|all-actions|groups|lists|options|packages|problems|show|tips|upgrades)
 				[[ -z $action ]] && action=help
-				group=problems
-				;;
-			tip?(s))
-				[[ -z $action ]] && action=help
-				group=tips
-				;;
-		# All cases below can use multiple user-provided words or chars to specify a single group.
-			a|abs|abbreviations)
-				# Don't set a default action for this group, this group is used for multiple actions. Set a default in the last parsing function.
-				group=abs
-				;;
-			action?(s))
-				[[ -z $action ]] && action=help
-				group=actions
-				;;
-			all)
-				# Don't set a default action for this group, this group is used for multiple actions. Set a default in the last parsing function.
-				group=all-actions
-				;;
-			action?(s)-all|all-action?(s))
-				[[ -z $action ]] && action=help
-				group=all-actions
-				;;
-			group?(s))
-				[[ -z $action ]] && action=help
-				group=groups
-				;;
-			o|option?(s))
-				[[ -z $action ]] && action=help
-				group=options
-				;;
-			show)
-				# Don't set a default action for this group, this group is used for multiple actions. Set a default in the last parsing function.
-				group=show
-				;;
-			upgrade)
-				# Don't set a default action for this group, this group is used for multiple actions. Set a default in the last parsing function.
-				group=upgrades
-				;;
-			upgrades|upgrading)
-				[[ -z $action ]] && action=help
-				group=upgrades
 		esac
 
 		# Pair action with group.
@@ -1916,7 +1889,7 @@ ParseHelpArgs()
 							run_package_actions=false
 							useropt_help_actions=true
 							;;
-						all-actions)
+						all|all-actions)
 							action=''
 							awaiting_group=false
 							generate_help_report=true
@@ -2019,7 +1992,10 @@ ParseHelpArgs()
 		esac
 	done
 
+	DebugArray args_incomplete "${args_incomplete[*]:-}"
+
 	args=(${args_remaining[@]:-})
+	DebugArray args "${args[*]:-}"
 
 	Func:Exit
 
@@ -2042,39 +2018,46 @@ ParseShowArgs()
 
 	Func:Init
 
-	local action=''
+	local action=''						# Internal, nice, simple, action name. Only one per-action.
 	local arg=''
 	local -a args_remaining=()
 	local awaiting_group=false
 	local current_action=''
 	local group=''
+	local potential_action=''			# A user arg that might be an action.
 	local requires_group=false
-	local user_action=''
+	local user_action=''				# The original user argument, detected as an action. There may be many variants per-action.
 
 	for arg in "${args[@]:-}"; do
 		[[ -n $arg ]] || continue
 
 		# Identify action.
 
-		action=$(TranslateIntoAction "$arg")
+		potential_action=$(TranslateIntoAction "$arg"); DebugVar potential_action
 
-		case $action in
-			show)
-				requires_group=true
-				user_action=$arg
-		esac
+		if [[ -n $potential_action ]]; then
+			action=$potential_action; DebugVar action
+			potential_action=''
 
-		if [[ -n $user_action && $user_action != "$current_action" ]]; then
-			[[ $awaiting_group = true ]] && args_incomplete+=("$user_action")
-			awaiting_group=$requires_group
-			current_action=$user_action
-			group=''	 			# When action changes, must clear group.
-			continue
+			case $action in
+				show)
+					requires_group=true
+					user_action=$arg
+			esac
+
+			if [[ -n $user_action && $user_action != "$current_action" ]]; then
+				[[ $awaiting_group = true ]] && args_incomplete+=("$user_action")
+				awaiting_group=$requires_group
+				current_action=$user_action
+				group=''	 			# When action changes, must clear group.
+				continue
+			fi
 		fi
 
 		# Identify group.
 
 		group=$(TranslateIntoGroup "$arg")
+		DebugVar group
 
 		# Include action assignment when action hasn't been previously specified.
 
@@ -2180,7 +2163,10 @@ ParseShowArgs()
 		args_incomplete+=("$user_action")									# Save the actual action word, phrase or char specified by the user.
 	fi
 
+	DebugArray args_incomplete "${args_incomplete[*]:-}"
+
 	args=(${args_remaining[@]:-})
+	DebugArray args "${args[*]:-}"
 
 	Func:Exit
 
@@ -2203,39 +2189,46 @@ ParseListArgs()
 
 	Func:Init
 
-	local action=''
+	local action=''						# Internal, nice, simple, action name. Only one per-action.
 	local arg=''
 	local -a args_remaining=()
 	local awaiting_group=false
 	local current_action=''
 	local group=''
+	local potential_action=''			# A user arg that might be an action.
 	local requires_group=false
-	local user_action=''
+	local user_action=''				# The original user argument, detected as an action. There may be many variants per-action.
 
 	for arg in "${args[@]:-}"; do
 		[[ -n $arg ]] || continue
 
 		# Identify action.
 
-		action=$(TranslateIntoAction "$arg")
+		potential_action=$(TranslateIntoAction "$arg"); DebugVar potential_action
 
-		case $action in
-			list)
-				requires_group=true
-				user_action=$arg
-		esac
+		if [[ -n $potential_action ]]; then
+			action=$potential_action; DebugVar action
+			potential_action=''
 
-		if [[ -n $user_action && $user_action != "$current_action" ]]; then
-			[[ $awaiting_group = true ]] && args_incomplete+=("$user_action")
-			awaiting_group=$requires_group
-			current_action=$user_action
-			group=''	 			# When action changes, must clear group.
-			continue
+			case $action in
+				list)
+					requires_group=true
+					user_action=$arg
+			esac
+
+			if [[ -n $user_action && $user_action != "$current_action" ]]; then
+				[[ $awaiting_group = true ]] && args_incomplete+=("$user_action")
+				awaiting_group=$requires_group
+				current_action=$user_action
+				group=''	 			# When action changes, must clear group.
+				continue
+			fi
 		fi
 
 		# Identify group.
 
 		group=$(TranslateIntoGroup "$arg")
+		DebugVar group
 
 		# Include action assignment when action hasn't been previously specified.
 
@@ -2313,7 +2306,10 @@ ParseListArgs()
 		args_incomplete+=("$user_action")									# Save the actual action word, phrase or char specified by the user.
 	fi
 
+	DebugArray args_incomplete "${args_incomplete[*]:-}"
+
 	args=(${args_remaining[@]:-})
+	DebugArray args "${args[*]:-}"
 
 	Func:Exit
 
@@ -2333,14 +2329,15 @@ ParseActionArgs()
 
 	Func:Init
 
-	local action=''
+	local action=''						# Internal, nice, simple, action name. Only one per-action.
 	local arg=''
 	local -a args_remaining=()
 	local awaiting_group=false
 	local current_action=''
 	local group=''
+	local potential_action=''			# A user arg that might be an action.
 	local requires_group=false
-	local user_action=''
+	local user_action=''				# The original user argument, detected as an action. There may be many variants per-action.
 
 	[[ -n ${args[*]:-} ]] && Packages:Load
 
@@ -2349,32 +2346,37 @@ ParseActionArgs()
 
 		# Identify action.
 
-		action=$(TranslateIntoAction "$arg")
+		potential_action=$(TranslateIntoAction "$arg"); DebugVar potential_action
 
-		case $action in
-			?(de|re)activate|backup|clean|@(dis|en)able?(au)|install|reassign|rebuild|@(re|un)install|restore|sign|upgrade)
-				requires_group=true
-				user_action=$arg
-				;;
-			status)
-				generate_show_report=true
-				get_qpkg_states=true
-				requires_group=true
-				user_action=$arg
-				useropt_show_status=true
-		esac
+		if [[ -n $potential_action ]]; then
+			action=$potential_action; DebugVar action
+			potential_action=''
 
-		if [[ -n $user_action && $user_action != "$current_action" ]]; then
-			[[ $awaiting_group = true ]] && args_incomplete+=("$user_action")
-			awaiting_group=$requires_group
-			current_action=$user_action
-			group=''	 			# When action changes, must clear group.
-			continue
+			case $action in
+				?(de|re)activate|backup|clean|@(dis|en)able?(au)|install|reassign|rebuild|@(re|un)install|restore|sign|upgrade)
+					requires_group=true
+					user_action=$arg
+					;;
+				status)
+					generate_show_report=true
+					get_qpkg_states=true
+					requires_group=true
+					user_action=$arg
+					useropt_show_status=true
+			esac
+
+			if [[ -n $user_action && $user_action != "$current_action" ]]; then
+				[[ $awaiting_group = true ]] && args_incomplete+=("$user_action")
+				awaiting_group=$requires_group
+				current_action=$user_action
+				group=''	 			# When action changes, must clear group.
+				continue
+			fi
 		fi
 
 		# Identify group.
 
-		group=$(TranslateIntoGroup "$arg")
+		group=$(TranslateIntoGroup "$arg"); DebugVar group
 
 		# Pair action with group.
 
@@ -2430,8 +2432,10 @@ ParseActionArgs()
 	fi
 
 	for arg in "${args_incomplete[@]:-}"; do
-		case $arg in
-			s|status?(es))
+		action=$(TranslateIntoAction "$arg")
+
+		case $action in
+			status)
 				Objects:Load
 				QPKGs.ACstatus.ISinstalled:Set								# If status is specified without a group, then group is `installed`.
 				generate_show_report=true
@@ -2456,7 +2460,9 @@ ParseActionArgs()
 		esac
 	done
 
-	args=(${args_remaining[@]:-})
+	DebugArray args_incomplete "${args_incomplete[*]:-}"
+
+	args=(${args_remaining[@]:-}); DebugArray args "${args[*]:-}"
 
 	Func:Exit
 
@@ -2465,7 +2471,7 @@ ParseActionArgs()
 TranslateIntoAction()
 	{
 
-	# Identify action from $1
+	# Identify variant action from $1 and output nice action.
 
 	local a=${1:-}
 
@@ -2476,7 +2482,7 @@ TranslateIntoAction()
 		add|install)
 			printf install
 			;;
-		backup|clean|colo?(u)r?(ful)|@(dis|en)able|follow|list|paste|reassign|rebuild|reinstall|reset|restore|sign|terse)
+		backup|clean|colo?(u)r?(ful)|@(dis|en)able|follow|help|list|paste|reassign|rebuild|reinstall|reset|restore|sign|terse)
 			echo -n "$a"
 			;;
 		c|check)
@@ -2518,13 +2524,19 @@ TranslateIntoAction()
 TranslateIntoGroup()
 	{
 
-	# Identify group from $1
+	# Identify variant group from $1 and output nice group.
 
 	local a=${1:-}
 
 	case $a in
 		a|abs|abbreviations)
 			printf abs
+			;;
+		action?(s))
+			printf actions
+			;;
+		action?(s)-all|all-action?(s))
+			printf all-actions
 			;;
 		active|no@(n|t)-inactive|no@(n|t)-stopped|started)
 			printf active
@@ -2535,7 +2547,7 @@ TranslateIntoGroup()
 		b|backups)
 			printf backups
 			;;
-		backedup|canbackup|enabled|installable|installed|missing|results|?(un)stable)
+		backedup|canbackup|enabled|installable|installed|missing|results|show|?(un)stable)
 			echo -n "$a"
 			;;
 		d|deps|dependencies|dependent?(s))
@@ -2550,6 +2562,9 @@ TranslateIntoGroup()
 		enable|on|set|true|yes)
 			printf true
 			;;
+		group?(s))
+			printf groups
+			;;
 		inactive|no@(n|t)-active|no@(n|t)-started|stopped)
 			printf NTactive
 			;;
@@ -2559,8 +2574,14 @@ TranslateIntoGroup()
 		l|last)
 			printf last
 			;;
+		list?(s))
+			printf lists
+			;;
 		log|tail)
 			printf tail
+			;;
+		me|problem?(s))
+			printf problems
 			;;
 		new|updat?(e)able|upgrad@(a|e)ble)
 			printf upgradable
@@ -2580,6 +2601,9 @@ TranslateIntoGroup()
 		no@(n|t)-upgradable)
 			printf NTupgradable
 			;;
+		o|option?(s))
+			printf options
+			;;
 		p|package?(s)|qpkg?(s))
 			printf packages
 			;;
@@ -2588,6 +2612,12 @@ TranslateIntoGroup()
 			;;
 		s|status?(es))
 			printf status
+			;;
+		tip?(s))
+			printf tips
+			;;
+		upgrade?(s)|upgrading)
+			printf upgrades
 			;;
 		version?(s))
 			printf versions
@@ -2685,7 +2715,7 @@ ArgSuggestions:Show()
 
 		for arg in "${args[@]}"; do
 			case $arg in
-				active|disabled|enabled|started)
+				active|@(dis|en)abled|started)
 					DisplayAsProjSynExam "please provide a valid $(ShowAsAction) before '$arg' like" "deactivate $arg"
 					arg_problem=true
 					useropt_help_basic=false
@@ -2716,7 +2746,7 @@ ArgSuggestions:Show()
 					useropt_help_basic=false
 					;;
 				all-restore|restore-all)
-					DisplayAsProjSynExam 'to restore all installed package configurations, use' 'restore all'
+					DisplayAsProjSynExam 'to restore all installed QPKG configurations, use' 'restore all'
 					arg_problem=true
 					useropt_help_basic=false
 					;;
@@ -2771,6 +2801,9 @@ ArgSuggestions:Show()
 	fi
 
 	[[ $arg_problem = true ]] && echo
+
+	DebugArray args_incomplete "${args_incomplete[*]:-}"
+	DebugArray args_remaining "${args_remaining[*]:-}"
 
 	Func:Exit
 
@@ -3059,6 +3092,8 @@ LoadIpkList()
 		DebugInfo "IPKs are being loaded from $(ShowAsFileName "$PREV_IPK_LIST")"
 
 		while read -r name separator version; do
+			name=$(Lowercase "$name")
+
 			IPKs-ACinstall-to:Add "$name"
 		done < "$PREV_IPK_LIST"
 	fi
@@ -3069,14 +3104,16 @@ LoadPipList()
 	{
 
 	local name=''
-	local separator=''
-	local version=''
+	local re=''
 
 	if [[ -e $PREV_PIP_LIST ]]; then
 		DebugInfo "PIPs are being loaded from $(ShowAsFileName "$PREV_PIP_LIST")"
 
-		while read -r name separator version; do
-			PIPs-ACinstall-to:Add "$name"
+		while read -r name; do
+			name=$(Lowercase "$name")
+			re=\\b$name\\b
+
+			[[ ${EXCLUSION_PIPS[*]} =~ $re ]] || PIPs-ACinstall-to:Add "$name"
 		done < "$PREV_PIP_LIST"
 	fi
 
@@ -3294,6 +3331,9 @@ IPKs:install()
 		IPKs-ACinstall-to:Add "$ESSENTIAL_IPKS"
 
 		if [[ -e $PREV_IPK_LIST && $useropt_check = false ]]; then		# Don't load previous IPK list during 'check'.
+
+
+
 			LoadIpkList
 			mv -f "$PREV_IPK_LIST" "$PREV_IPK_LIST.installing"
 		fi
@@ -11402,7 +11442,37 @@ DebugErrorTabld()
 DebugVar()
 	{
 
-	DebugAsVar "\$$1 : '${!1:-undefined}'"
+	# Input:
+	#   $1 = variable name
+
+	# Output:
+	#   to debug log
+
+	if [[ -n ${!1:-} ]]; then
+		DebugAsVar "\$$1 : '${!1}'"
+	else
+		DebugAsVar "\$$1 : null"
+	fi
+
+	}
+
+DebugArray()
+	{
+
+	# Input:
+	#   $1 = array name
+	#   $2 = array contents: i.e. "${myarray[*]}"
+
+	# Output:
+	#   to debug log
+
+	[[ -n ${1:-} ]] || return
+
+	if [[ -n ${2:-} ]]; then
+		DebugAsArray "\$$1 : ['$2']"
+	else
+		DebugAsArray "\$$1 : [null]"
+	fi
 
 	}
 
@@ -11592,6 +11662,13 @@ DebugAsVar()
 	{
 
 	[[ -n $1 ]] && DebugThis "(vv) $1"
+
+	}
+
+DebugAsArray()
+	{
+
+	[[ -n $1 ]] && DebugThis "(aa) $1"
 
 	}
 
@@ -12348,6 +12425,7 @@ Packages:Load()
 	readonly BASE_QPKG_WARNINGS
 	readonly ESSENTIAL_IPKS
 	readonly ESSENTIAL_PIPS
+	readonly EXCLUSION_PIPS
 	readonly MIN_PERL_VER
 	readonly MIN_PYTHON_VER
 	readonly PACKAGES_VER
