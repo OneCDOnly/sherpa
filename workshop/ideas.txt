@@ -1,40 +1,17 @@
-* Don't show sherpa title when viewing log.
+* 'debug' and 'verbose' modes should be persistent when set with a group.
+
+* Perform auto-test of available 'sed' binaries for one that handles extended regexes for StripANSICodes() without throwing an error.
+	- Might not need to wait for GNU 'sed' to be installed via Entware.
 
 * Add "about" user arg to display current environment.
-
-*  There should be distinct argument parsers for:
-	- script management functions:
-		'debug' (dbug)
-		'verbose' (v)
-		'follow': stable, unstable (this will be an undocumented action)
-		'reset'
-		'check' (c)
-		'paste': last (l), log
-
-	- 'help':
-		actions, tips, options, groups, lists, about/info(?), abbreviations (a),
-		- (and display pre-generated reports).
-
-	- 'list':
-		installed, not-installed, installable, upgradable, versions, missing, etc...
-		- (and generate basic reports with no heading).
-
-	- 'show':
-		results, dependencies (d), backups, packages (p), repositories (r),
-		- (and generate full reports).
-		log, last,
-		- (and generate dull reports).
-
-	- the usual QPKG actions:
-		- activate, status (s), (and generate full reports).
 
 * BASH completion.
 
 * Service scripts should show current auto-update setting when displaying basic help.
 
-* Automate generation of Packages.md in wiki using details from packages.source ?
+* Automate generation of 'Packages.md' in wiki using details from 'packages.source' ?
 	- Would need to store full application description, port numbers, application source.
-	- Maybe consider another local source file, that builds packages.source first?
+	- Maybe consider another local source file, that builds 'packages.source' first?
 
 * Don't start deactivated QPKGs (unless requested) during 'install all'.
 

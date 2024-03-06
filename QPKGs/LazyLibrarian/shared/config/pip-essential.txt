@@ -6,6 +6,7 @@ deluge_client
 html5lib
 httpagentparser
 httplib2
+irc
 mako
 pypdf3
 python_magic

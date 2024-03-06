@@ -22,29 +22,29 @@ match=false
 TranslateQPKGArch()
 	{
 
-	# translate arch from QPKG filename to sherpa.
+	# Translate arch from QPKG filename to sherpa.
 
 	case $1 in
 		i686|x86)
-			echo i86
+			printf i86
 			;;
 		x86_64)
-			echo i64
+			printf i64
 			;;
 		arm-x19)
-			echo a19
+			printf a19
 			;;
 		arm-x31)
-			echo a31
+			printf a31
 			;;
 		arm-x41)
-			echo a41
+			printf a41
 			;;
 		arm_64)
-			echo a64
+			printf a64
 			;;
 		'')
-			echo all
+			printf all
 			;;
 		*)
 			echo "$1"		# passthru
@@ -52,53 +52,112 @@ TranslateQPKGArch()
 
 	}
 
+StripComments()
+	{
+
+	# input:
+	#   $1 = string to strip comment lines, empty lines, and so-on.
+
+	# output:
+	#   stdout = stripped string.
+
+	[[ -n $1 ]] || return
+
+	local a="$1"
+
+	a=$(/bin/sed -e '/^#[[:space:]].*/d;/#$/d;s/[[:space:]]#[[:space:]].*//' <<< "$a")		# remove comment lines and line comments.
+	a=$(/bin/sed -e 's/^[[:space:]]*//' <<< "$a")											# remove leading whitespace.
+	a=$(/bin/sed 's/[[:space:]]*$//' <<< "$a")												# remove trailing whitespace.
+	a=$(/bin/sed "/^$/d" <<< "$a")															# remove empty lines.
+
+	echo "$a"
+
+	}
+
 echo -n 'locating QPKG checksum files ... '
-raw=$(find "$checksum_root_path" -name '*.qpkg.md5')
+
+	raw=$(find "$checksum_root_path" -name '*.qpkg.md5')
 
 ShowDone
 
-sorted=$(sort --version-sort --reverse <<< "$raw")
-
 echo -n 'extracting highest QPKG version numbers ... '
 
-while read -r checksum_pathfilename; do
-	checksum_filename=$(basename "$checksum_pathfilename")
-	qpkg_filename=${checksum_filename//.md5/}
+	sorted=$(sort --version-sort --reverse <<< "$raw")
 
-	IFS='_' read -r package_name version arch tailend <<< "${checksum_filename//.qpkg.md5/}"
+	while read -r checksum_pathfilename; do
+		checksum_filename=$(basename "$checksum_pathfilename")
+		qpkg_filename=${checksum_filename//.md5/}
 
-	if [[ $arch = std ]]; then     			# an exception for Entware.
-		arch=''
-		tailend=''
-	fi
+		IFS='_' read -r package_name version arch tailend <<< "${checksum_filename//.qpkg.md5/}"
 
-	[[ -n $tailend ]] && arch+=_$tailend
-
-	if [[ ${version##*.} = zip ]]; then		# an exception for QDK.
-		version=${version%.*}
-	fi
-
-	if [[ ${qpkg_filename: -9} = .zip.qpkg ]]; then		# another exception for QDK.
-		qpkg_filename=${qpkg_filename%.*}
-	fi
-
-	if [[ $package_name != "$previous_package_name" ]]; then
-		match=true
-	elif [[ $version = "$previous_version" ]]; then
-		if [[ $arch != "$previous_arch" ]]; then
-			match=true
+		if [[ $arch = std ]]; then     						# an exception for Entware.
+			arch=''
+			tailend=''
 		fi
-	else
-		match=false
+
+		[[ -n $tailend ]] && arch+=_$tailend
+
+		if [[ ${version##*.} = zip ]]; then					# an exception for QDK.
+			version=${version%.*}
+		fi
+
+		if [[ ${qpkg_filename: -9} = .zip.qpkg ]]; then		# another exception for QDK.
+			qpkg_filename=${qpkg_filename%.*}
+		fi
+
+		if [[ $package_name != "$previous_package_name" ]]; then
+			match=true
+		elif [[ $version = "$previous_version" ]]; then
+			if [[ $arch != "$previous_arch" ]]; then
+				match=true
+			fi
+		else
+			match=false
+		fi
+
+		if [[ $match = true ]]; then
+			printf '%-36s %-32s %-20s %-12s %-6s %s\n' "$checksum_filename" "$qpkg_filename" "$package_name" "$version" "$(TranslateQPKGArch "$arch")" "$(cut -d' ' -f1 < "$checksum_pathfilename")"
+			previous_package_name=$package_name
+			previous_version=$version
+			previous_arch=$arch
+		fi
+	done <<< "$sorted" | uniq > "$highest_package_versions_found_pathfile"
+
+ShowDone
+
+echo -n 'loading IPK essentials ... '
+
+	a=$source_path/ipk-essential.txt
+
+	if [[ -e $a ]]; then
+		essential_ipks=$(/bin/tr '\n' ' ' <<< "$(StripComments "$(<"$a")")")
+		essential_ipks=${essential_ipks%* }
+		essential_ipks=${essential_ipks,,}
 	fi
 
-	if [[ $match = true ]]; then
-		printf '%-36s %-32s %-20s %-12s %-6s %s\n' "$checksum_filename" "$qpkg_filename" "$package_name" "$version" "$(TranslateQPKGArch "$arch")" "$(cut -d' ' -f1 < "$checksum_pathfilename")"
-		previous_package_name=$package_name
-		previous_version=$version
-		previous_arch=$arch
+ShowDone
+
+echo -n 'loading PIP essentials ... '
+
+	a=$source_path/pip-essential.txt
+
+	if [[ -e $a ]]; then
+		essential_pips=$(/bin/tr '\n' ' ' <<< "$(StripComments "$(<"$a")")")
+		essential_pips=${essential_pips%* }
+		essential_pips=${essential_pips,,}
 	fi
-done <<< "$sorted" | uniq > "$highest_package_versions_found_pathfile"
+
+ShowDone
+
+echo -n 'loading PIP exclusions ... '
+
+	a=$source_path/pip-exclusions.txt
+
+	if [[ -e $a ]]; then
+		exclusion_pips=$(/bin/tr '\n' ' ' <<< "$(StripComments "$(<"$a")")")
+		exclusion_pips=${exclusion_pips%* }
+		exclusion_pips=${exclusion_pips,,}
+	fi
 
 ShowDone
 
@@ -109,29 +168,29 @@ buffer=$(<"$target_pathfile")
 
 echo -n 'updating QPKG fields ... '
 
-buffer=$(sed "s|<?cdn_sherpa_packages_url?>|$cdn_sherpa_packages_url|" <<< "$buffer")
-buffer=$(sed "s|<?cdn_qnap_dev_packages_url?>|$cdn_qnap_dev_packages_url|" <<< "$buffer")
-buffer=$(sed "s|<?cdn_other_packages_url?>|$cdn_other_packages_url|" <<< "$buffer")
+	buffer=$(sed "s|<?cdn_sherpa_packages_url?>|$cdn_sherpa_packages_url|" <<< "$buffer")
+	buffer=$(sed "s|<?cdn_qnap_dev_packages_url?>|$cdn_qnap_dev_packages_url|" <<< "$buffer")
+	buffer=$(sed "s|<?cdn_other_packages_url?>|$cdn_other_packages_url|" <<< "$buffer")
 
-while read -r checksum_filename qpkg_filename package_name version arch hash; do
-	for property in version package_name qpkg_filename hash; do
-		buffer=$(sed "/QPKG_NAME+=($package_name)/,/^$/{/QPKG_ARCH+=($arch)/,/$property.*/s/<?$property?>/${!property}/}" <<< "$buffer")
-
-		if [[ $package_name = QDK && $property = version ]]; then
-			# run this a second time as there are 2 version placeholders in packages.source for QDK.
+	while read -r checksum_filename qpkg_filename package_name version arch hash; do
+		for property in version package_name qpkg_filename hash; do
 			buffer=$(sed "/QPKG_NAME+=($package_name)/,/^$/{/QPKG_ARCH+=($arch)/,/$property.*/s/<?$property?>/${!property}/}" <<< "$buffer")
-		fi
 
-		# if arch = none then package is not to be installable. Write 'none' into all values.
-		buffer=$(sed "/QPKG_NAME+=($package_name)/,/^$/{/QPKG_ARCH+=(none)/,/$property.*/s/<?$property?>/none/}" <<< "$buffer")
-	done
-done <<< "$(sort "$highest_package_versions_found_pathfile")"
+			if [[ $package_name = QDK && $property = version ]]; then
+				# run this a second time as there are 2 version placeholders in packages.source for QDK.
+				buffer=$(sed "/QPKG_NAME+=($package_name)/,/^$/{/QPKG_ARCH+=($arch)/,/$property.*/s/<?$property?>/${!property}/}" <<< "$buffer")
+			fi
+
+			# if arch = none then package is not to be installable. Write 'none' into all values.
+			buffer=$(sed "/QPKG_NAME+=($package_name)/,/^$/{/QPKG_ARCH+=(none)/,/$property.*/s/<?$property?>/none/}" <<< "$buffer")
+		done
+	done <<< "$(sort "$highest_package_versions_found_pathfile")"
 
 ShowDone
 
 echo -n "building 'packages' file ... "
 
-echo "$buffer" > "$target_pathfile"
+	echo "$buffer" > "$target_pathfile"
 
 if [[ ! -e $target_pathfile ]]; then
 	ColourTextBrightRed "'$target_pathfile' was not written to disk"; echo

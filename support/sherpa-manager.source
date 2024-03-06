@@ -42,6 +42,7 @@ Init()
 	User.IsOk || return
 	Consts:Load
 	Vars:Load
+	UpdateColourisation
 	CMDs:Load
 	CMDs.IsOk || return
 	Keystrokes:Hide
@@ -64,7 +65,7 @@ Init()
 	QPKGs.Warnings:Check
 	Debug.Log:Env
 	Tasks:Check
-	Env:Validate
+	Env:Check
 	QPKGs:AssignToActions
 
 	return 0
@@ -106,31 +107,37 @@ Results:Show()
 	if [[ $generate_list_report = true ]]; then
 		if [[ ${packages_loaded:=false} = true ]]; then
 			if QPKGs.AClist.GRdependent.IsSet; then
-				QPKGs.GrDependent:Show
+				QPKGs.GRdependent:Show
 			elif QPKGs.AClist.GRindependent.IsSet; then
-				QPKGs.GrIndependent:Show
-			elif QPKGs.AClist.GRinstallable.IsSet; then
-				QPKGs.GrInstallable:Show
-			elif QPKGs.AClist.GRNTinstallable.IsSet; then
-				QPKGs.GrNtInstallable:Show
-			elif QPKGs.AClist.GRupgradable.IsSet; then
-				QPKGs.GrUpgradable:Show
+				QPKGs.GRindependent:Show
 			elif QPKGs.AClist.ISactive.IsSet; then
-				QPKGs.IsActive:Show
+				QPKGs.ISactive:Show
 			elif QPKGs.AClist.ISNTactive.IsSet; then
-				QPKGs.IsNtActive:Show
+				QPKGs.ISNTactive:Show
 			elif QPKGs.AClist.ISbackedup.IsSet; then
-				QPKGs.IsBackedUp:Show
+				QPKGs.ISbackedup:Show
 			elif QPKGs.AClist.ISNTbackedup.IsSet; then
-				QPKGs.IsNtBackedUp:Show
+				QPKGs.ISNTbackedup:Show
+			elif QPKGs.AClist.ISenabled.IsSet; then
+				QPKGs.ISenabled:Show
+			elif QPKGs.AClist.ISNTenabled.IsSet; then
+				QPKGs.ISNTenabled:Show
+			elif QPKGs.AClist.ISinstallable.IsSet; then
+				QPKGs.ISinstallable:Show
+			elif QPKGs.AClist.ISNTinstallable.IsSet; then
+				QPKGs.ISNTinstallable:Show
 			elif QPKGs.AClist.ISinstalled.IsSet; then
-				QPKGs.IsInstalled:Show
+				QPKGs.ISinstalled:Show
 			elif QPKGs.AClist.ISNTinstalled.IsSet; then
-				QPKGs.IsNtInstalled:Show
+				QPKGs.ISNTinstalled:Show
 			elif QPKGs.AClist.ISmissing.IsSet; then
-				QPKGs.IsMissing:Show
+				QPKGs.ISmissing:Show
 			elif QPKGs.AClist.ISNTmissing.IsSet; then
-				QPKGs.IsNtMissing:Show
+				QPKGs.ISNTmissing:Show
+			elif QPKGs.AClist.ISupgradable.IsSet; then
+				QPKGs.ISupgradable:Show
+			elif QPKGs.AClist.ISNTupgradable.IsSet; then
+				QPKGs.ISNTupgradable:Show
 			fi
 		fi
 	fi
@@ -161,6 +168,8 @@ Results:Show()
 			Help.Options:Show
 		elif [[ $useropt_help_packages = true ]]; then
 			Help.Packages:Show
+		elif [[ $useropt_help_show = true ]]; then
+			Help.Show:Show
 		elif [[ $useropt_help_problems = true ]]; then
 			Help.Problems:Show
 		elif [[ $useropt_help_upgrades = true ]]; then
@@ -345,6 +354,7 @@ Vars:Load()
 	useropt_help_options=false
 	useropt_help_packages=false
 	useropt_help_problems=false
+	useropt_help_show=false
 	useropt_help_tips=false
 	useropt_help_upgrades=false
 	useropt_paste_log_last=false
@@ -522,7 +532,7 @@ LocateSQLiteBinary()
 Env:Load()
 	{
 
-	ShowAsProc 'loading environment'
+	ShowAsProc env
 
 	readonly CERT_DB_PATHFILE=/etc/config/nas_sign_qpkg.db
 	readonly CPU_CORES=$(GetCPUCores)
@@ -623,32 +633,29 @@ Lists:Load()
 	PACKAGE_TIERS=(independent auxiliary dependent)
 
 	# sorted
-	QPKG_IS_STATES=(active backedup downloaded enabled installed missing signed slow unknown)
-	QPKG_ISNT_STATES=(active backedup downloaded enabled installed missing signed)
-	QPKG_STATES_TRANSIENT=(starting stopping restarting)
-	QPKG_SERVICE_RESULTS=(ok failed)
-
-	# sorted
-	IPK_STATES=(downgraded downloaded installed reinstalled upgraded)
+	QPKG_IS_STATES=(active backedup downloaded enabled installable installed missing signed upgradable)
+	QPKG_ISNT_STATES=(active backedup downloaded enabled installable installed missing signed upgradable)
+	QPKG_IS_GROUPS=(all canbackup canclean canrestarttoupdate dependent hasdependents independent)
+	QPKG_ISNT_GROUPS=(canclean)
+	QPKG_STATES_TRANSIENT=(restarting slow starting stopping unknown)
+	QPKG_SERVICE_RESULTS=(failed ok)
 
 	# ordered
 	QPKG_ACTIONS=(status list rebuild reassign download backup deactivate disable uninstall upgrade reinstall install enableau disableau sign restore clean enable activate reactivate)
-	IPK_ACTIONS=(downgrade download uninstall upgrade reinstall install)
-	PIP_ACTIONS=(download uninstall upgrade reinstall install)
+	IPK_ACTIONS=(downgrade download uninstall upgrade install)
+	PIP_ACTIONS=(uninstall upgrade install)
 
-	# These actions, states and groups may be specified by the user.
+	# These actions may be specified by the user.
 	# sorted
 	USER_QPKG_ACTIONS=(activate backup clean deactivate disable disableau enable enableau install list reactivate reassign rebuild reinstall restore sign status uninstall upgrade)
-	USER_QPKG_IS_STATES=(active backedup enabled installed missing)
-	USER_QPKG_ISNT_STATES=(active backedup enabled installed missing)
-	USER_QPKG_IS_GROUPS=(all canbackup canclean canrestarttoupdate dependent hasdependents independent installable upgradable)
-	USER_QPKG_ISNT_GROUPS=(canclean installable upgradable)
 
 	# KLUDGE: for some reason, setting `readonly` while populating arrays causes their scope to become local, so need to set as `readonly` afterward to ensure global scope. GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
 	readonly PACKAGE_TIERS
 
 	readonly QPKG_IS_STATES
 	readonly QPKG_ISNT_STATES
+	readonly QPKG_IS_GROUPS
+	readonly QPKG_ISNT_GROUPS
 	readonly QPKG_STATES_TRANSIENT
 	readonly QPKG_SERVICE_RESULTS
 
@@ -659,10 +666,6 @@ Lists:Load()
 	readonly PIP_ACTIONS
 
 	readonly USER_QPKG_ACTIONS
-	readonly USER_QPKG_IS_STATES
-	readonly USER_QPKG_ISNT_STATES
-	readonly USER_QPKG_IS_GROUPS
-	readonly USER_QPKG_ISNT_GROUPS
 
 	local action=''
 
@@ -702,7 +705,7 @@ Debug.Log:Env()
 
 	Func:Init
 
-	ShowAsProc 'logging environment'
+	ShowAsProc 'log env'
 
 	DebugInfoMinSepr
 	DebugHardware ok model "$(get_display_name)"
@@ -866,28 +869,28 @@ Tasks:Check()
 				break
 			fi
 
-			for group in "${USER_QPKG_IS_GROUPS[@]}"; do
+			for group in "${QPKG_IS_GROUPS[@]}"; do
 				if QPKGs.AC${action}.GR${group}.IsSet; then
 					build_states=true
 					break 2
 				fi
 			done
 
-			for group in "${USER_QPKG_ISNT_GROUPS[@]}"; do
+			for group in "${QPKG_ISNT_GROUPS[@]}"; do
 				if QPKGs.AC${action}.GRNT${group}.IsSet; then
 					build_states=true
 					break 2
 				fi
 			done
 
-			for state in "${USER_QPKG_IS_STATES[@]}"; do
+			for state in "${QPKG_IS_STATES[@]}"; do
 				if QPKGs.AC${action}.IS${state}.IsSet; then
 					build_states=true
 					break 2
 				fi
 			done
 
-			for state in "${USER_QPKG_ISNT_STATES[@]}"; do
+			for state in "${QPKG_ISNT_STATES[@]}"; do
 				if QPKGs.AC${action}.ISNT${state}.IsSet; then
 					build_states=true
 					break 2
@@ -907,7 +910,7 @@ Tasks:Check()
 
 	}
 
-Env:Validate()
+Env:Check()
 	{
 
 	# This function handles most of the high-level logic for package actions.
@@ -917,7 +920,7 @@ Env:Validate()
 
 	Func:Init
 
-	ShowAsProc 'validate environment'
+	ShowAsProc 'check env'
 
 	local installed_ver=''
 	local target_packages=''
@@ -928,52 +931,52 @@ Env:Validate()
 		else
 			DebugAsWarn "$(ShowAsPackageName Entware) appears to be installed but is inactive. Please consider starting the $(ShowAsPackageName Entware) QPKG."
 		fi
-	fi
 
-	# Decide if particular IPKs and PIPs should be installed/upgraded.
+		# Decide if specific IPKs and PIPs should be installed/upgraded.
 
-	if [[ $useropt_check = true ]] || QPKGs-ACupgrade-to.Exist Entware; then
-		ipks_upgrade=true
-		ipks_install=true
-		pips_install=true
+		if [[ $useropt_check = true ]] || QPKGs-ACupgrade-to.Exist Entware; then
+			ipks_install=true
+			ipks_upgrade=true
+			pips_install=true
 
-		if [[ -e $PYTHON3_CMD ]]; then
-			installed_ver=$(GetPython3Ver "$PYTHON3_CMD")
+			if [[ -e $PYTHON3_CMD ]]; then
+				installed_ver=$(GetPython3Ver "$PYTHON3_CMD")
 
-			if [[ ${installed_ver//./} -lt $MIN_PYTHON_VER ]]; then
-				ShowAsNote "the $(TextBrightOrange Python) environment will be auto-upgraded"
-				IPKs-ACuninstall-to:Add 'python*'
-			fi
-		fi
-
-		if [[ -e $PERL_CMD ]]; then
-			installed_ver=$(GetPerlVer "$PERL_CMD")
-
-			if [[ ${installed_ver//./} -lt $MIN_PERL_VER ]]; then
-				ShowAsNote "the $(TextBrightOrange Perl) environment will be auto-upgraded"
-				IPKs-ACuninstall-to:Add 'perl*'
-			fi
-		fi
-	fi
-
-	# Decide if specific IPKs should be uninstalled/downgraded.
-
-	if OS.IsNonStdKernelPageSize; then
-		case $NAS_QPKG_ARCH in
-			a41)
-				target_packages='ar binutils libbfd libctf libopcodes objdump'
-
-				# Assume first package version is same as remaining package versions.
-				installed_version=$($OPKG_CMD list-installed | $GREP_CMD "^${target_packages%% *} *" | cut -d' ' -f3 | cut -d'-' -f1)
-
-				if [[ ${installed_version//.} -gt 238 ]]; then
-					ipks_downgrade=true
-					ShowAsNote "IPKs will be downgraded to suit $KERNEL_PAGE_SIZE kernel page size"
-					IPKs-ACdowngrade-to:Add "$target_packages"
-				else
-					IPKs-ACdowngrade-sk:Add "$target_packages"
+				if [[ ${installed_ver//./} -lt $MIN_PYTHON_VER ]]; then
+					ShowAsNote "the $(TextBrightOrange Python) environment will be auto-upgraded"
+					IPKs-ACuninstall-to:Add 'python*'
 				fi
-		esac
+			fi
+
+			if [[ -e $PERL_CMD ]]; then
+				installed_ver=$(GetPerlVer "$PERL_CMD")
+
+				if [[ ${installed_ver//./} -lt $MIN_PERL_VER ]]; then
+					ShowAsNote "the $(TextBrightOrange Perl) environment will be auto-upgraded"
+					IPKs-ACuninstall-to:Add 'perl*'
+				fi
+			fi
+		fi
+
+		# Decide if specific IPKs should be uninstalled/downgraded.
+
+		if OS.IsNonStdKernelPageSize; then
+			case $NAS_QPKG_ARCH in
+				a41)
+					target_packages='ar binutils libbfd libctf libopcodes objdump'
+
+					# Assume first package version is same as remaining package versions.
+					installed_version=$($OPKG_CMD list-installed | $GREP_CMD "^${target_packages%% *} *" | cut -d' ' -f3 | cut -d'-' -f1)
+
+					if [[ ${installed_version//.} -gt 238 ]]; then
+						ipks_downgrade=true
+						ShowAsNote "IPKs will be downgraded to suit $KERNEL_PAGE_SIZE kernel page size"
+						IPKs-ACdowngrade-to:Add "$target_packages"
+					else
+						IPKs-ACdowngrade-sk:Add "$target_packages"
+					fi
+			esac
+		fi
 	fi
 
 	QPKGs.IsCanBackup:Build
@@ -982,7 +985,7 @@ Env:Validate()
 	AllocPackGroupsToAcs
 	AllocPackStatesToAcs
 
-	if QPKGs-GRupgradable.Exist sherpa; then
+	if QPKGs-ISupgradable.Exist sherpa; then
 		ShowAsNote "the $(TextBrightOrange sherpa) QPKG will be auto-upgraded"
 		QPKGs-ACupgrade-to:Add sherpa
 	fi
@@ -1227,37 +1230,44 @@ Actions:Proc()
 
 	# -> package preparation phase begins here <-
 
-	Action:Proc status all QPKG statusing statused
+	Action:Proc status all QPKG status statused
 
 	if [[ $useropt_show_status = false ]]; then
-		ShowAsProc 'assigning QPKGs by status'
+		ShowAsProc 'assign QPKGs by status'				# Update action lists based-on QPKG `status`.
 
-		for action in "${USER_QPKG_ACTIONS[@]}"; do			# Update action lists based-on QPKG `status`.
-			for state in "${USER_QPKG_IS_STATES[@]}"; do
+		for action in "${USER_QPKG_ACTIONS[@]}"; do
+			for state in "${QPKG_IS_STATES[@]}"; do
 				QPKGs.AC${action}.IS${state}.IsSet && QPKGs-AC${action}-to:Add "$(QPKGs-IS${state}:Array)"
 			done
 
-			for state in "${USER_QPKG_ISNT_STATES[@]}"; do
+			for state in "${QPKG_ISNT_STATES[@]}"; do
 				QPKGs.AC${action}.ISNT${state}.IsSet && QPKGs-AC${action}-to:Add "$(QPKGs-ISNT${state}:Array)"
 			done
 		done
 	fi
 
-	Action:Proc rebuild all QPKG meta-rebuilding meta-rebuilt
-	Action:Proc reassign all QPKG reassigning reassigned
-	Action:Proc download all QPKG downloading downloaded
-	Action:Proc backup all QPKG backing-up backed-up
+	Action:Proc rebuild all QPKG meta-rebuild meta-rebuilt
+	Action:Proc reassign all QPKG reassign reassigned
+	Action:Proc download all QPKG download downloaded
+	Action:Proc backup all QPKG backup backed-up
 
 	# -> package removal phase begins here <-
 
-	for ((tier_index=${#PACKAGE_TIERS[@]}-1; tier_index>=0; tier_index--)); do	# process tiers in-reverse
+	for ((tier_index=${#PACKAGE_TIERS[@]}-1; tier_index>=0; tier_index--)); do	# Process tiers in-reverse
 		tier=${PACKAGE_TIERS[$tier_index]}
 
 		case $tier in
 			?(in)dependent)
-				Action:Proc deactivate $tier QPKG deactivating deactivated
-				Action:Proc disable $tier QPKG disabling disabled
-				Action:Proc uninstall $tier QPKG uninstalling uninstalled
+				Action:Proc deactivate $tier QPKG deactivate deactivated
+				Action:Proc disable $tier QPKG disable disabled
+				Action:Proc uninstall $tier QPKG uninstall uninstalled
+				;;
+			auxiliary)
+				if QPKGs-ISenabled.Exist Entware; then
+					ModPathToEntware
+					PIPs:uninstall
+					IPKs:uninstall
+				fi
 		esac
 	done
 
@@ -1266,24 +1276,24 @@ Actions:Proc()
 	for tier in "${PACKAGE_TIERS[@]}"; do
 		case $tier in
 			?(in)dependent)
-				Action:Proc upgrade $tier QPKG upgrading upgraded
-				Action:Proc reinstall $tier QPKG reinstalling reinstalled
-				Action:Proc install $tier QPKG installing installed
-				Action:Proc enableau $tier QPKG 'enabling auto-update' 'enabled auto-update'
-				Action:Proc disableau $tier QPKG 'disabling auto-update' 'disabled auto-update'
-				Action:Proc sign $tier QPKG '"signing"' '"signed"'
-				Action:Proc restore $tier QPKG restoring restored
-				Action:Proc clean $tier QPKG cleaning cleaned
-				Action:Proc enable $tier QPKG enabling enabled
-				Action:Proc reactivate $tier QPKG reactivating reactivated
-				Action:Proc activate $tier QPKG activating activated
+				Action:Proc upgrade $tier QPKG upgrade upgraded
+				Action:Proc reinstall $tier QPKG reinstall reinstalled
+				Action:Proc install $tier QPKG install installed
+				Action:Proc enableau $tier QPKG 'enable auto-update' 'enabled auto-update'
+				Action:Proc disableau $tier QPKG 'disable auto-update' 'disabled auto-update'
+				Action:Proc sign $tier QPKG '"sign"' '"signed"'
+				Action:Proc restore $tier QPKG restore restored
+				Action:Proc clean $tier QPKG clean cleaned
+				Action:Proc enable $tier QPKG enable enabled
+				Action:Proc reactivate $tier QPKG reactivate reactivated
+				Action:Proc activate $tier QPKG activate activated
 				;;
 			auxiliary)
-				for action in install reinstall upgrade activate; do
+				for action in status install reinstall upgrade activate; do
 					if (QPKGs-ACinstall-ok.Exist Entware) || QPKGs-AC${action}-to.IsAny && QPKGs-ISenabled.Exist Entware; then
-						ipks_upgrade=true
-						ipks_install=true
 						ipks_downgrade=true
+						ipks_install=true
+						ipks_upgrade=true
 						pips_install=true
 						break
 					fi
@@ -1291,18 +1301,19 @@ Actions:Proc()
 
 				if QPKGs-ISenabled.Exist Entware; then
 					ModPathToEntware
-					Action:Proc upgrade $tier IPK upgrading upgraded
-					Action:Proc install $tier IPK installing installed
-					Action:Proc downgrade $tier IPK downgrading downgraded
-					Action:Proc install $tier PIP installing installed
+					IPKs:upgrade
+					IPKs:install
+					IPKs:downgrade
+					PIPs:upgrade
+					PIPs:install
 				fi
 		esac
 	done
 
 	if [[ $useropt_debug = true ]]; then
-#		PIPs.Actions:List
-		IPKs.Actions:List
 		QPKGs.Actions:List
+		IPKs.Actions:List
+		PIPs.Actions:List
 	fi
 
 	if [[ $title_shown = true ]]; then
@@ -1379,8 +1390,6 @@ Action:Proc()
 				fork_progress_prefix="$ACTION_PRESENT_MSG $([[ $TIER != all ]] && echo "$TIER ")$(Uppercase "$PACKAGE_TYPE")$(Pluralise "$total_count")"
 			fi
 
-			ShowAsProc "$fork_progress_prefix"
-
 			AdjustMaxForks "$TARGET_ACTION"
 			InitForkCounts
 			OpenActionMsgPipe
@@ -1404,7 +1413,7 @@ Action:Proc()
 						;;
 					change)			# Change the state of a single QPKG in the parent shell.
 						while true; do
-							for group in "${USER_QPKG_IS_GROUPS[@]}"; do
+							for group in "${QPKG_IS_GROUPS[@]}"; do
 								case $msg1_value in
 									"SC${group}")
 										[[ $(type -t QPKGs-GRNT${group}:Init) = function ]] && QPKGs-GRNT${group}:Remove "$msg2_value"
@@ -1413,7 +1422,7 @@ Action:Proc()
 								esac
 							done
 
-							for group in "${USER_QPKG_ISNT_GROUPS[@]}"; do
+							for group in "${QPKG_ISNT_GROUPS[@]}"; do
 								case $msg1_value in
 									"GRNT${group}")
 										[[ $(type -t QPKGs-GR${group}:Init) = function ]] && QPKGs-GR${group}:Remove "$msg2_value"
@@ -1499,9 +1508,11 @@ Action:Proc()
 			[[ ${#target_packages[@]} -gt 0 ]] && KillActiveFork		# Only needed if an action fork didn't exit properly.
 			wait 2>/dev/null
 			CloseActionMsgPipe
+
+			[[ ${useropt_terse:=true} = false && $useropt_verbose = false ]] && echo
 			;;
 		IPK|PIP)
-			if [[ $ipks_upgrade = true || $ipks_install = true || $ipks_downgrade || $pips_install = true ]]; then
+			if [[ $ipks_downgrade = true || $ipks_install = true || $ipks_upgrade = true || $pips_install = true ]]; then
 				InitForkCounts
 				${PACKAGE_TYPE}s:${TARGET_ACTION}	# Only process these packages in groups, not individually.
 			fi
@@ -1590,7 +1601,7 @@ AdjustMaxForks()
 				max_forks=4
 				reason="'$1'"
 				;;
-			disable?(au)|enable?(au)|rebuild|sign|status)	# Really-low-resource actions.
+			@(dis|en)able?(au)|rebuild|sign|status)			# Really-low-resource actions.
 				max_forks=8
 				reason="'$1'"
 		esac
@@ -1621,6 +1632,8 @@ PrepareArgs()
 	args=(${a/--/})
 	arg_problem=false
 
+	DebugArray args "${args[*]:-}"
+
 	[[ -z $ARGS_RAW ]] && useropt_help_basic=true
 
 	}
@@ -1641,86 +1654,72 @@ ParseManagementArgs()
 
 	Func:Init
 
-	local action=''
+	local action=''						# Internal, nice, simple, action name. Only one per-action.
 	local arg=''
 	local -a args_remaining=()
 	local awaiting_group=false
 	local current_action=''
 	local group=''
+	local potential_action=''			# A user arg that might be an action.
 	local requires_group=false
-	local user_action=''
+	local user_action=''				# The original user argument, detected as an action. There may be many variants per-action.
 
 	for arg in "${args[@]:-}"; do
 		[[ -n $arg ]] || continue
 
 		# Identify action.
 
-		case $arg in
-		# These cases are for a user-provided word to specify a single action.
-			reset)
-				DeleteSetting Colourful
-				DeleteSetting Git_Branch
-				DeleteSetting Terse
+		potential_action=$(TranslateIntoAction "$arg"); DebugVar potential_action
 
-				Reset					# <-- Processing will terminate in this function (no-return).
-				;;
-		# All cases below are for multiple user-provided words or chars to specify a single action.
-			c|check)
-				action=check
-				generate_show_report=true
-				get_qpkg_states=true
-				requires_group=false
-				run_package_actions=true
-				user_action=$arg
-				useropt_check=true
-				;;
-			colo?(u)r?(ful)|follow|paste|terse)
-				action=$arg
-				requires_group=true
-				user_action=$arg
-				;;
-			d?(e)bug)
-				action=debug
-				requires_group=false
-				user_action=$arg
-				EnableDebugToArchiveAndFile
-				;;
-			v|verbose)
-				action=verbose
-				requires_group=false
-				user_action=$arg
-				Verbose:Enable
-				EnableDebugToArchiveAndFile
-		esac
+		if [[ -n $potential_action ]]; then
+			action=$potential_action; DebugVar action
+			potential_action=''
 
-		if [[ -n $user_action && $user_action != "$current_action" ]]; then
-			[[ $awaiting_group = true ]] && args_incomplete+=("$user_action")
-			awaiting_group=$requires_group
-			current_action=$user_action
-			group=''	 			# When action changes, must clear group.
-			continue
+			case $action in
+				check)
+					generate_show_report=true
+					get_qpkg_states=true
+					requires_group=false
+					run_package_actions=true
+					user_action=$arg
+					useropt_check=true
+					;;
+				colo?(u)r?(ful)|follow|paste|terse)
+					requires_group=true
+					user_action=$arg
+					;;
+				debug)
+					requires_group=false
+					user_action=$arg
+					EnableDebugToArchiveAndFile
+					;;
+				reset)
+					DeleteSetting Colourful
+					DeleteSetting Git_Branch
+					DeleteSetting Terse
+
+					Reset					# <-- Processing will terminate in this function (no-return).
+					;;
+				verbose)
+					requires_group=false
+					user_action=$arg
+					Verbose:Enable
+					EnableDebugToArchiveAndFile
+			esac
+
+			if [[ -n $user_action && $user_action != "$current_action" ]]; then
+				[[ $awaiting_group = true ]] && args_incomplete+=("$user_action")
+				awaiting_group=$requires_group
+				current_action=$user_action
+				group=''	 			# When action changes, must clear group.
+				continue
+			fi
 		fi
 
-		# Identify group. Include action assignment when action hasn't been previously specified.
+		# Identify group.
 
-		case $arg in
-		# These cases use only a single user-provided word or char to specify a single group.
-			?(un)stable)
-				group=$arg
-				;;
-		# All cases below can use multiple user-provided words or chars to specify a single group.
-			all|log|tail)
-				group=tail
-				;;
-			disable|false|no|off)
-				group=false
-				;;
-			l|last)
-				group=last
-				;;
-			enable|on|true|yes)
-				group=true
-		esac
+		group=$(TranslateIntoGroup "$arg")
+		DebugVar group
 
 		# Pair action with group.
 
@@ -1796,7 +1795,10 @@ ParseManagementArgs()
 		args_incomplete+=("$user_action")									# Save the actual action word, phrase or char specified by the user.
 	fi
 
+	DebugArray args_incomplete "${args_incomplete[*]:-}"
+
 	args=(${args_remaining[@]:-})
+	DebugArray args "${args[*]:-}"
 
 	Func:Exit
 
@@ -1819,87 +1821,52 @@ ParseHelpArgs()
 
 	Func:Init
 
-	local action=''
+	local action=''						# Internal, nice, simple, action name. Only one per-action.
 	local arg=''
 	local -a args_remaining=()
 	local awaiting_group=false
 	local current_action=''
 	local group=''
+	local potential_action=''			# A user arg that might be an action.
 	local requires_group=false
-	local user_action=''
+	local user_action=''				# The original user argument, detected as an action. There may be many variants per-action.
 
 	for arg in "${args[@]:-}"; do
 		[[ -n $arg ]] || continue
 
 		# Identify action.
 
-		case $arg in
-			help)
-				action=$arg
-				requires_group=true
-				user_action=$arg
-		esac
+		potential_action=$(TranslateIntoAction "$arg"); DebugVar potential_action
 
-		if [[ -n $user_action && $user_action != "$current_action" ]]; then
-			[[ $awaiting_group = true ]] && args_incomplete+=("$user_action")
-			awaiting_group=$requires_group
-			current_action=$user_action
-			group=''	 			# When action changes, must clear group.
-			continue
+		if [[ -n $potential_action ]]; then
+			action=$potential_action; DebugVar action
+			potential_action=''
+
+			case $action in
+				help)
+					requires_group=true
+					user_action=$arg
+			esac
+
+			if [[ -n $user_action && $user_action != "$current_action" ]]; then
+				[[ $awaiting_group = true ]] && args_incomplete+=("$user_action")
+				awaiting_group=$requires_group
+				current_action=$user_action
+				group=''	 			# When action changes, must clear group.
+				continue
+			fi
 		fi
 
-		# Identify group. Include action assignment when action hasn't been previously specified.
+		# Identify group.
 
-		case $arg in
-		# These cases use only a single user-provided word or char to specify a single group.
-			list?(s))
-				# Don't set a default action for this group, this group is used for multiple actions. Set a default in the last parsing function.
-				group=lists
-				;;
-			package?(s)|qpkg?(s))
-				# Don't set a default action for this group, this group is used for multiple actions. Set a default in the last parsing function.
-				group=packages
-				;;
-			problem?(s))
+		group=$(TranslateIntoGroup "$arg")
+		DebugVar group
+
+		# Include action assignment when action hasn't been previously specified.
+
+		case $group in
+			abs|actions|all|all-actions|groups|lists|options|packages|problems|show|tips|upgrades)
 				[[ -z $action ]] && action=help
-				group=problems
-				;;
-			tip?(s))
-				[[ -z $action ]] && action=help
-				group=tips
-				;;
-		# All cases below can use multiple user-provided words or chars to specify a single group.
-			a|abs|abbreviations)
-				# Don't set a default action for this group, this group is used for multiple actions. Set a default in the last parsing function.
-				group=abs
-				;;
-			action?(s))
-				[[ -z $action ]] && action=help
-				group=actions
-				;;
-			all)
-				# Don't set a default action for this group, this group is used for multiple actions. Set a default in the last parsing function.
-				group=all-actions
-				;;
-			action?(s)-all|all-action?(s))
-				[[ -z $action ]] && action=help
-				group=all-actions
-				;;
-			group?(s))
-				[[ -z $action ]] && action=help
-				group=groups
-				;;
-			o|option?(s))
-				[[ -z $action ]] && action=help
-				group=options
-				;;
-			upgrade)
-				# Don't set a default action for this group, this group is used for multiple actions. Set a default in the last parsing function.
-				group=upgrades
-				;;
-			upgrades|upgrading)
-				[[ -z $action ]] && action=help
-				group=upgrades
 		esac
 
 		# Pair action with group.
@@ -1922,7 +1889,7 @@ ParseHelpArgs()
 							run_package_actions=false
 							useropt_help_actions=true
 							;;
-						all-actions)
+						all|all-actions)
 							action=''
 							awaiting_group=false
 							generate_help_report=true
@@ -1963,6 +1930,13 @@ ParseHelpArgs()
 							generate_help_report=true
 							run_package_actions=false
 							useropt_help_problems=true
+							;;
+						show)
+							action=''
+							awaiting_group=false
+							generate_help_report=true
+							run_package_actions=false
+							useropt_help_show=true
 							;;
 						tips)
 							action=''
@@ -2018,7 +1992,10 @@ ParseHelpArgs()
 		esac
 	done
 
+	DebugArray args_incomplete "${args_incomplete[*]:-}"
+
 	args=(${args_remaining[@]:-})
+	DebugArray args "${args[*]:-}"
 
 	Func:Exit
 
@@ -2041,75 +2018,52 @@ ParseShowArgs()
 
 	Func:Init
 
-	local action=''
+	local action=''						# Internal, nice, simple, action name. Only one per-action.
 	local arg=''
 	local -a args_remaining=()
 	local awaiting_group=false
 	local current_action=''
 	local group=''
+	local potential_action=''			# A user arg that might be an action.
 	local requires_group=false
-	local user_action=''
+	local user_action=''				# The original user argument, detected as an action. There may be many variants per-action.
 
 	for arg in "${args[@]:-}"; do
 		[[ -n $arg ]] || continue
 
 		# Identify action.
 
-		case $arg in
-			show|view)
-				action=show
-				requires_group=true
-				user_action=$arg
-		esac
+		potential_action=$(TranslateIntoAction "$arg"); DebugVar potential_action
 
-		if [[ -n $user_action && $user_action != "$current_action" ]]; then
-			[[ $awaiting_group = true ]] && args_incomplete+=("$user_action")
-			awaiting_group=$requires_group
-			current_action=$user_action
-			group=''	 			# When action changes, must clear group.
-			continue
+		if [[ -n $potential_action ]]; then
+			action=$potential_action; DebugVar action
+			potential_action=''
+
+			case $action in
+				show)
+					requires_group=true
+					user_action=$arg
+			esac
+
+			if [[ -n $user_action && $user_action != "$current_action" ]]; then
+				[[ $awaiting_group = true ]] && args_incomplete+=("$user_action")
+				awaiting_group=$requires_group
+				current_action=$user_action
+				group=''	 			# When action changes, must clear group.
+				continue
+			fi
 		fi
 
-		# Identify group. Include action assignment when action hasn't been previously specified.
+		# Identify group.
 
-		case $arg in
-		# These cases use only a single user-provided word or char to specify a single group.
-			backups|results)
+		group=$(TranslateIntoGroup "$arg")
+		DebugVar group
+
+		# Include action assignment when action hasn't been previously specified.
+
+		case $group in
+			abs|backups|dependent|last|packages|repositories|results|status|tail)
 				[[ -z $action ]] && action=show
-				group=$arg
-				;;
-		# All cases below can use multiple user-provided words or chars to specify a single group.
-			a|abs|abbreviations)
-				# Don't set a default action for this group, this group is used for multiple actions. Set a default in the last parsing function.
-				group=abs
-				;;
-			deps)
-				# Don't set a default action for this group, this group is used for multiple actions. Set a default in the last parsing function.
-				group=dependencies
-				;;
-			d|dependencies)
-				[[ -z $action ]] && action=show
-				group=dependencies
-				;;
-			l|last)
-				[[ -z $action ]] && action=show
-				group=last
-				;;
-			log|tail)
-				[[ -z $action ]] && action=show
-				group=tail
-				;;
-			p|package?(s)|qpkg?(s))
-				[[ -z $action ]] && action=show
-				group=packages
-				;;
-			r|repos|repositories)
-				[[ -z $action ]] && action=show
-				group=repositories
-				;;
-			s|status?(es))
-				# Don't set a default action for this group, this group is used for multiple actions. Set a default in the last parsing function.
-				group=status
 		esac
 
 		# Pair action with group.
@@ -2134,7 +2088,7 @@ ParseShowArgs()
 							run_package_actions=false
 							useropt_show_backups=true
 							;;
-						dependencies)
+						dependent)
 							Packages:Load
 							action=''
 							awaiting_group=false
@@ -2209,7 +2163,10 @@ ParseShowArgs()
 		args_incomplete+=("$user_action")									# Save the actual action word, phrase or char specified by the user.
 	fi
 
+	DebugArray args_incomplete "${args_incomplete[*]:-}"
+
 	args=(${args_remaining[@]:-})
+	DebugArray args "${args[*]:-}"
 
 	Func:Exit
 
@@ -2232,88 +2189,52 @@ ParseListArgs()
 
 	Func:Init
 
-	local action=''
+	local action=''						# Internal, nice, simple, action name. Only one per-action.
 	local arg=''
 	local -a args_remaining=()
 	local awaiting_group=false
 	local current_action=''
 	local group=''
+	local potential_action=''			# A user arg that might be an action.
 	local requires_group=false
-	local user_action=''
+	local user_action=''				# The original user argument, detected as an action. There may be many variants per-action.
 
 	for arg in "${args[@]:-}"; do
 		[[ -n $arg ]] || continue
 
 		# Identify action.
 
-		case $arg in
-			list)
-				action=$arg
-				requires_group=true
-				user_action=$arg
-		esac
+		potential_action=$(TranslateIntoAction "$arg"); DebugVar potential_action
 
-		if [[ -n $user_action && $user_action != "$current_action" ]]; then
-			[[ $awaiting_group = true ]] && args_incomplete+=("$user_action")
-			awaiting_group=$requires_group
-			current_action=$user_action
-			group=''	 			# When action changes, must clear group.
-			continue
+		if [[ -n $potential_action ]]; then
+			action=$potential_action; DebugVar action
+			potential_action=''
+
+			case $action in
+				list)
+					requires_group=true
+					user_action=$arg
+			esac
+
+			if [[ -n $user_action && $user_action != "$current_action" ]]; then
+				[[ $awaiting_group = true ]] && args_incomplete+=("$user_action")
+				awaiting_group=$requires_group
+				current_action=$user_action
+				group=''	 			# When action changes, must clear group.
+				continue
+			fi
 		fi
 
-		# Identify group. Include action assignment when action hasn't been previously specified.
+		# Identify group.
 
-		case $arg in
-		# These cases use only a single user-provided word to specify a single action.
-			backedup|installable|installed|missing|results)
-				group=${arg}
-				;;
-			no@(n|t)-back?(ed)up)
-				group=NTbackedup
-				;;
-			no@(n|t)-installable)
-				group=NTinstallable
-				;;
-			no@(n|t)-installed)
-				group=NTinstalled
-				;;
-			no@(n|t)-missing)
-				group=NTmissing
-				;;
-		# All cases below can use multiple user-provided words or chars to specify a single action.
-			a|abs|abbreviations)
+		group=$(TranslateIntoGroup "$arg")
+		DebugVar group
+
+		# Include action assignment when action hasn't been previously specified.
+
+		case $group in
+			abs)
 				[[ -z $action ]] && action=list
-				group=abs
-				;;
-			active|no@(n|t)-inactive|no@(n|t)-stopped|started)
-				group=active
-				;;
-			all|entire|everything)
-				group=all
-				;;
-			b|backups)
-				group=backups
-				;;
-			deps|dependent?(s))
-				group=dependent
-				;;
-			disabled)
-				group=NTenabled
-				;;
-			inactive|no@(n|t)-active|no@(n|t)-started|stopped)
-				group=NTactive
-				;;
-			independent?(s)|indeps)
-				group=independent
-				;;
-			new|updat?(e)able|upgradable)
-				group=upgradable
-				;;
-			no@(n|t)-installable)
-				group=NTinstallable
-				;;
-			version?(s))
-				group=versions
 		esac
 
 		# Pair action with group.
@@ -2342,7 +2263,7 @@ ParseListArgs()
 							run_package_actions=true
 							show_title=false
 							;;
-						?(NT)backedup|?(NT)installed|?(NT)missing)
+						?(NT)backedup|?(NT)enabled|?(NT)installable|?(NT)installed|?(NT)missing|?(NT)upgradable)
 							Objects:Load
 							QPKGs.AClist.IS${group}:Set
 							action=''
@@ -2352,7 +2273,7 @@ ParseListArgs()
 							run_package_actions=false
 							show_title=false
 							;;
-						?(in)dependent|disabled|?(NT)installable|?(NT)upgradable)
+						?(in)dependent)
 							Objects:Load
 							QPKGs.AClist.GR${group}:Set
 							action=''
@@ -2385,7 +2306,10 @@ ParseListArgs()
 		args_incomplete+=("$user_action")									# Save the actual action word, phrase or char specified by the user.
 	fi
 
+	DebugArray args_incomplete "${args_incomplete[*]:-}"
+
 	args=(${args_remaining[@]:-})
+	DebugArray args "${args[*]:-}"
 
 	Func:Exit
 
@@ -2405,14 +2329,15 @@ ParseActionArgs()
 
 	Func:Init
 
-	local action=''
+	local action=''						# Internal, nice, simple, action name. Only one per-action.
 	local arg=''
 	local -a args_remaining=()
 	local awaiting_group=false
 	local current_action=''
 	local group=''
+	local potential_action=''			# A user arg that might be an action.
 	local requires_group=false
-	local user_action=''
+	local user_action=''				# The original user argument, detected as an action. There may be many variants per-action.
 
 	[[ -n ${args[*]:-} ]] && Packages:Load
 
@@ -2421,111 +2346,37 @@ ParseActionArgs()
 
 		# Identify action.
 
-		case $arg in
-		# These cases are for a user-provided word to specify a single action.
-			backup|clean|@(dis|en)able|reassign|rebuild|reinstall|restore|sign)
-				action=$arg
-				requires_group=true
-				user_action=$arg
-				;;
-		# These cases are for a user-provided word or phrase to specify a single action.
-			disable-auto-update)
-				action=disableau
-				requires_group=true
-				user_action=$arg
-				;;
-			enable-auto-update)
-				action=enableau
-				requires_group=true
-				user_action=$arg
-				;;
-		# All cases below are for multiple user-provided words or chars to specify a single action.
-			activate|start)
-				action=activate
-				requires_group=true
-				user_action=$arg
-				;;
-			add|install)
-				action=install
-				requires_group=true
-				user_action=$arg
-				;;
-			deactivate|stop)
-				action=deactivate
-				requires_group=true
-				user_action=$arg
-				;;
-			reactivate|restart)
-				action=reactivate
-				requires_group=true
-				user_action=$arg
-				;;
-			remove|rm|uninstall)
-				action=uninstall
-				requires_group=true
-				user_action=$arg
-				;;
-			s|status?(es))
-				action=status
-				requires_group=true
-				useropt_show_status=true
-				user_action=$arg
-				;;
-			update|upgrade)
-				action=upgrade
-				requires_group=true
-				user_action=$arg
-		esac
+		potential_action=$(TranslateIntoAction "$arg"); DebugVar potential_action
 
-		if [[ -n $user_action && $user_action != "$current_action" ]]; then
-			[[ $awaiting_group = true ]] && args_incomplete+=("$user_action")
-			awaiting_group=$requires_group
-			current_action=$user_action
-			group=''	 			# When action changes, must clear group.
-			continue
+		if [[ -n $potential_action ]]; then
+			action=$potential_action; DebugVar action
+			potential_action=''
+
+			case $action in
+				?(de|re)activate|backup|clean|@(dis|en)able?(au)|install|reassign|rebuild|@(re|un)install|restore|sign|upgrade)
+					requires_group=true
+					user_action=$arg
+					;;
+				status)
+					generate_show_report=true
+					get_qpkg_states=true
+					requires_group=true
+					user_action=$arg
+					useropt_show_status=true
+			esac
+
+			if [[ -n $user_action && $user_action != "$current_action" ]]; then
+				[[ $awaiting_group = true ]] && args_incomplete+=("$user_action")
+				awaiting_group=$requires_group
+				current_action=$user_action
+				group=''	 			# When action changes, must clear group.
+				continue
+			fi
 		fi
 
 		# Identify group.
 
-		case $arg in
-		# These cases use only a single user-provided word or char to specify a single group.
-			backedup|installable|installed|missing)
-				group=$arg
-				;;
-			not-backedup)
-				group=NTbackedup
-				;;
-			not-installed)
-				group=NTinstalled
-				;;
-		# All cases below can use multiple user-provided words or chars to specify a single group.
-			active|started)
-				group=active
-				;;
-			all|everything)
-				group=all
-				;;
-			deps|dependent?(s))
-				group=dependent
-				;;
-			disabled)
-				group=NTenabled
-				;;
-			@(in|not)-active|stopped)
-				group=NTactive
-				;;
-			new|updat?(e)able|upgradable)
-				group=upgradable
-				;;
-			no@(n|t)-installable)
-				group=NTinstallable
-				;;
-			independent?(s)|indeps)
-				group=independent
-				;;
-			*)
-				group=$(QPKG.MatchAbbrv "$arg")
-		esac
+		group=$(TranslateIntoGroup "$arg"); DebugVar group
 
 		# Pair action with group.
 
@@ -2546,7 +2397,7 @@ ParseActionArgs()
 			esac
 
 			case $group in
-				all|canbackup|?(NT)canclean|canrestarttoupdate|?(in)dependent|hasdependents|?(NT)installable|?(NT)upgradable)
+				all|canbackup|?(NT)canclean|canrestarttoupdate|?(in)dependent|hasdependents)
 					Objects:Load
 					QPKGs.AC${action}.GR${group}:Set
 					awaiting_group=false
@@ -2555,7 +2406,7 @@ ParseActionArgs()
 					get_qpkg_states=true
 					run_package_actions=true
 					;;
-				?(NT)backedup|?(NT)enabled|?(NT)installed|?(NT)missing)
+				?(NT)backedup|?(NT)enabled|?(NT)installable|?(NT)installed|?(NT)missing|?(NT)upgradable)
 					Objects:Load
 					QPKGs.AC${action}.IS${group}:Set
 					awaiting_group=false
@@ -2581,10 +2432,12 @@ ParseActionArgs()
 	fi
 
 	for arg in "${args_incomplete[@]:-}"; do
-		case $arg in
-			s|status?(es))				# If status is specified without a group, then group is `all`.
+		action=$(TranslateIntoAction "$arg")
+
+		case $action in
+			status)
 				Objects:Load
-				QPKGs.ACstatus.GRall:Set
+				QPKGs.ACstatus.ISinstalled:Set								# If status is specified without a group, then group is `installed`.
 				generate_show_report=true
 				get_qpkg_states=true
 				run_package_actions=true
@@ -2607,9 +2460,171 @@ ParseActionArgs()
 		esac
 	done
 
-	args=(${args_remaining[@]:-})
+	DebugArray args_incomplete "${args_incomplete[*]:-}"
+
+	args=(${args_remaining[@]:-}); DebugArray args "${args[*]:-}"
 
 	Func:Exit
+
+	}
+
+TranslateIntoAction()
+	{
+
+	# Identify variant action from $1 and output nice action.
+
+	local a=${1:-}
+
+	case $a in
+		activate|start)
+			printf activate
+			;;
+		add|install)
+			printf install
+			;;
+		backup|clean|colo?(u)r?(ful)|@(dis|en)able|follow|help|list|paste|reassign|rebuild|reinstall|reset|restore|sign|terse)
+			echo -n "$a"
+			;;
+		c|check)
+			printf check
+			;;
+		deactivate|stop)
+			printf deactivate
+			;;
+		d?(e)bug)
+			printf debug
+			;;
+		disable-auto-update)
+			printf disableau
+			;;
+		enable-auto-update)
+			printf enableau
+			;;
+		reactivate|restart)
+			printf reactivate
+			;;
+		remove|rm|uninstall)
+			printf uninstall
+			;;
+		s|status?(es))
+			printf status
+			;;
+		show|view)
+			printf show
+			;;
+		update|upgrade)
+			printf upgrade
+			;;
+		v|verbose)
+			printf verbose
+	esac
+
+	}
+
+TranslateIntoGroup()
+	{
+
+	# Identify variant group from $1 and output nice group.
+
+	local a=${1:-}
+
+	case $a in
+		a|abs|abbreviations)
+			printf abs
+			;;
+		action?(s))
+			printf actions
+			;;
+		action?(s)-all|all-action?(s))
+			printf all-actions
+			;;
+		active|no@(n|t)-inactive|no@(n|t)-stopped|started)
+			printf active
+			;;
+		all|entire|everything)
+			printf all
+			;;
+		b|backups)
+			printf backups
+			;;
+		backedup|canbackup|enabled|installable|installed|missing|results|show|?(un)stable)
+			echo -n "$a"
+			;;
+		d|deps|dependencies|dependent?(s))
+			printf dependent
+			;;
+		disable|false|no|off|unset)
+			printf false
+			;;
+		disabled|no@(n|t)-enabled)
+			printf NTenabled
+			;;
+		enable|on|set|true|yes)
+			printf true
+			;;
+		group?(s))
+			printf groups
+			;;
+		inactive|no@(n|t)-active|no@(n|t)-started|stopped)
+			printf NTactive
+			;;
+		indep?(endent)?(s))
+			printf independent
+			;;
+		l|last)
+			printf last
+			;;
+		list?(s))
+			printf lists
+			;;
+		log|tail)
+			printf tail
+			;;
+		me|problem?(s))
+			printf problems
+			;;
+		new|updat?(e)able|upgrad@(a|e)ble)
+			printf upgradable
+			;;
+		no@(n|t)-back?(ed)up)
+			printf NTbackedup
+			;;
+		no@(n|t)-installable)
+			printf NTinstallable
+			;;
+		no@(n|t)-installed)
+			printf NTinstalled
+			;;
+		no@(n|t)-missing)
+			printf NTmissing
+			;;
+		no@(n|t)-upgradable)
+			printf NTupgradable
+			;;
+		o|option?(s))
+			printf options
+			;;
+		p|package?(s)|qpkg?(s))
+			printf packages
+			;;
+		r|repos|repositories)
+			printf repositories
+			;;
+		s|status?(es))
+			printf status
+			;;
+		tip?(s))
+			printf tips
+			;;
+		upgrade?(s)|upgrading)
+			printf upgrades
+			;;
+		version?(s))
+			printf versions
+			;;
+		*)
+			QPKG.MatchAbbrv "$a"
+	esac
 
 	}
 
@@ -2633,7 +2648,7 @@ ArgSuggestions:Show()
 
 		for arg in "${args_incomplete[@]}"; do
 			case $arg in
-				?(de|re)activate|backup|clean|@(dis|en)able|@(dis|en)able-auto-update|reassign|@(re|un)install|?(re)start|restore|sign|stop|upgrade)
+				?(de|re)activate|backup|clean|@(dis|en)able|@(dis|en)able-auto-update|reassign|@(re|un)install|?(re)start|restore|rm|sign|stop|upgrade)
 					DisplayAsProjSynExam "please provide valid $(ShowAsPackages) or a $(ShowAsPackageGroup) after '$arg' like" "$arg installed"
 					arg_problem=true
 					useropt_help_basic=false
@@ -2700,48 +2715,53 @@ ArgSuggestions:Show()
 
 		for arg in "${args[@]}"; do
 			case $arg in
+				active|@(dis|en)abled|started)
+					DisplayAsProjSynExam "please provide a valid $(ShowAsAction) before '$arg' like" "deactivate $arg"
+					arg_problem=true
+					useropt_help_basic=false
+					;;
 				all)
 					DisplayAsProjSynExam "please provide a valid $(ShowAsAction) before 'all' like" 'activate all'
 					arg_problem=true
 					useropt_help_basic=false
 					;;
 				all-activate|activate-all)
-					DisplayAsProjSynExam 'to activate all packages, use' 'activate all'
+					DisplayAsProjSynExam 'to activate all QPKGs, use' 'activate all'
 					arg_problem=true
 					useropt_help_basic=false
 					;;
 				all-backup|backup-all)
-					DisplayAsProjSynExam 'to backup all installed package configurations, use' 'backup all'
+					DisplayAsProjSynExam 'to backup all installed QPKG configurations, use' 'backup all'
+					arg_problem=true
+					useropt_help_basic=false
+					;;
+				all-deactivate|deactivate-all)
+					DisplayAsProjSynExam 'to deactivate all QPKGs, use' 'deactivate all'
 					arg_problem=true
 					useropt_help_basic=false
 					;;
 				all-reactivate|reactivate-all)
-					DisplayAsProjSynExam 'to reactivate all packages, use' 'reactivate all'
+					DisplayAsProjSynExam 'to reactivate all QPKGs, use' 'reactivate all'
 					arg_problem=true
 					useropt_help_basic=false
 					;;
 				all-restore|restore-all)
-					DisplayAsProjSynExam 'to restore all installed package configurations, use' 'restore all'
+					DisplayAsProjSynExam 'to restore all installed QPKG configurations, use' 'restore all'
 					arg_problem=true
 					useropt_help_basic=false
 					;;
 				all-stop|stop-all)
-					DisplayAsProjSynExam 'to stop all packages, use' 'stop all'
+					DisplayAsProjSynExam 'to stop all QPKGs, use' 'stop all'
 					arg_problem=true
 					useropt_help_basic=false
 					;;
 				all-uninstall|all-remove|uninstall-all|remove-all)
-					DisplayAsProjSynExam 'to uninstall all packages, use' 'force uninstall all'
+					DisplayAsProjSynExam 'to uninstall all QPKGs, use' 'uninstall all'
 					arg_problem=true
 					useropt_help_basic=false
 					;;
 				all-upgrade|upgrade-all)
-					DisplayAsProjSynExam 'to upgrade all packages, use' 'upgrade all'
-					arg_problem=true
-					useropt_help_basic=false
-					;;
-				download)
-					ShowAsError "'$arg' is not a manual action"
+					DisplayAsProjSynExam 'to upgrade all QPKGs, use' 'upgrade all'
 					arg_problem=true
 					useropt_help_basic=false
 					;;
@@ -2751,7 +2771,12 @@ ArgSuggestions:Show()
 					arg_problem=true
 					useropt_help_basic=false
 					;;
-				?(in)dependent?(s))
+				download)
+					ShowAsError "'$arg' is not a manual action"
+					arg_problem=true
+					useropt_help_basic=false
+					;;
+				@(in|not-)active|?(in)dependent?(s)|stopped)
 					DisplayAsProjSynExam "please provide a valid $(ShowAsAction) before '$arg' like" "activate $arg"
 					arg_problem=true
 					useropt_help_basic=false
@@ -2777,6 +2802,9 @@ ArgSuggestions:Show()
 
 	[[ $arg_problem = true ]] && echo
 
+	DebugArray args_incomplete "${args_incomplete[*]:-}"
+	DebugArray args_remaining "${args_remaining[*]:-}"
+
 	Func:Exit
 
 	}
@@ -2786,125 +2814,38 @@ AllocPackGroupsToAcs()
 
 	Func:Init
 
-	ShowAsProc 'matching QPKG groups to actions'
+	ShowAsProc 'match QPKG groups to actions'
 
 	local action=''
-	local found=false
 	local group=''
-	local prospect=''
 
 	for action in "${USER_QPKG_ACTIONS[@]}"; do
-		# Process group-based user-options.
+		# Process group-based user-actions.
 
 		# Positive groups.
 
-		for group in "${USER_QPKG_IS_GROUPS[@]}"; do
-			found=false
-
+		for group in "${QPKG_IS_GROUPS[@]}"; do
 			if QPKGs.AC${action}.GR${group}.IsSet; then
-				case $action in
-					clean)
-						case $group in
-							all|?(in)dependent)
-								found=true
-
-								for prospect in $(QPKGs-GR${group}:Array); do
-									QPKG.IsCanClean "$prospect" && QPKGs-AC${action}-to:Add "$prospect"
-								done
-								;;
-							*)
-								DebugAsWarn "group 'GR$group' has no positive allocation handler for action '$action'"
-						esac
-						;;
-					install|status)
-						case $group in
-							all|?(in)dependent)
-								found=true
-
-								QPKGs-AC${action}-to:Add "$(QPKGs-GR${group}:Array)"
-								;;
-							*)
-								DebugAsWarn "group 'GR$group' has no positive allocation handler for action '$action'"
-						esac
-						;;
-					?(de|re)activate|disable?(au)|enable?(au)|@(re|un)install|stop)
-						case $group in
-							all|?(in)dependent)
-								found=true
-
-								for prospect in $(QPKGs-GR${group}:Array); do
-									QPKGs-ISinstalled.Exist "$prospect" && QPKGs-AC${action}-to:Add "$prospect"
-								done
-								;;
-							*)
-								DebugAsWarn "group 'GR$group' has no positive allocation handler for action '$action'"
-						esac
-						;;
-					rebuild)
-						case $group in
-							all|?(in)dependent)
-								found=true
-
-								for prospect in $(QPKGs-GR${group}:Array); do
-									QPKGs-GRcanbackup.Exist "$prospect" && QPKGs-AC${action}-to:Add "$prospect"
-								done
-								;;
-							*)
-								DebugAsWarn "group 'GR$group' has no positive allocation handler for action '$action'"
-						esac
-						;;
-					upgrade)
-						case $group in
-							all|?(in)dependent|upgradable)
-								found=true
-
-								QPKGs-AC${action}-to:Add "$(QPKGs-GRupgradable:Array)"
-
-								for prospect in $(QPKGs-GR${group}:Array); do
-									QPKGs-GRcanrestarttoupdate.Exist "$prospect" && QPKGs-AC${action}-to:Add "$prospect"
-								done
-
-								QPKGs-ACreactivate-to:Remove "$(QPKGs-ACupgrade-to:Array)"
-								;;
-							*)
-								DebugAsWarn "group 'GR$group' has no positive allocation handler for action '$action'"
-						esac
-						;;
-					*)
-						DebugAsWarn "action '$action' has no positive group allocation handler"
-				esac
-
-				if [[ $found = false ]]; then
-					QPKGs-AC${action}-to:Add "$(QPKGs-GR${group}:Array)"
-				fi
+				QPKGs-AC${action}-to:Add "$(QPKGs-GR${group}:Array)"
 
 				if QPKGs-AC${action}-to.IsAny; then
-					DebugAsDone "action: '$action', group: 'GR$group': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
+					DebugAsDone "action: '$action', group: 'GR${group}': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
 				else
-					ShowAsWarn "unable to find any '$group' QPKGs to '$(Lowercase "$action")'"
+					ShowAsWarn "unable to find any 'GR$group' QPKGs to '$(Lowercase "$action")'"
 				fi
 			fi
 		done
 
 		# Negative groups.
 
-		for group in "${USER_QPKG_ISNT_GROUPS[@]}"; do
-			found=false
-
+		for group in "${QPKG_ISNT_GROUPS[@]}"; do
 			if QPKGs.AC${action}.GRNT${group}.IsSet; then
-				case $action in
-					*)
-						DebugAsWarn "action '$action' has no negative group allocation handler"
-				esac
-
-				if [[ $found = false ]]; then
-					QPKGs-AC${action}-to:Add "$(QPKGs-GRNT${group}:Array)"
-				fi
+				QPKGs-AC${action}-to:Add "$(QPKGs-GRNT${group}:Array)"
 
 				if QPKGs-AC${action}-to.IsAny; then
 					DebugAsDone "action: '$action', group: 'GRNT${group}': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
 				else
-					ShowAsWarn "unable to find any 'not $group' QPKGs to '$(Lowercase "$action")'"
+					ShowAsWarn "unable to find any 'GRNT$group' QPKGs to '$(Lowercase "$action")'"
 				fi
 			fi
 		done
@@ -2919,50 +2860,31 @@ AllocPackStatesToAcs()
 
 	Func:Init
 
-	ShowAsProc 'matching QPKG states to actions'
+	ShowAsProc 'match QPKG states to actions'
 
 	local action=''
 	local check_later=false
-	local found=false
 	local state=''
 
 	for action in "${USER_QPKG_ACTIONS[@]}"; do
-		# Process state-based user-options.
+		# Process state-based user-actions.
 
 		# Positive states.
 
-		for state in "${USER_QPKG_IS_STATES[@]}"; do
-			found=false
+		for state in "${QPKG_IS_STATES[@]}"; do
 			check_later=false
 
 			if QPKGs.AC${action}.IS${state}.IsSet; then
-				case $action in
-					backup|clean|uninstall|upgrade)
-						case $state in
-							backedup|cleaned|downloaded|enabled|installed)
-								found=true
-								QPKGs-AC${action}-to:Add "$(QPKGs-IS${state}:Array)"
-								;;
-							*)
-								DebugAsWarn "state 'IS$state' has no positive allocation handler for action '$action'"
-						esac
-						;;
-					list)
-						check_later=true
-						found=true
-						;;
-					*)
-						DebugAsWarn "action '$action' has no positive state allocation handler"
-				esac
-
-				if [[ $found = false ]]; then
+				if [[ $state = active ]]; then
+					check_later=true
+				else
 					QPKGs-AC${action}-to:Add "$(QPKGs-IS${state}:Array)"
 				fi
 
 				if QPKGs-AC${action}-to.IsAny; then
 					DebugAsDone "action: '$action', state: 'IS${state}': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
 				elif [[ $check_later = true ]]; then
-					DebugAsDone "action: '$action', state: 'IS${state}': will add filtered-packages later after 'status' has been determined"
+					DebugAsDone "action: '$action', state: 'IS${state}': will add filtered-QPKGs later after 'status' has been determined"
 				else
 					ShowAsWarn "unable to find any '$state' QPKGs to '$(Lowercase "$action")'"
 				fi
@@ -2971,42 +2893,20 @@ AllocPackStatesToAcs()
 
 		# Negative states.
 
-		for state in "${USER_QPKG_ISNT_STATES[@]}"; do
-			found=false
+		for state in "${QPKG_ISNT_STATES[@]}"; do
 			check_later=false
 
 			if QPKGs.AC${action}.ISNT${state}.IsSet; then
-				case $action in
-					activate|backup|clean|@(dis|en)ableau|?(un)install)
-						case $state in
-							?(in)active)
-								check_later=true
-								found=true
-								;;
-							enabled|installed)
-								found=true
-								QPKGs-AC${action}-to:Add "$(QPKGs-ISNT${state}:Array)"
-								;;
-							*)
-								DebugAsWarn "state 'ISNT$state' has no negative allocation handler for action '$action'"
-						esac
-						;;
-					list)
-						check_later=true
-						found=true
-						;;
-					*)
-						DebugAsWarn "action '$action' has no negative state allocation handler"
-				esac
-
-				if [[ $found = false ]]; then
+				if [[ $state = active ]]; then
+					check_later=true
+				else
 					QPKGs-AC${action}-to:Add "$(QPKGs-ISNT${state}:Array)"
 				fi
 
 				if QPKGs-AC${action}-to.IsAny; then
 					DebugAsDone "action: '$action', state: 'ISNT${state}': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
 				elif [[ $check_later = true ]]; then
-					DebugAsDone "action: '$action', state: 'ISNT${state}': will add filtered-packages later after 'status' has been determined"
+					DebugAsDone "action: '$action', state: 'ISNT${state}': will add filtered-QPKGs later after 'status' has been determined"
 				else
 					ShowAsWarn "unable to find any 'not $state' QPKGs to '$(Lowercase "$action")'"
 				fi
@@ -3170,10 +3070,10 @@ IsThisFileRecent()
 
 	}
 
-SaveEntwarePackageList()
+SaveIpkAndPipList()
 	{
 
-	$PIP_CMD freeze > "$PREV_PIP_LIST"
+	$PIP_CMD freeze | cut -d'=' -f1 > "$PREV_PIP_LIST"
 	[[ -e $PREV_PIP_LIST ]] && DebugAsDone "saved current PIP module list to $(ShowAsFileName "$PREV_PIP_LIST")"
 
 	$OPKG_CMD list-installed > "$PREV_IPK_LIST"
@@ -3181,7 +3081,7 @@ SaveEntwarePackageList()
 
 	} 2>/dev/null
 
-LoadEntwarePackageList()
+LoadIpkList()
 	{
 
 	local name=''
@@ -3189,9 +3089,32 @@ LoadEntwarePackageList()
 	local version=''
 
 	if [[ -e $PREV_IPK_LIST ]]; then
+		DebugInfo "IPKs are being loaded from $(ShowAsFileName "$PREV_IPK_LIST")"
+
 		while read -r name separator version; do
+			name=$(Lowercase "$name")
+
 			IPKs-ACinstall-to:Add "$name"
 		done < "$PREV_IPK_LIST"
+	fi
+
+	}
+
+LoadPipList()
+	{
+
+	local name=''
+	local re=''
+
+	if [[ -e $PREV_PIP_LIST ]]; then
+		DebugInfo "PIPs are being loaded from $(ShowAsFileName "$PREV_PIP_LIST")"
+
+		while read -r name; do
+			name=$(Lowercase "$name")
+			re=\\b$name\\b
+
+			[[ ${EXCLUSION_PIPS[*]} =~ $re ]] || PIPs-ACinstall-to:Add "$name"
+		done < "$PREV_PIP_LIST"
 	fi
 
 	}
@@ -3230,10 +3153,8 @@ CalcIpkDepsToInstall()
 
 	DebugInfo "$requested_count IPK$(Pluralise "$requested_count") requested" "'$req_list' "
 
-	ShowAsProc 'resolving IPK dependencies'
-
 	while [[ $iterations -lt $ITERATION_LIMIT ]]; do
-		ShowAsIterativeProgress 'resolving IPK dependencies' "$iterations" iteration "${#dep_acc[@]}" 'unique package'
+		ShowAsIterativeProgress 'resolve IPK dependencies' "$iterations" iteration "${#dep_acc[@]}" 'unique package'
 
 		((iterations++))
 		local ipk_titles=$(printf '^Package: %s$\|' "${this_list[@]}")
@@ -3242,7 +3163,7 @@ CalcIpkDepsToInstall()
 		this_list=($($GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator '^Package:\|^Depends:' "$EXTERNAL_PACKAGES_PATHFILE" | $GNU_GREP_CMD -vG '^Section:\|^Version:' | $GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator "$ipk_titles" | $GNU_GREP_CMD -vG "$ipk_titles" | $GNU_GREP_CMD -vG '^Package: ' | $SED_CMD 's|^Depends: ||;s|, |\n|g' | $SORT_CMD | $UNIQ_CMD))
 
 		# Update progress twice per loop.
-		ShowAsIterativeProgress 'resolving IPK dependencies' "$iterations" iteration "${#dep_acc[@]}" 'unique package'
+		ShowAsIterativeProgress 'resolve IPK dependencies' "$iterations" iteration "${#dep_acc[@]}" 'unique package'
 
 		if [[ ${#this_list[@]} -eq 0 ]]; then
 			complete=true
@@ -3254,6 +3175,8 @@ CalcIpkDepsToInstall()
 	done
 
 	sleep .5
+
+	[[ ${useropt_terse:=true} = false && ${useropt_verbose:=false} = false ]] && echo
 
 	if [[ $complete = true ]]; then
 		DebugAsDone "dependency calculation complete in $iterations iteration$(Pluralise "$iterations")"
@@ -3267,7 +3190,7 @@ CalcIpkDepsToInstall()
 	pre_exclude_count=$($WC_CMD -w <<< "$pre_exclude_list")
 
 	if [[ $pre_exclude_count -gt 0 ]]; then
-		ShowAsProc 'excluding IPKs already installed'
+		ShowAsProc 'exclude IPKs already installed'
 
 		DebugInfo "$pre_exclude_count IPK$(Pluralise "$pre_exclude_count") required (including dependencies)" "'$pre_exclude_list' "
 
@@ -3308,7 +3231,7 @@ CalcIpkDownloadSize()
 	size_count=$(IPKs-ACdownload-to:Count)
 
 	if [[ $size_count -gt 0 ]]; then
-		ShowAsProc "calculating size of IPK$(Pluralise "$size_count") to download"
+		ShowAsProc "calculate size of IPK$(Pluralise "$size_count") to download"
 
 		DebugAsDone "$size_count IPK$(Pluralise "$size_count") to download: '$(IPKs-ACdownload-to:List)'"
 		size_array=($($GNU_GREP_CMD -w '^Package:\|^Size:' "$EXTERNAL_PACKAGES_PATHFILE" | $GNU_GREP_CMD --after-context 1 --no-group-separator ": $($SED_CMD 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKs-ACdownload-to:List)")" | $GREP_CMD '^Size:' | $SED_CMD 's|^Size: ||'))
@@ -3357,7 +3280,7 @@ IPKs:upgrade()
 	if [[ $total_count -gt 0 ]]; then
 		desc="$total_count auxiliary IPK module$(Pluralise "$total_count")"
 
-		ShowAsProc "upgrading $desc"
+		ShowAsProc "upgrade $desc"
 
 		_DirSizeMonitor_ "$IPK_DL_PATH" "$(IPKs-ACdownload-to:Size)" &
 		fork_pid=$!
@@ -3375,6 +3298,8 @@ IPKs:upgrade()
 			NoteIpkAcAsEr "$(IPKs-ACupgrade-to:Array)" upgrade
 			SaveActionResultToLog IPK "$desc" upgrade failed "$z"
 		fi
+
+		[[ ${useropt_terse:=true} = false && ${useropt_verbose:=false} = false ]] && echo
 	fi
 
 	Func:Exit $z
@@ -3405,9 +3330,12 @@ IPKs:install()
 	if QPKGs-ACinstall-ok.Exist Entware || ([[ $useropt_check = true ]] && QPKG.IsInstalled Entware); then
 		IPKs-ACinstall-to:Add "$ESSENTIAL_IPKS"
 
-		if [[ -e $PREV_IPK_LIST ]]; then
-			LoadEntwarePackageList
-			mv "$PREV_IPK_LIST" "$PREV_IPK_LIST.installing"
+		if [[ -e $PREV_IPK_LIST && $useropt_check = false ]]; then		# Don't load previous IPK list during 'check'.
+
+
+
+			LoadIpkList
+			mv -f "$PREV_IPK_LIST" "$PREV_IPK_LIST.installing"
 		fi
 	fi
 
@@ -3435,7 +3363,7 @@ IPKs:install()
 	if [[ $total_count -gt 0 ]]; then
 		desc="$total_count auxiliary IPK module$(Pluralise "$total_count")"
 
-		ShowAsProc "installing $desc"
+		ShowAsProc "install $desc"
 
 		_DirSizeMonitor_ "$IPK_DL_PATH" "$(IPKs-ACdownload-to:Size)" &
 		fork_pid=$!
@@ -3452,17 +3380,17 @@ IPKs:install()
 			Keystrokes:Hide
 			UpdateColourisation
 
-			if [[ -e $PREV_IPK_LIST.installing ]]; then
-				rm "$PREV_IPK_LIST.installing"
-			fi
+			rm -f "$PREV_IPK_LIST.installing"
 		else
 			NoteIpkAcAsEr "$(IPKs-ACdownload-to:Array)" install
 			SaveActionResultToLog IPK "$desc" install failed "$z"
 
 			if [[ -e $PREV_IPK_LIST.installing ]]; then
-				mv "$PREV_IPK_LIST.installing" "$PREV_IPK_LIST"
+				mv -f "$PREV_IPK_LIST.installing" "$PREV_IPK_LIST"
 			fi
 		fi
+
+		[[ ${useropt_terse:=true} = false && ${useropt_verbose:=false} = false ]] && echo
 	fi
 
 	Func:Exit $z
@@ -3500,7 +3428,7 @@ IPKs:downgrade()
 		desc="$total_count ${package_type}$(Pluralise "$total_count")"
 		log_pathfile=$LOGS_PATH/ipks.$DOWNLOAD_LOG_FILE
 
-		ShowAsProc "downloading $desc"
+		ShowAsProc "download $desc"
 
 		if OS.IsNonStdKernelPageSize; then
 			url_prefix=http://bin.entware.net
@@ -3516,7 +3444,7 @@ IPKs:downgrade()
 			url_suffix+=.ipk
 
 			for name in $(IPKs-ACdowngrade-to:Array); do
-				ShowAsPercentProgress "downloading $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 0 "$total_count"
+				ShowAsPercentProgress "download $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 0 "$total_count"
 				((ok_count++))
 
 				remote_url=${url_prefix}${name}${url_suffix}
@@ -3524,8 +3452,10 @@ IPKs:downgrade()
 				RunAndLog "$CURL_CMD --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
 			done
 
-			ShowAsPercentProgress "downloading $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 "$fail_count" "$total_count"
+			ShowAsPercentProgress "download $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 "$fail_count" "$total_count"
 		fi
+
+		[[ ${useropt_terse:=true} = false && ${useropt_verbose:=false} = false ]] && echo
 
 		total_count=1
 		ok_count=0
@@ -3534,9 +3464,9 @@ IPKs:downgrade()
 		desc="$total_count ${package_type}$(Pluralise "$total_count")"
 		log_pathfile=$LOGS_PATH/ipks.$DOWNGRADE_LOG_FILE
 
-		ShowAsProc "downgrading $desc"
+		ShowAsProc "downgrade $desc"
 
-		ShowAsPercentProgress "downgrading $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 "$fail_count" "$total_count"
+		ShowAsPercentProgress "downgrade $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 "$fail_count" "$total_count"
 		RunAndLog "$OPKG_CMD install --force-downgrade --cache $IPK_CACHE_PATH --tmp-dir $IPK_DOWNGRADE_DL_PATH $IPK_DOWNGRADE_DL_PATH/*.ipk" "$log_pathfile" log:failure-only
 		z=$?
 
@@ -3551,10 +3481,26 @@ IPKs:downgrade()
 			SaveActionResultToLog IPK "$desc" downgrade failed "$z"
 		fi
 
-		ShowAsPercentProgress "downgrading $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 "$fail_count" "$total_count"
+		ShowAsPercentProgress "downgrade $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 "$fail_count" "$total_count"
+
+		[[ ${useropt_terse:=true} = false && ${useropt_verbose:=false} = false ]] && echo
 	fi
 
 	Func:Exit $z
+
+	}
+
+IPKs:uninstall()
+	{
+
+	:	# Placeholder function
+
+	}
+
+PIPs:upgrade()
+	{
+
+	:	# Placeholder function
 
 	}
 
@@ -3578,14 +3524,19 @@ PIPs:install()
 	local -i z=0
 
 	if [[ $useropt_check = true ]] || IPKs-ACinstall-ok.Exist python3-pip; then
+		PIPs-ACinstall-to:Add "$ESSENTIAL_PIPS"
+
+		if [[ -e $PREV_PIP_LIST && $useropt_check = false ]]; then		# Don't load previous PIP list during 'check'.
+			LoadPipList
+			mv -f "$PREV_PIP_LIST" "$PREV_PIP_LIST.installing"
+		fi
+
 		((total_count++))
 
-		exec_cmd="$PIP_CMD install --upgrade --no-input $ESSENTIAL_PIPS --cache-dir $PIP_CACHE_PATH 2> >($GREP_CMD -v \"Running pip as the 'root' user\") >&2"
+		exec_cmd="$PIP_CMD install --upgrade --no-input $(PIPs-ACinstall-to:List) --cache-dir $PIP_CACHE_PATH 2> >($GREP_CMD -v \"Running pip as the 'root' user\") >&2"
 		desc='auxiliary PyPI modules'
 
-		ShowAsProc "installing $total_count ${package_type}$(Pluralise "$total_count")"
-
-		ShowAsPercentProgress "installing $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 0 "$total_count"
+		ShowAsPercentProgress "install $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 0 "$total_count"
 		RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
 		z=$?
 
@@ -3593,15 +3544,30 @@ PIPs:install()
 			((ok_count++))
 			DebugAsDone "installed $desc"
 			SaveActionResultToLog PIP "$desc" install ok "$z"
+
+			rm -f "$PREV_PIP_LIST.installing"
 		else
 			((fail_count++))
 			SaveActionResultToLog PIP "$desc" install failed "$z"
+
+			if [[ -e $PREV_PIP_LIST.installing ]]; then
+				mv -f "$PREV_PIP_LIST.installing" "$PREV_PIP_LIST"
+			fi
 		fi
 
-		ShowAsPercentProgress "installing $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 "$fail_count" "$total_count"
+		ShowAsPercentProgress "install $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 "$fail_count" "$total_count"
+
+		[[ ${useropt_terse:=true} = false && ${useropt_verbose:=false} = false ]] && echo
 	fi
 
 	Func:Exit $z
+
+	}
+
+PIPs:uninstall()
+	{
+
+	:	# Placeholder function
 
 	}
 
@@ -4100,7 +4066,7 @@ CalcMaxStatusReportCols()
 
 	# Add width to include " (new)" string to QPKG version title.
 
-	if QPKGs-GRupgradable.IsAny; then
+	if QPKGs-ISupgradable.IsAny; then
 		package_ver_final_col_width=$((PACKAGE_VER_COL_WIDTH+6))
 		((col3_width+6))
 	else
@@ -4108,13 +4074,13 @@ CalcMaxStatusReportCols()
 	fi
 
 # 	if [[ $((col1_width+col2_width)) -ge $SESS_COLS ]]; then
-# 		max_cols=1
+# 		report_max_cols=1
 # 	elif [[ $((col1_width+col2_width+col3_width)) -ge $SESS_COLS ]]; then
-# 		max_cols=2
+# 		report_max_cols=2
 # 	elif [[ $((col1_width+col2_width+col3_width+col4_width)) -ge $SESS_COLS ]]; then
-# 		max_cols=3
+# 		report_max_cols=3
 # 	else
-# 		max_cols=4
+# 		report_max_cols=4
 # 	fi
 
 	return 0
@@ -4134,21 +4100,21 @@ CalcMaxStatusReportCols()
 # 	local col8_width=$((${#CHAR_SPACER}+${#CHARS_BULLET}+PACKAGE_ARCH_COL_WIDTH))
 #
 # 	if [[ $((col1_width+col2_width)) -ge $SESS_COLS ]]; then
-# 		max_cols=1
+# 		report_max_cols=1
 # 	elif [[ $((col1_width+col2_width+col3_width)) -ge $SESS_COLS ]]; then
-# 		max_cols=2
+# 		report_max_cols=2
 # 	elif [[ $((col1_width+col2_width+col3_width+col4_width)) -ge $SESS_COLS ]]; then
-# 		max_cols=3
+# 		report_max_cols=3
 # 	elif [[ $((col1_width+col2_width+col3_width+col4_width+col5_width)) -ge $SESS_COLS ]]; then
-# 		max_cols=4
+# 		report_max_cols=4
 # 	elif [[ $((col1_width+col2_width+col3_width+col4_width+col5_width+col6_width)) -ge $SESS_COLS ]]; then
-# 		max_cols=5
+# 		report_max_cols=5
 # 	elif [[ $((col1_width+col2_width+col3_width+col4_width+col5_width+col6_width+col7_width)) -ge $SESS_COLS ]]; then
-# 		max_cols=6
+# 		report_max_cols=6
 # 	elif [[ $((col1_width+col2_width+col3_width+col4_width+col5_width+col6_width+col7_width+col8_width)) -ge $SESS_COLS ]]; then
-# 		max_cols=7
+# 		report_max_cols=7
 # 	else
-# 		max_cols=8
+# 		report_max_cols=8
 # 	fi
 #
 # 	return 0
@@ -4212,14 +4178,14 @@ DisplayAsPacksReportTitleLine()
 
 	# column 1: package name
 
-	if [[ $max_cols -ge 1 ]]; then
+	if [[ $report_max_cols -ge 1 ]]; then
 		a="${CHARS_BULLET}QPKG name:"
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 2: application version
 
-	if [[ $max_cols -ge 2 ]]; then
+	if [[ $report_max_cols -ge 2 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}App version:"
 		printf "%-$((PACKAGE_APP_VER_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -4227,7 +4193,7 @@ DisplayAsPacksReportTitleLine()
 
 	# column 3: package description
 
-	if [[ $max_cols -ge 3 ]]; then
+	if [[ $report_max_cols -ge 3 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Description:"
 		printf "%-$((PACKAGE_DESCRIPTION_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -4281,20 +4247,20 @@ DisplayAsPacksReportItemLine()
 
 	# column 1: package name
 
-	if [[ $max_cols -ge 1 ]]; then
+	if [[ $report_max_cols -ge 1 ]]; then
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 	fi
 
 	# column 2: application version
 
-	if [[ $max_cols -ge 2 ]]; then
+	if [[ $report_max_cols -ge 2 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_APP_VER_COL_WIDTH+$(LenANSIDiff "$app_ver_msg")))s" "$app_ver_msg"
 	fi
 
 	# column 3: package description
 
-	if [[ $max_cols -ge 3 ]]; then
+	if [[ $report_max_cols -ge 3 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_DESCRIPTION_COL_WIDTH+$(LenANSIDiff "$description_msg")))s" "$description_msg"
 
@@ -4316,14 +4282,14 @@ DisplayAsStatusReportTitleLine()
 
 	# column 1: package name
 
-	if [[ $max_cols -ge 1 ]]; then
+	if [[ $report_max_cols -ge 1 ]]; then
 		a="${CHARS_BULLET}QPKG name:"
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 2: package statuses
 
-	if [[ $max_cols -ge 2 ]]; then
+	if [[ $report_max_cols -ge 2 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}QPKG statuses:"
 		printf "%-$((PACKAGE_STATUS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -4331,17 +4297,17 @@ DisplayAsStatusReportTitleLine()
 
 	# column 3: package version (variable-width)
 
-	if [[ $max_cols -ge 3 ]]; then
+	if [[ $report_max_cols -ge 3 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}QPKG version"
-		QPKGs-GRupgradable.IsAny && a+=" ($(TextBrightOrange new))"
+		QPKGs-ISupgradable.IsAny && a+=" ($(TextBrightOrange new))"
 		a+=':'
 		printf "%-$((${package_ver_final_col_width:=0}+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 4: application version
 
-	if [[ $max_cols -ge 4 ]]; then
+	if [[ $report_max_cols -ge 4 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}App version:"
 		printf "%-$((PACKAGE_APP_VER_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -4349,7 +4315,7 @@ DisplayAsStatusReportTitleLine()
 
 	# column 5: package installation path
 
-	if [[ $max_cols -ge 5 ]]; then
+	if [[ $report_max_cols -ge 5 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}QPKG installation path:"
 		printf "%-$((PACKAGE_PATH_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -4417,7 +4383,7 @@ DisplayAsStatusReportItemLine()
 			fi
 
 			status_msg=${CHARS_NORMAL}${status_msg}
-			QPKGs-GRupgradable.Exist "$name" && upgrade_ver=$(QPKG.Avail.GetVer "$name")
+			QPKGs-ISupgradable.Exist "$name" && upgrade_ver=$(QPKG.Avail.GetVer "$name")
 			ver_msg+=$(QPKG.Local.GetVer "$name")
 
 			if [[ -n $upgrade_ver ]]; then
@@ -4464,34 +4430,34 @@ DisplayAsStatusReportItemLine()
 
 	# column 1: package name
 
-	if [[ $max_cols -ge 1 ]]; then
+	if [[ $report_max_cols -ge 1 ]]; then
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 	fi
 
 	# column 2: package statuses
 
-	if [[ $max_cols -ge 2 ]]; then
+	if [[ $report_max_cols -ge 2 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_STATUS_COL_WIDTH+$(LenANSIDiff "$status_msg")))s" "$status_msg"
 	fi
 
 	# column 3: package version (variable-width)
 
-	if [[ $max_cols -ge 3 ]]; then
+	if [[ $report_max_cols -ge 3 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((${package_ver_final_col_width:=0}+$(LenANSIDiff "$ver_msg")))s" "$ver_msg"
 	fi
 
 	# column 4: application version
 
-	if [[ $max_cols -ge 4 ]]; then
+	if [[ $report_max_cols -ge 4 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_APP_VER_COL_WIDTH+$(LenANSIDiff "$app_ver_msg")))s" "$app_ver_msg"
 	fi
 
 	# column 5: package installation path
 
-	if [[ $max_cols -ge 5 ]]; then
+	if [[ $report_max_cols -ge 5 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_PATH_COL_WIDTH+$(LenANSIDiff "$path_msg")))s" "$path_msg"
 	fi
@@ -4509,14 +4475,14 @@ DisplayAsReposReportTitleLine()
 
 	# column 1: package name
 
-	if [[ $max_cols -ge 1 ]]; then
+	if [[ $report_max_cols -ge 1 ]]; then
 		a="${CHARS_BULLET}QPKG name:"
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 2: package installation date
 
-	if [[ $max_cols -ge 2 ]]; then
+	if [[ $report_max_cols -ge 2 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}install date:"
 		printf "%-$((PACKAGE_INSTALL_DATE_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -4524,7 +4490,7 @@ DisplayAsReposReportTitleLine()
 
 	# column 3: package repository
 
-	if [[ $max_cols -ge 3 ]]; then
+	if [[ $report_max_cols -ge 3 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}repository:"
 		printf "%-$((PACKAGE_REPO_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -4603,20 +4569,20 @@ DisplayAsReposReportItemLine()
 
 	# column 1: package name
 
-	if [[ $max_cols -ge 1 ]]; then
+	if [[ $report_max_cols -ge 1 ]]; then
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 	fi
 
 	# column 2: package installation date
 
-	if [[ $max_cols -ge 2 ]]; then
+	if [[ $report_max_cols -ge 2 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_INSTALL_DATE_COL_WIDTH+$(LenANSIDiff "$install_date_msg")))s" "$install_date_msg"
 	fi
 
 	# column 3: package repository
 
-	if [[ $max_cols -ge 3 ]]; then
+	if [[ $report_max_cols -ge 3 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_REPO_COL_WIDTH+$(LenANSIDiff "$assigned_repo_msg")))s" "$assigned_repo_msg"
 	fi
@@ -4634,14 +4600,14 @@ DisplayAsAbsReportTitleLine()
 
 	# column 1: package name
 
-	if [[ $max_cols -ge 1 ]]; then
+	if [[ $report_max_cols -ge 1 ]]; then
 		a="${CHARS_BULLET}QPKG name:"
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 2: package abbreviations
 
-	if [[ $max_cols -ge 2 ]]; then
+	if [[ $report_max_cols -ge 2 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}acceptable QPKG name abbreviations and aliases:"
 		printf "%-$((PACKAGE_ABBS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -4704,13 +4670,13 @@ DisplayAsAbsReportItemLine()
 
 	# column 1: package name
 
-	if [[ $max_cols -ge 1 ]]; then
+	if [[ $report_max_cols -ge 1 ]]; then
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 	fi
 
 	# column 2: package repository
 
-	if [[ $max_cols -ge 2 ]]; then
+	if [[ $report_max_cols -ge 2 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_ABBS_COL_WIDTH+$(LenANSIDiff "$abs_msg")))s" "$abs_msg"
 	fi
@@ -4728,14 +4694,14 @@ DisplayAsDepsReportTitleLine()
 
 	# column 1: package name
 
-	if [[ $max_cols -ge 1 ]]; then
+	if [[ $report_max_cols -ge 1 ]]; then
 		a="${CHARS_BULLET}QPKG name:"
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 2: package dependencies
 
-	if [[ $max_cols -ge 2 ]]; then
+	if [[ $report_max_cols -ge 2 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}dependencies:"
 		printf "%-$((PACKAGE_DEPENDENCIES_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -4743,7 +4709,7 @@ DisplayAsDepsReportTitleLine()
 
 	# column 3: QPKG is installed
 
-	if [[ $max_cols -ge 3 ]]; then
+	if [[ $report_max_cols -ge 3 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}installed?"
 		printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -4751,7 +4717,7 @@ DisplayAsDepsReportTitleLine()
 
 	# column 4: QPKG is enabled
 
-	if [[ $max_cols -ge 4 ]]; then
+	if [[ $report_max_cols -ge 4 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}enabled?"
 		printf "%-$((PACKAGE_ENABLED_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -4759,7 +4725,7 @@ DisplayAsDepsReportTitleLine()
 
 	# column 5: minimum NAS RAM required
 
-	if [[ $max_cols -ge 5 ]]; then
+	if [[ $report_max_cols -ge 5 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}min RAM:"
 		printf "%-$((PACKAGE_MIN_RAM_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -4767,7 +4733,7 @@ DisplayAsDepsReportTitleLine()
 
 	# column 6: minimum OS fimware version supported
 
-	if [[ $max_cols -ge 6 ]]; then
+	if [[ $report_max_cols -ge 6 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}min OS:"
 		printf "%-$((PACKAGE_MIN_OS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -4775,7 +4741,7 @@ DisplayAsDepsReportTitleLine()
 
 	# column 7: maximum OS fimware version supported
 
-	if [[ $max_cols -ge 7 ]]; then
+	if [[ $report_max_cols -ge 7 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}max OS:"
 		printf "%-$((PACKAGE_MAX_OS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -4783,7 +4749,7 @@ DisplayAsDepsReportTitleLine()
 
 	# column 8: arch is compatible
 
-	if [[ $max_cols -ge 8 ]]; then
+	if [[ $report_max_cols -ge 8 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}supported arch?"
 		printf "%-$((PACKAGE_ARCH_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -5006,55 +4972,55 @@ DisplayAsDepsReportItemLine()
 
 	# column 1: package name
 
-	if [[ $max_cols -ge 1 ]]; then
+	if [[ $report_max_cols -ge 1 ]]; then
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 	fi
 
 	# column 2: package repository
 
-	if [[ $max_cols -ge 2 ]]; then
+	if [[ $report_max_cols -ge 2 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_DEPENDENCIES_COL_WIDTH+$(LenANSIDiff "$package_deps_msg")))s" "$package_deps_msg"
 	fi
 
 	# column 3: package installed?
 
-	if [[ $max_cols -ge 3 ]]; then
+	if [[ $report_max_cols -ge 3 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+$(LenANSIDiff "$package_installed_msg")))s" "$package_installed_msg"
 	fi
 
 	# column 4: package enabled?
 
-	if [[ $max_cols -ge 4 ]]; then
+	if [[ $report_max_cols -ge 4 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_ENABLED_COL_WIDTH+$(LenANSIDiff "$package_enabled_msg")))s" "$package_enabled_msg"
 	fi
 
 	# column 5: minimum NAS RAM required
 
-	if [[ $max_cols -ge 5 ]]; then
+	if [[ $report_max_cols -ge 5 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_MIN_RAM_COL_WIDTH+$(LenANSIDiff "$package_min_ram_msg")))s" "$package_min_ram_msg"
 	fi
 
 	# column 6: minimum OS fimware version supported
 
-	if [[ $max_cols -ge 6 ]]; then
+	if [[ $report_max_cols -ge 6 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_MIN_OS_COL_WIDTH+$(LenANSIDiff "$package_min_os_msg")))s" "$package_min_os_msg"
 	fi
 
 	# column 7: maximum OS fimware version supported
 
-	if [[ $max_cols -ge 7 ]]; then
+	if [[ $report_max_cols -ge 7 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_MAX_OS_COL_WIDTH+$(LenANSIDiff "$package_max_os_msg")))s" "$package_max_os_msg"
 	fi
 
 	# column 8: arch is compatible?
 
-	if [[ $max_cols -ge 8 ]]; then
+	if [[ $report_max_cols -ge 8 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_ARCH_COL_WIDTH+$(LenANSIDiff "$package_arch_msg")))s" "$package_arch_msg"
 	fi
@@ -5072,14 +5038,14 @@ DisplayAsBacksReportTitleLine()
 
 	# column 1: backup filename
 
-	if [[ $max_cols -ge 1 ]]; then
+	if [[ $report_max_cols -ge 1 ]]; then
 		a="${CHARS_BULLET}Backup file:"
 		printf "%-$((FILE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 2: filesize in bytes
 
-	if [[ $max_cols -ge 2 ]]; then
+	if [[ $report_max_cols -ge 2 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}size in bytes:"
 		printf "%-$((FILE_BYTES_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -5087,7 +5053,7 @@ DisplayAsBacksReportTitleLine()
 
 	# column 3: last backup date
 
-	if [[ $max_cols -ge 3 ]]; then
+	if [[ $report_max_cols -ge 3 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}last backup date:"
 		printf "%-$((FILE_CHANGE_DATE_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -5135,20 +5101,20 @@ DisplayAsBacksReportItemLine()
 
 	# column 1: backup filename
 
-	if [[ $max_cols -ge 1 ]]; then
+	if [[ $report_max_cols -ge 1 ]]; then
 		printf "%-$((FILE_NAME_COL_WIDTH+$(LenANSIDiff "$file_name_msg")))s" "$file_name_msg"
 	fi
 
 	# column 2: filesize in bytes
 
-	if [[ $max_cols -ge 2 ]]; then
+	if [[ $report_max_cols -ge 2 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%$((FILE_BYTES_COL_WIDTH+$(LenANSIDiff "$file_bytes_msg")))s" "$file_bytes_msg "	# append 1 x whitespace char to force right-justified numbers to the left a bit. Looks nicer.
 	fi
 
 	# column 3: last backup date
 
-	if [[ $max_cols -ge 3 ]]; then
+	if [[ $report_max_cols -ge 3 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((FILE_CHANGE_DATE_COL_WIDTH+$(LenANSIDiff "$epoch_time_msg")))s" "$epoch_time_msg"
 	fi
@@ -5270,8 +5236,8 @@ Help.Actions:Show()
 		DisplayAsProjSynIndentExam 'enable auto-updating the application on package activation (where-supported)' "enable-auto-update $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam 'install these packages' "install $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam '' "add $(ShowAsPackages)"
-# 		DisplayAsProjSynIndentExam 'show application backup files' 'list backups'
-# 		DisplayAsProjSynIndentExam '' b
+		DisplayAsProjSynIndentExam 'show application backup files' 'show backups'
+		DisplayAsProjSynIndentExam '' b
 # 		DisplayAsProjSynIndentExam "list $(ShowAsTitleName) object version numbers" 'list versions'
 		DisplayAsProjSynIndentExam 'reactivate these packages (this will upgrade internal applications where-supported)' "reactivate $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam '' "restart $(ShowAsPackages)"
@@ -5318,28 +5284,29 @@ Help.ActionsAll:Show()
 		{
 
 		Help.Basic:Show
-		DisplayAsHelpTitle "the 'all' group applies to all installed packages. If $(ShowAsAction) is 'install all' then all available packages will be installed."
+		DisplayAsHelpTitle "the 'all' group applies to all QPKGs. If $(ShowAsAction) is 'install all' then all available QPKGs will be installed."
 		DisplayAsHelpTitle "$(ShowAsAction) $(ShowAsPackageGroup) usage examples:"
-		DisplayAsProjSynIndentExam 'activate all installed packages (this will upgrade internal applications where-supported)' 'activate all'
+		DisplayAsProjSynIndentExam 'activate all QPKGs (this will upgrade internal applications where-supported)' 'activate all'
 		DisplayAsProjSynIndentExam '' 'start all'
 		DisplayAsProjSynIndentExam 'backup all application configurations to the backup location' 'backup all'
-		DisplayAsProjSynIndentExam 'clean local repository files from all packages (your configs are safe, application files will be downloaded again)' 'clean all'
-		DisplayAsProjSynIndentExam 'deactivate all installed packages' 'deactivate all'
+		DisplayAsProjSynIndentExam 'clean local repository files from all QPKGs (your configs are safe, application files will be downloaded again)' 'clean all'
+		DisplayAsProjSynIndentExam 'deactivate all QPKGs' 'deactivate all'
 		DisplayAsProjSynIndentExam '' 'stop all'
-		DisplayAsProjSynIndentExam 'disable all installed packages. This will prevent them being activated' 'disable all'
-		DisplayAsProjSynIndentExam 'disable auto-updating all applications on package activation (where-supported)' 'disable-auto-update all'
-		DisplayAsProjSynIndentExam 'enable all installed packages. Packages must be enabled before they can be started' 'enable all'
-		DisplayAsProjSynIndentExam 'enable auto-updating all applications on package activation (where-supported)' 'enable-auto-update all'
+		DisplayAsProjSynIndentExam 'disable all QPKGs. This will prevent them being activated' 'disable all'
+		DisplayAsProjSynIndentExam 'disable auto-updating all applications on QPKG activation (where-supported)' 'disable-auto-update all'
+		DisplayAsProjSynIndentExam 'enable all QPKGs. QPKGs must be enabled before they can be started' 'enable all'
+		DisplayAsProjSynIndentExam 'enable auto-updating all applications on QPKG activation (where-supported)' 'enable-auto-update all'
 		DisplayAsProjSynIndentExam 'install everything!' 'install all'
-		DisplayAsProjSynIndentExam 'reactivate packages (this will upgrade internal applications where-supported)' 'reactivate all'
+		DisplayAsProjSynIndentExam 'reactivate installed QPKGs (this will upgrade internal applications where-supported)' 'reactivate all'
 		DisplayAsProjSynIndentExam '' 'restart all'
-		DisplayAsProjSynIndentExam "reassign all packages to $(ShowAsTitleName). Detach packages previously installed via an online repository from further management by that repository" 'reassign all'
-		DisplayAsProjSynIndentExam "rebuild all packages where backup files exist ('install' packages and 'restore' backups)" 'rebuild all'
-		DisplayAsProjSynIndentExam 'reinstall all installed packages' 'reinstall all'
+		DisplayAsProjSynIndentExam "reassign all QPKGs to $(ShowAsTitleName). Detach QPKGs previously installed via an online repository from further management by that repository" 'reassign all'
+		DisplayAsProjSynIndentExam "rebuild all QPKGs where backup files exist ('install' QPKGs and 'restore' backups)" 'rebuild all'
+		DisplayAsProjSynIndentExam 'reinstall all QPKGs' 'reinstall all'
 		DisplayAsProjSynIndentExam 'restore all application configurations from the backup location' 'restore all'
-		DisplayAsProjSynIndentExam 'digitally "sign" all packages' 'sign all'
-		DisplayAsProjSynIndentExam 'uninstall everything!' 'force uninstall all'
-		DisplayAsProjSynIndentExam 'upgrade all installed packages (and internal applications where-supported)' 'upgrade all'
+		DisplayAsProjSynIndentExam 'digitally "sign" all QPKGs' 'sign all'
+		DisplayAsProjSynIndentExam 'find the live status of each application in all QPKGs' 'status all'
+		DisplayAsProjSynIndentExam 'uninstall all QPKGs' 'uninstall all'
+		DisplayAsProjSynIndentExam 'upgrade all QPKGs (and internal applications where-supported)' 'upgrade all'
 
 		} > "$REPORT_OUTPUT_PATHFILE"
 
@@ -5401,20 +5368,20 @@ Help.Groups:Show()
 		Help.Basic:Show
 		DisplayAsHelpTitle "$(ShowAsPackageGroup) usage examples:"
 		DisplayAsProjSynIndentExam 'select every package' "$(ShowAsAction) all"
-		DisplayAsProjSynIndentExam 'select only independent packages (these do not depend on other QPKGs)' "$(ShowAsAction) independent"
+		DisplayAsProjSynIndentExam 'select only independent QPKGs (these do not depend on other QPKGs)' "$(ShowAsAction) independent"
 		DisplayAsProjSynIndentExam '' "$(ShowAsAction) independents"
-		DisplayAsProjSynIndentExam 'select only dependent packages (these require another QPKG to be installed and active)' "$(ShowAsAction) dependent"
-		DisplayAsProjSynIndentExam 'select only active packages' "$(ShowAsAction) active"
+		DisplayAsProjSynIndentExam 'select only dependent QPKGs (these require another QPKG to be installed and active)' "$(ShowAsAction) dependent"
+		DisplayAsProjSynIndentExam 'select only active QPKGs' "$(ShowAsAction) active"
 		DisplayAsProjSynIndentExam '' "$(ShowAsAction) started"
-		DisplayAsProjSynIndentExam 'select only inactive packages' "$(ShowAsAction) inactive"
+		DisplayAsProjSynIndentExam 'select only inactive QPKGs' "$(ShowAsAction) inactive"
 		DisplayAsProjSynIndentExam '' "$(ShowAsAction) stopped"
-		DisplayAsProjSynIndentExam 'select only installed packages' "$(ShowAsAction) installed"
-		DisplayAsProjSynIndentExam 'select only packages that are not installed' "$(ShowAsAction) not-installed"
-		DisplayAsProjSynIndentExam 'select only packages that are backed-up' "$(ShowAsAction) backedup"
-		DisplayAsProjSynIndentExam 'select only packages that are not backed-up' "$(ShowAsAction) not-backedup"
-		DisplayAsProjSynIndentExam 'select only packages that are upgradable' "$(ShowAsAction) upgradable"
+		DisplayAsProjSynIndentExam 'select only installed QPKGs' "$(ShowAsAction) installed"
+		DisplayAsProjSynIndentExam 'select only QPKGs that are not installed' "$(ShowAsAction) not-installed"
+		DisplayAsProjSynIndentExam 'select only QPKGs that are backed-up' "$(ShowAsAction) backedup"
+		DisplayAsProjSynIndentExam 'select only QPKGs that are not backed-up' "$(ShowAsAction) not-backedup"
+		DisplayAsProjSynIndentExam 'select only QPKGs that are upgradable' "$(ShowAsAction) upgradable"
 		DisplayAsProjSynIndentExam '' "$(ShowAsAction) new"
-		DisplayAsProjSynIndentExam 'select only missing packages (these are partly installed and broken)' "$(ShowAsAction) missing"
+		DisplayAsProjSynIndentExam 'select only missing QPKGs (these are partly installed and broken)' "$(ShowAsAction) missing"
 		DisplayAsProjSynExam 'multiple groups are supported like this' "$(ShowAsAction) $(ShowAsPackageGroup) $(ShowAsPackageGroup)"
 
 		} > "$REPORT_OUTPUT_PATHFILE"
@@ -5458,16 +5425,16 @@ Help.Lists:Show()
 
 		Help.Basic:Show
 		DisplayAsHelpTitle "'list' usage examples:"
-		DisplayAsProjSynIndentExam 'list all available packages' 'list all'
-		DisplayAsProjSynIndentExam 'list package backup files' 'list backups'
-		DisplayAsProjSynIndentExam '' b
-		DisplayAsProjSynIndentExam 'list only packages that can be installed' 'list installable'
+		DisplayAsProjSynIndentExam 'list all available QPKGs' 'list all'
+# 		DisplayAsProjSynIndentExam 'list package backup files' 'list backups'
+# 		DisplayAsProjSynIndentExam '' b
+		DisplayAsProjSynIndentExam 'list only QPKGs that can be installed' 'list installable'
 		DisplayAsProjSynIndentExam '' installable
-		DisplayAsProjSynIndentExam 'list only installed packages' 'list installed'
+		DisplayAsProjSynIndentExam 'list only installed QPKGs' 'list installed'
 		DisplayAsProjSynIndentExam '' installed
-		DisplayAsProjSynIndentExam 'list only packages that are not installed' 'list not-installed'
+		DisplayAsProjSynIndentExam 'list only QPKGs that are not installed' 'list not-installed'
 		DisplayAsProjSynIndentExam '' not-installed
-		DisplayAsProjSynIndentExam 'list only upgradable packages' 'list upgradable'
+		DisplayAsProjSynIndentExam 'list only upgradable QPKGs' 'list upgradable'
 		DisplayAsProjSynIndentExam '' upgradable
 		DisplayAsProjSynIndentExam "list $(ShowAsTitleName) object version numbers" 'list versions'
 
@@ -5515,7 +5482,7 @@ Report.Results:Show()
 				fi
 
 				if [[ $result = "$1" ]] || [[ $1 = skipped && ($result = 'skipped-ok' || $result = 'skipped-error' || $result = 'skipped-abort') ]]; then
-					[[ $action != status ]] || continue				# Don't need to see the result of `status` checks.
+					[[ $action = status && $useropt_show_results = false ]] && continue		# Don't need to see the result of `status` checks unless a 'results' report has been requested.
 
 					case $result in
 						ok)
@@ -5551,6 +5518,46 @@ Report.Results:Show()
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
 		$CAT_CMD "$REPORT_OUTPUT_PATHFILE"
+	fi
+
+	return 0
+
+	}
+
+Help.Show:Show()
+	{
+
+	DisableDebugToArchiveAndFile
+	DisplayProcReport show
+
+		{
+
+		Help.Basic:Show
+		DisplayAsHelpTitle "'show' usage examples:"
+		DisplayAsProjSynIndentExam 'show QPKG abbreviations' 'show abbreviations'
+		DisplayAsProjSynIndentExam '' 'show abs'
+		DisplayAsProjSynIndentExam '' a
+		DisplayAsProjSynIndentExam 'show application backup files' 'show backups'
+		DisplayAsProjSynIndentExam '' b
+		DisplayAsProjSynIndentExam 'show QPKG dependency report' 'show dependencies'
+		DisplayAsProjSynIndentExam '' 'show deps'
+		DisplayAsProjSynIndentExam '' d
+		DisplayAsProjSynIndentExam 'show QPKG repository assignments report' 'show repositories'
+		DisplayAsProjSynIndentExam '' 'show repos'
+		DisplayAsProjSynIndentExam '' r
+		DisplayAsProjSynIndentExam 'show last session action results' 'show results'
+		DisplayAsProjSynIndentExam '' results
+		DisplayAsProjSynIndentExam 'find the live status of each application in all QPKGs' 'show status'
+
+		} > "$REPORT_OUTPUT_PATHFILE"
+
+	EraseThisLine
+
+	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
+		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
+		Display
+	else
+		ShowAsError 'no information to display'
 	fi
 
 	return 0
@@ -5595,7 +5602,7 @@ Help.Packages:Show()
 		{
 
 		Help.Basic:Show
-		DisplayAsHelpTitle 'usage examples for packages will go here:'
+		DisplayAsHelpTitle 'usage examples for QPKGs will go here:'
 
 		} > "$REPORT_OUTPUT_PATHFILE"
 
@@ -5622,24 +5629,24 @@ Help.Problems:Show()
 
 		Help.Basic:Show
 		DisplayAsHelpTitle 'usage examples for dealing with problems:'
-		DisplayAsProjSynIndentExam 'show package statuses' 'show status'
-		DisplayAsProjSynIndentExam '' s
-		DisplayAsProjSynIndentExam 'show live debugging information, and record it to file' "$(ShowAsAction) $(ShowAsPackages) verbose"
-		DisplayAsProjSynIndentExam '' v
-		DisplayAsProjSynIndentExam 'record debugging information to file-only' "$(ShowAsAction) $(ShowAsPackages) debug"
-		DisplayAsProjSynIndentExam 'ensure all dependencies exist for installed packages' check
+		DisplayAsProjSynIndentExam 'activate these QPKGs' "activate $(ShowAsPackages)"
+		DisplayAsProjSynIndentExam 'ensure all dependencies exist for installed QPKGs' check
 		DisplayAsProjSynIndentExam '' c
-		DisplayAsProjSynIndentExam 'clear local repository files from these packages' "clean $(ShowAsPackages)"
-		DisplayAsProjSynIndentExam "remove all cached $(ShowAsTitleName) items and logs" reset
-		DisplayAsProjSynIndentExam 'reactivate all installed packages (upgrades internal applications where-supported)' 'reactivate all'
-		DisplayAsProjSynIndentExam 'enable then activate these packages' "activate $(ShowAsPackages)"
-		DisplayAsProjSynIndentExam 'stop then disable these packages (disabling will prevent them starting on reboot)' "stop $(ShowAsPackages)"
+		DisplayAsProjSynIndentExam 'clear local repository files from these QPKGs' "clean $(ShowAsPackages)"
+		DisplayAsProjSynIndentExam 'deactivate these QPKGs' "deactivate $(ShowAsPackages)"
+		DisplayAsProjSynIndentExam 'record debugging information to file-only' "$(ShowAsAction) $(ShowAsPackages) debug"
 		DisplayAsProjSynIndentExam "increase the default 'qpkg_service' timeouts from 3 minutes to 30 minutes" 'install increasetimeouts'
 		DisplayAsProjSynIndentExam "view only the most recent $(ShowAsTitleName) session log" last
 		DisplayAsProjSynIndentExam '' l
 		DisplayAsProjSynIndentExam "view the entire $(ShowAsTitleName) session log" log
 		DisplayAsProjSynIndentExam "upload the most-recent session in your $(ShowAsTitleName) log to the $(ShowAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste last'
 		DisplayAsProjSynIndentExam "upload the most-recent $(FormatAsThous "$LOG_TAIL_LINES") lines in your $(ShowAsTitleName) log to the $(ShowAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste log'
+		DisplayAsProjSynIndentExam 'reactivate installed QPKGs (upgrades internal applications where-supported)' 'reactivate all'
+		DisplayAsProjSynIndentExam "remove all cached $(ShowAsTitleName) items and logs" reset
+		DisplayAsProjSynIndentExam 'find the live status of each application in these QPKGs' "status $(ShowAsPackages)"
+		DisplayAsProjSynIndentExam '' "s $(ShowAsPackages)"
+		DisplayAsProjSynIndentExam 'show live debugging information, and record it to file' "$(ShowAsAction) $(ShowAsPackages) verbose"
+		DisplayAsProjSynIndentExam '' v
 		DisplayAsHelpTitleHighlighted "if you need help, please include a copy of your $(ShowAsTitleName) $(TextBrightOrange "log for analysis!")"
 
 		} > "$REPORT_OUTPUT_PATHFILE"
@@ -5666,13 +5673,14 @@ Help.Upgrades:Show()
 		{
 
 		Help.Basic:Show
-		DisplayAsHelpTitle 'usage examples for upgrading your packages:'
-		DisplayAsProjSynIndentExam 'upgrade only the upgradable packages' 'upgrade upgradable'
+		DisplayAsHelpTitle 'usage examples for upgrading your QPKGs:'
+		DisplayAsProjSynIndentExam 'upgrade only the upgradable QPKGs' 'upgrade upgradable'
 		DisplayAsProjSynIndentExam '' 'upgrade new'
-		DisplayAsProjSynIndentExam 'show a list of upgradable packages' 'list upgradable'
+		DisplayAsProjSynIndentExam 'show a list of upgradable QPKGs' 'list upgradable'
 		DisplayAsProjSynIndentExam '' 'list new'
-		DisplayAsProjSynIndentExam 'show package statuses' 'show status'
-		DisplayAsProjSynIndentExam '' s
+		DisplayAsProjSynIndentExam 'find the live application status of upgradable QPKGs' 'status upgradable'
+		DisplayAsProjSynIndentExam '' 's upgradable'
+		DisplayAsProjSynIndentExam '' 's new'
 
 		} > "$REPORT_OUTPUT_PATHFILE"
 
@@ -5699,14 +5707,14 @@ Help.Tips:Show()
 
 		Help.Basic:Show
 		DisplayAsHelpTitle 'helpful tips and shortcuts:'
-		DisplayAsProjSynIndentExam "install all available $(ShowAsTitleName) packages" 'install all'
+		DisplayAsProjSynIndentExam "install all available $(ShowAsTitleName) QPKGs" 'install all'
 		DisplayAsProjSynIndentExam 'package abbreviations and aliases also work. To see these' 'help abs'
 		DisplayAsProjSynIndentExam '' a
-		DisplayAsProjSynIndentExam 'reactivate all installed packages (upgrades internal applications where-supported)' 'reactivate all'
-		DisplayAsProjSynIndentExam 'list only packages that can be installed' 'list installable'
+		DisplayAsProjSynIndentExam 'reactivate all QPKGs (upgrades internal applications where-supported)' 'reactivate all'
+		DisplayAsProjSynIndentExam 'list only QPKGs that can be installed' 'list installable'
 		DisplayAsProjSynIndentExam "view only the most recent $(ShowAsTitleName) session log" last
 		DisplayAsProjSynIndentExam '' l
-		DisplayAsProjSynIndentExam 'activate all inactive packages' 'activate inactive'
+		DisplayAsProjSynIndentExam 'activate all inactive QPKGs' 'activate inactive'
 		DisplayAsProjSynIndentExam 'upgrade the internal applications only' "reactivate $(ShowAsPackages)"
 		Help.BackupLocation:Show
 
@@ -5863,7 +5871,7 @@ Log.Last:Paste()
 
 	if [[ -e $SESS_LAST_PATHFILE ]]; then
 		if Quiz "Press 'Y' to post the most-recent session in your $(ShowAsTitleName) log to a public pastebin, or any other key to abort"; then
-			ShowAsProc "uploading $(ShowAsTitleName) log"
+			ShowAsProc "upload $(ShowAsTitleName) log"
 
 			# with thanks to https://github.com/solusipse/fiche
 			link=$($CAT_CMD --number "$SESS_LAST_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
@@ -5898,7 +5906,7 @@ Log.Tail:Paste()
 
 	if [[ -e $SESS_TAIL_PATHFILE ]]; then
 		if Quiz "Press 'Y' to post the most-recent $(FormatAsThous "$LOG_TAIL_LINES") lines in your $(ShowAsTitleName) log to a public pastebin, or any other key to abort"; then
-			ShowAsProc "uploading $(ShowAsTitleName) log"
+			ShowAsProc "upload $(ShowAsTitleName) log"
 
 			# with thanks to https://github.com/solusipse/fiche
 			link=$($CAT_CMD --number "$SESS_TAIL_PATHFILE" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
@@ -6163,6 +6171,9 @@ QPKGs.Missing:Show()
 	#	$? = 0 if no packages are missing
 	#	$? = 1 if one-or-more packages are missing
 
+	QPKGs.AClist.ISmissing.IsNt || return 0
+	QPKGs.ACreinstall.ISmissing.IsNt || return 0
+
 	local a=''
 	local b=''
 	local c=''
@@ -6213,6 +6224,9 @@ QPKGs.NewVers:Show()
 	#	$? = 0 if all packages are up-to-date
 	#	$? = 1 if one-or-more packages can be upgraded
 
+	QPKGs.AClist.ISupgradable.IsNt || return 0
+	QPKGs.ACupgrade.ISupgradable.IsNt || return 0
+
 	local a=''
 	local b=''
 	local c=''
@@ -6220,10 +6234,10 @@ QPKGs.NewVers:Show()
 	local name_limit=2
 	local -a packages=()
 
-	if [[ $(QPKGs-GRupgradable:Count) -eq 0 ]]; then
+	if [[ $(QPKGs-ISupgradable:Count) -eq 0 ]]; then
 		return 0
 	else
-		packages+=($(QPKGs-GRupgradable:Array))
+		packages+=($(QPKGs-ISupgradable:Array))
 	fi
 
 	# shellcheck disable=2322
@@ -6296,7 +6310,7 @@ QPKGs.Warnings:Check()
 
 	}
 
-PIPs.Actions:List()
+QPKGs.Actions:List()
 	{
 
 	[[ $useropt_debug = true ]] || return
@@ -6304,14 +6318,32 @@ PIPs.Actions:List()
 	Func:Init
 
 	local a=''
-	DebugInfoMinSepr
+	local b=''
+	local border_shown=false
 
-	for a in "${PIP_ACTIONS[@]}"; do
-		PIPs-AC${a}-ok.IsAny && DebugPipInfo "AC${a}-ok" "($(PIPs-AC${a}-ok:Count)) $(PIPs-AC${a}-ok:ListCSV) "
-		PIPs-AC${a}-er.IsAny && DebugPipError "AC${a}-er" "($(PIPs-AC${a}-er:Count)) $(PIPs-AC${a}-er:ListCSV) "
+	for a in "${QPKG_ACTIONS[@]}"; do
+		for b in ok er sk so se sa; do
+			if QPKGs-AC${a}-${b}.IsAny; then
+				if [[ $border_shown = false ]]; then
+					DebugInfoMinSepr
+					border_shown=true
+				fi
+
+				case $b in
+					ok|sk|so)
+						DebugQpkg info "AC${a}-${b}" "($(QPKGs-AC${a}-${b}:Count)) $(QPKGs-AC${a}-${b}:ListCSV) "
+						;;
+					se|sa)
+						DebugQpkg warning "AC${a}-${b}" "($(QPKGs-AC${a}-${b}:Count)) $(QPKGs-AC${a}-${b}:ListCSV) "
+						;;
+					er)
+						DebugQpkg error "AC${a}-${b}" "($(QPKGs-AC${a}-${b}:Count)) $(QPKGs-AC${a}-${b}:ListCSV) "
+				esac
+			fi
+		done
 	done
 
-	DebugInfoMinSepr
+	[[ $border_shown = true ]] && DebugInfoMinSepr
 
 	Func:Exit
 
@@ -6351,7 +6383,7 @@ IPKs.Actions:List()
 
 	}
 
-QPKGs.Actions:List()
+PIPs.Actions:List()
 	{
 
 	[[ $useropt_debug = true ]] || return
@@ -6359,32 +6391,14 @@ QPKGs.Actions:List()
 	Func:Init
 
 	local a=''
-	local b=''
-	local border_shown=false
+	DebugInfoMinSepr
 
-	for a in "${QPKG_ACTIONS[@]}"; do
-		for b in ok er sk so se sa; do
-			if QPKGs-AC${a}-${b}.IsAny; then
-				if [[ $border_shown = false ]]; then
-					DebugInfoMinSepr
-					border_shown=true
-				fi
-
-				case $b in
-					ok)
-						DebugQpkg info "AC${a}-${b}" "($(QPKGs-AC${a}-${b}:Count)) $(QPKGs-AC${a}-${b}:ListCSV) "
-						;;
-					sk|so|se|sa)
-						DebugQpkg warning "AC${a}-${b}" "($(QPKGs-AC${a}-${b}:Count)) $(QPKGs-AC${a}-${b}:ListCSV) "
-						;;
-					er)
-						DebugQpkg error "AC${a}-${b}" "($(QPKGs-AC${a}-${b}:Count)) $(QPKGs-AC${a}-${b}:ListCSV) "
-				esac
-			fi
-		done
+	for a in "${PIP_ACTIONS[@]}"; do
+		PIPs-AC${a}-ok.IsAny && DebugPipInfo "AC${a}-ok" "($(PIPs-AC${a}-ok:Count)) $(PIPs-AC${a}-ok:ListCSV) "
+		PIPs-AC${a}-er.IsAny && DebugPipError "AC${a}-er" "($(PIPs-AC${a}-er:Count)) $(PIPs-AC${a}-er:ListCSV) "
 	done
 
-	[[ $border_shown = true ]] && DebugInfoMinSepr
+	DebugInfoMinSepr
 
 	Func:Exit
 
@@ -6544,10 +6558,26 @@ QPKGs.States:Build()
 	for a in $(QPKGs-GRall:Array); do
 		[[ $a = "$b" ]] && continue || b=$a
 
-		if QPKG.IsUpgradable "$a"; then
-			echo upgradable
-		else
-			echo notupgradable
+		if QPKG.IsInstalled "$a"; then
+			echo installed							# Only write this once per-file.
+
+			if QPKG.IsUpgradable "$a"; then
+				echo upgradable
+			else
+				echo notupgradable
+			fi
+		fi >> "$QPKG_STATES_PATH/$a"
+	done &
+
+	for a in $(QPKGs-GRall:Array); do
+		[[ $a = "$b" ]] && continue || b=$a
+
+		if QPKG.IsInstalled "$a"; then
+			if QPKG.IsEnabled "$a"; then
+				echo enabled
+			else
+				echo notenabled
+			fi
 		fi >> "$QPKG_STATES_PATH/$a"
 	done &
 
@@ -6570,28 +6600,12 @@ QPKGs.States:Build()
 	for a in $(QPKGs-GRall:Array); do
 		[[ $a = "$b" ]] && continue || b=$a
 
-		if QPKG.IsMissing "$a"; then
-			echo missing
-		else
-			echo notmissing
-		fi >> "$QPKG_STATES_PATH/$a"
-	done &
-
-	for a in $(QPKGs-GRall:Array); do
-		[[ $a = "$b" ]] && continue || b=$a
-
-		if QPKG.IsEnabled "$a"; then
-			echo enabled
-		else
-			echo notenabled
-		fi >> "$QPKG_STATES_PATH/$a"
-	done &
-
-	for a in $(QPKGs-GRall:Array); do
-		[[ $a = "$b" ]] && continue || b=$a
-
 		if QPKG.IsInstalled "$a"; then
-			echo installed
+			if QPKG.IsMissing "$a"; then
+				echo missing
+			else
+				echo notmissing
+			fi
 		else
 			echo notinstalled
 		fi >> "$QPKG_STATES_PATH/$a"
@@ -6649,10 +6663,10 @@ QPKGs.States:Build()
 					QPKGs-ISNTenabled:Add "$a"
 					;;
 				installable)
-					QPKGs-GRinstallable:Add "$a"
+					QPKGs-ISinstallable:Add "$a"
 					;;
 				notinstallable)
-					QPKGs-GRNTinstallable:Add "$a"
+					QPKGs-ISNTinstallable:Add "$a"
 					;;
 				installed)
 					QPKGs-ISinstalled:Add "$a"
@@ -6671,10 +6685,10 @@ QPKGs.States:Build()
 					QPKGs-ISNTmissing:Add "$a"
 					;;
 				upgradable)
-					QPKGs-GRupgradable:Add "$a"
+					QPKGs-ISupgradable:Add "$a"
 					;;
 				notupgradable)
-					QPKGs-GRNTupgradable:Add "$a"
+					QPKGs-ISNTupgradable:Add "$a"
 			esac
 		done
 	done
@@ -6700,12 +6714,12 @@ QPKGs.States:Init()
 
 	DebugAsProc 'initialising state lists'
 
-	for a in "${USER_QPKG_IS_STATES[@]:-}" "${QPKG_STATES_TRANSIENT[@]:-}"; do
+	for a in "${QPKG_IS_STATES[@]:-}" "${QPKG_STATES_TRANSIENT[@]:-}"; do
 		[[ $a = active ]] && continue		# don't reset.
 		QPKGs-IS${a}:Init
 	done
 
-	for a in "${USER_QPKG_ISNT_STATES[@]:-}"; do
+	for a in "${QPKG_ISNT_STATES[@]:-}"; do
 		[[ $a = active ]] && continue		# don't reset.
 		QPKGs-ISNT${a}:Init
 	done
@@ -6781,13 +6795,13 @@ Help.Abbreviations:Show()
 	{
 
 	# Output:
-	#   $max_cols (global)
+	#   $report_max_cols (global)
 
 	Func:Init
 
 	local a=''
 	local b=''
-	max_cols=2
+	report_max_cols=2
 	local -i m=0
 	local -i n=0
 
@@ -6856,7 +6870,7 @@ Report.Backups:Show()
 	local file_name=''
 	local file_time=''
 	local highlight_older_than='2 weeks ago'
-	max_cols=3
+	report_max_cols=3
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport backups
@@ -6904,13 +6918,13 @@ Report.Dependencies:Show()
 	{
 
 	# Output:
-	#   $max_cols (global)
+	#   $report_max_cols (global)
 
 	Func:Init
 
 	local a=''
 	local b=''
-	max_cols=8
+	report_max_cols=8
 	local -i m=0
 	local -i n=0
 	local -i t=$(QPKGs-GRall:Count)
@@ -6963,12 +6977,12 @@ Report.Packages:Show()
 	{
 
 	# Output:
-	#   $max_cols (global)
+	#   $report_max_cols (global)
 
 	Func:Init
 
 	local a=''
-	max_cols=3
+	report_max_cols=3
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport package
@@ -7004,13 +7018,13 @@ Report.Repos:Show()
 	{
 
 	# Output:
-	#   $max_cols (global)
+	#   $report_max_cols (global)
 
 	Func:Init
 
 	local a=''
 	local b=''
-	max_cols=3
+	report_max_cols=3
 	local -i m=0
 	local -i n=0
 	local -i t=$(QPKGs-GRall:Count)
@@ -7055,17 +7069,16 @@ Report.Statuses:Show()
 	{
 
 	# Output:
-	#   $max_cols (global)
+	#   $report_max_cols (global)
 
 	Func:Init
 
 	local a=''
 	local b=''
 	local f=''
-	max_cols=5
 	local -i m=0
+	report_max_cols=5
 	local -i n=0
-	local -i t=$(QPKGs-GRall:Count)
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport status
@@ -7074,6 +7087,7 @@ Report.Statuses:Show()
 	DisplayAsStatusReportTitleLine >"$REPORT_OUTPUT_PATHFILE"
 
 	for a in $(QPKGs-GRall:Array); do
+		QPKGs-ACstatus-dn.Exist $a || continue
 		((n++))
 		DisplayAsStatusReportItemLine "$a" > "$REPORTS_PATH/$n" &
 	done
@@ -7081,7 +7095,7 @@ Report.Statuses:Show()
 	m=$n
 	wait 2>/dev/null
 
-	# load report lines from individual files.
+	# Load report lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
 		f="$REPORTS_PATH/$n"
@@ -7112,7 +7126,7 @@ Report.Statuses:Show()
 
 	}
 
-QPKGs.IsBackedUp:Show()
+QPKGs.ISbackedup:Show()
 	{
 
 	local a=''
@@ -7132,7 +7146,7 @@ QPKGs.IsBackedUp:Show()
 
 	}
 
-QPKGs.IsNtBackedUp:Show()
+QPKGs.ISNTbackedup:Show()
 	{
 
 	local a=''
@@ -7152,7 +7166,47 @@ QPKGs.IsNtBackedUp:Show()
 
 	}
 
-QPKGs.IsInstalled:Show()
+QPKGs.ISenabled:Show()
+	{
+
+	local a=''
+
+	DisableDebugToArchiveAndFile
+	EraseThisLine
+
+	if QPKGs-ISenabled.IsAny; then
+		for a in $(QPKGs-ISenabled:Array); do
+			QPKGs-ISinstalled.Exist "$a" && Display "$a"
+		done
+	else
+		ShowAsWarn "unable to find any 'enabled' QPKGs"
+	fi
+
+	return 0
+
+	}
+
+QPKGs.ISNTenabled:Show()
+	{
+
+	local a=''
+
+	DisableDebugToArchiveAndFile
+	EraseThisLine
+
+	if QPKGs-ISNTenabled.IsAny; then
+		for a in $(QPKGs-ISNTenabled:Array); do
+			QPKGs-ISinstalled.Exist "$a" && Display "$a"
+		done
+	else
+		ShowAsWarn "unable to find any 'not enabled' QPKGs"
+	fi
+
+	return 0
+
+	}
+
+QPKGs.ISinstalled:Show()
 	{
 
 	local a=''
@@ -7172,7 +7226,7 @@ QPKGs.IsInstalled:Show()
 
 	}
 
-QPKGs.IsNtInstalled:Show()
+QPKGs.ISNTinstalled:Show()
 	{
 
 	local a=''
@@ -7192,7 +7246,7 @@ QPKGs.IsNtInstalled:Show()
 
 	}
 
-#QPKGs.GrAll:Show()
+#QPKGs.GRall:Show()
 # 	{
 #
 # 	local a=''
@@ -7212,7 +7266,7 @@ QPKGs.IsNtInstalled:Show()
 #
 # 	}
 
-QPKGs.GrInstallable:Show()
+QPKGs.ISinstallable:Show()
 	{
 
 	local a=''
@@ -7220,8 +7274,8 @@ QPKGs.GrInstallable:Show()
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	if QPKGs-GRinstallable.IsAny; then
-		for a in $(QPKGs-GRinstallable:Array); do
+	if QPKGs-ISinstallable.IsAny; then
+		for a in $(QPKGs-ISinstallable:Array); do
 			Display "$a"
 		done
 	else
@@ -7232,7 +7286,7 @@ QPKGs.GrInstallable:Show()
 
 	}
 
-QPKGs.GrNtInstallable:Show()
+QPKGs.ISNTinstallable:Show()
 	{
 
 	local a=''
@@ -7240,8 +7294,8 @@ QPKGs.GrNtInstallable:Show()
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	if QPKGs-GRNTinstallable.IsAny; then
-		for a in $(QPKGs-GRNTinstallable:Array); do
+	if QPKGs-ISNTinstallable.IsAny; then
+		for a in $(QPKGs-ISNTinstallable:Array); do
 			Display "$a"
 		done
 	else
@@ -7252,7 +7306,7 @@ QPKGs.GrNtInstallable:Show()
 
 	}
 
-QPKGs.IsMissing:Show()
+QPKGs.ISmissing:Show()
 	{
 
 	local a=''
@@ -7272,7 +7326,7 @@ QPKGs.IsMissing:Show()
 
 	}
 
-QPKGs.IsNtMissing:Show()
+QPKGs.ISNTmissing:Show()
 	{
 
 	local a=''
@@ -7292,7 +7346,7 @@ QPKGs.IsNtMissing:Show()
 
 	}
 
-QPKGs.IsActive:Show()
+QPKGs.ISactive:Show()
 	{
 
 	local a=''
@@ -7312,7 +7366,7 @@ QPKGs.IsActive:Show()
 
 	}
 
-QPKGs.IsNtActive:Show()
+QPKGs.ISNTactive:Show()
 	{
 
 	local a=''
@@ -7332,7 +7386,7 @@ QPKGs.IsNtActive:Show()
 
 	}
 
-QPKGs.GrUpgradable:Show()
+QPKGs.ISupgradable:Show()
 	{
 
 	local a=''
@@ -7340,8 +7394,8 @@ QPKGs.GrUpgradable:Show()
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	if QPKGs-GRupgradable.IsAny; then
-		for a in $(QPKGs-GRupgradable:Array); do
+	if QPKGs-ISupgradable.IsAny; then
+		for a in $(QPKGs-ISupgradable:Array); do
 			Display "$a"
 		done
 	else
@@ -7352,7 +7406,27 @@ QPKGs.GrUpgradable:Show()
 
 	}
 
-QPKGs.GrIndependent:Show()
+QPKGs.ISNTupgradable:Show()
+	{
+
+	local a=''
+
+	DisableDebugToArchiveAndFile
+	EraseThisLine
+
+	if QPKGs-ISNTupgradable.IsAny; then
+		for a in $(QPKGs-ISNTupgradable:Array); do
+			Display "$a"
+		done
+	else
+		ShowAsWarn "unable to find any 'non-upgradable' QPKGs"
+	fi
+
+	return 0
+
+	}
+
+QPKGs.GRindependent:Show()
 	{
 
 	local a=''
@@ -7372,7 +7446,7 @@ QPKGs.GrIndependent:Show()
 
 	}
 
-QPKGs.GrDependent:Show()
+QPKGs.GRdependent:Show()
 	{
 
 	local a=''
@@ -8047,7 +8121,7 @@ ShowZeroQpkgs()
 	local a=''
 	local b=''
 
-	for a in "${USER_QPKG_IS_STATES[@]:-}"; do
+	for a in "${QPKG_IS_STATES[@]:-}"; do
 		for b in "${USER_QPKG_ACTIONS[@]:-}"; do
 			[[ $b = list ]] && continue			# action results lists are unavailable for these
 
@@ -8092,6 +8166,7 @@ Verbose:Enable()
 	useropt_verbose=true
 	DebugVar useropt_verbose
 
+	useropt_terse=false
 	Keystrokes:Show
 	Cursor:Show
 
@@ -8395,6 +8470,7 @@ _QPKG:install_()
 
 		if [[ $PACKAGE_NAME = Entware ]]; then
 			SendParentChangeEnv ModPathToEntware
+			SendParentChangeEnv UpdateEntwarePackageList
 			PatchEntwareService
 
 			# Shift all files from original [/opt] into new [/opt]
@@ -8543,7 +8619,7 @@ _QPKG:rebuild_()
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
 
 	DebugAsProc "meta-rebuilding $(ShowAsPackageName "$PACKAGE_NAME")"
-	# Nothing-to-do here, real QPKG actions have already been assigned in Env:Validate().
+	# Nothing-to-do here, real QPKG actions have already been assigned in Env:Check().
 
 	SaveActionResultToLog QPKG "$PACKAGE_NAME" meta-rebuild ok
 	MarkThisActionForkAsOk
@@ -8577,7 +8653,7 @@ _QPKG:upgrade_()
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" upgrade skipped 'QPKG is not installed'
 		MarkThisActionForkAsSkipped
 		z=1
-	elif ! QPKGs-GRupgradable.Exist "$PACKAGE_NAME"; then
+	elif ! QPKGs-ISupgradable.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" upgrade skipped 'no new QPKG is available'
 		MarkThisActionForkAsSkipped
 		z=1
@@ -8617,7 +8693,7 @@ _QPKG:upgrade_()
 
 	if [[ $z -eq 0 || $z -eq 10 ]]; then
 		QPKG.ServiceStatus:Log
-		SendPackageStateChange GRNTupgradable
+		SendPackageStateChange ISNTupgradable
 
 		if QPKG.IsEnabled "$PACKAGE_NAME"; then
 			SendPackageStateChange ISenabled
@@ -8685,7 +8761,7 @@ _QPKG:uninstall_()
 
 	local -r QPKG_UNINSTALLER_PATHFILE=$(QPKG.GetInstallationPath "$PACKAGE_NAME")/.uninstall.sh
 
-	[[ $PACKAGE_NAME = Entware ]] && SaveEntwarePackageList
+	[[ $PACKAGE_NAME = Entware ]] && SaveIpkAndPipList
 
 	if [[ -e $QPKG_UNINSTALLER_PATHFILE ]]; then
 		DebugAsProc "uninstalling $(ShowAsPackageName "$PACKAGE_NAME")"
@@ -8703,6 +8779,7 @@ _QPKG:uninstall_()
 
 			if [[ $PACKAGE_NAME = Entware ]]; then
 				SendParentChangeEnv ModPathToEntware
+				SendParentChangeEnv UpdateColourisation
 				UpdateColourisation
 			fi
 
@@ -8792,6 +8869,7 @@ _QPKG:activate_()
 
 		if [[ $PACKAGE_NAME = Entware ]]; then
 			SendParentChangeEnv ModPathToEntware
+			SendParentChangeEnv UpdateColourisation
 			UpdateColourisation
 		fi
 
@@ -8954,6 +9032,7 @@ _QPKG:deactivate_()
 
 		if [[ $PACKAGE_NAME = Entware ]]; then
 			SendParentChangeEnv ModPathToEntware
+			SendParentChangeEnv UpdateColourisation
 			UpdateColourisation
 		fi
 
@@ -9499,7 +9578,7 @@ _QPKG:status_()
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
 
-	DebugAsProc "statusing $(ShowAsPackageName "$PACKAGE_NAME")"
+	DebugAsProc "status $(ShowAsPackageName "$PACKAGE_NAME")"
 
 	a=$(QPKG.GetActiveTest "$PACKAGE_NAME")
 
@@ -11363,7 +11442,37 @@ DebugErrorTabld()
 DebugVar()
 	{
 
-	DebugAsVar "\$$1 : '${!1:-undefined}'"
+	# Input:
+	#   $1 = variable name
+
+	# Output:
+	#   to debug log
+
+	if [[ -n ${!1:-} ]]; then
+		DebugAsVar "\$$1 : '${!1}'"
+	else
+		DebugAsVar "\$$1 : null"
+	fi
+
+	}
+
+DebugArray()
+	{
+
+	# Input:
+	#   $1 = array name
+	#   $2 = array contents: i.e. "${myarray[*]}"
+
+	# Output:
+	#   to debug log
+
+	[[ -n ${1:-} ]] || return
+
+	if [[ -n ${2:-} ]]; then
+		DebugAsArray "\$$1 : ['$2']"
+	else
+		DebugAsArray "\$$1 : [null]"
+	fi
 
 	}
 
@@ -11553,6 +11662,13 @@ DebugAsVar()
 	{
 
 	[[ -n $1 ]] && DebugThis "(vv) $1"
+
+	}
+
+DebugAsArray()
+	{
+
+	[[ -n $1 ]] && DebugThis "(aa) $1"
 
 	}
 
@@ -12247,7 +12363,7 @@ Objects:Load()
 
 	if [[ ! -e $PWD/dont-refresh-objects ]]; then
 		if [[ ! -e $OBJECTS_PATHFILE ]] || ! IsThisFileRecent "$OBJECTS_PATHFILE" "$FILE_CHANGE_THRESHOLD_MINUTES"; then
-			ShowAsProc 'downloading objects'
+			ShowAsProc 'download objects'
 
 			if $CURL_CMD --silent --fail "$OBJECTS_ARCHIVE_URL" > "$OBJECTS_ARCHIVE_PATHFILE"; then
 				$TAR_CMD --extract --gzip --no-same-owner --file="$OBJECTS_ARCHIVE_PATHFILE" --directory="$CACHE_PATH"
@@ -12261,7 +12377,7 @@ Objects:Load()
 		Func:Exit 1; exit
 	fi
 
-	ShowAsProc 'loading objects'
+	ShowAsProc objects
 
 	. "$OBJECTS_PATHFILE"
 	objects_loaded=true
@@ -12286,7 +12402,7 @@ Packages:Load()
 
 	if [[ ! -e $PWD/dont-refresh-packages ]]; then
 		if [[ ! -e $PACKAGES_PATHFILE ]] || ! IsThisFileRecent "$PACKAGES_PATHFILE" "$FILE_CHANGE_THRESHOLD_MINUTES"; then
-			ShowAsProc 'downloading QPKG list'
+			ShowAsProc 'download QPKG list'
 
 			if $CURL_CMD --silent --fail "$PACKAGES_ARCHIVE_URL" > "$PACKAGES_ARCHIVE_PATHFILE"; then
 				$TAR_CMD --extract --gzip --no-same-owner --file="$PACKAGES_ARCHIVE_PATHFILE" --directory="$CACHE_PATH"
@@ -12300,7 +12416,7 @@ Packages:Load()
 		Func:Exit 1; exit
 	fi
 
-	ShowAsProc 'loading QPKG list'
+	ShowAsProc QPKGs
 
 	. "$PACKAGES_PATHFILE"
 	packages_loaded=true
@@ -12309,6 +12425,7 @@ Packages:Load()
 	readonly BASE_QPKG_WARNINGS
 	readonly ESSENTIAL_IPKS
 	readonly ESSENTIAL_PIPS
+	readonly EXCLUSION_PIPS
 	readonly MIN_PERL_VER
 	readonly MIN_PYTHON_VER
 	readonly PACKAGES_VER

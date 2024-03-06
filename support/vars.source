@@ -29,6 +29,9 @@ SwapTags()
 		buffer=$(sed "s|<?management_file?>|$management_file|g" <<< "$buffer")
 		buffer=$(sed "s|<?latest_release_version?>|${latest_release_version:-0}|g" <<< "$buffer")
 		buffer=$(sed "s|<?title_description?>|$title_description|g" <<< "$buffer")
+		buffer=$(sed "s|<?essential_ipks?>|${essential_ipks:=essential ipks}|g" <<< "$buffer")
+		buffer=$(sed "s|<?essential_pips?>|${essential_pips:=essential pips}|g" <<< "$buffer")
+		buffer=$(sed "s|<?exclusion_pips?>|${exclusion_pips:=exclusion pips}|g" <<< "$buffer")
 
 		[[ -e $2 ]] && chmod +w "$2"
 		echo "$buffer" > "$2"
