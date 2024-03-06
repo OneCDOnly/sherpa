@@ -1666,18 +1666,10 @@ ParseManagementArgs()
 
 		# Identify action.
 
-		case $arg in
-		# These cases are for a user-provided word to specify a single action.
-			reset)
-				DeleteSetting Colourful
-				DeleteSetting Git_Branch
-				DeleteSetting Terse
+		action=$(TranslateIntoAction "$arg")
 
-				Reset					# <-- Processing will terminate in this function (no-return).
-				;;
-		# All cases below are for multiple user-provided words or chars to specify a single action.
-			c|check)
-				action=check
+		case $action in
+			check)
 				generate_show_report=true
 				get_qpkg_states=true
 				requires_group=false
@@ -1686,18 +1678,22 @@ ParseManagementArgs()
 				useropt_check=true
 				;;
 			colo?(u)r?(ful)|follow|paste|terse)
-				action=$arg
 				requires_group=true
 				user_action=$arg
 				;;
-			d?(e)bug)
-				action=debug
+			debug)
 				requires_group=false
 				user_action=$arg
 				EnableDebugToArchiveAndFile
 				;;
-			v|verbose)
-				action=verbose
+			reset)
+				DeleteSetting Colourful
+				DeleteSetting Git_Branch
+				DeleteSetting Terse
+
+				Reset					# <-- Processing will terminate in this function (no-return).
+				;;
+			verbose)
 				requires_group=false
 				user_action=$arg
 				Verbose:Enable
@@ -1714,24 +1710,7 @@ ParseManagementArgs()
 
 		# Identify group. Include action assignment when action hasn't been previously specified.
 
-		case $arg in
-		# These cases use only a single user-provided word or char to specify a single group.
-			?(un)stable)
-				group=$arg
-				;;
-		# All cases below can use multiple user-provided words or chars to specify a single group.
-			all|log|tail)
-				group=tail
-				;;
-			disable|false|no|off|unset)
-				group=false
-				;;
-			l|last)
-				group=last
-				;;
-			enable|on|set|true|yes)
-				group=true
-		esac
+		group=$(TranslateIntoGroup "$arg")
 
 		# Pair action with group.
 
@@ -2077,9 +2056,10 @@ ParseShowArgs()
 
 		# Identify action.
 
-		case $arg in
-			show|view)
-				action=show
+		action=$(TranslateIntoAction "$arg")
+
+		case $action in
+			show)
 				requires_group=true
 				user_action=$arg
 		esac
@@ -2092,50 +2072,15 @@ ParseShowArgs()
 			continue
 		fi
 
-		# Identify group. Include action assignment when action hasn't been previously specified.
+		# Identify group.
 
-		case $arg in
-		# These cases use only a single user-provided word or char to specify a single group.
-			results)
+		group=$(TranslateIntoGroup "$arg")
+
+		# Include action assignment when action hasn't been previously specified.
+
+		case $group in
+			abs|backups|dependent|last|packages|repositories|results|status|tail)
 				[[ -z $action ]] && action=show
-				group=$arg
-				;;
-		# All cases below can use multiple user-provided words or chars to specify a single group.
-			a|abs|abbreviations)
-				# Don't set a default action for this group, this group is used for multiple actions. Set a default in the last parsing function.
-				group=abs
-				;;
-			b|backups)
-				[[ -z $action ]] && action=show
-				group=backups
-				;;
-			deps)
-				# Don't set a default action for this group, this group is used for multiple actions. Set a default in the last parsing function.
-				group=dependencies
-				;;
-			d|dependencies)
-				[[ -z $action ]] && action=show
-				group=dependencies
-				;;
-			l|last)
-				[[ -z $action ]] && action=show
-				group=last
-				;;
-			log|tail)
-				[[ -z $action ]] && action=show
-				group=tail
-				;;
-			p|package?(s)|qpkg?(s))
-				[[ -z $action ]] && action=show
-				group=packages
-				;;
-			r|repos|repositories)
-				[[ -z $action ]] && action=show
-				group=repositories
-				;;
-			s|status?(es))
-				# Don't set a default action for this group, this group is used for multiple actions. Set a default in the last parsing function.
-				group=status
 		esac
 
 		# Pair action with group.
@@ -2160,7 +2105,7 @@ ParseShowArgs()
 							run_package_actions=false
 							useropt_show_backups=true
 							;;
-						dependencies)
+						dependent)
 							Packages:Load
 							action=''
 							awaiting_group=false
@@ -2272,9 +2217,10 @@ ParseListArgs()
 
 		# Identify action.
 
-		case $arg in
+		action=$(TranslateIntoAction "$arg")
+
+		case $action in
 			list)
-				action=$arg
 				requires_group=true
 				user_action=$arg
 		esac
@@ -2289,7 +2235,7 @@ ParseListArgs()
 
 		# Identify group.
 
-		group=$(TranslateArgToGroup "$arg")
+		group=$(TranslateIntoGroup "$arg")
 
 		# Include action assignment when action hasn't been previously specified.
 
@@ -2403,62 +2349,19 @@ ParseActionArgs()
 
 		# Identify action.
 
-		case $arg in
-		# These cases are for a user-provided word to specify a single action.
-			backup|clean|@(dis|en)able|reassign|rebuild|reinstall|restore|sign)
-				action=$arg
+		action=$(TranslateIntoAction "$arg")
+
+		case $action in
+			?(de|re)activate|backup|clean|@(dis|en)able?(au)|install|reassign|rebuild|@(re|un)install|restore|sign|upgrade)
 				requires_group=true
 				user_action=$arg
 				;;
-		# These cases are for a user-provided word or phrase to specify a single action.
-			disable-auto-update)
-				action=disableau
-				requires_group=true
-				user_action=$arg
-				;;
-			enable-auto-update)
-				action=enableau
-				requires_group=true
-				user_action=$arg
-				;;
-		# All cases below are for multiple user-provided words or chars to specify a single action.
-			activate|start)
-				action=activate
-				requires_group=true
-				user_action=$arg
-				;;
-			add|install)
-				action=install
-				requires_group=true
-				user_action=$arg
-				;;
-			deactivate|stop)
-				action=deactivate
-				requires_group=true
-				user_action=$arg
-				;;
-			reactivate|restart)
-				action=reactivate
-				requires_group=true
-				user_action=$arg
-				;;
-			remove|rm|uninstall)
-				action=uninstall
-				requires_group=true
-				user_action=$arg
-				;;
-			s|status?(es))
-				action=status
+			status)
 				generate_show_report=true
 				get_qpkg_states=true
 				requires_group=true
+				user_action=$arg
 				useropt_show_status=true
-				user_action=$arg
-				;;
-			update|upgrade)
-				action=upgrade
-				requires_group=true
-				user_action=$arg
 		esac
 
 		if [[ -n $user_action && $user_action != "$current_action" ]]; then
@@ -2471,7 +2374,7 @@ ParseActionArgs()
 
 		# Identify group.
 
-		group=$(TranslateArgToGroup "$arg")
+		group=$(TranslateIntoGroup "$arg")
 
 		# Pair action with group.
 
@@ -2559,67 +2462,139 @@ ParseActionArgs()
 
 	}
 
-TranslateArgToGroup()
+TranslateIntoAction()
 	{
 
-	# Identify group from supplied argument.
+	# Identify action from $1
 
 	local a=${1:-}
-	local b=''
 
 	case $a in
-	# These cases use only a single user-provided word or char to specify a single group.
-		backedup|canbackup|enabled|installable|installed|missing)
-			b=${a}
+		activate|start)
+			printf activate
 			;;
-	# All cases below can use multiple user-provided words or chars to specify a single group.
-		a|abs|abbreviations)
-			b=abs
+		add|install)
+			printf install
 			;;
-		active|no@(n|t)-inactive|no@(n|t)-stopped|started)
-			b=active
+		backup|clean|colo?(u)r?(ful)|@(dis|en)able|follow|list|paste|reassign|rebuild|reinstall|reset|restore|sign|terse)
+			echo -n "$a"
 			;;
-		all|entire|everything)
-			b=all
+		c|check)
+			printf check
 			;;
-		deps|dependent?(s))
-			b=dependent
+		deactivate|stop)
+			printf deactivate
 			;;
-		disabled|no@(n|t)-enabled)
-			b=NTenabled
+		d?(e)bug)
+			printf debug
 			;;
-		inactive|no@(n|t)-active|no@(n|t)-started|stopped)
-			b=NTactive
+		disable-auto-update)
+			printf disableau
 			;;
-		independent?(s)|indeps)
-			b=independent
+		enable-auto-update)
+			printf enableau
 			;;
-		new|updat?(e)able|upgradable)
-			b=upgradable
+		reactivate|restart)
+			printf reactivate
 			;;
-		no@(n|t)-back?(ed)up)
-			b=NTbackedup
+		remove|rm|uninstall)
+			printf uninstall
 			;;
-		no@(n|t)-installable)
-			b=NTinstallable
+		s|status?(es))
+			printf status
 			;;
-		no@(n|t)-installed)
-			b=NTinstalled
+		show|view)
+			printf show
 			;;
-		no@(n|t)-missing)
-			b=NTmissing
+		update|upgrade)
+			printf upgrade
 			;;
-		no@(n|t)-upgradable)
-			b=NTupgradable
-			;;
-		version?(s))
-			b=versions
-			;;
-		*)
-			b=$(QPKG.MatchAbbrv "$a")
+		v|verbose)
+			printf verbose
 	esac
 
-	echo -n "$b"
+	}
+
+TranslateIntoGroup()
+	{
+
+	# Identify group from $1
+
+	local a=${1:-}
+
+	case $a in
+		a|abs|abbreviations)
+			printf abs
+			;;
+		active|no@(n|t)-inactive|no@(n|t)-stopped|started)
+			printf active
+			;;
+		all|entire|everything)
+			printf all
+			;;
+		b|backups)
+			printf backups
+			;;
+		backedup|canbackup|enabled|installable|installed|missing|results|?(un)stable)
+			echo -n "$a"
+			;;
+		d|deps|dependencies|dependent?(s))
+			printf dependent
+			;;
+		disable|false|no|off|unset)
+			printf false
+			;;
+		disabled|no@(n|t)-enabled)
+			printf NTenabled
+			;;
+		enable|on|set|true|yes)
+			printf true
+			;;
+		inactive|no@(n|t)-active|no@(n|t)-started|stopped)
+			printf NTactive
+			;;
+		indep?(endent)?(s))
+			printf independent
+			;;
+		l|last)
+			printf last
+			;;
+		log|tail)
+			printf tail
+			;;
+		new|updat?(e)able|upgrad@(a|e)ble)
+			printf upgradable
+			;;
+		no@(n|t)-back?(ed)up)
+			printf NTbackedup
+			;;
+		no@(n|t)-installable)
+			printf NTinstallable
+			;;
+		no@(n|t)-installed)
+			printf NTinstalled
+			;;
+		no@(n|t)-missing)
+			printf NTmissing
+			;;
+		no@(n|t)-upgradable)
+			printf NTupgradable
+			;;
+		p|package?(s)|qpkg?(s))
+			printf packages
+			;;
+		r|repos|repositories)
+			printf repositories
+			;;
+		s|status?(es))
+			printf status
+			;;
+		version?(s))
+			printf versions
+			;;
+		*)
+			QPKG.MatchAbbrv "$a"
+	esac
 
 	}
 
@@ -3065,7 +3040,7 @@ IsThisFileRecent()
 SaveIpkAndPipList()
 	{
 
-	$PIP_CMD freeze > "$PREV_PIP_LIST"
+	$PIP_CMD freeze | cut -d'=' -f1 > "$PREV_PIP_LIST"
 	[[ -e $PREV_PIP_LIST ]] && DebugAsDone "saved current PIP module list to $(ShowAsFileName "$PREV_PIP_LIST")"
 
 	$OPKG_CMD list-installed > "$PREV_IPK_LIST"
@@ -3320,7 +3295,7 @@ IPKs:install()
 
 		if [[ -e $PREV_IPK_LIST && $useropt_check = false ]]; then		# Don't load previous IPK list during 'check'.
 			LoadIpkList
-			mv "$PREV_IPK_LIST" "$PREV_IPK_LIST.installing"
+			mv -f "$PREV_IPK_LIST" "$PREV_IPK_LIST.installing"
 		fi
 	fi
 
@@ -3365,15 +3340,13 @@ IPKs:install()
 			Keystrokes:Hide
 			UpdateColourisation
 
-			if [[ -e $PREV_IPK_LIST.installing ]]; then
-				rm "$PREV_IPK_LIST.installing"
-			fi
+			rm -f "$PREV_IPK_LIST.installing"
 		else
 			NoteIpkAcAsEr "$(IPKs-ACdownload-to:Array)" install
 			SaveActionResultToLog IPK "$desc" install failed "$z"
 
 			if [[ -e $PREV_IPK_LIST.installing ]]; then
-				mv "$PREV_IPK_LIST.installing" "$PREV_IPK_LIST"
+				mv -f "$PREV_IPK_LIST.installing" "$PREV_IPK_LIST"
 			fi
 		fi
 
@@ -3515,7 +3488,7 @@ PIPs:install()
 
 		if [[ -e $PREV_PIP_LIST && $useropt_check = false ]]; then		# Don't load previous PIP list during 'check'.
 			LoadPipList
-			mv "$PREV_PIP_LIST" "$PREV_PIP_LIST.installing"
+			mv -f "$PREV_PIP_LIST" "$PREV_PIP_LIST.installing"
 		fi
 
 		((total_count++))
@@ -3531,9 +3504,15 @@ PIPs:install()
 			((ok_count++))
 			DebugAsDone "installed $desc"
 			SaveActionResultToLog PIP "$desc" install ok "$z"
+
+			rm -f "$PREV_PIP_LIST.installing"
 		else
 			((fail_count++))
 			SaveActionResultToLog PIP "$desc" install failed "$z"
+
+			if [[ -e $PREV_PIP_LIST.installing ]]; then
+				mv -f "$PREV_PIP_LIST.installing" "$PREV_PIP_LIST"
+			fi
 		fi
 
 		ShowAsPercentProgress "install $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 "$fail_count" "$total_count"
