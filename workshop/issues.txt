@@ -1,5 +1,20 @@
 Observed issues:
 
+	* Derp.
+		-------------------------------------------------------------------------------------------------------------------------
+		[/share/Public] # ./sherpa-manager.source list backup enabled
+		proc: env ...
+		proc: download objects ...
+		proc: objects ...
+		proc: download QPKG list ...
+		proc: QPKGs ...
+
+		• Please provide valid [packages] or a [package group] after 'backup' like:
+			# sherpa backup installed
+
+		[/share/Public] #
+		-------------------------------------------------------------------------------------------------------------------------
+
 	* Don't need to resolve IPK deps during 'list active'.
 
 	* Some QPKGs won't 'start' because app is already runing.
