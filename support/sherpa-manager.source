@@ -1508,6 +1508,8 @@ Action:Proc()
 			[[ ${#target_packages[@]} -gt 0 ]] && KillActiveFork		# Only needed if an action fork didn't exit properly.
 			wait 2>/dev/null
 			CloseActionMsgPipe
+
+			[[ ${useropt_terse:=true} = false && $useropt_verbose = false ]] && echo
 			;;
 		IPK|PIP)
 			if [[ $ipks_downgrade = true || $ipks_install = true || $ipks_upgrade = true || $pips_install = true ]]; then
@@ -1515,8 +1517,6 @@ Action:Proc()
 				${PACKAGE_TYPE}s:${TARGET_ACTION}	# Only process these packages in groups, not individually.
 			fi
 	esac
-
-	[[ ${useropt_terse:=true} = false ]] && echo
 
 	EraseForkCountPaths
 
@@ -3164,7 +3164,7 @@ CalcIpkDepsToInstall()
 
 	sleep .5
 
-	[[ ${useropt_terse:=true} = false ]] && echo
+	[[ ${useropt_terse:=true} = false && ${useropt_verbose:=false} = false ]] && echo
 
 	if [[ $complete = true ]]; then
 		DebugAsDone "dependency calculation complete in $iterations iteration$(Pluralise "$iterations")"
@@ -3227,8 +3227,6 @@ CalcIpkDownloadSize()
 		# shellcheck disable=2283
 		IPKs-ACdownload-to:Size = "$(IFS=+; echo "$((${size_array[*]:-}))")"		# nifty sizing shortcut found here https://stackoverflow.com/a/13635566/6182835
 		DebugAsDone "$(FormatAsThous "$(IPKs-ACdownload-to:Size)") bytes ($(FormatAsIsoBytes "$(IPKs-ACdownload-to:Size)")) to download"
-
-		[[ ${useropt_terse:=true} = false ]] && echo
 	else
 		DebugAsDone 'no IPKs to size'
 	fi
@@ -3289,7 +3287,7 @@ IPKs:upgrade()
 			SaveActionResultToLog IPK "$desc" upgrade failed "$z"
 		fi
 
-		[[ ${useropt_terse:=true} = false ]] && echo
+		[[ ${useropt_terse:=true} = false && ${useropt_verbose:=false} = false ]] && echo
 	fi
 
 	Func:Exit $z
@@ -3379,7 +3377,7 @@ IPKs:install()
 			fi
 		fi
 
-		[[ ${useropt_terse:=true} = false ]] && echo
+		[[ ${useropt_terse:=true} = false && ${useropt_verbose:=false} = false ]] && echo
 	fi
 
 	Func:Exit $z
@@ -3444,7 +3442,7 @@ IPKs:downgrade()
 			ShowAsPercentProgress "download $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 "$fail_count" "$total_count"
 		fi
 
-		[[ ${useropt_terse:=true} = false ]] && echo
+		[[ ${useropt_terse:=true} = false && ${useropt_verbose:=false} = false ]] && echo
 
 		total_count=1
 		ok_count=0
@@ -3472,7 +3470,7 @@ IPKs:downgrade()
 
 		ShowAsPercentProgress "downgrade $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 "$fail_count" "$total_count"
 
-		[[ ${useropt_terse:=true} = false ]] && echo
+		[[ ${useropt_terse:=true} = false && ${useropt_verbose:=false} = false ]] && echo
 	fi
 
 	Func:Exit $z
@@ -3540,7 +3538,7 @@ PIPs:install()
 
 		ShowAsPercentProgress "install $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 "$fail_count" "$total_count"
 
-		[[ ${useropt_terse:=true} = false ]] && echo
+		[[ ${useropt_terse:=true} = false && ${useropt_verbose:=false} = false ]] && echo
 	fi
 
 	Func:Exit $z
@@ -8149,6 +8147,7 @@ Verbose:Enable()
 	useropt_verbose=true
 	DebugVar useropt_verbose
 
+	useropt_terse=false
 	Keystrokes:Show
 	Cursor:Show
 
