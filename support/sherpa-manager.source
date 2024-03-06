@@ -116,6 +116,8 @@ Results:Show()
 				QPKGs.GRNTinstallable:Show
 			elif QPKGs.AClist.GRupgradable.IsSet; then
 				QPKGs.GRupgradable:Show
+			elif QPKGs.AClist.GRNTupgradable.IsSet; then
+				QPKGs.GRNTupgradable:Show
 			elif QPKGs.AClist.ISactive.IsSet; then
 				QPKGs.ISactive:Show
 			elif QPKGs.AClist.ISNTactive.IsSet; then
@@ -124,6 +126,10 @@ Results:Show()
 				QPKGs.ISbackedup:Show
 			elif QPKGs.AClist.ISNTbackedup.IsSet; then
 				QPKGs.ISNTbackedup:Show
+			elif QPKGs.AClist.ISenabled.IsSet; then
+				QPKGs.ISenabled:Show
+			elif QPKGs.AClist.ISNTenabled.IsSet; then
+				QPKGs.ISNTenabled:Show
 			elif QPKGs.AClist.ISinstalled.IsSet; then
 				QPKGs.ISinstalled:Show
 			elif QPKGs.AClist.ISNTinstalled.IsSet; then
@@ -2285,56 +2291,15 @@ ParseListArgs()
 			continue
 		fi
 
-		# Identify group. Include action assignment when action hasn't been previously specified.
+		# Identify group.
 
-		case $arg in
-		# These cases use only a single user-provided word to specify a single action.
-			backedup|installable|installed|missing|results)
-				group=${arg}
-				;;
-			no@(n|t)-back?(ed)up)
-				group=NTbackedup
-				;;
-			no@(n|t)-installable)
-				group=NTinstallable
-				;;
-			no@(n|t)-installed)
-				group=NTinstalled
-				;;
-			no@(n|t)-missing)
-				group=NTmissing
-				;;
-		# All cases below can use multiple user-provided words or chars to specify a single action.
-			a|abs|abbreviations)
+		group=$(TranslateArgToGroup "$arg")
+
+		# Include action assignment when action hasn't been previously specified.
+
+		case $group in
+			abs)
 				[[ -z $action ]] && action=list
-				group=abs
-				;;
-			active|no@(n|t)-inactive|no@(n|t)-stopped|started)
-				group=active
-				;;
-			all|entire|everything)
-				group=all
-				;;
-			deps|dependent?(s))
-				group=dependent
-				;;
-			disabled)
-				group=NTenabled
-				;;
-			inactive|no@(n|t)-active|no@(n|t)-started|stopped)
-				group=NTactive
-				;;
-			independent?(s)|indeps)
-				group=independent
-				;;
-			new|updat?(e)able|upgradable)
-				group=upgradable
-				;;
-			no@(n|t)-installable)
-				group=NTinstallable
-				;;
-			version?(s))
-				group=versions
 		esac
 
 		# Pair action with group.
@@ -2363,7 +2328,7 @@ ParseListArgs()
 							run_package_actions=true
 							show_title=false
 							;;
-						?(NT)backedup|?(NT)installed|?(NT)missing)
+						?(NT)backedup|?(NT)enabled|?(NT)installed|?(NT)missing)
 							Objects:Load
 							QPKGs.AClist.IS${group}:Set
 							action=''
@@ -2373,7 +2338,7 @@ ParseListArgs()
 							run_package_actions=false
 							show_title=false
 							;;
-						?(in)dependent|disabled|?(NT)installable|?(NT)upgradable)
+						?(in)dependent|?(NT)installable|?(NT)upgradable)
 							Objects:Load
 							QPKGs.AClist.GR${group}:Set
 							action=''
@@ -2510,45 +2475,7 @@ ParseActionArgs()
 
 		# Identify group.
 
-		case $arg in
-		# These cases use only a single user-provided word or char to specify a single group.
-			backedup|canbackup|installable|installed|missing)
-				group=$arg
-				;;
-			not-backedup)
-				group=NTbackedup
-				;;
-			not-installed)
-				group=NTinstalled
-				;;
-		# All cases below can use multiple user-provided words or chars to specify a single group.
-			active|started)
-				group=active
-				;;
-			all|everything)
-				group=all
-				;;
-			deps|dependent?(s))
-				group=dependent
-				;;
-			disabled)
-				group=NTenabled
-				;;
-			@(in|not-)active|stopped)
-				group=NTactive
-				;;
-			new|updat?(e)able|upgradable)
-				group=upgradable
-				;;
-			no@(n|t)-installable)
-				group=NTinstallable
-				;;
-			independent?(s)|indeps)
-				group=independent
-				;;
-			*)
-				group=$(QPKG.MatchAbbrv "$arg")
-		esac
+		group=$(TranslateArgToGroup "$arg")
 
 		# Pair action with group.
 
@@ -2633,6 +2560,70 @@ ParseActionArgs()
 	args=(${args_remaining[@]:-})
 
 	Func:Exit
+
+	}
+
+TranslateArgToGroup()
+	{
+
+	# Identify group from supplied argument.
+
+	local a=${1:-}
+	local b=''
+
+	case $a in
+	# These cases use only a single user-provided word or char to specify a single group.
+		backedup|canbackup|enabled|installable|installed|missing)
+			b=${a}
+			;;
+	# All cases below can use multiple user-provided words or chars to specify a single group.
+		a|abs|abbreviations)
+			b=abs
+			;;
+		active|no@(n|t)-inactive|no@(n|t)-stopped|started)
+			b=active
+			;;
+		all|entire|everything)
+			b=all
+			;;
+		deps|dependent?(s))
+			b=dependent
+			;;
+		disabled|no@(n|t)-enabled)
+			b=NTenabled
+			;;
+		inactive|no@(n|t)-active|no@(n|t)-started|stopped)
+			b=NTactive
+			;;
+		independent?(s)|indeps)
+			b=independent
+			;;
+		new|updat?(e)able|upgradable)
+			b=upgradable
+			;;
+		no@(n|t)-back?(ed)up)
+			b=NTbackedup
+			;;
+		no@(n|t)-installable)
+			b=NTinstallable
+			;;
+		no@(n|t)-installed)
+			b=NTinstalled
+			;;
+		no@(n|t)-missing)
+			b=NTmissing
+			;;
+		no@(n|t)-upgradable)
+			b=NTupgradable
+			;;
+		version?(s))
+			b=versions
+			;;
+		*)
+			b=$(QPKG.MatchAbbrv "$a")
+	esac
+
+	echo -n "$b"
 
 	}
 
@@ -2723,7 +2714,7 @@ ArgSuggestions:Show()
 
 		for arg in "${args[@]}"; do
 			case $arg in
-				active|started)
+				active|disabled|enabled|started)
 					DisplayAsProjSynExam "please provide a valid $(ShowAsAction) before '$arg' like" "deactivate $arg"
 					arg_problem=true
 					useropt_help_basic=false
@@ -2880,7 +2871,7 @@ AllocPackStatesToAcs()
 			check_later=false
 
 			if QPKGs.AC${action}.IS${state}.IsSet; then
-				if [[ $action = list ]]; then
+				if [[ $state = active ]]; then
 					check_later=true
 				else
 					QPKGs-AC${action}-to:Add "$(QPKGs-IS${state}:Array)"
@@ -2902,7 +2893,7 @@ AllocPackStatesToAcs()
 			check_later=false
 
 			if QPKGs.AC${action}.ISNT${state}.IsSet; then
-				if [[ $action = list ]]; then
+				if [[ $state = active ]]; then
 					check_later=true
 				else
 					QPKGs-AC${action}-to:Add "$(QPKGs-ISNT${state}:Array)"
@@ -6157,6 +6148,9 @@ QPKGs.Missing:Show()
 	#	$? = 0 if no packages are missing
 	#	$? = 1 if one-or-more packages are missing
 
+	QPKGs.AClist.ISmissing.IsNt || return 0
+	QPKGs.ACreinstall.ISmissing.IsNt || return 0
+
 	local a=''
 	local b=''
 	local c=''
@@ -6206,6 +6200,9 @@ QPKGs.NewVers:Show()
 	# Output:
 	#	$? = 0 if all packages are up-to-date
 	#	$? = 1 if one-or-more packages can be upgraded
+
+	QPKGs.AClist.GRupgradable.IsNt || return 0
+	QPKGs.ACupgrade.GRupgradable.IsNt || return 0
 
 	local a=''
 	local b=''
@@ -6538,10 +6535,26 @@ QPKGs.States:Build()
 	for a in $(QPKGs-GRall:Array); do
 		[[ $a = "$b" ]] && continue || b=$a
 
-		if QPKG.IsUpgradable "$a"; then
-			echo upgradable
-		else
-			echo notupgradable
+		if QPKG.IsInstalled "$a"; then
+			echo installed							# Only write this once per-file.
+
+			if QPKG.IsUpgradable "$a"; then
+				echo upgradable
+			else
+				echo notupgradable
+			fi
+		fi >> "$QPKG_STATES_PATH/$a"
+	done &
+
+	for a in $(QPKGs-GRall:Array); do
+		[[ $a = "$b" ]] && continue || b=$a
+
+		if QPKG.IsInstalled "$a"; then
+			if QPKG.IsEnabled "$a"; then
+				echo enabled
+			else
+				echo notenabled
+			fi
 		fi >> "$QPKG_STATES_PATH/$a"
 	done &
 
@@ -6564,28 +6577,12 @@ QPKGs.States:Build()
 	for a in $(QPKGs-GRall:Array); do
 		[[ $a = "$b" ]] && continue || b=$a
 
-		if QPKG.IsMissing "$a"; then
-			echo missing
-		else
-			echo notmissing
-		fi >> "$QPKG_STATES_PATH/$a"
-	done &
-
-	for a in $(QPKGs-GRall:Array); do
-		[[ $a = "$b" ]] && continue || b=$a
-
-		if QPKG.IsEnabled "$a"; then
-			echo enabled
-		else
-			echo notenabled
-		fi >> "$QPKG_STATES_PATH/$a"
-	done &
-
-	for a in $(QPKGs-GRall:Array); do
-		[[ $a = "$b" ]] && continue || b=$a
-
 		if QPKG.IsInstalled "$a"; then
-			echo installed
+			if QPKG.IsMissing "$a"; then
+				echo missing
+			else
+				echo notmissing
+			fi
 		else
 			echo notinstalled
 		fi >> "$QPKG_STATES_PATH/$a"
@@ -7146,6 +7143,46 @@ QPKGs.ISNTbackedup:Show()
 
 	}
 
+QPKGs.ISenabled:Show()
+	{
+
+	local a=''
+
+	DisableDebugToArchiveAndFile
+	EraseThisLine
+
+	if QPKGs-ISenabled.IsAny; then
+		for a in $(QPKGs-ISenabled:Array); do
+			QPKGs-ISinstalled.Exist "$a" && Display "$a"
+		done
+	else
+		ShowAsWarn "unable to find any 'enabled' QPKGs"
+	fi
+
+	return 0
+
+	}
+
+QPKGs.ISNTenabled:Show()
+	{
+
+	local a=''
+
+	DisableDebugToArchiveAndFile
+	EraseThisLine
+
+	if QPKGs-ISNTenabled.IsAny; then
+		for a in $(QPKGs-ISNTenabled:Array); do
+			QPKGs-ISinstalled.Exist "$a" && Display "$a"
+		done
+	else
+		ShowAsWarn "unable to find any 'not enabled' QPKGs"
+	fi
+
+	return 0
+
+	}
+
 QPKGs.ISinstalled:Show()
 	{
 
@@ -7340,6 +7377,26 @@ QPKGs.GRupgradable:Show()
 		done
 	else
 		ShowAsWarn "unable to find any 'upgradable' QPKGs"
+	fi
+
+	return 0
+
+	}
+
+QPKGs.GRNTupgradable:Show()
+	{
+
+	local a=''
+
+	DisableDebugToArchiveAndFile
+	EraseThisLine
+
+	if QPKGs-GRNTupgradable.IsAny; then
+		for a in $(QPKGs-GRNTupgradable:Array); do
+			Display "$a"
+		done
+	else
+		ShowAsWarn "unable to find any 'non-upgradable' QPKGs"
 	fi
 
 	return 0
