@@ -319,7 +319,7 @@ StartQPKGLibrary()
 
 		if [[ $debug = true ]]; then
 			tar_extract_verbose=' --verbose'
-# 			unzip_extract_verbose=' -v'			# Don't enable this, it seems to prevent actual file extraction from occurring.
+# 			unzip_extract_verbose=' -v'			# Don't enable this, seems to prevent actual file extraction from occurring.
 		fi
 
 		if [[ ! -e $daemon_pathfile || ! -e $source_archive_pathfile || $(($(/bin/date +%s)-$(/usr/bin/stat "$source_archive_pathfile" -c %Y))) -lt 60 ]]; then			# Extract from latest release archive.
@@ -533,8 +533,8 @@ InstallAddons()
 	[[ -e $recommended_modules_pathfile && -d $(/usr/bin/dirname "$default_recommended_modules_pathfile") ]] && cp -f "$recommended_modules_pathfile" "$default_recommended_modules_pathfile"
 	[[ -e $default_recommended_modules_pathfile ]] && recommended_modules_pathfile=$default_recommended_modules_pathfile
 
-	# Must remove these modules from repo txt files, and use the ones installed via `opkg` instead (if available).
-	# If not, `pip` will attempt to compile these, which fails on early ARMv5 and some ARMv7 CPUs.
+	# Must remove these modules from repo txt files, and use the ones installed via `opkg` instead (if-available).
+	# If not, `pip` will attempt to compile these, which fails on various CPUs.
 
 	if [[ -e $excluded_modules_pathfile ]]; then
 		module_exclusions=$(/bin/tr '\n' ' ' <<< "$(StripComments "$(<"$excluded_modules_pathfile")")")
