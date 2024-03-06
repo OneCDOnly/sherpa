@@ -1289,7 +1289,7 @@ Actions:Proc()
 				Action:Proc activate $tier QPKG activate activated
 				;;
 			auxiliary)
-				for action in status install reinstall upgrade activate; do
+				for action in install reinstall upgrade activate; do
 					if (QPKGs-ACinstall-ok.Exist Entware) || QPKGs-AC${action}-to.IsAny && QPKGs-ISenabled.Exist Entware; then
 						ipks_downgrade=true
 						ipks_install=true
