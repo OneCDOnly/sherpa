@@ -1,31 +1,5 @@
 Observed issues:
 
-	* Seen during a 'rebuild sab' involving a fresh Enwtare install:
-		-------------------------------------------------------------------------------------------------------------------------
-		Installing collected packages: distlib, urllib3, platformdirs, pip, markupsafe, filelock, virtualenv, pyopenssl
-		Attempting uninstall: urllib3
-			Found existing installation: urllib3 2.0.4
-			Uninstalling urllib3-2.0.4:
-			Successfully uninstalled urllib3-2.0.4
-		Attempting uninstall: pip
-			Found existing installation: pip 23.3.1
-			Uninstalling pip-23.3.1:
-			Successfully uninstalled pip-23.3.1
-		Attempting uninstall: markupsafe
-			Found existing installation: MarkupSafe 2.1.3
-			Uninstalling MarkupSafe-2.1.3:
-			Successfully uninstalled MarkupSafe-2.1.3
-		Attempting uninstall: pyopenssl
-			Found existing installation: pyOpenSSL 23.3.0
-			Uninstalling pyOpenSSL-23.3.0:
-			Successfully uninstalled pyOpenSSL-23.3.0
-		ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
-		requests 2.31.0 requires charset-normalizer<4,>=2, which is not installed.
-		Successfully installed distlib-0.3.8 filelock-3.13.1 markupsafe-2.1.5 pip-24.0 platformdirs-4.2.0 pyopenssl-24.0.0 urllib3-2.2.1 virtualenv-20.25.1
-		-------------------------------------------------------------------------------------------------------------------------
-
-	* Before installing previous PIP list, must remove known problem pips from installation.
-
 	* SABNzbd failed during install, shows error, but install is marked as OK:
 		-------------------------------------------------------------------------------------------------------------------------
 		source: sabnzbd.sh, action: start, datetime: Wed Mar 6 15:12:14 EST 2024
@@ -47,63 +21,7 @@ Observed issues:
 		unable to install addons: 'virtual environment does not exist'
 		source: sabnzbd.sh, action: start, datetime: Wed Mar 6 15:12:20 EST 2024, result: failed, elapsed time: 6,224ms
 		-------------------------------------------------------------------------------------------------------------------------
-
-	* 'sherpa c' should also show actions completed OK, not just skipped actions.
-		-------------------------------------------------------------------------------------------------------------------------
-		[/share/Public] # ./sherpa-manager.source c
-		proc: env ...
-		sherpa v<?build_date?>-unstable
-		proc: objects ...
-		proc: QPKGs ...
-		proc: QPKG states ...
-		note: the LazyLibrarian QPKG is missing or broken. Please reinstall it.
-		note: a new QPKG version is available for SABnzbd.
-		proc: check env ...
-		proc: match QPKG groups to actions ...
-		proc: match QPKG states to actions ...
-		proc: QPKG assignment ...
-		proc: package actions ...
-		proc: assign QPKGs by status ...
-		proc: "sign" independent QPKGs ...
-		proc: resolve IPK dependencies ...
-		proc: exclude IPKs already installed ...
-		proc: install 1 auxiliary PyPI group ...
-		proc: "sign" dependent QPKGs ...
-		done: actions complete.
-
-		• These actions were skipped (and why):
-			"sign" Entware (QPKG is already signed)
-			"sign" Par2turbo (QPKG is already signed)
-			"sign" sherpa (QPKG is already signed)
-			"sign" Unrar (QPKG is already signed)
-			"sign" LazyLibrarian (QPKG is already signed)
-			"sign" nzbToMedia (QPKG is already signed)
-			"sign" pyLoad (QPKG is already signed)
-			"sign" SABnzbd (QPKG is already signed)
-
-		[/share/Public] # ./sherpa-manager.source results
-		proc: env ...
-		sherpa v<?build_date?>-unstable
-
-		• The following package actions were run: Wed Mar 6 11:32:30 EST 2024
-
-		• These actions completed OK:
-			install auxiliary PyPI modules in 6 seconds
-
-		• These actions were skipped (and why):
-			"sign" Entware (QPKG is already signed)
-			"sign" Par2turbo (QPKG is already signed)
-			"sign" sherpa (QPKG is already signed)
-			"sign" Unrar (QPKG is already signed)
-			"sign" LazyLibrarian (QPKG is already signed)
-			"sign" nzbToMedia (QPKG is already signed)
-			"sign" pyLoad (QPKG is already signed)
-			"sign" SABnzbd (QPKG is already signed)
-
-		• No package actions failed.
-
-		[/share/Public] #
-		-------------------------------------------------------------------------------------------------------------------------
+		- Original cause of install failure has been fixed, so will need to simulate an error to test.
 
 	* Don't need to resolve IPK deps during 'list active'.
 
