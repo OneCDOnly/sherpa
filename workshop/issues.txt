@@ -1,5 +1,29 @@
 Observed issues:
 
+	* Seen during a 'rebuild sab' involving a fresh Enwtare install:
+		-------------------------------------------------------------------------------------------------------------------------
+		Installing collected packages: distlib, urllib3, platformdirs, pip, markupsafe, filelock, virtualenv, pyopenssl
+		Attempting uninstall: urllib3
+			Found existing installation: urllib3 2.0.4
+			Uninstalling urllib3-2.0.4:
+			Successfully uninstalled urllib3-2.0.4
+		Attempting uninstall: pip
+			Found existing installation: pip 23.3.1
+			Uninstalling pip-23.3.1:
+			Successfully uninstalled pip-23.3.1
+		Attempting uninstall: markupsafe
+			Found existing installation: MarkupSafe 2.1.3
+			Uninstalling MarkupSafe-2.1.3:
+			Successfully uninstalled MarkupSafe-2.1.3
+		Attempting uninstall: pyopenssl
+			Found existing installation: pyOpenSSL 23.3.0
+			Uninstalling pyOpenSSL-23.3.0:
+			Successfully uninstalled pyOpenSSL-23.3.0
+		ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+		requests 2.31.0 requires charset-normalizer<4,>=2, which is not installed.
+		Successfully installed distlib-0.3.8 filelock-3.13.1 markupsafe-2.1.5 pip-24.0 platformdirs-4.2.0 pyopenssl-24.0.0 urllib3-2.2.1 virtualenv-20.25.1
+		-------------------------------------------------------------------------------------------------------------------------
+
 	* Before installing previous PIP list, must remove known problem pips from installation.
 
 	* SABNzbd failed during install, shows error, but install is marked as OK:

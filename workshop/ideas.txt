@@ -1,4 +1,4 @@
-* Perform manual test of available 'sed' binaries for one that handles extended regexes for StripANSICodes().
+* Perform auto-test of available 'sed' binaries for one that handles extended regexes for StripANSICodes() without throwing an error.
 	- Might not need to wait for GNU 'sed' to be installed via Entware.
 
 * Add "about" user arg to display current environment.
@@ -7,9 +7,9 @@
 
 * Service scripts should show current auto-update setting when displaying basic help.
 
-* Automate generation of Packages.md in wiki using details from packages.source ?
+* Automate generation of 'Packages.md' in wiki using details from 'packages.source' ?
 	- Would need to store full application description, port numbers, application source.
-	- Maybe consider another local source file, that builds packages.source first?
+	- Maybe consider another local source file, that builds 'packages.source' first?
 
 * Don't start deactivated QPKGs (unless requested) during 'install all'.
 
