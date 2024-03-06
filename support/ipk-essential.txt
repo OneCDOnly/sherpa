@@ -1,0 +1,15 @@
+ca-certificates
+column
+coreutils-sleep
+coreutils-sort
+coreutils-stty
+coreutils-timeout
+findutils
+gcc
+git
+git-http
+grep
+less
+nano
+sed
+sqlite3-cli
