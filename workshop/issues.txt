@@ -1,5 +1,34 @@
 Observed issues:
 
+	* SABNzbd failed during install, shows error, but install is marked as OK:
+		-------------------------------------------------------------------------------------------------------------------------
+		source: sabnzbd.sh, action: start, datetime: Wed Mar 6 15:12:14 EST 2024
+		package: 240305, service: 240305, library: 240226
+		daemon: inactive
+		auto-update: true
+		file '/opt/bin/git': exists
+		clone 'SABnzbd' from remote repository:
+		exec: 'cd /tmp; /opt/bin/git clone --branch master --depth 1 -c advice.detachedHead=false https://github.com/sabnzbd/sabnzbd.git /share/CACHEDEV1_DATA/.qpkg/SABnzbd/repo-cache'
+		Cloning into '/share/CACHEDEV1_DATA/.qpkg/SABnzbd/repo-cache'...
+		exec: completed OK
+		OK
+		active git branch: 'master'
+		create new virtual Python environment:
+		exec: 'export PIP_CACHE_DIR=/share/CACHEDEV1_DATA/.qpkg/SABnzbd/pip-cache VIRTUALENV_OVERRIDE_APP_DATA=/share/CACHEDEV1_DATA/.qpkg/SABnzbd/pip-cache; /opt/bin/python3 -m virtualenv /share/CACHEDEV1_DATA/.qpkg/SABnzbd/venv --system-site-packages'
+		/opt/bin/python3: No module named virtualenv
+		exec: completed, but with errors
+		failed
+		unable to install addons: 'virtual environment does not exist'
+		source: sabnzbd.sh, action: start, datetime: Wed Mar 6 15:12:20 EST 2024, result: failed, elapsed time: 6,224ms
+		-------------------------------------------------------------------------------------------------------------------------
+		- Original cause of install failure has been fixed, so will need to simulate an error to test.
+
+	* Don't need to resolve IPK deps during 'list active'.
+
+	* Some QPKGs won't 'start' because app is already runing.
+		- When QPKGs start, should run full status check first to ensure existing PID file is accurate.
+		- Don't just run a basic daemon/process check.
+
 	* Function durations can become incorrect when functions with the same name are called recursively.
 		- Need to make vars holding start-times unique. Maybe measure nest depth?
 

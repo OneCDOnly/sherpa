@@ -6,31 +6,27 @@ echo -n "building 'objects' file ... "
 
 target_pathfile="$source_path/$objects_file"
 
-# These are used internally by sherpa.
+# These are used internally by sherpa. Must maintain separate lists for sherpa internal-use, and what user has requested.
 # ordered
 PACKAGE_TIERS=(independent auxiliary dependent)
 
 # sorted
-QPKG_IS_STATES=(active backedup downloaded enabled installed missing signed slow unknown)
-QPKG_ISNT_STATES=(active backedup downloaded enabled installed missing signed)
-QPKG_STATES_TRANSIENT=(starting stopping restarting)
-QPKG_SERVICE_RESULTS=(ok failed)
-
-# sorted
-IPK_STATES=(downgraded downloaded installed reinstalled upgraded)
+QPKG_IS_STATES=(active backedup downloaded enabled installable installed missing signed upgradable)
+QPKG_ISNT_STATES=(active backedup downloaded enabled installable installed missing signed upgradable)
+QPKG_IS_GROUPS=(all canbackup canclean canrestarttoupdate dependent hasdependents independent)
+QPKG_ISNT_GROUPS=(canclean)
+QPKG_STATES_TRANSIENT=(restarting slow starting stopping unknown)
+QPKG_SERVICE_RESULTS=(failed ok)
 
 # ordered
 QPKG_ACTIONS=(status list rebuild reassign download backup deactivate disable uninstall upgrade reinstall install enableau disableau sign restore clean enable activate reactivate)
-IPK_ACTIONS=(downgrade download uninstall upgrade reinstall install)
-PIP_ACTIONS=(download uninstall upgrade reinstall install)
+IPK_ACTIONS=(downgrade download uninstall upgrade install)
+PIP_ACTIONS=(uninstall upgrade install)
 
-# These actions, states and groups may be specified by the user.
+# These actions may be specified by the user.
 # sorted
 USER_QPKG_ACTIONS=(activate backup clean deactivate disable disableau enable enableau install list reactivate reassign rebuild reinstall restore sign status uninstall upgrade)
-USER_QPKG_IS_STATES=(active backedup enabled installed missing)
-USER_QPKG_ISNT_STATES=(active backedup enabled installed missing)
-USER_QPKG_IS_GROUPS=(all canbackup canclean canrestarttoupdate dependent hasdependents independent installable upgradable)
-USER_QPKG_ISNT_GROUPS=(canclean installable upgradable)
+
 
 AddFlagObj()
 	{
@@ -144,26 +140,20 @@ echo "#* <?dont_edit?>" >> "$target_pathfile"
 
 # package action flag objects.
 
-for state in "${USER_QPKG_IS_STATES[@]}"; do
-	for action in "${USER_QPKG_ACTIONS[@]}"; do
+for action in "${USER_QPKG_ACTIONS[@]}"; do
+ 	for state in "${QPKG_IS_STATES[@]}"; do
 		AddFlagObj QPKGs.AC"$action".IS"$state"
 	done
-done
 
-for state in "${USER_QPKG_ISNT_STATES[@]}"; do
-	for action in "${USER_QPKG_ACTIONS[@]}"; do
+	for state in "${QPKG_ISNT_STATES[@]}"; do
 		AddFlagObj QPKGs.AC"$action".ISNT"$state"
 	done
-done
 
-for group in "${USER_QPKG_IS_GROUPS[@]}"; do
-	for action in "${USER_QPKG_ACTIONS[@]}"; do
+	for group in "${QPKG_IS_GROUPS[@]}"; do
 		AddFlagObj QPKGs.AC"$action".GR"$group"
 	done
-done
 
-for group in "${USER_QPKG_ISNT_GROUPS[@]}"; do
-	for action in "${USER_QPKG_ACTIONS[@]}"; do
+	for group in "${QPKG_ISNT_GROUPS[@]}"; do
 		AddFlagObj QPKGs.AC"$action".GRNT"$group"
 	done
 done
@@ -184,22 +174,27 @@ for state in "${QPKG_ISNT_STATES[@]}" "${QPKG_STATES_TRANSIENT[@]}" "${QPKG_SERV
 	AddListObj QPKGs-ISNT"$state"
 done
 
-for group in "${USER_QPKG_IS_GROUPS[@]}"; do
+for group in "${QPKG_IS_GROUPS[@]}"; do
 	AddListObj QPKGs-GR"$group"
 done
 
-for group in "${USER_QPKG_ISNT_GROUPS[@]}"; do
+for group in "${QPKG_ISNT_GROUPS[@]}"; do
 	AddListObj QPKGs-GRNT"$group"
 done
 
 for action in "${IPK_ACTIONS[@]}"; do
-	case $action in
-		list)
-			continue    # action result lists are not required for these.
-	esac
+	[[ $action != list ]] || continue
 
 	for prefix in to ok er sk; do
 		AddListObj "IPKs-AC${action}-${prefix}"
+	done
+done
+
+for action in "${PIP_ACTIONS[@]}"; do
+	[[ $action != list ]] || continue
+
+	for prefix in to ok er; do
+		AddListObj "PIPs-AC${action}-${prefix}"
 	done
 done
 
