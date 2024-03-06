@@ -110,14 +110,6 @@ Results:Show()
 				QPKGs.GRdependent:Show
 			elif QPKGs.AClist.GRindependent.IsSet; then
 				QPKGs.GRindependent:Show
-			elif QPKGs.AClist.GRinstallable.IsSet; then
-				QPKGs.GRinstallable:Show
-			elif QPKGs.AClist.GRNTinstallable.IsSet; then
-				QPKGs.GRNTinstallable:Show
-			elif QPKGs.AClist.GRupgradable.IsSet; then
-				QPKGs.GRupgradable:Show
-			elif QPKGs.AClist.GRNTupgradable.IsSet; then
-				QPKGs.GRNTupgradable:Show
 			elif QPKGs.AClist.ISactive.IsSet; then
 				QPKGs.ISactive:Show
 			elif QPKGs.AClist.ISNTactive.IsSet; then
@@ -130,6 +122,10 @@ Results:Show()
 				QPKGs.ISenabled:Show
 			elif QPKGs.AClist.ISNTenabled.IsSet; then
 				QPKGs.ISNTenabled:Show
+			elif QPKGs.AClist.ISinstallable.IsSet; then
+				QPKGs.ISinstallable:Show
+			elif QPKGs.AClist.ISNTinstallable.IsSet; then
+				QPKGs.ISNTinstallable:Show
 			elif QPKGs.AClist.ISinstalled.IsSet; then
 				QPKGs.ISinstalled:Show
 			elif QPKGs.AClist.ISNTinstalled.IsSet; then
@@ -138,6 +134,10 @@ Results:Show()
 				QPKGs.ISmissing:Show
 			elif QPKGs.AClist.ISNTmissing.IsSet; then
 				QPKGs.ISNTmissing:Show
+			elif QPKGs.AClist.ISupgradable.IsSet; then
+				QPKGs.ISupgradable:Show
+			elif QPKGs.AClist.ISNTupgradable.IsSet; then
+				QPKGs.ISNTupgradable:Show
 			fi
 		fi
 	fi
@@ -633,29 +633,29 @@ Lists:Load()
 	PACKAGE_TIERS=(independent auxiliary dependent)
 
 	# sorted
-	QPKG_IS_STATES=(active backedup downloaded enabled installed missing signed slow unknown)
-	QPKG_ISNT_STATES=(active backedup downloaded enabled installed missing signed)
-	QPKG_STATES_TRANSIENT=(starting stopping restarting)
-	QPKG_SERVICE_RESULTS=(ok failed)
+	QPKG_IS_STATES=(active backedup downloaded enabled installable installed missing signed upgradable)
+	QPKG_ISNT_STATES=(active backedup downloaded enabled installable installed missing signed upgradable)
+	QPKG_IS_GROUPS=(all canbackup canclean canrestarttoupdate dependent hasdependents independent)
+	QPKG_ISNT_GROUPS=(canclean)
+	QPKG_STATES_TRANSIENT=(restarting slow starting stopping unknown)
+	QPKG_SERVICE_RESULTS=(failed ok)
 
 	# ordered
 	QPKG_ACTIONS=(status list rebuild reassign download backup deactivate disable uninstall upgrade reinstall install enableau disableau sign restore clean enable activate reactivate)
 	IPK_ACTIONS=(downgrade download uninstall upgrade install)
 	PIP_ACTIONS=(uninstall upgrade install)
 
-	# These actions, states and groups may be specified by the user.
+	# These actions may be specified by the user.
 	# sorted
 	USER_QPKG_ACTIONS=(activate backup clean deactivate disable disableau enable enableau install list reactivate reassign rebuild reinstall restore sign status uninstall upgrade)
-	USER_QPKG_IS_STATES=(active backedup enabled installed missing)
-	USER_QPKG_ISNT_STATES=(active backedup enabled installed missing)
-	USER_QPKG_IS_GROUPS=(all canbackup canclean canrestarttoupdate dependent hasdependents independent installable upgradable)
-	USER_QPKG_ISNT_GROUPS=(canclean installable upgradable)
 
 	# KLUDGE: for some reason, setting `readonly` while populating arrays causes their scope to become local, so need to set as `readonly` afterward to ensure global scope. GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
 	readonly PACKAGE_TIERS
 
 	readonly QPKG_IS_STATES
 	readonly QPKG_ISNT_STATES
+	readonly QPKG_IS_GROUPS
+	readonly QPKG_ISNT_GROUPS
 	readonly QPKG_STATES_TRANSIENT
 	readonly QPKG_SERVICE_RESULTS
 
@@ -666,10 +666,6 @@ Lists:Load()
 	readonly PIP_ACTIONS
 
 	readonly USER_QPKG_ACTIONS
-	readonly USER_QPKG_IS_STATES
-	readonly USER_QPKG_ISNT_STATES
-	readonly USER_QPKG_IS_GROUPS
-	readonly USER_QPKG_ISNT_GROUPS
 
 	local action=''
 
@@ -873,28 +869,28 @@ Tasks:Check()
 				break
 			fi
 
-			for group in "${USER_QPKG_IS_GROUPS[@]}"; do
+			for group in "${QPKG_IS_GROUPS[@]}"; do
 				if QPKGs.AC${action}.GR${group}.IsSet; then
 					build_states=true
 					break 2
 				fi
 			done
 
-			for group in "${USER_QPKG_ISNT_GROUPS[@]}"; do
+			for group in "${QPKG_ISNT_GROUPS[@]}"; do
 				if QPKGs.AC${action}.GRNT${group}.IsSet; then
 					build_states=true
 					break 2
 				fi
 			done
 
-			for state in "${USER_QPKG_IS_STATES[@]}"; do
+			for state in "${QPKG_IS_STATES[@]}"; do
 				if QPKGs.AC${action}.IS${state}.IsSet; then
 					build_states=true
 					break 2
 				fi
 			done
 
-			for state in "${USER_QPKG_ISNT_STATES[@]}"; do
+			for state in "${QPKG_ISNT_STATES[@]}"; do
 				if QPKGs.AC${action}.ISNT${state}.IsSet; then
 					build_states=true
 					break 2
@@ -989,7 +985,7 @@ Env:Check()
 	AllocPackGroupsToAcs
 	AllocPackStatesToAcs
 
-	if QPKGs-GRupgradable.Exist sherpa; then
+	if QPKGs-ISupgradable.Exist sherpa; then
 		ShowAsNote "the $(TextBrightOrange sherpa) QPKG will be auto-upgraded"
 		QPKGs-ACupgrade-to:Add sherpa
 	fi
@@ -1240,11 +1236,11 @@ Actions:Proc()
 		ShowAsProc 'assign QPKGs by status'				# Update action lists based-on QPKG `status`.
 
 		for action in "${USER_QPKG_ACTIONS[@]}"; do
-			for state in "${USER_QPKG_IS_STATES[@]}"; do
+			for state in "${QPKG_IS_STATES[@]}"; do
 				QPKGs.AC${action}.IS${state}.IsSet && QPKGs-AC${action}-to:Add "$(QPKGs-IS${state}:Array)"
 			done
 
-			for state in "${USER_QPKG_ISNT_STATES[@]}"; do
+			for state in "${QPKG_ISNT_STATES[@]}"; do
 				QPKGs.AC${action}.ISNT${state}.IsSet && QPKGs-AC${action}-to:Add "$(QPKGs-ISNT${state}:Array)"
 			done
 		done
@@ -1419,7 +1415,7 @@ Action:Proc()
 						;;
 					change)			# Change the state of a single QPKG in the parent shell.
 						while true; do
-							for group in "${USER_QPKG_IS_GROUPS[@]}"; do
+							for group in "${QPKG_IS_GROUPS[@]}"; do
 								case $msg1_value in
 									"SC${group}")
 										[[ $(type -t QPKGs-GRNT${group}:Init) = function ]] && QPKGs-GRNT${group}:Remove "$msg2_value"
@@ -1428,7 +1424,7 @@ Action:Proc()
 								esac
 							done
 
-							for group in "${USER_QPKG_ISNT_GROUPS[@]}"; do
+							for group in "${QPKG_ISNT_GROUPS[@]}"; do
 								case $msg1_value in
 									"GRNT${group}")
 										[[ $(type -t QPKGs-GR${group}:Init) = function ]] && QPKGs-GR${group}:Remove "$msg2_value"
@@ -2328,7 +2324,7 @@ ParseListArgs()
 							run_package_actions=true
 							show_title=false
 							;;
-						?(NT)backedup|?(NT)enabled|?(NT)installed|?(NT)missing)
+						?(NT)backedup|?(NT)enabled|?(NT)installable|?(NT)installed|?(NT)missing|?(NT)upgradable)
 							Objects:Load
 							QPKGs.AClist.IS${group}:Set
 							action=''
@@ -2338,7 +2334,7 @@ ParseListArgs()
 							run_package_actions=false
 							show_title=false
 							;;
-						?(in)dependent|?(NT)installable|?(NT)upgradable)
+						?(in)dependent)
 							Objects:Load
 							QPKGs.AClist.GR${group}:Set
 							action=''
@@ -2496,7 +2492,7 @@ ParseActionArgs()
 			esac
 
 			case $group in
-				all|canbackup|?(NT)canclean|canrestarttoupdate|?(in)dependent|hasdependents|?(NT)installable|?(NT)upgradable)
+				all|canbackup|?(NT)canclean|canrestarttoupdate|?(in)dependent|hasdependents)
 					Objects:Load
 					QPKGs.AC${action}.GR${group}:Set
 					awaiting_group=false
@@ -2505,7 +2501,7 @@ ParseActionArgs()
 					get_qpkg_states=true
 					run_package_actions=true
 					;;
-				?(NT)backedup|?(NT)enabled|?(NT)installed|?(NT)missing)
+				?(NT)backedup|?(NT)enabled|?(NT)installable|?(NT)installed|?(NT)missing|?(NT)upgradable)
 					Objects:Load
 					QPKGs.AC${action}.IS${group}:Set
 					awaiting_group=false
@@ -2820,7 +2816,7 @@ AllocPackGroupsToAcs()
 
 		# Positive groups.
 
-		for group in "${USER_QPKG_IS_GROUPS[@]}"; do
+		for group in "${QPKG_IS_GROUPS[@]}"; do
 			if QPKGs.AC${action}.GR${group}.IsSet; then
 				QPKGs-AC${action}-to:Add "$(QPKGs-GR${group}:Array)"
 
@@ -2834,7 +2830,7 @@ AllocPackGroupsToAcs()
 
 		# Negative groups.
 
-		for group in "${USER_QPKG_ISNT_GROUPS[@]}"; do
+		for group in "${QPKG_ISNT_GROUPS[@]}"; do
 			if QPKGs.AC${action}.GRNT${group}.IsSet; then
 				QPKGs-AC${action}-to:Add "$(QPKGs-GRNT${group}:Array)"
 
@@ -2867,7 +2863,7 @@ AllocPackStatesToAcs()
 
 		# Positive states.
 
-		for state in "${USER_QPKG_IS_STATES[@]}"; do
+		for state in "${QPKG_IS_STATES[@]}"; do
 			check_later=false
 
 			if QPKGs.AC${action}.IS${state}.IsSet; then
@@ -2889,7 +2885,7 @@ AllocPackStatesToAcs()
 
 		# Negative states.
 
-		for state in "${USER_QPKG_ISNT_STATES[@]}"; do
+		for state in "${QPKG_ISNT_STATES[@]}"; do
 			check_later=false
 
 			if QPKGs.AC${action}.ISNT${state}.IsSet; then
@@ -4043,7 +4039,7 @@ CalcMaxStatusReportCols()
 
 	# Add width to include " (new)" string to QPKG version title.
 
-	if QPKGs-GRupgradable.IsAny; then
+	if QPKGs-ISupgradable.IsAny; then
 		package_ver_final_col_width=$((PACKAGE_VER_COL_WIDTH+6))
 		((col3_width+6))
 	else
@@ -4277,7 +4273,7 @@ DisplayAsStatusReportTitleLine()
 	if [[ $report_max_cols -ge 3 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}QPKG version"
-		QPKGs-GRupgradable.IsAny && a+=" ($(TextBrightOrange new))"
+		QPKGs-ISupgradable.IsAny && a+=" ($(TextBrightOrange new))"
 		a+=':'
 		printf "%-$((${package_ver_final_col_width:=0}+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
@@ -4360,7 +4356,7 @@ DisplayAsStatusReportItemLine()
 			fi
 
 			status_msg=${CHARS_NORMAL}${status_msg}
-			QPKGs-GRupgradable.Exist "$name" && upgrade_ver=$(QPKG.Avail.GetVer "$name")
+			QPKGs-ISupgradable.Exist "$name" && upgrade_ver=$(QPKG.Avail.GetVer "$name")
 			ver_msg+=$(QPKG.Local.GetVer "$name")
 
 			if [[ -n $upgrade_ver ]]; then
@@ -6201,8 +6197,8 @@ QPKGs.NewVers:Show()
 	#	$? = 0 if all packages are up-to-date
 	#	$? = 1 if one-or-more packages can be upgraded
 
-	QPKGs.AClist.GRupgradable.IsNt || return 0
-	QPKGs.ACupgrade.GRupgradable.IsNt || return 0
+	QPKGs.AClist.ISupgradable.IsNt || return 0
+	QPKGs.ACupgrade.ISupgradable.IsNt || return 0
 
 	local a=''
 	local b=''
@@ -6211,10 +6207,10 @@ QPKGs.NewVers:Show()
 	local name_limit=2
 	local -a packages=()
 
-	if [[ $(QPKGs-GRupgradable:Count) -eq 0 ]]; then
+	if [[ $(QPKGs-ISupgradable:Count) -eq 0 ]]; then
 		return 0
 	else
-		packages+=($(QPKGs-GRupgradable:Array))
+		packages+=($(QPKGs-ISupgradable:Array))
 	fi
 
 	# shellcheck disable=2322
@@ -6640,10 +6636,10 @@ QPKGs.States:Build()
 					QPKGs-ISNTenabled:Add "$a"
 					;;
 				installable)
-					QPKGs-GRinstallable:Add "$a"
+					QPKGs-ISinstallable:Add "$a"
 					;;
 				notinstallable)
-					QPKGs-GRNTinstallable:Add "$a"
+					QPKGs-ISNTinstallable:Add "$a"
 					;;
 				installed)
 					QPKGs-ISinstalled:Add "$a"
@@ -6662,10 +6658,10 @@ QPKGs.States:Build()
 					QPKGs-ISNTmissing:Add "$a"
 					;;
 				upgradable)
-					QPKGs-GRupgradable:Add "$a"
+					QPKGs-ISupgradable:Add "$a"
 					;;
 				notupgradable)
-					QPKGs-GRNTupgradable:Add "$a"
+					QPKGs-ISNTupgradable:Add "$a"
 			esac
 		done
 	done
@@ -6691,12 +6687,12 @@ QPKGs.States:Init()
 
 	DebugAsProc 'initialising state lists'
 
-	for a in "${USER_QPKG_IS_STATES[@]:-}" "${QPKG_STATES_TRANSIENT[@]:-}"; do
+	for a in "${QPKG_IS_STATES[@]:-}" "${QPKG_STATES_TRANSIENT[@]:-}"; do
 		[[ $a = active ]] && continue		# don't reset.
 		QPKGs-IS${a}:Init
 	done
 
-	for a in "${USER_QPKG_ISNT_STATES[@]:-}"; do
+	for a in "${QPKG_ISNT_STATES[@]:-}"; do
 		[[ $a = active ]] && continue		# don't reset.
 		QPKGs-ISNT${a}:Init
 	done
@@ -7243,7 +7239,7 @@ QPKGs.ISNTinstalled:Show()
 #
 # 	}
 
-QPKGs.GRinstallable:Show()
+QPKGs.ISinstallable:Show()
 	{
 
 	local a=''
@@ -7251,8 +7247,8 @@ QPKGs.GRinstallable:Show()
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	if QPKGs-GRinstallable.IsAny; then
-		for a in $(QPKGs-GRinstallable:Array); do
+	if QPKGs-ISinstallable.IsAny; then
+		for a in $(QPKGs-ISinstallable:Array); do
 			Display "$a"
 		done
 	else
@@ -7263,7 +7259,7 @@ QPKGs.GRinstallable:Show()
 
 	}
 
-QPKGs.GRNTinstallable:Show()
+QPKGs.ISNTinstallable:Show()
 	{
 
 	local a=''
@@ -7271,8 +7267,8 @@ QPKGs.GRNTinstallable:Show()
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	if QPKGs-GRNTinstallable.IsAny; then
-		for a in $(QPKGs-GRNTinstallable:Array); do
+	if QPKGs-ISNTinstallable.IsAny; then
+		for a in $(QPKGs-ISNTinstallable:Array); do
 			Display "$a"
 		done
 	else
@@ -7363,7 +7359,7 @@ QPKGs.ISNTactive:Show()
 
 	}
 
-QPKGs.GRupgradable:Show()
+QPKGs.ISupgradable:Show()
 	{
 
 	local a=''
@@ -7371,8 +7367,8 @@ QPKGs.GRupgradable:Show()
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	if QPKGs-GRupgradable.IsAny; then
-		for a in $(QPKGs-GRupgradable:Array); do
+	if QPKGs-ISupgradable.IsAny; then
+		for a in $(QPKGs-ISupgradable:Array); do
 			Display "$a"
 		done
 	else
@@ -7383,7 +7379,7 @@ QPKGs.GRupgradable:Show()
 
 	}
 
-QPKGs.GRNTupgradable:Show()
+QPKGs.ISNTupgradable:Show()
 	{
 
 	local a=''
@@ -7391,8 +7387,8 @@ QPKGs.GRNTupgradable:Show()
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	if QPKGs-GRNTupgradable.IsAny; then
-		for a in $(QPKGs-GRNTupgradable:Array); do
+	if QPKGs-ISNTupgradable.IsAny; then
+		for a in $(QPKGs-ISNTupgradable:Array); do
 			Display "$a"
 		done
 	else
@@ -8098,7 +8094,7 @@ ShowZeroQpkgs()
 	local a=''
 	local b=''
 
-	for a in "${USER_QPKG_IS_STATES[@]:-}"; do
+	for a in "${QPKG_IS_STATES[@]:-}"; do
 		for b in "${USER_QPKG_ACTIONS[@]:-}"; do
 			[[ $b = list ]] && continue			# action results lists are unavailable for these
 
@@ -8629,7 +8625,7 @@ _QPKG:upgrade_()
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" upgrade skipped 'QPKG is not installed'
 		MarkThisActionForkAsSkipped
 		z=1
-	elif ! QPKGs-GRupgradable.Exist "$PACKAGE_NAME"; then
+	elif ! QPKGs-ISupgradable.Exist "$PACKAGE_NAME"; then
 		SaveActionResultToLog QPKG "$PACKAGE_NAME" upgrade skipped 'no new QPKG is available'
 		MarkThisActionForkAsSkipped
 		z=1
@@ -8669,7 +8665,7 @@ _QPKG:upgrade_()
 
 	if [[ $z -eq 0 || $z -eq 10 ]]; then
 		QPKG.ServiceStatus:Log
-		SendPackageStateChange GRNTupgradable
+		SendPackageStateChange ISNTupgradable
 
 		if QPKG.IsEnabled "$PACKAGE_NAME"; then
 			SendPackageStateChange ISenabled

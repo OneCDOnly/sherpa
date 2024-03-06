@@ -1,4 +1,5 @@
-* Change 'upgradable' from a group to a state.
+* When terse is off, 'done: ' messages should start with a linefeed.
+	- Better to preserve last state of progress message.
 
 * Perform manual test of available 'sed' binaries for one that handles extended regexes for StripANSICodes().
 	- Might not need to wait for GNU 'sed' to be installed via Entware.
