@@ -1390,8 +1390,6 @@ Action:Proc()
 				fork_progress_prefix="$ACTION_PRESENT_MSG $([[ $TIER != all ]] && echo "$TIER ")$(Uppercase "$PACKAGE_TYPE")$(Pluralise "$total_count")"
 			fi
 
-			ShowAsProc "$fork_progress_prefix"
-
 			AdjustMaxForks "$TARGET_ACTION"
 			InitForkCounts
 			OpenActionMsgPipe
@@ -1517,6 +1515,8 @@ Action:Proc()
 				${PACKAGE_TYPE}s:${TARGET_ACTION}	# Only process these packages in groups, not individually.
 			fi
 	esac
+
+	[[ ${useropt_terse:=true} = false ]] && echo
 
 	EraseForkCountPaths
 
@@ -3141,8 +3141,6 @@ CalcIpkDepsToInstall()
 
 	DebugInfo "$requested_count IPK$(Pluralise "$requested_count") requested" "'$req_list' "
 
-	ShowAsProc 'resolve IPK dependencies'
-
 	while [[ $iterations -lt $ITERATION_LIMIT ]]; do
 		ShowAsIterativeProgress 'resolve IPK dependencies' "$iterations" iteration "${#dep_acc[@]}" 'unique package'
 
@@ -3165,6 +3163,8 @@ CalcIpkDepsToInstall()
 	done
 
 	sleep .5
+
+	[[ ${useropt_terse:=true} = false ]] && echo
 
 	if [[ $complete = true ]]; then
 		DebugAsDone "dependency calculation complete in $iterations iteration$(Pluralise "$iterations")"
@@ -3227,6 +3227,8 @@ CalcIpkDownloadSize()
 		# shellcheck disable=2283
 		IPKs-ACdownload-to:Size = "$(IFS=+; echo "$((${size_array[*]:-}))")"		# nifty sizing shortcut found here https://stackoverflow.com/a/13635566/6182835
 		DebugAsDone "$(FormatAsThous "$(IPKs-ACdownload-to:Size)") bytes ($(FormatAsIsoBytes "$(IPKs-ACdownload-to:Size)")) to download"
+
+		[[ ${useropt_terse:=true} = false ]] && echo
 	else
 		DebugAsDone 'no IPKs to size'
 	fi
@@ -3286,6 +3288,8 @@ IPKs:upgrade()
 			NoteIpkAcAsEr "$(IPKs-ACupgrade-to:Array)" upgrade
 			SaveActionResultToLog IPK "$desc" upgrade failed "$z"
 		fi
+
+		[[ ${useropt_terse:=true} = false ]] && echo
 	fi
 
 	Func:Exit $z
@@ -3374,6 +3378,8 @@ IPKs:install()
 				mv "$PREV_IPK_LIST.installing" "$PREV_IPK_LIST"
 			fi
 		fi
+
+		[[ ${useropt_terse:=true} = false ]] && echo
 	fi
 
 	Func:Exit $z
@@ -3427,7 +3433,7 @@ IPKs:downgrade()
 			url_suffix+=.ipk
 
 			for name in $(IPKs-ACdowngrade-to:Array); do
-				ShowAsPercentProgress "downloading $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 0 "$total_count"
+				ShowAsPercentProgress "download $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 0 "$total_count"
 				((ok_count++))
 
 				remote_url=${url_prefix}${name}${url_suffix}
@@ -3435,8 +3441,10 @@ IPKs:downgrade()
 				RunAndLog "$CURL_CMD --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
 			done
 
-			ShowAsPercentProgress "downloading $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 "$fail_count" "$total_count"
+			ShowAsPercentProgress "download $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 "$fail_count" "$total_count"
 		fi
+
+		[[ ${useropt_terse:=true} = false ]] && echo
 
 		total_count=1
 		ok_count=0
@@ -3447,7 +3455,7 @@ IPKs:downgrade()
 
 		ShowAsProc "downgrade $desc"
 
-		ShowAsPercentProgress "downgrading $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 "$fail_count" "$total_count"
+		ShowAsPercentProgress "downgrade $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 "$fail_count" "$total_count"
 		RunAndLog "$OPKG_CMD install --force-downgrade --cache $IPK_CACHE_PATH --tmp-dir $IPK_DOWNGRADE_DL_PATH $IPK_DOWNGRADE_DL_PATH/*.ipk" "$log_pathfile" log:failure-only
 		z=$?
 
@@ -3462,7 +3470,9 @@ IPKs:downgrade()
 			SaveActionResultToLog IPK "$desc" downgrade failed "$z"
 		fi
 
-		ShowAsPercentProgress "downgrading $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 "$fail_count" "$total_count"
+		ShowAsPercentProgress "downgrade $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 "$fail_count" "$total_count"
+
+		[[ ${useropt_terse:=true} = false ]] && echo
 	fi
 
 	Func:Exit $z
@@ -3515,9 +3525,7 @@ PIPs:install()
 		exec_cmd="$PIP_CMD install --upgrade --no-input $(PIPs-ACinstall-to:List) --cache-dir $PIP_CACHE_PATH 2> >($GREP_CMD -v \"Running pip as the 'root' user\") >&2"
 		desc='auxiliary PyPI modules'
 
-		ShowAsProc "install $total_count ${package_type}$(Pluralise "$total_count")"
-
-		ShowAsPercentProgress "installing $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 0 "$total_count"
+		ShowAsPercentProgress "install $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 0 "$total_count"
 		RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
 		z=$?
 
@@ -3530,7 +3538,9 @@ PIPs:install()
 			SaveActionResultToLog PIP "$desc" install failed "$z"
 		fi
 
-		ShowAsPercentProgress "installing $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 "$fail_count" "$total_count"
+		ShowAsPercentProgress "install $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 "$fail_count" "$total_count"
+
+		[[ ${useropt_terse:=true} = false ]] && echo
 	fi
 
 	Func:Exit $z
