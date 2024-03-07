@@ -1,3 +1,11 @@
+* Pretty-print arrays recorded to debug log.
+	-------------------------------------------------------------------------------------------------------------------------
+	$ test=(a b c d ee 'test phrase' 'and something else')
+	$ out=$(printf "'%s'," "${test[@]}")
+	$ echo "elements:${#test[@]},values:[${out%,}]"
+	elements:7,values:['a','b','c','d','ee','test phrase','and something else']
+	-------------------------------------------------------------------------------------------------------------------------
+
 * 'debug' and 'verbose' modes should be persistent when set with a group.
 
 * Perform auto-test of available 'sed' binaries for one that handles extended regexes for StripANSICodes() without throwing an error.
