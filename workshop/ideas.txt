@@ -1,3 +1,9 @@
+* Retest SickGear on armv5 with new Entware modules and see if it can now be installed.
+	https://github.com/OneCDOnly/sherpa/discussions/289
+
+* Is 'status' check looking at QPKG service-script results and prioritising 'inactive' over current state of 'active'?
+	- Why are active packages shown as 'inactive'? Some were 'inactive' (due to known startup network issues on Laura), but a manual 'status' check via the service-script shows them to be 'active', as-does a subsequest 'status' check via sherpa. Weird!
+
 * 'debug' and 'verbose' modes should be persistent when set with a group.
 
 * Perform auto-test of available 'sed' binaries for one that handles extended regexes for StripANSICodes() without throwing an error.
