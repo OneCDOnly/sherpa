@@ -1,5 +1,16 @@
 Observed issues:
 
+	* dev arg tests are './sherpa-manager.source enable watcher disable debug'
+		- this actually enables debug mode.
+
+	* dev arg tests are './sherpa-manager.source follow test clean me start all'
+
+	* 'sherpa show status' displays status report correctly, and then displays 'show' usage examples.
+
+	* 'sherpa help show' is only showing basic help, not the 'show' help list.
+
+	* 'sherpa terse disable' not recognised.
+
 	* SABNzbd failed during install, shows error, but install is marked as OK:
 		-------------------------------------------------------------------------------------------------------------------------
 		source: sabnzbd.sh, action: start, datetime: Wed Mar 6 15:12:14 EST 2024
@@ -22,8 +33,6 @@ Observed issues:
 		source: sabnzbd.sh, action: start, datetime: Wed Mar 6 15:12:20 EST 2024, result: failed, elapsed time: 6,224ms
 		-------------------------------------------------------------------------------------------------------------------------
 		- Original cause of install failure has been fixed, so will need to simulate an error to test.
-
-	* Don't need to resolve IPK deps during 'list active'.
 
 	* Some QPKGs won't 'start' because app is already runing.
 		- When QPKGs start, should run full status check first to ensure existing PID file is accurate.

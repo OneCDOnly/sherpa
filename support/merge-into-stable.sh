@@ -29,7 +29,7 @@ git checkout "$unstable_branch" || exit
 
 cd $HOME/scripts/nas/sherpa/support || exit
 
-./build-qpkgs.sh || exit
+./build-all.sh || exit
 ./commit.sh '[update] QPKGs rebuild [post-merge]' || exit
 
 exit 0
