@@ -20,9 +20,9 @@ Kapowarr_240307_x86.qpkg.md5         Kapowarr_240307_x86.qpkg         Kapowarr  
 LazyLibrarian_240307_arm_64.qpkg.md5 LazyLibrarian_240307_arm_64.qpkg LazyLibrarian        240307       a64    0b3a86870b1326aa2f3dfcfaac5da5d2
 LazyLibrarian_240307_x86_64.qpkg.md5 LazyLibrarian_240307_x86_64.qpkg LazyLibrarian        240307       i64    d1b5c9db6c3116e7962e5ef9aae8961b
 LazyLibrarian_240307_x86.qpkg.md5    LazyLibrarian_240307_x86.qpkg    LazyLibrarian        240307       i86    cff4b315accbdb6cd5e3070a131cbc2a
-Mylar3_240307_arm_64.qpkg.md5        Mylar3_240307_arm_64.qpkg        Mylar3               240307       a64    fab0ef7bc28cf391ee8f9875414be32c
-Mylar3_240307_x86_64.qpkg.md5        Mylar3_240307_x86_64.qpkg        Mylar3               240307       i64    b451dfb4c23debdca9505a7b801e2c97
-Mylar3_240307_x86.qpkg.md5           Mylar3_240307_x86.qpkg           Mylar3               240307       i86    13b2462082ed376fb142fc5282899d35
+Mylar3_240316_arm_64.qpkg.md5        Mylar3_240316_arm_64.qpkg        Mylar3               240316       a64    fd567cdd785bebf4e2e9effdce75ccf9
+Mylar3_240316_x86_64.qpkg.md5        Mylar3_240316_x86_64.qpkg        Mylar3               240316       i64    ad52a575bbfd503beb16aa77e6e26fee
+Mylar3_240316_x86.qpkg.md5           Mylar3_240316_x86.qpkg           Mylar3               240316       i86    a1e0a1e16b24881397cd1f724ad76cd2
 NZBGet_240307.qpkg.md5               NZBGet_240307.qpkg               NZBGet               240307       all    5426f761662bf645b250a694fd78561f
 NZBHydra2_240307_arm_64.qpkg.md5     NZBHydra2_240307_arm_64.qpkg     NZBHydra2            240307       a64    b4fc1c6dfde124feb2ac32f46993f553
 NZBHydra2_240307_x86_64.qpkg.md5     NZBHydra2_240307_x86_64.qpkg     NZBHydra2            240307       i64    1dc34b60af1fbf1ec6b07a7302122d5d
@@ -74,7 +74,7 @@ SABnzbd_240307_x86_64.qpkg.md5       SABnzbd_240307_x86_64.qpkg       SABnzbd   
 SABnzbd_240307_x86.qpkg.md5          SABnzbd_240307_x86.qpkg          SABnzbd              240307       i86    923c5372116d864a7a83f4fa2e185067
 sha3sum_230312_x86_64.qpkg.md5       sha3sum_230312_x86_64.qpkg       sha3sum              230312       i64    6ceba9116e0dbcbdb4e6112f0c02f8c0
 sha3sum_230312_x86.qpkg.md5          sha3sum_230312_x86.qpkg          sha3sum              230312       i86    fdba9d16b88a5b6e3b04483ca77706dd
-sherpa_240307.qpkg.md5               sherpa_240307.qpkg               sherpa               240307       all    0d4e0afa88d44b67184742fe708329b6
+sherpa_240316.qpkg.md5               sherpa_240316.qpkg               sherpa               240316       all    4ee6210b91c3ad06467cfaef2c4c05a8
 SortMyQPKGs_240225.qpkg.md5          SortMyQPKGs_240225.qpkg          SortMyQPKGs          240225       all    44643edd1a10db13caa48a46f0a8d3c5
 Unrar_6.2.5_arm_64.qpkg.md5          Unrar_6.2.5_arm_64.qpkg          Unrar                6.2.5        a64    e2382b80908fc9549bbb00058968082a
 Unrar_6.2.5_arm-x41.qpkg.md5         Unrar_6.2.5_arm-x41.qpkg         Unrar                6.2.5        a41    ac1ff1149258db5e4c0b8165774eda37
