@@ -1289,7 +1289,7 @@ Actions:Proc()
 				Action:Proc activate $tier QPKG activate activated
 				;;
 			auxiliary)
-				for action in install reinstall upgrade activate; do
+				for action in status install reinstall upgrade activate; do
 					if (QPKGs-ACinstall-ok.Exist Entware) || QPKGs-AC${action}-to.IsAny && QPKGs-ISenabled.Exist Entware; then
 						ipks_downgrade=true
 						ipks_install=true
@@ -1684,18 +1684,14 @@ ParseManagementArgs()
 					user_action=$arg
 					useropt_check=true
 					;;
+				colo?(u)r?(ful)|follow|paste|terse)
+					requires_group=true
+					user_action=$arg
+					;;
 				debug)
 					requires_group=false
 					user_action=$arg
 					EnableDebugToArchiveAndFile
-					;;
-				@(dis|en)able)
-					requires_group=true
-					user_action=$arg
-					;;
-				follow|paste)
-					requires_group=true
-					user_action=$arg
 					;;
 				reset)
 					DeleteSetting Colourful
@@ -1729,41 +1725,14 @@ ParseManagementArgs()
 
 		if [[ -n $action && -n $group ]]; then
 			case $action in
-				enable)
+				colo?(u)r?(ful))
 					case $group in
-						colourful)
+						true|false)
 							action=''
 							awaiting_group=false
 							switch_colour=true
-							user_colourful_value=true
+							user_colourful_value=$group
 							UpdateColourful
-							;;
-						terse)
-							action=''
-							awaiting_group=false
-							switch_terse=true
-							user_terse_value=true
-							UpdateTerse
-							;;
-						*)
-							args_remaining+=("$action")
-					esac
-					;;
-				disable)
-					case $group in
-						colourful)
-							action=''
-							awaiting_group=false
-							switch_colour=true
-							user_colourful_value=false
-							UpdateColourful
-							;;
-						terse)
-							action=''
-							awaiting_group=false
-							switch_terse=true
-							user_terse_value=false
-							UpdateTerse
 							;;
 						*)
 							args_remaining+=("$action")
@@ -1796,6 +1765,19 @@ ParseManagementArgs()
 							awaiting_group=false
 							run_package_actions=false
 							useropt_paste_log_tail=true
+							;;
+						*)
+							args_remaining+=("$action")
+					esac
+					;;
+				terse)
+					case $group in
+						true|false)
+							action=''
+							awaiting_group=false
+							switch_terse=true
+							user_terse_value=$group
+							UpdateTerse
 							;;
 						*)
 							args_remaining+=("$action")
@@ -1996,14 +1978,14 @@ ParseHelpArgs()
 				local a=''
 				local tmp=()
 
-				for a in "${args_incomplete[@]:-}"; do
+				for a in "${args_incomplete[@]}"; do
 					[[ $a != "$arg" ]] && tmp+=($a)
 				done
 
 				if [[ ${#tmp[@]:-} -eq 0 ]]; then
 					args_incomplete=()
 				else
-					args_incomplete=("${tmp[@]:-}")
+					args_incomplete=("${tmp[@]}")
 				fi
 
 				unset tmp
@@ -2464,14 +2446,14 @@ ParseActionArgs()
 				local a=''
 				local tmp=()
 
-				for a in "${args_incomplete[@]:-}"; do
+				for a in "${args_incomplete[@]}"; do
 					[[ $a != "$arg" ]] && tmp+=($a)
 				done
 
 				if [[ ${#tmp[@]:-} -eq 0 ]]; then
 					args_incomplete=()
 				else
-					args_incomplete=("${tmp[@]:-}")
+					args_incomplete=("${tmp[@]}")
 				fi
 
 				unset tmp
@@ -2500,7 +2482,7 @@ TranslateIntoAction()
 		add|install)
 			printf install
 			;;
-		backup|clean|@(dis|en)able|follow|help|list|paste|reassign|rebuild|reinstall|reset|restore|sign)
+		backup|clean|colo?(u)r?(ful)|@(dis|en)able|follow|help|list|paste|reassign|rebuild|reinstall|reset|restore|sign|terse)
 			echo -n "$a"
 			;;
 		c|check)
@@ -2565,17 +2547,20 @@ TranslateIntoGroup()
 		b|backups)
 			printf backups
 			;;
-		backedup|canbackup|enabled|installable|installed|missing|results|show|terse|?(un)stable)
+		backedup|canbackup|enabled|installable|installed|missing|results|show|?(un)stable)
 			echo -n "$a"
-			;;
-		colo?(u)r?(ful))
-			printf colourful
 			;;
 		d|deps|dependencies|dependent?(s))
 			printf dependent
 			;;
+		disable|false|no|off|unset)
+			printf false
+			;;
 		disabled|no@(n|t)-enabled)
 			printf NTenabled
+			;;
+		enable|on|set|true|yes)
+			printf true
 			;;
 		group?(s))
 			printf groups
@@ -2663,17 +2648,20 @@ ArgSuggestions:Show()
 
 		for arg in "${args_incomplete[@]}"; do
 			case $arg in
-				?(de|re)activate|backup|clean|@(dis|en)able-auto-update|reassign|@(re|un)install|?(re)start|restore|rm|sign|stop|upgrade)
+				?(de|re)activate|backup|clean|@(dis|en)able|@(dis|en)able-auto-update|reassign|@(re|un)install|?(re)start|restore|rm|sign|stop|upgrade)
 					DisplayAsProjSynExam "please provide valid $(ShowAsPackages) or a $(ShowAsPackageGroup) after '$arg' like" "$arg installed"
 					arg_problem=true
 					useropt_help_basic=false
 					;;
-				@(dis|en)able)
-					DisplayAsProjSynExam "please provide valid $(ShowAsPackages) or a $(ShowAsPackageGroup) after '$arg' like" "$arg installed"
-					DisplayAsProjSynExam "user settings may also be applied like" "enable colourful"
-					DisplayAsProjSynIndentExam '' "disable colourful"
-					DisplayAsProjSynIndentExam '' "enable color"
-					DisplayAsProjSynIndentExam '' "disable color"
+				colo?(u)r?(ful)|terse)
+					DisplayAsProjSynExam "please provide a valid boolean after '$arg' like" "$arg true"
+					DisplayAsProjSynIndentExam '' "$arg false"
+					DisplayAsProjSynIndentExam '' "$arg on"
+					DisplayAsProjSynIndentExam '' "$arg off"
+					DisplayAsProjSynIndentExam '' "$arg yes"
+					DisplayAsProjSynIndentExam '' "$arg no"
+					DisplayAsProjSynIndentExam '' "$arg enable"
+					DisplayAsProjSynIndentExam '' "$arg disable"
 					arg_problem=true
 					useropt_help_basic=false
 					;;
@@ -2777,9 +2765,9 @@ ArgSuggestions:Show()
 					arg_problem=true
 					useropt_help_basic=false
 					;;
-				colo?(u)r?(ful)|terse)
-					DisplayAsProjSynExam "please specify either 'enable' or 'disable' before '$arg' like" "enable $arg"
-					DisplayAsProjSynIndentExam '' "disable $arg"
+				@(dis|en)able|false|off|no|on|true|yes)
+					DisplayAsProjSynExam "please provide a valid setting before '$arg' like" "colour $arg"
+					DisplayAsProjSynIndentExam '' "terse $arg"
 					arg_problem=true
 					useropt_help_basic=false
 					;;
