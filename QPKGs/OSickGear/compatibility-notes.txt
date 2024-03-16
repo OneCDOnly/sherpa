@@ -1,0 +1,5 @@
+Test date: 2024-03-16
+
+* armv5tel (x19):
+	- All Entware IPK versions are now frozen for armv5 NAS.
+	- 'python3-orjson' IPK isn't available for armv5, so allow 'orjson' to be installed via 'pip' for x19 QPKG-only.

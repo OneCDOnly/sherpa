@@ -4,7 +4,7 @@ Test date: 2024-03-16
 	"pydantic-core==2.3.0 (from pydantic>=1.9.1->inflect->jaraco.text->jaraco.collections->cherrypy-> -r requirements.txt (line 3))"
 	"error: can't find Rust compiler"
 	- 'maturin' PyPI module can't be compiled as no Rust compiler available.
-	- Entware IPKs are now frozen for armv5 NAS, which means the new Rust-compiled maturin IPK can't be installed.
+	- Entware IPKs are now frozen for armv5 NAS, which means the new Rust-compiled 'maturin' IPK can't be installed.
 
 * install fails on armv7l (x31 & x41):
 	"No space left on device (os error 28)"
