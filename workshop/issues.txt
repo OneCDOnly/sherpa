@@ -1,7 +1,7 @@
 Observed issues:
 
 	* armv5 (Helga) install of Sickgear is attempting to install 'python3-orjson' when it shouldn't.
-		- IPK doesn't exist in the older Entware package list.
+		- IPK doesn't exist in the pre-February 2024 Entware package list.
 		- a19 has its own IPK requires list for Sickgear in 'packages.source', so this shouldn't be happening.
 
 	* dev arg tests are './sherpa-manager.source enable watcher disable debug'
