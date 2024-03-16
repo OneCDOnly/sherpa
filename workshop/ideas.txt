@@ -1,3 +1,7 @@
+* Change QPKG display names for sherpa QPKGs to remove leading 'O'.
+	- Internal names will remain the same.
+	- Must update packages wiki and remove lines about leading 'O' on app names.
+
 * armv5 NAS models will no-longer have their Python and Perl modules upgraded, so skip upgrade attempts on these models, unless Python and Perl are on final versions for armv5.
 
 * Is 'status' check looking at QPKG service-script results and prioritising 'inactive' over current state of 'active'?
