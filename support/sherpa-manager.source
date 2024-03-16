@@ -52,13 +52,13 @@ Init()
 	Traps:Set
 	Paths:Create || return
 	PrepareArgs
-	ParseManagementArgs || return
-	ParseHelpArgs || return
+	ParseManagementArgs
+	ParseHelpArgs
 	ArchivePriorSessLogs
 	Debug.Log:Init
-	ParseShowArgs || return
-	ParseListArgs || return
-	ParseActionArgs || return
+	ParseShowArgs
+	ParseListArgs
+	ParseActionArgs
 	Title:Show
 	ArgSuggestions:Show
 	QPKGs.Conflicts:Check || return
@@ -217,7 +217,8 @@ Debug.Log:Init()
 	DebugScript PID "$$"
 	DebugInfoMinSepr
 	DebugInfo 'Markers: (**) detected, (II) information, (WW) warning, (EE) error, (LL) log file, (--) processing,'
-	DebugInfo '(==) done, (>>) f entry, (<<) f exit, (vv) variable name & value, ($1) positional argument value'
+	DebugInfo '(==) done, (>>) f entry, (<<) f exit, (aa) array name & values, (vv) variable name & value,'
+	DebugInfo '($1) positional argument value'
 	DebugInfoMinSepr
 	DebugVar THIS_PACKAGE_VER
 	DebugVar THIS_SCRIPT_VER
@@ -307,6 +308,7 @@ Vars:Load()
 	# Default flags and values.
 	action_msg_pipe_fd=none
 	archive_debug_afterward=false
+	args=()								# command-line argument array.
 	backup_stdin_fd=none
 	branch_default=stable
 	colourful_default=true
@@ -320,9 +322,12 @@ Vars:Load()
 	ipks_downgrade=false
 	ipks_install=false
 	ipks_upgrade=false
+	objects_loaded=false
+	packages_loaded=false
 	pips_install=false
 	proc_counts_path=''
 	qpkg_timeouts_increased=false
+	run_argument_parsers=true
 	run_package_actions=false
 	show_backuploc=false
 	show_package_actions_failed=false
@@ -370,6 +375,7 @@ Vars:Load()
 	useropt_show_versions=false
 	useropt_terse=$(LoadSetting Terse "$terse_default")
 	useropt_verbose=false
+# useropt_verbose=true
 
 	}
 
@@ -551,8 +557,6 @@ Env:Load()
 	OS.IsSupportSecureDownload || CURL_CMD+=' --insecure'
 	readonly CURL_CMD
 
-	args=()						# command-line argument array.
-	args_incomplete=()
 	useropt_branch=$(/sbin/getcfg sherpa Git_Branch -d stable -f /etc/config/qpkg.conf)
 		readonly OBJECTS_ARCHIVE_URL='<?cdn_sherpa_base_url?>'/$useropt_branch/objects.tar.gz
 		readonly PACKAGES_ARCHIVE_URL='<?cdn_sherpa_base_url?>'/$useropt_branch/packages.tar.gz
@@ -1232,7 +1236,7 @@ Actions:Proc()
 
 	Action:Proc status all QPKG status statused
 
-	if [[ $useropt_show_status = false ]]; then
+	if [[ $get_qpkg_active_status = true ]]; then
 		ShowAsProc 'assign QPKGs by status'				# Update action lists based-on QPKG `status`.
 
 		for action in "${USER_QPKG_ACTIONS[@]}"; do
@@ -1289,7 +1293,7 @@ Actions:Proc()
 				Action:Proc activate $tier QPKG activate activated
 				;;
 			auxiliary)
-				for action in status install reinstall upgrade activate; do
+				for action in install reinstall upgrade activate; do
 					if (QPKGs-ACinstall-ok.Exist Entware) || QPKGs-AC${action}-to.IsAny && QPKGs-ISenabled.Exist Entware; then
 						ipks_downgrade=true
 						ipks_install=true
@@ -1627,6 +1631,7 @@ PrepareArgs()
 
 	# Output:
 	#   $args[] (global)
+	#   various global flags
 
 	local a=$(Lowercase "${ARGS_RAW//,/ }")
 	args=(${a/--/})
@@ -1634,174 +1639,251 @@ PrepareArgs()
 
 	DebugArray args "${args[*]:-}"
 
-	[[ -z $ARGS_RAW ]] && useropt_help_basic=true
+	if [[ -z $ARGS_RAW ]]; then
+		run_argument_parsers=false
+		useropt_help_basic=true
+	fi
 
 	}
 
 ParseManagementArgs()
 	{
 
+Verbose:Enable															#devdebug
+
 	# Basic argument syntax:
 	#   scriptname [action] [groups] [options]
 
 	# Input:
 	#   $args[] (global)
-	#   $args_incomplete[] (global)
+	#   various global flags
 
 	# Output:
 	#   $args[] (global)
-	#   $args_incomplete[] (global)
+	#   various global flags
+
+	[[ $run_argument_parsers = true ]] || return
 
 	Func:Init
 
 	local action=''						# Internal, nice, simple, action name. Only one per-action.
-	local arg=''
 	local -a args_remaining=()
-	local awaiting_group=false
-	local current_action=''
+	local -i element_count=${#args[@]}
 	local group=''
-	local potential_action=''			# A user arg that might be an action.
-	local requires_group=false
-	local user_action=''				# The original user argument, detected as an action. There may be many variants per-action.
+	local -i index=0
+	local next_arg=''
+	local source_arg=''
+	local this_arg=''
+	local twin_args=false				# If false, then only a single arg is being processed. If true, then 2 args are being processed at-once.
+	local value=false					# Holds converted 'enable' or 'disable' actions into 'true' or 'false'.
 
-	for arg in "${args[@]:-}"; do
-		[[ -n $arg ]] || continue
+	DebugInfoMajSepr													#devdebug
+	DebugArray args "${args[*]:-}" "${#args[@]}"						#devdebug
+
+	for ((index=0; index<=element_count; index++)); do
+		value=false
+		twin_args=false
+		DebugInfoMinSepr												#devdebug
+
+		DebugVar index													#devdebug
+		[[ $index -lt $element_count ]] || break		# Need this as $index is modified within loop, and can move out-of-range of array elements.
+
+		this_arg="${args[$index]}"
+		[[ -n $this_arg ]] || continue
+
+		if [[ $((index+1)) -gt $element_count ]]; then
+			next_arg=''
+		else
+			next_arg="${args[$((index+1))]:-}"
+		fi
+
+		DebugInfoMinSepr												#devdebug
+		DebugVar this_arg												#devdebug
+		DebugVar next_arg												#devdebug
 
 		# Identify action.
 
-		potential_action=$(TranslateIntoAction "$arg"); DebugVar potential_action
+		action=$(TranslateIntoAction "$this_arg")
+		DebugVar action													#devdebug
 
-		if [[ -n $potential_action ]]; then
-			action=$potential_action; DebugVar action
-			potential_action=''
+		case $action in
+			check|colourful|debug|terse|verbose)
+				group=$action											# Convert to action to group.
 
-			case $action in
-				check)
-					generate_show_report=true
-					get_qpkg_states=true
-					requires_group=false
-					run_package_actions=true
-					user_action=$arg
-					useropt_check=true
-					;;
-				colo?(u)r?(ful)|follow|paste|terse)
-					requires_group=true
-					user_action=$arg
-					;;
-				debug)
-					requires_group=false
-					user_action=$arg
-					EnableDebugToArchiveAndFile
-					;;
-				reset)
-					DeleteSetting Colourful
-					DeleteSetting Git_Branch
-					DeleteSetting Terse
+				action=enable
+				twin_args=false
+				;;
+			@(dis|en)able|follow|paste)
+				twin_args=true
+				;;
+			reset)
+				DebugAsInfo 'enabling reset'							#devdebug
+				twin_args=false
+# 					DeleteSetting Colourful
+# 					DeleteSetting Git_Branch
+# 					DeleteSetting Terse
 
-					Reset					# <-- Processing will terminate in this function (no-return).
-					;;
-				verbose)
-					requires_group=false
-					user_action=$arg
-					Verbose:Enable
-					EnableDebugToArchiveAndFile
-			esac
+# 					Reset					# <-- Processing will terminate in this function (no-return).
+		esac
 
-			if [[ -n $user_action && $user_action != "$current_action" ]]; then
-				[[ $awaiting_group = true ]] && args_incomplete+=("$user_action")
-				awaiting_group=$requires_group
-				current_action=$user_action
-				group=''	 			# When action changes, must clear group.
-				continue
-			fi
+		if [[ -z $action ]]; then
+			DebugAsInfo 'exporting $this_arg as $action=null'			#devdebug
+			args_remaining+=($this_arg)
+			DebugArray args_remaining "${args_remaining[*]:-}"			#devdebug
+			group=''
+			continue
 		fi
 
-		# Identify group.
+		DebugAsDone 'completed check for action'						#devdebug
 
-		group=$(TranslateIntoGroup "$arg")
-		DebugVar group
+		DebugVar action													#devdebug
+		DebugVar group													#devdebug
+
+		if [[ -z $group ]]; then
+			# Identify group.
+
+			if [[ -z $action ]]; then
+				source_arg=$this_arg
+			else
+				source_arg=$next_arg
+			fi
+
+			group=$(TranslateIntoGroup "$source_arg")
+			DebugVar group												#devdebug
+		fi
+
+		DebugAsDone 'completed check for group'							#devdebug
+
+		DebugVar action													#devdebug
+		DebugVar group													#devdebug
 
 		# Pair action with group.
 
 		if [[ -n $action && -n $group ]]; then
 			case $action in
-				colo?(u)r?(ful))
-					case $group in
-						true|false)
-							action=''
-							awaiting_group=false
-							switch_colour=true
-							user_colourful_value=$group
-							UpdateColourful
-							;;
-						*)
-							args_remaining+=("$action")
-					esac
+				enable)
+					value=true
+					DebugAsInfo "value = $value"						#devdebug
+					;;
+				disable)
+					value=false
+					DebugAsInfo "value = $value"						#devdebug
 					;;
 				follow)
 					case $group in
 						?(un)stable)
+							DebugAsInfo "setting following=$group"		#devdebug
 							action=''
-							awaiting_group=false
+							group=''
 							run_package_actions=false
 							switch_branch=true
 							user_branch_value=$group
-							UpdateBranch
-							;;
-						*)
-							args_remaining+=("$action")
+							[[ $twin_args = true ]] && ((index++))
+							continue
 					esac
 					;;
 				paste)
 					case $group in
 						last)
-							action=''
-							awaiting_group=false
+							DebugAsInfo 'pasting last'					#devdebug
 							run_package_actions=false
 							useropt_paste_log_last=true
+							[[ $twin_args = true ]] && ((index++))
+							continue
 							;;
 						tail)
-							action=''
-							awaiting_group=false
+							DebugAsInfo 'pasting tail'					#devdebug
 							run_package_actions=false
 							useropt_paste_log_tail=true
-							;;
-						*)
-							args_remaining+=("$action")
+							[[ $twin_args = true ]] && ((index++))
+							continue
 					esac
+			esac
+
+			case $group in
+				check)
+					[[ $value = true ]] && DebugAsInfo 'enabling check'	#devdebug
+					action=''
+					generate_show_report=true
+					get_qpkg_states=true
+					run_package_actions=true
+					useropt_check=true
+					[[ $twin_args = true ]] && ((index++))
+					continue
+					;;
+				colourful)
+					DebugAsInfo "setting colourful=$value"				#devdebug
+					action=''
+					group=''
+					switch_colour=true
+					user_colourful_value=$value
+					[[ $twin_args = true ]] && ((index++))
+					continue
+					;;
+				debug)
+					if [[ $value = true ]]; then
+						DebugAsInfo 'enabling debug'					#devdebug
+
+						EnableDebugToArchiveAndFile
+					else												#devdebug
+						DebugAsInfo 'disabling debug'					#devdebug
+
+						: # disable will go here.
+					fi
+
+					action=''
+					group=''
+					[[ $twin_args = true ]] && ((index++))
+					continue
 					;;
 				terse)
-					case $group in
-						true|false)
-							action=''
-							awaiting_group=false
-							switch_terse=true
-							user_terse_value=$group
-							UpdateTerse
-							;;
-						*)
-							args_remaining+=("$action")
-					esac
+					DebugAsInfo "setting terse=$value"					#devdebug
+					action=''
+					group=''
+					switch_terse=true
+					user_terse_value=$value
+					[[ $twin_args = true ]] && ((index++))
+					continue
+					;;
+				verbose)
+					if [[ $value = true ]]; then
+						DebugAsInfo 'enabling verbose'					#devdebug
+
+						Verbose:Enable
+						EnableDebugToArchiveAndFile
+					else												#devdebug
+						DebugAsInfo 'disabling verbose'					#devdebug
+
+						: # disable will go here.
+					fi
+
+					action=''
+					group=''
+					[[ $twin_args = true ]] && ((index++))
+					continue
 					;;
 				*)
-					args_remaining+=("$arg")
+					group=''
 			esac
-		else
-			args_remaining+=("$arg")
 		fi
+
+		DebugAsInfo 'exporting $this_arg as unwanted'					#devdebug
+		args_remaining+=($this_arg)
+		DebugArray args_remaining "${args_remaining[*]:-}"				#devdebug
 	done
 
-	if [[ $requires_group = true && $awaiting_group = true ]]; then			# Only if the last action specified was not followed by a group.
-		args_incomplete+=("$user_action")									# Save the actual action word, phrase or char specified by the user.
-	fi
+	DebugInfoMajSepr													#devdebug
+	DebugArray args_remaining "${args_remaining[*]:-}"					#devdebug
+exit
 
-	DebugArray args_incomplete "${args_incomplete[*]:-}"
+	[[ $switch_branch = true ]] && UpdateBranch
+	[[ $switch_colour = true ]] && UpdateColourful
+	[[ $switch_terse = true ]] && UpdateTerse
 
 	args=(${args_remaining[@]:-})
-	DebugArray args "${args[*]:-}"
+	DebugArray args "${args[*]:-}"										#devdebug
 
 	Func:Exit
-
 	}
 
 ParseHelpArgs()
@@ -1812,44 +1894,58 @@ ParseHelpArgs()
 
 	# Input:
 	#   $args[] (global)
-	#   $args_incomplete[] (global)
+	#   various global flags
 
 	# Output:
 	#   $args[] (global)
-	#   $args_incomplete[] (global)
 	#   various global flags
+
+	[[ $run_argument_parsers = true ]] || return
 
 	Func:Init
 
 	local action=''						# Internal, nice, simple, action name. Only one per-action.
 	local arg=''
+	local arg_identified=false
 	local -a args_remaining=()
 	local awaiting_group=false
 	local current_action=''
 	local group=''
-	local potential_action=''			# A user arg that might be an action.
+	local action=''			# A user arg that might be an action.
+	local group=''			# A user arg that might be a QPKG group.
 	local requires_group=false
 	local user_action=''				# The original user argument, detected as an action. There may be many variants per-action.
+	local value=false					# convert 'enable' action into 'true', and 'disable' action into 'false'.
 
 	for arg in "${args[@]:-}"; do
 		[[ -n $arg ]] || continue
 
+		arg_identified=false
+		value=false
+
 		# Identify action.
 
-		potential_action=$(TranslateIntoAction "$arg"); DebugVar potential_action
+		action=$(TranslateIntoAction "$arg")
 
-		if [[ -n $potential_action ]]; then
-			action=$potential_action; DebugVar action
-			potential_action=''
-
+		if [[ -n $action ]]; then
 			case $action in
 				help)
+					action=$action; DebugVar action
+					action=''
+					arg_identified=true
+					generate_help_report=true
 					requires_group=true
 					user_action=$arg
+					useropt_help_basic=true
 			esac
 
-			if [[ -n $user_action && $user_action != "$current_action" ]]; then
-				[[ $awaiting_group = true ]] && args_incomplete+=("$user_action")
+			if [[ $user_action != "$current_action" ]]; then
+				if [[ $awaiting_group = true ]]; then
+# 					DebugAsInfo "saving loop incomplete \$current_action '$current_action'"
+# 					args_remaining+=("$current_action"); DebugArray args_remaining "${args_remaining[*]:-}"
+					awaiting_group=false
+				fi
+
 				awaiting_group=$requires_group
 				current_action=$user_action
 				group=''	 			# When action changes, must clear group.
@@ -1857,17 +1953,28 @@ ParseHelpArgs()
 			fi
 		fi
 
+		[[ $arg_identified = false ]] || continue
+
 		# Identify group.
 
 		group=$(TranslateIntoGroup "$arg")
-		DebugVar group
 
-		# Include action assignment when action hasn't been previously specified.
+		if [[ -n $group ]]; then
+			group=$group; DebugVar group
+			group=''
 
-		case $group in
-			abs|actions|all|all-actions|groups|lists|options|packages|problems|show|tips|upgrades)
-				[[ -z $action ]] && action=help
-		esac
+			case $group in
+				abs|actions|all|all-actions|groups|options|problems|tips|upgrades)
+					if [[ -z $action ]]; then
+						action=help
+						requires_group=true
+					fi
+			esac
+		else
+			DebugAsInfo "saving early loop unidentified \$arg '$arg'"
+			args_remaining+=("$arg"); DebugArray args_remaining "${args_remaining[*]:-}"
+			continue
+		fi
 
 		# Pair action with group.
 
@@ -1876,126 +1983,135 @@ ParseHelpArgs()
 				help)
 					case $group in
 						abs)
-							action=''
+							arg_identified=true
 							awaiting_group=false
 							generate_help_report=true
 							run_package_actions=false
+							useropt_help_basic=false
 							useropt_help_abbreviations=true
 							;;
 						actions)
-							action=''
+							arg_identified=true
 							awaiting_group=false
 							generate_help_report=true
 							run_package_actions=false
+							useropt_help_basic=false
 							useropt_help_actions=true
 							;;
 						all|all-actions)
-							action=''
+							arg_identified=true
 							awaiting_group=false
 							generate_help_report=true
 							run_package_actions=false
+							useropt_help_basic=false
 							useropt_help_actions_all=true
 							;;
 						groups)
-							action=''
+							arg_identified=true
 							awaiting_group=false
 							generate_help_report=true
 							run_package_actions=false
+							useropt_help_basic=false
 							useropt_help_groups=true
 							;;
 						lists)
-							action=''
+							arg_identified=true
 							awaiting_group=false
 							generate_help_report=true
 							run_package_actions=false
+							useropt_help_basic=false
 							useropt_help_lists=true
 							;;
 						options)
-							action=''
+							arg_identified=true
 							awaiting_group=false
 							generate_help_report=true
 							run_package_actions=false
+							useropt_help_basic=false
 							useropt_help_options=true
 							;;
 						packages)
-							action=''
+							arg_identified=true
 							awaiting_group=false
 							generate_help_report=true
 							run_package_actions=false
+							useropt_help_basic=false
 							useropt_help_packages=true
 							;;
 						problems)
-							action=''
+							arg_identified=true
 							awaiting_group=false
 							generate_help_report=true
 							run_package_actions=false
+							useropt_help_basic=false
 							useropt_help_problems=true
 							;;
 						show)
-							action=''
+							arg_identified=true
 							awaiting_group=false
 							generate_help_report=true
 							run_package_actions=false
+							useropt_help_basic=false
 							useropt_help_show=true
 							;;
 						tips)
-							action=''
+							arg_identified=true
 							awaiting_group=false
 							generate_help_report=true
 							run_package_actions=false
+							useropt_help_basic=false
 							useropt_help_tips=true
 							;;
 						upgrades)
-							action=''
+							arg_identified=true
 							awaiting_group=false
 							generate_help_report=true
 							run_package_actions=false
+							useropt_help_basic=false
 							useropt_help_upgrades=true
-							;;
-						*)
-							args_remaining+=("$action")
 					esac
-					;;
-				*)
-					args_remaining+=("$arg")
 			esac
-		else
-			args_remaining+=("$arg")
+		fi
+
+		if [[ $arg_identified = false ]]; then
+			DebugAsInfo "saving late loop unidentified \$arg '$arg'"
+			args_remaining+=("$arg"); DebugArray args_remaining "${args_remaining[*]:-}"
+			action=''
 		fi
 	done
 
-	if [[ $requires_group = true && $awaiting_group = true ]]; then			# Only if the last action specified was not followed by a group.
-		args_incomplete+=("$user_action")									# Save the actual action word, phrase or char specified by the user.
-	fi
+# 	if [[ $requires_group = true && $awaiting_group = true ]]; then
+# 		DebugAsInfo "saving outloop incomplete \$user_action '$user_action'"
+# 		args_remaining+=("$user_action"); DebugArray args_remaining "${args_remaining[*]:-}"
+# 	fi
 
-	for arg in "${args_incomplete[@]:-}"; do
-		case $arg in
-			help)							# If `help` is specified without a valid group, then show basic help.
-				run_package_actions=false
-				useropt_help_basic=true
+# 	for arg in "${args_remaining[@]:-}"; do
+# 		action=$(TranslateIntoAction "$arg")
+#
+# 		case $action in
+# 			help)							# If specified without a valid group, then show help.
+# 				run_package_actions=false
+# 				useropt_help_basic=true
+#
+# 				# Remove this arg from array.
+# 				local a=''
+# 				local tmp=()
+#
+# 				for a in "${args_remaining[@]:-}"; do
+# 					[[ $a != "$arg" ]] && tmp+=($a)
+# 				done
+#
+# 				if [[ ${#tmp[@]:-} -eq 0 ]]; then
+# 					args_remaining=()
+# 				else
+# 					args_remaining=("${tmp[@]:-}")
+# 				fi
+#
+# 				unset tmp
+# 		esac
+# 	done
 
-				# Remove this arg from incomplete array.
-				local a=''
-				local tmp=()
-
-				for a in "${args_incomplete[@]}"; do
-					[[ $a != "$arg" ]] && tmp+=($a)
-				done
-
-				if [[ ${#tmp[@]:-} -eq 0 ]]; then
-					args_incomplete=()
-				else
-					args_incomplete=("${tmp[@]}")
-				fi
-
-				unset tmp
-		esac
-	done
-
-	DebugArray args_incomplete "${args_incomplete[*]:-}"
-
-	args=(${args_remaining[@]:-})
-	DebugArray args "${args[*]:-}"
+	args=(${args_remaining[@]:-}); DebugArray args "${args[*]:-}"
 
 	Func:Exit
 
@@ -2009,44 +2125,61 @@ ParseShowArgs()
 
 	# Input:
 	#   $args[] (global)
-	#   $args_incomplete[] (global)
+	#   various global flags
 
 	# Output:
 	#   $args[] (global)
-	#   $args_incomplete[] (global)
 	#   various global flags
+
+	[[ $run_argument_parsers = true ]] || return
 
 	Func:Init
 
 	local action=''						# Internal, nice, simple, action name. Only one per-action.
 	local arg=''
+	local arg_identified=false
 	local -a args_remaining=()
 	local awaiting_group=false
 	local current_action=''
 	local group=''
-	local potential_action=''			# A user arg that might be an action.
+	local action=''			# A user arg that might be an action.
+	local group=''			# A user arg that might be a QPKG group.
 	local requires_group=false
 	local user_action=''				# The original user argument, detected as an action. There may be many variants per-action.
+	local value=false					# convert 'enable' action into 'true', and 'disable' action into 'false'.
 
 	for arg in "${args[@]:-}"; do
 		[[ -n $arg ]] || continue
 
+		arg_identified=false
+		value=false
+
 		# Identify action.
 
-		potential_action=$(TranslateIntoAction "$arg"); DebugVar potential_action
+		action=$(TranslateIntoAction "$arg")
 
-		if [[ -n $potential_action ]]; then
-			action=$potential_action; DebugVar action
-			potential_action=''
-
+		if [[ -n $action ]]; then
 			case $action in
 				show)
+					action=$action; DebugVar action
+					action=''
+					arg_identified=true
 					requires_group=true
 					user_action=$arg
+
+					# Set these now incase a group isn't supplied later.
+					generate_help_report=true
+					run_package_actions=false
+					useropt_help_show=true
 			esac
 
-			if [[ -n $user_action && $user_action != "$current_action" ]]; then
-				[[ $awaiting_group = true ]] && args_incomplete+=("$user_action")
+			if [[ $user_action != "$current_action" ]]; then
+				if [[ $awaiting_group = true ]]; then
+# 					DebugAsInfo "saving loop incomplete \$current_action '$current_action'"
+# 					args_remaining+=("$current_action"); DebugArray args_remaining "${args_remaining[*]:-}"
+					awaiting_group=false
+				fi
+
 				awaiting_group=$requires_group
 				current_action=$user_action
 				group=''	 			# When action changes, must clear group.
@@ -2054,17 +2187,28 @@ ParseShowArgs()
 			fi
 		fi
 
+		[[ $arg_identified = false ]] || continue
+
 		# Identify group.
 
 		group=$(TranslateIntoGroup "$arg")
-		DebugVar group
 
-		# Include action assignment when action hasn't been previously specified.
+		if [[ -n $group ]]; then
+			group=$group; DebugVar group
+			group=''
 
-		case $group in
-			abs|backups|dependent|last|packages|repositories|results|status|tail)
-				[[ -z $action ]] && action=show
-		esac
+			case $group in
+				abs|backups|last|packages|repositories|results|status|tail)
+					if [[ -z $action ]]; then
+						action=show
+						requires_group=true
+					fi
+			esac
+		else
+			DebugAsInfo "saving early loop unidentified \$arg '$arg'"
+			args_remaining+=("$arg"); DebugArray args_remaining "${args_remaining[*]:-}"
+			continue
+		fi
 
 		# Pair action with group.
 
@@ -2073,100 +2217,185 @@ ParseShowArgs()
 				show)
 					case $group in
 						abs)
-							action=''
+							arg_identified=true
 							awaiting_group=false
 							generate_help_report=true
 							get_qpkg_states=false
 							run_package_actions=false
 							useropt_help_abbreviations=true
+							useropt_help_show=false
 							;;
 						backups)
-							action=''
+							arg_identified=true
 							awaiting_group=false
 							generate_show_report=true
 							get_qpkg_states=false
 							run_package_actions=false
+							useropt_help_show=false
 							useropt_show_backups=true
 							;;
 						dependent)
 							Packages:Load
-							action=''
+							arg_identified=true
 							awaiting_group=false
 							generate_show_report=true
 							run_package_actions=false
+							useropt_help_show=false
 							useropt_show_dependencies=true
 							;;
 						last)
-							action=''
+							arg_identified=true
 							awaiting_group=false
 							generate_show_report=true
 							get_qpkg_states=false
 							run_package_actions=false
+							useropt_help_show=false
 							useropt_show_log_last=true
 							;;
 						packages)
 							Packages:Load
-							action=''
+							arg_identified=true
 							awaiting_group=false
 							generate_show_report=true
 							get_qpkg_states=false
 							run_package_actions=false
+							useropt_help_show=false
 							useropt_show_packages=true
 							;;
 						repositories)
 							Packages:Load
-							action=''
+							arg_identified=true
 							awaiting_group=false
 							generate_show_report=true
 							run_package_actions=false
+							useropt_help_show=false
 							useropt_show_repos=true
 							;;
 						results)
-							action=''
+							arg_identified=true
 							awaiting_group=false
 							generate_show_report=true
 							get_qpkg_states=false
 							run_package_actions=false
+							useropt_help_show=false
 							useropt_show_results=true
 							;;
 						status)
 							Objects:Load
-							QPKGs.ACstatus.GRall:Set
-							action=''
+							QPKGs.ACstatus.ISinstalled:Set
+							arg_identified=true
 							awaiting_group=false
 							generate_show_report=true
 							get_qpkg_states=true
 							run_package_actions=true
+							useropt_help_show=false
 							useropt_show_status=true
 							;;
 						tail)
-							action=''
+							arg_identified=true
 							awaiting_group=false
 							generate_show_report=true
 							get_qpkg_states=false
 							run_package_actions=false
+							useropt_help_show=false
 							useropt_show_log_tail=true
-							;;
-						*)
-							args_remaining+=("$action")
 					esac
-					;;
-				*)
-					args_remaining+=("$arg")
 			esac
-		else
-			args_remaining+=("$arg")
+		fi
+
+		if [[ $arg_identified = false ]]; then
+			DebugAsInfo "saving late loop unidentified \$arg '$arg'"
+			args_remaining+=("$arg"); DebugArray args_remaining "${args_remaining[*]:-}"
+			action=''
 		fi
 	done
 
-	if [[ $requires_group = true && $awaiting_group = true ]]; then			# Only if the last action specified was not followed by a group.
-		args_incomplete+=("$user_action")									# Save the actual action word, phrase or char specified by the user.
-	fi
+# 	if [[ $requires_group = true && $awaiting_group = true ]]; then
+# 		DebugAsInfo "saving outloop incomplete \$user_action '$user_action'"
+# 		args_remaining+=("$user_action"); DebugArray args_remaining "${args_remaining[*]:-}"
+# 	fi
 
-	DebugArray args_incomplete "${args_incomplete[*]:-}"
+	for arg in "${args_remaining[@]:-}"; do
+		action=$(TranslateIntoAction "$arg")
 
-	args=(${args_remaining[@]:-})
-	DebugArray args "${args[*]:-}"
+		case $action in
+# 			show)											# If specified without a valid group, then show help.
+# 				generate_help_report=true
+# 				run_package_actions=false
+# 				useropt_help_show=true
+#
+# 				# Remove this arg from array.
+# 				local a=''
+# 				local tmp=()
+#
+# 				for a in "${args_remaining[@]:-}"; do
+# 					[[ $a != "$arg" ]] && tmp+=($a)
+# 				done
+#
+# 				if [[ ${#tmp[@]:-} -eq 0 ]]; then
+# 					args_remaining=()
+# 				else
+# 					args_remaining=("${tmp[@]:-}")
+# 				fi
+#
+# 				unset tmp
+# 				;;
+			dependent)											# If specified without a valid group, then show help.
+# 				generate_help_report=true
+# 				run_package_actions=false
+# 				useropt_help_show=true
+
+				Packages:Load
+# 				arg_identified=true
+# 				awaiting_group=false
+				generate_show_report=true
+				run_package_actions=false
+				useropt_show_dependencies=true
+
+
+				# Remove this arg from array.
+				local a=''
+				local tmp=()
+
+				for a in "${args_remaining[@]:-}"; do
+					[[ $a != "$arg" ]] && tmp+=($a)
+				done
+
+				if [[ ${#tmp[@]:-} -eq 0 ]]; then
+					args_remaining=()
+				else
+					args_remaining=("${tmp[@]:-}")
+				fi
+
+				unset tmp
+				;;
+			status)
+				Objects:Load
+				QPKGs.ACstatus.ISinstalled:Set				# If specified without a group, then group is `installed`.
+				generate_show_report=true
+				get_qpkg_active_status=true
+				get_qpkg_states=true
+				run_package_actions=true
+
+				# Remove this arg from incomplete array.
+				local a=''
+				local tmp=()
+
+				for a in "${args_remaining[@]:-}"; do
+					[[ $a != "$arg" ]] && tmp+=($a)
+				done
+
+				if [[ ${#tmp[@]:-} -eq 0 ]]; then
+					args_remaining=()
+				else
+					args_remaining=("${tmp[@]:-}")
+				fi
+
+				unset tmp
+		esac
+	done
+
+	args=(${args_remaining[@]:-}); DebugArray args "${args[*]:-}"
 
 	Func:Exit
 
@@ -2180,44 +2409,59 @@ ParseListArgs()
 
 	# Input:
 	#   $args[] (global)
-	#   $args_incomplete[] (global)
+	#   various global flags
 
 	# Output:
 	#   $args[] (global)
-	#   $args_incomplete[] (global)
 	#   various global flags
+
+	[[ $run_argument_parsers = true ]] || return
 
 	Func:Init
 
 	local action=''						# Internal, nice, simple, action name. Only one per-action.
 	local arg=''
+	local arg_identified=false
 	local -a args_remaining=()
 	local awaiting_group=false
 	local current_action=''
 	local group=''
-	local potential_action=''			# A user arg that might be an action.
+	local action=''			# A user arg that might be an action.
+	local group=''			# A user arg that might be a QPKG group.
 	local requires_group=false
 	local user_action=''				# The original user argument, detected as an action. There may be many variants per-action.
+	local value=false					# convert 'enable' action into 'true', and 'disable' action into 'false'.
 
 	for arg in "${args[@]:-}"; do
 		[[ -n $arg ]] || continue
 
+		arg_identified=false
+		value=false
+
 		# Identify action.
 
-		potential_action=$(TranslateIntoAction "$arg"); DebugVar potential_action
+		action=$(TranslateIntoAction "$arg")
 
-		if [[ -n $potential_action ]]; then
-			action=$potential_action; DebugVar action
-			potential_action=''
-
+		if [[ -n $action ]]; then
 			case $action in
 				list)
+					action=$action; DebugVar action
+					action=''
+					arg_identified=true
+					generate_help_report=true
 					requires_group=true
+					run_package_actions=false
 					user_action=$arg
+					useropt_help_lists=true
 			esac
 
-			if [[ -n $user_action && $user_action != "$current_action" ]]; then
-				[[ $awaiting_group = true ]] && args_incomplete+=("$user_action")
+			if [[ $user_action != "$current_action" ]]; then
+# 				if [[ $awaiting_group = true ]]; then
+# 					DebugAsInfo "saving loop incomplete \$current_action '$current_action'"
+# 					args_remaining+=("$current_action"); DebugArray args_remaining "${args_remaining[*]:-}"
+# 				fi
+# 					awaiting_group=false
+
 				awaiting_group=$requires_group
 				current_action=$user_action
 				group=''	 			# When action changes, must clear group.
@@ -2225,17 +2469,28 @@ ParseListArgs()
 			fi
 		fi
 
+		[[ $arg_identified = false ]] || continue
+
 		# Identify group.
 
 		group=$(TranslateIntoGroup "$arg")
-		DebugVar group
 
-		# Include action assignment when action hasn't been previously specified.
+		if [[ -n $group ]]; then
+			group=$group; DebugVar group
+			group=''
 
-		case $group in
-			abs)
-				[[ -z $action ]] && action=list
-		esac
+			case $group in
+				abs)
+					if [[ -z $action ]]; then
+						action=list
+						requires_group=true
+					fi
+			esac
+		else
+			DebugAsInfo "saving early loop unidentified \$arg '$arg'"
+			args_remaining+=("$arg"); DebugArray args_remaining "${args_remaining[*]:-}"
+			continue
+		fi
 
 		# Pair action with group.
 
@@ -2244,72 +2499,102 @@ ParseListArgs()
 				list)
 					case $group in
 						abs)
-							action=''
+							arg_identified=true
 							awaiting_group=false
 							generate_help_report=true
 							get_qpkg_states=true
 							run_package_actions=false
 							useropt_help_abbreviations=true
+							useropt_help_lists=false
 							;;
 						?(NT)active)
 							Objects:Load
 							QPKGs.AClist.IS${group}:Set
 							QPKGs.ACstatus.ISinstalled:Set
-							action=''
+							arg_identified=true
 							awaiting_group=false
 							generate_list_report=true
 							get_qpkg_active_status=true
 							get_qpkg_states=true
 							run_package_actions=true
 							show_title=false
+							useropt_help_lists=false
 							;;
 						?(NT)backedup|?(NT)enabled|?(NT)installable|?(NT)installed|?(NT)missing|?(NT)upgradable)
 							Objects:Load
 							QPKGs.AClist.IS${group}:Set
-							action=''
+							arg_identified=true
 							awaiting_group=false
+							generate_help_report=false
 							generate_list_report=true
 							get_qpkg_states=true
 							run_package_actions=false
 							show_title=false
+							useropt_help_lists=false
 							;;
 						?(in)dependent)
 							Objects:Load
 							QPKGs.AClist.GR${group}:Set
-							action=''
+							arg_identified=true
 							awaiting_group=false
 							generate_list_report=true
 							get_qpkg_states=true
 							run_package_actions=false
 							show_title=false
+							useropt_help_lists=false
 							;;
 						versions)
-							action=''
+							arg_identified=true
 							awaiting_group=false
 							generate_list_report=true
 							show_title=false
+							useropt_help_lists=false
 							useropt_show_versions=true
-							;;
-						*)
-							args_remaining+=("$action")
 					esac
-					;;
-				*)
-					args_remaining+=("$arg")
 			esac
-		else
-			args_remaining+=("$arg")
+		fi
+
+		if [[ $arg_identified = false ]]; then
+			DebugAsInfo "saving late loop unidentified \$arg '$arg'"
+			args_remaining+=("$arg"); DebugArray args_remaining "${args_remaining[*]:-}"
+			action=''
 		fi
 	done
 
-	if [[ $requires_group = true && $awaiting_group = true ]]; then			# Only if the last action specified was not followed by a group.
-		args_incomplete+=("$user_action")									# Save the actual action word, phrase or char specified by the user.
-	fi
+# 	if [[ $requires_group = true && $awaiting_group = true ]]; then
+# 		DebugAsInfo "saving outloop incomplete \$user_action '$user_action'"
+# 		args_remaining+=("$user_action"); DebugArray args_remaining "${args_remaining[*]:-}"
+# 	fi
 
-	DebugArray args_incomplete "${args_incomplete[*]:-}"
+# 	for arg in "${args_remaining[@]:-}"; do
+# 		action=$(TranslateIntoAction "$arg")
+#
+# 		case $action in
+# 			list)							# If specified without a valid group, then show help.
+# 				generate_help_report=true
+# 				run_package_actions=false
+# 				useropt_help_lists=true
+#
+# 				# Remove this arg from array.
+# 				local a=''
+# 				local tmp=()
+#
+# 				for a in "${args_remaining[@]:-}"; do
+# 					[[ $a != "$arg" ]] && tmp+=($a)
+# 				done
+#
+# 				if [[ ${#tmp[@]:-} -eq 0 ]]; then
+# 					args_remaining=()
+# 				else
+# 					args_remaining=("${tmp[@]:-}")
+# 				fi
+#
+# 				unset tmp
+# 		esac
+# 	done
 
-	args=(${args_remaining[@]:-})
-	DebugArray args "${args[*]:-}"
+Verbose:Enable
+	args=(${args_remaining[@]:-}); DebugArray args "${args[*]:-}"
 
 	Func:Exit
 
@@ -2318,46 +2603,55 @@ ParseListArgs()
 ParseActionArgs()
 	{
 
+	# Basic argument syntax:
+	#   scriptname [action] [groups] [options]
+
 	# Input:
 	#   $args[] (global)
-	#   $args_incomplete[] (global)
+	#   various global flags
 
 	# Output:
 	#   $args[] (global)
-	#   $args_incomplete[] (global)
 	#   various global flags
+
+	[[ $run_argument_parsers = true ]] || return
 
 	Func:Init
 
 	local action=''						# Internal, nice, simple, action name. Only one per-action.
 	local arg=''
+	local arg_identified=false
 	local -a args_remaining=()
 	local awaiting_group=false
 	local current_action=''
 	local group=''
-	local potential_action=''			# A user arg that might be an action.
+	local action=''			# A user arg that might be an action.
+	local group=''			# A user arg that might be a QPKG group.
 	local requires_group=false
 	local user_action=''				# The original user argument, detected as an action. There may be many variants per-action.
-
-	[[ -n ${args[*]:-} ]] && Packages:Load
+	local value=false					# convert 'enable' action into 'true', and 'disable' action into 'false'.
 
 	for arg in "${args[@]:-}"; do
 		[[ -n $arg ]] || continue
 
+		arg_identified=false
+		value=false
+
 		# Identify action.
 
-		potential_action=$(TranslateIntoAction "$arg"); DebugVar potential_action
+		action=$(TranslateIntoAction "$arg")
 
-		if [[ -n $potential_action ]]; then
-			action=$potential_action; DebugVar action
-			potential_action=''
-
+		if [[ -n $action ]]; then
 			case $action in
 				?(de|re)activate|backup|clean|@(dis|en)able?(au)|install|reassign|rebuild|@(re|un)install|restore|sign|upgrade)
+					action=$action; DebugVar action
+					action=''
 					requires_group=true
 					user_action=$arg
 					;;
 				status)
+					action=$action; DebugVar action
+					action=''
 					generate_show_report=true
 					get_qpkg_states=true
 					requires_group=true
@@ -2365,8 +2659,9 @@ ParseActionArgs()
 					useropt_show_status=true
 			esac
 
-			if [[ -n $user_action && $user_action != "$current_action" ]]; then
-				[[ $awaiting_group = true ]] && args_incomplete+=("$user_action")
+			if [[ $user_action != "$current_action" ]]; then
+# 				awaiting_group=false
+
 				awaiting_group=$requires_group
 				current_action=$user_action
 				group=''	 			# When action changes, must clear group.
@@ -2374,9 +2669,21 @@ ParseActionArgs()
 			fi
 		fi
 
+		[[ $arg_identified = false ]] || continue
+
 		# Identify group.
 
-		group=$(TranslateIntoGroup "$arg"); DebugVar group
+		Packages:Load
+		group=$(TranslateIntoGroup "$arg")
+
+		if [[ -n $group ]]; then
+			group=$group; DebugVar group
+			group=''
+		else
+			DebugAsInfo "saving loop unidentified \$arg '$arg'"
+			args_remaining+=("$arg"); DebugArray args_remaining "${args_remaining[*]:-}"
+			continue
+		fi
 
 		# Pair action with group.
 
@@ -2385,7 +2692,7 @@ ParseActionArgs()
 				?(de|re)activate|backup|clean|@(dis|en)able|@(re|un)install|restore|sign|upgrade)
 					case $group in
 						?(NT)active)
-							Objects:Load
+							arg_identified=true
 							QPKGs.AC${action}.IS${group}:Set
 							QPKGs.ACstatus.ISinstalled:Set
 							awaiting_group=false
@@ -2398,8 +2705,8 @@ ParseActionArgs()
 
 			case $group in
 				all|canbackup|?(NT)canclean|canrestarttoupdate|?(in)dependent|hasdependents)
-					Objects:Load
 					QPKGs.AC${action}.GR${group}:Set
+					arg_identified=true
 					awaiting_group=false
 					generate_action_report=true
 					get_qpkg_active_status=false
@@ -2407,65 +2714,39 @@ ParseActionArgs()
 					run_package_actions=true
 					;;
 				?(NT)backedup|?(NT)enabled|?(NT)installable|?(NT)installed|?(NT)missing|?(NT)upgradable)
-					Objects:Load
 					QPKGs.AC${action}.IS${group}:Set
+					arg_identified=true
 					awaiting_group=false
 					generate_action_report=true
 					get_qpkg_states=true
 					run_package_actions=true
 					;;
 				*)
-					Objects:Load
 					QPKGs-AC${action}-to:Add "$group"
+					arg_identified=true
 					awaiting_group=false
 					generate_action_report=true
 					get_qpkg_states=true
 					run_package_actions=true
 			esac
-		else
-			args_remaining+=("$arg")
+		fi
+
+		if [[ $arg_identified = false ]]; then
+			DebugAsInfo "saving loop unidentified \$arg '$arg'"
+			args_remaining+=("$arg"); DebugArray args_remaining "${args_remaining[*]:-}"
+			action=''
 		fi
 	done
 
-	if [[ $requires_group = true && $awaiting_group = true ]]; then			# Only if the last action specified was not followed by a group.
-		args_incomplete+=("$user_action")									# Save the actual action word, phrase or char specified by the user.
+	if [[ $requires_group = true && $awaiting_group = true ]]; then
+		DebugAsInfo "saving outloop incomplete \$user_action '$user_action'"
+		args_remaining+=("$user_action"); DebugArray args_remaining "${args_remaining[*]:-}"
 	fi
-
-	for arg in "${args_incomplete[@]:-}"; do
-		action=$(TranslateIntoAction "$arg")
-
-		case $action in
-			status)
-				Objects:Load
-				QPKGs.ACstatus.ISinstalled:Set								# If status is specified without a group, then group is `installed`.
-				generate_show_report=true
-				get_qpkg_states=true
-				run_package_actions=true
-
-				# Remove this arg from incomplete array.
-				local a=''
-				local tmp=()
-
-				for a in "${args_incomplete[@]}"; do
-					[[ $a != "$arg" ]] && tmp+=($a)
-				done
-
-				if [[ ${#tmp[@]:-} -eq 0 ]]; then
-					args_incomplete=()
-				else
-					args_incomplete=("${tmp[@]}")
-				fi
-
-				unset tmp
-		esac
-	done
-
-	DebugArray args_incomplete "${args_incomplete[*]:-}"
 
 	args=(${args_remaining[@]:-}); DebugArray args "${args[*]:-}"
 
 	Func:Exit
-
+# exit
 	}
 
 TranslateIntoAction()
@@ -2482,11 +2763,11 @@ TranslateIntoAction()
 		add|install)
 			printf install
 			;;
-		backup|clean|colo?(u)r?(ful)|@(dis|en)able|follow|help|list|paste|reassign|rebuild|reinstall|reset|restore|sign|terse)
-			echo -n "$a"
-			;;
 		c|check)
 			printf check
+			;;
+		colo?(u)r?(ful))
+			printf colourful
 			;;
 		deactivate|stop)
 			printf deactivate
@@ -2517,6 +2798,9 @@ TranslateIntoAction()
 			;;
 		v|verbose)
 			printf verbose
+			;;
+		backup|clean|@(dis|en)able|follow|help|list|paste|reassign|rebuild|reinstall|reset|restore|sign|terse)
+			echo -n "$a"
 	esac
 
 	}
@@ -2547,20 +2831,20 @@ TranslateIntoGroup()
 		b|backups)
 			printf backups
 			;;
-		backedup|canbackup|enabled|installable|installed|missing|results|show|?(un)stable)
-			echo -n "$a"
+		c|check)
+			printf check
+			;;
+		colo?(u)r?(ful))
+			printf colourful
 			;;
 		d|deps|dependencies|dependent?(s))
 			printf dependent
 			;;
-		disable|false|no|off|unset)
-			printf false
+		d?(e)bug)
+			printf debug
 			;;
 		disabled|no@(n|t)-enabled)
 			printf NTenabled
-			;;
-		enable|on|set|true|yes)
-			printf true
 			;;
 		group?(s))
 			printf groups
@@ -2619,8 +2903,14 @@ TranslateIntoGroup()
 		upgrade?(s)|upgrading)
 			printf upgrades
 			;;
+		v|verbose)
+			printf verbose
+			;;
 		version?(s))
 			printf versions
+			;;
+		backedup|canbackup|enabled|installable|installed|missing|results|show|terse|?(un)stable)
+			echo -n "$a"
 			;;
 		*)
 			QPKG.MatchAbbrv "$a"
@@ -2633,7 +2923,6 @@ ArgSuggestions:Show()
 
 	# Input:
 	#   $args[] (global)
-	#   $args_incomplete[] (global)
 
 	# Output:
 	#   various global flags
@@ -2642,73 +2931,6 @@ ArgSuggestions:Show()
 
 	local arg=''
 	local -a args_remaining=()
-
-	if [[ ${#args_incomplete[@]:-} -gt 0 ]]; then
-		run_package_actions=false
-
-		for arg in "${args_incomplete[@]}"; do
-			case $arg in
-				?(de|re)activate|backup|clean|@(dis|en)able|@(dis|en)able-auto-update|reassign|@(re|un)install|?(re)start|restore|rm|sign|stop|upgrade)
-					DisplayAsProjSynExam "please provide valid $(ShowAsPackages) or a $(ShowAsPackageGroup) after '$arg' like" "$arg installed"
-					arg_problem=true
-					useropt_help_basic=false
-					;;
-				colo?(u)r?(ful)|terse)
-					DisplayAsProjSynExam "please provide a valid boolean after '$arg' like" "$arg true"
-					DisplayAsProjSynIndentExam '' "$arg false"
-					DisplayAsProjSynIndentExam '' "$arg on"
-					DisplayAsProjSynIndentExam '' "$arg off"
-					DisplayAsProjSynIndentExam '' "$arg yes"
-					DisplayAsProjSynIndentExam '' "$arg no"
-					DisplayAsProjSynIndentExam '' "$arg enable"
-					DisplayAsProjSynIndentExam '' "$arg disable"
-					arg_problem=true
-					useropt_help_basic=false
-					;;
-				follow)
-					DisplayAsProjSynExam "please provide a valid $(ShowAsTitleName) git branch to '$arg' like" "$arg stable"
-					DisplayAsProjSynIndentExam '' "$arg unstable"
-					arg_problem=true
-					useropt_help_basic=false
-					;;
-				install|rebuild)
-					DisplayAsProjSynExam "please provide valid $(ShowAsPackages) or a $(ShowAsPackageGroup) after '$arg' like" "$arg all"
-					arg_problem=true
-					useropt_help_basic=false
-					;;
-				list)
-					DisplayAsProjSynExam "please provide a valid source to '$arg' like" "$arg installable"
-					DisplayAsProjSynIndentExam '' "$arg new"
-					arg_problem=true
-					useropt_help_basic=false
-					;;
-				paste)
-					DisplayAsProjSynExam "please provide a valid source to '$arg' online like" "$arg log"
-					DisplayAsProjSynIndentExam '' "$arg last"
-					arg_problem=true
-					useropt_help_basic=false
-					;;
-				show)
-					DisplayAsProjSynExam "please provide a valid source after '$arg' like" "$arg abs"
-					DisplayAsProjSynIndentExam '' "$arg log"
-					DisplayAsProjSynIndentExam '' "$arg packages"
-					DisplayAsProjSynIndentExam '' "$arg results"
-					arg_problem=true
-					useropt_help_basic=false
-					;;
-				*)
-					arg_problem=true
-					args_remaining+=("$arg")
-			esac
-		done
-
-		if [[ ${#args_remaining[@]:-} -gt 0 ]]; then
-			[[ $arg_problem = true ]] && echo
-			ShowAsError "incomplete argument$(Pluralise "${#args_remaining[@]}") \"${args_remaining[*]}\". Please check the arguments again"
-			arg_problem=true
-			args_remaining=()
-		fi
-	fi
 
 	if [[ ${#args[@]:-} -gt 0 ]]; then
 		run_package_actions=false
@@ -2765,9 +2987,23 @@ ArgSuggestions:Show()
 					arg_problem=true
 					useropt_help_basic=false
 					;;
-				@(dis|en)able|false|off|no|on|true|yes)
-					DisplayAsProjSynExam "please provide a valid setting before '$arg' like" "colour $arg"
-					DisplayAsProjSynIndentExam '' "terse $arg"
+				backup|clean|?(de|re)activate|@(dis|en)able-auto-update|reassign|@(re|un)install|?(re)start|restore|rm|sign|stop|upgrade)
+					DisplayAsProjSynExam "please provide valid $(ShowAsPackages) or a $(ShowAsPackageGroup) after '$arg' like" "$arg installed"
+					arg_problem=true
+					useropt_help_basic=false
+					;;
+				colo?(u)r?(ful)|terse)
+					DisplayAsProjSynExam "please specify either 'enable' or 'disable' before '$arg' like" "enable $arg"
+					DisplayAsProjSynIndentExam '' "disable $arg"
+					arg_problem=true
+					useropt_help_basic=false
+					;;
+				@(dis|en)able)
+					DisplayAsProjSynExam "please provide valid $(ShowAsPackages) or a $(ShowAsPackageGroup) after '$arg' like" "$arg installed"
+					DisplayAsProjSynExam "user settings may also be applied like" "enable colourful"
+					DisplayAsProjSynIndentExam '' "disable colourful"
+					DisplayAsProjSynIndentExam '' "enable color"
+					DisplayAsProjSynIndentExam '' "disable color"
 					arg_problem=true
 					useropt_help_basic=false
 					;;
@@ -2776,8 +3012,39 @@ ArgSuggestions:Show()
 					arg_problem=true
 					useropt_help_basic=false
 					;;
-				@(in|not-)active|?(in)dependent?(s)|stopped)
+				follow)
+					DisplayAsProjSynExam "please provide a valid $(ShowAsTitleName) git branch to '$arg' like" "$arg stable"
+					DisplayAsProjSynIndentExam '' "$arg unstable"
+					arg_problem=true
+					useropt_help_basic=false
+					;;
+				@(in|not-)active|?(in)dependent?(s)|installed|stopped)
 					DisplayAsProjSynExam "please provide a valid $(ShowAsAction) before '$arg' like" "activate $arg"
+					arg_problem=true
+					useropt_help_basic=false
+					;;
+				install|rebuild)
+					DisplayAsProjSynExam "please provide valid $(ShowAsPackages) or a $(ShowAsPackageGroup) after '$arg' like" "$arg all"
+					arg_problem=true
+					useropt_help_basic=false
+					;;
+				list)
+					DisplayAsProjSynExam "please provide a valid source to '$arg' like" "$arg installable"
+					DisplayAsProjSynIndentExam '' "$arg new"
+					arg_problem=true
+					useropt_help_basic=false
+					;;
+				paste)
+					DisplayAsProjSynExam "please provide a valid source to '$arg' online like" "$arg log"
+					DisplayAsProjSynIndentExam '' "$arg last"
+					arg_problem=true
+					useropt_help_basic=false
+					;;
+				show)
+					DisplayAsProjSynExam "please provide a valid source after '$arg' like" "$arg abs"
+					DisplayAsProjSynIndentExam '' "$arg log"
+					DisplayAsProjSynIndentExam '' "$arg packages"
+					DisplayAsProjSynIndentExam '' "$arg results"
 					arg_problem=true
 					useropt_help_basic=false
 					;;
@@ -2790,6 +3057,8 @@ ArgSuggestions:Show()
 					arg_problem=true
 					args_remaining+=("$arg")
 			esac
+
+# 			break	# Stop after 1st problem argument.
 		done
 
 		if [[ ${#args_remaining[@]:-} -gt 0 ]]; then
@@ -2802,7 +3071,6 @@ ArgSuggestions:Show()
 
 	[[ $arg_problem = true ]] && echo
 
-	DebugArray args_incomplete "${args_incomplete[*]:-}"
 	DebugArray args_remaining "${args_remaining[*]:-}"
 
 	Func:Exit
@@ -5350,7 +5618,6 @@ Help.Basic.Examples:Show()
 	DisplayAsProjSynIndentExam "to see available $(ShowAsPackageGroup)s" 'help groups'
 	DisplayAsProjSynIndentExam "or, for more $(ShowAsOptions)" 'help options'
 	DisplayAsHelpTitle "more in the wiki: $(ShowAsURL 'https://github.com/OneCDOnly/sherpa/wiki')"
-
 	Display
 
 	return 0
@@ -8162,6 +8429,8 @@ LockFile:Release()
 
 Verbose:Enable()
 	{
+
+	[[ $useropt_verbose = false && $useropt_terse = true ]] && echo
 
 	useropt_verbose=true
 	DebugVar useropt_verbose
@@ -11461,17 +11730,24 @@ DebugArray()
 
 	# Input:
 	#   $1 = array name
-	#   $2 = array contents: i.e. "${myarray[*]}"
+	#   $2 = array contents				i.e. "${myarray[*]}"
+	#   $3 = array length (optional)	i.e. "${#myarray[@]}"
 
 	# Output:
 	#   to debug log
 
 	[[ -n ${1:-} ]] || return
 
-	if [[ -n ${2:-} ]]; then
-		DebugAsArray "\$$1 : ['$2']"
+# 	test=(a b c d ee 'test phrase' 'and something else')
+# 	out=$(printf "'%s'," "${test[@]}")
+# 	echo "elements:${#test[@]},values:[${out%,}]"
+
+	if [[ -n ${3:-} ]]; then
+		DebugAsArray "\$$1 : elements ['$2'], count : '$3'"
+	elif [[ -n ${2:-} ]]; then
+		DebugAsArray "\$$1 : elements ['$2']"
 	else
-		DebugAsArray "\$$1 : [null]"
+		DebugAsArray "\$$1 : elements [null], count : '0'"
 	fi
 
 	}
@@ -12355,7 +12631,7 @@ Objects:Load()
 
 	# Ensure `objects` in the local cache is up-to-date, then source it.
 
-	[[ ${objects_loaded:=false} = false ]] || return 0
+	[[ $objects_loaded = false ]] || return 0
 
 	Func:Init
 
@@ -12394,7 +12670,7 @@ Packages:Load()
 
 	# Ensure `packages` in the local cache is up-to-date, then source it.
 
-	[[ ${packages_loaded:=false} = false ]] || return 0
+	[[ $packages_loaded = false ]] || return 0
 
 	Func:Init
 
