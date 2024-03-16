@@ -6,7 +6,7 @@ QPKG_SERVICE_PROGRAM="oreadarr.sh"
 QPKG_WEBUI="/"
 QPKG_WEB_PORT="8787"
 QTS_MINI_VERSION="4.4.1"
-QPKG_DISPLAY_NAME="OReadarr (web)"
+QPKG_DISPLAY_NAME="Readarr (web)"
 QPKG_LICENSE="GPLV3"
 
 # Select volume

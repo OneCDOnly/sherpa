@@ -6,7 +6,7 @@ QPKG_SERVICE_PROGRAM="owhisparr.sh"
 QPKG_WEBUI="/"
 QPKG_WEB_PORT="6969"
 QTS_MINI_VERSION="4.4.1"
-QPKG_DISPLAY_NAME="OWhisparr (web)"
+QPKG_DISPLAY_NAME="Whisparr (web)"
 QPKG_LICENSE="GPLV3"
 
 # Select volume
