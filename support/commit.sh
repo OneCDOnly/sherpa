@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 
+# Input:
+#	$1 = force (optional) = skip syntax check. Default is to perform syntax check before committing.
+
 source_path="$HOME"/scripts/nas/sherpa/support
 this_path=$PWD
 . $source_path/vars.source || exit
 
 cd "$source_path" || exit
 ./clean-source.sh
-./check-syntax.sh || exit
+[[ ${1:-} != force ]] && { ./check-syntax.sh || exit ;}
 
 [[ -e $objects_file ]] && rm -f "$objects_file"
 [[ -e $management_file ]] && rm -f "$management_file"
