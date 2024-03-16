@@ -1649,7 +1649,7 @@ PrepareArgs()
 ParseManagementArgs()
 	{
 
-Verbose:Enable															#devdebug
+# Verbose:Enable															#devdebug
 
 	# Basic argument syntax:
 	#   scriptname [action] [groups] [options]
@@ -1686,6 +1686,7 @@ Verbose:Enable															#devdebug
 		DebugInfoMinSepr												#devdebug
 
 		DebugVar index													#devdebug
+
 		[[ $index -lt $element_count ]] || break		# Need this as $index is modified within loop, and can move out-of-range of array elements.
 
 		this_arg="${args[$index]}"
@@ -1718,18 +1719,22 @@ Verbose:Enable															#devdebug
 				;;
 			reset)
 				DebugAsInfo 'enabling reset'							#devdebug
-				twin_args=false
-# 					DeleteSetting Colourful
-# 					DeleteSetting Git_Branch
-# 					DeleteSetting Terse
 
-# 					Reset					# <-- Processing will terminate in this function (no-return).
+				twin_args=false
+
+				DeleteSetting Colourful
+				DeleteSetting Git_Branch
+				DeleteSetting Terse
+
+				Reset					# <-- Processing will terminate in this function (no-return).
 		esac
 
 		if [[ -z $action ]]; then
 			DebugAsInfo 'exporting $this_arg as $action=null'			#devdebug
+
 			args_remaining+=($this_arg)
 			DebugArray args_remaining "${args_remaining[*]:-}"			#devdebug
+
 			group=''
 			continue
 		fi
@@ -1773,6 +1778,7 @@ Verbose:Enable															#devdebug
 					case $group in
 						?(un)stable)
 							DebugAsInfo "setting following=$group"		#devdebug
+
 							action=''
 							group=''
 							run_package_actions=false
@@ -1786,6 +1792,7 @@ Verbose:Enable															#devdebug
 					case $group in
 						last)
 							DebugAsInfo 'pasting last'					#devdebug
+
 							run_package_actions=false
 							useropt_paste_log_last=true
 							[[ $twin_args = true ]] && ((index++))
@@ -1793,6 +1800,7 @@ Verbose:Enable															#devdebug
 							;;
 						tail)
 							DebugAsInfo 'pasting tail'					#devdebug
+
 							run_package_actions=false
 							useropt_paste_log_tail=true
 							[[ $twin_args = true ]] && ((index++))
@@ -1803,6 +1811,7 @@ Verbose:Enable															#devdebug
 			case $group in
 				check)
 					[[ $value = true ]] && DebugAsInfo 'enabling check'	#devdebug
+
 					action=''
 					generate_show_report=true
 					get_qpkg_states=true
@@ -1813,6 +1822,7 @@ Verbose:Enable															#devdebug
 					;;
 				colourful)
 					DebugAsInfo "setting colourful=$value"				#devdebug
+
 					action=''
 					group=''
 					switch_colour=true
@@ -1838,6 +1848,7 @@ Verbose:Enable															#devdebug
 					;;
 				terse)
 					DebugAsInfo "setting terse=$value"					#devdebug
+
 					action=''
 					group=''
 					switch_terse=true
@@ -1868,13 +1879,13 @@ Verbose:Enable															#devdebug
 		fi
 
 		DebugAsInfo 'exporting $this_arg as unwanted'					#devdebug
+
 		args_remaining+=($this_arg)
 		DebugArray args_remaining "${args_remaining[*]:-}"				#devdebug
 	done
 
 	DebugInfoMajSepr													#devdebug
 	DebugArray args_remaining "${args_remaining[*]:-}"					#devdebug
-exit
 
 	[[ $switch_branch = true ]] && UpdateBranch
 	[[ $switch_colour = true ]] && UpdateColourful
@@ -1888,6 +1899,8 @@ exit
 
 ParseHelpArgs()
 	{
+
+# Verbose:Enable															#devdebug
 
 	# Basic argument syntax:
 	#   scriptname [action] [groups] [options]
@@ -1905,76 +1918,92 @@ ParseHelpArgs()
 	Func:Init
 
 	local action=''						# Internal, nice, simple, action name. Only one per-action.
-	local arg=''
-	local arg_identified=false
 	local -a args_remaining=()
-	local awaiting_group=false
-	local current_action=''
+	local -i element_count=${#args[@]}
 	local group=''
-	local action=''			# A user arg that might be an action.
-	local group=''			# A user arg that might be a QPKG group.
-	local requires_group=false
-	local user_action=''				# The original user argument, detected as an action. There may be many variants per-action.
-	local value=false					# convert 'enable' action into 'true', and 'disable' action into 'false'.
+	local -i index=0
+	local next_arg=''
+	local source_arg=''
+	local this_arg=''
+	local twin_args=false				# If false, then only a single arg is being processed. If true, then 2 args are being processed at-once.
+	local value=false					# Holds converted 'enable' or 'disable' actions into 'true' or 'false'.
 
-	for arg in "${args[@]:-}"; do
-		[[ -n $arg ]] || continue
+	DebugInfoMajSepr													#devdebug
+	DebugArray args "${args[*]:-}" "${#args[@]}"						#devdebug
 
-		arg_identified=false
+	for ((index=0; index<=element_count; index++)); do
 		value=false
+		twin_args=false
+		DebugInfoMinSepr												#devdebug
+
+		DebugVar index													#devdebug
+
+		[[ $index -lt $element_count ]] || break		# Need this as $index is modified within loop, and can move out-of-range of array elements.
+
+		this_arg="${args[$index]}"
+		[[ -n $this_arg ]] || continue
+
+		if [[ $((index+1)) -gt $element_count ]]; then
+			next_arg=''
+		else
+			next_arg="${args[$((index+1))]:-}"
+		fi
+
+		DebugInfoMinSepr												#devdebug
+		DebugVar this_arg												#devdebug
+		DebugVar next_arg												#devdebug
 
 		# Identify action.
 
-		action=$(TranslateIntoAction "$arg")
+		action=$(TranslateIntoAction "$this_arg")
+		DebugVar action													#devdebug
 
-		if [[ -n $action ]]; then
-			case $action in
-				help)
-					action=$action; DebugVar action
-					action=''
-					arg_identified=true
-					generate_help_report=true
-					requires_group=true
-					user_action=$arg
-					useropt_help_basic=true
-			esac
+		case $action in
+			help)
+# 				generate_help_report=true
+# 				useropt_help_basic=true
+				twin_args=true
+				;;
+			abs|actions|all|all-actions|groups|options|problems|tips|upgrades)
+				action=help
+				group=$action											# Convert to action to group.
+				twin_args=false
+		esac
 
-			if [[ $user_action != "$current_action" ]]; then
-				if [[ $awaiting_group = true ]]; then
-# 					DebugAsInfo "saving loop incomplete \$current_action '$current_action'"
-# 					args_remaining+=("$current_action"); DebugArray args_remaining "${args_remaining[*]:-}"
-					awaiting_group=false
-				fi
+		if [[ -z $action ]]; then
+			DebugAsInfo 'exporting $this_arg as $action=null'			#devdebug
 
-				awaiting_group=$requires_group
-				current_action=$user_action
-				group=''	 			# When action changes, must clear group.
-				continue
-			fi
+			args_remaining+=($this_arg)
+			DebugArray args_remaining "${args_remaining[*]:-}"			#devdebug
+
+			group=''
+			continue
 		fi
 
-		[[ $arg_identified = false ]] || continue
+		DebugAsDone 'completed check for action'						#devdebug
+
+		DebugVar action													#devdebug
+		DebugVar group													#devdebug
 
 		# Identify group.
 
-		group=$(TranslateIntoGroup "$arg")
+		if [[ -z $group ]]; then
+			# Identify group.
 
-		if [[ -n $group ]]; then
-			group=$group; DebugVar group
-			group=''
+			if [[ -z $action ]]; then
+				source_arg=$this_arg
+			else
+				source_arg=$next_arg
+			fi
 
-			case $group in
-				abs|actions|all|all-actions|groups|options|problems|tips|upgrades)
-					if [[ -z $action ]]; then
-						action=help
-						requires_group=true
-					fi
-			esac
-		else
-			DebugAsInfo "saving early loop unidentified \$arg '$arg'"
-			args_remaining+=("$arg"); DebugArray args_remaining "${args_remaining[*]:-}"
-			continue
+			group=$(TranslateIntoGroup "$source_arg")
+			DebugVar group												#devdebug
 		fi
+
+		DebugAsDone 'completed check for group'							#devdebug
+
+		DebugVar action													#devdebug
+		DebugVar group													#devdebug
 
 		# Pair action with group.
 
@@ -1983,12 +2012,14 @@ ParseHelpArgs()
 				help)
 					case $group in
 						abs)
-							arg_identified=true
-							awaiting_group=false
+							action=''
 							generate_help_report=true
+							group=''
 							run_package_actions=false
 							useropt_help_basic=false
 							useropt_help_abbreviations=true
+							[[ $twin_args = true ]] && ((index++))
+							continue
 							;;
 						actions)
 							arg_identified=true
@@ -2073,45 +2104,14 @@ ParseHelpArgs()
 			esac
 		fi
 
-		if [[ $arg_identified = false ]]; then
-			DebugAsInfo "saving late loop unidentified \$arg '$arg'"
-			args_remaining+=("$arg"); DebugArray args_remaining "${args_remaining[*]:-}"
-			action=''
-		fi
+		DebugAsInfo 'exporting $this_arg as unwanted'					#devdebug
+
+		args_remaining+=($this_arg)
+		DebugArray args_remaining "${args_remaining[*]:-}"				#devdebug
 	done
 
-# 	if [[ $requires_group = true && $awaiting_group = true ]]; then
-# 		DebugAsInfo "saving outloop incomplete \$user_action '$user_action'"
-# 		args_remaining+=("$user_action"); DebugArray args_remaining "${args_remaining[*]:-}"
-# 	fi
-
-# 	for arg in "${args_remaining[@]:-}"; do
-# 		action=$(TranslateIntoAction "$arg")
-#
-# 		case $action in
-# 			help)							# If specified without a valid group, then show help.
-# 				run_package_actions=false
-# 				useropt_help_basic=true
-#
-# 				# Remove this arg from array.
-# 				local a=''
-# 				local tmp=()
-#
-# 				for a in "${args_remaining[@]:-}"; do
-# 					[[ $a != "$arg" ]] && tmp+=($a)
-# 				done
-#
-# 				if [[ ${#tmp[@]:-} -eq 0 ]]; then
-# 					args_remaining=()
-# 				else
-# 					args_remaining=("${tmp[@]:-}")
-# 				fi
-#
-# 				unset tmp
-# 		esac
-# 	done
-
-	args=(${args_remaining[@]:-}); DebugArray args "${args[*]:-}"
+	DebugInfoMajSepr													#devdebug
+	DebugArray args_remaining "${args_remaining[*]:-}"					#devdebug
 
 	Func:Exit
 
@@ -2593,7 +2593,6 @@ ParseListArgs()
 # 		esac
 # 	done
 
-Verbose:Enable
 	args=(${args_remaining[@]:-}); DebugArray args "${args[*]:-}"
 
 	Func:Exit
