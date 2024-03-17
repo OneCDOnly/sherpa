@@ -1,3 +1,5 @@
-* install fails on armv5tel, armv7
-	pydantic-core==2.3.0 (from pydantic>=1.9.1->inflect->jaraco.text->jaraco.collections->cherrypy-> -r requirements.txt (line 3))
-	'maturin' PyPI module can't be compiled: no Rust compiler available
+Test date: 2024-03-16
+
+* armv5tel (x19):
+	- All Entware IPK versions are now frozen for armv5 NAS.
+	- 'python3-orjson' IPK isn't available for armv5, so allow 'orjson' to be installed via 'pip' for x19 QPKG-only.

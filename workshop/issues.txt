@@ -1,15 +1,12 @@
 Observed issues:
 
-	* dev arg tests are './sherpa-manager.source enable watcher disable debug'
-		- this actually enables debug mode.
-
-	* dev arg tests are './sherpa-manager.source follow test clean me start all'
+	* armv5 (Helga) install of Sickgear is attempting to install 'python3-orjson' when it shouldn't.
+		- IPK doesn't exist in the pre-February 2024 Entware package list.
+		- a19 has its own IPK requires list for Sickgear in 'packages.source', so this shouldn't be happening.
 
 	* 'sherpa show status' displays status report correctly, and then displays 'show' usage examples.
 
 	* 'sherpa help show' is only showing basic help, not the 'show' help list.
-
-	* 'sherpa terse disable' not recognised.
 
 	* SABNzbd failed during install, shows error, but install is marked as OK:
 		-------------------------------------------------------------------------------------------------------------------------

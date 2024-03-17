@@ -6,7 +6,7 @@ QPKG_SERVICE_PROGRAM="otransmission.sh"
 QPKG_WEBUI="/"
 QPKG_WEB_PORT="9991"
 QTS_MINI_VERSION="4.0.0"
-QPKG_DISPLAY_NAME="OTransmission (web)"
+QPKG_DISPLAY_NAME="Transmission (web)"
 QPKG_LICENSE="GPLV3"
 
 # Select volume

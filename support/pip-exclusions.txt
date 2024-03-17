@@ -1,5 +1,6 @@
 # Don't install these modules via 'pip', use the Python3 modules installed via Entware instead. Recompiling these via 'pip' causes problems.
 cassandra-driver
+certifi
 cffi
 cryptography
 dateutil
@@ -7,13 +8,17 @@ defusedxml
 levenshtein
 lxml
 mako
+markupsafe
+orjson
 packaging
 pillow
 psutil
 pycurl
 pysnmp
 python-dateutil
+pytz
 pyzmq
+regex
 requests
 setuptools
 six
