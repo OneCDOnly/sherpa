@@ -1,5 +1,4 @@
-* Retest SickGear on armv5 with new Entware modules and see if it can now be installed.
-	https://github.com/OneCDOnly/sherpa/discussions/289
+* armv5 NAS models will no-longer have their Python and Perl modules upgraded, so skip upgrade attempts on these models, unless Python and Perl are on final versions for armv5.
 
 * Is 'status' check looking at QPKG service-script results and prioritising 'inactive' over current state of 'active'?
 	- Why are active packages shown as 'inactive'? Some were 'inactive' (due to known startup network issues on Laura), but a manual 'status' check via the service-script shows them to be 'active', as-does a subsequest 'status' check via sherpa. Weird!
