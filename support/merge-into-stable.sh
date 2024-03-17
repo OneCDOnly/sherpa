@@ -25,6 +25,8 @@ cd $HOME/scripts/nas/sherpa || exit
 
 git checkout "$stable_branch" || exit
 git merge --no-ff -m "[merge] from \`$unstable_branch\` into \`$stable_branch\`" "$unstable_branch" && git push || exit
+git tag v${build_date}
+git push --tags
 git checkout "$unstable_branch" || exit
 
 cd $HOME/scripts/nas/sherpa/support || exit
