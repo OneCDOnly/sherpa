@@ -1710,7 +1710,6 @@ ParseManagementArgs()
 		case $action in
 			check|colourful|debug|terse|verbose)
 				group=$action											# Convert to action to group.
-
 				action=enable
 				twin_args=false
 				;;
@@ -1957,7 +1956,7 @@ Verbose:Enable															#devdebug
 
 		action=$(TranslateIntoAction "$this_arg")
 		DebugVar action													#devdebug
-
+set -x
 		case $action in
 			help)
 				generate_help_report=true
@@ -1965,10 +1964,13 @@ Verbose:Enable															#devdebug
 				twin_args=true
 				;;
 			abs|actions|all|all-actions|groups|options|problems|tips|upgrades)
-				action=help
 				group=$action											# Convert to action to group.
+				action=help
 				twin_args=false
 		esac
+set +x
+		DebugVar action													#devdebug
+		DebugVar group													#devdebug
 
 		if [[ -z $action ]]; then
 			DebugAsInfo 'exporting $this_arg as $action=null'			#devdebug
@@ -2832,9 +2834,9 @@ TranslateIntoGroup()
 		b|backups)
 			printf backups
 			;;
-		c|check)
-			printf check
-			;;
+# 		c|check)
+# 			printf check
+# 			;;
 		colo?(u)r?(ful))
 			printf colourful
 			;;
