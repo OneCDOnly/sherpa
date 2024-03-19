@@ -1704,13 +1704,12 @@ ParseManagementArgs()
 
 		# Identify action.
 
-		action=$(TranslateIntoAction "$this_arg")
+		action=$(MatchAction "$this_arg")
 		DebugVar action													#devdebug
 
 		case $action in
 			check|colourful|debug|terse|verbose)
 				group=$action											# Convert to action to group.
-
 				action=enable
 				twin_args=false
 				;;
@@ -1753,7 +1752,7 @@ ParseManagementArgs()
 				source_arg=$next_arg
 			fi
 
-			group=$(TranslateIntoGroup "$source_arg")
+			group=$(MatchGroup "$source_arg")
 			DebugVar group												#devdebug
 		fi
 
@@ -1955,9 +1954,9 @@ Verbose:Enable															#devdebug
 
 		# Identify action.
 
-		action=$(TranslateIntoAction "$this_arg")
+		action=$(MatchAction "$this_arg")
 		DebugVar action													#devdebug
-
+set -x
 		case $action in
 			help)
 				generate_help_report=true
@@ -1965,10 +1964,13 @@ Verbose:Enable															#devdebug
 				twin_args=true
 				;;
 			abs|actions|all|all-actions|groups|options|problems|tips|upgrades)
-				action=help
 				group=$action											# Convert to action to group.
+				action=help
 				twin_args=false
 		esac
+set +x
+		DebugVar action													#devdebug
+		DebugVar group													#devdebug
 
 		if [[ -z $action ]]; then
 			DebugAsInfo 'exporting $this_arg as $action=null'			#devdebug
@@ -1996,7 +1998,7 @@ Verbose:Enable															#devdebug
 				source_arg=$next_arg
 			fi
 
-			group=$(TranslateIntoGroup "$source_arg")
+			group=$(MatchGroup "$source_arg")
 			DebugVar group												#devdebug
 		fi
 
@@ -2158,7 +2160,7 @@ ParseShowArgs()
 
 		# Identify action.
 
-		action=$(TranslateIntoAction "$arg")
+		action=$(MatchAction "$arg")
 
 		if [[ -n $action ]]; then
 			case $action in
@@ -2193,7 +2195,7 @@ ParseShowArgs()
 
 		# Identify group.
 
-		group=$(TranslateIntoGroup "$arg")
+		group=$(MatchGroup "$arg")
 
 		if [[ -n $group ]]; then
 			group=$group; DebugVar group
@@ -2318,7 +2320,7 @@ ParseShowArgs()
 # 	fi
 
 	for arg in "${args_remaining[@]:-}"; do
-		action=$(TranslateIntoAction "$arg")
+		action=$(MatchAction "$arg")
 
 		case $action in
 # 			show)											# If specified without a valid group, then show help.
@@ -2442,7 +2444,7 @@ ParseListArgs()
 
 		# Identify action.
 
-		action=$(TranslateIntoAction "$arg")
+		action=$(MatchAction "$arg")
 
 		if [[ -n $action ]]; then
 			case $action in
@@ -2475,7 +2477,7 @@ ParseListArgs()
 
 		# Identify group.
 
-		group=$(TranslateIntoGroup "$arg")
+		group=$(MatchGroup "$arg")
 
 		if [[ -n $group ]]; then
 			group=$group; DebugVar group
@@ -2569,7 +2571,7 @@ ParseListArgs()
 # 	fi
 
 # 	for arg in "${args_remaining[@]:-}"; do
-# 		action=$(TranslateIntoAction "$arg")
+# 		action=$(MatchAction "$arg")
 #
 # 		case $action in
 # 			list)							# If specified without a valid group, then show help.
@@ -2640,7 +2642,7 @@ ParseActionArgs()
 
 		# Identify action.
 
-		action=$(TranslateIntoAction "$arg")
+		action=$(MatchAction "$arg")
 
 		if [[ -n $action ]]; then
 			case $action in
@@ -2675,7 +2677,7 @@ ParseActionArgs()
 		# Identify group.
 
 		Packages:Load
-		group=$(TranslateIntoGroup "$arg")
+		group=$(MatchGroup "$arg")
 
 		if [[ -n $group ]]; then
 			group=$group; DebugVar group
@@ -2750,10 +2752,16 @@ ParseActionArgs()
 # exit
 	}
 
-TranslateIntoAction()
+MatchAction()
 	{
 
 	# Identify variant action from $1 and output nice action.
+
+	# Input:
+	#   $1 = a potential action supplied by user.
+
+	# Output:
+	#   stdout = matched action.
 
 	local a=${1:-}
 
@@ -2773,9 +2781,9 @@ TranslateIntoAction()
 		deactivate|stop)
 			printf deactivate
 			;;
-		d?(e)bug)
-			printf debug
-			;;
+# 		d?(e)bug)
+# 			printf debug
+# 			;;
 		disable-auto-update)
 			printf disableau
 			;;
@@ -2797,19 +2805,25 @@ TranslateIntoAction()
 		update|upgrade)
 			printf upgrade
 			;;
-		v|verbose)
-			printf verbose
-			;;
+# 		v|verbose)
+# 			printf verbose
+# 			;;
 		backup|clean|@(dis|en)able|follow|help|list|paste|reassign|rebuild|reinstall|reset|restore|sign|terse)
 			echo -n "$a"
 	esac
 
 	}
 
-TranslateIntoGroup()
+MatchGroup()
 	{
 
 	# Identify variant group from $1 and output nice group.
+
+	# Input:
+	#   $1 = a potential group supplied by user.
+
+	# Output:
+	#   stdout = matched group.
 
 	local a=${1:-}
 
@@ -2832,9 +2846,9 @@ TranslateIntoGroup()
 		b|backups)
 			printf backups
 			;;
-		c|check)
-			printf check
-			;;
+# 		c|check)
+# 			printf check
+# 			;;
 		colo?(u)r?(ful))
 			printf colourful
 			;;
