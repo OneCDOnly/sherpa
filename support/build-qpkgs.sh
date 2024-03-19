@@ -71,7 +71,7 @@ for d in "$qpkgs_path"/*; do
 
 	if [[ $rebuild_package = false ]]; then
 		if [[ -e $datetime_change_reference_pathfile ]]; then
-			changed_file_list=$(find -L "$d" ! -type d -cnewer "$datetime_change_reference_pathfile")
+			changed_file_list=$(find -L "$d" ! -type d -newer "$datetime_change_reference_pathfile")
 
 			if [[ -n $changed_file_list ]]; then
 				echo "package files: changed"

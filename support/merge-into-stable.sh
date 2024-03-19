@@ -33,7 +33,8 @@ git checkout "$unstable_branch" || exit
 
 cd $HOME/scripts/nas/sherpa/support || exit
 
-./build-all.sh || exit
-./commit.sh '[update] QPKGs rebuild [post-merge]' || exit
+# ./build-all.sh || exit
+./reset-qpkg-datetimes.sh || exit
+./commit.sh '[update] datetimes reset [post-merge]' || exit
 
 exit 0
