@@ -1033,7 +1033,7 @@ QPKGs:AssignToActions()
 
 	# Ensure independent packages are also installed when processing these specific actions.
 
-	for action in upgrade reinstall install; do
+	for action in reinstall install; do
 		for package in $(QPKGs-AC${action}-to:Array); do
 			for prospect in $(QPKG.GetDependencies "$package"); do
 				QPKGs-ISNTinstalled.Exist "$prospect" && QPKGs-ACinstall-to:Add "$prospect"
@@ -6404,30 +6404,30 @@ PIPs.Actions:List()
 
 	}
 
-#QPKGs.Actions:ListAll()
-# 	{
-#
-# 	# Only used when debugging.
-#
-# 	Func:Init
-#
-# 	local a=''
-# 	local b=''
-# 	DebugInfoMinSepr
-#
-# 	for a in "${QPKG_ACTIONS[@]}"; do
-# 		for b in to ok er sk so se sa; do
-# 			if QPKGs-AC${a}-${b}.IsAny; then
-# 				DebugQpkg info "AC${a}=${b}" "($(QPKGs-AC${a}-${b}:Count)) $(QPKGs-AC${a}-${b}:ListCSV) "
-# 			fi
-# 		done
-# 	done
-#
-# 	DebugInfoMinSepr
-#
-# 	Func:Exit
-#
-# 	}
+QPKGs.Actions:ListAll()
+	{
+
+	# Only used when debugging.
+
+	Func:Init
+
+	local a=''
+	local b=''
+	DebugInfoMinSepr
+
+	for a in "${QPKG_ACTIONS[@]}"; do
+		for b in to ok er sk so se sa; do
+			if QPKGs-AC${a}-${b}.IsAny; then
+				DebugQpkg info "AC${a}-${b}" "($(QPKGs-AC${a}-${b}:Count)) $(QPKGs-AC${a}-${b}:ListCSV) "
+			fi
+		done
+	done
+
+	DebugInfoMinSepr
+
+	Func:Exit
+
+	}
 
 QPKGs.States:List()
 	{
