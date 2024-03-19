@@ -2,7 +2,9 @@
 
 . vars.source || exit
 
-echo -en "ready to merge the current '$unstable_branch_msg' branch into '$stable_branch_msg' branch: proceed? "
+release_tag=v${build_date}
+
+echo -en "ready to merge the current '$(ColourTextBrightRed "$unstable_branch")' branch into '$(ColourTextBrightGreen "$stable_branch")' branch as '$(ColourTextBrightWhite "$release_tag")': proceed? "
 read -rn1 response
 echo
 
@@ -25,8 +27,8 @@ cd $HOME/scripts/nas/sherpa || exit
 
 git checkout "$stable_branch" || exit
 git merge --no-ff -m "[merge] from \`$unstable_branch\` into \`$stable_branch\`" "$unstable_branch" && git push || exit
-git tag v${build_date}
-# git push --tags
+git tag "$release_tag"
+git push --tags
 git checkout "$unstable_branch" || exit
 
 cd $HOME/scripts/nas/sherpa/support || exit
