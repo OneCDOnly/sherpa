@@ -1150,7 +1150,12 @@ QPKGs:AssignToActions()
 	done
 
 	# Build list of required installation QPKGs.
-	QPKGs-ACdownload-to:Add "$(QPKGs-ACupgrade-to:Array) $(QPKGs-ACreinstall-to:Array) $(QPKGs-ACinstall-to:Array)"
+
+	QPKGs-ACdownload-to:Add "$(QPKGs-ACreinstall-to:Array) $(QPKGs-ACinstall-to:Array)"
+
+	for package in $(QPKGs-ACupgrade-to:Array); do
+		QPKGs-ISupgradable.Exist "$package" && QPKGs-ACdownload-to:Add "$package"		# Only download files for upgradable QPKGs
+	done
 
 	# Check all items.
 
@@ -3331,9 +3336,6 @@ IPKs:install()
 		IPKs-ACinstall-to:Add "$ESSENTIAL_IPKS"
 
 		if [[ -e $PREV_IPK_LIST && $useropt_check = false ]]; then		# Don't load previous IPK list during 'check'.
-
-
-
 			LoadIpkList
 			mv -f "$PREV_IPK_LIST" "$PREV_IPK_LIST.installing"
 		fi
