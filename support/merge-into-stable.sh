@@ -4,7 +4,7 @@
 
 release_tag=v${build_date}
 
-echo -en "ready to merge the current '$(ColourTextBrightRed "$unstable_branch")' branch into '$(ColourTextBrightGreen "$stable_branch")' branch as '$(ColourTextBrightWhite "$release_tag")': proceed? "
+echo -en "ready to merge '$(ColourTextBrightRed "$unstable_branch")' branch into '$(ColourTextBrightGreen "$stable_branch")' branch as '$(ColourTextBrightWhite "$release_tag")': proceed? "
 read -rn1 response
 echo
 
