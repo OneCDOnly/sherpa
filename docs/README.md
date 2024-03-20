@@ -18,7 +18,7 @@ That said: the majority of development is now complete, and I'm currently workin
 
 ## Installation
 
-1) [Click here to download the **sherpa** QPKG](https://github.com/OneCDOnly/sherpa/releases/download/v240320/sherpa_240320.qpkg).
+1) [Click here to download the **sherpa** QPKG](https://github.com/OneCDOnly/sherpa/releases/download/v240321/sherpa_240321.qpkg).
 
 2) Install the QPKG manually through your QTS App Center UI. This QPKG is not digitally signed, so you'll need to allow unsigned packages to be installed in your App Center before installing it. It can "sign" itself (and all supported QPKGs) after installation.
 

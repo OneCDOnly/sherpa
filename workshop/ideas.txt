@@ -1,3 +1,7 @@
+* After merge, set all QPKG file change datetimes to that of current sherpa QPKG release file.
+	- Must also update datetime of sherpa function library source.
+	- Auto QPKG rebuilder should therefore ignore datetimes updated by git during 'git checkout'.
+
 * Try each user arg as an action.
 	- if not an action, try as a group.
 	- if not a group, then it's unwanted.
