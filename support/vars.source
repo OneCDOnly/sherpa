@@ -255,9 +255,6 @@ forum_file=QNAP-forum-announcement.bbcode
 stable_branch=stable
 unstable_branch=unstable
 
-stable_branch_msg="$(ColourTextBrightGreen "$stable_branch")"
-unstable_branch_msg="$(ColourTextBrightRed "$unstable_branch")"
-
 cdn_onecd_url='https://raw.githubusercontent.com/OneCDOnly'
 cdn_sherpa_base_url=$cdn_onecd_url/sherpa
 cdn_sherpa_url=$cdn_sherpa_base_url/'$useropt_branch'
