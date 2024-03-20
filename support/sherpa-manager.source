@@ -1674,7 +1674,7 @@ ParseManagementArgs()
 
 		# Identify action.
 
-		potential_action=$(TranslateIntoAction "$arg"); DebugVar potential_action
+		potential_action=$(MatchVerb "$arg"); DebugVar potential_action
 
 		if [[ -n $potential_action ]]; then
 			action=$potential_action; DebugVar action
@@ -1723,7 +1723,7 @@ ParseManagementArgs()
 
 		# Identify group.
 
-		group=$(TranslateIntoGroup "$arg")
+		group=$(MatchNoun "$arg")
 		DebugVar group
 
 		# Pair action with group.
@@ -1841,7 +1841,7 @@ ParseHelpArgs()
 
 		# Identify action.
 
-		potential_action=$(TranslateIntoAction "$arg"); DebugVar potential_action
+		potential_action=$(MatchVerb "$arg"); DebugVar potential_action
 
 		if [[ -n $potential_action ]]; then
 			action=$potential_action; DebugVar action
@@ -1864,7 +1864,7 @@ ParseHelpArgs()
 
 		# Identify group.
 
-		group=$(TranslateIntoGroup "$arg")
+		group=$(MatchNoun "$arg")
 		DebugVar group
 
 		# Include action assignment when action hasn't been previously specified.
@@ -2038,7 +2038,7 @@ ParseShowArgs()
 
 		# Identify action.
 
-		potential_action=$(TranslateIntoAction "$arg"); DebugVar potential_action
+		potential_action=$(MatchVerb "$arg"); DebugVar potential_action
 
 		if [[ -n $potential_action ]]; then
 			action=$potential_action; DebugVar action
@@ -2061,7 +2061,7 @@ ParseShowArgs()
 
 		# Identify group.
 
-		group=$(TranslateIntoGroup "$arg")
+		group=$(MatchNoun "$arg")
 		DebugVar group
 
 		# Include action assignment when action hasn't been previously specified.
@@ -2209,7 +2209,7 @@ ParseListArgs()
 
 		# Identify action.
 
-		potential_action=$(TranslateIntoAction "$arg"); DebugVar potential_action
+		potential_action=$(MatchVerb "$arg"); DebugVar potential_action
 
 		if [[ -n $potential_action ]]; then
 			action=$potential_action; DebugVar action
@@ -2232,7 +2232,7 @@ ParseListArgs()
 
 		# Identify group.
 
-		group=$(TranslateIntoGroup "$arg")
+		group=$(MatchNoun "$arg")
 		DebugVar group
 
 		# Include action assignment when action hasn't been previously specified.
@@ -2351,7 +2351,7 @@ ParseActionArgs()
 
 		# Identify action.
 
-		potential_action=$(TranslateIntoAction "$arg"); DebugVar potential_action
+		potential_action=$(MatchVerb "$arg"); DebugVar potential_action
 
 		if [[ -n $potential_action ]]; then
 			action=$potential_action; DebugVar action
@@ -2381,7 +2381,7 @@ ParseActionArgs()
 
 		# Identify group.
 
-		group=$(TranslateIntoGroup "$arg"); DebugVar group
+		group=$(MatchNoun "$arg"); DebugVar group
 
 		# Pair action with group.
 
@@ -2437,7 +2437,7 @@ ParseActionArgs()
 	fi
 
 	for arg in "${args_incomplete[@]:-}"; do
-		action=$(TranslateIntoAction "$arg")
+		action=$(MatchVerb "$arg")
 
 		case $action in
 			status)
@@ -2473,7 +2473,7 @@ ParseActionArgs()
 
 	}
 
-TranslateIntoAction()
+MatchVerb()
 	{
 
 	# Identify variant action from $1 and output nice action.
@@ -2526,7 +2526,7 @@ TranslateIntoAction()
 
 	}
 
-TranslateIntoGroup()
+MatchNoun()
 	{
 
 	# Identify variant group from $1 and output nice group.
@@ -6406,30 +6406,30 @@ PIPs.Actions:List()
 
 	}
 
-QPKGs.Actions:ListAll()
-	{
+QPKGs.Actions:ListAll()																						#devdebug
+	{																										#devdebug
 
-	# Only used when debugging.
+	# Only used when debugging.																				#devdebug
 
-	Func:Init
+	Func:Init																								#devdebug
 
-	local a=''
-	local b=''
-	DebugInfoMinSepr
+	local a=''																								#devdebug
+	local b=''																								#devdebug
+	DebugInfoMinSepr																						#devdebug
 
-	for a in "${QPKG_ACTIONS[@]}"; do
-		for b in to ok er sk so se sa; do
-			if QPKGs-AC${a}-${b}.IsAny; then
-				DebugQpkg info "AC${a}-${b}" "($(QPKGs-AC${a}-${b}:Count)) $(QPKGs-AC${a}-${b}:ListCSV) "
-			fi
-		done
-	done
+	for a in "${QPKG_ACTIONS[@]}"; do																		#devdebug
+		for b in to ok er sk so se sa; do																	#devdebug
+			if QPKGs-AC${a}-${b}.IsAny; then																#devdebug
+				DebugQpkg info "AC${a}-${b}" "($(QPKGs-AC${a}-${b}:Count)) $(QPKGs-AC${a}-${b}:ListCSV) "	#devdebug
+			fi																								#devdebug
+		done																								#devdebug
+	done																									#devdebug
 
-	DebugInfoMinSepr
+	DebugInfoMinSepr																						#devdebug
 
-	Func:Exit
+	Func:Exit																								#devdebug
 
-	}
+	}																										#devdebug
 
 QPKGs.States:List()
 	{

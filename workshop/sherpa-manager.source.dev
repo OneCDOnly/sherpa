@@ -1704,7 +1704,7 @@ ParseManagementArgs()
 
 		# Identify action.
 
-		action=$(MatchAction "$this_arg")
+		action=$(MatchVerb "$this_arg")
 		DebugVar action													#devdebug
 
 		case $action in
@@ -1752,7 +1752,7 @@ ParseManagementArgs()
 				source_arg=$next_arg
 			fi
 
-			group=$(MatchGroup "$source_arg")
+			group=$(MatchNoun "$source_arg")
 			DebugVar group												#devdebug
 		fi
 
@@ -1954,7 +1954,7 @@ Verbose:Enable															#devdebug
 
 		# Identify action.
 
-		action=$(MatchAction "$this_arg")
+		action=$(MatchVerb "$this_arg")
 		DebugVar action													#devdebug
 set -x
 		case $action in
@@ -1998,7 +1998,7 @@ set +x
 				source_arg=$next_arg
 			fi
 
-			group=$(MatchGroup "$source_arg")
+			group=$(MatchNoun "$source_arg")
 			DebugVar group												#devdebug
 		fi
 
@@ -2160,7 +2160,7 @@ ParseShowArgs()
 
 		# Identify action.
 
-		action=$(MatchAction "$arg")
+		action=$(MatchVerb "$arg")
 
 		if [[ -n $action ]]; then
 			case $action in
@@ -2195,7 +2195,7 @@ ParseShowArgs()
 
 		# Identify group.
 
-		group=$(MatchGroup "$arg")
+		group=$(MatchNoun "$arg")
 
 		if [[ -n $group ]]; then
 			group=$group; DebugVar group
@@ -2320,7 +2320,7 @@ ParseShowArgs()
 # 	fi
 
 	for arg in "${args_remaining[@]:-}"; do
-		action=$(MatchAction "$arg")
+		action=$(MatchVerb "$arg")
 
 		case $action in
 # 			show)											# If specified without a valid group, then show help.
@@ -2444,7 +2444,7 @@ ParseListArgs()
 
 		# Identify action.
 
-		action=$(MatchAction "$arg")
+		action=$(MatchVerb "$arg")
 
 		if [[ -n $action ]]; then
 			case $action in
@@ -2477,7 +2477,7 @@ ParseListArgs()
 
 		# Identify group.
 
-		group=$(MatchGroup "$arg")
+		group=$(MatchNoun "$arg")
 
 		if [[ -n $group ]]; then
 			group=$group; DebugVar group
@@ -2571,7 +2571,7 @@ ParseListArgs()
 # 	fi
 
 # 	for arg in "${args_remaining[@]:-}"; do
-# 		action=$(MatchAction "$arg")
+# 		action=$(MatchVerb "$arg")
 #
 # 		case $action in
 # 			list)							# If specified without a valid group, then show help.
@@ -2642,7 +2642,7 @@ ParseActionArgs()
 
 		# Identify action.
 
-		action=$(MatchAction "$arg")
+		action=$(MatchVerb "$arg")
 
 		if [[ -n $action ]]; then
 			case $action in
@@ -2677,7 +2677,7 @@ ParseActionArgs()
 		# Identify group.
 
 		Packages:Load
-		group=$(MatchGroup "$arg")
+		group=$(MatchNoun "$arg")
 
 		if [[ -n $group ]]; then
 			group=$group; DebugVar group
@@ -2752,7 +2752,7 @@ ParseActionArgs()
 # exit
 	}
 
-MatchAction()
+MatchVerb()
 	{
 
 	# Identify variant action from $1 and output nice action.
@@ -2814,7 +2814,7 @@ MatchAction()
 
 	}
 
-MatchGroup()
+MatchNoun()
 	{
 
 	# Identify variant group from $1 and output nice group.
@@ -6686,30 +6686,30 @@ PIPs.Actions:List()
 
 	}
 
-#QPKGs.Actions:ListAll()
-# 	{
-#
-# 	# Only used when debugging.
-#
-# 	Func:Init
-#
-# 	local a=''
-# 	local b=''
-# 	DebugInfoMinSepr
-#
-# 	for a in "${QPKG_ACTIONS[@]}"; do
-# 		for b in to ok er sk so se sa; do
-# 			if QPKGs-AC${a}-${b}.IsAny; then
-# 				DebugQpkg info "AC${a}=${b}" "($(QPKGs-AC${a}-${b}:Count)) $(QPKGs-AC${a}-${b}:ListCSV) "
-# 			fi
-# 		done
-# 	done
-#
-# 	DebugInfoMinSepr
-#
-# 	Func:Exit
-#
-# 	}
+QPKGs.Actions:ListAll()																						#devdebug
+	{																										#devdebug
+
+	# Only used when debugging.																				#devdebug
+
+	Func:Init																								#devdebug
+
+	local a=''																								#devdebug
+	local b=''																								#devdebug
+	DebugInfoMinSepr																						#devdebug
+
+	for a in "${QPKG_ACTIONS[@]}"; do																		#devdebug
+		for b in to ok er sk so se sa; do																	#devdebug
+			if QPKGs-AC${a}-${b}.IsAny; then																#devdebug
+				DebugQpkg info "AC${a}-${b}" "($(QPKGs-AC${a}-${b}:Count)) $(QPKGs-AC${a}-${b}:ListCSV) "	#devdebug
+			fi																								#devdebug
+		done																								#devdebug
+	done																									#devdebug
+
+	DebugInfoMinSepr																						#devdebug
+
+	Func:Exit																								#devdebug
+
+	}																										#devdebug
 
 QPKGs.States:List()
 	{
