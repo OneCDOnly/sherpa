@@ -56,8 +56,8 @@ Squeeze()
 	if [[ -f "$1" ]]; then			# ignore symlinks.
 		local buffer=$(<"$1")
 
-		buffer=$(sed -e '/^#[[:space:]].*/d;/#$/d;s/[[:space:]]#[[:space:]].*//' <<< "$buffer")		# remove comment lines and line comments.
 		buffer=$(sed -e '/#devdebug/d' <<< "$buffer")												# remove '#devdebug' lines.
+		buffer=$(sed -e '/^#[[:space:]].*/d;/#$/d;s/[[:space:]]#[[:space:]].*//' <<< "$buffer")		# remove comment lines and line comments.
 		buffer=$(sed -e 's/^[[:space:]]*//' <<< "$buffer")											# remove line leading whitespace.
 		buffer=$(sed 's/[[:space:]]*$//' <<< "$buffer")												# remove line trailing whitespace.
 		buffer=$(sed '/^$/d' <<< "$buffer")															# remove empty lines.
