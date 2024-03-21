@@ -35,6 +35,6 @@ cd $HOME/scripts/nas/sherpa/support || exit
 
 # ./build-all.sh || exit
 ./reset-qpkg-datetimes.sh || exit
-./commit.sh '[update] datetimes reset [post-merge]' || exit
+# ./commit.sh '[update] datetimes reset [post-merge]' || exit
 
 exit 0
