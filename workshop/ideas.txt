@@ -1,3 +1,5 @@
+* Test for bash version and interpreter location?
+
 * Try each user arg as an action.
 	- if not an action, try as a group.
 	- if not a group, then it's unwanted.
