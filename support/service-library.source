@@ -308,7 +308,7 @@ StartQPKGLibrary()
 				[[ -e $source_archive_pathfile ]] && download_opts+=" --time-cond $source_archive_pathfile"
 				download_opts+=" --show-error --location --output $source_archive_pathfile"
 
-				DisplayRunAndLog 'refresh release package' "/sbin/curl${download_opts} '$release_url'" log:failure-only || { SetError; return 1 ;}
+				DisplayRunAndLog 'refresh release package' "/sbin/curl${download_opts} '$release_url'" log:failure-only
 			fi
 		fi
 
@@ -322,16 +322,17 @@ StartQPKGLibrary()
 # 			unzip_extract_verbose=' -v'			# Don't enable this, seems to prevent actual file extraction from occurring.
 		fi
 
-		if [[ ! -e $daemon_pathfile || ! -e $source_archive_pathfile || $(($(/bin/date +%s)-$(/usr/bin/stat "$source_archive_pathfile" -c %Y))) -lt 60 ]]; then			# Extract from latest release archive.
+		if [[ -e $source_archive_pathfile ]] && [[ ! -e $daemon_pathfile || $(($(/bin/date +%s)-$(/usr/bin/stat "$source_archive_pathfile" -c %Y))) -lt 60 ]]; then			# Extract from latest release archive.
 			tar_extract_opts="$tar_extract_verbose --extract --gzip --file=$source_archive_pathfile --directory=$qpkg_repo_path"
 			unzip_extract_opts="$unzip_extract_verbose -o $source_archive_pathfile -d $qpkg_repo_path"
 
 			# Try '.zip' first, then '.tar.gz'
-			DisplayRunAndLog 'extract release package' "/usr/bin/unzip${unzip_extract_opts} 2>/dev/null || /bin/tar${tar_extract_opts}" log:failure-only || { SetError; return 1 ;}
+			DisplayRunAndLog 'extract release package' "/usr/bin/unzip${unzip_extract_opts} 2>/dev/null || /bin/tar${tar_extract_opts}" log:failure-only
 		fi
 	fi
 
-	WaitForLaunchTarget || { SetError; return 1 ;}
+# 	WaitForLaunchTarget || { SetError; return 1 ;}
+	[[ -e $(GetLaunchTarget) ]] || { SetError; return 1 ;}
 	EnsureConfigFileExists
 	LoadPorts app || { SetError; return 1 ;}
 
@@ -893,12 +894,12 @@ GetLaunchTarget()
 
 	}
 
-WaitForLaunchTarget()
-	{
-
-	WaitForFileToAppear "$(GetLaunchTarget)" 30 || return
-
-	}
+# WaitForLaunchTarget()
+# 	{
+#
+# 	WaitForFileToAppear "$(GetLaunchTarget)" 30 || return
+#
+# 	}
 
 FindAndWritePIDFile()
 	{
