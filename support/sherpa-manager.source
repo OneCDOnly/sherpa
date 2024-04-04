@@ -4353,35 +4353,39 @@ DisplayAsStatusReportItemLine()
 
 	case $mode in
 		normal)
+			# Limit statuses to two words only.
+
+			# First word.
+
 			if QPKGs-ISenabled.Exist "$name"; then
 				status+=" $(TextBrightGreen enabled)"
 			else
 				status+=" $(TextBrightRed disabled)"
 			fi
 
-			if QPKGs-ACstatus-ok.Exist "$name"; then
-				if QPKGs-ISactive.Exist "$name"; then
-					status+=" $(TextBrightGreen active)"
-				elif QPKGs-ISslow.Exist "$name"; then
-					status+=" $(TextBrightOrange slow)"
-				elif QPKGs-ISstarting.Exist "$name"; then
-					status+=" $(TextBrightOrange starting)"
-				elif QPKGs-ISstopping.Exist "$name"; then
-					status+=" $(TextBrightOrange stopping)"
-				elif QPKGs-ISrestarting.Exist "$name"; then
-					status+=" $(TextBrightOrange restarting)"
-				elif QPKGs-ISunknown.Exist "$name"; then
-					status+=" $(TextBrightOrange unknown)"
-				else
-					status+=" $(TextBrightRed inactive)"
-				fi
+			# Second word.
+
+			if QPKGs-ISactive.Exist "$name"; then
+				status+=" $(TextBrightGreen active)"
+			elif QPKGs-ISslow.Exist "$name"; then
+				status+=" $(TextBrightOrange slow)"
+			elif QPKGs-ISstarting.Exist "$name"; then
+				status+=" $(TextBrightOrange starting)"
+			elif QPKGs-ISstopping.Exist "$name"; then
+				status+=" $(TextBrightOrange stopping)"
+			elif QPKGs-ISrestarting.Exist "$name"; then
+				status+=" $(TextBrightOrange restarting)"
+			elif QPKGs-ISNTactive.Exist "$name"; then
+				status+=" $(TextBrightRed inactive)"
 			else
 				status+=" $(TextBrightOrange unknown)"
 			fi
 
+			# Insert separators.
+
 			if [[ -n $status ]]; then
 				status=$(Trim "$status")
-				status_msg=${status// /, }	# insert separators
+				status_msg=${status// /, }
 			fi
 
 			status_msg=${CHARS_NORMAL}${status_msg}
