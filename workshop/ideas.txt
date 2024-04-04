@@ -1,25 +1,22 @@
-* After merge, set all QPKG file change datetimes to that of current sherpa QPKG release file.
-	- Must also update datetime of sherpa function library source.
-	- Auto QPKG rebuilder should therefore ignore datetimes updated by git during 'git checkout'.
+* 'show results' report should include completion and elapsed times.
+
+* Make last action result a separate status report column?
+    - should include action attempted too.
+
+* Test for bash version and interpreter location?
 
 * Try each user arg as an action.
-	- if not an action, try as a group.
-	- if not a group, then it's unwanted.
-	- if it's a group, and an action has already been set, process action and group.
-	- if it's a group, and no action was set, then assign a default action, process action and group, then iterate.
-
-* Use single quotes (where-possible) for onscreen messages in QPKGs.States:Build()
-	- Such as high load-average messages.
+    - if not an action, try as a group.
+    - if not a group, then it's unwanted.
+    - if it's a group, and an action has already been set, process action and group.
+    - if it's a group, and no action was set, then assign a default action, process action and group, then iterate.
 
 * armv5 NAS models will no-longer have their Python and Perl modules upgraded, so skip upgrade attempts on these models, unless Python and Perl are on final versions for armv5.
-
-* Is 'status' check looking at QPKG service-script results and prioritising 'inactive' over current state of 'active'?
-	- Why are active packages shown as 'inactive'? Some were 'inactive' (due to known startup network issues on Laura), but a manual 'status' check via the service-script shows them to be 'active', as-does a subsequest 'status' check via sherpa. Weird!
 
 * 'debug' and 'verbose' modes should be persistent when set with a group.
 
 * Perform auto-test of available 'sed' binaries for one that handles extended regexes for StripANSICodes() without throwing an error.
-	- Might not need to wait for GNU 'sed' to be installed via Entware.
+    - Might not need to wait for GNU 'sed' to be installed via Entware.
 
 * Add "about" user arg to display current environment.
 
@@ -28,16 +25,16 @@
 * Service scripts should show current auto-update setting when displaying basic help.
 
 * Automate generation of 'Packages.md' in wiki using details from 'packages.source' ?
-	- Would need to store full application description, port numbers, application source.
-	- Maybe consider another local source file, that builds 'packages.source' first?
+    - Would need to store full application description, port numbers, application source.
+    - Maybe consider another local source file, that builds 'packages.source' first?
 
 * Don't start deactivated QPKGs (unless requested) during 'install all'.
 
 * sherpa 'stable' branch should only update once per-day.
-	- 'unstable' should update once per 10 minutes.
+    - 'unstable' should update once per 10 minutes.
 
 * Examine TS-231 QTS executables with 'file'.
-	- In what way are they different to x41 executables?
+    - In what way are they different to x41 executables?
 
 	x31:
 		-------------------------------------------------------------------------------------------------------------------------

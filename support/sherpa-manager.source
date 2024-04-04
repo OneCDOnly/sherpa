@@ -1418,9 +1418,27 @@ Action:Proc()
 						;;
 					change)			# Change the state of a single QPKG in the parent shell.
 						while true; do
+							for state in "${QPKG_IS_STATES[@]}" "${QPKG_STATES_TRANSIENT[@]}"; do
+								case $msg1_value in
+									"IS${state}")
+										[[ $(type -t QPKGs-ISNT${state}:Init) = function ]] && QPKGs-ISNT${state}:Remove "$msg2_value"
+										[[ $(type -t QPKGs-IS${state}:Init) = function ]] && QPKGs-IS${state}:Add "$msg2_value"
+										break 2
+								esac
+							done
+
+							for state in "${QPKG_ISNT_STATES[@]}" "${QPKG_STATES_TRANSIENT[@]}"; do
+								case $msg1_value in
+									"ISNT${state}")
+										[[ $(type -t QPKGs-IS${state}:Init) = function ]] && QPKGs-IS${state}:Remove "$msg2_value"
+										[[ $(type -t QPKGs-ISNT${state}:Init) = function ]] && QPKGs-ISNT${state}:Add "$msg2_value"
+										break 2
+								esac
+							done
+
 							for group in "${QPKG_IS_GROUPS[@]}"; do
 								case $msg1_value in
-									"SC${group}")
+									"GR${group}")
 										[[ $(type -t QPKGs-GRNT${group}:Init) = function ]] && QPKGs-GRNT${group}:Remove "$msg2_value"
 										[[ $(type -t QPKGs-GR${group}:Init) = function ]] && QPKGs-GR${group}:Add "$msg2_value"
 										break 2
@@ -1432,24 +1450,6 @@ Action:Proc()
 									"GRNT${group}")
 										[[ $(type -t QPKGs-GR${group}:Init) = function ]] && QPKGs-GR${group}:Remove "$msg2_value"
 										[[ $(type -t QPKGs-GRNT${group}:Init) = function ]] && QPKGs-GRNT${group}:Add "$msg2_value"
-										break 2
-								esac
-							done
-
-							for state in "${QPKG_IS_STATES[@]}"; do
-								case $msg1_value in
-									"IS${state}")
-										[[ $(type -t QPKGs-ISNT${state}:Init) = function ]] && QPKGs-ISNT${state}:Remove "$msg2_value"
-										[[ $(type -t QPKGs-IS${state}:Init) = function ]] && QPKGs-IS${state}:Add "$msg2_value"
-										break 2
-								esac
-							done
-
-							for state in "${QPKG_ISNT_STATES[@]}"; do
-								case $msg1_value in
-									"ISNT${state}")
-										[[ $(type -t QPKGs-IS${state}:Init) = function ]] && QPKGs-IS${state}:Remove "$msg2_value"
-										[[ $(type -t QPKGs-ISNT${state}:Init) = function ]] && QPKGs-ISNT${state}:Add "$msg2_value"
 										break 2
 								esac
 							done
@@ -1674,7 +1674,7 @@ ParseManagementArgs()
 
 		# Identify action.
 
-		potential_action=$(TranslateIntoAction "$arg"); DebugVar potential_action
+		potential_action=$(MatchVerb "$arg"); DebugVar potential_action
 
 		if [[ -n $potential_action ]]; then
 			action=$potential_action; DebugVar action
@@ -1723,7 +1723,7 @@ ParseManagementArgs()
 
 		# Identify group.
 
-		group=$(TranslateIntoGroup "$arg")
+		group=$(MatchNoun "$arg")
 		DebugVar group
 
 		# Pair action with group.
@@ -1841,7 +1841,7 @@ ParseHelpArgs()
 
 		# Identify action.
 
-		potential_action=$(TranslateIntoAction "$arg"); DebugVar potential_action
+		potential_action=$(MatchVerb "$arg"); DebugVar potential_action
 
 		if [[ -n $potential_action ]]; then
 			action=$potential_action; DebugVar action
@@ -1864,7 +1864,7 @@ ParseHelpArgs()
 
 		# Identify group.
 
-		group=$(TranslateIntoGroup "$arg")
+		group=$(MatchNoun "$arg")
 		DebugVar group
 
 		# Include action assignment when action hasn't been previously specified.
@@ -2038,7 +2038,7 @@ ParseShowArgs()
 
 		# Identify action.
 
-		potential_action=$(TranslateIntoAction "$arg"); DebugVar potential_action
+		potential_action=$(MatchVerb "$arg"); DebugVar potential_action
 
 		if [[ -n $potential_action ]]; then
 			action=$potential_action; DebugVar action
@@ -2061,7 +2061,7 @@ ParseShowArgs()
 
 		# Identify group.
 
-		group=$(TranslateIntoGroup "$arg")
+		group=$(MatchNoun "$arg")
 		DebugVar group
 
 		# Include action assignment when action hasn't been previously specified.
@@ -2209,7 +2209,7 @@ ParseListArgs()
 
 		# Identify action.
 
-		potential_action=$(TranslateIntoAction "$arg"); DebugVar potential_action
+		potential_action=$(MatchVerb "$arg"); DebugVar potential_action
 
 		if [[ -n $potential_action ]]; then
 			action=$potential_action; DebugVar action
@@ -2232,7 +2232,7 @@ ParseListArgs()
 
 		# Identify group.
 
-		group=$(TranslateIntoGroup "$arg")
+		group=$(MatchNoun "$arg")
 		DebugVar group
 
 		# Include action assignment when action hasn't been previously specified.
@@ -2351,7 +2351,7 @@ ParseActionArgs()
 
 		# Identify action.
 
-		potential_action=$(TranslateIntoAction "$arg"); DebugVar potential_action
+		potential_action=$(MatchVerb "$arg"); DebugVar potential_action
 
 		if [[ -n $potential_action ]]; then
 			action=$potential_action; DebugVar action
@@ -2381,7 +2381,7 @@ ParseActionArgs()
 
 		# Identify group.
 
-		group=$(TranslateIntoGroup "$arg"); DebugVar group
+		group=$(MatchNoun "$arg"); DebugVar group
 
 		# Pair action with group.
 
@@ -2437,7 +2437,7 @@ ParseActionArgs()
 	fi
 
 	for arg in "${args_incomplete[@]:-}"; do
-		action=$(TranslateIntoAction "$arg")
+		action=$(MatchVerb "$arg")
 
 		case $action in
 			status)
@@ -2473,7 +2473,7 @@ ParseActionArgs()
 
 	}
 
-TranslateIntoAction()
+MatchVerb()
 	{
 
 	# Identify variant action from $1 and output nice action.
@@ -2526,7 +2526,7 @@ TranslateIntoAction()
 
 	}
 
-TranslateIntoGroup()
+MatchNoun()
 	{
 
 	# Identify variant group from $1 and output nice group.
@@ -4353,35 +4353,39 @@ DisplayAsStatusReportItemLine()
 
 	case $mode in
 		normal)
+			# Limit statuses to two words only.
+
+			# First word.
+
 			if QPKGs-ISenabled.Exist "$name"; then
 				status+=" $(TextBrightGreen enabled)"
 			else
 				status+=" $(TextBrightRed disabled)"
 			fi
 
-			if QPKGs-ACstatus-ok.Exist "$name"; then
-				if QPKGs-ISactive.Exist "$name"; then
-					status+=" $(TextBrightGreen active)"
-				elif QPKGs-ISslow.Exist "$name"; then
-					status+=" $(TextBrightOrange slow)"
-				elif QPKGs-ISstarting.Exist "$name"; then
-					status+=" $(TextBrightOrange starting)"
-				elif QPKGs-ISstopping.Exist "$name"; then
-					status+=" $(TextBrightOrange stopping)"
-				elif QPKGs-ISrestarting.Exist "$name"; then
-					status+=" $(TextBrightOrange restarting)"
-				elif QPKGs-ISunknown.Exist "$name"; then
-					status+=" $(TextBrightOrange unknown)"
-				else
-					status+=" $(TextBrightRed inactive)"
-				fi
+			# Second word.
+
+			if QPKGs-ISactive.Exist "$name"; then
+				status+=" $(TextBrightGreen active)"
+			elif QPKGs-ISslow.Exist "$name"; then
+				status+=" $(TextBrightOrange slow)"
+			elif QPKGs-ISstarting.Exist "$name"; then
+				status+=" $(TextBrightOrange starting)"
+			elif QPKGs-ISstopping.Exist "$name"; then
+				status+=" $(TextBrightOrange stopping)"
+			elif QPKGs-ISrestarting.Exist "$name"; then
+				status+=" $(TextBrightOrange restarting)"
+			elif QPKGs-ISNTactive.Exist "$name"; then
+				status+=" $(TextBrightRed inactive)"
 			else
 				status+=" $(TextBrightOrange unknown)"
 			fi
 
+			# Insert separators.
+
 			if [[ -n $status ]]; then
 				status=$(Trim "$status")
-				status_msg=${status// /, }	# insert separators
+				status_msg=${status// /, }
 			fi
 
 			status_msg=${CHARS_NORMAL}${status_msg}
@@ -6406,30 +6410,30 @@ PIPs.Actions:List()
 
 	}
 
-QPKGs.Actions:ListAll()
-	{
+QPKGs.Actions:ListAll()																						#devdebug
+	{																										#devdebug
 
-	# Only used when debugging.
+	# Only used when debugging.																				#devdebug
 
-	Func:Init
+	Func:Init																								#devdebug
 
-	local a=''
-	local b=''
-	DebugInfoMinSepr
+	local a=''																								#devdebug
+	local b=''																								#devdebug
+	DebugInfoMinSepr																						#devdebug
 
-	for a in "${QPKG_ACTIONS[@]}"; do
-		for b in to ok er sk so se sa; do
-			if QPKGs-AC${a}-${b}.IsAny; then
-				DebugQpkg info "AC${a}-${b}" "($(QPKGs-AC${a}-${b}:Count)) $(QPKGs-AC${a}-${b}:ListCSV) "
-			fi
-		done
-	done
+	for a in "${QPKG_ACTIONS[@]}"; do																		#devdebug
+		for b in to ok er sk so se sa; do																	#devdebug
+			if QPKGs-AC${a}-${b}.IsAny; then																#devdebug
+				DebugQpkg info "AC${a}-${b}" "($(QPKGs-AC${a}-${b}:Count)) $(QPKGs-AC${a}-${b}:ListCSV) "	#devdebug
+			fi																								#devdebug
+		done																								#devdebug
+	done																									#devdebug
 
-	DebugInfoMinSepr
+	DebugInfoMinSepr																						#devdebug
 
-	Func:Exit
+	Func:Exit																								#devdebug
 
-	}
+	}																										#devdebug
 
 QPKGs.States:List()
 	{
@@ -6532,11 +6536,11 @@ QPKGs.States:Build()
 	OS.IsStopping && ShowAsWarn "$(GetQnapOS) is shutting-down and all QPKGs are stopping"
 
 	if OS.IsLoadAverageInsane; then
-		ShowAsWarn "the NAS currently has an exceptionally-high system-load, recommend aborting and trying again later"
+		ShowAsWarn 'the NAS currently has an exceptionally-high system-load, recommend aborting and trying again later'
 	elif OS.IsLoadAverageHigh; then
-		ShowAsWarn "the NAS currently has an unusually-high system-load, so this will take a while"
+		ShowAsWarn 'the NAS currently has an unusually-high system-load, so this will take a while'
 	elif OS.IsLoadAverageElevated; then
-		ShowAsNote "the NAS currently has an elevated system-load, this will take a little longer than usual"
+		ShowAsNote 'the NAS currently has an elevated system-load, this will take a little longer than usual'
 	fi
 
 	ShowAsProc 'QPKG states'
@@ -9587,7 +9591,9 @@ _QPKG:status_()
 	if [[ $a = builtin ]]; then
 		[[ $useropt_debug = true ]] && b='DEBUG_QPKG=true '
 
-		if [[ -e $GNU_TIMEOUT_CMD ]]; then		# run status query with a timeout if-possible.
+		# Run status query with GNU 'timeout' if-possible.
+
+		if [[ -e $GNU_TIMEOUT_CMD ]]; then
 			$GNU_TIMEOUT_CMD "$QPKG_STATUS_CHECK_TIMEOUT_SECONDS" /bin/bash -c "${b}$(QPKG.GetServicePathFile) status"
 			z=$?
 		else
@@ -9601,18 +9607,20 @@ _QPKG:status_()
 
 	DebugVar z
 
+	# returncodes 124 and-up are generated by GNU 'timeout'.
+
 	case $z in
 		0)
 			SendPackageStateChange ISactive
 			;;
+		1)
+			SendPackageStateChange ISNTactive
+			;;
 		124)
 			SendPackageStateChange ISslow
 			;;
-		130)
-			SendPackageStateChange ISunknown
-			;;
 		*)
-			SendPackageStateChange ISNTactive
+			SendPackageStateChange ISunknown
 	esac
 
 	SaveActionResultToLog QPKG "$PACKAGE_NAME" status ok
