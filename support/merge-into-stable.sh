@@ -31,6 +31,7 @@ git tag "$release_tag"
 git push --tags
 git checkout "$unstable_branch" || exit
 git push -d origin unstable
+git push
 
 cd $HOME/scripts/nas/sherpa/support || exit
 
