@@ -30,6 +30,7 @@ git merge --no-ff -m "[merge] from \`$unstable_branch\` into \`$stable_branch\`"
 git tag "$release_tag"
 git push --tags
 git checkout "$unstable_branch" || exit
+git push -d origin unstable
 
 cd $HOME/scripts/nas/sherpa/support || exit
 

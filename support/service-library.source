@@ -331,7 +331,6 @@ StartQPKGLibrary()
 		fi
 	fi
 
-# 	WaitForLaunchTarget || { SetError; return 1 ;}
 	[[ -e $(GetLaunchTarget) ]] || { SetError; return 1 ;}
 	EnsureConfigFileExists
 	LoadPorts app || { SetError; return 1 ;}
@@ -893,13 +892,6 @@ GetLaunchTarget()
 	fi
 
 	}
-
-# WaitForLaunchTarget()
-# 	{
-#
-# 	WaitForFileToAppear "$(GetLaunchTarget)" 30 || return
-#
-# 	}
 
 FindAndWritePIDFile()
 	{
