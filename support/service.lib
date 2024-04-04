@@ -22,7 +22,7 @@
 #*   This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 #*	 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY, without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
-readonly SERVICE_LIB_VERSION='240404'
+readonly SERVICE_LIB_VERSION='240405'
 InitLibrary()
 {
 IsQNAP || exit
@@ -271,7 +271,7 @@ fi
 if [[ -n $release_url ]];then
 [[ -e $source_archive_pathfile ]] && download_opts+=" --time-cond $source_archive_pathfile"
 download_opts+=" --show-error --location --output $source_archive_pathfile"
-DisplayRunAndLog 'refresh release package' "/sbin/curl${download_opts} '$release_url'" log:failure-only || { SetError;return 1 ;}
+DisplayRunAndLog 'refresh release package' "/sbin/curl${download_opts} '$release_url'" log:failure-only
 fi
 fi
 local tar_extract_verbose=''
@@ -281,13 +281,13 @@ local unzip_extract_opts=''
 if [[ $debug = true ]];then
 tar_extract_verbose=' --verbose'
 fi
-if [[ ! -e $daemon_pathfile || ! -e $source_archive_pathfile || $(($(/bin/date +%s)-$(/usr/bin/stat "$source_archive_pathfile" -c %Y))) -lt 60 ]];then
+if [[ -e $source_archive_pathfile ]] && [[ ! -e $daemon_pathfile || $(($(/bin/date +%s)-$(/usr/bin/stat "$source_archive_pathfile" -c %Y))) -lt 60 ]];then
 tar_extract_opts="$tar_extract_verbose --extract --gzip --file=$source_archive_pathfile --directory=$qpkg_repo_path"
 unzip_extract_opts="$unzip_extract_verbose -o $source_archive_pathfile -d $qpkg_repo_path"
-DisplayRunAndLog 'extract release package' "/usr/bin/unzip${unzip_extract_opts} 2>/dev/null || /bin/tar${tar_extract_opts}" log:failure-only || { SetError;return 1 ;}
+DisplayRunAndLog 'extract release package' "/usr/bin/unzip${unzip_extract_opts} 2>/dev/null || /bin/tar${tar_extract_opts}" log:failure-only
 fi
 fi
-WaitForLaunchTarget || { SetError;return 1 ;}
+[[ -e $(GetLaunchTarget) ]] || { SetError;return 1 ;}
 EnsureConfigFileExists
 LoadPorts app || { SetError;return 1 ;}
 if [[ $daemon_port -le 0 && $ui_port -le 0 && $ui_port_secure -le 0 ]];then
@@ -668,10 +668,6 @@ echo "$daemon_pathfile"
 else
 return 1
 fi
-}
-WaitForLaunchTarget()
-{
-WaitForFileToAppear "$(GetLaunchTarget)" 30 || return
 }
 FindAndWritePIDFile()
 {
