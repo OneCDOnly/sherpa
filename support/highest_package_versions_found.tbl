@@ -75,7 +75,7 @@ SABnzbd_240404_x86_64.qpkg.md5       SABnzbd_240404_x86_64.qpkg       SABnzbd   
 SABnzbd_240404_x86.qpkg.md5          SABnzbd_240404_x86.qpkg          SABnzbd              240404       i86    ec7d87440571552460f96f82eaff4f82
 sha3sum_230312_x86_64.qpkg.md5       sha3sum_230312_x86_64.qpkg       sha3sum              230312       i64    6ceba9116e0dbcbdb4e6112f0c02f8c0
 sha3sum_230312_x86.qpkg.md5          sha3sum_230312_x86.qpkg          sha3sum              230312       i86    fdba9d16b88a5b6e3b04483ca77706dd
-sherpa_240404.qpkg.md5               sherpa_240404.qpkg               sherpa               240404       all    c31f39b0a23a62cccaa3d3eb281f29ea
+sherpa_240404.qpkg.md5               sherpa_240404.qpkg               sherpa               240404       all    46ce9120122090c91f00947ff9520b46
 SortMyQPKGs_240225.qpkg.md5          SortMyQPKGs_240225.qpkg          SortMyQPKGs          240225       all    44643edd1a10db13caa48a46f0a8d3c5
 Unrar_6.2.5_arm_64.qpkg.md5          Unrar_6.2.5_arm_64.qpkg          Unrar                6.2.5        a64    e2382b80908fc9549bbb00058968082a
 Unrar_6.2.5_arm-x41.qpkg.md5         Unrar_6.2.5_arm-x41.qpkg         Unrar                6.2.5        a41    ac1ff1149258db5e4c0b8165774eda37
