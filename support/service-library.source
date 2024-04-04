@@ -2980,12 +2980,15 @@ ProcessArgs()
 		esac
 	fi
 
-	if IsError; then
-		SetServiceStatusAsFailed
-		exit 1
+	if [[ -n $user_arg ]]; then
+		if IsError; then
+			SetServiceStatusAsFailed
+			exit 1
+		else
+			SetServiceStatusAsOK
+		fi
 	fi
 
-	SetServiceStatusAsOK
 	exit
 
 	}
