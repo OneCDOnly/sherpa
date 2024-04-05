@@ -1,8 +1,163 @@
 Observed issues:
 
-	* armv5 (Helga) install of Sickgear is attempting to install 'python3-orjson' when it shouldn't.
+	* armv5 (Bella) start failed:
+		-------------------------------------------------------------------------------------------------------------------------
+		[~] # /share/CACHEDEV1_DATA/.qpkg/pyLoad/venv/bin/python3 /share/CACHEDEV1_DATA/.qpkg/pyLoad/venv/bin/pyload --userdir /share/CACHEDEV1_DATA/.qpkg/pyLoad/config
+		[2024-04-05 14:56:55]  INFO                pyload  *** Welcome to pyLoad 0.5.0 ***
+		[2024-04-05 14:56:56]  INFO                pyload  Activated addons: ExternalScripts, TORRENT, UnSkipOnFail, UserAgentSwitcher
+		[2024-04-05 14:56:56]  INFO                pyload  Deactivate addons: AndroidPhoneNotify, AntiCaptcha, AntiStandby, AntiVirus, AppriseNotify, BypassCaptcha, Captcha9Kw, Checksum, ClickNLoad, CloudFlareDdos, DeathByCaptcha, DeleteFinished, DiscordNotifier, DownloadScheduler, ExpertDecoders, ExtractArchive, HotFolder, IRC, ImageTyperz, JustPremium, LinkFilter, LogMarker, MergeFiles, MultiHome, PushBullet, PushOver, RestartFailed, SkipRev, TransmissionRPC, UpdateManager, WindowsPhoneNotify, XFileSharing, XMPP
+		ModuleNotFoundError: No module named 'brotli'
+		Traceback (most recent call last):
+		File "/share/CACHEDEV1_DATA/.qpkg/pyLoad/venv/lib/python3.11/site-packages/flask_compress/flask_compress.py", line 15, in <module>
+			import brotlicffi as brotli
+		ModuleNotFoundError: No module named 'brotlicffi'
+
+		During handling of the above exception, another exception occurred:
+
+		Traceback (most recent call last):
+		File "/share/CACHEDEV1_DATA/.qpkg/pyLoad/venv/bin/pyload", line 8, in <module>
+			sys.exit(main())
+					^^^^^^
+		File "/share/CACHEDEV1_DATA/.qpkg/pyLoad/venv/lib/python3.11/site-packages/pyload/__main__.py", line 292, in main
+			run(core_args, args.daemon, args.pidfile)
+		File "/share/CACHEDEV1_DATA/.qpkg/pyLoad/venv/lib/python3.11/site-packages/pyload/__main__.py", line 235, in run
+			pyload_core = Core(*core_args)
+						^^^^^^^^^^^^^^^^
+		File "/share/CACHEDEV1_DATA/.qpkg/pyLoad/venv/lib/python3.11/site-packages/pyload/core/__init__.py", line 107, in __init__
+			self._init_webserver()
+		File "/share/CACHEDEV1_DATA/.qpkg/pyLoad/venv/lib/python3.11/site-packages/pyload/core/__init__.py", line 170, in _init_webserver
+			from pyload.webui.webserver_thread import WebServerThread
+		File "/share/CACHEDEV1_DATA/.qpkg/pyLoad/venv/lib/python3.11/site-packages/pyload/webui/webserver_thread.py", line 9, in <module>
+			from .app import App
+		File "/share/CACHEDEV1_DATA/.qpkg/pyLoad/venv/lib/python3.11/site-packages/pyload/webui/app/__init__.py", line 19, in <module>
+			from .extensions import EXTENSIONS, THEMES
+		File "/share/CACHEDEV1_DATA/.qpkg/pyLoad/venv/lib/python3.11/site-packages/pyload/webui/app/extensions.py", line 5, in <module>
+			from flask_compress import Compress
+		File "/share/CACHEDEV1_DATA/.qpkg/pyLoad/venv/lib/python3.11/site-packages/flask_compress/__init__.py", line 1, in <module>
+			from .flask_compress import Compress
+		File "/share/CACHEDEV1_DATA/.qpkg/pyLoad/venv/lib/python3.11/site-packages/flask_compress/flask_compress.py", line 17, in <module>
+			import brotli
+		ModuleNotFoundError: No module named 'brotli'
+		-------------------------------------------------------------------------------------------------------------------------
+
+	* armv5 (Milla) start failed:
+		-------------------------------------------------------------------------------------------------------------------------
+		11 source: glances.sh, action: start, datetime: Fri Apr 5 13:52:32 EST 2024
+		12 package: 240405, service: 240405, library: 240405
+		13 daemon: inactive
+		14 auto-update: true
+		15 exclude problem PyPI modules from 'pip-essential.txt': OK
+		16 install PyPI modules from 'pip-essential.txt': OK
+		17 load ports from configuration file: OK
+		18 start daemon (in screen session): OK
+		19 wait for daemon to appear: appeared in 2 seconds
+		20 daemon: exists
+		21 daemon: active (PID:612)
+		22 daemon listening address: '0.0.0.0'
+		23 HTTPS port enabled: false
+		24 HTTP port: '61208'
+		25 test for port '61208' response (no-more than 240 seconds): process not active
+		26 no response on configured port(s)
+		27 CheckPorts() failed!
+		28 dbug: (LL) adding external log to main log ...
+		29 dbug: (LL) ----------------------------------------------------------------------------------------------------
+		30 dbug: (LL) = log file: '/var/log/Glances.screen.log'
+		31 dbug: (LL) command: '/share/CACHEDEV1_DATA/.qpkg/Glances/venv/bin/python3 /share/CACHEDEV1_DATA/.qpkg/Glances/venv/bin/glances --webserver'
+		32 dbug: (LL) Traceback (most recent call last):
+		33 dbug: (LL) File "/share/CACHEDEV1_DATA/.qpkg/Glances/venv/bin/glances", line 5, in <module>
+		34 dbug: (LL) from glances import main
+		35 dbug: (LL) File "/share/CACHEDEV1_DATA/.qpkg/Glances/venv/lib/python3.11/site-packages/glances/__init__.py", line 35, in <module>
+		36 dbug: (LL) from glances.compat import PY3
+		37 dbug: (LL) File "/share/CACHEDEV1_DATA/.qpkg/Glances/venv/lib/python3.11/site-packages/glances/compat.py", line 25, in <module>
+		38 dbug: (LL) from glances.logger import logger
+		39 dbug: (LL) File "/share/CACHEDEV1_DATA/.qpkg/Glances/venv/lib/python3.11/site-packages/glances/logger.py", line 20, in <module>
+		40 dbug: (LL) from glances.globals import safe_makedirs
+		41 dbug: (LL) File "/share/CACHEDEV1_DATA/.qpkg/Glances/venv/lib/python3.11/site-packages/glances/globals.py", line 16, in <module>
+		42 dbug: (LL) import ujson
+		43 dbug: (LL) ModuleNotFoundError: No module named 'ujson'
+		44 dbug: (LL) ----------------------------------------------------------------------------------------------------
+		45  source: glances.sh, action: start, datetime: Fri Apr 5 13:53:13 EST 2024, result: failed, elapsed time: 0h:00m:40s
+		-------------------------------------------------------------------------------------------------------------------------
+
+	* armv5 (Milla) start failed:
+		-------------------------------------------------------------------------------------------------------------------------
+		[~] # /etc/init.d/deluge-web.sh start debug
+		source: deluge-web.sh, action: start, datetime: Fri Apr 5 14:41:11 EST 2024, package: 240205, service: 240205
+		daemon active: false
+		create paths: OK
+		file /opt/bin/deluge-web: exists
+		load ports from configuration file: OK
+		start daemon:
+		exec: '. /share/CACHEDEV1_DATA/.qpkg/Deluge-web/venv/bin/activate && /share/CACHEDEV1_DATA/.qpkg/Deluge-web/venv/bin/python3 /opt/bin/deluge-web --logfile /share/CACHEDEV1_DATA/.qpkg/Deluge-web/config/Deluge-web.log --config /share/CACHEDEV1_DATA/.qpkg/Deluge-web/config/ --pidfile /var/run/Deluge-web.pid'
+		exec: completed OK
+		OK
+		wait for daemon to appear: (no-more than 60 seconds): 1, OK
+		daemon: exists
+		file /var/run/Deluge-web.pid: exists
+		found daemon PID: 13179
+		daemon active: true
+		daemon PID: 13179
+		daemon listening address: 0.0.0.0
+		HTTPS port enabled: false
+		HTTP port: 8112
+		test for port 8112 response: (no-more than 240 seconds): 1, Traceback (most recent call last):
+		File "/opt/bin/deluge-web", line 8, in <module>
+			sys.exit(start())
+					^^^^^^^
+		File "/share/CACHEDEV1_DATA/.qpkg/Entware/lib/python3.11/site-packages/deluge/ui/web/__init__.py", line 6, in start
+			web.start()
+		File "/share/CACHEDEV1_DATA/.qpkg/Entware/lib/python3.11/site-packages/deluge/ui/web/web.py", line 71, in start
+			self.__server = server.DelugeWeb(options=self.options)
+							^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+		File "/share/CACHEDEV1_DATA/.qpkg/Entware/lib/python3.11/site-packages/deluge/ui/web/server.py", line 692, in __init__
+			self.web_api = WebApi()
+						^^^^^^^^
+		File "/share/CACHEDEV1_DATA/.qpkg/Entware/lib/python3.11/site-packages/deluge/ui/web/json_api.py", line 380, in __init__
+			self.hostlist = HostList()
+							^^^^^^^^^^
+		File "/share/CACHEDEV1_DATA/.qpkg/Entware/lib/python3.11/site-packages/deluge/ui/hostlist.py", line 102, in __init__
+			default_hostlist(),
+			^^^^^^^^^^^^^^^^^^
+		File "/share/CACHEDEV1_DATA/.qpkg/Entware/lib/python3.11/site-packages/deluge/ui/hostlist.py", line 31, in default_hostlist
+			username, password = get_localhost_auth()
+			^^^^^^^^^^^^^^^^^^
+		TypeError: cannot unpack non-iterable NoneType object
+		2, 3, process not active!
+		no response on configured port(s)!
+		CheckPorts() failed!
+		source: deluge-web.sh, action: start, datetime: Fri Apr 5 14:41:23 EST 2024, result: failed, elapsed time: 0h:00m:11s
+		-------------------------------------------------------------------------------------------------------------------------
+
+	* armv5 (Helga) install all is attempting to install 'python3-orjson' when it shouldn't.
 	    - IPK doesn't exist in the pre-February 2024 Entware package list.
 	    - a19 has its own IPK requires list for Sickgear in 'packages.source', so this shouldn't be happening.
+		-------------------------------------------------------------------------------------------------------------------------
+		= command: '/opt/bin/opkg install --force-overwrite check clamav freshclam libjson-c libmilter-sendmail python3-orjson --cache /share/HDA_DATA/.qpkg/sherpa/cache/IPKs --tmp-dir /share/HDA_DATA/.qpkg/sherpa/cache/IPKs.downloads'
+		! result_code: [255] ***** stdout/stderr begins below *****
+		Collected errors:
+		* opkg_conf_set_option: Duplicate option tmp_dir, using first seen value "/share/HDA_DATA/.qpkg/sherpa/cache/IPKs.downloads".
+		* opkg_install_cmd: Cannot install package python3-orjson.
+		Installing check (0.15.2-10) to root...
+		Downloading http://bin.entware.net/armv5sf-k3.2/check_0.15.2-10_armv5-3.2.ipk
+		Installing clamav (0.104.4-1) to root...
+		Downloading http://bin.entware.net/armv5sf-k3.2/clamav_0.104.4-1_armv5-3.2.ipk
+		Installing libjson-c (0.16-3) to root...
+		Downloading http://bin.entware.net/armv5sf-k3.2/libjson-c_0.16-3_armv5-3.2.ipk
+		Installing libmilter-sendmail (8.16.1-1) to root...
+		Downloading http://bin.entware.net/armv5sf-k3.2/libmilter-sendmail_8.16.1-1_armv5-3.2.ipk
+		Installing freshclam (0.104.4-1) to root...
+		Downloading http://bin.entware.net/armv5sf-k3.2/freshclam_0.104.4-1_armv5-3.2.ipk
+		Package libjson-c (0.16-3) installed in root is up to date.
+		Package libmilter-sendmail (8.16.1-1) installed in root is up to date.
+		Unknown package 'python3-orjson'.
+		Configuring check.
+		Configuring libjson-c.
+		Configuring libmilter-sendmail.
+		Configuring clamav.
+		Configuring freshclam.
+		! ***** stdout/stderr is complete *****
+		-------------------------------------------------------------------------------------------------------------------------
+
 
 	* 'sherpa show status' displays status report correctly, and then displays 'show' usage examples.
 
@@ -31,9 +186,9 @@ Observed issues:
 		-------------------------------------------------------------------------------------------------------------------------
 		- Original cause of install failure has been fixed, so will need to simulate an error to test.
 
-	* Some QPKGs won't 'start' because app is already runing.
+	* Some QPKGs won't 'start' because app is already runing (like OliveTin).
 		- When QPKGs start, should run full status check first to ensure existing PID file is accurate.
-		- Don't just run a basic daemon/process check.
+		- Don't just run a basic daemon/process exists check.
 
 	* Function durations can become incorrect when functions with the same name are called recursively.
 		- Need to make vars holding start-times unique. Maybe measure nest depth?
