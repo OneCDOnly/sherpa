@@ -12,6 +12,7 @@ Package management via **sherpa** provides extra features like easy application 
 
 > [!CAUTION]
 > This is a command-line package and service manager, it's in beta status, and packages have been known to break due to auto-upgrades going wrong. If you would like-to (and are able-to) help by diagnosing and providing logs, and don't mind things breaking from time-to-time, please use this package. If you're looking for complete stability and want a "set-and-forget" solution, it won't be found here just yet. <b>Do not</b> use sherpa in production environments, unless you're pretty-handy with the CLI and debugging bash and Python scripts, and/or can afford for applications to be out-of-order for extended periods of time.
+>
 > That said: the majority of development is now complete, and I'm currently working-on increasing stability during auto-package upgrades. So, <b>sherpa</b> will work beautifully on a fresh (or new) system, but can experience issues when individual application updates are released.
 
 <b>[Click here for available packages](https://github.com/OneCDOnly/sherpa/wiki/Packages)</b>
