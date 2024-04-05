@@ -1,13 +1,11 @@
-#<p align="center">sherpa</p>
-<p align="center"><img src="./images/sherpa.readme.png"></p>
-<p align="center"><i>The world's first multi-action CLI package-manager!</i></p>
----
+![icon](images/sherpa.readme.png)
 
-## Description
-
-A mini-package-manager for QNAP® NAS.
+sherpa - A mini-package-manager for QNAP® NAS
+============================================
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+
+The world's first multi-action CLI package-manager!
 
 Package management via **sherpa** provides extra features like easy application backup, upgrading, service and daemon management, self-checking and repair, and all operations may be automated via cron.
 
