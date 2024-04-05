@@ -1,5 +1,7 @@
 Observed issues:
 
+	* When launching a second sherpa instance, and aborting, terminal cursor and echo are not re-enabled.
+
 	* Is 'status' check looking at QPKG service-script results and prioritising 'inactive' over current state of 'active'?
 	    - Why are active packages shown as 'inactive'? Some were 'inactive' (due to known startup network issues on Laura), but a manual 'status' check via the service-script shows them to be 'active', as-does a subsequest 'status' check via sherpa. Weird!
 
