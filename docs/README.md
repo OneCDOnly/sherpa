@@ -4,6 +4,7 @@ sherpa - A mini-package-manager for QNAP® NAS
 ============================================
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+![GitHub Release](https://img.shields.io/github/v/release/OneCDOnly/sherpa)
 
 The world's first multi-action CLI package-manager!
 
