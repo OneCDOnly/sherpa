@@ -3,7 +3,7 @@
 sherpa: a mini-package-manager for QNAP NAS
 ============================================
 
-![GitHub Release](https://img.shields.io/github/v/release/OneCDOnly/sherpa) ![GitHub Downloads (all assets, latest release)](https://img.shields.io/github/downloads/OneCDOnly/sherpa/latest/total) ![GitHub repo size](https://img.shields.io/github/repo-size/OneCDOnly/sherpa) [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+![GitHub Release](https://img.shields.io/github/v/release/OneCDOnly/sherpa) ![GitHub Downloads (all assets, latest release)](https://img.shields.io/github/downloads/OneCDOnly/sherpa/latest/total) ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/OneCDOnly/sherpa) [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 The world's first multi-action CLI package-manager!
 
@@ -19,7 +19,7 @@ Package management via **sherpa** provides extra features like easy application 
 
 ## Installation
 
-1) [Click here to download the **sherpa** QPKG](https://github.com/OneCDOnly/sherpa/releases/download/v240405/sherpa_240405.qpkg).
+1) [Click here to download the latest **sherpa** QPKG](https://github.com/OneCDOnly/sherpa/releases/latest/download/sherpa.qpkg).
 
 2) Install the QPKG manually through your QTS App Center UI. This QPKG is not digitally signed, so you'll need to allow unsigned packages to be installed in your App Center before installing it. It can "sign" itself (and all supported QPKGs) after installation.
 
