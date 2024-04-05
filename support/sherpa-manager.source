@@ -45,11 +45,11 @@ Init()
 	UpdateColourisation
 	CMDs:Load
 	CMDs.IsOk || return
+	Traps:Set
 	Keystrokes:Hide
 	Cursor:Hide
 	Env:Load || return
 	LockFile:Claim || return
-	Traps:Set
 	Paths:Create || return
 	PrepareArgs
 	ParseManagementArgs || return

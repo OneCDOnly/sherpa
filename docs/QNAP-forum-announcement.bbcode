@@ -1,21 +1,22 @@
 [img]https://i.imgur.com/KTZ7xCy.png[/img]
-[i]The world's first multi-action CLI package-manager![/i]
+[b][u][size=150]sherpa: a mini-package-manager for QNAP NAS[/size][/u][/b]
 
-[b][u][size=120]Description[/size][/u][/b]
+[img]https://img.shields.io/github/v/release/OneCDOnly/sherpa[/img] [img]https://img.shields.io/github/downloads/OneCDOnly/sherpa/latest/total[/img] [img]https://img.shields.io/github/languages/code-size/OneCDOnly/sherpa[/img] [img]https://img.shields.io/badge/License-GPLv3-blue.svg[/img]
 
-A mini-package-manager for QNAP® NAS.
+The world's first multi-action CLI package-manager!
 
 Package management via [b]sherpa[/b] provides extra features like easy application backup, upgrading, service and daemon management, self-checking and repair, and all operations may be automated via cron.
 
-[b][color=#FF0000]Please note:[/color][/b] this is a command-line package and service manager, it's in beta status, and packages have been known to break due to auto-upgrades going wrong. If you would like-to (and are able-to) help by diagnosing and providing logs, and don't mind things breaking from time-to-time, please use this package. If you're looking for complete stability and want a "set-and-forget" solution, it won't be found here just yet. [b]Do not[/b] use sherpa in production environments, unless you're pretty-handy with the CLI and debugging bash and Python scripts, and/or can afford for applications to be out-of-order for extended periods of time.
+[list][b][color=#FF0000]Caution:[/color][/b] this is a command-line package and service manager, it's in beta status, and packages have been known to break due to auto-upgrades going wrong. If you would like-to (and are able-to) help by diagnosing and providing logs, and don't mind things breaking from time-to-time, please use this package. If you're looking for complete stability and want a "set-and-forget" solution, it won't be found here just yet. [b]Do not[/b] use sherpa in production environments, unless you're pretty-handy with the CLI and debugging bash and Python scripts, and/or can afford for applications to be out-of-order for extended periods of time.
 
 That said: the majority of development is now complete, and I'm currently working-on increasing stability during auto-package upgrades. So, [b]sherpa[/b] will work beautifully on a fresh (or new) system, but can experience issues when individual application updates are released.
+[/list]
 
 [b][url=https://github.com/OneCDOnly/sherpa/wiki/Packages]Click here for available packages[/url][/b]
 
 [b][u][size=120]Installation[/size][/u][/b]
 
-[list=1][*][url=https://github.com/OneCDOnly/sherpa/releases/download/v240405/sherpa_240405.qpkg]Click here to download the [b]sherpa[/b] QPKG[/url].
+[list=1][*][url=https://github.com/OneCDOnly/sherpa/releases/latest/download/sherpa.qpkg]Click here to download the latest [b]sherpa[/b] QPKG[/url].
 
 [*]Install the QPKG manually through your QTS App Center UI. This QPKG is not digitally signed, so you'll need to allow unsigned packages to be installed in your App Center before installing it. It can "sign" itself (and all supported QPKGs) after installation.
 [/list]
