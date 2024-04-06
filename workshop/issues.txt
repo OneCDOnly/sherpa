@@ -158,7 +158,6 @@ Observed issues:
 		! ***** stdout/stderr is complete *****
 		-------------------------------------------------------------------------------------------------------------------------
 
-
 	* 'sherpa show status' displays status report correctly, and then displays 'show' usage examples.
 
 	* 'sherpa help show' is only showing basic help, not the 'show' help list.
