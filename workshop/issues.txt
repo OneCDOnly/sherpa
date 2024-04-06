@@ -1,45 +1,5 @@
 Observed issues:
 
-	* armv5 (Bella) start failed:
-		-------------------------------------------------------------------------------------------------------------------------
-		[~] # /share/CACHEDEV1_DATA/.qpkg/pyLoad/venv/bin/python3 /share/CACHEDEV1_DATA/.qpkg/pyLoad/venv/bin/pyload --userdir /share/CACHEDEV1_DATA/.qpkg/pyLoad/config
-		[2024-04-05 14:56:55]  INFO                pyload  *** Welcome to pyLoad 0.5.0 ***
-		[2024-04-05 14:56:56]  INFO                pyload  Activated addons: ExternalScripts, TORRENT, UnSkipOnFail, UserAgentSwitcher
-		[2024-04-05 14:56:56]  INFO                pyload  Deactivate addons: AndroidPhoneNotify, AntiCaptcha, AntiStandby, AntiVirus, AppriseNotify, BypassCaptcha, Captcha9Kw, Checksum, ClickNLoad, CloudFlareDdos, DeathByCaptcha, DeleteFinished, DiscordNotifier, DownloadScheduler, ExpertDecoders, ExtractArchive, HotFolder, IRC, ImageTyperz, JustPremium, LinkFilter, LogMarker, MergeFiles, MultiHome, PushBullet, PushOver, RestartFailed, SkipRev, TransmissionRPC, UpdateManager, WindowsPhoneNotify, XFileSharing, XMPP
-		ModuleNotFoundError: No module named 'brotli'
-		Traceback (most recent call last):
-		File "/share/CACHEDEV1_DATA/.qpkg/pyLoad/venv/lib/python3.11/site-packages/flask_compress/flask_compress.py", line 15, in <module>
-			import brotlicffi as brotli
-		ModuleNotFoundError: No module named 'brotlicffi'
-
-		During handling of the above exception, another exception occurred:
-
-		Traceback (most recent call last):
-		File "/share/CACHEDEV1_DATA/.qpkg/pyLoad/venv/bin/pyload", line 8, in <module>
-			sys.exit(main())
-					^^^^^^
-		File "/share/CACHEDEV1_DATA/.qpkg/pyLoad/venv/lib/python3.11/site-packages/pyload/__main__.py", line 292, in main
-			run(core_args, args.daemon, args.pidfile)
-		File "/share/CACHEDEV1_DATA/.qpkg/pyLoad/venv/lib/python3.11/site-packages/pyload/__main__.py", line 235, in run
-			pyload_core = Core(*core_args)
-						^^^^^^^^^^^^^^^^
-		File "/share/CACHEDEV1_DATA/.qpkg/pyLoad/venv/lib/python3.11/site-packages/pyload/core/__init__.py", line 107, in __init__
-			self._init_webserver()
-		File "/share/CACHEDEV1_DATA/.qpkg/pyLoad/venv/lib/python3.11/site-packages/pyload/core/__init__.py", line 170, in _init_webserver
-			from pyload.webui.webserver_thread import WebServerThread
-		File "/share/CACHEDEV1_DATA/.qpkg/pyLoad/venv/lib/python3.11/site-packages/pyload/webui/webserver_thread.py", line 9, in <module>
-			from .app import App
-		File "/share/CACHEDEV1_DATA/.qpkg/pyLoad/venv/lib/python3.11/site-packages/pyload/webui/app/__init__.py", line 19, in <module>
-			from .extensions import EXTENSIONS, THEMES
-		File "/share/CACHEDEV1_DATA/.qpkg/pyLoad/venv/lib/python3.11/site-packages/pyload/webui/app/extensions.py", line 5, in <module>
-			from flask_compress import Compress
-		File "/share/CACHEDEV1_DATA/.qpkg/pyLoad/venv/lib/python3.11/site-packages/flask_compress/__init__.py", line 1, in <module>
-			from .flask_compress import Compress
-		File "/share/CACHEDEV1_DATA/.qpkg/pyLoad/venv/lib/python3.11/site-packages/flask_compress/flask_compress.py", line 17, in <module>
-			import brotli
-		ModuleNotFoundError: No module named 'brotli'
-		-------------------------------------------------------------------------------------------------------------------------
-
 	* armv5 (Milla) start failed:
 		-------------------------------------------------------------------------------------------------------------------------
 		11 source: glances.sh, action: start, datetime: Fri Apr 5 13:52:32 EST 2024

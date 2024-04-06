@@ -13,6 +13,7 @@ orjson
 packaging
 pillow
 psutil
+pycryptodome
 pycurl
 pysnmp
 python-dateutil
