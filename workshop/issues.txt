@@ -117,6 +117,8 @@ Observed issues:
 		Configuring freshclam.
 		! ***** stdout/stderr is complete *****
 		-------------------------------------------------------------------------------------------------------------------------
+		UPDATE:
+		IPKs:install() is not confirming arch is OK when selecting IPKs to install.
 
 	* 'sherpa show status' displays status report correctly, and then displays 'show' usage examples.
 

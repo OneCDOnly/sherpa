@@ -1,3 +1,8 @@
+* Include sherpa QPKG easy-install CLI method in readme.
+	-------------------------------------------------------------------------------------------------------------------------
+	curl | sh blah blah...
+	-------------------------------------------------------------------------------------------------------------------------
+
 * 'show results' report should include completion and elapsed times.
 
 * Make last action result a separate status report column?
