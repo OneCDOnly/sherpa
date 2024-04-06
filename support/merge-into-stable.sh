@@ -19,8 +19,9 @@ esac
 cd $HOME/scripts/nas/sherpa/support || exit
 
 ./build-all.sh || exit
-./build-readme.sh || exit
-./build-forum-announcement.sh || exit
+
+cp -f "$qpkgs_path/sherpa/build/sherpa_${build_date}.qpkg" "$qpkgs_path/sherpa/build/sherpa.qpkg"
+
 ./commit.sh '[update] archives [pre-merge]' || exit
 
 cd $HOME/scripts/nas/sherpa || exit
@@ -30,13 +31,9 @@ git merge --no-ff -m "[merge] from \`$unstable_branch\` into \`$stable_branch\`"
 git tag "$release_tag"
 git push --tags
 git checkout "$unstable_branch" || exit
-git push -d origin unstable
-git push
 
 cd $HOME/scripts/nas/sherpa/support || exit
 
-# ./build-all.sh || exit
 ./reset-qpkg-datetimes.sh || exit
-# ./commit.sh '[update] datetimes reset [post-merge]' || exit
 
 exit 0
