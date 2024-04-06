@@ -3344,6 +3344,11 @@ IPKs:install()
 	if QPKGs.ACinstall.GRall.IsSet; then
 		for i in "${!QPKG_NAME[@]}"; do
 			[[ $previous = "${QPKG_NAME[$i]}" ]] && continue || previous=${QPKG_NAME[$i]}
+
+			QPKG.IsArchOK "${QPKG_NAME[$i]}" || continue
+			QPKG.IsMinOSVerOk "${QPKG_NAME[$i]}" || continue
+			QPKG.IsMinRAMOk "${QPKG_NAME[$i]}" || continue
+
 			IPKs-ACinstall-to:Add "$(QPKG.GetIPKs "${QPKG_NAME[$i]}" "$i")"
 		done
 	else
@@ -3351,8 +3356,10 @@ IPKs:install()
 			[[ $previous = "${QPKG_NAME[$i]}" ]] && continue || previous=${QPKG_NAME[$i]}
 
 			if QPKGs-ACinstall-to.Exist "${QPKG_NAME[$i]}" || QPKGs-ISinstalled.Exist "${QPKG_NAME[$i]}" || QPKGs-ACreinstall-to.Exist "${QPKG_NAME[$i]}" || (QPKGs-ACactivate-to.Exist "${QPKG_NAME[$i]}" && (QPKGs-ACinstall-to.Exist "${QPKG_NAME[$i]}" || QPKGs-ISinstalled.Exist "${QPKG_NAME[$i]}" || QPKGs-ACreinstall-to.Exist "${QPKG_NAME[$i]}")); then
+				QPKG.IsArchOK "${QPKG_NAME[$i]}" || continue
 				QPKG.IsMinOSVerOk "${QPKG_NAME[$i]}" || continue
 				QPKG.IsMinRAMOk "${QPKG_NAME[$i]}" || continue
+
 				IPKs-ACinstall-to:Add "$(QPKG.GetIPKs "${QPKG_NAME[$i]}" "$i")"
 			fi
 		done
@@ -9786,12 +9793,10 @@ QPKG.Avail.GetVer()
 	for i in "${!QPKG_NAME[@]}"; do
 		a=${QPKG_NAME[$i]}
 		[[ $a = "$b" ]] && continue || b=$a
+		[[ ${1:-${PACKAGE_NAME:-sherpa}} = "$a" ]] || continue
+		echo -n "${QPKG_VERSION[$i]}"
 
-		if [[ ${1:-${PACKAGE_NAME:-sherpa}} = "$a" ]]; then
-			echo -n "${QPKG_VERSION[$i]}"
-
-			return 0
-		fi
+		return 0
 	done
 
 	return 1
@@ -9897,12 +9902,12 @@ QPKG.IsDependent()
 	local -i i=0
 
 	for i in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]]; then
-			a=${QPKG_DEPENDS_ON[$i]}
-			[[ $a = default ]] && a=${QPKG_DEPENDS_ON[$(QPKG.GetDefaultArchIndex "${QPKG_NAME[$i]}")]}
-			[[ $a = none ]] && break
-			[[ -n $a ]] && return
-		fi
+		[[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]] || continue
+		a=${QPKG_DEPENDS_ON[$i]}
+		[[ $a = default ]] && a=${QPKG_DEPENDS_ON[$(QPKG.GetDefaultArchIndex "${QPKG_NAME[$i]}")]}
+		[[ $a = none ]] && break
+
+		[[ -n $a ]] && return
 	done
 
 	return 1
@@ -9959,11 +9964,10 @@ QPKG.GetOriginalPath()
 
 	if [[ ${#QPKGs_were_installed_name[@]} -gt 0 ]]; then
 		for i in "${!QPKGs_were_installed_name[@]}"; do
-			if [[ ${QPKGs_were_installed_name[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]]; then
-				echo -n "${QPKGs_were_installed_path[$i]}"
+			[[ ${QPKGs_were_installed_name[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]] || continue
+			echo -n "${QPKGs_were_installed_path[$i]}"
 
-				return 0
-			fi
+			return 0
 		done
 	fi
 
@@ -9990,11 +9994,10 @@ QPKG.MatchAbbrv()
 		ar=(${QPKG_ABBRVS[$i]})
 
 		for j in "${!ar[@]}"; do
-			if [[ ${ar[$j]} = "$1" ]]; then
-				echo -n "${QPKG_NAME[$i]}"
-				z=0
-				break 2
-			fi
+			[[ ${ar[$j]} = "$1" ]] || continue
+			echo -n "${QPKG_NAME[$i]}"
+			z=0
+			break 2
 		done
 	done
 
@@ -10036,11 +10039,10 @@ QPKG.GetHash()
 	local -i i=0
 
 	for i in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]] && [[ ${QPKG_ARCH[$i]} = all || ${QPKG_ARCH[$i]} = "$NAS_QPKG_ARCH" ]]; then
-			echo -n "${QPKG_HASH[$i]}"
+		[[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]] && [[ ${QPKG_ARCH[$i]} = all || ${QPKG_ARCH[$i]} = "$NAS_QPKG_ARCH" ]] || continue
+		echo -n "${QPKG_HASH[$i]}"
 
-			return 0
-		fi
+		return 0
 	done
 
 	return 1
@@ -10060,11 +10062,10 @@ QPKG.GetURL()
 	local -i i=0
 
 	for i in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]] && [[ ${QPKG_ARCH[$i]} = all || ${QPKG_ARCH[$i]} = "$NAS_QPKG_ARCH" ]]; then
-			echo -n "${QPKG_URL[$i]}"
+		[[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]] && [[ ${QPKG_ARCH[$i]} = all || ${QPKG_ARCH[$i]} = "$NAS_QPKG_ARCH" ]] || continue
+		echo -n "${QPKG_URL[$i]}"
 
-			return 0
-		fi
+		return 0
 	done
 
 	return 1
@@ -10102,11 +10103,10 @@ QPKG.GetMinRAM()
 	local -i i=0
 
 	for i in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]]; then
-			echo -n "${QPKG_MIN_RAM_KB[$i]}"
+		[[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]] || continue
+		echo -n "${QPKG_MIN_RAM_KB[$i]}"
 
-			return 0
-		fi
+		return 0
 	done
 
 	return 1
@@ -10141,11 +10141,10 @@ QPKG.GetMinOSVer()
 	local -i i=0
 
 	for i in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]]; then
-			echo -n "${QPKG_MIN_OS_VERSION[$i]}"
+		[[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]] || continue
+		echo -n "${QPKG_MIN_OS_VERSION[$i]}"
 
-			return 0
-		fi
+		return 0
 	done
 
 	return 1
@@ -10180,11 +10179,10 @@ QPKG.GetMaxOSVer()
 	local -i i=0
 
 	for i in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]]; then
-			echo -n "${QPKG_MAX_OS_VERSION[$i]}"
+		[[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]] || continue
+		echo -n "${QPKG_MAX_OS_VERSION[$i]}"
 
-			return 0
-		fi
+		return 0
 	done
 
 	return 1
@@ -10221,11 +10219,10 @@ QPKG.GetAuthor()
 	local -i i=0
 
 	for i in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]]; then
-			echo -n "${QPKG_AUTHOR[$i]}"
+		[[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]] || continue
+		echo -n "${QPKG_AUTHOR[$i]}"
 
-			return 0
-		fi
+		return 0
 	done
 
 	return 1
@@ -10247,11 +10244,10 @@ QPKG.GetAuthor()
 # 	local -i i=0
 #
 # 	for i in "${!QPKG_NAME[@]}"; do
-# 		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]]; then
-# 			echo -n "${QPKG_AUTHOR_EMAIL[$i]}"
+# 		[[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]] || continue
+# 		echo -n "${QPKG_AUTHOR_EMAIL[$i]}"
 #
-# 			return 0
-# 		fi
+# 		return 0
 # 	done
 #
 # 	return 1
@@ -10273,11 +10269,10 @@ QPKG.GetAuthor()
 # 	local -i i=0
 #
 # 	for i in "${!QPKG_NAME[@]}"; do
-# 		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]]; then
-# 			echo -n "${QPKG_APP_AUTHOR[$i]}"
+# 		[[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]] || continue
+# 		echo -n "${QPKG_APP_AUTHOR[$i]}"
 #
-# 			return 0
-# 		fi
+# 		return 0
 # 	done
 #
 # 	return 1
@@ -10299,11 +10294,10 @@ QPKG.GetAuthor()
 # 	local -i i=0
 #
 # 	for i in "${!QPKG_NAME[@]}"; do
-# 		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]]; then
-# 			echo -n "${QPKG_APP_AUTHOR_EMAIL[$i]}"
+# 		[[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]] || continue
+# 		echo -n "${QPKG_APP_AUTHOR_EMAIL[$i]}"
 #
-# 			return 0
-# 		fi
+# 		return 0
 # 	done
 #
 # 	return 1
@@ -10323,11 +10317,10 @@ QPKG.GetDesc()
 	local -i i=0
 
 	for i in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]]; then
-			echo -n "${QPKG_DESC[$i]}"
+		[[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]] || continue
+		echo -n "${QPKG_DESC[$i]}"
 
-			return 0
-		fi
+		return 0
 	done
 
 	return 1
@@ -10350,12 +10343,11 @@ QPKG.GetNote()
 	local -i i=0
 
 	for i in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]]; then
-			a=${QPKG_NOTE[$i]}
-			[[ $a != none ]] && echo -n "$a"
+		[[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]] || continue
+		a=${QPKG_NOTE[$i]}
+		[[ $a != none ]] && echo -n "$a"
 
-			return 0
-		fi
+		return 0
 	done
 
 	return 1
@@ -10375,11 +10367,10 @@ QPKG.GetAbbrvs()
 	local -i i=0
 
 	for i in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]]; then
-			echo -n "${QPKG_ABBRVS[$i]}"
+		[[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]] || continue
+		echo -n "${QPKG_ABBRVS[$i]}"
 
-			return 0
-		fi
+		return 0
 	done
 
 	return 1
@@ -10398,19 +10389,17 @@ QPKG.GetArchIndex()
 	#   stdout = QPKG index. '-1' if a compatible arch could not be found.
 	#   $? = 0 if successful, 1 if failed.
 
-	local -i i=-1			# default to not-found.
+	local -i i=0
 
 	for i in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]]; then
-			if [[ ${QPKG_ARCH[$i]} = all || ${QPKG_ARCH[$i]} = "$NAS_QPKG_ARCH" ]]; then
-				echo -n "$i"
+		[[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]] || continue
+		[[ ${QPKG_ARCH[$i]} = all || ${QPKG_ARCH[$i]} = "$NAS_QPKG_ARCH" ]] || continue
+		echo -n "$i"
 
-				return
-			fi
-		fi
+		return 0
 	done
 
-	echo -n "$i"		# matching arch was not found.
+	printf '-1'		# matching arch was not found.
 
 	return 1
 
@@ -10428,17 +10417,16 @@ QPKG.GetDefaultArchIndex()
 	#   stdout = QPKG index. '-1' if a compatible arch could not be found.
 	#   $? = 0 if successful, 1 if failed.
 
-	local -i i=-1			# default to not-found.
+	local -i i=0
 
 	for i in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]]; then
-			echo -n "$i"
+		[[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]] || continue
+		echo -n "$i"
 
-			return
-		fi
+		return 0
 	done
 
-	echo -n "$i"		# matching arch was not found.
+	printf '-1'		# default arch was not found.
 
 	return 1
 
@@ -10597,13 +10585,8 @@ QPKG.IsCanBackup()
 	local -i i=0
 
 	for i in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$i]} = "${1:-$PACKAGE_NAME}" ]]; then
-			if ${QPKG_CAN_BACKUP[$i]}; then
-				return 0
-			else
-				break
-			fi
-		fi
+		[[ ${QPKG_NAME[$i]} = "${1:-$PACKAGE_NAME}" ]] || continue
+		${QPKG_CAN_BACKUP[$i]} && return 0 || break
 	done
 
 	return 1
@@ -10624,13 +10607,8 @@ QPKG.IsCanRestartToUpdate()
 	local -i i=0
 
 	for i in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]]; then
-			if ${QPKG_CAN_RESTART_TO_UPDATE[$i]}; then
-				return 0
-			else
-				break
-			fi
-		fi
+		[[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]] || continue
+		${QPKG_CAN_RESTART_TO_UPDATE[$i]} && return 0 || break
 	done
 
 	return 1
@@ -10652,13 +10630,8 @@ QPKG.IsCanClean()
 	local -i i=0
 
 	for i in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$i]} = "${1:-$PACKAGE_NAME}" ]]; then
-			if ${QPKG_CAN_CLEAN[$i]}; then
-				return 0
-			else
-				break
-			fi
-		fi
+		[[ ${QPKG_NAME[$i]} = "${1:-$PACKAGE_NAME}" ]] || continue
+		${QPKG_CAN_CLEAN[$i]} && return 0 || break
 	done
 
 	return 1
@@ -10680,13 +10653,8 @@ QPKG.IsCanLog()
 	local -i i=0
 
 	for i in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$i]} = "${1:-$PACKAGE_NAME}" ]]; then
-			if ${QPKG_CAN_LOG_SERVICE_OPERATIONS[$i]}; then
-				return 0
-			else
-				break
-			fi
-		fi
+		[[ ${QPKG_NAME[$i]} = "${1:-$PACKAGE_NAME}" ]] || continue
+		${QPKG_CAN_LOG_SERVICE_OPERATIONS[$i]} && return 0 || break
 	done
 
 	return 1
@@ -10709,14 +10677,13 @@ QPKG.GetActiveTest()
 	local -i i=0
 
 	for i in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]]; then
-			a=${QPKG_TEST_FOR_ACTIVE[$i]}
-			[[ -n $a ]] || break
+		[[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]] || continue
+		a=${QPKG_TEST_FOR_ACTIVE[$i]}
+		[[ -n $a ]] || break
 
-			echo -n "$a"
+		echo -n "$a"
 
-			return 0
-		fi
+		return 0
 	done
 
 	return 1
@@ -11889,7 +11856,7 @@ ShowAsPercentProgress()
 	local -i c=${4:-0}
 	local -i d=${5:-0}
 	local -i e=${6:-0}
-		local -r f=$(PercFrac "$b" "$c" "$d" "$e")
+	local -r f=$(PercFrac "$b" "$c" "$d" "$e")
 
 	if [[ ${2:-} != long ]]; then
 		ShowAsProc "$a" "$f"
@@ -12012,6 +11979,8 @@ ShowAsActionLogDetail()
 		*)
 			DisplayAsIndentActionResultDurationReason "$3" "$2" "$5"
 	esac
+
+	return 0
 
 	}
 
