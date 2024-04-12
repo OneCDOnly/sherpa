@@ -1,5 +1,10 @@
 Observed issues:
 
+	* duf QPKG is not checking its 'enable' status before starting.
+
+	* When QPKG is missing, need to show this on dependencies report.
+		- Add new state of 'missing' to 'installed?' column.
+
 	* armv5 (Milla) start failed:
 		-------------------------------------------------------------------------------------------------------------------------
 		11 source: glances.sh, action: start, datetime: Fri Apr 5 13:52:32 EST 2024
