@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #* Please don't edit this file directly, it was built/modified programmatically with the 'build-qpkgs.sh' script. (source: 'service-library.source')
 #* service.lib
-#* Copyright (C) 2017-2024 OneCD.
+#* copyright (C) 2017-2024 OneCD.
 #* Contact:
 #*   one.cd.only@gmail.com
 #* Description:
@@ -22,7 +22,7 @@
 #*   This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 #*	 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY, without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
-readonly SERVICE_LIB_VERSION='240405'
+readonly SERVICE_LIB_VERSION='240413'
 InitLibrary()
 {
 IsQNAP || exit

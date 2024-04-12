@@ -9329,7 +9329,7 @@ _QPKG:restore_()
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" restore skipped 'QPKG is not installed'
+		SaveActionResultToLog QPKG "$qpkg_name" restore skipped "QPKG is not installed, try 'rebuild' instead"
 		MarkThisActionForkAsSkipped
 		z=1
 	elif ! QPKG.IsCanBackup; then
