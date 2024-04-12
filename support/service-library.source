@@ -281,7 +281,7 @@ StartQPKGLibrary()
 	if IsOnlineArchive; then
 		local source_archive_pathfile=$qpkg_repo_path/source.archive
 
-		if IsAutoUpdate || [[ ! -e $source_archive_pathfile ]]; then		# Get remote source archive, even when auto-update is disabled.
+		if IsAutoUpdate || [[ ! -e $source_archive_pathfile ]]; then		# Get remote source archive, even when auto-update is disabled, if one doesn't exist locally.
 			local release_url=''
 			local download_opts=$curl_insecure_arg
 			[[ $debug = false ]] && download_opts+=' --silent'
