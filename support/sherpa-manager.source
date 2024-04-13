@@ -11994,7 +11994,7 @@ ShowAsIterativeProgress()
 	local -r e=${5:?${FUNCNAME[0]}'()': undefined suffix2}
 	local f=''
 
-	f="$(TextBrightWhite "$b") ${c}$(Pluralise "$b"): $(TextBrightWhite "$d") ${e}$(Pluralise "$d")"
+	f="$(TextBrightWhite "$b") ${c}$(Pluralise "$b") ($(TextBrightWhite "$d") ${e}$(Pluralise "$d"))"
 
 	if [[ ${6:-short} != long ]]; then
 		ShowAsProc "$a" "$f"
