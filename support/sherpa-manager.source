@@ -4240,7 +4240,7 @@ DisplayAsPacksReportItemLine()
 	#	$1 = package name
 
 	local app_ver_msg=$CHARS_BLANK
-# 	local author=$(QPKG.GetAuthor "$name")
+# 	local author=$(QPKG.GetAuthor)
 # 	local author_msg=$CHARS_BLANK
 	local description=$(QPKG.GetDesc)
 	local description_msg=$CHARS_BLANK
@@ -4535,17 +4535,19 @@ DisplayAsReposReportItemLine()
 	{
 
 	# Input:
-	#	$1 = package name
+	#   $1 = QPKG name (optional).
+	# 	$qpkg_name (global).
 
 	local assigned_repo_msg=$CHARS_NORMAL
 	local install_date_msg=$CHARS_BLANK
 	local mode=''
-	local install_date=$(QPKG.GetInstallDate)
-	local store_id=$(QPKG.GetStoreID)
-		local assigned_repo=$(GetRepoURLFromStoreID "$store_id")
+	local name=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
+		local install_date=$(QPKG.GetInstallDate "$name")
+		local store_id=$(QPKG.GetStoreID "$name")
+			local assigned_repo=$(GetRepoURLFromStoreID "$store_id")
 	local name_msg=$CHARS_BLANK
 
-	if QPKG.IsMissing "$qpkg_name"; then
+	if QPKG.IsMissing; then
 		mode=highlighted
 	elif QPKG.IsNtInstalled; then
 		mode=muted
@@ -4562,7 +4564,7 @@ DisplayAsReposReportItemLine()
 
 	case $mode in
 		normal)
-			name_msg+=$qpkg_name
+			name_msg+=$name
 
 			case $install_date in
 				sherpa)
@@ -4576,7 +4578,7 @@ DisplayAsReposReportItemLine()
 			esac
 			;;
 		muted)
-			name_msg+=$(TextDarkGrey "$qpkg_name")
+			name_msg+=$(TextDarkGrey "$name")
 
 			if ! QPKG.IsArchOK; then
 				assigned_repo='incompatible arch'
@@ -4593,7 +4595,7 @@ DisplayAsReposReportItemLine()
 			assigned_repo_msg=''
 			;;
 		highlighted)
-			name_msg+=$(TextBrightRed "$qpkg_name")
+			name_msg+=$(TextBrightRed "$name")
 			install_date_msg+=$install_date
 	esac
 
@@ -4651,16 +4653,16 @@ DisplayAsAbsReportItemLine()
 	{
 
 	# Input:
-	#   $qpkg_name (global)
-
-	[[ -n $qpkg_name ]] || return
+	#   $1 = QPKG name (optional).
+	# 	$qpkg_name (global).
 
 	local abs=''
 	local abs_msg=$CHARS_NORMAL
 	local mode=''
+	local name=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
 	local name_msg=$CHARS_BLANK
 
-	if QPKG.IsMissing "$qpkg_name"; then
+	if QPKG.IsMissing; then
 		mode=highlighted
 	elif QPKG.IsNtInstalled; then
 		mode=muted
@@ -4668,7 +4670,7 @@ DisplayAsAbsReportItemLine()
 		mode=normal
 	fi
 
-	abs=$(QPKG.GetAbbrvs)
+	abs=$(QPKG.GetAbbrvs "$name")
 
 	if [[ -n $abs ]]; then
 		abs=$(Trim "$abs"); abs=${abs// /, }	# insert separators
@@ -4677,16 +4679,16 @@ DisplayAsAbsReportItemLine()
 	case $mode in
 		normal)
 			abs_msg+=$abs
-			name_msg+=$qpkg_name
+			name_msg+=$name
 			;;
 		muted)
-			name_msg+=$(TextDarkGrey "$qpkg_name")
+			name_msg+=$(TextDarkGrey "$name")
 
-			if ! QPKG.IsArchOK "$qpkg_name"; then
+			if ! QPKG.IsArchOK "$name"; then
 				abs_msg+='(incompatible arch)'
-			elif ! QPKG.IsMinOSVerOk "$qpkg_name"; then
+			elif ! QPKG.IsMinOSVerOk "$name"; then
 				abs_msg+="(incompatible $(GetQnapOS) version)"
-			elif ! QPKG.IsMinRAMOk "$qpkg_name"; then
+			elif ! QPKG.IsMinRAMOk "$name"; then
 				abs_msg+='(insufficient RAM)'
 			else
 				abs_msg+=$abs
@@ -4696,7 +4698,7 @@ DisplayAsAbsReportItemLine()
 			;;
 		highlighted)
 			abs_msg=$(TextBrightRedBlink "${CHARS_ALERT}${abs}")
-			name_msg+=$(TextBrightRed "$qpkg_name")
+			name_msg+=$(TextBrightRed "$name")
 	esac
 
 	# column 1: package name
@@ -4794,34 +4796,34 @@ DisplayAsDepsReportItemLine()
 	{
 
 	# Input:
-	#   $qpkg_name (global)
+	#   $1 = QPKG name (optional).
+	# 	$qpkg_name (global).
 
-	local dep=''
+	local arch_msg=$CHARS_BLANK
+	local dep_name=''
+	local deps=''
+	local deps_msg=$CHARS_NORMAL
+	local enabled_msg=$CHARS_BLANK
+	local installed_msg=$CHARS_BLANK
+	local max_os_msg=$CHARS_BLANK
+	local min_os_msg=$CHARS_BLANK
+	local min_ram_msg=$CHARS_BLANK
 	local mode=''
-# 	local name=${1:?${FUNCNAME[0]}'()': undefined package name}
-name=$qpkg_name
-		local package_deps_raw=$(QPKG.GetDependencies "$qpkg_name")
-		local package_max_os=$(QPKG.GetMaxOSVer "$qpkg_name")
-		local package_min_os=$(QPKG.GetMinOSVer "$qpkg_name")
-		local package_min_ram=$(QPKG.GetMinRAM "$qpkg_name")
+	local name=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
+		local deps_raw=$(QPKG.GetDependencies "$name")
+		local max_os=$(QPKG.GetMaxOSVer "$name")
+		local min_os=$(QPKG.GetMinOSVer "$name")
+		local min_ram=$(QPKG.GetMinRAM "$name")
 	local name_msg=$CHARS_BLANK
-	local package_arch_msg=$CHARS_BLANK
-	local package_deps=''
-	local package_deps_msg=$CHARS_NORMAL
-	local package_enabled_msg=$CHARS_BLANK
-	local package_installed_msg=$CHARS_BLANK
-	local package_max_os_msg=$CHARS_BLANK
-	local package_min_os_msg=$CHARS_BLANK
-	local package_min_ram_msg=$CHARS_BLANK
 
-	[[ -z $package_deps_raw ]] && package_deps_raw=none
-	[[ -n $package_max_os && $package_max_os != none && ${#package_max_os} -eq 3 ]] && package_max_os=${package_max_os:0:1}.${package_max_os:1:1}.${package_max_os:2:1}
-	[[ -n $package_min_os && $package_min_os != none && ${#package_min_os} -eq 3 ]] && package_min_os=${package_min_os:0:1}.${package_min_os:1:1}.${package_min_os:2:1}
-	[[ $package_min_ram != none ]] && package_min_ram=$(FormatAsThous "$package_min_ram")kB
+	[[ -z $deps_raw ]] && deps_raw=none
+	[[ -n $max_os && $max_os != none && ${#max_os} -eq 3 ]] && max_os=${max_os:0:1}.${max_os:1:1}.${max_os:2:1}
+	[[ -n $min_os && $min_os != none && ${#min_os} -eq 3 ]] && min_os=${min_os:0:1}.${min_os:1:1}.${min_os:2:1}
+	[[ $min_ram != none ]] && min_ram=$(FormatAsThous "$min_ram")kB
 
-	if QPKG.IsMissing "$name"; then
+	if QPKG.IsMissing; then
 		mode=highlighted
-	elif QPKG.IsNtInstalled "$name"; then
+	elif QPKG.IsNtInstalled; then
 		mode=muted
 	else
 		mode=normal
@@ -4831,174 +4833,173 @@ name=$qpkg_name
 		normal)
 			name_msg+=$name
 
-			if [[ $package_deps_raw != none ]]; then
-				for dep in $package_deps_raw; do
-					[[ -n $package_deps ]] && package_deps+=' '
+			if [[ $deps_raw != none ]]; then
+				for dep_name in $deps_raw; do
+					[[ -n $deps ]] && deps+=' '
 
-					if QPKG.IsInstalled "$dep" && QPKG.IsEnabled "$dep"; then
-						package_deps+=$(TextBrightGreen "$dep")
+					if QPKG.IsInstalled "$dep_name" && QPKG.IsEnabled "$dep_name"; then
+						deps+=$(TextBrightGreen "$dep_name")
 					else
-						package_deps+=$(TextBrightRed "$dep")
-						package_deps_msg=$(TextBrightRed "$CHARS_ALERT")
+						deps+=$(TextBrightRed "$dep_name")
+						deps_msg=$(TextBrightRed "$CHARS_ALERT")
 						name_msg=${CHARS_BLANK}$(TextBrightRed "$name")
 					fi
 				done
 			else
-				package_deps+=$(TextBrightGreen "$package_deps_raw")
+				deps+=$(TextBrightGreen "$deps_raw")
 			fi
 
-			package_deps_msg+=${package_deps// /, }
+			deps_msg+=${deps// /, }
 
 			if QPKG.IsInstalled "$name"; then
-				package_installed_msg+=$(TextBrightGreen true)
+				installed_msg+=$(TextBrightGreen true)
 			else
-				package_installed_msg+=false
+				installed_msg+=false
 			fi
 
 			if QPKG.IsEnabled "$name"; then
-				package_enabled_msg+=$(TextBrightGreen true)
+				enabled_msg+=$(TextBrightGreen true)
 			else
-				package_enabled_msg=$(TextBrightRed "$CHARS_ALERT")
-				package_enabled_msg+=$(TextBrightRed false)
+				enabled_msg=$(TextBrightRed "$CHARS_ALERT")
+				enabled_msg+=$(TextBrightRed false)
 				name_msg=${CHARS_BLANK}$(TextBrightRed "$name")
 			fi
 
 			if QPKG.IsMinRAMOk "$name"; then
-				package_min_ram_msg+=$(TextBrightGreen "$package_min_ram")
+				min_ram_msg+=$(TextBrightGreen "$min_ram")
 			else
-				package_min_ram_msg=$(TextBrightRed "$CHARS_ALERT")
-				package_min_ram_msg+=$(TextBrightRed "$package_min_ram")
+				min_ram_msg=$(TextBrightRed "$CHARS_ALERT")
+				min_ram_msg+=$(TextBrightRed "$min_ram")
 				name_msg=${CHARS_BLANK}$(TextBrightRed "$name")
 			fi
 
 			if QPKG.IsMinOSVerOk "$name"; then
-				package_min_os_msg+=$(TextBrightGreen "$package_min_os")
+				min_os_msg+=$(TextBrightGreen "$min_os")
 			else
-				package_min_os_msg=$(TextBrightRed "$CHARS_ALERT")
-				package_min_os_msg+=$(TextBrightRed "$package_min_os")
+				min_os_msg=$(TextBrightRed "$CHARS_ALERT")
+				min_os_msg+=$(TextBrightRed "$min_os")
 				name_msg=${CHARS_BLANK}$(TextBrightRed "$name")
 			fi
 
 			if QPKG.IsMaxOSVerOk "$name"; then
-				package_max_os_msg+=$(TextBrightGreen "$package_max_os")
+				max_os_msg+=$(TextBrightGreen "$max_os")
 			else
-				package_max_os_msg=$(TextBrightRed "$CHARS_ALERT")
-				package_max_os_msg+=$(TextBrightRed "$package_max_os")
+				max_os_msg=$(TextBrightRed "$CHARS_ALERT")
+				max_os_msg+=$(TextBrightRed "$max_os")
 				name_msg=${CHARS_BLANK}$(TextBrightRed "$name")
 			fi
 
 			if QPKG.IsArchOK "$name"; then
-				package_arch_msg+=$(TextBrightGreen true)
+				arch_msg+=$(TextBrightGreen true)
 			else
-				package_arch_msg=$(TextBrightRed "$CHARS_ALERT")
-				package_arch_msg+=$(TextBrightRed false)
+				arch_msg=$(TextBrightRed "$CHARS_ALERT")
+				arch_msg+=$(TextBrightRed false)
 				name_msg=${CHARS_BLANK}$(TextBrightRed "$name")
 			fi
 			;;
 		muted)
 			name_msg+=$(TextDarkGrey "$name")
-			package_deps_msg=$(TextDarkGrey "$CHARS_NORMAL")
+			deps_msg=$(TextDarkGrey "$CHARS_NORMAL")
 
-			if [[ $package_deps_raw != none ]]; then
-				for dep in $package_deps_raw; do
-					[[ -n $package_deps ]] && package_deps+=' '
-					package_deps+=$(TextDarkGrey "$dep")
+			if [[ $deps_raw != none ]]; then
+				for dep_name in $deps_raw; do
+					[[ -n $deps ]] && deps+=' '
+					deps+=$(TextDarkGrey "$dep_name")
 				done
 			else
-				package_deps+=$(TextDarkGrey "$package_deps_raw")
+				deps+=$(TextDarkGrey "$deps_raw")
 			fi
 
-
-			package_deps_msg+=${package_deps// /$(TextDarkGrey ', ')}
-			package_installed_msg+=$(TextDarkGrey false)
-			package_enabled_msg+=$(TextDarkGrey 'N/A')
+			deps_msg+=${deps// /$(TextDarkGrey ', ')}
+			installed_msg+=$(TextDarkGrey false)
+			enabled_msg+=$(TextDarkGrey 'N/A')
 
 			if QPKG.IsMinRAMOk "$name"; then
-				package_min_ram_msg+=$(TextDarkGrey "$package_min_ram")
+				min_ram_msg+=$(TextDarkGrey "$min_ram")
 			else
-				package_min_ram_msg=$(TextBrightOrange "$CHARS_ATTENTION")
-				package_min_ram_msg+=$(TextBrightOrange "$package_min_ram")
+				min_ram_msg=$(TextBrightOrange "$CHARS_ATTENTION")
+				min_ram_msg+=$(TextBrightOrange "$min_ram")
 				name_msg=${CHARS_BLANK}$(TextBrightOrange "$name")
 			fi
 
 			if QPKG.IsMinOSVerOk "$name"; then
-				package_min_os_msg+=$(TextDarkGrey "$package_min_os")
+				min_os_msg+=$(TextDarkGrey "$min_os")
 			else
-				package_min_os_msg=$(TextBrightOrange "$CHARS_ATTENTION")
-				package_min_os_msg+=$(TextBrightOrange "$package_min_os")
+				min_os_msg=$(TextBrightOrange "$CHARS_ATTENTION")
+				min_os_msg+=$(TextBrightOrange "$min_os")
 				name_msg=${CHARS_BLANK}$(TextBrightOrange "$name")
 			fi
 
 			if QPKG.IsMaxOSVerOk "$name"; then
-				package_max_os_msg+=$(TextDarkGrey "$package_max_os")
+				max_os_msg+=$(TextDarkGrey "$max_os")
 			else
-				package_max_os_msg=$(TextBrightOrange "$CHARS_ATTENTION")
-				package_max_os_msg+=$(TextBrightOrange "$package_max_os")
+				max_os_msg=$(TextBrightOrange "$CHARS_ATTENTION")
+				max_os_msg+=$(TextBrightOrange "$max_os")
 				name_msg=${CHARS_BLANK}$(TextBrightOrange "$name")
 			fi
 
 			if QPKG.IsArchOK "$name"; then
-				package_arch_msg+=$(TextDarkGrey true)
+				arch_msg+=$(TextDarkGrey true)
 			else
-				package_arch_msg=$(TextBrightOrange "$CHARS_ATTENTION")
-				package_arch_msg+=$(TextBrightOrange false)
+				arch_msg=$(TextBrightOrange "$CHARS_ATTENTION")
+				arch_msg+=$(TextBrightOrange false)
 				name_msg=${CHARS_BLANK}$(TextBrightOrange "$name")
 			fi
 			;;
 		highlighted)
 			name_msg+=$(TextBrightRed "$name")
 
-			if [[ $package_deps_raw != none ]]; then
-				for dep in $package_deps_raw; do
-					[[ -n $package_deps ]] && package_deps+=' '
+			if [[ $deps_raw != none ]]; then
+				for dep_name in $deps_raw; do
+					[[ -n $deps ]] && deps+=' '
 
-					if QPKG.IsInstalled "$dep" && QPKG.IsEnabled "$dep"; then
-						package_deps+=$(TextBrightGreen "$dep")
+					if QPKG.IsInstalled "$dep_name" && QPKG.IsEnabled "$dep_name"; then
+						deps+=$(TextBrightGreen "$dep_name")
 					else
-						package_deps+=$(TextBrightRed "$dep")
+						deps+=$(TextBrightRed "$dep_name")
 					fi
 				done
 			else
-				package_deps+=$(TextBrightGreen "$package_deps_raw")
+				deps+=$(TextBrightGreen "$deps_raw")
 			fi
 
-			package_deps_msg+=${package_deps// /, }
-			package_installed_msg=$(TextBrightRedBlink "$CHARS_ALERT")
-			package_installed_msg+=$(TextBrightRedBlink 'missing')
+			deps_msg+=${deps// /, }
+			installed_msg=$(TextBrightRedBlink "$CHARS_ALERT")
+			installed_msg+=$(TextBrightRedBlink 'missing')
 
 			if QPKG.IsEnabled "$name"; then
-				package_enabled_msg+=$(TextBrightGreen true)
+				enabled_msg+=$(TextBrightGreen true)
 			else
-				package_enabled_msg=$(TextBrightRedBlink "$CHARS_ALERT")
-				package_enabled_msg+=$(TextBrightRed 'false')
+				enabled_msg=$(TextBrightRedBlink "$CHARS_ALERT")
+				enabled_msg+=$(TextBrightRed 'false')
 			fi
 
 			if QPKG.IsMinRAMOk "$name"; then
-				package_min_ram_msg+=$(TextBrightGreen "$package_min_ram")
+				min_ram_msg+=$(TextBrightGreen "$min_ram")
 			else
-				package_min_ram_msg=$(TextBrightRed "$CHARS_ALERT")
-				package_min_ram_msg+=$(TextBrightRed "$package_min_ram")
+				min_ram_msg=$(TextBrightRed "$CHARS_ALERT")
+				min_ram_msg+=$(TextBrightRed "$min_ram")
 			fi
 
 			if QPKG.IsMinOSVerOk "$name"; then
-				package_min_os_msg+=$(TextBrightGreen "$package_min_os")
+				min_os_msg+=$(TextBrightGreen "$min_os")
 			else
-				package_min_os_msg=$(TextBrightRed "$CHARS_ALERT")
-				package_min_os_msg+=$(TextBrightRed "$package_min_os")
+				min_os_msg=$(TextBrightRed "$CHARS_ALERT")
+				min_os_msg+=$(TextBrightRed "$min_os")
 			fi
 
 			if QPKG.IsMaxOSVerOk "$name"; then
-				package_max_os_msg+=$(TextBrightGreen "$package_max_os")
+				max_os_msg+=$(TextBrightGreen "$max_os")
 			else
-				package_max_os_msg=$(TextBrightRed "$CHARS_ALERT")
-				package_max_os_msg+=$(TextBrightRed "$package_max_os")
+				max_os_msg=$(TextBrightRed "$CHARS_ALERT")
+				max_os_msg+=$(TextBrightRed "$max_os")
 			fi
 
 			if QPKG.IsArchOK "$name"; then
-				package_arch_msg+=$(TextBrightGreen true)
+				arch_msg+=$(TextBrightGreen true)
 			else
-				package_arch_msg=$(TextBrightRed "$CHARS_ALERT")
-				package_arch_msg+=$(TextBrightRed false)
+				arch_msg=$(TextBrightRed "$CHARS_ALERT")
+				arch_msg+=$(TextBrightRed false)
 			fi
 	esac
 
@@ -5012,49 +5013,49 @@ name=$qpkg_name
 
 	if [[ $report_cols_max -ge 2 ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		printf "%-$((PACKAGE_DEPENDENCIES_COL_WIDTH+$(LenANSIDiff "$package_deps_msg")))s" "$package_deps_msg"
+		printf "%-$((PACKAGE_DEPENDENCIES_COL_WIDTH+$(LenANSIDiff "$deps_msg")))s" "$deps_msg"
 	fi
 
 	# column 3: package installed?
 
 	if [[ $report_cols_max -ge 3 ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+$(LenANSIDiff "$package_installed_msg")))s" "$package_installed_msg"
+		printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+$(LenANSIDiff "$installed_msg")))s" "$installed_msg"
 	fi
 
 	# column 4: package enabled?
 
 	if [[ $report_cols_max -ge 4 ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		printf "%-$((PACKAGE_ENABLED_COL_WIDTH+$(LenANSIDiff "$package_enabled_msg")))s" "$package_enabled_msg"
+		printf "%-$((PACKAGE_ENABLED_COL_WIDTH+$(LenANSIDiff "$enabled_msg")))s" "$enabled_msg"
 	fi
 
 	# column 5: minimum NAS RAM required
 
 	if [[ $report_cols_max -ge 5 ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		printf "%-$((PACKAGE_MIN_RAM_COL_WIDTH+$(LenANSIDiff "$package_min_ram_msg")))s" "$package_min_ram_msg"
+		printf "%-$((PACKAGE_MIN_RAM_COL_WIDTH+$(LenANSIDiff "$min_ram_msg")))s" "$min_ram_msg"
 	fi
 
 	# column 6: minimum OS fimware version supported
 
 	if [[ $report_cols_max -ge 6 ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		printf "%-$((PACKAGE_MIN_OS_COL_WIDTH+$(LenANSIDiff "$package_min_os_msg")))s" "$package_min_os_msg"
+		printf "%-$((PACKAGE_MIN_OS_COL_WIDTH+$(LenANSIDiff "$min_os_msg")))s" "$min_os_msg"
 	fi
 
 	# column 7: maximum OS fimware version supported
 
 	if [[ $report_cols_max -ge 7 ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		printf "%-$((PACKAGE_MAX_OS_COL_WIDTH+$(LenANSIDiff "$package_max_os_msg")))s" "$package_max_os_msg"
+		printf "%-$((PACKAGE_MAX_OS_COL_WIDTH+$(LenANSIDiff "$max_os_msg")))s" "$max_os_msg"
 	fi
 
 	# column 8: arch is compatible?
 
 	if [[ $report_cols_max -ge 8 ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		printf "%-$((PACKAGE_ARCH_COL_WIDTH+$(LenANSIDiff "$package_arch_msg")))s" "$package_arch_msg"
+		printf "%-$((PACKAGE_ARCH_COL_WIDTH+$(LenANSIDiff "$arch_msg")))s" "$arch_msg"
 	fi
 
 	printf '\n'
@@ -6856,8 +6857,8 @@ Help.Abbreviations:Show()
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
-		QPKG:SetIndex
-		DisplayAsAbsReportItemLine > "$REPORTS_PATH/$n" &
+# 		QPKG:SetIndex
+		DisplayAsAbsReportItemLine "$qpkg_name" > "$REPORTS_PATH/$n" &
 	done
 
 	m=$n
@@ -9623,7 +9624,7 @@ QPKG.AppCenterNotifier:Clear()
 	# KLUDGE: `clean` QTS 4.5.1+ App Center notifier status
 	[[ -e /sbin/qpkg_cli ]] && /sbin/qpkg_cli --cancel "$qpkg_name"
 
-	QPKG.IsNtInstalled && return 0
+	QPKG.IsNtInstalled && return
 
 	# Need to do this when installing QPKGs at the CLI.
 	/sbin/setcfg "$qpkg_name" Status complete -f /etc/config/qpkg.conf
@@ -9913,6 +9914,7 @@ QPKG.GetURL()
 	# Returns the URL of $qpkg_index.
 
 	# Input:
+	#   $1 = QPKG name (optional): if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
 	#   $qpkg_default_index (global)
 	#   $qpkg_index (global)
 	#	$qpkg_name (global)
@@ -9921,14 +9923,22 @@ QPKG.GetURL()
 	#   stdout = QPKG remote URL.
 	#   $? = 0 if found, !0 if not
 
-	[[ -n $qpkg_name && $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
-
 	local a=''
+	local -i i=0
 
-	a=${QPKG_URL[$qpkg_index]}
-	[[ $a = default ]] && a=${QPKG_URL[$qpkg_default_index]}
-	[[ $a != none ]] || return
+	if [[ -n ${1:-} ]]; then
+		for i in "${!QPKG_NAME[@]}"; do
+			[[ ${QPKG_NAME[$i]} = "$1" ]] || continue
+			a=${QPKG_URL[$i]}			# Always grab first found as default.
 
+			break
+		done
+	else
+		a=${QPKG_URL[$qpkg_index]}
+		[[ $a = default ]] && a=${QPKG_URL[$qpkg_default_index]}
+	fi
+
+	[[ -n $a ]] || a=none
 	echo -n "$a"
 
 	return 0
@@ -9948,32 +9958,23 @@ QPKG.GetMinRAM()
 	#   stdout = minimum installed RAM required.
 	#   $? = 0 if found, !0 if not
 
-	local a=false
-	local b=''
-	local c=''
+	local a=''
 	local -i i=0
 
 	if [[ -n ${1:-} ]]; then
-		a=true
-		b=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
-	else
-		b=${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}
-	fi
-
-	if [[ $a = true ]]; then
 		for i in "${!QPKG_NAME[@]}"; do
-			[[ ${QPKG_NAME[$i]} = "$b" ]] || continue
-			c=${QPKG_MIN_RAM_KB[$i]}
+			[[ ${QPKG_NAME[$i]} = "$1" ]] || continue
+			a=${QPKG_MIN_RAM_KB[$i]}			# Always grab first found as default.
 
 			break
 		done
 	else
-		c=${QPKG_MIN_RAM_KB[$qpkg_index]}
-		[[ $c = default ]] && c=${QPKG_MIN_RAM_KB[$qpkg_default_index]}
+		a=${QPKG_MIN_RAM_KB[$qpkg_index]}
+		[[ $a = default ]] && a=${QPKG_MIN_RAM_KB[$qpkg_default_index]}
 	fi
 
-	[[ -n $c ]] || c=none
-	echo -n "$c"
+	[[ -n $a ]] || a=none
+	echo -n "$a"
 
 	return 0
 
@@ -9992,32 +9993,23 @@ QPKG.GetMinOSVer()
 	#   stdout = minimum QTS/QuTS version required by this QPKG.
 	#   $? = 0 if found, !0 if not
 
-	local a=false
-	local b=''
-	local c=''
+	local a=''
 	local -i i=0
 
 	if [[ -n ${1:-} ]]; then
-		a=true
-		b=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
-	else
-		b=${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}
-	fi
-
-	if [[ $a = true ]]; then
 		for i in "${!QPKG_NAME[@]}"; do
-			[[ ${QPKG_NAME[$i]} = "$b" ]] || continue
-			c=${QPKG_MIN_OS_VERSION[$i]}
+			[[ ${QPKG_NAME[$i]} = "$1" ]] || continue
+			a=${QPKG_MIN_OS_VERSION[$i]}			# Always grab first found as default.
 
 			break
 		done
 	else
-		c=${QPKG_MIN_OS_VERSION[$qpkg_index]}
-		[[ $c = default ]] && c=${QPKG_MIN_OS_VERSION[$qpkg_default_index]}
+		a=${QPKG_MIN_OS_VERSION[$qpkg_index]}
+		[[ $a = default ]] && a=${QPKG_MIN_OS_VERSION[$qpkg_default_index]}
 	fi
 
-	[[ -n $c ]] || c=none
-	echo -n "$c"
+	[[ -n $a ]] || a=none
+	echo -n "$a"
 
 	return 0
 
@@ -10036,61 +10028,52 @@ QPKG.GetMaxOSVer()
 	#   stdout = maximum QTS/QuTS version required by this QPKG.
 	#   $? = 0 if found, !0 if not
 
-	local a=false
-	local b=''
-	local c=''
+	local a=''
 	local -i i=0
 
 	if [[ -n ${1:-} ]]; then
-		a=true
-		b=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
-	else
-		b=${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}
-	fi
-
-	if [[ $a = true ]]; then
 		for i in "${!QPKG_NAME[@]}"; do
-			[[ ${QPKG_NAME[$i]} = "$b" ]] || continue
-			c=${QPKG_MAX_OS_VERSION[$i]}
+			[[ ${QPKG_NAME[$i]} = "$1" ]] || continue
+			a=${QPKG_MAX_OS_VERSION[$i]}			# Always grab first found as default.
 
 			break
 		done
 	else
-		c=${QPKG_MAX_OS_VERSION[$qpkg_index]}
-		[[ $c = default ]] && c=${QPKG_MAX_OS_VERSION[$qpkg_default_index]}
+		a=${QPKG_MAX_OS_VERSION[$qpkg_index]}
+		[[ $a = default ]] && a=${QPKG_MAX_OS_VERSION[$qpkg_default_index]}
 	fi
 
-	[[ -n $c ]] || c=none
-	echo -n "$c"
+	[[ -n $a ]] || a=none
+	echo -n "$a"
 
 	return 0
 
 	}
 
-QPKG.GetAuthor()
-	{
-
-	# Return the maintainer of the specified QPKG.
-
-	# Input:
-	#   $1 = QPKG name
-
-	# Output:
-	#   stdout = QPKG author (first package found).
-	#   $? = 0 (found), !0 (not-found)
-
-	local -i i=0
-
-	for i in "${!QPKG_NAME[@]}"; do
-		[[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]] || continue
-		echo -n "${QPKG_AUTHOR[$i]}"
-
-		return 0
-	done
-
-	return 1
-
-	}
+# QPKG.GetAuthor()
+# 	{
+#
+# 	# Return the maintainer of the specified QPKG.
+#
+# 	# Input:
+# 	#   $1 = QPKG name
+#
+# 	# Output:
+# 	#   stdout = QPKG author (first package found).
+# 	#   $? = 0 (found), !0 (not-found)
+#
+# 	local -i i=0
+#
+# 	for i in "${!QPKG_NAME[@]}"; do
+# 		[[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]] || continue
+# 		echo -n "${QPKG_AUTHOR[$i]}"
+#
+# 		return 0
+# 	done
+#
+# 	return 1
+#
+# 	}
 
 #QPKG.GetAuthorEmail()
 # 	{
@@ -10171,22 +10154,31 @@ QPKG.GetDesc()
 	{
 
 	# Input:
+	#   $1 = QPKG name (optional): if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
 	#   $qpkg_default_index (global)
 	#   $qpkg_index (global)
 	#	$qpkg_name (global)
 
 	# Output:
-	#   stdout = QPKG description (first package found).
-	#   $? = 0 (found), !0 (not-found)
-
-	[[ -n $qpkg_name && $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
+	#   stdout = QPKG description.
+	#   $? = 0 if found, !0 if not
 
 	local a=''
+	local -i i=0
 
-	a=${QPKG_DESC[$qpkg_index]}
-	[[ $a = default ]] && a=${QPKG_DESC[$qpkg_default_index]}
-	[[ $a = none ]] && return 1
+	if [[ -n ${1:-} ]]; then
+		for i in "${!QPKG_NAME[@]}"; do
+			[[ ${QPKG_NAME[$i]} = "$1" ]] || continue
+			a=${QPKG_DESC[$i]}			# Always grab first found as default.
 
+			break
+		done
+	else
+		a=${QPKG_DESC[$qpkg_index]}
+		[[ $a = default ]] && a=${QPKG_DESC[$qpkg_default_index]}
+	fi
+
+	[[ -n $a ]] || a=none
 	echo -n "$a"
 
 	return 0
@@ -10225,21 +10217,31 @@ QPKG.GetAbbrvs()
 	{
 
 	# Input:
+	#   $1 = QPKG name (optional): if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
 	#   $qpkg_default_index (global)
 	#   $qpkg_index (global)
 	#	$qpkg_name (global)
 
 	# Output:
-	#   stdout = list of abbreviations that may be used to specify this package (default package only).
-	#   $? = 0 (found), !0 (not-found)
-
-	[[ -n $qpkg_name && $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
+	#   stdout = list of abbreviations that may be used to specify this package
+	#   $? = 0 if found, !0 if not
 
 	local a=''
+	local -i i=0
 
-	a=${QPKG_ABBRVS[$qpkg_default_index]}
-	[[ $a = none ]] && return 1
+	if [[ -n ${1:-} ]]; then
+		for i in "${!QPKG_NAME[@]}"; do
+			[[ ${QPKG_NAME[$i]} = "$1" ]] || continue
+			a=${QPKG_ABBRVS[$i]}			# Always grab first found as default.
 
+			break
+		done
+	else
+		a=${QPKG_ABBRVS[$qpkg_index]}
+		[[ $a = default ]] && a=${QPKG_ABBRVS[$qpkg_default_index]}
+	fi
+
+	[[ -n $a ]] || a=none
 	echo -n "$a"
 
 	return 0
@@ -10421,9 +10423,7 @@ QPKG.GetServiceStatus()
 	#   $stdout = last known package service status.
 	#   $? = 0 (found), !0 (not-found)
 
-	local a=''
-
-	a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
 
 	[[ -e /var/run/$a.last.operation ]] && echo "$(</var/run/"$a".last.operation)"
 
@@ -10526,9 +10526,7 @@ QPKG.IsRepoOk()
 	# Output:
 	#   $? = 0 (true), !0 (false)
 
-	local a=''
-
-	a=$(QPKG.GetStoreID "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
+	local a=$(QPKG.GetStoreID "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
 
 	[[ -z $a || $a = sherpa ]]
 
@@ -10584,9 +10582,7 @@ QPKG.IsUpgradable()
 	# Output:
 	#   $? = 0 (true), !0 (false)
 
-	local a=''
-
-	a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
 
 	QPKG.IsInstalled "$a" && QPKG.IsRepoOk "$a" && [[ $(QPKG.GetInstalledVer "$a") != "$(QPKG.GetAvailVer "$a")" ]] && QPKG.IsArchOK "$a" && QPKG.IsMinOSVerOk "$a" && QPKG.IsMinRAMOk "$a"
 
@@ -10616,15 +10612,31 @@ QPKG.IsCanBackup()
 	# Does this QPKG service-script support `backup` and `restore` actions?
 
 	# Input:
+	#   $1 = QPKG name (optional): if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
 	#   $qpkg_default_index (global)
 	#   $qpkg_index (global)
+	#	$qpkg_name (global)
 
 	# Output:
 	#   $? = 0 (true), !0 (false)
 
-	[[ $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
+	local a=''
+	local -i i=0
 
-	${QPKG_CAN_BACKUP[$qpkg_index]}
+	if [[ -n ${1:-} ]]; then
+		for i in "${!QPKG_NAME[@]}"; do
+			[[ ${QPKG_NAME[$i]} = "$1" ]] || continue
+			a=${QPKG_CAN_BACKUP[$i]}			# Always grab first found as default.
+
+			break
+		done
+	else
+		a=${QPKG_CAN_BACKUP[$qpkg_index]}
+		[[ $a = default ]] && a=${QPKG_CAN_BACKUP[$qpkg_default_index]}
+	fi
+
+	[[ -n $a ]] || a=none
+	[[ $a = true ]]
 
 	}
 
@@ -10736,9 +10748,7 @@ QPKG.IsMissing()
 	#   stdout = package installation date.
 	#   $? = 0 (found), !0 (not-found).
 
-	local a=''
-
-	a=$(QPKG.GetInstallationPath "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
+	local a=$(QPKG.GetInstallationPath "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
 
 	[[ $a != undefined && ! -d $a ]]
 
