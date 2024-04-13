@@ -16,7 +16,7 @@
     - if it's a group, and an action has already been set, process action and group.
     - if it's a group, and no action was set, then assign a default action, process action and group, then iterate.
 
-* armv5 NAS models will no-longer have their Python and Perl modules upgraded, so skip upgrade attempts on these models, unless Python and Perl are on final versions for armv5.
+* armv5 NAS models will no-longer have their Python and Perl modules upgraded, so skip upgrade attempts on these models, unless Python and Perl are not on final versions for armv5.
 
 * 'debug' and 'verbose' modes should be persistent when set with a group.
 

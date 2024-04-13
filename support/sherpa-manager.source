@@ -1039,7 +1039,7 @@ QPKGs:AssignToActions()
 
 	for action in reinstall install; do
 		for qpkg_name in $(QPKGs-AC${action}-to:Array); do
-			QPKG.SetIndex
+			QPKG:SetIndex
 
 			for prospect in $(QPKG.GetDependencies); do
 				QPKGs-ISNTinstalled.Exist "$prospect" && QPKGs-ACinstall-to:Add "$prospect"
@@ -1050,7 +1050,7 @@ QPKGs:AssignToActions()
 	# Install independents for installed dependents.
 
 	for qpkg_name in $(QPKGs-ISinstalled:Array); do
-		QPKG.SetIndex
+		QPKG:SetIndex
 
 		if [[ $useropt_check = true ]] || QPKGs-ACactivate-to.Exist "$qpkg_name"; then
 			for prospect in $(QPKG.GetDependencies); do
@@ -1062,7 +1062,7 @@ QPKGs:AssignToActions()
 	# If an independent has been selected for `reinstall`/`reactivate`/`upgrade`, need to `deactivate` its dependents first, and `activate` them again later.
 
 	for qpkg_name in $(QPKGs-ACreinstall-to:Array) $(QPKGs-ACreactivate-to:Array) $(QPKGs-ACupgrade-to:Array); do
-		QPKG.SetIndex
+		QPKG:SetIndex
 
 		if QPKGs-GRindependent.Exist "$qpkg_name" && QPKGs-ISinstalled.Exist "$qpkg_name"; then
 			for prospect in $(QPKG.GetDependents); do
@@ -1077,7 +1077,7 @@ QPKGs:AssignToActions()
 	# If an independent has been selected for `deactivate`/`uninstall`, need to `deactivate` its dependents first.
 
 	for qpkg_name in $(QPKGs-ACdeactivate-to:Array) $(QPKGs-ACuninstall-to:Array); do
-		QPKG.SetIndex
+		QPKG:SetIndex
 
 		if QPKGs-GRindependent.Exist "$qpkg_name" && QPKGs-ISinstalled.Exist "$qpkg_name"; then
 			for prospect in $(QPKG.GetDependents); do
@@ -1089,7 +1089,7 @@ QPKGs:AssignToActions()
 	# If an independent has been selected for `uninstall`, then `install`, need to `deactivate` its dependents first, and `activate` them again later.
 
 	for qpkg_name in $(QPKGs-ACuninstall-to:Array); do
-		QPKG.SetIndex
+		QPKG:SetIndex
 
 		if QPKGs-GRindependent.Exist "$qpkg_name" && QPKGs-ISinstalled.Exist "$qpkg_name"; then
 			if QPKGs-ACinstall-to.Exist "$qpkg_name"; then
@@ -1115,7 +1115,7 @@ QPKGs:AssignToActions()
 
 	for action in reinstall install activate reactivate; do
 		for qpkg_name in $(QPKGs-AC${action}-to:Array); do
-			QPKG.SetIndex
+			QPKG:SetIndex
 
 			for prospect in $(QPKG.GetDependencies); do
 				QPKGs-ISinstalled.Exist "$prospect" && QPKGs-ACactivate-to:Add "$prospect"
@@ -1154,7 +1154,7 @@ QPKGs:AssignToActions()
 
 	if QPKGs-ACuninstall-to.IsAny; then
 		for qpkg_name in $(QPKGs-ACuninstall-to:Array); do
-			QPKG.SetIndex
+			QPKG:SetIndex
 
 			if QPKGs-ISinstalled.Exist "$qpkg_name" && QPKGs-ACinstall-to.Exist "$qpkg_name"; then
 				QPKGs_were_installed_name+=("$qpkg_name")
@@ -3363,7 +3363,7 @@ IPKs:install()
 	if QPKGs.ACinstall.GRall.IsSet; then
 		for qpkg_name in "${QPKG_NAME[@]}"; do
 			[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
-			QPKG.SetIndex
+			QPKG:SetIndex
 			QPKG.IsArchOK || continue
 			QPKG.IsMinOSVerOk || continue
 			QPKG.IsMinRAMOk || continue
@@ -3373,7 +3373,7 @@ IPKs:install()
 	else
 		for qpkg_name in "${!QPKG_NAME[@]}"; do
 			[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
-			QPKG.SetIndex
+			QPKG:SetIndex
 
 			if QPKGs-ACinstall-to.Exist "$qpkg_name" || QPKGs-ISinstalled.Exist "$qpkg_name" || QPKGs-ACreinstall-to.Exist "$qpkg_name" || (QPKGs-ACactivate-to.Exist "$qpkg_name" && (QPKGs-ACinstall-to.Exist "$qpkg_name" || QPKGs-ISinstalled.Exist "$qpkg_name" || QPKGs-ACreinstall-to.Exist "$qpkg_name")); then
 # 				qpkg_index=$((i-1))
@@ -3664,7 +3664,7 @@ _LaunchOneActionWithManyForks_()
 
 		IncForkProgressIndex
 		MarkThisActionForkAsStarted 					# Must create runfile here, as it takes too-long to happen in background function.
-		QPKG.SetIndex
+		QPKG:SetIndex
 		$a "$qpkg_name" &
 		DebugAsDone "forked $a() for '$qpkg_name'"
 		UpdateForkProgress
@@ -6516,6 +6516,8 @@ QPKGs.IndependentDependent:Build()
 	# `dependent` QPKGs depend-on other QPKGs. They should be installed/activated after all `independent` QPKGs.
 
 	for qpkg_name in "${QPKG_NAME[@]}"; do
+		QPKG:SetIndex
+
 		if QPKG.IsDependent; then
 			QPKGs-GRdependent:Add "$qpkg_name"
 		else
@@ -6574,7 +6576,7 @@ QPKGs.States:Build()
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		[[ $qpkg_name = "$a" ]] && continue || a=$qpkg_name
-		QPKG.SetIndex
+		QPKG:SetIndex
 
 		if QPKG.IsNtInstalled; then
 			if QPKG.IsInstallable; then
@@ -6587,7 +6589,7 @@ QPKGs.States:Build()
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		[[ $qpkg_name = "$a" ]] && continue || a=$qpkg_name
-		QPKG.SetIndex
+		QPKG:SetIndex
 
 		if QPKG.IsInstalled; then
 			echo installed							# Only write this once per-file.
@@ -6602,7 +6604,7 @@ QPKGs.States:Build()
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		[[ $qpkg_name = "$a" ]] && continue || a=$qpkg_name
-		QPKG.SetIndex
+		QPKG:SetIndex
 
 		if QPKG.IsInstalled; then
 			if QPKG.IsEnabled; then
@@ -6615,7 +6617,7 @@ QPKGs.States:Build()
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		[[ $qpkg_name = "$a" ]] && continue || a=$qpkg_name
-		QPKG.SetIndex
+		QPKG:SetIndex
 
 		if QPKG.IsCanBackup; then
 			echo backupable
@@ -6632,7 +6634,7 @@ QPKGs.States:Build()
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		[[ $qpkg_name = "$a" ]] && continue || a=$qpkg_name
-		QPKG.SetIndex
+		QPKG:SetIndex
 
 		if QPKG.IsInstalled; then
 			if QPKG.IsMissing; then
@@ -6854,7 +6856,7 @@ Help.Abbreviations:Show()
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
-		QPKG.SetIndex
+		QPKG:SetIndex
 		DisplayAsAbsReportItemLine > "$REPORTS_PATH/$n" &
 	done
 
@@ -6974,7 +6976,7 @@ Report.Dependencies:Show()
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
-		QPKG.SetIndex
+		QPKG:SetIndex
 		DisplayAsDepsReportItemLine > "$REPORTS_PATH/$n" &
 	done
 
@@ -7024,7 +7026,7 @@ Report.Packages:Show()
 		DisplayAsPacksReportTitleLine
 
 		for qpkg_name in $(QPKGs-GRall:Array); do
-			QPKG.SetIndex
+			QPKG:SetIndex
 			DisplayAsPacksReportItemLine
 		done
 
@@ -7065,7 +7067,7 @@ Report.Repos:Show()
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
-		QPKG.SetIndex
+		QPKG:SetIndex
 		DisplayAsReposReportItemLine > "$REPORTS_PATH/$n" &
 	done
 
@@ -7118,7 +7120,7 @@ Report.Statuses:Show()
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		QPKGs-ACstatus-dn.Exist "$qpkg_name" || continue
 		((n++))
-		QPKG.SetIndex
+		QPKG:SetIndex
 		DisplayAsStatusReportItemLine > "$REPORTS_PATH/$n" &
 	done
 
@@ -10394,7 +10396,7 @@ QPKG.MatchAbbrv()
 
 	}
 
-QPKG.SetIndex()
+QPKG:SetIndex()
 	{
 
 	# Find and set the 1-based indexed reference of the named arch-specific QPKG in 'packages' file.
@@ -10408,7 +10410,7 @@ QPKG.SetIndex()
 
 	[[ -n ${qpkg_name:-} ]] || return
 
-	QPKG.SetDefaultIndex
+	QPKG:SetDefaultIndex
 
 	for qpkg_index in "${!QPKG_NAME[@]}"; do
 		[[ ${QPKG_NAME[$qpkg_index]} = "$qpkg_name" ]] || continue
@@ -10423,7 +10425,7 @@ QPKG.SetIndex()
 
 	}
 
-QPKG.SetDefaultIndex()
+QPKG:SetDefaultIndex()
 	{
 
 	# Find and set the 1-based indexed reference of the named QPKG in 'packages' file.

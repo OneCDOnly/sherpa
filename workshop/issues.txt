@@ -1,15 +1,5 @@
 Observed issues:
 
-	* Not finding QPKGs to stop:
-		-------------------------------------------------------------------------------------------------------------------------
-		[/share/Public] # ./sherpa-manager.source stop deps
-		sherpa v<?build_date?>-unstable
-		note: new QPKG versions are available for OLidarr, OliveTin & 5 others.
-		warn: unable to find any 'GRdependent' QPKGs to 'deactivate'.
-		done: actions complete.
-		-------------------------------------------------------------------------------------------------------------------------
-		- array lists for 'independent' and 'dependent' are not being generated correctly. 'dependent' is empty, and all QPKGs are listed as 'independent'.
-
 	* 'backup' operation must 'stop' QPKG first to prevent config files changing during backup.
 		- Must also 'start' QPKG again afterward if it was started before.
 
