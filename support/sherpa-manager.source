@@ -21,9 +21,11 @@
 #  utility interceptors: (same as original)
 #			  variables: 'lowercase_with_inline_underscores'
 # flag "object" methods: 'Capitalised.CamelCase.With.Inline.Periods.And.Colon.Before:Method'
+#   flag "object" tests: 'Capitalised.CamelCase.With.Inline.Periods.And.Period.Before.Test'
 # list "object" methods: 'Capitalised-CamelCase-With-Inline-Hyphens-And-Colon-Before:Method'
+#   list "object" tests: 'Capitalised-CamelCase-With-Inline-Hyphens-And-Period-Before.Test'
 #   "object" properties: '_lowercase_with_leading_and_inline_and_trailing_underscores_' (these should be managed ONLY by the object's methods)
-#			  constants: 'UPPERCASE_WITH_INLINE_UNDERSCORES' (also set as readonly)
+#			  constants: 'UPPERCASE_WITH_INLINE_UNDERSCORES' (and set as readonly)
 #				indents: 1 x tab
 #
 # Notes:
@@ -554,6 +556,8 @@ Env:Load()
 
 	args=()						# command-line argument array.
 	args_incomplete=()
+	qpkg_index=0
+	qpkg_default_index=0
 	useropt_branch=$(GetGitBranch)
 		readonly OBJECTS_ARCHIVE_URL='<?cdn_sherpa_base_url?>'/$useropt_branch/objects.tar.gz
 		readonly PACKAGES_ARCHIVE_URL='<?cdn_sherpa_base_url?>'/$useropt_branch/packages.tar.gz
@@ -1007,9 +1011,7 @@ QPKGs:AssignToActions()
 	ShowAsProc 'QPKG assignment'
 
 	local action=''
-	local package=''
 	local prospect=''
-	unset qpkg_name
 
 	# KLUDGE: ensure old installs of Entware are reinstalled.
 
@@ -1025,10 +1027,10 @@ QPKGs:AssignToActions()
 	# Meta-action pre-processing. Perform check for backup file here, to determine if QPKG should be downloaded and installed.
 
 	if QPKGs-ACrebuild-to.IsAny; then
-		for package in $(QPKGs-ACrebuild-to:Array); do
-			if QPKGs-ISNTinstalled.Exist "$package" && QPKG.IsBackupExist "$package"; then
-				QPKGs-ACinstall-to:Add "$package"
-				QPKGs-ACrestore-to:Add "$package"
+		for qpkg_name in $(QPKGs-ACrebuild-to:Array); do
+			if QPKGs-ISNTinstalled.Exist "$qpkg_name" && QPKG.IsBackupExist; then
+				QPKGs-ACinstall-to:Add "$qpkg_name"
+				QPKGs-ACrestore-to:Add "$qpkg_name"
 			fi
 		done
 	fi
@@ -1037,6 +1039,8 @@ QPKGs:AssignToActions()
 
 	for action in reinstall install; do
 		for qpkg_name in $(QPKGs-AC${action}-to:Array); do
+			QPKG.SetIndex
+
 			for prospect in $(QPKG.GetDependencies); do
 				QPKGs-ISNTinstalled.Exist "$prospect" && QPKGs-ACinstall-to:Add "$prospect"
 			done
@@ -1046,6 +1050,8 @@ QPKGs:AssignToActions()
 	# Install independents for installed dependents.
 
 	for qpkg_name in $(QPKGs-ISinstalled:Array); do
+		QPKG.SetIndex
+
 		if [[ $useropt_check = true ]] || QPKGs-ACactivate-to.Exist "$qpkg_name"; then
 			for prospect in $(QPKG.GetDependencies); do
 				QPKGs-ISNTinstalled.Exist "$prospect" && QPKGs-ACinstall-to:Add "$prospect"
@@ -1056,8 +1062,10 @@ QPKGs:AssignToActions()
 	# If an independent has been selected for `reinstall`/`reactivate`/`upgrade`, need to `deactivate` its dependents first, and `activate` them again later.
 
 	for qpkg_name in $(QPKGs-ACreinstall-to:Array) $(QPKGs-ACreactivate-to:Array) $(QPKGs-ACupgrade-to:Array); do
+		QPKG.SetIndex
+
 		if QPKGs-GRindependent.Exist "$qpkg_name" && QPKGs-ISinstalled.Exist "$qpkg_name"; then
-			for prospect in $(QPKG.GetDependents "$qpkg_name"); do
+			for prospect in $(QPKG.GetDependents); do
 				if QPKGs-ISenabled.Exist "$prospect"; then
 					QPKGs-ACdeactivate-to:Add "$prospect"
 					! QPKGs-ACuninstall-to.Exist "$prospect" && ! QPKGs-ACinstall-to.Exist "$prospect" && QPKGs-ACactivate-to:Add "$prospect"
@@ -1069,8 +1077,10 @@ QPKGs:AssignToActions()
 	# If an independent has been selected for `deactivate`/`uninstall`, need to `deactivate` its dependents first.
 
 	for qpkg_name in $(QPKGs-ACdeactivate-to:Array) $(QPKGs-ACuninstall-to:Array); do
+		QPKG.SetIndex
+
 		if QPKGs-GRindependent.Exist "$qpkg_name" && QPKGs-ISinstalled.Exist "$qpkg_name"; then
-			for prospect in $(QPKG.GetDependents "$qpkg_name"); do
+			for prospect in $(QPKG.GetDependents); do
 				QPKGs-ISinstalled.Exist "$prospect" && QPKGs-ACdeactivate-to:Add "$prospect"
 			done
 		fi
@@ -1079,9 +1089,11 @@ QPKGs:AssignToActions()
 	# If an independent has been selected for `uninstall`, then `install`, need to `deactivate` its dependents first, and `activate` them again later.
 
 	for qpkg_name in $(QPKGs-ACuninstall-to:Array); do
+		QPKG.SetIndex
+
 		if QPKGs-GRindependent.Exist "$qpkg_name" && QPKGs-ISinstalled.Exist "$qpkg_name"; then
 			if QPKGs-ACinstall-to.Exist "$qpkg_name"; then
-				for prospect in $(QPKG.GetDependents "$qpkg_name"); do
+				for prospect in $(QPKG.GetDependents); do
 					if QPKGs-ISenabled.Exist "$prospect"; then
 						QPKGs-ACdeactivate-to:Add "$prospect"
 						! QPKGs-ACuninstall-to.Exist "$prospect" && ! QPKGs-ACinstall-to.Exist "$prospect" && QPKGs-ACactivate-to:Add "$prospect"
@@ -1103,6 +1115,8 @@ QPKGs:AssignToActions()
 
 	for action in reinstall install activate reactivate; do
 		for qpkg_name in $(QPKGs-AC${action}-to:Array); do
+			QPKG.SetIndex
+
 			for prospect in $(QPKG.GetDependencies); do
 				QPKGs-ISinstalled.Exist "$prospect" && QPKGs-ACactivate-to:Add "$prospect"
 			done
@@ -1113,8 +1127,8 @@ QPKGs:AssignToActions()
 	# I've disabled this. Make user `enable` target packages first. Let's see how this goes...
 
 # 	for action in activate reactivate; do
-# 		for package in $(QPKGs-AC${action}-to:Array); do
-# 			QPKGs-ISinstalled.Exist "$package" && QPKGs-ISNTenabled.Exist "$package" && QPKGs-ACenable-to:Add "$package"
+# 		for qpkg_name in $(QPKGs-AC${action}-to:Array); do
+# 			QPKGs-ISinstalled.Exist "$qpkg_name" && QPKGs-ISNTenabled.Exist "$qpkg_name" && QPKGs-ACenable-to:Add "$qpkg_name"
 # 		done
 # 	done
 
@@ -1140,6 +1154,8 @@ QPKGs:AssignToActions()
 
 	if QPKGs-ACuninstall-to.IsAny; then
 		for qpkg_name in $(QPKGs-ACuninstall-to:Array); do
+			QPKG.SetIndex
+
 			if QPKGs-ISinstalled.Exist "$qpkg_name" && QPKGs-ACinstall-to.Exist "$qpkg_name"; then
 				QPKGs_were_installed_name+=("$qpkg_name")
 				QPKGs_were_installed_path+=("$($DIRNAME_CMD "$(QPKG.GetInstallationPath)")")
@@ -3347,7 +3363,7 @@ IPKs:install()
 	if QPKGs.ACinstall.GRall.IsSet; then
 		for qpkg_name in "${QPKG_NAME[@]}"; do
 			[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
-
+			QPKG.SetIndex
 			QPKG.IsArchOK || continue
 			QPKG.IsMinOSVerOk || continue
 			QPKG.IsMinRAMOk || continue
@@ -3357,6 +3373,7 @@ IPKs:install()
 	else
 		for qpkg_name in "${!QPKG_NAME[@]}"; do
 			[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
+			QPKG.SetIndex
 
 			if QPKGs-ACinstall-to.Exist "$qpkg_name" || QPKGs-ISinstalled.Exist "$qpkg_name" || QPKGs-ACreinstall-to.Exist "$qpkg_name" || (QPKGs-ACactivate-to.Exist "$qpkg_name" && (QPKGs-ACinstall-to.Exist "$qpkg_name" || QPKGs-ISinstalled.Exist "$qpkg_name" || QPKGs-ACreinstall-to.Exist "$qpkg_name")); then
 # 				qpkg_index=$((i-1))
@@ -3633,12 +3650,11 @@ _LaunchOneActionWithManyForks_()
 	#   $max_forks = maximum number of permitted concurrent forks given the current environment.
 
 	local a=${1:-function null}
-	local b=''
 
 	shift   											# `shift` all arguments one position to the left.
 	local -a c=("$@")
 
-	for b in "${c[@]}"; do
+	for qpkg_name in "${c[@]}"; do
 		while [[ $fork_count -ge $max_forks && ! -e $ACTION_ABORT_PATHFILE ]]; do  	# Don't fork until an empty spot becomes available.
 			sleep .2
 			UpdateForkProgress
@@ -3648,8 +3664,9 @@ _LaunchOneActionWithManyForks_()
 
 		IncForkProgressIndex
 		MarkThisActionForkAsStarted 					# Must create runfile here, as it takes too-long to happen in background function.
-		$a "$b" &
-		DebugAsDone "forked $a() for '$b'"
+		QPKG.SetIndex
+		$a "$qpkg_name" &
+		DebugAsDone "forked $a() for '$qpkg_name'"
 		UpdateForkProgress
 	done
 
@@ -4353,7 +4370,7 @@ DisplayAsStatusReportItemLine()
 
 	if QPKG.IsMissing; then
 		mode=highlighted
-	elif QPKG.IsNtInstalled "$qpkg_name"; then
+	elif QPKG.IsNtInstalled; then
 		mode=muted
 	else
 		mode=normal
@@ -4530,7 +4547,7 @@ DisplayAsReposReportItemLine()
 
 	if QPKG.IsMissing "$qpkg_name"; then
 		mode=highlighted
-	elif QPKG.IsNtInstalled "$qpkg_name"; then
+	elif QPKG.IsNtInstalled; then
 		mode=muted
 	else
 		mode=normal
@@ -4561,11 +4578,11 @@ DisplayAsReposReportItemLine()
 		muted)
 			name_msg+=$(TextDarkGrey "$qpkg_name")
 
-			if ! QPKG.IsArchOK "$qpkg_name"; then
+			if ! QPKG.IsArchOK; then
 				assigned_repo='incompatible arch'
-			elif ! QPKG.IsMinOSVerOk "$qpkg_name"; then
+			elif ! QPKG.IsMinOSVerOk; then
 				assigned_repo="incompatible $(GetQnapOS) version"
-			elif ! QPKG.IsMinRAMOk "$qpkg_name"; then
+			elif ! QPKG.IsMinRAMOk; then
 				assigned_repo='insufficient RAM'
 			else
 				assigned_repo='not installed'
@@ -4645,7 +4662,7 @@ DisplayAsAbsReportItemLine()
 
 	if QPKG.IsMissing "$qpkg_name"; then
 		mode=highlighted
-	elif QPKG.IsNtInstalled "$qpkg_name"; then
+	elif QPKG.IsNtInstalled; then
 		mode=muted
 	else
 		mode=normal
@@ -6557,6 +6574,7 @@ QPKGs.States:Build()
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		[[ $qpkg_name = "$a" ]] && continue || a=$qpkg_name
+		QPKG.SetIndex
 
 		if QPKG.IsNtInstalled; then
 			if QPKG.IsInstallable; then
@@ -6569,6 +6587,7 @@ QPKGs.States:Build()
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		[[ $qpkg_name = "$a" ]] && continue || a=$qpkg_name
+		QPKG.SetIndex
 
 		if QPKG.IsInstalled; then
 			echo installed							# Only write this once per-file.
@@ -6583,6 +6602,7 @@ QPKGs.States:Build()
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		[[ $qpkg_name = "$a" ]] && continue || a=$qpkg_name
+		QPKG.SetIndex
 
 		if QPKG.IsInstalled; then
 			if QPKG.IsEnabled; then
@@ -6595,11 +6615,12 @@ QPKGs.States:Build()
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		[[ $qpkg_name = "$a" ]] && continue || a=$qpkg_name
+		QPKG.SetIndex
 
-		if QPKG.IsCanBackup "$qpkg_name"; then
+		if QPKG.IsCanBackup; then
 			echo backupable
 
-			if QPKG.IsBackupExist "$qpkg_name"; then
+			if QPKG.IsBackupExist; then
 				echo backedup
 			else
 				echo notbackedup
@@ -6611,6 +6632,7 @@ QPKGs.States:Build()
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		[[ $qpkg_name = "$a" ]] && continue || a=$qpkg_name
+		QPKG.SetIndex
 
 		if QPKG.IsInstalled; then
 			if QPKG.IsMissing; then
@@ -6936,7 +6958,6 @@ Report.Dependencies:Show()
 	report_cols_max=8
 	local -i m=0
 	local -i n=0
-	local -i t=$(QPKGs-GRall:Count)
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport dependency
@@ -6953,7 +6974,8 @@ Report.Dependencies:Show()
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
-		DisplayAsDepsReportItemLine "$qpkg_name" > "$REPORTS_PATH/$n" &
+		QPKG.SetIndex
+		DisplayAsDepsReportItemLine > "$REPORTS_PATH/$n" &
 	done
 
 	m=$n
@@ -7002,6 +7024,7 @@ Report.Packages:Show()
 		DisplayAsPacksReportTitleLine
 
 		for qpkg_name in $(QPKGs-GRall:Array); do
+			QPKG.SetIndex
 			DisplayAsPacksReportItemLine
 		done
 
@@ -7034,7 +7057,6 @@ Report.Repos:Show()
 	report_cols_max=3
 	local -i m=0
 	local -i n=0
-	local -i t=$(QPKGs-GRall:Count)
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport repository
@@ -7042,9 +7064,9 @@ Report.Repos:Show()
 	DisplayAsReposReportTitleLine >"$REPORT_OUTPUT_PATHFILE"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		QPKG.SetIndex
 		((n++))
-		DisplayAsReposReportItemLine "$qpkg_name" > "$REPORTS_PATH/$n" &
+		QPKG.SetIndex
+		DisplayAsReposReportItemLine > "$REPORTS_PATH/$n" &
 	done
 
 	m=$n
@@ -7095,8 +7117,8 @@ Report.Statuses:Show()
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		QPKGs-ACstatus-dn.Exist "$qpkg_name" || continue
-		QPKG.SetIndex
 		((n++))
+		QPKG.SetIndex
 		DisplayAsStatusReportItemLine > "$REPORTS_PATH/$n" &
 	done
 
@@ -8256,7 +8278,6 @@ _QPKG:reassign_()
 
 	FuncFork:Init
 
-	qpkg_name=${1:?${FUNCNAME[0]}'()': undefined package name}
 	local -i z=0
 
 	if ! QPKGs-ISinstalled.Exist "$qpkg_name"; then
@@ -8271,7 +8292,7 @@ _QPKG:reassign_()
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
 
-	DebugAsProc "reassigning $(ShowAsPackageName "$qpkg_name")"
+	DebugAsProc "reassigning $(ShowAsPackageName)"
 	RunAndLog "/sbin/setcfg -e $qpkg_name store -f /etc/config/qpkg.conf" "$LOGS_PATH/$qpkg_name.$REASSIGN_LOG_FILE" log:failure-only
 	z=$?
 
@@ -8304,13 +8325,12 @@ _QPKG:download_()
 
 	FuncFork:Init
 
-	qpkg_name=${1:?${FUNCNAME[0]}'()': undefined package name}
-		local -r REMOTE_HASH=$(QPKG.GetHash "$qpkg_name")
-		local -r REMOTE_URL=$(QPKG.GetURL)
-			local -r REMOTE_FILENAME=$($BASENAME_CMD "$REMOTE_URL")
-				local -r LOCAL_PATHFILE=$QPKG_DL_PATH/$REMOTE_FILENAME
-					local -r LOCAL_FILENAME=$($BASENAME_CMD "$LOCAL_PATHFILE")
-						local -r LOG_PATHFILE=$LOGS_PATH/$LOCAL_FILENAME.$DOWNLOAD_LOG_FILE
+	local -r REMOTE_HASH=$(QPKG.GetHash)
+	local -r REMOTE_URL=$(QPKG.GetURL)
+		local -r REMOTE_FILENAME=$($BASENAME_CMD "$REMOTE_URL")
+			local -r LOCAL_PATHFILE=$QPKG_DL_PATH/$REMOTE_FILENAME
+				local -r LOCAL_FILENAME=$($BASENAME_CMD "$LOCAL_PATHFILE")
+					local -r LOG_PATHFILE=$LOGS_PATH/$LOCAL_FILENAME.$DOWNLOAD_LOG_FILE
 	local -i z=0
 
 	if [[ -z $REMOTE_URL || -z $REMOTE_HASH ]]; then
@@ -8378,7 +8398,6 @@ _QPKG:install_()
 	FuncFork:Init
 
 	local a=''
-	QPKG.SetIndex
 	local -i z=0
 
 	if QPKGs-ISinstalled.Exist "$qpkg_name"; then
@@ -8401,13 +8420,13 @@ _QPKG:install_()
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
 
-	local local_pathfile=$(QPKG.GetPathFilename "$qpkg_name")
+	local local_pathfile=$(QPKG.GetPathFilename)
 
 	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" install skipped-error 'no local file found for processing: please report this issue'
 		MarkThisActionForkAsSkippedError
 		z=4
-# 	elif ! FileMatchesMD5 "$local_pathfile" "$(QPKG.GetHash "$qpkg_name")"; then
+# 	elif ! FileMatchesMD5 "$local_pathfile" "$(QPKG.GetHash)"; then
 # 		SaveActionResultToLog QPKG "$qpkg_name" install skipped-error "cache file $(ShowAsFileName "$($BASENAME_CMD "$local_pathfile")") has incorrect checksum"
 # 		MarkThisActionForkAsSkippedError
 # 		z=4
@@ -8428,7 +8447,7 @@ _QPKG:install_()
 
 	local target_path=''
 
-	DebugAsProc "installing $(ShowAsPackageName "$qpkg_name")"
+	DebugAsProc "installing $(ShowAsPackageName)"
 	[[ $useropt_debug = true ]] && a='DEBUG_QPKG=true '
 
 	[[ ${QPKGs_were_installed_name[*]:-} = *"$qpkg_name"* ]] && target_path="QINSTALL_PATH=$(QPKG.GetOriginalPath "$qpkg_name") "
@@ -8502,7 +8521,7 @@ _QPKG:reinstall_()
 		SaveActionResultToLog QPKG "$qpkg_name" reinstall skipped "QPKG is not installed, please use 'install' instead."
 		MarkThisActionForkAsSkipped
 		z=1
-	elif ! QPKG.IsRepoOk "$qpkg_name"; then
+	elif ! QPKG.IsRepoOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" reinstall skipped "QPKG is assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkipped
 		z=1
@@ -8510,13 +8529,13 @@ _QPKG:reinstall_()
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
 
-	local local_pathfile=$(QPKG.GetPathFilename "$qpkg_name")
+	local local_pathfile=$(QPKG.GetPathFilename)
 
 	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" reinstall skipped-error 'no local file found for processing, please report this issue.'
 		MarkThisActionForkAsSkippedError
 		z=4
-# 	elif ! FileMatchesMD5 "$local_pathfile" "$(QPKG.GetHash "$qpkg_name")"; then
+# 	elif ! FileMatchesMD5 "$local_pathfile" "$(QPKG.GetHash)"; then
 # 		SaveActionResultToLog QPKG "$qpkg_name" reinstall skipped-error "cache file $(ShowAsFileName "$($BASENAME_CMD "$local_pathfile")") has incorrect checksum"
 # 		MarkThisActionForkAsSkippedError
 # 		z=4
@@ -8526,10 +8545,10 @@ _QPKG:reinstall_()
 
 	local target_path=''
 
-	DebugAsProc "reinstalling $(ShowAsPackageName "$qpkg_name")"
+	DebugAsProc "reinstalling $(ShowAsPackageName)"
 	[[ $useropt_debug = true ]] && a='DEBUG_QPKG=true '
 
-	QPKG.IsInstalled "$qpkg_name" && target_path="QINSTALL_PATH=$($DIRNAME_CMD "$(QPKG.GetInstallationPath)") "
+	QPKG.IsInstalled && target_path="QINSTALL_PATH=$($DIRNAME_CMD "$(QPKG.GetInstallationPath)") "
 	RunAndLog "${a}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$REINSTALL_LOG_FILE" log:failure-only 10
 	z=$?
 
@@ -8586,11 +8605,11 @@ _QPKG:rebuild_()
 		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild skipped "QPKG is already installed, please use 'restore' instead"
 		MarkThisActionForkAsSkipped
 		z=1
-	elif ! QPKG.IsBackupExist "$qpkg_name"; then
+	elif ! QPKG.IsBackupExist; then
 		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild skipped 'QPKG backup does not exist'
 		MarkThisActionForkAsSkipped
 		z=1
-	elif ! QPKG.IsRepoOk "$qpkg_name"; then
+	elif ! QPKG.IsRepoOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild skipped "QPKG is assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkipped
 		z=1
@@ -8598,7 +8617,7 @@ _QPKG:rebuild_()
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
 
-	DebugAsProc "meta-rebuilding $(ShowAsPackageName "$qpkg_name")"
+	DebugAsProc "meta-rebuilding $(ShowAsPackageName)"
 	# Nothing-to-do here, real QPKG actions have already been assigned in Env:Check().
 
 	SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild ok
@@ -8626,7 +8645,6 @@ _QPKG:upgrade_()
 	FuncFork:Init
 
 	local a=''
-	qpkg_name=${1:?${FUNCNAME[0]}'()': undefined package name}
 	local -i z=0
 
 	if ! QPKGs-ISinstalled.Exist "$qpkg_name"; then
@@ -8637,7 +8655,7 @@ _QPKG:upgrade_()
 		SaveActionResultToLog QPKG "$qpkg_name" upgrade skipped 'no new QPKG is available'
 		MarkThisActionForkAsSkipped
 		z=1
-	elif ! QPKG.IsRepoOk "$qpkg_name"; then
+	elif ! QPKG.IsRepoOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" upgrade skipped "QPKG is assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkipped
 		z=1
@@ -8645,13 +8663,13 @@ _QPKG:upgrade_()
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
 
-	local local_pathfile=$(QPKG.GetPathFilename "$qpkg_name")
+	local local_pathfile=$(QPKG.GetPathFilename)
 
 	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" upgrade skipped-error 'no local file found for processing, please report this issue'
 		MarkThisActionForkAsSkippedError
 		z=4
-# 	elif ! FileMatchesMD5 "$local_pathfile" "$(QPKG.GetHash "$qpkg_name")"; then
+# 	elif ! FileMatchesMD5 "$local_pathfile" "$(QPKG.GetHash)"; then
 # 		SaveActionResultToLog QPKG "$qpkg_name" upgrade skipped-error "cache file $(ShowAsFileName "$($BASENAME_CMD "$local_pathfile")") has incorrect checksum"
 # 		MarkThisActionForkAsSkippedError
 # 		z=4
@@ -8662,10 +8680,10 @@ _QPKG:upgrade_()
 	local prev_ver=$(QPKG.GetInstalledVer)
 	local target_path=''
 
-	DebugAsProc "upgrading $(ShowAsPackageName "$qpkg_name")"
+	DebugAsProc "upgrading $(ShowAsPackageName)"
 	[[ $useropt_debug = true ]] && a='DEBUG_QPKG=true '
 
-	QPKG.IsInstalled "$qpkg_name" && target_path="QINSTALL_PATH=$($DIRNAME_CMD "$(QPKG.GetInstallationPath "$qpkg_name")") "
+	QPKG.IsInstalled && target_path="QINSTALL_PATH=$($DIRNAME_CMD "$(QPKG.GetInstallationPath "$qpkg_name")") "
 	RunAndLog "${a}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$UPGRADE_LOG_FILE" log:failure-only 10
 	z=$?
 
@@ -8720,7 +8738,6 @@ _QPKG:uninstall_()
 	FuncFork:Init
 
 	local a=''
-	qpkg_name=${1:?${FUNCNAME[0]}'()': undefined package name}
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
@@ -8731,7 +8748,7 @@ _QPKG:uninstall_()
 		SaveActionResultToLog QPKG "$qpkg_name" uninstall skipped "it's needed here! 😉"
 		MarkThisActionForkAsSkipped
 		z=1
-	elif ! QPKG.IsRepoOk "$qpkg_name"; then
+	elif ! QPKG.IsRepoOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" uninstall skipped "QPKG is assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkipped
 		z=1
@@ -8744,7 +8761,7 @@ _QPKG:uninstall_()
 	[[ $qpkg_name = Entware ]] && SaveIpkAndPipList
 
 	if [[ -e $QPKG_UNINSTALLER_PATHFILE ]]; then
-		DebugAsProc "uninstalling $(ShowAsPackageName "$qpkg_name")"
+		DebugAsProc "uninstalling $(ShowAsPackageName)"
 		[[ $useropt_debug = true ]] && a='DEBUG_QPKG=true '
 
 		RunAndLog "${a}${SH_CMD} $QPKG_UNINSTALLER_PATHFILE" "$LOGS_PATH/$qpkg_name.$UNINSTALL_LOG_FILE" log:failure-only
@@ -8799,7 +8816,6 @@ _QPKG:activate_()
 	FuncFork:Init
 
 	local a=''
-	qpkg_name=${1:?${FUNCNAME[0]}'()': undefined package name}
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
@@ -8810,7 +8826,7 @@ _QPKG:activate_()
 		SaveActionResultToLog QPKG "$qpkg_name" activate skipped "QPKG is not enabled, please 'enable' it first"
 		MarkThisActionForkAsSkipped
 		z=1
-	elif ! QPKG.IsRepoOk "$qpkg_name"; then
+	elif ! QPKG.IsRepoOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" activate skipped "QPKG is assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkipped
 		z=1
@@ -8822,9 +8838,9 @@ _QPKG:activate_()
 	local -r LOG_PATHFILE=$LOGS_PATH/$qpkg_name.$ACTIVATE_LOG_FILE
 	local timeout=''
 	OS.IsSupportQpkgTimeout && timeout=" -t $QPKG_START_TIMEOUT_SECONDS"
-	local service_pathfile=$(QPKG.GetServicePathFile "$qpkg_name")
+	local service_pathfile=$(QPKG.GetServicePathFile)
 
-	DebugAsProc "activating $(ShowAsPackageName "$qpkg_name")"
+	DebugAsProc "activating $(ShowAsPackageName)"
 
 	if [[ $service_pathfile = undefined ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" activate skipped-error 'QPKG service script file undefined'
@@ -8896,7 +8912,7 @@ _QPKG:reactivate_()
 		SaveActionResultToLog QPKG "$qpkg_name" reactivate skipped "QPKG is not enabled, please 'enable' it first"
 		MarkThisActionForkAsSkipped
 		z=1
-	elif ! QPKG.IsRepoOk "$qpkg_name"; then
+	elif ! QPKG.IsRepoOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" reactivate skipped "QPKG is assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkipped
 		z=1
@@ -8908,9 +8924,9 @@ _QPKG:reactivate_()
 	local -r LOG_PATHFILE=$LOGS_PATH/$qpkg_name.$REACTIVATE_LOG_FILE
 	local timeout=''
 	OS.IsSupportQpkgTimeout && timeout=" -t $QPKG_RESTART_TIMEOUT_SECONDS"
-	local service_pathfile=$(QPKG.GetServicePathFile "$qpkg_name")
+	local service_pathfile=$(QPKG.GetServicePathFile)
 
-	DebugAsProc "reactivating $(ShowAsPackageName "$qpkg_name")"
+	DebugAsProc "reactivating $(ShowAsPackageName)"
 
 	if [[ $service_pathfile = undefined ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" reactivate skipped-error 'QPKG service script file undefined'
@@ -8962,7 +8978,6 @@ _QPKG:deactivate_()
 	FuncFork:Init
 
 	local a=''
-	qpkg_name=${1:?${FUNCNAME[0]}'()': undefined package name}
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
@@ -8973,7 +8988,7 @@ _QPKG:deactivate_()
 		SaveActionResultToLog QPKG "$qpkg_name" deactivate skipped "it's needed here! 😉"
 		MarkThisActionForkAsSkipped
 		z=1
-	elif ! QPKG.IsRepoOk "$qpkg_name"; then
+	elif ! QPKG.IsRepoOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" deactivate skipped "QPKG is assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkipped
 		z=1
@@ -8985,9 +9000,9 @@ _QPKG:deactivate_()
 	local -r LOG_PATHFILE=$LOGS_PATH/$qpkg_name.$DEACTIVATE_LOG_FILE
 	local timeout=''
 	OS.IsSupportQpkgTimeout && timeout=" -t $QPKG_STOP_TIMEOUT_SECONDS"
-	local service_pathfile=$(QPKG.GetServicePathFile "$qpkg_name")
+	local service_pathfile=$(QPKG.GetServicePathFile)
 
-	DebugAsProc "deactivating $(ShowAsPackageName "$qpkg_name")"
+	DebugAsProc "deactivating $(ShowAsPackageName)"
 
 	if [[ $service_pathfile = undefined ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" deactivate skipped-error 'QPKG service script file undefined'
@@ -9046,7 +9061,6 @@ _QPKG:enable_()
 
 	FuncFork:Init
 
-	qpkg_name=${1:?${FUNCNAME[0]}'()': undefined package name}
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
@@ -9057,7 +9071,7 @@ _QPKG:enable_()
 		SaveActionResultToLog QPKG "$qpkg_name" enable skipped 'QPKG is already enabled'
 		MarkThisActionForkAsSkipped
 		z=1
-	elif ! QPKG.IsRepoOk "$qpkg_name"; then
+	elif ! QPKG.IsRepoOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" enable skipped "QPKG is assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkipped
 		z=1
@@ -9070,7 +9084,7 @@ _QPKG:enable_()
 	local timeout=''
 	OS.IsSupportQpkgTimeout && timeout=" -t $QPKG_ENABLE_TIMEOUT_SECONDS"
 
-	DebugAsProc "enabling $(ShowAsPackageName "$qpkg_name")"
+	DebugAsProc "enabling $(ShowAsPackageName)"
 
 	RunAndLog "/sbin/qpkg_service${timeout} enable $qpkg_name" "$LOG_PATHFILE" log:failure-only
 	QPKG.IsEnabled "$qpkg_name" && SendPackageStateChange ISenabled
@@ -9098,7 +9112,6 @@ _QPKG:disable_()
 
 	FuncFork:Init
 
-	qpkg_name=${1:?${FUNCNAME[0]}'()': undefined package name}
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
@@ -9113,7 +9126,7 @@ _QPKG:disable_()
 		SaveActionResultToLog QPKG "$qpkg_name" disable skipped "it's needed here! 😉"
 		MarkThisActionForkAsSkipped
 		z=1
-	elif ! QPKG.IsRepoOk "$qpkg_name"; then
+	elif ! QPKG.IsRepoOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" disable skipped "QPKG is assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkipped
 		z=1
@@ -9126,7 +9139,7 @@ _QPKG:disable_()
 	local timeout=''
 	OS.IsSupportQpkgTimeout && timeout=" -t $QPKG_DISABLE_TIMEOUT_SECONDS"
 
-	DebugAsProc "disabling $(ShowAsPackageName "$qpkg_name")"
+	DebugAsProc "disabling $(ShowAsPackageName)"
 
 	RunAndLog "/sbin/qpkg_service${timeout} disable $qpkg_name" "$LOG_PATHFILE" log:failure-only
 	! QPKG.IsEnabled "$qpkg_name" && SendPackageStateChange ISNTenabled
@@ -9156,7 +9169,6 @@ _QPKG:enableau_()
 	FuncFork:Init
 
 	local a=''
-	qpkg_name=${1:?${FUNCNAME[0]}'()': undefined package name}
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
@@ -9167,7 +9179,7 @@ _QPKG:enableau_()
 		SaveActionResultToLog QPKG "$qpkg_name" enableau skipped 'QPKG does not support auto-updating'
 		MarkThisActionForkAsSkipped
 		z=1
-	elif ! QPKG.IsRepoOk "$qpkg_name"; then
+	elif ! QPKG.IsRepoOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" enableau skipped "QPKG is assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkipped
 		z=1
@@ -9175,7 +9187,7 @@ _QPKG:enableau_()
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
 
-	DebugAsProc "enabling auto-update $(ShowAsPackageName "$qpkg_name")"
+	DebugAsProc "enabling auto-update $(ShowAsPackageName)"
 	[[ $useropt_debug = true ]] && a='DEBUG_QPKG=true '
 
 	RunAndLog "${a}$(QPKG.GetServicePathFile) enable-auto-update" "$LOGS_PATH/$qpkg_name.$ENABLEAU_LOG_FILE" log:failure-only
@@ -9212,7 +9224,6 @@ _QPKG:disableau_()
 	FuncFork:Init
 
 	local a=''
-	qpkg_name=${1:?${FUNCNAME[0]}'()': undefined package name}
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
@@ -9223,7 +9234,7 @@ _QPKG:disableau_()
 		SaveActionResultToLog QPKG "$qpkg_name" disableau skipped 'QPKG does not support auto-updating'
 		MarkThisActionForkAsSkipped
 		z=1
-	elif ! QPKG.IsRepoOk "$qpkg_name"; then
+	elif ! QPKG.IsRepoOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" disableau skipped "QPKG is assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkipped
 		z=1
@@ -9231,7 +9242,7 @@ _QPKG:disableau_()
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
 
-	DebugAsProc "disabling auto-update $(ShowAsPackageName "$qpkg_name")"
+	DebugAsProc "disabling auto-update $(ShowAsPackageName)"
 	[[ $useropt_debug = true ]] && a='DEBUG_QPKG=true '
 
 	RunAndLog "${a}$(QPKG.GetServicePathFile) disable-auto-update" "$LOGS_PATH/$qpkg_name.$DISABLEAU_LOG_FILE" log:failure-only
@@ -9268,7 +9279,6 @@ _QPKG:backup_()
 	FuncFork:Init
 
 	local a=''
-	qpkg_name=${1:?${FUNCNAME[0]}'()': undefined package name}
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
@@ -9279,7 +9289,7 @@ _QPKG:backup_()
 		SaveActionResultToLog QPKG "$qpkg_name" backup skipped 'QPKG does not support backup'
 		MarkThisActionForkAsSkipped
 		z=1
-	elif ! QPKG.IsRepoOk "$qpkg_name"; then
+	elif ! QPKG.IsRepoOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" backup skipped "QPKG is assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkipped
 		z=1
@@ -9287,7 +9297,7 @@ _QPKG:backup_()
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
 
-	DebugAsProc "backing-up $(ShowAsPackageName "$qpkg_name") configuration"
+	DebugAsProc "backing-up $(ShowAsPackageName) configuration"
 	[[ $useropt_debug = true ]] && a='DEBUG_QPKG=true '
 
 	RunAndLog "${a}$(QPKG.GetServicePathFile) backup" "$LOGS_PATH/$qpkg_name.$BACKUP_LOG_FILE" log:failure-only
@@ -9325,7 +9335,6 @@ _QPKG:restore_()
 	FuncFork:Init
 
 	local a=''
-	qpkg_name=${1:?${FUNCNAME[0]}'()': undefined package name}
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
@@ -9336,11 +9345,11 @@ _QPKG:restore_()
 		SaveActionResultToLog QPKG "$qpkg_name" restore skipped 'QPKG does not support restore'
 		MarkThisActionForkAsSkipped
 		z=1
-	elif ! QPKG.IsBackupExist "$qpkg_name"; then
+	elif ! QPKG.IsBackupExist; then
 		SaveActionResultToLog QPKG "$qpkg_name" restore skipped 'QPKG backup does not exist'
 		MarkThisActionForkAsSkipped
 		z=1
-	elif ! QPKG.IsRepoOk "$qpkg_name"; then
+	elif ! QPKG.IsRepoOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" restore skipped "QPKG is assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkipped
 		z=1
@@ -9348,7 +9357,7 @@ _QPKG:restore_()
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
 
-	DebugAsProc "restoring $(ShowAsPackageName "$qpkg_name") configuration"
+	DebugAsProc "restoring $(ShowAsPackageName) configuration"
 	[[ $useropt_debug = true ]] && a='DEBUG_QPKG=true '
 
 	RunAndLog "${a}$(QPKG.GetServicePathFile) restore" "$LOGS_PATH/$qpkg_name.$RESTORE_LOG_FILE" log:failure-only
@@ -9386,7 +9395,6 @@ _QPKG:clean_()
 	FuncFork:Init
 
 	local a=''
-	qpkg_name=${1:?${FUNCNAME[0]}'()': undefined package name}
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
@@ -9397,7 +9405,7 @@ _QPKG:clean_()
 		SaveActionResultToLog QPKG "$qpkg_name" clean skipped 'QPKG does not support cleaning'
 		MarkThisActionForkAsSkipped
 		z=1
-	elif ! QPKG.IsRepoOk "$qpkg_name"; then
+	elif ! QPKG.IsRepoOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" clean skipped "QPKG is assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkipped
 		z=1
@@ -9405,7 +9413,7 @@ _QPKG:clean_()
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
 
-	DebugAsProc "cleaning $(ShowAsPackageName "$qpkg_name")"
+	DebugAsProc "cleaning $(ShowAsPackageName)"
 	[[ $useropt_debug = true ]] && a='DEBUG_QPKG=true '
 
 	RunAndLog "${a}$(QPKG.GetServicePathFile) clean" "$LOGS_PATH/$qpkg_name.$CLEAN_LOG_FILE" log:failure-only
@@ -9447,7 +9455,6 @@ _QPKG:sign_()
 
 	local a=''
 	local b=''
-	qpkg_name=${1:?${FUNCNAME[0]}'()': undefined package name}
 	local -i z=0
 
 	if [[ -e $ACTION_ABORT_PATHFILE ]]; then
@@ -9468,7 +9475,7 @@ _QPKG:sign_()
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' skipped 'not required: firmware < 4.3.5'
 		MarkThisActionForkAsSkipped
 		z=1
-	elif ! QPKG.IsRepoOk "$qpkg_name"; then
+	elif ! QPKG.IsRepoOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' skipped "QPKG is assigned to another repository, please 'reassign' it first"
 		MarkThisActionForkAsSkipped
 		z=1
@@ -9493,7 +9500,7 @@ _QPKG:sign_()
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
 
-	DebugAsProc "\"signing\" $(ShowAsPackageName "$qpkg_name")"
+	DebugAsProc "\"signing\" $(ShowAsPackageName)"
 
 # 	a="DELETE FROM Certificate WHERE QpkgName = '$qpkg_name'; INSERT INTO Certificate (Type,QpkgName,Cert,DigitalSignature) VALUES ('qpkg','$qpkg_name','$QPKG_CERTIFICATE','$QPKG_SIGNATURE');"
 
@@ -9536,7 +9543,9 @@ _QPKG:status_()
 	# Query a QPKG for its 'status'. Each compatible QPKG will return 0 if application process is active or ready-to-run, 0 if not.
 
 	# Input:
-	#   $1 = QPKG name
+	#   $qpkg_default_index (global, optional)
+	#   $qpkg_index (global, optional)
+	#	$qpkg_name (global, required)
 
 	# Output:
 	#   $? = none, this function executes in the background.
@@ -9547,7 +9556,6 @@ _QPKG:status_()
 
 	local a=''
 	local b=''
-	qpkg_name=${1:?${FUNCNAME[0]}'()': undefined package name}
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
@@ -9556,11 +9564,11 @@ _QPKG:status_()
 		z=1
 	fi
 
-	[[ $z -eq 0 ]] || FuncFork:Exit $z
+	[[ $z -eq 0 ]] || FuncFork:Exit
 
-	DebugAsProc "status $(ShowAsPackageName "$qpkg_name")"
+	DebugAsProc "status $(ShowAsPackageName)"
 
-	a=$(QPKG.GetActiveTest "$qpkg_name")
+	a=$(QPKG.GetActiveTest)
 
 	if [[ $a = builtin ]]; then
 		[[ $useropt_debug = true ]] && b='DEBUG_QPKG=true '
@@ -9613,7 +9621,7 @@ QPKG.AppCenterNotifier:Clear()
 	# KLUDGE: `clean` QTS 4.5.1+ App Center notifier status
 	[[ -e /sbin/qpkg_cli ]] && /sbin/qpkg_cli --cancel "$qpkg_name"
 
-	QPKG.IsNtInstalled "$qpkg_name" && return 0
+	QPKG.IsNtInstalled && return 0
 
 	# Need to do this when installing QPKGs at the CLI.
 	/sbin/setcfg "$qpkg_name" Status complete -f /etc/config/qpkg.conf
@@ -9644,7 +9652,7 @@ QPKG.LastResultWasOk()
 
 	[[ -n $qpkg_name ]] || return
 
-	[[ $(QPKG.GetServiceStatus "$qpkg_name") = ok ]]
+	[[ $(QPKG.GetServiceStatus) = ok ]]
 
 	}
 
@@ -9654,29 +9662,29 @@ QPKG.ServiceStatus:Log()
 	# Input:
 	#   $qpkg_name (global) = QPKG name
 
-	if ! local a=$(QPKG.GetServiceStatus "$qpkg_name"); then
-		DebugAsWarn "unable to get status of $(ShowAsPackageName "$qpkg_name") service. It may be a non-sherpa package, or a sherpa package earlier than 200816c that doesn't support service results."
+	if ! local a=$(QPKG.GetServiceStatus); then
+		DebugAsWarn "unable to get status of $(ShowAsPackageName) service. It may be a non-sherpa package, or a sherpa package earlier than 200816c that doesn't support service results."
 
 		return 1
 	fi
 
 	case $a in
 		?(re)start|stop)
-			DebugInfo "$(ShowAsPackageName "$qpkg_name") service is $a"
+			DebugInfo "$(ShowAsPackageName) service is $a"
 			;;
 		ok)
-			DebugInfo "$(ShowAsPackageName "$qpkg_name") service action completed OK"
+			DebugInfo "$(ShowAsPackageName) service action completed OK"
 			;;
 		failed)
 			if [[ -e /var/log/$qpkg_name.log ]]; then
-				DebugAsError "$(ShowAsPackageName "$qpkg_name") service action failed. Check $(ShowAsFileName "/var/log/$qpkg_name.log") for more information"
+				DebugAsError "$(ShowAsPackageName) service action failed. Check $(ShowAsFileName "/var/log/$qpkg_name.log") for more information"
 				AddExtLogToSessLog /var/log/$qpkg_name.log
 			else
-				DebugAsError "$(ShowAsPackageName "$qpkg_name") service action failed"
+				DebugAsError "$(ShowAsPackageName) service action failed"
 			fi
 			;;
 		*)
-			DebugAsWarn "$(ShowAsPackageName "$qpkg_name") service status is unrecognised or unsupported"
+			DebugAsWarn "$(ShowAsPackageName) service status is unrecognised or unsupported"
 	esac
 
 	return 0
@@ -9719,15 +9727,15 @@ QPKG.GetApplVer()
 	# Returns the version number of the application contained within a QPKG.
 
 	# Input:
-	#   $qpkg_index (global)
 	#   $qpkg_default_index (global)
+	#   $qpkg_index (global)
+	#	$qpkg_name (global)
 
 	# Output:
 	#   stdout = application version
 	#   $? = 0 if found, !0 if not
 
-	[[ ${qpkg_index:=0} -gt 0 ]] || QPKG.SetIndex
-	[[ ${qpkg_index:=0} -gt 0 ]] || return
+	[[ -n $qpkg_name && $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
 
 	local a=''
 
@@ -9748,25 +9756,23 @@ QPKG.GetAvailVer()
 	# Returns the version number of an available QPKG.
 
 	# Input:
-	#   $qpkg_index (global)
 	#   $qpkg_default_index (global)
+	#   $qpkg_index (global)
+	#	$qpkg_name (global)
 
 	# Output:
 	#   stdout = package version
 	#   $? = 0 if found, !0 if not
 
+	[[ -n $qpkg_name && $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
+
 	local a=''
-	local b=''
 
-	[[ -n ${qpkg_name:-} ]] || return
-	[[ ${qpkg_index:=0} -gt 0 ]] || QPKG.SetIndex
-	[[ ${qpkg_index:=0} -gt 0 ]] || return
+	a=${QPKG_VERSION[$qpkg_index]}
+	[[ $a = default ]] && a=${QPKG_VERSION[$qpkg_default_index]}
+	[[ $a != none ]] || return
 
-	b=${QPKG_VERSION[$qpkg_index]}
-	[[ $b = default ]] && b=${QPKG_VERSION[$qpkg_default_index]}
-	[[ $b != none ]] || return
-
-	echo -n "$b"
+	echo -n "$a"
 
 	return 0
 
@@ -9864,6 +9870,7 @@ QPKG.GetPathFilename()
 
 	a=$(QPKG.GetURL)
 	[[ -n $a ]] || return
+
 	[[ $(Lowercase "${a##*.}") != qpkg ]] && a=${a%.*}.qpkg		# Swap `zip` for `qpkg` here (only for compatibilty with `QDK.zip`).
 
 	echo -n "$QPKG_DL_PATH/$($BASENAME_CMD "$a")"
@@ -9876,16 +9883,15 @@ QPKG.GetHash()
 	{
 
 	# Input:
-	#   $qpkg_default_index (global, optional)
-	#   $qpkg_index (global, optional)
+	#   $qpkg_default_index (global)
+	#   $qpkg_index (global)
 	#	$qpkg_name (global)
 
 	# Output:
 	#   stdout = QPKG MD5
 	#   $? = 0 if found, !0 if not
 
-	[[ ${qpkg_index:=0} -gt 0 ]] || QPKG.SetIndex
-	[[ ${qpkg_index:=0} -gt 0 ]] || return
+	[[ -n $qpkg_name && $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
 
 	local a=''
 
@@ -9905,16 +9911,15 @@ QPKG.GetURL()
 	# Returns the URL of $qpkg_index.
 
 	# Input:
-	#   $qpkg_default_index (global, optional)
-	#   $qpkg_index (global, optional)
+	#   $qpkg_default_index (global)
+	#   $qpkg_index (global)
 	#	$qpkg_name (global)
 
 	# Output:
 	#   stdout = QPKG remote URL, specific to this NAS arch.
 	#   $? = 0 if found, !0 if not
 
-	[[ ${qpkg_index:=0} -gt 0 ]] || QPKG.SetIndex
-	[[ ${qpkg_index:=0} -gt 0 ]] || return
+	[[ -n $qpkg_name && $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
 
 	local a=''
 
@@ -10101,16 +10106,15 @@ QPKG.GetDesc()
 	{
 
 	# Input:
-	#   $qpkg_default_index (global, optional)
-	#   $qpkg_index (global, optional)
+	#   $qpkg_default_index (global)
+	#   $qpkg_index (global)
 	#	$qpkg_name (global)
 
 	# Output:
 	#   stdout = QPKG description (first package found).
 	#   $? = 0 (found), !0 (not-found)
 
-	[[ ${qpkg_index:=0} -gt 0 ]] || QPKG.SetIndex
-	[[ ${qpkg_index:=0} -gt 0 ]] || return
+	[[ -n $qpkg_name && $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
 
 	local a=''
 
@@ -10130,16 +10134,15 @@ QPKG.GetNote()
 	# Return any additional notes to be prominently displayed.
 
 	# Input:
-	#   $qpkg_default_index (global, optional)
-	#   $qpkg_index (global, optional)
+	#   $qpkg_default_index (global)
+	#   $qpkg_index (global)
 	#	$qpkg_name (global)
 
 	# Output:
 	#   stdout = package note (first package found).
 	#   $? = 0 (found), !0 (not-found)
 
-	[[ ${qpkg_index:=0} -gt 0 ]] || QPKG.SetIndex
-	[[ ${qpkg_index:=0} -gt 0 ]] || return
+	[[ -n $qpkg_name && $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
 
 	local a=''
 
@@ -10157,15 +10160,15 @@ QPKG.GetAbbrvs()
 	{
 
 	# Input:
-	#   $qpkg_default_index (global, optional)
+	#   $qpkg_default_index (global)
+	#   $qpkg_index (global)
 	#	$qpkg_name (global)
 
 	# Output:
 	#   stdout = list of abbreviations that may be used to specify this package (default package only).
 	#   $? = 0 (found), !0 (not-found)
 
-	[[ ${qpkg_default_index:=0} -gt 0 ]] || QPKG.SetIndex
-	[[ ${qpkg_default_index:=0} -gt 0 ]] || return
+	[[ -n $qpkg_name && $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
 
 	local a=''
 
@@ -10182,16 +10185,15 @@ QPKG.GetDependencies()
 	{
 
 	# Input:
+	#   $qpkg_default_index (global)
+	#   $qpkg_index (global)
 	#	$qpkg_name (global)
-	#   $qpkg_index (global, optional)
-	#   $qpkg_default_index (global, optional)
 
 	# Output:
 	#   stdout = list of QPKGs $qpkg_name depends-upon.
 	#   $? = 0 (found), !0 (not-found)
 
-	[[ ${qpkg_index:=0} -gt 0 ]] || QPKG.SetIndex
-	[[ ${qpkg_index:=0} -gt 0 ]] || return
+	[[ -n $qpkg_name && $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
 
 	local alt=''
 	local first=''
@@ -10258,19 +10260,22 @@ QPKG.GetDependencies()
 QPKG.GetDependents()
 	{
 
-	# Input: (must specify at-least one)
-	#   $1 = QPKG name
-	#   $2 = QPKG index in 'packages' (optional).
+	# Input:
+	#   $qpkg_default_index (global)
+	#   $qpkg_index (global)
+	#	$qpkg_name (global)
 
 	# Output:
-	#   stdout = list of QPKGs that depend-upon this QPKG (first package found).
+	#   stdout = list of QPKGs that depend-upon this QPKG.
 	#   $? = 0 (found), !0 (not-found)
+
+	[[ -n $qpkg_name && $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
 
 	local -a ar=()
 	local -i i=-1			# default to not-found.
-	local re=\\b${1:-}\\b
+	local re=\\b${qpkg_name}\\b
 
-	if QPKGs-GRindependent.Exist "$1"; then
+	if QPKGs-GRindependent.Exist "$qpkg_name"; then
 		for i in "${!QPKG_NAME[@]}"; do
 			if [[ ${QPKG_DEPENDS_ON[$i]} =~ $re ]]; then
 				[[ ${ar[*]:-} != "${QPKG_NAME[$i]}" ]] && ar+=(${QPKG_NAME[$i]})
@@ -10292,18 +10297,15 @@ QPKG.GetIPKs()
 	{
 
 	# Input:
-	#   $qpkg_index (global)
 	#   $qpkg_default_index (global)
+	#   $qpkg_index (global)
+	#	$qpkg_name (global)
 
 	# Output:
 	#   stdout = list of IPKs $qpkg_index depends-upon.
 	#   $? = 0 (found), !0 (not-found)
 
-	if ! [[ ${qpkg_index:=0} -gt 0 && ${qpkg_default_index:=0} -gt 0 ]]; then
-		QPKG.SetIndex
-	fi
-
-	[[ ${qpkg_index:=0} -gt 0 && ${qpkg_default_index:=0} -gt 0 ]] || return
+	[[ -n $qpkg_name && $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
 
 	local a=''
 
@@ -10323,26 +10325,23 @@ QPKG.GetActiveTest()
 	# Return any custom commands required to determine if specified QPKG is active or not.
 
 	# Input:
-	#   $1 = QPKG name
+	#   $qpkg_default_index (global)
+	#   $qpkg_index (global)
+	#	$qpkg_name (global)
 
 	# Output:
 	#   stdout = bash tests.
 	#   $? = 0 (found), !0 (not-found)
 
-	local a=''
-	local -i i=0
+	[[ -n $qpkg_name && $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
 
-	for i in "${!QPKG_NAME[@]}"; do
-		[[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]] || continue
-		a=${QPKG_TEST_FOR_ACTIVE[$i]}
-		[[ -n $a ]] || break
+	a=${QPKG_TEST_FOR_ACTIVE[$qpkg_index]}
+	[[ $a = default ]] && a=${QPKG_TEST_FOR_ACTIVE[$qpkg_default_index]}
+	[[ $a = none ]] && return 1
 
-		echo -n "$a"
+	echo -n "$a"
 
-		return 0
-	done
-
-	return 1
+	return 0
 
 	}
 
@@ -10492,13 +10491,13 @@ QPKG.IsDependent()
 	# Does this QPKG depend on any other QPKGs?
 
 	# Input:
-	#   $qpkg_index (global)
 	#   $qpkg_default_index (global)
+	#   $qpkg_index (global)
 
 	# Output:
 	#   $? = 0 (true), !0 (false)
 
-	[[ ${qpkg_index:=0} -gt 0 && ${qpkg_default_index:=0} -gt 0 ]] || return
+	[[ $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
 
 	local a=''
 
@@ -10520,7 +10519,9 @@ QPKG.IsUpgradable()
 	# Output:
 	#   $? = 0 (true), !0 (false)
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
+	local a=''
+
+	a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
 
 	QPKG.IsInstalled "$a" && QPKG.IsRepoOk "$a" && [[ $(QPKG.GetInstalledVer "$a") != "$(QPKG.GetAvailVer "$a")" ]] && QPKG.IsArchOK "$a" && QPKG.IsMinOSVerOk "$a" && QPKG.IsMinRAMOk "$a"
 
@@ -10532,15 +10533,15 @@ QPKG.IsInstallable()
 	# Can this QPKG be installed?
 
 	# Input:
-	#   $1 (optional) = QPKG name.
-	#   $qpkg_name (global, default) = target QPKG name.
+	#   $qpkg_default_index (global)
+	#   $qpkg_index (global)
 
 	# Output:
 	#   $? = 0 (true), !0 (false)
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
+	[[ $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
 
-	! QPKG.IsInstalled "$a" && QPKG.IsRepoOk "$a" && QPKG.IsArchOK "$a" && QPKG.IsMinOSVerOk "$a" && QPKG.IsMinRAMOk "$a"
+	! QPKG.IsInstalled && QPKG.IsRepoOk && QPKG.IsArchOK && QPKG.IsMinOSVerOk && QPKG.IsMinRAMOk
 
 	}
 
@@ -10550,20 +10551,15 @@ QPKG.IsCanBackup()
 	# Does this QPKG service-script support `backup` and `restore` actions?
 
 	# Input:
-	#   $1 (optional) = QPKG name.
-	#   $qpkg_name (global, default) = target QPKG name.
+	#   $qpkg_default_index (global)
+	#   $qpkg_index (global)
 
 	# Output:
-	#   $? = 0 (true), !0 (false) (first package found).
+	#   $? = 0 (true), !0 (false)
 
-	local -i i=0
+	[[ $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
 
-	for i in "${!QPKG_NAME[@]}"; do
-		[[ ${QPKG_NAME[$i]} = "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}" ]] || continue
-		${QPKG_CAN_BACKUP[$i]} && return 0 || break
-	done
-
-	return 1
+	${QPKG_CAN_BACKUP[$qpkg_index]}
 
 	}
 
@@ -10703,12 +10699,13 @@ QPKG.IsArchOK()
 	# Does an arch-compatible QPKG exist to suit this NAS?
 
 	# Input:
-	#   $qpkg_name (global)
+	#   $1 (optional) = QPKG name.
+	#   $qpkg_name (global, default) = target QPKG name.
 
 	# Output:
 	#   $? = 0 (true), !0 (false).
 
-	local a=$(QPKG.GetURL)
+	local a=$(QPKG.GetURL "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
 
 	[[ -n $a && $a != none ]]
 
@@ -10724,7 +10721,7 @@ QPKG.IsMinRAMOk()
 	# Output:
 	#   $? = 0 if this NAS meets the minium RAM requirements for QPKG name, 1 if not.
 
-	local a=$(QPKG.GetMinRAM "${1:?${FUNCNAME[0]}'()': undefined package name}")
+	local a=$(QPKG.GetMinRAM "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
 
 	[[ -n $a ]] && [[ $a = none || $NAS_RAM_KB -ge $a ]]
 
@@ -10734,12 +10731,13 @@ QPKG.IsMinOSVerOk()
 	{
 
 	# Input:
-	#   $1 = QPKG name
+	#   $1 (optional) = QPKG name.
+	#   $qpkg_name (global, default) = target QPKG name.
 
 	# Output:
 	#   $? = 0 if this NAS meets the minium OS firmware version requirements for QPKG name, 1 if not.
 
-	local a=$(QPKG.GetMinOSVer "${1:?${FUNCNAME[0]}'()': undefined package name}")
+	local a=$(QPKG.GetMinOSVer "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
 
 	[[ -n $a ]] && [[ $a = none || ${NAS_FIRMWARE_VER//.} -ge $a ]]
 
@@ -10749,12 +10747,13 @@ QPKG.IsMaxOSVerOk()
 	{
 
 	# Input:
-	#   $1 = QPKG name
+	#   $1 (optional) = QPKG name.
+	#   $qpkg_name (global, default) = target QPKG name.
 
 	# Output:
 	#   $? = 0 if this NAS meets the maximum OS firmware version requirements for QPKG name, 1 if not.
 
-	local a=$(QPKG.GetMaxOSVer "${1:?${FUNCNAME[0]}'()': undefined package name}")
+	local a=$(QPKG.GetMaxOSVer "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
 
 	[[ -n $a ]] && [[ $a = none || ${NAS_FIRMWARE_VER//.} -le $a ]]
 
@@ -11170,7 +11169,7 @@ ShowAsOptions()
 ShowAsPackageName()
 	{
 
-	printf '%s' "${1:?${FUNCNAME[0]}'()': undefined package name}"
+	printf '%s' "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}"
 
 	}
 
