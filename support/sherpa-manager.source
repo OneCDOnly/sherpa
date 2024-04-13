@@ -4800,10 +4800,10 @@ DisplayAsDepsReportItemLine()
 	local mode=''
 # 	local name=${1:?${FUNCNAME[0]}'()': undefined package name}
 name=$qpkg_name
-		local package_deps_raw=$(QPKG.GetDependencies)
-		local package_max_os=$(QPKG.GetMaxOSVer "$name")
-		local package_min_os=$(QPKG.GetMinOSVer "$name")
-		local package_min_ram=$(QPKG.GetMinRAM "$name")
+		local package_deps_raw=$(QPKG.GetDependencies "$qpkg_name")
+		local package_max_os=$(QPKG.GetMaxOSVer "$qpkg_name")
+		local package_min_os=$(QPKG.GetMinOSVer "$qpkg_name")
+		local package_min_ram=$(QPKG.GetMinRAM "$qpkg_name")
 	local name_msg=$CHARS_BLANK
 	local package_arch_msg=$CHARS_BLANK
 	local package_deps=''
@@ -9918,7 +9918,7 @@ QPKG.GetURL()
 	#	$qpkg_name (global)
 
 	# Output:
-	#   stdout = QPKG remote URL, specific to this NAS arch.
+	#   stdout = QPKG remote URL.
 	#   $? = 0 if found, !0 if not
 
 	[[ -n $qpkg_name && $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
@@ -9939,22 +9939,43 @@ QPKG.GetMinRAM()
 	{
 
 	# Input:
-	#   $1 = QPKG name
+	#   $1 = QPKG name (optional): if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $qpkg_default_index (global)
+	#   $qpkg_index (global)
+	#	$qpkg_name (global)
 
 	# Output:
-	#   stdout = minimum kB of installed RAM required by this QPKG (first package found).
-	#   $? = 0 (found), !0 (not-found)
+	#   stdout = minimum installed RAM required.
+	#   $? = 0 if found, !0 if not
 
+	local a=false
+	local b=''
+	local c=''
 	local -i i=0
 
-	for i in "${!QPKG_NAME[@]}"; do
-		[[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]] || continue
-		echo -n "${QPKG_MIN_RAM_KB[$i]}"
+	if [[ -n ${1:-} ]]; then
+		a=true
+		b=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
+	else
+		b=${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}
+	fi
 
-		return 0
-	done
+	if [[ $a = true ]]; then
+		for i in "${!QPKG_NAME[@]}"; do
+			[[ ${QPKG_NAME[$i]} = "$b" ]] || continue
+			c=${QPKG_MIN_RAM_KB[$i]}
 
-	return 1
+			break
+		done
+	else
+		c=${QPKG_MIN_RAM_KB[$qpkg_index]}
+		[[ $c = default ]] && c=${QPKG_MIN_RAM_KB[$qpkg_default_index]}
+	fi
+
+	[[ -n $c ]] || c=none
+	echo -n "$c"
+
+	return 0
 
 	}
 
@@ -9962,22 +9983,43 @@ QPKG.GetMinOSVer()
 	{
 
 	# Input:
-	#   $1 = QPKG name
+	#   $1 = QPKG name (optional): if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $qpkg_default_index (global)
+	#   $qpkg_index (global)
+	#	$qpkg_name (global)
 
 	# Output:
-	#   stdout = minimum QTS/QuTS version required by this QPKG (first package found).
-	#   $? = 0 (found), !0 (not-found)
+	#   stdout = minimum QTS/QuTS version required by this QPKG.
+	#   $? = 0 if found, !0 if not
 
+	local a=false
+	local b=''
+	local c=''
 	local -i i=0
 
-	for i in "${!QPKG_NAME[@]}"; do
-		[[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]] || continue
-		echo -n "${QPKG_MIN_OS_VERSION[$i]}"
+	if [[ -n ${1:-} ]]; then
+		a=true
+		b=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
+	else
+		b=${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}
+	fi
 
-		return 0
-	done
+	if [[ $a = true ]]; then
+		for i in "${!QPKG_NAME[@]}"; do
+			[[ ${QPKG_NAME[$i]} = "$b" ]] || continue
+			c=${QPKG_MIN_OS_VERSION[$i]}
 
-	return 1
+			break
+		done
+	else
+		c=${QPKG_MIN_OS_VERSION[$qpkg_index]}
+		[[ $c = default ]] && c=${QPKG_MIN_OS_VERSION[$qpkg_default_index]}
+	fi
+
+	[[ -n $c ]] || c=none
+	echo -n "$c"
+
+	return 0
 
 	}
 
@@ -9985,22 +10027,43 @@ QPKG.GetMaxOSVer()
 	{
 
 	# Input:
-	#   $1 = QPKG name
+	#   $1 = QPKG name (optional): if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $qpkg_default_index (global)
+	#   $qpkg_index (global)
+	#	$qpkg_name (global)
 
 	# Output:
-	#   stdout = maximum QTS/QuTS version required by this QPKG (first package found).
-	#   $? = 0 (found), !0 (not-found)
+	#   stdout = maximum QTS/QuTS version required by this QPKG.
+	#   $? = 0 if found, !0 if not
 
+	local a=false
+	local b=''
+	local c=''
 	local -i i=0
 
-	for i in "${!QPKG_NAME[@]}"; do
-		[[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]] || continue
-		echo -n "${QPKG_MAX_OS_VERSION[$i]}"
+	if [[ -n ${1:-} ]]; then
+		a=true
+		b=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
+	else
+		b=${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}
+	fi
 
-		return 0
-	done
+	if [[ $a = true ]]; then
+		for i in "${!QPKG_NAME[@]}"; do
+			[[ ${QPKG_NAME[$i]} = "$b" ]] || continue
+			c=${QPKG_MAX_OS_VERSION[$i]}
 
-	return 1
+			break
+		done
+	else
+		c=${QPKG_MAX_OS_VERSION[$qpkg_index]}
+		[[ $c = default ]] && c=${QPKG_MAX_OS_VERSION[$qpkg_default_index]}
+	fi
+
+	[[ -n $c ]] || c=none
+	echo -n "$c"
+
+	return 0
 
 	}
 
