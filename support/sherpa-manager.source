@@ -1019,7 +1019,7 @@ QPKGs:AssignToActions()
 		local entware_install_date=$(QPKG.GetInstallDate Entware)
 
 		if [[ $entware_install_date = undefined || ${entware_install_date//[!0-9]/} -le 20240224 ]]; then
-			ShowAsNote "the $(TextBrightOrange Entware) QPKG will be auto-reinstalled (Entware packages were updated late February 2024)"
+			ShowAsNote "the $(TextBrightOrange Entware) QPKG will be auto-reinstalled (Entware packages were updated late in February 2024)"
 			QPKGs-ACreinstall-to:Add Entware
 		fi
 	fi
@@ -1035,15 +1035,13 @@ QPKGs:AssignToActions()
 		done
 	fi
 
-	# Ensure independent packages are also installed when processing these specific actions.
+	# Ensure independent packages are also installed when processing these specific actions:
 
-	for action in reinstall install; do
-		for qpkg_name in $(QPKGs-AC${action}-to:Array); do
-			QPKG:SetIndex
+	for qpkg_name in $(QPKGs-ACinstall-to:Array); do
+		QPKG:SetIndex
 
-			for prospect in $(QPKG.GetDependencies); do
-				QPKGs-ISNTinstalled.Exist "$prospect" && QPKGs-ACinstall-to:Add "$prospect"
-			done
+		for prospect in $(QPKG.GetDependencies); do
+			QPKGs-ISNTinstalled.Exist "$prospect" && QPKGs-ACinstall-to:Add "$prospect"
 		done
 	done
 
@@ -1167,9 +1165,13 @@ QPKGs:AssignToActions()
 		QPKGs-ACupgrade-to.Exist "$qpkg_name" && QPKGs-ACreactivate-to:Add "$qpkg_name"
 	done
 
-	# Build list of required installation QPKGs.
+	# Build list of required QPKGs.
 
-	QPKGs-ACdownload-to:Add "$(QPKGs-ACreinstall-to:Array) $(QPKGs-ACinstall-to:Array)"
+	QPKGs-ACdownload-to:Add "$(QPKGs-ACinstall-to:Array)"
+
+	for qpkg_name in $(QPKGs-ACreinstall-to:Array); do
+		QPKGs-ISinstalled.Exist "$qpkg_name" && QPKGs-ACdownload-to:Add "$qpkg_name"		# Only download files for reinstallable QPKGs
+	done
 
 	for qpkg_name in $(QPKGs-ACupgrade-to:Array); do
 		QPKGs-ISupgradable.Exist "$qpkg_name" && QPKGs-ACdownload-to:Add "$qpkg_name"		# Only download files for upgradable QPKGs
@@ -3369,7 +3371,7 @@ IPKs:install()
 		for qpkg_name in "${QPKG_NAME[@]}"; do
 			[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
 
-			if QPKGs-ACinstall-to.Exist "$qpkg_name" || QPKGs-ISinstalled.Exist "$qpkg_name" || QPKGs-ACreinstall-to.Exist "$qpkg_name" || (QPKGs-ACactivate-to.Exist "$qpkg_name" && (QPKGs-ACinstall-to.Exist "$qpkg_name" || QPKGs-ISinstalled.Exist "$qpkg_name" || QPKGs-ACreinstall-to.Exist "$qpkg_name")); then
+			if QPKGs-ACinstall-to.Exist "$qpkg_name" || QPKGs-ISinstalled.Exist "$qpkg_name" || (QPKGs-ACreinstall-to.Exist "$qpkg_name" && QPKGs-ISinstalled.Exist "$qpkg_name"); then
 				QPKG:SetIndex
 				IPKs-ACinstall-to:Add "$(QPKG.GetIPKs)"
 			fi
@@ -10249,8 +10251,6 @@ QPKG.GetDependencies()
 	# Output:
 	#   stdout = list of QPKGs $qpkg_name depends-upon.
 	#   $? = 0 (found), !0 (not-found)
-
-	[[ -n $qpkg_name && $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
 
 	local alt=''
 	local first=''
