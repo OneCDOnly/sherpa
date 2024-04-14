@@ -2,6 +2,7 @@ Observed issues:
 
 	* When aborting sherpa, must also ensure child procs abort.
 		- Presently, if a child proc is waiting to check PID again, it doesn't abort.
+		- Try https://stackoverflow.com/a/2173421
 
 	* Add setting for $NZBHYDRA_TEMP_FOLDER to nzbhydra service script.
 		- Make this follow $temp_path.

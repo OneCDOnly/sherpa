@@ -4229,16 +4229,18 @@ DisplayAsPacksReportItemLine()
 	{
 
 	# Input:
-	#	$1 = package name
+	#   $1 = QPKG name (optional).
+	# 	$qpkg_name (global).
 
 	local app_ver_msg=$CHARS_BLANK
 # 	local author=$(QPKG.GetAuthor)
 # 	local author_msg=$CHARS_BLANK
-	local description=$(QPKG.GetDesc)
 	local description_msg=$CHARS_BLANK
 	local mode=''
+	local name=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
+		local description=$(QPKG.GetDesc "$name")
+		local notes=$(QPKG.GetNote "$name")
 	local name_msg=$CHARS_NORMAL
-	local notes=$(QPKG.GetNote)
 	local notes_msg="${notes}."
 
 	if QPKG.IsMissing; then
@@ -4249,7 +4251,7 @@ DisplayAsPacksReportItemLine()
 		mode=normal
 	fi
 
-	app_ver_msg+=$(QPKG.GetApplVer)
+	app_ver_msg+=$(QPKG.GetApplVer "$name")
 # 	author_msg+=$author
 	description_msg+="$(Capitalise "$description")."
 	name_msg+=$qpkg_name
@@ -4405,9 +4407,9 @@ DisplayAsStatusReportItemLine()
 				status_msg=${status// /, }
 			fi
 
+			app_ver_msg+=$(QPKG.GetApplVer "$qpkg_name")
 			status_msg=${CHARS_NORMAL}${status_msg}
-			QPKGs-ISupgradable.Exist "$qpkg_name" && upgrade_ver=$(QPKG.GetAvailVer)
-			ver_msg+=$(QPKG.GetInstalledVer)
+			QPKGs-ISupgradable.Exist "$qpkg_name" && upgrade_ver=$(QPKG.GetAvailVer "$qpkg_name")
 
 			if [[ -n $upgrade_ver ]]; then
 				ver_msg+=" ($(TextBrightOrange "$upgrade_ver"))"
@@ -4416,39 +4418,32 @@ DisplayAsStatusReportItemLine()
 				name_msg+=$qpkg_name
 			fi
 
-			app_ver_msg+=$(QPKG.GetApplVer)
 			path_msg+=$(QPKG.GetInstallationPath)
+			ver_msg+=$(QPKG.GetInstalledVer "$qpkg_name")
 			;;
 		muted)
-			name_msg+=$(TextDarkGrey "$qpkg_name")
-
 			if ! QPKG.IsArchOK; then
 				status='incompatible arch'
-				ver_msg=''
-				app_ver_msg=''
 			elif ! QPKG.IsMinOSVerOk; then
 				status="incompatible $(GetQnapOS) version"
-				ver_msg=''
-				app_ver_msg=''
 			elif ! QPKG.IsMinRAMOk; then
 				status='insufficient RAM'
-				ver_msg=''
-				app_ver_msg=''
 			else
 				status='not installed'
-				ver_msg+=$(TextDarkGrey "$(QPKG.GetAvailVer)")
-				app_ver_msg+=$(TextDarkGrey "$(QPKG.GetApplVer)")
 			fi
 
-			status_msg=$(TextDarkGrey "${CHARS_NORMAL}${status}")
+			app_ver_msg+=$(TextDarkGrey "$(QPKG.GetApplVer "$qpkg_name")")
+			name_msg+=$(TextDarkGrey "$qpkg_name")
 			path_msg=''
+			status_msg=$(TextDarkGrey "${CHARS_NORMAL}${status}")
+			ver_msg+=$(TextDarkGrey "$(QPKG.GetAvailVer "$qpkg_name")")
 			;;
 		highlighted)
+			app_ver_msg+=$(TextBrightRed "$(QPKG.GetApplVer "$qpkg_name")")
 			name_msg+=$(TextBrightRed "$qpkg_name")
+			path_msg=$(TextBrightRedBlink "${CHARS_ALERT}$(QPKG.GetInstallationPath)")
 			status_msg=$(TextBrightRedBlink "${CHARS_ALERT}missing")
 			ver_msg+=$(TextBrightRed "$(QPKG.GetInstalledVer)")
-			app_ver_msg+=$(TextBrightRed "$(QPKG.GetApplVer)")
-			path_msg=$(TextBrightRedBlink "${CHARS_ALERT}$(QPKG.GetInstallationPath)")
 	esac
 
 	# column 1: package name
@@ -4677,11 +4672,11 @@ DisplayAsAbsReportItemLine()
 			name_msg+=$(TextDarkGrey "$name")
 
 			if ! QPKG.IsArchOK "$name"; then
-				abs_msg+='(incompatible arch)'
+				abs_msg+='incompatible arch'
 			elif ! QPKG.IsMinOSVerOk "$name"; then
-				abs_msg+="(incompatible $(GetQnapOS) version)"
+				abs_msg+="incompatible $(GetQnapOS) version"
 			elif ! QPKG.IsMinRAMOk "$name"; then
-				abs_msg+='(insufficient RAM)'
+				abs_msg+='insufficient RAM'
 			else
 				abs_msg+=$abs
 			fi
@@ -6849,7 +6844,6 @@ Help.Abbreviations:Show()
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
-# 		QPKG:SetIndex
 		DisplayAsAbsReportItemLine "$qpkg_name" > "$REPORTS_PATH/$n" &
 	done
 
@@ -7020,7 +7014,7 @@ Report.Packages:Show()
 
 		for qpkg_name in $(QPKGs-GRall:Array); do
 			QPKG:SetIndex
-			DisplayAsPacksReportItemLine
+			DisplayAsPacksReportItemLine "$qpkg_name"
 		done
 
 		DisplayAsProjSynExam "abbreviations and aliases may also be used to specify $(ShowAsPackages). To list these" 'help abs'
@@ -9730,25 +9724,36 @@ QPKG.GetApplVer()
 	#   stdout = application version
 	#   $? = 0 if found, !0 if not
 
-	[[ -n $qpkg_name && $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
-
 	local a=''
+	local -i i=0
 
-	a=${QPKG_APPL_VERSION[$qpkg_index]}
-	[[ $a = default ]] && a=${QPKG_APPL_VERSION[$qpkg_default_index]}
-	[[ $a = version ]] && a=${QPKG_VERSION[$qpkg_default_index]}
-	[[ $a != none ]] || return
+	if [[ -n ${1:-} ]]; then
+		for i in "${!QPKG_NAME[@]}"; do
+			if [[ ${QPKG_NAME[$i]} = "$1" ]]; then
+				echo -n "${QPKG_APPL_VERSION[$i]}"
 
-	echo -n "$a"
+				return 0
+			fi
+		done
 
-	return 0
+		return 1
+	else
+		a=${QPKG_APPL_VERSION[$qpkg_index]}
+		[[ $a = default ]] && a=${QPKG_APPL_VERSION[$qpkg_default_index]}
+		[[ $a = version ]] && a=${QPKG_VERSION[$qpkg_default_index]}
+		[[ $a != none ]] || return
+
+		echo -n "$a"
+
+		return 0
+	fi
 
 	}
 
 QPKG.GetAvailVer()
 	{
 
-	# Returns the version number of an available QPKG.
+	# Returns the version number of an available (not-installed) QPKG.
 
 	# Input:
 	#   $qpkg_default_index (global)
@@ -9759,17 +9764,28 @@ QPKG.GetAvailVer()
 	#   stdout = package version
 	#   $? = 0 if found, !0 if not
 
-	[[ -n $qpkg_name && $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
-
 	local a=''
+	local -i i=0
 
-	a=${QPKG_VERSION[$qpkg_index]}
-	[[ $a = default ]] && a=${QPKG_VERSION[$qpkg_default_index]}
-	[[ $a != none ]] || return
+	if [[ -n ${1:-} ]]; then
+		for i in "${!QPKG_NAME[@]}"; do
+			if [[ ${QPKG_NAME[$i]} = "$1" ]]; then
+				echo -n "${QPKG_VERSION[$i]}"
 
-	echo -n "$a"
+				return 0
+			fi
+		done
 
-	return 0
+		return 1
+	else
+		a=${QPKG_VERSION[$qpkg_index]}
+		[[ $a = default ]] && a=${QPKG_VERSION[$qpkg_default_index]}
+		[[ $a != none ]] || return
+
+		echo -n "$a"
+
+		return 0
+	fi
 
 	}
 
