@@ -9920,18 +9920,20 @@ QPKG.GetURL()
 
 	if [[ -n ${1:-} ]]; then
 		for i in "${!QPKG_NAME[@]}"; do
-			[[ ${QPKG_NAME[$i]} = "$1" ]] || continue
-			a=${QPKG_URL[$i]}			# Always grab first found as default.
+			if [[ ${QPKG_NAME[$i]} = "$1" ]] && [[ ${QPKG_ARCH[$i]} = all || ${QPKG_ARCH[$i]} = "$NAS_QPKG_ARCH" ]]; then
+				echo -n "${QPKG_URL[$i]}"
 
-			break
+				return 0
+			fi
 		done
+
+		return 1
 	else
 		a=${QPKG_URL[$qpkg_index]}
 		[[ $a = default ]] && a=${QPKG_URL[$qpkg_default_index]}
+		[[ -n $a ]] || a=none
+		echo -n "$a"
 	fi
-
-	[[ -n $a ]] || a=none
-	echo -n "$a"
 
 	return 0
 
