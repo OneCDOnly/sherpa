@@ -1,5 +1,8 @@
 Observed issues:
 
+	* Dependency report shows Par2 as a "supported arch" on aarch64.
+		- Need to test QPKG.IsArchOK()
+
 	* When aborting sherpa, must also ensure child procs abort.
 		- Presently, if a child proc is waiting to check PID again, it doesn't abort.
 
