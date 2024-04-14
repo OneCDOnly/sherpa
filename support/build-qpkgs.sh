@@ -130,12 +130,4 @@ for d in "$qpkgs_path"/*; do
 	echo "QPKG arches: $(ColourTextBrightGreen rebuilt)"
 done
 
-# create sherpa.qpkg from most recent qbuild file.
-latest_release_version=$(grep ^sherpa_ "$highest_package_versions_found_sorted_pathfile" | tr -s ' ' | cut -d' ' -f4)
-
-if [[ -n $latest_release_version ]]; then
-	echo "latest release version: $latest_release_version"
-	cp -f "$qpkgs_path/sherpa/build/sherpa_$latest_release_version.qpkg" "$target_path/sherpa.qpkg"
-fi
-
 exit 0

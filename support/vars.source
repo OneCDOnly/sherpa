@@ -220,7 +220,7 @@ ShowDone()
 build_date=$(date '+%y%m%d')
 build_year=$(date '+%Y')
 colourful=true
-title_description='A mini-package-manager for QNAP® NAS'
+title_description='a mini-package-manager for QNAP NAS'
 
 checksum_root_path="$HOME"/scripts/nas
 source_path="$HOME"/scripts/nas/sherpa/support
@@ -263,7 +263,7 @@ cdn_other_packages_url="$cdn_onecd_url/<?package_name?>/main/build"
 cdn_qnap_dev_packages_url='https://github.com/qnap-dev/<?package_name?>/releases/download/v<?version?>'
 
 email='<?email?>'
-copyright_basic='Copyright (C) 2017-<?build_year?> OneCD'
+copyright_basic='copyright (C) 2017-<?build_year?> OneCD'
 dont_edit_msg="Please don't edit this file directly, it was built/modified programmatically with the '$(basename "$0")' script."
 email=one.cd.only@gmail.com
 

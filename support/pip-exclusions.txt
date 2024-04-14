@@ -5,6 +5,7 @@ cffi
 cryptography
 dateutil
 defusedxml
+deluge
 levenshtein
 lxml
 mako
@@ -13,6 +14,7 @@ orjson
 packaging
 pillow
 psutil
+pycryptodome
 pycurl
 pysnmp
 python-dateutil
