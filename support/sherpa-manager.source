@@ -3346,7 +3346,6 @@ IPKs:install()
 	local previous=''
 	local -i total_count=0
 	local -i z=0
-# 	qpkg_index=0			# Option 1 based index.
 
 	IPKs-ACinstall-to:Init
 	IPKs-ACdownload-to:Init
@@ -3364,23 +3363,14 @@ IPKs:install()
 		for qpkg_name in "${QPKG_NAME[@]}"; do
 			[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
 			QPKG:SetIndex
-			QPKG.IsArchOK || continue
-			QPKG.IsMinOSVerOk || continue
-			QPKG.IsMinRAMOk || continue
-
 			IPKs-ACinstall-to:Add "$(QPKG.GetIPKs)"
 		done
 	else
-		for qpkg_name in "${!QPKG_NAME[@]}"; do
+		for qpkg_name in "${QPKG_NAME[@]}"; do
 			[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
-			QPKG:SetIndex
 
 			if QPKGs-ACinstall-to.Exist "$qpkg_name" || QPKGs-ISinstalled.Exist "$qpkg_name" || QPKGs-ACreinstall-to.Exist "$qpkg_name" || (QPKGs-ACactivate-to.Exist "$qpkg_name" && (QPKGs-ACinstall-to.Exist "$qpkg_name" || QPKGs-ISinstalled.Exist "$qpkg_name" || QPKGs-ACreinstall-to.Exist "$qpkg_name")); then
-# 				qpkg_index=$((i-1))
-# 				QPKG.IsArchOK || continue
-# 				QPKG.IsMinOSVerOk "${QPKG_NAME[$i]}" || continue
-# 				QPKG.IsMinRAMOk "${QPKG_NAME[$i]}" || continue
-
+				QPKG:SetIndex
 				IPKs-ACinstall-to:Add "$(QPKG.GetIPKs)"
 			fi
 		done
