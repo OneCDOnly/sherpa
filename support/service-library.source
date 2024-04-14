@@ -2811,7 +2811,9 @@ ProcessArgs()
 
 				if IsSupportBackup; then
 					SetServiceAction backup
+					StopQPKG
 					BackupConfig
+					StartQPKG
 				else
 					SetServiceAction unsupported
 					ShowUnsupportedAction "$user_arg"

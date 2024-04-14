@@ -1,8 +1,5 @@
 Observed issues:
 
-	* 'backup' operation must 'stop' QPKG first to prevent config files changing during backup.
-		- Must also 'start' QPKG again afterward if it was started before.
-
 	* Applications like OliveTin and NZBHydra2 are not updating on QPKG start.
 
 	* When QPKG is missing, need to show this on dependencies report.
