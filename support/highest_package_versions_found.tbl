@@ -25,8 +25,8 @@ Mylar3_240414_arm-x41.qpkg.md5       Mylar3_240414_arm-x41.qpkg       Mylar3    
 Mylar3_240414_x86_64.qpkg.md5        Mylar3_240414_x86_64.qpkg        Mylar3               240414       i64    e482d3f2352a1c04c9e453dc4ceccd78
 Mylar3_240414_x86.qpkg.md5           Mylar3_240414_x86.qpkg           Mylar3               240414       i86    7e1b9f6f25640ed7fb06ed8bb84d22fe
 NZBGet_240414.qpkg.md5               NZBGet_240414.qpkg               NZBGet               240414       all    972b006189c30ef2e59d27e5ee531e1d
-NZBHydra2_240414_arm_64.qpkg.md5     NZBHydra2_240414_arm_64.qpkg     NZBHydra2            240414       a64    0cc91152eade026632e5190d3b858c2b
-NZBHydra2_240414_x86_64.qpkg.md5     NZBHydra2_240414_x86_64.qpkg     NZBHydra2            240414       i64    2578598f1148f570cc866cd0cc0f1231
+NZBHydra2_240415_arm_64.qpkg.md5     NZBHydra2_240415_arm_64.qpkg     NZBHydra2            240415       a64    cbf99cd63cebe5fbebb8e04e5b71313e
+NZBHydra2_240415_x86_64.qpkg.md5     NZBHydra2_240415_x86_64.qpkg     NZBHydra2            240415       i64    be8898d2338f27d82f926c35a6650032
 nzbToMedia_240205.qpkg.md5           nzbToMedia_240205.qpkg           nzbToMedia           240205       all    6a43a3e6a7b04762034a1ad7918addad
 OFlexGet_240202_arm_64.qpkg.md5      OFlexGet_240202_arm_64.qpkg      OFlexGet             240202       a64    48dbc690e008ada06eab04af92109982
 OFlexGet_240202_x86_64.qpkg.md5      OFlexGet_240202_x86_64.qpkg      OFlexGet             240202       i64    c43edf0eadadb7f522d3193a60c7e8e3
@@ -76,7 +76,7 @@ SABnzbd_240414_x86_64.qpkg.md5       SABnzbd_240414_x86_64.qpkg       SABnzbd   
 SABnzbd_240414_x86.qpkg.md5          SABnzbd_240414_x86.qpkg          SABnzbd              240414       i86    2302b6bc686f28d457628608c79e1192
 sha3sum_230312_x86_64.qpkg.md5       sha3sum_230312_x86_64.qpkg       sha3sum              230312       i64    6ceba9116e0dbcbdb4e6112f0c02f8c0
 sha3sum_230312_x86.qpkg.md5          sha3sum_230312_x86.qpkg          sha3sum              230312       i86    fdba9d16b88a5b6e3b04483ca77706dd
-sherpa_240414.qpkg.md5               sherpa_240414.qpkg               sherpa               240414       all    68d4ecb6514fd44be63769336f1fbc68
+sherpa_240415.qpkg.md5               sherpa_240415.qpkg               sherpa               240415       all    6bf4c029d6c89eb8afe927184b4ab001
 SortMyQPKGs_240225.qpkg.md5          SortMyQPKGs_240225.qpkg          SortMyQPKGs          240225       all    44643edd1a10db13caa48a46f0a8d3c5
 Unrar_6.2.5_arm_64.qpkg.md5          Unrar_6.2.5_arm_64.qpkg          Unrar                6.2.5        a64    e2382b80908fc9549bbb00058968082a
 Unrar_6.2.5_arm-x41.qpkg.md5         Unrar_6.2.5_arm-x41.qpkg         Unrar                6.2.5        a41    ac1ff1149258db5e4c0b8165774eda37
