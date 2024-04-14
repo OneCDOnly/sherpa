@@ -1795,7 +1795,9 @@ b|-b|backup|--backup|backup-config|--backup-config)
 IsSU ||	exit 1
 if IsSupportBackup;then
 SetServiceAction backup
+StopQPKG
 BackupConfig
+StartQPKG
 else
 SetServiceAction unsupported
 ShowUnsupportedAction "$user_arg"
