@@ -9730,7 +9730,11 @@ QPKG.GetApplVer()
 	if [[ -n ${1:-} ]]; then
 		for i in "${!QPKG_NAME[@]}"; do
 			if [[ ${QPKG_NAME[$i]} = "$1" ]]; then
-				echo -n "${QPKG_APPL_VERSION[$i]}"
+				a=${QPKG_APPL_VERSION[$i]}
+				[[ $a = version ]] && a=${QPKG_VERSION[$qpkg_default_index]}
+				[[ $a != none ]] || return
+
+				echo -n "$a"
 
 				return 0
 			fi
