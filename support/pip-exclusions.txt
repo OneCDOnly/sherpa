@@ -5,6 +5,7 @@ cffi
 cryptography
 dateutil
 defusedxml
+deluge
 levenshtein
 lxml
 mako
