@@ -1,6 +1,14 @@
 Observed issues:
 
-	* 'sherpa reinstall deps' also installed IPKGs for ClamAV, Deluge and Transmission, even though the QPKGs were not installed.
+	* When aborting sherpa, must also ensure child procs abort.
+		- Presently, if a child proc is waiting to check PID again, it doesn't abort.
+
+	* Add setting for $NZBHYDRA_TEMP_FOLDER to nzbhydra service script.
+		- Make this follow $temp_path.
+		-------------------------------------------------------------------------------------------------------------------------
+		local_temp_path=$QPKG_PATH/tmp
+		export NZBHYDRA_TEMP_FOLDER=$local_temp_path
+		-------------------------------------------------------------------------------------------------------------------------
 
 	* Applications like OliveTin and NZBHydra2 are not updating on QPKG start.
 
