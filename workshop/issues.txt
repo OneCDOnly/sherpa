@@ -9,6 +9,7 @@ Observed issues:
 		local_temp_path=$QPKG_PATH/tmp
 		export NZBHYDRA_TEMP_FOLDER=$local_temp_path
 		-------------------------------------------------------------------------------------------------------------------------
+		> Testing ...
 
 	* Applications like OliveTin and NZBHydra2 are not updating on QPKG start.
 
