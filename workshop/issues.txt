@@ -1,5 +1,7 @@
 Observed issues:
 
+	* 'sherpa reinstall deps' also installed IPKGs for ClamAV, Deluge and Transmission, even though the QPKGs were not installed.
+
 	* Applications like OliveTin and NZBHydra2 are not updating on QPKG start.
 
 	* When QPKG is missing, need to show this on dependencies report.
