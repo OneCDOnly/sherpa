@@ -5,8 +5,6 @@ Observed issues:
 
 	* Applications like OliveTin and NZBHydra2 are not updating on QPKG start.
 
-	* duf QPKG is not checking its 'enable' status before starting.
-
 	* When QPKG is missing, need to show this on dependencies report.
 		- Add new state of 'missing' to 'installed?' column.
 

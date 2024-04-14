@@ -1539,20 +1539,14 @@ IsQPKGInstalled()
 	#   $? = 0 : true
 	#   $? = 1 : false
 
-	if [[ -n ${1:-} ]]; then
-		local name=$1
-	else
-		local name=$QPKG_NAME
-	fi
-
-	/bin/grep -q "^\[$name\]" /etc/config/qpkg.conf
+	/bin/grep -q "^\[${1:-$QPKG_NAME}\]" /etc/config/qpkg.conf
 
 	}
 
 IsNotQPKGInstalled()
 	{
 
-	! IsQPKGInstalled "${1:-}"
+	! IsQPKGInstalled "${1:-$QPKG_NAME}"
 
 	}
 
@@ -1566,13 +1560,7 @@ IsQPKGEnabled()
 	#   $? = 0 : true
 	#   $? = 1 : false
 
-	if [[ -n ${1:-} ]]; then
-		local name=$1
-	else
-		local name=$QPKG_NAME
-	fi
-
-	[[ $(Lowercase "$(/sbin/getcfg "$name" Enable -d false -f /etc/config/qpkg.conf)") = true ]]
+	[[ $(Lowercase "$(/sbin/getcfg "${1:-$QPKG_NAME}" Enable -d false -f /etc/config/qpkg.conf)") = true ]]
 
 	}
 
@@ -1586,7 +1574,7 @@ IsNotQPKGEnabled()
 	#   $? = 0 : true
 	#   $? = 1 : false
 
-	! IsQPKGEnabled "${1:-}"
+	! IsQPKGEnabled "${1:-$QPKG_NAME}"
 
 	}
 
