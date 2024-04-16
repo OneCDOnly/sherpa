@@ -4396,6 +4396,7 @@ DisplayAsStatusReportItemLine()
 				status_msg=${status// /, }
 			fi
 
+
 			app_ver_msg+=$(QpkgGetApplVer "$qpkg_name")
 			status_msg=${CHARS_NORMAL}${status_msg}
 			ver_msg+=$(QpkgGetInstalledVer "$qpkg_name")
@@ -9759,9 +9760,7 @@ QpkgGetApplVer()
 				return 0
 			fi
 		done
-
-		return 1
-	else
+	elif [[ $qpkg_index -gt 0 ]]; then
 		a=${QPKG_APPL_VERSION[$qpkg_index]}
 		[[ $a = default ]] && a=${QPKG_APPL_VERSION[$qpkg_default_index]}
 		[[ $a = version ]] && a=${QPKG_VERSION[$qpkg_default_index]}
@@ -9771,6 +9770,8 @@ QpkgGetApplVer()
 
 		return 0
 	fi
+
+	return 1
 
 	}
 
@@ -9799,9 +9800,7 @@ QpkgGetAvailVer()
 				return 0
 			fi
 		done
-
-		return 1
-	else
+	elif [[ $qpkg_index -gt 0 ]]; then
 		a=${QPKG_VERSION[$qpkg_index]}
 		[[ $a = default ]] && a=${QPKG_VERSION[$qpkg_default_index]}
 		[[ $a != none ]] || return
@@ -9810,6 +9809,8 @@ QpkgGetAvailVer()
 
 		return 0
 	fi
+
+	return 1
 
 	}
 
