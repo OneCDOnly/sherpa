@@ -253,7 +253,7 @@ LoadConsts()
 	readonly PACKAGE_DEPENDENCIES_COL_WIDTH=29
 	readonly PACKAGE_DESCRIPTION_COL_WIDTH=10
 	readonly PACKAGE_ENABLED_COL_WIDTH=12
-	readonly PACKAGE_INSTALL_DATE_COL_WIDTH=18
+	readonly PACKAGE_INSTALL_DATE_COL_WIDTH=20
 	readonly PACKAGE_INSTALLED_COL_WIDTH=14
 	readonly PACKAGE_MAX_OS_COL_WIDTH=11
 	readonly PACKAGE_MIN_OS_COL_WIDTH=11
@@ -4397,11 +4397,11 @@ DisplayAsStatusReportItemLine()
 			fi
 
 
-			app_ver_msg+=$(QpkgGetApplVer "$qpkg_name")
+			app_ver_msg+=$(QpkgGetApplVer)
 			status_msg=${CHARS_NORMAL}${status_msg}
-			ver_msg+=$(QpkgGetInstalledVer "$qpkg_name")
+			ver_msg+=$(QpkgGetInstalledVer)
 
-			QPKGs-ISupgradable.Exist "$qpkg_name" && upgrade_ver=$(QpkgGetAvailVer "$qpkg_name")
+			QPKGs-ISupgradable.Exist "$qpkg_name" && upgrade_ver=$(QpkgGetAvailVer)
 
 			if [[ -n $upgrade_ver ]]; then
 				ver_msg+=" ($(TextBrightOrange "$upgrade_ver"))"
@@ -4430,7 +4430,7 @@ DisplayAsStatusReportItemLine()
 			ver_msg+=$(TextDarkGrey "$(QpkgGetAvailVer "$qpkg_name")")
 			;;
 		highlighted)
-			app_ver_msg+=$(TextBrightRed "$(QpkgGetApplVer "$qpkg_name")")
+			app_ver_msg+=$(TextBrightRed "$(QpkgGetApplVer)")
 			name_msg+=$(TextBrightRed "$qpkg_name")
 			path_msg=$(TextBrightRedBlink "${CHARS_ALERT}$(QpkgGetInstallationPath)")
 			status_msg=$(TextBrightRedBlink "${CHARS_ALERT}missing")
@@ -4513,17 +4513,17 @@ DisplayAsReposReportItemLine()
 	{
 
 	# Input:
-	#   $1 = QPKG name (optional).
 	# 	$qpkg_name (global).
 
+	local assigned_repo=''
 	local assigned_repo_msg=$CHARS_NORMAL
+	local install_date=$(QpkgGetInstallDate)
 	local install_date_msg=$CHARS_BLANK
 	local mode=''
-	local name=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
-		local install_date=$(QpkgGetInstallDate "$name")
-		local store_id=$(QpkgGetStoreID "$name")
-			local assigned_repo=$(GetRepoURLFromStoreID "$store_id")
 	local name_msg=$CHARS_BLANK
+	local store_id=$(QpkgGetStoreID)
+		local assigned_repo=$(GetRepoURLFromStoreID "$store_id")
+	[[ $store_id = sherpa ]] && assigned_repo=sherpa
 
 	if QpkgIsMissing; then
 		mode=highlighted
@@ -4533,51 +4533,57 @@ DisplayAsReposReportItemLine()
 		mode=normal
 	fi
 
-	if [[ $store_id = sherpa ]]; then
-		assigned_repo=sherpa
-		assigned_repo_msg+=$(TextBrightGreen "$assigned_repo")
-	else
-		assigned_repo_msg+=$assigned_repo
-	fi
-
 	case $mode in
 		normal)
-			name_msg+=$name
-
-			case $install_date in
+			case $assigned_repo in
 				sherpa)
-					install_date_msg+=$(TextBrightGreen "$install_date")
+					assigned_repo_msg+=$(TextBrightGreen "$assigned_repo")
+					name_msg+=$qpkg_name
 					;;
-				unassigned)
-					install_date_msg+=$(TextBrightOrange "$install_date")
+				undefined)
+					assigned_repo_msg+='N/A'
+					name_msg+=$qpkg_name
 					;;
 				*)
-					install_date_msg+=$install_date
+					assigned_repo_msg=$(TextBrightOrange "${CHARS_ATTENTION}$assigned_repo")
+					name_msg+=$(TextBrightOrange "$qpkg_name")
 			esac
+
+			install_date_msg+=$install_date
 			;;
 		muted)
-			name_msg+=$(TextDarkGrey "$name")
+			assigned_repo_msg=$(TextDarkGrey "${CHARS_NORMAL}N/A")
 
 			if ! QpkgIsArchOK; then
-				assigned_repo='incompatible arch'
+				install_date='incompatible arch'
 			elif ! QpkgIsMinOSVerOk; then
-				assigned_repo="incompatible $(OsGetQnapOS) version"
+				install_date="incompatible $(OsGetQnapOS) version"
 			elif ! QpkgIsMinRAMOk; then
-				assigned_repo='insufficient RAM'
+				install_date='insufficient RAM'
 			else
-				assigned_repo='not installed'
+				install_date='not installed'
 			fi
 
-			install_date_msg+=$(TextDarkGrey "$assigned_repo")
-			assigned_repo=''
-			assigned_repo_msg=''
+			install_date_msg+=$(TextDarkGrey "$install_date")
+			name_msg+=$(TextDarkGrey "$qpkg_name")
 			;;
 		highlighted)
-			name_msg+=$(TextBrightRed "$name")
-			install_date_msg+=$install_date
+			case $assigned_repo in
+				sherpa)
+					assigned_repo_msg+=$(TextBrightGreen "$assigned_repo")
+					;;
+				unassigned)
+					assigned_repo_msg+=$(TextBrightOrange "$assigned_repo")
+					;;
+				*)
+					assigned_repo_msg+=$assigned_repo
+			esac
+
+			install_date_msg=$(TextBrightRedBlink "${CHARS_ALERT}missing")
+			name_msg+=$(TextBrightRed "$qpkg_name")
 	esac
 
-	# column 1: package name
+	# column 1: package qpkg_name
 
 	if [[ $report_cols_max -ge 1 ]]; then
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
@@ -4631,13 +4637,11 @@ DisplayAsAbsReportItemLine()
 	{
 
 	# Input:
-	#   $1 = QPKG name (optional).
 	# 	$qpkg_name (global).
 
 	local abs=''
 	local abs_msg=$CHARS_NORMAL
 	local mode=''
-	local name=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
 	local name_msg=$CHARS_BLANK
 
 	if QpkgIsMissing; then
@@ -4648,35 +4652,32 @@ DisplayAsAbsReportItemLine()
 		mode=normal
 	fi
 
-	abs=$(QpkgGetAbbrvs "$name")
-
-	if [[ -n $abs ]]; then
-		abs=$(Trim "$abs"); abs=${abs// /, }	# insert separators
-	fi
-
 	case $mode in
 		normal)
+			abs=$(FormatAbbrvs "$(QpkgGetAbbrvs)")
 			abs_msg+=$abs
-			name_msg+=$name
+			name_msg+=$qpkg_name
 			;;
 		muted)
-			name_msg+=$(TextDarkGrey "$name")
+			abs=$(FormatAbbrvs "$(QpkgGetAbbrvs "$qpkg_name")")
 
-			if ! QpkgIsArchOK "$name"; then
+			if ! QpkgIsArchOK "$qpkg_name"; then
 				abs_msg+='incompatible arch'
-			elif ! QpkgIsMinOSVerOk "$name"; then
+			elif ! QpkgIsMinOSVerOk "$qpkg_name"; then
 				abs_msg+="incompatible $(OsGetQnapOS) version"
-			elif ! QpkgIsMinRAMOk "$name"; then
+			elif ! QpkgIsMinRAMOk "$qpkg_name"; then
 				abs_msg+='insufficient RAM'
 			else
 				abs_msg+=$abs
 			fi
 
 			abs_msg=$(TextDarkGrey "$abs_msg")
+			name_msg+=$(TextDarkGrey "$qpkg_name")
 			;;
 		highlighted)
+			abs=$(FormatAbbrvs "$(QpkgGetAbbrvs)")
 			abs_msg=$(TextBrightRedBlink "${CHARS_ALERT}${abs}")
-			name_msg+=$(TextBrightRed "$name")
+			name_msg+=$(TextBrightRed "$qpkg_name")
 	esac
 
 	# column 1: package name
@@ -4693,6 +4694,22 @@ DisplayAsAbsReportItemLine()
 	fi
 
 	printf '\n'
+
+	}
+
+FormatAbbrvs()
+	{
+
+	# Input:
+	# 	$1 = list of abbreviations to format with commas.
+
+	local a=''
+
+	if [[ -n ${1:-} ]]; then
+		a=$(Trim "$1"); a=${a// /, }	# insert separators
+	fi
+
+	echo -n "$a"
 
 	}
 
@@ -4781,17 +4798,16 @@ DisplayAsDepsReportItemLine()
 	local dep_name=''
 	local deps=''
 	local deps_msg=$CHARS_NORMAL
+	local deps_raw=$(QpkgGetDependencies)
 	local enabled_msg=$CHARS_BLANK
 	local installed_msg=$CHARS_BLANK
+	local max_os=$(QpkgGetMaxOSVer "$qpkg_name")
 	local max_os_msg=$CHARS_BLANK
+	local min_os=$(QpkgGetMinOSVer "$qpkg_name")
 	local min_os_msg=$CHARS_BLANK
+	local min_ram=$(QpkgGetMinRAM)
 	local min_ram_msg=$CHARS_BLANK
 	local mode=''
-	local name=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
-		local deps_raw=$(QpkgGetDependencies "$name")
-		local max_os=$(QpkgGetMaxOSVer "$name")
-		local min_os=$(QpkgGetMinOSVer "$name")
-		local min_ram=$(QpkgGetMinRAM "$name")
 	local name_msg=$CHARS_BLANK
 
 	[[ -z $deps_raw ]] && deps_raw=none
@@ -4809,7 +4825,15 @@ DisplayAsDepsReportItemLine()
 
 	case $mode in
 		normal)
-			name_msg+=$name
+			name_msg+=$qpkg_name
+
+			if QpkgIsArchOK; then
+				arch_msg+=$(TextBrightGreen true)
+			else
+				arch_msg=$(TextBrightRed "$CHARS_ALERT")
+				arch_msg+=$(TextBrightRed false)
+				name_msg=${CHARS_BLANK}$(TextBrightRed "$qpkg_name")
+			fi
 
 			if [[ $deps_raw != none ]]; then
 				for dep_name in $deps_raw; do
@@ -4820,7 +4844,7 @@ DisplayAsDepsReportItemLine()
 					else
 						deps+=$(TextBrightRed "$dep_name")
 						deps_msg=$(TextBrightRed "$CHARS_ALERT")
-						name_msg=${CHARS_BLANK}$(TextBrightRed "$name")
+						name_msg=${CHARS_BLANK}$(TextBrightRed "$qpkg_name")
 					fi
 				done
 			else
@@ -4829,54 +4853,51 @@ DisplayAsDepsReportItemLine()
 
 			deps_msg+=${deps// /, }
 
-			if QpkgIsInstalled "$name"; then
-				installed_msg+=$(TextBrightGreen true)
-			else
-				installed_msg+=false
-			fi
-
-			if QpkgIsEnabled "$name"; then
+			if QpkgIsEnabled; then
 				enabled_msg+=$(TextBrightGreen true)
 			else
 				enabled_msg=$(TextBrightRed "$CHARS_ALERT")
 				enabled_msg+=$(TextBrightRed false)
-				name_msg=${CHARS_BLANK}$(TextBrightRed "$name")
+				name_msg=${CHARS_BLANK}$(TextBrightRed "$qpkg_name")
 			fi
 
-			if QpkgIsMinRAMOk "$name"; then
-				min_ram_msg+=$(TextBrightGreen "$min_ram")
-			else
-				min_ram_msg=$(TextBrightRed "$CHARS_ALERT")
-				min_ram_msg+=$(TextBrightRed "$min_ram")
-				name_msg=${CHARS_BLANK}$(TextBrightRed "$name")
-			fi
+			installed_msg+=$(TextBrightGreen true)
 
-			if QpkgIsMinOSVerOk "$name"; then
-				min_os_msg+=$(TextBrightGreen "$min_os")
-			else
-				min_os_msg=$(TextBrightRed "$CHARS_ALERT")
-				min_os_msg+=$(TextBrightRed "$min_os")
-				name_msg=${CHARS_BLANK}$(TextBrightRed "$name")
-			fi
-
-			if QpkgIsMaxOSVerOk "$name"; then
+			if QpkgIsMaxOSVerOk; then
 				max_os_msg+=$(TextBrightGreen "$max_os")
 			else
 				max_os_msg=$(TextBrightRed "$CHARS_ALERT")
 				max_os_msg+=$(TextBrightRed "$max_os")
-				name_msg=${CHARS_BLANK}$(TextBrightRed "$name")
+				name_msg=${CHARS_BLANK}$(TextBrightRed "$qpkg_name")
 			fi
 
-			if QpkgIsArchOK "$name"; then
-				arch_msg+=$(TextBrightGreen true)
+			if QpkgIsMinOSVerOk; then
+				min_os_msg+=$(TextBrightGreen "$min_os")
 			else
-				arch_msg=$(TextBrightRed "$CHARS_ALERT")
-				arch_msg+=$(TextBrightRed false)
-				name_msg=${CHARS_BLANK}$(TextBrightRed "$name")
+				min_os_msg=$(TextBrightRed "$CHARS_ALERT")
+				min_os_msg+=$(TextBrightRed "$min_os")
+				name_msg=${CHARS_BLANK}$(TextBrightRed "$qpkg_name")
+			fi
+
+			if QpkgIsMinRAMOk; then
+				min_ram_msg+=$(TextBrightGreen "$min_ram")
+			else
+				min_ram_msg=$(TextBrightRed "$CHARS_ALERT")
+				min_ram_msg+=$(TextBrightRed "$min_ram")
+				name_msg=${CHARS_BLANK}$(TextBrightRed "$qpkg_name")
 			fi
 			;;
 		muted)
-			name_msg+=$(TextDarkGrey "$name")
+			name_msg+=$(TextDarkGrey "$qpkg_name")
+
+			if QpkgIsArchOK "$qpkg_name"; then
+				arch_msg+=$(TextDarkGrey true)
+			else
+				arch_msg=$(TextBrightOrange "$CHARS_ATTENTION")
+				arch_msg+=$(TextBrightOrange false)
+				name_msg=${CHARS_BLANK}$(TextBrightOrange "$qpkg_name")
+			fi
+
 			deps_msg=$(TextDarkGrey "$CHARS_NORMAL")
 
 			if [[ $deps_raw != none ]]; then
@@ -4889,43 +4910,40 @@ DisplayAsDepsReportItemLine()
 			fi
 
 			deps_msg+=${deps// /$(TextDarkGrey ', ')}
-			installed_msg+=$(TextDarkGrey false)
 			enabled_msg+=$(TextDarkGrey 'N/A')
+			installed_msg+=$(TextDarkGrey false)
 
-			if QpkgIsMinRAMOk "$name"; then
-				min_ram_msg+=$(TextDarkGrey "$min_ram")
-			else
-				min_ram_msg=$(TextBrightOrange "$CHARS_ATTENTION")
-				min_ram_msg+=$(TextBrightOrange "$min_ram")
-				name_msg=${CHARS_BLANK}$(TextBrightOrange "$name")
-			fi
-
-			if QpkgIsMinOSVerOk "$name"; then
-				min_os_msg+=$(TextDarkGrey "$min_os")
-			else
-				min_os_msg=$(TextBrightOrange "$CHARS_ATTENTION")
-				min_os_msg+=$(TextBrightOrange "$min_os")
-				name_msg=${CHARS_BLANK}$(TextBrightOrange "$name")
-			fi
-
-			if QpkgIsMaxOSVerOk "$name"; then
+			if QpkgIsMaxOSVerOk "$qpkg_name"; then
 				max_os_msg+=$(TextDarkGrey "$max_os")
 			else
 				max_os_msg=$(TextBrightOrange "$CHARS_ATTENTION")
 				max_os_msg+=$(TextBrightOrange "$max_os")
-				name_msg=${CHARS_BLANK}$(TextBrightOrange "$name")
+				name_msg=${CHARS_BLANK}$(TextBrightOrange "$qpkg_name")
 			fi
 
-			if QpkgIsArchOK "$name"; then
-				arch_msg+=$(TextDarkGrey true)
+			if QpkgIsMinOSVerOk "$qpkg_name"; then
+				min_os_msg+=$(TextDarkGrey "$min_os")
 			else
-				arch_msg=$(TextBrightOrange "$CHARS_ATTENTION")
-				arch_msg+=$(TextBrightOrange false)
-				name_msg=${CHARS_BLANK}$(TextBrightOrange "$name")
+				min_os_msg=$(TextBrightOrange "$CHARS_ATTENTION")
+				min_os_msg+=$(TextBrightOrange "$min_os")
+				name_msg=${CHARS_BLANK}$(TextBrightOrange "$qpkg_name")
+			fi
+
+			if QpkgIsMinRAMOk "$qpkg_name"; then
+				min_ram_msg+=$(TextDarkGrey "$min_ram")
+			else
+				min_ram_msg=$(TextBrightOrange "$CHARS_ATTENTION")
+				min_ram_msg+=$(TextBrightOrange "$min_ram")
+				name_msg=${CHARS_BLANK}$(TextBrightOrange "$qpkg_name")
 			fi
 			;;
 		highlighted)
-			name_msg+=$(TextBrightRed "$name")
+			if QpkgIsArchOK; then
+				arch_msg+=$(TextBrightGreen true)
+			else
+				arch_msg=$(TextBrightRed "$CHARS_ALERT")
+				arch_msg+=$(TextBrightRed false)
+			fi
 
 			if [[ $deps_raw != none ]]; then
 				for dep_name in $deps_raw; do
@@ -4942,43 +4960,39 @@ DisplayAsDepsReportItemLine()
 			fi
 
 			deps_msg+=${deps// /, }
-			installed_msg=$(TextBrightRedBlink "$CHARS_ALERT")
-			installed_msg+=$(TextBrightRedBlink 'missing')
 
-			if QpkgIsEnabled "$name"; then
+			if QpkgIsEnabled; then
 				enabled_msg+=$(TextBrightGreen true)
 			else
 				enabled_msg=$(TextBrightRedBlink "$CHARS_ALERT")
 				enabled_msg+=$(TextBrightRed 'false')
 			fi
 
-			if QpkgIsMinRAMOk "$name"; then
-				min_ram_msg+=$(TextBrightGreen "$min_ram")
-			else
-				min_ram_msg=$(TextBrightRed "$CHARS_ALERT")
-				min_ram_msg+=$(TextBrightRed "$min_ram")
-			fi
+			installed_msg=$(TextBrightRedBlink "$CHARS_ALERT")
+			installed_msg+=$(TextBrightRedBlink 'missing')
 
-			if QpkgIsMinOSVerOk "$name"; then
-				min_os_msg+=$(TextBrightGreen "$min_os")
-			else
-				min_os_msg=$(TextBrightRed "$CHARS_ALERT")
-				min_os_msg+=$(TextBrightRed "$min_os")
-			fi
-
-			if QpkgIsMaxOSVerOk "$name"; then
+			if QpkgIsMaxOSVerOk; then
 				max_os_msg+=$(TextBrightGreen "$max_os")
 			else
 				max_os_msg=$(TextBrightRed "$CHARS_ALERT")
 				max_os_msg+=$(TextBrightRed "$max_os")
 			fi
 
-			if QpkgIsArchOK "$name"; then
-				arch_msg+=$(TextBrightGreen true)
+			if QpkgIsMinOSVerOk; then
+				min_os_msg+=$(TextBrightGreen "$min_os")
 			else
-				arch_msg=$(TextBrightRed "$CHARS_ALERT")
-				arch_msg+=$(TextBrightRed false)
+				min_os_msg=$(TextBrightRed "$CHARS_ALERT")
+				min_os_msg+=$(TextBrightRed "$min_os")
 			fi
+
+			if QpkgIsMinRAMOk; then
+				min_ram_msg+=$(TextBrightGreen "$min_ram")
+			else
+				min_ram_msg=$(TextBrightRed "$CHARS_ALERT")
+				min_ram_msg+=$(TextBrightRed "$min_ram")
+			fi
+
+			name_msg+=$(TextBrightRed "$qpkg_name")
 	esac
 
 	# column 1: package name
@@ -6835,7 +6849,8 @@ Help.Abbreviations:Show()
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
-		DisplayAsAbsReportItemLine "$qpkg_name" > "$REPORTS_PATH/$n" &
+		QpkgSetIndex
+		DisplayAsAbsReportItemLine > "$REPORTS_PATH/$n" &
 	done
 
 	m=$n
