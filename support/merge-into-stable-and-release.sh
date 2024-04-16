@@ -32,6 +32,8 @@ git tag "$release_tag"
 git push --tags
 git checkout "$unstable_branch" || exit
 
+gh release create "$release_tag" --generate-notes "$qpkgs_path/sherpa/build/sherpa.qpkg"
+
 cd $HOME/scripts/nas/sherpa/support || exit
 
 ./reset-qpkg-datetimes.sh || exit
