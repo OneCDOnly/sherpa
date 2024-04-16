@@ -12,8 +12,6 @@ Observed issues:
 		-------------------------------------------------------------------------------------------------------------------------
 		> Testing ...
 
-	* Applications like OliveTin and NZBHydra2 are not updating on QPKG start.
-
 	* When QPKG is missing, need to show this on dependencies report.
 		- Add new state of 'missing' to 'installed?' column.
 
