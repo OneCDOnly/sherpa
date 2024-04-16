@@ -84,22 +84,22 @@ ShowResults()
 	if [[ $generate_show_report = true ]]; then
 		if [[ $useropt_show_log_last = true ]]; then
 			ReleaseLockfile
-			Log.Last:View
+			ViewLogLast
 		elif [[ $useropt_show_log_tail = true ]]; then
 			ReleaseLockfile
-			Log.Tail:View
+			ViewLogTail
 		elif [[ $useropt_show_backups = true ]]; then
-			Report.Backups:Show
+			ShowReportBackups
 		elif [[ $useropt_show_versions = true ]]; then
-			Report.Versions:Show
+			ShowReportVersions
 		elif [[ $useropt_show_dependencies = true ]]; then
-			Report.Dependencies:Show
+			ShowReportDependencies
 		elif [[ $useropt_show_packages = true ]]; then
-			Report.Packages:Show
+			ShowReportPackages
 		elif [[ $useropt_show_repos = true ]]; then
-			Report.Repos:Show
+			ShowReportRepos
 		elif [[ $useropt_show_status = true ]]; then
-			Report.Statuses:Show
+			ShowReportStatuses
 			show_package_actions_ok=false
 			show_package_actions_skipped=false
 			show_package_actions_failed=false
@@ -4398,6 +4398,8 @@ DisplayAsStatusReportItemLine()
 
 			app_ver_msg+=$(QpkgGetApplVer "$qpkg_name")
 			status_msg=${CHARS_NORMAL}${status_msg}
+			ver_msg+=$(QpkgGetInstalledVer "$qpkg_name")
+
 			QPKGs-ISupgradable.Exist "$qpkg_name" && upgrade_ver=$(QpkgGetAvailVer "$qpkg_name")
 
 			if [[ -n $upgrade_ver ]]; then
@@ -4408,7 +4410,6 @@ DisplayAsStatusReportItemLine()
 			fi
 
 			path_msg+=$(QpkgGetInstallationPath)
-			ver_msg+=$(QpkgGetInstalledVer "$qpkg_name")
 			;;
 		muted)
 			if ! QpkgIsArchOK; then
@@ -5742,7 +5743,7 @@ Help.Tips:Show()
 
 	}
 
-Log.Last:View()
+ViewLogLast()
 	{
 
 	# View only the last session log.
@@ -5762,7 +5763,7 @@ Log.Last:View()
 
 	}
 
-Log.Tail:View()
+ViewLogTail()
 	{
 
 	# View only the last session log.
@@ -6037,7 +6038,7 @@ ExtractTailFromLog()
 
 	}
 
-Report.Versions:Show()
+ShowReportVersions()
 	{
 
 	DisableDebugToArchiveAndFile
@@ -6869,7 +6870,7 @@ Help.Abbreviations:Show()
 
 	}
 
-Report.Backups:Show()
+ShowReportBackups()
 	{
 
 	FuncInit
@@ -6924,7 +6925,7 @@ Report.Backups:Show()
 
 	}
 
-Report.Dependencies:Show()
+ShowReportDependencies()
 	{
 
 	# Output:
@@ -6982,7 +6983,7 @@ Report.Dependencies:Show()
 
 	}
 
-Report.Packages:Show()
+ShowReportPackages()
 	{
 
 	# Output:
@@ -7023,7 +7024,7 @@ Report.Packages:Show()
 
 	}
 
-Report.Repos:Show()
+ShowReportRepos()
 	{
 
 	# Output:
@@ -7073,7 +7074,7 @@ Report.Repos:Show()
 
 	}
 
-Report.Statuses:Show()
+ShowReportStatuses()
 	{
 
 	# Output:

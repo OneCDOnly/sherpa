@@ -1,14 +1,5 @@
 Observed issues:
 
-	* upgradable QPKG versions are shown in status report in wrong order:
-		-------------------------------------------------------------------------------------------------------------------------
-	    • QPKG name:           • QPKG statuses:         • QPKG version (new):    • App version:    • QPKG installation path:
-		   Entware              - enabled, active          1.03a                    1.03a             /share/HDA_DATA/.qpkg/Entware
-		   Glances              - enabled, slow             (240413)240406          3.4.0.5           /share/HDA_DATA/.qpkg/Glances
-		   Headphones           - enabled, active           (240413)240406          0.6.1             /share/HDA_DATA/.qpkg/Headphones
-		   HideThatBanner       - enabled, active          240205                   240205            /share/HDA_DATA/.qpkg/HideThatBanner
-		-------------------------------------------------------------------------------------------------------------------------
-
 	* When aborting sherpa, must also ensure child procs abort.
 		- Presently, if a child proc is waiting to check PID again, it doesn't abort.
 		- Try https://stackoverflow.com/a/2173421
