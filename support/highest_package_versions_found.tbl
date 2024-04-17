@@ -8,7 +8,7 @@ duf_240414_arm-x41.qpkg.md5          duf_240414_arm-x41.qpkg          duf       
 duf_240414_x86_64.qpkg.md5           duf_240414_x86_64.qpkg           duf                  240414       i64    3e61b7da6ad82ee077bb95ed71986469
 duf_240414_x86.qpkg.md5              duf_240414_x86.qpkg              duf                  240414       i86    1a25bf4b189c123e11e84c3f5ec2de28
 Entware_1.03a_std.qpkg.md5           Entware_1.03a_std.qpkg           Entware              1.03a        all    deb88a170716d39309d124ad77875b4d
-Glances_240417.qpkg.md5              Glances_240417.qpkg              Glances              240417       all    b36bcdb18d3705b1e3f53d349d12de28
+Glances_240417.qpkg.md5              Glances_240417.qpkg              Glances              240417       all    793368130d562d3de65dfac3d1a66213
 gpt-engineer_240202.qpkg.md5         gpt-engineer_240202.qpkg         gpt-engineer         240202       all    f04fde0d2eab15a4ff645f8d99ca9b2f
 Headphones_240417.qpkg.md5           Headphones_240417.qpkg           Headphones           240417       all    e246052a2c68d8da6884c28e96ff8c9c
 HideThatBanner_240205.qpkg.md5       HideThatBanner_240205.qpkg       HideThatBanner       240205       all    a2d6d70756ab37a5b1af42b21f3c2b45
@@ -76,7 +76,7 @@ SABnzbd_240417_x86_64.qpkg.md5       SABnzbd_240417_x86_64.qpkg       SABnzbd   
 SABnzbd_240417_x86.qpkg.md5          SABnzbd_240417_x86.qpkg          SABnzbd              240417       i86    8d159d9a0a444f6669d0be5f5cf9a4a7
 sha3sum_230312_x86_64.qpkg.md5       sha3sum_230312_x86_64.qpkg       sha3sum              230312       i64    6ceba9116e0dbcbdb4e6112f0c02f8c0
 sha3sum_230312_x86.qpkg.md5          sha3sum_230312_x86.qpkg          sha3sum              230312       i86    fdba9d16b88a5b6e3b04483ca77706dd
-sherpa_240417.qpkg.md5               sherpa_240417.qpkg               sherpa               240417       all    1152b7ddf1e69143d40b2030eee1ec0f
+sherpa_240417.qpkg.md5               sherpa_240417.qpkg               sherpa               240417       all    d1d849e23fd2fab262d32d030e6360aa
 SortMyQPKGs_240225.qpkg.md5          SortMyQPKGs_240225.qpkg          SortMyQPKGs          240225       all    44643edd1a10db13caa48a46f0a8d3c5
 Unrar_6.2.5_arm_64.qpkg.md5          Unrar_6.2.5_arm_64.qpkg          Unrar                6.2.5        a64    e2382b80908fc9549bbb00058968082a
 Unrar_6.2.5_arm-x41.qpkg.md5         Unrar_6.2.5_arm-x41.qpkg         Unrar                6.2.5        a41    ac1ff1149258db5e4c0b8165774eda37
