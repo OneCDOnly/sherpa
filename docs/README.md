@@ -14,7 +14,7 @@ Package management via **sherpa** provides extra features like easy application 
 >
 > That said: the majority of development is now complete, and I'm currently working-on increasing stability during auto-package upgrades. So, <b>sherpa</b> will work beautifully on a fresh (or new) system, but can experience issues when individual application updates are released.
 
-<b>[Click here for available packages](https://github.com/OneCDOnly/sherpa/wiki/Packages)</b>
+<b>[Click here for installable packages](https://github.com/OneCDOnly/sherpa/wiki/Packages)</b>
 
 
 ## Installation
