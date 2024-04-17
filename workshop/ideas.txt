@@ -1,11 +1,6 @@
 * Default dependency report should only show installed QPKGs.
 	- ... but should allow 'sherpa d all' to see all QPKGs.
 
-* Include sherpa QPKG easy-install CLI method in readme.
-	-------------------------------------------------------------------------------------------------------------------------
-	curl | sh blah blah...
-	-------------------------------------------------------------------------------------------------------------------------
-
 * 'show results' report should include completion and elapsed times.
 
 * Make last action result a separate status report column?
