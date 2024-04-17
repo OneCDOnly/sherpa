@@ -311,7 +311,6 @@ LoadVars()
 	archive_debug_afterward=false
 	backup_stdin_fd=none
 	branch_default=stable
-	colourful_default=true
 	fork_pid=''
 	generate_action_report=false
 	generate_help_report=false
@@ -343,9 +342,17 @@ LoadVars()
 	user_terse_value=''
 
 	# User-selectable options.
+
+	if [[ -t 0 ]]; then			# Only enable ANSI colour codes if running in a user terminal.
+		colourful_default=true
+		useropt_colourful=$(LoadSetting Colourful "$colourful_default")
+	else
+		colourful_default=false
+		useropt_colourful=false
+	fi
+
 	useropt_branch=$(LoadSetting Git_Branch "$branch_default")
 	useropt_check=false
-	useropt_colourful=$(LoadSetting Colourful "$colourful_default")
 	useropt_debug=false
 	useropt_help_abbreviations=false
 	useropt_help_actions=false
