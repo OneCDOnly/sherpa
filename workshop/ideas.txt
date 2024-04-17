@@ -1,3 +1,5 @@
+* Disable same-line display updates when not in a user terminal.
+
 * Default dependency report should only show installed QPKGs.
 	- ... but should allow 'sherpa d all' to see all QPKGs.
 	- Do the same for repository report.

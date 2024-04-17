@@ -5,7 +5,7 @@
 
 The world's first multi-action CLI package-manager!
 
-Package management via [b]sherpa[/b] provides extra features like easy application backup, upgrading, service and daemon management, self-checking and repair, and all operations may be automated via cron.
+Package management via [b]sherpa[/b] provides features like easy application backup, upgrading, service and daemon management, multi-threaded operation, self-checking and repair, and all operations may be automated via cron.
 
 [list][b][color=#A371F7]Important:[/color][/b] this is a command-line package and service manager, it's in beta status, and packages have been known to break due to auto-upgrades going wrong. If you would like-to (and are able-to) help by diagnosing and providing logs, and don't mind things breaking from time-to-time, please use this package. If you're looking for complete stability and want a "set-and-forget" solution, it won't be found here just yet. [color=#FF0000][b]Do not[/b][/color] use [b]sherpa[/b] in production environments, unless you're comfortable with the CLI and debugging bash and Python scripts, and/or can afford for applications to be out-of-order for extended periods of time.
 
@@ -17,7 +17,7 @@ That said: the majority of development is now complete, and I'm currently workin
 [b][u][size=120]Installation[/size][/u][/b]
 
 [list]
-[*][url=https://www.qnap.com/en/how-to/faq/article/how-do-i-access-my-qnap-nas-using-ssh][b]SSH[/b][/url] into your NAS, and install the QPKG manually at the command-line:
+[*][url=https://www.qnap.com/en/how-to/faq/article/how-do-i-access-my-qnap-nas-using-ssh][b]SSH[/b][/url] into your NAS, and install the QPKG manually at the command-prompt:
 [code]curl -skL https://tinyurl.com/get-sherpa > /share/Public/sherpa.qpkg;
 sudo sh /share/Public/sherpa.qpkg
 [/code]
