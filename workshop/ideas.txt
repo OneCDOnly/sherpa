@@ -1,7 +1,6 @@
-* sherpa should check if running in interactive mode, and disable ANSI colour coded output if-so.
-
 * Default dependency report should only show installed QPKGs.
 	- ... but should allow 'sherpa d all' to see all QPKGs.
+	- Do the same for repository report.
 
 * 'show results' report should include completion and elapsed times.
 
