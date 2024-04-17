@@ -4348,7 +4348,6 @@ DisplayAsStatusReportItemLine()
 	local path_msg=$CHARS_BLANK
 	local status=''
 	local status_msg=''
-	local upgrade_ver=''
 	local ver_msg=$CHARS_BLANK
 
 	if QpkgIsMissing; then
@@ -4361,6 +4360,16 @@ DisplayAsStatusReportItemLine()
 
 	case $mode in
 		normal)
+			app_ver_msg+=$(QpkgGetApplVer)
+
+			if QPKGs-ISupgradable.Exist "$qpkg_name"; then
+				name_msg+=$(TextBrightOrange "$qpkg_name")
+			else
+				name_msg+=$qpkg_name
+			fi
+
+			path_msg+=$(QpkgGetInstallationPath)
+
 			# Limit statuses to two words only.
 
 			# First word.
@@ -4389,30 +4398,14 @@ DisplayAsStatusReportItemLine()
 				status+=" $(TextBrightOrange unknown)"
 			fi
 
-			# Insert separators.
-
-			if [[ -n $status ]]; then
-				status=$(Trim "$status")
-				status_msg=${status// /, }
-			fi
-
-
-			app_ver_msg+=$(QpkgGetApplVer)
-			status_msg=${CHARS_NORMAL}${status_msg}
+			status_msg=${CHARS_NORMAL}$(AddSeparators "$status")
 			ver_msg+=$(QpkgGetInstalledVer)
-
-			QPKGs-ISupgradable.Exist "$qpkg_name" && upgrade_ver=$(QpkgGetAvailVer)
-
-			if [[ -n $upgrade_ver ]]; then
-				ver_msg+=" ($(TextBrightOrange "$upgrade_ver"))"
-				name_msg+=$(TextBrightOrange "$qpkg_name")
-			else
-				name_msg+=$qpkg_name
-			fi
-
-			path_msg+=$(QpkgGetInstallationPath)
 			;;
 		muted)
+			app_ver_msg+=$(TextDarkGrey "$(QpkgGetApplVer "$qpkg_name")")
+			name_msg+=$(TextDarkGrey "$qpkg_name")
+			path_msg=''
+
 			if ! QpkgIsArchOK; then
 				status='incompatible arch'
 			elif ! QpkgIsMinOSVerOk; then
@@ -4423,9 +4416,6 @@ DisplayAsStatusReportItemLine()
 				status='not installed'
 			fi
 
-			app_ver_msg+=$(TextDarkGrey "$(QpkgGetApplVer "$qpkg_name")")
-			name_msg+=$(TextDarkGrey "$qpkg_name")
-			path_msg=''
 			status_msg=$(TextDarkGrey "${CHARS_NORMAL}${status}")
 			ver_msg+=$(TextDarkGrey "$(QpkgGetAvailVer "$qpkg_name")")
 			;;
@@ -4436,6 +4426,8 @@ DisplayAsStatusReportItemLine()
 			status_msg=$(TextBrightRedBlink "${CHARS_ALERT}missing")
 			ver_msg+=$(TextBrightRed "$(QpkgGetInstalledVer)")
 	esac
+
+	QPKGs-ISupgradable.Exist "$qpkg_name" && ver_msg+=" ($(TextBrightOrange "$(QpkgGetAvailVer)"))"
 
 	# column 1: package name
 
@@ -4654,12 +4646,12 @@ DisplayAsAbsReportItemLine()
 
 	case $mode in
 		normal)
-			abs=$(FormatAbbrvs "$(QpkgGetAbbrvs)")
+			abs=$(AddSeparators "$(QpkgGetAbbrvs)")
 			abs_msg+=$abs
 			name_msg+=$qpkg_name
 			;;
 		muted)
-			abs=$(FormatAbbrvs "$(QpkgGetAbbrvs "$qpkg_name")")
+			abs=$(AddSeparators "$(QpkgGetAbbrvs "$qpkg_name")")
 
 			if ! QpkgIsArchOK "$qpkg_name"; then
 				abs_msg+='incompatible arch'
@@ -4675,7 +4667,7 @@ DisplayAsAbsReportItemLine()
 			name_msg+=$(TextDarkGrey "$qpkg_name")
 			;;
 		highlighted)
-			abs=$(FormatAbbrvs "$(QpkgGetAbbrvs)")
+			abs=$(AddSeparators "$(QpkgGetAbbrvs)")
 			abs_msg=$(TextBrightRedBlink "${CHARS_ALERT}${abs}")
 			name_msg+=$(TextBrightRed "$qpkg_name")
 	esac
@@ -4697,7 +4689,7 @@ DisplayAsAbsReportItemLine()
 
 	}
 
-FormatAbbrvs()
+AddSeparators()
 	{
 
 	# Input:
