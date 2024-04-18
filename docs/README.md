@@ -3,7 +3,7 @@
 sherpa: a mini-package-manager for QNAP NAS
 ============================================
 
-[![GitHub Release](https://img.shields.io/github/v/release/OneCDOnly/sherpa)](https://github.com/OneCDOnly/sherpa/releases/latest) ![GitHub Downloads (all assets, latest release)](https://img.shields.io/github/downloads/OneCDOnly/sherpa/latest/total) [![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/OneCDOnly/sherpa)](https://github.com/OneCDOnly/sherpa) [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Latest Release](https://img.shields.io/github/v/release/OneCDOnly/sherpa?logo=github&label=latest%20release)](https://github.com/OneCDOnly/sherpa/releases/latest) ![GitHub Downloads (all assets, latest release)](https://img.shields.io/github/downloads/OneCDOnly/sherpa/latest/total?logo=github) ![Project Launch](https://img.shields.io/date/1494050732?logo=github&label=project%20launch)
 
 The world's first multi-action CLI package-manager!
 
