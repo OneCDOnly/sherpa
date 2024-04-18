@@ -1,3 +1,5 @@
+* Start building reiterator.
+
 * Disable same-line display updates when not in a user terminal.
 
 * Default dependency report should only show installed QPKGs.
