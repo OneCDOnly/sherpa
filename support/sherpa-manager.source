@@ -45,6 +45,8 @@ Init()
 	LoadConsts
 	LoadVars
 	UpdateColourisation
+	UpdateSedRexegSupport
+	UpdateSleepDecimalSecondsSupport
 	LoadCMDs
 	CMDsIsOk || return
 	SetTraps
@@ -443,14 +445,14 @@ CMDsIsOk()
 	IsSysFileExist $AWK_CMD || return
 	IsSysFileExist $BASENAME_CMD || return
 	IsSysFileExist $CAT_CMD || return
-	# Don't perform a check for `/bin/date` as it's already been called before arriving here.
+	# Don't check for `/bin/date` as it's already been called before arriving here.
 	IsSysFileExist $CURL_CMD || return
 	IsSysFileExist $DF_CMD || return
 	IsSysFileExist $DIRNAME_CMD || return
 	IsSysFileExist $DU_CMD || return
 	IsSysFileExist $GREP_CMD || return
 	IsSysFileExist $HEAD_CMD || return
-	# Don't perform a check for `/bin/less` because it's not always there.
+	# Don't check for `/bin/less` because it's not always there.
 	IsSysFileExist $MD5SUM_CMD || return
 	IsSysFileExist $MKNOD_CMD || return
 	IsSysFileExist $MKTEMP_CMD || return
@@ -458,8 +460,9 @@ CMDsIsOk()
 	IsSysFileExist $PS_CMD || return
 	IsSysFileExist $READLINK_CMD || return
 	IsSysFileExist $SCREEN_CMD || return
-	IsSysFileExist $SED_CMD || return
+	# Don't check for `/bin/sed` as it's already been called before arriving here.
 	IsSysFileExist $SH_CMD || return
+	# Don't check for `/bin/sleep` as it's already been called before arriving here.
 	IsSysFileExist $TAIL_CMD || return
 	IsSysFileExist $TAR_CMD || return
 	IsSysFileExist $TEE_CMD || return
@@ -468,16 +471,9 @@ CMDsIsOk()
 	IsSysFileExist $UNIQ_CMD || return
 	IsSysFileExist $UNZIP_CMD || return
 	IsSysFileExist $UPTIME_CMD || return
-	IsSysFileExist $WC_CMD || return
-
-	if [[ ! -e $GNU_SLEEP_CMD ]]; then
-		IsSysFileExist $SLEEP_CMD || return
-	fi
+	# Don't check for `/usr/bin/wc` as it's already been called before arriving here.
 
 	[[ ! -e $SORT_CMD ]] && ln -s /bin/busybox "$SORT_CMD"		# KLUDGE: `/usr/bin/sort` randomly disappears from QTS.
-
-	# Test if this QTS `sleep` can handle decimal seconds. Early QTS BusyBox versions cannot.
-	readonly DECIMAL_SLEEP_SECONDS_SUPPORTED=$($SLEEP_CMD .01 &>/dev/null && printf true || printf false)
 
 	LocateSQLiteBinary
 
@@ -3397,6 +3393,8 @@ IPKs:install()
 			SaveActionResultToLog IPK "$desc" install ok "$z"
 			HideKeystrokes
 			UpdateColourisation
+			UpdateSedRexegSupport
+			UpdateSleepDecimalSecondsSupport
 
 			rm -f "$PREV_IPK_LIST.installing"
 		else
@@ -8048,6 +8046,22 @@ OsIsSupportSudo()
 
 	}
 
+OsIsSupportSedExtRegex()
+	{
+
+	# Test if QTS `sed` can handle extended regexes (early BusyBox versions cannot).
+	[[ $(echo -en "\033[1;97ma" | /bin/sed -r 's/\x1b\[[0-9;]*m//g' | /usr/bin/wc -c) -eq 1 ]]
+
+	}
+
+OsIsSupportDecimalSleepSeconds()
+	{
+
+	# Test if QTS `sleep` can handle decimal seconds (early BusyBox versions cannot).
+	/bin/sleep .01 &>/dev/null
+
+	}
+
 OsIsAllowUnsignedPackages()
 	{
 
@@ -8801,7 +8815,11 @@ _QPKG:uninstall_()
 			if [[ $qpkg_name = Entware ]]; then
 				SendParentChangeEnv ModPathToEntware
 				SendParentChangeEnv UpdateColourisation
+				SendParentChangeEnv UpdateSedRexegSupport
+				SendParentChangeEnv UpdateSleepDecimalSecondsSupport
 				UpdateColourisation
+				UpdateSedRexegSupport
+				UpdateSleepDecimalSecondsSupport
 			fi
 
 			SendPackageStateChange ISNTinstalled
@@ -8890,7 +8908,11 @@ _QPKG:activate_()
 		if [[ $qpkg_name = Entware ]]; then
 			SendParentChangeEnv ModPathToEntware
 			SendParentChangeEnv UpdateColourisation
+			SendParentChangeEnv UpdateSedRexegSupport
+			SendParentChangeEnv UpdateSleepDecimalSecondsSupport
 			UpdateColourisation
+			UpdateSedRexegSupport
+			UpdateSleepDecimalSecondsSupport
 		fi
 
 		SendPackageStateChange ISactive
@@ -9052,7 +9074,11 @@ _QPKG:deactivate_()
 		if [[ $qpkg_name = Entware ]]; then
 			SendParentChangeEnv ModPathToEntware
 			SendParentChangeEnv UpdateColourisation
+			SendParentChangeEnv UpdateSedRexegSupport
+			SendParentChangeEnv UpdateSleepDecimalSecondsSupport
 			UpdateColourisation
+			UpdateSedRexegSupport
+			UpdateSleepDecimalSecondsSupport
 		fi
 
 		SendPackageStateChange ISNTactive
@@ -12315,12 +12341,14 @@ TextBrightWhite()
 StripANSICodes()
 	{
 
-	# QTS 4.2.6 BusyBox `sed` doesn't fully support extended regexes, so code-stripping only works with a real `sed`.
+	# QTS 4.2.6 BusyBox `sed` doesn't fully support extended-regexes, so code-stripping only works with a real `sed`.
 
-	if [[ -e /opt/bin/sed && -L /opt/etc/passwd ]]; then	# Try to ensure Entware is active first.
-		/opt/bin/sed -r 's/\x1b\[[0-9;]*m//g' <<< "${1:-}"	# https://superuser.com/a/380778
+	if [[ ${sed_ext_regex_supported:=false} = true ]]; then
+		/bin/sed -r 's/\x1b\[[0-9;]*m//g' <<< "${1:-}"		# https://superuser.com/a/380778
+	elif [[ -e /opt/bin/sed && -L /opt/etc/passwd ]]; then	# Try to ensure Entware is active first.
+		/opt/bin/sed -r 's/\x1b\[[0-9;]*m//g' <<< "${1:-}"
 	else
-		printf '%s' "${1:-}"		# Can't strip, so pass thru original message unaltered.
+		printf '%s' "${1:-}"								# Can't strip, so pass thru original message unaltered.
 	fi
 
 	} 2>/dev/null
@@ -12337,6 +12365,20 @@ UpdateColourisation()
 		useropt_colourful=false
 		SendParentChangeEnv 'useropt_colourful=false'
 	fi
+
+	}
+
+UpdateSedRexegSupport()
+	{
+
+	OsIsSupportSedExtRegex && sed_ext_regex_supported=true || sed_ext_regex_supported=false
+
+	}
+
+UpdateSleepDecimalSecondsSupport()
+	{
+
+	OsIsSupportDecimalSleepSeconds && sleep_decimal_seconds_supported=true || sleep_decimal_seconds_supported=false
 
 	}
 
@@ -12438,12 +12480,12 @@ sleep()
 
 	[[ ${n//.} -eq 0 ]] && n=1
 
-	if [[ -e $GNU_SLEEP_CMD && -L /opt/etc/passwd ]]; then  # Try to ensure Entware is active first.
-		$GNU_SLEEP_CMD "$n"
-	elif [[ $DECIMAL_SLEEP_SECONDS_SUPPORTED = false ]]; then
-		$SLEEP_CMD "$((${n%.*}+1))"							# Ensure decimal seconds are rounded-up to next integer.
-	else
+	if [[ ${sleep_decimal_seconds_supported:=false} = true ]]; then
 		$SLEEP_CMD "$n"
+	elif [[ -e $GNU_SLEEP_CMD && -L /opt/etc/passwd ]]; then  				# Try to ensure Entware is active first.
+		$GNU_SLEEP_CMD "$n"
+	else
+		$SLEEP_CMD "$((${n%.*}+1))"											# Ensure decimal seconds are rounded-up to next integer.
 	fi
 
 	return 0
