@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+#* <?dont_edit?>
+#
+#* <?filename?>
+#
+#* <?copyright?>
+#
+#* <?project?>
+#
+#* <?tested?>
+#
+#* <?license?>
+
+readonly USER_ARGS_RAW=$*
+readonly QPKG_NAME=Kapowarr
+readonly SERVICE_SCRIPT_VERSION='<?build_date?>'
+readonly SERVICE_SCRIPT_TYPE=1
+
+InitService()
+	{
+
+# 	app_version_pathfile=$qpkg_repo_path/lazylibrarian/version.py
+	daemon_pathfile=$qpkg_repo_path/Kapowarr.py
+		daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile --daemon --nolaunch --datadir $(/usr/bin/dirname "$qpkg_ini_pathfile") --config $qpkg_ini_pathfile --pidfile $daemon_pid_pathfile"
+
+	# '0.0.0.0' is the default value for LazyLibrarian, so it won't be found in config file. LL only stores non-default values.
+	get_ui_listening_address_cmd="/sbin/getcfg misc host -d 0.0.0.0 -f $qpkg_ini_pathfile"
+
+	# '5299' is the default value for LazyLibrarian, so it won't be found in config file. LL only stores non-default values.
+	get_ui_port_cmd="/sbin/getcfg General http_port -d 5656 -f $qpkg_ini_pathfile"
+	get_ui_port_secure_cmd="/sbin/getcfg General http_port -d 5656 -f $qpkg_ini_pathfile"
+	get_ui_port_secure_enabled_test_cmd='[[ $(/sbin/getcfg General https_enabled -d 0 -f '$qpkg_ini_pathfile') = 1 ]]'
+	run_daemon_in_screen_session=true
+	source_git_branch=development
+	source_git_release=latest
+	source_git_tag=''
+
+# [[ $(git branch) =~ '(no branch)' ]] && echo none || echo one
+# git describe --tags
+
+	source_git_url=https://github.com/Casvt/Kapowarr.git
+
+	IsSupportGetAppVersion && app_version_cmd="/bin/grep '__version__ =' $app_version_pathfile | /bin/sed 's|^.*\"\(.*\)\"|\1|'"
+
+	}
+
+library_path=$(/usr/bin/readlink "$0" 2>/dev/null)
+[[ -z $library_path ]] && library_path=$0
+readonly SERVICE_LIBRARY_PATHFILE=$(/usr/bin/dirname "$library_path")/service.lib
+
+if [[ -e $SERVICE_LIBRARY_PATHFILE ]]; then
+	. $SERVICE_LIBRARY_PATHFILE
+else
+	printf '\033[1;31m%s\033[0m: %s\n' 'derp' "QPKG service function library not found, can't continue."
+	exit 1
+fi
+
+ProcessArgs
