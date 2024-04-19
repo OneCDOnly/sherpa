@@ -1171,8 +1171,8 @@ QPKGsAssignToActions()
 
 	# Check all items.
 
-	if [[ $useropt_check = true ]] && OsIsSupportSignedPackages; then
-		QPKGs-ACsign-to:Add "$(QPKGs-ISinstalled:Array)"
+	if [[ $useropt_check = true ]]; then
+		OsIsSupportSignedPackages && QPKGs-ACsign-to:Add "$(QPKGs-ISinstalled:Array)"
 
 		for qpkg_name in $(QPKGs-GRdependent:Array); do
 			QPKGs-ISenabled.Exist "$qpkg_name" && QPKGs-ACreactivate-to:Add "$qpkg_name"
