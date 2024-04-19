@@ -1,11 +1,11 @@
 [img]https://i.imgur.com/KTZ7xCy.png[/img]
 [b][u][size=150]sherpa: a mini-package-manager for QNAP NAS[/size][/u][/b]
 
-[url=https://github.com/OneCDOnly/sherpa/releases/latest][img]https://img.shields.io/github/v/release/OneCDOnly/sherpa[/img][/url] [img]https://img.shields.io/github/downloads/OneCDOnly/sherpa/latest/total[/img] [url=https://github.com/OneCDOnly/sherpa][img]https://img.shields.io/github/languages/code-size/OneCDOnly/sherpa[/img][/url] [url=https://www.gnu.org/licenses/gpl-3.0][img]https://img.shields.io/badge/License-GPLv3-blue.svg[/img][/url]
+[url=https://github.com/OneCDOnly/sherpa/releases/latest][img]https://img.shields.io/github/v/release/OneCDOnly/sherpa?logo=github&label=latest%20release[/img][/url] [img]https://img.shields.io/github/downloads/OneCDOnly/sherpa/latest/total?logo=github[/img] [img]https://img.shields.io/date/1494050732?logo=github&label=project%20launch[/img]
 
 The world's first multi-action CLI package-manager!
 
-Package management via [b]sherpa[/b] provides extra features like easy application backup, upgrading, service and daemon management, self-checking and repair, and all operations may be automated via cron.
+Package management via [b]sherpa[/b] provides features like easy application backup, upgrading, service and daemon management, multi-threaded operation, self-checking and repair, and all operations may be automated via cron.
 
 [list][b][color=#A371F7]Important:[/color][/b] this is a command-line package and service manager, it's in beta status, and packages have been known to break due to auto-upgrades going wrong. If you would like-to (and are able-to) help by diagnosing and providing logs, and don't mind things breaking from time-to-time, please use this package. If you're looking for complete stability and want a "set-and-forget" solution, it won't be found here just yet. [color=#FF0000][b]Do not[/b][/color] use [b]sherpa[/b] in production environments, unless you're comfortable with the CLI and debugging bash and Python scripts, and/or can afford for applications to be out-of-order for extended periods of time.
 
@@ -17,7 +17,7 @@ That said: the majority of development is now complete, and I'm currently workin
 [b][u][size=120]Installation[/size][/u][/b]
 
 [list]
-[*][url=https://www.qnap.com/en/how-to/faq/article/how-do-i-access-my-qnap-nas-using-ssh][b]SSH[/b][/url] into your NAS, and install the QPKG manually at the command-line:
+[*][url=https://www.qnap.com/en/how-to/faq/article/how-do-i-access-my-qnap-nas-using-ssh][b]SSH[/b][/url] into your NAS, and install the QPKG manually at the command-prompt:
 [code]curl -skL https://tinyurl.com/get-sherpa > /share/Public/sherpa.qpkg;
 sudo sh /share/Public/sherpa.qpkg
 [/code]

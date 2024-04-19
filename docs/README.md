@@ -3,11 +3,11 @@
 sherpa: a mini-package-manager for QNAP NAS
 ============================================
 
-[![GitHub Release](https://img.shields.io/github/v/release/OneCDOnly/sherpa)](https://github.com/OneCDOnly/sherpa/releases/latest) ![GitHub Downloads (all assets, latest release)](https://img.shields.io/github/downloads/OneCDOnly/sherpa/latest/total) [![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/OneCDOnly/sherpa)](https://github.com/OneCDOnly/sherpa) [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Latest Release](https://img.shields.io/github/v/release/OneCDOnly/sherpa?logo=github&label=latest%20release)](https://github.com/OneCDOnly/sherpa/releases/latest) ![GitHub Downloads (all assets, latest release)](https://img.shields.io/github/downloads/OneCDOnly/sherpa/latest/total?logo=github) ![Project Launch](https://img.shields.io/date/1494050732?logo=github&label=project%20launch)
 
 The world's first multi-action CLI package-manager!
 
-Package management via **sherpa** provides extra features like easy application backup, upgrading, service and daemon management, self-checking and repair, and all operations may be automated via cron.
+Package management via **sherpa** provides features like easy application backup, upgrading, service and daemon management, multi-threaded operation, self-checking and repair, and all operations may be automated via cron.
 
 > [!IMPORTANT]
 > This is a command-line package and service manager, it's in beta status, and packages have been known to break due to auto-upgrades going wrong. If you would like-to (and are able-to) help by diagnosing and providing logs, and don't mind things breaking from time-to-time, please use this package. If you're looking for complete stability and want a "set-and-forget" solution, it won't be found here just yet. <b>Do not</b> use <b>sherpa</b> in production environments, unless you're comfortable with the CLI and debugging bash and Python scripts, and/or can afford for applications to be out-of-order for extended periods of time.
