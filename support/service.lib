@@ -22,7 +22,7 @@
 #*   This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 #*	 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY, without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
-readonly SERVICE_LIB_VERSION='240414'
+readonly SERVICE_LIB_VERSION='240420'
 InitLibrary()
 {
 IsQNAP || exit
@@ -1166,8 +1166,8 @@ IsNotDaemon()
 }
 IsDaemonActive()
 {
-DisplayWaitCommitToLog 'daemon:'
 local target_proc=''
+DisplayWaitCommitToLog 'daemon:'
 if [[ $daemon_proc_is_name_only = true ]];then
 target_proc=$(/usr/bin/basename "$(GetLaunchTarget)")
 else
@@ -1178,7 +1178,6 @@ DisplayCommitToLog "active (PID:$(<"$daemon_pid_pathfile"))"
 return 0
 fi
 DisplayCommitToLog inactive
-rm -f "$daemon_pid_pathfile"
 return 1
 }
 IsNotDaemonActive()
@@ -1189,6 +1188,7 @@ IsProcessActive()
 {
 [[ -n ${1:-} ]] || return
 [[ -n ${2:-} ]] || return
+rm -f "$2"
 [[ ! -e $2 ]] && FindAndWritePIDFile
 [[ -e $2 && -d /proc/$(<"$2") && -n ${1:-} && $(</proc/"$(<"$2")"/cmdline) =~ ${1:-} ]]
 }
