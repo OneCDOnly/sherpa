@@ -1740,9 +1740,9 @@ IsDaemonActive()
 	# $? = 0 : $daemon_pathfile is in memory
 	# $? = 1 : $daemon_pathfile is not in memory
 
-	DisplayWaitCommitToLog 'daemon:'
-
 	local target_proc=''
+
+	DisplayWaitCommitToLog 'daemon:'
 
 	if [[ $daemon_proc_is_name_only = true ]]; then
 		target_proc=$(/usr/bin/basename "$(GetLaunchTarget)")
@@ -1756,7 +1756,6 @@ IsDaemonActive()
 	fi
 
 	DisplayCommitToLog inactive
-	rm -f "$daemon_pid_pathfile"
 	return 1
 
 	}
@@ -1781,6 +1780,7 @@ IsProcessActive()
 
 	[[ -n ${1:-} ]] || return
 	[[ -n ${2:-} ]] || return
+	rm -f "$2"
 	[[ ! -e $2 ]] && FindAndWritePIDFile
 	[[ -e $2 && -d /proc/$(<"$2") && -n ${1:-} && $(</proc/"$(<"$2")"/cmdline) =~ ${1:-} ]]
 
