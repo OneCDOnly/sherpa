@@ -1,7 +1,7 @@
 # checksum_filename                  qpkg_filename                    package_name         version      arch   hash
 ClamAV_240420.qpkg.md5               ClamAV_240420.qpkg               ClamAV               240420       all    e89046d02c916326d7edac2abeecdb7c
-Deluge-server_240205.qpkg.md5        Deluge-server_240205.qpkg        Deluge-server        240205       all    9d6370b7cc37cb074ff1509c9688f618
-Deluge-web_240205.qpkg.md5           Deluge-web_240205.qpkg           Deluge-web           240205       all    0145f7e17997ffa1e92a5934c8c67a3a
+Deluge-server_240420.qpkg.md5        Deluge-server_240420.qpkg        Deluge-server        240420       all    cdc0e76e06cc49c6a8bf0814cd05897d
+Deluge-web_240420.qpkg.md5           Deluge-web_240420.qpkg           Deluge-web           240420       all    989d74e9507071eb454e127da8bd1700
 duf_240414_arm_64.qpkg.md5           duf_240414_arm_64.qpkg           duf                  240414       a64    094f8dd8f783ed329fe11e8084d543ba
 duf_240414_arm-x31.qpkg.md5          duf_240414_arm-x31.qpkg          duf                  240414       a31    fee8c354656f5550870a83bdb1f499b1
 duf_240414_arm-x41.qpkg.md5          duf_240414_arm-x41.qpkg          duf                  240414       a41    0bcb0e2cc9b9b57bbeb51c644a537a0f
@@ -76,7 +76,7 @@ SABnzbd_240420_x86_64.qpkg.md5       SABnzbd_240420_x86_64.qpkg       SABnzbd   
 SABnzbd_240420_x86.qpkg.md5          SABnzbd_240420_x86.qpkg          SABnzbd              240420       i86    bb24aace5e917122d1ce8f997e7fefa7
 sha3sum_230312_x86_64.qpkg.md5       sha3sum_230312_x86_64.qpkg       sha3sum              230312       i64    6ceba9116e0dbcbdb4e6112f0c02f8c0
 sha3sum_230312_x86.qpkg.md5          sha3sum_230312_x86.qpkg          sha3sum              230312       i86    fdba9d16b88a5b6e3b04483ca77706dd
-sherpa_240420.qpkg.md5               sherpa_240420.qpkg               sherpa               240420       all    2d1f578934edad4e9e6a7c6d2b67eca7
+sherpa_240420.qpkg.md5               sherpa_240420.qpkg               sherpa               240420       all    335d3ba7eb1e8c3a0293d6b11dc639e6
 SortMyQPKGs_240225.qpkg.md5          SortMyQPKGs_240225.qpkg          SortMyQPKGs          240225       all    44643edd1a10db13caa48a46f0a8d3c5
 Unrar_6.2.5_arm_64.qpkg.md5          Unrar_6.2.5_arm_64.qpkg          Unrar                6.2.5        a64    e2382b80908fc9549bbb00058968082a
 Unrar_6.2.5_arm-x41.qpkg.md5         Unrar_6.2.5_arm-x41.qpkg         Unrar                6.2.5        a41    ac1ff1149258db5e4c0b8165774eda37
