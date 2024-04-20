@@ -1,5 +1,10 @@
 Observed issues:
 
+	* armv5 (Helga) is cutting-off debug log early when running 'sherpa s olive verbose' due to SIGINT.
+
+	* armv5 (Helga) shows OliveTin status as "inactive" only during 'sherpa s' operation.
+		- Running direct check with the OliveTin service-script works fine.
+
 	* Allow Kapowarr to follow source git branch, release or tag.
 
 	* When aborting sherpa, must also ensure child procs abort.
@@ -200,9 +205,6 @@ Observed issues:
 
 	* Near the end of installing IPKs, monitored download path can remain at non-zero size while packages complete installation.
 		- Maybe include a separate progress message when dir size shrinks to almost zero?
-
-	* Extend startup timeouts for Deluge QPKGs?
-		- Frankly, Deluge-web is a colossal PITA. Consider removing support for this as a QPKG.
 
 	* QPKG version sort is not correctly sorting version numbers followed by an alpha as later than non-alpha.
 
