@@ -21,9 +21,6 @@
 
 * 'debug' and 'verbose' modes should be persistent when set with a group.
 
-* Perform auto-test of available 'sed' binaries for one that handles extended regexes for StripANSICodes() without throwing an error.
-    - Might not need to wait for GNU 'sed' to be installed via Entware.
-
 * Add "about" user arg to display current environment.
 
 * BASH completion.

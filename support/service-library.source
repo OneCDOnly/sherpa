@@ -77,7 +77,7 @@ InitLibrary()
 	allow_access_to_sys_packages=true
 	app_version_cmd=undefined
 	app_version_pathfile=undefined
-	OS.IsSupportSecureDownload && curl_insecure_arg='' || curl_insecure_arg=' --insecure'
+	OSIsSupportSecureDownload && curl_insecure_arg='' || curl_insecure_arg=' --insecure'
 	daemon_launch_cmd=undefined
 	daemon_pathfile=undefined
 	daemon_pid_pathfile=undefined
@@ -1740,9 +1740,9 @@ IsDaemonActive()
 	# $? = 0 : $daemon_pathfile is in memory
 	# $? = 1 : $daemon_pathfile is not in memory
 
-	DisplayWaitCommitToLog 'daemon:'
-
 	local target_proc=''
+
+	DisplayWaitCommitToLog 'daemon:'
 
 	if [[ $daemon_proc_is_name_only = true ]]; then
 		target_proc=$(/usr/bin/basename "$(GetLaunchTarget)")
@@ -1756,7 +1756,6 @@ IsDaemonActive()
 	fi
 
 	DisplayCommitToLog inactive
-	rm -f "$daemon_pid_pathfile"
 	return 1
 
 	}
@@ -1779,8 +1778,9 @@ IsProcessActive()
 	#   $? = 0 : $1 is in memory
 	#   $? = 1 : $1 is not in memory
 
-	[[ -n ${1:-} ]] || return
-	[[ -n ${2:-} ]] || return
+	[[ -n ${1:?process pathfilename null} ]] || return
+	[[ -n ${2:?pid pathfilename null} ]] || return
+	rm -f "$2"
 	[[ ! -e $2 ]] && FindAndWritePIDFile
 	[[ -e $2 && -d /proc/$(<"$2") && -n ${1:-} && $(</proc/"$(<"$2")"/cmdline) =~ ${1:-} ]]
 
@@ -1829,9 +1829,9 @@ IsSysFilePresent()
 		Display "A required NAS system file is missing: '$1'"
 		SetError
 		return 1
-	else
-		return 0
 	fi
+
+	return 0
 
 	}
 
@@ -1855,14 +1855,12 @@ IsPortAvailable()
 	#   $? = 0 : available
 	#   $? = 1 : already used
 
-	local port=${1//[!0-9]/}		# strip everything not a numeral
+	local port=${1//[!0-9]/}						# strip everything not a numeral
 	[[ -n $port && $port -gt 0 ]] || return 0
 
-	if (/usr/sbin/lsof -i :"$port" -sTCP:LISTEN >/dev/null 2>&1); then
-		return 1
-	else
-		return 0
-	fi
+	/usr/sbin/lsof -i :"$port" -sTCP:LISTEN >/dev/null 2>&1 && return 1
+
+	return 0
 
 	}
 
@@ -2073,7 +2071,7 @@ IsNotVirtualEnvironmentExist()
 
 	}
 
-OS.IsSupportSecureDownload()
+OSIsSupportSecureDownload()
 	{
 
 	[[ ${NAS_FIRMWARE_VER//.} -ge 500 ]]
