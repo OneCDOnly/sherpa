@@ -44,9 +44,7 @@ Init()
 	UserIsOk || return
 	LoadConsts
 	LoadVars
-	UpdateColourisation
-	UpdateSedRexegSupport
-	UpdateSleepDecimalSecondsSupport
+	UpdateCapabilities
 	LoadCMDs
 	CMDsIsOk || return
 	SetTraps
@@ -3392,9 +3390,7 @@ IPKs:install()
 			DebugAsDone "installed $desc"
 			SaveActionResultToLog IPK "$desc" install ok "$z"
 			HideKeystrokes
-			UpdateColourisation
-			UpdateSedRexegSupport
-			UpdateSleepDecimalSecondsSupport
+			UpdateCapabilities
 
 			rm -f "$PREV_IPK_LIST.installing"
 		else
@@ -8814,12 +8810,8 @@ _QPKG:uninstall_()
 
 			if [[ $qpkg_name = Entware ]]; then
 				SendParentChangeEnv ModPathToEntware
-				SendParentChangeEnv UpdateColourisation
-				SendParentChangeEnv UpdateSedRexegSupport
-				SendParentChangeEnv UpdateSleepDecimalSecondsSupport
-				UpdateColourisation
-				UpdateSedRexegSupport
-				UpdateSleepDecimalSecondsSupport
+				UpdateParentCapabilities
+				UpdateCapabilities
 			fi
 
 			SendPackageStateChange ISNTinstalled
@@ -8907,12 +8899,8 @@ _QPKG:activate_()
 
 		if [[ $qpkg_name = Entware ]]; then
 			SendParentChangeEnv ModPathToEntware
-			SendParentChangeEnv UpdateColourisation
-			SendParentChangeEnv UpdateSedRexegSupport
-			SendParentChangeEnv UpdateSleepDecimalSecondsSupport
-			UpdateColourisation
-			UpdateSedRexegSupport
-			UpdateSleepDecimalSecondsSupport
+			UpdateParentCapabilities
+			UpdateCapabilities
 		fi
 
 		SendPackageStateChange ISactive
@@ -9073,12 +9061,8 @@ _QPKG:deactivate_()
 
 		if [[ $qpkg_name = Entware ]]; then
 			SendParentChangeEnv ModPathToEntware
-			SendParentChangeEnv UpdateColourisation
-			SendParentChangeEnv UpdateSedRexegSupport
-			SendParentChangeEnv UpdateSleepDecimalSecondsSupport
-			UpdateColourisation
-			UpdateSedRexegSupport
-			UpdateSleepDecimalSecondsSupport
+			UpdateParentCapabilities
+			UpdateCapabilities
 		fi
 
 		SendPackageStateChange ISNTactive
@@ -12352,6 +12336,24 @@ StripANSICodes()
 	fi
 
 	} 2>/dev/null
+
+UpdateParentCapabilities()
+	{
+
+	SendParentChangeEnv UpdateColourisation
+	SendParentChangeEnv UpdateSedRexegSupport
+	SendParentChangeEnv UpdateSleepDecimalSecondsSupport
+
+	}
+
+UpdateCapabilities()
+	{
+
+	UpdateColourisation
+	UpdateSedRexegSupport
+	UpdateSleepDecimalSecondsSupport
+
+	}
 
 UpdateColourisation()
 	{
