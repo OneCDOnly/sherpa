@@ -189,6 +189,9 @@ InitByServiceType()
 				venv_pip_pathfile=$venv_path/bin/pip
 				venv_python_pathfile=$venv_path/bin/python3
 			;;
+		8)
+			daemon_pid_pathfile=/var/run/$QPKG_NAME.pid
+			;;
 		*)
 			:
 	esac
@@ -280,7 +283,7 @@ StartQPKGLibrary()
 	if IsOnlineArchive; then
 		local source_archive_pathfile=$qpkg_repo_path/source.archive
 
-		if IsAutoUpdate || [[ ! -e $source_archive_pathfile ]]; then		# Get remote source archive, even when auto-update is disabled, if one doesn't exist locally.
+		if IsAutoUpdate || [[ ! -e $source_archive_pathfile ]]; then		# Get remote archive - even when auto-update is disabled - if one doesn't exist locally.
 			local release_url=''
 			local download_opts=$curl_insecure_arg
 			[[ $debug = false ]] && download_opts+=' --silent'
@@ -370,7 +373,7 @@ StartQPKGLibrary()
 	fi
 
 	WaitForDaemon
-	WaitForStartPID
+	WaitForStartPid
 
 	if ! IsDaemonActive; then
 		DisplayErrCommitAllLogs 'IsDaemonActive() failed!'
@@ -459,7 +462,7 @@ StopQPKGLibrary()
 			break
 		done
 
-		WaitForKillPID
+		WaitForKillPid
 		IsNotDaemonActive || { SetError; return 1 ;}
 	fi
 
@@ -892,25 +895,25 @@ GetLaunchTarget()
 
 	}
 
-FindAndWritePIDFile()
+ReconfirmPidFile()
 	{
 
-	local target_pid=''
+	local target_pid=0
+	local process_pathfilename=$(GetLaunchTarget)
 
-	# NOTE: QTS `pidof` is unreliable.
-	target_pid=$(/bin/pidof "$(/usr/bin/basename "$(GetLaunchTarget)")")
+	[[ -n $process_pathfilename ]] || return
+	[[ -n $daemon_pid_pathfile ]] || return
 
-	if [[ -n $target_pid && $(/usr/bin/wc -w <<< "$target_pid") -gt 1 ]]; then
-		target_pid=$(/bin/ps | /bin/grep "$(GetLaunchTarget)" | /bin/grep -v grep)
-		target_pid=${target_pid:0:5}
-		target_pid=$(/bin/tr -d ' ' <<< "$target_pid")
-	fi
+	# CAUTION: QTS `pidof` is unreliable.
 
-	if [[ $target_pid -gt 0 ]]; then
+	for target_pid in $(/bin/pidof "$(/usr/bin/basename "$process_pathfilename")"); do
+		[[ -d /proc/$target_pid ]] || continue
+		[[ -e /proc/$target_pid/cmdline ]] || continue
+		[[ $(</proc/$target_pid/cmdline) =~ $process_pathfilename ]] || continue
 		echo "$target_pid" > "$daemon_pid_pathfile"
 
-		return 0
-	fi
+		return
+	done
 
 	rm -f "$daemon_pid_pathfile"
 
@@ -918,7 +921,7 @@ FindAndWritePIDFile()
 
 	}
 
-WaitForStartPID()
+WaitForStartPid()
 	{
 
 	local -i i=0
@@ -940,11 +943,11 @@ WaitForStartPID()
 		DisplayCommitToLog 'done'
 	fi
 
-	FindAndWritePIDFile || return
+	ReconfirmPidFile || return
 
 	}
 
-WaitForKillPID()
+WaitForKillPid()
 	{
 
 	local -i i=0
@@ -960,7 +963,7 @@ WaitForKillPID()
 		DisplayCommitToLog 'done'
 	fi
 
-	! FindAndWritePIDFile || return
+	! ReconfirmPidFile || return
 
 	}
 
@@ -1771,7 +1774,7 @@ IsProcessActive()
 	[[ -n ${1:?process pathfilename null} ]] || return
 	[[ -n ${2:?pid pathfilename null} ]] || return
 	rm -f "$2"
-	[[ ! -e $2 ]] && FindAndWritePIDFile
+	[[ ! -e $2 ]] && ReconfirmPidFile
 	[[ -e $2 && -d /proc/$(<"$2") && -n ${1:-} && $(</proc/"$(<"$2")"/cmdline) =~ ${1:-} ]]
 
 	}

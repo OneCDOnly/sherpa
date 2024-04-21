@@ -3983,39 +3983,39 @@ UserIsSU()
 
 	}
 
-DebugBinPathVerAndMinVer()
-	{
-
-	# Input:
-	#	$1 = binary filename
-	#	$2 = current version found
-	#	$3 = minimum version required
-
-	[[ -n ${1:?${FUNCNAME[0]}'()': undefined filename} ]] || return
-
-	local a=$(GetThisBinPath "$1")
-
-	if [[ -n $a ]]; then
-		DebugUserspace ok "'$1' path" "$a"
-	else
-		DebugUserspace warning "'$1' path" 'not present'
-	fi
-
-	if [[ -n ${2:-} && ${2:-undefined} != undefined ]]; then
-		[[ -n ${3:-} && ${3:-undefined} != undefined ]] || return
-
-		if [[ ${2//./} -ge ${3//./} ]]; then
-			DebugUserspace ok "'$1' version" "$2"
-		else
-			DebugUserspace warning "'$1' version" "$2"
-		fi
-	else
-		DebugUserspace warning "'$1' version" 'undefined'
-	fi
-
-	return 0
-
-	}
+#DebugBinPathVerAndMinVer()
+# 	{
+#
+# 	# Input:
+# 	#	$1 = binary filename
+# 	#	$2 = current version found
+# 	#	$3 = minimum version required
+#
+# 	[[ -n ${1:?${FUNCNAME[0]}'()': undefined filename} ]] || return
+#
+# 	local a=$(GetThisBinPath "$1")
+#
+# 	if [[ -n $a ]]; then
+# 		DebugUserspace ok "'$1' path" "$a"
+# 	else
+# 		DebugUserspace warning "'$1' path" 'not present'
+# 	fi
+#
+# 	if [[ -n ${2:-} && ${2:-undefined} != undefined ]]; then
+# 		[[ -n ${3:-} && ${3:-undefined} != undefined ]] || return
+#
+# 		if [[ ${2//./} -ge ${3//./} ]]; then
+# 			DebugUserspace ok "'$1' version" "$2"
+# 		else
+# 			DebugUserspace warning "'$1' version" "$2"
+# 		fi
+# 	else
+# 		DebugUserspace warning "'$1' version" 'undefined'
+# 	fi
+#
+# 	return 0
+#
+# 	}
 
 IsSysFileExist()
 	{
