@@ -176,6 +176,9 @@ venv_path=$QPKG_PATH/venv
 venv_pip_pathfile=$venv_path/bin/pip
 venv_python_pathfile=$venv_path/bin/python3
 ;;
+8)
+daemon_pid_pathfile=/var/run/$QPKG_NAME.pid
+;;
 *)
 :
 esac
@@ -317,7 +320,7 @@ SetError
 return 1
 fi
 WaitForDaemon
-WaitForStartPID
+WaitForStartPid
 if ! IsDaemonActive;then
 DisplayErrCommitAllLogs 'IsDaemonActive() failed!'
 SetError
@@ -381,7 +384,7 @@ CommitToLog "stopped in $acc second$(Pluralise "$acc")"
 CommitInfoToSysLog "$msg: OK"
 break
 done
-WaitForKillPID
+WaitForKillPid
 IsNotDaemonActive || { SetError;return 1 ;}
 fi
 return 0
@@ -668,23 +671,23 @@ else
 return 1
 fi
 }
-FindAndWritePIDFile()
+ReconfirmPidFile()
 {
-local target_pid=''
-target_pid=$(/bin/pidof "$(/usr/bin/basename "$(GetLaunchTarget)")")
-if [[ -n $target_pid && $(/usr/bin/wc -w <<< "$target_pid") -gt 1 ]];then
-target_pid=$(/bin/ps | /bin/grep "$(GetLaunchTarget)" | /bin/grep -v grep)
-target_pid=${target_pid:0:5}
-target_pid=$(/bin/tr -d ' ' <<< "$target_pid")
-fi
-if [[ $target_pid -gt 0 ]];then
+local target_pid=0
+local process_pathfilename=$(GetLaunchTarget)
+[[ -n $process_pathfilename ]] || return
+[[ -n $daemon_pid_pathfile ]] || return
+for target_pid in $(/bin/pidof "$(/usr/bin/basename "$process_pathfilename")");do
+[[ -d /proc/$target_pid ]] || continue
+[[ -e /proc/$target_pid/cmdline ]] || continue
+[[ $(</proc/$target_pid/cmdline) =~ $process_pathfilename ]] || continue
 echo "$target_pid" > "$daemon_pid_pathfile"
-return 0
-fi
+return
+done
 rm -f "$daemon_pid_pathfile"
 return 1
 }
-WaitForStartPID()
+WaitForStartPid()
 {
 local -i i=0
 if [[ $pidfile_is_managed_by_app = true ]];then
@@ -700,9 +703,9 @@ DisplayWait "$i,"
 done
 DisplayCommitToLog 'done'
 fi
-FindAndWritePIDFile || return
+ReconfirmPidFile || return
 }
-WaitForKillPID()
+WaitForKillPid()
 {
 local -i i=0
 if [[ $recheck_daemon_pid_after_kill = true ]];then
@@ -713,7 +716,7 @@ DisplayWait "$i,"
 done
 DisplayCommitToLog 'done'
 fi
-! FindAndWritePIDFile || return
+! ReconfirmPidFile || return
 }
 WaitForDaemon()
 {
@@ -1179,7 +1182,7 @@ IsProcessActive()
 [[ -n ${1:?process pathfilename null} ]] || return
 [[ -n ${2:?pid pathfilename null} ]] || return
 rm -f "$2"
-[[ ! -e $2 ]] && FindAndWritePIDFile
+[[ ! -e $2 ]] && ReconfirmPidFile
 [[ -e $2 && -d /proc/$(<"$2") && -n ${1:-} && $(</proc/"$(<"$2")"/cmdline) =~ ${1:-} ]]
 }
 IsPackageActive()
