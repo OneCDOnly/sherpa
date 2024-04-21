@@ -1775,7 +1775,7 @@ IsProcessActive()
 	[[ -n ${2:?pid pathfilename null} ]] || return
 	rm -f "$2"
 	[[ ! -e $2 ]] && ReconfirmPidFile
-	[[ -e $2 && -d /proc/$(<"$2") && -n ${1:-} && $(</proc/"$(<"$2")"/cmdline) =~ ${1:-} ]]
+	[[ -e $2 && -d /proc/"$(<$2)" && -n ${1:-} && $(</proc/"$(<$2)"/cmdline) =~ ${1:-} ]]
 
 	}
 
