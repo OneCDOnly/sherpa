@@ -1,8 +1,5 @@
 Observed issues:
 
-	* aarch64 (Laura) not detecting nzHydra2 proc already in memory.
-		- Must update $interpreter to use a venv python3 instead.
-
 	* armv5 (Helga) is cutting-off debug log early when running 'sherpa s olive verbose' due to SIGINT.
 
 	* armv5 (Helga) shows OliveTin status as "inactive" only during 'sherpa s' operation.
