@@ -1,3 +1,7 @@
+* 'packages' should contain a build hash.
+	- sherpa should check and compare this against expected hash.
+	- Redownload packages.tar.gz if hash is wrong.
+
 * Start building reiterator.
 
 * Disable same-line display updates when not in a user terminal.
