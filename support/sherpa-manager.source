@@ -219,7 +219,8 @@ DebugLogInit()
 	DebugScript PID "$$"
 	DebugInfoMinSepr
 	DebugInfo 'Markers: (**) detected, (II) information, (WW) warning, (EE) error, (LL) log file, (--) processing,'
-	DebugInfo '(==) done, (>>) f entry, (<<) f exit, (vv) variable name & value, ($1) positional argument value'
+	DebugInfo '(==) done, (>>) f entry, (<<) f exit, (aa) array name & values, (vv) variable name & value,'
+	DebugInfo '($1) positional argument value'
 	DebugInfoMinSepr
 	DebugVar THIS_PACKAGE_VER
 	DebugVar THIS_SCRIPT_VER
@@ -1647,7 +1648,7 @@ PrepareArgs()
 	args=(${a/--/})
 	arg_problem=false
 
-	DebugArray args "${args[*]:-}"
+	DebugArray args "${args[*]:-}"							#devdebug
 
 	[[ -z $ARGS_RAW ]] && useropt_help_basic=true
 
@@ -1810,10 +1811,10 @@ ParseManagementArgs()
 		args_incomplete+=("$user_action")									# Save the actual action word, phrase or char specified by the user.
 	fi
 
-	DebugArray args_incomplete "${args_incomplete[*]:-}"
+	DebugArray args_incomplete "${args_incomplete[*]:-}"					#devdebug
 
 	args=(${args_remaining[@]:-})
-	DebugArray args "${args[*]:-}"
+	DebugArray args "${args[*]:-}"											#devdebug
 
 	FuncExit
 
@@ -2007,10 +2008,10 @@ ParseHelpArgs()
 		esac
 	done
 
-	DebugArray args_incomplete "${args_incomplete[*]:-}"
+	DebugArray args_incomplete "${args_incomplete[*]:-}"					#devdebug
 
 	args=(${args_remaining[@]:-})
-	DebugArray args "${args[*]:-}"
+	DebugArray args "${args[*]:-}"											#devdebug
 
 	FuncExit
 
@@ -2178,10 +2179,10 @@ ParseShowArgs()
 		args_incomplete+=("$user_action")									# Save the actual action word, phrase or char specified by the user.
 	fi
 
-	DebugArray args_incomplete "${args_incomplete[*]:-}"
+	DebugArray args_incomplete "${args_incomplete[*]:-}"					#devdebug
 
 	args=(${args_remaining[@]:-})
-	DebugArray args "${args[*]:-}"
+	DebugArray args "${args[*]:-}"											#devdebug
 
 	FuncExit
 
@@ -2321,10 +2322,10 @@ ParseListArgs()
 		args_incomplete+=("$user_action")									# Save the actual action word, phrase or char specified by the user.
 	fi
 
-	DebugArray args_incomplete "${args_incomplete[*]:-}"
+	DebugArray args_incomplete "${args_incomplete[*]:-}"					#devdebug
 
 	args=(${args_remaining[@]:-})
-	DebugArray args "${args[*]:-}"
+	DebugArray args "${args[*]:-}"											#devdebug
 
 	FuncExit
 
@@ -2475,9 +2476,10 @@ ParseActionArgs()
 		esac
 	done
 
-	DebugArray args_incomplete "${args_incomplete[*]:-}"
+	DebugArray args_incomplete "${args_incomplete[*]:-}"					#devdebug
 
-	args=(${args_remaining[@]:-}); DebugArray args "${args[*]:-}"
+	args=(${args_remaining[@]:-})
+	DebugArray args "${args[*]:-}"											#devdebug
 
 	FuncExit
 
