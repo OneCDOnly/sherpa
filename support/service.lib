@@ -76,7 +76,6 @@ daemon_launch_cmd=undefined
 daemon_pathfile=undefined
 daemon_pid_pathfile=undefined
 daemon_port=0
-daemon_proc_is_name_only=false
 get_daemon_port_cmd=undefined
 get_ui_listening_address_cmd=undefined
 get_ui_port_cmd=undefined
@@ -586,7 +585,7 @@ fi
 if IsDaemonActive;then
 if IsDaemon || IsSourcedOnline;then
 LoadPorts app
-! CheckPorts && exit 1
+CheckPorts || exit
 fi
 else
 exit 1
@@ -662,9 +661,9 @@ return 1
 GetLaunchTarget()
 {
 if [[ $venv_python_pathfile != undefined ]];then
-echo "$venv_python_pathfile"
+echo -n "$venv_python_pathfile"
 elif [[ $daemon_pathfile != undefined ]];then
-echo "$daemon_pathfile"
+echo -n "$daemon_pathfile"
 else
 return 1
 fi
@@ -672,9 +671,8 @@ fi
 FindAndWritePIDFile()
 {
 local target_pid=''
-if [[ $daemon_proc_is_name_only = true ]];then
-target_pid=$(/bin/pidof -s "$(/usr/bin/basename "$daemon_pathfile")")
-else
+target_pid=$(/bin/pidof "$(/usr/bin/basename "$(GetLaunchTarget)")")
+if [[ -n $target_pid && $(/usr/bin/wc -w <<< "$target_pid") -gt 1 ]];then
 target_pid=$(/bin/ps | /bin/grep "$(GetLaunchTarget)" | /bin/grep -v grep)
 target_pid=${target_pid:0:5}
 target_pid=$(/bin/tr -d ' ' <<< "$target_pid")
@@ -729,11 +727,7 @@ if [[ ! -e $1 ]];then
 DisplayWaitCommitToLog 'wait for daemon to appear:'
 DisplayWait "(no-more than $MAX_SECONDS second$(Pluralise "$MAX_SECONDS")):"
 local target_proc=''
-if [[ $daemon_proc_is_name_only = true ]];then
-target_proc=$(/usr/bin/basename "$daemon_pathfile")
-else
 target_proc=$(GetLaunchTarget)
-fi
 (
 for ((i=1;i<=MAX_SECONDS; i++)); do
 /bin/sleep 1
@@ -1166,13 +1160,9 @@ IsNotDaemon()
 }
 IsDaemonActive()
 {
-local target_proc=''
 DisplayWaitCommitToLog 'daemon:'
-if [[ $daemon_proc_is_name_only = true ]];then
-target_proc=$(/usr/bin/basename "$(GetLaunchTarget)")
-else
+local target_proc=''
 target_proc=$(GetLaunchTarget)
-fi
 if IsProcessActive "$target_proc" "$daemon_pid_pathfile";then
 DisplayCommitToLog "active (PID:$(<"$daemon_pid_pathfile"))"
 return 0
@@ -1247,11 +1237,7 @@ fi
 local acc=0
 DisplayWaitCommitToLog "test for port '$port' response (no-more than $PORT_CHECK_TIMEOUT_SECONDS second$(Pluralise "$PORT_CHECK_TIMEOUT_SECONDS")):"
 local target_proc=''
-if [[ $daemon_proc_is_name_only = true ]];then
-target_proc=$(/usr/bin/basename "$daemon_pathfile")
-else
 target_proc=$(GetLaunchTarget)
-fi
 while true;do
 if ! IsProcessActive "$target_proc" "$daemon_pid_pathfile";then
 DisplayCommitToLog 'process not active'
@@ -1297,11 +1283,7 @@ local acc=0
 DisplayWaitCommitToLog "test for secure port '$port' response:"
 DisplayWait "(no-more than $PORT_CHECK_TIMEOUT_SECONDS second$(Pluralise "$PORT_CHECK_TIMEOUT_SECONDS")):"
 local target_proc=''
-if [[ $daemon_proc_is_name_only = true ]];then
-target_proc=$(/usr/bin/basename "$daemon_pathfile")
-else
 target_proc=$(GetLaunchTarget)
-fi
 while true;do
 if ! IsProcessActive "$target_proc" "$daemon_pid_pathfile";then
 DisplayCommitToLog 'process not active'
@@ -1788,7 +1770,7 @@ if IsNotError;then
 local user_arg=${USER_ARGS_RAW%% *}
 case $user_arg in
 b|-b|backup|--backup|backup-config|--backup-config)
-IsSU ||	exit 1
+IsSU ||	exit
 if IsSupportBackup;then
 SetServiceAction backup
 StopQPKG
@@ -1800,7 +1782,7 @@ ShowUnsupportedAction "$user_arg"
 fi
 ;;
 clean|--clean)
-IsSU ||	exit 1
+IsSU ||	exit
 if IsSourcedOnline;then
 SetServiceAction clean
 StopQPKG
@@ -1817,7 +1799,7 @@ debug|help|verbose)
 ShowHelp
 ;;
 disable)
-IsSU ||	exit 1
+IsSU ||	exit
 SetServiceAction disable
 /sbin/qpkg_service disable "$QPKG_NAME"
 if IsNotQPKGEnabled;then
@@ -1828,7 +1810,7 @@ SetError
 fi
 ;;
 disable-auto-update|--disable-auto-update)
-IsSU ||	exit 1
+IsSU ||	exit
 if IsSourcedOnline;then
 SetServiceAction disable-auto-update
 DisableAutoUpdate
@@ -1838,7 +1820,7 @@ ShowUnsupportedAction "$user_arg"
 fi
 ;;
 enable)
-IsSU ||	exit 1
+IsSU ||	exit
 SetServiceAction enable
 /sbin/qpkg_service enable "$QPKG_NAME"
 if IsQPKGEnabled;then
@@ -1849,7 +1831,7 @@ SetError
 fi
 ;;
 enable-auto-update|--enable-auto-update)
-IsSU ||	exit 1
+IsSU ||	exit
 if IsSourcedOnline;then
 SetServiceAction enable-auto-update
 EnableAutoUpdate
@@ -1866,7 +1848,7 @@ remove)
 SetServiceAction uninstall
 ;;
 reset-config|--reset-config)
-IsSU ||	exit 1
+IsSU ||	exit
 if IsSupportReset;then
 SetServiceAction reset
 StopQPKG
@@ -1878,7 +1860,7 @@ ShowUnsupportedAction "$user_arg"
 fi
 ;;
 r|-r|restart|--restart)
-IsSU ||	exit 1
+IsSU ||	exit
 SetServiceAction restart
 if IsNotQPKGEnabled;then
 DisplayCommitToLog "$(FormatAsPackageName "$QPKG_NAME") QPKG is disabled. Please enable it first with: $0 enable"
@@ -1888,7 +1870,7 @@ StopQPKG && StartQPKG
 fi
 ;;
 restore|--restore|restore-config|--restore-config)
-IsSU ||	exit 1
+IsSU ||	exit
 if IsSupportBackup;then
 SetServiceAction restore
 StopQPKG
@@ -1900,7 +1882,7 @@ ShowUnsupportedAction "$user_arg"
 fi
 ;;
 start|--start)
-IsSU ||	exit 1
+IsSU ||	exit
 SetServiceAction start
 if IsNotQPKGEnabled;then
 DisplayCommitToLog "$(FormatAsPackageName "$QPKG_NAME") QPKG is disabled. Please enable it first with: $0 enable"
@@ -1914,7 +1896,7 @@ SetServiceAction status
 StatusQPKG
 ;;
 stop|--stop)
-IsSU ||	exit 1
+IsSU ||	exit
 SetServiceAction stop
 StopQPKG
 ;;
