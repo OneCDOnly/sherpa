@@ -89,9 +89,9 @@ InitLibrary()
 	get_ui_port_secure_enabled_test_cmd=undefined
 	install_pip_deps=false
 	interpreter=undefined
-	launcher_pathfile=undefined					# on-call executables only
+	launcher_pathfile=undefined					# On-demand executables only.
 	local_temp_path=undefined
-	orig_daemon_service_script=undefined		# specific to Entware binaries only
+	orig_daemon_service_script=undefined		# Specific to Entware binaries only.
 	pidfile_is_managed_by_app=false
 	pip_cache_path=undefined
 	qpkg_backup_pathfile=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
@@ -99,30 +99,30 @@ InitLibrary()
 		qpkg_ini_pathfile=$QPKG_CONFIG_PATH/$qpkg_ini_file
 			qpkg_ini_default_pathfile=$qpkg_ini_pathfile.def
 	qpkg_repo_path=undefined
-	recheck_daemon_pid_after_launch=false		# if true, application PID is reconfirmed shortly after initial launch. Some applications launch with one PID, then switch to another.
-	recheck_daemon_pid_after_kill=false			# if true, application PID is reconfirmed shortly after kill confirmed. Some applications kill their main PID, then switch to another during shutdown.
+	recheck_daemon_pid_after_launch=false		# If true, application PID is reconfirmed shortly after initial launch. Some applications launch with one PID, then switch to another.
+	recheck_daemon_pid_after_kill=false			# If true, application PID is reconfirmed shortly after kill confirmed. Some applications kill their main PID, then switch to another during shutdown.
 	remote_arch=undefined
 	remote_url=undefined
-	resolve_remote_url=false					# if 'true', URL must be retrieved from remote first, then parsed to get final URL.
+	resolve_remote_url=false					# If 'true', URL must be retrieved from remote first, then parsed to get final URL.
 	run_daemon_in_screen_session=false
 	service_operation=unspecified
 	service_result=undefined
-	silence_pypi_errors=true					# if true, PyPI package processing errors won't be shown in system log.
+	silence_pypi_errors=true					# If true, PyPI package processing errors won't be shown in system log.
 	source_arch=undefined
 	source_archive_pathfile=undefined
 	source_git_branch=undefined
-	source_git_branch_depth=undefined			# 'shallow' (depth 1) or 'single-branch' ... 'shallow' implies 'single-branch'
+	source_git_branch_depth=undefined			# 'shallow' (depth 1) or 'single-branch' ... 'shallow' implies 'single-branch'.
 	source_git_url=undefined
 	ui_listening_address=undefined
 	ui_port=0
 	ui_port_secure=0
-    userlink_pathfile=undefined					# on-call executables only
+    userlink_pathfile=undefined					# On-demand executables only.
 	venv_path=undefined
 	venv_pip_pathfile=undefined
 	venv_python_pathfile=undefined
 
 	InitByServiceType
-	InitService									# located in parent service-script. Service-script vars can override vars set here.
+	InitService									# Located in parent service-script. Service-script vars can override vars set here.
 	MakePaths
 	EnsureConfigFileExists
 	GetAppVersion
@@ -174,8 +174,8 @@ InitByServiceType()
 			daemon_pid_pathfile=/var/run/$QPKG_NAME.pid
 			interpreter=/opt/bin/python3
 			pip_cache_path=$QPKG_PATH/pip-cache
-			qpkg_backup_pathfile=undefined					# backup is unsupported
-			qpkg_ini_pathfile=undefined						# app config is unsupported
+			qpkg_backup_pathfile=undefined					# Backup is unsupported.
+			qpkg_ini_pathfile=undefined						# App config is unsupported.
 			qpkg_repo_path=$QPKG_PATH/repo-cache
 			run_daemon_in_screen_session=true
 			venv_path=$QPKG_PATH/venv
@@ -516,7 +516,7 @@ InstallAddons()
 	IsNotAutoUpdate && [[ $new_env = false ]] && return 0
 
 	if [[ $QPKG_NAME = OWatcher3 ]]; then
-		# need to install `m2r` PyPI module first
+		# Need to install `m2r` PyPI module first.
 		DisplayRunAndLog "KLUDGE: install 'm2r' PyPI module first" "$venv_pip_pathfile install${no_pip_deps} --no-input m2r" log:failure-only
 
 		if [[ $? -gt 0 && $silence_pypi_errors = false ]]; then
@@ -527,7 +527,7 @@ InstallAddons()
 	[[ -e $essential_modules_pathfile && -d $(/usr/bin/dirname "$default_essential_modules_pathfile") ]] && cp -f "$essential_modules_pathfile" "$default_essential_modules_pathfile"
 	[[ -e $default_essential_modules_pathfile ]] && essential_modules_pathfile=$default_essential_modules_pathfile
 
-	# Edit developer-provided Python module requirements files out-of-repo
+	# Edit developer-provided Python module requirements files out-of-repo.
 
 	[[ -e $requirements_modules_pathfile && -d $(/usr/bin/dirname "$default_requirements_modules_pathfile") ]] && cp -f "$requirements_modules_pathfile" "$default_requirements_modules_pathfile"
 	[[ -e $default_requirements_modules_pathfile ]] && requirements_modules_pathfile=$default_requirements_modules_pathfile
@@ -546,9 +546,9 @@ InstallAddons()
 		for target in $essential_modules_pathfile $requirements_modules_pathfile $recommended_modules_pathfile $pyproject_pathfile; do
 			if [[ -e $target ]]; then
 				if [[ -e /opt/bin/sed ]]; then
-					cmd="/opt/bin/sed -i '${re}/Id' $target"		# perform case-insensitive match only if GNU `sed` exists.
+					cmd="/opt/bin/sed -i '${re}/Id' $target"		# Perform case-insensitive match only if GNU `sed` exists.
 				else
-					cmd="/bin/sed -i '${re}/d' $target"				# eh, hope for the best.
+					cmd="/bin/sed -i '${re}/d' $target"				# Eh, hope for the best.
 				fi
 
 				DisplayRunAndLog "exclude problem PyPI modules from '$(/usr/bin/basename "$target")'" "$cmd" log:failure-only
@@ -556,7 +556,7 @@ InstallAddons()
 		done
 	fi
 
-	# Install remaining PyPI modules
+	# Install remaining PyPI modules.
 
 	for target in $essential_modules_pathfile $requirements_modules_pathfile $recommended_modules_pathfile; do
 		if [[ -e $target ]]; then
@@ -570,7 +570,7 @@ InstallAddons()
 		fi
 	done
 
-	# Fallback to general installation method
+	# Fallback to general installation method.
 
 	if [[ $no_pips_installed = true ]]; then
 		if [[ -e $qpkg_repo_path/setup.py || -e $pyproject_pathfile ]]; then
@@ -596,13 +596,13 @@ InstallAddons()
 		GetAppVersion
 
 		if [[ $new_env = false && -e $APP_VERSION_STORE_PATHFILE && $(<"$APP_VERSION_STORE_PATHFILE") != "$app_version" ]]; then
-			# remove existing .pyc files to prevent runtime errors
+			# Remove existing .pyc files to prevent runtime errors
 			DisplayRunAndLog "clean Python bytecode files" "/opt/bin/find $qpkg_repo_path -type d -name '__pycache__' -print0 | xargs -I {} -0 rm -rf '{}'
 " log:failure-only
 		fi
 
 		if [[ ! -e $APP_VERSION_STORE_PATHFILE || $(<"$APP_VERSION_STORE_PATHFILE") != "$app_version" ]]; then
-			# generate language translations
+			# Generate language translations.
 			DisplayRunAndLog "generate language translations" "cd $qpkg_repo_path; $venv_python_pathfile $qpkg_repo_path/tools/make_mo.py" log:failure-only
 		fi
 
@@ -616,20 +616,20 @@ InstallAddons()
 StripComments()
 	{
 
-	# input:
-	#   $1 = string to strip comment lines, empty lines, and so-on.
+	# Input:
+	#   $1 = String to strip comment lines, empty lines, and so-on.
 
-	# output:
-	#   stdout = stripped string.
+	# Output:
+	#   stdout = Stripped string.
 
 	[[ -n $1 ]] || return
 
 	local a="$1"
 
-	a=$(/bin/sed -e '/^#[[:space:]].*/d;/#$/d;s/[[:space:]]#[[:space:]].*//' <<< "$a")		# remove comment lines and line comments.
-	a=$(/bin/sed -e 's/^[[:space:]]*//' <<< "$a")											# remove leading whitespace.
-	a=$(/bin/sed 's/[[:space:]]*$//' <<< "$a")												# remove trailing whitespace.
-	a=$(/bin/sed "/^$/d" <<< "$a")															# remove empty lines.
+	a=$(/bin/sed -e '/^#[[:space:]].*/d;/#$/d;s/[[:space:]]#[[:space:]].*//' <<< "$a")		# Remove comment lines and line comments.
+	a=$(/bin/sed -e 's/^[[:space:]]*//' <<< "$a")											# Remove leading whitespace.
+	a=$(/bin/sed 's/[[:space:]]*$//' <<< "$a")												# Remove trailing whitespace.
+	a=$(/bin/sed "/^$/d" <<< "$a")															# Remove empty lines.
 
 	echo "$a"
 
@@ -686,18 +686,18 @@ MakePaths()
 LoadPorts()
 	{
 
-	# If user changes ports via app UI, must first 'stop' application on old ports, then 'start' on new ports
+	# If user changes ports via app UI, must first 'stop' application on old ports, then 'start' on new ports.
 
 	case $1 in
 		app)
-			# Read the current application UI ports from application configuration
+			# Read the current application UI ports from application configuration.
 			DisplayWaitCommitToLog 'load ports from configuration file:'
 			[[ $get_ui_port_cmd != undefined ]] && ui_port=$(eval "$get_ui_port_cmd")
 			[[ $get_ui_port_secure_cmd != undefined ]] && ui_port_secure=$(eval "$get_ui_port_secure_cmd")
 			DisplayCommitToLog OK
 			;;
 		qts)
-			# Read the current application UI ports from QTS App Center
+			# Read the current application UI ports from QTS App Center.
 			DisplayWaitCommitToLog 'load UI ports from QPKG icon:'
 			ui_port=$(/sbin/getcfg $QPKG_NAME Web_Port -d 0 -f /etc/config/qpkg.conf)
 			ui_port_secure=$(/sbin/getcfg $QPKG_NAME Web_SSL_Port -d 0 -f /etc/config/qpkg.conf)
@@ -709,18 +709,18 @@ LoadPorts()
 			return 1
 	esac
 
-	# Always read these from the application configuration
+	# Always read these from the application configuration.
 	[[ $get_daemon_port_cmd != undefined ]] && daemon_port=$(eval "$get_daemon_port_cmd")
 	[[ $get_ui_listening_address_cmd != undefined ]] && ui_listening_address=$(eval "$get_ui_listening_address_cmd")
 
-	# validate port numbers
-	ui_port=${ui_port//[!0-9]/}					# strip everything not a numeral
+	# Validate port numbers.
+	ui_port=${ui_port//[!0-9]/}					# Strip everything not a numeral.
 	[[ -z $ui_port || $ui_port -lt 0 || $ui_port -gt 65535 ]] && ui_port=0
 
-	ui_port_secure=${ui_port_secure//[!0-9]/}	# strip everything not a numeral
+	ui_port_secure=${ui_port_secure//[!0-9]/}	# Strip everything not a numeral.
 	[[ -z $ui_port_secure || $ui_port_secure -lt 0 || $ui_port_secure -gt 65535 ]] && ui_port_secure=0
 
-	daemon_port=${daemon_port//[!0-9]/}			# strip everything not a numeral
+	daemon_port=${daemon_port//[!0-9]/}			# Strip everything not a numeral.
 	[[ -z $daemon_port || $daemon_port -lt 0 || $daemon_port -gt 65535 ]] && daemon_port=0
 
 	[[ -z $ui_listening_address ]] && ui_listening_address=undefined
@@ -731,9 +731,9 @@ LoadPorts()
 GetAppVersion()
 	{
 
-	# Find the application's internal version number
-	# creates a global var: $app_version
-	# this is the installed application version (not the QPKG version)
+	# Find the application's internal version number.
+	# Creates a global var: $app_version
+	# This is the installed application version (not the QPKG version).
 
 	if IsSupportGetAppVersion && [[ -e $app_version_pathfile ]]; then
 		app_version=$(eval "$app_version_cmd")
@@ -786,8 +786,8 @@ DisableOpkgDaemonStart()
 	{
 
 	if [[ $orig_daemon_service_script != undefined && -x $orig_daemon_service_script ]]; then
-		$orig_daemon_service_script stop		# stop default daemon
-		chmod -x "$orig_daemon_service_script"	# ... and ensure Entware doesn't re-launch it on startup
+		$orig_daemon_service_script stop		# Stop default daemon,
+		chmod -x "$orig_daemon_service_script"	# ... and ensure Entware doesn't re-launch it on startup.
 	fi
 
 	}
@@ -825,7 +825,7 @@ CloneGitRepo()
 		DisplayRunAndLog "clone $(FormatAsPackageName "$QPKG_NAME") from remote repository" "cd /tmp; /opt/bin/git clone --branch $source_git_branch $branch_depth -c advice.detachedHead=false $source_git_url $qpkg_repo_path" log:failure-only
 	else
 		if IsAutoUpdate; then
-			# latest effort at resolving local clone corruption: https://stackoverflow.com/a/10170195
+			# Latest effort at resolving local clone corruption: https://stackoverflow.com/a/10170195
 			DisplayRunAndLog "update $(FormatAsPackageName "$QPKG_NAME") from remote repository" "cd /tmp; /opt/bin/git -C $qpkg_repo_path clean -f; /opt/bin/git -C $qpkg_repo_path reset --hard origin/$source_git_branch; /opt/bin/git -C $qpkg_repo_path pull" log:failure-only
 		fi
 	fi
@@ -843,7 +843,7 @@ CloneGitRepo()
 CleanLocalRepo()
 	{
 
-	# for occasions where the local repo needs to be deleted and cloned again from source.
+	# For occasions where the local repo needs to be deleted and cloned again from source.
 
 	if [[ -z $QPKG_PATH || -z $QPKG_NAME ]] || IsNotSourcedOnline; then
 		SetError
@@ -970,10 +970,10 @@ WaitForKillPid()
 WaitForDaemon()
 	{
 
-	# input:
-	#   $1 = timeout in seconds (optional) - default 30
+	# Input:
+	#   $1 = Timeout in seconds (optional) - default 30
 
-	# output:
+	# Output:
 	#   $? = 0 (file was found) or 1 (file not found: timeout)
 
 	local -i i=0
@@ -1001,7 +1001,7 @@ WaitForDaemon()
 					CommitToLog "appeared in $i second$(Pluralise "$i")"
 					true
 
-					exit	# only this sub-shell
+					exit	# Only this sub-shell.
 				fi
 			done
 
@@ -1023,11 +1023,11 @@ WaitForDaemon()
 WaitForFileToAppear()
 	{
 
-	# input:
+	# Input:
 	#   $1 = pathfilename to watch for
 	#   $2 = timeout in seconds (optional) - default 30
 
-	# output:
+	# Output:
 	#   $? = 0 : file was found
 	#   $? = 1 : file not found/timeout
 
@@ -1055,7 +1055,7 @@ WaitForFileToAppear()
 					CommitToLog "visible after $i second$(Pluralise "$i")"
 					true
 
-					exit	# only this sub-shell
+					exit	# Only this sub-shell.
 				fi
 			done
 			false
@@ -1114,14 +1114,14 @@ SaveAppVersion()
 DisplayRunAndLog()
 	{
 
-	# Run a commandstring with a summarised description, log the results, and show onscreen if required
+	# Run a commandstring with a summarised description, log the results, and show onscreen if required.
 	# This function is just a fancy wrapper for RunAndLog()
 
-	# input:
-	#   $1 = processing message
-	#   $2 = commandstring to execute
+	# Input:
+	#   $1 = Processing message.
+	#   $2 = Commandstring to execute.
 	#   $3 = 'log:failure-only' (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed. Default is to always record stdout & stderr.
-	#   $4 = true/false (optional) - if true, run command in a screen session
+	#   $4 = true/false (optional) - if true, run command in a screen session.
 
 	local -r LOG_PATHFILE=$(/bin/mktemp /var/log/"${FUNCNAME[0]}"_XXXXXX)
 	local -i z=0
@@ -1151,19 +1151,19 @@ DisplayRunAndLog()
 RunAndLog()
 	{
 
-	# Run a commandstring, log the results, and show onscreen if required
+	# Run a commandstring, log the results, and show onscreen if required.
 
-	# input:
-	#   $1 = commandstring to execute
-	#   $2 = log pathfile to record stdout and stderr for commandstring
+	# Input:
+	#   $1 = commandstring to execute.
+	#   $2 = log pathfile to record stdout and stderr for commandstring.
 	#   $3 = 'log:failure-only' (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed. Default is to always record stdout & stderr.
-	#   $4 = e.g. '10' (optional) - an additional acceptable result code. Any other result from command (other than zero) will be considered a failure
-	#   $5 = true/false (optional) - if true, run command in a screen session
+	#   $4 = e.g. '10' (optional) - an additional acceptable result code. Any other result from command (other than zero) will be considered a failure.
+	#   $5 = true/false (optional) - if true, run command in a screen session.
 
-	# output:
-	#   stdout : commandstring stdout and stderr if script is in 'debug' mode
-	#   pathfile ($2) : commandstring ($1) stdout and stderr
-	#   $? : $result_code of commandstring
+	# Output:
+	#   stdout : commandstring stdout and stderr if script is in 'debug' mode.
+	#   pathfile ($2) : commandstring ($1) stdout and stderr.
+	#   $? : $result_code of commandstring.
 
 	local -r LOG_PATHFILE=$(/bin/mktemp /var/log/"${FUNCNAME[0]}"_XXXXXX)
 	local -i z=0
@@ -1182,7 +1182,7 @@ RunAndLog()
 		fi
 	else
 		if [[ ${5:-false} = false ]]; then
-			(eval "$1" > "$LOG_PATHFILE" 2>&1)					# run in a subshell to suppress 'Terminated' message later
+			(eval "$1" > "$LOG_PATHFILE" 2>&1)					# Run in a subshell to suppress "Terminated" message later.
 			z=$?
 		fi
 	fi
@@ -1215,12 +1215,12 @@ RunAndLog()
 AddFileToDebug()
 	{
 
-	# Add the contents of specified pathfile $1 to the runtime log
+	# Add the contents of specified pathfile $1 to the runtime log.
 
 	local debug_was_set=$debug
 	local linebuff=''
 
-	# prevent external log contents appearing onscreen again, as they have already been seen "live"
+	# Prevent external log contents appearing onscreen again, as they have already been seen "live".
 	debug=false
 
 	DebugAsLog ''
@@ -1247,8 +1247,8 @@ DebugExtLogMinorSeparator()
 DebugBulletSeparatorWithText()
 	{
 
-	# input:
-	#   $1 = text to center in separator line
+	# Input:
+	#   $1 = Text to center in separator line.
 
 	local a=''
 	[[ -n ${1:-} ]] && a=" ${1:-} "
@@ -1256,14 +1256,14 @@ DebugBulletSeparatorWithText()
 	local b=$(((DEBUG_LOG_DATAWIDTH-${#a})/2))
 	local c=$((DEBUG_LOG_DATAWIDTH-${#a}-b))
 
-	eval printf '%0.s•' "{1..$b}"; echo -n "$a"; eval printf '%0.s•' "{1..$c}"; echo 	# `seq` is unavailable in QTS, so must resort to `eval` trickery instead
+	eval printf '%0.s•' "{1..$b}"; echo -n "$a"; eval printf '%0.s•' "{1..$c}"; echo 	# `seq` is unavailable in QTS, so must resort to `eval` trickery instead.
 
 	}
 
 DebugMinorSeparator()
 	{
 
-	eval printf '%0.s-' "{1..$DEBUG_LOG_DATAWIDTH}"		# `seq` is unavailable in QTS, so must resort to `eval` trickery instead
+	eval printf '%0.s-' "{1..$DEBUG_LOG_DATAWIDTH}"		# `seq` is unavailable in QTS, so must resort to `eval` trickery instead.
 
 	}
 
@@ -1294,7 +1294,7 @@ WriteAsDebug()
 WriteToLog()
 	{
 
-	# input:
+	# Input:
 	#   $1 = pass/fail
 	#   $2 = message
 
@@ -1305,12 +1305,12 @@ WriteToLog()
 StripANSICodes()
 	{
 
-	# QTS 4.2.6 BusyBox 'sed' doesn't fully support extended regexes, so this only works with a real 'sed'
+	# QTS 4.2.6 BusyBox 'sed' doesn't fully support extended regexes, so this only works with a real 'sed'.
 
 	if [[ -e /opt/bin/sed && -L /opt/etc/passwd ]]; then	# Try to ensure Entware is active before using this utility.
 		/opt/bin/sed -r 's/\x1b\[[0-9;]*m//g' <<< "${1:-}"
 	else
-		echo "${1:-}"		# can't strip, so pass thru original message unaltered
+		echo "${1:-}"		# Can't strip, so pass thru original message unaltered.
 	fi
 
 	}
@@ -1318,7 +1318,7 @@ StripANSICodes()
 Capitalise()
 	{
 
-	# capitalise first character of $1
+	# Capitalise first character of $1
 
 	echo "$(Uppercase ${1:0:1})${1:1}"
 
@@ -1341,20 +1341,20 @@ Lowercase()
 ReWriteUIPorts()
 	{
 
-	# Write the current application UI ports into the QTS App Center configuration
+	# Write the current application UI ports into the QTS App Center configuration.
 
-	# QTS App Center requires 'Web_Port' to always be non-zero
+	# QTS App Center requires 'Web_Port' to always be non-zero.
 
 	# 'Web_SSL_Port' behaviour:
-	#		   < -2 = crashes current QTS session. Starts with non-responsive package icons in App Center
-	# missing or -2 = QTS will fallback from HTTPS to HTTP, with a warning to user
-	#			 -1 = launch QTS UI again (only if WebUI = '/'), else show "QNAP Error" page
-	#			  0 = "unable to connect"
-	#			> 0 = works if logged-in to QTS UI via HTTPS
+	#		   < -2 = crashes current QTS session. Starts with non-responsive package icons in App Center.
+	# missing or -2 = QTS will fallback from HTTPS to HTTP, with a warning to user.
+	#			 -1 = launch QTS UI again (only if WebUI = '/'), else show "QNAP Error" page.
+	#			  0 = "unable to connect".
+	#			> 0 = works if logged-in to QTS UI via HTTPS.
 
-	# If SSL is enabled, attempting to access with non-SSL via 'Web_Port' results in "connection was reset"
+	# If SSL is enabled, attempting to access with non-SSL via 'Web_Port' results in "connection was reset".
 
-	[[ $get_daemon_port_cmd != undefined ]] && return		# dont need to rewrite QTS UI ports if this app has a daemon port, as UI ports are unused
+	[[ $get_daemon_port_cmd != undefined ]] && return		# Don't need to rewrite QTS UI ports if this app has a daemon port, as UI ports are unused.
 
 	DisplayWaitCommitToLog 'update QPKG icon with UI ports:'
 	/sbin/setcfg $QPKG_NAME Web_Port "$ui_port" -f /etc/config/qpkg.conf
@@ -1435,7 +1435,7 @@ GetThisBinPath()
 RenameSharedObjectFile()
 	{
 
-	# need to check 3 possible module locations
+	# Must check 3 possible module locations.
 
 	[[ -n ${1:-} ]] || return
 
@@ -1487,10 +1487,10 @@ parse_yaml()
 
 	# a nice bit of coding! https://stackoverflow.com/a/21189044
 
-	# input:
+	# Input:
 	#   $1 = filename to parse
 
-	# output:
+	# Output:
 	#   stdout = parsed YAML
 
 	local prefix=$2
@@ -1513,7 +1513,7 @@ parse_yaml()
 IsQNAP()
 	{
 
-	# output:
+	# Output:
 	#   $? = 0 : this is a QNAP NAS
 	#   $? = 1 : not a QNAP
 
@@ -1530,10 +1530,10 @@ IsQNAP()
 IsQPKGInstalled()
 	{
 
-	# input:
+	# Input:
 	#   $1 = (optional) package name to check. If unspecified, default is $QPKG_NAME
 
-	# output:
+	# Output:
 	#   $? = 0 : true
 	#   $? = 1 : false
 
@@ -1551,10 +1551,10 @@ IsNotQPKGInstalled()
 IsQPKGEnabled()
 	{
 
-	# input:
+	# Input:
 	#   $1 = (optional) package name to check. If unspecified, default is $QPKG_NAME
 
-	# output:
+	# Output:
 	#   $? = 0 : true
 	#   $? = 1 : false
 
@@ -1565,10 +1565,10 @@ IsQPKGEnabled()
 IsNotQPKGEnabled()
 	{
 
-	# input:
+	# Input:
 	#   $1 = (optional) package name to check. If unspecified, default is $QPKG_NAME
 
-	# output:
+	# Output:
 	#   $? = 0 : true
 	#   $? = 1 : false
 
@@ -1635,7 +1635,7 @@ IsNotVirtualEnvironmentUsed()
 IsGitApp()
 	{
 
-	# is this application pulled from an online source with `git`?
+	# Is this application pulled from an online source with `git`?
 
 	[[ $source_git_url != undefined && $source_git_branch != undefined && $qpkg_repo_path != undefined ]]
 
@@ -1763,11 +1763,11 @@ IsNotDaemonActive()
 IsProcessActive()
 	{
 
-	# input:
+	# Input:
 	#   $1 = process pathfile
 	#   $2 = PID pathfile
 
-	# output:
+	# Output:
 	#   $? = 0 : $1 is in memory
 	#   $? = 1 : $1 is not in memory
 
@@ -1782,8 +1782,9 @@ IsProcessActive()
 IsPackageActive()
 	{
 
-	# $? = 0 : package is `started`
-	# $? = 1 : package is `stopped`
+	# Output:
+	# 	$? = 0 : package is `started`
+	# 	$? = 1 : package is `stopped`
 
 	DisplayWaitCommitToLog 'package active:'
 
@@ -1800,8 +1801,9 @@ IsPackageActive()
 IsNotPackageActive()
 	{
 
-	# $? = 0 : package is `stopped`
-	# $? = 1 : package is `started`
+	# Output:
+	# 	$? = 0 : package is `stopped`
+	# 	$? = 1 : package is `started`
 
 	! IsPackageActive
 
@@ -1810,7 +1812,7 @@ IsNotPackageActive()
 IsSysFilePresent()
 	{
 
-	# input:
+	# Input:
 	#   $1 = pathfilename to check
 
 	if [[ -z ${1:?pathfilename null} ]]; then
@@ -1831,7 +1833,7 @@ IsSysFilePresent()
 IsNotSysFilePresent()
 	{
 
-	# input:
+	# Input:
 	#   $1 = pathfilename to check
 
 	! IsSysFilePresent "${1:?pathfilename null}"
@@ -1841,14 +1843,14 @@ IsNotSysFilePresent()
 IsPortAvailable()
 	{
 
-	# input:
+	# Input:
 	#   $1 = port to check
 
-	# output:
+	# Output:
 	#   $? = 0 : available
 	#   $? = 1 : already used
 
-	local port=${1//[!0-9]/}						# strip everything not a numeral
+	local port=${1//[!0-9]/}						# Strip everything not a numeral.
 	[[ -n $port && $port -gt 0 ]] || return 0
 
 	/usr/sbin/lsof -i :"$port" -sTCP:LISTEN >/dev/null 2>&1 && return 1
@@ -1860,10 +1862,10 @@ IsPortAvailable()
 IsNotPortAvailable()
 	{
 
-	# input:
+	# Input:
 	#   $1 = port to check
 
-	# output:
+	# Output:
 	#   $? = 1 : port available
 	#   $? = 0 : already used
 
@@ -1874,14 +1876,14 @@ IsNotPortAvailable()
 IsPortResponds()
 	{
 
-	# input:
+	# Input:
 	#   $1 = port to check
 
-	# output:
+	# Output:
 	#   $? = 0 : response received
 	#   $? = 1 : not OK
 
-	local port=${1//[!0-9]/}		# strip everything not a numeral
+	local port=${1//[!0-9]/}		# Strip everything not a numeral.
 
 	if [[ -z $port ]]; then
 		Display 'empty port: not testing for response'
@@ -1939,14 +1941,14 @@ IsPortResponds()
 IsPortSecureResponds()
 	{
 
-	# input:
+	# Input:
 	#   $1 = secure port to check
 
-	# output:
+	# Output:
 	#   $? = 0 : response received
 	#   $? = 1 : not OK or secure port unspecified
 
-	local port=${1//[!0-9]/}		# strip everything not a numeral
+	local port=${1//[!0-9]/}		# Strip everything not a numeral.
 
 	if [[ -z $port ]]; then
 		Display 'empty port: not testing for response'
@@ -2066,7 +2068,7 @@ IsSiteUp()
 
 	# Test if remote site is reachable.
 
-	# input:
+	# Input:
 	#   $1 = URL to check.
 
 	local site=$(cut -d'/' -f3 <<< ${1:-} | cut -d':' -f1)
@@ -2086,7 +2088,7 @@ RequestLatestRelease()
 
 	# Request latest release URL from remote site.
 
-	# input:
+	# Input:
 	#   $1 = URL to check.
 	#   $1 = arch to match.
 
@@ -2499,7 +2501,7 @@ CommitSysLog()
 	# input (global):
 	#   $QPKG_NAME
 
-	# input:
+	# Input:
 	#   $1 = message to append to QTS system log
 	#   $2 = event type:
 	#	 1 : Error
@@ -2569,11 +2571,11 @@ Pluralise()
 CalcMilliDifference()
 	{
 
-	# input:
+	# Input:
 	#	$1 = starttime in epoch nanoseconds
 	#	$2 = endtime in epoch nanoseconds
 
-	# output:
+	# Output:
 	#	stdout = difference in milliseconds
 
 	local start=${1:-0}
@@ -2591,14 +2593,14 @@ FormatAsThous()
 	# A string-based thousands-group formatter totally unreliant on locale
 	# Why? Because builtin `printf` in 32b ARM QTS versions doesn't follow locale ¯\_(ツ)_/¯
 
-	# $1 = integer value
+	# $1 = Integer value.
 
 	local rightside_group=''
 	local foutput=''
-	local remainder=$(/bin/sed 's/[^0-9]*//g' <<< "${1:-}")	# strip everything not a numeral
+	local remainder=$(/bin/sed 's/[^0-9]*//g' <<< "${1:-}")	# Strip everything not a numeral.
 
 	while [[ ${#remainder} -gt 0 ]]; do
-		rightside_group=${remainder:${#remainder}<3?0:-3}	# a nifty trick found here: https://stackoverflow.com/a/19858692
+		rightside_group=${remainder:${#remainder}<3?0:-3}	# A nifty trick found here: https://stackoverflow.com/a/19858692
 
 		if [[ -z $foutput ]]; then
 			foutput=$rightside_group
@@ -2607,7 +2609,7 @@ FormatAsThous()
 		fi
 
 		if [[ ${#rightside_group} -eq 3 ]]; then
-			remainder=${remainder%???}						# trim rightside 3 characters
+			remainder=${remainder%???}						# Trim rightside 3 characters.
 		else
 			break
 		fi
@@ -2621,8 +2623,8 @@ FormatAsThous()
 FormatAsDuration()
 	{
 
-	# input:
-	#	$1 = duration in milliseconds
+	# Input:
+	#	$1 = Duration in milliseconds.
 
 	if [[ ${1:-0} -lt 10000 ]]; then
 		echo "$(FormatAsThous "${1:-0}")ms"
@@ -2637,7 +2639,7 @@ FormatSecsToHoursMinutesSecs()
 
 	# http://stackoverflow.com/questions/12199631/convert-seconds-to-hours-minutes-seconds
 
-	# input:
+	# Input:
 	#	$1 = a time in seconds to convert to `HHh:MMm:SSs`
 
 	((h=${1:-0}/3600))
@@ -2703,7 +2705,7 @@ GetPathGitBranch()
 IsSU()
 	{
 
-	# running as superuser?
+	# Running as superuser?
 
 	if [[ $EUID -ne 0 ]]; then
 		if [[ -e /usr/bin/sudo ]]; then
@@ -2735,10 +2737,10 @@ CalcAdaptiveSeconds()
 	{
 
 	# Input:
-	# 	$1 = integer of base seconds (to suit 1m load average of 1.0 on a single-core CPU).
+	# 	$1 = Integer of base seconds (to suit 1m load average of 1.0 on a single-core CPU).
 
 	# Output:
-	#   stdout = integer of adapted seconds based-on present 1 minute load average. Maximum of 1800.
+	#   stdout = Integer of adapted seconds based-on present 1 minute load average. Maximum of 1800.
 
 	local a=$(GetSysLoad1MinAverage); a=${a/./}		# Convert to hundreds.
 	local b=$(($(GetCPUCores)*100))					# Match conversion amount for $a.
@@ -2784,7 +2786,7 @@ ProcessArgs()
 	fi
 
 	if IsNotError; then
-		local user_arg=${USER_ARGS_RAW%% *}		# only process first argument
+		local user_arg=${USER_ARGS_RAW%% *}		# Only process first argument.
 
 		case $user_arg in
 			b|-b|backup|--backup|backup-config|--backup-config)
@@ -2820,6 +2822,7 @@ ProcessArgs()
 				;;
 			disable)
 				IsSU ||	exit
+
 				SetServiceAction disable
 				/sbin/qpkg_service disable "$QPKG_NAME"
 
@@ -2843,6 +2846,7 @@ ProcessArgs()
 				;;
 			enable)
 				IsSU ||	exit
+
 				SetServiceAction enable
 				/sbin/qpkg_service enable "$QPKG_NAME"
 
@@ -2868,7 +2872,7 @@ ProcessArgs()
 				SetServiceAction log
 				ViewLog
 				;;
-			remove)			# only called by the QDK '.uninstall.sh' script
+			remove)			# Only called by the QDK '.uninstall.sh' script.
 				SetServiceAction uninstall
 				;;
 			reset-config|--reset-config)
@@ -2886,6 +2890,7 @@ ProcessArgs()
 				;;
 			r|-r|restart|--restart)
 				IsSU ||	exit
+
 				SetServiceAction restart
 
 				if IsNotQPKGEnabled; then
@@ -2910,6 +2915,7 @@ ProcessArgs()
 				;;
 			start|--start)
 				IsSU ||	exit
+
 				SetServiceAction start
 
 				if IsNotQPKGEnabled; then
@@ -2925,6 +2931,7 @@ ProcessArgs()
 				;;
 			stop|--stop)
 				IsSU ||	exit
+
 				SetServiceAction stop
 				StopQPKG
 				;;
@@ -2947,6 +2954,7 @@ ProcessArgs()
 	if [[ -n $user_arg ]]; then
 		if IsError; then
 			SetServiceStatusAsFailed
+
 			exit 1
 		else
 			SetServiceStatusAsOK
