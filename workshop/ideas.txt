@@ -2,9 +2,8 @@
 	- sherpa should check and compare this against expected hash.
 	- Redownload packages.tar.gz if hash is wrong.
 
-* Start building reiterator.
-
 * Disable same-line display updates when not in a user terminal.
+	- No-need to record every progress message change in logs.
 
 * Default dependency report should only show installed QPKGs.
 	- ... but should allow 'sherpa d all' to see all QPKGs.

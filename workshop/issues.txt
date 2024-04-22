@@ -204,7 +204,7 @@ Observed issues:
 		- Both applications were dead.
 
 	* Near the end of installing IPKs, monitored download path can remain at non-zero size while packages complete installation.
-		- Maybe include a separate progress message when dir size shrinks to almost zero?
+		- Include a separate progress message when dir size shrinks?
 
 	* QPKG version sort is not correctly sorting version numbers followed by an alpha as later than non-alpha.
 

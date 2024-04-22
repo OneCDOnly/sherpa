@@ -37,5 +37,6 @@ gh release create "$release_tag" --generate-notes "$qpkgs_path/sherpa/build/sher
 cd $HOME/scripts/nas/sherpa/support || exit
 
 ./reset-qpkg-datetimes.sh || exit
+git diff			# run this now so don't need to wait during user check.
 
 exit 0
