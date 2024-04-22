@@ -4635,7 +4635,7 @@ DisplayAsAbsReportItemLine()
 	# 	$qpkg_name (global).
 
 	local abs=''
-	local abs_msg=$CHARS_NORMAL
+	local abs_msg=''
 	local mode=''
 	local name_msg=$CHARS_BLANK
 
@@ -4650,6 +4650,7 @@ DisplayAsAbsReportItemLine()
 	case $mode in
 		normal)
 			abs=$(AddSeparators "$(QpkgGetAbbrvs)")
+			abs_msg=$CHARS_NORMAL
 			abs_msg+=$abs
 			name_msg+=$qpkg_name
 			;;
@@ -4657,12 +4658,16 @@ DisplayAsAbsReportItemLine()
 			abs=$(AddSeparators "$(QpkgGetAbbrvs "$qpkg_name")")
 
 			if ! QpkgIsArchOK "$qpkg_name"; then
+				abs_msg=$CHARS_ALERT
 				abs_msg+='incompatible arch'
 			elif ! QpkgIsMinOSVerOk "$qpkg_name"; then
+				abs_msg=$CHARS_ALERT
 				abs_msg+="incompatible $(OsGetQnapOS) version"
 			elif ! QpkgIsMinRAMOk "$qpkg_name"; then
+				abs_msg=$CHARS_ALERT
 				abs_msg+='insufficient RAM'
 			else
+				abs_msg=$CHARS_NORMAL
 				abs_msg+=$abs
 			fi
 
