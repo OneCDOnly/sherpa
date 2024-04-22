@@ -1,3 +1,6 @@
+* Need a maintenance script to remove all but the most-recent QPKG builds.
+	- Should also run a 'git gc --aggressive' afterward.
+
 * 'packages' should contain a build hash.
 	- sherpa should check and compare this against expected hash.
 	- Redownload packages.tar.gz if hash is wrong.

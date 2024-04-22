@@ -1,5 +1,9 @@
 Observed issues:
 
+	* aarch64 (Laura), sherpa check fails to restart nzbhydra correctly.
+		- SIGTERM on proc fails, requires SIGKILL, but nzbhydra keeps running on a new PID (might be a shutdown process? This proc is later found to be inactive).
+		- maybe renice hydra proc to something less-demanding? Try it with 10.
+
 	* armv5 (Helga) is cutting-off debug log early when running 'sherpa s olive verbose' due to SIGINT.
 
 	* armv5 (Helga) shows OliveTin status as "inactive" only during 'sherpa s' operation.
@@ -10,14 +14,6 @@ Observed issues:
 	* When aborting sherpa, must also ensure child procs abort.
 		- Presently, if a child proc is waiting to check PID again, it doesn't abort.
 		- Try https://stackoverflow.com/a/2173421
-
-	* Add setting for $NZBHYDRA_TEMP_FOLDER to nzbhydra service script.
-		- Make this follow $temp_path.
-		-------------------------------------------------------------------------------------------------------------------------
-		local_temp_path=$QPKG_PATH/tmp
-		export NZBHYDRA_TEMP_FOLDER=$local_temp_path
-		-------------------------------------------------------------------------------------------------------------------------
-		> Testing ...
 
 	* When QPKG is missing, need to show this on dependencies report.
 		- Add new state of 'missing' to 'installed?' column.
@@ -59,55 +55,6 @@ Observed issues:
 		43 dbug: (LL) ModuleNotFoundError: No module named 'ujson'
 		44 dbug: (LL) ----------------------------------------------------------------------------------------------------
 		45  source: glances.sh, action: start, datetime: Fri Apr 5 13:53:13 EST 2024, result: failed, elapsed time: 0h:00m:40s
-		-------------------------------------------------------------------------------------------------------------------------
-
-	* armv5 (Milla) start failed:
-		-------------------------------------------------------------------------------------------------------------------------
-		[~] # /etc/init.d/deluge-web.sh start debug
-		source: deluge-web.sh, action: start, datetime: Fri Apr 5 14:41:11 EST 2024, package: 240205, service: 240205
-		daemon active: false
-		create paths: OK
-		file /opt/bin/deluge-web: exists
-		load ports from configuration file: OK
-		start daemon:
-		exec: '. /share/CACHEDEV1_DATA/.qpkg/Deluge-web/venv/bin/activate && /share/CACHEDEV1_DATA/.qpkg/Deluge-web/venv/bin/python3 /opt/bin/deluge-web --logfile /share/CACHEDEV1_DATA/.qpkg/Deluge-web/config/Deluge-web.log --config /share/CACHEDEV1_DATA/.qpkg/Deluge-web/config/ --pidfile /var/run/Deluge-web.pid'
-		exec: completed OK
-		OK
-		wait for daemon to appear: (no-more than 60 seconds): 1, OK
-		daemon: exists
-		file /var/run/Deluge-web.pid: exists
-		found daemon PID: 13179
-		daemon active: true
-		daemon PID: 13179
-		daemon listening address: 0.0.0.0
-		HTTPS port enabled: false
-		HTTP port: 8112
-		test for port 8112 response: (no-more than 240 seconds): 1, Traceback (most recent call last):
-		File "/opt/bin/deluge-web", line 8, in <module>
-			sys.exit(start())
-					^^^^^^^
-		File "/share/CACHEDEV1_DATA/.qpkg/Entware/lib/python3.11/site-packages/deluge/ui/web/__init__.py", line 6, in start
-			web.start()
-		File "/share/CACHEDEV1_DATA/.qpkg/Entware/lib/python3.11/site-packages/deluge/ui/web/web.py", line 71, in start
-			self.__server = server.DelugeWeb(options=self.options)
-							^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-		File "/share/CACHEDEV1_DATA/.qpkg/Entware/lib/python3.11/site-packages/deluge/ui/web/server.py", line 692, in __init__
-			self.web_api = WebApi()
-						^^^^^^^^
-		File "/share/CACHEDEV1_DATA/.qpkg/Entware/lib/python3.11/site-packages/deluge/ui/web/json_api.py", line 380, in __init__
-			self.hostlist = HostList()
-							^^^^^^^^^^
-		File "/share/CACHEDEV1_DATA/.qpkg/Entware/lib/python3.11/site-packages/deluge/ui/hostlist.py", line 102, in __init__
-			default_hostlist(),
-			^^^^^^^^^^^^^^^^^^
-		File "/share/CACHEDEV1_DATA/.qpkg/Entware/lib/python3.11/site-packages/deluge/ui/hostlist.py", line 31, in default_hostlist
-			username, password = get_localhost_auth()
-			^^^^^^^^^^^^^^^^^^
-		TypeError: cannot unpack non-iterable NoneType object
-		2, 3, process not active!
-		no response on configured port(s)!
-		CheckPorts() failed!
-		source: deluge-web.sh, action: start, datetime: Fri Apr 5 14:41:23 EST 2024, result: failed, elapsed time: 0h:00m:11s
 		-------------------------------------------------------------------------------------------------------------------------
 
 	* armv5 (Helga) install all is attempting to install 'python3-orjson' when it shouldn't.
@@ -179,19 +126,10 @@ Observed issues:
 
 	* Upgrading QPKGs via sherpa didn't update App Center icons 'live'.
 
-	* Deluge-server and Headphones didn't report 'stop' as successful.
+	* Headphones didn't report 'stop' as successful.
 		-------------------------------------------------------------------------------------------------------------------------
 		- • These actions failed:
-			Unable to deactivate Deluge-server in 5m:52s: For more information: /etc/init.d/deluge-server.sh log
 			Unable to deactivate Headphones in 5m:51s: For more information: /etc/init.d/headphones.sh log
-
-			24 source: deluge-server.sh, action: stop, datetime: Thu Jan 25 06:51:29 EST 2024, package: 230726, service: 230726
-			25 daemon active: true
-			26 daemon PID: 21177
-			27 stop daemon PID (21177) with SIGTERM:
-		-------------------------------------------------------------------------------------------------------------------------
-		log ended here like process had been killed.
-
 		-------------------------------------------------------------------------------------------------------------------------
 			37 source: headphones.sh, action: stop, datetime: Thu Jan 25 06:51:31 EST 2024
 			38 package: 240125, service: 240125, library: 240125
@@ -201,7 +139,7 @@ Observed issues:
 		-------------------------------------------------------------------------------------------------------------------------
 		log ended here like process had been killed.
 
-		- Both applications were dead.
+		- Applications was dead.
 
 	* Near the end of installing IPKs, monitored download path can remain at non-zero size while packages complete installation.
 		- Include a separate progress message when dir size shrinks?
