@@ -1,3 +1,7 @@
+* Looks like Mylar may now be compatible with x31 & x41.
+	- x31 works fine.
+	- Need to test x41.
+
 * 'packages' should contain a build hash.
 	- sherpa should check and compare this against expected hash.
 	- Redownload packages.tar.gz if hash is wrong.
