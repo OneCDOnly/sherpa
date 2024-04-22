@@ -4363,7 +4363,7 @@ DisplayAsStatusReportItemLine()
 
 	case $mode in
 		normal)
-			app_ver_msg+=$(QpkgGetApplVer)
+			app_ver_msg+=$(QpkgGetApplVer "$qpkg_name")
 
 			if QPKGs-ISupgradable.Exist "$qpkg_name"; then
 				name_msg+=$(TextBrightOrange "$qpkg_name")
