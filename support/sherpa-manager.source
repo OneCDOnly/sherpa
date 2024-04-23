@@ -248,7 +248,7 @@ LoadConsts()
 	readonly HELP_SYNTAX_INDENT=6
 
 	readonly PACKAGE_ABBS_COL_WIDTH=84
-	readonly PACKAGE_APP_VER_COL_WIDTH=18
+	readonly PACKAGE_APP_VER_COL_WIDTH=22
 	readonly PACKAGE_ARCH_COL_WIDTH=15
 	readonly PACKAGE_AUTHOR_COL_WIDTH=40
 	readonly PACKAGE_DEPENDENCIES_COL_WIDTH=29
@@ -4201,7 +4201,7 @@ DisplayAsPacksReportTitleLine()
 
 	if [[ $report_cols_max -ge 2 ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}App version:"
+		a="${CHARS_BULLET}Application version:"
 		printf "%-$((PACKAGE_APP_VER_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -4324,7 +4324,7 @@ DisplayAsStatusReportTitleLine()
 
 	if [[ $report_cols_max -ge 4 ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}App version:"
+		a="${CHARS_BULLET}Application version:"
 		printf "%-$((PACKAGE_APP_VER_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -4407,7 +4407,7 @@ DisplayAsStatusReportItemLine()
 		muted)
 			app_ver_msg+=$(TextDarkGrey "$(QpkgGetApplVer "$qpkg_name")")
 			name_msg+=$(TextDarkGrey "$qpkg_name")
-			path_msg=''
+			path_msg+=$(TextDarkGrey 'N/A')
 
 			if ! QpkgIsArchOK; then
 				status='incompatible arch'
