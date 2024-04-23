@@ -12,9 +12,6 @@ Observed issues:
 		- Presently, if a child proc is waiting to check PID again, it doesn't abort.
 		- Try https://stackoverflow.com/a/2173421
 
-	* When QPKG is missing, need to show this on dependencies report.
-		- Add new state of 'missing' to 'installed?' column.
-
 	* armv5 (Milla) start failed:
 		-------------------------------------------------------------------------------------------------------------------------
 		11 source: glances.sh, action: start, datetime: Fri Apr 5 13:52:32 EST 2024
