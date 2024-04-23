@@ -5128,7 +5128,7 @@ DisplayAsBacksReportItemLine()
 			file_name_msg+=$file_name
 			;;
 		highlighted)
-			epoch_time_msg+=$(TextBrightRed "$(/bin/date -d @"$epoch_time" +%c)")
+			epoch_time_msg=$(TextBrightRed "${CHARS_ALERT}$(/bin/date -d @"$epoch_time" +%c)")
 			file_bytes_msg+=$(TextBrightRed "$file_bytes")
 			file_name_msg+=$(TextBrightRed "$file_name")
 	esac
@@ -6915,7 +6915,7 @@ ShowReportBackups()
 
 		DisplayAsHelpTitle "the location for $(ShowAsTitleName) backups is: $QPKG_BU_PATH"
 
-		DisplayAsHelpTitle "backups are listed oldest-first, and those shown in $(TextBrightRed '! red') were last updated more-than $highlight_older_than."
+		DisplayAsHelpTitle "backups are listed oldest-first, and those shown in $(TextBrightRed red) (and prefixed with '$(TextBrightRed '!')') were last updated more-than $highlight_older_than."
 
 		DisplayAsBacksReportTitleLine
 
@@ -6969,9 +6969,9 @@ ShowReportDependencies()
 
 		{
 
-		DisplayAsHelpTitle "package dependencies are automatically installed/started/stopped/restarted as-required."
-		DisplayAsHelpTitle "requirements shown in \"$(TextBrightOrange '* orange')\" prevent the package being installed."
-		DisplayAsHelpTitle "those shown in \"$(TextBrightRed '! red')\" are preventing the package from working correctly."
+		DisplayAsHelpTitle "package dependencies are automatically installed/started/stopped/restarted as-required by $(ShowAsTitleName)."
+		DisplayAsHelpTitle "requirements shown in $(TextBrightOrange orange) (and prefixed with '$(TextBrightOrange '*')') prevent the package being installed."
+		DisplayAsHelpTitle "those shown in $(TextBrightRed red) (and prefixed with '$(TextBrightRed '!')') are preventing the package from working correctly."
 		DisplayAsDepsReportTitleLine
 
 		} >"$REPORT_OUTPUT_PATHFILE"
