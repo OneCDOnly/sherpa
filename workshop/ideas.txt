@@ -1,6 +1,7 @@
-* 'packages' should contain a build hash.
-	- sherpa should check and compare this against expected hash.
-	- Redownload packages.tar.gz if hash is wrong.
+* Split packages into separate repo?
+
+* Need a maintenance script to remove all but the most-recent QPKG builds.
+	- Should also run a 'git gc --aggressive' afterward.
 
 * Disable same-line display updates when not in a user terminal.
 	- No-need to record every progress message change in logs.
@@ -12,7 +13,7 @@
 * 'show results' report should include completion and elapsed times.
 
 * Make last action result a separate status report column?
-    - should include action attempted too.
+    - Should include action attempted too.
 
 * Test for bash version and interpreter location?
 

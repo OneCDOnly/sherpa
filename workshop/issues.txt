@@ -1,26 +1,16 @@
 Observed issues:
 
-	* armv5 (Helga) is cutting-off debug log early when running 'sherpa s olive verbose' due to SIGINT.
+	* aarch64 (Laura), sherpa check fails to restart nzbhydra correctly.
+		- SIGTERM on proc fails, requires SIGKILL, but nzbhydra keeps running on a new PID (might be a shutdown process? This proc is later found to be inactive).
+		- maybe renice hydra proc to something less-demanding? Try it with 10.
 
-	* armv5 (Helga) shows OliveTin status as "inactive" only during 'sherpa s' operation.
-		- Running direct check with the OliveTin service-script works fine.
+	* armv5 (Helga) is cutting-off debug log early when running 'sherpa s olive verbose' due to SIGINT.
 
 	* Allow Kapowarr to follow source git branch, release or tag.
 
 	* When aborting sherpa, must also ensure child procs abort.
 		- Presently, if a child proc is waiting to check PID again, it doesn't abort.
 		- Try https://stackoverflow.com/a/2173421
-
-	* Add setting for $NZBHYDRA_TEMP_FOLDER to nzbhydra service script.
-		- Make this follow $temp_path.
-		-------------------------------------------------------------------------------------------------------------------------
-		local_temp_path=$QPKG_PATH/tmp
-		export NZBHYDRA_TEMP_FOLDER=$local_temp_path
-		-------------------------------------------------------------------------------------------------------------------------
-		> Testing ...
-
-	* When QPKG is missing, need to show this on dependencies report.
-		- Add new state of 'missing' to 'installed?' column.
 
 	* armv5 (Milla) start failed:
 		-------------------------------------------------------------------------------------------------------------------------
@@ -61,87 +51,6 @@ Observed issues:
 		45  source: glances.sh, action: start, datetime: Fri Apr 5 13:53:13 EST 2024, result: failed, elapsed time: 0h:00m:40s
 		-------------------------------------------------------------------------------------------------------------------------
 
-	* armv5 (Milla) start failed:
-		-------------------------------------------------------------------------------------------------------------------------
-		[~] # /etc/init.d/deluge-web.sh start debug
-		source: deluge-web.sh, action: start, datetime: Fri Apr 5 14:41:11 EST 2024, package: 240205, service: 240205
-		daemon active: false
-		create paths: OK
-		file /opt/bin/deluge-web: exists
-		load ports from configuration file: OK
-		start daemon:
-		exec: '. /share/CACHEDEV1_DATA/.qpkg/Deluge-web/venv/bin/activate && /share/CACHEDEV1_DATA/.qpkg/Deluge-web/venv/bin/python3 /opt/bin/deluge-web --logfile /share/CACHEDEV1_DATA/.qpkg/Deluge-web/config/Deluge-web.log --config /share/CACHEDEV1_DATA/.qpkg/Deluge-web/config/ --pidfile /var/run/Deluge-web.pid'
-		exec: completed OK
-		OK
-		wait for daemon to appear: (no-more than 60 seconds): 1, OK
-		daemon: exists
-		file /var/run/Deluge-web.pid: exists
-		found daemon PID: 13179
-		daemon active: true
-		daemon PID: 13179
-		daemon listening address: 0.0.0.0
-		HTTPS port enabled: false
-		HTTP port: 8112
-		test for port 8112 response: (no-more than 240 seconds): 1, Traceback (most recent call last):
-		File "/opt/bin/deluge-web", line 8, in <module>
-			sys.exit(start())
-					^^^^^^^
-		File "/share/CACHEDEV1_DATA/.qpkg/Entware/lib/python3.11/site-packages/deluge/ui/web/__init__.py", line 6, in start
-			web.start()
-		File "/share/CACHEDEV1_DATA/.qpkg/Entware/lib/python3.11/site-packages/deluge/ui/web/web.py", line 71, in start
-			self.__server = server.DelugeWeb(options=self.options)
-							^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-		File "/share/CACHEDEV1_DATA/.qpkg/Entware/lib/python3.11/site-packages/deluge/ui/web/server.py", line 692, in __init__
-			self.web_api = WebApi()
-						^^^^^^^^
-		File "/share/CACHEDEV1_DATA/.qpkg/Entware/lib/python3.11/site-packages/deluge/ui/web/json_api.py", line 380, in __init__
-			self.hostlist = HostList()
-							^^^^^^^^^^
-		File "/share/CACHEDEV1_DATA/.qpkg/Entware/lib/python3.11/site-packages/deluge/ui/hostlist.py", line 102, in __init__
-			default_hostlist(),
-			^^^^^^^^^^^^^^^^^^
-		File "/share/CACHEDEV1_DATA/.qpkg/Entware/lib/python3.11/site-packages/deluge/ui/hostlist.py", line 31, in default_hostlist
-			username, password = get_localhost_auth()
-			^^^^^^^^^^^^^^^^^^
-		TypeError: cannot unpack non-iterable NoneType object
-		2, 3, process not active!
-		no response on configured port(s)!
-		CheckPorts() failed!
-		source: deluge-web.sh, action: start, datetime: Fri Apr 5 14:41:23 EST 2024, result: failed, elapsed time: 0h:00m:11s
-		-------------------------------------------------------------------------------------------------------------------------
-
-	* armv5 (Helga) install all is attempting to install 'python3-orjson' when it shouldn't.
-	    - IPK doesn't exist in the pre-February 2024 Entware package list.
-	    - a19 has its own IPK requires list for Sickgear in 'packages.source', so this shouldn't be happening.
-		-------------------------------------------------------------------------------------------------------------------------
-		= command: '/opt/bin/opkg install --force-overwrite check clamav freshclam libjson-c libmilter-sendmail python3-orjson --cache /share/HDA_DATA/.qpkg/sherpa/cache/IPKs --tmp-dir /share/HDA_DATA/.qpkg/sherpa/cache/IPKs.downloads'
-		! result_code: [255] ***** stdout/stderr begins below *****
-		Collected errors:
-		* opkg_conf_set_option: Duplicate option tmp_dir, using first seen value "/share/HDA_DATA/.qpkg/sherpa/cache/IPKs.downloads".
-		* opkg_install_cmd: Cannot install package python3-orjson.
-		Installing check (0.15.2-10) to root...
-		Downloading http://bin.entware.net/armv5sf-k3.2/check_0.15.2-10_armv5-3.2.ipk
-		Installing clamav (0.104.4-1) to root...
-		Downloading http://bin.entware.net/armv5sf-k3.2/clamav_0.104.4-1_armv5-3.2.ipk
-		Installing libjson-c (0.16-3) to root...
-		Downloading http://bin.entware.net/armv5sf-k3.2/libjson-c_0.16-3_armv5-3.2.ipk
-		Installing libmilter-sendmail (8.16.1-1) to root...
-		Downloading http://bin.entware.net/armv5sf-k3.2/libmilter-sendmail_8.16.1-1_armv5-3.2.ipk
-		Installing freshclam (0.104.4-1) to root...
-		Downloading http://bin.entware.net/armv5sf-k3.2/freshclam_0.104.4-1_armv5-3.2.ipk
-		Package libjson-c (0.16-3) installed in root is up to date.
-		Package libmilter-sendmail (8.16.1-1) installed in root is up to date.
-		Unknown package 'python3-orjson'.
-		Configuring check.
-		Configuring libjson-c.
-		Configuring libmilter-sendmail.
-		Configuring clamav.
-		Configuring freshclam.
-		! ***** stdout/stderr is complete *****
-		-------------------------------------------------------------------------------------------------------------------------
-		UPDATE:
-		IPKs:install() is not confirming arch is OK when selecting IPKs to install.
-
 	* 'sherpa show status' displays status report correctly, and then displays 'show' usage examples.
 
 	* 'sherpa help show' is only showing basic help, not the 'show' help list.
@@ -169,9 +78,6 @@ Observed issues:
 		-------------------------------------------------------------------------------------------------------------------------
 		- Original cause of install failure has been fixed, so will need to simulate an error to test.
 
-	* Some QPKGs (like OliveTin) won't 'start' because application is already runing.
-		- Theory: application wasn't started when initial status check was run, so script begins starting application - but first has to update it. This takes time. When script finally starts application, the application might already be running due to another script instance application launch completing. Maybe check if another copy of the service-script is running?
-
 	* Function durations can become incorrect when functions with the same name are called recursively.
 		- Need to make vars holding start-times unique. Maybe measure nest depth?
 
@@ -179,19 +85,10 @@ Observed issues:
 
 	* Upgrading QPKGs via sherpa didn't update App Center icons 'live'.
 
-	* Deluge-server and Headphones didn't report 'stop' as successful.
+	* Headphones didn't report 'stop' as successful.
 		-------------------------------------------------------------------------------------------------------------------------
 		- • These actions failed:
-			Unable to deactivate Deluge-server in 5m:52s: For more information: /etc/init.d/deluge-server.sh log
 			Unable to deactivate Headphones in 5m:51s: For more information: /etc/init.d/headphones.sh log
-
-			24 source: deluge-server.sh, action: stop, datetime: Thu Jan 25 06:51:29 EST 2024, package: 230726, service: 230726
-			25 daemon active: true
-			26 daemon PID: 21177
-			27 stop daemon PID (21177) with SIGTERM:
-		-------------------------------------------------------------------------------------------------------------------------
-		log ended here like process had been killed.
-
 		-------------------------------------------------------------------------------------------------------------------------
 			37 source: headphones.sh, action: stop, datetime: Thu Jan 25 06:51:31 EST 2024
 			38 package: 240125, service: 240125, library: 240125
@@ -201,7 +98,7 @@ Observed issues:
 		-------------------------------------------------------------------------------------------------------------------------
 		log ended here like process had been killed.
 
-		- Both applications were dead.
+		- Applications was dead.
 
 	* Near the end of installing IPKs, monitored download path can remain at non-zero size while packages complete installation.
 		- Include a separate progress message when dir size shrinks?

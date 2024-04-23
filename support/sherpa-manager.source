@@ -4616,9 +4616,17 @@ DisplayAsAbsReportTitleLine()
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
-	# column 2: package abbreviations
+	# column 2: QPKG is installed
 
 	if [[ $report_cols_max -ge 2 ]]; then
+		printf "%$((COLUMN_SPACING))s"
+		a="${CHARS_BULLET}installed?"
+		printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
+	fi
+
+	# column 3: package abbreviations
+
+	if [[ $report_cols_max -ge 3 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}acceptable QPKG name abbreviations and aliases:"
 		printf "%-$((PACKAGE_ABBS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -4634,8 +4642,8 @@ DisplayAsAbsReportItemLine()
 	# Input:
 	# 	$qpkg_name (global).
 
-	local abs=''
-	local abs_msg=$CHARS_NORMAL
+	local abs_msg=''
+	local installed_msg=$CHARS_BLANK
 	local mode=''
 	local name_msg=$CHARS_BLANK
 
@@ -4649,29 +4657,28 @@ DisplayAsAbsReportItemLine()
 
 	case $mode in
 		normal)
-			abs=$(AddSeparators "$(QpkgGetAbbrvs)")
-			abs_msg+=$abs
+			abs_msg=${CHARS_NORMAL}$(AddSeparators "$(QpkgGetAbbrvs)")
+			installed_msg+=true
 			name_msg+=$qpkg_name
 			;;
 		muted)
-			abs=$(AddSeparators "$(QpkgGetAbbrvs "$qpkg_name")")
-
 			if ! QpkgIsArchOK "$qpkg_name"; then
-				abs_msg+='incompatible arch'
+				abs_msg="${CHARS_ALERT}incompatible arch"
 			elif ! QpkgIsMinOSVerOk "$qpkg_name"; then
-				abs_msg+="incompatible $(OsGetQnapOS) version"
+				abs_msg="${CHARS_ALERT}incompatible $(OsGetQnapOS) version"
 			elif ! QpkgIsMinRAMOk "$qpkg_name"; then
-				abs_msg+='insufficient RAM'
+				abs_msg="${CHARS_ALERT}insufficient RAM"
 			else
-				abs_msg+=$abs
+				abs_msg=${CHARS_NORMAL}$(AddSeparators "$(QpkgGetAbbrvs "$qpkg_name")")
 			fi
 
 			abs_msg=$(TextDarkGrey "$abs_msg")
+			installed_msg+=$(TextDarkGrey false)
 			name_msg+=$(TextDarkGrey "$qpkg_name")
 			;;
 		highlighted)
-			abs=$(AddSeparators "$(QpkgGetAbbrvs)")
-			abs_msg=$(TextBrightRedBlink "${CHARS_ALERT}${abs}")
+			abs_msg=$(TextBrightRed "${CHARS_ALERT}$(AddSeparators "$(QpkgGetAbbrvs)")")
+			installed_msg=$(TextBrightRedBlink "${CHARS_ALERT}missing")
 			name_msg+=$(TextBrightRed "$qpkg_name")
 	esac
 
@@ -4681,9 +4688,16 @@ DisplayAsAbsReportItemLine()
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 	fi
 
-	# column 2: package repository
+	# column 2: package is installed?
 
 	if [[ $report_cols_max -ge 2 ]]; then
+		printf "%$((COLUMN_SPACING))s"
+		printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+$(LenANSIDiff "$installed_msg")))s" "$installed_msg"
+	fi
+
+	# column 3: package abbreviations
+
+	if [[ $report_cols_max -ge 3 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_ABBS_COL_WIDTH+$(LenANSIDiff "$abs_msg")))s" "$abs_msg"
 	fi
@@ -5003,14 +5017,14 @@ DisplayAsDepsReportItemLine()
 		printf "%-$((PACKAGE_DEPENDENCIES_COL_WIDTH+$(LenANSIDiff "$deps_msg")))s" "$deps_msg"
 	fi
 
-	# column 3: package installed?
+	# column 3: package is installed?
 
 	if [[ $report_cols_max -ge 3 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+$(LenANSIDiff "$installed_msg")))s" "$installed_msg"
 	fi
 
-	# column 4: package enabled?
+	# column 4: package is enabled?
 
 	if [[ $report_cols_max -ge 4 ]]; then
 		printf "%$((COLUMN_SPACING))s"
@@ -5038,7 +5052,7 @@ DisplayAsDepsReportItemLine()
 		printf "%-$((PACKAGE_MAX_OS_COL_WIDTH+$(LenANSIDiff "$max_os_msg")))s" "$max_os_msg"
 	fi
 
-	# column 8: arch is compatible?
+	# column 8: NAS arch is compatible?
 
 	if [[ $report_cols_max -ge 8 ]]; then
 		printf "%$((COLUMN_SPACING))s"
@@ -5114,7 +5128,7 @@ DisplayAsBacksReportItemLine()
 			file_name_msg+=$file_name
 			;;
 		highlighted)
-			epoch_time_msg+=$(TextBrightRed "$(/bin/date -d @"$epoch_time" +%c)")
+			epoch_time_msg=$(TextBrightRed "${CHARS_ALERT}$(/bin/date -d @"$epoch_time" +%c)")
 			file_bytes_msg+=$(TextBrightRed "$file_bytes")
 			file_name_msg+=$(TextBrightRed "$file_name")
 	esac
@@ -6827,7 +6841,7 @@ Help.Abbreviations:Show()
 	local f=''
 	local -i m=0
 	local -i n=0
-	report_cols_max=2
+	report_cols_max=3
 
 	LoadPackages
 	DisableDebugToArchiveAndFile
@@ -6901,7 +6915,7 @@ ShowReportBackups()
 
 		DisplayAsHelpTitle "the location for $(ShowAsTitleName) backups is: $QPKG_BU_PATH"
 
-		DisplayAsHelpTitle "backups are listed oldest-first, and those shown in $(TextBrightRed '! red') were last updated more-than $highlight_older_than."
+		DisplayAsHelpTitle "backups are listed oldest-first, and those shown in $(TextBrightRed red) (and prefixed with '$(TextBrightRed '!')') were last updated more-than $highlight_older_than."
 
 		DisplayAsBacksReportTitleLine
 
@@ -6955,9 +6969,9 @@ ShowReportDependencies()
 
 		{
 
-		DisplayAsHelpTitle "package dependencies are automatically installed/started/stopped/restarted as-required."
-		DisplayAsHelpTitle "requirements shown in \"$(TextBrightOrange '* orange')\" prevent the package being installed."
-		DisplayAsHelpTitle "those shown in \"$(TextBrightRed '! red')\" are preventing the package from working correctly."
+		DisplayAsHelpTitle "package dependencies are automatically installed/started/stopped/restarted as-required by $(ShowAsTitleName)."
+		DisplayAsHelpTitle "requirements shown in $(TextBrightOrange orange) (and prefixed with '$(TextBrightOrange '*')') prevent the package being installed."
+		DisplayAsHelpTitle "those shown in $(TextBrightRed red) (and prefixed with '$(TextBrightRed '!')') are preventing the package from working correctly."
 		DisplayAsDepsReportTitleLine
 
 		} >"$REPORT_OUTPUT_PATHFILE"
