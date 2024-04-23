@@ -6,9 +6,6 @@ Observed issues:
 
 	* armv5 (Helga) is cutting-off debug log early when running 'sherpa s olive verbose' due to SIGINT.
 
-	* armv5 (Helga) shows OliveTin status as "inactive" only during 'sherpa s' operation.
-		- Running direct check with the OliveTin service-script works fine.
-
 	* Allow Kapowarr to follow source git branch, release or tag.
 
 	* When aborting sherpa, must also ensure child procs abort.
@@ -57,38 +54,6 @@ Observed issues:
 		45  source: glances.sh, action: start, datetime: Fri Apr 5 13:53:13 EST 2024, result: failed, elapsed time: 0h:00m:40s
 		-------------------------------------------------------------------------------------------------------------------------
 
-	* armv5 (Helga) install all is attempting to install 'python3-orjson' when it shouldn't.
-	    - IPK doesn't exist in the pre-February 2024 Entware package list.
-	    - a19 has its own IPK requires list for Sickgear in 'packages.source', so this shouldn't be happening.
-		-------------------------------------------------------------------------------------------------------------------------
-		= command: '/opt/bin/opkg install --force-overwrite check clamav freshclam libjson-c libmilter-sendmail python3-orjson --cache /share/HDA_DATA/.qpkg/sherpa/cache/IPKs --tmp-dir /share/HDA_DATA/.qpkg/sherpa/cache/IPKs.downloads'
-		! result_code: [255] ***** stdout/stderr begins below *****
-		Collected errors:
-		* opkg_conf_set_option: Duplicate option tmp_dir, using first seen value "/share/HDA_DATA/.qpkg/sherpa/cache/IPKs.downloads".
-		* opkg_install_cmd: Cannot install package python3-orjson.
-		Installing check (0.15.2-10) to root...
-		Downloading http://bin.entware.net/armv5sf-k3.2/check_0.15.2-10_armv5-3.2.ipk
-		Installing clamav (0.104.4-1) to root...
-		Downloading http://bin.entware.net/armv5sf-k3.2/clamav_0.104.4-1_armv5-3.2.ipk
-		Installing libjson-c (0.16-3) to root...
-		Downloading http://bin.entware.net/armv5sf-k3.2/libjson-c_0.16-3_armv5-3.2.ipk
-		Installing libmilter-sendmail (8.16.1-1) to root...
-		Downloading http://bin.entware.net/armv5sf-k3.2/libmilter-sendmail_8.16.1-1_armv5-3.2.ipk
-		Installing freshclam (0.104.4-1) to root...
-		Downloading http://bin.entware.net/armv5sf-k3.2/freshclam_0.104.4-1_armv5-3.2.ipk
-		Package libjson-c (0.16-3) installed in root is up to date.
-		Package libmilter-sendmail (8.16.1-1) installed in root is up to date.
-		Unknown package 'python3-orjson'.
-		Configuring check.
-		Configuring libjson-c.
-		Configuring libmilter-sendmail.
-		Configuring clamav.
-		Configuring freshclam.
-		! ***** stdout/stderr is complete *****
-		-------------------------------------------------------------------------------------------------------------------------
-		UPDATE:
-		IPKs:install() is not confirming arch is OK when selecting IPKs to install.
-
 	* 'sherpa show status' displays status report correctly, and then displays 'show' usage examples.
 
 	* 'sherpa help show' is only showing basic help, not the 'show' help list.
@@ -115,9 +80,6 @@ Observed issues:
 		source: sabnzbd.sh, action: start, datetime: Wed Mar 6 15:12:20 EST 2024, result: failed, elapsed time: 6,224ms
 		-------------------------------------------------------------------------------------------------------------------------
 		- Original cause of install failure has been fixed, so will need to simulate an error to test.
-
-	* Some QPKGs (like OliveTin) won't 'start' because application is already runing.
-		- Theory: application wasn't started when initial status check was run, so script begins starting application - but first has to update it. This takes time. When script finally starts application, the application might already be running due to another script instance application launch completing. Maybe check if another copy of the service-script is running?
 
 	* Function durations can become incorrect when functions with the same name are called recursively.
 		- Need to make vars holding start-times unique. Maybe measure nest depth?
