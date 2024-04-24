@@ -1,9 +1,5 @@
 Observed issues:
 
-	* aarch64 (Laura), sherpa check fails to restart nzbhydra correctly.
-		- SIGTERM on proc fails, requires SIGKILL, but nzbhydra keeps running on a new PID (might be a shutdown process? This proc is later found to be inactive).
-		- maybe renice hydra proc to something less-demanding? Try it with 10.
-
 	* armv5 (Helga) is cutting-off debug log early when running 'sherpa s olive verbose' due to SIGINT.
 
 	* Allow Kapowarr to follow source git branch, release or tag.
