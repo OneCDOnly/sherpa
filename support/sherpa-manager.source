@@ -6854,7 +6854,7 @@ Help.Abbreviations:Show()
 		DisplayAsHelpTitle "$(ShowAsTitleName) can recognise various abbreviations and aliases as $(ShowAsPackages)."
 		DisplayAsAbsReportTitleLine
 
-		} >"$REPORT_OUTPUT_PATHFILE"
+		} > "$REPORT_OUTPUT_PATHFILE"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
@@ -6874,11 +6874,7 @@ Help.Abbreviations:Show()
 
 	[[ -n $a ]] && echo -en "$a" >>"$REPORT_OUTPUT_PATHFILE"
 
-		{
-
-		DisplayAsProjSynExam "example: to install $(ShowAsPackageName SABnzbd), $(ShowAsPackageName Mylar3) and $(ShowAsPackageName nzbToMedia) all-at-once" 'install sab my nzb2'
-
-		} >> "$REPORT_OUTPUT_PATHFILE"
+	DisplayAsProjSynExam "example: to install $(ShowAsPackageName SABnzbd), $(ShowAsPackageName Mylar3) and $(ShowAsPackageName nzbToMedia) all-at-once" 'install sab my nzb2' >> "$REPORT_OUTPUT_PATHFILE"
 
 	EraseThisLine
 
@@ -6967,14 +6963,7 @@ ShowReportDependencies()
 	DisplayProcReport dependency
 	ResetReportsPath &>/dev/null
 
-		{
-
-		DisplayAsHelpTitle "package dependencies are automatically installed/started/stopped/restarted as-required by $(ShowAsTitleName)."
-		DisplayAsHelpTitle "requirements shown in $(TextBrightOrange orange) (and prefixed with '$(TextBrightOrange '*')') prevent the package being installed."
-		DisplayAsHelpTitle "those shown in $(TextBrightRed red) (and prefixed with '$(TextBrightRed '!')') are preventing the package from working correctly."
-		DisplayAsDepsReportTitleLine
-
-		} >"$REPORT_OUTPUT_PATHFILE"
+	DisplayAsDepsReportTitleLine >"$REPORT_OUTPUT_PATHFILE"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
@@ -6992,7 +6981,15 @@ ShowReportDependencies()
 		[[ -e $f ]] && a+="$(<$f)\n"		# add newline to each imported report line
 	done
 
-	[[ -n $a ]] && echo -en "$a" >>"$REPORT_OUTPUT_PATHFILE"
+	[[ -n $a ]] && echo -en "$a" >> "$REPORT_OUTPUT_PATHFILE"
+
+		{
+
+		DisplayAsHelpTitle "package dependencies are automatically installed/started/stopped/restarted as-required by $(ShowAsTitleName)."
+		DisplayAsHelpTitle "requirements shown in $(TextBrightOrange orange) (and prefixed with '$(TextBrightOrange '*')') prevent the package being installed."
+		DisplayAsHelpTitle "those shown in $(TextBrightRed red) (and prefixed with '$(TextBrightRed '!')') are preventing the package from working correctly."
+
+		} >> "$REPORT_OUTPUT_PATHFILE"
 
 	EraseThisLine
 
@@ -7065,7 +7062,7 @@ ShowReportRepos()
 	DisableDebugToArchiveAndFile
 	DisplayProcReport repository
 	ResetReportsPath &>/dev/null
-	DisplayAsReposReportTitleLine >"$REPORT_OUTPUT_PATHFILE"
+	DisplayAsReposReportTitleLine > "$REPORT_OUTPUT_PATHFILE"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
@@ -7083,7 +7080,7 @@ ShowReportRepos()
 		[[ -e $f ]] && a+="$(<$f)\n"		# add newline to each imported report line
 	done
 
-	[[ -n $a ]] && echo -en "$a" >>"$REPORT_OUTPUT_PATHFILE"
+	[[ -n $a ]] && echo -en "$a" >> "$REPORT_OUTPUT_PATHFILE"
 
 	EraseThisLine
 
@@ -7118,7 +7115,7 @@ ShowReportStatuses()
 	ResetReportsPath &>/dev/null
 	CalcMaxStatusReportCols
 
-	DisplayAsStatusReportTitleLine >"$REPORT_OUTPUT_PATHFILE"
+	DisplayAsStatusReportTitleLine > "$REPORT_OUTPUT_PATHFILE"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		QPKGs-ACstatus-dn.Exist "$qpkg_name" || continue
@@ -7139,17 +7136,33 @@ ShowReportStatuses()
 
 	[[ -n $a ]] && echo -en "$a" >> "$REPORT_OUTPUT_PATHFILE"
 
-	if QPKGs-ISactive.IsAny; then
-		DisplayAsHelpTitle "An '$(TextBrightGreen active)' status means the QPKG application is alive (and responsive if it's a daemon). This is good." >> "$REPORT_OUTPUT_PATHFILE"
-	fi
+		{
 
-	if QPKGs-ISslow.IsAny; then
-		DisplayAsHelpTitle "A '$(TextBrightOrange slow)' status means the QPKG application is alive, but took too-long to respond to the status request. This is more common on NAS with lower installed RAM, and is usually because the application has been page-swapped to disk and must be reloaded into RAM. Try checking the status again shortly." >> "$REPORT_OUTPUT_PATHFILE"
-	fi
+		if QPKGs-ISenabled.IsAny; then
+			DisplayAsHelpTitle "An '$(TextBrightGreen enabled)' state means the QPKG application will be started automatically at bootup, and is usually required for QPKGs to be started."
+		fi
 
-	if QPKGs-ISNTactive.IsAny; then
-		DisplayAsHelpTitle "An '$(TextBrightRed inactive)' status means the QPKG application is dead or not-started. Try starting/activating it." >> "$REPORT_OUTPUT_PATHFILE"
-	fi
+		if QPKGs-ISNTenabled.IsAny; then
+			DisplayAsHelpTitle "A '$(TextBrightRed disabled)' state means the QPKG application won't be started at bootup, and (usually) can't be started manually. Enable it first to start it."
+		fi
+
+		if QPKGs-ISactive.IsAny; then
+			DisplayAsHelpTitle "An '$(TextBrightGreen active)' status means the QPKG application is alive (and responsive if it's a daemon). This is good."
+		fi
+
+		if QPKGs-ISslow.IsAny; then
+			DisplayAsHelpTitle "A '$(TextBrightOrange slow)' status means the QPKG application is alive, but took too-long to respond to the status request. This is more common on NAS with lower installed RAM, and is usually because the application has been page-swapped to disk and must be reloaded into RAM. Try checking the status again shortly."
+		fi
+
+		if QPKGs-ISNTactive.IsAny; then
+			DisplayAsHelpTitle "An '$(TextBrightRed inactive)' status means the QPKG application is dead or not-started. Try starting/activating it."
+		fi
+
+		if QPKGs-ISmissing.IsAny; then
+			DisplayAsHelpTitle "A '$(TextBrightRed missing)' state means the QPKG is missing from its installation path. This is a broken state. Reinstall the QPKG if you're aware of the problem. Your QPKG config (if-applicable) will need to be restored from backup."
+		fi
+
+		} >> "$REPORT_OUTPUT_PATHFILE"
 
 	EraseThisLine
 
