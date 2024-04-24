@@ -6872,7 +6872,7 @@ Help.Abbreviations:Show()
 		[[ -e $f ]] && a+="$(<$f)\n"		# add newline to each imported report line
 	done
 
-	[[ -n $a ]] && echo -en "$a" >>"$REPORT_OUTPUT_PATHFILE"
+	[[ -n $a ]] && echo -en "$a" >> "$REPORT_OUTPUT_PATHFILE"
 
 	DisplayAsProjSynExam "example: to install $(ShowAsPackageName SABnzbd), $(ShowAsPackageName Mylar3) and $(ShowAsPackageName nzbToMedia) all-at-once" 'install sab my nzb2' >> "$REPORT_OUTPUT_PATHFILE"
 
@@ -6963,7 +6963,7 @@ ShowReportDependencies()
 	DisplayProcReport dependency
 	ResetReportsPath &>/dev/null
 
-	DisplayAsDepsReportTitleLine >"$REPORT_OUTPUT_PATHFILE"
+	DisplayAsDepsReportTitleLine > "$REPORT_OUTPUT_PATHFILE"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
