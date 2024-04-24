@@ -256,8 +256,8 @@ LoadConsts()
 	readonly PACKAGE_ENABLED_COL_WIDTH=10
 	readonly PACKAGE_INSTALL_DATE_COL_WIDTH=20
 	readonly PACKAGE_INSTALLED_COL_WIDTH=12
-	readonly PACKAGE_MAX_OS_COL_WIDTH=9
-	readonly PACKAGE_MIN_OS_COL_WIDTH=9
+	readonly PACKAGE_MAX_OS_COL_WIDTH=10
+	readonly PACKAGE_MIN_OS_COL_WIDTH=10
 	readonly PACKAGE_MIN_RAM_COL_WIDTH=14
 	readonly PACKAGE_NAME_COL_WIDTH=21
 		readonly FILE_NAME_COL_WIDTH=$((PACKAGE_NAME_COL_WIDTH+14))
@@ -4488,7 +4488,7 @@ DisplayAsReposReportTitleLine()
 
 	if [[ $report_cols_max -ge 2 ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}install date:"
+		a="${CHARS_BULLET}Install date:"
 		printf "%-$((PACKAGE_INSTALL_DATE_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -4496,7 +4496,7 @@ DisplayAsReposReportTitleLine()
 
 	if [[ $report_cols_max -ge 3 ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}repository:"
+		a="${CHARS_BULLET}Repository:"
 		printf "%-$((PACKAGE_REPO_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -4620,7 +4620,7 @@ DisplayAsAbsReportTitleLine()
 
 	if [[ $report_cols_max -ge 2 ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}installed?"
+		a="${CHARS_BULLET}Installed?"
 		printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -4628,7 +4628,7 @@ DisplayAsAbsReportTitleLine()
 
 	if [[ $report_cols_max -ge 3 ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}acceptable QPKG name abbreviations and aliases:"
+		a="${CHARS_BULLET}Acceptable QPKG name abbreviations and aliases:"
 		printf "%-$((PACKAGE_ABBS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -4740,7 +4740,7 @@ DisplayAsDepsReportTitleLine()
 
 	if [[ $report_cols_max -ge 2 ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}dependencies:"
+		a="${CHARS_BULLET}Dependencies:"
 		printf "%-$((PACKAGE_DEPENDENCIES_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -4748,7 +4748,7 @@ DisplayAsDepsReportTitleLine()
 
 	if [[ $report_cols_max -ge 3 ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}installed?"
+		a="${CHARS_BULLET}Installed?"
 		printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -4756,7 +4756,7 @@ DisplayAsDepsReportTitleLine()
 
 	if [[ $report_cols_max -ge 4 ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}enabled?"
+		a="${CHARS_BULLET}Enabled?"
 		printf "%-$((PACKAGE_ENABLED_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -4764,7 +4764,7 @@ DisplayAsDepsReportTitleLine()
 
 	if [[ $report_cols_max -ge 5 ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}min RAM:"
+		a="${CHARS_BULLET}Min. RAM:"
 		printf "%-$((PACKAGE_MIN_RAM_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -4772,7 +4772,7 @@ DisplayAsDepsReportTitleLine()
 
 	if [[ $report_cols_max -ge 6 ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}min OS:"
+		a="${CHARS_BULLET}Min. OS:"
 		printf "%-$((PACKAGE_MIN_OS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -4780,7 +4780,7 @@ DisplayAsDepsReportTitleLine()
 
 	if [[ $report_cols_max -ge 7 ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}max OS:"
+		a="${CHARS_BULLET}Max. OS:"
 		printf "%-$((PACKAGE_MAX_OS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -4788,7 +4788,7 @@ DisplayAsDepsReportTitleLine()
 
 	if [[ $report_cols_max -ge 8 ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}supported arch?"
+		a="${CHARS_BULLET}Supported arch?"
 		printf "%-$((PACKAGE_ARCH_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -5081,7 +5081,7 @@ DisplayAsBacksReportTitleLine()
 
 	if [[ $report_cols_max -ge 2 ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}size in bytes:"
+		a="${CHARS_BULLET}Size in bytes:"
 		printf "%-$((FILE_BYTES_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -5089,7 +5089,7 @@ DisplayAsBacksReportTitleLine()
 
 	if [[ $report_cols_max -ge 3 ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}last backup date:"
+		a="${CHARS_BULLET}Backup date:"
 		printf "%-$((FILE_CHANGE_DATE_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
