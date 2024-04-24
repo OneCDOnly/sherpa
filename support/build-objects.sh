@@ -27,7 +27,6 @@ PIP_ACTIONS=(uninstall upgrade install)
 # sorted
 USER_QPKG_ACTIONS=(activate backup clean deactivate disable disableau enable enableau install list reactivate reassign rebuild reinstall restore sign status uninstall upgrade)
 
-
 AddFlagObj()
 	{
 
@@ -161,7 +160,7 @@ done
 # session list objects.
 
 for action in "${QPKG_ACTIONS[@]}"; do
-	for prefix in to ok er sk so se sa dn; do		# todo, done ok, done error, skipped, skipped-but-ok, skipped-with-error, skipped-with-abort, done (all processed QPKGs are placed in the 'done' list, as-well as the regular exit status lists).
+	for prefix in to ok er sk so se sa dn; do		# to-do, done ok, done error, skipped, skipped-but-ok, skipped-with-error, skipped-with-abort, done (all processed QPKGs are placed in the 'done' list, as-well as the regular exit status lists).
 		AddListObj "QPKGs-AC${action}-${prefix}"
 	done
 done
