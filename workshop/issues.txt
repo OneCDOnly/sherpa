@@ -33,7 +33,7 @@ Observed issues:
 		unable to install addons: 'virtual environment does not exist'
 		source: sabnzbd.sh, action: start, datetime: Wed Mar 6 15:12:20 EST 2024, result: failed, elapsed time: 6,224ms
 		-------------------------------------------------------------------------------------------------------------------------
-		- Original cause of install failure has been fixed, so will need to simulate an error to test.
+		- Note: original cause of installation failure has been fixed, so will need to simulate an error to test.
 
 	* Function durations can become incorrect when functions with the same name are called recursively.
 		- Need to make vars holding start-times unique. Maybe measure nest depth?

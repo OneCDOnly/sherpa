@@ -38,7 +38,7 @@
     - Would need to store full application description, port numbers, application source.
     - Maybe consider another local source file, that builds 'packages.source' first?
 
-* Don't start deactivated QPKGs (unless requested) during 'install all'.
+* Don't start deactivated QPKGs (unless-requested) during 'install all'.
 
 * sherpa 'stable' branch should only update once per-day.
     - 'unstable' should update once per 10 minutes.
@@ -65,6 +65,7 @@
 		-------------------------------------------------------------------------------------------------------------------------
 
 * Show results report in file viewport.
+	- Show status report in viewport too?
 
 * Results report wording should account for single QPKG actions.
 	- Don't pluralise "package actions" when there was only one.
@@ -102,7 +103,7 @@
 	- Use 'GNU column' for this?
 	- Nope, 'column' can't wrap text containing ANSI codes. Won't show a wrapped column in colour. :(
 
-* Autowidth display columns.
+* Autowidth report columns.
 
 * Include new integrated help screens for all actions?
 	- Like: `sherpa paste help`, `sherpa install help`, `sherpa reassign help`
