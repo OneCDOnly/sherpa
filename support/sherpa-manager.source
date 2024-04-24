@@ -6909,10 +6909,6 @@ ShowReportBackups()
 
 		{
 
-		DisplayAsHelpTitle "the location for $(ShowAsTitleName) backups is: $QPKG_BU_PATH"
-
-		DisplayAsHelpTitle "backups are listed oldest-first, and those shown in $(TextBrightRed red) (and prefixed with '$(TextBrightRed '!')') were last updated more-than $highlight_older_than."
-
 		DisplayAsBacksReportTitleLine
 
 		if [[ -e $GNU_FIND_CMD ]]; then				# Prefer GNU `find` for this.
@@ -6931,6 +6927,10 @@ ShowReportBackups()
 				DisplayAsBacksReportItemLine "$epoch_time" "$file_name" "$file_bytes" "$highlight_older_than"
 			done <<< "$(cd "$QPKG_BU_PATH" && ls -l1tr --time-style=+"%Y-%m-%d %H:%M:%S" ./*.config.tar.gz 2>/dev/null | $AWK_CMD '{print $6" "$7" "$8" "$5}')"
 		fi
+
+		DisplayAsHelpTitle "backups are listed oldest-first, and those shown in $(TextBrightRed red) (prefixed with '$(TextBrightRed '!')') were last updated more-than $highlight_older_than."
+
+		DisplayAsHelpTitle "All $(ShowAsTitleName) backup files are stored here: $QPKG_BU_PATH"
 
 		} > "$REPORT_OUTPUT_PATHFILE"
 
@@ -6986,8 +6986,8 @@ ShowReportDependencies()
 		{
 
 		DisplayAsHelpTitle "package dependencies are automatically installed/started/stopped/restarted as-required by $(ShowAsTitleName)."
-		DisplayAsHelpTitle "requirements shown in $(TextBrightOrange orange) (and prefixed with '$(TextBrightOrange '*')') prevent the package being installed."
-		DisplayAsHelpTitle "those shown in $(TextBrightRed red) (and prefixed with '$(TextBrightRed '!')') are preventing the package from working correctly."
+		DisplayAsHelpTitle "requirements shown in $(TextBrightOrange orange) (prefixed with '$(TextBrightOrange '*')') prevent the package being installed."
+		DisplayAsHelpTitle "those shown in $(TextBrightRed red) (prefixed with '$(TextBrightRed '!')') are preventing the package from working correctly."
 
 		} >> "$REPORT_OUTPUT_PATHFILE"
 
