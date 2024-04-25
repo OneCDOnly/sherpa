@@ -1,9 +1,5 @@
 Observed issues:
 
-	* aarch64 (Laura), sherpa check fails to restart nzbhydra correctly.
-		- SIGTERM on proc fails, requires SIGKILL, but nzbhydra keeps running on a new PID (might be a shutdown process? This proc is later found to be inactive).
-		- maybe renice hydra proc to something less-demanding? Try it with 10.
-
 	* armv5 (Helga) is cutting-off debug log early when running 'sherpa s olive verbose' due to SIGINT.
 
 	* Allow Kapowarr to follow source git branch, release or tag.
@@ -11,45 +7,6 @@ Observed issues:
 	* When aborting sherpa, must also ensure child procs abort.
 		- Presently, if a child proc is waiting to check PID again, it doesn't abort.
 		- Try https://stackoverflow.com/a/2173421
-
-	* armv5 (Milla) start failed:
-		-------------------------------------------------------------------------------------------------------------------------
-		11 source: glances.sh, action: start, datetime: Fri Apr 5 13:52:32 EST 2024
-		12 package: 240405, service: 240405, library: 240405
-		13 daemon: inactive
-		14 auto-update: true
-		15 exclude problem PyPI modules from 'pip-essential.txt': OK
-		16 install PyPI modules from 'pip-essential.txt': OK
-		17 load ports from configuration file: OK
-		18 start daemon (in screen session): OK
-		19 wait for daemon to appear: appeared in 2 seconds
-		20 daemon: exists
-		21 daemon: active (PID:612)
-		22 daemon listening address: '0.0.0.0'
-		23 HTTPS port enabled: false
-		24 HTTP port: '61208'
-		25 test for port '61208' response (no-more than 240 seconds): process not active
-		26 no response on configured port(s)
-		27 CheckPorts() failed!
-		28 dbug: (LL) adding external log to main log ...
-		29 dbug: (LL) ----------------------------------------------------------------------------------------------------
-		30 dbug: (LL) = log file: '/var/log/Glances.screen.log'
-		31 dbug: (LL) command: '/share/CACHEDEV1_DATA/.qpkg/Glances/venv/bin/python3 /share/CACHEDEV1_DATA/.qpkg/Glances/venv/bin/glances --webserver'
-		32 dbug: (LL) Traceback (most recent call last):
-		33 dbug: (LL) File "/share/CACHEDEV1_DATA/.qpkg/Glances/venv/bin/glances", line 5, in <module>
-		34 dbug: (LL) from glances import main
-		35 dbug: (LL) File "/share/CACHEDEV1_DATA/.qpkg/Glances/venv/lib/python3.11/site-packages/glances/__init__.py", line 35, in <module>
-		36 dbug: (LL) from glances.compat import PY3
-		37 dbug: (LL) File "/share/CACHEDEV1_DATA/.qpkg/Glances/venv/lib/python3.11/site-packages/glances/compat.py", line 25, in <module>
-		38 dbug: (LL) from glances.logger import logger
-		39 dbug: (LL) File "/share/CACHEDEV1_DATA/.qpkg/Glances/venv/lib/python3.11/site-packages/glances/logger.py", line 20, in <module>
-		40 dbug: (LL) from glances.globals import safe_makedirs
-		41 dbug: (LL) File "/share/CACHEDEV1_DATA/.qpkg/Glances/venv/lib/python3.11/site-packages/glances/globals.py", line 16, in <module>
-		42 dbug: (LL) import ujson
-		43 dbug: (LL) ModuleNotFoundError: No module named 'ujson'
-		44 dbug: (LL) ----------------------------------------------------------------------------------------------------
-		45  source: glances.sh, action: start, datetime: Fri Apr 5 13:53:13 EST 2024, result: failed, elapsed time: 0h:00m:40s
-		-------------------------------------------------------------------------------------------------------------------------
 
 	* 'sherpa show status' displays status report correctly, and then displays 'show' usage examples.
 
@@ -76,7 +33,7 @@ Observed issues:
 		unable to install addons: 'virtual environment does not exist'
 		source: sabnzbd.sh, action: start, datetime: Wed Mar 6 15:12:20 EST 2024, result: failed, elapsed time: 6,224ms
 		-------------------------------------------------------------------------------------------------------------------------
-		- Original cause of install failure has been fixed, so will need to simulate an error to test.
+		- Note: original cause of installation failure has been fixed, so will need to simulate an error to test.
 
 	* Function durations can become incorrect when functions with the same name are called recursively.
 		- Need to make vars holding start-times unique. Maybe measure nest depth?

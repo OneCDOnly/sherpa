@@ -248,7 +248,7 @@ LoadConsts()
 	readonly HELP_SYNTAX_INDENT=6
 
 	readonly PACKAGE_ABBS_COL_WIDTH=84
-	readonly PACKAGE_APP_VER_COL_WIDTH=18
+	readonly PACKAGE_APP_VER_COL_WIDTH=22
 	readonly PACKAGE_ARCH_COL_WIDTH=15
 	readonly PACKAGE_AUTHOR_COL_WIDTH=40
 	readonly PACKAGE_DEPENDENCIES_COL_WIDTH=29
@@ -256,8 +256,8 @@ LoadConsts()
 	readonly PACKAGE_ENABLED_COL_WIDTH=10
 	readonly PACKAGE_INSTALL_DATE_COL_WIDTH=20
 	readonly PACKAGE_INSTALLED_COL_WIDTH=12
-	readonly PACKAGE_MAX_OS_COL_WIDTH=9
-	readonly PACKAGE_MIN_OS_COL_WIDTH=9
+	readonly PACKAGE_MAX_OS_COL_WIDTH=10
+	readonly PACKAGE_MIN_OS_COL_WIDTH=10
 	readonly PACKAGE_MIN_RAM_COL_WIDTH=14
 	readonly PACKAGE_NAME_COL_WIDTH=21
 		readonly FILE_NAME_COL_WIDTH=$((PACKAGE_NAME_COL_WIDTH+14))
@@ -1009,7 +1009,7 @@ QPKGsAssignToActions()
 	if QpkgIsInstalled Entware; then
 		local entware_install_date=$(QpkgGetInstallDate Entware)
 
-		if [[ $entware_install_date = undefined || ${entware_install_date//[!0-9]/} -le 20240224 ]]; then
+		if [[ $entware_install_date = undefined || ${entware_install_date//[!0-9]/} -le 20240224 ]] && [[ $NAS_ARCH != armv5tel ]]; then
 			ShowAsNote "the $(TextBrightOrange Entware) QPKG will be auto-reinstalled (Entware packages were updated late in February 2024)"
 			QPKGs-ACreinstall-to:Add Entware
 		fi
@@ -4201,7 +4201,7 @@ DisplayAsPacksReportTitleLine()
 
 	if [[ $report_cols_max -ge 2 ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}App version:"
+		a="${CHARS_BULLET}Application version:"
 		printf "%-$((PACKAGE_APP_VER_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -4324,7 +4324,7 @@ DisplayAsStatusReportTitleLine()
 
 	if [[ $report_cols_max -ge 4 ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}App version:"
+		a="${CHARS_BULLET}Application version:"
 		printf "%-$((PACKAGE_APP_VER_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -4407,7 +4407,7 @@ DisplayAsStatusReportItemLine()
 		muted)
 			app_ver_msg+=$(TextDarkGrey "$(QpkgGetApplVer "$qpkg_name")")
 			name_msg+=$(TextDarkGrey "$qpkg_name")
-			path_msg=''
+			path_msg+=$(TextDarkGrey 'N/A')
 
 			if ! QpkgIsArchOK; then
 				status='incompatible arch'
@@ -4488,7 +4488,7 @@ DisplayAsReposReportTitleLine()
 
 	if [[ $report_cols_max -ge 2 ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}install date:"
+		a="${CHARS_BULLET}Install date:"
 		printf "%-$((PACKAGE_INSTALL_DATE_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -4496,7 +4496,7 @@ DisplayAsReposReportTitleLine()
 
 	if [[ $report_cols_max -ge 3 ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}repository:"
+		a="${CHARS_BULLET}Repository:"
 		printf "%-$((PACKAGE_REPO_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -4620,7 +4620,7 @@ DisplayAsAbsReportTitleLine()
 
 	if [[ $report_cols_max -ge 2 ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}installed?"
+		a="${CHARS_BULLET}Installed?"
 		printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -4628,7 +4628,7 @@ DisplayAsAbsReportTitleLine()
 
 	if [[ $report_cols_max -ge 3 ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}acceptable QPKG name abbreviations and aliases:"
+		a="${CHARS_BULLET}Acceptable QPKG name abbreviations and aliases:"
 		printf "%-$((PACKAGE_ABBS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -4740,7 +4740,7 @@ DisplayAsDepsReportTitleLine()
 
 	if [[ $report_cols_max -ge 2 ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}dependencies:"
+		a="${CHARS_BULLET}Dependencies:"
 		printf "%-$((PACKAGE_DEPENDENCIES_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -4748,7 +4748,7 @@ DisplayAsDepsReportTitleLine()
 
 	if [[ $report_cols_max -ge 3 ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}installed?"
+		a="${CHARS_BULLET}Installed?"
 		printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -4756,7 +4756,7 @@ DisplayAsDepsReportTitleLine()
 
 	if [[ $report_cols_max -ge 4 ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}enabled?"
+		a="${CHARS_BULLET}Enabled?"
 		printf "%-$((PACKAGE_ENABLED_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -4764,7 +4764,7 @@ DisplayAsDepsReportTitleLine()
 
 	if [[ $report_cols_max -ge 5 ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}min RAM:"
+		a="${CHARS_BULLET}Min. RAM:"
 		printf "%-$((PACKAGE_MIN_RAM_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -4772,7 +4772,7 @@ DisplayAsDepsReportTitleLine()
 
 	if [[ $report_cols_max -ge 6 ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}min OS:"
+		a="${CHARS_BULLET}Min. OS:"
 		printf "%-$((PACKAGE_MIN_OS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -4780,7 +4780,7 @@ DisplayAsDepsReportTitleLine()
 
 	if [[ $report_cols_max -ge 7 ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}max OS:"
+		a="${CHARS_BULLET}Max. OS:"
 		printf "%-$((PACKAGE_MAX_OS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -4788,7 +4788,7 @@ DisplayAsDepsReportTitleLine()
 
 	if [[ $report_cols_max -ge 8 ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}supported arch?"
+		a="${CHARS_BULLET}Supported arch?"
 		printf "%-$((PACKAGE_ARCH_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -5081,7 +5081,7 @@ DisplayAsBacksReportTitleLine()
 
 	if [[ $report_cols_max -ge 2 ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}size in bytes:"
+		a="${CHARS_BULLET}Size in bytes:"
 		printf "%-$((FILE_BYTES_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -5089,7 +5089,7 @@ DisplayAsBacksReportTitleLine()
 
 	if [[ $report_cols_max -ge 3 ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}last backup date:"
+		a="${CHARS_BULLET}Backup date:"
 		printf "%-$((FILE_CHANGE_DATE_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -6854,7 +6854,7 @@ Help.Abbreviations:Show()
 		DisplayAsHelpTitle "$(ShowAsTitleName) can recognise various abbreviations and aliases as $(ShowAsPackages)."
 		DisplayAsAbsReportTitleLine
 
-		} >"$REPORT_OUTPUT_PATHFILE"
+		} > "$REPORT_OUTPUT_PATHFILE"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
@@ -6872,13 +6872,9 @@ Help.Abbreviations:Show()
 		[[ -e $f ]] && a+="$(<$f)\n"		# add newline to each imported report line
 	done
 
-	[[ -n $a ]] && echo -en "$a" >>"$REPORT_OUTPUT_PATHFILE"
+	[[ -n $a ]] && echo -en "$a" >> "$REPORT_OUTPUT_PATHFILE"
 
-		{
-
-		DisplayAsProjSynExam "example: to install $(ShowAsPackageName SABnzbd), $(ShowAsPackageName Mylar3) and $(ShowAsPackageName nzbToMedia) all-at-once" 'install sab my nzb2'
-
-		} >> "$REPORT_OUTPUT_PATHFILE"
+	DisplayAsProjSynExam "example: to install $(ShowAsPackageName SABnzbd), $(ShowAsPackageName Mylar3) and $(ShowAsPackageName nzbToMedia) all-at-once" 'install sab my nzb2' >> "$REPORT_OUTPUT_PATHFILE"
 
 	EraseThisLine
 
@@ -6913,10 +6909,6 @@ ShowReportBackups()
 
 		{
 
-		DisplayAsHelpTitle "the location for $(ShowAsTitleName) backups is: $QPKG_BU_PATH"
-
-		DisplayAsHelpTitle "backups are listed oldest-first, and those shown in $(TextBrightRed red) (and prefixed with '$(TextBrightRed '!')') were last updated more-than $highlight_older_than."
-
 		DisplayAsBacksReportTitleLine
 
 		if [[ -e $GNU_FIND_CMD ]]; then				# Prefer GNU `find` for this.
@@ -6935,6 +6927,10 @@ ShowReportBackups()
 				DisplayAsBacksReportItemLine "$epoch_time" "$file_name" "$file_bytes" "$highlight_older_than"
 			done <<< "$(cd "$QPKG_BU_PATH" && ls -l1tr --time-style=+"%Y-%m-%d %H:%M:%S" ./*.config.tar.gz 2>/dev/null | $AWK_CMD '{print $6" "$7" "$8" "$5}')"
 		fi
+
+		DisplayAsHelpTitle "backups are listed oldest-first, and those shown in $(TextBrightRed red) (prefixed with '$(TextBrightRed '!')') were last updated more-than $highlight_older_than."
+
+		DisplayAsHelpTitle "All $(ShowAsTitleName) backup files are stored here: $QPKG_BU_PATH"
 
 		} > "$REPORT_OUTPUT_PATHFILE"
 
@@ -6967,14 +6963,7 @@ ShowReportDependencies()
 	DisplayProcReport dependency
 	ResetReportsPath &>/dev/null
 
-		{
-
-		DisplayAsHelpTitle "package dependencies are automatically installed/started/stopped/restarted as-required by $(ShowAsTitleName)."
-		DisplayAsHelpTitle "requirements shown in $(TextBrightOrange orange) (and prefixed with '$(TextBrightOrange '*')') prevent the package being installed."
-		DisplayAsHelpTitle "those shown in $(TextBrightRed red) (and prefixed with '$(TextBrightRed '!')') are preventing the package from working correctly."
-		DisplayAsDepsReportTitleLine
-
-		} >"$REPORT_OUTPUT_PATHFILE"
+	DisplayAsDepsReportTitleLine > "$REPORT_OUTPUT_PATHFILE"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
@@ -6992,7 +6981,15 @@ ShowReportDependencies()
 		[[ -e $f ]] && a+="$(<$f)\n"		# add newline to each imported report line
 	done
 
-	[[ -n $a ]] && echo -en "$a" >>"$REPORT_OUTPUT_PATHFILE"
+	[[ -n $a ]] && echo -en "$a" >> "$REPORT_OUTPUT_PATHFILE"
+
+		{
+
+		DisplayAsHelpTitle "package dependencies are automatically installed/started/stopped/restarted as-required by $(ShowAsTitleName)."
+		DisplayAsHelpTitle "requirements shown in $(TextBrightOrange orange) (prefixed with '$(TextBrightOrange '*')') prevent the package being installed."
+		DisplayAsHelpTitle "those shown in $(TextBrightRed red) (prefixed with '$(TextBrightRed '!')') are preventing the package from working correctly."
+
+		} >> "$REPORT_OUTPUT_PATHFILE"
 
 	EraseThisLine
 
@@ -7065,7 +7062,7 @@ ShowReportRepos()
 	DisableDebugToArchiveAndFile
 	DisplayProcReport repository
 	ResetReportsPath &>/dev/null
-	DisplayAsReposReportTitleLine >"$REPORT_OUTPUT_PATHFILE"
+	DisplayAsReposReportTitleLine > "$REPORT_OUTPUT_PATHFILE"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
@@ -7083,7 +7080,7 @@ ShowReportRepos()
 		[[ -e $f ]] && a+="$(<$f)\n"		# add newline to each imported report line
 	done
 
-	[[ -n $a ]] && echo -en "$a" >>"$REPORT_OUTPUT_PATHFILE"
+	[[ -n $a ]] && echo -en "$a" >> "$REPORT_OUTPUT_PATHFILE"
 
 	EraseThisLine
 
@@ -7117,7 +7114,8 @@ ShowReportStatuses()
 	DisplayProcReport status
 	ResetReportsPath &>/dev/null
 	CalcMaxStatusReportCols
-	DisplayAsStatusReportTitleLine >"$REPORT_OUTPUT_PATHFILE"
+
+	DisplayAsStatusReportTitleLine > "$REPORT_OUTPUT_PATHFILE"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		QPKGs-ACstatus-dn.Exist "$qpkg_name" || continue
@@ -7136,15 +7134,43 @@ ShowReportStatuses()
 		[[ -e $f ]] && a+="$(<$f)\n"		# add newline to each imported report line
 	done
 
-	[[ -n $a ]] && echo -en "$a" >>"$REPORT_OUTPUT_PATHFILE"
+	[[ -n $a ]] && echo -en "$a" >> "$REPORT_OUTPUT_PATHFILE"
 
-	if QPKGs-ISslow.IsAny; then
 		{
 
-		DisplayAsHelpTitle "statuses shown as '$(TextBrightOrange slow)' are usually because the application has been page-swapped to disk and must be reloaded into RAM to respond to a status request. Requesting the QPKG status again shortly afterward should return a useful status result."
+		if QPKGs-ISmissing.IsAny; then
+			DisplayAsHelpTitle "'$(TextBrightRed missing)' means the QPKG is missing from its installation path. This is a broken state. Reinstall the QPKG if you're aware of the problem. Your QPKG config (if-applicable) will need to be restored from backup."
+		fi
 
-		} >>"$REPORT_OUTPUT_PATHFILE"
-	fi
+		if QPKGs-ISNTenabled.IsAny; then
+			DisplayAsHelpTitle "'$(TextBrightRed disabled)' means the QPKG application won't start at bootup, and (usually) can't be started manually. Enable it first, then start it."
+		fi
+
+		if QPKGs-ISenabled.IsAny; then
+			DisplayAsHelpTitle "'$(TextBrightGreen enabled)' means the QPKG application will start automatically at bootup, and is (usually) required so QPKGs can be started manually."
+		fi
+
+		if QPKGs-ISNTactive.IsAny; then
+			DisplayAsHelpTitle "'$(TextBrightRed inactive)' means the QPKG application is dead or not-started. Try starting/activating it."
+		fi
+
+		if QPKGs-ISstopping.IsAny; then
+			DisplayAsHelpTitle "'$(TextBrightOrange stopping)' means the QPKG application is shutting-down. Try checking the status again shortly."
+		fi
+
+		if QPKGs-ISslow.IsAny; then
+			DisplayAsHelpTitle "'$(TextBrightOrange slow)' means the QPKG application is alive, but took too-long to respond to the status request. This is more common on NAS with lower installed RAM, and is usually because the application has been page-swapped to disk and must be reloaded into RAM. Try checking the status again shortly."
+		fi
+
+		if QPKGs-ISstarting.IsAny; then
+			DisplayAsHelpTitle "'$(TextBrightOrange starting)' means the QPKG application is being launched. Try checking the status again shortly."
+		fi
+
+		if QPKGs-ISactive.IsAny; then
+			DisplayAsHelpTitle "'$(TextBrightGreen active)' means the QPKG application is alive (and responsive if it's a daemon). This is good."
+		fi
+
+		} >> "$REPORT_OUTPUT_PATHFILE"
 
 	EraseThisLine
 
