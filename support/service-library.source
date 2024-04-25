@@ -103,7 +103,7 @@ InitLibrary()
 	recheck_daemon_pid_after_kill=false			# If true, application PID is reconfirmed shortly after kill confirmed. Some applications kill their main PID, then switch to another during shutdown.
 	remote_arch=undefined
 	remote_url=undefined
-	renice_daemon_to=0							# If non-zero, daemon proc is reniced to this value after being launched.
+	nice_daemon_to=0							# If non-zero, daemon proc is niced to this value on-launch.
 	resolve_remote_url=false					# If 'true', URL must be retrieved from remote first, then parsed to get final URL.
 	run_daemon_in_screen_session=false
 	service_operation=unspecified
@@ -366,6 +366,11 @@ StartQPKGLibrary()
 	if [[ $run_daemon_in_screen_session = true ]]; then
 		msg+=' (in screen session)'
 		rm -f "${SCREEN_LOG_PATHFILE:?}"
+	fi
+
+	if ((nice_daemon_to != 0)) && ((nice_daemon_to >= -20)) && ((nice_daemon_to <= 19)) && [[ -e /opt/bin/nice ]]; then
+		daemon_launch_cmd="/opt/bin/nice -n $nice_daemon_to bash -c \"$daemon_launch_cmd\""
+		DisplayCommitToLog "nice daemon to: $nice_daemon_to"
 	fi
 
 	if ! DisplayRunAndLog "$msg" "$daemon_launch_cmd" log:failure-only "$run_daemon_in_screen_session"; then
@@ -1016,11 +1021,6 @@ WaitForDaemon()
 	fi
 
 	DisplayCommitToLog "daemon: exists"
-
-	if ((renice_daemon_to != 0)) && ((renice_daemon_to >= -20)) && ((renice_daemon_to <= 19)) && [[ -e /bin/renice ]]; then
-		/bin/renice "$renice_daemon_to" -p "$(<$daemon_pid_pathfile)"
-		DisplayCommitToLog "daemon reniced to: $renice_daemon_to"
-	fi
 
 	return 0
 

@@ -8502,10 +8502,6 @@ _QPKG:install_()
 		SaveActionResultToLog QPKG "$qpkg_name" install skipped-error 'no local file found for processing: please report this issue'
 		MarkThisActionForkAsSkippedError
 		z=4
-# 	elif ! FileMatchesMD5 "$local_pathfile" "$(QpkgGetHash)"; then
-# 		SaveActionResultToLog QPKG "$qpkg_name" install skipped-error "cache file $(ShowAsFileName "$($BASENAME_CMD "$local_pathfile")") has incorrect checksum"
-# 		MarkThisActionForkAsSkippedError
-# 		z=4
 	fi
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
@@ -8530,10 +8526,12 @@ _QPKG:install_()
 	RunAndLog "${a}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$INSTALL_LOG_FILE" log:failure-only 10
 	z=$?
 
+	LogQpkgServiceStatus
+	QpkgIsCanLog && ! QpkgLastResultWasOk && z=1
+
 	[[ $qpkg_name = Entware ]] && IsNtSysFileExist $OPKG_CMD && z=1
 
-	if [[ $z -eq 0 || $z -eq 10 ]]; then
-		LogQpkgServiceStatus
+	if [[ $z -eq 0 || $z -eq 10 ]]; then	# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes aborts.
 		SendPackageStateChange ISinstalled
 
 		if QpkgIsEnabled "$qpkg_name"; then
@@ -8560,7 +8558,7 @@ _QPKG:install_()
 
 		SendParentChangeEnv "QPKGs-ACsign-to:Add $qpkg_name"
 		MarkThisActionForkAsOk
-		z=0   # Remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK, but unfortunately will include installation aborts).
+		z=0   # Remap to zero.
 	else
 		SaveActionResultToLog QPKG "$qpkg_name" install failed "$z"
 		MarkThisActionForkAsFailed
@@ -8611,10 +8609,6 @@ _QPKG:reinstall_()
 		SaveActionResultToLog QPKG "$qpkg_name" reinstall skipped-error 'no local file found for processing, please report this issue.'
 		MarkThisActionForkAsSkippedError
 		z=4
-# 	elif ! FileMatchesMD5 "$local_pathfile" "$(QpkgGetHash)"; then
-# 		SaveActionResultToLog QPKG "$qpkg_name" reinstall skipped-error "cache file $(ShowAsFileName "$($BASENAME_CMD "$local_pathfile")") has incorrect checksum"
-# 		MarkThisActionForkAsSkippedError
-# 		z=4
 	fi
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
@@ -8628,11 +8622,12 @@ _QPKG:reinstall_()
 	RunAndLog "${a}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$REINSTALL_LOG_FILE" log:failure-only 10
 	z=$?
 
+	LogQpkgServiceStatus
+	QpkgIsCanLog && ! QpkgLastResultWasOk && z=1
+
 	[[ $qpkg_name = Entware ]] && IsNtSysFileExist $OPKG_CMD && z=1
 
-	if [[ $z -eq 0 || $z -eq 10 ]]; then
-		LogQpkgServiceStatus
-
+	if [[ $z -eq 0 || $z -eq 10 ]]; then		# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes aborts.
 		if QpkgIsEnabled "$qpkg_name"; then
 			SendPackageStateChange ISenabled
 		else
@@ -8641,7 +8636,7 @@ _QPKG:reinstall_()
 
 		SaveActionResultToLog QPKG "$qpkg_name" reinstall ok "version $(QpkgGetInstalledVer)"
 		MarkThisActionForkAsOk
-		z=0   # Remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK, but unfortunately will include installation aborts).
+		z=0   # Remap to zero.
 	else
 		SaveActionResultToLog QPKG "$qpkg_name" reinstall failed "$z"
 		MarkThisActionForkAsFailed
@@ -8745,10 +8740,6 @@ _QPKG:upgrade_()
 		SaveActionResultToLog QPKG "$qpkg_name" upgrade skipped-error 'no local file found for processing, please report this issue'
 		MarkThisActionForkAsSkippedError
 		z=4
-# 	elif ! FileMatchesMD5 "$local_pathfile" "$(QpkgGetHash)"; then
-# 		SaveActionResultToLog QPKG "$qpkg_name" upgrade skipped-error "cache file $(ShowAsFileName "$($BASENAME_CMD "$local_pathfile")") has incorrect checksum"
-# 		MarkThisActionForkAsSkippedError
-# 		z=4
 	fi
 
 	[[ $z -eq 0 ]] || FuncFork:Exit $z
@@ -8763,10 +8754,12 @@ _QPKG:upgrade_()
 	RunAndLog "${a}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$UPGRADE_LOG_FILE" log:failure-only 10
 	z=$?
 
+	LogQpkgServiceStatus
+	QpkgIsCanLog && ! QpkgLastResultWasOk && z=1
+
 	[[ $qpkg_name = Entware ]] && IsNtSysFileExist $OPKG_CMD && z=1
 
-	if [[ $z -eq 0 || $z -eq 10 ]]; then
-		LogQpkgServiceStatus
+	if [[ $z -eq 0 || $z -eq 10 ]]; then	# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes aborts.
 		SendPackageStateChange ISNTupgradable
 
 		if QpkgIsEnabled "$qpkg_name"; then
@@ -8784,7 +8777,7 @@ _QPKG:upgrade_()
 		fi
 
 		MarkThisActionForkAsOk
-		z=0   # Remap to zero (0 or 10 from a QPKG install/reinstall/upgrade is OK, but unfortunately will include installation aborts).
+		z=0   # Remap to zero.
 	else
 		SaveActionResultToLog QPKG "$qpkg_name" upgrade failed "$z"
 		MarkThisActionForkAsFailed
@@ -11064,7 +11057,7 @@ RunAndLog()
 	#   $1 = commandstring to execute.
 	#   $2 = pathfile to record stdout and stderr for commandstring.
 	#   $3 = `log:failure-only` (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed. default is to always record stdout & stderr.
-	#   $4 = e.g. `10` (optional) - an additional acceptable result code. Any other result from command (other than zero) will be considered a failure.
+	#   $4 = e.g. `10` (optional) - an additional acceptable result code. Any other non-zero result from command will be considered a failure.
 
 	# Output:
 	#   stdout = commandstring stdout and stderr if script is in `debug` mode.
