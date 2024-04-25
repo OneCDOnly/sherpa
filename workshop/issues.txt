@@ -19,21 +19,6 @@ Observed issues:
 
 	* Upgrading QPKGs via sherpa didn't update App Center icons 'live'.
 
-	* Headphones didn't report 'stop' as successful.
-		-------------------------------------------------------------------------------------------------------------------------
-		- • These actions failed:
-			Unable to deactivate Headphones in 5m:51s: For more information: /etc/init.d/headphones.sh log
-		-------------------------------------------------------------------------------------------------------------------------
-			37 source: headphones.sh, action: stop, datetime: Thu Jan 25 06:51:31 EST 2024
-			38 package: 240125, service: 240125, library: 240125
-			39 daemon active: true
-			40 daemon PID: 24189
-			41 stop daemon PID (24189) with SIGTERM: stopped in 45 seconds
-		-------------------------------------------------------------------------------------------------------------------------
-		log ended here like process had been killed.
-
-		- Applications was dead.
-
 	* Near the end of installing IPKs, monitored download path can remain at non-zero size while packages complete installation.
 		- Include a separate progress message when dir size shrinks?
 
