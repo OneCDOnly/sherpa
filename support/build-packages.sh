@@ -65,10 +65,10 @@ StripComments()
 
 	local a="$1"
 
-	a=$(/bin/sed -e '/^#[[:space:]].*/d;/#$/d;s/[[:space:]]#[[:space:]].*//' <<< "$a")		# remove comment lines and line comments.
-	a=$(/bin/sed -e 's/^[[:space:]]*//' <<< "$a")											# remove leading whitespace.
-	a=$(/bin/sed 's/[[:space:]]*$//' <<< "$a")												# remove trailing whitespace.
-	a=$(/bin/sed "/^$/d" <<< "$a")															# remove empty lines.
+	a=$(/bin/sed -e '/^#[[:space:]].*/d;/#$/d;s/[[:space:]]#[[:space:]].*//' <<< "$a")		# Remove comment lines and line comments.
+	a=$(/bin/sed -e 's/^[[:space:]]*//' <<< "$a")											# Remove leading whitespace.
+	a=$(/bin/sed 's/[[:space:]]*$//' <<< "$a")												# Remove trailing whitespace.
+	a=$(/bin/sed "/^$/d" <<< "$a")															# Remove empty lines.
 
 	echo "$a"
 
@@ -90,18 +90,18 @@ echo -n 'extracting highest QPKG version numbers ... '
 
 		IFS='_' read -r package_name version arch tailend <<< "${checksum_filename//.qpkg.md5/}"
 
-		if [[ $arch = std ]]; then     						# an exception for Entware.
+		if [[ $arch = std ]]; then     						# Exception for Entware.
 			arch=''
 			tailend=''
 		fi
 
 		[[ -n $tailend ]] && arch+=_$tailend
 
-		if [[ ${version##*.} = zip ]]; then					# an exception for QDK.
+		if [[ ${version##*.} = zip ]]; then					# Exception for QDK.
 			version=${version%.*}
 		fi
 
-		if [[ ${qpkg_filename: -9} = .zip.qpkg ]]; then		# another exception for QDK.
+		if [[ ${qpkg_filename: -9} = .zip.qpkg ]]; then		# Another exception for QDK.
 			qpkg_filename=${qpkg_filename%.*}
 		fi
 
@@ -168,21 +168,25 @@ buffer=$(<"$target_pathfile")
 
 echo -n 'updating QPKG fields ... '
 
-	buffer=$(sed "s|<?cdn_sherpa_packages_url?>|$cdn_sherpa_packages_url|" <<< "$buffer")
-	buffer=$(sed "s|<?cdn_qnap_dev_packages_url?>|$cdn_qnap_dev_packages_url|" <<< "$buffer")
-	buffer=$(sed "s|<?cdn_other_packages_url?>|$cdn_other_packages_url|" <<< "$buffer")
+	buffer=$(sed "s|<?cdn_nzbget_dev_packages_url?>|$cdn_nzbget_dev_packages_url|g" <<< "$buffer")
+	buffer=$(sed "s|<?cdn_other_packages_url?>|$cdn_other_packages_url|g" <<< "$buffer")
+	buffer=$(sed "s|<?cdn_qnap_dev_packages_url?>|$cdn_qnap_dev_packages_url|g" <<< "$buffer")
+	buffer=$(sed "s|<?cdn_sherpa_packages_url?>|$cdn_sherpa_packages_url|g" <<< "$buffer")
 
 	while read -r checksum_filename qpkg_filename package_name version arch hash; do
 		for property in version package_name qpkg_filename hash; do
-			buffer=$(sed "/QPKG_NAME+=($package_name)/,/^$/{/QPKG_ARCH+=($arch)/,/$property.*/s/<?$property?>/${!property}/}" <<< "$buffer")
+			buffer=$(sed "/QPKG_NAME+=(${package_name})/,/^$/{/QPKG_ARCH+=(${arch})/,/${property}.*/s/<?${property}?>/${!property}/}" <<< "$buffer")
 
-			if [[ $package_name = QDK && $property = version ]]; then
-				# run this a second time as there are 2 version placeholders in packages.source for QDK.
-				buffer=$(sed "/QPKG_NAME+=($package_name)/,/^$/{/QPKG_ARCH+=($arch)/,/$property.*/s/<?$property?>/${!property}/}" <<< "$buffer")
-			fi
+			case $package_name in
+				nzbget|QDK)
+					if [[ $property = version ]]; then
+						# Run this a second time as there are 2 version placeholders in 'packages.source' for nzbget and QDK.
+						buffer=$(sed "/QPKG_NAME+=($package_name)/,/^$/{/QPKG_ARCH+=($arch)/,/$property.*/s/<?$property?>/${!property}/}" <<< "$buffer")
+					fi
+			esac
 
-			# if arch = none then package is not to be installable. Write 'none' into all values.
-			buffer=$(sed "/QPKG_NAME+=($package_name)/,/^$/{/QPKG_ARCH+=(none)/,/$property.*/s/<?$property?>/none/}" <<< "$buffer")
+			# If arch = 'none' then package will not be installable, so write 'none' to all fields.
+			buffer=$(sed "/QPKG_NAME+=(${package_name})/,/^$/{/QPKG_ARCH+=(none)/,/${property}.*/s/<?${property}?>/none/}" <<< "$buffer")
 		done
 	done <<< "$(sort "$highest_package_versions_found_pathfile")"
 
@@ -202,7 +206,7 @@ fi
 Squeeze "$target_pathfile" "$target_pathfile"
 [[ -f $target_pathfile ]] && chmod 444 "$target_pathfile"
 
-# sort and add header line for easier viewing.
+# Sort and add header line for easier viewing.
 
 [[ -f $highest_package_versions_found_sorted_pathfile ]] && chmod 644 "$highest_package_versions_found_sorted_pathfile"
 printf '%-36s %-32s %-20s %-12s %-6s %s\n%s\n' '# checksum_filename' qpkg_filename package_name version arch hash "$(sort "$highest_package_versions_found_pathfile")" > "$highest_package_versions_found_sorted_pathfile"

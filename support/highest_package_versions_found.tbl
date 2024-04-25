@@ -26,6 +26,12 @@ Mylar3_240426_arm-x41.qpkg.md5       Mylar3_240426_arm-x41.qpkg       Mylar3    
 Mylar3_240426_x86_64.qpkg.md5        Mylar3_240426_x86_64.qpkg        Mylar3               240426       i64    ddb088f93a38ff6e490af8177275aed8
 Mylar3_240426_x86.qpkg.md5           Mylar3_240426_x86.qpkg           Mylar3               240426       i86    a9c8fa0cd98fe00d543378307ec73f45
 NZBGet_240426.qpkg.md5               NZBGet_240426.qpkg               NZBGet               240426       all    ea1f0c48a0f37733e096c2834c8ad242
+nzbget_24.0_arm_64.qpkg.md5          nzbget_24.0_arm_64.qpkg          nzbget               24.0         a64    9a7e13ef1196fa88d689aa9cbfa77fdf
+nzbget_24.0_arm-x19.qpkg.md5         nzbget_24.0_arm-x19.qpkg         nzbget               24.0         a19    040e3d1469e981b39bc284a8281d3b42
+nzbget_24.0_arm-x31.qpkg.md5         nzbget_24.0_arm-x31.qpkg         nzbget               24.0         a31    26c966b96dced83bfe22707a178046e3
+nzbget_24.0_arm-x41.qpkg.md5         nzbget_24.0_arm-x41.qpkg         nzbget               24.0         a41    bc8f5084a023698b95d3919b8268a428
+nzbget_24.0_x86_64.qpkg.md5          nzbget_24.0_x86_64.qpkg          nzbget               24.0         i64    199e09ab6a5864dcee8254f8875b1e07
+nzbget_24.0_x86.qpkg.md5             nzbget_24.0_x86.qpkg             nzbget               24.0         i86    f6a8631990d067f0ce70e69f3c426a12
 NZBHydra2_240426_arm_64.qpkg.md5     NZBHydra2_240426_arm_64.qpkg     NZBHydra2            240426       a64    a6099a9cbf0517cad9dfbdd26214fa11
 NZBHydra2_240426_x86_64.qpkg.md5     NZBHydra2_240426_x86_64.qpkg     NZBHydra2            240426       i64    6abb6e55fd1b54fce10382ae127ea65e
 nzbToMedia_240205.qpkg.md5           nzbToMedia_240205.qpkg           nzbToMedia           240205       all    6a43a3e6a7b04762034a1ad7918addad
