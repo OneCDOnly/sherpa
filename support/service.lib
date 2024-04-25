@@ -22,7 +22,7 @@
 #*   This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 #*	 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY, without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
-readonly SERVICE_LIB_VERSION='240423'
+readonly SERVICE_LIB_VERSION='240425'
 InitLibrary()
 {
 IsQNAP || exit
@@ -97,6 +97,7 @@ recheck_daemon_pid_after_launch=false
 recheck_daemon_pid_after_kill=false
 remote_arch=undefined
 remote_url=undefined
+renice_daemon_to=0
 resolve_remote_url=false
 run_daemon_in_screen_session=false
 service_operation=unspecified
@@ -750,6 +751,10 @@ return 1
 fi
 fi
 DisplayCommitToLog "daemon: exists"
+if ((renice_daemon_to != 0)) && ((renice_daemon_to >= -20)) && ((renice_daemon_to <= 19)) && [[ -e /bin/renice ]];then
+/bin/renice "$renice_daemon_to" -p "$(<$daemon_pid_pathfile)"
+DisplayCommitToLog "daemon reniced to: $renice_daemon_to"
+fi
 return 0
 }
 WaitForFileToAppear()
