@@ -7170,6 +7170,8 @@ ShowReportStatuses()
 			DisplayAsHelpTitle "'$(TextBrightGreen active)' means the QPKG application is alive (and responsive if it's a daemon). This is good."
 		fi
 
+		DisplayAsHelpTitle "'dynamic' means the application version is the latest available online."
+
 		} >> "$REPORT_OUTPUT_PATHFILE"
 
 	EraseThisLine
