@@ -70,9 +70,9 @@ Par2turbo_1.1.0_arm_64.qpkg.md5      Par2turbo_1.1.0_arm_64.qpkg      Par2turbo 
 Par2turbo_1.1.0_arm-x31.qpkg.md5     Par2turbo_1.1.0_arm-x31.qpkg     Par2turbo            1.1.0        a31    fafa50f9fe67d7798e2261ec8408cf1a
 Par2turbo_1.1.0_arm-x41.qpkg.md5     Par2turbo_1.1.0_arm-x41.qpkg     Par2turbo            1.1.0        a41    da1a48d4674453c5116870ad35c0b899
 Par2turbo_1.1.0_x86_64.qpkg.md5      Par2turbo_1.1.0_x86_64.qpkg      Par2turbo            1.1.0        i64    574f2d84284fe1c1f2e66d104e16ae8b
-pyLoad_240426_arm_64.qpkg.md5        pyLoad_240426_arm_64.qpkg        pyLoad               240426       a64    fd329f6febc17cfcf22f7cc513cb643a
-pyLoad_240426_x86_64.qpkg.md5        pyLoad_240426_x86_64.qpkg        pyLoad               240426       i64    772dc325159d9eeb9414d5bdabae9b2f
-pyLoad_240426_x86.qpkg.md5           pyLoad_240426_x86.qpkg           pyLoad               240426       i86    e7cf9aeb053ac26bdaf50a5967d75266
+pyLoad_240426_arm_64.qpkg.md5        pyLoad_240426_arm_64.qpkg        pyLoad               240426       a64    aa4d989c6eb2da2d780c9e5927b937d4
+pyLoad_240426_x86_64.qpkg.md5        pyLoad_240426_x86_64.qpkg        pyLoad               240426       i64    c1b63c5a8a86658eab02338b80df3f50
+pyLoad_240426_x86.qpkg.md5           pyLoad_240426_x86.qpkg           pyLoad               240426       i86    a033c211c2f40c8dcd4ba6ba52e71243
 QDK_2.3.13.zip.qpkg.md5              QDK_2.3.13.zip                   QDK                  2.3.13       all    0b003e703a29520e98a0aca41ed0e585
 RunLast_230224.qpkg.md5              RunLast_230224.qpkg              RunLast              230224       all    6cb5415fe56592ca1f4e8a4f2dcc5f17
 SABnzbd_240426_arm_64.qpkg.md5       SABnzbd_240426_arm_64.qpkg       SABnzbd              240426       a64    44f03373899a8c7c51e41d60d4f00ca4
@@ -83,7 +83,7 @@ SABnzbd_240426_x86_64.qpkg.md5       SABnzbd_240426_x86_64.qpkg       SABnzbd   
 SABnzbd_240426_x86.qpkg.md5          SABnzbd_240426_x86.qpkg          SABnzbd              240426       i86    845d18b588e8eac34f917ef137fb4fd5
 sha3sum_230312_x86_64.qpkg.md5       sha3sum_230312_x86_64.qpkg       sha3sum              230312       i64    6ceba9116e0dbcbdb4e6112f0c02f8c0
 sha3sum_230312_x86.qpkg.md5          sha3sum_230312_x86.qpkg          sha3sum              230312       i86    fdba9d16b88a5b6e3b04483ca77706dd
-sherpa_240426.qpkg.md5               sherpa_240426.qpkg               sherpa               240426       all    d9e81c5d5a35d42050775f42dc41a83f
+sherpa_240426.qpkg.md5               sherpa_240426.qpkg               sherpa               240426       all    46b1ad37d10f7c714dc8010fe665b9f7
 SortMyQPKGs_240225.qpkg.md5          SortMyQPKGs_240225.qpkg          SortMyQPKGs          240225       all    44643edd1a10db13caa48a46f0a8d3c5
 Unrar_6.2.5_arm_64.qpkg.md5          Unrar_6.2.5_arm_64.qpkg          Unrar                6.2.5        a64    e2382b80908fc9549bbb00058968082a
 Unrar_6.2.5_arm-x41.qpkg.md5         Unrar_6.2.5_arm-x41.qpkg         Unrar                6.2.5        a41    ac1ff1149258db5e4c0b8165774eda37
