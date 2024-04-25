@@ -17,7 +17,7 @@
 * 'show results' report should include completion and elapsed times.
 
 * Make last action result a separate status report column?
-    - Should include action attempted too.
+    - Should also include the attempted action.
 
 * Test for bash version and interpreter location?
 
