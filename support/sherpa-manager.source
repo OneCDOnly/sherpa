@@ -1121,14 +1121,12 @@ QPKGsAssignToActions()
 # 		done
 # 	done
 
-	# No-need to `deactivate`/`reactivate`/`disable` packages that are to be uninstalled.
+	# No-need to `reactivate`/`disable` packages that are to be uninstalled.
 
 	if QPKGs.ACuninstall.GRall.IsSet; then
-		QPKGs-ACdeactivate-to:Init
 		QPKGs-ACreactivate-to:Init
 		QPKGs-ACdisable-to:Init
 	else
-		QPKGs-ACdeactivate-to:Remove "$(QPKGs-ACuninstall-to:Array)"
 		QPKGs-ACreactivate-to:Remove "$(QPKGs-ACuninstall-to:Array)"
 		QPKGs-ACdisable-to:Remove "$(QPKGs-ACuninstall-to:Array)"
 	fi
@@ -1149,6 +1147,8 @@ QPKGsAssignToActions()
 				QPKGs_were_installed_name+=("$qpkg_name")
 				QPKGs_were_installed_path+=("$($DIRNAME_CMD "$(QpkgGetInstallationPath)")")
 			fi
+
+			QPKGs-ACdeactivate-to:Add "$qpkg_name"
 		done
 	fi
 
