@@ -4412,7 +4412,7 @@ DisplayAsStatusReportItemLine()
 			if ! QpkgIsArchOK; then
 				status='incompatible arch'
 			elif ! QpkgIsMinOSVerOk; then
-				status="incompatible $(OsGetQnapOS) version"
+				status="incompatible $(OsGetQnapOS)"
 			elif ! QpkgIsMinRAMOk; then
 				status='insufficient RAM'
 			else
@@ -4552,7 +4552,7 @@ DisplayAsReposReportItemLine()
 			if ! QpkgIsArchOK; then
 				install_date='incompatible arch'
 			elif ! QpkgIsMinOSVerOk; then
-				install_date="incompatible $(OsGetQnapOS) version"
+				install_date="incompatible $(OsGetQnapOS)"
 			elif ! QpkgIsMinRAMOk; then
 				install_date='insufficient RAM'
 			else
@@ -4663,11 +4663,11 @@ DisplayAsAbsReportItemLine()
 			;;
 		muted)
 			if ! QpkgIsArchOK "$qpkg_name"; then
-				abs_msg="${CHARS_ALERT}incompatible arch"
+				abs_msg="${CHARS_ALERT}incompatible architecture"
 			elif ! QpkgIsMinOSVerOk "$qpkg_name"; then
 				abs_msg="${CHARS_ALERT}incompatible $(OsGetQnapOS) version"
 			elif ! QpkgIsMinRAMOk "$qpkg_name"; then
-				abs_msg="${CHARS_ALERT}insufficient RAM"
+				abs_msg="${CHARS_ALERT}insufficient RAM installed"
 			else
 				abs_msg=${CHARS_NORMAL}$(AddSeparators "$(QpkgGetAbbrvs "$qpkg_name")")
 			fi
