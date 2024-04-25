@@ -1009,7 +1009,7 @@ QPKGsAssignToActions()
 	if QpkgIsInstalled Entware; then
 		local entware_install_date=$(QpkgGetInstallDate Entware)
 
-		if [[ $entware_install_date = undefined || ${entware_install_date//[!0-9]/} -le 20240224 ]]; then
+		if [[ $entware_install_date = undefined || ${entware_install_date//[!0-9]/} -le 20240224 ]] && [[ $NAS_ARCH != armv5tel ]]; then
 			ShowAsNote "the $(TextBrightOrange Entware) QPKG will be auto-reinstalled (Entware packages were updated late in February 2024)"
 			QPKGs-ACreinstall-to:Add Entware
 		fi
