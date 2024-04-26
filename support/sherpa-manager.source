@@ -5382,8 +5382,8 @@ Help.Basic.Examples:Show()
 	DisplayAsProjSynIndentExam "to see available $(ShowAsPackages)" 'show packages'
 	DisplayAsProjSynIndentExam '' p
 	DisplayAsProjSynIndentExam "to see available $(ShowAsPackageGroup)s" 'help groups'
-	DisplayAsProjSynIndentExam "or, for more $(ShowAsOptions)" 'help options'
-	DisplayAsHelpTitle "more in the wiki: $(ShowAsURL 'https://github.com/OneCDOnly/sherpa/wiki')"
+	DisplayAsProjSynIndentExam "for more $(ShowAsOptions)" 'help options'
+	DisplayAsHelpTitle "there's also the wiki: $(ShowAsURL 'https://github.com/OneCDOnly/sherpa/wiki')"
 
 	Display
 
