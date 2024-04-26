@@ -1063,6 +1063,17 @@ QPKGsAssignToActions()
 		fi
 	done
 
+	# If a dependent has been selected for `reinstall`/`upgrade`, need to `deactivate` it first, and `activate` it again later.
+
+	for qpkg_name in $(QPKGs-ACreinstall-to:Array) $(QPKGs-ACupgrade-to:Array); do
+		QpkgSetIndex
+
+		if QPKGs-ISenabled.Exist "$qpkg_name"; then
+			QPKGs-ACdeactivate-to:Add "$qpkg_name"
+			! QPKGs-ACuninstall-to.Exist "$qpkg_name" && ! QPKGs-ACinstall-to.Exist "$qpkg_name" && QPKGs-ACactivate-to:Add "$qpkg_name"
+		fi
+	done
+
 	# If an independent has been selected for `deactivate`/`uninstall`, need to `deactivate` its dependents first.
 
 	for qpkg_name in $(QPKGs-ACdeactivate-to:Array) $(QPKGs-ACuninstall-to:Array); do
@@ -1121,14 +1132,12 @@ QPKGsAssignToActions()
 # 		done
 # 	done
 
-	# No-need to `deactivate`/`reactivate`/`disable` packages that are to be uninstalled.
+	# No-need to `reactivate`/`disable` packages that are to be uninstalled.
 
 	if QPKGs.ACuninstall.GRall.IsSet; then
-		QPKGs-ACdeactivate-to:Init
 		QPKGs-ACreactivate-to:Init
 		QPKGs-ACdisable-to:Init
 	else
-		QPKGs-ACdeactivate-to:Remove "$(QPKGs-ACuninstall-to:Array)"
 		QPKGs-ACreactivate-to:Remove "$(QPKGs-ACuninstall-to:Array)"
 		QPKGs-ACdisable-to:Remove "$(QPKGs-ACuninstall-to:Array)"
 	fi
@@ -1149,6 +1158,8 @@ QPKGsAssignToActions()
 				QPKGs_were_installed_name+=("$qpkg_name")
 				QPKGs_were_installed_path+=("$($DIRNAME_CMD "$(QpkgGetInstallationPath)")")
 			fi
+
+			QPKGs-ACdeactivate-to:Add "$qpkg_name"
 		done
 	fi
 
@@ -4412,7 +4423,7 @@ DisplayAsStatusReportItemLine()
 			if ! QpkgIsArchOK; then
 				status='incompatible arch'
 			elif ! QpkgIsMinOSVerOk; then
-				status="incompatible $(OsGetQnapOS) version"
+				status="incompatible $(OsGetQnapOS)"
 			elif ! QpkgIsMinRAMOk; then
 				status='insufficient RAM'
 			else
@@ -4552,7 +4563,7 @@ DisplayAsReposReportItemLine()
 			if ! QpkgIsArchOK; then
 				install_date='incompatible arch'
 			elif ! QpkgIsMinOSVerOk; then
-				install_date="incompatible $(OsGetQnapOS) version"
+				install_date="incompatible $(OsGetQnapOS)"
 			elif ! QpkgIsMinRAMOk; then
 				install_date='insufficient RAM'
 			else
@@ -4663,11 +4674,11 @@ DisplayAsAbsReportItemLine()
 			;;
 		muted)
 			if ! QpkgIsArchOK "$qpkg_name"; then
-				abs_msg="${CHARS_ALERT}incompatible arch"
+				abs_msg="${CHARS_ALERT}incompatible architecture"
 			elif ! QpkgIsMinOSVerOk "$qpkg_name"; then
 				abs_msg="${CHARS_ALERT}incompatible $(OsGetQnapOS) version"
 			elif ! QpkgIsMinRAMOk "$qpkg_name"; then
-				abs_msg="${CHARS_ALERT}insufficient RAM"
+				abs_msg="${CHARS_ALERT}insufficient RAM installed"
 			else
 				abs_msg=${CHARS_NORMAL}$(AddSeparators "$(QpkgGetAbbrvs "$qpkg_name")")
 			fi
@@ -5382,8 +5393,8 @@ Help.Basic.Examples:Show()
 	DisplayAsProjSynIndentExam "to see available $(ShowAsPackages)" 'show packages'
 	DisplayAsProjSynIndentExam '' p
 	DisplayAsProjSynIndentExam "to see available $(ShowAsPackageGroup)s" 'help groups'
-	DisplayAsProjSynIndentExam "or, for more $(ShowAsOptions)" 'help options'
-	DisplayAsHelpTitle "more in the wiki: $(ShowAsURL 'https://github.com/OneCDOnly/sherpa/wiki')"
+	DisplayAsProjSynIndentExam "for more $(ShowAsOptions)" 'help options'
+	DisplayAsHelpTitle "there's also the wiki: $(ShowAsURL 'https://github.com/OneCDOnly/sherpa/wiki')"
 
 	Display
 
@@ -7169,6 +7180,8 @@ ShowReportStatuses()
 		if QPKGs-ISactive.IsAny; then
 			DisplayAsHelpTitle "'$(TextBrightGreen active)' means the QPKG application is alive (and responsive if it's a daemon). This is good."
 		fi
+
+		DisplayAsHelpTitle "'dynamic' means the application version is the latest available online."
 
 		} >> "$REPORT_OUTPUT_PATHFILE"
 
