@@ -1063,6 +1063,17 @@ QPKGsAssignToActions()
 		fi
 	done
 
+	# If a dependent has been selected for `reinstall`/`upgrade`, need to `deactivate` it first, and `activate` it again later.
+
+	for qpkg_name in $(QPKGs-ACreinstall-to:Array) $(QPKGs-ACupgrade-to:Array); do
+		QpkgSetIndex
+
+		if QPKGs-ISenabled.Exist "$qpkg_name"; then
+			QPKGs-ACdeactivate-to:Add "$qpkg_name"
+			! QPKGs-ACuninstall-to.Exist "$qpkg_name" && ! QPKGs-ACinstall-to.Exist "$qpkg_name" && QPKGs-ACactivate-to:Add "$qpkg_name"
+		fi
+	done
+
 	# If an independent has been selected for `deactivate`/`uninstall`, need to `deactivate` its dependents first.
 
 	for qpkg_name in $(QPKGs-ACdeactivate-to:Array) $(QPKGs-ACuninstall-to:Array); do
