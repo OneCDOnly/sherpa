@@ -1,12 +1,17 @@
 Observed issues:
 
+	* Need to make a cleaner exit during SIGINT when in 'proc: env ...' stage.
+		- Must set traps earlier.
+
 	* armv5 (Helga) is cutting-off debug log early when running 'sherpa s olive verbose' due to SIGINT.
 
 	* Allow Kapowarr to follow source git branch, release or tag.
 
-	* When aborting sherpa, must also ensure child procs abort.
+	* When aborting sherpa, must also ensure backgrounded child procs abort.
 		- Presently, if a child proc is waiting to check PID again, it doesn't abort.
-		- Try https://stackoverflow.com/a/2173421
+		- Keep track of every launched background proc $! (save each to path with a unique ID generated before calling proc), then ensure these are killed on exit/sigint/sigkill. A simple accumulator will do for ID.
+		- Each background proc will rm its pidfile named as unique ID and provided as $1.
+		- On SIGINT from sherpa, loop through remaining files in $BG_PROCS_PATH and kill the pid contained in each one.
 
 	* 'sherpa show status' displays status report correctly, and then displays 'show' usage examples.
 

@@ -28,9 +28,6 @@
 * NetBox?
 	- https://docs.netbox.dev/en/stable/installation/
 
-* new nzbget fork?
-	- https://github.com/nzbgetcom/nzbget
-
 * gpt-engineer?
 	- See compatibility-notes.txt
 
