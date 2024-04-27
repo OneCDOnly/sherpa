@@ -4,9 +4,6 @@ Observed issues:
 		- This was then followed by a 'start', which is incorrect.
 		- This QPKG is using library functions, so other QPKGs will behave this way too.
 
-	* Need to make a cleaner exit during SIGINT when in 'proc: env ...' stage.
-		- Set traps earlier?
-
 	* armv5 (Helga) is cutting-off debug log early when running 'sherpa s olive verbose' due to SIGINT.
 
 	* Allow Kapowarr to follow source git branch, release or tag.
