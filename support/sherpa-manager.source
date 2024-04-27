@@ -3641,8 +3641,6 @@ CloseIpkArchive()
 _LaunchOneActionWithManyForks_()
 	{
 
-	trap '[[ -e $pidfile ]] && rm "$pidfile"; exit' SIGINT
-
 	# Execute actions concurrently, but only as many as $max_forks will allow given the circumstances.
 
 	# * This function runs as a background process *
@@ -3655,6 +3653,8 @@ _LaunchOneActionWithManyForks_()
 	#   $fork_count = number of currently running forks.
 	#   $max_forks = maximum number of permitted concurrent forks given the current environment.
 	#   $pidfile = pathfilename of a file containing the PID for this process.
+
+	FuncForkInit
 
 	local a=${1:-function null}
 
@@ -3693,7 +3693,7 @@ _LaunchOneActionWithManyForks_()
 
 	# All forks have exited.
 
-	[[ -e $pidfile ]] && rm "$pidfile"
+	FuncForkExit
 
 	}
 
@@ -11696,7 +11696,7 @@ FuncForkInit()
 
 	# Debug forked function entry.
 
-	trap '[[ -e $action_pidfile ]] && rm -f "$action_pidfile"; exit' SIGINT
+	trap '[[ -n ${action_pidfile:-} && -e $action_pidfile ]] && rm -f "$action_pidfile"; [[ -n ${pidfile:-} && -e ${pidfile:-} ]] && rm -f "$pidfile"; exit' SIGINT
 
 	# Redirect debug output to a temporary log, then add it to session log before exiting. This will keep action log progress in-order.
 	original_sess_active_pathfile=$sess_active_pathfile
@@ -11735,7 +11735,7 @@ FuncForkExit()
 	sess_active_pathfile=$original_sess_active_pathfile
 	original_sess_active_pathfile=''
 
-	[[ -e $action_pidfile ]] && rm -f "$action_pidfile"
+	[[ -n ${action_pidfile:-} && -e $action_pidfile ]] && rm -f "$action_pidfile"; [[ -n ${pidfile:-} && -e ${pidfile:-} ]] && rm -f "$pidfile"
 
 	exit ${1:-0}
 

@@ -1,3 +1,6 @@
+* Add new QPKG 'features' report.
+	- This would show the separate features available to each QPKG. Backup, clean restart-to-update, etc...
+
 * Include QPKG version numbers in progress messages.
 
 * Report helper descriptions should only be shown if-required.
