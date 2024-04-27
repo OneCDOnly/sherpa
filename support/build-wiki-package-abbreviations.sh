@@ -104,9 +104,14 @@ target_pathfile=$wiki_path/Package-abbreviations.md
 Objects:Load
 Packages:Load 2>/dev/null	# packages source file throws a lot of syntax errors until it's processed - ignore these.
 
-printf 'These abbreviations are recognised by **sherpa** and may be used in-place of each [package name](Packages):\n\n' > "$target_pathfile"
-echo '| package name | acceptable abbreviations |' >> "$target_pathfile"
-echo '| ---: | :--- |' >> "$target_pathfile"
+	{
+
+	echo -e '![Static Badge](https://img.shields.io/badge/page_status-live-green?style=for-the-badge)\n'
+	echo -e 'These abbreviations are recognised by **sherpa** and may be used in-place of each [package name](Packages):\n'
+	echo '| package name | acceptable abbreviations |'
+	echo '| ---: | :--- |'
+
+	} > "$target_pathfile"
 
 for package_name in $(QPKGs-GRall:Array); do
 	abs=$(QPKG.Abbrvs "$package_name")

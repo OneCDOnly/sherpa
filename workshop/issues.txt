@@ -1,11 +1,8 @@
 Observed issues:
 
-	* Old NZBGet QPKG was 'stop'ped, then a 'backup' was run.
+	* Old NZBGet QPKG was already 'stop'ped when a 'backup' was run.
 		- This was then followed by a 'start', which is incorrect.
 		- This QPKG is using library functions, so other QPKGs will behave this way too.
-
-	* Need to make a cleaner exit during SIGINT when in 'proc: env ...' stage.
-		- Must set traps earlier.
 
 	* armv5 (Helga) is cutting-off debug log early when running 'sherpa s olive verbose' due to SIGINT.
 

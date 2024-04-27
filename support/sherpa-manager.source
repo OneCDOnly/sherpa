@@ -40,6 +40,7 @@ readonly SCRIPT_STARTSECONDS=$(/bin/date +%s)
 Init()
 	{
 
+	SetTraps
 	OsIsOk || return
 	UserIsOk || return
 	LoadConsts
@@ -47,7 +48,6 @@ Init()
 	UpdateCapabilities
 	LoadCMDs
 	CMDsIsOk || return
-	SetTraps
 	HideKeystrokes
 	HideCursor
 	LoadEnv || return
@@ -573,10 +573,11 @@ LoadEnv()
 
 		readonly CACHE_PATH=$THIS_PACKAGE_PATH/cache
 			readonly ACTION_TIMES_PATH=$CACHE_PATH/action.times
+			readonly BG_PROCS_PATH=$CACHE_PATH/proc
 			readonly DISPLAY_INHIBIT_PATHFILE=$CACHE_PATH/display.inhibit
 			readonly IPK_CACHE_PATH=$CACHE_PATH/IPKs
-			readonly IPK_DL_PATH=$CACHE_PATH/IPKs.downloads
-			readonly IPK_DOWNGRADE_DL_PATH=$CACHE_PATH/IPKs.downgrade
+				readonly IPK_DL_PATH=$IPK_CACHE_PATH/downloads
+				readonly IPK_DOWNGRADE_PATH=$IPK_CACHE_PATH/downgrade
 			readonly PIP_CACHE_PATH=$CACHE_PATH/PIPs
 			readonly OBJECTS_ARCHIVE_PATHFILE=$CACHE_PATH/objects.tar.gz
 			readonly OBJECTS_PATHFILE=$CACHE_PATH/objects
@@ -584,7 +585,8 @@ LoadEnv()
 			readonly PACKAGES_PATHFILE=$CACHE_PATH/packages
 			readonly PREV_IPK_LIST=$CACHE_PATH/ipk.list.save
 			readonly PREV_PIP_LIST=$CACHE_PATH/pip.list.save
-			readonly QPKG_DL_PATH=$CACHE_PATH/QPKGs.downloads
+			readonly QPKG_CACHE_PATH=$CACHE_PATH/QPKGs
+				readonly QPKG_DL_PATH=$QPKG_CACHE_PATH/downloads
 		readonly LOGS_PATH=$THIS_PACKAGE_PATH/logs
 			readonly RAMDISKS_FREESPACE_PATHFILE=$LOGS_PATH/ramdisks.freespace
 			readonly SCREEN_SESSIONS_PATHFILE=$LOGS_PATH/screen.sessions
@@ -687,15 +689,17 @@ LoadLists()
 CreatePaths()
 	{
 
+	ClearPath "$CACHE_PATH" "$BG_PROCS_PATH"
 	ClearPath "$CACHE_PATH" "$IPK_CACHE_PATH"
 	ClearPath "$CACHE_PATH" "$IPK_DL_PATH"
 	ClearPath "$CACHE_PATH" "$PIP_CACHE_PATH"
 
 	MakePath "$ACTION_TIMES_PATH" 'action times' || return
+	MakePath "$BG_PROCS_PATH" 'background process tracking' || return
 	MakePath "$CACHE_PATH" cache || return
 	MakePath "$IPK_CACHE_PATH" 'IPK cache' || return
 	MakePath "$IPK_DL_PATH" 'IPK download' || return
-	MakePath "$IPK_DOWNGRADE_DL_PATH" 'IPK downgrade' || return
+	MakePath "$IPK_DOWNGRADE_PATH" 'IPK downgrade' || return
 	MakePath "$LOGS_PATH" logs || return
 	MakePath "$PIP_CACHE_PATH" 'PIP cache' || return
 	MakePath "$REPORTS_PATH" reports || return
@@ -1427,8 +1431,11 @@ Action:Proc()
 				ShowKeystrokes		# Enable this before removing Entware & GNU `stty`.
 			fi
 
+			pidfile=$($MKTEMP_CMD "$BG_PROCS_PATH"/bgproc_XXXXXX)	# Set pidfile here, before launching background process so it's inherited by that process.
+
 			_LaunchOneActionWithManyForks_ "_${PACKAGE_TYPE}:${TARGET_ACTION}_" "${target_packages[@]}" &
-			fork_pid=$!
+
+			echo "$!" > "$pidfile"
 
 			# Read message pipe and process QPKGs and actions as-per requests contained within.
 			while [[ ${#target_packages[@]} -gt 0 ]]; do
@@ -1582,17 +1589,19 @@ CloseActionMsgPipe()
 
 	# Restore original file descriptors, and remove message pipe.
 
-	# Restore stdin FD.
-	[[ $backup_stdin_fd != none ]] && eval "exec 0>&$backup_stdin_fd"
+	if [[ -n ${backup_stdin_fd:-} ]]; then
+		# Restore stdin FD.
+		[[ $backup_stdin_fd != none ]] && eval "exec 0>&$backup_stdin_fd"
 
-	# Release backup of stdin FD.
-	[[ $backup_stdin_fd != none ]] && eval "exec $backup_stdin_fd>&-"
+		# Release backup of stdin FD.
+		[[ $backup_stdin_fd != none ]] && eval "exec $backup_stdin_fd>&-"
+	fi
 
 	# Release message pipe FD.
-	[[ $action_msg_pipe_fd != none ]] && eval "exec $action_msg_pipe_fd>&-"
+	[[ -n ${action_msg_pipe_fd:-} && $action_msg_pipe_fd != none ]] && eval "exec $action_msg_pipe_fd>&-"
 
 	# Delete message pipe.
-	[[ -p $ACTION_MSG_PIPE ]] && rm -f "$ACTION_MSG_PIPE"
+	[[ -n ${ACTION_MSG_PIPE:-} && -p $ACTION_MSG_PIPE ]] && rm -f "$ACTION_MSG_PIPE"
 
 	}
 
@@ -3473,7 +3482,7 @@ IPKs:downgrade()
 				((ok_count++))
 
 				remote_url=${url_prefix}${name}${url_suffix}
-				local_pathfile=$IPK_DOWNGRADE_DL_PATH/$($BASENAME_CMD "$remote_url")
+				local_pathfile=$IPK_DOWNGRADE_PATH/$($BASENAME_CMD "$remote_url")
 				RunAndLog "$CURL_CMD --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
 			done
 
@@ -3492,7 +3501,7 @@ IPKs:downgrade()
 		ShowAsProc "downgrade $desc"
 
 		ShowAsPercentProgress "downgrade $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 "$fail_count" "$total_count"
-		RunAndLog "$OPKG_CMD install --force-downgrade --cache $IPK_CACHE_PATH --tmp-dir $IPK_DOWNGRADE_DL_PATH $IPK_DOWNGRADE_DL_PATH/*.ipk" "$log_pathfile" log:failure-only
+		RunAndLog "$OPKG_CMD install --force-downgrade --cache $IPK_CACHE_PATH --tmp-dir $IPK_DOWNGRADE_PATH $IPK_DOWNGRADE_PATH/*.ipk" "$log_pathfile" log:failure-only
 		z=$?
 
 		if [[ $z -eq 0 ]]; then
@@ -3643,11 +3652,15 @@ _LaunchOneActionWithManyForks_()
 	# inputs: (global)
 	#   $fork_count = number of currently running forks.
 	#   $max_forks = maximum number of permitted concurrent forks given the current environment.
+	#   $pidfile = pathfilename of a file containing the PID for this process.
+
+	FuncForkInit
 
 	local a=${1:-function null}
 
 	shift   											# `shift` all arguments one position to the left.
 	local -a c=("$@")
+	fork_id=0
 
 	for qpkg_name in "${c[@]}"; do
 		while [[ $fork_count -ge $max_forks && ! -e $ACTION_ABORT_PATHFILE ]]; do  	# Don't fork until an empty spot becomes available.
@@ -3660,8 +3673,14 @@ _LaunchOneActionWithManyForks_()
 		IncForkProgressIndex
 		MarkThisActionForkAsStarted 					# Must create runfile here, as it takes too-long to happen in background function.
 		QpkgSetIndex
-		$a "$qpkg_name" &
-		DebugAsDone "forked $a() for '$qpkg_name'"
+
+		action_pidfile=$($MKTEMP_CMD "$BG_PROCS_PATH"/bgproc_XXXXXX)		# Set pidfile here, before launching background process so it's inherited by that process.
+
+		$a &
+
+		echo "$!" > "$action_pidfile"
+
+		DebugAsDone "forked $a() instance for '$qpkg_name'"
 		UpdateForkProgress
 	done
 
@@ -3673,6 +3692,8 @@ _LaunchOneActionWithManyForks_()
 	done
 
 	# All forks have exited.
+
+	FuncForkExit
 
 	}
 
@@ -5393,8 +5414,8 @@ Help.Basic.Examples:Show()
 	DisplayAsProjSynIndentExam "to see available $(ShowAsPackages)" 'show packages'
 	DisplayAsProjSynIndentExam '' p
 	DisplayAsProjSynIndentExam "to see available $(ShowAsPackageGroup)s" 'help groups'
-	DisplayAsProjSynIndentExam "for more $(ShowAsOptions)" 'help options'
-	DisplayAsHelpTitle "there's also the wiki: $(ShowAsURL 'https://github.com/OneCDOnly/sherpa/wiki')"
+	DisplayAsProjSynIndentExam "or, for more $(ShowAsOptions)" 'help options'
+	DisplayAsHelpTitle "more in the wiki: $(ShowAsURL 'https://github.com/OneCDOnly/sherpa/wiki')"
 
 	Display
 
@@ -7711,7 +7732,7 @@ ModPathToEntware()
 HardwareGetCPUInfo()
 	{
 
-	# QTS 4.5.1 & BusyBox 1.01 don't support `-m` option for `grep`, so extract first mention the hard-way with `head`.
+	# BusyBox 1.01 doesn't support `-m` option for `grep`, so extract first mention the hard-way with `head`.
 
 	if $GREP_CMD -q '^model name' /proc/cpuinfo; then
 		$GREP_CMD '^model name' /proc/cpuinfo | $HEAD_CMD -n1 | $SED_CMD 's|^.*: ||' | tr -s ' '
@@ -7857,9 +7878,7 @@ UserGetTimeInShell()
 
 	local n=0
 
-	if [[ -n ${LOADER_SCRIPT_PPID:-} ]]; then
-		n=$($PS_CMD -o pid,etime | $GREP_CMD $LOADER_SCRIPT_PPID | $HEAD_CMD -n1)
-	fi
+	[[ -n ${LOADER_SCRIPT_PPID:-} ]] && n=$($PS_CMD -o pid,etime | $GREP_CMD $LOADER_SCRIPT_PPID | $HEAD_CMD -n1)
 
 	FormatLongMinutesSecs "${n:6}"
 
@@ -8063,7 +8082,7 @@ OsIsSupported()
 OsIsSupportSecureDownload()
 	{
 
-	# `curl` with SSL certificate verification enabled:
+	# `/sbin/curl` with SSL certificate verification enabled:
 	#	fails in:
 	# 		QTS 4.2.6
 	# 		QTS 4.4.1
@@ -8100,7 +8119,7 @@ OsIsSupportSudo()
 OsIsSupportSedExtRegex()
 	{
 
-	# Test if QTS `sed` can handle extended regexes (early BusyBox versions cannot).
+	# Test if QTS `/bin/sed` can handle extended regexes (early BusyBox versions cannot).
 	[[ $(echo -en "\033[1;97ma" | /bin/sed -r 's/\x1b\[[0-9;]*m//g' | /usr/bin/wc -c) -eq 1 ]]
 
 	}
@@ -8108,7 +8127,7 @@ OsIsSupportSedExtRegex()
 OsIsSupportDecimalSleepSeconds()
 	{
 
-	# Test if QTS `sleep` can handle decimal seconds (early BusyBox versions cannot).
+	# Test if QTS `/bin/sleep` can handle decimal seconds (early BusyBox versions cannot).
 	/bin/sleep .01 &>/dev/null
 
 	}
@@ -8248,7 +8267,7 @@ ClaimLockfile()
 ReleaseLockfile()
 	{
 
-	rm -f "$LOCK_PATHFILE"
+	[[ -n ${LOCK_PATHFILE:-} ]] && rm -f "$LOCK_PATHFILE"
 
 	}
 
@@ -8355,17 +8374,17 @@ _QPKG:reassign_()
 	{
 
 	# * This function runs autonomously *
-	# Removes the `storeid` assignment for the QPKG named in $1.
+	# Removes the `storeid` assignment for the QPKG named in $qpkg_name.
 
 	# Input:
-	#   $1 = QPKG name
+	#	$qpkg_name (global)
 
 	# Output:
-	#   $? = none, this function executes in the background.
+	#   $? = none, this function executes in the background. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
 
-	FuncFork:Init
+	FuncForkInit
 
 	local -i z=0
 
@@ -8379,7 +8398,7 @@ _QPKG:reassign_()
 		z=1
 	fi
 
-	[[ $z -eq 0 ]] || FuncFork:Exit $z
+	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "reassigning $(ShowAsPackageName)"
 	RunAndLog "/sbin/setcfg -e $qpkg_name store -f /etc/config/qpkg.conf" "$LOGS_PATH/$qpkg_name.$REASSIGN_LOG_FILE" log:failure-only
@@ -8394,7 +8413,7 @@ _QPKG:reassign_()
 		z=1   # remap to 1
 	fi
 
-	FuncFork:Exit $z
+	FuncForkExit $z
 
 	}
 
@@ -8402,17 +8421,17 @@ _QPKG:download_()
 	{
 
 	# * This function runs autonomously *
-	# Downloads the QPKG named in $1.
+	# Downloads the QPKG named in $qpkg_name.
 
 	# Input:
-	#   $1 = QPKG name
+	#	$qpkg_name (global)
 
 	# Output:
-	#   $? = none, this function executes in the background.
+	#   $? = none, this function executes in the background. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
 
-	FuncFork:Init
+	FuncForkInit
 
 	local -r REMOTE_HASH=$(QpkgGetHash)
 	local -r REMOTE_URL=$(QpkgGetURL)
@@ -8437,7 +8456,7 @@ _QPKG:download_()
 		fi
 	fi
 
-	[[ $z -eq 0 ]] || FuncFork:Exit $z
+	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	if [[ ! -f $LOCAL_PATHFILE ]]; then
 		DebugAsProc "downloading $(ShowAsFileName "$REMOTE_FILENAME")"
@@ -8466,7 +8485,7 @@ _QPKG:download_()
 		fi
 	fi
 
-	FuncFork:Exit $z
+	FuncForkExit $z
 
 	}
 
@@ -8477,14 +8496,14 @@ _QPKG:install_()
 	# Installs the QPKG named in $qpkg_name.
 
 	# Input:
-	#   $qpkg_name (global) = QPKG name
+	#	$qpkg_name (global)
 
 	# Output:
-	#   $? = none, this function executes in the background.
+	#   $? = none, this function executes in the background. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
 
-	FuncFork:Init
+	FuncForkInit
 
 	local a=''
 	local -i z=0
@@ -8507,7 +8526,7 @@ _QPKG:install_()
 		z=1
 	fi
 
-	[[ $z -eq 0 ]] || FuncFork:Exit $z
+	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	local local_pathfile=$(QpkgGetPathFilename)
 
@@ -8517,7 +8536,7 @@ _QPKG:install_()
 		z=4
 	fi
 
-	[[ $z -eq 0 ]] || FuncFork:Exit $z
+	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	if [[ $qpkg_name = Entware ]] && ! QPKGs-ISinstalled.Exist Entware && QPKGs-ACinstall-to.Exist Entware; then
 		local -r OPT_PATH=/opt
@@ -8580,7 +8599,7 @@ _QPKG:install_()
 
 	ClearQpkgAppCenterNotifier
 
-	FuncFork:Exit $z
+	FuncForkExit $z
 
 	}
 
@@ -8588,20 +8607,19 @@ _QPKG:reinstall_()
 	{
 
 	# * This function runs autonomously *
-	# Reinstalls the QPKG named in $1.
+	# Reinstalls the QPKG named in $qpkg_name.
 
 	# Input:
-	#   $1 = QPKG name
+	#	$qpkg_name (global)
 
 	# Output:
-	#   $? = none, this function executes in the background.
+	#   $? = none, this function executes in the background. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
 
-	FuncFork:Init
+	FuncForkInit
 
 	local a=''
-	qpkg_name=${1:?${FUNCNAME[0]}'()': undefined package name}
 	local -i z=0
 
 	if ! QPKGs-ISinstalled.Exist "$qpkg_name"; then
@@ -8614,7 +8632,7 @@ _QPKG:reinstall_()
 		z=1
 	fi
 
-	[[ $z -eq 0 ]] || FuncFork:Exit $z
+	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	local local_pathfile=$(QpkgGetPathFilename)
 
@@ -8624,7 +8642,7 @@ _QPKG:reinstall_()
 		z=4
 	fi
 
-	[[ $z -eq 0 ]] || FuncFork:Exit $z
+	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	local target_path=''
 
@@ -8658,7 +8676,7 @@ _QPKG:reinstall_()
 
 	ClearQpkgAppCenterNotifier
 
-	FuncFork:Exit $z
+	FuncForkExit $z
 
 	}
 
@@ -8666,19 +8684,18 @@ _QPKG:rebuild_()
 	{
 
 	# * This function runs autonomously *
-	# Meta-action: rebuilds the QPKG named in $1. This is a `download`, `install` and `restore`, but only if a backup file exists for this QPKG.
+	# Meta-action: rebuilds the QPKG named in $qpkg_name. This is a `download`, `install` and `restore`, but only if a backup file exists for this QPKG.
 
 	# Input:
-	#   $1 = QPKG name
+	#	$qpkg_name (global)
 
 	# Output:
-	#   $? = none, this function executes in the background.
+	#   $? = none, this function executes in the background. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
 
-	FuncFork:Init
+	FuncForkInit
 
-	qpkg_name=${1:?${FUNCNAME[0]}'()': undefined package name}
 	local -i z=0
 
 	if ! QpkgIsCanBackup; then
@@ -8699,7 +8716,7 @@ _QPKG:rebuild_()
 		z=1
 	fi
 
-	[[ $z -eq 0 ]] || FuncFork:Exit $z
+	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "meta-rebuilding $(ShowAsPackageName)"
 	# Nothing-to-do here, real QPKG actions have already been assigned in CheckEnv().
@@ -8708,7 +8725,7 @@ _QPKG:rebuild_()
 	MarkThisActionForkAsOk
 	ClearQpkgAppCenterNotifier
 
-	FuncFork:Exit $z
+	FuncForkExit $z
 
 	}
 
@@ -8716,17 +8733,17 @@ _QPKG:upgrade_()
 	{
 
 	# * This function runs autonomously *
-	# Upgrades the QPKG named in $1.
+	# Upgrades the QPKG named in $qpkg_name.
 
 	# Input:
-	#   $1 = QPKG name
+	#	$qpkg_name (global)
 
 	# Output:
-	#   $? = none, this function executes in the background.
+	#   $? = none, this function executes in the background. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
 
-	FuncFork:Init
+	FuncForkInit
 
 	local a=''
 	local -i z=0
@@ -8745,7 +8762,7 @@ _QPKG:upgrade_()
 		z=1
 	fi
 
-	[[ $z -eq 0 ]] || FuncFork:Exit $z
+	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	local local_pathfile=$(QpkgGetPathFilename)
 
@@ -8755,7 +8772,7 @@ _QPKG:upgrade_()
 		z=4
 	fi
 
-	[[ $z -eq 0 ]] || FuncFork:Exit $z
+	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	local prev_ver=$(QpkgGetInstalledVer)
 	local target_path=''
@@ -8799,7 +8816,7 @@ _QPKG:upgrade_()
 
 	ClearQpkgAppCenterNotifier
 
-	FuncFork:Exit $z
+	FuncForkExit $z
 
 	}
 
@@ -8807,17 +8824,17 @@ _QPKG:uninstall_()
 	{
 
 	# * This function runs autonomously *
-	# Uninstalls the QPKG named in $1.
+	# Uninstalls the QPKG named in $qpkg_name.
 
 	# Input:
-	#   $1 = QPKG name
+	#	$qpkg_name (global)
 
 	# Output:
-	#   $? = none, this function executes in the background.
+	#   $? = none, this function executes in the background. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
 
-	FuncFork:Init
+	FuncForkInit
 
 	local a=''
 	local -i z=0
@@ -8836,7 +8853,7 @@ _QPKG:uninstall_()
 		z=1
 	fi
 
-	[[ $z -eq 0 ]] || FuncFork:Exit $z
+	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	local -r QPKG_UNINSTALLER_PATHFILE=$(QpkgGetInstallationPath)/.uninstall.sh
 
@@ -8877,7 +8894,7 @@ _QPKG:uninstall_()
 		MarkThisActionForkAsFailed
 	fi
 
-	FuncFork:Exit $z
+	FuncForkExit $z
 
 	}
 
@@ -8885,17 +8902,17 @@ _QPKG:activate_()
 	{
 
 	# * This function runs autonomously *
-	# Activates/starts the service script for the QPKG named in $1.
+	# Activates/starts the service script for the QPKG named in $qpkg_name.
 
 	# Input:
-	#   $1 = QPKG name
+	#	$qpkg_name (global)
 
 	# Output:
-	#   $? = none, this function executes in the background.
+	#   $? = none, this function executes in the background. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
 
-	FuncFork:Init
+	FuncForkInit
 
 	local a=''
 	local -i z=0
@@ -8914,7 +8931,7 @@ _QPKG:activate_()
 		z=1
 	fi
 
-	[[ $z -eq 0 ]] || FuncFork:Exit $z
+	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	ClearQpkgServiceStatus
 	local -r LOG_PATHFILE=$LOGS_PATH/$qpkg_name.$ACTIVATE_LOG_FILE
@@ -8928,7 +8945,7 @@ _QPKG:activate_()
 		SaveActionResultToLog QPKG "$qpkg_name" activate skipped-error 'QPKG service script file undefined'
 		MarkThisActionForkAsSkippedError
 
-		FuncFork:Exit 4
+		FuncForkExit 4
 	elif [[ $useropt_debug = true ]]; then
 		a='DEBUG_QPKG=true '
 		RunAndLog "${a}${service_pathfile} start" "$LOG_PATHFILE" log:failure-only
@@ -8962,7 +8979,7 @@ _QPKG:activate_()
 
 	ClearQpkgAppCenterNotifier
 
-	FuncFork:Exit $z
+	FuncForkExit $z
 
 	}
 
@@ -8970,20 +8987,19 @@ _QPKG:reactivate_()
 	{
 
 	# * This function runs autonomously *
-	# Reactivates/restarts the service script for the QPKG named in $1.
+	# Reactivates/restarts the service script for the QPKG named in $qpkg_name.
 
 	# Input:
-	#   $1 = QPKG name
+	#	$qpkg_name (global)
 
 	# Output:
-	#   $? = none, this function executes in the background.
+	#   $? = none, this function executes in the background. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
 
-	FuncFork:Init
+	FuncForkInit
 
 	local a=''
-	qpkg_name=${1:?${FUNCNAME[0]}'()': undefined package name}
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
@@ -9000,7 +9016,7 @@ _QPKG:reactivate_()
 		z=1
 	fi
 
-	[[ $z -eq 0 ]] || FuncFork:Exit $z
+	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	ClearQpkgServiceStatus
 	local -r LOG_PATHFILE=$LOGS_PATH/$qpkg_name.$REACTIVATE_LOG_FILE
@@ -9014,7 +9030,7 @@ _QPKG:reactivate_()
 		SaveActionResultToLog QPKG "$qpkg_name" reactivate skipped-error 'QPKG service script file undefined'
 		MarkThisActionForkAsSkippedError
 
-		FuncFork:Exit 4
+		FuncForkExit 4
 	elif [[ $useropt_debug = true ]]; then
 		a='DEBUG_QPKG=true '
 		RunAndLog "${a}${service_pathfile} restart" "$LOG_PATHFILE" log:failure-only
@@ -9039,7 +9055,7 @@ _QPKG:reactivate_()
 
 	ClearQpkgAppCenterNotifier
 
-	FuncFork:Exit $z
+	FuncForkExit $z
 
 	}
 
@@ -9047,17 +9063,17 @@ _QPKG:deactivate_()
 	{
 
 	# * This function runs autonomously *
-	# Deactivates/stops the service script for the QPKG named in $1.
+	# Deactivates/stops the service script for the QPKG named in $qpkg_name.
 
 	# Input:
-	#   $1 = QPKG name
+	#	$qpkg_name (global)
 
 	# Output:
-	#   $? = none, this function executes in the background.
+	#   $? = none, this function executes in the background. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
 
-	FuncFork:Init
+	FuncForkInit
 
 	local a=''
 	local -i z=0
@@ -9076,7 +9092,7 @@ _QPKG:deactivate_()
 		z=1
 	fi
 
-	[[ $z -eq 0 ]] || FuncFork:Exit $z
+	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	ClearQpkgServiceStatus
 	local -r LOG_PATHFILE=$LOGS_PATH/$qpkg_name.$DEACTIVATE_LOG_FILE
@@ -9090,7 +9106,7 @@ _QPKG:deactivate_()
 		SaveActionResultToLog QPKG "$qpkg_name" deactivate skipped-error 'QPKG service script file undefined'
 		MarkThisActionForkAsSkippedError
 
-		FuncFork:Exit 4
+		FuncForkExit 4
 	elif [[ $useropt_debug = true ]]; then
 		a='DEBUG_QPKG=true '
 		RunAndLog "${a}${service_pathfile} stop" "$LOG_PATHFILE" log:failure-only
@@ -9123,7 +9139,7 @@ _QPKG:deactivate_()
 
 	ClearQpkgAppCenterNotifier
 
-	FuncFork:Exit $z
+	FuncForkExit $z
 
 	}
 
@@ -9131,17 +9147,17 @@ _QPKG:enable_()
 	{
 
 	# * This function runs autonomously *
-	# Enables the QPKG named in $1.
+	# Enables the QPKG named in $qpkg_name.
 
 	# Input:
-	#   $1 = QPKG name
+	#	$qpkg_name (global)
 
 	# Output:
-	#   $? = none, this function executes in the background.
+	#   $? = none, this function executes in the background. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
 
-	FuncFork:Init
+	FuncForkInit
 
 	local -i z=0
 
@@ -9159,7 +9175,7 @@ _QPKG:enable_()
 		z=1
 	fi
 
-	[[ $z -eq 0 ]] || FuncFork:Exit $z
+	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	ClearQpkgServiceStatus
 	local -r LOG_PATHFILE=$LOGS_PATH/$qpkg_name.$ENABLE_LOG_FILE
@@ -9174,7 +9190,7 @@ _QPKG:enable_()
 	SaveActionResultToLog QPKG "$qpkg_name" enable ok
 	MarkThisActionForkAsOk
 
-	FuncFork:Exit $z
+	FuncForkExit $z
 
 	}
 
@@ -9182,17 +9198,17 @@ _QPKG:disable_()
 	{
 
 	# * This function runs autonomously *
-	# Disabled the QPKG named in $1.
+	# Disables the QPKG named in $qpkg_name.
 
 	# Input:
-	#   $1 = QPKG name
+	#	$qpkg_name (global)
 
 	# Output:
-	#   $? = none, this function executes in the background.
+	#   $? = none, this function executes in the background. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
 
-	FuncFork:Init
+	FuncForkInit
 
 	local -i z=0
 
@@ -9214,7 +9230,7 @@ _QPKG:disable_()
 		z=1
 	fi
 
-	[[ $z -eq 0 ]] || FuncFork:Exit $z
+	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	ClearQpkgServiceStatus
 	local -r LOG_PATHFILE=$LOGS_PATH/$qpkg_name.$DISABLE_LOG_FILE
@@ -9230,7 +9246,7 @@ _QPKG:disable_()
 	SaveActionResultToLog QPKG "$qpkg_name" disable ok
 	MarkThisActionForkAsOk
 
-	FuncFork:Exit $z
+	FuncForkExit $z
 
 	}
 
@@ -9238,17 +9254,17 @@ _QPKG:enableau_()
 	{
 
 	# * This function runs autonomously *
-	# Enables auto-updating of the QPKG named in $1.
+	# Enables auto-updating of the QPKG named in $qpkg_name.
 
 	# Input:
-	#   $1 = QPKG name
+	#	$qpkg_name (global)
 
 	# Output:
-	#   $? = none, this function executes in the background.
+	#   $? = none, this function executes in the background. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
 
-	FuncFork:Init
+	FuncForkInit
 
 	local a=''
 	local -i z=0
@@ -9267,7 +9283,7 @@ _QPKG:enableau_()
 		z=1
 	fi
 
-	[[ $z -eq 0 ]] || FuncFork:Exit $z
+	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "enabling auto-update $(ShowAsPackageName)"
 	[[ $useropt_debug = true ]] && a='DEBUG_QPKG=true '
@@ -9285,7 +9301,7 @@ _QPKG:enableau_()
 		z=1   # Remap to 1.
 	fi
 
-	FuncFork:Exit $z
+	FuncForkExit $z
 
 	}
 
@@ -9293,17 +9309,17 @@ _QPKG:disableau_()
 	{
 
 	# * This function runs autonomously *
-	# Disables auto-updating of the QPKG named in $1.
+	#  Disables auto-updating of the QPKG named in $qpkg_name.
 
 	# Input:
-	#   $1 = QPKG name
+	#	$qpkg_name (global)
 
 	# Output:
-	#   $? = none, this function executes in the background.
+	#   $? = none, this function executes in the background. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
 
-	FuncFork:Init
+	FuncForkInit
 
 	local a=''
 	local -i z=0
@@ -9322,7 +9338,7 @@ _QPKG:disableau_()
 		z=1
 	fi
 
-	[[ $z -eq 0 ]] || FuncFork:Exit $z
+	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "disabling auto-update $(ShowAsPackageName)"
 	[[ $useropt_debug = true ]] && a='DEBUG_QPKG=true '
@@ -9340,7 +9356,7 @@ _QPKG:disableau_()
 		z=1   # Remap to 1.
 	fi
 
-	FuncFork:Exit $z
+	FuncForkExit $z
 
 	}
 
@@ -9348,17 +9364,17 @@ _QPKG:backup_()
 	{
 
 	# * This function runs autonomously *
-	# Calls the service script for the QPKG named in $1 and runs a `backup` action.
+	#  Calls the service script for the QPKG named in $qpkg_name and runs a `backup` action
 
 	# Input:
-	#   $1 = QPKG name
+	#	$qpkg_name (global)
 
 	# Output:
-	#   $? = none, this function executes in the background.
+	#   $? = none, this function executes in the background. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
 
-	FuncFork:Init
+	FuncForkInit
 
 	local a=''
 	local -i z=0
@@ -9377,7 +9393,7 @@ _QPKG:backup_()
 		z=1
 	fi
 
-	[[ $z -eq 0 ]] || FuncFork:Exit $z
+	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "backing-up $(ShowAsPackageName) configuration"
 	[[ $useropt_debug = true ]] && a='DEBUG_QPKG=true '
@@ -9396,7 +9412,7 @@ _QPKG:backup_()
 		z=1   # Remap to 1.
 	fi
 
-	FuncFork:Exit $z
+	FuncForkExit $z
 
 	}
 
@@ -9404,17 +9420,17 @@ _QPKG:restore_()
 	{
 
 	# * This function runs autonomously *
-	# Calls the service script for the QPKG named in $1 and runs a `restore` action.
+	#  Calls the service script for the QPKG named in $qpkg_name and runs a `restore` action
 
 	# Input:
-	#   $1 = QPKG name
+	#	$qpkg_name (global)
 
 	# Output:
-	#   $? = none, this function executes in the background.
+	#   $? = none, this function executes in the background. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
 
-	FuncFork:Init
+	FuncForkInit
 
 	local a=''
 	local -i z=0
@@ -9437,7 +9453,7 @@ _QPKG:restore_()
 		z=1
 	fi
 
-	[[ $z -eq 0 ]] || FuncFork:Exit $z
+	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "restoring $(ShowAsPackageName) configuration"
 	[[ $useropt_debug = true ]] && a='DEBUG_QPKG=true '
@@ -9456,7 +9472,7 @@ _QPKG:restore_()
 		z=1   # Remap to 1.
 	fi
 
-	FuncFork:Exit $z
+	FuncForkExit $z
 
 	}
 
@@ -9464,17 +9480,17 @@ _QPKG:clean_()
 	{
 
 	# * This function runs autonomously *
-	# Calls the service script for the QPKG named in $1 and runs a `clean` action.
+	#  Calls the service script for the QPKG named in $qpkg_name and runs a `clean` action
 
 	# Input:
-	#   $1 = QPKG name
+	#	$qpkg_name (global)
 
 	# Output:
-	#   $? = none, this function executes in the background.
+	#   $? = none, this function executes in the background. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
 
-	FuncFork:Init
+	FuncForkInit
 
 	local a=''
 	local -i z=0
@@ -9493,7 +9509,7 @@ _QPKG:clean_()
 		z=1
 	fi
 
-	[[ $z -eq 0 ]] || FuncFork:Exit $z
+	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "cleaning $(ShowAsPackageName)"
 	[[ $useropt_debug = true ]] && a='DEBUG_QPKG=true '
@@ -9511,7 +9527,7 @@ _QPKG:clean_()
 		z=1   # Remap to 1.
 	fi
 
-	FuncFork:Exit $z
+	FuncForkExit $z
 
 	}
 
@@ -9526,14 +9542,14 @@ _QPKG:sign_()
 	# Should only be required for QTS 4.3.5-and-later firmwares.
 
 	# Input:
-	#   $1 = QPKG name
+	#	$qpkg_name (global)
 
 	# Output:
 	#   $? = none, this function executes in the background. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
 
-	FuncFork:Init
+	FuncForkInit
 
 	local a=''
 	local b=''
@@ -9545,7 +9561,7 @@ _QPKG:sign_()
 		z=3
 	fi
 
-	[[ $z -eq 0 ]] || FuncFork:Exit $z
+	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugVar SQLITE_CMD
 
@@ -9580,7 +9596,7 @@ _QPKG:sign_()
 		fi
 	fi
 
-	[[ $z -eq 0 ]] || FuncFork:Exit $z
+	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "\"signing\" $(ShowAsPackageName)"
 
@@ -9614,7 +9630,7 @@ _QPKG:sign_()
 		z=1   # Remap to 1.
 	fi
 
-	FuncFork:Exit $z
+	FuncForkExit $z
 
 	}
 
@@ -9625,16 +9641,14 @@ _QPKG:status_()
 	# Query a QPKG for its 'status'. Each compatible QPKG will return 0 if application process is active or ready-to-run, 0 if not.
 
 	# Input:
-	#   $qpkg_default_index (global, optional)
-	#   $qpkg_index (global, optional)
-	#	$qpkg_name (global, required)
+	#	$qpkg_name (global)
 
 	# Output:
-	#   $? = none, this function executes in the background.
+	#   $? = none, this function executes in the background. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
 
-	FuncFork:Init
+	FuncForkInit
 
 	local a=''
 	local b=''
@@ -9646,7 +9660,7 @@ _QPKG:status_()
 		z=1
 	fi
 
-	[[ $z -eq 0 ]] || FuncFork:Exit
+	[[ $z -eq 0 ]] || FuncForkExit
 
 	DebugAsProc "status $(ShowAsPackageName)"
 
@@ -9690,7 +9704,7 @@ _QPKG:status_()
 	SaveActionResultToLog QPKG "$qpkg_name" status ok
 	MarkThisActionForkAsOk
 
-	FuncFork:Exit
+	FuncForkExit
 
 	}
 
@@ -11677,10 +11691,12 @@ FuncExit()
 
 	}
 
-FuncFork:Init()
+FuncForkInit()
 	{
 
 	# Debug forked function entry.
+
+	trap '[[ -n ${action_pidfile:-} && -e $action_pidfile ]] && rm -f "$action_pidfile"; [[ -n ${pidfile:-} && -e ${pidfile:-} ]] && rm -f "$pidfile"; exit' SIGINT
 
 	# Redirect debug output to a temporary log, then add it to session log before exiting. This will keep action log progress in-order.
 	original_sess_active_pathfile=$sess_active_pathfile
@@ -11696,7 +11712,7 @@ FuncFork:Init()
 
 	}
 
-FuncFork:Exit()
+FuncForkExit()
 	{
 
 	# Debug forked function exit.
@@ -11718,6 +11734,8 @@ FuncFork:Exit()
 
 	sess_active_pathfile=$original_sess_active_pathfile
 	original_sess_active_pathfile=''
+
+	[[ -n ${action_pidfile:-} && -e $action_pidfile ]] && rm -f "$action_pidfile"; [[ -n ${pidfile:-} && -e ${pidfile:-} ]] && rm -f "$pidfile"
 
 	exit ${1:-0}
 
@@ -12456,7 +12474,7 @@ HideKeystrokes()
 ShowKeystrokes()
 	{
 
-	[[ -e $GNU_STTY_CMD && -t 0 ]] && $GNU_STTY_CMD 'echo'
+	[[ -n ${GNU_STTY_CMD:-} && -e $GNU_STTY_CMD && -t 0 ]] && $GNU_STTY_CMD 'echo'
 
 	}
 
@@ -12723,11 +12741,20 @@ SetTraps()
 RunOnSIGINT()
 	{
 
-	$TOUCH_CMD "$DISPLAY_INHIBIT_PATHFILE"
+	local a=''
+
+	[[ -n ${DISPLAY_INHIBIT_PATHFILE:-} ]] && ${TOUCH_CMD:-/bin/touch} "$DISPLAY_INHIBIT_PATHFILE"
 	EraseThisLine
 	ShowAsAbort 'caught SIGINT'
 	KillActiveFork
 	CloseActionMsgPipe
+
+	if [[ -n ${BG_PROCS_PATH:-} && -d ${BG_PROCS_PATH:-} ]]; then
+		for a in "$BG_PROCS_PATH"/*; do
+			[[ -n $a && $(${BASENAME_CMD:-/usr/bin/basename} "$a") != '*' && -s $a ]] && kill -9 "$(<$a)"
+		done
+	fi
+
 	exit
 
 	}
@@ -12736,6 +12763,7 @@ RunOnEXIT()
 	{
 
 	trap - INT
+
 	ShowKeystrokes
 	ShowCursor
 	ReleaseLockfile
