@@ -22,12 +22,12 @@ runme()
 
 	}
 
-basepath=~/workspace/bg_procs
+basepath=~/workspace/proc
 mkdir -p "$basepath"
 echo "root PID: [$$]"
 
 for ((i=1; i<=10; i++)); do
-	pidfile=$(mktemp "$basepath"/proc_XXXXXX)		# Set $pidfile here, before launching background process so it's inherited by child.
+	pidfile=$(mktemp "$basepath"/bgproc_XXXXXX)		# Set $pidfile here, before launching background process so it's inherited by child.
 
 	runme &
 	echo "$!" > "$pidfile"
