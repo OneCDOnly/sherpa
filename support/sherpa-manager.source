@@ -505,7 +505,7 @@ LocateSQLiteBinary()
 		[[ ! -e $SQLITE_CMD ]] && SQLITE_CMD=''
 	fi
 
-	if [[ -z ${SQLITE_CMD:-} ]] && QpkgIsInstalled CacheMount; then			# `HybridMount`
+	if [[ -z ${SQLITE_CMD:-} ]] && QpkgIsInstalled CacheMount; then				# `HybridMount`
 		SQLITE_CMD=$(QpkgGetInstallationPath CacheMount)/bin/sqlite3
 		[[ ! -e $SQLITE_CMD ]] && SQLITE_CMD=''
 	fi
@@ -515,7 +515,7 @@ LocateSQLiteBinary()
 		[[ ! -e $SQLITE_CMD ]] && SQLITE_CMD=''
 	fi
 
-	if [[ -z ${SQLITE_CMD:-} ]] && QpkgIsInstalled qmiixagent; then			# `Qmiix Agent`
+	if [[ -z ${SQLITE_CMD:-} ]] && QpkgIsInstalled qmiixagent; then				# `Qmiix Agent`
 		SQLITE_CMD=$(QpkgGetInstallationPath qmiixagent)/bin/sqlite3
 		[[ ! -e $SQLITE_CMD ]] && SQLITE_CMD=''
 	fi
@@ -525,7 +525,7 @@ LocateSQLiteBinary()
 		[[ ! -e $SQLITE_CMD ]] && SQLITE_CMD=''
 	fi
 
-	if [[ -z ${SQLITE_CMD:-} ]] && QpkgIsInstalled Qsirch; then				# `Qsirch`
+	if [[ -z ${SQLITE_CMD:-} ]] && QpkgIsInstalled Qsirch; then					# `Qsirch`
 		SQLITE_CMD="LD_LIBRARY_PATH=$(QpkgGetInstallationPath Qsirch)/lib $(QpkgGetInstallationPath Qsirch)/bin/sqlite3"
 		[[ ! -e $SQLITE_CMD ]] && SQLITE_CMD=''
 	fi

@@ -1,7 +1,3 @@
-* Confirm new nzbget QPKG will install and run on a clean NAS without any deps.
-
-* Reminder: check sherpa install from scratch.
-
 * Include QPKG version numbers in progress messages.
 
 * Allow Kapowarr to follow source git branch, release or tag.
