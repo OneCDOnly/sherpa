@@ -704,7 +704,7 @@ CreatePaths()
 	MakePath "$IPK_DOWNGRADE_PATH" 'IPK downgrade' || return
 	MakePath "$LOGS_PATH" logs || return
 	MakePath "$PIP_CACHE_PATH" 'PIP cache' || return
-	MakePath "$REPORT_FLAGS_PATH" report flags || return
+	MakePath "$REPORT_FLAGS_PATH" 'report flags' || return
 	MakePath "$REPORTS_PATH" reports || return
 	MakePath "$QPKG_BU_PATH" 'QPKG backup' || return
 	MakePath "$QPKG_DL_PATH" 'QPKG download' || return
@@ -4406,10 +4406,10 @@ DisplayAsStatusReportItemLine()
 		$TOUCH_CMD "$REPORT_FLAGS_PATH"/status-missing
 	elif QpkgIsNtInstalled; then
 		mode=muted
-		$TOUCH_CMD "$REPORT_FLAGS_PATH"/notinstalled
+		$TOUCH_CMD "$REPORT_FLAGS_PATH"/state-notinstalled
 	else
 		mode=normal
-		$TOUCH_CMD "$REPORT_FLAGS_PATH"/installed
+		$TOUCH_CMD "$REPORT_FLAGS_PATH"/state-installed
 	fi
 
 	[[ $(QpkgGetApplVer "$qpkg_name") = dynamic ]] && $TOUCH_CMD "$REPORT_FLAGS_PATH"/app-dynamic
@@ -4420,7 +4420,7 @@ DisplayAsStatusReportItemLine()
 
 			if QPKGs-ISupgradable.Exist "$qpkg_name"; then
 				name_msg+=$(TextBrightOrange "$qpkg_name")
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/upgradable
+				$TOUCH_CMD "$REPORT_FLAGS_PATH"/state-upgradable
 			else
 				name_msg+=$qpkg_name
 			fi
@@ -4455,13 +4455,13 @@ DisplayAsStatusReportItemLine()
 				$TOUCH_CMD "$REPORT_FLAGS_PATH"/status-stopping
 			elif QPKGs-ISrestarting.Exist "$qpkg_name"; then
 				status+=" $(TextBrightOrange restarting)"
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/restarting
+				$TOUCH_CMD "$REPORT_FLAGS_PATH"/status-restarting
 			elif QPKGs-ISNTactive.Exist "$qpkg_name"; then
 				status+=" $(TextBrightRed inactive)"
 				$TOUCH_CMD "$REPORT_FLAGS_PATH"/state-inactive
 			else
 				status+=" $(TextBrightOrange unknown)"
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/unknown
+				$TOUCH_CMD "$REPORT_FLAGS_PATH"/status-unknown
 			fi
 
 			status_msg=${CHARS_NORMAL}$(AddSeparators "$status")
