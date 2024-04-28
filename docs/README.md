@@ -17,7 +17,7 @@ Package management via **sherpa** provides features like easy application backup
 - [SSH](https://www.qnap.com/en/how-to/faq/article/how-do-i-access-my-qnap-nas-using-ssh) into your NAS, and install the QPKG manually at the command-prompt:
 ```
 curl -skL https://tinyurl.com/get-sherpa > /share/Public/sherpa.qpkg;
-sudo sh /share/Public/sherpa.qpkg
+sudo sh /share/Public/sherpa.qpkg;
 ```
 ## Usage
 - At the command-prompt, run:
