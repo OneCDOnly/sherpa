@@ -226,7 +226,7 @@ checksum_root_path=$HOME/scripts/nas
 source_path=$HOME/scripts/nas/sherpa/support
 target_path=$HOME/scripts/nas/sherpa
 qpkgs_root_path=$HOME/scripts/nas/sherpa.packages
-qpkgs_path=$qpkgs_root_path/QPKGs
+	qpkgs_path=$qpkgs_root_path/QPKGs
 wiki_path=$HOME/documents/sherpa.wiki
 docs_path=$HOME/scripts/nas/sherpa/docs
 
@@ -259,7 +259,7 @@ unstable_branch=unstable
 cdn_onecd_url='https://raw.githubusercontent.com/OneCDOnly'
 cdn_sherpa_base_url=$cdn_onecd_url/sherpa
 cdn_sherpa_url=$cdn_sherpa_base_url/'$useropt_branch'
-cdn_sherpa_packages_url="$cdn_onecd_url/sherpa.packages/QPKGs/<?package_name?>/build"
+cdn_sherpa_packages_url="$cdn_onecd_url/sherpa.packages/main/QPKGs/<?package_name?>/build"
 cdn_other_packages_url="$cdn_onecd_url/<?package_name?>/main/build"
 cdn_qnap_dev_packages_url='https://github.com/qnap-dev/<?package_name?>/releases/download/v<?version?>'
 cdn_nzbget_dev_packages_url='https://github.com/nzbgetcom/<?package_name?>/releases/download/v<?version?>'
