@@ -1,5 +1,9 @@
 Observed issues:
 
+	* FIXED: When a QPKG couldn't be signed (due to no 'sqlite3'), it's not shown by QPKGs.Actions:List() at-all.
+		- QPKG was skipped-abort, and is shown as a skipped QPKG in results.
+		- TODO: Other QPKGs to be signed were not shown in either list.
+
 	* armv5 (Helga) is cutting-off debug log early when running 'sherpa s olive verbose' due to SIGINT.
 
 	* When aborting sherpa, must also ensure backgrounded procs abort.
