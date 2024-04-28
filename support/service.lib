@@ -22,7 +22,7 @@
 #*   This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 #*	 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY, without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
-readonly SERVICE_LIB_VERSION='240426'
+readonly SERVICE_LIB_VERSION='240428'
 InitLibrary()
 {
 IsQNAP || exit
@@ -162,7 +162,6 @@ source_archive_pathfile="$qpkg_repo_path/$QPKG_NAME.tar.gz"
 daemon_pid_pathfile=/var/run/$QPKG_NAME.pid
 interpreter=/opt/bin/python3
 pip_cache_path=$QPKG_PATH/pip-cache
-qpkg_backup_pathfile=undefined
 qpkg_ini_pathfile=undefined
 qpkg_repo_path=$QPKG_PATH/repo-cache
 run_daemon_in_screen_session=true
@@ -219,10 +218,10 @@ fi
 StartQPKGLibrary()
 {
 IsError && return
-if IsNotRestart && IsNotRestore && IsNotClean && IsNotReset;then
+if IsNotRestart && IsNotBackup && IsNotRestore && IsNotClean && IsNotReset;then
 IsDaemonActive && return
 fi
-if IsRestore || IsClean || IsReset;then
+if IsBackup || IsRestore || IsClean || IsReset;then
 IsNotRestartPending && return
 fi
 DisplayWaitCommitToLog 'auto-update:'
@@ -360,7 +359,7 @@ fi
 return
 fi
 if IsDaemonActive;then
-if IsRestart || IsRestore || IsClean || IsReset;then
+if IsRestart || IsBackup || IsRestore || IsClean || IsReset;then
 SetRestartPending
 fi
 local acc=0
@@ -1452,6 +1451,14 @@ IsClean()
 IsNotClean()
 {
 ! IsClean
+}
+IsBackup()
+{
+[[ $service_operation = backup ]]
+}
+IsNotBackup()
+{
+! IsBackup
 }
 IsRestore()
 {
