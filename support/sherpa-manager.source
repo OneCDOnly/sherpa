@@ -1114,15 +1114,17 @@ QPKGsAssignToActions()
 		QPKGs-ACinstall-to:Add Entware
 	fi
 
-	# If any QPKG has been selected for `reinstall` or `upgrade`, need to `deactivate` it first, and `activate` it again later.
+	# If any QPKG has been selected for `backup`/`restore`/`reinstall`/`upgrade`, need to `deactivate` it first, and `activate` it again later.
 
-	for qpkg_name in $(QPKGs-ACreinstall-to:Array) $(QPKGs-ACupgrade-to:Array); do
-		QpkgSetIndex
+	for action in backup restore reinstall upgrade; do
+		for qpkg_name in $(QPKGs-AC${action}-to:Array); do
+			QpkgSetIndex
 
-		if QPKGs-ISenabled.Exist "$qpkg_name"; then
-			QPKGs-ACdeactivate-to:Add "$qpkg_name"
-			! QPKGs-ACuninstall-to.Exist "$qpkg_name" && ! QPKGs-ACinstall-to.Exist "$qpkg_name" && QPKGs-ACactivate-to:Add "$qpkg_name"
-		fi
+			if QPKGs-ISenabled.Exist "$qpkg_name"; then
+				QPKGs-ACdeactivate-to:Add "$qpkg_name"
+				! QPKGs-ACuninstall-to.Exist "$qpkg_name" && ! QPKGs-ACinstall-to.Exist "$qpkg_name" && QPKGs-ACactivate-to:Add "$qpkg_name"
+			fi
+		done
 	done
 
 	# If dependents have been selected for `reinstall`/`install`/`activate`/`reactivate`, need to `activate` their independent packages first.
@@ -1219,39 +1221,40 @@ QPKGsAssignToActions()
 #	2. rebuild all				(meta-action: `download`, `install` & `restore` QPKG, but only if package has an existing backup file)
 #	3. reassign all
 #	4. download all
-#	5. backup all
 #
-#	6. stop/deactivate dependents
+#	5. stop/deactivate dependents
+#	6. backup dependents
 #	7. disable dependents
 #   8. uninstall dependents
 #
 #	9. stop/deactivate independents
-#  10. disable independents
-#  11. uninstall independents
+#  10. backup independents
+#  11. disable independents
+#  12. uninstall independents
 #
-#  12. upgrade independents
-#  13. reinstall independents
-#  14. install independents
-#  15. enable-auto-update independents
-#  16. disable-auto-update independents
-#  17. "sign" independents
-#  18. restore independents
-#  19. clean independents
-#  20. enable independents
-#  21. restart/reactivate independents
-#  22. start/activate independents
+#  13. upgrade independents
+#  14. reinstall independents
+#  15. install independents
+#  16. enable-auto-update independents
+#  17. disable-auto-update independents
+#  18. "sign" independents
+#  19. restore independents
+#  20. clean independents
+#  21. enable independents
+#  22. restart/reactivate independents
+#  23. start/activate independents
 #
-#  23. upgrade dependents
-#  24. reinstall dependents
-#  25. install dependents
-#  26. enable-auto-update dependents
-#  27. disable-auto-update dependents
-#  28. "sign" dependents
-#  29. restore dependents
-#  30. clean dependents
-#  31. enable dependents
-#  32. restart/reactivate dependents
-#  33. start/activate dependents
+#  24. upgrade dependents
+#  25. reinstall dependents
+#  26. install dependents
+#  27. enable-auto-update dependents
+#  28. disable-auto-update dependents
+#  29. "sign" dependents
+#  30. restore dependents
+#  31. clean dependents
+#  32. enable dependents
+#  33. restart/reactivate dependents
+#  34. start/activate dependents
 
 ProcActions()
 	{
@@ -1292,7 +1295,6 @@ ProcActions()
 	Action:Proc rebuild all QPKG meta-rebuild meta-rebuilt
 	Action:Proc reassign all QPKG reassign reassigned
 	Action:Proc download all QPKG download downloaded
-	Action:Proc backup all QPKG backup backed-up
 
 	# -> package removal phase begins here <-
 
@@ -1302,6 +1304,7 @@ ProcActions()
 		case $tier in
 			?(in)dependent)
 				Action:Proc deactivate $tier QPKG deactivate deactivated
+				Action:Proc backup $tier QPKG backup backed-up
 				Action:Proc disable $tier QPKG disable disabled
 				Action:Proc uninstall $tier QPKG uninstall uninstalled
 				;;
