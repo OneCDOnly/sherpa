@@ -32,7 +32,7 @@
     - if it's a group, and an action has already been set, process action and group.
     - if it's a group, and no action was set, then assign a default action, process action and group, then iterate.
 
-* 'debug' and 'verbose' modes should be persistent when set with a group.
+* 'debug' and 'verbose' modes should be persistent when set as groups.
 
 * Add "about" user arg to display current environment.
 
@@ -46,7 +46,7 @@
 
 * Don't start deactivated QPKGs (unless-requested) during 'install all'.
 
-* sherpa 'stable' branch should only update once per-day.
+* In production, sherpa 'stable' branch should only update once per-day.
     - 'unstable' should update once per 10 minutes.
 
 * Examine TS-231 QTS executables with 'file'.
@@ -92,9 +92,6 @@
 
 * Create a troubleshooting page for the wiki?
     - Include explanations of various actions like 'clean' and 'check', so users will have a better idea which action to run when things go wrong.
-
-* Upgrade IPKs automatically?
-    - Store a local checksum of the Entware package list. If this changes, assume it's been updated and all IPKs should be checked for upgrade status and upgraded. No-need to prompt user, just upgrade automatically.
 
 * Download QPKG updates in background when running sherpa for any reason?
 
