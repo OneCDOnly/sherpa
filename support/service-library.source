@@ -175,7 +175,6 @@ InitByServiceType()
 			daemon_pid_pathfile=/var/run/$QPKG_NAME.pid
 			interpreter=/opt/bin/python3
 			pip_cache_path=$QPKG_PATH/pip-cache
-			qpkg_backup_pathfile=undefined					# Backup is unsupported.
 			qpkg_ini_pathfile=undefined						# App config is unsupported.
 			qpkg_repo_path=$QPKG_PATH/repo-cache
 			run_daemon_in_screen_session=true
@@ -242,11 +241,11 @@ StartQPKGLibrary()
 
 	IsError && return
 
-	if IsNotRestart && IsNotRestore && IsNotClean && IsNotReset; then
+	if IsNotRestart && IsNotBackup && IsNotRestore && IsNotClean && IsNotReset; then
 		IsDaemonActive && return
 	fi
 
-	if IsRestore || IsClean || IsReset; then
+	if IsBackup || IsRestore || IsClean || IsReset; then
 		IsNotRestartPending && return
 	fi
 
@@ -427,7 +426,7 @@ StopQPKGLibrary()
 	fi
 
 	if IsDaemonActive; then
-		if IsRestart || IsRestore || IsClean || IsReset; then
+		if IsRestart || IsBackup || IsRestore || IsClean || IsReset; then
 			SetRestartPending
 		fi
 
@@ -2241,6 +2240,20 @@ IsNotClean()
 	{
 
 	! IsClean
+
+	}
+
+IsBackup()
+	{
+
+	[[ $service_operation = backup ]]
+
+	}
+
+IsNotBackup()
+	{
+
+	! IsBackup
 
 	}
 
