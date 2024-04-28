@@ -602,6 +602,7 @@ LoadEnv()
 	readonly QPKG_STATES_PATH=/var/run/sherpa/packages/states
 		readonly ACTION_ABORT_PATHFILE=$QPKG_STATES_PATH/abort.action
 		readonly ACTION_MSG_PIPE=$QPKG_STATES_PATH/action.messages.pipe
+	readonly REPORT_FLAGS_PATH=/var/run/sherpa/report/flags
 	readonly REPORTS_PATH=/var/log/sherpa/reports
 			readonly REPORT_OUTPUT_PATHFILE=$REPORTS_PATH/report.ansi
 	readonly RUN_LOGS_PATH=/var/run/sherpa/run.logs
@@ -693,6 +694,7 @@ CreatePaths()
 	ClearPath "$CACHE_PATH" "$IPK_CACHE_PATH"
 	ClearPath "$CACHE_PATH" "$IPK_DL_PATH"
 	ClearPath "$CACHE_PATH" "$PIP_CACHE_PATH"
+	ClearPath /var/run/sherpa/report "$REPORT_FLAGS_PATH"
 
 	MakePath "$ACTION_TIMES_PATH" 'action times' || return
 	MakePath "$BG_PROCS_PATH" 'background process tracking' || return
@@ -702,6 +704,7 @@ CreatePaths()
 	MakePath "$IPK_DOWNGRADE_PATH" 'IPK downgrade' || return
 	MakePath "$LOGS_PATH" logs || return
 	MakePath "$PIP_CACHE_PATH" 'PIP cache' || return
+	MakePath "$REPORT_FLAGS_PATH" report flags || return
 	MakePath "$REPORTS_PATH" reports || return
 	MakePath "$QPKG_BU_PATH" 'QPKG backup' || return
 	MakePath "$QPKG_DL_PATH" 'QPKG download' || return
@@ -4215,6 +4218,19 @@ DisplayAsSynExam()
 
 	}
 
+DisplayAsGlossaryIndentItem()
+	{
+
+	# Display as an indented, non-bulleted item.
+
+	# Input:
+	#	$1 = word
+	#	$2 = description
+
+	printf "\n%${HELP_DESC_INDENT}s%s: %s\n" '' "'${1:-}'" "${2:-}"
+
+	}
+
 DisplayAsPacksReportTitleLine()
 	{
 
@@ -4387,11 +4403,16 @@ DisplayAsStatusReportItemLine()
 
 	if QpkgIsMissing; then
 		mode=highlighted
+		$TOUCH_CMD "$REPORT_FLAGS_PATH"/status-missing
 	elif QpkgIsNtInstalled; then
 		mode=muted
+		$TOUCH_CMD "$REPORT_FLAGS_PATH"/notinstalled
 	else
 		mode=normal
+		$TOUCH_CMD "$REPORT_FLAGS_PATH"/installed
 	fi
+
+	[[ $(QpkgGetApplVer "$qpkg_name") = dynamic ]] && $TOUCH_CMD "$REPORT_FLAGS_PATH"/app-dynamic
 
 	case $mode in
 		normal)
@@ -4399,6 +4420,7 @@ DisplayAsStatusReportItemLine()
 
 			if QPKGs-ISupgradable.Exist "$qpkg_name"; then
 				name_msg+=$(TextBrightOrange "$qpkg_name")
+				$TOUCH_CMD "$REPORT_FLAGS_PATH"/upgradable
 			else
 				name_msg+=$qpkg_name
 			fi
@@ -4411,26 +4433,35 @@ DisplayAsStatusReportItemLine()
 
 			if QPKGs-ISenabled.Exist "$qpkg_name"; then
 				status+=" $(TextBrightGreen enabled)"
+				$TOUCH_CMD "$REPORT_FLAGS_PATH"/state-enabled
 			else
 				status+=" $(TextBrightRed disabled)"
+				$TOUCH_CMD "$REPORT_FLAGS_PATH"/state-disabled
 			fi
 
 			# Second word.
 
 			if QPKGs-ISactive.Exist "$qpkg_name"; then
 				status+=" $(TextBrightGreen active)"
+				$TOUCH_CMD "$REPORT_FLAGS_PATH"/status-active
 			elif QPKGs-ISslow.Exist "$qpkg_name"; then
 				status+=" $(TextBrightOrange slow)"
+				$TOUCH_CMD "$REPORT_FLAGS_PATH"/status-slow
 			elif QPKGs-ISstarting.Exist "$qpkg_name"; then
 				status+=" $(TextBrightOrange starting)"
+				$TOUCH_CMD "$REPORT_FLAGS_PATH"/status-starting
 			elif QPKGs-ISstopping.Exist "$qpkg_name"; then
 				status+=" $(TextBrightOrange stopping)"
+				$TOUCH_CMD "$REPORT_FLAGS_PATH"/status-stopping
 			elif QPKGs-ISrestarting.Exist "$qpkg_name"; then
 				status+=" $(TextBrightOrange restarting)"
+				$TOUCH_CMD "$REPORT_FLAGS_PATH"/restarting
 			elif QPKGs-ISNTactive.Exist "$qpkg_name"; then
 				status+=" $(TextBrightRed inactive)"
+				$TOUCH_CMD "$REPORT_FLAGS_PATH"/state-inactive
 			else
 				status+=" $(TextBrightOrange unknown)"
+				$TOUCH_CMD "$REPORT_FLAGS_PATH"/unknown
 			fi
 
 			status_msg=${CHARS_NORMAL}$(AddSeparators "$status")
@@ -4874,6 +4905,7 @@ DisplayAsDepsReportItemLine()
 				arch_msg=$(TextBrightRed "$CHARS_ALERT")
 				arch_msg+=$(TextBrightRed false)
 				name_msg=${CHARS_BLANK}$(TextBrightRed "$qpkg_name")
+				$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-alert
 			fi
 
 			if [[ $deps_raw != none ]]; then
@@ -4886,6 +4918,7 @@ DisplayAsDepsReportItemLine()
 						deps+=$(TextBrightRed "$dep_name")
 						deps_msg=$(TextBrightRed "$CHARS_ALERT")
 						name_msg=${CHARS_BLANK}$(TextBrightRed "$qpkg_name")
+						$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-alert
 					fi
 				done
 			else
@@ -4900,6 +4933,7 @@ DisplayAsDepsReportItemLine()
 				enabled_msg=$(TextBrightRed "$CHARS_ALERT")
 				enabled_msg+=$(TextBrightRed false)
 				name_msg=${CHARS_BLANK}$(TextBrightRed "$qpkg_name")
+				$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-alert
 			fi
 
 			installed_msg+=$(TextBrightGreen true)
@@ -4910,6 +4944,7 @@ DisplayAsDepsReportItemLine()
 				max_os_msg=$(TextBrightRed "$CHARS_ALERT")
 				max_os_msg+=$(TextBrightRed "$max_os")
 				name_msg=${CHARS_BLANK}$(TextBrightRed "$qpkg_name")
+				$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-alert
 			fi
 
 			if QpkgIsMinOSVerOk; then
@@ -4918,6 +4953,7 @@ DisplayAsDepsReportItemLine()
 				min_os_msg=$(TextBrightRed "$CHARS_ALERT")
 				min_os_msg+=$(TextBrightRed "$min_os")
 				name_msg=${CHARS_BLANK}$(TextBrightRed "$qpkg_name")
+				$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-alert
 			fi
 
 			if QpkgIsMinRAMOk; then
@@ -4926,6 +4962,7 @@ DisplayAsDepsReportItemLine()
 				min_ram_msg=$(TextBrightRed "$CHARS_ALERT")
 				min_ram_msg+=$(TextBrightRed "$min_ram")
 				name_msg=${CHARS_BLANK}$(TextBrightRed "$qpkg_name")
+				$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-alert
 			fi
 			;;
 		muted)
@@ -4937,6 +4974,7 @@ DisplayAsDepsReportItemLine()
 				arch_msg=$(TextBrightOrange "$CHARS_ATTENTION")
 				arch_msg+=$(TextBrightOrange false)
 				name_msg=${CHARS_BLANK}$(TextBrightOrange "$qpkg_name")
+				$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-attention
 			fi
 
 			deps_msg=$(TextDarkGrey "$CHARS_NORMAL")
@@ -4960,6 +4998,7 @@ DisplayAsDepsReportItemLine()
 				max_os_msg=$(TextBrightOrange "$CHARS_ATTENTION")
 				max_os_msg+=$(TextBrightOrange "$max_os")
 				name_msg=${CHARS_BLANK}$(TextBrightOrange "$qpkg_name")
+				$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-attention
 			fi
 
 			if QpkgIsMinOSVerOk "$qpkg_name"; then
@@ -4968,6 +5007,7 @@ DisplayAsDepsReportItemLine()
 				min_os_msg=$(TextBrightOrange "$CHARS_ATTENTION")
 				min_os_msg+=$(TextBrightOrange "$min_os")
 				name_msg=${CHARS_BLANK}$(TextBrightOrange "$qpkg_name")
+				$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-attention
 			fi
 
 			if QpkgIsMinRAMOk "$qpkg_name"; then
@@ -4976,6 +5016,7 @@ DisplayAsDepsReportItemLine()
 				min_ram_msg=$(TextBrightOrange "$CHARS_ATTENTION")
 				min_ram_msg+=$(TextBrightOrange "$min_ram")
 				name_msg=${CHARS_BLANK}$(TextBrightOrange "$qpkg_name")
+				$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-attention
 			fi
 			;;
 		highlighted)
@@ -4984,6 +5025,7 @@ DisplayAsDepsReportItemLine()
 			else
 				arch_msg=$(TextBrightRed "$CHARS_ALERT")
 				arch_msg+=$(TextBrightRed false)
+				$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-alert
 			fi
 
 			if [[ $deps_raw != none ]]; then
@@ -5007,16 +5049,19 @@ DisplayAsDepsReportItemLine()
 			else
 				enabled_msg=$(TextBrightRedBlink "$CHARS_ALERT")
 				enabled_msg+=$(TextBrightRed 'false')
+				$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-alert
 			fi
 
 			installed_msg=$(TextBrightRedBlink "$CHARS_ALERT")
 			installed_msg+=$(TextBrightRedBlink 'missing')
+			$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-alert
 
 			if QpkgIsMaxOSVerOk; then
 				max_os_msg+=$(TextBrightGreen "$max_os")
 			else
 				max_os_msg=$(TextBrightRed "$CHARS_ALERT")
 				max_os_msg+=$(TextBrightRed "$max_os")
+				$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-alert
 			fi
 
 			if QpkgIsMinOSVerOk; then
@@ -5024,6 +5069,7 @@ DisplayAsDepsReportItemLine()
 			else
 				min_os_msg=$(TextBrightRed "$CHARS_ALERT")
 				min_os_msg+=$(TextBrightRed "$min_os")
+				$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-alert
 			fi
 
 			if QpkgIsMinRAMOk; then
@@ -5031,6 +5077,7 @@ DisplayAsDepsReportItemLine()
 			else
 				min_ram_msg=$(TextBrightRed "$CHARS_ALERT")
 				min_ram_msg+=$(TextBrightRed "$min_ram")
+				$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-alert
 			fi
 
 			name_msg+=$(TextBrightRed "$qpkg_name")
@@ -6960,7 +7007,7 @@ ShowReportBackups()
 			done <<< "$(cd "$QPKG_BU_PATH" && ls -l1tr --time-style=+"%Y-%m-%d %H:%M:%S" ./*.config.tar.gz 2>/dev/null | $AWK_CMD '{print $6" "$7" "$8" "$5}')"
 		fi
 
-		DisplayAsHelpTitle "backups are listed oldest-first, and those shown in $(TextBrightRed red) (prefixed with '$(TextBrightRed '!')') were last updated more-than $highlight_older_than."
+		DisplayAsHelpTitle "backups are listed oldest-first, and those shown in '$(TextBrightRed '! red')' were last updated more-than $highlight_older_than."
 
 		DisplayAsHelpTitle "All $(ShowAsTitleName) backup files are stored here: $QPKG_BU_PATH"
 
@@ -7015,13 +7062,9 @@ ShowReportDependencies()
 
 	[[ -n $a ]] && echo -en "$a" >> "$REPORT_OUTPUT_PATHFILE"
 
-		{
+	DisplayAsHelpTitle "package dependencies are automatically installed/started/stopped/restarted as-required by $(ShowAsTitleName)." >> "$REPORT_OUTPUT_PATHFILE"
 
-		DisplayAsHelpTitle "package dependencies are automatically installed/started/stopped/restarted as-required by $(ShowAsTitleName)."
-		DisplayAsHelpTitle "requirements shown in $(TextBrightOrange orange) (prefixed with '$(TextBrightOrange '*')') prevent the package being installed."
-		DisplayAsHelpTitle "those shown in $(TextBrightRed red) (prefixed with '$(TextBrightRed '!')') are preventing the package from working correctly."
-
-		} >> "$REPORT_OUTPUT_PATHFILE"
+	IncludeReportGlossary
 
 	EraseThisLine
 
@@ -7168,43 +7211,7 @@ ShowReportStatuses()
 
 	[[ -n $a ]] && echo -en "$a" >> "$REPORT_OUTPUT_PATHFILE"
 
-		{
-
-		if QPKGs-ISmissing.IsAny; then
-			DisplayAsHelpTitle "'$(TextBrightRed missing)' means the QPKG is missing from its installation path. This is a broken state. Reinstall the QPKG if you're aware of the problem. Your QPKG config (if-applicable) will need to be restored from backup."
-		fi
-
-		if QPKGs-ISNTenabled.IsAny; then
-			DisplayAsHelpTitle "'$(TextBrightRed disabled)' means the QPKG application won't start at bootup, and (usually) can't be started manually. Enable it first, then start it."
-		fi
-
-		if QPKGs-ISenabled.IsAny; then
-			DisplayAsHelpTitle "'$(TextBrightGreen enabled)' means the QPKG application will start automatically at bootup, and is (usually) required so QPKGs can be started manually."
-		fi
-
-		if QPKGs-ISNTactive.IsAny; then
-			DisplayAsHelpTitle "'$(TextBrightRed inactive)' means the QPKG application is dead or not-started. Try starting/activating it."
-		fi
-
-		if QPKGs-ISstopping.IsAny; then
-			DisplayAsHelpTitle "'$(TextBrightOrange stopping)' means the QPKG application is shutting-down. Try checking the status again shortly."
-		fi
-
-		if QPKGs-ISslow.IsAny; then
-			DisplayAsHelpTitle "'$(TextBrightOrange slow)' means the QPKG application is alive, but took too-long to respond to the status request. This is more common on NAS with lower installed RAM, and is usually because the application has been page-swapped to disk and must be reloaded into RAM. Try checking the status again shortly."
-		fi
-
-		if QPKGs-ISstarting.IsAny; then
-			DisplayAsHelpTitle "'$(TextBrightOrange starting)' means the QPKG application is being launched. Try checking the status again shortly."
-		fi
-
-		if QPKGs-ISactive.IsAny; then
-			DisplayAsHelpTitle "'$(TextBrightGreen active)' means the QPKG application is alive (and responsive if it's a daemon). This is good."
-		fi
-
-		DisplayAsHelpTitle "'dynamic' means the application version is the latest available online."
-
-		} >> "$REPORT_OUTPUT_PATHFILE"
+	IncludeReportGlossary
 
 	EraseThisLine
 
@@ -7219,6 +7226,57 @@ ShowReportStatuses()
 	FuncExit
 
 	}
+
+IncludeReportGlossary()
+	{
+
+	DisplayAsHelpTitle 'report glossary:'
+
+	if [[ -e "$REPORT_FLAGS_PATH"/status-missing ]]; then
+		DisplayAsGlossaryIndentItem "$(TextBrightRed '! missing')" 'the QPKG is missing from its installation path. Reinstall it.'
+	fi
+
+	if [[ -e "$REPORT_FLAGS_PATH"/state-disabled ]]; then
+		DisplayAsGlossaryIndentItem "$(TextBrightRed disabled)" "the QPKG application won't start at bootup, and (usually) can't be started manually. Enable it first, then start it."
+	fi
+
+	if [[ -e "$REPORT_FLAGS_PATH"/state-enabled ]]; then
+		DisplayAsGlossaryIndentItem "$(TextBrightGreen enabled)" 'the QPKG application will start automatically at bootup, and is (usually) required so QPKGs can be started manually.'
+	fi
+
+	if [[ -e "$REPORT_FLAGS_PATH"/state-inactive ]]; then
+		DisplayAsGlossaryIndentItem "$(TextBrightRed inactive)" 'the QPKG application is dead or not-started. Try starting/activating it.'
+	fi
+
+	if [[ -e "$REPORT_FLAGS_PATH"/status-stopping ]]; then
+		DisplayAsGlossaryIndentItem "$(TextBrightOrange stopping)" 'the QPKG application is shutting-down. Try checking the status again shortly.'
+	fi
+
+	if [[ -e "$REPORT_FLAGS_PATH"/status-slow ]]; then
+		DisplayAsGlossaryIndentItem "$(TextBrightOrange slow)" 'the QPKG application is alive, but took too-long to respond to the status request. This is more common on NAS with lower installed RAM, and is usually because the application has been page-swapped to disk and must be reloaded into RAM. Try checking the status again shortly.'
+	fi
+
+	if [[ -e "$REPORT_FLAGS_PATH"/status-starting ]]; then
+		DisplayAsGlossaryIndentItem "$(TextBrightOrange starting)" 'the QPKG application is being launched. Try checking the status again shortly.'
+	fi
+
+	if [[ -e "$REPORT_FLAGS_PATH"/status-active ]]; then
+		DisplayAsGlossaryIndentItem "$(TextBrightGreen active)" "the QPKG application is alive (and responsive if it's a daemon). This is good."
+	fi
+
+	if [[ -e "$REPORT_FLAGS_PATH"/app-dynamic ]]; then
+		DisplayAsGlossaryIndentItem dynamic 'the application version is the latest available online.'
+	fi
+
+	if [[ -e "$REPORT_FLAGS_PATH"/req-attention ]]; then
+		DisplayAsGlossaryIndentItem "$(TextBrightOrange '* orange')" 'this package cannot be installed.'
+	fi
+
+	if [[ -e "$REPORT_FLAGS_PATH"/req-alert ]]; then
+		DisplayAsGlossaryIndentItem "$(TextBrightRed '! red')" 'this package is not working correctly.'
+	fi
+
+	} >> "$REPORT_OUTPUT_PATHFILE"
 
 QPKGs.ISbackedup:Show()
 	{

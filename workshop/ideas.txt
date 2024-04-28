@@ -3,9 +3,6 @@
 
 * Include QPKG version numbers in progress messages.
 
-* Report helper descriptions should only be shown if-required.
-	- Don't show helpers for words not used in the report.
-
 * Only install IPKs for QPKGs that download successfully (or are already downloaded).
 	- ... and the installed ones, as-happens now.
 
