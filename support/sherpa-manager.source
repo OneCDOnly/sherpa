@@ -1064,29 +1064,33 @@ QPKGsAssignToActions()
 
 	# If an independent has been selected for `reinstall`/`reactivate`/`upgrade`, need to `deactivate` its dependents first, and `activate` them again later.
 
-	for qpkg_name in $(QPKGs-ACreinstall-to:Array) $(QPKGs-ACreactivate-to:Array) $(QPKGs-ACupgrade-to:Array); do
-		QpkgSetIndex
+	for action in reinstall reactivate upgrade; do
+		for qpkg_name in $(QPKGs-AC${action}-to:Array); do
+			QpkgSetIndex
 
-		if QPKGs-GRindependent.Exist "$qpkg_name" && QPKGs-ISinstalled.Exist "$qpkg_name"; then
-			for prospect in $(QpkgGetDependents); do
-				if QPKGs-ISenabled.Exist "$prospect"; then
-					QPKGs-ACdeactivate-to:Add "$prospect"
-					! QPKGs-ACuninstall-to.Exist "$prospect" && ! QPKGs-ACinstall-to.Exist "$prospect" && QPKGs-ACactivate-to:Add "$prospect"
-				fi
-			done
-		fi
+			if QPKGs-GRindependent.Exist "$qpkg_name" && QPKGs-ISinstalled.Exist "$qpkg_name"; then
+				for prospect in $(QpkgGetDependents); do
+					if QPKGs-ISenabled.Exist "$prospect"; then
+						QPKGs-ACdeactivate-to:Add "$prospect"
+						! QPKGs-ACuninstall-to.Exist "$prospect" && ! QPKGs-ACinstall-to.Exist "$prospect" && QPKGs-ACactivate-to:Add "$prospect"
+					fi
+				done
+			fi
+		done
 	done
 
 	# If an independent has been selected for `deactivate` or `uninstall`, need to `deactivate` its dependents first.
 
-	for qpkg_name in $(QPKGs-ACdeactivate-to:Array) $(QPKGs-ACuninstall-to:Array); do
-		QpkgSetIndex
+	for action in deactivate uninstall; do
+		for qpkg_name in $(QPKGs-AC${action}-to:Array); do
+			QpkgSetIndex
 
-		if QPKGs-GRindependent.Exist "$qpkg_name" && QPKGs-ISinstalled.Exist "$qpkg_name"; then
-			for prospect in $(QpkgGetDependents); do
-				QPKGs-ISinstalled.Exist "$prospect" && QPKGs-ACdeactivate-to:Add "$prospect"
-			done
-		fi
+			if QPKGs-GRindependent.Exist "$qpkg_name" && QPKGs-ISinstalled.Exist "$qpkg_name"; then
+				for prospect in $(QpkgGetDependents); do
+					QPKGs-ISinstalled.Exist "$prospect" && QPKGs-ACdeactivate-to:Add "$prospect"
+				done
+			fi
+		done
 	done
 
 	# If an independent has been selected for `uninstall`, then `install`, need to `deactivate` its dependents first, and `activate` them again later.
@@ -1139,15 +1143,6 @@ QPKGsAssignToActions()
 		done
 	done
 
-	# Check for packages that must be enabled first, because `activate`/`reactivate` was requested.
-	# I've disabled this. Make user `enable` target packages first. Let's see how this goes...
-
-# 	for action in activate reactivate; do
-# 		for qpkg_name in $(QPKGs-AC${action}-to:Array); do
-# 			QPKGs-ISinstalled.Exist "$qpkg_name" && QPKGs-ISNTenabled.Exist "$qpkg_name" && QPKGs-ACenable-to:Add "$qpkg_name"
-# 		done
-# 	done
-
 	# No-need to `reactivate` or `disable` packages that are to be uninstalled.
 
 	if QPKGs.ACuninstall.GRall.IsSet; then
@@ -1178,12 +1173,6 @@ QPKGsAssignToActions()
 			QPKGs-ACdeactivate-to:Add "$qpkg_name"
 		done
 	fi
-
-	# Shouldn't need this now that all QPKGs to be upgraded or reinstalled are deactivated first.
-
-# 	for qpkg_name in sherpa Entware; do
-# 		QPKGs-ACupgrade-to.Exist "$qpkg_name" && QPKGs-ACreactivate-to:Add "$qpkg_name"
-# 	done
 
 	# Build list to download.
 
