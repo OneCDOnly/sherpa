@@ -94,6 +94,8 @@ ShowResults()
 			ShowReportVersions
 		elif [[ $useropt_show_dependencies = true ]]; then
 			ShowReportDependencies
+		elif [[ $useropt_show_features = true ]]; then
+			ShowReportFeatures
 		elif [[ $useropt_show_packages = true ]]; then
 			ShowReportPackages
 		elif [[ $useropt_show_repos = true ]]; then
@@ -251,6 +253,7 @@ LoadConsts()
 	readonly PACKAGE_APP_VER_COL_WIDTH=22
 	readonly PACKAGE_ARCH_COL_WIDTH=15
 	readonly PACKAGE_AUTHOR_COL_WIDTH=40
+	readonly PACKAGE_BUILTIN_ACTIVE_TEST_COL_WIDTH=18
 	readonly PACKAGE_DEPENDENCIES_COL_WIDTH=29
 	readonly PACKAGE_DESCRIPTION_COL_WIDTH=10
 	readonly PACKAGE_ENABLED_COL_WIDTH=10
@@ -264,6 +267,9 @@ LoadConsts()
 	readonly PACKAGE_PATH_COL_WIDTH=48
 	readonly PACKAGE_REPO_COL_WIDTH=40
 	readonly PACKAGE_STATUS_COL_WIDTH=23
+	readonly PACKAGE_SUPPORTS_BACKUP_COL_WIDTH=18
+	readonly PACKAGE_SUPPORTS_CLEAN_COL_WIDTH=20
+	readonly PACKAGE_SUPPORTS_RESTART_TO_UPDATE_COL_WIDTH=20
 	readonly PACKAGE_VER_COL_WIDTH=15
 
 	# For reports and onscreen display.
@@ -371,6 +377,7 @@ LoadVars()
 	useropt_paste_log_tail=false
 	useropt_show_backups=false
 	useropt_show_dependencies=false
+	useropt_show_features=false
 	useropt_show_log_last=false
 	useropt_show_log_tail=false
 	useropt_show_packages=false
@@ -867,7 +874,7 @@ CheckTasks()
 
 	if [[ $useropt_check = true || $useropt_show_status = true ]]; then
 		build_states=true
-	elif [[ $useropt_show_dependencies = true || $useropt_show_packages = true || $useropt_show_repos = true ]]; then
+	elif [[ $useropt_show_dependencies = true || $useropt_show_features = true || $useropt_show_packages = true || $useropt_show_repos = true ]]; then
 		build_states=true
 	elif [[ $useropt_help_actions = true || $useropt_help_actions_all = true || $useropt_help_groups = true || $useropt_help_lists = true || $useropt_help_options = true || $useropt_help_packages = true || $useropt_help_problems = true || $useropt_help_tips = true || $useropt_help_upgrades = true || $useropt_show_results = true ]]; then
 		: # don't do anything
@@ -2101,7 +2108,7 @@ ParseShowArgs()
 		# Include action assignment when action hasn't been previously specified.
 
 		case $group in
-			abs|backups|dependent|last|packages|repositories|results|status|tail)
+			abs|backups|dependent|features|last|packages|repositories|results|status|tail)
 				[[ -z $action ]] && action=show
 		esac
 
@@ -2134,6 +2141,14 @@ ParseShowArgs()
 							generate_show_report=true
 							run_package_actions=false
 							useropt_show_dependencies=true
+							;;
+						features)
+							LoadPackages
+							action=''
+							awaiting_group=false
+							generate_show_report=true
+							run_package_actions=false
+							useropt_show_features=true
 							;;
 						last)
 							action=''
@@ -2601,6 +2616,9 @@ MatchNoun()
 			;;
 		enable|on|set|true|yes)
 			printf true
+			;;
+		f|features)
+			printf features
 			;;
 		group?(s))
 			printf groups
@@ -4964,6 +4982,7 @@ DisplayAsDepsReportItemLine()
 				name_msg=${CHARS_BLANK}$(TextBrightRed "$qpkg_name")
 				$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-alert
 			fi
+
 			;;
 		muted)
 			name_msg+=$(TextDarkGrey "$qpkg_name")
@@ -5018,6 +5037,7 @@ DisplayAsDepsReportItemLine()
 				name_msg=${CHARS_BLANK}$(TextBrightOrange "$qpkg_name")
 				$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-attention
 			fi
+
 			;;
 		highlighted)
 			if QpkgIsArchOK; then
@@ -5136,6 +5156,203 @@ DisplayAsDepsReportItemLine()
 	if [[ $report_cols_max -ge 8 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_ARCH_COL_WIDTH+$(LenANSIDiff "$arch_msg")))s" "$arch_msg"
+	fi
+
+	printf '\n'
+
+	}
+
+DisplayAsFeaturesReportTitleLine()
+	{
+
+	local a=''
+
+	printf '\n'
+
+	# column 1: package name
+
+	if [[ $report_cols_max -ge 1 ]]; then
+		a="${CHARS_BULLET}QPKG name:"
+		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
+	fi
+
+	# column 2: package supports `backup` action?
+
+	if [[ $report_cols_max -ge 2 ]]; then
+		printf "%$((COLUMN_SPACING))s"
+		a="${CHARS_BULLET}Supports backup?"
+		printf "%-$((PACKAGE_SUPPORTS_BACKUP_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
+	fi
+
+	# column 3: package supports `clean` action?
+
+	if [[ $report_cols_max -ge 3 ]]; then
+		printf "%$((COLUMN_SPACING))s"
+		a="${CHARS_BULLET}Supports cleaning?"
+		printf "%-$((PACKAGE_SUPPORTS_CLEAN_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
+	fi
+
+	# column 4: package supports restart-to-update application action?
+
+	if [[ $report_cols_max -ge 4 ]]; then
+		printf "%$((COLUMN_SPACING))s"
+		a="${CHARS_BULLET}Restart-to-update?"
+		printf "%-$((PACKAGE_SUPPORTS_RESTART_TO_UPDATE_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
+	fi
+
+	# column 5: package active test is builtin?
+
+	if [[ $report_cols_max -ge 5 ]]; then
+		printf "%$((COLUMN_SPACING))s"
+		a="${CHARS_BULLET}Active test builtin?"
+		printf "%-$((PACKAGE_BUILTIN_ACTIVE_TEST_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
+	fi
+
+	printf '\n'
+
+	}
+
+DisplayAsFeaturesReportItemLine()
+	{
+
+	# Input:
+	# 	$qpkg_name (global).
+
+	local active_test_msg=$CHARS_BLANK
+	local backup_msg=$CHARS_BLANK
+	local clean_msg=$CHARS_BLANK
+	local mode=''
+	local name_msg=$CHARS_BLANK
+	local restart_to_update_msg=$CHARS_BLANK
+
+	if QpkgIsMissing; then
+		mode=highlighted
+	elif QpkgIsNtInstalled; then
+		mode=muted
+	else
+		mode=normal
+	fi
+
+	if [[ $(QpkgGetActiveTest) = builtin ]]; then
+		active_test_msg+=true
+	else
+		active_test_msg+=false
+	fi
+
+	if QpkgIsCanBackup; then
+		backup_msg+=true
+	else
+		backup_msg+=false
+	fi
+
+	if QpkgIsCanClean; then
+		clean_msg+=true
+	else
+		clean_msg+=false
+	fi
+
+	if QpkgIsCanRestartToUpdate; then
+		restart_to_update_msg+=true
+	else
+		restart_to_update_msg+=false
+	fi
+
+	case $mode in
+		normal)
+			if [[ $active_test_msg =~ true ]]; then
+				active_test_msg=$(TextBrightGreen "$active_test_msg")
+			else
+				active_test_msg=$(TextBrightOrange "$active_test_msg")
+			fi
+
+			if [[ $backup_msg =~ true ]]; then
+				backup_msg=$(TextBrightGreen "$backup_msg")
+			else
+				backup_msg=$(TextBrightOrange "$backup_msg")
+			fi
+
+			if [[ $clean_msg =~ true ]]; then
+				clean_msg=$(TextBrightGreen "$clean_msg")
+			else
+				clean_msg=$(TextBrightOrange "$clean_msg")
+			fi
+
+			name_msg+=$qpkg_name
+
+			if [[ $restart_to_update_msg =~ true ]]; then
+				restart_to_update_msg=$(TextBrightGreen "$restart_to_update_msg")
+			else
+				restart_to_update_msg=$(TextBrightOrange "$restart_to_update_msg")
+			fi
+
+			;;
+		muted)
+			active_test_msg=$(TextDarkGrey "$active_test_msg")
+			backup_msg=$(TextDarkGrey "$backup_msg")
+			clean_msg=$(TextDarkGrey "$clean_msg")
+			name_msg+=$(TextDarkGrey "$qpkg_name")
+			restart_to_update_msg=$(TextDarkGrey "$restart_to_update_msg")
+			;;
+		highlighted)
+			if [[ $active_test_msg =~ true ]]; then
+				active_test_msg=$(TextBrightGreen "$active_test_msg")
+			else
+				active_test_msg=$(TextBrightOrange "$active_test_msg")
+			fi
+
+			if [[ $backup_msg =~ true ]]; then
+				backup_msg=$(TextBrightGreen "$backup_msg")
+			else
+				backup_msg=$(TextBrightOrange "$backup_msg")
+			fi
+
+			if [[ $clean_msg =~ true ]]; then
+				clean_msg=$(TextBrightGreen "$clean_msg")
+			else
+				clean_msg=$(TextBrightOrange "$clean_msg")
+			fi
+
+			name_msg+=$(TextBrightRed "$qpkg_name")
+
+			if [[ $restart_to_update_msg =~ true ]]; then
+				restart_to_update_msg=$(TextBrightGreen "$restart_to_update_msg")
+			else
+				restart_to_update_msg=$(TextBrightOrange "$restart_to_update_msg")
+			fi
+	esac
+
+	# column 1: package name
+
+	if [[ $report_cols_max -ge 1 ]]; then
+		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
+	fi
+
+	# column 2: package supports `backup` action?
+
+	if [[ $report_cols_max -ge 2 ]]; then
+		printf "%$((COLUMN_SPACING))s"
+		printf "%-$((PACKAGE_SUPPORTS_BACKUP_COL_WIDTH+$(LenANSIDiff "$backup_msg")))s" "$backup_msg"
+	fi
+
+	# column 3: package supports `clean` action?
+
+	if [[ $report_cols_max -ge 3 ]]; then
+		printf "%$((COLUMN_SPACING))s"
+		printf "%-$((PACKAGE_SUPPORTS_CLEAN_COL_WIDTH+$(LenANSIDiff "$clean_msg")))s" "$clean_msg"
+	fi
+
+	# column 4: package supports restart-to-update application action?
+
+	if [[ $report_cols_max -ge 4 ]]; then
+		printf "%$((COLUMN_SPACING))s"
+		printf "%-$((PACKAGE_SUPPORTS_RESTART_TO_UPDATE_COL_WIDTH+$(LenANSIDiff "$restart_to_update_msg")))s" "$restart_to_update_msg"
+	fi
+
+	# column 5: package active test is builtin?
+
+	if [[ $report_cols_max -ge 5 ]]; then
+		printf "%$((COLUMN_SPACING))s"
+		printf "%-$((PACKAGE_BUILTIN_ACTIVE_TEST_COL_WIDTH+$(LenANSIDiff "$active_test_msg")))s" "$active_test_msg"
 	fi
 
 	printf '\n'
@@ -7065,6 +7282,57 @@ ShowReportDependencies()
 	DisplayAsHelpTitle "package dependencies are automatically installed/started/stopped/restarted as-required by $(ShowAsTitleName)." >> "$REPORT_OUTPUT_PATHFILE"
 
 	IncludeReportGlossary
+
+	EraseThisLine
+
+	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
+		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
+	else
+		ShowAsError 'no information to display'
+	fi
+
+	QPKGs.States:List
+
+	FuncExit
+
+	}
+
+ShowReportFeatures()
+	{
+
+	# Output:
+	#   $report_cols_max (global)
+
+	FuncInit
+
+	local a=''
+	report_cols_max=5
+	local -i m=0
+	local -i n=0
+
+	DisableDebugToArchiveAndFile
+	DisplayProcReport features
+	ResetReportsPath &>/dev/null
+
+	DisplayAsFeaturesReportTitleLine > "$REPORT_OUTPUT_PATHFILE"
+
+	for qpkg_name in $(QPKGs-GRall:Array); do
+		((n++))
+		QpkgSetIndex
+		DisplayAsFeaturesReportItemLine > "$REPORTS_PATH/$n" &
+	done
+
+	m=$n
+	wait 2>/dev/null
+
+	# load report lines from individual files.
+
+	for ((n=1; n<=m; n++)); do
+		f="$REPORTS_PATH/$n"
+		[[ -e $f ]] && a+="$(<$f)\n"		# add newline to each imported report line
+	done
+
+	[[ -n $a ]] && echo -en "$a" >> "$REPORT_OUTPUT_PATHFILE"
 
 	EraseThisLine
 
@@ -12723,9 +12991,9 @@ LoadPackages()
 	QPKG_AUTHOR+=('')						# Name of the person or group maintaining this QPKG.
 	QPKG_AUTHOR_EMAIL+=('')					# Email address of the package maintainer.
 	QPKG_CAN_BACKUP+=('')					# 'true'/'false': this QPKG service-script supports configuration 'backup' and 'restore' operations.
-	QPKG_CAN_CLEAN+=('')					# 'true'/'false': the internal appplication can be cleaned and re-downloaded.
+	QPKG_CAN_CLEAN+=('')					# 'true'/'false': the internal application can be cleaned and re-downloaded.
 	QPKG_CAN_LOG_SERVICE_OPERATIONS+=('')	# 'true'/'false': the service script logs operation results in a format compatible with sherpa.
-	QPKG_CAN_RESTART_TO_UPDATE+=('')		# 'true'/'false': the internal appplication can be updated by restarting the QPKG.
+	QPKG_CAN_RESTART_TO_UPDATE+=('')		# 'true'/'false': the internal application can be updated by restarting the QPKG.
 	QPKG_CONFLICTS_WITH+=('')				# Abort if these QPKGs are installed.
 	QPKG_DEPENDS_ON+=('')					# Require these QPKGs to be installed first. Use 'none' if package is independent. Separate alternatives with '|'.
 	QPKG_DESC+=('')							# QPKG description.
@@ -12736,7 +13004,7 @@ LoadPackages()
 	QPKG_NAME+=('')							# Internal QPKG name.
 	QPKG_NOTE+=('')							# An additional note to be prominently displayed.
 	QPKG_REQUIRES_IPKS+=('')				# Require these IPKs to be installed first.
-	QPKG_TEST_FOR_ACTIVE+=('')				# Test command-string to determine if this QPKG is active or inactive. Use '' if QPKG has its own status tests.
+	QPKG_TEST_FOR_ACTIVE+=('')				# Test command-string to determine if this QPKG is active or inactive. Use 'builtin' if QPKG has its own status tests.
 	QPKG_URL+=('') 							# Remote URL.
 	QPKG_VERSION+=('') 						# QPKG version.
 
