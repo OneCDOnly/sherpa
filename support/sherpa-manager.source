@@ -250,7 +250,7 @@ LoadConsts()
 	readonly HELP_SYNTAX_INDENT=6
 
 	readonly PACKAGE_ABBS_COL_WIDTH=84
-	readonly PACKAGE_ACTIVE_TEST_BUILTIN_COL_WIDTH=22
+	readonly PACKAGE_ACTIVE_TEST_BUILTIN_COL_WIDTH=8
 	readonly PACKAGE_APP_VER_COL_WIDTH=22
 	readonly PACKAGE_ARCH_COL_WIDTH=15
 	readonly PACKAGE_AUTHOR_COL_WIDTH=40
@@ -267,9 +267,9 @@ LoadConsts()
 	readonly PACKAGE_PATH_COL_WIDTH=48
 	readonly PACKAGE_REPO_COL_WIDTH=40
 	readonly PACKAGE_STATUS_COL_WIDTH=23
-	readonly PACKAGE_SUPPORTS_BACKUP_COL_WIDTH=18
-	readonly PACKAGE_SUPPORTS_CLEAN_COL_WIDTH=20
-	readonly PACKAGE_SUPPORTS_RESTART_TO_UPDATE_COL_WIDTH=20
+	readonly PACKAGE_SUPPORTS_BACKUP_COL_WIDTH=9
+	readonly PACKAGE_SUPPORTS_CLEAN_COL_WIDTH=8
+	readonly PACKAGE_SUPPORTS_RESTART_TO_UPDATE_COL_WIDTH=10
 	readonly PACKAGE_TIER_COL_WIDTH=18
 	readonly PACKAGE_VER_COL_WIDTH=15
 
@@ -4244,6 +4244,19 @@ DisplayAsGlossaryIndentItem()
 
 	}
 
+DisplayAsColumnExplainedIndentItem()
+	{
+
+	# Display as an indented, non-bulleted item.
+
+	# Input:
+	#	$1 = word
+	#	$2 = description
+
+	printf "%${HELP_DESC_INDENT}s%s: %s\n" '' "'${1:-}'" "${2:-}"
+
+	}
+
 DisplayAsPacksReportTitleLine()
 	{
 
@@ -5175,7 +5188,7 @@ DisplayAsFeaturesReportTitleLine()
 
 	if [[ $report_cols_max -ge 2 ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}Supports backup?"
+		a="${CHARS_BULLET}Backup?"
 		printf "%-$((PACKAGE_SUPPORTS_BACKUP_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -5183,7 +5196,7 @@ DisplayAsFeaturesReportTitleLine()
 
 	if [[ $report_cols_max -ge 3 ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}Supports cleaning?"
+		a="${CHARS_BULLET}Clean?"
 		printf "%-$((PACKAGE_SUPPORTS_CLEAN_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -5191,7 +5204,7 @@ DisplayAsFeaturesReportTitleLine()
 
 	if [[ $report_cols_max -ge 4 ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}Restart-to-update?"
+		a="${CHARS_BULLET}Restart?"
 		printf "%-$((PACKAGE_SUPPORTS_RESTART_TO_UPDATE_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -5199,7 +5212,7 @@ DisplayAsFeaturesReportTitleLine()
 
 	if [[ $report_cols_max -ge 5 ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}Active test builtin?"
+		a="${CHARS_BULLET}Test?"
 		printf "%-$((PACKAGE_ACTIVE_TEST_BUILTIN_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -7357,6 +7370,17 @@ ShowReportFeatures()
 	done
 
 	[[ -n $a ]] && echo -en "$a" >> "$REPORT_OUTPUT_PATHFILE"
+
+		{
+
+		DisplayAsHelpTitle 'column headings:'
+		DisplayAsColumnExplainedIndentItem 'Backup?' "service-script supports application config 'backup' and 'restore'."
+		DisplayAsColumnExplainedIndentItem 'Clean?' "service-script supports application 'clean'ing."
+		DisplayAsColumnExplainedIndentItem 'Restart?' "service-script supports restarting to update application."
+		DisplayAsColumnExplainedIndentItem 'Test?' "service-script has a builtin 'status' check, and can test for daemon live status."
+		DisplayAsColumnExplainedIndentItem 'Independent?' "this QPKG is independent of other QPKGs."
+
+		} >> "$REPORT_OUTPUT_PATHFILE"
 
 	EraseThisLine
 
