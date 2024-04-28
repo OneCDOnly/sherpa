@@ -4,6 +4,8 @@
 
 * Include QPKG version numbers in progress messages.
 
+* Allow Kapowarr to follow source git branch, release or tag.
+
 * Only install IPKs for QPKGs that download successfully (or are already downloaded).
 	- ... and the installed ones, as-happens now.
 

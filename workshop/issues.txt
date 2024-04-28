@@ -2,8 +2,6 @@ Observed issues:
 
 	* armv5 (Helga) is cutting-off debug log early when running 'sherpa s olive verbose' due to SIGINT.
 
-	* Allow Kapowarr to follow source git branch, release or tag.
-
 	* When aborting sherpa, must also ensure backgrounded procs abort.
 		- Presently, if a child proc is waiting (example: to check PID of application daemon again), it doesn't abort.
 		- Keep track of every launched background proc $! (save each to path with a unique ID generated before calling proc), then ensure these are killed on exit/sigint/sigkill.
