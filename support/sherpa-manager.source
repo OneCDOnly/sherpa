@@ -250,10 +250,10 @@ LoadConsts()
 	readonly HELP_SYNTAX_INDENT=6
 
 	readonly PACKAGE_ABBS_COL_WIDTH=84
+	readonly PACKAGE_ACTIVE_TEST_BUILTIN_COL_WIDTH=22
 	readonly PACKAGE_APP_VER_COL_WIDTH=22
 	readonly PACKAGE_ARCH_COL_WIDTH=15
 	readonly PACKAGE_AUTHOR_COL_WIDTH=40
-	readonly PACKAGE_BUILTIN_ACTIVE_TEST_COL_WIDTH=18
 	readonly PACKAGE_DEPENDENCIES_COL_WIDTH=29
 	readonly PACKAGE_DESCRIPTION_COL_WIDTH=10
 	readonly PACKAGE_ENABLED_COL_WIDTH=10
@@ -270,6 +270,7 @@ LoadConsts()
 	readonly PACKAGE_SUPPORTS_BACKUP_COL_WIDTH=18
 	readonly PACKAGE_SUPPORTS_CLEAN_COL_WIDTH=20
 	readonly PACKAGE_SUPPORTS_RESTART_TO_UPDATE_COL_WIDTH=20
+	readonly PACKAGE_TIER_COL_WIDTH=18
 	readonly PACKAGE_VER_COL_WIDTH=15
 
 	# For reports and onscreen display.
@@ -4882,14 +4883,14 @@ DisplayAsDepsReportItemLine()
 	local dep_name=''
 	local deps=''
 	local deps_msg=$CHARS_NORMAL
-	local deps_raw=$(QpkgGetDependencies)
+	local deps_raw=$(QpkgGetDependencies "$qpkg_name")
 	local enabled_msg=$CHARS_BLANK
 	local installed_msg=$CHARS_BLANK
 	local max_os=$(QpkgGetMaxOSVer "$qpkg_name")
 	local max_os_msg=$CHARS_BLANK
 	local min_os=$(QpkgGetMinOSVer "$qpkg_name")
 	local min_os_msg=$CHARS_BLANK
-	local min_ram=$(QpkgGetMinRAM)
+	local min_ram=$(QpkgGetMinRAM "$qpkg_name")
 	local min_ram_msg=$CHARS_BLANK
 	local mode=''
 	local name_msg=$CHARS_BLANK
@@ -5163,7 +5164,7 @@ DisplayAsFeaturesReportTitleLine()
 
 	printf '\n'
 
-	# column 1: package name
+	# column 1: package name.
 
 	if [[ $report_cols_max -ge 1 ]]; then
 		a="${CHARS_BULLET}QPKG name:"
@@ -5199,7 +5200,15 @@ DisplayAsFeaturesReportTitleLine()
 	if [[ $report_cols_max -ge 5 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Active test builtin?"
-		printf "%-$((PACKAGE_BUILTIN_ACTIVE_TEST_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
+		printf "%-$((PACKAGE_ACTIVE_TEST_BUILTIN_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
+	fi
+
+	# column 6: package is independent?
+
+	if [[ $report_cols_max -ge 6 ]]; then
+		printf "%$((COLUMN_SPACING))s"
+		a="${CHARS_BULLET}Independent?"
+		printf "%-$((PACKAGE_TIER_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	printf '\n'
@@ -5218,6 +5227,7 @@ DisplayAsFeaturesReportItemLine()
 	local mode=''
 	local name_msg=$CHARS_BLANK
 	local restart_to_update_msg=$CHARS_BLANK
+	local tier_msg=$CHARS_BLANK
 
 	if QpkgIsMissing; then
 		mode=highlighted
@@ -5251,6 +5261,12 @@ DisplayAsFeaturesReportItemLine()
 		restart_to_update_msg+=false
 	fi
 
+	if QpkgIsIndependent; then
+		tier_msg+=true
+	else
+		tier_msg+=false
+	fi
+
 	case $mode in
 		normal)
 			if [[ $active_test_msg =~ true ]]; then
@@ -5279,6 +5295,12 @@ DisplayAsFeaturesReportItemLine()
 				restart_to_update_msg=$(TextBrightOrange "$restart_to_update_msg")
 			fi
 
+			if [[ $tier_msg =~ true ]]; then
+				tier_msg=$(TextBrightGreen "$tier_msg")
+			else
+				tier_msg=$(TextBrightOrange "$tier_msg")
+			fi
+
 			;;
 		muted)
 			active_test_msg=$(TextDarkGrey "$active_test_msg")
@@ -5286,6 +5308,7 @@ DisplayAsFeaturesReportItemLine()
 			clean_msg=$(TextDarkGrey "$clean_msg")
 			name_msg+=$(TextDarkGrey "$qpkg_name")
 			restart_to_update_msg=$(TextDarkGrey "$restart_to_update_msg")
+			tier_msg=$(TextDarkGrey "$tier_msg")
 			;;
 		highlighted)
 			if [[ $active_test_msg =~ true ]]; then
@@ -5315,7 +5338,7 @@ DisplayAsFeaturesReportItemLine()
 			fi
 	esac
 
-	# column 1: package name
+	# column 1: package name.
 
 	if [[ $report_cols_max -ge 1 ]]; then
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
@@ -5346,7 +5369,14 @@ DisplayAsFeaturesReportItemLine()
 
 	if [[ $report_cols_max -ge 5 ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		printf "%-$((PACKAGE_BUILTIN_ACTIVE_TEST_COL_WIDTH+$(LenANSIDiff "$active_test_msg")))s" "$active_test_msg"
+		printf "%-$((PACKAGE_ACTIVE_TEST_BUILTIN_COL_WIDTH+$(LenANSIDiff "$active_test_msg")))s" "$active_test_msg"
+	fi
+
+	# column 6: package is independent?
+
+	if [[ $report_cols_max -ge 6 ]]; then
+		printf "%$((COLUMN_SPACING))s"
+		printf "%-$((PACKAGE_TIER_COL_WIDTH+$(LenANSIDiff "$tier_msg")))s" "$tier_msg"
 	fi
 
 	printf '\n'
@@ -7300,7 +7330,7 @@ ShowReportFeatures()
 	FuncInit
 
 	local a=''
-	report_cols_max=5
+	report_cols_max=6
 	local -i m=0
 	local -i n=0
 
@@ -11006,6 +11036,22 @@ QpkgIsDependent()
 	a=${QPKG_DEPENDS_ON[$qpkg_index]}
 	[[ $a = default ]] && a=${QPKG_DEPENDS_ON[$qpkg_default_index]}
 	[[ $a != none ]]
+
+	}
+
+QpkgIsIndependent()
+	{
+
+	# Will this package run independent of other QPKGs?
+
+	# Input:
+	#   $qpkg_default_index (global)
+	#   $qpkg_index (global)
+
+	# Output:
+	#   $? = 0 (true), !0 (false)
+
+	! QpkgIsDependent
 
 	}
 

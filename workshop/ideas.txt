@@ -1,3 +1,7 @@
+* Confirm new nzbget QPKG will install and run on a clean NAS without any deps.
+
+* Reminder: check sherpa install from scratch.
+
 * Include QPKG version numbers in progress messages.
 
 * Only install IPKs for QPKGs that download successfully (or are already downloaded).
