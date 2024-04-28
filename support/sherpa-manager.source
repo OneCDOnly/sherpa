@@ -1018,7 +1018,7 @@ QPKGsAssignToActions()
 	local action=''
 	local prospect=''
 
-	# KLUDGE: ensure old installs of Entware are reinstalled.
+	# KLUDGE: ensure Entware is reinstalled when IPKs are upgraded.
 
 	if QpkgIsInstalled Entware; then
 		local entware_install_date=$(QpkgGetInstallDate Entware)
@@ -1029,7 +1029,7 @@ QPKGsAssignToActions()
 		fi
 	fi
 
-	# Meta-action pre-processing. Perform check for backup file here, to determine if QPKG should be downloaded and installed.
+	# Meta-action pre-processing. Perform check for backup file here, to determine if QPKG should be downloaded, installed and restored.
 
 	if QPKGs-ACrebuild-to.IsAny; then
 		for qpkg_name in $(QPKGs-ACrebuild-to:Array); do
@@ -1040,7 +1040,7 @@ QPKGsAssignToActions()
 		done
 	fi
 
-	# Ensure independent packages are also installed when processing these specific actions:
+	# Install independents are installed when processing these specific actions:
 
 	for qpkg_name in $(QPKGs-ACinstall-to:Array); do
 		QpkgSetIndex
@@ -1077,18 +1077,7 @@ QPKGsAssignToActions()
 		fi
 	done
 
-	# If a dependent has been selected for `reinstall`/`upgrade`, need to `deactivate` it first, and `activate` it again later.
-
-	for qpkg_name in $(QPKGs-ACreinstall-to:Array) $(QPKGs-ACupgrade-to:Array); do
-		QpkgSetIndex
-
-		if QPKGs-ISenabled.Exist "$qpkg_name"; then
-			QPKGs-ACdeactivate-to:Add "$qpkg_name"
-			! QPKGs-ACuninstall-to.Exist "$qpkg_name" && ! QPKGs-ACinstall-to.Exist "$qpkg_name" && QPKGs-ACactivate-to:Add "$qpkg_name"
-		fi
-	done
-
-	# If an independent has been selected for `deactivate`/`uninstall`, need to `deactivate` its dependents first.
+	# If an independent has been selected for `deactivate` or `uninstall`, need to `deactivate` its dependents first.
 
 	for qpkg_name in $(QPKGs-ACdeactivate-to:Array) $(QPKGs-ACuninstall-to:Array); do
 		QpkgSetIndex
@@ -1125,6 +1114,17 @@ QPKGsAssignToActions()
 		QPKGs-ACinstall-to:Add Entware
 	fi
 
+	# If any QPKG has been selected for `reinstall` or `upgrade`, need to `deactivate` it first, and `activate` it again later.
+
+	for qpkg_name in $(QPKGs-ACreinstall-to:Array) $(QPKGs-ACupgrade-to:Array); do
+		QpkgSetIndex
+
+		if QPKGs-ISenabled.Exist "$qpkg_name"; then
+			QPKGs-ACdeactivate-to:Add "$qpkg_name"
+			! QPKGs-ACuninstall-to.Exist "$qpkg_name" && ! QPKGs-ACinstall-to.Exist "$qpkg_name" && QPKGs-ACactivate-to:Add "$qpkg_name"
+		fi
+	done
+
 	# If dependents have been selected for `reinstall`/`install`/`activate`/`reactivate`, need to `activate` their independent packages first.
 
 	for action in reinstall install activate reactivate; do
@@ -1146,7 +1146,7 @@ QPKGsAssignToActions()
 # 		done
 # 	done
 
-	# No-need to `reactivate`/`disable` packages that are to be uninstalled.
+	# No-need to `reactivate` or `disable` packages that are to be uninstalled.
 
 	if QPKGs.ACuninstall.GRall.IsSet; then
 		QPKGs-ACreactivate-to:Init
@@ -1177,23 +1177,25 @@ QPKGsAssignToActions()
 		done
 	fi
 
-	for qpkg_name in sherpa Entware; do
-		QPKGs-ACupgrade-to.Exist "$qpkg_name" && QPKGs-ACreactivate-to:Add "$qpkg_name"
-	done
+	# Shouldn't need this now that all QPKGs to be upgraded or reinstalled are deactivated first.
 
-	# Build list of required QPKGs.
+# 	for qpkg_name in sherpa Entware; do
+# 		QPKGs-ACupgrade-to.Exist "$qpkg_name" && QPKGs-ACreactivate-to:Add "$qpkg_name"
+# 	done
+
+	# Build list to download.
 
 	QPKGs-ACdownload-to:Add "$(QPKGs-ACinstall-to:Array)"
 
 	for qpkg_name in $(QPKGs-ACreinstall-to:Array); do
-		QPKGs-ISinstalled.Exist "$qpkg_name" && QPKGs-ACdownload-to:Add "$qpkg_name"		# Only download files for reinstallable QPKGs
+		QPKGs-ISinstalled.Exist "$qpkg_name" && QPKGs-ACdownload-to:Add "$qpkg_name"		# Only download files for reinstallable QPKGs.
 	done
 
 	for qpkg_name in $(QPKGs-ACupgrade-to:Array); do
-		QPKGs-ISupgradable.Exist "$qpkg_name" && QPKGs-ACdownload-to:Add "$qpkg_name"		# Only download files for upgradable QPKGs
+		QPKGs-ISupgradable.Exist "$qpkg_name" && QPKGs-ACdownload-to:Add "$qpkg_name"		# Only download files for upgradable QPKGs.
 	done
 
-	# Check all items.
+	# Check all packages.
 
 	if [[ $useropt_check = true ]]; then
 		OsIsSupportSignedPackages && QPKGs-ACsign-to:Add "$(QPKGs-ISinstalled:Array)"
