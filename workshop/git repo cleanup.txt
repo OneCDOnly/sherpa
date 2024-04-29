@@ -1,9 +1,13 @@
+git gc --aggressive
 git filter-repo --analyze --force
-git filter-repo --path-glob '*.qpkg' --invert-paths				# https://stackoverflow.com/a/58252098
-git filter-repo --path-glob '*.gz' --invert-paths
-tail +3 .git/filter-repo/analysis/path-deleted-sizes.txt \		# https://stackoverflow.com/a/68368158
-    | tr -s ' ' \
-    | cut -d ' ' -f 5- \
-    > .git/filter-repo/analysis/path-deleted.txt
+
+# https://stackoverflow.com/a/58252098
+git filter-repo --path-glob '*.qpkg' --invert-paths --force
+git filter-repo --path-glob '*.gz' --invert-paths --force
+
+git filter-repo --analyze --force
+
+# https://stackoverflow.com/a/58252098
+tail +3 .git/filter-repo/analysis/path-deleted-sizes.txt | tr -s ' ' | cut -d ' ' -f 5- > .git/filter-repo/analysis/path-deleted.txt
 git filter-repo --invert-paths --paths-from-file .git/filter-repo/analysis/path-deleted.txt
 git gc --aggressive

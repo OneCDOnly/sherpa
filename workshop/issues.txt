@@ -1,8 +1,15 @@
 Observed issues:
 
-	* armv5 (Helga) is cutting-off debug log early when running 'sherpa s olive verbose' due to SIGINT.
+	* 'sherpa' and 'opkg' were not available after installing Entware.
+		- Entware installation may be corrupt.
+		- But this shouldn't affect the sherpa command `/usr/sbin/sherpa`.
+		- Restarting sherpa got this going again.
 
-	* Allow Kapowarr to follow source git branch, release or tag.
+	* FIXED: When a QPKG couldn't be signed (due to no 'sqlite3'), it's not shown by QPKGs.Actions:List() at-all.
+		- QPKG was skipped-abort, and is shown as a skipped QPKG in results.
+		- TODO: Other QPKGs to be signed were not shown in either list.
+
+	* armv5 (Helga) is cutting-off debug log early when running 'sherpa s olive verbose' due to SIGINT.
 
 	* When aborting sherpa, must also ensure backgrounded procs abort.
 		- Presently, if a child proc is waiting (example: to check PID of application daemon again), it doesn't abort.

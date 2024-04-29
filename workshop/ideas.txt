@@ -1,16 +1,12 @@
-* Confirm new nzbget QPKG will install and run on a clean NAS without any deps.
-
-* Reminder: check sherpa install from scratch.
-
 * Include QPKG version numbers in progress messages.
+
+* Allow Kapowarr to follow source git branch, release or tag.
 
 * Only install IPKs for QPKGs that download successfully (or are already downloaded).
 	- ... and the installed ones, as-happens now.
 
 * Add new arg to reshow the previously generated report.
 	- 'sherpa show report'.
-
-* Split packages into separate repo?
 
 * Need a maintenance script to remove all but the most-recent QPKG builds.
 	- Should also run a 'git gc --aggressive' afterward.
