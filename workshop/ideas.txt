@@ -8,8 +8,6 @@
 * Add new arg to reshow the previously generated report.
 	- 'sherpa show report'.
 
-* Split packages into separate repo?
-
 * Need a maintenance script to remove all but the most-recent QPKG builds.
 	- Should also run a 'git gc --aggressive' afterward.
 
