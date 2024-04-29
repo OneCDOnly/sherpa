@@ -1,5 +1,10 @@
 Observed issues:
 
+	* 'sherpa' and 'opkg' were not available after installing Entware.
+		- Entware installation may be corrupt.
+		- But this shouldn't affect the sherpa command `/usr/sbin/sherpa`.
+		- Restarting sherpa got this going again.
+
 	* FIXED: When a QPKG couldn't be signed (due to no 'sqlite3'), it's not shown by QPKGs.Actions:List() at-all.
 		- QPKG was skipped-abort, and is shown as a skipped QPKG in results.
 		- TODO: Other QPKGs to be signed were not shown in either list.
