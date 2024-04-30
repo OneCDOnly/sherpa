@@ -1,3 +1,5 @@
+* Report column headings in bright white?
+
 * Include QPKG version numbers in progress messages.
 
 * Allow Kapowarr to follow source git branch, release or tag.
