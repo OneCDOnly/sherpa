@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 
 . vars.source || exit
+
 objects_built=false
 
 Objects:Load()
 	{
 
-	readonly OBJECTS_PATHFILE=$source_path/$objects_file
+	readonly OBJECTS_PATHFILE=$support_path/$objects_file
 
 	if [[ ! -e $OBJECTS_PATHFILE ]]; then
 		./build-objects.sh &>/dev/null
@@ -27,7 +28,7 @@ Objects:Load()
 Packages:Load()
 	{
 
-	readonly PACKAGES_PATHFILE=$source_path/$packages_source_file
+	readonly PACKAGES_PATHFILE=$support_path/$packages_source_file
 
 	if [[ ! -e $PACKAGES_PATHFILE ]]; then
 		echo 'package list missing'
@@ -74,35 +75,12 @@ Packages:Load()
 
 	}
 
-QPKG.Abbrvs()
-	{
-
-	# input:
-	#   $1 = QPKG name.
-
-	# output:
-	#   stdout = list of abbreviations that may be used to specify this package (first package found).
-	#   $? = 0 if successful, 1 if failed.
-
-	local -i index=0
-
-	for index in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$index]} = "${1:?package name null}" ]]; then
-			echo "${QPKG_ABBRVS[$index]}"
-			return 0
-		fi
-	done
-
-	return 1
-
-	}
-
 echo -n "building wiki 'Package abbreviations' page ... "
 
-target_pathfile=$wiki_path/Package-abbreviations.md
+a=$wiki_path/Package-abbreviations.md
 
 Objects:Load
-Packages:Load 2>/dev/null	# packages source file throws a lot of syntax errors until it's processed - ignore these.
+Packages:Load 2>/dev/null	# packages source file throws b lot of syntax errors until it's processed - ignore these.
 
 	{
 
@@ -111,11 +89,11 @@ Packages:Load 2>/dev/null	# packages source file throws a lot of syntax errors u
 	echo '| package name | acceptable abbreviations |'
 	echo '| ---: | :--- |'
 
-	} > "$target_pathfile"
+	} > "$a"
 
-for package_name in $(QPKGs-GRall:Array); do
-	abs=$(QPKG.Abbrvs "$package_name")
-	echo "| $package_name | \`${abs// /\` \`}\` |" >> "$target_pathfile"
+for b in $(QPKGs-GRall:Array); do
+	abs=$(QPKG.Abbrvs "$b")
+	echo "| $b | \`${abs// /\` \`}\` |" >> "$a"
 done
 
 [[ $objects_built = true ]] && rm -f "$OBJECTS_PATHFILE"

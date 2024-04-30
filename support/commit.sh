@@ -4,11 +4,10 @@
 #	$1 = commit message (optional)
 #	$1 = 'nocheck' (optional) = skip syntax check. Default is to perform syntax check before committing.
 
-source_path="$HOME"/scripts/nas/sherpa/support
 this_path=$PWD
-. $source_path/vars.source || exit
+. $HOME/scripts/nas/sherpa/support/vars.source || exit
 
-cd "$source_path" || exit
+cd "$support_path" || exit
 ./clean-source.sh
 [[ ${1:-} != nocheck ]] && { ./check-syntax.sh || exit ;}
 
@@ -25,5 +24,3 @@ else
 fi
 
 cd "$this_path" || exit
-
-exit 0

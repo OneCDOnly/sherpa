@@ -2,10 +2,10 @@
 
 . vars.source || exit
 
-source_pathfile=$source_path/$packages_source_file
-target_pathfile=$source_path/$packages_file
+source=$support_path/$packages_source_file
+target=$support_path/$packages_file
 
-buffer=$(<"$source_pathfile")
+buffer=$(<"$source")
 
 checksum_pathfilename=''
 checksum_filename=''
@@ -55,10 +55,10 @@ TranslateQPKGArch()
 StripComments()
 	{
 
-	# input:
+	# Input:
 	#   $1 = string to strip comment lines, empty lines, and so-on.
 
-	# output:
+	# Output:
 	#   stdout = stripped string.
 
 	[[ -n $1 ]] || return
@@ -127,7 +127,7 @@ ShowDone
 
 echo -n 'loading IPK essentials ... '
 
-	a=$source_path/ipk-essential.txt
+	a=$support_path/ipk-essential.txt
 
 	if [[ -e $a ]]; then
 		essential_ipks=$(/bin/tr '\n' ' ' <<< "$(StripComments "$(<"$a")")")
@@ -139,7 +139,7 @@ ShowDone
 
 echo -n 'loading PIP essentials ... '
 
-	a=$source_path/pip-essential.txt
+	a=$support_path/pip-essential.txt
 
 	if [[ -e $a ]]; then
 		essential_pips=$(/bin/tr '\n' ' ' <<< "$(StripComments "$(<"$a")")")
@@ -151,7 +151,7 @@ ShowDone
 
 echo -n 'loading PIP exclusions ... '
 
-	a=$source_path/pip-exclusions.txt
+	a=$support_path/pip-exclusions.txt
 
 	if [[ -e $a ]]; then
 		exclusion_pips=$(/bin/tr '\n' ' ' <<< "$(StripComments "$(<"$a")")")
@@ -161,17 +161,17 @@ echo -n 'loading PIP exclusions ... '
 
 ShowDone
 
-[[ -e $target_pathfile ]] && chmod +w "$target_pathfile"
-echo "$buffer" > "$target_pathfile"
-SwapTags "$source_pathfile" "$target_pathfile"
-buffer=$(<"$target_pathfile")
+[[ -e $target ]] && chmod +w "$target"
+echo "$buffer" > "$target"
+SwapTags "$source" "$target"
+buffer=$(<"$target")
 
 echo -n 'updating QPKG fields ... '
 
-	buffer=$(sed "s|<?cdn_nzbget_dev_packages_url?>|$cdn_nzbget_dev_packages_url|g" <<< "$buffer")
-	buffer=$(sed "s|<?cdn_other_packages_url?>|$cdn_other_packages_url|g" <<< "$buffer")
-	buffer=$(sed "s|<?cdn_qnap_dev_packages_url?>|$cdn_qnap_dev_packages_url|g" <<< "$buffer")
-	buffer=$(sed "s|<?cdn_sherpa_packages_url?>|$cdn_sherpa_packages_url|g" <<< "$buffer")
+# 	buffer=$(sed "s|<?cdn_nzbget_dev_packages_url?>|$cdn_nzbget_dev_packages_url|g" <<< "$buffer")
+# 	buffer=$(sed "s|<?cdn_other_packages_url?>|$cdn_other_packages_url|g" <<< "$buffer")
+# 	buffer=$(sed "s|<?cdn_qnap_dev_packages_url?>|$cdn_qnap_dev_packages_url|g" <<< "$buffer")
+# 	buffer=$(sed "s|<?cdn_sherpa_packages_url?>|$cdn_sherpa_packages_url|g" <<< "$buffer")
 
 	while read -r checksum_filename qpkg_filename package_name version arch hash; do
 		for property in version package_name qpkg_filename hash; do
@@ -194,17 +194,17 @@ ShowDone
 
 echo -n "building 'packages' file ... "
 
-	echo "$buffer" > "$target_pathfile"
+	echo "$buffer" > "$target"
 
-if [[ ! -e $target_pathfile ]]; then
-	ColourTextBrightRed "'$target_pathfile' was not written to disk"; echo
+if [[ ! -e $target ]]; then
+	ColourTextBrightRed "'$target' was not written to disk"; echo
 	exit 1
 else
 	ShowDone
 fi
 
-Squeeze "$target_pathfile" "$target_pathfile"
-[[ -f $target_pathfile ]] && chmod 444 "$target_pathfile"
+Squeeze "$target" "$target"
+[[ -f $target ]] && chmod 444 "$target"
 
 # Sort and add header line for easier viewing.
 

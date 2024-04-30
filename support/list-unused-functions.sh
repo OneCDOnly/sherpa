@@ -2,12 +2,12 @@
 
 . vars.source || exit
 
-source_pathfile=$source_path/$management_source_file
-target_func=''
+a=$support_path/$management_source_file
+b=''
 
 # shellcheck disable=SC2013
-for target_func in $(grep '()$' "$source_pathfile" | grep -v '=\|\$\|_(' | sed 's|()||g'); do
-	case $target_func in
+for b in $(grep '()$' "$a" | grep -v '=\|\$\|_(' | sed 's|()||g'); do
+	case $b in
 		IPKs:upgrade|IPKs:install|IPKs:downgrade|PIPs:install)		# called by constructing the function name with vars.
 			continue
 # 			;;
@@ -15,8 +15,8 @@ for target_func in $(grep '()$' "$source_pathfile" | grep -v '=\|\$\|_(' | sed '
 # 			continue
 	esac
 
-	if [[ $(grep -ow "$target_func" < "$source_pathfile" | wc -l) -eq 1 ]]; then
-		echo "$target_func()"
+	if [[ $(grep -ow "$b" < "$a" | wc -l) -eq 1 ]]; then
+		echo "$b()"
 	fi
 done
 

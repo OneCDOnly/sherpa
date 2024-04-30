@@ -2,10 +2,8 @@
 
 . vars.source || exit
 
-source_pathfile=$source_path/$objects_file
+a=$support_path/$objects_file
 
-[[ ! -e $source_pathfile ]] && ./build-objects.sh
+[[ ! -e $a ]] && ./build-objects.sh
 
-grep '.Init()' "$source_pathfile" | sort
-
-exit 0
+grep '.Init()' "$a" | sort

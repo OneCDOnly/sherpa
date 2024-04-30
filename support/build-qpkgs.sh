@@ -6,14 +6,14 @@
 
 . vars.source || exit
 
-source_pathfile=$source_path/$service_library_source_file
-target_pathfile=$source_path/$service_library_file
-datetime_change_reference_pathfile=$target_pathfile
 rebuild_functions=false
 rebuilt_functions=false
+a=$support_path/$service_library_source_file
+b=$support_path/$service_library_file
+	c=$b
 
-if [[ -e $datetime_change_reference_pathfile ]]; then
-	if [[ -n $(find -L "$source_pathfile" -newer "$datetime_change_reference_pathfile") ]]; then
+if [[ -e $c ]]; then
+	if [[ -n $(find -L "$a" -newer "$c") ]]; then
 		echo "service library source: modified"
 		rebuild_functions=true
 	else
@@ -25,11 +25,11 @@ else
 fi
 
 if [[ $rebuild_functions = true ]]; then
-	SwapTags "$source_pathfile" "$target_pathfile" >/dev/null
-	Squeeze "$target_pathfile" "$target_pathfile" >/dev/null
-	[[ -f "$target_pathfile" ]] && chmod 444 "$target_pathfile"
+	SwapTags "$a" "$b" >/dev/null
+	Squeeze "$b" "$b" >/dev/null
+	[[ -f "$b" ]] && chmod 444 "$b"
 
-	if [[ -s "$target_pathfile" ]]; then
+	if [[ -s "$b" ]]; then
 		echo "service library: $(ColourTextBrightGreen rebuilt)"
 		rebuilt_functions=true
 	fi
@@ -58,11 +58,11 @@ for d in "$qpkgs_path"/*; do
 			echo "service library: no link"
 		fi
 	else
-		datetime_change_reference_file=$(cd "$d/build" || exit; ls -t1 --reverse | tail -n1)
+		a=$(cd "$d/build" || exit; ls -t1 --reverse | tail -n1)
 
-		if [[ -n $datetime_change_reference_file ]]; then
-			echo "datetime reference file: '$datetime_change_reference_file'"
-			datetime_change_reference_pathfile=$d/build/$datetime_change_reference_file
+		if [[ -n $a ]]; then
+			echo "datetime reference file: '$a'"
+			c=$d/build/$a
 		else
 			echo "datetime reference file: unspecified"
 			rebuild_package=true
@@ -70,8 +70,8 @@ for d in "$qpkgs_path"/*; do
 	fi
 
 	if [[ $rebuild_package = false ]]; then
-		if [[ -e $datetime_change_reference_pathfile ]]; then
-			changed_file_list=$(find -L "$d" ! -type d -newer "$datetime_change_reference_pathfile")
+		if [[ -e $c ]]; then
+			changed_file_list=$(find -L "$d" ! -type d -newer "$c")
 
 			if [[ -n $changed_file_list ]]; then
 				echo "package files: changed"
@@ -99,8 +99,8 @@ for d in "$qpkgs_path"/*; do
 		continue
 	fi
 
-	service_script_file=$(. $config_pathfile; echo "$QPKG_SERVICE_PROGRAM")
 	loader_script_file=$(. $config_pathfile; echo "$QPKG_LOADER_PROGRAM")
+	service_script_file=$(. $config_pathfile; echo "$QPKG_SERVICE_PROGRAM")
 
 	if [[ -z $service_script_file ]]; then
 		echo "service script file: unspecified"

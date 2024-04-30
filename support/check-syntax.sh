@@ -21,7 +21,7 @@ exclusions+=(1036,1090,1091,2001,2006,2012,2016,2028,2034,2054,2086,2154,2155)
 for index in "${!filenames[@]}"; do
 	echo -n "checking '${filenames[index]}' ... "
 
-	if shellcheck --shell=bash --exclude="${exclusions[index]}" "$source_path"/${filenames[index]}; then
+	if shellcheck --shell=bash --exclude="${exclusions[index]}" "$support_path"/${filenames[index]}; then
 		ShowPassed
 	else
 		ShowFailed

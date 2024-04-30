@@ -4,7 +4,7 @@
 
 echo -n "building 'objects' file ... "
 
-target_pathfile="$source_path/$objects_file"
+target=$support_path/$objects_file
 
 # These are used internally by sherpa. Must maintain separate lists for sherpa internal-use, and what user has requested.
 # ordered
@@ -65,7 +65,7 @@ echo $public_function_name':Init()
 '$public_function_name':NoLogMods()
 	{ '$_placeholder_log_changes_flag_'=false ;}
 
-'$public_function_name':Init' >> "$target_pathfile"
+'$public_function_name':Init' >> "$target"
 
 	return 0
 
@@ -127,15 +127,15 @@ echo $public_function_name':Add()
 	{ if [[ -n ${1:-} && ${1:-} = "=" ]]; then '$_placeholder_size_'=$2; else echo -n "$'$_placeholder_size_'"
 	fi ;}
 
-'$public_function_name':Init' >> "$target_pathfile"
+'$public_function_name':Init' >> "$target"
 
 	return 0
 
 	}
 
-[[ -e $target_pathfile ]] && rm -f "$target_pathfile"
-echo "OBJECTS_VER='<?build_date?>'" > "$target_pathfile"
-echo "#* <?dont_edit?>" >> "$target_pathfile"
+[[ -e $target ]] && rm -f "$target"
+echo "OBJECTS_VER='<?build_date?>'" > "$target"
+echo "#* <?dont_edit?>" >> "$target"
 
 # package action flag objects.
 
@@ -197,16 +197,16 @@ for action in "${PIP_ACTIONS[@]}"; do
 	done
 done
 
-if [[ ! -e $target_pathfile ]]; then
-	ColourTextBrightRed "'$target_pathfile' was not written to disk"; echo
+if [[ ! -e $target ]]; then
+	ColourTextBrightRed "'$target' was not written to disk"; echo
 	exit 1
 else
 	ShowDone
 fi
 
-SwapTags "$target_pathfile" "$target_pathfile"
-Squeeze "$target_pathfile" "$target_pathfile"
+SwapTags "$target" "$target"
+Squeeze "$target" "$target"
 
-[[ -f $target_pathfile ]] && chmod 444 "$target_pathfile"
+[[ -f $target ]] && chmod 444 "$target"
 
 exit 0

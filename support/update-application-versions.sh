@@ -3,5 +3,3 @@
 . vars.source || exit
 
 git add "$packages_source_file" && git commit -m '[update] application version(s)' && git push
-
-exit 0
