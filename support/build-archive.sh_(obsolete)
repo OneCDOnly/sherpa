@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-# compiler for sherpa archives.
+# This script has been superseded by 'build-archives.sh'
+
+# Compiler for sherpa archives.
 
 . vars.source || exit
 
