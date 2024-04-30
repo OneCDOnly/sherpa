@@ -6,11 +6,11 @@ this_path=$PWD
 
 cd "$source_path" || exit
 ./build-all.sh || exit
-./commit.sh '[update] archives' || exit
+./commit.sh '[update] management archives' || exit
 
 cd "$qpkgs_root_path" || exit
 git add .
-git commit -m '[update] archives' || exit
+git commit -m '[update] QPKG archives' || exit
 git push
 
 cd "$this_path" || exit

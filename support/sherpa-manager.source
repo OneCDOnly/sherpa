@@ -270,7 +270,7 @@ LoadConsts()
 	readonly PACKAGE_SUPPORTS_BACKUP_COL_WIDTH=9
 	readonly PACKAGE_SUPPORTS_CLEAN_COL_WIDTH=8
 	readonly PACKAGE_SUPPORTS_RESTART_TO_UPDATE_COL_WIDTH=10
-	readonly PACKAGE_TIER_COL_WIDTH=18
+	readonly PACKAGE_TIER_COL_WIDTH=14
 	readonly PACKAGE_VER_COL_WIDTH=15
 
 	# For reports and onscreen display.
@@ -5228,6 +5228,14 @@ DisplayAsFeaturesReportTitleLine()
 		printf "%-$((PACKAGE_TIER_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
+	# column 7: NAS arch is compatible?
+
+	if [[ $report_cols_max -ge 7 ]]; then
+		printf "%$((COLUMN_SPACING))s"
+		a="${CHARS_BULLET}Compatible?"
+		printf "%-$((PACKAGE_ARCH_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
+	fi
+
 	printf '\n'
 
 	}
@@ -5239,6 +5247,7 @@ DisplayAsFeaturesReportItemLine()
 	# 	$qpkg_name (global).
 
 	local active_test_msg=$CHARS_BLANK
+	local arch_msg=$CHARS_BLANK
 	local backup_msg=$CHARS_BLANK
 	local clean_msg=$CHARS_BLANK
 	local mode=''
@@ -5284,12 +5293,24 @@ DisplayAsFeaturesReportItemLine()
 		tier_msg+=false
 	fi
 
+	if QpkgIsArchOK; then
+		arch_msg+=true
+	else
+		arch_msg+=false
+	fi
+
 	case $mode in
 		normal)
 			if [[ $active_test_msg =~ true ]]; then
 				active_test_msg=$(TextBrightGreen "$active_test_msg")
 			else
 				active_test_msg=$(TextBrightOrange "$active_test_msg")
+			fi
+
+			if [[ $arch_msg =~ true ]]; then
+				arch_msg=$(TextBrightGreen "$arch_msg")
+			else
+				arch_msg=$(TextBrightRed "$arch_msg")
 			fi
 
 			if [[ $backup_msg =~ true ]]; then
@@ -5321,6 +5342,13 @@ DisplayAsFeaturesReportItemLine()
 			;;
 		muted)
 			active_test_msg=$(TextDarkGrey "$active_test_msg")
+
+			if [[ $arch_msg =~ true ]]; then
+				arch_msg=$(TextDarkGrey "$arch_msg")
+			else
+				arch_msg=$(TextBrightOrange "$arch_msg")
+			fi
+
 			backup_msg=$(TextDarkGrey "$backup_msg")
 			clean_msg=$(TextDarkGrey "$clean_msg")
 			name_msg+=$(TextDarkGrey "$qpkg_name")
@@ -5332,6 +5360,12 @@ DisplayAsFeaturesReportItemLine()
 				active_test_msg=$(TextBrightGreen "$active_test_msg")
 			else
 				active_test_msg=$(TextBrightOrange "$active_test_msg")
+			fi
+
+			if [[ $arch_msg =~ true ]]; then
+				arch_msg=$(TextBrightGreen "$arch_msg")
+			else
+				arch_msg=$(TextBrightOrange "$arch_msg")
 			fi
 
 			if [[ $backup_msg =~ true ]]; then
@@ -5394,6 +5428,13 @@ DisplayAsFeaturesReportItemLine()
 	if [[ $report_cols_max -ge 6 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_TIER_COL_WIDTH+$(LenANSIDiff "$tier_msg")))s" "$tier_msg"
+	fi
+
+	# column 7: NAS arch is compatible?
+
+	if [[ $report_cols_max -ge 7 ]]; then
+		printf "%$((COLUMN_SPACING))s"
+		printf "%-$((PACKAGE_ARCH_COL_WIDTH+$(LenANSIDiff "$arch_msg")))s" "$arch_msg"
 	fi
 
 	printf '\n'
@@ -7347,7 +7388,7 @@ ShowReportFeatures()
 	FuncInit
 
 	local a=''
-	report_cols_max=6
+	report_cols_max=7
 	local -i m=0
 	local -i n=0
 
@@ -7383,6 +7424,7 @@ ShowReportFeatures()
 		DisplayAsColumnExplainedIndentItem 'Restart?' "service-script supports restarting to update application."
 		DisplayAsColumnExplainedIndentItem 'Test?' "service-script has a builtin 'status' check, and can test for daemon live status."
 		DisplayAsColumnExplainedIndentItem 'Independent?' "this QPKG is independent of other QPKGs."
+		DisplayAsColumnExplainedIndentItem 'Compatible?' "QPKG is compatible with this NAS arch."
 
 		} >> "$REPORT_OUTPUT_PATHFILE"
 
@@ -9460,10 +9502,10 @@ _QPKG:deactivate_()
 		SaveActionResultToLog QPKG "$qpkg_name" deactivate skipped 'QPKG is not installed'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif [[ $qpkg_name = sherpa ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" deactivate skipped "it's needed here! 😉"
-		MarkThisAcForkAsSkipped
-		z=1
+# 	elif [[ $qpkg_name = sherpa ]]; then
+# 		SaveActionResultToLog QPKG "$qpkg_name" deactivate skipped "it's needed here! 😉"
+# 		MarkThisAcForkAsSkipped
+# 		z=1
 	elif ! QpkgIsRepoOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" deactivate skipped "QPKG is assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
@@ -9598,10 +9640,10 @@ _QPKG:disable_()
 		SaveActionResultToLog QPKG "$qpkg_name" disable skipped 'QPKG is already disabled'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif [[ $qpkg_name = sherpa ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" disable skipped "it's needed here! 😉"
-		MarkThisAcForkAsSkipped
-		z=1
+# 	elif [[ $qpkg_name = sherpa ]]; then
+# 		SaveActionResultToLog QPKG "$qpkg_name" disable skipped "it's needed here! 😉"
+# 		MarkThisAcForkAsSkipped
+# 		z=1
 	elif ! QpkgIsRepoOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" disable skipped "QPKG is assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
