@@ -28,6 +28,6 @@ sudo sherpa
 
 If you have suggestions, advice, comments or concerns, please either create a new [issue](https://github.com/OneCDOnly/sherpa/issues/new), or you are most welcome to start a new [discussion](https://github.com/OneCDOnly/sherpa/discussions/new/choose) topic.
 
-This project is a community effort, and has been built with the combined feedback of many community members on the [QNAP](https://forum.qnap.com/viewtopic.php?f=320&t=132373) community forum. Thank you to everyone who has contributed. 🤓
+This project is a community effort, and was built with combined feedback from many members of the [QNAP](https://forum.qnap.com/viewtopic.php?f=320&t=132373) community forum. Thank you to everyone who has contributed. 🤓
 
 Checkout the wiki for more information: [https://github.com/OneCDOnly/sherpa/wiki](https://github.com/OneCDOnly/sherpa/wiki)
