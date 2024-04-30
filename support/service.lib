@@ -22,7 +22,7 @@
 #*   This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 #*	 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY, without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
-readonly SERVICE_LIB_VERSION='240428'
+readonly SERVICE_LIB_VERSION='240430'
 InitLibrary()
 {
 IsQNAP || exit
@@ -231,7 +231,6 @@ else
 DisplayCommitToLog false
 fi
 CloneGitRepo || { SetError;return 1 ;}
-InstallAddons || { SetError;return 1 ;}
 if IsNotDaemon;then
 if [[ $userlink_pathfile != undefined ]];then
 if [[ ! -L $userlink_pathfile && -e $launcher_pathfile ]];then
@@ -289,6 +288,7 @@ unzip_extract_opts="$unzip_extract_verbose -o $source_archive_pathfile -d $qpkg_
 DisplayRunAndLog 'extract release package' "/usr/bin/unzip${unzip_extract_opts} 2>/dev/null || /bin/tar${tar_extract_opts}" log:failure-only
 fi
 fi
+InstallAddons || { SetError;return 1 ;}
 [[ -e $(GetLaunchTarget) ]] || { SetError;return 1 ;}
 EnsureConfigFileExists
 LoadPorts app || { SetError;return 1 ;}
@@ -1367,8 +1367,10 @@ return 1
 RequestLatestRelease()
 {
 [[ -n $1 && $1 != undefined ]] || return
-[[ -n $2 && $2 != undefined ]] || return
-/sbin/curl${download_opts} "$1" | /bin/grep browser_download_url | cut -d\" -f4 | /bin/grep "$2"
+local a=''
+a=$(/sbin/curl${download_opts} "$1" | /bin/grep browser_download_url | cut -d\" -f4)
+[[ -n ${2:-} && ${2:-} != undefined ]] && a=$(/bin/grep "$2" <<< "$a")
+echo -n "$a"
 } 2>/dev/null
 SetServiceAction()
 {

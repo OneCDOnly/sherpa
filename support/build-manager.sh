@@ -2,12 +2,12 @@
 
 . vars.source || exit
 
-source_pathfile=$source_path/$management_source_file
-target_pathfile=$source_path/$management_file
+a=$support_path/$management_source_file
+b=$support_path/$management_file
 
-SwapTags "$source_pathfile" "$target_pathfile"
-Squeeze "$target_pathfile" "$target_pathfile"
+SwapTags "$a" "$b"
+Squeeze "$b" "$b"
 
-[[ -e $target_pathfile ]] && chmod 554 "$target_pathfile"
+[[ -e $b ]] && chmod 554 "$b"
 
 exit 0

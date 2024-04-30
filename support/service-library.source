@@ -258,7 +258,6 @@ StartQPKGLibrary()
 	fi
 
 	CloneGitRepo || { SetError; return 1 ;}
-	InstallAddons || { SetError; return 1 ;}
 
 	if IsNotDaemon; then
 		if [[ $userlink_pathfile != undefined ]]; then
@@ -333,6 +332,7 @@ StartQPKGLibrary()
 		fi
 	fi
 
+	InstallAddons || { SetError; return 1 ;}
 	[[ -e $(GetLaunchTarget) ]] || { SetError; return 1 ;}
 	EnsureConfigFileExists
 	LoadPorts app || { SetError; return 1 ;}
@@ -2095,13 +2095,17 @@ RequestLatestRelease()
 
 	# Input:
 	#   $1 = URL to check.
-	#   $1 = arch to match.
+	#   $2 = arch to match (optional).
 
 	[[ -n $1 && $1 != undefined ]] || return
-	[[ -n $2 && $2 != undefined ]] || return
+
+	local a=''
 
 	# https://gist.github.com/steinwaywhw/a4cd19cda655b8249d908261a62687f8
-	/sbin/curl${download_opts} "$1" | /bin/grep browser_download_url | cut -d\" -f4 | /bin/grep "$2"
+	a=$(/sbin/curl${download_opts} "$1" | /bin/grep browser_download_url | cut -d\" -f4)
+	[[ -n ${2:-} && ${2:-} != undefined ]] && a=$(/bin/grep "$2" <<< "$a")
+
+	echo -n "$a"
 
 	} 2>/dev/null
 

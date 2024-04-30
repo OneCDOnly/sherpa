@@ -1,13 +1,95 @@
 #!/usr/bin/env bash
 
+build_date=$(date '+%y%m%d')
+build_year=$(date '+%Y')
+colourful=true
+title_description='a mini-package-manager for QNAP NAS'
+
+checksum_root_path=$HOME/scripts/nas
+docs_path=$HOME/scripts/nas/sherpa/docs
+qpkgs_root_path=$HOME/scripts/nas/sherpa.packages
+	qpkgs_path=$qpkgs_root_path/QPKGs
+support_path=$HOME/scripts/nas/sherpa/support
+target_path=$HOME/scripts/nas/sherpa
+wiki_path=$HOME/documents/sherpa.wiki
+
+highest_package_versions_found_pathfile=$support_path/highest_package_versions_found.raw
+highest_package_versions_found_sorted_pathfile=$support_path/highest_package_versions_found.tbl
+
+management_archive_file=sherpa-manager.tar.gz
+management_file=sherpa-manager.sh
+management_source_file=sherpa-manager.source
+
+objects_archive_file=objects.tar.gz
+objects_file=objects
+
+packages_archive_file=packages.tar.gz
+packages_file=packages
+packages_source_file=packages.source
+
+service_library_file=service.lib
+service_library_source_file=service-library.source
+
+stable_branch=stable
+unstable_branch=unstable
+
+cdn_nzbget_dev_packages_url='https://github.com/nzbgetcom/<?package_name?>/releases/download/v<?version?>'
+cdn_onecd_url='https://raw.githubusercontent.com/OneCDOnly'
+	cdn_other_packages_url=$cdn_onecd_url/'<?package_name?>/main/build'
+	cdn_sherpa_base_url=$cdn_onecd_url/sherpa
+		cdn_sherpa_url=$cdn_sherpa_base_url/'$useropt_branch'
+	cdn_sherpa_packages_url=$cdn_onecd_url/'sherpa.packages/main/QPKGs/<?package_name?>/build'
+cdn_qnap_dev_packages_url='https://github.com/qnap-dev/<?package_name?>/releases/download/v<?version?>'
+
+copyright_basic='copyright (C) 2017-<?build_year?> OneCD'
+dont_edit_msg="Please don't edit this file directly, it was built/modified programmatically with the '$(basename "$0")' script."
+email=one.cd.only@gmail.com
+
+# Must escape ampersand chars in `read` blocks for compatibility with `sed` regex.
+
+read -rd '' copyright_msg << EOB
+<?copyright_basic?>.
+#
+#* Contact:
+#*   <?email?>
+EOB
+
+read -rd '' project_msg << EOB
+Project:
+#*	 https://git.io/sherpa
+#
+#* Forum:
+#*	 https://forum.qnap.com/viewtopic.php?f=320\&t=132373
+EOB
+
+read -rd '' tested_msg << EOB
+Tested on:
+#*	 GNU bash, version 3.2.57(2)-release (i686-pc-linux-gnu)
+#*	 GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
+#*	   Copyright (C) 2007 Free Software Foundation, Inc.
+#
+#*   ... and periodically on:
+#*	 GNU bash, version 5.0.17(1)-release (aarch64-openwrt-linux-gnu)
+#*	   Copyright (C) 2019 Free Software Foundation, Inc.
+EOB
+
+read -rd '' license_msg << EOB
+License:
+#*   This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+#
+#*	 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY, without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#
+#*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
+EOB
+
 SwapTags()
 	{
 
-	# input:
-	# 	$1 = input pathfile to process for tags. This always has a '.source' extension.
-	# 	$2 = output pathfile.
+	# Input:
+	# 	$1 = Input pathfile to process for tags. This always has a '.source' extension.
+	# 	$2 = Output pathfile.
 
-	# output:
+	# Output:
 	# 	$? = 0
 
 	echo -n "swapping tags (input: '$(basename $1)', output: '$(basename $2)') ... "
@@ -33,6 +115,11 @@ SwapTags()
 		buffer=$(sed "s|<?essential_pips?>|${essential_pips:=essential pips}|g" <<< "$buffer")
 		buffer=$(sed "s|<?exclusion_pips?>|${exclusion_pips:=exclusion pips}|g" <<< "$buffer")
 
+		buffer=$(sed "s|<?cdn_nzbget_dev_packages_url?>|$cdn_nzbget_dev_packages_url|g" <<< "$buffer")
+		buffer=$(sed "s|<?cdn_other_packages_url?>|$cdn_other_packages_url|g" <<< "$buffer")
+		buffer=$(sed "s|<?cdn_qnap_dev_packages_url?>|$cdn_qnap_dev_packages_url|g" <<< "$buffer")
+		buffer=$(sed "s|<?cdn_sherpa_packages_url?>|$cdn_sherpa_packages_url|g" <<< "$buffer")
+
 		[[ -e $2 ]] && chmod +w "$2"
 		echo "$buffer" > "$2"
 	fi
@@ -44,11 +131,11 @@ SwapTags()
 Squeeze()
 	{
 
-	# input:
-	# 	$1 = input pathfile to process for excess material.
-	# 	$2 = output pathfile.
+	# Input:
+	# 	$1 = Input pathfile to process for excess material.
+	# 	$2 = Output pathfile.
 
-	# output:
+	# Output:
 	# 	$? = 0
 
 	echo -n 'squeezing ... '
@@ -69,6 +156,29 @@ Squeeze()
 	fi
 
 	ShowDone
+
+	}
+
+QPKG.Abbrvs()
+	{
+
+	# Input:
+	#   $1 = QPKG name.
+
+	# Output:
+	#   stdout = list of abbreviations that may be used to specify this package (first package found).
+	#   $? = 0 if successful, 1 if failed.
+
+	local -i i=0
+
+	for i in "${!QPKG_NAME[@]}"; do
+		if [[ ${QPKG_NAME[$i]} = "${1:?package name null}" ]]; then
+			echo -n "${QPKG_ABBRVS[$i]}"
+			return 0
+		fi
+	done
+
+	return 1
 
 	}
 
@@ -216,94 +326,5 @@ ShowDone()
 	echo
 
 	}
-
-build_date=$(date '+%y%m%d')
-build_year=$(date '+%Y')
-colourful=true
-title_description='a mini-package-manager for QNAP NAS'
-
-checksum_root_path=$HOME/scripts/nas
-source_path=$HOME/scripts/nas/sherpa/support
-target_path=$HOME/scripts/nas/sherpa
-qpkgs_root_path=$HOME/scripts/nas/sherpa.packages
-	qpkgs_path=$qpkgs_root_path/QPKGs
-wiki_path=$HOME/documents/sherpa.wiki
-docs_path=$HOME/scripts/nas/sherpa/docs
-
-management_source_file=sherpa-manager.source
-management_file=sherpa-manager.sh
-management_archive_file=sherpa-manager.tar.gz
-
-objects_file=objects
-objects_archive_file=objects.tar.gz
-
-packages_source_file=packages.source
-packages_file=packages
-packages_archive_file=packages.tar.gz
-
-highest_package_versions_found_pathfile=$source_path/highest_package_versions_found.raw
-highest_package_versions_found_sorted_pathfile=$source_path/highest_package_versions_found.tbl
-
-service_library_source_file=service-library.source
-service_library_file=service.lib
-
-readme_source_file=README.source
-readme_file=README.md
-
-forum_source_file=QNAP-forum-announcement.bbcode.source
-forum_file=QNAP-forum-announcement.bbcode
-
-stable_branch=stable
-unstable_branch=unstable
-
-cdn_onecd_url='https://raw.githubusercontent.com/OneCDOnly'
-cdn_sherpa_base_url=$cdn_onecd_url/sherpa
-cdn_sherpa_url=$cdn_sherpa_base_url/'$useropt_branch'
-cdn_sherpa_packages_url="$cdn_onecd_url/sherpa.packages/main/QPKGs/<?package_name?>/build"
-cdn_other_packages_url="$cdn_onecd_url/<?package_name?>/main/build"
-cdn_qnap_dev_packages_url='https://github.com/qnap-dev/<?package_name?>/releases/download/v<?version?>'
-cdn_nzbget_dev_packages_url='https://github.com/nzbgetcom/<?package_name?>/releases/download/v<?version?>'
-
-email='<?email?>'
-copyright_basic='copyright (C) 2017-<?build_year?> OneCD'
-dont_edit_msg="Please don't edit this file directly, it was built/modified programmatically with the '$(basename "$0")' script."
-email=one.cd.only@gmail.com
-
-# Must escape ampersand chars in `read` blocks for compatibility with `sed` regex.
-
-read -rd '' copyright_msg << EOB
-<?copyright_basic?>.
-#
-#* Contact:
-#*   <?email?>
-EOB
-
-read -rd '' project_msg << EOB
-Project:
-#*	 https://git.io/sherpa
-#
-#* Forum:
-#*	 https://forum.qnap.com/viewtopic.php?f=320\&t=132373
-EOB
-
-read -rd '' tested_msg << EOB
-Tested on:
-#*	 GNU bash, version 3.2.57(2)-release (i686-pc-linux-gnu)
-#*	 GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
-#*	   Copyright (C) 2007 Free Software Foundation, Inc.
-#
-#*   ... and periodically on:
-#*	 GNU bash, version 5.0.17(1)-release (aarch64-openwrt-linux-gnu)
-#*	   Copyright (C) 2019 Free Software Foundation, Inc.
-EOB
-
-read -rd '' license_msg << EOB
-License:
-#*   This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
-#
-#*	 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY, without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-#
-#*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
-EOB
 
 true

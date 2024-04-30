@@ -6,36 +6,36 @@
 
 echo -n 'building archives ... '
 
-declare -a source_pathfiles
-declare -a target_pathfiles
-declare -i index=0
+declare -a a
+declare -a b
+declare -i i=0
 
-source_pathfiles+=("$source_path/$objects_file")
-target_pathfiles+=("$target_path/$objects_archive_file")
+a+=("$support_path/$objects_file")
+b+=("$target_path/$objects_archive_file")
 
-source_pathfiles+=("$source_path/$packages_file")
-target_pathfiles+=("$target_path/$packages_archive_file")
+a+=("$support_path/$packages_file")
+b+=("$target_path/$packages_archive_file")
 
-source_pathfiles+=("$source_path/$management_file")
-target_pathfiles+=("$target_path/$management_archive_file")
+a+=("$support_path/$management_file")
+b+=("$target_path/$management_archive_file")
 
-for index in "${!source_pathfiles[@]}"; do
-	[[ -e ${target_pathfiles[index]} ]] && rm -f "${target_pathfiles[index]}"
+for i in "${!a[@]}"; do
+	[[ -e ${b[i]} ]] && rm -f "${b[i]}"
 
-	if [[ ! -e ${source_pathfiles[index]} ]]; then
-		ColourTextBrightRed "'${source_pathfiles[index]}' not found, "
+	if [[ ! -e ${a[i]} ]]; then
+		ColourTextBrightRed "'${a[i]}' not found, "
 		continue
 	fi
 
-	tar --create --gzip --numeric-owner --file="${target_pathfiles[index]}" --directory="$source_path" "$(basename "${source_pathfiles[index]}")"
+	tar --create --gzip --numeric-owner --file="${b[i]}" --directory="$support_path" "$(basename "${a[i]}")"
 
-	if [[ ! -s ${target_pathfiles[index]} ]]; then
-		ColourTextBrightRed "'${target_pathfiles[index]}' was not written"; echo
+	if [[ ! -s ${b[i]} ]]; then
+		ColourTextBrightRed "'${b[i]}' was not written"; echo
 		exit 1
 	fi
 
-	[[ -e ${source_pathfiles[index]} ]] && rm -f "${source_pathfiles[index]}"
-	chmod 444 "${target_pathfiles[index]}"
+	[[ -e ${a[i]} ]] && rm -f "${a[i]}"
+	chmod 444 "${b[i]}"
 done
 
 ShowDone

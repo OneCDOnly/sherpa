@@ -2,15 +2,15 @@
 
 . vars.source || exit
 
-declare -a source_pathfiles
-declare -i index=0
+declare -a a
+declare -i i=0
 
-source_pathfiles+=("$source_path/$objects_file")
-source_pathfiles+=("$source_path/$packages_file")
-source_pathfiles+=("$source_path/$management_file")
+a+=("$support_path/$objects_file")
+a+=("$support_path/$packages_file")
+a+=("$support_path/$management_file")
 
-for index in "${!source_pathfiles[@]}"; do
-	[[ -e ${source_pathfiles[index]} ]] && rm -f "${source_pathfiles[index]}"
+for i in "${!a[@]}"; do
+	[[ -e ${a[i]} ]] && rm -f "${a[i]}"
 done
 
 ./build-qpkgs.sh sherpa || exit
@@ -19,5 +19,3 @@ done
 ./build-wiki-package-abbreviations.sh || exit
 ./build-manager.sh || exit
 ./build-archives.sh || exit
-
-exit 0
