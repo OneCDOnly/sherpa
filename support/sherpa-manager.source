@@ -7634,11 +7634,11 @@ IncludeReportGlossary()
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/req-attention ]]; then
-		DisplayAsGlossaryIndentItem "$(TextBrightOrange '* orange')" 'this package cannot be installed.'
+		DisplayAsGlossaryIndentItem "$(TextBrightOrange '*')" 'this package cannot be installed.'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/req-alert ]]; then
-		DisplayAsGlossaryIndentItem "$(TextBrightRed '! red')" 'this package is not working correctly.'
+		DisplayAsGlossaryIndentItem "$(TextBrightRed '!')" 'this package is not working correctly.'
 	fi
 
 	} >> "$REPORT_OUTPUT_PATHFILE"
