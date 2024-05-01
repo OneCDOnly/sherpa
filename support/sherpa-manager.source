@@ -5345,13 +5345,7 @@ DisplayAsFeaturesReportItemLine()
 			;;
 		muted)
 			active_test_msg=$(TextDarkGrey "$active_test_msg")
-
-			if [[ $arch_msg =~ true ]]; then
-				arch_msg=$(TextDarkGrey "$arch_msg")
-			else
-				arch_msg=$(TextBrightOrange "$arch_msg")
-			fi
-
+			arch_msg=$(TextDarkGrey "$arch_msg")
 			backup_msg=$(TextDarkGrey "$backup_msg")
 			clean_msg=$(TextDarkGrey "$clean_msg")
 			name_msg+=$(TextDarkGrey "$qpkg_name")
