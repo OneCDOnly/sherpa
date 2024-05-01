@@ -570,7 +570,7 @@ LoadEnv()
 	qpkg_default_index=0
 	useropt_branch=$(UserGetGitBranch)
 		readonly OBJECTS_ARCHIVE_URL='<?cdn_sherpa_base_url?>'/$useropt_branch/objects.tar.gz
-		readonly PACKAGES_ARCHIVE_URL='<?cdn_sherpa_base_url?>'/$useropt_branch/packages.tar.gz
+		readonly PACKAGES_ARCHIVE_URL='<?cdn_sherpa_packages_base_url?>'/$useropt_branch/packages.tar.gz
 	readonly QPKG_BU_PATH=$(UserGetDefVol)/.qpkg_config_backup
 	readonly THIS_PACKAGE_PATH=$(QpkgGetInstallationPath)
 		if [[ -z $THIS_PACKAGE_PATH || $THIS_PACKAGE_PATH = undefined || ! -d $THIS_PACKAGE_PATH ]]; then
@@ -1227,24 +1227,26 @@ QPKGsAssignToActions()
 #  15. install independents
 #  16. enable-auto-update independents
 #  17. disable-auto-update independents
-#  18. "sign" independents
-#  19. restore independents
-#  20. clean independents
-#  21. enable independents
-#  22. restart/reactivate independents
-#  23. start/activate independents
+#  18. restore independents
+#  19. clean independents
+#  20. enable independents
+#  21. restart/reactivate independents
+#  22. start/activate independents
+#
+#  23. auxiliary packages (IPKs and PIPs) are managed here.
 #
 #  24. upgrade dependents
 #  25. reinstall dependents
 #  26. install dependents
 #  27. enable-auto-update dependents
 #  28. disable-auto-update dependents
-#  29. "sign" dependents
 #  30. restore dependents
 #  31. clean dependents
 #  32. enable dependents
 #  33. restart/reactivate dependents
 #  34. start/activate dependents
+#
+#  35. "sign" all
 
 ProcActions()
 	{
@@ -1317,7 +1319,6 @@ ProcActions()
 				ProcAction install $tier QPKG install installed
 				ProcAction enableau $tier QPKG 'enable auto-update' 'enabled auto-update'
 				ProcAction disableau $tier QPKG 'disable auto-update' 'disabled auto-update'
-				ProcAction sign $tier QPKG '"sign"' '"signed"'
 				ProcAction restore $tier QPKG restore restored
 				ProcAction clean $tier QPKG clean cleaned
 				ProcAction enable $tier QPKG enable enabled
@@ -1345,6 +1346,8 @@ ProcActions()
 				fi
 		esac
 	done
+
+	ProcAction sign all QPKG '"sign"' '"signed"'
 
 	if [[ $useropt_debug = true ]]; then
 		QPKGs.Actions:List
@@ -5342,13 +5345,7 @@ DisplayAsFeaturesReportItemLine()
 			;;
 		muted)
 			active_test_msg=$(TextDarkGrey "$active_test_msg")
-
-			if [[ $arch_msg =~ true ]]; then
-				arch_msg=$(TextDarkGrey "$arch_msg")
-			else
-				arch_msg=$(TextBrightOrange "$arch_msg")
-			fi
-
+			arch_msg=$(TextDarkGrey "$arch_msg")
 			backup_msg=$(TextDarkGrey "$backup_msg")
 			clean_msg=$(TextDarkGrey "$clean_msg")
 			name_msg+=$(TextDarkGrey "$qpkg_name")
@@ -7631,11 +7628,11 @@ IncludeReportGlossary()
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/req-attention ]]; then
-		DisplayAsGlossaryIndentItem "$(TextBrightOrange '* orange')" 'this package cannot be installed.'
+		DisplayAsGlossaryIndentItem "$(TextBrightOrange '*')" 'this package cannot be installed.'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/req-alert ]]; then
-		DisplayAsGlossaryIndentItem "$(TextBrightRed '! red')" 'this package is not working correctly.'
+		DisplayAsGlossaryIndentItem "$(TextBrightRed '!')" 'this package is not working correctly.'
 	fi
 
 	} >> "$REPORT_OUTPUT_PATHFILE"
@@ -8525,7 +8522,13 @@ OsIsSupportQpkgTimeout()
 OsIsSupportSignedPackages()
 	{
 
-	[[ ${NAS_FIRMWARE_VER//.} -ge 435 ]]
+# 	[[ ${NAS_FIRMWARE_VER//.} -ge 435 ]]
+
+	# NOTE: signing failed on QTS 4.3.6 (x31). No cert database.
+
+	# Let's go one-version-higher:
+
+	[[ ${NAS_FIRMWARE_VER//.} -ge 440 ]]
 
 	}
 

@@ -13,9 +13,8 @@ cd "$support_path" || exit
 
 [[ -e $objects_file ]] && rm -f "$objects_file"
 [[ -e $management_file ]] && rm -f "$management_file"
-[[ -e $packages_file ]] && rm -f "$packages_file"
 
-cd "$target_path" || exit
+cd "$root_path" || exit
 
 if [[ -z ${1:-} || ${1:-} = nocheck ]]; then
 	git add . && git commit && git push || exit

@@ -1,4 +1,0 @@
-# 'pip' is listed here to ensure an upgrade to the 'python3-pip' IPK installed from Entware.
-charset-normalizer
-pip
-virtualenv
