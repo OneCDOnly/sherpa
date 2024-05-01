@@ -1,3 +1,0 @@
-# These 'many2linux' module builds are not seen in Python unless each module shared object file is renamed.
-rpds
-sabyenc3

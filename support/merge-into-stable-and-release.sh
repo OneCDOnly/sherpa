@@ -16,27 +16,20 @@ case ${response:0:1} in
 		exit 0
 esac
 
-cd $HOME/scripts/nas/sherpa/support || exit
+cd "$support_path" || exit
 
 ./build-all.sh || exit
 
-cp -f "$qpkgs_path/sherpa/build/sherpa_${build_date}.qpkg" "$qpkgs_path/sherpa/build/sherpa.qpkg"
+$support_path/commit.sh '[update] archives [pre-merge]' || exit
 
-./commit.sh '[update] archives [pre-merge]' || exit
-
-cd $HOME/scripts/nas/sherpa || exit
+cd "$root_path" || exit
 
 git checkout "$stable_branch" || exit
-git merge --no-ff -m "[merge] from \`$unstable_branch\` into \`$stable_branch\`" "$unstable_branch" && git push #|| exit
+git merge --no-ff -m "[merge] from \`$unstable_branch\` into \`$stable_branch\`" "$unstable_branch" && git push || exit
 git tag "$release_tag"
 git push --tags
-git checkout "$unstable_branch" #|| exit
+git checkout "$unstable_branch" || exit
 
 gh release create "$release_tag" --generate-notes "$qpkgs_path/sherpa/build/sherpa.qpkg"
 
-cd $HOME/scripts/nas/sherpa/support || exit
-
-./reset-qpkg-datetimes.sh || exit
-git diff			# run this now so don't need to wait during manual (user) check.
-
-exit 0
+cd "$support_path" || exit

@@ -6,15 +6,16 @@ colourful=true
 title_description='a mini-package-manager for QNAP NAS'
 
 checksum_root_path=$HOME/scripts/nas
-docs_path=$HOME/scripts/nas/sherpa/docs
 qpkgs_root_path=$HOME/scripts/nas/sherpa.packages
 	qpkgs_path=$qpkgs_root_path/QPKGs
-support_path=$HOME/scripts/nas/sherpa/support
-target_path=$HOME/scripts/nas/sherpa
+	qpkgs_support_path=$qpkgs_root_path/support
+root_path=$HOME/scripts/nas/sherpa
+	docs_path=$root_path/docs
+	support_path=$root_path/support
 wiki_path=$HOME/documents/sherpa.wiki
 
-highest_package_versions_found_pathfile=$support_path/highest_package_versions_found.raw
-highest_package_versions_found_sorted_pathfile=$support_path/highest_package_versions_found.tbl
+highest_package_versions_found_pathfile=$qpkgs_support_path/highest_package_versions_found.raw
+highest_package_versions_found_sorted_pathfile=$qpkgs_support_path/highest_package_versions_found.tbl
 
 management_archive_file=sherpa-manager.tar.gz
 management_file=sherpa-manager.sh
@@ -32,6 +33,7 @@ service_library_source_file=service-library.source
 
 stable_branch=stable
 unstable_branch=unstable
+qpkgs_production_branch=main		# Must rename this as 'stable' at some point.
 
 cdn_nzbget_dev_packages_url='https://github.com/nzbgetcom/<?package_name?>/releases/download/v<?version?>'
 cdn_onecd_url='https://raw.githubusercontent.com/OneCDOnly'
