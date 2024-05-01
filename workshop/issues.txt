@@ -1,6 +1,8 @@
 Observed issues:
 
-	* Fresh install of Entware was unable to sign itself. But a dependent QPKGs was signed OK.
+	* Must update 'packages.tar.gz' hardcoded-location in sherpa.
+
+	* Fresh install of Entware was unable to sign itself. But a dependent QPKG was signed OK.
 		- Need to move signing for independents ProcAction() later in ProcActions().
 
 	* 'sherpa' and 'opkg' were not available after installing Entware.
