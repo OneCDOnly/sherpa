@@ -1,10 +1,5 @@
 Observed issues:
 
-	* sherpa.packages repo will need a 'stable' branch too.
-
-	* Fresh install of Entware was unable to sign itself. But a dependent QPKG was signed OK.
-		- Need to move signing for independents ProcAction() later in ProcActions().
-
 	* 'sherpa' and 'opkg' were not available after installing Entware.
 		- Entware installation may be corrupt.
 		- But this shouldn't affect the sherpa command `/usr/sbin/sherpa`.

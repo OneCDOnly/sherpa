@@ -33,7 +33,6 @@ service_library_source_file=service-library.source
 
 stable_branch=stable
 unstable_branch=unstable
-qpkgs_production_branch=main		# Must rename this as 'stable' at some point.
 
 cdn_nzbget_dev_packages_url='https://github.com/nzbgetcom/<?package_name?>/releases/download/v<?version?>'
 cdn_onecd_url='https://raw.githubusercontent.com/OneCDOnly'

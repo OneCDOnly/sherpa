@@ -1227,24 +1227,26 @@ QPKGsAssignToActions()
 #  15. install independents
 #  16. enable-auto-update independents
 #  17. disable-auto-update independents
-#  18. "sign" independents
-#  19. restore independents
-#  20. clean independents
-#  21. enable independents
-#  22. restart/reactivate independents
-#  23. start/activate independents
+#  18. restore independents
+#  19. clean independents
+#  20. enable independents
+#  21. restart/reactivate independents
+#  22. start/activate independents
+#
+#  23. auxiliary packages (IPKs and PIPs) are managed here.
 #
 #  24. upgrade dependents
 #  25. reinstall dependents
 #  26. install dependents
 #  27. enable-auto-update dependents
 #  28. disable-auto-update dependents
-#  29. "sign" dependents
 #  30. restore dependents
 #  31. clean dependents
 #  32. enable dependents
 #  33. restart/reactivate dependents
 #  34. start/activate dependents
+#
+#  35. "sign" all
 
 ProcActions()
 	{
@@ -1317,7 +1319,6 @@ ProcActions()
 				ProcAction install $tier QPKG install installed
 				ProcAction enableau $tier QPKG 'enable auto-update' 'enabled auto-update'
 				ProcAction disableau $tier QPKG 'disable auto-update' 'disabled auto-update'
-				ProcAction sign $tier QPKG '"sign"' '"signed"'
 				ProcAction restore $tier QPKG restore restored
 				ProcAction clean $tier QPKG clean cleaned
 				ProcAction enable $tier QPKG enable enabled
@@ -1345,6 +1346,8 @@ ProcActions()
 				fi
 		esac
 	done
+
+	ProcAction sign all QPKG '"sign"' '"signed"'
 
 	if [[ $useropt_debug = true ]]; then
 		QPKGs.Actions:List
