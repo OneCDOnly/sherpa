@@ -8522,7 +8522,13 @@ OsIsSupportQpkgTimeout()
 OsIsSupportSignedPackages()
 	{
 
-	[[ ${NAS_FIRMWARE_VER//.} -ge 435 ]]
+# 	[[ ${NAS_FIRMWARE_VER//.} -ge 435 ]]
+
+	# NOTE: signing failed on QTS 4.3.6 (x31). No cert database.
+
+	# Let's go one-version-higher:
+
+	[[ ${NAS_FIRMWARE_VER//.} -ge 440 ]]
 
 	}
 
