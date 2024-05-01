@@ -1,6 +1,6 @@
 Observed issues:
 
-	* Must update 'packages.tar.gz' hardcoded-location in sherpa.
+	* sherpa.packages repo will need a 'stable' branch too.
 
 	* Fresh install of Entware was unable to sign itself. But a dependent QPKG was signed OK.
 		- Need to move signing for independents ProcAction() later in ProcActions().

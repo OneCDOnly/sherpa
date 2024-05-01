@@ -570,7 +570,7 @@ LoadEnv()
 	qpkg_default_index=0
 	useropt_branch=$(UserGetGitBranch)
 		readonly OBJECTS_ARCHIVE_URL='<?cdn_sherpa_base_url?>'/$useropt_branch/objects.tar.gz
-		readonly PACKAGES_ARCHIVE_URL='<?cdn_sherpa_base_url?>'/$useropt_branch/packages.tar.gz
+		readonly PACKAGES_ARCHIVE_URL='<?cdn_sherpa_packages_base_url?>'/$useropt_branch/packages.tar.gz
 	readonly QPKG_BU_PATH=$(UserGetDefVol)/.qpkg_config_backup
 	readonly THIS_PACKAGE_PATH=$(QpkgGetInstallationPath)
 		if [[ -z $THIS_PACKAGE_PATH || $THIS_PACKAGE_PATH = undefined || ! -d $THIS_PACKAGE_PATH ]]; then

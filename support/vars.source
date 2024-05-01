@@ -40,7 +40,8 @@ cdn_onecd_url='https://raw.githubusercontent.com/OneCDOnly'
 	cdn_other_packages_url=$cdn_onecd_url/'<?package_name?>/main/build'
 	cdn_sherpa_base_url=$cdn_onecd_url/sherpa
 		cdn_sherpa_url=$cdn_sherpa_base_url/'$useropt_branch'
-	cdn_sherpa_packages_url=$cdn_onecd_url/'sherpa.packages/main/QPKGs/<?package_name?>/build'
+	cdn_sherpa_packages_base_url=$cdn_onecd_url/sherpa.packages
+		cdn_sherpa_packages_url=$cdn_sherpa_packages_base_url/'$useropt_branch/QPKGs/<?package_name?>/build'
 cdn_qnap_dev_packages_url='https://github.com/qnap-dev/<?package_name?>/releases/download/v<?version?>'
 
 copyright_basic='copyright (C) 2017-<?build_year?> OneCD'
@@ -121,6 +122,7 @@ SwapTags()
 		buffer=$(sed "s|<?cdn_other_packages_url?>|$cdn_other_packages_url|g" <<< "$buffer")
 		buffer=$(sed "s|<?cdn_qnap_dev_packages_url?>|$cdn_qnap_dev_packages_url|g" <<< "$buffer")
 		buffer=$(sed "s|<?cdn_sherpa_packages_url?>|$cdn_sherpa_packages_url|g" <<< "$buffer")
+		buffer=$(sed "s|<?cdn_sherpa_packages_base_url?>|$cdn_sherpa_packages_base_url|g" <<< "$buffer")
 
 		[[ -e $2 ]] && chmod +w "$2"
 		echo "$buffer" > "$2"
