@@ -1,3 +1,5 @@
+* Service-scripts should shown current QPKG enabled state.
+
 * If QPKG downloading fails, should abort and not-process any further actions.
 	- No-good having a QPKG download fail for a complex reinstall, then the original is uninstalled and there's nothing to replace it. :(
 

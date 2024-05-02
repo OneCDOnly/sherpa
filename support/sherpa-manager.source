@@ -1235,18 +1235,19 @@ QPKGsAssignToActions()
 #
 #  23. auxiliary packages (IPKs and PIPs) are managed here.
 #
-#  24. upgrade dependents
-#  25. reinstall dependents
-#  26. install dependents
-#  27. enable-auto-update dependents
-#  28. disable-auto-update dependents
+#  24. "sign" independents
+#
+#  25. upgrade dependents
+#  26. reinstall dependents
+#  27. install dependents
+#  28. enable-auto-update dependents
+#  29. disable-auto-update dependents
 #  30. restore dependents
 #  31. clean dependents
-#  32. enable dependents
-#  33. restart/reactivate dependents
-#  34. start/activate dependents
-#
-#  35. "sign" all
+#  32. "sign" dependents
+#  33. enable dependents
+#  34. restart/reactivate dependents
+#  35. start/activate dependents
 
 ProcActions()
 	{
@@ -1321,6 +1322,7 @@ ProcActions()
 				ProcAction disableau $tier QPKG 'disable auto-update' 'disabled auto-update'
 				ProcAction restore $tier QPKG restore restored
 				ProcAction clean $tier QPKG clean cleaned
+				[[ $tier = dependent ]] && ProcAction sign dependent QPKG '"sign"' '"signed"'
 				ProcAction enable $tier QPKG enable enabled
 				ProcAction reactivate $tier QPKG reactivate reactivated
 				ProcAction activate $tier QPKG activate activated
@@ -1344,6 +1346,8 @@ ProcActions()
 					PIPs:upgrade
 					PIPs:install
 				fi
+
+				ProcAction sign independent QPKG '"sign"' '"signed"'
 		esac
 	done
 
