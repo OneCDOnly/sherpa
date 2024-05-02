@@ -628,7 +628,7 @@ LoadEnv()
 	# KLUDGE: just in-case `python` has disappeared again ... ¯\_(ツ)_/¯
 	[[ -e $PYTHON3_CMD && ! -L $PYTHON_CMD ]] && ln -s "$PYTHON3_CMD" "$PYTHON_CMD"
 
-	rm -f "$REPORT_OUTPUT_PATHFILE" "$RAMDISKS_FREESPACE_PATHFILE" "$DISPLAY_INHIBIT_PATHFILE"
+	rm -f "$REPORT_OUTPUT_PATHFILE" "$RAMDISKS_FREESPACE_PATHFILE" "$DISPLAY_INHIBIT_PATHFILE" 2> /dev/null
 
 	if [[ -e $GNU_STTY_CMD && -t 0 ]]; then
 		local terminal_dimensions=$($GNU_STTY_CMD size)
@@ -1264,7 +1264,7 @@ ProcActions()
 	local state=''
 	local -i tier_index=0
 
-	rm -f "$SESS_ACTION_RESULTS_PATHFILE"
+	rm -f "$SESS_ACTION_RESULTS_PATHFILE" 2> /dev/null
 
 	# -> package preparation phase begins here <-
 
@@ -1577,7 +1577,7 @@ OpenActionMsgPipe()
 
 	# Create a message pipe, so action forks can send data back to parent.
 
-	[[ -p $ACTION_MSG_PIPE ]] && rm -f "$ACTION_MSG_PIPE"
+	[[ -p $ACTION_MSG_PIPE ]] && rm -f "$ACTION_MSG_PIPE" 2> /dev/null
 	[[ ! -p $ACTION_MSG_PIPE ]] && mknod "$ACTION_MSG_PIPE" p
 
 	# Create a file descriptor to store original stdin FD.
@@ -1613,7 +1613,7 @@ CloseActionMsgPipe()
 	[[ -n ${action_msg_pipe_fd:-} && $action_msg_pipe_fd != none ]] && eval "exec $action_msg_pipe_fd>&-"
 
 	# Delete message pipe.
-	[[ -n ${ACTION_MSG_PIPE:-} && -p $ACTION_MSG_PIPE ]] && rm -f "$ACTION_MSG_PIPE"
+	[[ -n ${ACTION_MSG_PIPE:-} && -p $ACTION_MSG_PIPE ]] && rm -f "$ACTION_MSG_PIPE" 2> /dev/null
 
 	}
 
@@ -3437,7 +3437,7 @@ IPKs:install()
 			HideKeystrokes
 			UpdateCapabilities
 
-			rm -f "$PREV_IPK_LIST.installing"
+			rm -f "$PREV_IPK_LIST.installing" 2> /dev/null
 		else
 			NoteIpkAcAsEr "$(IPKs-ACdownload-to:Array)" install
 			SaveActionResultToLog IPK "$desc" install failed "$z"
@@ -3602,7 +3602,7 @@ PIPs:install()
 			DebugAsDone "installed $desc"
 			SaveActionResultToLog PIP "$desc" install ok "$z"
 
-			rm -f "$PREV_PIP_LIST.installing"
+			rm -f "$PREV_PIP_LIST.installing" 2> /dev/null
 		else
 			((fail_count++))
 			SaveActionResultToLog PIP "$desc" install failed "$z"
@@ -3657,7 +3657,7 @@ OpenIpkArchive()
 CloseIpkArchive()
 	{
 
-	rm -f "$EXTERNAL_PACKAGES_PATHFILE"
+	rm -f "$EXTERNAL_PACKAGES_PATHFILE" 2> /dev/null
 
 	}
 
@@ -6381,7 +6381,7 @@ ArchivePriorSessLogs()
 	for f in "$THIS_PACKAGE_PATH"/session.*.active.log; do
 		if [[ -f $f && $f != "$sess_active_pathfile" ]]; then
 			$CAT_CMD "$f" >> "$SESS_ARCHIVE_PATHFILE"
-			rm -f "$f"
+			rm -f "$f" 2> /dev/null
 		fi
 	done
 
@@ -6390,7 +6390,7 @@ ArchivePriorSessLogs()
 ResetActiveSessLog()
 	{
 
-	rm -f "$sess_active_pathfile"
+	rm -f "$sess_active_pathfile" 2> /dev/null
 
 	}
 
@@ -6417,7 +6417,7 @@ ExtractPrevSessFromTail()
 
 		$SED_CMD "$start_line,$end_line!d" "$SESS_TAIL_PATHFILE" > "$SESS_LAST_PATHFILE"
 	else
-		rm -f "$SESS_LAST_PATHFILE"
+		rm -f "$SESS_LAST_PATHFILE" 2> /dev/null
 	fi
 
 	return 0
@@ -6430,7 +6430,7 @@ ExtractTailFromLog()
 	if [[ -e $SESS_ARCHIVE_PATHFILE ]]; then
 		$TAIL_CMD -n${LOG_TAIL_LINES} "$SESS_ARCHIVE_PATHFILE" > "$SESS_TAIL_PATHFILE"	# Trim main log first so there's less to `grep`.
 	else
-		rm -f "$SESS_TAIL_PATHFILE"
+		rm -f "$SESS_TAIL_PATHFILE" 2> /dev/null
 	fi
 
 	return 0
@@ -8690,7 +8690,7 @@ ClaimLockfile()
 ReleaseLockfile()
 	{
 
-	[[ -n ${LOCK_PATHFILE:-} ]] && rm -f "$LOCK_PATHFILE"
+	[[ -n ${LOCK_PATHFILE:-} ]] && rm -f "$LOCK_PATHFILE" 2> /dev/null
 
 	}
 
@@ -8875,7 +8875,7 @@ _QPKG:download_()
 			z=2
 		else
 			DebugInfo "deleting $(ShowAsFileName "$LOCAL_FILENAME") as checksum is incorrect"
-			rm -f "$LOCAL_PATHFILE"
+			rm -f "$LOCAL_PATHFILE" 2> /dev/null
 		fi
 	fi
 
@@ -8884,7 +8884,7 @@ _QPKG:download_()
 	if [[ ! -f $LOCAL_PATHFILE ]]; then
 		DebugAsProc "downloading $(ShowAsFileName "$REMOTE_FILENAME")"
 
-		rm -f "$LOG_PATHFILE"
+		rm -f "$LOG_PATHFILE" 2> /dev/null
 
 		RunAndLog "$CURL_CMD --location --output $LOCAL_PATHFILE $REMOTE_URL" "$LOG_PATHFILE" log:failure-only
 		z=$?
@@ -10157,7 +10157,7 @@ ClearQpkgServiceStatus()
 
 	[[ -n $qpkg_name ]] || return
 
-	rm -f /var/run/"$qpkg_name".last.operation
+	rm -f /var/run/"$qpkg_name".last.operation 2> /dev/null
 
 	}
 
@@ -11552,7 +11552,7 @@ RunAndLog()
 
 	if [[ -e $LOG_PATHFILE ]]; then
 		ShowAsResultAndStdout "$z" "$(<"$LOG_PATHFILE")" >> "$2"
-		rm -f "$LOG_PATHFILE"
+		rm -f "$LOG_PATHFILE" 2> /dev/null
 	else
 		ShowAsResultAndStdout "$z" '<null>' >> "$2"
 	fi
@@ -11561,7 +11561,7 @@ RunAndLog()
 		0|"${4:-}")
 			[[ ${3:-} != log:failure-only || $useropt_debug = true ]] && AddExtLogToSessLog "$2"
 			DebugAsDone 'exec: complete'
-			[[ $useropt_debug = false ]] && rm -f "$2"
+			[[ $useropt_debug = false ]] && rm -f "$2" 2> /dev/null
 			;;
 		*)
 			AddExtLogToSessLog "$2"
@@ -12135,7 +12135,7 @@ FuncForkInit()
 
 	# Debug forked function entry.
 
-	trap '[[ -n ${action_pidfile:-} && -e $action_pidfile ]] && rm -f "$action_pidfile"; [[ -n ${pidfile:-} && -e ${pidfile:-} ]] && rm -f "$pidfile"; exit' SIGINT
+	trap '[[ -n ${action_pidfile:-} && -e $action_pidfile ]] && rm -f "$action_pidfile" 2> /dev/null; [[ -n ${pidfile:-} && -e ${pidfile:-} ]] && rm -f "$pidfile" 2> /dev/null; exit' SIGINT
 
 	# Redirect debug output to a temporary log, then add it to session log before exiting. This will keep action log progress in-order.
 	original_sess_active_pathfile=$sess_active_pathfile
@@ -12168,10 +12168,10 @@ FuncForkExit()
 			$CAT_CMD "$sess_active_pathfile" >> "$original_sess_active_pathfile"
 		fi
 
-		rm -f "$sess_active_pathfile"
+		rm -f "$sess_active_pathfile" 2> /dev/null
 	fi
 
-	[[ -n ${action_pidfile:-} && -e $action_pidfile ]] && rm -f "$action_pidfile"; [[ -n ${pidfile:-} && -e ${pidfile:-} ]] && rm -f "$pidfile"
+	[[ -n ${action_pidfile:-} && -e $action_pidfile ]] && rm -f "$action_pidfile" 2> /dev/null; [[ -n ${pidfile:-} && -e ${pidfile:-} ]] && rm -f "$pidfile" 2> /dev/null
 
 	exit ${1:-0}
 
