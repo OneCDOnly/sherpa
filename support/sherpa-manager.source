@@ -12171,9 +12171,6 @@ FuncForkExit()
 		rm -f "$sess_active_pathfile"
 	fi
 
-	sess_active_pathfile=$original_sess_active_pathfile
-	original_sess_active_pathfile=''
-
 	[[ -n ${action_pidfile:-} && -e $action_pidfile ]] && rm -f "$action_pidfile"; [[ -n ${pidfile:-} && -e ${pidfile:-} ]] && rm -f "$pidfile"
 
 	exit ${1:-0}
