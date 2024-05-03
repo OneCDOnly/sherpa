@@ -6598,8 +6598,8 @@ QPKGs.Missing:Show()
 	#	$? = 0 if no packages are missing
 	#	$? = 1 if one-or-more packages are missing
 
-	QPKGs.AClist.ISmissing.IsNt || return 0
-	QPKGs.ACreinstall.ISmissing.IsNt || return 0
+	! QPKGs.AClist.ISmissing.IsSet || return 0
+	! QPKGs.ACreinstall.ISmissing.IsSet || return 0
 
 	local a=''
 	local b=''
@@ -6651,8 +6651,8 @@ QPKGs.NewVers:Show()
 	#	$? = 0 if all packages are up-to-date
 	#	$? = 1 if one-or-more packages can be upgraded
 
-	QPKGs.AClist.ISupgradable.IsNt || return 0
-	QPKGs.ACupgrade.ISupgradable.IsNt || return 0
+	! QPKGs.AClist.ISupgradable.IsSet || return 0
+	! QPKGs.ACupgrade.ISupgradable.IsSet || return 0
 
 	local a=''
 	local b=''
