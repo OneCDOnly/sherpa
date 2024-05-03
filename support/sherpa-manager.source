@@ -1267,7 +1267,7 @@ ProcActions()
 
 	rm -f "$SESS_ACTION_RESULTS_PATHFILE" 2> /dev/null
 
-	# -> package preparation phase begins here <-
+	# -> Package preparation phase <-
 
 	ProcAction status all QPKG status statused
 
@@ -1289,12 +1289,12 @@ ProcActions()
 	ProcAction reassign all QPKG reassign reassigned
 	ProcAction download all QPKG download downloaded
 
-	# If download of any QPKG failed, don't execute any futher actions.
+	# If download of any QPKG failed, don't execute any further actions.
 
-	if QPKGs-ACdownload-er.IsNone && QPKGs-ACdownload-se.IsNone; then
-		# -> package removal phase begins here <-
+	if QPKGs-ACdownload-er.IsNone && QPKGs-ACdownload-se.IsNone && QPKGs-ACdownload-sa.IsNone; then
+		# -> Package removal phase <-
 
-		for ((tier_index=${#PACKAGE_TIERS[@]}-1; tier_index>=0; tier_index--)); do	# Process tiers in-reverse
+		for ((tier_index=${#PACKAGE_TIERS[@]}-1; tier_index>=0; tier_index--)); do		# Process tiers in-reverse
 			tier=${PACKAGE_TIERS[$tier_index]}
 
 			case $tier in
@@ -1313,7 +1313,7 @@ ProcActions()
 			esac
 		done
 
-		# -> package installation phase begins here <-
+		# -> Package installation phase <-
 
 		for tier in "${PACKAGE_TIERS[@]}"; do
 			case $tier in
@@ -1337,6 +1337,7 @@ ProcActions()
 							ipks_install=true
 							ipks_upgrade=true
 							pips_install=true
+
 							break
 						fi
 					done
@@ -1378,7 +1379,7 @@ ProcActions()
 ProcAction()
 	{
 
-	# Run a single action on an entire tier of packages, asynchronously where possible.
+	# Run a single action on an entire tier of packages, asynchronously where-possible.
 
 	# Input:
 	#   $1 = $TARGET_ACTION					e.g. `activate`, `reactivate` ...
@@ -1562,6 +1563,15 @@ ProcAction()
 			[[ ${#target_packages[@]} -gt 0 ]] && KillActiveFork		# Only needed if an action fork didn't exit properly.
 			wait 2>/dev/null
 			CloseActionMsgPipe
+
+			# TODO: Process unactioned QPKGs here (if-any), and mark them as aborted.
+
+# 			for package in $(QPKGs-AC${TARGET_ACTION}-to:Array); do
+# 				if ! QPKGs-AC${TARGET_ACTION}-dn.Exist "$package"; then
+# 					QPKGs-AC${TARGET_ACTION}-sa:Add "$package"
+# 					QPKGs-AC${TARGET_ACTION}-dn:Add "$package"
+# 				fi
+# 			done
 
 			[[ ${useropt_terse:=true} = false && $useropt_verbose = false ]] && echo
 			;;
