@@ -1119,9 +1119,9 @@ QPKGsAssignToActions()
 		QPKGs-ACinstall-to:Add Entware
 	fi
 
-	# If any QPKG has been selected for `backup`/`restore`/`reinstall`/`upgrade`, need to `deactivate` it first, and `activate` it again later.
+	# If any QPKG has been selected for `backup`/`restore`, need to `deactivate` it first, and `activate` it again later.
 
-	for action in backup restore reinstall upgrade; do
+	for action in backup restore; do
 		for qpkg_name in $(QPKGs-AC${action}-to:Array); do
 			QpkgSetIndex
 
