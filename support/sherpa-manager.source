@@ -628,7 +628,7 @@ LoadEnv()
 	# KLUDGE: just in-case `python` has disappeared again ... ¯\_(ツ)_/¯
 	[[ -e $PYTHON3_CMD && ! -L $PYTHON_CMD ]] && ln -s "$PYTHON3_CMD" "$PYTHON_CMD"
 
-	rm -f "$REPORT_OUTPUT_PATHFILE" "$RAMDISKS_FREESPACE_PATHFILE" "$DISPLAY_INHIBIT_PATHFILE"
+	rm -f "$REPORT_OUTPUT_PATHFILE" "$RAMDISKS_FREESPACE_PATHFILE" "$DISPLAY_INHIBIT_PATHFILE" 2> /dev/null
 
 	if [[ -e $GNU_STTY_CMD && -t 0 ]]; then
 		local terminal_dimensions=$($GNU_STTY_CMD size)
@@ -1119,9 +1119,9 @@ QPKGsAssignToActions()
 		QPKGs-ACinstall-to:Add Entware
 	fi
 
-	# If any QPKG has been selected for `backup`/`restore`/`reinstall`/`upgrade`, need to `deactivate` it first, and `activate` it again later.
+	# If any QPKG has been selected for `backup`/`restore`, need to `deactivate` it first, and `activate` it again later.
 
-	for action in backup restore reinstall upgrade; do
+	for action in backup restore; do
 		for qpkg_name in $(QPKGs-AC${action}-to:Array); do
 			QpkgSetIndex
 
@@ -1235,18 +1235,19 @@ QPKGsAssignToActions()
 #
 #  23. auxiliary packages (IPKs and PIPs) are managed here.
 #
-#  24. upgrade dependents
-#  25. reinstall dependents
-#  26. install dependents
-#  27. enable-auto-update dependents
-#  28. disable-auto-update dependents
+#  24. "sign" independents
+#
+#  25. upgrade dependents
+#  26. reinstall dependents
+#  27. install dependents
+#  28. enable-auto-update dependents
+#  29. disable-auto-update dependents
 #  30. restore dependents
 #  31. clean dependents
-#  32. enable dependents
-#  33. restart/reactivate dependents
-#  34. start/activate dependents
-#
-#  35. "sign" all
+#  32. "sign" dependents
+#  33. enable dependents
+#  34. restart/reactivate dependents
+#  35. start/activate dependents
 
 ProcActions()
 	{
@@ -1264,7 +1265,7 @@ ProcActions()
 	local state=''
 	local -i tier_index=0
 
-	rm -f "$SESS_ACTION_RESULTS_PATHFILE"
+	rm -f "$SESS_ACTION_RESULTS_PATHFILE" 2> /dev/null
 
 	# -> package preparation phase begins here <-
 
@@ -1288,66 +1289,73 @@ ProcActions()
 	ProcAction reassign all QPKG reassign reassigned
 	ProcAction download all QPKG download downloaded
 
-	# -> package removal phase begins here <-
+	# If download of any QPKG failed, don't execute any futher actions.
 
-	for ((tier_index=${#PACKAGE_TIERS[@]}-1; tier_index>=0; tier_index--)); do	# Process tiers in-reverse
-		tier=${PACKAGE_TIERS[$tier_index]}
+	if QPKGs-ACdownload-er.IsNone && QPKGs-ACdownload-se.IsNone; then
+		# -> package removal phase begins here <-
 
-		case $tier in
-			?(in)dependent)
-				ProcAction deactivate $tier QPKG deactivate deactivated
-				ProcAction backup $tier QPKG backup backed-up
-				ProcAction disable $tier QPKG disable disabled
-				ProcAction uninstall $tier QPKG uninstall uninstalled
-				;;
-			auxiliary)
-				if QPKGs-ISenabled.Exist Entware; then
-					ModPathToEntware
-					PIPs:uninstall
-					IPKs:uninstall
-				fi
-		esac
-	done
+		for ((tier_index=${#PACKAGE_TIERS[@]}-1; tier_index>=0; tier_index--)); do	# Process tiers in-reverse
+			tier=${PACKAGE_TIERS[$tier_index]}
 
-	# -> package installation phase begins here <-
-
-	for tier in "${PACKAGE_TIERS[@]}"; do
-		case $tier in
-			?(in)dependent)
-				ProcAction upgrade $tier QPKG upgrade upgraded
-				ProcAction reinstall $tier QPKG reinstall reinstalled
-				ProcAction install $tier QPKG install installed
-				ProcAction enableau $tier QPKG 'enable auto-update' 'enabled auto-update'
-				ProcAction disableau $tier QPKG 'disable auto-update' 'disabled auto-update'
-				ProcAction restore $tier QPKG restore restored
-				ProcAction clean $tier QPKG clean cleaned
-				ProcAction enable $tier QPKG enable enabled
-				ProcAction reactivate $tier QPKG reactivate reactivated
-				ProcAction activate $tier QPKG activate activated
-				;;
-			auxiliary)
-				for action in status install reinstall upgrade activate; do
-					if (QPKGs-ACinstall-ok.Exist Entware) || QPKGs-AC${action}-to.IsAny && QPKGs-ISenabled.Exist Entware; then
-						ipks_downgrade=true
-						ipks_install=true
-						ipks_upgrade=true
-						pips_install=true
-						break
+			case $tier in
+				?(in)dependent)
+					ProcAction deactivate $tier QPKG deactivate deactivated
+					ProcAction backup $tier QPKG backup backed-up
+					ProcAction disable $tier QPKG disable disabled
+					ProcAction uninstall $tier QPKG uninstall uninstalled
+					;;
+				auxiliary)
+					if QPKGs-ISenabled.Exist Entware; then
+						ModPathToEntware
+						PIPs:uninstall
+						IPKs:uninstall
 					fi
-				done
+			esac
+		done
 
-				if QPKGs-ISenabled.Exist Entware; then
-					ModPathToEntware
-					IPKs:upgrade
-					IPKs:install
-					IPKs:downgrade
-					PIPs:upgrade
-					PIPs:install
-				fi
-		esac
-	done
+		# -> package installation phase begins here <-
 
-	ProcAction sign all QPKG '"sign"' '"signed"'
+		for tier in "${PACKAGE_TIERS[@]}"; do
+			case $tier in
+				?(in)dependent)
+					ProcAction upgrade $tier QPKG upgrade upgraded
+					ProcAction reinstall $tier QPKG reinstall reinstalled
+					ProcAction install $tier QPKG install installed
+					ProcAction enableau $tier QPKG 'enable auto-update' 'enabled auto-update'
+					ProcAction disableau $tier QPKG 'disable auto-update' 'disabled auto-update'
+					ProcAction restore $tier QPKG restore restored
+					ProcAction clean $tier QPKG clean cleaned
+					[[ $tier = dependent ]] && ProcAction sign dependent QPKG '"sign"' '"signed"'
+					ProcAction enable $tier QPKG enable enabled
+					ProcAction reactivate $tier QPKG reactivate reactivated
+					ProcAction activate $tier QPKG activate activated
+					;;
+				auxiliary)
+					for action in status install reinstall upgrade activate; do
+						if (QPKGs-ACinstall-ok.Exist Entware) || QPKGs-AC${action}-to.IsAny && QPKGs-ISenabled.Exist Entware; then
+							ipks_downgrade=true
+							ipks_install=true
+							ipks_upgrade=true
+							pips_install=true
+							break
+						fi
+					done
+
+					if QPKGs-ISenabled.Exist Entware; then
+						ModPathToEntware
+						IPKs:upgrade
+						IPKs:install
+						IPKs:downgrade
+						PIPs:upgrade
+						PIPs:install
+					fi
+
+					ProcAction sign independent QPKG '"sign"' '"signed"'
+			esac
+		done
+
+		ProcAction sign all QPKG '"sign"' '"signed"'
+	fi
 
 	if [[ $useropt_debug = true ]]; then
 		QPKGs.Actions:List
@@ -1577,7 +1585,7 @@ OpenActionMsgPipe()
 
 	# Create a message pipe, so action forks can send data back to parent.
 
-	[[ -p $ACTION_MSG_PIPE ]] && rm -f "$ACTION_MSG_PIPE"
+	[[ -p $ACTION_MSG_PIPE ]] && rm -f "$ACTION_MSG_PIPE" 2> /dev/null
 	[[ ! -p $ACTION_MSG_PIPE ]] && mknod "$ACTION_MSG_PIPE" p
 
 	# Create a file descriptor to store original stdin FD.
@@ -1613,7 +1621,7 @@ CloseActionMsgPipe()
 	[[ -n ${action_msg_pipe_fd:-} && $action_msg_pipe_fd != none ]] && eval "exec $action_msg_pipe_fd>&-"
 
 	# Delete message pipe.
-	[[ -n ${ACTION_MSG_PIPE:-} && -p $ACTION_MSG_PIPE ]] && rm -f "$ACTION_MSG_PIPE"
+	[[ -n ${ACTION_MSG_PIPE:-} && -p $ACTION_MSG_PIPE ]] && rm -f "$ACTION_MSG_PIPE" 2> /dev/null
 
 	}
 
@@ -3437,7 +3445,7 @@ IPKs:install()
 			HideKeystrokes
 			UpdateCapabilities
 
-			rm -f "$PREV_IPK_LIST.installing"
+			rm -f "$PREV_IPK_LIST.installing" 2> /dev/null
 		else
 			NoteIpkAcAsEr "$(IPKs-ACdownload-to:Array)" install
 			SaveActionResultToLog IPK "$desc" install failed "$z"
@@ -3602,7 +3610,7 @@ PIPs:install()
 			DebugAsDone "installed $desc"
 			SaveActionResultToLog PIP "$desc" install ok "$z"
 
-			rm -f "$PREV_PIP_LIST.installing"
+			rm -f "$PREV_PIP_LIST.installing" 2> /dev/null
 		else
 			((fail_count++))
 			SaveActionResultToLog PIP "$desc" install failed "$z"
@@ -3657,7 +3665,7 @@ OpenIpkArchive()
 CloseIpkArchive()
 	{
 
-	rm -f "$EXTERNAL_PACKAGES_PATHFILE"
+	rm -f "$EXTERNAL_PACKAGES_PATHFILE" 2> /dev/null
 
 	}
 
@@ -6381,7 +6389,7 @@ ArchivePriorSessLogs()
 	for f in "$THIS_PACKAGE_PATH"/session.*.active.log; do
 		if [[ -f $f && $f != "$sess_active_pathfile" ]]; then
 			$CAT_CMD "$f" >> "$SESS_ARCHIVE_PATHFILE"
-			rm -f "$f"
+			rm -f "$f" 2> /dev/null
 		fi
 	done
 
@@ -6390,7 +6398,7 @@ ArchivePriorSessLogs()
 ResetActiveSessLog()
 	{
 
-	rm -f "$sess_active_pathfile"
+	rm -f "$sess_active_pathfile" 2> /dev/null
 
 	}
 
@@ -6417,7 +6425,7 @@ ExtractPrevSessFromTail()
 
 		$SED_CMD "$start_line,$end_line!d" "$SESS_TAIL_PATHFILE" > "$SESS_LAST_PATHFILE"
 	else
-		rm -f "$SESS_LAST_PATHFILE"
+		rm -f "$SESS_LAST_PATHFILE" 2> /dev/null
 	fi
 
 	return 0
@@ -6430,7 +6438,7 @@ ExtractTailFromLog()
 	if [[ -e $SESS_ARCHIVE_PATHFILE ]]; then
 		$TAIL_CMD -n${LOG_TAIL_LINES} "$SESS_ARCHIVE_PATHFILE" > "$SESS_TAIL_PATHFILE"	# Trim main log first so there's less to `grep`.
 	else
-		rm -f "$SESS_TAIL_PATHFILE"
+		rm -f "$SESS_TAIL_PATHFILE" 2> /dev/null
 	fi
 
 	return 0
@@ -8690,7 +8698,7 @@ ClaimLockfile()
 ReleaseLockfile()
 	{
 
-	[[ -n ${LOCK_PATHFILE:-} ]] && rm -f "$LOCK_PATHFILE"
+	[[ -n ${LOCK_PATHFILE:-} ]] && rm -f "$LOCK_PATHFILE" 2> /dev/null
 
 	}
 
@@ -8875,7 +8883,7 @@ _QPKG:download_()
 			z=2
 		else
 			DebugInfo "deleting $(ShowAsFileName "$LOCAL_FILENAME") as checksum is incorrect"
-			rm -f "$LOCAL_PATHFILE"
+			rm -f "$LOCAL_PATHFILE" 2> /dev/null
 		fi
 	fi
 
@@ -8884,7 +8892,7 @@ _QPKG:download_()
 	if [[ ! -f $LOCAL_PATHFILE ]]; then
 		DebugAsProc "downloading $(ShowAsFileName "$REMOTE_FILENAME")"
 
-		rm -f "$LOG_PATHFILE"
+		rm -f "$LOG_PATHFILE" 2> /dev/null
 
 		RunAndLog "$CURL_CMD --location --output $LOCAL_PATHFILE $REMOTE_URL" "$LOG_PATHFILE" log:failure-only
 		z=$?
@@ -10157,7 +10165,7 @@ ClearQpkgServiceStatus()
 
 	[[ -n $qpkg_name ]] || return
 
-	rm -f /var/run/"$qpkg_name".last.operation
+	rm -f /var/run/"$qpkg_name".last.operation 2> /dev/null
 
 	}
 
@@ -11552,7 +11560,7 @@ RunAndLog()
 
 	if [[ -e $LOG_PATHFILE ]]; then
 		ShowAsResultAndStdout "$z" "$(<"$LOG_PATHFILE")" >> "$2"
-		rm -f "$LOG_PATHFILE"
+		rm -f "$LOG_PATHFILE" 2> /dev/null
 	else
 		ShowAsResultAndStdout "$z" '<null>' >> "$2"
 	fi
@@ -11561,7 +11569,7 @@ RunAndLog()
 		0|"${4:-}")
 			[[ ${3:-} != log:failure-only || $useropt_debug = true ]] && AddExtLogToSessLog "$2"
 			DebugAsDone 'exec: complete'
-			[[ $useropt_debug = false ]] && rm -f "$2"
+			[[ $useropt_debug = false ]] && rm -f "$2" 2> /dev/null
 			;;
 		*)
 			AddExtLogToSessLog "$2"
@@ -12135,7 +12143,7 @@ FuncForkInit()
 
 	# Debug forked function entry.
 
-	trap '[[ -n ${action_pidfile:-} && -e $action_pidfile ]] && rm -f "$action_pidfile"; [[ -n ${pidfile:-} && -e ${pidfile:-} ]] && rm -f "$pidfile"; exit' SIGINT
+	trap '[[ -n ${action_pidfile:-} && -e $action_pidfile ]] && rm -f "$action_pidfile" 2> /dev/null; [[ -n ${pidfile:-} && -e ${pidfile:-} ]] && rm -f "$pidfile" 2> /dev/null; exit' SIGINT
 
 	# Redirect debug output to a temporary log, then add it to session log before exiting. This will keep action log progress in-order.
 	original_sess_active_pathfile=$sess_active_pathfile
@@ -12168,13 +12176,10 @@ FuncForkExit()
 			$CAT_CMD "$sess_active_pathfile" >> "$original_sess_active_pathfile"
 		fi
 
-		rm -f "$sess_active_pathfile"
+		rm -f "$sess_active_pathfile" 2> /dev/null
 	fi
 
-	sess_active_pathfile=$original_sess_active_pathfile
-	original_sess_active_pathfile=''
-
-	[[ -n ${action_pidfile:-} && -e $action_pidfile ]] && rm -f "$action_pidfile"; [[ -n ${pidfile:-} && -e ${pidfile:-} ]] && rm -f "$pidfile"
+	[[ -n ${action_pidfile:-} && -e $action_pidfile ]] && rm -f "$action_pidfile" 2> /dev/null; [[ -n ${pidfile:-} && -e ${pidfile:-} ]] && rm -f "$pidfile" 2> /dev/null
 
 	exit ${1:-0}
 
