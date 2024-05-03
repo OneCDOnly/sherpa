@@ -1289,69 +1289,73 @@ ProcActions()
 	ProcAction reassign all QPKG reassign reassigned
 	ProcAction download all QPKG download downloaded
 
-	# -> package removal phase begins here <-
+	# If download of any QPKG failed, don't execute any futher actions.
 
-	for ((tier_index=${#PACKAGE_TIERS[@]}-1; tier_index>=0; tier_index--)); do	# Process tiers in-reverse
-		tier=${PACKAGE_TIERS[$tier_index]}
+	if QPKGs-ACdownload-er.IsNone && QPKGs-ACdownload-se.IsNone; then
+		# -> package removal phase begins here <-
 
-		case $tier in
-			?(in)dependent)
-				ProcAction deactivate $tier QPKG deactivate deactivated
-				ProcAction backup $tier QPKG backup backed-up
-				ProcAction disable $tier QPKG disable disabled
-				ProcAction uninstall $tier QPKG uninstall uninstalled
-				;;
-			auxiliary)
-				if QPKGs-ISenabled.Exist Entware; then
-					ModPathToEntware
-					PIPs:uninstall
-					IPKs:uninstall
-				fi
-		esac
-	done
+		for ((tier_index=${#PACKAGE_TIERS[@]}-1; tier_index>=0; tier_index--)); do	# Process tiers in-reverse
+			tier=${PACKAGE_TIERS[$tier_index]}
 
-	# -> package installation phase begins here <-
-
-	for tier in "${PACKAGE_TIERS[@]}"; do
-		case $tier in
-			?(in)dependent)
-				ProcAction upgrade $tier QPKG upgrade upgraded
-				ProcAction reinstall $tier QPKG reinstall reinstalled
-				ProcAction install $tier QPKG install installed
-				ProcAction enableau $tier QPKG 'enable auto-update' 'enabled auto-update'
-				ProcAction disableau $tier QPKG 'disable auto-update' 'disabled auto-update'
-				ProcAction restore $tier QPKG restore restored
-				ProcAction clean $tier QPKG clean cleaned
-				[[ $tier = dependent ]] && ProcAction sign dependent QPKG '"sign"' '"signed"'
-				ProcAction enable $tier QPKG enable enabled
-				ProcAction reactivate $tier QPKG reactivate reactivated
-				ProcAction activate $tier QPKG activate activated
-				;;
-			auxiliary)
-				for action in status install reinstall upgrade activate; do
-					if (QPKGs-ACinstall-ok.Exist Entware) || QPKGs-AC${action}-to.IsAny && QPKGs-ISenabled.Exist Entware; then
-						ipks_downgrade=true
-						ipks_install=true
-						ipks_upgrade=true
-						pips_install=true
-						break
+			case $tier in
+				?(in)dependent)
+					ProcAction deactivate $tier QPKG deactivate deactivated
+					ProcAction backup $tier QPKG backup backed-up
+					ProcAction disable $tier QPKG disable disabled
+					ProcAction uninstall $tier QPKG uninstall uninstalled
+					;;
+				auxiliary)
+					if QPKGs-ISenabled.Exist Entware; then
+						ModPathToEntware
+						PIPs:uninstall
+						IPKs:uninstall
 					fi
-				done
+			esac
+		done
 
-				if QPKGs-ISenabled.Exist Entware; then
-					ModPathToEntware
-					IPKs:upgrade
-					IPKs:install
-					IPKs:downgrade
-					PIPs:upgrade
-					PIPs:install
-				fi
+		# -> package installation phase begins here <-
 
-				ProcAction sign independent QPKG '"sign"' '"signed"'
-		esac
-	done
+		for tier in "${PACKAGE_TIERS[@]}"; do
+			case $tier in
+				?(in)dependent)
+					ProcAction upgrade $tier QPKG upgrade upgraded
+					ProcAction reinstall $tier QPKG reinstall reinstalled
+					ProcAction install $tier QPKG install installed
+					ProcAction enableau $tier QPKG 'enable auto-update' 'enabled auto-update'
+					ProcAction disableau $tier QPKG 'disable auto-update' 'disabled auto-update'
+					ProcAction restore $tier QPKG restore restored
+					ProcAction clean $tier QPKG clean cleaned
+					[[ $tier = dependent ]] && ProcAction sign dependent QPKG '"sign"' '"signed"'
+					ProcAction enable $tier QPKG enable enabled
+					ProcAction reactivate $tier QPKG reactivate reactivated
+					ProcAction activate $tier QPKG activate activated
+					;;
+				auxiliary)
+					for action in status install reinstall upgrade activate; do
+						if (QPKGs-ACinstall-ok.Exist Entware) || QPKGs-AC${action}-to.IsAny && QPKGs-ISenabled.Exist Entware; then
+							ipks_downgrade=true
+							ipks_install=true
+							ipks_upgrade=true
+							pips_install=true
+							break
+						fi
+					done
 
-	ProcAction sign all QPKG '"sign"' '"signed"'
+					if QPKGs-ISenabled.Exist Entware; then
+						ModPathToEntware
+						IPKs:upgrade
+						IPKs:install
+						IPKs:downgrade
+						PIPs:upgrade
+						PIPs:install
+					fi
+
+					ProcAction sign independent QPKG '"sign"' '"signed"'
+			esac
+		done
+
+		ProcAction sign all QPKG '"sign"' '"signed"'
+	fi
 
 	if [[ $useropt_debug = true ]]; then
 		QPKGs.Actions:List
