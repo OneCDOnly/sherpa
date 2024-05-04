@@ -7205,10 +7205,12 @@ QPKGs.IsCanBackup:Build()
 
 	FuncInit
 
-	local a=''
+	local previous=''
+	local qpkg_name=''
 
-	for a in $(QPKGs-GRall:Array); do
-		QpkgIsCanBackup "$a" && QPKGs-GRcanbackup:Add "$a"
+	for qpkg_name in $(QPKGs-GRall:Array); do
+		[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
+		QpkgIsCanBackup "$qpkg_name" && QPKGs-GRcanbackup:Add "$qpkg_name"
 	done
 
 	FuncExit
@@ -7222,10 +7224,12 @@ QPKGs.IsCanRestartToUpdate:Build()
 
 	FuncInit
 
-	local a=''
+	local previous=''
+	local qpkg_name=''
 
-	for a in $(QPKGs-GRall:Array); do
-		QpkgIsCanRestartToUpdate "$a" && QPKGs-GRcanrestarttoupdate:Add "$a"
+	for qpkg_name in $(QPKGs-GRall:Array); do
+		[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
+		QpkgIsCanRestartToUpdate "$qpkg_name" && QPKGs-GRcanrestarttoupdate:Add "$qpkg_name"
 	done
 
 	FuncExit
@@ -7239,10 +7243,12 @@ QPKGs.IsCanClean:Build()
 
 	FuncInit
 
-	local a=''
+	local previous=''
+	local qpkg_name=''
 
-	for a in $(QPKGs-GRall:Array); do
-		QpkgIsCanClean "$a" && QPKGs-GRcanclean:Add "$a"
+	for qpkg_name in $(QPKGs-GRall:Array); do
+		[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
+		QpkgIsCanClean "$qpkg_name" && QPKGs-GRcanclean:Add "$qpkg_name"
 	done
 
 	FuncExit
