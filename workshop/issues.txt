@@ -1,5 +1,9 @@
 Observed issues:
 
+	* Takes ~3.4 seconds to build QPKG states on Laura.
+		- Should be able to do this quicker.
+		- Calculate QPKG features separate to states and cache/load these from file next time.
+
 	* 'sherpa' and 'opkg' were not available after installing Entware.
 		- Entware installation may be corrupt.
 		- But this shouldn't affect the sherpa command `/usr/sbin/sherpa`.
