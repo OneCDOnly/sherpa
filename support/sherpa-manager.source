@@ -582,7 +582,9 @@ LoadEnv()
 		readonly CACHE_PATH=$THIS_PACKAGE_PATH/cache
 			readonly ACTION_TIMES_PATH=$CACHE_PATH/action.times
 			readonly BG_PROCS_PATH=$CACHE_PATH/proc
+			readonly DEPENDENT_QPKGS_LIST_PATHFILE=$CACHE_PATH/dependents
 			readonly DISPLAY_INHIBIT_PATHFILE=$CACHE_PATH/display.inhibit
+			readonly INDEPENDENT_QPKGS_LIST_PATHFILE=$CACHE_PATH/independents
 			readonly IPK_CACHE_PATH=$CACHE_PATH/IPKs
 				readonly IPK_DL_PATH=$IPK_CACHE_PATH/downloads
 				readonly IPK_DOWNGRADE_PATH=$IPK_CACHE_PATH/downgrade
@@ -6903,7 +6905,7 @@ QPKGs.States:List()
 
 	}
 
-QPKGs.IndependentDependent:Build()
+QPKGs.Tiers:Build()
 	{
 
 	FuncInit
@@ -6914,19 +6916,45 @@ QPKGs.IndependentDependent:Build()
 	# `independent` QPKGs don't depend-on other QPKGs, but may be required for other QPKGs. They should be installed/activated before any `dependent` QPKGs.
 	# `dependent` QPKGs depend-on other QPKGs. They should be installed/activated after all `independent` QPKGs.
 
-	ShowAsProc tiers
+	if [[ ${qpkgs_tiers_built:=false} = true ]]; then
+		DebugAsDone "don't build tiers: they're already built"
 
-	for qpkg_name in "${QPKG_NAME[@]}"; do
-		QpkgSetIndex
+		FuncExit; return
+	fi
 
-		if QpkgIsDependent; then
-			QPKGs-GRdependent:Add "$qpkg_name"
-		else
-			QPKGs-GRindependent:Add "$qpkg_name"
-		fi
-	done
+	local previous=''
+
+	if [[ ! -e $DEPENDENT_QPKGS_LIST_PATHFILE || ! -e $INDEPENDENT_QPKGS_LIST_PATHFILE ]]; then
+		ShowAsProc tiers
+		rm -f "$DEPENDENT_QPKGS_LIST_PATHFILE" "$INDEPENDENT_QPKGS_LIST_PATHFILE" 2> /dev/null
+
+		for qpkg_name in "${QPKG_NAME[@]}"; do
+			[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
+
+			QpkgSetIndex
+
+			if QpkgIsDependent; then
+				echo "$qpkg_name" >> "$DEPENDENT_QPKGS_LIST_PATHFILE"
+			else
+				echo "$qpkg_name" >> "$INDEPENDENT_QPKGS_LIST_PATHFILE"
+			fi
+		done
+
+		qpkgs_tiers_built=true
+	fi
+
+	[[ -e $DEPENDENT_QPKGS_LIST_PATHFILE ]] && QPKGs-GRdependent:Add "$(<$DEPENDENT_QPKGS_LIST_PATHFILE)"
+	[[ -e $INDEPENDENT_QPKGS_LIST_PATHFILE ]] && QPKGs-GRindependent:Add "$(<$INDEPENDENT_QPKGS_LIST_PATHFILE)"
 
 	FuncExit
+
+	}
+
+QPKGs.Tiers:Init()
+	{
+
+	rm -f "$DEPENDENT_QPKGS_LIST_PATHFILE" "$INDEPENDENT_QPKGS_LIST_PATHFILE" 2> /dev/null
+	qpkgs_tiers_built=false
 
 	}
 
@@ -13077,6 +13105,8 @@ LoadPackages()
 			if $CURL_CMD --silent --fail "$PACKAGES_ARCHIVE_URL" > "$PACKAGES_ARCHIVE_PATHFILE"; then
 				$TAR_CMD --extract --gzip --no-same-owner --file="$PACKAGES_ARCHIVE_PATHFILE" --directory="$CACHE_PATH"
 			fi
+
+			QPKGs.Tiers:Init
 		fi
 	fi
 
@@ -13184,7 +13214,7 @@ LoadPackages()
 
 	DebugVar PACKAGES_VER
 	QPKGs-GRall:Add "${QPKG_NAME[*]}"
-	QPKGs.IndependentDependent:Build
+	QPKGs.Tiers:Build
 
 	FuncExit
 
