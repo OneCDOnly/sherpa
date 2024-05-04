@@ -1,5 +1,8 @@
 Observed issues:
 
+	* Takes too-long (~1.5 seconds on Laura) to calc which QPKGs are dependent, and which are independent.
+		- This can be improved.
+
 	* 'sherpa' and 'opkg' were not available after installing Entware.
 		- Entware installation may be corrupt.
 		- But this shouldn't affect the sherpa command `/usr/sbin/sherpa`.

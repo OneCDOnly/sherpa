@@ -1289,7 +1289,7 @@ ProcActions()
 	ProcAction reassign all QPKG reassign reassigned
 	ProcAction download all QPKG download downloaded
 
-	# If download of any QPKG failed, don't execute any further actions.
+	# If download of any QPKG failed, don't execute further actions.
 
 	if QPKGs-ACdownload-er.IsNone && QPKGs-ACdownload-se.IsNone && QPKGs-ACdownload-sa.IsNone; then
 		# -> Package removal phase <-
@@ -1693,6 +1693,8 @@ PrepareArgs()
 
 	# Output:
 	#   $args[] (global)
+
+	ShowAsProc args
 
 	local a=$(Lowercase "${ARGS_RAW//,/ }")
 	args=(${a/--/})
@@ -6904,11 +6906,15 @@ QPKGs.States:List()
 QPKGs.IndependentDependent:Build()
 	{
 
+	FuncInit
+
 	# There are three tiers of package: `independent`, `auxiliary` and `dependent`.
 	# ... but only two tiers of QPKG: `independent` and `dependent`.
 
 	# `independent` QPKGs don't depend-on other QPKGs, but may be required for other QPKGs. They should be installed/activated before any `dependent` QPKGs.
 	# `dependent` QPKGs depend-on other QPKGs. They should be installed/activated after all `independent` QPKGs.
+
+	ShowAsProc tiers
 
 	for qpkg_name in "${QPKG_NAME[@]}"; do
 		QpkgSetIndex
@@ -6920,7 +6926,7 @@ QPKGs.IndependentDependent:Build()
 		fi
 	done
 
-	return 0
+	FuncExit
 
 	}
 
