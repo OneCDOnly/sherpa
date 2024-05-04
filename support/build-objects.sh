@@ -46,9 +46,6 @@ echo $public_function_name':Init()
 	{ '$_placeholder_flag_'='$state_default'
 	'$_placeholder_log_changes_flag_'='$state_logmods' ;}
 
-'$public_function_name'.IsNt()
-	{ [[ $'$_placeholder_flag_' != '\'true\'' ]] ;}
-
 '$public_function_name'.IsSet()
 	{ [[ $'$_placeholder_flag_' = '\'true\'' ]] ;}
 
@@ -56,14 +53,6 @@ echo $public_function_name':Init()
 	{ [[ $'$_placeholder_flag_' = '\'true\'' ]] && return
 	'$_placeholder_flag_'=true
 	[[ $'$_placeholder_log_changes_flag_' = '\'true\'' ]] && DebugVar '$_placeholder_flag_' ;}
-
-'$public_function_name':UnSet()
-	{ [[ $'$_placeholder_flag_' != '\'true\'' ]] && return
-	'$_placeholder_flag_'=false
-	[[ $'$_placeholder_log_changes_flag_' = '\'true\'' ]] && DebugVar '$_placeholder_flag_' ;}
-
-'$public_function_name':NoLogMods()
-	{ '$_placeholder_log_changes_flag_'=false ;}
 
 '$public_function_name':Init' >> "$target"
 

@@ -582,7 +582,9 @@ LoadEnv()
 		readonly CACHE_PATH=$THIS_PACKAGE_PATH/cache
 			readonly ACTION_TIMES_PATH=$CACHE_PATH/action.times
 			readonly BG_PROCS_PATH=$CACHE_PATH/proc
+			readonly DEPENDENT_QPKGS_LIST_PATHFILE=$CACHE_PATH/dependents
 			readonly DISPLAY_INHIBIT_PATHFILE=$CACHE_PATH/display.inhibit
+			readonly INDEPENDENT_QPKGS_LIST_PATHFILE=$CACHE_PATH/independents
 			readonly IPK_CACHE_PATH=$CACHE_PATH/IPKs
 				readonly IPK_DL_PATH=$IPK_CACHE_PATH/downloads
 				readonly IPK_DOWNGRADE_PATH=$IPK_CACHE_PATH/downgrade
@@ -1267,7 +1269,7 @@ ProcActions()
 
 	rm -f "$SESS_ACTION_RESULTS_PATHFILE" 2> /dev/null
 
-	# -> package preparation phase begins here <-
+	# -> Package preparation phase <-
 
 	ProcAction status all QPKG status statused
 
@@ -1289,12 +1291,12 @@ ProcActions()
 	ProcAction reassign all QPKG reassign reassigned
 	ProcAction download all QPKG download downloaded
 
-	# If download of any QPKG failed, don't execute any futher actions.
+	# If download of any QPKG failed, don't execute further actions.
 
-	if QPKGs-ACdownload-er.IsNone && QPKGs-ACdownload-se.IsNone; then
-		# -> package removal phase begins here <-
+	if QPKGs-ACdownload-er.IsNone && QPKGs-ACdownload-se.IsNone && QPKGs-ACdownload-sa.IsNone; then
+		# -> Package removal phase <-
 
-		for ((tier_index=${#PACKAGE_TIERS[@]}-1; tier_index>=0; tier_index--)); do	# Process tiers in-reverse
+		for ((tier_index=${#PACKAGE_TIERS[@]}-1; tier_index>=0; tier_index--)); do		# Process tiers in-reverse
 			tier=${PACKAGE_TIERS[$tier_index]}
 
 			case $tier in
@@ -1313,7 +1315,7 @@ ProcActions()
 			esac
 		done
 
-		# -> package installation phase begins here <-
+		# -> Package installation phase <-
 
 		for tier in "${PACKAGE_TIERS[@]}"; do
 			case $tier in
@@ -1337,6 +1339,7 @@ ProcActions()
 							ipks_install=true
 							ipks_upgrade=true
 							pips_install=true
+
 							break
 						fi
 					done
@@ -1378,7 +1381,7 @@ ProcActions()
 ProcAction()
 	{
 
-	# Run a single action on an entire tier of packages, asynchronously where possible.
+	# Run a single action on an entire tier of packages, asynchronously where-possible.
 
 	# Input:
 	#   $1 = $TARGET_ACTION					e.g. `activate`, `reactivate` ...
@@ -1563,6 +1566,15 @@ ProcAction()
 			wait 2>/dev/null
 			CloseActionMsgPipe
 
+			# TODO: Process unactioned QPKGs here (if-any), and mark them as aborted.
+
+# 			for package in $(QPKGs-AC${TARGET_ACTION}-to:Array); do
+# 				if ! QPKGs-AC${TARGET_ACTION}-dn.Exist "$package"; then
+# 					QPKGs-AC${TARGET_ACTION}-sa:Add "$package"
+# 					QPKGs-AC${TARGET_ACTION}-dn:Add "$package"
+# 				fi
+# 			done
+
 			[[ ${useropt_terse:=true} = false && $useropt_verbose = false ]] && echo
 			;;
 		IPK|PIP)
@@ -1683,6 +1695,8 @@ PrepareArgs()
 
 	# Output:
 	#   $args[] (global)
+
+	ShowAsProc args
 
 	local a=$(Lowercase "${ARGS_RAW//,/ }")
 	args=(${a/--/})
@@ -6588,8 +6602,8 @@ QPKGs.Missing:Show()
 	#	$? = 0 if no packages are missing
 	#	$? = 1 if one-or-more packages are missing
 
-	QPKGs.AClist.ISmissing.IsNt || return 0
-	QPKGs.ACreinstall.ISmissing.IsNt || return 0
+	! QPKGs.AClist.ISmissing.IsSet || return 0
+	! QPKGs.ACreinstall.ISmissing.IsSet || return 0
 
 	local a=''
 	local b=''
@@ -6641,8 +6655,8 @@ QPKGs.NewVers:Show()
 	#	$? = 0 if all packages are up-to-date
 	#	$? = 1 if one-or-more packages can be upgraded
 
-	QPKGs.AClist.ISupgradable.IsNt || return 0
-	QPKGs.ACupgrade.ISupgradable.IsNt || return 0
+	! QPKGs.AClist.ISupgradable.IsSet || return 0
+	! QPKGs.ACupgrade.ISupgradable.IsSet || return 0
 
 	local a=''
 	local b=''
@@ -6891,8 +6905,10 @@ QPKGs.States:List()
 
 	}
 
-QPKGs.IndependentDependent:Build()
+QPKGs.Tiers:Build()
 	{
+
+	FuncInit
 
 	# There are three tiers of package: `independent`, `auxiliary` and `dependent`.
 	# ... but only two tiers of QPKG: `independent` and `dependent`.
@@ -6900,17 +6916,45 @@ QPKGs.IndependentDependent:Build()
 	# `independent` QPKGs don't depend-on other QPKGs, but may be required for other QPKGs. They should be installed/activated before any `dependent` QPKGs.
 	# `dependent` QPKGs depend-on other QPKGs. They should be installed/activated after all `independent` QPKGs.
 
-	for qpkg_name in "${QPKG_NAME[@]}"; do
-		QpkgSetIndex
+	if [[ ${qpkgs_tiers_built:=false} = true ]]; then
+		DebugAsDone "don't build tiers: they're already built"
 
-		if QpkgIsDependent; then
-			QPKGs-GRdependent:Add "$qpkg_name"
-		else
-			QPKGs-GRindependent:Add "$qpkg_name"
-		fi
-	done
+		FuncExit; return
+	fi
 
-	return 0
+	local previous=''
+
+	if [[ ! -e $DEPENDENT_QPKGS_LIST_PATHFILE || ! -e $INDEPENDENT_QPKGS_LIST_PATHFILE ]]; then
+		ShowAsProc tiers
+		rm -f "$DEPENDENT_QPKGS_LIST_PATHFILE" "$INDEPENDENT_QPKGS_LIST_PATHFILE" 2> /dev/null
+
+		for qpkg_name in "${QPKG_NAME[@]}"; do
+			[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
+
+			QpkgSetIndex
+
+			if QpkgIsDependent; then
+				echo "$qpkg_name" >> "$DEPENDENT_QPKGS_LIST_PATHFILE"
+			else
+				echo "$qpkg_name" >> "$INDEPENDENT_QPKGS_LIST_PATHFILE"
+			fi
+		done
+
+		qpkgs_tiers_built=true
+	fi
+
+	[[ -e $DEPENDENT_QPKGS_LIST_PATHFILE ]] && QPKGs-GRdependent:Add "$(<$DEPENDENT_QPKGS_LIST_PATHFILE)"
+	[[ -e $INDEPENDENT_QPKGS_LIST_PATHFILE ]] && QPKGs-GRindependent:Add "$(<$INDEPENDENT_QPKGS_LIST_PATHFILE)"
+
+	FuncExit
+
+	}
+
+QPKGs.Tiers:Init()
+	{
+
+	rm -f "$DEPENDENT_QPKGS_LIST_PATHFILE" "$INDEPENDENT_QPKGS_LIST_PATHFILE" 2> /dev/null
+	qpkgs_tiers_built=false
 
 	}
 
@@ -7161,10 +7205,12 @@ QPKGs.IsCanBackup:Build()
 
 	FuncInit
 
-	local a=''
+	local previous=''
+	local qpkg_name=''
 
-	for a in $(QPKGs-GRall:Array); do
-		QpkgIsCanBackup "$a" && QPKGs-GRcanbackup:Add "$a"
+	for qpkg_name in $(QPKGs-GRall:Array); do
+		[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
+		QpkgIsCanBackup "$qpkg_name" && QPKGs-GRcanbackup:Add "$qpkg_name"
 	done
 
 	FuncExit
@@ -7178,10 +7224,12 @@ QPKGs.IsCanRestartToUpdate:Build()
 
 	FuncInit
 
-	local a=''
+	local previous=''
+	local qpkg_name=''
 
-	for a in $(QPKGs-GRall:Array); do
-		QpkgIsCanRestartToUpdate "$a" && QPKGs-GRcanrestarttoupdate:Add "$a"
+	for qpkg_name in $(QPKGs-GRall:Array); do
+		[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
+		QpkgIsCanRestartToUpdate "$qpkg_name" && QPKGs-GRcanrestarttoupdate:Add "$qpkg_name"
 	done
 
 	FuncExit
@@ -7195,10 +7243,12 @@ QPKGs.IsCanClean:Build()
 
 	FuncInit
 
-	local a=''
+	local previous=''
+	local qpkg_name=''
 
-	for a in $(QPKGs-GRall:Array); do
-		QpkgIsCanClean "$a" && QPKGs-GRcanclean:Add "$a"
+	for qpkg_name in $(QPKGs-GRall:Array); do
+		[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
+		QpkgIsCanClean "$qpkg_name" && QPKGs-GRcanclean:Add "$qpkg_name"
 	done
 
 	FuncExit
@@ -7224,6 +7274,7 @@ Help.Abbreviations:Show()
 	local f=''
 	local -i m=0
 	local -i n=0
+	local previous=''
 	report_cols_max=3
 
 	LoadPackages
@@ -7240,6 +7291,7 @@ Help.Abbreviations:Show()
 		} > "$REPORT_OUTPUT_PATHFILE"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
+		[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
 		((n++))
 		QpkgSetIndex
 		DisplayAsAbsReportItemLine > "$REPORTS_PATH/$n" &
@@ -7341,6 +7393,7 @@ ShowReportDependencies()
 	report_cols_max=8
 	local -i m=0
 	local -i n=0
+	local previous=''
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport dependency
@@ -7349,6 +7402,7 @@ ShowReportDependencies()
 	DisplayAsDepsReportTitleLine > "$REPORT_OUTPUT_PATHFILE"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
+		[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
 		((n++))
 		QpkgSetIndex
 		DisplayAsDepsReportItemLine > "$REPORTS_PATH/$n" &
@@ -7396,6 +7450,7 @@ ShowReportFeatures()
 	report_cols_max=7
 	local -i m=0
 	local -i n=0
+	local previous=''
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport features
@@ -7404,6 +7459,7 @@ ShowReportFeatures()
 	DisplayAsFeaturesReportTitleLine > "$REPORT_OUTPUT_PATHFILE"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
+		[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
 		((n++))
 		QpkgSetIndex
 		DisplayAsFeaturesReportItemLine > "$REPORTS_PATH/$n" &
@@ -7455,6 +7511,7 @@ ShowReportPackages()
 
 	FuncInit
 
+	local previous=''
 	report_cols_max=3
 
 	DisableDebugToArchiveAndFile
@@ -7467,6 +7524,7 @@ ShowReportPackages()
 		DisplayAsPacksReportTitleLine
 
 		for qpkg_name in $(QPKGs-GRall:Array); do
+			[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
 			QpkgSetIndex
 			DisplayAsPacksReportItemLine "$qpkg_name"
 		done
@@ -7500,6 +7558,7 @@ ShowReportRepos()
 	report_cols_max=3
 	local -i m=0
 	local -i n=0
+	local previous=''
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport repository
@@ -7507,6 +7566,7 @@ ShowReportRepos()
 	DisplayAsReposReportTitleLine > "$REPORT_OUTPUT_PATHFILE"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
+		[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
 		((n++))
 		QpkgSetIndex
 		DisplayAsReposReportItemLine > "$REPORTS_PATH/$n" &
@@ -7551,6 +7611,7 @@ ShowReportStatuses()
 	local -i m=0
 	report_cols_max=5
 	local -i n=0
+	local previous=''
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport status
@@ -7560,6 +7621,7 @@ ShowReportStatuses()
 	DisplayAsStatusReportTitleLine > "$REPORT_OUTPUT_PATHFILE"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
+		[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
 		QPKGs-ACstatus-dn.Exist "$qpkg_name" || continue
 		((n++))
 		QpkgSetIndex
@@ -13061,6 +13123,8 @@ LoadPackages()
 			if $CURL_CMD --silent --fail "$PACKAGES_ARCHIVE_URL" > "$PACKAGES_ARCHIVE_PATHFILE"; then
 				$TAR_CMD --extract --gzip --no-same-owner --file="$PACKAGES_ARCHIVE_PATHFILE" --directory="$CACHE_PATH"
 			fi
+
+			QPKGs.Tiers:Init
 		fi
 	fi
 
@@ -13168,7 +13232,7 @@ LoadPackages()
 
 	DebugVar PACKAGES_VER
 	QPKGs-GRall:Add "${QPKG_NAME[*]}"
-	QPKGs.IndependentDependent:Build
+	QPKGs.Tiers:Build
 
 	FuncExit
 
