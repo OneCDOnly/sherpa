@@ -1460,7 +1460,7 @@ ProcAction()
 				ShowKeystrokes		# Enable this before removing Entware & GNU `stty`.
 			fi
 
-			pidfile=$($MKTEMP_CMD "$BG_PROCS_PATH"/bgproc_XXXXXX)	# Set pidfile here, before launching background process so it's inherited by that process.
+			pidfile=$($MKTEMP_CMD "$BG_PROCS_PATH"/bgproc_XXXXXX)		# Set $pidfile here, before launching background process so it's inherited by that process.
 
 			_LaunchOneActionWithManyForks_ "_${PACKAGE_TYPE}:${TARGET_ACTION}_" "${target_packages[@]}" &
 
@@ -3729,7 +3729,7 @@ _LaunchOneActionWithManyForks_()
 		MarkThisAcForkAsStarted 					# Must create runfile here, as it takes too-long to happen in background function.
 		QpkgSetIndex
 
-		action_pidfile=$($MKTEMP_CMD "$BG_PROCS_PATH"/bgproc_XXXXXX)		# Set pidfile here, before launching background process so it's inherited by that process.
+		action_pidfile=$($MKTEMP_CMD "$BG_PROCS_PATH"/bgproc_XXXXXX)		# Set $action_pidfile here, before launching background process so it's inherited by that process.
 
 		$a &
 
