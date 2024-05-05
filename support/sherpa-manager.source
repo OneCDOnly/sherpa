@@ -8602,7 +8602,7 @@ OsIsSupportSignedPackages()
 
 	# NOTE: signing failed on QTS 4.3.6 (x31). No cert database.
 
-	# Let's go one-version-higher:
+	# So, let's go one-version-higher:
 
 	[[ ${NAS_FIRMWARE_VER//.} -ge 440 ]]
 
@@ -8611,7 +8611,7 @@ OsIsSupportSignedPackages()
 OsIsSupportUnofficialPackages()
 	{
 
-	# Must check for "official QPKGs" on QTS 4.3.3 & QTS 4.3.6
+	# Must check for "official QPKGs" on QTS 4.3.3 to QTS 4.3.6
 
 	[[ ${NAS_FIRMWARE_VER//.} -gt 426 && ${NAS_FIRMWARE_VER//.} -lt 440 ]]
 
@@ -8628,6 +8628,7 @@ OsIsSupportSedExtRegex()
 	{
 
 	# Test if QTS `/bin/sed` can handle extended regexes (early BusyBox versions cannot).
+
 	[[ $(echo -en "\033[1;97ma" | /bin/sed -r 's/\x1b\[[0-9;]*m//g' | /usr/bin/wc -c) -eq 1 ]]
 
 	}
@@ -8636,6 +8637,7 @@ OsIsSupportDecimalSleepSeconds()
 	{
 
 	# Test if QTS `/bin/sleep` can handle decimal seconds (early BusyBox versions cannot).
+
 	/bin/sleep .01 &>/dev/null
 
 	}
