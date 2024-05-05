@@ -1,7 +1,3 @@
-* Must also check for "official QPKGs" on QTS 4.3.6 (Milla) & 4.3.3 (Helga)
-	- Also called "Allow installation of non-QNAP Store apps".
-	- Located in uLinux.conf -> [QPKG Management] -> 'Check_Official = TRUE'
-
 * Service-scripts should shown current QPKG enabled state.
 
 * Report column headings in bright white?

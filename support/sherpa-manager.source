@@ -807,6 +807,16 @@ DebugLogEnv()
 	DebugScript 'logs path' "$LOGS_PATH"
 	DebugScript 'action concurrency' "$CONCURRENCY"
 
+	if OsIsSupportUnofficialPackages; then
+		if OsIsAllowUnofficialPackages; then
+			DebugQpkg detect 'allow unofficial' yes
+		else
+			DebugQpkg warning 'allow unofficial' no
+		fi
+	else
+		DebugQpkg detect 'allow unofficial' 'N/A'
+	fi
+
 	if OsIsSupportSignedPackages; then
 		if OsIsAllowUnsignedPackages; then
 			DebugQpkg detect 'allow unsigned' yes
@@ -8596,6 +8606,15 @@ OsIsSupportSignedPackages()
 
 	}
 
+OsIsSupportUnofficialPackages()
+	{
+
+	# Must check for "official QPKGs" on QTS 4.3.3 & QTS 4.3.6
+
+	[[ ${NAS_FIRMWARE_VER//.} -gt 426 && ${NAS_FIRMWARE_VER//.} -lt 440 ]]
+
+	}
+
 OsIsSupportSudo()
 	{
 
@@ -8622,7 +8641,14 @@ OsIsSupportDecimalSleepSeconds()
 OsIsAllowUnsignedPackages()
 	{
 
-	[[ $(/sbin/getcfg 'QPKG Management' Ignore_Cert) = TRUE ]]
+	[[ $(/sbin/getcfg 'QPKG Management' Ignore_Cert -d FALSE) = TRUE ]]
+
+	}
+
+OsIsAllowUnofficialPackages()
+	{
+
+	[[ $(/sbin/getcfg 'QPKG Management' Check_Official -d TRUE) = FALSE ]]
 
 	}
 
