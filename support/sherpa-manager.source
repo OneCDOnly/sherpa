@@ -807,6 +807,16 @@ DebugLogEnv()
 	DebugScript 'logs path' "$LOGS_PATH"
 	DebugScript 'action concurrency' "$CONCURRENCY"
 
+	if OsIsSupportUnofficialPackages; then
+		if OsIsAllowUnofficialPackages; then
+			DebugQpkg detect 'allow unofficial' yes
+		else
+			DebugQpkg warning 'allow unofficial' no
+		fi
+	else
+		DebugQpkg detect 'allow unofficial' 'N/A'
+	fi
+
 	if OsIsSupportSignedPackages; then
 		if OsIsAllowUnsignedPackages; then
 			DebugQpkg detect 'allow unsigned' yes
@@ -1271,10 +1281,10 @@ ProcActions()
 
 	# -> Package preparation phase <-
 
-	ProcAction status all QPKG status statused
+	ProcAction status all QPKG '"live" status' '"live" statused'
 
 	if [[ $useropt_show_status = false ]]; then
-		ShowAsProc 'assign QPKGs by status'				# Update action lists based-on QPKG `status`.
+		ShowAsProc 'assign QPKGs by state'				# Update action lists based-on QPKG `status`.
 
 		for action in "${USER_QPKG_ACTIONS[@]}"; do
 			for state in "${QPKG_IS_STATES[@]}"; do
@@ -1450,7 +1460,7 @@ ProcAction()
 				ShowKeystrokes		# Enable this before removing Entware & GNU `stty`.
 			fi
 
-			pidfile=$($MKTEMP_CMD "$BG_PROCS_PATH"/bgproc_XXXXXX)	# Set pidfile here, before launching background process so it's inherited by that process.
+			pidfile=$($MKTEMP_CMD "$BG_PROCS_PATH"/bgproc_XXXXXX)		# Set $pidfile here, before launching background process so it's inherited by that process.
 
 			_LaunchOneActionWithManyForks_ "_${PACKAGE_TYPE}:${TARGET_ACTION}_" "${target_packages[@]}" &
 
@@ -3213,6 +3223,7 @@ CalcIpkDepsToInstall()
 	local complete=false
 	local -a dep_acc=()
 	local element=''
+	local ipk_titles=''
 	local -i iterations=0
 	local -r ITERATION_LIMIT=20
 	local -i pre_exclude_count=0
@@ -3234,12 +3245,11 @@ CalcIpkDepsToInstall()
 	fi
 
 	DebugInfo "$requested_count IPK$(Pluralise "$requested_count") requested" "'$req_list' "
-
-	while [[ $iterations -lt $ITERATION_LIMIT ]]; do
+	while [[ $iterations -le $ITERATION_LIMIT ]]; do
 		ShowAsIterativeProgress 'resolve IPK dependencies' "$iterations" iteration "${#dep_acc[@]}" 'unique package'
 
 		((iterations++))
-		local ipk_titles=$(printf '^Package: %s$\|' "${this_list[@]}")
+		printf -v ipk_titles '^Package: %s$\|' "${this_list[@]}"
 		ipk_titles=${ipk_titles%??}		# Remove last 2 characters.
 
 		this_list=($($GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator '^Package:\|^Depends:' "$EXTERNAL_PACKAGES_PATHFILE" | $GNU_GREP_CMD -vG '^Section:\|^Version:' | $GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator "$ipk_titles" | $GNU_GREP_CMD -vG "$ipk_titles" | $GNU_GREP_CMD -vG '^Package: ' | $SED_CMD 's|^Depends: ||;s|, |\n|g' | $SORT_CMD | $UNIQ_CMD))
@@ -3719,7 +3729,7 @@ _LaunchOneActionWithManyForks_()
 		MarkThisAcForkAsStarted 					# Must create runfile here, as it takes too-long to happen in background function.
 		QpkgSetIndex
 
-		action_pidfile=$($MKTEMP_CMD "$BG_PROCS_PATH"/bgproc_XXXXXX)		# Set pidfile here, before launching background process so it's inherited by that process.
+		action_pidfile=$($MKTEMP_CMD "$BG_PROCS_PATH"/bgproc_XXXXXX)		# Set $action_pidfile here, before launching background process so it's inherited by that process.
 
 		$a &
 
@@ -4224,7 +4234,7 @@ DisplayAsProjSynExam()
 	printf "\n${CHARS_BULLET}%s" "$(Capitalise "${1:-}")"
 	[[ ${1: -1} != '!' ]] && printf ':'
 
-	printf "\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_SUDO_PREFIX}%s\n" '' "sherpa ${2:-}"
+	printf "\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_SUDO_PREFIX}sherpa %s\n" '' "${2:-}"
 
 	}
 
@@ -4243,7 +4253,7 @@ DisplayAsProjSynIndentExam()
 		printf '\n'
 	fi
 
-	printf "%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_SUDO_PREFIX}%s\n" '' "sherpa ${2:-}"
+	printf "%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_SUDO_PREFIX}sherpa %s\n" '' "${2:-}"
 
 	}
 
@@ -6509,8 +6519,10 @@ InitForkCounts()
 IncForkProgressIndex()
 	{
 
+	local a
+
 	((progress_index++))
-	local a=$(printf '%02d' "$progress_index")
+	printf -v a '%02d' "$progress_index"
 
 	proc_fork_pathfile=$proc_fork_count_path/$a
 	proc_ok_pathfile=$proc_ok_count_path/$a
@@ -6961,19 +6973,18 @@ QPKGs.Tiers:Init()
 QPKGs.States:Build()
 	{
 
-	# Builds several lists of QPKGs:
-	#   - can be installed or reinstalled by the user
-	#   - are installed or not
-	#   - can be upgraded
-	#   - are enabled or disabled in [/etc/config/qpkg.conf]
-	#   - are active or inactive
-	#   - have backup files in backup location
-	#   - have config blocks in [/etc/config/qpkg.conf], but no files on-disk
-	#   - those in the process of starting, stopping, or restarting
+	# Build several lists of QPKGs:
+	#   - installed/not.
+	#   - installable/not.
+	#   - upgradable/not.
+	#   - enabled/disabled.
+	#   - have backup files in backup location/not.
+	#   - have config blocks in [/etc/config/qpkg.conf], but no files on-disk (missing).
+	#   - starting, stopping, or restarting.
 
 	FuncInit
 
-	local a=''
+	local previous=''
 	local b=''
 	local c=''
 
@@ -7004,35 +7015,40 @@ QPKGs.States:Build()
 	# Faster to launch several concurrent loops in the background, than a single loop. Launch those requiring more processing-time first.
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		[[ $qpkg_name = "$a" ]] && continue || a=$qpkg_name
-		QpkgSetIndex
-
-		if QpkgIsNtInstalled; then
-			if QpkgIsInstallable; then
-				echo installable
-			else
-				echo notinstallable
-			fi >> "$QPKG_STATES_PATH/$qpkg_name"
-		fi
-	done &
-
-	for qpkg_name in $(QPKGs-GRall:Array); do
-		[[ $qpkg_name = "$a" ]] && continue || a=$qpkg_name
+		[[ $qpkg_name = "$previous" ]] && continue || previous=$qpkg_name
 		QpkgSetIndex
 
 		if QpkgIsInstalled; then
-			echo installed							# Only write this once per-file.
-
-			if QpkgIsUpgradable; then
-				echo upgradable
-			else
-				echo notupgradable
-			fi
+			echo installed
+		else
+			echo notinstalled
 		fi >> "$QPKG_STATES_PATH/$qpkg_name"
 	done &
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		[[ $qpkg_name = "$a" ]] && continue || a=$qpkg_name
+		[[ $qpkg_name = "$previous" ]] && continue || previous=$qpkg_name
+		QpkgSetIndex
+
+		if QpkgIsInstallable; then
+			echo installable
+		else
+			echo notinstallable
+		fi >> "$QPKG_STATES_PATH/$qpkg_name"
+	done &
+
+	for qpkg_name in $(QPKGs-GRall:Array); do
+		[[ $qpkg_name = "$previous" ]] && continue || previous=$qpkg_name
+		QpkgSetIndex
+
+		if QpkgIsUpgradable; then
+			echo upgradable
+		else
+			echo notupgradable
+		fi >> "$QPKG_STATES_PATH/$qpkg_name"
+	done &
+
+	for qpkg_name in $(QPKGs-GRall:Array); do
+		[[ $qpkg_name = "$previous" ]] && continue || previous=$qpkg_name
 		QpkgSetIndex
 
 		if QpkgIsInstalled; then
@@ -7045,34 +7061,24 @@ QPKGs.States:Build()
 	done &
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		[[ $qpkg_name = "$a" ]] && continue || a=$qpkg_name
+		[[ $qpkg_name = "$previous" ]] && continue || previous=$qpkg_name
 		QpkgSetIndex
 
-		if QpkgIsCanBackup; then
-			echo backupable
-
-			if QpkgIsBackupExist; then
-				echo backedup
-			else
-				echo notbackedup
-			fi >> "$QPKG_STATES_PATH/$qpkg_name"
+		if QpkgIsBackupExist; then
+			echo backedup
 		else
-			echo notbackupable
+			echo notbackedup
 		fi >> "$QPKG_STATES_PATH/$qpkg_name"
 	done &
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		[[ $qpkg_name = "$a" ]] && continue || a=$qpkg_name
+		[[ $qpkg_name = "$previous" ]] && continue || previous=$qpkg_name
 		QpkgSetIndex
 
-		if QpkgIsInstalled; then
-			if QpkgIsMissing; then
-				echo missing
-			else
-				echo notmissing
-			fi
+		if QpkgIsMissing; then
+			echo missing
 		else
-			echo notinstalled
+			echo notmissing
 		fi >> "$QPKG_STATES_PATH/$qpkg_name"
 	done &
 
@@ -7081,7 +7087,7 @@ QPKGs.States:Build()
 	# Load status lines from individual files.
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		[[ $qpkg_name = "$a" ]] && continue || a=$qpkg_name
+		[[ $qpkg_name = "$previous" ]] && continue || previous=$qpkg_name
 
 		c=/var/run/$qpkg_name.last.operation
 
@@ -8602,6 +8608,15 @@ OsIsSupportSignedPackages()
 
 	}
 
+OsIsSupportUnofficialPackages()
+	{
+
+	# Must check for "official QPKGs" on QTS 4.3.3 & QTS 4.3.6
+
+	[[ ${NAS_FIRMWARE_VER//.} -gt 426 && ${NAS_FIRMWARE_VER//.} -lt 440 ]]
+
+	}
+
 OsIsSupportSudo()
 	{
 
@@ -8628,7 +8643,14 @@ OsIsSupportDecimalSleepSeconds()
 OsIsAllowUnsignedPackages()
 	{
 
-	[[ $(/sbin/getcfg 'QPKG Management' Ignore_Cert) = TRUE ]]
+	[[ $(/sbin/getcfg 'QPKG Management' Ignore_Cert -d FALSE) = TRUE ]]
+
+	}
+
+OsIsAllowUnofficialPackages()
+	{
+
+	[[ $(/sbin/getcfg 'QPKG Management' Check_Official -d TRUE) = FALSE ]]
 
 	}
 
@@ -12537,7 +12559,7 @@ AddPeriod()
 
 	[[ -n ${1:-} ]] || return
 
-	[[ ${1: -1} != ':' && ${1: -1} != '?' && ${1: -1} != '.' ]] && printf '%s' "${1}." || printf '%s' "$1"
+	[[ ${1: -1} != ':' && ${1: -1} != '?' && ${1: -1} != '.' ]] && printf '%s.' "$1" || printf '%s' "$1"
 
 	}
 
