@@ -1274,7 +1274,7 @@ ProcActions()
 	ProcAction status all QPKG '"live" status' '"live" statused'
 
 	if [[ $useropt_show_status = false ]]; then
-		ShowAsProc 'assign QPKGs by "live" status'				# Update action lists based-on QPKG `status`.
+		ShowAsProc 'assign QPKGs by state'				# Update action lists based-on QPKG `status`.
 
 		for action in "${USER_QPKG_ACTIONS[@]}"; do
 			for state in "${QPKG_IS_STATES[@]}"; do
