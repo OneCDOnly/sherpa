@@ -6961,19 +6961,18 @@ QPKGs.Tiers:Init()
 QPKGs.States:Build()
 	{
 
-	# Builds several lists of QPKGs:
-	#   - can be installed or reinstalled by the user
-	#   - are installed or not
-	#   - can be upgraded
-	#   - are enabled or disabled in [/etc/config/qpkg.conf]
-	#   - are active or inactive
-	#   - have backup files in backup location
-	#   - have config blocks in [/etc/config/qpkg.conf], but no files on-disk
-	#   - those in the process of starting, stopping, or restarting
+	# Build several lists of QPKGs:
+	#   - installed/not.
+	#   - installable/not.
+	#   - upgradable/not.
+	#   - enabled/disabled.
+	#   - have backup files in backup location/not.
+	#   - have config blocks in [/etc/config/qpkg.conf], but no files on-disk (missing).
+	#   - starting, stopping, or restarting.
 
 	FuncInit
 
-	local a=''
+	local previous=''
 	local b=''
 	local c=''
 
@@ -7004,35 +7003,40 @@ QPKGs.States:Build()
 	# Faster to launch several concurrent loops in the background, than a single loop. Launch those requiring more processing-time first.
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		[[ $qpkg_name = "$a" ]] && continue || a=$qpkg_name
-		QpkgSetIndex
-
-		if QpkgIsNtInstalled; then
-			if QpkgIsInstallable; then
-				echo installable
-			else
-				echo notinstallable
-			fi >> "$QPKG_STATES_PATH/$qpkg_name"
-		fi
-	done &
-
-	for qpkg_name in $(QPKGs-GRall:Array); do
-		[[ $qpkg_name = "$a" ]] && continue || a=$qpkg_name
+		[[ $qpkg_name = "$previous" ]] && continue || previous=$qpkg_name
 		QpkgSetIndex
 
 		if QpkgIsInstalled; then
-			echo installed							# Only write this once per-file.
-
-			if QpkgIsUpgradable; then
-				echo upgradable
-			else
-				echo notupgradable
-			fi
+			echo installed
+		else
+			echo notinstalled
 		fi >> "$QPKG_STATES_PATH/$qpkg_name"
 	done &
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		[[ $qpkg_name = "$a" ]] && continue || a=$qpkg_name
+		[[ $qpkg_name = "$previous" ]] && continue || previous=$qpkg_name
+		QpkgSetIndex
+
+		if QpkgIsInstallable; then
+			echo installable
+		else
+			echo notinstallable
+		fi >> "$QPKG_STATES_PATH/$qpkg_name"
+	done &
+
+	for qpkg_name in $(QPKGs-GRall:Array); do
+		[[ $qpkg_name = "$previous" ]] && continue || previous=$qpkg_name
+		QpkgSetIndex
+
+		if QpkgIsUpgradable; then
+			echo upgradable
+		else
+			echo notupgradable
+		fi >> "$QPKG_STATES_PATH/$qpkg_name"
+	done &
+
+	for qpkg_name in $(QPKGs-GRall:Array); do
+		[[ $qpkg_name = "$previous" ]] && continue || previous=$qpkg_name
 		QpkgSetIndex
 
 		if QpkgIsInstalled; then
@@ -7045,34 +7049,24 @@ QPKGs.States:Build()
 	done &
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		[[ $qpkg_name = "$a" ]] && continue || a=$qpkg_name
+		[[ $qpkg_name = "$previous" ]] && continue || previous=$qpkg_name
 		QpkgSetIndex
 
-		if QpkgIsCanBackup; then
-			echo backupable
-
-			if QpkgIsBackupExist; then
-				echo backedup
-			else
-				echo notbackedup
-			fi >> "$QPKG_STATES_PATH/$qpkg_name"
+		if QpkgIsBackupExist; then
+			echo backedup
 		else
-			echo notbackupable
+			echo notbackedup
 		fi >> "$QPKG_STATES_PATH/$qpkg_name"
 	done &
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		[[ $qpkg_name = "$a" ]] && continue || a=$qpkg_name
+		[[ $qpkg_name = "$previous" ]] && continue || previous=$qpkg_name
 		QpkgSetIndex
 
-		if QpkgIsInstalled; then
-			if QpkgIsMissing; then
-				echo missing
-			else
-				echo notmissing
-			fi
+		if QpkgIsMissing; then
+			echo missing
 		else
-			echo notinstalled
+			echo notmissing
 		fi >> "$QPKG_STATES_PATH/$qpkg_name"
 	done &
 
@@ -7081,7 +7075,7 @@ QPKGs.States:Build()
 	# Load status lines from individual files.
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		[[ $qpkg_name = "$a" ]] && continue || a=$qpkg_name
+		[[ $qpkg_name = "$previous" ]] && continue || previous=$qpkg_name
 
 		c=/var/run/$qpkg_name.last.operation
 
