@@ -3223,6 +3223,7 @@ CalcIpkDepsToInstall()
 	local complete=false
 	local -a dep_acc=()
 	local element=''
+	local ipk_titles=''
 	local -i iterations=0
 	local -r ITERATION_LIMIT=20
 	local -i pre_exclude_count=0
@@ -3244,12 +3245,11 @@ CalcIpkDepsToInstall()
 	fi
 
 	DebugInfo "$requested_count IPK$(Pluralise "$requested_count") requested" "'$req_list' "
-
-	while [[ $iterations -lt $ITERATION_LIMIT ]]; do
+	while [[ $iterations -le $ITERATION_LIMIT ]]; do
 		ShowAsIterativeProgress 'resolve IPK dependencies' "$iterations" iteration "${#dep_acc[@]}" 'unique package'
 
 		((iterations++))
-		local ipk_titles=$(printf '^Package: %s$\|' "${this_list[@]}")
+		printf -v ipk_titles '^Package: %s$\|' "${this_list[@]}"
 		ipk_titles=${ipk_titles%??}		# Remove last 2 characters.
 
 		this_list=($($GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator '^Package:\|^Depends:' "$EXTERNAL_PACKAGES_PATHFILE" | $GNU_GREP_CMD -vG '^Section:\|^Version:' | $GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator "$ipk_titles" | $GNU_GREP_CMD -vG "$ipk_titles" | $GNU_GREP_CMD -vG '^Package: ' | $SED_CMD 's|^Depends: ||;s|, |\n|g' | $SORT_CMD | $UNIQ_CMD))
@@ -4234,7 +4234,7 @@ DisplayAsProjSynExam()
 	printf "\n${CHARS_BULLET}%s" "$(Capitalise "${1:-}")"
 	[[ ${1: -1} != '!' ]] && printf ':'
 
-	printf "\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_SUDO_PREFIX}%s\n" '' "sherpa ${2:-}"
+	printf "\n%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_SUDO_PREFIX}sherpa %s\n" '' "${2:-}"
 
 	}
 
@@ -4253,7 +4253,7 @@ DisplayAsProjSynIndentExam()
 		printf '\n'
 	fi
 
-	printf "%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_SUDO_PREFIX}%s\n" '' "sherpa ${2:-}"
+	printf "%${HELP_SYNTAX_INDENT}s${HELP_SYNTAX_SUDO_PREFIX}sherpa %s\n" '' "${2:-}"
 
 	}
 
@@ -6519,8 +6519,10 @@ InitForkCounts()
 IncForkProgressIndex()
 	{
 
+	local a
+
 	((progress_index++))
-	local a=$(printf '%02d' "$progress_index")
+	printf -v a '%02d' "$progress_index"
 
 	proc_fork_pathfile=$proc_fork_count_path/$a
 	proc_ok_pathfile=$proc_ok_count_path/$a
@@ -12557,7 +12559,7 @@ AddPeriod()
 
 	[[ -n ${1:-} ]] || return
 
-	[[ ${1: -1} != ':' && ${1: -1} != '?' && ${1: -1} != '.' ]] && printf '%s' "${1}." || printf '%s' "$1"
+	[[ ${1: -1} != ':' && ${1: -1} != '?' && ${1: -1} != '.' ]] && printf '%s.' "$1" || printf '%s' "$1"
 
 	}
 
