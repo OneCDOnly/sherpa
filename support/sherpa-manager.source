@@ -4274,12 +4274,12 @@ DisplayAsSynExam()
 DisplayAsIndentItem()
 	{
 
-	# Display as an indented, non-bulleted item.
+	# Display as an indented, bulleted item.
 
 	# Input:
 	#	$1 = item
 
-	printf "\n%${HELP_DESC_INDENT}s%s\n" '' "$(Capitalise "${1:-}")"
+	printf "\n%${HELP_DESC_INDENT}s${CHARS_BULLET}%s\n" '' "$(Capitalise "${1:-}")"
 
 	}
 
@@ -4964,6 +4964,7 @@ DisplayAsDepsReportItemLine()
 	[[ -n $max_os && $max_os != none && ${#max_os} -eq 3 ]] && max_os=${max_os:0:1}.${max_os:1:1}.${max_os:2:1}
 	[[ -n $min_os && $min_os != none && ${#min_os} -eq 3 ]] && min_os=${min_os:0:1}.${min_os:1:1}.${min_os:2:1}
 	[[ $min_ram != none ]] && min_ram=$(FormatAsThous "$min_ram")kB
+	$TOUCH_CMD "$REPORT_FLAGS_PATH"/deps
 
 	if QpkgIsMissing; then
 		mode=highlighted
@@ -7438,8 +7439,6 @@ ShowReportDependencies()
 
 	[[ -n $a ]] && echo -en "$a" >> "$REPORT_OUTPUT_PATHFILE"
 
-	DisplayAsHelpTitle "package dependencies are automatically installed/started/stopped/restarted as-required by $(ShowAsTitleName)." >> "$REPORT_OUTPUT_PATHFILE"
-
 	IncludeReportGlossary
 
 	EraseThisLine
@@ -7674,6 +7673,10 @@ IncludeReportGlossary()
 	{
 
 	DisplayAsHelpTitle 'report glossary:'
+
+	if [[ -e "$REPORT_FLAGS_PATH"/deps ]]; then
+		DisplayAsIndentItem "package dependencies are automatically installed/started/stopped/restarted as-required by $(ShowAsTitleName)."
+	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/status-missing ]]; then
 		DisplayAsGlossaryIndentItem "$(TextBrightRed '! missing')" 'the QPKG is missing from its installation path. Reinstall it.'

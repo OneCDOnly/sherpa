@@ -1,7 +1,5 @@
 Observed issues:
 
-	* Move dependencies report note (about auto start/stop etc...) into glossary.
-
 	* Takes ~3.5 - 4.5 seconds to build QPKG states on Laura.
 		- Should be able to do this quicker.
 		- Calculate QPKG features separate to states and cache/load these from file next time?
