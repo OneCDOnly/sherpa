@@ -7029,19 +7029,8 @@ QPKGs.States:Build()
 
 	# Faster to launch several concurrent loops in the background, than a single loop. Launch those requiring more processing-time first.
 
+# 	time for qpkg_name in $(QPKGs-GRall:Array); do
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		[[ $qpkg_name = "$previous" ]] && continue || previous=$qpkg_name
-		QpkgSetIndex
-
-		if QpkgIsInstalled; then
-			echo installed
-		else
-			echo notinstalled
-		fi >> "$QPKG_STATES_PATH/$qpkg_name"
-	done &
-
-	for qpkg_name in $(QPKGs-GRall:Array); do
-		[[ $qpkg_name = "$previous" ]] && continue || previous=$qpkg_name
 		QpkgSetIndex
 
 		if QpkgIsInstallable; then
@@ -7049,10 +7038,23 @@ QPKGs.States:Build()
 		else
 			echo notinstallable
 		fi >> "$QPKG_STATES_PATH/$qpkg_name"
+# 	done #&
 	done &
 
+# 	time for qpkg_name in $(QPKGs-GRall:Array); do
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		[[ $qpkg_name = "$previous" ]] && continue || previous=$qpkg_name
+		QpkgSetIndex
+
+		if QpkgIsMissing; then
+			echo missing
+		else
+			echo notmissing
+		fi >> "$QPKG_STATES_PATH/$qpkg_name"
+# 	done #&
+	done &
+
+# 	time for qpkg_name in $(QPKGs-GRall:Array); do
+	for qpkg_name in $(QPKGs-GRall:Array); do
 		QpkgSetIndex
 
 		if QpkgIsUpgradable; then
@@ -7060,10 +7062,11 @@ QPKGs.States:Build()
 		else
 			echo notupgradable
 		fi >> "$QPKG_STATES_PATH/$qpkg_name"
+# 	done #&
 	done &
 
+# 	time for qpkg_name in $(QPKGs-GRall:Array); do
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		[[ $qpkg_name = "$previous" ]] && continue || previous=$qpkg_name
 		QpkgSetIndex
 
 		if QpkgIsInstalled; then
@@ -7073,10 +7076,23 @@ QPKGs.States:Build()
 				echo notenabled
 			fi
 		fi >> "$QPKG_STATES_PATH/$qpkg_name"
+# 	done #&
 	done &
 
+# 	time for qpkg_name in $(QPKGs-GRall:Array); do
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		[[ $qpkg_name = "$previous" ]] && continue || previous=$qpkg_name
+		QpkgSetIndex
+
+		if QpkgIsInstalled; then
+			echo installed
+		else
+			echo notinstalled
+		fi >> "$QPKG_STATES_PATH/$qpkg_name"
+# 	done #&
+	done &
+
+# 	time for qpkg_name in $(QPKGs-GRall:Array); do
+	for qpkg_name in $(QPKGs-GRall:Array); do
 		QpkgSetIndex
 
 		if QpkgIsBackupExist; then
@@ -7084,17 +7100,7 @@ QPKGs.States:Build()
 		else
 			echo notbackedup
 		fi >> "$QPKG_STATES_PATH/$qpkg_name"
-	done &
-
-	for qpkg_name in $(QPKGs-GRall:Array); do
-		[[ $qpkg_name = "$previous" ]] && continue || previous=$qpkg_name
-		QpkgSetIndex
-
-		if QpkgIsMissing; then
-			echo missing
-		else
-			echo notmissing
-		fi >> "$QPKG_STATES_PATH/$qpkg_name"
+# 	done #&
 	done &
 
 	wait 2>/dev/null
@@ -7102,8 +7108,6 @@ QPKGs.States:Build()
 	# Load status lines from individual files.
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		[[ $qpkg_name = "$previous" ]] && continue || previous=$qpkg_name
-
 		c=/var/run/$qpkg_name.last.operation
 
 		if [[ -e $c ]]; then
@@ -7230,7 +7234,6 @@ QPKGs.IsCanBackup:Build()
 	local qpkg_name=''
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
 		QpkgIsCanBackup "$qpkg_name" && QPKGs-GRcanbackup:Add "$qpkg_name"
 	done
 
@@ -7249,7 +7252,6 @@ QPKGs.IsCanRestartToUpdate:Build()
 	local qpkg_name=''
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
 		QpkgIsCanRestartToUpdate "$qpkg_name" && QPKGs-GRcanrestarttoupdate:Add "$qpkg_name"
 	done
 
@@ -7268,7 +7270,6 @@ QPKGs.IsCanClean:Build()
 	local qpkg_name=''
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
 		QpkgIsCanClean "$qpkg_name" && QPKGs-GRcanclean:Add "$qpkg_name"
 	done
 
@@ -7312,7 +7313,6 @@ Help.Abbreviations:Show()
 		} > "$REPORT_OUTPUT_PATHFILE"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
 		((n++))
 		QpkgSetIndex
 		DisplayAsAbsReportItemLine > "$REPORTS_PATH/$n" &
@@ -7421,7 +7421,6 @@ ShowReportDependencies()
 	DisplayAsDepsReportTitleLine > "$REPORT_OUTPUT_PATHFILE"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
 		((n++))
 		QpkgSetIndex
 		DisplayAsDepsReportItemLine > "$REPORTS_PATH/$n" &
@@ -7478,7 +7477,6 @@ ShowReportFeatures()
 	DisplayAsFeaturesReportTitleLine > "$REPORT_OUTPUT_PATHFILE"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
 		((n++))
 		QpkgSetIndex
 		DisplayAsFeaturesReportItemLine > "$REPORTS_PATH/$n" &
@@ -7543,7 +7541,6 @@ ShowReportPackages()
 		DisplayAsPacksReportTitleLine
 
 		for qpkg_name in $(QPKGs-GRall:Array); do
-			[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
 			QpkgSetIndex
 			DisplayAsPacksReportItemLine "$qpkg_name"
 		done
@@ -7585,7 +7582,6 @@ ShowReportRepos()
 	DisplayAsReposReportTitleLine > "$REPORT_OUTPUT_PATHFILE"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
 		((n++))
 		QpkgSetIndex
 		DisplayAsReposReportItemLine > "$REPORTS_PATH/$n" &
@@ -7640,7 +7636,6 @@ ShowReportStatuses()
 	DisplayAsStatusReportTitleLine > "$REPORT_OUTPUT_PATHFILE"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
 		QPKGs-ACstatus-dn.Exist "$qpkg_name" || continue
 		((n++))
 		QpkgSetIndex
@@ -13161,6 +13156,8 @@ LoadPackages()
 
 	FuncInit
 
+	local previous=''
+
 	LoadObjects
 
 	if [[ ! -e $PWD/dont-refresh-packages ]]; then
@@ -13278,7 +13275,12 @@ LoadPackages()
 	readonly PACKAGES_VER
 
 	DebugVar PACKAGES_VER
-	QPKGs-GRall:Add "${QPKG_NAME[*]}"
+
+	for qpkg_name in "${QPKG_NAME[@]}"; do					# Ensure only first entry for each QPKG name is added to "GRall" array.
+		[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
+		QPKGs-GRall:Add "$qpkg_name"
+	done
+
 	QPKGs.Tiers:Build
 
 	FuncExit

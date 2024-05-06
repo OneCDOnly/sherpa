@@ -1,11 +1,13 @@
 Observed issues:
 
+	* Move dependencies report note (about auto start/stop etc...) into glossary.
+
+	* Takes ~3.5 - 4.5 seconds to build QPKG states on Laura.
+		- Should be able to do this quicker.
+		- Calculate QPKG features separate to states and cache/load these from file next time?
+
 	* Python module cleaner in service library functions is removing PyPI packages with a partial name match.
 		- Must be changed to a complete match.
-
-	* Takes ~3.4 seconds to build QPKG states on Laura.
-		- Should be able to do this quicker.
-		- Calculate QPKG features separate to states and cache/load these from file next time.
 
 	* 'sherpa' and 'opkg' were not available after installing Entware.
 		- Entware installation may be corrupt.
