@@ -5593,6 +5593,8 @@ DisplayAsBacksReportItemLine()
 		mode=normal
 	fi
 
+	file_bytes=$(FormatAsThous "$file_bytes")
+
 	case $mode in
 		normal)
 			epoch_time_msg+=$(/bin/date -d @"$epoch_time" +%c)
