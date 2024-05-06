@@ -1,3 +1,5 @@
+* Features report should display current "auto-update" setting for each QPKG.
+
 * Service-scripts should shown current QPKG enabled state.
 
 * Report column headings in bright white?

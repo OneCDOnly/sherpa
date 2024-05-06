@@ -4279,33 +4279,20 @@ DisplayAsIndentItem()
 	# Input:
 	#	$1 = item
 
-	printf "\n%${HELP_DESC_INDENT}s${CHARS_BULLET}%s\n" '' "$(Capitalise "${1:-}")"
+	printf "%${HELP_DESC_INDENT}s${CHARS_BULLET}%s\n" '' "$(Capitalise "${1:-}")"
 
 	}
 
 DisplayAsGlossaryIndentItem()
 	{
 
-	# Display as an indented, non-bulleted item, formatted for two fields.
+	# Display as an indented, bulleted item, formatted for two fields.
 
 	# Input:
 	#	$1 = word
 	#	$2 = description
 
-	printf "\n%${HELP_DESC_INDENT}s'%s': %s\n" '' "${1:-}" "$(Capitalise "${2:-}")"
-
-	}
-
-DisplayAsColumnExplainedIndentItem()
-	{
-
-	# Display as an indented, non-bulleted item, condensed-line format, formatted for two fields.
-
-	# Input:
-	#	$1 = word
-	#	$2 = description
-
-	printf "%${HELP_DESC_INDENT}s%s: %s\n" '' "'${1:-}'" "${2:-}"
+	printf "%${HELP_DESC_INDENT}s${CHARS_BULLET}'%s' = %s\n" '' "${1:-}" "$(Capitalise "${2:-}")"
 
 	}
 
@@ -4491,6 +4478,7 @@ DisplayAsStatusReportItemLine()
 	fi
 
 	[[ $(QpkgGetApplVer "$qpkg_name") = dynamic ]] && $TOUCH_CMD "$REPORT_FLAGS_PATH"/app-dynamic
+	[[ $(QpkgGetApplVer "$qpkg_name") = final ]] && $TOUCH_CMD "$REPORT_FLAGS_PATH"/app-final
 
 	case $mode in
 		normal)
@@ -7496,12 +7484,12 @@ ShowReportFeatures()
 		{
 
 		DisplayAsHelpTitle 'column headings:'
-		DisplayAsColumnExplainedIndentItem 'Backup?' "service-script supports application config 'backup' and 'restore'."
-		DisplayAsColumnExplainedIndentItem 'Clean?' "service-script supports application 'clean'ing."
-		DisplayAsColumnExplainedIndentItem 'Restart?' "service-script supports restarting to update application."
-		DisplayAsColumnExplainedIndentItem 'Test?' "service-script has a builtin 'status' check, and can test for daemon live status."
-		DisplayAsColumnExplainedIndentItem 'Independent?' "this QPKG is independent of other QPKGs."
-		DisplayAsColumnExplainedIndentItem 'Compatible?' "QPKG is compatible with this NAS arch."
+		DisplayAsGlossaryIndentItem 'Backup?' "service-script supports application config 'backup' and 'restore'."
+		DisplayAsGlossaryIndentItem 'Clean?' "service-script supports application 'clean'ing."
+		DisplayAsGlossaryIndentItem 'Restart?' "service-script supports restarting to update application."
+		DisplayAsGlossaryIndentItem 'Test?' "service-script has a builtin 'status' check, and can test for daemon \"live\" status."
+		DisplayAsGlossaryIndentItem 'Independent?' "this QPKG is independent of other QPKGs."
+		DisplayAsGlossaryIndentItem 'Compatible?' "QPKG is compatible with this NAS arch."
 
 		} >> "$REPORT_OUTPUT_PATHFILE"
 
@@ -7683,35 +7671,39 @@ IncludeReportGlossary()
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/state-disabled ]]; then
-		DisplayAsGlossaryIndentItem "$(TextBrightRed disabled)" "the QPKG application won't start at bootup, and (usually) can't be started manually. Enable it first, then start it."
+		DisplayAsGlossaryIndentItem "$(TextBrightRed disabled)" "the application won't start at bootup. Enable it first, then start it."
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/state-enabled ]]; then
-		DisplayAsGlossaryIndentItem "$(TextBrightGreen enabled)" 'the QPKG application will start automatically at bootup, and is (usually) required so QPKGs can be started manually.'
+		DisplayAsGlossaryIndentItem "$(TextBrightGreen enabled)" 'the application will start automatically at bootup.'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/state-inactive ]]; then
-		DisplayAsGlossaryIndentItem "$(TextBrightRed inactive)" 'the QPKG application is dead or not-started. Try starting/activating it.'
+		DisplayAsGlossaryIndentItem "$(TextBrightRed inactive)" 'the application is dead or not-started. Try starting/activating it.'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/status-stopping ]]; then
-		DisplayAsGlossaryIndentItem "$(TextBrightOrange stopping)" 'the QPKG application is shutting-down. Try checking the status again shortly.'
+		DisplayAsGlossaryIndentItem "$(TextBrightOrange stopping)" 'the application is shutting-down. Try checking again shortly.'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/status-slow ]]; then
-		DisplayAsGlossaryIndentItem "$(TextBrightOrange slow)" 'the QPKG application is alive, but took too-long to respond to the status request. This is more common on NAS with lower installed RAM, and is usually because the application has been page-swapped to disk and must be reloaded into RAM. Try checking the status again shortly.'
+		DisplayAsGlossaryIndentItem "$(TextBrightOrange slow)" 'the application is alive, but took too-long to respond to the status request. This is more common on NAS with lower installed RAM, and is usually because the application has been page-swapped to disk and must be reloaded into RAM. Try checking the status again shortly.'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/status-starting ]]; then
-		DisplayAsGlossaryIndentItem "$(TextBrightOrange starting)" 'the QPKG application is being launched. Try checking the status again shortly.'
+		DisplayAsGlossaryIndentItem "$(TextBrightOrange starting)" 'the application is being launched. Try checking again shortly.'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/status-active ]]; then
-		DisplayAsGlossaryIndentItem "$(TextBrightGreen active)" "the QPKG application is alive (and responsive if it's a daemon). This is good."
+		DisplayAsGlossaryIndentItem "$(TextBrightGreen active)" "the application is alive (and responsive if it's a daemon)."
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/app-dynamic ]]; then
 		DisplayAsGlossaryIndentItem dynamic 'the application version is the latest available online.'
+	fi
+
+	if [[ -e "$REPORT_FLAGS_PATH"/app-final ]]; then
+		DisplayAsGlossaryIndentItem final 'the application version is the last available.'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/req-attention ]]; then
