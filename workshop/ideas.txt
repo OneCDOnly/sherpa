@@ -48,8 +48,6 @@
     - Would need to store full application description, port numbers, application source.
     - Maybe consider another local source file, that builds 'packages.source' first?
 
-* Don't start deactivated QPKGs (unless-requested) during 'install all'.
-
 * In production, sherpa 'stable' branch should only update once per-day.
     - 'unstable' should update once per 10 minutes.
 

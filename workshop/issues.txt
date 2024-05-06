@@ -1,5 +1,65 @@
 Observed issues:
 
+	* aarch64 (Laura) 'sherpa install all' showed this after results report was displayed:
+		-------------------------------------------------------------------------------------------------------------------------
+		...
+		• These actions failed (and why):
+			"sign" Deluge-web in 6 seconds (For more information: /etc/init.d/deluge-web.sh log)
+			"sign" inxi in 5 seconds (For more information: /etc/init.d/inxi.sh log)
+
+
+		• Please consider creating a new issue for this on GitHub: https://github.com/OneCDOnly/sherpa/issues
+
+		• Alternatively, post on the QNAP NAS Community Forum: https://forum.qnap.com/viewtopic.php?f=320&t=132373
+
+		View only the most recent sherpa session log:
+			# sherpa last
+
+		View the entire sherpa session log:
+			# sherpa log
+
+		Upload the most-recent 5,000 lines in your sherpa log to the https://termbin.com public pastebin. A URL will be generated afterward:
+			# sherpa paste log
+
+		• If you need help, please include a copy of your sherpa log for analysis!
+		-------------------------------------------------------------------------------------------------------------------------
+
+	* x86 (Sarah) is writing files into /root/.cache
+		-------------------------------------------------------------------------------------------------------------------------
+		[~] # du -h .cache/
+		36K     .cache/pip/http-v2/a/1/9/5/3
+		37K     .cache/pip/http-v2/a/1/9/5
+		38K     .cache/pip/http-v2/a/1/9
+		39K     .cache/pip/http-v2/a/1
+		40K     .cache/pip/http-v2/a
+		34K     .cache/pip/http-v2/d/8/7/b/2
+		35K     .cache/pip/http-v2/d/8/7/b
+		36K     .cache/pip/http-v2/d/8/7
+		37K     .cache/pip/http-v2/d/8
+		38K     .cache/pip/http-v2/d
+		48K     .cache/pip/http-v2/e/1/3/7/4
+		49K     .cache/pip/http-v2/e/1/3/7
+		50K     .cache/pip/http-v2/e/1/3
+		51K     .cache/pip/http-v2/e/1
+		52K     .cache/pip/http-v2/e
+		26K     .cache/pip/http-v2/0/1/a/4/0
+		27K     .cache/pip/http-v2/0/1/a/4
+		28K     .cache/pip/http-v2/0/1/a
+		29K     .cache/pip/http-v2/0/1
+		30K     .cache/pip/http-v2/0
+		8.0K    .cache/pip/http-v2/8/7/c/c/0
+		9.0K    .cache/pip/http-v2/8/7/c/c
+		10K     .cache/pip/http-v2/8/7/c
+		11K     .cache/pip/http-v2/8/7
+		12K     .cache/pip/http-v2/8
+		173K    .cache/pip/http-v2
+		2.0K    .cache/pip/selfcheck
+		176K    .cache/pip
+		177K    .cache/
+		-------------------------------------------------------------------------------------------------------------------------
+
+	* Don't start deactivated QPKGs (unless-requested) during 'install all'.
+
 	* Takes ~3.5 - 4.5 seconds to build QPKG states on Laura.
 		- Should be able to do this quicker.
 		- Calculate QPKG features separate to states and cache/load these from file next time?
