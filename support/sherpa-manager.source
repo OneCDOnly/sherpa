@@ -254,6 +254,8 @@ LoadConsts()
 	readonly PACKAGE_APP_VER_COL_WIDTH=22
 	readonly PACKAGE_ARCH_COL_WIDTH=15
 	readonly PACKAGE_AUTHOR_COL_WIDTH=40
+	readonly PACKAGE_AUTO_UPDATE_COL_WIDTH=9
+	readonly PACKAGE_COMPATIBLE_COL_WIDTH=15
 	readonly PACKAGE_DEPENDENCIES_COL_WIDTH=29
 	readonly PACKAGE_DESCRIPTION_COL_WIDTH=10
 	readonly PACKAGE_ENABLED_COL_WIDTH=10
@@ -5215,62 +5217,79 @@ DisplayAsFeaturesReportTitleLine()
 	{
 
 	local a=''
+	local -i n=0
 
 	printf '\n'
 
 	# column 1: package name.
+	((n++))
 
-	if [[ $report_cols_max -ge 1 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		a="${CHARS_BULLET}QPKG name:"
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 2: package supports `backup` action?
+	((n++))
 
-	if [[ $report_cols_max -ge 2 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Backup?"
 		printf "%-$((PACKAGE_SUPPORTS_BACKUP_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 3: package supports `clean` action?
+	((n++))
 
-	if [[ $report_cols_max -ge 3 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Clean?"
 		printf "%-$((PACKAGE_SUPPORTS_CLEAN_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 4: package supports restart-to-update application action?
+	((n++))
 
-	if [[ $report_cols_max -ge 4 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Restart?"
 		printf "%-$((PACKAGE_SUPPORTS_RESTART_TO_UPDATE_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
-	# column 5: package active test is builtin?
+	# column 5: package is set to auto-update on restart?
+	((n++))
 
-	if [[ $report_cols_max -ge 5 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
+		printf "%$((COLUMN_SPACING))s"
+		a="${CHARS_BULLET}Update?"
+		printf "%-$((PACKAGE_AUTO_UPDATE_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
+	fi
+
+	# column 6: package active test is builtin?
+	((n++))
+
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Test?"
 		printf "%-$((PACKAGE_ACTIVE_TEST_BUILTIN_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
-	# column 6: package is independent?
+	# column 7: package is independent?
+	((n++))
 
-	if [[ $report_cols_max -ge 6 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Independent?"
 		printf "%-$((PACKAGE_TIER_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
-	# column 7: NAS arch is compatible?
+	# column 8: NAS arch is compatible?
+	((n++))
 
-	if [[ $report_cols_max -ge 7 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Compatible?"
-		printf "%-$((PACKAGE_ARCH_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
+		printf "%-$((PACKAGE_COMPATIBLE_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	printf '\n'
@@ -5284,10 +5303,12 @@ DisplayAsFeaturesReportItemLine()
 	# 	$qpkg_name (global).
 
 	local active_test_msg=$CHARS_BLANK
-	local arch_msg=$CHARS_BLANK
+	local autoupdate_msg=$CHARS_BLANK
 	local backup_msg=$CHARS_BLANK
 	local clean_msg=$CHARS_BLANK
+	local compatible_msg=$CHARS_BLANK
 	local mode=''
+	local -i n=0
 	local name_msg=$CHARS_BLANK
 	local restart_to_update_msg=$CHARS_BLANK
 	local tier_msg=$CHARS_BLANK
@@ -5324,6 +5345,16 @@ DisplayAsFeaturesReportItemLine()
 		restart_to_update_msg+=false
 	fi
 
+	if QpkgIsInstalled && QpkgIsCanRestartToUpdate; then
+		if QpkgIsAutoUpdate; then
+			autoupdate_msg+=true
+		else
+			autoupdate_msg+=false
+		fi
+	else
+		autoupdate_msg+='N/A'
+	fi
+
 	if QpkgIsIndependent; then
 		tier_msg+=true
 	else
@@ -5331,9 +5362,9 @@ DisplayAsFeaturesReportItemLine()
 	fi
 
 	if QpkgIsArchOK; then
-		arch_msg+=true
+		compatible_msg+=true
 	else
-		arch_msg+=false
+		compatible_msg+=false
 	fi
 
 	case $mode in
@@ -5344,42 +5375,49 @@ DisplayAsFeaturesReportItemLine()
 				active_test_msg=$(TextBrightOrange "$active_test_msg")
 			fi
 
-			if [[ $arch_msg =~ true ]]; then
-				arch_msg=$(TextBrightGreen "$arch_msg")
+			if [[ $compatible_msg =~ true ]]; then
+				compatible_msg=$(TextBrightGreen "$compatible_msg")
 			else
-				arch_msg=$(TextBrightRed "$arch_msg")
+				compatible_msg=$(TextBrightRed "$compatible_msg")
+			fi
+
+			if [[ $autoupdate_msg =~ true ]]; then
+				autoupdate_msg=$(TextBrightGreen "$autoupdate_msg")
+			elif [[ $autoupdate_msg =~ false ]]; then
+				autoupdate_msg=$(TextBrightOrange "$autoupdate_msg")
 			fi
 
 			if [[ $backup_msg =~ true ]]; then
 				backup_msg=$(TextBrightGreen "$backup_msg")
-			else
-				backup_msg=$(TextBrightOrange "$backup_msg")
+# 			else
+# 				backup_msg=$(TextBrightOrange "$backup_msg")
 			fi
 
 			if [[ $clean_msg =~ true ]]; then
 				clean_msg=$(TextBrightGreen "$clean_msg")
-			else
-				clean_msg=$(TextBrightOrange "$clean_msg")
+# 			else
+# 				clean_msg=$(TextBrightOrange "$clean_msg")
 			fi
 
 			name_msg+=$qpkg_name
 
 			if [[ $restart_to_update_msg =~ true ]]; then
 				restart_to_update_msg=$(TextBrightGreen "$restart_to_update_msg")
-			else
-				restart_to_update_msg=$(TextBrightOrange "$restart_to_update_msg")
+# 			else
+# 				restart_to_update_msg=$(TextBrightOrange "$restart_to_update_msg")
 			fi
 
-			if [[ $tier_msg =~ true ]]; then
-				tier_msg=$(TextBrightGreen "$tier_msg")
-			else
-				tier_msg=$(TextBrightOrange "$tier_msg")
-			fi
+# 			if [[ $tier_msg =~ true ]]; then
+# 				tier_msg=$(TextBrightGreen "$tier_msg")
+# 			else
+# 				tier_msg=$(TextBrightOrange "$tier_msg")
+# 			fi
 
 			;;
 		muted)
 			active_test_msg=$(TextDarkGrey "$active_test_msg")
-			arch_msg=$(TextDarkGrey "$arch_msg")
+			compatible_msg=$(TextDarkGrey "$compatible_msg")
+			autoupdate_msg=$(TextDarkGrey "$autoupdate_msg")
 			backup_msg=$(TextDarkGrey "$backup_msg")
 			clean_msg=$(TextDarkGrey "$clean_msg")
 			name_msg+=$(TextDarkGrey "$qpkg_name")
@@ -5393,10 +5431,16 @@ DisplayAsFeaturesReportItemLine()
 				active_test_msg=$(TextBrightOrange "$active_test_msg")
 			fi
 
-			if [[ $arch_msg =~ true ]]; then
-				arch_msg=$(TextBrightGreen "$arch_msg")
+			if [[ $compatible_msg =~ true ]]; then
+				compatible_msg=$(TextBrightGreen "$compatible_msg")
 			else
-				arch_msg=$(TextBrightOrange "$arch_msg")
+				compatible_msg=$(TextBrightOrange "$compatible_msg")
+			fi
+
+			if [[ $autoupdate_msg =~ true ]]; then
+				autoupdate_msg=$(TextBrightGreen "$autoupdate_msg")
+			else
+				autoupdate_msg=$(TextBrightOrange "$autoupdate_msg")
 			fi
 
 			if [[ $backup_msg =~ true ]]; then
@@ -5421,51 +5465,66 @@ DisplayAsFeaturesReportItemLine()
 	esac
 
 	# column 1: package name.
+	((n++))
 
-	if [[ $report_cols_max -ge 1 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 	fi
 
 	# column 2: package supports `backup` action?
+	((n++))
 
-	if [[ $report_cols_max -ge 2 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_SUPPORTS_BACKUP_COL_WIDTH+$(LenANSIDiff "$backup_msg")))s" "$backup_msg"
 	fi
 
 	# column 3: package supports `clean` action?
+	((n++))
 
-	if [[ $report_cols_max -ge 3 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_SUPPORTS_CLEAN_COL_WIDTH+$(LenANSIDiff "$clean_msg")))s" "$clean_msg"
 	fi
 
 	# column 4: package supports restart-to-update application action?
+	((n++))
 
-	if [[ $report_cols_max -ge 4 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_SUPPORTS_RESTART_TO_UPDATE_COL_WIDTH+$(LenANSIDiff "$restart_to_update_msg")))s" "$restart_to_update_msg"
 	fi
 
-	# column 5: package active test is builtin?
+	# column 5: package is set to auto-update on restart?
+	((n++))
 
-	if [[ $report_cols_max -ge 5 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
+		printf "%$((COLUMN_SPACING))s"
+		printf "%-$((PACKAGE_AUTO_UPDATE_COL_WIDTH+$(LenANSIDiff "$autoupdate_msg")))s" "$autoupdate_msg"
+	fi
+
+	# column 6: package active test is builtin?
+	((n++))
+
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_ACTIVE_TEST_BUILTIN_COL_WIDTH+$(LenANSIDiff "$active_test_msg")))s" "$active_test_msg"
 	fi
 
-	# column 6: package is independent?
+	# column 7: package is independent?
+	((n++))
 
-	if [[ $report_cols_max -ge 6 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_TIER_COL_WIDTH+$(LenANSIDiff "$tier_msg")))s" "$tier_msg"
 	fi
 
-	# column 7: NAS arch is compatible?
+	# column 8: NAS arch is compatible?
+	((n++))
 
-	if [[ $report_cols_max -ge 7 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		printf "%-$((PACKAGE_ARCH_COL_WIDTH+$(LenANSIDiff "$arch_msg")))s" "$arch_msg"
+		printf "%-$((PACKAGE_COMPATIBLE_COL_WIDTH+$(LenANSIDiff "$compatible_msg")))s" "$compatible_msg"
 	fi
 
 	printf '\n'
@@ -7452,7 +7511,7 @@ ShowReportFeatures()
 	FuncInit
 
 	local a=''
-	report_cols_max=7
+	report_cols_max=8
 	local -i m=0
 	local -i n=0
 	local previous=''
@@ -7486,7 +7545,8 @@ ShowReportFeatures()
 		DisplayAsHelpTitle 'column headings:'
 		DisplayAsGlossaryIndentItem 'Backup?' "service-script supports application config 'backup' and 'restore'."
 		DisplayAsGlossaryIndentItem 'Clean?' "service-script supports application 'clean'ing."
-		DisplayAsGlossaryIndentItem 'Restart?' "service-script supports restarting to update application."
+		DisplayAsGlossaryIndentItem 'Restart?' "service-script supports restart-to-update application."
+		DisplayAsGlossaryIndentItem 'Update?' "application will auto-update on each restart."
 		DisplayAsGlossaryIndentItem 'Test?' "service-script has a builtin 'status' check, and can test for daemon \"live\" status."
 		DisplayAsGlossaryIndentItem 'Independent?' "this QPKG is independent of other QPKGs."
 		DisplayAsGlossaryIndentItem 'Compatible?' "QPKG is compatible with this NAS arch."
@@ -11496,6 +11556,22 @@ QpkgIsMaxOSVerOk()
 	local a=$(QpkgGetMaxOSVer "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
 
 	[[ -n $a ]] && [[ $a = none || ${NAS_FIRMWARE_VER//.} -le $a ]]
+
+	}
+
+QpkgIsAutoUpdate()
+	{
+
+	# Is the installed QPKG set to auto-update on restart?
+
+	# Input:
+	#   $1 (optional) = QPKG name.
+	#   $qpkg_name (global, default) = target QPKG name.
+
+	# Output:
+	#   $? = 0 (true), !0 (false).
+
+	[[ $(/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}" Auto_Update -u -f /etc/config/qpkg.conf) = TRUE ]]
 
 	}
 
