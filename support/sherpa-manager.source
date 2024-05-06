@@ -1212,6 +1212,9 @@ QPKGsAssignToActions()
 		done
 	fi
 
+	QPKGs-ACdeactivate-to:Remove sherpa
+	QPKGs-ACuninstall-to:Remove sherpa
+
 	if QPKGs-ACsign-to.IsAny || QPKGs-ACinstall-to.IsAny; then
 		LoadQpkgSigning
 	fi
