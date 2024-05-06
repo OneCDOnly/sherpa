@@ -57,8 +57,8 @@ Observed issues:
 		176K    .cache/pip
 		177K    .cache/
 		-------------------------------------------------------------------------------------------------------------------------
-
-	* Don't start deactivated QPKGs (unless-requested) during 'install all'.
+		- Narrowed-down to WebSSH.
+		- Doesn't happen on aarch64 (Laura).
 
 	* Takes ~3.5 - 4.5 seconds to build QPKG states on Laura.
 		- Should be able to do this quicker.
