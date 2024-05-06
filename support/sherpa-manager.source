@@ -5341,6 +5341,8 @@ DisplayAsFeaturesReportItemLine()
 
 	if QpkgIsCanRestartToUpdate; then
 		restart_to_update_msg+=true
+	elif [[ $qpkg_name = sherpa ]]; then
+		restart_to_update_msg+=true				# sherpa always auto-updates and this can't be disabled.
 	else
 		restart_to_update_msg+=false
 	fi
@@ -5351,6 +5353,8 @@ DisplayAsFeaturesReportItemLine()
 		else
 			autoupdate_msg+=false
 		fi
+	elif [[ $qpkg_name = sherpa ]]; then
+		autoupdate_msg+=true					# sherpa always auto-updates and this can't be disabled.
 	else
 		autoupdate_msg+='N/A'
 	fi
