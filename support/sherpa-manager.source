@@ -326,6 +326,7 @@ LoadVars()
 	generate_show_report=false
 	get_qpkg_active_status=false
 	get_qpkg_states=false
+	highlight_backups_older_than='2 weeks ago'
 	ipks_downgrade=false
 	ipks_install=false
 	ipks_upgrade=false
@@ -4244,7 +4245,7 @@ DisplayAsProjSynIndentExam()
 	# Display as project syntax indented example.
 
 	# Input:
-	#	$1 = description
+	#	$1 = description (optional)
 	#	$2 = example syntax
 
 	if [[ -n $1	]]; then
@@ -4270,23 +4271,35 @@ DisplayAsSynExam()
 
 	}
 
-DisplayAsGlossaryIndentItem()
+DisplayAsIndentItem()
 	{
 
 	# Display as an indented, non-bulleted item.
 
 	# Input:
+	#	$1 = item
+
+	printf "\n%${HELP_DESC_INDENT}s%s\n" '' "$(Capitalise "${1:-}")"
+
+	}
+
+DisplayAsGlossaryIndentItem()
+	{
+
+	# Display as an indented, non-bulleted item, formatted for two fields.
+
+	# Input:
 	#	$1 = word
 	#	$2 = description
 
-	printf "\n%${HELP_DESC_INDENT}s%s: %s\n" '' "'${1:-}'" "${2:-}"
+	printf "\n%${HELP_DESC_INDENT}s'%s': %s\n" '' "${1:-}" "$(Capitalise "${2:-}")"
 
 	}
 
 DisplayAsColumnExplainedIndentItem()
 	{
 
-	# Display as an indented, non-bulleted item.
+	# Display as an indented, non-bulleted item, condensed-line format, formatted for two fields.
 
 	# Input:
 	#	$1 = word
@@ -5519,10 +5532,10 @@ DisplayAsBacksReportItemLine()
 	local file_bytes_msg=$CHARS_BLANK
 	local file_name=${2:-}
 	local file_name_msg=$CHARS_BLANK
-	local highlight_older_than=${4:-'1 week ago'}
+	local local_highlight_backups_older_than=${4:-'1 week ago'}
 	local mode=''
 
-	if [[ ${epoch_time%.*} -lt $(/bin/date --date="$highlight_older_than" +%s) ]]; then
+	if [[ ${epoch_time%.*} -lt $(/bin/date --date="$local_highlight_backups_older_than" +%s) ]]; then
 		mode=highlighted
 	else
 		mode=normal
@@ -5533,11 +5546,13 @@ DisplayAsBacksReportItemLine()
 			epoch_time_msg+=$(/bin/date -d @"$epoch_time" +%c)
 			file_bytes_msg+=$file_bytes
 			file_name_msg+=$file_name
+			$TOUCH_CMD "$REPORT_FLAGS_PATH"/backup-file-ok
 			;;
 		highlighted)
 			epoch_time_msg=$(TextBrightRed "${CHARS_ALERT}$(/bin/date -d @"$epoch_time" +%c)")
 			file_bytes_msg+=$(TextBrightRed "$file_bytes")
 			file_name_msg+=$(TextBrightRed "$file_name")
+			$TOUCH_CMD "$REPORT_FLAGS_PATH"/backup-file-old
 	esac
 
 	# column 1: backup filename
@@ -7342,11 +7357,11 @@ ShowReportBackups()
 	local file_date=''
 	local file_name=''
 	local file_time=''
-	local highlight_older_than='2 weeks ago'
 	report_cols_max=3
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport backups
+	ResetReportsPath &>/dev/null
 
 		{
 
@@ -7356,7 +7371,7 @@ ShowReportBackups()
 			while read -r epoch_time file_name file_bytes; do
 				[[ -z $epoch_time || -z $file_name ]] && break
 
-				DisplayAsBacksReportItemLine "$epoch_time" "$file_name" "$file_bytes" "$highlight_older_than"
+				DisplayAsBacksReportItemLine "$epoch_time" "$file_name" "$file_bytes" "$highlight_backups_older_than"
 			done <<< "$($GNU_FIND_CMD "$QPKG_BU_PATH"/*.config.tar.gz -maxdepth 1 -printf '%C@ %f %s\n' 2>/dev/null | $SORT_CMD)"
 		else										# If GNU `find` isn't available, do-it the hard-way.
 			while read -r file_date file_time file_name file_bytes; do
@@ -7365,13 +7380,11 @@ ShowReportBackups()
 				epoch_time=$(/bin/date -d "$file_date $file_time" +"%s")
 				file_name=$($BASENAME_CMD "$file_name")
 
-				DisplayAsBacksReportItemLine "$epoch_time" "$file_name" "$file_bytes" "$highlight_older_than"
+				DisplayAsBacksReportItemLine "$epoch_time" "$file_name" "$file_bytes" "$highlight_backups_older_than"
 			done <<< "$(cd "$QPKG_BU_PATH" && ls -l1tr --time-style=+"%Y-%m-%d %H:%M:%S" ./*.config.tar.gz 2>/dev/null | $AWK_CMD '{print $6" "$7" "$8" "$5}')"
 		fi
 
-		DisplayAsHelpTitle "backups are listed oldest-first, and those shown in '$(TextBrightRed '! red')' were last updated more-than $highlight_older_than."
-
-		DisplayAsHelpTitle "All $(ShowAsTitleName) backup files are stored here: $QPKG_BU_PATH"
+		IncludeReportGlossary
 
 		} > "$REPORT_OUTPUT_PATHFILE"
 
@@ -7709,6 +7722,18 @@ IncludeReportGlossary()
 
 	if [[ -e "$REPORT_FLAGS_PATH"/req-alert ]]; then
 		DisplayAsGlossaryIndentItem "$(TextBrightRed '!')" 'this package is not working correctly.'
+	fi
+
+	if compgen -G "${REPORT_FLAGS_PATH}/backup-file-*" > /dev/null; then			# https://stackoverflow.com/a/6364244
+		DisplayAsIndentItem "backups are listed oldest-first."
+	fi
+
+	if [[ -e "$REPORT_FLAGS_PATH"/backup-file-old ]]; then
+		DisplayAsGlossaryIndentItem "$(TextBrightRed '!')" "this QPKG backup file was updated more-than $highlight_backups_older_than."
+	fi
+
+	if compgen -G "${REPORT_FLAGS_PATH}/backup-file-*" > /dev/null; then			# https://stackoverflow.com/a/6364244
+		DisplayAsIndentItem "All $(ShowAsTitleName) backup files are stored here: $QPKG_BU_PATH"
 	fi
 
 	} >> "$REPORT_OUTPUT_PATHFILE"
