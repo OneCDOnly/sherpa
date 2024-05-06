@@ -8268,7 +8268,7 @@ HardwareGetPlatform()
 	{
 
 	# Output:
-	#   $? = 0 if found, 250 if not
+	#   $? = 0 if found, 250 if not.
 
 	/sbin/getcfg '' Platform -d undefined -f /etc/platform.conf
 
@@ -8278,7 +8278,7 @@ UserGetDefVol()
 	{
 
 	# Output:
-	#   $? = 0 if found, 250 if not
+	#   $? = 0 if found, 250 if not.
 
 	/sbin/getcfg SHARE_DEF defVolMP -d undefined -f /etc/config/def_share.info
 
@@ -8349,7 +8349,7 @@ GetRepoURLFromStoreID()
 	#	$1 = store ID to lookup repo URL for
 
 	# Output:
-	#   $? = 0 if found, 250 if not
+	#   $? = 0 if found, 250 if not.
 
 	[[ -n ${1:-} ]] || return
 
@@ -8413,7 +8413,7 @@ OsGetFirmwareVer()
 	{
 
 	# Output:
-	#   $? = 0 if found, 250 if not
+	#   $? = 0 if found, 250 if not.
 
 	/sbin/getcfg System Version -d undefined -f /etc/config/uLinux.conf
 
@@ -8423,7 +8423,7 @@ OsGetFirmwareBuild()
 	{
 
 	# Output:
-	#   $? = 0 if found, 250 if not
+	#   $? = 0 if found, 250 if not.
 
 	/sbin/getcfg System Number -d undefined -f /etc/config/uLinux.conf
 
@@ -8433,7 +8433,7 @@ OsGetFirmwareDate()
 	{
 
 	# Output:
-	#   $? = 0 if found, 250 if not
+	#   $? = 0 if found, 250 if not.
 
 	/sbin/getcfg System 'Build Number' -d undefined -f /etc/config/uLinux.conf
 
@@ -8453,7 +8453,7 @@ OsGetQnapOS()
 QpkgGetArch()
 	{
 
-	# Translate arch from QTS/QuTS-to-sherpa notation.
+	# Translate arch from local NAS (QTS/QuTS) to sherpa notation.
 
 	case $NAS_ARCH in
 		x86_64)
@@ -8554,19 +8554,10 @@ OsIsQNAP()
 
 	}
 
-OsIsCompatibleWithSigned()
-	{
-
-	# QTS builds released over these 6 days don't allow unsigned QPKGs to run at-all.
-
-	[[ $NAS_FIRMWARE_DATE -lt 20201015 || $NAS_FIRMWARE_DATE -gt 20201020 ]]
-
-	}
-
 OsIsSupported()
 	{
 
-	# Unable to test firmwares any earlier than 4.2.6 (but still have 4.2.0 available for TS-559Pro+)
+	# Unable to test firmwares any earlier than 4.2.6 (but still have 4.2.0 available for TS-559Pro+):
 
 	[[ ${NAS_FIRMWARE_VER//.} -ge 400 ]]
 
@@ -8600,18 +8591,25 @@ OsIsSupportSignedPackages()
 
 # 	[[ ${NAS_FIRMWARE_VER//.} -ge 435 ]]
 
-	# NOTE: signing failed on QTS 4.3.6 (x31). No cert database.
-
-	# So, let's go one-version-higher:
+	# NOTE: signing failed on QTS 4.3.6 (x31). No cert database. So, let's go one-version-higher:
 
 	[[ ${NAS_FIRMWARE_VER//.} -ge 440 ]]
+
+	}
+
+OsIsCompatibleWithSigned()
+	{
+
+	# QTS builds released over these 6 days don't allow unsigned QPKGs to run at-all:
+
+	[[ $NAS_FIRMWARE_DATE -lt 20201015 || $NAS_FIRMWARE_DATE -gt 20201020 ]]
 
 	}
 
 OsIsSupportUnofficialPackages()
 	{
 
-	# Must check for "official QPKGs" on QTS 4.3.3 to QTS 4.3.6
+	# Must check for "official QPKGs" on QTS 4.3.3 to QTS 4.3.6:
 
 	[[ ${NAS_FIRMWARE_VER//.} -gt 426 && ${NAS_FIRMWARE_VER//.} -lt 440 ]]
 
@@ -8627,7 +8625,7 @@ OsIsSupportSudo()
 OsIsSupportSedExtRegex()
 	{
 
-	# Test if QTS `/bin/sed` can handle extended regexes (early BusyBox versions cannot).
+	# Test if QTS `/bin/sed` can handle extended regexes (early BusyBox versions cannot):
 
 	[[ $(echo -en "\033[1;97ma" | /bin/sed -r 's/\x1b\[[0-9;]*m//g' | /usr/bin/wc -c) -eq 1 ]]
 
@@ -8636,7 +8634,7 @@ OsIsSupportSedExtRegex()
 OsIsSupportDecimalSleepSeconds()
 	{
 
-	# Test if QTS `/bin/sleep` can handle decimal seconds (early BusyBox versions cannot).
+	# Test if QTS `/bin/sleep` can handle decimal seconds (early BusyBox versions cannot):
 
 	/bin/sleep .01 &>/dev/null
 
@@ -8751,7 +8749,7 @@ ShowZeroQpkgs()
 
 	for a in "${QPKG_IS_STATES[@]:-}"; do
 		for b in "${USER_QPKG_ACTIONS[@]:-}"; do
-			[[ $b = list ]] && continue			# action results lists are unavailable for these
+			[[ $b = list ]] && continue			# Action results lists are unavailable for these.
 
 			QPKGs.AC${b}.IS${a}.IsSet && QPKGs-AC${b}-ok.IsNone && ShowAsWarn "no QPKGs were able to $(Lowercase "$b")"
 		done
@@ -8826,7 +8824,7 @@ SaveActionResultToLog()
 
 	# Write package type, package name, datetime in seconds, action, result, reason to actions logfile, and into actions durations file.
 
-	# Input:						example:
+	# Input:						Example:
 	#   $1 = package type			`QPKG`, `IPK`, `PIP`
 	#   $2 = package or group name	`SABnzbd`, `essential`
 	#   $3 = action					`download`, `activate`
@@ -8927,7 +8925,7 @@ _QPKG:reassign_()
 	else
 		SaveActionResultToLog QPKG "$qpkg_name" reassign failed "$z"
 		MarkThisAcForkAsError
-		z=1   # remap to 1
+		z=1   # Remap to 1.
 	fi
 
 	FuncForkExit $z
@@ -8998,7 +8996,7 @@ _QPKG:download_()
 		else
 			SaveActionResultToLog QPKG "$qpkg_name" download failed "$z"
 			MarkThisAcForkAsError
-			z=1   # remap to 1 (last time I checked, 'curl' had 92 return codes)
+			z=1   # Remap to 1 (last time I checked, 'curl' had 92 return codes).
 		fi
 	fi
 
@@ -9567,7 +9565,7 @@ _QPKG:reactivate_()
 	else
 		SaveActionResultToLog QPKG "$qpkg_name" reactivate failed "$z"
 		MarkThisAcForkAsError
-		z=1   # remap to 1
+		z=1   # Remap to 1.
 	fi
 
 	ClearQpkgAppCenterNotifier
@@ -10328,7 +10326,7 @@ QpkgGetServicePathFile()
 
 	# Output:
 	#   stdout = service script pathfile
-	#   $? = 0 if found, 250 if not
+	#   $? = 0 if found, 250 if not.
 
 	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}" Shell -d undefined -f /etc/config/qpkg.conf
 
@@ -10428,7 +10426,7 @@ QpkgGetInstalledVer()
 
 	# Output:
 	#   stdout = package version
-	#   $? = 0 if found, 250 if not
+	#   $? = 0 if found, 250 if not.
 
 	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}" Version -d undefined -f /etc/config/qpkg.conf
 
@@ -10445,7 +10443,7 @@ QpkgGetStoreID()
 
 	# Output:
 	#   stdout = package store ID
-	#   $? = 0 if found, 250 if not
+	#   $? = 0 if found, 250 if not.
 
 	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}" store -d sherpa -f /etc/config/qpkg.conf
 
