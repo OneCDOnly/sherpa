@@ -1,29 +1,5 @@
 Observed issues:
 
-	* aarch64 (Laura) 'sherpa install all' showed this after results report was displayed:
-		-------------------------------------------------------------------------------------------------------------------------
-		...
-		• These actions failed (and why):
-			"sign" Deluge-web in 6 seconds (For more information: /etc/init.d/deluge-web.sh log)
-			"sign" inxi in 5 seconds (For more information: /etc/init.d/inxi.sh log)
-
-
-		• Please consider creating a new issue for this on GitHub: https://github.com/OneCDOnly/sherpa/issues
-
-		• Alternatively, post on the QNAP NAS Community Forum: https://forum.qnap.com/viewtopic.php?f=320&t=132373
-
-		View only the most recent sherpa session log:
-			# sherpa last
-
-		View the entire sherpa session log:
-			# sherpa log
-
-		Upload the most-recent 5,000 lines in your sherpa log to the https://termbin.com public pastebin. A URL will be generated afterward:
-			# sherpa paste log
-
-		• If you need help, please include a copy of your sherpa log for analysis!
-		-------------------------------------------------------------------------------------------------------------------------
-
 	* x86 (Sarah) is writing files into /root/.cache
 		-------------------------------------------------------------------------------------------------------------------------
 		[~] # du -h .cache/
