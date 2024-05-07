@@ -89,8 +89,10 @@ ShowResults()
 			ReleaseLockfile
 			ViewLogTail
 		elif [[ $useropt_show_backups = true ]]; then
+			ReleaseLockfile
 			ShowReportBackups
 		elif [[ $useropt_show_versions = true ]]; then
+			ReleaseLockfile
 			ShowReportVersions
 		elif [[ $useropt_show_dependencies = true ]]; then
 			ShowReportDependencies
@@ -158,6 +160,8 @@ ShowResults()
 	fi
 
 	if [[ $generate_help_report = true ]]; then
+		ReleaseLockfile
+
 		if [[ $useropt_help_tips = true ]]; then
 			Help.Tips:Show
 		elif [[ $useropt_help_abbreviations = true ]]; then
@@ -539,7 +543,7 @@ LocateSQLiteBinary()
 		[[ ! -e $SQLITE_CMD ]] && SQLITE_CMD=''
 	fi
 
-	[[ -z ${SQLITE_CMD:-} ]] && SQLITE_CMD=/opt/bin/sqlite3						# last-resort, hope Entware will be installed this session.
+	[[ -z ${SQLITE_CMD:-} ]] && SQLITE_CMD=/opt/bin/sqlite3						# Last-resort, hope Entware will be installed this session.
 
 	readonly SQLITE_CMD
 
@@ -568,7 +572,7 @@ LoadEnv()
 	OsIsSupportSecureDownload || CURL_CMD+=' --insecure'
 	readonly CURL_CMD
 
-	args=()						# command-line argument array.
+	args=()						# Command-line argument array.
 	args_incomplete=()
 	qpkg_index=0
 	qpkg_default_index=0
