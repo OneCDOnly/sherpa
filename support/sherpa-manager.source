@@ -89,8 +89,10 @@ ShowResults()
 			ReleaseLockfile
 			ViewLogTail
 		elif [[ $useropt_show_backups = true ]]; then
+			ReleaseLockfile
 			ShowReportBackups
 		elif [[ $useropt_show_versions = true ]]; then
+			ReleaseLockfile
 			ShowReportVersions
 		elif [[ $useropt_show_dependencies = true ]]; then
 			ShowReportDependencies
@@ -158,6 +160,8 @@ ShowResults()
 	fi
 
 	if [[ $generate_help_report = true ]]; then
+		ReleaseLockfile
+
 		if [[ $useropt_help_tips = true ]]; then
 			Help.Tips:Show
 		elif [[ $useropt_help_abbreviations = true ]]; then
@@ -246,6 +250,7 @@ LoadConsts()
 	readonly COLUMN_SPACING=2
 	readonly FILE_BYTES_COL_WIDTH=16
 	readonly FILE_CHANGE_DATE_COL_WIDTH=60
+	readonly FOOTER_NAME_COL_WIDTH=12
 	readonly HELP_DESC_INDENT=3
 	readonly HELP_SYNTAX_INDENT=6
 
@@ -538,7 +543,7 @@ LocateSQLiteBinary()
 		[[ ! -e $SQLITE_CMD ]] && SQLITE_CMD=''
 	fi
 
-	[[ -z ${SQLITE_CMD:-} ]] && SQLITE_CMD=/opt/bin/sqlite3						# last-resort, hope Entware will be installed this session.
+	[[ -z ${SQLITE_CMD:-} ]] && SQLITE_CMD=/opt/bin/sqlite3						# Last-resort, hope Entware will be installed this session.
 
 	readonly SQLITE_CMD
 
@@ -567,7 +572,7 @@ LoadEnv()
 	OsIsSupportSecureDownload || CURL_CMD+=' --insecure'
 	readonly CURL_CMD
 
-	args=()						# command-line argument array.
+	args=()						# Command-line argument array.
 	args_incomplete=()
 	qpkg_index=0
 	qpkg_default_index=0
@@ -1211,6 +1216,9 @@ QPKGsAssignToActions()
 			QPKGs-ISenabled.Exist "$qpkg_name" && QPKGs-ACreactivate-to:Add "$qpkg_name"
 		done
 	fi
+
+	QPKGs-ACdeactivate-to:Remove sherpa
+	QPKGs-ACuninstall-to:Remove sherpa
 
 	if QPKGs-ACsign-to.IsAny || QPKGs-ACinstall-to.IsAny; then
 		LoadQpkgSigning
@@ -4276,7 +4284,7 @@ DisplayAsSynExam()
 DisplayAsIndentItem()
 	{
 
-	# Display as an indented, bulleted item.
+	# Display as an indented, bulleted item, formatted for a single field.
 
 	# Input:
 	#	$1 = item
@@ -4285,7 +4293,7 @@ DisplayAsIndentItem()
 
 	}
 
-DisplayAsGlossaryIndentItem()
+DisplayAsInfoIndentItem()
 	{
 
 	# Display as an indented, bulleted item, formatted for two fields.
@@ -4294,7 +4302,7 @@ DisplayAsGlossaryIndentItem()
 	#	$1 = word
 	#	$2 = description
 
-	printf "%${HELP_DESC_INDENT}s${CHARS_BULLET}'%s' = %s\n" '' "${1:-}" "$(AddPeriod "${2:-}")"
+	printf "%${HELP_DESC_INDENT}s${CHARS_BULLET}%-$((FOOTER_NAME_COL_WIDTH+2+$(LenANSIDiff "${1:-}")))s = %s\n" '' "${1:-}" "$(AddPeriod "${2:-}")"
 
 	}
 
@@ -7438,7 +7446,7 @@ ShowReportBackups()
 			done <<< "$(cd "$QPKG_BU_PATH" && ls -l1tr --time-style=+"%Y-%m-%d %H:%M:%S" ./*.config.tar.gz 2>/dev/null | $AWK_CMD '{print $6" "$7" "$8" "$5}')"
 		fi
 
-		IncludeReportGlossary
+		IncludeReportFooter
 
 		} > "$REPORT_OUTPUT_PATHFILE"
 
@@ -7492,7 +7500,7 @@ ShowReportDependencies()
 
 	[[ -n $a ]] && echo -en "$a" >> "$REPORT_OUTPUT_PATHFILE"
 
-	IncludeReportGlossary
+	IncludeReportFooter
 
 	EraseThisLine
 
@@ -7546,7 +7554,7 @@ ShowReportFeatures()
 
 	[[ -n $a ]] && echo -en "$a" >> "$REPORT_OUTPUT_PATHFILE"
 
-	IncludeReportHeadingsDescription
+	IncludeReportHeadingsFooter
 
 	EraseThisLine
 
@@ -7696,7 +7704,7 @@ ShowReportStatuses()
 
 	[[ -n $a ]] && echo -en "$a" >> "$REPORT_OUTPUT_PATHFILE"
 
-	IncludeReportGlossary
+	IncludeReportFooter
 
 	EraseThisLine
 
@@ -7712,61 +7720,61 @@ ShowReportStatuses()
 
 	}
 
-IncludeReportGlossary()
+IncludeReportFooter()
 	{
 
-	DisplayAsHelpTitle 'report glossary:'
+	DisplayAsHelpTitle 'report information:'
 
 	if [[ -e "$REPORT_FLAGS_PATH"/deps ]]; then
 		DisplayAsIndentItem "QPKG dependencies are automatically installed/started/stopped/restarted as-required by $(ShowAsTitleName)."
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/status-missing ]]; then
-		DisplayAsGlossaryIndentItem "$(TextBrightRed '! missing')" 'QPKG is missing from its installation path. Reinstall it'
+		DisplayAsInfoIndentItem "$(TextBrightRed '! missing')" 'QPKG is missing from its installation path. Reinstall it'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/state-disabled ]]; then
-		DisplayAsGlossaryIndentItem "$(TextBrightRed disabled)" "application won't start at bootup. Enable it first, then start it"
+		DisplayAsInfoIndentItem "$(TextBrightRed disabled)" "application won't start at bootup. Enable it first, then start it"
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/state-enabled ]]; then
-		DisplayAsGlossaryIndentItem "$(TextBrightGreen enabled)" 'application is started at bootup'
+		DisplayAsInfoIndentItem "$(TextBrightGreen enabled)" 'application is started at bootup'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/state-inactive ]]; then
-		DisplayAsGlossaryIndentItem "$(TextBrightRed inactive)" 'application is dead or not-started. Try starting/activating it'
+		DisplayAsInfoIndentItem "$(TextBrightRed inactive)" 'application is dead or not-started. Try starting/activating it'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/status-stopping ]]; then
-		DisplayAsGlossaryIndentItem "$(TextBrightOrange stopping)" 'application is stopping. Try checking again shortly'
+		DisplayAsInfoIndentItem "$(TextBrightOrange stopping)" 'application is stopping. Try checking again shortly'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/status-slow ]]; then
-		DisplayAsGlossaryIndentItem "$(TextBrightOrange slow)" 'application appears to be alive, but is slow to respond to the status request. Try checking again shortly' 		# More common on NAS with lower installed RAM, and usually because the application has been page-swapped to disk and must be reloaded into RAM.
+		DisplayAsInfoIndentItem "$(TextBrightOrange slow)" 'application appears to be alive, but is slow to respond to the status request. Try checking again shortly' 		# More common on NAS with lower installed RAM, and usually because the application has been page-swapped to disk and must be reloaded into RAM.
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/status-starting ]]; then
-		DisplayAsGlossaryIndentItem "$(TextBrightOrange starting)" 'application is starting. Try checking again shortly'
+		DisplayAsInfoIndentItem "$(TextBrightOrange starting)" 'application is starting. Try checking again shortly'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/status-active ]]; then
-		DisplayAsGlossaryIndentItem "$(TextBrightGreen active)" "application is alive (and responsive if it's a daemon)"
+		DisplayAsInfoIndentItem "$(TextBrightGreen active)" "application is alive (and responsive if it's a daemon)"
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/app-dynamic ]]; then
-		DisplayAsGlossaryIndentItem dynamic 'application version is the latest available online'
+		DisplayAsInfoIndentItem dynamic 'application version is the latest available online'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/app-final ]]; then
-		DisplayAsGlossaryIndentItem final 'application version is the last available'
+		DisplayAsInfoIndentItem final 'application version is the last available'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/req-attention ]]; then
-		DisplayAsGlossaryIndentItem "$(TextBrightOrange '*')" 'QPKG cannot be installed'
+		DisplayAsIndentItem "'$(TextBrightOrange '*')' = QPKG cannot be installed"
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/req-alert ]]; then
-		DisplayAsGlossaryIndentItem "$(TextBrightRed '!')" 'QPKG is not working correctly'
+		DisplayAsIndentItem "'$(TextBrightRed '!')' = QPKG is not working correctly"
 	fi
 
 	if compgen -G "${REPORT_FLAGS_PATH}/backup-file-*" > /dev/null; then			# https://stackoverflow.com/a/6364244
@@ -7774,7 +7782,7 @@ IncludeReportGlossary()
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/backup-file-old ]]; then
-		DisplayAsGlossaryIndentItem "$(TextBrightRed '!')" "QPKG backup file was updated more-than $highlight_backups_older_than"
+		DisplayAsIndentItem "'$(TextBrightRed '!')' = QPKG backup file was updated more-than $highlight_backups_older_than"
 	fi
 
 	if compgen -G "${REPORT_FLAGS_PATH}/backup-file-*" > /dev/null; then			# https://stackoverflow.com/a/6364244
@@ -7783,17 +7791,17 @@ IncludeReportGlossary()
 
 	} >> "$REPORT_OUTPUT_PATHFILE"
 
-IncludeReportHeadingsDescription()
+IncludeReportHeadingsFooter()
 	{
 
 	DisplayAsHelpTitle 'column headings:'
-	DisplayAsGlossaryIndentItem 'Backup?' "service-script supports application config 'backup' and 'restore'"
-	DisplayAsGlossaryIndentItem 'Clean?' "service-script supports application 'clean'ing"
-	DisplayAsGlossaryIndentItem 'Restart?' 'service-script supports restart-to-update application'
-	DisplayAsGlossaryIndentItem 'Update?' 'application will auto-update on each restart'
-	DisplayAsGlossaryIndentItem 'Test?' "service-script has a builtin 'status' check, and can test for daemon \"live\" status"
-	DisplayAsGlossaryIndentItem 'Independent?' 'this QPKG is independent of other QPKGs'
-	DisplayAsGlossaryIndentItem 'Compatible?' 'QPKG is compatible with this NAS arch'
+	DisplayAsInfoIndentItem 'Backup?' "supports application config 'backup' and 'restore'"
+	DisplayAsInfoIndentItem 'Clean?' "supports application 'clean'ing"
+	DisplayAsInfoIndentItem 'Restart?' 'supports restart-to-update application'
+	DisplayAsInfoIndentItem 'Update?' 'application will auto-update on each restart'
+	DisplayAsInfoIndentItem 'Test?' "has a built-in 'status' check, and can test for daemon \"live\" status"
+	DisplayAsInfoIndentItem 'Independent?' 'this QPKG is independent of other QPKGs'
+	DisplayAsInfoIndentItem 'Compatible?' 'QPKG has a release compatible with this NAS arch'
 
 	} >> "$REPORT_OUTPUT_PATHFILE"
 
