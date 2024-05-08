@@ -499,53 +499,66 @@ CMDsIsOk()
 LocateSQLiteBinary()
 	{
 
+	local a=''
+	sqlite_pathfile=''
+	sqlite_cmd=''
+
 	# Prefer Entware-installed `sqlite3`.
 
-	if [[ -z ${SQLITE_CMD:-} ]] && QpkgIsInstalled Entware; then
-		SQLITE_CMD=/opt/bin/sqlite3
-		[[ ! -e $SQLITE_CMD ]] && SQLITE_CMD=''
+	if [[ -z ${sqlite_cmd:-} ]] && QpkgIsInstalled Entware; then
+		sqlite_pathfile=/opt/bin/sqlite3
+		[[ -e $sqlite_pathfile ]] && sqlite_cmd=$sqlite_pathfile
 	fi
 
-	# If that can't be found, then try several other locations.
+	# If that can't be found, then try several other locations...
 
-	if [[ -z ${SQLITE_CMD:-} ]] && QpkgIsInstalled HybridBackup; then			# `Hybrid Backup Sync`
-		SQLITE_CMD=$(QpkgGetInstallationPath HybridBackup)/CloudConnector3/bin/sqlite3
-		[[ ! -e $SQLITE_CMD ]] && SQLITE_CMD=''
+	# These use a specific path to the binary:
+	#	HybridBackup = `Hybrid Backup Sync`
+	#	container-station = `Container Station`
+
+	if [[ -z $sqlite_cmd ]] && QpkgIsInstalled HybridBackup; then
+		sqlite_pathfile=$(QpkgGetInstallationPath HybridBackup)/CloudConnector3/bin/sqlite3
+		[[ -e $sqlite_pathfile ]] && sqlite_cmd=$sqlite_pathfile
 	fi
 
-	if [[ -z ${SQLITE_CMD:-} ]] && QpkgIsInstalled CacheMount; then				# `HybridMount`
-		SQLITE_CMD=$(QpkgGetInstallationPath CacheMount)/bin/sqlite3
-		[[ ! -e $SQLITE_CMD ]] && SQLITE_CMD=''
+	if [[ -z $sqlite_cmd ]] && QpkgIsInstalled container-station; then
+		sqlite_pathfile=$(QpkgGetInstallationPath container-station)/usr/bin/sqlite3
+		[[ -e $sqlite_pathfile ]] && sqlite_cmd=$sqlite_pathfile
 	fi
 
-	if [[ -z ${SQLITE_CMD:-} ]] && QpkgIsInstalled container-station; then		# `Container Station`
-		SQLITE_CMD=$(QpkgGetInstallationPath container-station)/usr/bin/sqlite3
-		[[ ! -e $SQLITE_CMD ]] && SQLITE_CMD=''
+	# These all use the same path to the binary:
+	#	CacheMount = `HybridMount`
+	# 	qmiixagent = `Qmiix Agent`
+
+	if [[ -z $sqlite_cmd ]]; then
+		for a in CacheMount qmiixagent QPython312 QPython311 QPython39; do
+			if QpkgIsInstalled "$a"; then
+				sqlite_pathfile=$(QpkgGetInstallationPath "$a")/bin/sqlite3
+				[[ -e $sqlite_pathfile ]] || continue
+
+				sqlite_cmd=$sqlite_pathfile
+				break
+			fi
+		done
 	fi
 
-	if [[ -z ${SQLITE_CMD:-} ]] && QpkgIsInstalled qmiixagent; then				# `Qmiix Agent`
-		SQLITE_CMD=$(QpkgGetInstallationPath qmiixagent)/bin/sqlite3
-		[[ ! -e $SQLITE_CMD ]] && SQLITE_CMD=''
+	# These all use the same path to the binary, and require the linked-library path to be set:
+	#	img2pdf = `Image2PDF`
+	#	OCR_Converter = `OCR Converter`
+
+	if [[ -z $sqlite_cmd ]]; then
+		for a in img2pdf Qsirch OCR_Converter; do
+			if QpkgIsInstalled "$a"; then
+				sqlite_pathfile=$(QpkgGetInstallationPath "$a")/bin/sqlite3
+				[[ -e $sqlite_pathfile ]] || continue
+
+				sqlite_cmd="LD_LIBRARY_PATH=$(QpkgGetInstallationPath "$a")/lib $sqlite_pathfile"
+				break
+			fi
+		done
 	fi
 
-	if [[ -z ${SQLITE_CMD:-} ]] && QpkgIsInstalled img2pdf; then				# `Image2PDF`
-		SQLITE_CMD="LD_LIBRARY_PATH=$(QpkgGetInstallationPath img2pdf)/lib $(QpkgGetInstallationPath img2pdf)/bin/sqlite3"
-		[[ ! -e $SQLITE_CMD ]] && SQLITE_CMD=''
-	fi
-
-	if [[ -z ${SQLITE_CMD:-} ]] && QpkgIsInstalled Qsirch; then					# `Qsirch`
-		SQLITE_CMD="LD_LIBRARY_PATH=$(QpkgGetInstallationPath Qsirch)/lib $(QpkgGetInstallationPath Qsirch)/bin/sqlite3"
-		[[ ! -e $SQLITE_CMD ]] && SQLITE_CMD=''
-	fi
-
-	if [[ -z ${SQLITE_CMD:-} ]] && QpkgIsInstalled OCR_Converter; then			# `OCR Converter`
-		SQLITE_CMD="LD_LIBRARY_PATH=$(QpkgGetInstallationPath OCR_Converter)/lib $(QpkgGetInstallationPath OCR_Converter)/bin/sqlite3"
-		[[ ! -e $SQLITE_CMD ]] && SQLITE_CMD=''
-	fi
-
-	[[ -z ${SQLITE_CMD:-} ]] && SQLITE_CMD=/opt/bin/sqlite3						# Last-resort, hope Entware will be installed this session.
-
-	readonly SQLITE_CMD
+	[[ -z $sqlite_cmd ]] && sqlite_cmd=/opt/bin/sqlite3						# Last-resort, hope Entware will be installed this session.
 
 	}
 
@@ -1374,11 +1387,9 @@ ProcActions()
 						PIPs:install
 					fi
 
-					ProcAction sign independent QPKG '"sign"' '"signed"'
+					ProcAction sign independent QPKG '"sign"' '"signed"'		# Sign these ASAP after installing 'sqlite3-cli' IPK.
 			esac
 		done
-
-		ProcAction sign all QPKG '"sign"' '"signed"'
 	fi
 
 	if [[ $useropt_debug = true ]]; then
@@ -4868,14 +4879,14 @@ DisplayAsDepsReportTitleLine()
 
 	printf '\n'
 
-	# column 1: package name
+	# column 1: package name.
 
 	if [[ $report_cols_max -ge 1 ]]; then
 		a="${CHARS_BULLET}QPKG name:"
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
-	# column 2: package dependencies
+	# column 2: package dependencies.
 
 	if [[ $report_cols_max -ge 2 ]]; then
 		printf "%$((COLUMN_SPACING))s"
@@ -4883,7 +4894,7 @@ DisplayAsDepsReportTitleLine()
 		printf "%-$((PACKAGE_DEPENDENCIES_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
-	# column 3: QPKG is installed
+	# column 3: QPKG is installed?
 
 	if [[ $report_cols_max -ge 3 ]]; then
 		printf "%$((COLUMN_SPACING))s"
@@ -4891,7 +4902,7 @@ DisplayAsDepsReportTitleLine()
 		printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
-	# column 4: QPKG is enabled
+	# column 4: QPKG is enabled?
 
 	if [[ $report_cols_max -ge 4 ]]; then
 		printf "%$((COLUMN_SPACING))s"
@@ -4899,7 +4910,7 @@ DisplayAsDepsReportTitleLine()
 		printf "%-$((PACKAGE_ENABLED_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
-	# column 5: minimum NAS RAM required
+	# column 5: minimum NAS RAM required.
 
 	if [[ $report_cols_max -ge 5 ]]; then
 		printf "%$((COLUMN_SPACING))s"
@@ -4907,7 +4918,7 @@ DisplayAsDepsReportTitleLine()
 		printf "%-$((PACKAGE_MIN_RAM_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
-	# column 6: minimum OS fimware version supported
+	# column 6: minimum OS fimware version supported.
 
 	if [[ $report_cols_max -ge 6 ]]; then
 		printf "%$((COLUMN_SPACING))s"
@@ -4915,7 +4926,7 @@ DisplayAsDepsReportTitleLine()
 		printf "%-$((PACKAGE_MIN_OS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
-	# column 7: maximum OS fimware version supported
+	# column 7: maximum OS fimware version supported.
 
 	if [[ $report_cols_max -ge 7 ]]; then
 		printf "%$((COLUMN_SPACING))s"
@@ -4923,7 +4934,7 @@ DisplayAsDepsReportTitleLine()
 		printf "%-$((PACKAGE_MAX_OS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
-	# column 8: arch is compatible
+	# column 8: arch is compatible?
 
 	if [[ $report_cols_max -ge 8 ]]; then
 		printf "%$((COLUMN_SPACING))s"
@@ -4999,7 +5010,7 @@ DisplayAsDepsReportItemLine()
 					fi
 				done
 			else
-				deps+=$(TextBrightGreen "$deps_raw")
+				deps+=$deps_raw
 			fi
 
 			deps_msg+=${deps// /, }
@@ -5016,7 +5027,11 @@ DisplayAsDepsReportItemLine()
 			installed_msg+=$(TextBrightGreen true)
 
 			if QpkgIsMaxOSVerOk; then
-				max_os_msg+=$(TextBrightGreen "$max_os")
+				if [[ $max_os != none ]]; then
+					max_os_msg+=$(TextBrightGreen "$max_os")
+				else
+					max_os_msg+=$max_os
+				fi
 			else
 				max_os_msg=$(TextBrightRed "$CHARS_ALERT")
 				max_os_msg+=$(TextBrightRed "$max_os")
@@ -5034,7 +5049,11 @@ DisplayAsDepsReportItemLine()
 			fi
 
 			if QpkgIsMinRAMOk; then
-				min_ram_msg+=$(TextBrightGreen "$min_ram")
+				if [[ $min_ram != none ]]; then
+					min_ram_msg+=$(TextBrightGreen "$min_ram")
+				else
+					min_ram_msg+=$min_ram
+				fi
 			else
 				min_ram_msg=$(TextBrightRed "$CHARS_ALERT")
 				min_ram_msg+=$(TextBrightRed "$min_ram")
@@ -5162,13 +5181,13 @@ DisplayAsDepsReportItemLine()
 			name_msg+=$(TextBrightRed "$qpkg_name")
 	esac
 
-	# column 1: package name
+	# column 1: package name.
 
 	if [[ $report_cols_max -ge 1 ]]; then
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 	fi
 
-	# column 2: package repository
+	# column 2: package dependencies.
 
 	if [[ $report_cols_max -ge 2 ]]; then
 		printf "%$((COLUMN_SPACING))s"
@@ -5189,21 +5208,21 @@ DisplayAsDepsReportItemLine()
 		printf "%-$((PACKAGE_ENABLED_COL_WIDTH+$(LenANSIDiff "$enabled_msg")))s" "$enabled_msg"
 	fi
 
-	# column 5: minimum NAS RAM required
+	# column 5: minimum NAS RAM required.
 
 	if [[ $report_cols_max -ge 5 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_MIN_RAM_COL_WIDTH+$(LenANSIDiff "$min_ram_msg")))s" "$min_ram_msg"
 	fi
 
-	# column 6: minimum OS fimware version supported
+	# column 6: minimum OS fimware version supported.
 
 	if [[ $report_cols_max -ge 6 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_MIN_OS_COL_WIDTH+$(LenANSIDiff "$min_os_msg")))s" "$min_os_msg"
 	fi
 
-	# column 7: maximum OS fimware version supported
+	# column 7: maximum OS fimware version supported.
 
 	if [[ $report_cols_max -ge 7 ]]; then
 		printf "%$((COLUMN_SPACING))s"
@@ -10170,7 +10189,7 @@ _QPKG:sign_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugVar SQLITE_CMD
+	DebugVar sqlite_cmd
 
 	if ! QPKGs-ISinstalled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' skipped 'QPKG is not installed'
@@ -10184,8 +10203,8 @@ _QPKG:sign_()
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' skipped "QPKG is assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
-	elif [[ ! -e $SQLITE_CMD ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' skipped-abort "$(ShowAsFileName "$SQLITE_CMD") not found"
+	elif [[ ! -e $sqlite_pathfile ]]; then
+		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' skipped-abort "$(ShowAsFileName "$sqlite_pathfile") not found"
 		MarkThisAcForkAsSkippedAbort
 		z=3
 	elif [[ ! -e $CERT_DB_PATHFILE ]]; then
@@ -10194,7 +10213,7 @@ _QPKG:sign_()
 		z=3
 	else
 		a="SELECT 1 FROM Certificate WHERE QpkgName = '$qpkg_name' LIMIT 1;"
-		b=$($SQLITE_CMD "$CERT_DB_PATHFILE" "$a")
+		b=$(eval "$sqlite_cmd" "$CERT_DB_PATHFILE" \"$a\")
 
 		if [[ $b = 1 ]]; then
 			SaveActionResultToLog QPKG "$qpkg_name" '"sign"' skipped-ok 'QPKG is already signed'
@@ -10214,7 +10233,7 @@ _QPKG:sign_()
 	a="INSERT INTO Certificate (Type,QpkgName,Cert,DigitalSignature) VALUES ('qpkg','$qpkg_name','$QPKG_CERTIFICATE','$QPKG_SIGNATURE');"
 
 	for ((retries=0; retries<10; retries++)); do
-		$SQLITE_CMD "$CERT_DB_PATHFILE" "$a"
+		eval "$sqlite_cmd" "$CERT_DB_PATHFILE" \"$a\"
 		z=$?
 
 		case $z in

@@ -4,7 +4,7 @@
 
 * Include QPKG version numbers in progress messages?
 
-* Allow Kapowarr to follow source git branch, release or tag.
+* Allow QPKGs to follow source git branch, release or tag.
 
 * Only install IPKs for QPKGs that download successfully (or are already downloaded).
 	- ... and the installed ones, as-happens now.
@@ -95,7 +95,7 @@
 * Create a troubleshooting page for the wiki?
     - Include explanations of various actions like 'clean' and 'check', so users will have a better idea which action to run when things go wrong.
 
-* Download QPKG updates in background when running sherpa for any reason?
+* Download updates for installed QPKGs in background when running sherpa for any reason?
 
 * Keep track of each package's action times and process the longest ones first next time?
 	- Add a new "launch policy" setting: 'none', 'longest', 'shortest', 'balanced'.
