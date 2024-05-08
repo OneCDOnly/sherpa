@@ -41,7 +41,7 @@ Observed issues:
 		- Calculate QPKG features separate to states and cache/load these from file next time?
 
 	* Python module cleaner in service library functions is removing PyPI packages with a partial name match.
-		- Must be changed to a complete match.
+		- Must be changed to an exact match.
 
 	* 'sherpa' and 'opkg' were not available after installing Entware.
 		- Entware installation may be corrupt.
