@@ -4879,14 +4879,14 @@ DisplayAsDepsReportTitleLine()
 
 	printf '\n'
 
-	# column 1: package name
+	# column 1: package name.
 
 	if [[ $report_cols_max -ge 1 ]]; then
 		a="${CHARS_BULLET}QPKG name:"
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
-	# column 2: package dependencies
+	# column 2: package dependencies.
 
 	if [[ $report_cols_max -ge 2 ]]; then
 		printf "%$((COLUMN_SPACING))s"
@@ -4894,7 +4894,7 @@ DisplayAsDepsReportTitleLine()
 		printf "%-$((PACKAGE_DEPENDENCIES_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
-	# column 3: QPKG is installed
+	# column 3: QPKG is installed?
 
 	if [[ $report_cols_max -ge 3 ]]; then
 		printf "%$((COLUMN_SPACING))s"
@@ -4902,7 +4902,7 @@ DisplayAsDepsReportTitleLine()
 		printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
-	# column 4: QPKG is enabled
+	# column 4: QPKG is enabled?
 
 	if [[ $report_cols_max -ge 4 ]]; then
 		printf "%$((COLUMN_SPACING))s"
@@ -4910,7 +4910,7 @@ DisplayAsDepsReportTitleLine()
 		printf "%-$((PACKAGE_ENABLED_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
-	# column 5: minimum NAS RAM required
+	# column 5: minimum NAS RAM required.
 
 	if [[ $report_cols_max -ge 5 ]]; then
 		printf "%$((COLUMN_SPACING))s"
@@ -4918,7 +4918,7 @@ DisplayAsDepsReportTitleLine()
 		printf "%-$((PACKAGE_MIN_RAM_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
-	# column 6: minimum OS fimware version supported
+	# column 6: minimum OS fimware version supported.
 
 	if [[ $report_cols_max -ge 6 ]]; then
 		printf "%$((COLUMN_SPACING))s"
@@ -4926,7 +4926,7 @@ DisplayAsDepsReportTitleLine()
 		printf "%-$((PACKAGE_MIN_OS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
-	# column 7: maximum OS fimware version supported
+	# column 7: maximum OS fimware version supported.
 
 	if [[ $report_cols_max -ge 7 ]]; then
 		printf "%$((COLUMN_SPACING))s"
@@ -4934,7 +4934,7 @@ DisplayAsDepsReportTitleLine()
 		printf "%-$((PACKAGE_MAX_OS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
-	# column 8: arch is compatible
+	# column 8: arch is compatible?
 
 	if [[ $report_cols_max -ge 8 ]]; then
 		printf "%$((COLUMN_SPACING))s"
@@ -5010,7 +5010,7 @@ DisplayAsDepsReportItemLine()
 					fi
 				done
 			else
-				deps+=$(TextBrightGreen "$deps_raw")
+				deps+=$deps_raw
 			fi
 
 			deps_msg+=${deps// /, }
@@ -5027,7 +5027,11 @@ DisplayAsDepsReportItemLine()
 			installed_msg+=$(TextBrightGreen true)
 
 			if QpkgIsMaxOSVerOk; then
-				max_os_msg+=$(TextBrightGreen "$max_os")
+				if [[ $max_os != none ]]; then
+					max_os_msg+=$(TextBrightGreen "$max_os")
+				else
+					max_os_msg+=$max_os
+				fi
 			else
 				max_os_msg=$(TextBrightRed "$CHARS_ALERT")
 				max_os_msg+=$(TextBrightRed "$max_os")
@@ -5045,7 +5049,11 @@ DisplayAsDepsReportItemLine()
 			fi
 
 			if QpkgIsMinRAMOk; then
-				min_ram_msg+=$(TextBrightGreen "$min_ram")
+				if [[ $min_ram != none ]]; then
+					min_ram_msg+=$(TextBrightGreen "$min_ram")
+				else
+					min_ram_msg+=$min_ram
+				fi
 			else
 				min_ram_msg=$(TextBrightRed "$CHARS_ALERT")
 				min_ram_msg+=$(TextBrightRed "$min_ram")
@@ -5173,13 +5181,13 @@ DisplayAsDepsReportItemLine()
 			name_msg+=$(TextBrightRed "$qpkg_name")
 	esac
 
-	# column 1: package name
+	# column 1: package name.
 
 	if [[ $report_cols_max -ge 1 ]]; then
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 	fi
 
-	# column 2: package repository
+	# column 2: package dependencies.
 
 	if [[ $report_cols_max -ge 2 ]]; then
 		printf "%$((COLUMN_SPACING))s"
@@ -5200,21 +5208,21 @@ DisplayAsDepsReportItemLine()
 		printf "%-$((PACKAGE_ENABLED_COL_WIDTH+$(LenANSIDiff "$enabled_msg")))s" "$enabled_msg"
 	fi
 
-	# column 5: minimum NAS RAM required
+	# column 5: minimum NAS RAM required.
 
 	if [[ $report_cols_max -ge 5 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_MIN_RAM_COL_WIDTH+$(LenANSIDiff "$min_ram_msg")))s" "$min_ram_msg"
 	fi
 
-	# column 6: minimum OS fimware version supported
+	# column 6: minimum OS fimware version supported.
 
 	if [[ $report_cols_max -ge 6 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_MIN_OS_COL_WIDTH+$(LenANSIDiff "$min_os_msg")))s" "$min_os_msg"
 	fi
 
-	# column 7: maximum OS fimware version supported
+	# column 7: maximum OS fimware version supported.
 
 	if [[ $report_cols_max -ge 7 ]]; then
 		printf "%$((COLUMN_SPACING))s"
