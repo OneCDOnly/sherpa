@@ -8,22 +8,11 @@
 
 * Allow QPKGs to follow source git branch, release or tag.
 
-* Only install IPKs for QPKGs that download successfully (or are already downloaded).
-	- ... and the installed ones, as-happens now.
-
 * Add new arg to reshow the previously generated report.
 	- 'sherpa show report'.
 
 * Need a maintenance script to remove all but the most-recent QPKG builds.
 	- Should also run a 'git gc --aggressive' afterward.
-
-* Disable same-line display updates when not in a user terminal.
-	- No-need to record every progress message change in logs.
-
-* Default dependency report should only show installed QPKGs.
-	- ... but should allow 'sherpa d all' to see all QPKGs.
-	- Do the same for repository report.
-	- Add new $QPKG_ACTIONS element: 'report'
 
 * 'show results' report should include completion and elapsed times.
 
@@ -76,9 +65,6 @@
 
 * Show results report in file viewport.
 	- Show status report in viewport too?
-
-* Results report wording should account for single QPKG actions.
-	- Don't pluralise "package actions" when there was only one.
 
 * QDK looks like it will now write installation scripts that extract to unique paths.
 	- Should now be able to install more than one QPKG simultaneously. https://github.com/qnap-dev/QDK/commit/f1eaf3bf0a9547d449592369e555cdfd6cc3c405
