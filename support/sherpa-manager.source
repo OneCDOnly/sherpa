@@ -7080,9 +7080,8 @@ QPKGs.States:Build()
 
 	FuncInit
 
-	local previous=''
+	local a=''
 	local b=''
-	local c=''
 
 	if [[ ${qpkgs_states_built:=false} = true ]]; then
 		DebugAsDone "don't build states: they're already built"
@@ -7109,6 +7108,8 @@ QPKGs.States:Build()
 	MakePath "$QPKG_STATES_PATH" states || return
 
 	# Faster to launch several concurrent loops in the background, than a single loop. Launch those requiring more processing-time first.
+
+	# This one should only be run when actioning 'installable' QPKGs.
 
 # 	time for qpkg_name in $(QPKGs-GRall:Array); do
 	for qpkg_name in $(QPKGs-GRall:Array); do
@@ -7172,6 +7173,8 @@ QPKGs.States:Build()
 # 	done #&
 	done &
 
+	# This one should only be run when actioning 'rebuild' or 'restore'.
+
 # 	time for qpkg_name in $(QPKGs-GRall:Array); do
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		QpkgSetIndex
@@ -7189,10 +7192,10 @@ QPKGs.States:Build()
 	# Load status lines from individual files.
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		c=/var/run/$qpkg_name.last.operation
+		a=/var/run/$qpkg_name.last.operation
 
-		if [[ -e $c ]]; then
-			case $(<$c) in
+		if [[ -e $a ]]; then
+			case $(<$a) in
 				start)
 					QPKGs-ISstarting:Add "$qpkg_name"
 					;;
@@ -7210,10 +7213,10 @@ QPKGs.States:Build()
 			esac
 		fi
 
-		c="$QPKG_STATES_PATH/$qpkg_name"
-		[[ -e $c ]] || continue
+		a=$QPKG_STATES_PATH/$qpkg_name
+		[[ -e $a ]] || continue
 
-		for b in $(<$c); do
+		for b in $(<$a); do
 			case $b in
 				backedup)
 					QPKGs-ISbackedup:Add "$qpkg_name"
@@ -11345,7 +11348,7 @@ QpkgIsUpgradable()
 
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
 
-	QpkgIsInstalled "$a" && QpkgIsRepoOk "$a" && [[ $(QpkgGetInstalledVer "$a") != "$(QpkgGetAvailVer "$a")" ]] && QpkgIsArchOK "$a" && QpkgIsMinOSVerOk "$a" && QpkgIsMinRAMOk "$a"
+	QpkgIsInstalled "$a" && QpkgIsRepoOk "$a" && [[ $(QpkgGetInstalledVer "$a") != "$(QpkgGetAvailVer "$a")" ]] && QpkgIsArchOK "$a" && QpkgIsMinOSVerOk "$a" && QpkgIsMaxOSVerOk "$a" && QpkgIsMinRAMOk "$a"
 
 	}
 
@@ -11363,7 +11366,7 @@ QpkgIsInstallable()
 
 	[[ $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
 
-	! QpkgIsInstalled && QpkgIsRepoOk && QpkgIsArchOK && QpkgIsMinOSVerOk && QpkgIsMinRAMOk
+	! QpkgIsInstalled && QpkgIsRepoOk && QpkgIsArchOK && QpkgIsMinOSVerOk && QpkgIsMaxOSVerOk && QpkgIsMinRAMOk
 
 	}
 

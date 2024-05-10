@@ -1,3 +1,5 @@
+* Add 'unknown' as a possible status to status report information footer.
+
 * Service-scripts should shown current QPKG enabled state.
 
 * Report column headings in bright white?
