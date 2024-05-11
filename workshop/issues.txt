@@ -1,5 +1,19 @@
 Observed issues:
 
+	* Default dependency report should only show installed QPKGs.
+		- ... but should allow 'sherpa d all' to see all QPKGs.
+		- Do the same for repository report.
+		- Add new $QPKG_ACTIONS element: 'report'
+
+	* Disable same-line display updates when not in a user terminal.
+		- No-need to record every progress message change in logs.
+
+	* Only install IPKs for QPKGs that download successfully (or are already downloaded).
+		- ... and the installed ones, as-happens now.
+
+	* Results report wording should account for single QPKG actions.
+		- Don't pluralise "package actions" when there was only one.
+
 	* x86 (Sarah) is writing files into /root/.cache
 		-------------------------------------------------------------------------------------------------------------------------
 		[~] # du -h .cache/
