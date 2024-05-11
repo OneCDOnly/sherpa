@@ -7792,11 +7792,11 @@ IncludeReportFooter()
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/req-attention ]]; then
-		DisplayAsIndentItem "'$(TextBrightOrange '*')' = QPKG cannot be installed"
+		DisplayAsIndentItem "'$(TextBrightOrange '*')' = QPKG cannot be installed."
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/req-alert ]]; then
-		DisplayAsIndentItem "'$(TextBrightRed '!')' = QPKG is not working correctly"
+		DisplayAsIndentItem "'$(TextBrightRed '!')' = QPKG is not working correctly."
 	fi
 
 	if compgen -G "${REPORT_FLAGS_PATH}/backup-file-*" > /dev/null; then			# https://stackoverflow.com/a/6364244
@@ -7804,7 +7804,7 @@ IncludeReportFooter()
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/backup-file-old ]]; then
-		DisplayAsIndentItem "'$(TextBrightRed '!')' = QPKG backup file was updated more-than $highlight_backups_older_than"
+		DisplayAsIndentItem "'$(TextBrightRed '!')' = QPKG backup file was updated more-than $highlight_backups_older_than."
 	fi
 
 	if compgen -G "${REPORT_FLAGS_PATH}/backup-file-*" > /dev/null; then			# https://stackoverflow.com/a/6364244
