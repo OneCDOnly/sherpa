@@ -13,13 +13,13 @@ Package management via **sherpa** provides features like easy application backup
 > That said: the majority of development is now complete, and I'm currently working-on increasing stability during auto-package upgrades. So, <b>sherpa</b> will work beautifully on a fresh (or new) system, but can experience issues when individual application updates are released.
 
 <b>[Click here for installable packages](https://github.com/OneCDOnly/sherpa/wiki/Packages)</b>
-## Installation
+## ![#c5f015](images/lime.png) Installation
 - [SSH](https://www.qnap.com/en/how-to/faq/article/how-do-i-access-my-qnap-nas-using-ssh) into your NAS, and install the QPKG manually at the command-prompt:
 ```
 curl -skL https://tinyurl.com/get-sherpa > /share/Public/sherpa.qpkg;
 sudo sh /share/Public/sherpa.qpkg;
 ```
-## Usage
+## ![#c5f015](images/lime.png) Usage
 - At the command-prompt, run:
 ```
 sudo sherpa
