@@ -1,4 +1,4 @@
-![icon](images/sherpa.readme.png)
+![icon](images/sherpa.readme.png)<br>
 ![#c5f015](images/lime.png) sherpa: a mini-package-manager for QNAP NAS
 ============================================
 [![Latest Release](https://img.shields.io/github/v/release/OneCDOnly/sherpa?logo=github&label=latest%20release)](https://github.com/OneCDOnly/sherpa/releases/latest) ![Static Badge](https://img.shields.io/badge/release_status-beta-orange?logo=github) ![Project Launch](https://img.shields.io/date/1494050732?logo=github&label=project%20launch)
