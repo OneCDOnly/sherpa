@@ -1,8 +1,6 @@
-* Add to 'status' report footer an explanation of "(new)".
+* Should reject useless action/group combinations like 'sherpa stop inactive'.
 
 * 'status' report: show new QPKG application version alongside current application version.
-
-* Add 'unknown' as a possible status to status report information footer.
 
 * Service-scripts should shown current QPKG enabled state.
 
