@@ -9906,6 +9906,10 @@ _QPKG:enableau_()
 		SaveActionResultToLog QPKG "$qpkg_name" enableau skipped 'QPKG is not installed'
 		MarkThisAcForkAsSkipped
 		z=1
+	elif [[ $qpkg_name = sherpa ]]; then
+		SaveActionResultToLog QPKG "$qpkg_name" enableau skipped 'auto-update is always enabled'
+		MarkThisAcForkAsSkipped
+		z=1
 	elif ! QpkgIsCanRestartToUpdate "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" enableau skipped 'QPKG does not support auto-updating'
 		MarkThisAcForkAsSkipped
@@ -9959,6 +9963,10 @@ _QPKG:disableau_()
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" disableau skipped 'QPKG is not installed'
+		MarkThisAcForkAsSkipped
+		z=1
+	elif [[ $qpkg_name = sherpa ]]; then
+		SaveActionResultToLog QPKG "$qpkg_name" disableau skipped 'auto-update cannot be disabled'
 		MarkThisAcForkAsSkipped
 		z=1
 	elif ! QpkgIsCanRestartToUpdate "$qpkg_name"; then
