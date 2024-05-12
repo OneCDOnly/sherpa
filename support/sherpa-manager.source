@@ -7788,11 +7788,11 @@ IncludeReportFooter()
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/app-dynamic ]]; then
-		DisplayAsInfoIndentItem dynamic 'version is the latest available online'
+		DisplayAsInfoIndentItem dynamic 'is the latest version available'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/app-final ]]; then
-		DisplayAsInfoIndentItem final 'version is the last available'
+		DisplayAsInfoIndentItem final 'is the last version available'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/req-attention ]]; then
@@ -7826,7 +7826,7 @@ IncludeReportHeadingsFooter()
 	DisplayAsInfoIndentItem 'Restart?' 'supports restart-to-update application'
 	DisplayAsInfoIndentItem 'Update?' 'application will auto-update on each restart'
 	DisplayAsInfoIndentItem 'Test?' "has a built-in 'status' check, and can test for daemon \"live\" status"
-	DisplayAsInfoIndentItem 'Independent?' 'this QPKG is independent of other QPKGs'
+	DisplayAsInfoIndentItem 'Independent?' 'QPKG is independent of other QPKGs'
 	DisplayAsInfoIndentItem 'Compatible?' 'QPKG has a release compatible with this NAS arch'
 
 	} >> "$REPORT_OUTPUT_PATHFILE"
