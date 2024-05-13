@@ -3743,6 +3743,7 @@ _LaunchOneActionWithManyForks_()
 		[[ ! -e $ACTION_ABORT_PATHFILE ]] || break
 
 		while [[ $fork_count -ge $max_forks ]]; do  	# Don't fork until an empty spot becomes available.
+			[[ ! -e $ACTION_ABORT_PATHFILE ]] || break 2
 			sleep .2
 			UpdateForkProgress
 		done
@@ -3763,7 +3764,8 @@ _LaunchOneActionWithManyForks_()
 
 	# All action forks have launched, just need to wait for them to exit.
 
-	while [[ $fork_count -gt 0 && ! -e $ACTION_ABORT_PATHFILE ]]; do
+	while [[ $fork_count -gt 0 ]]; do
+		[[ ! -e $ACTION_ABORT_PATHFILE ]] || break
 		sleep .2
 		UpdateForkProgress								# Update display while running forks complete.
 	done
