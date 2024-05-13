@@ -3740,15 +3740,15 @@ _LaunchOneActionWithManyForks_()
 	fork_id=0
 
 	for qpkg_name in "${c[@]}"; do
-		while [[ $fork_count -ge $max_forks && ! -e $ACTION_ABORT_PATHFILE ]]; do  	# Don't fork until an empty spot becomes available.
+		[[ ! -e $ACTION_ABORT_PATHFILE ]] || break
+
+		while [[ $fork_count -ge $max_forks ]]; do  	# Don't fork until an empty spot becomes available.
 			sleep .2
 			UpdateForkProgress
 		done
 
-		[[ -e $ACTION_ABORT_PATHFILE ]] && exit
-
 		IncForkProgressIndex
-		MarkThisAcForkAsStarted 					# Must create runfile here, as it takes too-long to happen in background function.
+		MarkThisAcForkAsStarted 						# Must create runfile here, as it takes too-long to happen in background function.
 		QpkgSetIndex
 
 		action_pidfile=$($MKTEMP_CMD "$BG_PROCS_PATH"/bgproc_XXXXXX)		# Set $action_pidfile here, before launching background process so it's inherited by that process.
@@ -3763,7 +3763,7 @@ _LaunchOneActionWithManyForks_()
 
 	# All action forks have launched, just need to wait for them to exit.
 
-	while [[ $fork_count -gt 0 ]]; do
+	while [[ $fork_count -gt 0 && ! -e $ACTION_ABORT_PATHFILE ]]; do
 		sleep .2
 		UpdateForkProgress								# Update display while running forks complete.
 	done
@@ -3847,7 +3847,7 @@ _DirSizeMonitor_()
 
 		[[ ! -e $DISPLAY_INHIBIT_PATHFILE ]] || return
 		WriteMsgInPlace "$progress_msg"
-		sleep 1
+		sleep .5
 	done
 
 	[[ -n $progress_msg ]] && WriteMsgInPlace 'done!'
@@ -3891,7 +3891,6 @@ KillActiveFork()
 		set +m		# disable job control
 		kill -9 "$fork_pid"
 		set -m		# re-enable job control
-		wait
 	fi
 
 	} &>/dev/null
@@ -13422,16 +13421,10 @@ RunOnSIGINT()
 	local a=''
 
 	[[ -n ${DISPLAY_INHIBIT_PATHFILE:-} ]] && ${TOUCH_CMD:-/bin/touch} "$DISPLAY_INHIBIT_PATHFILE"
+	$TOUCH_CMD "$ACTION_ABORT_PATHFILE"
 	EraseThisLine
 	ShowAsAbort 'caught SIGINT'
-	KillActiveFork
 	CloseActionMsgPipe
-
-	if [[ -n ${BG_PROCS_PATH:-} && -d ${BG_PROCS_PATH:-} ]]; then
-		for a in "$BG_PROCS_PATH"/*; do
-			[[ -n $a && $(${BASENAME_CMD:-/usr/bin/basename} "$a") != '*' && -s $a ]] && kill -9 "$(<$a)"
-		done
-	fi
 
 	exit
 
