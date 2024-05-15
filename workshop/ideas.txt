@@ -1,9 +1,12 @@
+* If auto-update is disabled for a QPKG, application version in status report should show as 'static'.
+	- Footer entry for 'static' should read "static = version is frozen as auto-update is disabled."
+
 * Include current $- in debug log.
 
-* install/reinstall/upgrade should check path QPKG is installed or is to-be installed to.
+* 'install'/'reinstall'/'upgrade' should check path QPKG is installed or is to-be installed to.
 	- If it starts with /root - abort.
 
-* Should reject useless action/group combinations like 'sherpa stop inactive'.
+* Reject useless action/group combinations like 'sherpa stop inactive'.
 
 * 'status' report: show new QPKG application version alongside current application version.
 
