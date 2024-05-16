@@ -26,7 +26,7 @@
 #	 list "object" tests: 'Capitalised-CamelCase-With-Inline-Hyphens-And-Period-Before.Test'
 #	 "object" properties: '_lowercase_with_leading_and_inline_and_trailing_underscores_' (these should be managed ONLY by the object's methods)
 #			   constants: 'UPPERCASE_WITH_INLINE_UNDERSCORES' (and set as readonly)
-#				 indents: 1 x tab
+#				 indents: 1 x tab char (=4 space chars)
 #
 # Notes:
 #   If on-screen line-spacing is required, this should only be done by the next function to print output.
@@ -35,6 +35,7 @@
 set -o nounset -o pipefail
 shopt -s extglob
 [[ $- != *m* ]] || set +m			# Disable job control if-enabled (only needed for QTS 4.2.6).
+ln -fns /proc/self/fd /dev/fd		# KLUDGE: `/dev/fd` isn't always created by QTS.
 
 trap RunOnSIGINT SIGINT
 trap RunOnEXIT EXIT
@@ -447,7 +448,6 @@ LoadCMDs()
 	readonly TAIL_CMD=/usr/bin/tail
 	readonly TAR_CMD=/bin/tar
 	readonly TEE_CMD=/usr/bin/tee
-	readonly TOUCH_CMD=/bin/touch
 	readonly UNAME_CMD=/bin/uname
 	readonly UNIQ_CMD=/bin/uniq
 	readonly UNZIP_CMD=/usr/bin/unzip
@@ -485,7 +485,6 @@ CMDsIsOk()
 	IsSysFileExist $TAIL_CMD || return
 	IsSysFileExist $TAR_CMD || return
 	IsSysFileExist $TEE_CMD || return
-	IsSysFileExist $TOUCH_CMD || return
 	IsSysFileExist $UNAME_CMD || return
 	IsSysFileExist $UNIQ_CMD || return
 	IsSysFileExist $UNZIP_CMD || return
@@ -648,9 +647,6 @@ LoadEnv()
 	# Entware
 	readonly EXTERNAL_PACKAGES_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
 	readonly EXTERNAL_PACKAGES_PATHFILE=$CACHE_PATH/Packages
-
-	# KLUDGE: `/dev/fd` isn't always created by QTS.
-	ln -fns /proc/self/fd /dev/fd
 
 	# KLUDGE: just in-case `python` has disappeared again ... ¯\_(ツ)_/¯
 	[[ -e $PYTHON3_CMD && ! -L $PYTHON_CMD ]] && ln -s "$PYTHON3_CMD" "$PYTHON_CMD"
@@ -1561,7 +1557,7 @@ ProcAction()
 								;;
 							sa)		# Action was skipped and must immediately abort (don't attempt this action again).
 								((skip_abort_count++))
-								$TOUCH_CMD "$ACTION_ABORT_PATHFILE"
+								/bin/touch "$ACTION_ABORT_PATHFILE"
 								;;
 							er)		# Action failed (uh-oh).
 								((fail_count++))
@@ -4494,18 +4490,18 @@ DisplayAsStatusReportItemLine()
 
 	if QpkgIsMissing; then
 		mode=highlighted
-		$TOUCH_CMD "$REPORT_FLAGS_PATH"/status-missing
+		/bin/touch "$REPORT_FLAGS_PATH"/status-missing
 	elif QpkgIsNtInstalled; then
 		mode=muted
-		$TOUCH_CMD "$REPORT_FLAGS_PATH"/state-notinstalled
+		/bin/touch "$REPORT_FLAGS_PATH"/state-notinstalled
 	else
 		mode=normal
-		$TOUCH_CMD "$REPORT_FLAGS_PATH"/state-installed
+		/bin/touch "$REPORT_FLAGS_PATH"/state-installed
 	fi
 
-	[[ $(QpkgGetApplVer "$qpkg_name") = dynamic ]] && $TOUCH_CMD "$REPORT_FLAGS_PATH"/app-dynamic
-	[[ $(QpkgGetApplVer "$qpkg_name") = static ]] && $TOUCH_CMD "$REPORT_FLAGS_PATH"/app-static
-	[[ $(QpkgGetApplVer "$qpkg_name") = final ]] && $TOUCH_CMD "$REPORT_FLAGS_PATH"/app-final
+	[[ $(QpkgGetApplVer "$qpkg_name") = dynamic ]] && /bin/touch "$REPORT_FLAGS_PATH"/app-dynamic
+	[[ $(QpkgGetApplVer "$qpkg_name") = static ]] && /bin/touch "$REPORT_FLAGS_PATH"/app-static
+	[[ $(QpkgGetApplVer "$qpkg_name") = final ]] && /bin/touch "$REPORT_FLAGS_PATH"/app-final
 
 	case $mode in
 		normal)
@@ -4519,35 +4515,35 @@ DisplayAsStatusReportItemLine()
 
 			if QPKGs-ISenabled.Exist "$qpkg_name"; then
 				status+=" $(TextBrightGreen enabled)"
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/state-enabled
+				/bin/touch "$REPORT_FLAGS_PATH"/state-enabled
 			else
 				status+=" $(TextBrightRed disabled)"
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/state-disabled
+				/bin/touch "$REPORT_FLAGS_PATH"/state-disabled
 			fi
 
 			# Second word.
 
 			if QPKGs-ISactive.Exist "$qpkg_name"; then
 				status+=" $(TextBrightGreen active)"
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/status-active
+				/bin/touch "$REPORT_FLAGS_PATH"/status-active
 			elif QPKGs-ISslow.Exist "$qpkg_name"; then
 				status+=" $(TextBrightOrange slow)"
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/status-slow
+				/bin/touch "$REPORT_FLAGS_PATH"/status-slow
 			elif QPKGs-ISstarting.Exist "$qpkg_name"; then
 				status+=" $(TextBrightOrange starting)"
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/status-starting
+				/bin/touch "$REPORT_FLAGS_PATH"/status-starting
 			elif QPKGs-ISstopping.Exist "$qpkg_name"; then
 				status+=" $(TextBrightOrange stopping)"
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/status-stopping
+				/bin/touch "$REPORT_FLAGS_PATH"/status-stopping
 			elif QPKGs-ISrestarting.Exist "$qpkg_name"; then
 				status+=" $(TextBrightOrange restarting)"
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/status-restarting
+				/bin/touch "$REPORT_FLAGS_PATH"/status-restarting
 			elif QPKGs-ISNTactive.Exist "$qpkg_name"; then
 				status+=" $(TextBrightRed inactive)"
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/state-inactive
+				/bin/touch "$REPORT_FLAGS_PATH"/state-inactive
 			else
 				status+=" $(TextBrightOrange unknown)"
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/status-unknown
+				/bin/touch "$REPORT_FLAGS_PATH"/status-unknown
 			fi
 
 			status_msg=${CHARS_NORMAL}$(AddSeparators "$status")
@@ -4581,7 +4577,7 @@ DisplayAsStatusReportItemLine()
 
 	if QPKGs-ISupgradable.Exist "$qpkg_name"; then
 		ver_msg+=" ($(TextBrightOrange "$(QpkgGetAvailVer)"))"
-		$TOUCH_CMD "$REPORT_FLAGS_PATH"/status-upgradable
+		/bin/touch "$REPORT_FLAGS_PATH"/status-upgradable
 	fi
 
 	# column 1: package name
@@ -4975,7 +4971,7 @@ DisplayAsDepsReportItemLine()
 	[[ -n $max_os && $max_os != none && ${#max_os} -eq 3 ]] && max_os=${max_os:0:1}.${max_os:1:1}.${max_os:2:1}
 	[[ -n $min_os && $min_os != none && ${#min_os} -eq 3 ]] && min_os=${min_os:0:1}.${min_os:1:1}.${min_os:2:1}
 	[[ $min_ram != none ]] && min_ram=$(FormatAsThous "$min_ram")kB
-	$TOUCH_CMD "$REPORT_FLAGS_PATH"/deps
+	/bin/touch "$REPORT_FLAGS_PATH"/deps
 
 	if QpkgIsMissing; then
 		mode=highlighted
@@ -4995,7 +4991,7 @@ DisplayAsDepsReportItemLine()
 				arch_msg=$(TextBrightRed "$CHARS_ALERT")
 				arch_msg+=$(TextBrightRed false)
 				name_msg=${CHARS_BLANK}$(TextBrightRed "$qpkg_name")
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-alert
+				/bin/touch "$REPORT_FLAGS_PATH"/req-alert
 			fi
 
 			if [[ $deps_raw != none ]]; then
@@ -5008,7 +5004,7 @@ DisplayAsDepsReportItemLine()
 						deps+=$(TextBrightRed "$dep_name")
 						deps_msg=$(TextBrightRed "$CHARS_ALERT")
 						name_msg=${CHARS_BLANK}$(TextBrightRed "$qpkg_name")
-						$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-alert
+						/bin/touch "$REPORT_FLAGS_PATH"/req-alert
 					fi
 				done
 			else
@@ -5023,7 +5019,7 @@ DisplayAsDepsReportItemLine()
 				enabled_msg=$(TextBrightRed "$CHARS_ALERT")
 				enabled_msg+=$(TextBrightRed false)
 				name_msg=${CHARS_BLANK}$(TextBrightRed "$qpkg_name")
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-alert
+				/bin/touch "$REPORT_FLAGS_PATH"/req-alert
 			fi
 
 			installed_msg+=$(TextBrightGreen true)
@@ -5038,7 +5034,7 @@ DisplayAsDepsReportItemLine()
 				max_os_msg=$(TextBrightRed "$CHARS_ALERT")
 				max_os_msg+=$(TextBrightRed "$max_os")
 				name_msg=${CHARS_BLANK}$(TextBrightRed "$qpkg_name")
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-alert
+				/bin/touch "$REPORT_FLAGS_PATH"/req-alert
 			fi
 
 			if QpkgIsMinOSVerOk; then
@@ -5047,7 +5043,7 @@ DisplayAsDepsReportItemLine()
 				min_os_msg=$(TextBrightRed "$CHARS_ALERT")
 				min_os_msg+=$(TextBrightRed "$min_os")
 				name_msg=${CHARS_BLANK}$(TextBrightRed "$qpkg_name")
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-alert
+				/bin/touch "$REPORT_FLAGS_PATH"/req-alert
 			fi
 
 			if QpkgIsMinRAMOk; then
@@ -5060,7 +5056,7 @@ DisplayAsDepsReportItemLine()
 				min_ram_msg=$(TextBrightRed "$CHARS_ALERT")
 				min_ram_msg+=$(TextBrightRed "$min_ram")
 				name_msg=${CHARS_BLANK}$(TextBrightRed "$qpkg_name")
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-alert
+				/bin/touch "$REPORT_FLAGS_PATH"/req-alert
 			fi
 
 			;;
@@ -5073,7 +5069,7 @@ DisplayAsDepsReportItemLine()
 				arch_msg=$(TextBrightOrange "$CHARS_ATTENTION")
 				arch_msg+=$(TextBrightOrange false)
 				name_msg=${CHARS_BLANK}$(TextBrightOrange "$qpkg_name")
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-attention
+				/bin/touch "$REPORT_FLAGS_PATH"/req-attention
 			fi
 
 			deps_msg=$(TextDarkGrey "$CHARS_NORMAL")
@@ -5097,7 +5093,7 @@ DisplayAsDepsReportItemLine()
 				max_os_msg=$(TextBrightOrange "$CHARS_ATTENTION")
 				max_os_msg+=$(TextBrightOrange "$max_os")
 				name_msg=${CHARS_BLANK}$(TextBrightOrange "$qpkg_name")
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-attention
+				/bin/touch "$REPORT_FLAGS_PATH"/req-attention
 			fi
 
 			if QpkgIsMinOSVerOk "$qpkg_name"; then
@@ -5106,7 +5102,7 @@ DisplayAsDepsReportItemLine()
 				min_os_msg=$(TextBrightOrange "$CHARS_ATTENTION")
 				min_os_msg+=$(TextBrightOrange "$min_os")
 				name_msg=${CHARS_BLANK}$(TextBrightOrange "$qpkg_name")
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-attention
+				/bin/touch "$REPORT_FLAGS_PATH"/req-attention
 			fi
 
 			if QpkgIsMinRAMOk "$qpkg_name"; then
@@ -5115,7 +5111,7 @@ DisplayAsDepsReportItemLine()
 				min_ram_msg=$(TextBrightOrange "$CHARS_ATTENTION")
 				min_ram_msg+=$(TextBrightOrange "$min_ram")
 				name_msg=${CHARS_BLANK}$(TextBrightOrange "$qpkg_name")
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-attention
+				/bin/touch "$REPORT_FLAGS_PATH"/req-attention
 			fi
 
 			;;
@@ -5125,7 +5121,7 @@ DisplayAsDepsReportItemLine()
 			else
 				arch_msg=$(TextBrightRed "$CHARS_ALERT")
 				arch_msg+=$(TextBrightRed false)
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-alert
+				/bin/touch "$REPORT_FLAGS_PATH"/req-alert
 			fi
 
 			if [[ $deps_raw != none ]]; then
@@ -5149,19 +5145,19 @@ DisplayAsDepsReportItemLine()
 			else
 				enabled_msg=$(TextBrightRedBlink "$CHARS_ALERT")
 				enabled_msg+=$(TextBrightRed 'false')
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-alert
+				/bin/touch "$REPORT_FLAGS_PATH"/req-alert
 			fi
 
 			installed_msg=$(TextBrightRedBlink "$CHARS_ALERT")
 			installed_msg+=$(TextBrightRedBlink 'missing')
-			$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-alert
+			/bin/touch "$REPORT_FLAGS_PATH"/req-alert
 
 			if QpkgIsMaxOSVerOk; then
 				max_os_msg+=$(TextBrightGreen "$max_os")
 			else
 				max_os_msg=$(TextBrightRed "$CHARS_ALERT")
 				max_os_msg+=$(TextBrightRed "$max_os")
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-alert
+				/bin/touch "$REPORT_FLAGS_PATH"/req-alert
 			fi
 
 			if QpkgIsMinOSVerOk; then
@@ -5169,7 +5165,7 @@ DisplayAsDepsReportItemLine()
 			else
 				min_os_msg=$(TextBrightRed "$CHARS_ALERT")
 				min_os_msg+=$(TextBrightRed "$min_os")
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-alert
+				/bin/touch "$REPORT_FLAGS_PATH"/req-alert
 			fi
 
 			if QpkgIsMinRAMOk; then
@@ -5177,7 +5173,7 @@ DisplayAsDepsReportItemLine()
 			else
 				min_ram_msg=$(TextBrightRed "$CHARS_ALERT")
 				min_ram_msg+=$(TextBrightRed "$min_ram")
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-alert
+				/bin/touch "$REPORT_FLAGS_PATH"/req-alert
 			fi
 
 			name_msg+=$(TextBrightRed "$qpkg_name")
@@ -5629,13 +5625,13 @@ DisplayAsBacksReportItemLine()
 			epoch_time_msg+=$(/bin/date -d @"$epoch_time" +%c)
 			file_bytes_msg+=$file_bytes
 			file_name_msg+=$file_name
-			$TOUCH_CMD "$REPORT_FLAGS_PATH"/backup-file-ok
+			/bin/touch "$REPORT_FLAGS_PATH"/backup-file-ok
 			;;
 		highlighted)
 			epoch_time_msg=$(TextBrightRed "${CHARS_ALERT}$(/bin/date -d @"$epoch_time" +%c)")
 			file_bytes_msg+=$(TextBrightRed "$file_bytes")
 			file_name_msg+=$(TextBrightRed "$file_name")
-			$TOUCH_CMD "$REPORT_FLAGS_PATH"/backup-file-old
+			/bin/touch "$REPORT_FLAGS_PATH"/backup-file-old
 	esac
 
 	# column 1: backup filename
@@ -8237,7 +8233,7 @@ FindNextFD()
 MarkThisAcForkAsStarted()
 	{
 
-	[[ -n $proc_fork_pathfile ]] && $TOUCH_CMD "$proc_fork_pathfile"
+	[[ -n $proc_fork_pathfile ]] && /bin/touch "$proc_fork_pathfile"
 
 	}
 
@@ -12906,7 +12902,7 @@ WriteToLog()
 
 	[[ -n ${1:-} && -n ${2:-} ]] || return
 
-	[[ ${useropt_debug:=false} = true && -n $sess_active_pathfile ]] && printf '%-4s: %s\n' "$(StripANSICodes "$1")" "$(StripANSICodes "$2")" >> "$sess_active_pathfile"
+	[[ ${useropt_debug:=false} = true && -n ${sess_active_pathfile:-} ]] && printf '%-4s: %s\n' "$(StripANSICodes "$1")" "$(StripANSICodes "$2")" >> "$sess_active_pathfile"
 
 	}
 
@@ -13422,8 +13418,8 @@ RunOnSIGINT()
 
 	trap - SIGINT
 
-	[[ -n ${DISPLAY_INHIBIT_PATHFILE:-} ]] && ${TOUCH_CMD:-/bin/touch} "$DISPLAY_INHIBIT_PATHFILE"
-	$TOUCH_CMD "$ACTION_ABORT_PATHFILE"
+	[[ -n ${DISPLAY_INHIBIT_PATHFILE:-} ]] && /bin/touch "$DISPLAY_INHIBIT_PATHFILE"
+	[[ -n ${ACTION_ABORT_PATHFILE:-} ]] && /bin/touch "$ACTION_ABORT_PATHFILE"
 	EraseThisLine
 	ShowAsAbort 'caught SIGINT'
 	CloseActionMsgPipe
