@@ -1,6 +1,3 @@
-* If auto-update is disabled for a QPKG, application version in status report should show as 'static'.
-	- Footer entry for 'static' should read "static = version is frozen as auto-update is disabled."
-
 * 'install'/'reinstall'/'upgrade' should check path QPKG is installed or is to-be installed to.
 	- If it starts with /root - abort.
 

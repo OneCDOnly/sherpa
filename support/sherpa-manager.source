@@ -4502,6 +4502,7 @@ DisplayAsStatusReportItemLine()
 	fi
 
 	[[ $(QpkgGetApplVer "$qpkg_name") = dynamic ]] && $TOUCH_CMD "$REPORT_FLAGS_PATH"/app-dynamic
+	[[ $(QpkgGetApplVer "$qpkg_name") = static ]] && $TOUCH_CMD "$REPORT_FLAGS_PATH"/app-static
 	[[ $(QpkgGetApplVer "$qpkg_name") = final ]] && $TOUCH_CMD "$REPORT_FLAGS_PATH"/app-final
 
 	case $mode in
@@ -7794,6 +7795,10 @@ IncludeReportFooter()
 		DisplayAsInfoIndentItem dynamic 'is the latest version available'
 	fi
 
+	if [[ -e "$REPORT_FLAGS_PATH"/app-static ]]; then
+		DisplayAsInfoIndentItem static 'version is frozen as auto-update is disabled'
+	fi
+
 	if [[ -e "$REPORT_FLAGS_PATH"/app-final ]]; then
 		DisplayAsInfoIndentItem final 'is the last version available'
 	fi
@@ -10484,9 +10489,7 @@ QpkgGetApplVer()
 				[[ $a = version ]] && a=${QPKG_VERSION[$qpkg_default_index]}
 				[[ $a != none ]] || return
 
-				echo -n "$a"
-
-				return 0
+				break
 			fi
 		done
 	elif [[ $qpkg_index -gt 0 ]]; then
@@ -10494,13 +10497,19 @@ QpkgGetApplVer()
 		[[ $a = default ]] && a=${QPKG_APPL_VERSION[$qpkg_default_index]}
 		[[ $a = version ]] && a=${QPKG_VERSION[$qpkg_default_index]}
 		[[ $a != none ]] || return
-
-		echo -n "$a"
-
-		return 0
 	fi
 
-	return 1
+	[[ -n $a ]] || return
+
+	if [[ $a != final ]] && QpkgIsInstalled && QpkgIsCanRestartToUpdate && ! QpkgIsAutoUpdate; then
+		printf static
+
+		return
+	fi
+
+	echo -n "$a"
+
+	return 0
 
 	}
 
