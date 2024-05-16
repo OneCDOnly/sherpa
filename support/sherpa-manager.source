@@ -10502,12 +10502,7 @@ QpkgGetApplVer()
 	fi
 
 	[[ -n $a ]] || return
-
-	if [[ $a != final ]] && QpkgIsInstalled && QpkgIsCanRestartToUpdate && ! QpkgIsAutoUpdate; then
-		printf static
-
-		return
-	fi
+	[[ $a = dynamic ]] && QpkgIsInstalled && ! QpkgIsAutoUpdate && a=static
 
 	echo -n "$a"
 
