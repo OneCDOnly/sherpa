@@ -36,13 +36,15 @@ set -o nounset -o pipefail
 shopt -s extglob
 [[ $- != *m* ]] || set +m			# Disable job control if-enabled (only needed for QTS 4.2.6).
 
+trap RunOnSIGINT SIGINT
+trap RunOnEXIT EXIT
+
 readonly ARGS_RAW=$*
 readonly SCRIPT_STARTSECONDS=$(/bin/date +%s)
 
 Init()
 	{
 
-	SetTraps
 	OsIsOk || return
 	UserIsOk || return
 	LoadConsts
@@ -811,7 +813,7 @@ DebugLogEnv()
 	DebugUserspace ok '$BASH_VERSION' "$BASH_VERSION"
 	DebugUserspace ok 'shell options' "$-"
 	DebugUserspace ok 'default volume' "$(UserGetDefVol)"
-	DebugUserspace ok '/opt' "$($READLINK_CMD /opt 2>/dev/null || printf 'not present')"
+	DebugUserspace ok '/opt' "$($READLINK_CMD /opt 2> /dev/null || printf 'not present')"
 
 	local public_share=$(/sbin/getcfg SHARE_DEF defPublic -d Qpublic -f /etc/config/def_share.info)
 
@@ -1034,7 +1036,7 @@ CheckEnv()
 		QPKGs-ACupgrade-to:Add sherpa
 	fi
 
-	wait 2>/dev/null			# Ensure Entware package updater completes before continuing.
+	wait 2> /dev/null			# Ensure Entware package updater completes before continuing.
 
 	FuncExit
 
@@ -1598,7 +1600,7 @@ ProcAction()
 			[[ $skip_count -gt 0 || $skip_ok_count -gt 0 || $skip_error_count -gt 0 || $skip_abort_count -gt 0 ]] && show_package_actions_skipped=true
 
 			[[ ${#target_packages[@]} -gt 0 ]] && KillActiveFork		# Only needed if an action fork didn't exit properly.
-			wait 2>/dev/null
+			wait 2> /dev/null
 			CloseActionMsgPipe
 
 			# TODO: Process unactioned QPKGs here (if-any), and mark them as aborted.
@@ -3196,7 +3198,7 @@ SaveIpkAndPipList()
 	$OPKG_CMD list-installed > "$PREV_IPK_LIST"
 	[[ -e $PREV_IPK_LIST ]] && DebugAsDone "saved current $(ShowAsPackageName Entware) IPK list to $(ShowAsFileName "$PREV_IPK_LIST")"
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 LoadIpkList()
 	{
@@ -3807,7 +3809,7 @@ _DirSizeMonitor_()
 	InitProgress
 
 	while [[ $current_bytes -lt $total_bytes ]]; do
-		current_bytes=$($GNU_FIND_CMD "$1" -type f -name '*.ipk' -exec $DU_CMD --bytes --total --apparent-size {} + 2>/dev/null | $GREP_CMD total$ | cut -f1)
+		current_bytes=$($GNU_FIND_CMD "$1" -type f -name '*.ipk' -exec $DU_CMD --bytes --total --apparent-size {} + 2> /dev/null | $GREP_CMD total$ | cut -f1)
 		[[ -z $current_bytes ]] && current_bytes=0
 
 		if [[ $current_bytes -ne $last_bytes ]]; then
@@ -3896,7 +3898,7 @@ KillActiveFork()
 		kill -9 "$fork_pid"
 	fi
 
-	} &>/dev/null
+	} &> /dev/null
 
 Reset()
 	{
@@ -6633,15 +6635,15 @@ IncForkProgressIndex()
 RefreshForkCounts()
 	{
 
-	fork_count=$(ls -A -1 "$proc_fork_count_path" 2>/dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
-	ok_count=$(ls -A -1 "$proc_ok_count_path" 2>/dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
-	skip_count=$(ls -A -1 "$proc_skip_count_path" 2>/dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
-	skip_ok_count=$(ls -A -1 "$proc_skip_ok_count_path" 2>/dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
-	skip_error_count=$(ls -A -1 "$proc_skip_error_count_path" 2>/dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
-	skip_abort_count=$(ls -A -1 "$proc_skip_abort_count_path" 2>/dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
-	fail_count=$(ls -A -1 "$proc_fail_count_path" 2>/dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
+	fork_count=$(ls -A -1 "$proc_fork_count_path" 2> /dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
+	ok_count=$(ls -A -1 "$proc_ok_count_path" 2> /dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
+	skip_count=$(ls -A -1 "$proc_skip_count_path" 2> /dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
+	skip_ok_count=$(ls -A -1 "$proc_skip_ok_count_path" 2> /dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
+	skip_error_count=$(ls -A -1 "$proc_skip_error_count_path" 2> /dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
+	skip_abort_count=$(ls -A -1 "$proc_skip_abort_count_path" 2> /dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
+	fail_count=$(ls -A -1 "$proc_fail_count_path" 2> /dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
 
-	} &>/dev/null
+	} &> /dev/null
 
 EraseForkCountPaths()
 	{
@@ -6649,7 +6651,7 @@ EraseForkCountPaths()
 	ClearPath /var/run/sherpa/actions/forks "$proc_counts_path"
 	[[ -e $ACTION_ABORT_PATHFILE ]] && rm -f "$ACTION_ABORT_PATHFILE"
 
-	} &>/dev/null
+	} &> /dev/null
 
 InitProgress()
 	{
@@ -7187,7 +7189,7 @@ QPKGs.States:Build()
 # 	done #&
 	done &
 
-	wait 2>/dev/null
+	wait 2> /dev/null
 
 	# Load status lines from individual files.
 
@@ -7386,7 +7388,7 @@ Help.Abbreviations:Show()
 	LoadPackages
 	DisableDebugToArchiveAndFile
 	DisplayProcReport abbreviations
-	ResetReportsPath &>/dev/null
+	ResetReportsPath &> /dev/null
 
 		{
 
@@ -7403,7 +7405,7 @@ Help.Abbreviations:Show()
 	done
 
 	m=$n
-	wait 2>/dev/null
+	wait 2> /dev/null
 
 	# load report lines from individual files.
 
@@ -7445,7 +7447,7 @@ ShowReportBackups()
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport backups
-	ResetReportsPath &>/dev/null
+	ResetReportsPath &> /dev/null
 
 		{
 
@@ -7456,7 +7458,7 @@ ShowReportBackups()
 				[[ -z $epoch_time || -z $file_name ]] && break
 
 				DisplayAsBacksReportItemLine "$epoch_time" "$file_name" "$file_bytes" "$highlight_backups_older_than"
-			done <<< "$($GNU_FIND_CMD "$QPKG_BU_PATH"/*.config.tar.gz -maxdepth 1 -printf '%C@ %f %s\n' 2>/dev/null | $SORT_CMD)"
+			done <<< "$($GNU_FIND_CMD "$QPKG_BU_PATH"/*.config.tar.gz -maxdepth 1 -printf '%C@ %f %s\n' 2> /dev/null | $SORT_CMD)"
 		else										# If GNU `find` isn't available, do-it the hard-way.
 			while read -r file_date file_time file_name file_bytes; do
 				[[ -z $file_date || -z $file_name ]] && break
@@ -7465,7 +7467,7 @@ ShowReportBackups()
 				file_name=$($BASENAME_CMD "$file_name")
 
 				DisplayAsBacksReportItemLine "$epoch_time" "$file_name" "$file_bytes" "$highlight_backups_older_than"
-			done <<< "$(cd "$QPKG_BU_PATH" && ls -l1tr --time-style=+"%Y-%m-%d %H:%M:%S" ./*.config.tar.gz 2>/dev/null | $AWK_CMD '{print $6" "$7" "$8" "$5}')"
+			done <<< "$(cd "$QPKG_BU_PATH" && ls -l1tr --time-style=+"%Y-%m-%d %H:%M:%S" ./*.config.tar.gz 2> /dev/null | $AWK_CMD '{print $6" "$7" "$8" "$5}')"
 		fi
 
 		IncludeReportFooter
@@ -7500,7 +7502,7 @@ ShowReportDependencies()
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport dependency
-	ResetReportsPath &>/dev/null
+	ResetReportsPath &> /dev/null
 
 	DisplayAsDepsReportTitleLine > "$REPORT_OUTPUT_PATHFILE"
 
@@ -7511,7 +7513,7 @@ ShowReportDependencies()
 	done
 
 	m=$n
-	wait 2>/dev/null
+	wait 2> /dev/null
 
 	# load report lines from individual files.
 
@@ -7554,7 +7556,7 @@ ShowReportFeatures()
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport features
-	ResetReportsPath &>/dev/null
+	ResetReportsPath &> /dev/null
 
 	DisplayAsFeaturesReportTitleLine > "$REPORT_OUTPUT_PATHFILE"
 
@@ -7565,7 +7567,7 @@ ShowReportFeatures()
 	done
 
 	m=$n
-	wait 2>/dev/null
+	wait 2> /dev/null
 
 	# load report lines from individual files.
 
@@ -7650,7 +7652,7 @@ ShowReportRepos()
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport repository
-	ResetReportsPath &>/dev/null
+	ResetReportsPath &> /dev/null
 	DisplayAsReposReportTitleLine > "$REPORT_OUTPUT_PATHFILE"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
@@ -7660,7 +7662,7 @@ ShowReportRepos()
 	done
 
 	m=$n
-	wait 2>/dev/null
+	wait 2> /dev/null
 
 	# load report lines from individual files.
 
@@ -7702,7 +7704,7 @@ ShowReportStatuses()
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport status
-	ResetReportsPath &>/dev/null
+	ResetReportsPath &> /dev/null
 	CalcMaxStatusReportCols
 
 	DisplayAsStatusReportTitleLine > "$REPORT_OUTPUT_PATHFILE"
@@ -7715,7 +7717,7 @@ ShowReportStatuses()
 	done
 
 	m=$n
-	wait 2>/dev/null
+	wait 2> /dev/null
 
 	# Load report lines from individual files.
 
@@ -8435,7 +8437,7 @@ Python3GetVer()
 PythonGetVer()
 	{
 
-	GetThisBinPath ${1:-python} &>/dev/null && ${1:-python} -V 2>&1 | $SED_CMD 's|^Python ||'
+	GetThisBinPath ${1:-python} &> /dev/null && ${1:-python} -V 2>&1 | $SED_CMD 's|^Python ||'
 
 	}
 
@@ -8457,7 +8459,7 @@ PerlIsOutdated()
 PerlGetVer()
 	{
 
-	GetThisBinPath ${1:-perl} &>/dev/null && ${1:-perl} -e 'print "$^V\n"' 2>/dev/null | $SED_CMD 's|v||'
+	GetThisBinPath ${1:-perl} &> /dev/null && ${1:-perl} -e 'print "$^V\n"' 2> /dev/null | $SED_CMD 's|v||'
 
 	}
 
@@ -8629,7 +8631,7 @@ QpkgGetEntwareType()
 		printf 'not-installed'
 	fi
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 UserGetSudoUID()
 	{
@@ -8762,7 +8764,7 @@ OsIsSupportDecimalSleepSeconds()
 
 	# Test if QTS `/bin/sleep` can handle decimal seconds (early BusyBox versions cannot):
 
-	/bin/sleep .01 &>/dev/null
+	/bin/sleep .01 &> /dev/null
 
 	}
 
@@ -8785,14 +8787,14 @@ OsIsStarting()
 
 	$PS_CMD | $GREP_CMD -F '/bin/sh /etc/init.d/rcS' | $GREP_CMD -v grep
 
-	} &>/dev/null
+	} &> /dev/null
 
 OsIsStopping()
 	{
 
 	$PS_CMD | $GREP_CMD -F '/bin/sh /etc/init.d/rcK' | $GREP_CMD -v grep
 
-	} &>/dev/null
+	} &> /dev/null
 
 OsIsStdKernelPageSize()
 	{
@@ -9023,7 +9025,7 @@ _QPKG:reassign_()
 	# Output:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -9070,7 +9072,7 @@ _QPKG:download_()
 	# Output:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -9142,7 +9144,7 @@ _QPKG:install_()
 	# Output:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -9256,7 +9258,7 @@ _QPKG:reinstall_()
 	# Output:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -9333,7 +9335,7 @@ _QPKG:rebuild_()
 	# Output:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -9382,7 +9384,7 @@ _QPKG:upgrade_()
 	# Output:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -9473,7 +9475,7 @@ _QPKG:uninstall_()
 	# Output:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -9509,7 +9511,7 @@ _QPKG:uninstall_()
 
 		if [[ $z -eq 0 ]]; then
 			# ALERT: beware of `qpkg_cli --remove`, it removes the QPKG installation path around 10-20 seconds after execution. If sherpa has moved-on and starts an install, `qpkg_cli` will remove the newly created QPKG installation path partway through the installation. So, check if QPKG is to be installed: if this is the case, don't use `qpkg_cli --remove`.
-			[[ -e /sbin/qpkg_cli ]] && ! QPKGs-ACinstall-to.Exist "$qpkg_name" && /sbin/qpkg_cli --remove "$qpkg_name" &>/dev/null
+			[[ -e /sbin/qpkg_cli ]] && ! QPKGs-ACinstall-to.Exist "$qpkg_name" && /sbin/qpkg_cli --remove "$qpkg_name" &> /dev/null
 			SaveActionResultToLog QPKG "$qpkg_name" uninstall ok
 			/sbin/rmcfg "$qpkg_name" -f /etc/config/qpkg.conf
 			DebugAsDone 'removed icon information from App Center'
@@ -9551,7 +9553,7 @@ _QPKG:activate_()
 	# Output:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -9636,7 +9638,7 @@ _QPKG:reactivate_()
 	# Output:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -9712,7 +9714,7 @@ _QPKG:deactivate_()
 	# Output:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -9796,7 +9798,7 @@ _QPKG:enable_()
 	# Output:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -9847,7 +9849,7 @@ _QPKG:disable_()
 	# Output:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -9903,7 +9905,7 @@ _QPKG:enableau_()
 	# Output:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -9962,7 +9964,7 @@ _QPKG:disableau_()
 	# Output:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10021,7 +10023,7 @@ _QPKG:backup_()
 	# Output:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10077,7 +10079,7 @@ _QPKG:restore_()
 	# Output:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10137,7 +10139,7 @@ _QPKG:clean_()
 	# Output:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10196,7 +10198,7 @@ _QPKG:sign_()
 	# Output:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10295,7 +10297,7 @@ _QPKG:status_()
 	# Output:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10328,7 +10330,7 @@ _QPKG:status_()
 			z=$?
 		fi
 	elif [[ $a != none ]]; then
-		eval "$a" &>/dev/null
+		eval "$a" &> /dev/null
 		z=$?
 	fi
 
@@ -10372,7 +10374,7 @@ ClearQpkgAppCenterNotifier()
 
 	return 0
 
-	} &>/dev/null
+	} &> /dev/null
 
 ClearQpkgServiceStatus()
 	{
@@ -12776,7 +12778,7 @@ PercFrac()
 
 	return 0
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 ShowAsIterativeProgress()
 	{
@@ -12924,7 +12926,7 @@ TextBrightGreen()
 		printf '%s' "$1"
 	fi
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 TextBrightYellow()
 	{
@@ -12937,7 +12939,7 @@ TextBrightYellow()
 		printf '%s' "$1"
 	fi
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 TextBrightOrange()
 	{
@@ -12950,7 +12952,7 @@ TextBrightOrange()
 		printf '%s' "$1"
 	fi
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 TextBrightOrangeBlink()
 	{
@@ -12963,7 +12965,7 @@ TextBrightOrangeBlink()
 		printf '%s' "$1"
 	fi
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 TextBrightRed()
 	{
@@ -12976,7 +12978,7 @@ TextBrightRed()
 		printf '%s' "$1"
 	fi
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 TextBrightRedBlink()
 	{
@@ -12989,7 +12991,7 @@ TextBrightRedBlink()
 		printf '%s' "$1"
 	fi
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 #TextCyan()
 # 	{
@@ -13002,7 +13004,7 @@ TextBrightRedBlink()
 # 		printf '%s' "$1"
 # 	fi
 #
-# 	} 2>/dev/null
+# 	} 2> /dev/null
 
 TextDarkGrey()
 	{
@@ -13015,7 +13017,7 @@ TextDarkGrey()
 		printf '%s' "$1"
 	fi
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 #TextUnderlined()
 # 	{
@@ -13028,7 +13030,7 @@ TextDarkGrey()
 # 		printf '%s' "$1"
 # 	fi
 #
-# 	} 2>/dev/null
+# 	} 2> /dev/null
 
 TextUnderlinedCyan()
 	{
@@ -13041,7 +13043,7 @@ TextUnderlinedCyan()
 		printf '%s' "$1"
 	fi
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 TextBlackOnCyan()
 	{
@@ -13054,7 +13056,7 @@ TextBlackOnCyan()
 		printf '%s' "$1"
 	fi
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 TextBrightWhite()
 	{
@@ -13067,7 +13069,7 @@ TextBrightWhite()
 		printf '%s' "$1"
 	fi
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 StripANSICodes()
 	{
@@ -13082,7 +13084,7 @@ StripANSICodes()
 		echo -en "${1:-}" 												# Can't strip, so pass thru original message unaltered.
 	fi
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 UpdateParentCapabilities()
 	{
@@ -13183,7 +13185,7 @@ FormatMillisecsToMinutesSecs()
 		printf '%dm:%02ds' "$m" "$s"
 	fi
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 FormatSecsToHoursMinutesSecs()
 	{
@@ -13199,7 +13201,7 @@ FormatSecsToHoursMinutesSecs()
 
 	printf '%01dh:%02dm:%02ds\n' "$h" "$m" "$s"
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 FormatLongMinutesSecs()
 	{
@@ -13217,7 +13219,7 @@ FormatLongMinutesSecs()
 
 	printf '%01dm:%02ds\n' "$((10#$m))" "$((10#$s))"
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 sleep()
 	{
@@ -13239,7 +13241,7 @@ sleep()
 
 	return 0
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 LoadObjects()
 	{
@@ -13420,16 +13422,10 @@ LoadPackages()
 
 	}
 
-SetTraps()
-	{
-
-	trap RunOnEXIT EXIT
-	trap RunOnSIGINT INT
-
-	}
-
 RunOnSIGINT()
 	{
+
+	trap - SIGINT
 
 	[[ -n ${DISPLAY_INHIBIT_PATHFILE:-} ]] && ${TOUCH_CMD:-/bin/touch} "$DISPLAY_INHIBIT_PATHFILE"
 	$TOUCH_CMD "$ACTION_ABORT_PATHFILE"
