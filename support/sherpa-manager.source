@@ -809,6 +809,7 @@ DebugLogEnv()
 	DebugUserspace ok '$EUID' "$EUID"
 	DebugUserspace ok 'time in shell' "$(UserGetTimeInShell)"
 	DebugUserspace ok '$BASH_VERSION' "$BASH_VERSION"
+	DebugUserspace ok 'shell options' "$-"
 	DebugUserspace ok 'default volume' "$(UserGetDefVol)"
 	DebugUserspace ok '/opt' "$($READLINK_CMD /opt 2>/dev/null || printf 'not present')"
 
