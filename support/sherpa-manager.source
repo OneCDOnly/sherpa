@@ -16,17 +16,17 @@
 #* <?license?>
 #
 # Project variable and function naming style-guide:
-#			  functions: 'CamelCase'
-#  background functions: '_CamelCaseWithLeadingAndTrailingUnderscores_'
-#  utility interceptors: (same as original)
-#			  variables: 'lowercase_with_inline_underscores'
-# flag "object" methods: 'Capitalised.CamelCase.With.Inline.Periods.And.Colon.Before:Method'
-#   flag "object" tests: 'Capitalised.CamelCase.With.Inline.Periods.And.Period.Before.Test'
-# list "object" methods: 'Capitalised-CamelCase-With-Inline-Hyphens-And-Colon-Before:Method'
-#   list "object" tests: 'Capitalised-CamelCase-With-Inline-Hyphens-And-Period-Before.Test'
-#   "object" properties: '_lowercase_with_leading_and_inline_and_trailing_underscores_' (these should be managed ONLY by the object's methods)
-#			  constants: 'UPPERCASE_WITH_INLINE_UNDERSCORES' (and set as readonly)
-#				indents: 1 x tab
+# 			   functions: 'CamelCase'
+# asynchronous functions: '_CamelCaseWithLeadingAndTrailingUnderscores_'
+# 	utility interceptors: (same as original)
+#			   variables: 'lowercase_with_inline_underscores'
+#  flag "object" methods: 'Capitalised.CamelCase.With.Inline.Periods.And.Colon.Before:Method'
+#	 flag "object" tests: 'Capitalised.CamelCase.With.Inline.Periods.And.Period.Before.Test'
+#  list "object" methods: 'Capitalised-CamelCase-With-Inline-Hyphens-And-Colon-Before:Method'
+#	 list "object" tests: 'Capitalised-CamelCase-With-Inline-Hyphens-And-Period-Before.Test'
+#	 "object" properties: '_lowercase_with_leading_and_inline_and_trailing_underscores_' (these should be managed ONLY by the object's methods)
+#			   constants: 'UPPERCASE_WITH_INLINE_UNDERSCORES' (and set as readonly)
+#				 indents: 1 x tab
 #
 # Notes:
 #   If on-screen line-spacing is required, this should only be done by the next function to print output.
@@ -34,6 +34,8 @@
 
 set -o nounset -o pipefail
 shopt -s extglob
+[[ $- != *m* ]] || set +m			# Disable job control if-enabled (only needed for QTS 4.2.6).
+
 readonly ARGS_RAW=$*
 readonly SCRIPT_STARTSECONDS=$(/bin/date +%s)
 
@@ -602,7 +604,7 @@ LoadEnv()
 
 		readonly CACHE_PATH=$THIS_PACKAGE_PATH/cache
 			readonly ACTION_TIMES_PATH=$CACHE_PATH/action.times
-			readonly BG_PROCS_PATH=$CACHE_PATH/proc
+			readonly ASYNC_PROCS_PATH=$CACHE_PATH/proc
 			readonly DEPENDENT_QPKGS_LIST_PATHFILE=$CACHE_PATH/dependents
 			readonly DISPLAY_INHIBIT_PATHFILE=$CACHE_PATH/display.inhibit
 			readonly INDEPENDENT_QPKGS_LIST_PATHFILE=$CACHE_PATH/independents
@@ -721,14 +723,14 @@ LoadLists()
 CreatePaths()
 	{
 
-	ClearPath "$CACHE_PATH" "$BG_PROCS_PATH"
+	ClearPath "$CACHE_PATH" "$ASYNC_PROCS_PATH"
 	ClearPath "$CACHE_PATH" "$IPK_CACHE_PATH"
 	ClearPath "$CACHE_PATH" "$IPK_DL_PATH"
 	ClearPath "$CACHE_PATH" "$PIP_CACHE_PATH"
 	ClearPath /var/run/sherpa/report "$REPORT_FLAGS_PATH"
 
 	MakePath "$ACTION_TIMES_PATH" 'action times' || return
-	MakePath "$BG_PROCS_PATH" 'background process tracking' || return
+	MakePath "$ASYNC_PROCS_PATH" 'asynchronous process tracking' || return
 	MakePath "$CACHE_PATH" cache || return
 	MakePath "$IPK_CACHE_PATH" 'IPK cache' || return
 	MakePath "$IPK_DL_PATH" 'IPK download' || return
@@ -807,6 +809,7 @@ DebugLogEnv()
 	DebugUserspace ok '$EUID' "$EUID"
 	DebugUserspace ok 'time in shell' "$(UserGetTimeInShell)"
 	DebugUserspace ok '$BASH_VERSION' "$BASH_VERSION"
+	DebugUserspace ok 'shell options' "$-"
 	DebugUserspace ok 'default volume' "$(UserGetDefVol)"
 	DebugUserspace ok '/opt' "$($READLINK_CMD /opt 2>/dev/null || printf 'not present')"
 
@@ -1482,7 +1485,7 @@ ProcAction()
 				ShowKeystrokes		# Enable this before removing Entware & GNU `stty`.
 			fi
 
-			pidfile=$($MKTEMP_CMD "$BG_PROCS_PATH"/bgproc_XXXXXX)		# Set $pidfile here, before launching background process so it's inherited by that process.
+			pidfile=$($MKTEMP_CMD "$ASYNC_PROCS_PATH"/bgproc_XXXXXX)		# Set $pidfile here, before launching async process so it's inherited by that process.
 
 			_LaunchOneActionWithManyForks_ "_${PACKAGE_TYPE}:${TARGET_ACTION}_" "${target_packages[@]}" &
 
@@ -1681,7 +1684,7 @@ AdjustMaxForks()
 	max_forks=$CONCURRENCY
 	local reason=''
 
-	if [[ $useropt_verbose = true ]]; then 					# No-point running actions async in verbose mode: stdout will be a confusing mess.
+	if [[ $useropt_verbose = true ]]; then 					# No-point running async actions in verbose mode: stdout will be a confusing mess.
 		max_forks=1
 		reason='verbose mode is active'
 	elif [[ $useropt_debug = true ]]; then 					# Same goes for debug mode: logs will be a mess.
@@ -3720,7 +3723,7 @@ _LaunchOneActionWithManyForks_()
 
 	# Execute actions concurrently, but only as many as $max_forks will allow given the circumstances.
 
-	# * This function runs as a background process *
+	# * This function runs as an asynchronous process *
 
 	# inputs: (local)
 	#   $1 = the target function action to be applied to each QPKG in $target_packages()
@@ -3740,18 +3743,19 @@ _LaunchOneActionWithManyForks_()
 	fork_id=0
 
 	for qpkg_name in "${c[@]}"; do
-		while [[ $fork_count -ge $max_forks && ! -e $ACTION_ABORT_PATHFILE ]]; do  	# Don't fork until an empty spot becomes available.
+		[[ ! -e $ACTION_ABORT_PATHFILE ]] || break
+
+		while [[ $fork_count -ge $max_forks ]]; do  	# Don't fork until an empty spot becomes available.
+			[[ ! -e $ACTION_ABORT_PATHFILE ]] || break 2
 			sleep .2
 			UpdateForkProgress
 		done
 
-		[[ -e $ACTION_ABORT_PATHFILE ]] && exit
-
 		IncForkProgressIndex
-		MarkThisAcForkAsStarted 					# Must create runfile here, as it takes too-long to happen in background function.
+		MarkThisAcForkAsStarted 						# Must create runfile here, as it takes too-long to happen in async function.
 		QpkgSetIndex
 
-		action_pidfile=$($MKTEMP_CMD "$BG_PROCS_PATH"/bgproc_XXXXXX)		# Set $action_pidfile here, before launching background process so it's inherited by that process.
+		action_pidfile=$($MKTEMP_CMD "$ASYNC_PROCS_PATH"/bgproc_XXXXXX)		# Set $action_pidfile here, before launching async process so it's inherited by that process.
 
 		$a &
 
@@ -3764,6 +3768,7 @@ _LaunchOneActionWithManyForks_()
 	# All action forks have launched, just need to wait for them to exit.
 
 	while [[ $fork_count -gt 0 ]]; do
+		[[ ! -e $ACTION_ABORT_PATHFILE ]] || break
 		sleep .2
 		UpdateForkProgress								# Update display while running forks complete.
 	done
@@ -3847,7 +3852,7 @@ _DirSizeMonitor_()
 
 		[[ ! -e $DISPLAY_INHIBIT_PATHFILE ]] || return
 		WriteMsgInPlace "$progress_msg"
-		sleep 1
+		sleep .5
 	done
 
 	[[ -n $progress_msg ]] && WriteMsgInPlace 'done!'
@@ -3888,10 +3893,7 @@ KillActiveFork()
 
 	if [[ -n ${fork_pid:-} && ${fork_pid:-0} -gt 0 && -d /proc/$fork_pid ]]; then
 		sleep .2
-		set +m		# disable job control
 		kill -9 "$fork_pid"
-		set -m		# re-enable job control
-		wait
 	fi
 
 	} &>/dev/null
@@ -3904,6 +3906,7 @@ Reset()
 	ResetArchivedLogs
 	ArchiveActiveSessLog
 	ResetActiveSessLog
+
 	exit 0
 
 	}
@@ -4499,6 +4502,7 @@ DisplayAsStatusReportItemLine()
 	fi
 
 	[[ $(QpkgGetApplVer "$qpkg_name") = dynamic ]] && $TOUCH_CMD "$REPORT_FLAGS_PATH"/app-dynamic
+	[[ $(QpkgGetApplVer "$qpkg_name") = static ]] && $TOUCH_CMD "$REPORT_FLAGS_PATH"/app-static
 	[[ $(QpkgGetApplVer "$qpkg_name") = final ]] && $TOUCH_CMD "$REPORT_FLAGS_PATH"/app-final
 
 	case $mode in
@@ -6580,7 +6584,7 @@ ShowReportVersions()
 InitForkCounts()
 	{
 
-	# Create directories so background processes can be monitored.
+	# Create directories so async processes can be monitored.
 
 	MakePath "$ACTION_FORKS_COUNT" 'action forks'
 	proc_counts_path=$($MKTEMP_CMD -d "$ACTION_FORKS_COUNT"/"${FUNCNAME[1]}"_XXXXXX)
@@ -7103,7 +7107,7 @@ QPKGs.States:Build()
 
 	MakePath "$QPKG_STATES_PATH" states || return
 
-	# Faster to launch several concurrent loops in the background, than a single loop. Launch those requiring more processing-time first.
+	# Faster to launch several concurrent loops async, than a single loop. Launch those requiring more processing-time first.
 
 	# This one should only be run when actioning 'installable' QPKGs.
 
@@ -7788,11 +7792,15 @@ IncludeReportFooter()
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/app-dynamic ]]; then
-		DisplayAsInfoIndentItem dynamic 'version is the latest available online'
+		DisplayAsInfoIndentItem dynamic 'is the latest version available'
+	fi
+
+	if [[ -e "$REPORT_FLAGS_PATH"/app-static ]]; then
+		DisplayAsInfoIndentItem static 'version is frozen as auto-update is disabled'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/app-final ]]; then
-		DisplayAsInfoIndentItem final 'version is the last available'
+		DisplayAsInfoIndentItem final 'is the last version available'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/req-attention ]]; then
@@ -7826,7 +7834,7 @@ IncludeReportHeadingsFooter()
 	DisplayAsInfoIndentItem 'Restart?' 'supports restart-to-update application'
 	DisplayAsInfoIndentItem 'Update?' 'application will auto-update on each restart'
 	DisplayAsInfoIndentItem 'Test?' "has a built-in 'status' check, and can test for daemon \"live\" status"
-	DisplayAsInfoIndentItem 'Independent?' 'this QPKG is independent of other QPKGs'
+	DisplayAsInfoIndentItem 'Independent?' 'QPKG is independent of other QPKGs'
 	DisplayAsInfoIndentItem 'Compatible?' 'QPKG has a release compatible with this NAS arch'
 
 	} >> "$REPORT_OUTPUT_PATHFILE"
@@ -8141,7 +8149,7 @@ SendParentChangeEnv()
 	{
 
 	# Send a message into message stream to change a sherpa parent environment variable or variables.
-	# This function is only called from within background functions.
+	# This function is only called from within async functions.
 
 	# Input:
 	#   $1 = action request
@@ -8155,7 +8163,7 @@ SendPackageStateChange()
 
 	# Send a message into message stream to change the state of this QPKG to $1 in sherpa parent environment.
 	# This might be: `isinstalled`, `isntenabled`, `isstarted`, `scntupgradable`, etc ...
-	# This function is only called from within background functions.
+	# This function is only called from within async functions.
 
 	# Input:
 	#   $1 = action request
@@ -8169,7 +8177,7 @@ SendActionStatus()
 
 	# Send a message into message stream to update sherpa parent environment with the status of this action for $qpkg_name.
 	# This can be: `ok`, `so`, `sk`, `se`, `er`, `ex`. `ab`.
-	# This function is only called from within background functions.
+	# This function is only called from within async functions.
 
 	# Input:
 	#   $1 = status update
@@ -9013,7 +9021,7 @@ _QPKG:reassign_()
 	#	$qpkg_name (global)
 
 	# Output:
-	#   $? = none, this function executes in the background. But an exitcode is recorded in the debug log.
+	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
 
@@ -9060,7 +9068,7 @@ _QPKG:download_()
 	#	$qpkg_name (global)
 
 	# Output:
-	#   $? = none, this function executes in the background. But an exitcode is recorded in the debug log.
+	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
 
@@ -9132,7 +9140,7 @@ _QPKG:install_()
 	#	$qpkg_name (global)
 
 	# Output:
-	#   $? = none, this function executes in the background. But an exitcode is recorded in the debug log.
+	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
 
@@ -9246,7 +9254,7 @@ _QPKG:reinstall_()
 	#	$qpkg_name (global)
 
 	# Output:
-	#   $? = none, this function executes in the background. But an exitcode is recorded in the debug log.
+	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
 
@@ -9323,7 +9331,7 @@ _QPKG:rebuild_()
 	#	$qpkg_name (global)
 
 	# Output:
-	#   $? = none, this function executes in the background. But an exitcode is recorded in the debug log.
+	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
 
@@ -9372,7 +9380,7 @@ _QPKG:upgrade_()
 	#	$qpkg_name (global)
 
 	# Output:
-	#   $? = none, this function executes in the background. But an exitcode is recorded in the debug log.
+	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
 
@@ -9463,7 +9471,7 @@ _QPKG:uninstall_()
 	#	$qpkg_name (global)
 
 	# Output:
-	#   $? = none, this function executes in the background. But an exitcode is recorded in the debug log.
+	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
 
@@ -9541,7 +9549,7 @@ _QPKG:activate_()
 	#	$qpkg_name (global)
 
 	# Output:
-	#   $? = none, this function executes in the background. But an exitcode is recorded in the debug log.
+	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
 
@@ -9626,7 +9634,7 @@ _QPKG:reactivate_()
 	#	$qpkg_name (global)
 
 	# Output:
-	#   $? = none, this function executes in the background. But an exitcode is recorded in the debug log.
+	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
 
@@ -9702,7 +9710,7 @@ _QPKG:deactivate_()
 	#	$qpkg_name (global)
 
 	# Output:
-	#   $? = none, this function executes in the background. But an exitcode is recorded in the debug log.
+	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
 
@@ -9786,7 +9794,7 @@ _QPKG:enable_()
 	#	$qpkg_name (global)
 
 	# Output:
-	#   $? = none, this function executes in the background. But an exitcode is recorded in the debug log.
+	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
 
@@ -9837,7 +9845,7 @@ _QPKG:disable_()
 	#	$qpkg_name (global)
 
 	# Output:
-	#   $? = none, this function executes in the background. But an exitcode is recorded in the debug log.
+	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
 
@@ -9893,7 +9901,7 @@ _QPKG:enableau_()
 	#	$qpkg_name (global)
 
 	# Output:
-	#   $? = none, this function executes in the background. But an exitcode is recorded in the debug log.
+	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
 
@@ -9904,6 +9912,10 @@ _QPKG:enableau_()
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" enableau skipped 'QPKG is not installed'
+		MarkThisAcForkAsSkipped
+		z=1
+	elif [[ $qpkg_name = sherpa ]]; then
+		SaveActionResultToLog QPKG "$qpkg_name" enableau skipped 'auto-update is always enabled'
 		MarkThisAcForkAsSkipped
 		z=1
 	elif ! QpkgIsCanRestartToUpdate "$qpkg_name"; then
@@ -9948,7 +9960,7 @@ _QPKG:disableau_()
 	#	$qpkg_name (global)
 
 	# Output:
-	#   $? = none, this function executes in the background. But an exitcode is recorded in the debug log.
+	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
 
@@ -9959,6 +9971,10 @@ _QPKG:disableau_()
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" disableau skipped 'QPKG is not installed'
+		MarkThisAcForkAsSkipped
+		z=1
+	elif [[ $qpkg_name = sherpa ]]; then
+		SaveActionResultToLog QPKG "$qpkg_name" disableau skipped 'auto-update cannot be disabled'
 		MarkThisAcForkAsSkipped
 		z=1
 	elif ! QpkgIsCanRestartToUpdate "$qpkg_name"; then
@@ -10003,7 +10019,7 @@ _QPKG:backup_()
 	#	$qpkg_name (global)
 
 	# Output:
-	#   $? = none, this function executes in the background. But an exitcode is recorded in the debug log.
+	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
 
@@ -10059,7 +10075,7 @@ _QPKG:restore_()
 	#	$qpkg_name (global)
 
 	# Output:
-	#   $? = none, this function executes in the background. But an exitcode is recorded in the debug log.
+	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
 
@@ -10119,7 +10135,7 @@ _QPKG:clean_()
 	#	$qpkg_name (global)
 
 	# Output:
-	#   $? = none, this function executes in the background. But an exitcode is recorded in the debug log.
+	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
 
@@ -10178,7 +10194,7 @@ _QPKG:sign_()
 	#	$qpkg_name (global)
 
 	# Output:
-	#   $? = none, this function executes in the background. But an exitcode is recorded in the debug log.
+	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
 
@@ -10277,7 +10293,7 @@ _QPKG:status_()
 	#	$qpkg_name (global)
 
 	# Output:
-	#   $? = none, this function executes in the background. But an exitcode is recorded in the debug log.
+	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &>/dev/null
 
@@ -10473,9 +10489,7 @@ QpkgGetApplVer()
 				[[ $a = version ]] && a=${QPKG_VERSION[$qpkg_default_index]}
 				[[ $a != none ]] || return
 
-				echo -n "$a"
-
-				return 0
+				break
 			fi
 		done
 	elif [[ $qpkg_index -gt 0 ]]; then
@@ -10483,13 +10497,19 @@ QpkgGetApplVer()
 		[[ $a = default ]] && a=${QPKG_APPL_VERSION[$qpkg_default_index]}
 		[[ $a = version ]] && a=${QPKG_VERSION[$qpkg_default_index]}
 		[[ $a != none ]] || return
-
-		echo -n "$a"
-
-		return 0
 	fi
 
-	return 1
+	[[ -n $a ]] || return
+
+	if [[ $a != final ]] && QpkgIsInstalled && QpkgIsCanRestartToUpdate && ! QpkgIsAutoUpdate; then
+		printf static
+
+		return
+	fi
+
+	echo -n "$a"
+
+	return 0
 
 	}
 
@@ -13411,19 +13431,13 @@ SetTraps()
 RunOnSIGINT()
 	{
 
-	local a=''
-
 	[[ -n ${DISPLAY_INHIBIT_PATHFILE:-} ]] && ${TOUCH_CMD:-/bin/touch} "$DISPLAY_INHIBIT_PATHFILE"
+	$TOUCH_CMD "$ACTION_ABORT_PATHFILE"
 	EraseThisLine
 	ShowAsAbort 'caught SIGINT'
-	KillActiveFork
 	CloseActionMsgPipe
 
-	if [[ -n ${BG_PROCS_PATH:-} && -d ${BG_PROCS_PATH:-} ]]; then
-		for a in "$BG_PROCS_PATH"/*; do
-			[[ -n $a && $(${BASENAME_CMD:-/usr/bin/basename} "$a") != '*' && -s $a ]] && kill -9 "$(<$a)"
-		done
-	fi
+	# TODO: send SIGTERM to each PID in $ASYNC_PROCS_PATH here.
 
 	exit
 
@@ -13432,7 +13446,7 @@ RunOnSIGINT()
 RunOnEXIT()
 	{
 
-	trap - INT
+	trap - EXIT
 
 	ShowKeystrokes
 	ShowCursor

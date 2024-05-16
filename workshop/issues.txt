@@ -47,10 +47,10 @@ Observed issues:
 		176K    .cache/pip
 		177K    .cache/
 		-------------------------------------------------------------------------------------------------------------------------
-		- Narrowed-down to WebSSH.
+		- Narrowed this down to WebSSH.
 		- Doesn't happen on aarch64 (Laura).
 
-	* Takes ~3.5 - 4.5 seconds to build QPKG states on Laura.
+	* Takes ~3.5 - 6 seconds to build QPKG states on Laura.
 		- Should be able to do this quicker.
 		- Calculate QPKG features separate to states and cache/load these from file next time?
 
@@ -69,10 +69,7 @@ Observed issues:
 	* armv5 (Helga) is cutting-off debug log early when running 'sherpa s olive verbose' due to SIGINT.
 
 	* When aborting sherpa, must also ensure backgrounded procs abort.
-		- Presently, if a child proc is waiting (example: to check PID of application daemon again), it doesn't abort.
-		- Keep track of every launched background proc $! (save each to path with a unique ID generated before calling proc), then ensure these are killed on exit/sigint/sigkill.
-		- Each background proc will rm its pidfile named as unique ID.
-		- On SIGINT from sherpa, loop through all files remaining in $BG_PROCS_PATH and kill the PID contained in each one.
+		- UPDATE: working fine, possibly won't need BG_PROCS_PATH anymore. Test to confirm.
 
 	* 'sherpa show status' displays status report correctly, and then displays 'show' usage examples.
 
