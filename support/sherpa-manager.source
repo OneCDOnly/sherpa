@@ -529,7 +529,7 @@ LocateSQLiteBinary()
 		[[ -e $sqlite_pathfile ]] && sqlite_cmd=$sqlite_pathfile
 	fi
 
-	# These all use the same path to the binary:
+	# These use the same path to the binary:
 	#	CacheMount = `HybridMount`
 	# 	qmiixagent = `Qmiix Agent`
 
@@ -545,7 +545,7 @@ LocateSQLiteBinary()
 		done
 	fi
 
-	# These all use the same path to the binary, and require the linked-library path to be set:
+	# These use the same path to the binary, and require the linked-library path to be set:
 	#	img2pdf = `Image2PDF`
 	#	OCR_Converter = `OCR Converter`
 
@@ -622,7 +622,7 @@ LoadEnv()
 			readonly QPKG_CACHE_PATH=$CACHE_PATH/QPKGs
 				readonly QPKG_DL_PATH=$QPKG_CACHE_PATH/downloads
 		readonly LOGS_PATH=$THIS_PACKAGE_PATH/logs
-			readonly RAMDISKS_FREESPACE_PATHFILE=$LOGS_PATH/ramdisks.freespace
+			readonly RAMFS_FREESPACE_PATHFILE=$LOGS_PATH/ramfs.freespace
 			readonly SCREEN_SESSIONS_PATHFILE=$LOGS_PATH/screen.sessions
 			readonly SESS_ACTION_RESULTS_PATHFILE=$LOGS_PATH/session.action.results.log
 			readonly SESS_ARCHIVE_PATHFILE=$LOGS_PATH/session.archive.log
@@ -651,7 +651,7 @@ LoadEnv()
 	# KLUDGE: just in-case `python` has disappeared again ... ¯\_(ツ)_/¯
 	[[ -e $PYTHON3_CMD && ! -L $PYTHON_CMD ]] && ln -s "$PYTHON3_CMD" "$PYTHON_CMD"
 
-	rm -f "$REPORT_OUTPUT_PATHFILE" "$RAMDISKS_FREESPACE_PATHFILE" "$DISPLAY_INHIBIT_PATHFILE" 2> /dev/null
+	rm -f "$REPORT_OUTPUT_PATHFILE" "$RAMFS_FREESPACE_PATHFILE" "$DISPLAY_INHIBIT_PATHFILE" 2> /dev/null
 
 	if [[ -e $GNU_STTY_CMD && -t 0 ]]; then
 		local terminal_dimensions=$($GNU_STTY_CMD size)
@@ -874,7 +874,7 @@ DebugLogEnv()
 	fi
 
 	DebugInfoMinSepr
-	RunAndLog "$DF_CMD -h | $GREP_CMD '^Filesystem\|^none\|^tmpfs\|ram'" "$RAMDISKS_FREESPACE_PATHFILE"
+	RunAndLog "$DF_CMD -h | $GREP_CMD '^Filesystem\|^none\|^tmpfs\|ram'" "$RAMFS_FREESPACE_PATHFILE"
 	DebugInfoMinSepr
 	RunAndLog "$SCREEN_CMD -ls" "$SCREEN_SESSIONS_PATHFILE" '' 1
 	DebugInfoMinSepr
