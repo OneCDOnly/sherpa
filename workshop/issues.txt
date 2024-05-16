@@ -47,10 +47,10 @@ Observed issues:
 		176K    .cache/pip
 		177K    .cache/
 		-------------------------------------------------------------------------------------------------------------------------
-		- Narrowed-down to WebSSH.
+		- Narrowed this down to WebSSH.
 		- Doesn't happen on aarch64 (Laura).
 
-	* Takes ~3.5 - 4.5 seconds to build QPKG states on Laura.
+	* Takes ~3.5 - 6 seconds to build QPKG states on Laura.
 		- Should be able to do this quicker.
 		- Calculate QPKG features separate to states and cache/load these from file next time?
 
