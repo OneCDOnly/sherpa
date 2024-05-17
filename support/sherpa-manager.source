@@ -37,8 +37,8 @@ shopt -s extglob
 [[ $- != *m* ]] || set +m			# Disable job control if-enabled (only needed for QTS 4.2.6).
 ln -fns /proc/self/fd /dev/fd		# KLUDGE: `/dev/fd` isn't always created by QTS.
 
-trap RunOnSIGINT SIGINT
-trap RunOnEXIT EXIT
+trap CaughtSIGINT SIGINT
+trap CaughtExit EXIT
 
 readonly ARGS_RAW=$*
 readonly SCRIPT_STARTSECONDS=$(/bin/date +%s)
@@ -538,7 +538,6 @@ LocateSQLiteBinary()
 			if QpkgIsInstalled "$a"; then
 				sqlite_pathfile=$(QpkgGetInstallationPath "$a")/bin/sqlite3
 				[[ -e $sqlite_pathfile ]] || continue
-
 				sqlite_cmd=$sqlite_pathfile
 				break
 			fi
@@ -554,7 +553,6 @@ LocateSQLiteBinary()
 			if QpkgIsInstalled "$a"; then
 				sqlite_pathfile=$(QpkgGetInstallationPath "$a")/bin/sqlite3
 				[[ -e $sqlite_pathfile ]] || continue
-
 				sqlite_cmd="LD_LIBRARY_PATH=$(QpkgGetInstallationPath "$a")/lib $sqlite_pathfile"
 				break
 			fi
@@ -1374,7 +1372,6 @@ ProcActions()
 							ipks_install=true
 							ipks_upgrade=true
 							pips_install=true
-
 							break
 						fi
 					done
@@ -3922,7 +3919,6 @@ UpdateColourful()
 
 		for a in true false; do
 			[[ $a != "$user_colourful_value" ]] && continue
-
 			useropt_colourful=$user_colourful_value
 
 			if [[ ${1:-} = silent ]]; then
@@ -3957,7 +3953,6 @@ UpdateBranch()
 
 		for a in unstable stable; do
 			[[ $a != "$user_branch_value" ]] && continue
-
 			useropt_branch=$user_branch_value
 
 			if [[ ${1:-} = silent ]]; then
@@ -3994,7 +3989,6 @@ UpdateTerse()
 
 		for a in true false; do
 			[[ $a != "$user_terse_value" ]] && continue
-
 			useropt_terse=$user_terse_value
 
 			if [[ ${1:-} = silent ]]; then
@@ -7036,7 +7030,6 @@ QPKGs.Tiers:Build()
 
 		for qpkg_name in "${QPKG_NAME[@]}"; do
 			[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
-
 			QpkgSetIndex
 
 			if QpkgIsDependent; then
@@ -7452,16 +7445,13 @@ ShowReportBackups()
 		if [[ -e $GNU_FIND_CMD ]]; then				# Prefer GNU `find` for this.
 			while read -r epoch_time file_name file_bytes; do
 				[[ -z $epoch_time || -z $file_name ]] && break
-
 				DisplayAsBacksReportItemLine "$epoch_time" "$file_name" "$file_bytes" "$highlight_backups_older_than"
 			done <<< "$($GNU_FIND_CMD "$QPKG_BU_PATH"/*.config.tar.gz -maxdepth 1 -printf '%C@ %f %s\n' 2> /dev/null | $SORT_CMD)"
 		else										# If GNU `find` isn't available, do-it the hard-way.
 			while read -r file_date file_time file_name file_bytes; do
 				[[ -z $file_date || -z $file_name ]] && break
-
 				epoch_time=$(/bin/date -d "$file_date $file_time" +"%s")
 				file_name=$($BASENAME_CMD "$file_name")
-
 				DisplayAsBacksReportItemLine "$epoch_time" "$file_name" "$file_bytes" "$highlight_backups_older_than"
 			done <<< "$(cd "$QPKG_BU_PATH" && ls -l1tr --time-style=+"%Y-%m-%d %H:%M:%S" ./*.config.tar.gz 2> /dev/null | $AWK_CMD '{print $6" "$7" "$8" "$5}')"
 		fi
@@ -8874,7 +8864,6 @@ ShowZeroQpkgs()
 	for a in "${QPKG_IS_STATES[@]:-}"; do
 		for b in "${USER_QPKG_ACTIONS[@]:-}"; do
 			[[ $b = list ]] && continue			# Action results lists are unavailable for these.
-
 			QPKGs.AC${b}.IS${a}.IsSet && QPKGs-AC${b}-ok.IsNone && ShowAsWarn "no QPKGs were able to $(Lowercase "$b")"
 		done
 	done
@@ -10486,7 +10475,6 @@ QpkgGetApplVer()
 				a=${QPKG_APPL_VERSION[$i]}
 				[[ $a = version ]] && a=${QPKG_VERSION[$qpkg_default_index]}
 				[[ $a != none ]] || return
-
 				break
 			fi
 		done
@@ -10731,7 +10719,6 @@ QpkgGetMinRAM()
 		for i in "${!QPKG_NAME[@]}"; do
 			[[ ${QPKG_NAME[$i]} = "$1" ]] || continue
 			a=${QPKG_MIN_RAM_KB[$i]}			# Always grab first found as default.
-
 			break
 		done
 	else
@@ -10766,7 +10753,6 @@ QpkgGetMinOSVer()
 		for i in "${!QPKG_NAME[@]}"; do
 			[[ ${QPKG_NAME[$i]} = "$1" ]] || continue
 			a=${QPKG_MIN_OS_VERSION[$i]}			# Always grab first found as default.
-
 			break
 		done
 	else
@@ -10801,7 +10787,6 @@ QpkgGetMaxOSVer()
 		for i in "${!QPKG_NAME[@]}"; do
 			[[ ${QPKG_NAME[$i]} = "$1" ]] || continue
 			a=${QPKG_MAX_OS_VERSION[$i]}			# Always grab first found as default.
-
 			break
 		done
 	else
@@ -10936,7 +10921,6 @@ QpkgGetDesc()
 		for i in "${!QPKG_NAME[@]}"; do
 			[[ ${QPKG_NAME[$i]} = "$1" ]] || continue
 			a=${QPKG_DESC[$i]}			# Always grab first found as default.
-
 			break
 		done
 	else
@@ -10999,7 +10983,6 @@ QpkgGetAbbrvs()
 		for i in "${!QPKG_NAME[@]}"; do
 			[[ ${QPKG_NAME[$i]} = "$1" ]] || continue
 			a=${QPKG_ABBRVS[$i]}			# Always grab first found as default.
-
 			break
 		done
 	else
@@ -11407,7 +11390,6 @@ QpkgIsCanBackup()
 		for i in "${!QPKG_NAME[@]}"; do
 			[[ ${QPKG_NAME[$i]} = "$1" ]] || continue
 			a=${QPKG_CAN_BACKUP[$i]}			# Always grab first found as default.
-
 			break
 		done
 	else
@@ -13413,7 +13395,7 @@ LoadPackages()
 
 	}
 
-RunOnSIGINT()
+CaughtSIGINT()
 	{
 
 	trap - SIGINT
@@ -13430,7 +13412,7 @@ RunOnSIGINT()
 
 	}
 
-RunOnEXIT()
+CaughtExit()
 	{
 
 	trap - EXIT
