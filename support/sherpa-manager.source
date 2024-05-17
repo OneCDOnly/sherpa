@@ -260,12 +260,12 @@ LoadConsts()
 	readonly HELP_SYNTAX_INDENT=6
 
 	readonly PACKAGE_ABBS_COL_WIDTH=84
-	readonly PACKAGE_ACTIVE_TEST_BUILTIN_COL_WIDTH=8
+	readonly PACKAGE_ACTIVE_TEST_BUILTIN_COL_WIDTH=11
 	readonly PACKAGE_APP_VER_COL_WIDTH=22
 	readonly PACKAGE_ARCH_COL_WIDTH=15
 	readonly PACKAGE_AUTHOR_COL_WIDTH=40
-	readonly PACKAGE_AUTO_UPDATE_COL_WIDTH=9
-	readonly PACKAGE_COMPATIBLE_COL_WIDTH=15
+	readonly PACKAGE_AUTO_UPDATE_COL_WIDTH=10
+	readonly PACKAGE_COMPATIBLE_COL_WIDTH=9
 	readonly PACKAGE_DEPENDENCIES_COL_WIDTH=29
 	readonly PACKAGE_DESCRIPTION_COL_WIDTH=10
 	readonly PACKAGE_ENABLED_COL_WIDTH=10
@@ -279,10 +279,10 @@ LoadConsts()
 	readonly PACKAGE_PATH_COL_WIDTH=48
 	readonly PACKAGE_REPO_COL_WIDTH=40
 	readonly PACKAGE_STATUS_COL_WIDTH=23
-	readonly PACKAGE_SUPPORTS_BACKUP_COL_WIDTH=9
-	readonly PACKAGE_SUPPORTS_CLEAN_COL_WIDTH=8
-	readonly PACKAGE_SUPPORTS_RESTART_TO_UPDATE_COL_WIDTH=10
-	readonly PACKAGE_TIER_COL_WIDTH=14
+	readonly PACKAGE_SUPPORTS_BACKUP_COL_WIDTH=10
+	readonly PACKAGE_SUPPORTS_CLEAN_COL_WIDTH=11
+	readonly PACKAGE_SUPPORTS_START_TO_UPDATE_COL_WIDTH=11
+	readonly PACKAGE_TIER_COL_WIDTH=8
 	readonly PACKAGE_VER_COL_WIDTH=15
 
 	# For reports and onscreen display.
@@ -5259,7 +5259,7 @@ DisplayAsFeaturesReportTitleLine()
 
 	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}Backup?"
+		a="${CHARS_BULLET}CanBack?"
 		printf "%-$((PACKAGE_SUPPORTS_BACKUP_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -5268,7 +5268,7 @@ DisplayAsFeaturesReportTitleLine()
 
 	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}Clean?"
+		a="${CHARS_BULLET}CanClean?"
 		printf "%-$((PACKAGE_SUPPORTS_CLEAN_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -5277,8 +5277,8 @@ DisplayAsFeaturesReportTitleLine()
 
 	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}Restart?"
-		printf "%-$((PACKAGE_SUPPORTS_RESTART_TO_UPDATE_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
+		a="${CHARS_BULLET}StartUpd?"
+		printf "%-$((PACKAGE_SUPPORTS_START_TO_UPDATE_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 5: package is set to auto-update on restart?
@@ -5286,7 +5286,7 @@ DisplayAsFeaturesReportTitleLine()
 
 	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}Update?"
+		a="${CHARS_BULLET}AutoUpd?"
 		printf "%-$((PACKAGE_AUTO_UPDATE_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -5295,7 +5295,7 @@ DisplayAsFeaturesReportTitleLine()
 
 	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}Test?"
+		a="${CHARS_BULLET}LiveTest?"
 		printf "%-$((PACKAGE_ACTIVE_TEST_BUILTIN_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -5304,7 +5304,7 @@ DisplayAsFeaturesReportTitleLine()
 
 	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}Independent?"
+		a="${CHARS_BULLET}Indep?"
 		printf "%-$((PACKAGE_TIER_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -5313,7 +5313,7 @@ DisplayAsFeaturesReportTitleLine()
 
 	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}Compatible?"
+		a="${CHARS_BULLET}Compat?"
 		printf "%-$((PACKAGE_COMPATIBLE_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -5521,7 +5521,7 @@ DisplayAsFeaturesReportItemLine()
 
 	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		printf "%-$((PACKAGE_SUPPORTS_RESTART_TO_UPDATE_COL_WIDTH+$(LenANSIDiff "$restart_to_update_msg")))s" "$restart_to_update_msg"
+		printf "%-$((PACKAGE_SUPPORTS_START_TO_UPDATE_COL_WIDTH+$(LenANSIDiff "$restart_to_update_msg")))s" "$restart_to_update_msg"
 	fi
 
 	# column 5: package is set to auto-update on restart?
@@ -7827,13 +7827,13 @@ IncludeReportHeadingsFooter()
 	{
 
 	DisplayAsHelpTitle 'column headings:'
-	DisplayAsInfoIndentItem 'Backup?' "supports application config 'backup' and 'restore'"
-	DisplayAsInfoIndentItem 'Clean?' "supports application 'clean'ing"
-	DisplayAsInfoIndentItem 'Restart?' 'supports restart-to-update application'
-	DisplayAsInfoIndentItem 'Update?' 'application will auto-update on each restart'
-	DisplayAsInfoIndentItem 'Test?' "has a built-in 'status' check, and can test for daemon \"live\" status"
-	DisplayAsInfoIndentItem 'Independent?' 'QPKG is independent of other QPKGs'
-	DisplayAsInfoIndentItem 'Compatible?' 'QPKG has a release compatible with this NAS arch'
+	DisplayAsInfoIndentItem 'CanBack?' "supports application config 'backup' and 'restore'"
+	DisplayAsInfoIndentItem 'CanClean?' "supports application 'clean'ing"
+	DisplayAsInfoIndentItem 'StartUpd?' 'supports restart-to-update application'
+	DisplayAsInfoIndentItem 'AutoUpd?' 'application will auto-update on each restart'
+	DisplayAsInfoIndentItem 'LiveTest?' "has a built-in 'status' check, and can test for daemon \"live\" status"
+	DisplayAsInfoIndentItem 'Indep?' 'is independent of other QPKGs'
+	DisplayAsInfoIndentItem 'Compat?' 'has a release compatible with this NAS arch'
 
 	} >> "$REPORT_OUTPUT_PATHFILE"
 
@@ -8484,7 +8484,7 @@ GetRepoURLFromStoreID()
 OsGetUptime()
 	{
 
-	local n=$(</proc/uptime)
+	local n=$(< /proc/uptime)
 
 	FormatSecsToHoursMinutesSecs "${n%%.*}"
 
@@ -8890,7 +8890,7 @@ ClaimLockfile()
 	readonly LOCK_PATHFILE=/var/run/sherpa.lock		# global
 
 	for a in sherpa-manager.sh sherpa-manager.source; do
-		if [[ -e $LOCK_PATHFILE && -d /proc/$(<"$LOCK_PATHFILE") && $(</proc/"$(<"$LOCK_PATHFILE")"/cmdline) =~ $a ]]; then
+		if [[ -e $LOCK_PATHFILE && -d /proc/$(<"$LOCK_PATHFILE") && $(< /proc/"$(<"$LOCK_PATHFILE")"/cmdline) =~ $a ]]; then
 			ShowAsAbort "another sherpa instance was found (PID:$(<"$LOCK_PATHFILE")), can't continue"
 
 			return 1
@@ -11189,7 +11189,7 @@ QpkgGetServiceStatus()
 
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
 
-	[[ -e /var/run/$a.last.operation ]] && echo "$(</var/run/"$a".last.operation)"
+	[[ -e /var/run/$a.last.operation ]] && echo "$(< /var/run/"$a".last.operation)"
 
 	}
 
