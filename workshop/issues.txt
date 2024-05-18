@@ -1,5 +1,8 @@
 Observed issues:
 
+	* Applications sourced online are not updating (e.g. Tautulli).
+		- Had to 'clean' it to get latest version pulled.
+
 	* Default dependency report should only show installed QPKGs.
 		- ... but should allow 'sherpa d all' to see all QPKGs.
 		- Do the same for repository report.
