@@ -1,7 +1,13 @@
 * 'install'/'reinstall'/'upgrade' should check path QPKG is installed or is to-be installed to.
 	- If it starts with /root - abort.
 
-* Reject useless action/group combinations like 'sherpa stop inactive'.
+* Reject useless action/group combinations like:
+	- 'stop/deactivate inactive'
+	- 'start/activate active'
+	- 'install installed'
+	- 'uninstall not-installed'
+	- 'enable enabled'
+	- 'disable disabled'
 
 * 'status' report: show new QPKG application version alongside current application version?
 	- Not sure about this. Installed application version is not stored. Maybe just display new version?

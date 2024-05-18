@@ -26,7 +26,7 @@
 #	 list "object" tests: 'Capitalised-CamelCase-With-Inline-Hyphens-And-Period-Before.Test'
 #	 "object" properties: '_lowercase_with_leading_and_inline_and_trailing_underscores_' (these should be managed ONLY by the object's methods)
 #			   constants: 'UPPERCASE_WITH_INLINE_UNDERSCORES' (and set as readonly)
-#				 indents: 1 x tab
+#				 indents: 1 x tab char (=4 space chars)
 #
 # Notes:
 #   If on-screen line-spacing is required, this should only be done by the next function to print output.
@@ -35,6 +35,10 @@
 set -o nounset -o pipefail
 shopt -s extglob
 [[ $- != *m* ]] || set +m			# Disable job control if-enabled (only needed for QTS 4.2.6).
+ln -fns /proc/self/fd /dev/fd		# KLUDGE: `/dev/fd` isn't always created by QTS.
+
+trap CaughtSIGINT SIGINT
+trap CaughtExit EXIT
 
 readonly ARGS_RAW=$*
 readonly SCRIPT_STARTSECONDS=$(/bin/date +%s)
@@ -42,7 +46,6 @@ readonly SCRIPT_STARTSECONDS=$(/bin/date +%s)
 Init()
 	{
 
-	SetTraps
 	OsIsOk || return
 	UserIsOk || return
 	LoadConsts
@@ -257,12 +260,12 @@ LoadConsts()
 	readonly HELP_SYNTAX_INDENT=6
 
 	readonly PACKAGE_ABBS_COL_WIDTH=84
-	readonly PACKAGE_ACTIVE_TEST_BUILTIN_COL_WIDTH=8
+	readonly PACKAGE_ACTIVE_TEST_BUILTIN_COL_WIDTH=11
 	readonly PACKAGE_APP_VER_COL_WIDTH=22
 	readonly PACKAGE_ARCH_COL_WIDTH=15
 	readonly PACKAGE_AUTHOR_COL_WIDTH=40
-	readonly PACKAGE_AUTO_UPDATE_COL_WIDTH=9
-	readonly PACKAGE_COMPATIBLE_COL_WIDTH=15
+	readonly PACKAGE_AUTO_UPDATE_COL_WIDTH=10
+	readonly PACKAGE_COMPATIBLE_COL_WIDTH=9
 	readonly PACKAGE_DEPENDENCIES_COL_WIDTH=29
 	readonly PACKAGE_DESCRIPTION_COL_WIDTH=10
 	readonly PACKAGE_ENABLED_COL_WIDTH=10
@@ -276,10 +279,10 @@ LoadConsts()
 	readonly PACKAGE_PATH_COL_WIDTH=48
 	readonly PACKAGE_REPO_COL_WIDTH=40
 	readonly PACKAGE_STATUS_COL_WIDTH=23
-	readonly PACKAGE_SUPPORTS_BACKUP_COL_WIDTH=9
-	readonly PACKAGE_SUPPORTS_CLEAN_COL_WIDTH=8
-	readonly PACKAGE_SUPPORTS_RESTART_TO_UPDATE_COL_WIDTH=10
-	readonly PACKAGE_TIER_COL_WIDTH=14
+	readonly PACKAGE_SUPPORTS_BACKUP_COL_WIDTH=10
+	readonly PACKAGE_SUPPORTS_CLEAN_COL_WIDTH=11
+	readonly PACKAGE_SUPPORTS_START_TO_UPDATE_COL_WIDTH=11
+	readonly PACKAGE_TIER_COL_WIDTH=8
 	readonly PACKAGE_VER_COL_WIDTH=15
 
 	# For reports and onscreen display.
@@ -445,7 +448,6 @@ LoadCMDs()
 	readonly TAIL_CMD=/usr/bin/tail
 	readonly TAR_CMD=/bin/tar
 	readonly TEE_CMD=/usr/bin/tee
-	readonly TOUCH_CMD=/bin/touch
 	readonly UNAME_CMD=/bin/uname
 	readonly UNIQ_CMD=/bin/uniq
 	readonly UNZIP_CMD=/usr/bin/unzip
@@ -483,7 +485,6 @@ CMDsIsOk()
 	IsSysFileExist $TAIL_CMD || return
 	IsSysFileExist $TAR_CMD || return
 	IsSysFileExist $TEE_CMD || return
-	IsSysFileExist $TOUCH_CMD || return
 	IsSysFileExist $UNAME_CMD || return
 	IsSysFileExist $UNIQ_CMD || return
 	IsSysFileExist $UNZIP_CMD || return
@@ -528,7 +529,7 @@ LocateSQLiteBinary()
 		[[ -e $sqlite_pathfile ]] && sqlite_cmd=$sqlite_pathfile
 	fi
 
-	# These all use the same path to the binary:
+	# These use the same path to the binary:
 	#	CacheMount = `HybridMount`
 	# 	qmiixagent = `Qmiix Agent`
 
@@ -537,14 +538,13 @@ LocateSQLiteBinary()
 			if QpkgIsInstalled "$a"; then
 				sqlite_pathfile=$(QpkgGetInstallationPath "$a")/bin/sqlite3
 				[[ -e $sqlite_pathfile ]] || continue
-
 				sqlite_cmd=$sqlite_pathfile
 				break
 			fi
 		done
 	fi
 
-	# These all use the same path to the binary, and require the linked-library path to be set:
+	# These use the same path to the binary, and require the linked-library path to be set:
 	#	img2pdf = `Image2PDF`
 	#	OCR_Converter = `OCR Converter`
 
@@ -553,7 +553,6 @@ LocateSQLiteBinary()
 			if QpkgIsInstalled "$a"; then
 				sqlite_pathfile=$(QpkgGetInstallationPath "$a")/bin/sqlite3
 				[[ -e $sqlite_pathfile ]] || continue
-
 				sqlite_cmd="LD_LIBRARY_PATH=$(QpkgGetInstallationPath "$a")/lib $sqlite_pathfile"
 				break
 			fi
@@ -621,7 +620,7 @@ LoadEnv()
 			readonly QPKG_CACHE_PATH=$CACHE_PATH/QPKGs
 				readonly QPKG_DL_PATH=$QPKG_CACHE_PATH/downloads
 		readonly LOGS_PATH=$THIS_PACKAGE_PATH/logs
-			readonly RAMDISKS_FREESPACE_PATHFILE=$LOGS_PATH/ramdisks.freespace
+			readonly RAMFS_FREESPACE_PATHFILE=$LOGS_PATH/ramfs.freespace
 			readonly SCREEN_SESSIONS_PATHFILE=$LOGS_PATH/screen.sessions
 			readonly SESS_ACTION_RESULTS_PATHFILE=$LOGS_PATH/session.action.results.log
 			readonly SESS_ARCHIVE_PATHFILE=$LOGS_PATH/session.archive.log
@@ -647,13 +646,10 @@ LoadEnv()
 	readonly EXTERNAL_PACKAGES_ARCHIVE_PATHFILE=/opt/var/opkg-lists/entware
 	readonly EXTERNAL_PACKAGES_PATHFILE=$CACHE_PATH/Packages
 
-	# KLUDGE: `/dev/fd` isn't always created by QTS.
-	ln -fns /proc/self/fd /dev/fd
-
 	# KLUDGE: just in-case `python` has disappeared again ... ¯\_(ツ)_/¯
 	[[ -e $PYTHON3_CMD && ! -L $PYTHON_CMD ]] && ln -s "$PYTHON3_CMD" "$PYTHON_CMD"
 
-	rm -f "$REPORT_OUTPUT_PATHFILE" "$RAMDISKS_FREESPACE_PATHFILE" "$DISPLAY_INHIBIT_PATHFILE" 2> /dev/null
+	rm -f "$REPORT_OUTPUT_PATHFILE" "$RAMFS_FREESPACE_PATHFILE" "$DISPLAY_INHIBIT_PATHFILE" 2> /dev/null
 
 	if [[ -e $GNU_STTY_CMD && -t 0 ]]; then
 		local terminal_dimensions=$($GNU_STTY_CMD size)
@@ -811,7 +807,7 @@ DebugLogEnv()
 	DebugUserspace ok '$BASH_VERSION' "$BASH_VERSION"
 	DebugUserspace ok 'shell options' "$-"
 	DebugUserspace ok 'default volume' "$(UserGetDefVol)"
-	DebugUserspace ok '/opt' "$($READLINK_CMD /opt 2>/dev/null || printf 'not present')"
+	DebugUserspace ok '/opt' "$($READLINK_CMD /opt 2> /dev/null || printf 'not present')"
 
 	local public_share=$(/sbin/getcfg SHARE_DEF defPublic -d Qpublic -f /etc/config/def_share.info)
 
@@ -876,7 +872,7 @@ DebugLogEnv()
 	fi
 
 	DebugInfoMinSepr
-	RunAndLog "$DF_CMD -h | $GREP_CMD '^Filesystem\|^none\|^tmpfs\|ram'" "$RAMDISKS_FREESPACE_PATHFILE"
+	RunAndLog "$DF_CMD -h | $GREP_CMD '^Filesystem\|^none\|^tmpfs\|ram'" "$RAMFS_FREESPACE_PATHFILE"
 	DebugInfoMinSepr
 	RunAndLog "$SCREEN_CMD -ls" "$SCREEN_SESSIONS_PATHFILE" '' 1
 	DebugInfoMinSepr
@@ -1034,7 +1030,7 @@ CheckEnv()
 		QPKGs-ACupgrade-to:Add sherpa
 	fi
 
-	wait 2>/dev/null			# Ensure Entware package updater completes before continuing.
+	wait 2> /dev/null			# Ensure Entware package updater completes before continuing.
 
 	FuncExit
 
@@ -1376,7 +1372,6 @@ ProcActions()
 							ipks_install=true
 							ipks_upgrade=true
 							pips_install=true
-
 							break
 						fi
 					done
@@ -1559,7 +1554,7 @@ ProcAction()
 								;;
 							sa)		# Action was skipped and must immediately abort (don't attempt this action again).
 								((skip_abort_count++))
-								$TOUCH_CMD "$ACTION_ABORT_PATHFILE"
+								/bin/touch "$ACTION_ABORT_PATHFILE"
 								;;
 							er)		# Action failed (uh-oh).
 								((fail_count++))
@@ -1598,7 +1593,7 @@ ProcAction()
 			[[ $skip_count -gt 0 || $skip_ok_count -gt 0 || $skip_error_count -gt 0 || $skip_abort_count -gt 0 ]] && show_package_actions_skipped=true
 
 			[[ ${#target_packages[@]} -gt 0 ]] && KillActiveFork		# Only needed if an action fork didn't exit properly.
-			wait 2>/dev/null
+			wait 2> /dev/null
 			CloseActionMsgPipe
 
 			# TODO: Process unactioned QPKGs here (if-any), and mark them as aborted.
@@ -3196,7 +3191,7 @@ SaveIpkAndPipList()
 	$OPKG_CMD list-installed > "$PREV_IPK_LIST"
 	[[ -e $PREV_IPK_LIST ]] && DebugAsDone "saved current $(ShowAsPackageName Entware) IPK list to $(ShowAsFileName "$PREV_IPK_LIST")"
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 LoadIpkList()
 	{
@@ -3807,7 +3802,7 @@ _DirSizeMonitor_()
 	InitProgress
 
 	while [[ $current_bytes -lt $total_bytes ]]; do
-		current_bytes=$($GNU_FIND_CMD "$1" -type f -name '*.ipk' -exec $DU_CMD --bytes --total --apparent-size {} + 2>/dev/null | $GREP_CMD total$ | cut -f1)
+		current_bytes=$($GNU_FIND_CMD "$1" -type f -name '*.ipk' -exec $DU_CMD --bytes --total --apparent-size {} + 2> /dev/null | $GREP_CMD total$ | cut -f1)
 		[[ -z $current_bytes ]] && current_bytes=0
 
 		if [[ $current_bytes -ne $last_bytes ]]; then
@@ -3896,7 +3891,7 @@ KillActiveFork()
 		kill -9 "$fork_pid"
 	fi
 
-	} &>/dev/null
+	} &> /dev/null
 
 Reset()
 	{
@@ -3924,7 +3919,6 @@ UpdateColourful()
 
 		for a in true false; do
 			[[ $a != "$user_colourful_value" ]] && continue
-
 			useropt_colourful=$user_colourful_value
 
 			if [[ ${1:-} = silent ]]; then
@@ -3959,7 +3953,6 @@ UpdateBranch()
 
 		for a in unstable stable; do
 			[[ $a != "$user_branch_value" ]] && continue
-
 			useropt_branch=$user_branch_value
 
 			if [[ ${1:-} = silent ]]; then
@@ -3996,7 +3989,6 @@ UpdateTerse()
 
 		for a in true false; do
 			[[ $a != "$user_terse_value" ]] && continue
-
 			useropt_terse=$user_terse_value
 
 			if [[ ${1:-} = silent ]]; then
@@ -4492,18 +4484,18 @@ DisplayAsStatusReportItemLine()
 
 	if QpkgIsMissing; then
 		mode=highlighted
-		$TOUCH_CMD "$REPORT_FLAGS_PATH"/status-missing
+		/bin/touch "$REPORT_FLAGS_PATH"/status-missing
 	elif QpkgIsNtInstalled; then
 		mode=muted
-		$TOUCH_CMD "$REPORT_FLAGS_PATH"/state-notinstalled
+		/bin/touch "$REPORT_FLAGS_PATH"/state-notinstalled
 	else
 		mode=normal
-		$TOUCH_CMD "$REPORT_FLAGS_PATH"/state-installed
+		/bin/touch "$REPORT_FLAGS_PATH"/state-installed
 	fi
 
-	[[ $(QpkgGetApplVer "$qpkg_name") = dynamic ]] && $TOUCH_CMD "$REPORT_FLAGS_PATH"/app-dynamic
-	[[ $(QpkgGetApplVer "$qpkg_name") = static ]] && $TOUCH_CMD "$REPORT_FLAGS_PATH"/app-static
-	[[ $(QpkgGetApplVer "$qpkg_name") = final ]] && $TOUCH_CMD "$REPORT_FLAGS_PATH"/app-final
+	[[ $(QpkgGetApplVer "$qpkg_name") = dynamic ]] && /bin/touch "$REPORT_FLAGS_PATH"/app-dynamic
+	[[ $(QpkgGetApplVer "$qpkg_name") = static ]] && /bin/touch "$REPORT_FLAGS_PATH"/app-static
+	[[ $(QpkgGetApplVer "$qpkg_name") = final ]] && /bin/touch "$REPORT_FLAGS_PATH"/app-final
 
 	case $mode in
 		normal)
@@ -4517,35 +4509,35 @@ DisplayAsStatusReportItemLine()
 
 			if QPKGs-ISenabled.Exist "$qpkg_name"; then
 				status+=" $(TextBrightGreen enabled)"
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/state-enabled
+				/bin/touch "$REPORT_FLAGS_PATH"/state-enabled
 			else
 				status+=" $(TextBrightRed disabled)"
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/state-disabled
+				/bin/touch "$REPORT_FLAGS_PATH"/state-disabled
 			fi
 
 			# Second word.
 
 			if QPKGs-ISactive.Exist "$qpkg_name"; then
 				status+=" $(TextBrightGreen active)"
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/status-active
+				/bin/touch "$REPORT_FLAGS_PATH"/status-active
 			elif QPKGs-ISslow.Exist "$qpkg_name"; then
 				status+=" $(TextBrightOrange slow)"
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/status-slow
+				/bin/touch "$REPORT_FLAGS_PATH"/status-slow
 			elif QPKGs-ISstarting.Exist "$qpkg_name"; then
 				status+=" $(TextBrightOrange starting)"
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/status-starting
+				/bin/touch "$REPORT_FLAGS_PATH"/status-starting
 			elif QPKGs-ISstopping.Exist "$qpkg_name"; then
 				status+=" $(TextBrightOrange stopping)"
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/status-stopping
+				/bin/touch "$REPORT_FLAGS_PATH"/status-stopping
 			elif QPKGs-ISrestarting.Exist "$qpkg_name"; then
 				status+=" $(TextBrightOrange restarting)"
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/status-restarting
+				/bin/touch "$REPORT_FLAGS_PATH"/status-restarting
 			elif QPKGs-ISNTactive.Exist "$qpkg_name"; then
 				status+=" $(TextBrightRed inactive)"
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/state-inactive
+				/bin/touch "$REPORT_FLAGS_PATH"/state-inactive
 			else
 				status+=" $(TextBrightOrange unknown)"
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/status-unknown
+				/bin/touch "$REPORT_FLAGS_PATH"/status-unknown
 			fi
 
 			status_msg=${CHARS_NORMAL}$(AddSeparators "$status")
@@ -4579,7 +4571,7 @@ DisplayAsStatusReportItemLine()
 
 	if QPKGs-ISupgradable.Exist "$qpkg_name"; then
 		ver_msg+=" ($(TextBrightOrange "$(QpkgGetAvailVer)"))"
-		$TOUCH_CMD "$REPORT_FLAGS_PATH"/status-upgradable
+		/bin/touch "$REPORT_FLAGS_PATH"/status-upgradable
 	fi
 
 	# column 1: package name
@@ -4973,7 +4965,7 @@ DisplayAsDepsReportItemLine()
 	[[ -n $max_os && $max_os != none && ${#max_os} -eq 3 ]] && max_os=${max_os:0:1}.${max_os:1:1}.${max_os:2:1}
 	[[ -n $min_os && $min_os != none && ${#min_os} -eq 3 ]] && min_os=${min_os:0:1}.${min_os:1:1}.${min_os:2:1}
 	[[ $min_ram != none ]] && min_ram=$(FormatAsThous "$min_ram")kB
-	$TOUCH_CMD "$REPORT_FLAGS_PATH"/deps
+	/bin/touch "$REPORT_FLAGS_PATH"/deps
 
 	if QpkgIsMissing; then
 		mode=highlighted
@@ -4993,7 +4985,7 @@ DisplayAsDepsReportItemLine()
 				arch_msg=$(TextBrightRed "$CHARS_ALERT")
 				arch_msg+=$(TextBrightRed false)
 				name_msg=${CHARS_BLANK}$(TextBrightRed "$qpkg_name")
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-alert
+				/bin/touch "$REPORT_FLAGS_PATH"/req-alert
 			fi
 
 			if [[ $deps_raw != none ]]; then
@@ -5006,7 +4998,7 @@ DisplayAsDepsReportItemLine()
 						deps+=$(TextBrightRed "$dep_name")
 						deps_msg=$(TextBrightRed "$CHARS_ALERT")
 						name_msg=${CHARS_BLANK}$(TextBrightRed "$qpkg_name")
-						$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-alert
+						/bin/touch "$REPORT_FLAGS_PATH"/req-alert
 					fi
 				done
 			else
@@ -5021,7 +5013,7 @@ DisplayAsDepsReportItemLine()
 				enabled_msg=$(TextBrightRed "$CHARS_ALERT")
 				enabled_msg+=$(TextBrightRed false)
 				name_msg=${CHARS_BLANK}$(TextBrightRed "$qpkg_name")
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-alert
+				/bin/touch "$REPORT_FLAGS_PATH"/req-alert
 			fi
 
 			installed_msg+=$(TextBrightGreen true)
@@ -5036,7 +5028,7 @@ DisplayAsDepsReportItemLine()
 				max_os_msg=$(TextBrightRed "$CHARS_ALERT")
 				max_os_msg+=$(TextBrightRed "$max_os")
 				name_msg=${CHARS_BLANK}$(TextBrightRed "$qpkg_name")
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-alert
+				/bin/touch "$REPORT_FLAGS_PATH"/req-alert
 			fi
 
 			if QpkgIsMinOSVerOk; then
@@ -5045,7 +5037,7 @@ DisplayAsDepsReportItemLine()
 				min_os_msg=$(TextBrightRed "$CHARS_ALERT")
 				min_os_msg+=$(TextBrightRed "$min_os")
 				name_msg=${CHARS_BLANK}$(TextBrightRed "$qpkg_name")
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-alert
+				/bin/touch "$REPORT_FLAGS_PATH"/req-alert
 			fi
 
 			if QpkgIsMinRAMOk; then
@@ -5058,7 +5050,7 @@ DisplayAsDepsReportItemLine()
 				min_ram_msg=$(TextBrightRed "$CHARS_ALERT")
 				min_ram_msg+=$(TextBrightRed "$min_ram")
 				name_msg=${CHARS_BLANK}$(TextBrightRed "$qpkg_name")
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-alert
+				/bin/touch "$REPORT_FLAGS_PATH"/req-alert
 			fi
 
 			;;
@@ -5071,7 +5063,7 @@ DisplayAsDepsReportItemLine()
 				arch_msg=$(TextBrightOrange "$CHARS_ATTENTION")
 				arch_msg+=$(TextBrightOrange false)
 				name_msg=${CHARS_BLANK}$(TextBrightOrange "$qpkg_name")
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-attention
+				/bin/touch "$REPORT_FLAGS_PATH"/req-attention
 			fi
 
 			deps_msg=$(TextDarkGrey "$CHARS_NORMAL")
@@ -5095,7 +5087,7 @@ DisplayAsDepsReportItemLine()
 				max_os_msg=$(TextBrightOrange "$CHARS_ATTENTION")
 				max_os_msg+=$(TextBrightOrange "$max_os")
 				name_msg=${CHARS_BLANK}$(TextBrightOrange "$qpkg_name")
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-attention
+				/bin/touch "$REPORT_FLAGS_PATH"/req-attention
 			fi
 
 			if QpkgIsMinOSVerOk "$qpkg_name"; then
@@ -5104,7 +5096,7 @@ DisplayAsDepsReportItemLine()
 				min_os_msg=$(TextBrightOrange "$CHARS_ATTENTION")
 				min_os_msg+=$(TextBrightOrange "$min_os")
 				name_msg=${CHARS_BLANK}$(TextBrightOrange "$qpkg_name")
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-attention
+				/bin/touch "$REPORT_FLAGS_PATH"/req-attention
 			fi
 
 			if QpkgIsMinRAMOk "$qpkg_name"; then
@@ -5113,7 +5105,7 @@ DisplayAsDepsReportItemLine()
 				min_ram_msg=$(TextBrightOrange "$CHARS_ATTENTION")
 				min_ram_msg+=$(TextBrightOrange "$min_ram")
 				name_msg=${CHARS_BLANK}$(TextBrightOrange "$qpkg_name")
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-attention
+				/bin/touch "$REPORT_FLAGS_PATH"/req-attention
 			fi
 
 			;;
@@ -5123,7 +5115,7 @@ DisplayAsDepsReportItemLine()
 			else
 				arch_msg=$(TextBrightRed "$CHARS_ALERT")
 				arch_msg+=$(TextBrightRed false)
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-alert
+				/bin/touch "$REPORT_FLAGS_PATH"/req-alert
 			fi
 
 			if [[ $deps_raw != none ]]; then
@@ -5147,19 +5139,19 @@ DisplayAsDepsReportItemLine()
 			else
 				enabled_msg=$(TextBrightRedBlink "$CHARS_ALERT")
 				enabled_msg+=$(TextBrightRed 'false')
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-alert
+				/bin/touch "$REPORT_FLAGS_PATH"/req-alert
 			fi
 
 			installed_msg=$(TextBrightRedBlink "$CHARS_ALERT")
 			installed_msg+=$(TextBrightRedBlink 'missing')
-			$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-alert
+			/bin/touch "$REPORT_FLAGS_PATH"/req-alert
 
 			if QpkgIsMaxOSVerOk; then
 				max_os_msg+=$(TextBrightGreen "$max_os")
 			else
 				max_os_msg=$(TextBrightRed "$CHARS_ALERT")
 				max_os_msg+=$(TextBrightRed "$max_os")
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-alert
+				/bin/touch "$REPORT_FLAGS_PATH"/req-alert
 			fi
 
 			if QpkgIsMinOSVerOk; then
@@ -5167,7 +5159,7 @@ DisplayAsDepsReportItemLine()
 			else
 				min_os_msg=$(TextBrightRed "$CHARS_ALERT")
 				min_os_msg+=$(TextBrightRed "$min_os")
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-alert
+				/bin/touch "$REPORT_FLAGS_PATH"/req-alert
 			fi
 
 			if QpkgIsMinRAMOk; then
@@ -5175,7 +5167,7 @@ DisplayAsDepsReportItemLine()
 			else
 				min_ram_msg=$(TextBrightRed "$CHARS_ALERT")
 				min_ram_msg+=$(TextBrightRed "$min_ram")
-				$TOUCH_CMD "$REPORT_FLAGS_PATH"/req-alert
+				/bin/touch "$REPORT_FLAGS_PATH"/req-alert
 			fi
 
 			name_msg+=$(TextBrightRed "$qpkg_name")
@@ -5261,7 +5253,7 @@ DisplayAsFeaturesReportTitleLine()
 
 	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}Backup?"
+		a="${CHARS_BULLET}CanBack?"
 		printf "%-$((PACKAGE_SUPPORTS_BACKUP_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -5270,7 +5262,7 @@ DisplayAsFeaturesReportTitleLine()
 
 	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}Clean?"
+		a="${CHARS_BULLET}CanClean?"
 		printf "%-$((PACKAGE_SUPPORTS_CLEAN_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -5279,8 +5271,8 @@ DisplayAsFeaturesReportTitleLine()
 
 	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}Restart?"
-		printf "%-$((PACKAGE_SUPPORTS_RESTART_TO_UPDATE_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
+		a="${CHARS_BULLET}StartUpd?"
+		printf "%-$((PACKAGE_SUPPORTS_START_TO_UPDATE_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 5: package is set to auto-update on restart?
@@ -5288,7 +5280,7 @@ DisplayAsFeaturesReportTitleLine()
 
 	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}Update?"
+		a="${CHARS_BULLET}AutoUpd?"
 		printf "%-$((PACKAGE_AUTO_UPDATE_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -5297,7 +5289,7 @@ DisplayAsFeaturesReportTitleLine()
 
 	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}Test?"
+		a="${CHARS_BULLET}LiveTest?"
 		printf "%-$((PACKAGE_ACTIVE_TEST_BUILTIN_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -5306,7 +5298,7 @@ DisplayAsFeaturesReportTitleLine()
 
 	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}Independent?"
+		a="${CHARS_BULLET}Indep?"
 		printf "%-$((PACKAGE_TIER_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -5315,7 +5307,7 @@ DisplayAsFeaturesReportTitleLine()
 
 	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}Compatible?"
+		a="${CHARS_BULLET}Compat?"
 		printf "%-$((PACKAGE_COMPATIBLE_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
@@ -5523,7 +5515,7 @@ DisplayAsFeaturesReportItemLine()
 
 	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
-		printf "%-$((PACKAGE_SUPPORTS_RESTART_TO_UPDATE_COL_WIDTH+$(LenANSIDiff "$restart_to_update_msg")))s" "$restart_to_update_msg"
+		printf "%-$((PACKAGE_SUPPORTS_START_TO_UPDATE_COL_WIDTH+$(LenANSIDiff "$restart_to_update_msg")))s" "$restart_to_update_msg"
 	fi
 
 	# column 5: package is set to auto-update on restart?
@@ -5627,13 +5619,13 @@ DisplayAsBacksReportItemLine()
 			epoch_time_msg+=$(/bin/date -d @"$epoch_time" +%c)
 			file_bytes_msg+=$file_bytes
 			file_name_msg+=$file_name
-			$TOUCH_CMD "$REPORT_FLAGS_PATH"/backup-file-ok
+			/bin/touch "$REPORT_FLAGS_PATH"/backup-file-ok
 			;;
 		highlighted)
 			epoch_time_msg=$(TextBrightRed "${CHARS_ALERT}$(/bin/date -d @"$epoch_time" +%c)")
 			file_bytes_msg+=$(TextBrightRed "$file_bytes")
 			file_name_msg+=$(TextBrightRed "$file_name")
-			$TOUCH_CMD "$REPORT_FLAGS_PATH"/backup-file-old
+			/bin/touch "$REPORT_FLAGS_PATH"/backup-file-old
 	esac
 
 	# column 1: backup filename
@@ -6633,15 +6625,15 @@ IncForkProgressIndex()
 RefreshForkCounts()
 	{
 
-	fork_count=$(ls -A -1 "$proc_fork_count_path" 2>/dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
-	ok_count=$(ls -A -1 "$proc_ok_count_path" 2>/dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
-	skip_count=$(ls -A -1 "$proc_skip_count_path" 2>/dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
-	skip_ok_count=$(ls -A -1 "$proc_skip_ok_count_path" 2>/dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
-	skip_error_count=$(ls -A -1 "$proc_skip_error_count_path" 2>/dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
-	skip_abort_count=$(ls -A -1 "$proc_skip_abort_count_path" 2>/dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
-	fail_count=$(ls -A -1 "$proc_fail_count_path" 2>/dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
+	fork_count=$(ls -A -1 "$proc_fork_count_path" 2> /dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
+	ok_count=$(ls -A -1 "$proc_ok_count_path" 2> /dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
+	skip_count=$(ls -A -1 "$proc_skip_count_path" 2> /dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
+	skip_ok_count=$(ls -A -1 "$proc_skip_ok_count_path" 2> /dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
+	skip_error_count=$(ls -A -1 "$proc_skip_error_count_path" 2> /dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
+	skip_abort_count=$(ls -A -1 "$proc_skip_abort_count_path" 2> /dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
+	fail_count=$(ls -A -1 "$proc_fail_count_path" 2> /dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
 
-	} &>/dev/null
+	} &> /dev/null
 
 EraseForkCountPaths()
 	{
@@ -6649,7 +6641,7 @@ EraseForkCountPaths()
 	ClearPath /var/run/sherpa/actions/forks "$proc_counts_path"
 	[[ -e $ACTION_ABORT_PATHFILE ]] && rm -f "$ACTION_ABORT_PATHFILE"
 
-	} &>/dev/null
+	} &> /dev/null
 
 InitProgress()
 	{
@@ -7038,7 +7030,6 @@ QPKGs.Tiers:Build()
 
 		for qpkg_name in "${QPKG_NAME[@]}"; do
 			[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
-
 			QpkgSetIndex
 
 			if QpkgIsDependent; then
@@ -7187,7 +7178,7 @@ QPKGs.States:Build()
 # 	done #&
 	done &
 
-	wait 2>/dev/null
+	wait 2> /dev/null
 
 	# Load status lines from individual files.
 
@@ -7386,7 +7377,7 @@ Help.Abbreviations:Show()
 	LoadPackages
 	DisableDebugToArchiveAndFile
 	DisplayProcReport abbreviations
-	ResetReportsPath &>/dev/null
+	ResetReportsPath &> /dev/null
 
 		{
 
@@ -7403,7 +7394,7 @@ Help.Abbreviations:Show()
 	done
 
 	m=$n
-	wait 2>/dev/null
+	wait 2> /dev/null
 
 	# load report lines from individual files.
 
@@ -7445,7 +7436,7 @@ ShowReportBackups()
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport backups
-	ResetReportsPath &>/dev/null
+	ResetReportsPath &> /dev/null
 
 		{
 
@@ -7454,18 +7445,15 @@ ShowReportBackups()
 		if [[ -e $GNU_FIND_CMD ]]; then				# Prefer GNU `find` for this.
 			while read -r epoch_time file_name file_bytes; do
 				[[ -z $epoch_time || -z $file_name ]] && break
-
 				DisplayAsBacksReportItemLine "$epoch_time" "$file_name" "$file_bytes" "$highlight_backups_older_than"
-			done <<< "$($GNU_FIND_CMD "$QPKG_BU_PATH"/*.config.tar.gz -maxdepth 1 -printf '%C@ %f %s\n' 2>/dev/null | $SORT_CMD)"
+			done <<< "$($GNU_FIND_CMD "$QPKG_BU_PATH"/*.config.tar.gz -maxdepth 1 -printf '%C@ %f %s\n' 2> /dev/null | $SORT_CMD)"
 		else										# If GNU `find` isn't available, do-it the hard-way.
 			while read -r file_date file_time file_name file_bytes; do
 				[[ -z $file_date || -z $file_name ]] && break
-
 				epoch_time=$(/bin/date -d "$file_date $file_time" +"%s")
 				file_name=$($BASENAME_CMD "$file_name")
-
 				DisplayAsBacksReportItemLine "$epoch_time" "$file_name" "$file_bytes" "$highlight_backups_older_than"
-			done <<< "$(cd "$QPKG_BU_PATH" && ls -l1tr --time-style=+"%Y-%m-%d %H:%M:%S" ./*.config.tar.gz 2>/dev/null | $AWK_CMD '{print $6" "$7" "$8" "$5}')"
+			done <<< "$(cd "$QPKG_BU_PATH" && ls -l1tr --time-style=+"%Y-%m-%d %H:%M:%S" ./*.config.tar.gz 2> /dev/null | $AWK_CMD '{print $6" "$7" "$8" "$5}')"
 		fi
 
 		IncludeReportFooter
@@ -7500,7 +7488,7 @@ ShowReportDependencies()
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport dependency
-	ResetReportsPath &>/dev/null
+	ResetReportsPath &> /dev/null
 
 	DisplayAsDepsReportTitleLine > "$REPORT_OUTPUT_PATHFILE"
 
@@ -7511,7 +7499,7 @@ ShowReportDependencies()
 	done
 
 	m=$n
-	wait 2>/dev/null
+	wait 2> /dev/null
 
 	# load report lines from individual files.
 
@@ -7554,7 +7542,7 @@ ShowReportFeatures()
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport features
-	ResetReportsPath &>/dev/null
+	ResetReportsPath &> /dev/null
 
 	DisplayAsFeaturesReportTitleLine > "$REPORT_OUTPUT_PATHFILE"
 
@@ -7565,7 +7553,7 @@ ShowReportFeatures()
 	done
 
 	m=$n
-	wait 2>/dev/null
+	wait 2> /dev/null
 
 	# load report lines from individual files.
 
@@ -7650,7 +7638,7 @@ ShowReportRepos()
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport repository
-	ResetReportsPath &>/dev/null
+	ResetReportsPath &> /dev/null
 	DisplayAsReposReportTitleLine > "$REPORT_OUTPUT_PATHFILE"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
@@ -7660,7 +7648,7 @@ ShowReportRepos()
 	done
 
 	m=$n
-	wait 2>/dev/null
+	wait 2> /dev/null
 
 	# load report lines from individual files.
 
@@ -7702,7 +7690,7 @@ ShowReportStatuses()
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport status
-	ResetReportsPath &>/dev/null
+	ResetReportsPath &> /dev/null
 	CalcMaxStatusReportCols
 
 	DisplayAsStatusReportTitleLine > "$REPORT_OUTPUT_PATHFILE"
@@ -7715,7 +7703,7 @@ ShowReportStatuses()
 	done
 
 	m=$n
-	wait 2>/dev/null
+	wait 2> /dev/null
 
 	# Load report lines from individual files.
 
@@ -7829,13 +7817,13 @@ IncludeReportHeadingsFooter()
 	{
 
 	DisplayAsHelpTitle 'column headings:'
-	DisplayAsInfoIndentItem 'Backup?' "supports application config 'backup' and 'restore'"
-	DisplayAsInfoIndentItem 'Clean?' "supports application 'clean'ing"
-	DisplayAsInfoIndentItem 'Restart?' 'supports restart-to-update application'
-	DisplayAsInfoIndentItem 'Update?' 'application will auto-update on each restart'
-	DisplayAsInfoIndentItem 'Test?' "has a built-in 'status' check, and can test for daemon \"live\" status"
-	DisplayAsInfoIndentItem 'Independent?' 'QPKG is independent of other QPKGs'
-	DisplayAsInfoIndentItem 'Compatible?' 'QPKG has a release compatible with this NAS arch'
+	DisplayAsInfoIndentItem 'CanBack?' "supports application config 'backup' and 'restore'"
+	DisplayAsInfoIndentItem 'CanClean?' "supports application 'clean'ing"
+	DisplayAsInfoIndentItem 'StartUpd?' 'supports restart-to-update application'
+	DisplayAsInfoIndentItem 'AutoUpd?' 'application will auto-update on each restart'
+	DisplayAsInfoIndentItem 'LiveTest?' "has a built-in 'status' check, and can test for daemon \"live\" status"
+	DisplayAsInfoIndentItem 'Indep?' 'is independent of other QPKGs'
+	DisplayAsInfoIndentItem 'Compat?' 'has a release compatible with this NAS arch'
 
 	} >> "$REPORT_OUTPUT_PATHFILE"
 
@@ -8235,7 +8223,7 @@ FindNextFD()
 MarkThisAcForkAsStarted()
 	{
 
-	[[ -n $proc_fork_pathfile ]] && $TOUCH_CMD "$proc_fork_pathfile"
+	[[ -n $proc_fork_pathfile ]] && /bin/touch "$proc_fork_pathfile"
 
 	}
 
@@ -8435,7 +8423,7 @@ Python3GetVer()
 PythonGetVer()
 	{
 
-	GetThisBinPath ${1:-python} &>/dev/null && ${1:-python} -V 2>&1 | $SED_CMD 's|^Python ||'
+	GetThisBinPath ${1:-python} &> /dev/null && ${1:-python} -V 2>&1 | $SED_CMD 's|^Python ||'
 
 	}
 
@@ -8457,7 +8445,7 @@ PerlIsOutdated()
 PerlGetVer()
 	{
 
-	GetThisBinPath ${1:-perl} &>/dev/null && ${1:-perl} -e 'print "$^V\n"' 2>/dev/null | $SED_CMD 's|v||'
+	GetThisBinPath ${1:-perl} &> /dev/null && ${1:-perl} -e 'print "$^V\n"' 2> /dev/null | $SED_CMD 's|v||'
 
 	}
 
@@ -8486,7 +8474,7 @@ GetRepoURLFromStoreID()
 OsGetUptime()
 	{
 
-	local n=$(</proc/uptime)
+	local n=$(< /proc/uptime)
 
 	FormatSecsToHoursMinutesSecs "${n%%.*}"
 
@@ -8629,7 +8617,7 @@ QpkgGetEntwareType()
 		printf 'not-installed'
 	fi
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 UserGetSudoUID()
 	{
@@ -8762,7 +8750,7 @@ OsIsSupportDecimalSleepSeconds()
 
 	# Test if QTS `/bin/sleep` can handle decimal seconds (early BusyBox versions cannot):
 
-	/bin/sleep .01 &>/dev/null
+	/bin/sleep .01 &> /dev/null
 
 	}
 
@@ -8785,14 +8773,14 @@ OsIsStarting()
 
 	$PS_CMD | $GREP_CMD -F '/bin/sh /etc/init.d/rcS' | $GREP_CMD -v grep
 
-	} &>/dev/null
+	} &> /dev/null
 
 OsIsStopping()
 	{
 
 	$PS_CMD | $GREP_CMD -F '/bin/sh /etc/init.d/rcK' | $GREP_CMD -v grep
 
-	} &>/dev/null
+	} &> /dev/null
 
 OsIsStdKernelPageSize()
 	{
@@ -8876,7 +8864,6 @@ ShowZeroQpkgs()
 	for a in "${QPKG_IS_STATES[@]:-}"; do
 		for b in "${USER_QPKG_ACTIONS[@]:-}"; do
 			[[ $b = list ]] && continue			# Action results lists are unavailable for these.
-
 			QPKGs.AC${b}.IS${a}.IsSet && QPKGs-AC${b}-ok.IsNone && ShowAsWarn "no QPKGs were able to $(Lowercase "$b")"
 		done
 	done
@@ -8892,7 +8879,7 @@ ClaimLockfile()
 	readonly LOCK_PATHFILE=/var/run/sherpa.lock		# global
 
 	for a in sherpa-manager.sh sherpa-manager.source; do
-		if [[ -e $LOCK_PATHFILE && -d /proc/$(<"$LOCK_PATHFILE") && $(</proc/"$(<"$LOCK_PATHFILE")"/cmdline) =~ $a ]]; then
+		if [[ -e $LOCK_PATHFILE && -d /proc/$(<"$LOCK_PATHFILE") && $(< /proc/"$(<"$LOCK_PATHFILE")"/cmdline) =~ $a ]]; then
 			ShowAsAbort "another sherpa instance was found (PID:$(<"$LOCK_PATHFILE")), can't continue"
 
 			return 1
@@ -9023,7 +9010,7 @@ _QPKG:reassign_()
 	# Output:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -9070,7 +9057,7 @@ _QPKG:download_()
 	# Output:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -9142,7 +9129,7 @@ _QPKG:install_()
 	# Output:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -9256,7 +9243,7 @@ _QPKG:reinstall_()
 	# Output:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -9333,7 +9320,7 @@ _QPKG:rebuild_()
 	# Output:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -9382,7 +9369,7 @@ _QPKG:upgrade_()
 	# Output:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -9473,7 +9460,7 @@ _QPKG:uninstall_()
 	# Output:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -9509,7 +9496,7 @@ _QPKG:uninstall_()
 
 		if [[ $z -eq 0 ]]; then
 			# ALERT: beware of `qpkg_cli --remove`, it removes the QPKG installation path around 10-20 seconds after execution. If sherpa has moved-on and starts an install, `qpkg_cli` will remove the newly created QPKG installation path partway through the installation. So, check if QPKG is to be installed: if this is the case, don't use `qpkg_cli --remove`.
-			[[ -e /sbin/qpkg_cli ]] && ! QPKGs-ACinstall-to.Exist "$qpkg_name" && /sbin/qpkg_cli --remove "$qpkg_name" &>/dev/null
+			[[ -e /sbin/qpkg_cli ]] && ! QPKGs-ACinstall-to.Exist "$qpkg_name" && /sbin/qpkg_cli --remove "$qpkg_name" &> /dev/null
 			SaveActionResultToLog QPKG "$qpkg_name" uninstall ok
 			/sbin/rmcfg "$qpkg_name" -f /etc/config/qpkg.conf
 			DebugAsDone 'removed icon information from App Center'
@@ -9551,7 +9538,7 @@ _QPKG:activate_()
 	# Output:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -9636,7 +9623,7 @@ _QPKG:reactivate_()
 	# Output:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -9712,7 +9699,7 @@ _QPKG:deactivate_()
 	# Output:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -9796,7 +9783,7 @@ _QPKG:enable_()
 	# Output:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -9847,7 +9834,7 @@ _QPKG:disable_()
 	# Output:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -9903,7 +9890,7 @@ _QPKG:enableau_()
 	# Output:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -9962,7 +9949,7 @@ _QPKG:disableau_()
 	# Output:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10021,7 +10008,7 @@ _QPKG:backup_()
 	# Output:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10077,7 +10064,7 @@ _QPKG:restore_()
 	# Output:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10137,7 +10124,7 @@ _QPKG:clean_()
 	# Output:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10196,7 +10183,7 @@ _QPKG:sign_()
 	# Output:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10295,7 +10282,7 @@ _QPKG:status_()
 	# Output:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10328,7 +10315,7 @@ _QPKG:status_()
 			z=$?
 		fi
 	elif [[ $a != none ]]; then
-		eval "$a" &>/dev/null
+		eval "$a" &> /dev/null
 		z=$?
 	fi
 
@@ -10372,7 +10359,7 @@ ClearQpkgAppCenterNotifier()
 
 	return 0
 
-	} &>/dev/null
+	} &> /dev/null
 
 ClearQpkgServiceStatus()
 	{
@@ -10488,7 +10475,6 @@ QpkgGetApplVer()
 				a=${QPKG_APPL_VERSION[$i]}
 				[[ $a = version ]] && a=${QPKG_VERSION[$qpkg_default_index]}
 				[[ $a != none ]] || return
-
 				break
 			fi
 		done
@@ -10500,12 +10486,7 @@ QpkgGetApplVer()
 	fi
 
 	[[ -n $a ]] || return
-
-	if [[ $a != final ]] && QpkgIsInstalled && QpkgIsCanRestartToUpdate && ! QpkgIsAutoUpdate; then
-		printf static
-
-		return
-	fi
+	[[ $a = dynamic ]] && QpkgIsInstalled && ! QpkgIsAutoUpdate && a=static
 
 	echo -n "$a"
 
@@ -10738,7 +10719,6 @@ QpkgGetMinRAM()
 		for i in "${!QPKG_NAME[@]}"; do
 			[[ ${QPKG_NAME[$i]} = "$1" ]] || continue
 			a=${QPKG_MIN_RAM_KB[$i]}			# Always grab first found as default.
-
 			break
 		done
 	else
@@ -10773,7 +10753,6 @@ QpkgGetMinOSVer()
 		for i in "${!QPKG_NAME[@]}"; do
 			[[ ${QPKG_NAME[$i]} = "$1" ]] || continue
 			a=${QPKG_MIN_OS_VERSION[$i]}			# Always grab first found as default.
-
 			break
 		done
 	else
@@ -10808,7 +10787,6 @@ QpkgGetMaxOSVer()
 		for i in "${!QPKG_NAME[@]}"; do
 			[[ ${QPKG_NAME[$i]} = "$1" ]] || continue
 			a=${QPKG_MAX_OS_VERSION[$i]}			# Always grab first found as default.
-
 			break
 		done
 	else
@@ -10943,7 +10921,6 @@ QpkgGetDesc()
 		for i in "${!QPKG_NAME[@]}"; do
 			[[ ${QPKG_NAME[$i]} = "$1" ]] || continue
 			a=${QPKG_DESC[$i]}			# Always grab first found as default.
-
 			break
 		done
 	else
@@ -11006,7 +10983,6 @@ QpkgGetAbbrvs()
 		for i in "${!QPKG_NAME[@]}"; do
 			[[ ${QPKG_NAME[$i]} = "$1" ]] || continue
 			a=${QPKG_ABBRVS[$i]}			# Always grab first found as default.
-
 			break
 		done
 	else
@@ -11196,7 +11172,7 @@ QpkgGetServiceStatus()
 
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
 
-	[[ -e /var/run/$a.last.operation ]] && echo "$(</var/run/"$a".last.operation)"
+	[[ -e /var/run/$a.last.operation ]] && echo "$(< /var/run/"$a".last.operation)"
 
 	}
 
@@ -11414,7 +11390,6 @@ QpkgIsCanBackup()
 		for i in "${!QPKG_NAME[@]}"; do
 			[[ ${QPKG_NAME[$i]} = "$1" ]] || continue
 			a=${QPKG_CAN_BACKUP[$i]}			# Always grab first found as default.
-
 			break
 		done
 	else
@@ -12776,7 +12751,7 @@ PercFrac()
 
 	return 0
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 ShowAsIterativeProgress()
 	{
@@ -12909,7 +12884,7 @@ WriteToLog()
 
 	[[ -n ${1:-} && -n ${2:-} ]] || return
 
-	[[ ${useropt_debug:=false} = true && -n $sess_active_pathfile ]] && printf '%-4s: %s\n' "$(StripANSICodes "$1")" "$(StripANSICodes "$2")" >> "$sess_active_pathfile"
+	[[ ${useropt_debug:=false} = true && -n ${sess_active_pathfile:-} ]] && printf '%-4s: %s\n' "$(StripANSICodes "$1")" "$(StripANSICodes "$2")" >> "$sess_active_pathfile"
 
 	}
 
@@ -12924,7 +12899,7 @@ TextBrightGreen()
 		printf '%s' "$1"
 	fi
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 TextBrightYellow()
 	{
@@ -12937,7 +12912,7 @@ TextBrightYellow()
 		printf '%s' "$1"
 	fi
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 TextBrightOrange()
 	{
@@ -12950,7 +12925,7 @@ TextBrightOrange()
 		printf '%s' "$1"
 	fi
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 TextBrightOrangeBlink()
 	{
@@ -12963,7 +12938,7 @@ TextBrightOrangeBlink()
 		printf '%s' "$1"
 	fi
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 TextBrightRed()
 	{
@@ -12976,7 +12951,7 @@ TextBrightRed()
 		printf '%s' "$1"
 	fi
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 TextBrightRedBlink()
 	{
@@ -12989,7 +12964,7 @@ TextBrightRedBlink()
 		printf '%s' "$1"
 	fi
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 #TextCyan()
 # 	{
@@ -13002,7 +12977,7 @@ TextBrightRedBlink()
 # 		printf '%s' "$1"
 # 	fi
 #
-# 	} 2>/dev/null
+# 	} 2> /dev/null
 
 TextDarkGrey()
 	{
@@ -13015,7 +12990,7 @@ TextDarkGrey()
 		printf '%s' "$1"
 	fi
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 #TextUnderlined()
 # 	{
@@ -13028,7 +13003,7 @@ TextDarkGrey()
 # 		printf '%s' "$1"
 # 	fi
 #
-# 	} 2>/dev/null
+# 	} 2> /dev/null
 
 TextUnderlinedCyan()
 	{
@@ -13041,7 +13016,7 @@ TextUnderlinedCyan()
 		printf '%s' "$1"
 	fi
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 TextBlackOnCyan()
 	{
@@ -13054,7 +13029,7 @@ TextBlackOnCyan()
 		printf '%s' "$1"
 	fi
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 TextBrightWhite()
 	{
@@ -13067,7 +13042,7 @@ TextBrightWhite()
 		printf '%s' "$1"
 	fi
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 StripANSICodes()
 	{
@@ -13082,7 +13057,7 @@ StripANSICodes()
 		echo -en "${1:-}" 												# Can't strip, so pass thru original message unaltered.
 	fi
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 UpdateParentCapabilities()
 	{
@@ -13183,7 +13158,7 @@ FormatMillisecsToMinutesSecs()
 		printf '%dm:%02ds' "$m" "$s"
 	fi
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 FormatSecsToHoursMinutesSecs()
 	{
@@ -13199,7 +13174,7 @@ FormatSecsToHoursMinutesSecs()
 
 	printf '%01dh:%02dm:%02ds\n' "$h" "$m" "$s"
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 FormatLongMinutesSecs()
 	{
@@ -13217,7 +13192,7 @@ FormatLongMinutesSecs()
 
 	printf '%01dm:%02ds\n' "$((10#$m))" "$((10#$s))"
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 sleep()
 	{
@@ -13239,7 +13214,7 @@ sleep()
 
 	return 0
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 LoadObjects()
 	{
@@ -13420,19 +13395,13 @@ LoadPackages()
 
 	}
 
-SetTraps()
+CaughtSIGINT()
 	{
 
-	trap RunOnEXIT EXIT
-	trap RunOnSIGINT INT
+	trap - SIGINT
 
-	}
-
-RunOnSIGINT()
-	{
-
-	[[ -n ${DISPLAY_INHIBIT_PATHFILE:-} ]] && ${TOUCH_CMD:-/bin/touch} "$DISPLAY_INHIBIT_PATHFILE"
-	$TOUCH_CMD "$ACTION_ABORT_PATHFILE"
+	[[ -n ${DISPLAY_INHIBIT_PATHFILE:-} ]] && /bin/touch "$DISPLAY_INHIBIT_PATHFILE"
+	[[ -n ${ACTION_ABORT_PATHFILE:-} ]] && /bin/touch "$ACTION_ABORT_PATHFILE"
 	EraseThisLine
 	ShowAsAbort 'caught SIGINT'
 	CloseActionMsgPipe
@@ -13443,7 +13412,7 @@ RunOnSIGINT()
 
 	}
 
-RunOnEXIT()
+CaughtExit()
 	{
 
 	trap - EXIT
