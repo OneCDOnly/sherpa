@@ -26,7 +26,7 @@
 #	 list "object" tests: 'Capitalised-CamelCase-With-Inline-Hyphens-And-Period-Before.Test'
 #	 "object" properties: '_lowercase_with_leading_and_inline_and_trailing_underscores_' (these should be managed ONLY by the object's methods)
 #			   constants: 'UPPERCASE_WITH_INLINE_UNDERSCORES' (and set as readonly)
-#				 indents: 1 x tab char (=4 space chars)
+#				 indents: 1 x tab char (= 4 space chars)
 #
 # Notes:
 #   If on-screen line-spacing is required, this should only be done by the next function to print output.
@@ -38,7 +38,7 @@ shopt -s extglob
 ln -fns /proc/self/fd /dev/fd		# KLUDGE: `/dev/fd` isn't always created by QTS.
 
 trap CaughtSIGINT SIGINT
-trap CaughtExit EXIT
+trap CaughtEXIT EXIT
 
 readonly ARGS_RAW=$*
 readonly SCRIPT_STARTSECONDS=$(/bin/date +%s)
@@ -13412,7 +13412,7 @@ CaughtSIGINT()
 
 	}
 
-CaughtExit()
+CaughtEXIT()
 	{
 
 	trap - EXIT

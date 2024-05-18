@@ -50,12 +50,12 @@ Observed issues:
 		- Narrowed this down to WebSSH.
 		- Doesn't happen on aarch64 (Laura).
 
-	* Takes ~3.5 - 6 seconds to build QPKG states on Laura.
+	* Takes 3.5 to 6 seconds to build QPKG states on Laura.
 		- Should be able to do this quicker.
 		- Calculate QPKG features separate to states and cache/load these from file next time?
 
 	* Python module cleaner in service library functions is removing PyPI packages with a partial name match.
-		- Must be changed to an exact match.
+		- Must be an exact match only.
 
 	* 'sherpa' and 'opkg' were not available after installing Entware.
 		- Entware installation may be corrupt.
