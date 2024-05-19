@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+#* <?dont_edit?>
+#
+#* <?filename?>
+#
+#* <?copyright?>
+#
+#* <?project?>
+#
+#* <?tested?>
+#
+#* <?license?>
+
+readonly USER_ARGS_RAW=$*
+readonly QPKG_NAME=Headphones
+readonly SERVICE_SCRIPT_VERSION='<?build_date?>'
+readonly SERVICE_SCRIPT_TYPE=1
+
+InitService()
+	{
+
+	# default values
+	allow_access_to_sys_packages=true
+	app_version_cmd=undefined
+	app_version_pathfile=undefined
+	daemon_pid_pathfile=/var/run/$QPKG_NAME.pid
+	daemon_port=0
+	get_daemon_port_cmd=undefined
+	install_pip_deps=true
+	interpreter=/opt/bin/python3
+	launcher_pathfile=undefined					# On-demand executables only.
+	local_temp_path=undefined
+	nice_daemon_to=0							# If non-zero, daemon proc is niced to this value on-launch.
+	orig_daemon_service_script=undefined		# Specific to Entware binaries only.
+	pidfile_is_managed_by_app=true
+	pip_cache_path=$QPKG_PATH/pip-cache
+	qpkg_backup_pathfile=$BACKUP_PATH/$QPKG_NAME.config.tar.gz
+	qpkg_ini_file=config.ini
+	qpkg_ini_pathfile=$QPKG_CONFIG_PATH/$qpkg_ini_file
+	qpkg_ini_default_pathfile=$qpkg_ini_pathfile.def
+	qpkg_repo_path=$QPKG_PATH/repo-cache
+	recheck_daemon_pid_after_launch=true		# If true, application PID is reconfirmed shortly after initial launch. Some applications launch with one PID, then switch to another.
+	recheck_daemon_pid_after_kill=false			# If true, application PID is reconfirmed shortly after kill confirmed. Some applications kill their main PID, then switch to another during shutdown.
+	remote_arch=undefined
+	remote_url=undefined
+	resolve_remote_url=false					# If 'true', URL must be retrieved from remote first, then parsed to get final URL.
+	run_daemon_in_screen_session=false
+	service_operation=unspecified
+	service_result=undefined
+	silence_pypi_errors=true					# If true, PyPI package processing errors won't be shown in system log.
+	source_arch=undefined
+	source_archive_pathfile=undefined
+	source_git_branch=master
+	source_git_branch_depth=shallow				# 'shallow' (depth 1) or 'single-branch' ... 'shallow' implies 'single-branch'.
+	source_git_url=https://github.com/rembo10/headphones.git
+	ui_listening_address=undefined
+	ui_port=0
+	ui_port_secure=0
+    userlink_pathfile=undefined					# On-demand executables only.
+	venv_path=$QPKG_PATH/venv
+	venv_pip_pathfile=$venv_path/bin/pip
+	venv_python_pathfile=$venv_path/bin/python3
+
+	daemon_launch_cmd="$venv_python_pathfile $daemon_pathfile --daemon --nolaunch --datadir $(/usr/bin/dirname "$qpkg_ini_pathfile") --config $qpkg_ini_pathfile --pidfile $daemon_pid_pathfile"	daemon_pathfile=$qpkg_repo_path/Headphones.py
+
+	get_ui_listening_address_cmd="/sbin/getcfg General web_host -d undefined -f $qpkg_ini_pathfile"
+	get_ui_port_cmd="/sbin/getcfg General web_port -d 0 -f $qpkg_ini_pathfile"
+	get_ui_port_secure_cmd="/sbin/getcfg General web_port -d 0 -f $qpkg_ini_pathfile"
+	get_ui_port_secure_enabled_test_cmd='[[ $(/sbin/getcfg General enable_https -d 0 -f '$qpkg_ini_pathfile') = 1 ]]'
+
+	if [[ -e $qpkg_ini_default_pathfile ]]; then
+		/sbin/setcfg General log_dir "$QPKG_CONFIG_PATH"/logs -f "$qpkg_ini_default_pathfile"
+		/sbin/setcfg General cache_dir "$QPKG_CONFIG_PATH"/cache -f "$qpkg_ini_default_pathfile"
+	fi
+
+	if [[ -e $qpkg_ini_pathfile ]]; then
+		/sbin/setcfg General log_dir "$QPKG_CONFIG_PATH"/logs -f "$qpkg_ini_pathfile"
+		/sbin/setcfg General cache_dir "$QPKG_CONFIG_PATH"/cache -f "$qpkg_ini_pathfile"
+	fi
+
+	}
+
+library_path=$(/usr/bin/readlink "$0" 2>/dev/null)
+[[ -z $library_path ]] && library_path=$0
+readonly SERVICE_LIBRARY_PATHFILE=$(/usr/bin/dirname "$library_path")/service.lib
+
+if [[ -e $SERVICE_LIBRARY_PATHFILE ]]; then
+	. $SERVICE_LIBRARY_PATHFILE
+else
+	printf '\033[1;31m%s\033[0m: %s\n' 'derp' "QPKG service function library not found, can't continue."
+	exit 1
+fi
+
+ProcessArgs

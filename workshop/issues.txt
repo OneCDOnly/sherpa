@@ -17,42 +17,6 @@ Observed issues:
 	* Results report wording should account for single QPKG actions.
 		- Don't pluralise "package actions" when there was only one.
 
-	* x86 (Sarah) is writing files into /root/.cache
-		-------------------------------------------------------------------------------------------------------------------------
-		[~] # du -h .cache/
-		36K     .cache/pip/http-v2/a/1/9/5/3
-		37K     .cache/pip/http-v2/a/1/9/5
-		38K     .cache/pip/http-v2/a/1/9
-		39K     .cache/pip/http-v2/a/1
-		40K     .cache/pip/http-v2/a
-		34K     .cache/pip/http-v2/d/8/7/b/2
-		35K     .cache/pip/http-v2/d/8/7/b
-		36K     .cache/pip/http-v2/d/8/7
-		37K     .cache/pip/http-v2/d/8
-		38K     .cache/pip/http-v2/d
-		48K     .cache/pip/http-v2/e/1/3/7/4
-		49K     .cache/pip/http-v2/e/1/3/7
-		50K     .cache/pip/http-v2/e/1/3
-		51K     .cache/pip/http-v2/e/1
-		52K     .cache/pip/http-v2/e
-		26K     .cache/pip/http-v2/0/1/a/4/0
-		27K     .cache/pip/http-v2/0/1/a/4
-		28K     .cache/pip/http-v2/0/1/a
-		29K     .cache/pip/http-v2/0/1
-		30K     .cache/pip/http-v2/0
-		8.0K    .cache/pip/http-v2/8/7/c/c/0
-		9.0K    .cache/pip/http-v2/8/7/c/c
-		10K     .cache/pip/http-v2/8/7/c
-		11K     .cache/pip/http-v2/8/7
-		12K     .cache/pip/http-v2/8
-		173K    .cache/pip/http-v2
-		2.0K    .cache/pip/selfcheck
-		176K    .cache/pip
-		177K    .cache/
-		-------------------------------------------------------------------------------------------------------------------------
-		- Narrowed this down to WebSSH.
-		- Doesn't happen on aarch64 (Laura).
-
 	* Takes 3.5 to 6 seconds to build QPKG states on Laura.
 		- Should be able to do this quicker.
 		- Calculate QPKG features separate to states and cache/load these from file next time?
@@ -86,7 +50,7 @@ Observed issues:
 	* Upgrading QPKGs via sherpa didn't update App Center icons 'live'.
 
 	* Near the end of installing IPKs, monitored download path can remain at non-zero size while packages complete installation.
-		- Include a separate progress message when dir size shrinks?
+		- Include a separate progress message when dir size shrinks? Maybe force increase to "100%" and stop monitoring?
 
 	* QPKG version sort is not correctly sorting version numbers followed by an alpha as later than non-alpha.
 
