@@ -610,13 +610,13 @@ LoadEnv()
 			readonly IPK_CACHE_PATH=$CACHE_PATH/IPKs
 				readonly IPK_DL_PATH=$IPK_CACHE_PATH/downloads
 				readonly IPK_DOWNGRADE_PATH=$IPK_CACHE_PATH/downgrade
+				readonly PREV_IPK_LIST=$IPK_CACHE_PATH/ipk.list.save
 			readonly PIP_CACHE_PATH=$CACHE_PATH/PIPs
+				readonly PREV_PIP_LIST=$PIP_CACHE_PATH/pip.list.save
 			readonly OBJECTS_ARCHIVE_PATHFILE=$CACHE_PATH/objects.tar.gz
 			readonly OBJECTS_PATHFILE=$CACHE_PATH/objects
 			readonly PACKAGES_ARCHIVE_PATHFILE=$CACHE_PATH/packages.tar.gz
 			readonly PACKAGES_PATHFILE=$CACHE_PATH/packages
-			readonly PREV_IPK_LIST=$CACHE_PATH/ipk.list.save
-			readonly PREV_PIP_LIST=$CACHE_PATH/pip.list.save
 			readonly QPKG_CACHE_PATH=$CACHE_PATH/QPKGs
 				readonly QPKG_DL_PATH=$QPKG_CACHE_PATH/downloads
 		readonly LOGS_PATH=$THIS_PACKAGE_PATH/logs
