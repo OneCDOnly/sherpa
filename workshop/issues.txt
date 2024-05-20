@@ -1,9 +1,5 @@
 Observed issues:
 
-	* When installing Entware as a dependency of pyLoad, lots of unrequired IPKs were detected as dependencies (like 'deluge').
-		- After Entware finished installing, running a 'check' calculates correct dependencies.
-		- Suspect the faulty calculation is due to required use of BusyBox utils.
-
 	* Takes 3.5 to 6 seconds to build QPKG states on Laura.
 		- Should be able to do this quicker.
 		- Calculate QPKG features separate to states and cache/load these from file next time?

@@ -1075,7 +1075,7 @@ QPKGsAssignToActions()
 
 	# Install independents are installed when processing these specific actions:
 
-	for qpkg_name in $(QPKGs-ACinstall-to:Array); do
+	for qpkg_name in $(QPKGs-ACinstall-to:Array) $(QPKGs-ACreinstall-to:Array); do
 		QpkgSetIndex
 
 		for prospect in $(QpkgGetDependencies); do
