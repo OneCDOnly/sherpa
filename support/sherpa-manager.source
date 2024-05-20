@@ -3847,7 +3847,7 @@ _DirSizeMonitor_()
 
 		[[ ! -e $DISPLAY_INHIBIT_PATHFILE ]] || return
 		WriteMsgInPlace "$progress_msg"
-		sleep .5
+		sleep 1
 	done
 
 	[[ -n $progress_msg ]] && WriteMsgInPlace 'done!'
