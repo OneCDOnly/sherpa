@@ -1,7 +1,12 @@
 Observed issues:
 
+	* Takes 3.5 to 6 seconds to build QPKG states on Laura.
+		- Should be able to do this quicker.
+		- Calculate QPKG features separate to states and cache/load these from file next time?
+
 	* Applications sourced online are not updating (e.g. Tautulli).
 		- Had to 'clean' it to get latest version pulled.
+		- Forgot to check: was auto-update disabled?
 
 	* Default dependency report should only show installed QPKGs.
 		- ... but should allow 'sherpa d all' to see all QPKGs.
@@ -16,13 +21,6 @@ Observed issues:
 
 	* Results report wording should account for single QPKG actions.
 		- Don't pluralise "package actions" when there was only one.
-
-	* Takes 3.5 to 6 seconds to build QPKG states on Laura.
-		- Should be able to do this quicker.
-		- Calculate QPKG features separate to states and cache/load these from file next time?
-
-	* Python module cleaner in service library functions is removing PyPI packages with a partial name match.
-		- Must be an exact match only.
 
 	* 'sherpa' and 'opkg' were not available after installing Entware.
 		- Entware installation may be corrupt.
