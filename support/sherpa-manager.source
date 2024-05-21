@@ -26,7 +26,7 @@
 #	 list "object" tests: 'Capitalised-CamelCase-With-Inline-Hyphens-And-Period-Before.Test'
 #	 "object" properties: '_lowercase_with_leading_and_inline_and_trailing_underscores_' (these should be managed ONLY by the object's methods)
 #			   constants: 'UPPERCASE_WITH_INLINE_UNDERSCORES' (and set as readonly)
-#				 indents: 1 x tab char (=4 space chars)
+#				 indents: 1 x tab char (= 4 space chars)
 #
 # Notes:
 #   If on-screen line-spacing is required, this should only be done by the next function to print output.
@@ -38,7 +38,7 @@ shopt -s extglob
 ln -fns /proc/self/fd /dev/fd		# KLUDGE: `/dev/fd` isn't always created by QTS.
 
 trap CaughtSIGINT SIGINT
-trap CaughtExit EXIT
+trap CaughtEXIT EXIT
 
 readonly ARGS_RAW=$*
 readonly SCRIPT_STARTSECONDS=$(/bin/date +%s)
@@ -610,13 +610,13 @@ LoadEnv()
 			readonly IPK_CACHE_PATH=$CACHE_PATH/IPKs
 				readonly IPK_DL_PATH=$IPK_CACHE_PATH/downloads
 				readonly IPK_DOWNGRADE_PATH=$IPK_CACHE_PATH/downgrade
+				readonly PREV_IPK_LIST=$IPK_CACHE_PATH/ipk.list.save
 			readonly PIP_CACHE_PATH=$CACHE_PATH/PIPs
+				readonly PREV_PIP_LIST=$PIP_CACHE_PATH/pip.list.save
 			readonly OBJECTS_ARCHIVE_PATHFILE=$CACHE_PATH/objects.tar.gz
 			readonly OBJECTS_PATHFILE=$CACHE_PATH/objects
 			readonly PACKAGES_ARCHIVE_PATHFILE=$CACHE_PATH/packages.tar.gz
 			readonly PACKAGES_PATHFILE=$CACHE_PATH/packages
-			readonly PREV_IPK_LIST=$CACHE_PATH/ipk.list.save
-			readonly PREV_PIP_LIST=$CACHE_PATH/pip.list.save
 			readonly QPKG_CACHE_PATH=$CACHE_PATH/QPKGs
 				readonly QPKG_DL_PATH=$QPKG_CACHE_PATH/downloads
 		readonly LOGS_PATH=$THIS_PACKAGE_PATH/logs
@@ -1075,7 +1075,7 @@ QPKGsAssignToActions()
 
 	# Install independents are installed when processing these specific actions:
 
-	for qpkg_name in $(QPKGs-ACinstall-to:Array); do
+	for qpkg_name in $(QPKGs-ACinstall-to:Array) $(QPKGs-ACreinstall-to:Array); do
 		QpkgSetIndex
 
 		for prospect in $(QpkgGetDependencies); do
@@ -1687,12 +1687,12 @@ AdjustMaxForks()
 		reason='debug mode is active'
 	else
 		case ${1:-} in
-			clean)											# Precautionary: don't make too-many calls to PyPI at the same time.
-				max_forks=$(((max_forks+1)/2))
+			?(re)install|upgrade)							# Don't execute these actions async: installer for each package eventually aborts (QPKGs can only be managed one-at-a-time, else packages overwrite each other, and package source files end-up in the wrong install paths).
+				max_forks=1
 				reason="'$1'"
 				;;
-			@(in|re)stall|upgrade)							# Don't execute these actions async: installer for each package eventually aborts (QPKGs can only be managed one-at-a-time, else packages overwrite each other, and package source files end-up in the wrong install paths).
-				max_forks=1
+			clean)											# Precautionary: don't make too-many calls to PyPI at the same time.
+				max_forks=$(((max_forks+1)/2))
 				reason="'$1'"
 				;;
 			backup|deactivate|download|uninstall)			# Low-resource actions, so allow multiple forks, even on ARMv5.
@@ -3847,7 +3847,7 @@ _DirSizeMonitor_()
 
 		[[ ! -e $DISPLAY_INHIBIT_PATHFILE ]] || return
 		WriteMsgInPlace "$progress_msg"
-		sleep .5
+		sleep 1
 	done
 
 	[[ -n $progress_msg ]] && WriteMsgInPlace 'done!'
@@ -13412,7 +13412,7 @@ CaughtSIGINT()
 
 	}
 
-CaughtExit()
+CaughtEXIT()
 	{
 
 	trap - EXIT
