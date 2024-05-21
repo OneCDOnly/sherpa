@@ -688,7 +688,7 @@ LoadLists()
 	# sorted
 	USER_QPKG_ACTIONS=(activate backup clean deactivate disable disableau enable enableau install list reactivate reassign rebuild reinstall restore sign status uninstall upgrade)
 
-	# KLUDGE: for some reason, setting `readonly` while populating arrays causes their scope to become local, so need to set as `readonly` afterward to ensure global scope. GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
+	# KLUDGE: for some reason, setting `readonly` while populating arrays causes their scope to become local, so need to set as `readonly` afterward to ensure global scope. GNU Bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
 	readonly PACKAGE_TIERS
 
 	readonly QPKG_IS_STATES
@@ -1465,7 +1465,7 @@ ProcAction()
 			fi
 
 			if [[ $total_count -eq 1 ]]; then
-				fork_progress_prefix="$ACTION_PRESENT_MSG $(TextBrightOrange "${target_packages[0]}")"
+				fork_progress_prefix="$ACTION_PRESENT_MSG $(TextBrightOrange "${target_packages[0]}") $PACKAGE_TYPE"
 			else
 				fork_progress_prefix="$ACTION_PRESENT_MSG $([[ $TIER != all ]] && echo "$TIER ")$(Uppercase "$PACKAGE_TYPE")$(Pluralise "$total_count")"
 			fi
@@ -1474,7 +1474,7 @@ ProcAction()
 			InitForkCounts
 			OpenActionMsgPipe
 
-			re=\\bEntware\\b		# bash 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
+			re=\\bEntware\\b		# Bash 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
 
 			if [[ $TARGET_ACTION = uninstall && ${target_packages[*]} =~ $re ]]; then
 				ShowKeystrokes		# Enable this before removing Entware & GNU `stty`.
@@ -11144,7 +11144,7 @@ QpkgGetActiveTest()
 	#	$qpkg_name (global)
 
 	# Output:
-	#   stdout = bash tests.
+	#   stdout = Bash tests.
 	#   $? = 0 (found), !0 (not-found)
 
 	[[ -n $qpkg_name && $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
