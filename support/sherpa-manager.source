@@ -1010,7 +1010,7 @@ CheckEnv()
 
 					if [[ ${installed_version//.} -gt 238 ]]; then
 						ipks_downgrade=true
-						ShowAsNote "IPK packages will be downgraded to suit $KERNEL_PAGE_SIZE kernel page size"
+						ShowAsNote "IPKs will be downgraded to suit $KERNEL_PAGE_SIZE kernel page size"
 						IPKs-ACdowngrade-to:Add "$target_packages"
 					else
 						IPKs-ACdowngrade-sk:Add "$target_packages"
@@ -3186,10 +3186,10 @@ SaveIpkAndPipList()
 	{
 
 	$PIP_CMD freeze | cut -d'=' -f1 > "$PREV_PIP_LIST"
-	[[ -e $PREV_PIP_LIST ]] && DebugAsDone "saved current PIP package list to $(ShowAsFileName "$PREV_PIP_LIST")"
+	[[ -e $PREV_PIP_LIST ]] && DebugAsDone "saved current PIP list to $(ShowAsFileName "$PREV_PIP_LIST")"
 
 	$OPKG_CMD list-installed > "$PREV_IPK_LIST"
-	[[ -e $PREV_IPK_LIST ]] && DebugAsDone "saved current $(ShowAsPackageName Entware) IPK package list to $(ShowAsFileName "$PREV_IPK_LIST")"
+	[[ -e $PREV_IPK_LIST ]] && DebugAsDone "saved current $(ShowAsPackageName Entware) IPK list to $(ShowAsFileName "$PREV_IPK_LIST")"
 
 	} 2> /dev/null
 
@@ -3201,7 +3201,7 @@ LoadIpkList()
 	local version=''
 
 	if [[ -e $PREV_IPK_LIST ]]; then
-		DebugInfo "IPK packages are being loaded from $(ShowAsFileName "$PREV_IPK_LIST")"
+		DebugInfo "IPKs are being loaded from $(ShowAsFileName "$PREV_IPK_LIST")"
 
 		while read -r name separator version; do
 			name=$(Lowercase "$name")
@@ -3219,7 +3219,7 @@ LoadPipList()
 	local re=''
 
 	if [[ -e $PREV_PIP_LIST ]]; then
-		DebugInfo "PIP packages are being loaded from $(ShowAsFileName "$PREV_PIP_LIST")"
+		DebugInfo "PIPs are being loaded from $(ShowAsFileName "$PREV_PIP_LIST")"
 
 		while read -r name; do
 			name=$(Lowercase "$name")
@@ -3259,14 +3259,14 @@ CalcIpkDepsToInstall()
 	requested_count=$($WC_CMD -w <<< "$req_list")
 
 	if [[ $requested_count -eq 0 ]]; then
-		DebugAsWarn 'no IPK packages requested'
+		DebugAsWarn 'no IPKs requested'
 
 		FuncExit 1; return
 	fi
 
-	DebugInfo "$requested_count IPK package$(Pluralise "$requested_count") requested" "'$req_list' "
+	DebugInfo "$requested_count IPK$(Pluralise "$requested_count") requested" "'$req_list' "
 	while [[ $iterations -le $ITERATION_LIMIT ]]; do
-		ShowAsIterativeProgress 'resolve IPK package dependencies' "$iterations" iteration "${#dep_acc[@]}" 'unique package'
+		ShowAsIterativeProgress 'resolve IPK dependencies' "$iterations" iteration "${#dep_acc[@]}" 'unique IPK'
 
 		((iterations++))
 		printf -v ipk_titles '^Package: %s$\|' "${this_list[@]}"
@@ -3275,7 +3275,7 @@ CalcIpkDepsToInstall()
 		this_list=($($GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator '^Package:\|^Depends:' "$EXTERNAL_PACKAGES_PATHFILE" | $GNU_GREP_CMD -vG '^Section:\|^Version:' | $GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator "$ipk_titles" | $GNU_GREP_CMD -vG "$ipk_titles" | $GNU_GREP_CMD -vG '^Package: ' | $SED_CMD 's|^Depends: ||;s|, |\n|g' | $SORT_CMD | $UNIQ_CMD))
 
 		# Update progress twice per loop.
-		ShowAsIterativeProgress 'resolve IPK package dependencies' "$iterations" iteration "${#dep_acc[@]}" 'unique package'
+		ShowAsIterativeProgress 'resolve IPK dependencies' "$iterations" iteration "${#dep_acc[@]}" 'unique IPK'
 
 		if [[ ${#this_list[@]} -eq 0 ]]; then
 			complete=true
@@ -3302,9 +3302,9 @@ CalcIpkDepsToInstall()
 	pre_exclude_count=$($WC_CMD -w <<< "$pre_exclude_list")
 
 	if [[ $pre_exclude_count -gt 0 ]]; then
-		ShowAsProc 'exclude IPK packages already installed'
+		ShowAsProc 'exclude IPKs already installed'
 
-		DebugInfo "$pre_exclude_count IPK package$(Pluralise "$pre_exclude_count") required (including dependencies)" "'$pre_exclude_list' "
+		DebugInfo "$pre_exclude_count IPK$(Pluralise "$pre_exclude_count") required (including dependencies)" "'$pre_exclude_list' "
 
 		for element in $pre_exclude_list; do
 			# KLUDGE: silently exclude these packages from being installed:
@@ -3324,7 +3324,7 @@ CalcIpkDepsToInstall()
 			fi
 		done
 	else
-		DebugAsDone 'no IPK packages to exclude'
+		DebugAsDone 'no IPKs to exclude'
 	fi
 
 	FuncExit
@@ -3343,7 +3343,7 @@ CalcIpkDownloadSize()
 	size_count=$(IPKs-ACdownload-to:Count)
 
 	if [[ $size_count -gt 0 ]]; then
-		ShowAsProc "calculate size of IPK package$(Pluralise "$size_count") to download"
+		ShowAsProc "calculate size of IPK$(Pluralise "$size_count") to download"
 
 		DebugAsDone "$size_count IPK$(Pluralise "$size_count") to download: '$(IPKs-ACdownload-to:List)'"
 		size_array=($($GNU_GREP_CMD -w '^Package:\|^Size:' "$EXTERNAL_PACKAGES_PATHFILE" | $GNU_GREP_CMD --after-context 1 --no-group-separator ": $($SED_CMD 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKs-ACdownload-to:List)")" | $GREP_CMD '^Size:' | $SED_CMD 's|^Size: ||'))
@@ -3352,7 +3352,7 @@ CalcIpkDownloadSize()
 		IPKs-ACdownload-to:Size = "$(IFS=+; echo "$((${size_array[*]:-}))")"		# nifty sizing shortcut found here https://stackoverflow.com/a/13635566/6182835
 		DebugAsDone "$(FormatAsThous "$(IPKs-ACdownload-to:Size)") bytes ($(FormatAsIsoBytes "$(IPKs-ACdownload-to:Size)")) to download"
 	else
-		DebugAsDone 'no IPK packages to size'
+		DebugAsDone 'no IPKs to size'
 	fi
 
 	FuncExit
@@ -3390,7 +3390,7 @@ IPKs:upgrade()
 	total_count=$(IPKs-ACdownload-to:Count)
 
 	if [[ $total_count -gt 0 ]]; then
-		desc="$total_count auxiliary IPK package$(Pluralise "$total_count")"
+		desc="$total_count auxiliary IPK$(Pluralise "$total_count")"
 
 		ShowAsProc "upgrade $desc"
 
@@ -3470,7 +3470,7 @@ IPKs:install()
 	total_count=$(IPKs-ACdownload-to:Count)
 
 	if [[ $total_count -gt 0 ]]; then
-		desc="$total_count auxiliary IPK package$(Pluralise "$total_count")"
+		desc="$total_count auxiliary IPK$(Pluralise "$total_count")"
 
 		ShowAsProc "install $desc"
 
@@ -3533,7 +3533,7 @@ IPKs:downgrade()
 	total_count=$(IPKs-ACdowngrade-to:Count)
 
 	if [[ $total_count -gt 0 ]]; then
-		package_type='auxiliary IPK package'
+		package_type='auxiliary IPK'
 		desc="$total_count ${package_type}$(Pluralise "$total_count")"
 		log_pathfile=$LOGS_PATH/ipks.$DOWNLOAD_LOG_FILE
 
@@ -3569,7 +3569,7 @@ IPKs:downgrade()
 		total_count=1
 		ok_count=0
 		fail_count=0
-		package_type='auxiliary IPK package group'
+		package_type='auxiliary IPK group'
 		desc="$total_count ${package_type}$(Pluralise "$total_count")"
 		log_pathfile=$LOGS_PATH/ipks.$DOWNGRADE_LOG_FILE
 
@@ -3626,9 +3626,9 @@ PIPs:install()
 	local desc=''
 	local exec_cmd=''
 	local -i fail_count=0
-	local log_pathfile=$LOGS_PATH/pypi.$INSTALL_LOG_FILE
+	local log_pathfile=$LOGS_PATH/pips.$INSTALL_LOG_FILE
 	local -i ok_count=0
-	local package_type='auxiliary PyPI package group'
+	local package_type='auxiliary PyPI group'
 	local -i total_count=0
 	local -i z=0
 
@@ -3689,7 +3689,7 @@ OpenIpkArchive()
 	#   $? = 0 if successful or 1 if failed
 
 	if [[ ! -e $EXTERNAL_PACKAGES_ARCHIVE_PATHFILE ]]; then
-		ShowAsError 'unable to locate the IPK package list file'
+		ShowAsError 'unable to locate the IPK list file'
 
 		return 1
 	fi
@@ -3697,7 +3697,7 @@ OpenIpkArchive()
 	RunAndLog "/usr/local/sbin/7z e -o$($DIRNAME_CMD "$EXTERNAL_PACKAGES_PATHFILE") $EXTERNAL_PACKAGES_ARCHIVE_PATHFILE" "$CACHE_PATH/ipk.archive.extract" log:failure-only
 
 	if [[ ! -e $EXTERNAL_PACKAGES_PATHFILE ]]; then
-		ShowAsError 'unable to open the IPK package list file'
+		ShowAsError 'unable to open the IPK list file'
 
 		return 1
 	fi
@@ -8278,7 +8278,7 @@ MarkThisAcForkAsError()
 NoteIpkAcAsOk()
 	{
 
-	# Move specified IPK package name from `to` action array into associated `ok` array.
+	# Move specified IPK name from `to` action array into associated `ok` array.
 
 	# Input:
 	#   $1 = package name
@@ -8294,7 +8294,7 @@ NoteIpkAcAsOk()
 NoteIpkAcAsEr()
 	{
 
-	# Move specified IPK package name from `to` action array into associated `er` array.
+	# Move specified IPK name from `to` action array into associated `er` array.
 
 	# Input:
 	#   $1 = package name
