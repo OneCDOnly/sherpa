@@ -688,7 +688,7 @@ LoadLists()
 	# sorted
 	USER_QPKG_ACTIONS=(activate backup clean deactivate disable disableau enable enableau install list reactivate reassign rebuild reinstall restore sign status uninstall upgrade)
 
-	# KLUDGE: for some reason, setting `readonly` while populating arrays causes their scope to become local, so need to set as `readonly` afterward to ensure global scope. GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
+	# KLUDGE: for some reason, setting `readonly` while populating arrays causes their scope to become local, so need to set as `readonly` afterward to ensure global scope. GNU Bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
 	readonly PACKAGE_TIERS
 
 	readonly QPKG_IS_STATES
@@ -1465,7 +1465,7 @@ ProcAction()
 			fi
 
 			if [[ $total_count -eq 1 ]]; then
-				fork_progress_prefix="$ACTION_PRESENT_MSG $(TextBrightOrange "${target_packages[0]}")"
+				fork_progress_prefix="$ACTION_PRESENT_MSG $(TextBrightOrange "${target_packages[0]}") $PACKAGE_TYPE"
 			else
 				fork_progress_prefix="$ACTION_PRESENT_MSG $([[ $TIER != all ]] && echo "$TIER ")$(Uppercase "$PACKAGE_TYPE")$(Pluralise "$total_count")"
 			fi
@@ -1474,7 +1474,7 @@ ProcAction()
 			InitForkCounts
 			OpenActionMsgPipe
 
-			re=\\bEntware\\b		# bash 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
+			re=\\bEntware\\b		# Bash 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
 
 			if [[ $TARGET_ACTION = uninstall && ${target_packages[*]} =~ $re ]]; then
 				ShowKeystrokes		# Enable this before removing Entware & GNU `stty`.
@@ -3186,7 +3186,7 @@ SaveIpkAndPipList()
 	{
 
 	$PIP_CMD freeze | cut -d'=' -f1 > "$PREV_PIP_LIST"
-	[[ -e $PREV_PIP_LIST ]] && DebugAsDone "saved current PIP module list to $(ShowAsFileName "$PREV_PIP_LIST")"
+	[[ -e $PREV_PIP_LIST ]] && DebugAsDone "saved current PIP list to $(ShowAsFileName "$PREV_PIP_LIST")"
 
 	$OPKG_CMD list-installed > "$PREV_IPK_LIST"
 	[[ -e $PREV_IPK_LIST ]] && DebugAsDone "saved current $(ShowAsPackageName Entware) IPK list to $(ShowAsFileName "$PREV_IPK_LIST")"
@@ -3266,7 +3266,7 @@ CalcIpkDepsToInstall()
 
 	DebugInfo "$requested_count IPK$(Pluralise "$requested_count") requested" "'$req_list' "
 	while [[ $iterations -le $ITERATION_LIMIT ]]; do
-		ShowAsIterativeProgress 'resolve IPK dependencies' "$iterations" iteration "${#dep_acc[@]}" 'unique package'
+		ShowAsIterativeProgress 'resolve IPK dependencies' "$iterations" iteration "${#dep_acc[@]}" 'unique IPK'
 
 		((iterations++))
 		printf -v ipk_titles '^Package: %s$\|' "${this_list[@]}"
@@ -3275,7 +3275,7 @@ CalcIpkDepsToInstall()
 		this_list=($($GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator '^Package:\|^Depends:' "$EXTERNAL_PACKAGES_PATHFILE" | $GNU_GREP_CMD -vG '^Section:\|^Version:' | $GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator "$ipk_titles" | $GNU_GREP_CMD -vG "$ipk_titles" | $GNU_GREP_CMD -vG '^Package: ' | $SED_CMD 's|^Depends: ||;s|, |\n|g' | $SORT_CMD | $UNIQ_CMD))
 
 		# Update progress twice per loop.
-		ShowAsIterativeProgress 'resolve IPK dependencies' "$iterations" iteration "${#dep_acc[@]}" 'unique package'
+		ShowAsIterativeProgress 'resolve IPK dependencies' "$iterations" iteration "${#dep_acc[@]}" 'unique IPK'
 
 		if [[ ${#this_list[@]} -eq 0 ]]; then
 			complete=true
@@ -3390,7 +3390,7 @@ IPKs:upgrade()
 	total_count=$(IPKs-ACdownload-to:Count)
 
 	if [[ $total_count -gt 0 ]]; then
-		desc="$total_count auxiliary IPK module$(Pluralise "$total_count")"
+		desc="$total_count auxiliary IPK$(Pluralise "$total_count")"
 
 		ShowAsProc "upgrade $desc"
 
@@ -3470,7 +3470,7 @@ IPKs:install()
 	total_count=$(IPKs-ACdownload-to:Count)
 
 	if [[ $total_count -gt 0 ]]; then
-		desc="$total_count auxiliary IPK module$(Pluralise "$total_count")"
+		desc="$total_count auxiliary IPK$(Pluralise "$total_count")"
 
 		ShowAsProc "install $desc"
 
@@ -3533,7 +3533,7 @@ IPKs:downgrade()
 	total_count=$(IPKs-ACdowngrade-to:Count)
 
 	if [[ $total_count -gt 0 ]]; then
-		package_type='auxiliary IPK module'
+		package_type='auxiliary IPK'
 		desc="$total_count ${package_type}$(Pluralise "$total_count")"
 		log_pathfile=$LOGS_PATH/ipks.$DOWNLOAD_LOG_FILE
 
@@ -3626,7 +3626,7 @@ PIPs:install()
 	local desc=''
 	local exec_cmd=''
 	local -i fail_count=0
-	local log_pathfile=$LOGS_PATH/pypi.$INSTALL_LOG_FILE
+	local log_pathfile=$LOGS_PATH/pips.$INSTALL_LOG_FILE
 	local -i ok_count=0
 	local package_type='auxiliary PyPI group'
 	local -i total_count=0
@@ -3643,7 +3643,7 @@ PIPs:install()
 		((total_count++))
 
 		exec_cmd="$PIP_CMD install --upgrade --no-input $(PIPs-ACinstall-to:List) --cache-dir $PIP_CACHE_PATH 2> >($GREP_CMD -v \"Running pip as the 'root' user\") >&2"
-		desc='auxiliary PyPI modules'
+		desc='auxiliary PyPI packages'
 
 		ShowAsPercentProgress "install $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 0 "$total_count"
 		RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
@@ -8278,7 +8278,7 @@ MarkThisAcForkAsError()
 NoteIpkAcAsOk()
 	{
 
-	# Move specified IPK package name from `to` action array into associated `ok` array.
+	# Move specified IPK name from `to` action array into associated `ok` array.
 
 	# Input:
 	#   $1 = package name
@@ -8294,7 +8294,7 @@ NoteIpkAcAsOk()
 NoteIpkAcAsEr()
 	{
 
-	# Move specified IPK package name from `to` action array into associated `er` array.
+	# Move specified IPK name from `to` action array into associated `er` array.
 
 	# Input:
 	#   $1 = package name
@@ -11144,7 +11144,7 @@ QpkgGetActiveTest()
 	#	$qpkg_name (global)
 
 	# Output:
-	#   stdout = bash tests.
+	#   stdout = Bash tests.
 	#   $? = 0 (found), !0 (not-found)
 
 	[[ -n $qpkg_name && $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
