@@ -1,3 +1,6 @@
+* Check if older Glances v3 works with ARMv5 & ARMv7.
+	- Might be able to offer this as a separate package, locked to v3.
+
 * Include QPKG "signed" status in dependencies report?
 
 * If using 'rustc' IPK, ensure $HOME is reset to ! /root before executing.

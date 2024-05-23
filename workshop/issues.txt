@@ -31,7 +31,7 @@ Observed issues:
 		- QPKG was skipped-abort, and is shown as a skipped QPKG in results.
 		- TODO: Other QPKGs to be signed were not shown in either list.
 
-	* armv5 (Helga) is cutting-off debug log early when running 'sherpa s olive verbose' due to SIGINT.
+	* ARMv5 (Helga) is cutting-off debug log early when running 'sherpa s olive verbose' due to SIGINT.
 
 	* When aborting sherpa, must also ensure backgrounded procs abort.
 		- UPDATE: working fine, possibly won't need BG_PROCS_PATH anymore. Test to confirm.
