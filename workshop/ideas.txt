@@ -1,4 +1,4 @@
-* Watcher, WebSSH for ARMv5 & ARMv7 might be OK now.
+* Watcher for ARMv5 & ARMv7 might be OK now.
 	- Reconfirm compatibility notes.
 
 * Check all arch compatibility for Tautulli.

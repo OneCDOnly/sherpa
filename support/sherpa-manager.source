@@ -3892,6 +3892,7 @@ KillPID()
 	[[ -n ${1:-} && $1 -gt 0 && -d /proc/$1 ]] || return
 
 	kill -9 "$1"
+	wait
 
 	} &> /dev/null
 
