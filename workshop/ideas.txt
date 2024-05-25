@@ -1,7 +1,8 @@
-* pyLoad, Watcher, WebSSH for ARMv5 & ARMv7 might be OK now.
+* Watcher, WebSSH for ARMv5 & ARMv7 might be OK now.
 	- Reconfirm compatibility notes.
 
 * Check all arch compatibility for Tautulli.
+	- 2024-05-26: works fine on ARMv7 (x41).
 
 * Mod results messages to include package type:
 	-------------------------------------------------------------------------------------------------------------------------
