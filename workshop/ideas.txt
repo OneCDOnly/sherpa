@@ -1,5 +1,32 @@
-* Check if older Glances v3 works with ARMv5 & ARMv7.
-	- Might be able to offer this as a separate package, locked to v3.
+* pyLoad, Watcher, WebSSH for ARMv5 & ARMv7 might be OK now.
+	- Reconfirm compatibility notes.
+
+* Check all arch compatibility for Tautulli.
+
+* Mod results messages to include package type:
+	-------------------------------------------------------------------------------------------------------------------------
+	dbug: (>>) ShowResults()
+
+	• These actions completed OK:
+		download LazyLibrarian in 2 seconds
+		activate Entware in 2 seconds
+		install LazyLibrarian in 12m:45s
+
+	• These actions were skipped (and why):
+		"sign" LazyLibrarian (not required: firmware < 4.3.5)
+	-------------------------------------------------------------------------------------------------------------------------
+	... becomes:
+	-------------------------------------------------------------------------------------------------------------------------
+	dbug: (>>) ShowResults()
+
+	• These actions completed OK:
+		download LazyLibrarian QPKG in 2 seconds
+		activate Entware QPKG in 2 seconds
+		install LazyLibrarian QPKG in 12m:45s
+
+	• These actions were skipped (and why):
+		"sign" LazyLibrarian QPKG (not required: firmware < 4.3.5)
+	-------------------------------------------------------------------------------------------------------------------------
 
 * Include QPKG "signed" status in dependencies report?
 
