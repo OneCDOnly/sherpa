@@ -1,3 +1,5 @@
+* Arg parser should use commas to separate commands.
+
 * Mod results messages to include package type:
 	-------------------------------------------------------------------------------------------------------------------------
 	dbug: (>>) ShowResults()

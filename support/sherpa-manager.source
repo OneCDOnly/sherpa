@@ -9078,7 +9078,7 @@ _QPKG:download_()
 		z=1
 	elif [[ -f $LOCAL_PATHFILE ]]; then
 		if FileMatchesMD5 "$LOCAL_PATHFILE" "$REMOTE_HASH"; then
-			SaveActionResultToLog QPKG "$qpkg_name" download skipped-ok "existing file $(ShowAsFileName "$LOCAL_FILENAME") checksum correct"
+			SaveActionResultToLog QPKG "$qpkg_name" download skipped-ok "existing file $(ShowAsFileName "$LOCAL_FILENAME") checksum is correct"
 			MarkThisAcForkAsSkippedOk
 			z=2
 		else
