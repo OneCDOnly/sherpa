@@ -1487,7 +1487,7 @@ ProcAction()
 			echo "$!" > "$pidfile"
 
 			# Read message pipe and process QPKGs and actions as-per requests contained within.
-			while [[ ${#target_packages[@]} -gt 0 ]]; do
+			while [[ ${#target_packages[@]} -gt 0 && ! -e $ACTION_ABORT_PATHFILE ]]; do
 				ReadFromActionMsgPipe msg1_key msg1_value msg2_key msg2_value
 
 				case $msg1_key in
@@ -1592,7 +1592,7 @@ ProcAction()
 			[[ $ok_count -gt 0 ]] && show_package_actions_ok=true
 			[[ $skip_count -gt 0 || $skip_ok_count -gt 0 || $skip_error_count -gt 0 || $skip_abort_count -gt 0 ]] && show_package_actions_skipped=true
 
-			[[ ${#target_packages[@]} -gt 0 ]] && KillActiveFork		# Only needed if an action fork didn't exit properly.
+			[[ ${#target_packages[@]} -gt 0 ]] && KillPID "$(<$pidfile)"		# Only needed if an action fork didn't exit properly.
 			wait 2> /dev/null
 			CloseActionMsgPipe
 
@@ -3400,7 +3400,7 @@ IPKs:upgrade()
 		RunAndLog "$OPKG_CMD upgrade --force-overwrite $(IPKs-ACdownload-to:List) --cache $IPK_CACHE_PATH --tmp-dir $IPK_DL_PATH" "$log_pathfile" log:failure-only
 		z=$?
 
-		KillActiveFork
+		KillPID "$fork_pid"
 
 		if [[ $z -eq 0 ]]; then
 			NoteIpkAcAsOk "$(IPKs-ACupgrade-to:Array)" upgrade
@@ -3480,7 +3480,7 @@ IPKs:install()
 		RunAndLog "$OPKG_CMD install --force-overwrite $(IPKs-ACdownload-to:List) --cache $IPK_CACHE_PATH --tmp-dir $IPK_DL_PATH" "$log_pathfile" log:failure-only
 		z=$?
 
-		KillActiveFork
+		KillPID "$fork_pid"
 
 		if [[ $z -eq 0 ]]; then
 			NoteIpkAcAsOk "$(IPKs-ACdownload-to:Array)" install
@@ -3883,13 +3883,16 @@ WriteMsgInPlace()
 
 	}
 
-KillActiveFork()
+KillPID()
 	{
 
-	if [[ -n ${fork_pid:-} && ${fork_pid:-0} -gt 0 && -d /proc/$fork_pid ]]; then
-		sleep .2
-		kill -9 "$fork_pid"
-	fi
+	# Input:
+	#   $1 = PID to kill.
+
+	[[ -n ${1:-} && $1 -gt 0 && -d /proc/$1 ]] || return
+
+	kill -9 "$1"
+	wait
 
 	} &> /dev/null
 
