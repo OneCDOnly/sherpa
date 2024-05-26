@@ -1,12 +1,15 @@
 Observed issues:
 
+	* When running 'sherpa rebuild sab', SAB is installed and auto-updates as usual. Then when 'restore' action runs, auto-update runs again.
+		- Disable auto-update after installation if 'restore' is to be run, then enable it again after 'restore' completes.
+
 	* Takes 3.5 to 6 seconds to build QPKG states on Laura.
 		- Should be able to do this quicker.
 		- Calculate QPKG features separate to states and cache/load these from file next time?
 
 	* Applications sourced online are not updating (e.g. Tautulli).
 		- Had to 'clean' it to get latest version pulled.
-		- Forgot to check: was auto-update disabled?
+		- Forgot to check: was auto-update disabled? Retest.
 
 	* Default dependency report should only show installed QPKGs.
 		- ... but should allow 'sherpa d all' to see all QPKGs.
