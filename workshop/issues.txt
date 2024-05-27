@@ -1,5 +1,7 @@
 Observed issues:
 
+	* Ensure Glances v3 is shown as-such on armv5 and armv7 status report.
+
 	* When running 'sherpa rebuild sab', SAB is installed and auto-updates as usual. Then when 'restore' action runs, auto-update runs again.
 		- Disable auto-update after installation if 'restore' is to be run, then enable it again after 'restore' completes.
 
