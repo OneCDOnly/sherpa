@@ -1,31 +1,8 @@
-* Mod results messages to include package type:
-	-------------------------------------------------------------------------------------------------------------------------
-	dbug: (>>) ShowResults()
-
-	• These actions completed OK:
-		download LazyLibrarian in 2 seconds
-		activate Entware in 2 seconds
-		install LazyLibrarian in 12m:45s
-
-	• These actions were skipped (and why):
-		"sign" LazyLibrarian (not required: firmware < 4.3.5)
-	-------------------------------------------------------------------------------------------------------------------------
-	... becomes:
-	-------------------------------------------------------------------------------------------------------------------------
-	dbug: (>>) ShowResults()
-
-	• These actions completed OK:
-		download LazyLibrarian QPKG in 2 seconds
-		activate Entware QPKG in 2 seconds
-		install LazyLibrarian QPKG in 12m:45s
-
-	• These actions were skipped (and why):
-		"sign" LazyLibrarian QPKG (not required: firmware < 4.3.5)
-	-------------------------------------------------------------------------------------------------------------------------
+* Arg parser should use commas to separate actions & options.
 
 * Include QPKG "signed" status in dependencies report?
 
-* If using 'rustc' IPK, ensure $HOME is reset to ! /root before executing.
+* If using 'rustc' IPK, ensure $HOME is reset to != /root before executing.
 
 * Compile and distribute ARMv5 & ARMv7 wheels for 'pydantic-core' via sherpa.packages repo?
 	- rust version too-old to build.
@@ -61,7 +38,7 @@
 * Need a maintenance script to remove all but the most-recent QPKG builds.
 	- Should also run a 'git gc --aggressive' afterward.
 
-* 'show results' report should include completion and elapsed times.
+* 'show results' report should include start, finish and elapsed times.
 
 * Test for bash version and interpreter location?
 
