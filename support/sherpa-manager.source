@@ -6570,7 +6570,7 @@ ShowReportVersions()
 	Display "manager: ${THIS_SCRIPT_VER:-undefined}"
 	Display "loader: ${LOADER_SCRIPT_VER:-undefined}"
 	Display "objects: ${OBJECTS_VER:-undefined}"
-	Display "packages: ${PACKAGES_VER:-undefined}"
+	Display "packages: ${PACKAGES_EPOCH}$([[ $PACKAGES_EPOCH != undefined ]] && echo -n " ($(/bin/date -d @"$PACKAGES_EPOCH" +%c))")"
 
 	return 0
 
@@ -13353,6 +13353,8 @@ LoadPackages()
 	unset QPKG_URL
 	unset QPKG_VERSION
 
+	PACKAGES_EPOCH=undefined
+
 	# Second, create an index 0 element for each array. This element is used to indicate no matching QPKG when searching array.
 	QPKG_ABBRVS+=('')						# If set, this package is user-installable, and these abbreviations may be used to specify app.
 	QPKG_APPL_AUTHOR+=('')					# Name of the person or group maintaining the internal application.
@@ -13382,7 +13384,9 @@ LoadPackages()
 	# Third, source remaining elements from packages file.
 	. "$PACKAGES_PATHFILE"
 
-	# Fourth, lock list arrays.
+	# Add translated datetime to string.
+
+	# Fourth, lock list arrays and values.
 	readonly QPKG_ABBRVS
 	readonly QPKG_APPL_AUTHOR
 	readonly QPKG_APPL_AUTHOR_EMAIL
@@ -13417,9 +13421,9 @@ LoadPackages()
 	readonly EXCLUSION_PIPS
 	readonly MIN_PERL_VER
 	readonly MIN_PYTHON_VER
-	readonly PACKAGES_VER
+	readonly PACKAGES_EPOCH
 
-	DebugVar PACKAGES_VER
+	DebugVar PACKAGES_EPOCH
 
 	for qpkg_name in "${QPKG_NAME[@]}"; do					# Ensure only first entry for each QPKG name is added to "GRall" array.
 		[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
