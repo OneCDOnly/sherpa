@@ -8,6 +8,7 @@ title_description='a mini-package-manager for QNAP NAS'
 
 checksum_root_path=$HOME/scripts/nas
 qpkgs_root_path=$HOME/scripts/nas/sherpa.packages
+	qpkgs_docs_path=$qpkgs_root_path/docs
 	qpkgs_path=$qpkgs_root_path/QPKGs
 	qpkgs_support_path=$qpkgs_root_path/support
 root_path=$HOME/scripts/nas/sherpa
