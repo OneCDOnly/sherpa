@@ -3553,7 +3553,7 @@ IPKs:downgrade()
 			url_suffix+=.ipk
 
 			for name in $(IPKs-ACdowngrade-to:Array); do
-				ShowAsPercentProgress "download $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 0 "$total_count"
+				ShowAsPercentProgress "download $desc" '' "$ok_count" 0 0 "$total_count"
 				((ok_count++))
 
 				remote_url=${url_prefix}${name}${url_suffix}
@@ -3561,7 +3561,7 @@ IPKs:downgrade()
 				RunAndLog "$CURL_CMD --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
 			done
 
-			ShowAsPercentProgress "download $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 "$fail_count" "$total_count"
+			ShowAsPercentProgress "download $desc" '' "$ok_count" 0 "$fail_count" "$total_count"
 		fi
 
 		[[ ${useropt_terse:=true} = false && ${useropt_verbose:=false} = false ]] && echo
@@ -3574,7 +3574,7 @@ IPKs:downgrade()
 
 		ShowAsProc "downgrade $desc"
 
-		ShowAsPercentProgress "downgrade $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 "$fail_count" "$total_count"
+		ShowAsPercentProgress "downgrade $desc" '' "$ok_count" 0 "$fail_count" "$total_count"
 		RunAndLog "$OPKG_CMD install --force-downgrade --cache $IPK_CACHE_PATH --tmp-dir $IPK_DOWNGRADE_PATH $IPK_DOWNGRADE_PATH/*.ipk" "$log_pathfile" log:failure-only
 		z=$?
 
@@ -3589,7 +3589,7 @@ IPKs:downgrade()
 			SaveActionResultToLog IPK auxiliary downgrade "$fail_count" failed "$z"
 		fi
 
-		ShowAsPercentProgress "downgrade $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 "$fail_count" "$total_count"
+		ShowAsPercentProgress "downgrade $desc" '' "$ok_count" 0 "$fail_count" "$total_count"
 
 		[[ ${useropt_terse:=true} = false && ${useropt_verbose:=false} = false ]] && echo
 	fi
@@ -3644,7 +3644,7 @@ PIPs:install()
 		exec_cmd="$PIP_CMD install --upgrade --no-input $(PIPs-ACinstall-to:List) --cache-dir $PIP_CACHE_PATH 2> >($GREP_CMD -v \"Running pip as the 'root' user\") >&2"
 		desc="$total_count auxiliary PIP$(Pluralise "$total_count")"
 
-		ShowAsPercentProgress "install $total_count ${package_type}$(Pluralise "$total_count")" '' "$ok_count" 0 0 "$total_count"
+		ShowAsPercentProgress "install $desc" '' "$ok_count" 0 0 "$total_count"
 		RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
 		z=$?
 
