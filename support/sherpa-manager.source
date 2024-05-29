@@ -4374,7 +4374,7 @@ DisplayAsPacksReportItemLine()
 		mode=normal
 	fi
 
-	app_ver_msg+=$(QpkgGetApplVer "$name")
+	app_ver_msg+=$(QpkgGetApplVer)
 # 	author_msg+=$author
 	description_msg+="$(Capitalise "$description")."
 	name_msg+=$qpkg_name
@@ -4476,6 +4476,7 @@ DisplayAsStatusReportItemLine()
 
 	# Input:
 
+	local app_ver=''
 	local app_ver_msg=$CHARS_BLANK
 	local mode=''
 	local name_msg=$CHARS_BLANK
@@ -4495,58 +4496,58 @@ DisplayAsStatusReportItemLine()
 		/bin/touch "$REPORT_FLAGS_PATH"/state-installed
 	fi
 
-	[[ $(QpkgGetApplVer "$qpkg_name") = dynamic ]] && /bin/touch "$REPORT_FLAGS_PATH"/app-dynamic
-	[[ $(QpkgGetApplVer "$qpkg_name") = static ]] && /bin/touch "$REPORT_FLAGS_PATH"/app-static
-	[[ $(QpkgGetApplVer "$qpkg_name") = final ]] && /bin/touch "$REPORT_FLAGS_PATH"/app-final
+	app_ver=$(QpkgGetApplVer)
+
+	case $app_ver in
+		dynamic|final|static)
+			/bin/touch "$REPORT_FLAGS_PATH"/app-$app_ver
+	esac
 
 	case $mode in
 		normal)
-			app_ver_msg+=$(QpkgGetApplVer "$qpkg_name")
+			app_ver_msg+=$app_ver
 			name_msg+=$qpkg_name
 			path_msg+=$(QpkgGetInstallationPath)
 
 			# Limit statuses to two words only.
+				# First word.
+					if QPKGs-ISenabled.Exist "$qpkg_name"; then
+						status+=" $(TextBrightGreen enabled)"
+						/bin/touch "$REPORT_FLAGS_PATH"/state-enabled
+					else
+						status+=" $(TextBrightRed disabled)"
+						/bin/touch "$REPORT_FLAGS_PATH"/state-disabled
+					fi
 
-			# First word.
-
-			if QPKGs-ISenabled.Exist "$qpkg_name"; then
-				status+=" $(TextBrightGreen enabled)"
-				/bin/touch "$REPORT_FLAGS_PATH"/state-enabled
-			else
-				status+=" $(TextBrightRed disabled)"
-				/bin/touch "$REPORT_FLAGS_PATH"/state-disabled
-			fi
-
-			# Second word.
-
-			if QPKGs-ISactive.Exist "$qpkg_name"; then
-				status+=" $(TextBrightGreen active)"
-				/bin/touch "$REPORT_FLAGS_PATH"/status-active
-			elif QPKGs-ISslow.Exist "$qpkg_name"; then
-				status+=" $(TextBrightOrange slow)"
-				/bin/touch "$REPORT_FLAGS_PATH"/status-slow
-			elif QPKGs-ISstarting.Exist "$qpkg_name"; then
-				status+=" $(TextBrightOrange starting)"
-				/bin/touch "$REPORT_FLAGS_PATH"/status-starting
-			elif QPKGs-ISstopping.Exist "$qpkg_name"; then
-				status+=" $(TextBrightOrange stopping)"
-				/bin/touch "$REPORT_FLAGS_PATH"/status-stopping
-			elif QPKGs-ISrestarting.Exist "$qpkg_name"; then
-				status+=" $(TextBrightOrange restarting)"
-				/bin/touch "$REPORT_FLAGS_PATH"/status-restarting
-			elif QPKGs-ISNTactive.Exist "$qpkg_name"; then
-				status+=" $(TextBrightRed inactive)"
-				/bin/touch "$REPORT_FLAGS_PATH"/state-inactive
-			else
-				status+=" $(TextBrightOrange unknown)"
-				/bin/touch "$REPORT_FLAGS_PATH"/status-unknown
-			fi
+				# Second word.
+					if QPKGs-ISactive.Exist "$qpkg_name"; then
+						status+=" $(TextBrightGreen active)"
+						/bin/touch "$REPORT_FLAGS_PATH"/status-active
+					elif QPKGs-ISslow.Exist "$qpkg_name"; then
+						status+=" $(TextBrightOrange slow)"
+						/bin/touch "$REPORT_FLAGS_PATH"/status-slow
+					elif QPKGs-ISstarting.Exist "$qpkg_name"; then
+						status+=" $(TextBrightOrange starting)"
+						/bin/touch "$REPORT_FLAGS_PATH"/status-starting
+					elif QPKGs-ISstopping.Exist "$qpkg_name"; then
+						status+=" $(TextBrightOrange stopping)"
+						/bin/touch "$REPORT_FLAGS_PATH"/status-stopping
+					elif QPKGs-ISrestarting.Exist "$qpkg_name"; then
+						status+=" $(TextBrightOrange restarting)"
+						/bin/touch "$REPORT_FLAGS_PATH"/status-restarting
+					elif QPKGs-ISNTactive.Exist "$qpkg_name"; then
+						status+=" $(TextBrightRed inactive)"
+						/bin/touch "$REPORT_FLAGS_PATH"/state-inactive
+					else
+						status+=" $(TextBrightOrange unknown)"
+						/bin/touch "$REPORT_FLAGS_PATH"/status-unknown
+					fi
 
 			status_msg=${CHARS_NORMAL}$(AddSeparators "$status")
 			ver_msg+=$(QpkgGetInstalledVer)
 			;;
 		muted)
-			app_ver_msg+=$(TextDarkGrey "$(QpkgGetApplVer "$qpkg_name")")
+			app_ver_msg+=$(TextDarkGrey "$app_ver")
 			name_msg+=$(TextDarkGrey "$qpkg_name")
 			path_msg+=$(TextDarkGrey 'N/A')
 
@@ -4564,7 +4565,7 @@ DisplayAsStatusReportItemLine()
 			ver_msg+=$(TextDarkGrey "$(QpkgGetAvailVer "$qpkg_name")")
 			;;
 		highlighted)
-			app_ver_msg+=$(TextBrightRed "$(QpkgGetApplVer)")
+			app_ver_msg+=$(TextBrightRed "$app_ver")
 			name_msg+=$(TextBrightRed "$qpkg_name")
 			path_msg=$(TextBrightRedBlink "${CHARS_ALERT}$(QpkgGetInstallationPath)")
 			status_msg=$(TextBrightRedBlink "${CHARS_ALERT}missing")
@@ -6570,7 +6571,7 @@ ShowReportVersions()
 	Display "manager: ${THIS_SCRIPT_VER:-undefined}"
 	Display "loader: ${LOADER_SCRIPT_VER:-undefined}"
 	Display "objects: ${OBJECTS_VER:-undefined}"
-	Display "packages: ${PACKAGES_VER:-undefined}"
+	Display "packages: ${PACKAGES_EPOCH}$([[ $PACKAGES_EPOCH != undefined ]] && echo -n " ($(/bin/date -d @"$PACKAGES_EPOCH" +%c))")"
 
 	return 0
 
@@ -10474,20 +10475,20 @@ QpkgGetApplVer()
 	local a=''
 	local -i i=0
 
-	if [[ -n ${1:-} ]]; then
+	if [[ $qpkg_index -gt 0 ]]; then
+		a=${QPKG_APPL_VERSION[$qpkg_index]}
+		[[ $a = default ]] && a=${QPKG_APPL_VERSION[$qpkg_default_index]}
+		[[ $a = version ]] && a=${QPKG_VERSION[$qpkg_default_index]}
+		[[ $a != none ]] || return
+	else
 		for i in "${!QPKG_NAME[@]}"; do
-			if [[ ${QPKG_NAME[$i]} = "$1" ]]; then
+			if [[ ${QPKG_NAME[$i]} = "$qpkg_name" ]]; then
 				a=${QPKG_APPL_VERSION[$i]}
 				[[ $a = version ]] && a=${QPKG_VERSION[$qpkg_default_index]}
 				[[ $a != none ]] || return
 				break
 			fi
 		done
-	elif [[ $qpkg_index -gt 0 ]]; then
-		a=${QPKG_APPL_VERSION[$qpkg_index]}
-		[[ $a = default ]] && a=${QPKG_APPL_VERSION[$qpkg_default_index]}
-		[[ $a = version ]] && a=${QPKG_VERSION[$qpkg_default_index]}
-		[[ $a != none ]] || return
 	fi
 
 	[[ -n $a ]] || return
@@ -13353,6 +13354,8 @@ LoadPackages()
 	unset QPKG_URL
 	unset QPKG_VERSION
 
+	PACKAGES_EPOCH=undefined
+
 	# Second, create an index 0 element for each array. This element is used to indicate no matching QPKG when searching array.
 	QPKG_ABBRVS+=('')						# If set, this package is user-installable, and these abbreviations may be used to specify app.
 	QPKG_APPL_AUTHOR+=('')					# Name of the person or group maintaining the internal application.
@@ -13382,7 +13385,9 @@ LoadPackages()
 	# Third, source remaining elements from packages file.
 	. "$PACKAGES_PATHFILE"
 
-	# Fourth, lock list arrays.
+	# Add translated datetime to string.
+
+	# Fourth, lock list arrays and values.
 	readonly QPKG_ABBRVS
 	readonly QPKG_APPL_AUTHOR
 	readonly QPKG_APPL_AUTHOR_EMAIL
@@ -13417,9 +13422,9 @@ LoadPackages()
 	readonly EXCLUSION_PIPS
 	readonly MIN_PERL_VER
 	readonly MIN_PYTHON_VER
-	readonly PACKAGES_VER
+	readonly PACKAGES_EPOCH
 
-	DebugVar PACKAGES_VER
+	DebugVar PACKAGES_EPOCH
 
 	for qpkg_name in "${QPKG_NAME[@]}"; do					# Ensure only first entry for each QPKG name is added to "GRall" array.
 		[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name

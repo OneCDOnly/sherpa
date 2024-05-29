@@ -2,6 +2,7 @@
 
 build_date=$(date '+%y%m%d')
 build_year=$(date '+%Y')
+packages_epoch=0			# Only update before building `packages` file.
 colourful=true
 title_description='a mini-package-manager for QNAP NAS'
 
@@ -108,6 +109,7 @@ SwapTags()
 		buffer=$(sed "s|<?license?>|${license_msg//$'\n'/\\n}|g" <<< "$buffer")						# Escape newlines.
 		buffer=$(sed "s|<?build_date?>|$build_date|g" <<< "$buffer")
 		buffer=$(sed "s|<?build_year?>|$build_year|g" <<< "$buffer")
+		buffer=$(sed "s|<?packages_epoch?>|$packages_epoch|g" <<< "$buffer")
 		buffer=$(sed "s|<?email?>|$email|g" <<< "$buffer")
 		buffer=$(sed "s|<?cdn_sherpa_base_url?>|$cdn_sherpa_base_url|g" <<< "$buffer")
 		buffer=$(sed "s|<?management_file?>|$management_file|g" <<< "$buffer")
