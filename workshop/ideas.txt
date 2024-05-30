@@ -1,11 +1,10 @@
-* Arg parser should use commas to separate actions & options.
+* Add report information panel for 'sherpa show packages' to explain application versions used.
+
+* Arg parser should use commas (or semicolons?) to separate actions & options.
 
 * Include QPKG "signed" status in dependencies report?
 
 * If using 'rustc' IPK, ensure $HOME is reset to != /root before executing.
-
-* Compile and distribute ARMv5 & ARMv7 wheels for 'pydantic-core' via sherpa.packages repo?
-	- rust version too-old to build.
 
 * Make last action result a separate status report column?
     - Should also include the attempted action.
