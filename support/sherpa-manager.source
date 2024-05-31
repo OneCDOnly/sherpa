@@ -4314,6 +4314,19 @@ DisplayAsInfoIndentItem()
 
 	}
 
+DisplayAsInfoIndentQuotedItem()
+	{
+
+	# Display as an indented, bulleted item, formatted for two fields.
+
+	# Input:
+	#	$1 = word
+	#	$2 = description
+
+	printf "%${HELP_DESC_INDENT}s${CHARS_BULLET}%-$((FOOTER_NAME_COL_WIDTH+2+$(LenANSIDiff "${1:-}")))s = %s\n" '' "'${1:-}'" "$(AddPeriod "${2:-}")"
+
+	}
+
 DisplayAsPacksReportTitleLine()
 	{
 
@@ -4369,10 +4382,13 @@ DisplayAsPacksReportItemLine()
 
 	if QpkgIsMissing; then
 		mode=highlighted
+		/bin/touch "$REPORT_FLAGS_PATH"/status-missing
 	elif QpkgIsNtInstalled; then
 		mode=muted
+		/bin/touch "$REPORT_FLAGS_PATH"/state-notinstalled
 	else
 		mode=normal
+		/bin/touch "$REPORT_FLAGS_PATH"/state-installed
 	fi
 
 	app_ver=$(QpkgGetApplVer)
@@ -4545,7 +4561,7 @@ DisplayAsStatusReportItemLine()
 						/bin/touch "$REPORT_FLAGS_PATH"/status-restarting
 					elif QPKGs-ISNTactive.Exist "$qpkg_name"; then
 						status+=" $(TextBrightRed inactive)"
-						/bin/touch "$REPORT_FLAGS_PATH"/state-inactive
+						/bin/touch "$REPORT_FLAGS_PATH"/status-inactive
 					else
 						status+=" $(TextBrightOrange unknown)"
 						/bin/touch "$REPORT_FLAGS_PATH"/status-unknown
@@ -4675,10 +4691,13 @@ DisplayAsReposReportItemLine()
 
 	if QpkgIsMissing; then
 		mode=highlighted
+		/bin/touch "$REPORT_FLAGS_PATH"/status-missing
 	elif QpkgIsNtInstalled; then
 		mode=muted
+		/bin/touch "$REPORT_FLAGS_PATH"/state-notinstalled
 	else
 		mode=normal
+		/bin/touch "$REPORT_FLAGS_PATH"/state-installed
 	fi
 
 	case $mode in
@@ -4802,10 +4821,13 @@ DisplayAsAbsReportItemLine()
 
 	if QpkgIsMissing; then
 		mode=highlighted
+		/bin/touch "$REPORT_FLAGS_PATH"/status-missing
 	elif QpkgIsNtInstalled; then
 		mode=muted
+		/bin/touch "$REPORT_FLAGS_PATH"/state-notinstalled
 	else
 		mode=normal
+		/bin/touch "$REPORT_FLAGS_PATH"/state-installed
 	fi
 
 	case $mode in
@@ -4982,6 +5004,7 @@ DisplayAsDepsReportItemLine()
 		mode=highlighted
 	elif QpkgIsNtInstalled; then
 		mode=muted
+		/bin/touch "$REPORT_FLAGS_PATH"/state-notinstalled
 	else
 		mode=normal
 	fi
@@ -5073,7 +5096,6 @@ DisplayAsDepsReportItemLine()
 			else
 				arch_msg=$(TextBrightOrange "$CHARS_ATTENTION")
 				arch_msg+=$(TextBrightOrange false)
-				name_msg=${CHARS_BLANK}$(TextBrightOrange "$qpkg_name")
 				/bin/touch "$REPORT_FLAGS_PATH"/req-attention
 			fi
 
@@ -5097,7 +5119,6 @@ DisplayAsDepsReportItemLine()
 			else
 				max_os_msg=$(TextBrightOrange "$CHARS_ATTENTION")
 				max_os_msg+=$(TextBrightOrange "$max_os")
-				name_msg=${CHARS_BLANK}$(TextBrightOrange "$qpkg_name")
 				/bin/touch "$REPORT_FLAGS_PATH"/req-attention
 			fi
 
@@ -5106,7 +5127,6 @@ DisplayAsDepsReportItemLine()
 			else
 				min_os_msg=$(TextBrightOrange "$CHARS_ATTENTION")
 				min_os_msg+=$(TextBrightOrange "$min_os")
-				name_msg=${CHARS_BLANK}$(TextBrightOrange "$qpkg_name")
 				/bin/touch "$REPORT_FLAGS_PATH"/req-attention
 			fi
 
@@ -5115,7 +5135,6 @@ DisplayAsDepsReportItemLine()
 			else
 				min_ram_msg=$(TextBrightOrange "$CHARS_ATTENTION")
 				min_ram_msg+=$(TextBrightOrange "$min_ram")
-				name_msg=${CHARS_BLANK}$(TextBrightOrange "$qpkg_name")
 				/bin/touch "$REPORT_FLAGS_PATH"/req-attention
 			fi
 
@@ -7417,6 +7436,8 @@ Help.Abbreviations:Show()
 
 	[[ -n $a ]] && echo -en "$a" >> "$REPORT_OUTPUT_PATHFILE"
 
+	IncludeReportFooter
+
 	DisplayAsProjSynExam "example: to install $(ShowAsPackageName SABnzbd), $(ShowAsPackageName Mylar3) and $(ShowAsPackageName nzbToMedia) all-at-once" 'install sab my nzb2' >> "$REPORT_OUTPUT_PATHFILE"
 
 	EraseThisLine
@@ -7677,6 +7698,8 @@ ShowReportRepos()
 
 	[[ -n $a ]] && echo -en "$a" >> "$REPORT_OUTPUT_PATHFILE"
 
+	IncludeReportFooter
+
 	EraseThisLine
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
@@ -7758,71 +7781,75 @@ IncludeReportFooter()
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/status-missing ]]; then
-		DisplayAsInfoIndentItem "$(TextBrightRed '! missing')" 'QPKG is missing from its installation path. Reinstall it'
+		DisplayAsInfoIndentItem "$(TextBrightRed '! missing')" 'QPKG is missing from its installation path. Please reinstall it'
+	fi
+
+	if [[ -e "$REPORT_FLAGS_PATH"/req-alert ]]; then
+		DisplayAsInfoIndentQuotedItem "$(TextBrightRed '!')" 'prevents QPKG working correctly'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/state-disabled ]]; then
-		DisplayAsInfoIndentItem "$(TextBrightRed disabled)" "QPKG won't start at bootup. Enable it first, then start it"
+		DisplayAsInfoIndentQuotedItem "$(TextBrightRed disabled)" "QPKG won't start at bootup. Enable it first, then start it"
 	fi
 
-	if [[ -e "$REPORT_FLAGS_PATH"/state-enabled ]]; then
-		DisplayAsInfoIndentItem "$(TextBrightGreen enabled)" 'QPKG will start at bootup'
+	if [[ -e "$REPORT_FLAGS_PATH"/status-inactive ]]; then
+		DisplayAsInfoIndentQuotedItem "$(TextBrightRed inactive)" 'application is dead or not-started. Try starting/activating it'
 	fi
 
-	if [[ -e "$REPORT_FLAGS_PATH"/state-inactive ]]; then
-		DisplayAsInfoIndentItem "$(TextBrightRed inactive)" 'application is dead or not-started. Try starting/activating it'
-	fi
-
-	if [[ -e "$REPORT_FLAGS_PATH"/status-stopping ]]; then
-		DisplayAsInfoIndentItem "$(TextBrightOrange stopping)" 'QPKG is stopping. Try checking again shortly'
+	if [[ -e "$REPORT_FLAGS_PATH"/backup-file-old ]]; then
+		DisplayAsInfoIndentQuotedItem "$(TextBrightRed '!')" "QPKG backup file was updated more-than $highlight_backups_older_than."
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/status-upgradable ]]; then
 		DisplayAsInfoIndentItem "($(TextBrightOrange new))" 'an upgraded QPKG is available'
 	fi
 
-	if [[ -e "$REPORT_FLAGS_PATH"/status-unknown ]]; then
-		DisplayAsInfoIndentItem "$(TextBrightOrange unknown)" 'application status could not be determined'
+	if [[ -e "$REPORT_FLAGS_PATH"/req-attention ]]; then
+		DisplayAsInfoIndentQuotedItem "$(TextBrightOrange '*')" 'QPKG cannot be installed'
+	fi
+
+	if [[ -e "$REPORT_FLAGS_PATH"/status-stopping ]]; then
+		DisplayAsInfoIndentQuotedItem "$(TextBrightOrange stopping)" 'QPKG is stopping. Try checking again shortly'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/status-slow ]]; then
-		DisplayAsInfoIndentItem "$(TextBrightOrange slow)" 'application appears to be alive, but is slow to respond to the status request. Try checking again shortly' 		# More common on NAS with lower installed RAM, and usually because the application has been page-swapped to disk and must be reloaded into RAM.
+		DisplayAsInfoIndentQuotedItem "$(TextBrightOrange slow)" 'application appears to be alive, but is slow to respond to the status request. Try checking again shortly' 		# More common on NAS with lower installed RAM, and usually because the application has been page-swapped to disk and must be reloaded into RAM.
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/status-starting ]]; then
-		DisplayAsInfoIndentItem "$(TextBrightOrange starting)" 'QPKG is starting. Try checking again shortly'
+		DisplayAsInfoIndentQuotedItem "$(TextBrightOrange starting)" 'QPKG is starting. Try checking again shortly'
+	fi
+
+	if [[ -e "$REPORT_FLAGS_PATH"/status-unknown ]]; then
+		DisplayAsInfoIndentQuotedItem "$(TextBrightOrange unknown)" 'application status could not be determined'
+	fi
+
+	if [[ -e "$REPORT_FLAGS_PATH"/state-enabled ]]; then
+		DisplayAsInfoIndentQuotedItem "$(TextBrightGreen enabled)" 'QPKG will start at bootup'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/status-active ]]; then
-		DisplayAsInfoIndentItem "$(TextBrightGreen active)" "application is alive (and responsive if it's a daemon)"
+		DisplayAsInfoIndentQuotedItem "$(TextBrightGreen active)" "application is alive (and responsive if it's a daemon)"
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/app-dynamic ]]; then
-		DisplayAsInfoIndentItem dynamic 'application version is the latest available'
+		DisplayAsInfoIndentQuotedItem dynamic 'application version is the latest available'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/app-static ]]; then
-		DisplayAsInfoIndentItem static 'application version auto-update is disabled'
+		DisplayAsInfoIndentQuotedItem static 'application version auto-update is disabled'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/app-final ]]; then
-		DisplayAsInfoIndentItem final 'application version is the last available'
+		DisplayAsInfoIndentQuotedItem final 'application version is the last available'
 	fi
 
-	if [[ -e "$REPORT_FLAGS_PATH"/req-attention ]]; then
-		DisplayAsIndentItem "'$(TextBrightOrange '*')' = QPKG cannot be installed."
-	fi
-
-	if [[ -e "$REPORT_FLAGS_PATH"/req-alert ]]; then
-		DisplayAsIndentItem "'$(TextBrightRed '!')' = prevents QPKG working correctly."
+	if [[ -e "$REPORT_FLAGS_PATH"/state-notinstalled ]]; then
+		DisplayAsInfoIndentItem "$(TextDarkGrey muted)" "QPKG is not installed"
 	fi
 
 	if compgen -G "${REPORT_FLAGS_PATH}/backup-file-*" > /dev/null; then			# https://stackoverflow.com/a/6364244
 		DisplayAsIndentItem "backups are listed oldest-first."
-	fi
-
-	if [[ -e "$REPORT_FLAGS_PATH"/backup-file-old ]]; then
-		DisplayAsIndentItem "'$(TextBrightRed '!')' = QPKG backup file was updated more-than $highlight_backups_older_than."
 	fi
 
 	if compgen -G "${REPORT_FLAGS_PATH}/backup-file-*" > /dev/null; then			# https://stackoverflow.com/a/6364244
