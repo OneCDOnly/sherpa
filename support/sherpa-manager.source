@@ -4355,6 +4355,7 @@ DisplayAsPacksReportItemLine()
 	#   $1 = QPKG name (optional).
 	# 	$qpkg_name (global).
 
+	local app_ver=''
 	local app_ver_msg=$CHARS_BLANK
 # 	local author=$(QpkgGetAuthor)
 # 	local author_msg=$CHARS_BLANK
@@ -4374,7 +4375,14 @@ DisplayAsPacksReportItemLine()
 		mode=normal
 	fi
 
-	app_ver_msg+=$(QpkgGetApplVer)
+	app_ver=$(QpkgGetApplVer)
+
+	case $app_ver in
+		dynamic|final|static)
+			/bin/touch "$REPORT_FLAGS_PATH"/app-$app_ver
+	esac
+
+	app_ver_msg+=$app_ver
 # 	author_msg+=$author
 	description_msg+="$(Capitalise "$description")."
 	name_msg+=$qpkg_name
@@ -7609,10 +7617,16 @@ ShowReportPackages()
 			DisplayAsPacksReportItemLine "$qpkg_name"
 		done
 
+		} > "$REPORT_OUTPUT_PATHFILE"
+
+		IncludeReportFooter
+
+		{
+
 		DisplayAsProjSynExam "abbreviations and aliases may also be used to specify $(ShowAsPackages). To list these" 'help abs'
 		DisplayAsProjSynIndentExam '' a
 
-		} > "$REPORT_OUTPUT_PATHFILE"
+		} >> "$REPORT_OUTPUT_PATHFILE"
 
 	EraseThisLine
 

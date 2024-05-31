@@ -1,9 +1,5 @@
 Observed issues:
 
-	* Bazarr on Sarah launches, then exits without error.
-		- Try running with debug enabled.
-		- Nope, no messages to explain why this is happening. Application bug? Low resources?
-
 	* Report completion time is miscalculated.
 		- Currently using the start time of the last action performed, not the finish time.
 
