@@ -1248,34 +1248,34 @@ QPKGsAssignToActions()
 #	4. download all
 #
 #	5. stop/deactivate dependents
-#	6. backup dependents
-#	7. disable dependents
-#   8. uninstall dependents
+#   6. disable-auto-update dependents
+#	7. backup dependents
+#	8. disable dependents
+#   9. uninstall dependents
 #
-#	9. stop/deactivate independents
-#  10. backup independents
-#  11. disable independents
-#  12. uninstall independents
+#  10. stop/deactivate independents
+#  11. disable-auto-update independents
+#  12. backup independents
+#  13. disable independents
+#  14. uninstall independents
 #
-#  13. upgrade independents
-#  14. reinstall independents
-#  15. install independents
-#  16. disable-auto-update independents
-#  17. restore independents
-#  18. enable-auto-update independents
-#  19. clean independents
-#  20. enable independents
-#  21. restart/reactivate independents
-#  22. start/activate independents
+#  15. upgrade independents
+#  16. reinstall independents
+#  17. install independents
+#  18. restore independents
+#  19. enable-auto-update independents
+#  20. clean independents
+#  21. enable independents
+#  22. restart/reactivate independents
+#  23. start/activate independents
 #
-#  23. auxiliary packages (IPKs and PIPs) are managed here.
+#  24. auxiliary packages (IPKs and PIPs) are managed here.
 #
-#  24. "sign" independents
+#  25. "sign" independents
 #
-#  25. upgrade dependents
-#  26. reinstall dependents
-#  27. install dependents
-#  28. disable-auto-update dependents
+#  26. upgrade dependents
+#  27. reinstall dependents
+#  28. install dependents
 #  29. restore dependents
 #  30. enable-auto-update dependents
 #  31. clean dependents
@@ -1335,6 +1335,7 @@ ProcActions()
 			case $tier in
 				?(in)dependent)
 					ProcAction deactivate $tier QPKG deactivate deactivated
+					ProcAction disableau $tier QPKG 'disable auto-update' 'disabled auto-update'
 					ProcAction backup $tier QPKG backup backed-up
 					ProcAction disable $tier QPKG disable disabled
 					ProcAction uninstall $tier QPKG uninstall uninstalled
@@ -1356,7 +1357,6 @@ ProcActions()
 					ProcAction upgrade $tier QPKG upgrade upgraded
 					ProcAction reinstall $tier QPKG reinstall reinstalled
 					ProcAction install $tier QPKG install installed
-					ProcAction disableau $tier QPKG 'disable auto-update' 'disabled auto-update'
 					ProcAction restore $tier QPKG restore restored
 					ProcAction enableau $tier QPKG 'enable auto-update' 'enabled auto-update'
 					ProcAction clean $tier QPKG clean cleaned
