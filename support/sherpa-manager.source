@@ -781,6 +781,8 @@ DebugLogEnv()
 		DebugFirmware ok 'system load' "$(OsGetSysLoadAverages)"
 	fi
 
+	DebugUserspace ok 'GLIBC' "$(/sbin/ldd --version | $HEAD_CMD -n1 | cut -d' ' -f4)"
+
 	if OsIsSupportSudo; then
 		DebugUserspace ok '$SUDO_UID' "$(UserGetSudoUID)"
 	else
