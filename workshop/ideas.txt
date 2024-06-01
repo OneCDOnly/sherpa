@@ -1,7 +1,3 @@
-* Add dependencies column for repository assignment.
-	- "Managed?": true or false.
-	- "'Managed?' = QPKG is managed by sherpa."
-
 * Arg parser should use commas to separate actions & options.
 
 * Include QPKG "signed" status in dependencies report?
