@@ -84,9 +84,6 @@ ShowResults()
 
 	FuncInit
 
-	display_first_action_datetime=false
-	display_last_action_datetime=false
-
 	if [[ $generate_show_report = true ]]; then
 		if [[ $useropt_show_log_last = true ]]; then
 			ReleaseLockfile
@@ -110,9 +107,6 @@ ShowResults()
 			ShowReportRepos
 		elif [[ $useropt_show_status = true ]]; then
 			ShowReportStatuses
-			show_package_actions_ok=false
-			show_package_actions_skipped=false
-			show_package_actions_failed=false
 		fi
 	fi
 
@@ -193,20 +187,8 @@ ShowResults()
 		fi
 	fi
 
-	if [[ $useropt_show_results = true ]]; then
-		display_first_action_datetime=true
-		display_last_action_datetime=true
-		show_package_actions_failed=true
-		show_package_actions_ok=true
-		show_package_actions_skipped=true
-	fi
-
-	if [[ $generate_action_report = true || $generate_show_report = true ]]; then
-		[[ $show_package_actions_ok = true ]] && Report.ShowResults ok
-		[[ $show_package_actions_skipped = true ]] && Report.ShowResults skipped
-		[[ $show_package_actions_failed = true ]] && Report.ShowResults failed
-		[[ $show_zero_qpkgs = true ]] && ShowZeroQpkgs
-		Display
+	if [[ $generate_action_results_report = true || $generate_show_report = true ]]; then
+		ShowReportAllActionResults
 	fi
 
 	[[ $show_backuploc = true ]] && Help.BackupLocation:Show
@@ -335,7 +317,7 @@ LoadVars()
 	backup_stdin_fd=none
 	branch_default=stable
 	fork_pid=''
-	generate_action_report=false
+	generate_action_results_report=false
 	generate_help_report=false
 	generate_list_report=false
 	generate_show_report=false
@@ -350,12 +332,12 @@ LoadVars()
 	qpkg_timeouts_increased=false
 	run_package_actions=false
 	show_backuploc=false
-	show_package_actions_failed=false
-	show_package_actions_ok=false
-	show_package_actions_skipped=false
+	show_action_results_failed=false
+	show_action_results_ok=false
+	show_action_results_skipped=false
 	show_suggest_raise_issue=false
 	show_title=true
-	show_zero_qpkgs=false
+	show_action_results_zero=false
 	switch_colour=false
 	switch_branch=false
 	switch_terse=false
@@ -890,7 +872,7 @@ CheckTasks()
 	# Establish whether there's something to-do.
 
 	if [[ $arg_problem = true || $useropt_help_basic = true ]]; then
-		generate_action_report=false
+		generate_action_results_report=false
 		generate_help_report=false
 		generate_list_report=false
 		generate_show_report=false
@@ -1591,9 +1573,9 @@ ProcAction()
 				[[ -e $ACTION_ABORT_PATHFILE ]] && break
 			done
 
-			[[ $fail_count -gt 0 ]] && show_package_actions_failed=true
-			[[ $ok_count -gt 0 ]] && show_package_actions_ok=true
-			[[ $skip_count -gt 0 || $skip_ok_count -gt 0 || $skip_error_count -gt 0 || $skip_abort_count -gt 0 ]] && show_package_actions_skipped=true
+			[[ $fail_count -gt 0 ]] && show_action_results_failed=true
+			[[ $ok_count -gt 0 ]] && show_action_results_ok=true
+			[[ $skip_count -gt 0 || $skip_ok_count -gt 0 || $skip_error_count -gt 0 || $skip_abort_count -gt 0 ]] && show_action_results_skipped=true
 
 			[[ ${#target_packages[@]} -gt 0 ]] && KillPID "$(<$pidfile)"		# Only needed if an action fork didn't exit properly.
 			wait 2> /dev/null
@@ -2500,7 +2482,7 @@ ParseActionArgs()
 							QPKGs.AC${action}.IS${group}:Set
 							QPKGs.ACstatus.ISinstalled:Set
 							awaiting_group=false
-							generate_action_report=true
+							generate_action_results_report=true
 							get_qpkg_active_status=true
 							get_qpkg_states=true
 							run_package_actions=true
@@ -2512,7 +2494,7 @@ ParseActionArgs()
 					LoadObjects
 					QPKGs.AC${action}.GR${group}:Set
 					awaiting_group=false
-					generate_action_report=true
+					generate_action_results_report=true
 					get_qpkg_active_status=false
 					get_qpkg_states=true
 					run_package_actions=true
@@ -2521,7 +2503,7 @@ ParseActionArgs()
 					LoadObjects
 					QPKGs.AC${action}.IS${group}:Set
 					awaiting_group=false
-					generate_action_report=true
+					generate_action_results_report=true
 					get_qpkg_states=true
 					run_package_actions=true
 					;;
@@ -2529,7 +2511,7 @@ ParseActionArgs()
 					LoadObjects
 					QPKGs-AC${action}-to:Add "$group"
 					awaiting_group=false
-					generate_action_report=true
+					generate_action_results_report=true
 					get_qpkg_states=true
 					run_package_actions=true
 			esac
@@ -6043,7 +6025,38 @@ Help.Lists:Show()
 
 	}
 
-Report.ShowResults()
+ShowReportAllActionResults()
+	{
+
+	display_first_action_datetime=false
+	display_last_action_datetime=false
+
+	if [[ $useropt_show_results = true ]]; then
+		display_first_action_datetime=true
+		display_last_action_datetime=true
+		show_action_results_failed=true
+		show_action_results_ok=true
+		show_action_results_skipped=true
+	fi
+
+		{
+
+		[[ $show_action_results_ok = true ]] && ShowReportActionResults ok
+		[[ $show_action_results_skipped = true ]] && ShowReportActionResults skipped
+		[[ $show_action_results_failed = true ]] && ShowReportActionResults failed
+		[[ $show_action_results_zero = true ]] && ShowZeroQpkgs
+
+		Display
+
+		} > "$REPORT_OUTPUT_PATHFILE"
+
+	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
+		$CAT_CMD "$REPORT_OUTPUT_PATHFILE"
+	fi
+
+	}
+
+ShowReportActionResults()
 	{
 
 	# Input:
@@ -6061,54 +6074,46 @@ Report.ShowResults()
 	local result=''
 	local singular='this action'
 
-		{
+	if [[ -e $SESS_ACTION_RESULTS_PATHFILE ]]; then
+		local IFS='|'
 
-		if [[ -e $SESS_ACTION_RESULTS_PATHFILE ]]; then
-			local IFS='|'
+		while read -r datetime action quantity package_name package_type result duration reason; do
+			if [[ $display_first_action_datetime = true ]]; then
+				DisplayAsHelpTitle "the following actions began at: $(/bin/date -d @"$datetime")"
+				display_first_action_datetime=false
+			fi
 
-			while read -r datetime action quantity package_name package_type result duration reason; do
-				if [[ $display_first_action_datetime = true ]]; then
-					DisplayAsHelpTitle "the following actions began at: $(/bin/date -d @"$datetime")"
-					display_first_action_datetime=false
-				fi
+			if [[ $result = "$1" ]] || [[ $1 = skipped && ($result = 'skipped-ok' || $result = 'skipped-error' || $result = 'skipped-abort') ]]; then
+				[[ $action = status && $useropt_show_results = false ]] && continue		# Don't need to see the result of `status` checks unless a 'results' report has been requested.
 
-				if [[ $result = "$1" ]] || [[ $1 = skipped && ($result = 'skipped-ok' || $result = 'skipped-error' || $result = 'skipped-abort') ]]; then
-					[[ $action = status && $useropt_show_results = false ]] && continue		# Don't need to see the result of `status` checks unless a 'results' report has been requested.
+				case $result in
+					ok)
+						[[ $found = false ]] && DisplayAsHelpTitle "$plural completed $(TextBrightGreen OK):"
+						;;
+					skipped*)
+						[[ $found = false ]] && DisplayAsHelpTitle "$plural were $(TextBrightOrange skipped) (and why):"
+						;;
+					failed)
+						[[ $found = false ]] && DisplayAsHelpTitle "$plural $(TextBrightRed failed) (and why):"
+				esac
 
-					case $result in
-						ok)
-							[[ $found = false ]] && DisplayAsHelpTitle "$plural completed $(TextBrightGreen OK):"
-							;;
-						skipped*)
-							[[ $found = false ]] && DisplayAsHelpTitle "$plural were $(TextBrightOrange skipped) (and why):"
-							;;
-						failed)
-							[[ $found = false ]] && DisplayAsHelpTitle "$plural $(TextBrightRed failed) (and why):"
-					esac
+				ShowAsActionLogDetail "$datetime" "$package_name" "$action" "$result" "$duration" "$reason" "$package_type" "$quantity"
+				found=true
+			fi
+		done < "$SESS_ACTION_RESULTS_PATHFILE"
+	fi
 
-					ShowAsActionLogDetail "$datetime" "$package_name" "$action" "$result" "$duration" "$reason" "$package_type" "$quantity"
-					found=true
-				fi
-			done < "$SESS_ACTION_RESULTS_PATHFILE"
-		fi
-
-		if [[ $found = false ]]; then
-			case $1 in
-				ok)
-					DisplayAsHelpTitle "no package actions completed $(TextBrightGreen OK)."
-					;;
-				skipped)
-					DisplayAsHelpTitle "no package actions were $(TextBrightOrange skipped)."
-					;;
-				failed)
-					DisplayAsHelpTitle "no package actions $(TextBrightRed failed)."
-			esac
-		fi
-
-		} > "$REPORT_OUTPUT_PATHFILE"
-
-	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
-		$CAT_CMD "$REPORT_OUTPUT_PATHFILE"
+	if [[ $found = false ]]; then
+		case $1 in
+			ok)
+				DisplayAsHelpTitle "no package actions completed $(TextBrightGreen OK)."
+				;;
+			skipped)
+				DisplayAsHelpTitle "no package actions were $(TextBrightOrange skipped)."
+				;;
+			failed)
+				DisplayAsHelpTitle "no package actions $(TextBrightRed failed)."
+		esac
 	fi
 
 	return 0
@@ -6475,7 +6480,7 @@ Log.Last:Paste()
 		else
 			DebugInfoMinSepr
 			DebugScript 'user abort'
-			show_zero_qpkgs=false
+			show_action_results_zero=false
 
 			return 1
 		fi
@@ -6510,7 +6515,7 @@ Log.Tail:Paste()
 		else
 			DebugInfoMinSepr
 			DebugScript 'user abort'
-			show_zero_qpkgs=false
+			show_action_results_zero=false
 
 			return 1
 		fi
@@ -7797,6 +7802,10 @@ ShowReportStatuses()
 	fi
 
 	QPKGs.States:List
+
+	show_action_results_ok=false
+	show_action_results_skipped=false
+	show_action_results_failed=false
 
 	FuncExit
 
