@@ -271,6 +271,7 @@ LoadConsts()
 	readonly PACKAGE_ENABLED_COL_WIDTH=10
 	readonly PACKAGE_INSTALL_DATE_COL_WIDTH=20
 	readonly PACKAGE_INSTALLED_COL_WIDTH=12
+	readonly PACKAGE_MANAGED_COL_WIDTH=10
 	readonly PACKAGE_MAX_OS_COL_WIDTH=10
 	readonly PACKAGE_MIN_OS_COL_WIDTH=10
 	readonly PACKAGE_MIN_RAM_COL_WIDTH=14
@@ -4939,33 +4940,41 @@ DisplayAsDepsReportTitleLine()
 		printf "%-$((PACKAGE_ENABLED_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
-	# column 5: minimum NAS RAM required.
+	# column 5: QPKG is managed by sherpa?
 
 	if [[ $report_cols_max -ge 5 ]]; then
+		printf "%$((COLUMN_SPACING))s"
+		a="${CHARS_BULLET}Managed?"
+		printf "%-$((PACKAGE_MANAGED_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
+	fi
+
+	# column 6: minimum NAS RAM required.
+
+	if [[ $report_cols_max -ge 6 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Min. RAM:"
 		printf "%-$((PACKAGE_MIN_RAM_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
-	# column 6: minimum OS fimware version supported.
+	# column 7: minimum OS fimware version supported.
 
-	if [[ $report_cols_max -ge 6 ]]; then
+	if [[ $report_cols_max -ge 7 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Min. OS:"
 		printf "%-$((PACKAGE_MIN_OS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
-	# column 7: maximum OS fimware version supported.
+	# column 8: maximum OS fimware version supported.
 
-	if [[ $report_cols_max -ge 7 ]]; then
+	if [[ $report_cols_max -ge 8 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Max. OS:"
 		printf "%-$((PACKAGE_MAX_OS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
-	# column 8: arch is compatible?
+	# column 9: arch is compatible?
 
-	if [[ $report_cols_max -ge 8 ]]; then
+	if [[ $report_cols_max -ge 9 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Supported arch?"
 		printf "%-$((PACKAGE_ARCH_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -4989,6 +4998,8 @@ DisplayAsDepsReportItemLine()
 	local deps_raw=$(QpkgGetDependencies "$qpkg_name")
 	local enabled_msg=$CHARS_BLANK
 	local installed_msg=$CHARS_BLANK
+	local managed='N/A'
+	local managed_msg=$CHARS_BLANK
 	local max_os=$(QpkgGetMaxOSVer "$qpkg_name")
 	local max_os_msg=$CHARS_BLANK
 	local min_os=$(QpkgGetMinOSVer "$qpkg_name")
@@ -5011,6 +5022,12 @@ DisplayAsDepsReportItemLine()
 		/bin/touch "$REPORT_FLAGS_PATH"/state-notinstalled
 	else
 		mode=normal
+
+		if QpkgIsRepoSelfManaged; then
+			managed_msg+=$(TextBrightGreen true)
+		else
+			managed_msg+=$(TextBrightOrange false)
+		fi
 	fi
 
 	case $mode in
@@ -5093,6 +5110,7 @@ DisplayAsDepsReportItemLine()
 
 			;;
 		muted)
+			managed_msg+=$(TextDarkGrey 'N/A')
 			name_msg+=$(TextDarkGrey "$qpkg_name")
 
 			if QpkgIsArchOK "$qpkg_name"; then
@@ -5234,30 +5252,37 @@ DisplayAsDepsReportItemLine()
 		printf "%-$((PACKAGE_ENABLED_COL_WIDTH+$(LenANSIDiff "$enabled_msg")))s" "$enabled_msg"
 	fi
 
-	# column 5: minimum NAS RAM required.
+	# column 5: package is managed by sherpa?
 
 	if [[ $report_cols_max -ge 5 ]]; then
+		printf "%$((COLUMN_SPACING))s"
+		printf "%-$((PACKAGE_MANAGED_COL_WIDTH+$(LenANSIDiff "$managed_msg")))s" "$managed_msg"
+	fi
+
+	# column 6: minimum NAS RAM required.
+
+	if [[ $report_cols_max -ge 6 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_MIN_RAM_COL_WIDTH+$(LenANSIDiff "$min_ram_msg")))s" "$min_ram_msg"
 	fi
 
-	# column 6: minimum OS fimware version supported.
+	# column 7: minimum OS fimware version supported.
 
-	if [[ $report_cols_max -ge 6 ]]; then
+	if [[ $report_cols_max -ge 7 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_MIN_OS_COL_WIDTH+$(LenANSIDiff "$min_os_msg")))s" "$min_os_msg"
 	fi
 
-	# column 7: maximum OS fimware version supported.
+	# column 8: maximum OS fimware version supported.
 
-	if [[ $report_cols_max -ge 7 ]]; then
+	if [[ $report_cols_max -ge 8 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_MAX_OS_COL_WIDTH+$(LenANSIDiff "$max_os_msg")))s" "$max_os_msg"
 	fi
 
-	# column 8: NAS arch is compatible?
+	# column 9: NAS arch is compatible?
 
-	if [[ $report_cols_max -ge 8 ]]; then
+	if [[ $report_cols_max -ge 9 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_ARCH_COL_WIDTH+$(LenANSIDiff "$arch_msg")))s" "$arch_msg"
 	fi
@@ -7518,7 +7543,7 @@ ShowReportDependencies()
 	FuncInit
 
 	local a=''
-	report_cols_max=8
+	report_cols_max=9
 	local -i m=0
 	local -i n=0
 	local previous=''
@@ -9313,7 +9338,7 @@ _QPKG:reinstall_()
 		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' skipped "not installed, please use 'install' instead."
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsRepoOk; then
+	elif ! QpkgIsRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
@@ -9397,7 +9422,7 @@ _QPKG:rebuild_()
 		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' skipped 'backup file does not exist'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsRepoOk; then
+	elif ! QpkgIsRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
@@ -9443,7 +9468,7 @@ _QPKG:upgrade_()
 		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' skipped 'no new QPKG is available'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsRepoOk; then
+	elif ! QpkgIsRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
@@ -9534,7 +9559,7 @@ _QPKG:uninstall_()
 		SaveActionResultToLog QPKG "$qpkg_name" uninstall '' skipped "it's needed here! 😉"
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsRepoOk; then
+	elif ! QpkgIsRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" uninstall '' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
@@ -9612,7 +9637,7 @@ _QPKG:activate_()
 		SaveActionResultToLog QPKG "$qpkg_name" activate '' skipped "not enabled, please 'enable' it first"
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsRepoOk; then
+	elif ! QpkgIsRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" activate '' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
@@ -9697,7 +9722,7 @@ _QPKG:reactivate_()
 		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' skipped "not enabled, please 'enable' it first"
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsRepoOk; then
+	elif ! QpkgIsRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
@@ -9773,7 +9798,7 @@ _QPKG:deactivate_()
 # 		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' skipped "it's needed here! 😉"
 # 		MarkThisAcForkAsSkipped
 # 		z=1
-	elif ! QpkgIsRepoOk; then
+	elif ! QpkgIsRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
@@ -9856,7 +9881,7 @@ _QPKG:enable_()
 		SaveActionResultToLog QPKG "$qpkg_name" enable '' skipped 'already enabled'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsRepoOk; then
+	elif ! QpkgIsRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" enable '' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
@@ -9911,7 +9936,7 @@ _QPKG:disable_()
 # 		SaveActionResultToLog QPKG "$qpkg_name" disable '' skipped "it's needed here! 😉"
 # 		MarkThisAcForkAsSkipped
 # 		z=1
-	elif ! QpkgIsRepoOk; then
+	elif ! QpkgIsRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" disable '' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
@@ -9968,7 +9993,7 @@ _QPKG:enableau_()
 		SaveActionResultToLog QPKG "$qpkg_name" enableau '' skipped 'auto-update is unsupported'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsRepoOk; then
+	elif ! QpkgIsRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" enableau '' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
@@ -10027,7 +10052,7 @@ _QPKG:disableau_()
 		SaveActionResultToLog QPKG "$qpkg_name" disableau '' skipped 'auto-update is unsupported'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsRepoOk; then
+	elif ! QpkgIsRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" disableau '' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
@@ -10082,7 +10107,7 @@ _QPKG:backup_()
 		SaveActionResultToLog QPKG "$qpkg_name" backup '' skipped 'backup is unsupported'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsRepoOk; then
+	elif ! QpkgIsRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" backup '' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
@@ -10142,7 +10167,7 @@ _QPKG:restore_()
 		SaveActionResultToLog QPKG "$qpkg_name" restore '' skipped 'backup file does not exist'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsRepoOk; then
+	elif ! QpkgIsRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" restore '' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
@@ -10198,7 +10223,7 @@ _QPKG:clean_()
 		SaveActionResultToLog QPKG "$qpkg_name" clean '' skipped 'clean is unsupported'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsRepoOk; then
+	elif ! QpkgIsRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" clean '' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
@@ -10268,7 +10293,7 @@ _QPKG:sign_()
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped 'not required: firmware < 4.3.5'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsRepoOk; then
+	elif ! QpkgIsRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
@@ -10622,7 +10647,7 @@ QpkgGetStoreID()
 	#   stdout = package store ID
 	#   $? = 0 if found, 250 if not.
 
-	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}" store -d sherpa -f /etc/config/qpkg.conf
+	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}" store -d undefined -f /etc/config/qpkg.conf
 
 	}
 
@@ -11320,7 +11345,7 @@ QpkgSetDefaultIndex()
 
 	}
 
-QpkgIsRepoOk()
+QpkgIsRepoSelfManaged()
 	{
 
 	# Is this QPKG managable by sherpa?
@@ -11334,7 +11359,7 @@ QpkgIsRepoOk()
 
 	local a=$(QpkgGetStoreID "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
 
-	[[ -z $a || $a = sherpa ]]
+	[[ -z $a || $a = undefined || $a = sherpa ]]
 
 	}
 
@@ -11406,7 +11431,7 @@ QpkgIsUpgradable()
 
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
 
-	QpkgIsInstalled "$a" && QpkgIsRepoOk "$a" && [[ $(QpkgGetInstalledVer "$a") != "$(QpkgGetAvailVer "$a")" ]] && QpkgIsArchOK "$a" && QpkgIsMinOSVerOk "$a" && QpkgIsMaxOSVerOk "$a" && QpkgIsMinRAMOk "$a"
+	QpkgIsInstalled "$a" && QpkgIsRepoSelfManaged "$a" && [[ $(QpkgGetInstalledVer "$a") != "$(QpkgGetAvailVer "$a")" ]] && QpkgIsArchOK "$a" && QpkgIsMinOSVerOk "$a" && QpkgIsMaxOSVerOk "$a" && QpkgIsMinRAMOk "$a"
 
 	}
 
@@ -11424,7 +11449,7 @@ QpkgIsInstallable()
 
 	[[ $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
 
-	! QpkgIsInstalled && QpkgIsRepoOk && QpkgIsArchOK && QpkgIsMinOSVerOk && QpkgIsMaxOSVerOk && QpkgIsMinRAMOk
+	! QpkgIsInstalled && QpkgIsRepoSelfManaged && QpkgIsArchOK && QpkgIsMinOSVerOk && QpkgIsMaxOSVerOk && QpkgIsMinRAMOk
 
 	}
 
