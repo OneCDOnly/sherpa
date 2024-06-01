@@ -9117,10 +9117,10 @@ _QPKG:reassign_()
 	z=$?
 
 	if [[ $z -eq 0 ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" '' reassign ok
+		SaveActionResultToLog QPKG "$qpkg_name" reassign '' ok
 		MarkThisAcForkAsOk
 	else
-		SaveActionResultToLog QPKG "$qpkg_name" '' reassign failed "$z"
+		SaveActionResultToLog QPKG "$qpkg_name" reassign '' failed "$z"
 		MarkThisAcForkAsError
 		z=1   # Remap to 1.
 	fi
@@ -9433,7 +9433,7 @@ _QPKG:rebuild_()
 	DebugAsProc "meta-rebuilding $(ShowAsPackageName)"
 	# Nothing-to-do here, real QPKG actions have already been assigned in CheckEnv().
 
-	SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild ok
+	SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' ok
 	MarkThisAcForkAsOk
 	ClearQpkgAppCenterNotifier
 
