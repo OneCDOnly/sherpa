@@ -84,6 +84,7 @@ ShowResults()
 
 	FuncInit
 
+	display_first_action_datetime=false
 	display_last_action_datetime=false
 
 	if [[ $generate_show_report = true ]]; then
@@ -193,6 +194,7 @@ ShowResults()
 	fi
 
 	if [[ $useropt_show_results = true ]]; then
+		display_first_action_datetime=true
 		display_last_action_datetime=true
 		show_package_actions_failed=true
 		show_package_actions_ok=true
@@ -6065,9 +6067,9 @@ Report.ShowResults()
 			local IFS='|'
 
 			while read -r datetime action quantity package_name package_type result duration reason; do
-				if [[ $display_last_action_datetime = true ]]; then
-					DisplayAsHelpTitle "the following actions completed at: $(/bin/date -d @"$datetime")"
-					display_last_action_datetime=false
+				if [[ $display_first_action_datetime = true ]]; then
+					DisplayAsHelpTitle "the following actions began at: $(/bin/date -d @"$datetime")"
+					display_first_action_datetime=false
 				fi
 
 				if [[ $result = "$1" ]] || [[ $1 = skipped && ($result = 'skipped-ok' || $result = 'skipped-error' || $result = 'skipped-abort') ]]; then
