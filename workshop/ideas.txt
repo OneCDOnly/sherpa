@@ -1,4 +1,4 @@
-* Arg parser should use commas (or semicolons?) to separate actions & options.
+* Arg parser should use commas to separate actions & options.
 
 * Include QPKG "signed" status in dependencies report?
 
