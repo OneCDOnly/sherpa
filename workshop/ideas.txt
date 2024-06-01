@@ -4,9 +4,6 @@
 
 * If using 'rustc' IPK, ensure $HOME is reset to != /root before executing.
 
-* Compile and distribute ARMv5 & ARMv7 wheels for 'pydantic-core' via sherpa.packages repo?
-	- rust version too-old to build.
-
 * Make last action result a separate status report column?
     - Should also include the attempted action.
 
@@ -85,7 +82,6 @@
 		-------------------------------------------------------------------------------------------------------------------------
 
 * Show results report in file viewport.
-	- Show status report in viewport too?
 
 * QDK looks like it will now write installation scripts that extract to unique paths.
 	- Should now be able to install more than one QPKG simultaneously. https://github.com/qnap-dev/QDK/commit/f1eaf3bf0a9547d449592369e555cdfd6cc3c405

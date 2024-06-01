@@ -84,8 +84,6 @@ ShowResults()
 
 	FuncInit
 
-	display_last_action_datetime=false
-
 	if [[ $generate_show_report = true ]]; then
 		if [[ $useropt_show_log_last = true ]]; then
 			ReleaseLockfile
@@ -109,9 +107,6 @@ ShowResults()
 			ShowReportRepos
 		elif [[ $useropt_show_status = true ]]; then
 			ShowReportStatuses
-			show_package_actions_ok=false
-			show_package_actions_skipped=false
-			show_package_actions_failed=false
 		fi
 	fi
 
@@ -192,19 +187,8 @@ ShowResults()
 		fi
 	fi
 
-	if [[ $useropt_show_results = true ]]; then
-		display_last_action_datetime=true
-		show_package_actions_failed=true
-		show_package_actions_ok=true
-		show_package_actions_skipped=true
-	fi
-
-	if [[ $generate_action_report = true || $generate_show_report = true ]]; then
-		[[ $show_package_actions_ok = true ]] && Report.ShowResults ok
-		[[ $show_package_actions_skipped = true ]] && Report.ShowResults skipped
-		[[ $show_package_actions_failed = true ]] && Report.ShowResults failed
-		[[ $show_zero_qpkgs = true ]] && ShowZeroQpkgs
-		Display
+	if [[ $generate_action_results_report = true || $generate_show_report = true ]]; then
+		ShowReportAllActionResults
 	fi
 
 	[[ $show_backuploc = true ]] && Help.BackupLocation:Show
@@ -271,6 +255,7 @@ LoadConsts()
 	readonly PACKAGE_ENABLED_COL_WIDTH=10
 	readonly PACKAGE_INSTALL_DATE_COL_WIDTH=20
 	readonly PACKAGE_INSTALLED_COL_WIDTH=12
+	readonly PACKAGE_MANAGED_COL_WIDTH=10
 	readonly PACKAGE_MAX_OS_COL_WIDTH=10
 	readonly PACKAGE_MIN_OS_COL_WIDTH=10
 	readonly PACKAGE_MIN_RAM_COL_WIDTH=14
@@ -332,7 +317,7 @@ LoadVars()
 	backup_stdin_fd=none
 	branch_default=stable
 	fork_pid=''
-	generate_action_report=false
+	generate_action_results_report=false
 	generate_help_report=false
 	generate_list_report=false
 	generate_show_report=false
@@ -347,12 +332,12 @@ LoadVars()
 	qpkg_timeouts_increased=false
 	run_package_actions=false
 	show_backuploc=false
-	show_package_actions_failed=false
-	show_package_actions_ok=false
-	show_package_actions_skipped=false
+	show_action_results_failed=false
+	show_action_results_ok=false
+	show_action_results_skipped=false
 	show_suggest_raise_issue=false
 	show_title=true
-	show_zero_qpkgs=false
+	show_action_results_zero=false
 	switch_colour=false
 	switch_branch=false
 	switch_terse=false
@@ -887,7 +872,7 @@ CheckTasks()
 	# Establish whether there's something to-do.
 
 	if [[ $arg_problem = true || $useropt_help_basic = true ]]; then
-		generate_action_report=false
+		generate_action_results_report=false
 		generate_help_report=false
 		generate_list_report=false
 		generate_show_report=false
@@ -1248,34 +1233,34 @@ QPKGsAssignToActions()
 #	4. download all
 #
 #	5. stop/deactivate dependents
-#	6. backup dependents
-#	7. disable dependents
-#   8. uninstall dependents
+#   6. disable-auto-update dependents
+#	7. backup dependents
+#	8. disable dependents
+#   9. uninstall dependents
 #
-#	9. stop/deactivate independents
-#  10. backup independents
-#  11. disable independents
-#  12. uninstall independents
+#  10. stop/deactivate independents
+#  11. disable-auto-update independents
+#  12. backup independents
+#  13. disable independents
+#  14. uninstall independents
 #
-#  13. upgrade independents
-#  14. reinstall independents
-#  15. install independents
-#  16. disable-auto-update independents
-#  17. restore independents
-#  18. enable-auto-update independents
-#  19. clean independents
-#  20. enable independents
-#  21. restart/reactivate independents
-#  22. start/activate independents
+#  15. upgrade independents
+#  16. reinstall independents
+#  17. install independents
+#  18. restore independents
+#  19. enable-auto-update independents
+#  20. clean independents
+#  21. enable independents
+#  22. restart/reactivate independents
+#  23. start/activate independents
 #
-#  23. auxiliary packages (IPKs and PIPs) are managed here.
+#  24. auxiliary packages (IPKs and PIPs) are managed here.
 #
-#  24. "sign" independents
+#  25. "sign" independents
 #
-#  25. upgrade dependents
-#  26. reinstall dependents
-#  27. install dependents
-#  28. disable-auto-update dependents
+#  26. upgrade dependents
+#  27. reinstall dependents
+#  28. install dependents
 #  29. restore dependents
 #  30. enable-auto-update dependents
 #  31. clean dependents
@@ -1335,6 +1320,7 @@ ProcActions()
 			case $tier in
 				?(in)dependent)
 					ProcAction deactivate $tier QPKG deactivate deactivated
+					ProcAction disableau $tier QPKG 'disable auto-update' 'disabled auto-update'
 					ProcAction backup $tier QPKG backup backed-up
 					ProcAction disable $tier QPKG disable disabled
 					ProcAction uninstall $tier QPKG uninstall uninstalled
@@ -1356,7 +1342,6 @@ ProcActions()
 					ProcAction upgrade $tier QPKG upgrade upgraded
 					ProcAction reinstall $tier QPKG reinstall reinstalled
 					ProcAction install $tier QPKG install installed
-					ProcAction disableau $tier QPKG 'disable auto-update' 'disabled auto-update'
 					ProcAction restore $tier QPKG restore restored
 					ProcAction enableau $tier QPKG 'enable auto-update' 'enabled auto-update'
 					ProcAction clean $tier QPKG clean cleaned
@@ -1588,9 +1573,9 @@ ProcAction()
 				[[ -e $ACTION_ABORT_PATHFILE ]] && break
 			done
 
-			[[ $fail_count -gt 0 ]] && show_package_actions_failed=true
-			[[ $ok_count -gt 0 ]] && show_package_actions_ok=true
-			[[ $skip_count -gt 0 || $skip_ok_count -gt 0 || $skip_error_count -gt 0 || $skip_abort_count -gt 0 ]] && show_package_actions_skipped=true
+			[[ $fail_count -gt 0 ]] && show_action_results_failed=true
+			[[ $ok_count -gt 0 ]] && show_action_results_ok=true
+			[[ $skip_count -gt 0 || $skip_ok_count -gt 0 || $skip_error_count -gt 0 || $skip_abort_count -gt 0 ]] && show_action_results_skipped=true
 
 			[[ ${#target_packages[@]} -gt 0 ]] && KillPID "$(<$pidfile)"		# Only needed if an action fork didn't exit properly.
 			wait 2> /dev/null
@@ -2497,7 +2482,7 @@ ParseActionArgs()
 							QPKGs.AC${action}.IS${group}:Set
 							QPKGs.ACstatus.ISinstalled:Set
 							awaiting_group=false
-							generate_action_report=true
+							generate_action_results_report=true
 							get_qpkg_active_status=true
 							get_qpkg_states=true
 							run_package_actions=true
@@ -2509,7 +2494,7 @@ ParseActionArgs()
 					LoadObjects
 					QPKGs.AC${action}.GR${group}:Set
 					awaiting_group=false
-					generate_action_report=true
+					generate_action_results_report=true
 					get_qpkg_active_status=false
 					get_qpkg_states=true
 					run_package_actions=true
@@ -2518,7 +2503,7 @@ ParseActionArgs()
 					LoadObjects
 					QPKGs.AC${action}.IS${group}:Set
 					awaiting_group=false
-					generate_action_report=true
+					generate_action_results_report=true
 					get_qpkg_states=true
 					run_package_actions=true
 					;;
@@ -2526,7 +2511,7 @@ ParseActionArgs()
 					LoadObjects
 					QPKGs-AC${action}-to:Add "$group"
 					awaiting_group=false
-					generate_action_report=true
+					generate_action_results_report=true
 					get_qpkg_states=true
 					run_package_actions=true
 			esac
@@ -4314,6 +4299,19 @@ DisplayAsInfoIndentItem()
 
 	}
 
+DisplayAsInfoIndentQuotedItem()
+	{
+
+	# Display as an indented, bulleted item, formatted for two fields.
+
+	# Input:
+	#	$1 = word
+	#	$2 = description
+
+	printf "%${HELP_DESC_INDENT}s${CHARS_BULLET}%-$((FOOTER_NAME_COL_WIDTH+2+$(LenANSIDiff "${1:-}")))s = %s\n" '' "'${1:-}'" "$(AddPeriod "${2:-}")"
+
+	}
+
 DisplayAsPacksReportTitleLine()
 	{
 
@@ -4355,6 +4353,7 @@ DisplayAsPacksReportItemLine()
 	#   $1 = QPKG name (optional).
 	# 	$qpkg_name (global).
 
+	local app_ver=''
 	local app_ver_msg=$CHARS_BLANK
 # 	local author=$(QpkgGetAuthor)
 # 	local author_msg=$CHARS_BLANK
@@ -4368,13 +4367,23 @@ DisplayAsPacksReportItemLine()
 
 	if QpkgIsMissing; then
 		mode=highlighted
+		/bin/touch "$REPORT_FLAGS_PATH"/status-missing
 	elif QpkgIsNtInstalled; then
 		mode=muted
+		/bin/touch "$REPORT_FLAGS_PATH"/state-notinstalled
 	else
 		mode=normal
+		/bin/touch "$REPORT_FLAGS_PATH"/state-installed
 	fi
 
-	app_ver_msg+=$(QpkgGetApplVer)
+	app_ver=$(QpkgGetApplVer)
+
+	case $app_ver in
+		dynamic|final|static)
+			/bin/touch "$REPORT_FLAGS_PATH"/app-$app_ver
+	esac
+
+	app_ver_msg+=$app_ver
 # 	author_msg+=$author
 	description_msg+="$(Capitalise "$description")."
 	name_msg+=$qpkg_name
@@ -4537,7 +4546,7 @@ DisplayAsStatusReportItemLine()
 						/bin/touch "$REPORT_FLAGS_PATH"/status-restarting
 					elif QPKGs-ISNTactive.Exist "$qpkg_name"; then
 						status+=" $(TextBrightRed inactive)"
-						/bin/touch "$REPORT_FLAGS_PATH"/state-inactive
+						/bin/touch "$REPORT_FLAGS_PATH"/status-inactive
 					else
 						status+=" $(TextBrightOrange unknown)"
 						/bin/touch "$REPORT_FLAGS_PATH"/status-unknown
@@ -4667,11 +4676,16 @@ DisplayAsReposReportItemLine()
 
 	if QpkgIsMissing; then
 		mode=highlighted
+		/bin/touch "$REPORT_FLAGS_PATH"/status-missing
 	elif QpkgIsNtInstalled; then
 		mode=muted
+		/bin/touch "$REPORT_FLAGS_PATH"/state-notinstalled
 	else
 		mode=normal
+		/bin/touch "$REPORT_FLAGS_PATH"/state-installed
 	fi
+
+	[[ $assigned_repo = sherpa ]] && /bin/touch "$REPORT_FLAGS_PATH"/repo-sherpa
 
 	case $mode in
 		normal)
@@ -4687,6 +4701,7 @@ DisplayAsReposReportItemLine()
 				*)
 					assigned_repo_msg=$(TextBrightOrange "${CHARS_ATTENTION}$assigned_repo")
 					name_msg+=$(TextBrightOrange "$qpkg_name")
+					/bin/touch "$REPORT_FLAGS_PATH"/repo-other
 			esac
 
 			install_date_msg+=$install_date
@@ -4717,6 +4732,7 @@ DisplayAsReposReportItemLine()
 					;;
 				*)
 					assigned_repo_msg+=$assigned_repo
+					/bin/touch "$REPORT_FLAGS_PATH"/repo-other
 			esac
 
 			install_date_msg=$(TextBrightRedBlink "${CHARS_ALERT}missing")
@@ -4794,10 +4810,13 @@ DisplayAsAbsReportItemLine()
 
 	if QpkgIsMissing; then
 		mode=highlighted
+		/bin/touch "$REPORT_FLAGS_PATH"/status-missing
 	elif QpkgIsNtInstalled; then
 		mode=muted
+		/bin/touch "$REPORT_FLAGS_PATH"/state-notinstalled
 	else
 		mode=normal
+		/bin/touch "$REPORT_FLAGS_PATH"/state-installed
 	fi
 
 	case $mode in
@@ -4905,33 +4924,41 @@ DisplayAsDepsReportTitleLine()
 		printf "%-$((PACKAGE_ENABLED_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
-	# column 5: minimum NAS RAM required.
+	# column 5: QPKG is managed by sherpa?
 
 	if [[ $report_cols_max -ge 5 ]]; then
+		printf "%$((COLUMN_SPACING))s"
+		a="${CHARS_BULLET}Managed?"
+		printf "%-$((PACKAGE_MANAGED_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
+	fi
+
+	# column 6: minimum NAS RAM required.
+
+	if [[ $report_cols_max -ge 6 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Min. RAM:"
 		printf "%-$((PACKAGE_MIN_RAM_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
-	# column 6: minimum OS fimware version supported.
+	# column 7: minimum OS fimware version supported.
 
-	if [[ $report_cols_max -ge 6 ]]; then
+	if [[ $report_cols_max -ge 7 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Min. OS:"
 		printf "%-$((PACKAGE_MIN_OS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
-	# column 7: maximum OS fimware version supported.
+	# column 8: maximum OS fimware version supported.
 
-	if [[ $report_cols_max -ge 7 ]]; then
+	if [[ $report_cols_max -ge 8 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Max. OS:"
 		printf "%-$((PACKAGE_MAX_OS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
-	# column 8: arch is compatible?
+	# column 9: arch is compatible?
 
-	if [[ $report_cols_max -ge 8 ]]; then
+	if [[ $report_cols_max -ge 9 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Supported arch?"
 		printf "%-$((PACKAGE_ARCH_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -4955,6 +4982,8 @@ DisplayAsDepsReportItemLine()
 	local deps_raw=$(QpkgGetDependencies "$qpkg_name")
 	local enabled_msg=$CHARS_BLANK
 	local installed_msg=$CHARS_BLANK
+	local managed='N/A'
+	local managed_msg=$CHARS_BLANK
 	local max_os=$(QpkgGetMaxOSVer "$qpkg_name")
 	local max_os_msg=$CHARS_BLANK
 	local min_os=$(QpkgGetMinOSVer "$qpkg_name")
@@ -4974,8 +5003,15 @@ DisplayAsDepsReportItemLine()
 		mode=highlighted
 	elif QpkgIsNtInstalled; then
 		mode=muted
+		/bin/touch "$REPORT_FLAGS_PATH"/state-notinstalled
 	else
 		mode=normal
+
+		if QpkgIsRepoSelfManaged; then
+			managed_msg+=$(TextBrightGreen true)
+		else
+			managed_msg+=$(TextBrightOrange false)
+		fi
 	fi
 
 	case $mode in
@@ -5058,6 +5094,7 @@ DisplayAsDepsReportItemLine()
 
 			;;
 		muted)
+			managed_msg+=$(TextDarkGrey 'N/A')
 			name_msg+=$(TextDarkGrey "$qpkg_name")
 
 			if QpkgIsArchOK "$qpkg_name"; then
@@ -5065,7 +5102,6 @@ DisplayAsDepsReportItemLine()
 			else
 				arch_msg=$(TextBrightOrange "$CHARS_ATTENTION")
 				arch_msg+=$(TextBrightOrange false)
-				name_msg=${CHARS_BLANK}$(TextBrightOrange "$qpkg_name")
 				/bin/touch "$REPORT_FLAGS_PATH"/req-attention
 			fi
 
@@ -5089,7 +5125,6 @@ DisplayAsDepsReportItemLine()
 			else
 				max_os_msg=$(TextBrightOrange "$CHARS_ATTENTION")
 				max_os_msg+=$(TextBrightOrange "$max_os")
-				name_msg=${CHARS_BLANK}$(TextBrightOrange "$qpkg_name")
 				/bin/touch "$REPORT_FLAGS_PATH"/req-attention
 			fi
 
@@ -5098,7 +5133,6 @@ DisplayAsDepsReportItemLine()
 			else
 				min_os_msg=$(TextBrightOrange "$CHARS_ATTENTION")
 				min_os_msg+=$(TextBrightOrange "$min_os")
-				name_msg=${CHARS_BLANK}$(TextBrightOrange "$qpkg_name")
 				/bin/touch "$REPORT_FLAGS_PATH"/req-attention
 			fi
 
@@ -5107,7 +5141,6 @@ DisplayAsDepsReportItemLine()
 			else
 				min_ram_msg=$(TextBrightOrange "$CHARS_ATTENTION")
 				min_ram_msg+=$(TextBrightOrange "$min_ram")
-				name_msg=${CHARS_BLANK}$(TextBrightOrange "$qpkg_name")
 				/bin/touch "$REPORT_FLAGS_PATH"/req-attention
 			fi
 
@@ -5203,30 +5236,37 @@ DisplayAsDepsReportItemLine()
 		printf "%-$((PACKAGE_ENABLED_COL_WIDTH+$(LenANSIDiff "$enabled_msg")))s" "$enabled_msg"
 	fi
 
-	# column 5: minimum NAS RAM required.
+	# column 5: package is managed by sherpa?
 
 	if [[ $report_cols_max -ge 5 ]]; then
+		printf "%$((COLUMN_SPACING))s"
+		printf "%-$((PACKAGE_MANAGED_COL_WIDTH+$(LenANSIDiff "$managed_msg")))s" "$managed_msg"
+	fi
+
+	# column 6: minimum NAS RAM required.
+
+	if [[ $report_cols_max -ge 6 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_MIN_RAM_COL_WIDTH+$(LenANSIDiff "$min_ram_msg")))s" "$min_ram_msg"
 	fi
 
-	# column 6: minimum OS fimware version supported.
+	# column 7: minimum OS fimware version supported.
 
-	if [[ $report_cols_max -ge 6 ]]; then
+	if [[ $report_cols_max -ge 7 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_MIN_OS_COL_WIDTH+$(LenANSIDiff "$min_os_msg")))s" "$min_os_msg"
 	fi
 
-	# column 7: maximum OS fimware version supported.
+	# column 8: maximum OS fimware version supported.
 
-	if [[ $report_cols_max -ge 7 ]]; then
+	if [[ $report_cols_max -ge 8 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_MAX_OS_COL_WIDTH+$(LenANSIDiff "$max_os_msg")))s" "$max_os_msg"
 	fi
 
-	# column 8: NAS arch is compatible?
+	# column 9: NAS arch is compatible?
 
-	if [[ $report_cols_max -ge 8 ]]; then
+	if [[ $report_cols_max -ge 9 ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_ARCH_COL_WIDTH+$(LenANSIDiff "$arch_msg")))s" "$arch_msg"
 	fi
@@ -5985,7 +6025,38 @@ Help.Lists:Show()
 
 	}
 
-Report.ShowResults()
+ShowReportAllActionResults()
+	{
+
+	display_first_action_datetime=false
+	display_last_action_datetime=false
+
+	if [[ $useropt_show_results = true ]]; then
+		display_first_action_datetime=true
+		display_last_action_datetime=true
+		show_action_results_failed=true
+		show_action_results_ok=true
+		show_action_results_skipped=true
+	fi
+
+		{
+
+		[[ $show_action_results_ok = true ]] && ShowReportActionResults ok
+		[[ $show_action_results_skipped = true ]] && ShowReportActionResults skipped
+		[[ $show_action_results_failed = true ]] && ShowReportActionResults failed
+		[[ $show_action_results_zero = true ]] && ShowZeroQpkgs
+
+		Display
+
+		} > "$REPORT_OUTPUT_PATHFILE"
+
+	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
+		$CAT_CMD "$REPORT_OUTPUT_PATHFILE"
+	fi
+
+	}
+
+ShowReportActionResults()
 	{
 
 	# Input:
@@ -6003,54 +6074,46 @@ Report.ShowResults()
 	local result=''
 	local singular='this action'
 
-		{
+	if [[ -e $SESS_ACTION_RESULTS_PATHFILE ]]; then
+		local IFS='|'
 
-		if [[ -e $SESS_ACTION_RESULTS_PATHFILE ]]; then
-			local IFS='|'
+		while read -r datetime action quantity package_name package_type result duration reason; do
+			if [[ $display_first_action_datetime = true ]]; then
+				DisplayAsHelpTitle "the following actions began at: $(/bin/date -d @"$datetime")"
+				display_first_action_datetime=false
+			fi
 
-			while read -r datetime action quantity package_name package_type result duration reason; do
-				if [[ $display_last_action_datetime = true ]]; then
-					DisplayAsHelpTitle "the following actions completed at: $(/bin/date -d @"$datetime")"
-					display_last_action_datetime=false
-				fi
+			if [[ $result = "$1" ]] || [[ $1 = skipped && ($result = 'skipped-ok' || $result = 'skipped-error' || $result = 'skipped-abort') ]]; then
+				[[ $action = status && $useropt_show_results = false ]] && continue		# Don't need to see the result of `status` checks unless a 'results' report has been requested.
 
-				if [[ $result = "$1" ]] || [[ $1 = skipped && ($result = 'skipped-ok' || $result = 'skipped-error' || $result = 'skipped-abort') ]]; then
-					[[ $action = status && $useropt_show_results = false ]] && continue		# Don't need to see the result of `status` checks unless a 'results' report has been requested.
+				case $result in
+					ok)
+						[[ $found = false ]] && DisplayAsHelpTitle "$plural completed $(TextBrightGreen OK):"
+						;;
+					skipped*)
+						[[ $found = false ]] && DisplayAsHelpTitle "$plural were $(TextBrightOrange skipped) (and why):"
+						;;
+					failed)
+						[[ $found = false ]] && DisplayAsHelpTitle "$plural $(TextBrightRed failed) (and why):"
+				esac
 
-					case $result in
-						ok)
-							[[ $found = false ]] && DisplayAsHelpTitle "$plural completed $(TextBrightGreen OK):"
-							;;
-						skipped*)
-							[[ $found = false ]] && DisplayAsHelpTitle "$plural were $(TextBrightOrange skipped) (and why):"
-							;;
-						failed)
-							[[ $found = false ]] && DisplayAsHelpTitle "$plural $(TextBrightRed failed) (and why):"
-					esac
+				ShowAsActionLogDetail "$datetime" "$package_name" "$action" "$result" "$duration" "$reason" "$package_type" "$quantity"
+				found=true
+			fi
+		done < "$SESS_ACTION_RESULTS_PATHFILE"
+	fi
 
-					ShowAsActionLogDetail "$datetime" "$package_name" "$action" "$result" "$duration" "$reason" "$package_type" "$quantity"
-					found=true
-				fi
-			done < "$SESS_ACTION_RESULTS_PATHFILE"
-		fi
-
-		if [[ $found = false ]]; then
-			case $1 in
-				ok)
-					DisplayAsHelpTitle "no package actions completed $(TextBrightGreen OK)."
-					;;
-				skipped)
-					DisplayAsHelpTitle "no package actions were $(TextBrightOrange skipped)."
-					;;
-				failed)
-					DisplayAsHelpTitle "no package actions $(TextBrightRed failed)."
-			esac
-		fi
-
-		} > "$REPORT_OUTPUT_PATHFILE"
-
-	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
-		$CAT_CMD "$REPORT_OUTPUT_PATHFILE"
+	if [[ $found = false ]]; then
+		case $1 in
+			ok)
+				DisplayAsHelpTitle "no package actions completed $(TextBrightGreen OK)."
+				;;
+			skipped)
+				DisplayAsHelpTitle "no package actions were $(TextBrightOrange skipped)."
+				;;
+			failed)
+				DisplayAsHelpTitle "no package actions $(TextBrightRed failed)."
+		esac
 	fi
 
 	return 0
@@ -6417,7 +6480,7 @@ Log.Last:Paste()
 		else
 			DebugInfoMinSepr
 			DebugScript 'user abort'
-			show_zero_qpkgs=false
+			show_action_results_zero=false
 
 			return 1
 		fi
@@ -6452,7 +6515,7 @@ Log.Tail:Paste()
 		else
 			DebugInfoMinSepr
 			DebugScript 'user abort'
-			show_zero_qpkgs=false
+			show_action_results_zero=false
 
 			return 1
 		fi
@@ -7409,6 +7472,8 @@ Help.Abbreviations:Show()
 
 	[[ -n $a ]] && echo -en "$a" >> "$REPORT_OUTPUT_PATHFILE"
 
+	IncludeReportFooter
+
 	DisplayAsProjSynExam "example: to install $(ShowAsPackageName SABnzbd), $(ShowAsPackageName Mylar3) and $(ShowAsPackageName nzbToMedia) all-at-once" 'install sab my nzb2' >> "$REPORT_OUTPUT_PATHFILE"
 
 	EraseThisLine
@@ -7485,7 +7550,7 @@ ShowReportDependencies()
 	FuncInit
 
 	local a=''
-	report_cols_max=8
+	report_cols_max=9
 	local -i m=0
 	local -i n=0
 	local previous=''
@@ -7609,10 +7674,16 @@ ShowReportPackages()
 			DisplayAsPacksReportItemLine "$qpkg_name"
 		done
 
+		} > "$REPORT_OUTPUT_PATHFILE"
+
+		IncludeReportFooter
+
+		{
+
 		DisplayAsProjSynExam "abbreviations and aliases may also be used to specify $(ShowAsPackages). To list these" 'help abs'
 		DisplayAsProjSynIndentExam '' a
 
-		} > "$REPORT_OUTPUT_PATHFILE"
+		} >> "$REPORT_OUTPUT_PATHFILE"
 
 	EraseThisLine
 
@@ -7662,6 +7733,8 @@ ShowReportRepos()
 	done
 
 	[[ -n $a ]] && echo -en "$a" >> "$REPORT_OUTPUT_PATHFILE"
+
+	IncludeReportFooter
 
 	EraseThisLine
 
@@ -7730,6 +7803,10 @@ ShowReportStatuses()
 
 	QPKGs.States:List
 
+	show_action_results_ok=false
+	show_action_results_skipped=false
+	show_action_results_failed=false
+
 	FuncExit
 
 	}
@@ -7744,71 +7821,83 @@ IncludeReportFooter()
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/status-missing ]]; then
-		DisplayAsInfoIndentItem "$(TextBrightRed '! missing')" 'QPKG is missing from its installation path. Reinstall it'
+		DisplayAsInfoIndentItem "$(TextBrightRed '! missing')" 'QPKG is missing from its installation path. Please reinstall it'
+	fi
+
+	if [[ -e "$REPORT_FLAGS_PATH"/req-alert ]]; then
+		DisplayAsInfoIndentQuotedItem "$(TextBrightRed '!')" 'prevents QPKG working correctly'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/state-disabled ]]; then
-		DisplayAsInfoIndentItem "$(TextBrightRed disabled)" "QPKG won't start at bootup. Enable it first, then start it"
+		DisplayAsInfoIndentQuotedItem "$(TextBrightRed disabled)" "QPKG won't start at bootup. Enable it first, then start it"
 	fi
 
-	if [[ -e "$REPORT_FLAGS_PATH"/state-enabled ]]; then
-		DisplayAsInfoIndentItem "$(TextBrightGreen enabled)" 'QPKG will start at bootup'
+	if [[ -e "$REPORT_FLAGS_PATH"/status-inactive ]]; then
+		DisplayAsInfoIndentQuotedItem "$(TextBrightRed inactive)" 'application is dead or not-started. Try starting/activating it'
 	fi
 
-	if [[ -e "$REPORT_FLAGS_PATH"/state-inactive ]]; then
-		DisplayAsInfoIndentItem "$(TextBrightRed inactive)" 'application is dead or not-started. Try starting/activating it'
-	fi
-
-	if [[ -e "$REPORT_FLAGS_PATH"/status-stopping ]]; then
-		DisplayAsInfoIndentItem "$(TextBrightOrange stopping)" 'QPKG is stopping. Try checking again shortly'
+	if [[ -e "$REPORT_FLAGS_PATH"/backup-file-old ]]; then
+		DisplayAsInfoIndentQuotedItem "$(TextBrightRed '!')" "QPKG backup file was updated more-than $highlight_backups_older_than."
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/status-upgradable ]]; then
 		DisplayAsInfoIndentItem "($(TextBrightOrange new))" 'an upgraded QPKG is available'
 	fi
 
-	if [[ -e "$REPORT_FLAGS_PATH"/status-unknown ]]; then
-		DisplayAsInfoIndentItem "$(TextBrightOrange unknown)" 'application status could not be determined'
+	if [[ -e "$REPORT_FLAGS_PATH"/req-attention ]]; then
+		DisplayAsInfoIndentQuotedItem "$(TextBrightOrange '*')" 'QPKG cannot be installed'
+	fi
+
+	if [[ -e "$REPORT_FLAGS_PATH"/status-stopping ]]; then
+		DisplayAsInfoIndentQuotedItem "$(TextBrightOrange stopping)" 'QPKG is stopping. Try checking again shortly'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/status-slow ]]; then
-		DisplayAsInfoIndentItem "$(TextBrightOrange slow)" 'application appears to be alive, but is slow to respond to the status request. Try checking again shortly' 		# More common on NAS with lower installed RAM, and usually because the application has been page-swapped to disk and must be reloaded into RAM.
+		DisplayAsInfoIndentQuotedItem "$(TextBrightOrange slow)" 'application appears to be alive, but is slow to respond to the status request. Try checking again shortly' 		# More common on NAS with lower installed RAM, and usually because the application has been page-swapped to disk and must be reloaded into RAM.
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/status-starting ]]; then
-		DisplayAsInfoIndentItem "$(TextBrightOrange starting)" 'QPKG is starting. Try checking again shortly'
+		DisplayAsInfoIndentQuotedItem "$(TextBrightOrange starting)" 'QPKG is starting. Try checking again shortly'
+	fi
+
+	if [[ -e "$REPORT_FLAGS_PATH"/status-unknown ]]; then
+		DisplayAsInfoIndentQuotedItem "$(TextBrightOrange unknown)" 'application status could not be determined'
+	fi
+
+	if [[ -e "$REPORT_FLAGS_PATH"/repo-other ]]; then
+		DisplayAsInfoIndentQuotedItem "$(TextBrightOrange '* URL')" 'another repository is managing this QPKG'
+	fi
+
+	if [[ -e "$REPORT_FLAGS_PATH"/state-enabled ]]; then
+		DisplayAsInfoIndentQuotedItem "$(TextBrightGreen enabled)" 'QPKG will start at bootup'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/status-active ]]; then
-		DisplayAsInfoIndentItem "$(TextBrightGreen active)" "application is alive (and responsive if it's a daemon)"
+		DisplayAsInfoIndentQuotedItem "$(TextBrightGreen active)" "application is alive (and responsive if it's a daemon)"
+	fi
+
+	if [[ -e "$REPORT_FLAGS_PATH"/repo-sherpa ]]; then
+		DisplayAsInfoIndentQuotedItem "$(TextBrightGreen sherpa)" "$(ShowAsTitleName) is managing this QPKG"
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/app-dynamic ]]; then
-		DisplayAsInfoIndentItem dynamic 'application version is the latest available'
+		DisplayAsInfoIndentQuotedItem dynamic 'application version is the latest available'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/app-static ]]; then
-		DisplayAsInfoIndentItem static 'application version auto-update is disabled'
+		DisplayAsInfoIndentQuotedItem static 'application version auto-update is disabled'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/app-final ]]; then
-		DisplayAsInfoIndentItem final 'application version is the last available'
+		DisplayAsInfoIndentQuotedItem final 'application version is the last available'
 	fi
 
-	if [[ -e "$REPORT_FLAGS_PATH"/req-attention ]]; then
-		DisplayAsIndentItem "'$(TextBrightOrange '*')' = QPKG cannot be installed."
-	fi
-
-	if [[ -e "$REPORT_FLAGS_PATH"/req-alert ]]; then
-		DisplayAsIndentItem "'$(TextBrightRed '!')' = prevents QPKG working correctly."
+	if [[ -e "$REPORT_FLAGS_PATH"/state-notinstalled ]]; then
+		DisplayAsInfoIndentItem "$(TextDarkGrey muted)" 'QPKG is not installed'
 	fi
 
 	if compgen -G "${REPORT_FLAGS_PATH}/backup-file-*" > /dev/null; then			# https://stackoverflow.com/a/6364244
 		DisplayAsIndentItem "backups are listed oldest-first."
-	fi
-
-	if [[ -e "$REPORT_FLAGS_PATH"/backup-file-old ]]; then
-		DisplayAsIndentItem "'$(TextBrightRed '!')' = QPKG backup file was updated more-than $highlight_backups_older_than."
 	fi
 
 	if compgen -G "${REPORT_FLAGS_PATH}/backup-file-*" > /dev/null; then			# https://stackoverflow.com/a/6364244
@@ -7821,13 +7910,13 @@ IncludeReportHeadingsFooter()
 	{
 
 	DisplayAsHelpTitle 'column headings:'
-	DisplayAsInfoIndentItem 'CanBack?' "supports application config 'backup' and 'restore'"
-	DisplayAsInfoIndentItem 'CanClean?' "supports application 'clean'ing"
-	DisplayAsInfoIndentItem 'StartUpd?' 'supports restart-to-update application'
-	DisplayAsInfoIndentItem 'AutoUpd?' 'application will auto-update on each restart'
-	DisplayAsInfoIndentItem 'LiveTest?' "has a built-in 'status' check, and can test for daemon \"live\" status"
-	DisplayAsInfoIndentItem 'Indep?' 'is independent of other QPKGs'
-	DisplayAsInfoIndentItem 'Compat?' 'has a release compatible with this NAS arch'
+	DisplayAsInfoIndentQuotedItem 'CanBack?' "supports application config 'backup' and 'restore'"
+	DisplayAsInfoIndentQuotedItem 'CanClean?' "supports application 'clean'ing"
+	DisplayAsInfoIndentQuotedItem 'StartUpd?' 'supports restart-to-update application'
+	DisplayAsInfoIndentQuotedItem 'AutoUpd?' 'application will auto-update on each restart'
+	DisplayAsInfoIndentQuotedItem 'LiveTest?' "has a built-in 'status' check, and can test for daemon \"live\" status"
+	DisplayAsInfoIndentQuotedItem 'Indep?' 'is independent of other QPKGs'
+	DisplayAsInfoIndentQuotedItem 'Compat?' 'has a release compatible with this NAS arch'
 
 	} >> "$REPORT_OUTPUT_PATHFILE"
 
@@ -9039,10 +9128,10 @@ _QPKG:reassign_()
 	z=$?
 
 	if [[ $z -eq 0 ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" '' reassign ok
+		SaveActionResultToLog QPKG "$qpkg_name" reassign '' ok
 		MarkThisAcForkAsOk
 	else
-		SaveActionResultToLog QPKG "$qpkg_name" '' reassign failed "$z"
+		SaveActionResultToLog QPKG "$qpkg_name" reassign '' failed "$z"
 		MarkThisAcForkAsError
 		z=1   # Remap to 1.
 	fi
@@ -9260,7 +9349,7 @@ _QPKG:reinstall_()
 		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' skipped "not installed, please use 'install' instead."
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsRepoOk; then
+	elif ! QpkgIsRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
@@ -9344,7 +9433,7 @@ _QPKG:rebuild_()
 		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' skipped 'backup file does not exist'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsRepoOk; then
+	elif ! QpkgIsRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
@@ -9355,7 +9444,7 @@ _QPKG:rebuild_()
 	DebugAsProc "meta-rebuilding $(ShowAsPackageName)"
 	# Nothing-to-do here, real QPKG actions have already been assigned in CheckEnv().
 
-	SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild ok
+	SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' ok
 	MarkThisAcForkAsOk
 	ClearQpkgAppCenterNotifier
 
@@ -9390,7 +9479,7 @@ _QPKG:upgrade_()
 		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' skipped 'no new QPKG is available'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsRepoOk; then
+	elif ! QpkgIsRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
@@ -9481,7 +9570,7 @@ _QPKG:uninstall_()
 		SaveActionResultToLog QPKG "$qpkg_name" uninstall '' skipped "it's needed here! 😉"
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsRepoOk; then
+	elif ! QpkgIsRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" uninstall '' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
@@ -9559,7 +9648,7 @@ _QPKG:activate_()
 		SaveActionResultToLog QPKG "$qpkg_name" activate '' skipped "not enabled, please 'enable' it first"
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsRepoOk; then
+	elif ! QpkgIsRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" activate '' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
@@ -9644,7 +9733,7 @@ _QPKG:reactivate_()
 		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' skipped "not enabled, please 'enable' it first"
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsRepoOk; then
+	elif ! QpkgIsRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
@@ -9720,7 +9809,7 @@ _QPKG:deactivate_()
 # 		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' skipped "it's needed here! 😉"
 # 		MarkThisAcForkAsSkipped
 # 		z=1
-	elif ! QpkgIsRepoOk; then
+	elif ! QpkgIsRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
@@ -9803,7 +9892,7 @@ _QPKG:enable_()
 		SaveActionResultToLog QPKG "$qpkg_name" enable '' skipped 'already enabled'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsRepoOk; then
+	elif ! QpkgIsRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" enable '' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
@@ -9858,7 +9947,7 @@ _QPKG:disable_()
 # 		SaveActionResultToLog QPKG "$qpkg_name" disable '' skipped "it's needed here! 😉"
 # 		MarkThisAcForkAsSkipped
 # 		z=1
-	elif ! QpkgIsRepoOk; then
+	elif ! QpkgIsRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" disable '' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
@@ -9915,7 +10004,7 @@ _QPKG:enableau_()
 		SaveActionResultToLog QPKG "$qpkg_name" enableau '' skipped 'auto-update is unsupported'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsRepoOk; then
+	elif ! QpkgIsRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" enableau '' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
@@ -9974,7 +10063,7 @@ _QPKG:disableau_()
 		SaveActionResultToLog QPKG "$qpkg_name" disableau '' skipped 'auto-update is unsupported'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsRepoOk; then
+	elif ! QpkgIsRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" disableau '' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
@@ -10029,7 +10118,7 @@ _QPKG:backup_()
 		SaveActionResultToLog QPKG "$qpkg_name" backup '' skipped 'backup is unsupported'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsRepoOk; then
+	elif ! QpkgIsRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" backup '' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
@@ -10089,7 +10178,7 @@ _QPKG:restore_()
 		SaveActionResultToLog QPKG "$qpkg_name" restore '' skipped 'backup file does not exist'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsRepoOk; then
+	elif ! QpkgIsRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" restore '' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
@@ -10145,7 +10234,7 @@ _QPKG:clean_()
 		SaveActionResultToLog QPKG "$qpkg_name" clean '' skipped 'clean is unsupported'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsRepoOk; then
+	elif ! QpkgIsRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" clean '' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
@@ -10215,7 +10304,7 @@ _QPKG:sign_()
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped 'not required: firmware < 4.3.5'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsRepoOk; then
+	elif ! QpkgIsRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
@@ -10569,7 +10658,7 @@ QpkgGetStoreID()
 	#   stdout = package store ID
 	#   $? = 0 if found, 250 if not.
 
-	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}" store -d sherpa -f /etc/config/qpkg.conf
+	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}" store -d undefined -f /etc/config/qpkg.conf
 
 	}
 
@@ -11267,7 +11356,7 @@ QpkgSetDefaultIndex()
 
 	}
 
-QpkgIsRepoOk()
+QpkgIsRepoSelfManaged()
 	{
 
 	# Is this QPKG managable by sherpa?
@@ -11281,7 +11370,7 @@ QpkgIsRepoOk()
 
 	local a=$(QpkgGetStoreID "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
 
-	[[ -z $a || $a = sherpa ]]
+	[[ -z $a || $a = undefined || $a = sherpa ]]
 
 	}
 
@@ -11353,7 +11442,7 @@ QpkgIsUpgradable()
 
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
 
-	QpkgIsInstalled "$a" && QpkgIsRepoOk "$a" && [[ $(QpkgGetInstalledVer "$a") != "$(QpkgGetAvailVer "$a")" ]] && QpkgIsArchOK "$a" && QpkgIsMinOSVerOk "$a" && QpkgIsMaxOSVerOk "$a" && QpkgIsMinRAMOk "$a"
+	QpkgIsInstalled "$a" && QpkgIsRepoSelfManaged "$a" && [[ $(QpkgGetInstalledVer "$a") != "$(QpkgGetAvailVer "$a")" ]] && QpkgIsArchOK "$a" && QpkgIsMinOSVerOk "$a" && QpkgIsMaxOSVerOk "$a" && QpkgIsMinRAMOk "$a"
 
 	}
 
@@ -11371,7 +11460,7 @@ QpkgIsInstallable()
 
 	[[ $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
 
-	! QpkgIsInstalled && QpkgIsRepoOk && QpkgIsArchOK && QpkgIsMinOSVerOk && QpkgIsMaxOSVerOk && QpkgIsMinRAMOk
+	! QpkgIsInstalled && QpkgIsRepoSelfManaged && QpkgIsArchOK && QpkgIsMinOSVerOk && QpkgIsMaxOSVerOk && QpkgIsMinRAMOk
 
 	}
 
