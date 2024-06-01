@@ -4700,6 +4700,8 @@ DisplayAsReposReportItemLine()
 		/bin/touch "$REPORT_FLAGS_PATH"/state-installed
 	fi
 
+	[[ $assigned_repo = sherpa ]] && /bin/touch "$REPORT_FLAGS_PATH"/repo-sherpa
+
 	case $mode in
 		normal)
 			case $assigned_repo in
@@ -4714,6 +4716,7 @@ DisplayAsReposReportItemLine()
 				*)
 					assigned_repo_msg=$(TextBrightOrange "${CHARS_ATTENTION}$assigned_repo")
 					name_msg+=$(TextBrightOrange "$qpkg_name")
+					/bin/touch "$REPORT_FLAGS_PATH"/repo-other
 			esac
 
 			install_date_msg+=$install_date
@@ -4744,6 +4747,7 @@ DisplayAsReposReportItemLine()
 					;;
 				*)
 					assigned_repo_msg+=$assigned_repo
+					/bin/touch "$REPORT_FLAGS_PATH"/repo-other
 			esac
 
 			install_date_msg=$(TextBrightRedBlink "${CHARS_ALERT}missing")
@@ -7824,12 +7828,20 @@ IncludeReportFooter()
 		DisplayAsInfoIndentQuotedItem "$(TextBrightOrange unknown)" 'application status could not be determined'
 	fi
 
+	if [[ -e "$REPORT_FLAGS_PATH"/repo-other ]]; then
+		DisplayAsInfoIndentQuotedItem "$(TextBrightOrange '* URL')" 'another repository is managing this QPKG'
+	fi
+
 	if [[ -e "$REPORT_FLAGS_PATH"/state-enabled ]]; then
 		DisplayAsInfoIndentQuotedItem "$(TextBrightGreen enabled)" 'QPKG will start at bootup'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/status-active ]]; then
 		DisplayAsInfoIndentQuotedItem "$(TextBrightGreen active)" "application is alive (and responsive if it's a daemon)"
+	fi
+
+	if [[ -e "$REPORT_FLAGS_PATH"/repo-sherpa ]]; then
+		DisplayAsInfoIndentQuotedItem "$(TextBrightGreen sherpa)" "$(ShowAsTitleName) is managing this QPKG"
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/app-dynamic ]]; then
@@ -7845,7 +7857,7 @@ IncludeReportFooter()
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/state-notinstalled ]]; then
-		DisplayAsInfoIndentItem "$(TextDarkGrey muted)" "QPKG is not installed"
+		DisplayAsInfoIndentItem "$(TextDarkGrey muted)" 'QPKG is not installed'
 	fi
 
 	if compgen -G "${REPORT_FLAGS_PATH}/backup-file-*" > /dev/null; then			# https://stackoverflow.com/a/6364244
@@ -7862,13 +7874,13 @@ IncludeReportHeadingsFooter()
 	{
 
 	DisplayAsHelpTitle 'column headings:'
-	DisplayAsInfoIndentItem 'CanBack?' "supports application config 'backup' and 'restore'"
-	DisplayAsInfoIndentItem 'CanClean?' "supports application 'clean'ing"
-	DisplayAsInfoIndentItem 'StartUpd?' 'supports restart-to-update application'
-	DisplayAsInfoIndentItem 'AutoUpd?' 'application will auto-update on each restart'
-	DisplayAsInfoIndentItem 'LiveTest?' "has a built-in 'status' check, and can test for daemon \"live\" status"
-	DisplayAsInfoIndentItem 'Indep?' 'is independent of other QPKGs'
-	DisplayAsInfoIndentItem 'Compat?' 'has a release compatible with this NAS arch'
+	DisplayAsInfoIndentQuotedItem 'CanBack?' "supports application config 'backup' and 'restore'"
+	DisplayAsInfoIndentQuotedItem 'CanClean?' "supports application 'clean'ing"
+	DisplayAsInfoIndentQuotedItem 'StartUpd?' 'supports restart-to-update application'
+	DisplayAsInfoIndentQuotedItem 'AutoUpd?' 'application will auto-update on each restart'
+	DisplayAsInfoIndentQuotedItem 'LiveTest?' "has a built-in 'status' check, and can test for daemon \"live\" status"
+	DisplayAsInfoIndentQuotedItem 'Indep?' 'is independent of other QPKGs'
+	DisplayAsInfoIndentQuotedItem 'Compat?' 'has a release compatible with this NAS arch'
 
 	} >> "$REPORT_OUTPUT_PATHFILE"
 
