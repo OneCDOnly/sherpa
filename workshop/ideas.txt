@@ -1,3 +1,6 @@
+* Trim elapsed time if zero hours.
+	- only show minutes and seconds.
+
 * Arg parser should use commas to separate actions & options.
 
 * Include QPKG "signed" status in dependencies report?
@@ -34,8 +37,6 @@
 
 * Need a maintenance script to remove all but the most-recent QPKG builds.
 	- Should also run a 'git gc --aggressive' afterward.
-
-* Test for bash version and interpreter location?
 
 * Try each user arg as an action (verb).
     - if not an action, try as a group (noun).
