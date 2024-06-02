@@ -6431,7 +6431,7 @@ DisplayFileInViewport()
 		fi
 	fi
 
-	if [[ $($WC_CMD -l < "$filename") -ge $SESS_ROWS ]]; then
+	if [[ $($WC_CMD -l < "$filename") -ge $SESS_ROWS || $($WC_CMD -L < "$filename") -ge $SESS_COLS ]]; then
 		if [[ -e $GNU_LESS_CMD ]]; then
 			options=' --quit-on-intr --tilde --mouse --RAW-CONTROL-CHARS --shift 4 --redraw-on-quit --quit-if-one-screen'
 			[[ $wraplines = false ]] && options+=' --chop-long-lines'
