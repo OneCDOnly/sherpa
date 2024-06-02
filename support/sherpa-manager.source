@@ -195,7 +195,7 @@ ShowResults()
 
 	DebugInfoMinSepr
 	DebugScript finished "$(FormatNowAsFullDate)"
-	DebugScript 'elapsed time' "$(FormatSecsToHoursMinutesSecs "$(($(FormatNowAsSeconds)-SCRIPT_STARTSECONDS))")"
+	DebugScript 'elapsed time' "$(FormatAsSecsToHoursMinutesSecs "$(($(FormatNowAsSeconds)-SCRIPT_STARTSECONDS))")"
 	DebugInfoMajSepr
 
 	[[ $title_shown = true ]] && Display 			# Final on-screen linespace.
@@ -3810,7 +3810,7 @@ _DirSizeMonitor_()
 			if [[ $stall_seconds -lt 60 ]]; then
 				stall_msg+="$stall_seconds seconds"
 			else
-				stall_msg+=$(FormatSecsToHoursMinutesSecs "$stall_seconds")
+				stall_msg+=$(FormatAsSecsToHoursMinutesSecs "$stall_seconds")
 			fi
 
 			# Add a suggestion to cancel if download has stalled for too-long.
@@ -8578,7 +8578,7 @@ OsGetUptime()
 
 	local n=$(< /proc/uptime)
 
-	FormatSecsToHoursMinutesSecs "${n%%.*}"
+	FormatAsSecsToHoursMinutesSecs "${n%%.*}"
 
 	}
 
@@ -8589,7 +8589,7 @@ UserGetTimeInShell()
 
 	[[ -n ${LOADER_SCRIPT_PPID:-} ]] && n=$($PS_CMD -o pid,etime | $GREP_CMD $LOADER_SCRIPT_PPID | head -n1)
 
-	FormatLongMinutesSecs "${n:6}"
+	FormatAsLongMinutesSecs "${n:6}"
 
 	}
 
@@ -12594,7 +12594,7 @@ FormatSecondsAsDuration()
 	if [[ ${1:-0} -lt 30 ]]; then
 		echo -n "$(FormatAsThous "${1:-0}")s" | $TAIL_CMD -n1			# Prevent "broken pipe" error: https://superuser.com/a/642932
 	else
-		FormatSecsToHoursMinutesSecs "$1"
+		FormatAsSecsToHoursMinutesSecs "$1"
 	fi
 
 	}
@@ -12608,7 +12608,7 @@ FormatMillisecondsAsDuration()
 	if [[ ${1:-0} -lt 30000 ]]; then
 		echo -n "$(FormatAsThous "${1:-0}")ms" | $TAIL_CMD -n1			# Prevent "broken pipe" error: https://superuser.com/a/642932
 	else
-		FormatSecsToHoursMinutesSecs "$(($1/1000))"
+		FormatAsSecsToHoursMinutesSecs "$(($1/1000))"
 	fi
 
 	}
@@ -13380,7 +13380,7 @@ FormatMillisecsToMinutesSecs()
 
 	} 2> /dev/null
 
-FormatSecsToHoursMinutesSecs()
+FormatAsSecsToHoursMinutesSecs()
 	{
 
 	# http://stackoverflow.com/questions/12199631/convert-seconds-to-hours-minutes-seconds
@@ -13392,11 +13392,17 @@ FormatSecsToHoursMinutesSecs()
 	((m=(${1:-0}%3600)/60))
 	((s=${1:-0}%60))
 
-	printf '%01dh:%02dm:%02ds\n' "$h" "$m" "$s"
+	if [[ $h -gt 0 ]]; then
+		printf '%01dh:%02dm:%02ds\n' "$h" "$m" "$s"
+	elif [[ $m -gt 0 ]]; then
+		printf '%01dm:%02ds\n' "$m" "$s"
+	else
+		printf '%01ds\n' "$s"
+	fi
 
 	} 2> /dev/null
 
-FormatLongMinutesSecs()
+FormatAsLongMinutesSecs()
 	{
 
 	# Input:
