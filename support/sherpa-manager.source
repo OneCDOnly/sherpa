@@ -198,7 +198,7 @@ ShowResults()
 	DebugScript 'elapsed time' "$(FormatSecsToHoursMinutesSecs "$(($(FormatNowAsSeconds)-SCRIPT_STARTSECONDS))")"
 	DebugInfoMajSepr
 
-	Display 			# Final on-screen linespace.
+	[[ $title_shown = true ]] && Display 			# Final on-screen linespace.
 
 	FuncExit
 
@@ -5843,7 +5843,6 @@ Help.Actions:Show()
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
 		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
-		Display
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -5891,7 +5890,6 @@ Help.ActionsAll:Show()
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
 		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
-		Display
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -5927,8 +5925,6 @@ Help.Basic.Examples:Show()
 	DisplayAsProjSynIndentExam "to see available $(ShowAsPackageGroup)s" 'help groups'
 	DisplayAsProjSynIndentExam "or, for more $(ShowAsOptions)" 'help options'
 	DisplayAsHelpTitle "more in the wiki: $(ShowAsURL 'https://github.com/OneCDOnly/sherpa/wiki')"
-
-	Display
 
 	return 0
 
@@ -5967,7 +5963,6 @@ Help.Groups:Show()
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
 		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
-		Display
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -6021,7 +6016,6 @@ Help.Lists:Show()
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
 		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
-		Display
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -6082,7 +6076,6 @@ ShowReportAllActionResults()
 			else
 				ShowAsError 'no information to display'
 			fi
-
 		fi
 	fi
 
@@ -6176,7 +6169,6 @@ Help.Show:Show()
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
 		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
-		Display
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -6205,7 +6197,6 @@ Help.Options:Show()
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
 		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
-		Display
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -6231,7 +6222,6 @@ Help.Packages:Show()
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
 		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
-		Display
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -6276,7 +6266,6 @@ Help.Problems:Show()
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
 		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
-		Display
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -6309,7 +6298,6 @@ Help.Upgrades:Show()
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
 		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
-		Display
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -6345,7 +6333,6 @@ Help.Tips:Show()
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
 		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
-		Display
 	else
 		ShowAsError 'no information to display'
 	fi
@@ -7505,7 +7492,6 @@ Help.Abbreviations:Show()
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
 		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
-		Display
 	else
 		ShowAsError 'no information to display'
 	fi
