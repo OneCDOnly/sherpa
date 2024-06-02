@@ -784,7 +784,11 @@ DebugLogEnv()
 		DebugFirmware ok 'system load' "$(OsGetSysLoadAverages)"
 	fi
 
-	DebugUserspace ok 'GLIBC' "$(/sbin/ldd --version | $HEAD_CMD -n1 | cut -d' ' -f4)"
+	DebugUserspace ok 'GLIBC' "$(/sbin/ldd --version | $HEAD_CMD -n1 | cut -d' ' -f4) $(/sbin/ldd --version | /bin/grep Copyright)"
+
+	DebugUserspace ok '$BASH_VERSION' "$BASH_VERSION"
+	DebugUserspace ok 'shell options' "$-"
+	DebugUserspace ok 'time in shell' "$(UserGetTimeInShell)"
 
 	if OsIsSupportSudo; then
 		DebugUserspace ok '$SUDO_UID' "$(UserGetSudoUID)"
@@ -793,9 +797,6 @@ DebugLogEnv()
 	fi
 
 	DebugUserspace ok '$EUID' "$EUID"
-	DebugUserspace ok 'time in shell' "$(UserGetTimeInShell)"
-	DebugUserspace ok '$BASH_VERSION' "$BASH_VERSION"
-	DebugUserspace ok 'shell options' "$-"
 	DebugUserspace ok 'default volume' "$(UserGetDefVol)"
 	DebugUserspace ok '/opt' "$($READLINK_CMD /opt 2> /dev/null || printf 'not present')"
 
