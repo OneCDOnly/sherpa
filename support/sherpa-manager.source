@@ -10314,11 +10314,11 @@ _QPKG:sign_()
 		MarkThisAcForkAsSkipped
 		z=1
 	elif [[ ! -e $sqlite_pathfile ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped-abort "$(ShowAsFileName "$sqlite_pathfile") not found"
+		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped-abort "$(ShowAsFileName sqlite3) binary not found"
 		MarkThisAcForkAsSkippedAbort
 		z=3
 	elif [[ ! -e $CERT_DB_PATHFILE ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped-abort "$(OsGetQnapOS) certificate database not found"
+		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped-abort "$(OsGetQnapOS) QPKG certificate database not found"
 		MarkThisAcForkAsSkippedAbort
 		z=3
 	else
