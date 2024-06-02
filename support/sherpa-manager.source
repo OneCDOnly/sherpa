@@ -195,7 +195,7 @@ ShowResults()
 
 	DebugInfoMinSepr
 	DebugScript finished "$(FormatNowAsFullDate)"
-	DebugScript 'elapsed time' "$(FormatAsSecsToHoursMinutesSecs "$(($(FormatNowAsSeconds)-SCRIPT_STARTSECONDS))")"
+	DebugScript 'elapsed time' "$(FormatSecondsAsHoursMinutesSeconds "$(($(FormatNowAsSeconds)-SCRIPT_STARTSECONDS))")"
 	DebugInfoMajSepr
 
 	[[ $title_shown = true ]] && Display 			# Final on-screen linespace.
@@ -3810,7 +3810,7 @@ _DirSizeMonitor_()
 			if [[ $stall_seconds -lt 60 ]]; then
 				stall_msg+="$stall_seconds seconds"
 			else
-				stall_msg+=$(FormatAsSecsToHoursMinutesSecs "$stall_seconds")
+				stall_msg+=$(FormatSecondsAsHoursMinutesSeconds "$stall_seconds")
 			fi
 
 			# Add a suggestion to cancel if download has stalled for too-long.
@@ -5744,7 +5744,7 @@ DisplayAsIndentActionResultDurationReason()
 			action=$1
 	esac
 
-	[[ -n ${3:-} ]] && duration=$(FormatMillisecsToMinutesSecs "$3")
+	[[ -n ${3:-} ]] && duration=$(FormatMillisecondsAsMinutesSeconds "$3")
 
 	printf "%${ACTION_RESULT_INDENT}s" ''
 
@@ -8578,7 +8578,7 @@ OsGetUptime()
 
 	local n=$(< /proc/uptime)
 
-	FormatAsSecsToHoursMinutesSecs "${n%%.*}"
+	FormatSecondsAsHoursMinutesSeconds "${n%%.*}"
 
 	}
 
@@ -12551,7 +12551,7 @@ FormatSecondsAsTime()
 	# Output:
 	#	stdout = time component only.
 
-	/bin/date -d @"$1" +%r | tr -s ' '
+	/bin/date -d @"$1" '+%-H:%M:%S %p' | tr -s ' '
 
 	}
 
@@ -12594,7 +12594,7 @@ FormatSecondsAsDuration()
 	if [[ ${1:-0} -lt 30 ]]; then
 		echo -n "$(FormatAsThous "${1:-0}")s" | $TAIL_CMD -n1			# Prevent "broken pipe" error: https://superuser.com/a/642932
 	else
-		FormatAsSecsToHoursMinutesSecs "$1"
+		FormatSecondsAsHoursMinutesSeconds "$1"
 	fi
 
 	}
@@ -12608,10 +12608,76 @@ FormatMillisecondsAsDuration()
 	if [[ ${1:-0} -lt 30000 ]]; then
 		echo -n "$(FormatAsThous "${1:-0}")ms" | $TAIL_CMD -n1			# Prevent "broken pipe" error: https://superuser.com/a/642932
 	else
-		FormatAsSecsToHoursMinutesSecs "$(($1/1000))"
+		FormatSecondsAsHoursMinutesSeconds "$(($1/1000))"
 	fi
 
 	}
+
+FormatMillisecondsAsMinutesSeconds()
+	{
+
+	# http://stackoverflow.com/questions/12199631/convert-seconds-to-hours-minutes-seconds
+
+	# Input:
+	#	$1 = a time in milliseconds to convert to `S seconds` or `Mm:SSs`.
+
+	local seconds=$((${1:-0}/1000))
+	((m=(seconds%3600)/60))
+	((s=seconds%60))
+
+	[[ $s -eq 0 ]] && s=1
+
+	if [[ $m -eq 0 ]]; then
+		if [[ $s -eq 1 ]]; then
+			printf '%d second' "$s"
+		else
+			printf '%d seconds' "$s"
+		fi
+	else
+		printf '%dm:%02ds' "$m" "$s"
+	fi
+
+	} 2> /dev/null
+
+FormatSecondsAsHoursMinutesSeconds()
+	{
+
+	# http://stackoverflow.com/questions/12199631/convert-seconds-to-hours-minutes-seconds
+
+	# Input:
+	#	$1 = a time in seconds to convert to `HHh:MMm:SSs`.
+
+	((h=${1:-0}/3600))
+	((m=(${1:-0}%3600)/60))
+	((s=${1:-0}%60))
+
+	if [[ $h -gt 0 ]]; then
+		printf '%01dh:%02dm:%02ds\n' "$h" "$m" "$s"
+	elif [[ $m -gt 0 ]]; then
+		printf '%01dm:%02ds\n' "$m" "$s"
+	else
+		printf '%01ds\n' "$s"
+	fi
+
+	} 2> /dev/null
+
+FormatAsLongMinutesSecs()
+	{
+
+	# Input:
+	#	$1 = a time in long minutes and seconds to convert to `MMMm:SSs`.
+
+	# separate minutes from seconds
+	local m=${1%%:*}
+	local s=${1#*:}
+
+	# remove leading whitespace
+	m=${m##* }
+	s=${s##* }
+
+	printf '%01dm:%02ds\n' "$((10#$m))" "$((10#$s))"
+
+	} 2> /dev/null
 
 DebugAsFuncEn()
 	{
@@ -13353,72 +13419,6 @@ ShowKeystrokes()
 	[[ -n ${GNU_STTY_CMD:-} && -e $GNU_STTY_CMD && -t 0 ]] && $GNU_STTY_CMD 'echo'
 
 	}
-
-FormatMillisecsToMinutesSecs()
-	{
-
-	# http://stackoverflow.com/questions/12199631/convert-seconds-to-hours-minutes-seconds
-
-	# Input:
-	#	$1 = a time in milliseconds to convert to `S seconds` or `Mm:SSs`.
-
-	local seconds=$((${1:-0}/1000))
-	((m=(seconds%3600)/60))
-	((s=seconds%60))
-
-	[[ $s -eq 0 ]] && s=1
-
-	if [[ $m -eq 0 ]]; then
-		if [[ $s -eq 1 ]]; then
-			printf '%d second' "$s"
-		else
-			printf '%d seconds' "$s"
-		fi
-	else
-		printf '%dm:%02ds' "$m" "$s"
-	fi
-
-	} 2> /dev/null
-
-FormatAsSecsToHoursMinutesSecs()
-	{
-
-	# http://stackoverflow.com/questions/12199631/convert-seconds-to-hours-minutes-seconds
-
-	# Input:
-	#	$1 = a time in seconds to convert to `HHh:MMm:SSs`.
-
-	((h=${1:-0}/3600))
-	((m=(${1:-0}%3600)/60))
-	((s=${1:-0}%60))
-
-	if [[ $h -gt 0 ]]; then
-		printf '%01dh:%02dm:%02ds\n' "$h" "$m" "$s"
-	elif [[ $m -gt 0 ]]; then
-		printf '%01dm:%02ds\n' "$m" "$s"
-	else
-		printf '%01ds\n' "$s"
-	fi
-
-	} 2> /dev/null
-
-FormatAsLongMinutesSecs()
-	{
-
-	# Input:
-	#	$1 = a time in long minutes and seconds to convert to `MMMm:SSs`.
-
-	# separate minutes from seconds
-	local m=${1%%:*}
-	local s=${1#*:}
-
-	# remove leading whitespace
-	m=${m##* }
-	s=${s##* }
-
-	printf '%01dm:%02ds\n' "$((10#$m))" "$((10#$s))"
-
-	} 2> /dev/null
 
 sleep()
 	{
