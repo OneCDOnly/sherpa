@@ -198,6 +198,8 @@ ShowResults()
 	DebugScript 'elapsed time' "$(FormatSecsToHoursMinutesSecs "$(($(FormatNowAsSeconds)-SCRIPT_STARTSECONDS))")"
 	DebugInfoMajSepr
 
+	Display 			# Final on-screen linespace.
+
 	FuncExit
 
 	[[ $archive_debug_afterward = true ]] && ArchiveActiveSessLog
@@ -2895,14 +2897,12 @@ ShowArgSuggestions()
 		done
 
 		if [[ ${#args_remaining[@]:-} -gt 0 ]]; then
-			[[ $arg_problem = true ]] && echo
+			[[ $arg_problem = true ]] && Display
 			ShowAsError "unknown argument$(Pluralise "${#args_remaining[@]}") \"${args_remaining[*]}\". Please check the arguments again"
 			arg_problem=true
 			useropt_help_basic=false
 		fi
 	fi
-
-	[[ $arg_problem = true ]] && echo
 
 	DebugArray args_incomplete "${args_incomplete[*]:-}"
 	DebugArray args_remaining "${args_remaining[*]:-}"
