@@ -544,7 +544,10 @@ LocateSQLiteBinary()
 		done
 	fi
 
-	[[ -z $sqlite_cmd ]] && sqlite_cmd=/opt/bin/sqlite3						# Last-resort, hope Entware will be installed this session.
+	if [[ -z $sqlite_cmd ]]; then				# Last-resort, hope Entware will be installed this session.
+		sqlite_pathfile=/opt/bin/sqlite3
+		sqlite_cmd=$sqlite_pathfile
+	fi
 
 	}
 
@@ -12515,7 +12518,7 @@ ShowAsDuration()
 	#	$1 = duration in milliseconds
 
 	if [[ ${1:-0} -lt 30000 ]]; then
-		echo -n "$(FormatAsThous "${1:-0}")ms"
+		echo -n "$(FormatAsThous "${1:-0}")ms" | $TAIL_CMD -n1			# Prevent "broken pipe" error: https://superuser.com/a/642932
 	else
 		FormatSecsToHoursMinutesSecs "$(($1/1000))"
 	fi
