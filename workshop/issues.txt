@@ -53,9 +53,6 @@ Observed issues:
 	* Only install IPKs for QPKGs that download successfully (or are already downloaded).
 		- ... and the installed ones, as-happens now.
 
-	* Results report wording should account for single QPKG actions.
-		- Don't pluralise "package actions" when there was only one.
-
 	* 'sherpa' and 'opkg' were not available after installing Entware.
 		- Entware installation may be corrupt.
 		- But this shouldn't affect the sherpa command `/usr/sbin/sherpa`.

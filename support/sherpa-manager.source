@@ -6060,7 +6060,7 @@ ShowReportAllActionResults()
 		if [[ $show_action_results_ok = true || $show_action_results_skipped = true || $show_action_results_failed = true || $show_action_results_zero = true ]]; then
 			{
 
-			DisplayAsHelpTitle "action$(Pluralise "$e") started @ $(FormatSecondsAsTime "$a"), ended @ $(FormatSecondsAsTime "$b"), elapsed = $(FormatSecondsAsDuration "$(CalcSecondsDiff "$a" "$b")")"
+			DisplayAsHelpTitle "package action$(Pluralise "$e") started @ $(FormatSecondsAsTime "$a"), ended @ $(FormatSecondsAsTime "$b"), elapsed = $(FormatSecondsAsDuration "$(CalcSecondsDiff "$a" "$b")")"
 
 			[[ $show_action_results_ok = true ]] && ShowReportActionResults ok
 			[[ $show_action_results_skipped = true ]] && ShowReportActionResults skipped
@@ -6086,40 +6086,63 @@ ShowReportActionResults()
 	#	$1 = `ok`, `skipped`, `failed`
 
 	local action=''
+	local -i count=0
 	local -i datetime=0
 	local -i duration=0
-	local found=false
 	local package_name=''
 	local package_type=''
-	local plural='these actions'
 	local -i quantity=0
 	local reason=''
 	local result=''
-	local singular='this action'
 
 	if [[ -e $SESS_ACTION_RESULTS_PATHFILE ]]; then
+		# Obtain count of same results. Need to know if action applied to one QPKG or many.
+
 		while IFS='|' read -r datetime action quantity package_name package_type result duration reason; do
 			if [[ $result = "$1" ]] || [[ $1 = skipped && ($result = 'skipped-ok' || $result = 'skipped-error' || $result = 'skipped-abort') ]]; then
 				[[ $action = status && $useropt_show_all_results = false ]] && continue		# Don't need to see the result of `status` checks unless a 'results' report has been requested.
-
-				case $result in
-					ok)
-						[[ $found = false ]] && DisplayAsHelpTitle "$plural completed $(TextBrightGreen OK):"
-						;;
-					skipped*)
-						[[ $found = false ]] && DisplayAsHelpTitle "$plural were $(TextBrightOrange skipped) (and why):"
-						;;
-					failed)
-						[[ $found = false ]] && DisplayAsHelpTitle "$plural $(TextBrightRed failed) (and why):"
-				esac
-
-				ShowAsActionLogDetail "$datetime" "$package_name" "$action" "$result" "$duration" "$reason" "$package_type" "$quantity"
-				found=true
+				((count++))
+				[[ $count -gt 1 ]] && break			# Two-or-more of the same action means must pluralise messages.
 			fi
 		done < "$SESS_ACTION_RESULTS_PATHFILE"
+
+		# Display action titles and QPKGs.
+
+		if [[ $count -eq 1 ]]; then
+			case $1 in
+				ok)
+					DisplayAsHelpTitle "this package action completed $(TextBrightGreen OK):"
+					;;
+				skipped)
+					DisplayAsHelpTitle "this package action was $(TextBrightOrange skipped) (and why):"
+					;;
+				failed)
+					DisplayAsHelpTitle "this package action $(TextBrightRed failed) (and why):"
+			esac
+		elif [[ $count -gt 1 ]]; then
+			case $1 in
+				ok)
+					DisplayAsHelpTitle "these package actions completed $(TextBrightGreen OK):"
+					;;
+				skipped)
+					DisplayAsHelpTitle "these package actions were $(TextBrightOrange skipped) (and why):"
+					;;
+				failed)
+					DisplayAsHelpTitle "these package actions $(TextBrightRed failed) (and why):"
+			esac
+		fi
+
+		if [[ $count -ge 1 ]]; then
+			while IFS='|' read -r datetime action quantity package_name package_type result duration reason; do
+				if [[ $result = "$1" ]] || [[ $1 = skipped && ($result = 'skipped-ok' || $result = 'skipped-error' || $result = 'skipped-abort') ]]; then
+					[[ $action = status && $useropt_show_all_results = false ]] && continue		# Don't need to see the result of `status` checks unless a 'results' report has been requested.
+					ShowAsActionLogDetail "$datetime" "$package_name" "$action" "$result" "$duration" "$reason" "$package_type" "$quantity"
+				fi
+			done < "$SESS_ACTION_RESULTS_PATHFILE"
+		fi
 	fi
 
-	if [[ $found = false ]]; then
+	if [[ $count -eq 0 ]]; then
 		case $1 in
 			ok)
 				DisplayAsHelpTitle "no package actions completed $(TextBrightGreen OK)."
