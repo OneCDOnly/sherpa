@@ -6078,8 +6078,11 @@ ShowReportAllActionResults()
 			} > "$REPORT_OUTPUT_PATHFILE"
 
 			if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
-				$CAT_CMD "$REPORT_OUTPUT_PATHFILE"
+				DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
+			else
+				ShowAsError 'no information to display'
 			fi
+
 		fi
 	fi
 
