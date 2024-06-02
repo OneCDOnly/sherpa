@@ -1,9 +1,5 @@
 Observed issues:
 
-	* Report completion time is miscalculated.
-		- Currently using the start time of the last action performed, not the finish time.
-		- Use last action start time + action duration to get finish time.
-
 	* When attempting to view file versions with-and-without correct syntax fails in several ways:
 		-------------------------------------------------------------------------------------------------------------------------
 		[~] # sherpa list versions
