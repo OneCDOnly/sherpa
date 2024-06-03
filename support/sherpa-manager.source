@@ -1460,7 +1460,7 @@ ProcAction()
 				fork_progress_prefix="$ACTION_PRESENT_MSG $([[ $TIER != all ]] && echo "$TIER ")$(Uppercase "$PACKAGE_TYPE")$(Pluralise "$total_count")"
 			fi
 
-			AdjustMaxForks "$TARGET_ACTION"
+			SetMaxForks "$TARGET_ACTION"
 			InitForkCounts
 			OpenActionMsgPipe
 
@@ -1481,7 +1481,7 @@ ProcAction()
 				ReadFromActionMsgPipe msg1_key msg1_value msg2_key msg2_value
 
 				case $msg1_key in
-					env)			# Change the state of the sherpa environment.
+					env)			# Change the state of the parent environment.
 						eval "$msg1_value"	# Run this as executable.
 
 						;;
@@ -1657,7 +1657,7 @@ CloseActionMsgPipe()
 
 	}
 
-AdjustMaxForks()
+SetMaxForks()
 	{
 
 	# Input:
@@ -2582,7 +2582,7 @@ MatchVerb()
 			printf install
 			;;
 		backup|clean|colo?(u)r?(ful)|@(dis|en)able|follow|help|list|paste|reassign|rebuild|reinstall|reset|restore|sign|terse)
-			echo -n "$a"
+			printf '%s' "$a"
 			;;
 		c|check)
 			printf check
@@ -2647,7 +2647,7 @@ MatchNoun()
 			printf backups
 			;;
 		backedup|canbackup|enabled|installable|installed|missing|results|show|?(un)stable)
-			echo -n "$a"
+			printf '%s' "$a"
 			;;
 		d|deps|dependencies|dependent?(s))
 			printf dependent
@@ -4158,7 +4158,7 @@ LenANSIDiff()
 	local original=${1:-}
 	local stripped=$(StripANSICodes "$original")
 
-	echo -n "$((${#original}-${#stripped}))"
+	printf '%s' "$((${#original}-${#stripped}))"
 
 	return 0
 
@@ -4228,6 +4228,22 @@ CalcMaxStatusReportCols()
 # 	return 0
 #
 # 	}
+
+AddSeparators()
+	{
+
+	# Input:
+	# 	$1 = list of abbreviations to format with commas.
+
+	local a=''
+
+	if [[ -n ${1:-} ]]; then
+		a=$(Trim "$1"); a=${a// /, }	# insert separators
+	fi
+
+	printf '%s' "$a"
+
+	}
 
 DisplayAsProjSynExam()
 	{
@@ -4319,27 +4335,31 @@ DisplayAsPacksReportTitleLine()
 	{
 
 	local a=''
+	local -i n=0
 
 	printf '\n'
 
 	# column 1: package name
+	((n++))
 
-	if [[ $report_cols_max -ge 1 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		a="${CHARS_BULLET}QPKG name:"
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 2: application version
+	((n++))
 
-	if [[ $report_cols_max -ge 2 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Application version:"
 		printf "%-$((PACKAGE_APP_VER_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 3: package description
+	((n++))
 
-	if [[ $report_cols_max -ge 3 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Description:"
 		printf "%-$((PACKAGE_DESCRIPTION_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -4362,6 +4382,7 @@ DisplayAsPacksReportItemLine()
 # 	local author_msg=$CHARS_BLANK
 	local description_msg=$CHARS_BLANK
 	local mode=''
+	local -i n=0
 	local name=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
 		local description=$(QpkgGetDesc "$name")
 		local notes=$(QpkgGetNote "$name")
@@ -4404,21 +4425,24 @@ DisplayAsPacksReportItemLine()
 	esac
 
 	# column 1: package name
+	((n++))
 
-	if [[ $report_cols_max -ge 1 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 	fi
 
 	# column 2: application version
+	((n++))
 
-	if [[ $report_cols_max -ge 2 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_APP_VER_COL_WIDTH+$(LenANSIDiff "$app_ver_msg")))s" "$app_ver_msg"
 	fi
 
 	# column 3: package description
+	((n++))
 
-	if [[ $report_cols_max -ge 3 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_DESCRIPTION_COL_WIDTH+$(LenANSIDiff "$description_msg")))s" "$description_msg"
 
@@ -4435,27 +4459,31 @@ DisplayAsStatusReportTitleLine()
 	{
 
 	local a=''
+	local -i n=0
 
 	printf '\n'
 
 	# column 1: package name
+	((n++))
 
-	if [[ $report_cols_max -ge 1 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		a="${CHARS_BULLET}QPKG name:"
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 2: package statuses
+	((n++))
 
-	if [[ $report_cols_max -ge 2 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}QPKG statuses:"
 		printf "%-$((PACKAGE_STATUS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 3: package version (variable-width)
+	((n++))
 
-	if [[ $report_cols_max -ge 3 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}QPKG version"
 		QPKGs-ISupgradable.IsAny && a+=" ($(TextBrightOrange new))"
@@ -4464,16 +4492,18 @@ DisplayAsStatusReportTitleLine()
 	fi
 
 	# column 4: application version
+	((n++))
 
-	if [[ $report_cols_max -ge 4 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Application version:"
 		printf "%-$((PACKAGE_APP_VER_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 5: package installation path
+	((n++))
 
-	if [[ $report_cols_max -ge 5 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}QPKG installation path:"
 		printf "%-$((PACKAGE_PATH_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -4491,6 +4521,7 @@ DisplayAsStatusReportItemLine()
 	local app_ver=''
 	local app_ver_msg=$CHARS_BLANK
 	local mode=''
+	local -i n=0
 	local name_msg=$CHARS_BLANK
 	local path_msg=$CHARS_BLANK
 	local status=''
@@ -4590,35 +4621,40 @@ DisplayAsStatusReportItemLine()
 	fi
 
 	# column 1: package name
+	((n++))
 
-	if [[ $report_cols_max -ge 1 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 	fi
 
 	# column 2: package statuses
+	((n++))
 
-	if [[ $report_cols_max -ge 2 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_STATUS_COL_WIDTH+$(LenANSIDiff "$status_msg")))s" "$status_msg"
 	fi
 
 	# column 3: package version (variable-width)
+	((n++))
 
-	if [[ $report_cols_max -ge 3 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((${package_ver_final_col_width:=0}+$(LenANSIDiff "$ver_msg")))s" "$ver_msg"
 	fi
 
 	# column 4: application version
+	((n++))
 
-	if [[ $report_cols_max -ge 4 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_APP_VER_COL_WIDTH+$(LenANSIDiff "$app_ver_msg")))s" "$app_ver_msg"
 	fi
 
 	# column 5: package installation path
+	((n++))
 
-	if [[ $report_cols_max -ge 5 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_PATH_COL_WIDTH+$(LenANSIDiff "$path_msg")))s" "$path_msg"
 	fi
@@ -4631,27 +4667,31 @@ DisplayAsReposReportTitleLine()
 	{
 
 	local a=''
+	local -i n=0
 
 	printf '\n'
 
 	# column 1: package name
+	((n++))
 
-	if [[ $report_cols_max -ge 1 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		a="${CHARS_BULLET}QPKG name:"
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 2: package installation date
+	((n++))
 
-	if [[ $report_cols_max -ge 2 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Install date:"
 		printf "%-$((PACKAGE_INSTALL_DATE_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 3: package repository
+	((n++))
 
-	if [[ $report_cols_max -ge 3 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Repository:"
 		printf "%-$((PACKAGE_REPO_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -4672,6 +4712,7 @@ DisplayAsReposReportItemLine()
 	local install_date=$(QpkgGetInstallDate)
 	local install_date_msg=$CHARS_BLANK
 	local mode=''
+	local -i n=0
 	local name_msg=$CHARS_BLANK
 	local store_id=$(QpkgGetStoreID)
 		local assigned_repo=$(GetRepoURLFromStoreID "$store_id")
@@ -4743,21 +4784,24 @@ DisplayAsReposReportItemLine()
 	esac
 
 	# column 1: package qpkg_name
+	((n++))
 
-	if [[ $report_cols_max -ge 1 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 	fi
 
 	# column 2: package installation date
+	((n++))
 
-	if [[ $report_cols_max -ge 2 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_INSTALL_DATE_COL_WIDTH+$(LenANSIDiff "$install_date_msg")))s" "$install_date_msg"
 	fi
 
 	# column 3: package repository
+	((n++))
 
-	if [[ $report_cols_max -ge 3 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_REPO_COL_WIDTH+$(LenANSIDiff "$assigned_repo_msg")))s" "$assigned_repo_msg"
 	fi
@@ -4770,27 +4814,31 @@ DisplayAsAbsReportTitleLine()
 	{
 
 	local a=''
+	local -i n=0
 
 	printf '\n'
 
 	# column 1: package name
+	((n++))
 
-	if [[ $report_cols_max -ge 1 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		a="${CHARS_BULLET}QPKG name:"
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 2: QPKG is installed
+	((n++))
 
-	if [[ $report_cols_max -ge 2 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Installed?"
 		printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 3: package abbreviations
+	((n++))
 
-	if [[ $report_cols_max -ge 3 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Acceptable QPKG name abbreviations and aliases:"
 		printf "%-$((PACKAGE_ABBS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -4809,6 +4857,7 @@ DisplayAsAbsReportItemLine()
 	local abs_msg=''
 	local installed_msg=$CHARS_BLANK
 	local mode=''
+	local -i n=0
 	local name_msg=$CHARS_BLANK
 
 	if QpkgIsMissing; then
@@ -4850,21 +4899,24 @@ DisplayAsAbsReportItemLine()
 	esac
 
 	# column 1: package name
+	((n++))
 
-	if [[ $report_cols_max -ge 1 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 	fi
 
 	# column 2: package is installed?
+	((n++))
 
-	if [[ $report_cols_max -ge 2 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+$(LenANSIDiff "$installed_msg")))s" "$installed_msg"
 	fi
 
 	# column 3: package abbreviations
+	((n++))
 
-	if [[ $report_cols_max -ge 3 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_ABBS_COL_WIDTH+$(LenANSIDiff "$abs_msg")))s" "$abs_msg"
 	fi
@@ -4873,95 +4925,89 @@ DisplayAsAbsReportItemLine()
 
 	}
 
-AddSeparators()
-	{
-
-	# Input:
-	# 	$1 = list of abbreviations to format with commas.
-
-	local a=''
-
-	if [[ -n ${1:-} ]]; then
-		a=$(Trim "$1"); a=${a// /, }	# insert separators
-	fi
-
-	echo -n "$a"
-
-	}
-
 DisplayAsDepsReportTitleLine()
 	{
 
 	local a=''
+	local -i n=0
 
 	printf '\n'
 
 	# column 1: package name.
+	((n++))
 
-	if [[ $report_cols_max -ge 1 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		a="${CHARS_BULLET}QPKG name:"
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 2: package dependencies.
+	((n++))
 
-	if [[ $report_cols_max -ge 2 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Dependencies:"
 		printf "%-$((PACKAGE_DEPENDENCIES_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 3: QPKG is installed?
+	((n++))
 
-	if [[ $report_cols_max -ge 3 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Installed?"
 		printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 4: QPKG is enabled?
+	((n++))
 
-	if [[ $report_cols_max -ge 4 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Enabled?"
 		printf "%-$((PACKAGE_ENABLED_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 5: QPKG is managed by sherpa?
+	((n++))
 
-	if [[ $report_cols_max -ge 5 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Managed?"
 		printf "%-$((PACKAGE_MANAGED_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 6: minimum NAS RAM required.
+	((n++))
 
-	if [[ $report_cols_max -ge 6 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Min. RAM:"
 		printf "%-$((PACKAGE_MIN_RAM_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 7: minimum OS fimware version supported.
+	((n++))
 
-	if [[ $report_cols_max -ge 7 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Min. OS:"
 		printf "%-$((PACKAGE_MIN_OS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 8: maximum OS fimware version supported.
+	((n++))
 
-	if [[ $report_cols_max -ge 8 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Max. OS:"
 		printf "%-$((PACKAGE_MAX_OS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 9: arch is compatible?
+	((n++))
 
-	if [[ $report_cols_max -ge 9 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Supported arch?"
 		printf "%-$((PACKAGE_ARCH_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -4994,6 +5040,7 @@ DisplayAsDepsReportItemLine()
 	local min_ram=$(QpkgGetMinRAM "$qpkg_name")
 	local min_ram_msg=$CHARS_BLANK
 	local mode=''
+	local -i n=0
 	local name_msg=$CHARS_BLANK
 
 	[[ -z $deps_raw ]] && deps_raw=none
@@ -5213,63 +5260,72 @@ DisplayAsDepsReportItemLine()
 	esac
 
 	# column 1: package name.
+	((n++))
 
-	if [[ $report_cols_max -ge 1 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 	fi
 
 	# column 2: package dependencies.
+	((n++))
 
-	if [[ $report_cols_max -ge 2 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_DEPENDENCIES_COL_WIDTH+$(LenANSIDiff "$deps_msg")))s" "$deps_msg"
 	fi
 
 	# column 3: package is installed?
+	((n++))
 
-	if [[ $report_cols_max -ge 3 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+$(LenANSIDiff "$installed_msg")))s" "$installed_msg"
 	fi
 
 	# column 4: package is enabled?
+	((n++))
 
-	if [[ $report_cols_max -ge 4 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_ENABLED_COL_WIDTH+$(LenANSIDiff "$enabled_msg")))s" "$enabled_msg"
 	fi
 
 	# column 5: package is managed by sherpa?
+	((n++))
 
-	if [[ $report_cols_max -ge 5 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_MANAGED_COL_WIDTH+$(LenANSIDiff "$managed_msg")))s" "$managed_msg"
 	fi
 
 	# column 6: minimum NAS RAM required.
+	((n++))
 
-	if [[ $report_cols_max -ge 6 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_MIN_RAM_COL_WIDTH+$(LenANSIDiff "$min_ram_msg")))s" "$min_ram_msg"
 	fi
 
 	# column 7: minimum OS fimware version supported.
+	((n++))
 
-	if [[ $report_cols_max -ge 7 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_MIN_OS_COL_WIDTH+$(LenANSIDiff "$min_os_msg")))s" "$min_os_msg"
 	fi
 
 	# column 8: maximum OS fimware version supported.
+	((n++))
 
-	if [[ $report_cols_max -ge 8 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_MAX_OS_COL_WIDTH+$(LenANSIDiff "$max_os_msg")))s" "$max_os_msg"
 	fi
 
 	# column 9: NAS arch is compatible?
+	((n++))
 
-	if [[ $report_cols_max -ge 9 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_ARCH_COL_WIDTH+$(LenANSIDiff "$arch_msg")))s" "$arch_msg"
 	fi
@@ -5604,27 +5660,31 @@ DisplayAsBacksReportTitleLine()
 	{
 
 	local a=''
+	local -i n=0
 
 	printf '\n'
 
 	# column 1: backup filename
+	((n++))
 
-	if [[ $report_cols_max -ge 1 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		a="${CHARS_BULLET}Backup file:"
 		printf "%-$((FILE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 2: filesize in bytes
+	((n++))
 
-	if [[ $report_cols_max -ge 2 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Size in bytes:"
 		printf "%-$((FILE_BYTES_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 3: last backup date
+	((n++))
 
-	if [[ $report_cols_max -ge 3 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Backup date:"
 		printf "%-$((FILE_CHANGE_DATE_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -5651,6 +5711,7 @@ DisplayAsBacksReportItemLine()
 	local file_name_msg=$CHARS_BLANK
 	local local_highlight_backups_older_than=${4:-'1 week ago'}
 	local mode=''
+	local -i n=0
 
 	if [[ ${epoch_time%.*} -lt $(/bin/date --date="$local_highlight_backups_older_than" +%s) ]]; then
 		mode=highlighted
@@ -5675,21 +5736,24 @@ DisplayAsBacksReportItemLine()
 	esac
 
 	# column 1: backup filename
+	((n++))
 
-	if [[ $report_cols_max -ge 1 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%-$((FILE_NAME_COL_WIDTH+$(LenANSIDiff "$file_name_msg")))s" "$file_name_msg"
 	fi
 
 	# column 2: filesize in bytes
+	((n++))
 
-	if [[ $report_cols_max -ge 2 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%$((FILE_BYTES_COL_WIDTH+$(LenANSIDiff "$file_bytes_msg")))s" "$file_bytes_msg "	# append 1 x whitespace char to force right-justified numbers to the left a bit. Looks nicer.
 	fi
 
 	# column 3: last backup date
+	((n++))
 
-	if [[ $report_cols_max -ge 3 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((FILE_CHANGE_DATE_COL_WIDTH+$(LenANSIDiff "$epoch_time_msg")))s" "$epoch_time_msg"
 	fi
@@ -6572,7 +6636,7 @@ GetLogSessStartLine()
 
 	local -i linenum=$(($($GREP_CMD -n 'SCRIPT:.*started:' "$SESS_TAIL_PATHFILE" | $TAIL_CMD -n${1:-1} | head -n1 | cut -d':' -f1)-1))
 	[[ $linenum -lt 1 ]] && linenum=1
-	echo -n "$linenum"
+	printf '%s' "$linenum"
 
 	}
 
@@ -6584,7 +6648,7 @@ GetLogSessFinishLine()
 
 	local -i linenum=$(($($GREP_CMD -n 'SCRIPT:.*finished:' "$SESS_TAIL_PATHFILE" | $TAIL_CMD -n${1:-1} | cut -d':' -f1)+2))
 	[[ $linenum -eq 2 ]] && linenum=3
-	echo -n "$linenum"
+	printf '%s' "$linenum"
 
 	}
 
@@ -6671,7 +6735,7 @@ ShowReportVersions()
 	Display "manager: ${THIS_SCRIPT_VER:-undefined}"
 	Display "loader: ${LOADER_SCRIPT_VER:-undefined}"
 	Display "objects: ${OBJECTS_VER:-undefined}"
-	Display "packages: ${PACKAGES_EPOCH}$([[ $PACKAGES_EPOCH != undefined ]] && echo -n " ($(ConvertSecondsToFullDate "$PACKAGES_EPOCH"))")"
+	Display "packages: ${PACKAGES_EPOCH}$([[ $PACKAGES_EPOCH != undefined ]] && printf '%s' " ($(ConvertSecondsToFullDate "$PACKAGES_EPOCH"))")"
 
 	return 0
 
@@ -8339,7 +8403,7 @@ FindNextFD()
 
 	for fd in {10..100}; do
 		if [[ ! -e /proc/$$/fd/$fd ]]; then
-			echo -n "$fd"
+			printf '%s' "$fd"
 
 			return 0
 		fi
@@ -8641,7 +8705,7 @@ HardwareGetCPUCores()
 
 	[[ $n -eq 0 ]] && n=$($GREP_CMD -c '^Processor' /proc/cpuinfo)
 
-	echo -n "$n"
+	printf '%s' "$n"
 
 	}
 
@@ -8751,7 +8815,7 @@ QpkgGetEntwareType()
 UserGetSudoUID()
 	{
 
-	echo -n "${SUDO_UID:-undefined}"
+	printf '%s' "${SUDO_UID:-undefined}"
 
 	}
 
@@ -9096,8 +9160,7 @@ SaveActionResultToLog()
 		return 1
 	fi
 
-	# Write new action results entry.
-
+	# Add new action results entry.
 	echo "$STARTTIME|$ACTION|$QTY|$qpkg_name|$PACKAGE_TYPE|$RESULT|$DURATION|$REASON" >> "$SESS_ACTION_RESULTS_PATHFILE"
 
 	# Remove previous action duration entry if one exists.
@@ -10621,7 +10684,7 @@ QpkgGetApplVer()
 	[[ -n $a ]] || return
 	[[ $a = dynamic ]] && QpkgIsInstalled && ! QpkgIsAutoUpdate && a=static
 
-	echo -n "$a"
+	printf '%s' "$a"
 
 	return 0
 
@@ -10647,7 +10710,7 @@ QpkgGetAvailVer()
 	if [[ -n ${1:-} ]]; then
 		for i in "${!QPKG_NAME[@]}"; do
 			if [[ ${QPKG_NAME[$i]} = "$1" ]]; then
-				echo -n "${QPKG_VERSION[$i]}"
+				printf '%s' "${QPKG_VERSION[$i]}"
 
 				return 0
 			fi
@@ -10657,7 +10720,7 @@ QpkgGetAvailVer()
 		[[ $a = default ]] && a=${QPKG_VERSION[$qpkg_default_index]}
 		[[ $a != none ]] || return
 
-		echo -n "$a"
+		printf '%s' "$a"
 
 		return 0
 	fi
@@ -10732,7 +10795,7 @@ QpkgGetOriginalPath()
 	if [[ ${#QPKGs_were_installed_name[@]} -gt 0 ]]; then
 		for i in "${!QPKGs_were_installed_name[@]}"; do
 			[[ ${QPKGs_were_installed_name[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]] || continue
-			echo -n "${QPKGs_were_installed_path[$i]}"
+			printf '%s' "${QPKGs_were_installed_path[$i]}"
 
 			return 0
 		done
@@ -10761,7 +10824,7 @@ QpkgGetPathFilename()
 
 	[[ $(Lowercase "${a##*.}") != qpkg ]] && a=${a%.*}.qpkg		# Swap `zip` for `qpkg` here (only for compatibilty with `QDK.zip`).
 
-	echo -n "$QPKG_DL_PATH/$($BASENAME_CMD "$a")"
+	printf '%s' "$QPKG_DL_PATH/$($BASENAME_CMD "$a")"
 
 	return 0
 
@@ -10787,7 +10850,7 @@ QpkgGetHash()
 	[[ $a = default ]] && a=${QPKG_HASH[$qpkg_default_index]}
 	[[ $a != none ]] || return
 
-	echo -n "$a"
+	printf '%s' "$a"
 
 	return 0
 
@@ -10814,7 +10877,7 @@ QpkgGetURL()
 	if [[ -n ${1:-} ]]; then
 		for i in "${!QPKG_NAME[@]}"; do
 			if [[ ${QPKG_NAME[$i]} = "$1" ]] && [[ ${QPKG_ARCH[$i]} = all || ${QPKG_ARCH[$i]} = "$NAS_QPKG_ARCH" ]]; then
-				echo -n "${QPKG_URL[$i]}"
+				printf '%s' "${QPKG_URL[$i]}"
 
 				return 0
 			fi
@@ -10825,7 +10888,7 @@ QpkgGetURL()
 		a=${QPKG_URL[$qpkg_index]}
 		[[ $a = default ]] && a=${QPKG_URL[$qpkg_default_index]}
 		[[ -n $a ]] || a=none
-		echo -n "$a"
+		printf '%s' "$a"
 	fi
 
 	return 0
@@ -10860,7 +10923,7 @@ QpkgGetMinRAM()
 	fi
 
 	[[ -n $a ]] || a=none
-	echo -n "$a"
+	printf '%s' "$a"
 
 	return 0
 
@@ -10894,7 +10957,7 @@ QpkgGetMinOSVer()
 	fi
 
 	[[ -n $a ]] || a=none
-	echo -n "$a"
+	printf '%s' "$a"
 
 	return 0
 
@@ -10928,7 +10991,7 @@ QpkgGetMaxOSVer()
 	fi
 
 	[[ -n $a ]] || a=none
-	echo -n "$a"
+	printf '%s' "$a"
 
 	return 0
 
@@ -10950,7 +11013,7 @@ QpkgGetMaxOSVer()
 #
 # 	for i in "${!QPKG_NAME[@]}"; do
 # 		[[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]] || continue
-# 		echo -n "${QPKG_AUTHOR[$i]}"
+# 		printf '%s' "${QPKG_AUTHOR[$i]}"
 #
 # 		return 0
 # 	done
@@ -10975,7 +11038,7 @@ QpkgGetMaxOSVer()
 #
 # 	for i in "${!QPKG_NAME[@]}"; do
 # 		[[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]] || continue
-# 		echo -n "${QPKG_AUTHOR_EMAIL[$i]}"
+# 		printf '%s' "${QPKG_AUTHOR_EMAIL[$i]}"
 #
 # 		return 0
 # 	done
@@ -11000,7 +11063,7 @@ QpkgGetMaxOSVer()
 #
 # 	for i in "${!QPKG_NAME[@]}"; do
 # 		[[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]] || continue
-# 		echo -n "${QPKG_APPL_AUTHOR[$i]}"
+# 		printf '%s' "${QPKG_APPL_AUTHOR[$i]}"
 #
 # 		return 0
 # 	done
@@ -11025,7 +11088,7 @@ QpkgGetMaxOSVer()
 #
 # 	for i in "${!QPKG_NAME[@]}"; do
 # 		[[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]] || continue
-# 		echo -n "${QPKG_APPL_AUTHOR_EMAIL[$i]}"
+# 		printf '%s' "${QPKG_APPL_AUTHOR_EMAIL[$i]}"
 #
 # 		return 0
 # 	done
@@ -11062,7 +11125,7 @@ QpkgGetDesc()
 	fi
 
 	[[ -n $a ]] || a=none
-	echo -n "$a"
+	printf '%s' "$a"
 
 	return 0
 
@@ -11090,7 +11153,7 @@ QpkgGetNote()
 	[[ $a = default ]] && a=${QPKG_NOTE[$qpkg_default_index]}
 	[[ $a = none ]] && return 1
 
-	echo -n "$a"
+	printf '%s' "$a"
 
 	return 0
 
@@ -11124,7 +11187,7 @@ QpkgGetAbbrvs()
 	fi
 
 	[[ -n $a ]] || a=none
-	echo -n "$a"
+	printf '%s' "$a"
 
 	return 0
 
@@ -11155,7 +11218,7 @@ QpkgGetDependencies()
 	[[ $g = default ]] && g=${QPKG_DEPENDS_ON[$qpkg_default_index]}
 
 	if [[ $g != *'|'* ]]; then		# no alternatives were listed.
-		echo -n "$g"
+		printf '%s' "$g"
 
 		return 0
 	fi
@@ -11198,7 +11261,7 @@ QpkgGetDependencies()
 		fi
 	done
 
-	echo -n "$out"
+	printf '%s' "$out"
 
 	return 0
 
@@ -11231,7 +11294,7 @@ QpkgGetDependents()
 	fi
 
 	if [[ ${#ar[@]} -gt 0 ]]; then
-		echo -n "${ar[@]}"
+		printf '%s' "${ar[@]}"
 
 		return 0
 	fi
@@ -11260,7 +11323,7 @@ QpkgGetIPKs()
 	[[ $a = default ]] && a=${QPKG_REQUIRES_IPKS[$qpkg_default_index]}
 	[[ $a = none ]] && return 1
 
-	echo -n "$a"
+	printf '%s' "$a"
 
 	return 0
 
@@ -11286,7 +11349,7 @@ QpkgGetActiveTest()
 	[[ $a = default ]] && a=${QPKG_TEST_FOR_ACTIVE[$qpkg_default_index]}
 	[[ $a = none ]] && return 1
 
-	echo -n "$a"
+	printf '%s' "$a"
 
 	return 0
 
@@ -11329,7 +11392,7 @@ QpkgMatchAbbrv()
 
 		for j in "${!ar[@]}"; do
 			[[ ${ar[$j]} = "$1" ]] || continue
-			echo -n "${QPKG_NAME[$i]}"
+			printf '%s' "${QPKG_NAME[$i]}"
 			z=0
 			break 2
 		done
@@ -11960,9 +12023,9 @@ Capitalise()
 	[[ -n ${1:-} ]] || return
 
 	if [[ $1 == sherpa* ]]; then
-		echo -n "$1"
+		printf '%s' "$1"
 	else
-		echo -n "$(Uppercase ${1:0:1})${1:1}"
+		printf '%s' "$(Uppercase ${1:0:1})${1:1}"
 	fi
 
 	}
@@ -12044,7 +12107,7 @@ FormatAsThous()
 		fi
 	done
 
-	echo -n "$c"
+	printf '%s' "$c"
 
 	return 0
 
@@ -12541,9 +12604,9 @@ CalcAmountDiff()
 	#	stdout = difference.
 
 	if [[ $2 -gt $1 ]]; then
-		echo -n "$(($2-$1))"
+		printf '%s' "$(($2-$1))"
 	else
-		echo -n "$(($1-$2))"
+		printf '%s' "$(($1-$2))"
 	fi
 
 	} 2> /dev/null
@@ -12558,7 +12621,7 @@ CalcMillisecondsDiffFromNanoseconds()
 	# Output:
 	#	stdout = difference in milliseconds.
 
-	echo -n "$((($2-$1)/(10**6)))"
+	printf '%s' "$((($2-$1)/(10**6)))"
 
 	} 2> /dev/null
 
@@ -12625,7 +12688,7 @@ ConvertMillisecondsToSeconds()
 	# Output:
 	#	stdout = seconds.
 
-	echo -n "$(($1/(10**3)))"
+	printf '%s' "$(($1/(10**3)))"
 
 	} 2> /dev/null
 
@@ -12648,7 +12711,7 @@ ConvertMillisecondsToFuncDuration()
 	#	$1 = duration in milliseconds.
 
 	if [[ ${1:-0} -lt 30000 ]]; then
-		echo -n "$(FormatAsThous "${1:-0}")ms" | $TAIL_CMD -n1			# Prevent "broken pipe" error: https://superuser.com/a/642932
+		printf '%s' "$(FormatAsThous "${1:-0}")ms" | $TAIL_CMD -n1			# Prevent "broken pipe" error: https://superuser.com/a/642932
 	else
 		ConvertMillisecondsToDuration "$1"
 	fi
@@ -12664,7 +12727,7 @@ ConvertNanosecondsToMilliseconds()
 	# Output:
 	#	stdout = milliseconds.
 
-	echo -n "$(($1/(10**6)))"
+	printf '%s' "$(($1/(10**6)))"
 
 	} 2> /dev/null
 
@@ -13048,7 +13111,7 @@ PercFrac()
 		c="$((200*(a+1)/(b+1)%2+100*(a+1)/(b+1)))%"
 	fi
 
-	echo -n "$c ($(TextBrightWhite "$a")/$(TextBrightWhite "$b"))"
+	printf '%s' "$c ($(TextBrightWhite "$a")/$(TextBrightWhite "$b"))"
 
 	return 0
 
