@@ -194,8 +194,8 @@ ShowResults()
 	[[ $show_suggest_raise_issue = true ]] && Help.Issue:Show
 
 	DebugInfoMinSepr
-	DebugScript finished "$(FormatNowAsFullDate)"
-	DebugScript 'elapsed time' "$(FormatSecondsAsHoursMinutesSeconds "$(($(FormatNowAsSeconds)-SCRIPT_STARTSECONDS))")"
+	DebugScript finished "$(ConvertNowToFullDate)"
+	DebugScript 'elapsed time' "$(ConvertSecondsToDuration "$(($(ConvertNowToSeconds)-SCRIPT_STARTSECONDS))")"
 	DebugInfoMajSepr
 
 	[[ $title_shown = true ]] && Display 			# Final on-screen linespace.
@@ -211,7 +211,7 @@ DebugLogInit()
 	{
 
 	DebugInfoMajSepr
-	DebugScript started "$(FormatSecondsAsFullDate "$SCRIPT_STARTSECONDS")"
+	DebugScript started "$(ConvertSecondsToFullDate "$SCRIPT_STARTSECONDS")"
 	DebugScript PID "$$"
 	DebugInfoMinSepr
 	DebugInfo 'Markers: (**) detected, (II) information, (WW) warning, (EE) error, (LL) log file, (--) processing,'
@@ -3166,7 +3166,7 @@ IsThisFileRecent()
 	# Examine `change` time as this is updated even if file content isn't modified.
 
 	# https://stackoverflow.com/a/55622661
-	[[ -e ${1:-} && $((($(FormatNowAsSeconds)-$(/usr/bin/stat "$1" -c %Z))/60)) -le ${2:-1440} ]]
+	[[ -e ${1:-} && $((($(ConvertNowToSeconds)-$(/usr/bin/stat "$1" -c %Z))/60)) -le ${2:-1440} ]]
 
 	}
 
@@ -3810,7 +3810,7 @@ _DirSizeMonitor_()
 			if [[ $stall_seconds -lt 60 ]]; then
 				stall_msg+="$stall_seconds seconds"
 			else
-				stall_msg+=$(FormatSecondsAsHoursMinutesSeconds "$stall_seconds")
+				stall_msg+=$(ConvertSecondsToDuration "$stall_seconds")
 			fi
 
 			# Add a suggestion to cancel if download has stalled for too-long.
@@ -5662,13 +5662,13 @@ DisplayAsBacksReportItemLine()
 
 	case $mode in
 		normal)
-			epoch_time_msg+=$(FormatSecondsAsFullDate "$epoch_time")
+			epoch_time_msg+=$(ConvertSecondsToFullDate "$epoch_time")
 			file_bytes_msg+=$file_bytes
 			file_name_msg+=$file_name
 			/bin/touch "$REPORT_FLAGS_PATH"/backup-file-ok
 			;;
 		highlighted)
-			epoch_time_msg=$(TextBrightRed "${CHARS_ALERT}$(FormatSecondsAsFullDate "$epoch_time")")
+			epoch_time_msg=$(TextBrightRed "${CHARS_ALERT}$(ConvertSecondsToFullDate "$epoch_time")")
 			file_bytes_msg+=$(TextBrightRed "$file_bytes")
 			file_name_msg+=$(TextBrightRed "$file_name")
 			/bin/touch "$REPORT_FLAGS_PATH"/backup-file-old
@@ -5744,7 +5744,7 @@ DisplayAsIndentActionResultDurationReason()
 			action=$1
 	esac
 
-	[[ -n ${3:-} ]] && duration=$(FormatMillisecondsAsHoursMinutesSeconds "$3")
+	[[ -n ${3:-} ]] && duration=$(ConvertMillisecondsToDuration "$3")
 
 	printf "%${ACTION_RESULT_INDENT}s" ''
 
@@ -6055,16 +6055,16 @@ ShowReportAllActionResults()
 			fi
 		done < "$SESS_ACTION_RESULTS_PATHFILE"
 
-		a=$(FormatMillisecondsAsSeconds "$a")
-		b=$(FormatMillisecondsAsSeconds "$b")
-		c=$(FormatMillisecondsAsSeconds "$c")
+		a=$(ConvertMillisecondsToSeconds "$a")
+		b=$(ConvertMillisecondsToSeconds "$b")
+		c=$(ConvertMillisecondsToSeconds "$c")
 
 		[[ $b -gt 0 ]] && e=$((b+c+1))		# Use last non-zero iteration of $datetime as beginning of last action, then add duration to it.
 
 		if [[ $show_action_results_ok = true || $show_action_results_skipped = true || $show_action_results_failed = true || $show_action_results_zero = true ]]; then
 			{
 
-			DisplayAsHelpTitle "package action$(Pluralise "$d") started @ $(FormatSecondsAsTime "$a"), ended @ $(FormatSecondsAsTime "$e"), elapsed = $(FormatSecondsAsHoursMinutesSeconds "$(CalcTimeDiff "$a" "$e")")"
+			DisplayAsHelpTitle "package action$(Pluralise "$d") started @ $(ConvertSecondsToTime "$a"), ended @ $(ConvertSecondsToTime "$e"), elapsed = $(ConvertSecondsToDuration "$(CalcAmountDiff "$a" "$e")")"
 
 			[[ $show_action_results_ok = true ]] && ShowReportActionResults ok
 			[[ $show_action_results_skipped = true ]] && ShowReportActionResults skipped
@@ -6671,7 +6671,7 @@ ShowReportVersions()
 	Display "manager: ${THIS_SCRIPT_VER:-undefined}"
 	Display "loader: ${LOADER_SCRIPT_VER:-undefined}"
 	Display "objects: ${OBJECTS_VER:-undefined}"
-	Display "packages: ${PACKAGES_EPOCH}$([[ $PACKAGES_EPOCH != undefined ]] && echo -n " ($(FormatSecondsAsFullDate "$PACKAGES_EPOCH"))")"
+	Display "packages: ${PACKAGES_EPOCH}$([[ $PACKAGES_EPOCH != undefined ]] && echo -n " ($(ConvertSecondsToFullDate "$PACKAGES_EPOCH"))")"
 
 	return 0
 
@@ -8605,7 +8605,7 @@ OsGetUptime()
 
 	local n=$(< /proc/uptime)
 
-	FormatSecondsAsHoursMinutesSeconds "${n%%.*}"
+	ConvertSecondsToDuration "${n%%.*}"
 
 	}
 
@@ -9086,8 +9086,8 @@ SaveActionResultToLog()
 	local -r CLEAN_ACTION=${ACTION//\"/}
 	local -r RESULT=${5:?${FUNCNAME[0]}'()': undefined result}
 	local -r REASON=${6:-}
-	local -r STARTTIME=$(FormatNanosecondsAsMilliseconds "${!var_safe_name}")
-	local -r DURATION=$(CalcTimeDiff "$STARTTIME" "$(FormatNowAsMilliseconds)")
+	local -r STARTTIME=$(ConvertNanosecondsToMilliseconds "${!var_safe_name}")
+	local -r DURATION=$(CalcAmountDiff "$STARTTIME" "$(ConvertNowToMilliseconds)")
 	local -r ACTION_TIMES_PATHFILE=$ACTION_TIMES_PATH/$CLEAN_ACTION.milliseconds
 
 	if [[ $2 = undefined ]]; then
@@ -12462,7 +12462,7 @@ FuncInit()
 	local var_safe_name=${VAR_NAME//[.-]/_}
 	var_safe_name=${var_safe_name//:/_}
 
-	eval "$var_safe_name=$(FormatNowAsNanoseconds)"
+	eval "$var_safe_name=$(ConvertNowToNanoseconds)"
 
 	DebugAsFuncEn
 
@@ -12477,7 +12477,7 @@ FuncExit()
 	local var_safe_name=${VAR_NAME//[.-]/_}
 	var_safe_name=${var_safe_name//:/_}
 
-	DebugAsFuncEx "${1:-0}" "$(FormatMillisecondsAsDuration "$(CalcMillisecondsDiffFromNanoseconds "${!var_safe_name}" "$(FormatNowAsNanoseconds)")")"
+	DebugAsFuncEx "${1:-0}" "$(ConvertMillisecondsToFuncDuration "$(CalcMillisecondsDiffFromNanoseconds "${!var_safe_name}" "$(ConvertNowToNanoseconds)")")"
 
 	return ${1:-0}
 
@@ -12498,7 +12498,7 @@ FuncForkInit()
 	local -r VAR_NAME=${FUNCNAME[1]}_STARTNANOSECONDS
 	local var_safe_name=${VAR_NAME//[.-]/_}
 	var_safe_name=${var_safe_name//:/_}
-	eval "$var_safe_name=$(FormatNowAsNanoseconds)"
+	eval "$var_safe_name=$(ConvertNowToNanoseconds)"
 
 	DebugAsFuncEn
 
@@ -12514,7 +12514,7 @@ FuncForkExit()
 	var_safe_name=${var_safe_name//:/_}
 
 	SendActionStatus ex
-	DebugAsFuncEx "${1:-0}" "$(FormatMillisecondsAsDuration "$(CalcMillisecondsDiffFromNanoseconds "${!var_safe_name}" "$(FormatNowAsNanoseconds)")")"
+	DebugAsFuncEx "${1:-0}" "$(ConvertMillisecondsToFuncDuration "$(CalcMillisecondsDiffFromNanoseconds "${!var_safe_name}" "$(ConvertNowToNanoseconds)")")"
 
 	if [[ -n $sess_active_pathfile && -e $sess_active_pathfile ]]; then
 		if [[ -s $sess_active_pathfile ]]; then
@@ -12530,17 +12530,21 @@ FuncForkExit()
 
 	}
 
-CalcTimeDiff()
+CalcAmountDiff()
 	{
 
 	# Input:
-	#	$1 = start time in seconds/milliseconds.
-	#	$2 = end time in seconds/milliseconds.
+	#	$1 = e.g. start time in seconds/milliseconds.
+	#	$2 = e.g. end time in seconds/milliseconds.
 
 	# Output:
-	#	stdout = difference in seconds/milliseconds.
+	#	stdout = difference.
 
-	echo -n "$(($2-$1))"
+	if [[ $2 -gt $1 ]]; then
+		echo -n "$(($2-$1))"
+	else
+		echo -n "$(($1-$2))"
+	fi
 
 	} 2> /dev/null
 
@@ -12558,7 +12562,7 @@ CalcMillisecondsDiffFromNanoseconds()
 
 	} 2> /dev/null
 
-FormatSecondsAsFullDate()
+ConvertSecondsToFullDate()
 	{
 
 	# Input:
@@ -12571,7 +12575,7 @@ FormatSecondsAsFullDate()
 
 	} 2> /dev/null
 
-FormatSecondsAsTime()
+ConvertSecondsToTime()
 	{
 
 	# Input:
@@ -12584,7 +12588,7 @@ FormatSecondsAsTime()
 
 	} 2> /dev/null
 
-FormatSecondsAsHoursMinutesSeconds()
+ConvertSecondsToDuration()
 	{
 
 	# http://stackoverflow.com/questions/12199631/convert-seconds-to-hours-minutes-seconds
@@ -12601,6 +12605,8 @@ FormatSecondsAsHoursMinutesSeconds()
 	elif [[ $m -gt 0 ]]; then
 		printf '%01dm:%02ds' "$m" "$s"
 	else
+		[[ $s -eq 0 ]] && s=1			# Never show zero seconds as a duration (bash isn't that fast).
+
 		if [[ $s -eq 1 ]]; then
 			printf '%d second' "$s"
 		else
@@ -12610,31 +12616,33 @@ FormatSecondsAsHoursMinutesSeconds()
 
 	} 2> /dev/null
 
-FormatMillisecondsAsSeconds()
+ConvertMillisecondsToSeconds()
 	{
 
 	# Input:
-	#	$1 = epoch milliseconds.
+	#	$1 = milliseconds.
 
 	# Output:
-	#	stdout = epoch seconds.
+	#	stdout = seconds.
 
 	echo -n "$(($1/(10**3)))"
 
 	} 2> /dev/null
 
-FormatMillisecondsAsHoursMinutesSeconds()
+ConvertMillisecondsToDuration()
 	{
 
 	# Input:
-	#	$1 = a time in milliseconds to convert to `S seconds` or `Mm:SSs`.
+	#	$1 = milliseconds to convert to `HHh:MMm:SSs` or, if less than 1 minute, to `S seconds`.
 
-	FormatSecondsAsHoursMinutesSeconds "$((${1:-0}/1000))"
+	ConvertSecondsToDuration "$(ConvertMillisecondsToSeconds "$1")"
 
 	} 2> /dev/null
 
-FormatMillisecondsAsDuration()
+ConvertMillisecondsToFuncDuration()
 	{
+
+	# NOTE: This formatter is only used by script function timers.
 
 	# Input:
 	#	$1 = duration in milliseconds.
@@ -12642,25 +12650,25 @@ FormatMillisecondsAsDuration()
 	if [[ ${1:-0} -lt 30000 ]]; then
 		echo -n "$(FormatAsThous "${1:-0}")ms" | $TAIL_CMD -n1			# Prevent "broken pipe" error: https://superuser.com/a/642932
 	else
-		FormatSecondsAsHoursMinutesSeconds "$(FormatMillisecondsAsSeconds "$1")"
+		ConvertMillisecondsToDuration "$1"
 	fi
 
 	} 2> /dev/null
 
-FormatNanosecondsAsMilliseconds()
+ConvertNanosecondsToMilliseconds()
 	{
 
 	# Input:
-	#	$1 = epoch nanoseconds.
+	#	$1 = nanoseconds.
 
 	# Output:
-	#	stdout = epoch milliseconds.
+	#	stdout = milliseconds.
 
 	echo -n "$(($1/(10**6)))"
 
 	} 2> /dev/null
 
-FormatNowAsFullDate()
+ConvertNowToFullDate()
 	{
 
 	# Output:
@@ -12670,7 +12678,7 @@ FormatNowAsFullDate()
 
 	} 2> /dev/null
 
-FormatNowAsSeconds()
+ConvertNowToSeconds()
 	{
 
 	# Output:
@@ -12680,17 +12688,17 @@ FormatNowAsSeconds()
 
 	} 2> /dev/null
 
-FormatNowAsMilliseconds()
+ConvertNowToMilliseconds()
 	{
 
 	# Output:
 	#	stdout = epoch milliseconds.
 
-	FormatNanosecondsAsMilliseconds "$(FormatNowAsNanoseconds)"
+	ConvertNanosecondsToMilliseconds "$(ConvertNowToNanoseconds)"
 
 	} 2> /dev/null
 
-FormatNowAsNanoseconds()
+ConvertNowToNanoseconds()
 	{
 
 	# Output:
@@ -13692,7 +13700,7 @@ CaughtEXIT()
 
 	}
 
-readonly SCRIPT_STARTSECONDS=$(FormatNowAsSeconds)
+readonly SCRIPT_STARTSECONDS=$(ConvertNowToSeconds)
 
 Init || exit
 ProcActions
