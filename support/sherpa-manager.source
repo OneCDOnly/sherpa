@@ -194,8 +194,8 @@ ShowResults()
 	[[ $show_suggest_raise_issue = true ]] && Help.Issue:Show
 
 	DebugInfoMinSepr
-	DebugScript finished "$(FormatNowAsFullDate)"
-	DebugScript 'elapsed time' "$(FormatSecsToHoursMinutesSecs "$(($(FormatNowAsSeconds)-SCRIPT_STARTSECONDS))")"
+	DebugScript finished "$(ConvertNowToFullDate)"
+	DebugScript 'elapsed time' "$(ConvertSecondsToDuration "$(($(ConvertNowToSeconds)-SCRIPT_STARTSECONDS))")"
 	DebugInfoMajSepr
 
 	[[ $title_shown = true ]] && Display 			# Final on-screen linespace.
@@ -211,7 +211,7 @@ DebugLogInit()
 	{
 
 	DebugInfoMajSepr
-	DebugScript started "$(FormatSecondsAsFullDate "$SCRIPT_STARTSECONDS")"
+	DebugScript started "$(ConvertSecondsToFullDate "$SCRIPT_STARTSECONDS")"
 	DebugScript PID "$$"
 	DebugInfoMinSepr
 	DebugInfo 'Markers: (**) detected, (II) information, (WW) warning, (EE) error, (LL) log file, (--) processing,'
@@ -418,7 +418,6 @@ LoadCMDs()
 	readonly DIRNAME_CMD=/usr/bin/dirname
 	readonly DU_CMD=/usr/bin/du
 	readonly GREP_CMD=/bin/grep
-	readonly HEAD_CMD=/usr/bin/head
 	readonly LESS_CMD=/bin/less
 	readonly MD5SUM_CMD=/bin/md5sum
 	readonly MKNOD_CMD=/bin/mknod
@@ -456,7 +455,6 @@ CMDsIsOk()
 	IsSysFileExist $DIRNAME_CMD || return
 	IsSysFileExist $DU_CMD || return
 	IsSysFileExist $GREP_CMD || return
-	IsSysFileExist $HEAD_CMD || return
 	# Don't check for `/bin/less` because it's not always there.
 	IsSysFileExist $MD5SUM_CMD || return
 	IsSysFileExist $MKNOD_CMD || return
@@ -785,9 +783,9 @@ DebugLogEnv()
 		DebugFirmware ok 'system load' "$(OsGetSysLoadAverages)"
 	fi
 
-	DebugUserspace ok 'GLIBC' "$(/sbin/ldd --version | $HEAD_CMD -n1 | cut -d' ' -f4) $(/sbin/ldd --version | /bin/grep Copyright)"
+	DebugUserspace ok 'GLIBC' "$(/sbin/ldd --version | head -n1 | cut -d' ' -f4) $(/sbin/ldd --version | /bin/grep Copyright | /bin/sed 's|\$||')"
 
-	DebugUserspace ok '$BASH_VERSION' "$BASH_VERSION"
+	DebugUserspace ok 'bash' "$(bash --version | head -n1)"
 	DebugUserspace ok 'shell options' "$-"
 	DebugUserspace ok 'time in shell' "$(UserGetTimeInShell)"
 
@@ -1462,7 +1460,7 @@ ProcAction()
 				fork_progress_prefix="$ACTION_PRESENT_MSG $([[ $TIER != all ]] && echo "$TIER ")$(Uppercase "$PACKAGE_TYPE")$(Pluralise "$total_count")"
 			fi
 
-			AdjustMaxForks "$TARGET_ACTION"
+			SetMaxForks "$TARGET_ACTION"
 			InitForkCounts
 			OpenActionMsgPipe
 
@@ -1483,7 +1481,7 @@ ProcAction()
 				ReadFromActionMsgPipe msg1_key msg1_value msg2_key msg2_value
 
 				case $msg1_key in
-					env)			# Change the state of the sherpa environment.
+					env)			# Change the state of the parent environment.
 						eval "$msg1_value"	# Run this as executable.
 
 						;;
@@ -1659,7 +1657,7 @@ CloseActionMsgPipe()
 
 	}
 
-AdjustMaxForks()
+SetMaxForks()
 	{
 
 	# Input:
@@ -2584,7 +2582,7 @@ MatchVerb()
 			printf install
 			;;
 		backup|clean|colo?(u)r?(ful)|@(dis|en)able|follow|help|list|paste|reassign|rebuild|reinstall|reset|restore|sign|terse)
-			echo -n "$a"
+			printf '%s' "$a"
 			;;
 		c|check)
 			printf check
@@ -2649,7 +2647,7 @@ MatchNoun()
 			printf backups
 			;;
 		backedup|canbackup|enabled|installable|installed|missing|results|show|?(un)stable)
-			echo -n "$a"
+			printf '%s' "$a"
 			;;
 		d|deps|dependencies|dependent?(s))
 			printf dependent
@@ -3168,7 +3166,7 @@ IsThisFileRecent()
 	# Examine `change` time as this is updated even if file content isn't modified.
 
 	# https://stackoverflow.com/a/55622661
-	[[ -e ${1:-} && $((($(FormatNowAsSeconds)-$(/usr/bin/stat "$1" -c %Z))/60)) -le ${2:-1440} ]]
+	[[ -e ${1:-} && $((($(ConvertNowToSeconds)-$(/usr/bin/stat "$1" -c %Z))/60)) -le ${2:-1440} ]]
 
 	}
 
@@ -3812,7 +3810,7 @@ _DirSizeMonitor_()
 			if [[ $stall_seconds -lt 60 ]]; then
 				stall_msg+="$stall_seconds seconds"
 			else
-				stall_msg+=$(FormatSecsToHoursMinutesSecs "$stall_seconds")
+				stall_msg+=$(ConvertSecondsToDuration "$stall_seconds")
 			fi
 
 			# Add a suggestion to cancel if download has stalled for too-long.
@@ -4160,7 +4158,7 @@ LenANSIDiff()
 	local original=${1:-}
 	local stripped=$(StripANSICodes "$original")
 
-	echo -n "$((${#original}-${#stripped}))"
+	printf '%s' "$((${#original}-${#stripped}))"
 
 	return 0
 
@@ -4230,6 +4228,22 @@ CalcMaxStatusReportCols()
 # 	return 0
 #
 # 	}
+
+AddSeparators()
+	{
+
+	# Input:
+	# 	$1 = list of abbreviations to format with commas.
+
+	local a=''
+
+	if [[ -n ${1:-} ]]; then
+		a=$(Trim "$1"); a=${a// /, }	# insert separators
+	fi
+
+	printf '%s' "$a"
+
+	}
 
 DisplayAsProjSynExam()
 	{
@@ -4321,27 +4335,31 @@ DisplayAsPacksReportTitleLine()
 	{
 
 	local a=''
+	local -i n=0
 
 	printf '\n'
 
 	# column 1: package name
+	((n++))
 
-	if [[ $report_cols_max -ge 1 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		a="${CHARS_BULLET}QPKG name:"
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 2: application version
+	((n++))
 
-	if [[ $report_cols_max -ge 2 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Application version:"
 		printf "%-$((PACKAGE_APP_VER_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 3: package description
+	((n++))
 
-	if [[ $report_cols_max -ge 3 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Description:"
 		printf "%-$((PACKAGE_DESCRIPTION_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -4364,6 +4382,7 @@ DisplayAsPacksReportItemLine()
 # 	local author_msg=$CHARS_BLANK
 	local description_msg=$CHARS_BLANK
 	local mode=''
+	local -i n=0
 	local name=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
 		local description=$(QpkgGetDesc "$name")
 		local notes=$(QpkgGetNote "$name")
@@ -4406,21 +4425,24 @@ DisplayAsPacksReportItemLine()
 	esac
 
 	# column 1: package name
+	((n++))
 
-	if [[ $report_cols_max -ge 1 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 	fi
 
 	# column 2: application version
+	((n++))
 
-	if [[ $report_cols_max -ge 2 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_APP_VER_COL_WIDTH+$(LenANSIDiff "$app_ver_msg")))s" "$app_ver_msg"
 	fi
 
 	# column 3: package description
+	((n++))
 
-	if [[ $report_cols_max -ge 3 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_DESCRIPTION_COL_WIDTH+$(LenANSIDiff "$description_msg")))s" "$description_msg"
 
@@ -4437,27 +4459,31 @@ DisplayAsStatusReportTitleLine()
 	{
 
 	local a=''
+	local -i n=0
 
 	printf '\n'
 
 	# column 1: package name
+	((n++))
 
-	if [[ $report_cols_max -ge 1 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		a="${CHARS_BULLET}QPKG name:"
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 2: package statuses
+	((n++))
 
-	if [[ $report_cols_max -ge 2 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}QPKG statuses:"
 		printf "%-$((PACKAGE_STATUS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 3: package version (variable-width)
+	((n++))
 
-	if [[ $report_cols_max -ge 3 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}QPKG version"
 		QPKGs-ISupgradable.IsAny && a+=" ($(TextBrightOrange new))"
@@ -4466,16 +4492,18 @@ DisplayAsStatusReportTitleLine()
 	fi
 
 	# column 4: application version
+	((n++))
 
-	if [[ $report_cols_max -ge 4 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Application version:"
 		printf "%-$((PACKAGE_APP_VER_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 5: package installation path
+	((n++))
 
-	if [[ $report_cols_max -ge 5 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}QPKG installation path:"
 		printf "%-$((PACKAGE_PATH_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -4493,6 +4521,7 @@ DisplayAsStatusReportItemLine()
 	local app_ver=''
 	local app_ver_msg=$CHARS_BLANK
 	local mode=''
+	local -i n=0
 	local name_msg=$CHARS_BLANK
 	local path_msg=$CHARS_BLANK
 	local status=''
@@ -4592,35 +4621,40 @@ DisplayAsStatusReportItemLine()
 	fi
 
 	# column 1: package name
+	((n++))
 
-	if [[ $report_cols_max -ge 1 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 	fi
 
 	# column 2: package statuses
+	((n++))
 
-	if [[ $report_cols_max -ge 2 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_STATUS_COL_WIDTH+$(LenANSIDiff "$status_msg")))s" "$status_msg"
 	fi
 
 	# column 3: package version (variable-width)
+	((n++))
 
-	if [[ $report_cols_max -ge 3 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((${package_ver_final_col_width:=0}+$(LenANSIDiff "$ver_msg")))s" "$ver_msg"
 	fi
 
 	# column 4: application version
+	((n++))
 
-	if [[ $report_cols_max -ge 4 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_APP_VER_COL_WIDTH+$(LenANSIDiff "$app_ver_msg")))s" "$app_ver_msg"
 	fi
 
 	# column 5: package installation path
+	((n++))
 
-	if [[ $report_cols_max -ge 5 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_PATH_COL_WIDTH+$(LenANSIDiff "$path_msg")))s" "$path_msg"
 	fi
@@ -4633,27 +4667,31 @@ DisplayAsReposReportTitleLine()
 	{
 
 	local a=''
+	local -i n=0
 
 	printf '\n'
 
 	# column 1: package name
+	((n++))
 
-	if [[ $report_cols_max -ge 1 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		a="${CHARS_BULLET}QPKG name:"
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 2: package installation date
+	((n++))
 
-	if [[ $report_cols_max -ge 2 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Install date:"
 		printf "%-$((PACKAGE_INSTALL_DATE_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 3: package repository
+	((n++))
 
-	if [[ $report_cols_max -ge 3 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Repository:"
 		printf "%-$((PACKAGE_REPO_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -4674,6 +4712,7 @@ DisplayAsReposReportItemLine()
 	local install_date=$(QpkgGetInstallDate)
 	local install_date_msg=$CHARS_BLANK
 	local mode=''
+	local -i n=0
 	local name_msg=$CHARS_BLANK
 	local store_id=$(QpkgGetStoreID)
 		local assigned_repo=$(GetRepoURLFromStoreID "$store_id")
@@ -4745,21 +4784,24 @@ DisplayAsReposReportItemLine()
 	esac
 
 	# column 1: package qpkg_name
+	((n++))
 
-	if [[ $report_cols_max -ge 1 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 	fi
 
 	# column 2: package installation date
+	((n++))
 
-	if [[ $report_cols_max -ge 2 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_INSTALL_DATE_COL_WIDTH+$(LenANSIDiff "$install_date_msg")))s" "$install_date_msg"
 	fi
 
 	# column 3: package repository
+	((n++))
 
-	if [[ $report_cols_max -ge 3 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_REPO_COL_WIDTH+$(LenANSIDiff "$assigned_repo_msg")))s" "$assigned_repo_msg"
 	fi
@@ -4772,27 +4814,31 @@ DisplayAsAbsReportTitleLine()
 	{
 
 	local a=''
+	local -i n=0
 
 	printf '\n'
 
 	# column 1: package name
+	((n++))
 
-	if [[ $report_cols_max -ge 1 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		a="${CHARS_BULLET}QPKG name:"
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 2: QPKG is installed
+	((n++))
 
-	if [[ $report_cols_max -ge 2 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Installed?"
 		printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 3: package abbreviations
+	((n++))
 
-	if [[ $report_cols_max -ge 3 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Acceptable QPKG name abbreviations and aliases:"
 		printf "%-$((PACKAGE_ABBS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -4811,6 +4857,7 @@ DisplayAsAbsReportItemLine()
 	local abs_msg=''
 	local installed_msg=$CHARS_BLANK
 	local mode=''
+	local -i n=0
 	local name_msg=$CHARS_BLANK
 
 	if QpkgIsMissing; then
@@ -4852,21 +4899,24 @@ DisplayAsAbsReportItemLine()
 	esac
 
 	# column 1: package name
+	((n++))
 
-	if [[ $report_cols_max -ge 1 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 	fi
 
 	# column 2: package is installed?
+	((n++))
 
-	if [[ $report_cols_max -ge 2 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+$(LenANSIDiff "$installed_msg")))s" "$installed_msg"
 	fi
 
 	# column 3: package abbreviations
+	((n++))
 
-	if [[ $report_cols_max -ge 3 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_ABBS_COL_WIDTH+$(LenANSIDiff "$abs_msg")))s" "$abs_msg"
 	fi
@@ -4875,95 +4925,89 @@ DisplayAsAbsReportItemLine()
 
 	}
 
-AddSeparators()
-	{
-
-	# Input:
-	# 	$1 = list of abbreviations to format with commas.
-
-	local a=''
-
-	if [[ -n ${1:-} ]]; then
-		a=$(Trim "$1"); a=${a// /, }	# insert separators
-	fi
-
-	echo -n "$a"
-
-	}
-
 DisplayAsDepsReportTitleLine()
 	{
 
 	local a=''
+	local -i n=0
 
 	printf '\n'
 
 	# column 1: package name.
+	((n++))
 
-	if [[ $report_cols_max -ge 1 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		a="${CHARS_BULLET}QPKG name:"
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 2: package dependencies.
+	((n++))
 
-	if [[ $report_cols_max -ge 2 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Dependencies:"
 		printf "%-$((PACKAGE_DEPENDENCIES_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 3: QPKG is installed?
+	((n++))
 
-	if [[ $report_cols_max -ge 3 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Installed?"
 		printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 4: QPKG is enabled?
+	((n++))
 
-	if [[ $report_cols_max -ge 4 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Enabled?"
 		printf "%-$((PACKAGE_ENABLED_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 5: QPKG is managed by sherpa?
+	((n++))
 
-	if [[ $report_cols_max -ge 5 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Managed?"
 		printf "%-$((PACKAGE_MANAGED_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 6: minimum NAS RAM required.
+	((n++))
 
-	if [[ $report_cols_max -ge 6 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Min. RAM:"
 		printf "%-$((PACKAGE_MIN_RAM_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 7: minimum OS fimware version supported.
+	((n++))
 
-	if [[ $report_cols_max -ge 7 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Min. OS:"
 		printf "%-$((PACKAGE_MIN_OS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 8: maximum OS fimware version supported.
+	((n++))
 
-	if [[ $report_cols_max -ge 8 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Max. OS:"
 		printf "%-$((PACKAGE_MAX_OS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 9: arch is compatible?
+	((n++))
 
-	if [[ $report_cols_max -ge 9 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Supported arch?"
 		printf "%-$((PACKAGE_ARCH_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -4996,6 +5040,7 @@ DisplayAsDepsReportItemLine()
 	local min_ram=$(QpkgGetMinRAM "$qpkg_name")
 	local min_ram_msg=$CHARS_BLANK
 	local mode=''
+	local -i n=0
 	local name_msg=$CHARS_BLANK
 
 	[[ -z $deps_raw ]] && deps_raw=none
@@ -5215,63 +5260,72 @@ DisplayAsDepsReportItemLine()
 	esac
 
 	# column 1: package name.
+	((n++))
 
-	if [[ $report_cols_max -ge 1 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 	fi
 
 	# column 2: package dependencies.
+	((n++))
 
-	if [[ $report_cols_max -ge 2 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_DEPENDENCIES_COL_WIDTH+$(LenANSIDiff "$deps_msg")))s" "$deps_msg"
 	fi
 
 	# column 3: package is installed?
+	((n++))
 
-	if [[ $report_cols_max -ge 3 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+$(LenANSIDiff "$installed_msg")))s" "$installed_msg"
 	fi
 
 	# column 4: package is enabled?
+	((n++))
 
-	if [[ $report_cols_max -ge 4 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_ENABLED_COL_WIDTH+$(LenANSIDiff "$enabled_msg")))s" "$enabled_msg"
 	fi
 
 	# column 5: package is managed by sherpa?
+	((n++))
 
-	if [[ $report_cols_max -ge 5 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_MANAGED_COL_WIDTH+$(LenANSIDiff "$managed_msg")))s" "$managed_msg"
 	fi
 
 	# column 6: minimum NAS RAM required.
+	((n++))
 
-	if [[ $report_cols_max -ge 6 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_MIN_RAM_COL_WIDTH+$(LenANSIDiff "$min_ram_msg")))s" "$min_ram_msg"
 	fi
 
 	# column 7: minimum OS fimware version supported.
+	((n++))
 
-	if [[ $report_cols_max -ge 7 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_MIN_OS_COL_WIDTH+$(LenANSIDiff "$min_os_msg")))s" "$min_os_msg"
 	fi
 
 	# column 8: maximum OS fimware version supported.
+	((n++))
 
-	if [[ $report_cols_max -ge 8 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_MAX_OS_COL_WIDTH+$(LenANSIDiff "$max_os_msg")))s" "$max_os_msg"
 	fi
 
 	# column 9: NAS arch is compatible?
+	((n++))
 
-	if [[ $report_cols_max -ge 9 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_ARCH_COL_WIDTH+$(LenANSIDiff "$arch_msg")))s" "$arch_msg"
 	fi
@@ -5606,27 +5660,31 @@ DisplayAsBacksReportTitleLine()
 	{
 
 	local a=''
+	local -i n=0
 
 	printf '\n'
 
 	# column 1: backup filename
+	((n++))
 
-	if [[ $report_cols_max -ge 1 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		a="${CHARS_BULLET}Backup file:"
 		printf "%-$((FILE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 2: filesize in bytes
+	((n++))
 
-	if [[ $report_cols_max -ge 2 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Size in bytes:"
 		printf "%-$((FILE_BYTES_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
 	# column 3: last backup date
+	((n++))
 
-	if [[ $report_cols_max -ge 3 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		a="${CHARS_BULLET}Backup date:"
 		printf "%-$((FILE_CHANGE_DATE_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
@@ -5653,6 +5711,7 @@ DisplayAsBacksReportItemLine()
 	local file_name_msg=$CHARS_BLANK
 	local local_highlight_backups_older_than=${4:-'1 week ago'}
 	local mode=''
+	local -i n=0
 
 	if [[ ${epoch_time%.*} -lt $(/bin/date --date="$local_highlight_backups_older_than" +%s) ]]; then
 		mode=highlighted
@@ -5664,34 +5723,37 @@ DisplayAsBacksReportItemLine()
 
 	case $mode in
 		normal)
-			epoch_time_msg+=$(FormatSecondsAsFullDate "$epoch_time")
+			epoch_time_msg+=$(ConvertSecondsToFullDate "$epoch_time")
 			file_bytes_msg+=$file_bytes
 			file_name_msg+=$file_name
 			/bin/touch "$REPORT_FLAGS_PATH"/backup-file-ok
 			;;
 		highlighted)
-			epoch_time_msg=$(TextBrightRed "${CHARS_ALERT}$(FormatSecondsAsFullDate "$epoch_time")")
+			epoch_time_msg=$(TextBrightRed "${CHARS_ALERT}$(ConvertSecondsToFullDate "$epoch_time")")
 			file_bytes_msg+=$(TextBrightRed "$file_bytes")
 			file_name_msg+=$(TextBrightRed "$file_name")
 			/bin/touch "$REPORT_FLAGS_PATH"/backup-file-old
 	esac
 
 	# column 1: backup filename
+	((n++))
 
-	if [[ $report_cols_max -ge 1 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%-$((FILE_NAME_COL_WIDTH+$(LenANSIDiff "$file_name_msg")))s" "$file_name_msg"
 	fi
 
 	# column 2: filesize in bytes
+	((n++))
 
-	if [[ $report_cols_max -ge 2 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%$((FILE_BYTES_COL_WIDTH+$(LenANSIDiff "$file_bytes_msg")))s" "$file_bytes_msg "	# append 1 x whitespace char to force right-justified numbers to the left a bit. Looks nicer.
 	fi
 
 	# column 3: last backup date
+	((n++))
 
-	if [[ $report_cols_max -ge 3 ]]; then
+	if [[ $report_cols_max -ge $n ]]; then
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((FILE_CHANGE_DATE_COL_WIDTH+$(LenANSIDiff "$epoch_time_msg")))s" "$epoch_time_msg"
 	fi
@@ -5746,7 +5808,7 @@ DisplayAsIndentActionResultDurationReason()
 			action=$1
 	esac
 
-	[[ -n ${3:-} ]] && duration=$(FormatMillisecsToMinutesSecs "$3")
+	[[ -n ${3:-} ]] && duration=$(ConvertMillisecondsToDuration "$3")
 
 	printf "%${ACTION_RESULT_INDENT}s" ''
 
@@ -6051,18 +6113,22 @@ ShowReportAllActionResults()
 		while IFS='|' read -r datetime action quantity package_name package_type result duration reason; do
 			if [[ $datetime -gt 0 && $duration -gt 0 ]]; then
 				[[ $a -eq 0 ]] && a=$datetime		# Only use first entry as start time.
-				c=$datetime
-				d=$duration
-				((e++))
+				b=$datetime
+				c=$duration
+				((d++))
 			fi
 		done < "$SESS_ACTION_RESULTS_PATHFILE"
 
-		[[ $c -gt 0 ]] && b=$((c+(d/1000)+1))		# Use last non-zero iteration of $datetime as beginning of last action, then add duration to it.
+		a=$(ConvertMillisecondsToSeconds "$a")
+		b=$(ConvertMillisecondsToSeconds "$b")
+		c=$(ConvertMillisecondsToSeconds "$c")
+
+		[[ $b -gt 0 ]] && e=$((b+c+1))		# Use last non-zero iteration of $datetime as beginning of last action, then add duration to it.
 
 		if [[ $show_action_results_ok = true || $show_action_results_skipped = true || $show_action_results_failed = true || $show_action_results_zero = true ]]; then
 			{
 
-			DisplayAsHelpTitle "action$(Pluralise "$e") started @ $(FormatSecondsAsTime "$a"), ended @ $(FormatSecondsAsTime "$b"), elapsed = $(FormatSecondsAsDuration "$(CalcSecondsDiff "$a" "$b")")"
+			DisplayAsHelpTitle "package action$(Pluralise "$d") started @ $(ConvertSecondsToTime "$a"), ended @ $(ConvertSecondsToTime "$e"), elapsed = $(ConvertSecondsToDuration "$(CalcAmountDiff "$a" "$e")")"
 
 			[[ $show_action_results_ok = true ]] && ShowReportActionResults ok
 			[[ $show_action_results_skipped = true ]] && ShowReportActionResults skipped
@@ -6088,40 +6154,63 @@ ShowReportActionResults()
 	#	$1 = `ok`, `skipped`, `failed`
 
 	local action=''
+	local -i count=0
 	local -i datetime=0
 	local -i duration=0
-	local found=false
 	local package_name=''
 	local package_type=''
-	local plural='these actions'
 	local -i quantity=0
 	local reason=''
 	local result=''
-	local singular='this action'
 
 	if [[ -e $SESS_ACTION_RESULTS_PATHFILE ]]; then
+		# Obtain count of same results. Need to know if action applied to one QPKG or many.
+
 		while IFS='|' read -r datetime action quantity package_name package_type result duration reason; do
 			if [[ $result = "$1" ]] || [[ $1 = skipped && ($result = 'skipped-ok' || $result = 'skipped-error' || $result = 'skipped-abort') ]]; then
 				[[ $action = status && $useropt_show_all_results = false ]] && continue		# Don't need to see the result of `status` checks unless a 'results' report has been requested.
-
-				case $result in
-					ok)
-						[[ $found = false ]] && DisplayAsHelpTitle "$plural completed $(TextBrightGreen OK):"
-						;;
-					skipped*)
-						[[ $found = false ]] && DisplayAsHelpTitle "$plural were $(TextBrightOrange skipped) (and why):"
-						;;
-					failed)
-						[[ $found = false ]] && DisplayAsHelpTitle "$plural $(TextBrightRed failed) (and why):"
-				esac
-
-				ShowAsActionLogDetail "$datetime" "$package_name" "$action" "$result" "$duration" "$reason" "$package_type" "$quantity"
-				found=true
+				((count++))
+				[[ $count -gt 1 ]] && break			# Two-or-more of the same action means must pluralise messages.
 			fi
 		done < "$SESS_ACTION_RESULTS_PATHFILE"
+
+		# Display action titles and QPKGs.
+
+		if [[ $count -eq 1 ]]; then
+			case $1 in
+				ok)
+					DisplayAsHelpTitle "this package action completed $(TextBrightGreen OK):"
+					;;
+				skipped)
+					DisplayAsHelpTitle "this package action was $(TextBrightOrange skipped) (and why):"
+					;;
+				failed)
+					DisplayAsHelpTitle "this package action $(TextBrightRed failed) (and why):"
+			esac
+		elif [[ $count -gt 1 ]]; then
+			case $1 in
+				ok)
+					DisplayAsHelpTitle "these package actions completed $(TextBrightGreen OK):"
+					;;
+				skipped)
+					DisplayAsHelpTitle "these package actions were $(TextBrightOrange skipped) (and why):"
+					;;
+				failed)
+					DisplayAsHelpTitle "these package actions $(TextBrightRed failed) (and why):"
+			esac
+		fi
+
+		if [[ $count -ge 1 ]]; then
+			while IFS='|' read -r datetime action quantity package_name package_type result duration reason; do
+				if [[ $result = "$1" ]] || [[ $1 = skipped && ($result = 'skipped-ok' || $result = 'skipped-error' || $result = 'skipped-abort') ]]; then
+					[[ $action = status && $useropt_show_all_results = false ]] && continue		# Don't need to see the result of `status` checks unless a 'results' report has been requested.
+					ShowAsActionLogDetail "$datetime" "$package_name" "$action" "$result" "$duration" "$reason" "$package_type" "$quantity"
+				fi
+			done < "$SESS_ACTION_RESULTS_PATHFILE"
+		fi
 	fi
 
-	if [[ $found = false ]]; then
+	if [[ $count -eq 0 ]]; then
 		case $1 in
 			ok)
 				DisplayAsHelpTitle "no package actions completed $(TextBrightGreen OK)."
@@ -6545,9 +6634,9 @@ GetLogSessStartLine()
 	# Input:
 	#	$1 = how many sessions back? (optional) default = 1
 
-	local -i linenum=$(($($GREP_CMD -n 'SCRIPT:.*started:' "$SESS_TAIL_PATHFILE" | $TAIL_CMD -n${1:-1} | $HEAD_CMD -n1 | cut -d':' -f1)-1))
+	local -i linenum=$(($($GREP_CMD -n 'SCRIPT:.*started:' "$SESS_TAIL_PATHFILE" | $TAIL_CMD -n${1:-1} | head -n1 | cut -d':' -f1)-1))
 	[[ $linenum -lt 1 ]] && linenum=1
-	echo -n "$linenum"
+	printf '%s' "$linenum"
 
 	}
 
@@ -6559,7 +6648,7 @@ GetLogSessFinishLine()
 
 	local -i linenum=$(($($GREP_CMD -n 'SCRIPT:.*finished:' "$SESS_TAIL_PATHFILE" | $TAIL_CMD -n${1:-1} | cut -d':' -f1)+2))
 	[[ $linenum -eq 2 ]] && linenum=3
-	echo -n "$linenum"
+	printf '%s' "$linenum"
 
 	}
 
@@ -6646,7 +6735,7 @@ ShowReportVersions()
 	Display "manager: ${THIS_SCRIPT_VER:-undefined}"
 	Display "loader: ${LOADER_SCRIPT_VER:-undefined}"
 	Display "objects: ${OBJECTS_VER:-undefined}"
-	Display "packages: ${PACKAGES_EPOCH}$([[ $PACKAGES_EPOCH != undefined ]] && echo -n " ($(FormatSecondsAsFullDate "$PACKAGES_EPOCH"))")"
+	Display "packages: ${PACKAGES_EPOCH}$([[ $PACKAGES_EPOCH != undefined ]] && printf '%s' " ($(ConvertSecondsToFullDate "$PACKAGES_EPOCH"))")"
 
 	return 0
 
@@ -7508,7 +7597,7 @@ ShowReportBackups()
 	FuncInit
 
 	local epoch_time=0		# Allow float as seconds have a fractional component.
-	local file_bytes=0
+	local -i file_bytes=0
 	local file_date=''
 	local file_name=''
 	local file_time=''
@@ -8314,7 +8403,7 @@ FindNextFD()
 
 	for fd in {10..100}; do
 		if [[ ! -e /proc/$$/fd/$fd ]]; then
-			echo -n "$fd"
+			printf '%s' "$fd"
 
 			return 0
 		fi
@@ -8446,9 +8535,9 @@ HardwareGetCPUInfo()
 	# BusyBox 1.01 doesn't support `-m` option for `grep`, so extract first mention the hard-way with `head`.
 
 	if $GREP_CMD -q '^model name' /proc/cpuinfo; then
-		$GREP_CMD '^model name' /proc/cpuinfo | $HEAD_CMD -n1 | $SED_CMD 's|^.*: ||' | tr -s ' '
+		$GREP_CMD '^model name' /proc/cpuinfo | head -n1 | $SED_CMD 's|^.*: ||' | tr -s ' '
 	elif $GREP_CMD -q '^Processor name' /proc/cpuinfo; then
-		$GREP_CMD '^Processor name' /proc/cpuinfo | $HEAD_CMD -n1 | $SED_CMD 's|^.*: ||' | tr -s ' '
+		$GREP_CMD '^Processor name' /proc/cpuinfo | head -n1 | $SED_CMD 's|^.*: ||' | tr -s ' '
 	else
 		printf unknown
 
@@ -8478,7 +8567,7 @@ OsGetKernelPageSize()
 
 	# Accuracy of this method is uncertain.
 
-	$GREP_CMD KernelPageSize /proc/1/smaps | $HEAD_CMD -n1 | cut -f2 -d':' | tr -d ' '
+	$GREP_CMD KernelPageSize /proc/1/smaps | head -n1 | cut -f2 -d':' | tr -d ' '
 
 	}
 
@@ -8580,18 +8669,18 @@ OsGetUptime()
 
 	local n=$(< /proc/uptime)
 
-	FormatSecsToHoursMinutesSecs "${n%%.*}"
+	ConvertSecondsToDuration "${n%%.*}"
 
 	}
 
 UserGetTimeInShell()
 	{
 
-	local n=0
+	local -i n=0
 
-	[[ -n ${LOADER_SCRIPT_PPID:-} ]] && n=$($PS_CMD -o pid,etime | $GREP_CMD $LOADER_SCRIPT_PPID | $HEAD_CMD -n1)
+	[[ -n ${LOADER_SCRIPT_PPID:-} ]] && n=$($PS_CMD -o pid,etime | $GREP_CMD $LOADER_SCRIPT_PPID | head -n1)
 
-	FormatLongMinutesSecs "${n:6}"
+	FormatAsLongMinutesSecs "${n:6}"
 
 	}
 
@@ -8616,7 +8705,7 @@ HardwareGetCPUCores()
 
 	[[ $n -eq 0 ]] && n=$($GREP_CMD -c '^Processor' /proc/cpuinfo)
 
-	echo -n "$n"
+	printf '%s' "$n"
 
 	}
 
@@ -8726,7 +8815,7 @@ QpkgGetEntwareType()
 UserGetSudoUID()
 	{
 
-	echo -n "${SUDO_UID:-undefined}"
+	printf '%s' "${SUDO_UID:-undefined}"
 
 	}
 
@@ -9061,7 +9150,8 @@ SaveActionResultToLog()
 	local -r CLEAN_ACTION=${ACTION//\"/}
 	local -r RESULT=${5:?${FUNCNAME[0]}'()': undefined result}
 	local -r REASON=${6:-}
-	local -r DURATION=$(CalcMillisecondsDiff "${!var_safe_name}" "$(FormatNowAsNanoseconds)")
+	local -r STARTTIME=$(ConvertNanosecondsToMilliseconds "${!var_safe_name}")
+	local -r DURATION=$(CalcAmountDiff "$STARTTIME" "$(ConvertNowToMilliseconds)")
 	local -r ACTION_TIMES_PATHFILE=$ACTION_TIMES_PATH/$CLEAN_ACTION.milliseconds
 
 	if [[ $2 = undefined ]]; then
@@ -9070,8 +9160,8 @@ SaveActionResultToLog()
 		return 1
 	fi
 
-	# Write new action results entry.
-	echo "$(FormatNowAsSeconds)|$ACTION|$QTY|$qpkg_name|$PACKAGE_TYPE|$RESULT|$DURATION|$REASON" >> "$SESS_ACTION_RESULTS_PATHFILE"
+	# Add new action results entry.
+	echo "$STARTTIME|$ACTION|$QTY|$qpkg_name|$PACKAGE_TYPE|$RESULT|$DURATION|$REASON" >> "$SESS_ACTION_RESULTS_PATHFILE"
 
 	# Remove previous action duration entry if one exists.
 
@@ -9535,9 +9625,9 @@ _QPKG:upgrade_()
 		local current_ver=$(QpkgGetInstalledVer)
 
 		if [[ $current_ver = "$prev_ver" ]]; then
-			SaveActionResultToLog QPKG "$qpkg_name" upgrade '' ok "version $current_ver"
+			SaveActionResultToLog QPKG "$qpkg_name" upgrade '' ok "= $current_ver"
 		else
-			SaveActionResultToLog QPKG "$qpkg_name" upgrade '' ok "upgraded from version $prev_ver to version $current_ver"
+			SaveActionResultToLog QPKG "$qpkg_name" upgrade '' ok "$prev_ver -> $current_ver"
 		fi
 
 		MarkThisAcForkAsOk
@@ -10594,7 +10684,7 @@ QpkgGetApplVer()
 	[[ -n $a ]] || return
 	[[ $a = dynamic ]] && QpkgIsInstalled && ! QpkgIsAutoUpdate && a=static
 
-	echo -n "$a"
+	printf '%s' "$a"
 
 	return 0
 
@@ -10620,7 +10710,7 @@ QpkgGetAvailVer()
 	if [[ -n ${1:-} ]]; then
 		for i in "${!QPKG_NAME[@]}"; do
 			if [[ ${QPKG_NAME[$i]} = "$1" ]]; then
-				echo -n "${QPKG_VERSION[$i]}"
+				printf '%s' "${QPKG_VERSION[$i]}"
 
 				return 0
 			fi
@@ -10630,7 +10720,7 @@ QpkgGetAvailVer()
 		[[ $a = default ]] && a=${QPKG_VERSION[$qpkg_default_index]}
 		[[ $a != none ]] || return
 
-		echo -n "$a"
+		printf '%s' "$a"
 
 		return 0
 	fi
@@ -10705,7 +10795,7 @@ QpkgGetOriginalPath()
 	if [[ ${#QPKGs_were_installed_name[@]} -gt 0 ]]; then
 		for i in "${!QPKGs_were_installed_name[@]}"; do
 			[[ ${QPKGs_were_installed_name[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]] || continue
-			echo -n "${QPKGs_were_installed_path[$i]}"
+			printf '%s' "${QPKGs_were_installed_path[$i]}"
 
 			return 0
 		done
@@ -10734,7 +10824,7 @@ QpkgGetPathFilename()
 
 	[[ $(Lowercase "${a##*.}") != qpkg ]] && a=${a%.*}.qpkg		# Swap `zip` for `qpkg` here (only for compatibilty with `QDK.zip`).
 
-	echo -n "$QPKG_DL_PATH/$($BASENAME_CMD "$a")"
+	printf '%s' "$QPKG_DL_PATH/$($BASENAME_CMD "$a")"
 
 	return 0
 
@@ -10760,7 +10850,7 @@ QpkgGetHash()
 	[[ $a = default ]] && a=${QPKG_HASH[$qpkg_default_index]}
 	[[ $a != none ]] || return
 
-	echo -n "$a"
+	printf '%s' "$a"
 
 	return 0
 
@@ -10787,7 +10877,7 @@ QpkgGetURL()
 	if [[ -n ${1:-} ]]; then
 		for i in "${!QPKG_NAME[@]}"; do
 			if [[ ${QPKG_NAME[$i]} = "$1" ]] && [[ ${QPKG_ARCH[$i]} = all || ${QPKG_ARCH[$i]} = "$NAS_QPKG_ARCH" ]]; then
-				echo -n "${QPKG_URL[$i]}"
+				printf '%s' "${QPKG_URL[$i]}"
 
 				return 0
 			fi
@@ -10798,7 +10888,7 @@ QpkgGetURL()
 		a=${QPKG_URL[$qpkg_index]}
 		[[ $a = default ]] && a=${QPKG_URL[$qpkg_default_index]}
 		[[ -n $a ]] || a=none
-		echo -n "$a"
+		printf '%s' "$a"
 	fi
 
 	return 0
@@ -10833,7 +10923,7 @@ QpkgGetMinRAM()
 	fi
 
 	[[ -n $a ]] || a=none
-	echo -n "$a"
+	printf '%s' "$a"
 
 	return 0
 
@@ -10867,7 +10957,7 @@ QpkgGetMinOSVer()
 	fi
 
 	[[ -n $a ]] || a=none
-	echo -n "$a"
+	printf '%s' "$a"
 
 	return 0
 
@@ -10901,7 +10991,7 @@ QpkgGetMaxOSVer()
 	fi
 
 	[[ -n $a ]] || a=none
-	echo -n "$a"
+	printf '%s' "$a"
 
 	return 0
 
@@ -10923,7 +11013,7 @@ QpkgGetMaxOSVer()
 #
 # 	for i in "${!QPKG_NAME[@]}"; do
 # 		[[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]] || continue
-# 		echo -n "${QPKG_AUTHOR[$i]}"
+# 		printf '%s' "${QPKG_AUTHOR[$i]}"
 #
 # 		return 0
 # 	done
@@ -10948,7 +11038,7 @@ QpkgGetMaxOSVer()
 #
 # 	for i in "${!QPKG_NAME[@]}"; do
 # 		[[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]] || continue
-# 		echo -n "${QPKG_AUTHOR_EMAIL[$i]}"
+# 		printf '%s' "${QPKG_AUTHOR_EMAIL[$i]}"
 #
 # 		return 0
 # 	done
@@ -10973,7 +11063,7 @@ QpkgGetMaxOSVer()
 #
 # 	for i in "${!QPKG_NAME[@]}"; do
 # 		[[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]] || continue
-# 		echo -n "${QPKG_APPL_AUTHOR[$i]}"
+# 		printf '%s' "${QPKG_APPL_AUTHOR[$i]}"
 #
 # 		return 0
 # 	done
@@ -10998,7 +11088,7 @@ QpkgGetMaxOSVer()
 #
 # 	for i in "${!QPKG_NAME[@]}"; do
 # 		[[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]] || continue
-# 		echo -n "${QPKG_APPL_AUTHOR_EMAIL[$i]}"
+# 		printf '%s' "${QPKG_APPL_AUTHOR_EMAIL[$i]}"
 #
 # 		return 0
 # 	done
@@ -11035,7 +11125,7 @@ QpkgGetDesc()
 	fi
 
 	[[ -n $a ]] || a=none
-	echo -n "$a"
+	printf '%s' "$a"
 
 	return 0
 
@@ -11063,7 +11153,7 @@ QpkgGetNote()
 	[[ $a = default ]] && a=${QPKG_NOTE[$qpkg_default_index]}
 	[[ $a = none ]] && return 1
 
-	echo -n "$a"
+	printf '%s' "$a"
 
 	return 0
 
@@ -11097,7 +11187,7 @@ QpkgGetAbbrvs()
 	fi
 
 	[[ -n $a ]] || a=none
-	echo -n "$a"
+	printf '%s' "$a"
 
 	return 0
 
@@ -11128,7 +11218,7 @@ QpkgGetDependencies()
 	[[ $g = default ]] && g=${QPKG_DEPENDS_ON[$qpkg_default_index]}
 
 	if [[ $g != *'|'* ]]; then		# no alternatives were listed.
-		echo -n "$g"
+		printf '%s' "$g"
 
 		return 0
 	fi
@@ -11171,7 +11261,7 @@ QpkgGetDependencies()
 		fi
 	done
 
-	echo -n "$out"
+	printf '%s' "$out"
 
 	return 0
 
@@ -11204,7 +11294,7 @@ QpkgGetDependents()
 	fi
 
 	if [[ ${#ar[@]} -gt 0 ]]; then
-		echo -n "${ar[@]}"
+		printf '%s' "${ar[@]}"
 
 		return 0
 	fi
@@ -11233,7 +11323,7 @@ QpkgGetIPKs()
 	[[ $a = default ]] && a=${QPKG_REQUIRES_IPKS[$qpkg_default_index]}
 	[[ $a = none ]] && return 1
 
-	echo -n "$a"
+	printf '%s' "$a"
 
 	return 0
 
@@ -11259,7 +11349,7 @@ QpkgGetActiveTest()
 	[[ $a = default ]] && a=${QPKG_TEST_FOR_ACTIVE[$qpkg_default_index]}
 	[[ $a = none ]] && return 1
 
-	echo -n "$a"
+	printf '%s' "$a"
 
 	return 0
 
@@ -11302,7 +11392,7 @@ QpkgMatchAbbrv()
 
 		for j in "${!ar[@]}"; do
 			[[ ${ar[$j]} = "$1" ]] || continue
-			echo -n "${QPKG_NAME[$i]}"
+			printf '%s' "${QPKG_NAME[$i]}"
 			z=0
 			break 2
 		done
@@ -11933,9 +12023,9 @@ Capitalise()
 	[[ -n ${1:-} ]] || return
 
 	if [[ $1 == sherpa* ]]; then
-		echo -n "$1"
+		printf '%s' "$1"
 	else
-		echo -n "$(Uppercase ${1:0:1})${1:1}"
+		printf '%s' "$(Uppercase ${1:0:1})${1:1}"
 	fi
 
 	}
@@ -12017,7 +12107,7 @@ FormatAsThous()
 		fi
 	done
 
-	echo -n "$c"
+	printf '%s' "$c"
 
 	return 0
 
@@ -12435,7 +12525,7 @@ FuncInit()
 	local var_safe_name=${VAR_NAME//[.-]/_}
 	var_safe_name=${var_safe_name//:/_}
 
-	eval "$var_safe_name=$(FormatNowAsNanoseconds)"
+	eval "$var_safe_name=$(ConvertNowToNanoseconds)"
 
 	DebugAsFuncEn
 
@@ -12450,7 +12540,7 @@ FuncExit()
 	local var_safe_name=${VAR_NAME//[.-]/_}
 	var_safe_name=${var_safe_name//:/_}
 
-	DebugAsFuncEx "${1:-0}" "$(FormatMillisecondsAsDuration "$(CalcMillisecondsDiff "${!var_safe_name}" "$(FormatNowAsNanoseconds)")")"
+	DebugAsFuncEx "${1:-0}" "$(ConvertMillisecondsToFuncDuration "$(CalcMillisecondsDiffFromNanoseconds "${!var_safe_name}" "$(ConvertNowToNanoseconds)")")"
 
 	return ${1:-0}
 
@@ -12471,7 +12561,7 @@ FuncForkInit()
 	local -r VAR_NAME=${FUNCNAME[1]}_STARTNANOSECONDS
 	local var_safe_name=${VAR_NAME//[.-]/_}
 	var_safe_name=${var_safe_name//:/_}
-	eval "$var_safe_name=$(FormatNowAsNanoseconds)"
+	eval "$var_safe_name=$(ConvertNowToNanoseconds)"
 
 	DebugAsFuncEn
 
@@ -12487,7 +12577,7 @@ FuncForkExit()
 	var_safe_name=${var_safe_name//:/_}
 
 	SendActionStatus ex
-	DebugAsFuncEx "${1:-0}" "$(FormatMillisecondsAsDuration "$(CalcMillisecondsDiff "${!var_safe_name}" "$(FormatNowAsNanoseconds)")")"
+	DebugAsFuncEx "${1:-0}" "$(ConvertMillisecondsToFuncDuration "$(CalcMillisecondsDiffFromNanoseconds "${!var_safe_name}" "$(ConvertNowToNanoseconds)")")"
 
 	if [[ -n $sess_active_pathfile && -e $sess_active_pathfile ]]; then
 		if [[ -s $sess_active_pathfile ]]; then
@@ -12503,21 +12593,25 @@ FuncForkExit()
 
 	}
 
-CalcSecondsDiff()
+CalcAmountDiff()
 	{
 
 	# Input:
-	#	$1 = start time in seconds.
-	#	$2 = end time in seconds.
+	#	$1 = e.g. start time in seconds/milliseconds.
+	#	$2 = e.g. end time in seconds/milliseconds.
 
 	# Output:
-	#	stdout = difference in seconds.
+	#	stdout = difference.
 
-	echo -n "$(($2-$1))"
+	if [[ $2 -gt $1 ]]; then
+		printf '%s' "$(($2-$1))"
+	else
+		printf '%s' "$(($1-$2))"
+	fi
 
-	}
+	} 2> /dev/null
 
-CalcMillisecondsDiff()
+CalcMillisecondsDiffFromNanoseconds()
 	{
 
 	# Input:
@@ -12527,11 +12621,11 @@ CalcMillisecondsDiff()
 	# Output:
 	#	stdout = difference in milliseconds.
 
-	echo -n "$((($2-$1)/1000000))"
+	printf '%s' "$((($2-$1)/(10**6)))"
 
-	}
+	} 2> /dev/null
 
-FormatSecondsAsFullDate()
+ConvertSecondsToFullDate()
 	{
 
 	# Input:
@@ -12542,9 +12636,9 @@ FormatSecondsAsFullDate()
 
 	/bin/date -d @"$1" +%c | tr -s ' '
 
-	}
+	} 2> /dev/null
 
-FormatSecondsAsTime()
+ConvertSecondsToTime()
 	{
 
 	# Input:
@@ -12553,11 +12647,91 @@ FormatSecondsAsTime()
 	# Output:
 	#	stdout = time component only.
 
-	/bin/date -d @"$1" +%r | tr -s ' '
+	/bin/date -d @"$1" '+%-l:%M:%S %p' | tr -s ' '
 
-	}
+	} 2> /dev/null
 
-FormatNowAsFullDate()
+ConvertSecondsToDuration()
+	{
+
+	# http://stackoverflow.com/questions/12199631/convert-seconds-to-hours-minutes-seconds
+
+	# Input:
+	#	$1 = a time in seconds to convert to `HHh:MMm:SSs` or, if less than 1 minute, to `S seconds`.
+
+	((h=${1:-0}/3600))
+	((m=(${1:-0}%3600)/60))
+	((s=${1:-0}%60))
+
+	if [[ $h -gt 0 ]]; then
+		printf '%01dh:%02dm:%02ds' "$h" "$m" "$s"
+	elif [[ $m -gt 0 ]]; then
+		printf '%01dm:%02ds' "$m" "$s"
+	else
+		[[ $s -eq 0 ]] && s=1			# Never show zero seconds as a duration (bash isn't that fast).
+
+		if [[ $s -eq 1 ]]; then
+			printf '%d second' "$s"
+		else
+			printf '%d seconds' "$s"
+		fi
+	fi
+
+	} 2> /dev/null
+
+ConvertMillisecondsToSeconds()
+	{
+
+	# Input:
+	#	$1 = milliseconds.
+
+	# Output:
+	#	stdout = seconds.
+
+	printf '%s' "$(($1/(10**3)))"
+
+	} 2> /dev/null
+
+ConvertMillisecondsToDuration()
+	{
+
+	# Input:
+	#	$1 = milliseconds to convert to `HHh:MMm:SSs` or, if less than 1 minute, to `S seconds`.
+
+	ConvertSecondsToDuration "$(ConvertMillisecondsToSeconds "$1")"
+
+	} 2> /dev/null
+
+ConvertMillisecondsToFuncDuration()
+	{
+
+	# NOTE: This formatter is only used by script function timers.
+
+	# Input:
+	#	$1 = duration in milliseconds.
+
+	if [[ ${1:-0} -lt 30000 ]]; then
+		printf '%s' "$(FormatAsThous "${1:-0}")ms" | $TAIL_CMD -n1			# Prevent "broken pipe" error: https://superuser.com/a/642932
+	else
+		ConvertMillisecondsToDuration "$1"
+	fi
+
+	} 2> /dev/null
+
+ConvertNanosecondsToMilliseconds()
+	{
+
+	# Input:
+	#	$1 = nanoseconds.
+
+	# Output:
+	#	stdout = milliseconds.
+
+	printf '%s' "$(($1/(10**6)))"
+
+	} 2> /dev/null
+
+ConvertNowToFullDate()
 	{
 
 	# Output:
@@ -12565,9 +12739,9 @@ FormatNowAsFullDate()
 
 	/bin/date +%c | tr -s ' '
 
-	}
+	} 2> /dev/null
 
-FormatNowAsSeconds()
+ConvertNowToSeconds()
 	{
 
 	# Output:
@@ -12575,9 +12749,19 @@ FormatNowAsSeconds()
 
 	/bin/date +%s
 
-	}
+	} 2> /dev/null
 
-FormatNowAsNanoseconds()
+ConvertNowToMilliseconds()
+	{
+
+	# Output:
+	#	stdout = epoch milliseconds.
+
+	ConvertNanosecondsToMilliseconds "$(ConvertNowToNanoseconds)"
+
+	} 2> /dev/null
+
+ConvertNowToNanoseconds()
 	{
 
 	# Output:
@@ -12585,35 +12769,25 @@ FormatNowAsNanoseconds()
 
 	/bin/date +%s%N
 
-	}
+	} 2> /dev/null
 
-FormatSecondsAsDuration()
+FormatAsLongMinutesSecs()
 	{
 
 	# Input:
-	#	$1 = duration in seconds.
+	#	$1 = a time in long minutes and seconds to convert to `MMMm:SSs`.
 
-	if [[ ${1:-0} -lt 30 ]]; then
-		echo -n "$(FormatAsThous "${1:-0}")s" | $TAIL_CMD -n1			# Prevent "broken pipe" error: https://superuser.com/a/642932
-	else
-		FormatSecsToHoursMinutesSecs "$1"
-	fi
+	# separate minutes from seconds
+	local m=${1%%:*}
+	local s=${1#*:}
 
-	}
+	# remove leading whitespace
+	m=${m##* }
+	s=${s##* }
 
-FormatMillisecondsAsDuration()
-	{
+	printf '%01dm:%02ds\n' "$((10#$m))" "$((10#$s))"
 
-	# Input:
-	#	$1 = duration in milliseconds.
-
-	if [[ ${1:-0} -lt 30000 ]]; then
-		echo -n "$(FormatAsThous "${1:-0}")ms" | $TAIL_CMD -n1			# Prevent "broken pipe" error: https://superuser.com/a/642932
-	else
-		FormatSecsToHoursMinutesSecs "$(($1/1000))"
-	fi
-
-	}
+	} 2> /dev/null
 
 DebugAsFuncEn()
 	{
@@ -12937,7 +13111,7 @@ PercFrac()
 		c="$((200*(a+1)/(b+1)%2+100*(a+1)/(b+1)))%"
 	fi
 
-	echo -n "$c ($(TextBrightWhite "$a")/$(TextBrightWhite "$b"))"
+	printf '%s' "$c ($(TextBrightWhite "$a")/$(TextBrightWhite "$b"))"
 
 	return 0
 
@@ -13000,12 +13174,10 @@ ShowAsActionLogDetail()
 		return 1
 	fi
 
-
 	local package_type=''
 	local quantity_msg=''
 
 	package_type=$7$(Pluralise "$8")
-
 
 	case $8 in
 		0)
@@ -13052,7 +13224,7 @@ ShowAsActionLogDetail()
 			fi
 			;;
 		*)
-			DisplayAsIndentActionResultDurationReason "$3" "${quantity_msg}${2} $package_type" "$5"
+			DisplayAsIndentActionResultDurationReason "$3" "${quantity_msg}${2} $package_type" "$5" "$6"
 	esac
 
 	return 0
@@ -13356,66 +13528,6 @@ ShowKeystrokes()
 
 	}
 
-FormatMillisecsToMinutesSecs()
-	{
-
-	# http://stackoverflow.com/questions/12199631/convert-seconds-to-hours-minutes-seconds
-
-	# Input:
-	#	$1 = a time in milliseconds to convert to `S seconds` or `Mm:SSs`.
-
-	local seconds=$((${1:-0}/1000))
-	((m=(seconds%3600)/60))
-	((s=seconds%60))
-
-	[[ $s -eq 0 ]] && s=1
-
-	if [[ $m -eq 0 ]]; then
-		if [[ $s -eq 1 ]]; then
-			printf '%d second' "$s"
-		else
-			printf '%d seconds' "$s"
-		fi
-	else
-		printf '%dm:%02ds' "$m" "$s"
-	fi
-
-	} 2> /dev/null
-
-FormatSecsToHoursMinutesSecs()
-	{
-
-	# http://stackoverflow.com/questions/12199631/convert-seconds-to-hours-minutes-seconds
-
-	# Input:
-	#	$1 = a time in seconds to convert to `HHh:MMm:SSs`.
-
-	((h=${1:-0}/3600))
-	((m=(${1:-0}%3600)/60))
-	((s=${1:-0}%60))
-
-	printf '%01dh:%02dm:%02ds\n' "$h" "$m" "$s"
-
-	} 2> /dev/null
-
-FormatLongMinutesSecs()
-	{
-
-	# Input:
-	#	$1 = a time in long minutes and seconds to convert to `MMMm:SSs`.
-
-	# separate minutes from seconds
-	local m=${1%%:*}
-	local s=${1#*:}
-
-	# remove leading whitespace
-	m=${m##* }
-	s=${s##* }
-
-	printf '%01dm:%02ds\n' "$((10#$m))" "$((10#$s))"
-
-	} 2> /dev/null
-
 sleep()
 	{
 
@@ -13649,7 +13761,7 @@ CaughtEXIT()
 
 	}
 
-readonly SCRIPT_STARTSECONDS=$(FormatNowAsSeconds)
+readonly SCRIPT_STARTSECONDS=$(ConvertNowToSeconds)
 
 Init || exit
 ProcActions

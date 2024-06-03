@@ -1,5 +1,10 @@
 Observed issues:
 
+	* Repository report shows N/A for all packages.
+
+	* Near the end of installing IPKs, monitored download path can remain at non-zero size while packages complete installation.
+		- Include a separate progress message when dir size shrinks? Maybe force increase to "100%" and stop monitoring?
+
 	* When attempting to view file versions with-and-without correct syntax fails in several ways:
 		-------------------------------------------------------------------------------------------------------------------------
 		[~] # sherpa list versions
@@ -53,9 +58,6 @@ Observed issues:
 	* Only install IPKs for QPKGs that download successfully (or are already downloaded).
 		- ... and the installed ones, as-happens now.
 
-	* Results report wording should account for single QPKG actions.
-		- Don't pluralise "package actions" when there was only one.
-
 	* 'sherpa' and 'opkg' were not available after installing Entware.
 		- Entware installation may be corrupt.
 		- But this shouldn't affect the sherpa command `/usr/sbin/sherpa`.
@@ -80,9 +82,6 @@ Observed issues:
 	* Removing OMedusa QPKG via sherpa didn't update App Center 'live' (icon remained until App Center was manually refreshed).
 
 	* Upgrading QPKGs via sherpa didn't update App Center icons 'live'.
-
-	* Near the end of installing IPKs, monitored download path can remain at non-zero size while packages complete installation.
-		- Include a separate progress message when dir size shrinks? Maybe force increase to "100%" and stop monitoring?
 
 	* QPKG version sort is not correctly sorting version numbers followed by an alpha as later than non-alpha.
 
