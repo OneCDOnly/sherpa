@@ -6025,11 +6025,11 @@ Help.Lists:Show()
 ShowReportAllActionResults()
 	{
 
-	local -i a=0
-	local -i b=0
-	local -i c=0
+	local a=0
+	local b=0
+	local c=0
 	local -i d=0
-	local -i e=0
+	local e=0
 	local action=''
 	local -i datetime=0
 	local -i duration=0
@@ -6049,22 +6049,22 @@ ShowReportAllActionResults()
 		while IFS='|' read -r datetime action quantity package_name package_type result duration reason; do
 			if [[ $datetime -gt 0 && $duration -gt 0 ]]; then
 				[[ $a -eq 0 ]] && a=$datetime		# Only use first entry as start time.
-				c=$datetime
-				d=$duration
-				((e++))
+				b=$datetime
+				c=$duration
+				((d++))
 			fi
 		done < "$SESS_ACTION_RESULTS_PATHFILE"
 
 		a=$(FormatMillisecondsAsSeconds "$a")
+		b=$(FormatMillisecondsAsSeconds "$b")
 		c=$(FormatMillisecondsAsSeconds "$c")
-		d=$(FormatMillisecondsAsSeconds "$d")
 
-		[[ $c -gt 0 ]] && b=$((c+d+1))		# Use last non-zero iteration of $datetime as beginning of last action, then add duration to it.
+		[[ $b -gt 0 ]] && e=$((b+c+1))		# Use last non-zero iteration of $datetime as beginning of last action, then add duration to it.
 
 		if [[ $show_action_results_ok = true || $show_action_results_skipped = true || $show_action_results_failed = true || $show_action_results_zero = true ]]; then
 			{
 
-			DisplayAsHelpTitle "package action$(Pluralise "$e") started @ $(FormatSecondsAsTime "$a"), ended @ $(FormatSecondsAsTime "$b"), elapsed = $(FormatSecondsAsDuration "$(CalcTimeDiff "$a" "$b")")"
+			DisplayAsHelpTitle "package action$(Pluralise "$d") started @ $(FormatSecondsAsTime "$a"), ended @ $(FormatSecondsAsTime "$e"), elapsed = $(FormatSecondsAsDuration "$(CalcTimeDiff "$a" "$e")")"
 
 			[[ $show_action_results_ok = true ]] && ShowReportActionResults ok
 			[[ $show_action_results_skipped = true ]] && ShowReportActionResults skipped
@@ -6091,8 +6091,8 @@ ShowReportActionResults()
 
 	local action=''
 	local -i count=0
-	local -i datetime=0
-	local -i duration=0
+	local datetime=0
+	local duration=0
 	local package_name=''
 	local package_type=''
 	local -i quantity=0
