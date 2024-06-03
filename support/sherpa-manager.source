@@ -9562,9 +9562,9 @@ _QPKG:upgrade_()
 		local current_ver=$(QpkgGetInstalledVer)
 
 		if [[ $current_ver = "$prev_ver" ]]; then
-			SaveActionResultToLog QPKG "$qpkg_name" upgrade '' ok "version $current_ver"
+			SaveActionResultToLog QPKG "$qpkg_name" upgrade '' ok "= $current_ver"
 		else
-			SaveActionResultToLog QPKG "$qpkg_name" upgrade '' ok "upgraded from version $prev_ver to version $current_ver"
+			SaveActionResultToLog QPKG "$qpkg_name" upgrade '' ok "$prev_ver -> $current_ver"
 		fi
 
 		MarkThisAcForkAsOk
@@ -13111,12 +13111,10 @@ ShowAsActionLogDetail()
 		return 1
 	fi
 
-
 	local package_type=''
 	local quantity_msg=''
 
 	package_type=$7$(Pluralise "$8")
-
 
 	case $8 in
 		0)
@@ -13163,7 +13161,7 @@ ShowAsActionLogDetail()
 			fi
 			;;
 		*)
-			DisplayAsIndentActionResultDurationReason "$3" "${quantity_msg}${2} $package_type" "$5"
+			DisplayAsIndentActionResultDurationReason "$3" "${quantity_msg}${2} $package_type" "$5" "$6"
 	esac
 
 	return 0
