@@ -5744,7 +5744,7 @@ DisplayAsIndentActionResultDurationReason()
 			action=$1
 	esac
 
-	[[ -n ${3:-} ]] && duration=$(FormatMillisecondsAsMinutesSeconds "$3")
+	[[ -n ${3:-} ]] && duration=$(FormatMillisecondsAsHoursMinutesSeconds "$3")
 
 	printf "%${ACTION_RESULT_INDENT}s" ''
 
@@ -6064,7 +6064,7 @@ ShowReportAllActionResults()
 		if [[ $show_action_results_ok = true || $show_action_results_skipped = true || $show_action_results_failed = true || $show_action_results_zero = true ]]; then
 			{
 
-			DisplayAsHelpTitle "package action$(Pluralise "$d") started @ $(FormatSecondsAsTime "$a"), ended @ $(FormatSecondsAsTime "$e"), elapsed = $(FormatSecondsAsDuration "$(CalcTimeDiff "$a" "$e")")"
+			DisplayAsHelpTitle "package action$(Pluralise "$d") started @ $(FormatSecondsAsTime "$a"), ended @ $(FormatSecondsAsTime "$e"), elapsed = $(FormatSecondsAsHoursMinutesSeconds "$(CalcTimeDiff "$a" "$e")")"
 
 			[[ $show_action_results_ok = true ]] && ShowReportActionResults ok
 			[[ $show_action_results_skipped = true ]] && ShowReportActionResults skipped
@@ -12542,7 +12542,7 @@ CalcTimeDiff()
 
 	echo -n "$(($2-$1))"
 
-	}
+	} 2> /dev/null
 
 CalcMillisecondsDiffFromNanoseconds()
 	{
@@ -12556,7 +12556,7 @@ CalcMillisecondsDiffFromNanoseconds()
 
 	echo -n "$((($2-$1)/(10**6)))"
 
-	}
+	} 2> /dev/null
 
 FormatSecondsAsFullDate()
 	{
@@ -12569,7 +12569,7 @@ FormatSecondsAsFullDate()
 
 	/bin/date -d @"$1" +%c | tr -s ' '
 
-	}
+	} 2> /dev/null
 
 FormatSecondsAsTime()
 	{
@@ -12582,7 +12582,33 @@ FormatSecondsAsTime()
 
 	/bin/date -d @"$1" '+%-H:%M:%S %p' | tr -s ' '
 
-	}
+	} 2> /dev/null
+
+FormatSecondsAsHoursMinutesSeconds()
+	{
+
+	# http://stackoverflow.com/questions/12199631/convert-seconds-to-hours-minutes-seconds
+
+	# Input:
+	#	$1 = a time in seconds to convert to `HHh:MMm:SSs` or, if less than 1 minute, to `S seconds`.
+
+	((h=${1:-0}/3600))
+	((m=(${1:-0}%3600)/60))
+	((s=${1:-0}%60))
+
+	if [[ $h -gt 0 ]]; then
+		printf '%01dh:%02dm:%02ds' "$h" "$m" "$s"
+	elif [[ $m -gt 0 ]]; then
+		printf '%01dm:%02ds' "$m" "$s"
+	else
+		if [[ $s -eq 1 ]]; then
+			printf '%d second' "$s"
+		else
+			printf '%d seconds' "$s"
+		fi
+	fi
+
+	} 2> /dev/null
 
 FormatMillisecondsAsSeconds()
 	{
@@ -12595,74 +12621,17 @@ FormatMillisecondsAsSeconds()
 
 	echo -n "$(($1/(10**3)))"
 
-	}
+	} 2> /dev/null
 
-FormatNanosecondsAsMilliseconds()
+FormatMillisecondsAsHoursMinutesSeconds()
 	{
 
 	# Input:
-	#	$1 = epoch nanoseconds.
+	#	$1 = a time in milliseconds to convert to `S seconds` or `Mm:SSs`.
 
-	# Output:
-	#	stdout = epoch milliseconds.
+	FormatSecondsAsHoursMinutesSeconds "$((${1:-0}/1000))"
 
-	echo -n "$(($1/(10**6)))"
-
-	}
-
-FormatNowAsFullDate()
-	{
-
-	# Output:
-	#	stdout = real date.
-
-	/bin/date +%c | tr -s ' '
-
-	}
-
-FormatNowAsSeconds()
-	{
-
-	# Output:
-	#	stdout = epoch seconds.
-
-	/bin/date +%s
-
-	}
-
-FormatNowAsMilliseconds()
-	{
-
-	# Output:
-	#	stdout = epoch milliseconds.
-
-	FormatNanosecondsAsMilliseconds "$(FormatNowAsNanoseconds)"
-
-	}
-
-FormatNowAsNanoseconds()
-	{
-
-	# Output:
-	#	stdout = epoch nanoseconds.
-
-	/bin/date +%s%N
-
-	}
-
-FormatSecondsAsDuration()
-	{
-
-	# Input:
-	#	$1 = duration in seconds.
-
-	if [[ ${1:-0} -lt 30 ]]; then
-		echo -n "$(FormatAsThous "${1:-0}")s" | $TAIL_CMD -n1			# Prevent "broken pipe" error: https://superuser.com/a/642932
-	else
-		FormatSecondsAsHoursMinutesSeconds "$1"
-	fi
-
-	}
+	} 2> /dev/null
 
 FormatMillisecondsAsDuration()
 	{
@@ -12676,53 +12645,58 @@ FormatMillisecondsAsDuration()
 		FormatSecondsAsHoursMinutesSeconds "$(FormatMillisecondsAsSeconds "$1")"
 	fi
 
-	}
+	} 2> /dev/null
 
-FormatMillisecondsAsMinutesSeconds()
+FormatNanosecondsAsMilliseconds()
 	{
 
-	# http://stackoverflow.com/questions/12199631/convert-seconds-to-hours-minutes-seconds
-
 	# Input:
-	#	$1 = a time in milliseconds to convert to `S seconds` or `Mm:SSs`.
+	#	$1 = epoch nanoseconds.
 
-	local seconds=$((${1:-0}/1000))
-	((m=(seconds%3600)/60))
-	((s=seconds%60))
+	# Output:
+	#	stdout = epoch milliseconds.
 
-	[[ $s -eq 0 ]] && s=1
-
-	if [[ $m -eq 0 ]]; then
-		if [[ $s -eq 1 ]]; then
-			printf '%d second' "$s"
-		else
-			printf '%d seconds' "$s"
-		fi
-	else
-		printf '%dm:%02ds' "$m" "$s"
-	fi
+	echo -n "$(($1/(10**6)))"
 
 	} 2> /dev/null
 
-FormatSecondsAsHoursMinutesSeconds()
+FormatNowAsFullDate()
 	{
 
-	# http://stackoverflow.com/questions/12199631/convert-seconds-to-hours-minutes-seconds
+	# Output:
+	#	stdout = real date.
 
-	# Input:
-	#	$1 = a time in seconds to convert to `HHh:MMm:SSs`.
+	/bin/date +%c | tr -s ' '
 
-	((h=${1:-0}/3600))
-	((m=(${1:-0}%3600)/60))
-	((s=${1:-0}%60))
+	} 2> /dev/null
 
-	if [[ $h -gt 0 ]]; then
-		printf '%01dh:%02dm:%02ds\n' "$h" "$m" "$s"
-	elif [[ $m -gt 0 ]]; then
-		printf '%01dm:%02ds\n' "$m" "$s"
-	else
-		printf '%01ds\n' "$s"
-	fi
+FormatNowAsSeconds()
+	{
+
+	# Output:
+	#	stdout = epoch seconds.
+
+	/bin/date +%s
+
+	} 2> /dev/null
+
+FormatNowAsMilliseconds()
+	{
+
+	# Output:
+	#	stdout = epoch milliseconds.
+
+	FormatNanosecondsAsMilliseconds "$(FormatNowAsNanoseconds)"
+
+	} 2> /dev/null
+
+FormatNowAsNanoseconds()
+	{
+
+	# Output:
+	#	stdout = epoch nanoseconds.
+
+	/bin/date +%s%N
 
 	} 2> /dev/null
 
