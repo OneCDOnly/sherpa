@@ -12584,7 +12584,7 @@ ConvertSecondsToTime()
 	# Output:
 	#	stdout = time component only.
 
-	/bin/date -d @"$1" '+%-H:%M:%S %p' | tr -s ' '
+	/bin/date -d @"$1" '+%-l:%M:%S %p' | tr -s ' '
 
 	} 2> /dev/null
 
