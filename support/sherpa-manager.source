@@ -6025,11 +6025,11 @@ Help.Lists:Show()
 ShowReportAllActionResults()
 	{
 
-	local a=0
-	local b=0
-	local c=0
+	local -i a=0
+	local -i b=0
+	local -i c=0
 	local -i d=0
-	local e=0
+	local -i e=0
 	local action=''
 	local -i datetime=0
 	local -i duration=0
@@ -6091,8 +6091,8 @@ ShowReportActionResults()
 
 	local action=''
 	local -i count=0
-	local datetime=0
-	local duration=0
+	local -i datetime=0
+	local -i duration=0
 	local package_name=''
 	local package_type=''
 	local -i quantity=0
@@ -7533,7 +7533,7 @@ ShowReportBackups()
 	FuncInit
 
 	local epoch_time=0		# Allow float as seconds have a fractional component.
-	local file_bytes=0
+	local -i file_bytes=0
 	local file_date=''
 	local file_name=''
 	local file_time=''
@@ -8612,7 +8612,7 @@ OsGetUptime()
 UserGetTimeInShell()
 	{
 
-	local n=0
+	local -i n=0
 
 	[[ -n ${LOADER_SCRIPT_PPID:-} ]] && n=$($PS_CMD -o pid,etime | $GREP_CMD $LOADER_SCRIPT_PPID | head -n1)
 
