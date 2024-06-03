@@ -783,7 +783,7 @@ DebugLogEnv()
 		DebugFirmware ok 'system load' "$(OsGetSysLoadAverages)"
 	fi
 
-	DebugUserspace ok 'GLIBC' "$(/sbin/ldd --version | head -n1 | cut -d' ' -f4) $(/sbin/ldd --version | /bin/grep Copyright)"
+	DebugUserspace ok 'GLIBC' "$(/sbin/ldd --version | head -n1 | cut -d' ' -f4) $(/sbin/ldd --version | /bin/grep Copyright | /bin/sed 's|\$||')"
 
 	DebugUserspace ok 'bash' "$(bash --version | head -n1)"
 	DebugUserspace ok 'shell options' "$-"
