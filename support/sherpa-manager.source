@@ -6055,12 +6055,16 @@ ShowReportAllActionResults()
 			fi
 		done < "$SESS_ACTION_RESULTS_PATHFILE"
 
-		[[ $c -gt 0 ]] && b=$((c+(d/1000)+1))		# Use last non-zero iteration of $datetime as beginning of last action, then add duration to it.
+		a=$(FormatMillisecondsAsSeconds "$a")
+		c=$(FormatMillisecondsAsSeconds "$c")
+		d=$(FormatMillisecondsAsSeconds "$d")
+
+		[[ $c -gt 0 ]] && b=$((c+d+1))		# Use last non-zero iteration of $datetime as beginning of last action, then add duration to it.
 
 		if [[ $show_action_results_ok = true || $show_action_results_skipped = true || $show_action_results_failed = true || $show_action_results_zero = true ]]; then
 			{
 
-			DisplayAsHelpTitle "package action$(Pluralise "$e") started @ $(FormatSecondsAsTime "$a"), ended @ $(FormatSecondsAsTime "$b"), elapsed = $(FormatSecondsAsDuration "$(CalcSecondsDiff "$a" "$b")")"
+			DisplayAsHelpTitle "package action$(Pluralise "$e") started @ $(FormatSecondsAsTime "$a"), ended @ $(FormatSecondsAsTime "$b"), elapsed = $(FormatSecondsAsDuration "$(CalcTimeDiff "$a" "$b")")"
 
 			[[ $show_action_results_ok = true ]] && ShowReportActionResults ok
 			[[ $show_action_results_skipped = true ]] && ShowReportActionResults skipped
@@ -9082,7 +9086,8 @@ SaveActionResultToLog()
 	local -r CLEAN_ACTION=${ACTION//\"/}
 	local -r RESULT=${5:?${FUNCNAME[0]}'()': undefined result}
 	local -r REASON=${6:-}
-	local -r DURATION=$(CalcMillisecondsDiff "${!var_safe_name}" "$(FormatNowAsNanoseconds)")
+	local -r STARTTIME=$(FormatNanosecondsAsMilliseconds "${!var_safe_name}")
+	local -r DURATION=$(CalcTimeDiff "$STARTTIME" "$(FormatNowAsMilliseconds)")
 	local -r ACTION_TIMES_PATHFILE=$ACTION_TIMES_PATH/$CLEAN_ACTION.milliseconds
 
 	if [[ $2 = undefined ]]; then
@@ -9092,7 +9097,8 @@ SaveActionResultToLog()
 	fi
 
 	# Write new action results entry.
-	echo "$(FormatNowAsSeconds)|$ACTION|$QTY|$qpkg_name|$PACKAGE_TYPE|$RESULT|$DURATION|$REASON" >> "$SESS_ACTION_RESULTS_PATHFILE"
+
+	echo "$STARTTIME|$ACTION|$QTY|$qpkg_name|$PACKAGE_TYPE|$RESULT|$DURATION|$REASON" >> "$SESS_ACTION_RESULTS_PATHFILE"
 
 	# Remove previous action duration entry if one exists.
 
@@ -12471,7 +12477,7 @@ FuncExit()
 	local var_safe_name=${VAR_NAME//[.-]/_}
 	var_safe_name=${var_safe_name//:/_}
 
-	DebugAsFuncEx "${1:-0}" "$(FormatMillisecondsAsDuration "$(CalcMillisecondsDiff "${!var_safe_name}" "$(FormatNowAsNanoseconds)")")"
+	DebugAsFuncEx "${1:-0}" "$(FormatMillisecondsAsDuration "$(CalcMillisecondsDiffFromNanoseconds "${!var_safe_name}" "$(FormatNowAsNanoseconds)")")"
 
 	return ${1:-0}
 
@@ -12508,7 +12514,7 @@ FuncForkExit()
 	var_safe_name=${var_safe_name//:/_}
 
 	SendActionStatus ex
-	DebugAsFuncEx "${1:-0}" "$(FormatMillisecondsAsDuration "$(CalcMillisecondsDiff "${!var_safe_name}" "$(FormatNowAsNanoseconds)")")"
+	DebugAsFuncEx "${1:-0}" "$(FormatMillisecondsAsDuration "$(CalcMillisecondsDiffFromNanoseconds "${!var_safe_name}" "$(FormatNowAsNanoseconds)")")"
 
 	if [[ -n $sess_active_pathfile && -e $sess_active_pathfile ]]; then
 		if [[ -s $sess_active_pathfile ]]; then
@@ -12524,21 +12530,21 @@ FuncForkExit()
 
 	}
 
-CalcSecondsDiff()
+CalcTimeDiff()
 	{
 
 	# Input:
-	#	$1 = start time in seconds.
-	#	$2 = end time in seconds.
+	#	$1 = start time in seconds/milliseconds.
+	#	$2 = end time in seconds/milliseconds.
 
 	# Output:
-	#	stdout = difference in seconds.
+	#	stdout = difference in seconds/milliseconds.
 
 	echo -n "$(($2-$1))"
 
 	}
 
-CalcMillisecondsDiff()
+CalcMillisecondsDiffFromNanoseconds()
 	{
 
 	# Input:
@@ -12548,7 +12554,7 @@ CalcMillisecondsDiff()
 	# Output:
 	#	stdout = difference in milliseconds.
 
-	echo -n "$((($2-$1)/1000000))"
+	echo -n "$((($2-$1)/(10**6)))"
 
 	}
 
@@ -12578,6 +12584,32 @@ FormatSecondsAsTime()
 
 	}
 
+FormatMillisecondsAsSeconds()
+	{
+
+	# Input:
+	#	$1 = epoch milliseconds.
+
+	# Output:
+	#	stdout = epoch seconds.
+
+	echo -n "$(($1/(10**3)))"
+
+	}
+
+FormatNanosecondsAsMilliseconds()
+	{
+
+	# Input:
+	#	$1 = epoch nanoseconds.
+
+	# Output:
+	#	stdout = epoch milliseconds.
+
+	echo -n "$(($1/(10**6)))"
+
+	}
+
 FormatNowAsFullDate()
 	{
 
@@ -12595,6 +12627,16 @@ FormatNowAsSeconds()
 	#	stdout = epoch seconds.
 
 	/bin/date +%s
+
+	}
+
+FormatNowAsMilliseconds()
+	{
+
+	# Output:
+	#	stdout = epoch milliseconds.
+
+	FormatNanosecondsAsMilliseconds "$(FormatNowAsNanoseconds)"
 
 	}
 
@@ -12631,7 +12673,7 @@ FormatMillisecondsAsDuration()
 	if [[ ${1:-0} -lt 30000 ]]; then
 		echo -n "$(FormatAsThous "${1:-0}")ms" | $TAIL_CMD -n1			# Prevent "broken pipe" error: https://superuser.com/a/642932
 	else
-		FormatSecondsAsHoursMinutesSeconds "$(($1/1000))"
+		FormatSecondsAsHoursMinutesSeconds "$(FormatMillisecondsAsSeconds "$1")"
 	fi
 
 	}
