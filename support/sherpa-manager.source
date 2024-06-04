@@ -965,7 +965,7 @@ CheckEnv()
 
 	if QpkgIsInstalled Entware; then
 		if [[ $ENTWARE_VER != none ]]; then
-			UpdateEntwarePackageList &			# Let's try launching this early.
+			_UpdateEntwarePackageList_ &			# Let's try launching this early.
 		else
 			DebugAsWarn "$(ShowAsPackageName Entware) appears to be installed but is inactive. Please consider starting the $(ShowAsPackageName Entware) QPKG."
 		fi
@@ -3114,8 +3114,10 @@ PatchEntwareService()
 
 	}
 
-UpdateEntwarePackageList()
+_UpdateEntwarePackageList_()
 	{
+
+	# * This function runs autonomously *
 
 	if IsNtSysFileExist $OPKG_CMD; then
 		DisplayAsProjSynExam 'try reactivating Entware' 'reactivate ew'
@@ -4513,8 +4515,10 @@ DisplayAsStatusReportTitleLine()
 
 	}
 
-DisplayAsStatusReportItemLine()
+_DisplayAsStatusReportItemLine_()
 	{
+
+	# * This function runs autonomously *
 
 	# Input:
 
@@ -4701,8 +4705,10 @@ DisplayAsReposReportTitleLine()
 
 	}
 
-DisplayAsReposReportItemLine()
+_DisplayAsReposReportItemLine_()
 	{
+
+	# * This function runs autonomously *
 
 	# Input:
 	# 	$qpkg_name (global).
@@ -4715,8 +4721,14 @@ DisplayAsReposReportItemLine()
 	local -i n=0
 	local name_msg=$CHARS_BLANK
 	local store_id=$(QpkgGetStoreID)
-		local assigned_repo=$(GetRepoURLFromStoreID "$store_id")
-	[[ $store_id = sherpa ]] && assigned_repo=sherpa
+
+	if [[ $store_id = undefined || $store_id = sherpa ]]; then
+		store_id=sherpa
+		assigned_repo=sherpa
+		/bin/touch "$REPORT_FLAGS_PATH"/repo-sherpa
+	else
+		assigned_repo=$(GetRepoURLFromStoreID "$store_id")
+	fi
 
 	if QpkgIsMissing; then
 		mode=highlighted
@@ -4728,8 +4740,6 @@ DisplayAsReposReportItemLine()
 		mode=normal
 		/bin/touch "$REPORT_FLAGS_PATH"/state-installed
 	fi
-
-	[[ $assigned_repo = sherpa ]] && /bin/touch "$REPORT_FLAGS_PATH"/repo-sherpa
 
 	case $mode in
 		normal)
@@ -4848,8 +4858,10 @@ DisplayAsAbsReportTitleLine()
 
 	}
 
-DisplayAsAbsReportItemLine()
+_DisplayAsAbsReportItemLine_()
 	{
+
+	# * This function runs autonomously *
 
 	# Input:
 	# 	$qpkg_name (global).
@@ -5017,8 +5029,10 @@ DisplayAsDepsReportTitleLine()
 
 	}
 
-DisplayAsDepsReportItemLine()
+_DisplayAsDepsReportItemLine_()
 	{
+
+	# * This function runs autonomously *
 
 	# Input:
 	#   $1 = QPKG name (optional).
@@ -5417,8 +5431,10 @@ DisplayAsFeaturesReportTitleLine()
 
 	}
 
-DisplayAsFeaturesReportItemLine()
+_DisplayAsFeaturesReportItemLine_()
 	{
+
+	# * This function runs autonomously *
 
 	# Input:
 	# 	$qpkg_name (global).
@@ -7558,13 +7574,13 @@ Help.Abbreviations:Show()
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		QpkgSetIndex
-		DisplayAsAbsReportItemLine > "$REPORTS_PATH/$n" &
+		_DisplayAsAbsReportItemLine_ > "$REPORTS_PATH/$n" &
 	done
 
 	m=$n
 	wait 2> /dev/null
 
-	# load report lines from individual files.
+	# Load report lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
 		f="$REPORTS_PATH/$n"
@@ -7664,13 +7680,13 @@ ShowReportDependencies()
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		QpkgSetIndex
-		DisplayAsDepsReportItemLine > "$REPORTS_PATH/$n" &
+		_DisplayAsDepsReportItemLine_ > "$REPORTS_PATH/$n" &
 	done
 
 	m=$n
 	wait 2> /dev/null
 
-	# load report lines from individual files.
+	# Load report lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
 		f="$REPORTS_PATH/$n"
@@ -7718,13 +7734,13 @@ ShowReportFeatures()
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		QpkgSetIndex
-		DisplayAsFeaturesReportItemLine > "$REPORTS_PATH/$n" &
+		_DisplayAsFeaturesReportItemLine_ > "$REPORTS_PATH/$n" &
 	done
 
 	m=$n
 	wait 2> /dev/null
 
-	# load report lines from individual files.
+	# Load report lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
 		f="$REPORTS_PATH/$n"
@@ -7806,10 +7822,10 @@ ShowReportRepos()
 	FuncInit
 
 	local a=''
-	report_cols_max=3
 	local -i m=0
 	local -i n=0
 	local previous=''
+	report_cols_max=3
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport repository
@@ -7819,13 +7835,13 @@ ShowReportRepos()
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		QpkgSetIndex
-		DisplayAsReposReportItemLine > "$REPORTS_PATH/$n" &
+		_DisplayAsReposReportItemLine_ > "$REPORTS_PATH/$n" &
 	done
 
 	m=$n
 	wait 2> /dev/null
 
-	# load report lines from individual files.
+	# Load report lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
 		f="$REPORTS_PATH/$n"
@@ -7876,7 +7892,7 @@ ShowReportStatuses()
 		QPKGs-ACstatus-dn.Exist "$qpkg_name" || continue
 		((n++))
 		QpkgSetIndex
-		DisplayAsStatusReportItemLine > "$REPORTS_PATH/$n" &
+		_DisplayAsStatusReportItemLine_ > "$REPORTS_PATH/$n" &
 	done
 
 	m=$n
@@ -9216,7 +9232,7 @@ _QPKG:reassign_()
 		SaveActionResultToLog QPKG "$qpkg_name" reassign '' skipped 'not installed'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif [[ $(QpkgGetStoreID) = sherpa ]]; then
+	elif [[ $(QpkgGetStoreID) = sherpa || $(QpkgGetStoreID) = undefined ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" reassign '' skipped 'already assigned to sherpa'
 		MarkThisAcForkAsSkipped
 		z=1
@@ -9400,7 +9416,7 @@ _QPKG:install_()
 
 		if [[ $qpkg_name = Entware ]]; then
 			SendParentChangeEnv ModPathToEntware
-			SendParentChangeEnv UpdateEntwarePackageList
+			SendParentChangeEnv _UpdateEntwarePackageList_
 			PatchEntwareService
 
 			# Shift all files from original [/opt] into new [/opt]
@@ -9625,9 +9641,9 @@ _QPKG:upgrade_()
 		local current_ver=$(QpkgGetInstalledVer)
 
 		if [[ $current_ver = "$prev_ver" ]]; then
-			SaveActionResultToLog QPKG "$qpkg_name" upgrade '' ok "= $current_ver"
+			SaveActionResultToLog QPKG "$qpkg_name" upgrade '' ok "version $current_ver"
 		else
-			SaveActionResultToLog QPKG "$qpkg_name" upgrade '' ok "$prev_ver -> $current_ver"
+			SaveActionResultToLog QPKG "$qpkg_name" upgrade '' ok "version $prev_ver -> version $current_ver"
 		fi
 
 		MarkThisAcForkAsOk
