@@ -9232,7 +9232,7 @@ _QPKG:reassign_()
 		SaveActionResultToLog QPKG "$qpkg_name" reassign '' skipped 'not installed'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif [[ $(QpkgGetStoreID) = sherpa ]]; then
+	elif [[ $(QpkgGetStoreID) = sherpa || $(QpkgGetStoreID) = undefined ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" reassign '' skipped 'already assigned to sherpa'
 		MarkThisAcForkAsSkipped
 		z=1
