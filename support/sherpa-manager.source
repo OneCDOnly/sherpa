@@ -9641,9 +9641,9 @@ _QPKG:upgrade_()
 		local current_ver=$(QpkgGetInstalledVer)
 
 		if [[ $current_ver = "$prev_ver" ]]; then
-			SaveActionResultToLog QPKG "$qpkg_name" upgrade '' ok "= $current_ver"
+			SaveActionResultToLog QPKG "$qpkg_name" upgrade '' ok "version $current_ver"
 		else
-			SaveActionResultToLog QPKG "$qpkg_name" upgrade '' ok "$prev_ver -> $current_ver"
+			SaveActionResultToLog QPKG "$qpkg_name" upgrade '' ok "version $prev_ver -> version $current_ver"
 		fi
 
 		MarkThisAcForkAsOk
