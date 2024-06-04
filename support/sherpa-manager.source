@@ -8692,10 +8692,9 @@ OsGetUptime()
 UserGetTimeInShell()
 	{
 
-	local -i n=0
+	local n=''
 
 	[[ -n ${LOADER_SCRIPT_PPID:-} ]] && n=$($PS_CMD -o pid,etime | $GREP_CMD $LOADER_SCRIPT_PPID | head -n1)
-
 	FormatAsLongMinutesSecs "${n:6}"
 
 	}
