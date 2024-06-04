@@ -965,7 +965,7 @@ CheckEnv()
 
 	if QpkgIsInstalled Entware; then
 		if [[ $ENTWARE_VER != none ]]; then
-			UpdateEntwarePackageList &			# Let's try launching this early.
+			_UpdateEntwarePackageList_ &			# Let's try launching this early.
 		else
 			DebugAsWarn "$(ShowAsPackageName Entware) appears to be installed but is inactive. Please consider starting the $(ShowAsPackageName Entware) QPKG."
 		fi
@@ -3114,8 +3114,10 @@ PatchEntwareService()
 
 	}
 
-UpdateEntwarePackageList()
+_UpdateEntwarePackageList_()
 	{
+
+	# * This function runs autonomously *
 
 	if IsNtSysFileExist $OPKG_CMD; then
 		DisplayAsProjSynExam 'try reactivating Entware' 'reactivate ew'
@@ -4513,8 +4515,10 @@ DisplayAsStatusReportTitleLine()
 
 	}
 
-DisplayAsStatusReportItemLine()
+_DisplayAsStatusReportItemLine_()
 	{
+
+	# * This function runs autonomously *
 
 	# Input:
 
@@ -4854,8 +4858,10 @@ DisplayAsAbsReportTitleLine()
 
 	}
 
-DisplayAsAbsReportItemLine()
+_DisplayAsAbsReportItemLine_()
 	{
+
+	# * This function runs autonomously *
 
 	# Input:
 	# 	$qpkg_name (global).
@@ -5023,8 +5029,10 @@ DisplayAsDepsReportTitleLine()
 
 	}
 
-DisplayAsDepsReportItemLine()
+_DisplayAsDepsReportItemLine_()
 	{
+
+	# * This function runs autonomously *
 
 	# Input:
 	#   $1 = QPKG name (optional).
@@ -5423,8 +5431,10 @@ DisplayAsFeaturesReportTitleLine()
 
 	}
 
-DisplayAsFeaturesReportItemLine()
+_DisplayAsFeaturesReportItemLine_()
 	{
+
+	# * This function runs autonomously *
 
 	# Input:
 	# 	$qpkg_name (global).
@@ -7564,7 +7574,7 @@ Help.Abbreviations:Show()
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		QpkgSetIndex
-		DisplayAsAbsReportItemLine > "$REPORTS_PATH/$n" &
+		_DisplayAsAbsReportItemLine_ > "$REPORTS_PATH/$n" &
 	done
 
 	m=$n
@@ -7670,7 +7680,7 @@ ShowReportDependencies()
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		QpkgSetIndex
-		DisplayAsDepsReportItemLine > "$REPORTS_PATH/$n" &
+		_DisplayAsDepsReportItemLine_ > "$REPORTS_PATH/$n" &
 	done
 
 	m=$n
@@ -7724,7 +7734,7 @@ ShowReportFeatures()
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		QpkgSetIndex
-		DisplayAsFeaturesReportItemLine > "$REPORTS_PATH/$n" &
+		_DisplayAsFeaturesReportItemLine_ > "$REPORTS_PATH/$n" &
 	done
 
 	m=$n
@@ -7882,7 +7892,7 @@ ShowReportStatuses()
 		QPKGs-ACstatus-dn.Exist "$qpkg_name" || continue
 		((n++))
 		QpkgSetIndex
-		DisplayAsStatusReportItemLine > "$REPORTS_PATH/$n" &
+		_DisplayAsStatusReportItemLine_ > "$REPORTS_PATH/$n" &
 	done
 
 	m=$n
@@ -9406,7 +9416,7 @@ _QPKG:install_()
 
 		if [[ $qpkg_name = Entware ]]; then
 			SendParentChangeEnv ModPathToEntware
-			SendParentChangeEnv UpdateEntwarePackageList
+			SendParentChangeEnv _UpdateEntwarePackageList_
 			PatchEntwareService
 
 			# Shift all files from original [/opt] into new [/opt]
