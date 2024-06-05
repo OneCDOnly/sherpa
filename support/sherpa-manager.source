@@ -1778,9 +1778,10 @@ ParseManagementArgs()
 					requires_group=true
 					user_action=$arg
 					;;
-				debug)
+				debug|verbose)
 					requires_group=false
 					user_action=$arg
+					EnableVerbose
 					EnableDebugToArchiveAndFile
 					;;
 				reset)
@@ -1789,12 +1790,6 @@ ParseManagementArgs()
 					DeleteSetting Terse
 
 					Reset					# <-- Processing will terminate in this function (no-return).
-					;;
-				verbose)
-					requires_group=false
-					user_action=$arg
-					EnableVerbose
-					EnableDebugToArchiveAndFile
 			esac
 
 			if [[ -n $user_action && $user_action != "$current_action" ]]; then
@@ -3395,7 +3390,7 @@ IPKs:upgrade()
 		if [[ $z -eq 0 ]]; then
 			NoteIpkAcAsOk "$(IPKs-ACupgrade-to:Array)" upgrade
 			DebugAsDone "upgraded $desc"
-			SaveActionResultToLog IPK auxiliary upgrade "$total_count" ok "$z"
+			SaveActionResultToLog IPK auxiliary upgrade "$total_count" ok
 		else
 			NoteIpkAcAsEr "$(IPKs-ACupgrade-to:Array)" upgrade
 			SaveActionResultToLog IPK auxiliary upgrade "$total_count" failed "$z"
@@ -3475,7 +3470,7 @@ IPKs:install()
 		if [[ $z -eq 0 ]]; then
 			NoteIpkAcAsOk "$(IPKs-ACdownload-to:Array)" install
 			DebugAsDone "installed $desc"
-			SaveActionResultToLog IPK auxiliary install "$total_count" ok "$z"
+			SaveActionResultToLog IPK auxiliary install "$total_count" ok
 			HideKeystrokes
 			UpdateCapabilities
 
@@ -3572,7 +3567,7 @@ IPKs:downgrade()
 			((ok_count++))
 			NoteIpkAcAsOk "$(IPKs-ACdowngrade-to:Array)" downgrade
 			DebugAsDone "downgraded $desc"
-			SaveActionResultToLog IPK auxiliary downgrade "$ok_count" ok "$z"
+			SaveActionResultToLog IPK auxiliary downgrade "$ok_count" ok
 		else
 			((fail_count++))
 			NoteIpkAcAsEr "$(IPKs-ACdowngrade-to:Array)" downgrade
@@ -3641,7 +3636,7 @@ PIPs:install()
 		if [[ $z -eq 0 ]]; then
 			((ok_count++))
 			DebugAsDone "installed $desc"
-			SaveActionResultToLog PIP auxiliary install "$ok_count" ok "$z"
+			SaveActionResultToLog PIP auxiliary install "$ok_count" ok
 
 			rm -f "$PREV_PIP_LIST.installing" 2> /dev/null
 		else
@@ -6292,9 +6287,9 @@ Help.Options:Show()
 
 		Help.Basic:Show
 		DisplayAsHelpTitle "$(ShowAsOptions) usage examples:"
-		DisplayAsProjSynIndentExam 'show live debugging information, and record it to file' "$(ShowAsAction) $(ShowAsPackages) verbose"
-		DisplayAsProjSynIndentExam '' v
-		DisplayAsProjSynIndentExam 'record debugging information to file-only' "$(ShowAsAction) $(ShowAsPackages) debug"
+		DisplayAsProjSynIndentExam 'show debugging information, and record it to file' "$(ShowAsAction) $(ShowAsPackages) debug"
+		DisplayAsProjSynIndentExam '' "$(ShowAsAction) $(ShowAsPackages) verbose"
+		DisplayAsProjSynIndentExam '' "$(ShowAsAction) $(ShowAsPackages) v"
 
 		} > "$REPORT_OUTPUT_PATHFILE"
 
@@ -6350,7 +6345,6 @@ Help.Problems:Show()
 		DisplayAsProjSynIndentExam '' c
 		DisplayAsProjSynIndentExam 'clear local repository files from these QPKGs' "clean $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam 'deactivate these QPKGs' "deactivate $(ShowAsPackages)"
-		DisplayAsProjSynIndentExam 'record debugging information to file-only' "$(ShowAsAction) $(ShowAsPackages) debug"
 		DisplayAsProjSynIndentExam "increase the default 'qpkg_service' timeouts from 3 minutes to 30 minutes" 'install increasetimeouts'
 		DisplayAsProjSynIndentExam "view only the most recent $(ShowAsTitleName) session log" last
 		DisplayAsProjSynIndentExam '' l
@@ -6361,8 +6355,9 @@ Help.Problems:Show()
 		DisplayAsProjSynIndentExam "remove all cached $(ShowAsTitleName) items and logs" reset
 		DisplayAsProjSynIndentExam 'find the live status of each application in these QPKGs' "status $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam '' "s $(ShowAsPackages)"
-		DisplayAsProjSynIndentExam 'show live debugging information, and record it to file' "$(ShowAsAction) $(ShowAsPackages) verbose"
-		DisplayAsProjSynIndentExam '' v
+		DisplayAsProjSynIndentExam 'show debugging information, and record it to file' "$(ShowAsAction) $(ShowAsPackages) debug"
+		DisplayAsProjSynIndentExam '' "$(ShowAsAction) $(ShowAsPackages) verbose"
+		DisplayAsProjSynIndentExam '' "$(ShowAsAction) $(ShowAsPackages) v"
 		DisplayAsHelpTitleHighlighted "if you need help, please include a copy of your $(ShowAsTitleName) $(TextBrightOrange "log for analysis!")"
 
 		} > "$REPORT_OUTPUT_PATHFILE"
@@ -8692,10 +8687,9 @@ OsGetUptime()
 UserGetTimeInShell()
 	{
 
-	local -i n=0
+	local n=''
 
 	[[ -n ${LOADER_SCRIPT_PPID:-} ]] && n=$($PS_CMD -o pid,etime | $GREP_CMD $LOADER_SCRIPT_PPID | head -n1)
-
 	FormatAsLongMinutesSecs "${n:6}"
 
 	}
