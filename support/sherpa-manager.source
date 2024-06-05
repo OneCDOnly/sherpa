@@ -3390,7 +3390,7 @@ IPKs:upgrade()
 		if [[ $z -eq 0 ]]; then
 			NoteIpkAcAsOk "$(IPKs-ACupgrade-to:Array)" upgrade
 			DebugAsDone "upgraded $desc"
-			SaveActionResultToLog IPK auxiliary upgrade "$total_count" ok "$z"
+			SaveActionResultToLog IPK auxiliary upgrade "$total_count" ok
 		else
 			NoteIpkAcAsEr "$(IPKs-ACupgrade-to:Array)" upgrade
 			SaveActionResultToLog IPK auxiliary upgrade "$total_count" failed "$z"
@@ -3470,7 +3470,7 @@ IPKs:install()
 		if [[ $z -eq 0 ]]; then
 			NoteIpkAcAsOk "$(IPKs-ACdownload-to:Array)" install
 			DebugAsDone "installed $desc"
-			SaveActionResultToLog IPK auxiliary install "$total_count" ok "$z"
+			SaveActionResultToLog IPK auxiliary install "$total_count" ok
 			HideKeystrokes
 			UpdateCapabilities
 
@@ -3567,7 +3567,7 @@ IPKs:downgrade()
 			((ok_count++))
 			NoteIpkAcAsOk "$(IPKs-ACdowngrade-to:Array)" downgrade
 			DebugAsDone "downgraded $desc"
-			SaveActionResultToLog IPK auxiliary downgrade "$ok_count" ok "$z"
+			SaveActionResultToLog IPK auxiliary downgrade "$ok_count" ok
 		else
 			((fail_count++))
 			NoteIpkAcAsEr "$(IPKs-ACdowngrade-to:Array)" downgrade
@@ -3636,7 +3636,7 @@ PIPs:install()
 		if [[ $z -eq 0 ]]; then
 			((ok_count++))
 			DebugAsDone "installed $desc"
-			SaveActionResultToLog PIP auxiliary install "$ok_count" ok "$z"
+			SaveActionResultToLog PIP auxiliary install "$ok_count" ok
 
 			rm -f "$PREV_PIP_LIST.installing" 2> /dev/null
 		else
