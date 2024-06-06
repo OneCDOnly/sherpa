@@ -1,5 +1,7 @@
 Observed issues:
 
+	* If service script is unable to update repo/download release file, and there isn't already an installation, then abort immediately.
+
 	* Lidarr (and Readarr) not running on x86-64:
 		-------------------------------------------------------------------------------------------------------------------------
 		[/share/Public] # cat /var/log/OLidarr.screen.log

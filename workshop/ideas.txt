@@ -1,5 +1,3 @@
-* Don't save action result code of '0' as reason.
-
 * Arg parser should use commas to separate actions & options?
 
 * Include QPKG "signed" status in dependencies report?
