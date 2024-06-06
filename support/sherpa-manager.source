@@ -1375,6 +1375,8 @@ ProcActions()
 						PIPs:install
 					fi
 
+					QPKGs-ACinstall-ok.Exist Entware && [[ $sqlite_pathfile = /opt/bin/sqlite3 && -e $sqlite_pathfile ]] && OsIsSupportSignedPackages && QPKGs-ACsign-to:Add "$(QPKGs-ISinstalled:Array)"
+
 					ProcAction sign independent QPKG '"sign"' '"signed"'		# Sign these ASAP after installing 'sqlite3-cli' IPK.
 			esac
 		done
@@ -9395,9 +9397,9 @@ _QPKG:install_()
 	LogQpkgServiceStatus
 	QpkgIsCanLog && ! QpkgLastResultWasOk && z=1
 
-	[[ $qpkg_name = Entware ]] && IsNtSysFileExist $OPKG_CMD && z=1
+	[[ $qpkg_name = Entware ]] && IsNtSysFileExist $OPKG_CMD && z=1		# Entware installation has failed.
 
-	if [[ $z -eq 0 || $z -eq 10 ]]; then	# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes aborts.
+	if [[ $z -eq 0 || $z -eq 10 ]]; then	# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes user-aborts.
 		SendPackageStateChange ISinstalled
 
 		if QpkgIsEnabled "$qpkg_name"; then

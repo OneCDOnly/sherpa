@@ -9,9 +9,6 @@ Observed issues:
 		bash: /share/CACHEDEV1_DATA/.qpkg/OLidarr/repo-cache/Lidarr/Lidarr: No such file or directory
 		-------------------------------------------------------------------------------------------------------------------------
 
-	* When sherpa installs Entware (and now has a working sqlite3 binary), should also "sign" all installed QPKGs.
-		- For now, must run a 'check' to ensure it's signed.
-
 	* Near the end of installing IPKs, monitored download path can remain at non-zero size while packages complete installation.
 		- Include a separate progress message when dir size shrinks? Maybe force increase to "100%" and stop monitoring?
 
