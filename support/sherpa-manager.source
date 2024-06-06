@@ -1375,7 +1375,9 @@ ProcActions()
 						PIPs:install
 					fi
 
-					ProcAction sign independent QPKG '"sign"' '"signed"'		# Sign these ASAP after installing 'sqlite3-cli' IPK.
+					QPKGs-ACinstall-ok.Exist Entware && [[ $sqlite_pathfile = /opt/bin/sqlite3 && -e $sqlite_pathfile ]] && OsIsSupportSignedPackages && QPKGs-ACsign-to:Add "$(QPKGs-ISinstalled:Array)"
+
+					ProcAction sign independent QPKG '"sign"' '"signed"'
 			esac
 		done
 	fi
@@ -3112,7 +3114,7 @@ PatchEntwareService()
 _UpdateEntwarePackageList_()
 	{
 
-	# * This function runs autonomously *
+	# * This function runs asynchronously *
 
 	if IsNtSysFileExist $OPKG_CMD; then
 		DisplayAsProjSynExam 'try reactivating Entware' 'reactivate ew'
@@ -3761,7 +3763,7 @@ _LaunchOneActionWithManyForks_()
 _DirSizeMonitor_()
 	{
 
-	# * This function runs autonomously *
+	# * This function runs asynchronously *
 
 	# Input:
 	#   $1 = directory to monitor the size of.
@@ -4513,7 +4515,7 @@ DisplayAsStatusReportTitleLine()
 _DisplayAsStatusReportItemLine_()
 	{
 
-	# * This function runs autonomously *
+	# * This function runs asynchronously *
 
 	# Input:
 
@@ -4703,7 +4705,7 @@ DisplayAsReposReportTitleLine()
 _DisplayAsReposReportItemLine_()
 	{
 
-	# * This function runs autonomously *
+	# * This function runs asynchronously *
 
 	# Input:
 	# 	$qpkg_name (global).
@@ -4856,7 +4858,7 @@ DisplayAsAbsReportTitleLine()
 _DisplayAsAbsReportItemLine_()
 	{
 
-	# * This function runs autonomously *
+	# * This function runs asynchronously *
 
 	# Input:
 	# 	$qpkg_name (global).
@@ -5027,7 +5029,7 @@ DisplayAsDepsReportTitleLine()
 _DisplayAsDepsReportItemLine_()
 	{
 
-	# * This function runs autonomously *
+	# * This function runs asynchronously *
 
 	# Input:
 	#   $1 = QPKG name (optional).
@@ -5429,7 +5431,7 @@ DisplayAsFeaturesReportTitleLine()
 _DisplayAsFeaturesReportItemLine_()
 	{
 
-	# * This function runs autonomously *
+	# * This function runs asynchronously *
 
 	# Input:
 	# 	$qpkg_name (global).
@@ -9207,7 +9209,7 @@ SaveActionResultToLog()
 _QPKG:reassign_()
 	{
 
-	# * This function runs autonomously *
+	# * This function runs asynchronously *
 	# Removes the `storeid` assignment for the QPKG named in $qpkg_name.
 
 	# Input:
@@ -9254,7 +9256,7 @@ _QPKG:reassign_()
 _QPKG:download_()
 	{
 
-	# * This function runs autonomously *
+	# * This function runs asynchronously *
 	# Downloads the QPKG named in $qpkg_name.
 
 	# Input:
@@ -9326,7 +9328,7 @@ _QPKG:download_()
 _QPKG:install_()
 	{
 
-	# * This function runs autonomously *
+	# * This function runs asynchronously *
 	# Installs the QPKG named in $qpkg_name.
 
 	# Input:
@@ -9395,9 +9397,9 @@ _QPKG:install_()
 	LogQpkgServiceStatus
 	QpkgIsCanLog && ! QpkgLastResultWasOk && z=1
 
-	[[ $qpkg_name = Entware ]] && IsNtSysFileExist $OPKG_CMD && z=1
+	[[ $qpkg_name = Entware ]] && IsNtSysFileExist $OPKG_CMD && z=1		# Entware installation has failed.
 
-	if [[ $z -eq 0 || $z -eq 10 ]]; then	# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes aborts.
+	if [[ $z -eq 0 || $z -eq 10 ]]; then	# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes user-aborts.
 		SendPackageStateChange ISinstalled
 
 		if QpkgIsEnabled "$qpkg_name"; then
@@ -9440,7 +9442,7 @@ _QPKG:install_()
 _QPKG:reinstall_()
 	{
 
-	# * This function runs autonomously *
+	# * This function runs asynchronously *
 	# Reinstalls the QPKG named in $qpkg_name.
 
 	# Input:
@@ -9517,7 +9519,7 @@ _QPKG:reinstall_()
 _QPKG:rebuild_()
 	{
 
-	# * This function runs autonomously *
+	# * This function runs asynchronously *
 	# Meta-action: rebuilds the QPKG named in $qpkg_name. This is a `download`, `install` and `restore`, but only if a backup file exists for this QPKG.
 
 	# Input:
@@ -9566,7 +9568,7 @@ _QPKG:rebuild_()
 _QPKG:upgrade_()
 	{
 
-	# * This function runs autonomously *
+	# * This function runs asynchronously *
 	# Upgrades the QPKG named in $qpkg_name.
 
 	# Input:
@@ -9657,7 +9659,7 @@ _QPKG:upgrade_()
 _QPKG:uninstall_()
 	{
 
-	# * This function runs autonomously *
+	# * This function runs asynchronously *
 	# Uninstalls the QPKG named in $qpkg_name.
 
 	# Input:
@@ -9735,7 +9737,7 @@ _QPKG:uninstall_()
 _QPKG:activate_()
 	{
 
-	# * This function runs autonomously *
+	# * This function runs asynchronously *
 	# Activates/starts the service script for the QPKG named in $qpkg_name.
 
 	# Input:
@@ -9820,7 +9822,7 @@ _QPKG:activate_()
 _QPKG:reactivate_()
 	{
 
-	# * This function runs autonomously *
+	# * This function runs asynchronously *
 	# Reactivates/restarts the service script for the QPKG named in $qpkg_name.
 
 	# Input:
@@ -9896,7 +9898,7 @@ _QPKG:reactivate_()
 _QPKG:deactivate_()
 	{
 
-	# * This function runs autonomously *
+	# * This function runs asynchronously *
 	# Deactivates/stops the service script for the QPKG named in $qpkg_name.
 
 	# Input:
@@ -9980,7 +9982,7 @@ _QPKG:deactivate_()
 _QPKG:enable_()
 	{
 
-	# * This function runs autonomously *
+	# * This function runs asynchronously *
 	# Enables the QPKG named in $qpkg_name.
 
 	# Input:
@@ -10031,7 +10033,7 @@ _QPKG:enable_()
 _QPKG:disable_()
 	{
 
-	# * This function runs autonomously *
+	# * This function runs asynchronously *
 	# Disables the QPKG named in $qpkg_name.
 
 	# Input:
@@ -10087,7 +10089,7 @@ _QPKG:disable_()
 _QPKG:enableau_()
 	{
 
-	# * This function runs autonomously *
+	# * This function runs asynchronously *
 	# Enables auto-updating of the QPKG named in $qpkg_name.
 
 	# Input:
@@ -10146,7 +10148,7 @@ _QPKG:enableau_()
 _QPKG:disableau_()
 	{
 
-	# * This function runs autonomously *
+	# * This function runs asynchronously *
 	#  Disables auto-updating of the QPKG named in $qpkg_name.
 
 	# Input:
@@ -10205,7 +10207,7 @@ _QPKG:disableau_()
 _QPKG:backup_()
 	{
 
-	# * This function runs autonomously *
+	# * This function runs asynchronously *
 	#  Calls the service script for the QPKG named in $qpkg_name and runs a `backup` action
 
 	# Input:
@@ -10261,7 +10263,7 @@ _QPKG:backup_()
 _QPKG:restore_()
 	{
 
-	# * This function runs autonomously *
+	# * This function runs asynchronously *
 	#  Calls the service script for the QPKG named in $qpkg_name and runs a `restore` action
 
 	# Input:
@@ -10321,7 +10323,7 @@ _QPKG:restore_()
 _QPKG:clean_()
 	{
 
-	# * This function runs autonomously *
+	# * This function runs asynchronously *
 	#  Calls the service script for the QPKG named in $qpkg_name and runs a `clean` action
 
 	# Input:
@@ -10376,7 +10378,7 @@ _QPKG:clean_()
 _QPKG:sign_()
 	{
 
-	# * This function runs autonomously *
+	# * This function runs asynchronously *
 	# Modify the QTS App Center certificate dB, and add an unsigned QPKG as-if it were signed. It adds a QNAP-generated certificate and digital signature to the certificate database for the unsigned QPKG.
 
 	# Running the code below makes the target QPKG effectively "signed", and allows user to install and run this QPKG with the 'Allow installation of applications without a valid digital signature' App Center option unticked.
@@ -10479,7 +10481,7 @@ _QPKG:sign_()
 _QPKG:status_()
 	{
 
-	# * This function runs autonomously *
+	# * This function runs asynchronously *
 	# Query a QPKG for its 'status'. Each compatible QPKG will return 0 if application process is active or ready-to-run, 0 if not.
 
 	# Input:
