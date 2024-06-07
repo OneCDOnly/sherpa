@@ -104,6 +104,7 @@
 
 * Create local sherpa App Center repository in UI.
 	- Place sherpa.xml in /home/httpd and add a 3rd-party repo to App Center with 'http://0.0.0.0:8080/sherpa.xml'
+	- Hide this repo in App Center, to prevent user installs via UI? Must check if this can be done. If can't hide, prohibit icon installs?
 
 * Compare .git/ORIG_HEAD before-and-after 'git pull'. If different, then remove *.pyc before starting application.
 
