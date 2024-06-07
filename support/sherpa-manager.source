@@ -10451,7 +10451,7 @@ _QPKG:sign_()
 	a="INSERT INTO Certificate (Type,QpkgName,Cert,DigitalSignature) VALUES ('qpkg','$qpkg_name','$QPKG_CERTIFICATE','$QPKG_SIGNATURE');"
 
 	for ((retries=0; retries<10; retries++)); do
-		eval "$sqlite_cmd" "$CERT_DB_PATHFILE" \"$a\"
+		eval "$sqlite_cmd" "$CERT_DB_PATHFILE" "\"$a\""
 		z=$?
 
 		case $z in
@@ -11856,8 +11856,8 @@ EOB
 	# This digital signature block is the same used by QNAP for LicenseCenter.
 	read -r -d '' QPKG_SIGNATURE << EOB
 MIME-Version: 1.0
-Content-Disposition: attachment; filename="smime.p7m"
-Content-Type: application/pkcs7-mime; smime-type=signed-data; name="smime.p7m"
+Content-Disposition: attachment; filename=\"smime.p7m\"
+Content-Type: application/pkcs7-mime; smime-type=signed-data; name=\"smime.p7m\"
 Content-Transfer-Encoding: base64
 
 MIIGtAYJKoZIhvcNAQcCoIIGpTCCBqECAQExDTALBglghkgBZQMEAgEwIwYJKoZI

@@ -1,3 +1,23 @@
+* Takes 3.5 to 6 seconds to build QPKG states on Laura.
+	- Should be able to do this quicker.
+	- Calculate QPKG features separate to states and cache/load these from file next time?
+
+* Disable same-line display updates when not in a user terminal.
+	- No-need to record every progress message change in logs.
+
+* Only install IPKs for QPKGs that download successfully (or are already downloaded).
+	- ... and the installed ones, as-happens now.
+
+* If service script is unable to update repo/download release file, and there isn't already an installation, then abort immediately.
+
+* Default dependency report should only show installed QPKGs.
+	- ... but should allow 'sherpa d all' to see all QPKGs.
+	- Do the same for repository report.
+	- Add new $QPKG_ACTIONS element: 'report'
+
+* When running 'sherpa rebuild sab', SAB is installed and auto-updates as usual. Then when 'restore' action runs, auto-update runs again.
+	- Disable auto-update after installation if 'restore' is to be run, then enable it again after 'restore' completes.
+
 * Arg parser should use commas to separate actions & options?
 
 * Include QPKG "signed" status in dependencies report?
@@ -84,6 +104,7 @@
 
 * Create local sherpa App Center repository in UI.
 	- Place sherpa.xml in /home/httpd and add a 3rd-party repo to App Center with 'http://0.0.0.0:8080/sherpa.xml'
+	- Hide this repo in App Center, to prevent user installs via UI? Must check if this can be done. If can't hide, prohibit icon installs?
 
 * Compare .git/ORIG_HEAD before-and-after 'git pull'. If different, then remove *.pyc before starting application.
 
