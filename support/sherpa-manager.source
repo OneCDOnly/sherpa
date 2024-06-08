@@ -10434,9 +10434,17 @@ _QPKG:sign_()
 		b=$(eval "$sqlite_cmd" "$CERT_DB_PATHFILE" \"$a\")
 
 		if [[ $b = 1 ]]; then
-			SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped-ok 'already signed'
-			MarkThisAcForkAsSkippedOk
-			z=2
+# 			SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped-ok 'already signed'
+# 			MarkThisAcForkAsSkippedOk
+# 			z=2
+
+			# KLUDGE: replace db entries created prior to 2024-06-08 as $QPKG_SIGNATURE quoting was incorrect.
+			# So, remove existing entry now, and re-add it later in this function.
+			# Keep this in-place until 2025-06-07.
+
+			a="DELETE FROM Certificate WHERE QpkgName = '$qpkg_name';"
+			b=$(eval "$sqlite_cmd" "$CERT_DB_PATHFILE" \"$a\")
+			z=0		# Disregard errors generated while deleting record.
 		fi
 	fi
 
