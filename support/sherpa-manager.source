@@ -83,6 +83,8 @@ ShowResults()
 
 	FuncInit
 
+	local a=''
+
 	if [[ $generate_show_report = true ]]; then
 		if [[ $useropt_show_log_last = true ]]; then
 			ReleaseLockfile
@@ -111,39 +113,21 @@ ShowResults()
 
 	if [[ $generate_list_report = true ]]; then
 		if [[ ${packages_loaded:=false} = true ]]; then
-			if QPKGs.AClist.GRdependent.IsSet; then
-				QPKGs.GRdependent:Show
-			elif QPKGs.AClist.GRindependent.IsSet; then
-				QPKGs.GRindependent:Show
-			elif QPKGs.AClist.ISactive.IsSet; then
-				QPKGs.ISactive:Show
-			elif QPKGs.AClist.ISNTactive.IsSet; then
-				QPKGs.ISNTactive:Show
-			elif QPKGs.AClist.ISbackedup.IsSet; then
-				QPKGs.ISbackedup:Show
-			elif QPKGs.AClist.ISNTbackedup.IsSet; then
-				QPKGs.ISNTbackedup:Show
-			elif QPKGs.AClist.ISenabled.IsSet; then
-				QPKGs.ISenabled:Show
-			elif QPKGs.AClist.ISNTenabled.IsSet; then
-				QPKGs.ISNTenabled:Show
-			elif QPKGs.AClist.ISinstallable.IsSet; then
-				QPKGs.ISinstallable:Show
-			elif QPKGs.AClist.ISNTinstallable.IsSet; then
-				QPKGs.ISNTinstallable:Show
-			elif QPKGs.AClist.ISinstalled.IsSet; then
-				QPKGs.ISinstalled:Show
-			elif QPKGs.AClist.ISNTinstalled.IsSet; then
-				QPKGs.ISNTinstalled:Show
-			elif QPKGs.AClist.ISmissing.IsSet; then
-				QPKGs.ISmissing:Show
-			elif QPKGs.AClist.ISNTmissing.IsSet; then
-				QPKGs.ISNTmissing:Show
-			elif QPKGs.AClist.ISupgradable.IsSet; then
-				QPKGs.ISupgradable:Show
-			elif QPKGs.AClist.ISNTupgradable.IsSet; then
-				QPKGs.ISNTupgradable:Show
-			fi
+			for a in "${QPKG_IS_STATES[@]}"; do
+				case $a in
+					downloaded|signed)
+						: # No reports required for these.
+						;;
+					*)
+						if QPKGs.AClist.IS${a}.IsSet; then
+							QPKGs.IS${a}:Show
+							break
+						elif QPKGs.AClist.ISNT${a}.IsSet; then
+							QPKGs.ISNT${a}:Show
+							break
+						fi
+				esac
+			done
 		fi
 	fi
 
@@ -10434,9 +10418,17 @@ _QPKG:sign_()
 		b=$(eval "$sqlite_cmd" "$CERT_DB_PATHFILE" \"$a\")
 
 		if [[ $b = 1 ]]; then
-			SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped-ok 'already signed'
-			MarkThisAcForkAsSkippedOk
-			z=2
+# 			SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped-ok 'already signed'
+# 			MarkThisAcForkAsSkippedOk
+# 			z=2
+
+			# KLUDGE: replace db entries created prior to 2024-06-08 as $QPKG_SIGNATURE quoting was incorrect.
+			# So, remove existing entry now, and re-add it later in this function.
+			# Keep this in-place until 2025-06-07.
+
+			a="DELETE FROM Certificate WHERE QpkgName = '$qpkg_name';"
+			b=$(eval "$sqlite_cmd" "$CERT_DB_PATHFILE" \"$a\")
+			z=0		# Disregard errors generated while deleting record.
 		fi
 	fi
 
