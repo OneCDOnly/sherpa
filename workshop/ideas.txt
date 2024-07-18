@@ -22,7 +22,7 @@
 
 * Include QPKG "signed" status in dependencies report?
 
-* If using 'rustc' IPK, ensure $HOME is reset to != /root before executing.
+* If using 'rustc' IPK, ensure $HOME is != /root before executing.
 
 * Make last action result a separate status report column?
     - Should also include the attempted action.
@@ -124,11 +124,10 @@
 		- 'shortest': QPKGs that take a short time to execute are processed first, in-order, up to the longest time to execute.
 		- 'balanced': QPKGs are processed as a mix of longest, then shortest, then next longest, then next shortest, and so-on.
 
-* Wrap description column text in packages report.
-	- Use 'GNU column' for this?
-	- Nope, 'column' can't wrap text containing ANSI codes. Won't show a wrapped column in colour. :(
+* Wrap description column text in packages report?
+	- Use 'GNU column' for this? Nope, 'column' can't wrap text containing ANSI codes. Won't show a wrapped column in colour. :(
 
-* Autowidth report columns.
+* Autowidth report columns?
 
 * Include new integrated help screens for all actions?
 	- Like: `sherpa paste help`, `sherpa install help`, `sherpa reassign help`

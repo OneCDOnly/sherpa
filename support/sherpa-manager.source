@@ -8566,6 +8566,8 @@ OsGetKernelPageSize()
 
 	$GREP_CMD KernelPageSize /proc/1/smaps | head -n1 | cut -f2 -d':' | tr -d ' '
 
+	# There's also: /sbin/hal_app --get_pagesize
+
 	}
 
 HardwareGetPlatform()
