@@ -1,13 +1,5 @@
 Observed issues:
 
-	* Kapowarr not starting on x86-64:
-		-------------------------------------------------------------------------------------------------------------------------
-		60 dbug: (LL) = log file: '/var/log/Kapowarr.screen.log'
-		61 dbug: (LL) command: '/share/CACHEDEV1_DATA/.qpkg/Kapowarr/venv/bin/python3 /share/CACHEDEV1_DATA/.qpkg/Kapowarr/repo-cache/Kapowarr.py --daemon --nolaunch --datadir /share/CACHEDEV1_DATA/.qpkg/Kapowarr/config --config /share/CACHEDEV1_DATA/.qpkg/Kapowarr/config/config.ini --pidfile /var/run/Kapowarr.pid'
-		62 dbug: (LL) usage: Kapowarr.py [-h] [-d DATABASEFOLDER]
-		63 dbug: (LL) Kapowarr.py: error: unrecognized arguments: --daemon --nolaunch --datadir /share/CACHEDEV1_DATA/.qpkg/Kapowarr/config --config /share/CAC     63 HEDEV1_DATA/.qpkg/Kapowarr/config/config.ini --pidfile /var/run/Kapowarr.pid
-		-------------------------------------------------------------------------------------------------------------------------
-
 	* Near the end of installing IPKs, monitored download path can remain at non-zero size while packages complete installation.
 		- Include a separate progress message when dir size shrinks? Maybe force increase to "100%" and stop monitoring?
 
