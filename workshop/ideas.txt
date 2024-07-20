@@ -27,8 +27,6 @@
 * Make last action result a separate status report column?
     - Should also include the attempted action.
 
-* Use service-script type templates instead of group variable sets.
-
 * 'install'/'reinstall'/'upgrade' should check path QPKG is installed or is to-be installed to.
 	- If it starts with /root - abort.
 
