@@ -8,7 +8,7 @@
 * Only install IPKs for QPKGs that download successfully (or are already downloaded).
 	- ... and the installed ones, as-happens now.
 
-* If service script is unable to update repo/download release file, and there isn't already an installation, then abort immediately.
+* If service-script is unable to update repo/download release file, and there isn't already an installation, then abort immediately.
 
 * Default dependency report should only show installed QPKGs.
 	- ... but should allow 'sherpa d all' to see all QPKGs.
@@ -62,7 +62,7 @@
 
 * BASH completion.
 
-* Service scripts should show current auto-update setting when displaying basic help.
+* Service-scripts should show current auto-update setting when displaying basic help.
 
 * Automate generation of 'Packages.md' in wiki using details from 'packages.source' ?
     - Would need to store full application description, port numbers, application source.
