@@ -50,9 +50,6 @@
 * Add new arg to reshow the previously generated report.
 	- 'sherpa show report'.
 
-* Need a maintenance script to remove all but the most-recent QPKG builds.
-	- Should also run a 'git gc --aggressive' afterward.
-
 * Try each user arg as an action (verb).
     - if not an action, try as a group (noun).
     - if not a group, then it's unwanted.
