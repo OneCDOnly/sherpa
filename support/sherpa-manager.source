@@ -1040,6 +1040,8 @@ QPKGsAssignToActions()
 
 	if QPKGs-ACrebuild-to.IsAny; then
 		for qpkg_name in $(QPKGs-ACrebuild-to:Array); do
+			QpkgSetIndex
+
 			if QPKGs-ISNTinstalled.Exist "$qpkg_name" && QpkgIsBackupExist; then
 				QPKGs-ACinstall-to:Add "$qpkg_name"
 				QPKGs-ACrestore-to:Add "$qpkg_name"
@@ -1060,9 +1062,9 @@ QPKGsAssignToActions()
 	# Install independents for installed dependents.
 
 	for qpkg_name in $(QPKGs-ISinstalled:Array); do
-		QpkgSetIndex
-
 		if [[ $useropt_check = true ]] || QPKGs-ACactivate-to.Exist "$qpkg_name"; then
+			QpkgSetIndex
+
 			for prospect in $(QpkgGetDependencies); do
 				QPKGs-ISNTinstalled.Exist "$prospect" && QPKGs-ACinstall-to:Add "$prospect"
 			done
@@ -1073,9 +1075,9 @@ QPKGsAssignToActions()
 
 	for action in reinstall reactivate upgrade; do
 		for qpkg_name in $(QPKGs-AC${action}-to:Array); do
-			QpkgSetIndex
-
 			if QPKGs-GRindependent.Exist "$qpkg_name" && QPKGs-ISinstalled.Exist "$qpkg_name"; then
+				QpkgSetIndex
+
 				for prospect in $(QpkgGetDependents); do
 					if QPKGs-ISenabled.Exist "$prospect"; then
 						QPKGs-ACdeactivate-to:Add "$prospect"
@@ -1090,9 +1092,9 @@ QPKGsAssignToActions()
 
 	for action in deactivate uninstall; do
 		for qpkg_name in $(QPKGs-AC${action}-to:Array); do
-			QpkgSetIndex
-
 			if QPKGs-GRindependent.Exist "$qpkg_name" && QPKGs-ISinstalled.Exist "$qpkg_name"; then
+				QpkgSetIndex
+
 				for prospect in $(QpkgGetDependents); do
 					QPKGs-ISinstalled.Exist "$prospect" && QPKGs-ACdeactivate-to:Add "$prospect"
 				done
@@ -1100,24 +1102,7 @@ QPKGsAssignToActions()
 		done
 	done
 
-	# If an independent has been selected for `uninstall`, then `install`, need to `deactivate` its dependents first, and `activate` them again later.
-
-	for qpkg_name in $(QPKGs-ACuninstall-to:Array); do
-		QpkgSetIndex
-
-		if QPKGs-GRindependent.Exist "$qpkg_name" && QPKGs-ISinstalled.Exist "$qpkg_name"; then
-			if QPKGs-ACinstall-to.Exist "$qpkg_name"; then
-				for prospect in $(QpkgGetDependents); do
-					if QPKGs-ISenabled.Exist "$prospect"; then
-						QPKGs-ACdeactivate-to:Add "$prospect"
-						! QPKGs-ACuninstall-to.Exist "$prospect" && ! QPKGs-ACinstall-to.Exist "$prospect" && QPKGs-ACactivate-to:Add "$prospect"
-					fi
-				done
-			fi
-		fi
-	done
-
-	# Entware is a special-case: perform complete removal and fresh install to clear all installed IPKs.
+	# Special-case: perform complete removal and fresh install of Entware to clear all installed IPKs.
 
 	if QPKGs-ACreinstall-to.Exist Entware; then
 		QPKGs-ACreinstall-to:Remove Entware
@@ -1125,12 +1110,25 @@ QPKGsAssignToActions()
 		QPKGs-ACinstall-to:Add Entware
 	fi
 
+	# If an independent has been selected for `uninstall`, then `install`, need to `deactivate` its dependents first, and `activate` them again later.
+
+	for qpkg_name in $(QPKGs-ACuninstall-to:Array); do
+		if QPKGs-GRindependent.Exist "$qpkg_name" && QPKGs-ISinstalled.Exist "$qpkg_name" && QPKGs-ACinstall-to.Exist "$qpkg_name"; then
+			QpkgSetIndex
+
+			for prospect in $(QpkgGetDependents); do
+				if QPKGs-ISenabled.Exist "$prospect"; then
+					QPKGs-ACdeactivate-to:Add "$prospect"
+					! QPKGs-ACuninstall-to.Exist "$prospect" && ! QPKGs-ACinstall-to.Exist "$prospect" && QPKGs-ACactivate-to:Add "$prospect"
+				fi
+			done
+		fi
+	done
+
 	# If any QPKG has been selected for `backup`/`restore`, need to `deactivate` it first, and `activate` it again later.
 
 	for action in backup restore; do
 		for qpkg_name in $(QPKGs-AC${action}-to:Array); do
-			QpkgSetIndex
-
 			if QPKGs-ISenabled.Exist "$qpkg_name"; then
 				QPKGs-ACdeactivate-to:Add "$qpkg_name"
 				! QPKGs-ACuninstall-to.Exist "$qpkg_name" && ! QPKGs-ACinstall-to.Exist "$qpkg_name" && QPKGs-ACactivate-to:Add "$qpkg_name"
@@ -1170,10 +1168,9 @@ QPKGsAssignToActions()
 
 	if QPKGs-ACuninstall-to.IsAny; then
 		for qpkg_name in $(QPKGs-ACuninstall-to:Array); do
-			QpkgSetIndex
-
 			if QPKGs-ISinstalled.Exist "$qpkg_name" && QPKGs-ACinstall-to.Exist "$qpkg_name"; then
 				QPKGs_were_installed_name+=("$qpkg_name")
+				QpkgSetIndex
 				QPKGs_were_installed_path+=("$($DIRNAME_CMD "$(QpkgGetInstallationPath)")")
 			fi
 
@@ -11300,7 +11297,7 @@ QpkgGetDependents()
 	fi
 
 	if [[ ${#ar[@]} -gt 0 ]]; then
-		printf '%s' "${ar[@]}"
+		printf '%s' "${ar[*]}"
 
 		return 0
 	fi
