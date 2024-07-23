@@ -8004,10 +8004,10 @@ IncludeReportHeadingsFooter()
 	{
 
 	DisplayAsHelpTitle 'column headings:'
-	DisplayAsInfoIndentQuotedItem 'CanBack?' "supports application config 'backup' and 'restore'"
-	DisplayAsInfoIndentQuotedItem 'CanClean?' "supports application 'clean'ing"
-	DisplayAsInfoIndentQuotedItem 'StartUpd?' 'supports restart-to-update application'
-	DisplayAsInfoIndentQuotedItem 'AutoUpd?' 'application will auto-update on each restart'
+	DisplayAsInfoIndentQuotedItem 'CanBack?' "application config 'backup' and 'restore' supported"
+	DisplayAsInfoIndentQuotedItem 'CanClean?' "application 'clean' supported"
+	DisplayAsInfoIndentQuotedItem 'StartUpd?' 'application restart-to-update supported'
+	DisplayAsInfoIndentQuotedItem 'AutoUpd?' 'application restart-to-update enabled'
 	DisplayAsInfoIndentQuotedItem 'LiveTest?' "has a built-in 'status' check, and can test for daemon \"live\" status"
 	DisplayAsInfoIndentQuotedItem 'Indep?' 'is independent of other QPKGs'
 	DisplayAsInfoIndentQuotedItem 'Compat?' 'has a release compatible with this NAS arch'
