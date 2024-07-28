@@ -7345,7 +7345,7 @@ QPKGs.States:Build()
 	# Load status lines from individual files.
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		a=/var/run/$qpkg_name.last.operation
+		a=/var/log/$qpkg_name.action
 
 		if [[ -e $a ]]; then
 			case $(<$a) in
@@ -7358,11 +7358,11 @@ QPKGs.States:Build()
 				stop)
 					QPKGs-ISstopping:Add "$qpkg_name"
 					;;
-				failed)
-					QPKGs-ISNTok:Add "$qpkg_name"
-					;;
-				ok)
-					QPKGs-ISok:Add "$qpkg_name"
+# 				failed)
+# 					QPKGs-ISNTok:Add "$qpkg_name"
+# 					;;
+# 				ok)
+# 					QPKGs-ISok:Add "$qpkg_name"
 			esac
 		fi
 
