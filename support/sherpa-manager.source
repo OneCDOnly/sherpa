@@ -7346,23 +7346,27 @@ QPKGs.States:Build()
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		a=/var/log/$qpkg_name.action
+		b=/var/log/$qpkg_name.result
 
-		if [[ -e $a ]]; then
-			case $(<$a) in
-				start)
-					QPKGs-ISstarting:Add "$qpkg_name"
+		if [[ -e $a && -e $b ]]; then
+			case $(<$b) in
+				in-progress)
+					case $(<$a) in
+						start)
+							QPKGs-ISstarting:Add "$qpkg_name"
+							;;
+						restart)
+							QPKGs-ISrestarting:Add "$qpkg_name"
+							;;
+						stop)
+							QPKGs-ISstopping:Add "$qpkg_name"
+					esac
 					;;
-				restart)
-					QPKGs-ISrestarting:Add "$qpkg_name"
+				ok)
+					QPKGs-ISok:Add "$qpkg_name"
 					;;
-				stop)
-					QPKGs-ISstopping:Add "$qpkg_name"
-					;;
-# 				failed)
-# 					QPKGs-ISNTok:Add "$qpkg_name"
-# 					;;
-# 				ok)
-# 					QPKGs-ISok:Add "$qpkg_name"
+				failed)
+					QPKGs-ISNTok:Add "$qpkg_name"
 			esac
 		fi
 
@@ -9377,7 +9381,7 @@ _QPKG:install_()
 	RunAndLog "${a}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$INSTALL_LOG_FILE" log:failure-only 10
 	z=$?
 
-	LogQpkgServiceStatus
+	LogQpkgServiceResult
 	QpkgIsCanLog && ! QpkgLastResultWasOk && z=1
 
 	[[ $qpkg_name = Entware ]] && IsNtSysFileExist $OPKG_CMD && z=1		# Entware installation has failed.
@@ -9472,7 +9476,7 @@ _QPKG:reinstall_()
 	RunAndLog "${a}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$REINSTALL_LOG_FILE" log:failure-only 10
 	z=$?
 
-	LogQpkgServiceStatus
+	LogQpkgServiceResult
 	QpkgIsCanLog && ! QpkgLastResultWasOk && z=1
 
 	[[ $qpkg_name = Entware ]] && IsNtSysFileExist $OPKG_CMD && z=1
@@ -9603,7 +9607,7 @@ _QPKG:upgrade_()
 	RunAndLog "${a}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$UPGRADE_LOG_FILE" log:failure-only 10
 	z=$?
 
-	LogQpkgServiceStatus
+	LogQpkgServiceResult
 	QpkgIsCanLog && ! QpkgLastResultWasOk && z=1
 
 	[[ $qpkg_name = Entware ]] && IsNtSysFileExist $OPKG_CMD && z=1
@@ -9752,7 +9756,6 @@ _QPKG:activate_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	ClearQpkgServiceStatus
 	local -r LOG_PATHFILE=$LOGS_PATH/$qpkg_name.$ACTIVATE_LOG_FILE
 	local timeout=''
 	OsIsSupportQpkgTimeout && timeout=" -t $QPKG_START_TIMEOUT_SECONDS"
@@ -9778,7 +9781,7 @@ _QPKG:activate_()
 	fi
 
 	if [[ $z -eq 0 ]]; then
-		LogQpkgServiceStatus
+		LogQpkgServiceResult
 		SaveActionResultToLog QPKG "$qpkg_name" activate '' ok
 
 		if [[ $qpkg_name = Entware ]]; then
@@ -9837,7 +9840,6 @@ _QPKG:reactivate_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	ClearQpkgServiceStatus
 	local -r LOG_PATHFILE=$LOGS_PATH/$qpkg_name.$REACTIVATE_LOG_FILE
 	local timeout=''
 	OsIsSupportQpkgTimeout && timeout=" -t $QPKG_RESTART_TIMEOUT_SECONDS"
@@ -9863,7 +9865,7 @@ _QPKG:reactivate_()
 	fi
 
 	if [[ $z -eq 0 ]]; then
-		LogQpkgServiceStatus
+		LogQpkgServiceResult
 		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' ok
 		MarkThisAcForkAsOk
 	else
@@ -9913,7 +9915,6 @@ _QPKG:deactivate_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	ClearQpkgServiceStatus
 	local -r LOG_PATHFILE=$LOGS_PATH/$qpkg_name.$DEACTIVATE_LOG_FILE
 	local timeout=''
 	OsIsSupportQpkgTimeout && timeout=" -t $QPKG_STOP_TIMEOUT_SECONDS"
@@ -9939,7 +9940,7 @@ _QPKG:deactivate_()
 	fi
 
 	if [[ $z -eq 0 ]]; then
-		LogQpkgServiceStatus
+		LogQpkgServiceResult
 		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' ok
 
 		if [[ $qpkg_name = Entware ]]; then
@@ -9996,7 +9997,6 @@ _QPKG:enable_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	ClearQpkgServiceStatus
 	local -r LOG_PATHFILE=$LOGS_PATH/$qpkg_name.$ENABLE_LOG_FILE
 	local timeout=''
 	OsIsSupportQpkgTimeout && timeout=" -t $QPKG_ENABLE_TIMEOUT_SECONDS"
@@ -10051,7 +10051,6 @@ _QPKG:disable_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	ClearQpkgServiceStatus
 	local -r LOG_PATHFILE=$LOGS_PATH/$qpkg_name.$DISABLE_LOG_FILE
 	local timeout=''
 	OsIsSupportQpkgTimeout && timeout=" -t $QPKG_DISABLE_TIMEOUT_SECONDS"
@@ -10115,7 +10114,7 @@ _QPKG:enableau_()
 	z=$?
 
 	if [[ $z -eq 0 ]]; then
-		LogQpkgServiceStatus
+		LogQpkgServiceResult
 		SaveActionResultToLog QPKG "$qpkg_name" enableau '' ok
 		MarkThisAcForkAsOk
 	else
@@ -10174,7 +10173,7 @@ _QPKG:disableau_()
 	z=$?
 
 	if [[ $z -eq 0 ]]; then
-		LogQpkgServiceStatus
+		LogQpkgServiceResult
 		SaveActionResultToLog QPKG "$qpkg_name" disableau '' ok
 		MarkThisAcForkAsOk
 	else
@@ -10229,7 +10228,7 @@ _QPKG:backup_()
 	z=$?
 
 	if [[ $z -eq 0 ]]; then
-		LogQpkgServiceStatus
+		LogQpkgServiceResult
 		SaveActionResultToLog QPKG "$qpkg_name" backup '' ok
 		SendPackageStateChange ISbackedup
 		MarkThisAcForkAsOk
@@ -10289,7 +10288,7 @@ _QPKG:restore_()
 	z=$?
 
 	if [[ $z -eq 0 ]]; then
-		LogQpkgServiceStatus
+		LogQpkgServiceResult
 		SaveActionResultToLog QPKG "$qpkg_name" restore '' ok
 		SendPackageStateChange ISrestored
 		MarkThisAcForkAsOk
@@ -10345,7 +10344,7 @@ _QPKG:clean_()
 	z=$?
 
 	if [[ $z -eq 0 ]]; then
-		LogQpkgServiceStatus
+		LogQpkgServiceResult
 		SaveActionResultToLog QPKG "$qpkg_name" clean '' ok
 		MarkThisAcForkAsOk
 	else
@@ -10560,18 +10559,6 @@ ClearQpkgAppCenterNotifier()
 
 	} &> /dev/null
 
-ClearQpkgServiceStatus()
-	{
-
-	# Input:
-	#   $qpkg_name (global) = QPKG name
-
-	[[ -n $qpkg_name ]] || return
-
-	rm -f /var/run/"$qpkg_name".last.operation 2> /dev/null
-
-	}
-
 QpkgLastResultWasOk()
 	{
 
@@ -10582,25 +10569,25 @@ QpkgLastResultWasOk()
 
 	[[ -n $qpkg_name ]] || return
 
-	[[ $(QpkgGetServiceStatus) = ok ]]
+	[[ $(QpkgGetServiceResult) = ok ]]
 
 	}
 
-LogQpkgServiceStatus()
+LogQpkgServiceResult()
 	{
 
 	# Input:
 	#   $qpkg_name (global) = QPKG name
 
-	if ! local a=$(QpkgGetServiceStatus); then
+	if ! local a=$(QpkgGetServiceResult); then
 		DebugAsWarn "unable to get status of $(ShowAsPackageName) service. It may be a non-sherpa package, or a sherpa package earlier than 200816c that doesn't support service results."
 
 		return 1
 	fi
 
 	case $a in
-		?(re)start|stop)
-			DebugInfo "$(ShowAsPackageName) service is $a"
+		in-progress)
+			DebugInfo "$(ShowAsPackageName) service action is in-progress"
 			;;
 		ok)
 			DebugInfo "$(ShowAsPackageName) service action completed OK"
@@ -11358,7 +11345,7 @@ QpkgGetActiveTest()
 
 	}
 
-QpkgGetServiceStatus()
+QpkgGetServiceResult()
 	{
 
 	# Input:
@@ -11371,7 +11358,7 @@ QpkgGetServiceStatus()
 
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
 
-	[[ -e /var/run/$a.last.operation ]] && echo "$(< /var/run/"$a".last.operation)"
+	[[ -e /var/log/$a.result ]] && printf '%s' "$(</var/log/"$a".result)"
 
 	}
 
