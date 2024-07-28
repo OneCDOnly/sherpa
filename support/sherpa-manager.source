@@ -4548,9 +4548,6 @@ _DisplayAsStatusReportItemLine_()
 					if QPKGs-ISactive.Exist "$qpkg_name"; then
 						status+=" $(TextBrightGreen active)"
 						/bin/touch "$REPORT_FLAGS_PATH"/status-active
-					elif QPKGs-ISslow.Exist "$qpkg_name"; then
-						status+=" $(TextBrightOrange slow)"
-						/bin/touch "$REPORT_FLAGS_PATH"/status-slow
 					elif QPKGs-ISstarting.Exist "$qpkg_name"; then
 						status+=" $(TextBrightOrange starting)"
 						/bin/touch "$REPORT_FLAGS_PATH"/status-starting
@@ -4560,6 +4557,9 @@ _DisplayAsStatusReportItemLine_()
 					elif QPKGs-ISrestarting.Exist "$qpkg_name"; then
 						status+=" $(TextBrightOrange restarting)"
 						/bin/touch "$REPORT_FLAGS_PATH"/status-restarting
+					elif QPKGs-ISslow.Exist "$qpkg_name"; then
+						status+=" $(TextBrightOrange slow)"
+						/bin/touch "$REPORT_FLAGS_PATH"/status-slow
 					elif QPKGs-ISNTactive.Exist "$qpkg_name"; then
 						status+=" $(TextBrightRed inactive)"
 						/bin/touch "$REPORT_FLAGS_PATH"/status-inactive
@@ -7947,7 +7947,7 @@ IncludeReportFooter()
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/status-slow ]]; then
-		DisplayAsInfoIndentQuotedItem "$(TextBrightOrange slow)" 'application appears to be alive, but is slow to respond to the status request. Try checking again shortly' 		# More common on NAS with lower installed RAM, and usually because the application has been page-swapped to disk and must be reloaded into RAM.
+		DisplayAsInfoIndentQuotedItem "$(TextBrightOrange slow)" 'application appears to be alive, but was slow to respond to the status request. Try checking again shortly' 		# More common on NAS with lower installed RAM, and usually because the application has been page-swapped to disk and must be reloaded into RAM.
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/status-starting ]]; then

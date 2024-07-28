@@ -43,7 +43,7 @@
 
 * Report column headings in bright white?
 
-* Include QPKG version numbers in progress messages?
+* Include QPKG version numbers in live progress messages?
 
 * Allow QPKGs to follow source git branch, release or tag.
 

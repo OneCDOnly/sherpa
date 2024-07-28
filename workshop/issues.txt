@@ -1,5 +1,7 @@
 Observed issues:
 
+	* 'sherpa enable-auto-update active' is not running 'enable-auto-update' action.
+
 	* Near the end of installing IPKs, monitored download path can remain at non-zero size while packages complete installation.
 		- Include a separate progress message when dir size shrinks? Maybe force increase to "100%" and stop monitoring?
 
