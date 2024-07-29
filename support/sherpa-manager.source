@@ -224,12 +224,12 @@ LoadConsts()
 	readonly COLUMN_SPACING=2
 	readonly FILE_BYTES_COL_WIDTH=16
 	readonly FILE_CHANGE_DATE_COL_WIDTH=60
-	readonly FOOTER_NAME_COL_WIDTH=12
+	readonly FOOTER_NAME_COL_WIDTH=13
 	readonly HELP_DESC_INDENT=3
 	readonly HELP_SYNTAX_INDENT=6
 
 	readonly PACKAGE_ABBS_COL_WIDTH=84
-	readonly PACKAGE_ACTION_COL_WIDTH=23
+	readonly PACKAGE_ACTION_COL_WIDTH=24
 	readonly PACKAGE_ACTIVE_TEST_BUILTIN_COL_WIDTH=11
 	readonly PACKAGE_APP_VER_COL_WIDTH=22
 	readonly PACKAGE_ARCH_COL_WIDTH=15
@@ -4553,7 +4553,7 @@ _DisplayAsStatusReportItemLine_()
 
 			case $result in
 				ok)
-					action_msg+=" ($(TextBrightGreen $result))"
+					action_msg+=" ($(TextBrightGreen OK))"
 					;;
 				in-progress)
 					action_msg+=" ($(TextBrightOrange $result))"
@@ -4604,14 +4604,14 @@ _DisplayAsStatusReportItemLine_()
 			action=$(QpkgGetServiceAction)
 			/bin/touch "$REPORT_FLAGS_PATH"/action-$action
 
-			if [[ $action != unsupported ]]; then
+			if [[ $action != 'not-found' ]]; then
 				action_msg+="$action"
 				result=$(QpkgGetServiceResult)
 				/bin/touch "$REPORT_FLAGS_PATH"/result-$result
 
 				case $result in
 					ok)
-						action_msg+=" ($(TextBrightGreen $result))"
+						action_msg+=" ($(TextBrightGreen OK))"
 						;;
 					in-progress)
 						action_msg+=" ($(TextBrightOrange $result))"
@@ -7919,7 +7919,8 @@ ShowReportStatuses()
 	local a=''
 	local f=''
 	local -i m=0
-	report_cols_max=5 #6
+	report_cols_max=6
+	report_cols_max=5 									#devdebug
 	local -i n=0
 	local previous=''
 
@@ -7991,7 +7992,7 @@ IncludeReportFooter()
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/result-failed ]]; then
-		DisplayAsInfoIndentQuotedItem "$(TextBrightRed failed)" "last action tried failed"
+		DisplayAsInfoIndentQuotedItem "($(TextBrightRed failed))" 'last action tried failed'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/status-inactive ]]; then
@@ -8023,7 +8024,7 @@ IncludeReportFooter()
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/result-in-progress ]]; then
-		DisplayAsInfoIndentQuotedItem "$(TextBrightOrange in-progress)" "last action is still in-progress"
+		DisplayAsInfoIndentQuotedItem "($(TextBrightOrange in-progress))" 'action is in-progress'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/status-unknown ]]; then
@@ -8039,7 +8040,7 @@ IncludeReportFooter()
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/result-ok ]]; then
-		DisplayAsInfoIndentQuotedItem "$(TextBrightGreen ok)" "last action tried was successful"
+		DisplayAsInfoIndentQuotedItem "($(TextBrightGreen OK))" 'last action tried was successful'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/status-active ]]; then
@@ -8062,8 +8063,8 @@ IncludeReportFooter()
 		DisplayAsInfoIndentQuotedItem final 'application version is the last available'
 	fi
 
-	if [[ -e "$REPORT_FLAGS_PATH"/action-unsupported ]]; then
-		DisplayAsInfoIndentQuotedItem unsupported 'sherpa-compatible actions are not supported'
+	if [[ -e "$REPORT_FLAGS_PATH"/action-not-found ]]; then
+		DisplayAsInfoIndentQuotedItem not-found 'action tracking files were not found'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/state-notinstalled ]]; then
@@ -11436,24 +11437,11 @@ QpkgGetServiceAction()
 	local b=''
 	[[ -e /var/log/$a.action ]] && b=$(</var/log/${a}.action)
 
-	# Translate QPKG service script action into sherpa action.
-
-	case $b in
-		start)
-			printf activate
-			;;
-		stop)
-			printf deactivate
-			;;
-		restart)
-			printf reactivate
-			;;
-		'')
-			printf unsupported
-			;;
-		*)
-			printf '%s' "$b"
-	esac
+	if [[ -n $b ]]; then
+		printf '%s' "$b"
+	else
+		printf not-found
+	fi
 
 	}
 
@@ -11469,11 +11457,13 @@ QpkgGetServiceResult()
 	#   $? = 0 (found), !0 (not-found)
 
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
+	local b=''
+	[[ -e /var/log/$a.result ]] && b=$(</var/log/${a}.result)
 
-	if [[ -e /var/log/$a.result ]]; then
-		printf '%s' "$(</var/log/${a}.result)"
+	if [[ -n $b ]]; then
+		printf '%s' "$b"
 	else
-		printf unknown
+		printf not-found
 	fi
 
 	}
