@@ -4581,15 +4581,6 @@ _DisplayAsStatusReportItemLine_()
 			if QPKGs-ISactive.Exist "$qpkg_name"; then
 				status+=" $(TextBrightGreen active)"
 				/bin/touch "$REPORT_FLAGS_PATH"/status-active
-			elif QPKGs-ISstarting.Exist "$qpkg_name"; then
-				status+=" $(TextBrightOrange starting)"
-				/bin/touch "$REPORT_FLAGS_PATH"/status-starting
-			elif QPKGs-ISstopping.Exist "$qpkg_name"; then
-				status+=" $(TextBrightOrange stopping)"
-				/bin/touch "$REPORT_FLAGS_PATH"/status-stopping
-			elif QPKGs-ISrestarting.Exist "$qpkg_name"; then
-				status+=" $(TextBrightOrange restarting)"
-				/bin/touch "$REPORT_FLAGS_PATH"/status-restarting
 			elif QPKGs-ISslow.Exist "$qpkg_name"; then
 				status+=" $(TextBrightOrange slow)"
 				/bin/touch "$REPORT_FLAGS_PATH"/status-slow
@@ -4626,14 +4617,17 @@ _DisplayAsStatusReportItemLine_()
 					esac
 				else
 					action_msg+=$(TextDarkGrey 'N/A')
+					/bin/touch "$REPORT_FLAGS_PATH"/na
 				fi
 			else
 				action_msg+=$(TextDarkGrey 'N/A')
+				/bin/touch "$REPORT_FLAGS_PATH"/na
 			fi
 
 			app_ver_msg+=$(TextDarkGrey "$app_ver")
 			name_msg+=$(TextDarkGrey "$qpkg_name")
 			path_msg+=$(TextDarkGrey 'N/A')
+			/bin/touch "$REPORT_FLAGS_PATH"/na
 
 			if ! QpkgIsArchOK; then
 				status='incompatible arch'
@@ -7926,8 +7920,8 @@ ShowReportStatuses()
 	local a=''
 	local f=''
 	local -i m=0
-	report_cols_max=6
-	report_cols_max=5 									#devdebug
+# 	report_cols_max=6
+	report_cols_max=5
 	local -i n=0
 	local previous=''
 
@@ -8076,6 +8070,10 @@ IncludeReportFooter()
 
 	if [[ -e "$REPORT_FLAGS_PATH"/state-notinstalled ]]; then
 		DisplayAsInfoIndentItem "$(TextDarkGrey muted)" 'QPKG is not installed'
+	fi
+
+	if [[ -e "$REPORT_FLAGS_PATH"/na ]]; then
+		DisplayAsInfoIndentItem "$(TextDarkGrey 'N/A')" 'not applicable'
 	fi
 
 	if compgen -G "${REPORT_FLAGS_PATH}/backup-file-*" > /dev/null; then			# https://stackoverflow.com/a/6364244
