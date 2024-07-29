@@ -229,6 +229,7 @@ LoadConsts()
 	readonly HELP_SYNTAX_INDENT=6
 
 	readonly PACKAGE_ABBS_COL_WIDTH=84
+	readonly PACKAGE_ACTION_COL_WIDTH=23
 	readonly PACKAGE_ACTIVE_TEST_BUILTIN_COL_WIDTH=11
 	readonly PACKAGE_APP_VER_COL_WIDTH=22
 	readonly PACKAGE_ARCH_COL_WIDTH=15
@@ -4217,9 +4218,11 @@ AddSeparators()
 
 	local a=''
 
-	if [[ -n ${1:-} ]]; then
-		a=$(Trim "$1"); a=${a// /, }	# insert separators
-	fi
+	[[ -z ${1:-} ]] && return
+
+	a=$(Trim "$1")
+	a=${a// /, }	# Replace whitespace with separators.
+	a=${a//!/ }		# Convert '!' to whitespace.
 
 	printf '%s' "$a"
 
@@ -4460,7 +4463,16 @@ DisplayAsStatusReportTitleLine()
 		printf "%-$((PACKAGE_STATUS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
-	# column 3: package version (variable-width)
+	# column 3: package action and result
+	((n++))
+
+	if [[ $report_cols_max -ge $n ]]; then
+		printf "%$((COLUMN_SPACING))s"
+		a="${CHARS_BULLET}QPKG action (result):"
+		printf "%-$((PACKAGE_ACTION_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
+	fi
+
+	# column 4: package version (variable-width)
 	((n++))
 
 	if [[ $report_cols_max -ge $n ]]; then
@@ -4471,7 +4483,7 @@ DisplayAsStatusReportTitleLine()
 		printf "%-$((${package_ver_final_col_width:=0}+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
-	# column 4: application version
+	# column 5: application version
 	((n++))
 
 	if [[ $report_cols_max -ge $n ]]; then
@@ -4480,7 +4492,7 @@ DisplayAsStatusReportTitleLine()
 		printf "%-$((PACKAGE_APP_VER_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
-	# column 5: package installation path
+	# column 6: package installation path
 	((n++))
 
 	if [[ $report_cols_max -ge $n ]]; then
@@ -4500,14 +4512,17 @@ _DisplayAsStatusReportItemLine_()
 
 	# Input:
 
+	local action=''
+	local action_msg=$CHARS_BLANK
 	local app_ver=''
 	local app_ver_msg=$CHARS_BLANK
 	local mode=''
 	local -i n=0
 	local name_msg=$CHARS_BLANK
 	local path_msg=$CHARS_BLANK
+	local result=''
 	local status=''
-	local status_msg=''
+	local status_msg=$CHARS_NORMAL
 	local ver_msg=$CHARS_BLANK
 
 	if QpkgIsMissing; then
@@ -4530,48 +4545,85 @@ _DisplayAsStatusReportItemLine_()
 
 	case $mode in
 		normal)
+			action=$(QpkgGetServiceAction)
+			/bin/touch "$REPORT_FLAGS_PATH"/action-$action
+			action_msg+="$action"
+			result=$(QpkgGetServiceResult)
+			/bin/touch "$REPORT_FLAGS_PATH"/result-$result
+
+			case $result in
+				ok)
+					action_msg+=" ($(TextBrightGreen $result))"
+					;;
+				in-progress)
+					action_msg+=" ($(TextBrightOrange $result))"
+					;;
+				failed)
+					action_msg+=" ($(TextBrightRed $result))"
+			esac
+
 			app_ver_msg+=$app_ver
 			name_msg+=$qpkg_name
 			path_msg+=$(QpkgGetInstallationPath)
 
-			# Limit statuses to two words only.
-				# First word.
-					if QPKGs-ISenabled.Exist "$qpkg_name"; then
-						status+=" $(TextBrightGreen enabled)"
-						/bin/touch "$REPORT_FLAGS_PATH"/state-enabled
-					else
-						status+=" $(TextBrightRed disabled)"
-						/bin/touch "$REPORT_FLAGS_PATH"/state-disabled
-					fi
+			if QPKGs-ISenabled.Exist "$qpkg_name"; then
+				status+=" $(TextBrightGreen enabled)"
+				/bin/touch "$REPORT_FLAGS_PATH"/state-enabled
+			else
+				status+=" $(TextBrightRed disabled)"
+				/bin/touch "$REPORT_FLAGS_PATH"/state-disabled
+			fi
 
-				# Second word.
-					if QPKGs-ISactive.Exist "$qpkg_name"; then
-						status+=" $(TextBrightGreen active)"
-						/bin/touch "$REPORT_FLAGS_PATH"/status-active
-					elif QPKGs-ISstarting.Exist "$qpkg_name"; then
-						status+=" $(TextBrightOrange starting)"
-						/bin/touch "$REPORT_FLAGS_PATH"/status-starting
-					elif QPKGs-ISstopping.Exist "$qpkg_name"; then
-						status+=" $(TextBrightOrange stopping)"
-						/bin/touch "$REPORT_FLAGS_PATH"/status-stopping
-					elif QPKGs-ISrestarting.Exist "$qpkg_name"; then
-						status+=" $(TextBrightOrange restarting)"
-						/bin/touch "$REPORT_FLAGS_PATH"/status-restarting
-					elif QPKGs-ISslow.Exist "$qpkg_name"; then
-						status+=" $(TextBrightOrange slow)"
-						/bin/touch "$REPORT_FLAGS_PATH"/status-slow
-					elif QPKGs-ISNTactive.Exist "$qpkg_name"; then
-						status+=" $(TextBrightRed inactive)"
-						/bin/touch "$REPORT_FLAGS_PATH"/status-inactive
-					else
-						status+=" $(TextBrightOrange unknown)"
-						/bin/touch "$REPORT_FLAGS_PATH"/status-unknown
-					fi
+			if QPKGs-ISactive.Exist "$qpkg_name"; then
+				status+=" $(TextBrightGreen active)"
+				/bin/touch "$REPORT_FLAGS_PATH"/status-active
+			elif QPKGs-ISstarting.Exist "$qpkg_name"; then
+				status+=" $(TextBrightOrange starting)"
+				/bin/touch "$REPORT_FLAGS_PATH"/status-starting
+			elif QPKGs-ISstopping.Exist "$qpkg_name"; then
+				status+=" $(TextBrightOrange stopping)"
+				/bin/touch "$REPORT_FLAGS_PATH"/status-stopping
+			elif QPKGs-ISrestarting.Exist "$qpkg_name"; then
+				status+=" $(TextBrightOrange restarting)"
+				/bin/touch "$REPORT_FLAGS_PATH"/status-restarting
+			elif QPKGs-ISslow.Exist "$qpkg_name"; then
+				status+=" $(TextBrightOrange slow)"
+				/bin/touch "$REPORT_FLAGS_PATH"/status-slow
+			elif QPKGs-ISNTactive.Exist "$qpkg_name"; then
+				status+=" $(TextBrightRed inactive)"
+				/bin/touch "$REPORT_FLAGS_PATH"/status-inactive
+			else
+				status+=" $(TextBrightOrange unknown)"
+				/bin/touch "$REPORT_FLAGS_PATH"/status-unknown
+			fi
 
-			status_msg=${CHARS_NORMAL}$(AddSeparators "$status")
+			status_msg+=$(AddSeparators "$status")
 			ver_msg+=$(QpkgGetInstalledVer)
 			;;
 		muted)
+			action=$(QpkgGetServiceAction)
+			/bin/touch "$REPORT_FLAGS_PATH"/action-$action
+
+			if [[ $action != unsupported ]]; then
+				action_msg+="$action"
+				result=$(QpkgGetServiceResult)
+				/bin/touch "$REPORT_FLAGS_PATH"/result-$result
+
+				case $result in
+					ok)
+						action_msg+=" ($(TextBrightGreen $result))"
+						;;
+					in-progress)
+						action_msg+=" ($(TextBrightOrange $result))"
+						;;
+					failed)
+						action_msg+=" ($(TextBrightRed $result))"
+				esac
+
+			else
+				action_msg+=$(TextDarkGrey 'N/A')
+			fi
+
 			app_ver_msg+=$(TextDarkGrey "$app_ver")
 			name_msg+=$(TextDarkGrey "$qpkg_name")
 			path_msg+=$(TextDarkGrey 'N/A')
@@ -4617,7 +4669,15 @@ _DisplayAsStatusReportItemLine_()
 		printf "%-$((PACKAGE_STATUS_COL_WIDTH+$(LenANSIDiff "$status_msg")))s" "$status_msg"
 	fi
 
-	# column 3: package version (variable-width)
+	# column 3: package action and result
+	((n++))
+
+	if [[ $report_cols_max -ge $n ]]; then
+		printf "%$((COLUMN_SPACING))s"
+		printf "%-$((PACKAGE_ACTION_COL_WIDTH+$(LenANSIDiff "$action_msg")))s" "$action_msg"
+	fi
+
+	# column 4: package version (variable-width)
 	((n++))
 
 	if [[ $report_cols_max -ge $n ]]; then
@@ -4625,7 +4685,7 @@ _DisplayAsStatusReportItemLine_()
 		printf "%-$((${package_ver_final_col_width:=0}+$(LenANSIDiff "$ver_msg")))s" "$ver_msg"
 	fi
 
-	# column 4: application version
+	# column 5: application version
 	((n++))
 
 	if [[ $report_cols_max -ge $n ]]; then
@@ -4633,7 +4693,7 @@ _DisplayAsStatusReportItemLine_()
 		printf "%-$((PACKAGE_APP_VER_COL_WIDTH+$(LenANSIDiff "$app_ver_msg")))s" "$app_ver_msg"
 	fi
 
-	# column 5: package installation path
+	# column 6: package installation path
 	((n++))
 
 	if [[ $report_cols_max -ge $n ]]; then
@@ -7859,7 +7919,7 @@ ShowReportStatuses()
 	local a=''
 	local f=''
 	local -i m=0
-	report_cols_max=5
+	report_cols_max=5 #6
 	local -i n=0
 	local previous=''
 
@@ -7930,6 +7990,10 @@ IncludeReportFooter()
 		DisplayAsInfoIndentQuotedItem "$(TextBrightRed disabled)" "QPKG won't start at bootup. Enable it first, then start it"
 	fi
 
+	if [[ -e "$REPORT_FLAGS_PATH"/result-failed ]]; then
+		DisplayAsInfoIndentQuotedItem "$(TextBrightRed failed)" "last action tried failed"
+	fi
+
 	if [[ -e "$REPORT_FLAGS_PATH"/status-inactive ]]; then
 		DisplayAsInfoIndentQuotedItem "$(TextBrightRed inactive)" 'application is dead or not-started. Try starting/activating it'
 	fi
@@ -7958,6 +8022,10 @@ IncludeReportFooter()
 		DisplayAsInfoIndentQuotedItem "$(TextBrightOrange starting)" 'QPKG is starting. Try checking again shortly'
 	fi
 
+	if [[ -e "$REPORT_FLAGS_PATH"/result-in-progress ]]; then
+		DisplayAsInfoIndentQuotedItem "$(TextBrightOrange in-progress)" "last action is still in-progress"
+	fi
+
 	if [[ -e "$REPORT_FLAGS_PATH"/status-unknown ]]; then
 		DisplayAsInfoIndentQuotedItem "$(TextBrightOrange unknown)" 'application status could not be determined'
 	fi
@@ -7968,6 +8036,10 @@ IncludeReportFooter()
 
 	if [[ -e "$REPORT_FLAGS_PATH"/state-enabled ]]; then
 		DisplayAsInfoIndentQuotedItem "$(TextBrightGreen enabled)" 'QPKG will start at bootup'
+	fi
+
+	if [[ -e "$REPORT_FLAGS_PATH"/result-ok ]]; then
+		DisplayAsInfoIndentQuotedItem "$(TextBrightGreen ok)" "last action tried was successful"
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/status-active ]]; then
@@ -7988,6 +8060,10 @@ IncludeReportFooter()
 
 	if [[ -e "$REPORT_FLAGS_PATH"/app-final ]]; then
 		DisplayAsInfoIndentQuotedItem final 'application version is the last available'
+	fi
+
+	if [[ -e "$REPORT_FLAGS_PATH"/action-unsupported ]]; then
+		DisplayAsInfoIndentQuotedItem unsupported 'sherpa-compatible actions are not supported'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/state-notinstalled ]]; then
@@ -9382,7 +9458,7 @@ _QPKG:install_()
 	z=$?
 
 	LogQpkgServiceResult
-	QpkgIsCanLog && ! QpkgLastResultWasOk && z=1
+	QpkgIsCanLog && ! QpkgServiceResultWasOk && z=1
 
 	[[ $qpkg_name = Entware ]] && IsNtSysFileExist $OPKG_CMD && z=1		# Entware installation has failed.
 
@@ -9477,7 +9553,7 @@ _QPKG:reinstall_()
 	z=$?
 
 	LogQpkgServiceResult
-	QpkgIsCanLog && ! QpkgLastResultWasOk && z=1
+	QpkgIsCanLog && ! QpkgServiceResultWasOk && z=1
 
 	[[ $qpkg_name = Entware ]] && IsNtSysFileExist $OPKG_CMD && z=1
 
@@ -9608,7 +9684,7 @@ _QPKG:upgrade_()
 	z=$?
 
 	LogQpkgServiceResult
-	QpkgIsCanLog && ! QpkgLastResultWasOk && z=1
+	QpkgIsCanLog && ! QpkgServiceResultWasOk && z=1
 
 	[[ $qpkg_name = Entware ]] && IsNtSysFileExist $OPKG_CMD && z=1
 
@@ -9774,7 +9850,7 @@ _QPKG:activate_()
 		z=$?
 	elif QpkgIsCanLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
 		RunAndLog "/sbin/qpkg_service${timeout} start $qpkg_name" "$LOG_PATHFILE" log:failure-only
-		QpkgLastResultWasOk && z=0 || z=1
+		QpkgServiceResultWasOk && z=0 || z=1
 	else
 		RunAndLog "$service_pathfile start" "$LOG_PATHFILE" log:failure-only
 		z=$?
@@ -9858,7 +9934,7 @@ _QPKG:reactivate_()
 		z=$?
 	elif QpkgIsCanLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
 		RunAndLog "/sbin/qpkg_service${timeout} restart $qpkg_name" "$LOG_PATHFILE" log:failure-only
-		QpkgLastResultWasOk && z=0 || z=1
+		QpkgServiceResultWasOk && z=0 || z=1
 	else
 		RunAndLog "$service_pathfile restart" "$LOG_PATHFILE" log:failure-only
 		z=$?
@@ -9933,7 +10009,7 @@ _QPKG:deactivate_()
 		z=$?
 	elif QpkgIsCanLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
 		RunAndLog "/sbin/qpkg_service${timeout} stop $qpkg_name" "$LOG_PATHFILE" log:failure-only
-		QpkgLastResultWasOk && z=0 || z=1
+		QpkgServiceResultWasOk && z=0 || z=1
 	else
 		RunAndLog "$service_pathfile stop" "$LOG_PATHFILE" log:failure-only
 		z=$?
@@ -10559,7 +10635,7 @@ ClearQpkgAppCenterNotifier()
 
 	} &> /dev/null
 
-QpkgLastResultWasOk()
+QpkgServiceResultWasOk()
 	{
 
 	# Returns true if last operation for this package is `ok`.
@@ -11345,6 +11421,42 @@ QpkgGetActiveTest()
 
 	}
 
+QpkgGetServiceAction()
+	{
+
+	# Input:
+	#   $1 (optional) = QPKG name.
+	#   $qpkg_name (global, default) = target QPKG name.
+
+	# Output:
+	#   $stdout = last action requested.
+	#   $? = 0 (found), !0 (not-found)
+
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
+	local b=''
+	[[ -e /var/log/$a.action ]] && b=$(</var/log/${a}.action)
+
+	# Translate QPKG service script action into sherpa action.
+
+	case $b in
+		start)
+			printf activate
+			;;
+		stop)
+			printf deactivate
+			;;
+		restart)
+			printf reactivate
+			;;
+		'')
+			printf unsupported
+			;;
+		*)
+			printf '%s' "$b"
+	esac
+
+	}
+
 QpkgGetServiceResult()
 	{
 
@@ -11358,7 +11470,11 @@ QpkgGetServiceResult()
 
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
 
-	[[ -e /var/log/$a.result ]] && printf '%s' "$(</var/log/"$a".result)"
+	if [[ -e /var/log/$a.result ]]; then
+		printf '%s' "$(</var/log/${a}.result)"
+	else
+		printf unknown
+	fi
 
 	}
 
