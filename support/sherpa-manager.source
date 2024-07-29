@@ -4560,7 +4560,13 @@ _DisplayAsStatusReportItemLine_()
 			if QpkgIsCanLog; then
 				action=$(QpkgGetServiceAction)
 				/bin/touch "$REPORT_FLAGS_PATH"/action-$action
-				action_msg+="$action"
+
+				if [[ $action = not-found ]]; then
+					action_msg+=$(TextDarkGrey not-found)
+				else
+					action_msg+="$action"
+				fi
+
 				result=$(QpkgGetServiceResult)
 				/bin/touch "$REPORT_FLAGS_PATH"/result-$result
 
@@ -4575,7 +4581,8 @@ _DisplayAsStatusReportItemLine_()
 						action_msg+=" ($(TextBrightRed $result))"
 				esac
 			else
-				action_msg+=unsupported
+				action_msg+=$(TextDarkGrey unsupported)
+				/bin/touch "$REPORT_FLAGS_PATH"/action-unsupported
 			fi
 
 			app_ver_msg+=$app_ver
@@ -8082,15 +8089,19 @@ IncludeReportFooter()
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/action-not-found ]]; then
-		DisplayAsInfoIndentQuotedItem not-found 'action tracking files were not found'
+		DisplayAsInfoIndentQuotedItem "$(TextDarkGrey not-found)" 'action tracking files were not found'
+	fi
+
+	if [[ -e "$REPORT_FLAGS_PATH"/action-unsupported ]]; then
+		DisplayAsInfoIndentQuotedItem "$(TextDarkGrey unsupported)" 'action tracking is not supported by this QPKG'
+	fi
+
+	if [[ -e "$REPORT_FLAGS_PATH"/na ]]; then
+		DisplayAsInfoIndentQuotedItem "$(TextDarkGrey 'N/A')" 'not applicable'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/state-notinstalled ]]; then
 		DisplayAsInfoIndentItem "$(TextDarkGrey muted)" 'QPKG is not installed'
-	fi
-
-	if [[ -e "$REPORT_FLAGS_PATH"/na ]]; then
-		DisplayAsInfoIndentItem "$(TextDarkGrey 'N/A')" 'not applicable'
 	fi
 
 	if compgen -G "${REPORT_FLAGS_PATH}/backup-file-*" > /dev/null; then			# https://stackoverflow.com/a/6364244
