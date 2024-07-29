@@ -486,19 +486,31 @@ LocateSQLiteBinary()
 
 	# These use a specific path to the binary:
 	#	HybridBackup = `Hybrid Backup Sync`
-	#	container-station = `Container Station`
 
 	if [[ -z $sqlite_cmd ]] && QpkgIsInstalled HybridBackup; then
 		sqlite_pathfile=$(QpkgGetInstallationPath HybridBackup)/CloudConnector3/bin/sqlite3
 		[[ -e $sqlite_pathfile ]] && sqlite_cmd=$sqlite_pathfile
 	fi
 
-	if [[ -z $sqlite_cmd ]] && QpkgIsInstalled container-station; then
-		sqlite_pathfile=$(QpkgGetInstallationPath container-station)/usr/bin/sqlite3
+	if [[ -z $sqlite_cmd ]] && QpkgIsInstalled ArchiwareP5; then	# untested
+		sqlite_pathfile=$(QpkgGetInstallationPath ArchiwareP5)/binaries/Linux/unknown/64/sqlite3
 		[[ -e $sqlite_pathfile ]] && sqlite_cmd=$sqlite_pathfile
 	fi
 
 	# These use the same path to the binary:
+	#	container-station = `Container Station`
+
+	if [[ -z $sqlite_cmd ]]; then
+		for a in container-station HD_Station; do					# 'HD_Station' is untested
+			if QpkgIsInstalled "$a"; then
+				sqlite_pathfile=$(QpkgGetInstallationPath "$a")/usr/bin/sqlite3
+				[[ -e $sqlite_pathfile ]] || continue
+				sqlite_cmd=$sqlite_pathfile
+				break
+			fi
+		done
+	fi
+
 	#	CacheMount = `HybridMount`
 	# 	qmiixagent = `Qmiix Agent`
 
