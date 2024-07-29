@@ -4790,6 +4790,7 @@ _DisplayAsReposReportItemLine_()
 				undefined)
 					assigned_repo_msg+='N/A'
 					name_msg+=$qpkg_name
+					/bin/touch "$REPORT_FLAGS_PATH"/na
 					;;
 				*)
 					assigned_repo_msg=$(TextBrightOrange "${CHARS_ATTENTION}$assigned_repo")
@@ -4801,6 +4802,7 @@ _DisplayAsReposReportItemLine_()
 			;;
 		muted)
 			assigned_repo_msg=$(TextDarkGrey "${CHARS_NORMAL}N/A")
+			/bin/touch "$REPORT_FLAGS_PATH"/na
 
 			if ! QpkgIsArchOK; then
 				install_date='incompatible arch'
@@ -5199,6 +5201,7 @@ _DisplayAsDepsReportItemLine_()
 		muted)
 			managed_msg+=$(TextDarkGrey 'N/A')
 			name_msg+=$(TextDarkGrey "$qpkg_name")
+			/bin/touch "$REPORT_FLAGS_PATH"/na
 
 			if QpkgIsArchOK "$qpkg_name"; then
 				arch_msg+=$(TextDarkGrey true)
@@ -5222,6 +5225,7 @@ _DisplayAsDepsReportItemLine_()
 			deps_msg+=${deps// /$(TextDarkGrey ', ')}
 			enabled_msg+=$(TextDarkGrey 'N/A')
 			installed_msg+=$(TextDarkGrey false)
+			/bin/touch "$REPORT_FLAGS_PATH"/na
 
 			if QpkgIsMaxOSVerOk "$qpkg_name"; then
 				max_os_msg+=$(TextDarkGrey "$max_os")
@@ -5533,6 +5537,7 @@ _DisplayAsFeaturesReportItemLine_()
 		autoupdate_msg+=true					# sherpa always auto-updates and this can't be disabled.
 	else
 		autoupdate_msg+='N/A'
+		/bin/touch "$REPORT_FLAGS_PATH"/na
 	fi
 
 	if QpkgIsIndependent; then
