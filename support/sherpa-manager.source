@@ -224,7 +224,7 @@ LoadConsts()
 	readonly COLUMN_SPACING=2
 	readonly FILE_BYTES_COL_WIDTH=16
 	readonly FILE_CHANGE_DATE_COL_WIDTH=60
-	readonly FOOTER_NAME_COL_WIDTH=13
+	readonly FOOTER_NAME_COL_WIDTH=14
 	readonly HELP_DESC_INDENT=3
 	readonly HELP_SYNTAX_INDENT=6
 
@@ -4548,7 +4548,7 @@ _DisplayAsStatusReportItemLine_()
 	local mode=''
 	local -i n=0
 	local name_msg=$CHARS_BLANK
-	local path_msg=$CHARS_BLANK
+# 	local path_msg=$CHARS_BLANK
 	local result=''
 	local status=''
 	local status_msg=$CHARS_NORMAL
@@ -4604,7 +4604,7 @@ _DisplayAsStatusReportItemLine_()
 
 			app_ver_msg+=$app_ver
 			name_msg+=$qpkg_name
-			path_msg+=$(QpkgGetInstallationPath)
+# 			path_msg+=$(QpkgGetInstallationPath)
 
 			if QPKGs-ISenabled.Exist "$qpkg_name"; then
 				status+=" $(TextBrightGreen enabled)"
@@ -4662,7 +4662,7 @@ _DisplayAsStatusReportItemLine_()
 
 			app_ver_msg+=$(TextDarkGrey "$app_ver")
 			name_msg+=$(TextDarkGrey "$qpkg_name")
-			path_msg+=$(TextDarkGrey 'N/A')
+# 			path_msg+=$(TextDarkGrey 'N/A')
 			/bin/touch "$REPORT_FLAGS_PATH"/na
 
 			if ! QpkgIsArchOK; then
@@ -4681,7 +4681,7 @@ _DisplayAsStatusReportItemLine_()
 		highlighted)
 			app_ver_msg+=$(TextBrightRed "$app_ver")
 			name_msg+=$(TextBrightRed "$qpkg_name")
-			path_msg=$(TextBrightRedBlink "${CHARS_ALERT}$(QpkgGetInstallationPath)")
+# 			path_msg=$(TextBrightRedBlink "${CHARS_ALERT}$(QpkgGetInstallationPath)")
 			status_msg=$(TextBrightRedBlink "${CHARS_ALERT}missing")
 			ver_msg+=$(TextBrightRed "$(QpkgGetInstalledVer)")
 	esac
@@ -4731,12 +4731,12 @@ _DisplayAsStatusReportItemLine_()
 	fi
 
 	# column 6: package installation path
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		printf "%-$((PACKAGE_PATH_COL_WIDTH+$(LenANSIDiff "$path_msg")))s" "$path_msg"
-	fi
+# 	((n++))
+#
+# 	if [[ $report_cols_max -ge $n ]]; then
+# 		printf "%$((COLUMN_SPACING))s"
+# 		printf "%-$((PACKAGE_PATH_COL_WIDTH+$(LenANSIDiff "$path_msg")))s" "$path_msg"
+# 	fi
 
 	printf '\n'
 
@@ -8017,12 +8017,8 @@ IncludeReportFooter()
 
 	DisplayAsHelpTitle 'report information:'
 
-	if [[ -e "$REPORT_FLAGS_PATH"/deps ]]; then
-		DisplayAsIndentItem "QPKG dependencies are automatically installed/started/stopped/restarted as-required by $(ShowAsTitleName)."
-	fi
-
 	if [[ -e "$REPORT_FLAGS_PATH"/status-missing ]]; then
-		DisplayAsInfoIndentItem "$(TextBrightRed '! missing')" 'QPKG is missing from its installation path. Please reinstall it'
+		DisplayAsIndentQuotedInfoItem "$(TextBrightRed '! missing')" 'QPKG is missing from its installation path. Please reinstall it'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/req-alert ]]; then
@@ -8034,7 +8030,7 @@ IncludeReportFooter()
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/result-failed ]]; then
-		DisplayAsIndentQuotedInfoItem "($(TextBrightRed failed))" 'last action tried failed'
+		DisplayAsIndentQuotedInfoItem "($(TextBrightRed failed))" 'last action failed'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/status-inactive ]]; then
@@ -8046,7 +8042,7 @@ IncludeReportFooter()
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/status-upgradable ]]; then
-		DisplayAsInfoIndentItem "($(TextBrightOrange new))" 'an upgraded QPKG is available'
+		DisplayAsIndentQuotedInfoItem "($(TextBrightOrange new))" 'an upgraded QPKG version is available'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/req-attention ]]; then
@@ -8054,7 +8050,7 @@ IncludeReportFooter()
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/status-stopping ]]; then
-		DisplayAsIndentQuotedInfoItem "$(TextBrightOrange stopping)" 'QPKG is stopping. Try checking again shortly'
+		DisplayAsIndentQuotedInfoItem "$(TextBrightOrange stopping)" 'QPKG is stopping. Check again shortly'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/status-slow ]]; then
@@ -8062,11 +8058,11 @@ IncludeReportFooter()
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/status-starting ]]; then
-		DisplayAsIndentQuotedInfoItem "$(TextBrightOrange starting)" 'QPKG is starting. Try checking again shortly'
+		DisplayAsIndentQuotedInfoItem "$(TextBrightOrange starting)" 'QPKG is starting. Check again shortly'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/result-in-progress ]]; then
-		DisplayAsIndentQuotedInfoItem "($(TextBrightOrange in-progress))" 'action is in-progress'
+		DisplayAsIndentQuotedInfoItem "($(TextBrightOrange in-progress))" 'an action is in-progress. Check again shortly'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/status-unknown ]]; then
@@ -8078,15 +8074,15 @@ IncludeReportFooter()
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/state-enabled ]]; then
-		DisplayAsIndentQuotedInfoItem "$(TextBrightGreen enabled)" 'QPKG will start at bootup'
+		DisplayAsIndentQuotedInfoItem "$(TextBrightGreen enabled)" 'QPKG will be started at bootup'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/result-ok ]]; then
-		DisplayAsIndentQuotedInfoItem "($(TextBrightGreen OK))" 'last action tried was successful'
+		DisplayAsIndentQuotedInfoItem "($(TextBrightGreen OK))" 'last action was successful'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/status-active ]]; then
-		DisplayAsIndentQuotedInfoItem "$(TextBrightGreen active)" "application is alive (and responsive if it's a daemon)"
+		DisplayAsIndentQuotedInfoItem "$(TextBrightGreen active)" "application is alive (and responsive if a daemon)"
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/repo-sherpa ]]; then
@@ -8117,8 +8113,12 @@ IncludeReportFooter()
 		DisplayAsIndentQuotedInfoItem "$(TextDarkGrey 'N/A')" 'not applicable'
 	fi
 
-	if [[ -e "$REPORT_FLAGS_PATH"/state-notinstalled ]]; then
-		DisplayAsInfoIndentItem "$(TextDarkGrey muted)" 'QPKG is not installed'
+# 	if [[ -e "$REPORT_FLAGS_PATH"/state-notinstalled ]]; then
+# 		DisplayAsInfoIndentItem "$(TextDarkGrey muted)" 'QPKG is not installed'
+# 	fi
+
+	if [[ -e "$REPORT_FLAGS_PATH"/deps ]]; then
+		DisplayAsHelpTitle "QPKG dependencies are automatically installed/started/stopped/restarted as-required by $(ShowAsTitleName)."
 	fi
 
 	if compgen -G "${REPORT_FLAGS_PATH}/backup-file-*" > /dev/null; then			# https://stackoverflow.com/a/6364244
@@ -8135,13 +8135,13 @@ IncludeReportHeadingsFooter()
 	{
 
 	DisplayAsHelpTitle 'column headings:'
-	DisplayAsInfoIndentQuotedItem 'CanBack?' "application config 'backup' and 'restore' supported"
-	DisplayAsInfoIndentQuotedItem 'CanClean?' "application 'clean' supported"
-	DisplayAsInfoIndentQuotedItem 'StartUpd?' 'application restart-to-update supported'
-	DisplayAsInfoIndentQuotedItem 'AutoUpd?' 'application restart-to-update enabled'
-	DisplayAsInfoIndentQuotedItem 'LiveTest?' "has a built-in 'status' check, and can test for daemon \"live\" status"
-	DisplayAsInfoIndentQuotedItem 'Indep?' 'is independent of other QPKGs'
-	DisplayAsInfoIndentQuotedItem 'Compat?' 'has a release compatible with this NAS arch'
+	DisplayAsIndentQuotedInfoItem 'CanBack?' "application config 'backup' and 'restore' supported"
+	DisplayAsIndentQuotedInfoItem 'CanClean?' "application 'clean' supported"
+	DisplayAsIndentQuotedInfoItem 'StartUpd?' 'application restart-to-update supported'
+	DisplayAsIndentQuotedInfoItem 'AutoUpd?' 'application restart-to-update enabled'
+	DisplayAsIndentQuotedInfoItem 'LiveTest?' "has a built-in 'status' check, and can test for daemon \"live\" status"
+	DisplayAsIndentQuotedInfoItem 'Indep?' 'is independent of other QPKGs'
+	DisplayAsIndentQuotedInfoItem 'Compat?' 'has a release compatible with this NAS arch'
 
 	} >> "$REPORT_OUTPUT_PATHFILE"
 
