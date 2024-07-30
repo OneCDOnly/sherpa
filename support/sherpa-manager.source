@@ -9324,7 +9324,7 @@ _QPKG:reassign_()
 	{
 
 	# * This function runs asynchronously *
-	# Removes the `storeid` assignment for the QPKG named in $qpkg_name.
+	# Remove the `storeid` assignment for the QPKG named in $qpkg_name.
 
 	# Input:
 	#	$qpkg_name (global)
@@ -9371,7 +9371,7 @@ _QPKG:download_()
 	{
 
 	# * This function runs asynchronously *
-	# Downloads the QPKG named in $qpkg_name.
+	# Download the QPKG named in $qpkg_name.
 
 	# Input:
 	#	$qpkg_name (global)
@@ -9443,7 +9443,7 @@ _QPKG:install_()
 	{
 
 	# * This function runs asynchronously *
-	# Installs the QPKG named in $qpkg_name.
+	# Install the QPKG named in $qpkg_name.
 
 	# Input:
 	#	$qpkg_name (global)
@@ -9557,7 +9557,7 @@ _QPKG:reinstall_()
 	{
 
 	# * This function runs asynchronously *
-	# Reinstalls the QPKG named in $qpkg_name.
+	# Reinstall the QPKG named in $qpkg_name.
 
 	# Input:
 	#	$qpkg_name (global)
@@ -9634,7 +9634,7 @@ _QPKG:rebuild_()
 	{
 
 	# * This function runs asynchronously *
-	# Meta-action: rebuilds the QPKG named in $qpkg_name. This is a `download`, `install` and `restore`, but only if a backup file exists for this QPKG.
+	# Meta-action: rebuild the QPKG named in $qpkg_name. This is a `download`, `install` and `restore`, but only if a backup file exists for this QPKG.
 
 	# Input:
 	#	$qpkg_name (global)
@@ -9683,7 +9683,7 @@ _QPKG:upgrade_()
 	{
 
 	# * This function runs asynchronously *
-	# Upgrades the QPKG named in $qpkg_name.
+	# Upgrade the QPKG named in $qpkg_name.
 
 	# Input:
 	#	$qpkg_name (global)
@@ -9774,7 +9774,7 @@ _QPKG:uninstall_()
 	{
 
 	# * This function runs asynchronously *
-	# Uninstalls the QPKG named in $qpkg_name.
+	# Uninstall the QPKG named in $qpkg_name.
 
 	# Input:
 	#	$qpkg_name (global)
@@ -9852,7 +9852,7 @@ _QPKG:activate_()
 	{
 
 	# * This function runs asynchronously *
-	# Activates/starts the service-script for the QPKG named in $qpkg_name.
+	# Activate/start the service-script for the QPKG named in $qpkg_name.
 
 	# Input:
 	#	$qpkg_name (global)
@@ -9936,7 +9936,7 @@ _QPKG:reactivate_()
 	{
 
 	# * This function runs asynchronously *
-	# Reactivates/restarts the service-script for the QPKG named in $qpkg_name.
+	# Reactivate/restart the service-script for the QPKG named in $qpkg_name.
 
 	# Input:
 	#	$qpkg_name (global)
@@ -10011,7 +10011,7 @@ _QPKG:deactivate_()
 	{
 
 	# * This function runs asynchronously *
-	# Deactivates/stops the service-script for the QPKG named in $qpkg_name.
+	# Deactivate/stop the service-script for the QPKG named in $qpkg_name.
 
 	# Input:
 	#	$qpkg_name (global)
@@ -10094,7 +10094,7 @@ _QPKG:enable_()
 	{
 
 	# * This function runs asynchronously *
-	# Enables the QPKG named in $qpkg_name.
+	# Enable the QPKG named in $qpkg_name.
 
 	# Input:
 	#	$qpkg_name (global)
@@ -10144,7 +10144,7 @@ _QPKG:disable_()
 	{
 
 	# * This function runs asynchronously *
-	# Disables the QPKG named in $qpkg_name.
+	# Disable the QPKG named in $qpkg_name.
 
 	# Input:
 	#	$qpkg_name (global)
@@ -10199,7 +10199,7 @@ _QPKG:enableau_()
 	{
 
 	# * This function runs asynchronously *
-	# Enables auto-updating of the QPKG named in $qpkg_name.
+	# Enable auto-updating of the QPKG named in $qpkg_name.
 
 	# Input:
 	#	$qpkg_name (global)
@@ -10258,7 +10258,7 @@ _QPKG:disableau_()
 	{
 
 	# * This function runs asynchronously *
-	#  Disables auto-updating of the QPKG named in $qpkg_name.
+	#  Disable auto-updating of the QPKG named in $qpkg_name.
 
 	# Input:
 	#	$qpkg_name (global)
@@ -10317,7 +10317,7 @@ _QPKG:backup_()
 	{
 
 	# * This function runs asynchronously *
-	#  Calls the service-script for the QPKG named in $qpkg_name and runs a `backup` action
+	#  Run a `backup` action for the QPKG named in $qpkg_name.
 
 	# Input:
 	#	$qpkg_name (global)
@@ -10373,7 +10373,7 @@ _QPKG:restore_()
 	{
 
 	# * This function runs asynchronously *
-	#  Calls the service-script for the QPKG named in $qpkg_name and runs a `restore` action
+	#  Run a `restore` action for the QPKG named in $qpkg_name.
 
 	# Input:
 	#	$qpkg_name (global)
@@ -10433,7 +10433,7 @@ _QPKG:clean_()
 	{
 
 	# * This function runs asynchronously *
-	#  Calls the service-script for the QPKG named in $qpkg_name and runs a `clean` action
+	#  Run a `clean` action for the QPKG named in $qpkg_name.
 
 	# Input:
 	#	$qpkg_name (global)
