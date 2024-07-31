@@ -1,5 +1,17 @@
 Observed issues:
 
+	* Dameons are slow to re-lauch with new pid on armv5. Maybe extend timesouts?
+		-------------------------------------------------------------------------------------------------------------------------
+		readonly DAEMON_CHECK_TIMEOUT_SECONDS=$(CalcAdaptiveSeconds 120)
+		readonly DAEMON_STOP_TIMEOUT_SECONDS=$(CalcAdaptiveSeconds 60)
+		readonly PIDFILE_APPEAR_TIMEOUT_SECONDS=$(CalcAdaptiveSeconds 60)
+		readonly PID_START_RECHECK_WAIT_SECONDS=$(CalcAdaptiveSeconds 30)
+		readonly PID_STOP_RECHECK_WAIT_SECONDS=$(CalcAdaptiveSeconds 30)
+		readonly PORT_CHECK_TIMEOUT_SECONDS=$(CalcAdaptiveSeconds 60)
+		-------------------------------------------------------------------------------------------------------------------------
+
+	* If installed QPKGs are disabled, then upgraded, upgrade result is "failed".
+
 	* 'sherpa enable-auto-update active' is not running 'enable-auto-update' action.
 
 	* Near the end of installing IPKs, monitored download path can remain at non-zero size while packages complete installation.
