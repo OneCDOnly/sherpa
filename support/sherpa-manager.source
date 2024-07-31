@@ -604,6 +604,8 @@ LoadEnv()
 			readonly QPKG_CACHE_PATH=$CACHE_PATH/QPKGs
 				readonly QPKG_DL_PATH=$QPKG_CACHE_PATH/downloads
 		readonly LOGS_PATH=$THIS_PACKAGE_PATH/logs
+			readonly OOM_LOG_PATHFILE=$LOGS_PATH/oom.log
+			readonly RAM_FREEUSED_PATHFILE=$LOGS_PATH/ram.freeused
 			readonly RAMFS_FREESPACE_PATHFILE=$LOGS_PATH/ramfs.freespace
 			readonly SCREEN_SESSIONS_PATHFILE=$LOGS_PATH/screen.sessions
 			readonly SESS_ACTION_RESULTS_PATHFILE=$LOGS_PATH/session.action.results.log
@@ -863,6 +865,10 @@ DebugLogEnv()
 	DebugInfoMinSepr
 	RunAndLog "$SCREEN_CMD -ls" "$SCREEN_SESSIONS_PATHFILE" '' 1
 	DebugInfoMinSepr
+	RunAndLog '/usr/bin/free' "$RAM_FREEUSED_PATHFILE" '' 1
+	DebugInfoMinSepr
+	RunAndLog "$CAT_CMD /mnt/HDA_ROOT/.logs/kmsg | $GREP_CMD -i 'out of memory\|oom-killer'" "$OOM_LOG_PATHFILE" '' 1
+	DebugInfoMinSepr
 
 	FuncExit
 
@@ -959,6 +965,10 @@ CheckEnv()
 
 	local installed_ver=''
 	local target_packages=''
+
+	if [[ $($CAT_CMD /mnt/HDA_ROOT/.logs/kmsg | $GREP_CMD -i 'out of memory\|oom-killer' | $WC_CMD -l) -gt 0 ]]; then
+		ShowAsWarn "$(TextBrightRed 'Out-Of-Memory killer') has been active recently ... check for $(TextBrightRed inactive) QPKGs"
+	fi
 
 	if QpkgIsInstalled Entware; then
 		if [[ $ENTWARE_VER != none ]]; then
