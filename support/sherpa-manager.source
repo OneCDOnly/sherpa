@@ -36,10 +36,6 @@ set -o nounset -o pipefail
 shopt -s extglob
 [[ $- != *m* ]] || set +m			# Disable job control if-enabled (only needed for QTS 4.2.6).
 ln -fns /proc/self/fd /dev/fd		# KLUDGE: `/dev/fd` isn't always created by QTS.
-
-trap CaughtSIGINT SIGINT
-trap CaughtEXIT EXIT
-
 readonly ARGS_RAW=$*
 
 Init()
@@ -13918,6 +13914,9 @@ CaughtEXIT()
 	}
 
 readonly SCRIPT_STARTSECONDS=$(ConvertNowToSeconds)
+
+trap CaughtSIGINT SIGINT
+trap CaughtEXIT EXIT
 
 Init || exit
 ProcActions
