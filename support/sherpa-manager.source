@@ -967,7 +967,7 @@ CheckEnv()
 	local target_packages=''
 
 	if [[ $($CAT_CMD /mnt/HDA_ROOT/.logs/kmsg | $GREP_CMD -i 'out of memory\|oom-killer' | $WC_CMD -l) -gt 0 ]]; then
-		ShowAsWarn "$(TextBrightRed 'Out-Of-Memory killer') has been active recently ... check for $(TextBrightRed inactive) QPKGs"
+		ShowAsWarn "the $(TextBrightRed 'Out-Of-Memory killer') has been triggered ... check for $(TextBrightRed inactive) QPKGs"
 	fi
 
 	if QpkgIsInstalled Entware; then
