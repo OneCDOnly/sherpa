@@ -863,7 +863,7 @@ DebugLogEnv()
 	DebugInfoMinSepr
 	RunAndLog '/usr/bin/free' "$RAM_FREEUSED_PATHFILE" '' 1
 	DebugInfoMinSepr
-	RunAndLog "$CAT_CMD /mnt/HDA_ROOT/.logs/kmsg | $GREP_CMD -i 'out of memory\|oom-killer'" "$OOM_LOG_PATHFILE" '' 1
+	RunAndLog "$GREP_CMD -i 'out of memory\|oom-killer' /mnt/HDA_ROOT/.logs/kmsg" "$OOM_LOG_PATHFILE" '' 1
 	DebugInfoMinSepr
 
 	FuncExit
@@ -962,7 +962,7 @@ CheckEnv()
 	local installed_ver=''
 	local target_packages=''
 
-	if [[ $($CAT_CMD /mnt/HDA_ROOT/.logs/kmsg | $GREP_CMD -i 'out of memory\|oom-killer' | $WC_CMD -l) -gt 0 ]]; then
+	if [[ $($GREP_CMD -i 'out of memory\|oom-killer' /mnt/HDA_ROOT/.logs/kmsg | $WC_CMD -l) -gt 0 ]]; then
 		ShowAsWarn "the $(TextBrightRed 'Out-Of-Memory killer') has been triggered ... check for $(TextBrightRed inactive) QPKGs"
 	fi
 
