@@ -36,10 +36,6 @@ set -o nounset -o pipefail
 shopt -s extglob
 [[ $- != *m* ]] || set +m			# Disable job control if-enabled (only needed for QTS 4.2.6).
 ln -fns /proc/self/fd /dev/fd		# KLUDGE: `/dev/fd` isn't always created by QTS.
-
-trap CaughtSIGINT SIGINT
-trap CaughtEXIT EXIT
-
 readonly ARGS_RAW=$*
 
 Init()
@@ -224,11 +220,12 @@ LoadConsts()
 	readonly COLUMN_SPACING=2
 	readonly FILE_BYTES_COL_WIDTH=16
 	readonly FILE_CHANGE_DATE_COL_WIDTH=60
-	readonly FOOTER_NAME_COL_WIDTH=12
+	readonly FOOTER_NAME_COL_WIDTH=14
 	readonly HELP_DESC_INDENT=3
 	readonly HELP_SYNTAX_INDENT=6
 
 	readonly PACKAGE_ABBS_COL_WIDTH=84
+	readonly PACKAGE_ACTION_COL_WIDTH=27
 	readonly PACKAGE_ACTIVE_TEST_BUILTIN_COL_WIDTH=11
 	readonly PACKAGE_APP_VER_COL_WIDTH=22
 	readonly PACKAGE_ARCH_COL_WIDTH=15
@@ -485,19 +482,31 @@ LocateSQLiteBinary()
 
 	# These use a specific path to the binary:
 	#	HybridBackup = `Hybrid Backup Sync`
-	#	container-station = `Container Station`
 
 	if [[ -z $sqlite_cmd ]] && QpkgIsInstalled HybridBackup; then
 		sqlite_pathfile=$(QpkgGetInstallationPath HybridBackup)/CloudConnector3/bin/sqlite3
 		[[ -e $sqlite_pathfile ]] && sqlite_cmd=$sqlite_pathfile
 	fi
 
-	if [[ -z $sqlite_cmd ]] && QpkgIsInstalled container-station; then
-		sqlite_pathfile=$(QpkgGetInstallationPath container-station)/usr/bin/sqlite3
+	if [[ -z $sqlite_cmd ]] && QpkgIsInstalled ArchiwareP5; then	# untested
+		sqlite_pathfile=$(QpkgGetInstallationPath ArchiwareP5)/binaries/Linux/unknown/64/sqlite3
 		[[ -e $sqlite_pathfile ]] && sqlite_cmd=$sqlite_pathfile
 	fi
 
 	# These use the same path to the binary:
+	#	container-station = `Container Station`
+
+	if [[ -z $sqlite_cmd ]]; then
+		for a in container-station HD_Station; do					# 'HD_Station' is untested
+			if QpkgIsInstalled "$a"; then
+				sqlite_pathfile=$(QpkgGetInstallationPath "$a")/usr/bin/sqlite3
+				[[ -e $sqlite_pathfile ]] || continue
+				sqlite_cmd=$sqlite_pathfile
+				break
+			fi
+		done
+	fi
+
 	#	CacheMount = `HybridMount`
 	# 	qmiixagent = `Qmiix Agent`
 
@@ -591,6 +600,8 @@ LoadEnv()
 			readonly QPKG_CACHE_PATH=$CACHE_PATH/QPKGs
 				readonly QPKG_DL_PATH=$QPKG_CACHE_PATH/downloads
 		readonly LOGS_PATH=$THIS_PACKAGE_PATH/logs
+			readonly OOM_LOG_PATHFILE=$LOGS_PATH/oom.log
+			readonly RAM_FREEUSED_PATHFILE=$LOGS_PATH/ram.freeused
 			readonly RAMFS_FREESPACE_PATHFILE=$LOGS_PATH/ramfs.freespace
 			readonly SCREEN_SESSIONS_PATHFILE=$LOGS_PATH/screen.sessions
 			readonly SESS_ACTION_RESULTS_PATHFILE=$LOGS_PATH/session.action.results.log
@@ -850,6 +861,10 @@ DebugLogEnv()
 	DebugInfoMinSepr
 	RunAndLog "$SCREEN_CMD -ls" "$SCREEN_SESSIONS_PATHFILE" '' 1
 	DebugInfoMinSepr
+	RunAndLog '/usr/bin/free' "$RAM_FREEUSED_PATHFILE" '' 1
+	DebugInfoMinSepr
+	RunAndLog "$CAT_CMD /mnt/HDA_ROOT/.logs/kmsg | $GREP_CMD -i 'out of memory\|oom-killer'" "$OOM_LOG_PATHFILE" '' 1
+	DebugInfoMinSepr
 
 	FuncExit
 
@@ -947,6 +962,10 @@ CheckEnv()
 	local installed_ver=''
 	local target_packages=''
 
+	if [[ $($CAT_CMD /mnt/HDA_ROOT/.logs/kmsg | $GREP_CMD -i 'out of memory\|oom-killer' | $WC_CMD -l) -gt 0 ]]; then
+		ShowAsWarn "the $(TextBrightRed 'Out-Of-Memory killer') has been triggered ... check for $(TextBrightRed inactive) QPKGs"
+	fi
+
 	if QpkgIsInstalled Entware; then
 		if [[ $ENTWARE_VER != none ]]; then
 			_UpdateEntwarePackageList_ &			# Let's try launching this early.
@@ -1030,7 +1049,7 @@ QPKGsAssignToActions()
 	if QpkgIsInstalled Entware; then
 		local entware_install_date=$(QpkgGetInstallDate Entware)
 
-		if [[ $entware_install_date = undefined || ${entware_install_date//[!0-9]/} -le 20240224 ]] && [[ $NAS_ARCH != armv5tel ]]; then
+		if [[ $entware_install_date = undefined || ${entware_install_date//[!0-9]/} -le 20240223 ]] && [[ $NAS_ARCH != armv5tel ]]; then
 			ShowAsNote "the $(TextBrightOrange Entware) QPKG will be auto-reinstalled (Entware packages were updated late in February 2024)"
 			QPKGs-ACreinstall-to:Add Entware
 		fi
@@ -1040,6 +1059,8 @@ QPKGsAssignToActions()
 
 	if QPKGs-ACrebuild-to.IsAny; then
 		for qpkg_name in $(QPKGs-ACrebuild-to:Array); do
+			QpkgSetIndex
+
 			if QPKGs-ISNTinstalled.Exist "$qpkg_name" && QpkgIsBackupExist; then
 				QPKGs-ACinstall-to:Add "$qpkg_name"
 				QPKGs-ACrestore-to:Add "$qpkg_name"
@@ -1060,9 +1081,9 @@ QPKGsAssignToActions()
 	# Install independents for installed dependents.
 
 	for qpkg_name in $(QPKGs-ISinstalled:Array); do
-		QpkgSetIndex
-
 		if [[ $useropt_check = true ]] || QPKGs-ACactivate-to.Exist "$qpkg_name"; then
+			QpkgSetIndex
+
 			for prospect in $(QpkgGetDependencies); do
 				QPKGs-ISNTinstalled.Exist "$prospect" && QPKGs-ACinstall-to:Add "$prospect"
 			done
@@ -1073,9 +1094,9 @@ QPKGsAssignToActions()
 
 	for action in reinstall reactivate upgrade; do
 		for qpkg_name in $(QPKGs-AC${action}-to:Array); do
-			QpkgSetIndex
-
 			if QPKGs-GRindependent.Exist "$qpkg_name" && QPKGs-ISinstalled.Exist "$qpkg_name"; then
+				QpkgSetIndex
+
 				for prospect in $(QpkgGetDependents); do
 					if QPKGs-ISenabled.Exist "$prospect"; then
 						QPKGs-ACdeactivate-to:Add "$prospect"
@@ -1090,9 +1111,9 @@ QPKGsAssignToActions()
 
 	for action in deactivate uninstall; do
 		for qpkg_name in $(QPKGs-AC${action}-to:Array); do
-			QpkgSetIndex
-
 			if QPKGs-GRindependent.Exist "$qpkg_name" && QPKGs-ISinstalled.Exist "$qpkg_name"; then
+				QpkgSetIndex
+
 				for prospect in $(QpkgGetDependents); do
 					QPKGs-ISinstalled.Exist "$prospect" && QPKGs-ACdeactivate-to:Add "$prospect"
 				done
@@ -1100,24 +1121,7 @@ QPKGsAssignToActions()
 		done
 	done
 
-	# If an independent has been selected for `uninstall`, then `install`, need to `deactivate` its dependents first, and `activate` them again later.
-
-	for qpkg_name in $(QPKGs-ACuninstall-to:Array); do
-		QpkgSetIndex
-
-		if QPKGs-GRindependent.Exist "$qpkg_name" && QPKGs-ISinstalled.Exist "$qpkg_name"; then
-			if QPKGs-ACinstall-to.Exist "$qpkg_name"; then
-				for prospect in $(QpkgGetDependents); do
-					if QPKGs-ISenabled.Exist "$prospect"; then
-						QPKGs-ACdeactivate-to:Add "$prospect"
-						! QPKGs-ACuninstall-to.Exist "$prospect" && ! QPKGs-ACinstall-to.Exist "$prospect" && QPKGs-ACactivate-to:Add "$prospect"
-					fi
-				done
-			fi
-		fi
-	done
-
-	# Entware is a special-case: perform complete removal and fresh install to clear all installed IPKs.
+	# Special-case: perform complete removal and fresh install of Entware to clear all installed IPKs.
 
 	if QPKGs-ACreinstall-to.Exist Entware; then
 		QPKGs-ACreinstall-to:Remove Entware
@@ -1125,12 +1129,25 @@ QPKGsAssignToActions()
 		QPKGs-ACinstall-to:Add Entware
 	fi
 
+	# If an independent has been selected for `uninstall`, then `install`, need to `deactivate` its dependents first, and `activate` them again later.
+
+	for qpkg_name in $(QPKGs-ACuninstall-to:Array); do
+		if QPKGs-GRindependent.Exist "$qpkg_name" && QPKGs-ISinstalled.Exist "$qpkg_name" && QPKGs-ACinstall-to.Exist "$qpkg_name"; then
+			QpkgSetIndex
+
+			for prospect in $(QpkgGetDependents); do
+				if QPKGs-ISenabled.Exist "$prospect"; then
+					QPKGs-ACdeactivate-to:Add "$prospect"
+					! QPKGs-ACuninstall-to.Exist "$prospect" && ! QPKGs-ACinstall-to.Exist "$prospect" && QPKGs-ACactivate-to:Add "$prospect"
+				fi
+			done
+		fi
+	done
+
 	# If any QPKG has been selected for `backup`/`restore`, need to `deactivate` it first, and `activate` it again later.
 
 	for action in backup restore; do
 		for qpkg_name in $(QPKGs-AC${action}-to:Array); do
-			QpkgSetIndex
-
 			if QPKGs-ISenabled.Exist "$qpkg_name"; then
 				QPKGs-ACdeactivate-to:Add "$qpkg_name"
 				! QPKGs-ACuninstall-to.Exist "$qpkg_name" && ! QPKGs-ACinstall-to.Exist "$qpkg_name" && QPKGs-ACactivate-to:Add "$qpkg_name"
@@ -1170,10 +1187,9 @@ QPKGsAssignToActions()
 
 	if QPKGs-ACuninstall-to.IsAny; then
 		for qpkg_name in $(QPKGs-ACuninstall-to:Array); do
-			QpkgSetIndex
-
 			if QPKGs-ISinstalled.Exist "$qpkg_name" && QPKGs-ACinstall-to.Exist "$qpkg_name"; then
 				QPKGs_were_installed_name+=("$qpkg_name")
+				QpkgSetIndex
 				QPKGs_were_installed_path+=("$($DIRNAME_CMD "$(QpkgGetInstallationPath)")")
 			fi
 
@@ -2432,7 +2448,7 @@ ParseActionArgs()
 			potential_action=''
 
 			case $action in
-				?(de|re)activate|backup|clean|@(dis|en)able?(au)|install|reassign|rebuild|@(re|un)install|restore|sign|upgrade)
+				?(de|re)activate|backup|clean|@(dis|en)able?(au)|reassign|rebuild|?(re|un)install|restore|sign|upgrade)
 					requires_group=true
 					user_action=$arg
 					;;
@@ -2461,7 +2477,7 @@ ParseActionArgs()
 
 		if [[ -n $action && -n $group ]]; then
 			case $action in
-				?(de|re)activate|backup|clean|@(dis|en)able|@(re|un)install|restore|sign|upgrade)
+				?(de|re)activate|backup|clean|@(dis|en)able|reassign|@(re|un)install|restore|sign|upgrade)
 					case $group in
 						?(NT)active)
 							LoadObjects
@@ -4220,9 +4236,11 @@ AddSeparators()
 
 	local a=''
 
-	if [[ -n ${1:-} ]]; then
-		a=$(Trim "$1"); a=${a// /, }	# insert separators
-	fi
+	[[ -z ${1:-} ]] && return
+
+	a=$(Trim "$1")
+	a=${a// /, }	# Replace whitespace with separators.
+	a=${a//!/ }		# Convert '!' to whitespace.
 
 	printf '%s' "$a"
 
@@ -4279,7 +4297,7 @@ DisplayAsSynExam()
 DisplayAsIndentItem()
 	{
 
-	# Display as an indented, bulleted item, formatted for a single field.
+	# Display as indented single field, bulleted.
 
 	# Input:
 	#	$1 = item
@@ -4291,7 +4309,7 @@ DisplayAsIndentItem()
 DisplayAsInfoIndentItem()
 	{
 
-	# Display as an indented, bulleted item, formatted for two fields.
+	# Display as indented two fields, first field bulleted.
 
 	# Input:
 	#	$1 = word
@@ -4301,18 +4319,35 @@ DisplayAsInfoIndentItem()
 
 	}
 
-DisplayAsInfoIndentQuotedItem()
+DisplayAsIndentQuotedInfoItem()
 	{
 
-	# Display as an indented, bulleted item, formatted for two fields.
+	# Display as indented two fields, first field quoted, second field bulleted.
+	# Example:
+	# "  'inactive'     •  application is dead or not-started. Try starting/activating it."
 
 	# Input:
 	#	$1 = word
 	#	$2 = description
 
-	printf "%${HELP_DESC_INDENT}s${CHARS_BULLET}%-$((FOOTER_NAME_COL_WIDTH+2+$(LenANSIDiff "${1:-}")))s = %s\n" '' "'${1:-}'" "$(AddPeriod "${2:-}")"
+	printf "%${HELP_DESC_INDENT}s%-$((FOOTER_NAME_COL_WIDTH+2+$(LenANSIDiff "${1:-}")))s${CHARS_BULLET}%s\n" '' "'${1:-}'" "$(AddPeriod "${2:-}")"
 
 	}
+
+#DisplayAsInfoIndentQuotedItem()
+# 	{
+#
+# 	# Display as indented two fields, first field quoted and bulleted.
+# 	# Example:
+# 	# "   • 'enabled'       = QPKG will start at bootup."
+#
+# 	# Input:
+# 	#	$1 = word
+# 	#	$2 = description
+#
+# 	printf "%${HELP_DESC_INDENT}s${CHARS_BULLET}%-$((FOOTER_NAME_COL_WIDTH+2+$(LenANSIDiff "${1:-}")))s = %s\n" '' "'${1:-}'" "$(AddPeriod "${2:-}")"
+#
+# 	}
 
 DisplayAsPacksReportTitleLine()
 	{
@@ -4369,6 +4404,7 @@ DisplayAsPacksReportItemLine()
 	local name=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
 		local description=$(QpkgGetDesc "$name")
 		local notes=$(QpkgGetNote "$name")
+		[[ $notes = none ]] && notes=''
 	local name_msg=$CHARS_NORMAL
 	local notes_msg="${notes}."
 
@@ -4463,7 +4499,16 @@ DisplayAsStatusReportTitleLine()
 		printf "%-$((PACKAGE_STATUS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
-	# column 3: package version (variable-width)
+	# column 3: package action and result
+	((n++))
+
+	if [[ $report_cols_max -ge $n ]]; then
+		printf "%$((COLUMN_SPACING))s"
+		a="${CHARS_BULLET}QPKG action (result):"
+		printf "%-$((PACKAGE_ACTION_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
+	fi
+
+	# column 4: package version (variable-width)
 	((n++))
 
 	if [[ $report_cols_max -ge $n ]]; then
@@ -4474,7 +4519,7 @@ DisplayAsStatusReportTitleLine()
 		printf "%-$((${package_ver_final_col_width:=0}+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
-	# column 4: application version
+	# column 5: application version
 	((n++))
 
 	if [[ $report_cols_max -ge $n ]]; then
@@ -4483,7 +4528,7 @@ DisplayAsStatusReportTitleLine()
 		printf "%-$((PACKAGE_APP_VER_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 	fi
 
-	# column 5: package installation path
+	# column 6: package installation path
 	((n++))
 
 	if [[ $report_cols_max -ge $n ]]; then
@@ -4503,14 +4548,17 @@ _DisplayAsStatusReportItemLine_()
 
 	# Input:
 
+	local action=''
+	local action_msg=$CHARS_BLANK
 	local app_ver=''
 	local app_ver_msg=$CHARS_BLANK
 	local mode=''
 	local -i n=0
 	local name_msg=$CHARS_BLANK
-	local path_msg=$CHARS_BLANK
+# 	local path_msg=$CHARS_BLANK
+	local result=''
 	local status=''
-	local status_msg=''
+	local status_msg=$CHARS_NORMAL
 	local ver_msg=$CHARS_BLANK
 
 	if QpkgIsMissing; then
@@ -4533,51 +4581,96 @@ _DisplayAsStatusReportItemLine_()
 
 	case $mode in
 		normal)
+			if QpkgIsCanLog; then
+				action=$(QpkgGetServiceAction)
+				/bin/touch "$REPORT_FLAGS_PATH"/action-$action
+
+				if [[ $action = not-found ]]; then
+					action_msg+=$(TextDarkGrey not-found)
+				else
+					action_msg+="$action"
+				fi
+
+				result=$(QpkgGetServiceResult)
+				/bin/touch "$REPORT_FLAGS_PATH"/result-$result
+
+				case $result in
+					ok)
+						action_msg+=" ($(TextBrightGreen OK))"
+						;;
+					in-progress)
+						action_msg+=" ($(TextBrightOrange $result))"
+						;;
+					failed)
+						action_msg+=" ($(TextBrightRed $result))"
+				esac
+			else
+				action_msg+=$(TextDarkGrey unsupported)
+				/bin/touch "$REPORT_FLAGS_PATH"/action-unsupported
+			fi
+
 			app_ver_msg+=$app_ver
 			name_msg+=$qpkg_name
-			path_msg+=$(QpkgGetInstallationPath)
+# 			path_msg+=$(QpkgGetInstallationPath)
 
-			# Limit statuses to two words only.
-				# First word.
-					if QPKGs-ISenabled.Exist "$qpkg_name"; then
-						status+=" $(TextBrightGreen enabled)"
-						/bin/touch "$REPORT_FLAGS_PATH"/state-enabled
-					else
-						status+=" $(TextBrightRed disabled)"
-						/bin/touch "$REPORT_FLAGS_PATH"/state-disabled
-					fi
+			if QPKGs-ISenabled.Exist "$qpkg_name"; then
+				status+=" $(TextBrightGreen enabled)"
+				/bin/touch "$REPORT_FLAGS_PATH"/state-enabled
+			else
+				status+=" $(TextBrightRed disabled)"
+				/bin/touch "$REPORT_FLAGS_PATH"/state-disabled
+			fi
 
-				# Second word.
-					if QPKGs-ISactive.Exist "$qpkg_name"; then
-						status+=" $(TextBrightGreen active)"
-						/bin/touch "$REPORT_FLAGS_PATH"/status-active
-					elif QPKGs-ISslow.Exist "$qpkg_name"; then
-						status+=" $(TextBrightOrange slow)"
-						/bin/touch "$REPORT_FLAGS_PATH"/status-slow
-					elif QPKGs-ISstarting.Exist "$qpkg_name"; then
-						status+=" $(TextBrightOrange starting)"
-						/bin/touch "$REPORT_FLAGS_PATH"/status-starting
-					elif QPKGs-ISstopping.Exist "$qpkg_name"; then
-						status+=" $(TextBrightOrange stopping)"
-						/bin/touch "$REPORT_FLAGS_PATH"/status-stopping
-					elif QPKGs-ISrestarting.Exist "$qpkg_name"; then
-						status+=" $(TextBrightOrange restarting)"
-						/bin/touch "$REPORT_FLAGS_PATH"/status-restarting
-					elif QPKGs-ISNTactive.Exist "$qpkg_name"; then
-						status+=" $(TextBrightRed inactive)"
-						/bin/touch "$REPORT_FLAGS_PATH"/status-inactive
-					else
-						status+=" $(TextBrightOrange unknown)"
-						/bin/touch "$REPORT_FLAGS_PATH"/status-unknown
-					fi
+			if QPKGs-ISactive.Exist "$qpkg_name"; then
+				status+=" $(TextBrightGreen active)"
+				/bin/touch "$REPORT_FLAGS_PATH"/status-active
+			elif QPKGs-ISslow.Exist "$qpkg_name"; then
+				status+=" $(TextBrightOrange slow)"
+				/bin/touch "$REPORT_FLAGS_PATH"/status-slow
+			elif QPKGs-ISNTactive.Exist "$qpkg_name"; then
+				status+=" $(TextBrightRed inactive)"
+				/bin/touch "$REPORT_FLAGS_PATH"/status-inactive
+			else
+				status+=" $(TextBrightOrange unknown)"
+				/bin/touch "$REPORT_FLAGS_PATH"/status-unknown
+			fi
 
-			status_msg=${CHARS_NORMAL}$(AddSeparators "$status")
+			status_msg+=$(AddSeparators "$status")
 			ver_msg+=$(QpkgGetInstalledVer)
 			;;
 		muted)
+			if QpkgIsCanLog; then
+				action=$(QpkgGetServiceAction)
+				/bin/touch "$REPORT_FLAGS_PATH"/action-$action
+
+				if [[ $action != 'not-found' ]]; then
+					action_msg+="$action"
+					result=$(QpkgGetServiceResult)
+					/bin/touch "$REPORT_FLAGS_PATH"/result-$result
+
+					case $result in
+						ok)
+							action_msg+=" ($(TextBrightGreen OK))"
+							;;
+						in-progress)
+							action_msg+=" ($(TextBrightOrange $result))"
+							;;
+						failed)
+							action_msg+=" ($(TextBrightRed $result))"
+					esac
+				else
+					action_msg+=$(TextDarkGrey 'N/A')
+					/bin/touch "$REPORT_FLAGS_PATH"/na
+				fi
+			else
+				action_msg+=$(TextDarkGrey 'N/A')
+				/bin/touch "$REPORT_FLAGS_PATH"/na
+			fi
+
 			app_ver_msg+=$(TextDarkGrey "$app_ver")
 			name_msg+=$(TextDarkGrey "$qpkg_name")
-			path_msg+=$(TextDarkGrey 'N/A')
+# 			path_msg+=$(TextDarkGrey 'N/A')
+			/bin/touch "$REPORT_FLAGS_PATH"/na
 
 			if ! QpkgIsArchOK; then
 				status='incompatible arch'
@@ -4595,7 +4688,7 @@ _DisplayAsStatusReportItemLine_()
 		highlighted)
 			app_ver_msg+=$(TextBrightRed "$app_ver")
 			name_msg+=$(TextBrightRed "$qpkg_name")
-			path_msg=$(TextBrightRedBlink "${CHARS_ALERT}$(QpkgGetInstallationPath)")
+# 			path_msg=$(TextBrightRedBlink "${CHARS_ALERT}$(QpkgGetInstallationPath)")
 			status_msg=$(TextBrightRedBlink "${CHARS_ALERT}missing")
 			ver_msg+=$(TextBrightRed "$(QpkgGetInstalledVer)")
 	esac
@@ -4620,7 +4713,15 @@ _DisplayAsStatusReportItemLine_()
 		printf "%-$((PACKAGE_STATUS_COL_WIDTH+$(LenANSIDiff "$status_msg")))s" "$status_msg"
 	fi
 
-	# column 3: package version (variable-width)
+	# column 3: package action and result
+	((n++))
+
+	if [[ $report_cols_max -ge $n ]]; then
+		printf "%$((COLUMN_SPACING))s"
+		printf "%-$((PACKAGE_ACTION_COL_WIDTH+$(LenANSIDiff "$action_msg")))s" "$action_msg"
+	fi
+
+	# column 4: package version (variable-width)
 	((n++))
 
 	if [[ $report_cols_max -ge $n ]]; then
@@ -4628,7 +4729,7 @@ _DisplayAsStatusReportItemLine_()
 		printf "%-$((${package_ver_final_col_width:=0}+$(LenANSIDiff "$ver_msg")))s" "$ver_msg"
 	fi
 
-	# column 4: application version
+	# column 5: application version
 	((n++))
 
 	if [[ $report_cols_max -ge $n ]]; then
@@ -4636,13 +4737,13 @@ _DisplayAsStatusReportItemLine_()
 		printf "%-$((PACKAGE_APP_VER_COL_WIDTH+$(LenANSIDiff "$app_ver_msg")))s" "$app_ver_msg"
 	fi
 
-	# column 5: package installation path
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		printf "%-$((PACKAGE_PATH_COL_WIDTH+$(LenANSIDiff "$path_msg")))s" "$path_msg"
-	fi
+	# column 6: package installation path
+# 	((n++))
+#
+# 	if [[ $report_cols_max -ge $n ]]; then
+# 		printf "%$((COLUMN_SPACING))s"
+# 		printf "%-$((PACKAGE_PATH_COL_WIDTH+$(LenANSIDiff "$path_msg")))s" "$path_msg"
+# 	fi
 
 	printf '\n'
 
@@ -4732,6 +4833,7 @@ _DisplayAsReposReportItemLine_()
 				undefined)
 					assigned_repo_msg+='N/A'
 					name_msg+=$qpkg_name
+					/bin/touch "$REPORT_FLAGS_PATH"/na
 					;;
 				*)
 					assigned_repo_msg=$(TextBrightOrange "${CHARS_ATTENTION}$assigned_repo")
@@ -4743,6 +4845,7 @@ _DisplayAsReposReportItemLine_()
 			;;
 		muted)
 			assigned_repo_msg=$(TextDarkGrey "${CHARS_NORMAL}N/A")
+			/bin/touch "$REPORT_FLAGS_PATH"/na
 
 			if ! QpkgIsArchOK; then
 				install_date='incompatible arch'
@@ -5141,6 +5244,7 @@ _DisplayAsDepsReportItemLine_()
 		muted)
 			managed_msg+=$(TextDarkGrey 'N/A')
 			name_msg+=$(TextDarkGrey "$qpkg_name")
+			/bin/touch "$REPORT_FLAGS_PATH"/na
 
 			if QpkgIsArchOK "$qpkg_name"; then
 				arch_msg+=$(TextDarkGrey true)
@@ -5164,6 +5268,7 @@ _DisplayAsDepsReportItemLine_()
 			deps_msg+=${deps// /$(TextDarkGrey ', ')}
 			enabled_msg+=$(TextDarkGrey 'N/A')
 			installed_msg+=$(TextDarkGrey false)
+			/bin/touch "$REPORT_FLAGS_PATH"/na
 
 			if QpkgIsMaxOSVerOk "$qpkg_name"; then
 				max_os_msg+=$(TextDarkGrey "$max_os")
@@ -5475,6 +5580,7 @@ _DisplayAsFeaturesReportItemLine_()
 		autoupdate_msg+=true					# sherpa always auto-updates and this can't be disabled.
 	else
 		autoupdate_msg+='N/A'
+		/bin/touch "$REPORT_FLAGS_PATH"/na
 	fi
 
 	if QpkgIsIndependent; then
@@ -7348,24 +7454,28 @@ QPKGs.States:Build()
 	# Load status lines from individual files.
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		a=/var/run/$qpkg_name.last.operation
+		a=/var/log/$qpkg_name.action
+		b=/var/log/$qpkg_name.result
 
-		if [[ -e $a ]]; then
-			case $(<$a) in
-				start)
-					QPKGs-ISstarting:Add "$qpkg_name"
-					;;
-				restart)
-					QPKGs-ISrestarting:Add "$qpkg_name"
-					;;
-				stop)
-					QPKGs-ISstopping:Add "$qpkg_name"
-					;;
-				failed)
-					QPKGs-ISNTok:Add "$qpkg_name"
+		if [[ -e $a && -e $b ]]; then
+			case $(<$b) in
+				in-progress)
+					case $(<$a) in
+						start)
+							QPKGs-ISstarting:Add "$qpkg_name"
+							;;
+						restart)
+							QPKGs-ISrestarting:Add "$qpkg_name"
+							;;
+						stop)
+							QPKGs-ISstopping:Add "$qpkg_name"
+					esac
 					;;
 				ok)
 					QPKGs-ISok:Add "$qpkg_name"
+					;;
+				failed)
+					QPKGs-ISNTok:Add "$qpkg_name"
 			esac
 		fi
 
@@ -7858,6 +7968,7 @@ ShowReportStatuses()
 	local a=''
 	local f=''
 	local -i m=0
+# 	report_cols_max=6
 	report_cols_max=5
 	local -i n=0
 	local previous=''
@@ -7913,84 +8024,108 @@ IncludeReportFooter()
 
 	DisplayAsHelpTitle 'report information:'
 
-	if [[ -e "$REPORT_FLAGS_PATH"/deps ]]; then
-		DisplayAsIndentItem "QPKG dependencies are automatically installed/started/stopped/restarted as-required by $(ShowAsTitleName)."
-	fi
-
 	if [[ -e "$REPORT_FLAGS_PATH"/status-missing ]]; then
-		DisplayAsInfoIndentItem "$(TextBrightRed '! missing')" 'QPKG is missing from its installation path. Please reinstall it'
+		DisplayAsIndentQuotedInfoItem "$(TextBrightRed '! missing')" 'QPKG is missing from its installation path. Please reinstall it'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/req-alert ]]; then
-		DisplayAsInfoIndentQuotedItem "$(TextBrightRed '!')" 'prevents QPKG working correctly'
+		DisplayAsIndentQuotedInfoItem "$(TextBrightRed '!')" 'prevents QPKG working correctly'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/state-disabled ]]; then
-		DisplayAsInfoIndentQuotedItem "$(TextBrightRed disabled)" "QPKG won't start at bootup. Enable it first, then start it"
+		DisplayAsIndentQuotedInfoItem "$(TextBrightRed disabled)" "QPKG won't start at bootup. Enable it first, then start it"
+	fi
+
+	if [[ -e "$REPORT_FLAGS_PATH"/result-failed ]]; then
+		DisplayAsIndentQuotedInfoItem "($(TextBrightRed failed))" 'last action failed'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/status-inactive ]]; then
-		DisplayAsInfoIndentQuotedItem "$(TextBrightRed inactive)" 'application is dead or not-started. Try starting/activating it'
+		DisplayAsIndentQuotedInfoItem "$(TextBrightRed inactive)" 'application is dead or not-started. Try starting/activating it'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/backup-file-old ]]; then
-		DisplayAsInfoIndentQuotedItem "$(TextBrightRed '!')" "QPKG backup file was updated more-than $highlight_backups_older_than."
+		DisplayAsIndentQuotedInfoItem "$(TextBrightRed '!')" "QPKG backup file was updated more-than $highlight_backups_older_than."
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/status-upgradable ]]; then
-		DisplayAsInfoIndentItem "($(TextBrightOrange new))" 'an upgraded QPKG is available'
+		DisplayAsIndentQuotedInfoItem "($(TextBrightOrange new))" 'an upgraded QPKG version is available'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/req-attention ]]; then
-		DisplayAsInfoIndentQuotedItem "$(TextBrightOrange '*')" 'QPKG cannot be installed'
+		DisplayAsIndentQuotedInfoItem "$(TextBrightOrange '*')" 'QPKG cannot be installed'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/status-stopping ]]; then
-		DisplayAsInfoIndentQuotedItem "$(TextBrightOrange stopping)" 'QPKG is stopping. Try checking again shortly'
+		DisplayAsIndentQuotedInfoItem "$(TextBrightOrange stopping)" 'QPKG is stopping. Check again shortly'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/status-slow ]]; then
-		DisplayAsInfoIndentQuotedItem "$(TextBrightOrange slow)" 'application appears to be alive, but is slow to respond to the status request. Try checking again shortly' 		# More common on NAS with lower installed RAM, and usually because the application has been page-swapped to disk and must be reloaded into RAM.
+		DisplayAsIndentQuotedInfoItem "$(TextBrightOrange slow)" 'application is alive, but was slow to respond to the status request. Try checking again shortly' 		# More common on NAS with lower installed RAM, and usually because the application has been page-swapped to disk and must be reloaded into RAM.
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/status-starting ]]; then
-		DisplayAsInfoIndentQuotedItem "$(TextBrightOrange starting)" 'QPKG is starting. Try checking again shortly'
+		DisplayAsIndentQuotedInfoItem "$(TextBrightOrange starting)" 'QPKG is starting. Check again shortly'
+	fi
+
+	if [[ -e "$REPORT_FLAGS_PATH"/result-in-progress ]]; then
+		DisplayAsIndentQuotedInfoItem "($(TextBrightOrange in-progress))" 'an action is in-progress. Check again shortly'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/status-unknown ]]; then
-		DisplayAsInfoIndentQuotedItem "$(TextBrightOrange unknown)" 'application status could not be determined'
+		DisplayAsIndentQuotedInfoItem "$(TextBrightOrange unknown)" 'application status could not be determined'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/repo-other ]]; then
-		DisplayAsInfoIndentQuotedItem "$(TextBrightOrange '* URL')" 'another repository is managing this QPKG'
+		DisplayAsIndentQuotedInfoItem "$(TextBrightOrange '* URL')" 'another repository is managing this QPKG'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/state-enabled ]]; then
-		DisplayAsInfoIndentQuotedItem "$(TextBrightGreen enabled)" 'QPKG will start at bootup'
+		DisplayAsIndentQuotedInfoItem "$(TextBrightGreen enabled)" 'QPKG will be started at bootup'
+	fi
+
+	if [[ -e "$REPORT_FLAGS_PATH"/result-ok ]]; then
+		DisplayAsIndentQuotedInfoItem "($(TextBrightGreen OK))" 'last action was successful'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/status-active ]]; then
-		DisplayAsInfoIndentQuotedItem "$(TextBrightGreen active)" "application is alive (and responsive if it's a daemon)"
+		DisplayAsIndentQuotedInfoItem "$(TextBrightGreen active)" "application is alive (and responsive if a daemon)"
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/repo-sherpa ]]; then
-		DisplayAsInfoIndentQuotedItem "$(TextBrightGreen sherpa)" "$(ShowAsTitleName) is managing this QPKG"
+		DisplayAsIndentQuotedInfoItem "$(TextBrightGreen sherpa)" "$(ShowAsTitleName) is managing this QPKG"
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/app-dynamic ]]; then
-		DisplayAsInfoIndentQuotedItem dynamic 'application version is the latest available'
+		DisplayAsIndentQuotedInfoItem dynamic 'application version is the latest available'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/app-static ]]; then
-		DisplayAsInfoIndentQuotedItem static 'application version auto-update is disabled'
+		DisplayAsIndentQuotedInfoItem static 'application version auto-update is disabled'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/app-final ]]; then
-		DisplayAsInfoIndentQuotedItem final 'application version is the last available'
+		DisplayAsIndentQuotedInfoItem final 'application version is the last available'
 	fi
 
-	if [[ -e "$REPORT_FLAGS_PATH"/state-notinstalled ]]; then
-		DisplayAsInfoIndentItem "$(TextDarkGrey muted)" 'QPKG is not installed'
+	if [[ -e "$REPORT_FLAGS_PATH"/action-not-found ]]; then
+		DisplayAsIndentQuotedInfoItem "$(TextDarkGrey not-found)" 'action tracking files were not found'
+	fi
+
+	if [[ -e "$REPORT_FLAGS_PATH"/action-unsupported ]]; then
+		DisplayAsIndentQuotedInfoItem "$(TextDarkGrey unsupported)" 'action tracking is not supported by this QPKG'
+	fi
+
+	if [[ -e "$REPORT_FLAGS_PATH"/na ]]; then
+		DisplayAsIndentQuotedInfoItem "$(TextDarkGrey 'N/A')" 'not applicable'
+	fi
+
+# 	if [[ -e "$REPORT_FLAGS_PATH"/state-notinstalled ]]; then
+# 		DisplayAsInfoIndentItem "$(TextDarkGrey muted)" 'QPKG is not installed'
+# 	fi
+
+	if [[ -e "$REPORT_FLAGS_PATH"/deps ]]; then
+		DisplayAsHelpTitle "QPKG dependencies are automatically installed/started/stopped/restarted as-required by $(ShowAsTitleName)."
 	fi
 
 	if compgen -G "${REPORT_FLAGS_PATH}/backup-file-*" > /dev/null; then			# https://stackoverflow.com/a/6364244
@@ -8007,13 +8142,13 @@ IncludeReportHeadingsFooter()
 	{
 
 	DisplayAsHelpTitle 'column headings:'
-	DisplayAsInfoIndentQuotedItem 'CanBack?' "supports application config 'backup' and 'restore'"
-	DisplayAsInfoIndentQuotedItem 'CanClean?' "supports application 'clean'ing"
-	DisplayAsInfoIndentQuotedItem 'StartUpd?' 'supports restart-to-update application'
-	DisplayAsInfoIndentQuotedItem 'AutoUpd?' 'application will auto-update on each restart'
-	DisplayAsInfoIndentQuotedItem 'LiveTest?' "has a built-in 'status' check, and can test for daemon \"live\" status"
-	DisplayAsInfoIndentQuotedItem 'Indep?' 'is independent of other QPKGs'
-	DisplayAsInfoIndentQuotedItem 'Compat?' 'has a release compatible with this NAS arch'
+	DisplayAsIndentQuotedInfoItem 'CanBack?' "application config 'backup' and 'restore' supported"
+	DisplayAsIndentQuotedInfoItem 'CanClean?' "application 'clean' supported"
+	DisplayAsIndentQuotedInfoItem 'StartUpd?' 'application restart-to-update supported'
+	DisplayAsIndentQuotedInfoItem 'AutoUpd?' 'application restart-to-update enabled'
+	DisplayAsIndentQuotedInfoItem 'LiveTest?' "has a built-in 'status' check, and can test for daemon \"live\" status"
+	DisplayAsIndentQuotedInfoItem 'Indep?' 'is independent of other QPKGs'
+	DisplayAsIndentQuotedInfoItem 'Compat?' 'has a release compatible with this NAS arch'
 
 	} >> "$REPORT_OUTPUT_PATHFILE"
 
@@ -9196,7 +9331,7 @@ _QPKG:reassign_()
 	{
 
 	# * This function runs asynchronously *
-	# Removes the `storeid` assignment for the QPKG named in $qpkg_name.
+	# Remove the `storeid` assignment for the QPKG named in $qpkg_name.
 
 	# Input:
 	#	$qpkg_name (global)
@@ -9243,7 +9378,7 @@ _QPKG:download_()
 	{
 
 	# * This function runs asynchronously *
-	# Downloads the QPKG named in $qpkg_name.
+	# Download the QPKG named in $qpkg_name.
 
 	# Input:
 	#	$qpkg_name (global)
@@ -9315,7 +9450,7 @@ _QPKG:install_()
 	{
 
 	# * This function runs asynchronously *
-	# Installs the QPKG named in $qpkg_name.
+	# Install the QPKG named in $qpkg_name.
 
 	# Input:
 	#	$qpkg_name (global)
@@ -9380,8 +9515,8 @@ _QPKG:install_()
 	RunAndLog "${a}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$INSTALL_LOG_FILE" log:failure-only 10
 	z=$?
 
-	LogQpkgServiceStatus
-	QpkgIsCanLog && ! QpkgLastResultWasOk && z=1
+	LogQpkgServiceResult
+	QpkgIsCanLog && ! QpkgServiceResultWasOk && z=1
 
 	[[ $qpkg_name = Entware ]] && IsNtSysFileExist $OPKG_CMD && z=1		# Entware installation has failed.
 
@@ -9429,7 +9564,7 @@ _QPKG:reinstall_()
 	{
 
 	# * This function runs asynchronously *
-	# Reinstalls the QPKG named in $qpkg_name.
+	# Reinstall the QPKG named in $qpkg_name.
 
 	# Input:
 	#	$qpkg_name (global)
@@ -9475,8 +9610,8 @@ _QPKG:reinstall_()
 	RunAndLog "${a}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$REINSTALL_LOG_FILE" log:failure-only 10
 	z=$?
 
-	LogQpkgServiceStatus
-	QpkgIsCanLog && ! QpkgLastResultWasOk && z=1
+	LogQpkgServiceResult
+	QpkgIsCanLog && ! QpkgServiceResultWasOk && z=1
 
 	[[ $qpkg_name = Entware ]] && IsNtSysFileExist $OPKG_CMD && z=1
 
@@ -9506,7 +9641,7 @@ _QPKG:rebuild_()
 	{
 
 	# * This function runs asynchronously *
-	# Meta-action: rebuilds the QPKG named in $qpkg_name. This is a `download`, `install` and `restore`, but only if a backup file exists for this QPKG.
+	# Meta-action: rebuild the QPKG named in $qpkg_name. This is a `download`, `install` and `restore`, but only if a backup file exists for this QPKG.
 
 	# Input:
 	#	$qpkg_name (global)
@@ -9555,7 +9690,7 @@ _QPKG:upgrade_()
 	{
 
 	# * This function runs asynchronously *
-	# Upgrades the QPKG named in $qpkg_name.
+	# Upgrade the QPKG named in $qpkg_name.
 
 	# Input:
 	#	$qpkg_name (global)
@@ -9606,8 +9741,8 @@ _QPKG:upgrade_()
 	RunAndLog "${a}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$UPGRADE_LOG_FILE" log:failure-only 10
 	z=$?
 
-	LogQpkgServiceStatus
-	QpkgIsCanLog && ! QpkgLastResultWasOk && z=1
+	LogQpkgServiceResult
+	QpkgIsCanLog && ! QpkgServiceResultWasOk && z=1
 
 	[[ $qpkg_name = Entware ]] && IsNtSysFileExist $OPKG_CMD && z=1
 
@@ -9646,7 +9781,7 @@ _QPKG:uninstall_()
 	{
 
 	# * This function runs asynchronously *
-	# Uninstalls the QPKG named in $qpkg_name.
+	# Uninstall the QPKG named in $qpkg_name.
 
 	# Input:
 	#	$qpkg_name (global)
@@ -9724,7 +9859,7 @@ _QPKG:activate_()
 	{
 
 	# * This function runs asynchronously *
-	# Activates/starts the service script for the QPKG named in $qpkg_name.
+	# Activate/start the service-script for the QPKG named in $qpkg_name.
 
 	# Input:
 	#	$qpkg_name (global)
@@ -9755,7 +9890,6 @@ _QPKG:activate_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	ClearQpkgServiceStatus
 	local -r LOG_PATHFILE=$LOGS_PATH/$qpkg_name.$ACTIVATE_LOG_FILE
 	local timeout=''
 	OsIsSupportQpkgTimeout && timeout=" -t $QPKG_START_TIMEOUT_SECONDS"
@@ -9764,7 +9898,7 @@ _QPKG:activate_()
 	DebugAsProc "activating $(ShowAsPackageName)"
 
 	if [[ $service_pathfile = undefined ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" activate '' skipped-error 'QPKG service script file undefined'
+		SaveActionResultToLog QPKG "$qpkg_name" activate '' skipped-error 'QPKG service-script file undefined'
 		MarkThisAcForkAsSkippedError
 
 		FuncForkExit 4
@@ -9774,14 +9908,14 @@ _QPKG:activate_()
 		z=$?
 	elif QpkgIsCanLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
 		RunAndLog "/sbin/qpkg_service${timeout} start $qpkg_name" "$LOG_PATHFILE" log:failure-only
-		QpkgLastResultWasOk && z=0 || z=1
+		QpkgServiceResultWasOk && z=0 || z=1
 	else
 		RunAndLog "$service_pathfile start" "$LOG_PATHFILE" log:failure-only
 		z=$?
 	fi
 
 	if [[ $z -eq 0 ]]; then
-		LogQpkgServiceStatus
+		LogQpkgServiceResult
 		SaveActionResultToLog QPKG "$qpkg_name" activate '' ok
 
 		if [[ $qpkg_name = Entware ]]; then
@@ -9809,7 +9943,7 @@ _QPKG:reactivate_()
 	{
 
 	# * This function runs asynchronously *
-	# Reactivates/restarts the service script for the QPKG named in $qpkg_name.
+	# Reactivate/restart the service-script for the QPKG named in $qpkg_name.
 
 	# Input:
 	#	$qpkg_name (global)
@@ -9840,7 +9974,6 @@ _QPKG:reactivate_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	ClearQpkgServiceStatus
 	local -r LOG_PATHFILE=$LOGS_PATH/$qpkg_name.$REACTIVATE_LOG_FILE
 	local timeout=''
 	OsIsSupportQpkgTimeout && timeout=" -t $QPKG_RESTART_TIMEOUT_SECONDS"
@@ -9849,7 +9982,7 @@ _QPKG:reactivate_()
 	DebugAsProc "reactivating $(ShowAsPackageName)"
 
 	if [[ $service_pathfile = undefined ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' skipped-error 'QPKG service script file undefined'
+		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' skipped-error 'QPKG service-script file undefined'
 		MarkThisAcForkAsSkippedError
 
 		FuncForkExit 4
@@ -9859,14 +9992,14 @@ _QPKG:reactivate_()
 		z=$?
 	elif QpkgIsCanLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
 		RunAndLog "/sbin/qpkg_service${timeout} restart $qpkg_name" "$LOG_PATHFILE" log:failure-only
-		QpkgLastResultWasOk && z=0 || z=1
+		QpkgServiceResultWasOk && z=0 || z=1
 	else
 		RunAndLog "$service_pathfile restart" "$LOG_PATHFILE" log:failure-only
 		z=$?
 	fi
 
 	if [[ $z -eq 0 ]]; then
-		LogQpkgServiceStatus
+		LogQpkgServiceResult
 		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' ok
 		MarkThisAcForkAsOk
 	else
@@ -9885,7 +10018,7 @@ _QPKG:deactivate_()
 	{
 
 	# * This function runs asynchronously *
-	# Deactivates/stops the service script for the QPKG named in $qpkg_name.
+	# Deactivate/stop the service-script for the QPKG named in $qpkg_name.
 
 	# Input:
 	#	$qpkg_name (global)
@@ -9916,7 +10049,6 @@ _QPKG:deactivate_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	ClearQpkgServiceStatus
 	local -r LOG_PATHFILE=$LOGS_PATH/$qpkg_name.$DEACTIVATE_LOG_FILE
 	local timeout=''
 	OsIsSupportQpkgTimeout && timeout=" -t $QPKG_STOP_TIMEOUT_SECONDS"
@@ -9925,7 +10057,7 @@ _QPKG:deactivate_()
 	DebugAsProc "deactivating $(ShowAsPackageName)"
 
 	if [[ $service_pathfile = undefined ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' skipped-error 'QPKG service script file undefined'
+		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' skipped-error 'QPKG service-script file undefined'
 		MarkThisAcForkAsSkippedError
 
 		FuncForkExit 4
@@ -9935,14 +10067,14 @@ _QPKG:deactivate_()
 		z=$?
 	elif QpkgIsCanLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
 		RunAndLog "/sbin/qpkg_service${timeout} stop $qpkg_name" "$LOG_PATHFILE" log:failure-only
-		QpkgLastResultWasOk && z=0 || z=1
+		QpkgServiceResultWasOk && z=0 || z=1
 	else
 		RunAndLog "$service_pathfile stop" "$LOG_PATHFILE" log:failure-only
 		z=$?
 	fi
 
 	if [[ $z -eq 0 ]]; then
-		LogQpkgServiceStatus
+		LogQpkgServiceResult
 		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' ok
 
 		if [[ $qpkg_name = Entware ]]; then
@@ -9969,7 +10101,7 @@ _QPKG:enable_()
 	{
 
 	# * This function runs asynchronously *
-	# Enables the QPKG named in $qpkg_name.
+	# Enable the QPKG named in $qpkg_name.
 
 	# Input:
 	#	$qpkg_name (global)
@@ -9999,7 +10131,6 @@ _QPKG:enable_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	ClearQpkgServiceStatus
 	local -r LOG_PATHFILE=$LOGS_PATH/$qpkg_name.$ENABLE_LOG_FILE
 	local timeout=''
 	OsIsSupportQpkgTimeout && timeout=" -t $QPKG_ENABLE_TIMEOUT_SECONDS"
@@ -10020,7 +10151,7 @@ _QPKG:disable_()
 	{
 
 	# * This function runs asynchronously *
-	# Disables the QPKG named in $qpkg_name.
+	# Disable the QPKG named in $qpkg_name.
 
 	# Input:
 	#	$qpkg_name (global)
@@ -10054,7 +10185,6 @@ _QPKG:disable_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	ClearQpkgServiceStatus
 	local -r LOG_PATHFILE=$LOGS_PATH/$qpkg_name.$DISABLE_LOG_FILE
 	local timeout=''
 	OsIsSupportQpkgTimeout && timeout=" -t $QPKG_DISABLE_TIMEOUT_SECONDS"
@@ -10076,7 +10206,7 @@ _QPKG:enableau_()
 	{
 
 	# * This function runs asynchronously *
-	# Enables auto-updating of the QPKG named in $qpkg_name.
+	# Enable auto-updating of the QPKG named in $qpkg_name.
 
 	# Input:
 	#	$qpkg_name (global)
@@ -10118,7 +10248,7 @@ _QPKG:enableau_()
 	z=$?
 
 	if [[ $z -eq 0 ]]; then
-		LogQpkgServiceStatus
+		LogQpkgServiceResult
 		SaveActionResultToLog QPKG "$qpkg_name" enableau '' ok
 		MarkThisAcForkAsOk
 	else
@@ -10135,7 +10265,7 @@ _QPKG:disableau_()
 	{
 
 	# * This function runs asynchronously *
-	#  Disables auto-updating of the QPKG named in $qpkg_name.
+	#  Disable auto-updating of the QPKG named in $qpkg_name.
 
 	# Input:
 	#	$qpkg_name (global)
@@ -10177,7 +10307,7 @@ _QPKG:disableau_()
 	z=$?
 
 	if [[ $z -eq 0 ]]; then
-		LogQpkgServiceStatus
+		LogQpkgServiceResult
 		SaveActionResultToLog QPKG "$qpkg_name" disableau '' ok
 		MarkThisAcForkAsOk
 	else
@@ -10194,7 +10324,7 @@ _QPKG:backup_()
 	{
 
 	# * This function runs asynchronously *
-	#  Calls the service script for the QPKG named in $qpkg_name and runs a `backup` action
+	#  Run a `backup` action for the QPKG named in $qpkg_name.
 
 	# Input:
 	#	$qpkg_name (global)
@@ -10232,7 +10362,7 @@ _QPKG:backup_()
 	z=$?
 
 	if [[ $z -eq 0 ]]; then
-		LogQpkgServiceStatus
+		LogQpkgServiceResult
 		SaveActionResultToLog QPKG "$qpkg_name" backup '' ok
 		SendPackageStateChange ISbackedup
 		MarkThisAcForkAsOk
@@ -10250,7 +10380,7 @@ _QPKG:restore_()
 	{
 
 	# * This function runs asynchronously *
-	#  Calls the service script for the QPKG named in $qpkg_name and runs a `restore` action
+	#  Run a `restore` action for the QPKG named in $qpkg_name.
 
 	# Input:
 	#	$qpkg_name (global)
@@ -10292,7 +10422,7 @@ _QPKG:restore_()
 	z=$?
 
 	if [[ $z -eq 0 ]]; then
-		LogQpkgServiceStatus
+		LogQpkgServiceResult
 		SaveActionResultToLog QPKG "$qpkg_name" restore '' ok
 		SendPackageStateChange ISrestored
 		MarkThisAcForkAsOk
@@ -10310,7 +10440,7 @@ _QPKG:clean_()
 	{
 
 	# * This function runs asynchronously *
-	#  Calls the service script for the QPKG named in $qpkg_name and runs a `clean` action
+	#  Run a `clean` action for the QPKG named in $qpkg_name.
 
 	# Input:
 	#	$qpkg_name (global)
@@ -10348,7 +10478,7 @@ _QPKG:clean_()
 	z=$?
 
 	if [[ $z -eq 0 ]]; then
-		LogQpkgServiceStatus
+		LogQpkgServiceResult
 		SaveActionResultToLog QPKG "$qpkg_name" clean '' ok
 		MarkThisAcForkAsOk
 	else
@@ -10563,47 +10693,35 @@ ClearQpkgAppCenterNotifier()
 
 	} &> /dev/null
 
-ClearQpkgServiceStatus()
+QpkgServiceResultWasOk()
 	{
+
+	# Returns true if last action for this package is `ok`.
 
 	# Input:
 	#   $qpkg_name (global) = QPKG name
 
 	[[ -n $qpkg_name ]] || return
 
-	rm -f /var/run/"$qpkg_name".last.operation 2> /dev/null
+	[[ $(QpkgGetServiceResult) = ok ]]
 
 	}
 
-QpkgLastResultWasOk()
-	{
-
-	# Returns true if last operation for this package is `ok`.
-
-	# Input:
-	#   $qpkg_name (global) = QPKG name
-
-	[[ -n $qpkg_name ]] || return
-
-	[[ $(QpkgGetServiceStatus) = ok ]]
-
-	}
-
-LogQpkgServiceStatus()
+LogQpkgServiceResult()
 	{
 
 	# Input:
 	#   $qpkg_name (global) = QPKG name
 
-	if ! local a=$(QpkgGetServiceStatus); then
+	if ! local a=$(QpkgGetServiceResult); then
 		DebugAsWarn "unable to get status of $(ShowAsPackageName) service. It may be a non-sherpa package, or a sherpa package earlier than 200816c that doesn't support service results."
 
 		return 1
 	fi
 
 	case $a in
-		?(re)start|stop)
-			DebugInfo "$(ShowAsPackageName) service is $a"
+		in-progress)
+			DebugInfo "$(ShowAsPackageName) service action is in-progress"
 			;;
 		ok)
 			DebugInfo "$(ShowAsPackageName) service action completed OK"
@@ -10647,7 +10765,7 @@ QpkgGetServicePathFile()
 	#   $qpkg_name (global, default) = target QPKG name.
 
 	# Output:
-	#   stdout = service script pathfile
+	#   stdout = service-script pathfile
 	#   $? = 0 if found, 250 if not.
 
 	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}" Shell -d undefined -f /etc/config/qpkg.conf
@@ -11151,13 +11269,20 @@ QpkgGetNote()
 	#   stdout = package note (first package found).
 	#   $? = 0 (found), !0 (not-found)
 
-	[[ -n $qpkg_name && $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
-
 	local a=''
+	local -i i=0
 
-	a=${QPKG_NOTE[$qpkg_index]}
-	[[ $a = default ]] && a=${QPKG_NOTE[$qpkg_default_index]}
-	[[ $a = none ]] && return 1
+	if [[ -n ${1:-} ]]; then
+		for i in "${!QPKG_NAME[@]}"; do
+			[[ ${QPKG_NAME[$i]} = "$1" ]] || continue
+			a=${QPKG_NOTE[$i]}			# Always grab first found as default.
+			break
+		done
+	else
+		a=${QPKG_NOTE[$qpkg_index]}
+		[[ $a = default ]] && a=${QPKG_NOTE[$qpkg_default_index]}
+		[[ $a = none ]] && return 1
+	fi
 
 	printf '%s' "$a"
 
@@ -11300,7 +11425,7 @@ QpkgGetDependents()
 	fi
 
 	if [[ ${#ar[@]} -gt 0 ]]; then
-		printf '%s' "${ar[@]}"
+		printf '%s' "${ar[*]}"
 
 		return 0
 	fi
@@ -11361,7 +11486,30 @@ QpkgGetActiveTest()
 
 	}
 
-QpkgGetServiceStatus()
+QpkgGetServiceAction()
+	{
+
+	# Input:
+	#   $1 (optional) = QPKG name.
+	#   $qpkg_name (global, default) = target QPKG name.
+
+	# Output:
+	#   $stdout = last action requested.
+	#   $? = 0 (found), !0 (not-found)
+
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
+	local b=''
+	[[ -e /var/log/$a.action ]] && b=$(</var/log/${a}.action)
+
+	if [[ -n $b ]]; then
+		printf '%s' "$b"
+	else
+		printf not-found
+	fi
+
+	}
+
+QpkgGetServiceResult()
 	{
 
 	# Input:
@@ -11373,8 +11521,14 @@ QpkgGetServiceStatus()
 	#   $? = 0 (found), !0 (not-found)
 
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
+	local b=''
+	[[ -e /var/log/$a.result ]] && b=$(</var/log/${a}.result)
 
-	[[ -e /var/run/$a.last.operation ]] && echo "$(< /var/run/"$a".last.operation)"
+	if [[ -n $b ]]; then
+		printf '%s' "$b"
+	else
+		printf not-found
+	fi
 
 	}
 
@@ -11653,7 +11807,7 @@ QpkgIsCanClean()
 QpkgIsCanLog()
 	{
 
-	# Does this QPKG service-script support logging of operations? When an action fails, this means user can be directed to check the service script log.
+	# Does this QPKG service-script support logging of actions? When an action fails, this means user can be directed to check the service-script log.
 
 	# Input:
 	#   $1 (optional) = QPKG name.
@@ -11666,7 +11820,7 @@ QpkgIsCanLog()
 
 	for i in "${!QPKG_NAME[@]}"; do
 		[[ ${QPKG_NAME[$i]} = "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}" ]] || continue
-		${QPKG_CAN_LOG_SERVICE_OPERATIONS[$i]} && return 0 || break
+		${QPKG_CAN_LOG_SERVICE_ACTIONS[$i]} && return 0 || break
 	done
 
 	return 1
@@ -13219,7 +13373,7 @@ ShowAsActionLogDetail()
 						fi
 				esac
 			else
-				DisplayAsIndentActionResultDurationReason "$3" "$2 $package_type" "$5" 'no reason was provided by the service script'
+				DisplayAsIndentActionResultDurationReason "$3" "$2 $package_type" "$5" 'no reason was provided by the service-script'
 			fi
 			;;
 		skipped*)
@@ -13640,7 +13794,7 @@ LoadPackages()
 	unset QPKG_AUTHOR_EMAIL
 	unset QPKG_CAN_BACKUP
 	unset QPKG_CAN_CLEAN
-	unset QPKG_CAN_LOG_SERVICE_OPERATIONS
+	unset QPKG_CAN_LOG_SERVICE_ACTIONS
 	unset QPKG_CAN_RESTART_TO_UPDATE
 	unset QPKG_CONFLICTS_WITH
 	unset QPKG_DEPENDS_ON
@@ -13666,9 +13820,9 @@ LoadPackages()
 	QPKG_ARCH+=('')							# QPKG supports this architecture. Use 'all' if every arch is supported. Use 'none' to disable installation.
 	QPKG_AUTHOR+=('')						# Name of the person or group maintaining this QPKG.
 	QPKG_AUTHOR_EMAIL+=('')					# Email address of the package maintainer.
-	QPKG_CAN_BACKUP+=('')					# 'true'/'false': this QPKG service-script supports configuration 'backup' and 'restore' operations.
+	QPKG_CAN_BACKUP+=('')					# 'true'/'false': this QPKG service-script supports configuration 'backup' and 'restore' actions.
 	QPKG_CAN_CLEAN+=('')					# 'true'/'false': the internal application can be cleaned and re-downloaded.
-	QPKG_CAN_LOG_SERVICE_OPERATIONS+=('')	# 'true'/'false': the service script logs operation results in a format compatible with sherpa.
+	QPKG_CAN_LOG_SERVICE_ACTIONS+=('')		# 'true'/'false': the service-script logs action results in a format compatible with sherpa.
 	QPKG_CAN_RESTART_TO_UPDATE+=('')		# 'true'/'false': the internal application can be updated by restarting the QPKG.
 	QPKG_CONFLICTS_WITH+=('')				# Abort if these QPKGs are installed.
 	QPKG_DEPENDS_ON+=('')					# Require these QPKGs to be installed first. Use 'none' if package is independent. Separate alternatives with '|'.
@@ -13699,7 +13853,7 @@ LoadPackages()
 	readonly QPKG_AUTHOR_EMAIL
 	readonly QPKG_CAN_BACKUP
 	readonly QPKG_CAN_CLEAN
-	readonly QPKG_CAN_LOG_SERVICE_OPERATIONS
+	readonly QPKG_CAN_LOG_SERVICE_ACTIONS
 	readonly QPKG_CAN_RESTART_TO_UPDATE
 	readonly QPKG_CONFLICTS_WITH
 	readonly QPKG_DEPENDS_ON
@@ -13768,6 +13922,9 @@ CaughtEXIT()
 	}
 
 readonly SCRIPT_STARTSECONDS=$(ConvertNowToSeconds)
+
+trap CaughtSIGINT SIGINT
+trap CaughtEXIT EXIT
 
 Init || exit
 ProcActions
