@@ -1,5 +1,14 @@
 Observed issues:
 
+	* 'clean' doesn't run on these QPKGs on armv5 (works fine on arm64, armv7):
+		-------------------------------------------------------------------------------------------------------------------------
+		[/share/Public] # sherpa clean taut watcher unmanic
+		sherpa v240802-unstable
+		warn: the NAS has an unusually-high system-load, so this may take a while.
+		done: actions complete.
+
+		-------------------------------------------------------------------------------------------------------------------------
+
 	* Create new switch for double-forked daemon processes? This should disable `screen` launching.
 
 	* If installed QPKGs are disabled, then upgraded, upgrade result is "failed".
