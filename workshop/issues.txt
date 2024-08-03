@@ -1,5 +1,23 @@
 Observed issues:
 
+	* NZBHydra isn't recognising when it's already running.
+		- because $daemon_pathfile isn't the one that eventually ends up as a running process.
+		-------------------------------------------------------------------------------------------------------------------------
+		- daemon_pathfile=$qpkg_repo_path/core
+		- wrapper_pathfile=$qpkg_repo_path/nzbhydra2wrapperPy3.py
+
+		- daemon_pid_pathfile=/var/run/$QPKG_NAME-daemon.pid
+		- wrapper_pid_pathfile=/var/run/$QPKG_NAME-wrapper.pid
+
+		- daemon_launch_cmd="export NZBHYDRA_TEMP_FOLDER=$local_temp_path; $venv_python_pathfile $wrapper_pathfile --nobrowser --daemon --datafolder $QPKG_CONFIG_PATH --pidfile $wrapper_pid_pathfile"
+		-------------------------------------------------------------------------------------------------------------------------
+		- if [[ $wrapper_pathfile != undefined ]] then check `ps` for $(basename $daemon_pathfile).
+		- check each pid returned, examine `readlink /proc/pid/exe` for $daemon_pathfile
+		- if/when found, write this pid into $daemon_pid_pathfile
+
+		- if [[ $wrapper_pathfile != undefined ]] then this is the process to kill. `kill $(<$daemon_pid_pathfile)`
+		-------------------------------------------------------------------------------------------------------------------------
+
 	* 'clean' doesn't run on these QPKGs on armv5 (works fine on arm64, armv7):
 		-------------------------------------------------------------------------------------------------------------------------
 		[/share/Public] # sherpa clean taut watcher unmanic
