@@ -63,7 +63,7 @@ Project:
 #*	 https://git.io/sherpa
 #
 #* Forum:
-#*	 https://forum.qnap.com/viewtopic.php?f=320\&t=132373
+#*	 https://forum.qnap.com/viewtopic.php?t=132373
 EOB
 
 read -rd '' tested_msg << EOB

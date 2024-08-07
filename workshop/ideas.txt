@@ -1,3 +1,6 @@
+* When building status report, check if OOM killer has been active.
+	- Check killed pids against inactive daemons and report as-such.
+
 * Takes 3.5 to 6 seconds to build QPKG states on Laura.
 	- Should be able to do this quicker.
 	- Calculate QPKG features separate to states and cache/load these from file next time?
