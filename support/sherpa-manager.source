@@ -1144,9 +1144,9 @@ QPKGsAssignToActions()
 		fi
 	done
 
-	# If any QPKG has been selected for `backup`/`restore`, need to `deactivate` it first, and `activate` it again later.
+	# If any QPKG has been selected for `backup`/`restore`/`upgrade`/`reinstall`, need to `deactivate` it first, and `activate` it again later.
 
-	for action in backup restore; do
+	for action in backup restore upgrade reinstall; do
 		for qpkg_name in $(QPKGs-AC${action}-to:Array); do
 			if QPKGs-ISenabled.Exist "$qpkg_name"; then
 				QPKGs-ACdeactivate-to:Add "$qpkg_name"
@@ -9467,6 +9467,7 @@ _QPKG:install_()
 	FuncForkInit
 
 	local a=''
+	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
 	if QPKGs-ISinstalled.Exist "$qpkg_name"; then
@@ -9510,13 +9511,10 @@ _QPKG:install_()
 		fi
 	fi
 
-	local target_path=''
-
 	DebugAsProc "installing $(ShowAsPackageName)"
-	[[ $useropt_debug = true ]] && a='DEBUG_QPKG=true '
+	[[ ${QPKGs_were_installed_name[*]:-} = *"$qpkg_name"* ]] && a+="QINSTALL_PATH=$(QpkgGetOriginalPath "$qpkg_name") "
 
-	[[ ${QPKGs_were_installed_name[*]:-} = *"$qpkg_name"* ]] && target_path="QINSTALL_PATH=$(QpkgGetOriginalPath "$qpkg_name") "
-	RunAndLog "${a}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$INSTALL_LOG_FILE" log:failure-only 10
+	RunAndLog "${a}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$INSTALL_LOG_FILE" log:failure-only 10
 	z=$?
 
 	LogQpkgServiceResult
@@ -9580,7 +9578,8 @@ _QPKG:reinstall_()
 
 	FuncForkInit
 
-	local a=''
+	local a='QPKG_REINSTALL=true '
+	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
 	if ! QPKGs-ISinstalled.Exist "$qpkg_name"; then
@@ -9605,13 +9604,10 @@ _QPKG:reinstall_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	local target_path=''
-
 	DebugAsProc "reinstalling $(ShowAsPackageName)"
-	[[ $useropt_debug = true ]] && a='DEBUG_QPKG=true '
+	QpkgIsInstalled && a+="QINSTALL_PATH=$($DIRNAME_CMD "$(QpkgGetInstallationPath)") "
 
-	QpkgIsInstalled && target_path="QINSTALL_PATH=$($DIRNAME_CMD "$(QpkgGetInstallationPath)") "
-	RunAndLog "${a}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$REINSTALL_LOG_FILE" log:failure-only 10
+	RunAndLog "${a}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$REINSTALL_LOG_FILE" log:failure-only 10
 	z=$?
 
 	LogQpkgServiceResult
@@ -9706,7 +9702,8 @@ _QPKG:upgrade_()
 
 	FuncForkInit
 
-	local a=''
+	local a='QPKG_UPGRADE=true '
+	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
 	if ! QPKGs-ISinstalled.Exist "$qpkg_name"; then
@@ -9736,13 +9733,11 @@ _QPKG:upgrade_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	local prev_ver=$(QpkgGetInstalledVer)
-	local target_path=''
 
 	DebugAsProc "upgrading $(ShowAsPackageName)"
-	[[ $useropt_debug = true ]] && a='DEBUG_QPKG=true '
+	QpkgIsInstalled && a+="QINSTALL_PATH=$($DIRNAME_CMD "$(QpkgGetInstallationPath "$qpkg_name")") "
 
-	QpkgIsInstalled && target_path="QINSTALL_PATH=$($DIRNAME_CMD "$(QpkgGetInstallationPath "$qpkg_name")") "
-	RunAndLog "${a}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$UPGRADE_LOG_FILE" log:failure-only 10
+	RunAndLog "${a}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$UPGRADE_LOG_FILE" log:failure-only 10
 	z=$?
 
 	LogQpkgServiceResult
@@ -9798,6 +9793,7 @@ _QPKG:uninstall_()
 	FuncForkInit
 
 	local a=''
+	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
@@ -9822,7 +9818,6 @@ _QPKG:uninstall_()
 
 	if [[ -e $QPKG_UNINSTALLER_PATHFILE ]]; then
 		DebugAsProc "uninstalling $(ShowAsPackageName)"
-		[[ $useropt_debug = true ]] && a='DEBUG_QPKG=true '
 
 		RunAndLog "${a}${SH_CMD} $QPKG_UNINSTALLER_PATHFILE" "$LOGS_PATH/$qpkg_name.$UNINSTALL_LOG_FILE" log:failure-only
 		z=$?
@@ -9876,6 +9871,7 @@ _QPKG:activate_()
 	FuncForkInit
 
 	local a=''
+	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
@@ -9907,7 +9903,6 @@ _QPKG:activate_()
 
 		FuncForkExit 4
 	elif [[ $useropt_debug = true ]]; then
-		a='DEBUG_QPKG=true '
 		RunAndLog "${a}${service_pathfile} start" "$LOG_PATHFILE" log:failure-only
 		z=$?
 	elif QpkgIsCanLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
@@ -9960,6 +9955,7 @@ _QPKG:reactivate_()
 	FuncForkInit
 
 	local a=''
+	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
@@ -9991,7 +9987,6 @@ _QPKG:reactivate_()
 
 		FuncForkExit 4
 	elif [[ $useropt_debug = true ]]; then
-		a='DEBUG_QPKG=true '
 		RunAndLog "${a}${service_pathfile} restart" "$LOG_PATHFILE" log:failure-only
 		z=$?
 	elif QpkgIsCanLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
@@ -10035,6 +10030,7 @@ _QPKG:deactivate_()
 	FuncForkInit
 
 	local a=''
+	[[ $useropt_debug = true ]]	&& a+='DEBUG_QPKG=true '
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
@@ -10066,7 +10062,6 @@ _QPKG:deactivate_()
 
 		FuncForkExit 4
 	elif [[ $useropt_debug = true ]]; then
-		a='DEBUG_QPKG=true '
 		RunAndLog "${a}${service_pathfile} stop" "$LOG_PATHFILE" log:failure-only
 		z=$?
 	elif QpkgIsCanLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
@@ -10223,6 +10218,7 @@ _QPKG:enableau_()
 	FuncForkInit
 
 	local a=''
+	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
@@ -10246,7 +10242,6 @@ _QPKG:enableau_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "enabling auto-update $(ShowAsPackageName)"
-	[[ $useropt_debug = true ]] && a='DEBUG_QPKG=true '
 
 	RunAndLog "${a}$(QpkgGetServicePathFile) enable-auto-update" "$LOGS_PATH/$qpkg_name.$ENABLEAU_LOG_FILE" log:failure-only
 	z=$?
@@ -10282,6 +10277,7 @@ _QPKG:disableau_()
 	FuncForkInit
 
 	local a=''
+	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
@@ -10305,7 +10301,6 @@ _QPKG:disableau_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "disabling auto-update $(ShowAsPackageName)"
-	[[ $useropt_debug = true ]] && a='DEBUG_QPKG=true '
 
 	RunAndLog "${a}$(QpkgGetServicePathFile) disable-auto-update" "$LOGS_PATH/$qpkg_name.$DISABLEAU_LOG_FILE" log:failure-only
 	z=$?
@@ -10341,6 +10336,7 @@ _QPKG:backup_()
 	FuncForkInit
 
 	local a=''
+	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
@@ -10360,7 +10356,6 @@ _QPKG:backup_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "backing-up $(ShowAsPackageName) configuration"
-	[[ $useropt_debug = true ]] && a='DEBUG_QPKG=true '
 
 	RunAndLog "${a}$(QpkgGetServicePathFile) backup" "$LOGS_PATH/$qpkg_name.$BACKUP_LOG_FILE" log:failure-only
 	z=$?
@@ -10397,6 +10392,7 @@ _QPKG:restore_()
 	FuncForkInit
 
 	local a=''
+	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
@@ -10420,7 +10416,6 @@ _QPKG:restore_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "restoring $(ShowAsPackageName) configuration"
-	[[ $useropt_debug = true ]] && a='DEBUG_QPKG=true '
 
 	RunAndLog "${a}$(QpkgGetServicePathFile) restore" "$LOGS_PATH/$qpkg_name.$RESTORE_LOG_FILE" log:failure-only
 	z=$?
@@ -10457,6 +10452,7 @@ _QPKG:clean_()
 	FuncForkInit
 
 	local a=''
+	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
@@ -10476,7 +10472,6 @@ _QPKG:clean_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "cleaning $(ShowAsPackageName)"
-	[[ $useropt_debug = true ]] && a='DEBUG_QPKG=true '
 
 	RunAndLog "${a}$(QpkgGetServicePathFile) clean" "$LOGS_PATH/$qpkg_name.$CLEAN_LOG_FILE" log:failure-only
 	z=$?
@@ -10624,6 +10619,7 @@ _QPKG:status_()
 
 	local a=''
 	local b=''
+	[[ $useropt_debug = true ]] && b+='DEBUG_QPKG=true '
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
@@ -10639,8 +10635,6 @@ _QPKG:status_()
 	a=$(QpkgGetActiveTest)
 
 	if [[ $a = builtin ]]; then
-		[[ $useropt_debug = true ]] && b='DEBUG_QPKG=true '
-
 		# Run status query with GNU 'timeout' if-possible.
 
 		if [[ -e $GNU_TIMEOUT_CMD ]]; then
