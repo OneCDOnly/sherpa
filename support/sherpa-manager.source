@@ -616,6 +616,7 @@ LoadEnv()
 	readonly QPKG_STATES_PATH=/var/run/sherpa/packages/states
 		readonly ACTION_ABORT_PATHFILE=$QPKG_STATES_PATH/abort.action
 		readonly ACTION_MSG_PIPE=$QPKG_STATES_PATH/action.messages.pipe
+	readonly REPORT_COLS_PATH=/var/run/sherpa/report/columns
 	readonly REPORT_FLAGS_PATH=/var/run/sherpa/report/flags
 	readonly REPORTS_PATH=/var/log/sherpa/reports
 			readonly REPORT_OUTPUT_PATHFILE=$REPORTS_PATH/report.ansi
@@ -705,6 +706,7 @@ CreatePaths()
 	ClearPath "$CACHE_PATH" "$IPK_CACHE_PATH"
 	ClearPath "$CACHE_PATH" "$IPK_DL_PATH"
 	ClearPath "$CACHE_PATH" "$PIP_CACHE_PATH"
+	ClearPath /var/run/sherpa/report "$REPORT_COLS_PATH"
 	ClearPath /var/run/sherpa/report "$REPORT_FLAGS_PATH"
 
 	MakePath "$ACTION_TIMES_PATH" 'action times' || return
@@ -715,6 +717,7 @@ CreatePaths()
 	MakePath "$IPK_DOWNGRADE_PATH" 'IPK downgrade' || return
 	MakePath "$LOGS_PATH" logs || return
 	MakePath "$PIP_CACHE_PATH" 'PIP cache' || return
+	MakePath "$REPORT_COLS_PATH" 'report columns' || return
 	MakePath "$REPORT_FLAGS_PATH" 'report flags' || return
 	MakePath "$REPORTS_PATH" reports || return
 	MakePath "$QPKG_BU_PATH" 'QPKG backup' || return
@@ -4641,9 +4644,9 @@ _DisplayAsStatusReportItemLine_()
 		muted)
 			if QpkgIsCanLog; then
 				action=$(QpkgGetServiceAction)
-				/bin/touch "$REPORT_FLAGS_PATH"/action-$action
 
-				if [[ $action != 'not-found' ]]; then
+				if [[ $action != not-found ]]; then
+					/bin/touch "$REPORT_FLAGS_PATH"/action-$action
 					action_msg+="$action"
 					result=$(QpkgGetServiceResult)
 					/bin/touch "$REPORT_FLAGS_PATH"/result-$result
