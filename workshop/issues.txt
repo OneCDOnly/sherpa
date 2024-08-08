@@ -10,6 +10,9 @@ Observed issues:
 		-------------------------------------------------------------------------------------------------------------------------
 
 	* If installed QPKGs are disabled, then upgraded, upgrade result is "failed".
+		- Suspect this will be because QPKG couldn't be 'start'ed afterward.
+		- Maybe set a env flag `$QPKG_REINSTALL=true` in sherpa when running 'upgrade'? Get service-script to look for this and ignore 'stop' and 'start' requests?
+		- Same for 'reinstall'.
 
 	* 'sherpa enable-auto-update active' is not running 'enable-auto-update' action.
 
