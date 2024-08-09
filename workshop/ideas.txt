@@ -1,3 +1,7 @@
+* Autowidth report columns?
+	- Maybe this? https://unix.stackexchange.com/a/448471
+	- requires GNU awk from Entware for compatibility.
+
 * When building status report, check if OOM killer has been active.
 	- Check killed pids against inactive daemons and report as-such.
 
@@ -120,8 +124,6 @@
 
 * Wrap description column text in packages report?
 	- Use 'GNU column' for this? Nope, 'column' can't wrap text containing ANSI codes. Won't show a wrapped column in colour. :(
-
-* Autowidth report columns?
 
 * Include new integrated help screens for all actions?
 	- Like: `sherpa paste help`, `sherpa install help`, `sherpa reassign help`
