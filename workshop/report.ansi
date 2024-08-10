@@ -1,0 +1,38 @@
+QPKG name:|QPKG statuses:|QPKG action (result):|QPKG version:|Application version:
+  Bazarr|- [1;32menabled[0m, [1;32mactive[0m|  start ([1;32mOK[0m)|  240809|  dynamic
+  ClamAV|- [1;32menabled[0m, [1;32mactive[0m|  start ([1;32mOK[0m)|  240809|  0.104.4
+  duf|  [1;32menabled[0m, [1;32mactive[0m|  start ([1;32mOK[0m)|  240731|  0.8.1
+  Entware|  [1;32menabled[0m, [1;32mactive[0m|  [1;90munsupported[0m|  1.03a|  1.03a
+  Glances|  [1;32menabled[0m, [1;32mactive[0m|  start ([1;32mOK[0m)|  240809|  dynamic
+  Headphones|  [1;32menabled[0m, [1;32mactive[0m|  start ([1;31mfailed[0m)|  240809|  dynamic
+  HideThatBanner|  [1;32menabled[0m, [1;32mactive[0m|  start ([1;32mOK[0m)|  240807|  240807
+  IncreaseTimeouts|  [1;32menabled[0m, [1;32mactive[0m|  start ([1;32mOK[0m)|  240808|  240808
+  inxi|  [1;32menabled[0m, [1;32mactive[0m|  [1;90munsupported[0m|  240417|  3.3.34
+  Kapowarr|  [1;32menabled[0m, [1;32mactive[0m|  start ([1;32mOK[0m)|  240809|  dynamic
+  LazyLibrarian|  [1;32menabled[0m, [1;32mactive[0m|  start ([1;32mOK[0m)|  240809|  dynamic
+  OLidarr|  [1;32menabled[0m, [1;32mactive[0m|  start ([1;32mOK[0m)|  240809|  dynamic
+  OMedusa|  [1;32menabled[0m, [1;32mactive[0m|  start ([1;32mOK[0m)|  240809|  dynamic
+  Mylar3|  [1;32menabled[0m, [1;32mactive[0m|  start ([1;32mOK[0m)|  240809|  dynamic
+  nzbget|  [1;32menabled[0m, [1;32mactive[0m|  [1;90munsupported[0m|  24.2|  24.2
+  NZBHydra2|  [1;32menabled[0m, [1;32mactive[0m|  start ([1;32mOK[0m)|  240809|  dynamic
+  nzbToMedia|  [1;32menabled[0m, [1;32mactive[0m|  [1;90munsupported[0m|  240205|  dynamic
+  OliveTin|  [1;32menabled[0m, [1;32mactive[0m|  start ([1;32mOK[0m)|  240809|  dynamic
+  Par2turbo|  [1;32menabled[0m, [1;32mactive[0m|  [1;90munsupported[0m|  1.1.0|  1.1.0
+  pyLoad|  [1;32menabled[0m, [1;32mactive[0m|  start ([1;32mOK[0m)|  240809|  dynamic
+  OqBittorrent|  [1;32menabled[0m, [1;32mactive[0m|  start ([1;32mOK[0m)|  240809|  4.6.3
+  QDK|  [1;32menabled[0m, [1;32mactive[0m|  [1;90munsupported[0m|  2.3.13|  2.3.13
+  OReadarr|  [1;32menabled[0m, [1;32mactive[0m|  start ([1;32mOK[0m)|  240809|  dynamic
+  RunLast|  [1;32menabled[0m, [1;32mactive[0m|  start ([1;32mOK[0m)|  240731|  240731
+  SABnzbd|  [1;32menabled[0m, [1;32mactive[0m|  start ([1;32mOK[0m)|  240809|  dynamic
+  sha3sum|  [1;32menabled[0m, [1;32mactive[0m|  start ([1;32mOK[0m)|  240808|  1.23.1
+  sherpa|  [1;32menabled[0m, [1;32mactive[0m|  start ([1;32mOK[0m)|  240809|  240809
+  OSickGear|  [1;32menabled[0m, [1;32mactive[0m|  start ([1;32mOK[0m)|  240809|  dynamic
+  OSonarr|  [1;32menabled[0m, [1;32mactive[0m|  start ([1;32mOK[0m)|  240809|  dynamic
+  SortMyQPKGs|  [1;32menabled[0m, [1;32mactive[0m|  start ([1;32mOK[0m)|  240801|  240801
+  OTautulli|  [1;32menabled[0m, [1;32mactive[0m|  start ([1;32mOK[0m)|  240809|  dynamic
+  OTransmission|  [1;32menabled[0m, [1;32mactive[0m|  start ([1;32mOK[0m)|  240809|  4.0.4
+  Unmanic|  [1;32menabled[0m, [1;32mactive[0m|  start ([1;32mOK[0m)|  240809|  dynamic
+  Unrar|  [1;32menabled[0m, [1;32mactive[0m|  [1;90munsupported[0m|  7.0.8|  7.01 beta 1
+  OWatcher3|  [1;32menabled[0m, [1;32mactive[0m|  start ([1;32mOK[0m)|  240809|  final
+  WebSSH|  [1;32menabled[0m, [1;32mactive[0m|  start ([1;32mOK[0m)|  240809|  dynamic
+  OWhisparr|  [1;32menabled[0m, [1;32mactive[0m|  start ([1;32mOK[0m)|  240809|  dynamic

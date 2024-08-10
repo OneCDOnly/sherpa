@@ -103,7 +103,11 @@ ShowResults()
 		elif [[ $useropt_show_repos = true ]]; then
 			ShowReportRepos
 		elif [[ $useropt_show_status = true ]]; then
-			ShowReportStatuses
+			if [[ -e $GNU_AWK_CMD ]]; then
+				ShowReportStatusesAutoWidth
+			else
+				ShowReportStatuses
+			fi
 		fi
 	fi
 
@@ -224,6 +228,7 @@ LoadConsts()
 	readonly HELP_DESC_INDENT=3
 	readonly HELP_SYNTAX_INDENT=6
 
+	readonly STD_COL_WIDTH=28						# Use this width for all report columns when GNU `awk` isn't available.
 	readonly PACKAGE_ABBS_COL_WIDTH=84
 	readonly PACKAGE_ACTION_COL_WIDTH=27
 	readonly PACKAGE_ACTIVE_TEST_BUILTIN_COL_WIDTH=11
@@ -253,18 +258,18 @@ LoadConsts()
 	readonly PACKAGE_VER_COL_WIDTH=15
 
 	# For reports and onscreen display.
+	readonly CHARS_ALERT='! '
+	readonly CHARS_ATTENTION='* '
+	readonly CHARS_BLANK='  '
+	readonly CHARS_BULLET='• '
 	readonly CHARS_DROPEND='└─ '
 	readonly CHARS_ELLIPSIS='...'
+	readonly CHARS_NORMAL='- '
 	readonly CHARS_NOTE='* '
 	readonly CHARS_REGULAR_PROMPT='$ '
 		readonly CHARS_SUDO_PROMPT="${CHARS_REGULAR_PROMPT}sudo "
 	readonly CHARS_RESULTS='= '
 	readonly CHAR_SPACER=' '
-		readonly CHARS_ALERT="${CHAR_SPACER}! "
-		readonly CHARS_ATTENTION="${CHAR_SPACER}* "
-		readonly CHARS_BLANK="${CHAR_SPACER}  "
-		readonly CHARS_NORMAL="${CHAR_SPACER}- "
-	readonly CHARS_BULLET='• '
 	readonly CHARS_SUPER_PROMPT='# '
 
 	readonly DEBUG_LOG_DATAWIDTH=101
@@ -375,6 +380,7 @@ LoadCMDs()
 	{
 
 	# Cherry-pick Entware binaries.
+	readonly GNU_AWK_CMD=/opt/bin/awk
 	readonly GNU_FIND_CMD=/opt/bin/find
 	readonly GNU_GREP_CMD=/opt/bin/grep
 	readonly GNU_LESS_CMD=/opt/bin/less
@@ -616,6 +622,7 @@ LoadEnv()
 	readonly QPKG_STATES_PATH=/var/run/sherpa/packages/states
 		readonly ACTION_ABORT_PATHFILE=$QPKG_STATES_PATH/abort.action
 		readonly ACTION_MSG_PIPE=$QPKG_STATES_PATH/action.messages.pipe
+	readonly REPORT_COLS_PATH=/var/run/sherpa/report/columns
 	readonly REPORT_FLAGS_PATH=/var/run/sherpa/report/flags
 	readonly REPORTS_PATH=/var/log/sherpa/reports
 			readonly REPORT_OUTPUT_PATHFILE=$REPORTS_PATH/report.ansi
@@ -705,6 +712,7 @@ CreatePaths()
 	ClearPath "$CACHE_PATH" "$IPK_CACHE_PATH"
 	ClearPath "$CACHE_PATH" "$IPK_DL_PATH"
 	ClearPath "$CACHE_PATH" "$PIP_CACHE_PATH"
+	ClearPath /var/run/sherpa/report "$REPORT_COLS_PATH"
 	ClearPath /var/run/sherpa/report "$REPORT_FLAGS_PATH"
 
 	MakePath "$ACTION_TIMES_PATH" 'action times' || return
@@ -715,6 +723,7 @@ CreatePaths()
 	MakePath "$IPK_DOWNGRADE_PATH" 'IPK downgrade' || return
 	MakePath "$LOGS_PATH" logs || return
 	MakePath "$PIP_CACHE_PATH" 'PIP cache' || return
+	MakePath "$REPORT_COLS_PATH" 'report columns' || return
 	MakePath "$REPORT_FLAGS_PATH" 'report flags' || return
 	MakePath "$REPORTS_PATH" reports || return
 	MakePath "$QPKG_BU_PATH" 'QPKG backup' || return
@@ -1049,8 +1058,8 @@ QPKGsAssignToActions()
 	if QpkgIsInstalled Entware; then
 		local entware_install_date=$(QpkgGetInstallDate Entware)
 
-		if [[ $entware_install_date = undefined || ${entware_install_date//[!0-9]/} -le 20240223 ]] && [[ $NAS_ARCH != armv5tel ]]; then
-			ShowAsNote "the $(TextBrightOrange Entware) QPKG will be auto-reinstalled (Entware packages were updated late in February 2024)"
+		if [[ $entware_install_date = undefined || ${entware_install_date//[!0-9]/} -le 20240809 ]] && [[ $NAS_ARCH != armv5tel ]]; then
+			ShowAsNote "the $(TextBrightOrange Entware) QPKG will be auto-reinstalled (Entware packages were updated early in August 2024)"
 			QPKGs-ACreinstall-to:Add Entware
 		fi
 	fi
@@ -1144,9 +1153,9 @@ QPKGsAssignToActions()
 		fi
 	done
 
-	# If any QPKG has been selected for `backup`/`restore`, need to `deactivate` it first, and `activate` it again later.
+	# If any QPKG has been selected for `backup`/`restore`/`upgrade`/`reinstall`, need to `deactivate` it first, and `activate` it again later.
 
-	for action in backup restore; do
+	for action in backup restore upgrade reinstall; do
 		for qpkg_name in $(QPKGs-AC${action}-to:Array); do
 			if QPKGs-ISenabled.Exist "$qpkg_name"; then
 				QPKGs-ACdeactivate-to:Add "$qpkg_name"
@@ -4163,71 +4172,6 @@ LenANSIDiff()
 
 	}
 
-CalcMaxStatusReportCols()
-	{
-
-# 	local col1_width=$((${#CHARS_BULLET}+PACKAGE_NAME_COL_WIDTH))
-# 	local col2_width=$((${#CHAR_SPACER}+${#CHARS_BULLET}+PACKAGE_STATUS_COL_WIDTH))
-	local col3_width=$((${#CHAR_SPACER}+${#CHARS_BULLET}+PACKAGE_VER_COL_WIDTH))
-# 	local col4_width=$((${#CHAR_SPACER}+${#CHARS_BULLET}+PACKAGE_PATH_COL_WIDTH))
-
-	# Add width to include " (new)" string to QPKG version title.
-
-	if QPKGs-ISupgradable.IsAny; then
-		package_ver_final_col_width=$((PACKAGE_VER_COL_WIDTH+6))
-		((col3_width+6))
-	else
-		package_ver_final_col_width=$PACKAGE_VER_COL_WIDTH
-	fi
-
-# 	if [[ $((col1_width+col2_width)) -ge $SESS_COLS ]]; then
-# 		report_cols_max=1
-# 	elif [[ $((col1_width+col2_width+col3_width)) -ge $SESS_COLS ]]; then
-# 		report_cols_max=2
-# 	elif [[ $((col1_width+col2_width+col3_width+col4_width)) -ge $SESS_COLS ]]; then
-# 		report_cols_max=3
-# 	else
-# 		report_cols_max=4
-# 	fi
-
-	return 0
-
-	}
-
-#CalcMaxDepsReportCols()
-# 	{
-#
-# 	local col1_width=$((${#CHARS_BULLET}+PACKAGE_NAME_COL_WIDTH))
-# 	local col2_width=$((${#CHAR_SPACER}+${#CHARS_BULLET}+PACKAGE_DEPENDENCIES_COL_WIDTH))
-# 	local col3_width=$((${#CHAR_SPACER}+${#CHARS_BULLET}+PACKAGE_INSTALLED_COL_WIDTH))
-# 	local col4_width=$((${#CHAR_SPACER}+${#CHARS_BULLET}+PACKAGE_ENABLED_COL_WIDTH))
-# 	local col5_width=$((${#CHAR_SPACER}+${#CHARS_BULLET}+PACKAGE_MIN_RAM_COL_WIDTH))
-# 	local col6_width=$((${#CHAR_SPACER}+${#CHARS_BULLET}+PACKAGE_MIN_OS_COL_WIDTH))
-# 	local col7_width=$((${#CHAR_SPACER}+${#CHARS_BULLET}+PACKAGE_MAX_OS_COL_WIDTH))
-# 	local col8_width=$((${#CHAR_SPACER}+${#CHARS_BULLET}+PACKAGE_ARCH_COL_WIDTH))
-#
-# 	if [[ $((col1_width+col2_width)) -ge $SESS_COLS ]]; then
-# 		report_cols_max=1
-# 	elif [[ $((col1_width+col2_width+col3_width)) -ge $SESS_COLS ]]; then
-# 		report_cols_max=2
-# 	elif [[ $((col1_width+col2_width+col3_width+col4_width)) -ge $SESS_COLS ]]; then
-# 		report_cols_max=3
-# 	elif [[ $((col1_width+col2_width+col3_width+col4_width+col5_width)) -ge $SESS_COLS ]]; then
-# 		report_cols_max=4
-# 	elif [[ $((col1_width+col2_width+col3_width+col4_width+col5_width+col6_width)) -ge $SESS_COLS ]]; then
-# 		report_cols_max=5
-# 	elif [[ $((col1_width+col2_width+col3_width+col4_width+col5_width+col6_width+col7_width)) -ge $SESS_COLS ]]; then
-# 		report_cols_max=6
-# 	elif [[ $((col1_width+col2_width+col3_width+col4_width+col5_width+col6_width+col7_width+col8_width)) -ge $SESS_COLS ]]; then
-# 		report_cols_max=7
-# 	else
-# 		report_cols_max=8
-# 	fi
-#
-# 	return 0
-#
-# 	}
-
 AddSeparators()
 	{
 
@@ -4353,35 +4297,22 @@ DisplayAsPacksReportTitleLine()
 	{
 
 	local a=''
-	local -i n=0
 
 	printf '\n'
 
 	# column 1: package name
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		a="${CHARS_BULLET}QPKG name:"
-		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
-	fi
+	a="${CHARS_BULLET}QPKG name:"
+	printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 2: application version
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}Application version:"
-		printf "%-$((PACKAGE_APP_VER_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	a="${CHARS_BULLET}Application version:"
+	printf "%-$((PACKAGE_APP_VER_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 3: package description
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}Description:"
-		printf "%-$((PACKAGE_DESCRIPTION_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	a="${CHARS_BULLET}Description:"
+	printf "%-$((PACKAGE_DESCRIPTION_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	printf '\n'
 
@@ -4400,7 +4331,6 @@ DisplayAsPacksReportItemLine()
 # 	local author_msg=$CHARS_BLANK
 	local description_msg=$CHARS_BLANK
 	local mode=''
-	local -i n=0
 	local name=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
 		local description=$(QpkgGetDesc "$name")
 		local notes=$(QpkgGetNote "$name")
@@ -4444,33 +4374,182 @@ DisplayAsPacksReportItemLine()
 	esac
 
 	# column 1: package name
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
-	fi
+	printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 
 	# column 2: application version
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		printf "%-$((PACKAGE_APP_VER_COL_WIDTH+$(LenANSIDiff "$app_ver_msg")))s" "$app_ver_msg"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	printf "%-$((PACKAGE_APP_VER_COL_WIDTH+$(LenANSIDiff "$app_ver_msg")))s" "$app_ver_msg"
 
 	# column 3: package description
-	((n++))
+	printf "%$((COLUMN_SPACING))s"
+	printf "%-$((PACKAGE_DESCRIPTION_COL_WIDTH+$(LenANSIDiff "$description_msg")))s" "$description_msg"
 
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		printf "%-$((PACKAGE_DESCRIPTION_COL_WIDTH+$(LenANSIDiff "$description_msg")))s" "$description_msg"
-
-		if [[ -n $notes ]]; then
-			printf "\n%$((${#CHARS_BLANK}+PACKAGE_NAME_COL_WIDTH+PACKAGE_APP_VER_COL_WIDTH+(COLUMN_SPACING*2)))s$(TextBrightOrange "${CHARS_DROPEND}${CHARS_NOTE}")%s" '' "$notes_msg"
-		fi
+	if [[ -n $notes ]]; then
+		printf "\n%$((${#CHARS_BLANK}+PACKAGE_NAME_COL_WIDTH+PACKAGE_APP_VER_COL_WIDTH+(COLUMN_SPACING*2)))s$(TextBrightOrange "${CHARS_DROPEND}${CHARS_NOTE}")%s" '' "$notes_msg"
 	fi
 
 	printf '\n'
+
+	}
+
+_DisplayAsStatusReportItemLineAutoWidth_()
+	{
+
+	# * This function runs asynchronously *
+
+	# Input:
+
+	local action=''
+	local action_msg=$CHARS_BLANK
+	local app_ver=''
+	local app_ver_msg=$CHARS_BLANK
+	local mode=''
+	local -i n=0
+	local name_msg=$CHARS_BLANK
+# 	local path_msg=$CHARS_BLANK
+	local result=''
+	local status=''
+	local status_msg=$CHARS_NORMAL
+	local ver_msg=$CHARS_BLANK
+
+	if QpkgIsMissing; then
+		mode=highlighted
+		/bin/touch "$REPORT_FLAGS_PATH"/status-missing
+	elif QpkgIsNtInstalled; then
+		mode=muted
+		/bin/touch "$REPORT_FLAGS_PATH"/state-notinstalled
+	else
+		mode=normal
+		/bin/touch "$REPORT_FLAGS_PATH"/state-installed
+	fi
+
+	app_ver=$(QpkgGetApplVer)
+
+	case $app_ver in
+		dynamic|final|static)
+			/bin/touch "$REPORT_FLAGS_PATH"/app-$app_ver
+	esac
+
+	case $mode in
+		normal)
+			if QpkgIsCanLog; then
+				action=$(QpkgGetServiceAction)
+				/bin/touch "$REPORT_FLAGS_PATH"/action-$action
+
+				if [[ $action = not-found ]]; then
+					action_msg+=$(TextDarkGrey not-found)
+				else
+					action_msg+="$action"
+				fi
+
+				result=$(QpkgGetServiceResult)
+				/bin/touch "$REPORT_FLAGS_PATH"/result-$result
+
+				case $result in
+					ok)
+						action_msg+=" ($(TextBrightGreen OK))"
+						;;
+					in-progress)
+						action_msg+=" ($(TextBrightOrange $result))"
+						;;
+					aborted|failed)
+						action_msg+=" ($(TextBrightRed $result))"
+				esac
+			else
+				action_msg+=$(TextDarkGrey unsupported)
+				/bin/touch "$REPORT_FLAGS_PATH"/action-unsupported
+			fi
+
+			app_ver_msg+=$app_ver
+			name_msg+=$qpkg_name
+# 			path_msg+=$(QpkgGetInstallationPath)
+
+			if QPKGs-ISenabled.Exist "$qpkg_name"; then
+				status+=" $(TextBrightGreen enabled)"
+				/bin/touch "$REPORT_FLAGS_PATH"/state-enabled
+			else
+				status+=" $(TextBrightRed disabled)"
+				/bin/touch "$REPORT_FLAGS_PATH"/state-disabled
+			fi
+
+			if QPKGs-ISactive.Exist "$qpkg_name"; then
+				status+=" $(TextBrightGreen active)"
+				/bin/touch "$REPORT_FLAGS_PATH"/status-active
+			elif QPKGs-ISslow.Exist "$qpkg_name"; then
+				status+=" $(TextBrightOrange slow)"
+				/bin/touch "$REPORT_FLAGS_PATH"/status-slow
+			elif QPKGs-ISNTactive.Exist "$qpkg_name"; then
+				status+=" $(TextBrightRed inactive)"
+				/bin/touch "$REPORT_FLAGS_PATH"/status-inactive
+			else
+				status+=" $(TextBrightOrange unknown)"
+				/bin/touch "$REPORT_FLAGS_PATH"/status-unknown
+			fi
+
+			status_msg+=$(AddSeparators "$status")
+			ver_msg+=$(QpkgGetInstalledVer)
+			;;
+		muted)
+			if QpkgIsCanLog; then
+				action=$(QpkgGetServiceAction)
+
+				if [[ $action != not-found ]]; then
+					/bin/touch "$REPORT_FLAGS_PATH"/action-$action
+					action_msg+="$action"
+					result=$(QpkgGetServiceResult)
+					/bin/touch "$REPORT_FLAGS_PATH"/result-$result
+
+					case $result in
+						ok)
+							action_msg+=" ($(TextBrightGreen OK))"
+							;;
+						in-progress)
+							action_msg+=" ($(TextBrightOrange $result))"
+							;;
+						aborted|failed)
+							action_msg+=" ($(TextBrightRed $result))"
+					esac
+				else
+					action_msg+=$(TextDarkGrey 'N/A')
+					/bin/touch "$REPORT_FLAGS_PATH"/na
+				fi
+			else
+				action_msg+=$(TextDarkGrey 'N/A')
+				/bin/touch "$REPORT_FLAGS_PATH"/na
+			fi
+
+			app_ver_msg+=$(TextDarkGrey "$app_ver")
+			name_msg+=$(TextDarkGrey "$qpkg_name")
+# 			path_msg+=$(TextDarkGrey 'N/A')
+			/bin/touch "$REPORT_FLAGS_PATH"/na
+
+			if ! QpkgIsArchOK; then
+				status='incompatible arch'
+			elif ! QpkgIsMinOSVerOk; then
+				status="incompatible $(OsGetQnapOS)"
+			elif ! QpkgIsMinRAMOk; then
+				status='insufficient RAM'
+			else
+				status='not installed'
+			fi
+
+			status_msg=$(TextDarkGrey "${CHARS_NORMAL}${status}")
+			ver_msg+=$(TextDarkGrey "$(QpkgGetAvailVer "$qpkg_name")")
+			;;
+		highlighted)
+			app_ver_msg+=$(TextBrightRed "$app_ver")
+			name_msg+=$(TextBrightRed "$qpkg_name")
+# 			path_msg=$(TextBrightRedBlink "${CHARS_ALERT}$(QpkgGetInstallationPath)")
+			status_msg=$(TextBrightRedBlink "${CHARS_ALERT}missing")
+			ver_msg+=$(TextBrightRed "$(QpkgGetInstalledVer)")
+	esac
+
+	if QPKGs-ISupgradable.Exist "$qpkg_name"; then
+		ver_msg+=" ($(TextBrightOrange "$(QpkgGetAvailVer)"))"
+		/bin/touch "$REPORT_FLAGS_PATH"/status-upgradable
+	fi
+
+	echo -en "$name_msg|$status_msg|$action_msg|$ver_msg|$app_ver_msg"
 
 	}
 
@@ -4478,64 +4557,36 @@ DisplayAsStatusReportTitleLine()
 	{
 
 	local a=''
-	local -i n=0
-
-	printf '\n'
 
 	# column 1: package name
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		a="${CHARS_BULLET}QPKG name:"
-		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
-	fi
+	a='QPKG name'
+	printf "%-${PACKAGE_NAME_COL_WIDTH}s" "$a:"
 
 	# column 2: package statuses
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}QPKG statuses:"
-		printf "%-$((PACKAGE_STATUS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	a='QPKG statuses'
+	printf "%-${STD_COL_WIDTH}s" "$a:"
 
 	# column 3: package action and result
-	((n++))
+	printf "%$((COLUMN_SPACING))s"
+	a='QPKG action (result)'
+	printf "%-${STD_COL_WIDTH}s" "$a:"
 
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}QPKG action (result):"
-		printf "%-$((PACKAGE_ACTION_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
-	fi
-
-	# column 4: package version (variable-width)
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}QPKG version"
-		QPKGs-ISupgradable.IsAny && a+=" ($(TextBrightOrange new))"
-		a+=':'
-		printf "%-$((${package_ver_final_col_width:=0}+2+$(LenANSIDiff "$a")))s" "$a"
-	fi
+	# column 4: package version
+	printf "%$((COLUMN_SPACING))s"
+	a='QPKG version'
+	QPKGs-ISupgradable.IsAny && a+=" ($(TextBrightOrange new))"
+	printf "%-$((${package_ver_final_col_width:=0}+2+$(LenANSIDiff "$a")))s" "$a:"
 
 	# column 5: application version
-	((n++))
+	printf "%$((COLUMN_SPACING))s"
+	a='Application version'
+	printf "%-${STD_COL_WIDTH}s" "$a:"
 
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}Application version:"
-		printf "%-$((PACKAGE_APP_VER_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
-	fi
-
-	# column 6: package installation path
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}QPKG installation path:"
-		printf "%-$((PACKAGE_PATH_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
-	fi
+# 	# column 6: package installation path
+# 	printf "%$((COLUMN_SPACING))s"
+# 	a='QPKG installation path'
+# 	printf "%-${STD_COL_WIDTH}s" "$a:"
 
 	printf '\n'
 
@@ -4553,7 +4604,6 @@ _DisplayAsStatusReportItemLine_()
 	local app_ver=''
 	local app_ver_msg=$CHARS_BLANK
 	local mode=''
-	local -i n=0
 	local name_msg=$CHARS_BLANK
 # 	local path_msg=$CHARS_BLANK
 	local result=''
@@ -4699,51 +4749,29 @@ _DisplayAsStatusReportItemLine_()
 	fi
 
 	# column 1: package name
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
-	fi
+	printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 
 	# column 2: package statuses
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		printf "%-$((PACKAGE_STATUS_COL_WIDTH+$(LenANSIDiff "$status_msg")))s" "$status_msg"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	printf "%-$((STD_COL_WIDTH+$(LenANSIDiff "$status_msg")))s" "$status_msg"
 
 	# column 3: package action and result
-	((n++))
+	printf "%$((COLUMN_SPACING))s"
+	printf "%-$((STD_COL_WIDTH+$(LenANSIDiff "$action_msg")))s" "$action_msg"
 
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		printf "%-$((PACKAGE_ACTION_COL_WIDTH+$(LenANSIDiff "$action_msg")))s" "$action_msg"
-	fi
+	# column 4: package version
+	printf "%$((COLUMN_SPACING))s"
+	printf "%-$((${package_ver_final_col_width:=0}+2+$(LenANSIDiff "$ver_msg")))s" "$ver_msg"
 
-	# column 4: package version (variable-width)
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		printf "%-$((${package_ver_final_col_width:=0}+$(LenANSIDiff "$ver_msg")))s" "$ver_msg"
-	fi
+# 	printf "%-$((STD_COL_WIDTH+$(LenANSIDiff "$ver_msg")))s" "$ver_msg"
 
 	# column 5: application version
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		printf "%-$((PACKAGE_APP_VER_COL_WIDTH+$(LenANSIDiff "$app_ver_msg")))s" "$app_ver_msg"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	printf "%-$((STD_COL_WIDTH+$(LenANSIDiff "$app_ver_msg")))s" "$app_ver_msg"
 
 	# column 6: package installation path
-# 	((n++))
-#
-# 	if [[ $report_cols_max -ge $n ]]; then
-# 		printf "%$((COLUMN_SPACING))s"
-# 		printf "%-$((PACKAGE_PATH_COL_WIDTH+$(LenANSIDiff "$path_msg")))s" "$path_msg"
-# 	fi
+# 	printf "%$((COLUMN_SPACING))s"
+# 	printf "%-$((PACKAGE_PATH_COL_WIDTH+$(LenANSIDiff "$path_msg")))s" "$path_msg"
 
 	printf '\n'
 
@@ -4753,35 +4781,22 @@ DisplayAsReposReportTitleLine()
 	{
 
 	local a=''
-	local -i n=0
 
 	printf '\n'
 
 	# column 1: package name
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		a="${CHARS_BULLET}QPKG name:"
-		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
-	fi
+	a="${CHARS_BULLET}QPKG name:"
+	printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 2: package installation date
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}Install date:"
-		printf "%-$((PACKAGE_INSTALL_DATE_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	a="${CHARS_BULLET}Install date:"
+	printf "%-$((PACKAGE_INSTALL_DATE_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 3: package repository
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}Repository:"
-		printf "%-$((PACKAGE_REPO_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	a="${CHARS_BULLET}Repository:"
+	printf "%-$((PACKAGE_REPO_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	printf '\n'
 
@@ -4800,7 +4815,6 @@ _DisplayAsReposReportItemLine_()
 	local install_date=$(QpkgGetInstallDate)
 	local install_date_msg=$CHARS_BLANK
 	local mode=''
-	local -i n=0
 	local name_msg=$CHARS_BLANK
 	local store_id=$(QpkgGetStoreID)
 
@@ -4878,27 +4892,15 @@ _DisplayAsReposReportItemLine_()
 	esac
 
 	# column 1: package qpkg_name
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
-	fi
+	printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 
 	# column 2: package installation date
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		printf "%-$((PACKAGE_INSTALL_DATE_COL_WIDTH+$(LenANSIDiff "$install_date_msg")))s" "$install_date_msg"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	printf "%-$((PACKAGE_INSTALL_DATE_COL_WIDTH+$(LenANSIDiff "$install_date_msg")))s" "$install_date_msg"
 
 	# column 3: package repository
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		printf "%-$((PACKAGE_REPO_COL_WIDTH+$(LenANSIDiff "$assigned_repo_msg")))s" "$assigned_repo_msg"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	printf "%-$((PACKAGE_REPO_COL_WIDTH+$(LenANSIDiff "$assigned_repo_msg")))s" "$assigned_repo_msg"
 
 	printf '\n'
 
@@ -4908,35 +4910,22 @@ DisplayAsAbsReportTitleLine()
 	{
 
 	local a=''
-	local -i n=0
 
 	printf '\n'
 
 	# column 1: package name
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		a="${CHARS_BULLET}QPKG name:"
-		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
-	fi
+	a="${CHARS_BULLET}QPKG name:"
+	printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 2: QPKG is installed
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}Installed?"
-		printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	a="${CHARS_BULLET}Installed?"
+	printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 3: package abbreviations
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}Acceptable QPKG name abbreviations and aliases:"
-		printf "%-$((PACKAGE_ABBS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	a="${CHARS_BULLET}Acceptable QPKG name abbreviations and aliases:"
+	printf "%-$((PACKAGE_ABBS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	printf '\n'
 
@@ -4953,7 +4942,6 @@ _DisplayAsAbsReportItemLine_()
 	local abs_msg=''
 	local installed_msg=$CHARS_BLANK
 	local mode=''
-	local -i n=0
 	local name_msg=$CHARS_BLANK
 
 	if QpkgIsMissing; then
@@ -4995,27 +4983,15 @@ _DisplayAsAbsReportItemLine_()
 	esac
 
 	# column 1: package name
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
-	fi
+	printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 
 	# column 2: package is installed?
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+$(LenANSIDiff "$installed_msg")))s" "$installed_msg"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+$(LenANSIDiff "$installed_msg")))s" "$installed_msg"
 
 	# column 3: package abbreviations
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		printf "%-$((PACKAGE_ABBS_COL_WIDTH+$(LenANSIDiff "$abs_msg")))s" "$abs_msg"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	printf "%-$((PACKAGE_ABBS_COL_WIDTH+$(LenANSIDiff "$abs_msg")))s" "$abs_msg"
 
 	printf '\n'
 
@@ -5025,89 +5001,52 @@ DisplayAsDepsReportTitleLine()
 	{
 
 	local a=''
-	local -i n=0
 
 	printf '\n'
 
 	# column 1: package name.
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		a="${CHARS_BULLET}QPKG name:"
-		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
-	fi
+	a="${CHARS_BULLET}QPKG name:"
+	printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 2: package dependencies.
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}Dependencies:"
-		printf "%-$((PACKAGE_DEPENDENCIES_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	a="${CHARS_BULLET}Dependencies:"
+	printf "%-$((PACKAGE_DEPENDENCIES_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 3: QPKG is installed?
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}Installed?"
-		printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	a="${CHARS_BULLET}Installed?"
+	printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 4: QPKG is enabled?
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}Enabled?"
-		printf "%-$((PACKAGE_ENABLED_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	a="${CHARS_BULLET}Enabled?"
+	printf "%-$((PACKAGE_ENABLED_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 5: QPKG is managed by sherpa?
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}Managed?"
-		printf "%-$((PACKAGE_MANAGED_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	a="${CHARS_BULLET}Managed?"
+	printf "%-$((PACKAGE_MANAGED_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 6: minimum NAS RAM required.
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}Min. RAM:"
-		printf "%-$((PACKAGE_MIN_RAM_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	a="${CHARS_BULLET}Min. RAM:"
+	printf "%-$((PACKAGE_MIN_RAM_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 7: minimum OS fimware version supported.
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}Min. OS:"
-		printf "%-$((PACKAGE_MIN_OS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	a="${CHARS_BULLET}Min. OS:"
+	printf "%-$((PACKAGE_MIN_OS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 8: maximum OS fimware version supported.
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}Max. OS:"
-		printf "%-$((PACKAGE_MAX_OS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	a="${CHARS_BULLET}Max. OS:"
+	printf "%-$((PACKAGE_MAX_OS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 9: arch is compatible?
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}Supported arch?"
-		printf "%-$((PACKAGE_ARCH_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	a="${CHARS_BULLET}Supported arch?"
+	printf "%-$((PACKAGE_ARCH_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	printf '\n'
 
@@ -5138,7 +5077,6 @@ _DisplayAsDepsReportItemLine_()
 	local min_ram=$(QpkgGetMinRAM "$qpkg_name")
 	local min_ram_msg=$CHARS_BLANK
 	local mode=''
-	local -i n=0
 	local name_msg=$CHARS_BLANK
 
 	[[ -z $deps_raw ]] && deps_raw=none
@@ -5360,75 +5298,39 @@ _DisplayAsDepsReportItemLine_()
 	esac
 
 	# column 1: package name.
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
-	fi
+	printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 
 	# column 2: package dependencies.
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		printf "%-$((PACKAGE_DEPENDENCIES_COL_WIDTH+$(LenANSIDiff "$deps_msg")))s" "$deps_msg"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	printf "%-$((PACKAGE_DEPENDENCIES_COL_WIDTH+$(LenANSIDiff "$deps_msg")))s" "$deps_msg"
 
 	# column 3: package is installed?
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+$(LenANSIDiff "$installed_msg")))s" "$installed_msg"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+$(LenANSIDiff "$installed_msg")))s" "$installed_msg"
 
 	# column 4: package is enabled?
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		printf "%-$((PACKAGE_ENABLED_COL_WIDTH+$(LenANSIDiff "$enabled_msg")))s" "$enabled_msg"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	printf "%-$((PACKAGE_ENABLED_COL_WIDTH+$(LenANSIDiff "$enabled_msg")))s" "$enabled_msg"
 
 	# column 5: package is managed by sherpa?
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		printf "%-$((PACKAGE_MANAGED_COL_WIDTH+$(LenANSIDiff "$managed_msg")))s" "$managed_msg"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	printf "%-$((PACKAGE_MANAGED_COL_WIDTH+$(LenANSIDiff "$managed_msg")))s" "$managed_msg"
 
 	# column 6: minimum NAS RAM required.
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		printf "%-$((PACKAGE_MIN_RAM_COL_WIDTH+$(LenANSIDiff "$min_ram_msg")))s" "$min_ram_msg"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	printf "%-$((PACKAGE_MIN_RAM_COL_WIDTH+$(LenANSIDiff "$min_ram_msg")))s" "$min_ram_msg"
 
 	# column 7: minimum OS fimware version supported.
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		printf "%-$((PACKAGE_MIN_OS_COL_WIDTH+$(LenANSIDiff "$min_os_msg")))s" "$min_os_msg"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	printf "%-$((PACKAGE_MIN_OS_COL_WIDTH+$(LenANSIDiff "$min_os_msg")))s" "$min_os_msg"
 
 	# column 8: maximum OS fimware version supported.
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		printf "%-$((PACKAGE_MAX_OS_COL_WIDTH+$(LenANSIDiff "$max_os_msg")))s" "$max_os_msg"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	printf "%-$((PACKAGE_MAX_OS_COL_WIDTH+$(LenANSIDiff "$max_os_msg")))s" "$max_os_msg"
 
 	# column 9: NAS arch is compatible?
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		printf "%-$((PACKAGE_ARCH_COL_WIDTH+$(LenANSIDiff "$arch_msg")))s" "$arch_msg"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	printf "%-$((PACKAGE_ARCH_COL_WIDTH+$(LenANSIDiff "$arch_msg")))s" "$arch_msg"
 
 	printf '\n'
 
@@ -5438,80 +5340,47 @@ DisplayAsFeaturesReportTitleLine()
 	{
 
 	local a=''
-	local -i n=0
 
 	printf '\n'
 
 	# column 1: package name.
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		a="${CHARS_BULLET}QPKG name:"
-		printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
-	fi
+	a="${CHARS_BULLET}QPKG name:"
+	printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 2: package supports `backup` action?
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}CanBack?"
-		printf "%-$((PACKAGE_SUPPORTS_BACKUP_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	a="${CHARS_BULLET}CanBack?"
+	printf "%-$((PACKAGE_SUPPORTS_BACKUP_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 3: package supports `clean` action?
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}CanClean?"
-		printf "%-$((PACKAGE_SUPPORTS_CLEAN_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	a="${CHARS_BULLET}CanClean?"
+	printf "%-$((PACKAGE_SUPPORTS_CLEAN_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 4: package supports restart-to-update application action?
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}StartUpd?"
-		printf "%-$((PACKAGE_SUPPORTS_START_TO_UPDATE_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	a="${CHARS_BULLET}StartUpd?"
+	printf "%-$((PACKAGE_SUPPORTS_START_TO_UPDATE_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 5: package is set to auto-update on restart?
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}AutoUpd?"
-		printf "%-$((PACKAGE_AUTO_UPDATE_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	a="${CHARS_BULLET}AutoUpd?"
+	printf "%-$((PACKAGE_AUTO_UPDATE_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 6: package active test is builtin?
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}LiveTest?"
-		printf "%-$((PACKAGE_ACTIVE_TEST_BUILTIN_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	a="${CHARS_BULLET}LiveTest?"
+	printf "%-$((PACKAGE_ACTIVE_TEST_BUILTIN_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 7: package is independent?
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}Indep?"
-		printf "%-$((PACKAGE_TIER_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	a="${CHARS_BULLET}Indep?"
+	printf "%-$((PACKAGE_TIER_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 8: NAS arch is compatible?
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}Compat?"
-		printf "%-$((PACKAGE_COMPATIBLE_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	a="${CHARS_BULLET}Compat?"
+	printf "%-$((PACKAGE_COMPATIBLE_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	printf '\n'
 
@@ -5531,7 +5400,6 @@ _DisplayAsFeaturesReportItemLine_()
 	local clean_msg=$CHARS_BLANK
 	local compatible_msg=$CHARS_BLANK
 	local mode=''
-	local -i n=0
 	local name_msg=$CHARS_BLANK
 	local restart_to_update_msg=$CHARS_BLANK
 	local tier_msg=$CHARS_BLANK
@@ -5693,67 +5561,35 @@ _DisplayAsFeaturesReportItemLine_()
 	esac
 
 	# column 1: package name.
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
-	fi
+	printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 
 	# column 2: package supports `backup` action?
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		printf "%-$((PACKAGE_SUPPORTS_BACKUP_COL_WIDTH+$(LenANSIDiff "$backup_msg")))s" "$backup_msg"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	printf "%-$((PACKAGE_SUPPORTS_BACKUP_COL_WIDTH+$(LenANSIDiff "$backup_msg")))s" "$backup_msg"
 
 	# column 3: package supports `clean` action?
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		printf "%-$((PACKAGE_SUPPORTS_CLEAN_COL_WIDTH+$(LenANSIDiff "$clean_msg")))s" "$clean_msg"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	printf "%-$((PACKAGE_SUPPORTS_CLEAN_COL_WIDTH+$(LenANSIDiff "$clean_msg")))s" "$clean_msg"
 
 	# column 4: package supports restart-to-update application action?
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		printf "%-$((PACKAGE_SUPPORTS_START_TO_UPDATE_COL_WIDTH+$(LenANSIDiff "$restart_to_update_msg")))s" "$restart_to_update_msg"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	printf "%-$((PACKAGE_SUPPORTS_START_TO_UPDATE_COL_WIDTH+$(LenANSIDiff "$restart_to_update_msg")))s" "$restart_to_update_msg"
 
 	# column 5: package is set to auto-update on restart?
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		printf "%-$((PACKAGE_AUTO_UPDATE_COL_WIDTH+$(LenANSIDiff "$autoupdate_msg")))s" "$autoupdate_msg"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	printf "%-$((PACKAGE_AUTO_UPDATE_COL_WIDTH+$(LenANSIDiff "$autoupdate_msg")))s" "$autoupdate_msg"
 
 	# column 6: package active test is builtin?
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		printf "%-$((PACKAGE_ACTIVE_TEST_BUILTIN_COL_WIDTH+$(LenANSIDiff "$active_test_msg")))s" "$active_test_msg"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	printf "%-$((PACKAGE_ACTIVE_TEST_BUILTIN_COL_WIDTH+$(LenANSIDiff "$active_test_msg")))s" "$active_test_msg"
 
 	# column 7: package is independent?
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		printf "%-$((PACKAGE_TIER_COL_WIDTH+$(LenANSIDiff "$tier_msg")))s" "$tier_msg"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	printf "%-$((PACKAGE_TIER_COL_WIDTH+$(LenANSIDiff "$tier_msg")))s" "$tier_msg"
 
 	# column 8: NAS arch is compatible?
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		printf "%-$((PACKAGE_COMPATIBLE_COL_WIDTH+$(LenANSIDiff "$compatible_msg")))s" "$compatible_msg"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	printf "%-$((PACKAGE_COMPATIBLE_COL_WIDTH+$(LenANSIDiff "$compatible_msg")))s" "$compatible_msg"
 
 	printf '\n'
 
@@ -5763,35 +5599,22 @@ DisplayAsBacksReportTitleLine()
 	{
 
 	local a=''
-	local -i n=0
 
 	printf '\n'
 
 	# column 1: backup filename
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		a="${CHARS_BULLET}Backup file:"
-		printf "%-$((FILE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
-	fi
+	a="${CHARS_BULLET}Backup file:"
+	printf "%-$((FILE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 2: filesize in bytes
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}Size in bytes:"
-		printf "%-$((FILE_BYTES_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	a="${CHARS_BULLET}Size in bytes:"
+	printf "%-$((FILE_BYTES_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 3: last backup date
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		a="${CHARS_BULLET}Backup date:"
-		printf "%-$((FILE_CHANGE_DATE_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	a="${CHARS_BULLET}Backup date:"
+	printf "%-$((FILE_CHANGE_DATE_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	printf '\n'
 
@@ -5814,7 +5637,6 @@ DisplayAsBacksReportItemLine()
 	local file_name_msg=$CHARS_BLANK
 	local local_highlight_backups_older_than=${4:-'1 week ago'}
 	local mode=''
-	local -i n=0
 
 	if [[ ${epoch_time%.*} -lt $(/bin/date --date="$local_highlight_backups_older_than" +%s) ]]; then
 		mode=highlighted
@@ -5839,27 +5661,15 @@ DisplayAsBacksReportItemLine()
 	esac
 
 	# column 1: backup filename
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%-$((FILE_NAME_COL_WIDTH+$(LenANSIDiff "$file_name_msg")))s" "$file_name_msg"
-	fi
+	printf "%-$((FILE_NAME_COL_WIDTH+$(LenANSIDiff "$file_name_msg")))s" "$file_name_msg"
 
 	# column 2: filesize in bytes
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		printf "%$((FILE_BYTES_COL_WIDTH+$(LenANSIDiff "$file_bytes_msg")))s" "$file_bytes_msg "	# append 1 x whitespace char to force right-justified numbers to the left a bit. Looks nicer.
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	printf "%$((FILE_BYTES_COL_WIDTH+$(LenANSIDiff "$file_bytes_msg")))s" "$file_bytes_msg "	# append 1 x whitespace char to force right-justified numbers to the left a bit. Looks nicer.
 
 	# column 3: last backup date
-	((n++))
-
-	if [[ $report_cols_max -ge $n ]]; then
-		printf "%$((COLUMN_SPACING))s"
-		printf "%-$((FILE_CHANGE_DATE_COL_WIDTH+$(LenANSIDiff "$epoch_time_msg")))s" "$epoch_time_msg"
-	fi
+	printf "%$((COLUMN_SPACING))s"
+	printf "%-$((FILE_CHANGE_DATE_COL_WIDTH+$(LenANSIDiff "$epoch_time_msg")))s" "$epoch_time_msg"
 
 	printf '\n'
 
@@ -7637,9 +7447,6 @@ QPKGs.IsTimeoutsIncreased()
 Help.Abbreviations:Show()
 	{
 
-	# Output:
-	#   $report_cols_max (global)
-
 	FuncInit
 
 	local a=''
@@ -7647,7 +7454,6 @@ Help.Abbreviations:Show()
 	local -i m=0
 	local -i n=0
 	local previous=''
-	report_cols_max=3
 
 	LoadPackages
 	DisableDebugToArchiveAndFile
@@ -7708,7 +7514,6 @@ ShowReportBackups()
 	local file_date=''
 	local file_name=''
 	local file_time=''
-	report_cols_max=3
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport backups
@@ -7751,13 +7556,9 @@ ShowReportBackups()
 ShowReportDependencies()
 	{
 
-	# Output:
-	#   $report_cols_max (global)
-
 	FuncInit
 
 	local a=''
-	report_cols_max=9
 	local -i m=0
 	local -i n=0
 	local previous=''
@@ -7805,13 +7606,9 @@ ShowReportDependencies()
 ShowReportFeatures()
 	{
 
-	# Output:
-	#   $report_cols_max (global)
-
 	FuncInit
 
 	local a=''
-	report_cols_max=8
 	local -i m=0
 	local -i n=0
 	local previous=''
@@ -7859,13 +7656,9 @@ ShowReportFeatures()
 ShowReportPackages()
 	{
 
-	# Output:
-	#   $report_cols_max (global)
-
 	FuncInit
 
 	local previous=''
-	report_cols_max=3
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport package
@@ -7907,16 +7700,12 @@ ShowReportPackages()
 ShowReportRepos()
 	{
 
-	# Output:
-	#   $report_cols_max (global)
-
 	FuncInit
 
 	local a=''
 	local -i m=0
 	local -i n=0
 	local previous=''
-	report_cols_max=3
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport repository
@@ -7957,26 +7746,97 @@ ShowReportRepos()
 
 	}
 
-ShowReportStatuses()
+ShowReportStatusesAutoWidth()
 	{
 
-	# Output:
-	#   $report_cols_max (global)
+	# Generate a status report formatted with auto-minimum-width columns (GNU `awk` only).
+
+	[[ -e $GNU_AWK_CMD ]] || return
 
 	FuncInit
 
-	local a=''
+	local a=false
+	local b=''
+	local c=''
 	local f=''
 	local -i m=0
-# 	report_cols_max=6
-	report_cols_max=5
 	local -i n=0
 	local previous=''
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport status
 	ResetReportsPath &> /dev/null
-	CalcMaxStatusReportCols
+
+	for qpkg_name in $(QPKGs-GRall:Array); do
+		QPKGs-ACstatus-dn.Exist "$qpkg_name" || continue
+		((n++))
+		QpkgSetIndex
+		QPKGs-ISupgradable.Exist "$qpkg_name" && a=true
+		_DisplayAsStatusReportItemLineAutoWidth_ > "$REPORTS_PATH/$n" &
+	done
+
+	[[ $a = true ]] && b=" ($(TextBrightOrange new))"
+	c="QPKG name:|QPKG statuses:|QPKG action (result):|QPKG version${b}:|Application version:\n"
+
+	m=$n
+	wait 2> /dev/null
+
+	# Load report lines from individual files.
+
+	for ((n=1; n<=m; n++)); do
+		f="$REPORTS_PATH/$n"
+		# shellcheck disable=2179
+		[[ -e $f ]] && c+="$(<$f)\n"		# Add newline to each imported report line.
+	done
+
+	if [[ -n $c ]]; then
+		echo -en "$c" | Tableise > "$REPORT_OUTPUT_PATHFILE"
+		IncludeReportFooter
+	fi
+
+	EraseThisLine
+
+	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
+		echo
+		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
+	else
+		ShowAsError 'no information to display'
+	fi
+
+	QPKGs.States:List
+
+	show_action_results_ok=false
+	show_action_results_skipped=false
+	show_action_results_failed=false
+
+	FuncExit
+
+	}
+
+ShowReportStatuses()
+	{
+
+	# Generate a status report formatted with fixed-width columns (non-gawk).
+
+	FuncInit
+
+	local a=''
+	local f=''
+	local -i m=0
+	local -i n=0
+	local previous=''
+
+	DisableDebugToArchiveAndFile
+	DisplayProcReport status
+	ResetReportsPath &> /dev/null
+
+	# Add width to include " (new)" string to QPKG version title.
+
+	if QPKGs-ISupgradable.IsAny; then
+		package_ver_final_col_width=$((STD_COL_WIDTH+6))
+	else
+		package_ver_final_col_width=$STD_COL_WIDTH
+	fi
 
 	DisplayAsStatusReportTitleLine > "$REPORT_OUTPUT_PATHFILE"
 
@@ -8000,10 +7860,10 @@ ShowReportStatuses()
 	[[ -n $a ]] && echo -en "$a" >> "$REPORT_OUTPUT_PATHFILE"
 
 	IncludeReportFooter
-
 	EraseThisLine
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
+		echo
 		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
 	else
 		ShowAsError 'no information to display'
@@ -9467,6 +9327,7 @@ _QPKG:install_()
 	FuncForkInit
 
 	local a=''
+	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
 	if QPKGs-ISinstalled.Exist "$qpkg_name"; then
@@ -9510,13 +9371,10 @@ _QPKG:install_()
 		fi
 	fi
 
-	local target_path=''
-
 	DebugAsProc "installing $(ShowAsPackageName)"
-	[[ $useropt_debug = true ]] && a='DEBUG_QPKG=true '
+	[[ ${QPKGs_were_installed_name[*]:-} = *"$qpkg_name"* ]] && a+="QINSTALL_PATH=$(QpkgGetOriginalPath "$qpkg_name") "
 
-	[[ ${QPKGs_were_installed_name[*]:-} = *"$qpkg_name"* ]] && target_path="QINSTALL_PATH=$(QpkgGetOriginalPath "$qpkg_name") "
-	RunAndLog "${a}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$INSTALL_LOG_FILE" log:failure-only 10
+	RunAndLog "${a}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$INSTALL_LOG_FILE" log:failure-only 10
 	z=$?
 
 	LogQpkgServiceResult
@@ -9580,7 +9438,8 @@ _QPKG:reinstall_()
 
 	FuncForkInit
 
-	local a=''
+	local a='QPKG_REINSTALL=true '
+	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
 	if ! QPKGs-ISinstalled.Exist "$qpkg_name"; then
@@ -9605,13 +9464,10 @@ _QPKG:reinstall_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	local target_path=''
-
 	DebugAsProc "reinstalling $(ShowAsPackageName)"
-	[[ $useropt_debug = true ]] && a='DEBUG_QPKG=true '
+	QpkgIsInstalled && a+="QINSTALL_PATH=$($DIRNAME_CMD "$(QpkgGetInstallationPath)") "
 
-	QpkgIsInstalled && target_path="QINSTALL_PATH=$($DIRNAME_CMD "$(QpkgGetInstallationPath)") "
-	RunAndLog "${a}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$REINSTALL_LOG_FILE" log:failure-only 10
+	RunAndLog "${a}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$REINSTALL_LOG_FILE" log:failure-only 10
 	z=$?
 
 	LogQpkgServiceResult
@@ -9706,7 +9562,8 @@ _QPKG:upgrade_()
 
 	FuncForkInit
 
-	local a=''
+	local a='QPKG_UPGRADE=true '
+	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
 	if ! QPKGs-ISinstalled.Exist "$qpkg_name"; then
@@ -9736,13 +9593,11 @@ _QPKG:upgrade_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	local prev_ver=$(QpkgGetInstalledVer)
-	local target_path=''
 
 	DebugAsProc "upgrading $(ShowAsPackageName)"
-	[[ $useropt_debug = true ]] && a='DEBUG_QPKG=true '
+	QpkgIsInstalled && a+="QINSTALL_PATH=$($DIRNAME_CMD "$(QpkgGetInstallationPath "$qpkg_name")") "
 
-	QpkgIsInstalled && target_path="QINSTALL_PATH=$($DIRNAME_CMD "$(QpkgGetInstallationPath "$qpkg_name")") "
-	RunAndLog "${a}${target_path}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$UPGRADE_LOG_FILE" log:failure-only 10
+	RunAndLog "${a}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$UPGRADE_LOG_FILE" log:failure-only 10
 	z=$?
 
 	LogQpkgServiceResult
@@ -9798,6 +9653,7 @@ _QPKG:uninstall_()
 	FuncForkInit
 
 	local a=''
+	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
@@ -9822,7 +9678,6 @@ _QPKG:uninstall_()
 
 	if [[ -e $QPKG_UNINSTALLER_PATHFILE ]]; then
 		DebugAsProc "uninstalling $(ShowAsPackageName)"
-		[[ $useropt_debug = true ]] && a='DEBUG_QPKG=true '
 
 		RunAndLog "${a}${SH_CMD} $QPKG_UNINSTALLER_PATHFILE" "$LOGS_PATH/$qpkg_name.$UNINSTALL_LOG_FILE" log:failure-only
 		z=$?
@@ -9876,6 +9731,7 @@ _QPKG:activate_()
 	FuncForkInit
 
 	local a=''
+	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
@@ -9907,7 +9763,6 @@ _QPKG:activate_()
 
 		FuncForkExit 4
 	elif [[ $useropt_debug = true ]]; then
-		a='DEBUG_QPKG=true '
 		RunAndLog "${a}${service_pathfile} start" "$LOG_PATHFILE" log:failure-only
 		z=$?
 	elif QpkgIsCanLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
@@ -9960,6 +9815,7 @@ _QPKG:reactivate_()
 	FuncForkInit
 
 	local a=''
+	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
@@ -9991,7 +9847,6 @@ _QPKG:reactivate_()
 
 		FuncForkExit 4
 	elif [[ $useropt_debug = true ]]; then
-		a='DEBUG_QPKG=true '
 		RunAndLog "${a}${service_pathfile} restart" "$LOG_PATHFILE" log:failure-only
 		z=$?
 	elif QpkgIsCanLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
@@ -10035,6 +9890,7 @@ _QPKG:deactivate_()
 	FuncForkInit
 
 	local a=''
+	[[ $useropt_debug = true ]]	&& a+='DEBUG_QPKG=true '
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
@@ -10066,7 +9922,6 @@ _QPKG:deactivate_()
 
 		FuncForkExit 4
 	elif [[ $useropt_debug = true ]]; then
-		a='DEBUG_QPKG=true '
 		RunAndLog "${a}${service_pathfile} stop" "$LOG_PATHFILE" log:failure-only
 		z=$?
 	elif QpkgIsCanLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
@@ -10223,6 +10078,7 @@ _QPKG:enableau_()
 	FuncForkInit
 
 	local a=''
+	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
@@ -10246,7 +10102,6 @@ _QPKG:enableau_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "enabling auto-update $(ShowAsPackageName)"
-	[[ $useropt_debug = true ]] && a='DEBUG_QPKG=true '
 
 	RunAndLog "${a}$(QpkgGetServicePathFile) enable-auto-update" "$LOGS_PATH/$qpkg_name.$ENABLEAU_LOG_FILE" log:failure-only
 	z=$?
@@ -10282,6 +10137,7 @@ _QPKG:disableau_()
 	FuncForkInit
 
 	local a=''
+	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
@@ -10305,7 +10161,6 @@ _QPKG:disableau_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "disabling auto-update $(ShowAsPackageName)"
-	[[ $useropt_debug = true ]] && a='DEBUG_QPKG=true '
 
 	RunAndLog "${a}$(QpkgGetServicePathFile) disable-auto-update" "$LOGS_PATH/$qpkg_name.$DISABLEAU_LOG_FILE" log:failure-only
 	z=$?
@@ -10341,6 +10196,7 @@ _QPKG:backup_()
 	FuncForkInit
 
 	local a=''
+	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
@@ -10360,7 +10216,6 @@ _QPKG:backup_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "backing-up $(ShowAsPackageName) configuration"
-	[[ $useropt_debug = true ]] && a='DEBUG_QPKG=true '
 
 	RunAndLog "${a}$(QpkgGetServicePathFile) backup" "$LOGS_PATH/$qpkg_name.$BACKUP_LOG_FILE" log:failure-only
 	z=$?
@@ -10397,6 +10252,7 @@ _QPKG:restore_()
 	FuncForkInit
 
 	local a=''
+	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
@@ -10420,7 +10276,6 @@ _QPKG:restore_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "restoring $(ShowAsPackageName) configuration"
-	[[ $useropt_debug = true ]] && a='DEBUG_QPKG=true '
 
 	RunAndLog "${a}$(QpkgGetServicePathFile) restore" "$LOGS_PATH/$qpkg_name.$RESTORE_LOG_FILE" log:failure-only
 	z=$?
@@ -10457,6 +10312,7 @@ _QPKG:clean_()
 	FuncForkInit
 
 	local a=''
+	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
@@ -10476,7 +10332,6 @@ _QPKG:clean_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "cleaning $(ShowAsPackageName)"
-	[[ $useropt_debug = true ]] && a='DEBUG_QPKG=true '
 
 	RunAndLog "${a}$(QpkgGetServicePathFile) clean" "$LOGS_PATH/$qpkg_name.$CLEAN_LOG_FILE" log:failure-only
 	z=$?
@@ -10624,6 +10479,7 @@ _QPKG:status_()
 
 	local a=''
 	local b=''
+	[[ $useropt_debug = true ]] && b+='DEBUG_QPKG=true '
 	local -i z=0
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
@@ -10639,8 +10495,6 @@ _QPKG:status_()
 	a=$(QpkgGetActiveTest)
 
 	if [[ $a = builtin ]]; then
-		[[ $useropt_debug = true ]] && b='DEBUG_QPKG=true '
-
 		# Run status query with GNU 'timeout' if-possible.
 
 		if [[ -e $GNU_TIMEOUT_CMD ]]; then
@@ -13601,6 +13455,34 @@ TextBrightWhite()
 	fi
 
 	} 2> /dev/null
+
+Tableise()
+	{
+
+	# Generate an ANSI-aware table with auto-minimum-width columns.
+
+	# With many thanks to Stéphane Chazelas for writing this, and to Josh Klodnicki for his enhancements.
+	#  	  https://unix.stackexchange.com/a/121139/259233
+
+	awk '{
+		nf[NR]=NF
+		for (i = 1; i <= NF; i++) {
+			cell[NR,i] = $i
+			gsub(/\033\[[0-9;]*[mK]/, "", $i)
+			len[NR,i] = l = length($i)
+			if (l > max[i]) max[i] = l
+		}
+	}
+	END {
+		for (row = 1; row <= NR; row++) {
+			for (col = 1; col < nf[row]; col++)
+				printf "%s%*s%s", cell[row,col], max[col]-len[row,col], "", OFS
+			print cell[row,nf[row]]
+		}
+
+	}' FS='|' OFS="$(printf "%$((COLUMN_SPACING))s")"
+
+	}
 
 StripANSICodes()
 	{
