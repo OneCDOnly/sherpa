@@ -998,23 +998,45 @@ CheckEnv()
 
 		# Decide if specific IPKs should be uninstalled/downgraded.
 
+		# These must be downgraded on armv7 when QTS has a non-standard kernel page size.
+
 		if OsIsNonStdKernelPageSize; then
 			case $NAS_QPKG_ARCH in
 				a41)
 					target_packages='ar binutils libbfd libctf libopcodes objdump'
 
 					# Assume first package version is same as remaining package versions.
-					installed_version=$($OPKG_CMD list-installed | $GREP_CMD "^${target_packages%% *} *" | cut -d' ' -f3 | cut -d'-' -f1)
+					installed_version=$($OPKG_CMD list-installed | $GREP_CMD "^${target_packages%% *} *" | head -n1 | cut -d' ' -f3 | cut -d'-' -f1)
 
 					if [[ ${installed_version//.} -gt 238 ]]; then
 						ipks_downgrade=true
-						ShowAsNote "IPKs will be downgraded to suit $KERNEL_PAGE_SIZE kernel page size"
+						ShowAsNote "various IPKs will be downgraded to suit $KERNEL_PAGE_SIZE kernel page size"
 						IPKs-ACdowngrade-to:Add "$target_packages"
 					else
 						IPKs-ACdowngrade-sk:Add "$target_packages"
 					fi
 			esac
 		fi
+
+		# These must be downgraded on armv7 as 2.45.2 versions can't clone a repo.
+		# https://github.com/Entware/Entware/issues/1072
+
+		case $NAS_QPKG_ARCH in
+			a41)
+				target_packages='git git-http'
+
+				# Assume first package version is same as remaining package versions.
+				installed_version=$($OPKG_CMD list-installed | $GREP_CMD "^${target_packages%% *} *" | head -n1 | cut -d' ' -f3 | cut -d'-' -f1)
+
+				if [[ ${installed_version//.} -gt 2392 ]]; then
+					ipks_downgrade=true
+					ShowAsNote "git IPKs will be downgraded back to a working version"
+					IPKs-ACdowngrade-to:Add "$target_packages"
+				else
+					IPKs-ACdowngrade-sk:Add "$target_packages"
+				fi
+		esac
+
 	fi
 
 	QPKGs.IsCanBackup:Build
@@ -3531,30 +3553,38 @@ IPKs:downgrade()
 
 		ShowAsProc "download $desc"
 
-		if OsIsNonStdKernelPageSize; then
-			url_prefix=http://bin.entware.net
-			url_suffix=_2.38-1
+		case $NAS_QPKG_ARCH in
+			a41)
+				if OsIsNonStdKernelPageSize; then
+					url_prefix=http://bin.entware.net/armv7sf-k3.2/archive/
+					url_suffix=_2.38-1_armv7-3.2.ipk
 
-			case $NAS_QPKG_ARCH in
-				a41)
-					url_prefix+='/armv7sf-k3.2'
-					url_suffix+='_armv7-3.2'
-			esac
+					for name in $(IPKs-ACdowngrade-to:Array); do
+						ShowAsPercentProgress "download $desc" '' "$ok_count" 0 0 "$total_count"
+						((ok_count++))
 
-			url_prefix+=/archive/
-			url_suffix+=.ipk
+						remote_url=${url_prefix}${name}${url_suffix}
+						local_pathfile=$IPK_DOWNGRADE_PATH/$($BASENAME_CMD "$remote_url")
+						RunAndLog "$CURL_CMD --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
+					done
 
-			for name in $(IPKs-ACdowngrade-to:Array); do
-				ShowAsPercentProgress "download $desc" '' "$ok_count" 0 0 "$total_count"
-				((ok_count++))
+					ShowAsPercentProgress "download $desc" '' "$ok_count" 0 "$fail_count" "$total_count"
+				fi
 
-				remote_url=${url_prefix}${name}${url_suffix}
-				local_pathfile=$IPK_DOWNGRADE_PATH/$($BASENAME_CMD "$remote_url")
-				RunAndLog "$CURL_CMD --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
-			done
+				url_prefix=http://bin.entware.net/armv7sf-k3.2/archive/
+				url_suffix=_2.39.2-1_armv7-3.2.ipk
 
-			ShowAsPercentProgress "download $desc" '' "$ok_count" 0 "$fail_count" "$total_count"
-		fi
+				for name in $(IPKs-ACdowngrade-to:Array); do
+					ShowAsPercentProgress "download $desc" '' "$ok_count" 0 0 "$total_count"
+					((ok_count++))
+
+					remote_url=${url_prefix}${name}${url_suffix}
+					local_pathfile=$IPK_DOWNGRADE_PATH/$($BASENAME_CMD "$remote_url")
+					RunAndLog "$CURL_CMD --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
+				done
+
+				ShowAsPercentProgress "download $desc" '' "$ok_count" 0 "$fail_count" "$total_count"
+		esac
 
 		[[ ${useropt_terse:=true} = false && ${useropt_verbose:=false} = false ]] && echo
 
