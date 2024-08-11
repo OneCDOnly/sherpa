@@ -1,10 +1,5 @@
 Observed issues:
 
-	* armv7 requires IPK downgrade of 'git' and 'git-http' after 9/8/24 Entware update.
-
-	* Is RunAndLog() in service-library.source actually using $3 & $4?
-		- If not, why are they there?
-
 	* 'clean' doesn't run on these QPKGs on armv5 (works fine on arm64, armv7):
 		-------------------------------------------------------------------------------------------------------------------------
 		[/share/Public] # sherpa clean taut watcher unmanic
