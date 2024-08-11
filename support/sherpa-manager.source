@@ -998,11 +998,12 @@ CheckEnv()
 
 		# Decide if specific IPKs should be uninstalled/downgraded.
 
-		# These must be downgraded on armv7 when QTS has a non-standard kernel page size.
+		case $NAS_QPKG_ARCH in
+			a41)
+				# These must be downgraded on armv7 when QTS has a non-standard kernel page size.
+				# 	https://forum.qnap.com/viewtopic.php?p=850945#p850945
 
-		if OsIsNonStdKernelPageSize; then
-			case $NAS_QPKG_ARCH in
-				a41)
+				if OsIsNonStdKernelPageSize; then
 					target_packages='ar binutils libbfd libctf libopcodes objdump'
 
 					# Assume first package version is same as remaining package versions.
@@ -1015,14 +1016,11 @@ CheckEnv()
 					else
 						IPKs-ACdowngrade-sk:Add "$target_packages"
 					fi
-			esac
-		fi
+				fi
 
-		# These must be downgraded on armv7 as 2.45.2 versions can't clone a repo.
-		# https://github.com/Entware/Entware/issues/1072
+				# These must be downgraded on armv7 as 2.45.2 versions can't clone a repo.
+				# 	https://github.com/Entware/Entware/issues/1072
 
-		case $NAS_QPKG_ARCH in
-			a41)
 				target_packages='git git-http'
 
 				# Assume first package version is same as remaining package versions.
@@ -1036,7 +1034,6 @@ CheckEnv()
 					IPKs-ACdowngrade-sk:Add "$target_packages"
 				fi
 		esac
-
 	fi
 
 	QPKGs.IsCanBackup:Build
