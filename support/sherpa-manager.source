@@ -4297,7 +4297,11 @@ DisplayAsIndentQuotedInfoItem()
 	#	$1 = word
 	#	$2 = description
 
-	printf "%${HELP_DESC_INDENT}s%-$((FOOTER_NAME_COL_WIDTH+2+$(LenANSIDiff "${1:-}")))s${CHARS_BULLET}%s\n" '' "'${1:-}'" "$(AddPeriod "${2:-}")"
+# 	if [[ -e $GNU_AWK_CMD ]]; then
+# 		printf "%${HELP_DESC_INDENT}s%s|%s\n" '' "'${1:-}'" "$(AddPeriod "${2:-}")"
+# 	else
+		printf "%${HELP_DESC_INDENT}s%-$((FOOTER_NAME_COL_WIDTH+2+$(LenANSIDiff "${1:-}")))s${CHARS_BULLET}%s\n" '' "'${1:-}'" "$(AddPeriod "${2:-}")"
+# 	fi
 
 	}
 
@@ -7816,7 +7820,7 @@ IncludeReportFooter()
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/status-active ]]; then
-		DisplayAsIndentQuotedInfoItem "$(TextBrightGreen active)" "application is alive (and responsive if a daemon)"
+		DisplayAsIndentQuotedInfoItem "$(TextBrightGreen active)" 'application is alive (and responsive if a daemon)'
 	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/repo-sherpa ]]; then
@@ -7862,6 +7866,14 @@ IncludeReportFooter()
 	if compgen -G "${REPORT_FLAGS_PATH}/backup-file-*" > /dev/null; then			# https://stackoverflow.com/a/6364244
 		DisplayAsIndentItem "all $(ShowAsTitleName) backup files are stored here: $QPKG_BU_PATH"
 	fi
+
+# 	if [[ -n $a ]]; then
+# 		if [[ -e $GNU_AWK_CMD ]]; then
+# 			printf '%s' "$a" | Tableise
+# 		else
+# 			printf '%s' "$a"
+# 		fi
+# 	fi
 
 	} >> "$REPORT_OUTPUT_PATHFILE"
 
