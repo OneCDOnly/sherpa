@@ -103,11 +103,7 @@ ShowResults()
 		elif [[ $useropt_show_repos = true ]]; then
 			ShowReportRepos
 		elif [[ $useropt_show_status = true ]]; then
-			if [[ -e $GNU_AWK_CMD ]]; then
-				ShowReportStatusesAutoWidth
-			else
-				ShowReportStatuses
-			fi
+			ShowReportStatuses
 		fi
 	fi
 
@@ -1002,23 +998,42 @@ CheckEnv()
 
 		# Decide if specific IPKs should be uninstalled/downgraded.
 
-		if OsIsNonStdKernelPageSize; then
-			case $NAS_QPKG_ARCH in
-				a41)
+		case $NAS_QPKG_ARCH in
+			a41)
+				# These must be downgraded on armv7 when QTS has a non-standard kernel page size.
+				# 	https://forum.qnap.com/viewtopic.php?p=850945#p850945
+
+				if OsIsNonStdKernelPageSize; then
 					target_packages='ar binutils libbfd libctf libopcodes objdump'
 
 					# Assume first package version is same as remaining package versions.
-					installed_version=$($OPKG_CMD list-installed | $GREP_CMD "^${target_packages%% *} *" | cut -d' ' -f3 | cut -d'-' -f1)
+					installed_version=$($OPKG_CMD list-installed | $GREP_CMD "^${target_packages%% *} *" | head -n1 | cut -d' ' -f3 | cut -d'-' -f1)
 
 					if [[ ${installed_version//.} -gt 238 ]]; then
 						ipks_downgrade=true
-						ShowAsNote "IPKs will be downgraded to suit $KERNEL_PAGE_SIZE kernel page size"
+						ShowAsNote "various IPKs will be downgraded to suit $KERNEL_PAGE_SIZE kernel page size"
 						IPKs-ACdowngrade-to:Add "$target_packages"
 					else
 						IPKs-ACdowngrade-sk:Add "$target_packages"
 					fi
-			esac
-		fi
+				fi
+
+				# These must be downgraded on armv7 as 2.45.2 versions can't clone a repo.
+				# 	https://github.com/Entware/Entware/issues/1072
+
+				target_packages='git git-http'
+
+				# Assume first package version is same as remaining package versions.
+				installed_version=$($OPKG_CMD list-installed | $GREP_CMD "^${target_packages%% *} *" | head -n1 | cut -d' ' -f3 | cut -d'-' -f1)
+
+				if [[ ${installed_version//.} -gt 2392 ]]; then
+					ipks_downgrade=true
+					ShowAsNote "git IPKs will be downgraded back to a working version"
+					IPKs-ACdowngrade-to:Add "$target_packages"
+				else
+					IPKs-ACdowngrade-sk:Add "$target_packages"
+				fi
+		esac
 	fi
 
 	QPKGs.IsCanBackup:Build
@@ -3535,30 +3550,38 @@ IPKs:downgrade()
 
 		ShowAsProc "download $desc"
 
-		if OsIsNonStdKernelPageSize; then
-			url_prefix=http://bin.entware.net
-			url_suffix=_2.38-1
+		case $NAS_QPKG_ARCH in
+			a41)
+				if OsIsNonStdKernelPageSize; then
+					url_prefix=http://bin.entware.net/armv7sf-k3.2/archive/
+					url_suffix=_2.38-1_armv7-3.2.ipk
 
-			case $NAS_QPKG_ARCH in
-				a41)
-					url_prefix+='/armv7sf-k3.2'
-					url_suffix+='_armv7-3.2'
-			esac
+					for name in $(IPKs-ACdowngrade-to:Array); do
+						ShowAsPercentProgress "download $desc" '' "$ok_count" 0 0 "$total_count"
+						((ok_count++))
 
-			url_prefix+=/archive/
-			url_suffix+=.ipk
+						remote_url=${url_prefix}${name}${url_suffix}
+						local_pathfile=$IPK_DOWNGRADE_PATH/$($BASENAME_CMD "$remote_url")
+						RunAndLog "$CURL_CMD --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
+					done
 
-			for name in $(IPKs-ACdowngrade-to:Array); do
-				ShowAsPercentProgress "download $desc" '' "$ok_count" 0 0 "$total_count"
-				((ok_count++))
+					ShowAsPercentProgress "download $desc" '' "$ok_count" 0 "$fail_count" "$total_count"
+				fi
 
-				remote_url=${url_prefix}${name}${url_suffix}
-				local_pathfile=$IPK_DOWNGRADE_PATH/$($BASENAME_CMD "$remote_url")
-				RunAndLog "$CURL_CMD --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
-			done
+				url_prefix=http://bin.entware.net/armv7sf-k3.2/archive/
+				url_suffix=_2.39.2-1_armv7-3.2.ipk
 
-			ShowAsPercentProgress "download $desc" '' "$ok_count" 0 "$fail_count" "$total_count"
-		fi
+				for name in $(IPKs-ACdowngrade-to:Array); do
+					ShowAsPercentProgress "download $desc" '' "$ok_count" 0 0 "$total_count"
+					((ok_count++))
+
+					remote_url=${url_prefix}${name}${url_suffix}
+					local_pathfile=$IPK_DOWNGRADE_PATH/$($BASENAME_CMD "$remote_url")
+					RunAndLog "$CURL_CMD --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
+				done
+
+				ShowAsPercentProgress "download $desc" '' "$ok_count" 0 "$fail_count" "$total_count"
+		esac
 
 		[[ ${useropt_terse:=true} = false && ${useropt_verbose:=false} = false ]] && echo
 
@@ -4266,7 +4289,7 @@ DisplayAsInfoIndentItem()
 DisplayAsIndentQuotedInfoItem()
 	{
 
-	# Display as indented two fields, first field quoted, second field bulleted.
+	# Display as indented two fields, first field quoted, second field hyphenated.
 	# Example:
 	# "  'inactive'     •  application is dead or not-started. Try starting/activating it."
 
@@ -4274,7 +4297,11 @@ DisplayAsIndentQuotedInfoItem()
 	#	$1 = word
 	#	$2 = description
 
-	printf "%${HELP_DESC_INDENT}s%-$((FOOTER_NAME_COL_WIDTH+2+$(LenANSIDiff "${1:-}")))s${CHARS_BULLET}%s\n" '' "'${1:-}'" "$(AddPeriod "${2:-}")"
+	if [[ -e $GNU_AWK_CMD ]]; then
+		printf "%${HELP_DESC_INDENT}s%s|%s\n" '' "'${1:-}'" "- $(AddPeriod "${2:-}")"
+	else
+		printf "%${HELP_DESC_INDENT}s%-$((FOOTER_NAME_COL_WIDTH+2+$(LenANSIDiff "${1:-}")))s%s\n" '' "'${1:-}'" "- $(AddPeriod "${2:-}")"
+	fi
 
 	}
 
@@ -4293,32 +4320,28 @@ DisplayAsIndentQuotedInfoItem()
 #
 # 	}
 
-DisplayAsPacksReportTitleLine()
+GeneratePacksReportTitleLine()
 	{
 
 	local a=''
 
-	printf '\n'
-
 	# column 1: package name
-	a="${CHARS_BULLET}QPKG name:"
+	a='QPKG name:'
 	printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 2: application version
-	printf "%$((COLUMN_SPACING))s"
-	a="${CHARS_BULLET}Application version:"
+	a='Application version:'
 	printf "%-$((PACKAGE_APP_VER_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 3: package description
-	printf "%$((COLUMN_SPACING))s"
-	a="${CHARS_BULLET}Description:"
+	a='Description:'
 	printf "%-$((PACKAGE_DESCRIPTION_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	printf '\n'
 
 	}
 
-DisplayAsPacksReportItemLine()
+GeneratePacksReportDataLine()
 	{
 
 	# Input:
@@ -4373,26 +4396,73 @@ DisplayAsPacksReportItemLine()
 			name_msg=$(TextBrightRed "$name_msg")
 	esac
 
-	# column 1: package name
-	printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
+	if [[ -e $GNU_AWK_CMD ]]; then
+		printf '%s|%s|%s\n' "$name_msg" "$app_ver_msg" "$description_msg"
 
-	# column 2: application version
-	printf "%$((COLUMN_SPACING))s"
-	printf "%-$((PACKAGE_APP_VER_COL_WIDTH+$(LenANSIDiff "$app_ver_msg")))s" "$app_ver_msg"
+		if [[ -n $notes ]]; then
+			printf "%s|%s|%$((${#CHARS_BLANK}))s%s\n" '' '' '' "$(TextBrightOrange "${CHARS_DROPEND}${CHARS_NOTE}") $notes_msg"
+		fi
+	else
+		# column 1: package name
+		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 
-	# column 3: package description
-	printf "%$((COLUMN_SPACING))s"
-	printf "%-$((PACKAGE_DESCRIPTION_COL_WIDTH+$(LenANSIDiff "$description_msg")))s" "$description_msg"
+		# column 2: application version
+		printf "%$((COLUMN_SPACING))s"
+		printf "%-$((PACKAGE_APP_VER_COL_WIDTH+$(LenANSIDiff "$app_ver_msg")))s" "$app_ver_msg"
 
-	if [[ -n $notes ]]; then
-		printf "\n%$((${#CHARS_BLANK}+PACKAGE_NAME_COL_WIDTH+PACKAGE_APP_VER_COL_WIDTH+(COLUMN_SPACING*2)))s$(TextBrightOrange "${CHARS_DROPEND}${CHARS_NOTE}")%s" '' "$notes_msg"
+		# column 3: package description
+		printf "%$((COLUMN_SPACING))s"
+		printf "%-$((PACKAGE_DESCRIPTION_COL_WIDTH+$(LenANSIDiff "$description_msg")))s" "$description_msg"
+
+		if [[ -n $notes ]]; then
+			printf "\n%$((${#CHARS_BLANK}+PACKAGE_NAME_COL_WIDTH+PACKAGE_APP_VER_COL_WIDTH+(COLUMN_SPACING*2)))s$(TextBrightOrange "${CHARS_DROPEND}${CHARS_NOTE}")%s" '' "$notes_msg"
+		fi
+
+		printf '\n'
 	fi
+
+	}
+
+GenerateStatusReportTitleLine()
+	{
+
+	local a=''
+
+	# column 1: package name
+	a='QPKG name'
+	printf "%-${PACKAGE_NAME_COL_WIDTH}s" "$a:"
+
+	# column 2: package statuses
+	printf "%$((COLUMN_SPACING))s"
+	a='QPKG statuses'
+	printf "%-${STD_COL_WIDTH}s" "$a:"
+
+	# column 3: package action and result
+	printf "%$((COLUMN_SPACING))s"
+	a='QPKG action (result)'
+	printf "%-${STD_COL_WIDTH}s" "$a:"
+
+	# column 4: package version
+	printf "%$((COLUMN_SPACING))s"
+	a='QPKG version'
+	QPKGs-ISupgradable.IsAny && a+=" ($(TextBrightOrange new))"
+	printf "%-${STD_COL_WIDTH}s" "$a:"
+
+	# column 5: application version
+	printf "%$((COLUMN_SPACING))s"
+	a='Application version'
+	printf "%-${STD_COL_WIDTH}s" "$a:"
+
+	# column 6: package installation path
+	printf "%$((COLUMN_SPACING))s"
+	a='QPKG installation path'
+	printf "%-${STD_COL_WIDTH}s" "$a:"
 
 	printf '\n'
 
 	}
 
-_DisplayAsStatusReportItemLineAutoWidth_()
+GenerateStatusReportDataLine()
 	{
 
 	# * This function runs asynchronously *
@@ -4406,7 +4476,7 @@ _DisplayAsStatusReportItemLineAutoWidth_()
 	local mode=''
 	local -i n=0
 	local name_msg=$CHARS_BLANK
-# 	local path_msg=$CHARS_BLANK
+	local path_msg=$CHARS_BLANK
 	local result=''
 	local status=''
 	local status_msg=$CHARS_NORMAL
@@ -4462,7 +4532,7 @@ _DisplayAsStatusReportItemLineAutoWidth_()
 
 			app_ver_msg+=$app_ver
 			name_msg+=$qpkg_name
-# 			path_msg+=$(QpkgGetInstallationPath)
+			path_msg+=$(QpkgGetInstallationPath)
 
 			if QPKGs-ISenabled.Exist "$qpkg_name"; then
 				status+=" $(TextBrightGreen enabled)"
@@ -4520,7 +4590,7 @@ _DisplayAsStatusReportItemLineAutoWidth_()
 
 			app_ver_msg+=$(TextDarkGrey "$app_ver")
 			name_msg+=$(TextDarkGrey "$qpkg_name")
-# 			path_msg+=$(TextDarkGrey 'N/A')
+			path_msg+=$(TextDarkGrey 'N/A')
 			/bin/touch "$REPORT_FLAGS_PATH"/na
 
 			if ! QpkgIsArchOK; then
@@ -4539,7 +4609,7 @@ _DisplayAsStatusReportItemLineAutoWidth_()
 		highlighted)
 			app_ver_msg+=$(TextBrightRed "$app_ver")
 			name_msg+=$(TextBrightRed "$qpkg_name")
-# 			path_msg=$(TextBrightRedBlink "${CHARS_ALERT}$(QpkgGetInstallationPath)")
+			path_msg=$(TextBrightRedBlink "${CHARS_ALERT}$(QpkgGetInstallationPath)")
 			status_msg=$(TextBrightRedBlink "${CHARS_ALERT}missing")
 			ver_msg+=$(TextBrightRed "$(QpkgGetInstalledVer)")
 	esac
@@ -4549,266 +4619,66 @@ _DisplayAsStatusReportItemLineAutoWidth_()
 		/bin/touch "$REPORT_FLAGS_PATH"/status-upgradable
 	fi
 
-	echo -en "$name_msg|$status_msg|$action_msg|$ver_msg|$app_ver_msg"
-
-	}
-
-DisplayAsStatusReportTitleLine()
-	{
-
-	local a=''
-
-	# column 1: package name
-	a='QPKG name'
-	printf "%-${PACKAGE_NAME_COL_WIDTH}s" "$a:"
-
-	# column 2: package statuses
-	printf "%$((COLUMN_SPACING))s"
-	a='QPKG statuses'
-	printf "%-${STD_COL_WIDTH}s" "$a:"
-
-	# column 3: package action and result
-	printf "%$((COLUMN_SPACING))s"
-	a='QPKG action (result)'
-	printf "%-${STD_COL_WIDTH}s" "$a:"
-
-	# column 4: package version
-	printf "%$((COLUMN_SPACING))s"
-	a='QPKG version'
-	QPKGs-ISupgradable.IsAny && a+=" ($(TextBrightOrange new))"
-	printf "%-$((${package_ver_final_col_width:=0}+2+$(LenANSIDiff "$a")))s" "$a:"
-
-	# column 5: application version
-	printf "%$((COLUMN_SPACING))s"
-	a='Application version'
-	printf "%-${STD_COL_WIDTH}s" "$a:"
-
-# 	# column 6: package installation path
-# 	printf "%$((COLUMN_SPACING))s"
-# 	a='QPKG installation path'
-# 	printf "%-${STD_COL_WIDTH}s" "$a:"
-
-	printf '\n'
-
-	}
-
-_DisplayAsStatusReportItemLine_()
-	{
-
-	# * This function runs asynchronously *
-
-	# Input:
-
-	local action=''
-	local action_msg=$CHARS_BLANK
-	local app_ver=''
-	local app_ver_msg=$CHARS_BLANK
-	local mode=''
-	local name_msg=$CHARS_BLANK
-# 	local path_msg=$CHARS_BLANK
-	local result=''
-	local status=''
-	local status_msg=$CHARS_NORMAL
-	local ver_msg=$CHARS_BLANK
-
-	if QpkgIsMissing; then
-		mode=highlighted
-		/bin/touch "$REPORT_FLAGS_PATH"/status-missing
-	elif QpkgIsNtInstalled; then
-		mode=muted
-		/bin/touch "$REPORT_FLAGS_PATH"/state-notinstalled
+	if [[ -e $GNU_AWK_CMD ]]; then
+		printf '%s|%s|%s|%s|%s|%s\n' "$name_msg" "$status_msg" "$action_msg" "$ver_msg" "$app_ver_msg" "$path_msg"
 	else
-		mode=normal
-		/bin/touch "$REPORT_FLAGS_PATH"/state-installed
+		# column 1: package qpkg_name
+		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
+
+		# column 2: package statuses
+		printf "%$((COLUMN_SPACING))s"
+		printf "%-$((STD_COL_WIDTH+$(LenANSIDiff "$status_msg")))s" "$status_msg"
+
+		# column 3: package action and result
+		printf "%$((COLUMN_SPACING))s"
+		printf "%-$((STD_COL_WIDTH+$(LenANSIDiff "$action_msg")))s" "$action_msg"
+
+		# column 4: package version
+		printf "%$((COLUMN_SPACING))s"
+		printf "%-$((STD_COL_WIDTH+$(LenANSIDiff "$ver_msg")))s" "$ver_msg"
+
+		# column 5: application version
+		printf "%$((COLUMN_SPACING))s"
+		printf "%-$((STD_COL_WIDTH+$(LenANSIDiff "$app_ver_msg")))s" "$app_ver_msg"
+
+		# column 6: package installation path
+	 	printf "%$((COLUMN_SPACING))s"
+	 	printf "%-$((PACKAGE_PATH_COL_WIDTH+$(LenANSIDiff "$path_msg")))s" "$path_msg"
+
+	 	printf '\n'
 	fi
-
-	app_ver=$(QpkgGetApplVer)
-
-	case $app_ver in
-		dynamic|final|static)
-			/bin/touch "$REPORT_FLAGS_PATH"/app-$app_ver
-	esac
-
-	case $mode in
-		normal)
-			if QpkgIsCanLog; then
-				action=$(QpkgGetServiceAction)
-				/bin/touch "$REPORT_FLAGS_PATH"/action-$action
-
-				if [[ $action = not-found ]]; then
-					action_msg+=$(TextDarkGrey not-found)
-				else
-					action_msg+="$action"
-				fi
-
-				result=$(QpkgGetServiceResult)
-				/bin/touch "$REPORT_FLAGS_PATH"/result-$result
-
-				case $result in
-					ok)
-						action_msg+=" ($(TextBrightGreen OK))"
-						;;
-					in-progress)
-						action_msg+=" ($(TextBrightOrange $result))"
-						;;
-					aborted|failed)
-						action_msg+=" ($(TextBrightRed $result))"
-				esac
-			else
-				action_msg+=$(TextDarkGrey unsupported)
-				/bin/touch "$REPORT_FLAGS_PATH"/action-unsupported
-			fi
-
-			app_ver_msg+=$app_ver
-			name_msg+=$qpkg_name
-# 			path_msg+=$(QpkgGetInstallationPath)
-
-			if QPKGs-ISenabled.Exist "$qpkg_name"; then
-				status+=" $(TextBrightGreen enabled)"
-				/bin/touch "$REPORT_FLAGS_PATH"/state-enabled
-			else
-				status+=" $(TextBrightRed disabled)"
-				/bin/touch "$REPORT_FLAGS_PATH"/state-disabled
-			fi
-
-			if QPKGs-ISactive.Exist "$qpkg_name"; then
-				status+=" $(TextBrightGreen active)"
-				/bin/touch "$REPORT_FLAGS_PATH"/status-active
-			elif QPKGs-ISslow.Exist "$qpkg_name"; then
-				status+=" $(TextBrightOrange slow)"
-				/bin/touch "$REPORT_FLAGS_PATH"/status-slow
-			elif QPKGs-ISNTactive.Exist "$qpkg_name"; then
-				status+=" $(TextBrightRed inactive)"
-				/bin/touch "$REPORT_FLAGS_PATH"/status-inactive
-			else
-				status+=" $(TextBrightOrange unknown)"
-				/bin/touch "$REPORT_FLAGS_PATH"/status-unknown
-			fi
-
-			status_msg+=$(AddSeparators "$status")
-			ver_msg+=$(QpkgGetInstalledVer)
-			;;
-		muted)
-			if QpkgIsCanLog; then
-				action=$(QpkgGetServiceAction)
-				/bin/touch "$REPORT_FLAGS_PATH"/action-$action
-
-				if [[ $action != 'not-found' ]]; then
-					action_msg+="$action"
-					result=$(QpkgGetServiceResult)
-					/bin/touch "$REPORT_FLAGS_PATH"/result-$result
-
-					case $result in
-						ok)
-							action_msg+=" ($(TextBrightGreen OK))"
-							;;
-						in-progress)
-							action_msg+=" ($(TextBrightOrange $result))"
-							;;
-						aborted|failed)
-							action_msg+=" ($(TextBrightRed $result))"
-					esac
-				else
-					action_msg+=$(TextDarkGrey 'N/A')
-					/bin/touch "$REPORT_FLAGS_PATH"/na
-				fi
-			else
-				action_msg+=$(TextDarkGrey 'N/A')
-				/bin/touch "$REPORT_FLAGS_PATH"/na
-			fi
-
-			app_ver_msg+=$(TextDarkGrey "$app_ver")
-			name_msg+=$(TextDarkGrey "$qpkg_name")
-# 			path_msg+=$(TextDarkGrey 'N/A')
-			/bin/touch "$REPORT_FLAGS_PATH"/na
-
-			if ! QpkgIsArchOK; then
-				status='incompatible arch'
-			elif ! QpkgIsMinOSVerOk; then
-				status="incompatible $(OsGetQnapOS)"
-			elif ! QpkgIsMinRAMOk; then
-				status='insufficient RAM'
-			else
-				status='not installed'
-			fi
-
-			status_msg=$(TextDarkGrey "${CHARS_NORMAL}${status}")
-			ver_msg+=$(TextDarkGrey "$(QpkgGetAvailVer "$qpkg_name")")
-			;;
-		highlighted)
-			app_ver_msg+=$(TextBrightRed "$app_ver")
-			name_msg+=$(TextBrightRed "$qpkg_name")
-# 			path_msg=$(TextBrightRedBlink "${CHARS_ALERT}$(QpkgGetInstallationPath)")
-			status_msg=$(TextBrightRedBlink "${CHARS_ALERT}missing")
-			ver_msg+=$(TextBrightRed "$(QpkgGetInstalledVer)")
-	esac
-
-	if QPKGs-ISupgradable.Exist "$qpkg_name"; then
-		ver_msg+=" ($(TextBrightOrange "$(QpkgGetAvailVer)"))"
-		/bin/touch "$REPORT_FLAGS_PATH"/status-upgradable
-	fi
-
-	# column 1: package name
-	printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
-
-	# column 2: package statuses
-	printf "%$((COLUMN_SPACING))s"
-	printf "%-$((STD_COL_WIDTH+$(LenANSIDiff "$status_msg")))s" "$status_msg"
-
-	# column 3: package action and result
-	printf "%$((COLUMN_SPACING))s"
-	printf "%-$((STD_COL_WIDTH+$(LenANSIDiff "$action_msg")))s" "$action_msg"
-
-	# column 4: package version
-	printf "%$((COLUMN_SPACING))s"
-	printf "%-$((${package_ver_final_col_width:=0}+2+$(LenANSIDiff "$ver_msg")))s" "$ver_msg"
-
-# 	printf "%-$((STD_COL_WIDTH+$(LenANSIDiff "$ver_msg")))s" "$ver_msg"
-
-	# column 5: application version
-	printf "%$((COLUMN_SPACING))s"
-	printf "%-$((STD_COL_WIDTH+$(LenANSIDiff "$app_ver_msg")))s" "$app_ver_msg"
-
-	# column 6: package installation path
-# 	printf "%$((COLUMN_SPACING))s"
-# 	printf "%-$((PACKAGE_PATH_COL_WIDTH+$(LenANSIDiff "$path_msg")))s" "$path_msg"
-
-	printf '\n'
 
 	}
 
-DisplayAsReposReportTitleLine()
+GenerateReposReportTitleLine()
 	{
 
 	local a=''
 
-	printf '\n'
-
 	# column 1: package name
-	a="${CHARS_BULLET}QPKG name:"
+	a="QPKG name:"
 	printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 2: package installation date
-	printf "%$((COLUMN_SPACING))s"
-	a="${CHARS_BULLET}Install date:"
+	a="Install date:"
 	printf "%-$((PACKAGE_INSTALL_DATE_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 3: package repository
-	printf "%$((COLUMN_SPACING))s"
-	a="${CHARS_BULLET}Repository:"
+	a="Repository:"
 	printf "%-$((PACKAGE_REPO_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	printf '\n'
 
 	}
 
-_DisplayAsReposReportItemLine_()
+GenerateReposReportDataLine()
 	{
-
-	# * This function runs asynchronously *
 
 	# Input:
 	# 	$qpkg_name (global).
+
+	# Output:
+	# 	stdout = single report line with data fields.
 
 	local assigned_repo=''
 	local assigned_repo_msg=$CHARS_NORMAL
@@ -4891,47 +4761,47 @@ _DisplayAsReposReportItemLine_()
 			name_msg+=$(TextBrightRed "$qpkg_name")
 	esac
 
-	# column 1: package qpkg_name
-	printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
+	if [[ -e $GNU_AWK_CMD ]]; then
+		printf '%s|%s|%s\n' "$name_msg" "$install_date_msg" "$assigned_repo_msg"
+	else
+		# column 1: package qpkg_name
+		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 
-	# column 2: package installation date
-	printf "%$((COLUMN_SPACING))s"
-	printf "%-$((PACKAGE_INSTALL_DATE_COL_WIDTH+$(LenANSIDiff "$install_date_msg")))s" "$install_date_msg"
+		# column 2: package installation date
+		printf "%$((COLUMN_SPACING))s"
+		printf "%-$((PACKAGE_INSTALL_DATE_COL_WIDTH+$(LenANSIDiff "$install_date_msg")))s" "$install_date_msg"
 
-	# column 3: package repository
-	printf "%$((COLUMN_SPACING))s"
-	printf "%-$((PACKAGE_REPO_COL_WIDTH+$(LenANSIDiff "$assigned_repo_msg")))s" "$assigned_repo_msg"
+		# column 3: package repository
+		printf "%$((COLUMN_SPACING))s"
+		printf "%-$((PACKAGE_REPO_COL_WIDTH+$(LenANSIDiff "$assigned_repo_msg")))s" "$assigned_repo_msg"
 
-	printf '\n'
+		printf '\n'
+	fi
 
 	}
 
-DisplayAsAbsReportTitleLine()
+GenerateAbsReportTitleLine()
 	{
 
 	local a=''
 
-	printf '\n'
-
 	# column 1: package name
-	a="${CHARS_BULLET}QPKG name:"
+	a='QPKG name:'
 	printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 2: QPKG is installed
-	printf "%$((COLUMN_SPACING))s"
-	a="${CHARS_BULLET}Installed?"
+	a='Installed?'
 	printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 3: package abbreviations
-	printf "%$((COLUMN_SPACING))s"
-	a="${CHARS_BULLET}Acceptable QPKG name abbreviations and aliases:"
+	a='Acceptable QPKG name abbreviations and aliases:'
 	printf "%-$((PACKAGE_ABBS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	printf '\n'
 
 	}
 
-_DisplayAsAbsReportItemLine_()
+GenerateAbsReportDataLine()
 	{
 
 	# * This function runs asynchronously *
@@ -4982,77 +4852,71 @@ _DisplayAsAbsReportItemLine_()
 			name_msg+=$(TextBrightRed "$qpkg_name")
 	esac
 
-	# column 1: package name
-	printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
+	if [[ -e $GNU_AWK_CMD ]]; then
+		printf '%s|%s|%s\n' "$name_msg" "$installed_msg" "$abs_msg"
+	else
+		# column 1: package name
+		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 
-	# column 2: package is installed?
-	printf "%$((COLUMN_SPACING))s"
-	printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+$(LenANSIDiff "$installed_msg")))s" "$installed_msg"
+		# column 2: package is installed?
+		printf "%$((COLUMN_SPACING))s"
+		printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+$(LenANSIDiff "$installed_msg")))s" "$installed_msg"
 
-	# column 3: package abbreviations
-	printf "%$((COLUMN_SPACING))s"
-	printf "%-$((PACKAGE_ABBS_COL_WIDTH+$(LenANSIDiff "$abs_msg")))s" "$abs_msg"
+		# column 3: package abbreviations
+		printf "%$((COLUMN_SPACING))s"
+		printf "%-$((PACKAGE_ABBS_COL_WIDTH+$(LenANSIDiff "$abs_msg")))s" "$abs_msg"
 
-	printf '\n'
+		printf '\n'
+	fi
 
 	}
 
-DisplayAsDepsReportTitleLine()
+GenerateDepsReportTitleLine()
 	{
 
 	local a=''
 
-	printf '\n'
-
 	# column 1: package name.
-	a="${CHARS_BULLET}QPKG name:"
+	a='QPKG name:'
 	printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 2: package dependencies.
-	printf "%$((COLUMN_SPACING))s"
-	a="${CHARS_BULLET}Dependencies:"
+	a='Dependencies:'
 	printf "%-$((PACKAGE_DEPENDENCIES_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 3: QPKG is installed?
-	printf "%$((COLUMN_SPACING))s"
-	a="${CHARS_BULLET}Installed?"
+	a='Installed?'
 	printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 4: QPKG is enabled?
-	printf "%$((COLUMN_SPACING))s"
-	a="${CHARS_BULLET}Enabled?"
+	a='Enabled?'
 	printf "%-$((PACKAGE_ENABLED_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 5: QPKG is managed by sherpa?
-	printf "%$((COLUMN_SPACING))s"
-	a="${CHARS_BULLET}Managed?"
+	a='Managed?'
 	printf "%-$((PACKAGE_MANAGED_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 6: minimum NAS RAM required.
-	printf "%$((COLUMN_SPACING))s"
-	a="${CHARS_BULLET}Min. RAM:"
+	a='Min. RAM:'
 	printf "%-$((PACKAGE_MIN_RAM_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 7: minimum OS fimware version supported.
-	printf "%$((COLUMN_SPACING))s"
-	a="${CHARS_BULLET}Min. OS:"
+	a='Min. OS:'
 	printf "%-$((PACKAGE_MIN_OS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 8: maximum OS fimware version supported.
-	printf "%$((COLUMN_SPACING))s"
-	a="${CHARS_BULLET}Max. OS:"
+	a='Max. OS:'
 	printf "%-$((PACKAGE_MAX_OS_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 9: arch is compatible?
-	printf "%$((COLUMN_SPACING))s"
-	a="${CHARS_BULLET}Supported arch?"
+	a='Supported arch?'
 	printf "%-$((PACKAGE_ARCH_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	printf '\n'
 
 	}
 
-_DisplayAsDepsReportItemLine_()
+GenerateDepsReportDataLine()
 	{
 
 	# * This function runs asynchronously *
@@ -5297,96 +5161,91 @@ _DisplayAsDepsReportItemLine_()
 			name_msg+=$(TextBrightRed "$qpkg_name")
 	esac
 
-	# column 1: package name.
-	printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
+	if [[ -e $GNU_AWK_CMD ]]; then
+		printf '%s|%s|%s|%s|%s|%s|%s|%s|%s\n' "$name_msg" "$deps_msg" "$installed_msg" "$enabled_msg" "$managed_msg" "$min_ram_msg" "$min_os_msg" "$max_os_msg" "$arch_msg"
+	else
+		# column 1: package qpkg_name
+		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 
-	# column 2: package dependencies.
-	printf "%$((COLUMN_SPACING))s"
-	printf "%-$((PACKAGE_DEPENDENCIES_COL_WIDTH+$(LenANSIDiff "$deps_msg")))s" "$deps_msg"
+		# column 2: package dependencies.
+		printf "%$((COLUMN_SPACING))s"
+		printf "%-$((PACKAGE_DEPENDENCIES_COL_WIDTH+$(LenANSIDiff "$deps_msg")))s" "$deps_msg"
 
-	# column 3: package is installed?
-	printf "%$((COLUMN_SPACING))s"
-	printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+$(LenANSIDiff "$installed_msg")))s" "$installed_msg"
+		# column 3: package is installed?
+		printf "%$((COLUMN_SPACING))s"
+		printf "%-$((PACKAGE_INSTALLED_COL_WIDTH+$(LenANSIDiff "$installed_msg")))s" "$installed_msg"
 
-	# column 4: package is enabled?
-	printf "%$((COLUMN_SPACING))s"
-	printf "%-$((PACKAGE_ENABLED_COL_WIDTH+$(LenANSIDiff "$enabled_msg")))s" "$enabled_msg"
+		# column 4: package is enabled?
+		printf "%$((COLUMN_SPACING))s"
+		printf "%-$((PACKAGE_ENABLED_COL_WIDTH+$(LenANSIDiff "$enabled_msg")))s" "$enabled_msg"
 
-	# column 5: package is managed by sherpa?
-	printf "%$((COLUMN_SPACING))s"
-	printf "%-$((PACKAGE_MANAGED_COL_WIDTH+$(LenANSIDiff "$managed_msg")))s" "$managed_msg"
+		# column 5: package is managed by sherpa?
+		printf "%$((COLUMN_SPACING))s"
+		printf "%-$((PACKAGE_MANAGED_COL_WIDTH+$(LenANSIDiff "$managed_msg")))s" "$managed_msg"
 
-	# column 6: minimum NAS RAM required.
-	printf "%$((COLUMN_SPACING))s"
-	printf "%-$((PACKAGE_MIN_RAM_COL_WIDTH+$(LenANSIDiff "$min_ram_msg")))s" "$min_ram_msg"
+		# column 6: minimum NAS RAM required.
+		printf "%$((COLUMN_SPACING))s"
+		printf "%-$((PACKAGE_MIN_RAM_COL_WIDTH+$(LenANSIDiff "$min_ram_msg")))s" "$min_ram_msg"
 
-	# column 7: minimum OS fimware version supported.
-	printf "%$((COLUMN_SPACING))s"
-	printf "%-$((PACKAGE_MIN_OS_COL_WIDTH+$(LenANSIDiff "$min_os_msg")))s" "$min_os_msg"
+		# column 7: minimum OS fimware version supported.
+		printf "%$((COLUMN_SPACING))s"
+		printf "%-$((PACKAGE_MIN_OS_COL_WIDTH+$(LenANSIDiff "$min_os_msg")))s" "$min_os_msg"
 
-	# column 8: maximum OS fimware version supported.
-	printf "%$((COLUMN_SPACING))s"
-	printf "%-$((PACKAGE_MAX_OS_COL_WIDTH+$(LenANSIDiff "$max_os_msg")))s" "$max_os_msg"
+		# column 8: maximum OS fimware version supported.
+		printf "%$((COLUMN_SPACING))s"
+		printf "%-$((PACKAGE_MAX_OS_COL_WIDTH+$(LenANSIDiff "$max_os_msg")))s" "$max_os_msg"
 
-	# column 9: NAS arch is compatible?
-	printf "%$((COLUMN_SPACING))s"
-	printf "%-$((PACKAGE_ARCH_COL_WIDTH+$(LenANSIDiff "$arch_msg")))s" "$arch_msg"
+		# column 9: NAS arch is compatible?
+		printf "%$((COLUMN_SPACING))s"
+		printf "%-$((PACKAGE_ARCH_COL_WIDTH+$(LenANSIDiff "$arch_msg")))s" "$arch_msg"
 
-	printf '\n'
+		printf '\n'
+	fi
 
 	}
 
-DisplayAsFeaturesReportTitleLine()
+GenerateFeaturesReportTitleLine()
 	{
 
 	local a=''
 
-	printf '\n'
-
 	# column 1: package name.
-	a="${CHARS_BULLET}QPKG name:"
+	a='QPKG name:'
 	printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 2: package supports `backup` action?
-	printf "%$((COLUMN_SPACING))s"
-	a="${CHARS_BULLET}CanBack?"
+	a='CanBack?'
 	printf "%-$((PACKAGE_SUPPORTS_BACKUP_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 3: package supports `clean` action?
-	printf "%$((COLUMN_SPACING))s"
-	a="${CHARS_BULLET}CanClean?"
+	a='CanClean?'
 	printf "%-$((PACKAGE_SUPPORTS_CLEAN_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 4: package supports restart-to-update application action?
-	printf "%$((COLUMN_SPACING))s"
-	a="${CHARS_BULLET}StartUpd?"
+	a='StartUpd?'
 	printf "%-$((PACKAGE_SUPPORTS_START_TO_UPDATE_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 5: package is set to auto-update on restart?
-	printf "%$((COLUMN_SPACING))s"
-	a="${CHARS_BULLET}AutoUpd?"
+	a='AutoUpd?'
 	printf "%-$((PACKAGE_AUTO_UPDATE_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 6: package active test is builtin?
-	printf "%$((COLUMN_SPACING))s"
-	a="${CHARS_BULLET}LiveTest?"
+	a='LiveTest?'
 	printf "%-$((PACKAGE_ACTIVE_TEST_BUILTIN_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 7: package is independent?
-	printf "%$((COLUMN_SPACING))s"
-	a="${CHARS_BULLET}Indep?"
+	a='Indep?'
 	printf "%-$((PACKAGE_TIER_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 8: NAS arch is compatible?
-	printf "%$((COLUMN_SPACING))s"
-	a="${CHARS_BULLET}Compat?"
+	a='Compat?'
 	printf "%-$((PACKAGE_COMPATIBLE_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	printf '\n'
 
 	}
 
-_DisplayAsFeaturesReportItemLine_()
+GenerateFeaturesReportDataLine()
 	{
 
 	# * This function runs asynchronously *
@@ -5560,38 +5419,42 @@ _DisplayAsFeaturesReportItemLine_()
 			fi
 	esac
 
-	# column 1: package name.
-	printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
+	if [[ -e $GNU_AWK_CMD ]]; then
+		printf '%s|%s|%s|%s|%s|%s|%s|%s\n' "$name_msg" "$backup_msg" "$clean_msg" "$restart_to_update_msg" "$autoupdate_msg" "$active_test_msg" "$tier_msg" "$compatible_msg"
+	else
+		# column 1: package name.
+		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 
-	# column 2: package supports `backup` action?
-	printf "%$((COLUMN_SPACING))s"
-	printf "%-$((PACKAGE_SUPPORTS_BACKUP_COL_WIDTH+$(LenANSIDiff "$backup_msg")))s" "$backup_msg"
+		# column 2: package supports `backup` action?
+		printf "%$((COLUMN_SPACING))s"
+		printf "%-$((PACKAGE_SUPPORTS_BACKUP_COL_WIDTH+$(LenANSIDiff "$backup_msg")))s" "$backup_msg"
 
-	# column 3: package supports `clean` action?
-	printf "%$((COLUMN_SPACING))s"
-	printf "%-$((PACKAGE_SUPPORTS_CLEAN_COL_WIDTH+$(LenANSIDiff "$clean_msg")))s" "$clean_msg"
+		# column 3: package supports `clean` action?
+		printf "%$((COLUMN_SPACING))s"
+		printf "%-$((PACKAGE_SUPPORTS_CLEAN_COL_WIDTH+$(LenANSIDiff "$clean_msg")))s" "$clean_msg"
 
-	# column 4: package supports restart-to-update application action?
-	printf "%$((COLUMN_SPACING))s"
-	printf "%-$((PACKAGE_SUPPORTS_START_TO_UPDATE_COL_WIDTH+$(LenANSIDiff "$restart_to_update_msg")))s" "$restart_to_update_msg"
+		# column 4: package supports restart-to-update application action?
+		printf "%$((COLUMN_SPACING))s"
+		printf "%-$((PACKAGE_SUPPORTS_START_TO_UPDATE_COL_WIDTH+$(LenANSIDiff "$restart_to_update_msg")))s" "$restart_to_update_msg"
 
-	# column 5: package is set to auto-update on restart?
-	printf "%$((COLUMN_SPACING))s"
-	printf "%-$((PACKAGE_AUTO_UPDATE_COL_WIDTH+$(LenANSIDiff "$autoupdate_msg")))s" "$autoupdate_msg"
+		# column 5: package is set to auto-update on restart?
+		printf "%$((COLUMN_SPACING))s"
+		printf "%-$((PACKAGE_AUTO_UPDATE_COL_WIDTH+$(LenANSIDiff "$autoupdate_msg")))s" "$autoupdate_msg"
 
-	# column 6: package active test is builtin?
-	printf "%$((COLUMN_SPACING))s"
-	printf "%-$((PACKAGE_ACTIVE_TEST_BUILTIN_COL_WIDTH+$(LenANSIDiff "$active_test_msg")))s" "$active_test_msg"
+		# column 6: package active test is builtin?
+		printf "%$((COLUMN_SPACING))s"
+		printf "%-$((PACKAGE_ACTIVE_TEST_BUILTIN_COL_WIDTH+$(LenANSIDiff "$active_test_msg")))s" "$active_test_msg"
 
-	# column 7: package is independent?
-	printf "%$((COLUMN_SPACING))s"
-	printf "%-$((PACKAGE_TIER_COL_WIDTH+$(LenANSIDiff "$tier_msg")))s" "$tier_msg"
+		# column 7: package is independent?
+		printf "%$((COLUMN_SPACING))s"
+		printf "%-$((PACKAGE_TIER_COL_WIDTH+$(LenANSIDiff "$tier_msg")))s" "$tier_msg"
 
-	# column 8: NAS arch is compatible?
-	printf "%$((COLUMN_SPACING))s"
-	printf "%-$((PACKAGE_COMPATIBLE_COL_WIDTH+$(LenANSIDiff "$compatible_msg")))s" "$compatible_msg"
+		# column 8: NAS arch is compatible?
+		printf "%$((COLUMN_SPACING))s"
+		printf "%-$((PACKAGE_COMPATIBLE_COL_WIDTH+$(LenANSIDiff "$compatible_msg")))s" "$compatible_msg"
 
-	printf '\n'
+		printf '\n'
+	fi
 
 	}
 
@@ -7390,7 +7253,6 @@ QPKGs.IsCanBackup:Build()
 
 	FuncInit
 
-	local previous=''
 	local qpkg_name=''
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
@@ -7408,7 +7270,6 @@ QPKGs.IsCanRestartToUpdate:Build()
 
 	FuncInit
 
-	local previous=''
 	local qpkg_name=''
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
@@ -7426,7 +7287,6 @@ QPKGs.IsCanClean:Build()
 
 	FuncInit
 
-	local previous=''
 	local qpkg_name=''
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
@@ -7453,7 +7313,6 @@ Help.Abbreviations:Show()
 	local f=''
 	local -i m=0
 	local -i n=0
-	local previous=''
 
 	LoadPackages
 	DisableDebugToArchiveAndFile
@@ -7464,14 +7323,20 @@ Help.Abbreviations:Show()
 
 		Help.Basic:Show
 		DisplayAsHelpTitle "$(ShowAsTitleName) can recognise various abbreviations and aliases as $(ShowAsPackages)."
-		DisplayAsAbsReportTitleLine
+		printf '\n'
 
 		} > "$REPORT_OUTPUT_PATHFILE"
+
+	if [[ -e $GNU_AWK_CMD ]]; then
+		printf -v a '%s\n' 'QPKG name:|Installed?|Acceptable QPKG name abbreviations and aliases:'
+	else
+		printf -v a '%s\n' "$(GenerateAbsReportTitleLine)"
+	fi
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		QpkgSetIndex
-		_DisplayAsAbsReportItemLine_ > "$REPORTS_PATH/$n" &
+		GenerateAbsReportDataLine > "$REPORTS_PATH/$n" &
 	done
 
 	m=$n
@@ -7481,12 +7346,18 @@ Help.Abbreviations:Show()
 
 	for ((n=1; n<=m; n++)); do
 		f="$REPORTS_PATH/$n"
-		[[ -e $f ]] && a+="$(<$f)\n"		# Add newline to each imported report line.
+		[[ -e $f ]] && printf -v a '%s\n' "$a$(<$f)"		# Add newline to each imported report line.
 	done
 
-	[[ -n $a ]] && echo -en "$a" >> "$REPORT_OUTPUT_PATHFILE"
+	if [[ -n $a ]]; then
+		if [[ -e $GNU_AWK_CMD ]]; then
+			printf '%s' "$a" | Tableise
+		else
+			printf '%s' "$a"
+		fi >> "$REPORT_OUTPUT_PATHFILE"
 
-	IncludeReportFooter
+# 		GenerateReportFooter >> "$REPORT_OUTPUT_PATHFILE"
+	fi
 
 	DisplayAsProjSynExam "example: to install $(ShowAsPackageName SABnzbd), $(ShowAsPackageName Mylar3) and $(ShowAsPackageName nzbToMedia) all-at-once" 'install sab my nzb2' >> "$REPORT_OUTPUT_PATHFILE"
 
@@ -7537,7 +7408,7 @@ ShowReportBackups()
 			done <<< "$(cd "$QPKG_BU_PATH" && ls -l1tr --time-style=+"%Y-%m-%d %H:%M:%S" ./*.config.tar.gz 2> /dev/null | $AWK_CMD '{print $6" "$7" "$8" "$5}')"
 		fi
 
-		IncludeReportFooter
+		GenerateReportFooter
 
 		} > "$REPORT_OUTPUT_PATHFILE"
 
@@ -7561,18 +7432,21 @@ ShowReportDependencies()
 	local a=''
 	local -i m=0
 	local -i n=0
-	local previous=''
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport dependency
 	ResetReportsPath &> /dev/null
 
-	DisplayAsDepsReportTitleLine > "$REPORT_OUTPUT_PATHFILE"
+	if [[ -e $GNU_AWK_CMD ]]; then
+		printf -v a '%s\n' 'QPKG name:|Dependencies:|Installed?|Enabled?|Managed?|Min. RAM:|Min. OS:|Max. OS:|Supported arch?'
+	else
+		printf -v a '%s\n' "$(GenerateDepsReportTitleLine)"
+	fi
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		QpkgSetIndex
-		_DisplayAsDepsReportItemLine_ > "$REPORTS_PATH/$n" &
+		GenerateDepsReportDataLine > "$REPORTS_PATH/$n" &
 	done
 
 	m=$n
@@ -7582,16 +7456,23 @@ ShowReportDependencies()
 
 	for ((n=1; n<=m; n++)); do
 		f="$REPORTS_PATH/$n"
-		[[ -e $f ]] && a+="$(<$f)\n"		# Add newline to each imported report line.
+		[[ -e $f ]] && printf -v a '%s\n' "$a$(<$f)"		# Add newline to each imported report line.
 	done
 
-	[[ -n $a ]] && echo -en "$a" >> "$REPORT_OUTPUT_PATHFILE"
+	if [[ -n $a ]]; then
+		if [[ -e $GNU_AWK_CMD ]]; then
+			printf '%s' "$a" | Tableise
+		else
+			printf '%s' "$a"
+		fi > "$REPORT_OUTPUT_PATHFILE"
 
-	IncludeReportFooter
+		GenerateReportFooter >> "$REPORT_OUTPUT_PATHFILE"
+	fi
 
 	EraseThisLine
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
+		echo
 		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
 	else
 		ShowAsError 'no information to display'
@@ -7611,18 +7492,21 @@ ShowReportFeatures()
 	local a=''
 	local -i m=0
 	local -i n=0
-	local previous=''
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport features
 	ResetReportsPath &> /dev/null
 
-	DisplayAsFeaturesReportTitleLine > "$REPORT_OUTPUT_PATHFILE"
+	if [[ -e $GNU_AWK_CMD ]]; then
+		printf -v a '%s\n' 'QPKG name:|CanBack?|CanClean?|StartUpd?|AutoUpd?|LiveTest?|Indep?|Compat?'
+	else
+		printf -v a '%s\n' "$(GenerateFeaturesReportTitleLine)"
+	fi
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		QpkgSetIndex
-		_DisplayAsFeaturesReportItemLine_ > "$REPORTS_PATH/$n" &
+		GenerateFeaturesReportDataLine > "$REPORTS_PATH/$n" &
 	done
 
 	m=$n
@@ -7632,16 +7516,23 @@ ShowReportFeatures()
 
 	for ((n=1; n<=m; n++)); do
 		f="$REPORTS_PATH/$n"
-		[[ -e $f ]] && a+="$(<$f)\n"		# Add newline to each imported report line.
+		[[ -e $f ]] && printf -v a '%s\n' "$a$(<$f)"		# Add newline to each imported report line.
 	done
 
-	[[ -n $a ]] && echo -en "$a" >> "$REPORT_OUTPUT_PATHFILE"
+	if [[ -n $a ]]; then
+		if [[ -e $GNU_AWK_CMD ]]; then
+			printf '%s' "$a" | Tableise
+		else
+			printf '%s' "$a"
+		fi > "$REPORT_OUTPUT_PATHFILE"
 
-	IncludeReportHeadingsFooter
+		GenerateReportHeadingsFooter >> "$REPORT_OUTPUT_PATHFILE"
+	fi
 
 	EraseThisLine
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
+		echo
 		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
 	else
 		ShowAsError 'no information to display'
@@ -7658,7 +7549,9 @@ ShowReportPackages()
 
 	FuncInit
 
-	local previous=''
+	local a=''
+	local -i m=0
+	local -i n=0
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport package
@@ -7667,16 +7560,40 @@ ShowReportPackages()
 
 		Help.Basic:Show
 		DisplayAsHelpTitle "one-or-more $(ShowAsPackages) may be specified at-once."
-		DisplayAsPacksReportTitleLine
-
-		for qpkg_name in $(QPKGs-GRall:Array); do
-			QpkgSetIndex
-			DisplayAsPacksReportItemLine "$qpkg_name"
-		done
+		printf '\n'
 
 		} > "$REPORT_OUTPUT_PATHFILE"
 
-		IncludeReportFooter
+	if [[ -e $GNU_AWK_CMD ]]; then
+		printf -v a '%s\n' 'QPKG name:|Install date:|Repository:'
+	else
+		printf -v a '%s\n' "$(GeneratePacksReportTitleLine)"
+	fi
+
+	for qpkg_name in $(QPKGs-GRall:Array); do
+		((n++))
+		QpkgSetIndex
+		GeneratePacksReportDataLine "$qpkg_name" > "$REPORTS_PATH/$n" &
+	done
+
+	m=$n
+
+	# Load report data lines from individual files.
+
+	for ((n=1; n<=m; n++)); do
+		f="$REPORTS_PATH/$n"
+		[[ -e $f ]] && printf -v a '%s\n' "$a$(<$f)"		# Add newline to each imported report line.
+	done
+
+	if [[ -n $a ]]; then
+		if [[ -e $GNU_AWK_CMD ]]; then
+			printf '%s' "$a" | Tableise
+		else
+			printf '%s' "$a"
+		fi >> "$REPORT_OUTPUT_PATHFILE"
+
+		GenerateReportFooter >> "$REPORT_OUTPUT_PATHFILE"
+	fi
 
 		{
 
@@ -7688,6 +7605,7 @@ ShowReportPackages()
 	EraseThisLine
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
+		echo
 		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
 	else
 		ShowAsError 'no information to display'
@@ -7705,36 +7623,47 @@ ShowReportRepos()
 	local a=''
 	local -i m=0
 	local -i n=0
-	local previous=''
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport repository
 	ResetReportsPath &> /dev/null
-	DisplayAsReposReportTitleLine > "$REPORT_OUTPUT_PATHFILE"
+
+	if [[ -e $GNU_AWK_CMD ]]; then
+		printf -v a '%s\n' 'QPKG name:|Install date:|Repository:'
+	else
+		printf -v a '%s\n' "$(GenerateReposReportTitleLine)"
+	fi
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		QpkgSetIndex
-		_DisplayAsReposReportItemLine_ > "$REPORTS_PATH/$n" &
+		GenerateReposReportDataLine > "$REPORTS_PATH/$n" &
 	done
 
 	m=$n
 	wait 2> /dev/null
 
-	# Load report lines from individual files.
+	# Load report data lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
 		f="$REPORTS_PATH/$n"
-		[[ -e $f ]] && a+="$(<$f)\n"		# Add newline to each imported report line.
+		[[ -e $f ]] && printf -v a '%s\n' "$a$(<$f)"		# Add newline to each imported report line.
 	done
 
-	[[ -n $a ]] && echo -en "$a" >> "$REPORT_OUTPUT_PATHFILE"
+	if [[ -n $a ]]; then
+		if [[ -e $GNU_AWK_CMD ]]; then
+			printf '%s' "$a" | Tableise
+		else
+			printf '%s' "$a"
+		fi > "$REPORT_OUTPUT_PATHFILE"
 
-	IncludeReportFooter
+		GenerateReportFooter >> "$REPORT_OUTPUT_PATHFILE"
+	fi
 
 	EraseThisLine
 
 	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
+		echo
 		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
 	else
 		ShowAsError 'no information to display'
@@ -7746,12 +7675,8 @@ ShowReportRepos()
 
 	}
 
-ShowReportStatusesAutoWidth()
+ShowReportStatuses()
 	{
-
-	# Generate a status report formatted with auto-minimum-width columns (GNU `awk` only).
-
-	[[ -e $GNU_AWK_CMD ]] || return
 
 	FuncInit
 
@@ -7761,7 +7686,6 @@ ShowReportStatusesAutoWidth()
 	local f=''
 	local -i m=0
 	local -i n=0
-	local previous=''
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport status
@@ -7772,11 +7696,15 @@ ShowReportStatusesAutoWidth()
 		((n++))
 		QpkgSetIndex
 		QPKGs-ISupgradable.Exist "$qpkg_name" && a=true
-		_DisplayAsStatusReportItemLineAutoWidth_ > "$REPORTS_PATH/$n" &
+		GenerateStatusReportDataLine > "$REPORTS_PATH/$n" &
 	done
 
-	[[ $a = true ]] && b=" ($(TextBrightOrange new))"
-	c="QPKG name:|QPKG statuses:|QPKG action (result):|QPKG version${b}:|Application version:\n"
+	if [[ -e $GNU_AWK_CMD ]]; then
+		[[ $a = true ]] && b=" ($(TextBrightOrange new))"
+		printf -v c '%s\n' "QPKG name:|QPKG statuses:|QPKG action (result):|QPKG version${b}:|Application version:|QPKG installation path:"
+	else
+		printf -v c '%s\n' "$(GenerateStatusReportTitleLine)"
+	fi
 
 	m=$n
 	wait 2> /dev/null
@@ -7786,12 +7714,17 @@ ShowReportStatusesAutoWidth()
 	for ((n=1; n<=m; n++)); do
 		f="$REPORTS_PATH/$n"
 		# shellcheck disable=2179
-		[[ -e $f ]] && c+="$(<$f)\n"		# Add newline to each imported report line.
+		[[ -e $f ]] && printf -v c '%s\n' "$c$(<$f)"		# Add newline to each imported report line.
 	done
 
 	if [[ -n $c ]]; then
-		echo -en "$c" | Tableise > "$REPORT_OUTPUT_PATHFILE"
-		IncludeReportFooter
+		if [[ -e $GNU_AWK_CMD ]]; then
+			printf '%s' "$c" | Tableise
+		else
+			printf '%s' "$c"
+		fi > "$REPORT_OUTPUT_PATHFILE"
+
+		GenerateReportFooter >> "$REPORT_OUTPUT_PATHFILE"
 	fi
 
 	EraseThisLine
@@ -7813,180 +7746,126 @@ ShowReportStatusesAutoWidth()
 
 	}
 
-ShowReportStatuses()
-	{
-
-	# Generate a status report formatted with fixed-width columns (non-gawk).
-
-	FuncInit
-
-	local a=''
-	local f=''
-	local -i m=0
-	local -i n=0
-	local previous=''
-
-	DisableDebugToArchiveAndFile
-	DisplayProcReport status
-	ResetReportsPath &> /dev/null
-
-	# Add width to include " (new)" string to QPKG version title.
-
-	if QPKGs-ISupgradable.IsAny; then
-		package_ver_final_col_width=$((STD_COL_WIDTH+6))
-	else
-		package_ver_final_col_width=$STD_COL_WIDTH
-	fi
-
-	DisplayAsStatusReportTitleLine > "$REPORT_OUTPUT_PATHFILE"
-
-	for qpkg_name in $(QPKGs-GRall:Array); do
-		QPKGs-ACstatus-dn.Exist "$qpkg_name" || continue
-		((n++))
-		QpkgSetIndex
-		_DisplayAsStatusReportItemLine_ > "$REPORTS_PATH/$n" &
-	done
-
-	m=$n
-	wait 2> /dev/null
-
-	# Load report lines from individual files.
-
-	for ((n=1; n<=m; n++)); do
-		f="$REPORTS_PATH/$n"
-		[[ -e $f ]] && a+="$(<$f)\n"		# Add newline to each imported report line.
-	done
-
-	[[ -n $a ]] && echo -en "$a" >> "$REPORT_OUTPUT_PATHFILE"
-
-	IncludeReportFooter
-	EraseThisLine
-
-	if [[ -e $REPORT_OUTPUT_PATHFILE ]]; then
-		echo
-		DisplayFileInViewport "$REPORT_OUTPUT_PATHFILE"
-	else
-		ShowAsError 'no information to display'
-	fi
-
-	QPKGs.States:List
-
-	show_action_results_ok=false
-	show_action_results_skipped=false
-	show_action_results_failed=false
-
-	FuncExit
-
-	}
-
-IncludeReportFooter()
+GenerateReportFooter()
 	{
 
 	DisplayAsHelpTitle 'report information:'
 
-	if [[ -e "$REPORT_FLAGS_PATH"/status-missing ]]; then
-		DisplayAsIndentQuotedInfoItem "$(TextBrightRed '! missing')" 'QPKG is missing from its installation path. Please reinstall it'
-	fi
+	local a=''
 
-	if [[ -e "$REPORT_FLAGS_PATH"/req-alert ]]; then
-		DisplayAsIndentQuotedInfoItem "$(TextBrightRed '!')" 'prevents QPKG working correctly'
-	fi
+	a=$({
+		if [[ -e "$REPORT_FLAGS_PATH"/status-missing ]]; then
+			DisplayAsIndentQuotedInfoItem "$(TextBrightRed '! missing')" 'QPKG is missing from its installation path. Please reinstall it'
+		fi
 
-	if [[ -e "$REPORT_FLAGS_PATH"/state-disabled ]]; then
-		DisplayAsIndentQuotedInfoItem "$(TextBrightRed disabled)" "QPKG won't start at bootup. Enable it first, then start it"
-	fi
+		if [[ -e "$REPORT_FLAGS_PATH"/req-alert ]]; then
+			DisplayAsIndentQuotedInfoItem "$(TextBrightRed '!')" 'prevents QPKG working correctly'
+		fi
 
-	if [[ -e "$REPORT_FLAGS_PATH"/result-aborted ]]; then
-		DisplayAsIndentQuotedInfoItem "($(TextBrightRed aborted))" 'last action was aborted'
-	fi
+		if [[ -e "$REPORT_FLAGS_PATH"/state-disabled ]]; then
+			DisplayAsIndentQuotedInfoItem "$(TextBrightRed disabled)" "QPKG won't start at bootup. Enable it first, then start it"
+		fi
 
-	if [[ -e "$REPORT_FLAGS_PATH"/result-failed ]]; then
-		DisplayAsIndentQuotedInfoItem "($(TextBrightRed failed))" 'last action failed'
-	fi
+		if [[ -e "$REPORT_FLAGS_PATH"/result-aborted ]]; then
+			DisplayAsIndentQuotedInfoItem "($(TextBrightRed aborted))" 'last action was aborted'
+		fi
 
-	if [[ -e "$REPORT_FLAGS_PATH"/status-inactive ]]; then
-		DisplayAsIndentQuotedInfoItem "$(TextBrightRed inactive)" 'application is dead or not-started. Try starting/activating it'
-	fi
+		if [[ -e "$REPORT_FLAGS_PATH"/result-failed ]]; then
+			DisplayAsIndentQuotedInfoItem "($(TextBrightRed failed))" 'last action failed'
+		fi
 
-	if [[ -e "$REPORT_FLAGS_PATH"/backup-file-old ]]; then
-		DisplayAsIndentQuotedInfoItem "$(TextBrightRed '!')" "QPKG backup file was updated more-than $highlight_backups_older_than."
-	fi
+		if [[ -e "$REPORT_FLAGS_PATH"/status-inactive ]]; then
+			DisplayAsIndentQuotedInfoItem "$(TextBrightRed inactive)" 'application is dead or not-started. Try starting/activating it'
+		fi
 
-	if [[ -e "$REPORT_FLAGS_PATH"/status-upgradable ]]; then
-		DisplayAsIndentQuotedInfoItem "($(TextBrightOrange new))" 'an upgraded QPKG version is available'
-	fi
+		if [[ -e "$REPORT_FLAGS_PATH"/backup-file-old ]]; then
+			DisplayAsIndentQuotedInfoItem "$(TextBrightRed '!')" "QPKG backup file was updated more-than $highlight_backups_older_than."
+		fi
 
-	if [[ -e "$REPORT_FLAGS_PATH"/req-attention ]]; then
-		DisplayAsIndentQuotedInfoItem "$(TextBrightOrange '*')" 'QPKG cannot be installed'
-	fi
+		if [[ -e "$REPORT_FLAGS_PATH"/status-upgradable ]]; then
+			DisplayAsIndentQuotedInfoItem "($(TextBrightOrange new))" 'an upgraded QPKG version is available'
+		fi
 
-	if [[ -e "$REPORT_FLAGS_PATH"/status-stopping ]]; then
-		DisplayAsIndentQuotedInfoItem "$(TextBrightOrange stopping)" 'QPKG is stopping. Check again shortly'
-	fi
+		if [[ -e "$REPORT_FLAGS_PATH"/req-attention ]]; then
+			DisplayAsIndentQuotedInfoItem "$(TextBrightOrange '*')" 'QPKG cannot be installed'
+		fi
 
-	if [[ -e "$REPORT_FLAGS_PATH"/status-slow ]]; then
-		DisplayAsIndentQuotedInfoItem "$(TextBrightOrange slow)" 'application is alive, but was slow to respond to the status request. Try checking again shortly' 		# More common on NAS with lower installed RAM, and usually because the application has been page-swapped to disk and must be reloaded into RAM.
-	fi
+		if [[ -e "$REPORT_FLAGS_PATH"/status-stopping ]]; then
+			DisplayAsIndentQuotedInfoItem "$(TextBrightOrange stopping)" 'QPKG is stopping. Check again shortly'
+		fi
 
-	if [[ -e "$REPORT_FLAGS_PATH"/status-starting ]]; then
-		DisplayAsIndentQuotedInfoItem "$(TextBrightOrange starting)" 'QPKG is starting. Check again shortly'
-	fi
+		if [[ -e "$REPORT_FLAGS_PATH"/status-slow ]]; then
+			DisplayAsIndentQuotedInfoItem "$(TextBrightOrange slow)" 'application is alive, but was slow to respond to the status request. Try checking again shortly' 		# More common on NAS with lower installed RAM, and usually because the application has been page-swapped to disk and must be reloaded into RAM.
+		fi
 
-	if [[ -e "$REPORT_FLAGS_PATH"/result-in-progress ]]; then
-		DisplayAsIndentQuotedInfoItem "($(TextBrightOrange in-progress))" 'an action is in-progress. Check again shortly'
-	fi
+		if [[ -e "$REPORT_FLAGS_PATH"/status-starting ]]; then
+			DisplayAsIndentQuotedInfoItem "$(TextBrightOrange starting)" 'QPKG is starting. Check again shortly'
+		fi
 
-	if [[ -e "$REPORT_FLAGS_PATH"/status-unknown ]]; then
-		DisplayAsIndentQuotedInfoItem "$(TextBrightOrange unknown)" 'application status could not be determined'
-	fi
+		if [[ -e "$REPORT_FLAGS_PATH"/result-in-progress ]]; then
+			DisplayAsIndentQuotedInfoItem "($(TextBrightOrange in-progress))" 'an action is in-progress. Check again shortly'
+		fi
 
-	if [[ -e "$REPORT_FLAGS_PATH"/repo-other ]]; then
-		DisplayAsIndentQuotedInfoItem "$(TextBrightOrange '* URL')" 'another repository is managing this QPKG'
-	fi
+		if [[ -e "$REPORT_FLAGS_PATH"/status-unknown ]]; then
+			DisplayAsIndentQuotedInfoItem "$(TextBrightOrange unknown)" 'application status could not be determined'
+		fi
 
-	if [[ -e "$REPORT_FLAGS_PATH"/state-enabled ]]; then
-		DisplayAsIndentQuotedInfoItem "$(TextBrightGreen enabled)" 'QPKG will be started at bootup'
-	fi
+		if [[ -e "$REPORT_FLAGS_PATH"/repo-other ]]; then
+			DisplayAsIndentQuotedInfoItem "$(TextBrightOrange '* URL')" 'another repository is managing this QPKG'
+		fi
 
-	if [[ -e "$REPORT_FLAGS_PATH"/result-ok ]]; then
-		DisplayAsIndentQuotedInfoItem "($(TextBrightGreen OK))" 'last action was successful'
-	fi
+		if [[ -e "$REPORT_FLAGS_PATH"/state-enabled ]]; then
+			DisplayAsIndentQuotedInfoItem "$(TextBrightGreen enabled)" 'QPKG will be started at bootup'
+		fi
 
-	if [[ -e "$REPORT_FLAGS_PATH"/status-active ]]; then
-		DisplayAsIndentQuotedInfoItem "$(TextBrightGreen active)" "application is alive (and responsive if a daemon)"
-	fi
+		if [[ -e "$REPORT_FLAGS_PATH"/result-ok ]]; then
+			DisplayAsIndentQuotedInfoItem "($(TextBrightGreen OK))" 'last action was successful'
+		fi
 
-	if [[ -e "$REPORT_FLAGS_PATH"/repo-sherpa ]]; then
-		DisplayAsIndentQuotedInfoItem "$(TextBrightGreen sherpa)" "$(ShowAsTitleName) is managing this QPKG"
-	fi
+		if [[ -e "$REPORT_FLAGS_PATH"/status-active ]]; then
+			DisplayAsIndentQuotedInfoItem "$(TextBrightGreen active)" 'application is alive (and responsive if a daemon)'
+		fi
 
-	if [[ -e "$REPORT_FLAGS_PATH"/app-dynamic ]]; then
-		DisplayAsIndentQuotedInfoItem dynamic 'application version is the latest available'
-	fi
+		if [[ -e "$REPORT_FLAGS_PATH"/repo-sherpa ]]; then
+			DisplayAsIndentQuotedInfoItem "$(TextBrightGreen sherpa)" "$(ShowAsTitleName) is managing this QPKG"
+		fi
 
-	if [[ -e "$REPORT_FLAGS_PATH"/app-static ]]; then
-		DisplayAsIndentQuotedInfoItem static 'application version auto-update is disabled'
-	fi
+		if [[ -e "$REPORT_FLAGS_PATH"/app-dynamic ]]; then
+			DisplayAsIndentQuotedInfoItem dynamic 'application version is the latest available'
+		fi
 
-	if [[ -e "$REPORT_FLAGS_PATH"/app-final ]]; then
-		DisplayAsIndentQuotedInfoItem final 'application version is the last available'
-	fi
+		if [[ -e "$REPORT_FLAGS_PATH"/app-static ]]; then
+			DisplayAsIndentQuotedInfoItem static 'application version auto-update is disabled'
+		fi
 
-	if [[ -e "$REPORT_FLAGS_PATH"/action-not-found ]]; then
-		DisplayAsIndentQuotedInfoItem "$(TextDarkGrey not-found)" 'action tracking files were not found'
-	fi
+		if [[ -e "$REPORT_FLAGS_PATH"/app-final ]]; then
+			DisplayAsIndentQuotedInfoItem final 'application version is the last available'
+		fi
 
-	if [[ -e "$REPORT_FLAGS_PATH"/action-unsupported ]]; then
-		DisplayAsIndentQuotedInfoItem "$(TextDarkGrey unsupported)" 'action tracking is not supported by this QPKG'
-	fi
+		if [[ -e "$REPORT_FLAGS_PATH"/action-not-found ]]; then
+			DisplayAsIndentQuotedInfoItem "$(TextDarkGrey not-found)" 'action tracking files were not found'
+		fi
 
-	if [[ -e "$REPORT_FLAGS_PATH"/na ]]; then
-		DisplayAsIndentQuotedInfoItem "$(TextDarkGrey 'N/A')" 'not applicable'
-	fi
+		if [[ -e "$REPORT_FLAGS_PATH"/action-unsupported ]]; then
+			DisplayAsIndentQuotedInfoItem "$(TextDarkGrey unsupported)" 'action tracking is not supported by this QPKG'
+		fi
 
-# 	if [[ -e "$REPORT_FLAGS_PATH"/state-notinstalled ]]; then
-# 		DisplayAsInfoIndentItem "$(TextDarkGrey muted)" 'QPKG is not installed'
-# 	fi
+		if [[ -e "$REPORT_FLAGS_PATH"/na ]]; then
+			DisplayAsIndentQuotedInfoItem "$(TextDarkGrey 'N/A')" 'not applicable'
+		fi
+
+	# 	if [[ -e "$REPORT_FLAGS_PATH"/state-notinstalled ]]; then
+	# 		DisplayAsInfoIndentItem "$(TextDarkGrey muted)" 'QPKG is not installed'
+	# 	fi
+	})
+
+	if [[ -n $a ]]; then
+		if [[ -e $GNU_AWK_CMD ]]; then
+			printf '%s' "$a" | Tableise
+		else
+			printf '%s\n' "$a"
+		fi
+	fi
 
 	if [[ -e "$REPORT_FLAGS_PATH"/deps ]]; then
 		DisplayAsHelpTitle "QPKG dependencies are automatically installed/started/stopped/restarted as-required by $(ShowAsTitleName)."
@@ -8000,21 +7879,34 @@ IncludeReportFooter()
 		DisplayAsIndentItem "all $(ShowAsTitleName) backup files are stored here: $QPKG_BU_PATH"
 	fi
 
-	} >> "$REPORT_OUTPUT_PATHFILE"
+	}
 
-IncludeReportHeadingsFooter()
+GenerateReportHeadingsFooter()
 	{
 
 	DisplayAsHelpTitle 'column headings:'
-	DisplayAsIndentQuotedInfoItem 'CanBack?' "application config 'backup' and 'restore' supported"
-	DisplayAsIndentQuotedInfoItem 'CanClean?' "application 'clean' supported"
-	DisplayAsIndentQuotedInfoItem 'StartUpd?' 'application restart-to-update supported'
-	DisplayAsIndentQuotedInfoItem 'AutoUpd?' 'application restart-to-update enabled'
-	DisplayAsIndentQuotedInfoItem 'LiveTest?' "has a built-in 'status' check, and can test for daemon \"live\" status"
-	DisplayAsIndentQuotedInfoItem 'Indep?' 'is independent of other QPKGs'
-	DisplayAsIndentQuotedInfoItem 'Compat?' 'has a release compatible with this NAS arch'
 
-	} >> "$REPORT_OUTPUT_PATHFILE"
+	local a=''
+
+	a=$({
+		DisplayAsIndentQuotedInfoItem 'CanBack?' "application config 'backup' and 'restore' supported"
+		DisplayAsIndentQuotedInfoItem 'CanClean?' "application 'clean' supported"
+		DisplayAsIndentQuotedInfoItem 'StartUpd?' 'application restart-to-update supported'
+		DisplayAsIndentQuotedInfoItem 'AutoUpd?' 'application restart-to-update enabled'
+		DisplayAsIndentQuotedInfoItem 'LiveTest?' "has a built-in 'status' check, and can test for daemon \"live\" status"
+		DisplayAsIndentQuotedInfoItem 'Indep?' 'is independent of other QPKGs'
+		DisplayAsIndentQuotedInfoItem 'Compat?' 'has a release compatible with this NAS arch'
+	})
+
+	if [[ -n $a ]]; then
+		if [[ -e $GNU_AWK_CMD ]]; then
+			printf '%s' "$a" | Tableise
+		else
+			printf '%s\n' "$a"
+		fi
+	fi
+
+	}
 
 QPKGs.ISbackedup:Show()
 	{
@@ -13784,8 +13676,8 @@ CaughtSIGINT()
 
 	trap - SIGINT
 
-	[[ -n ${DISPLAY_INHIBIT_PATHFILE:-} ]] && /bin/touch "$DISPLAY_INHIBIT_PATHFILE"
-	[[ -n ${ACTION_ABORT_PATHFILE:-} ]] && /bin/touch "$ACTION_ABORT_PATHFILE"
+	[[ -n ${DISPLAY_INHIBIT_PATHFILE:-} ]] && [[ -d $($DIRNAME_CMD "$DISPLAY_INHIBIT_PATHFILE") ]] && /bin/touch "$DISPLAY_INHIBIT_PATHFILE"
+	[[ -n ${ACTION_ABORT_PATHFILE:-} ]] && [[ -d $($DIRNAME_CMD "$ACTION_ABORT_PATHFILE") ]] && /bin/touch "$ACTION_ABORT_PATHFILE"
 	EraseThisLine
 	ShowAsAbort 'caught SIGINT'
 	CloseActionMsgPipe
