@@ -1,9 +1,4 @@
-* Autowidth report columns?
-	- Maybe this? https://unix.stackexchange.com/a/448471
-	- requires GNU awk from Entware for compatibility.
-
-* When building status report, check if OOM killer has been active.
-	- Check killed pids against inactive daemons and report as-such.
+* Check OOM killed pids against inactive daemons and report as-such on status report.
 
 * Takes 3.5 to 6 seconds to build QPKG states on Laura.
 	- Should be able to do this quicker.
