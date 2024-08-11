@@ -1,12 +1,5 @@
 Observed issues:
 
-	* Found additional files in /opt/tmp that shouldn't be there.
-		-------------------------------------------------------------------------------------------------------------------------
-		[/opt/tmp] # ll
-		-rw-rw-rw-  1 admin administrators 4.8K 2024-08-12 04:36 glances-admin.log
-		drwxrwxrwx  4 admin administrators 4.0K 2024-08-12 04:36 pyLoad/
-		-------------------------------------------------------------------------------------------------------------------------
-
 	* 'clean' doesn't run on these QPKGs on armv5 (works fine on arm64, armv7):
 		-------------------------------------------------------------------------------------------------------------------------
 		[/share/Public] # sherpa clean taut watcher unmanic
