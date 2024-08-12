@@ -5247,7 +5247,7 @@ GenerateFeaturesReportTitleLine()
 	printf "%-$((PACKAGE_COMPATIBLE_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 9: QPKG is sherpa-compatible?
-	a='Compat?'
+	a='Enhanced?'
 	printf "%-$((STD_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	printf '\n'
@@ -7524,7 +7524,7 @@ ShowReportFeatures()
 	ResetReportsPath &> /dev/null
 
 	if [[ -e $GNU_AWK_CMD ]]; then
-		printf -v a '%s\n' 'QPKG name:|CanBack?|CanClean?|StartUpd?|AutoUpd?|LiveTest?|Indep?|Compat?|sherpaCompat?'
+		printf -v a '%s\n' 'QPKG name:|CanBack?|CanClean?|StartUpd?|AutoUpd?|LiveTest?|Indep?|Compat?|Enhanced?'
 	else
 		printf -v a '%s\n' "$(GenerateFeaturesReportTitleLine)"
 	fi
@@ -7865,7 +7865,7 @@ GenerateReportFooter()
 		fi
 
 		if [[ -e "$REPORT_FLAGS_PATH"/app-static ]]; then
-			DisplayAsIndentQuotedInfoItem static 'application version auto-update is disabled'
+			DisplayAsIndentQuotedInfoItem static 'application version auto-update is disabled or unsupported'
 		fi
 
 		if [[ -e "$REPORT_FLAGS_PATH"/app-final ]]; then
@@ -7877,7 +7877,7 @@ GenerateReportFooter()
 		fi
 
 		if [[ -e "$REPORT_FLAGS_PATH"/action-unsupported ]]; then
-			DisplayAsIndentQuotedInfoItem "$(TextDarkGrey unsupported)" 'action tracking is not supported by this QPKG'
+			DisplayAsIndentQuotedInfoItem "$(TextDarkGrey unsupported)" 'action tracking is unsupported by this QPKG'
 		fi
 
 		if [[ -e "$REPORT_FLAGS_PATH"/na ]]; then
@@ -7926,7 +7926,7 @@ GenerateReportHeadingsFooter()
 		DisplayAsIndentQuotedInfoItem 'LiveTest?' "has a built-in 'status' check, and can test for daemon \"live\" status"
 		DisplayAsIndentQuotedInfoItem 'Indep?' 'is independent of other QPKGs'
 		DisplayAsIndentQuotedInfoItem 'Compat?' 'has a release compatible with this NAS arch'
-		DisplayAsIndentQuotedInfoItem 'sherpaCompat?' "$(ShowAsTitleName) enhanced service actions are supported"
+		DisplayAsIndentQuotedInfoItem 'Enhanced?' "$(ShowAsTitleName) enhanced service actions are supported"
 	})
 
 	if [[ -n $a ]]; then
