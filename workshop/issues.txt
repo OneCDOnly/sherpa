@@ -1,6 +1,9 @@
 Observed issues:
 
-	* 'clean' doesn't run on these QPKGs on armv5 (works fine on arm64, armv7):
+	* Whisparr source archive is being downloaded on every start.
+		- https://forum.qnap.com/viewtopic.php?p=866768#p866768
+
+	* 'clean' doesn't run on these QPKGs on ARMv5 (works fine on ARM64, ARMv7):
 		-------------------------------------------------------------------------------------------------------------------------
 		[/share/Public] # sherpa clean taut watcher unmanic
 		sherpa v240802-unstable
@@ -44,10 +47,6 @@ Observed issues:
 			# sherpa show packages
 			# sherpa show results
 		-------------------------------------------------------------------------------------------------------------------------
-
-	* Applications sourced online are not updating (e.g. Tautulli).
-		- Had to 'clean' it to get latest version pulled.
-		- Forgot to check: was auto-update disabled? Retest.
 
 	* 'sherpa' and 'opkg' were not available after installing Entware.
 		- Entware installation may be corrupt.
