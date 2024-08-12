@@ -4330,7 +4330,7 @@ GeneratePacksReportTitleLine()
 	printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 2: application version
-	a='Application version:'
+	a='Appl. version:'
 	printf "%-$((PACKAGE_APP_VER_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 3: package description
@@ -4450,7 +4450,7 @@ GenerateStatusReportTitleLine()
 
 	# column 5: application version
 	printf "%$((COLUMN_SPACING))s"
-	a='Application version'
+	a='Appl. version'
 	printf "%-${STD_COL_WIDTH}s" "$a:"
 
 	# column 6: package installation path
@@ -7593,7 +7593,7 @@ ShowReportPackages()
 		} > "$REPORT_OUTPUT_PATHFILE"
 
 	if [[ -e $GNU_AWK_CMD ]]; then
-		printf -v a '%s\n' 'QPKG name:|Install date:|Repository:'
+		printf -v a '%s\n' 'QPKG name:|Appl. version:|Description:'
 	else
 		printf -v a '%s\n' "$(GeneratePacksReportTitleLine)"
 	fi
@@ -7729,7 +7729,7 @@ ShowReportStatuses()
 
 	if [[ -e $GNU_AWK_CMD ]]; then
 		[[ $a = true ]] && b=" ($(TextBrightOrange new))"
-		printf -v c '%s\n' "QPKG name:|QPKG statuses:|QPKG action (result):|QPKG version${b}:|Application version:|QPKG installation path:"
+		printf -v c '%s\n' "QPKG name:|QPKG statuses:|QPKG action (result):|QPKG version${b}:|Appl. version:|QPKG installation path:"
 	else
 		printf -v c '%s\n' "$(GenerateStatusReportTitleLine)"
 	fi
