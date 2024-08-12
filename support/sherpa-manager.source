@@ -4502,34 +4502,6 @@ GenerateStatusReportDataLine()
 
 	case $mode in
 		normal)
-			if QpkgIsSherpaCompatible; then
-				action=$(QpkgGetServiceAction)
-				/bin/touch "$REPORT_FLAGS_PATH"/action-$action
-
-				if [[ $action = not-found ]]; then
-					action_msg+=$(TextDarkGrey not-found)
-				else
-					action_msg+="$action"
-				fi
-
-				result=$(QpkgGetServiceResult)
-				/bin/touch "$REPORT_FLAGS_PATH"/result-$result
-
-				case $result in
-					ok)
-						action_msg+=" ($(TextBrightGreen OK))"
-						;;
-					in-progress)
-						action_msg+=" ($(TextBrightOrange $result))"
-						;;
-					aborted|failed)
-						action_msg+=" ($(TextBrightRed $result))"
-				esac
-			else
-				action_msg+=$(TextDarkGrey unsupported)
-				/bin/touch "$REPORT_FLAGS_PATH"/action-unsupported
-			fi
-
 			app_ver_msg+=$app_ver
 			name_msg+=$qpkg_name
 			path_msg+=$(QpkgGetInstallationPath)
@@ -4554,6 +4526,39 @@ GenerateStatusReportDataLine()
 			else
 				status+=" $(TextBrightOrange unknown)"
 				/bin/touch "$REPORT_FLAGS_PATH"/status-unknown
+			fi
+
+			if QpkgIsSherpaCompatible; then
+				action=$(QpkgGetServiceAction)
+				/bin/touch "$REPORT_FLAGS_PATH"/action-$action
+
+				if [[ $action = not-found ]]; then
+					if OsIsStarting && [[ -e $REPORT_FLAGS_PATH/state-enabled && -e $REPORT_FLAGS_PATH/status-inactive ]]; then
+						action_msg+=$(TextBrightOrange pending)
+						/bin/touch "$REPORT_FLAGS_PATH"/action-pending
+					else
+						action_msg+=$(TextDarkGrey not-found)
+					fi
+				else
+					action_msg+="$action"
+				fi
+
+				result=$(QpkgGetServiceResult)
+				/bin/touch "$REPORT_FLAGS_PATH"/result-$result
+
+				case $result in
+					ok)
+						action_msg+=" ($(TextBrightGreen OK))"
+						;;
+					in-progress)
+						action_msg+=" ($(TextBrightOrange $result))"
+						;;
+					aborted|failed)
+						action_msg+=" ($(TextBrightRed $result))"
+				esac
+			else
+				action_msg+=$(TextDarkGrey unsupported)
+				/bin/touch "$REPORT_FLAGS_PATH"/action-unsupported
 			fi
 
 			status_msg+=$(AddSeparators "$status")
@@ -7809,6 +7814,10 @@ GenerateReportFooter()
 
 		if [[ -e "$REPORT_FLAGS_PATH"/req-attention ]]; then
 			DisplayAsIndentQuotedInfoItem "$(TextBrightOrange '*')" 'QPKG cannot be installed'
+		fi
+
+		if [[ -e "$REPORT_FLAGS_PATH"/action-pending ]]; then
+			DisplayAsIndentQuotedInfoItem "$(TextBrightOrange pending)" 'QPKG is waiting for first action to be run. Check again shortly'
 		fi
 
 		if [[ -e "$REPORT_FLAGS_PATH"/status-stopping ]]; then
