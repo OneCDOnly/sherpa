@@ -4502,7 +4502,7 @@ GenerateStatusReportDataLine()
 
 	case $mode in
 		normal)
-			if QpkgIsCanLog; then
+			if QpkgIsSherpaCompatible; then
 				action=$(QpkgGetServiceAction)
 				/bin/touch "$REPORT_FLAGS_PATH"/action-$action
 
@@ -4560,7 +4560,7 @@ GenerateStatusReportDataLine()
 			ver_msg+=$(QpkgGetInstalledVer)
 			;;
 		muted)
-			if QpkgIsCanLog; then
+			if QpkgIsSherpaCompatible; then
 				action=$(QpkgGetServiceAction)
 
 				if [[ $action != not-found ]]; then
@@ -5241,6 +5241,10 @@ GenerateFeaturesReportTitleLine()
 	a='Compat?'
 	printf "%-$((PACKAGE_COMPATIBLE_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
+	# column 9: QPKG is sherpa-compatible?
+	a='Compat?'
+	printf "%-$((STD_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
+
 	printf '\n'
 
 	}
@@ -5261,6 +5265,7 @@ GenerateFeaturesReportDataLine()
 	local mode=''
 	local name_msg=$CHARS_BLANK
 	local restart_to_update_msg=$CHARS_BLANK
+	local sherpa_compatible_msg=$CHARS_BLANK
 	local tier_msg=$CHARS_BLANK
 
 	if QpkgIsMissing; then
@@ -5322,6 +5327,12 @@ GenerateFeaturesReportDataLine()
 		compatible_msg+=false
 	fi
 
+	if QpkgIsSherpaCompatible; then
+		sherpa_compatible_msg+=true
+	else
+		sherpa_compatible_msg+=false
+	fi
+
 	case $mode in
 		normal)
 			if [[ $active_test_msg =~ true ]]; then
@@ -5362,6 +5373,12 @@ GenerateFeaturesReportDataLine()
 # 				restart_to_update_msg=$(TextBrightOrange "$restart_to_update_msg")
 			fi
 
+			if [[ $sherpa_compatible_msg =~ true ]]; then
+				sherpa_compatible_msg=$(TextBrightGreen "$sherpa_compatible_msg")
+			else
+				sherpa_compatible_msg=$(TextBrightOrange "$sherpa_compatible_msg")
+			fi
+
 # 			if [[ $tier_msg =~ true ]]; then
 # 				tier_msg=$(TextBrightGreen "$tier_msg")
 # 			else
@@ -5377,6 +5394,7 @@ GenerateFeaturesReportDataLine()
 			clean_msg=$(TextDarkGrey "$clean_msg")
 			name_msg+=$(TextDarkGrey "$qpkg_name")
 			restart_to_update_msg=$(TextDarkGrey "$restart_to_update_msg")
+			sherpa_compatible_msg=$(TextDarkGrey "$sherpa_compatible_msg")
 			tier_msg=$(TextDarkGrey "$tier_msg")
 			;;
 		highlighted)
@@ -5417,10 +5435,16 @@ GenerateFeaturesReportDataLine()
 			else
 				restart_to_update_msg=$(TextBrightOrange "$restart_to_update_msg")
 			fi
+
+			if [[ $sherpa_compatible_msg =~ true ]]; then
+				sherpa_compatible_msg=$(TextBrightGreen "$sherpa_compatible_msg")
+			else
+				sherpa_compatible_msg=$(TextBrightOrange "$sherpa_compatible_msg")
+			fi
 	esac
 
 	if [[ -e $GNU_AWK_CMD ]]; then
-		printf '%s|%s|%s|%s|%s|%s|%s|%s\n' "$name_msg" "$backup_msg" "$clean_msg" "$restart_to_update_msg" "$autoupdate_msg" "$active_test_msg" "$tier_msg" "$compatible_msg"
+		printf '%s|%s|%s|%s|%s|%s|%s|%s|%s\n' "$name_msg" "$backup_msg" "$clean_msg" "$restart_to_update_msg" "$autoupdate_msg" "$active_test_msg" "$tier_msg" "$compatible_msg" "$sherpa_compatible_msg"
 	else
 		# column 1: package name.
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
@@ -5452,6 +5476,10 @@ GenerateFeaturesReportDataLine()
 		# column 8: NAS arch is compatible?
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_COMPATIBLE_COL_WIDTH+$(LenANSIDiff "$compatible_msg")))s" "$compatible_msg"
+
+		# column 9: QPKG is sherpa-compatible?
+		printf "%$((COLUMN_SPACING))s"
+		printf "%-$((STD_COL_WIDTH+$(LenANSIDiff "$sherpa_compatible_msg")))s" "$sherpa_compatible_msg"
 
 		printf '\n'
 	fi
@@ -7498,7 +7526,7 @@ ShowReportFeatures()
 	ResetReportsPath &> /dev/null
 
 	if [[ -e $GNU_AWK_CMD ]]; then
-		printf -v a '%s\n' 'QPKG name:|CanBack?|CanClean?|StartUpd?|AutoUpd?|LiveTest?|Indep?|Compat?'
+		printf -v a '%s\n' 'QPKG name:|CanBack?|CanClean?|StartUpd?|AutoUpd?|LiveTest?|Indep?|Compat?|sherpaCompat?'
 	else
 		printf -v a '%s\n' "$(GenerateFeaturesReportTitleLine)"
 	fi
@@ -7896,6 +7924,7 @@ GenerateReportHeadingsFooter()
 		DisplayAsIndentQuotedInfoItem 'LiveTest?' "has a built-in 'status' check, and can test for daemon \"live\" status"
 		DisplayAsIndentQuotedInfoItem 'Indep?' 'is independent of other QPKGs'
 		DisplayAsIndentQuotedInfoItem 'Compat?' 'has a release compatible with this NAS arch'
+		DisplayAsIndentQuotedInfoItem 'sherpaCompat?' "supports enhanced service actions issued by $(ShowAsTitleName)"
 	})
 
 	if [[ -n $a ]]; then
@@ -11554,6 +11583,39 @@ QpkgIsCanClean()
 
 	}
 
+QpkgIsSherpaCompatible()
+	{
+
+	# Is this QPKG service-script compatible with enhanced actions supplied by sherpa?
+
+	# Input:
+	#   $1 = QPKG name (optional): if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $qpkg_default_index (global)
+	#   $qpkg_index (global)
+	#	$qpkg_name (global)
+
+	# Output:
+	#   $? = 0 (true), !0 (false)
+
+	local a=''
+	local -i i=0
+
+	if [[ -n ${1:-} ]]; then
+		for i in "${!QPKG_NAME[@]}"; do
+			[[ ${QPKG_NAME[$i]} = "$1" ]] || continue
+			a=${QPKG_IS_SHERPA_COMPATIBLE[$i]}			# Always grab first found as default.
+			break
+		done
+	else
+		a=${QPKG_IS_SHERPA_COMPATIBLE[$qpkg_index]}
+		[[ $a = default ]] && a=${QPKG_IS_SHERPA_COMPATIBLE[$qpkg_default_index]}
+	fi
+
+	[[ -n $a ]] || a=none
+	[[ $a = true ]]
+
+	}
+
 QpkgIsCanLog()
 	{
 
@@ -11570,7 +11632,7 @@ QpkgIsCanLog()
 
 	for i in "${!QPKG_NAME[@]}"; do
 		[[ ${QPKG_NAME[$i]} = "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}" ]] || continue
-		${QPKG_CAN_LOG_SERVICE_ACTIONS[$i]} && return 0 || break
+		${QPKG_CAN_LOG[$i]} && return 0 || break
 	done
 
 	return 1
@@ -13572,7 +13634,7 @@ LoadPackages()
 	unset QPKG_AUTHOR_EMAIL
 	unset QPKG_CAN_BACKUP
 	unset QPKG_CAN_CLEAN
-	unset QPKG_CAN_LOG_SERVICE_ACTIONS
+	unset QPKG_CAN_LOG
 	unset QPKG_CAN_RESTART_TO_UPDATE
 	unset QPKG_CONFLICTS_WITH
 	unset QPKG_DEPENDS_ON
@@ -13600,7 +13662,8 @@ LoadPackages()
 	QPKG_AUTHOR_EMAIL+=('')					# Email address of the package maintainer.
 	QPKG_CAN_BACKUP+=('')					# 'true'/'false': this QPKG service-script supports configuration 'backup' and 'restore' actions.
 	QPKG_CAN_CLEAN+=('')					# 'true'/'false': the internal application can be cleaned and re-downloaded.
-	QPKG_CAN_LOG_SERVICE_ACTIONS+=('')		# 'true'/'false': the service-script logs action results in a format compatible with sherpa.
+	QPKG_CAN_LOG+=('')						# 'true'/'false': the service-script has a log.
+	QPKG_IS_SHERPA_COMPATIBLE+=('')			# 'true'/'false': the service-script responds to enhanced sherpa actions.
 	QPKG_CAN_RESTART_TO_UPDATE+=('')		# 'true'/'false': the internal application can be updated by restarting the QPKG.
 	QPKG_CONFLICTS_WITH+=('')				# Abort if these QPKGs are installed.
 	QPKG_DEPENDS_ON+=('')					# Require these QPKGs to be installed first. Use 'none' if package is independent. Separate alternatives with '|'.
@@ -13631,12 +13694,13 @@ LoadPackages()
 	readonly QPKG_AUTHOR_EMAIL
 	readonly QPKG_CAN_BACKUP
 	readonly QPKG_CAN_CLEAN
-	readonly QPKG_CAN_LOG_SERVICE_ACTIONS
+	readonly QPKG_CAN_LOG
 	readonly QPKG_CAN_RESTART_TO_UPDATE
 	readonly QPKG_CONFLICTS_WITH
 	readonly QPKG_DEPENDS_ON
 	readonly QPKG_DESC
 	readonly QPKG_HASH
+	readonly QPKG_IS_SHERPA_COMPATIBLE
 	readonly QPKG_MAX_OS_VERSION
 	readonly QPKG_MIN_OS_VERSION
 	readonly QPKG_MIN_RAM_KB
