@@ -4659,13 +4659,13 @@ GenerateReposReportTitleLine()
 	a="QPKG name:"
 	printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
-	# column 2: package installation date
-	a="Install date:"
-	printf "%-$((PACKAGE_INSTALL_DATE_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 3: package repository
+	# column 2: package repository
 	a="Repository:"
 	printf "%-$((PACKAGE_REPO_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
+
+	# column 3: package installation date
+	a="Install date:"
+	printf "%-$((PACKAGE_INSTALL_DATE_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
 	printf '\n'
 
@@ -4762,18 +4762,18 @@ GenerateReposReportDataLine()
 	esac
 
 	if [[ -e $GNU_AWK_CMD ]]; then
-		printf '%s|%s|%s\n' "$name_msg" "$install_date_msg" "$assigned_repo_msg"
+		printf '%s|%s|%s\n' "$name_msg" "$assigned_repo_msg" "$install_date_msg"
 	else
 		# column 1: package qpkg_name
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 
-		# column 2: package installation date
-		printf "%$((COLUMN_SPACING))s"
-		printf "%-$((PACKAGE_INSTALL_DATE_COL_WIDTH+$(LenANSIDiff "$install_date_msg")))s" "$install_date_msg"
-
-		# column 3: package repository
+		# column 2: package repository
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_REPO_COL_WIDTH+$(LenANSIDiff "$assigned_repo_msg")))s" "$assigned_repo_msg"
+
+		# column 3: package installation date
+		printf "%$((COLUMN_SPACING))s"
+		printf "%-$((PACKAGE_INSTALL_DATE_COL_WIDTH+$(LenANSIDiff "$install_date_msg")))s" "$install_date_msg"
 
 		printf '\n'
 	fi
@@ -5378,13 +5378,6 @@ GenerateFeaturesReportDataLine()
 			else
 				sherpa_compatible_msg=$(TextBrightOrange "$sherpa_compatible_msg")
 			fi
-
-# 			if [[ $tier_msg =~ true ]]; then
-# 				tier_msg=$(TextBrightGreen "$tier_msg")
-# 			else
-# 				tier_msg=$(TextBrightOrange "$tier_msg")
-# 			fi
-
 			;;
 		muted)
 			active_test_msg=$(TextDarkGrey "$active_test_msg")
@@ -7657,7 +7650,7 @@ ShowReportRepos()
 	ResetReportsPath &> /dev/null
 
 	if [[ -e $GNU_AWK_CMD ]]; then
-		printf -v a '%s\n' 'QPKG name:|Install date:|Repository:'
+		printf -v a '%s\n' 'QPKG name:|Repository:|Install date:'
 	else
 		printf -v a '%s\n' "$(GenerateReposReportTitleLine)"
 	fi
@@ -7917,14 +7910,14 @@ GenerateReportHeadingsFooter()
 	local a=''
 
 	a=$({
-		DisplayAsIndentQuotedInfoItem 'CanBack?' "application config 'backup' and 'restore' supported"
-		DisplayAsIndentQuotedInfoItem 'CanClean?' "application 'clean' supported"
-		DisplayAsIndentQuotedInfoItem 'StartUpd?' 'application restart-to-update supported'
-		DisplayAsIndentQuotedInfoItem 'AutoUpd?' 'application restart-to-update enabled'
+		DisplayAsIndentQuotedInfoItem 'CanBack?' "application config 'backup' and 'restore' are supported"
+		DisplayAsIndentQuotedInfoItem 'CanClean?' "application 'clean' is supported"
+		DisplayAsIndentQuotedInfoItem 'StartUpd?' 'application restart-to-update is supported'
+		DisplayAsIndentQuotedInfoItem 'AutoUpd?' 'application restart-to-update is enabled'
 		DisplayAsIndentQuotedInfoItem 'LiveTest?' "has a built-in 'status' check, and can test for daemon \"live\" status"
 		DisplayAsIndentQuotedInfoItem 'Indep?' 'is independent of other QPKGs'
 		DisplayAsIndentQuotedInfoItem 'Compat?' 'has a release compatible with this NAS arch'
-		DisplayAsIndentQuotedInfoItem 'sherpaCompat?' "supports enhanced service actions issued by $(ShowAsTitleName)"
+		DisplayAsIndentQuotedInfoItem 'sherpaCompat?' "$(ShowAsTitleName) enhanced service actions are supported"
 	})
 
 	if [[ -n $a ]]; then
