@@ -4273,19 +4273,6 @@ DisplayAsIndentItem()
 
 	}
 
-DisplayAsInfoIndentItem()
-	{
-
-	# Display as indented two fields, first field bulleted.
-
-	# Input:
-	#	$1 = word
-	#	$2 = description
-
-	printf "%${HELP_DESC_INDENT}s${CHARS_BULLET}%-$((FOOTER_NAME_COL_WIDTH+2+$(LenANSIDiff "${1:-}")))s = %s\n" '' "${1:-}" "$(AddPeriod "${2:-}")"
-
-	}
-
 DisplayAsIndentQuotedInfoItem()
 	{
 
@@ -4304,21 +4291,6 @@ DisplayAsIndentQuotedInfoItem()
 	fi
 
 	}
-
-#DisplayAsInfoIndentQuotedItem()
-# 	{
-#
-# 	# Display as indented two fields, first field quoted and bulleted.
-# 	# Example:
-# 	# "   • 'enabled'       = QPKG will start at bootup."
-#
-# 	# Input:
-# 	#	$1 = word
-# 	#	$2 = description
-#
-# 	printf "%${HELP_DESC_INDENT}s${CHARS_BULLET}%-$((FOOTER_NAME_COL_WIDTH+2+$(LenANSIDiff "${1:-}")))s = %s\n" '' "'${1:-}'" "$(AddPeriod "${2:-}")"
-#
-# 	}
 
 GeneratePacksReportTitleLine()
 	{
@@ -7883,10 +7855,6 @@ GenerateReportFooter()
 		if [[ -e "$REPORT_FLAGS_PATH"/na ]]; then
 			DisplayAsIndentQuotedInfoItem "$(TextDarkGrey 'N/A')" 'not applicable'
 		fi
-
-	# 	if [[ -e "$REPORT_FLAGS_PATH"/state-notinstalled ]]; then
-	# 		DisplayAsInfoIndentItem "$(TextDarkGrey muted)" 'QPKG is not installed'
-	# 	fi
 	})
 
 	if [[ -n $a ]]; then
