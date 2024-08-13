@@ -1,8 +1,5 @@
 Observed issues:
 
-	* Whisparr source archive is being downloaded on every start.
-		- https://forum.qnap.com/viewtopic.php?p=866768#p866768
-
 	* 'sherpa enable-auto-update active' is not running 'enable-auto-update' action.
 
 	* Near the end of installing IPKs, monitored download path can remain at non-zero size while packages complete installation.
