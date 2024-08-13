@@ -1,3 +1,9 @@
+* Service-script adaptive timeouts should be recalculated just before each action is begun.
+	- To allow for fast-changing system-load averages.
+
+* Service-scripts need a way to clear stale actions and results.
+	- 'clear' ?
+
 * Check OOM killed pids against inactive daemons and report as-such on status report.
 
 * Takes 3.5 to 6 seconds to build QPKG states on Laura.
