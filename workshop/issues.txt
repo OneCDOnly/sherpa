@@ -1,16 +1,7 @@
 Observed issues:
 
-	* Whisparr source archive is being downloaded on every start.
-		- https://forum.qnap.com/viewtopic.php?p=866768#p866768
-
-	* 'clean' doesn't run on these QPKGs on ARMv5 (works fine on ARM64, ARMv7):
-		-------------------------------------------------------------------------------------------------------------------------
-		[/share/Public] # sherpa clean taut watcher unmanic
-		sherpa v240802-unstable
-		warn: the NAS has an unusually-high system-load, so this may take a while.
-		done: actions complete.
-
-		-------------------------------------------------------------------------------------------------------------------------
+	* NZBHydra2 on siena is writing `nzbhydra.pid` to cwd on start.
+		- pidfile appears to contain an early launch pid, not the pid eventually used by daemon.
 
 	* 'sherpa enable-auto-update active' is not running 'enable-auto-update' action.
 
