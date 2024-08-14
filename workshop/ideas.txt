@@ -16,16 +16,13 @@
 	- Add new $QPKG_ACTIONS element: 'report'
 
 * When running 'sherpa rebuild sab', SAB is installed and auto-updates as usual. Then when 'restore' action runs, auto-update runs again.
-	- Disable auto-update after installation if 'restore' is to be run, then enable it again after 'restore' completes.
+	- Disable auto-update after installation if 'restore' is to be run, then enable it again after 'restore' completes?
 
 * Arg parser should use commas to separate actions & options?
 
 * Include QPKG "signed" status in dependencies report?
 
 * If using 'rustc' IPK, ensure $HOME is != /root before executing.
-
-* Make last action result a separate status report column?
-    - Should also include the attempted action.
 
 * 'install'/'reinstall'/'upgrade' should check path QPKG is installed or is to-be installed to.
 	- If it starts with /root - abort.
