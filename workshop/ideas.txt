@@ -1,3 +1,5 @@
+* Show currently selected git branch with 'enabled' and 'autoupdate' settings.
+
 * Check OOM killed pids against inactive daemons and report as-such on status report.
 
 * Takes 3.5 to 6 seconds to build QPKG states on Laura.

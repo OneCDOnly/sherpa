@@ -1,7 +1,8 @@
 Observed issues:
 
-	* NZBHydra2 on siena is writing `nzbhydra.pid` to cwd on start.
-		- pidfile appears to contain an early launch pid, not the pid eventually used by daemon.
+	* Bazarr can take 4-5 minutes to start.
+		- 'start' shows as failed but daemon is running.
+		- Need to extend timeouts for this QPKG
 
 	* 'sherpa enable-auto-update active' is not running 'enable-auto-update' action.
 
@@ -47,8 +48,6 @@ Observed issues:
 	* FIXED: When a QPKG couldn't be signed (due to no 'sqlite3'), it's not shown by QPKGs.Actions:List() at-all.
 		- QPKG was skipped-abort, and is shown as a skipped QPKG in results.
 		- TODO: Other QPKGs to be signed were not shown in either list.
-
-	* ARMv5 (Helga) is cutting-off debug log early when running 'sherpa s olive verbose' due to SIGINT.
 
 	* When aborting sherpa, must also ensure backgrounded procs abort.
 		- UPDATE: working fine, possibly won't need BG_PROCS_PATH anymore. Test to confirm.
