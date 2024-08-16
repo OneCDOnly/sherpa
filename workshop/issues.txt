@@ -1,5 +1,7 @@
 Observed issues:
 
+	* Fix start and stop functions to only show qpkg state after running action checks.
+
 	* Bazarr can take 4-5 minutes to start.
 		- 'start' shows as failed but daemon is running.
 		- Need to extend timeouts for this QPKG
