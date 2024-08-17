@@ -1,9 +1,5 @@
 Observed issues:
 
-	* Bazarr can take 4-5 minutes to start.
-		- 'start' shows as failed but daemon is running.
-		- Need to extend timeouts for this QPKG
-
 	* 'sherpa enable-auto-update active' is not running 'enable-auto-update' action.
 
 	* Near the end of installing IPKs, monitored download path can remain at non-zero size while packages complete installation.
