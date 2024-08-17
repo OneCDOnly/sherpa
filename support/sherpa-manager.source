@@ -7765,11 +7765,11 @@ GenerateReportFooter()
 		fi
 
 		if [[ -e "$REPORT_FLAGS_PATH"/result-aborted ]]; then
-			DisplayAsIndentQuotedInfoItem "($(TextBrightRed aborted))" 'last action was aborted'
+			DisplayAsIndentQuotedInfoItem "($(TextBrightRed aborted))" 'previous action was aborted'
 		fi
 
 		if [[ -e "$REPORT_FLAGS_PATH"/result-failed ]]; then
-			DisplayAsIndentQuotedInfoItem "($(TextBrightRed failed))" 'last action failed'
+			DisplayAsIndentQuotedInfoItem "($(TextBrightRed failed))" 'previous action failed'
 		fi
 
 		if [[ -e "$REPORT_FLAGS_PATH"/status-inactive ]]; then
@@ -7821,7 +7821,7 @@ GenerateReportFooter()
 		fi
 
 		if [[ -e "$REPORT_FLAGS_PATH"/result-ok ]]; then
-			DisplayAsIndentQuotedInfoItem "($(TextBrightGreen OK))" 'last action was successful'
+			DisplayAsIndentQuotedInfoItem "($(TextBrightGreen OK))" 'previous action was successful'
 		fi
 
 		if [[ -e "$REPORT_FLAGS_PATH"/status-active ]]; then
@@ -10445,7 +10445,7 @@ ClearQpkgAppCenterNotifier()
 QpkgServiceResultWasOk()
 	{
 
-	# Returns true if last action for this package is `ok`.
+	# Returns true if previous action for this package is `ok`.
 
 	# Input:
 	#   $qpkg_name (global) = QPKG name
@@ -11243,7 +11243,7 @@ QpkgGetServiceAction()
 	#   $qpkg_name (global, default) = target QPKG name.
 
 	# Output:
-	#   $stdout = last action requested.
+	#   $stdout = previous action requested.
 	#   $? = 0 (found), !0 (not-found)
 
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
