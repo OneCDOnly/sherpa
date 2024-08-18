@@ -1020,19 +1020,20 @@ CheckEnv()
 
 				# These must be downgraded on armv7 as 2.45.2 versions can't clone a repo.
 				# 	https://github.com/Entware/Entware/issues/1072
+				# 	NOTE: this issue has been fixed.
 
-				target_packages='git git-http'
-
-				# Assume first package version is same as remaining package versions.
-				installed_version=$($OPKG_CMD list-installed | $GREP_CMD "^${target_packages%% *} *" | head -n1 | cut -d' ' -f3 | cut -d'-' -f1)
-
-				if [[ ${installed_version//.} -gt 2392 ]]; then
-					ipks_downgrade=true
-					ShowAsNote "git IPKs will be downgraded back to a working version"
-					IPKs-ACdowngrade-to:Add "$target_packages"
-				else
-					IPKs-ACdowngrade-sk:Add "$target_packages"
-				fi
+# 				target_packages='git git-http'
+#
+# 				# Assume first package version is same as remaining package versions.
+# 				installed_version=$($OPKG_CMD list-installed | $GREP_CMD "^${target_packages%% *} *" | head -n1 | cut -d' ' -f3 | cut -d'-' -f1)
+#
+# 				if [[ ${installed_version//.} -gt 2392 ]]; then
+# 					ipks_downgrade=true
+# 					ShowAsNote "git IPKs will be downgraded back to a working version"
+# 					IPKs-ACdowngrade-to:Add "$target_packages"
+# 				else
+# 					IPKs-ACdowngrade-sk:Add "$target_packages"
+# 				fi
 		esac
 	fi
 
