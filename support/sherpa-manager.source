@@ -469,6 +469,10 @@ CMDsIsOk()
 LocateSQLiteBinary()
 	{
 
+	# Outputs: (global)
+	#   $sqlite_cmd
+	#   $sqlite_pathfile
+
 	local a=''
 	sqlite_pathfile=''
 	sqlite_cmd=''
@@ -1430,12 +1434,44 @@ ProcAction()
 
 	# Run a single action on an entire tier of packages, asynchronously where-possible.
 
-	# Input:
-	#   $1 = $TARGET_ACTION					e.g. `activate`, `reactivate` ...
-	#   $2 = $TIER							e.g. `independent`, `dependent`, `auxiliary`, `all`
-	#   $3 = $PACKAGE_TYPE					e.g. `QPKG`, `IPK`, `PIP`
-	#   $4 = $ACTION_PRESENT_MSG			e.g. `activating` ...
-	#   $5 = $ACTION_PAST_MSG				e.g. `activated` ...
+	# Inputs: (local)
+	#   $1 = an action to run 			e.g. `activate`, `reactivate` ...
+	#   $2 = target tier 				e.g. `independent`, `dependent`, `auxiliary`, `all`
+	#   $3 = package type to process 	e.g. `QPKG`, `IPK`, `PIP`
+	#   $4 = present action verb 		e.g. `activating` ...
+	#   $5 = past action verb 			e.g. `activated` ...
+
+	# Inputs: (global)
+	#	$ACTION_ABORT_PATHFILE
+	#	$ASYNC_PROCS_PATH
+	#   $fail_count
+	#   $ok_count
+	#   $skip_abort_count
+	#   $skip_count
+	#   $skip_error_count
+	#   $skip_ok_count
+	#   $useropt_colourful
+	#	$useropt_terse
+
+	# Outputs: (global)
+	#   $fail_count
+	#	$fork_progress_prefix
+	#	$ipks_downgrade
+	#	$ipks_install
+	#	$ipks_upgrade
+	#   $ok_count
+	#   $pidfile
+	#	$pips_install
+	#   $show_action_results_failed
+	#   $show_action_results_ok
+	#   $show_action_results_skipped
+	#   $skip_abort_count
+	#   $skip_count
+	#   $skip_error_count
+	#   $skip_ok_count
+	#   $total_count
+	#	$useropt_terse
+	#	$useropt_verbose
 
 	FuncInit
 
@@ -1450,6 +1486,7 @@ ProcAction()
 	local package=''
 	local -i package_index=0
 	local -r PACKAGE_TYPE=${3:?${FUNCNAME[0]}'()': undefined package type}
+	local re=''
 	local state=''
 	local -r TARGET_ACTION=${1:?${FUNCNAME[0]}'()': undefined action}
 	local -a target_packages=()
@@ -3739,14 +3776,14 @@ _LaunchOneActionWithManyForks_()
 
 	# * This function runs as an asynchronous process *
 
+	# Inputs: (global)
+	#   $fork_count
+	#   $max_forks
+	#   $pidfile
+
 	# Inputs: (local)
 	#   $1 = the target function action to be applied to each QPKG in $target_packages()
 	#   $2 = an array of QPKG names to process with $1
-
-	# Inputs: (global)
-	#   $fork_count = number of currently running forks.
-	#   $max_forks = maximum number of permitted concurrent forks given the current environment.
-	#   $pidfile = pathfilename of a file containing the PID for this process.
 
 	FuncForkInit
 
@@ -4317,7 +4354,7 @@ GeneratePacksReportTitleLine()
 GeneratePacksReportDataLine()
 	{
 
-	# Input (global):
+	# Input: (global)
 	# 	$qpkg_name
 
 	# Input (local):
@@ -10462,7 +10499,7 @@ QpkgServiceResultWasOk()
 LogQpkgServiceResult()
 	{
 
-	# Input (global):
+	# Input: (global)
 	#   $qpkg_name
 
 	if ! local a=$(QpkgGetServiceResult); then
@@ -10497,7 +10534,7 @@ LogQpkgServiceResult()
 QpkgGetInstallationPath()
 	{
 
-	# Input (global):
+	# Input: (global)
 	#   $qpkg_name
 
 	# Input (local):
@@ -10514,7 +10551,7 @@ QpkgGetInstallationPath()
 QpkgGetServicePathFile()
 	{
 
-	# Input (global):
+	# Input: (global)
 	#   $qpkg_name
 
 	# Input (local):
@@ -10533,7 +10570,7 @@ QpkgGetApplVer()
 
 	# Returns the version number of the application contained within a QPKG.
 
-	# Inputs (global):
+	# Inputs: (global)
 	#	$QPKG_APPL_VERSION
 	#   $qpkg_default_index
 	#   $qpkg_index
@@ -10578,7 +10615,7 @@ QpkgGetAvailVer()
 
 	# Returns the version number of an available (not-installed) QPKG.
 
-	# Inputs (global):
+	# Inputs: (global)
 	#   $qpkg_default_index
 	#   $qpkg_index
 	#	$qpkg_name
