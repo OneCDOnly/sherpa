@@ -4407,28 +4407,28 @@ GenerateStatusReportTitleLine()
 	# column 2: package statuses
 	printf "%$((COLUMN_SPACING))s"
 	a='QPKG statuses'
-	printf "%-${STD_COL_WIDTH}s" "$a:"
+	printf "%-${PACKAGE_STATUS_COL_WIDTH}s" "$a:"
 
 	# column 3: package action and result
 	printf "%$((COLUMN_SPACING))s"
-	a='QPKG action (result)'
-	printf "%-${STD_COL_WIDTH}s" "$a:"
+	a='QPKG previous action (result)'
+	printf "%-${PACKAGE_ACTION_COL_WIDTH}s" "$a:"
 
 	# column 4: package version
 	printf "%$((COLUMN_SPACING))s"
 	a='QPKG version'
 	QPKGs-ISupgradable.IsAny && a+=" ($(TextBrightOrange new))"
-	printf "%-${STD_COL_WIDTH}s" "$a:"
+	printf "%-${PACKAGE_VER_COL_WIDTH}s" "$a:"
 
 	# column 5: application version
 	printf "%$((COLUMN_SPACING))s"
 	a='Appl. version'
-	printf "%-${STD_COL_WIDTH}s" "$a:"
+	printf "%-${PACKAGE_APP_VER_COL_WIDTH}s" "$a:"
 
 	# column 6: package installation path
 	printf "%$((COLUMN_SPACING))s"
 	a='QPKG installation path'
-	printf "%-${STD_COL_WIDTH}s" "$a:"
+	printf "%-${PACKAGE_PATH_COL_WIDTH}s" "$a:"
 
 	printf '\n'
 
@@ -7699,7 +7699,7 @@ ShowReportStatuses()
 
 	if [[ -e $GNU_AWK_CMD ]]; then
 		[[ $a = true ]] && b=" ($(TextBrightOrange new))"
-		printf -v c '%s\n' "QPKG name:|QPKG statuses:|QPKG action (result):|QPKG version${b}:|Appl. version:|QPKG installation path:"
+		printf -v c '%s\n' "QPKG name:|QPKG statuses:|QPKG previous action (result):|QPKG version${b}:|Appl. version:|QPKG installation path:"
 	else
 		printf -v c '%s\n' "$(GenerateStatusReportTitleLine)"
 	fi
