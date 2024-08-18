@@ -1724,11 +1724,16 @@ CloseActionMsgPipe()
 SetMaxForks()
 	{
 
-	# Input:
+	# Inputs: (local)
 	#   $1 = action
 
-	# Output:
-	#   $max_forks (global)
+	# Inputs: (global)
+	#   $CONCURRENCY
+	#   $useropt_debug
+	#   $useropt_verbose
+
+	# Outputs: (global)
+	#   $max_forks
 
 	max_forks=$CONCURRENCY
 	local reason=''
@@ -1769,16 +1774,18 @@ SetMaxForks()
 PrepareArgs()
 	{
 
-	# Process user arguments ready for parsing
+	# Process user arguments ready for parsing.
 
 	# Basic argument syntax:
 	#   scriptname [action] [groups] [options]
 
-	# Input:
-	#   $ARGS_RAW (global)
+	# Inputs: (global)
+	#   $ARGS_RAW
 
-	# Output:
-	#   $args[] (global)
+	# Outputs: (global)
+	#   $arg_problem
+	#   $args
+	#   $useropt_help_basic
 
 	ShowAsProc args
 
@@ -1798,13 +1805,25 @@ ParseManagementArgs()
 	# Basic argument syntax:
 	#   scriptname [action] [groups] [options]
 
-	# Input:
-	#   $args[] (global)
-	#   $args_incomplete[] (global)
+	# Inputs: (global)
+	#   $args
+	#   $args_incomplete
 
-	# Output:
-	#   $args[] (global)
-	#   $args_incomplete[] (global)
+	# Outputs: (global)
+	#   $args
+	#   $args_incomplete
+	#	$generate_show_report
+	#	$get_qpkg_states
+	#	$run_package_actions
+	#	$switch_branch
+	#	$switch_colour
+	#	$switch_terse
+	#	$user_branch_value
+	#	$user_colourful_value
+	#	$user_terse_value
+	#	$useropt_check
+	#	$useropt_paste_log_last
+	#	$useropt_paste_log_tail
 
 	FuncInit
 
@@ -1853,7 +1872,7 @@ ParseManagementArgs()
 					DeleteSetting Git_Branch
 					DeleteSetting Terse
 
-					Reset					# <-- Processing will terminate in this function (no-return).
+					Reset				# <-- Processing will terminate in this function (no-return).
 			esac
 
 			if [[ -n $user_action && $user_action != "$current_action" ]]; then
@@ -1959,14 +1978,13 @@ ParseHelpArgs()
 	# Basic argument syntax:
 	#   scriptname [action] [groups] [options]
 
-	# Input:
-	#   $args[] (global)
-	#   $args_incomplete[] (global)
+	# Inputs: (global)
+	#   $args
+	#   $args_incomplete
 
-	# Output:
-	#   $args[] (global)
-	#   $args_incomplete[] (global)
-	#   various global flags
+	# Outputs: (global)
+	#   $args
+	#   $args_incomplete
 
 	FuncInit
 
@@ -2156,14 +2174,13 @@ ParseShowArgs()
 	# Basic argument syntax:
 	#   scriptname [action] [groups] [options]
 
-	# Input:
-	#   $args[] (global)
-	#   $args_incomplete[] (global)
+	# Inputs: (global)
+	#   $args
+	#   $args_incomplete
 
-	# Output:
-	#   $args[] (global)
-	#   $args_incomplete[] (global)
-	#   various global flags
+	# Outputs: (global)
+	#   $args
+	#   $args_incomplete
 
 	FuncInit
 
@@ -2335,14 +2352,13 @@ ParseListArgs()
 	# Basic argument syntax:
 	#   scriptname [action] [groups] [options]
 
-	# Input:
-	#   $args[] (global)
-	#   $args_incomplete[] (global)
+	# Inputs: (global)
+	#   $args
+	#   $args_incomplete
 
-	# Output:
-	#   $args[] (global)
-	#   $args_incomplete[] (global)
-	#   various global flags
+	# Outputs: (global)
+	#   $args
+	#   $args_incomplete
 
 	FuncInit
 
@@ -2475,14 +2491,13 @@ ParseListArgs()
 ParseActionArgs()
 	{
 
-	# Input:
-	#   $args[] (global)
-	#   $args_incomplete[] (global)
+	# Inputs: (global)
+	#   $args
+	#   $args_incomplete
 
-	# Output:
-	#   $args[] (global)
-	#   $args_incomplete[] (global)
-	#   various global flags
+	# Outputs: (global)
+	#   $args
+	#   $args_incomplete
 
 	FuncInit
 
@@ -2792,11 +2807,11 @@ MatchNoun()
 ShowArgSuggestions()
 	{
 
-	# Input:
-	#   $args[] (global)
-	#   $args_incomplete[] (global)
+	# Inputs: (global)
+	#   $args
+	#   $args_incomplete
 
-	# Output:
+	# Outputs: (global)
 	#   various global flags
 
 	FuncInit
@@ -3117,10 +3132,10 @@ ResetReportsPath()
 Quiz()
 	{
 
-	# Input:
-	#   $1 = prompt
+	# Inputs: (local)
+	#   $1 = prompt/question
 
-	# Output:
+	# Outputs: (local)
 	#   $? = 0 if "y", 1 if anything else
 
 	local prompt=${1:?${FUNCNAME[0]}'()': undefined prompt}
@@ -3217,11 +3232,11 @@ _UpdateEntwarePackageList_()
 IsThisFileRecent()
 	{
 
-	# Input:
+	# Inputs: (local)
 	#   $1 = pathfilename: file to examine change time of.
 	#   $2 = integer (optional): threshold in minutes - default is `1440` = 1 day.
 
-	# Output:
+	# Outputs: (local)
 	#   $? = true/false
 
 	# Examine `change` time as this is updated even if file content isn't modified.
@@ -3741,8 +3756,8 @@ OpenIpkArchive()
 
 	# Unpack the package list file used by `opkg`.
 
-	# Output:
-	#   $? = 0 if successful or 1 if failed
+	# Outputs: (local)
+	#   $? = 0 if successful, 1 if failed
 
 	if [[ ! -e $EXTERNAL_PACKAGES_ARCHIVE_PATHFILE ]]; then
 		ShowAsError 'unable to locate the IPK list file'
@@ -3776,14 +3791,14 @@ _LaunchOneActionWithManyForks_()
 
 	# * This function runs as an asynchronous process *
 
+	# Inputs: (local)
+	#   $1 = the target function action to be applied to each QPKG in $target_packages()
+	#   $2 = an array of QPKG names to process with $1
+
 	# Inputs: (global)
 	#   $fork_count
 	#   $max_forks
 	#   $pidfile
-
-	# Inputs: (local)
-	#   $1 = the target function action to be applied to each QPKG in $target_packages()
-	#   $2 = an array of QPKG names to process with $1
 
 	FuncForkInit
 
@@ -3835,12 +3850,15 @@ _DirSizeMonitor_()
 
 	# * This function runs asynchronously *
 
-	# Input:
-	#   $1 = directory to monitor the size of.
+	# Inputs: (local)
+	#   $1 = directory to monitor the size-of.
 	#   $2 = total target bytes (100%) for specified path.
 
-	# Output:
-	#   stdout = "percentage downloaded (downloaded bytes/total expected bytes)".
+	# Inputs: (global)
+	#   $DISPLAY_INHIBIT_PATHFILE
+
+	# Outputs: (local)
+	#   stdout = formatted as: "percentage downloaded (downloaded bytes/total expected bytes)".
 
 	[[ -n ${1:?${FUNCNAME[0]}'()': undefined path} ]] || exit
 	[[ -d $1 && ${2:-0} -gt 0 ]] || exit
@@ -3913,11 +3931,13 @@ _DirSizeMonitor_()
 WriteMsgInPlace()
 	{
 
-	# Input:
+	# Inputs: (local)
 	#   $1 = message to display.
 
-	# Output:
-	#   stdout = "$1" with all whitespace squeezed.
+	# Outputs: (local)
+	#   stdout = $1 but with all whitespace squeezed.
+
+	# Outputs: (global)
 	#   $prev_clean_msg = the message provided in $1, but with all whitespace squeezed, and ANSI codes removed.
 
 	local -i a=0		# Blanking length
@@ -3927,6 +3947,7 @@ WriteMsgInPlace()
 	if [[ $c != "$prev_clean_msg" ]]; then
 		if [[ ${#c} -lt ${#prev_clean_msg} ]]; then
 			a=$((${#c}-${#prev_clean_msg}))
+
 			# Backspace to start of previous msg, print new msg, add additional spaces, then backspace to end of new msg.
 			printf "%${#prev_clean_msg}s" | tr ' ' '\b'; echo -en "$b"; printf "%${a}s"; printf "%${a}s" | tr ' ' '\b'
 		else
@@ -3942,7 +3963,7 @@ WriteMsgInPlace()
 KillPID()
 	{
 
-	# Input:
+	# Inputs: (local)
 	#   $1 = PID to kill.
 
 	[[ -n ${1:-} && $1 -gt 0 && -d /proc/$1 ]] || return
@@ -3968,8 +3989,18 @@ Reset()
 UpdateColourful()
 	{
 
-	# Input:
-	# 	$1 = silent (optional): don't announce setting save.
+	# Inputs: (local)
+	# 	$1 = 'silent' (optional): don't announce setting was saved.
+
+	# Inputs: (global)
+	#	$switch_colour
+	#	$user_colourful_value
+	#	$useropt_colourful
+
+	# Outputs: (global)
+	#	$run_package_actions
+	#	$switch_colour
+	#	$useropt_colourful
 
 	local a=''
 
@@ -4002,8 +4033,18 @@ UpdateColourful()
 UpdateBranch()
 	{
 
-	# Input:
-	# 	$1 = silent (optional): don't announce setting save.
+	# Inputs: (local)
+	# 	$1 = 'silent' (optional): don't announce setting was saved.
+
+	# Inputs: (global)
+	#	$switch_branch
+	#	$user_branch_value
+	#	$useropt_branch
+
+	# Outputs: (global)
+	#	$run_package_actions
+	#	$switch_branch
+	#	$useropt_branch
 
 	local a=''
 
@@ -4038,8 +4079,18 @@ UpdateBranch()
 UpdateTerse()
 	{
 
-	# Input:
-	# 	$1 = silent (optional): don't announce setting save.
+	# Inputs: (local)
+	# 	$1 = 'silent' (optional): don't announce setting was saved.
+
+	# Inputs: (global)
+	#	$switch_terse
+	#	$user_terse_value
+	#	$useropt_terse
+
+	# Outputs: (global)
+	#	$run_package_actions
+	#	$switch_terse
+	#	$useropt_terse
 
 	local a=''
 
@@ -4072,9 +4123,9 @@ UpdateTerse()
 SaveSetting()
 	{
 
-	# Save setting named as $1 with a value of $2 to persistent storage: /etc/config/qpkg.conf
+	# Save a setting named as $1 with a value of $2 to persistent storage: /etc/config/qpkg.conf
 
-	# Input:
+	# Inputs: (local)
 	#   $1 = name
 	# 	$2 = value
 	# 	$3 = 'announce' (optional): display on-screen when setting has been saved.
@@ -4096,11 +4147,14 @@ SaveSetting()
 LoadSetting()
 	{
 
-	# Load setting named as $1 (with a default value of $2) from persistent storage: /etc/config/qpkg.conf
+	# Load a setting named as $1 with a default value of $2 from persistent storage: /etc/config/qpkg.conf
 
-	# Input:
-	#   $1 = name
+	# Inputs: (local)
+	#   $1 = setting name
 	# 	$2 = default value
+
+	# Outputs: (local)
+	#   stdout = setting value
 
 	local a=${1:?${FUNCNAME[0]}'()': undefined name}
 	local b=$(Lowercase "${2:?${FUNCNAME[0]}'()': undefined default value}")
@@ -4114,7 +4168,7 @@ DeleteSetting()
 
 	# Remove a setting named as $1 from persistent storage: /etc/config/qpkg.conf
 
-	# Input:
+	# Inputs: (local)
 	#   $1 = name
 
 	local a=${1:?${FUNCNAME[0]}'()': undefined name}
@@ -4151,7 +4205,7 @@ UserIsSU()
 #DebugBinPathVerAndMinVer()
 # 	{
 #
-# 	# Input:
+# 	# Inputs:
 # 	#	$1 = binary filename
 # 	#	$2 = current version found
 # 	#	$3 = minimum version required
@@ -4185,10 +4239,10 @@ UserIsSU()
 IsSysFileExist()
 	{
 
-	# Input:
+	# Inputs: (local)
 	#   $1 = pathfile to check
 
-	# Output:
+	# Outputs: (local)
 	#   $? = 0 (exists) or 1 (not exists)
 
 	[[ -n ${1:?${FUNCNAME[0]}'()': undefined pathfile} ]] || exit
@@ -4208,10 +4262,10 @@ IsSysFileExist()
 IsNtSysFileExist()
 	{
 
-	# Input:
+	# Inputs:
 	#   $1 = pathfile to check
 
-	# Output:
+	# Outputs:
 	#   $? = 0 (not exists) or 1 (exists)
 
 	! IsSysFileExist "${1:?${FUNCNAME[0]}'()': undefined pathfile}"
@@ -4221,7 +4275,7 @@ IsNtSysFileExist()
 LenANSIDiff()
 	{
 
-	# Input:
+	# Inputs:
 	#   $1 = (optional) text to find length of
 
 	local original=${1:-}
@@ -4236,7 +4290,7 @@ LenANSIDiff()
 AddSeparators()
 	{
 
-	# Input:
+	# Inputs:
 	# 	$1 = list of abbreviations to format with commas.
 
 	local a=''
@@ -4256,7 +4310,7 @@ DisplayAsProjSynExam()
 
 	# Display as project syntax example.
 
-	# Input:
+	# Inputs:
 	#	$1 = description
 	#	$2 = example syntax
 
@@ -4272,7 +4326,7 @@ DisplayAsProjSynIndentExam()
 
 	# Display as project syntax indented example.
 
-	# Input:
+	# Inputs:
 	#	$1 = description (optional)
 	#	$2 = example syntax
 
@@ -4291,7 +4345,7 @@ DisplayAsSynExam()
 
 	# Display as syntax example.
 
-	# Input:
+	# Inputs:
 	#	$1 = description
 	#	$2 = example syntax
 
@@ -4304,7 +4358,7 @@ DisplayAsIndentItem()
 
 	# Display as indented single field, bulleted.
 
-	# Input:
+	# Inputs:
 	#	$1 = item
 
 	printf "%${HELP_DESC_INDENT}s${CHARS_BULLET}%s\n" '' "$(Capitalise "${1:-}")"
@@ -4318,7 +4372,7 @@ DisplayAsIndentQuotedInfoItem()
 	# Example:
 	# "  'inactive'     •  application is dead or not-started. Try starting/activating it."
 
-	# Input:
+	# Inputs:
 	#	$1 = word
 	#	$2 = description
 
@@ -4354,7 +4408,7 @@ GeneratePacksReportTitleLine()
 GeneratePacksReportDataLine()
 	{
 
-	# Input: (global)
+	# Inputs: (global)
 	# 	$qpkg_name
 
 	# Input (local):
@@ -4479,7 +4533,7 @@ GenerateStatusReportDataLine()
 
 	# * This function runs asynchronously *
 
-	# Input:
+	# Inputs:
 
 	local action=''
 	local action_msg=$CHARS_BLANK
@@ -4691,10 +4745,10 @@ GenerateReposReportTitleLine()
 GenerateReposReportDataLine()
 	{
 
-	# Input:
+	# Inputs:
 	# 	$qpkg_name (global).
 
-	# Output:
+	# Outputs:
 	# 	stdout = single report line with data fields.
 
 	local assigned_repo=''
@@ -4823,7 +4877,7 @@ GenerateAbsReportDataLine()
 
 	# * This function runs asynchronously *
 
-	# Input:
+	# Inputs:
 	# 	$qpkg_name (global).
 
 	local abs_msg=''
@@ -4938,7 +4992,7 @@ GenerateDepsReportDataLine()
 
 	# * This function runs asynchronously *
 
-	# Input:
+	# Inputs:
 	#   $1 = QPKG name (optional).
 	# 	$qpkg_name (global).
 
@@ -5271,7 +5325,7 @@ GenerateFeaturesReportDataLine()
 
 	# * This function runs asynchronously *
 
-	# Input:
+	# Inputs:
 	# 	$qpkg_name (global).
 
 	local active_test_msg=$CHARS_BLANK
@@ -5524,7 +5578,7 @@ DisplayAsBacksReportTitleLine()
 DisplayAsBacksReportItemLine()
 	{
 
-	# Input:
+	# Inputs:
 	#	$1 = last backup date in epoch seconds
 	#	$2 = backup filename
 	#	$3 = filesize in bytes
@@ -5579,7 +5633,7 @@ DisplayAsBacksReportItemLine()
 DisplayAsHelpTitle()
 	{
 
-	# Input:
+	# Inputs:
 	#	$1 = text
 
 	printf "\n${CHARS_BULLET}%s\n" "$(Capitalise "${1:-}" | tr -s ' ')"
@@ -5589,7 +5643,7 @@ DisplayAsHelpTitle()
 DisplayAsHelpTitleHighlighted()
 	{
 
-	# Input:
+	# Inputs:
 	#	$1 = text
 
 	# shellcheck disable=2059
@@ -5600,7 +5654,7 @@ DisplayAsHelpTitleHighlighted()
 DisplayAsIndentActionResultDurationReason()
 	{
 
-	# Input:
+	# Inputs:
 	#	$1 = action
 	#	$2 = result message
 	#	$3 = duration in milliseconds (optional)
@@ -5964,7 +6018,7 @@ ShowReportAllActionResults()
 ShowReportActionResults()
 	{
 
-	# Input:
+	# Inputs:
 	#	$1 = `ok`, `skipped`, `failed`
 
 	local action=''
@@ -6287,7 +6341,7 @@ ViewLogTail()
 DisplayFileInViewport()
 	{
 
-	# Input:
+	# Inputs:
 	# 	$1 = pathfile to display
 	# 	$2/$3/$4 (optional, and in any order)
 	#		= 'linenumbers' : display file contents with line numbers.
@@ -6445,7 +6499,7 @@ Log.Tail:Paste()
 GetLogSessStartLine()
 	{
 
-	# Input:
+	# Inputs:
 	#	$1 = how many sessions back? (optional) default = 1
 
 	local -i linenum=$(($($GREP_CMD -n 'SCRIPT:.*started:' "$SESS_TAIL_PATHFILE" | $TAIL_CMD -n${1:-1} | head -n1 | cut -d':' -f1)-1))
@@ -6457,7 +6511,7 @@ GetLogSessStartLine()
 GetLogSessFinishLine()
 	{
 
-	# Input:
+	# Inputs:
 	#	$1 = how many sessions back? (optional) default = 1
 
 	local -i linenum=$(($($GREP_CMD -n 'SCRIPT:.*finished:' "$SESS_TAIL_PATHFILE" | $TAIL_CMD -n${1:-1} | cut -d':' -f1)+2))
@@ -6680,7 +6734,7 @@ QPKGs.Missing:Show()
 
 	# Check installed QPKGs and check if they're missing. If so, advise on-screen.
 
-	# Output:
+	# Outputs:
 	#	$? = 0 if no packages are missing
 	#	$? = 1 if one-or-more packages are missing
 
@@ -6733,7 +6787,7 @@ QPKGs.NewVers:Show()
 
 	# Check installed QPKGs and compare versions against upgradable array. If new versions are available, advise on-screen.
 
-	# Output:
+	# Outputs:
 	#	$? = 0 if all packages are up-to-date
 	#	$? = 1 if one-or-more packages can be upgraded
 
@@ -8259,7 +8313,7 @@ SendParentChangeEnv()
 	# Send a message into message stream to change a sherpa parent environment variable or variables.
 	# This function is only called from within async functions.
 
-	# Input:
+	# Inputs:
 	#   $1 = action request
 
 	WriteToActionMsgPipe env "$1" '' ''
@@ -8273,7 +8327,7 @@ SendPackageStateChange()
 	# This might be: `isinstalled`, `isntenabled`, `isstarted`, `scntupgradable`, etc ...
 	# This function is only called from within async functions.
 
-	# Input:
+	# Inputs:
 	#   $1 = action request
 
 	WriteToActionMsgPipe change "$1" package "$qpkg_name"
@@ -8287,7 +8341,7 @@ SendActionStatus()
 	# This can be: `ok`, `so`, `sk`, `se`, `er`, `ex`. `ab`.
 	# This function is only called from within async functions.
 
-	# Input:
+	# Inputs:
 	#   $1 = status update
 
 	WriteToActionMsgPipe status "$1" package "$qpkg_name"
@@ -8400,7 +8454,7 @@ NoteIpkAcAsOk()
 
 	# Move specified IPK name from `to` action array into associated `ok` array.
 
-	# Input:
+	# Inputs:
 	#   $1 = package name
 	#   $2 = action
 
@@ -8416,7 +8470,7 @@ NoteIpkAcAsEr()
 
 	# Move specified IPK name from `to` action array into associated `er` array.
 
-	# Input:
+	# Inputs:
 	#   $1 = package name
 	#   $2 = action
 	#   $3 = reason (optional)
@@ -8503,7 +8557,7 @@ OsGetKernelPageSize()
 HardwareGetPlatform()
 	{
 
-	# Output:
+	# Outputs:
 	#   $? = 0 if found, 250 if not.
 
 	/sbin/getcfg '' Platform -d undefined -f /etc/platform.conf
@@ -8513,7 +8567,7 @@ HardwareGetPlatform()
 UserGetDefVol()
 	{
 
-	# Output:
+	# Outputs:
 	#   $? = 0 if found, 250 if not.
 
 	/sbin/getcfg SHARE_DEF defVolMP -d undefined -f /etc/config/def_share.info
@@ -8525,7 +8579,7 @@ Python3IsOutdated()
 
 	# Check if Python3 interpreter needs upgrading for this NAS arch.
 
-	# Output:
+	# Outputs:
 	#   $? = 0 if outdated, !0 if not
 
 	[[ -e $PYTHON3_CMD ]] || return
@@ -8554,7 +8608,7 @@ PerlIsOutdated()
 
 	# Check if Perl interpreter needs upgrading for this NAS arch.
 
-	# Output:
+	# Outputs:
 	#   $? = 0 if outdated, !0 if not
 
 	[[ -e $PERL_CMD ]] || return
@@ -8581,10 +8635,10 @@ GetThisBinPath()
 GetRepoURLFromStoreID()
 	{
 
-	# Input:
+	# Inputs:
 	#	$1 = store ID to lookup repo URL for
 
-	# Output:
+	# Outputs:
 	#   $? = 0 if found, 250 if not.
 
 	[[ -n ${1:-} ]] || return
@@ -8647,7 +8701,7 @@ HardwareGetInstalledRAM()
 OsGetFirmwareVer()
 	{
 
-	# Output:
+	# Outputs:
 	#   $? = 0 if found, 250 if not.
 
 	/sbin/getcfg System Version -d undefined -f /etc/config/uLinux.conf
@@ -8657,7 +8711,7 @@ OsGetFirmwareVer()
 OsGetFirmwareBuild()
 	{
 
-	# Output:
+	# Outputs:
 	#   $? = 0 if found, 250 if not.
 
 	/sbin/getcfg System Number -d undefined -f /etc/config/uLinux.conf
@@ -8667,7 +8721,7 @@ OsGetFirmwareBuild()
 OsGetFirmwareDate()
 	{
 
-	# Output:
+	# Outputs:
 	#   $? = 0 if found, 250 if not.
 
 	/sbin/getcfg System 'Build Number' -d undefined -f /etc/config/uLinux.conf
@@ -9058,7 +9112,7 @@ SaveActionResultToLog()
 
 	# Write package type, package name, datetime in seconds, action, result, reason to actions logfile, and into actions durations file.
 
-	# Input:									Example:
+	# Inputs:									Example:
 	#   $1 = package type						`QPKG`, `IPK`, `PIP`
 	#   $2 = package or group name				`SABnzbd`, `essential`
 	#   $3 = action								`download`, `activate`
@@ -9128,10 +9182,10 @@ _QPKG:reassign_()
 	# * This function runs asynchronously *
 	# Remove the `storeid` assignment for the QPKG named in $qpkg_name.
 
-	# Input:
+	# Inputs:
 	#	$qpkg_name (global)
 
-	# Output:
+	# Outputs:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &> /dev/null
@@ -9175,10 +9229,10 @@ _QPKG:download_()
 	# * This function runs asynchronously *
 	# Download the QPKG named in $qpkg_name.
 
-	# Input:
+	# Inputs:
 	#	$qpkg_name (global)
 
-	# Output:
+	# Outputs:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &> /dev/null
@@ -9247,10 +9301,10 @@ _QPKG:install_()
 	# * This function runs asynchronously *
 	# Install the QPKG named in $qpkg_name.
 
-	# Input:
+	# Inputs:
 	#	$qpkg_name (global)
 
-	# Output:
+	# Outputs:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &> /dev/null
@@ -9359,10 +9413,10 @@ _QPKG:reinstall_()
 	# * This function runs asynchronously *
 	# Reinstall the QPKG named in $qpkg_name.
 
-	# Input:
+	# Inputs:
 	#	$qpkg_name (global)
 
-	# Output:
+	# Outputs:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &> /dev/null
@@ -9434,10 +9488,10 @@ _QPKG:rebuild_()
 	# * This function runs asynchronously *
 	# Meta-action: rebuild the QPKG named in $qpkg_name. This is a `download`, `install` and `restore`, but only if a backup file exists for this QPKG.
 
-	# Input:
+	# Inputs:
 	#	$qpkg_name (global)
 
-	# Output:
+	# Outputs:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &> /dev/null
@@ -9483,10 +9537,10 @@ _QPKG:upgrade_()
 	# * This function runs asynchronously *
 	# Upgrade the QPKG named in $qpkg_name.
 
-	# Input:
+	# Inputs:
 	#	$qpkg_name (global)
 
-	# Output:
+	# Outputs:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &> /dev/null
@@ -9573,10 +9627,10 @@ _QPKG:uninstall_()
 	# * This function runs asynchronously *
 	# Uninstall the QPKG named in $qpkg_name.
 
-	# Input:
+	# Inputs:
 	#	$qpkg_name (global)
 
-	# Output:
+	# Outputs:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &> /dev/null
@@ -9651,10 +9705,10 @@ _QPKG:activate_()
 	# * This function runs asynchronously *
 	# Activate/start the service-script for the QPKG named in $qpkg_name.
 
-	# Input:
+	# Inputs:
 	#	$qpkg_name (global)
 
-	# Output:
+	# Outputs:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &> /dev/null
@@ -9735,10 +9789,10 @@ _QPKG:reactivate_()
 	# * This function runs asynchronously *
 	# Reactivate/restart the service-script for the QPKG named in $qpkg_name.
 
-	# Input:
+	# Inputs:
 	#	$qpkg_name (global)
 
-	# Output:
+	# Outputs:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &> /dev/null
@@ -9810,10 +9864,10 @@ _QPKG:deactivate_()
 	# * This function runs asynchronously *
 	# Deactivate/stop the service-script for the QPKG named in $qpkg_name.
 
-	# Input:
+	# Inputs:
 	#	$qpkg_name (global)
 
-	# Output:
+	# Outputs:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &> /dev/null
@@ -9893,10 +9947,10 @@ _QPKG:enable_()
 	# * This function runs asynchronously *
 	# Enable the QPKG named in $qpkg_name.
 
-	# Input:
+	# Inputs:
 	#	$qpkg_name (global)
 
-	# Output:
+	# Outputs:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &> /dev/null
@@ -9943,10 +9997,10 @@ _QPKG:disable_()
 	# * This function runs asynchronously *
 	# Disable the QPKG named in $qpkg_name.
 
-	# Input:
+	# Inputs:
 	#	$qpkg_name (global)
 
-	# Output:
+	# Outputs:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &> /dev/null
@@ -9998,10 +10052,10 @@ _QPKG:enableau_()
 	# * This function runs asynchronously *
 	# Enable auto-updating of the QPKG named in $qpkg_name.
 
-	# Input:
+	# Inputs:
 	#	$qpkg_name (global)
 
-	# Output:
+	# Outputs:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &> /dev/null
@@ -10057,10 +10111,10 @@ _QPKG:disableau_()
 	# * This function runs asynchronously *
 	#  Disable auto-updating of the QPKG named in $qpkg_name.
 
-	# Input:
+	# Inputs:
 	#	$qpkg_name (global)
 
-	# Output:
+	# Outputs:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &> /dev/null
@@ -10116,10 +10170,10 @@ _QPKG:backup_()
 	# * This function runs asynchronously *
 	#  Run a `backup` action for the QPKG named in $qpkg_name.
 
-	# Input:
+	# Inputs:
 	#	$qpkg_name (global)
 
-	# Output:
+	# Outputs:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &> /dev/null
@@ -10172,10 +10226,10 @@ _QPKG:restore_()
 	# * This function runs asynchronously *
 	#  Run a `restore` action for the QPKG named in $qpkg_name.
 
-	# Input:
+	# Inputs:
 	#	$qpkg_name (global)
 
-	# Output:
+	# Outputs:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &> /dev/null
@@ -10232,10 +10286,10 @@ _QPKG:clean_()
 	# * This function runs asynchronously *
 	#  Run a `clean` action for the QPKG named in $qpkg_name.
 
-	# Input:
+	# Inputs:
 	#	$qpkg_name (global)
 
-	# Output:
+	# Outputs:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &> /dev/null
@@ -10291,10 +10345,10 @@ _QPKG:sign_()
 
 	# Should only be required for QTS 4.3.5-and-later firmwares.
 
-	# Input:
+	# Inputs:
 	#	$qpkg_name (global)
 
-	# Output:
+	# Outputs:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &> /dev/null
@@ -10398,10 +10452,10 @@ _QPKG:status_()
 	# * This function runs asynchronously *
 	# Query a QPKG for its 'status'. Each compatible QPKG will return 0 if application process is active or ready-to-run, 0 if not.
 
-	# Input:
+	# Inputs:
 	#	$qpkg_name (global)
 
-	# Output:
+	# Outputs:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &> /dev/null
@@ -10467,7 +10521,7 @@ _QPKG:status_()
 ClearQpkgAppCenterNotifier()
 	{
 
-	# Input:
+	# Inputs:
 	#   $qpkg_name (global) = QPKG name to clear from notifier list.
 
 	# KLUDGE: `clean` QTS 4.5.1+ App Center notifier status
@@ -10487,7 +10541,7 @@ QpkgServiceResultWasOk()
 
 	# Returns true if previous action for this package is `ok`.
 
-	# Input:
+	# Inputs:
 	#   $qpkg_name (global) = QPKG name
 
 	[[ -n $qpkg_name ]] || return
@@ -10499,7 +10553,7 @@ QpkgServiceResultWasOk()
 LogQpkgServiceResult()
 	{
 
-	# Input: (global)
+	# Inputs: (global)
 	#   $qpkg_name
 
 	if ! local a=$(QpkgGetServiceResult); then
@@ -10534,7 +10588,7 @@ LogQpkgServiceResult()
 QpkgGetInstallationPath()
 	{
 
-	# Input: (global)
+	# Inputs: (global)
 	#   $qpkg_name
 
 	# Input (local):
@@ -10551,7 +10605,7 @@ QpkgGetInstallationPath()
 QpkgGetServicePathFile()
 	{
 
-	# Input: (global)
+	# Inputs: (global)
 	#   $qpkg_name
 
 	# Input (local):
@@ -10654,11 +10708,11 @@ QpkgGetInstalledVer()
 
 	# Returns the version number of an installed QPKG.
 
-	# Input:
+	# Inputs:
 	#   $1 (optional) = QPKG name.
 	#   $qpkg_name (global, default) = target QPKG name.
 
-	# Output:
+	# Outputs:
 	#   stdout = package version
 	#   $? = 0 if found, 250 if not.
 
@@ -10671,11 +10725,11 @@ QpkgGetStoreID()
 
 	# Returns the presently assigned repository store ID of an installed QPKG.
 
-	# Input:
+	# Inputs:
 	#   $qpkg_name (global) = QPKG name (default).
 	#   $1 = if specified, use this as QPKG name instead.
 
-	# Output:
+	# Outputs:
 	#   stdout = package store ID
 	#   $? = 0 if found, 250 if not.
 
@@ -10688,11 +10742,11 @@ QpkgGetInstallDate()
 
 	# Returns the date specified QPKG was installed.
 
-	# Input:
+	# Inputs:
 	#   $qpkg_name (global) = QPKG name (default).
 	#   $1 = if specified, use this as QPKG name instead.
 
-	# Output:
+	# Outputs:
 	#   stdout = package installation date
 	#   $? = 0 if found, 1 if QPKG name unspecified, 250 if not found
 
@@ -10703,10 +10757,10 @@ QpkgGetInstallDate()
 QpkgGetOriginalPath()
 	{
 
-	# Input:
+	# Inputs:
 	#   $1 = QPKG name
 
-	# Output:
+	# Outputs:
 	#   stdout = the original installation path of this QPKG (even if it was migrated to another volume).
 	#   $? = 0 if successful, 1 if failed
 
@@ -10728,12 +10782,12 @@ QpkgGetOriginalPath()
 QpkgGetPathFilename()
 	{
 
-	# Input:
+	# Inputs:
 	#   $qpkg_default_index (global, optional)
 	#   $qpkg_index (global, optional)
 	#	$qpkg_name (global)
 
-	# Output:
+	# Outputs:
 	#   stdout = QPKG local filename.
 	#   $? = 0 (found), !0 (not-found)
 
@@ -10753,12 +10807,12 @@ QpkgGetPathFilename()
 QpkgGetHash()
 	{
 
-	# Input:
+	# Inputs:
 	#   $qpkg_default_index (global)
 	#   $qpkg_index (global)
 	#	$qpkg_name (global)
 
-	# Output:
+	# Outputs:
 	#   stdout = QPKG MD5
 	#   $? = 0 if found, !0 if not
 
@@ -10781,13 +10835,13 @@ QpkgGetURL()
 
 	# Returns the URL of $qpkg_index.
 
-	# Input:
+	# Inputs:
 	#   $1 = QPKG name (optional): if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
 	#   $qpkg_default_index (global)
 	#   $qpkg_index (global)
 	#	$qpkg_name (global)
 
-	# Output:
+	# Outputs:
 	#   stdout = QPKG remote URL.
 	#   $? = 0 if found, !0 if not
 
@@ -10818,13 +10872,13 @@ QpkgGetURL()
 QpkgGetMinRAM()
 	{
 
-	# Input:
+	# Inputs:
 	#   $1 = QPKG name (optional): if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
 	#   $qpkg_default_index (global)
 	#   $qpkg_index (global)
 	#	$qpkg_name (global)
 
-	# Output:
+	# Outputs:
 	#   stdout = minimum installed RAM required.
 	#   $? = 0 if found, !0 if not
 
@@ -10852,13 +10906,13 @@ QpkgGetMinRAM()
 QpkgGetMinOSVer()
 	{
 
-	# Input:
+	# Inputs:
 	#   $1 = QPKG name (optional): if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
 	#   $qpkg_default_index (global)
 	#   $qpkg_index (global)
 	#	$qpkg_name (global)
 
-	# Output:
+	# Outputs:
 	#   stdout = minimum QTS/QuTS version required by this QPKG.
 	#   $? = 0 if found, !0 if not
 
@@ -10886,13 +10940,13 @@ QpkgGetMinOSVer()
 QpkgGetMaxOSVer()
 	{
 
-	# Input:
+	# Inputs:
 	#   $1 = QPKG name (optional): if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
 	#   $qpkg_default_index (global)
 	#   $qpkg_index (global)
 	#	$qpkg_name (global)
 
-	# Output:
+	# Outputs:
 	#   stdout = maximum QTS/QuTS version required by this QPKG.
 	#   $? = 0 if found, !0 if not
 
@@ -10922,10 +10976,10 @@ QpkgGetMaxOSVer()
 #
 # 	# Return the maintainer of the specified QPKG.
 #
-# 	# Input:
+# 	# Inputs:
 # 	#   $1 = QPKG name
 #
-# 	# Output:
+# 	# Outputs:
 # 	#   stdout = QPKG author (first package found).
 # 	#   $? = 0 (found), !0 (not-found)
 #
@@ -10947,10 +11001,10 @@ QpkgGetMaxOSVer()
 #
 # 	# Return the email address for the maintainer of the specified QPKG.
 #
-# 	# Input:
+# 	# Inputs:
 # 	#   $1 = QPKG name
 #
-# 	# Output:
+# 	# Outputs:
 # 	#   stdout = QPKG author (first package found).
 # 	#   $? = 0 (found), !0 (not-found)
 #
@@ -10972,10 +11026,10 @@ QpkgGetMaxOSVer()
 #
 # 	# Return the author of the application contained within the specified QPKG.
 #
-# 	# Input:
+# 	# Inputs:
 # 	#   $1 = QPKG name
 #
-# 	# Output:
+# 	# Outputs:
 # 	#   stdout = application author (first package found).
 # 	#   $? = 0 (found), !0 (not-found)
 #
@@ -10997,10 +11051,10 @@ QpkgGetMaxOSVer()
 #
 # 	# Return the email address for the author of the application contained within the specified QPKG.
 #
-# 	# Input:
+# 	# Inputs:
 # 	#   $1 = QPKG name
 #
-# 	# Output:
+# 	# Outputs:
 # 	#   stdout = application author (first package found).
 # 	#   $? = 0 (found), !0 (not-found)
 #
@@ -11020,13 +11074,13 @@ QpkgGetMaxOSVer()
 QpkgGetDesc()
 	{
 
-	# Input:
+	# Inputs:
 	#   $1 = QPKG name (optional): if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
 	#   $qpkg_default_index (global)
 	#   $qpkg_index (global)
 	#	$qpkg_name (global)
 
-	# Output:
+	# Outputs:
 	#   stdout = QPKG description.
 	#   $? = 0 if found, !0 if not
 
@@ -11056,12 +11110,12 @@ QpkgGetNote()
 
 	# Return any additional notes to be prominently displayed.
 
-	# Input:
+	# Inputs:
 	#   $qpkg_default_index (global)
 	#   $qpkg_index (global)
 	#	$qpkg_name (global)
 
-	# Output:
+	# Outputs:
 	#   stdout = package note (first package found).
 	#   $? = 0 (found), !0 (not-found)
 
@@ -11089,13 +11143,13 @@ QpkgGetNote()
 QpkgGetAbbrvs()
 	{
 
-	# Input:
+	# Inputs:
 	#   $1 = QPKG name (optional): if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
 	#   $qpkg_default_index (global)
 	#   $qpkg_index (global)
 	#	$qpkg_name (global)
 
-	# Output:
+	# Outputs:
 	#   stdout = list of abbreviations that may be used to specify this package
 	#   $? = 0 if found, !0 if not
 
@@ -11123,12 +11177,12 @@ QpkgGetAbbrvs()
 QpkgGetDependencies()
 	{
 
-	# Input:
+	# Inputs:
 	#   $qpkg_default_index (global)
 	#   $qpkg_index (global)
 	#	$qpkg_name (global)
 
-	# Output:
+	# Outputs:
 	#   stdout = list of QPKGs $qpkg_name depends-upon.
 	#   $? = 0 (found), !0 (not-found)
 
@@ -11197,12 +11251,12 @@ QpkgGetDependencies()
 QpkgGetDependents()
 	{
 
-	# Input:
+	# Inputs:
 	#   $qpkg_default_index (global)
 	#   $qpkg_index (global)
 	#	$qpkg_name (global)
 
-	# Output:
+	# Outputs:
 	#   stdout = list of QPKGs that depend-upon this QPKG.
 	#   $? = 0 (found), !0 (not-found)
 
@@ -11233,12 +11287,12 @@ QpkgGetDependents()
 QpkgGetIPKs()
 	{
 
-	# Input:
+	# Inputs:
 	#   $qpkg_default_index (global)
 	#   $qpkg_index (global)
 	#	$qpkg_name (global)
 
-	# Output:
+	# Outputs:
 	#   stdout = list of IPKs $qpkg_index depends-upon.
 	#   $? = 0 (found), !0 (not-found)
 
@@ -11261,12 +11315,12 @@ QpkgGetActiveTest()
 
 	# Return any custom commands required to determine if specified QPKG is active or not.
 
-	# Input:
+	# Inputs:
 	#   $qpkg_default_index (global)
 	#   $qpkg_index (global)
 	#	$qpkg_name (global)
 
-	# Output:
+	# Outputs:
 	#   stdout = Bash tests.
 	#   $? = 0 (found), !0 (not-found)
 
@@ -11285,11 +11339,11 @@ QpkgGetActiveTest()
 QpkgGetServiceAction()
 	{
 
-	# Input:
+	# Inputs:
 	#   $1 (optional) = QPKG name.
 	#   $qpkg_name (global, default) = target QPKG name.
 
-	# Output:
+	# Outputs:
 	#   $stdout = previous action requested.
 	#   $? = 0 (found), !0 (not-found)
 
@@ -11308,11 +11362,11 @@ QpkgGetServiceAction()
 QpkgGetServiceResult()
 	{
 
-	# Input:
+	# Inputs:
 	#   $1 (optional) = QPKG name.
 	#   $qpkg_name (global, default) = target QPKG name.
 
-	# Output:
+	# Outputs:
 	#   $stdout = last known package service status.
 	#   $? = 0 (found), !0 (not-found)
 
@@ -11331,10 +11385,10 @@ QpkgGetServiceResult()
 QpkgMatchAbbrv()
 	{
 
-	# Input:
+	# Inputs:
 	#   $1 = a potential package abbreviation supplied by user.
 
-	# Output:
+	# Outputs:
 	#   stdout = matched installable package name (empty if unmatched).
 	#   $? = 0 (matched), !0 (unmatched)
 
@@ -11363,10 +11417,10 @@ QpkgSetIndex()
 
 	# Find and set the 1-based indexed reference of the named arch-specific QPKG in 'packages' file.
 
-	# Input:
+	# Inputs:
 	#   $qpkg_name (global)
 
-	# Output:
+	# Outputs:
 	#   $qpkg_index (global) = QPKG element index in packages list arrays. '0' if a compatible arch could not be found.
 	#   $? = 0 (successful), !0 (failed)
 
@@ -11392,10 +11446,10 @@ QpkgSetDefaultIndex()
 
 	# Find and set the 1-based indexed reference of the named QPKG in 'packages' file.
 
-	# Input:
+	# Inputs:
 	#   $qpkg_name (global)
 
-	# Output:
+	# Outputs:
 	#   $qpkg_default_index (global) = QPKG element index in packages list arrays. '0' if QPKG could not be found.
 	#   $? = 0 (successful), !0 (failed)
 
@@ -11418,11 +11472,11 @@ QpkgIsRepoSelfManaged()
 
 	# Is this QPKG managable by sherpa?
 
-	# Input:
+	# Inputs:
 	#   $1 (optional) = QPKG name.
 	#   $qpkg_name (global, default) = target QPKG name.
 
-	# Output:
+	# Outputs:
 	#   $? = 0 (true), !0 (false)
 
 	local a=$(QpkgGetStoreID "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
@@ -11436,11 +11490,11 @@ QpkgIsBackupExist()
 
 	# Does this QPKG have an existing `backup` file?
 
-	# Input:
+	# Inputs:
 	#   $1 (optional) = QPKG name.
 	#   $qpkg_name (global, default) = target QPKG name.
 
-	# Output:
+	# Outputs:
 	#   $? = 0 (true), !0 (false)
 
 	[[ -e $QPKG_BU_PATH/${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}.config.tar.gz ]]
@@ -11452,11 +11506,11 @@ QpkgIsDependent()
 
 	# Does this QPKG depend on any other QPKGs?
 
-	# Input:
+	# Inputs:
 	#   $qpkg_default_index (global)
 	#   $qpkg_index (global)
 
-	# Output:
+	# Outputs:
 	#   $? = 0 (true), !0 (false)
 
 	[[ $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
@@ -11474,11 +11528,11 @@ QpkgIsIndependent()
 
 	# Will this package run independent of other QPKGs?
 
-	# Input:
+	# Inputs:
 	#   $qpkg_default_index (global)
 	#   $qpkg_index (global)
 
-	# Output:
+	# Outputs:
 	#   $? = 0 (true), !0 (false)
 
 	! QpkgIsDependent
@@ -11490,11 +11544,11 @@ QpkgIsUpgradable()
 
 	# Does an upgraded QPKG exist?
 
-	# Input:
+	# Inputs:
 	#   $1 (optional) = QPKG name.
 	#   $qpkg_name (global, default) = target QPKG name.
 
-	# Output:
+	# Outputs:
 	#   $? = 0 (true), !0 (false)
 
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
@@ -11508,11 +11562,11 @@ QpkgIsInstallable()
 
 	# Can this QPKG be installed?
 
-	# Input:
+	# Inputs:
 	#   $qpkg_default_index (global)
 	#   $qpkg_index (global)
 
-	# Output:
+	# Outputs:
 	#   $? = 0 (true), !0 (false)
 
 	[[ $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
@@ -11526,13 +11580,13 @@ QpkgIsCanBackup()
 
 	# Does this QPKG service-script support `backup` and `restore` actions?
 
-	# Input:
+	# Inputs:
 	#   $1 = QPKG name (optional): if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
 	#   $qpkg_default_index (global)
 	#   $qpkg_index (global)
 	#	$qpkg_name (global)
 
-	# Output:
+	# Outputs:
 	#   $? = 0 (true), !0 (false)
 
 	local a=''
@@ -11559,11 +11613,11 @@ QpkgIsCanRestartToUpdate()
 
 	# Does this QPKG service-script support updating the internal application when the QPKG is restarted?
 
-	# Input:
+	# Inputs:
 	#   $1 (optional) = QPKG name.
 	#   $qpkg_name (global, default) = target QPKG name.
 
-	# Output:
+	# Outputs:
 	#   $? = 0 (true), !0 (false) (first package found).
 
 	local -i i=0
@@ -11582,11 +11636,11 @@ QpkgIsCanClean()
 
 	# Does this QPKG service-script support cleaning of the internal application?
 
-	# Input:
+	# Inputs:
 	#   $1 (optional) = QPKG name.
 	#   $qpkg_name (global, default) = target QPKG name.
 
-	# Output:
+	# Outputs:
 	#   $? = 0 (true), !0 (false) (first package found).
 
 	local -i i=0
@@ -11605,13 +11659,13 @@ QpkgIsSherpaCompatible()
 
 	# Is this QPKG service-script compatible with enhanced actions supplied by sherpa?
 
-	# Input:
+	# Inputs:
 	#   $1 = QPKG name (optional): if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
 	#   $qpkg_default_index (global)
 	#   $qpkg_index (global)
 	#	$qpkg_name (global)
 
-	# Output:
+	# Outputs:
 	#   $? = 0 (true), !0 (false)
 
 	local a=''
@@ -11638,11 +11692,11 @@ QpkgIsCanLog()
 
 	# Does this QPKG service-script support logging of actions? When an action fails, this means user can be directed to check the service-script log.
 
-	# Input:
+	# Inputs:
 	#   $1 (optional) = QPKG name.
 	#   $qpkg_name (global, default) = target QPKG name.
 
-	# Output:
+	# Outputs:
 	#   $? = 0 (true), !0 (false) (first package found).
 
 	local -i i=0
@@ -11659,11 +11713,11 @@ QpkgIsCanLog()
 QpkgIsInstalled()
 	{
 
-	# Input:
+	# Inputs:
 	#   $1 (optional) = QPKG name.
 	#   $qpkg_name (global, default) = target QPKG name.
 
-	# Output:
+	# Outputs:
 	#   $? = 0 (true), !0 (false)
 
 	$GREP_CMD -q "^\[${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}\]" /etc/config/qpkg.conf
@@ -11673,11 +11727,11 @@ QpkgIsInstalled()
 QpkgIsNtInstalled()
 	{
 
-	# Input:
+	# Inputs:
 	#   $1 (optional) = QPKG name.
 	#   $qpkg_name (global, default) = target QPKG name.
 
-	# Output:
+	# Outputs:
 	#   $? = 0 (true), !0 (false)
 
 	! QpkgIsInstalled "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}"
@@ -11687,11 +11741,11 @@ QpkgIsNtInstalled()
 QpkgIsMissing()
 	{
 
-	# Input:
+	# Inputs:
 	#   $1 (optional) = QPKG name.
 	#   $qpkg_name (global, default) = target QPKG name.
 
-	# Output:
+	# Outputs:
 	#   stdout = package installation date.
 	#   $? = 0 (found), !0 (not-found).
 
@@ -11704,11 +11758,11 @@ QpkgIsMissing()
 QpkgIsEnabled()
 	{
 
-	# Input:
+	# Inputs:
 	#   $1 (optional) = QPKG name.
 	#   $qpkg_name (global, default) = target QPKG name.
 
-	# Output:
+	# Outputs:
 	#   $? = 0 (true), !0 (false).
 
 	[[ $(/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}" Enable -u -f /etc/config/qpkg.conf) = TRUE ]]
@@ -11720,11 +11774,11 @@ QpkgIsArchOK()
 
 	# Does an arch-compatible QPKG exist to suit this NAS?
 
-	# Input:
+	# Inputs:
 	#   $1 (optional) = QPKG name.
 	#   $qpkg_name (global, default) = target QPKG name.
 
-	# Output:
+	# Outputs:
 	#   $? = 0 (true), !0 (false).
 
 	local a=$(QpkgGetURL "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
@@ -11736,11 +11790,11 @@ QpkgIsArchOK()
 QpkgIsMinRAMOk()
 	{
 
-	# Input:
+	# Inputs:
 	#   $1 (optional) = QPKG name.
 	#   $qpkg_name (global, default) = target QPKG name.
 
-	# Output:
+	# Outputs:
 	#   $? = 0 if this NAS meets the minium RAM requirements for QPKG name, 1 if not.
 
 	local a=$(QpkgGetMinRAM "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
@@ -11752,11 +11806,11 @@ QpkgIsMinRAMOk()
 QpkgIsMinOSVerOk()
 	{
 
-	# Input:
+	# Inputs:
 	#   $1 (optional) = QPKG name.
 	#   $qpkg_name (global, default) = target QPKG name.
 
-	# Output:
+	# Outputs:
 	#   $? = 0 if this NAS meets the minium OS firmware version requirements for QPKG name, 1 if not.
 
 	local a=$(QpkgGetMinOSVer "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
@@ -11768,11 +11822,11 @@ QpkgIsMinOSVerOk()
 QpkgIsMaxOSVerOk()
 	{
 
-	# Input:
+	# Inputs:
 	#   $1 (optional) = QPKG name.
 	#   $qpkg_name (global, default) = target QPKG name.
 
-	# Output:
+	# Outputs:
 	#   $? = 0 if this NAS meets the maximum OS firmware version requirements for QPKG name, 1 if not.
 
 	local a=$(QpkgGetMaxOSVer "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
@@ -11786,11 +11840,11 @@ QpkgIsAutoUpdate()
 
 	# Is the installed QPKG set to auto-update on restart?
 
-	# Input:
+	# Inputs:
 	#   $1 (optional) = QPKG name.
 	#   $qpkg_name (global, default) = target QPKG name.
 
-	# Output:
+	# Outputs:
 	#   $? = 0 (true), !0 (false).
 
 	[[ $(/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}" Auto_Update -u -f /etc/config/qpkg.conf) = TRUE ]]
@@ -11883,7 +11937,7 @@ EOB
 MakePath()
 	{
 
-	# Input:
+	# Inputs:
 	#   $1 = path to create.
 	#   $2 = reason for this path.
 
@@ -11906,7 +11960,7 @@ ClearPath()
 	# Clear (empty) an existing directory, but don't delete the directory.
 	# Delete files in a relatively safe manner. Parent of directory MUST be specified to avoid an 'rm -rf /*' situation through empty args.
 
-	# Input:
+	# Inputs:
 	#	$1 = full path to parent of directory name to clear.
 	#   $2 = directory name to clear.
 
@@ -11924,13 +11978,13 @@ RunAndLog()
 
 	# Run a commandstring, log the results, and show onscreen if required.
 
-	# Input:
+	# Inputs:
 	#   $1 = commandstring to execute.
 	#   $2 = pathfile to record stdout and stderr for commandstring.
 	#   $3 = `log:failure-only` (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed. default is to always record stdout & stderr.
 	#   $4 = e.g. `10` (optional) - an additional acceptable result code. Any other non-zero result from command will be considered a failure.
 
-	# Output:
+	# Outputs:
 	#   stdout = commandstring stdout and stderr if script is in `debug` mode.
 	#   pathfile (specified as $2) = stdout and stderr from commandstring (specified as $1).
 	#   $? = result_code of commandstring.
@@ -11989,7 +12043,7 @@ DeDupeWords()
 FileMatchesMD5()
 	{
 
-	# Input:
+	# Inputs:
 	#   $1 = pathfile to generate an MD5 checksum for.
 	#   $2 = MD5 checksum to compare against.
 
@@ -12265,7 +12319,7 @@ ShowAsResultAndStdout()
 DisplayProcReport()
 	{
 
-	# Input:
+	# Inputs:
 	#	$1 = report type (optional)
 
 	[[ ${report_title_shown:=false} = false ]] || return
@@ -12456,10 +12510,10 @@ DebugErrorTabld()
 DebugVar()
 	{
 
-	# Input:
+	# Inputs:
 	#   $1 = variable name
 
-	# Output:
+	# Outputs:
 	#   to debug log
 
 	if [[ -n ${!1:-} ]]; then
@@ -12473,11 +12527,11 @@ DebugVar()
 DebugArray()
 	{
 
-	# Input:
+	# Inputs:
 	#   $1 = array name
 	#   $2 = array contents: i.e. "${myarray[*]}"
 
-	# Output:
+	# Outputs:
 	#   to debug log
 
 	[[ -n ${1:-} ]] || return
@@ -12585,11 +12639,11 @@ FuncForkExit()
 CalcAmountDiff()
 	{
 
-	# Input:
+	# Inputs:
 	#	$1 = e.g. start time in seconds/milliseconds.
 	#	$2 = e.g. end time in seconds/milliseconds.
 
-	# Output:
+	# Outputs:
 	#	stdout = difference.
 
 	if [[ $2 -gt $1 ]]; then
@@ -12603,11 +12657,11 @@ CalcAmountDiff()
 CalcMillisecondsDiffFromNanoseconds()
 	{
 
-	# Input:
+	# Inputs:
 	#	$1 = start time in nanoseconds.
 	#	$2 = end time in nanoseconds.
 
-	# Output:
+	# Outputs:
 	#	stdout = difference in milliseconds.
 
 	printf '%s' "$((($2-$1)/(10**6)))"
@@ -12617,10 +12671,10 @@ CalcMillisecondsDiffFromNanoseconds()
 ConvertSecondsToFullDate()
 	{
 
-	# Input:
+	# Inputs:
 	#	$1 = epoch seconds.
 
-	# Output:
+	# Outputs:
 	#	stdout = real date.
 
 	/bin/date -d @"$1" +%c | tr -s ' '
@@ -12630,10 +12684,10 @@ ConvertSecondsToFullDate()
 ConvertSecondsToTime()
 	{
 
-	# Input:
+	# Inputs:
 	#	$1 = epoch seconds.
 
-	# Output:
+	# Outputs:
 	#	stdout = time component only.
 
 	/bin/date -d @"$1" '+%-l:%M:%S %p' | tr -s ' '
@@ -12645,7 +12699,7 @@ ConvertSecondsToDuration()
 
 	# http://stackoverflow.com/questions/12199631/convert-seconds-to-hours-minutes-seconds
 
-	# Input:
+	# Inputs:
 	#	$1 = a time in seconds to convert to `HHh:MMm:SSs` or, if less than 1 minute, to `S seconds`.
 
 	((h=${1:-0}/3600))
@@ -12671,10 +12725,10 @@ ConvertSecondsToDuration()
 ConvertMillisecondsToSeconds()
 	{
 
-	# Input:
+	# Inputs:
 	#	$1 = milliseconds.
 
-	# Output:
+	# Outputs:
 	#	stdout = seconds.
 
 	printf '%s' "$(($1/(10**3)))"
@@ -12684,7 +12738,7 @@ ConvertMillisecondsToSeconds()
 ConvertMillisecondsToDuration()
 	{
 
-	# Input:
+	# Inputs:
 	#	$1 = milliseconds to convert to `HHh:MMm:SSs` or, if less than 1 minute, to `S seconds`.
 
 	ConvertSecondsToDuration "$(ConvertMillisecondsToSeconds "$1")"
@@ -12696,7 +12750,7 @@ ConvertMillisecondsToFuncDuration()
 
 	# NOTE: This formatter is only used by script function timers.
 
-	# Input:
+	# Inputs:
 	#	$1 = duration in milliseconds.
 
 	if [[ ${1:-0} -lt 30000 ]]; then
@@ -12710,10 +12764,10 @@ ConvertMillisecondsToFuncDuration()
 ConvertNanosecondsToMilliseconds()
 	{
 
-	# Input:
+	# Inputs:
 	#	$1 = nanoseconds.
 
-	# Output:
+	# Outputs:
 	#	stdout = milliseconds.
 
 	printf '%s' "$(($1/(10**6)))"
@@ -12723,7 +12777,7 @@ ConvertNanosecondsToMilliseconds()
 ConvertNowToFullDate()
 	{
 
-	# Output:
+	# Outputs:
 	#	stdout = real date.
 
 	/bin/date +%c | tr -s ' '
@@ -12733,7 +12787,7 @@ ConvertNowToFullDate()
 ConvertNowToSeconds()
 	{
 
-	# Output:
+	# Outputs:
 	#	stdout = epoch seconds.
 
 	/bin/date +%s
@@ -12743,7 +12797,7 @@ ConvertNowToSeconds()
 ConvertNowToMilliseconds()
 	{
 
-	# Output:
+	# Outputs:
 	#	stdout = epoch milliseconds.
 
 	ConvertNanosecondsToMilliseconds "$(ConvertNowToNanoseconds)"
@@ -12753,7 +12807,7 @@ ConvertNowToMilliseconds()
 ConvertNowToNanoseconds()
 	{
 
-	# Output:
+	# Outputs:
 	#	stdout = epoch nanoseconds.
 
 	/bin/date +%s%N
@@ -12763,7 +12817,7 @@ ConvertNowToNanoseconds()
 FormatAsLongMinutesSecs()
 	{
 
-	# Input:
+	# Inputs:
 	#	$1 = a time in long minutes and seconds to convert to `MMMm:SSs`.
 
 	# separate minutes from seconds
@@ -12901,7 +12955,7 @@ ShowAsProcLong()
 ShowAsProc()
 	{
 
-	# Input:
+	# Inputs:
 	#	$1 = task being carried-out.
 	#	$2 = trailing task (after the ellipsis) (optional). If specified, $useropt_terse will be ignored.
 
@@ -13049,7 +13103,7 @@ ShowAsPercentProgress()
 
 	# Show single action package progress as percent-complete and a fraction of the total.
 
-	# Input:
+	# Inputs:
 	#	$1 = verb (present) (optional)
 	#	$2 = expected action duration: `long` (optional)
 	#	$3 = ok count
@@ -13081,7 +13135,7 @@ PercFrac()
 
 	# Calculate percent-complete and a fraction of the total.
 
-	# Input:
+	# Inputs:
 	#	$1 = ok count
 	#	$2 = skip count
 	#	$3 = fail count
@@ -13111,7 +13165,7 @@ ShowAsIterativeProgress()
 
 	# Show single action package progress as an incrementing amount with no limit.
 
-	# Input:
+	# Inputs:
 	#	$1 = operation 		"calculating"
 	#	$2 = count1			15
 	#	$3 = suffix1		"iterations"
@@ -13141,7 +13195,7 @@ ShowAsIterativeProgress()
 ShowAsActionLogDetail()
 	{
 
-	# Input:								Example:
+	# Inputs:								Example:
 	#   $1 = datetime in seconds (unused)
 	#   $2 = package or group name			`SABnzbd`, `essential`
 	#   $3 = action							`download`, 'downloaded'
@@ -13225,7 +13279,7 @@ OpStepClearWait()
 
 	# Displays script operation message from beginning of line, remain on this line, and leave cursor at end.
 
-	# Input:
+	# Inputs:
 	#	$1 = a 4 character string such as `info`, `proc`, `done`, `derp`.
 	#	$2 = detailed message.
 
@@ -13244,7 +13298,7 @@ OpStepClear()
 
 	# Displays script operation message from beginning of line, jump down a line, and leave cursor at start.
 
-	# Input:
+	# Inputs:
 	#	$1 = a 4 character string such as `info`, `proc`, `done`, `derp`.
 	#	$2 = detailed message.
 
@@ -13261,7 +13315,7 @@ OpStepClear()
 WriteToLog()
 	{
 
-	# Input:
+	# Inputs:
 	#	$1 = pass/fail
 	#	$2 = message
 
@@ -13548,7 +13602,7 @@ ShowKeystrokes()
 sleep()
 	{
 
-	# Input:
+	# Inputs:
 	#	$1 = seconds to sleep (decimal or integer) (optional), default is 1 second.
 
 	local n=${1:-}
