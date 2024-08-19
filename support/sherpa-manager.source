@@ -295,6 +295,7 @@ LoadVars()
 	{
 
 	# Default flags and values.
+
 	action_msg_pipe_fd=none
 	archive_debug_afterward=false
 	backup_stdin_fd=none
@@ -376,6 +377,7 @@ LoadCMDs()
 	{
 
 	# Cherry-pick Entware binaries.
+
 	readonly GNU_AWK_CMD=/opt/bin/awk
 	readonly GNU_FIND_CMD=/opt/bin/find
 	readonly GNU_GREP_CMD=/opt/bin/grep
@@ -392,6 +394,7 @@ LoadCMDs()
 		readonly PIP_CMD="$PYTHON3_CMD -m pip"
 
 	# Cherry-pick QTS binaries.
+
 	readonly AWK_CMD=/bin/awk
 	readonly BASENAME_CMD=/usr/bin/basename
 	readonly CAT_CMD=/bin/cat
@@ -2812,7 +2815,9 @@ ShowArgSuggestions()
 	#   $args_incomplete
 
 	# Outputs: (global)
-	#   various global flags
+	#   $arg_problem
+	#   $run_package_actions
+	#   $useropt_help_basic
 
 	FuncInit
 
@@ -3138,18 +3143,18 @@ Quiz()
 	# Outputs: (local)
 	#   $? = 0 if "y", 1 if anything else
 
-	local prompt=${1:?${FUNCNAME[0]}'()': undefined prompt}
-	local response=''
+	local a=${1:?${FUNCNAME[0]}'()': undefined prompt}
+	local b=''
 
-	ShowAsQuiz "$prompt"
+	ShowAsQuiz "$a"
 	[[ -e $GNU_STTY_CMD && -t 0 ]] && $GNU_STTY_CMD igncr	# Ignore CR to prevent an onscreen linefeed (which disrupts same-line rewrite used later, and looks bad).
-	read -rn1 response
+	read -rn1 b
 	[[ -e $GNU_STTY_CMD && -t 0 ]] && $GNU_STTY_CMD -igncr	# Re-allow CR.
-	DebugVar response
+	DebugVar b
 
-	ShowAsQuizDone "$prompt: $response"
+	ShowAsQuizDone "$a: $b"
 
-	case ${response:0:1} in
+	case ${b:0:1} in
 		y|Y)
 			return 0
 			;;
@@ -3234,7 +3239,7 @@ IsThisFileRecent()
 
 	# Inputs: (local)
 	#   $1 = pathfilename: file to examine change time of.
-	#   $2 = integer (optional): threshold in minutes - default is `1440` = 1 day.
+	#   $2 = integer (optional): threshold in minutes - default is `1440` (1 day).
 
 	# Outputs: (local)
 	#   $? = true/false
