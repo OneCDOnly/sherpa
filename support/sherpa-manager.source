@@ -4262,10 +4262,10 @@ IsSysFileExist()
 IsNtSysFileExist()
 	{
 
-	# Inputs:
+	# Inputs: (local)
 	#   $1 = pathfile to check
 
-	# Outputs:
+	# Outputs: (local)
 	#   $? = 0 (not exists) or 1 (exists)
 
 	! IsSysFileExist "${1:?${FUNCNAME[0]}'()': undefined pathfile}"
@@ -4275,13 +4275,13 @@ IsNtSysFileExist()
 LenANSIDiff()
 	{
 
-	# Inputs:
-	#   $1 = (optional) text to find length of
+	# Inputs: (local)
+	#   $1 = (optional) text to find length-of.
 
-	local original=${1:-}
-	local stripped=$(StripANSICodes "$original")
+	local a=${1:-}
+	local b=$(StripANSICodes "$a")
 
-	printf '%s' "$((${#original}-${#stripped}))"
+	printf '%s' "$((${#a}-${#b}))"
 
 	return 0
 
@@ -4290,12 +4290,15 @@ LenANSIDiff()
 AddSeparators()
 	{
 
-	# Inputs:
+	# Inputs: (local)
 	# 	$1 = list of abbreviations to format with commas.
 
-	local a=''
+	# Outputs: (local)
+	# 	stdout = $1 formatted with commas.
 
 	[[ -z ${1:-} ]] && return
+
+	local a=''
 
 	a=$(Trim "$1")
 	a=${a// /, }	# Replace whitespace with separators.
@@ -4310,9 +4313,17 @@ DisplayAsProjSynExam()
 
 	# Display as project syntax example.
 
-	# Inputs:
+	# Inputs: (local)
 	#	$1 = description
 	#	$2 = example syntax
+
+	# Inputs: (global)
+	#	$CHARS_BULLET
+	#	$HELP_SYNTAX_INDENT
+	#	$HELP_SYNTAX_SUDO_PREFIX
+
+	# Outputs: (local)
+	# 	stdout = $1 & $2 formatted.
 
 	printf "\n${CHARS_BULLET}%s" "$(Capitalise "${1:-}")"
 	[[ ${1: -1} != '!' ]] && printf ':'
@@ -4745,10 +4756,10 @@ GenerateReposReportTitleLine()
 GenerateReposReportDataLine()
 	{
 
-	# Inputs:
-	# 	$qpkg_name (global).
+	# Inputs: (global)
+	# 	$qpkg_name
 
-	# Outputs:
+	# Outputs: (local)
 	# 	stdout = single report line with data fields.
 
 	local assigned_repo=''
@@ -4877,8 +4888,8 @@ GenerateAbsReportDataLine()
 
 	# * This function runs asynchronously *
 
-	# Inputs:
-	# 	$qpkg_name (global).
+	# Inputs: (global)
+	# 	$qpkg_name
 
 	local abs_msg=''
 	local installed_msg=$CHARS_BLANK
@@ -4992,9 +5003,11 @@ GenerateDepsReportDataLine()
 
 	# * This function runs asynchronously *
 
-	# Inputs:
+	# Inputs: (local)
 	#   $1 = QPKG name (optional).
-	# 	$qpkg_name (global).
+
+	# Inputs: (global)
+	# 	$qpkg_name
 
 	local arch_msg=$CHARS_BLANK
 	local dep_name=''
@@ -5325,8 +5338,8 @@ GenerateFeaturesReportDataLine()
 
 	# * This function runs asynchronously *
 
-	# Inputs:
-	# 	$qpkg_name (global).
+	# Inputs: (global)
+	# 	$qpkg_name
 
 	local active_test_msg=$CHARS_BLANK
 	local autoupdate_msg=$CHARS_BLANK
