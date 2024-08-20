@@ -1,5 +1,8 @@
 Observed issues:
 
+	* Need sherpa to determine the diff between sherpa ClamAV QPKG and the new QNAP ClamAV QPKG so it knwos when to ignore the new one.
+		- Maybe check installed QPKG author in qpkg.conf?
+
 	* 'sherpa enable-auto-update active' is not running 'enable-auto-update' action.
 
 	* Near the end of installing IPKs, monitored download path can remain at non-zero size while packages complete installation.

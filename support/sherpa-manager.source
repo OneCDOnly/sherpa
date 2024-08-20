@@ -12973,9 +12973,14 @@ ShowAsProcLong()
 ShowAsProc()
 	{
 
-	# Inputs:
+	# Inputs: (local)
 	#	$1 = task being carried-out.
 	#	$2 = trailing task (after the ellipsis) (optional). If specified, $useropt_terse will be ignored.
+
+	# Inputs: (global)
+	#	$CHARS_ELLIPSIS
+	#	$useropt_terse
+	#	$useropt_verbose
 
 	local a=''
 	local b=''
@@ -13121,7 +13126,7 @@ ShowAsPercentProgress()
 
 	# Show single action package progress as percent-complete and a fraction of the total.
 
-	# Inputs:
+	# Inputs: (local)
 	#	$1 = verb (present) (optional)
 	#	$2 = expected action duration: `long` (optional)
 	#	$3 = ok count
@@ -13153,7 +13158,7 @@ PercFrac()
 
 	# Calculate percent-complete and a fraction of the total.
 
-	# Inputs:
+	# Inputs: (local)
 	#	$1 = ok count
 	#	$2 = skip count
 	#	$3 = fail count
@@ -13183,7 +13188,7 @@ ShowAsIterativeProgress()
 
 	# Show single action package progress as an incrementing amount with no limit.
 
-	# Inputs:
+	# Inputs: (local)
 	#	$1 = operation 		"calculating"
 	#	$2 = count1			15
 	#	$3 = suffix1		"iterations"
@@ -13213,7 +13218,7 @@ ShowAsIterativeProgress()
 ShowAsActionLogDetail()
 	{
 
-	# Inputs:								Example:
+	# Inputs: (local)
 	#   $1 = datetime in seconds (unused)
 	#   $2 = package or group name			`SABnzbd`, `essential`
 	#   $3 = action							`download`, 'downloaded'
@@ -13297,9 +13302,12 @@ OpStepClearWait()
 
 	# Displays script operation message from beginning of line, remain on this line, and leave cursor at end.
 
-	# Inputs:
+	# Inputs: (local)
 	#	$1 = a 4 character string such as `info`, `proc`, `done`, `derp`.
 	#	$2 = detailed message.
+
+	# Inputs: (global)
+	#	$useropt_colourful
 
 	local -i n=4			# Width of the message type.
 
@@ -13316,9 +13324,12 @@ OpStepClear()
 
 	# Displays script operation message from beginning of line, jump down a line, and leave cursor at start.
 
-	# Inputs:
+	# Inputs: (local)
 	#	$1 = a 4 character string such as `info`, `proc`, `done`, `derp`.
 	#	$2 = detailed message.
+
+	# Inputs: (global)
+	#	$useropt_colourful
 
 	local -i n=4			# Width of the message type.
 
@@ -13333,9 +13344,13 @@ OpStepClear()
 WriteToLog()
 	{
 
-	# Inputs:
+	# Inputs: (local)
 	#	$1 = pass/fail
 	#	$2 = message
+
+	# Inputs: (global)
+	#	$sess_active_pathfile
+	#	$useropt_debug
 
 	[[ -n ${1:-} && -n ${2:-} ]] || return
 
