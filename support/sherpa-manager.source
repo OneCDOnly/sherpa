@@ -295,6 +295,7 @@ LoadVars()
 	{
 
 	# Default flags and values.
+
 	action_msg_pipe_fd=none
 	archive_debug_afterward=false
 	backup_stdin_fd=none
@@ -376,6 +377,7 @@ LoadCMDs()
 	{
 
 	# Cherry-pick Entware binaries.
+
 	readonly GNU_AWK_CMD=/opt/bin/awk
 	readonly GNU_FIND_CMD=/opt/bin/find
 	readonly GNU_GREP_CMD=/opt/bin/grep
@@ -392,6 +394,7 @@ LoadCMDs()
 		readonly PIP_CMD="$PYTHON3_CMD -m pip"
 
 	# Cherry-pick QTS binaries.
+
 	readonly AWK_CMD=/bin/awk
 	readonly BASENAME_CMD=/usr/bin/basename
 	readonly CAT_CMD=/bin/cat
@@ -2812,7 +2815,9 @@ ShowArgSuggestions()
 	#   $args_incomplete
 
 	# Outputs: (global)
-	#   various global flags
+	#   $arg_problem
+	#   $run_package_actions
+	#   $useropt_help_basic
 
 	FuncInit
 
@@ -3138,18 +3143,18 @@ Quiz()
 	# Outputs: (local)
 	#   $? = 0 if "y", 1 if anything else
 
-	local prompt=${1:?${FUNCNAME[0]}'()': undefined prompt}
-	local response=''
+	local a=${1:?${FUNCNAME[0]}'()': undefined prompt}
+	local b=''
 
-	ShowAsQuiz "$prompt"
+	ShowAsQuiz "$a"
 	[[ -e $GNU_STTY_CMD && -t 0 ]] && $GNU_STTY_CMD igncr	# Ignore CR to prevent an onscreen linefeed (which disrupts same-line rewrite used later, and looks bad).
-	read -rn1 response
+	read -rn1 b
 	[[ -e $GNU_STTY_CMD && -t 0 ]] && $GNU_STTY_CMD -igncr	# Re-allow CR.
-	DebugVar response
+	DebugVar b
 
-	ShowAsQuizDone "$prompt: $response"
+	ShowAsQuizDone "$a: $b"
 
-	case ${response:0:1} in
+	case ${b:0:1} in
 		y|Y)
 			return 0
 			;;
@@ -3234,7 +3239,7 @@ IsThisFileRecent()
 
 	# Inputs: (local)
 	#   $1 = pathfilename: file to examine change time of.
-	#   $2 = integer (optional): threshold in minutes - default is `1440` = 1 day.
+	#   $2 = integer (optional): threshold in minutes - default is `1440` (1 day).
 
 	# Outputs: (local)
 	#   $? = true/false
@@ -6403,7 +6408,7 @@ DisplayFileInViewport()
 
 	if [[ $($WC_CMD -l < "$filename") -ge $SESS_ROWS || $($WC_CMD -L < "$filename") -ge $SESS_COLS ]]; then
 		if [[ -e $GNU_LESS_CMD ]]; then
-			options=' --quit-on-intr --tilde --mouse --RAW-CONTROL-CHARS --shift 4 --redraw-on-quit --quit-if-one-screen'
+			options=' --header=1 --quit-on-intr --tilde --mouse --RAW-CONTROL-CHARS --shift=4 --redraw-on-quit --quit-if-one-screen'
 			[[ $wraplines = false ]] && options+=' --chop-long-lines'
 			[[ $showlinenumbers = true ]] && options+=' --LINE-NUMBERS'
 			[[ $jumptoend = true ]] && options+=' +G'
@@ -12968,9 +12973,14 @@ ShowAsProcLong()
 ShowAsProc()
 	{
 
-	# Inputs:
+	# Inputs: (local)
 	#	$1 = task being carried-out.
 	#	$2 = trailing task (after the ellipsis) (optional). If specified, $useropt_terse will be ignored.
+
+	# Inputs: (global)
+	#	$CHARS_ELLIPSIS
+	#	$useropt_terse
+	#	$useropt_verbose
 
 	local a=''
 	local b=''
@@ -13116,7 +13126,7 @@ ShowAsPercentProgress()
 
 	# Show single action package progress as percent-complete and a fraction of the total.
 
-	# Inputs:
+	# Inputs: (local)
 	#	$1 = verb (present) (optional)
 	#	$2 = expected action duration: `long` (optional)
 	#	$3 = ok count
@@ -13148,7 +13158,7 @@ PercFrac()
 
 	# Calculate percent-complete and a fraction of the total.
 
-	# Inputs:
+	# Inputs: (local)
 	#	$1 = ok count
 	#	$2 = skip count
 	#	$3 = fail count
@@ -13178,7 +13188,7 @@ ShowAsIterativeProgress()
 
 	# Show single action package progress as an incrementing amount with no limit.
 
-	# Inputs:
+	# Inputs: (local)
 	#	$1 = operation 		"calculating"
 	#	$2 = count1			15
 	#	$3 = suffix1		"iterations"
@@ -13208,7 +13218,7 @@ ShowAsIterativeProgress()
 ShowAsActionLogDetail()
 	{
 
-	# Inputs:								Example:
+	# Inputs: (local)
 	#   $1 = datetime in seconds (unused)
 	#   $2 = package or group name			`SABnzbd`, `essential`
 	#   $3 = action							`download`, 'downloaded'
@@ -13292,9 +13302,12 @@ OpStepClearWait()
 
 	# Displays script operation message from beginning of line, remain on this line, and leave cursor at end.
 
-	# Inputs:
+	# Inputs: (local)
 	#	$1 = a 4 character string such as `info`, `proc`, `done`, `derp`.
 	#	$2 = detailed message.
+
+	# Inputs: (global)
+	#	$useropt_colourful
 
 	local -i n=4			# Width of the message type.
 
@@ -13311,9 +13324,12 @@ OpStepClear()
 
 	# Displays script operation message from beginning of line, jump down a line, and leave cursor at start.
 
-	# Inputs:
+	# Inputs: (local)
 	#	$1 = a 4 character string such as `info`, `proc`, `done`, `derp`.
 	#	$2 = detailed message.
+
+	# Inputs: (global)
+	#	$useropt_colourful
 
 	local -i n=4			# Width of the message type.
 
@@ -13328,9 +13344,13 @@ OpStepClear()
 WriteToLog()
 	{
 
-	# Inputs:
+	# Inputs: (local)
 	#	$1 = pass/fail
 	#	$2 = message
+
+	# Inputs: (global)
+	#	$sess_active_pathfile
+	#	$useropt_debug
 
 	[[ -n ${1:-} && -n ${2:-} ]] || return
 
