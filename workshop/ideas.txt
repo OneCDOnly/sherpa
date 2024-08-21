@@ -1,6 +1,3 @@
-* Add static header row and column(s) to less output.
-	- https://unix.stackexchange.com/a/739599
-
 * Check OOM killed pids against inactive daemons and report as-such on status report.
 
 * Takes 3.5 to 6 seconds to build QPKG states on Laura.
