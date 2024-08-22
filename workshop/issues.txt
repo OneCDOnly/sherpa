@@ -2,8 +2,8 @@ Observed issues:
 
 	* Will need a new method to detect if QTS 5.2.0 is still starting QPKGs due to async starts.
 
-	* Need sherpa to determine the diff between sherpa ClamAV QPKG and the new QNAP ClamAV QPKG so it knwos when to ignore the new one.
-		- Maybe check installed QPKG author in qpkg.conf?
+	* Need sherpa to determine the diff between sherpa ClamAV QPKG and the new QNAP ClamAV QPKG so it knows when to ignore the new one.
+		- Maybe check installed QPKG authors (in qpkg.conf) against packages file?
 
 	* 'sherpa enable-auto-update active' is not running 'enable-auto-update' action.
 
