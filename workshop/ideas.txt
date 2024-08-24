@@ -1,3 +1,5 @@
+* Don't attempt to 'sign' QPKGs after install on unsupported firmware (<4.3.5)
+
 * Check OOM killed pids against inactive daemons and report as-such on status report.
 
 * Takes 3.5 to 6 seconds to build QPKG states on Laura.
@@ -56,8 +58,6 @@
 * Add "about" user arg to display current environment.
 
 * BASH completion.
-
-* Service-scripts should show current auto-update setting when displaying basic help.
 
 * Automate generation of 'Packages.md' in wiki using details from 'packages.source' ?
     - Would need to store full application description, port numbers, application source.
