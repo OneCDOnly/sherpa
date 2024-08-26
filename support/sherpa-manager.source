@@ -8964,14 +8964,14 @@ OsIsAllowUnofficialPackages()
 OsIsStarting()
 	{
 
-	$PS_CMD | $GREP_CMD -F '/bin/sh /etc/init.d/rcS' | $GREP_CMD -v grep
+	$PS_CMD | $GREP_CMD '/bin/sh /etc/init.d/rcS' | $GREP_CMD -v grep
 
 	} &> /dev/null
 
 OsIsStopping()
 	{
 
-	$PS_CMD | $GREP_CMD -F '/bin/sh /etc/init.d/rcK' | $GREP_CMD -v grep
+	$PS_CMD | $GREP_CMD '/bin/sh /etc/init.d/rcK' | $GREP_CMD -v grep
 
 	} &> /dev/null
 
@@ -9410,7 +9410,7 @@ _QPKG:install_()
 			fi
 		fi
 
-		SendParentChangeEnv "QPKGs-ACsign-to:Add $qpkg_name"
+		OsIsSupportSignedPackages && SendParentChangeEnv "QPKGs-ACsign-to:Add $qpkg_name"
 		MarkThisAcForkAsOk
 		z=0   # Remap to zero.
 	else
