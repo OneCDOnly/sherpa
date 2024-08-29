@@ -12756,7 +12756,7 @@ ConvertSecondsToDuration()
 
 	# http://stackoverflow.com/questions/12199631/convert-seconds-to-hours-minutes-seconds
 
-	# Inputs:
+	# Inputs: (local)
 	#	$1 = a time in seconds to convert to 'HHh:MMm:SSs' or, if less than 1 minute, to 'S seconds'.
 
 	((h=${1:-0}/3600))
@@ -12782,10 +12782,10 @@ ConvertSecondsToDuration()
 ConvertMillisecondsToSeconds()
 	{
 
-	# Inputs:
+	# Inputs: (local)
 	#	$1 = milliseconds.
 
-	# Outputs:
+	# Outputs: (local)
 	#	stdout = seconds.
 
 	printf '%s' "$(($1/(10**3)))"
@@ -12795,7 +12795,7 @@ ConvertMillisecondsToSeconds()
 ConvertMillisecondsToDuration()
 	{
 
-	# Inputs:
+	# Inputs: (local)
 	#	$1 = milliseconds to convert to 'HHh:MMm:SSs' or, if less than 1 minute, to 'S seconds'.
 
 	ConvertSecondsToDuration "$(ConvertMillisecondsToSeconds "$1")"
@@ -12807,7 +12807,7 @@ ConvertMillisecondsToFuncDuration()
 
 	# NOTE: This formatter is only used by script function timers.
 
-	# Inputs:
+	# Inputs: (local)
 	#	$1 = duration in milliseconds.
 
 	if [[ ${1:-0} -lt 30000 ]]; then
@@ -12821,10 +12821,10 @@ ConvertMillisecondsToFuncDuration()
 ConvertNanosecondsToMilliseconds()
 	{
 
-	# Inputs:
+	# Inputs: (local)
 	#	$1 = nanoseconds.
 
-	# Outputs:
+	# Outputs: (local)
 	#	stdout = milliseconds.
 
 	printf '%s' "$(($1/(10**6)))"
@@ -12834,7 +12834,7 @@ ConvertNanosecondsToMilliseconds()
 ConvertNowToFullDate()
 	{
 
-	# Outputs:
+	# Outputs: (local)
 	#	stdout = real date.
 
 	/bin/date +%c | tr -s ' '
@@ -12844,7 +12844,7 @@ ConvertNowToFullDate()
 ConvertNowToSeconds()
 	{
 
-	# Outputs:
+	# Outputs: (local)
 	#	stdout = epoch seconds.
 
 	/bin/date +%s
@@ -12854,7 +12854,7 @@ ConvertNowToSeconds()
 ConvertNowToMilliseconds()
 	{
 
-	# Outputs:
+	# Outputs: (local)
 	#	stdout = epoch milliseconds.
 
 	ConvertNanosecondsToMilliseconds "$(ConvertNowToNanoseconds)"
@@ -12864,7 +12864,7 @@ ConvertNowToMilliseconds()
 ConvertNowToNanoseconds()
 	{
 
-	# Outputs:
+	# Outputs: (local)
 	#	stdout = epoch nanoseconds.
 
 	/bin/date +%s%N
@@ -12874,7 +12874,7 @@ ConvertNowToNanoseconds()
 FormatAsLongMinutesSecs()
 	{
 
-	# Inputs:
+	# Inputs: (local)
 	#	$1 = a time in long minutes and seconds to convert to 'MMMm:SSs'.
 
 	# separate minutes from seconds
