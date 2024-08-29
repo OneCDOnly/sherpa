@@ -8762,6 +8762,11 @@ QpkgGetArch()
 
 	# Translate arch from local NAS (QTS/QuTS) to sherpa notation.
 
+	if [[ $(get_display_name) = 'TS-269H' ]]; then
+		printf i53
+		return
+	fi
+
 	case $NAS_ARCH in
 		x86_64)
 			[[ ${NAS_FIRMWARE_VER//.} -ge 430 ]] && printf i64 || printf i86
