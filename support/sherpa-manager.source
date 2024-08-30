@@ -8761,6 +8761,8 @@ QpkgGetArch()
 	{
 
 	# Translate arch from local NAS (QTS/QuTS) to sherpa notation.
+	# sherpa arch for target NAS is a single 3 character-code.
+	# 'a' for ARM, 'i' for Intel.
 
 	if [[ $(get_display_name) = 'TS-269H' ]]; then
 		printf i53
