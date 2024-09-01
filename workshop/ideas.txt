@@ -1,7 +1,3 @@
-* Need two types of QPKG function:
-	- QpkgGetInstalledVer: return already installed QPKG version.
-	- QpkgGetDatabaseVer: return QPKG version from sherpa package database (including unsupported/unavailable if QPKG name is explicitly specified as $1)
-
 * Check OOM killed pids against inactive daemons and report as-such on status report.
 
 * Takes 3.5 to 6 seconds to build QPKG states on Laura.

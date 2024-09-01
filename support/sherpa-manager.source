@@ -493,12 +493,12 @@ LocateSQLiteBinary()
 	#	HybridBackup = `Hybrid Backup Sync`
 
 	if [[ -z $sqlite_cmd ]] && QpkgIsInstalled HybridBackup; then
-		sqlite_pathfile=$(QpkgGetInstallationPath HybridBackup)/CloudConnector3/bin/sqlite3
+		sqlite_pathfile=$(QpkgGetInstalledPath HybridBackup)/CloudConnector3/bin/sqlite3
 		[[ -e $sqlite_pathfile ]] && sqlite_cmd=$sqlite_pathfile
 	fi
 
 	if [[ -z $sqlite_cmd ]] && QpkgIsInstalled ArchiwareP5; then	# untested
-		sqlite_pathfile=$(QpkgGetInstallationPath ArchiwareP5)/binaries/Linux/unknown/64/sqlite3
+		sqlite_pathfile=$(QpkgGetInstalledPath ArchiwareP5)/binaries/Linux/unknown/64/sqlite3
 		[[ -e $sqlite_pathfile ]] && sqlite_cmd=$sqlite_pathfile
 	fi
 
@@ -508,7 +508,7 @@ LocateSQLiteBinary()
 	if [[ -z $sqlite_cmd ]]; then
 		for a in container-station HD_Station; do					# 'HD_Station' is untested
 			if QpkgIsInstalled "$a"; then
-				sqlite_pathfile=$(QpkgGetInstallationPath "$a")/usr/bin/sqlite3
+				sqlite_pathfile=$(QpkgGetInstalledPath "$a")/usr/bin/sqlite3
 				[[ -e $sqlite_pathfile ]] || continue
 				sqlite_cmd=$sqlite_pathfile
 				break
@@ -522,7 +522,7 @@ LocateSQLiteBinary()
 	if [[ -z $sqlite_cmd ]]; then
 		for a in CacheMount qmiixagent QPython312 QPython311 QPython39; do
 			if QpkgIsInstalled "$a"; then
-				sqlite_pathfile=$(QpkgGetInstallationPath "$a")/bin/sqlite3
+				sqlite_pathfile=$(QpkgGetInstalledPath "$a")/bin/sqlite3
 				[[ -e $sqlite_pathfile ]] || continue
 				sqlite_cmd=$sqlite_pathfile
 				break
@@ -537,9 +537,9 @@ LocateSQLiteBinary()
 	if [[ -z $sqlite_cmd ]]; then
 		for a in img2pdf Qsirch OCR_Converter; do
 			if QpkgIsInstalled "$a"; then
-				sqlite_pathfile=$(QpkgGetInstallationPath "$a")/bin/sqlite3
+				sqlite_pathfile=$(QpkgGetInstalledPath "$a")/bin/sqlite3
 				[[ -e $sqlite_pathfile ]] || continue
-				sqlite_cmd="LD_LIBRARY_PATH=$(QpkgGetInstallationPath "$a")/lib $sqlite_pathfile"
+				sqlite_cmd="LD_LIBRARY_PATH=$(QpkgGetInstalledPath "$a")/lib $sqlite_pathfile"
 				break
 			fi
 		done
@@ -583,7 +583,7 @@ LoadEnv()
 		readonly OBJECTS_ARCHIVE_URL='<?cdn_sherpa_base_url?>'/$useropt_branch/objects.tar.gz
 		readonly PACKAGES_ARCHIVE_URL='<?cdn_sherpa_packages_base_url?>'/$useropt_branch/packages.tar.gz
 	readonly QPKG_BU_PATH=$(UserGetDefVol)/.qpkg_config_backup
-	readonly THIS_PACKAGE_PATH=$(QpkgGetInstallationPath)
+	readonly THIS_PACKAGE_PATH=$(QpkgGetInstalledPath)
 		if [[ -z $THIS_PACKAGE_PATH || $THIS_PACKAGE_PATH = undefined || ! -d $THIS_PACKAGE_PATH ]]; then
 			ShowAsError "$(ShowAsTitleName) installation path not found. Please reinstall the $(ShowAsTitleName) QPKG"
 
@@ -846,7 +846,7 @@ DebugLogEnv()
 
 	DebugQpkg detect architecture "$NAS_QPKG_ARCH"
 	DebugQpkg detect "$(ShowAsPackageName Entware) type" "$ENTWARE_VER"
-	DebugQpkg detect "$(ShowAsPackageName Entware) install date" "$(QpkgGetInstallDate Entware)"
+	DebugQpkg detect "$(ShowAsPackageName Entware) install date" "$(QpkgGetInstalledDate Entware)"
 
 	if QpkgIsInstalled SortMyQPKGs; then
 		DebugQpkg detect "$(ShowAsPackageName SortMyQPKGs)" installed
@@ -1079,7 +1079,7 @@ QPKGsAssignToActions()
 	# KLUDGE: ensure Entware is reinstalled when IPKs are upgraded.
 
 	if QpkgIsInstalled Entware; then
-		local entware_install_date=$(QpkgGetInstallDate Entware)
+		local entware_install_date=$(QpkgGetInstalledDate Entware)
 
 		if [[ $entware_install_date = undefined || ${entware_install_date//[!0-9]/} -le 20240809 ]] && [[ $NAS_ARCH != armv5tel ]]; then
 			ShowAsNote "the $(TextBrightOrange Entware) QPKG will be auto-reinstalled (Entware packages were updated early in August 2024)"
@@ -1105,7 +1105,7 @@ QPKGsAssignToActions()
 	for qpkg_name in $(QPKGs-ACinstall-to:Array) $(QPKGs-ACreinstall-to:Array); do
 		QpkgSetIndex
 
-		for prospect in $(QpkgGetDependencies); do
+		for prospect in $(QpkgGetDatabaseDependencies); do
 			QPKGs-ISNTinstalled.Exist "$prospect" && QPKGs-ACinstall-to:Add "$prospect"
 		done
 	done
@@ -1116,7 +1116,7 @@ QPKGsAssignToActions()
 		if [[ $useropt_check = true ]] || QPKGs-ACactivate-to.Exist "$qpkg_name"; then
 			QpkgSetIndex
 
-			for prospect in $(QpkgGetDependencies); do
+			for prospect in $(QpkgGetDatabaseDependencies); do
 				QPKGs-ISNTinstalled.Exist "$prospect" && QPKGs-ACinstall-to:Add "$prospect"
 			done
 		fi
@@ -1129,7 +1129,7 @@ QPKGsAssignToActions()
 			if QPKGs-GRindependent.Exist "$qpkg_name" && QPKGs-ISinstalled.Exist "$qpkg_name"; then
 				QpkgSetIndex
 
-				for prospect in $(QpkgGetDependents); do
+				for prospect in $(QpkgGetDatabaseDependents); do
 					if QPKGs-ISenabled.Exist "$prospect"; then
 						QPKGs-ACdeactivate-to:Add "$prospect"
 						! QPKGs-ACuninstall-to.Exist "$prospect" && ! QPKGs-ACinstall-to.Exist "$prospect" && QPKGs-ACactivate-to:Add "$prospect"
@@ -1146,7 +1146,7 @@ QPKGsAssignToActions()
 			if QPKGs-GRindependent.Exist "$qpkg_name" && QPKGs-ISinstalled.Exist "$qpkg_name"; then
 				QpkgSetIndex
 
-				for prospect in $(QpkgGetDependents); do
+				for prospect in $(QpkgGetDatabaseDependents); do
 					QPKGs-ISinstalled.Exist "$prospect" && QPKGs-ACdeactivate-to:Add "$prospect"
 				done
 			fi
@@ -1167,7 +1167,7 @@ QPKGsAssignToActions()
 		if QPKGs-GRindependent.Exist "$qpkg_name" && QPKGs-ISinstalled.Exist "$qpkg_name" && QPKGs-ACinstall-to.Exist "$qpkg_name"; then
 			QpkgSetIndex
 
-			for prospect in $(QpkgGetDependents); do
+			for prospect in $(QpkgGetDatabaseDependents); do
 				if QPKGs-ISenabled.Exist "$prospect"; then
 					QPKGs-ACdeactivate-to:Add "$prospect"
 					! QPKGs-ACuninstall-to.Exist "$prospect" && ! QPKGs-ACinstall-to.Exist "$prospect" && QPKGs-ACactivate-to:Add "$prospect"
@@ -1193,7 +1193,7 @@ QPKGsAssignToActions()
 		for qpkg_name in $(QPKGs-AC${action}-to:Array); do
 			QpkgSetIndex
 
-			for prospect in $(QpkgGetDependencies); do
+			for prospect in $(QpkgGetDatabaseDependencies); do
 				QPKGs-ISinstalled.Exist "$prospect" && QPKGs-ACactivate-to:Add "$prospect"
 			done
 		done
@@ -1222,7 +1222,7 @@ QPKGsAssignToActions()
 			if QPKGs-ISinstalled.Exist "$qpkg_name" && QPKGs-ACinstall-to.Exist "$qpkg_name"; then
 				QPKGs_were_installed_name+=("$qpkg_name")
 				QpkgSetIndex
-				QPKGs_were_installed_path+=("$($DIRNAME_CMD "$(QpkgGetInstallationPath)")")
+				QPKGs_were_installed_path+=("$($DIRNAME_CMD "$(QpkgGetInstalledPath)")")
 			fi
 
 			QPKGs-ACdeactivate-to:Add "$qpkg_name"
@@ -3169,7 +3169,7 @@ PatchEntwareService()
 
 	local -r TAB=$'\t'
 	local -r PREFIX='# the following line was inserted by sherpa: https://git.io/sherpa'
-	local -r PACKAGE_INIT_PATHFILE=$(QpkgGetServicePathFile Entware)
+	local -r PACKAGE_INIT_PATHFILE=$(QpkgGetInstalledServicePathFile Entware)
 	local find=''
 	local insert=''
 
@@ -3521,7 +3521,7 @@ IPKs:install()
 		for qpkg_name in "${QPKG_NAME[@]}"; do
 			[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
 			QpkgSetIndex
-			IPKs-ACinstall-to:Add "$(QpkgGetIPKs)"
+			IPKs-ACinstall-to:Add "$(QpkgGetDatabaseIPKs)"
 		done
 	else
 		for qpkg_name in "${QPKG_NAME[@]}"; do
@@ -3529,7 +3529,7 @@ IPKs:install()
 
 			if QPKGs-ACinstall-to.Exist "$qpkg_name" || QPKGs-ISinstalled.Exist "$qpkg_name" || (QPKGs-ACreinstall-to.Exist "$qpkg_name" && QPKGs-ISinstalled.Exist "$qpkg_name"); then
 				QpkgSetIndex
-				IPKs-ACinstall-to:Add "$(QpkgGetIPKs)"
+				IPKs-ACinstall-to:Add "$(QpkgGetDatabaseIPKs)"
 			fi
 		done
 	fi
@@ -4432,13 +4432,13 @@ GeneratePacksReportDataLine()
 
 	local app_ver=''
 	local app_ver_msg=$CHARS_BLANK
-# 	local author=$(QpkgGetAuthor)
+# 	local author=$(QpkgGetDatabaseAuthor)
 # 	local author_msg=$CHARS_BLANK
 	local description_msg=$CHARS_BLANK
 	local mode=''
 	local name=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
-		local description=$(QpkgGetDesc "$name")
-		local notes=$(QpkgGetNote "$name")
+		local description=$(QpkgGetDatabaseDesc "$name")
+		local notes=$(QpkgGetDatabaseNote "$name")
 		[[ $notes = none ]] && notes=''
 	local name_msg=$CHARS_NORMAL
 	local notes_msg="${notes}."
@@ -4454,7 +4454,7 @@ GeneratePacksReportDataLine()
 		/bin/touch "$REPORT_FLAGS_PATH"/state-installed
 	fi
 
-	app_ver=$(QpkgGetApplVer)
+	app_ver=$(QpkgGetDatabaseApplVer)
 
 	case $app_ver in
 		dynamic|final|static)
@@ -4575,7 +4575,7 @@ GenerateStatusReportDataLine()
 		/bin/touch "$REPORT_FLAGS_PATH"/state-installed
 	fi
 
-	app_ver=$(QpkgGetApplVer)
+	app_ver=$(QpkgGetDatabaseApplVer)
 
 	case $app_ver in
 		dynamic|final|static)
@@ -4586,7 +4586,7 @@ GenerateStatusReportDataLine()
 		normal)
 			app_ver_msg+=$app_ver
 			name_msg+=$qpkg_name
-			path_msg+=$(QpkgGetInstallationPath)
+			path_msg+=$(QpkgGetInstalledPath)
 
 			if QPKGs-ISenabled.Exist "$qpkg_name"; then
 				status+=" $(TextBrightGreen enabled)"
@@ -4611,7 +4611,7 @@ GenerateStatusReportDataLine()
 			fi
 
 			if QpkgIsSherpaCompatible; then
-				action=$(QpkgGetServiceAction)
+				action=$(QpkgGetInstalledServiceAction)
 				/bin/touch "$REPORT_FLAGS_PATH"/action-$action
 
 				if [[ $action = not-found ]]; then
@@ -4625,7 +4625,7 @@ GenerateStatusReportDataLine()
 					action_msg+="$action"
 				fi
 
-				result=$(QpkgGetServiceResult)
+				result=$(QpkgGetInstalledServiceResult)
 				/bin/touch "$REPORT_FLAGS_PATH"/result-$result
 
 				case $result in
@@ -4648,12 +4648,12 @@ GenerateStatusReportDataLine()
 			;;
 		muted)
 			if QpkgIsSherpaCompatible; then
-				action=$(QpkgGetServiceAction)
+				action=$(QpkgGetInstalledServiceAction)
 
 				if [[ $action != not-found ]]; then
 					/bin/touch "$REPORT_FLAGS_PATH"/action-$action
 					action_msg+="$action"
-					result=$(QpkgGetServiceResult)
+					result=$(QpkgGetInstalledServiceResult)
 					/bin/touch "$REPORT_FLAGS_PATH"/result-$result
 
 					case $result in
@@ -4691,18 +4691,18 @@ GenerateStatusReportDataLine()
 			fi
 
 			status_msg=$(TextDarkGrey "${CHARS_NORMAL}${status}")
-			ver_msg+=$(TextDarkGrey "$(QpkgGetAvailVer "$qpkg_name")")
+			ver_msg+=$(TextDarkGrey "$(QpkgGetDatabaseVer "$qpkg_name")")
 			;;
 		highlighted)
 			app_ver_msg+=$(TextBrightRed "$app_ver")
 			name_msg+=$(TextBrightRed "$qpkg_name")
-			path_msg=$(TextBrightRedBlink "${CHARS_ALERT}$(QpkgGetInstallationPath)")
+			path_msg=$(TextBrightRedBlink "${CHARS_ALERT}$(QpkgGetInstalledPath)")
 			status_msg=$(TextBrightRedBlink "${CHARS_ALERT}missing")
 			ver_msg+=$(TextBrightRed "$(QpkgGetInstalledVer)")
 	esac
 
 	if QPKGs-ISupgradable.Exist "$qpkg_name"; then
-		ver_msg+=" ($(TextBrightOrange "$(QpkgGetAvailVer)"))"
+		ver_msg+=" ($(TextBrightOrange "$(QpkgGetDatabaseVer)"))"
 		/bin/touch "$REPORT_FLAGS_PATH"/status-upgradable
 	fi
 
@@ -4769,11 +4769,11 @@ GenerateReposReportDataLine()
 
 	local assigned_repo=''
 	local assigned_repo_msg=$CHARS_NORMAL
-	local install_date=$(QpkgGetInstallDate)
+	local install_date=$(QpkgGetInstalledDate)
 	local install_date_msg=$CHARS_BLANK
 	local mode=''
 	local name_msg=$CHARS_BLANK
-	local store_id=$(QpkgGetStoreID)
+	local store_id=$(QpkgGetInstalledStoreID)
 
 	if [[ $store_id = undefined || $store_id = sherpa ]]; then
 		store_id=sherpa
@@ -4914,7 +4914,7 @@ GenerateAbsReportDataLine()
 
 	case $mode in
 		normal)
-			abs_msg=${CHARS_NORMAL}$(AddSeparators "$(QpkgGetAbbrvs)")
+			abs_msg=${CHARS_NORMAL}$(AddSeparators "$(QpkgGetDatabaseAbbrvs)")
 			installed_msg+=true
 			name_msg+=$qpkg_name
 			;;
@@ -4926,7 +4926,7 @@ GenerateAbsReportDataLine()
 			elif ! QpkgIsMinRAMOk "$qpkg_name"; then
 				abs_msg="${CHARS_ALERT}insufficient RAM installed"
 			else
-				abs_msg=${CHARS_NORMAL}$(AddSeparators "$(QpkgGetAbbrvs "$qpkg_name")")
+				abs_msg=${CHARS_NORMAL}$(AddSeparators "$(QpkgGetDatabaseAbbrvs "$qpkg_name")")
 			fi
 
 			abs_msg=$(TextDarkGrey "$abs_msg")
@@ -4934,7 +4934,7 @@ GenerateAbsReportDataLine()
 			name_msg+=$(TextDarkGrey "$qpkg_name")
 			;;
 		highlighted)
-			abs_msg=$(TextBrightRed "${CHARS_ALERT}$(AddSeparators "$(QpkgGetAbbrvs)")")
+			abs_msg=$(TextBrightRed "${CHARS_ALERT}$(AddSeparators "$(QpkgGetDatabaseAbbrvs)")")
 			installed_msg=$(TextBrightRedBlink "${CHARS_ALERT}missing")
 			name_msg+=$(TextBrightRed "$qpkg_name")
 	esac
@@ -5018,16 +5018,16 @@ GenerateDepsReportDataLine()
 	local dep_name=''
 	local deps=''
 	local deps_msg=$CHARS_NORMAL
-	local deps_raw=$(QpkgGetDependencies "$qpkg_name")
+	local deps_raw=$(QpkgGetDatabaseDependencies "$qpkg_name")
 	local enabled_msg=$CHARS_BLANK
 	local installed_msg=$CHARS_BLANK
 	local managed='N/A'
 	local managed_msg=$CHARS_BLANK
-	local max_os=$(QpkgGetMaxOSVer "$qpkg_name")
+	local max_os=$(QpkgGetDatabaseMaxOSVer "$qpkg_name")
 	local max_os_msg=$CHARS_BLANK
-	local min_os=$(QpkgGetMinOSVer "$qpkg_name")
+	local min_os=$(QpkgGetDatabaseMinOSVer "$qpkg_name")
 	local min_os_msg=$CHARS_BLANK
-	local min_ram=$(QpkgGetMinRAM "$qpkg_name")
+	local min_ram=$(QpkgGetDatabaseMinRAM "$qpkg_name")
 	local min_ram_msg=$CHARS_BLANK
 	local mode=''
 	local name_msg=$CHARS_BLANK
@@ -5365,7 +5365,7 @@ GenerateFeaturesReportDataLine()
 		mode=normal
 	fi
 
-	if [[ $(QpkgGetActiveTest) = builtin ]]; then
+	if [[ $(QpkgGetDatabaseActiveTest) = builtin ]]; then
 		active_test_msg+=true
 	else
 		active_test_msg+=false
@@ -9223,7 +9223,7 @@ _QPKG:reassign_()
 		SaveActionResultToLog QPKG "$qpkg_name" reassign '' skipped 'not installed'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif [[ $(QpkgGetStoreID) = sherpa || $(QpkgGetStoreID) = undefined ]]; then
+	elif [[ $(QpkgGetInstalledStoreID) = sherpa || $(QpkgGetInstalledStoreID) = undefined ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" reassign '' skipped 'already assigned to sherpa'
 		MarkThisAcForkAsSkipped
 		z=1
@@ -9264,8 +9264,8 @@ _QPKG:download_()
 
 	FuncForkInit
 
-	local -r REMOTE_HASH=$(QpkgGetHash)
-	local -r REMOTE_URL=$(QpkgGetURL)
+	local -r REMOTE_HASH=$(QpkgGetDatabaseHash)
+	local -r REMOTE_URL=$(QpkgGetDatabaseURL)
 		local -r REMOTE_FILENAME=$($BASENAME_CMD "$REMOTE_URL")
 			local -r LOCAL_PATHFILE=$QPKG_DL_PATH/$REMOTE_FILENAME
 				local -r LOCAL_FILENAME=$($BASENAME_CMD "$LOCAL_PATHFILE")
@@ -9360,7 +9360,7 @@ _QPKG:install_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	local local_pathfile=$(QpkgGetPathFilename)
+	local local_pathfile=$(QpkgGetDatabasePathFilename)
 
 	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" install '' skipped-error 'no local file found for processing: please report this issue'
@@ -9382,7 +9382,7 @@ _QPKG:install_()
 	fi
 
 	DebugAsProc "installing $(ShowAsPackageName)"
-	[[ ${QPKGs_were_installed_name[*]:-} = *"$qpkg_name"* ]] && a+="QINSTALL_PATH=$(QpkgGetOriginalPath "$qpkg_name") "
+	[[ ${QPKGs_were_installed_name[*]:-} = *"$qpkg_name"* ]] && a+="QINSTALL_PATH=$(QpkgGetInstalledOriginalPath "$qpkg_name") "
 
 	RunAndLog "${a}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$INSTALL_LOG_FILE" log:failure-only 10
 	z=$?
@@ -9464,7 +9464,7 @@ _QPKG:reinstall_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	local local_pathfile=$(QpkgGetPathFilename)
+	local local_pathfile=$(QpkgGetDatabasePathFilename)
 
 	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' skipped-error 'no local file found for processing, please report this issue.'
@@ -9475,7 +9475,7 @@ _QPKG:reinstall_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "reinstalling $(ShowAsPackageName)"
-	QpkgIsInstalled && a+="QINSTALL_PATH=$($DIRNAME_CMD "$(QpkgGetInstallationPath)") "
+	QpkgIsInstalled && a+="QINSTALL_PATH=$($DIRNAME_CMD "$(QpkgGetInstalledPath)") "
 
 	RunAndLog "${a}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$REINSTALL_LOG_FILE" log:failure-only 10
 	z=$?
@@ -9592,7 +9592,7 @@ _QPKG:upgrade_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	local local_pathfile=$(QpkgGetPathFilename)
+	local local_pathfile=$(QpkgGetDatabasePathFilename)
 
 	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' skipped-error 'no local file found for processing, please report this issue'
@@ -9605,7 +9605,7 @@ _QPKG:upgrade_()
 	local prev_ver=$(QpkgGetInstalledVer)
 
 	DebugAsProc "upgrading $(ShowAsPackageName)"
-	QpkgIsInstalled && a+="QINSTALL_PATH=$($DIRNAME_CMD "$(QpkgGetInstallationPath "$qpkg_name")") "
+	QpkgIsInstalled && a+="QINSTALL_PATH=$($DIRNAME_CMD "$(QpkgGetInstalledPath "$qpkg_name")") "
 
 	RunAndLog "${a}${SH_CMD} $local_pathfile" "$LOGS_PATH/$($BASENAME_CMD "$local_pathfile").$UPGRADE_LOG_FILE" log:failure-only 10
 	z=$?
@@ -9682,7 +9682,7 @@ _QPKG:uninstall_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	local -r QPKG_UNINSTALLER_PATHFILE=$(QpkgGetInstallationPath)/.uninstall.sh
+	local -r QPKG_UNINSTALLER_PATHFILE=$(QpkgGetInstalledPath)/.uninstall.sh
 
 	[[ $qpkg_name = Entware ]] && SaveIpkAndPipList
 
@@ -9763,7 +9763,7 @@ _QPKG:activate_()
 	local -r LOG_PATHFILE=$LOGS_PATH/$qpkg_name.$ACTIVATE_LOG_FILE
 	local timeout=''
 	OsIsSupportQpkgTimeout && timeout=" -t $QPKG_START_TIMEOUT_SECONDS"
-	local service_pathfile=$(QpkgGetServicePathFile)
+	local service_pathfile=$(QpkgGetInstalledServicePathFile)
 
 	DebugAsProc "activating $(ShowAsPackageName)"
 
@@ -9847,7 +9847,7 @@ _QPKG:reactivate_()
 	local -r LOG_PATHFILE=$LOGS_PATH/$qpkg_name.$REACTIVATE_LOG_FILE
 	local timeout=''
 	OsIsSupportQpkgTimeout && timeout=" -t $QPKG_RESTART_TIMEOUT_SECONDS"
-	local service_pathfile=$(QpkgGetServicePathFile)
+	local service_pathfile=$(QpkgGetInstalledServicePathFile)
 
 	DebugAsProc "reactivating $(ShowAsPackageName)"
 
@@ -9922,7 +9922,7 @@ _QPKG:deactivate_()
 	local -r LOG_PATHFILE=$LOGS_PATH/$qpkg_name.$DEACTIVATE_LOG_FILE
 	local timeout=''
 	OsIsSupportQpkgTimeout && timeout=" -t $QPKG_STOP_TIMEOUT_SECONDS"
-	local service_pathfile=$(QpkgGetServicePathFile)
+	local service_pathfile=$(QpkgGetInstalledServicePathFile)
 
 	DebugAsProc "deactivating $(ShowAsPackageName)"
 
@@ -10113,7 +10113,7 @@ _QPKG:enableau_()
 
 	DebugAsProc "enabling auto-update $(ShowAsPackageName)"
 
-	RunAndLog "${a}$(QpkgGetServicePathFile) enable-auto-update" "$LOGS_PATH/$qpkg_name.$ENABLEAU_LOG_FILE" log:failure-only
+	RunAndLog "${a}$(QpkgGetInstalledServicePathFile) enable-auto-update" "$LOGS_PATH/$qpkg_name.$ENABLEAU_LOG_FILE" log:failure-only
 	z=$?
 
 	if [[ $z -eq 0 ]]; then
@@ -10172,7 +10172,7 @@ _QPKG:disableau_()
 
 	DebugAsProc "disabling auto-update $(ShowAsPackageName)"
 
-	RunAndLog "${a}$(QpkgGetServicePathFile) disable-auto-update" "$LOGS_PATH/$qpkg_name.$DISABLEAU_LOG_FILE" log:failure-only
+	RunAndLog "${a}$(QpkgGetInstalledServicePathFile) disable-auto-update" "$LOGS_PATH/$qpkg_name.$DISABLEAU_LOG_FILE" log:failure-only
 	z=$?
 
 	if [[ $z -eq 0 ]]; then
@@ -10227,7 +10227,7 @@ _QPKG:backup_()
 
 	DebugAsProc "backing-up $(ShowAsPackageName) configuration"
 
-	RunAndLog "${a}$(QpkgGetServicePathFile) backup" "$LOGS_PATH/$qpkg_name.$BACKUP_LOG_FILE" log:failure-only
+	RunAndLog "${a}$(QpkgGetInstalledServicePathFile) backup" "$LOGS_PATH/$qpkg_name.$BACKUP_LOG_FILE" log:failure-only
 	z=$?
 
 	if [[ $z -eq 0 ]]; then
@@ -10287,7 +10287,7 @@ _QPKG:restore_()
 
 	DebugAsProc "restoring $(ShowAsPackageName) configuration"
 
-	RunAndLog "${a}$(QpkgGetServicePathFile) restore" "$LOGS_PATH/$qpkg_name.$RESTORE_LOG_FILE" log:failure-only
+	RunAndLog "${a}$(QpkgGetInstalledServicePathFile) restore" "$LOGS_PATH/$qpkg_name.$RESTORE_LOG_FILE" log:failure-only
 	z=$?
 
 	if [[ $z -eq 0 ]]; then
@@ -10343,7 +10343,7 @@ _QPKG:clean_()
 
 	DebugAsProc "cleaning $(ShowAsPackageName)"
 
-	RunAndLog "${a}$(QpkgGetServicePathFile) clean" "$LOGS_PATH/$qpkg_name.$CLEAN_LOG_FILE" log:failure-only
+	RunAndLog "${a}$(QpkgGetInstalledServicePathFile) clean" "$LOGS_PATH/$qpkg_name.$CLEAN_LOG_FILE" log:failure-only
 	z=$?
 
 	if [[ $z -eq 0 ]]; then
@@ -10477,8 +10477,8 @@ _QPKG:status_()
 	# * This function runs asynchronously *
 	# Query a QPKG for its 'status'. Each compatible QPKG will return 0 if application process is active or ready-to-run, 0 if not.
 
-	# Inputs:
-	#	$qpkg_name (global)
+	# Inputs: (global)
+	#	$qpkg_name
 
 	# Outputs:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
@@ -10502,16 +10502,16 @@ _QPKG:status_()
 
 	DebugAsProc "status $(ShowAsPackageName)"
 
-	a=$(QpkgGetActiveTest)
+	a=$(QpkgGetDatabaseActiveTest)
 
 	if [[ $a = builtin ]]; then
 		# Run status query with GNU `timeout` if-possible.
 
 		if [[ -e $GNU_TIMEOUT_CMD ]]; then
-			$GNU_TIMEOUT_CMD "$QPKG_STATUS_CHECK_TIMEOUT_SECONDS" /bin/bash -c "${b}$(QpkgGetServicePathFile) status"
+			$GNU_TIMEOUT_CMD "$QPKG_STATUS_CHECK_TIMEOUT_SECONDS" /bin/bash -c "${b}$(QpkgGetInstalledServicePathFile) status"
 			z=$?
 		else
-			RunAndLog "${b}$(QpkgGetServicePathFile) status" "$LOGS_PATH/$qpkg_name.$STATUS_LOG_FILE" log:failure-only
+			RunAndLog "${b}$(QpkgGetInstalledServicePathFile) status" "$LOGS_PATH/$qpkg_name.$STATUS_LOG_FILE" log:failure-only
 			z=$?
 		fi
 	elif [[ $a != none ]]; then
@@ -10546,15 +10546,17 @@ _QPKG:status_()
 ClearQpkgAppCenterNotifier()
 	{
 
-	# Inputs:
-	#   $qpkg_name (global) = QPKG name to clear from notifier list.
+	# Clear QPKG name from notifier list.
 
-	# KLUDGE: `clean` QTS 4.5.1+ App Center notifier status
+	# Inputs: (global)
+	#   $qpkg_name
+
+	# KLUDGE: `clean` QTS 4.5.1+ App Center notifier status.
 	[[ -e /sbin/qpkg_cli ]] && /sbin/qpkg_cli --cancel "$qpkg_name"
 
 	QpkgIsNtInstalled && return
 
-	# Need to do this when installing QPKGs at the CLI.
+	# Must also do this when installing QPKGs at the CLI.
 	/sbin/setcfg "$qpkg_name" Status complete -f /etc/config/qpkg.conf
 
 	return 0
@@ -10564,14 +10566,17 @@ ClearQpkgAppCenterNotifier()
 QpkgServiceResultWasOk()
 	{
 
-	# Returns true if previous action for this package is `ok`.
+	# Returns true if previous action for this package is 'ok'.
 
-	# Inputs:
-	#   $qpkg_name (global) = QPKG name
+	# Inputs: (global)
+	#   $qpkg_name
+
+	# Outputs: (local)
+	#   $? = true/false
 
 	[[ -n $qpkg_name ]] || return
 
-	[[ $(QpkgGetServiceResult) = ok ]]
+	[[ $(QpkgGetInstalledServiceResult) = ok ]]
 
 	}
 
@@ -10581,7 +10586,7 @@ LogQpkgServiceResult()
 	# Inputs: (global)
 	#   $qpkg_name
 
-	if ! local a=$(QpkgGetServiceResult); then
+	if ! local a=$(QpkgGetInstalledServiceResult); then
 		DebugAsWarn "unable to get status of $(ShowAsPackageName) service. It may be a non-sherpa package, or a sherpa package earlier than 200816c that doesn't support service results."
 
 		return 1
@@ -10610,14 +10615,14 @@ LogQpkgServiceResult()
 
 	}
 
-QpkgGetInstallationPath()
+QpkgGetInstalledPath()
 	{
 
-	# Inputs: (global)
-	#   $qpkg_name
-
 	# Input (local):
-	#   $1 (optional) = source QPKG name.
+	#   $1 (optional) = QPKG name.
+
+	# Inputs: (global)
+	#   $qpkg_name (default)
 
 	# Outputs:
 	#   stdout = package installation date.
@@ -10627,16 +10632,16 @@ QpkgGetInstallationPath()
 
 	}
 
-QpkgGetServicePathFile()
+QpkgGetInstalledServicePathFile()
 	{
-
-	# Inputs: (global)
-	#   $qpkg_name
 
 	# Input (local):
 	#   $1 (optional) = source QPKG name.
 
-	# Outputs:
+	# Inputs: (global)
+	#   $qpkg_name (default)
+
+	# Outputs: (local)
 	#   stdout = service-script pathfile
 	#   $? = 0 if found, 250 if not.
 
@@ -10644,7 +10649,7 @@ QpkgGetServicePathFile()
 
 	}
 
-QpkgGetApplVer()
+QpkgGetDatabaseApplVer()
 	{
 
 	# Returns the version number of the application contained within a QPKG.
@@ -10657,7 +10662,7 @@ QpkgGetApplVer()
 	#	$QPKG_NAME
 	#	$QPKG_VERSION
 
-	# Outputs:
+	# Outputs: (local)
 	#   stdout = application version
 	#   $? = 0 if found, !0 if not
 
@@ -10689,7 +10694,7 @@ QpkgGetApplVer()
 
 	}
 
-QpkgGetAvailVer()
+QpkgGetDatabaseVer()
 	{
 
 	# Returns the version number of an available (not-installed) QPKG.
@@ -10699,7 +10704,7 @@ QpkgGetAvailVer()
 	#   $qpkg_index
 	#	$qpkg_name
 
-	# Outputs:
+	# Outputs: (local)
 	#   stdout = package version
 	#   $? = 0 if found, !0 if not
 
@@ -10733,9 +10738,11 @@ QpkgGetInstalledVer()
 
 	# Returns the version number of an installed QPKG.
 
-	# Inputs:
+	# Inputs: (local)
 	#   $1 (optional) = QPKG name.
-	#   $qpkg_name (global, default) = target QPKG name.
+
+	# Inputs: (global)
+	#   $qpkg_name (default)
 
 	# Outputs:
 	#   stdout = package version
@@ -10745,16 +10752,18 @@ QpkgGetInstalledVer()
 
 	}
 
-QpkgGetStoreID()
+QpkgGetInstalledStoreID()
 	{
 
 	# Returns the presently assigned repository store ID of an installed QPKG.
 
-	# Inputs:
-	#   $qpkg_name (global) = QPKG name (default).
+	# Inputs: (local)
 	#   $1 = if specified, use this as QPKG name instead.
 
-	# Outputs:
+	# Inputs: (global)
+	#   $qpkg_name (default)
+
+	# Outputs: (local)
 	#   stdout = package store ID
 	#   $? = 0 if found, 250 if not.
 
@@ -10762,16 +10771,18 @@ QpkgGetStoreID()
 
 	}
 
-QpkgGetInstallDate()
+QpkgGetInstalledDate()
 	{
 
 	# Returns the date specified QPKG was installed.
 
-	# Inputs:
-	#   $qpkg_name (global) = QPKG name (default).
+	# Inputs: (local)
 	#   $1 = if specified, use this as QPKG name instead.
 
-	# Outputs:
+	# Inputs: (global)
+	#   $qpkg_name (default)
+
+	# Outputs: (local)
 	#   stdout = package installation date
 	#   $? = 0 if found, 1 if QPKG name unspecified, 250 if not found
 
@@ -10779,13 +10790,13 @@ QpkgGetInstallDate()
 
 	}
 
-QpkgGetOriginalPath()
+QpkgGetInstalledOriginalPath()
 	{
 
-	# Inputs:
+	# Inputs: (local)
 	#   $1 = QPKG name
 
-	# Outputs:
+	# Outputs: (local)
 	#   stdout = the original installation path of this QPKG (even if it was migrated to another volume).
 	#   $? = 0 if successful, 1 if failed
 
@@ -10804,24 +10815,19 @@ QpkgGetOriginalPath()
 
 	}
 
-QpkgGetPathFilename()
+QpkgGetDatabasePathFilename()
 	{
 
-	# Inputs:
-	#   $qpkg_default_index (global, optional)
-	#   $qpkg_index (global, optional)
-	#	$qpkg_name (global)
-
-	# Outputs:
-	#   stdout = QPKG local filename.
-	#   $? = 0 (found), !0 (not-found)
+	# Outputs: (local)
+	#   stdout = pathfilename.
+	#   $? = 0 if found, !0 if not
 
 	local a=''
 
-	a=$(QpkgGetURL)
+	a=$(QpkgGetDatabaseURL)
 	[[ -n $a ]] || return
 
-	[[ $(Lowercase "${a##*.}") != qpkg ]] && a=${a%.*}.qpkg		# Swap `zip` for `qpkg` here (only for compatibilty with `QDK.zip`).
+	[[ $(Lowercase "${a##*.}") != qpkg ]] && a=${a%.*}.qpkg		# Swap 'zip' for 'qpkg' here (only for compatibilty with 'QDK.zip').
 
 	printf '%s' "$QPKG_DL_PATH/$($BASENAME_CMD "$a")"
 
@@ -10829,15 +10835,15 @@ QpkgGetPathFilename()
 
 	}
 
-QpkgGetHash()
+QpkgGetDatabaseHash()
 	{
 
-	# Inputs:
-	#   $qpkg_default_index (global)
-	#   $qpkg_index (global)
-	#	$qpkg_name (global)
+	# Inputs: (global)
+	#   $qpkg_default_index
+	#   $qpkg_index
+	#	$qpkg_name
 
-	# Outputs:
+	# Outputs: (local)
 	#   stdout = QPKG MD5
 	#   $? = 0 if found, !0 if not
 
@@ -10855,18 +10861,20 @@ QpkgGetHash()
 
 	}
 
-QpkgGetURL()
+QpkgGetDatabaseURL()
 	{
 
 	# Returns the URL of $qpkg_index.
 
-	# Inputs:
+	# Inputs: (local)
 	#   $1 = QPKG name (optional): if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
-	#   $qpkg_default_index (global)
-	#   $qpkg_index (global)
-	#	$qpkg_name (global)
 
-	# Outputs:
+	# Inputs: (global)
+	#   $qpkg_default_index
+	#   $qpkg_index
+	#	$qpkg_name
+
+	# Outputs: (local)
 	#   stdout = QPKG remote URL.
 	#   $? = 0 if found, !0 if not
 
@@ -10894,16 +10902,18 @@ QpkgGetURL()
 
 	}
 
-QpkgGetMinRAM()
+QpkgGetDatabaseMinRAM()
 	{
 
-	# Inputs:
+	# Inputs: (local)
 	#   $1 = QPKG name (optional): if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
-	#   $qpkg_default_index (global)
-	#   $qpkg_index (global)
-	#	$qpkg_name (global)
 
-	# Outputs:
+	# Inputs: (global)
+	#   $qpkg_default_index
+	#   $qpkg_index
+	#	$qpkg_name
+
+	# Outputs: (local)
 	#   stdout = minimum installed RAM required.
 	#   $? = 0 if found, !0 if not
 
@@ -10928,16 +10938,18 @@ QpkgGetMinRAM()
 
 	}
 
-QpkgGetMinOSVer()
+QpkgGetDatabaseMinOSVer()
 	{
 
-	# Inputs:
+	# Inputs: (local)
 	#   $1 = QPKG name (optional): if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
-	#   $qpkg_default_index (global)
-	#   $qpkg_index (global)
-	#	$qpkg_name (global)
 
-	# Outputs:
+	# Inputs: (global)
+	#   $qpkg_default_index
+	#   $qpkg_index
+	#	$qpkg_name
+
+	# Outputs: (local)
 	#   stdout = minimum QTS/QuTS version required by this QPKG.
 	#   $? = 0 if found, !0 if not
 
@@ -10962,16 +10974,18 @@ QpkgGetMinOSVer()
 
 	}
 
-QpkgGetMaxOSVer()
+QpkgGetDatabaseMaxOSVer()
 	{
 
-	# Inputs:
+	# Inputs: (local)
 	#   $1 = QPKG name (optional): if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
-	#   $qpkg_default_index (global)
-	#   $qpkg_index (global)
-	#	$qpkg_name (global)
 
-	# Outputs:
+	# Inputs: (global)
+	#   $qpkg_default_index
+	#   $qpkg_index
+	#	$qpkg_name
+
+	# Outputs: (local)
 	#   stdout = maximum QTS/QuTS version required by this QPKG.
 	#   $? = 0 if found, !0 if not
 
@@ -10996,30 +11010,30 @@ QpkgGetMaxOSVer()
 
 	}
 
-# QpkgGetAuthor()
-# 	{
-#
-# 	# Return the maintainer of the specified QPKG.
-#
-# 	# Inputs:
-# 	#   $1 = QPKG name
-#
-# 	# Outputs:
-# 	#   stdout = QPKG author (first package found).
-# 	#   $? = 0 (found), !0 (not-found)
-#
-# 	local -i i=0
-#
-# 	for i in "${!QPKG_NAME[@]}"; do
-# 		[[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]] || continue
-# 		printf '%s' "${QPKG_AUTHOR[$i]}"
-#
-# 		return 0
-# 	done
-#
-# 	return 1
-#
-# 	}
+QpkgGetDatabaseAuthor()
+	{
+
+	# Return the maintainer of the specified QPKG.
+
+	# Inputs: (local)
+	#   $1 = QPKG name
+
+	# Outputs: (local)
+	#   stdout = QPKG author (first package found).
+	#   $? = 0 (found), !0 (not-found)
+
+	local -i i=0
+
+	for i in "${!QPKG_NAME[@]}"; do
+		[[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]] || continue
+		printf '%s' "${QPKG_AUTHOR[$i]}"
+
+		return 0
+	done
+
+	return 1
+
+	}
 
 #QpkgGetAuthorEmail()
 # 	{
@@ -11096,7 +11110,7 @@ QpkgGetMaxOSVer()
 #
 # 	}
 
-QpkgGetDesc()
+QpkgGetDatabaseDesc()
 	{
 
 	# Inputs:
@@ -11130,7 +11144,7 @@ QpkgGetDesc()
 
 	}
 
-QpkgGetNote()
+QpkgGetDatabaseNote()
 	{
 
 	# Return any additional notes to be prominently displayed.
@@ -11165,7 +11179,7 @@ QpkgGetNote()
 
 	}
 
-QpkgGetAbbrvs()
+QpkgGetDatabaseAbbrvs()
 	{
 
 	# Inputs:
@@ -11199,7 +11213,7 @@ QpkgGetAbbrvs()
 
 	}
 
-QpkgGetDependencies()
+QpkgGetDatabaseDependencies()
 	{
 
 	# Inputs:
@@ -11273,7 +11287,7 @@ QpkgGetDependencies()
 
 	}
 
-QpkgGetDependents()
+QpkgGetDatabaseDependents()
 	{
 
 	# Inputs:
@@ -11309,7 +11323,7 @@ QpkgGetDependents()
 
 	}
 
-QpkgGetIPKs()
+QpkgGetDatabaseIPKs()
 	{
 
 	# Inputs:
@@ -11335,7 +11349,7 @@ QpkgGetIPKs()
 
 	}
 
-QpkgGetActiveTest()
+QpkgGetDatabaseActiveTest()
 	{
 
 	# Return any custom commands required to determine if specified QPKG is active or not.
@@ -11361,7 +11375,7 @@ QpkgGetActiveTest()
 
 	}
 
-QpkgGetServiceAction()
+QpkgGetInstalledServiceAction()
 	{
 
 	# Inputs:
@@ -11384,7 +11398,7 @@ QpkgGetServiceAction()
 
 	}
 
-QpkgGetServiceResult()
+QpkgGetInstalledServiceResult()
 	{
 
 	# Inputs:
@@ -11410,17 +11424,17 @@ QpkgGetServiceResult()
 QpkgMatchAbbrv()
 	{
 
-	# Inputs:
+	# Inputs: (local)
 	#   $1 = a potential package abbreviation supplied by user.
 
-	# Outputs:
+	# Outputs: (local)
 	#   stdout = matched installable package name (empty if unmatched).
-	#   $? = 0 (matched), !0 (unmatched)
+	#   $? = 0 (matched) / !0 (unmatched)
 
 	local -a ar=()
 	local -i i=0
 	local -i j=0
-	local -i z=1			# default to unmatched
+	local -i z=1			# Default to 'unmatched'.
 
 	for i in "${!QPKG_NAME[@]}"; do
 		ar=(${QPKG_ABBRVS[$i]})
@@ -11442,12 +11456,14 @@ QpkgSetIndex()
 
 	# Find and set the 1-based indexed reference of the named arch-specific QPKG in 'packages' file.
 
-	# Inputs:
-	#   $qpkg_name (global)
+	# Inputs: (global)
+	#   $qpkg_name
 
-	# Outputs:
-	#   $qpkg_index (global) = QPKG element index in packages list arrays. '0' if a compatible arch could not be found.
-	#   $? = 0 (successful), !0 (failed)
+	# Outputs: (local)
+	#   $? = 0 (successful) / !0 (failed)
+
+	# Outputs: (global)
+	#   $qpkg_index ('0' if QPKG a compatible arch could not be found).
 
 	[[ -n ${qpkg_name:-} ]] || return
 
@@ -11471,12 +11487,14 @@ QpkgSetDefaultIndex()
 
 	# Find and set the 1-based indexed reference of the named QPKG in 'packages' file.
 
-	# Inputs:
-	#   $qpkg_name (global)
+	# Inputs: (global)
+	#   $qpkg_name
 
-	# Outputs:
-	#   $qpkg_default_index (global) = QPKG element index in packages list arrays. '0' if QPKG could not be found.
-	#   $? = 0 (successful), !0 (failed)
+	# Outputs: (local)
+	#   $? = 0 (successful) / !0 (failed)
+
+	# Outputs: (global)
+	#   $qpkg_default_index ('0' if QPKG could not be found).
 
 	[[ -n ${qpkg_name:-} ]] || return
 
@@ -11497,14 +11515,16 @@ QpkgIsRepoSelfManaged()
 
 	# Is this QPKG managable by sherpa?
 
-	# Inputs:
+	# Inputs: (local)
 	#   $1 (optional) = QPKG name.
-	#   $qpkg_name (global, default) = target QPKG name.
 
-	# Outputs:
-	#   $? = 0 (true), !0 (false)
+	# Inputs: (global)
+	#   $qpkg_name (default)
 
-	local a=$(QpkgGetStoreID "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
+	# Outputs: (local)
+	#   $? = true/false
+
+	local a=$(QpkgGetInstalledStoreID "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
 
 	[[ -z $a || $a = undefined || $a = sherpa ]]
 
@@ -11515,12 +11535,14 @@ QpkgIsBackupExist()
 
 	# Does this QPKG have an existing `backup` file?
 
-	# Inputs:
+	# Inputs: (local)
 	#   $1 (optional) = QPKG name.
-	#   $qpkg_name (global, default) = target QPKG name.
 
-	# Outputs:
-	#   $? = 0 (true), !0 (false)
+	# Inputs: (global)
+	#   $qpkg_name (default)
+
+	# Outputs: (local)
+	#   $? = true/false
 
 	[[ -e $QPKG_BU_PATH/${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}.config.tar.gz ]]
 
@@ -11531,12 +11553,12 @@ QpkgIsDependent()
 
 	# Does this QPKG depend on any other QPKGs?
 
-	# Inputs:
-	#   $qpkg_default_index (global)
-	#   $qpkg_index (global)
+	# Inputs: (global)
+	#   $qpkg_default_index
+	#   $qpkg_index
 
-	# Outputs:
-	#   $? = 0 (true), !0 (false)
+	# Outputs: (local)
+	#   $? = true/false
 
 	[[ $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
 
@@ -11553,12 +11575,12 @@ QpkgIsIndependent()
 
 	# Will this package run independent of other QPKGs?
 
-	# Inputs:
-	#   $qpkg_default_index (global)
-	#   $qpkg_index (global)
+	# Inputs: (global)
+	#   $qpkg_default_index
+	#   $qpkg_index
 
-	# Outputs:
-	#   $? = 0 (true), !0 (false)
+	# Outputs: (local)
+	#   $? = true/false
 
 	! QpkgIsDependent
 
@@ -11569,16 +11591,18 @@ QpkgIsUpgradable()
 
 	# Does an upgraded QPKG exist?
 
-	# Inputs:
+	# Inputs: (local)
 	#   $1 (optional) = QPKG name.
-	#   $qpkg_name (global, default) = target QPKG name.
 
-	# Outputs:
-	#   $? = 0 (true), !0 (false)
+	# Inputs: (global)
+	#   $qpkg_name (default)
+
+	# Outputs: (local)
+	#   $? = true/false
 
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
 
-	QpkgIsInstalled "$a" && QpkgIsRepoSelfManaged "$a" && [[ $(QpkgGetInstalledVer "$a") != "$(QpkgGetAvailVer "$a")" ]] && QpkgIsArchOK "$a" && QpkgIsMinOSVerOk "$a" && QpkgIsMaxOSVerOk "$a" && QpkgIsMinRAMOk "$a"
+	QpkgIsInstalled "$a" && QpkgIsRepoSelfManaged "$a" && [[ $(QpkgGetInstalledVer "$a") != "$(QpkgGetDatabaseVer "$a")" ]] && QpkgIsArchOK "$a" && QpkgIsMinOSVerOk "$a" && QpkgIsMaxOSVerOk "$a" && QpkgIsMinRAMOk "$a"
 
 	}
 
@@ -11587,12 +11611,12 @@ QpkgIsInstallable()
 
 	# Can this QPKG be installed?
 
-	# Inputs:
-	#   $qpkg_default_index (global)
-	#   $qpkg_index (global)
+	# Inputs: (global)
+	#   $qpkg_default_index
+	#   $qpkg_index
 
-	# Outputs:
-	#   $? = 0 (true), !0 (false)
+	# Outputs: (local)
+	#   $? = true/false
 
 	[[ $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
 
@@ -11605,14 +11629,16 @@ QpkgIsCanBackup()
 
 	# Does this QPKG service-script support `backup` and `restore` actions?
 
-	# Inputs:
+	# Inputs: (local)
 	#   $1 = QPKG name (optional): if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
-	#   $qpkg_default_index (global)
-	#   $qpkg_index (global)
-	#	$qpkg_name (global)
 
-	# Outputs:
-	#   $? = 0 (true), !0 (false)
+	# Inputs: (global)
+	#   $qpkg_default_index
+	#   $qpkg_index
+	#	$qpkg_name (default)
+
+	# Outputs: (local)
+	#   $? = true/false
 
 	local a=''
 	local -i i=0
@@ -11638,11 +11664,13 @@ QpkgIsCanRestartToUpdate()
 
 	# Does this QPKG service-script support updating the internal application when the QPKG is restarted?
 
-	# Inputs:
+	# Inputs: (local)
 	#   $1 (optional) = QPKG name.
-	#   $qpkg_name (global, default) = target QPKG name.
 
-	# Outputs:
+	# Inputs: (global)
+	#   $qpkg_name (default)
+
+	# Outputs: (local)
 	#   $? = 0 (true), !0 (false) (first package found).
 
 	local -i i=0
@@ -11661,11 +11689,13 @@ QpkgIsCanClean()
 
 	# Does this QPKG service-script support cleaning of the internal application?
 
-	# Inputs:
+	# Inputs: (local)
 	#   $1 (optional) = QPKG name.
-	#   $qpkg_name (global, default) = target QPKG name.
 
-	# Outputs:
+	# Inputs: (global)
+	#   $qpkg_name (default)
+
+	# Outputs: (local)
 	#   $? = 0 (true), !0 (false) (first package found).
 
 	local -i i=0
@@ -11684,14 +11714,16 @@ QpkgIsSherpaCompatible()
 
 	# Is this QPKG service-script compatible with enhanced actions supplied by sherpa?
 
-	# Inputs:
+	# Inputs: (local)
 	#   $1 = QPKG name (optional): if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
-	#   $qpkg_default_index (global)
-	#   $qpkg_index (global)
-	#	$qpkg_name (global)
 
-	# Outputs:
-	#   $? = 0 (true), !0 (false)
+	# Inputs: (global)
+	#   $qpkg_default_index
+	#   $qpkg_index
+	#	$qpkg_name (default)
+
+	# Outputs: (local)
+	#   $? = true/false
 
 	local a=''
 	local -i i=0
@@ -11721,7 +11753,7 @@ QpkgIsCanLog()
 	#   $1 (optional) = QPKG name.
 	#   $qpkg_name (global, default) = target QPKG name.
 
-	# Outputs:
+	# Outputs: (local)
 	#   $? = 0 (true), !0 (false) (first package found).
 
 	local -i i=0
@@ -11742,8 +11774,8 @@ QpkgIsInstalled()
 	#   $1 (optional) = QPKG name.
 	#   $qpkg_name (global, default) = target QPKG name.
 
-	# Outputs:
-	#   $? = 0 (true), !0 (false)
+	# Outputs: (local)
+	#   $? = true/false
 
 	$GREP_CMD -q "^\[${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}\]" /etc/config/qpkg.conf
 
@@ -11756,8 +11788,8 @@ QpkgIsNtInstalled()
 	#   $1 (optional) = QPKG name.
 	#   $qpkg_name (global, default) = target QPKG name.
 
-	# Outputs:
-	#   $? = 0 (true), !0 (false)
+	# Outputs: (local)
+	#   $? = true/false
 
 	! QpkgIsInstalled "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}"
 
@@ -11772,9 +11804,9 @@ QpkgIsMissing()
 
 	# Outputs:
 	#   stdout = package installation date.
-	#   $? = 0 (found), !0 (not-found).
+	#   $? = true (found) / false (not-found).
 
-	local a=$(QpkgGetInstallationPath "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
+	local a=$(QpkgGetInstalledPath "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
 
 	[[ $a != undefined && ! -d $a ]]
 
@@ -11790,8 +11822,7 @@ QpkgIsEnabled()
 	#   $qpkg_name (default) = target QPKG name.
 
 	# Outputs: (local)
-	#   $? = 0 	: true
-	#   $? = !0 : false
+	#   $? = true/false
 
 	[[ $(/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}" Enable -u -f /etc/config/qpkg.conf) = TRUE ]]
 
@@ -11809,10 +11840,9 @@ QpkgIsArchOK()
 	#   $qpkg_name (default) = target QPKG name.
 
 	# Outputs: (local)
-	#   $? = 0 	: true
-	#   $? = !0 : false
+	#   $? = true/false
 
-	local a=$(QpkgGetURL "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
+	local a=$(QpkgGetDatabaseURL "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
 
 	[[ -n $a && $a != none ]]
 
@@ -11831,10 +11861,9 @@ QpkgIsMinRAMOk()
 	#   $qpkg_name (default) = target QPKG name.
 
 	# Outputs: (local)
-	#   $? = 0 	: true
-	#   $? = !0 : false
+	#   $? = true/false
 
-	local a=$(QpkgGetMinRAM "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
+	local a=$(QpkgGetDatabaseMinRAM "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
 
 	[[ -n $a ]] && [[ $a = none || $NAS_RAM_KB -ge $a ]]
 
@@ -11853,10 +11882,9 @@ QpkgIsMinOSVerOk()
 	#   $qpkg_name (default) = target QPKG name.
 
 	# Outputs: (local)
-	#   $? = 0 	: true
-	#   $? = !0 : false
+	#   $? = true/false
 
-	local a=$(QpkgGetMinOSVer "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
+	local a=$(QpkgGetDatabaseMinOSVer "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
 
 	[[ -n $a ]] && [[ $a = none || ${NAS_FIRMWARE_VER//.} -ge $a ]]
 
@@ -11875,10 +11903,9 @@ QpkgIsMaxOSVerOk()
 	#   $qpkg_name (default) = target QPKG name.
 
 	# Outputs: (local)
-	#   $? = 0 	: true
-	#   $? = !0 : false
+	#   $? = true/false
 
-	local a=$(QpkgGetMaxOSVer "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
+	local a=$(QpkgGetDatabaseMaxOSVer "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
 
 	[[ -n $a ]] && [[ $a = none || ${NAS_FIRMWARE_VER//.} -le $a ]]
 
@@ -11896,8 +11923,7 @@ QpkgIsAutoUpdate()
 	#   $qpkg_name (default) = target QPKG name.
 
 	# Outputs: (local)
-	#   $? = 0 	: true
-	#   $? = !0 : false
+	#   $? = true/false
 
 	[[ $(/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}" Auto_Update -u -f /etc/config/qpkg.conf) = TRUE ]]
 
@@ -13319,7 +13345,7 @@ ShowAsActionLogDetail()
 						;;
 					*)
 						if QpkgIsCanLog "$2"; then
-							DisplayAsIndentActionResultDurationReason "$3" "$2 $package_type" "$5" "For more information: /etc/init.d/$($BASENAME_CMD "$(QpkgGetServicePathFile "$2")") log"
+							DisplayAsIndentActionResultDurationReason "$3" "$2 $package_type" "$5" "For more information: /etc/init.d/$($BASENAME_CMD "$(QpkgGetInstalledServicePathFile "$2")") log"
 						else
 							DisplayAsIndentActionResultDurationReason "$3" "$2 $package_type" "$5" "$6"
 						fi
