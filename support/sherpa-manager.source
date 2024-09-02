@@ -9014,7 +9014,7 @@ OsIsStdKernelPageSize()
 	# Standard kernel page size for most QNAP NAS is 4kiB. Non-standard size is 32kiB (confirmed on the TS-431XeU, TS-431X3 & TS-1635).
 	# https://www.qnap.com/en-us/how-to/faq/article/why-do-the-installed-third-party-containers-not-run-successfully-on-specific-32-bit-arm-devices
 
-	[[ ${KERNEL_PAGE_SIZE:=$(OsGetKernelPageSize)} = 4096 ]]
+	[[ ${KERNEL_PAGE_SIZE:=$(OsGetKernelPageSize)} = 4096 || $KERNEL_PAGE_SIZE = 4kB ]]
 
 	}
 
