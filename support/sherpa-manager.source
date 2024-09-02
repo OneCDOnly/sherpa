@@ -767,9 +767,9 @@ DebugLogEnv()
 	DebugFirmware ok 'kernel version' "$(OsGetKernelVersion)"
 
 	if OsIsStdKernelPageSize; then
-		DebugFirmware ok 'kernel page size' "$KERNEL_PAGE_SIZE"
+		DebugFirmware ok 'kernel page size' "${KERNEL_PAGE_SIZE}B"
 	else
-		DebugFirmware warning 'kernel page size' "$KERNEL_PAGE_SIZE"
+		DebugFirmware warning 'kernel page size' "${KERNEL_PAGE_SIZE}B"
 	fi
 
 	DebugFirmware ok platform "$NAS_PLATFORM"
@@ -1018,7 +1018,7 @@ CheckEnv()
 
 					if [[ ${installed_version//.} -gt 238 ]]; then
 						ipks_downgrade=true
-						ShowAsNote "various IPKs will be downgraded to suit $KERNEL_PAGE_SIZE kernel page size"
+						ShowAsNote "various IPKs will be downgraded to suit ${KERNEL_PAGE_SIZE}B kernel page size"
 						IPKs-ACdowngrade-to:Add "$target_packages"
 					else
 						IPKs-ACdowngrade-sk:Add "$target_packages"
@@ -1262,7 +1262,7 @@ QPKGsAssignToActions()
 
 	}
 
-# QPKG action processing shall be conducted in this order:
+# QPKG action processing shall-be conducted in this order:
 #
 #	1. status all
 #	2. rebuild all				(meta-action: `download`, `install` & `restore` QPKG, but only if package has an existing backup file)
@@ -1539,7 +1539,7 @@ ProcAction()
 
 			pidfile=$($MKTEMP_CMD "$ASYNC_PROCS_PATH"/bgproc_XXXXXX)		# Set $pidfile here, before launching async process so it's inherited by that process.
 
-			_LaunchOneActionWithManyForks_ "_${PACKAGE_TYPE}:${TARGET_ACTION}_" "${target_packages[@]}" &
+			_ExecOneActionWithManyForks_ "_${PACKAGE_TYPE}:${TARGET_ACTION}_" "${target_packages[@]}" &
 
 			echo "$!" > "$pidfile"
 
@@ -3789,7 +3789,7 @@ CloseIpkArchive()
 
 	}
 
-_LaunchOneActionWithManyForks_()
+_ExecOneActionWithManyForks_()
 	{
 
 	# Execute actions concurrently, but only as many as $max_forks will allow given the circumstances.
@@ -8590,11 +8590,11 @@ OsGetKernelVersion()
 OsGetKernelPageSize()
 	{
 
-	# Accuracy of this method is uncertain.
-
-	$GREP_CMD KernelPageSize /proc/1/smaps | head -n1 | cut -f2 -d':' | tr -d ' '
-
-	# There's also: /sbin/hal_app --get_pagesize
+	if [[ -e /sbin/hal_app ]]; then
+		/sbin/hal_app --get_pagesize
+	else
+		$GREP_CMD KernelPageSize /proc/1/smaps | head -n1 | cut -f2 -d':' | tr -d ' '
+	fi
 
 	}
 
@@ -9011,10 +9011,10 @@ OsIsStopping()
 OsIsStdKernelPageSize()
 	{
 
-	# Standard kernel page size for most QNAP NAS is 4kB. Non-standard size is 32kB (confirmed on the TS-431XeU, TS-431X3 & TS-1635).
+	# Standard kernel page size for most QNAP NAS is 4kiB. Non-standard size is 32kiB (confirmed on the TS-431XeU, TS-431X3 & TS-1635).
 	# https://www.qnap.com/en-us/how-to/faq/article/why-do-the-installed-third-party-containers-not-run-successfully-on-specific-32-bit-arm-devices
 
-	[[ ${KERNEL_PAGE_SIZE:=$(OsGetKernelPageSize)} = 4kB ]]
+	[[ ${KERNEL_PAGE_SIZE:=$(OsGetKernelPageSize)} = 4096 ]]
 
 	}
 
