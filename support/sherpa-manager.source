@@ -8939,7 +8939,7 @@ OsIsSupportUnofficialPackages()
 
 	# Must check for "official QPKGs" on QTS 4.3.3 to QTS 4.3.6:
 
-	[[ ${NAS_FIRMWARE_VER//.} -gt 426 && ${NAS_FIRMWARE_VER//.} -lt 440 ]]
+	[[ ${NAS_FIRMWARE_VER//.} -gt 426 && ${NAS_FIRMWARE_VER//.} -le 436 ]]
 
 	}
 
