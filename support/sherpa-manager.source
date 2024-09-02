@@ -4342,7 +4342,7 @@ DisplayAsProjSynIndentExam()
 
 	# Display as project syntax indented example.
 
-	# Inputs:
+	# Inputs: (local)
 	#	$1 = description (optional)
 	#	$2 = example syntax
 
@@ -4361,7 +4361,7 @@ DisplayAsSynExam()
 
 	# Display as syntax example.
 
-	# Inputs:
+	# Inputs: (local)
 	#	$1 = description
 	#	$2 = example syntax
 
@@ -4374,7 +4374,7 @@ DisplayAsIndentItem()
 
 	# Display as indented single field, bulleted.
 
-	# Inputs:
+	# Inputs: (local)
 	#	$1 = item
 
 	printf "%${HELP_DESC_INDENT}s${CHARS_BULLET}%s\n" '' "$(Capitalise "${1:-}")"
@@ -4385,14 +4385,15 @@ DisplayAsIndentQuotedInfoItem()
 	{
 
 	# Display as indented two fields, first field quoted, second field hyphenated.
-	# Example:
-	# "  'inactive'     •  application is dead or not-started. Try starting/activating it."
 
-	# Inputs:
+	# Example:
+	# "  'inactive'     - application is dead or not-started. Try starting/activating it."
+
+	# Inputs: (local)
 	#	$1 = word
 	#	$2 = description
 
-	if [[ -e $GNU_AWK_CMD ]]; then
+	if OsIsSupportAutowidthTableColumns; then
 		printf "%${HELP_DESC_INDENT}s%s|%s\n" '' "'${1:-}'" "- $(AddPeriod "${2:-}")"
 	else
 		printf "%${HELP_DESC_INDENT}s%-$((FOOTER_NAME_COL_WIDTH+2+$(LenANSIDiff "${1:-}")))s%s\n" '' "'${1:-}'" "- $(AddPeriod "${2:-}")"
@@ -4405,7 +4406,7 @@ GeneratePacksReportTitleLine()
 
 	local a=''
 
-	# column 1: package name
+	# column 1: package name.
 	a='QPKG name:'
 	printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
@@ -4424,11 +4425,11 @@ GeneratePacksReportTitleLine()
 GeneratePacksReportDataLine()
 	{
 
-	# Inputs: (global)
-	# 	$qpkg_name
-
 	# Input (local):
 	#   $1 = QPKG name (optional).
+
+	# Inputs: (global)
+	# 	$qpkg_name
 
 	local app_ver=''
 	local app_ver_msg=$CHARS_BLANK
@@ -4478,14 +4479,14 @@ GeneratePacksReportDataLine()
 			name_msg=$(TextBrightRed "$name_msg")
 	esac
 
-	if [[ -e $GNU_AWK_CMD ]]; then
-		printf '%s|%s|%s\n' "$name_msg" "$app_ver_msg" "$description_msg"
+	if OsIsSupportAutowidthTableColumns; then
+		echo "$name_msg|$app_ver_msg|$description_msg"
 
 		if [[ -n $notes ]]; then
 			printf "%s|%s|%$((${#CHARS_BLANK}))s%s\n" '' '' '' "$(TextBrightOrange "${CHARS_DROPEND}${CHARS_NOTE}") $notes_msg"
 		fi
 	else
-		# column 1: package name
+		# column 1: package name.
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 
 		# column 2: application version
@@ -4510,7 +4511,7 @@ GenerateStatusReportTitleLine()
 
 	local a=''
 
-	# column 1: package name
+	# column 1: package name.
 	a='QPKG name'
 	printf "%-${PACKAGE_NAME_COL_WIDTH}s" "$a:"
 
@@ -4548,8 +4549,6 @@ GenerateStatusReportDataLine()
 	{
 
 	# * This function runs asynchronously *
-
-	# Inputs:
 
 	local action=''
 	local action_msg=$CHARS_BLANK
@@ -4706,10 +4705,10 @@ GenerateStatusReportDataLine()
 		/bin/touch "$REPORT_FLAGS_PATH"/status-upgradable
 	fi
 
-	if [[ -e $GNU_AWK_CMD ]]; then
-		printf '%s|%s|%s|%s|%s|%s\n' "$name_msg" "$status_msg" "$action_msg" "$ver_msg" "$app_ver_msg" "$path_msg"
+	if OsIsSupportAutowidthTableColumns; then
+		echo "$name_msg|$status_msg|$action_msg|$ver_msg|$app_ver_msg|$path_msg"
 	else
-		# column 1: package qpkg_name
+		# column 1: package name.
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 
 		# column 2: package statuses
@@ -4742,7 +4741,7 @@ GenerateReposReportTitleLine()
 
 	local a=''
 
-	# column 1: package name
+	# column 1: package name.
 	a="QPKG name:"
 	printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
@@ -4848,10 +4847,10 @@ GenerateReposReportDataLine()
 			name_msg+=$(TextBrightRed "$qpkg_name")
 	esac
 
-	if [[ -e $GNU_AWK_CMD ]]; then
-		printf '%s|%s|%s\n' "$name_msg" "$assigned_repo_msg" "$install_date_msg"
+	if OsIsSupportAutowidthTableColumns; then
+		echo "$name_msg|$assigned_repo_msg|$install_date_msg"
 	else
-		# column 1: package qpkg_name
+		# column 1: package name.
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 
 		# column 2: package repository
@@ -4872,7 +4871,7 @@ GenerateAbsReportTitleLine()
 
 	local a=''
 
-	# column 1: package name
+	# column 1: package name.
 	a='QPKG name:'
 	printf "%-$((PACKAGE_NAME_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
@@ -4939,10 +4938,10 @@ GenerateAbsReportDataLine()
 			name_msg+=$(TextBrightRed "$qpkg_name")
 	esac
 
-	if [[ -e $GNU_AWK_CMD ]]; then
-		printf '%s|%s|%s\n' "$name_msg" "$installed_msg" "$abs_msg"
+	if OsIsSupportAutowidthTableColumns; then
+		echo "$name_msg|$installed_msg|$abs_msg"
 	else
-		# column 1: package name
+		# column 1: package name.
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 
 		# column 2: package is installed?
@@ -5261,10 +5260,10 @@ GenerateDepsReportDataLine()
 			name_msg+=$(TextBrightRed "$qpkg_name")
 	esac
 
-	if [[ -e $GNU_AWK_CMD ]]; then
-		printf '%s|%s|%s|%s|%s|%s|%s|%s|%s|%s\n' "$name_msg" "$deps_msg" "$installed_msg" "$enabled_msg" "$managed_msg" "$min_ram_msg" "$min_os_msg" "$max_os_msg" "$arch_msg" "$author_msg"
+	if OsIsSupportAutowidthTableColumns; then
+		echo "$name_msg|$deps_msg|$installed_msg|$enabled_msg|$managed_msg|$min_ram_msg|$min_os_msg|$max_os_msg|$arch_msg|$author_msg"
 	else
-		# column 1: package qpkg_name
+		# column 1: package name.
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 
 		# column 2: package dependencies.
@@ -5540,8 +5539,8 @@ GenerateFeaturesReportDataLine()
 			fi
 	esac
 
-	if [[ -e $GNU_AWK_CMD ]]; then
-		printf '%s|%s|%s|%s|%s|%s|%s|%s|%s\n' "$name_msg" "$backup_msg" "$clean_msg" "$restart_to_update_msg" "$autoupdate_msg" "$active_test_msg" "$tier_msg" "$compatible_msg" "$sherpa_compatible_msg"
+	if OsIsSupportAutowidthTableColumns; then
+		echo "$name_msg|$backup_msg|$clean_msg|$restart_to_update_msg|$autoupdate_msg|$active_test_msg|$tier_msg|$compatible_msg|$sherpa_compatible_msg"
 	else
 		# column 1: package name.
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
@@ -7452,7 +7451,7 @@ Help.Abbreviations:Show()
 
 		} > "$REPORT_OUTPUT_PATHFILE"
 
-	if [[ -e $GNU_AWK_CMD ]]; then
+	if OsIsSupportAutowidthTableColumns; then
 		printf -v a '%s\n' 'QPKG name:|Installed?|Acceptable QPKG name abbreviations and aliases:'
 	else
 		printf -v a '%s\n' "$(GenerateAbsReportTitleLine)"
@@ -7475,7 +7474,7 @@ Help.Abbreviations:Show()
 	done
 
 	if [[ -n $a ]]; then
-		if [[ -e $GNU_AWK_CMD ]]; then
+		if OsIsSupportAutowidthTableColumns; then
 			printf '%s' "$a" | Tableise
 		else
 			printf '%s' "$a"
@@ -7562,7 +7561,7 @@ ShowReportDependencies()
 	DisplayProcReport dependency
 	ResetReportsPath &> /dev/null
 
-	if [[ -e $GNU_AWK_CMD ]]; then
+	if OsIsSupportAutowidthTableColumns; then
 		printf -v a '%s\n' 'QPKG name:|Dependencies:|Installed?|Enabled?|Managed?|Min. RAM:|Min. OS:|Max. OS:|Supported arch?|Installed QPKG author:'
 	else
 		printf -v a '%s\n' "$(GenerateDepsReportTitleLine)"
@@ -7585,7 +7584,7 @@ ShowReportDependencies()
 	done
 
 	if [[ -n $a ]]; then
-		if [[ -e $GNU_AWK_CMD ]]; then
+		if OsIsSupportAutowidthTableColumns; then
 			printf '%s' "$a" | Tableise
 		else
 			printf '%s' "$a"
@@ -7622,7 +7621,7 @@ ShowReportFeatures()
 	DisplayProcReport features
 	ResetReportsPath &> /dev/null
 
-	if [[ -e $GNU_AWK_CMD ]]; then
+	if OsIsSupportAutowidthTableColumns; then
 		printf -v a '%s\n' 'QPKG name:|CanBack?|CanClean?|StartUpd?|AutoUpd?|LiveTest?|Indep?|Compat?|Enhanced?'
 	else
 		printf -v a '%s\n' "$(GenerateFeaturesReportTitleLine)"
@@ -7645,7 +7644,7 @@ ShowReportFeatures()
 	done
 
 	if [[ -n $a ]]; then
-		if [[ -e $GNU_AWK_CMD ]]; then
+		if OsIsSupportAutowidthTableColumns; then
 			printf '%s' "$a" | Tableise
 		else
 			printf '%s' "$a"
@@ -7689,7 +7688,7 @@ ShowReportPackages()
 
 		} > "$REPORT_OUTPUT_PATHFILE"
 
-	if [[ -e $GNU_AWK_CMD ]]; then
+	if OsIsSupportAutowidthTableColumns; then
 		printf -v a '%s\n' 'QPKG name:|Appl. version:|Description:'
 	else
 		printf -v a '%s\n' "$(GeneratePacksReportTitleLine)"
@@ -7711,7 +7710,7 @@ ShowReportPackages()
 	done
 
 	if [[ -n $a ]]; then
-		if [[ -e $GNU_AWK_CMD ]]; then
+		if OsIsSupportAutowidthTableColumns; then
 			printf '%s' "$a" | Tableise
 		else
 			printf '%s' "$a"
@@ -7753,7 +7752,7 @@ ShowReportRepos()
 	DisplayProcReport repository
 	ResetReportsPath &> /dev/null
 
-	if [[ -e $GNU_AWK_CMD ]]; then
+	if OsIsSupportAutowidthTableColumns; then
 		printf -v a '%s\n' 'QPKG name:|Repository:|Install date:'
 	else
 		printf -v a '%s\n' "$(GenerateReposReportTitleLine)"
@@ -7776,7 +7775,7 @@ ShowReportRepos()
 	done
 
 	if [[ -n $a ]]; then
-		if [[ -e $GNU_AWK_CMD ]]; then
+		if OsIsSupportAutowidthTableColumns; then
 			printf '%s' "$a" | Tableise
 		else
 			printf '%s' "$a"
@@ -7824,7 +7823,7 @@ ShowReportStatuses()
 		GenerateStatusReportDataLine > "$REPORTS_PATH/$n" &
 	done
 
-	if [[ -e $GNU_AWK_CMD ]]; then
+	if OsIsSupportAutowidthTableColumns; then
 		[[ $a = true ]] && b=" ($(TextBrightOrange new))"
 		printf -v c '%s\n' "QPKG name:|Status:|Previous action (result):|QPKG version${b}:|Appl. version:|Location:"
 	else
@@ -7843,7 +7842,7 @@ ShowReportStatuses()
 	done
 
 	if [[ -n $c ]]; then
-		if [[ -e $GNU_AWK_CMD ]]; then
+		if OsIsSupportAutowidthTableColumns; then
 			printf '%s' "$c" | Tableise
 		else
 			printf '%s' "$c"
@@ -7985,7 +7984,7 @@ GenerateReportFooter()
 	})
 
 	if [[ -n $a ]]; then
-		if [[ -e $GNU_AWK_CMD ]]; then
+		if OsIsSupportAutowidthTableColumns; then
 			printf '%s' "$a" | Tableise
 		else
 			printf '%s\n' "$a"
@@ -8025,7 +8024,7 @@ GenerateReportHeadingsFooter()
 	})
 
 	if [[ -n $a ]]; then
-		if [[ -e $GNU_AWK_CMD ]]; then
+		if OsIsSupportAutowidthTableColumns; then
 			printf '%s' "$a" | Tableise
 		else
 			printf '%s\n' "$a"
@@ -8969,6 +8968,13 @@ OsIsSupportDecimalSleepSeconds()
 
 	}
 
+OsIsSupportAutowidthTableColumns()
+	{
+
+	[[ -e $GNU_AWK_CMD ]]
+
+	}
+
 OsIsAllowUnsignedPackages()
 	{
 
@@ -9152,7 +9158,7 @@ SaveActionResultToLog()
 
 	# Write package type, package name, datetime in seconds, action, result, reason to actions logfile, and into actions durations file.
 
-	# Inputs:									Example:
+	# Inputs: (local)							Example:
 	#   $1 = package type						`QPKG`, `IPK`, `PIP`
 	#   $2 = package or group name				`SABnzbd`, `essential`
 	#   $3 = action								`download`, `activate`
