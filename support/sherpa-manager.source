@@ -4999,6 +4999,10 @@ GenerateDepsReportTitleLine()
 	a='Supported arch?'
 	printf "%-$((PACKAGE_ARCH_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
+	# column 10: installed QPKG author
+	a='Installed QPKG author:'
+	printf "%-$((STD_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
+
 	printf '\n'
 
 	}
@@ -5014,6 +5018,8 @@ GenerateDepsReportDataLine()
 	# Inputs: (global)
 	# 	$qpkg_name
 
+	local author=$(QpkgGetInstalledAuthor)
+	local author_msg=$CHARS_BLANK
 	local arch_msg=$CHARS_BLANK
 	local dep_name=''
 	local deps=''
@@ -5043,18 +5049,22 @@ GenerateDepsReportDataLine()
 	elif QpkgIsNtInstalled; then
 		mode=muted
 		/bin/touch "$REPORT_FLAGS_PATH"/state-notinstalled
+		author='N/A'
 	else
 		mode=normal
-
-		if QpkgIsInstalledRepoSelfManaged; then
-			managed_msg+=$(TextBrightGreen true)
-		else
-			managed_msg+=$(TextBrightOrange false)
-		fi
+		[[ -n $author && $(QpkgGetDatabaseAuthor "$qpkg_name") = "$author" ]] || mode=muted
 	fi
 
 	case $mode in
 		normal)
+			author_msg+=$(TextBrightGreen "$author")
+
+			if QpkgIsInstalledRepoSelfManaged; then
+				managed_msg+=$(TextBrightGreen true)
+			else
+				managed_msg+=$(TextBrightOrange false)
+			fi
+
 			name_msg+=$qpkg_name
 
 			if QpkgIsDatabaseArchOK; then
@@ -5133,10 +5143,6 @@ GenerateDepsReportDataLine()
 
 			;;
 		muted)
-			managed_msg+=$(TextDarkGrey 'N/A')
-			name_msg+=$(TextDarkGrey "$qpkg_name")
-			/bin/touch "$REPORT_FLAGS_PATH"/na
-
 			if QpkgIsDatabaseArchOK "$qpkg_name"; then
 				arch_msg+=$(TextDarkGrey true)
 			else
@@ -5145,7 +5151,13 @@ GenerateDepsReportDataLine()
 				/bin/touch "$REPORT_FLAGS_PATH"/req-attention
 			fi
 
+			author_msg+=$(TextDarkGrey "$author")
 			deps_msg=$(TextDarkGrey "$CHARS_NORMAL")
+			enabled_msg+=$(TextDarkGrey 'N/A')
+			/bin/touch "$REPORT_FLAGS_PATH"/na
+			installed_msg+=$(TextDarkGrey false)
+			managed_msg+=$(TextDarkGrey 'N/A')
+			name_msg+=$(TextDarkGrey "$qpkg_name")
 
 			if [[ $deps_raw != none ]]; then
 				for dep_name in $deps_raw; do
@@ -5157,9 +5169,6 @@ GenerateDepsReportDataLine()
 			fi
 
 			deps_msg+=${deps// /$(TextDarkGrey ', ')}
-			enabled_msg+=$(TextDarkGrey 'N/A')
-			installed_msg+=$(TextDarkGrey false)
-			/bin/touch "$REPORT_FLAGS_PATH"/na
 
 			if QpkgIsDatabaseMaxOSVerOk "$qpkg_name"; then
 				max_os_msg+=$(TextDarkGrey "$max_os")
@@ -5194,6 +5203,8 @@ GenerateDepsReportDataLine()
 				arch_msg+=$(TextBrightRed false)
 				/bin/touch "$REPORT_FLAGS_PATH"/req-alert
 			fi
+
+			author_msg+=$(TextBrightRed "$author")
 
 			if [[ $deps_raw != none ]]; then
 				for dep_name in $deps_raw; do
@@ -5251,7 +5262,7 @@ GenerateDepsReportDataLine()
 	esac
 
 	if [[ -e $GNU_AWK_CMD ]]; then
-		printf '%s|%s|%s|%s|%s|%s|%s|%s|%s\n' "$name_msg" "$deps_msg" "$installed_msg" "$enabled_msg" "$managed_msg" "$min_ram_msg" "$min_os_msg" "$max_os_msg" "$arch_msg"
+		printf '%s|%s|%s|%s|%s|%s|%s|%s|%s|%s\n' "$name_msg" "$deps_msg" "$installed_msg" "$enabled_msg" "$managed_msg" "$min_ram_msg" "$min_os_msg" "$max_os_msg" "$arch_msg" "$author_msg"
 	else
 		# column 1: package qpkg_name
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
@@ -5287,6 +5298,10 @@ GenerateDepsReportDataLine()
 		# column 9: NAS arch is compatible?
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((PACKAGE_ARCH_COL_WIDTH+$(LenANSIDiff "$arch_msg")))s" "$arch_msg"
+
+		# column 10: installed QPKG author.
+		printf "%$((COLUMN_SPACING))s"
+		printf "%-$((STD_COL_WIDTH+$(LenANSIDiff "$author_msg")))s" "$author_msg"
 
 		printf '\n'
 	fi
@@ -5334,10 +5349,6 @@ GenerateFeaturesReportTitleLine()
 	a='Enhanced?'
 	printf "%-$((STD_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
 
-	# column 10: installed QPKG author
-	a='Installed QPKG author:'
-	printf "%-$((STD_COL_WIDTH+2+$(LenANSIDiff "$a")))s" "$a"
-
 	printf '\n'
 
 	}
@@ -5351,8 +5362,6 @@ GenerateFeaturesReportDataLine()
 	# 	$qpkg_name
 
 	local active_test_msg=$CHARS_BLANK
-	local author=''
-	local author_msg=$CHARS_BLANK
 	local autoupdate_msg=$CHARS_BLANK
 	local backup_msg=$CHARS_BLANK
 	local clean_msg=$CHARS_BLANK
@@ -5362,7 +5371,6 @@ GenerateFeaturesReportDataLine()
 	local restart_to_update_msg=$CHARS_BLANK
 	local sherpa_compatible_msg=$CHARS_BLANK
 	local tier_msg=$CHARS_BLANK
-
 
 	if QpkgIsInstalledMissing; then
 		mode=highlighted
@@ -5376,14 +5384,6 @@ GenerateFeaturesReportDataLine()
 		active_test_msg+=true
 	else
 		active_test_msg+=false
-	fi
-
-	author=$(QpkgGetInstalledAuthor)
-
-	if [[ -n $author ]]; then
-		author_msg+=$author
-	else
-		author_msg+='N/A'
 	fi
 
 	if QpkgIsDatabaseCanBackup; then
@@ -5447,12 +5447,6 @@ GenerateFeaturesReportDataLine()
 				active_test_msg=$(TextBrightOrange "$active_test_msg")
 			fi
 
-			if [[ $(QpkgGetDatabaseAuthor "$qpkg_name") = "$author" ]]; then
-				author_msg=$(TextBrightGreen "$author_msg")
-			else
-				author_msg=$(TextBrightRed "$author_msg")
-			fi
-
 			if [[ $compatible_msg =~ true ]]; then
 				compatible_msg=$(TextBrightGreen "$compatible_msg")
 			else
@@ -5491,7 +5485,6 @@ GenerateFeaturesReportDataLine()
 			;;
 		muted)
 			active_test_msg=$(TextDarkGrey "$active_test_msg")
-			author_msg=$(TextDarkGrey "$author_msg")
 			compatible_msg=$(TextDarkGrey "$compatible_msg")
 			autoupdate_msg=$(TextDarkGrey "$autoupdate_msg")
 			backup_msg=$(TextDarkGrey "$backup_msg")
@@ -5548,7 +5541,7 @@ GenerateFeaturesReportDataLine()
 	esac
 
 	if [[ -e $GNU_AWK_CMD ]]; then
-		printf '%s|%s|%s|%s|%s|%s|%s|%s|%s|%s\n' "$name_msg" "$backup_msg" "$clean_msg" "$restart_to_update_msg" "$autoupdate_msg" "$active_test_msg" "$tier_msg" "$compatible_msg" "$sherpa_compatible_msg" "$author_msg"
+		printf '%s|%s|%s|%s|%s|%s|%s|%s|%s\n' "$name_msg" "$backup_msg" "$clean_msg" "$restart_to_update_msg" "$autoupdate_msg" "$active_test_msg" "$tier_msg" "$compatible_msg" "$sherpa_compatible_msg"
 	else
 		# column 1: package name.
 		printf "%-$((PACKAGE_NAME_COL_WIDTH+$(LenANSIDiff "$name_msg")))s" "$name_msg"
@@ -5584,10 +5577,6 @@ GenerateFeaturesReportDataLine()
 		# column 9: QPKG is sherpa-compatible?
 		printf "%$((COLUMN_SPACING))s"
 		printf "%-$((STD_COL_WIDTH+$(LenANSIDiff "$sherpa_compatible_msg")))s" "$sherpa_compatible_msg"
-
-		# column 10: installed QPKG author.
-		printf "%$((COLUMN_SPACING))s"
-		printf "%-$((STD_COL_WIDTH+$(LenANSIDiff "$author_msg")))s" "$author_msg"
 
 		printf '\n'
 	fi
@@ -7574,7 +7563,7 @@ ShowReportDependencies()
 	ResetReportsPath &> /dev/null
 
 	if [[ -e $GNU_AWK_CMD ]]; then
-		printf -v a '%s\n' 'QPKG name:|Dependencies:|Installed?|Enabled?|Managed?|Min. RAM:|Min. OS:|Max. OS:|Supported arch?'
+		printf -v a '%s\n' 'QPKG name:|Dependencies:|Installed?|Enabled?|Managed?|Min. RAM:|Min. OS:|Max. OS:|Supported arch?|Installed QPKG author:'
 	else
 		printf -v a '%s\n' "$(GenerateDepsReportTitleLine)"
 	fi
@@ -7634,7 +7623,7 @@ ShowReportFeatures()
 	ResetReportsPath &> /dev/null
 
 	if [[ -e $GNU_AWK_CMD ]]; then
-		printf -v a '%s\n' 'QPKG name:|CanBack?|CanClean?|StartUpd?|AutoUpd?|LiveTest?|Indep?|Compat?|Enhanced?|Installed QPKG author:'
+		printf -v a '%s\n' 'QPKG name:|CanBack?|CanClean?|StartUpd?|AutoUpd?|LiveTest?|Indep?|Compat?|Enhanced?'
 	else
 		printf -v a '%s\n' "$(GenerateFeaturesReportTitleLine)"
 	fi
