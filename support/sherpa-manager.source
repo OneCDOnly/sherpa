@@ -5052,12 +5052,15 @@ GenerateDepsReportDataLine()
 		author='N/A'
 	else
 		mode=normal
-		[[ -n $author && $(QpkgGetDatabaseAuthor "$qpkg_name") = "$author" ]] || mode=muted
 	fi
 
 	case $mode in
 		normal)
-			author_msg+=$(TextBrightGreen "$author")
+			if QpkgIsInstalledAuthorOk; then
+				author_msg+=$(TextBrightGreen "$author")
+			else
+				author_msg+=$(TextBrightRed "$author")
+			fi
 
 			if QpkgIsInstalledRepoSelfManaged; then
 				managed_msg+=$(TextBrightGreen true)
@@ -11477,7 +11480,11 @@ QpkgMatchAbbrv()
 	{
 
 	# Inputs: (local)
-	#   $1 = a potential package abbreviation supplied by user.
+	#   $1 (string) = a potential package abbreviation supplied by user.
+
+	# Inputs: (global)
+	#   $QPKG_ABBRVS[]
+	#   $QPKG_NAME[]
 
 	# Outputs: (local)
 	#   stdout = matched installable package name (empty if unmatched).
@@ -11506,10 +11513,13 @@ QpkgMatchAbbrv()
 QpkgSetIndex()
 	{
 
-	# Find and set the 1-based indexed reference of the named arch-specific QPKG in 'packages' file.
+	# Find and set the 1-based indexed reference of the named arch-specific QPKG in `packages` file.
 
 	# Inputs: (global)
+	#   $NAS_QPKG_ARCH
+	#   $QPKG_ARCH[]
 	#   $qpkg_name
+	#   $QPKG_NAME[]
 
 	# Outputs: (local)
 	#   $? = 0 (successful) / !0 (failed)
@@ -11537,10 +11547,11 @@ QpkgSetIndex()
 QpkgSetDefaultIndex()
 	{
 
-	# Find and set the 1-based indexed reference of the named QPKG in 'packages' file.
+	# Find and set the 1-based indexed reference of the named QPKG in `packages` file.
 
 	# Inputs: (global)
 	#   $qpkg_name
+	#   $QPKG_NAME[]
 
 	# Outputs: (local)
 	#   $? = 0 (successful) / !0 (failed)
@@ -11591,6 +11602,7 @@ QpkgIsBackupExist()
 	#   $1 (optional) = QPKG name.
 
 	# Inputs: (global)
+	#	$QPKG_BU_PATH
 	#   $qpkg_name (default)
 
 	# Outputs: (local)
@@ -11723,11 +11735,11 @@ QpkgIsDatabaseMinOSVerOk()
 	# Does this NAS meets the minimum OS firmware version requirements for QPKG name?
 
 	# Inputs: (local)
-	#   $1 (optional) = QPKG name.
+	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#	$NAS_FIRMWARE_VER
-	#   $qpkg_name (default)
+	#	$qpkg_name (default for $1)
 
 	# Outputs: (local)
 	#   $? = true/false
@@ -11744,11 +11756,11 @@ QpkgIsDatabaseMaxOSVerOk()
 	# Does this NAS meets the maximum OS firmware version requirements for QPKG name?
 
 	# Inputs: (local)
-	#   $1 (optional) = QPKG name.
+	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#	$NAS_FIRMWARE_VER
-	#   $qpkg_name (default)
+	#	$qpkg_name (default for $1)
 
 	# Outputs: (local)
 	#   $? = true/false
@@ -11765,12 +11777,14 @@ QpkgIsDatabaseCanBackup()
 	# Does this QPKG service-script support `backup` and `restore` actions?
 
 	# Inputs: (local)
-	#   $1 = QPKG name (optional): if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
+	#	$QPKG_CAN_BACKUP[]
 	#   $qpkg_default_index
 	#   $qpkg_index
-	#	$qpkg_name (default)
+	#	$qpkg_name (default for $1)
+	#	$QPKG_NAME[]
 
 	# Outputs: (local)
 	#   $? = true/false
@@ -11800,10 +11814,12 @@ QpkgIsDatabaseCanRestartToUpdate()
 	# Does this QPKG service-script support updating the internal application when the QPKG is restarted?
 
 	# Inputs: (local)
-	#   $1 (optional) = QPKG name.
+	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
-	#   $qpkg_name (default)
+	#	$qpkg_name (default for $1)
+	#	$QPKG_NAME[]
+	#	$QPKG_CAN_RESTART_TO_UPDATE[]
 
 	# Outputs: (local)
 	#   $? = 0 (true), !0 (false) (first package found).
@@ -11826,13 +11842,13 @@ QpkgIsDatabaseCanClean()
 	# Does this QPKG service-script support cleaning of the internal application?
 
 	# Inputs: (local)
-	#   $1 (optional) = QPKG name.
+	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
-	#   $qpkg_name (default)
+	#	$qpkg_name (default for $1)
 
 	# Outputs: (local)
-	#   $? = 0 (true), !0 (false) (first package found).
+	#   $? = 0 (true), 1 (false) (first package found).
 
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
 	local -i i=0
@@ -11852,7 +11868,7 @@ QpkgIsDatabaseSherpaCompatible()
 	# Is this QPKG service-script compatible with enhanced actions supplied by sherpa?
 
 	# Inputs: (local)
-	#   $1 = QPKG name (optional): if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#   $qpkg_default_index
@@ -11887,7 +11903,7 @@ QpkgIsDatabaseCanLog()
 	# Does this QPKG service-script support logging of actions? When an action fails, this means user can be directed to check the service-script log.
 
 	# Inputs: (local)
-	#   $1 (optional) = QPKG name.
+	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#   $qpkg_name (default)
@@ -11912,7 +11928,7 @@ QpkgIsInstalledAutoUpdate()
 	# Is the installed QPKG set to auto-update on restart?
 
 	# Inputs: (local)
-	#   $1 (optional) = QPKG name.
+	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#   $qpkg_name (default)
@@ -11922,7 +11938,7 @@ QpkgIsInstalledAutoUpdate()
 
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
 
-	[[ $(/sbin/getcfg "$a" Auto_Update -u -f /etc/config/qpkg.conf) = TRUE ]] && QpkgIsInstalledAuthorOk "$a"
+	[[ $(/sbin/getcfg "$a" Auto_Update -u -f /etc/config/qpkg.conf) = TRUE ]]
 
 	}
 
@@ -11930,7 +11946,7 @@ QpkgIsInstalledAuthorOk()
 	{
 
 	# Inputs: (local)
-	#   $1 (optional) = QPKG name.
+	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#   $qpkg_name (default)
@@ -11948,7 +11964,7 @@ QpkgIsInstalled()
 	{
 
 	# Inputs: (local)
-	#   $1 (optional) = QPKG name.
+	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#   $qpkg_name (default)
@@ -11958,7 +11974,7 @@ QpkgIsInstalled()
 
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
 
-	$GREP_CMD -q "^\[$a\]" /etc/config/qpkg.conf && QpkgIsInstalledAuthorOk "$a"
+	$GREP_CMD -q "^\[$a\]" /etc/config/qpkg.conf
 
 	}
 
@@ -11966,7 +11982,7 @@ QpkgIsNtInstalled()
 	{
 
 	# Inputs: (local)
-	#   $1 (optional) = QPKG name.
+	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#   $qpkg_name (default)
@@ -11982,7 +11998,7 @@ QpkgIsInstalledMissing()
 	{
 
 	# Inputs: (local)
-	#   $1 (optional) = QPKG name.
+	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#   $qpkg_name (default)
@@ -12001,7 +12017,7 @@ QpkgIsInstalledEnabled()
 	{
 
 	# Inputs: (local)
-	#   $1 (optional) = QPKG name.
+	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#   $qpkg_name (default)
@@ -12011,7 +12027,7 @@ QpkgIsInstalledEnabled()
 
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
 
-	[[ $(/sbin/getcfg "$a" Enable -u -f /etc/config/qpkg.conf) = TRUE ]] && QpkgIsInstalledAuthorOk "$a"
+	[[ $(/sbin/getcfg "$a" Enable -u -f /etc/config/qpkg.conf) = TRUE ]]
 
 	}
 
