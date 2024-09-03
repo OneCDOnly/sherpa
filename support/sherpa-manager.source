@@ -11873,7 +11873,7 @@ QpkgIsDatabaseSherpaCompatible()
 	# Inputs: (global)
 	#   $qpkg_default_index
 	#   $qpkg_index
-	#	$qpkg_name (default)
+	#	$qpkg_name (default for $1)
 
 	# Outputs: (local)
 	#   $? = true/false
@@ -11906,7 +11906,7 @@ QpkgIsDatabaseCanLog()
 	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
-	#   $qpkg_name (default)
+	#	$qpkg_name (default for $1)
 
 	# Outputs: (local)
 	#   $? = 0 (true) / !0 (false) (first package found).
@@ -11931,7 +11931,7 @@ QpkgIsInstalledAutoUpdate()
 	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
-	#   $qpkg_name (default)
+	#	$qpkg_name (default for $1)
 
 	# Outputs: (local)
 	#   $? = true/false
@@ -11949,7 +11949,7 @@ QpkgIsInstalledAuthorOk()
 	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
-	#   $qpkg_name (default)
+	#	$qpkg_name (default for $1)
 
 	# Outputs: (local)
 	#   $? = true/false
@@ -11967,7 +11967,7 @@ QpkgIsInstalled()
 	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
-	#   $qpkg_name (default)
+	#	$qpkg_name (default for $1)
 
 	# Outputs: (local)
 	#   $? = true/false
@@ -11985,7 +11985,7 @@ QpkgIsNtInstalled()
 	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
-	#   $qpkg_name (default)
+	#	$qpkg_name (default for $1)
 
 	# Outputs: (local)
 	#   $? = true/false
@@ -12001,7 +12001,7 @@ QpkgIsInstalledMissing()
 	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
-	#   $qpkg_name (default)
+	#	$qpkg_name (default for $1)
 
 	# Outputs: (local)
 	#   stdout = package installation date.
@@ -12020,7 +12020,7 @@ QpkgIsInstalledEnabled()
 	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
-	#   $qpkg_name (default)
+	#	$qpkg_name (default for $1)
 
 	# Outputs: (local)
 	#   $? = true/false
