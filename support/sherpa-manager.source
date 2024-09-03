@@ -4558,6 +4558,7 @@ GenerateStatusReportDataLine()
 	local mode=''
 	local -i n=0
 	local name_msg=$CHARS_BLANK
+	local path=''
 	local path_msg=$CHARS_BLANK
 	local result=''
 	local status=''
@@ -4573,6 +4574,10 @@ GenerateStatusReportDataLine()
 	else
 		mode=normal
 		/bin/touch "$REPORT_FLAGS_PATH"/state-installed
+	fi
+
+	if [[ $mode = normal ]] && QpkgIsNtInstalledAuthorOk; then
+		mode=muted
 	fi
 
 	app_ver=$(QpkgGetDatabaseApplVer)
@@ -4675,12 +4680,23 @@ GenerateStatusReportDataLine()
 				/bin/touch "$REPORT_FLAGS_PATH"/na
 			fi
 
-			app_ver_msg+=$(TextDarkGrey "$app_ver")
 			name_msg+=$(TextDarkGrey "$qpkg_name")
-			path_msg+=$(TextDarkGrey 'N/A')
+
+			if QpkgIsInstalled && QpkgIsNtInstalledAuthorOk; then
+				app_ver='N/A'
+				path+=$(QpkgGetInstalledPath)
+			else
+				path+='N/A'
+			fi
+
+			app_ver_msg+=$(TextDarkGrey "$app_ver")
+			path_msg+=$(TextDarkGrey "$path")
+
 			/bin/touch "$REPORT_FLAGS_PATH"/na
 
-			if ! QpkgIsDatabaseArchOK; then
+			if QpkgIsNtInstalledAuthorOk; then
+				status='incompatible author'
+			elif ! QpkgIsDatabaseArchOK; then
 				status='incompatible arch'
 			elif ! QpkgIsDatabaseMinOSVerOk; then
 				status="incompatible $(OsGetQnapOS)"
@@ -11957,6 +11973,22 @@ QpkgIsInstalledAuthorOk()
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
 
 	[[ $(QpkgGetDatabaseAuthor "$a") = "$(QpkgGetInstalledAuthor "$a")" ]]
+
+	}
+
+QpkgIsNtInstalledAuthorOk()
+	{
+
+	# Inputs: (local)
+	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+
+	# Inputs: (global)
+	#	$qpkg_name (default for $1)
+
+	# Outputs: (local)
+	#   $? = true/false
+
+	! QpkgIsInstalledAuthorOk "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}"
 
 	}
 
