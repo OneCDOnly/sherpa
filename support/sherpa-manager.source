@@ -1544,6 +1544,7 @@ ProcAction()
 			echo "$!" > "$pidfile"
 
 			# Read message pipe and process QPKGs and actions as-per requests contained within.
+
 			while [[ ${#target_packages[@]} -gt 0 && ! -e $ACTION_ABORT_PATHFILE ]]; do
 				ReadFromActionMsgPipe msg1_key msg1_value msg2_key msg2_value
 
@@ -1598,7 +1599,7 @@ ProcAction()
 					status)			# Update the status of a single action fork in the parent shell.
 						case $msg1_value in
 							ok)		# Completed OK (wonderful!).
-								[[ $TARGET_ACTION != status ]] && ((ok_count++))		# Don't need to count the result of `status` checks.
+								[[ $TARGET_ACTION != status ]] && ((ok_count++))		# No-need to count result of `status` checks.
 								;;
 							so)		# Action was skipped, but this is normal (no-big-deal).
 								((skip_ok_count++))
@@ -10622,7 +10623,7 @@ LogQpkgServiceResult()
 QpkgGetInstalledPath()
 	{
 
-	# Input (local):
+	# Inputs: (local)
 	#   $1 (optional) = QPKG name.
 
 	# Inputs: (global)
@@ -10639,8 +10640,8 @@ QpkgGetInstalledPath()
 QpkgGetInstalledServicePathFile()
 	{
 
-	# Input (local):
-	#   $1 (optional) = source QPKG name.
+	# Inputs: (local)
+	#   $1 (optional) = QPKG name.
 
 	# Inputs: (global)
 	#   $qpkg_name (default)
@@ -10762,7 +10763,7 @@ QpkgGetInstalledStoreID()
 	# Returns the presently assigned repository store ID of an installed QPKG.
 
 	# Inputs: (local)
-	#   $1 = if specified, use this as QPKG name instead.
+	#   $1 (optional) = QPKG name.
 
 	# Inputs: (global)
 	#   $qpkg_name (default)
@@ -10781,7 +10782,7 @@ QpkgGetInstalledDate()
 	# Returns the date specified QPKG was installed.
 
 	# Inputs: (local)
-	#   $1 = if specified, use this as QPKG name instead.
+	#   $1 (optional) = QPKG name.
 
 	# Inputs: (global)
 	#   $qpkg_name (default)
@@ -10798,17 +10799,21 @@ QpkgGetInstalledOriginalPath()
 	{
 
 	# Inputs: (local)
-	#   $1 = QPKG name
+	#   $1 (optional) = QPKG name.
+
+	# Inputs: (global)
+	#   $qpkg_name (default)
 
 	# Outputs: (local)
 	#   stdout = the original installation path of this QPKG (even if it was migrated to another volume).
 	#   $? = 0 if successful, 1 if failed
 
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
 	local -i i=0
 
 	if [[ ${#QPKGs_were_installed_name[@]} -gt 0 ]]; then
 		for i in "${!QPKGs_were_installed_name[@]}"; do
-			[[ ${QPKGs_were_installed_name[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]] || continue
+			[[ ${QPKGs_were_installed_name[$i]} = "$a" ]] || continue
 			printf '%s' "${QPKGs_were_installed_path[$i]}"
 
 			return 0
@@ -11020,16 +11025,20 @@ QpkgGetDatabaseAuthor()
 	# Return the maintainer of the specified QPKG.
 
 	# Inputs: (local)
-	#   $1 = QPKG name
+	#   $1 (optional) = QPKG name.
+
+	# Inputs: (global)
+	#   $qpkg_name (default)
 
 	# Outputs: (local)
 	#   stdout = QPKG author (first package found).
 	#   $? = 0 (found), !0 (not-found)
 
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
 	local -i i=0
 
 	for i in "${!QPKG_NAME[@]}"; do
-		[[ ${QPKG_NAME[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]] || continue
+		[[ ${QPKG_NAME[$i]} = "$a" ]] || continue
 		printf '%s' "${QPKG_AUTHOR[$i]}"
 
 		return 0
@@ -11400,11 +11409,13 @@ QpkgGetDatabaseActiveTest()
 QpkgGetInstalledServiceAction()
 	{
 
-	# Inputs:
+	# Inputs: (local)
 	#   $1 (optional) = QPKG name.
-	#   $qpkg_name (global, default) = target QPKG name.
 
-	# Outputs:
+	# Inputs: (global)
+	#   $qpkg_name (default)
+
+	# Outputs: (local)
 	#   $stdout = previous action requested.
 	#   $? = 0 (found), !0 (not-found)
 
@@ -11423,11 +11434,13 @@ QpkgGetInstalledServiceAction()
 QpkgGetInstalledServiceResult()
 	{
 
-	# Inputs:
+	# Inputs: (local)
 	#   $1 (optional) = QPKG name.
-	#   $qpkg_name (global, default) = target QPKG name.
 
-	# Outputs:
+	# Inputs: (global)
+	#   $qpkg_name (default)
+
+	# Outputs: (local)
 	#   $stdout = last known package service status.
 	#   $? = 0 (found), !0 (not-found)
 
@@ -11587,44 +11600,6 @@ QpkgIsBackupExist()
 
 	}
 
-QpkgIsDatabaseDependent()
-	{
-
-	# Does this QPKG depend on any other QPKGs?
-
-	# Inputs: (global)
-	#   $qpkg_default_index
-	#   $qpkg_index
-
-	# Outputs: (local)
-	#   $? = true/false
-
-	[[ $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
-
-	local a=''
-
-	a=${QPKG_DEPENDS_ON[$qpkg_index]}
-	[[ $a = default ]] && a=${QPKG_DEPENDS_ON[$qpkg_default_index]}
-	[[ $a != none ]]
-
-	}
-
-QpkgIsDatabaseIndependent()
-	{
-
-	# Will this package run independent of other QPKGs?
-
-	# Inputs: (global)
-	#   $qpkg_default_index
-	#   $qpkg_index
-
-	# Outputs: (local)
-	#   $? = true/false
-
-	! QpkgIsDatabaseDependent
-
-	}
-
 QpkgIsUpgradable()
 	{
 
@@ -11663,215 +11638,41 @@ QpkgIsInstallable()
 
 	}
 
-QpkgIsDatabaseCanBackup()
+QpkgIsDatabaseDependent()
 	{
 
-	# Does this QPKG service-script support `backup` and `restore` actions?
-
-	# Inputs: (local)
-	#   $1 = QPKG name (optional): if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
+	# Does this QPKG depend on any other QPKGs?
 
 	# Inputs: (global)
 	#   $qpkg_default_index
 	#   $qpkg_index
-	#	$qpkg_name (default)
 
 	# Outputs: (local)
 	#   $? = true/false
 
+	[[ $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
+
 	local a=''
-	local -i i=0
 
-	if [[ -n ${1:-} ]]; then
-		for i in "${!QPKG_NAME[@]}"; do
-			[[ ${QPKG_NAME[$i]} = "$1" ]] || continue
-			a=${QPKG_CAN_BACKUP[$i]}			# Always grab first found as default.
-			break
-		done
-	else
-		a=${QPKG_CAN_BACKUP[$qpkg_index]}
-		[[ $a = default ]] && a=${QPKG_CAN_BACKUP[$qpkg_default_index]}
-	fi
-
-	[[ -n $a ]] || a=none
-	[[ $a = true ]]
+	a=${QPKG_DEPENDS_ON[$qpkg_index]}
+	[[ $a = default ]] && a=${QPKG_DEPENDS_ON[$qpkg_default_index]}
+	[[ $a != none ]]
 
 	}
 
-QpkgIsDatabaseCanRestartToUpdate()
+QpkgIsDatabaseIndependent()
 	{
 
-	# Does this QPKG service-script support updating the internal application when the QPKG is restarted?
-
-	# Inputs: (local)
-	#   $1 (optional) = QPKG name.
-
-	# Inputs: (global)
-	#   $qpkg_name (default)
-
-	# Outputs: (local)
-	#   $? = 0 (true), !0 (false) (first package found).
-
-	local -i i=0
-
-	for i in "${!QPKG_NAME[@]}"; do
-		[[ ${QPKG_NAME[$i]} = "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}" ]] || continue
-		${QPKG_CAN_RESTART_TO_UPDATE[$i]} && return 0 || break
-	done
-
-	return 1
-
-	}
-
-QpkgIsDatabaseCanClean()
-	{
-
-	# Does this QPKG service-script support cleaning of the internal application?
-
-	# Inputs: (local)
-	#   $1 (optional) = QPKG name.
-
-	# Inputs: (global)
-	#   $qpkg_name (default)
-
-	# Outputs: (local)
-	#   $? = 0 (true), !0 (false) (first package found).
-
-	local -i i=0
-
-	for i in "${!QPKG_NAME[@]}"; do
-		[[ ${QPKG_NAME[$i]} = "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}" ]] || continue
-		${QPKG_CAN_CLEAN[$i]} && return 0 || break
-	done
-
-	return 1
-
-	}
-
-QpkgIsDatabaseSherpaCompatible()
-	{
-
-	# Is this QPKG service-script compatible with enhanced actions supplied by sherpa?
-
-	# Inputs: (local)
-	#   $1 = QPKG name (optional): if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
+	# Will this package run independent of other QPKGs?
 
 	# Inputs: (global)
 	#   $qpkg_default_index
 	#   $qpkg_index
-	#	$qpkg_name (default)
 
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=''
-	local -i i=0
-
-	if [[ -n ${1:-} ]]; then
-		for i in "${!QPKG_NAME[@]}"; do
-			[[ ${QPKG_NAME[$i]} = "$1" ]] || continue
-			a=${QPKG_IS_SHERPA_COMPATIBLE[$i]}			# Always grab first found as default.
-			break
-		done
-	else
-		a=${QPKG_IS_SHERPA_COMPATIBLE[$qpkg_index]}
-		[[ $a = default ]] && a=${QPKG_IS_SHERPA_COMPATIBLE[$qpkg_default_index]}
-	fi
-
-	[[ -n $a ]] || a=none
-	[[ $a = true ]]
-
-	}
-
-QpkgIsDatabaseCanLog()
-	{
-
-	# Does this QPKG service-script support logging of actions? When an action fails, this means user can be directed to check the service-script log.
-
-	# Inputs: (local)
-	#   $1 (optional) = QPKG name.
-
-	# Inputs: (global)
-	#   $qpkg_name (default)
-
-	# Outputs: (local)
-	#   $? = 0 (true) / !0 (false) (first package found).
-
-	local -i i=0
-
-	for i in "${!QPKG_NAME[@]}"; do
-		[[ ${QPKG_NAME[$i]} = "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}" ]] || continue
-		${QPKG_CAN_LOG[$i]} && return 0 || break
-	done
-
-	return 1
-
-	}
-
-QpkgIsInstalled()
-	{
-
-	# Inputs: (local)
-	#   $1 (optional) = QPKG name.
-
-	# Inputs: (global)
-	#   $qpkg_name (default)
-
-	# Outputs: (local)
-	#   $? = true/false
-
-	$GREP_CMD -q "^\[${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}\]" /etc/config/qpkg.conf
-
-	}
-
-QpkgIsNtInstalled()
-	{
-
-	# Inputs: (local)
-	#   $1 (optional) = QPKG name.
-
-	# Inputs: (global)
-	#   $qpkg_name (default)
-
-	# Outputs: (local)
-	#   $? = true/false
-
-	! QpkgIsInstalled "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}"
-
-	}
-
-QpkgIsInstalledMissing()
-	{
-
-	# Inputs: (local)
-	#   $1 (optional) = QPKG name.
-
-	# Inputs: (global)
-	#   $qpkg_name (default)
-
-	# Outputs: (local)
-	#   stdout = package installation date.
-	#   $? = true (found) / false (not-found).
-
-	local a=$(QpkgGetInstalledPath "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
-
-	[[ $a != undefined && ! -d $a ]]
-
-	}
-
-QpkgIsInstalledEnabled()
-	{
-
-	# Inputs: (local)
-	#   $1 (optional) = QPKG name.
-
-	# Inputs: (global)
-	#   $qpkg_name (default)
-
-	# Outputs: (local)
-	#   $? = true/false
-
-	[[ $(/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}" Enable -u -f /etc/config/qpkg.conf) = TRUE ]]
+	! QpkgIsDatabaseDependent
 
 	}
 
@@ -11958,6 +11759,153 @@ QpkgIsDatabaseMaxOSVerOk()
 
 	}
 
+QpkgIsDatabaseCanBackup()
+	{
+
+	# Does this QPKG service-script support `backup` and `restore` actions?
+
+	# Inputs: (local)
+	#   $1 = QPKG name (optional): if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
+
+	# Inputs: (global)
+	#   $qpkg_default_index
+	#   $qpkg_index
+	#	$qpkg_name (default)
+
+	# Outputs: (local)
+	#   $? = true/false
+
+	local a=''
+	local -i i=0
+
+	if [[ -n ${1:-} ]]; then
+		for i in "${!QPKG_NAME[@]}"; do
+			[[ ${QPKG_NAME[$i]} = "$1" ]] || continue
+			a=${QPKG_CAN_BACKUP[$i]}			# Always grab first found as default.
+			break
+		done
+	else
+		a=${QPKG_CAN_BACKUP[$qpkg_index]}
+		[[ $a = default ]] && a=${QPKG_CAN_BACKUP[$qpkg_default_index]}
+	fi
+
+	[[ -n $a ]] || a=none
+	[[ $a = true ]]
+
+	}
+
+QpkgIsDatabaseCanRestartToUpdate()
+	{
+
+	# Does this QPKG service-script support updating the internal application when the QPKG is restarted?
+
+	# Inputs: (local)
+	#   $1 (optional) = QPKG name.
+
+	# Inputs: (global)
+	#   $qpkg_name (default)
+
+	# Outputs: (local)
+	#   $? = 0 (true), !0 (false) (first package found).
+
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
+	local -i i=0
+
+	for i in "${!QPKG_NAME[@]}"; do
+		[[ ${QPKG_NAME[$i]} = "$a" ]] || continue
+		${QPKG_CAN_RESTART_TO_UPDATE[$i]} && return 0 || break
+	done
+
+	return 1
+
+	}
+
+QpkgIsDatabaseCanClean()
+	{
+
+	# Does this QPKG service-script support cleaning of the internal application?
+
+	# Inputs: (local)
+	#   $1 (optional) = QPKG name.
+
+	# Inputs: (global)
+	#   $qpkg_name (default)
+
+	# Outputs: (local)
+	#   $? = 0 (true), !0 (false) (first package found).
+
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
+	local -i i=0
+
+	for i in "${!QPKG_NAME[@]}"; do
+		[[ ${QPKG_NAME[$i]} = "$a" ]] || continue
+		${QPKG_CAN_CLEAN[$i]} && return 0 || break
+	done
+
+	return 1
+
+	}
+
+QpkgIsDatabaseSherpaCompatible()
+	{
+
+	# Is this QPKG service-script compatible with enhanced actions supplied by sherpa?
+
+	# Inputs: (local)
+	#   $1 = QPKG name (optional): if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
+
+	# Inputs: (global)
+	#   $qpkg_default_index
+	#   $qpkg_index
+	#	$qpkg_name (default)
+
+	# Outputs: (local)
+	#   $? = true/false
+
+	local a=''
+	local -i i=0
+
+	if [[ -n ${1:-} ]]; then
+		for i in "${!QPKG_NAME[@]}"; do
+			[[ ${QPKG_NAME[$i]} = "$1" ]] || continue
+			a=${QPKG_IS_SHERPA_COMPATIBLE[$i]}			# Always grab first found as default.
+			break
+		done
+	else
+		a=${QPKG_IS_SHERPA_COMPATIBLE[$qpkg_index]}
+		[[ $a = default ]] && a=${QPKG_IS_SHERPA_COMPATIBLE[$qpkg_default_index]}
+	fi
+
+	[[ -n $a ]] || a=none
+	[[ $a = true ]]
+
+	}
+
+QpkgIsDatabaseCanLog()
+	{
+
+	# Does this QPKG service-script support logging of actions? When an action fails, this means user can be directed to check the service-script log.
+
+	# Inputs: (local)
+	#   $1 (optional) = QPKG name.
+
+	# Inputs: (global)
+	#   $qpkg_name (default)
+
+	# Outputs: (local)
+	#   $? = 0 (true) / !0 (false) (first package found).
+
+	local -i i=0
+
+	for i in "${!QPKG_NAME[@]}"; do
+		[[ ${QPKG_NAME[$i]} = "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}" ]] || continue
+		${QPKG_CAN_LOG[$i]} && return 0 || break
+	done
+
+	return 1
+
+	}
+
 QpkgIsInstalledAutoUpdate()
 	{
 
@@ -11972,7 +11920,98 @@ QpkgIsInstalledAutoUpdate()
 	# Outputs: (local)
 	#   $? = true/false
 
-	[[ $(/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}" Auto_Update -u -f /etc/config/qpkg.conf) = TRUE ]]
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
+
+	[[ $(/sbin/getcfg "$a" Auto_Update -u -f /etc/config/qpkg.conf) = TRUE ]] && QpkgIsInstalledAuthorOk "$a"
+
+	}
+
+QpkgIsInstalledAuthorOk()
+	{
+
+	# Inputs: (local)
+	#   $1 (optional) = QPKG name.
+
+	# Inputs: (global)
+	#   $qpkg_name (default)
+
+	# Outputs: (local)
+	#   $? = true/false
+
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
+
+	[[ $(QpkgGetDatabaseAuthor "$a") = "$(QpkgGetInstalledAuthor "$a")" ]]
+
+	}
+
+QpkgIsInstalled()
+	{
+
+	# Inputs: (local)
+	#   $1 (optional) = QPKG name.
+
+	# Inputs: (global)
+	#   $qpkg_name (default)
+
+	# Outputs: (local)
+	#   $? = true/false
+
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
+
+	$GREP_CMD -q "^\[$a\]" /etc/config/qpkg.conf && QpkgIsInstalledAuthorOk "$a"
+
+	}
+
+QpkgIsNtInstalled()
+	{
+
+	# Inputs: (local)
+	#   $1 (optional) = QPKG name.
+
+	# Inputs: (global)
+	#   $qpkg_name (default)
+
+	# Outputs: (local)
+	#   $? = true/false
+
+	! QpkgIsInstalled "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}"
+
+	}
+
+QpkgIsInstalledMissing()
+	{
+
+	# Inputs: (local)
+	#   $1 (optional) = QPKG name.
+
+	# Inputs: (global)
+	#   $qpkg_name (default)
+
+	# Outputs: (local)
+	#   stdout = package installation date.
+	#   $? = true (found) / false (not-found).
+
+	local a=$(QpkgGetInstalledPath "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
+
+	[[ $a != undefined && ! -d $a ]]
+
+	}
+
+QpkgIsInstalledEnabled()
+	{
+
+	# Inputs: (local)
+	#   $1 (optional) = QPKG name.
+
+	# Inputs: (global)
+	#   $qpkg_name (default)
+
+	# Outputs: (local)
+	#   $? = true/false
+
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
+
+	[[ $(/sbin/getcfg "$a" Enable -u -f /etc/config/qpkg.conf) = TRUE ]] && QpkgIsInstalledAuthorOk "$a"
 
 	}
 
@@ -12120,6 +12159,11 @@ RunAndLog()
 	#   $3 = 'log:failure-only' (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed. Default is to always record stdout & stderr.
 	#   $4 = e.g. '10' (optional) - an additional acceptable result code. Any other non-zero result from command will be considered a failure.
 
+	# Inputs: (global)
+	#   $RUN_LOGS_PATH
+	#   $useropt_debug
+	#   $useropt_verbose
+
 	# Outputs: (local)
 	#   stdout = commandstring stdout and stderr if script is in 'debug' mode.
 	#   pathfile (specified as $2) = stdout and stderr from commandstring (specified as $1).
@@ -12230,7 +12274,7 @@ LTrim()
 
 	[[ -n ${1:-} ]] || return
 
-	(shopt -s extglob; printf '%s' "${1##+(' ')}")
+	printf '%s' "${1##+(' ')}"
 
 	}
 
@@ -12241,7 +12285,7 @@ RTrim()
 
 	[[ -n ${1:-} ]] || return
 
-	(shopt -s extglob; printf '%s' "${1%%+(' ')}")
+	printf '%s' "${1%%+(' ')}"
 
 	}
 
@@ -12302,6 +12346,14 @@ FormatAsIsoBytes()
 
 ShowTitle()
 	{
+
+	# Inputs: (global)
+	# 	$show_title
+	# 	$title_shown
+	# 	$useropt_verbose
+
+	# Outputs: (global)
+	# 	$title_shown
 
 	[[ $show_title = true && $title_shown = false && $useropt_verbose = false ]] || return
 
@@ -12456,8 +12508,17 @@ ShowAsResultAndStdout()
 DisplayProcReport()
 	{
 
-	# Inputs:
-	#	$1 = report type (optional)
+	# Inputs: (local)
+	#	$1 = report type string (optional)
+
+	# Inputs: (global)
+	#	$report_title_shown
+
+	# Outputs: (local)
+	#	stdout = formatted string
+
+	# Outputs: (global)
+	#	$report_title_shown
 
 	[[ ${report_title_shown:=false} = false ]] || return
 
@@ -12647,10 +12708,10 @@ DebugErrorTabld()
 DebugVar()
 	{
 
-	# Inputs:
+	# Inputs: (local)
 	#   $1 = variable name
 
-	# Outputs:
+	# Outputs: (global)
 	#   to debug log
 
 	if [[ -n ${!1:-} ]]; then
@@ -12664,11 +12725,11 @@ DebugVar()
 DebugArray()
 	{
 
-	# Inputs:
+	# Inputs: (local)
 	#   $1 = array name
 	#   $2 = array contents: i.e. "${myarray[*]}"
 
-	# Outputs:
+	# Outputs: (global)
 	#   to debug log
 
 	[[ -n ${1:-} ]] || return
@@ -12776,11 +12837,11 @@ FuncForkExit()
 CalcAmountDiff()
 	{
 
-	# Inputs:
+	# Inputs: (local)
 	#	$1 = e.g. start time in seconds/milliseconds.
 	#	$2 = e.g. end time in seconds/milliseconds.
 
-	# Outputs:
+	# Outputs: (local)
 	#	stdout = difference.
 
 	if [[ $2 -gt $1 ]]; then
@@ -12794,11 +12855,11 @@ CalcAmountDiff()
 CalcMillisecondsDiffFromNanoseconds()
 	{
 
-	# Inputs:
+	# Inputs: (local)
 	#	$1 = start time in nanoseconds.
 	#	$2 = end time in nanoseconds.
 
-	# Outputs:
+	# Outputs: (local)
 	#	stdout = difference in milliseconds.
 
 	printf '%s' "$((($2-$1)/(10**6)))"
@@ -12808,10 +12869,10 @@ CalcMillisecondsDiffFromNanoseconds()
 ConvertSecondsToFullDate()
 	{
 
-	# Inputs:
+	# Inputs: (local)
 	#	$1 = Epoch seconds.
 
-	# Outputs:
+	# Outputs: (local)
 	#	stdout = real date.
 
 	/bin/date -d @"$1" +%c | tr -s ' '
@@ -12821,10 +12882,10 @@ ConvertSecondsToFullDate()
 ConvertSecondsToTime()
 	{
 
-	# Inputs:
+	# Inputs: (local)
 	#	$1 = Epoch seconds.
 
-	# Outputs:
+	# Outputs: (local)
 	#	stdout = time component only.
 
 	/bin/date -d @"$1" '+%-l:%M:%S %p' | tr -s ' '
