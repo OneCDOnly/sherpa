@@ -4567,17 +4567,11 @@ GenerateStatusReportDataLine()
 
 	if QpkgIsInstalledMissing; then
 		mode=highlighted
-		/bin/touch "$REPORT_FLAGS_PATH"/status-missing
 	elif QpkgIsNtInstalled; then
 		mode=muted
-		/bin/touch "$REPORT_FLAGS_PATH"/state-notinstalled
 	else
 		mode=normal
-		/bin/touch "$REPORT_FLAGS_PATH"/state-installed
-	fi
-
-	if [[ $mode = normal ]] && QpkgIsNtInstalledAuthorOk; then
-		mode=muted
+		QpkgIsNtInstalledAuthorOk && mode=muted
 	fi
 
 	app_ver=$(QpkgGetDatabaseApplVer)
@@ -4588,33 +4582,7 @@ GenerateStatusReportDataLine()
 	esac
 
 	case $mode in
-		normal)
-			app_ver_msg+=$app_ver
-			name_msg+=$qpkg_name
-			path_msg+=$(QpkgGetInstalledPath)
-
-			if QPKGs-ISenabled.Exist "$qpkg_name"; then
-				status+=" $(TextBrightGreen enabled)"
-				/bin/touch "$REPORT_FLAGS_PATH"/state-enabled
-			else
-				status+=" $(TextBrightRed disabled)"
-				/bin/touch "$REPORT_FLAGS_PATH"/state-disabled
-			fi
-
-			if QPKGs-ISactive.Exist "$qpkg_name"; then
-				status+=" $(TextBrightGreen active)"
-				/bin/touch "$REPORT_FLAGS_PATH"/status-active
-			elif QPKGs-ISslow.Exist "$qpkg_name"; then
-				status+=" $(TextBrightOrange slow)"
-				/bin/touch "$REPORT_FLAGS_PATH"/status-slow
-			elif QPKGs-ISNTactive.Exist "$qpkg_name"; then
-				status+=" $(TextBrightRed inactive)"
-				/bin/touch "$REPORT_FLAGS_PATH"/status-inactive
-			else
-				status+=" $(TextBrightOrange unknown)"
-				/bin/touch "$REPORT_FLAGS_PATH"/status-unknown
-			fi
-
+		normal|highlighted)
 			if QpkgIsDatabaseSherpaCompatible; then
 				action=$(QpkgGetInstalledServiceAction)
 				/bin/touch "$REPORT_FLAGS_PATH"/action-$action
@@ -4648,39 +4616,47 @@ GenerateStatusReportDataLine()
 				/bin/touch "$REPORT_FLAGS_PATH"/action-unsupported
 			fi
 
-			status_msg+=$(AddSeparators "$status")
+			app_ver_msg+=$app_ver
 			ver_msg+=$(QpkgGetInstalledVer)
 			;;
 		muted)
-			if QpkgIsDatabaseSherpaCompatible; then
-				action=$(QpkgGetInstalledServiceAction)
+			action_msg+=$(TextDarkGrey 'N/A')
+			app_ver_msg+=$(TextDarkGrey "$app_ver")
+			ver_msg+=$(TextDarkGrey "$(QpkgGetDatabaseVer "$qpkg_name")")
+	esac
 
-				if [[ $action != not-found ]]; then
-					/bin/touch "$REPORT_FLAGS_PATH"/action-$action
-					action_msg+="$action"
-					result=$(QpkgGetInstalledServiceResult)
-					/bin/touch "$REPORT_FLAGS_PATH"/result-$result
+	case $mode in
+		normal)
+			/bin/touch "$REPORT_FLAGS_PATH"/state-installed
 
-					case $result in
-						ok)
-							action_msg+=" ($(TextBrightGreen OK))"
-							;;
-						in-progress)
-							action_msg+=" ($(TextBrightOrange $result))"
-							;;
-						aborted|failed)
-							action_msg+=" ($(TextBrightRed $result))"
-					esac
-				else
-					action_msg+=$(TextDarkGrey 'N/A')
-					/bin/touch "$REPORT_FLAGS_PATH"/na
-				fi
+			if QPKGs-ISenabled.Exist "$qpkg_name"; then
+				status+=" $(TextBrightGreen enabled)"
+				/bin/touch "$REPORT_FLAGS_PATH"/state-enabled
 			else
-				action_msg+=$(TextDarkGrey 'N/A')
-				/bin/touch "$REPORT_FLAGS_PATH"/na
+				status+=" $(TextBrightRed disabled)"
+				/bin/touch "$REPORT_FLAGS_PATH"/state-disabled
 			fi
 
-			name_msg+=$(TextDarkGrey "$qpkg_name")
+			if QPKGs-ISactive.Exist "$qpkg_name"; then
+				status+=" $(TextBrightGreen active)"
+				/bin/touch "$REPORT_FLAGS_PATH"/status-active
+			elif QPKGs-ISslow.Exist "$qpkg_name"; then
+				status+=" $(TextBrightOrange slow)"
+				/bin/touch "$REPORT_FLAGS_PATH"/status-slow
+			elif QPKGs-ISNTactive.Exist "$qpkg_name"; then
+				status+=" $(TextBrightRed inactive)"
+				/bin/touch "$REPORT_FLAGS_PATH"/status-inactive
+			else
+				status+=" $(TextBrightOrange unknown)"
+				/bin/touch "$REPORT_FLAGS_PATH"/status-unknown
+			fi
+
+			name_msg+=$qpkg_name
+			path_msg+=$(QpkgGetInstalledPath)
+			status_msg+=$(AddSeparators "$status")
+			;;
+		muted)
+			/bin/touch "$REPORT_FLAGS_PATH"/state-notinstalled
 
 			if QpkgIsInstalled && QpkgIsNtInstalledAuthorOk; then
 				app_ver='N/A'
@@ -4689,32 +4665,29 @@ GenerateStatusReportDataLine()
 				path+='N/A'
 			fi
 
-			app_ver_msg+=$(TextDarkGrey "$app_ver")
-			path_msg+=$(TextDarkGrey "$path")
-
 			/bin/touch "$REPORT_FLAGS_PATH"/na
 
 			if QpkgIsNtInstalledAuthorOk; then
-				status='incompatible author'
+				status='incompatible QPKG author'
 			elif ! QpkgIsDatabaseArchOK; then
-				status='incompatible arch'
+				status='incompatible NAS arch'
 			elif ! QpkgIsDatabaseMinOSVerOk; then
 				status="incompatible $(OsGetQnapOS)"
 			elif ! QpkgIsDatabaseMinRAMOk; then
-				status='insufficient RAM'
+				status='insufficient NAS RAM'
 			else
 				status='not installed'
 			fi
 
+			name_msg+=$(TextDarkGrey "$qpkg_name")
+			path_msg+=$(TextDarkGrey "$path")
 			status_msg=$(TextDarkGrey "${CHARS_NORMAL}${status}")
-			ver_msg+=$(TextDarkGrey "$(QpkgGetDatabaseVer "$qpkg_name")")
 			;;
 		highlighted)
-			app_ver_msg+=$(TextBrightRed "$app_ver")
+			/bin/touch "$REPORT_FLAGS_PATH"/status-missing
 			name_msg+=$(TextBrightRed "$qpkg_name")
 			path_msg=$(TextBrightRedBlink "${CHARS_ALERT}$(QpkgGetInstalledPath)")
 			status_msg=$(TextBrightRedBlink "${CHARS_ALERT}missing")
-			ver_msg+=$(TextBrightRed "$(QpkgGetInstalledVer)")
 	esac
 
 	if QPKGs-ISupgradable.Exist "$qpkg_name"; then
@@ -5053,22 +5026,24 @@ GenerateDepsReportDataLine()
 	local min_ram_msg=$CHARS_BLANK
 	local mode=''
 	local name_msg=$CHARS_BLANK
+	local req_alert_flag=false
+	local req_attention_flag=false
 
-	[[ -z $deps_raw ]] && deps_raw=none
-	[[ -n $max_os && $max_os != none && ${#max_os} -eq 3 ]] && max_os=${max_os:0:1}.${max_os:1:1}.${max_os:2:1}
-	[[ -n $min_os && $min_os != none && ${#min_os} -eq 3 ]] && min_os=${min_os:0:1}.${min_os:1:1}.${min_os:2:1}
-	[[ $min_ram != none ]] && min_ram=$(FormatAsThous "$min_ram")kB
 	/bin/touch "$REPORT_FLAGS_PATH"/deps
 
 	if QpkgIsInstalledMissing; then
 		mode=highlighted
 	elif QpkgIsNtInstalled; then
 		mode=muted
-		/bin/touch "$REPORT_FLAGS_PATH"/state-notinstalled
-		author='N/A'
 	else
 		mode=normal
+		QpkgIsNtInstalledAuthorOk && mode=muted
 	fi
+
+	[[ -z $deps_raw ]] && deps_raw=none
+	[[ -n $max_os && $max_os != none && ${#max_os} -eq 3 ]] && max_os=${max_os:0:1}.${max_os:1:1}.${max_os:2:1}
+	[[ -n $min_os && $min_os != none && ${#min_os} -eq 3 ]] && min_os=${min_os:0:1}.${min_os:1:1}.${min_os:2:1}
+	[[ $min_ram != none ]] && min_ram=$(FormatAsThous "$min_ram")kB
 
 	case $mode in
 		normal)
@@ -5084,15 +5059,11 @@ GenerateDepsReportDataLine()
 				managed_msg+=$(TextBrightOrange false)
 			fi
 
-			name_msg+=$qpkg_name
-
 			if QpkgIsDatabaseArchOK; then
 				arch_msg+=$(TextBrightGreen true)
 			else
-				arch_msg=$(TextBrightRed "$CHARS_ALERT")
-				arch_msg+=$(TextBrightRed false)
-				name_msg=${CHARS_BLANK}$(TextBrightRed "$qpkg_name")
-				/bin/touch "$REPORT_FLAGS_PATH"/req-alert
+				arch_msg=$(TextBrightRed "${CHARS_ALERT}false")
+				req_alert_flag=true
 			fi
 
 			if [[ $deps_raw != none ]]; then
@@ -5104,8 +5075,7 @@ GenerateDepsReportDataLine()
 					else
 						deps+=$(TextBrightRed "$dep_name")
 						deps_msg=$(TextBrightRed "$CHARS_ALERT")
-						name_msg=${CHARS_BLANK}$(TextBrightRed "$qpkg_name")
-						/bin/touch "$REPORT_FLAGS_PATH"/req-alert
+						req_alert_flag=true
 					fi
 				done
 			else
@@ -5117,10 +5087,8 @@ GenerateDepsReportDataLine()
 			if QpkgIsInstalledEnabled; then
 				enabled_msg+=$(TextBrightGreen true)
 			else
-				enabled_msg=$(TextBrightRed "$CHARS_ALERT")
-				enabled_msg+=$(TextBrightRed false)
-				name_msg=${CHARS_BLANK}$(TextBrightRed "$qpkg_name")
-				/bin/touch "$REPORT_FLAGS_PATH"/req-alert
+				enabled_msg=$(TextBrightRed "${CHARS_ALERT}false")
+				req_alert_flag=true
 			fi
 
 			installed_msg+=$(TextBrightGreen true)
@@ -5132,19 +5100,15 @@ GenerateDepsReportDataLine()
 					max_os_msg+=$max_os
 				fi
 			else
-				max_os_msg=$(TextBrightRed "$CHARS_ALERT")
-				max_os_msg+=$(TextBrightRed "$max_os")
-				name_msg=${CHARS_BLANK}$(TextBrightRed "$qpkg_name")
-				/bin/touch "$REPORT_FLAGS_PATH"/req-alert
+				max_os_msg=$(TextBrightRed "${CHARS_ALERT}${max_os}")
+				req_alert_flag=true
 			fi
 
 			if QpkgIsDatabaseMinOSVerOk; then
 				min_os_msg+=$(TextBrightGreen "$min_os")
 			else
-				min_os_msg=$(TextBrightRed "$CHARS_ALERT")
-				min_os_msg+=$(TextBrightRed "$min_os")
-				name_msg=${CHARS_BLANK}$(TextBrightRed "$qpkg_name")
-				/bin/touch "$REPORT_FLAGS_PATH"/req-alert
+				min_os_msg=$(TextBrightRed "${CHARS_ALERT}${min_os}")
+				req_alert_flag=true
 			fi
 
 			if QpkgIsDatabaseMinRAMOk; then
@@ -5154,76 +5118,78 @@ GenerateDepsReportDataLine()
 					min_ram_msg+=$min_ram
 				fi
 			else
-				min_ram_msg=$(TextBrightRed "$CHARS_ALERT")
-				min_ram_msg+=$(TextBrightRed "$min_ram")
-				name_msg=${CHARS_BLANK}$(TextBrightRed "$qpkg_name")
-				/bin/touch "$REPORT_FLAGS_PATH"/req-alert
+				min_ram_msg=$(TextBrightRed "${CHARS_ALERT}${min_ram}")
+				req_alert_flag=true
 			fi
-
 			;;
 		muted)
+			/bin/touch "$REPORT_FLAGS_PATH"/state-notinstalled
+
 			if QpkgIsDatabaseArchOK "$qpkg_name"; then
 				arch_msg+=$(TextDarkGrey true)
 			else
-				arch_msg=$(TextBrightOrange "$CHARS_ATTENTION")
-				arch_msg+=$(TextBrightOrange false)
-				/bin/touch "$REPORT_FLAGS_PATH"/req-attention
+				arch_msg=$(TextBrightOrange "${CHARS_ATTENTION}false")
+				req_attention_flag=true
 			fi
-
-			author_msg+=$(TextDarkGrey "$author")
-			deps_msg=$(TextDarkGrey "$CHARS_NORMAL")
-			enabled_msg+=$(TextDarkGrey 'N/A')
-			/bin/touch "$REPORT_FLAGS_PATH"/na
-			installed_msg+=$(TextDarkGrey false)
-			managed_msg+=$(TextDarkGrey 'N/A')
-			name_msg+=$(TextDarkGrey "$qpkg_name")
 
 			if [[ $deps_raw != none ]]; then
 				for dep_name in $deps_raw; do
 					[[ -n $deps ]] && deps+=' '
-					deps+=$(TextDarkGrey "$dep_name")
+					deps+=$dep_name
 				done
 			else
-				deps+=$(TextDarkGrey "$deps_raw")
+				deps+=$deps_raw
 			fi
-
-			deps_msg+=${deps// /$(TextDarkGrey ', ')}
 
 			if QpkgIsDatabaseMaxOSVerOk "$qpkg_name"; then
 				max_os_msg+=$(TextDarkGrey "$max_os")
 			else
-				max_os_msg=$(TextBrightOrange "$CHARS_ATTENTION")
-				max_os_msg+=$(TextBrightOrange "$max_os")
-				/bin/touch "$REPORT_FLAGS_PATH"/req-attention
+				max_os_msg=$(TextBrightOrange "${CHARS_ATTENTION}${max_os}")
+				req_attention_flag=true
 			fi
 
 			if QpkgIsDatabaseMinOSVerOk "$qpkg_name"; then
 				min_os_msg+=$(TextDarkGrey "$min_os")
 			else
-				min_os_msg=$(TextBrightOrange "$CHARS_ATTENTION")
-				min_os_msg+=$(TextBrightOrange "$min_os")
-				/bin/touch "$REPORT_FLAGS_PATH"/req-attention
+				min_os_msg=$(TextBrightOrange "${CHARS_ATTENTION}${min_os}")
+				req_attention_flag=true
 			fi
 
 			if QpkgIsDatabaseMinRAMOk "$qpkg_name"; then
 				min_ram_msg+=$(TextDarkGrey "$min_ram")
 			else
-				min_ram_msg=$(TextBrightOrange "$CHARS_ATTENTION")
-				min_ram_msg+=$(TextBrightOrange "$min_ram")
-				/bin/touch "$REPORT_FLAGS_PATH"/req-attention
+				min_ram_msg=$(TextBrightOrange "${CHARS_ATTENTION}${min_ram}")
+				req_attention_flag=true
 			fi
 
+			if [[ -n $author ]]; then
+				author_msg=$(TextBrightRed "${CHARS_ALERT}${author}")
+				req_alert_flag=true
+			else
+				author_msg+=$(TextDarkGrey 'N/A')
+			fi
+
+			deps_msg=$(TextDarkGrey "${deps_msg}${deps// /, }")
+			enabled_msg+=$(TextDarkGrey 'N/A')
+			installed_msg+=$(TextDarkGrey false)
+			managed_msg+=$(TextDarkGrey 'N/A')
+
+			/bin/touch "$REPORT_FLAGS_PATH"/na
 			;;
 		highlighted)
+			req_alert_flag=true
+
 			if QpkgIsDatabaseArchOK; then
 				arch_msg+=$(TextBrightGreen true)
 			else
-				arch_msg=$(TextBrightRed "$CHARS_ALERT")
-				arch_msg+=$(TextBrightRed false)
-				/bin/touch "$REPORT_FLAGS_PATH"/req-alert
+				arch_msg=$(TextBrightRed "${CHARS_ALERT}false")
 			fi
 
-			author_msg+=$(TextBrightRed "$author")
+			if QpkgIsInstalledRepoSelfManaged; then
+				managed_msg+=$(TextBrightGreen true)
+			else
+				managed_msg+=$(TextBrightOrange false)
+			fi
 
 			if [[ $deps_raw != none ]]; then
 				for dep_name in $deps_raw; do
@@ -5239,46 +5205,51 @@ GenerateDepsReportDataLine()
 				deps+=$(TextBrightGreen "$deps_raw")
 			fi
 
-			deps_msg+=${deps// /, }
-
 			if QpkgIsInstalledEnabled; then
 				enabled_msg+=$(TextBrightGreen true)
 			else
-				enabled_msg=$(TextBrightRedBlink "$CHARS_ALERT")
-				enabled_msg+=$(TextBrightRed 'false')
-				/bin/touch "$REPORT_FLAGS_PATH"/req-alert
+				enabled_msg=$(TextBrightRedBlink "${CHARS_ALERT}false")
 			fi
-
-			installed_msg=$(TextBrightRedBlink "$CHARS_ALERT")
-			installed_msg+=$(TextBrightRedBlink 'missing')
-			/bin/touch "$REPORT_FLAGS_PATH"/req-alert
 
 			if QpkgIsDatabaseMaxOSVerOk; then
 				max_os_msg+=$(TextBrightGreen "$max_os")
 			else
-				max_os_msg=$(TextBrightRed "$CHARS_ALERT")
-				max_os_msg+=$(TextBrightRed "$max_os")
-				/bin/touch "$REPORT_FLAGS_PATH"/req-alert
+				max_os_msg=$(TextBrightRed "${CHARS_ALERT}${max_os}")
 			fi
 
 			if QpkgIsDatabaseMinOSVerOk; then
 				min_os_msg+=$(TextBrightGreen "$min_os")
 			else
-				min_os_msg=$(TextBrightRed "$CHARS_ALERT")
-				min_os_msg+=$(TextBrightRed "$min_os")
-				/bin/touch "$REPORT_FLAGS_PATH"/req-alert
+				min_os_msg=$(TextBrightRed "${CHARS_ALERT}${min_os}")
 			fi
 
 			if QpkgIsDatabaseMinRAMOk; then
-				min_ram_msg+=$(TextBrightGreen "$min_ram")
+				if [[ $min_ram != none ]]; then
+					min_ram_msg+=$(TextBrightGreen "$min_ram")
+				else
+					min_ram_msg+=$min_ram
+				fi
 			else
-				min_ram_msg=$(TextBrightRed "$CHARS_ALERT")
-				min_ram_msg+=$(TextBrightRed "$min_ram")
-				/bin/touch "$REPORT_FLAGS_PATH"/req-alert
+				min_ram_msg=$(TextBrightRed "${CHARS_ALERT}${min_ram}")
+				req_alert_flag=true
 			fi
 
-			name_msg+=$(TextBrightRed "$qpkg_name")
+			author_msg+=$author
+			deps_msg+=${deps// /, }
+			installed_msg=$(TextBrightRedBlink "${CHARS_ALERT}missing")
 	esac
+
+	if [[ $req_alert_flag = true ]]; then
+		/bin/touch "$REPORT_FLAGS_PATH"/req-alert
+		name_msg=${CHARS_BLANK}$(TextBrightRed "$qpkg_name")
+	elif [[ $req_attention_flag = true ]]; then
+		/bin/touch "$REPORT_FLAGS_PATH"/req-attention
+		name_msg=${CHARS_BLANK}$(TextBrightOrange "$qpkg_name")
+	elif [[ $mode = muted ]]; then
+		name_msg+=$(TextDarkGrey "$qpkg_name")
+	else
+		name_msg+=$qpkg_name
+	fi
 
 	if OsIsSupportAutowidthTableColumns; then
 		echo "$name_msg|$deps_msg|$installed_msg|$enabled_msg|$managed_msg|$min_ram_msg|$min_os_msg|$max_os_msg|$arch_msg|$author_msg"
@@ -5397,69 +5368,70 @@ GenerateFeaturesReportDataLine()
 		mode=muted
 	else
 		mode=normal
-	fi
-
-	if [[ $(QpkgGetDatabaseActiveTest) = builtin ]]; then
-		active_test_msg+=true
-	else
-		active_test_msg+=false
-	fi
-
-	if QpkgIsDatabaseCanBackup; then
-		backup_msg+=true
-	else
-		backup_msg+=false
-	fi
-
-	if QpkgIsDatabaseCanClean; then
-		clean_msg+=true
-	else
-		clean_msg+=false
-	fi
-
-	if QpkgIsDatabaseCanRestartToUpdate; then
-		restart_to_update_msg+=true
-	elif [[ $qpkg_name = sherpa ]]; then
-		restart_to_update_msg+=true				# sherpa always auto-updates and this can't be disabled.
-	else
-		restart_to_update_msg+=false
-	fi
-
-	if QpkgIsInstalled && QpkgIsDatabaseCanRestartToUpdate; then
-		if QpkgIsInstalledAutoUpdate; then
-			autoupdate_msg+=true
-		else
-			autoupdate_msg+=false
-		fi
-	elif [[ $qpkg_name = sherpa ]]; then
-		autoupdate_msg+=true					# sherpa always auto-updates and this can't be disabled.
-	else
-		autoupdate_msg+='N/A'
-		/bin/touch "$REPORT_FLAGS_PATH"/na
-	fi
-
-	if QpkgIsDatabaseIndependent; then
-		tier_msg+=true
-	else
-		tier_msg+=false
-	fi
-
-	if QpkgIsDatabaseArchOK; then
-		compatible_msg+=true
-	else
-		compatible_msg+=false
-	fi
-
-	if QpkgIsDatabaseSherpaCompatible; then
-		sherpa_compatible_msg+=true
-	else
-		sherpa_compatible_msg+=false
+		QpkgIsNtInstalledAuthorOk && mode=muted
 	fi
 
 	name_msg+=$qpkg_name
 
 	case $mode in
 		normal)
+			if [[ $(QpkgGetDatabaseActiveTest) = builtin ]]; then
+				active_test_msg+=true
+			else
+				active_test_msg+=false
+			fi
+
+			if QpkgIsDatabaseCanBackup; then
+				backup_msg+=true
+			else
+				backup_msg+=false
+			fi
+
+			if QpkgIsDatabaseCanClean; then
+				clean_msg+=true
+			else
+				clean_msg+=false
+			fi
+
+			if QpkgIsDatabaseCanRestartToUpdate; then
+				restart_to_update_msg+=true
+			elif [[ $qpkg_name = sherpa ]]; then
+				restart_to_update_msg+=true				# sherpa always auto-updates and this can't be disabled.
+			else
+				restart_to_update_msg+=false
+			fi
+
+			if QpkgIsInstalled && QpkgIsDatabaseCanRestartToUpdate; then
+				if QpkgIsInstalledAutoUpdate; then
+					autoupdate_msg+=true
+				else
+					autoupdate_msg+=false
+				fi
+			elif [[ $qpkg_name = sherpa ]]; then
+				autoupdate_msg+=true					# sherpa always auto-updates and this can't be disabled.
+			else
+				autoupdate_msg+='N/A'
+				/bin/touch "$REPORT_FLAGS_PATH"/na
+			fi
+
+			if QpkgIsDatabaseIndependent; then
+				tier_msg+=true
+			else
+				tier_msg+=false
+			fi
+
+			if QpkgIsDatabaseArchOK; then
+				compatible_msg+=true
+			else
+				compatible_msg+=false
+			fi
+
+			if QpkgIsDatabaseSherpaCompatible; then
+				sherpa_compatible_msg+=true
+			else
+				sherpa_compatible_msg+=false
+			fi
+
 			if [[ $active_test_msg =~ true ]]; then
 				active_test_msg=$(TextBrightGreen "$active_test_msg")
 			else
@@ -5503,15 +5475,15 @@ GenerateFeaturesReportDataLine()
 			fi
 			;;
 		muted)
-			active_test_msg=$(TextDarkGrey "$active_test_msg")
-			compatible_msg=$(TextDarkGrey "$compatible_msg")
-			autoupdate_msg=$(TextDarkGrey "$autoupdate_msg")
-			backup_msg=$(TextDarkGrey "$backup_msg")
-			clean_msg=$(TextDarkGrey "$clean_msg")
+			active_test_msg+=$(TextDarkGrey 'N/A')
+			autoupdate_msg+=$(TextDarkGrey 'N/A')
+			backup_msg+=$(TextDarkGrey 'N/A')
+			clean_msg+=$(TextDarkGrey 'N/A')
+			compatible_msg+=$(TextDarkGrey 'N/A')
 			name_msg=$(TextDarkGrey "$name_msg")
-			restart_to_update_msg=$(TextDarkGrey "$restart_to_update_msg")
-			sherpa_compatible_msg=$(TextDarkGrey "$sherpa_compatible_msg")
-			tier_msg=$(TextDarkGrey "$tier_msg")
+			restart_to_update_msg+=$(TextDarkGrey 'N/A')
+			sherpa_compatible_msg+=$(TextDarkGrey 'N/A')
+			tier_msg+=$(TextDarkGrey 'N/A')
 			;;
 		highlighted)
 			if [[ $active_test_msg =~ true ]]; then
@@ -5532,11 +5504,13 @@ GenerateFeaturesReportDataLine()
 				autoupdate_msg=$(TextBrightOrange "$autoupdate_msg")
 			fi
 
-			if [[ $backup_msg =~ true ]]; then
-				backup_msg=$(TextBrightGreen "$backup_msg")
-			else
-				backup_msg=$(TextBrightOrange "$backup_msg")
-			fi
+			backup_msg=$(TextBrightRedBlink "${CHARS_ALERT}missing")
+
+# 			if [[ $backup_msg =~ true ]]; then
+# 				backup_msg=$(TextBrightGreen "$backup_msg")
+# 			else
+# 				backup_msg=$(TextBrightOrange "$backup_msg")
+# 			fi
 
 			if [[ $clean_msg =~ true ]]; then
 				clean_msg=$(TextBrightGreen "$clean_msg")
