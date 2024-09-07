@@ -4587,13 +4587,11 @@ GenerateStatusReportDataLine()
 		missing|normal)
 			if QpkgIsDatabaseSherpaCompatible; then
 				action=$(QpkgGetInstalledServiceAction)
-
 				/bin/touch "$REPORT_FLAGS_PATH"/action-$action
 
 				if [[ $action = not-found ]]; then
-					if OsIsStarting && [[ -e $REPORT_FLAGS_PATH/state-enabled && -e $REPORT_FLAGS_PATH/status-inactive ]]; then
+					if OsIsStarting && QpkgIsInstalledEnabled; then
 						action_msg+=$(TextBrightOrange pending)
-
 						/bin/touch "$REPORT_FLAGS_PATH"/action-pending
 					else
 						action_msg+=$(TextDarkGrey not-found)
@@ -4603,7 +4601,6 @@ GenerateStatusReportDataLine()
 				fi
 
 				result=$(QpkgGetInstalledServiceResult)
-
 				/bin/touch "$REPORT_FLAGS_PATH"/result-$result
 
 				case $result in
@@ -4618,7 +4615,6 @@ GenerateStatusReportDataLine()
 				esac
 			else
 				action=unsupported
-
 				/bin/touch "$REPORT_FLAGS_PATH"/action-unsupported
 
 				action_msg+=$(TextDarkGrey "$action")
@@ -4626,44 +4622,63 @@ GenerateStatusReportDataLine()
 			;;
 		*)
 			action=N/A
-
 			/bin/touch "$REPORT_FLAGS_PATH"/na
 	esac
 
 	case $mode in
 		author)
-			/bin/touch "$REPORT_FLAGS_PATH"/status-author
-
-			app_ver=N/A
-			status='author incorrect'
-			ver=N/A
-
+			/bin/touch "$REPORT_FLAGS_PATH"/status-wrongauthor
 			/bin/touch "$REPORT_FLAGS_PATH"/na
 
-			action_msg=$(TextBrightOrange "${action_msg}${action}")
-			app_ver_msg=$(TextBrightOrange "${app_ver_msg}${app_ver}")
-			name_msg=$(TextBrightOrange "${name_msg}${qpkg_name}")
-			path_msg=$(TextBrightOrange "${path_msg}${path}")
-			status_msg=$(TextBrightOrange "${CHARS_ATTENTION}${status}")
-			ver_msg=$(TextBrightOrange "${ver_msg}${ver}")
+			# Set field values.
+			app_ver=N/A
+			status='incompatible author'
+			ver=N/A
+
+			# Assign field messages.
+			action_msg+=$action
+			app_ver_msg+=$app_ver
+			name_msg+=$qpkg_name
+			path_msg+=$path
+			status_msg=${CHARS_ATTENTION}${status}
+			ver_msg+=$ver
+
+			# Highlight field messages.
+			action_msg=$(TextBrightOrange "$action_msg")
+			app_ver_msg=$(TextBrightOrange "$app_ver_msg")
+			name_msg=$(TextBrightOrange "$name_msg")
+			path_msg=$(TextBrightOrange "$path_msg")
+			status_msg=$(TextBrightOrange "$status_msg")
+			ver_msg=$(TextBrightOrange "$ver_msg")
 			;;
 		missing)
 			/bin/touch "$REPORT_FLAGS_PATH"/status-missing
 
+			# Set field values.
 			status=missing
 
-			app_ver_msg=$(TextBrightRed "${app_ver_msg}${app_ver}")
-			name_msg=$(TextBrightRed "${name_msg}${qpkg_name}")
-			path_msg=$(TextBrightRedBlink "${path_msg}${path}")
-			status_msg=$(TextBrightRedBlink "${CHARS_ALERT}${status}")
-			ver_msg=$(TextBrightRed "${ver_msg}${ver}")
+			# Assign field messages.
+			app_ver_msg+=$app_ver
+			name_msg+=$qpkg_name
+			path_msg+=$path
+			status_msg=${CHARS_ALERT}${status}
+			ver_msg+=$ver
+
+			# Highlight field messages.
+			app_ver_msg=$(TextBrightRed "$app_ver_msg")
+			name_msg=$(TextBrightRed "$name_msg")
+			path_msg=$(TextBrightRedBlink "$path_msg")
+			status_msg=$(TextBrightRedBlink "$status_msg")
+			ver_msg=$(TextBrightRed "$ver_msg")
 			;;
 		mute)
 			/bin/touch "$REPORT_FLAGS_PATH"/state-notinstalled
+			/bin/touch "$REPORT_FLAGS_PATH"/na
 
-			if QpkgIsInstalled && QpkgIsNtInstalledAuthorOk; then
-				status+='incompatible QPKG author'
-			elif ! QpkgIsDatabaseArchOK; then
+			# Set field values.
+			path=N/A
+
+			if ! QpkgIsDatabaseArchOK; then
 				status+='incompatible NAS arch'
 			elif ! QpkgIsDatabaseMinOSVerOk || ! QpkgIsDatabaseMaxOSVerOk; then
 				status+="incompatible $(OsGetQnapOS)"
@@ -4673,49 +4688,54 @@ GenerateStatusReportDataLine()
 				status+='not installed'
 			fi
 
-			path=N/A
 			ver=$(QpkgGetDatabaseVer "$qpkg_name")
 
-			/bin/touch "$REPORT_FLAGS_PATH"/na
+			# Assign field messages.
+			action_msg+=$action
+			app_ver_msg+=$app_ver
+			name_msg+=$qpkg_name
+			path_msg+=$path
+			status_msg+=$status
+			ver_msg+=$ver
 
-			action_msg=$(TextDarkGrey "${action_msg}${action}")
-			app_ver_msg=$(TextDarkGrey "${app_ver_msg}${app_ver}")
-			name_msg=$(TextDarkGrey "${name_msg}${qpkg_name}")
-			path_msg=$(TextDarkGrey "${path_msg}${path}")
-			status_msg=$(TextDarkGrey "${status_msg}${status}")
-			ver_msg=$(TextDarkGrey "${ver_msg}${ver}")
+			# Highlight field messages.
+			action_msg=$(TextDarkGrey "$action_msg")
+			app_ver_msg=$(TextDarkGrey "$app_ver_msg")
+			name_msg=$(TextDarkGrey "$name_msg")
+			path_msg=$(TextDarkGrey "$path_msg")
+			status_msg=$(TextDarkGrey "$status_msg")
+			ver_msg=$(TextDarkGrey "$ver_msg")
 			;;
 		normal)
 			/bin/touch "$REPORT_FLAGS_PATH"/state-installed
 
+			# Set field values.
+
+			# Assign highlighting earlier than-usual as each status can have a different highlight.
+
 			if QPKGs-ISenabled.Exist "$qpkg_name"; then
 				status+=" $(TextBrightGreen enabled)"
-
 				/bin/touch "$REPORT_FLAGS_PATH"/state-enabled
 			else
 				status+=" $(TextBrightRed disabled)"
-
 				/bin/touch "$REPORT_FLAGS_PATH"/state-disabled
 			fi
 
 			if QPKGs-ISactive.Exist "$qpkg_name"; then
 				status+=" $(TextBrightGreen active)"
-
 				/bin/touch "$REPORT_FLAGS_PATH"/status-active
 			elif QPKGs-ISslow.Exist "$qpkg_name"; then
 				status+=" $(TextBrightOrange slow)"
-
 				/bin/touch "$REPORT_FLAGS_PATH"/status-slow
 			elif QPKGs-ISNTactive.Exist "$qpkg_name"; then
 				status+=" $(TextBrightRed inactive)"
-
 				/bin/touch "$REPORT_FLAGS_PATH"/status-inactive
 			else
 				status+=" $(TextBrightOrange unknown)"
-
 				/bin/touch "$REPORT_FLAGS_PATH"/status-unknown
 			fi
 
+			# Assign field messages.
 			app_ver_msg+=$app_ver
 			name_msg+=$qpkg_name
 			path_msg+=$path
@@ -4725,7 +4745,6 @@ GenerateStatusReportDataLine()
 
 	if QPKGs-ISupgradable.Exist "$qpkg_name"; then
 		ver_msg+=" ($(TextBrightOrange "$(QpkgGetDatabaseVer)"))"
-
 		/bin/touch "$REPORT_FLAGS_PATH"/status-upgradable
 	fi
 
@@ -5088,11 +5107,11 @@ GenerateDepsReportDataLine()
 
 	case $mode in
 		author)
-			/bin/touch "$REPORT_FLAGS_PATH"/status-author
+			/bin/touch "$REPORT_FLAGS_PATH"/status-wrongauthor
 
 			# Set field values.
 			arch=N/A
-			deps='author incorrect'
+			deps='incompatible author'
 			enabled=N/A
 			installed=true
 			managed=N/A
@@ -5594,7 +5613,7 @@ GenerateFeaturesReportDataLine()
 	case $mode in
 		author)
 			# Set field values.
-			backup='incorrect author'
+			backup='incompatible author'
 			req_attention=true
 
 			# Assign field messages.
@@ -8071,7 +8090,7 @@ GenerateReportFooter()
 		fi
 
 		if [[ -e "$REPORT_FLAGS_PATH"/req-alert ]]; then
-			DisplayAsIndentQuotedInfoItem "$(TextBrightRed '!')" 'prevents QPKG working correctly'
+			DisplayAsIndentQuotedInfoItem "$(TextBrightRed '!')" 'QPKG is prevented from working correctly'
 		fi
 
 		if [[ -e "$REPORT_FLAGS_PATH"/state-disabled ]]; then
@@ -8098,8 +8117,8 @@ GenerateReportFooter()
 			DisplayAsIndentQuotedInfoItem "($(TextBrightOrange new))" 'an upgraded QPKG version is available'
 		fi
 
-		if [[ -e "$REPORT_FLAGS_PATH"/status-author ]]; then
-			DisplayAsIndentQuotedInfoItem "$(TextBrightOrange 'author incorrect')" "QPKG is a non-compatible, identically-named duplicate of a $(ShowAsTitleName) QPKG"
+		if [[ -e "$REPORT_FLAGS_PATH"/status-wrongauthor ]]; then
+			DisplayAsIndentQuotedInfoItem "$(TextBrightOrange 'incompatible author')" "QPKG is a non-compatible, identically-named duplicate of a $(ShowAsTitleName) QPKG"
 		fi
 
 		if [[ -e "$REPORT_FLAGS_PATH"/req-attention ]]; then
@@ -8165,6 +8184,7 @@ GenerateReportFooter()
 		if [[ -e "$REPORT_FLAGS_PATH"/na ]]; then
 			DisplayAsIndentQuotedInfoItem N/A 'not applicable'
 		fi
+
 		if [[ -e "$REPORT_FLAGS_PATH"/action-not-found ]]; then
 			DisplayAsIndentQuotedInfoItem "$(TextDarkGrey not-found)" 'action tracking files were not found'
 		fi
