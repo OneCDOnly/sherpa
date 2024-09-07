@@ -9458,7 +9458,7 @@ _QPKG:reassign_()
 		SaveActionResultToLog QPKG "$qpkg_name" reassign '' skipped 'not installed'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsInstalledAuthorOk; then
+	elif QpkgIsNtInstalledAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" reassign '' skipped 'incompatible author'
 		MarkThisAcForkAsSkipped
 		z=1
@@ -9590,7 +9590,7 @@ _QPKG:install_()
 	local -i z=0
 
 	if QPKGs-ISinstalled.Exist "$qpkg_name"; then
-		if ! QpkgIsInstalledAuthorOk; then
+		if QpkgIsNtInstalledAuthorOk; then
 			SaveActionResultToLog QPKG "$qpkg_name" install '' skipped 'incompatible author'
 		else
 			SaveActionResultToLog QPKG "$qpkg_name" install '' skipped 'already installed'
@@ -9710,11 +9710,11 @@ _QPKG:reinstall_()
 		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' skipped "not installed, please use 'install' instead."
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsInstalledAuthorOk; then
+	elif QpkgIsNtInstalledAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' skipped 'incompatible author'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsInstalledRepoSelfManaged; then
+	elif QpkgIsNtInstalledRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
@@ -9788,7 +9788,7 @@ _QPKG:rebuild_()
 		MarkThisAcForkAsSkipped
 		z=1
 	elif QPKGs-ISinstalled.Exist "$qpkg_name"; then
-		if ! QpkgIsInstalledAuthorOk; then
+		if QpkgIsNtInstalledAuthorOk; then
 			SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' skipped 'incompatible author'
 		else
 			SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' skipped "already installed, please use 'restore' instead"
@@ -9800,7 +9800,7 @@ _QPKG:rebuild_()
 		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' skipped 'backup file does not exist'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsInstalledRepoSelfManaged; then
+	elif QpkgIsNtInstalledRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
@@ -9843,7 +9843,7 @@ _QPKG:upgrade_()
 		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' skipped 'not installed'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsInstalledAuthorOk; then
+	elif QpkgIsNtInstalledAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' skipped 'incompatible author'
 		MarkThisAcForkAsSkipped
 		z=1
@@ -9851,7 +9851,7 @@ _QPKG:upgrade_()
 		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' skipped 'no new QPKG is available'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsInstalledRepoSelfManaged; then
+	elif QpkgIsNtInstalledRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
@@ -9937,7 +9937,7 @@ _QPKG:uninstall_()
 		SaveActionResultToLog QPKG "$qpkg_name" uninstall '' skipped 'not installed'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsInstalledAuthorOk; then
+	elif QpkgIsNtInstalledAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" uninstall '' skipped 'incompatible author'
 		MarkThisAcForkAsSkipped
 		z=1
@@ -9945,7 +9945,7 @@ _QPKG:uninstall_()
 		SaveActionResultToLog QPKG "$qpkg_name" uninstall '' skipped "it's needed here! 😉"
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsInstalledRepoSelfManaged; then
+	elif QpkgIsNtInstalledRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" uninstall '' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
@@ -10019,7 +10019,7 @@ _QPKG:activate_()
 		SaveActionResultToLog QPKG "$qpkg_name" activate '' skipped 'not installed'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsInstalledAuthorOk; then
+	elif QpkgIsNtInstalledAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" activate '' skipped 'incompatible author'
 		MarkThisAcForkAsSkipped
 		z=1
@@ -10027,7 +10027,7 @@ _QPKG:activate_()
 		SaveActionResultToLog QPKG "$qpkg_name" activate '' skipped "not enabled, please 'enable' it first"
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsInstalledRepoSelfManaged; then
+	elif QpkgIsNtInstalledRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" activate '' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
@@ -10107,7 +10107,7 @@ _QPKG:reactivate_()
 		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' skipped 'not installed'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsInstalledAuthorOk; then
+	elif QpkgIsNtInstalledAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' skipped 'incompatible author'
 		MarkThisAcForkAsSkipped
 		z=1
@@ -10115,7 +10115,7 @@ _QPKG:reactivate_()
 		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' skipped "not enabled, please 'enable' it first"
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsInstalledRepoSelfManaged; then
+	elif QpkgIsNtInstalledRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
@@ -10186,7 +10186,7 @@ _QPKG:deactivate_()
 		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' skipped 'not installed'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsInstalledAuthorOk; then
+	elif QpkgIsNtInstalledAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' skipped 'incompatible author'
 		MarkThisAcForkAsSkipped
 		z=1
@@ -10194,7 +10194,7 @@ _QPKG:deactivate_()
 # 		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' skipped "it's needed here! 😉"
 # 		MarkThisAcForkAsSkipped
 # 		z=1
-	elif ! QpkgIsInstalledRepoSelfManaged; then
+	elif QpkgIsNtInstalledRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
@@ -10271,7 +10271,7 @@ _QPKG:enable_()
 		SaveActionResultToLog QPKG "$qpkg_name" enable '' skipped 'not installed'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsInstalledAuthorOk; then
+	elif QpkgIsNtInstalledAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" enable '' skipped 'incompatible author'
 		MarkThisAcForkAsSkipped
 		z=1
@@ -10279,7 +10279,7 @@ _QPKG:enable_()
 		SaveActionResultToLog QPKG "$qpkg_name" enable '' skipped 'already enabled'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsInstalledRepoSelfManaged; then
+	elif QpkgIsNtInstalledRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" enable '' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
@@ -10325,7 +10325,7 @@ _QPKG:disable_()
 		SaveActionResultToLog QPKG "$qpkg_name" disable '' skipped 'not installed'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsInstalledAuthorOk; then
+	elif QpkgIsNtInstalledAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" disable '' skipped 'incompatible author'
 		MarkThisAcForkAsSkipped
 		z=1
@@ -10337,7 +10337,7 @@ _QPKG:disable_()
 # 		SaveActionResultToLog QPKG "$qpkg_name" disable '' skipped "it's needed here! 😉"
 # 		MarkThisAcForkAsSkipped
 # 		z=1
-	elif ! QpkgIsInstalledRepoSelfManaged; then
+	elif QpkgIsNtInstalledRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" disable '' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
@@ -10386,7 +10386,7 @@ _QPKG:enableau_()
 		SaveActionResultToLog QPKG "$qpkg_name" enableau '' skipped 'not installed'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsInstalledAuthorOk; then
+	elif QpkgIsNtInstalledAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" enableau '' skipped 'incompatible author'
 		MarkThisAcForkAsSkipped
 		z=1
@@ -10398,7 +10398,7 @@ _QPKG:enableau_()
 		SaveActionResultToLog QPKG "$qpkg_name" enableau '' skipped 'auto-update is unsupported'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsInstalledRepoSelfManaged; then
+	elif QpkgIsNtInstalledRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" enableau '' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
@@ -10449,7 +10449,7 @@ _QPKG:disableau_()
 		SaveActionResultToLog QPKG "$qpkg_name" disableau '' skipped 'not installed'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsInstalledAuthorOk; then
+	elif QpkgIsNtInstalledAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" disableau '' skipped 'incompatible author'
 		MarkThisAcForkAsSkipped
 		z=1
@@ -10461,7 +10461,7 @@ _QPKG:disableau_()
 		SaveActionResultToLog QPKG "$qpkg_name" disableau '' skipped 'auto-update is unsupported'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsInstalledRepoSelfManaged; then
+	elif QpkgIsNtInstalledRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" disableau '' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
@@ -10512,7 +10512,7 @@ _QPKG:backup_()
 		SaveActionResultToLog QPKG "$qpkg_name" backup '' skipped 'not installed'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsInstalledAuthorOk; then
+	elif QpkgIsNtInstalledAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" backup '' skipped 'incompatible author'
 		MarkThisAcForkAsSkipped
 		z=1
@@ -10520,7 +10520,7 @@ _QPKG:backup_()
 		SaveActionResultToLog QPKG "$qpkg_name" backup '' skipped 'backup is unsupported'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsInstalledRepoSelfManaged; then
+	elif QpkgIsNtInstalledRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" backup '' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
@@ -10572,7 +10572,7 @@ _QPKG:restore_()
 		SaveActionResultToLog QPKG "$qpkg_name" restore '' skipped "not installed, try 'rebuild' instead"
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsInstalledAuthorOk; then
+	elif QpkgIsNtInstalledAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" restore '' skipped 'incompatible author'
 		MarkThisAcForkAsSkipped
 		z=1
@@ -10584,7 +10584,7 @@ _QPKG:restore_()
 		SaveActionResultToLog QPKG "$qpkg_name" restore '' skipped 'backup file does not exist'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsInstalledRepoSelfManaged; then
+	elif QpkgIsNtInstalledRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" restore '' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
@@ -10636,7 +10636,7 @@ _QPKG:clean_()
 		SaveActionResultToLog QPKG "$qpkg_name" clean '' skipped 'not installed'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsInstalledAuthorOk; then
+	elif QpkgIsNtInstalledAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" clean '' skipped 'incompatible author'
 		MarkThisAcForkAsSkipped
 		z=1
@@ -10644,7 +10644,7 @@ _QPKG:clean_()
 		SaveActionResultToLog QPKG "$qpkg_name" clean '' skipped 'clean is unsupported'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsInstalledRepoSelfManaged; then
+	elif QpkgIsNtInstalledRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" clean '' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
@@ -10709,7 +10709,7 @@ _QPKG:sign_()
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped 'not installed'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsInstalledAuthorOk; then
+	elif QpkgIsNtInstalledAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped 'incompatible author'
 		MarkThisAcForkAsSkipped
 		z=1
@@ -10717,7 +10717,7 @@ _QPKG:sign_()
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped 'not required: firmware < 4.3.5'
 		MarkThisAcForkAsSkipped
 		z=1
-	elif ! QpkgIsInstalledRepoSelfManaged; then
+	elif QpkgIsNtInstalledRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped "assigned to another repository, please 'reassign' it first"
 		MarkThisAcForkAsSkipped
 		z=1
@@ -11883,6 +11883,24 @@ QpkgIsInstalledRepoSelfManaged()
 
 	}
 
+QpkgIsNtInstalledRepoSelfManaged()
+	{
+
+	# Is this QPKG not managable by sherpa?
+
+	# Inputs: (local)
+	#   $1 (optional) = QPKG name.
+
+	# Inputs: (global)
+	#   $qpkg_name (default)
+
+	# Outputs: (local)
+	#   $? = true/false
+
+	! QpkgIsInstalledRepoSelfManaged "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}"
+
+	}
+
 QpkgIsBackupExist()
 	{
 
@@ -11918,7 +11936,7 @@ QpkgIsUpgradable()
 
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
 
-	QpkgIsInstalled "$a" && QpkgIsInstalledRepoSelfManaged "$a" && [[ $(QpkgGetInstalledVer "$a") != "$(QpkgGetDatabaseVer "$a")" ]] && QpkgIsDatabaseArchOK "$a" && QpkgIsDatabaseMinOSVerOk "$a" && QpkgIsDatabaseMaxOSVerOk "$a" && QpkgIsDatabaseMinRAMOk "$a"
+	QpkgIsInstalled "$a" && QpkgIsInstalledAuthorOk "$a" && QpkgIsInstalledRepoSelfManaged "$a" && [[ $(QpkgGetInstalledVer "$a") != "$(QpkgGetDatabaseVer "$a")" ]] && QpkgIsDatabaseArchOK "$a" && QpkgIsDatabaseMinOSVerOk "$a" && QpkgIsDatabaseMaxOSVerOk "$a" && QpkgIsDatabaseMinRAMOk "$a"
 
 	}
 
