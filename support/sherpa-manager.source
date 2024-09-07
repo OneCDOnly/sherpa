@@ -8122,7 +8122,7 @@ GenerateReportFooter()
 		fi
 
 		if [[ -e "$REPORT_FLAGS_PATH"/req-attention ]]; then
-			DisplayAsIndentQuotedInfoItem "$(TextBrightOrange '*')" 'QPKG cannot be installed'
+			DisplayAsIndentQuotedInfoItem "$(TextBrightOrange '*')" "QPKG cannot be managed with $(ShowAsTitleName)"
 		fi
 
 		if [[ -e "$REPORT_FLAGS_PATH"/action-pending ]]; then
@@ -9439,10 +9439,13 @@ _QPKG:reassign_()
 	# * This function runs asynchronously *
 	# Remove the `storeid` assignment for the QPKG named in $qpkg_name.
 
-	# Inputs:
-	#	$qpkg_name (global)
+	# Inputs: (global)
+	#	$LOGS_PATH
+	#	$qpkg_name
+	#	$REASSIGN_LOG_FILE
+	#	$useropt_verbose
 
-	# Outputs:
+	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &> /dev/null
@@ -9453,6 +9456,10 @@ _QPKG:reassign_()
 
 	if ! QPKGs-ISinstalled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" reassign '' skipped 'not installed'
+		MarkThisAcForkAsSkipped
+		z=1
+	elif ! QpkgIsInstalledAuthorOk; then
+		SaveActionResultToLog QPKG "$qpkg_name" reassign '' skipped 'incompatible author'
 		MarkThisAcForkAsSkipped
 		z=1
 	elif [[ $(QpkgGetInstalledStoreID) = sherpa || $(QpkgGetInstalledStoreID) = undefined ]]; then
@@ -9486,10 +9493,15 @@ _QPKG:download_()
 	# * This function runs asynchronously *
 	# Download the QPKG named in $qpkg_name.
 
-	# Inputs:
-	#	$qpkg_name (global)
+	# Inputs: (global)
+	#	$DOWNLOAD_LOG_FILE
+	#	$LOGS_PATH
+	#	$QPKG_DL_PATH
+	#	$qpkg_name
+	#	$REMOTE_FILENAME
+	#	$useropt_verbose
 
-	# Outputs:
+	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &> /dev/null
@@ -9558,10 +9570,15 @@ _QPKG:install_()
 	# * This function runs asynchronously *
 	# Install the QPKG named in $qpkg_name.
 
-	# Inputs:
-	#	$qpkg_name (global)
+	# Inputs: (global)
+	#	$INSTALL_LOG_FILE
+	#	$LOGS_PATH
+	#	$qpkg_name
+	#	$QPKGs_were_installed_name[]
+	#	$useropt_debug
+	#	$useropt_verbose
 
-	# Outputs:
+	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &> /dev/null
@@ -9573,7 +9590,12 @@ _QPKG:install_()
 	local -i z=0
 
 	if QPKGs-ISinstalled.Exist "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" install '' skipped 'already installed'
+		if ! QpkgIsInstalledAuthorOk; then
+			SaveActionResultToLog QPKG "$qpkg_name" install '' skipped 'incompatible author'
+		else
+			SaveActionResultToLog QPKG "$qpkg_name" install '' skipped 'already installed'
+		fi
+
 		MarkThisAcForkAsSkipped
 		z=1
 	elif ! QpkgIsDatabaseArchOK "$qpkg_name"; then
@@ -9670,10 +9692,10 @@ _QPKG:reinstall_()
 	# * This function runs asynchronously *
 	# Reinstall the QPKG named in $qpkg_name.
 
-	# Inputs:
-	#	$qpkg_name (global)
+	# Inputs: (global)
+	#	$qpkg_name
 
-	# Outputs:
+	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &> /dev/null
@@ -9686,6 +9708,10 @@ _QPKG:reinstall_()
 
 	if ! QPKGs-ISinstalled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' skipped "not installed, please use 'install' instead."
+		MarkThisAcForkAsSkipped
+		z=1
+	elif ! QpkgIsInstalledAuthorOk; then
+		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' skipped 'incompatible author'
 		MarkThisAcForkAsSkipped
 		z=1
 	elif ! QpkgIsInstalledRepoSelfManaged; then
@@ -9745,10 +9771,10 @@ _QPKG:rebuild_()
 	# * This function runs asynchronously *
 	# Meta-action: rebuild the QPKG named in $qpkg_name. This is a `download`, `install` and `restore`, but only if a backup file exists for this QPKG.
 
-	# Inputs:
-	#	$qpkg_name (global)
+	# Inputs: (global)
+	#	$qpkg_name
 
-	# Outputs:
+	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &> /dev/null
@@ -9762,7 +9788,12 @@ _QPKG:rebuild_()
 		MarkThisAcForkAsSkipped
 		z=1
 	elif QPKGs-ISinstalled.Exist "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' skipped "already installed, please use 'restore' instead"
+		if ! QpkgIsInstalledAuthorOk; then
+			SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' skipped 'incompatible author'
+		else
+			SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' skipped "already installed, please use 'restore' instead"
+		fi
+
 		MarkThisAcForkAsSkipped
 		z=1
 	elif ! QpkgIsBackupExist; then
@@ -9794,10 +9825,10 @@ _QPKG:upgrade_()
 	# * This function runs asynchronously *
 	# Upgrade the QPKG named in $qpkg_name.
 
-	# Inputs:
-	#	$qpkg_name (global)
+	# Inputs: (global)
+	#	$qpkg_name
 
-	# Outputs:
+	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &> /dev/null
@@ -9810,6 +9841,10 @@ _QPKG:upgrade_()
 
 	if ! QPKGs-ISinstalled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' skipped 'not installed'
+		MarkThisAcForkAsSkipped
+		z=1
+	elif ! QpkgIsInstalledAuthorOk; then
+		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' skipped 'incompatible author'
 		MarkThisAcForkAsSkipped
 		z=1
 	elif ! QPKGs-ISupgradable.Exist "$qpkg_name"; then
@@ -9884,10 +9919,10 @@ _QPKG:uninstall_()
 	# * This function runs asynchronously *
 	# Uninstall the QPKG named in $qpkg_name.
 
-	# Inputs:
-	#	$qpkg_name (global)
+	# Inputs: (global)
+	#	$qpkg_name
 
-	# Outputs:
+	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &> /dev/null
@@ -9900,6 +9935,10 @@ _QPKG:uninstall_()
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" uninstall '' skipped 'not installed'
+		MarkThisAcForkAsSkipped
+		z=1
+	elif ! QpkgIsInstalledAuthorOk; then
+		SaveActionResultToLog QPKG "$qpkg_name" uninstall '' skipped 'incompatible author'
 		MarkThisAcForkAsSkipped
 		z=1
 	elif [[ $qpkg_name = sherpa ]]; then
@@ -9962,10 +10001,10 @@ _QPKG:activate_()
 	# * This function runs asynchronously *
 	# Activate/start the service-script for the QPKG named in $qpkg_name.
 
-	# Inputs:
-	#	$qpkg_name (global)
+	# Inputs: (global)
+	#	$qpkg_name
 
-	# Outputs:
+	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &> /dev/null
@@ -9978,6 +10017,10 @@ _QPKG:activate_()
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" activate '' skipped 'not installed'
+		MarkThisAcForkAsSkipped
+		z=1
+	elif ! QpkgIsInstalledAuthorOk; then
+		SaveActionResultToLog QPKG "$qpkg_name" activate '' skipped 'incompatible author'
 		MarkThisAcForkAsSkipped
 		z=1
 	elif QPKGs-ISNTenabled.Exist "$qpkg_name"; then
@@ -10046,10 +10089,10 @@ _QPKG:reactivate_()
 	# * This function runs asynchronously *
 	# Reactivate/restart the service-script for the QPKG named in $qpkg_name.
 
-	# Inputs:
-	#	$qpkg_name (global)
+	# Inputs: (global)
+	#	$qpkg_name
 
-	# Outputs:
+	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &> /dev/null
@@ -10062,6 +10105,10 @@ _QPKG:reactivate_()
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' skipped 'not installed'
+		MarkThisAcForkAsSkipped
+		z=1
+	elif ! QpkgIsInstalledAuthorOk; then
+		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' skipped 'incompatible author'
 		MarkThisAcForkAsSkipped
 		z=1
 	elif QPKGs-ISNTenabled.Exist "$qpkg_name"; then
@@ -10121,10 +10168,10 @@ _QPKG:deactivate_()
 	# * This function runs asynchronously *
 	# Deactivate/stop the service-script for the QPKG named in $qpkg_name.
 
-	# Inputs:
-	#	$qpkg_name (global)
+	# Inputs: (global)
+	#	$qpkg_name
 
-	# Outputs:
+	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &> /dev/null
@@ -10137,6 +10184,10 @@ _QPKG:deactivate_()
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' skipped 'not installed'
+		MarkThisAcForkAsSkipped
+		z=1
+	elif ! QpkgIsInstalledAuthorOk; then
+		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' skipped 'incompatible author'
 		MarkThisAcForkAsSkipped
 		z=1
 # 	elif [[ $qpkg_name = sherpa ]]; then
@@ -10204,10 +10255,10 @@ _QPKG:enable_()
 	# * This function runs asynchronously *
 	# Enable the QPKG named in $qpkg_name.
 
-	# Inputs:
-	#	$qpkg_name (global)
+	# Inputs: (global)
+	#	$qpkg_name
 
-	# Outputs:
+	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &> /dev/null
@@ -10218,6 +10269,10 @@ _QPKG:enable_()
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" enable '' skipped 'not installed'
+		MarkThisAcForkAsSkipped
+		z=1
+	elif ! QpkgIsInstalledAuthorOk; then
+		SaveActionResultToLog QPKG "$qpkg_name" enable '' skipped 'incompatible author'
 		MarkThisAcForkAsSkipped
 		z=1
 	elif QPKGs-ISenabled.Exist "$qpkg_name"; then
@@ -10254,10 +10309,10 @@ _QPKG:disable_()
 	# * This function runs asynchronously *
 	# Disable the QPKG named in $qpkg_name.
 
-	# Inputs:
-	#	$qpkg_name (global)
+	# Inputs: (global)
+	#	$qpkg_name
 
-	# Outputs:
+	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &> /dev/null
@@ -10268,6 +10323,10 @@ _QPKG:disable_()
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" disable '' skipped 'not installed'
+		MarkThisAcForkAsSkipped
+		z=1
+	elif ! QpkgIsInstalledAuthorOk; then
+		SaveActionResultToLog QPKG "$qpkg_name" disable '' skipped 'incompatible author'
 		MarkThisAcForkAsSkipped
 		z=1
 	elif QPKGs-ISNTenabled.Exist "$qpkg_name"; then
@@ -10309,10 +10368,10 @@ _QPKG:enableau_()
 	# * This function runs asynchronously *
 	# Enable auto-updating of the QPKG named in $qpkg_name.
 
-	# Inputs:
-	#	$qpkg_name (global)
+	# Inputs: (global)
+	#	$qpkg_name
 
-	# Outputs:
+	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &> /dev/null
@@ -10325,6 +10384,10 @@ _QPKG:enableau_()
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" enableau '' skipped 'not installed'
+		MarkThisAcForkAsSkipped
+		z=1
+	elif ! QpkgIsInstalledAuthorOk; then
+		SaveActionResultToLog QPKG "$qpkg_name" enableau '' skipped 'incompatible author'
 		MarkThisAcForkAsSkipped
 		z=1
 	elif [[ $qpkg_name = sherpa ]]; then
@@ -10368,10 +10431,10 @@ _QPKG:disableau_()
 	# * This function runs asynchronously *
 	#  Disable auto-updating of the QPKG named in $qpkg_name.
 
-	# Inputs:
-	#	$qpkg_name (global)
+	# Inputs: (global)
+	#	$qpkg_name
 
-	# Outputs:
+	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &> /dev/null
@@ -10384,6 +10447,10 @@ _QPKG:disableau_()
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" disableau '' skipped 'not installed'
+		MarkThisAcForkAsSkipped
+		z=1
+	elif ! QpkgIsInstalledAuthorOk; then
+		SaveActionResultToLog QPKG "$qpkg_name" disableau '' skipped 'incompatible author'
 		MarkThisAcForkAsSkipped
 		z=1
 	elif [[ $qpkg_name = sherpa ]]; then
@@ -10427,10 +10494,10 @@ _QPKG:backup_()
 	# * This function runs asynchronously *
 	#  Run a `backup` action for the QPKG named in $qpkg_name.
 
-	# Inputs:
-	#	$qpkg_name (global)
+	# Inputs: (global)
+	#	$qpkg_name
 
-	# Outputs:
+	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &> /dev/null
@@ -10443,6 +10510,10 @@ _QPKG:backup_()
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" backup '' skipped 'not installed'
+		MarkThisAcForkAsSkipped
+		z=1
+	elif ! QpkgIsInstalledAuthorOk; then
+		SaveActionResultToLog QPKG "$qpkg_name" backup '' skipped 'incompatible author'
 		MarkThisAcForkAsSkipped
 		z=1
 	elif ! QpkgIsDatabaseCanBackup; then
@@ -10483,10 +10554,10 @@ _QPKG:restore_()
 	# * This function runs asynchronously *
 	#  Run a `restore` action for the QPKG named in $qpkg_name.
 
-	# Inputs:
-	#	$qpkg_name (global)
+	# Inputs: (global)
+	#	$qpkg_name
 
-	# Outputs:
+	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &> /dev/null
@@ -10499,6 +10570,10 @@ _QPKG:restore_()
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" restore '' skipped "not installed, try 'rebuild' instead"
+		MarkThisAcForkAsSkipped
+		z=1
+	elif ! QpkgIsInstalledAuthorOk; then
+		SaveActionResultToLog QPKG "$qpkg_name" restore '' skipped 'incompatible author'
 		MarkThisAcForkAsSkipped
 		z=1
 	elif ! QpkgIsDatabaseCanBackup; then
@@ -10543,10 +10618,10 @@ _QPKG:clean_()
 	# * This function runs asynchronously *
 	#  Run a `clean` action for the QPKG named in $qpkg_name.
 
-	# Inputs:
-	#	$qpkg_name (global)
+	# Inputs: (global)
+	#	$qpkg_name
 
-	# Outputs:
+	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &> /dev/null
@@ -10559,6 +10634,10 @@ _QPKG:clean_()
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" clean '' skipped 'not installed'
+		MarkThisAcForkAsSkipped
+		z=1
+	elif ! QpkgIsInstalledAuthorOk; then
+		SaveActionResultToLog QPKG "$qpkg_name" clean '' skipped 'incompatible author'
 		MarkThisAcForkAsSkipped
 		z=1
 	elif ! QpkgIsDatabaseCanClean; then
@@ -10602,10 +10681,10 @@ _QPKG:sign_()
 
 	# Should only be required for QTS 4.3.5-and-later firmwares.
 
-	# Inputs:
-	#	$qpkg_name (global)
+	# Inputs: (global)
+	#	$qpkg_name
 
-	# Outputs:
+	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
 	[[ $useropt_verbose != true ]] && exec &> /dev/null
@@ -10628,6 +10707,10 @@ _QPKG:sign_()
 
 	if ! QPKGs-ISinstalled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped 'not installed'
+		MarkThisAcForkAsSkipped
+		z=1
+	elif ! QpkgIsInstalledAuthorOk; then
+		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped 'incompatible author'
 		MarkThisAcForkAsSkipped
 		z=1
 	elif ! OsIsSupportSignedPackages; then
