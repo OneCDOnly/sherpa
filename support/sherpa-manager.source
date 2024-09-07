@@ -4636,9 +4636,9 @@ GenerateStatusReportDataLine()
 		mode=missing
 	elif QpkgIsInstalled; then
 		mode=normal
-		QpkgIsNtInstalledAuthorOk && mode=author
 	else
 		mode=mute
+		QpkgIsReallyInstalled && QpkgIsNtInstalledAuthorOk && mode=author
 	fi
 
 	case $app_ver in
@@ -5158,9 +5158,9 @@ GenerateDepsReportDataLine()
 		mode=missing
 	elif QpkgIsInstalled; then
 		mode=normal
-		QpkgIsNtInstalledAuthorOk && mode=author
 	else
 		mode=mute
+		QpkgIsReallyInstalled && QpkgIsNtInstalledAuthorOk && mode=author
 	fi
 
 	[[ -z $deps_raw ]] && deps_raw=none
@@ -5668,9 +5668,9 @@ GenerateFeaturesReportDataLine()
 		mode=missing
 	elif QpkgIsInstalled; then
 		mode=normal
-		QpkgIsNtInstalledAuthorOk && mode=author
 	else
 		mode=mute
+		QpkgIsReallyInstalled && QpkgIsNtInstalledAuthorOk && mode=author
 	fi
 
 	case $mode in
@@ -7339,7 +7339,7 @@ BuildQPKGsStates()
 
 		if QpkgIsInstalled; then
 			echo installed
-		else
+		elif QpkgIsNtReallyInstalled; then
 			echo notinstalled
 		fi >> "$QPKG_STATES_PATH/$qpkg_name"
 # 	done #&
@@ -12021,7 +12021,7 @@ QpkgIsInstallable()
 
 	[[ $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
 
-	! QpkgIsInstalled && QpkgIsInstalledRepoSelfManaged && QpkgIsDatabaseArchOK && QpkgIsDatabaseMinOSVerOk && QpkgIsDatabaseMaxOSVerOk && QpkgIsDatabaseMinRAMOk
+	QpkgIsNtReallyInstalled && QpkgIsDatabaseArchOK && QpkgIsDatabaseMinOSVerOk && QpkgIsDatabaseMaxOSVerOk && QpkgIsDatabaseMinRAMOk
 
 	}
 
@@ -12354,6 +12354,8 @@ QpkgIsNtInstalledAuthorOk()
 QpkgIsInstalled()
 	{
 
+	# Check if specified QPKG is installed, and that QPKG author is valid.
+
 	# Inputs: (local)
 	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
@@ -12365,7 +12367,7 @@ QpkgIsInstalled()
 
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
 
-	$GREP_CMD -q "^\[$a\]" /etc/config/qpkg.conf
+	$GREP_CMD -q "^\[$a\]" /etc/config/qpkg.conf && QpkgIsInstalledAuthorOk "$a"
 
 	}
 
@@ -12382,6 +12384,42 @@ QpkgIsNtInstalled()
 	#   $? = true/false
 
 	! QpkgIsInstalled "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}"
+
+	}
+
+QpkgIsReallyInstalled()
+	{
+
+	# Check if specified QPKG is installed, and don't check anything else.
+
+	# Inputs: (local)
+	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+
+	# Inputs: (global)
+	#	$qpkg_name (default for $1)
+
+	# Outputs: (local)
+	#   $? = true/false
+
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
+
+	$GREP_CMD -q "^\[$a\]" /etc/config/qpkg.conf
+
+	}
+
+QpkgIsNtReallyInstalled()
+	{
+
+	# Inputs: (local)
+	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+
+	# Inputs: (global)
+	#	$qpkg_name (default for $1)
+
+	# Outputs: (local)
+	#   $? = true/false
+
+	! QpkgIsReallyInstalled "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}"
 
 	}
 
