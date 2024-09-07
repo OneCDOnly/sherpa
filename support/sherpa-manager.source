@@ -8284,6 +8284,8 @@ GenerateReportFooter()
 GenerateReportHeadingsFooter()
 	{
 
+	[[ $useropt_report_footer = true ]] || return
+
 	DisplayAsHelpTitle 'column headings:'
 
 	local a=''
