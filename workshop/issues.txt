@@ -2,6 +2,7 @@ Observed issues:
 
 	* sherpa must exclude installed QPKGs with wrong author from upgradable QPKG list.
 		- Must check display of 'installable', 'installed' lists also.
+		- Maybe exclude wrong author QPKGs from installed QPKG check? Will need an override to prevent exclusion test.
 
 	* Will need a new method to detect if QTS 5.2.0 is still starting QPKGs due to async starts.
 
