@@ -314,6 +314,7 @@ LoadVars()
 	pips_install=false
 	proc_counts_path=''
 	qpkg_timeouts_increased=false
+	report_footer_default=true
 	run_package_actions=false
 	show_backuploc=false
 	show_action_results_failed=false
@@ -322,13 +323,15 @@ LoadVars()
 	show_suggest_raise_issue=false
 	show_title=true
 	show_action_results_zero=false
-	switch_colour=false
 	switch_branch=false
+	switch_colour=false
+	switch_report_footer=false
 	switch_terse=false
 	terse_default=true
 	title_shown=false
 	user_branch_value=''
 	user_colourful_value=''
+	user_report_footer_value=''
 	user_terse_value=''
 
 	# User-selectable options.
@@ -358,6 +361,7 @@ LoadVars()
 	useropt_help_upgrades=false
 	useropt_paste_log_last=false
 	useropt_paste_log_tail=false
+	useropt_report_footer=$(LoadSetting ReportFooter "$report_footer_default")
 	useropt_show_backups=false
 	useropt_show_dependencies=false
 	useropt_show_features=false
@@ -1821,9 +1825,11 @@ ParseManagementArgs()
 	#	$run_package_actions
 	#	$switch_branch
 	#	$switch_colour
+	#	$switch_report_footer
 	#	$switch_terse
 	#	$user_branch_value
 	#	$user_colourful_value
+	#	$user_report_footer_value
 	#	$user_terse_value
 	#	$useropt_check
 	#	$useropt_paste_log_last
@@ -1861,7 +1867,7 @@ ParseManagementArgs()
 					user_action=$arg
 					useropt_check=true
 					;;
-				colo?(u)r?(ful)|follow|paste|terse)
+				colo?(u)r?(ful)|follow|paste|report-footer|terse)
 					requires_group=true
 					user_action=$arg
 					;;
@@ -1937,6 +1943,19 @@ ParseManagementArgs()
 							awaiting_group=false
 							run_package_actions=false
 							useropt_paste_log_tail=true
+							;;
+						*)
+							args_remaining+=("$action")
+					esac
+					;;
+				report-footer)
+					case $group in
+						true|false)
+							action=''
+							awaiting_group=false
+							switch_report_footer=true
+							user_report_footer_value=$group
+							UpdateReportFooter
 							;;
 						*)
 							args_remaining+=("$action")
@@ -2659,7 +2678,7 @@ MatchVerb()
 		add|install)
 			printf install
 			;;
-		backup|clean|colo?(u)r?(ful)|@(dis|en)able|follow|help|list|paste|reassign|rebuild|reinstall|reset|restore|sign|terse)
+		backup|clean|colo?(u)r?(ful)|@(dis|en)able|follow|help|list|paste|reassign|rebuild|reinstall|report-footer|reset|restore|sign|terse)
 			printf '%s' "$a"
 			;;
 		c|check)
@@ -4075,6 +4094,50 @@ UpdateBranch()
 		done
 
 		ShowAsAbort "user setting '$user_branch_value' is not 'unstable' or 'stable'"
+		run_package_actions=false
+
+		return 1
+	fi
+
+	}
+
+UpdateReportFooter()
+	{
+
+	# Inputs: (local)
+	# 	$1 = 'silent' (optional): don't announce setting was saved.
+
+	# Inputs: (global)
+	#	$switch_terse
+	#	$user_report_footer_value
+	#	$useropt_report_footer
+
+	# Outputs: (global)
+	#	$run_package_actions
+	#	$switch_report_footer
+	#	$useropt_report_footer
+
+	local a=''
+
+	if [[ $switch_report_footer = true && -n $user_report_footer_value ]]; then
+		# Validate before saving.
+
+		for a in true false; do
+			[[ $a != "$user_report_footer_value" ]] && continue
+			useropt_report_footer=$user_report_footer_value
+
+			if [[ ${1:-} = silent ]]; then
+				SaveSetting ReportFooter "$useropt_report_footer"
+			else
+				SaveSetting ReportFooter "$useropt_report_footer" announce
+			fi
+
+			switch_report_footer=false
+
+			return
+		done
+
+		ShowAsAbort "user setting '$user_report_footer_value' is not 'true' or 'false'"
 		run_package_actions=false
 
 		return 1
@@ -8079,6 +8142,8 @@ ShowReportActionResults()
 
 GenerateReportFooter()
 	{
+
+	[[ $useropt_report_footer = true ]] || return
 
 	DisplayAsHelpTitle 'report information:'
 
