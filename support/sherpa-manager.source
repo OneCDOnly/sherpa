@@ -9521,7 +9521,7 @@ _QPKG:reassign_()
 
 	local -i z=0
 
-	if ! QPKGs-ISinstalled.Exist "$qpkg_name"; then
+	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" reassign '' skipped 'not installed'
 		MarkThisAcForkAsSkipped
 		z=1
@@ -9657,12 +9657,11 @@ _QPKG:install_()
 	local -i z=0
 
 	if QPKGs-ISinstalled.Exist "$qpkg_name"; then
-		if QpkgIsNtInstalledAuthorOk; then
-			SaveActionResultToLog QPKG "$qpkg_name" install '' skipped 'incompatible author'
-		else
-			SaveActionResultToLog QPKG "$qpkg_name" install '' skipped 'already installed'
-		fi
-
+		SaveActionResultToLog QPKG "$qpkg_name" install '' skipped 'already installed'
+		MarkThisAcForkAsSkipped
+		z=1
+	elif QpkgIsReallyInstalled && QpkgIsNtInstalledAuthorOk; then
+		SaveActionResultToLog QPKG "$qpkg_name" install '' skipped 'incompatible author'
 		MarkThisAcForkAsSkipped
 		z=1
 	elif ! QpkgIsDatabaseArchOK "$qpkg_name"; then
@@ -9773,7 +9772,7 @@ _QPKG:reinstall_()
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
-	if ! QPKGs-ISinstalled.Exist "$qpkg_name"; then
+	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' skipped "not installed, please use 'install' instead."
 		MarkThisAcForkAsSkipped
 		z=1
@@ -9854,13 +9853,12 @@ _QPKG:rebuild_()
 		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' skipped 'does not support rebuild'
 		MarkThisAcForkAsSkipped
 		z=1
+	elif QpkgIsReallyInstalled && QpkgIsNtInstalledAuthorOk; then
+		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' skipped 'incompatible author'
+		MarkThisAcForkAsSkipped
+		z=1
 	elif QPKGs-ISinstalled.Exist "$qpkg_name"; then
-		if QpkgIsNtInstalledAuthorOk; then
-			SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' skipped 'incompatible author'
-		else
-			SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' skipped "already installed, please use 'restore' instead"
-		fi
-
+		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' skipped "already installed, please use 'restore' instead"
 		MarkThisAcForkAsSkipped
 		z=1
 	elif ! QpkgIsBackupExist; then
@@ -9906,7 +9904,7 @@ _QPKG:upgrade_()
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
-	if ! QPKGs-ISinstalled.Exist "$qpkg_name"; then
+	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' skipped 'not installed'
 		MarkThisAcForkAsSkipped
 		z=1
@@ -10772,7 +10770,7 @@ _QPKG:sign_()
 
 	DebugVar sqlite_cmd
 
-	if ! QPKGs-ISinstalled.Exist "$qpkg_name"; then
+	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped 'not installed'
 		MarkThisAcForkAsSkipped
 		z=1
