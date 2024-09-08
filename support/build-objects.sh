@@ -8,24 +8,24 @@ target=$support_path/$objects_file
 
 # These are used internally by sherpa. Must maintain separate lists for sherpa internal-use, and what user has requested.
 # ordered
-PACKAGE_TIERS=(independent auxiliary dependent)
+r_package_tiers=(independent auxiliary dependent)
 
 # sorted
-QPKG_IS_STATES=(active backedup downloaded enabled installable installed missing signed upgradable)
-QPKG_ISNT_STATES=(active backedup downloaded enabled installable installed missing signed upgradable)
-QPKG_IS_GROUPS=(all canbackup canclean canrestarttoupdate dependent hasdependents independent)
-QPKG_ISNT_GROUPS=(canclean)
-QPKG_STATES_TRANSIENT=(restarting slow starting stopping unknown)
-QPKG_SERVICE_RESULTS=(failed ok)
+r_qpkg_is_states=(active backedup downloaded enabled installable installed missing signed upgradable)
+r_qpkg_isnt_states=(active backedup downloaded enabled installable installed missing signed upgradable)
+r_qpkg_is_groups=(all canbackup canclean canrestarttoupdate dependent hasdependents independent)
+r_qpkg_isnt_groups=(canclean)
+r_qpkg_states_transient=(restarting slow starting stopping unknown)
+r_qpkg_service_results=(failed ok)
 
 # ordered
-QPKG_ACTIONS=(status list rebuild reassign download backup deactivate disable uninstall upgrade reinstall install enableau disableau sign restore clean enable activate reactivate)
-IPK_ACTIONS=(downgrade download uninstall upgrade install)
-PIP_ACTIONS=(uninstall upgrade install)
+r_qpkg_actions=(status list rebuild reassign download backup deactivate disable uninstall upgrade reinstall install enableau disableau sign restore clean enable activate reactivate)
+r_ipk_actions=(downgrade download uninstall upgrade install)
+r_pip_actions=(uninstall upgrade install)
 
 # These actions may be specified by the user.
 # sorted
-USER_QPKG_ACTIONS=(activate backup clean deactivate disable disableau enable enableau install list reactivate reassign rebuild reinstall restore sign status uninstall upgrade)
+r_user_qpkg_actions=(activate backup clean deactivate disable disableau enable enableau install list reactivate reassign rebuild reinstall restore sign status uninstall upgrade)
 
 AddFlagObj()
 	{
@@ -123,54 +123,54 @@ echo $public_function_name':Add()
 	}
 
 [[ -e $target ]] && rm -f "$target"
-echo "OBJECTS_VER='<?build_date?>'" > "$target"
+echo "r_objects_version='<?build_date?>'" > "$target"
 echo "#* <?dont_edit?>" >> "$target"
 
 # package action flag objects.
 
-for action in "${USER_QPKG_ACTIONS[@]}"; do
- 	for state in "${QPKG_IS_STATES[@]}"; do
+for action in "${r_user_qpkg_actions[@]}"; do
+	for state in "${r_qpkg_is_states[@]}"; do
 		AddFlagObj QPKGs.AC"$action".IS"$state"
 	done
 
-	for state in "${QPKG_ISNT_STATES[@]}"; do
+	for state in "${r_qpkg_isnt_states[@]}"; do
 		AddFlagObj QPKGs.AC"$action".ISNT"$state"
 	done
 
-	for group in "${QPKG_IS_GROUPS[@]}"; do
+	for group in "${r_qpkg_is_groups[@]}"; do
 		AddFlagObj QPKGs.AC"$action".GR"$group"
 	done
 
-	for group in "${QPKG_ISNT_GROUPS[@]}"; do
+	for group in "${r_qpkg_isnt_groups[@]}"; do
 		AddFlagObj QPKGs.AC"$action".GRNT"$group"
 	done
 done
 
 # session list objects.
 
-for action in "${QPKG_ACTIONS[@]}"; do
+for action in "${r_qpkg_actions[@]}"; do
 	for prefix in to ok er sk so se sa dn; do		# to-do, done ok, done error, skipped, skipped-but-ok, skipped-with-error, skipped-with-abort, done (all processed QPKGs are placed in the 'done' list, as-well as the regular exit status lists).
 		AddListObj "QPKGs-AC${action}-${prefix}"
 	done
 done
 
-for state in "${QPKG_IS_STATES[@]}" "${QPKG_STATES_TRANSIENT[@]}" "${QPKG_SERVICE_RESULTS[@]}"; do
+for state in "${r_qpkg_is_states[@]}" "${r_qpkg_states_transient[@]}" "${r_qpkg_service_results[@]}"; do
 	AddListObj QPKGs-IS"$state"
 done
 
-for state in "${QPKG_ISNT_STATES[@]}" "${QPKG_STATES_TRANSIENT[@]}" "${QPKG_SERVICE_RESULTS[@]}"; do
+for state in "${r_qpkg_isnt_states[@]}" "${r_qpkg_states_transient[@]}" "${r_qpkg_service_results[@]}"; do
 	AddListObj QPKGs-ISNT"$state"
 done
 
-for group in "${QPKG_IS_GROUPS[@]}"; do
+for group in "${r_qpkg_is_groups[@]}"; do
 	AddListObj QPKGs-GR"$group"
 done
 
-for group in "${QPKG_ISNT_GROUPS[@]}"; do
+for group in "${r_qpkg_isnt_groups[@]}"; do
 	AddListObj QPKGs-GRNT"$group"
 done
 
-for action in "${IPK_ACTIONS[@]}"; do
+for action in "${r_ipk_actions[@]}"; do
 	[[ $action != list ]] || continue
 
 	for prefix in to ok er sk; do
@@ -178,7 +178,7 @@ for action in "${IPK_ACTIONS[@]}"; do
 	done
 done
 
-for action in "${PIP_ACTIONS[@]}"; do
+for action in "${r_pip_actions[@]}"; do
 	[[ $action != list ]] || continue
 
 	for prefix in to ok er; do
@@ -194,8 +194,13 @@ else
 fi
 
 SwapTags "$target" "$target"
-Squeeze "$target" "$target"
 
+if grep -q '<?\|?>' "$target"; then
+	ColourTextBrightRed "'$target' contains unswapped tags, can't continue"; echo
+	exit 1
+fi
+
+Squeeze "$target" "$target"
 [[ -f $target ]] && chmod 444 "$target"
 
 exit 0
