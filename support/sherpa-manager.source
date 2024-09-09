@@ -9774,7 +9774,7 @@ _QPKG:reinstall_()
 
 	FuncForkInit
 
-	local a='QPKG_REINSTALL=true '
+	local a='REINSTALL_QPKG=true '
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
@@ -9906,7 +9906,7 @@ _QPKG:upgrade_()
 
 	FuncForkInit
 
-	local a='QPKG_UPGRADE=true '
+	local a='UPGRADE_QPKG=true '
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
@@ -14178,7 +14178,7 @@ StripANSICodes()
 
 	if [[ ${sed_ext_regex_supported:=false} = true ]]; then
 		echo -en "${1:-}" | /bin/sed -r 's/\x1b\[[0-9;]*m//g' 			# https://superuser.com/a/380778
-	elif [[ -e /opt/bin/sed && -L /opt/etc/passwd ]]; then	# Try to ensure Entware is active first.
+	elif [[ -e /opt/bin/sed && -L /opt/etc/passwd ]]; then				# Try to ensure Entware is active first.
 		echo -en "${1:-}" | /opt/bin/sed -r 's/\x1b\[[0-9;]*m//g' 		# https://superuser.com/a/380778
 	else
 		echo -en "${1:-}" 												# Can't strip, so pass thru original message unaltered.
@@ -14358,6 +14358,7 @@ LoadPackages()
 	# Supported QPKG details - parallel arrays.
 
 	# First, clear existing list arrays (if-any).
+
 	unset r_qpkg_abbrvs
 	unset r_qpkg_appl_author
 	unset r_qpkg_appl_author_email
@@ -14387,6 +14388,7 @@ LoadPackages()
 	r_packages_epoch=undefined
 
 	# Second, create an index 0 element for each array. This element is used to indicate no matching QPKG when searching array.
+
 	r_qpkg_abbrvs+=('')						# If set, this package is user-installable, and these abbreviations may be used to specify app.
 	r_qpkg_appl_author+=('')				# Name of the person or group maintaining the internal application.
 	r_qpkg_appl_author_email+=('')			# Email address for the internal application developer.
@@ -14414,11 +14416,11 @@ LoadPackages()
 	r_qpkg_version+=('') 					# QPKG version.
 
 	# Third, source remaining elements from packages file.
+
 	. "$r_packages_pathfile"
 
-	# Add translated datetime to string.
-
 	# Fourth, lock list arrays and values.
+
 	readonly r_qpkg_abbrvs
 	readonly r_qpkg_appl_author
 	readonly r_qpkg_appl_author_email
