@@ -9945,7 +9945,7 @@ _QPKG:upgrade_()
 	DebugAsProc "upgrading $(ShowAsPackageName)"
 	QpkgIsInstalled && a+="QINSTALL_PATH=$($DIRNAME_CMD "$(QpkgGetInstalledPath "$qpkg_name")") "
 
-	RunAndLog "${a}${SH_CMD} $local_pathfile" "$r_logs_path/$($BASENAME_CMD "$local_pathfile").$_r_upgrade_log_file" log:failure-only 10
+	RunAndLog "${a}${SH_CMD} $local_pathfile" "$r_logs_path/$($BASENAME_CMD "$local_pathfile").$r_upgrade_log_file" log:failure-only 10
 	z=$?
 
 	LogQpkgServiceResult
