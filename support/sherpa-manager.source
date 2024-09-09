@@ -208,6 +208,7 @@ LoadConsts()
 	{
 
 	# QPKG actions.
+
 	readonly r_qpkg_disable_timeout_seconds=10
 	readonly r_qpkg_enable_timeout_seconds=10
 	readonly r_qpkg_restart_timeout_seconds=1800		# 30 minutes
@@ -215,45 +216,53 @@ LoadConsts()
 	readonly r_qpkg_status_check_timeout_seconds=15
 	readonly r_qpkg_stop_timeout_seconds=300			# 5 minutes
 
-	# Report formatting.
-	readonly r_action_result_indent=6
-	readonly r_column_spacing=2
-	readonly r_file_bytes_column_width=16
-	readonly r_file_change_date_column_width=60
-	readonly r_footer_name_column_width=14
+	# Fixed-widths for report columns when GNU `awk` isn't available.
+
+	readonly r_report_qpkg_abbreviations_column_width=84
+	readonly r_report_qpkg_action_column_width=27
+	readonly r_report_qpkg_active_test_builtin_column_width=11
+	readonly r_report_qpkg_appl_version_column_width=22
+	readonly r_report_qpkg_arch_column_width=15
+	readonly r_report_qpkg_author_column_width=40
+	readonly r_report_qpkg_auto_update_column_width=10
+	readonly r_report_qpkg_dependencies_column_width=29
+	readonly r_report_qpkg_description_column_width=10
+	readonly r_report_qpkg_install_date_column_width=20
+	readonly r_report_qpkg_is_compatible_column_width=9
+	readonly r_report_qpkg_is_enabled_column_width=10
+	readonly r_report_qpkg_is_installed_column_width=12
+	readonly r_report_qpkg_is_managed_column_width=10
+	readonly r_report_qpkg_max_os_version_column_width=10
+	readonly r_report_qpkg_min_os_version_column_width=10
+	readonly r_report_qpkg_min_ram_column_width=14
+	readonly r_report_qpkg_name_column_width=21
+	readonly r_report_qpkg_path_column_width=48
+	readonly r_report_qpkg_repo_column_width=40
+	readonly r_report_qpkg_status_column_width=23
+	readonly r_report_qpkg_supports_backup_column_width=10
+	readonly r_report_qpkg_supports_clean_column_width=11
+	readonly r_report_qpkg_supports_start_to_update_column_width=11
+	readonly r_report_qpkg_tier_column_width=8
+	readonly r_report_qpkg_version_column_width=15
+	readonly r_report_lazy_column_width=28				# Use this when can't be bothered calculating required fixed column width.
+
+	# Report, help and debug formatting.
+
+	readonly r_debug_log_full_width=101
+	readonly r_debug_log_first_column_width=9
+	readonly r_debug_log_second_column_width=22
+		readonly r_debug_log_third_column_width=$((r_debug_log_full_width-r_debug_log_first_column_width-r_debug_log_second_column_width-4))
 	readonly r_help_desc_indent=3
 	readonly r_help_syntax_indent=6
+	readonly r_report_action_result_indent=6
+	readonly r_report_column_spacing=2
+	readonly r_report_file_bytes_column_width=16
+	readonly r_report_file_change_date_column_width=60
+	readonly r_report_file_name_column_width=$((r_report_qpkg_name_column_width+14))
+	readonly r_report_footer_name_column_width=14
 
-	readonly r_std_column_width=28						# Use this width for all report columns when GNU `awk` isn't available.
-	readonly r_package_abbs_column_width=84
-	readonly r_package_action_column_width=27
-	readonly r_package_active_test_builtin_column_width=11
-	readonly r_package_appl_version_column_width=22
-	readonly r_package_arch_column_width=15
-	readonly r_package_author_column_width=40
-	readonly r_package_auto_update_column_width=10
-	readonly r_package_compatible_column_width=9
-	readonly r_package_dependencies_column_width=29
-	readonly r_package_description_column_width=10
-	readonly r_package_enabled_column_width=10
-	readonly r_package_install_date_column_width=20
-	readonly r_package_installed_column_width=12
-	readonly r_package_managed_column_width=10
-	readonly r_package_max_os_column_width=10
-	readonly r_package_min_os_column_width=10
-	readonly r_package_min_ram_column_width=14
-	readonly r_package_name_column_width=21
-		readonly r_file_name_column_width=$((r_package_name_column_width+14))
-	readonly r_package_path_column_width=48
-	readonly r_package_repo_column_width=40
-	readonly r_package_status_column_width=23
-	readonly r_package_supports_backup_column_width=10
-	readonly r_package_supports_clean_column_width=11
-	readonly r_package_supports_start_to_update_column_width=11
-	readonly r_package_tier_column_width=8
-	readonly r_package_version_column_width=15
+	# For reports and onscreen messages.
 
-	# For reports and onscreen display.
 	readonly r_chars_alert='! '
 	readonly r_chars_attention='* '
 	readonly r_chars_blank='  '
@@ -265,13 +274,7 @@ LoadConsts()
 	readonly r_chars_regular_prompt='$ '
 		readonly r_chars_sudo_prompt="${r_chars_regular_prompt}sudo "
 	readonly r_chars_results='= '
-	readonly r_char_spacer=' '
 	readonly r_chars_super_prompt='# '
-
-	readonly r_debug_log_datawidth=101
-	readonly r_debug_log_first_column_width=9
-	readonly r_debug_log_second_column_width=22
-	readonly r_debug_log_third_column_width=$((r_debug_log_datawidth-r_debug_log_first_column_width-r_debug_log_second_column_width-4))
 
 	if OsIsSupportSudo; then
 		if [[ $(UserGetSudoUID) = undefined ]]; then
@@ -316,13 +319,13 @@ LoadVars()
 	qpkg_timeouts_increased=false
 	report_footer_default=true
 	run_package_actions=false
-	show_backuploc=false
 	show_action_results_failed=false
 	show_action_results_ok=false
 	show_action_results_skipped=false
+	show_action_results_zero=false
+	show_backuploc=false
 	show_suggest_raise_issue=false
 	show_title=true
-	show_action_results_zero=false
 	switch_branch=false
 	switch_colour=false
 	switch_report_footer=false
@@ -575,17 +578,19 @@ LoadEnv()
 	readonly r_nas_qpkg_arch=$(QpkgGetArch)
 	readonly r_nas_ram_kb=$(HardwareGetInstalledRAM)
 	readonly r_nas_upstate=$(OsGetUpState)
+	readonly r_this_package_ver=$(QpkgGetInstalledVer)
 
 	OsIsSupportSecureDownload || CURL_CMD+=' --insecure'
 	readonly CURL_CMD
 
 	args=()						# Command-line argument array.
 	args_incomplete=()
-	qpkg_index=0
 	qpkg_default_index=0
+	qpkg_index=0
 	useropt_branch=$(UserGetGitBranch)
 		readonly r_objects_archive_url='<?cdn_sherpa_base_url?>'/$useropt_branch/objects.tar.gz
 		readonly r_packages_archive_url='<?cdn_sherpa_packages_base_url?>'/$useropt_branch/packages.tar.gz
+		readonly r_this_script_ver='<?build_date?>'-$useropt_branch
 	readonly r_qpkg_bu_path=$(UserGetDefVol)/.qpkg_config_backup
 	readonly r_this_package_path=$(QpkgGetInstalledPath)
 		if [[ -z $r_this_package_path || $r_this_package_path = undefined || ! -d $r_this_package_path ]]; then
@@ -601,15 +606,15 @@ LoadEnv()
 			readonly r_display_inhibit_pathfile=$r_cache_path/display.inhibit
 			readonly r_independent_qpkgs_list_pathfile=$r_cache_path/independents
 			readonly r_ipk_cache_path=$r_cache_path/IPKs
-				readonly r_ipk_download_path=$r_ipk_cache_path/downloads
 				readonly r_ipk_downgrade_path=$r_ipk_cache_path/downgrade
+				readonly r_ipk_download_path=$r_ipk_cache_path/downloads
 				readonly r_prev_ipk_list_pathfile=$r_ipk_cache_path/ipk.list.save
-			readonly r_pip_cache_path=$r_cache_path/PIPs
-				readonly r_prev_pip_list_pathfile=$r_pip_cache_path/pip.list.save
 			readonly r_objects_archive_pathfile=$r_cache_path/objects.tar.gz
 			readonly r_objects_pathfile=$r_cache_path/objects
 			readonly r_packages_archive_pathfile=$r_cache_path/packages.tar.gz
 			readonly r_packages_pathfile=$r_cache_path/packages
+			readonly r_pip_cache_path=$r_cache_path/PIPs
+				readonly r_prev_pip_list_pathfile=$r_pip_cache_path/pip.list.save
 			readonly r_qpkg_cache_path=$r_cache_path/QPKGs
 				readonly r_qpkg_download_path=$r_qpkg_cache_path/downloads
 		readonly r_logs_path=$r_this_package_path/logs
@@ -623,7 +628,8 @@ LoadEnv()
 			readonly r_session_tail_pathfile=$r_logs_path/session.tail.log
 		sess_active_pathfile=$r_this_package_path/session.$$.active.log
 
-	# Ephemeral
+	# Ephemeral files.
+
 	readonly r_action_forks_count=/var/run/sherpa/actions/forks
 	readonly r_action_logs_path=/var/log/sherpa/actions/logs
 	readonly r_qpkg_states_path=/var/run/sherpa/packages/states
@@ -635,10 +641,8 @@ LoadEnv()
 			readonly r_report_output_pathfile=$r_reports_path/report.ansi
 	readonly r_run_logs_path=/var/run/sherpa/run.logs
 
-	readonly r_this_package_ver=$(QpkgGetInstalledVer)
-	readonly r_this_script_ver='<?build_date?>'-$useropt_branch
-
 	# Entware
+
 	readonly r_external_packages_archive_pathfile=/opt/var/opkg-lists/entware
 	readonly r_external_packages_pathfile=$r_cache_path/Packages
 
@@ -665,9 +669,11 @@ LoadLists()
 
 	# These are used internally by sherpa.
 	# ordered
+
 	r_package_tiers=(independent auxiliary dependent)
 
 	# sorted
+
 	r_qpkg_is_states=(active backedup downloaded enabled installable installed missing signed upgradable)
 	r_qpkg_isnt_states=(active backedup downloaded enabled installable installed missing signed upgradable)
 	r_qpkg_is_groups=(all canbackup canclean canrestarttoupdate dependent hasdependents independent)
@@ -676,15 +682,18 @@ LoadLists()
 	r_qpkg_service_results=(failed ok)
 
 	# ordered
+
 	r_qpkg_actions=(status list rebuild reassign download backup deactivate disable uninstall upgrade reinstall install enableau disableau sign restore clean enable activate reactivate)
 	r_ipk_actions=(downgrade download uninstall upgrade install)
 	r_pip_actions=(uninstall upgrade install)
 
 	# These actions may be specified by the user.
 	# sorted
+
 	r_user_qpkg_actions=(activate backup clean deactivate disable disableau enable enableau install list reactivate reassign rebuild reinstall restore sign status uninstall upgrade)
 
 	# KLUDGE: for some reason, setting `readonly` while populating arrays causes their scope to become local, so need to set as `readonly` afterward to ensure global scope. GNU Bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
+
 	readonly r_package_tiers
 
 	readonly r_qpkg_is_states
@@ -1600,23 +1609,23 @@ ProcAction()
 						;;
 					status)			# Update the status of a single action fork in the parent shell.
 						case $msg1_value in
-							ok)		# Completed OK (wonderful!).
+							ok)		# Completed OK (wonderful!)
 								[[ $r_action != status ]] && ((ok_count++))		# No-need to count result of `status` checks.
 								;;
-							so)		# Action was skipped, but this is normal (no-big-deal).
+							so)		# Action was skipped, but this is normal (no-big-deal)
 								((skip_ok_count++))
 								;;
-							sk)		# Action was skipped (and there's a good reason for it).
+							sk)		# Action was skipped (and there's a good reason for it)
 								((skip_count++))
 								;;
-							se)		# Action was skipped due to error prior to action being attempted (might be a big-deal).
+							se)		# Action was skipped due to error prior to action being attempted (might be a big-deal)
 								((skip_error_count++))
 								;;
-							sa)		# Action was skipped and must immediately abort (don't attempt this action again).
+							sa)		# Action was skipped and must immediately abort (don't attempt this action again)
 								((skip_abort_count++))
 								/bin/touch "$r_action_abort_pathfile"
 								;;
-							er)		# Action failed (uh-oh).
+							er)		# Action failed (uh-oh)
 								((fail_count++))
 						esac
 
@@ -4458,7 +4467,7 @@ DisplayAsIndentQuotedInfoItem()
 	if OsIsSupportAutowidthTableColumns; then
 		printf "%${r_help_desc_indent}s%s|%s\n" '' "'${1:-}'" "- $(AddPeriod "${2:-}")"
 	else
-		printf "%${r_help_desc_indent}s%-$((r_footer_name_column_width+2+$(LenANSIDiff "${1:-}")))s%s\n" '' "'${1:-}'" "- $(AddPeriod "${2:-}")"
+		printf "%${r_help_desc_indent}s%-$((r_report_footer_name_column_width+2+$(LenANSIDiff "${1:-}")))s%s\n" '' "'${1:-}'" "- $(AddPeriod "${2:-}")"
 	fi
 
 	}
@@ -4470,15 +4479,15 @@ GeneratePacksReportTitleLine()
 
 	# column 1: package name.
 	a='QPKG name:'
-	printf "%-$((r_package_name_column_width+2+$(LenANSIDiff "$a")))s" "$a"
+	printf "%-$((r_report_qpkg_name_column_width+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 2: application version
 	a='Appl. version:'
-	printf "%-$((r_package_appl_version_column_width+2+$(LenANSIDiff "$a")))s" "$a"
+	printf "%-$((r_report_qpkg_appl_version_column_width+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 3: package description
 	a='Description:'
-	printf "%-$((r_package_description_column_width+2+$(LenANSIDiff "$a")))s" "$a"
+	printf "%-$((r_report_qpkg_description_column_width+2+$(LenANSIDiff "$a")))s" "$a"
 
 	printf '\n'
 
@@ -4549,18 +4558,18 @@ GeneratePacksReportDataLine()
 		fi
 	else
 		# column 1: package name.
-		printf "%-$((r_package_name_column_width+$(LenANSIDiff "$name_msg")))s" "$name_msg"
+		printf "%-$((r_report_qpkg_name_column_width+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 
 		# column 2: application version
-		printf "%$((r_column_spacing))s"
-		printf "%-$((r_package_appl_version_column_width+$(LenANSIDiff "$app_ver_msg")))s" "$app_ver_msg"
+		printf "%$((r_report_column_spacing))s"
+		printf "%-$((r_report_qpkg_appl_version_column_width+$(LenANSIDiff "$app_ver_msg")))s" "$app_ver_msg"
 
 		# column 3: package description
-		printf "%$((r_column_spacing))s"
-		printf "%-$((r_package_description_column_width+$(LenANSIDiff "$description_msg")))s" "$description_msg"
+		printf "%$((r_report_column_spacing))s"
+		printf "%-$((r_report_qpkg_description_column_width+$(LenANSIDiff "$description_msg")))s" "$description_msg"
 
 		if [[ -n $notes ]]; then
-			printf "\n%$((${#r_chars_blank}+r_package_name_column_width+r_package_appl_version_column_width+(r_column_spacing*2)))s$(TextBrightOrange "${r_chars_dropend}${r_chars_note}")%s" '' "$notes_msg"
+			printf "\n%$((${#r_chars_blank}+r_report_qpkg_name_column_width+r_report_qpkg_appl_version_column_width+(r_report_column_spacing*2)))s$(TextBrightOrange "${r_chars_dropend}${r_chars_note}")%s" '' "$notes_msg"
 		fi
 
 		printf '\n'
@@ -4575,33 +4584,33 @@ GenerateStatusReportTitleLine()
 
 	# column 1: package name.
 	a='QPKG name'
-	printf "%-${r_package_name_column_width}s" "$a:"
+	printf "%-${r_report_qpkg_name_column_width}s" "$a:"
 
 	# column 2: package statuses
-	printf "%$((r_column_spacing))s"
+	printf "%$((r_report_column_spacing))s"
 	a='Status'
-	printf "%-${r_package_status_column_width}s" "$a:"
+	printf "%-${r_report_qpkg_status_column_width}s" "$a:"
 
 	# column 3: package action and result
-	printf "%$((r_column_spacing))s"
+	printf "%$((r_report_column_spacing))s"
 	a='Previous action (result)'
-	printf "%-${r_package_action_column_width}s" "$a:"
+	printf "%-${r_report_qpkg_action_column_width}s" "$a:"
 
 	# column 4: package version
-	printf "%$((r_column_spacing))s"
+	printf "%$((r_report_column_spacing))s"
 	a='QPKG version'
 	QPKGs-ISupgradable.IsAny && a+=" ($(TextBrightOrange new))"
-	printf "%-${r_package_version_column_width}s" "$a:"
+	printf "%-${r_report_qpkg_version_column_width}s" "$a:"
 
 	# column 5: application version
-	printf "%$((r_column_spacing))s"
+	printf "%$((r_report_column_spacing))s"
 	a='Appl. version'
-	printf "%-${r_package_appl_version_column_width}s" "$a:"
+	printf "%-${r_report_qpkg_appl_version_column_width}s" "$a:"
 
 	# column 6: package installation path
-	printf "%$((r_column_spacing))s"
+	printf "%$((r_report_column_spacing))s"
 	a='Location'
-	printf "%-${r_package_path_column_width}s" "$a:"
+	printf "%-${r_report_qpkg_path_column_width}s" "$a:"
 
 	printf '\n'
 
@@ -4813,27 +4822,27 @@ GenerateStatusReportDataLine()
 		echo "$name_msg|$status_msg|$action_msg|$ver_msg|$app_ver_msg|$path_msg"
 	else
 		# column 1: package name.
-		printf "%-$((r_package_name_column_width+$(LenANSIDiff "$name_msg")))s" "$name_msg"
+		printf "%-$((r_report_qpkg_name_column_width+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 
 		# column 2: package statuses
-		printf "%$((r_column_spacing))s"
-		printf "%-$((r_std_column_width+$(LenANSIDiff "$status_msg")))s" "$status_msg"
+		printf "%$((r_report_column_spacing))s"
+		printf "%-$((r_report_lazy_column_width+$(LenANSIDiff "$status_msg")))s" "$status_msg"
 
 		# column 3: package action and result
-		printf "%$((r_column_spacing))s"
-		printf "%-$((r_std_column_width+$(LenANSIDiff "$action_msg")))s" "$action_msg"
+		printf "%$((r_report_column_spacing))s"
+		printf "%-$((r_report_lazy_column_width+$(LenANSIDiff "$action_msg")))s" "$action_msg"
 
 		# column 4: package version
-		printf "%$((r_column_spacing))s"
-		printf "%-$((r_std_column_width+$(LenANSIDiff "$ver_msg")))s" "$ver_msg"
+		printf "%$((r_report_column_spacing))s"
+		printf "%-$((r_report_lazy_column_width+$(LenANSIDiff "$ver_msg")))s" "$ver_msg"
 
 		# column 5: application version
-		printf "%$((r_column_spacing))s"
-		printf "%-$((r_std_column_width+$(LenANSIDiff "$app_ver_msg")))s" "$app_ver_msg"
+		printf "%$((r_report_column_spacing))s"
+		printf "%-$((r_report_lazy_column_width+$(LenANSIDiff "$app_ver_msg")))s" "$app_ver_msg"
 
 		# column 6: package installation path
-	 	printf "%$((r_column_spacing))s"
-	 	printf "%-$((r_package_path_column_width+$(LenANSIDiff "$path_msg")))s" "$path_msg"
+	 	printf "%$((r_report_column_spacing))s"
+	 	printf "%-$((r_report_qpkg_path_column_width+$(LenANSIDiff "$path_msg")))s" "$path_msg"
 
 	 	printf '\n'
 	fi
@@ -4847,15 +4856,15 @@ GenerateReposReportTitleLine()
 
 	# column 1: package name.
 	a="QPKG name:"
-	printf "%-$((r_package_name_column_width+2+$(LenANSIDiff "$a")))s" "$a"
+	printf "%-$((r_report_qpkg_name_column_width+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 2: package repository
 	a="Repository:"
-	printf "%-$((r_package_repo_column_width+2+$(LenANSIDiff "$a")))s" "$a"
+	printf "%-$((r_report_qpkg_repo_column_width+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 3: package installation date
 	a="Install date:"
-	printf "%-$((r_package_install_date_column_width+2+$(LenANSIDiff "$a")))s" "$a"
+	printf "%-$((r_report_qpkg_install_date_column_width+2+$(LenANSIDiff "$a")))s" "$a"
 
 	printf '\n'
 
@@ -4958,15 +4967,15 @@ GenerateReposReportDataLine()
 		echo "$name_msg|$assigned_repo_msg|$install_date_msg"
 	else
 		# column 1: package name.
-		printf "%-$((r_package_name_column_width+$(LenANSIDiff "$name_msg")))s" "$name_msg"
+		printf "%-$((r_report_qpkg_name_column_width+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 
 		# column 2: package repository
-		printf "%$((r_column_spacing))s"
-		printf "%-$((r_package_repo_column_width+$(LenANSIDiff "$assigned_repo_msg")))s" "$assigned_repo_msg"
+		printf "%$((r_report_column_spacing))s"
+		printf "%-$((r_report_qpkg_repo_column_width+$(LenANSIDiff "$assigned_repo_msg")))s" "$assigned_repo_msg"
 
 		# column 3: package installation date
-		printf "%$((r_column_spacing))s"
-		printf "%-$((r_package_install_date_column_width+$(LenANSIDiff "$install_date_msg")))s" "$install_date_msg"
+		printf "%$((r_report_column_spacing))s"
+		printf "%-$((r_report_qpkg_install_date_column_width+$(LenANSIDiff "$install_date_msg")))s" "$install_date_msg"
 
 		printf '\n'
 	fi
@@ -4980,15 +4989,15 @@ GenerateAbsReportTitleLine()
 
 	# column 1: package name.
 	a='QPKG name:'
-	printf "%-$((r_package_name_column_width+2+$(LenANSIDiff "$a")))s" "$a"
+	printf "%-$((r_report_qpkg_name_column_width+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 2: QPKG is installed
 	a='Installed?'
-	printf "%-$((r_package_installed_column_width+2+$(LenANSIDiff "$a")))s" "$a"
+	printf "%-$((r_report_qpkg_is_installed_column_width+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 3: package abbreviations
 	a='Acceptable QPKG name abbreviations and aliases:'
-	printf "%-$((r_package_abbs_column_width+2+$(LenANSIDiff "$a")))s" "$a"
+	printf "%-$((r_report_qpkg_abbreviations_column_width+2+$(LenANSIDiff "$a")))s" "$a"
 
 	printf '\n'
 
@@ -5049,15 +5058,15 @@ GenerateAbsReportDataLine()
 		echo "$name_msg|$installed_msg|$abs_msg"
 	else
 		# column 1: package name.
-		printf "%-$((r_package_name_column_width+$(LenANSIDiff "$name_msg")))s" "$name_msg"
+		printf "%-$((r_report_qpkg_name_column_width+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 
 		# column 2: package is installed?
-		printf "%$((r_column_spacing))s"
-		printf "%-$((r_package_installed_column_width+$(LenANSIDiff "$installed_msg")))s" "$installed_msg"
+		printf "%$((r_report_column_spacing))s"
+		printf "%-$((r_report_qpkg_is_installed_column_width+$(LenANSIDiff "$installed_msg")))s" "$installed_msg"
 
 		# column 3: package abbreviations
-		printf "%$((r_column_spacing))s"
-		printf "%-$((r_package_abbs_column_width+$(LenANSIDiff "$abs_msg")))s" "$abs_msg"
+		printf "%$((r_report_column_spacing))s"
+		printf "%-$((r_report_qpkg_abbreviations_column_width+$(LenANSIDiff "$abs_msg")))s" "$abs_msg"
 
 		printf '\n'
 	fi
@@ -5071,43 +5080,43 @@ GenerateDepsReportTitleLine()
 
 	# column 1: package name.
 	a='QPKG name:'
-	printf "%-$((r_package_name_column_width+2+$(LenANSIDiff "$a")))s" "$a"
+	printf "%-$((r_report_qpkg_name_column_width+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 2: package dependencies.
 	a='Dependencies:'
-	printf "%-$((r_package_dependencies_column_width+2+$(LenANSIDiff "$a")))s" "$a"
+	printf "%-$((r_report_qpkg_dependencies_column_width+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 3: QPKG is installed?
 	a='Installed?'
-	printf "%-$((r_package_installed_column_width+2+$(LenANSIDiff "$a")))s" "$a"
+	printf "%-$((r_report_qpkg_is_installed_column_width+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 4: QPKG is enabled?
 	a='Enabled?'
-	printf "%-$((r_package_enabled_column_width+2+$(LenANSIDiff "$a")))s" "$a"
+	printf "%-$((r_report_qpkg_is_enabled_column_width+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 5: QPKG is managed by sherpa?
 	a='Managed?'
-	printf "%-$((r_package_managed_column_width+2+$(LenANSIDiff "$a")))s" "$a"
+	printf "%-$((r_report_qpkg_is_managed_column_width+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 6: minimum NAS RAM required.
 	a='Min. RAM:'
-	printf "%-$((r_package_min_ram_column_width+2+$(LenANSIDiff "$a")))s" "$a"
+	printf "%-$((r_report_qpkg_min_ram_column_width+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 7: minimum OS fimware version supported.
 	a='Min. OS:'
-	printf "%-$((r_package_min_os_column_width+2+$(LenANSIDiff "$a")))s" "$a"
+	printf "%-$((r_report_qpkg_min_os_version_column_width+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 8: maximum OS fimware version supported.
 	a='Max. OS:'
-	printf "%-$((r_package_max_os_column_width+2+$(LenANSIDiff "$a")))s" "$a"
+	printf "%-$((r_report_qpkg_max_os_version_column_width+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 9: arch is compatible?
 	a='Supported arch?'
-	printf "%-$((r_package_arch_column_width+2+$(LenANSIDiff "$a")))s" "$a"
+	printf "%-$((r_report_qpkg_arch_column_width+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 10: installed QPKG author
 	a='Installed QPKG author:'
-	printf "%-$((r_std_column_width+2+$(LenANSIDiff "$a")))s" "$a"
+	printf "%-$((r_report_lazy_column_width+2+$(LenANSIDiff "$a")))s" "$a"
 
 	printf '\n'
 
@@ -5545,43 +5554,43 @@ GenerateDepsReportDataLine()
 		echo "$name_msg|$deps_msg|$installed_msg|$enabled_msg|$managed_msg|$min_ram_msg|$min_os_msg|$max_os_msg|$arch_msg|$author_msg"
 	else
 		# column 1: package name.
-		printf "%-$((r_package_name_column_width+$(LenANSIDiff "$name_msg")))s" "$name_msg"
+		printf "%-$((r_report_qpkg_name_column_width+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 
 		# column 2: package dependencies.
-		printf "%$((r_column_spacing))s"
-		printf "%-$((r_package_dependencies_column_width+$(LenANSIDiff "$deps_msg")))s" "$deps_msg"
+		printf "%$((r_report_column_spacing))s"
+		printf "%-$((r_report_qpkg_dependencies_column_width+$(LenANSIDiff "$deps_msg")))s" "$deps_msg"
 
 		# column 3: package is installed?
-		printf "%$((r_column_spacing))s"
-		printf "%-$((r_package_installed_column_width+$(LenANSIDiff "$installed_msg")))s" "$installed_msg"
+		printf "%$((r_report_column_spacing))s"
+		printf "%-$((r_report_qpkg_is_installed_column_width+$(LenANSIDiff "$installed_msg")))s" "$installed_msg"
 
 		# column 4: package is enabled?
-		printf "%$((r_column_spacing))s"
-		printf "%-$((r_package_enabled_column_width+$(LenANSIDiff "$enabled_msg")))s" "$enabled_msg"
+		printf "%$((r_report_column_spacing))s"
+		printf "%-$((r_report_qpkg_is_enabled_column_width+$(LenANSIDiff "$enabled_msg")))s" "$enabled_msg"
 
 		# column 5: package is managed by sherpa?
-		printf "%$((r_column_spacing))s"
-		printf "%-$((r_package_managed_column_width+$(LenANSIDiff "$managed_msg")))s" "$managed_msg"
+		printf "%$((r_report_column_spacing))s"
+		printf "%-$((r_report_qpkg_is_managed_column_width+$(LenANSIDiff "$managed_msg")))s" "$managed_msg"
 
 		# column 6: minimum NAS RAM required.
-		printf "%$((r_column_spacing))s"
-		printf "%-$((r_package_min_ram_column_width+$(LenANSIDiff "$min_ram_msg")))s" "$min_ram_msg"
+		printf "%$((r_report_column_spacing))s"
+		printf "%-$((r_report_qpkg_min_ram_column_width+$(LenANSIDiff "$min_ram_msg")))s" "$min_ram_msg"
 
 		# column 7: minimum OS fimware version supported.
-		printf "%$((r_column_spacing))s"
-		printf "%-$((r_package_min_os_column_width+$(LenANSIDiff "$min_os_msg")))s" "$min_os_msg"
+		printf "%$((r_report_column_spacing))s"
+		printf "%-$((r_report_qpkg_min_os_version_column_width+$(LenANSIDiff "$min_os_msg")))s" "$min_os_msg"
 
 		# column 8: maximum OS fimware version supported.
-		printf "%$((r_column_spacing))s"
-		printf "%-$((r_package_max_os_column_width+$(LenANSIDiff "$max_os_msg")))s" "$max_os_msg"
+		printf "%$((r_report_column_spacing))s"
+		printf "%-$((r_report_qpkg_max_os_version_column_width+$(LenANSIDiff "$max_os_msg")))s" "$max_os_msg"
 
 		# column 9: NAS arch is compatible?
-		printf "%$((r_column_spacing))s"
-		printf "%-$((r_package_arch_column_width+$(LenANSIDiff "$arch_msg")))s" "$arch_msg"
+		printf "%$((r_report_column_spacing))s"
+		printf "%-$((r_report_qpkg_arch_column_width+$(LenANSIDiff "$arch_msg")))s" "$arch_msg"
 
 		# column 10: installed QPKG author.
-		printf "%$((r_column_spacing))s"
-		printf "%-$((r_std_column_width+$(LenANSIDiff "$author_msg")))s" "$author_msg"
+		printf "%$((r_report_column_spacing))s"
+		printf "%-$((r_report_lazy_column_width+$(LenANSIDiff "$author_msg")))s" "$author_msg"
 
 		printf '\n'
 	fi
@@ -5595,39 +5604,39 @@ GenerateFeaturesReportTitleLine()
 
 	# column 1: package name.
 	a='QPKG name:'
-	printf "%-$((r_package_name_column_width+2+$(LenANSIDiff "$a")))s" "$a"
+	printf "%-$((r_report_qpkg_name_column_width+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 2: package supports `backup` action?
 	a='CanBack?'
-	printf "%-$((r_package_supports_backup_column_width+2+$(LenANSIDiff "$a")))s" "$a"
+	printf "%-$((r_report_qpkg_supports_backup_column_width+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 3: package supports `clean` action?
 	a='CanClean?'
-	printf "%-$((r_package_supports_clean_column_width+2+$(LenANSIDiff "$a")))s" "$a"
+	printf "%-$((r_report_qpkg_supports_clean_column_width+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 4: package supports restart-to-update application action?
 	a='StartUpd?'
-	printf "%-$((r_package_supports_start_to_update_column_width+2+$(LenANSIDiff "$a")))s" "$a"
+	printf "%-$((r_report_qpkg_supports_start_to_update_column_width+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 5: package is set to auto-update on restart?
 	a='AutoUpd?'
-	printf "%-$((r_package_auto_update_column_width+2+$(LenANSIDiff "$a")))s" "$a"
+	printf "%-$((r_report_qpkg_auto_update_column_width+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 6: package active test is builtin?
 	a='LiveTest?'
-	printf "%-$((r_package_active_test_builtin_column_width+2+$(LenANSIDiff "$a")))s" "$a"
+	printf "%-$((r_report_qpkg_active_test_builtin_column_width+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 7: package is independent?
 	a='Indep?'
-	printf "%-$((r_package_tier_column_width+2+$(LenANSIDiff "$a")))s" "$a"
+	printf "%-$((r_report_qpkg_tier_column_width+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 8: NAS arch is compatible?
 	a='Compat?'
-	printf "%-$((r_package_compatible_column_width+2+$(LenANSIDiff "$a")))s" "$a"
+	printf "%-$((r_report_qpkg_is_compatible_column_width+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 9: QPKG is sherpa-compatible?
 	a='Enhanced?'
-	printf "%-$((r_std_column_width+2+$(LenANSIDiff "$a")))s" "$a"
+	printf "%-$((r_report_lazy_column_width+2+$(LenANSIDiff "$a")))s" "$a"
 
 	printf '\n'
 
@@ -5811,39 +5820,39 @@ GenerateFeaturesReportDataLine()
 		echo "$name_msg|$backup_msg|$clean_msg|$restart_to_update_msg|$autoupdate_msg|$active_test_msg|$tier_msg|$compatible_msg|$sherpa_compatible_msg"
 	else
 		# column 1: package name.
-		printf "%-$((r_package_name_column_width+$(LenANSIDiff "$name_msg")))s" "$name_msg"
+		printf "%-$((r_report_qpkg_name_column_width+$(LenANSIDiff "$name_msg")))s" "$name_msg"
 
 		# column 2: package supports `backup` action?
-		printf "%$((r_column_spacing))s"
-		printf "%-$((r_package_supports_backup_column_width+$(LenANSIDiff "$backup_msg")))s" "$backup_msg"
+		printf "%$((r_report_column_spacing))s"
+		printf "%-$((r_report_qpkg_supports_backup_column_width+$(LenANSIDiff "$backup_msg")))s" "$backup_msg"
 
 		# column 3: package supports `clean` action?
-		printf "%$((r_column_spacing))s"
-		printf "%-$((r_package_supports_clean_column_width+$(LenANSIDiff "$clean_msg")))s" "$clean_msg"
+		printf "%$((r_report_column_spacing))s"
+		printf "%-$((r_report_qpkg_supports_clean_column_width+$(LenANSIDiff "$clean_msg")))s" "$clean_msg"
 
 		# column 4: package supports restart-to-update application action?
-		printf "%$((r_column_spacing))s"
-		printf "%-$((r_package_supports_start_to_update_column_width+$(LenANSIDiff "$restart_to_update_msg")))s" "$restart_to_update_msg"
+		printf "%$((r_report_column_spacing))s"
+		printf "%-$((r_report_qpkg_supports_start_to_update_column_width+$(LenANSIDiff "$restart_to_update_msg")))s" "$restart_to_update_msg"
 
 		# column 5: package is set to auto-update on restart?
-		printf "%$((r_column_spacing))s"
-		printf "%-$((r_package_auto_update_column_width+$(LenANSIDiff "$autoupdate_msg")))s" "$autoupdate_msg"
+		printf "%$((r_report_column_spacing))s"
+		printf "%-$((r_report_qpkg_auto_update_column_width+$(LenANSIDiff "$autoupdate_msg")))s" "$autoupdate_msg"
 
 		# column 6: package active test is builtin?
-		printf "%$((r_column_spacing))s"
-		printf "%-$((r_package_active_test_builtin_column_width+$(LenANSIDiff "$active_test_msg")))s" "$active_test_msg"
+		printf "%$((r_report_column_spacing))s"
+		printf "%-$((r_report_qpkg_active_test_builtin_column_width+$(LenANSIDiff "$active_test_msg")))s" "$active_test_msg"
 
 		# column 7: package is independent?
-		printf "%$((r_column_spacing))s"
-		printf "%-$((r_package_tier_column_width+$(LenANSIDiff "$tier_msg")))s" "$tier_msg"
+		printf "%$((r_report_column_spacing))s"
+		printf "%-$((r_report_qpkg_tier_column_width+$(LenANSIDiff "$tier_msg")))s" "$tier_msg"
 
 		# column 8: NAS arch is compatible?
-		printf "%$((r_column_spacing))s"
-		printf "%-$((r_package_compatible_column_width+$(LenANSIDiff "$compatible_msg")))s" "$compatible_msg"
+		printf "%$((r_report_column_spacing))s"
+		printf "%-$((r_report_qpkg_is_compatible_column_width+$(LenANSIDiff "$compatible_msg")))s" "$compatible_msg"
 
 		# column 9: QPKG is sherpa-compatible?
-		printf "%$((r_column_spacing))s"
-		printf "%-$((r_std_column_width+$(LenANSIDiff "$sherpa_compatible_msg")))s" "$sherpa_compatible_msg"
+		printf "%$((r_report_column_spacing))s"
+		printf "%-$((r_report_lazy_column_width+$(LenANSIDiff "$sherpa_compatible_msg")))s" "$sherpa_compatible_msg"
 
 		printf '\n'
 	fi
@@ -5859,17 +5868,17 @@ DisplayAsBacksReportTitleLine()
 
 	# column 1: backup filename
 	a="${r_chars_bullet}Backup file:"
-	printf "%-$((r_file_name_column_width+2+$(LenANSIDiff "$a")))s" "$a"
+	printf "%-$((r_report_file_name_column_width+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 2: filesize in bytes
-	printf "%$((r_column_spacing))s"
+	printf "%$((r_report_column_spacing))s"
 	a="${r_chars_bullet}Size in bytes:"
-	printf "%-$((r_file_bytes_column_width+2+$(LenANSIDiff "$a")))s" "$a"
+	printf "%-$((r_report_file_bytes_column_width+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 3: last backup date
-	printf "%$((r_column_spacing))s"
+	printf "%$((r_report_column_spacing))s"
 	a="${r_chars_bullet}Backup date:"
-	printf "%-$((r_file_change_date_column_width+2+$(LenANSIDiff "$a")))s" "$a"
+	printf "%-$((r_report_file_change_date_column_width+2+$(LenANSIDiff "$a")))s" "$a"
 
 	printf '\n'
 
@@ -5916,15 +5925,15 @@ DisplayAsBacksReportItemLine()
 	esac
 
 	# column 1: backup filename
-	printf "%-$((r_file_name_column_width+$(LenANSIDiff "$file_name_msg")))s" "$file_name_msg"
+	printf "%-$((r_report_file_name_column_width+$(LenANSIDiff "$file_name_msg")))s" "$file_name_msg"
 
 	# column 2: filesize in bytes
-	printf "%$((r_column_spacing))s"
-	printf "%$((r_file_bytes_column_width+$(LenANSIDiff "$file_bytes_msg")))s" "$file_bytes_msg "	# append 1 x whitespace char to force right-justified numbers to the left a bit. Looks nicer.
+	printf "%$((r_report_column_spacing))s"
+	printf "%$((r_report_file_bytes_column_width+$(LenANSIDiff "$file_bytes_msg")))s" "$file_bytes_msg "	# append 1 x whitespace char to force right-justified numbers to the left a bit. Looks nicer.
 
 	# column 3: last backup date
-	printf "%$((r_column_spacing))s"
-	printf "%-$((r_file_change_date_column_width+$(LenANSIDiff "$epoch_time_msg")))s" "$epoch_time_msg"
+	printf "%$((r_report_column_spacing))s"
+	printf "%-$((r_report_file_change_date_column_width+$(LenANSIDiff "$epoch_time_msg")))s" "$epoch_time_msg"
 
 	printf '\n'
 
@@ -5978,7 +5987,7 @@ DisplayAsIndentActionResultDurationReason()
 
 	[[ -n ${3:-} ]] && duration=$(ConvertMillisecondsToDuration "$3")
 
-	printf "%${r_action_result_indent}s" ''
+	printf "%${r_report_action_result_indent}s" ''
 
 	if [[ -z ${4:-} ]]; then
 		printf "%s %s%s" "$(Lowercase "$action")" "$2" "$([[ -n $duration ]] && printf ' in %s' "$duration")"
@@ -12977,7 +12986,7 @@ DebugInfoMajSepr()
 
 	# Debug info major separator.
 
-	DebugInfo "$(eval printf '%0.s=' "{1..$r_debug_log_datawidth}")"  # `seq` is unavailable in QTS, so must resort to `eval` trickery instead.
+	DebugInfo "$(eval printf '%0.s=' "{1..$r_debug_log_full_width}")"  # `seq` is unavailable in QTS, so must resort to `eval` trickery instead.
 
 	}
 
@@ -12986,7 +12995,7 @@ DebugInfoMinSepr()
 
 	# Debug info minor separator.
 
-	DebugInfo "$(eval printf '%0.s-' "{1..$r_debug_log_datawidth}")"  # `seq` is unavailable in QTS, so must resort to `eval` trickery instead.
+	DebugInfo "$(eval printf '%0.s-' "{1..$r_debug_log_full_width}")"  # `seq` is unavailable in QTS, so must resort to `eval` trickery instead.
 
 	}
 
@@ -12995,7 +13004,7 @@ DebugExtLogMinSepr()
 
 	# Debug external log minor separator.
 
-	DebugAsLog "$(eval printf '%0.s-' "{1..$r_debug_log_datawidth}")" # `seq` is unavailable in QTS, so must resort to `eval` trickery instead.
+	DebugAsLog "$(eval printf '%0.s-' "{1..$r_debug_log_full_width}")" # `seq` is unavailable in QTS, so must resort to `eval` trickery instead.
 
 	}
 
@@ -14158,7 +14167,7 @@ Tableise()
 			print cell[row,nf[row]]
 		}
 
-	}' FS='|' OFS="$(printf "%$((r_column_spacing))s")"
+	}' FS='|' OFS="$(printf "%$((r_report_column_spacing))s")"
 
 	}
 
