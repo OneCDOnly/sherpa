@@ -200,7 +200,7 @@ DebugLogInit()
 	DebugInfoMinSepr
 	DebugVar r_this_package_ver
 	DebugVar r_this_script_ver
-	DebugVar r_loader_script_ver
+	DebugVar LOADER_SCRIPT_VERSION
 
 	}
 
@@ -7998,7 +7998,7 @@ ShowReportVersions()
 
 	Display "QPKG: ${r_this_package_ver:-undefined}"
 	Display "manager: ${r_this_script_ver:-undefined}"
-	Display "loader: ${r_loader_script_ver:-undefined}"
+	Display "loader: ${LOADER_SCRIPT_VERSION:-undefined}"
 	Display "objects: ${r_objects_version:-undefined}"
 	Display "packages: ${r_packages_epoch}$([[ $r_packages_epoch != undefined ]] && printf '%s' " ($(ConvertSecondsToFullDate "$r_packages_epoch"))")"
 
