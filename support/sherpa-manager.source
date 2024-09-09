@@ -501,7 +501,7 @@ LocateSQLiteBinary()
 		[[ -e $sqlite_pathfile ]] && sqlite_cmd=$sqlite_pathfile
 	fi
 
-	if [[ -z $sqlite_cmd ]] && QpkgIsInstalled ArchiwareP5; then	# untested
+	if [[ -z $sqlite_cmd ]] && QpkgIsInstalled ArchiwareP5; then	# untested.
 		sqlite_pathfile=$(QpkgGetInstalledPath ArchiwareP5)/binaries/Linux/unknown/64/sqlite3
 		[[ -e $sqlite_pathfile ]] && sqlite_cmd=$sqlite_pathfile
 	fi
@@ -510,7 +510,7 @@ LocateSQLiteBinary()
 	#	container-station = `Container Station`
 
 	if [[ -z $sqlite_cmd ]]; then
-		for a in container-station HD_Station; do					# 'HD_Station' is untested
+		for a in container-station HD_Station; do					# 'HD_Station' is untested.
 			if QpkgIsInstalled "$a"; then
 				sqlite_pathfile=$(QpkgGetInstalledPath "$a")/usr/bin/sqlite3
 				[[ -e $sqlite_pathfile ]] || continue
@@ -4740,11 +4740,11 @@ GenerateStatusReportDataLine()
 			path=N/A
 
 			if ! QpkgIsDatabaseArchOK; then
-				status+='incompatible NAS arch'
+				status+='incompatible architecture'
 			elif ! QpkgIsDatabaseMinOSVerOk || ! QpkgIsDatabaseMaxOSVerOk; then
 				status+="incompatible $(OsGetQnapOS)"
 			elif ! QpkgIsDatabaseMinRAMOk; then
-				status+='insufficient NAS RAM'
+				status+='insufficient RAM installed'
 			else
 				status+='not installed'
 			fi
@@ -4940,11 +4940,11 @@ GenerateReposReportDataLine()
 			/bin/touch "$r_report_flags_path"/na
 
 			if ! QpkgIsDatabaseArchOK; then
-				install_date='incompatible arch'
+				install_date='incompatible architecture'
 			elif ! QpkgIsDatabaseMinOSVerOk; then
 				install_date="incompatible $(OsGetQnapOS)"
 			elif ! QpkgIsDatabaseMinRAMOk; then
-				install_date='insufficient RAM'
+				install_date='insufficient RAM installed'
 			else
 				install_date='not installed'
 			fi
@@ -9447,7 +9447,7 @@ SaveActionResultToLog()
 	local -r r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
 		local var_safe_name=${r_var_name//[.-]/_}; var_safe_name=${var_safe_name//:/_}
 	local -r r_package_type=${1:?${FUNCNAME[0]}'()': undefined package type}
-	local -r r_qpkg_name=${2:?${FUNCNAME[0]}'()': undefined package name}
+	local -r r_name=${2:?${FUNCNAME[0]}'()': undefined package name}
 	local -r r_action=${3:?${FUNCNAME[0]}'()': undefined action}
 	local -r r_qty=${4:-1}
 	local -r r_clean_action=${r_action//\"/}
@@ -9464,16 +9464,16 @@ SaveActionResultToLog()
 	fi
 
 	# Add new action results entry.
-	echo "$r_starttime|$r_action|$r_qty|$r_qpkg_name|$r_package_type|$r_result|$r_duration|$r_reason" >> "$r_session_action_results_pathfile"
+	echo "$r_starttime|$r_action|$r_qty|$r_name|$r_package_type|$r_result|$r_duration|$r_reason" >> "$r_session_action_results_pathfile"
 
 	# Remove previous action duration entry if one exists.
 
-	if [[ -e $r_action_times_pathfile ]] && $GREP_CMD -q "^$r_qpkg_name|" < "$r_action_times_pathfile"; then
-		$SED_CMD -i "/^$r_qpkg_name|/d" "$r_action_times_pathfile"
+	if [[ -e $r_action_times_pathfile ]] && $GREP_CMD -q "^$r_name|" < "$r_action_times_pathfile"; then
+		$SED_CMD -i "/^$r_name|/d" "$r_action_times_pathfile"
 	fi
 
 	# Add new action duration entry.
-	echo "$r_qpkg_name|$r_duration" >> "$r_action_times_pathfile"
+	echo "$r_name|$r_duration" >> "$r_action_times_pathfile"
 
 	case $4 in
 		ok|skipped-ok)
@@ -9670,7 +9670,7 @@ _QPKG:install_()
 		MarkThisAcForkAsSkipped
 		z=1
 	elif ! QpkgIsDatabaseMinRAMOk "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" install '' skipped 'NAS has insufficient RAM'
+		SaveActionResultToLog QPKG "$qpkg_name" install '' skipped 'NAS has insufficient RAM installed'
 		MarkThisAcForkAsSkipped
 		z=1
 	fi
