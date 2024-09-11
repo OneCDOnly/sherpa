@@ -9845,7 +9845,7 @@ _QPKG:install_()
 			SendPackageStateChange ISNTenabled
 		fi
 
-		SaveActionResultToLog QPKG "$qpkg_name" install '' ok "version $(QpkgGetInstalledVer)"
+		SaveActionResultToLog QPKG "$qpkg_name" install '' ok "v$(QpkgGetInstalledVer)"
 
 		if [[ $qpkg_name = Entware ]]; then
 			SendParentChangeEnv ModPathToEntware
@@ -9940,7 +9940,7 @@ _QPKG:reinstall_()
 			SendPackageStateChange ISNTenabled
 		fi
 
-		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' ok "version $(QpkgGetInstalledVer)"
+		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' ok "v$(QpkgGetInstalledVer)"
 		MarkThisAcForkAsOk
 		z=0   # Remap to zero.
 	else
@@ -10083,9 +10083,9 @@ _QPKG:upgrade_()
 		local current_ver=$(QpkgGetInstalledVer)
 
 		if [[ $current_ver = "$prev_ver" ]]; then
-			SaveActionResultToLog QPKG "$qpkg_name" upgrade '' ok "version $current_ver"
+			SaveActionResultToLog QPKG "$qpkg_name" upgrade '' ok "v${current_ver}"
 		else
-			SaveActionResultToLog QPKG "$qpkg_name" upgrade '' ok "version $prev_ver -> version $current_ver"
+			SaveActionResultToLog QPKG "$qpkg_name" upgrade '' ok "v${prev_ver} -> v${current_ver}"
 		fi
 
 		MarkThisAcForkAsOk
