@@ -1454,7 +1454,7 @@ ProcAction()
 	#   $1 = an action to run 			e.g. `activate`, `reactivate` ...
 	#   $2 = target tier 				e.g. `independent`, `dependent`, `auxiliary`, `all`
 	#   $3 = package type to process 	e.g. `QPKG`, `IPK`, `PIP`
-	#   $4 = action verb message		e.g. `activate`
+	#   $4 = action intransitive verb	e.g. `activate`
 
 	# Inputs: (global)
 	#	$r_action_abort_pathfile
@@ -1491,7 +1491,7 @@ ProcAction()
 	FuncInit
 
 	local -r r_action=${1:?${FUNCNAME[0]}'()': undefined action}
-	local -r r_action_present_msg=${4:?${FUNCNAME[0]}'()': undefined action message}
+	local -r r_action_intransitive_msg=${4:?${FUNCNAME[0]}'()': undefined action message}
 	local group=''
 	local msg1_key=''
 	local msg1_value=''
@@ -1533,9 +1533,9 @@ ProcAction()
 			fi
 
 			if [[ $total_count -eq 1 ]]; then
-				fork_progress_prefix="$r_action_present_msg $(TextBrightOrange "${target_packages[0]}") $r_package_type"
+				fork_progress_prefix="$r_action_intransitive_msg $(TextBrightOrange "${target_packages[0]}") $r_package_type"
 			else
-				fork_progress_prefix="$r_action_present_msg $([[ $r_tier != all ]] && echo "$r_tier ")$(Uppercase "$r_package_type")$(Pluralise "$total_count")"
+				fork_progress_prefix="$r_action_intransitive_msg $([[ $r_tier != all ]] && echo "$r_tier ")$(Uppercase "$r_package_type")$(Pluralise "$total_count")"
 			fi
 
 			SetMaxForks "$r_action"
