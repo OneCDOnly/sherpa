@@ -5978,32 +5978,28 @@ GenerateFeaturesReportDataLine()
 
 	}
 
-DisplayAsBacksReportTitleLine()
+GenerateBacksReportTitleLine()
 	{
 
 	local a=''
 
-	printf '\n'
-
 	# column 1: backup filename
-	a="${r_chars_bullet}Backup file:"
+	a='Backup file:'
 	printf "%-$((r_report_file_name_column_width+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 2: filesize in bytes
-	printf "%$((r_report_column_spacing))s"
-	a="${r_chars_bullet}Size in bytes:"
+	a='Size in bytes:'
 	printf "%-$((r_report_file_bytes_column_width+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 3: last backup date
-	printf "%$((r_report_column_spacing))s"
-	a="${r_chars_bullet}Backup date:"
+	a='Backup date:'
 	printf "%-$((r_report_file_change_date_column_width+2+$(LenANSIDiff "$a")))s" "$a"
 
 	printf '\n'
 
 	}
 
-DisplayAsBacksReportItemLine()
+GenerateBacksReportItemLine()
 	{
 
 	# Inputs:
@@ -6042,18 +6038,22 @@ DisplayAsBacksReportItemLine()
 			/bin/touch "$r_report_flags_path"/backup-file-old
 	esac
 
-	# column 1: backup filename
-	printf "%-$((r_report_file_name_column_width+$(LenANSIDiff "$file_name_msg")))s" "$file_name_msg"
+	if OsIsSupportAutowidthTableColumns; then
+		echo "$file_name_msg|$file_bytes_msg|$epoch_time_msg"
+	else
+		# column 1: backup filename
+		printf "%-$((r_report_file_name_column_width+$(LenANSIDiff "$file_name_msg")))s" "$file_name_msg"
 
-	# column 2: filesize in bytes
-	printf "%$((r_report_column_spacing))s"
-	printf "%$((r_report_file_bytes_column_width+$(LenANSIDiff "$file_bytes_msg")))s" "$file_bytes_msg "	# append 1 x whitespace char to force right-justified numbers to the left a bit. Looks nicer.
+		# column 2: filesize in bytes
+		printf "%$((r_report_column_spacing))s"
+		printf "%$((r_report_file_bytes_column_width+$(LenANSIDiff "$file_bytes_msg")))s" "$file_bytes_msg "	# append 1 x whitespace char to force right-justified numbers to the left a bit. Looks nicer.
 
-	# column 3: last backup date
-	printf "%$((r_report_column_spacing))s"
-	printf "%-$((r_report_file_change_date_column_width+$(LenANSIDiff "$epoch_time_msg")))s" "$epoch_time_msg"
+		# column 3: last backup date
+		printf "%$((r_report_column_spacing))s"
+		printf "%-$((r_report_file_change_date_column_width+$(LenANSIDiff "$epoch_time_msg")))s" "$epoch_time_msg"
 
-	printf '\n'
+		printf '\n'
+	fi
 
 	}
 
@@ -7742,41 +7742,67 @@ ShowReportBackups()
 
 	FuncInit
 
+	local a=''
 	local epoch_time=0		# Allow float as seconds have a fractional component.
 	local -i file_bytes=0
 	local file_date=''
 	local file_name=''
 	local file_time=''
+	local -i m=0
+	local -i n=0
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport backups
 	ResetReportsPath &> /dev/null
 
-		{
+	if OsIsSupportAutowidthTableColumns; then
+		printf -v a '%s\n' 'Backup file:|Size in bytes:|Backup date:'
+	else
+		printf -v a '%s\n' "$(GenerateBacksReportTitleLine)"
+	fi
 
-		DisplayAsBacksReportTitleLine
+	if [[ -e $GNU_FIND_CMD ]]; then				# Prefer GNU `find` for this.
+		while read -r epoch_time file_name file_bytes; do
+			[[ -z $epoch_time || -z $file_name ]] && break
 
-		if [[ -e $GNU_FIND_CMD ]]; then				# Prefer GNU `find` for this.
-			while read -r epoch_time file_name file_bytes; do
-				[[ -z $epoch_time || -z $file_name ]] && break
-				DisplayAsBacksReportItemLine "$epoch_time" "$file_name" "$file_bytes" "$r_report_highlight_backups_older_than"
-			done <<< "$($GNU_FIND_CMD "$r_qpkg_bu_path"/*.config.tar.gz -maxdepth 1 -printf '%C@ %f %s\n' 2> /dev/null | $SORT_CMD)"
-		else										# If GNU `find` isn't available, do-it the hard-way.
-			while read -r file_date file_time file_name file_bytes; do
-				[[ -z $file_date || -z $file_name ]] && break
-				epoch_time=$(/bin/date -d "$file_date $file_time" +"%s")
-				file_name=$($BASENAME_CMD "$file_name")
-				DisplayAsBacksReportItemLine "$epoch_time" "$file_name" "$file_bytes" "$r_report_highlight_backups_older_than"
-			done <<< "$(cd "$r_qpkg_bu_path" && ls -l1tr --time-style=+"%Y-%m-%d %H:%M:%S" ./*.config.tar.gz 2> /dev/null | $AWK_CMD '{print $6" "$7" "$8" "$5}')"
-		fi
+			((n++))
+			GenerateBacksReportItemLine "$epoch_time" "$file_name" "$file_bytes" "$r_report_highlight_backups_older_than" > "$r_reports_path/$n" &
+		done <<< "$($GNU_FIND_CMD "$r_qpkg_bu_path"/*.config.tar.gz -maxdepth 1 -printf '%C@ %f %s\n' 2> /dev/null | $SORT_CMD)"
+	else										# If GNU `find` isn't available, do-it the hard-way.
+		while read -r file_date file_time file_name file_bytes; do
+			[[ -z $file_date || -z $file_name ]] && break
+			epoch_time=$(/bin/date -d "$file_date $file_time" +"%s")
+			file_name=$($BASENAME_CMD "$file_name")
 
-		GenerateReportFooter
+			((n++))
+			GenerateBacksReportItemLine "$epoch_time" "$file_name" "$file_bytes" "$r_report_highlight_backups_older_than" > "$r_reports_path/$n" &
+		done <<< "$(cd "$r_qpkg_bu_path" && ls -l1tr --time-style=+"%Y-%m-%d %H:%M:%S" ./*.config.tar.gz 2> /dev/null | $AWK_CMD '{print $6" "$7" "$8" "$5}')"
+	fi
 
-		} > "$r_report_output_pathfile"
+	m=$n
+	wait 2> /dev/null
+
+	# Load report lines from individual files.
+
+	for ((n=1; n<=m; n++)); do
+		f="$r_reports_path/$n"
+		[[ -e $f ]] && printf -v a '%s\n' "$a$(<$f)"		# Add newline to each imported report line.
+	done
+
+	if [[ -n $a ]]; then
+		if OsIsSupportAutowidthTableColumns; then
+			printf '%s' "$a" | Tableise
+		else
+			printf '%s' "$a"
+		fi > "$r_report_output_pathfile"
+
+		GenerateReportFooter >> "$r_report_output_pathfile"
+	fi
 
 	EraseThisLine
 
 	if [[ -e $r_report_output_pathfile ]]; then
+		echo
 		DisplayFileInViewport "$r_report_output_pathfile"
 	else
 		ShowAsError 'no information to display'
