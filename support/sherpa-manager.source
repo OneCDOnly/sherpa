@@ -244,7 +244,7 @@ LoadConsts()
 	readonly r_report_qpkg_supports_start_to_update_column_width=11
 	readonly r_report_qpkg_tier_column_width=8
 	readonly r_report_qpkg_version_column_width=15
-	readonly r_report_lazy_column_width=28				# Use this when can't be bothered calculating required fixed column width.
+	readonly r_report_lazy_column_width=28				# Use this when I can't be bothered calculating an optimum fixed column width.
 
 	# Report, help and debug formatting.
 
@@ -260,8 +260,9 @@ LoadConsts()
 	readonly r_report_file_change_date_column_width=60
 	readonly r_report_file_name_column_width=$((r_report_qpkg_name_column_width+14))
 	readonly r_report_footer_name_column_width=14
+	readonly r_report_highlight_backups_older_than='2 weeks ago'
 
-	# For reports and onscreen messages.
+	# Report, help and onscreen messages.
 
 	readonly r_chars_alert='! '
 	readonly r_chars_attention='* '
@@ -289,6 +290,14 @@ LoadConsts()
 		readonly r_help_syntax_sudo_prefix=$r_chars_super_prompt
 	fi
 
+	if [[ -t 0 ]]; then			# Only enable ANSI colour codes if running in a user terminal.
+		readonly r_colourful_default=true
+	else
+		readonly r_colourful_default=false
+	fi
+
+	# Various.
+
 	readonly r_file_change_threshold_minutes=60
 	readonly r_log_tail_lines=5000
 
@@ -297,27 +306,20 @@ LoadConsts()
 LoadVars()
 	{
 
-	# Default flags and values.
+	# Default flags.
 
-	action_msg_pipe_fd=none
 	archive_debug_afterward=false
-	backup_stdin_fd=none
-	branch_default=stable
-	fork_pid=''
 	generate_action_results_report=false
 	generate_help_report=false
 	generate_list_report=false
 	generate_show_report=false
 	get_qpkg_active_status=false
 	get_qpkg_states=false
-	highlight_backups_older_than='2 weeks ago'
 	ipks_downgrade=false
 	ipks_install=false
 	ipks_upgrade=false
 	pips_install=false
-	proc_counts_path=''
 	qpkg_timeouts_increased=false
-	report_footer_default=true
 	run_package_actions=false
 	show_action_results_failed=false
 	show_action_results_ok=false
@@ -330,24 +332,20 @@ LoadVars()
 	switch_colour=false
 	switch_report_footer=false
 	switch_terse=false
-	terse_default=true
 	title_shown=false
+
+	# Default values.
+
+	action_msg_pipe_fd=none
+	backup_stdin_fd=none
+	proc_counts_path=''
 	user_branch_value=''
 	user_colourful_value=''
 	user_report_footer_value=''
 	user_terse_value=''
 
-	# User-selectable options.
+	# User-selectable flags.
 
-	if [[ -t 0 ]]; then			# Only enable ANSI colour codes if running in a user terminal.
-		colourful_default=true
-		useropt_colourful=$(LoadSetting Colourful "$colourful_default")
-	else
-		colourful_default=false
-		useropt_colourful=false
-	fi
-
-	useropt_branch=$(LoadSetting Git_Branch "$branch_default")
 	useropt_check=false
 	useropt_debug=false
 	useropt_help_abbreviations=false
@@ -364,7 +362,7 @@ LoadVars()
 	useropt_help_upgrades=false
 	useropt_paste_log_last=false
 	useropt_paste_log_tail=false
-	useropt_report_footer=$(LoadSetting ReportFooter "$report_footer_default")
+	useropt_report_footer=$(LoadSetting ReportFooter true)
 	useropt_show_backups=false
 	useropt_show_dependencies=false
 	useropt_show_features=false
@@ -375,8 +373,18 @@ LoadVars()
 	useropt_show_all_results=false
 	useropt_show_status=false
 	useropt_show_versions=false
-	useropt_terse=$(LoadSetting Terse "$terse_default")
+	useropt_terse=$(LoadSetting Terse true)
 	useropt_verbose=false
+
+	if [[ -t 0 ]]; then			# Only enable ANSI colour codes if running in a user terminal.
+		useropt_colourful=$(LoadSetting Colourful "$r_colourful_default")
+	else
+		useropt_colourful=false
+	fi
+
+	# User-selectable values.
+
+	useropt_branch=$(LoadSetting Git_Branch stable)
 
 	}
 
@@ -400,7 +408,7 @@ LoadCMDs()
 	readonly PYTHON3_CMD=/opt/bin/python3
 		readonly PIP_CMD="$PYTHON3_CMD -m pip"
 
-	# Cherry-pick QTS binaries.
+	# Cherry-pick QTS/QuTS binaries.
 
 	readonly AWK_CMD=/bin/awk
 	readonly BASENAME_CMD=/usr/bin/basename
@@ -459,6 +467,7 @@ CMDsIsOk()
 	# Don't check for `/bin/sed` as it's already been called before arriving here.
 	IsSysFileExist $SH_CMD || return
 	# Don't check for `/bin/sleep` as it's already been called before arriving here.
+	[[ ! -e $SORT_CMD ]] && ln -s /bin/busybox "$SORT_CMD"		# KLUDGE: `/usr/bin/sort` randomly disappears from QTS.
 	IsSysFileExist $TAIL_CMD || return
 	IsSysFileExist $TAR_CMD || return
 	IsSysFileExist $TEE_CMD || return
@@ -467,8 +476,6 @@ CMDsIsOk()
 	IsSysFileExist $UNZIP_CMD || return
 	IsSysFileExist $UPTIME_CMD || return
 	# Don't check for `/usr/bin/wc` as it's already been called before arriving here.
-
-	[[ ! -e $SORT_CMD ]] && ln -s /bin/busybox "$SORT_CMD"		# KLUDGE: `/usr/bin/sort` randomly disappears from QTS.
 
 	LocateSQLiteBinary
 
@@ -484,8 +491,8 @@ LocateSQLiteBinary()
 	#   $sqlite_pathfile
 
 	local a=''
-	sqlite_pathfile=''
 	sqlite_cmd=''
+	sqlite_pathfile=''
 
 	# Prefer Entware-installed `sqlite3`.
 
@@ -568,7 +575,7 @@ LoadEnv()
 	readonly r_cert_db_pathfile=/etc/config/nas_sign_qpkg.db
 	readonly r_cpu_cores=$(HardwareGetCPUCores)
 		readonly r_concurrency=$r_cpu_cores			# Maximum concurrent package actions to run. Should probably make this account for CPU speed too.
-	readonly r_entware_version=$(QpkgGetEntwareType)
+	readonly r_entware_type=$(QpkgGetEntwareType)
 	readonly r_kernel_page_size=$(OsGetKernelPageSize)
 	readonly r_nas_arch=$(OsGetArch)
 	readonly r_nas_firmware_build=$(OsGetFirmwareBuild)
@@ -577,7 +584,7 @@ LoadEnv()
 	readonly r_nas_platform=$(HardwareGetPlatform)
 	readonly r_nas_qpkg_arch=$(QpkgGetArch)
 	readonly r_nas_ram_kb=$(HardwareGetInstalledRAM)
-	readonly r_nas_upstate=$(OsGetUpState)
+	readonly r_os_upstate=$(OsGetUpState)
 	readonly r_this_package_ver=$(QpkgGetInstalledVer)
 
 	OsIsSupportSecureDownload || CURL_CMD+=' --insecure'
@@ -665,7 +672,39 @@ LoadEnv()
 LoadLists()
 	{
 
+	# Inputs: (global)
+	#	$lists_loaded
+
+	# Outputs: (global)
+	#	$lists_loaded
+	#	$r_ipk_actions[]
+	#	$r_package_tiers[]
+	#	$r_pip_actions[]
+	#	$r_qpkg_actions[]
+	#	$r_qpkg_is_groups[]
+	#	$r_qpkg_is_states[]
+	#	$r_qpkg_isnt_groups[]
+	#	$r_qpkg_isnt_states[]
+	#	$r_qpkg_service_results[]
+	#	$r_qpkg_states_transient[]
+	#	$r_user_qpkg_actions[]
+	#	$r_"$(Lowercase "$action")"_log_file
+
 	[[ ${lists_loaded:=false} = false ]] || return 0
+
+	# First, clear existing list arrays (if-any).
+
+	unset r_ipk_actions
+	unset r_package_tiers
+	unset r_pip_actions
+	unset r_qpkg_actions
+	unset r_qpkg_is_groups
+	unset r_qpkg_is_states
+	unset r_qpkg_isnt_groups
+	unset r_qpkg_isnt_states
+	unset r_qpkg_service_results
+	unset r_qpkg_states_transient
+	unset r_user_qpkg_actions
 
 	# These are used internally by sherpa.
 	# ordered
@@ -785,12 +824,12 @@ DebugLogEnv()
 
 	DebugFirmware ok platform "$r_nas_platform"
 
-	case $r_nas_upstate in
+	case $r_os_upstate in
 		starting-up|shutting-down)
-			DebugFirmware warning 'OS state' "$r_nas_upstate"
+			DebugFirmware warning 'OS state' "$r_os_upstate"
 			;;
 		*)
-			DebugFirmware ok 'OS state' "$r_nas_upstate"
+			DebugFirmware ok 'OS state' "$r_os_upstate"
 	esac
 
 	DebugFirmware ok 'OS uptime' "$(OsGetUptime)"
@@ -856,7 +895,7 @@ DebugLogEnv()
 	fi
 
 	DebugQpkg detect architecture "$r_nas_qpkg_arch"
-	DebugQpkg detect "$(ShowAsPackageName Entware) type" "$r_entware_version"
+	DebugQpkg detect "$(ShowAsPackageName Entware) type" "$r_entware_type"
 	DebugQpkg detect "$(ShowAsPackageName Entware) install date" "$(QpkgGetInstalledDate Entware)"
 
 	if QpkgIsInstalled SortMyQPKGs; then
@@ -896,7 +935,7 @@ DebugLogEnv()
 CheckTasks()
 	{
 
-	# Establish whether there's something to-do.
+	# Establish whether there's anything to-do.
 
 	if [[ $arg_problem = true || $useropt_help_basic = true ]]; then
 		generate_action_results_report=false
@@ -982,7 +1021,7 @@ CheckEnv()
 
 	ShowAsProc 'check env'
 
-	local installed_ver=''
+	local installed_version=''
 	local target_packages=''
 
 	if [[ $($GREP_CMD -i 'out of memory\|oom-killer' /mnt/HDA_ROOT/.logs/kmsg | $WC_CMD -l) -gt 0 ]]; then
@@ -990,7 +1029,7 @@ CheckEnv()
 	fi
 
 	if QpkgIsInstalled Entware; then
-		if [[ $r_entware_version != none ]]; then
+		if [[ $r_entware_type != none ]]; then
 			_UpdateEntwarePackageList_ &			# Let's try launching this early.
 		else
 			DebugAsWarn "$(ShowAsPackageName Entware) appears to be installed but is inactive. Please consider starting the $(ShowAsPackageName Entware) QPKG."
@@ -1328,16 +1367,16 @@ ProcActions()
 
 	ShowAsProc 'package actions'
 
-	local tier=''
 	local action=''
 	local state=''
+	local tier=''
 	local -i tier_index=0
 
 	rm -f "$r_session_action_results_pathfile" 2> /dev/null
 
 	# -> Package preparation phase <-
 
-	ProcAction status all QPKG '"live" status' '"live" statused'
+	ProcAction status all QPKG '"live" status'
 
 	if [[ $useropt_show_status = false ]]; then
 		ShowAsProc 'assign QPKGs by state'				# Update action lists based-on QPKG `status`.
@@ -1353,25 +1392,25 @@ ProcActions()
 		done
 	fi
 
-	ProcAction rebuild all QPKG meta-rebuild meta-rebuilt
-	ProcAction reassign all QPKG reassign reassigned
-	ProcAction download all QPKG download downloaded
+	ProcAction rebuild all QPKG meta-rebuild
+	ProcAction reassign all QPKG reassign
+	ProcAction download all QPKG download
 
-	# If download of any QPKG failed, don't execute further actions.
+	# If any QPKG download failed, don't attempt further actions.
 
 	if QPKGs-ACdownload-er.IsNone && QPKGs-ACdownload-se.IsNone && QPKGs-ACdownload-sa.IsNone; then
 		# -> Package removal phase <-
 
-		for ((tier_index=${#r_package_tiers[@]}-1; tier_index>=0; tier_index--)); do		# Process tiers in-reverse
+		for ((tier_index=${#r_package_tiers[@]}-1; tier_index>=0; tier_index--)); do		# Process tiers in-reverse.
 			tier=${r_package_tiers[$tier_index]}
 
 			case $tier in
 				?(in)dependent)
-					ProcAction deactivate $tier QPKG deactivate deactivated
-					ProcAction disableau $tier QPKG 'disable auto-update' 'disabled auto-update'
-					ProcAction backup $tier QPKG backup backed-up
-					ProcAction disable $tier QPKG disable disabled
-					ProcAction uninstall $tier QPKG uninstall uninstalled
+					ProcAction deactivate $tier QPKG deactivate
+					ProcAction disableau $tier QPKG 'disable auto-update'
+					ProcAction backup $tier QPKG backup
+					ProcAction disable $tier QPKG disable
+					ProcAction uninstall $tier QPKG uninstall
 					;;
 				auxiliary)
 					if QPKGs-ISenabled.Exist Entware; then
@@ -1387,16 +1426,16 @@ ProcActions()
 		for tier in "${r_package_tiers[@]}"; do
 			case $tier in
 				?(in)dependent)
-					ProcAction upgrade $tier QPKG upgrade upgraded
-					ProcAction reinstall $tier QPKG reinstall reinstalled
-					ProcAction install $tier QPKG install installed
-					ProcAction restore $tier QPKG restore restored
-					ProcAction enableau $tier QPKG 'enable auto-update' 'enabled auto-update'
-					ProcAction clean $tier QPKG clean cleaned
-					[[ $tier = dependent ]] && ProcAction sign dependent QPKG '"sign"' '"signed"'
-					ProcAction enable $tier QPKG enable enabled
-					ProcAction reactivate $tier QPKG reactivate reactivated
-					ProcAction activate $tier QPKG activate activated
+					ProcAction upgrade $tier QPKG upgrade
+					ProcAction reinstall $tier QPKG reinstall
+					ProcAction install $tier QPKG install
+					ProcAction restore $tier QPKG restore
+					ProcAction enableau $tier QPKG 'enable auto-update'
+					ProcAction clean $tier QPKG clean
+					[[ $tier = dependent ]] && ProcAction sign $tier QPKG '"sign"'
+					ProcAction enable $tier QPKG enable
+					ProcAction reactivate $tier QPKG reactivate
+					ProcAction activate $tier QPKG activate
 					;;
 				auxiliary)
 					for action in status install reinstall upgrade activate; do
@@ -1420,7 +1459,7 @@ ProcActions()
 
 					QPKGs-ACinstall-ok.Exist Entware && [[ $sqlite_pathfile = /opt/bin/sqlite3 && -e $sqlite_pathfile ]] && OsIsSupportSignedPackages && QPKGs-ACsign-to:Add "$(QPKGs-ISinstalled:Array)"
 
-					ProcAction sign independent QPKG '"sign"' '"signed"'
+					ProcAction sign independent QPKG '"sign"'
 			esac
 		done
 	fi
@@ -1452,30 +1491,29 @@ ProcAction()
 	#   $1 = an action to run 			e.g. `activate`, `reactivate` ...
 	#   $2 = target tier 				e.g. `independent`, `dependent`, `auxiliary`, `all`
 	#   $3 = package type to process 	e.g. `QPKG`, `IPK`, `PIP`
-	#   $4 = present action verb 		e.g. `activating` ...
-	#   $5 = past action verb 			e.g. `activated` ...
+	#   $4 = action intransitive verb	e.g. `activate`
 
 	# Inputs: (global)
 	#	$r_action_abort_pathfile
 	#	$r_async_procs_path
 	#   $fail_count
-	#   $ok_count
-	#   $skip_abort_count
-	#   $skip_count
-	#   $skip_error_count
-	#   $skip_ok_count
-	#   $useropt_colourful
-	#	$useropt_terse
-
-	# Outputs: (global)
-	#   $fail_count
-	#	$fork_progress_prefix
 	#	$ipks_downgrade
 	#	$ipks_install
 	#	$ipks_upgrade
 	#   $ok_count
-	#   $pidfile
 	#	$pips_install
+	#   $skip_abort_count
+	#   $skip_count
+	#   $skip_error_count
+	#   $skip_ok_count
+	#	$useropt_terse
+	#	$useropt_verbose
+
+	# Outputs: (global)
+	#   $fail_count
+	#	$fork_progress_prefix
+	#   $ok_count
+	#   $pidfile
 	#   $show_action_results_failed
 	#   $show_action_results_ok
 	#   $show_action_results_skipped
@@ -1490,19 +1528,18 @@ ProcAction()
 	FuncInit
 
 	local -r r_action=${1:?${FUNCNAME[0]}'()': undefined action}
-	local -r r_action_past_msg=${5:?${FUNCNAME[0]}'()': undefined action past}
-	local -r r_action_present_msg=${4:?${FUNCNAME[0]}'()': undefined action present}
+	local -r r_action_intransitive_msg=${4:?${FUNCNAME[0]}'()': undefined action message}
 	local group=''
 	local msg1_key=''
 	local msg1_value=''
 	local msg2_key=''
 	local msg2_value=''
-	local original_colourful=$useropt_colourful
 	local package=''
 	local -i package_index=0
 	local -r r_package_type=${3:?${FUNCNAME[0]}'()': undefined package type}
 	local re=''
 	local state=''
+	local target_object_name=''
 	local -a target_packages=()
 	local -r r_tier=${2:?${FUNCNAME[0]}'()': undefined tier}
 	total_count=0
@@ -1533,9 +1570,9 @@ ProcAction()
 			fi
 
 			if [[ $total_count -eq 1 ]]; then
-				fork_progress_prefix="$r_action_present_msg $(TextBrightOrange "${target_packages[0]}") $r_package_type"
+				fork_progress_prefix="$r_action_intransitive_msg $(TextBrightOrange "${target_packages[0]}") $r_package_type"
 			else
-				fork_progress_prefix="$r_action_present_msg $([[ $r_tier != all ]] && echo "$r_tier ")$(Uppercase "$r_package_type")$(Pluralise "$total_count")"
+				fork_progress_prefix="$r_action_intransitive_msg $([[ $r_tier != all ]] && echo "$r_tier ")$(Uppercase "$r_package_type")$(Pluralise "$total_count")"
 			fi
 
 			SetMaxForks "$r_action"
@@ -1545,7 +1582,7 @@ ProcAction()
 			re=\\bEntware\\b		# Bash 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
 
 			if [[ $r_action = uninstall && ${target_packages[*]} =~ $re ]]; then
-				ShowKeystrokes		# Enable this before removing Entware & GNU `stty`.
+				ShowKeystrokes		# Enable this before removing Entware (& GNU `stty`).
 			fi
 
 			pidfile=$($MKTEMP_CMD "$r_async_procs_path"/bgproc_XXXXXX)		# Set $pidfile here, before launching async process so it's inherited by that process.
@@ -1612,20 +1649,20 @@ ProcAction()
 							ok)		# Completed OK (wonderful!)
 								[[ $r_action != status ]] && ((ok_count++))		# No-need to count result of `status` checks.
 								;;
-							so)		# Action was skipped, but this is normal (no-big-deal)
+							so)		# Action was skipped, but this is normal (no-big-deal).
 								((skip_ok_count++))
 								;;
-							sk)		# Action was skipped (and there's a good reason for it)
+							sk)		# Action was skipped (and there's a good reason for it).
 								((skip_count++))
 								;;
-							se)		# Action was skipped due to error prior to action being attempted (might be a big-deal)
+							se)		# Action was skipped due to error prior to action being attempted (might be a big-deal).
 								((skip_error_count++))
 								;;
-							sa)		# Action was skipped and must immediately abort (don't attempt this action again)
+							sa)		# Action was skipped and must immediately abort (don't attempt this action again).
 								((skip_abort_count++))
 								/bin/touch "$r_action_abort_pathfile"
 								;;
-							er)		# Action failed (uh-oh)
+							er)		# Action failed (uh-oh).
 								((fail_count++))
 						esac
 
@@ -1679,7 +1716,7 @@ ProcAction()
 		IPK|PIP)
 			if [[ $ipks_downgrade = true || $ipks_install = true || $ipks_upgrade = true || $pips_install = true ]]; then
 				InitForkCounts
-				${r_package_type}s:${r_action}	# Only process these packages in groups, not individually.
+				${r_package_type}s:${r_action}		# Only process these packages in groups, not individually.
 			fi
 	esac
 
@@ -1700,17 +1737,21 @@ OpenActionMsgPipe()
 	[[ ! -p $r_action_msg_pipe ]] && mknod "$r_action_msg_pipe" p
 
 	# Create a file descriptor to store original stdin FD.
+
 	backup_stdin_fd=$(FindNextFD)
 	DebugVar backup_stdin_fd
 
 	# Backup original stdin file descriptor so it can be restored later.
+
 	eval "exec $backup_stdin_fd>&0"
 
 	# Create another file descriptor to use in message pipe.
+
 	action_msg_pipe_fd=$(FindNextFD)
 	DebugVar action_msg_pipe_fd
 
 	# Open a 2-way channel to message pipe.
+
 	[[ $action_msg_pipe_fd != none ]] && eval "exec $action_msg_pipe_fd<>$r_action_msg_pipe"
 
 	}
@@ -1722,16 +1763,20 @@ CloseActionMsgPipe()
 
 	if [[ -n ${backup_stdin_fd:-} ]]; then
 		# Restore stdin FD.
+
 		[[ $backup_stdin_fd != none ]] && eval "exec 0>&$backup_stdin_fd"
 
 		# Release backup of stdin FD.
+
 		[[ $backup_stdin_fd != none ]] && eval "exec $backup_stdin_fd>&-"
 	fi
 
 	# Release message pipe FD.
+
 	[[ -n ${action_msg_pipe_fd:-} && $action_msg_pipe_fd != none ]] && eval "exec $action_msg_pipe_fd>&-"
 
 	# Delete message pipe.
+
 	[[ -n ${r_action_msg_pipe:-} && -p $r_action_msg_pipe ]] && rm -f "$r_action_msg_pipe" 2> /dev/null
 
 	}
@@ -1799,7 +1844,7 @@ PrepareArgs()
 
 	# Outputs: (global)
 	#   $arg_problem
-	#   $args
+	#   $args[]
 	#   $useropt_help_basic
 
 	ShowAsProc args
@@ -1821,12 +1866,12 @@ ParseManagementArgs()
 	#   scriptname [action] [groups] [options]
 
 	# Inputs: (global)
-	#   $args
-	#   $args_incomplete
+	#   $args[]
+	#   $args_incomplete[]
 
 	# Outputs: (global)
-	#   $args
-	#   $args_incomplete
+	#   $args[]
+	#   $args_incomplete[]
 	#	$generate_show_report
 	#	$get_qpkg_states
 	#	$run_package_actions
@@ -2009,12 +2054,12 @@ ParseHelpArgs()
 	#   scriptname [action] [groups] [options]
 
 	# Inputs: (global)
-	#   $args
-	#   $args_incomplete
+	#   $args[]
+	#   $args_incomplete[]
 
 	# Outputs: (global)
-	#   $args
-	#   $args_incomplete
+	#   $args[]
+	#   $args_incomplete[]
 
 	FuncInit
 
@@ -2205,12 +2250,12 @@ ParseShowArgs()
 	#   scriptname [action] [groups] [options]
 
 	# Inputs: (global)
-	#   $args
-	#   $args_incomplete
+	#   $args[]
+	#   $args_incomplete[]
 
 	# Outputs: (global)
-	#   $args
-	#   $args_incomplete
+	#   $args[]
+	#   $args_incomplete[]
 
 	FuncInit
 
@@ -2383,12 +2428,12 @@ ParseListArgs()
 	#   scriptname [action] [groups] [options]
 
 	# Inputs: (global)
-	#   $args
-	#   $args_incomplete
+	#   $args[]
+	#   $args_incomplete[]
 
 	# Outputs: (global)
-	#   $args
-	#   $args_incomplete
+	#   $args[]
+	#   $args_incomplete[]
 
 	FuncInit
 
@@ -2522,12 +2567,12 @@ ParseActionArgs()
 	{
 
 	# Inputs: (global)
-	#   $args
-	#   $args_incomplete
+	#   $args[]
+	#   $args_incomplete[]
 
 	# Outputs: (global)
-	#   $args
-	#   $args_incomplete
+	#   $args[]
+	#   $args_incomplete[]
 
 	FuncInit
 
@@ -2838,8 +2883,8 @@ ShowArgSuggestions()
 	{
 
 	# Inputs: (global)
-	#   $args
-	#   $args_incomplete
+	#   $args[]
+	#   $args_incomplete[]
 
 	# Outputs: (global)
 	#   $arg_problem
@@ -3018,6 +3063,11 @@ ShowArgSuggestions()
 AllocPackGroupsToAcs()
 	{
 
+	# Inputs: (global)
+	#	$r_qpkg_is_groups[]
+	#	$r_qpkg_isnt_groups[]
+	#	$r_user_qpkg_actions[]
+
 	FuncInit
 
 	ShowAsProc 'match QPKG groups to actions'
@@ -3063,6 +3113,11 @@ AllocPackGroupsToAcs()
 
 AllocPackStatesToAcs()
 	{
+
+	# Inputs: (global)
+	#	$r_qpkg_is_states[]
+	#	$r_qpkg_isnt_states[]
+	#	$r_user_qpkg_actions[]
 
 	FuncInit
 
@@ -3127,6 +3182,11 @@ AllocPackStatesToAcs()
 ResetArchivedLogs()
 	{
 
+	# Inputs: (global)
+	#	$r_logs_path
+	#	$r_this_package_path
+	#	$sess_active_pathfile
+
 	if [[ -n $r_logs_path && -d $r_logs_path ]]; then
 		ClearPath "$r_this_package_path" "$r_logs_path"
 		echo 'log reset' > "$sess_active_pathfile"
@@ -3140,6 +3200,10 @@ ResetArchivedLogs()
 ResetCachePath()
 	{
 
+	# Inputs: (global)
+	#	$r_cache_path
+	#	$r_this_package_path
+
 	if [[ -n $r_cache_path && -d $r_cache_path ]]; then
 		ClearPath "$r_this_package_path" "$r_cache_path"
 		ShowAsDone 'package cache cleared'
@@ -3151,6 +3215,9 @@ ResetCachePath()
 
 ResetReportsPath()
 	{
+
+	# Inputs: (global)
+	#	$r_reports_path
 
 	if [[ -n $r_reports_path && -d $r_reports_path ]]; then
 		ClearPath /var/log/sherpa "$r_reports_path"
@@ -3281,6 +3348,10 @@ IsThisFileRecent()
 SaveIpkAndPipList()
 	{
 
+	# Inputs: (global)
+	#	$r_prev_ipk_list_pathfile
+	#	$r_prev_pip_list_pathfile
+
 	$PIP_CMD freeze | cut -d'=' -f1 > "$r_prev_pip_list_pathfile"
 	[[ -e $r_prev_pip_list_pathfile ]] && DebugAsDone "saved current PIP list to $(ShowAsFileName "$r_prev_pip_list_pathfile")"
 
@@ -3291,6 +3362,9 @@ SaveIpkAndPipList()
 
 LoadIpkList()
 	{
+
+	# Inputs: (global)
+	#	$r_prev_ipk_list_pathfile
 
 	local name=''
 	local separator=''
@@ -3310,6 +3384,9 @@ LoadIpkList()
 
 LoadPipList()
 	{
+
+	# Inputs: (global)
+	#	$r_prev_pip_list_pathfile
 
 	local name=''
 	local re=''
@@ -3331,6 +3408,16 @@ CalcIpkDepsToInstall()
 	{
 
 	# From a specified list of IPK names, find all dependent IPKs, exclude those already installed, then generate a list to download.
+
+	# Inputs: (global)
+	#	$r_external_packages_pathfile
+	#	$useropt_terse
+	#	$useropt_verbose
+
+	# Outputs: (global)
+	#	$show_suggest_raise_issue
+	#	$useropt_terse
+	#	$useropt_verbose
 
 	IsSysFileExist $GNU_GREP_CMD || return
 
@@ -3404,8 +3491,8 @@ CalcIpkDepsToInstall()
 
 		for element in $pre_exclude_list; do
 			# KLUDGE: silently exclude these packages from being installed:
-			#   KLUDGE: `ca-certs` appears to be a bogus meta-package.
-			#   KLUDGE: `python3-gdbm` is not available, but can be requested as per https://forum.qnap.com/viewtopic.php?p=806031#p806031 (don't know why).
+			#   `ca-certs` appears to be a bogus meta-package.
+			#   `python3-gdbm` is not available, but can be requested as per https://forum.qnap.com/viewtopic.php?p=806031#p806031 (don't know why).
 
 			if [[ $element != 'ca-certs' && $element != 'python3-gdbm' ]]; then
 				# KLUDGE: `libjpeg` appears to have been replaced by `libjpeg-turbo`, but many packages still have `libjpeg` as a dependency, so replace it with `libjpeg-turbo`.
@@ -3431,6 +3518,9 @@ CalcIpkDownloadSize()
 	{
 
 	# Calculate size of required IPKs.
+
+	# Inputs: (global)
+	#	$r_external_packages_pathfile
 
 	FuncInit
 
@@ -3460,6 +3550,19 @@ IPKs:upgrade()
 
 	# Upgrade all installed IPKs.
 
+	# Inputs: (global)
+	#	$r_ipk_cache_path
+	#	$r_ipk_download_path
+	#	$ipks_upgrade
+	#	$r_logs_path
+	#	$r_upgrade_log_file
+	#	$useropt_terse
+	#	$useropt_verbose
+
+	# Outputs: (global)
+	#	$useropt_terse
+	#	$useropt_verbose
+
 	[[ $ipks_upgrade = true ]] || return
 	QPKGs-ISenabled.Exist Entware || return
 	ErrorIsNt || return
@@ -3467,7 +3570,7 @@ IPKs:upgrade()
 	FuncInit
 
 	local desc=''
-	local log_pathfile=$r_logs_path/ipks.$r_upgrade_log_file
+	local fork_pid=''
 	local -i total_count=0
 	local -i z=0
 
@@ -3493,7 +3596,7 @@ IPKs:upgrade()
 		_DirSizeMonitor_ "$r_ipk_download_path" "$(IPKs-ACdownload-to:Size)" &
 		fork_pid=$!
 
-		RunAndLog "$OPKG_CMD upgrade --force-overwrite $(IPKs-ACdownload-to:List) --cache $r_ipk_cache_path --tmp-dir $r_ipk_download_path" "$log_pathfile" log:failure-only
+		RunAndLog "$OPKG_CMD upgrade --force-overwrite $(IPKs-ACdownload-to:List) --cache $r_ipk_cache_path --tmp-dir $r_ipk_download_path" "$r_logs_path/ipks.$r_upgrade_log_file" log:failure-only
 		z=$?
 
 		KillPID "$fork_pid"
@@ -3519,6 +3622,22 @@ IPKs:install()
 
 	# Install IPKs required to support QPKGs.
 
+	# Inputs: (global)
+	#	$r_essential_ipks
+	#	$r_install_log_file
+	#	$r_ipk_cache_path
+	#	$r_ipk_download_path
+	#	$r_logs_path
+	#	$r_prev_ipk_list_pathfile
+	#	$r_qpkg_name[]
+	#	$useropt_check
+	#	$useropt_terse
+	#	$useropt_verbose
+
+	# Outputs: (global)
+	#	$useropt_terse
+	#	$useropt_verbose
+
 	[[ $ipks_install = true ]] || return
 	QPKGs-ISenabled.Exist Entware || return
 	ErrorIsNt || return
@@ -3526,8 +3645,8 @@ IPKs:install()
 	FuncInit
 
 	local desc=''
+	local fork_pid=''
 	local -i i=0
-	local log_pathfile=$r_logs_path/ipks.$r_install_log_file
 	local previous=''
 	local -i total_count=0
 	local -i z=0
@@ -3573,7 +3692,7 @@ IPKs:install()
 		_DirSizeMonitor_ "$r_ipk_download_path" "$(IPKs-ACdownload-to:Size)" &
 		fork_pid=$!
 
-		RunAndLog "$OPKG_CMD install --force-overwrite $(IPKs-ACdownload-to:List) --cache $r_ipk_cache_path --tmp-dir $r_ipk_download_path" "$log_pathfile" log:failure-only
+		RunAndLog "$OPKG_CMD install --force-overwrite $(IPKs-ACdownload-to:List) --cache $r_ipk_cache_path --tmp-dir $r_ipk_download_path" "$r_logs_path/ipks.$r_install_log_file" log:failure-only
 		z=$?
 
 		KillPID "$fork_pid"
@@ -5859,32 +5978,28 @@ GenerateFeaturesReportDataLine()
 
 	}
 
-DisplayAsBacksReportTitleLine()
+GenerateBacksReportTitleLine()
 	{
 
 	local a=''
 
-	printf '\n'
-
 	# column 1: backup filename
-	a="${r_chars_bullet}Backup file:"
+	a='Backup file:'
 	printf "%-$((r_report_file_name_column_width+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 2: filesize in bytes
-	printf "%$((r_report_column_spacing))s"
-	a="${r_chars_bullet}Size in bytes:"
+	a='Size in bytes:'
 	printf "%-$((r_report_file_bytes_column_width+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 3: last backup date
-	printf "%$((r_report_column_spacing))s"
-	a="${r_chars_bullet}Backup date:"
+	a='Backup date:'
 	printf "%-$((r_report_file_change_date_column_width+2+$(LenANSIDiff "$a")))s" "$a"
 
 	printf '\n'
 
 	}
 
-DisplayAsBacksReportItemLine()
+GenerateBacksReportItemLine()
 	{
 
 	# Inputs:
@@ -5899,10 +6014,9 @@ DisplayAsBacksReportItemLine()
 	local file_bytes_msg=$r_chars_blank
 	local file_name=${2:-}
 	local file_name_msg=$r_chars_blank
-	local local_highlight_backups_older_than=${4:-'1 week ago'}
 	local mode=''
 
-	if [[ ${epoch_time%.*} -lt $(/bin/date --date="$local_highlight_backups_older_than" +%s) ]]; then
+	if [[ ${epoch_time%.*} -lt $(/bin/date --date="${4:-'1 week ago'}" +%s) ]]; then
 		mode=highlight
 	else
 		mode=normal
@@ -5924,18 +6038,22 @@ DisplayAsBacksReportItemLine()
 			/bin/touch "$r_report_flags_path"/backup-file-old
 	esac
 
-	# column 1: backup filename
-	printf "%-$((r_report_file_name_column_width+$(LenANSIDiff "$file_name_msg")))s" "$file_name_msg"
+	if OsIsSupportAutowidthTableColumns; then
+		echo "$file_name_msg|$file_bytes_msg|$epoch_time_msg"
+	else
+		# column 1: backup filename
+		printf "%-$((r_report_file_name_column_width+$(LenANSIDiff "$file_name_msg")))s" "$file_name_msg"
 
-	# column 2: filesize in bytes
-	printf "%$((r_report_column_spacing))s"
-	printf "%$((r_report_file_bytes_column_width+$(LenANSIDiff "$file_bytes_msg")))s" "$file_bytes_msg "	# append 1 x whitespace char to force right-justified numbers to the left a bit. Looks nicer.
+		# column 2: filesize in bytes
+		printf "%$((r_report_column_spacing))s"
+		printf "%$((r_report_file_bytes_column_width+$(LenANSIDiff "$file_bytes_msg")))s" "$file_bytes_msg "	# append 1 x whitespace char to force right-justified numbers to the left a bit. Looks nicer.
 
-	# column 3: last backup date
-	printf "%$((r_report_column_spacing))s"
-	printf "%-$((r_report_file_change_date_column_width+$(LenANSIDiff "$epoch_time_msg")))s" "$epoch_time_msg"
+		# column 3: last backup date
+		printf "%$((r_report_column_spacing))s"
+		printf "%-$((r_report_file_change_date_column_width+$(LenANSIDiff "$epoch_time_msg")))s" "$epoch_time_msg"
 
-	printf '\n'
+		printf '\n'
+	fi
 
 	}
 
@@ -7624,41 +7742,67 @@ ShowReportBackups()
 
 	FuncInit
 
+	local a=''
 	local epoch_time=0		# Allow float as seconds have a fractional component.
 	local -i file_bytes=0
 	local file_date=''
 	local file_name=''
 	local file_time=''
+	local -i m=0
+	local -i n=0
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport backups
 	ResetReportsPath &> /dev/null
 
-		{
+	if OsIsSupportAutowidthTableColumns; then
+		printf -v a '%s\n' 'Backup file:|Size in bytes:|Backup date:'
+	else
+		printf -v a '%s\n' "$(GenerateBacksReportTitleLine)"
+	fi
 
-		DisplayAsBacksReportTitleLine
+	if [[ -e $GNU_FIND_CMD ]]; then				# Prefer GNU `find` for this.
+		while read -r epoch_time file_name file_bytes; do
+			[[ -z $epoch_time || -z $file_name ]] && break
 
-		if [[ -e $GNU_FIND_CMD ]]; then				# Prefer GNU `find` for this.
-			while read -r epoch_time file_name file_bytes; do
-				[[ -z $epoch_time || -z $file_name ]] && break
-				DisplayAsBacksReportItemLine "$epoch_time" "$file_name" "$file_bytes" "$highlight_backups_older_than"
-			done <<< "$($GNU_FIND_CMD "$r_qpkg_bu_path"/*.config.tar.gz -maxdepth 1 -printf '%C@ %f %s\n' 2> /dev/null | $SORT_CMD)"
-		else										# If GNU `find` isn't available, do-it the hard-way.
-			while read -r file_date file_time file_name file_bytes; do
-				[[ -z $file_date || -z $file_name ]] && break
-				epoch_time=$(/bin/date -d "$file_date $file_time" +"%s")
-				file_name=$($BASENAME_CMD "$file_name")
-				DisplayAsBacksReportItemLine "$epoch_time" "$file_name" "$file_bytes" "$highlight_backups_older_than"
-			done <<< "$(cd "$r_qpkg_bu_path" && ls -l1tr --time-style=+"%Y-%m-%d %H:%M:%S" ./*.config.tar.gz 2> /dev/null | $AWK_CMD '{print $6" "$7" "$8" "$5}')"
-		fi
+			((n++))
+			GenerateBacksReportItemLine "$epoch_time" "$file_name" "$file_bytes" "$r_report_highlight_backups_older_than" > "$r_reports_path/$n" &
+		done <<< "$($GNU_FIND_CMD "$r_qpkg_bu_path"/*.config.tar.gz -maxdepth 1 -printf '%C@ %f %s\n' 2> /dev/null | $SORT_CMD)"
+	else										# If GNU `find` isn't available, do-it the hard-way.
+		while read -r file_date file_time file_name file_bytes; do
+			[[ -z $file_date || -z $file_name ]] && break
+			epoch_time=$(/bin/date -d "$file_date $file_time" +"%s")
+			file_name=$($BASENAME_CMD "$file_name")
 
-		GenerateReportFooter
+			((n++))
+			GenerateBacksReportItemLine "$epoch_time" "$file_name" "$file_bytes" "$r_report_highlight_backups_older_than" > "$r_reports_path/$n" &
+		done <<< "$(cd "$r_qpkg_bu_path" && ls -l1tr --time-style=+"%Y-%m-%d %H:%M:%S" ./*.config.tar.gz 2> /dev/null | $AWK_CMD '{print $6" "$7" "$8" "$5}')"
+	fi
 
-		} > "$r_report_output_pathfile"
+	m=$n
+	wait 2> /dev/null
+
+	# Load report lines from individual files.
+
+	for ((n=1; n<=m; n++)); do
+		f="$r_reports_path/$n"
+		[[ -e $f ]] && printf -v a '%s\n' "$a$(<$f)"		# Add newline to each imported report line.
+	done
+
+	if [[ -n $a ]]; then
+		if OsIsSupportAutowidthTableColumns; then
+			printf '%s' "$a" | Tableise
+		else
+			printf '%s' "$a"
+		fi > "$r_report_output_pathfile"
+
+		GenerateReportFooter >> "$r_report_output_pathfile"
+	fi
 
 	EraseThisLine
 
 	if [[ -e $r_report_output_pathfile ]]; then
+		echo
 		DisplayFileInViewport "$r_report_output_pathfile"
 	else
 		ShowAsError 'no information to display'
@@ -8182,7 +8326,7 @@ GenerateReportFooter()
 		fi
 
 		if [[ -e "$r_report_flags_path"/backup-file-old ]]; then
-			DisplayAsIndentQuotedInfoItem "$(TextBrightRed '!')" "QPKG backup file was updated more-than $highlight_backups_older_than."
+			DisplayAsIndentQuotedInfoItem "$(TextBrightRed '!')" "QPKG backup file was updated more-than $r_report_highlight_backups_older_than."
 		fi
 
 		if [[ -e "$r_report_flags_path"/status-upgradable ]]; then
@@ -9727,7 +9871,7 @@ _QPKG:install_()
 			SendPackageStateChange ISNTenabled
 		fi
 
-		SaveActionResultToLog QPKG "$qpkg_name" install '' ok "version $(QpkgGetInstalledVer)"
+		SaveActionResultToLog QPKG "$qpkg_name" install '' ok "v$(QpkgGetInstalledVer)"
 
 		if [[ $qpkg_name = Entware ]]; then
 			SendParentChangeEnv ModPathToEntware
@@ -9822,7 +9966,7 @@ _QPKG:reinstall_()
 			SendPackageStateChange ISNTenabled
 		fi
 
-		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' ok "version $(QpkgGetInstalledVer)"
+		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' ok "v$(QpkgGetInstalledVer)"
 		MarkThisAcForkAsOk
 		z=0   # Remap to zero.
 	else
@@ -9965,9 +10109,9 @@ _QPKG:upgrade_()
 		local current_ver=$(QpkgGetInstalledVer)
 
 		if [[ $current_ver = "$prev_ver" ]]; then
-			SaveActionResultToLog QPKG "$qpkg_name" upgrade '' ok "version $current_ver"
+			SaveActionResultToLog QPKG "$qpkg_name" upgrade '' ok "v${current_ver}"
 		else
-			SaveActionResultToLog QPKG "$qpkg_name" upgrade '' ok "version $prev_ver -> version $current_ver"
+			SaveActionResultToLog QPKG "$qpkg_name" upgrade '' ok "v${prev_ver} -> v${current_ver}"
 		fi
 
 		MarkThisAcForkAsOk
@@ -14209,7 +14353,7 @@ UpdateColourisation()
 
 	# If it seems Entware is active, check if possible to return to colourful display.
 
-	if [[ -e /opt/bin/sed && -L /opt/etc/passwd && $(LoadSetting Colourful "$colourful_default") = true ]]; then
+	if [[ -e /opt/bin/sed && -L /opt/etc/passwd && $(LoadSetting Colourful "$r_colourful_default") = true ]]; then
 		useropt_colourful=true
 		SendParentChangeEnv 'useropt_colourful=true'
 	else
@@ -14460,8 +14604,8 @@ LoadPackages()
 
 	DebugVar r_packages_epoch
 
-	for qpkg_name in "${r_qpkg_name[@]}"; do					# Ensure only first entry for each QPKG name is added to "GRall" array.
-		[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
+	for qpkg_name in "${r_qpkg_name[@]}"; do
+		[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name	# Ensure only first mention of each QPKG name is added to "GRall" array.
 		QPKGs-GRall:Add "$qpkg_name"
 	done
 
@@ -14473,6 +14617,10 @@ LoadPackages()
 
 CaughtSIGINT()
 	{
+
+	# Inputs: (global)
+	#	$r_action_abort_pathfile
+	#	$r_display_inhibit_pathfile
 
 	trap - SIGINT
 
