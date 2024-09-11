@@ -244,7 +244,7 @@ LoadConsts()
 	readonly r_report_qpkg_supports_start_to_update_column_width=11
 	readonly r_report_qpkg_tier_column_width=8
 	readonly r_report_qpkg_version_column_width=15
-	readonly r_report_lazy_column_width=28				# Use this when can't be bothered calculating required fixed column width.
+	readonly r_report_lazy_column_width=28				# Use this when I can't be bothered calculating an optimum fixed column width.
 
 	# Report, help and debug formatting.
 
@@ -290,28 +290,25 @@ LoadConsts()
 		readonly r_help_syntax_sudo_prefix=$r_chars_super_prompt
 	fi
 
-	# Various.
-
-	readonly r_file_change_threshold_minutes=60
-	readonly r_log_tail_lines=5000
-
 	if [[ -t 0 ]]; then			# Only enable ANSI colour codes if running in a user terminal.
 		readonly r_colourful_default=true
 	else
 		readonly r_colourful_default=false
 	fi
 
+	# Various.
+
+	readonly r_file_change_threshold_minutes=60
+	readonly r_log_tail_lines=5000
+
 	}
 
 LoadVars()
 	{
 
-	# Default flags and values.
+	# Default flags.
 
-	action_msg_pipe_fd=none
 	archive_debug_afterward=false
-	backup_stdin_fd=none
-	fork_pid=''
 	generate_action_results_report=false
 	generate_help_report=false
 	generate_list_report=false
@@ -322,7 +319,6 @@ LoadVars()
 	ipks_install=false
 	ipks_upgrade=false
 	pips_install=false
-	proc_counts_path=''
 	qpkg_timeouts_increased=false
 	run_package_actions=false
 	show_action_results_failed=false
@@ -337,14 +333,19 @@ LoadVars()
 	switch_report_footer=false
 	switch_terse=false
 	title_shown=false
+
+	# Default values.
+
+	action_msg_pipe_fd=none
+	backup_stdin_fd=none
+	proc_counts_path=''
 	user_branch_value=''
 	user_colourful_value=''
 	user_report_footer_value=''
 	user_terse_value=''
 
-	# User-selectable options.
+	# User-selectable flags.
 
-	useropt_branch=$(LoadSetting Git_Branch stable)
 	useropt_check=false
 	useropt_debug=false
 	useropt_help_abbreviations=false
@@ -381,6 +382,10 @@ LoadVars()
 		useropt_colourful=false
 	fi
 
+	# User-selectable values.
+
+	useropt_branch=$(LoadSetting Git_Branch stable)
+
 	}
 
 LoadCMDs()
@@ -403,7 +408,7 @@ LoadCMDs()
 	readonly PYTHON3_CMD=/opt/bin/python3
 		readonly PIP_CMD="$PYTHON3_CMD -m pip"
 
-	# Cherry-pick QTS binaries.
+	# Cherry-pick QTS/QuTS binaries.
 
 	readonly AWK_CMD=/bin/awk
 	readonly BASENAME_CMD=/usr/bin/basename
@@ -667,7 +672,39 @@ LoadEnv()
 LoadLists()
 	{
 
+	# Inputs: (global)
+	#	$lists_loaded
+
+	# Outputs: (global)
+	#	$lists_loaded
+	#	$r_ipk_actions[]
+	#	$r_package_tiers[]
+	#	$r_pip_actions[]
+	#	$r_qpkg_actions[]
+	#	$r_qpkg_is_groups[]
+	#	$r_qpkg_is_states[]
+	#	$r_qpkg_isnt_groups[]
+	#	$r_qpkg_isnt_states[]
+	#	$r_qpkg_service_results[]
+	#	$r_qpkg_states_transient[]
+	#	$r_user_qpkg_actions[]
+	#	$r_"$(Lowercase "$action")"_log_file
+
 	[[ ${lists_loaded:=false} = false ]] || return 0
+
+	# First, clear existing list arrays (if-any).
+
+	unset r_ipk_actions
+	unset r_package_tiers
+	unset r_pip_actions
+	unset r_qpkg_actions
+	unset r_qpkg_is_groups
+	unset r_qpkg_is_states
+	unset r_qpkg_isnt_groups
+	unset r_qpkg_isnt_states
+	unset r_qpkg_service_results
+	unset r_qpkg_states_transient
+	unset r_user_qpkg_actions
 
 	# These are used internally by sherpa.
 	# ordered
@@ -898,7 +935,7 @@ DebugLogEnv()
 CheckTasks()
 	{
 
-	# Establish whether there's something to-do.
+	# Establish whether there's anything to-do.
 
 	if [[ $arg_problem = true || $useropt_help_basic = true ]]; then
 		generate_action_results_report=false
@@ -1359,12 +1396,12 @@ ProcActions()
 	ProcAction reassign all QPKG reassign
 	ProcAction download all QPKG download
 
-	# If download of any QPKG failed, don't execute further actions.
+	# If any QPKG download failed, don't attempt further actions.
 
 	if QPKGs-ACdownload-er.IsNone && QPKGs-ACdownload-se.IsNone && QPKGs-ACdownload-sa.IsNone; then
 		# -> Package removal phase <-
 
-		for ((tier_index=${#r_package_tiers[@]}-1; tier_index>=0; tier_index--)); do		# Process tiers in-reverse
+		for ((tier_index=${#r_package_tiers[@]}-1; tier_index>=0; tier_index--)); do		# Process tiers in-reverse.
 			tier=${r_package_tiers[$tier_index]}
 
 			case $tier in
@@ -1679,7 +1716,7 @@ ProcAction()
 		IPK|PIP)
 			if [[ $ipks_downgrade = true || $ipks_install = true || $ipks_upgrade = true || $pips_install = true ]]; then
 				InitForkCounts
-				${r_package_type}s:${r_action}	# Only process these packages in groups, not individually.
+				${r_package_type}s:${r_action}		# Only process these packages in groups, not individually.
 			fi
 	esac
 
@@ -3311,6 +3348,10 @@ IsThisFileRecent()
 SaveIpkAndPipList()
 	{
 
+	# Inputs: (global)
+	#	$r_prev_ipk_list_pathfile
+	#	$r_prev_pip_list_pathfile
+
 	$PIP_CMD freeze | cut -d'=' -f1 > "$r_prev_pip_list_pathfile"
 	[[ -e $r_prev_pip_list_pathfile ]] && DebugAsDone "saved current PIP list to $(ShowAsFileName "$r_prev_pip_list_pathfile")"
 
@@ -3321,6 +3362,9 @@ SaveIpkAndPipList()
 
 LoadIpkList()
 	{
+
+	# Inputs: (global)
+	#	$r_prev_ipk_list_pathfile
 
 	local name=''
 	local separator=''
@@ -3340,6 +3384,9 @@ LoadIpkList()
 
 LoadPipList()
 	{
+
+	# Inputs: (global)
+	#	$r_prev_pip_list_pathfile
 
 	local name=''
 	local re=''
@@ -3361,6 +3408,16 @@ CalcIpkDepsToInstall()
 	{
 
 	# From a specified list of IPK names, find all dependent IPKs, exclude those already installed, then generate a list to download.
+
+	# Inputs: (global)
+	#	$r_external_packages_pathfile
+	#	$useropt_terse
+	#	$useropt_verbose
+
+	# Outputs: (global)
+	#	$show_suggest_raise_issue
+	#	$useropt_terse
+	#	$useropt_verbose
 
 	IsSysFileExist $GNU_GREP_CMD || return
 
@@ -3434,8 +3491,8 @@ CalcIpkDepsToInstall()
 
 		for element in $pre_exclude_list; do
 			# KLUDGE: silently exclude these packages from being installed:
-			#   KLUDGE: `ca-certs` appears to be a bogus meta-package.
-			#   KLUDGE: `python3-gdbm` is not available, but can be requested as per https://forum.qnap.com/viewtopic.php?p=806031#p806031 (don't know why).
+			#   `ca-certs` appears to be a bogus meta-package.
+			#   `python3-gdbm` is not available, but can be requested as per https://forum.qnap.com/viewtopic.php?p=806031#p806031 (don't know why).
 
 			if [[ $element != 'ca-certs' && $element != 'python3-gdbm' ]]; then
 				# KLUDGE: `libjpeg` appears to have been replaced by `libjpeg-turbo`, but many packages still have `libjpeg` as a dependency, so replace it with `libjpeg-turbo`.
@@ -3461,6 +3518,9 @@ CalcIpkDownloadSize()
 	{
 
 	# Calculate size of required IPKs.
+
+	# Inputs: (global)
+	#	$r_external_packages_pathfile
 
 	FuncInit
 
@@ -3490,6 +3550,19 @@ IPKs:upgrade()
 
 	# Upgrade all installed IPKs.
 
+	# Inputs: (global)
+	#	$r_ipk_cache_path
+	#	$r_ipk_download_path
+	#	$ipks_upgrade
+	#	$r_logs_path
+	#	$r_upgrade_log_file
+	#	$useropt_terse
+	#	$useropt_verbose
+
+	# Outputs: (global)
+	#	$useropt_terse
+	#	$useropt_verbose
+
 	[[ $ipks_upgrade = true ]] || return
 	QPKGs-ISenabled.Exist Entware || return
 	ErrorIsNt || return
@@ -3497,7 +3570,7 @@ IPKs:upgrade()
 	FuncInit
 
 	local desc=''
-	local log_pathfile=$r_logs_path/ipks.$r_upgrade_log_file
+	local fork_pid=''
 	local -i total_count=0
 	local -i z=0
 
@@ -3523,7 +3596,7 @@ IPKs:upgrade()
 		_DirSizeMonitor_ "$r_ipk_download_path" "$(IPKs-ACdownload-to:Size)" &
 		fork_pid=$!
 
-		RunAndLog "$OPKG_CMD upgrade --force-overwrite $(IPKs-ACdownload-to:List) --cache $r_ipk_cache_path --tmp-dir $r_ipk_download_path" "$log_pathfile" log:failure-only
+		RunAndLog "$OPKG_CMD upgrade --force-overwrite $(IPKs-ACdownload-to:List) --cache $r_ipk_cache_path --tmp-dir $r_ipk_download_path" "$r_logs_path/ipks.$r_upgrade_log_file" log:failure-only
 		z=$?
 
 		KillPID "$fork_pid"
@@ -3549,6 +3622,22 @@ IPKs:install()
 
 	# Install IPKs required to support QPKGs.
 
+	# Inputs: (global)
+	#	$r_essential_ipks
+	#	$r_install_log_file
+	#	$r_ipk_cache_path
+	#	$r_ipk_download_path
+	#	$r_logs_path
+	#	$r_prev_ipk_list_pathfile
+	#	$r_qpkg_name[]
+	#	$useropt_check
+	#	$useropt_terse
+	#	$useropt_verbose
+
+	# Outputs: (global)
+	#	$useropt_terse
+	#	$useropt_verbose
+
 	[[ $ipks_install = true ]] || return
 	QPKGs-ISenabled.Exist Entware || return
 	ErrorIsNt || return
@@ -3556,8 +3645,8 @@ IPKs:install()
 	FuncInit
 
 	local desc=''
+	local fork_pid=''
 	local -i i=0
-	local log_pathfile=$r_logs_path/ipks.$r_install_log_file
 	local previous=''
 	local -i total_count=0
 	local -i z=0
@@ -3603,7 +3692,7 @@ IPKs:install()
 		_DirSizeMonitor_ "$r_ipk_download_path" "$(IPKs-ACdownload-to:Size)" &
 		fork_pid=$!
 
-		RunAndLog "$OPKG_CMD install --force-overwrite $(IPKs-ACdownload-to:List) --cache $r_ipk_cache_path --tmp-dir $r_ipk_download_path" "$log_pathfile" log:failure-only
+		RunAndLog "$OPKG_CMD install --force-overwrite $(IPKs-ACdownload-to:List) --cache $r_ipk_cache_path --tmp-dir $r_ipk_download_path" "$r_logs_path/ipks.$r_install_log_file" log:failure-only
 		z=$?
 
 		KillPID "$fork_pid"
