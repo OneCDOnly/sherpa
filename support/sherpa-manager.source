@@ -14489,8 +14489,8 @@ LoadPackages()
 
 	DebugVar r_packages_epoch
 
-	for qpkg_name in "${r_qpkg_name[@]}"; do					# Ensure only first entry for each QPKG name is added to "GRall" array.
-		[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
+	for qpkg_name in "${r_qpkg_name[@]}"; do
+		[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name	# Ensure only first mention of each QPKG name is added to "GRall" array.
 		QPKGs-GRall:Add "$qpkg_name"
 	done
 
@@ -14502,6 +14502,10 @@ LoadPackages()
 
 CaughtSIGINT()
 	{
+
+	# Inputs: (global)
+	#	$r_action_abort_pathfile
+	#	$r_display_inhibit_pathfile
 
 	trap - SIGINT
 
