@@ -1,5 +1,12 @@
 Observed issues:
 
+	* 'sherpa list deps' and 'sherpa list indeps' are not showing anything.
+		-------------------------------------------------------------------------------------------------------------------------
+		[/share/Public] # sherpa list indeps
+		proc: QPKG states ... [/share/Public] #
+		-------------------------------------------------------------------------------------------------------------------------
+		- Maybe lists are not being created?
+
 	* If IPK install stalls, seconds stalled display is not accurate.
 		- Need to calculate actual seconds elapsed since stall began, instead of using an accumulator and `sleep 1`.
 
