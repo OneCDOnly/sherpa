@@ -124,6 +124,32 @@ ShowResults()
 						fi
 				esac
 			done
+
+			for a in "${r_qpkg_is_groups[@]}"; do
+				case $a in
+					canbackup|canrestarttoupdate)
+						: # No reports for these yet.
+						;;
+					*)
+						if QPKGs.AClist.GR${a}.IsSet; then
+							ShowQPKGsGR${a}
+							break
+						fi
+				esac
+			done
+
+			for a in "${r_qpkg_isnt_groups[@]}"; do
+				case $a in
+					all|canbackup|canrestarttoupdate)
+						: # No reports for these yet.
+						;;
+					*)
+						if QPKGs.AClist.GRNT${a}.IsSet; then
+							ShowQPKGsGRNT${a}
+							break
+						fi
+				esac
+			done
 		fi
 	fi
 
@@ -974,14 +1000,12 @@ CheckTasks()
 
 			for group in "${r_qpkg_is_groups[@]}"; do
 				if QPKGs.AC${action}.GR${group}.IsSet; then
-					build_states=true
 					break 2
 				fi
 			done
 
 			for group in "${r_qpkg_isnt_groups[@]}"; do
 				if QPKGs.AC${action}.GRNT${group}.IsSet; then
-					build_states=true
 					break 2
 				fi
 			done
@@ -2500,6 +2524,16 @@ ParseListArgs()
 							run_package_actions=false
 							useropt_help_abbreviations=true
 							;;
+						all|?(in)dependent)
+							LoadObjects
+							QPKGs.AClist.GR${group}:Set
+							action=''
+							awaiting_group=false
+							generate_list_report=true
+							get_qpkg_states=true
+							run_package_actions=false
+							show_title=false
+							;;
 						?(NT)active)
 							LoadObjects
 							QPKGs.AClist.IS${group}:Set
@@ -2515,16 +2549,6 @@ ParseListArgs()
 						?(NT)backedup|?(NT)enabled|?(NT)installable|?(NT)installed|?(NT)missing|?(NT)upgradable)
 							LoadObjects
 							QPKGs.AClist.IS${group}:Set
-							action=''
-							awaiting_group=false
-							generate_list_report=true
-							get_qpkg_states=true
-							run_package_actions=false
-							show_title=false
-							;;
-						?(in)dependent)
-							LoadObjects
-							QPKGs.AClist.GR${group}:Set
 							action=''
 							awaiting_group=false
 							generate_list_report=true
@@ -8571,23 +8595,23 @@ ShowQPKGsISNTinstalled()
 
 	}
 
-#ShowQPKGsGRall()
-# 	{
-#
-# 	DisableDebugToArchiveAndFile
-# 	EraseThisLine
-#
-# 	if QPKGs-GRall.IsAny; then
-# 		for qpkg_name in $(QPKGs-GRall:Array); do
-# 			Display "$qpkg_name"
-# 		done
-# 	else
-# 		ShowAsWarn "unable to find any QPKGs"
-# 	fi
-#
-# 	return 0
-#
-# 	}
+ShowQPKGsGRall()
+	{
+
+	DisableDebugToArchiveAndFile
+	EraseThisLine
+
+	if QPKGs-GRall.IsAny; then
+		for qpkg_name in $(QPKGs-GRall:Array); do
+			Display "$qpkg_name"
+		done
+	else
+		ShowAsWarn "unable to find any QPKGs"
+	fi
+
+	return 0
+
+	}
 
 ShowQPKGsISinstallable()
 	{
