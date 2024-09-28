@@ -20,7 +20,7 @@
 * When running 'sherpa rebuild sab', SAB is installed and auto-updates as usual. Then when 'restore' action runs, auto-update runs again.
 	- Disable auto-update after installation if 'restore' is to be run, then enable it again after 'restore' completes?
 
-* Arg parser should use commas to separate actions & options?
+* Arg parser: use commas to separate actions & options?
 
 * Include QPKG "signed" status in dependencies report?
 
