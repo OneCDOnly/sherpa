@@ -89,9 +89,6 @@ ShowResults()
 		elif [[ $useropt_show_backups = true ]]; then
 			ReleaseLockfile
 			ShowReportBackups
-		elif [[ $useropt_show_versions = true ]]; then
-			ReleaseLockfile
-			ShowReportVersions
 		elif [[ $useropt_show_dependencies = true ]]; then
 			ShowReportDependencies
 		elif [[ $useropt_show_features = true ]]; then
@@ -106,7 +103,12 @@ ShowResults()
 	fi
 
 	if [[ $generate_list_report = true ]]; then
-		ShowQPKGLists
+		if [[ $useropt_list_versions = true ]]; then
+			ReleaseLockfile
+			ShowVersionsList
+		else
+			ShowQPKGLists
+		fi
 	fi
 
 	if [[ $useropt_paste_log_last = true ]]; then
@@ -342,6 +344,7 @@ LoadVars()
 	useropt_help_show=false
 	useropt_help_tips=false
 	useropt_help_upgrades=false
+	useropt_list_versions=false
 	useropt_paste_log_last=false
 	useropt_paste_log_tail=false
 	useropt_report_footer=$(LoadSetting ReportFooter true)
@@ -354,7 +357,6 @@ LoadVars()
 	useropt_show_repos=false
 	useropt_show_all_results=false
 	useropt_show_status=false
-	useropt_show_versions=false
 	useropt_terse=$(LoadSetting Terse true)
 	useropt_verbose=false
 
@@ -2462,7 +2464,7 @@ ParseListArgs()
 		# Include action assignment when action hasn't been previously specified.
 
 		case $group in
-			abs)
+			versions)
 				[[ -z $action ]] && action=list
 		esac
 
@@ -2472,14 +2474,6 @@ ParseListArgs()
 			case $action in
 				list)
 					case $group in
-						abs)
-							action=''
-							awaiting_group=false
-							generate_help_report=true
-							get_qpkg_states=true
-							run_package_actions=false
-							useropt_help_abbreviations=true
-							;;
 						all|?(in)dependent)
 							LoadObjects
 							QPKGs.AClist.GR${group}:Set
@@ -2513,11 +2507,12 @@ ParseListArgs()
 							show_title=false
 							;;
 						versions)
+							LoadPackages
 							action=''
 							awaiting_group=false
 							generate_list_report=true
 							show_title=false
-							useropt_show_versions=true
+							useropt_list_versions=true
 							;;
 						*)
 							args_remaining+=("$action")
@@ -2641,14 +2636,14 @@ ParseActionArgs()
 					generate_action_results_report=true
 					get_qpkg_states=true
 					run_package_actions=true
-					;;
-				*)
-					LoadObjects
-					QPKGs-AC${action}-to:Add "$group"
-					awaiting_group=false
-					generate_action_results_report=true
-					get_qpkg_states=true
-					run_package_actions=true
+# 					;;
+# 				*)
+# 					LoadObjects
+# 					QPKGs-AC${action}-to:Add "$group"
+# 					awaiting_group=false
+# 					generate_action_results_report=true
+# 					get_qpkg_states=true
+# 					run_package_actions=true
 			esac
 		else
 			args_remaining+=("$arg")
@@ -8115,22 +8110,6 @@ ShowReportStatuses()
 
 	}
 
-ShowReportVersions()
-	{
-
-	DisableDebugToArchiveAndFile
-	EraseThisLine
-
-	Display "QPKG: ${r_this_package_ver:-undefined}"
-	Display "manager: ${r_this_script_ver:-undefined}"
-	Display "loader: ${LOADER_SCRIPT_VERSION:-undefined}"
-	Display "objects: ${r_objects_version:-undefined}"
-	Display "packages: ${r_packages_epoch}$([[ $r_packages_epoch != undefined ]] && printf '%s' " ($(ConvertSecondsToFullDate "$r_packages_epoch"))")"
-
-	return 0
-
-	}
-
 ShowReportAllActionResults()
 	{
 
@@ -8443,6 +8422,22 @@ GenerateReportHeadingsFooter()
 			printf '%s\n' "$a"
 		fi
 	fi
+
+	}
+
+ShowVersionsList()
+	{
+
+	DisableDebugToArchiveAndFile
+	EraseThisLine
+
+	Display "QPKG: ${r_this_package_ver:-undefined}"
+	Display "manager: ${r_this_script_ver:-undefined}"
+	Display "loader: ${LOADER_SCRIPT_VERSION:-undefined}"
+	Display "objects: ${r_objects_version:-undefined}"
+	Display "packages: ${r_packages_epoch}$([[ $r_packages_epoch != undefined ]] && printf '%s' " ($(ConvertSecondsToFullDate "$r_packages_epoch"))")"
+
+	return 0
 
 	}
 
