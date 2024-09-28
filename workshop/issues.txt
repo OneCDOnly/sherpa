@@ -13,37 +13,6 @@ Observed issues:
 	* Near the end of installing IPKs, monitored download path can remain at non-zero size while packages complete installation.
 		- Include a separate progress message when dir size shrinks? Maybe force increase to "100%" and stop monitoring?
 
-	* When attempting to view file versions with-and-without correct syntax fails in several ways:
-		-------------------------------------------------------------------------------------------------------------------------
-		[~] # sherpa list versions
-		proc: env ...
-		proc: args ...
-		-------------------------------------------------------------------------------------------------------------------------
-		[~] # sherpa versions
-		proc: env ...
-		proc: args ...
-		proc: objects ...
-		proc: QPKGs ...
-		sherpa v240529-unstable
-
-		derp: unknown argument "versions". Please check the arguments again.
-
-		-------------------------------------------------------------------------------------------------------------------------
-		[~] # sherpa show versions
-		proc: env ...
-		proc: args ...
-		proc: objects ...
-		proc: QPKGs ...
-		/share/CACHEDEV1_DATA/.qpkg/sherpa/cache/sherpa-manager.sh: line 1882: QPKGs-ACshow-to:Add: command not found
-		sherpa v240529-unstable
-
-		• Please provide a valid source after 'show' like:
-			# sherpa show abs
-			# sherpa show log
-			# sherpa show packages
-			# sherpa show results
-		-------------------------------------------------------------------------------------------------------------------------
-
 	* 'sherpa' and 'opkg' were not available after installing Entware.
 		- Entware installation may be corrupt.
 		- But this shouldn't affect the sherpa command `/usr/sbin/sherpa`.
