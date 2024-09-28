@@ -3424,6 +3424,7 @@ CalcIpkDepsToInstall()
 	fi
 
 	DebugInfo "$requested_count IPK$(Pluralise "$requested_count") requested" "'$req_list' "
+
 	while [[ $iterations -le $r_iteration_limit ]]; do
 		ShowAsIterativeProgress 'resolve IPK dependencies' "$iterations" iteration "${#dep_acc[@]}" 'unique IPK'
 
@@ -13556,7 +13557,7 @@ ShowAsProc()
 		OpStepClear "$(TextBrightYellow proc)" "$a $r_chars_ellipsis $b"
 	fi
 
-	WriteToLog proc "${a}${b}"
+	WriteToLog proc "$a $r_chars_ellipsis $b"
 
 	} >&2
 
