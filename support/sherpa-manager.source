@@ -79,8 +79,6 @@ ShowResults()
 
 	FuncInit
 
-	local a=''
-
 	if [[ $generate_show_report = true ]]; then
 		if [[ $useropt_show_log_last = true ]]; then
 			ReleaseLockfile
@@ -108,49 +106,7 @@ ShowResults()
 	fi
 
 	if [[ $generate_list_report = true ]]; then
-		if [[ ${packages_loaded:=false} = true ]]; then
-			for a in "${r_qpkg_is_states[@]}"; do
-				case $a in
-					downloaded|signed)
-						: # No reports required for these.
-						;;
-					*)
-						if QPKGs.AClist.IS${a}.IsSet; then
-							ShowQPKGsIS${a}
-							break
-						elif QPKGs.AClist.ISNT${a}.IsSet; then
-							ShowQPKGsISNT${a}
-							break
-						fi
-				esac
-			done
-
-			for a in "${r_qpkg_is_groups[@]}"; do
-				case $a in
-					canbackup|canrestarttoupdate)
-						: # No reports for these yet.
-						;;
-					*)
-						if QPKGs.AClist.GR${a}.IsSet; then
-							ShowQPKGsGR${a}
-							break
-						fi
-				esac
-			done
-
-			for a in "${r_qpkg_isnt_groups[@]}"; do
-				case $a in
-					all|canbackup|canrestarttoupdate)
-						: # No reports for these yet.
-						;;
-					*)
-						if QPKGs.AClist.GRNT${a}.IsSet; then
-							ShowQPKGsGRNT${a}
-							break
-						fi
-				esac
-			done
-		fi
+		ShowQPKGLists
 	fi
 
 	if [[ $useropt_paste_log_last = true ]]; then
@@ -8239,8 +8195,11 @@ ShowReportAllActionResults()
 ShowReportActionResults()
 	{
 
-	# Inputs:
+	# Inputs: (local)
 	#	$1 = `ok`, `skipped`, `failed`
+
+	# Inputs: (global)
+	#	$r_session_action_results_pathfile
 
 	local action=''
 	local -i count=0
@@ -8259,7 +8218,7 @@ ShowReportActionResults()
 			if [[ $result = "$1" ]] || [[ $1 = skipped && ($result = 'skipped-ok' || $result = 'skipped-error' || $result = 'skipped-abort') ]]; then
 				[[ $action = status && $useropt_show_all_results = false ]] && continue		# Don't need to see the result of `status` checks unless a 'results' report has been requested.
 				((count++))
-				[[ $count -gt 1 ]] && break			# Two-or-more of the same action means must pluralise messages.
+				[[ $count -gt 1 ]] && break			# Two-or-more of the same action so must pluralise messages.
 			fi
 		done < "$r_session_action_results_pathfile"
 
@@ -8473,7 +8432,7 @@ GenerateReportHeadingsFooter()
 		DisplayAsIndentQuotedInfoItem 'AutoUpd?' 'application restart-to-update is enabled'
 		DisplayAsIndentQuotedInfoItem 'LiveTest?' "has a built-in 'status' check, and can test for daemon \"live\" status"
 		DisplayAsIndentQuotedInfoItem 'Indep?' 'is independent of other QPKGs'
-		DisplayAsIndentQuotedInfoItem 'Compat?' 'has a release compatible with this NAS arch'
+		DisplayAsIndentQuotedInfoItem 'Compat?' 'has a release compatible with this NAS architecture'
 		DisplayAsIndentQuotedInfoItem 'Enhanced?' "$(ShowAsTitleName) enhanced service actions are supported"
 	})
 
@@ -8487,306 +8446,76 @@ GenerateReportHeadingsFooter()
 
 	}
 
-ShowQPKGsISbackedup()
+ShowQPKGLists()
 	{
+
+	[[ ${packages_loaded:=false} = true ]] || return
+
+	local a=''
+
+	for a in "${r_qpkg_is_states[@]}"; do
+		case $a in
+			downloaded|signed)						# Never show these.
+				: # Do nothing.
+				;;
+			*)
+				if QPKGs.AClist.IS${a}.IsSet; then
+					ShowQPKGList "IS${a}"
+					return
+				elif QPKGs.AClist.ISNT${a}.IsSet; then
+					ShowQPKGList "ISNT${a}"
+					return
+				fi
+		esac
+	done
+
+	for a in "${r_qpkg_is_groups[@]}"; do
+		case $a in
+			canbackup|canrestarttoupdate)			# Never show these.
+				: # Do nothing.
+				;;
+			*)
+				if QPKGs.AClist.GR${a}.IsSet; then
+					ShowQPKGList "GR${a}"
+					return
+				fi
+		esac
+	done
+
+	for a in "${r_qpkg_isnt_groups[@]}"; do
+		case $a in
+			all|canbackup|canrestarttoupdate)		# Never show these.
+				: # Do nothing.
+				;;
+			*)
+				if QPKGs.AClist.GRNT${a}.IsSet; then
+					ShowQPKGList "GRNT${a}"
+					return
+				fi
+		esac
+	done
+
+	}
+
+ShowQPKGList()
+	{
+
+	# Inputs: (local)
+	#	$1 = state or group list object name ('ISbackedup', 'ISNTbackedup', 'GRall', etc...)
+
+	[[ -n $1 ]] || return
+
+	local qpkg_name=''
 
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	if QPKGs-ISbackedup.IsAny; then
-		for qpkg_name in $(QPKGs-ISbackedup:Array); do
+	if [[ $(type -t QPKGs-$1.IsAny) = function ]] && QPKGs-$1.IsAny; then
+		for qpkg_name in $(QPKGs-$1:Array); do
 			Display "$qpkg_name"
 		done
 	else
-		ShowAsWarn "unable to find any 'backed-up' QPKGs"
-	fi
-
-	return 0
-
-	}
-
-ShowQPKGsISNTbackedup()
-	{
-
-	DisableDebugToArchiveAndFile
-	EraseThisLine
-
-	if QPKGs-ISNTbackedup.IsAny; then
-		for qpkg_name in $(QPKGs-ISNTbackedup:Array); do
-			Display "$qpkg_name"
-		done
-	else
-		ShowAsWarn "unable to find any 'not backed-up' QPKGs"
-	fi
-
-	return 0
-
-	}
-
-ShowQPKGsISenabled()
-	{
-
-	DisableDebugToArchiveAndFile
-	EraseThisLine
-
-	if QPKGs-ISenabled.IsAny; then
-		for qpkg_name in $(QPKGs-ISenabled:Array); do
-			QPKGs-ISinstalled.Exist "$qpkg_name" && Display "$qpkg_name"
-		done
-	else
-		ShowAsWarn "unable to find any 'enabled' QPKGs"
-	fi
-
-	return 0
-
-	}
-
-ShowQPKGsISNTenabled()
-	{
-
-	DisableDebugToArchiveAndFile
-	EraseThisLine
-
-	if QPKGs-ISNTenabled.IsAny; then
-		for qpkg_name in $(QPKGs-ISNTenabled:Array); do
-			QPKGs-ISinstalled.Exist "$qpkg_name" && Display "$qpkg_name"
-		done
-	else
-		ShowAsWarn "unable to find any 'not enabled' QPKGs"
-	fi
-
-	return 0
-
-	}
-
-ShowQPKGsISinstalled()
-	{
-
-	DisableDebugToArchiveAndFile
-	EraseThisLine
-
-	if QPKGs-ISinstalled.IsAny; then
-		for qpkg_name in $(QPKGs-ISinstalled:Array); do
-			Display "$qpkg_name"
-		done
-	else
-		ShowAsWarn "unable to find any 'installed' QPKGs"
-	fi
-
-	return 0
-
-	}
-
-ShowQPKGsISNTinstalled()
-	{
-
-	DisableDebugToArchiveAndFile
-	EraseThisLine
-
-	if QPKGs-ISNTinstalled.IsAny; then
-		for qpkg_name in $(QPKGs-ISNTinstalled:Array); do
-			Display "$qpkg_name"
-		done
-	else
-		ShowAsWarn "unable to find any 'not installed' QPKGs"
-	fi
-
-	return 0
-
-	}
-
-ShowQPKGsGRall()
-	{
-
-	DisableDebugToArchiveAndFile
-	EraseThisLine
-
-	if QPKGs-GRall.IsAny; then
-		for qpkg_name in $(QPKGs-GRall:Array); do
-			Display "$qpkg_name"
-		done
-	else
-		ShowAsWarn "unable to find any QPKGs"
-	fi
-
-	return 0
-
-	}
-
-ShowQPKGsISinstallable()
-	{
-
-	DisableDebugToArchiveAndFile
-	EraseThisLine
-
-	if QPKGs-ISinstallable.IsAny; then
-		for qpkg_name in $(QPKGs-ISinstallable:Array); do
-			Display "$qpkg_name"
-		done
-	else
-		ShowAsWarn "unable to find any 'installable' QPKGs"
-	fi
-
-	return 0
-
-	}
-
-ShowQPKGsISNTinstallable()
-	{
-
-	DisableDebugToArchiveAndFile
-	EraseThisLine
-
-	if QPKGs-ISNTinstallable.IsAny; then
-		for qpkg_name in $(QPKGs-ISNTinstallable:Array); do
-			Display "$qpkg_name"
-		done
-	else
-		ShowAsWarn "unable to find any 'not installable' QPKGs"
-	fi
-
-	return 0
-
-	}
-
-ShowQPKGsISmissing()
-	{
-
-	DisableDebugToArchiveAndFile
-	EraseThisLine
-
-	if QPKGs-ISmissing.IsAny; then
-		for qpkg_name in $(QPKGs-ISmissing:Array); do
-			Display "$qpkg_name"
-		done
-	else
-		ShowAsWarn "unable to find any 'missing' QPKGs"
-	fi
-
-	return 0
-
-	}
-
-ShowQPKGsISNTmissing()
-	{
-
-	DisableDebugToArchiveAndFile
-	EraseThisLine
-
-	if QPKGs-ISNTmissing.IsAny; then
-		for qpkg_name in $(QPKGs-ISNTmissing:Array); do
-			Display "$qpkg_name"
-		done
-	else
-		ShowAsWarn "unable to find any 'not missing' QPKGs"
-	fi
-
-	return 0
-
-	}
-
-ShowQPKGsISactive()
-	{
-
-	DisableDebugToArchiveAndFile
-	EraseThisLine
-
-	if QPKGs-ISactive.IsAny; then
-		for qpkg_name in $(QPKGs-ISactive:Array); do
-			Display "$qpkg_name"
-		done
-	else
-		ShowAsWarn "unable to find any 'active' QPKGs"
-	fi
-
-	return 0
-
-	}
-
-ShowQPKGsISNTactive()
-	{
-
-	DisableDebugToArchiveAndFile
-	EraseThisLine
-
-	if QPKGs-ISNTactive.IsAny; then
-		for qpkg_name in $(QPKGs-ISNTactive:Array); do
-			Display "$qpkg_name"
-		done
-	else
-		ShowAsWarn "unable to find any 'inactive' QPKGs"
-	fi
-
-	return 0
-
-	}
-
-ShowQPKGsISupgradable()
-	{
-
-	DisableDebugToArchiveAndFile
-	EraseThisLine
-
-	if QPKGs-ISupgradable.IsAny; then
-		for qpkg_name in $(QPKGs-ISupgradable:Array); do
-			Display "$qpkg_name"
-		done
-	else
-		ShowAsWarn "unable to find any 'upgradable' QPKGs"
-	fi
-
-	return 0
-
-	}
-
-ShowQPKGsISNTupgradable()
-	{
-
-	DisableDebugToArchiveAndFile
-	EraseThisLine
-
-	if QPKGs-ISNTupgradable.IsAny; then
-		for qpkg_name in $(QPKGs-ISNTupgradable:Array); do
-			Display "$qpkg_name"
-		done
-	else
-		ShowAsWarn "unable to find any 'non-upgradable' QPKGs"
-	fi
-
-	return 0
-
-	}
-
-ShowQPKGsGRindependent()
-	{
-
-	DisableDebugToArchiveAndFile
-	EraseThisLine
-
-	if QPKGs-GRindependent.IsAny; then
-		for qpkg_name in $(QPKGs-GRindependent:Array); do
-			Display "$qpkg_name"
-		done
-	else
-		ShowAsWarn "unable to find any 'independent' QPKGs"
-	fi
-
-	return 0
-
-	}
-
-ShowQPKGsGRdependent()
-	{
-
-	DisableDebugToArchiveAndFile
-	EraseThisLine
-
-	if QPKGs-GRdependent.IsAny; then
-		for qpkg_name in $(QPKGs-GRdependent:Array); do
-			Display "$qpkg_name"
-		done
-	else
-		ShowAsWarn "unable to find any 'dependent' QPKGs"
+		ShowAsWarn "unable to find any '$1' QPKGs"
 	fi
 
 	return 0
@@ -8799,7 +8528,7 @@ SendParentChangeEnv()
 	# Send a message into message stream to change a sherpa parent environment variable or variables.
 	# This function is only called from within async functions.
 
-	# Inputs:
+	# Inputs: (local)
 	#   $1 = action request
 
 	WriteToActionMsgPipe env "$1" '' ''
@@ -8813,7 +8542,7 @@ SendPackageStateChange()
 	# This might be: `isinstalled`, `isntenabled`, `isstarted`, `scntupgradable`, etc ...
 	# This function is only called from within async functions.
 
-	# Inputs:
+	# Inputs: (local)
 	#   $1 = action request
 
 	WriteToActionMsgPipe change "$1" package "$qpkg_name"
@@ -8827,7 +8556,7 @@ SendActionStatus()
 	# This can be: `ok`, `so`, `sk`, `se`, `er`, `ex`. `ab`.
 	# This function is only called from within async functions.
 
-	# Inputs:
+	# Inputs: (local)
 	#   $1 = status update
 
 	WriteToActionMsgPipe status "$1" package "$qpkg_name"
@@ -8839,6 +8568,15 @@ WriteToActionMsgPipe()
 
 	# Send a message into message stream to update sherpa parent shell environment.
 
+	# Inputs: (local)
+	#	$1 = message 1 key
+	#	$2 = message 1 value
+	#	$3 = message 2 key
+	#	$4 = message 2 value
+
+	# Inputs: (global)
+	#	$action_msg_pipe_fd
+
 	[[ $action_msg_pipe_fd != none && -e /proc/$$/fd/$action_msg_pipe_fd ]] && echo "$1|$2|$3|$4" >&$action_msg_pipe_fd
 
 	return 0
@@ -8847,6 +8585,15 @@ WriteToActionMsgPipe()
 
 ReadFromActionMsgPipe()
 	{
+
+	# Inputs: (local)
+	#	$1 = message 1 key
+	#	$2 = message 1 value
+	#	$3 = message 2 key
+	#	$4 = message 2 value
+
+	# Inputs: (global)
+	#	$action_msg_pipe_fd
 
 	local _msg1_key
 	local _msg1_value
@@ -8940,7 +8687,7 @@ NoteIpkAcAsOk()
 
 	# Move specified IPK name from `to` action array into associated `ok` array.
 
-	# Inputs:
+	# Inputs: (local)
 	#   $1 = package name
 	#   $2 = action
 
@@ -8956,7 +8703,7 @@ NoteIpkAcAsEr()
 
 	# Move specified IPK name from `to` action array into associated `er` array.
 
-	# Inputs:
+	# Inputs: (local)
 	#   $1 = package name
 	#   $2 = action
 	#   $3 = reason (optional)
@@ -9043,7 +8790,7 @@ OsGetKernelPageSize()
 HardwareGetPlatform()
 	{
 
-	# Outputs:
+	# Outputs: (local)
 	#   $? = 0 if found, 250 if not.
 
 	/sbin/getcfg '' Platform -d undefined -f /etc/platform.conf
@@ -9053,7 +8800,7 @@ HardwareGetPlatform()
 UserGetDefVol()
 	{
 
-	# Outputs:
+	# Outputs: (local)
 	#   $? = 0 if found, 250 if not.
 
 	/sbin/getcfg SHARE_DEF defVolMP -d undefined -f /etc/config/def_share.info
@@ -9065,7 +8812,7 @@ Python3IsOutdated()
 
 	# Check if Python3 interpreter needs upgrading for this NAS arch.
 
-	# Outputs:
+	# Outputs: (local)
 	#   $? = 0 if outdated, !0 if not
 
 	[[ -e $PYTHON3_CMD ]] || return
@@ -9094,7 +8841,7 @@ PerlIsOutdated()
 
 	# Check if Perl interpreter needs upgrading for this NAS arch.
 
-	# Outputs:
+	# Outputs: (local)
 	#   $? = 0 if outdated, !0 if not
 
 	[[ -e $PERL_CMD ]] || return
@@ -9121,10 +8868,10 @@ GetThisBinPath()
 GetRepoURLFromStoreID()
 	{
 
-	# Inputs:
+	# Inputs: (local)
 	#	$1 = store ID to lookup repo URL for
 
-	# Outputs:
+	# Outputs: (local)
 	#   $? = 0 if found, 250 if not.
 
 	[[ -n ${1:-} ]] || return
@@ -9187,7 +8934,7 @@ HardwareGetInstalledRAM()
 OsGetFirmwareVer()
 	{
 
-	# Outputs:
+	# Outputs: (local)
 	#   $? = 0 if found, 250 if not.
 
 	/sbin/getcfg System Version -d undefined -f /etc/config/uLinux.conf
@@ -9197,7 +8944,7 @@ OsGetFirmwareVer()
 OsGetFirmwareBuild()
 	{
 
-	# Outputs:
+	# Outputs: (local)
 	#   $? = 0 if found, 250 if not.
 
 	/sbin/getcfg System Number -d undefined -f /etc/config/uLinux.conf
@@ -9207,7 +8954,7 @@ OsGetFirmwareBuild()
 OsGetFirmwareDate()
 	{
 
-	# Outputs:
+	# Outputs: (local)
 	#   $? = 0 if found, 250 if not.
 
 	/sbin/getcfg System 'Build Number' -d undefined -f /etc/config/uLinux.conf
