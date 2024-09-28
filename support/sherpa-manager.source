@@ -13545,19 +13545,20 @@ ShowAsProc()
 	#	$useropt_terse
 	#	$useropt_verbose
 
-	local a=''
-	local b=''
+	[[ -n ${1:-} ]] || return
 
-	[[ -n ${1:-} ]] && a=$1 || return
+	local a=$1
+	local b=''
 	[[ -n ${2:-} ]] && b=${2:-}
+	local c="$a $r_chars_ellipsis $b"
 
 	if [[ ${useropt_verbose:=false} = false && ${useropt_terse:=true} = true ]] || [[ ${useropt_verbose:=false} = false && -n ${2:-} ]]; then
-		OpStepClearWait "$(TextBrightYellow proc)" "$a $r_chars_ellipsis $b"
+		OpStepClearWait "$(TextBrightYellow proc)" "$c"
 	else
-		OpStepClear "$(TextBrightYellow proc)" "$a $r_chars_ellipsis $b"
+		OpStepClear "$(TextBrightYellow proc)" "$c"
 	fi
 
-	WriteToLog proc "$a $r_chars_ellipsis $b"
+	WriteToLog proc "$c"
 
 	} >&2
 
