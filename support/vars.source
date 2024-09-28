@@ -177,9 +177,9 @@ QPKG.Abbrvs()
 
 	local -i i=0
 
-	for i in "${!QPKG_NAME[@]}"; do
-		if [[ ${QPKG_NAME[$i]} = "${1:?package name null}" ]]; then
-			echo -n "${QPKG_ABBRVS[$i]}"
+	for i in "${!r_qpkg_name[@]}"; do
+		if [[ ${r_qpkg_name[$i]} = "${1:?package name null}" ]]; then
+			echo -n "${r_qpkg_abbrvs[$i]}"
 			return 0
 		fi
 	done
