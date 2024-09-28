@@ -45,6 +45,8 @@
 * Include QPKG version numbers in live progress messages?
 
 * Allow QPKGs to follow source git branch, release or tag.
+	# [[ $(git branch) =~ '(no branch)' ]] && echo none || echo one
+	# git describe --tags
 
 * Add new arg to reshow the previously generated report.
 	- 'sherpa show report'.
