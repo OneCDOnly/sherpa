@@ -8431,11 +8431,11 @@ ShowVersionsList()
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	Display "QPKG: ${r_this_package_ver:-undefined}"
-	Display "manager: ${r_this_script_ver:-undefined}"
-	Display "loader: ${LOADER_SCRIPT_VERSION:-undefined}"
-	Display "objects: ${r_objects_version:-undefined}"
-	Display "packages: ${r_packages_epoch}$([[ $r_packages_epoch != undefined ]] && printf '%s' " ($(ConvertSecondsToFullDate "$r_packages_epoch"))")"
+	Display "QPKG: ${r_this_package_ver:-undefined}$([[ $r_this_package_ver != undefined ]] && printf '%s' " ($(ConvertDateCodeToExtendedDate "$r_this_package_ver"))")"
+	Display "manager: ${r_this_script_ver:-undefined}$([[ $r_this_script_ver != undefined ]] && printf '%s' " ($(ConvertDateCodeToExtendedDate "$r_this_script_ver"))")"
+	Display "loader: ${LOADER_SCRIPT_VERSION:=undefined}$([[ $LOADER_SCRIPT_VERSION != undefined ]] && printf '%s' " ($(ConvertDateCodeToExtendedDate "$LOADER_SCRIPT_VERSION"))")"
+	Display "objects: ${r_objects_version:-undefined}$([[ $r_objects_version != undefined ]] && printf '%s' " ($(ConvertDateCodeToExtendedDate "$r_objects_version"))")"
+	Display "packages: ${r_packages_epoch:-undefined}$([[ $r_packages_epoch != undefined ]] && printf '%s' " ($(ConvertSecondsToFullDate "$r_packages_epoch"))")"
 
 	return 0
 
@@ -13332,6 +13332,28 @@ ConvertNanosecondsToMilliseconds()
 
 	} 2> /dev/null
 
+ConvertDateCodeToExtendedDate()
+	{
+
+	# Inputs: (local)
+	#	$1 = datecode in the format 'YYMMDD'. Example: '240928'
+
+	# Outputs: (local)
+	#	stdout = extended date format without time. Example: 'Sun 28 Sep 2024'
+
+	[[ -n ${1:-} ]] || return
+
+	local a=$($SED_CMD 's/[^0-9]*//g' <<< "${1:-}")		# Strip everything not a numeral.
+
+	if [[ ${#a} -ne 6 ]]; then
+		printf 'unable to interpret datecode'
+		return 1
+	fi
+
+	/bin/date -d ${a::2}-${a:2:2}-${a:4:2} '+%a %d %b %Y'
+
+	} 2> /dev/null
+
 ConvertNowToFullDate()
 	{
 
@@ -13378,11 +13400,11 @@ FormatAsLongMinutesSecs()
 	# Inputs: (local)
 	#	$1 = a time in long minutes and seconds to convert to 'MMMm:SSs'.
 
-	# separate minutes from seconds
+	# Separate minutes from seconds
 	local m=${1%%:*}
 	local s=${1#*:}
 
-	# remove leading whitespace
+	# Remove leading whitespace
 	m=${m##* }
 	s=${s##* }
 
