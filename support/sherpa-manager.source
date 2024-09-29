@@ -99,6 +99,7 @@ ShowResults()
 			ShowReportRepos
 		elif [[ $useropt_show_status = true ]]; then
 			ShowReportStatuses
+			show_action_results_report=false
 		fi
 	fi
 
@@ -150,7 +151,7 @@ ShowResults()
 		fi
 	fi
 
-	if [[ $generate_action_results_report = true || $generate_show_report = true ]]; then
+	if [[ $show_action_results_report = true ]]; then
 		ShowReportAllActionResults
 	fi
 
@@ -161,8 +162,6 @@ ShowResults()
 	DebugScript finished "$(ConvertNowToFullDate)"
 	DebugScript 'elapsed time' "$(ConvertSecondsToDuration "$(($(ConvertNowToSeconds)-r_script_startseconds))")"
 	DebugInfoMajSepr
-
-	[[ $title_shown = true ]] && Display 			# Final on-screen linespace.
 
 	FuncExit
 
@@ -293,7 +292,6 @@ LoadVars()
 	# Default flags.
 
 	archive_debug_afterward=false
-	generate_action_results_report=false
 	generate_help_report=false
 	generate_list_report=false
 	generate_show_report=false
@@ -307,6 +305,7 @@ LoadVars()
 	run_package_actions=false
 	show_action_results_failed=false
 	show_action_results_ok=false
+	show_action_results_report=false
 	show_action_results_skipped=false
 	show_action_results_zero=false
 	show_backuploc=false
@@ -348,14 +347,16 @@ LoadVars()
 	useropt_paste_log_last=false
 	useropt_paste_log_tail=false
 	useropt_report_footer=$(LoadSetting ReportFooter true)
+	useropt_show_about=false
+	useropt_show_aboutall=false
 	useropt_show_backups=false
 	useropt_show_dependencies=false
 	useropt_show_features=false
 	useropt_show_log_last=false
 	useropt_show_log_tail=false
 	useropt_show_packages=false
+	useropt_show_previous_action_results_report=false
 	useropt_show_repos=false
-	useropt_show_all_results=false
 	useropt_show_status=false
 	useropt_terse=$(LoadSetting Terse true)
 	useropt_verbose=false
@@ -578,10 +579,11 @@ LoadEnv()
 	args_incomplete=()
 	qpkg_default_index=0
 	qpkg_index=0
+	readonly r_this_script_epoch='<?manager_epoch?>'
 	useropt_branch=$(UserGetGitBranch)
 		readonly r_objects_archive_url='<?cdn_sherpa_base_url?>'/$useropt_branch/objects.tar.gz
 		readonly r_packages_archive_url='<?cdn_sherpa_packages_base_url?>'/$useropt_branch/packages.tar.gz
-		readonly r_this_script_ver='<?build_date?>'-$useropt_branch
+		readonly r_this_script_ver="$(ConvertSecondsToDatecode $r_this_script_epoch)-$useropt_branch"
 	readonly r_qpkg_bu_path=$(UserGetDefVol)/.qpkg_config_backup
 	readonly r_this_package_path=$(QpkgGetInstalledPath)
 		if [[ -z $r_this_package_path || $r_this_package_path = undefined || ! -d $r_this_package_path ]]; then
@@ -771,12 +773,19 @@ CreatePaths()
 DebugLogEnv()
 	{
 
-	[[ $run_package_actions = true ]] || return 0
-	[[ $useropt_debug = true ]] || return 0
+	if [[ $useropt_show_about = false && $useropt_show_aboutall = false ]]; then
+		[[ $run_package_actions = true ]] || return 0
+		[[ $useropt_debug = true ]] || return 0
+	fi
 
 	FuncInit
 
 	ShowAsProc 'log env'
+
+	if [[ $useropt_show_about = true || $useropt_show_aboutall = true ]]; then
+		useropt_debug=true
+		useropt_verbose=true
+	fi
 
 	DebugInfoMinSepr
 	DebugHardware ok model "$(get_display_name)"
@@ -848,11 +857,11 @@ DebugLogEnv()
 		DebugUserspace warning "'$public_share' share" 'not present'
 	fi
 
-	if [[ ${#PATH} -le $r_debug_log_third_column_width ]]; then
-		DebugUserspace ok '$PATH' "$PATH"
-	else
-		DebugUserspace ok '$PATH (LHS-only)' "${PATH:0:$((r_debug_log_third_column_width-${#r_chars_ellipsis}))}${r_chars_ellipsis}"
-	fi
+# 	if [[ ${#PATH} -le $r_debug_log_third_column_width ]]; then
+# 		DebugUserspace ok '$PATH' "$PATH"
+# 	else
+# 		DebugUserspace ok '$PATH (LHS-only)' "${PATH:0:$((r_debug_log_third_column_width-${#r_chars_ellipsis}))}${r_chars_ellipsis}"
+# 	fi
 
 	DebugScript 'git branch' "$useropt_branch"
 	DebugScript 'logs path' "$r_logs_path"
@@ -883,14 +892,18 @@ DebugLogEnv()
 	DebugQpkg detect "$(ShowAsPackageName Entware) type" "$r_entware_type"
 	DebugQpkg detect "$(ShowAsPackageName Entware) install date" "$(QpkgGetInstalledDate Entware)"
 
-	if QpkgIsInstalled SortMyQPKGs; then
+	if QpkgIsReallyInstalled SortMyQPKGs; then
 		DebugQpkg detect "$(ShowAsPackageName SortMyQPKGs)" installed
 	else
-		DebugQpkg warning "$(ShowAsPackageName SortMyQPKGs)" 'not installed'
+		if [[ ${r_nas_firmware_version//.} -lt 400 || ${r_nas_firmware_version//.} -gt 518 ]]; then
+			DebugQpkg detect "$(ShowAsPackageName SortMyQPKGs)" 'not installed'
+		else
+			DebugQpkg warning "$(ShowAsPackageName SortMyQPKGs)" 'not installed'
+		fi
 	fi
 
 	if OsIsSupportQpkgTimeout; then
-		if QpkgIsInstalled IncreaseTimeouts; then
+		if QpkgIsReallyInstalled IncreaseTimeouts; then
 			if QPKGs.IsTimeoutsIncreased; then
 				DebugQpkg detect "$(ShowAsPackageName IncreaseTimeouts)" active
 			else
@@ -904,14 +917,27 @@ DebugLogEnv()
 	fi
 
 	DebugInfoMinSepr
+
+	if [[ $useropt_show_about = true ]]; then
+		useropt_debug=false
+		useropt_verbose=false
+		return
+	fi
+
 	RunAndLog "$DF_CMD -h | $GREP_CMD '^Filesystem\|^none\|^tmpfs\|ram'" "$r_ramfs_freespace_pathfile"
 	DebugInfoMinSepr
 	RunAndLog "$SCREEN_CMD -ls" "$r_screen_sessions_pathfile" '' 1
 	DebugInfoMinSepr
-	RunAndLog '/usr/bin/free' "$r_ram_freeused_pathfile" '' 1
+	RunAndLog '/usr/bin/free -m' "$r_ram_freeused_pathfile" '' 1
 	DebugInfoMinSepr
 	RunAndLog "$GREP_CMD -i 'out of memory\|oom-killer' /mnt/HDA_ROOT/.logs/kmsg" "$r_oom_log_pathfile" '' 1
 	DebugInfoMinSepr
+
+	if [[ $useropt_show_aboutall = true ]]; then
+		useropt_debug=false
+		useropt_verbose=false
+		return
+	fi
 
 	FuncExit
 
@@ -923,7 +949,7 @@ CheckTasks()
 	# Establish whether there's anything to-do.
 
 	if [[ $arg_problem = true || $useropt_help_basic = true ]]; then
-		generate_action_results_report=false
+		show_action_results_report=false
 		generate_help_report=false
 		generate_list_report=false
 		generate_show_report=false
@@ -943,9 +969,9 @@ CheckTasks()
 
 	if [[ $useropt_check = true || $useropt_show_status = true ]]; then
 		build_states=true
-	elif [[ $useropt_show_dependencies = true || $useropt_show_features = true || $useropt_show_packages = true || $useropt_show_repos = true ]]; then
+	elif [[ $useropt_help_abbreviations = true || $useropt_show_backups = true || $useropt_show_dependencies = true || $useropt_show_features = true || $useropt_show_packages = true || $useropt_show_repos = true ]]; then
 		build_states=true
-	elif [[ $useropt_help_actions = true || $useropt_help_actions_all = true || $useropt_help_groups = true || $useropt_help_lists = true || $useropt_help_options = true || $useropt_help_packages = true || $useropt_help_problems = true || $useropt_help_tips = true || $useropt_help_upgrades = true || $useropt_show_all_results = true ]]; then
+	elif [[ $useropt_help_actions = true || $useropt_help_actions_all = true || $useropt_help_basic = true || $useropt_help_groups = true || $useropt_help_lists = true || $useropt_help_options = true || $useropt_help_packages = true || $useropt_help_problems = true || $useropt_help_show = true || $useropt_help_tips = true || $useropt_help_upgrades = true || $useropt_list_versions = true || $useropt_paste_log_last = true || $useropt_paste_log_tail = true || $useropt_show_about = true || $useropt_show_about = true || $useropt_show_previous_action_results_report = true || $useropt_show_log_last = true || $useropt_show_log_tail = true || $switch_branch = true || $switch_colour = true || $switch_report_footer = true || $switch_terse = true ]]; then
 		: # don't do anything
 	else
 		LoadPackages
@@ -984,12 +1010,7 @@ CheckTasks()
 		done
 	fi
 
-	if [[ $build_states = true ]]; then
-		BuildQPKGsStates
-	else
-		get_qpkg_states=false
-		run_package_actions=false
-	fi
+	[[ $build_states = true ]] && BuildQPKGsStates
 
 	FuncExit
 
@@ -1359,7 +1380,7 @@ ProcActions()
 
 	# -> Package preparation phase <-
 
-	ProcAction status all QPKG '"live" status'
+	ProcAction status all QPKG 'live status'
 
 	if [[ $useropt_show_status = false ]]; then
 		ShowAsProc 'assign QPKGs by state'				# Update action lists based-on QPKG `status`.
@@ -1460,6 +1481,8 @@ ProcActions()
 			ShowAsFail 'actions complete with errors'
 		fi
 	fi
+
+	show_action_results_report=true
 
 	FuncExit
 
@@ -2286,7 +2309,7 @@ ParseShowArgs()
 		# Include action assignment when action hasn't been previously specified.
 
 		case $group in
-			abs|backups|dependent|features|last|packages|repositories|results|status|tail)
+			about|about-all|abs|backups|dependent|features|last|packages|repositories|results|status|tail)
 				[[ -z $action ]] && action=show
 		esac
 
@@ -2296,6 +2319,20 @@ ParseShowArgs()
 			case $action in
 				show)
 					case $group in
+						about)
+							action=''
+							awaiting_group=false
+							get_qpkg_states=false
+							run_package_actions=false
+							useropt_show_about=true
+							;;
+						about-all)
+							action=''
+							awaiting_group=false
+							get_qpkg_states=false
+							run_package_actions=false
+							useropt_show_aboutall=true
+							;;
 						abs)
 							action=''
 							awaiting_group=false
@@ -2359,7 +2396,8 @@ ParseShowArgs()
 							generate_show_report=true
 							get_qpkg_states=false
 							run_package_actions=false
-							useropt_show_all_results=true
+							useropt_show_previous_action_results_report=true
+							show_action_results_report=true
 							;;
 						status)
 							LoadObjects
@@ -2464,7 +2502,7 @@ ParseListArgs()
 		# Include action assignment when action hasn't been previously specified.
 
 		case $group in
-			versions)
+			?(NT)installed|upgradable|versions)
 				[[ -z $action ]] && action=list
 		esac
 
@@ -2605,14 +2643,14 @@ ParseActionArgs()
 
 		if [[ -n $action && -n $group ]]; then
 			case $action in
-				?(de|re)activate|backup|clean|@(dis|en)able|reassign|@(re|un)install|restore|sign|upgrade)
+				?(de|re)activate|backup|clean|@(dis|en)able?(au)|reassign|@(re|un)install|restore|sign|upgrade)
 					case $group in
 						?(NT)active)
 							LoadObjects
 							QPKGs.AC${action}.IS${group}:Set
 							QPKGs.ACstatus.ISinstalled:Set
 							awaiting_group=false
-							generate_action_results_report=true
+							show_action_results_report=true
 							get_qpkg_active_status=true
 							get_qpkg_states=true
 							run_package_actions=true
@@ -2624,7 +2662,7 @@ ParseActionArgs()
 					LoadObjects
 					QPKGs.AC${action}.GR${group}:Set
 					awaiting_group=false
-					generate_action_results_report=true
+					show_action_results_report=true
 					get_qpkg_active_status=false
 					get_qpkg_states=true
 					run_package_actions=true
@@ -2633,17 +2671,18 @@ ParseActionArgs()
 					LoadObjects
 					QPKGs.AC${action}.IS${group}:Set
 					awaiting_group=false
-					generate_action_results_report=true
+					show_action_results_report=true
 					get_qpkg_states=true
 					run_package_actions=true
-# 					;;
-# 				*)
-# 					LoadObjects
-# 					QPKGs-AC${action}-to:Add "$group"
-# 					awaiting_group=false
-# 					generate_action_results_report=true
-# 					get_qpkg_states=true
-# 					run_package_actions=true
+					;;
+				*)
+					[[ $action != show ]] || continue
+					LoadObjects
+					QPKGs-AC${action}-to:Add "$group"
+					awaiting_group=false
+					show_action_results_report=true
+					get_qpkg_states=true
+					run_package_actions=true
 			esac
 		else
 			args_remaining+=("$arg")
@@ -2756,6 +2795,9 @@ MatchNoun()
 		a|abs|abbreviations)
 			printf abs
 			;;
+		about|about-all|backedup|canbackup|enabled|installable|installed|missing|results|show|?(un)stable)
+			printf '%s' "$a"
+			;;
 		action?(s))
 			printf actions
 			;;
@@ -2770,9 +2812,6 @@ MatchNoun()
 			;;
 		b|backups)
 			printf backups
-			;;
-		backedup|canbackup|enabled|installable|installed|missing|results|show|?(un)stable)
-			printf '%s' "$a"
 			;;
 		d|deps|dependencies|dependent?(s))
 			printf dependent
@@ -2931,8 +2970,9 @@ ShowArgSuggestions()
 			esac
 		done
 
+		[[ $arg_problem = true ]] && Display
+
 		if [[ ${#args_remaining[@]:-} -gt 0 ]]; then
-			[[ $arg_problem = true ]] && echo
 			ShowAsError "incomplete argument$(Pluralise "${#args_remaining[@]}") \"${args_remaining[*]}\". Please check the arguments again"
 			arg_problem=true
 			args_remaining=()
@@ -3022,10 +3062,11 @@ ShowArgSuggestions()
 		done
 
 		if [[ ${#args_remaining[@]:-} -gt 0 ]]; then
-			[[ $arg_problem = true ]] && Display
 			ShowAsError "unknown argument$(Pluralise "${#args_remaining[@]}") \"${args_remaining[*]}\". Please check the arguments again"
 			arg_problem=true
 			useropt_help_basic=false
+		elif [[ $arg_problem = true ]]; then
+			Display
 		fi
 	fi
 
@@ -3424,6 +3465,7 @@ CalcIpkDepsToInstall()
 	fi
 
 	DebugInfo "$requested_count IPK$(Pluralise "$requested_count") requested" "'$req_list' "
+
 	while [[ $iterations -le $r_iteration_limit ]]; do
 		ShowAsIterativeProgress 'resolve IPK dependencies' "$iterations" iteration "${#dep_acc[@]}" 'unique IPK'
 
@@ -6173,12 +6215,7 @@ ShowHelpActions()
 		} > "$r_report_output_pathfile"
 
 	EraseThisLine
-
-	if [[ -e $r_report_output_pathfile ]]; then
-		DisplayFileInViewport "$r_report_output_pathfile"
-	else
-		ShowAsError 'no information to display'
-	fi
+	ShowReport
 
 	return 0
 
@@ -6220,12 +6257,7 @@ ShowHelpActionsAll()
 		} > "$r_report_output_pathfile"
 
 	EraseThisLine
-
-	if [[ -e $r_report_output_pathfile ]]; then
-		DisplayFileInViewport "$r_report_output_pathfile"
-	else
-		ShowAsError 'no information to display'
-	fi
+	ShowReport
 
 	return 0
 
@@ -6252,12 +6284,18 @@ ShowHelpBasic()
 ShowHelpBasicExamples()
 	{
 
-	DisplayAsProjSynIndentExam "to see available $(ShowAsAction)s" 'help actions'
-	DisplayAsProjSynIndentExam "to see available $(ShowAsPackages)" 'show packages'
-	DisplayAsProjSynIndentExam '' p
-	DisplayAsProjSynIndentExam "to see available $(ShowAsPackageGroup)s" 'help groups'
-	DisplayAsProjSynIndentExam "or, for more $(ShowAsOptions)" 'help options'
-	DisplayAsHelpTitle "more in the wiki: $(ShowAsURL 'https://github.com/OneCDOnly/sherpa/wiki')"
+		{
+
+		DisplayAsProjSynIndentExam "to see available $(ShowAsAction)s" 'help actions'
+		DisplayAsProjSynIndentExam "to see available $(ShowAsPackages)" 'show packages'
+		DisplayAsProjSynIndentExam '' p
+		DisplayAsProjSynIndentExam "to see available $(ShowAsPackageGroup)s" 'help groups'
+		DisplayAsProjSynIndentExam "or, for more $(ShowAsOptions)" 'help options'
+		DisplayAsHelpTitle "more in the wiki: $(ShowAsURL 'https://github.com/OneCDOnly/sherpa/wiki')"
+
+		} > "$r_report_output_pathfile"
+
+	ShowReport
 
 	return 0
 
@@ -6274,31 +6312,26 @@ ShowHelpGroups()
 		ShowHelpBasic
 		DisplayAsHelpTitle "$(ShowAsPackageGroup) usage examples:"
 		DisplayAsProjSynIndentExam 'select every package' "$(ShowAsAction) all"
-		DisplayAsProjSynIndentExam 'select only independent QPKGs (these do not depend on other QPKGs)' "$(ShowAsAction) independent"
-		DisplayAsProjSynIndentExam '' "$(ShowAsAction) independents"
-		DisplayAsProjSynIndentExam 'select only dependent QPKGs (these require another QPKG to be installed and active)' "$(ShowAsAction) dependent"
 		DisplayAsProjSynIndentExam 'select only active QPKGs' "$(ShowAsAction) active"
 		DisplayAsProjSynIndentExam '' "$(ShowAsAction) started"
+		DisplayAsProjSynIndentExam 'select only disabled QPKGs' "$(ShowAsAction) disabled"
+		DisplayAsProjSynIndentExam 'select only enabled QPKGs' "$(ShowAsAction) enabled"
 		DisplayAsProjSynIndentExam 'select only inactive QPKGs' "$(ShowAsAction) inactive"
 		DisplayAsProjSynIndentExam '' "$(ShowAsAction) stopped"
+		DisplayAsProjSynIndentExam 'select only installable QPKGs' "$(ShowAsAction) installable"
 		DisplayAsProjSynIndentExam 'select only installed QPKGs' "$(ShowAsAction) installed"
 		DisplayAsProjSynIndentExam 'select only QPKGs that are not installed' "$(ShowAsAction) not-installed"
 		DisplayAsProjSynIndentExam 'select only QPKGs that are backed-up' "$(ShowAsAction) backedup"
 		DisplayAsProjSynIndentExam 'select only QPKGs that are not backed-up' "$(ShowAsAction) not-backedup"
 		DisplayAsProjSynIndentExam 'select only QPKGs that are upgradable' "$(ShowAsAction) upgradable"
 		DisplayAsProjSynIndentExam '' "$(ShowAsAction) new"
-		DisplayAsProjSynIndentExam 'select only missing QPKGs (these are partly installed and broken)' "$(ShowAsAction) missing"
+		DisplayAsProjSynIndentExam 'select only missing QPKGs (these are partly-installed and broken)' "$(ShowAsAction) missing"
 		DisplayAsProjSynExam 'multiple groups are supported like this' "$(ShowAsAction) $(ShowAsPackageGroup) $(ShowAsPackageGroup)"
 
 		} > "$r_report_output_pathfile"
 
 	EraseThisLine
-
-	if [[ -e $r_report_output_pathfile ]]; then
-		DisplayFileInViewport "$r_report_output_pathfile"
-	else
-		ShowAsError 'no information to display'
-	fi
+	ShowReport
 
 	return 0
 
@@ -6312,8 +6345,6 @@ ShowHelpIssue()
 	DisplayAsProjSynIndentExam "view only the most recent $(ShowAsTitleName) session log" last
 	DisplayAsProjSynIndentExam "view the entire $(ShowAsTitleName) session log" log
 	DisplayAsProjSynIndentExam "upload the most-recent $(FormatAsThous "$r_log_tail_lines") lines in your $(ShowAsTitleName) log to the $(ShowAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste log'
-	DisplayAsHelpTitleHighlighted "if you need help, please include a copy of your $(ShowAsTitleName) $(TextBrightOrange 'log for analysis!')"
-
 	Display
 
 	return 0
@@ -6340,18 +6371,16 @@ ShowHelpLists()
 		DisplayAsProjSynIndentExam 'list only QPKGs that are not installed' 'list not-installed'
 		DisplayAsProjSynIndentExam '' not-installed
 		DisplayAsProjSynIndentExam 'list only upgradable QPKGs' 'list upgradable'
+		DisplayAsProjSynIndentExam '' 'list new'
 		DisplayAsProjSynIndentExam '' upgradable
+		DisplayAsProjSynIndentExam '' new
 		DisplayAsProjSynIndentExam "list $(ShowAsTitleName) object version numbers" 'list versions'
+		DisplayAsProjSynIndentExam '' versions
 
 		} > "$r_report_output_pathfile"
 
 	EraseThisLine
-
-	if [[ -e $r_report_output_pathfile ]]; then
-		DisplayFileInViewport "$r_report_output_pathfile"
-	else
-		ShowAsError 'no information to display'
-	fi
+	ShowReport
 
 	return 0
 
@@ -6380,17 +6409,11 @@ ShowHelpShow()
 		DisplayAsProjSynIndentExam '' r
 		DisplayAsProjSynIndentExam 'show last session action results' 'show results'
 		DisplayAsProjSynIndentExam '' results
-		DisplayAsProjSynIndentExam 'find the live status of each application in all QPKGs' 'show status'
 
 		} > "$r_report_output_pathfile"
 
 	EraseThisLine
-
-	if [[ -e $r_report_output_pathfile ]]; then
-		DisplayFileInViewport "$r_report_output_pathfile"
-	else
-		ShowAsError 'no information to display'
-	fi
+	ShowReport
 
 	return 0
 
@@ -6413,12 +6436,7 @@ ShowHelpOptions()
 		} > "$r_report_output_pathfile"
 
 	EraseThisLine
-
-	if [[ -e $r_report_output_pathfile ]]; then
-		DisplayFileInViewport "$r_report_output_pathfile"
-	else
-		ShowAsError 'no information to display'
-	fi
+	ShowReport
 
 	return 0
 
@@ -6438,12 +6456,7 @@ ShowHelpPackages()
 		} > "$r_report_output_pathfile"
 
 	EraseThisLine
-
-	if [[ -e $r_report_output_pathfile ]]; then
-		DisplayFileInViewport "$r_report_output_pathfile"
-	else
-		ShowAsError 'no information to display'
-	fi
+	ShowReport
 
 	return 0
 
@@ -6482,12 +6495,7 @@ ShowHelpProblems()
 		} > "$r_report_output_pathfile"
 
 	EraseThisLine
-
-	if [[ -e $r_report_output_pathfile ]]; then
-		DisplayFileInViewport "$r_report_output_pathfile"
-	else
-		ShowAsError 'no information to display'
-	fi
+	ShowReport
 
 	return 0
 
@@ -6514,12 +6522,7 @@ ShowHelpUpgrades()
 		} > "$r_report_output_pathfile"
 
 	EraseThisLine
-
-	if [[ -e $r_report_output_pathfile ]]; then
-		DisplayFileInViewport "$r_report_output_pathfile"
-	else
-		ShowAsError 'no information to display'
-	fi
+	ShowReport
 
 	return 0
 
@@ -6549,12 +6552,7 @@ ShowHelpTips()
 		} > "$r_report_output_pathfile"
 
 	EraseThisLine
-
-	if [[ -e $r_report_output_pathfile ]]; then
-		DisplayFileInViewport "$r_report_output_pathfile"
-	else
-		ShowAsError 'no information to display'
-	fi
+	ShowReport
 
 	return 0
 
@@ -7661,14 +7659,13 @@ HelpAbbreviations()
 
 		ShowHelpBasic
 		DisplayAsHelpTitle "$(ShowAsTitleName) can recognise various abbreviations and aliases as $(ShowAsPackages)."
-		printf '\n'
 
 		} > "$r_report_output_pathfile"
 
 	if OsIsSupportAutowidthTableColumns; then
-		printf -v a '%s\n' 'QPKG name:|Installed?|Acceptable QPKG name abbreviations and aliases:'
+		printf -v a '\n%s\n' 'QPKG name:|Installed?|Acceptable QPKG name abbreviations and aliases:'
 	else
-		printf -v a '%s\n' "$(GenerateAbsReportTitleLine)"
+		printf -v a '\n%s\n' "$(GenerateAbsReportTitleLine)"
 	fi
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
@@ -7700,13 +7697,7 @@ HelpAbbreviations()
 	DisplayAsProjSynExam "example: to install $(ShowAsPackageName SABnzbd), $(ShowAsPackageName Mylar3) and $(ShowAsPackageName nzbToMedia) all-at-once" 'install sab my nzb2' >> "$r_report_output_pathfile"
 
 	EraseThisLine
-
-	if [[ -e $r_report_output_pathfile ]]; then
-		DisplayFileInViewport "$r_report_output_pathfile"
-	else
-		ShowAsError 'no information to display'
-	fi
-
+	ShowReport
 	ListQPKGsStates
 
 	FuncExit
@@ -7732,9 +7723,9 @@ ShowReportBackups()
 	ResetReportsPath &> /dev/null
 
 	if OsIsSupportAutowidthTableColumns; then
-		printf -v a '%s\n' 'Backup file:|Size in bytes:|Backup date:'
+		printf -v a '\n%s\n' 'Backup file:|Size in bytes:|Backup date:'
 	else
-		printf -v a '%s\n' "$(GenerateBacksReportTitleLine)"
+		printf -v a '\n%s\n' "$(GenerateBacksReportTitleLine)"
 	fi
 
 	if [[ -e $GNU_FIND_CMD ]]; then				# Prefer GNU `find` for this.
@@ -7776,13 +7767,7 @@ ShowReportBackups()
 	fi
 
 	EraseThisLine
-
-	if [[ -e $r_report_output_pathfile ]]; then
-		echo
-		DisplayFileInViewport "$r_report_output_pathfile"
-	else
-		ShowAsError 'no information to display'
-	fi
+	ShowReport
 
 	FuncExit
 
@@ -7802,9 +7787,9 @@ ShowReportDependencies()
 	ResetReportsPath &> /dev/null
 
 	if OsIsSupportAutowidthTableColumns; then
-		printf -v a '%s\n' 'QPKG name:|Dependencies:|Installed?|Enabled?|Managed?|Min. RAM:|Min. OS:|Max. OS:|Supported arch?|Installed QPKG author:'
+		printf -v a '\n%s\n' 'QPKG name:|Dependencies:|Installed?|Enabled?|Managed?|Min. RAM:|Min. OS:|Max. OS:|Supported arch?|Installed QPKG author:'
 	else
-		printf -v a '%s\n' "$(GenerateDepsReportTitleLine)"
+		printf -v a '\n%s\n' "$(GenerateDepsReportTitleLine)"
 	fi
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
@@ -7834,14 +7819,7 @@ ShowReportDependencies()
 	fi
 
 	EraseThisLine
-
-	if [[ -e $r_report_output_pathfile ]]; then
-		echo
-		DisplayFileInViewport "$r_report_output_pathfile"
-	else
-		ShowAsError 'no information to display'
-	fi
-
+	ShowReport
 	ListQPKGsStates
 
 	FuncExit
@@ -7862,9 +7840,9 @@ ShowReportFeatures()
 	ResetReportsPath &> /dev/null
 
 	if OsIsSupportAutowidthTableColumns; then
-		printf -v a '%s\n' 'QPKG name:|CanBack?|CanClean?|StartUpd?|AutoUpd?|LiveTest?|Indep?|Compat?|Enhanced?'
+		printf -v a '\n%s\n' 'QPKG name:|CanBack?|CanClean?|StartUpd?|AutoUpd?|LiveTest?|Indep?|Compat?|Enhanced?'
 	else
-		printf -v a '%s\n' "$(GenerateFeaturesReportTitleLine)"
+		printf -v a '\n%s\n' "$(GenerateFeaturesReportTitleLine)"
 	fi
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
@@ -7894,14 +7872,7 @@ ShowReportFeatures()
 	fi
 
 	EraseThisLine
-
-	if [[ -e $r_report_output_pathfile ]]; then
-		echo
-		DisplayFileInViewport "$r_report_output_pathfile"
-	else
-		ShowAsError 'no information to display'
-	fi
-
+	ShowReport
 	ListQPKGsStates
 
 	FuncExit
@@ -7924,14 +7895,13 @@ ShowReportPackages()
 
 		ShowHelpBasic
 		DisplayAsHelpTitle "one-or-more $(ShowAsPackages) may be specified at-once."
-		printf '\n'
 
 		} > "$r_report_output_pathfile"
 
 	if OsIsSupportAutowidthTableColumns; then
-		printf -v a '%s\n' 'QPKG name:|Appl. version:|Description:'
+		printf -v a '\n%s\n' 'QPKG name:|Appl. version:|Description:'
 	else
-		printf -v a '%s\n' "$(GeneratePacksReportTitleLine)"
+		printf -v a '\n%s\n' "$(GeneratePacksReportTitleLine)"
 	fi
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
@@ -7967,13 +7937,7 @@ ShowReportPackages()
 		} >> "$r_report_output_pathfile"
 
 	EraseThisLine
-
-	if [[ -e $r_report_output_pathfile ]]; then
-		echo
-		DisplayFileInViewport "$r_report_output_pathfile"
-	else
-		ShowAsError 'no information to display'
-	fi
+	ShowReport
 
 	FuncExit
 
@@ -7993,9 +7957,9 @@ ShowReportRepos()
 	ResetReportsPath &> /dev/null
 
 	if OsIsSupportAutowidthTableColumns; then
-		printf -v a '%s\n' 'QPKG name:|Repository:|Install date:'
+		printf -v a '\n%s\n' 'QPKG name:|Repository:|Install date:'
 	else
-		printf -v a '%s\n' "$(GenerateReposReportTitleLine)"
+		printf -v a '\n%s\n' "$(GenerateReposReportTitleLine)"
 	fi
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
@@ -8025,14 +7989,7 @@ ShowReportRepos()
 	fi
 
 	EraseThisLine
-
-	if [[ -e $r_report_output_pathfile ]]; then
-		echo
-		DisplayFileInViewport "$r_report_output_pathfile"
-	else
-		ShowAsError 'no information to display'
-	fi
-
+	ShowReport
 	ListQPKGsStates
 
 	FuncExit
@@ -8065,9 +8022,9 @@ ShowReportStatuses()
 
 	if OsIsSupportAutowidthTableColumns; then
 		[[ $a = true ]] && b=" ($(TextBrightOrange new))"
-		printf -v c '%s\n' "QPKG name:|Status:|Previous action (result):|QPKG version${b}:|Appl. version:|Location:"
+		printf -v c '\n%s\n' "QPKG name:|Status:|Previous action (result):|QPKG version${b}:|Appl. version:|Location:"
 	else
-		printf -v c '%s\n' "$(GenerateStatusReportTitleLine)"
+		printf -v c '\n%s\n' "$(GenerateStatusReportTitleLine)"
 	fi
 
 	m=$n
@@ -8092,14 +8049,7 @@ ShowReportStatuses()
 	fi
 
 	EraseThisLine
-
-	if [[ -e $r_report_output_pathfile ]]; then
-		echo
-		DisplayFileInViewport "$r_report_output_pathfile"
-	else
-		ShowAsError 'no information to display'
-	fi
-
+	ShowReport
 	ListQPKGsStates
 
 	show_action_results_ok=false
@@ -8127,7 +8077,7 @@ ShowReportAllActionResults()
 	local reason=''
 	local result=''
 
-	if [[ $useropt_show_all_results = true ]]; then
+	if [[ $useropt_show_previous_action_results_report = true ]]; then
 		show_action_results_failed=true
 		show_action_results_ok=true
 		show_action_results_skipped=true
@@ -8161,12 +8111,10 @@ ShowReportAllActionResults()
 
 			} > "$r_report_output_pathfile"
 
-			if [[ -e $r_report_output_pathfile ]]; then
-				DisplayFileInViewport "$r_report_output_pathfile"
-			else
-				ShowAsError 'no information to display'
-			fi
+			ShowReport
 		fi
+	else
+		ShowAsError 'previous report results not found'
 	fi
 
 	}
@@ -8195,7 +8143,7 @@ ShowReportActionResults()
 
 		while IFS='|' read -r datetime action quantity package_name package_type result duration reason; do
 			if [[ $result = "$1" ]] || [[ $1 = skipped && ($result = 'skipped-ok' || $result = 'skipped-error' || $result = 'skipped-abort') ]]; then
-				[[ $action = status && $useropt_show_all_results = false ]] && continue		# Don't need to see the result of `status` checks unless a 'results' report has been requested.
+				[[ $action = status && $useropt_show_previous_action_results_report = false ]] && continue		# Don't need to see the result of `status` checks unless a 'results' report has been requested.
 				((count++))
 				[[ $count -gt 1 ]] && break			# Two-or-more of the same action so must pluralise messages.
 			fi
@@ -8230,7 +8178,7 @@ ShowReportActionResults()
 		if [[ $count -ge 1 ]]; then
 			while IFS='|' read -r datetime action quantity package_name package_type result duration reason; do
 				if [[ $result = "$1" ]] || [[ $1 = skipped && ($result = 'skipped-ok' || $result = 'skipped-error' || $result = 'skipped-abort') ]]; then
-					[[ $action = status && $useropt_show_all_results = false ]] && continue		# Don't need to see the result of `status` checks unless a 'results' report has been requested.
+					[[ $action = status && $useropt_show_previous_action_results_report = false ]] && continue		# Don't need to see the result of `status` checks unless a 'results' report has been requested.
 					ShowAsActionLogDetail "$datetime" "$package_name" "$action" "$result" "$duration" "$reason" "$package_type" "$quantity"
 				fi
 			done < "$r_session_action_results_pathfile"
@@ -8409,7 +8357,7 @@ GenerateReportHeadingsFooter()
 		DisplayAsIndentQuotedInfoItem 'CanClean?' "application 'clean' is supported"
 		DisplayAsIndentQuotedInfoItem 'StartUpd?' 'application restart-to-update is supported'
 		DisplayAsIndentQuotedInfoItem 'AutoUpd?' 'application restart-to-update is enabled'
-		DisplayAsIndentQuotedInfoItem 'LiveTest?' "has a built-in 'status' check, and can test for daemon \"live\" status"
+		DisplayAsIndentQuotedInfoItem 'LiveTest?' "has a built-in 'status' check, and can test for daemon live status"
 		DisplayAsIndentQuotedInfoItem 'Indep?' 'is independent of other QPKGs'
 		DisplayAsIndentQuotedInfoItem 'Compat?' 'has a release compatible with this NAS architecture'
 		DisplayAsIndentQuotedInfoItem 'Enhanced?' "$(ShowAsTitleName) enhanced service actions are supported"
@@ -8425,6 +8373,21 @@ GenerateReportHeadingsFooter()
 
 	}
 
+ShowReport()
+	{
+
+	# Inputs: (global)
+	#	$r_report_output_pathfile
+
+	if [[ -e $r_report_output_pathfile ]]; then
+		DisplayFileInViewport "$r_report_output_pathfile"
+		Display
+	else
+		ShowAsError 'report not found'
+	fi
+
+	}
+
 ShowVersionsList()
 	{
 
@@ -8432,7 +8395,7 @@ ShowVersionsList()
 	EraseThisLine
 
 	Display "QPKG: ${r_this_package_ver:-undefined}$([[ $r_this_package_ver != undefined ]] && printf '%s' " ($(ConvertDateCodeToExtendedDate "$r_this_package_ver"))")"
-	Display "manager: ${r_this_script_ver:-undefined}$([[ $r_this_script_ver != undefined ]] && printf '%s' " ($(ConvertDateCodeToExtendedDate "$r_this_script_ver"))")"
+	Display "manager: ${r_this_script_ver:-undefined}$([[ $r_this_script_ver != undefined ]] && printf '%s' " ($(ConvertSecondsToFullDate "$r_this_script_epoch"))")"
 	Display "loader: ${LOADER_SCRIPT_VERSION:=undefined}$([[ $LOADER_SCRIPT_VERSION != undefined ]] && printf '%s' " ($(ConvertDateCodeToExtendedDate "$LOADER_SCRIPT_VERSION"))")"
 	Display "objects: ${r_objects_version:-undefined}$([[ $r_objects_version != undefined ]] && printf '%s' " ($(ConvertDateCodeToExtendedDate "$r_objects_version"))")"
 	Display "packages: ${r_packages_epoch:-undefined}$([[ $r_packages_epoch != undefined ]] && printf '%s' " ($(ConvertSecondsToFullDate "$r_packages_epoch"))")"
@@ -8510,7 +8473,7 @@ ShowQPKGList()
 			Display "$qpkg_name"
 		done
 	else
-		ShowAsWarn "unable to find any '$1' QPKGs"
+		ShowAsError 'unable to find any matching QPKGs'
 	fi
 
 	return 0
@@ -9292,12 +9255,15 @@ ShowZeroQpkgs()
 ClaimLockfile()
 	{
 
+	# Outputs: (global)
+	#	$r_lock_pathfile
+
 	local a=''
-	readonly r_lock_pathfile=/var/run/sherpa.lock		# global
+	readonly r_lock_pathfile=/var/run/sherpa.lock
 
 	for a in sherpa-manager.sh sherpa-manager.source; do
 		if [[ -e $r_lock_pathfile && -d /proc/$(<"$r_lock_pathfile") && $(< /proc/"$(<"$r_lock_pathfile")"/cmdline) =~ $a ]]; then
-			ShowAsAbort "another sherpa instance was found (PID:$(<"$r_lock_pathfile")), can't continue"
+			ShowAsAbort "another $(ShowAsTitleName) instance was found (PID:$(<"$r_lock_pathfile")), can't continue"
 
 			return 1
 		fi
@@ -9311,6 +9277,9 @@ ClaimLockfile()
 
 ReleaseLockfile()
 	{
+
+	# Inputs: (global)
+	#	$r_lock_pathfile
 
 	[[ -n ${r_lock_pathfile:-} ]] && rm -f "$r_lock_pathfile" 2> /dev/null
 
@@ -13239,6 +13208,30 @@ ConvertSecondsToFullDate()
 
 	} 2> /dev/null
 
+ConvertSecondsToDatecode()
+	{
+
+	# Convert supplied epoch-seconds into sherpa datecode.
+
+	# Inputs: (local)
+	#	$1 = Epoch seconds.
+
+	# Outputs: (local)
+	#	stdout = datecode.
+
+	[[ -n ${1:-} ]] || return
+
+	local a=$($SED_CMD 's/[^0-9]*//g' <<< "${1:-}")		# Strip everything not a numeral.
+
+	if [[ ${#a} -ne 10 ]]; then
+		printf 000000
+		return 1
+	fi
+
+	/bin/date -d @"$a" '+%y%m%d'
+
+	} 2> /dev/null
+
 ConvertSecondsToTime()
 	{
 
@@ -13346,7 +13339,7 @@ ConvertDateCodeToExtendedDate()
 	local a=$($SED_CMD 's/[^0-9]*//g' <<< "${1:-}")		# Strip everything not a numeral.
 
 	if [[ ${#a} -ne 6 ]]; then
-		printf 'unable to interpret datecode'
+		printf '%s' "$1"
 		return 1
 	fi
 
@@ -13507,7 +13500,7 @@ AddExtLogToSessLog()
 	local a=''
 	local b=false
 
-	if [[ $useropt_verbose = true ]]; then   # Prevent external log contents appearing onscreen again, because they've already been seen "live".
+	if [[ $useropt_verbose = true ]]; then   # Prevent external log contents appearing onscreen again, because they've already been seen live.
 		b=true
 		useropt_verbose=false
 	fi
@@ -13544,19 +13537,20 @@ ShowAsProc()
 	#	$useropt_terse
 	#	$useropt_verbose
 
-	local a=''
-	local b=''
+	[[ -n ${1:-} ]] || return
 
-	[[ -n ${1:-} ]] && a=$1 || return
+	local a=$1
+	local b=''
 	[[ -n ${2:-} ]] && b=${2:-}
+	local c="$a $r_chars_ellipsis $b"
 
 	if [[ ${useropt_verbose:=false} = false && ${useropt_terse:=true} = true ]] || [[ ${useropt_verbose:=false} = false && -n ${2:-} ]]; then
-		OpStepClearWait "$(TextBrightYellow proc)" "$a $r_chars_ellipsis $b"
+		OpStepClearWait "$(TextBrightYellow proc)" "$c"
 	else
-		OpStepClear "$(TextBrightYellow proc)" "$a $r_chars_ellipsis $b"
+		OpStepClear "$(TextBrightYellow proc)" "$c"
 	fi
 
-	WriteToLog proc "${a}${b}"
+	WriteToLog proc "$c"
 
 	} >&2
 

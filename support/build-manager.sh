@@ -4,6 +4,7 @@
 
 a=$support_path/$management_source_file
 b=$support_path/$management_file
+manager_epoch=$(date +%s)
 
 SwapTags "$a" "$b"
 

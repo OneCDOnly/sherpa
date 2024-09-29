@@ -1,17 +1,18 @@
 Observed issues:
 
+	* Unmanic backup fails.
+		- Service script reports 'backup unsupported', but Unmanic has database files.
+
 	* If IPK install stalls, seconds stalled display is not accurate.
 		- Need to calculate actual seconds elapsed since stall began, instead of using an accumulator and `sleep 1`.
 
 	* If an action fork fails (such as with "unbound variable" error), main loop stalls.
 		- Must save stderr to file, and exit main loop.
 
-	* Will need a new method to detect if QTS 5.2.0 is still starting QPKGs due to async starts.
-
-	* 'sherpa enable-auto-update active' is not running 'enable-auto-update' action.
+	* Will need a new method to detect if QTS 5.2.0 is starting/stopping QPKGs due to async starts/stops.
 
 	* Near the end of installing IPKs, monitored download path can remain at non-zero size while packages complete installation.
-		- Include a separate progress message when dir size shrinks? Maybe force increase to "100%" and stop monitoring?
+		- Include a separate progress message when dir size stops increasing and shrinks instead? Maybe force increase to "100%" and stop monitoring?
 
 	* 'sherpa' and 'opkg' were not available after installing Entware.
 		- Entware installation may be corrupt.
@@ -19,24 +20,24 @@ Observed issues:
 		- Restarting sherpa got this going again.
 
 	* FIXED: When a QPKG couldn't be signed (due to no 'sqlite3'), it's not shown by QPKGs.Actions:List() at-all.
-		- QPKG was skipped-abort, and is shown as a skipped QPKG in results.
-		- TODO: Other QPKGs to be signed were not shown in either list.
+		- QPKG was 'skipped-abort', and is shown as 'skipped' in results.
+		- TODO: Other QPKGs to be signed were not shown in either list. Must add them to 'skipped-abort' list.
 
 	* When aborting sherpa, must also ensure backgrounded procs abort.
 		- UPDATE: working fine, possibly won't need BG_PROCS_PATH anymore. Test to confirm.
 
-	* 'sherpa show status' displays status report correctly, and then displays 'show' usage examples.
-
 	* 'sherpa help show' is only showing basic help, not the 'show' help list.
 
 	* Function durations can become incorrect when functions with the same name are called recursively.
-		- Need to make vars holding start-times unique. Maybe measure nest depth?
-
-	* Removing OMedusa QPKG via sherpa didn't update App Center 'live' (icon remained until App Center was manually refreshed).
-
-	* Upgrading QPKGs via sherpa didn't update App Center icons 'live'.
+		- Need to make vars holding start-times unique. Maybe measure nest depth? Use epoch time in name?
 
 	* QPKG version sort is not correctly sorting version numbers followed by an alpha as later than non-alpha.
+
+	# QTS/QuTS App Center
+
+		* Removing OMedusa QPKG via sherpa didn't update App Center 'live' (icon remained until App Center was manually refreshed).
+
+		* Upgrading QPKGs via sherpa didn't update App Center icons 'live'.
 
 Reported issues:
 
