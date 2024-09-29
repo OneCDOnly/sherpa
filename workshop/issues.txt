@@ -1,5 +1,8 @@
 Observed issues:
 
+	* Unmanic backup fails.
+		- Service script reports 'backup unsupported', but Unmanic has database files.
+
 	* If IPK install stalls, seconds stalled display is not accurate.
 		- Need to calculate actual seconds elapsed since stall began, instead of using an accumulator and `sleep 1`.
 
