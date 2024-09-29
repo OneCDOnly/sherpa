@@ -793,7 +793,6 @@ DebugLogEnv()
 	DebugHardware ok 'CPU cores' "$r_cpu_cores"
 	DebugHardware ok 'CPU architecture' "$r_nas_arch"
 	DebugHardware ok RAM "$(FormatAsThous "$r_nas_ram_kb")kiB"
-
 	DebugKernel ok name "$(OsGetKernelName)"
 	DebugKernel ok version "$(OsGetKernelVersion)"
 
@@ -821,22 +820,21 @@ DebugLogEnv()
 
 	case $r_os_upstate in
 		starting-up|shutting-down)
-			DebugFirmware warning 'OS state' "$r_os_upstate"
+			DebugOS warning state "$r_os_upstate"
 			;;
 		*)
-			DebugFirmware ok 'OS state' "$r_os_upstate"
+			DebugOS ok state "$r_os_upstate"
 	esac
 
-	DebugFirmware ok 'OS uptime' "$(OsGetUptime)"
+	DebugOS ok uptime "$(OsGetUptime)"
 
 	if OsIsLoadAverageElevated; then
-		DebugFirmware warning 'system load' "$(OsGetSysLoadAverages)"
+		DebugOS warning 'load averages' "$(OsGetSysLoadAverages)"
 	else
-		DebugFirmware ok 'system load' "$(OsGetSysLoadAverages)"
+		DebugOS ok 'load averages' "$(OsGetSysLoadAverages)"
 	fi
 
 	DebugUserspace ok 'GLIBC' "$(/sbin/ldd --version | head -n1 | cut -d' ' -f4) $(/sbin/ldd --version | /bin/grep Copyright | /bin/sed 's|\$||')"
-
 	DebugUserspace ok 'bash' "$(bash --version | head -n1)"
 	DebugUserspace ok 'shell options' "$-"
 	DebugUserspace ok 'time in shell' "$(UserGetTimeInShell)"
@@ -12930,6 +12928,18 @@ DebugFirmware()
 	#	$3 = value
 
 	DebugItem "$1" firmware "$2" "$3"
+
+	}
+
+DebugOS()
+	{
+
+	# Inputs: (local)
+	#	$1 = type
+	#	$2 = name
+	#	$3 = value
+
+	DebugItem "$1" os "$2" "$3"
 
 	}
 
