@@ -1373,7 +1373,7 @@ ProcActions()
 
 	# -> Package preparation phase <-
 
-	ProcAction status all QPKG '"live" status'
+	ProcAction status all QPKG 'live status'
 
 	if [[ $useropt_show_status = false ]]; then
 		ShowAsProc 'assign QPKGs by state'				# Update action lists based-on QPKG `status`.
@@ -8340,7 +8340,7 @@ GenerateReportHeadingsFooter()
 		DisplayAsIndentQuotedInfoItem 'CanClean?' "application 'clean' is supported"
 		DisplayAsIndentQuotedInfoItem 'StartUpd?' 'application restart-to-update is supported'
 		DisplayAsIndentQuotedInfoItem 'AutoUpd?' 'application restart-to-update is enabled'
-		DisplayAsIndentQuotedInfoItem 'LiveTest?' "has a built-in 'status' check, and can test for daemon \"live\" status"
+		DisplayAsIndentQuotedInfoItem 'LiveTest?' "has a built-in 'status' check, and can test for daemon live status"
 		DisplayAsIndentQuotedInfoItem 'Indep?' 'is independent of other QPKGs'
 		DisplayAsIndentQuotedInfoItem 'Compat?' 'has a release compatible with this NAS architecture'
 		DisplayAsIndentQuotedInfoItem 'Enhanced?' "$(ShowAsTitleName) enhanced service actions are supported"
@@ -13483,7 +13483,7 @@ AddExtLogToSessLog()
 	local a=''
 	local b=false
 
-	if [[ $useropt_verbose = true ]]; then   # Prevent external log contents appearing onscreen again, because they've already been seen "live".
+	if [[ $useropt_verbose = true ]]; then   # Prevent external log contents appearing onscreen again, because they've already been seen live.
 		b=true
 		useropt_verbose=false
 	fi
