@@ -2621,6 +2621,9 @@ ParseActionArgs()
 							get_qpkg_states=true
 							run_package_actions=true
 					esac
+					;;
+				*)
+					continue
 			esac
 
 			case $group in
@@ -2640,14 +2643,15 @@ ParseActionArgs()
 					generate_action_results_report=true
 					get_qpkg_states=true
 					run_package_actions=true
-# 					;;
-# 				*)
-# 					LoadObjects
-# 					QPKGs-AC${action}-to:Add "$group"
-# 					awaiting_group=false
-# 					generate_action_results_report=true
-# 					get_qpkg_states=true
-# 					run_package_actions=true
+					;;
+				*)
+					LoadObjects
+# 					LoadPackages
+					QPKGs-AC${action}-to:Add "$group"
+					awaiting_group=false
+					generate_action_results_report=true
+					get_qpkg_states=true
+					run_package_actions=true
 			esac
 		else
 			args_remaining+=("$arg")

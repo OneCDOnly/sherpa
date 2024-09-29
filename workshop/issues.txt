@@ -1,5 +1,16 @@
 Observed issues:
 
+	* 'sherpa stop deps' does't execute actions.
+		-------------------------------------------------------------------------------------
+		[/share/Public] # ./sherpa-manager.source stop deps
+		sherpa v<?build_date?>-unstable
+
+		-------------------------------------------------------------------------------------
+		[/share/Public] # ./sherpa-manager.source start all
+		sherpa v<?build_date?>-unstable
+
+		-------------------------------------------------------------------------------------
+
 	* If IPK install stalls, seconds stalled display is not accurate.
 		- Need to calculate actual seconds elapsed since stall began, instead of using an accumulator and `sleep 1`.
 
