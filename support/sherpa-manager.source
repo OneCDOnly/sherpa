@@ -2605,7 +2605,7 @@ ParseActionArgs()
 
 		if [[ -n $action && -n $group ]]; then
 			case $action in
-				?(de|re)activate|backup|clean|@(dis|en)able|reassign|@(re|un)install|restore|sign|upgrade)
+				?(de|re)activate|backup|clean|@(dis|en)able?(au)|reassign|@(re|un)install|restore|sign|upgrade)
 					case $group in
 						?(NT)active)
 							LoadObjects
@@ -6382,7 +6382,6 @@ ShowHelpShow()
 		DisplayAsProjSynIndentExam '' r
 		DisplayAsProjSynIndentExam 'show last session action results' 'show results'
 		DisplayAsProjSynIndentExam '' results
-		DisplayAsProjSynIndentExam 'find the live status of each application in all QPKGs' 'show status'
 
 		} > "$r_report_output_pathfile"
 
@@ -8169,6 +8168,8 @@ ShowReportAllActionResults()
 				ShowAsError 'no information to display'
 			fi
 		fi
+	else
+		ShowAsError 'no information to display'
 	fi
 
 	}
@@ -8512,7 +8513,7 @@ ShowQPKGList()
 			Display "$qpkg_name"
 		done
 	else
-		ShowAsDone 'unable to find any matching QPKGs'
+		ShowAsError 'unable to find any matching QPKGs'
 	fi
 
 	return 0
