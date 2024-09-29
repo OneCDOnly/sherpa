@@ -348,6 +348,7 @@ LoadVars()
 	useropt_paste_log_last=false
 	useropt_paste_log_tail=false
 	useropt_report_footer=$(LoadSetting ReportFooter true)
+	useropt_show_about=false
 	useropt_show_backups=false
 	useropt_show_dependencies=false
 	useropt_show_features=false
@@ -772,12 +773,19 @@ CreatePaths()
 DebugLogEnv()
 	{
 
-	[[ $run_package_actions = true ]] || return 0
-	[[ $useropt_debug = true ]] || return 0
+	if [[ $useropt_show_about = false ]]; then
+		[[ $run_package_actions = true ]] || return 0
+		[[ $useropt_debug = true ]] || return 0
+	fi
 
 	FuncInit
 
 	ShowAsProc 'log env'
+
+	if [[ $useropt_show_about = true ]]; then
+		useropt_debug=true
+		useropt_verbose=true
+	fi
 
 	DebugInfoMinSepr
 	DebugHardware ok model "$(get_display_name)"
@@ -909,6 +917,13 @@ DebugLogEnv()
 	fi
 
 	DebugInfoMinSepr
+
+	if [[ $useropt_show_about = true ]]; then
+		useropt_debug=false
+		useropt_verbose=false
+		return
+	fi
+
 	RunAndLog "$DF_CMD -h | $GREP_CMD '^Filesystem\|^none\|^tmpfs\|ram'" "$r_ramfs_freespace_pathfile"
 	DebugInfoMinSepr
 	RunAndLog "$SCREEN_CMD -ls" "$r_screen_sessions_pathfile" '' 1
@@ -950,7 +965,7 @@ CheckTasks()
 		build_states=true
 	elif [[ $useropt_help_abbreviations = true || $useropt_show_backups = true || $useropt_show_dependencies = true || $useropt_show_features = true || $useropt_show_packages = true || $useropt_show_repos = true ]]; then
 		build_states=true
-	elif [[ $useropt_help_actions = true || $useropt_help_actions_all = true || $useropt_help_basic = true || $useropt_help_groups = true || $useropt_help_lists = true || $useropt_help_options = true || $useropt_help_packages = true || $useropt_help_problems = true || $useropt_help_show = true || $useropt_help_tips = true || $useropt_help_upgrades = true || $useropt_list_versions = true || $useropt_paste_log_last = true || $useropt_paste_log_tail = true || $useropt_show_all_results = true || $useropt_show_log_last = true || $useropt_show_log_tail = true || $switch_branch = true || $switch_colour = true || $switch_report_footer = true || $switch_terse = true ]]; then
+	elif [[ $useropt_help_actions = true || $useropt_help_actions_all = true || $useropt_help_basic = true || $useropt_help_groups = true || $useropt_help_lists = true || $useropt_help_options = true || $useropt_help_packages = true || $useropt_help_problems = true || $useropt_help_show = true || $useropt_help_tips = true || $useropt_help_upgrades = true || $useropt_list_versions = true || $useropt_paste_log_last = true || $useropt_paste_log_tail = true || $useropt_show_about = true || $useropt_show_all_results = true || $useropt_show_log_last = true || $useropt_show_log_tail = true || $switch_branch = true || $switch_colour = true || $switch_report_footer = true || $switch_terse = true ]]; then
 		: # don't do anything
 	else
 		LoadPackages
@@ -2286,7 +2301,7 @@ ParseShowArgs()
 		# Include action assignment when action hasn't been previously specified.
 
 		case $group in
-			abs|backups|dependent|features|last|packages|repositories|results|status|tail)
+			about|abs|backups|dependent|features|last|packages|repositories|results|status|tail)
 				[[ -z $action ]] && action=show
 		esac
 
@@ -2296,6 +2311,14 @@ ParseShowArgs()
 			case $action in
 				show)
 					case $group in
+						about)
+							action=''
+							awaiting_group=false
+							generate_show_report=true
+							get_qpkg_states=false
+							run_package_actions=false
+							useropt_show_about=true
+							;;
 						abs)
 							action=''
 							awaiting_group=false
@@ -2757,6 +2780,9 @@ MatchNoun()
 		a|abs|abbreviations)
 			printf abs
 			;;
+		about|backedup|canbackup|enabled|installable|installed|missing|results|show|?(un)stable)
+			printf '%s' "$a"
+			;;
 		action?(s))
 			printf actions
 			;;
@@ -2771,9 +2797,6 @@ MatchNoun()
 			;;
 		b|backups)
 			printf backups
-			;;
-		backedup|canbackup|enabled|installable|installed|missing|results|show|?(un)stable)
-			printf '%s' "$a"
 			;;
 		d|deps|dependencies|dependent?(s))
 			printf dependent
@@ -9295,12 +9318,15 @@ ShowZeroQpkgs()
 ClaimLockfile()
 	{
 
+	# Outputs: (global)
+	#	$r_lock_pathfile
+
 	local a=''
-	readonly r_lock_pathfile=/var/run/sherpa.lock		# global
+	readonly r_lock_pathfile=/var/run/sherpa.lock
 
 	for a in sherpa-manager.sh sherpa-manager.source; do
 		if [[ -e $r_lock_pathfile && -d /proc/$(<"$r_lock_pathfile") && $(< /proc/"$(<"$r_lock_pathfile")"/cmdline) =~ $a ]]; then
-			ShowAsAbort "another sherpa instance was found (PID:$(<"$r_lock_pathfile")), can't continue"
+			ShowAsAbort "another $(ShowAsTitleName) instance was found (PID:$(<"$r_lock_pathfile")), can't continue"
 
 			return 1
 		fi
@@ -9314,6 +9340,9 @@ ClaimLockfile()
 
 ReleaseLockfile()
 	{
+
+	# Inputs: (global)
+	#	$r_lock_pathfile
 
 	[[ -n ${r_lock_pathfile:-} ]] && rm -f "$r_lock_pathfile" 2> /dev/null
 
@@ -13264,7 +13293,7 @@ ConvertSecondsToDatecode()
 
 	/bin/date -d @"$a" '+%y%m%d'
 
-	} #2> /dev/null
+	} 2> /dev/null
 
 ConvertSecondsToTime()
 	{
