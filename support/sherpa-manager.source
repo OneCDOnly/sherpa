@@ -99,6 +99,7 @@ ShowResults()
 			ShowReportRepos
 		elif [[ $useropt_show_status = true ]]; then
 			ShowReportStatuses
+			show_action_results_report=false
 		fi
 	fi
 
@@ -150,7 +151,7 @@ ShowResults()
 		fi
 	fi
 
-	if [[ $generate_action_results_report = true || $generate_show_report = true ]]; then
+	if [[ $show_action_results_report = true ]]; then
 		ShowReportAllActionResults
 	fi
 
@@ -161,8 +162,6 @@ ShowResults()
 	DebugScript finished "$(ConvertNowToFullDate)"
 	DebugScript 'elapsed time' "$(ConvertSecondsToDuration "$(($(ConvertNowToSeconds)-r_script_startseconds))")"
 	DebugInfoMajSepr
-
-	[[ $title_shown = true ]] && Display 			# Final on-screen linespace.
 
 	FuncExit
 
@@ -293,7 +292,6 @@ LoadVars()
 	# Default flags.
 
 	archive_debug_afterward=false
-	generate_action_results_report=false
 	generate_help_report=false
 	generate_list_report=false
 	generate_show_report=false
@@ -307,6 +305,7 @@ LoadVars()
 	run_package_actions=false
 	show_action_results_failed=false
 	show_action_results_ok=false
+	show_action_results_report=false
 	show_action_results_skipped=false
 	show_action_results_zero=false
 	show_backuploc=false
@@ -355,8 +354,8 @@ LoadVars()
 	useropt_show_log_last=false
 	useropt_show_log_tail=false
 	useropt_show_packages=false
+	useropt_show_previous_action_results_report=false
 	useropt_show_repos=false
-	useropt_show_all_results=false
 	useropt_show_status=false
 	useropt_terse=$(LoadSetting Terse true)
 	useropt_verbose=false
@@ -943,7 +942,7 @@ CheckTasks()
 	# Establish whether there's anything to-do.
 
 	if [[ $arg_problem = true || $useropt_help_basic = true ]]; then
-		generate_action_results_report=false
+		show_action_results_report=false
 		generate_help_report=false
 		generate_list_report=false
 		generate_show_report=false
@@ -965,7 +964,7 @@ CheckTasks()
 		build_states=true
 	elif [[ $useropt_help_abbreviations = true || $useropt_show_backups = true || $useropt_show_dependencies = true || $useropt_show_features = true || $useropt_show_packages = true || $useropt_show_repos = true ]]; then
 		build_states=true
-	elif [[ $useropt_help_actions = true || $useropt_help_actions_all = true || $useropt_help_basic = true || $useropt_help_groups = true || $useropt_help_lists = true || $useropt_help_options = true || $useropt_help_packages = true || $useropt_help_problems = true || $useropt_help_show = true || $useropt_help_tips = true || $useropt_help_upgrades = true || $useropt_list_versions = true || $useropt_paste_log_last = true || $useropt_paste_log_tail = true || $useropt_show_about = true || $useropt_show_all_results = true || $useropt_show_log_last = true || $useropt_show_log_tail = true || $switch_branch = true || $switch_colour = true || $switch_report_footer = true || $switch_terse = true ]]; then
+	elif [[ $useropt_help_actions = true || $useropt_help_actions_all = true || $useropt_help_basic = true || $useropt_help_groups = true || $useropt_help_lists = true || $useropt_help_options = true || $useropt_help_packages = true || $useropt_help_problems = true || $useropt_help_show = true || $useropt_help_tips = true || $useropt_help_upgrades = true || $useropt_list_versions = true || $useropt_paste_log_last = true || $useropt_paste_log_tail = true || $useropt_show_about = true || $useropt_show_previous_action_results_report = true || $useropt_show_log_last = true || $useropt_show_log_tail = true || $switch_branch = true || $switch_colour = true || $switch_report_footer = true || $switch_terse = true ]]; then
 		: # don't do anything
 	else
 		LoadPackages
@@ -1475,6 +1474,8 @@ ProcActions()
 			ShowAsFail 'actions complete with errors'
 		fi
 	fi
+
+	show_action_results_report=true
 
 	FuncExit
 
@@ -2381,7 +2382,8 @@ ParseShowArgs()
 							generate_show_report=true
 							get_qpkg_states=false
 							run_package_actions=false
-							useropt_show_all_results=true
+							useropt_show_previous_action_results_report=true
+							show_action_results_report=true
 							;;
 						status)
 							LoadObjects
@@ -2634,7 +2636,7 @@ ParseActionArgs()
 							QPKGs.AC${action}.IS${group}:Set
 							QPKGs.ACstatus.ISinstalled:Set
 							awaiting_group=false
-							generate_action_results_report=true
+							show_action_results_report=true
 							get_qpkg_active_status=true
 							get_qpkg_states=true
 							run_package_actions=true
@@ -2646,7 +2648,7 @@ ParseActionArgs()
 					LoadObjects
 					QPKGs.AC${action}.GR${group}:Set
 					awaiting_group=false
-					generate_action_results_report=true
+					show_action_results_report=true
 					get_qpkg_active_status=false
 					get_qpkg_states=true
 					run_package_actions=true
@@ -2655,7 +2657,7 @@ ParseActionArgs()
 					LoadObjects
 					QPKGs.AC${action}.IS${group}:Set
 					awaiting_group=false
-					generate_action_results_report=true
+					show_action_results_report=true
 					get_qpkg_states=true
 					run_package_actions=true
 					;;
@@ -2664,7 +2666,7 @@ ParseActionArgs()
 					LoadObjects
 					QPKGs-AC${action}-to:Add "$group"
 					awaiting_group=false
-					generate_action_results_report=true
+					show_action_results_report=true
 					get_qpkg_states=true
 					run_package_actions=true
 			esac
@@ -6197,12 +6199,7 @@ ShowHelpActions()
 		} > "$r_report_output_pathfile"
 
 	EraseThisLine
-
-	if [[ -e $r_report_output_pathfile ]]; then
-		DisplayFileInViewport "$r_report_output_pathfile"
-	else
-		ShowAsError 'no information to display'
-	fi
+	ShowReport
 
 	return 0
 
@@ -6244,12 +6241,7 @@ ShowHelpActionsAll()
 		} > "$r_report_output_pathfile"
 
 	EraseThisLine
-
-	if [[ -e $r_report_output_pathfile ]]; then
-		DisplayFileInViewport "$r_report_output_pathfile"
-	else
-		ShowAsError 'no information to display'
-	fi
+	ShowReport
 
 	return 0
 
@@ -6276,12 +6268,18 @@ ShowHelpBasic()
 ShowHelpBasicExamples()
 	{
 
-	DisplayAsProjSynIndentExam "to see available $(ShowAsAction)s" 'help actions'
-	DisplayAsProjSynIndentExam "to see available $(ShowAsPackages)" 'show packages'
-	DisplayAsProjSynIndentExam '' p
-	DisplayAsProjSynIndentExam "to see available $(ShowAsPackageGroup)s" 'help groups'
-	DisplayAsProjSynIndentExam "or, for more $(ShowAsOptions)" 'help options'
-	DisplayAsHelpTitle "more in the wiki: $(ShowAsURL 'https://github.com/OneCDOnly/sherpa/wiki')"
+		{
+
+		DisplayAsProjSynIndentExam "to see available $(ShowAsAction)s" 'help actions'
+		DisplayAsProjSynIndentExam "to see available $(ShowAsPackages)" 'show packages'
+		DisplayAsProjSynIndentExam '' p
+		DisplayAsProjSynIndentExam "to see available $(ShowAsPackageGroup)s" 'help groups'
+		DisplayAsProjSynIndentExam "or, for more $(ShowAsOptions)" 'help options'
+		DisplayAsHelpTitle "more in the wiki: $(ShowAsURL 'https://github.com/OneCDOnly/sherpa/wiki')"
+
+		} > "$r_report_output_pathfile"
+
+	ShowReport
 
 	return 0
 
@@ -6317,12 +6315,7 @@ ShowHelpGroups()
 		} > "$r_report_output_pathfile"
 
 	EraseThisLine
-
-	if [[ -e $r_report_output_pathfile ]]; then
-		DisplayFileInViewport "$r_report_output_pathfile"
-	else
-		ShowAsError 'no information to display'
-	fi
+	ShowReport
 
 	return 0
 
@@ -6336,7 +6329,7 @@ ShowHelpIssue()
 	DisplayAsProjSynIndentExam "view only the most recent $(ShowAsTitleName) session log" last
 	DisplayAsProjSynIndentExam "view the entire $(ShowAsTitleName) session log" log
 	DisplayAsProjSynIndentExam "upload the most-recent $(FormatAsThous "$r_log_tail_lines") lines in your $(ShowAsTitleName) log to the $(ShowAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste log'
-	DisplayAsHelpTitleHighlighted "if you need help, please include a copy of your $(ShowAsTitleName) $(TextBrightOrange 'log for analysis!')"
+# 	DisplayAsHelpTitleHighlighted "if you need help, please include a copy of your $(ShowAsTitleName) $(TextBrightOrange 'log for analysis!')"
 
 	Display
 
@@ -6370,12 +6363,7 @@ ShowHelpLists()
 		} > "$r_report_output_pathfile"
 
 	EraseThisLine
-
-	if [[ -e $r_report_output_pathfile ]]; then
-		DisplayFileInViewport "$r_report_output_pathfile"
-	else
-		ShowAsError 'no information to display'
-	fi
+	ShowReport
 
 	return 0
 
@@ -6408,12 +6396,7 @@ ShowHelpShow()
 		} > "$r_report_output_pathfile"
 
 	EraseThisLine
-
-	if [[ -e $r_report_output_pathfile ]]; then
-		DisplayFileInViewport "$r_report_output_pathfile"
-	else
-		ShowAsError 'no information to display'
-	fi
+	ShowReport
 
 	return 0
 
@@ -6436,12 +6419,7 @@ ShowHelpOptions()
 		} > "$r_report_output_pathfile"
 
 	EraseThisLine
-
-	if [[ -e $r_report_output_pathfile ]]; then
-		DisplayFileInViewport "$r_report_output_pathfile"
-	else
-		ShowAsError 'no information to display'
-	fi
+	ShowReport
 
 	return 0
 
@@ -6461,12 +6439,7 @@ ShowHelpPackages()
 		} > "$r_report_output_pathfile"
 
 	EraseThisLine
-
-	if [[ -e $r_report_output_pathfile ]]; then
-		DisplayFileInViewport "$r_report_output_pathfile"
-	else
-		ShowAsError 'no information to display'
-	fi
+	ShowReport
 
 	return 0
 
@@ -6505,12 +6478,7 @@ ShowHelpProblems()
 		} > "$r_report_output_pathfile"
 
 	EraseThisLine
-
-	if [[ -e $r_report_output_pathfile ]]; then
-		DisplayFileInViewport "$r_report_output_pathfile"
-	else
-		ShowAsError 'no information to display'
-	fi
+	ShowReport
 
 	return 0
 
@@ -6537,12 +6505,7 @@ ShowHelpUpgrades()
 		} > "$r_report_output_pathfile"
 
 	EraseThisLine
-
-	if [[ -e $r_report_output_pathfile ]]; then
-		DisplayFileInViewport "$r_report_output_pathfile"
-	else
-		ShowAsError 'no information to display'
-	fi
+	ShowReport
 
 	return 0
 
@@ -6572,12 +6535,7 @@ ShowHelpTips()
 		} > "$r_report_output_pathfile"
 
 	EraseThisLine
-
-	if [[ -e $r_report_output_pathfile ]]; then
-		DisplayFileInViewport "$r_report_output_pathfile"
-	else
-		ShowAsError 'no information to display'
-	fi
+	ShowReport
 
 	return 0
 
@@ -7684,14 +7642,13 @@ HelpAbbreviations()
 
 		ShowHelpBasic
 		DisplayAsHelpTitle "$(ShowAsTitleName) can recognise various abbreviations and aliases as $(ShowAsPackages)."
-		printf '\n'
 
 		} > "$r_report_output_pathfile"
 
 	if OsIsSupportAutowidthTableColumns; then
-		printf -v a '%s\n' 'QPKG name:|Installed?|Acceptable QPKG name abbreviations and aliases:'
+		printf -v a '\n%s\n' 'QPKG name:|Installed?|Acceptable QPKG name abbreviations and aliases:'
 	else
-		printf -v a '%s\n' "$(GenerateAbsReportTitleLine)"
+		printf -v a '\n%s\n' "$(GenerateAbsReportTitleLine)"
 	fi
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
@@ -7723,13 +7680,7 @@ HelpAbbreviations()
 	DisplayAsProjSynExam "example: to install $(ShowAsPackageName SABnzbd), $(ShowAsPackageName Mylar3) and $(ShowAsPackageName nzbToMedia) all-at-once" 'install sab my nzb2' >> "$r_report_output_pathfile"
 
 	EraseThisLine
-
-	if [[ -e $r_report_output_pathfile ]]; then
-		DisplayFileInViewport "$r_report_output_pathfile"
-	else
-		ShowAsError 'no information to display'
-	fi
-
+	ShowReport
 	ListQPKGsStates
 
 	FuncExit
@@ -7755,9 +7706,9 @@ ShowReportBackups()
 	ResetReportsPath &> /dev/null
 
 	if OsIsSupportAutowidthTableColumns; then
-		printf -v a '%s\n' 'Backup file:|Size in bytes:|Backup date:'
+		printf -v a '\n%s\n' 'Backup file:|Size in bytes:|Backup date:'
 	else
-		printf -v a '%s\n' "$(GenerateBacksReportTitleLine)"
+		printf -v a '\n%s\n' "$(GenerateBacksReportTitleLine)"
 	fi
 
 	if [[ -e $GNU_FIND_CMD ]]; then				# Prefer GNU `find` for this.
@@ -7799,13 +7750,7 @@ ShowReportBackups()
 	fi
 
 	EraseThisLine
-
-	if [[ -e $r_report_output_pathfile ]]; then
-		echo
-		DisplayFileInViewport "$r_report_output_pathfile"
-	else
-		ShowAsError 'no information to display'
-	fi
+	ShowReport
 
 	FuncExit
 
@@ -7825,9 +7770,9 @@ ShowReportDependencies()
 	ResetReportsPath &> /dev/null
 
 	if OsIsSupportAutowidthTableColumns; then
-		printf -v a '%s\n' 'QPKG name:|Dependencies:|Installed?|Enabled?|Managed?|Min. RAM:|Min. OS:|Max. OS:|Supported arch?|Installed QPKG author:'
+		printf -v a '\n%s\n' 'QPKG name:|Dependencies:|Installed?|Enabled?|Managed?|Min. RAM:|Min. OS:|Max. OS:|Supported arch?|Installed QPKG author:'
 	else
-		printf -v a '%s\n' "$(GenerateDepsReportTitleLine)"
+		printf -v a '\n%s\n' "$(GenerateDepsReportTitleLine)"
 	fi
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
@@ -7857,14 +7802,7 @@ ShowReportDependencies()
 	fi
 
 	EraseThisLine
-
-	if [[ -e $r_report_output_pathfile ]]; then
-		echo
-		DisplayFileInViewport "$r_report_output_pathfile"
-	else
-		ShowAsError 'no information to display'
-	fi
-
+	ShowReport
 	ListQPKGsStates
 
 	FuncExit
@@ -7885,9 +7823,9 @@ ShowReportFeatures()
 	ResetReportsPath &> /dev/null
 
 	if OsIsSupportAutowidthTableColumns; then
-		printf -v a '%s\n' 'QPKG name:|CanBack?|CanClean?|StartUpd?|AutoUpd?|LiveTest?|Indep?|Compat?|Enhanced?'
+		printf -v a '\n%s\n' 'QPKG name:|CanBack?|CanClean?|StartUpd?|AutoUpd?|LiveTest?|Indep?|Compat?|Enhanced?'
 	else
-		printf -v a '%s\n' "$(GenerateFeaturesReportTitleLine)"
+		printf -v a '\n%s\n' "$(GenerateFeaturesReportTitleLine)"
 	fi
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
@@ -7917,14 +7855,7 @@ ShowReportFeatures()
 	fi
 
 	EraseThisLine
-
-	if [[ -e $r_report_output_pathfile ]]; then
-		echo
-		DisplayFileInViewport "$r_report_output_pathfile"
-	else
-		ShowAsError 'no information to display'
-	fi
-
+	ShowReport
 	ListQPKGsStates
 
 	FuncExit
@@ -7947,14 +7878,13 @@ ShowReportPackages()
 
 		ShowHelpBasic
 		DisplayAsHelpTitle "one-or-more $(ShowAsPackages) may be specified at-once."
-		printf '\n'
 
 		} > "$r_report_output_pathfile"
 
 	if OsIsSupportAutowidthTableColumns; then
-		printf -v a '%s\n' 'QPKG name:|Appl. version:|Description:'
+		printf -v a '\n%s\n' 'QPKG name:|Appl. version:|Description:'
 	else
-		printf -v a '%s\n' "$(GeneratePacksReportTitleLine)"
+		printf -v a '\n%s\n' "$(GeneratePacksReportTitleLine)"
 	fi
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
@@ -7990,13 +7920,7 @@ ShowReportPackages()
 		} >> "$r_report_output_pathfile"
 
 	EraseThisLine
-
-	if [[ -e $r_report_output_pathfile ]]; then
-		echo
-		DisplayFileInViewport "$r_report_output_pathfile"
-	else
-		ShowAsError 'no information to display'
-	fi
+	ShowReport
 
 	FuncExit
 
@@ -8016,9 +7940,9 @@ ShowReportRepos()
 	ResetReportsPath &> /dev/null
 
 	if OsIsSupportAutowidthTableColumns; then
-		printf -v a '%s\n' 'QPKG name:|Repository:|Install date:'
+		printf -v a '\n%s\n' 'QPKG name:|Repository:|Install date:'
 	else
-		printf -v a '%s\n' "$(GenerateReposReportTitleLine)"
+		printf -v a '\n%s\n' "$(GenerateReposReportTitleLine)"
 	fi
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
@@ -8048,14 +7972,7 @@ ShowReportRepos()
 	fi
 
 	EraseThisLine
-
-	if [[ -e $r_report_output_pathfile ]]; then
-		echo
-		DisplayFileInViewport "$r_report_output_pathfile"
-	else
-		ShowAsError 'no information to display'
-	fi
-
+	ShowReport
 	ListQPKGsStates
 
 	FuncExit
@@ -8088,9 +8005,9 @@ ShowReportStatuses()
 
 	if OsIsSupportAutowidthTableColumns; then
 		[[ $a = true ]] && b=" ($(TextBrightOrange new))"
-		printf -v c '%s\n' "QPKG name:|Status:|Previous action (result):|QPKG version${b}:|Appl. version:|Location:"
+		printf -v c '\n%s\n' "QPKG name:|Status:|Previous action (result):|QPKG version${b}:|Appl. version:|Location:"
 	else
-		printf -v c '%s\n' "$(GenerateStatusReportTitleLine)"
+		printf -v c '\n%s\n' "$(GenerateStatusReportTitleLine)"
 	fi
 
 	m=$n
@@ -8115,14 +8032,7 @@ ShowReportStatuses()
 	fi
 
 	EraseThisLine
-
-	if [[ -e $r_report_output_pathfile ]]; then
-		echo
-		DisplayFileInViewport "$r_report_output_pathfile"
-	else
-		ShowAsError 'no information to display'
-	fi
-
+	ShowReport
 	ListQPKGsStates
 
 	show_action_results_ok=false
@@ -8150,7 +8060,7 @@ ShowReportAllActionResults()
 	local reason=''
 	local result=''
 
-	if [[ $useropt_show_all_results = true ]]; then
+	if [[ $useropt_show_previous_action_results_report = true ]]; then
 		show_action_results_failed=true
 		show_action_results_ok=true
 		show_action_results_skipped=true
@@ -8184,14 +8094,10 @@ ShowReportAllActionResults()
 
 			} > "$r_report_output_pathfile"
 
-			if [[ -e $r_report_output_pathfile ]]; then
-				DisplayFileInViewport "$r_report_output_pathfile"
-			else
-				ShowAsError 'no information to display'
-			fi
+			ShowReport
 		fi
 	else
-		ShowAsError 'no information to display'
+		ShowAsError 'previous report results not found'
 	fi
 
 	}
@@ -8220,7 +8126,7 @@ ShowReportActionResults()
 
 		while IFS='|' read -r datetime action quantity package_name package_type result duration reason; do
 			if [[ $result = "$1" ]] || [[ $1 = skipped && ($result = 'skipped-ok' || $result = 'skipped-error' || $result = 'skipped-abort') ]]; then
-				[[ $action = status && $useropt_show_all_results = false ]] && continue		# Don't need to see the result of `status` checks unless a 'results' report has been requested.
+				[[ $action = status && $useropt_show_previous_action_results_report = false ]] && continue		# Don't need to see the result of `status` checks unless a 'results' report has been requested.
 				((count++))
 				[[ $count -gt 1 ]] && break			# Two-or-more of the same action so must pluralise messages.
 			fi
@@ -8255,7 +8161,7 @@ ShowReportActionResults()
 		if [[ $count -ge 1 ]]; then
 			while IFS='|' read -r datetime action quantity package_name package_type result duration reason; do
 				if [[ $result = "$1" ]] || [[ $1 = skipped && ($result = 'skipped-ok' || $result = 'skipped-error' || $result = 'skipped-abort') ]]; then
-					[[ $action = status && $useropt_show_all_results = false ]] && continue		# Don't need to see the result of `status` checks unless a 'results' report has been requested.
+					[[ $action = status && $useropt_show_previous_action_results_report = false ]] && continue		# Don't need to see the result of `status` checks unless a 'results' report has been requested.
 					ShowAsActionLogDetail "$datetime" "$package_name" "$action" "$result" "$duration" "$reason" "$package_type" "$quantity"
 				fi
 			done < "$r_session_action_results_pathfile"
@@ -8446,6 +8352,21 @@ GenerateReportHeadingsFooter()
 		else
 			printf '%s\n' "$a"
 		fi
+	fi
+
+	}
+
+ShowReport()
+	{
+
+	# Inputs: (global)
+	#	$r_report_output_pathfile
+
+	if [[ -e $r_report_output_pathfile ]]; then
+		DisplayFileInViewport "$r_report_output_pathfile"
+		Display
+	else
+		ShowAsError 'report not found'
 	fi
 
 	}
@@ -13286,7 +13207,7 @@ ConvertSecondsToDatecode()
 	local a=$($SED_CMD 's/[^0-9]*//g' <<< "${1:-}")		# Strip everything not a numeral.
 
 	if [[ ${#a} -ne 10 ]]; then
-		printf 'unable to interpret epoch seconds'
+		printf 000000
 		return 1
 	fi
 
@@ -13401,7 +13322,7 @@ ConvertDateCodeToExtendedDate()
 	local a=$($SED_CMD 's/[^0-9]*//g' <<< "${1:-}")		# Strip everything not a numeral.
 
 	if [[ ${#a} -ne 6 ]]; then
-		printf 'unable to interpret datecode'
+		printf '%s' "$1"
 		return 1
 	fi
 
