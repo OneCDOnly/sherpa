@@ -8512,7 +8512,7 @@ ShowQPKGList()
 			Display "$qpkg_name"
 		done
 	else
-		ShowAsWarn "unable to find any '$1' QPKGs"
+		ShowAsDone 'unable to find any matching QPKGs'
 	fi
 
 	return 0
