@@ -2488,7 +2488,7 @@ ParseListArgs()
 		# Include action assignment when action hasn't been previously specified.
 
 		case $group in
-			versions)
+			?(NT)installed|upgradable|versions)
 				[[ -z $action ]] && action=list
 		esac
 
@@ -6296,20 +6296,20 @@ ShowHelpGroups()
 		ShowHelpBasic
 		DisplayAsHelpTitle "$(ShowAsPackageGroup) usage examples:"
 		DisplayAsProjSynIndentExam 'select every package' "$(ShowAsAction) all"
-		DisplayAsProjSynIndentExam 'select only independent QPKGs (these do not depend on other QPKGs)' "$(ShowAsAction) independent"
-		DisplayAsProjSynIndentExam '' "$(ShowAsAction) independents"
-		DisplayAsProjSynIndentExam 'select only dependent QPKGs (these require another QPKG to be installed and active)' "$(ShowAsAction) dependent"
 		DisplayAsProjSynIndentExam 'select only active QPKGs' "$(ShowAsAction) active"
 		DisplayAsProjSynIndentExam '' "$(ShowAsAction) started"
+		DisplayAsProjSynIndentExam 'select only disabled QPKGs' "$(ShowAsAction) disabled"
+		DisplayAsProjSynIndentExam 'select only enabled QPKGs' "$(ShowAsAction) enabled"
 		DisplayAsProjSynIndentExam 'select only inactive QPKGs' "$(ShowAsAction) inactive"
 		DisplayAsProjSynIndentExam '' "$(ShowAsAction) stopped"
+		DisplayAsProjSynIndentExam 'select only installable QPKGs' "$(ShowAsAction) installable"
 		DisplayAsProjSynIndentExam 'select only installed QPKGs' "$(ShowAsAction) installed"
 		DisplayAsProjSynIndentExam 'select only QPKGs that are not installed' "$(ShowAsAction) not-installed"
 		DisplayAsProjSynIndentExam 'select only QPKGs that are backed-up' "$(ShowAsAction) backedup"
 		DisplayAsProjSynIndentExam 'select only QPKGs that are not backed-up' "$(ShowAsAction) not-backedup"
 		DisplayAsProjSynIndentExam 'select only QPKGs that are upgradable' "$(ShowAsAction) upgradable"
 		DisplayAsProjSynIndentExam '' "$(ShowAsAction) new"
-		DisplayAsProjSynIndentExam 'select only missing QPKGs (these are partly installed and broken)' "$(ShowAsAction) missing"
+		DisplayAsProjSynIndentExam 'select only missing QPKGs (these are partly-installed and broken)' "$(ShowAsAction) missing"
 		DisplayAsProjSynExam 'multiple groups are supported like this' "$(ShowAsAction) $(ShowAsPackageGroup) $(ShowAsPackageGroup)"
 
 		} > "$r_report_output_pathfile"
@@ -6329,8 +6329,6 @@ ShowHelpIssue()
 	DisplayAsProjSynIndentExam "view only the most recent $(ShowAsTitleName) session log" last
 	DisplayAsProjSynIndentExam "view the entire $(ShowAsTitleName) session log" log
 	DisplayAsProjSynIndentExam "upload the most-recent $(FormatAsThous "$r_log_tail_lines") lines in your $(ShowAsTitleName) log to the $(ShowAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste log'
-# 	DisplayAsHelpTitleHighlighted "if you need help, please include a copy of your $(ShowAsTitleName) $(TextBrightOrange 'log for analysis!')"
-
 	Display
 
 	return 0
@@ -6357,8 +6355,11 @@ ShowHelpLists()
 		DisplayAsProjSynIndentExam 'list only QPKGs that are not installed' 'list not-installed'
 		DisplayAsProjSynIndentExam '' not-installed
 		DisplayAsProjSynIndentExam 'list only upgradable QPKGs' 'list upgradable'
+		DisplayAsProjSynIndentExam '' 'list new'
 		DisplayAsProjSynIndentExam '' upgradable
+		DisplayAsProjSynIndentExam '' new
 		DisplayAsProjSynIndentExam "list $(ShowAsTitleName) object version numbers" 'list versions'
+		DisplayAsProjSynIndentExam '' versions
 
 		} > "$r_report_output_pathfile"
 
