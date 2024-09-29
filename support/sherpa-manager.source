@@ -578,10 +578,11 @@ LoadEnv()
 	args_incomplete=()
 	qpkg_default_index=0
 	qpkg_index=0
+	readonly r_this_script_epoch='<?manager_epoch?>'
 	useropt_branch=$(UserGetGitBranch)
 		readonly r_objects_archive_url='<?cdn_sherpa_base_url?>'/$useropt_branch/objects.tar.gz
 		readonly r_packages_archive_url='<?cdn_sherpa_packages_base_url?>'/$useropt_branch/packages.tar.gz
-		readonly r_this_script_ver='<?build_date?>'-$useropt_branch
+		readonly r_this_script_ver="$(ConvertSecondsToDatecode $r_this_script_epoch)-$useropt_branch"
 	readonly r_qpkg_bu_path=$(UserGetDefVol)/.qpkg_config_backup
 	readonly r_this_package_path=$(QpkgGetInstalledPath)
 		if [[ -z $r_this_package_path || $r_this_package_path = undefined || ! -d $r_this_package_path ]]; then
@@ -8433,7 +8434,7 @@ ShowVersionsList()
 	EraseThisLine
 
 	Display "QPKG: ${r_this_package_ver:-undefined}$([[ $r_this_package_ver != undefined ]] && printf '%s' " ($(ConvertDateCodeToExtendedDate "$r_this_package_ver"))")"
-	Display "manager: ${r_this_script_ver:-undefined}$([[ $r_this_script_ver != undefined ]] && printf '%s' " ($(ConvertDateCodeToExtendedDate "$r_this_script_ver"))")"
+	Display "manager: ${r_this_script_ver:-undefined}$([[ $r_this_script_ver != undefined ]] && printf '%s' " ($(ConvertSecondsToFullDate "$r_this_script_epoch"))")"
 	Display "loader: ${LOADER_SCRIPT_VERSION:=undefined}$([[ $LOADER_SCRIPT_VERSION != undefined ]] && printf '%s' " ($(ConvertDateCodeToExtendedDate "$LOADER_SCRIPT_VERSION"))")"
 	Display "objects: ${r_objects_version:-undefined}$([[ $r_objects_version != undefined ]] && printf '%s' " ($(ConvertDateCodeToExtendedDate "$r_objects_version"))")"
 	Display "packages: ${r_packages_epoch:-undefined}$([[ $r_packages_epoch != undefined ]] && printf '%s' " ($(ConvertSecondsToFullDate "$r_packages_epoch"))")"
@@ -13239,6 +13240,30 @@ ConvertSecondsToFullDate()
 	/bin/date -d @"$1" +%c | tr -s ' '
 
 	} 2> /dev/null
+
+ConvertSecondsToDatecode()
+	{
+
+	# Convert supplied epoch-seconds into sherpa datecode.
+
+	# Inputs: (local)
+	#	$1 = Epoch seconds.
+
+	# Outputs: (local)
+	#	stdout = datecode.
+
+	[[ -n ${1:-} ]] || return
+
+	local a=$($SED_CMD 's/[^0-9]*//g' <<< "${1:-}")		# Strip everything not a numeral.
+
+	if [[ ${#a} -ne 10 ]]; then
+		printf 'unable to interpret epoch seconds'
+		return 1
+	fi
+
+	/bin/date -d @"$a" '+%y%m%d'
+
+	} #2> /dev/null
 
 ConvertSecondsToTime()
 	{
