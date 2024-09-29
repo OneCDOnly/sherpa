@@ -348,6 +348,7 @@ LoadVars()
 	useropt_paste_log_tail=false
 	useropt_report_footer=$(LoadSetting ReportFooter true)
 	useropt_show_about=false
+	useropt_show_aboutall=false
 	useropt_show_backups=false
 	useropt_show_dependencies=false
 	useropt_show_features=false
@@ -772,7 +773,7 @@ CreatePaths()
 DebugLogEnv()
 	{
 
-	if [[ $useropt_show_about = false ]]; then
+	if [[ $useropt_show_about = false && $useropt_show_aboutall = false ]]; then
 		[[ $run_package_actions = true ]] || return 0
 		[[ $useropt_debug = true ]] || return 0
 	fi
@@ -781,7 +782,7 @@ DebugLogEnv()
 
 	ShowAsProc 'log env'
 
-	if [[ $useropt_show_about = true ]]; then
+	if [[ $useropt_show_about = true || $useropt_show_aboutall = true ]]; then
 		useropt_debug=true
 		useropt_verbose=true
 	fi
@@ -932,6 +933,12 @@ DebugLogEnv()
 	RunAndLog "$GREP_CMD -i 'out of memory\|oom-killer' /mnt/HDA_ROOT/.logs/kmsg" "$r_oom_log_pathfile" '' 1
 	DebugInfoMinSepr
 
+	if [[ $useropt_show_aboutall = true ]]; then
+		useropt_debug=false
+		useropt_verbose=false
+		return
+	fi
+
 	FuncExit
 
 	}
@@ -964,7 +971,7 @@ CheckTasks()
 		build_states=true
 	elif [[ $useropt_help_abbreviations = true || $useropt_show_backups = true || $useropt_show_dependencies = true || $useropt_show_features = true || $useropt_show_packages = true || $useropt_show_repos = true ]]; then
 		build_states=true
-	elif [[ $useropt_help_actions = true || $useropt_help_actions_all = true || $useropt_help_basic = true || $useropt_help_groups = true || $useropt_help_lists = true || $useropt_help_options = true || $useropt_help_packages = true || $useropt_help_problems = true || $useropt_help_show = true || $useropt_help_tips = true || $useropt_help_upgrades = true || $useropt_list_versions = true || $useropt_paste_log_last = true || $useropt_paste_log_tail = true || $useropt_show_about = true || $useropt_show_previous_action_results_report = true || $useropt_show_log_last = true || $useropt_show_log_tail = true || $switch_branch = true || $switch_colour = true || $switch_report_footer = true || $switch_terse = true ]]; then
+	elif [[ $useropt_help_actions = true || $useropt_help_actions_all = true || $useropt_help_basic = true || $useropt_help_groups = true || $useropt_help_lists = true || $useropt_help_options = true || $useropt_help_packages = true || $useropt_help_problems = true || $useropt_help_show = true || $useropt_help_tips = true || $useropt_help_upgrades = true || $useropt_list_versions = true || $useropt_paste_log_last = true || $useropt_paste_log_tail = true || $useropt_show_about = true || $useropt_show_about = true || $useropt_show_previous_action_results_report = true || $useropt_show_log_last = true || $useropt_show_log_tail = true || $switch_branch = true || $switch_colour = true || $switch_report_footer = true || $switch_terse = true ]]; then
 		: # don't do anything
 	else
 		LoadPackages
@@ -2302,7 +2309,7 @@ ParseShowArgs()
 		# Include action assignment when action hasn't been previously specified.
 
 		case $group in
-			about|abs|backups|dependent|features|last|packages|repositories|results|status|tail)
+			about|about-all|abs|backups|dependent|features|last|packages|repositories|results|status|tail)
 				[[ -z $action ]] && action=show
 		esac
 
@@ -2318,6 +2325,13 @@ ParseShowArgs()
 							get_qpkg_states=false
 							run_package_actions=false
 							useropt_show_about=true
+							;;
+						about-all)
+							action=''
+							awaiting_group=false
+							get_qpkg_states=false
+							run_package_actions=false
+							useropt_show_aboutall=true
 							;;
 						abs)
 							action=''
@@ -2781,7 +2795,7 @@ MatchNoun()
 		a|abs|abbreviations)
 			printf abs
 			;;
-		about|backedup|canbackup|enabled|installable|installed|missing|results|show|?(un)stable)
+		about|about-all|backedup|canbackup|enabled|installable|installed|missing|results|show|?(un)stable)
 			printf '%s' "$a"
 			;;
 		action?(s))
