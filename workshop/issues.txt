@@ -1,5 +1,7 @@
 Observed issues:
 
+	* Packages report (without report footer) has 3 linespaces between last QPKG name and abbreviations reminder text.
+
 	* If IPK install stalls, seconds stalled display is not accurate.
 		- Need to calculate actual seconds elapsed since stall began, instead of using an accumulator and `sleep 1`.
 
