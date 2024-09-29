@@ -891,7 +891,7 @@ DebugLogEnv()
 	DebugQpkg detect "$(ShowAsPackageName Entware) type" "$r_entware_type"
 	DebugQpkg detect "$(ShowAsPackageName Entware) install date" "$(QpkgGetInstalledDate Entware)"
 
-	if QpkgIsInstalled SortMyQPKGs; then
+	if QpkgIsReallyInstalled SortMyQPKGs; then
 		DebugQpkg detect "$(ShowAsPackageName SortMyQPKGs)" installed
 	else
 		if [[ ${r_nas_firmware_version//.} -lt 400 || ${r_nas_firmware_version//.} -gt 518 ]]; then
@@ -902,7 +902,7 @@ DebugLogEnv()
 	fi
 
 	if OsIsSupportQpkgTimeout; then
-		if QpkgIsInstalled IncreaseTimeouts; then
+		if QpkgIsReallyInstalled IncreaseTimeouts; then
 			if QPKGs.IsTimeoutsIncreased; then
 				DebugQpkg detect "$(ShowAsPackageName IncreaseTimeouts)" active
 			else
