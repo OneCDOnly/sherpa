@@ -947,9 +947,9 @@ CheckTasks()
 
 	if [[ $useropt_check = true || $useropt_show_status = true ]]; then
 		build_states=true
-	elif [[ $useropt_show_dependencies = true || $useropt_show_features = true || $useropt_show_packages = true || $useropt_show_repos = true ]]; then
+	elif [[ $useropt_help_abbreviations = true || $useropt_show_backups = true || $useropt_show_dependencies = true || $useropt_show_features = true || $useropt_show_packages = true || $useropt_show_repos = true ]]; then
 		build_states=true
-	elif [[ $useropt_help_actions = true || $useropt_help_actions_all = true || $useropt_help_groups = true || $useropt_help_lists = true || $useropt_help_options = true || $useropt_help_packages = true || $useropt_help_problems = true || $useropt_help_tips = true || $useropt_help_upgrades = true || $useropt_show_all_results = true ]]; then
+	elif [[ $useropt_help_actions = true || $useropt_help_actions_all = true || $useropt_help_basic = true || $useropt_help_groups = true || $useropt_help_lists = true || $useropt_help_options = true || $useropt_help_packages = true || $useropt_help_problems = true || $useropt_help_show = true || $useropt_help_tips = true || $useropt_help_upgrades = true || $useropt_list_versions = true || $useropt_paste_log_last = true || $useropt_paste_log_tail = true || $useropt_show_all_results = true || $useropt_show_log_last = true || $useropt_show_log_tail = true || $switch_branch = true || $switch_colour = true || $switch_report_footer = true || $switch_terse = true ]]; then
 		: # don't do anything
 	else
 		LoadPackages
@@ -988,12 +988,7 @@ CheckTasks()
 		done
 	fi
 
-	if [[ $build_states = true ]]; then
-		BuildQPKGsStates
-	else
-		get_qpkg_states=false
-		run_package_actions=false
-	fi
+	[[ $build_states = true ]] && BuildQPKGsStates
 
 	FuncExit
 
@@ -2621,9 +2616,6 @@ ParseActionArgs()
 							get_qpkg_states=true
 							run_package_actions=true
 					esac
-					;;
-				*)
-					continue
 			esac
 
 			case $group in
@@ -2645,8 +2637,8 @@ ParseActionArgs()
 					run_package_actions=true
 					;;
 				*)
+					[[ $action != show ]] || continue
 					LoadObjects
-# 					LoadPackages
 					QPKGs-AC${action}-to:Add "$group"
 					awaiting_group=false
 					generate_action_results_report=true
