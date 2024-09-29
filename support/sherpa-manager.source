@@ -2956,8 +2956,9 @@ ShowArgSuggestions()
 			esac
 		done
 
+		[[ $arg_problem = true ]] && Display
+
 		if [[ ${#args_remaining[@]:-} -gt 0 ]]; then
-			[[ $arg_problem = true ]] && echo
 			ShowAsError "incomplete argument$(Pluralise "${#args_remaining[@]}") \"${args_remaining[*]}\". Please check the arguments again"
 			arg_problem=true
 			args_remaining=()
@@ -3047,10 +3048,11 @@ ShowArgSuggestions()
 		done
 
 		if [[ ${#args_remaining[@]:-} -gt 0 ]]; then
-			[[ $arg_problem = true ]] && Display
 			ShowAsError "unknown argument$(Pluralise "${#args_remaining[@]}") \"${args_remaining[*]}\". Please check the arguments again"
 			arg_problem=true
 			useropt_help_basic=false
+		elif [[ $arg_problem = true ]]; then
+			Display
 		fi
 	fi
 
