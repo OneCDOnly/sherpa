@@ -9263,7 +9263,7 @@ ClaimLockfile()
 
 	for a in sherpa-manager.sh sherpa-manager.source; do
 		if [[ -e $r_lock_pathfile && -d /proc/$(<"$r_lock_pathfile") && $(< /proc/"$(<"$r_lock_pathfile")"/cmdline) =~ $a ]]; then
-			ShowAsAbort "another $(ShowAsTitleName) instance was found (PID:$(<"$r_lock_pathfile")), can't continue"
+			ShowAsAbort "a running $(ShowAsTitleName) instance was found (PID:$(<"$r_lock_pathfile")), can't continue"
 
 			return 1
 		fi
