@@ -928,7 +928,7 @@ DebugLogEnv()
 	DebugInfoMinSepr
 	RunAndLog "$SCREEN_CMD -ls" "$r_screen_sessions_pathfile" '' 1
 	DebugInfoMinSepr
-	RunAndLog '/usr/bin/free' "$r_ram_freeused_pathfile" '' 1
+	RunAndLog '/usr/bin/free -m' "$r_ram_freeused_pathfile" '' 1
 	DebugInfoMinSepr
 	RunAndLog "$GREP_CMD -i 'out of memory\|oom-killer' /mnt/HDA_ROOT/.logs/kmsg" "$r_oom_log_pathfile" '' 1
 	DebugInfoMinSepr
