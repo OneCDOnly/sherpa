@@ -2314,7 +2314,6 @@ ParseShowArgs()
 						about)
 							action=''
 							awaiting_group=false
-							generate_show_report=true
 							get_qpkg_states=false
 							run_package_actions=false
 							useropt_show_about=true
