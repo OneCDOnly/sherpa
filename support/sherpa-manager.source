@@ -834,8 +834,10 @@ DebugLogEnv()
 		DebugOS ok 'load averages' "$(OsGetSysLoadAverages)"
 	fi
 
-	DebugUserspace ok 'GLIBC' "$(/sbin/ldd --version | head -n1 | cut -d' ' -f4) $(/sbin/ldd --version | /bin/grep Copyright | /bin/sed 's|\$||')"
-	DebugUserspace ok 'bash' "$(bash --version | head -n1)"
+	DebugUserspace ok 'GLIBC' "$(UserGetGLIBC)"
+	DebugUserspace ok 'GLIBC copyright' "$(UserGetGLIBCCopyright)"
+	DebugUserspace ok 'bash' "$(UserGetBash)"
+	DebugUserspace ok 'bash copyright' "$(UserGetBashCopyright)"
 	DebugUserspace ok 'shell options' "$-"
 	DebugUserspace ok 'time in shell' "$(UserGetTimeInShell)"
 
@@ -8853,6 +8855,35 @@ OsGetUptime()
 	local n=$(< /proc/uptime)
 
 	ConvertSecondsToDuration "${n%%.*}"
+
+	}
+
+UserGetGLIBC()
+	{
+
+	local a=$(/sbin/ldd --version | head -n1)
+	printf '%s' "${a:4}"			# Trim 'ldd ' from front of string
+
+	}
+
+UserGetGLIBCCopyright()
+	{
+
+	/sbin/ldd --version | $GREP_CMD Copyright | $SED_CMD 's|\$||'
+
+	}
+
+UserGetBash()
+	{
+
+	bash --version | head -n1
+
+	}
+
+UserGetBashCopyright()
+	{
+
+	bash --version | $GREP_CMD Copyright | $SED_CMD 's|\$||'
 
 	}
 
