@@ -1,6 +1,6 @@
 Observed issues:
 
-	* Packages report (without report footer) has 3 linespaces between last QPKG name and abbreviations reminder text.
+	* Packages report (report-footer off) has 3 linespaces between last QPKG name and abbreviations reminder text.
 
 	* If IPK install stalls, seconds stalled display is not accurate.
 		- Need to calculate actual seconds elapsed since stall began, instead of using an accumulator and `sleep 1`.
@@ -17,6 +17,7 @@ Observed issues:
 		- Entware installation may be corrupt.
 		- But this shouldn't affect the sherpa command `/usr/sbin/sherpa`.
 		- Restarting sherpa got this going again.
+		- Retest.
 
 	* FIXED: When a QPKG couldn't be signed (due to no 'sqlite3'), it's not shown by QPKGs.Actions:List() at-all.
 		- QPKG was 'skipped-abort', and is shown as 'skipped' in results.

@@ -834,12 +834,8 @@ DebugLogEnv()
 		DebugOS ok 'load averages' "$(OsGetSysLoadAverages)"
 	fi
 
-	DebugUserspace ok 'GLIBC' "$(UserGetGLIBC)"
-	DebugUserspace ok 'GLIBC copyright' "$(UserGetGLIBCCopyright)"
-	DebugUserspace ok 'bash' "$(UserGetBash)"
-	DebugUserspace ok 'bash copyright' "$(UserGetBashCopyright)"
-	DebugUserspace ok 'shell options' "$-"
-	DebugUserspace ok 'time in shell' "$(UserGetTimeInShell)"
+	DebugUserspace ok LIBC "$(UserGetLIBC)"
+	DebugUserspace ok 'LIBC copyright' "$(UserGetLIBCCopyright)"
 
 	if OsIsSupportSudo; then
 		DebugUserspace ok '$SUDO_UID' "$(UserGetSudoUID)"
@@ -858,6 +854,12 @@ DebugLogEnv()
 	else
 		DebugUserspace warning "'$public_share' share" 'not present'
 	fi
+
+	DebugUserspace ok '$SHELL' "$(ShellGet)"
+	DebugShell ok version "$(ShellGetVersion)"
+	DebugShell ok copyright "$(ShellGetCopyright)"
+	DebugShell ok options "$-"
+	DebugShell ok 'time in shell' "$(ShellGetTimeIn)"
 
 # 	if [[ ${#PATH} -le $r_debug_log_third_column_width ]]; then
 # 		DebugUserspace ok '$PATH' "$PATH"
@@ -8858,7 +8860,7 @@ OsGetUptime()
 
 	}
 
-UserGetGLIBC()
+UserGetLIBC()
 	{
 
 	local a=$(/sbin/ldd --version | head -n1)
@@ -8866,28 +8868,39 @@ UserGetGLIBC()
 
 	}
 
-UserGetGLIBCCopyright()
+UserGetLIBCCopyright()
 	{
 
-	/sbin/ldd --version | $GREP_CMD Copyright | $SED_CMD 's|\$||'
+	/sbin/ldd --version | $GREP_CMD -i copyright | $SED_CMD 's|\$||'
 
 	}
 
-UserGetBash()
+ShellGet()
 	{
 
-	bash --version | head -n1
+	printf '%s' "${SHELL:-undefined}"
 
 	}
 
-UserGetBashCopyright()
+ShellGetVersion()
 	{
 
-	bash --version | $GREP_CMD Copyright | $SED_CMD 's|\$||'
+	[[ -n ${SHELL:-} ]] || printf undefined
+
+	$SHELL --version | head -n1
 
 	}
 
-UserGetTimeInShell()
+ShellGetCopyright()
+	{
+
+	[[ -n ${SHELL:-} ]] || printf undefined
+
+	$SHELL --version | $GREP_CMD -i copyright | $SED_CMD 's|\$||'
+
+	}
+
+ShellGetTimeIn()
 	{
 
 	local n=''
@@ -12973,6 +12986,18 @@ DebugOS()
 	#	$3 = value
 
 	DebugItem "$1" os "$2" "$3"
+
+	}
+
+DebugShell()
+	{
+
+	# Inputs: (local)
+	#	$1 = type
+	#	$2 = name
+	#	$3 = value
+
+	DebugItem "$1" shell "$2" "$3"
 
 	}
 
