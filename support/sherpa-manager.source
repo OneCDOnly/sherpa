@@ -231,9 +231,9 @@ LoadConsts()
 
 	# Report, help and debug formatting.
 
-	readonly r_debug_log_full_width=101
+	readonly r_debug_log_full_width=100
 	readonly r_debug_log_first_column_width=9
-	readonly r_debug_log_second_column_width=22
+	readonly r_debug_log_second_column_width=20
 		readonly r_debug_log_third_column_width=$((r_debug_log_full_width-r_debug_log_first_column_width-r_debug_log_second_column_width-4))
 	readonly r_help_desc_indent=3
 	readonly r_help_syntax_indent=6
@@ -793,6 +793,15 @@ DebugLogEnv()
 	DebugHardware ok 'CPU cores' "$r_cpu_cores"
 	DebugHardware ok 'CPU architecture' "$r_nas_arch"
 	DebugHardware ok RAM "$(FormatAsThous "$r_nas_ram_kb")kiB"
+	DebugKernel ok name "$(OsGetKernelName)"
+	DebugKernel ok version "$(OsGetKernelVersion)"
+
+	if OsIsStdKernelPageSize; then
+		DebugKernel ok 'page size' "${r_kernel_page_size}B"
+	else
+		DebugKernel warning 'page size' "${r_kernel_page_size}B"
+	fi
+
 	DebugFirmware ok OS "$(OsGetQnapOS)"
 
 	if OsIsSupported; then
@@ -807,37 +816,26 @@ DebugLogEnv()
 		DebugFirmware warning 'build date' "$r_nas_firmware_date"
 	fi
 
-	DebugFirmware ok 'kernel version' "$(OsGetKernelVersion)"
-
-	if OsIsStdKernelPageSize; then
-		DebugFirmware ok 'kernel page size' "${r_kernel_page_size}B"
-	else
-		DebugFirmware warning 'kernel page size' "${r_kernel_page_size}B"
-	fi
-
 	DebugFirmware ok platform "$r_nas_platform"
 
 	case $r_os_upstate in
 		starting-up|shutting-down)
-			DebugFirmware warning 'OS state' "$r_os_upstate"
+			DebugOS warning state "$r_os_upstate"
 			;;
 		*)
-			DebugFirmware ok 'OS state' "$r_os_upstate"
+			DebugOS ok state "$r_os_upstate"
 	esac
 
-	DebugFirmware ok 'OS uptime' "$(OsGetUptime)"
+	DebugOS ok uptime "$(OsGetUptime)"
 
 	if OsIsLoadAverageElevated; then
-		DebugFirmware warning 'system load' "$(OsGetSysLoadAverages)"
+		DebugOS warning 'load averages' "$(OsGetSysLoadAverages)"
 	else
-		DebugFirmware ok 'system load' "$(OsGetSysLoadAverages)"
+		DebugOS ok 'load averages' "$(OsGetSysLoadAverages)"
 	fi
 
-	DebugUserspace ok 'GLIBC' "$(/sbin/ldd --version | head -n1 | cut -d' ' -f4) $(/sbin/ldd --version | /bin/grep Copyright | /bin/sed 's|\$||')"
-
-	DebugUserspace ok 'bash' "$(bash --version | head -n1)"
-	DebugUserspace ok 'shell options' "$-"
-	DebugUserspace ok 'time in shell' "$(UserGetTimeInShell)"
+	DebugUserspace ok LIBC "$(UserGetLIBC)"
+	DebugUserspace ok 'LIBC copyright' "$(UserGetLIBCCopyright)"
 
 	if OsIsSupportSudo; then
 		DebugUserspace ok '$SUDO_UID' "$(UserGetSudoUID)"
@@ -856,6 +854,12 @@ DebugLogEnv()
 	else
 		DebugUserspace warning "'$public_share' share" 'not present'
 	fi
+
+	DebugUserspace ok '$SHELL' "$(ShellGet)"
+	DebugShell ok version "$(ShellGetVersion)"
+	DebugShell ok copyright "$(ShellGetCopyright)"
+	DebugShell ok options "$-"
+	DebugShell ok 'time in shell' "$(ShellGetTimeIn)"
 
 # 	if [[ ${#PATH} -le $r_debug_log_third_column_width ]]; then
 # 		DebugUserspace ok '$PATH' "$PATH"
@@ -8704,7 +8708,7 @@ ModPathToEntware()
 HardwareGetCPUInfo()
 	{
 
-	# BusyBox 1.01 doesn't support `-m` option for `grep`, so extract first mention the hard-way with `head`.
+	# BusyBox 1.01 doesn't support `grep -m`, so extract first mention the hard-way with `head`.
 
 	if $GREP_CMD -q '^model name' /proc/cpuinfo; then
 		$GREP_CMD '^model name' /proc/cpuinfo | head -n1 | $SED_CMD 's|^.*: ||' | tr -s ' '
@@ -8726,6 +8730,15 @@ OsGetArch()
 	$UNAME_CMD -m
 
 	}
+
+OsGetKernelName()
+	{
+
+	# BusyBox 1.01 doesn't support `uname -o` (operating system), so try with `-o` first, then fall-back to default if it fails.
+
+	$UNAME_CMD -o || $UNAME_CMD
+
+	} 2> /dev/null
 
 OsGetKernelVersion()
 	{
@@ -8847,7 +8860,47 @@ OsGetUptime()
 
 	}
 
-UserGetTimeInShell()
+UserGetLIBC()
+	{
+
+	local a=$(/sbin/ldd --version | head -n1)
+	printf '%s' "${a:4}"			# Trim 'ldd ' from front of string
+
+	}
+
+UserGetLIBCCopyright()
+	{
+
+	/sbin/ldd --version | $GREP_CMD -i copyright | $SED_CMD 's|\$||'
+
+	}
+
+ShellGet()
+	{
+
+	printf '%s' "${SHELL:-undefined}"
+
+	}
+
+ShellGetVersion()
+	{
+
+	[[ -n ${SHELL:-} ]] || printf undefined
+
+	$SHELL --version | head -n1
+
+	}
+
+ShellGetCopyright()
+	{
+
+	[[ -n ${SHELL:-} ]] || printf undefined
+
+	$SHELL --version | $GREP_CMD -i copyright | $SED_CMD 's|\$||'
+
+	}
+
+ShellGetTimeIn()
 	{
 
 	local n=''
@@ -9263,7 +9316,7 @@ ClaimLockfile()
 
 	for a in sherpa-manager.sh sherpa-manager.source; do
 		if [[ -e $r_lock_pathfile && -d /proc/$(<"$r_lock_pathfile") && $(< /proc/"$(<"$r_lock_pathfile")"/cmdline) =~ $a ]]; then
-			ShowAsAbort "another $(ShowAsTitleName) instance was found (PID:$(<"$r_lock_pathfile")), can't continue"
+			ShowAsAbort "a running $(ShowAsTitleName) instance was found (PID:$(<"$r_lock_pathfile")), can't continue"
 
 			return 1
 		fi
@@ -12888,80 +12941,141 @@ DebugExtLogMinSepr()
 
 	}
 
-DebugScript()
-	{
-
-	DebugDetectTabld SCRIPT "${1:-}" "${2:-}"
-
-	}
-
 DebugHardware()
 	{
 
-	case ${1:-} in
-		warning)
-			DebugWarningTabld HARDWARE "${2:-}" "${3:-}"
-			;;
-		*)
-			DebugDetectTabld HARDWARE "${2:-}" "${3:-}"
-	esac
+	# Inputs: (local)
+	#	$1 = type
+	#	$2 = name
+	#	$3 = value
+
+	DebugItem "$1" hardware "$2" "$3"
+
+	}
+
+DebugKernel()
+	{
+
+	# Inputs: (local)
+	#	$1 = type
+	#	$2 = name
+	#	$3 = value
+
+	DebugItem "$1" kernel "$2" "$3"
 
 	}
 
 DebugFirmware()
 	{
 
-	case ${1:-} in
-		warning)
-			DebugWarningTabld FIRMWARE "${2:-}" "${3:-}"
-			;;
-		*)
-			DebugDetectTabld FIRMWARE "${2:-}" "${3:-}"
-	esac
+	# Inputs: (local)
+	#	$1 = type
+	#	$2 = name
+	#	$3 = value
+
+	DebugItem "$1" firmware "$2" "$3"
+
+	}
+
+DebugOS()
+	{
+
+	# Inputs: (local)
+	#	$1 = type
+	#	$2 = name
+	#	$3 = value
+
+	DebugItem "$1" os "$2" "$3"
+
+	}
+
+DebugShell()
+	{
+
+	# Inputs: (local)
+	#	$1 = type
+	#	$2 = name
+	#	$3 = value
+
+	DebugItem "$1" shell "$2" "$3"
 
 	}
 
 DebugUserspace()
 	{
 
-	case ${1:-} in
-		warning)
-			DebugWarningTabld USERSPACE "${2:-}" "${3:-}"
-			;;
-		*)
-			DebugDetectTabld USERSPACE "${2:-}" "${3:-}"
-	esac
+	# Inputs: (local)
+	#	$1 = type
+	#	$2 = name
+	#	$3 = value
+
+	DebugItem "$1" userspace "$2" "$3"
+
+	}
+
+DebugScript()
+	{
+
+	# Inputs: (local)
+	#	$1 = name
+	#	$2 = value
+
+	DebugItem ok script "$1" "$2"
 
 	}
 
 DebugIpk()
 	{
 
-	case ${1:-} in
-		error)
-			DebugErrorTabld IPK "${2:-}" "${3:-}"
-			;;
-		*)
-			DebugInfoTabld IPK "${2:-}" "${3:-}"
-	esac
+	# Inputs: (local)
+	#	$1 = type
+	#	$2 = name
+	#	$3 = value
+
+	DebugItem "$1" ipk "$2" "$3"
 
 	}
 
 DebugQpkg()
 	{
 
-	case ${1:-} in
+	# Inputs: (local)
+	#	$1 = type
+	#	$2 = name
+	#	$3 = value
+
+	DebugItem "$1" qpkg "$2" "$3"
+
+	}
+
+DebugItem()
+	{
+
+	# Inputs: (local)
+	#	$1 = type
+	#	$2 = category
+	#	$3 = name
+	#	$4 = value
+
+	[[ -n ${1:-} ]] || return
+	[[ -n ${2:-} ]] || return
+	[[ -n ${3:-} ]] || return
+	[[ -n ${4:-} ]] || return
+
+	local a=$(Uppercase "$2")
+
+	case $1 in
 		error)
-			DebugErrorTabld QPKG "${2:-}" "${3:-}"
+			DebugErrorTabld "$a" "$3" "$4"
 			;;
 		warning)
-			DebugWarningTabld QPKG "${2:-}" "${3:-}"
+			DebugWarningTabld "$a" "$3" "$4"
 			;;
 		info)
-			DebugInfoTabld QPKG "${2:-}" "${3:-}"
+			DebugInfoTabld "$a" "$3" "$4"
 			;;
 		*)
-			DebugDetectTabld QPKG "${2:-}" "${3:-}"
+			DebugDetectTabld "$a" "$3" "$4"
 	esac
 
 	}
