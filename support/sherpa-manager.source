@@ -8704,7 +8704,7 @@ ModPathToEntware()
 HardwareGetCPUInfo()
 	{
 
-	# BusyBox 1.01 doesn't support `-m` option for `grep`, so extract first mention the hard-way with `head`.
+	# BusyBox 1.01 doesn't support `grep -m`, so extract first mention the hard-way with `head`.
 
 	if $GREP_CMD -q '^model name' /proc/cpuinfo; then
 		$GREP_CMD '^model name' /proc/cpuinfo | head -n1 | $SED_CMD 's|^.*: ||' | tr -s ' '
@@ -8730,9 +8730,11 @@ OsGetArch()
 OsGetKernelName()
 	{
 
-	$UNAME_CMD -o
+	# BusyBox 1.01 doesn't support `uname -o` (operating system), so try with `-o` first, then fall-back to default if it fails.
 
-	}
+	$UNAME_CMD -o || $UNAME_CMD
+
+	} 2> /dev/null
 
 OsGetKernelVersion()
 	{
