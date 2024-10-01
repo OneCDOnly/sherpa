@@ -767,6 +767,7 @@ CreatePaths()
 	MakePath "$r_reports_path" reports || return
 	MakePath "$r_qpkg_bu_path" 'QPKG backup' || return
 	MakePath "$r_qpkg_download_path" 'QPKG download' || return
+	MakePath "$r_qpkg_states_path" states || return
 
 	}
 
@@ -1741,10 +1742,18 @@ ProcAction()
 OpenActionMsgPipe()
 	{
 
+	# Inputs: (global)
+	#	$r_action_msg_pipe
+
+	# Outputs: (global)
+	#	$action_msg_pipe_fd
+	#	$backup_stdin_fd
+
 	# Create a message pipe, so action forks can send data back to parent.
 
 	[[ -p $r_action_msg_pipe ]] && rm -f "$r_action_msg_pipe" 2> /dev/null
-	[[ ! -p $r_action_msg_pipe ]] && mknod "$r_action_msg_pipe" p
+	[[ ! -d $($DIRNAME_CMD "$r_action_msg_pipe") ]] && mkdir -p "$($DIRNAME_CMD "$r_action_msg_pipe")"
+	[[ ! -p $r_action_msg_pipe ]] && $MKNOD_CMD "$r_action_msg_pipe" p
 
 	# Create a file descriptor to store original stdin FD.
 
@@ -1768,6 +1777,11 @@ OpenActionMsgPipe()
 
 CloseActionMsgPipe()
 	{
+
+	# Inputs: (global)
+	#	$action_msg_pipe_fd
+	#	$backup_stdin_fd
+	#	$r_action_msg_pipe
 
 	# Restore original file descriptors, and remove message pipe.
 
@@ -7395,8 +7409,6 @@ BuildQPKGsStates()
 
 	ShowAsProc 'QPKG states'
 
-	MakePath "$r_qpkg_states_path" states || return
-
 	# Faster to launch several concurrent loops async, than a single loop. Launch those requiring more processing-time first.
 
 	# This one should only be run when actioning 'installable' QPKGs.
@@ -12568,7 +12580,7 @@ ClearPath()
 	{
 
 	# Clear (empty) an existing directory, but don't delete the directory.
-	# Delete files in a relatively safe manner. Parent of directory MUST be specified to avoid an 'rm -rf /*' situation through empty args.
+	# Delete files in a relatively safe manner. Parent of directory MUST be specified to avoid an `rm -rf /*` situation because of empty args.
 
 	# Inputs: (local)
 	#	$1 = full path to parent of directory name to clear.
