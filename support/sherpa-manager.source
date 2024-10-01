@@ -788,7 +788,7 @@ DebugLogEnv()
 	fi
 
 	DebugInfoMinSepr
-	DebugHardware ok model "$(get_display_name)"
+	DebugHardware ok 'NAS model' "$(get_display_name)"
 	DebugHardware ok CPU "$(HardwareGetCPUInfo)"
 	DebugHardware ok 'CPU cores' "$r_cpu_cores"
 	DebugHardware ok 'CPU architecture' "$r_nas_arch"
@@ -1821,7 +1821,7 @@ SetMaxForks()
 				reason="'$1'"
 				;;
 			clean)											# Precautionary: don't make too-many calls to PyPI at the same time.
-				max_forks=$(((max_forks+1)/2))
+				max_forks=$(((r_concurrency+1)/2))
 				reason="'$1'"
 				;;
 			backup|deactivate|download|uninstall)			# Low-resource actions, so allow multiple forks, even on ARMv5.
