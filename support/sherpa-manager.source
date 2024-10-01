@@ -868,9 +868,8 @@ DebugLogEnv()
 # 		DebugUserspace ok '$PATH (LHS-only)' "${PATH:0:$((r_debug_log_third_column_width-${#r_chars_ellipsis}))}${r_chars_ellipsis}"
 # 	fi
 
-
 	DebugScript QPKG "${r_this_package_ver:-undefined}$([[ $r_this_package_ver != undefined ]] && printf '%s' " ($(ConvertDateCodeToExtendedDate "$r_this_package_ver"))")"
-	DebugScript manager "$(ConvertSecondsToDatecode "$r_this_script_epoch")"
+	DebugScript manager "$(ConvertSecondsToDatecode "$r_this_script_epoch")$([[ ${#r_this_script_epoch} -eq 10 ]] && printf '%s' " ($(ConvertSecondsToFullDate "$r_this_script_epoch"))")"
 	DebugScript 'git branch' "$useropt_branch"
 	DebugScript loader "${LOADER_SCRIPT_VERSION:=undefined}$([[ $LOADER_SCRIPT_VERSION != undefined ]] && printf '%s' " ($(ConvertDateCodeToExtendedDate "$LOADER_SCRIPT_VERSION"))")"
 
