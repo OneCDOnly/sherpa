@@ -1,6 +1,6 @@
 Observed issues:
 
-	* Packages report (report-footer off) has 3 linespaces between last QPKG name and abbreviations reminder text.
+	* Packages report (with 'report-footer off') has 3 linespaces between last QPKG name and abbreviations reminder text.
 
 	* If IPK install stalls, seconds stalled display is not accurate.
 		- Need to calculate actual seconds elapsed since stall began, instead of using an accumulator and `sleep 1`.

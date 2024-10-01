@@ -1,4 +1,4 @@
-* Update sherpa service control script terminal output so it matches QPKG library functions.
+* Put 'sherpa about' display into a report window.
 
 * Check OOM killed pids against inactive daemons and report as-such on status report.
 
