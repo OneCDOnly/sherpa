@@ -5785,7 +5785,7 @@ GenerateFeaturesReportTitleLine()
 	printf "%-$((r_report_qpkg_tier_column_width+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 8: NAS arch is compatible?
-	a='Compat?'
+	a='ArchCompat?'
 	printf "%-$((r_report_qpkg_is_compatible_column_width+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 9: QPKG is sherpa-compatible?
@@ -5811,14 +5811,14 @@ GenerateFeaturesReportDataLine()
 
 	local active_test=false
 	local active_test_msg=$r_chars_blank
-	local autoupdate=false
+	local autoupdate=false					# Tri-state: true, false, N/A
 	local autoupdate_msg=$r_chars_blank
 	local backup=false
 	local backup_msg=$r_chars_blank
 	local clean=false
 	local clean_msg=$r_chars_blank
-	local compatible=false
-	local compatible_msg=$r_chars_blank
+	local arch_compatible=false
+	local arch_compatible_msg=$r_chars_blank
 	local mode=''
 	local name_msg=$r_chars_blank
 	local req_alert=false
@@ -5870,7 +5870,7 @@ GenerateFeaturesReportDataLine()
 			autoupdate=N/A
 			backup=N/A
 			clean=N/A
-			compatible=N/A
+			arch_compatible=N/A
 			restart_to_update=N/A
 			sherpa_compatible=N/A
 			tier=N/A
@@ -5881,7 +5881,7 @@ GenerateFeaturesReportDataLine()
 			autoupdate_msg+=$autoupdate
 			backup_msg+=$backup
 			clean_msg+=$clean
-			compatible_msg+=$compatible
+			arch_compatible_msg+=$arch_compatible
 			restart_to_update_msg+=$restart_to_update
 			sherpa_compatible_msg+=$sherpa_compatible
 			tier_msg+=$tier
@@ -5892,7 +5892,7 @@ GenerateFeaturesReportDataLine()
 			autoupdate_msg=$(TextDarkGrey "$autoupdate_msg")
 			backup_msg=$(TextDarkGrey "$backup_msg")
 			clean_msg=$(TextDarkGrey "$clean_msg")
-			compatible_msg=$(TextDarkGrey "$compatible_msg")
+			arch_compatible_msg=$(TextDarkGrey "$arch_compatible_msg")
 			restart_to_update_msg=$(TextDarkGrey "$restart_to_update_msg")
 			sherpa_compatible_msg=$(TextDarkGrey "$sherpa_compatible_msg")
 			tier_msg=$(TextDarkGrey "$tier_msg")
@@ -5915,7 +5915,7 @@ GenerateFeaturesReportDataLine()
 
 			QpkgIsDatabaseCanBackup && backup=true
 			QpkgIsDatabaseCanClean && clean=true
-			QpkgIsDatabaseArchOK && compatible=true
+			QpkgIsDatabaseArchOK && arch_compatible=true
 
 			if QpkgIsDatabaseCanRestartToUpdate; then
 				restart_to_update=true
@@ -5932,7 +5932,7 @@ GenerateFeaturesReportDataLine()
 			autoupdate_msg+=$autoupdate
 			backup_msg+=$backup
 			clean_msg+=$clean
-			compatible_msg+=$compatible
+			arch_compatible_msg+=$arch_compatible
 			restart_to_update_msg+=$restart_to_update
 			sherpa_compatible_msg+=$sherpa_compatible
 			tier_msg+=$tier
@@ -5941,32 +5941,51 @@ GenerateFeaturesReportDataLine()
 			# Highlight field messages.
 
 			if [[ $active_test = true ]]; then
-				active_test_msg=$(TextBrightGreen "$active_test_msg")
+				: #	active_test_msg=$(TextBrightGreen "$active_test_msg")
 			else
 				active_test_msg=$(TextBrightOrange "$active_test_msg")
 			fi
 
-			if [[ $autoupdate = true ]]; then
-				autoupdate_msg=$(TextBrightGreen "$autoupdate_msg")
+			if [[ $autoupdate = true ]]; then			# Tri-state.
+				: # autoupdate_msg=$(TextBrightGreen "$autoupdate_msg")
 			elif [[ $autoupdate = false ]]; then
 				autoupdate_msg=$(TextBrightOrange "$autoupdate_msg")
 			fi
 
-			[[ $backup = true ]] && backup_msg=$(TextBrightGreen "$backup_msg")
-			[[ $clean = true ]] && clean_msg=$(TextBrightGreen "$clean_msg")
-
-			if [[ $compatible = true ]]; then
-				compatible_msg=$(TextBrightGreen "$compatible_msg")
+			if [[ $backup = true ]]; then
+				: # backup_msg=$(TextBrightGreen "$backup_msg")
 			else
-				compatible_msg=$(TextBrightRed "$compatible_msg")
+				backup_msg=$(TextBrightOrange "$backup_msg")
 			fi
 
-			[[ $restart_to_update = true ]] && restart_to_update_msg=$(TextBrightGreen "$restart_to_update_msg")
+			if [[ $clean = true ]]; then
+				: # clean_msg=$(TextBrightGreen "$clean_msg")
+			else
+				clean_msg=$(TextBrightOrange "$clean_msg")
+			fi
+
+			if [[ $arch_compatible = true ]]; then
+				: # arch_compatible_msg=$(TextBrightGreen "$arch_compatible_msg")
+			else
+				arch_compatible_msg=$(TextBrightRed "$arch_compatible_msg")
+			fi
+
+			if [[ $restart_to_update = true ]]; then
+				: # restart_to_update_msg=$(TextBrightGreen "$restart_to_update_msg")
+			else
+				restart_to_update_msg=$(TextBrightOrange "$restart_to_update_msg")
+			fi
 
 			if [[ $sherpa_compatible = true ]]; then
-				sherpa_compatible_msg=$(TextBrightGreen "$sherpa_compatible_msg")
+				: # sherpa_compatible_msg=$(TextBrightGreen "$sherpa_compatible_msg")
 			else
 				sherpa_compatible_msg=$(TextBrightOrange "$sherpa_compatible_msg")
+			fi
+
+			if [[ $uniqueunpack = true ]]; then
+				: # uniqueunpack_msg=$(TextBrightGreen "$uniqueunpack_msg")
+			else
+				uniqueunpack_msg=$(TextBrightOrange "$uniqueunpack_msg")
 			fi
 	esac
 
@@ -5983,7 +6002,7 @@ GenerateFeaturesReportDataLine()
 	fi
 
 	if OsIsSupportAutowidthTableColumns; then
-		echo "$name_msg|$backup_msg|$clean_msg|$restart_to_update_msg|$autoupdate_msg|$active_test_msg|$tier_msg|$compatible_msg|$sherpa_compatible_msg|$uniqueunpack_msg"
+		echo "$name_msg|$backup_msg|$clean_msg|$restart_to_update_msg|$autoupdate_msg|$active_test_msg|$tier_msg|$arch_compatible_msg|$sherpa_compatible_msg|$uniqueunpack_msg"
 	else
 		# column 1: package name.
 		printf "%-$((r_report_qpkg_name_column_width+$(LenANSIDiff "$name_msg")))s" "$name_msg"
@@ -6014,7 +6033,7 @@ GenerateFeaturesReportDataLine()
 
 		# column 8: NAS arch is compatible?
 		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_qpkg_is_compatible_column_width+$(LenANSIDiff "$compatible_msg")))s" "$compatible_msg"
+		printf "%-$((r_report_qpkg_is_compatible_column_width+$(LenANSIDiff "$arch_compatible_msg")))s" "$arch_compatible_msg"
 
 		# column 9: QPKG is sherpa-compatible?
 		printf "%$((r_report_column_spacing))s"
@@ -7871,7 +7890,7 @@ ShowReportFeatures()
 	ResetReportsPath &> /dev/null
 
 	if OsIsSupportAutowidthTableColumns; then
-		printf -v a '\n%s\n' 'QPKG name:|CanBack?|CanClean?|StartUpd?|AutoUpd?|LiveTest?|Indep?|Compat?|Enhanced?|UniqueUnpack?'
+		printf -v a '\n%s\n' 'QPKG name:|CanBack?|CanClean?|StartUpd?|AutoUpd?|LiveTest?|Indep?|ArchCompat?|Enhanced?|UniqueUnpack?'
 	else
 		printf -v a '\n%s\n' "$(GenerateFeaturesReportTitleLine)"
 	fi
@@ -8390,8 +8409,9 @@ GenerateReportHeadingsFooter()
 		DisplayAsIndentQuotedInfoItem 'AutoUpd?' 'application restart-to-update is enabled'
 		DisplayAsIndentQuotedInfoItem 'LiveTest?' "has a built-in 'status' check, and can test for daemon live status"
 		DisplayAsIndentQuotedInfoItem 'Indep?' 'is independent of other QPKGs'
-		DisplayAsIndentQuotedInfoItem 'Compat?' 'has a release compatible with this NAS architecture'
+		DisplayAsIndentQuotedInfoItem 'ArchCompat?' 'has a release compatible with this NAS architecture'
 		DisplayAsIndentQuotedInfoItem 'Enhanced?' "$(ShowAsTitleName) enhanced service actions are supported"
+		DisplayAsIndentQuotedInfoItem 'UniqueUnpack?' 'QPKG unpacks itself to a unique path'
 	})
 
 	if [[ -n $a ]]; then
