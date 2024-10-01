@@ -874,7 +874,7 @@ DebugLogEnv()
 	DebugScript loader "${LOADER_SCRIPT_VERSION:=undefined}$([[ $LOADER_SCRIPT_VERSION != undefined ]] && printf '%s' " ($(ConvertDateCodeToExtendedDate "$LOADER_SCRIPT_VERSION"))")"
 
 	if [[ ${objects_loaded:=false} = true ]]; then
-		DebugScript objects "${r_objects_version:-undefined}$([[ $r_objects_version != undefined ]] && printf '%s' " ($(ConvertDateCodeToExtendedDate "$r_objects_version"))")"
+		DebugScript objects "${r_objects_epoch:-undefined}$([[ ${#r_objects_epoch} -eq 10 ]] && printf '%s' " ($(ConvertSecondsToFullDate "$r_objects_epoch"))")"
 	else
 		DebugScript objects 'not loaded'
 	fi
@@ -8464,7 +8464,7 @@ ShowVersionsList()
 	Display "QPKG: ${r_this_package_ver:-undefined}$([[ $r_this_package_ver != undefined ]] && printf '%s' " ($(ConvertDateCodeToExtendedDate "$r_this_package_ver"))")"
 	Display "manager: ${r_this_script_ver:-undefined}$([[ $r_this_script_ver != undefined ]] && printf '%s' " ($(ConvertSecondsToFullDate "$r_this_script_epoch"))")"
 	Display "loader: ${LOADER_SCRIPT_VERSION:=undefined}$([[ $LOADER_SCRIPT_VERSION != undefined ]] && printf '%s' " ($(ConvertDateCodeToExtendedDate "$LOADER_SCRIPT_VERSION"))")"
-	Display "objects: ${r_objects_version:-undefined}$([[ $r_objects_version != undefined ]] && printf '%s' " ($(ConvertDateCodeToExtendedDate "$r_objects_version"))")"
+	Display "objects: ${r_objects_epoch:-undefined}$([[ $r_objects_epoch != undefined ]] && printf '%s' " ($(ConvertSecondsToFullDate "$r_objects_epoch"))")"
 	Display "packages: ${r_packages_epoch:-undefined}$([[ $r_packages_epoch != undefined ]] && printf '%s' " ($(ConvertSecondsToFullDate "$r_packages_epoch"))")"
 
 	return 0
@@ -14457,8 +14457,8 @@ LoadObjects()
 	. "$r_objects_pathfile"
 	objects_loaded=true
 
-	readonly r_objects_version
-	DebugVar r_objects_version
+	readonly r_objects_epoch
+	DebugVar r_objects_epoch
 
 	FuncExit
 
