@@ -9663,7 +9663,7 @@ _QPKG:install_()
 	z=$?
 
 	LogQpkgServiceResult
-	QpkgIsDatabaseCanLog && ! QpkgInstalledServiceResultWasOk && z=1
+	QpkgIsDatabaseWillLog && ! QpkgInstalledServiceResultWasOk && z=1
 
 	[[ $qpkg_name = Entware ]] && IsNtSysFileExist $OPKG_CMD && z=1		# Entware installation has failed.
 
@@ -9760,7 +9760,7 @@ _QPKG:reinstall_()
 	z=$?
 
 	LogQpkgServiceResult
-	QpkgIsDatabaseCanLog && ! QpkgInstalledServiceResultWasOk && z=1
+	QpkgIsDatabaseWillLog && ! QpkgInstalledServiceResultWasOk && z=1
 
 	[[ $qpkg_name = Entware ]] && IsNtSysFileExist $OPKG_CMD && z=1
 
@@ -9898,7 +9898,7 @@ _QPKG:upgrade_()
 	z=$?
 
 	LogQpkgServiceResult
-	QpkgIsDatabaseCanLog && ! QpkgInstalledServiceResultWasOk && z=1
+	QpkgIsDatabaseWillLog && ! QpkgInstalledServiceResultWasOk && z=1
 
 	[[ $qpkg_name = Entware ]] && IsNtSysFileExist $OPKG_CMD && z=1
 
@@ -10070,7 +10070,7 @@ _QPKG:activate_()
 	elif [[ $useropt_debug = true ]]; then
 		RunAndLog "${a}${service_pathfile} start" "$r_log_pathfile" log:failure-only
 		z=$?
-	elif QpkgIsDatabaseCanLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
+	elif QpkgIsDatabaseWillLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
 		RunAndLog "/sbin/qpkg_service${timeout} start $qpkg_name" "$r_log_pathfile" log:failure-only
 		QpkgInstalledServiceResultWasOk && z=0 || z=1
 	else
@@ -10158,7 +10158,7 @@ _QPKG:reactivate_()
 	elif [[ $useropt_debug = true ]]; then
 		RunAndLog "${a}${service_pathfile} restart" "$r_log_pathfile" log:failure-only
 		z=$?
-	elif QpkgIsDatabaseCanLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
+	elif QpkgIsDatabaseWillLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
 		RunAndLog "/sbin/qpkg_service${timeout} restart $qpkg_name" "$r_log_pathfile" log:failure-only
 		QpkgInstalledServiceResultWasOk && z=0 || z=1
 	else
@@ -10237,7 +10237,7 @@ _QPKG:deactivate_()
 	elif [[ $useropt_debug = true ]]; then
 		RunAndLog "${a}${service_pathfile} stop" "$r_log_pathfile" log:failure-only
 		z=$?
-	elif QpkgIsDatabaseCanLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
+	elif QpkgIsDatabaseWillLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
 		RunAndLog "/sbin/qpkg_service${timeout} stop $qpkg_name" "$r_log_pathfile" log:failure-only
 		QpkgInstalledServiceResultWasOk && z=0 || z=1
 	else
@@ -12263,10 +12263,10 @@ QpkgIsDatabaseUniqueUnpack()
 
 	}
 
-QpkgIsDatabaseCanLog()
+QpkgIsDatabaseWillLog()
 	{
 
-	# Does this QPKG service-script support logging of actions? When an action fails, this means user can be directed to check the service-script log.
+	# Does this QPKG service-script log all actions? If so, when an action fails, user can be directed to check the service-script log.
 
 	# Inputs: (local)
 	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
@@ -12281,7 +12281,7 @@ QpkgIsDatabaseCanLog()
 
 	for i in "${!r_qpkg_name[@]}"; do
 		[[ ${r_qpkg_name[$i]} = "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}" ]] || continue
-		${r_qpkg_can_log[$i]} && return 0 || break
+		${r_qpkg_will_log[$i]} && return 0 || break
 	done
 
 	return 1
@@ -13996,7 +13996,7 @@ ShowAsActionLogDetail()
 						DisplayAsIndentActionResultDurationReason "$3" "$2 $package_type" "$5" "$6"
 						;;
 					*)
-						if QpkgIsDatabaseCanLog "$2"; then
+						if QpkgIsDatabaseWillLog "$2"; then
 							DisplayAsIndentActionResultDurationReason "$3" "$2 $package_type" "$5" "For more information: /etc/init.d/$($BASENAME_CMD "$(QpkgGetInstalledServicePathFile "$2")") log"
 						else
 							DisplayAsIndentActionResultDurationReason "$3" "$2 $package_type" "$5" "$6"
@@ -14463,7 +14463,6 @@ LoadPackages()
 	unset r_qpkg_author_email
 	unset r_qpkg_can_backup
 	unset r_qpkg_can_clean
-	unset r_qpkg_can_log
 	unset r_qpkg_can_restart_to_update
 	unset r_qpkg_conflicts_with
 	unset r_qpkg_depends_on
@@ -14480,6 +14479,7 @@ LoadPackages()
 	unset r_qpkg_test_for_active
 	unset r_qpkg_url
 	unset r_qpkg_version
+	unset r_qpkg_will_log
 
 	r_packages_epoch=undefined
 
@@ -14494,7 +14494,6 @@ LoadPackages()
 	r_qpkg_author_email+=('')				# Email address of the package maintainer.
 	r_qpkg_can_backup+=('')					# 'true'/'false': this QPKG service-script supports configuration 'backup' and 'restore' actions.
 	r_qpkg_can_clean+=('')					# 'true'/'false': the internal application can be cleaned and re-downloaded.
-	r_qpkg_can_log+=('')					# 'true'/'false': the service-script keeps a log of all actions.
 	r_qpkg_can_restart_to_update+=('')		# 'true'/'false': the internal application can be updated by restarting the QPKG.
 	r_qpkg_conflicts_with+=('')				# Abort if these QPKGs are installed.
 	r_qpkg_depends_on+=('')					# Require these QPKGs to be installed first. Use 'none' if package is independent. Separate alternatives with '|'.
@@ -14511,6 +14510,7 @@ LoadPackages()
 	r_qpkg_test_for_active+=('')			# Test command-string to determine if this QPKG is active or inactive. Use 'builtin' if QPKG has its own status tests.
 	r_qpkg_url+=('') 						# Remote URL.
 	r_qpkg_version+=('') 					# QPKG version.
+	r_qpkg_will_log+=('')					# 'true'/'false': the service-script keeps a log of all actions.
 
 	# Third, source remaining elements from packages file.
 
@@ -14527,7 +14527,6 @@ LoadPackages()
 	readonly r_qpkg_author_email
 	readonly r_qpkg_can_backup
 	readonly r_qpkg_can_clean
-	readonly r_qpkg_can_log
 	readonly r_qpkg_can_restart_to_update
 	readonly r_qpkg_conflicts_with
 	readonly r_qpkg_depends_on
@@ -14544,6 +14543,7 @@ LoadPackages()
 	readonly r_qpkg_test_for_active
 	readonly r_qpkg_url
 	readonly r_qpkg_version
+	readonly r_qpkg_will_log
 
 	packages_loaded=true
 
