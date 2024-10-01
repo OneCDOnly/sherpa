@@ -868,7 +868,24 @@ DebugLogEnv()
 # 		DebugUserspace ok '$PATH (LHS-only)' "${PATH:0:$((r_debug_log_third_column_width-${#r_chars_ellipsis}))}${r_chars_ellipsis}"
 # 	fi
 
+
+	DebugScript QPKG "${r_this_package_ver:-undefined}$([[ $r_this_package_ver != undefined ]] && printf '%s' " ($(ConvertDateCodeToExtendedDate "$r_this_package_ver"))")"
+	DebugScript manager "$(ConvertSecondsToDatecode "$r_this_script_epoch")"
 	DebugScript 'git branch' "$useropt_branch"
+	DebugScript loader "${LOADER_SCRIPT_VERSION:=undefined}$([[ $LOADER_SCRIPT_VERSION != undefined ]] && printf '%s' " ($(ConvertDateCodeToExtendedDate "$LOADER_SCRIPT_VERSION"))")"
+
+	if [[ ${objects_loaded:=false} = true ]]; then
+		DebugScript objects "${r_objects_version:-undefined}$([[ $r_objects_version != undefined ]] && printf '%s' " ($(ConvertDateCodeToExtendedDate "$r_objects_version"))")"
+	else
+		DebugScript objects 'not loaded'
+	fi
+
+	if [[ ${packages_loaded:=false} = true ]]; then
+		DebugScript packages "${r_packages_epoch:-undefined}$([[ $r_packages_epoch != undefined ]] && printf '%s' " ($(ConvertSecondsToFullDate "$r_packages_epoch"))")"
+	else
+		DebugScript packages 'not loaded'
+	fi
+
 	DebugScript 'logs path' "$r_logs_path"
 	DebugScript 'action concurrency' "$r_concurrency"
 	DebugScript "'sqlite3' binary" "$sqlite_cmd"
