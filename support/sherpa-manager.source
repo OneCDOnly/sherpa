@@ -5779,6 +5779,10 @@ GenerateFeaturesReportTitleLine()
 	a='Enhanced?'
 	printf "%-$((r_report_lazy_column_width+2+$(LenANSIDiff "$a")))s" "$a"
 
+	# column 10: QPKG unpacks itself to unique path?
+	a='UniqueUnpack?'
+	printf "%-$((r_report_lazy_column_width+2+$(LenANSIDiff "$a")))s" "$a"
+
 	printf '\n'
 
 	}
@@ -5790,6 +5794,7 @@ GenerateFeaturesReportDataLine()
 
 	# Inputs: (global)
 	# 	$qpkg_name
+	#	$r_report_flags_path
 
 	local active_test=false
 	local active_test_msg=$r_chars_blank
@@ -5811,6 +5816,8 @@ GenerateFeaturesReportDataLine()
 	local sherpa_compatible_msg=$r_chars_blank
 	local tier=false
 	local tier_msg=$r_chars_blank
+	local uniqueunpack=false
+	local uniqueunpack_msg=$r_chars_blank
 
 	if QpkgIsInstalledMissing; then
 		mode=missing
@@ -5854,6 +5861,7 @@ GenerateFeaturesReportDataLine()
 			restart_to_update=N/A
 			sherpa_compatible=N/A
 			tier=N/A
+			uniqueunpack=N/A
 
 			# Assign field messages.
 			active_test_msg+=$active_test
@@ -5864,6 +5872,7 @@ GenerateFeaturesReportDataLine()
 			restart_to_update_msg+=$restart_to_update
 			sherpa_compatible_msg+=$sherpa_compatible
 			tier_msg+=$tier
+			uniqueunpack_msg+=$uniqueunpack
 
 			# Highlight field messages.
 			active_test_msg=$(TextDarkGrey "$active_test_msg")
@@ -5874,6 +5883,7 @@ GenerateFeaturesReportDataLine()
 			restart_to_update_msg=$(TextDarkGrey "$restart_to_update_msg")
 			sherpa_compatible_msg=$(TextDarkGrey "$sherpa_compatible_msg")
 			tier_msg=$(TextDarkGrey "$tier_msg")
+			uniqueunpack_msg=$(TextDarkGrey "$uniqueunpack_msg")
 			;;
 		normal)
 			# Set field values.
@@ -5897,11 +5907,12 @@ GenerateFeaturesReportDataLine()
 			if QpkgIsDatabaseCanRestartToUpdate; then
 				restart_to_update=true
 			elif [[ $qpkg_name = sherpa ]]; then
-				restart_to_update=true				# sherpa always auto-updates and this can't be disabled.
+				restart_to_update=true			# sherpa always auto-updates and this can't be disabled.
 			fi
 
 			QpkgIsDatabaseSherpaCompatible && sherpa_compatible=true
 			QpkgIsDatabaseIndependent && tier=true
+			QpkgIsDatabaseUniqueUnpack && uniqueunpack=true
 
 			# Assign field messages.
 			active_test_msg+=$active_test
@@ -5912,6 +5923,7 @@ GenerateFeaturesReportDataLine()
 			restart_to_update_msg+=$restart_to_update
 			sherpa_compatible_msg+=$sherpa_compatible
 			tier_msg+=$tier
+			uniqueunpack_msg+=$uniqueunpack
 
 			# Highlight field messages.
 
@@ -5958,7 +5970,7 @@ GenerateFeaturesReportDataLine()
 	fi
 
 	if OsIsSupportAutowidthTableColumns; then
-		echo "$name_msg|$backup_msg|$clean_msg|$restart_to_update_msg|$autoupdate_msg|$active_test_msg|$tier_msg|$compatible_msg|$sherpa_compatible_msg"
+		echo "$name_msg|$backup_msg|$clean_msg|$restart_to_update_msg|$autoupdate_msg|$active_test_msg|$tier_msg|$compatible_msg|$sherpa_compatible_msg|$uniqueunpack_msg"
 	else
 		# column 1: package name.
 		printf "%-$((r_report_qpkg_name_column_width+$(LenANSIDiff "$name_msg")))s" "$name_msg"
@@ -5994,6 +6006,10 @@ GenerateFeaturesReportDataLine()
 		# column 9: QPKG is sherpa-compatible?
 		printf "%$((r_report_column_spacing))s"
 		printf "%-$((r_report_lazy_column_width+$(LenANSIDiff "$sherpa_compatible_msg")))s" "$sherpa_compatible_msg"
+
+		# column 10: QPKG will unpack to unique path?
+		printf "%$((r_report_column_spacing))s"
+		printf "%-$((r_report_lazy_column_width+$(LenANSIDiff "$uniqueunpack_msg")))s" "$uniqueunpack_msg"
 
 		printf '\n'
 	fi
@@ -7844,7 +7860,7 @@ ShowReportFeatures()
 	ResetReportsPath &> /dev/null
 
 	if OsIsSupportAutowidthTableColumns; then
-		printf -v a '\n%s\n' 'QPKG name:|CanBack?|CanClean?|StartUpd?|AutoUpd?|LiveTest?|Indep?|Compat?|Enhanced?'
+		printf -v a '\n%s\n' 'QPKG name:|CanBack?|CanClean?|StartUpd?|AutoUpd?|LiveTest?|Indep?|Compat?|Enhanced?|UniqueUnpack?'
 	else
 		printf -v a '\n%s\n' "$(GenerateFeaturesReportTitleLine)"
 	fi
@@ -12186,6 +12202,7 @@ QpkgIsDatabaseSherpaCompatible()
 	#   $qpkg_default_index
 	#   $qpkg_index
 	#	$qpkg_name (default for $1)
+	#	$r_qpkg_is_sherpa_compatible[]
 
 	# Outputs: (local)
 	#   $? = true/false
@@ -12202,6 +12219,43 @@ QpkgIsDatabaseSherpaCompatible()
 	else
 		a=${r_qpkg_is_sherpa_compatible[$qpkg_index]}
 		[[ $a = default ]] && a=${r_qpkg_is_sherpa_compatible[$qpkg_default_index]}
+	fi
+
+	[[ -n $a ]] || a=none
+	[[ $a = true ]]
+
+	}
+
+QpkgIsDatabaseUniqueUnpack()
+	{
+
+	# Was this QPKG built to extract itself to a unique path? Requires QDK 2.3.14 or-later.
+	# If true, then this QPKG can be installed/reinstalled/upgraded concurrently with other QPKGs.
+
+	# Inputs: (local)
+	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+
+	# Inputs: (global)
+	#   $qpkg_default_index
+	#   $qpkg_index
+	#	$qpkg_name (default for $1)
+	#	$r_qpkg_is_unique_unpack[]
+
+	# Outputs: (local)
+	#   $? = true/false
+
+	local a=''
+	local -i i=0
+
+	if [[ -n ${1:-} ]]; then
+		for i in "${!r_qpkg_name[@]}"; do
+			[[ ${r_qpkg_name[$i]} = "$1" ]] || continue
+			a=${r_qpkg_is_unique_unpack[$i]}			# Always grab first found as default.
+			break
+		done
+	else
+		a=${r_qpkg_is_unique_unpack[$qpkg_index]}
+		[[ $a = default ]] && a=${r_qpkg_is_unique_unpack[$qpkg_default_index]}
 	fi
 
 	[[ -n $a ]] || a=none
@@ -14416,6 +14470,7 @@ LoadPackages()
 	unset r_qpkg_description
 	unset r_qpkg_hash
 	unset r_qpkg_is_sherpa_compatible
+	unset r_qpkg_is_unique_unpack
 	unset r_qpkg_max_os_version
 	unset r_qpkg_min_os_version
 	unset r_qpkg_min_ram_kb
@@ -14439,13 +14494,14 @@ LoadPackages()
 	r_qpkg_author_email+=('')				# Email address of the package maintainer.
 	r_qpkg_can_backup+=('')					# 'true'/'false': this QPKG service-script supports configuration 'backup' and 'restore' actions.
 	r_qpkg_can_clean+=('')					# 'true'/'false': the internal application can be cleaned and re-downloaded.
-	r_qpkg_can_log+=('')					# 'true'/'false': the service-script has a log.
+	r_qpkg_can_log+=('')					# 'true'/'false': the service-script keeps a log of all actions.
 	r_qpkg_can_restart_to_update+=('')		# 'true'/'false': the internal application can be updated by restarting the QPKG.
 	r_qpkg_conflicts_with+=('')				# Abort if these QPKGs are installed.
 	r_qpkg_depends_on+=('')					# Require these QPKGs to be installed first. Use 'none' if package is independent. Separate alternatives with '|'.
 	r_qpkg_description+=('')				# QPKG description.
 	r_qpkg_hash+=('') 						# MD5 checksum.
 	r_qpkg_is_sherpa_compatible+=('')		# 'true'/'false': the service-script responds to enhanced sherpa actions.
+	r_qpkg_is_unique_unpack+=('')			# 'true'/'false': QPKG will self-extract contents to a unique path. Requires build with QDK 2.3.14 or-later.
 	r_qpkg_max_os_version+=('')				# The maximum QTS/QuTS version supported by this QPKG.
 	r_qpkg_min_os_version+=('')				# The minimum QTS/QuTS version supported by this QPKG.
 	r_qpkg_min_ram_kb+=('')					# QPKG requires at-least this much RAM installed in kiB. Use 'none' if no minimum.
@@ -14478,6 +14534,7 @@ LoadPackages()
 	readonly r_qpkg_description
 	readonly r_qpkg_hash
 	readonly r_qpkg_is_sherpa_compatible
+	readonly r_qpkg_is_unique_unpack
 	readonly r_qpkg_max_os_version
 	readonly r_qpkg_min_os_version
 	readonly r_qpkg_min_ram_kb
