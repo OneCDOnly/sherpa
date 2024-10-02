@@ -13535,8 +13535,11 @@ ConvertDateTimeAutoExpand()
 	# Convert a datecode or epoch time to an extended date format, or a full date format for epoch time.
 
 	# Inputs: (local)
-	#	$1 = Datecode in the format 'YYMMDD'. Example: '240928'
-	#	$1 = Epoch time. Example: '1234567890'. Since 9th September 2001, epoch time has-been 10 numerals and will remain-so until 21st November 2286.
+	#	$1 = datecode in the format 'YYMMDD'. Example: '240928'
+	#	$1 = epoch time. Example: '1234567890'. Since 9th September 2001, epoch time has-been 10 numerals and will remain-so until 21st November 2286.
+
+	# Outputs: (local)
+	#	stdout = formatted datetime string.
 
 	[[ -n ${1:-} ]] || return
 
@@ -13550,9 +13553,6 @@ ConvertDateTimeAutoExpand()
 			;;
 		10)		# Assume input is epoch time, so convert to full date format.
 			b=full
-
-			# also need a bit here to detect if time component = 00:00:00. If-so, show as 'extended' (without time) instead of 'full'.
-			;;
 	esac
 
 	case $b in
@@ -13560,7 +13560,7 @@ ConvertDateTimeAutoExpand()
 			c=$(/bin/date -d ${a::2}-${a:2:2}-${a:4:2} '+%a %d %b %Y')	# (shortdayname, daynum, monthname, shortyearnum)
 			;;
 		full)
-			c=$(/bin/date -d @"$a" +%c | tr -s ' ')		#(shortdayname, daynum, monthname, yearnum, time, TZname) TODO: hardcode this format instead of relying on the locale default '%c'.
+			c=$(/bin/date -d @"$a" +%c | tr -s ' ')		# (shortdayname, daynum, monthname, yearnum, time, TZname) TODO: hardcode this format instead of relying on the locale default '%c'.
 	esac
 
 	if [[ -n $c ]]; then
@@ -13571,7 +13571,7 @@ ConvertDateTimeAutoExpand()
 
 	return
 
-	}
+	} 2> /dev/null
 
 ConvertNowToFullDate()
 	{
