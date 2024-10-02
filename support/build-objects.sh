@@ -4,6 +4,8 @@
 
 echo -n "building 'objects' file ... "
 
+objects_epoch=$(date +%s)
+
 target=$support_path/$objects_file
 
 # These are used internally by sherpa. Must maintain separate lists for sherpa internal-use, and what user has requested.
@@ -123,7 +125,7 @@ echo $public_function_name':Add()
 	}
 
 [[ -e $target ]] && rm -f "$target"
-echo "r_objects_version='<?build_date?>'" > "$target"
+echo "r_objects_epoch='<?objects_epoch?>'" > "$target"
 echo "#* <?dont_edit?>" >> "$target"
 
 # package action flag objects.

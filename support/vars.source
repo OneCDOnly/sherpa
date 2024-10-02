@@ -3,6 +3,7 @@
 build_date=$(date '+%y%m%d')
 build_year=$(date '+%Y')
 manager_epoch=0				# Only update before building `sherpa-manager.sh` file.
+objects_epoch=0				# Only update before building `objects` file.
 packages_epoch=0			# Only update before building `packages` file.
 colourful=true
 title_description='a mini-package-manager for QNAP NAS'
@@ -112,6 +113,7 @@ SwapTags()
 		buffer=$(sed "s|<?build_date?>|$build_date|g" <<< "$buffer")
 		buffer=$(sed "s|<?build_year?>|$build_year|g" <<< "$buffer")
 		buffer=$(sed "s|<?manager_epoch?>|$manager_epoch|g" <<< "$buffer")
+		buffer=$(sed "s|<?objects_epoch?>|$objects_epoch|g" <<< "$buffer")
 		buffer=$(sed "s|<?packages_epoch?>|$packages_epoch|g" <<< "$buffer")
 		buffer=$(sed "s|<?email?>|$email|g" <<< "$buffer")
 		buffer=$(sed "s|<?cdn_sherpa_base_url?>|$cdn_sherpa_base_url|g" <<< "$buffer")
