@@ -875,7 +875,6 @@ DebugLogEnv()
 	DebugScript 'objects epoch' "$(ConvertDateTimeAutoExpand "${r_objects_epoch:-not loaded}")"
 	DebugScript 'packages epoch' "$(ConvertDateTimeAutoExpand "${r_packages_epoch:-not loaded}")"
 	DebugScript 'logs path' "$r_logs_path"
-	DebugScript 'action concurrency' "$r_concurrency"
 	DebugScript "'sqlite3' binary" "$sqlite_cmd"
 
 	if OsIsSupportUnofficialPackages; then
