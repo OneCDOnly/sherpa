@@ -899,7 +899,7 @@ DebugLogEnv()
 
 	DebugQpkg detect architecture "$r_nas_qpkg_arch"
 	DebugQpkg detect "$(ShowAsPackageName Entware) type" "$r_entware_type"
-	DebugQpkg detect "$(ShowAsPackageName Entware) install date" "$(QpkgGetInstalledDate Entware)"
+	DebugQpkg detect "$(ShowAsPackageName Entware) install date" "$(ConvertDateTimeAutoExpand "$(QpkgGetInstalledDate Entware)")"
 
 	if QpkgIsReallyInstalled SortMyQPKGs; then
 		DebugQpkg detect "$(ShowAsPackageName SortMyQPKGs)" installed
@@ -13565,7 +13565,7 @@ ConvertDateTimeAutoExpand()
 	esac
 
 	if [[ -n $b ]]; then
-		printf '%s (%s)' "$a" "$b"
+		printf '%s (%s)' "$1" "$b"
 	else
 		printf '%s' "$1"
 	fi
