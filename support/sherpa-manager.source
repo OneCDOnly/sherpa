@@ -12783,7 +12783,7 @@ FormatAsThous()
 	# Inputs: (local)
 	# 	$1 = integer value
 
-	local a=$($SED_CMD 's/[^0-9]*//g' <<< "${1:-}")	# Strip everything not a numeral.
+	local a=$($SED_CMD 's/[^0-9]*//g' <<< "${1:-}")	# Strip non-numerals.
 	local b=''
 	local c=''
 
@@ -13425,7 +13425,7 @@ ConvertSecondsToDatecode()
 
 	[[ -n ${1:-} ]] || return
 
-	local a=$($SED_CMD 's/[^0-9]*//g' <<< "${1:-}")		# Strip everything not a numeral.
+	local a=$($SED_CMD 's/[^0-9]*//g' <<< "${1:-}")		# Strip non-numerals.
 
 	if [[ ${#a} -ne 10 ]]; then
 		printf 000000
@@ -13536,35 +13536,35 @@ ConvertDateTimeAutoExpand()
 
 	# Inputs: (local)
 	#	$1 = Datecode in the format 'YYMMDD'. Example: '240928'
-	#	$1 = Epoch time. Example: '1234567890'. Since 9th September 2001, epoch time is 10 numerals and will remain-so until 21st November 2286.
+	#	$1 = Epoch time. Example: '1234567890'. Since 9th September 2001, epoch time has-been 10 numerals and will remain-so until 21st November 2286.
 
 	[[ -n ${1:-} ]] || return
 
-	local a=$($SED_CMD 's/[^0-9]*//g' <<< "$1")		# Strip everything not a numeral.
+	local a=$($SED_CMD 's/[^0-9]*//g' <<< "$1")		# Strip non-numerals.
 	local b=''
-	local output_type=''
+	local c=''
 
 	case ${#a} in
-		6)		# Datecode, so convert to extended date format (shortdayname, daynum, monthname, shortyearnum).
-			output_type=extended
+		6)		# Assume input is a datecode, so convert to extended date format.
+			b=extended
 			;;
-		10)		# Epoch time, so convert to full date format (shortdayname, daynum, monthname, yearnum, time, TZname).
-			# also need a bit here to detect time component is 00:00:00. If-so, show as extended date without time.
+		10)		# Assume input is epoch time, so convert to full date format.
+			b=full
 
-			output_type=full
+			# also need a bit here to detect if time component = 00:00:00. If-so, show as 'extended' (without time) instead of 'full'.
 			;;
 	esac
 
-	case $output_type in
+	case $b in
 		extended)
-			b=$(/bin/date -d ${a::2}-${a:2:2}-${a:4:2} '+%a %d %b %Y')
+			c=$(/bin/date -d ${a::2}-${a:2:2}-${a:4:2} '+%a %d %b %Y')	# (shortdayname, daynum, monthname, shortyearnum)
 			;;
 		full)
-			b=$(/bin/date -d @"$a" +%c | tr -s ' ')
+			c=$(/bin/date -d @"$a" +%c | tr -s ' ')		#(shortdayname, daynum, monthname, yearnum, time, TZname) TODO: hardcode this format instead of relying on the locale default '%c'.
 	esac
 
-	if [[ -n $b ]]; then
-		printf '%s (%s)' "$a" "$b"
+	if [[ -n $c ]]; then
+		printf '%s (%s)' "$a" "$c"
 	else
 		printf '%s' "$1"
 	fi
