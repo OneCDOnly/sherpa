@@ -868,23 +868,12 @@ DebugLogEnv()
 # 		DebugUserspace ok '$PATH (LHS-only)' "${PATH:0:$((r_debug_log_third_column_width-${#r_chars_ellipsis}))}${r_chars_ellipsis}"
 # 	fi
 
-	DebugScript QPKG "${r_this_package_ver:-undefined}$([[ $r_this_package_ver != undefined ]] && printf '%s' " ($(ConvertDateCodeToExtendedDate "$r_this_package_ver"))")"
-	DebugScript manager "${r_this_script_epoch:-undefined}$([[ ${#r_this_script_epoch} -eq 10 ]] && printf '%s' " ($(ConvertSecondsToFullDate "$r_this_script_epoch"))")"
-	DebugScript 'git branch' "$useropt_branch"
-	DebugScript loader "${LOADER_SCRIPT_VERSION:=undefined}$([[ $LOADER_SCRIPT_VERSION != undefined ]] && printf '%s' " ($(ConvertDateCodeToExtendedDate "$LOADER_SCRIPT_VERSION"))")"
-
-	if [[ ${objects_loaded:=false} = true ]]; then
-		DebugScript objects "${r_objects_epoch:-undefined}$([[ ${#r_objects_epoch} -eq 10 ]] && printf '%s' " ($(ConvertSecondsToFullDate "$r_objects_epoch"))")"
-	else
-		DebugScript objects 'not loaded'
-	fi
-
-	if [[ ${packages_loaded:=false} = true ]]; then
-		DebugScript packages "${r_packages_epoch:-undefined}$([[ ${#r_packages_epoch} -eq 10 ]] && printf '%s' " ($(ConvertSecondsToFullDate "$r_packages_epoch"))")"
-	else
-		DebugScript packages 'not loaded'
-	fi
-
+	DebugScript 'QPKG version' "$(ConvertDateTimeAutoExpand "$r_this_package_ver")"
+	DebugScript 'manager epoch' "$(ConvertDateTimeAutoExpand "$r_this_script_epoch")"
+	DebugScript 'manager version' "$r_this_script_ver"
+	DebugScript 'loader version' "$(ConvertDateTimeAutoExpand "${LOADER_SCRIPT_VERSION:=undefined}")"
+	DebugScript 'objects epoch' "$(ConvertDateTimeAutoExpand "${r_objects_epoch:-not loaded}")"
+	DebugScript 'packages epoch' "$(ConvertDateTimeAutoExpand "${r_packages_epoch:-not loaded}")"
 	DebugScript 'logs path' "$r_logs_path"
 	DebugScript 'action concurrency' "$r_concurrency"
 	DebugScript "'sqlite3' binary" "$sqlite_cmd"
@@ -8461,11 +8450,11 @@ ShowVersionsList()
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	Display "QPKG: ${r_this_package_ver:-undefined}$([[ $r_this_package_ver != undefined ]] && printf '%s' " ($(ConvertDateCodeToExtendedDate "$r_this_package_ver"))")"
-	Display "manager: ${r_this_script_ver:-undefined}$([[ $r_this_script_ver != undefined ]] && printf '%s' " ($(ConvertSecondsToFullDate "$r_this_script_epoch"))")"
-	Display "loader: ${LOADER_SCRIPT_VERSION:=undefined}$([[ $LOADER_SCRIPT_VERSION != undefined ]] && printf '%s' " ($(ConvertDateCodeToExtendedDate "$LOADER_SCRIPT_VERSION"))")"
-	Display "objects: ${r_objects_epoch:-undefined}$([[ $r_objects_epoch != undefined ]] && printf '%s' " ($(ConvertSecondsToFullDate "$r_objects_epoch"))")"
-	Display "packages: ${r_packages_epoch:-undefined}$([[ $r_packages_epoch != undefined ]] && printf '%s' " ($(ConvertSecondsToFullDate "$r_packages_epoch"))")"
+	Display "QPKG: $(ConvertDateTimeAutoExpand "$r_this_package_ver")"
+	Display "manager: $(ConvertDateTimeAutoExpand "$r_this_script_epoch")"
+	Display "loader: $(ConvertDateTimeAutoExpand "${LOADER_SCRIPT_VERSION:=undefined}")"
+	Display "objects: $(ConvertDateTimeAutoExpand "${r_objects_epoch:-not loaded}")"
+	Display "packages: $(ConvertDateTimeAutoExpand "${r_packages_epoch:-not loaded}")"
 
 	return 0
 
@@ -13540,27 +13529,49 @@ ConvertNanosecondsToMilliseconds()
 
 	} 2> /dev/null
 
-ConvertDateCodeToExtendedDate()
+ConvertDateTimeAutoExpand()
 	{
 
-	# Inputs: (local)
-	#	$1 = datecode in the format 'YYMMDD'. Example: '240928'
+	# Convert a datecode or epoch time to an extended date format, or a full date format for epoch time.
 
-	# Outputs: (local)
-	#	stdout = extended date format without time. Example: 'Sun 28 Sep 2024'
+	# Inputs: (local)
+	#	$1 = Datecode in the format 'YYMMDD'. Example: '240928'
+	#	$1 = Epoch time. Example: '1234567890'. Since 9th September 2001, epoch time is 10 numerals and will remain-so until 21st November 2286.
 
 	[[ -n ${1:-} ]] || return
 
-	local a=$($SED_CMD 's/[^0-9]*//g' <<< "${1:-}")		# Strip everything not a numeral.
+	local a=$($SED_CMD 's/[^0-9]*//g' <<< "$1")		# Strip everything not a numeral.
+	local b=''
+	local output_type=''
 
-	if [[ ${#a} -ne 6 ]]; then
+	case ${#a} in
+		6)		# Datecode, so convert to extended date format (shortdayname, daynum, monthname, shortyearnum).
+			output_type=extended
+			;;
+		10)		# Epoch time, so convert to full date format (shortdayname, daynum, monthname, yearnum, time, TZname).
+			# also need a bit here to detect time component is 00:00:00. If-so, show as extended date without time.
+
+			output_type=full
+			;;
+	esac
+
+	case $output_type in
+		extended)
+			b=$(/bin/date -d ${a::2}-${a:2:2}-${a:4:2} '+%a %d %b %Y')
+			;;
+		full)
+			b=$(/bin/date -d @"$a" +%c | tr -s ' ')
+	esac
+
+	if [[ -n $b ]]; then
+		printf '%s (%s)' "$a" "$b"
+	else
 		printf '%s' "$1"
-		return 1
 	fi
 
-	/bin/date -d ${a::2}-${a:2:2}-${a:4:2} '+%a %d %b %Y'
+	return
 
-	} 2> /dev/null
+	}
 
 ConvertNowToFullDate()
 	{
@@ -14454,6 +14465,9 @@ LoadObjects()
 
 	ShowAsProc objects
 
+	unset r_objects_epoch
+	r_objects_epoch=undefined
+
 	. "$r_objects_pathfile"
 	objects_loaded=true
 
@@ -14528,6 +14542,7 @@ LoadPackages()
 	unset r_qpkg_version
 	unset r_qpkg_will_log
 
+	unset r_packages_epoch
 	r_packages_epoch=undefined
 
 	# Second, create an index 0 element for each array. This element is used to indicate no matching QPKG when searching array.
