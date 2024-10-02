@@ -1,5 +1,7 @@
 Observed issues:
 
+	* Ensure 'list versions' report shows number formats same as 'about' report.
+
 	* Extra derp when running actions with no matching packages after reset:
 		-------------------------------------------------------------------
 		[/share/Public] # sherpa follow unstable
