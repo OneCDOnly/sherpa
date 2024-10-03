@@ -1,7 +1,5 @@
 * Add translated datetimes to service script versions.
 
-* Include sherpa service script version in versions report?
-
 * Put 'sherpa about' display into a report window.
 
 * Check OOM killed pids against inactive daemons and report as-such on status report.

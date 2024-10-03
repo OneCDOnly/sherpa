@@ -183,7 +183,6 @@ DebugLogInit()
 	DebugInfoMinSepr
 	DebugVar r_this_package_ver
 	DebugVar r_this_script_ver
-	DebugVar LOADER_SCRIPT_VERSION
 
 	}
 
@@ -869,9 +868,8 @@ DebugLogEnv()
 # 	fi
 
 	DebugScript 'QPKG version' "$(ConvertDateTimeAutoExpand "$r_this_package_ver")"
-	DebugScript 'manager epoch' "$(ConvertDateTimeAutoExpand "$r_this_script_epoch")"
 	DebugScript 'manager version' "$r_this_script_ver"
-	DebugScript 'loader version' "$(ConvertDateTimeAutoExpand "${LOADER_SCRIPT_VERSION:=undefined}")"
+	DebugScript 'manager epoch' "$(ConvertDateTimeAutoExpand "$r_this_script_epoch")"
 	DebugScript 'objects epoch' "$(ConvertDateTimeAutoExpand "${r_objects_epoch:-not loaded}")"
 	DebugScript 'packages epoch' "$(ConvertDateTimeAutoExpand "${r_packages_epoch:-not loaded}")"
 	DebugScript 'logs path' "$r_logs_path"
@@ -8458,7 +8456,6 @@ ShowVersionsList()
 
 	Display "QPKG: $(ConvertDateTimeAutoExpand "$r_this_package_ver")"
 	Display "manager: $(ConvertDateTimeAutoExpand "$r_this_script_epoch")"
-	Display "loader: $(ConvertDateTimeAutoExpand "${LOADER_SCRIPT_VERSION:=undefined}")"
 	Display "objects: $(ConvertDateTimeAutoExpand "${r_objects_epoch:-not loaded}")"
 	Display "packages: $(ConvertDateTimeAutoExpand "${r_packages_epoch:-not loaded}")"
 
