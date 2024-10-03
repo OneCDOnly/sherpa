@@ -811,9 +811,9 @@ DebugLogEnv()
 	fi
 
 	if OsIsCompatibleWithSigned; then
-		DebugFirmware ok 'build date' "$(ConvertDateTimeAutoExpand "$r_nas_firmware_date")"
+		DebugFirmware ok 'build date' "$(ConvertSmartDateFormat "$r_nas_firmware_date")"
 	else
-		DebugFirmware warning 'build date' "$(ConvertDateTimeAutoExpand "$r_nas_firmware_date")"
+		DebugFirmware warning 'build date' "$(ConvertSmartDateFormat "$r_nas_firmware_date")"
 	fi
 
 	DebugFirmware ok platform "$r_nas_platform"
@@ -867,11 +867,11 @@ DebugLogEnv()
 # 		DebugUserspace ok '$PATH (LHS-only)' "${PATH:0:$((r_debug_log_third_column_width-${#r_chars_ellipsis}))}${r_chars_ellipsis}"
 # 	fi
 
-	DebugScript 'QPKG version' "$(ConvertDateTimeAutoExpand "$r_this_package_ver")"
+	DebugScript 'QPKG version' "$(ConvertSmartDateFormat "$r_this_package_ver")"
 	DebugScript 'manager version' "$r_this_script_ver"
-	DebugScript 'manager epoch' "$(ConvertDateTimeAutoExpand "$r_this_script_epoch")"
-	DebugScript 'objects epoch' "$(ConvertDateTimeAutoExpand "${r_objects_epoch:-not loaded}")"
-	DebugScript 'packages epoch' "$(ConvertDateTimeAutoExpand "${r_packages_epoch:-not loaded}")"
+	DebugScript 'manager epoch' "$(ConvertSmartDateFormat "$r_this_script_epoch")"
+	DebugScript 'objects epoch' "$(ConvertSmartDateFormat "${r_objects_epoch:-not loaded}")"
+	DebugScript 'packages epoch' "$(ConvertSmartDateFormat "${r_packages_epoch:-not loaded}")"
 	DebugScript 'logs path' "$r_logs_path"
 	DebugScript "'sqlite3' binary" "$sqlite_cmd"
 
@@ -897,7 +897,7 @@ DebugLogEnv()
 
 	DebugQpkg detect architecture "$r_nas_qpkg_arch"
 	DebugQpkg detect "$(ShowAsPackageName Entware) type" "$r_entware_type"
-	DebugQpkg detect "$(ShowAsPackageName Entware) install date" "$(ConvertDateTimeAutoExpand "$(QpkgGetInstalledDate Entware)")"
+	DebugQpkg detect "$(ShowAsPackageName Entware) install date" "$(ConvertSmartDateFormat "$(QpkgGetInstalledDate Entware)")"
 
 	if QpkgIsReallyInstalled SortMyQPKGs; then
 		DebugQpkg detect "$(ShowAsPackageName SortMyQPKGs)" installed
@@ -8454,10 +8454,10 @@ ShowVersionsList()
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	Display "QPKG: $(ConvertDateTimeAutoExpand "$r_this_package_ver")"
-	Display "manager: $(ConvertDateTimeAutoExpand "$r_this_script_epoch")"
-	Display "objects: $(ConvertDateTimeAutoExpand "${r_objects_epoch:-not loaded}")"
-	Display "packages: $(ConvertDateTimeAutoExpand "${r_packages_epoch:-not loaded}")"
+	Display "QPKG: $(ConvertSmartDateFormat "$r_this_package_ver")"
+	Display "manager: $(ConvertSmartDateFormat "$r_this_script_epoch")"
+	Display "objects: $(ConvertSmartDateFormat "${r_objects_epoch:-not loaded}")"
+	Display "packages: $(ConvertSmartDateFormat "${r_packages_epoch:-not loaded}")"
 
 	return 0
 
@@ -13532,7 +13532,7 @@ ConvertNanosecondsToMilliseconds()
 
 	} 2> /dev/null
 
-ConvertDateTimeAutoExpand()
+ConvertSmartDateFormat()
 	{
 
 	# Convert a datecode or epoch time to an extended date format, or a full date format for epoch time.
