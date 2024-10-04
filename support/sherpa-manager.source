@@ -5871,15 +5871,21 @@ GenerateFeaturesReportDataLine()
 			;;
 		mute)
 			# Set field values.
-			active_test=N/A
-			arch_compatible=N/A
+			[[ $(QpkgGetDatabaseActiveTest) = builtin ]] && active_test=true
+			QpkgIsDatabaseArchOK && arch_compatible=true
 			autoupdate=N/A
-			backup=N/A
-			clean=N/A
-			independent=N/A
-			restart_to_update=N/A
-			sherpa_compatible=N/A
-			uniqueunpack=N/A
+			QpkgIsDatabaseCanBackup && backup=true
+			QpkgIsDatabaseCanClean && clean=true
+			QpkgIsDatabaseIndependent && independent=true
+
+			if QpkgIsDatabaseCanRestartToUpdate; then
+				restart_to_update=true
+			elif [[ $qpkg_name = sherpa ]]; then
+				restart_to_update=true			# sherpa always auto-updates and this can't be disabled.
+			fi
+
+			QpkgIsDatabaseSherpaCompatible && sherpa_compatible=true
+			QpkgIsDatabaseUniqueUnpack && uniqueunpack=true
 
 			# Assign field messages.
 			active_test_msg+=$active_test
