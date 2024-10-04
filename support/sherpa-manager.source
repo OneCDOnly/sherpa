@@ -258,6 +258,8 @@ LoadConsts()
 		readonly r_chars_sudo_prompt="${r_chars_regular_prompt}sudo "
 	readonly r_chars_results='= '
 	readonly r_chars_super_prompt='# '
+	readonly r_extended_datetime_format='+%a %-d %b %Y'
+	readonly r_full_datetime_format=$r_extended_datetime_format' %-I:%M:%S %p %Z'
 
 	if OsIsSupportSudo; then
 		if [[ $(UserGetSudoUID) = undefined ]]; then
@@ -811,9 +813,9 @@ DebugLogEnv()
 	fi
 
 	if OsIsCompatibleWithSigned; then
-		DebugFirmware ok 'build date' "$(ConvertDateTimeAutoExpand "$r_nas_firmware_date")"
+		DebugFirmware ok 'build date' "$(ConvertAsSmartDate "$r_nas_firmware_date")"
 	else
-		DebugFirmware warning 'build date' "$(ConvertDateTimeAutoExpand "$r_nas_firmware_date")"
+		DebugFirmware warning 'build date' "$(ConvertAsSmartDate "$r_nas_firmware_date")"
 	fi
 
 	DebugFirmware ok platform "$r_nas_platform"
@@ -867,11 +869,11 @@ DebugLogEnv()
 # 		DebugUserspace ok '$PATH (LHS-only)' "${PATH:0:$((r_debug_log_third_column_width-${#r_chars_ellipsis}))}${r_chars_ellipsis}"
 # 	fi
 
-	DebugScript 'QPKG version' "$(ConvertDateTimeAutoExpand "$r_this_package_ver")"
+	DebugScript 'QPKG version' "$(ConvertAsSmartDate "$r_this_package_ver")"
 	DebugScript 'manager version' "$r_this_script_ver"
-	DebugScript 'manager epoch' "$(ConvertDateTimeAutoExpand "$r_this_script_epoch")"
-	DebugScript 'objects epoch' "$(ConvertDateTimeAutoExpand "${r_objects_epoch:-not loaded}")"
-	DebugScript 'packages epoch' "$(ConvertDateTimeAutoExpand "${r_packages_epoch:-not loaded}")"
+	DebugScript 'manager epoch' "$(ConvertAsSmartDate "$r_this_script_epoch")"
+	DebugScript 'objects epoch' "$(ConvertAsSmartDate "${r_objects_epoch:-not loaded}")"
+	DebugScript 'packages epoch' "$(ConvertAsSmartDate "${r_packages_epoch:-not loaded}")"
 	DebugScript 'logs path' "$r_logs_path"
 	DebugScript "'sqlite3' binary" "$sqlite_cmd"
 
@@ -897,7 +899,7 @@ DebugLogEnv()
 
 	DebugQpkg detect architecture "$r_nas_qpkg_arch"
 	DebugQpkg detect "$(ShowAsPackageName Entware) type" "$r_entware_type"
-	DebugQpkg detect "$(ShowAsPackageName Entware) install date" "$(ConvertDateTimeAutoExpand "$(QpkgGetInstalledDate Entware)")"
+	DebugQpkg detect "$(ShowAsPackageName Entware) install date" "$(ConvertAsSmartDate "$(QpkgGetInstalledDate Entware)")"
 
 	if QpkgIsReallyInstalled SortMyQPKGs; then
 		DebugQpkg detect "$(ShowAsPackageName SortMyQPKGs)" installed
@@ -5869,15 +5871,21 @@ GenerateFeaturesReportDataLine()
 			;;
 		mute)
 			# Set field values.
-			active_test=N/A
-			arch_compatible=N/A
+			[[ $(QpkgGetDatabaseActiveTest) = builtin ]] && active_test=true
+			QpkgIsDatabaseArchOK && arch_compatible=true
 			autoupdate=N/A
-			backup=N/A
-			clean=N/A
-			independent=N/A
-			restart_to_update=N/A
-			sherpa_compatible=N/A
-			uniqueunpack=N/A
+			QpkgIsDatabaseCanBackup && backup=true
+			QpkgIsDatabaseCanClean && clean=true
+			QpkgIsDatabaseIndependent && independent=true
+
+			if QpkgIsDatabaseCanRestartToUpdate; then
+				restart_to_update=true
+			elif [[ $qpkg_name = sherpa ]]; then
+				restart_to_update=true			# sherpa always auto-updates and this can't be disabled.
+			fi
+
+			QpkgIsDatabaseSherpaCompatible && sherpa_compatible=true
+			QpkgIsDatabaseUniqueUnpack && uniqueunpack=true
 
 			# Assign field messages.
 			active_test_msg+=$active_test
@@ -8454,10 +8462,10 @@ ShowVersionsList()
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	Display "QPKG: $(ConvertDateTimeAutoExpand "$r_this_package_ver")"
-	Display "manager: $(ConvertDateTimeAutoExpand "$r_this_script_epoch")"
-	Display "objects: $(ConvertDateTimeAutoExpand "${r_objects_epoch:-not loaded}")"
-	Display "packages: $(ConvertDateTimeAutoExpand "${r_packages_epoch:-not loaded}")"
+	Display "QPKG: $(ConvertAsSmartDate "$r_this_package_ver")"
+	Display "manager: $(ConvertAsSmartDate "$r_this_script_epoch")"
+	Display "objects: $(ConvertAsSmartDate "${r_objects_epoch:-not loaded}")"
+	Display "packages: $(ConvertAsSmartDate "${r_packages_epoch:-not loaded}")"
 
 	return 0
 
@@ -13411,7 +13419,7 @@ ConvertSecondsToFullDate()
 	# Outputs: (local)
 	#	stdout = real date.
 
-	/bin/date -d @"$1" +%c | tr -s ' '
+	/bin/date -d @"$1" "$r_full_datetime_format"
 
 	} 2> /dev/null
 
@@ -13532,7 +13540,7 @@ ConvertNanosecondsToMilliseconds()
 
 	} 2> /dev/null
 
-ConvertDateTimeAutoExpand()
+ConvertAsSmartDate()
 	{
 
 	# Convert a datecode or epoch time to an extended date format, or a full date format for epoch time.
@@ -13541,6 +13549,10 @@ ConvertDateTimeAutoExpand()
 	#	$1 = datecode in the format 'YYMMDD'. Example: '240928' with 6 digits.
 	#	$1 = longdatecode in the format 'YYYYMMDD'. Example: '20240928' with 8 digits.
 	#	$1 = epoch time. Example: '1234567890'. Since 9th September 2001, epoch time has-been 10 digits and will remain-so until 21st November 2286.
+
+	# Inputs: (global)
+	#	$r_extended_datetime_format
+	#	$r_full_datetime_format
 
 	# Outputs: (local)
 	#	stdout = formatted datetime string.
@@ -13552,13 +13564,13 @@ ConvertDateTimeAutoExpand()
 
 	case ${#a} in
 		6)		# Assume input is datecode, so convert to extended date format.
-			b=$(/bin/date -d ${a::2}-${a:2:2}-${a:4:2} '+%a %d %b %Y')	# (shortdayname, daynum, monthname, shortyearnum)
+			b=$(/bin/date -d "${a::2}-${a:2:2}-${a:4:2}" "$r_extended_datetime_format")
 			;;
 		8)		# Assume input is longdatecode, so convert to extended date format.
-			b=$(/bin/date -d ${a::4}-${a:4:2}-${a:6:2} '+%a %d %b %Y')	# (shortdayname, daynum, monthname, shortyearnum)
+			b=$(/bin/date -d ${a::4}-${a:4:2}-${a:6:2} "$r_extended_datetime_format")
 			;;
 		10)		# Assume input is epoch time, so convert to full date format.
-			b=$(/bin/date -d @"$a" +%c | tr -s ' ')		# (shortdayname, daynum, monthname, yearnum, time, TZname) TODO: hardcode this format instead of relying on the locale default '%c'.
+			b=$(/bin/date -d @"$a" "$r_full_datetime_format")
 	esac
 
 	if [[ -n $b ]]; then
@@ -13577,7 +13589,7 @@ ConvertNowToFullDate()
 	# Outputs: (local)
 	#	stdout = real date.
 
-	/bin/date +%c | tr -s ' '
+	/bin/date "$r_full_datetime_format"
 
 	} 2> /dev/null
 
