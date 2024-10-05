@@ -1783,9 +1783,9 @@ CloseActionMsgPipe()
 	{
 
 	# Inputs: (global)
+	#	$r_action_msg_pipe
 	#	$action_msg_pipe_fd
 	#	$backup_stdin_fd
-	#	$r_action_msg_pipe
 
 	# Restore original file descriptors, and remove message pipe.
 
@@ -12249,8 +12249,8 @@ QpkgIsDatabaseSherpaCompatible()
 	# Inputs: (global)
 	#   $qpkg_default_index
 	#   $qpkg_index
-	#	$qpkg_name (default for $1)
 	#	$r_qpkg_is_sherpa_compatible[]
+	#	$qpkg_name (default for $1)
 
 	# Outputs: (local)
 	#   $? = true/false
@@ -12286,8 +12286,8 @@ QpkgIsDatabaseUniqueUnpack()
 	# Inputs: (global)
 	#   $qpkg_default_index
 	#   $qpkg_index
-	#	$qpkg_name (default for $1)
 	#	$r_qpkg_is_unique_unpack[]
+	#	$qpkg_name (default for $1)
 
 	# Outputs: (local)
 	#   $? = true/false
