@@ -8005,6 +8005,7 @@ ShowReportPackages()
 
 	EraseThisLine
 	ShowReport
+	ListQPKGsStates
 
 	FuncExit
 
@@ -8181,7 +8182,7 @@ ShowReportAllActionResults()
 			ShowReport
 		fi
 	else
-		ShowAsError 'previous report results not found'
+		ShowAsDone 'no action results to report'
 	fi
 
 	}
