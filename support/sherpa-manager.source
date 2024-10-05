@@ -13358,6 +13358,15 @@ FuncForkExit()
 
 	# Debug forked function exit.
 
+	# Inputs: (local)
+	#	$1 = return code to supply on exit.
+
+	# Inputs: (global)
+	#	$action_pidfile
+	#	$original_sess_active_pathfile
+	#	$pidfile
+	#	$sess_active_pathfile
+
 	local -r r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
 	local var_safe_name=${r_var_name//[.-]/_}
 	var_safe_name=${var_safe_name//:/_}
@@ -13365,19 +13374,20 @@ FuncForkExit()
 	SendActionStatus ex
 	DebugAsFuncEx "${1:-0}" "$(ConvertMillisecondsToFuncDuration "$(CalcMillisecondsDiffFromNanoseconds "${!var_safe_name}" "$(ConvertNowToNanoseconds)")")"
 
-	if [[ -n $sess_active_pathfile && -e $sess_active_pathfile ]]; then
+	if [[ -n ${sess_active_pathfile:-} && -e $sess_active_pathfile ]]; then
 		if [[ -s $sess_active_pathfile ]]; then
 			$CAT_CMD "$sess_active_pathfile" >> "$original_sess_active_pathfile"
 		fi
 
-		rm -f "$sess_active_pathfile" 2> /dev/null
+		rm -f "$sess_active_pathfile"
 	fi
 
-	[[ -n ${action_pidfile:-} && -e $action_pidfile ]] && rm -f "$action_pidfile" 2> /dev/null; [[ -n ${pidfile:-} && -e ${pidfile:-} ]] && rm -f "$pidfile" 2> /dev/null
+	[[ -n ${action_pidfile:-} && -e $action_pidfile ]] && rm -f "$action_pidfile"
+	[[ -n ${pidfile:-} && -e $pidfile ]] && rm -f "$pidfile"
 
 	exit ${1:-0}
 
-	}
+	} 2> /dev/null
 
 CalcAmountDiff()
 	{
