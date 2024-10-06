@@ -1,10 +1,13 @@
 Observed issues:
 
+	* must adapt hard-coded curl insecure args in manager.
+
 	* If IPK install stalls, seconds stalled display is not accurate.
 		- Need to calculate actual seconds elapsed since stall began, instead of using an accumulator and `sleep 1`.
 
 	* If an action fork fails (such as with "unbound variable" error), main loop stalls.
 		- Must save stderr to file, and exit main loop.
+		- set trap for SIGERR?
 
 	* Will need a new method to detect if QTS 5.2.0 is starting/stopping QPKGs due to async starts/stops.
 
