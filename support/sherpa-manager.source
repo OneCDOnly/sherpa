@@ -541,9 +541,6 @@ LoadEnv()
 	readonly r_os_upstate=$(OsGetUpState)
 	readonly r_this_package_ver=$(QpkgGetInstalledVer)
 
-	OsIsSupportSecureDownload || CURL_CMD+=' --insecure'
-	readonly CURL_CMD
-
 	args=()						# Command-line argument array.
 	args_incomplete=()
 	qpkg_default_index=0
@@ -3051,6 +3048,8 @@ ShowArgSuggestions()
 			esac
 		done
 
+		[[ $arg_problem = true ]] && Display
+
 		if [[ ${#args_remaining[@]:-} -gt 0 ]]; then
 			ShowAsError "unknown argument$(Pluralise "${#args_remaining[@]}") \"${args_remaining[*]}\". Please check the arguments again"
 			arg_problem=true
@@ -3740,6 +3739,7 @@ IPKs:downgrade()
 
 	FuncInit
 
+	local curl_options=''
 	local desc=''
 	local -i fail_count=0
 	local log_pathfile=''
@@ -3754,6 +3754,7 @@ IPKs:downgrade()
 
 	IPKs-ACdownload-to:Init
 	total_count=$(IPKs-ACdowngrade-to:Count)
+	OsIsSupportSecureDownload || curl_options=' --insecure'
 
 	if [[ $total_count -gt 0 ]]; then
 		package_type=IPK
@@ -3774,7 +3775,7 @@ IPKs:downgrade()
 
 						remote_url=${url_prefix}${name}${url_suffix}
 						local_pathfile=$r_ipk_downgrade_path/$(/usr/bin/basename "$remote_url")
-						RunAndLog "/sbin/curl --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
+						RunAndLog "/sbin/curl${curl_options} --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
 					done
 
 					ShowAsPercentProgress "download $desc" '' "$ok_count" 0 "$fail_count" "$total_count"
@@ -3789,7 +3790,7 @@ IPKs:downgrade()
 
 					remote_url=${url_prefix}${name}${url_suffix}
 					local_pathfile=$r_ipk_downgrade_path/$(/usr/bin/basename "$remote_url")
-					RunAndLog "/sbin/curl --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
+					RunAndLog "/sbin/curl${curl_options} --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
 				done
 
 				ShowAsPercentProgress "download $desc" '' "$ok_count" 0 "$fail_count" "$total_count"
@@ -9549,6 +9550,7 @@ _QPKG:download_()
 
 	FuncForkInit
 
+	local curl_options=''
 	local -r r_remote_hash=$(QpkgGetDatabaseHash)
 	local -r r_remote_url=$(QpkgGetDatabaseURL)
 		local -r r_remote_filename=$(/usr/bin/basename "$r_remote_url")
@@ -9556,6 +9558,8 @@ _QPKG:download_()
 				local -r r_local_filename=$(/usr/bin/basename "$r_local_pathfile")
 					local -r r_log_pathfile=$r_logs_path/$r_local_filename.$r_download_log_file
 	local -i z=0
+
+	OsIsSupportSecureDownload || curl_options=' --insecure'
 
 	if [[ -z $r_remote_url || -z $r_remote_hash ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" download '' skipped 'NAS arch is incompatible'
@@ -9579,7 +9583,7 @@ _QPKG:download_()
 
 		rm -f "$r_log_pathfile" 2> /dev/null
 
-		RunAndLog "/sbin/curl --location --output $r_local_pathfile $r_remote_url" "$r_log_pathfile" log:failure-only
+		RunAndLog "/sbin/curl${curl_options} --location --output $r_local_pathfile $r_remote_url" "$r_log_pathfile" log:failure-only
 		z=$?
 
 		if [[ $z -eq 0 ]]; then
@@ -9678,7 +9682,7 @@ _QPKG:install_()
 	DebugAsProc "installing $(ShowAsPackageName)"
 	[[ ${QPKGs_were_installed_name[*]:-} = *"$qpkg_name"* ]] && a+="QINSTALL_PATH=$(QpkgGetInstalledOriginalPath "$qpkg_name") "
 
-	RunAndLog "${a}${SH_CMD} $local_pathfile" "$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_install_log_file" log:failure-only 10
+	RunAndLog "${a}/bin/sh $local_pathfile" "$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_install_log_file" log:failure-only 10
 	z=$?
 
 	LogQpkgServiceResult
@@ -9775,7 +9779,7 @@ _QPKG:reinstall_()
 	DebugAsProc "reinstalling $(ShowAsPackageName)"
 	QpkgIsInstalled && a+="QINSTALL_PATH=$(/usr/bin/dirname "$(QpkgGetInstalledPath)") "
 
-	RunAndLog "${a}${SH_CMD} $local_pathfile" "$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_reinstall_log_file" log:failure-only 10
+	RunAndLog "${a}/bin/sh $local_pathfile" "$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_reinstall_log_file" log:failure-only 10
 	z=$?
 
 	LogQpkgServiceResult
@@ -9913,7 +9917,7 @@ _QPKG:upgrade_()
 	DebugAsProc "upgrading $(ShowAsPackageName)"
 	QpkgIsInstalled && a+="QINSTALL_PATH=$(/usr/bin/dirname "$(QpkgGetInstalledPath "$qpkg_name")") "
 
-	RunAndLog "${a}${SH_CMD} $local_pathfile" "$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_upgrade_log_file" log:failure-only 10
+	RunAndLog "${a}/bin/sh $local_pathfile" "$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_upgrade_log_file" log:failure-only 10
 	z=$?
 
 	LogQpkgServiceResult
@@ -9999,7 +10003,7 @@ _QPKG:uninstall_()
 	if [[ -e $r_qpkg_uninstaller_pathfile ]]; then
 		DebugAsProc "uninstalling $(ShowAsPackageName)"
 
-		RunAndLog "${a}${SH_CMD} $r_qpkg_uninstaller_pathfile" "$r_logs_path/$qpkg_name.$r_uninstall_log_file" log:failure-only
+		RunAndLog "${a}/bin/sh $r_qpkg_uninstaller_pathfile" "$r_logs_path/$qpkg_name.$r_uninstall_log_file" log:failure-only
 		z=$?
 
 		if [[ $z -eq 0 ]]; then
@@ -14443,13 +14447,17 @@ LoadObjects()
 
 	FuncInit
 
+	local curl_options=''
+
+	OsIsSupportSecureDownload || curl_options=' --insecure'
+
 	LoadLists
 
 	if [[ ! -e $PWD/dont-refresh-objects ]]; then
 		if [[ ! -e $r_objects_pathfile ]] || ! IsThisFileRecent "$r_objects_pathfile" "$r_file_change_threshold_minutes"; then
 			ShowAsProc 'download objects'
 
-			if /sbin/curl --silent --fail "$r_objects_archive_url" > "$r_objects_archive_pathfile"; then
+			if /sbin/curl"${curl_options}" --silent --fail "$r_objects_archive_url" > "$r_objects_archive_pathfile"; then
 				/bin/tar --extract --gzip --no-same-owner --file="$r_objects_archive_pathfile" --directory="$r_cache_path"
 			fi
 		fi
@@ -14485,7 +14493,10 @@ LoadPackages()
 
 	FuncInit
 
+	local curl_options=''
 	local previous=''
+
+	OsIsSupportSecureDownload || curl_options=' --insecure'
 
 	LoadObjects
 
@@ -14493,7 +14504,7 @@ LoadPackages()
 		if [[ ! -e $r_packages_pathfile ]] || ! IsThisFileRecent "$r_packages_pathfile" "$r_file_change_threshold_minutes"; then
 			ShowAsProc 'download QPKG list'
 
-			if /sbin/curl --silent --fail "$r_packages_archive_url" > "$r_packages_archive_pathfile"; then
+			if /sbin/curl"${curl_options}" --silent --fail "$r_packages_archive_url" > "$r_packages_archive_pathfile"; then
 				/bin/tar --extract --gzip --no-same-owner --file="$r_packages_archive_pathfile" --directory="$r_cache_path"
 			fi
 

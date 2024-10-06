@@ -1,7 +1,5 @@
 Observed issues:
 
-	* must adapt hard-coded curl insecure args in manager.
-
 	* If IPK install stalls, seconds stalled display is not accurate.
 		- Need to calculate actual seconds elapsed since stall began, instead of using an accumulator and `sleep 1`.
 
