@@ -394,38 +394,6 @@ LoadCMDs()
 	readonly PYTHON3_CMD=/opt/bin/python3
 		readonly PIP_CMD="$PYTHON3_CMD -m pip"
 
-	# Cherry-pick QTS/QuTS binaries.
-
-	readonly AWK_CMD=/bin/awk
-	readonly BASENAME_CMD=/usr/bin/basename
-	readonly CAT_CMD=/bin/cat
-	CURL_CMD=/sbin/curl			# Set as readonly later when secure download ability has been checked.
-	# Don't assign a const for `/bin/date` as it's already been called before arriving here.
-	readonly DF_CMD=/bin/df
-	readonly DIRNAME_CMD=/usr/bin/dirname
-	readonly DU_CMD=/usr/bin/du
-	readonly GREP_CMD=/bin/grep
-	readonly LESS_CMD=/bin/less
-	readonly MD5SUM_CMD=/bin/md5sum
-	readonly MKNOD_CMD=/bin/mknod
-	readonly MKTEMP_CMD=/bin/mktemp
-	readonly MORE_CMD=/bin/more
-	readonly PS_CMD=/bin/ps
-	readonly READLINK_CMD=/usr/bin/readlink
-	readonly SCREEN_CMD=/usr/sbin/screen
-	readonly SED_CMD=/bin/sed
-	readonly SH_CMD=/bin/sh
-	readonly SLEEP_CMD=/bin/sleep
-	readonly SORT_CMD=/usr/bin/sort
-	readonly TAIL_CMD=/usr/bin/tail
-	readonly TAR_CMD=/bin/tar
-	readonly TEE_CMD=/usr/bin/tee
-	readonly UNAME_CMD=/bin/uname
-	readonly UNIQ_CMD=/bin/uniq
-	readonly UNZIP_CMD=/usr/bin/unzip
-	readonly UPTIME_CMD=/usr/bin/uptime
-	readonly WC_CMD=/usr/bin/wc
-
 	}
 
 CMDsIsOk()
@@ -433,35 +401,35 @@ CMDsIsOk()
 
 	# Confirm required binaries are present.
 
-	IsSysFileExist $AWK_CMD || return
-	IsSysFileExist $BASENAME_CMD || return
-	IsSysFileExist $CAT_CMD || return
-	# Don't check for `/bin/date` as it's already been called before arriving here.
-	IsSysFileExist $CURL_CMD || return
-	IsSysFileExist $DF_CMD || return
-	IsSysFileExist $DIRNAME_CMD || return
-	IsSysFileExist $DU_CMD || return
-	IsSysFileExist $GREP_CMD || return
+	IsSysFileExist /bin/awk || return
+	IsSysFileExist /usr/bin/basename || return
+	IsSysFileExist /bin/cat || return
+	IsSysFileExist /sbin/curl || return
+	# `/bin/date` has already been called before arriving here.
+	IsSysFileExist /bin/df || return
+	IsSysFileExist /usr/bin/dirname || return
+	IsSysFileExist /usr/bin/du || return
+	IsSysFileExist /bin/grep || return
 	# Don't check for `/bin/less` because it's not always there.
-	IsSysFileExist $MD5SUM_CMD || return
-	IsSysFileExist $MKNOD_CMD || return
-	IsSysFileExist $MKTEMP_CMD || return
+	IsSysFileExist /bin/md5sum || return
+	IsSysFileExist /bin/mknod || return
+	IsSysFileExist /bin/mktemp || return
 	# Don't check for `/bin/more` because it's a very low-priority utility (non-essential).
-	IsSysFileExist $PS_CMD || return
-	IsSysFileExist $READLINK_CMD || return
-	IsSysFileExist $SCREEN_CMD || return
-	# Don't check for `/bin/sed` as it's already been called before arriving here.
-	IsSysFileExist $SH_CMD || return
-	# Don't check for `/bin/sleep` as it's already been called before arriving here.
-	[[ ! -e $SORT_CMD ]] && ln -s /bin/busybox "$SORT_CMD"		# KLUDGE: `/usr/bin/sort` randomly disappears from QTS.
-	IsSysFileExist $TAIL_CMD || return
-	IsSysFileExist $TAR_CMD || return
-	IsSysFileExist $TEE_CMD || return
-	IsSysFileExist $UNAME_CMD || return
-	IsSysFileExist $UNIQ_CMD || return
-	IsSysFileExist $UNZIP_CMD || return
-	IsSysFileExist $UPTIME_CMD || return
-	# Don't check for `/usr/bin/wc` as it's already been called before arriving here.
+	IsSysFileExist /bin/ps || return
+	IsSysFileExist /usr/bin/readlink || return
+	IsSysFileExist /usr/sbin/screen || return
+	# `/bin/sed` has already been called before arriving here.
+	IsSysFileExist /bin/sh || return
+	# `/bin/sleep` has already been called before arriving here.
+	[[ ! -e /usr/bin/sort ]] && ln -s /bin/busybox /usr/bin/sort		# KLUDGE: `/usr/bin/sort` randomly disappears from QTS.
+	IsSysFileExist /usr/bin/tail || return
+	IsSysFileExist /bin/tar || return
+	IsSysFileExist /usr/bin/tee || return
+	IsSysFileExist /bin/uname || return
+	IsSysFileExist /bin/uniq || return
+	IsSysFileExist /usr/bin/unzip || return
+	IsSysFileExist /usr/bin/uptime || return
+	# `/usr/bin/wc` has already been called before arriving here.
 
 	LocateSQLiteBinary
 
@@ -572,9 +540,6 @@ LoadEnv()
 	readonly r_nas_ram_kb=$(HardwareGetInstalledRAM)
 	readonly r_os_upstate=$(OsGetUpState)
 	readonly r_this_package_ver=$(QpkgGetInstalledVer)
-
-	OsIsSupportSecureDownload || CURL_CMD+=' --insecure'
-	readonly CURL_CMD
 
 	args=()						# Command-line argument array.
 	args_incomplete=()
@@ -847,7 +812,7 @@ DebugLogEnv()
 
 	DebugUserspace ok '$EUID' "$EUID"
 	DebugUserspace ok 'default volume' "$(UserGetDefVol)"
-	DebugUserspace ok '/opt' "$($READLINK_CMD /opt 2> /dev/null || printf 'not present')"
+	DebugUserspace ok '/opt' "$(/usr/bin/readlink /opt 2> /dev/null || printf 'not present')"
 
 	local public_share=$(/sbin/getcfg SHARE_DEF defPublic -d Qpublic -f /etc/config/def_share.info)
 
@@ -933,13 +898,13 @@ DebugLogEnv()
 		return
 	fi
 
-	RunAndLog "$DF_CMD -h | $GREP_CMD '^Filesystem\|^none\|^tmpfs\|ram'" "$r_ramfs_freespace_pathfile"
+	RunAndLog "/bin/df -h | /bin/grep '^Filesystem\|^none\|^tmpfs\|ram'" "$r_ramfs_freespace_pathfile"
 	DebugInfoMinSepr
-	RunAndLog "$SCREEN_CMD -ls" "$r_screen_sessions_pathfile" '' 1
+	RunAndLog "/usr/sbin/screen -ls" "$r_screen_sessions_pathfile" '' 1
 	DebugInfoMinSepr
 	RunAndLog '/usr/bin/free -m' "$r_ram_freeused_pathfile" '' 1
 	DebugInfoMinSepr
-	RunAndLog "$GREP_CMD -i 'out of memory\|oom-killer' /mnt/HDA_ROOT/.logs/kmsg" "$r_oom_log_pathfile" '' 1
+	RunAndLog "/bin/grep -i 'out of memory\|oom-killer' /mnt/HDA_ROOT/.logs/kmsg" "$r_oom_log_pathfile" '' 1
 	DebugInfoMinSepr
 
 	if [[ $useropt_show_aboutall = true ]]; then
@@ -1037,7 +1002,7 @@ CheckEnv()
 	local installed_version=''
 	local target_packages=''
 
-	if [[ $($GREP_CMD -i 'out of memory\|oom-killer' /mnt/HDA_ROOT/.logs/kmsg | $WC_CMD -l) -gt 0 ]]; then
+	if [[ $(/bin/grep -i 'out of memory\|oom-killer' /mnt/HDA_ROOT/.logs/kmsg | /usr/bin/wc -l) -gt 0 ]]; then
 		ShowAsWarn "the $(TextBrightRed 'Out-Of-Memory killer') has been triggered ... check for $(TextBrightRed inactive) QPKGs"
 	fi
 
@@ -1077,7 +1042,7 @@ CheckEnv()
 					target_packages='ar binutils libbfd libctf libopcodes objdump'
 
 					# Assume first package version is same as remaining package versions.
-					installed_version=$($OPKG_CMD list-installed | $GREP_CMD "^${target_packages%% *} *" | head -n1 | cut -d' ' -f3 | cut -d'-' -f1)
+					installed_version=$($OPKG_CMD list-installed | /bin/grep "^${target_packages%% *} *" | head -n1 | cut -d' ' -f3 | cut -d'-' -f1)
 
 					if [[ ${installed_version//.} -gt 238 ]]; then
 						ipks_downgrade=true
@@ -1095,7 +1060,7 @@ CheckEnv()
 # 				target_packages='git git-http'
 #
 # 				# Assume first package version is same as remaining package versions.
-# 				installed_version=$($OPKG_CMD list-installed | $GREP_CMD "^${target_packages%% *} *" | head -n1 | cut -d' ' -f3 | cut -d'-' -f1)
+# 				installed_version=$($OPKG_CMD list-installed | /bin/grep "^${target_packages%% *} *" | head -n1 | cut -d' ' -f3 | cut -d'-' -f1)
 #
 # 				if [[ ${installed_version//.} -gt 2392 ]]; then
 # 					ipks_downgrade=true
@@ -1285,7 +1250,7 @@ QPKGsAssignToActions()
 			if QPKGs-ISinstalled.Exist "$qpkg_name" && QPKGs-ACinstall-to.Exist "$qpkg_name"; then
 				QPKGs_were_installed_name+=("$qpkg_name")
 				QpkgSetIndex
-				QPKGs_were_installed_path+=("$($DIRNAME_CMD "$(QpkgGetInstalledPath)")")
+				QPKGs_were_installed_path+=("$(/usr/bin/dirname "$(QpkgGetInstalledPath)")")
 			fi
 
 			QPKGs-ACdeactivate-to:Add "$qpkg_name"
@@ -1600,7 +1565,7 @@ ProcAction()
 				ShowKeystrokes		# Enable this before removing Entware (& GNU `stty`).
 			fi
 
-			pidfile=$($MKTEMP_CMD "$r_async_procs_path"/bgproc_XXXXXX)		# Set $pidfile here, before launching async process so it's inherited by that process.
+			pidfile=$(/bin/mktemp "$r_async_procs_path"/bgproc_XXXXXX)		# Set $pidfile here, before launching async process so it's inherited by that process.
 
 			_ExecOneActionWithManyForks_ "_${r_package_type}:${r_action}_" "${target_packages[@]}" &
 
@@ -1746,6 +1711,8 @@ ProcAction()
 OpenActionMsgPipe()
 	{
 
+	# Create a message pipe, so action forks can send data back to parent.
+
 	# Inputs: (global)
 	#	$r_action_msg_pipe
 
@@ -1753,11 +1720,12 @@ OpenActionMsgPipe()
 	#	$action_msg_pipe_fd
 	#	$backup_stdin_fd
 
-	# Create a message pipe, so action forks can send data back to parent.
+	[[ -p $r_action_msg_pipe ]] && rm -f "$r_action_msg_pipe"
+	[[ ! -d $(/usr/bin/dirname "$r_action_msg_pipe") ]] && mkdir -p "$(/usr/bin/dirname "$r_action_msg_pipe")"
 
-	[[ -p $r_action_msg_pipe ]] && rm -f "$r_action_msg_pipe" 2> /dev/null
-	[[ ! -d $($DIRNAME_CMD "$r_action_msg_pipe") ]] && mkdir -p "$($DIRNAME_CMD "$r_action_msg_pipe")"
-	[[ ! -p $r_action_msg_pipe ]] && $MKNOD_CMD "$r_action_msg_pipe" p
+	# Create message pipe.
+
+	[[ ! -p $r_action_msg_pipe ]] && /bin/mknod "$r_action_msg_pipe" p
 
 	# Create a file descriptor to store original stdin FD.
 
@@ -1777,15 +1745,15 @@ OpenActionMsgPipe()
 
 	[[ $action_msg_pipe_fd != none ]] && eval "exec $action_msg_pipe_fd<>$r_action_msg_pipe"
 
-	}
+	} 2> /dev/null
 
 CloseActionMsgPipe()
 	{
 
 	# Inputs: (global)
+	#	$r_action_msg_pipe
 	#	$action_msg_pipe_fd
 	#	$backup_stdin_fd
-	#	$r_action_msg_pipe
 
 	# Restore original file descriptors, and remove message pipe.
 
@@ -2930,6 +2898,8 @@ ShowArgSuggestions()
 	local arg=''
 	local -a args_remaining=()
 
+	ResetReportsPath &> /dev/null
+
 	if [[ ${#args_incomplete[@]:-} -gt 0 ]]; then
 		run_package_actions=false
 
@@ -2987,9 +2957,7 @@ ShowArgSuggestions()
 					arg_problem=true
 					args_remaining+=("$arg")
 			esac
-		done
-
-		[[ $arg_problem = true ]] && Display
+		done > "$r_report_output_pathfile"
 
 		if [[ ${#args_remaining[@]:-} -gt 0 ]]; then
 			ShowAsError "incomplete argument$(Pluralise "${#args_remaining[@]}") \"${args_remaining[*]}\". Please check the arguments again"
@@ -3003,13 +2971,8 @@ ShowArgSuggestions()
 
 		for arg in "${args[@]}"; do
 			case $arg in
-				active|@(dis|en)abled|started)
+				active|all|@(dis|en)abled|started)
 					DisplayAsProjSynExam "please provide a valid $(ShowAsAction) before '$arg' like" "deactivate $arg"
-					arg_problem=true
-					useropt_help_basic=false
-					;;
-				all)
-					DisplayAsProjSynExam "please provide a valid $(ShowAsAction) before 'all' like" 'activate all'
 					arg_problem=true
 					useropt_help_basic=false
 					;;
@@ -3054,7 +3017,7 @@ ShowArgSuggestions()
 					useropt_help_basic=false
 					;;
 				@(dis|en)able|false|off|no|on|true|yes)
-					DisplayAsProjSynExam "please provide a valid setting before '$arg' like" "colour $arg"
+					DisplayAsProjSynExam "please provide a valid $(ShowAsSetting) before '$arg' like" "colour $arg"
 					DisplayAsProjSynIndentExam '' "terse $arg"
 					arg_problem=true
 					useropt_help_basic=false
@@ -3070,7 +3033,7 @@ ShowArgSuggestions()
 					useropt_help_basic=false
 					;;
 				?(un)stable)
-					DisplayAsProjSynExam "please provide a valid $(ShowAsAction) before '$arg' like" "follow $arg"
+					DisplayAsProjSynExam "please provide a valid $(ShowAsSetting) before '$arg' like" "follow $arg"
 					arg_problem=true
 					useropt_help_basic=false
 					;;
@@ -3078,16 +3041,16 @@ ShowArgSuggestions()
 					arg_problem=true
 					args_remaining+=("$arg")
 			esac
-		done
+		done >> "$r_report_output_pathfile"
 
 		if [[ ${#args_remaining[@]:-} -gt 0 ]]; then
 			ShowAsError "unknown argument$(Pluralise "${#args_remaining[@]}") \"${args_remaining[*]}\". Please check the arguments again"
 			arg_problem=true
 			useropt_help_basic=false
-		elif [[ $arg_problem = true ]]; then
-			Display
 		fi
 	fi
+
+	[[ -e $r_report_output_pathfile ]] && cat "$r_report_output_pathfile"
 
 	DebugArray args_incomplete "${args_incomplete[*]:-}"
 	DebugArray args_remaining "${args_remaining[*]:-}"
@@ -3303,18 +3266,18 @@ PatchEntwareService()
 	local find=''
 	local insert=''
 
-	if $GREP_CMD -q 'opt.orig' "$r_package_init_pathfile"; then
+	if /bin/grep -q 'opt.orig' "$r_package_init_pathfile"; then
 		DebugInfo 'patch: do the "/opt shuffle" - already done'
 	else
 		# Ensure existing files are moved out of the way before creating /opt symlink.
 		find='# sym-link $QPKG_DIR to /opt'
 		insert='opt_path="/opt"; opt_backup_path="/opt.orig"; [[ -d "$opt_path" \&\& ! -L "$opt_path" \&\& ! -e "$opt_backup_path" ]] \&\& mv "$opt_path" "$opt_backup_path"'
-		$SED_CMD -i "s|$find|$find\n\n${r_tab_char}${r_prefix}\n${r_tab_char}${insert}\n|" "$r_package_init_pathfile"
+		/bin/sed -i "s|$find|$find\n\n${r_tab_char}${r_prefix}\n${r_tab_char}${insert}\n|" "$r_package_init_pathfile"
 
 		# ... then restored after creating /opt symlink.
 		find='/bin/ln -sf $QPKG_DIR /opt'
 		insert='[[ -L "$opt_path" \&\& -d "$opt_backup_path" ]] \&\& cp "$opt_backup_path"/* --target-directory "$opt_path" \&\& rm -r "$opt_backup_path"'
-		$SED_CMD -i "s|$find|$find\n\n${r_tab_char}${r_prefix}\n${r_tab_char}${insert}\n|" "$r_package_init_pathfile"
+		/bin/sed -i "s|$find|$find\n\n${r_tab_char}${r_prefix}\n${r_tab_char}${insert}\n|" "$r_package_init_pathfile"
 
 		DebugAsDone 'patch: do the "opt shuffle"'
 	fi
@@ -3475,7 +3438,7 @@ CalcIpkDepsToInstall()
 	req_list=$(DeDupeWords "$(IPKs-ACinstall-to:List)")
 	dep_acc=($req_list)
 	this_list=($req_list)
-	requested_count=$($WC_CMD -w <<< "$req_list")
+	requested_count=$(/usr/bin/wc -w <<< "$req_list")
 
 	if [[ $requested_count -eq 0 ]]; then
 		DebugAsWarn 'no IPKs requested'
@@ -3492,7 +3455,7 @@ CalcIpkDepsToInstall()
 		printf -v ipk_titles '^Package: %s$\|' "${this_list[@]}"
 		ipk_titles=${ipk_titles%??}		# Remove last 2 characters.
 
-		this_list=($($GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator '^Package:\|^Depends:' "$r_external_packages_pathfile" | $GNU_GREP_CMD -vG '^Section:\|^Version:' | $GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator "$ipk_titles" | $GNU_GREP_CMD -vG "$ipk_titles" | $GNU_GREP_CMD -vG '^Package: ' | $SED_CMD 's|^Depends: ||;s|, |\n|g' | $SORT_CMD | $UNIQ_CMD))
+		this_list=($($GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator '^Package:\|^Depends:' "$r_external_packages_pathfile" | $GNU_GREP_CMD -vG '^Section:\|^Version:' | $GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator "$ipk_titles" | $GNU_GREP_CMD -vG "$ipk_titles" | $GNU_GREP_CMD -vG '^Package: ' | /bin/sed 's|^Depends: ||;s|, |\n|g' | /usr/bin/sort | /bin/uniq))
 
 		# Update progress twice per loop.
 		ShowAsIterativeProgress 'resolve IPK dependencies' "$iterations" iteration "${#dep_acc[@]}" 'unique IPK'
@@ -3519,7 +3482,7 @@ CalcIpkDepsToInstall()
 
 	# Exclude already installed IPKs.
 	pre_exclude_list=${dep_acc[*]}
-	pre_exclude_count=$($WC_CMD -w <<< "$pre_exclude_list")
+	pre_exclude_count=$(/usr/bin/wc -w <<< "$pre_exclude_list")
 
 	if [[ $pre_exclude_count -gt 0 ]]; then
 		ShowAsProc 'exclude IPKs already installed'
@@ -3535,10 +3498,10 @@ CalcIpkDepsToInstall()
 				# KLUDGE: `libjpeg` appears to have been replaced by `libjpeg-turbo`, but many packages still have `libjpeg` as a dependency, so replace it with `libjpeg-turbo`.
 
 				if [[ $element != 'libjpeg' ]]; then
-					if ! $OPKG_CMD status "$element" | $GREP_CMD -q "Status:.*installed"; then
+					if ! $OPKG_CMD status "$element" | /bin/grep -q "Status:.*installed"; then
 						IPKs-ACdownload-to:Add "$element"
 					fi
-				elif ! $OPKG_CMD status 'libjpeg-turbo' | $GREP_CMD -q "Status:.*installed"; then
+				elif ! $OPKG_CMD status 'libjpeg-turbo' | /bin/grep -q "Status:.*installed"; then
 					IPKs-ACdownload-to:Add 'libjpeg-turbo'
 				fi
 			fi
@@ -3569,7 +3532,7 @@ CalcIpkDownloadSize()
 		ShowAsProc "calculate size of IPK$(Pluralise "$size_count") to download"
 
 		DebugAsDone "$size_count IPK$(Pluralise "$size_count") to download: '$(IPKs-ACdownload-to:List)'"
-		size_array=($($GNU_GREP_CMD -w '^Package:\|^Size:' "$r_external_packages_pathfile" | $GNU_GREP_CMD --after-context 1 --no-group-separator ": $($SED_CMD 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKs-ACdownload-to:List)")" | $GREP_CMD '^Size:' | $SED_CMD 's|^Size: ||'))
+		size_array=($($GNU_GREP_CMD -w '^Package:\|^Size:' "$r_external_packages_pathfile" | $GNU_GREP_CMD --after-context 1 --no-group-separator ": $(/bin/sed 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKs-ACdownload-to:List)")" | /bin/grep '^Size:' | /bin/sed 's|^Size: ||'))
 
 		# shellcheck disable=2283
 		IPKs-ACdownload-to:Size = "$(IFS=+; echo "$((${size_array[*]:-}))")"		# nifty sizing shortcut found here https://stackoverflow.com/a/13635566/6182835
@@ -3769,6 +3732,7 @@ IPKs:downgrade()
 
 	FuncInit
 
+	local curl_options=''
 	local desc=''
 	local -i fail_count=0
 	local log_pathfile=''
@@ -3783,6 +3747,7 @@ IPKs:downgrade()
 
 	IPKs-ACdownload-to:Init
 	total_count=$(IPKs-ACdowngrade-to:Count)
+	OsIsSupportSecureDownload || curl_options=' --insecure'
 
 	if [[ $total_count -gt 0 ]]; then
 		package_type=IPK
@@ -3802,8 +3767,8 @@ IPKs:downgrade()
 						((ok_count++))
 
 						remote_url=${url_prefix}${name}${url_suffix}
-						local_pathfile=$r_ipk_downgrade_path/$($BASENAME_CMD "$remote_url")
-						RunAndLog "$CURL_CMD --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
+						local_pathfile=$r_ipk_downgrade_path/$(/usr/bin/basename "$remote_url")
+						RunAndLog "/sbin/curl${curl_options} --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
 					done
 
 					ShowAsPercentProgress "download $desc" '' "$ok_count" 0 "$fail_count" "$total_count"
@@ -3817,8 +3782,8 @@ IPKs:downgrade()
 					((ok_count++))
 
 					remote_url=${url_prefix}${name}${url_suffix}
-					local_pathfile=$r_ipk_downgrade_path/$($BASENAME_CMD "$remote_url")
-					RunAndLog "$CURL_CMD --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
+					local_pathfile=$r_ipk_downgrade_path/$(/usr/bin/basename "$remote_url")
+					RunAndLog "/sbin/curl${curl_options} --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
 				done
 
 				ShowAsPercentProgress "download $desc" '' "$ok_count" 0 "$fail_count" "$total_count"
@@ -3877,7 +3842,7 @@ PIPs:install()
 
 	[[ $pips_install = true ]] || return
 	QPKGs-ISenabled.Exist Entware || return
-	$OPKG_CMD status python3-pip | $GREP_CMD -q "Status:.*installed" || return
+	$OPKG_CMD status python3-pip | /bin/grep -q "Status:.*installed" || return
 	ErrorIsNt || return
 
 	FuncInit
@@ -3953,7 +3918,7 @@ OpenIpkArchive()
 		return 1
 	fi
 
-	RunAndLog "/usr/local/sbin/7z e -o$($DIRNAME_CMD "$r_external_packages_pathfile") $r_external_packages_archive_pathfile" "$r_cache_path/ipk.archive.extract" log:failure-only
+	RunAndLog "/usr/local/sbin/7z e -o$(/usr/bin/dirname "$r_external_packages_pathfile") $r_external_packages_archive_pathfile" "$r_cache_path/ipk.archive.extract" log:failure-only
 
 	if [[ ! -e $r_external_packages_pathfile ]]; then
 		ShowAsError 'unable to open the IPK list file'
@@ -4011,7 +3976,7 @@ _ExecOneActionWithManyForks_()
 		MarkThisAcForkAsStarted 						# Must create runfile here, as it takes too-long to happen in async function.
 		QpkgSetIndex
 
-		action_pidfile=$($MKTEMP_CMD "$r_async_procs_path"/bgproc_XXXXXX)		# Set $action_pidfile here, before launching async process so it's inherited by that process.
+		action_pidfile=$(/bin/mktemp "$r_async_procs_path"/bgproc_XXXXXX)		# Set $action_pidfile here, before launching async process so it's inherited by that process.
 
 		$a &
 
@@ -4067,7 +4032,7 @@ _DirSizeMonitor_()
 	InitProgress
 
 	while [[ $current_bytes -lt $total_bytes ]]; do
-		current_bytes=$($GNU_FIND_CMD "$1" -type f -name '*.ipk' -exec $DU_CMD --bytes --total --apparent-size {} + 2> /dev/null | $GREP_CMD total$ | cut -f1)
+		current_bytes=$($GNU_FIND_CMD "$1" -type f -name '*.ipk' -exec /usr/bin/du --bytes --total --apparent-size {} + 2> /dev/null | /bin/grep total$ | cut -f1)
 		[[ -z $current_bytes ]] && current_bytes=0
 
 		if [[ $current_bytes -ne $last_bytes ]]; then
@@ -6670,9 +6635,9 @@ ViewLogTail()
 DisplayFileInViewport()
 	{
 
-	# Inputs:
+	# Inputs: (local)
 	# 	$1 = pathfile to display
-	# 	$2/$3/$4 (optional, and in any order)
+	# 	$2/$3/$4 (optional, in any order)
 	#		= 'linenumbers' : display file contents with line numbers.
 	#		= 'jumptoend'   : display file contents scrolled to the last line.
 	#		= 'wrap'		: wrap lines of text to displayport.
@@ -6706,8 +6671,8 @@ DisplayFileInViewport()
 	esac
 
 	if [[ $useropt_verbose = true ]]; then
-		if [[ -e $CAT_CMD ]]; then
-			$CAT_CMD "$filename"
+		if [[ -e /bin/cat ]]; then
+			/bin/cat "$filename"
 
 			return
 		else
@@ -6717,34 +6682,34 @@ DisplayFileInViewport()
 		fi
 	fi
 
-	if [[ $($WC_CMD -l < "$filename") -ge $r_sess_rows || $($WC_CMD -L < "$filename") -ge $r_sess_columns ]]; then
+	if [[ $(/usr/bin/wc -l < "$filename") -ge $r_sess_rows || $(/usr/bin/wc -L < "$filename") -ge $r_sess_columns ]]; then
 		if [[ -e $GNU_LESS_CMD ]]; then
-			options=' --quit-on-intr --tilde --mouse --RAW-CONTROL-CHARS --shift=4 --redraw-on-quit --quit-if-one-screen'
+			options='--quit-on-intr --tilde --mouse --RAW-CONTROL-CHARS --shift=4 --redraw-on-quit --quit-if-one-screen'
 			[[ $wraplines = false ]] && options+=' --chop-long-lines'
 			[[ $showlinenumbers = true ]] && options+=' --LINE-NUMBERS'
 			[[ $jumptoend = true ]] && options+=' +G'
-			LESSSECURE=1 ${GNU_LESS_CMD}${options} --prompt "$prompt" "$filename"
+			LESSSECURE=1 ${GNU_LESS_CMD} "$options" --prompt "$prompt" "$filename"
 
 			return
 		fi
 
-		if [[ -e $LESS_CMD ]]; then
-			options=' -~'
+		if [[ -e /bin/less ]]; then
+			options='-~'
 			[[ $wraplines = false ]] && options+='S'
 			[[ $showlinenumbers = true ]] && options+='N'
-			${LESS_CMD}${options} "$filename"
+			/bin/less "$options" "$filename"
 
 			return
 		fi
 	fi
 
-	if [[ -e $CAT_CMD ]]; then
-		[[ $showlinenumbers = true ]] && options+=' --number'
-		${CAT_CMD}${options} "$filename"
+	if [[ -e /bin/cat ]]; then
+		[[ $showlinenumbers = true ]] && options='--number'
+		/bin/cat "$options" "$filename"
 
 		return
-	elif [[ -e $MORE_CMD ]]; then
-		$MORE_CMD "$filename"
+	elif [[ -e /bin/more ]]; then
+		/bin/more "$filename"
 
 		return
 	fi
@@ -6753,7 +6718,7 @@ DisplayFileInViewport()
 
 	echo "$(<$1)"
 
-	}
+	} 2> /dev/null
 
 PasteLogLast()
 	{
@@ -6768,7 +6733,7 @@ PasteLogLast()
 			ShowAsProc "upload $(ShowAsTitleName) log"
 
 			# with thanks to https://github.com/solusipse/fiche
-			link=$($CAT_CMD --number "$r_session_last_pathfile" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
+			link=$(/bin/cat --number "$r_session_last_pathfile" | (exec 3<>/dev/tcp/termbin.com/9999; /bin/cat >&3; /bin/cat <&3; exec 3<&-))
 
 			if [[ $? -eq 0 ]]; then
 				ShowAsDone "your $(ShowAsTitleName) log is now online at $(ShowAsURL "$link") and will be deleted in 1 month"
@@ -6803,7 +6768,7 @@ PasteLogTail()
 			ShowAsProc "upload $(ShowAsTitleName) log"
 
 			# with thanks to https://github.com/solusipse/fiche
-			link=$($CAT_CMD --number "$r_session_tail_pathfile" | (exec 3<>/dev/tcp/termbin.com/9999; $CAT_CMD >&3; $CAT_CMD <&3; exec 3<&-))
+			link=$(/bin/cat --number "$r_session_tail_pathfile" | (exec 3<>/dev/tcp/termbin.com/9999; /bin/cat >&3; /bin/cat <&3; exec 3<&-))
 
 			if [[ $? -eq 0 ]]; then
 				ShowAsDone "your $(ShowAsTitleName) log is now online at $(ShowAsURL "$link") and will be deleted in 1 month"
@@ -6831,7 +6796,7 @@ GetLogSessStartLine()
 	# Inputs:
 	#	$1 = how many sessions back? (optional) default = 1
 
-	local -i linenum=$(($($GREP_CMD -n 'SCRIPT:.*started:' "$r_session_tail_pathfile" | $TAIL_CMD -n${1:-1} | head -n1 | cut -d':' -f1)-1))
+	local -i linenum=$(($(/bin/grep -n 'SCRIPT:.*started:' "$r_session_tail_pathfile" | /usr/bin/tail -n${1:-1} | head -n1 | cut -d':' -f1)-1))
 	[[ $linenum -lt 1 ]] && linenum=1
 	printf '%s' "$linenum"
 
@@ -6843,7 +6808,7 @@ GetLogSessFinishLine()
 	# Inputs:
 	#	$1 = how many sessions back? (optional) default = 1
 
-	local -i linenum=$(($($GREP_CMD -n 'SCRIPT:.*finished:' "$r_session_tail_pathfile" | $TAIL_CMD -n${1:-1} | cut -d':' -f1)+2))
+	local -i linenum=$(($(/bin/grep -n 'SCRIPT:.*finished:' "$r_session_tail_pathfile" | /usr/bin/tail -n${1:-1} | cut -d':' -f1)+2))
 	[[ $linenum -eq 2 ]] && linenum=3
 	printf '%s' "$linenum"
 
@@ -6852,7 +6817,7 @@ GetLogSessFinishLine()
 ArchiveActiveSessLog()
 	{
 
-	[[ -n ${sess_active_pathfile:-} && -e $sess_active_pathfile ]] && $CAT_CMD "$sess_active_pathfile" >> "$r_session_archive_pathfile"
+	[[ -n ${sess_active_pathfile:-} && -e $sess_active_pathfile ]] && /bin/cat "$sess_active_pathfile" >> "$r_session_archive_pathfile"
 
 	}
 
@@ -6865,7 +6830,7 @@ ArchivePriorSessLogs()
 
 	for f in "$r_this_package_path"/session.*.active.log; do
 		if [[ -f $f && $f != "$sess_active_pathfile" ]]; then
-			$CAT_CMD "$f" >> "$r_session_archive_pathfile"
+			/bin/cat "$f" >> "$r_session_archive_pathfile"
 			rm -f "$f" 2> /dev/null
 		fi
 	done
@@ -6900,7 +6865,7 @@ ExtractPrevSessFromTail()
 			[[ $old_session -gt $old_session_limit ]] && break
 		done
 
-		$SED_CMD "$start_line,$end_line!d" "$r_session_tail_pathfile" > "$r_session_last_pathfile"
+		/bin/sed "$start_line,$end_line!d" "$r_session_tail_pathfile" > "$r_session_last_pathfile"
 	else
 		rm -f "$r_session_last_pathfile" 2> /dev/null
 	fi
@@ -6913,7 +6878,7 @@ ExtractTailFromLog()
 	{
 
 	if [[ -e $r_session_archive_pathfile ]]; then
-		$TAIL_CMD -n${r_log_tail_lines} "$r_session_archive_pathfile" > "$r_session_tail_pathfile"	# Trim main log first so there's less to `grep`.
+		/usr/bin/tail -n${r_log_tail_lines} "$r_session_archive_pathfile" > "$r_session_tail_pathfile"	# Trim main log first so there's less to `grep`.
 	else
 		rm -f "$r_session_tail_pathfile" 2> /dev/null
 	fi
@@ -6928,7 +6893,7 @@ InitForkCounts()
 	# Create directories so async processes can be monitored.
 
 	MakePath "$r_action_forks_count" 'action forks'
-	proc_counts_path=$($MKTEMP_CMD -d "$r_action_forks_count"/"${FUNCNAME[1]}"_XXXXXX)
+	proc_counts_path=$(/bin/mktemp -d "$r_action_forks_count"/"${FUNCNAME[1]}"_XXXXXX)
 	[[ -n ${proc_counts_path:?undefined proc counts path} ]] || return
 
 	EraseForkCountPaths
@@ -6974,13 +6939,13 @@ IncForkProgressIndex()
 RefreshForkCounts()
 	{
 
-	fork_count=$(ls -A -1 "$proc_fork_count_path" 2> /dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
-	ok_count=$(ls -A -1 "$proc_ok_count_path" 2> /dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
-	skip_count=$(ls -A -1 "$proc_skip_count_path" 2> /dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
-	skip_ok_count=$(ls -A -1 "$proc_skip_ok_count_path" 2> /dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
-	skip_error_count=$(ls -A -1 "$proc_skip_error_count_path" 2> /dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
-	skip_abort_count=$(ls -A -1 "$proc_skip_abort_count_path" 2> /dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
-	fail_count=$(ls -A -1 "$proc_fail_count_path" 2> /dev/null | $WC_CMD -l | $SED_CMD 's|^ *||')
+	fork_count=$(ls -A -1 "$proc_fork_count_path" 2> /dev/null | /usr/bin/wc -l | /bin/sed 's|^ *||')
+	ok_count=$(ls -A -1 "$proc_ok_count_path" 2> /dev/null | /usr/bin/wc -l | /bin/sed 's|^ *||')
+	skip_count=$(ls -A -1 "$proc_skip_count_path" 2> /dev/null | /usr/bin/wc -l | /bin/sed 's|^ *||')
+	skip_ok_count=$(ls -A -1 "$proc_skip_ok_count_path" 2> /dev/null | /usr/bin/wc -l | /bin/sed 's|^ *||')
+	skip_error_count=$(ls -A -1 "$proc_skip_error_count_path" 2> /dev/null | /usr/bin/wc -l | /bin/sed 's|^ *||')
+	skip_abort_count=$(ls -A -1 "$proc_skip_abort_count_path" 2> /dev/null | /usr/bin/wc -l | /bin/sed 's|^ *||')
+	fail_count=$(ls -A -1 "$proc_fail_count_path" 2> /dev/null | /usr/bin/wc -l | /bin/sed 's|^ *||')
 
 	} &> /dev/null
 
@@ -7801,16 +7766,16 @@ ShowReportBackups()
 
 			((n++))
 			GenerateBacksReportItemLine "$epoch_time" "$file_name" "$file_bytes" "$r_report_highlight_backups_older_than" > "$r_reports_path/$n" &
-		done <<< "$($GNU_FIND_CMD "$r_qpkg_bu_path"/*.config.tar.gz -maxdepth 1 -printf '%C@ %f %s\n' 2> /dev/null | $SORT_CMD)"
+		done <<< "$($GNU_FIND_CMD "$r_qpkg_bu_path"/*.config.tar.gz -maxdepth 1 -printf '%C@ %f %s\n' 2> /dev/null | /usr/bin/sort)"
 	else										# If GNU `find` isn't available, do-it the hard-way.
 		while read -r file_date file_time file_name file_bytes; do
 			[[ -z $file_date || -z $file_name ]] && break
 			epoch_time=$(/bin/date -d "$file_date $file_time" +"%s")
-			file_name=$($BASENAME_CMD "$file_name")
+			file_name=$(/usr/bin/basename "$file_name")
 
 			((n++))
 			GenerateBacksReportItemLine "$epoch_time" "$file_name" "$file_bytes" "$r_report_highlight_backups_older_than" > "$r_reports_path/$n" &
-		done <<< "$(cd "$r_qpkg_bu_path" && ls -l1tr --time-style=+"%Y-%m-%d %H:%M:%S" ./*.config.tar.gz 2> /dev/null | $AWK_CMD '{print $6" "$7" "$8" "$5}')"
+		done <<< "$(cd "$r_qpkg_bu_path" && ls -l1tr --time-style=+"%Y-%m-%d %H:%M:%S" ./*.config.tar.gz 2> /dev/null | /bin/awk '{print $6" "$7" "$8" "$5}')"
 	fi
 
 	m=$n
@@ -8005,6 +7970,7 @@ ShowReportPackages()
 
 	EraseThisLine
 	ShowReport
+	ListQPKGsStates
 
 	FuncExit
 
@@ -8181,7 +8147,7 @@ ShowReportAllActionResults()
 			ShowReport
 		fi
 	else
-		ShowAsError 'previous report results not found'
+		ShowAsDone 'no action results to report'
 	fi
 
 	}
@@ -8528,7 +8494,7 @@ ShowQPKGList()
 	# Inputs: (local)
 	#	$1 = state or group list object name ('ISbackedup', 'ISNTbackedup', 'GRall', etc...)
 
-	[[ -n $1 ]] || return
+	[[ -n ${1:-} ]] || return
 
 	local qpkg_name=''
 
@@ -8752,12 +8718,12 @@ ModPathToEntware()
 
 	if QPKGs-ISenabled.Exist Entware; then
 		! [[ $PATH =~ $b ]] || return
-		a=$($SED_CMD "s|${b}:||" <<< "$PATH:")		# Append colon prior to searching, then remove existing Entware paths.
+		a=$(/bin/sed "s|${b}:||" <<< "$PATH:")		# Append colon prior to searching, then remove existing Entware paths.
 		export PATH=$b:${a%:}						# ... now prepend Entware paths and remove trailing colon
 		DebugAsDone 'prepended Entware to $PATH'
 	else
 		[[ $PATH =~ $b ]] || return
-		a=$($SED_CMD "s|${b}:||" <<< "$PATH:")		# Append colon prior to searching, then remove existing Entware paths.
+		a=$(/bin/sed "s|${b}:||" <<< "$PATH:")		# Append colon prior to searching, then remove existing Entware paths.
 		export PATH=${a%:}							# ... now remove trailing colon
 		DebugAsDone 'removed Entware from $PATH'
 	fi
@@ -8773,10 +8739,10 @@ HardwareGetCPUInfo()
 
 	# BusyBox 1.01 doesn't support `grep -m`, so extract first mention the hard-way with `head`.
 
-	if $GREP_CMD -q '^model name' /proc/cpuinfo; then
-		$GREP_CMD '^model name' /proc/cpuinfo | head -n1 | $SED_CMD 's|^.*: ||' | tr -s ' '
-	elif $GREP_CMD -q '^Processor name' /proc/cpuinfo; then
-		$GREP_CMD '^Processor name' /proc/cpuinfo | head -n1 | $SED_CMD 's|^.*: ||' | tr -s ' '
+	if /bin/grep -q '^model name' /proc/cpuinfo; then
+		/bin/grep '^model name' /proc/cpuinfo | head -n1 | /bin/sed 's|^.*: ||' | tr -s ' '
+	elif /bin/grep -q '^Processor name' /proc/cpuinfo; then
+		/bin/grep '^Processor name' /proc/cpuinfo | head -n1 | /bin/sed 's|^.*: ||' | tr -s ' '
 	else
 		printf unknown
 
@@ -8790,7 +8756,7 @@ HardwareGetCPUInfo()
 OsGetArch()
 	{
 
-	$UNAME_CMD -m
+	/bin/uname -m
 
 	}
 
@@ -8799,14 +8765,14 @@ OsGetKernelName()
 
 	# BusyBox 1.01 doesn't support `uname -o` (operating system), so try with `-o` first, then fall-back to default if it fails.
 
-	$UNAME_CMD -o || $UNAME_CMD
+	/bin/uname -o || /bin/uname
 
 	} 2> /dev/null
 
 OsGetKernelVersion()
 	{
 
-	$UNAME_CMD -r
+	/bin/uname -r
 
 	}
 
@@ -8816,7 +8782,7 @@ OsGetKernelPageSize()
 	if [[ -e /sbin/hal_app ]]; then
 		/sbin/hal_app --get_pagesize
 	else
-		$GREP_CMD KernelPageSize /proc/1/smaps | head -n1 | cut -f2 -d':' | tr -d ' '
+		/bin/grep KernelPageSize /proc/1/smaps | head -n1 | cut -f2 -d':' | tr -d ' '
 	fi
 
 	}
@@ -8866,7 +8832,7 @@ Python3GetVer()
 PythonGetVer()
 	{
 
-	GetThisBinPath ${1:-python} &> /dev/null && ${1:-python} -V 2>&1 | $SED_CMD 's|^Python ||'
+	GetThisBinPath ${1:-python} &> /dev/null && ${1:-python} -V 2>&1 | /bin/sed 's|^Python ||'
 
 	}
 
@@ -8888,7 +8854,7 @@ PerlIsOutdated()
 PerlGetVer()
 	{
 
-	GetThisBinPath ${1:-perl} &> /dev/null && ${1:-perl} -e 'print "$^V\n"' 2> /dev/null | $SED_CMD 's|v||'
+	GetThisBinPath ${1:-perl} &> /dev/null && ${1:-perl} -e 'print "$^V\n"' 2> /dev/null | /bin/sed 's|v||'
 
 	}
 
@@ -8934,7 +8900,7 @@ UserGetLIBC()
 UserGetLIBCCopyright()
 	{
 
-	/sbin/ldd --version | $GREP_CMD -i copyright | $SED_CMD 's|\$||'
+	/sbin/ldd --version | /bin/grep -i copyright | /bin/sed 's|\$||'
 
 	}
 
@@ -8959,7 +8925,7 @@ ShellGetCopyright()
 
 	[[ -n ${SHELL:-} ]] || printf undefined
 
-	$SHELL --version | $GREP_CMD -i copyright | $SED_CMD 's|\$||'
+	$SHELL --version | /bin/grep -i copyright | /bin/sed 's|\$||'
 
 	}
 
@@ -8968,7 +8934,7 @@ ShellGetTimeIn()
 
 	local n=''
 
-	[[ -n ${LOADER_SCRIPT_PPID:-} ]] && n=$($PS_CMD -o pid,etime | $GREP_CMD $LOADER_SCRIPT_PPID | head -n1)
+	[[ -n ${LOADER_SCRIPT_PPID:-} ]] && n=$(/bin/ps -o pid,etime | /bin/grep $LOADER_SCRIPT_PPID | head -n1)
 	FormatAsLongMinutesSecs "${n:6}"
 
 	}
@@ -8976,23 +8942,23 @@ ShellGetTimeIn()
 OsGetSysLoadAverages()
 	{
 
-	$UPTIME_CMD | $SED_CMD 's|.*load average: ||' | $AWK_CMD -F', ' '{print "1m:"$1", 5m:"$2", 15m:"$3}'
+	/usr/bin/uptime | /bin/sed 's|.*load average: ||' | /bin/awk -F', ' '{print "1m:"$1", 5m:"$2", 15m:"$3}'
 
 	}
 
 OsGetSysLoad1MinAverage()
 	{
 
-	$UPTIME_CMD | $SED_CMD 's|.*load average: ||' | $AWK_CMD -F', ' '{print $1}'
+	/usr/bin/uptime | /bin/sed 's|.*load average: ||' | /bin/awk -F', ' '{print $1}'
 
 	}
 
 HardwareGetCPUCores()
 	{
 
-	local n=$($GREP_CMD -c '^processor' /proc/cpuinfo)
+	local n=$(/bin/grep -c '^processor' /proc/cpuinfo)
 
-	[[ $n -eq 0 ]] && n=$($GREP_CMD -c '^Processor' /proc/cpuinfo)
+	[[ $n -eq 0 ]] && n=$(/bin/grep -c '^Processor' /proc/cpuinfo)
 
 	printf '%s' "$n"
 
@@ -9001,7 +8967,7 @@ HardwareGetCPUCores()
 HardwareGetInstalledRAM()
 	{
 
-	$GREP_CMD MemTotal /proc/meminfo | $SED_CMD 's|.*: ||;s|kB||;s| ||g'
+	/bin/grep MemTotal /proc/meminfo | /bin/sed 's|.*: ||;s|kB||;s| ||g'
 
 	}
 
@@ -9038,7 +9004,7 @@ OsGetFirmwareDate()
 OsGetQnapOS()
 	{
 
-	if $GREP_CMD -q zfs /proc/filesystems; then
+	if /bin/grep -q zfs /proc/filesystems; then
 		printf 'QuTS hero'
 	else
 		printf QTS
@@ -9239,9 +9205,9 @@ OsIsSupportDecimalSleepSeconds()
 
 	# Test if QTS `/bin/sleep` can handle decimal seconds (early BusyBox versions cannot):
 
-	/bin/sleep .01 &> /dev/null
+	/bin/sleep .01
 
-	}
+	} &> /dev/null
 
 OsIsSupportAutowidthTableColumns()
 	{
@@ -9267,14 +9233,14 @@ OsIsAllowUnofficialPackages()
 OsIsStarting()
 	{
 
-	$PS_CMD | $GREP_CMD '/bin/sh /etc/init.d/rcS' | $GREP_CMD -v grep
+	/bin/ps | /bin/grep '/bin/sh /etc/init.d/rcS' | /bin/grep -v grep
 
 	} &> /dev/null
 
 OsIsStopping()
 	{
 
-	$PS_CMD | $GREP_CMD '/bin/sh /etc/init.d/rcK' | $GREP_CMD -v grep
+	/bin/ps | /bin/grep '/bin/sh /etc/init.d/rcK' | /bin/grep -v grep
 
 	} &> /dev/null
 
@@ -9473,8 +9439,8 @@ SaveActionResultToLog()
 
 	# Remove previous action duration entry if one exists.
 
-	if [[ -e $r_action_times_pathfile ]] && $GREP_CMD -q "^$r_name|" < "$r_action_times_pathfile"; then
-		$SED_CMD -i "/^$r_name|/d" "$r_action_times_pathfile"
+	if [[ -e $r_action_times_pathfile ]] && /bin/grep -q "^$r_name|" < "$r_action_times_pathfile"; then
+		/bin/sed -i "/^$r_name|/d" "$r_action_times_pathfile"
 	fi
 
 	# Add new action duration entry.
@@ -9577,13 +9543,16 @@ _QPKG:download_()
 
 	FuncForkInit
 
+	local curl_options=''
 	local -r r_remote_hash=$(QpkgGetDatabaseHash)
 	local -r r_remote_url=$(QpkgGetDatabaseURL)
-		local -r r_remote_filename=$($BASENAME_CMD "$r_remote_url")
+		local -r r_remote_filename=$(/usr/bin/basename "$r_remote_url")
 			local -r r_local_pathfile=$r_qpkg_download_path/$r_remote_filename
-				local -r r_local_filename=$($BASENAME_CMD "$r_local_pathfile")
+				local -r r_local_filename=$(/usr/bin/basename "$r_local_pathfile")
 					local -r r_log_pathfile=$r_logs_path/$r_local_filename.$r_download_log_file
 	local -i z=0
+
+	OsIsSupportSecureDownload || curl_options=' --insecure'
 
 	if [[ -z $r_remote_url || -z $r_remote_hash ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" download '' skipped 'NAS arch is incompatible'
@@ -9607,12 +9576,12 @@ _QPKG:download_()
 
 		rm -f "$r_log_pathfile" 2> /dev/null
 
-		RunAndLog "$CURL_CMD --location --output $r_local_pathfile $r_remote_url" "$r_log_pathfile" log:failure-only
+		RunAndLog "/sbin/curl${curl_options} --location --output $r_local_pathfile $r_remote_url" "$r_log_pathfile" log:failure-only
 		z=$?
 
 		if [[ $z -eq 0 ]]; then
 			if FileMatchesMD5 "$r_local_pathfile" "$r_remote_hash"; then
-				[[ $(Lowercase "${r_local_pathfile##*.}") = zip ]] && $UNZIP_CMD -nq "$r_local_pathfile" -d "$r_qpkg_download_path"
+				[[ $(Lowercase "${r_local_pathfile##*.}") = zip ]] && /usr/bin/unzip -nq "$r_local_pathfile" -d "$r_qpkg_download_path"
 				SaveActionResultToLog QPKG "$qpkg_name" download '' ok
 				SendPackageStateChange ISdownloaded
 				MarkThisAcForkAsOk
@@ -9706,7 +9675,7 @@ _QPKG:install_()
 	DebugAsProc "installing $(ShowAsPackageName)"
 	[[ ${QPKGs_were_installed_name[*]:-} = *"$qpkg_name"* ]] && a+="QINSTALL_PATH=$(QpkgGetInstalledOriginalPath "$qpkg_name") "
 
-	RunAndLog "${a}${SH_CMD} $local_pathfile" "$r_logs_path/$($BASENAME_CMD "$local_pathfile").$r_install_log_file" log:failure-only 10
+	RunAndLog "${a}/bin/sh $local_pathfile" "$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_install_log_file" log:failure-only 10
 	z=$?
 
 	LogQpkgServiceResult
@@ -9801,9 +9770,9 @@ _QPKG:reinstall_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "reinstalling $(ShowAsPackageName)"
-	QpkgIsInstalled && a+="QINSTALL_PATH=$($DIRNAME_CMD "$(QpkgGetInstalledPath)") "
+	QpkgIsInstalled && a+="QINSTALL_PATH=$(/usr/bin/dirname "$(QpkgGetInstalledPath)") "
 
-	RunAndLog "${a}${SH_CMD} $local_pathfile" "$r_logs_path/$($BASENAME_CMD "$local_pathfile").$r_reinstall_log_file" log:failure-only 10
+	RunAndLog "${a}/bin/sh $local_pathfile" "$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_reinstall_log_file" log:failure-only 10
 	z=$?
 
 	LogQpkgServiceResult
@@ -9939,9 +9908,9 @@ _QPKG:upgrade_()
 	local prev_ver=$(QpkgGetInstalledVer)
 
 	DebugAsProc "upgrading $(ShowAsPackageName)"
-	QpkgIsInstalled && a+="QINSTALL_PATH=$($DIRNAME_CMD "$(QpkgGetInstalledPath "$qpkg_name")") "
+	QpkgIsInstalled && a+="QINSTALL_PATH=$(/usr/bin/dirname "$(QpkgGetInstalledPath "$qpkg_name")") "
 
-	RunAndLog "${a}${SH_CMD} $local_pathfile" "$r_logs_path/$($BASENAME_CMD "$local_pathfile").$r_upgrade_log_file" log:failure-only 10
+	RunAndLog "${a}/bin/sh $local_pathfile" "$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_upgrade_log_file" log:failure-only 10
 	z=$?
 
 	LogQpkgServiceResult
@@ -10027,7 +9996,7 @@ _QPKG:uninstall_()
 	if [[ -e $r_qpkg_uninstaller_pathfile ]]; then
 		DebugAsProc "uninstalling $(ShowAsPackageName)"
 
-		RunAndLog "${a}${SH_CMD} $r_qpkg_uninstaller_pathfile" "$r_logs_path/$qpkg_name.$r_uninstall_log_file" log:failure-only
+		RunAndLog "${a}/bin/sh $r_qpkg_uninstaller_pathfile" "$r_logs_path/$qpkg_name.$r_uninstall_log_file" log:failure-only
 		z=$?
 
 		if [[ $z -eq 0 ]]; then
@@ -11198,7 +11167,7 @@ QpkgGetDatabasePathFilename()
 
 	[[ $(Lowercase "${a##*.}") != qpkg ]] && a=${a%.*}.qpkg		# Swap 'zip' for 'qpkg' here (only for compatibilty with 'QDK.zip').
 
-	printf '%s' "$r_qpkg_download_path/$($BASENAME_CMD "$a")"
+	printf '%s' "$r_qpkg_download_path/$(/usr/bin/basename "$a")"
 
 	return 0
 
@@ -12248,8 +12217,8 @@ QpkgIsDatabaseSherpaCompatible()
 	# Inputs: (global)
 	#   $qpkg_default_index
 	#   $qpkg_index
-	#	$qpkg_name (default for $1)
 	#	$r_qpkg_is_sherpa_compatible[]
+	#	$qpkg_name (default for $1)
 
 	# Outputs: (local)
 	#   $? = true/false
@@ -12285,8 +12254,8 @@ QpkgIsDatabaseUniqueUnpack()
 	# Inputs: (global)
 	#   $qpkg_default_index
 	#   $qpkg_index
-	#	$qpkg_name (default for $1)
 	#	$r_qpkg_is_unique_unpack[]
+	#	$qpkg_name (default for $1)
 
 	# Outputs: (local)
 	#   $? = true/false
@@ -12405,7 +12374,7 @@ QpkgIsInstalled()
 
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
 
-	$GREP_CMD -q "^\[$a\]" /etc/config/qpkg.conf && QpkgIsInstalledAuthorOk "$a"
+	/bin/grep -q "^\[$a\]" /etc/config/qpkg.conf && QpkgIsInstalledAuthorOk "$a"
 
 	}
 
@@ -12441,7 +12410,7 @@ QpkgIsReallyInstalled()
 
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
 
-	$GREP_CMD -q "^\[$a\]" /etc/config/qpkg.conf
+	/bin/grep -q "^\[$a\]" /etc/config/qpkg.conf
 
 	}
 
@@ -12625,7 +12594,7 @@ ClearPath()
 	[[ -n ${1:?${FUNCNAME[0]}'()': undefined parent path} && -n ${2:?${FUNCNAME[0]}'()': undefined target path} ]] || return
 
 	local parent=${1:-undefined}
-	local target=$($BASENAME_CMD "${2:-undefined}")
+	local target=$(/usr/bin/basename "${2:-undefined}")
 
 	[[ -n $parent && $parent != undefined && -n $target && $target != undefined && -d $parent/$target ]] && rm -rf "${parent:?}/${target:?}"/*
 
@@ -12658,14 +12627,14 @@ RunAndLog()
 
 	MakePath "$r_run_logs_path" 'runtime logs'
 
-	local -r r_log_pathfile=$($MKTEMP_CMD "$r_run_logs_path"/"${FUNCNAME[0]}"_XXXXXX)
+	local -r r_log_pathfile=$(/bin/mktemp "$r_run_logs_path"/"${FUNCNAME[0]}"_XXXXXX)
 	local -i z=0
 
 	ShowAsCommand "$1" > "$2"
 	DebugAsProc "exec: '$1'"
 
 	if [[ $useropt_verbose = true ]]; then
-		eval "$1 > >($TEE_CMD $r_log_pathfile) 2>&1"		# NOTE: `tee` buffers stdout here
+		eval "$1 > >(/usr/bin/tee $r_log_pathfile) 2>&1"		# NOTE: `tee` buffers stdout here
 		z=$?
 	else
 		(eval "$1" > "$r_log_pathfile" 2>&1)				# run in a subshell to suppress 'Terminated' message later
@@ -12699,7 +12668,7 @@ DeDupeWords()
 
 	[[ -n ${1:-} ]] || return
 
-	tr ' ' '\n' <<< "$1" | $SORT_CMD | $UNIQ_CMD | tr '\n' ' ' | $SED_CMD 's|^[[:blank:]]*||;s|[[:blank:]]*$||'
+	tr ' ' '\n' <<< "$1" | /usr/bin/sort | /bin/uniq | tr '\n' ' ' | /bin/sed 's|^[[:blank:]]*||;s|[[:blank:]]*$||'
 
 	}
 
@@ -12710,7 +12679,7 @@ FileMatchesMD5()
 	#   $1 = pathfile to generate an MD5 checksum for.
 	#   $2 = MD5 checksum to compare against.
 
-	[[ $($MD5SUM_CMD "${1:?${FUNCNAME[0]}'()': undefined pathfile}" | cut -f1 -d' ') = "${2:?${FUNCNAME[0]}'()': undefined checksum}" ]]
+	[[ $(/bin/md5sum "${1:?${FUNCNAME[0]}'()': undefined pathfile}" | cut -f1 -d' ') = "${2:?${FUNCNAME[0]}'()': undefined checksum}" ]]
 
 	}
 
@@ -12794,7 +12763,7 @@ FormatAsThous()
 	# Inputs: (local)
 	# 	$1 = integer value
 
-	local a=$($SED_CMD 's/[^0-9]*//g' <<< "${1:-}")	# Strip non-digits.
+	local a=$(/bin/sed 's/[^0-9]*//g' <<< "${1:-}")	# Strip non-digits.
 	local b=''
 	local c=''
 
@@ -12823,7 +12792,7 @@ FormatAsThous()
 FormatAsIsoBytes()
 	{
 
-	$AWK_CMD 'BEGIN{ u[0]="B"; u[1]="kB"; u[2]="MB"; u[3]="GB"} { n = $1; i = 0; while(n > 1000) { i+=1; n= int((n/1000)+0.5) } print n u[i] } ' <<< "$1"
+	/bin/awk 'BEGIN{ u[0]="B"; u[1]="kB"; u[2]="MB"; u[3]="GB"} { n = $1; i = 0; while(n > 1000) { i+=1; n= int((n/1000)+0.5) } print n u[i] } ' <<< "$1"
 
 	}
 
@@ -12906,6 +12875,13 @@ ShowAsAction()
 	{
 
 	TextBrightYellow '[action]'
+
+	}
+
+ShowAsSetting()
+	{
+
+	TextBrightYellow '[setting]'
 
 	}
 
@@ -13191,7 +13167,7 @@ DebugDetectTabld()
 	elif [[ ${3:-} = ' ' ]]; then		# If $3 is only a whitespace then print $2 with trailing colon and 'none' as third field.
 		DebugAsDetect "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: none\n" "${1:-}" "${2:-}")"
 	elif [[ ${3: -1} = ' ' ]]; then		# If $3 has a trailing whitespace then print $3 without the trailing whitespace.
-		DebugAsDetect "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "$($SED_CMD 's| *$||' <<< "${3:-}")")"
+		DebugAsDetect "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "$(/bin/sed 's| *$||' <<< "${3:-}")")"
 	else
 		DebugAsDetect "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "${3:-}")"
 	fi
@@ -13208,7 +13184,7 @@ DebugInfoTabld()
 	elif [[ ${3:-} = ' ' ]]; then		# If $3 is only a whitespace then print $2 with trailing colon and 'none' as third field.
 		DebugAsInfo "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: none\n" "${1:-}" "${2:-}")"
 	elif [[ ${3: -1} = ' ' ]]; then		# If $3 has a trailing whitespace then print $3 without the trailing whitespace.
-		DebugAsInfo "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "$($SED_CMD 's| *$||' <<< "${3:-}")")"
+		DebugAsInfo "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "$(/bin/sed 's| *$||' <<< "${3:-}")")"
 	else
 		DebugAsInfo "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "${3:-}")"
 	fi
@@ -13225,7 +13201,7 @@ DebugWarningTabld()
 	elif [[ ${3:-} = ' ' ]]; then		# If $3 is only a whitespace then print $2 with trailing colon and 'none' as third field
 		DebugAsWarn "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: none\n" "${1:-}" "${2:-}")"
 	elif [[ ${3: -1} = ' ' ]]; then		# If $3 has a trailing whitespace then print $3 without the trailing whitespace
-		DebugAsWarn "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "$($SED_CMD 's| *$||' <<< "${3:-}")")"
+		DebugAsWarn "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "$(/bin/sed 's| *$||' <<< "${3:-}")")"
 	else
 		DebugAsWarn "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "${3:-}")"
 	fi
@@ -13242,7 +13218,7 @@ DebugErrorTabld()
 	elif [[ ${3:-} = ' ' ]]; then		# If $3 is only a whitespace then print $2 with trailing colon and 'none' as third field.
 		DebugAsError "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: none\n" "${1:-}" "${2:-}")"
 	elif [[ ${3: -1} = ' ' ]]; then		# If $3 has a trailing whitespace then print $3 without the trailing whitespace.
-		DebugAsError "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "$($SED_CMD 's| *$||' <<< "${3:-}")")"
+		DebugAsError "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "$(/bin/sed 's| *$||' <<< "${3:-}")")"
 	else
 		DebugAsError "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "${3:-}")"
 	fi
@@ -13341,7 +13317,7 @@ FuncForkInit()
 	# Redirect debug output to a temporary log, then add it to session log before exiting. This will keep action log progress in-order.
 	original_sess_active_pathfile=$sess_active_pathfile
 	MakePath "$r_action_logs_path" 'action logs'
-	sess_active_pathfile=$($MKTEMP_CMD "$r_action_logs_path"/"${FUNCNAME[1]}"_XXXXXX)
+	sess_active_pathfile=$(/bin/mktemp "$r_action_logs_path"/"${FUNCNAME[1]}"_XXXXXX)
 
 	local -r r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
 	local var_safe_name=${r_var_name//[.-]/_}
@@ -13357,6 +13333,15 @@ FuncForkExit()
 
 	# Debug forked function exit.
 
+	# Inputs: (local)
+	#	$1 = return code to supply on exit.
+
+	# Inputs: (global)
+	#	$action_pidfile
+	#	$original_sess_active_pathfile
+	#	$pidfile
+	#	$sess_active_pathfile
+
 	local -r r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
 	local var_safe_name=${r_var_name//[.-]/_}
 	var_safe_name=${var_safe_name//:/_}
@@ -13364,19 +13349,20 @@ FuncForkExit()
 	SendActionStatus ex
 	DebugAsFuncEx "${1:-0}" "$(ConvertMillisecondsToFuncDuration "$(CalcMillisecondsDiffFromNanoseconds "${!var_safe_name}" "$(ConvertNowToNanoseconds)")")"
 
-	if [[ -n $sess_active_pathfile && -e $sess_active_pathfile ]]; then
+	if [[ -n ${sess_active_pathfile:-} && -e $sess_active_pathfile ]]; then
 		if [[ -s $sess_active_pathfile ]]; then
-			$CAT_CMD "$sess_active_pathfile" >> "$original_sess_active_pathfile"
+			/bin/cat "$sess_active_pathfile" >> "$original_sess_active_pathfile"
 		fi
 
-		rm -f "$sess_active_pathfile" 2> /dev/null
+		rm -f "$sess_active_pathfile"
 	fi
 
-	[[ -n ${action_pidfile:-} && -e $action_pidfile ]] && rm -f "$action_pidfile" 2> /dev/null; [[ -n ${pidfile:-} && -e ${pidfile:-} ]] && rm -f "$pidfile" 2> /dev/null
+	[[ -n ${action_pidfile:-} && -e $action_pidfile ]] && rm -f "$action_pidfile"
+	[[ -n ${pidfile:-} && -e $pidfile ]] && rm -f "$pidfile"
 
 	exit ${1:-0}
 
-	}
+	} 2> /dev/null
 
 CalcAmountDiff()
 	{
@@ -13436,7 +13422,7 @@ ConvertSecondsToDatecode()
 
 	[[ -n ${1:-} ]] || return
 
-	local a=$($SED_CMD 's/[^0-9]*//g' <<< "${1:-}")		# Strip non-digits.
+	local a=$(/bin/sed 's/[^0-9]*//g' <<< "${1:-}")		# Strip non-digits.
 
 	if [[ ${#a} -ne 10 ]]; then
 		printf 000000
@@ -13520,7 +13506,7 @@ ConvertMillisecondsToFuncDuration()
 	#	$1 = duration in milliseconds.
 
 	if [[ ${1:-0} -lt 30000 ]]; then
-		printf '%s' "$(FormatAsThous "${1:-0}")ms" | $TAIL_CMD -n1			# Prevent "broken pipe" error: https://superuser.com/a/642932
+		printf '%s' "$(FormatAsThous "${1:-0}")ms" | /usr/bin/tail -n1			# Prevent "broken pipe" error: https://superuser.com/a/642932
 	else
 		ConvertMillisecondsToDuration "$1"
 	fi
@@ -13559,7 +13545,7 @@ ConvertAsSmartDate()
 
 	[[ -n ${1:-} ]] || return
 
-	local a=$($SED_CMD 's/[^0-9]*//g' <<< "$1")		# Strip non-digits.
+	local a=$(/bin/sed 's/[^0-9]*//g' <<< "$1")		# Strip non-digits.
 	local b=''
 
 	case ${#a} in
@@ -13585,6 +13571,9 @@ ConvertAsSmartDate()
 
 ConvertNowToFullDate()
 	{
+
+	# Inputs: (global)
+	#	$r_full_datetime_format
 
 	# Outputs: (local)
 	#	stdout = real date.
@@ -13658,68 +13647,71 @@ DebugAsFuncEx()
 DebugAsProc()
 	{
 
-	[[ -n $1 ]] && DebugThis "(--) $1"
+	[[ -n ${1:-} ]] && DebugThis "(--) $1"
 
 	}
 
 DebugAsDone()
 	{
 
-	[[ -n $1 ]] && DebugThis "(==) $1"
+	[[ -n ${1:-} ]] && DebugThis "(==) $1"
 
 	}
 
 DebugAsDetect()
 	{
 
-	[[ -n $1 ]] && DebugThis "(**) $1"
+	[[ -n ${1:-} ]] && DebugThis "(**) $1"
 
 	}
 
 DebugAsInfo()
 	{
 
-	[[ -n $1 ]] && DebugThis "(II) $1"
+	[[ -n ${1:-} ]] && DebugThis "(II) $1"
 
 	}
 
 DebugAsWarn()
 	{
 
-	[[ -n $1 ]] && DebugThis "(WW) $1"
+	[[ -n ${1:-} ]] && DebugThis "(WW) $1"
 
 	}
 
 DebugAsError()
 	{
 
-	[[ -n $1 ]] && DebugThis "(EE) $1"
+	[[ -n ${1:-} ]] && DebugThis "(EE) $1"
 
 	}
 
 DebugAsLog()
 	{
 
-	[[ -n $1 ]] && DebugThis "(LL) $1"
+	[[ -n ${1:-} ]] && DebugThis "(LL) $1"
 
 	}
 
 DebugAsVar()
 	{
 
-	[[ -n $1 ]] && DebugThis "(vv) $1"
+	[[ -n ${1:-} ]] && DebugThis "(vv) $1"
 
 	}
 
 DebugAsArray()
 	{
 
-	[[ -n $1 ]] && DebugThis "(aa) $1"
+	[[ -n ${1:-} ]] && DebugThis "(aa) $1"
 
 	}
 
 DebugThis()
 	{
+
+	# Inputs: (global)
+	#	$useropt_verbose
 
 	[[ -n ${1:-} ]] || return
 
@@ -14065,7 +14057,7 @@ ShowAsActionLogDetail()
 						;;
 					*)
 						if QpkgIsDatabaseWillLog "$2"; then
-							DisplayAsIndentActionResultDurationReason "$3" "$2 $package_type" "$5" "For more information: /etc/init.d/$($BASENAME_CMD "$(QpkgGetInstalledServicePathFile "$2")") log"
+							DisplayAsIndentActionResultDurationReason "$3" "$2 $package_type" "$5" "For more information: /etc/init.d/$(/usr/bin/basename "$(QpkgGetInstalledServicePathFile "$2")") log"
 						else
 							DisplayAsIndentActionResultDurationReason "$3" "$2 $package_type" "$5" "$6"
 						fi
@@ -14435,11 +14427,11 @@ sleep()
 	[[ ${n//.} -eq 0 ]] && n=1
 
 	if [[ ${sleep_decimal_seconds_supported:=false} = true ]]; then
-		$SLEEP_CMD "$n"
-	elif [[ -e $GNU_SLEEP_CMD && -L /opt/etc/passwd ]]; then  				# Try to ensure Entware is active first.
-		$GNU_SLEEP_CMD "$n"
+		/bin/sleep "$n"
+	elif [[ -e /opt/bin/sleep && -L /opt/etc/passwd ]]; then  				# Try to ensure Entware is active first.
+		/opt/bin/sleep "$n"
 	else
-		$SLEEP_CMD "$((${n%.*}+1))"											# Ensure decimal seconds are rounded-up to next integer.
+		/bin/sleep "$((${n%.*}+1))"											# Ensure decimal seconds are rounded-up to next integer.
 	fi
 
 	return 0
@@ -14455,14 +14447,18 @@ LoadObjects()
 
 	FuncInit
 
+	local curl_options=''
+
+	OsIsSupportSecureDownload || curl_options=' --insecure'
+
 	LoadLists
 
 	if [[ ! -e $PWD/dont-refresh-objects ]]; then
 		if [[ ! -e $r_objects_pathfile ]] || ! IsThisFileRecent "$r_objects_pathfile" "$r_file_change_threshold_minutes"; then
 			ShowAsProc 'download objects'
 
-			if $CURL_CMD --silent --fail "$r_objects_archive_url" > "$r_objects_archive_pathfile"; then
-				$TAR_CMD --extract --gzip --no-same-owner --file="$r_objects_archive_pathfile" --directory="$r_cache_path"
+			if /sbin/curl"${curl_options}" --silent --fail "$r_objects_archive_url" > "$r_objects_archive_pathfile"; then
+				/bin/tar --extract --gzip --no-same-owner --file="$r_objects_archive_pathfile" --directory="$r_cache_path"
 			fi
 		fi
 	fi
@@ -14497,7 +14493,10 @@ LoadPackages()
 
 	FuncInit
 
+	local curl_options=''
 	local previous=''
+
+	OsIsSupportSecureDownload || curl_options=' --insecure'
 
 	LoadObjects
 
@@ -14505,8 +14504,8 @@ LoadPackages()
 		if [[ ! -e $r_packages_pathfile ]] || ! IsThisFileRecent "$r_packages_pathfile" "$r_file_change_threshold_minutes"; then
 			ShowAsProc 'download QPKG list'
 
-			if $CURL_CMD --silent --fail "$r_packages_archive_url" > "$r_packages_archive_pathfile"; then
-				$TAR_CMD --extract --gzip --no-same-owner --file="$r_packages_archive_pathfile" --directory="$r_cache_path"
+			if /sbin/curl"${curl_options}" --silent --fail "$r_packages_archive_url" > "$r_packages_archive_pathfile"; then
+				/bin/tar --extract --gzip --no-same-owner --file="$r_packages_archive_pathfile" --directory="$r_cache_path"
 			fi
 
 			InitQPKGsTiers
@@ -14650,8 +14649,8 @@ CaughtSIGINT()
 
 	trap - SIGINT
 
-	[[ -n ${r_display_inhibit_pathfile:-} ]] && [[ -d $($DIRNAME_CMD "$r_display_inhibit_pathfile") ]] && /bin/touch "$r_display_inhibit_pathfile"
-	[[ -n ${r_action_abort_pathfile:-} ]] && [[ -d $($DIRNAME_CMD "$r_action_abort_pathfile") ]] && /bin/touch "$r_action_abort_pathfile"
+	[[ -n ${r_display_inhibit_pathfile:-} ]] && [[ -d $(/usr/bin/dirname "$r_display_inhibit_pathfile") ]] && /bin/touch "$r_display_inhibit_pathfile"
+	[[ -n ${r_action_abort_pathfile:-} ]] && [[ -d $(/usr/bin/dirname "$r_action_abort_pathfile") ]] && /bin/touch "$r_action_abort_pathfile"
 	EraseThisLine
 	ShowAsAbort 'caught SIGINT'
 	CloseActionMsgPipe

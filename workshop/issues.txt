@@ -1,26 +1,11 @@
 Observed issues:
 
-	* Extra derp when running actions with no matching packages after reset:
-		-------------------------------------------------------------------
-		[/share/Public] # sherpa follow unstable
-		done: user setting 'Git_Branch = unstable' has been saved.
-		done: package cache cleared.
-		done: reports cleared.
-		done: logs cleared.
-		[/share/Public] # sherpa upgrade new
-		sherpa v241002-unstable
-		warn: unable to find any 'upgradable' QPKGs to 'upgrade'.
-		done: actions complete.
-		derp: previous report results not found.
-		-------------------------------------------------------------------
-
-	* Packages report (with 'report-footer off') has 3 linespaces between last QPKG name and abbreviations reminder text.
-
 	* If IPK install stalls, seconds stalled display is not accurate.
 		- Need to calculate actual seconds elapsed since stall began, instead of using an accumulator and `sleep 1`.
 
 	* If an action fork fails (such as with "unbound variable" error), main loop stalls.
 		- Must save stderr to file, and exit main loop.
+		- set trap for SIGERR?
 
 	* Will need a new method to detect if QTS 5.2.0 is starting/stopping QPKGs due to async starts/stops.
 
