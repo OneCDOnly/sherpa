@@ -2898,6 +2898,8 @@ ShowArgSuggestions()
 	local arg=''
 	local -a args_remaining=()
 
+	ResetReportsPath &> /dev/null
+
 	if [[ ${#args_incomplete[@]:-} -gt 0 ]]; then
 		run_package_actions=false
 
@@ -2955,9 +2957,7 @@ ShowArgSuggestions()
 					arg_problem=true
 					args_remaining+=("$arg")
 			esac
-		done
-
-		[[ $arg_problem = true ]] && Display
+		done > "$r_report_output_pathfile"
 
 		if [[ ${#args_remaining[@]:-} -gt 0 ]]; then
 			ShowAsError "incomplete argument$(Pluralise "${#args_remaining[@]}") \"${args_remaining[*]}\". Please check the arguments again"
@@ -2971,13 +2971,8 @@ ShowArgSuggestions()
 
 		for arg in "${args[@]}"; do
 			case $arg in
-				active|@(dis|en)abled|started)
+				active|all|@(dis|en)abled|started)
 					DisplayAsProjSynExam "please provide a valid $(ShowAsAction) before '$arg' like" "deactivate $arg"
-					arg_problem=true
-					useropt_help_basic=false
-					;;
-				all)
-					DisplayAsProjSynExam "please provide a valid $(ShowAsAction) before 'all' like" 'activate all'
 					arg_problem=true
 					useropt_help_basic=false
 					;;
@@ -3022,7 +3017,7 @@ ShowArgSuggestions()
 					useropt_help_basic=false
 					;;
 				@(dis|en)able|false|off|no|on|true|yes)
-					DisplayAsProjSynExam "please provide a valid setting before '$arg' like" "colour $arg"
+					DisplayAsProjSynExam "please provide a valid $(ShowAsSetting) before '$arg' like" "colour $arg"
 					DisplayAsProjSynIndentExam '' "terse $arg"
 					arg_problem=true
 					useropt_help_basic=false
@@ -3038,7 +3033,7 @@ ShowArgSuggestions()
 					useropt_help_basic=false
 					;;
 				?(un)stable)
-					DisplayAsProjSynExam "please provide a valid $(ShowAsAction) before '$arg' like" "follow $arg"
+					DisplayAsProjSynExam "please provide a valid $(ShowAsSetting) before '$arg' like" "follow $arg"
 					arg_problem=true
 					useropt_help_basic=false
 					;;
@@ -3046,18 +3041,16 @@ ShowArgSuggestions()
 					arg_problem=true
 					args_remaining+=("$arg")
 			esac
-		done
-
-		[[ $arg_problem = true ]] && Display
+		done >> "$r_report_output_pathfile"
 
 		if [[ ${#args_remaining[@]:-} -gt 0 ]]; then
 			ShowAsError "unknown argument$(Pluralise "${#args_remaining[@]}") \"${args_remaining[*]}\". Please check the arguments again"
 			arg_problem=true
 			useropt_help_basic=false
-		elif [[ $arg_problem = true ]]; then
-			Display
 		fi
 	fi
+
+	[[ -e $r_report_output_pathfile ]] && cat "$r_report_output_pathfile"
 
 	DebugArray args_incomplete "${args_incomplete[*]:-}"
 	DebugArray args_remaining "${args_remaining[*]:-}"
@@ -12882,6 +12875,13 @@ ShowAsAction()
 	{
 
 	TextBrightYellow '[action]'
+
+	}
+
+ShowAsSetting()
+	{
+
+	TextBrightYellow '[setting]'
 
 	}
 
