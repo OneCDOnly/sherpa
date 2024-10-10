@@ -14457,7 +14457,7 @@ LoadObjects()
 		if [[ ! -e $r_objects_pathfile ]] || ! IsThisFileRecent "$r_objects_pathfile" "$r_file_change_threshold_minutes"; then
 			ShowAsProc 'download objects'
 
-			if /sbin/curl"${curl_options}" --silent --fail "$r_objects_archive_url" > "$r_objects_archive_pathfile"; then
+			if /sbin/curl${curl_options} --silent --fail "$r_objects_archive_url" > "$r_objects_archive_pathfile"; then
 				/bin/tar --extract --gzip --no-same-owner --file="$r_objects_archive_pathfile" --directory="$r_cache_path"
 			fi
 		fi
@@ -14504,7 +14504,7 @@ LoadPackages()
 		if [[ ! -e $r_packages_pathfile ]] || ! IsThisFileRecent "$r_packages_pathfile" "$r_file_change_threshold_minutes"; then
 			ShowAsProc 'download QPKG list'
 
-			if /sbin/curl"${curl_options}" --silent --fail "$r_packages_archive_url" > "$r_packages_archive_pathfile"; then
+			if /sbin/curl${curl_options} --silent --fail "$r_packages_archive_url" > "$r_packages_archive_pathfile"; then
 				/bin/tar --extract --gzip --no-same-owner --file="$r_packages_archive_pathfile" --directory="$r_cache_path"
 			fi
 
