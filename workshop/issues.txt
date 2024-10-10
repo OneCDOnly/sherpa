@@ -1,5 +1,22 @@
 Observed issues:
 
+	* helga: kernel page size display has extra 'B':
+		-------------------------------------------------------------------------
+		dbug: (**)    KERNEL:            page size: 4kBB
+		-------------------------------------------------------------------------
+
+	* bella/milla/helga: `free -m` not displaying free/used RAM due to old BusyBox limitation.
+		-------------------------------------------------------------------------
+		dbug: (--) exec: '/usr/bin/free -m'
+		BusyBox v1.01 (2024.01.30-19:38+0000) multi-call binary
+
+		Usage: free
+
+		Displays the amount of free and used system memory
+
+		dbug: (==) exec: complete
+		-------------------------------------------------------------------------
+
 	* If IPK install stalls, seconds stalled display is not accurate.
 		- Need to calculate actual seconds elapsed since stall began, instead of using an accumulator and `sleep 1`.
 
