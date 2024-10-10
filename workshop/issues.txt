@@ -1,10 +1,5 @@
 Observed issues:
 
-	* helga: kernel page size display has extra 'B':
-		-------------------------------------------------------------------------
-		dbug: (**)    KERNEL:            page size: 4kBB
-		-------------------------------------------------------------------------
-
 	* If IPK install stalls, seconds stalled display is not accurate.
 		- Need to calculate actual seconds elapsed since stall began, instead of using an accumulator and `sleep 1`.
 

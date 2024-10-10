@@ -764,9 +764,9 @@ DebugLogEnv()
 	DebugKernel ok version "$(OsGetKernelVersion)"
 
 	if OsIsStdKernelPageSize; then
-		DebugKernel ok 'page size' "${r_kernel_page_size}B"
+		DebugKernel ok 'page size' "$r_kernel_page_size"
 	else
-		DebugKernel warning 'page size' "${r_kernel_page_size}B"
+		DebugKernel warning 'page size' "$r_kernel_page_size"
 	fi
 
 	DebugFirmware ok OS "$(OsGetQnapOS)"
@@ -1046,7 +1046,7 @@ CheckEnv()
 
 					if [[ ${installed_version//.} -gt 238 ]]; then
 						ipks_downgrade=true
-						ShowAsNote "various IPKs will be downgraded to suit ${r_kernel_page_size}B kernel page size"
+						ShowAsNote "various IPKs will be downgraded to suit $r_kernel_page_size kernel page size"
 						IPKs-ACdowngrade-to:Add "$target_packages"
 					else
 						IPKs-ACdowngrade-sk:Add "$target_packages"
@@ -8780,9 +8780,9 @@ OsGetKernelPageSize()
 	{
 
 	if [[ -e /sbin/hal_app ]]; then
-		/sbin/hal_app --get_pagesize
+		echo "$(/sbin/hal_app --get_pagesize)B"
 	else
-		/bin/grep KernelPageSize /proc/1/smaps | head -n1 | cut -f2 -d':' | tr -d ' '
+		/bin/grep KernelPageSize /proc/1/smaps | head -n1 | cut -f2 -d':' | tr -d ' ' | /bin/sed 's|kB|kiB|'
 	fi
 
 	}
@@ -9250,7 +9250,7 @@ OsIsStdKernelPageSize()
 	# Standard kernel page size for most QNAP NAS is 4kiB. Non-standard size is 32kiB (confirmed on the TS-431XeU, TS-431X3 & TS-1635).
 	# https://www.qnap.com/en-us/how-to/faq/article/why-do-the-installed-third-party-containers-not-run-successfully-on-specific-32-bit-arm-devices
 
-	[[ ${r_kernel_page_size:=$(OsGetKernelPageSize)} = 4096 || $r_kernel_page_size = 4kB ]]
+	[[ ${r_kernel_page_size:=$(OsGetKernelPageSize)} = 4096B || $r_kernel_page_size = 4kiB ]]
 
 	}
 
