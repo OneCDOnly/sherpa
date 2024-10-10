@@ -2905,7 +2905,7 @@ ShowArgSuggestions()
 
 		for arg in "${args_incomplete[@]}"; do
 			case $arg in
-				?(de|re)activate|backup|clean|@(dis|en)able|@(dis|en)able-auto-update|reassign|@(re|un)install|?(re)start|restore|rm|sign|stop|upgrade)
+				?(de|re)activate|backup|clean|@(dis|en)able|@(dis|en)able-auto-update|reassign|@(re|un)install|?(re)start|restore|rm|sign|stop)
 					DisplayAsProjSynExam "please provide valid $(ShowAsPackages) or a $(ShowAsPackageGroup) after '$arg' like" "$arg installed"
 					arg_problem=true
 					useropt_help_basic=false
@@ -2950,6 +2950,11 @@ ShowArgSuggestions()
 					DisplayAsProjSynIndentExam '' "$arg log"
 					DisplayAsProjSynIndentExam '' "$arg packages"
 					DisplayAsProjSynIndentExam '' "$arg results"
+					arg_problem=true
+					useropt_help_basic=false
+					;;
+				upgrade)
+					DisplayAsProjSynExam "please provide valid $(ShowAsPackages) or a $(ShowAsPackageGroup) after '$arg' like" "$arg new"
 					arg_problem=true
 					useropt_help_basic=false
 					;;
