@@ -902,7 +902,7 @@ DebugLogEnv()
 	DebugInfoMinSepr
 	RunAndLog "/usr/sbin/screen -ls" "$r_screen_sessions_pathfile" '' 1
 	DebugInfoMinSepr
-	RunAndLog '/usr/bin/free -m' "$r_ram_freeused_pathfile" '' 1
+	RunAndLog '/usr/bin/free' "$r_ram_freeused_pathfile" '' 1
 	DebugInfoMinSepr
 	RunAndLog "/bin/grep -i 'out of memory\|oom-killer' /mnt/HDA_ROOT/.logs/kmsg" "$r_oom_log_pathfile" '' 1
 	DebugInfoMinSepr
@@ -3050,7 +3050,7 @@ ShowArgSuggestions()
 		fi
 	fi
 
-	[[ -e $r_report_output_pathfile ]] && cat "$r_report_output_pathfile"
+	[[ -e $r_report_output_pathfile ]] && /bin/cat "$r_report_output_pathfile"
 
 	DebugArray args_incomplete "${args_incomplete[*]:-}"
 	DebugArray args_remaining "${args_remaining[*]:-}"
