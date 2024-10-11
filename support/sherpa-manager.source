@@ -4722,7 +4722,7 @@ GenerateStatusReportTitleLine()
 
 	# column 3: package action and result
 	printf "%$((r_report_column_spacing))s"
-	a='Previous action (result)'
+	a='Action (result)'
 	printf "%-${r_report_qpkg_action_column_width}s" "$a:"
 
 	# column 4: package version
@@ -8060,7 +8060,7 @@ ShowReportStatuses()
 
 	if OsIsSupportAutowidthTableColumns; then
 		[[ $a = true ]] && b=" ($(TextBrightOrange new))"
-		printf -v c '\n%s\n' "QPKG name:|Status:|Previous action (result):|QPKG version${b}:|Appl. version:|Location:"
+		printf -v c '\n%s\n' "QPKG name:|Status:|Action (result):|QPKG version${b}:|Appl. version:|Location:"
 	else
 		printf -v c '\n%s\n' "$(GenerateStatusReportTitleLine)"
 	fi
