@@ -748,13 +748,13 @@ DebugLogEnv()
 	FuncInit
 
 	ShowAsProc 'log env'
+	DebugInfoMinSepr
 
 	if [[ $useropt_show_about = true || $useropt_show_aboutall = true ]]; then
 		useropt_debug=true
 		useropt_verbose=true
 	fi
 
-	DebugInfoMinSepr
 	DebugHardware ok 'NAS model' "$(get_display_name)"
 	DebugHardware ok CPU "$(HardwareGetCPUInfo)"
 	DebugHardware ok 'CPU cores' "$r_cpu_cores"
@@ -890,28 +890,28 @@ DebugLogEnv()
 		DebugQpkg detect "$(ShowAsPackageName IncreaseTimeouts)" N/A
 	fi
 
-	DebugInfoMinSepr
-
 	if [[ $useropt_show_about = true ]]; then
 		useropt_debug=false
 		useropt_verbose=false
 		return
 	fi
 
+	[[ $useropt_show_aboutall = false ]] && DebugInfoMinSepr
 	RunAndLog "/bin/df -h | /bin/grep '^Filesystem\|^none\|^tmpfs\|ram'" "$r_ramfs_freespace_pathfile"
-	DebugInfoMinSepr
-	RunAndLog "/usr/sbin/screen -ls" "$r_screen_sessions_pathfile" '' 1
-	DebugInfoMinSepr
+	[[ $useropt_show_aboutall = false ]] && DebugInfoMinSepr
+	RunAndLog "/usr/sbin/screen -ls | /bin/sed '/^[[:space:]]*$/d'" "$r_screen_sessions_pathfile" '' 1
+	[[ $useropt_show_aboutall = false ]] && DebugInfoMinSepr
 	RunAndLog '/usr/bin/free' "$r_ram_freeused_pathfile" '' 1
-	DebugInfoMinSepr
+	[[ $useropt_show_aboutall = false ]] && DebugInfoMinSepr
 	RunAndLog "/bin/grep -i 'out of memory\|oom-killer' /mnt/HDA_ROOT/.logs/kmsg" "$r_oom_log_pathfile" '' 1
-	DebugInfoMinSepr
 
 	if [[ $useropt_show_aboutall = true ]]; then
 		useropt_debug=false
 		useropt_verbose=false
 		return
 	fi
+
+	DebugInfoMinSepr
 
 	FuncExit
 
