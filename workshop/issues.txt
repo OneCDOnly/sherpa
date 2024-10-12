@@ -19,9 +19,6 @@ Observed issues:
 			- active git branch: 'master'
 			--------------------------------------------------------------------------------------------------
 
-	* If IPK install stalls, seconds stalled display is not accurate.
-		- Need to calculate actual seconds elapsed since stall began, instead of using an accumulator and `sleep 1`.
-
 	* Will need a new method to detect if QTS 5.2.0 is starting/stopping QPKGs due to async starts/stops.
 
 	* Near the end of installing IPKs, monitored download path can remain at non-zero size while packages complete installation.
