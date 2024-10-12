@@ -562,8 +562,8 @@ LoadEnv()
 			readonly r_action_times_path=$r_cache_path/action.times
 			readonly r_async_procs_path=$r_cache_path/proc
 			readonly r_dependent_qpkgs_list_pathfile=$r_cache_path/dependents
-			readonly r_display_inhibit_pathfile=$r_cache_path/display.inhibit
 			readonly r_independent_qpkgs_list_pathfile=$r_cache_path/independents
+			readonly r_inhibit_display_pathfile=$r_cache_path/display.inhibit
 			readonly r_ipk_cache_path=$r_cache_path/IPKs
 				readonly r_ipk_downgrade_path=$r_ipk_cache_path/downgrade
 				readonly r_ipk_download_path=$r_ipk_cache_path/downloads
@@ -608,7 +608,7 @@ LoadEnv()
 	# KLUDGE: just in-case `python` has disappeared again ... ¯\_(ツ)_/¯
 	[[ -e $PYTHON3_CMD && ! -L $PYTHON_CMD ]] && ln -s "$PYTHON3_CMD" "$PYTHON_CMD"
 
-	rm -f "$r_report_output_pathfile" "$r_ramfs_freespace_pathfile" "$r_display_inhibit_pathfile" 2> /dev/null
+	rm -f "$r_report_output_pathfile" "$r_ramfs_freespace_pathfile" "$r_inhibit_display_pathfile" 2> /dev/null
 
 	if [[ -e $GNU_STTY_CMD && -t 0 ]]; then
 		local terminal_dimensions=$($GNU_STTY_CMD size)
@@ -1792,26 +1792,32 @@ SetMaxForks()
 	#   $max_forks
 
 	max_forks=$r_concurrency
+
+	[[ -n ${1:-} ]] || return
+
 	local reason=''
 
 	if [[ $useropt_verbose = true ]]; then 					# No-point running async actions in verbose mode: stdout will be a confusing mess.
 		max_forks=1
 		reason='verbose mode is active'
-	elif [[ $useropt_debug = true ]]; then 					# Same goes for debug mode: logs will be a mess.
+	elif [[ $useropt_debug = true ]]; then 					# Same for debug mode: logs will be a mess.
 		max_forks=1
 		reason='debug mode is active'
 	else
-		case ${1:-} in
-			?(re)install|upgrade)							# Don't execute these actions async: installer for each package eventually aborts (QPKGs can only be managed one-at-a-time, else packages overwrite each other, and package source files end-up in the wrong install paths).
+		case $1 in
+			?(re)install|upgrade)							# QPKG built-in installer eventually aborts (QPKGs can only be managed one-at-a-time, else packages overwrite each other, and package source files end-up in the wrong install paths).
 				max_forks=1
 				;;
-			clean)											# Precautionary: don't make too-many calls to PyPI at the same time.
+			sign)											# Avoid "database busy" errors.
+				max_forks=1
+				;;
+			clean)											# Don't make too-many calls to PyPI at the same time.
 				max_forks=$(((r_concurrency+1)/2))
 				;;
 			backup|deactivate|download|uninstall)			# Low-resource actions, so allow multiple forks, even on ARMv5.
 				max_forks=4
 				;;
-			@(dis|en)able?(au)|rebuild|sign|status)			# Really-low-resource actions.
+			@(dis|en)able?(au)|rebuild|status)				# Really-low-resource actions.
 				max_forks=8
 		esac
 
@@ -2314,6 +2320,7 @@ ParseShowArgs()
 							useropt_show_about=true
 							;;
 						about-all)
+							LoadPackages
 							action=''
 							awaiting_group=false
 							get_qpkg_states=false
@@ -4016,7 +4023,7 @@ _DirSizeMonitor_()
 	#   $2 = total target bytes (100%) for specified path.
 
 	# Inputs: (global)
-	#   $r_display_inhibit_pathfile
+	#   $r_inhibit_display_pathfile
 
 	# Outputs: (local)
 	#   stdout = formatted as: "percentage downloaded (downloaded bytes/total expected bytes)".
@@ -4026,12 +4033,13 @@ _DirSizeMonitor_()
 	IsSysFileExist $GNU_FIND_CMD || exit
 
 	local -i current_bytes=-1
+	local -i last_active_epoch=0
 	local -i last_bytes=0
 	local perc_msg=''
 	local progress_msg=''
-	local stall_msg=''
-	local -i stall_seconds=0
-	local -i stall_seconds_threshold=4
+	local stalled_msg=''
+	local -i stalled_seconds=0
+	local -i stalled_seconds_threshold=4
 	local -i total_bytes=${2:-0}
 
 	InitProgress
@@ -4041,46 +4049,46 @@ _DirSizeMonitor_()
 		[[ -z $current_bytes ]] && current_bytes=0
 
 		if [[ $current_bytes -ne $last_bytes ]]; then
-			stall_seconds=0
+			last_active_epoch=$(ConvertNowToSeconds)
 			last_bytes=$current_bytes
-		else
-			((stall_seconds++))
 		fi
 
+		[[ $last_active_epoch -ne 0 ]] && stalled_seconds=$(CalcAmountDiff "$(ConvertNowToSeconds)" "$last_active_epoch")
+
 		perc_msg="$((200*(current_bytes)/(total_bytes)%2+100*(current_bytes)/(total_bytes)))%"
-		[[ $current_bytes -lt $total_bytes && $perc_msg = '100%' ]] && perc_msg='99%'	# ensure we don't hit 100% until the last byte is downloaded
+		[[ $current_bytes -lt $total_bytes && $perc_msg = '100%' ]] && perc_msg='99%'	# Ensure we don't hit 100% until the last byte is downloaded.
 		progress_msg="$perc_msg ($(TextBrightWhite "$(FormatAsIsoBytes "$current_bytes")")/$(TextBrightWhite "$(FormatAsIsoBytes "$total_bytes")"))"
 
-		if [[ $stall_seconds -ge $stall_seconds_threshold ]]; then
+		if [[ $stalled_seconds -ge $stalled_seconds_threshold ]]; then
 			# Append a message showing stalled time.
-			stall_msg=' stalled for '
+			stalled_msg=' stalled for '
 
-			if [[ $stall_seconds -lt 60 ]]; then
-				stall_msg+="$stall_seconds seconds"
+			if [[ $stalled_seconds -lt 60 ]]; then
+				stalled_msg+="$stalled_seconds seconds"
 			else
-				stall_msg+=$(ConvertSecondsToDuration "$stall_seconds")
+				stalled_msg+=$(ConvertSecondsToDuration "$stalled_seconds")
 			fi
 
 			# Add a suggestion to cancel if download has stalled for too-long.
 
-			if [[ $stall_seconds -ge 90 ]]; then
-				stall_msg+=': cancel with CTRL+C and try again later'
+			if [[ $stalled_seconds -ge 90 ]]; then
+				stalled_msg+=': cancel with CTRL+C and try again later'
 			fi
 
 			# Colourise as-required.
 
-			if [[ $stall_seconds -ge 90 ]]; then
-				stall_msg=$(TextBrightRed "$stall_msg")
-			elif [[ $stall_seconds -ge 45 ]]; then
-				stall_msg=$(TextBrightOrange "$stall_msg")
-			elif [[ $stall_seconds -ge 20 ]]; then
-				stall_msg=$(TextBrightYellow "$stall_msg")
+			if [[ $stalled_seconds -ge 90 ]]; then
+				stalled_msg=$(TextBrightRed "$stalled_msg")
+			elif [[ $stalled_seconds -ge 45 ]]; then
+				stalled_msg=$(TextBrightOrange "$stalled_msg")
+			elif [[ $stalled_seconds -ge 20 ]]; then
+				stalled_msg=$(TextBrightYellow "$stalled_msg")
 			fi
 
-			progress_msg+=$stall_msg
+			progress_msg+=$stalled_msg
 		fi
 
-		[[ ! -e $r_display_inhibit_pathfile ]] || return
+		[[ ! -e $r_inhibit_display_pathfile ]] || return
 		WriteMsgInPlace "$progress_msg"
 		sleep 1
 	done
@@ -6981,7 +6989,7 @@ UpdateForkProgress()
 	local b=''
 
 	RefreshForkCounts
-	[[ $useropt_verbose = false && ! -e $r_display_inhibit_pathfile ]] || return		# Don't display progress, it's difficult to read with so-many other writes to the screen.
+	[[ $useropt_verbose = false && ! -e $r_inhibit_display_pathfile ]] || return		# Don't display progress, it's difficult to read with so-many other writes to the screen.
 
 	a=$((skip_count+skip_ok_count+skip_error_count+skip_abort_count))
 	b=$(PercFrac "$ok_count" "$a" "$fail_count" "$total_count")
@@ -7006,7 +7014,7 @@ UpdateForkProgress()
 		b+="$(TextBrightYellow "$fork_count") in-progress"
 	fi
 
-	[[ -n $b && ! -e $r_display_inhibit_pathfile ]] && ShowAsProc "${fork_progress_prefix:-}" "$b"
+	[[ -n $b && ! -e $r_inhibit_display_pathfile ]] && ShowAsProc "${fork_progress_prefix:-}" "$b"
 
 	return 0
 
@@ -13240,9 +13248,9 @@ DebugVar()
 	#   to debug log
 
 	if [[ -n ${!1:-} ]]; then
-		DebugAsVar "\$$1 : '${!1}'"
+		DebugAsVar "\$$1: '${!1}'"
 	else
-		DebugAsVar "\$$1 : null"
+		DebugAsVar "\$$1: null"
 	fi
 
 	}
@@ -13260,9 +13268,9 @@ DebugArray()
 	[[ -n ${1:-} ]] || return
 
 	if [[ -n ${2:-} ]]; then
-		DebugAsArray "\$$1 : ['$2']"
+		DebugAsArray "\$$1: ['$2']"
 	else
-		DebugAsArray "\$$1 : [null]"
+		DebugAsArray "\$$1: null"
 	fi
 
 	}
@@ -13591,7 +13599,7 @@ ConvertNowToSeconds()
 	{
 
 	# Outputs: (local)
-	#	stdout = epoch seconds.
+	#	stdout = current epoch seconds.
 
 	/bin/date +%s
 
@@ -14650,11 +14658,11 @@ CaughtSIGINT()
 
 	# Inputs: (global)
 	#	$r_action_abort_pathfile
-	#	$r_display_inhibit_pathfile
+	#	$r_inhibit_display_pathfile
 
 	trap - SIGINT
 
-	[[ -n ${r_display_inhibit_pathfile:-} ]] && [[ -d $(/usr/bin/dirname "$r_display_inhibit_pathfile") ]] && /bin/touch "$r_display_inhibit_pathfile"
+	[[ -n ${r_inhibit_display_pathfile:-} ]] && [[ -d $(/usr/bin/dirname "$r_inhibit_display_pathfile") ]] && /bin/touch "$r_inhibit_display_pathfile"
 	[[ -n ${r_action_abort_pathfile:-} ]] && [[ -d $(/usr/bin/dirname "$r_action_abort_pathfile") ]] && /bin/touch "$r_action_abort_pathfile"
 	EraseThisLine
 	ShowAsAbort 'caught SIGINT'

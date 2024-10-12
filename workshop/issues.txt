@@ -1,7 +1,23 @@
 Observed issues:
 
-	* If IPK install stalls, seconds stalled display is not accurate.
-		- Need to calculate actual seconds elapsed since stall began, instead of using an accumulator and `sleep 1`.
+	* Service-script daemon PID shown twice consecutively during 'clean' action:
+		--------------------------------------------------------------------------------------------------
+		[/share/Public] # /etc/init.d/sabnzbd.sh clean
+		> source: sabnzbd.sh, action: clean, time: Sat 12 Oct 2024 10:55:01 AM EST, load: 1.23
+		- package: 241007, service: 241007, library: <?build_date?>
+		- daemon PID: '26013'
+		- daemon PID: '26013'
+		> stop daemon PID '26013' with SIGTERM (no-more than 120 seconds): 1, OK
+		- daemon PID: none
+		...
+		--------------------------------------------------------------------------------------------------
+		- Should show this too:
+			--------------------------------------------------------------------------------------------------
+			- package: 241007, service: 241007, library: <?build_date?>
+			- QPKG enabled: 'true'
+			- application auto-update: 'true'
+			- active git branch: 'master'
+			--------------------------------------------------------------------------------------------------
 
 	* Will need a new method to detect if QTS 5.2.0 is starting/stopping QPKGs due to async starts/stops.
 
