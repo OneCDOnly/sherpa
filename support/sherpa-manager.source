@@ -748,13 +748,13 @@ DebugLogEnv()
 	FuncInit
 
 	ShowAsProc 'log env'
+	DebugInfoMinSepr
 
 	if [[ $useropt_show_about = true || $useropt_show_aboutall = true ]]; then
 		useropt_debug=true
 		useropt_verbose=true
 	fi
 
-	DebugInfoMinSepr
 	DebugHardware ok 'NAS model' "$(get_display_name)"
 	DebugHardware ok CPU "$(HardwareGetCPUInfo)"
 	DebugHardware ok 'CPU cores' "$r_cpu_cores"
@@ -890,28 +890,28 @@ DebugLogEnv()
 		DebugQpkg detect "$(ShowAsPackageName IncreaseTimeouts)" N/A
 	fi
 
-	DebugInfoMinSepr
-
 	if [[ $useropt_show_about = true ]]; then
 		useropt_debug=false
 		useropt_verbose=false
 		return
 	fi
 
+	[[ $useropt_show_aboutall = false ]] && DebugInfoMinSepr
 	RunAndLog "/bin/df -h | /bin/grep '^Filesystem\|^none\|^tmpfs\|ram'" "$r_ramfs_freespace_pathfile"
-	DebugInfoMinSepr
-	RunAndLog "/usr/sbin/screen -ls" "$r_screen_sessions_pathfile" '' 1
-	DebugInfoMinSepr
+	[[ $useropt_show_aboutall = false ]] && DebugInfoMinSepr
+	RunAndLog "/usr/sbin/screen -ls | /bin/sed '/^[[:space:]]*$/d'" "$r_screen_sessions_pathfile" '' 1
+	[[ $useropt_show_aboutall = false ]] && DebugInfoMinSepr
 	RunAndLog '/usr/bin/free' "$r_ram_freeused_pathfile" '' 1
-	DebugInfoMinSepr
+	[[ $useropt_show_aboutall = false ]] && DebugInfoMinSepr
 	RunAndLog "/bin/grep -i 'out of memory\|oom-killer' /mnt/HDA_ROOT/.logs/kmsg" "$r_oom_log_pathfile" '' 1
-	DebugInfoMinSepr
 
 	if [[ $useropt_show_aboutall = true ]]; then
 		useropt_debug=false
 		useropt_verbose=false
 		return
 	fi
+
+	DebugInfoMinSepr
 
 	FuncExit
 
@@ -2905,7 +2905,7 @@ ShowArgSuggestions()
 
 		for arg in "${args_incomplete[@]}"; do
 			case $arg in
-				?(de|re)activate|backup|clean|@(dis|en)able|@(dis|en)able-auto-update|reassign|@(re|un)install|?(re)start|restore|rm|sign|stop|upgrade)
+				?(de|re)activate|backup|clean|@(dis|en)able|@(dis|en)able-auto-update|reassign|@(re|un)install|?(re)start|restore|rm|sign|stop)
 					DisplayAsProjSynExam "please provide valid $(ShowAsPackages) or a $(ShowAsPackageGroup) after '$arg' like" "$arg installed"
 					arg_problem=true
 					useropt_help_basic=false
@@ -2950,6 +2950,11 @@ ShowArgSuggestions()
 					DisplayAsProjSynIndentExam '' "$arg log"
 					DisplayAsProjSynIndentExam '' "$arg packages"
 					DisplayAsProjSynIndentExam '' "$arg results"
+					arg_problem=true
+					useropt_help_basic=false
+					;;
+				upgrade)
+					DisplayAsProjSynExam "please provide valid $(ShowAsPackages) or a $(ShowAsPackageGroup) after '$arg' like" "$arg new"
 					arg_problem=true
 					useropt_help_basic=false
 					;;
@@ -4717,7 +4722,7 @@ GenerateStatusReportTitleLine()
 
 	# column 3: package action and result
 	printf "%$((r_report_column_spacing))s"
-	a='Previous action (result)'
+	a='Action (result)'
 	printf "%-${r_report_qpkg_action_column_width}s" "$a:"
 
 	# column 4: package version
@@ -8055,7 +8060,7 @@ ShowReportStatuses()
 
 	if OsIsSupportAutowidthTableColumns; then
 		[[ $a = true ]] && b=" ($(TextBrightOrange new))"
-		printf -v c '\n%s\n' "QPKG name:|Status:|Previous action (result):|QPKG version${b}:|Appl. version:|Location:"
+		printf -v c '\n%s\n' "QPKG name:|Status:|Action (result):|QPKG version${b}:|Appl. version:|Location:"
 	else
 		printf -v c '\n%s\n' "$(GenerateStatusReportTitleLine)"
 	fi
