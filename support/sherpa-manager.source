@@ -1800,21 +1800,24 @@ SetMaxForks()
 	if [[ $useropt_verbose = true ]]; then 					# No-point running async actions in verbose mode: stdout will be a confusing mess.
 		max_forks=1
 		reason='verbose mode is active'
-	elif [[ $useropt_debug = true ]]; then 					# Same goes for debug mode: logs will be a mess.
+	elif [[ $useropt_debug = true ]]; then 					# Same for debug mode: logs will be a mess.
 		max_forks=1
 		reason='debug mode is active'
 	else
 		case $1 in
-			?(re)install|upgrade)							# Don't execute these actions async: installer for each package eventually aborts (QPKGs can only be managed one-at-a-time, else packages overwrite each other, and package source files end-up in the wrong install paths).
+			?(re)install|upgrade)							# QPKG built-in installer eventually aborts (QPKGs can only be managed one-at-a-time, else packages overwrite each other, and package source files end-up in the wrong install paths).
 				max_forks=1
 				;;
-			clean)											# Precautionary: don't make too-many calls to PyPI at the same time.
+			sign)											# Avoid "database busy" errors.
+				max_forks=1
+				;;
+			clean)											# Don't make too-many calls to PyPI at the same time.
 				max_forks=$(((r_concurrency+1)/2))
 				;;
 			backup|deactivate|download|uninstall)			# Low-resource actions, so allow multiple forks, even on ARMv5.
 				max_forks=4
 				;;
-			@(dis|en)able?(au)|rebuild|sign|status)			# Really-low-resource actions.
+			@(dis|en)able?(au)|rebuild|status)				# Really-low-resource actions.
 				max_forks=8
 		esac
 
