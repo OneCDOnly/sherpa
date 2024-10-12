@@ -2314,6 +2314,7 @@ ParseShowArgs()
 							useropt_show_about=true
 							;;
 						about-all)
+							LoadPackages
 							action=''
 							awaiting_group=false
 							get_qpkg_states=false
