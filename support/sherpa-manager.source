@@ -13241,9 +13241,9 @@ DebugVar()
 	#   to debug log
 
 	if [[ -n ${!1:-} ]]; then
-		DebugAsVar "\$$1 : '${!1}'"
+		DebugAsVar "\$$1: '${!1}'"
 	else
-		DebugAsVar "\$$1 : null"
+		DebugAsVar "\$$1: null"
 	fi
 
 	}
@@ -13261,9 +13261,9 @@ DebugArray()
 	[[ -n ${1:-} ]] || return
 
 	if [[ -n ${2:-} ]]; then
-		DebugAsArray "\$$1 : ['$2']"
+		DebugAsArray "\$$1: ['$2']"
 	else
-		DebugAsArray "\$$1 : [null]"
+		DebugAsArray "\$$1: null"
 	fi
 
 	}
