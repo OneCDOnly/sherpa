@@ -3250,6 +3250,9 @@ Quiz()
 	# Inputs: (local)
 	#   $1 = prompt/question
 
+	# Inputs: (global)
+	#	$r_gnu_stty_cmd
+
 	# Outputs: (local)
 	#   $? = 0 if "y", 1 if anything else
 
@@ -3307,6 +3310,19 @@ _UpdateEntwarePackageList_()
 	{
 
 	# * This function runs asynchronously *
+
+	# Inputs: (global)
+	#	$r_entware_package_list_uptodate
+	#	$r_external_packages_archive_pathfile
+	#	$r_external_packages_pathfile
+	#	$r_file_change_threshold_minutes
+	#	$r_logs_path
+	#	$r_opkg_cmd
+	#	$r_update_log_file
+	#	$useropt_check
+
+	# Outputs: (global)
+	#	$r_entware_package_list_uptodate
 
 	if IsNtSysFileExist $r_opkg_cmd; then
 		DisplayAsProjSynExam 'try reactivating Entware' 'reactivate ew'
@@ -3428,7 +3444,8 @@ CalcIpkDepsToInstall()
 
 	# Inputs: (global)
 	#	$r_external_packages_pathfile
-	#	$r_gnu_less_cmd
+	#	$r_gnu_grep_cmd
+	#	$r_opkg_cmd
 	#	$useropt_terse
 	#	$useropt_verbose
 
@@ -4453,6 +4470,9 @@ UserIsOk()
 UserIsSU()
 	{
 
+	# Inputs: (global)
+	#	$EUID
+
 	[[ $EUID -eq 0 ]]
 
 	}
@@ -4657,6 +4677,10 @@ DisplayAsIndentQuotedInfoItem()
 	#	$1 = word
 	#	$2 = description
 
+	# Inputs: (global)
+	# 	$r_help_desc_indent
+	#	$r_report_footer_name_column_width
+
 	if OsIsSupportAutowidthTableColumns; then
 		printf "%${r_help_desc_indent}s%s|%s\n" '' "'${1:-}'" "- $(AddPeriod "${2:-}")"
 	else
@@ -4667,6 +4691,11 @@ DisplayAsIndentQuotedInfoItem()
 
 GeneratePacksReportTitleLine()
 	{
+
+	# Inputs: (global)
+	#	$r_report_qpkg_appl_version_column_width
+	#	$r_report_qpkg_description_column_width
+	# 	$r_report_qpkg_name_column_width
 
 	local a=''
 
@@ -5045,6 +5074,11 @@ GenerateStatusReportDataLine()
 GenerateReposReportTitleLine()
 	{
 
+	# Inputs: (global)
+	#	$r_report_qpkg_install_date_column_width
+	#	$r_report_qpkg_name_column_width
+	#	$r_report_qpkg_repo_column_width
+
 	local a=''
 
 	# column 1: package name.
@@ -5068,6 +5102,15 @@ GenerateReposReportDataLine()
 
 	# Inputs: (global)
 	# 	$qpkg_name
+	#	$r_chars_alert
+	#	$r_chars_attention
+	#	$r_chars_blank
+	#	$r_chars_normal
+	#	$r_report_column_spacing
+	#	$r_report_flags_path
+	#	$r_report_qpkg_install_date_column_width
+	#	$r_report_qpkg_name_column_width
+	#	$r_report_qpkg_repo_column_width
 
 	# Outputs: (local)
 	# 	stdout = single report line with data fields.
@@ -6243,6 +6286,12 @@ EraseThisLine()
 
 	# Reset cursor to start-of-line, erasing entire line, and stay on this line.
 
+	# Inputs: (global)
+	#	$useropt_verbose
+
+	# Outputs: (global)
+	#	$useropt_verbose
+
 	[[ ${useropt_verbose:=false} = false ]] && printf '\033[2K\r'
 
 	} >&2
@@ -6267,6 +6316,9 @@ DisplayWait()
 
 ShowHelpActions()
 	{
+
+	# Inputs: (global)
+	#	$r_report_output_pathfile
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport actions
@@ -6327,6 +6379,9 @@ ShowHelpActions()
 ShowHelpActionsAll()
 	{
 
+	# Inputs: (global)
+	#	$r_report_output_pathfile
+
 	DisableDebugToArchiveAndFile
 	DisplayProcReport 'all actions'
 
@@ -6369,6 +6424,9 @@ ShowHelpActionsAll()
 ShowHelpBackupLocation()
 	{
 
+	# Inputs: (global)
+	#	$r_qpkg_bu_path
+
 	DisplayAsSynExam 'the backup location can be accessed by running' "cd $r_qpkg_bu_path"
 
 	return 0
@@ -6386,6 +6444,9 @@ ShowHelpBasic()
 
 ShowHelpBasicExamples()
 	{
+
+	# Inputs: (global)
+	#	$r_report_output_pathfile
 
 		{
 
@@ -6406,6 +6467,9 @@ ShowHelpBasicExamples()
 
 ShowHelpGroups()
 	{
+
+	# Inputs: (global)
+	#	$r_report_output_pathfile
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport groups
@@ -6443,6 +6507,9 @@ ShowHelpGroups()
 ShowHelpIssue()
 	{
 
+	# Inputs: (global)
+	#	$r_log_tail_lines
+
 	DisplayAsHelpTitle "please consider creating a new issue for this on GitHub: $(ShowAsURL 'https://github.com/OneCDOnly/sherpa/issues')"
 	DisplayAsHelpTitle "alternatively, post on the QNAP NAS Community Forum: $(ShowAsURL 'https://forum.qnap.com/viewtopic.php?f=320&t=132373')"
 	DisplayAsProjSynIndentExam "view only the most recent $(ShowAsTitleName) session log" last
@@ -6456,6 +6523,9 @@ ShowHelpIssue()
 
 ShowHelpLists()
 	{
+
+	# Inputs: (global)
+	#	$r_report_output_pathfile
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport lists
@@ -6492,6 +6562,9 @@ ShowHelpLists()
 ShowHelpShow()
 	{
 
+	# Inputs: (global)
+	#	$r_report_output_pathfile
+
 	DisableDebugToArchiveAndFile
 	DisplayProcReport show
 
@@ -6525,6 +6598,9 @@ ShowHelpShow()
 ShowHelpOptions()
 	{
 
+	# Inputs: (global)
+	#	$r_report_output_pathfile
+
 	DisableDebugToArchiveAndFile
 	DisplayProcReport options
 
@@ -6548,6 +6624,9 @@ ShowHelpOptions()
 ShowHelpPackages()
 	{
 
+	# Inputs: (global)
+	#	$r_report_output_pathfile
+
 	DisableDebugToArchiveAndFile
 	DisplayProcReport packages
 
@@ -6567,6 +6646,10 @@ ShowHelpPackages()
 
 ShowHelpProblems()
 	{
+
+	# Inputs: (global)
+	#	$r_log_tail_lines
+	#	$r_report_output_pathfile
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport problems
@@ -6607,6 +6690,9 @@ ShowHelpProblems()
 ShowHelpUpgrades()
 	{
 
+	# Inputs: (global)
+	#	$r_report_output_pathfile
+
 	DisableDebugToArchiveAndFile
 	DisplayProcReport upgrades
 
@@ -6633,6 +6719,9 @@ ShowHelpUpgrades()
 
 ShowHelpTips()
 	{
+
+	# Inputs: (global)
+	#	$r_report_output_pathfile
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport tips
@@ -6666,6 +6755,9 @@ ViewLogLast()
 
 	# View only the last session log.
 
+	# Inputs: (global)
+	#	$r_session_last_pathfile
+
 	DisableDebugToArchiveAndFile
 	ExtractPrevSessFromTail
 	EraseThisLine
@@ -6685,6 +6777,9 @@ ViewLogTail()
 	{
 
 	# View only the last session log.
+
+	# Inputs: (global)
+	#	$r_session_tail_pathfile
 
 	DisableDebugToArchiveAndFile
 	ExtractTailFromLog
@@ -6710,6 +6805,12 @@ DisplayFileInViewport()
 	#		= 'linenumbers' : display file contents with line numbers.
 	#		= 'jumptoend'   : display file contents scrolled to the last line.
 	#		= 'wrap'		: wrap lines of text to displayport.
+
+	# Inputs: (global)
+	#	$r_gnu_less_cmd
+	#	$r_sess_columns
+	#	$r_sess_rows
+	#	$useropt_verbose
 
 	local filename=${1:-}
 	local jumptoend=false
@@ -6757,7 +6858,7 @@ DisplayFileInViewport()
 			[[ $wraplines = false ]] && options+=' --chop-long-lines'
 			[[ $showlinenumbers = true ]] && options+=' --LINE-NUMBERS'
 			[[ $jumptoend = true ]] && options+=' +G'
-			LESSSECURE=1 ${r_gnu_less_cmd} "$options" --prompt "$prompt" "$filename"
+			LESSSECURE=1 $r_gnu_less_cmd "$options" --prompt "$prompt" "$filename"
 
 			return
 		fi
@@ -8882,7 +8983,7 @@ OsGetKernelPageSize()
 	{
 
 	if [[ -e /sbin/hal_app ]]; then
-		echo "$(/sbin/hal_app --get_pagesize)B"
+		echo -n "$(/sbin/hal_app --get_pagesize)B"
 	else
 		/bin/grep KernelPageSize /proc/1/smaps | head -n1 | cut -f2 -d':' | tr -d ' ' | /bin/sed 's|kB|kiB|'
 	fi
@@ -8914,13 +9015,18 @@ Python3IsOutdated()
 
 	# Check if Python3 interpreter needs upgrading for this NAS arch.
 
+	# Inputs: (global)
+	#	$r_min_python_version
+	#	$r_nas_arch
+	#	$r_python3_cmd
+
 	# Outputs: (local)
 	#   $? = 0 if outdated, !0 if not
 
 	[[ -e $r_python3_cmd ]] || return
-	installed_ver=$(Python3GetVer "$r_python3_cmd")
+	local a=$(Python3GetVer "$r_python3_cmd")
 
-	[[ $r_nas_arch = armv5tel && ${installed_ver//./} -lt 3114 ]] || [[ $r_nas_arch != armv5tel && ${installed_ver//./} -lt $r_min_python_version ]]
+	[[ $r_nas_arch = armv5tel && ${a//./} -lt 3114 ]] || [[ $r_nas_arch != armv5tel && ${a//./} -lt $r_min_python_version ]]
 
 	}
 
@@ -8943,13 +9049,18 @@ PerlIsOutdated()
 
 	# Check if Perl interpreter needs upgrading for this NAS arch.
 
+	# Inputs: (global)
+	#	$r_min_perl_version
+	#	$r_nas_arch
+	#	$r_perl_cmd
+
 	# Outputs: (local)
 	#   $? = 0 if outdated, !0 if not
 
 	[[ -e $r_perl_cmd ]] || return
-	installed_ver=$(PerlGetVer "$r_perl_cmd")
+	local a=$(PerlGetVer "$r_perl_cmd")
 
-	[[ $r_nas_arch = armv5tel && ${installed_ver//./} -lt 5281 ]] || [[ $r_nas_arch != armv5tel && ${installed_ver//./} -lt $r_min_perl_version ]]
+	[[ $r_nas_arch = armv5tel && ${a//./} -lt 5281 ]] || [[ $r_nas_arch != armv5tel && ${a//./} -lt $r_min_perl_version ]]
 
 	}
 
@@ -9009,12 +9120,18 @@ UserGetLIBCCopyright()
 ShellGet()
 	{
 
+	# Inputs: (global)
+	#	$SHELL
+
 	printf '%s' "${SHELL:-undefined}"
 
 	}
 
 ShellGetVersion()
 	{
+
+	# Inputs: (global)
+	#	$SHELL
 
 	[[ -n ${SHELL:-} ]] || printf undefined
 
@@ -9025,6 +9142,9 @@ ShellGetVersion()
 ShellGetCopyright()
 	{
 
+	# Inputs: (global)
+	#	$SHELL
+
 	[[ -n ${SHELL:-} ]] || printf undefined
 
 	$SHELL --version | /bin/grep -i copyright | /bin/sed 's|\$||'
@@ -9033,6 +9153,9 @@ ShellGetCopyright()
 
 ShellGetTimeIn()
 	{
+
+	# Inputs: (global)
+	#	$LOADER_SCRIPT_PPID
 
 	local n=''
 
@@ -9119,7 +9242,15 @@ QpkgGetArch()
 
 	# Translate arch from local NAS (QTS/QuTS) to sherpa notation.
 	# sherpa arch for target NAS is a single 3 character-code.
-	# 'a' for ARM, 'i' for Intel.
+	# prefix is 'a' for ARM, 'i' for Intel.
+
+	# Inputs: (global)
+	#	$r_nas_arch
+	#	$r_nas_firmware_version
+	#	$r_nas_platform
+
+	# Outputs: (local)
+	#	stdout = translated QPKG arch.
 
 	if [[ $(get_display_name) = 'TS-269H' ]]; then
 		printf i53
@@ -9178,6 +9309,9 @@ QpkgGetEntwareType()
 
 UserGetSudoUID()
 	{
+
+	# Inputs: (global)
+	#	$SUDO_UID
 
 	printf '%s' "${SUDO_UID:-undefined}"
 
@@ -14428,7 +14562,14 @@ TextBlackOnCyan()
 TextBrightWhite()
 	{
 
+	# Inputs: (local)
+
 	# Inputs: (global)
+	#	$useropt_colourful
+
+	# Outputs: (local)
+
+	# Outputs: (global)
 	#	$useropt_colourful
 
 	[[ -n ${1:-} ]] || return
@@ -14516,6 +14657,12 @@ UpdateColourisation()
 
 	# If it seems Entware is active, check if possible to return to colourful display.
 
+	# Inputs: (global)
+	#	$r_colourful_default
+
+	# Outputs: (global)
+	#	$useropt_colourful
+
 	if [[ -e /opt/bin/sed && -L /opt/etc/passwd && $(LoadSetting Colourful "$r_colourful_default") = true ]]; then
 		useropt_colourful=true
 		SendParentChangeEnv 'useropt_colourful=true'
@@ -14529,6 +14676,9 @@ UpdateColourisation()
 UpdateSedRexegSupport()
 	{
 
+	# Outputs: (global)
+	#	$sed_ext_regex_supported
+
 	OsIsSupportSedExtRegex && sed_ext_regex_supported=true || sed_ext_regex_supported=false
 
 	}
@@ -14536,12 +14686,18 @@ UpdateSedRexegSupport()
 UpdateSleepDecimalSecondsSupport()
 	{
 
+	# Outputs: (global)
+	#	$sleep_decimal_seconds_supported
+
 	OsIsSupportDecimalSleepSeconds && sleep_decimal_seconds_supported=true || sleep_decimal_seconds_supported=false
 
 	}
 
 HideCursor()
 	{
+
+	# Inputs: (global)
+	#	$useropt_verbose
 
 	[[ $useropt_verbose = false ]] && printf '\033[?25l'
 
@@ -14557,12 +14713,19 @@ ShowCursor()
 HideKeystrokes()
 	{
 
+	# Inputs: (global)
+	#	$r_gnu_stty_cmd
+	#	$useropt_verbose
+
 	[[ $useropt_verbose = false && -e $r_gnu_stty_cmd && -t 0 ]] && $r_gnu_stty_cmd '-echo'
 
 	}
 
 ShowKeystrokes()
 	{
+
+	# Inputs: (global)
+	#	$r_gnu_stty_cmd
 
 	[[ -n ${r_gnu_stty_cmd:-} && -e $r_gnu_stty_cmd && -t 0 ]] && $r_gnu_stty_cmd 'echo'
 
@@ -14571,8 +14734,15 @@ ShowKeystrokes()
 sleep()
 	{
 
-	# Inputs:
+	# Inputs: (local)
 	#	$1 = seconds to sleep (decimal or integer) (optional), default is 1 second.
+
+	# Inputs: (global)
+	#	$r_gnu_sleep_cmd
+	#	$sleep_decimal_seconds_supported
+
+	# Outputs: (global)
+	#	$sleep_decimal_seconds_supported
 
 	local n=${1:-}
 
@@ -14580,8 +14750,8 @@ sleep()
 
 	if [[ ${sleep_decimal_seconds_supported:=false} = true ]]; then
 		/bin/sleep "$n"
-	elif [[ -e /opt/bin/sleep && -L /opt/etc/passwd ]]; then  				# Try to ensure Entware is active first.
-		/opt/bin/sleep "$n"
+	elif [[ -e $r_gnu_sleep_cmd && -L /opt/etc/passwd ]]; then  			# Try to ensure Entware is active first.
+		$r_gnu_sleep_cmd "$n"
 	else
 		/bin/sleep "$((${n%.*}+1))"											# Ensure decimal seconds are rounded-up to next integer.
 	fi
@@ -14594,6 +14764,17 @@ LoadObjects()
 	{
 
 	# Ensure `objects` in the local cache is up-to-date, then source it.
+
+	# Inputs: (global)
+	#	$r_cache_path
+	#	$r_file_change_threshold_minutes
+	#	$r_objects_archive_pathfile
+	#	$r_objects_archive_url
+	#	$r_objects_pathfile
+
+	# Outputs: (global)
+	#	$objects_loaded
+	#	$r_objects_epoch
 
 	[[ ${objects_loaded:=false} = false ]] || return 0
 
