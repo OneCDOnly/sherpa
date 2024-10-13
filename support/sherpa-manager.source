@@ -173,6 +173,11 @@ ShowResults()
 DebugLogInit()
 	{
 
+	# Inputs: (global)
+	#	$r_script_startseconds
+	#	$r_this_package_ver
+	#	$r_this_script_ver
+
 	DebugInfoMajSepr
 	DebugScript started "$(ConvertSecondsToFullDate "$r_script_startseconds")"
 	DebugScript PID "$$"
@@ -379,20 +384,20 @@ LoadCMDs()
 
 	# Cherry-pick Entware binaries.
 
-	readonly GNU_AWK_CMD=/opt/bin/awk
-	readonly GNU_FIND_CMD=/opt/bin/find
-	readonly GNU_GREP_CMD=/opt/bin/grep
-	readonly GNU_LESS_CMD=/opt/bin/less
-	readonly GNU_SED_CMD=/opt/bin/sed
-	readonly GNU_SLEEP_CMD=/opt/bin/sleep
-	readonly GNU_SORT_CMD=/opt/bin/sort
-	readonly GNU_STTY_CMD=/opt/bin/stty
-	readonly GNU_TIMEOUT_CMD=/opt/bin/timeout
-	readonly OPKG_CMD=/opt/bin/opkg
-	readonly PERL_CMD=/opt/bin/perl
-	readonly PYTHON_CMD=/opt/bin/python
-	readonly PYTHON3_CMD=/opt/bin/python3
-		readonly PIP_CMD="$PYTHON3_CMD -m pip"
+	readonly r_gnu_awk_cmd=/opt/bin/awk
+	readonly r_gnu_find_cmd=/opt/bin/find
+	readonly r_gnu_grep_cmd=/opt/bin/grep
+	readonly r_gnu_less_cmd=/opt/bin/less
+	readonly r_gnu_sed_cmd=/opt/bin/sed
+	readonly r_gnu_sleep_cmd=/opt/bin/sleep
+	readonly r_gnu_sort_cmd=/opt/bin/sort
+	readonly r_gnu_stty_cmd=/opt/bin/stty
+	readonly r_gnu_timeout_cmd=/opt/bin/timeout
+	readonly r_opkg_cmd=/opt/bin/opkg
+	readonly r_perl_cmd=/opt/bin/perl
+	readonly r_python_cmd=/opt/bin/python
+	readonly r_python3_cmd=/opt/bin/python3
+		readonly r_pip_cmd="$r_python3_cmd -m pip"
 
 	}
 
@@ -606,12 +611,12 @@ LoadEnv()
 	readonly r_external_packages_pathfile=$r_cache_path/Packages
 
 	# KLUDGE: just in-case `python` has disappeared again ... ¯\_(ツ)_/¯
-	[[ -e $PYTHON3_CMD && ! -L $PYTHON_CMD ]] && ln -s "$PYTHON3_CMD" "$PYTHON_CMD"
+	[[ -e $r_python3_cmd && ! -L $r_python_cmd ]] && ln -s "$r_python3_cmd" "$r_python_cmd"
 
 	rm -f "$r_report_output_pathfile" "$r_ramfs_freespace_pathfile" "$r_inhibit_display_pathfile" 2> /dev/null
 
-	if [[ -e $GNU_STTY_CMD && -t 0 ]]; then
-		local terminal_dimensions=$($GNU_STTY_CMD size)
+	if [[ -e $r_gnu_stty_cmd && -t 0 ]]; then
+		local terminal_dimensions=$($r_gnu_stty_cmd size)
 		readonly r_sess_rows=${terminal_dimensions% *}
 		readonly r_sess_columns=${terminal_dimensions#* }
 	else
@@ -1042,7 +1047,7 @@ CheckEnv()
 					target_packages='ar binutils libbfd libctf libopcodes objdump'
 
 					# Assume first package version is same as remaining package versions.
-					installed_version=$($OPKG_CMD list-installed | /bin/grep "^${target_packages%% *} *" | head -n1 | cut -d' ' -f3 | cut -d'-' -f1)
+					installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${target_packages%% *} *" | head -n1 | cut -d' ' -f3 | cut -d'-' -f1)
 
 					if [[ ${installed_version//.} -gt 238 ]]; then
 						ipks_downgrade=true
@@ -1060,7 +1065,7 @@ CheckEnv()
 # 				target_packages='git git-http'
 #
 # 				# Assume first package version is same as remaining package versions.
-# 				installed_version=$($OPKG_CMD list-installed | /bin/grep "^${target_packages%% *} *" | head -n1 | cut -d' ' -f3 | cut -d'-' -f1)
+# 				installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${target_packages%% *} *" | head -n1 | cut -d' ' -f3 | cut -d'-' -f1)
 #
 # 				if [[ ${installed_version//.} -gt 2392 ]]; then
 # 					ipks_downgrade=true
@@ -1474,14 +1479,14 @@ ProcAction()
 	#   $4 = action intransitive verb	e.g. `activate`
 
 	# Inputs: (global)
-	#	$r_action_abort_pathfile
-	#	$r_async_procs_path
 	#   $fail_count
 	#	$ipks_downgrade
 	#	$ipks_install
 	#	$ipks_upgrade
 	#   $ok_count
 	#	$pips_install
+	#	$r_action_abort_pathfile
+	#	$r_async_procs_path
 	#   $skip_abort_count
 	#   $skip_count
 	#   $skip_error_count
@@ -1507,8 +1512,6 @@ ProcAction()
 
 	FuncInit
 
-	local -r r_action=${1:?${FUNCNAME[0]}'()': undefined action}
-	local -r r_action_intransitive_msg=${4:?${FUNCNAME[0]}'()': undefined action message}
 	local group=''
 	local msg1_key=''
 	local msg1_value=''
@@ -1516,12 +1519,14 @@ ProcAction()
 	local msg2_value=''
 	local package=''
 	local -i package_index=0
+	local -r r_action=${1:?${FUNCNAME[0]}'()': undefined action}
+	local -r r_action_intransitive_msg=${4:?${FUNCNAME[0]}'()': undefined action message}
 	local -r r_package_type=${3:?${FUNCNAME[0]}'()': undefined package type}
+	local -r r_tier=${2:?${FUNCNAME[0]}'()': undefined tier}
 	local re=''
 	local state=''
 	local target_object_name=''
 	local -a target_packages=()
-	local -r r_tier=${2:?${FUNCNAME[0]}'()': undefined tier}
 	total_count=0
 
 	DebugVar r_action
@@ -1751,9 +1756,9 @@ CloseActionMsgPipe()
 	{
 
 	# Inputs: (global)
-	#	$r_action_msg_pipe
 	#	$action_msg_pipe_fd
 	#	$backup_stdin_fd
+	#	$r_action_msg_pipe
 
 	# Restore original file descriptors, and remove message pipe.
 
@@ -3252,9 +3257,9 @@ Quiz()
 	local b=''
 
 	ShowAsQuiz "$a"
-	[[ -e $GNU_STTY_CMD && -t 0 ]] && $GNU_STTY_CMD igncr	# Ignore CR to prevent an onscreen linefeed (which disrupts same-line rewrite used later, and looks bad).
+	[[ -e $r_gnu_stty_cmd && -t 0 ]] && $r_gnu_stty_cmd igncr	# Ignore CR to prevent an onscreen linefeed (which disrupts same-line rewrite used later, and looks bad).
 	read -rn1 b
-	[[ -e $GNU_STTY_CMD && -t 0 ]] && $GNU_STTY_CMD -igncr	# Re-allow CR.
+	[[ -e $r_gnu_stty_cmd && -t 0 ]] && $r_gnu_stty_cmd -igncr	# Re-allow CR.
 	DebugVar b
 
 	ShowAsQuizDone "$a: $b"
@@ -3303,7 +3308,7 @@ _UpdateEntwarePackageList_()
 
 	# * This function runs asynchronously *
 
-	if IsNtSysFileExist $OPKG_CMD; then
+	if IsNtSysFileExist $r_opkg_cmd; then
 		DisplayAsProjSynExam 'try reactivating Entware' 'reactivate ew'
 
 		return 1
@@ -3318,7 +3323,7 @@ _UpdateEntwarePackageList_()
 	if ! IsThisFileRecent "$r_external_packages_archive_pathfile" "$r_file_change_threshold_minutes" || [[ ! -f $r_external_packages_archive_pathfile || $useropt_check = true ]]; then
 		DebugAsProc "updating $(ShowAsPackageName Entware) package list"
 
-		RunAndLog "$OPKG_CMD update" "$r_logs_path/Entware.$r_update_log_file" log:failure-only
+		RunAndLog "$r_opkg_cmd update" "$r_logs_path/Entware.$r_update_log_file" log:failure-only
 		z=$?
 
 		if [[ $z -eq 0 ]]; then
@@ -3351,8 +3356,7 @@ IsThisFileRecent()
 
 	# Examine `change` time as this is updated even if file content isn't modified.
 
-	# https://stackoverflow.com/a/55622661
-	[[ -e ${1:-} && $((($(ConvertNowToSeconds)-$(/usr/bin/stat "$1" -c %Z))/60)) -le ${2:-1440} ]]
+	[[ -e ${1:-} && $((($(ConvertNowToSeconds)-$(/usr/bin/stat "$1" -c %Z))/60)) -le ${2:-1440} ]]		# https://stackoverflow.com/a/55622661
 
 	}
 
@@ -3360,13 +3364,15 @@ SaveIpkAndPipList()
 	{
 
 	# Inputs: (global)
+	#	$r_opkg_cmd
+	#	$r_pip_cmd
 	#	$r_prev_ipk_list_pathfile
 	#	$r_prev_pip_list_pathfile
 
-	$PIP_CMD freeze | cut -d'=' -f1 > "$r_prev_pip_list_pathfile"
+	$r_pip_cmd freeze | cut -d'=' -f1 > "$r_prev_pip_list_pathfile"
 	[[ -e $r_prev_pip_list_pathfile ]] && DebugAsDone "saved current PIP list to $(ShowAsFileName "$r_prev_pip_list_pathfile")"
 
-	$OPKG_CMD list-installed > "$r_prev_ipk_list_pathfile"
+	$r_opkg_cmd list-installed > "$r_prev_ipk_list_pathfile"
 	[[ -e $r_prev_ipk_list_pathfile ]] && DebugAsDone "saved current $(ShowAsPackageName Entware) IPK list to $(ShowAsFileName "$r_prev_ipk_list_pathfile")"
 
 	} 2> /dev/null
@@ -3422,6 +3428,7 @@ CalcIpkDepsToInstall()
 
 	# Inputs: (global)
 	#	$r_external_packages_pathfile
+	#	$r_gnu_less_cmd
 	#	$useropt_terse
 	#	$useropt_verbose
 
@@ -3430,7 +3437,7 @@ CalcIpkDepsToInstall()
 	#	$useropt_terse
 	#	$useropt_verbose
 
-	IsSysFileExist $GNU_GREP_CMD || return
+	IsSysFileExist $r_gnu_grep_cmd || return
 
 	FuncInit
 
@@ -3467,7 +3474,7 @@ CalcIpkDepsToInstall()
 		printf -v ipk_titles '^Package: %s$\|' "${this_list[@]}"
 		ipk_titles=${ipk_titles%??}		# Remove last 2 characters.
 
-		this_list=($($GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator '^Package:\|^Depends:' "$r_external_packages_pathfile" | $GNU_GREP_CMD -vG '^Section:\|^Version:' | $GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator "$ipk_titles" | $GNU_GREP_CMD -vG "$ipk_titles" | $GNU_GREP_CMD -vG '^Package: ' | /bin/sed 's|^Depends: ||;s|, |\n|g' | /usr/bin/sort | /bin/uniq))
+		this_list=($($r_gnu_grep_cmd --word-regexp --after-context 1 --no-group-separator '^Package:\|^Depends:' "$r_external_packages_pathfile" | $r_gnu_grep_cmd -vG '^Section:\|^Version:' | $r_gnu_grep_cmd --word-regexp --after-context 1 --no-group-separator "$ipk_titles" | $r_gnu_grep_cmd -vG "$ipk_titles" | $r_gnu_grep_cmd -vG '^Package: ' | /bin/sed 's|^Depends: ||;s|, |\n|g' | /usr/bin/sort | /bin/uniq))
 
 		# Update progress twice per loop.
 		ShowAsIterativeProgress 'resolve IPK dependencies' "$iterations" iteration "${#dep_acc[@]}" 'unique IPK'
@@ -3510,10 +3517,10 @@ CalcIpkDepsToInstall()
 				# KLUDGE: `libjpeg` appears to have been replaced by `libjpeg-turbo`, but many packages still have `libjpeg` as a dependency, so replace it with `libjpeg-turbo`.
 
 				if [[ $element != 'libjpeg' ]]; then
-					if ! $OPKG_CMD status "$element" | /bin/grep -q "Status:.*installed"; then
+					if ! $r_opkg_cmd status "$element" | /bin/grep -q "Status:.*installed"; then
 						IPKs-ACdownload-to:Add "$element"
 					fi
-				elif ! $OPKG_CMD status 'libjpeg-turbo' | /bin/grep -q "Status:.*installed"; then
+				elif ! $r_opkg_cmd status 'libjpeg-turbo' | /bin/grep -q "Status:.*installed"; then
 					IPKs-ACdownload-to:Add 'libjpeg-turbo'
 				fi
 			fi
@@ -3532,6 +3539,7 @@ CalcIpkDownloadSize()
 	# Calculate size of required IPKs.
 
 	# Inputs: (global)
+	#	$r_gnu_grep_cmd
 	#	$r_external_packages_pathfile
 
 	FuncInit
@@ -3544,7 +3552,7 @@ CalcIpkDownloadSize()
 		ShowAsProc "calculate size of IPK$(Pluralise "$size_count") to download"
 
 		DebugAsDone "$size_count IPK$(Pluralise "$size_count") to download: '$(IPKs-ACdownload-to:List)'"
-		size_array=($($GNU_GREP_CMD -w '^Package:\|^Size:' "$r_external_packages_pathfile" | $GNU_GREP_CMD --after-context 1 --no-group-separator ": $(/bin/sed 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKs-ACdownload-to:List)")" | /bin/grep '^Size:' | /bin/sed 's|^Size: ||'))
+		size_array=($($r_gnu_grep_cmd -w '^Package:\|^Size:' "$r_external_packages_pathfile" | $r_gnu_grep_cmd --after-context 1 --no-group-separator ": $(/bin/sed 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKs-ACdownload-to:List)")" | /bin/grep '^Size:' | /bin/sed 's|^Size: ||'))
 
 		# shellcheck disable=2283
 		IPKs-ACdownload-to:Size = "$(IFS=+; echo "$((${size_array[*]:-}))")"		# nifty sizing shortcut found here https://stackoverflow.com/a/13635566/6182835
@@ -3563,9 +3571,10 @@ IPKs:upgrade()
 	# Upgrade all installed IPKs.
 
 	# Inputs: (global)
+	#	$ipks_upgrade
+	#	$r_opkg_cmd
 	#	$r_ipk_cache_path
 	#	$r_ipk_download_path
-	#	$ipks_upgrade
 	#	$r_logs_path
 	#	$r_upgrade_log_file
 	#	$useropt_terse
@@ -3589,7 +3598,7 @@ IPKs:upgrade()
 	IPKs-ACupgrade-to:Init
 	IPKs-ACdownload-to:Init
 
-	IPKs-ACupgrade-to:Add "$($OPKG_CMD list-upgradable | cut -f1 -d' ')"
+	IPKs-ACupgrade-to:Add "$($r_opkg_cmd list-upgradable | cut -f1 -d' ')"
 
 	# Don't upgrade IPKs that must remain downgraded.
 	IPKs-ACupgrade-to:Remove "$(IPKs-ACdowngrade-to:Array)"
@@ -3608,7 +3617,7 @@ IPKs:upgrade()
 		_DirSizeMonitor_ "$r_ipk_download_path" "$(IPKs-ACdownload-to:Size)" &
 		fork_pid=$!
 
-		RunAndLog "$OPKG_CMD upgrade --force-overwrite $(IPKs-ACdownload-to:List) --cache $r_ipk_cache_path --tmp-dir $r_ipk_download_path" "$r_logs_path/ipks.$r_upgrade_log_file" log:failure-only
+		RunAndLog "$r_opkg_cmd upgrade --force-overwrite $(IPKs-ACdownload-to:List) --cache $r_ipk_cache_path --tmp-dir $r_ipk_download_path" "$r_logs_path/ipks.$r_upgrade_log_file" log:failure-only
 		z=$?
 
 		KillPID "$fork_pid"
@@ -3635,6 +3644,7 @@ IPKs:install()
 	# Install IPKs required to support QPKGs.
 
 	# Inputs: (global)
+	#	$r_opkg_cmd
 	#	$r_essential_ipks
 	#	$r_install_log_file
 	#	$r_ipk_cache_path
@@ -3704,7 +3714,7 @@ IPKs:install()
 		_DirSizeMonitor_ "$r_ipk_download_path" "$(IPKs-ACdownload-to:Size)" &
 		fork_pid=$!
 
-		RunAndLog "$OPKG_CMD install --force-overwrite $(IPKs-ACdownload-to:List) --cache $r_ipk_cache_path --tmp-dir $r_ipk_download_path" "$r_logs_path/ipks.$r_install_log_file" log:failure-only
+		RunAndLog "$r_opkg_cmd install --force-overwrite $(IPKs-ACdownload-to:List) --cache $r_ipk_cache_path --tmp-dir $r_ipk_download_path" "$r_logs_path/ipks.$r_install_log_file" log:failure-only
 		z=$?
 
 		KillPID "$fork_pid"
@@ -3737,6 +3747,10 @@ IPKs:downgrade()
 	{
 
 	# Downgrade specific installed IPKs.
+
+	# Inputs: (global)
+	#	$ipks_downgrade
+	#	$r_opkg_cmd
 
 	[[ $ipks_downgrade = true ]] || return
 	QPKGs-ISenabled.Exist Entware || return
@@ -3812,7 +3826,7 @@ IPKs:downgrade()
 		ShowAsProc "downgrade $desc"
 
 		ShowAsPercentProgress "downgrade $desc" '' "$ok_count" 0 "$fail_count" "$total_count"
-		RunAndLog "$OPKG_CMD install --force-downgrade --cache $r_ipk_cache_path --tmp-dir $r_ipk_downgrade_path $r_ipk_downgrade_path/*.ipk" "$log_pathfile" log:failure-only
+		RunAndLog "$r_opkg_cmd install --force-downgrade --cache $r_ipk_cache_path --tmp-dir $r_ipk_downgrade_path $r_ipk_downgrade_path/*.ipk" "$log_pathfile" log:failure-only
 		z=$?
 
 		if [[ $z -eq 0 ]]; then
@@ -3852,9 +3866,20 @@ PIPs:upgrade()
 PIPs:install()
 	{
 
+	# Inputs: (global)
+	#	$r_pip_cmd
+	#	$r_essential_pips
+	#	$r_install_log_file
+	#	$r_logs_path
+	#	$r_pip_cache_path
+	#	$r_prev_pip_list_pathfile
+	#	$useropt_check
+	#	$useropt_terse
+	#	$useropt_verbose
+
 	[[ $pips_install = true ]] || return
 	QPKGs-ISenabled.Exist Entware || return
-	$OPKG_CMD status python3-pip | /bin/grep -q "Status:.*installed" || return
+	$r_opkg_cmd status python3-pip | /bin/grep -q "Status:.*installed" || return
 	ErrorIsNt || return
 
 	FuncInit
@@ -3878,7 +3903,7 @@ PIPs:install()
 
 		((total_count++))
 
-		exec_cmd="$PIP_CMD install --upgrade --no-input $(PIPs-ACinstall-to:List) --cache-dir $r_pip_cache_path --root-user-action=ignore"
+		exec_cmd="$r_pip_cmd install --upgrade --no-input $(PIPs-ACinstall-to:List) --cache-dir $r_pip_cache_path --root-user-action=ignore"
 		desc="$total_count auxiliary PIP$(Pluralise "$total_count")"
 
 		ShowAsPercentProgress "install $desc" '' "$ok_count" 0 0 "$total_count"
@@ -3921,6 +3946,11 @@ OpenIpkArchive()
 
 	# Unpack the package list file used by `opkg`.
 
+	# Inputs: (global)
+	#	$r_cache_path
+	#	$r_external_packages_archive_pathfile
+	#	$r_external_packages_pathfile
+
 	# Outputs: (local)
 	#   $? = 0 if successful, 1 if failed
 
@@ -3945,6 +3975,9 @@ OpenIpkArchive()
 CloseIpkArchive()
 	{
 
+	# Inputs: (global)
+	#	$r_external_packages_pathfile
+
 	rm -f "$r_external_packages_pathfile" 2> /dev/null
 
 	}
@@ -3963,7 +3996,11 @@ _ExecOneActionWithManyForks_()
 	# Inputs: (global)
 	#   $fork_count
 	#   $max_forks
-	#   $pidfile
+	#	$r_action_abort_pathfile
+	#	$r_async_procs_path
+
+	# Outputs: (global)
+	#	$action_pidfile
 
 	FuncForkInit
 
@@ -4023,6 +4060,7 @@ _DirSizeMonitor_()
 	#   $2 = total target bytes (100%) for specified path.
 
 	# Inputs: (global)
+	#	$r_gnu_find_cmd
 	#   $r_inhibit_display_pathfile
 
 	# Outputs: (local)
@@ -4030,7 +4068,7 @@ _DirSizeMonitor_()
 
 	[[ -n ${1:?${FUNCNAME[0]}'()': undefined path} ]] || exit
 	[[ -d $1 && ${2:-0} -gt 0 ]] || exit
-	IsSysFileExist $GNU_FIND_CMD || exit
+	IsSysFileExist $r_gnu_find_cmd || exit
 
 	local -i current_bytes=-1
 	local -i last_active_epoch=0
@@ -4045,7 +4083,7 @@ _DirSizeMonitor_()
 	InitProgress
 
 	while [[ $current_bytes -lt $total_bytes ]]; do
-		current_bytes=$($GNU_FIND_CMD "$1" -type f -name '*.ipk' -exec /usr/bin/du --bytes --total --apparent-size {} + 2> /dev/null | /bin/grep total$ | cut -f1)
+		current_bytes=$($r_gnu_find_cmd "$1" -type f -name '*.ipk' -exec /usr/bin/du --bytes --total --apparent-size {} + 2> /dev/null | /bin/grep total$ | cut -f1)
 		[[ -z $current_bytes ]] && current_bytes=0
 
 		if [[ $current_bytes -ne $last_bytes ]]; then
@@ -4393,6 +4431,10 @@ DeleteSetting()
 UserIsOk()
 	{
 
+	# Inputs: (global)
+	#	$r_args_raw
+	#	$r_chars_sudo_prompt
+
 	if ! UserIsSU; then
 		if OsIsSupportSudo; then
 			ShowAsError 'this utility must be run with superuser privileges. Try again as:'
@@ -4554,6 +4596,11 @@ DisplayAsProjSynIndentExam()
 	#	$1 = description (optional)
 	#	$2 = example syntax
 
+	# Inputs: (global)
+	#	$r_help_desc_indent
+	#	$r_help_syntax_indent
+	#	$r_help_syntax_sudo_prefix
+
 	if [[ -n $1	]]; then
 		printf "\n%${r_help_desc_indent}s%s" '' "$(Capitalise "${1:-}")"
 		[[ ${1: -1} != '!' ]] && printf ':'
@@ -4573,6 +4620,11 @@ DisplayAsSynExam()
 	#	$1 = description
 	#	$2 = example syntax
 
+	# Inputs: (global)
+	#	$r_chars_bullet
+	#	$r_help_syntax_indent
+	#	$r_help_syntax_prefix
+
 	printf "\n${r_chars_bullet}%s:\n%${r_help_syntax_indent}s${r_help_syntax_prefix}%s\n" "$(Capitalise "${1:-}")" '' "${2:-}"
 
 	}
@@ -4584,6 +4636,10 @@ DisplayAsIndentItem()
 
 	# Inputs: (local)
 	#	$1 = item
+
+	# Inputs: (global)
+	#	$r_chars_bullet
+	#	$r_help_desc_indent
 
 	printf "%${r_help_desc_indent}s${r_chars_bullet}%s\n" '' "$(Capitalise "${1:-}")"
 
@@ -6696,12 +6752,12 @@ DisplayFileInViewport()
 	fi
 
 	if [[ $(/usr/bin/wc -l < "$filename") -ge $r_sess_rows || $(/usr/bin/wc -L < "$filename") -ge $r_sess_columns ]]; then
-		if [[ -e $GNU_LESS_CMD ]]; then
+		if [[ -e $r_gnu_less_cmd ]]; then
 			options='--quit-on-intr --tilde --mouse --RAW-CONTROL-CHARS --shift=4 --redraw-on-quit --quit-if-one-screen'
 			[[ $wraplines = false ]] && options+=' --chop-long-lines'
 			[[ $showlinenumbers = true ]] && options+=' --LINE-NUMBERS'
 			[[ $jumptoend = true ]] && options+=' +G'
-			LESSSECURE=1 ${GNU_LESS_CMD} "$options" --prompt "$prompt" "$filename"
+			LESSSECURE=1 ${r_gnu_less_cmd} "$options" --prompt "$prompt" "$filename"
 
 			return
 		fi
@@ -7782,6 +7838,9 @@ HelpAbbreviations()
 ShowReportBackups()
 	{
 
+	# Inputs: (global)
+	#	$r_gnu_find_cmd
+
 	FuncInit
 
 	local a=''
@@ -7803,13 +7862,13 @@ ShowReportBackups()
 		printf -v a '\n%s\n' "$(GenerateBacksReportTitleLine)"
 	fi
 
-	if [[ -e $GNU_FIND_CMD ]]; then				# Prefer GNU `find` for this.
+	if [[ -e $r_gnu_find_cmd ]]; then				# Prefer GNU `find` for this.
 		while read -r epoch_time file_name file_bytes; do
 			[[ -z $epoch_time || -z $file_name ]] && break
 
 			((n++))
 			GenerateBacksReportItemLine "$epoch_time" "$file_name" "$file_bytes" "$r_report_highlight_backups_older_than" > "$r_reports_path/$n" &
-		done <<< "$($GNU_FIND_CMD "$r_qpkg_bu_path"/*.config.tar.gz -maxdepth 1 -printf '%C@ %f %s\n' 2> /dev/null | /usr/bin/sort)"
+		done <<< "$($r_gnu_find_cmd "$r_qpkg_bu_path"/*.config.tar.gz -maxdepth 1 -printf '%C@ %f %s\n' 2> /dev/null | /usr/bin/sort)"
 	else										# If GNU `find` isn't available, do-it the hard-way.
 		while read -r file_date file_time file_name file_bytes; do
 			[[ -z $file_date || -z $file_name ]] && break
@@ -8858,8 +8917,8 @@ Python3IsOutdated()
 	# Outputs: (local)
 	#   $? = 0 if outdated, !0 if not
 
-	[[ -e $PYTHON3_CMD ]] || return
-	installed_ver=$(Python3GetVer "$PYTHON3_CMD")
+	[[ -e $r_python3_cmd ]] || return
+	installed_ver=$(Python3GetVer "$r_python3_cmd")
 
 	[[ $r_nas_arch = armv5tel && ${installed_ver//./} -lt 3114 ]] || [[ $r_nas_arch != armv5tel && ${installed_ver//./} -lt $r_min_python_version ]]
 
@@ -8887,8 +8946,8 @@ PerlIsOutdated()
 	# Outputs: (local)
 	#   $? = 0 if outdated, !0 if not
 
-	[[ -e $PERL_CMD ]] || return
-	installed_ver=$(PerlGetVer "$PERL_CMD")
+	[[ -e $r_perl_cmd ]] || return
+	installed_ver=$(PerlGetVer "$r_perl_cmd")
 
 	[[ $r_nas_arch = armv5tel && ${installed_ver//./} -lt 5281 ]] || [[ $r_nas_arch != armv5tel && ${installed_ver//./} -lt $r_min_perl_version ]]
 
@@ -9255,7 +9314,7 @@ OsIsSupportDecimalSleepSeconds()
 OsIsSupportAutowidthTableColumns()
 	{
 
-	[[ -e $GNU_AWK_CMD ]]
+	[[ -e $r_gnu_awk_cmd ]]
 
 	}
 
@@ -9724,7 +9783,7 @@ _QPKG:install_()
 	LogQpkgServiceResult
 	QpkgIsDatabaseWillLog && ! QpkgInstalledServiceResultWasOk && z=1
 
-	[[ $qpkg_name = Entware ]] && IsNtSysFileExist $OPKG_CMD && z=1		# Entware installation has failed.
+	[[ $qpkg_name = Entware ]] && IsNtSysFileExist $r_opkg_cmd && z=1		# Entware installation has failed.
 
 	if [[ $z -eq 0 || $z -eq 10 ]]; then	# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes user-aborts.
 		SendPackageStateChange ISinstalled
@@ -9821,7 +9880,7 @@ _QPKG:reinstall_()
 	LogQpkgServiceResult
 	QpkgIsDatabaseWillLog && ! QpkgInstalledServiceResultWasOk && z=1
 
-	[[ $qpkg_name = Entware ]] && IsNtSysFileExist $OPKG_CMD && z=1
+	[[ $qpkg_name = Entware ]] && IsNtSysFileExist $r_opkg_cmd && z=1
 
 	if [[ $z -eq 0 || $z -eq 10 ]]; then		# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes aborts.
 		if QpkgIsInstalledEnabled "$qpkg_name"; then
@@ -9959,7 +10018,7 @@ _QPKG:upgrade_()
 	LogQpkgServiceResult
 	QpkgIsDatabaseWillLog && ! QpkgInstalledServiceResultWasOk && z=1
 
-	[[ $qpkg_name = Entware ]] && IsNtSysFileExist $OPKG_CMD && z=1
+	[[ $qpkg_name = Entware ]] && IsNtSysFileExist $r_opkg_cmd && z=1
 
 	if [[ $z -eq 0 || $z -eq 10 ]]; then	# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes aborts.
 		SendPackageStateChange ISNTupgradable
@@ -10901,8 +10960,8 @@ _QPKG:status_()
 	if [[ $a = builtin ]]; then
 		# Run status query with GNU `timeout` if-possible.
 
-		if [[ -e $GNU_TIMEOUT_CMD ]]; then
-			$GNU_TIMEOUT_CMD "$r_qpkg_status_check_timeout_seconds" /bin/bash -c "${b}$(QpkgGetInstalledServicePathFile) status"
+		if [[ -e $r_gnu_timeout_cmd ]]; then
+			$r_gnu_timeout_cmd "$r_qpkg_status_check_timeout_seconds" /bin/bash -c "${b}$(QpkgGetInstalledServicePathFile) status"
 			z=$?
 		else
 			RunAndLog "${b}$(QpkgGetInstalledServicePathFile) status" "$r_logs_path/$qpkg_name.$r_status_log_file" log:failure-only
@@ -13662,10 +13721,12 @@ FormatAsLongMinutesSecs()
 	#	$1 = a time in long minutes and seconds to convert to 'MMMm:SSs'.
 
 	# Separate minutes from seconds
+
 	local m=${1%%:*}
 	local s=${1#*:}
 
 	# Remove leading whitespace
+
 	m=${m##* }
 	s=${s##* }
 
@@ -13767,6 +13828,9 @@ AddExtLogToSessLog()
 	{
 
 	# Add the contents of pathfile $1 to the session debug log, with each line formatted as an external log entry.
+
+	# Inputs: (global)
+	#	$useropt_verbose
 
 	local a=''
 	local b=false
@@ -14188,6 +14252,9 @@ WriteToLog()
 TextBrightGreen()
 	{
 
+	# Inputs: (global)
+	#	$useropt_colourful
+
 	[[ -n ${1:-} ]] || return
 
 	if [[ ${useropt_colourful:=false} = true ]]; then
@@ -14200,6 +14267,9 @@ TextBrightGreen()
 
 TextBrightYellow()
 	{
+
+	# Inputs: (global)
+	#	$useropt_colourful
 
 	[[ -n ${1:-} ]] || return
 
@@ -14214,6 +14284,9 @@ TextBrightYellow()
 TextBrightOrange()
 	{
 
+	# Inputs: (global)
+	#	$useropt_colourful
+
 	[[ -n ${1:-} ]] || return
 
 	if [[ ${useropt_colourful:=false} = true ]]; then
@@ -14226,6 +14299,9 @@ TextBrightOrange()
 
 TextBrightOrangeBlink()
 	{
+
+	# Inputs: (global)
+	#	$useropt_colourful
 
 	[[ -n ${1:-} ]] || return
 
@@ -14240,6 +14316,9 @@ TextBrightOrangeBlink()
 TextBrightRed()
 	{
 
+	# Inputs: (global)
+	#	$useropt_colourful
+
 	[[ -n ${1:-} ]] || return
 
 	if [[ ${useropt_colourful:=false} = true ]]; then
@@ -14253,6 +14332,9 @@ TextBrightRed()
 TextBrightRedBlink()
 	{
 
+	# Inputs: (global)
+	#	$useropt_colourful
+
 	[[ -n ${1:-} ]] || return
 
 	if [[ ${useropt_colourful:=false} = true ]]; then
@@ -14263,8 +14345,11 @@ TextBrightRedBlink()
 
 	} 2> /dev/null
 
-#TextCyan()
+# TextCyan()
 # 	{
+#
+# 	# Inputs: (global)
+# 	#	$useropt_colourful
 #
 # 	[[ -n ${1:-} ]] || return
 #
@@ -14279,6 +14364,9 @@ TextBrightRedBlink()
 TextDarkGrey()
 	{
 
+	# Inputs: (global)
+	#	$useropt_colourful
+
 	[[ -n ${1:-} ]] || return
 
 	if [[ ${useropt_colourful:=false} = true ]]; then
@@ -14289,8 +14377,11 @@ TextDarkGrey()
 
 	} 2> /dev/null
 
-#TextUnderlined()
+# TextUnderlined()
 # 	{
+#
+# 	# Inputs: (global)
+# 	#	$useropt_colourful
 #
 # 	[[ -n ${1:-} ]] || return
 #
@@ -14305,6 +14396,9 @@ TextDarkGrey()
 TextUnderlinedCyan()
 	{
 
+	# Inputs: (global)
+	#	$useropt_colourful
+
 	[[ -n ${1:-} ]] || return
 
 	if [[ ${useropt_colourful:=false} = true ]]; then
@@ -14318,6 +14412,9 @@ TextUnderlinedCyan()
 TextBlackOnCyan()
 	{
 
+	# Inputs: (global)
+	#	$useropt_colourful
+
 	[[ -n ${1:-} ]] || return
 
 	if [[ ${useropt_colourful:=false} = true ]]; then
@@ -14330,6 +14427,9 @@ TextBlackOnCyan()
 
 TextBrightWhite()
 	{
+
+	# Inputs: (global)
+	#	$useropt_colourful
 
 	[[ -n ${1:-} ]] || return
 
@@ -14349,7 +14449,13 @@ Tableise()
 	# With many thanks to Stéphane Chazelas for writing this, and to Josh Klodnicki for his enhancements.
 	#  	  https://unix.stackexchange.com/a/121139/259233
 
-	awk '{
+	# Inputs: (global)
+	#	$r_gnu_awk_cmd
+	#	$r_report_column_spacing
+
+	[[ -e $r_gnu_awk_cmd ]] || return
+
+	$r_gnu_awk_cmd '{
 		nf[NR]=NF
 		for (i = 1; i <= NF; i++) {
 			cell[NR,i] = $i
@@ -14371,6 +14477,9 @@ Tableise()
 
 StripANSICodes()
 	{
+
+	# Inputs: (global)
+	#	$sed_ext_regex_supported
 
 	# QTS 4.2.6 BusyBox `sed` doesn't fully support extended-regexes, so code-stripping only works with a real `sed`.
 
@@ -14448,14 +14557,14 @@ ShowCursor()
 HideKeystrokes()
 	{
 
-	[[ $useropt_verbose = false && -e $GNU_STTY_CMD && -t 0 ]] && $GNU_STTY_CMD '-echo'
+	[[ $useropt_verbose = false && -e $r_gnu_stty_cmd && -t 0 ]] && $r_gnu_stty_cmd '-echo'
 
 	}
 
 ShowKeystrokes()
 	{
 
-	[[ -n ${GNU_STTY_CMD:-} && -e $GNU_STTY_CMD && -t 0 ]] && $GNU_STTY_CMD 'echo'
+	[[ -n ${r_gnu_stty_cmd:-} && -e $r_gnu_stty_cmd && -t 0 ]] && $r_gnu_stty_cmd 'echo'
 
 	}
 
