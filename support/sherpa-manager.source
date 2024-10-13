@@ -6983,13 +6983,23 @@ InitProgress()
 UpdateForkProgress()
 	{
 
-	# All input vars are global.
+	# Inputs: (global)
+	#	$fail_count
+	#	$fork_progress_prefix
+	#	$fork_count
+	#	$ok_count
+	#	$r_inhibit_display_pathfile
+	#	$skip_abort_count
+	#	$skip_count
+	#	$skip_error_count
+	#	$skip_ok_count
+	#	$useropt_verbose
 
 	local a=''
 	local b=''
 
 	RefreshForkCounts
-	[[ $useropt_verbose = false && ! -e $r_inhibit_display_pathfile ]] || return		# Don't display progress, it's difficult to read with so-many other writes to the screen.
+	[[ $useropt_verbose = false && ! -e $r_inhibit_display_pathfile ]] || return		# Don't display progress, difficult to read with so-many other writes to the screen.
 
 	a=$((skip_count+skip_ok_count+skip_error_count+skip_abort_count))
 	b=$(PercFrac "$ok_count" "$a" "$fail_count" "$total_count")
