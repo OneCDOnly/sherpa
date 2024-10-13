@@ -6934,6 +6934,26 @@ InitForkCounts()
 IncForkProgressIndex()
 	{
 
+	# Inputs: (global)
+	#	$proc_fail_count_path
+	#	$proc_fork_count_path
+	#	$proc_ok_count_path
+	#	$proc_skip_abort_count_path
+	#	$proc_skip_count_path
+	#	$proc_skip_error_count_path
+	#	$proc_skip_ok_count_path
+	#	$progress_index
+
+	# Outputs: (global)
+	#	$proc_fail_pathfile
+	#	$proc_fork_pathfile
+	#	$proc_ok_pathfile
+	#	$proc_skip_abort_pathfile
+	#	$proc_skip_error_pathfile
+	#	$proc_skip_ok_pathfile
+	#	$proc_skip_pathfile
+	#	$progress_index
+
 	local a
 
 	((progress_index++))
@@ -9632,10 +9652,10 @@ _QPKG:install_()
 	# Install the QPKG named in $qpkg_name.
 
 	# Inputs: (global)
-	#	$r_install_log_file
-	#	$r_logs_path
 	#	$qpkg_name
 	#	$QPKGs_were_installed_name[]
+	#	$r_install_log_file
+	#	$r_logs_path
 	#	$useropt_debug
 	#	$useropt_verbose
 
