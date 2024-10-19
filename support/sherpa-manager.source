@@ -565,7 +565,6 @@ LoadEnv()
 
 		readonly r_cache_path=$r_this_package_path/cache
 			readonly r_action_times_path=$r_cache_path/action.times
-			readonly r_async_procs_path=$r_cache_path/proc
 			readonly r_dependent_qpkgs_list_pathfile=$r_cache_path/dependents
 			readonly r_independent_qpkgs_list_pathfile=$r_cache_path/independents
 			readonly r_inhibit_display_pathfile=$r_cache_path/display.inhibit
@@ -596,6 +595,7 @@ LoadEnv()
 
 	readonly r_action_forks_count=/var/run/sherpa/actions/forks
 	readonly r_action_logs_path=/var/log/sherpa/actions/logs
+	readonly r_async_procs_path=/var/run/sherpa/proc
 	readonly r_qpkg_states_path=/var/run/sherpa/packages/states
 		readonly r_action_abort_pathfile=$r_qpkg_states_path/abort.action
 		readonly r_action_msg_pipe=$r_qpkg_states_path/action.messages.pipe
@@ -603,7 +603,7 @@ LoadEnv()
 	readonly r_report_flags_path=/var/run/sherpa/report/flags
 	readonly r_reports_path=/var/log/sherpa/reports
 			readonly r_report_output_pathfile=$r_reports_path/report.ansi
-	readonly r_run_logs_path=/var/run/sherpa/run.logs
+	readonly r_run_logs_path=/var/run/sherpa/logs
 
 	# Entware
 
@@ -725,6 +725,7 @@ CreatePaths()
 	ClearPath /var/run/sherpa/report "$r_report_columns_path"
 	ClearPath /var/run/sherpa/report "$r_report_flags_path"
 
+	MakePath "$r_action_logs_path" 'action logs' || return
 	MakePath "$r_action_times_path" 'action times' || return
 	MakePath "$r_async_procs_path" 'asynchronous process tracking' || return
 	MakePath "$r_cache_path" cache || return
@@ -1498,7 +1499,6 @@ ProcAction()
 	#   $fail_count
 	#	$fork_progress_prefix
 	#   $ok_count
-	#   $pidfile
 	#   $show_action_results_failed
 	#   $show_action_results_ok
 	#   $show_action_results_skipped
@@ -1570,11 +1570,11 @@ ProcAction()
 				ShowKeystrokes		# Enable this before removing Entware (& GNU `stty`).
 			fi
 
-			pidfile=$(/bin/mktemp "$r_async_procs_path"/bgproc_XXXXXX)		# Set $pidfile here, before launching async process so it's inherited by that process.
+			CreatePidFile
 
 			_ExecOneActionWithManyForks_ "_${r_package_type}:${r_action}_" "${target_packages[@]}" &
 
-			echo "$!" > "$pidfile"
+			UpdatePidFile "$!"
 
 			# Read message pipe and process QPKGs and actions as-per requests contained within.
 
@@ -1683,7 +1683,7 @@ ProcAction()
 			[[ $ok_count -gt 0 ]] && show_action_results_ok=true
 			[[ $skip_count -gt 0 || $skip_ok_count -gt 0 || $skip_error_count -gt 0 || $skip_abort_count -gt 0 ]] && show_action_results_skipped=true
 
-			[[ ${#target_packages[@]} -gt 0 ]] && KillPID "$(<$pidfile)"		# Only needed if an action fork didn't exit properly.
+# 			[[ ${#target_packages[@]} -gt 0 ]] && KillPID "$(<$pidfile)"		# Only needed if an action fork didn't exit properly.
 			wait 2> /dev/null
 			CloseActionMsgPipe
 
@@ -1695,6 +1695,8 @@ ProcAction()
 # 					QPKGs-AC${r_action}-dn:Add "$package"
 # 				fi
 # 			done
+
+			RemovePidFile
 
 			[[ ${useropt_terse:=true} = false && $useropt_verbose = false ]] && echo
 			;;
@@ -4017,7 +4019,7 @@ _ExecOneActionWithManyForks_()
 	#	$r_async_procs_path
 
 	# Outputs: (global)
-	#	$action_pidfile
+	#	$pidfile
 
 	FuncForkInit
 
@@ -4042,11 +4044,13 @@ _ExecOneActionWithManyForks_()
 		MarkThisAcForkAsStarted 						# Must create runfile here, as it takes too-long to happen in async function.
 		QpkgSetIndex
 
-		action_pidfile=$(/bin/mktemp "$r_async_procs_path"/bgproc_XXXXXX)		# Set $action_pidfile here, before launching async process so it's inherited by that process.
+		(	# Keep updated $pidfile in a subshell, so existing one doesn't change.
+			CreatePidFile
 
-		$a &
+			$a &
 
-		echo "$!" > "$action_pidfile"
+			UpdatePidFile "$!"
+		)
 
 		DebugAsDone "forked $a() instance for '$qpkg_name'"
 		UpdateForkProgress
@@ -12703,6 +12707,43 @@ QpkgIsInstalledEnabled()
 
 	}
 
+CreatePidFile()
+	{
+
+	# Outputs: (global)
+	#	$pidfile
+
+	pidfile=$(/bin/mktemp "$r_async_procs_path"/proc_XXXXXX)		# Set $pidfile before launching async process so $pidfile is inherited by that process.
+
+	}
+
+UpdatePidFile()
+	{
+
+	# Inputs: (local)
+	#   $1 = process ID to write into file.
+
+	# Inputs: (global)
+	#	$pidfile
+
+	[[ -n ${1:-} && -n ${pidfile:-} ]] || return
+
+	echo "$1" > "$pidfile"
+
+	}
+
+RemovePidFile()
+	{
+
+	# Inputs: (global)
+	#	$pidfile
+
+	[[ -n ${pidfile:-} && -e $pidfile ]] || return
+
+	rm -f "$pidfile"
+
+	}
+
 LoadQpkgSigning()
 	{
 
@@ -13546,13 +13587,17 @@ FuncExit()
 FuncForkInit()
 	{
 
-	# Debug forked function entry.
+	# Debug forked function entry. $pidfile must be set before running this function.
 
-	trap '[[ -n ${action_pidfile:-} && -e $action_pidfile ]] && rm -f "$action_pidfile" 2> /dev/null; [[ -n ${pidfile:-} && -e ${pidfile:-} ]] && rm -f "$pidfile" 2> /dev/null; exit' SIGINT
+	# Inputs: (global)
+	#	$pidfile
+
+	[[ -n ${pidfile:?${FUNCNAME[0]}'()': undefined \$pidfile} ]] || return
+
+	trap '[[ -n ${pidfile:-} && -e $pidfile ]] && rm -f "$pidfile" 2> /dev/null; exit' SIGINT
 
 	# Redirect debug output to a temporary log, then add it to session log before exiting. This will keep action log progress in-order.
 	original_sess_active_pathfile=$sess_active_pathfile
-	MakePath "$r_action_logs_path" 'action logs'
 	sess_active_pathfile=$(/bin/mktemp "$r_action_logs_path"/"${FUNCNAME[1]}"_XXXXXX)
 
 	local -r r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
@@ -13573,9 +13618,7 @@ FuncForkExit()
 	#	$1 = return code to supply on exit.
 
 	# Inputs: (global)
-	#	$action_pidfile
 	#	$original_sess_active_pathfile
-	#	$pidfile
 	#	$sess_active_pathfile
 
 	local -r r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
@@ -13593,8 +13636,7 @@ FuncForkExit()
 		rm -f "$sess_active_pathfile"
 	fi
 
-	[[ -n ${action_pidfile:-} && -e $action_pidfile ]] && rm -f "$action_pidfile"
-	[[ -n ${pidfile:-} && -e $pidfile ]] && rm -f "$pidfile"
+	RemovePidFile
 
 	exit ${1:-0}
 
