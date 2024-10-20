@@ -4044,7 +4044,7 @@ _ExecOneActionWithManyForks_()
 		MarkThisAcForkAsStarted 						# Must create runfile here, as it takes too-long to happen in async function.
 		QpkgSetIndex
 
-		(	# Keep updated $pidfile in a subshell, so existing one doesn't change.
+		(	# Keep updated $pidfile in a subshell, so the one for this function doesn't change.
 			CreatePidFile
 
 			$a &
@@ -12710,6 +12710,9 @@ QpkgIsInstalledEnabled()
 CreatePidFile()
 	{
 
+	# Inputs: (global)
+	#	$r_async_procs_path
+
 	# Outputs: (global)
 	#	$pidfile
 
@@ -12943,6 +12946,9 @@ RunAndLog()
 DeDupeWords()
 	{
 
+	# Inputs: (local)
+	#   $1 = string with space-separated words. Duplicate words will be removed.
+
 	[[ -n ${1:-} ]] || return
 
 	tr ' ' '\n' <<< "$1" | /usr/bin/sort | /bin/uniq | tr '\n' ' ' | /bin/sed 's|^[[:blank:]]*||;s|[[:blank:]]*$||'
@@ -13077,6 +13083,7 @@ ShowTitle()
 	{
 
 	# Inputs: (global)
+	#	$r_args_raw[]
 	# 	$show_title
 	# 	$title_shown
 	# 	$useropt_verbose
@@ -13214,12 +13221,18 @@ ShowAsExitcode()
 ShowAsLogFilename()
 	{
 
+	# Inputs: (global)
+	#	$r_chars_results
+
 	printf '%s' "${r_chars_results}log file: '${1:?${FUNCNAME[0]}'()': undefined filename}'"
 
 	}
 
 ShowAsCommand()
 	{
+
+	# Inputs: (global)
+	#	$r_chars_results
 
 	echo "${r_chars_results}command: '${1:?${FUNCNAME[0]}'()': undefined commandstring}'"
 
@@ -13273,6 +13286,9 @@ DebugInfoMajSepr()
 
 	# Debug info major separator.
 
+	# Inputs: (global)
+	#	$r_debug_log_full_width
+
 	DebugInfo "$(eval printf '%0.s=' "{1..$r_debug_log_full_width}")"  # `seq` is unavailable in QTS, so must resort to `eval` trickery instead.
 
 	}
@@ -13282,6 +13298,9 @@ DebugInfoMinSepr()
 
 	# Debug info minor separator.
 
+	# Inputs: (global)
+	#	$r_debug_log_full_width
+
 	DebugInfo "$(eval printf '%0.s-' "{1..$r_debug_log_full_width}")"  # `seq` is unavailable in QTS, so must resort to `eval` trickery instead.
 
 	}
@@ -13290,6 +13309,9 @@ DebugExtLogMinSepr()
 	{
 
 	# Debug external log minor separator.
+
+	# Inputs: (global)
+	#	$r_debug_log_full_width
 
 	DebugAsLog "$(eval printf '%0.s-' "{1..$r_debug_log_full_width}")" # `seq` is unavailable in QTS, so must resort to `eval` trickery instead.
 
@@ -13587,16 +13609,23 @@ FuncExit()
 FuncForkInit()
 	{
 
-	# Debug forked function entry. $pidfile must be set before running this function.
+	# Debug forked function entry. $pidfile MUST be set before calling this function.
 
 	# Inputs: (global)
 	#	$pidfile
+	#	$r_action_logs_path
+	#	$sess_active_pathfile
+
+	# Outputs: (global)
+	#	$original_sess_active_pathfile
+	#	$sess_active_pathfile
 
 	[[ -n ${pidfile:?${FUNCNAME[0]}'()': undefined \$pidfile} ]] || return
 
 	trap '[[ -n ${pidfile:-} && -e $pidfile ]] && rm -f "$pidfile" 2> /dev/null; exit' SIGINT
 
 	# Redirect debug output to a temporary log, then add it to session log before exiting. This will keep action log progress in-order.
+
 	original_sess_active_pathfile=$sess_active_pathfile
 	sess_active_pathfile=$(/bin/mktemp "$r_action_logs_path"/"${FUNCNAME[1]}"_XXXXXX)
 
