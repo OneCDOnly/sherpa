@@ -9366,6 +9366,9 @@ OsIsQNAP()
 OsIsSupported()
 	{
 
+	# Inputs: (global)
+	#	$r_nas_firmware_version
+
 	# Unable to test firmwares any earlier than 4.2.6 (but still have 4.2.0 available for TS-559Pro+):
 
 	[[ ${r_nas_firmware_version//.} -ge 400 ]]
@@ -9384,12 +9387,18 @@ OsIsSupportSecureDownload()
 	#	works in:
 	# 		QTS 4.5.4.2627
 
+	# Inputs: (global)
+	#	$r_nas_firmware_version
+
 	[[ ${r_nas_firmware_version//.} -ge 500 ]]
 
 	}
 
 OsIsSupportQpkgTimeout()
 	{
+
+	# Inputs: (global)
+	#	$r_nas_firmware_version
 
 	[[ ${r_nas_firmware_version//.} -ge 430 ]]
 
@@ -9398,9 +9407,10 @@ OsIsSupportQpkgTimeout()
 OsIsSupportSignedPackages()
 	{
 
-# 	[[ ${r_nas_firmware_version//.} -ge 435 ]]
+	# Inputs: (global)
+	#	$r_nas_firmware_version
 
-	# NOTE: signing failed on QTS 4.3.6 (x31). No cert database. So, let's go one-version-higher:
+# 	[[ ${r_nas_firmware_version//.} -ge 435 ]]	# NOTE: signing failed on QTS 4.3.6 (x31). No cert database. So, let's go one-version-higher:
 
 	[[ ${r_nas_firmware_version//.} -ge 440 ]]
 
@@ -9408,6 +9418,9 @@ OsIsSupportSignedPackages()
 
 OsIsCompatibleWithSigned()
 	{
+
+	# Inputs: (global)
+	#	$r_nas_firmware_version
 
 	# QTS builds released over these 6 days don't allow unsigned QPKGs to run at-all:
 
@@ -9417,6 +9430,9 @@ OsIsCompatibleWithSigned()
 
 OsIsSupportUnofficialPackages()
 	{
+
+	# Inputs: (global)
+	#	$r_nas_firmware_version
 
 	# Must check for "official QPKGs" on QTS 4.3.3 to QTS 4.3.6:
 
@@ -9451,6 +9467,9 @@ OsIsSupportDecimalSleepSeconds()
 
 OsIsSupportAutowidthTableColumns()
 	{
+
+	# Inputs: (global)
+	#	$r_gnu_awk_cmd
 
 	[[ -e $r_gnu_awk_cmd ]]
 
@@ -9490,6 +9509,9 @@ OsIsStdKernelPageSize()
 	# Standard kernel page size for most QNAP NAS is 4kiB. Non-standard size is 32kiB (confirmed on the TS-431XeU, TS-431X3 & TS-1635).
 	# https://www.qnap.com/en-us/how-to/faq/article/why-do-the-installed-third-party-containers-not-run-successfully-on-specific-32-bit-arm-devices
 
+	# Inputs: (global)
+	#	$r_kernel_page_size
+
 	[[ ${r_kernel_page_size:=$(OsGetKernelPageSize)} = 4096B || $r_kernel_page_size = 4kiB ]]
 
 	}
@@ -9504,6 +9526,9 @@ OsIsNonStdKernelPageSize()
 OsIsLoadAverageElevated()
 	{
 
+	# Inputs: (global)
+	#	$r_cpu_cores
+
 	local a=$(OsGetSysLoad1MinAverage); a=${a/./}
 	local b=$((r_cpu_cores*2*100))
 
@@ -9513,6 +9538,9 @@ OsIsLoadAverageElevated()
 
 OsIsLoadAverageHigh()
 	{
+
+	# Inputs: (global)
+	#	$r_cpu_cores
 
 	local a=$(OsGetSysLoad1MinAverage); a=${a/./}
 	local b=$((r_cpu_cores*4*100))
@@ -9524,6 +9552,9 @@ OsIsLoadAverageHigh()
 OsIsLoadAverageInsane()
 	{
 
+	# Inputs: (global)
+	#	$r_cpu_cores
+
 	local a=$(OsGetSysLoad1MinAverage); a=${a/./}
 	local b=$((r_cpu_cores*8*100))
 
@@ -9533,6 +9564,10 @@ OsIsLoadAverageInsane()
 
 SetError()
 	{
+
+	# Outputs: (global)
+	#	$run_package_actions
+	#	$_script_error_flag_
 
 	run_package_actions=false
 	ErrorIsSet && return
