@@ -818,12 +818,12 @@ DebugLogEnv()
 
 	DebugUserspace ok '$EUID' "$EUID"
 	DebugUserspace ok 'default volume' "$(UserGetDefVol)"
-	DebugUserspace ok '/opt' "$(/usr/bin/readlink /opt 2> /dev/null || printf 'not present')"
+	DebugUserspace ok /opt "$(/usr/bin/readlink /opt 2> /dev/null || printf 'not present')"
 
 	local public_share=$(/sbin/getcfg SHARE_DEF defPublic -d Qpublic -f /etc/config/def_share.info)
 
 	if [[ -L /share/$public_share ]]; then
-		DebugUserspace ok "'$public_share' share" "/share/$public_share"
+		DebugUserspace ok "'$public_share' share" /share/$public_share
 	else
 		DebugUserspace warning "'$public_share' share" 'not present'
 	fi
@@ -14712,7 +14712,6 @@ Tableise()
 
 	[[ -e $r_gnu_awk_cmd ]] || return
 
-	# shellcheck disable=2046
 	$r_gnu_awk_cmd '{
 		nf[NR]=NF
 		for (i = 1; i <= NF; i++) {
@@ -14728,7 +14727,7 @@ Tableise()
 				printf "%s%*s%s", cell[row,col], max[col]-len[row,col], "", OFS
 			print cell[row,nf[row]]
 		}
-	}' FS='|' OFS=$(printf "%$((r_report_column_spacing))s")
+	}' FS='|' OFS="$(printf "%$((r_report_column_spacing))s")"
 
 	}
 
