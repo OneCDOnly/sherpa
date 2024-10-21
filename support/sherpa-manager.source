@@ -260,11 +260,11 @@ LoadConsts()
 	readonly r_chars_normal='- '
 	readonly r_chars_note='* '
 	readonly r_chars_regular_prompt='$ '
-		readonly r_chars_sudo_prompt="${r_chars_regular_prompt}sudo "
+		readonly r_chars_sudo_prompt=$r_chars_regular_prompt'sudo '
 	readonly r_chars_results='= '
 	readonly r_chars_super_prompt='# '
 	readonly r_extended_datetime_format='+%a %-d %b %Y'
-	readonly r_full_datetime_format=$r_extended_datetime_format' %-I:%M:%S %p %Z'
+		readonly r_full_datetime_format=$r_extended_datetime_format' %-I:%M:%S %p %Z'
 
 	if OsIsSupportSudo; then
 		if [[ $(UserGetSudoUID) = undefined ]]; then
@@ -397,7 +397,7 @@ LoadCMDs()
 	readonly r_perl_cmd=/opt/bin/perl
 	readonly r_python_cmd=/opt/bin/python
 	readonly r_python3_cmd=/opt/bin/python3
-		readonly r_pip_cmd="$r_python3_cmd -m pip"
+		readonly r_pip_cmd=$r_python3_cmd' -m pip'
 
 	}
 
@@ -554,7 +554,7 @@ LoadEnv()
 	useropt_branch=$(UserGetGitBranch)
 		readonly r_objects_archive_url='<?cdn_sherpa_base_url?>'/$useropt_branch/objects.tar.gz
 		readonly r_packages_archive_url='<?cdn_sherpa_packages_base_url?>'/$useropt_branch/packages.tar.gz
-		readonly r_this_script_ver="$(ConvertSecondsToDatecode $r_this_script_epoch)-$useropt_branch"
+		readonly r_this_script_ver=$(ConvertSecondsToDatecode $r_this_script_epoch)-$useropt_branch
 	readonly r_qpkg_bu_path=$(UserGetDefVol)/.qpkg_config_backup
 	readonly r_this_package_path=$(QpkgGetInstalledPath)
 		if [[ -z $r_this_package_path || $r_this_package_path = undefined || ! -d $r_this_package_path ]]; then
@@ -4114,7 +4114,7 @@ _DirSizeMonitor_()
 
 		[[ $last_active_epoch -ne 0 ]] && stalled_seconds=$(CalcAmountDiff "$(ConvertNowToSeconds)" "$last_active_epoch")
 
-		perc_msg="$((200*(current_bytes)/(total_bytes)%2+100*(current_bytes)/(total_bytes)))%"
+		perc_msg=$((200*(current_bytes)/(total_bytes)%2+100*(current_bytes)/(total_bytes)))'%'
 		[[ $current_bytes -lt $total_bytes && $perc_msg = '100%' ]] && perc_msg='99%'	# Ensure we don't hit 100% until the last byte is downloaded.
 		progress_msg="$perc_msg ($(TextBrightWhite "$(FormatAsIsoBytes "$current_bytes")")/$(TextBrightWhite "$(FormatAsIsoBytes "$total_bytes")"))"
 
@@ -4123,7 +4123,7 @@ _DirSizeMonitor_()
 			stalled_msg=' stalled for '
 
 			if [[ $stalled_seconds -lt 60 ]]; then
-				stalled_msg+="$stalled_seconds seconds"
+				stalled_msg+=$stalled_seconds' seconds'
 			else
 				stalled_msg+=$(ConvertSecondsToDuration "$stalled_seconds")
 			fi
@@ -4739,7 +4739,7 @@ GeneratePacksReportDataLine()
 		local notes=$(QpkgGetDatabaseNote "$name")
 		[[ $notes = none ]] && notes=''
 	local name_msg=$r_chars_normal
-	local notes_msg="${notes}."
+	local notes_msg=$notes.
 
 	if QpkgIsInstalledMissing; then
 		mode=highlight
@@ -4761,7 +4761,7 @@ GeneratePacksReportDataLine()
 
 	app_ver_msg+=$app_ver
 # 	author_msg+=$author
-	description_msg+="$(Capitalise "$description")."
+	description_msg+=$(Capitalise "$description").
 	name_msg+=$qpkg_name
 
 	case $mode in
@@ -5086,15 +5086,15 @@ GenerateReposReportTitleLine()
 	local a=''
 
 	# column 1: package name.
-	a="QPKG name:"
+	a='QPKG name:'
 	printf "%-$((r_report_qpkg_name_column_width+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 2: package repository
-	a="Repository:"
+	a='Repository:'
 	printf "%-$((r_report_qpkg_repo_column_width+2+$(LenANSIDiff "$a")))s" "$a"
 
 	# column 3: package installation date
-	a="Install date:"
+	a='Install date:'
 	printf "%-$((r_report_qpkg_install_date_column_width+2+$(LenANSIDiff "$a")))s" "$a"
 
 	printf '\n'
@@ -5275,11 +5275,11 @@ GenerateAbsReportDataLine()
 			;;
 		mute)
 			if ! QpkgIsDatabaseArchOK "$qpkg_name"; then
-				abs_msg="${r_chars_alert}incompatible architecture"
+				abs_msg=$r_chars_alert'incompatible architecture'
 			elif ! QpkgIsDatabaseMinOSVerOk "$qpkg_name"; then
-				abs_msg="${r_chars_alert}incompatible $(OsGetQnapOS) version"
+				abs_msg=$r_chars_alert"incompatible $(OsGetQnapOS) version"
 			elif ! QpkgIsDatabaseMinRAMOk "$qpkg_name"; then
-				abs_msg="${r_chars_alert}insufficient RAM installed"
+				abs_msg=$r_chars_alert'insufficient RAM installed'
 			else
 				abs_msg=${r_chars_normal}$(AddSeparators "$(QpkgGetDatabaseAbbrvs "$qpkg_name")")
 			fi
@@ -6735,6 +6735,7 @@ ShowHelpTips()
 		ShowHelpBasic
 		DisplayAsHelpTitle 'helpful tips and shortcuts:'
 		DisplayAsProjSynIndentExam "install all available $(ShowAsTitleName) QPKGs" 'install all'
+		DisplayAsProjSynIndentExam "install all installable $(ShowAsTitleName) QPKGs" 'install installable'
 		DisplayAsProjSynIndentExam 'package abbreviations and aliases also work. To see these' 'help abs'
 		DisplayAsProjSynIndentExam '' a
 		DisplayAsProjSynIndentExam 'reactivate all QPKGs (upgrades internal applications where-supported)' 'reactivate all'
@@ -7187,22 +7188,22 @@ UpdateForkProgress()
 
 	if [[ $ok_count -gt 0 ]]; then
 		[[ -n $b ]] && b+=', '
-		b+="$(TextBrightGreen "$ok_count") OK"
+		b+=$(TextBrightGreen "$ok_count")' OK'
 	fi
 
 	if [[ $a -gt 0 ]]; then
 		[[ -n $b ]] && b+=', '
-		b+="$(TextBrightOrange "$a") skipped"
+		b+=$(TextBrightOrange "$a")' skipped'
 	fi
 
 	if [[ $fail_count -gt 0 ]]; then
 		[[ -n $b ]] && b+=', '
-		b+="$(TextBrightRed "$fail_count") failed"
+		b+=$(TextBrightRed "$fail_count")' failed'
 	fi
 
 	if [[ $fork_count -gt 0 ]]; then
 		[[ -n $b ]] && b+=', '
-		b+="$(TextBrightYellow "$fork_count") in-progress"
+		b+=$(TextBrightYellow "$fork_count")' in-progress'
 	fi
 
 	[[ -n $b && ! -e $r_inhibit_display_pathfile ]] && ShowAsProc "${fork_progress_prefix:-}" "$b"
@@ -7307,7 +7308,7 @@ ShowQPKGsNewVers()
 		b='a '
 		c='version is'
 	else
-		c="version$(Pluralise "${#packages[@]}") are"
+		c='versions are'
 	fi
 
 	ShowAsNote "${b}new QPKG $c available for $a"
@@ -7916,7 +7917,7 @@ HelpAbbreviations()
 	# Load report lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		f="$r_reports_path/$n"
+		f=$r_reports_path/$n
 		[[ -e $f ]] && printf -v a '%s\n' "$a$(<$f)"		# Add newline to each imported report line.
 	done
 
@@ -7991,7 +7992,7 @@ ShowReportBackups()
 	# Load report lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		f="$r_reports_path/$n"
+		f=$r_reports_path/$n
 		[[ -e $f ]] && printf -v a '%s\n' "$a$(<$f)"		# Add newline to each imported report line.
 	done
 
@@ -8043,7 +8044,7 @@ ShowReportDependencies()
 	# Load report lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		f="$r_reports_path/$n"
+		f=$r_reports_path/$n
 		[[ -e $f ]] && printf -v a '%s\n' "$a$(<$f)"		# Add newline to each imported report line.
 	done
 
@@ -8096,7 +8097,7 @@ ShowReportFeatures()
 	# Load report lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		f="$r_reports_path/$n"
+		f=$r_reports_path/$n
 		[[ -e $f ]] && printf -v a '%s\n' "$a$(<$f)"		# Add newline to each imported report line.
 	done
 
@@ -8154,7 +8155,7 @@ ShowReportPackages()
 	# Load report data lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		f="$r_reports_path/$n"
+		f=$r_reports_path/$n
 		[[ -e $f ]] && printf -v a '%s\n' "$a$(<$f)"		# Add newline to each imported report line.
 	done
 
@@ -8214,7 +8215,7 @@ ShowReportRepos()
 	# Load report data lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		f="$r_reports_path/$n"
+		f=$r_reports_path/$n
 		[[ -e $f ]] && printf -v a '%s\n' "$a$(<$f)"		# Add newline to each imported report line.
 	done
 
@@ -8273,7 +8274,7 @@ ShowReportStatuses()
 	# Load report lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		f="$r_reports_path/$n"
+		f=$r_reports_path/$n
 		# shellcheck disable=2179
 		[[ -e $f ]] && printf -v c '%s\n' "$c$(<$f)"		# Add newline to each imported report line.
 	done
