@@ -4114,8 +4114,8 @@ _DirSizeMonitor_()
 
 		[[ $last_active_epoch -ne 0 ]] && stalled_seconds=$(CalcAmountDiff "$(ConvertNowToSeconds)" "$last_active_epoch")
 
-		perc_msg=$((200*(current_bytes)/(total_bytes)%2+100*(current_bytes)/(total_bytes)))'%'
-		[[ $current_bytes -lt $total_bytes && $perc_msg = '100%' ]] && perc_msg='99%'	# Ensure we don't hit 100% until the last byte is downloaded.
+		perc_msg=$((200*(current_bytes)/(total_bytes)%2+100*(current_bytes)/(total_bytes)))%
+		[[ $current_bytes -lt $total_bytes && $perc_msg = '100%' ]] && perc_msg=99%	# Ensure we don't hit 100% until the last byte is downloaded.
 		progress_msg="$perc_msg ($(TextBrightWhite "$(FormatAsIsoBytes "$current_bytes")")/$(TextBrightWhite "$(FormatAsIsoBytes "$total_bytes")"))"
 
 		if [[ $stalled_seconds -ge $stalled_seconds_threshold ]]; then
@@ -4809,18 +4809,18 @@ GenerateStatusReportTitleLine()
 	local a=''
 
 	# column 1: package name.
-	a='QPKG name'
-	printf "%-${r_report_qpkg_name_column_width}s" "$a:"
+	a='QPKG name:'
+	printf "%-${r_report_qpkg_name_column_width}s" "$a"
 
 	# column 2: package statuses
 	printf "%$((r_report_column_spacing))s"
-	a='Status'
-	printf "%-${r_report_qpkg_status_column_width}s" "$a:"
+	a='Status:'
+	printf "%-${r_report_qpkg_status_column_width}s" "$a"
 
 	# column 3: package action and result
 	printf "%$((r_report_column_spacing))s"
-	a='Action (result)'
-	printf "%-${r_report_qpkg_action_column_width}s" "$a:"
+	a='Action (result):'
+	printf "%-${r_report_qpkg_action_column_width}s" "$a"
 
 	# column 4: package version
 	printf "%$((r_report_column_spacing))s"
@@ -4830,13 +4830,13 @@ GenerateStatusReportTitleLine()
 
 	# column 5: application version
 	printf "%$((r_report_column_spacing))s"
-	a='Appl. version'
-	printf "%-${r_report_qpkg_appl_version_column_width}s" "$a:"
+	a='Appl. version:'
+	printf "%-${r_report_qpkg_appl_version_column_width}s" "$a"
 
 	# column 6: package installation path
 	printf "%$((r_report_column_spacing))s"
-	a='Location'
-	printf "%-${r_report_qpkg_path_column_width}s" "$a:"
+	a='Location:'
+	printf "%-${r_report_qpkg_path_column_width}s" "$a"
 
 	printf '\n'
 
@@ -14315,7 +14315,7 @@ PercFrac()
 		a=$b
 		c='100%'
 	else
-		c=$((200*(a+1)/(b+1)%2+100*(a+1)/(b+1)))'%'
+		c=$((200*(a+1)/(b+1)%2+100*(a+1)/(b+1)))%
 	fi
 
 	printf '%s' "$c ($(TextBrightWhite "$a")/$(TextBrightWhite "$b"))"
