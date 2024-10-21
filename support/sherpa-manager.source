@@ -1567,7 +1567,7 @@ ProcAction()
 			re=\\bEntware\\b		# Bash 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
 
 			if [[ $r_action = uninstall && ${target_packages[*]} =~ $re ]]; then
-				ShowKeystrokes		# Enable this before removing Entware (& GNU `stty`).
+				ShowKeystrokes		# Enable before removing Entware (& GNU `stty`).
 			fi
 
 			CreatePidFile
@@ -1696,7 +1696,7 @@ ProcAction()
 # 				fi
 # 			done
 
-			RemovePidFile
+# 			RemovePidFile
 
 			[[ ${useropt_terse:=true} = false && $useropt_verbose = false ]] && echo
 			;;
@@ -4825,7 +4825,7 @@ GenerateStatusReportTitleLine()
 	# column 4: package version
 	printf "%$((r_report_column_spacing))s"
 	a='QPKG version'
-	QPKGs-ISupgradable.IsAny && a+=" ($(TextBrightOrange new))"
+	QPKGs-ISupgradable.IsAny && a+=' '$(Parenthesise "$(TextBrightOrange new)")
 	printf "%-${r_report_qpkg_version_column_width}s" "$a:"
 
 	# column 5: application version
@@ -4901,13 +4901,13 @@ GenerateStatusReportDataLine()
 
 				case $result in
 					aborted|failed)
-						action_msg+=" ($(TextBrightRed "$result"))"
+						action_msg+=' '$(Parenthesise "$(TextBrightRed "$result")")
 						;;
 					in-progress)
-						action_msg+=" ($(TextBrightOrange "$result"))"
+						action_msg+=' '$(Parenthesise "$(TextBrightOrange "$result")")
 						;;
 					ok)
-						action_msg+=" ($(TextBrightGreen "$(Uppercase "$result")"))"
+						action_msg+=' '$(Parenthesise "$(TextBrightGreen "$(Uppercase "$result")")")
 				esac
 			else
 				action=unsupported
@@ -4977,7 +4977,7 @@ GenerateStatusReportDataLine()
 			if ! QpkgIsDatabaseArchOK; then
 				status+='incompatible architecture'
 			elif ! QpkgIsDatabaseMinOSVerOk || ! QpkgIsDatabaseMaxOSVerOk; then
-				status+="incompatible $(OsGetQnapOS)"
+				status+='incompatible '$(OsGetQnapOS)
 			elif ! QpkgIsDatabaseMinRAMOk; then
 				status+='insufficient RAM installed'
 			else
@@ -5010,24 +5010,24 @@ GenerateStatusReportDataLine()
 			# Assign highlighting earlier than-usual as each status can have a different highlight.
 
 			if QPKGs-ISenabled.Exist "$qpkg_name"; then
-				status+=" $(TextBrightGreen enabled)"
+				status+=' '$(TextBrightGreen enabled)
 				/bin/touch "$r_report_flags_path"/state-enabled
 			else
-				status+=" $(TextBrightRed disabled)"
+				status+=' '$(TextBrightRed disabled)
 				/bin/touch "$r_report_flags_path"/state-disabled
 			fi
 
 			if QPKGs-ISactive.Exist "$qpkg_name"; then
-				status+=" $(TextBrightGreen active)"
+				status+=' '$(TextBrightGreen active)
 				/bin/touch "$r_report_flags_path"/status-active
 			elif QPKGs-ISslow.Exist "$qpkg_name"; then
-				status+=" $(TextBrightOrange slow)"
+				status+=' '$(TextBrightOrange slow)
 				/bin/touch "$r_report_flags_path"/status-slow
 			elif QPKGs-ISNTactive.Exist "$qpkg_name"; then
-				status+=" $(TextBrightRed inactive)"
+				status+=' '$(TextBrightRed inactive)
 				/bin/touch "$r_report_flags_path"/status-inactive
 			else
-				status+=" $(TextBrightOrange unknown)"
+				status+=' '$(TextBrightOrange unknown)
 				/bin/touch "$r_report_flags_path"/status-unknown
 			fi
 
@@ -5040,7 +5040,7 @@ GenerateStatusReportDataLine()
 	esac
 
 	if QPKGs-ISupgradable.Exist "$qpkg_name"; then
-		ver_msg+=" ($(TextBrightOrange "$(QpkgGetDatabaseVer)"))"
+		ver_msg+=' '$(Parenthesise "$(TextBrightOrange "$(QpkgGetDatabaseVer)")")
 		/bin/touch "$r_report_flags_path"/status-upgradable
 	fi
 
@@ -5191,7 +5191,7 @@ GenerateReposReportDataLine()
 			if ! QpkgIsDatabaseArchOK; then
 				install_date='incompatible architecture'
 			elif ! QpkgIsDatabaseMinOSVerOk; then
-				install_date="incompatible $(OsGetQnapOS)"
+				install_date='incompatible '$(OsGetQnapOS)
 			elif ! QpkgIsDatabaseMinRAMOk; then
 				install_date='insufficient RAM installed'
 			else
@@ -8262,7 +8262,7 @@ ShowReportStatuses()
 	done
 
 	if OsIsSupportAutowidthTableColumns; then
-		[[ $a = true ]] && b=" ($(TextBrightOrange new))"
+		[[ $a = true ]] && b=' '$(Parenthesise "$(TextBrightOrange new)")
 		printf -v c '\n%s\n' "QPKG name:|Status:|Action (result):|QPKG version${b}:|Appl. version:|Location:"
 	else
 		printf -v c '\n%s\n' "$(GenerateStatusReportTitleLine)"
@@ -8909,7 +8909,7 @@ NoteIpkAcAsEr()
 
 	local a="failing request to $2 $(ShowAsPackageName "$1")"
 
-	[[ -n ${3:-} ]] && a+=" as $3"
+	[[ -n ${3:-} ]] && a+=' as '$3
 	DebugAsError "$a" >&2
 	IPKs-AC"$2"-to:Remove "$1"
 	IPKs-AC"$2"-er:Add "$1"
@@ -9621,7 +9621,7 @@ ClaimLockfile()
 
 	for a in sherpa-manager.sh sherpa-manager.source; do
 		if [[ -e $r_lock_pathfile && -d /proc/$(<"$r_lock_pathfile") && $(< /proc/"$(<"$r_lock_pathfile")"/cmdline) =~ $a ]]; then
-			ShowAsAbort "a running $(ShowAsTitleName) instance was found (PID:$(<"$r_lock_pathfile")), can't continue"
+			ShowAsAbort "a running $(ShowAsTitleName) instance was found $(Parenthesise "PID:$(<"$r_lock_pathfile")"), can't continue"
 
 			return 1
 		fi
@@ -10349,7 +10349,7 @@ _QPKG:activate_()
 
 	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_activate_log_file
 	local timeout=''
-	OsIsSupportQpkgTimeout && timeout=" -t $r_qpkg_start_timeout_seconds"
+	OsIsSupportQpkgTimeout && timeout=' -t '$r_qpkg_start_timeout_seconds
 	local service_pathfile=$(QpkgGetInstalledServicePathFile)
 
 	DebugAsProc "activating $(ShowAsPackageName)"
@@ -10437,7 +10437,7 @@ _QPKG:reactivate_()
 
 	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_reactivate_log_file
 	local timeout=''
-	OsIsSupportQpkgTimeout && timeout=" -t $r_qpkg_restart_timeout_seconds"
+	OsIsSupportQpkgTimeout && timeout=' -t '$r_qpkg_restart_timeout_seconds
 	local service_pathfile=$(QpkgGetInstalledServicePathFile)
 
 	DebugAsProc "reactivating $(ShowAsPackageName)"
@@ -10516,7 +10516,7 @@ _QPKG:deactivate_()
 
 	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_deactivate_log_file
 	local timeout=''
-	OsIsSupportQpkgTimeout && timeout=" -t $r_qpkg_stop_timeout_seconds"
+	OsIsSupportQpkgTimeout && timeout=' -t '$r_qpkg_stop_timeout_seconds
 	local service_pathfile=$(QpkgGetInstalledServicePathFile)
 
 	DebugAsProc "deactivating $(ShowAsPackageName)"
@@ -10601,7 +10601,7 @@ _QPKG:enable_()
 
 	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_enable_log_file
 	local timeout=''
-	OsIsSupportQpkgTimeout && timeout=" -t $r_qpkg_enable_timeout_seconds"
+	OsIsSupportQpkgTimeout && timeout=' -t '$r_qpkg_enable_timeout_seconds
 
 	DebugAsProc "enabling $(ShowAsPackageName)"
 
@@ -10659,7 +10659,7 @@ _QPKG:disable_()
 
 	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_disable_log_file
 	local timeout=''
-	OsIsSupportQpkgTimeout && timeout=" -t $r_qpkg_disable_timeout_seconds"
+	OsIsSupportQpkgTimeout && timeout=' -t '$r_qpkg_disable_timeout_seconds
 
 	DebugAsProc "disabling $(ShowAsPackageName)"
 
@@ -11891,7 +11891,7 @@ QpkgGetDatabaseDependencies()
 		found=false
 
 		if [[ $x != *'|'* ]]; then
-			out+=" $x"
+			out+=' '$x
 			continue
 		fi
 
@@ -11903,7 +11903,7 @@ QpkgGetDatabaseDependencies()
 			# Test alternative for compatibility
 
 			if QpkgIsDatabaseArchOK "$alt"; then
-				out+=" $alt"
+				out+=' '$alt
 				found=true
 				break
 			fi
@@ -11912,7 +11912,7 @@ QpkgGetDatabaseDependencies()
 		[[ $IFS != "$oldIFS" ]] && IFS=$oldIFS
 
 		if [[ $found = false ]]; then
-			out+=" $first"
+			out+=' '$first
 			first=''
 		fi
 	done
@@ -13024,6 +13024,24 @@ Capitalise()
 
 	}
 
+Parenthesise()
+	{
+
+	[[ -n ${1:-} ]] || return
+
+	printf '(%s)' "$1"
+
+	}
+
+AddPeriod()
+	{
+
+	[[ -n ${1:-} ]] || return
+
+	[[ ${1: -1} != ':' && ${1: -1} != '?' && ${1: -1} != '.' ]] && printf '%s.' "$1" || printf '%s' "$1"
+
+	}
+
 Uppercase()
 	{
 
@@ -13309,7 +13327,7 @@ DisplayProcReport()
 
 	local a=''
 
-	[[ -n ${1:-} ]] && a="$1 "
+	[[ -n ${1:-} ]] && a=$1' '
 
 	ShowAsProc "${a}report"
 
@@ -13645,7 +13663,7 @@ FuncExit()
 FuncForkInit()
 	{
 
-	# Debug forked function entry. $pidfile MUST be set before calling this function.
+	# Debug forked function entry. NOTE: $pidfile MUST be set before calling this function.
 
 	# Inputs: (global)
 	#	$pidfile
@@ -14244,15 +14262,6 @@ ShowAsQuizDone()
 
 	}
 
-AddPeriod()
-	{
-
-	[[ -n ${1:-} ]] || return
-
-	[[ ${1: -1} != ':' && ${1: -1} != '?' && ${1: -1} != '.' ]] && printf '%s.' "$1" || printf '%s' "$1"
-
-	}
-
 ShowAsPercentProgress()
 	{
 
@@ -14306,7 +14315,7 @@ PercFrac()
 		a=$b
 		c='100%'
 	else
-		c="$((200*(a+1)/(b+1)%2+100*(a+1)/(b+1)))%"
+		c=$((200*(a+1)/(b+1)%2+100*(a+1)/(b+1)))'%'
 	fi
 
 	printf '%s' "$c ($(TextBrightWhite "$a")/$(TextBrightWhite "$b"))"
@@ -14385,7 +14394,7 @@ ShowAsActionLogDetail()
 			: # Don't shown 1's.
 			;;
 		*)
-			quantity_msg="$8 "
+			quantity_msg=$8' '
 	esac
 
 	if [[ ${8:-undefined} = undefined ]]; then
@@ -14703,6 +14712,7 @@ Tableise()
 
 	[[ -e $r_gnu_awk_cmd ]] || return
 
+	# shellcheck disable=2046
 	$r_gnu_awk_cmd '{
 		nf[NR]=NF
 		for (i = 1; i <= NF; i++) {
@@ -14718,8 +14728,7 @@ Tableise()
 				printf "%s%*s%s", cell[row,col], max[col]-len[row,col], "", OFS
 			print cell[row,nf[row]]
 		}
-
-	}' FS='|' OFS="$(printf "%$((r_report_column_spacing))s")"
+	}' FS='|' OFS=$(printf "%$((r_report_column_spacing))s")
 
 	}
 
