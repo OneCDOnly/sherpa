@@ -47,7 +47,7 @@ cdn_onecd_url='https://raw.githubusercontent.com/OneCDOnly'
 		cdn_sherpa_packages_url=$cdn_sherpa_packages_base_url/'$useropt_branch/QPKGs/<?package_name?>/build'
 cdn_qnap_dev_packages_url='https://github.com/qnap-dev/<?package_name?>/releases/download/v<?version?>'
 
-copyright_basic='copyright (C) 2017-<?build_year?> OneCD'
+copyright_basic='Copyright (C) 2017-<?build_year?> OneCD'
 dont_edit_msg="Please don't edit this file directly, it was built/modified programmatically with the '$(basename "$0")' script."
 email=one.cd.only@gmail.com
 
@@ -70,6 +70,7 @@ EOB
 
 read -rd '' tested_msg << EOB
 Tested on:
+#*	 GNU bash, version 3.2.57(1)-release (x86_64-QNAP-linux-gnu)
 #*	 GNU bash, version 3.2.57(2)-release (i686-pc-linux-gnu)
 #*	 GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
 #*	   Copyright (C) 2007 Free Software Foundation, Inc.
@@ -77,6 +78,8 @@ Tested on:
 #*   ... and periodically on:
 #*	 GNU bash, version 5.0.17(1)-release (aarch64-openwrt-linux-gnu)
 #*	   Copyright (C) 2019 Free Software Foundation, Inc.
+#
+#*	 All scripts are optimised for compatibility with bash 3.2 (via QTS BusyBox). Be-careful reusing code in other shells, as these scripts contain syntax quirks often compatible only with bash.
 EOB
 
 read -rd '' license_msg << EOB

@@ -173,6 +173,11 @@ ShowResults()
 DebugLogInit()
 	{
 
+	# Inputs: (global)
+	#	$r_script_startseconds
+	#	$r_this_package_ver
+	#	$r_this_script_ver
+
 	DebugInfoMajSepr
 	DebugScript started "$(ConvertSecondsToFullDate "$r_script_startseconds")"
 	DebugScript PID "$$"
@@ -202,30 +207,31 @@ LoadConsts()
 
 	readonly r_report_qpkg_abbreviations_column_width=84
 	readonly r_report_qpkg_action_column_width=27
-	readonly r_report_qpkg_active_test_builtin_column_width=11
+	readonly r_report_qpkg_active_test_builtin_column_width=9
 	readonly r_report_qpkg_appl_version_column_width=22
 	readonly r_report_qpkg_arch_column_width=15
 	readonly r_report_qpkg_author_column_width=40
-	readonly r_report_qpkg_auto_update_column_width=10
+	readonly r_report_qpkg_auto_update_column_width=8
 	readonly r_report_qpkg_dependencies_column_width=29
 	readonly r_report_qpkg_description_column_width=10
 	readonly r_report_qpkg_install_date_column_width=20
-	readonly r_report_qpkg_is_compatible_column_width=9
-	readonly r_report_qpkg_is_enabled_column_width=10
-	readonly r_report_qpkg_is_installed_column_width=12
-	readonly r_report_qpkg_is_managed_column_width=10
-	readonly r_report_qpkg_max_os_version_column_width=10
-	readonly r_report_qpkg_min_os_version_column_width=10
-	readonly r_report_qpkg_min_ram_column_width=14
+	readonly r_report_qpkg_is_compatible_column_width=11
+	readonly r_report_qpkg_is_enabled_column_width=8
+	readonly r_report_qpkg_is_installed_column_width=10
+	readonly r_report_qpkg_is_managed_column_width=8
+	readonly r_report_qpkg_max_os_version_column_width=8
+	readonly r_report_qpkg_min_os_version_column_width=8
+	readonly r_report_qpkg_min_ram_column_width=13
 	readonly r_report_qpkg_name_column_width=21
 	readonly r_report_qpkg_path_column_width=48
 	readonly r_report_qpkg_repo_column_width=40
 	readonly r_report_qpkg_status_column_width=23
-	readonly r_report_qpkg_supports_backup_column_width=10
-	readonly r_report_qpkg_supports_clean_column_width=11
-	readonly r_report_qpkg_supports_start_to_update_column_width=11
-	readonly r_report_qpkg_tier_column_width=8
-	readonly r_report_qpkg_version_column_width=15
+	readonly r_report_qpkg_supports_backup_column_width=8
+	readonly r_report_qpkg_supports_clean_column_width=9
+	readonly r_report_qpkg_supports_start_to_update_column_width=9
+	readonly r_report_qpkg_tier_column_width=12
+	readonly r_report_qpkg_version_column_width=19
+
 	readonly r_report_lazy_column_width=28				# Use this when I can't be bothered calculating an optimum fixed column width.
 
 	# Report, help and debug formatting.
@@ -238,7 +244,7 @@ LoadConsts()
 	readonly r_help_syntax_indent=6
 	readonly r_report_action_result_indent=6
 	readonly r_report_column_spacing=2
-	readonly r_report_file_bytes_column_width=16
+	readonly r_report_file_bytes_column_width=14
 	readonly r_report_file_change_date_column_width=60
 	readonly r_report_file_name_column_width=$((r_report_qpkg_name_column_width+14))
 	readonly r_report_footer_name_column_width=14
@@ -255,11 +261,11 @@ LoadConsts()
 	readonly r_chars_normal='- '
 	readonly r_chars_note='* '
 	readonly r_chars_regular_prompt='$ '
-		readonly r_chars_sudo_prompt="${r_chars_regular_prompt}sudo "
+		readonly r_chars_sudo_prompt=$r_chars_regular_prompt'sudo '
 	readonly r_chars_results='= '
 	readonly r_chars_super_prompt='# '
 	readonly r_extended_datetime_format='+%a %-d %b %Y'
-	readonly r_full_datetime_format=$r_extended_datetime_format' %-I:%M:%S %p %Z'
+		readonly r_full_datetime_format=$r_extended_datetime_format' %-I:%M:%S %p %Z'
 
 	if OsIsSupportSudo; then
 		if [[ $(UserGetSudoUID) = undefined ]]; then
@@ -379,20 +385,20 @@ LoadCMDs()
 
 	# Cherry-pick Entware binaries.
 
-	readonly GNU_AWK_CMD=/opt/bin/awk
-	readonly GNU_FIND_CMD=/opt/bin/find
-	readonly GNU_GREP_CMD=/opt/bin/grep
-	readonly GNU_LESS_CMD=/opt/bin/less
-	readonly GNU_SED_CMD=/opt/bin/sed
-	readonly GNU_SLEEP_CMD=/opt/bin/sleep
-	readonly GNU_SORT_CMD=/opt/bin/sort
-	readonly GNU_STTY_CMD=/opt/bin/stty
-	readonly GNU_TIMEOUT_CMD=/opt/bin/timeout
-	readonly OPKG_CMD=/opt/bin/opkg
-	readonly PERL_CMD=/opt/bin/perl
-	readonly PYTHON_CMD=/opt/bin/python
-	readonly PYTHON3_CMD=/opt/bin/python3
-		readonly PIP_CMD="$PYTHON3_CMD -m pip"
+	readonly r_gnu_awk_cmd=/opt/bin/awk
+	readonly r_gnu_find_cmd=/opt/bin/find
+	readonly r_gnu_grep_cmd=/opt/bin/grep
+	readonly r_gnu_less_cmd=/opt/bin/less
+	readonly r_gnu_sed_cmd=/opt/bin/sed
+	readonly r_gnu_sleep_cmd=/opt/bin/sleep
+	readonly r_gnu_sort_cmd=/opt/bin/sort
+	readonly r_gnu_stty_cmd=/opt/bin/stty
+	readonly r_gnu_timeout_cmd=/opt/bin/timeout
+	readonly r_opkg_cmd=/opt/bin/opkg
+	readonly r_perl_cmd=/opt/bin/perl
+	readonly r_python_cmd=/opt/bin/python
+	readonly r_python3_cmd=/opt/bin/python3
+		readonly r_pip_cmd=$r_python3_cmd' -m pip'
 
 	}
 
@@ -549,7 +555,7 @@ LoadEnv()
 	useropt_branch=$(UserGetGitBranch)
 		readonly r_objects_archive_url='<?cdn_sherpa_base_url?>'/$useropt_branch/objects.tar.gz
 		readonly r_packages_archive_url='<?cdn_sherpa_packages_base_url?>'/$useropt_branch/packages.tar.gz
-		readonly r_this_script_ver="$(ConvertSecondsToDatecode $r_this_script_epoch)-$useropt_branch"
+		readonly r_this_script_ver=$(ConvertSecondsToDatecode $r_this_script_epoch)-$useropt_branch
 	readonly r_qpkg_bu_path=$(UserGetDefVol)/.qpkg_config_backup
 	readonly r_this_package_path=$(QpkgGetInstalledPath)
 		if [[ -z $r_this_package_path || $r_this_package_path = undefined || ! -d $r_this_package_path ]]; then
@@ -560,7 +566,6 @@ LoadEnv()
 
 		readonly r_cache_path=$r_this_package_path/cache
 			readonly r_action_times_path=$r_cache_path/action.times
-			readonly r_async_procs_path=$r_cache_path/proc
 			readonly r_dependent_qpkgs_list_pathfile=$r_cache_path/dependents
 			readonly r_independent_qpkgs_list_pathfile=$r_cache_path/independents
 			readonly r_inhibit_display_pathfile=$r_cache_path/display.inhibit
@@ -591,6 +596,7 @@ LoadEnv()
 
 	readonly r_action_forks_count=/var/run/sherpa/actions/forks
 	readonly r_action_logs_path=/var/log/sherpa/actions/logs
+	readonly r_async_procs_path=/var/run/sherpa/proc
 	readonly r_qpkg_states_path=/var/run/sherpa/packages/states
 		readonly r_action_abort_pathfile=$r_qpkg_states_path/abort.action
 		readonly r_action_msg_pipe=$r_qpkg_states_path/action.messages.pipe
@@ -598,7 +604,7 @@ LoadEnv()
 	readonly r_report_flags_path=/var/run/sherpa/report/flags
 	readonly r_reports_path=/var/log/sherpa/reports
 			readonly r_report_output_pathfile=$r_reports_path/report.ansi
-	readonly r_run_logs_path=/var/run/sherpa/run.logs
+	readonly r_run_logs_path=/var/run/sherpa/logs
 
 	# Entware
 
@@ -606,12 +612,12 @@ LoadEnv()
 	readonly r_external_packages_pathfile=$r_cache_path/Packages
 
 	# KLUDGE: just in-case `python` has disappeared again ... ¯\_(ツ)_/¯
-	[[ -e $PYTHON3_CMD && ! -L $PYTHON_CMD ]] && ln -s "$PYTHON3_CMD" "$PYTHON_CMD"
+	[[ -e $r_python3_cmd && ! -L $r_python_cmd ]] && ln -s "$r_python3_cmd" "$r_python_cmd"
 
 	rm -f "$r_report_output_pathfile" "$r_ramfs_freespace_pathfile" "$r_inhibit_display_pathfile" 2> /dev/null
 
-	if [[ -e $GNU_STTY_CMD && -t 0 ]]; then
-		local terminal_dimensions=$($GNU_STTY_CMD size)
+	if [[ -e $r_gnu_stty_cmd && -t 0 ]]; then
+		local terminal_dimensions=$($r_gnu_stty_cmd size)
 		readonly r_sess_rows=${terminal_dimensions% *}
 		readonly r_sess_columns=${terminal_dimensions#* }
 	else
@@ -720,6 +726,7 @@ CreatePaths()
 	ClearPath /var/run/sherpa/report "$r_report_columns_path"
 	ClearPath /var/run/sherpa/report "$r_report_flags_path"
 
+	MakePath "$r_action_logs_path" 'action logs' || return
 	MakePath "$r_action_times_path" 'action times' || return
 	MakePath "$r_async_procs_path" 'asynchronous process tracking' || return
 	MakePath "$r_cache_path" cache || return
@@ -812,12 +819,12 @@ DebugLogEnv()
 
 	DebugUserspace ok '$EUID' "$EUID"
 	DebugUserspace ok 'default volume' "$(UserGetDefVol)"
-	DebugUserspace ok '/opt' "$(/usr/bin/readlink /opt 2> /dev/null || printf 'not present')"
+	DebugUserspace ok /opt "$(/usr/bin/readlink /opt 2> /dev/null || printf 'not present')"
 
 	local public_share=$(/sbin/getcfg SHARE_DEF defPublic -d Qpublic -f /etc/config/def_share.info)
 
 	if [[ -L /share/$public_share ]]; then
-		DebugUserspace ok "'$public_share' share" "/share/$public_share"
+		DebugUserspace ok "'$public_share' share" /share/$public_share
 	else
 		DebugUserspace warning "'$public_share' share" 'not present'
 	fi
@@ -1042,7 +1049,7 @@ CheckEnv()
 					target_packages='ar binutils libbfd libctf libopcodes objdump'
 
 					# Assume first package version is same as remaining package versions.
-					installed_version=$($OPKG_CMD list-installed | /bin/grep "^${target_packages%% *} *" | head -n1 | cut -d' ' -f3 | cut -d'-' -f1)
+					installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${target_packages%% *} *" | head -n1 | cut -d' ' -f3 | cut -d'-' -f1)
 
 					if [[ ${installed_version//.} -gt 238 ]]; then
 						ipks_downgrade=true
@@ -1060,7 +1067,7 @@ CheckEnv()
 # 				target_packages='git git-http'
 #
 # 				# Assume first package version is same as remaining package versions.
-# 				installed_version=$($OPKG_CMD list-installed | /bin/grep "^${target_packages%% *} *" | head -n1 | cut -d' ' -f3 | cut -d'-' -f1)
+# 				installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${target_packages%% *} *" | head -n1 | cut -d' ' -f3 | cut -d'-' -f1)
 #
 # 				if [[ ${installed_version//.} -gt 2392 ]]; then
 # 					ipks_downgrade=true
@@ -1474,14 +1481,14 @@ ProcAction()
 	#   $4 = action intransitive verb	e.g. `activate`
 
 	# Inputs: (global)
-	#	$r_action_abort_pathfile
-	#	$r_async_procs_path
 	#   $fail_count
 	#	$ipks_downgrade
 	#	$ipks_install
 	#	$ipks_upgrade
 	#   $ok_count
 	#	$pips_install
+	#	$r_action_abort_pathfile
+	#	$r_async_procs_path
 	#   $skip_abort_count
 	#   $skip_count
 	#   $skip_error_count
@@ -1493,7 +1500,6 @@ ProcAction()
 	#   $fail_count
 	#	$fork_progress_prefix
 	#   $ok_count
-	#   $pidfile
 	#   $show_action_results_failed
 	#   $show_action_results_ok
 	#   $show_action_results_skipped
@@ -1507,8 +1513,6 @@ ProcAction()
 
 	FuncInit
 
-	local -r r_action=${1:?${FUNCNAME[0]}'()': undefined action}
-	local -r r_action_intransitive_msg=${4:?${FUNCNAME[0]}'()': undefined action message}
 	local group=''
 	local msg1_key=''
 	local msg1_value=''
@@ -1516,12 +1520,14 @@ ProcAction()
 	local msg2_value=''
 	local package=''
 	local -i package_index=0
+	local -r r_action=${1:?${FUNCNAME[0]}'()': undefined action}
+	local -r r_action_intransitive_msg=${4:?${FUNCNAME[0]}'()': undefined action message}
 	local -r r_package_type=${3:?${FUNCNAME[0]}'()': undefined package type}
+	local -r r_tier=${2:?${FUNCNAME[0]}'()': undefined tier}
 	local re=''
 	local state=''
 	local target_object_name=''
 	local -a target_packages=()
-	local -r r_tier=${2:?${FUNCNAME[0]}'()': undefined tier}
 	total_count=0
 
 	DebugVar r_action
@@ -1562,14 +1568,14 @@ ProcAction()
 			re=\\bEntware\\b		# Bash 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
 
 			if [[ $r_action = uninstall && ${target_packages[*]} =~ $re ]]; then
-				ShowKeystrokes		# Enable this before removing Entware (& GNU `stty`).
+				ShowKeystrokes		# Enable before removing Entware (& GNU `stty`).
 			fi
 
-			pidfile=$(/bin/mktemp "$r_async_procs_path"/bgproc_XXXXXX)		# Set $pidfile here, before launching async process so it's inherited by that process.
+			CreatePidFile
 
 			_ExecOneActionWithManyForks_ "_${r_package_type}:${r_action}_" "${target_packages[@]}" &
 
-			echo "$!" > "$pidfile"
+			UpdatePidFile "$!"
 
 			# Read message pipe and process QPKGs and actions as-per requests contained within.
 
@@ -1678,7 +1684,7 @@ ProcAction()
 			[[ $ok_count -gt 0 ]] && show_action_results_ok=true
 			[[ $skip_count -gt 0 || $skip_ok_count -gt 0 || $skip_error_count -gt 0 || $skip_abort_count -gt 0 ]] && show_action_results_skipped=true
 
-			[[ ${#target_packages[@]} -gt 0 ]] && KillPID "$(<$pidfile)"		# Only needed if an action fork didn't exit properly.
+# 			[[ ${#target_packages[@]} -gt 0 ]] && KillPID "$(<$pidfile)"		# Only needed if an action fork didn't exit properly.
 			wait 2> /dev/null
 			CloseActionMsgPipe
 
@@ -1690,6 +1696,8 @@ ProcAction()
 # 					QPKGs-AC${r_action}-dn:Add "$package"
 # 				fi
 # 			done
+
+# 			RemovePidFile
 
 			[[ ${useropt_terse:=true} = false && $useropt_verbose = false ]] && echo
 			;;
@@ -1751,9 +1759,9 @@ CloseActionMsgPipe()
 	{
 
 	# Inputs: (global)
-	#	$r_action_msg_pipe
 	#	$action_msg_pipe_fd
 	#	$backup_stdin_fd
+	#	$r_action_msg_pipe
 
 	# Restore original file descriptors, and remove message pipe.
 
@@ -3245,6 +3253,9 @@ Quiz()
 	# Inputs: (local)
 	#   $1 = prompt/question
 
+	# Inputs: (global)
+	#	$r_gnu_stty_cmd
+
 	# Outputs: (local)
 	#   $? = 0 if "y", 1 if anything else
 
@@ -3252,9 +3263,9 @@ Quiz()
 	local b=''
 
 	ShowAsQuiz "$a"
-	[[ -e $GNU_STTY_CMD && -t 0 ]] && $GNU_STTY_CMD igncr	# Ignore CR to prevent an onscreen linefeed (which disrupts same-line rewrite used later, and looks bad).
+	[[ -e $r_gnu_stty_cmd && -t 0 ]] && $r_gnu_stty_cmd igncr	# Ignore CR to prevent an onscreen linefeed (which disrupts same-line rewrite used later, and looks bad).
 	read -rn1 b
-	[[ -e $GNU_STTY_CMD && -t 0 ]] && $GNU_STTY_CMD -igncr	# Re-allow CR.
+	[[ -e $r_gnu_stty_cmd && -t 0 ]] && $r_gnu_stty_cmd -igncr	# Re-allow CR.
 	DebugVar b
 
 	ShowAsQuizDone "$a: $b"
@@ -3303,7 +3314,20 @@ _UpdateEntwarePackageList_()
 
 	# * This function runs asynchronously *
 
-	if IsNtSysFileExist $OPKG_CMD; then
+	# Inputs: (global)
+	#	$r_entware_package_list_uptodate
+	#	$r_external_packages_archive_pathfile
+	#	$r_external_packages_pathfile
+	#	$r_file_change_threshold_minutes
+	#	$r_logs_path
+	#	$r_opkg_cmd
+	#	$r_update_log_file
+	#	$useropt_check
+
+	# Outputs: (global)
+	#	$r_entware_package_list_uptodate
+
+	if IsNtSysFileExist $r_opkg_cmd; then
 		DisplayAsProjSynExam 'try reactivating Entware' 'reactivate ew'
 
 		return 1
@@ -3318,7 +3342,7 @@ _UpdateEntwarePackageList_()
 	if ! IsThisFileRecent "$r_external_packages_archive_pathfile" "$r_file_change_threshold_minutes" || [[ ! -f $r_external_packages_archive_pathfile || $useropt_check = true ]]; then
 		DebugAsProc "updating $(ShowAsPackageName Entware) package list"
 
-		RunAndLog "$OPKG_CMD update" "$r_logs_path/Entware.$r_update_log_file" log:failure-only
+		RunAndLog "$r_opkg_cmd update" "$r_logs_path/Entware.$r_update_log_file" log:failure-only
 		z=$?
 
 		if [[ $z -eq 0 ]]; then
@@ -3351,8 +3375,7 @@ IsThisFileRecent()
 
 	# Examine `change` time as this is updated even if file content isn't modified.
 
-	# https://stackoverflow.com/a/55622661
-	[[ -e ${1:-} && $((($(ConvertNowToSeconds)-$(/usr/bin/stat "$1" -c %Z))/60)) -le ${2:-1440} ]]
+	[[ -e ${1:-} && $((($(ConvertNowToSeconds)-$(/usr/bin/stat "$1" -c %Z))/60)) -le ${2:-1440} ]]		# https://stackoverflow.com/a/55622661
 
 	}
 
@@ -3360,13 +3383,15 @@ SaveIpkAndPipList()
 	{
 
 	# Inputs: (global)
+	#	$r_opkg_cmd
+	#	$r_pip_cmd
 	#	$r_prev_ipk_list_pathfile
 	#	$r_prev_pip_list_pathfile
 
-	$PIP_CMD freeze | cut -d'=' -f1 > "$r_prev_pip_list_pathfile"
+	$r_pip_cmd freeze | cut -d'=' -f1 > "$r_prev_pip_list_pathfile"
 	[[ -e $r_prev_pip_list_pathfile ]] && DebugAsDone "saved current PIP list to $(ShowAsFileName "$r_prev_pip_list_pathfile")"
 
-	$OPKG_CMD list-installed > "$r_prev_ipk_list_pathfile"
+	$r_opkg_cmd list-installed > "$r_prev_ipk_list_pathfile"
 	[[ -e $r_prev_ipk_list_pathfile ]] && DebugAsDone "saved current $(ShowAsPackageName Entware) IPK list to $(ShowAsFileName "$r_prev_ipk_list_pathfile")"
 
 	} 2> /dev/null
@@ -3422,6 +3447,8 @@ CalcIpkDepsToInstall()
 
 	# Inputs: (global)
 	#	$r_external_packages_pathfile
+	#	$r_gnu_grep_cmd
+	#	$r_opkg_cmd
 	#	$useropt_terse
 	#	$useropt_verbose
 
@@ -3430,7 +3457,7 @@ CalcIpkDepsToInstall()
 	#	$useropt_terse
 	#	$useropt_verbose
 
-	IsSysFileExist $GNU_GREP_CMD || return
+	IsSysFileExist $r_gnu_grep_cmd || return
 
 	FuncInit
 
@@ -3467,7 +3494,7 @@ CalcIpkDepsToInstall()
 		printf -v ipk_titles '^Package: %s$\|' "${this_list[@]}"
 		ipk_titles=${ipk_titles%??}		# Remove last 2 characters.
 
-		this_list=($($GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator '^Package:\|^Depends:' "$r_external_packages_pathfile" | $GNU_GREP_CMD -vG '^Section:\|^Version:' | $GNU_GREP_CMD --word-regexp --after-context 1 --no-group-separator "$ipk_titles" | $GNU_GREP_CMD -vG "$ipk_titles" | $GNU_GREP_CMD -vG '^Package: ' | /bin/sed 's|^Depends: ||;s|, |\n|g' | /usr/bin/sort | /bin/uniq))
+		this_list=($($r_gnu_grep_cmd --word-regexp --after-context 1 --no-group-separator '^Package:\|^Depends:' "$r_external_packages_pathfile" | $r_gnu_grep_cmd -vG '^Section:\|^Version:' | $r_gnu_grep_cmd --word-regexp --after-context 1 --no-group-separator "$ipk_titles" | $r_gnu_grep_cmd -vG "$ipk_titles" | $r_gnu_grep_cmd -vG '^Package: ' | /bin/sed 's|^Depends: ||;s|, |\n|g' | /usr/bin/sort | /bin/uniq))
 
 		# Update progress twice per loop.
 		ShowAsIterativeProgress 'resolve IPK dependencies' "$iterations" iteration "${#dep_acc[@]}" 'unique IPK'
@@ -3510,10 +3537,10 @@ CalcIpkDepsToInstall()
 				# KLUDGE: `libjpeg` appears to have been replaced by `libjpeg-turbo`, but many packages still have `libjpeg` as a dependency, so replace it with `libjpeg-turbo`.
 
 				if [[ $element != 'libjpeg' ]]; then
-					if ! $OPKG_CMD status "$element" | /bin/grep -q "Status:.*installed"; then
+					if ! $r_opkg_cmd status "$element" | /bin/grep -q "Status:.*installed"; then
 						IPKs-ACdownload-to:Add "$element"
 					fi
-				elif ! $OPKG_CMD status 'libjpeg-turbo' | /bin/grep -q "Status:.*installed"; then
+				elif ! $r_opkg_cmd status 'libjpeg-turbo' | /bin/grep -q "Status:.*installed"; then
 					IPKs-ACdownload-to:Add 'libjpeg-turbo'
 				fi
 			fi
@@ -3532,6 +3559,7 @@ CalcIpkDownloadSize()
 	# Calculate size of required IPKs.
 
 	# Inputs: (global)
+	#	$r_gnu_grep_cmd
 	#	$r_external_packages_pathfile
 
 	FuncInit
@@ -3544,7 +3572,7 @@ CalcIpkDownloadSize()
 		ShowAsProc "calculate size of IPK$(Pluralise "$size_count") to download"
 
 		DebugAsDone "$size_count IPK$(Pluralise "$size_count") to download: '$(IPKs-ACdownload-to:List)'"
-		size_array=($($GNU_GREP_CMD -w '^Package:\|^Size:' "$r_external_packages_pathfile" | $GNU_GREP_CMD --after-context 1 --no-group-separator ": $(/bin/sed 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKs-ACdownload-to:List)")" | /bin/grep '^Size:' | /bin/sed 's|^Size: ||'))
+		size_array=($($r_gnu_grep_cmd -w '^Package:\|^Size:' "$r_external_packages_pathfile" | $r_gnu_grep_cmd --after-context 1 --no-group-separator ": $(/bin/sed 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKs-ACdownload-to:List)")" | /bin/grep '^Size:' | /bin/sed 's|^Size: ||'))
 
 		# shellcheck disable=2283
 		IPKs-ACdownload-to:Size = "$(IFS=+; echo "$((${size_array[*]:-}))")"		# nifty sizing shortcut found here https://stackoverflow.com/a/13635566/6182835
@@ -3563,9 +3591,10 @@ IPKs:upgrade()
 	# Upgrade all installed IPKs.
 
 	# Inputs: (global)
+	#	$ipks_upgrade
+	#	$r_opkg_cmd
 	#	$r_ipk_cache_path
 	#	$r_ipk_download_path
-	#	$ipks_upgrade
 	#	$r_logs_path
 	#	$r_upgrade_log_file
 	#	$useropt_terse
@@ -3589,7 +3618,7 @@ IPKs:upgrade()
 	IPKs-ACupgrade-to:Init
 	IPKs-ACdownload-to:Init
 
-	IPKs-ACupgrade-to:Add "$($OPKG_CMD list-upgradable | cut -f1 -d' ')"
+	IPKs-ACupgrade-to:Add "$($r_opkg_cmd list-upgradable | cut -f1 -d' ')"
 
 	# Don't upgrade IPKs that must remain downgraded.
 	IPKs-ACupgrade-to:Remove "$(IPKs-ACdowngrade-to:Array)"
@@ -3608,7 +3637,7 @@ IPKs:upgrade()
 		_DirSizeMonitor_ "$r_ipk_download_path" "$(IPKs-ACdownload-to:Size)" &
 		fork_pid=$!
 
-		RunAndLog "$OPKG_CMD upgrade --force-overwrite $(IPKs-ACdownload-to:List) --cache $r_ipk_cache_path --tmp-dir $r_ipk_download_path" "$r_logs_path/ipks.$r_upgrade_log_file" log:failure-only
+		RunAndLog "$r_opkg_cmd upgrade --force-overwrite $(IPKs-ACdownload-to:List) --cache $r_ipk_cache_path --tmp-dir $r_ipk_download_path" "$r_logs_path/ipks.$r_upgrade_log_file" log:failure-only
 		z=$?
 
 		KillPID "$fork_pid"
@@ -3635,6 +3664,7 @@ IPKs:install()
 	# Install IPKs required to support QPKGs.
 
 	# Inputs: (global)
+	#	$r_opkg_cmd
 	#	$r_essential_ipks
 	#	$r_install_log_file
 	#	$r_ipk_cache_path
@@ -3704,7 +3734,7 @@ IPKs:install()
 		_DirSizeMonitor_ "$r_ipk_download_path" "$(IPKs-ACdownload-to:Size)" &
 		fork_pid=$!
 
-		RunAndLog "$OPKG_CMD install --force-overwrite $(IPKs-ACdownload-to:List) --cache $r_ipk_cache_path --tmp-dir $r_ipk_download_path" "$r_logs_path/ipks.$r_install_log_file" log:failure-only
+		RunAndLog "$r_opkg_cmd install --force-overwrite $(IPKs-ACdownload-to:List) --cache $r_ipk_cache_path --tmp-dir $r_ipk_download_path" "$r_logs_path/ipks.$r_install_log_file" log:failure-only
 		z=$?
 
 		KillPID "$fork_pid"
@@ -3737,6 +3767,10 @@ IPKs:downgrade()
 	{
 
 	# Downgrade specific installed IPKs.
+
+	# Inputs: (global)
+	#	$ipks_downgrade
+	#	$r_opkg_cmd
 
 	[[ $ipks_downgrade = true ]] || return
 	QPKGs-ISenabled.Exist Entware || return
@@ -3812,7 +3846,7 @@ IPKs:downgrade()
 		ShowAsProc "downgrade $desc"
 
 		ShowAsPercentProgress "downgrade $desc" '' "$ok_count" 0 "$fail_count" "$total_count"
-		RunAndLog "$OPKG_CMD install --force-downgrade --cache $r_ipk_cache_path --tmp-dir $r_ipk_downgrade_path $r_ipk_downgrade_path/*.ipk" "$log_pathfile" log:failure-only
+		RunAndLog "$r_opkg_cmd install --force-downgrade --cache $r_ipk_cache_path --tmp-dir $r_ipk_downgrade_path $r_ipk_downgrade_path/*.ipk" "$log_pathfile" log:failure-only
 		z=$?
 
 		if [[ $z -eq 0 ]]; then
@@ -3852,9 +3886,20 @@ PIPs:upgrade()
 PIPs:install()
 	{
 
+	# Inputs: (global)
+	#	$r_pip_cmd
+	#	$r_essential_pips
+	#	$r_install_log_file
+	#	$r_logs_path
+	#	$r_pip_cache_path
+	#	$r_prev_pip_list_pathfile
+	#	$useropt_check
+	#	$useropt_terse
+	#	$useropt_verbose
+
 	[[ $pips_install = true ]] || return
 	QPKGs-ISenabled.Exist Entware || return
-	$OPKG_CMD status python3-pip | /bin/grep -q "Status:.*installed" || return
+	$r_opkg_cmd status python3-pip | /bin/grep -q "Status:.*installed" || return
 	ErrorIsNt || return
 
 	FuncInit
@@ -3878,7 +3923,7 @@ PIPs:install()
 
 		((total_count++))
 
-		exec_cmd="$PIP_CMD install --upgrade --no-input $(PIPs-ACinstall-to:List) --cache-dir $r_pip_cache_path --root-user-action=ignore"
+		exec_cmd="$r_pip_cmd install --upgrade --no-input $(PIPs-ACinstall-to:List) --cache-dir $r_pip_cache_path --root-user-action=ignore"
 		desc="$total_count auxiliary PIP$(Pluralise "$total_count")"
 
 		ShowAsPercentProgress "install $desc" '' "$ok_count" 0 0 "$total_count"
@@ -3921,6 +3966,11 @@ OpenIpkArchive()
 
 	# Unpack the package list file used by `opkg`.
 
+	# Inputs: (global)
+	#	$r_cache_path
+	#	$r_external_packages_archive_pathfile
+	#	$r_external_packages_pathfile
+
 	# Outputs: (local)
 	#   $? = 0 if successful, 1 if failed
 
@@ -3945,6 +3995,9 @@ OpenIpkArchive()
 CloseIpkArchive()
 	{
 
+	# Inputs: (global)
+	#	$r_external_packages_pathfile
+
 	rm -f "$r_external_packages_pathfile" 2> /dev/null
 
 	}
@@ -3963,7 +4016,11 @@ _ExecOneActionWithManyForks_()
 	# Inputs: (global)
 	#   $fork_count
 	#   $max_forks
-	#   $pidfile
+	#	$r_action_abort_pathfile
+	#	$r_async_procs_path
+
+	# Outputs: (global)
+	#	$pidfile
 
 	FuncForkInit
 
@@ -3988,11 +4045,13 @@ _ExecOneActionWithManyForks_()
 		MarkThisAcForkAsStarted 						# Must create runfile here, as it takes too-long to happen in async function.
 		QpkgSetIndex
 
-		action_pidfile=$(/bin/mktemp "$r_async_procs_path"/bgproc_XXXXXX)		# Set $action_pidfile here, before launching async process so it's inherited by that process.
+		(	# Keep updated $pidfile in a subshell, so the one for this function doesn't change.
+			CreatePidFile
 
-		$a &
+			$a &
 
-		echo "$!" > "$action_pidfile"
+			UpdatePidFile "$!"
+		)
 
 		DebugAsDone "forked $a() instance for '$qpkg_name'"
 		UpdateForkProgress
@@ -4023,6 +4082,7 @@ _DirSizeMonitor_()
 	#   $2 = total target bytes (100%) for specified path.
 
 	# Inputs: (global)
+	#	$r_gnu_find_cmd
 	#   $r_inhibit_display_pathfile
 
 	# Outputs: (local)
@@ -4030,7 +4090,7 @@ _DirSizeMonitor_()
 
 	[[ -n ${1:?${FUNCNAME[0]}'()': undefined path} ]] || exit
 	[[ -d $1 && ${2:-0} -gt 0 ]] || exit
-	IsSysFileExist $GNU_FIND_CMD || exit
+	IsSysFileExist $r_gnu_find_cmd || exit
 
 	local -i current_bytes=-1
 	local -i last_active_epoch=0
@@ -4045,7 +4105,7 @@ _DirSizeMonitor_()
 	InitProgress
 
 	while [[ $current_bytes -lt $total_bytes ]]; do
-		current_bytes=$($GNU_FIND_CMD "$1" -type f -name '*.ipk' -exec /usr/bin/du --bytes --total --apparent-size {} + 2> /dev/null | /bin/grep total$ | cut -f1)
+		current_bytes=$($r_gnu_find_cmd "$1" -type f -name '*.ipk' -exec /usr/bin/du --bytes --total --apparent-size {} + 2> /dev/null | /bin/grep total$ | cut -f1)
 		[[ -z $current_bytes ]] && current_bytes=0
 
 		if [[ $current_bytes -ne $last_bytes ]]; then
@@ -4055,8 +4115,8 @@ _DirSizeMonitor_()
 
 		[[ $last_active_epoch -ne 0 ]] && stalled_seconds=$(CalcAmountDiff "$(ConvertNowToSeconds)" "$last_active_epoch")
 
-		perc_msg="$((200*(current_bytes)/(total_bytes)%2+100*(current_bytes)/(total_bytes)))%"
-		[[ $current_bytes -lt $total_bytes && $perc_msg = '100%' ]] && perc_msg='99%'	# Ensure we don't hit 100% until the last byte is downloaded.
+		perc_msg=$((200*(current_bytes)/(total_bytes)%2+100*(current_bytes)/(total_bytes)))%
+		[[ $current_bytes -lt $total_bytes && $perc_msg = '100%' ]] && perc_msg=99%	# Ensure we don't hit 100% until the last byte is downloaded.
 		progress_msg="$perc_msg ($(TextBrightWhite "$(FormatAsIsoBytes "$current_bytes")")/$(TextBrightWhite "$(FormatAsIsoBytes "$total_bytes")"))"
 
 		if [[ $stalled_seconds -ge $stalled_seconds_threshold ]]; then
@@ -4064,7 +4124,7 @@ _DirSizeMonitor_()
 			stalled_msg=' stalled for '
 
 			if [[ $stalled_seconds -lt 60 ]]; then
-				stalled_msg+="$stalled_seconds seconds"
+				stalled_msg+=$stalled_seconds' seconds'
 			else
 				stalled_msg+=$(ConvertSecondsToDuration "$stalled_seconds")
 			fi
@@ -4393,6 +4453,10 @@ DeleteSetting()
 UserIsOk()
 	{
 
+	# Inputs: (global)
+	#	$r_args_raw
+	#	$r_chars_sudo_prompt
+
 	if ! UserIsSU; then
 		if OsIsSupportSudo; then
 			ShowAsError 'this utility must be run with superuser privileges. Try again as:'
@@ -4410,6 +4474,9 @@ UserIsOk()
 
 UserIsSU()
 	{
+
+	# Inputs: (global)
+	#	$EUID
 
 	[[ $EUID -eq 0 ]]
 
@@ -4554,6 +4621,11 @@ DisplayAsProjSynIndentExam()
 	#	$1 = description (optional)
 	#	$2 = example syntax
 
+	# Inputs: (global)
+	#	$r_help_desc_indent
+	#	$r_help_syntax_indent
+	#	$r_help_syntax_sudo_prefix
+
 	if [[ -n $1	]]; then
 		printf "\n%${r_help_desc_indent}s%s" '' "$(Capitalise "${1:-}")"
 		[[ ${1: -1} != '!' ]] && printf ':'
@@ -4573,6 +4645,11 @@ DisplayAsSynExam()
 	#	$1 = description
 	#	$2 = example syntax
 
+	# Inputs: (global)
+	#	$r_chars_bullet
+	#	$r_help_syntax_indent
+	#	$r_help_syntax_prefix
+
 	printf "\n${r_chars_bullet}%s:\n%${r_help_syntax_indent}s${r_help_syntax_prefix}%s\n" "$(Capitalise "${1:-}")" '' "${2:-}"
 
 	}
@@ -4584,6 +4661,10 @@ DisplayAsIndentItem()
 
 	# Inputs: (local)
 	#	$1 = item
+
+	# Inputs: (global)
+	#	$r_chars_bullet
+	#	$r_help_desc_indent
 
 	printf "%${r_help_desc_indent}s${r_chars_bullet}%s\n" '' "$(Capitalise "${1:-}")"
 
@@ -4601,6 +4682,10 @@ DisplayAsIndentQuotedInfoItem()
 	#	$1 = word
 	#	$2 = description
 
+	# Inputs: (global)
+	# 	$r_help_desc_indent
+	#	$r_report_footer_name_column_width
+
 	if OsIsSupportAutowidthTableColumns; then
 		printf "%${r_help_desc_indent}s%s|%s\n" '' "'${1:-}'" "- $(AddPeriod "${2:-}")"
 	else
@@ -4612,26 +4697,27 @@ DisplayAsIndentQuotedInfoItem()
 GeneratePacksReportTitleLine()
 	{
 
-	local a=''
+	# Inputs: (global)
+	#	$r_report_qpkg_appl_version_column_width
+	#	$r_report_qpkg_description_column_width
+	# 	$r_report_qpkg_name_column_width
 
-	# column 1: package name.
-	a='QPKG name:'
-	printf "%-$((r_report_qpkg_name_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 2: application version
-	a='Appl. version:'
-	printf "%-$((r_report_qpkg_appl_version_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 3: package description
-	a='Description:'
-	printf "%-$((r_report_qpkg_description_column_width+2+$(LenANSIDiff "$a")))s" "$a"
+	if OsIsSupportAutowidthTableColumns; then
+		printf 'QPKG name:|Appl. version:|Description:'
+	else
+		GenerateReportLineItem 'QPKG name:' "$r_report_qpkg_name_column_width"
+		GenerateReportLineItem 'Appl. version:' "$r_report_qpkg_appl_version_column_width"
+		GenerateReportLineItem 'Description:' "$r_report_qpkg_description_column_width"
+	fi
 
 	printf '\n'
 
 	}
 
-GeneratePacksReportDataLine()
+_GeneratePacksReportDataLine_()
 	{
+
+	# * This function runs asynchronously *
 
 	# Input (local):
 	#   $1 = QPKG name (optional).
@@ -4650,7 +4736,7 @@ GeneratePacksReportDataLine()
 		local notes=$(QpkgGetDatabaseNote "$name")
 		[[ $notes = none ]] && notes=''
 	local name_msg=$r_chars_normal
-	local notes_msg="${notes}."
+	local notes_msg=$notes.
 
 	if QpkgIsInstalledMissing; then
 		mode=highlight
@@ -4672,7 +4758,7 @@ GeneratePacksReportDataLine()
 
 	app_ver_msg+=$app_ver
 # 	author_msg+=$author
-	description_msg+="$(Capitalise "$description")."
+	description_msg+=$(Capitalise "$description").
 	name_msg+=$qpkg_name
 
 	case $mode in
@@ -4688,72 +4774,56 @@ GeneratePacksReportDataLine()
 	esac
 
 	if OsIsSupportAutowidthTableColumns; then
-		echo "$name_msg|$app_ver_msg|$description_msg"
+		printf '%s' "$name_msg|$app_ver_msg|$description_msg"
 
 		if [[ -n $notes ]]; then
-			printf "%s|%s|%$((${#r_chars_blank}))s%s\n" '' '' '' "$(TextBrightOrange "${r_chars_dropend}${r_chars_note}") $notes_msg"
+			printf "\n%s|%s|%$((${#r_chars_blank}))s$(TextBrightOrange "${r_chars_dropend}${r_chars_note}")%s" '' '' '' "$notes_msg"
 		fi
 	else
-		# column 1: package name.
-		printf "%-$((r_report_qpkg_name_column_width+$(LenANSIDiff "$name_msg")))s" "$name_msg"
-
-		# column 2: application version
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_qpkg_appl_version_column_width+$(LenANSIDiff "$app_ver_msg")))s" "$app_ver_msg"
-
-		# column 3: package description
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_qpkg_description_column_width+$(LenANSIDiff "$description_msg")))s" "$description_msg"
+		GenerateReportLineItem "$name_msg" "$r_report_qpkg_name_column_width"
+		GenerateReportLineItem "$app_ver_msg" "$r_report_qpkg_appl_version_column_width"
+		GenerateReportLineItem "$description_msg" "$r_report_qpkg_description_column_width"
 
 		if [[ -n $notes ]]; then
 			printf "\n%$((${#r_chars_blank}+r_report_qpkg_name_column_width+r_report_qpkg_appl_version_column_width+(r_report_column_spacing*2)))s$(TextBrightOrange "${r_chars_dropend}${r_chars_note}")%s" '' "$notes_msg"
 		fi
-
-		printf '\n'
 	fi
+
+	printf '\n'
 
 	}
 
 GenerateStatusReportTitleLine()
 	{
 
-	local a=''
+	# Inputs: (global)
+	# 	$r_report_qpkg_action_column_width
+	#	$r_report_qpkg_appl_version_column_width
+	# 	$r_report_qpkg_name_column_width
+	# 	$r_report_qpkg_path_column_width
+	#	$r_report_qpkg_status_column_width
+	# 	$r_report_qpkg_version_column_width
 
-	# column 1: package name.
-	a='QPKG name'
-	printf "%-${r_report_qpkg_name_column_width}s" "$a:"
+	local a='QPKG version'
 
-	# column 2: package statuses
-	printf "%$((r_report_column_spacing))s"
-	a='Status'
-	printf "%-${r_report_qpkg_status_column_width}s" "$a:"
+	QPKGs-ISupgradable.IsAny && a+=' '$(Parenthesise "$(TextBrightOrange new)")
 
-	# column 3: package action and result
-	printf "%$((r_report_column_spacing))s"
-	a='Action (result)'
-	printf "%-${r_report_qpkg_action_column_width}s" "$a:"
-
-	# column 4: package version
-	printf "%$((r_report_column_spacing))s"
-	a='QPKG version'
-	QPKGs-ISupgradable.IsAny && a+=" ($(TextBrightOrange new))"
-	printf "%-${r_report_qpkg_version_column_width}s" "$a:"
-
-	# column 5: application version
-	printf "%$((r_report_column_spacing))s"
-	a='Appl. version'
-	printf "%-${r_report_qpkg_appl_version_column_width}s" "$a:"
-
-	# column 6: package installation path
-	printf "%$((r_report_column_spacing))s"
-	a='Location'
-	printf "%-${r_report_qpkg_path_column_width}s" "$a:"
+	if OsIsSupportAutowidthTableColumns; then
+		printf '%s' "QPKG name:|Status:|Action (result):|$a:|Appl. version:|Location:"
+	else
+		GenerateReportLineItem 'QPKG name:' "$r_report_qpkg_name_column_width"
+		GenerateReportLineItem 'Status:' "$r_report_qpkg_status_column_width"
+		GenerateReportLineItem 'Action (result):' "$r_report_qpkg_action_column_width"
+		GenerateReportLineItem "$a:" "$r_report_qpkg_version_column_width"
+		GenerateReportLineItem 'Appl. version:' "$r_report_qpkg_appl_version_column_width"
+		GenerateReportLineItem 'Location:' "$r_report_qpkg_path_column_width"
+	fi
 
 	printf '\n'
 
 	}
 
-GenerateStatusReportDataLine()
+_GenerateStatusReportDataLine_()
 	{
 
 	# * This function runs asynchronously *
@@ -4812,13 +4882,13 @@ GenerateStatusReportDataLine()
 
 				case $result in
 					aborted|failed)
-						action_msg+=" ($(TextBrightRed "$result"))"
+						action_msg+=' '$(Parenthesise "$(TextBrightRed "$result")")
 						;;
 					in-progress)
-						action_msg+=" ($(TextBrightOrange "$result"))"
+						action_msg+=' '$(Parenthesise "$(TextBrightOrange "$result")")
 						;;
 					ok)
-						action_msg+=" ($(TextBrightGreen "$(Uppercase "$result")"))"
+						action_msg+=' '$(Parenthesise "$(TextBrightGreen "$(Uppercase "$result")")")
 				esac
 			else
 				action=unsupported
@@ -4888,7 +4958,7 @@ GenerateStatusReportDataLine()
 			if ! QpkgIsDatabaseArchOK; then
 				status+='incompatible architecture'
 			elif ! QpkgIsDatabaseMinOSVerOk || ! QpkgIsDatabaseMaxOSVerOk; then
-				status+="incompatible $(OsGetQnapOS)"
+				status+='incompatible '$(OsGetQnapOS)
 			elif ! QpkgIsDatabaseMinRAMOk; then
 				status+='insufficient RAM installed'
 			else
@@ -4921,24 +4991,24 @@ GenerateStatusReportDataLine()
 			# Assign highlighting earlier than-usual as each status can have a different highlight.
 
 			if QPKGs-ISenabled.Exist "$qpkg_name"; then
-				status+=" $(TextBrightGreen enabled)"
+				status+=' '$(TextBrightGreen enabled)
 				/bin/touch "$r_report_flags_path"/state-enabled
 			else
-				status+=" $(TextBrightRed disabled)"
+				status+=' '$(TextBrightRed disabled)
 				/bin/touch "$r_report_flags_path"/state-disabled
 			fi
 
 			if QPKGs-ISactive.Exist "$qpkg_name"; then
-				status+=" $(TextBrightGreen active)"
+				status+=' '$(TextBrightGreen active)
 				/bin/touch "$r_report_flags_path"/status-active
 			elif QPKGs-ISslow.Exist "$qpkg_name"; then
-				status+=" $(TextBrightOrange slow)"
+				status+=' '$(TextBrightOrange slow)
 				/bin/touch "$r_report_flags_path"/status-slow
 			elif QPKGs-ISNTactive.Exist "$qpkg_name"; then
-				status+=" $(TextBrightRed inactive)"
+				status+=' '$(TextBrightRed inactive)
 				/bin/touch "$r_report_flags_path"/status-inactive
 			else
-				status+=" $(TextBrightOrange unknown)"
+				status+=' '$(TextBrightOrange unknown)
 				/bin/touch "$r_report_flags_path"/status-unknown
 			fi
 
@@ -4951,67 +5021,61 @@ GenerateStatusReportDataLine()
 	esac
 
 	if QPKGs-ISupgradable.Exist "$qpkg_name"; then
-		ver_msg+=" ($(TextBrightOrange "$(QpkgGetDatabaseVer)"))"
+		ver_msg+=' '$(Parenthesise "$(TextBrightOrange "$(QpkgGetDatabaseVer)")")
 		/bin/touch "$r_report_flags_path"/status-upgradable
 	fi
 
 	if OsIsSupportAutowidthTableColumns; then
-		echo "$name_msg|$status_msg|$action_msg|$ver_msg|$app_ver_msg|$path_msg"
+		printf '%s' "$name_msg|$status_msg|$action_msg|$ver_msg|$app_ver_msg|$path_msg"
 	else
-		# column 1: package name.
-		printf "%-$((r_report_qpkg_name_column_width+$(LenANSIDiff "$name_msg")))s" "$name_msg"
-
-		# column 2: package statuses
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_lazy_column_width+$(LenANSIDiff "$status_msg")))s" "$status_msg"
-
-		# column 3: package action and result
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_lazy_column_width+$(LenANSIDiff "$action_msg")))s" "$action_msg"
-
-		# column 4: package version
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_lazy_column_width+$(LenANSIDiff "$ver_msg")))s" "$ver_msg"
-
-		# column 5: application version
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_lazy_column_width+$(LenANSIDiff "$app_ver_msg")))s" "$app_ver_msg"
-
-		# column 6: package installation path
-	 	printf "%$((r_report_column_spacing))s"
-	 	printf "%-$((r_report_qpkg_path_column_width+$(LenANSIDiff "$path_msg")))s" "$path_msg"
-
-	 	printf '\n'
+		GenerateReportLineItem "$name_msg" "$r_report_qpkg_name_column_width"
+		GenerateReportLineItem "$status_msg" "$r_report_qpkg_status_column_width"
+		GenerateReportLineItem "$action_msg" "$r_report_qpkg_action_column_width"
+		GenerateReportLineItem "$ver_msg" "$r_report_qpkg_version_column_width"
+		GenerateReportLineItem "$app_ver_msg" "$r_report_qpkg_appl_version_column_width"
+		GenerateReportLineItem "$path_msg" "$r_report_qpkg_path_column_width"
 	fi
+
+	printf '\n'
 
 	}
 
 GenerateReposReportTitleLine()
 	{
 
-	local a=''
+	# Inputs: (global)
+	#	$r_report_qpkg_install_date_column_width
+	#	$r_report_qpkg_name_column_width
+	#	$r_report_qpkg_repo_column_width
 
-	# column 1: package name.
-	a="QPKG name:"
-	printf "%-$((r_report_qpkg_name_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 2: package repository
-	a="Repository:"
-	printf "%-$((r_report_qpkg_repo_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 3: package installation date
-	a="Install date:"
-	printf "%-$((r_report_qpkg_install_date_column_width+2+$(LenANSIDiff "$a")))s" "$a"
+	if OsIsSupportAutowidthTableColumns; then
+		printf 'QPKG name:|Repository:|Install date:'
+	else
+		GenerateReportLineItem 'QPKG name:' "$r_report_qpkg_name_column_width"
+		GenerateReportLineItem 'Repository:' "$r_report_qpkg_repo_column_width"
+		GenerateReportLineItem 'Install date:' "$r_report_qpkg_install_date_column_width"
+	fi
 
 	printf '\n'
 
 	}
 
-GenerateReposReportDataLine()
+_GenerateReposReportDataLine_()
 	{
+
+	# * This function runs asynchronously *
 
 	# Inputs: (global)
 	# 	$qpkg_name
+	#	$r_chars_alert
+	#	$r_chars_attention
+	#	$r_chars_blank
+	#	$r_chars_normal
+	#	$r_report_column_spacing
+	#	$r_report_flags_path
+	#	$r_report_qpkg_install_date_column_width
+	#	$r_report_qpkg_name_column_width
+	#	$r_report_qpkg_repo_column_width
 
 	# Outputs: (local)
 	# 	stdout = single report line with data fields.
@@ -5088,7 +5152,7 @@ GenerateReposReportDataLine()
 			if ! QpkgIsDatabaseArchOK; then
 				install_date='incompatible architecture'
 			elif ! QpkgIsDatabaseMinOSVerOk; then
-				install_date="incompatible $(OsGetQnapOS)"
+				install_date='incompatible '$(OsGetQnapOS)
 			elif ! QpkgIsDatabaseMinRAMOk; then
 				install_date='insufficient RAM installed'
 			else
@@ -5101,46 +5165,38 @@ GenerateReposReportDataLine()
 	esac
 
 	if OsIsSupportAutowidthTableColumns; then
-		echo "$name_msg|$assigned_repo_msg|$install_date_msg"
+		printf '%s' "$name_msg|$assigned_repo_msg|$install_date_msg"
 	else
-		# column 1: package name.
-		printf "%-$((r_report_qpkg_name_column_width+$(LenANSIDiff "$name_msg")))s" "$name_msg"
-
-		# column 2: package repository
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_qpkg_repo_column_width+$(LenANSIDiff "$assigned_repo_msg")))s" "$assigned_repo_msg"
-
-		# column 3: package installation date
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_qpkg_install_date_column_width+$(LenANSIDiff "$install_date_msg")))s" "$install_date_msg"
-
-		printf '\n'
+		GenerateReportLineItem "$name_msg" "$r_report_qpkg_name_column_width"
+		GenerateReportLineItem "$assigned_repo_msg" "$r_report_qpkg_repo_column_width"
+		GenerateReportLineItem "$install_date_msg" "$r_report_qpkg_install_date_column_width"
 	fi
+
+	printf '\n'
 
 	}
 
 GenerateAbsReportTitleLine()
 	{
 
-	local a=''
+	# Inputs: (global)
+	#	$r_report_qpkg_abbreviations_column_width
+	#	$r_report_qpkg_is_installed_column_width
+	#	$r_report_qpkg_name_column_width
 
-	# column 1: package name.
-	a='QPKG name:'
-	printf "%-$((r_report_qpkg_name_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 2: QPKG is installed
-	a='Installed?'
-	printf "%-$((r_report_qpkg_is_installed_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 3: package abbreviations
-	a='Acceptable QPKG name abbreviations and aliases:'
-	printf "%-$((r_report_qpkg_abbreviations_column_width+2+$(LenANSIDiff "$a")))s" "$a"
+	if OsIsSupportAutowidthTableColumns; then
+		printf 'QPKG name:|Installed?|Acceptable QPKG name abbreviations and aliases:'
+	else
+		GenerateReportLineItem 'QPKG name:' "$r_report_qpkg_name_column_width"
+		GenerateReportLineItem 'Installed?' "$r_report_qpkg_is_installed_column_width"
+		GenerateReportLineItem 'Acceptable QPKG name abbreviations and aliases:' "$r_report_qpkg_abbreviations_column_width"
+	fi
 
 	printf '\n'
 
 	}
 
-GenerateAbsReportDataLine()
+_GenerateAbsReportDataLine_()
 	{
 
 	# * This function runs asynchronously *
@@ -5172,11 +5228,11 @@ GenerateAbsReportDataLine()
 			;;
 		mute)
 			if ! QpkgIsDatabaseArchOK "$qpkg_name"; then
-				abs_msg="${r_chars_alert}incompatible architecture"
+				abs_msg=$r_chars_alert'incompatible architecture'
 			elif ! QpkgIsDatabaseMinOSVerOk "$qpkg_name"; then
-				abs_msg="${r_chars_alert}incompatible $(OsGetQnapOS) version"
+				abs_msg=$r_chars_alert"incompatible $(OsGetQnapOS) version"
 			elif ! QpkgIsDatabaseMinRAMOk "$qpkg_name"; then
-				abs_msg="${r_chars_alert}insufficient RAM installed"
+				abs_msg=$r_chars_alert'insufficient RAM installed'
 			else
 				abs_msg=${r_chars_normal}$(AddSeparators "$(QpkgGetDatabaseAbbrvs "$qpkg_name")")
 			fi
@@ -5192,74 +5248,52 @@ GenerateAbsReportDataLine()
 	esac
 
 	if OsIsSupportAutowidthTableColumns; then
-		echo "$name_msg|$installed_msg|$abs_msg"
+		printf '%s' "$name_msg|$installed_msg|$abs_msg"
 	else
-		# column 1: package name.
-		printf "%-$((r_report_qpkg_name_column_width+$(LenANSIDiff "$name_msg")))s" "$name_msg"
-
-		# column 2: package is installed?
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_qpkg_is_installed_column_width+$(LenANSIDiff "$installed_msg")))s" "$installed_msg"
-
-		# column 3: package abbreviations
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_qpkg_abbreviations_column_width+$(LenANSIDiff "$abs_msg")))s" "$abs_msg"
-
-		printf '\n'
+		GenerateReportLineItem "$name_msg" "$r_report_qpkg_name_column_width"
+		GenerateReportLineItem "$installed_msg" "$r_report_qpkg_is_installed_column_width"
+		GenerateReportLineItem "$abs_msg" "$r_report_qpkg_abbreviations_column_width"
 	fi
+
+	printf '\n'
 
 	}
 
 GenerateDepsReportTitleLine()
 	{
 
-	local a=''
+	# Inputs: (global)
+	#	$r_report_lazy_column_width
+	#	$r_report_qpkg_arch_column_width
+	#	$r_report_qpkg_dependencies_column_width
+	#	$r_report_qpkg_is_enabled_column_width
+	#	$r_report_qpkg_is_installed_column_width
+	#	$r_report_qpkg_is_managed_column_width
+	#	$r_report_qpkg_max_os_version_column_width
+	#	$r_report_qpkg_min_os_version_column_width
+	#	$r_report_qpkg_min_ram_column_width
+	#	$r_report_qpkg_name_column_width
 
-	# column 1: package name.
-	a='QPKG name:'
-	printf "%-$((r_report_qpkg_name_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 2: package dependencies.
-	a='Dependencies:'
-	printf "%-$((r_report_qpkg_dependencies_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 3: QPKG is installed?
-	a='Installed?'
-	printf "%-$((r_report_qpkg_is_installed_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 4: QPKG is enabled?
-	a='Enabled?'
-	printf "%-$((r_report_qpkg_is_enabled_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 5: QPKG is managed by sherpa?
-	a='Managed?'
-	printf "%-$((r_report_qpkg_is_managed_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 6: minimum NAS RAM required.
-	a='Min. RAM:'
-	printf "%-$((r_report_qpkg_min_ram_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 7: minimum OS fimware version supported.
-	a='Min. OS:'
-	printf "%-$((r_report_qpkg_min_os_version_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 8: maximum OS fimware version supported.
-	a='Max. OS:'
-	printf "%-$((r_report_qpkg_max_os_version_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 9: arch is compatible?
-	a='Supported arch?'
-	printf "%-$((r_report_qpkg_arch_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 10: installed QPKG author
-	a='Installed QPKG author:'
-	printf "%-$((r_report_lazy_column_width+2+$(LenANSIDiff "$a")))s" "$a"
+	if OsIsSupportAutowidthTableColumns; then
+		printf 'QPKG name:|Dependencies:|Installed?|Enabled?|Managed?|Min. RAM:|Min. OS:|Max. OS:|Supported arch?|Installed QPKG author:'
+	else
+		GenerateReportLineItem 'QPKG name:' "$r_report_qpkg_name_column_width"
+		GenerateReportLineItem 'Dependencies:' "$r_report_qpkg_dependencies_column_width"
+		GenerateReportLineItem 'Installed?' "$r_report_qpkg_is_installed_column_width"
+		GenerateReportLineItem 'Enabled?' "$r_report_qpkg_is_enabled_column_width"
+		GenerateReportLineItem 'Managed?' "$r_report_qpkg_is_managed_column_width"
+		GenerateReportLineItem 'Min. RAM:' "$r_report_qpkg_min_ram_column_width"
+		GenerateReportLineItem 'Min. OS:' "$r_report_qpkg_min_os_version_column_width"
+		GenerateReportLineItem 'Max. OS:' "$r_report_qpkg_max_os_version_column_width"
+		GenerateReportLineItem 'Supported arch?' "$r_report_qpkg_arch_column_width"
+		GenerateReportLineItem 'Installed QPKG author:' "$r_report_lazy_column_width"
+	fi
 
 	printf '\n'
 
 	}
 
-GenerateDepsReportDataLine()
+_GenerateDepsReportDataLine_()
 	{
 
 	# * This function runs asynchronously *
@@ -5688,102 +5722,58 @@ GenerateDepsReportDataLine()
 	fi
 
 	if OsIsSupportAutowidthTableColumns; then
-		echo "$name_msg|$deps_msg|$installed_msg|$enabled_msg|$managed_msg|$min_ram_msg|$min_os_msg|$max_os_msg|$arch_msg|$author_msg"
+		printf '%s' "$name_msg|$deps_msg|$installed_msg|$enabled_msg|$managed_msg|$min_ram_msg|$min_os_msg|$max_os_msg|$arch_msg|$author_msg"
 	else
-		# column 1: package name.
-		printf "%-$((r_report_qpkg_name_column_width+$(LenANSIDiff "$name_msg")))s" "$name_msg"
-
-		# column 2: package dependencies.
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_qpkg_dependencies_column_width+$(LenANSIDiff "$deps_msg")))s" "$deps_msg"
-
-		# column 3: package is installed?
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_qpkg_is_installed_column_width+$(LenANSIDiff "$installed_msg")))s" "$installed_msg"
-
-		# column 4: package is enabled?
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_qpkg_is_enabled_column_width+$(LenANSIDiff "$enabled_msg")))s" "$enabled_msg"
-
-		# column 5: package is managed by sherpa?
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_qpkg_is_managed_column_width+$(LenANSIDiff "$managed_msg")))s" "$managed_msg"
-
-		# column 6: minimum NAS RAM required.
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_qpkg_min_ram_column_width+$(LenANSIDiff "$min_ram_msg")))s" "$min_ram_msg"
-
-		# column 7: minimum OS fimware version supported.
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_qpkg_min_os_version_column_width+$(LenANSIDiff "$min_os_msg")))s" "$min_os_msg"
-
-		# column 8: maximum OS fimware version supported.
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_qpkg_max_os_version_column_width+$(LenANSIDiff "$max_os_msg")))s" "$max_os_msg"
-
-		# column 9: NAS arch is compatible?
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_qpkg_arch_column_width+$(LenANSIDiff "$arch_msg")))s" "$arch_msg"
-
-		# column 10: installed QPKG author.
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_lazy_column_width+$(LenANSIDiff "$author_msg")))s" "$author_msg"
-
-		printf '\n'
+		GenerateReportLineItem "$name_msg" "$r_report_qpkg_name_column_width"
+		GenerateReportLineItem "$deps_msg" "$r_report_qpkg_dependencies_column_width"
+		GenerateReportLineItem "$installed_msg" "$r_report_qpkg_is_installed_column_width"
+		GenerateReportLineItem "$enabled_msg" "$r_report_qpkg_is_enabled_column_width"
+		GenerateReportLineItem "$managed_msg" "$r_report_qpkg_is_managed_column_width"
+		GenerateReportLineItem "$min_ram_msg" "$r_report_qpkg_min_ram_column_width"
+		GenerateReportLineItem "$min_os_msg" "$r_report_qpkg_min_os_version_column_width"
+		GenerateReportLineItem "$max_os_msg" "$r_report_qpkg_max_os_version_column_width"
+		GenerateReportLineItem "$arch_msg" "$r_report_qpkg_arch_column_width"
+		GenerateReportLineItem "$author_msg" "$r_report_lazy_column_width"
 	fi
+
+	printf '\n'
 
 	}
 
 GenerateFeaturesReportTitleLine()
 	{
 
-	local a=''
+	# Inputs: (global)
+	#	$r_report_lazy_column_width
+	#	$r_report_qpkg_active_test_builtin_column_width
+	#	$r_report_qpkg_auto_update_column_width
+	#	$r_report_qpkg_is_compatible_column_width
+	#	$r_report_qpkg_name_column_width
+	#	$r_report_qpkg_tier_column_width
+	#	$r_report_qpkg_supports_backup_column_width
+	#	$r_report_qpkg_supports_clean_column_width
+	#	$r_report_qpkg_supports_start_to_update_column_width
 
-	# column 1: package name.
-	a='QPKG name:'
-	printf "%-$((r_report_qpkg_name_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 2: package supports `backup` action?
-	a='CanBack?'
-	printf "%-$((r_report_qpkg_supports_backup_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 3: package supports `clean` action?
-	a='CanClean?'
-	printf "%-$((r_report_qpkg_supports_clean_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 4: package supports restart-to-update application action?
-	a='StartUpd?'
-	printf "%-$((r_report_qpkg_supports_start_to_update_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 5: package is set to auto-update on restart?
-	a='AutoUpd?'
-	printf "%-$((r_report_qpkg_auto_update_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 6: package active test is builtin?
-	a='LiveTest?'
-	printf "%-$((r_report_qpkg_active_test_builtin_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 7: package is independent?
-	a='Independent?'
-	printf "%-$((r_report_qpkg_tier_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 8: NAS arch is compatible?
-	a='ArchCompat?'
-	printf "%-$((r_report_qpkg_is_compatible_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 9: QPKG is sherpa-compatible?
-	a='Enhanced?'
-	printf "%-$((r_report_lazy_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 10: QPKG unpacks itself to unique path?
-	a='UniqueUnpack?'
-	printf "%-$((r_report_lazy_column_width+2+$(LenANSIDiff "$a")))s" "$a"
+	if OsIsSupportAutowidthTableColumns; then
+		printf 'QPKG name:|CanBack?|CanClean?|StartUpd?|AutoUpd?|LiveTest?|Independent?|ArchCompat?|Enhanced?|UniqueUnpack?'
+	else
+		GenerateReportLineItem 'QPKG name:' "$r_report_qpkg_name_column_width"
+		GenerateReportLineItem 'CanBack?' "$r_report_qpkg_supports_backup_column_width"
+		GenerateReportLineItem 'CanClean?' "$r_report_qpkg_supports_clean_column_width"
+		GenerateReportLineItem 'StartUpd?' "$r_report_qpkg_supports_start_to_update_column_width"
+		GenerateReportLineItem 'AutoUpd?' "$r_report_qpkg_auto_update_column_width"
+		GenerateReportLineItem 'LiveTest?' "$r_report_qpkg_active_test_builtin_column_width"
+		GenerateReportLineItem 'Independent?' "$r_report_qpkg_tier_column_width"
+		GenerateReportLineItem 'ArchCompat?' "$r_report_qpkg_is_compatible_column_width"
+		GenerateReportLineItem 'Enhanced?' "$r_report_lazy_column_width"
+		GenerateReportLineItem 'UniqueUnpack?' "$r_report_lazy_column_width"
+	fi
 
 	printf '\n'
 
 	}
 
-GenerateFeaturesReportDataLine()
+_GenerateFeaturesReportDataLine_()
 	{
 
 	# * This function runs asynchronously *
@@ -5997,81 +5987,63 @@ GenerateFeaturesReportDataLine()
 	fi
 
 	if OsIsSupportAutowidthTableColumns; then
-		echo "$name_msg|$backup_msg|$clean_msg|$restart_to_update_msg|$autoupdate_msg|$active_test_msg|$independent_msg|$arch_compatible_msg|$sherpa_compatible_msg|$uniqueunpack_msg"
+		printf '%s' "$name_msg|$backup_msg|$clean_msg|$restart_to_update_msg|$autoupdate_msg|$active_test_msg|$independent_msg|$arch_compatible_msg|$sherpa_compatible_msg|$uniqueunpack_msg"
 	else
-		# column 1: package name.
-		printf "%-$((r_report_qpkg_name_column_width+$(LenANSIDiff "$name_msg")))s" "$name_msg"
-
-		# column 2: package supports `backup` action?
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_qpkg_supports_backup_column_width+$(LenANSIDiff "$backup_msg")))s" "$backup_msg"
-
-		# column 3: package supports `clean` action?
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_qpkg_supports_clean_column_width+$(LenANSIDiff "$clean_msg")))s" "$clean_msg"
-
-		# column 4: package supports restart-to-update application action?
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_qpkg_supports_start_to_update_column_width+$(LenANSIDiff "$restart_to_update_msg")))s" "$restart_to_update_msg"
-
-		# column 5: package is set to auto-update on restart?
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_qpkg_auto_update_column_width+$(LenANSIDiff "$autoupdate_msg")))s" "$autoupdate_msg"
-
-		# column 6: package active test is builtin?
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_qpkg_active_test_builtin_column_width+$(LenANSIDiff "$active_test_msg")))s" "$active_test_msg"
-
-		# column 7: package is independent?
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_qpkg_tier_column_width+$(LenANSIDiff "$independent_msg")))s" "$independent_msg"
-
-		# column 8: NAS arch is compatible?
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_qpkg_is_compatible_column_width+$(LenANSIDiff "$arch_compatible_msg")))s" "$arch_compatible_msg"
-
-		# column 9: QPKG is sherpa-compatible?
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_lazy_column_width+$(LenANSIDiff "$sherpa_compatible_msg")))s" "$sherpa_compatible_msg"
-
-		# column 10: QPKG will unpack to unique path?
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_lazy_column_width+$(LenANSIDiff "$uniqueunpack_msg")))s" "$uniqueunpack_msg"
-
-		printf '\n'
+		GenerateReportLineItem "$name_msg" "$r_report_qpkg_name_column_width"
+		GenerateReportLineItem "$backup_msg" "$r_report_qpkg_supports_backup_column_width"
+		GenerateReportLineItem "$clean_msg" "$r_report_qpkg_supports_clean_column_width"
+		GenerateReportLineItem "$restart_to_update_msg" "$r_report_qpkg_supports_start_to_update_column_width"
+		GenerateReportLineItem "$autoupdate_msg" "$r_report_qpkg_auto_update_column_width"
+		GenerateReportLineItem "$active_test_msg" "$r_report_qpkg_active_test_builtin_column_width"
+		GenerateReportLineItem "$independent_msg" "$r_report_qpkg_tier_column_width"
+		GenerateReportLineItem "$arch_compatible_msg" "$r_report_qpkg_is_compatible_column_width"
+		GenerateReportLineItem "$sherpa_compatible_msg" "$r_report_lazy_column_width"
+		GenerateReportLineItem "$uniqueunpack_msg" "$r_report_lazy_column_width"
 	fi
+
+	printf '\n'
 
 	}
 
 GenerateBacksReportTitleLine()
 	{
 
-	local a=''
+	# Inputs: (global)
+	#	$r_report_file_bytes_column_width
+	#	$r_report_file_change_date_column_width
+	#	$r_report_file_name_column_width
 
-	# column 1: backup filename
-	a='Backup file:'
-	printf "%-$((r_report_file_name_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 2: filesize in bytes
-	a='Size in bytes:'
-	printf "%-$((r_report_file_bytes_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 3: last backup date
-	a='Backup date:'
-	printf "%-$((r_report_file_change_date_column_width+2+$(LenANSIDiff "$a")))s" "$a"
+	if OsIsSupportAutowidthTableColumns; then
+		printf 'Backup file:|Size in bytes:|Backup date:'
+	else
+		GenerateReportLineItem 'Backup file:' "$r_report_file_name_column_width"
+		GenerateReportLineItem 'Size in bytes:' "$r_report_file_bytes_column_width"
+		GenerateReportLineItem 'Backup date:' "$r_report_file_change_date_column_width"
+	fi
 
 	printf '\n'
 
 	}
 
-GenerateBacksReportItemLine()
+_GenerateBacksReportItemLine_()
 	{
 
-	# Inputs:
+	# * This function runs asynchronously *
+
+	# Inputs: (local)
 	#	$1 = last backup date in epoch seconds
 	#	$2 = backup filename
 	#	$3 = filesize in bytes
 	#	$4 = age threshold to highlight (optional) '1 week ago' (default)		e.g. '2 days ago', '2 weeks ago', etc ...
+
+	# Inputs: (global)
+	#	$r_chars_alert
+	#	$r_chars_blank
+	#	$r_chars_normal
+	#	$r_report_file_bytes_column_width
+	#	$r_report_file_change_date_column_width
+	#	$r_report_file_name_column_width
+	#	$r_report_flags_path
 
 	local epoch_time=${1:-0}
 	local epoch_time_msg=$r_chars_normal
@@ -6104,53 +6076,71 @@ GenerateBacksReportItemLine()
 	esac
 
 	if OsIsSupportAutowidthTableColumns; then
-		echo "$file_name_msg|$file_bytes_msg|$epoch_time_msg"
+		printf '%s' "$file_name_msg|$file_bytes_msg|$epoch_time_msg"
 	else
-		# column 1: backup filename
-		printf "%-$((r_report_file_name_column_width+$(LenANSIDiff "$file_name_msg")))s" "$file_name_msg"
-
-		# column 2: filesize in bytes
-		printf "%$((r_report_column_spacing))s"
-		printf "%$((r_report_file_bytes_column_width+$(LenANSIDiff "$file_bytes_msg")))s" "$file_bytes_msg "	# append 1 x whitespace char to force right-justified numbers to the left a bit. Looks nicer.
-
-		# column 3: last backup date
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_file_change_date_column_width+$(LenANSIDiff "$epoch_time_msg")))s" "$epoch_time_msg"
-
-		printf '\n'
+		GenerateReportLineItem "$file_name_msg" "$r_report_file_name_column_width"
+		GenerateReportLineItem "$file_bytes_msg" "$r_report_file_bytes_column_width"
+		GenerateReportLineItem "$epoch_time_msg" "$r_report_file_change_date_column_width"
 	fi
+
+	printf '\n'
+
+	}
+
+GenerateReportLineItem()
+	{
+
+	# Inputs: (local)
+	#	$1 = string: field text with possible ANSI codes.
+	#	$2 = integer: field column width.
+
+	# Inputs: (global)
+	#	$r_report_column_spacing
+
+	[[ -n ${1:-} && -n ${2:-} ]] || return
+	[[ $2 -ge 0 ]] || return
+
+	printf "%-$(($(LenANSIDiff "$1")+$2+r_report_column_spacing))s" "$1"
 
 	}
 
 DisplayAsHelpTitle()
 	{
 
-	# Inputs:
-	#	$1 = text
+	# Inputs: (local)
+	#	$1 = string: text
 
-	printf "\n${r_chars_bullet}%s\n" "$(Capitalise "${1:-}" | tr -s ' ')"
+	# Inputs: (global)
+	#	$r_chars_bullet
+
+	printf '\n%s\n' "${r_chars_bullet}$(Capitalise "${1:-}" | tr -s ' ')"
 
 	}
 
 DisplayAsHelpTitleHighlighted()
 	{
 
-	# Inputs:
-	#	$1 = text
+	# Inputs: (local)
+	#	$1 = string: text
 
-	# shellcheck disable=2059
-	printf "\n$(TextBrightOrange "${r_chars_bullet}%s\n")" "$(Capitalise "${1:-}")"
+	# Inputs: (global)
+	#	$r_chars_bullet
+
+	printf '\n%s\n' "$(TextBrightOrange "${r_chars_bullet}$(Capitalise "${1:-}")")"
 
 	}
 
 DisplayAsIndentActionResultDurationReason()
 	{
 
-	# Inputs:
+	# Inputs: (local)
 	#	$1 = action
 	#	$2 = result message
 	#	$3 = duration in milliseconds (optional)
 	#	$4 = reason message (optional)
+
+	# Inputs: (global)
+	#	$r_report_action_result_indent
 
 	[[ -n ${1:-} && -n ${2:-} ]] || return
 
@@ -6173,9 +6163,9 @@ DisplayAsIndentActionResultDurationReason()
 	printf "%${r_report_action_result_indent}s" ''
 
 	if [[ -z ${4:-} ]]; then
-		printf "%s %s%s" "$(Lowercase "$action")" "$2" "$([[ -n $duration ]] && printf ' in %s' "$duration")"
+		printf '%s %s%s' "$(Lowercase "$action")" "$2" "$([[ -n $duration ]] && printf ' in %s' "$duration")"
 	else
-		printf "%s %s%s (%s)" "$(Lowercase "$action")" "$2" "$([[ -n $duration ]] && printf ' in %s' "$duration")" "$4"
+		printf '%s %s%s (%s)' "$(Lowercase "$action")" "$2" "$([[ -n $duration ]] && printf ' in %s' "$duration")" "$4"
 	fi
 
 	printf '\n'
@@ -6186,6 +6176,12 @@ EraseThisLine()
 	{
 
 	# Reset cursor to start-of-line, erasing entire line, and stay on this line.
+
+	# Inputs: (global)
+	#	$useropt_verbose
+
+	# Outputs: (global)
+	#	$useropt_verbose
 
 	[[ ${useropt_verbose:=false} = false ]] && printf '\033[2K\r'
 
@@ -6212,6 +6208,9 @@ DisplayWait()
 ShowHelpActions()
 	{
 
+	# Inputs: (global)
+	#	$r_report_output_pathfile
+
 	DisableDebugToArchiveAndFile
 	DisplayProcReport actions
 
@@ -6237,18 +6236,13 @@ ShowHelpActions()
 		DisplayAsProjSynIndentExam '' "add $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam 'show application backup files' 'show backups'
 		DisplayAsProjSynIndentExam '' b
-# 		DisplayAsProjSynIndentExam "list $(ShowAsTitleName) object version numbers" 'list versions'
 		DisplayAsProjSynIndentExam 'reactivate these packages (this will upgrade internal applications where-supported)' "reactivate $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam '' "restart $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam "reassign packages to $(ShowAsTitleName). Detach packages previously installed via an online repository from further management by that repository" "reassign $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam "rebuild these packages ('install' packages, then 'restore' configuration backups)" "rebuild $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam 'reinstall these packages' "reinstall $(ShowAsPackages)"
-# 		DisplayAsProjSynIndentExam 'generate QPKG repository assignments report' repos
-# 		DisplayAsProjSynIndentExam '' r
 		DisplayAsProjSynIndentExam 'restore these application configurations from the backup location' "restore $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam 'digitally "sign" these QPKGs' "sign $(ShowAsPackages)"
-# 		DisplayAsProjSynIndentExam 'generate QPKG status report' status
-# 		DisplayAsProjSynIndentExam '' s
 		DisplayAsProjSynIndentExam 'uninstall these packages' "uninstall $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam '' "remove $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam '' "rm $(ShowAsPackages)"
@@ -6270,6 +6264,9 @@ ShowHelpActions()
 
 ShowHelpActionsAll()
 	{
+
+	# Inputs: (global)
+	#	$r_report_output_pathfile
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport 'all actions'
@@ -6313,6 +6310,9 @@ ShowHelpActionsAll()
 ShowHelpBackupLocation()
 	{
 
+	# Inputs: (global)
+	#	$r_qpkg_bu_path
+
 	DisplayAsSynExam 'the backup location can be accessed by running' "cd $r_qpkg_bu_path"
 
 	return 0
@@ -6330,6 +6330,9 @@ ShowHelpBasic()
 
 ShowHelpBasicExamples()
 	{
+
+	# Inputs: (global)
+	#	$r_report_output_pathfile
 
 		{
 
@@ -6350,6 +6353,9 @@ ShowHelpBasicExamples()
 
 ShowHelpGroups()
 	{
+
+	# Inputs: (global)
+	#	$r_report_output_pathfile
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport groups
@@ -6387,6 +6393,9 @@ ShowHelpGroups()
 ShowHelpIssue()
 	{
 
+	# Inputs: (global)
+	#	$r_log_tail_lines
+
 	DisplayAsHelpTitle "please consider creating a new issue for this on GitHub: $(ShowAsURL 'https://github.com/OneCDOnly/sherpa/issues')"
 	DisplayAsHelpTitle "alternatively, post on the QNAP NAS Community Forum: $(ShowAsURL 'https://forum.qnap.com/viewtopic.php?f=320&t=132373')"
 	DisplayAsProjSynIndentExam "view only the most recent $(ShowAsTitleName) session log" last
@@ -6401,6 +6410,9 @@ ShowHelpIssue()
 ShowHelpLists()
 	{
 
+	# Inputs: (global)
+	#	$r_report_output_pathfile
+
 	DisableDebugToArchiveAndFile
 	DisplayProcReport lists
 
@@ -6409,8 +6421,6 @@ ShowHelpLists()
 		ShowHelpBasic
 		DisplayAsHelpTitle "'list' usage examples:"
 		DisplayAsProjSynIndentExam 'list all available QPKGs' 'list all'
-# 		DisplayAsProjSynIndentExam 'list package backup files' 'list backups'
-# 		DisplayAsProjSynIndentExam '' b
 		DisplayAsProjSynIndentExam 'list only QPKGs that can be installed' 'list installable'
 		DisplayAsProjSynIndentExam '' installable
 		DisplayAsProjSynIndentExam 'list only installed QPKGs' 'list installed'
@@ -6435,6 +6445,9 @@ ShowHelpLists()
 
 ShowHelpShow()
 	{
+
+	# Inputs: (global)
+	#	$r_report_output_pathfile
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport show
@@ -6469,6 +6482,9 @@ ShowHelpShow()
 ShowHelpOptions()
 	{
 
+	# Inputs: (global)
+	#	$r_report_output_pathfile
+
 	DisableDebugToArchiveAndFile
 	DisplayProcReport options
 
@@ -6492,6 +6508,9 @@ ShowHelpOptions()
 ShowHelpPackages()
 	{
 
+	# Inputs: (global)
+	#	$r_report_output_pathfile
+
 	DisableDebugToArchiveAndFile
 	DisplayProcReport packages
 
@@ -6511,6 +6530,10 @@ ShowHelpPackages()
 
 ShowHelpProblems()
 	{
+
+	# Inputs: (global)
+	#	$r_log_tail_lines
+	#	$r_report_output_pathfile
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport problems
@@ -6551,6 +6574,9 @@ ShowHelpProblems()
 ShowHelpUpgrades()
 	{
 
+	# Inputs: (global)
+	#	$r_report_output_pathfile
+
 	DisableDebugToArchiveAndFile
 	DisplayProcReport upgrades
 
@@ -6578,6 +6604,9 @@ ShowHelpUpgrades()
 ShowHelpTips()
 	{
 
+	# Inputs: (global)
+	#	$r_report_output_pathfile
+
 	DisableDebugToArchiveAndFile
 	DisplayProcReport tips
 
@@ -6586,6 +6615,7 @@ ShowHelpTips()
 		ShowHelpBasic
 		DisplayAsHelpTitle 'helpful tips and shortcuts:'
 		DisplayAsProjSynIndentExam "install all available $(ShowAsTitleName) QPKGs" 'install all'
+		DisplayAsProjSynIndentExam "install all installable $(ShowAsTitleName) QPKGs" 'install installable'
 		DisplayAsProjSynIndentExam 'package abbreviations and aliases also work. To see these' 'help abs'
 		DisplayAsProjSynIndentExam '' a
 		DisplayAsProjSynIndentExam 'reactivate all QPKGs (upgrades internal applications where-supported)' 'reactivate all'
@@ -6610,6 +6640,9 @@ ViewLogLast()
 
 	# View only the last session log.
 
+	# Inputs: (global)
+	#	$r_session_last_pathfile
+
 	DisableDebugToArchiveAndFile
 	ExtractPrevSessFromTail
 	EraseThisLine
@@ -6629,6 +6662,9 @@ ViewLogTail()
 	{
 
 	# View only the last session log.
+
+	# Inputs: (global)
+	#	$r_session_tail_pathfile
 
 	DisableDebugToArchiveAndFile
 	ExtractTailFromLog
@@ -6654,6 +6690,12 @@ DisplayFileInViewport()
 	#		= 'linenumbers' : display file contents with line numbers.
 	#		= 'jumptoend'   : display file contents scrolled to the last line.
 	#		= 'wrap'		: wrap lines of text to displayport.
+
+	# Inputs: (global)
+	#	$r_gnu_less_cmd
+	#	$r_sess_columns
+	#	$r_sess_rows
+	#	$useropt_verbose
 
 	local filename=${1:-}
 	local jumptoend=false
@@ -6696,12 +6738,12 @@ DisplayFileInViewport()
 	fi
 
 	if [[ $(/usr/bin/wc -l < "$filename") -ge $r_sess_rows || $(/usr/bin/wc -L < "$filename") -ge $r_sess_columns ]]; then
-		if [[ -e $GNU_LESS_CMD ]]; then
+		if [[ -e $r_gnu_less_cmd ]]; then
 			options='--quit-on-intr --tilde --mouse --RAW-CONTROL-CHARS --shift=4 --redraw-on-quit --quit-if-one-screen'
 			[[ $wraplines = false ]] && options+=' --chop-long-lines'
 			[[ $showlinenumbers = true ]] && options+=' --LINE-NUMBERS'
 			[[ $jumptoend = true ]] && options+=' +G'
-			LESSSECURE=1 ${GNU_LESS_CMD} "$options" --prompt "$prompt" "$filename"
+			LESSSECURE=1 $r_gnu_less_cmd "$options" --prompt "$prompt" "$filename"
 
 			return
 		fi
@@ -6736,6 +6778,12 @@ DisplayFileInViewport()
 PasteLogLast()
 	{
 
+	# Inputs: (global)
+	#	$r_session_last_pathfile
+
+	# Outputs: (global)
+	#	$show_action_results_zero
+
 	local link=''
 
 	DisableDebugToArchiveAndFile
@@ -6745,7 +6793,7 @@ PasteLogLast()
 		if Quiz "Press 'Y' to post the most-recent session in your $(ShowAsTitleName) log to a public pastebin, or any other key to abort"; then
 			ShowAsProc "upload $(ShowAsTitleName) log"
 
-			# with thanks to https://github.com/solusipse/fiche
+			# With thanks to https://github.com/solusipse/fiche
 			link=$(/bin/cat --number "$r_session_last_pathfile" | (exec 3<>/dev/tcp/termbin.com/9999; /bin/cat >&3; /bin/cat <&3; exec 3<&-))
 
 			if [[ $? -eq 0 ]]; then
@@ -6771,6 +6819,13 @@ PasteLogLast()
 PasteLogTail()
 	{
 
+	# Inputs: (global)
+	#	$r_log_tail_lines
+	#	$r_session_tail_pathfile
+
+	# Outputs: (global)
+	#	$show_action_results_zero
+
 	local link=''
 
 	DisableDebugToArchiveAndFile
@@ -6780,7 +6835,7 @@ PasteLogTail()
 		if Quiz "Press 'Y' to post the most-recent $(FormatAsThous "$r_log_tail_lines") lines in your $(ShowAsTitleName) log to a public pastebin, or any other key to abort"; then
 			ShowAsProc "upload $(ShowAsTitleName) log"
 
-			# with thanks to https://github.com/solusipse/fiche
+			# With thanks to https://github.com/solusipse/fiche
 			link=$(/bin/cat --number "$r_session_tail_pathfile" | (exec 3<>/dev/tcp/termbin.com/9999; /bin/cat >&3; /bin/cat <&3; exec 3<&-))
 
 			if [[ $? -eq 0 ]]; then
@@ -6806,8 +6861,11 @@ PasteLogTail()
 GetLogSessStartLine()
 	{
 
-	# Inputs:
+	# Inputs: (local)
 	#	$1 = how many sessions back? (optional) default = 1
+
+	# Inputs: (global)
+	#	$r_session_tail_pathfile
 
 	local -i linenum=$(($(/bin/grep -n 'SCRIPT:.*started:' "$r_session_tail_pathfile" | /usr/bin/tail -n${1:-1} | head -n1 | cut -d':' -f1)-1))
 	[[ $linenum -lt 1 ]] && linenum=1
@@ -6818,8 +6876,11 @@ GetLogSessStartLine()
 GetLogSessFinishLine()
 	{
 
-	# Inputs:
+	# Inputs: (local)
 	#	$1 = how many sessions back? (optional) default = 1
+
+	# Inputs: (global)
+	#	$r_session_tail_pathfile
 
 	local -i linenum=$(($(/bin/grep -n 'SCRIPT:.*finished:' "$r_session_tail_pathfile" | /usr/bin/tail -n${1:-1} | cut -d':' -f1)+2))
 	[[ $linenum -eq 2 ]] && linenum=3
@@ -6830,6 +6891,10 @@ GetLogSessFinishLine()
 ArchiveActiveSessLog()
 	{
 
+	# Inputs: (global)
+	#	$r_session_archive_pathfile
+	#	$sess_active_pathfile
+
 	[[ -n ${sess_active_pathfile:-} && -e $sess_active_pathfile ]] && /bin/cat "$sess_active_pathfile" >> "$r_session_archive_pathfile"
 
 	}
@@ -6838,6 +6903,11 @@ ArchivePriorSessLogs()
 	{
 
 	# Check for incomplete previous session logs (crashed, interrupted?) and save to archive.
+
+	# Inputs: (global)
+	#	$r_session_archive_pathfile
+	#	$r_this_package_path
+	#	$sess_active_pathfile
 
 	local f=''
 
@@ -6853,12 +6923,19 @@ ArchivePriorSessLogs()
 ResetActiveSessLog()
 	{
 
+	# Inputs: (global)
+	#	$sess_active_pathfile
+
 	rm -f "$sess_active_pathfile" 2> /dev/null
 
 	}
 
 ExtractPrevSessFromTail()
 	{
+
+	# Inputs: (global)
+	#	$r_session_last_pathfile
+	#	$r_session_tail_pathfile
 
 	local -i end_line=0
 	local -i old_session=1
@@ -6889,6 +6966,11 @@ ExtractPrevSessFromTail()
 
 ExtractTailFromLog()
 	{
+
+	# Inputs: (global)
+	#	$r_log_tail_lines
+	#	$r_session_archive_pathfile
+	#	$r_session_tail_pathfile
 
 	if [[ -e $r_session_archive_pathfile ]]; then
 		/usr/bin/tail -n${r_log_tail_lines} "$r_session_archive_pathfile" > "$r_session_tail_pathfile"	# Trim main log first so there's less to `grep`.
@@ -6933,6 +7015,26 @@ InitForkCounts()
 
 IncForkProgressIndex()
 	{
+
+	# Inputs: (global)
+	#	$proc_fail_count_path
+	#	$proc_fork_count_path
+	#	$proc_ok_count_path
+	#	$proc_skip_abort_count_path
+	#	$proc_skip_count_path
+	#	$proc_skip_error_count_path
+	#	$proc_skip_ok_count_path
+	#	$progress_index
+
+	# Outputs: (global)
+	#	$proc_fail_pathfile
+	#	$proc_fork_pathfile
+	#	$proc_ok_pathfile
+	#	$proc_skip_abort_pathfile
+	#	$proc_skip_error_pathfile
+	#	$proc_skip_ok_pathfile
+	#	$proc_skip_pathfile
+	#	$progress_index
 
 	local a
 
@@ -6983,35 +7085,45 @@ InitProgress()
 UpdateForkProgress()
 	{
 
-	# All input vars are global.
+	# Inputs: (global)
+	#	$fail_count
+	#	$fork_progress_prefix
+	#	$fork_count
+	#	$ok_count
+	#	$r_inhibit_display_pathfile
+	#	$skip_abort_count
+	#	$skip_count
+	#	$skip_error_count
+	#	$skip_ok_count
+	#	$useropt_verbose
 
 	local a=''
 	local b=''
 
 	RefreshForkCounts
-	[[ $useropt_verbose = false && ! -e $r_inhibit_display_pathfile ]] || return		# Don't display progress, it's difficult to read with so-many other writes to the screen.
+	[[ $useropt_verbose = false && ! -e $r_inhibit_display_pathfile ]] || return		# Don't display progress, difficult to read with so-many other writes to the screen.
 
 	a=$((skip_count+skip_ok_count+skip_error_count+skip_abort_count))
 	b=$(PercFrac "$ok_count" "$a" "$fail_count" "$total_count")
 
 	if [[ $ok_count -gt 0 ]]; then
 		[[ -n $b ]] && b+=', '
-		b+="$(TextBrightGreen "$ok_count") OK"
+		b+=$(TextBrightGreen "$ok_count")' OK'
 	fi
 
 	if [[ $a -gt 0 ]]; then
 		[[ -n $b ]] && b+=', '
-		b+="$(TextBrightOrange "$a") skipped"
+		b+=$(TextBrightOrange "$a")' skipped'
 	fi
 
 	if [[ $fail_count -gt 0 ]]; then
 		[[ -n $b ]] && b+=', '
-		b+="$(TextBrightRed "$fail_count") failed"
+		b+=$(TextBrightRed "$fail_count")' failed'
 	fi
 
 	if [[ $fork_count -gt 0 ]]; then
 		[[ -n $b ]] && b+=', '
-		b+="$(TextBrightYellow "$fork_count") in-progress"
+		b+=$(TextBrightYellow "$fork_count")' in-progress'
 	fi
 
 	[[ -n $b && ! -e $r_inhibit_display_pathfile ]] && ShowAsProc "${fork_progress_prefix:-}" "$b"
@@ -7045,8 +7157,7 @@ ShowQPKGsMissing()
 		packages+=($(QPKGs-ISmissing:Array))
 	fi
 
-	# shellcheck disable=2322
-	for ((i=0; i<=((${#packages[@]}-1)); i++)); do
+	for ((i=0; i<=(${#packages[@]}-1); i++)); do
 		a+=$(TextBrightRed "${packages[$i]}")
 
 		if [[ $((i+1)) -ge $name_limit && $((${#packages[@]}-name_limit)) -gt 0 ]]; then
@@ -7098,8 +7209,7 @@ ShowQPKGsNewVers()
 		packages+=($(QPKGs-ISupgradable:Array))
 	fi
 
-	# shellcheck disable=2322
-	for ((i=0; i<=((${#packages[@]}-1)); i++)); do
+	for ((i=0; i<=(${#packages[@]}-1); i++)); do
 		a+=$(TextBrightOrange "${packages[$i]}")
 
 		if [[ $((i+1)) -ge $name_limit && $((${#packages[@]}-name_limit)) -gt 0 ]]; then
@@ -7116,7 +7226,7 @@ ShowQPKGsNewVers()
 		b='a '
 		c='version is'
 	else
-		c="version$(Pluralise "${#packages[@]}") are"
+		c='versions are'
 	fi
 
 	ShowAsNote "${b}new QPKG $c available for $a"
@@ -7133,7 +7243,6 @@ CheckQPKGsConflicts()
 	local a=''
 
 	if [[ -n ${r_base_qpkg_conflicts_with:-} ]]; then
-		# shellcheck disable=2068
 		for a in "${r_base_qpkg_conflicts_with[@]}"; do
 			if QpkgIsInstalledEnabled "$a"; then
 				ShowAsError "the '$a' QPKG is enabled. $(ShowAsTitleName) is incompatible with this package. Please consider stopping this QPKG in your App Center"
@@ -7151,10 +7260,12 @@ CheckQPKGsConflicts()
 CheckQPKGsWarnings()
 	{
 
+	# Inputs: (global)
+	#	$r_base_qpkg_warnings[]
+
 	local a=''
 
 	if [[ -n ${r_base_qpkg_warnings:-} ]]; then
-		# shellcheck disable=2068
 		for a in "${r_base_qpkg_warnings[@]}"; do
 			if QpkgIsInstalledEnabled "$a"; then
 				ShowAsWarn "the '$a' QPKG is enabled. This may cause problems with $(ShowAsTitleName) applications. Please consider stopping this QPKG in your App Center"
@@ -7170,6 +7281,10 @@ CheckQPKGsWarnings()
 
 ListQPKGsActions()
 	{
+
+	# Inputs: (global)
+	#	$r_qpkg_actions[]
+	#	$useropt_debug
 
 	[[ $useropt_debug = true ]] || return
 
@@ -7212,6 +7327,9 @@ ListQPKGsActionsAll()																						#devdebug
 
 	# Only used when debugging.																				#devdebug
 
+	# Inputs: (global)																						#devdebug
+	#	$r_qpkg_actions[]																					#devdebug
+
 	FuncInit																								#devdebug
 
 	local a=''																								#devdebug
@@ -7234,6 +7352,10 @@ ListQPKGsActionsAll()																						#devdebug
 
 ListIPKsActions()
 	{
+
+	# Inputs: (global)
+	#	$r_ipk_actions[]
+	#	$useropt_debug
 
 	[[ $useropt_debug = true ]] || return
 
@@ -7269,6 +7391,10 @@ ListIPKsActions()
 ListPIPsActions()
 	{
 
+	# Inputs: (global)
+	#	$r_pip_actions[]
+	#	$useropt_debug
+
 	[[ $useropt_debug = true ]] || return
 
 	FuncInit
@@ -7289,6 +7415,13 @@ ListPIPsActions()
 
 ListQPKGsStates()
 	{
+
+	# Inputs: (global)
+	#	$r_qpkg_is_states[]
+	#	$r_qpkg_isnt_states[]
+	#	$r_qpkg_service_results[]
+	#	$r_qpkg_states_transient[]
+	#	$useropt_debug
 
 	[[ $useropt_debug = true ]] || return
 
@@ -7322,7 +7455,6 @@ ListQPKGsStates()
 	done
 
 	for a in "${r_qpkg_states_transient[@]}"; do
-		# shellcheck disable=2043
 		QPKGs-IS${a}.IsAny && DebugQpkg info "IS${a}" "($(QPKGs-IS${a}:Count)) $(QPKGs-IS${a}:ListCSV) "
 	done
 
@@ -7335,13 +7467,22 @@ ListQPKGsStates()
 BuildQPKGsTiers()
 	{
 
-	FuncInit
-
 	# There are three tiers of package: `independent`, `auxiliary` and `dependent`.
 	# ... but only two tiers of QPKG: `independent` and `dependent`.
 
 	# `independent` QPKGs don't depend-on other QPKGs, but may be required for other QPKGs. They should be installed/activated before any `dependent` QPKGs.
 	# `dependent` QPKGs depend-on other QPKGs. They should be installed/activated after all `independent` QPKGs.
+
+	# Inputs: (global)
+	#	$qpkgs_tiers_built
+	#	$r_dependent_qpkgs_list_pathfile
+	#	$r_independent_qpkgs_list_pathfile
+	#	$r_qpkg_name[]
+
+	# Outputs: (global)
+	#	$qpkgs_tiers_built
+
+	FuncInit
 
 	if [[ ${qpkgs_tiers_built:=false} = true ]]; then
 		DebugAsDone "don't build tiers: they're already built"
@@ -7378,6 +7519,13 @@ BuildQPKGsTiers()
 
 InitQPKGsTiers()
 	{
+
+	# Inputs: (global)
+	#	$r_dependent_qpkgs_list_pathfile
+	#	$r_independent_qpkgs_list_pathfile
+
+	# Outputs: (global)
+	#	$qpkgs_tiers_built
 
 	rm -f "$r_dependent_qpkgs_list_pathfile" "$r_independent_qpkgs_list_pathfile" 2> /dev/null
 	qpkgs_tiers_built=false
@@ -7598,7 +7746,16 @@ BuildQPKGsStates()
 InitQPKGsStates()
 	{
 
-	# Clears in-memory state list objects
+	# Clear in-memory state list objects.
+
+	# Inputs: (global)
+	#	$r_qpkg_is_states[]
+	#	$r_qpkg_isnt_states[]
+	#	$r_qpkg_states_path
+	#	$r_qpkg_states_transient[]
+
+	# Outputs: (global)
+	#	$qpkgs_states_built
 
 	LoadObjects || return
 
@@ -7691,7 +7848,7 @@ HelpAbbreviations()
 	FuncInit
 
 	local a=''
-	local f=''
+	local b=''
 	local -i m=0
 	local -i n=0
 
@@ -7707,16 +7864,12 @@ HelpAbbreviations()
 
 		} > "$r_report_output_pathfile"
 
-	if OsIsSupportAutowidthTableColumns; then
-		printf -v a '\n%s\n' 'QPKG name:|Installed?|Acceptable QPKG name abbreviations and aliases:'
-	else
-		printf -v a '\n%s\n' "$(GenerateAbsReportTitleLine)"
-	fi
+	printf -v a '\n%s\n' "$(GenerateAbsReportTitleLine)"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		QpkgSetIndex
-		GenerateAbsReportDataLine > "$r_reports_path/$n" &
+		_GenerateAbsReportDataLine_ > "$r_reports_path/$n" &
 	done
 
 	m=$n
@@ -7725,8 +7878,8 @@ HelpAbbreviations()
 	# Load report lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		f="$r_reports_path/$n"
-		[[ -e $f ]] && printf -v a '%s\n' "$a$(<$f)"		# Add newline to each imported report line.
+		b=$r_reports_path/$n
+		[[ -e $b ]] && printf -v a '%s\n' "$a$(<$b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
 	if [[ -n $a ]]; then
@@ -7752,9 +7905,13 @@ HelpAbbreviations()
 ShowReportBackups()
 	{
 
+	# Inputs: (global)
+	#	$r_gnu_find_cmd
+
 	FuncInit
 
 	local a=''
+	local b=''
 	local epoch_time=0		# Allow float as seconds have a fractional component.
 	local -i file_bytes=0
 	local file_date=''
@@ -7767,19 +7924,15 @@ ShowReportBackups()
 	DisplayProcReport backups
 	ResetReportsPath &> /dev/null
 
-	if OsIsSupportAutowidthTableColumns; then
-		printf -v a '\n%s\n' 'Backup file:|Size in bytes:|Backup date:'
-	else
-		printf -v a '\n%s\n' "$(GenerateBacksReportTitleLine)"
-	fi
+	printf -v a '\n%s\n' "$(GenerateBacksReportTitleLine)"
 
-	if [[ -e $GNU_FIND_CMD ]]; then				# Prefer GNU `find` for this.
+	if [[ -e $r_gnu_find_cmd ]]; then				# Prefer GNU `find` for this.
 		while read -r epoch_time file_name file_bytes; do
 			[[ -z $epoch_time || -z $file_name ]] && break
 
 			((n++))
-			GenerateBacksReportItemLine "$epoch_time" "$file_name" "$file_bytes" "$r_report_highlight_backups_older_than" > "$r_reports_path/$n" &
-		done <<< "$($GNU_FIND_CMD "$r_qpkg_bu_path"/*.config.tar.gz -maxdepth 1 -printf '%C@ %f %s\n' 2> /dev/null | /usr/bin/sort)"
+			_GenerateBacksReportItemLine_ "$epoch_time" "$file_name" "$file_bytes" "$r_report_highlight_backups_older_than" > "$r_reports_path/$n" &
+		done <<< "$($r_gnu_find_cmd "$r_qpkg_bu_path"/*.config.tar.gz -maxdepth 1 -printf '%C@ %f %s\n' 2> /dev/null | /usr/bin/sort)"
 	else										# If GNU `find` isn't available, do-it the hard-way.
 		while read -r file_date file_time file_name file_bytes; do
 			[[ -z $file_date || -z $file_name ]] && break
@@ -7787,7 +7940,7 @@ ShowReportBackups()
 			file_name=$(/usr/bin/basename "$file_name")
 
 			((n++))
-			GenerateBacksReportItemLine "$epoch_time" "$file_name" "$file_bytes" "$r_report_highlight_backups_older_than" > "$r_reports_path/$n" &
+			_GenerateBacksReportItemLine_ "$epoch_time" "$file_name" "$file_bytes" "$r_report_highlight_backups_older_than" > "$r_reports_path/$n" &
 		done <<< "$(cd "$r_qpkg_bu_path" && ls -l1tr --time-style=+"%Y-%m-%d %H:%M:%S" ./*.config.tar.gz 2> /dev/null | /bin/awk '{print $6" "$7" "$8" "$5}')"
 	fi
 
@@ -7797,8 +7950,8 @@ ShowReportBackups()
 	# Load report lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		f="$r_reports_path/$n"
-		[[ -e $f ]] && printf -v a '%s\n' "$a$(<$f)"		# Add newline to each imported report line.
+		b=$r_reports_path/$n
+		[[ -e $b ]] && printf -v a '%s\n' "$a$(<$b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
 	if [[ -n $a ]]; then
@@ -7824,6 +7977,7 @@ ShowReportDependencies()
 	FuncInit
 
 	local a=''
+	local b=''
 	local -i m=0
 	local -i n=0
 
@@ -7831,16 +7985,12 @@ ShowReportDependencies()
 	DisplayProcReport dependency
 	ResetReportsPath &> /dev/null
 
-	if OsIsSupportAutowidthTableColumns; then
-		printf -v a '\n%s\n' 'QPKG name:|Dependencies:|Installed?|Enabled?|Managed?|Min. RAM:|Min. OS:|Max. OS:|Supported arch?|Installed QPKG author:'
-	else
-		printf -v a '\n%s\n' "$(GenerateDepsReportTitleLine)"
-	fi
+	printf -v a '\n%s\n' "$(GenerateDepsReportTitleLine)"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		QpkgSetIndex
-		GenerateDepsReportDataLine > "$r_reports_path/$n" &
+		_GenerateDepsReportDataLine_ > "$r_reports_path/$n" &
 	done
 
 	m=$n
@@ -7849,8 +7999,8 @@ ShowReportDependencies()
 	# Load report lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		f="$r_reports_path/$n"
-		[[ -e $f ]] && printf -v a '%s\n' "$a$(<$f)"		# Add newline to each imported report line.
+		b=$r_reports_path/$n
+		[[ -e $b ]] && printf -v a '%s\n' "$a$(<$b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
 	if [[ -n $a ]]; then
@@ -7877,6 +8027,7 @@ ShowReportFeatures()
 	FuncInit
 
 	local a=''
+	local b=''
 	local -i m=0
 	local -i n=0
 
@@ -7884,16 +8035,12 @@ ShowReportFeatures()
 	DisplayProcReport features
 	ResetReportsPath &> /dev/null
 
-	if OsIsSupportAutowidthTableColumns; then
-		printf -v a '\n%s\n' 'QPKG name:|CanBack?|CanClean?|StartUpd?|AutoUpd?|LiveTest?|Independent?|ArchCompat?|Enhanced?|UniqueUnpack?'
-	else
-		printf -v a '\n%s\n' "$(GenerateFeaturesReportTitleLine)"
-	fi
+	printf -v a '\n%s\n' "$(GenerateFeaturesReportTitleLine)"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		QpkgSetIndex
-		GenerateFeaturesReportDataLine > "$r_reports_path/$n" &
+		_GenerateFeaturesReportDataLine_ > "$r_reports_path/$n" &
 	done
 
 	m=$n
@@ -7902,8 +8049,8 @@ ShowReportFeatures()
 	# Load report lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		f="$r_reports_path/$n"
-		[[ -e $f ]] && printf -v a '%s\n' "$a$(<$f)"		# Add newline to each imported report line.
+		b=$r_reports_path/$n
+		[[ -e $b ]] && printf -v a '%s\n' "$a$(<$b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
 	if [[ -n $a ]]; then
@@ -7930,6 +8077,7 @@ ShowReportPackages()
 	FuncInit
 
 	local a=''
+	local b=''
 	local -i m=0
 	local -i n=0
 
@@ -7943,16 +8091,12 @@ ShowReportPackages()
 
 		} > "$r_report_output_pathfile"
 
-	if OsIsSupportAutowidthTableColumns; then
-		printf -v a '\n%s\n' 'QPKG name:|Appl. version:|Description:'
-	else
-		printf -v a '\n%s\n' "$(GeneratePacksReportTitleLine)"
-	fi
+	printf -v a '\n%s\n' "$(GeneratePacksReportTitleLine)"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		QpkgSetIndex
-		GeneratePacksReportDataLine "$qpkg_name" > "$r_reports_path/$n" &
+		_GeneratePacksReportDataLine_ "$qpkg_name" > "$r_reports_path/$n" &
 	done
 
 	m=$n
@@ -7960,8 +8104,8 @@ ShowReportPackages()
 	# Load report data lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		f="$r_reports_path/$n"
-		[[ -e $f ]] && printf -v a '%s\n' "$a$(<$f)"		# Add newline to each imported report line.
+		b=$r_reports_path/$n
+		[[ -e $b ]] && printf -v a '%s\n' "$a$(<$b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
 	if [[ -n $a ]]; then
@@ -7995,6 +8139,7 @@ ShowReportRepos()
 	FuncInit
 
 	local a=''
+	local b=''
 	local -i m=0
 	local -i n=0
 
@@ -8002,16 +8147,12 @@ ShowReportRepos()
 	DisplayProcReport repository
 	ResetReportsPath &> /dev/null
 
-	if OsIsSupportAutowidthTableColumns; then
-		printf -v a '\n%s\n' 'QPKG name:|Repository:|Install date:'
-	else
-		printf -v a '\n%s\n' "$(GenerateReposReportTitleLine)"
-	fi
+	printf -v a '\n%s\n' "$(GenerateReposReportTitleLine)"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		QpkgSetIndex
-		GenerateReposReportDataLine > "$r_reports_path/$n" &
+		_GenerateReposReportDataLine_ > "$r_reports_path/$n" &
 	done
 
 	m=$n
@@ -8020,8 +8161,8 @@ ShowReportRepos()
 	# Load report data lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		f="$r_reports_path/$n"
-		[[ -e $f ]] && printf -v a '%s\n' "$a$(<$f)"		# Add newline to each imported report line.
+		b=$r_reports_path/$n
+		[[ -e $b ]] && printf -v a '%s\n' "$a$(<$b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
 	if [[ -n $a ]]; then
@@ -8047,10 +8188,8 @@ ShowReportStatuses()
 
 	FuncInit
 
-	local a=false
+	local a=''
 	local b=''
-	local c=''
-	local f=''
 	local -i m=0
 	local -i n=0
 
@@ -8062,16 +8201,10 @@ ShowReportStatuses()
 		QPKGs-ACstatus-dn.Exist "$qpkg_name" || continue
 		((n++))
 		QpkgSetIndex
-		QPKGs-ISupgradable.Exist "$qpkg_name" && a=true
-		GenerateStatusReportDataLine > "$r_reports_path/$n" &
+		_GenerateStatusReportDataLine_ > "$r_reports_path/$n" &
 	done
 
-	if OsIsSupportAutowidthTableColumns; then
-		[[ $a = true ]] && b=" ($(TextBrightOrange new))"
-		printf -v c '\n%s\n' "QPKG name:|Status:|Action (result):|QPKG version${b}:|Appl. version:|Location:"
-	else
-		printf -v c '\n%s\n' "$(GenerateStatusReportTitleLine)"
-	fi
+	printf -v a '\n%s\n' "$(GenerateStatusReportTitleLine)"
 
 	m=$n
 	wait 2> /dev/null
@@ -8079,16 +8212,15 @@ ShowReportStatuses()
 	# Load report lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		f="$r_reports_path/$n"
-		# shellcheck disable=2179
-		[[ -e $f ]] && printf -v c '%s\n' "$c$(<$f)"		# Add newline to each imported report line.
+		b=$r_reports_path/$n
+		[[ -e $b ]] && printf -v a '%s\n' "$a$(<$b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
-	if [[ -n $c ]]; then
+	if [[ -n $a ]]; then
 		if OsIsSupportAutowidthTableColumns; then
-			printf '%s' "$c" | Tableise
+			printf '%s' "$a" | Tableise
 		else
-			printf '%s' "$c"
+			printf '%s' "$a"
 		fi > "$r_report_output_pathfile"
 
 		GenerateReportFooter >> "$r_report_output_pathfile"
@@ -8110,13 +8242,13 @@ ShowReportAllActionResults()
 	{
 
 	local -i a=0
+	local action=''
 	local -i b=0
 	local -i c=0
 	local -i d=0
-	local -i e=0
-	local action=''
 	local -i datetime=0
 	local -i duration=0
+	local -i e=0
 	local package_name=''
 	local package_type=''
 	local -i quantity=0
@@ -8381,9 +8513,6 @@ GenerateReportFooter()
 
 	if compgen -G "${r_report_flags_path}/backup-file-*" > /dev/null; then			# https://stackoverflow.com/a/6364244
 		DisplayAsIndentItem "backups are listed oldest-first."
-	fi
-
-	if compgen -G "${r_report_flags_path}/backup-file-*" > /dev/null; then			# https://stackoverflow.com/a/6364244
 		DisplayAsIndentItem "all $(ShowAsTitleName) backup files are stored here: $r_qpkg_bu_path"
 	fi
 
@@ -8714,7 +8843,7 @@ NoteIpkAcAsEr()
 
 	local a="failing request to $2 $(ShowAsPackageName "$1")"
 
-	[[ -n ${3:-} ]] && a+=" as $3"
+	[[ -n ${3:-} ]] && a+=' as '$3
 	DebugAsError "$a" >&2
 	IPKs-AC"$2"-to:Remove "$1"
 	IPKs-AC"$2"-er:Add "$1"
@@ -8793,7 +8922,7 @@ OsGetKernelPageSize()
 	{
 
 	if [[ -e /sbin/hal_app ]]; then
-		echo "$(/sbin/hal_app --get_pagesize)B"
+		echo -n "$(/sbin/hal_app --get_pagesize)B"
 	else
 		/bin/grep KernelPageSize /proc/1/smaps | head -n1 | cut -f2 -d':' | tr -d ' ' | /bin/sed 's|kB|kiB|'
 	fi
@@ -8825,13 +8954,18 @@ Python3IsOutdated()
 
 	# Check if Python3 interpreter needs upgrading for this NAS arch.
 
+	# Inputs: (global)
+	#	$r_min_python_version
+	#	$r_nas_arch
+	#	$r_python3_cmd
+
 	# Outputs: (local)
 	#   $? = 0 if outdated, !0 if not
 
-	[[ -e $PYTHON3_CMD ]] || return
-	installed_ver=$(Python3GetVer "$PYTHON3_CMD")
+	[[ -e $r_python3_cmd ]] || return
+	local a=$(Python3GetVer "$r_python3_cmd")
 
-	[[ $r_nas_arch = armv5tel && ${installed_ver//./} -lt 3114 ]] || [[ $r_nas_arch != armv5tel && ${installed_ver//./} -lt $r_min_python_version ]]
+	[[ $r_nas_arch = armv5tel && ${a//./} -lt 3114 ]] || [[ $r_nas_arch != armv5tel && ${a//./} -lt $r_min_python_version ]]
 
 	}
 
@@ -8854,13 +8988,18 @@ PerlIsOutdated()
 
 	# Check if Perl interpreter needs upgrading for this NAS arch.
 
+	# Inputs: (global)
+	#	$r_min_perl_version
+	#	$r_nas_arch
+	#	$r_perl_cmd
+
 	# Outputs: (local)
 	#   $? = 0 if outdated, !0 if not
 
-	[[ -e $PERL_CMD ]] || return
-	installed_ver=$(PerlGetVer "$PERL_CMD")
+	[[ -e $r_perl_cmd ]] || return
+	local a=$(PerlGetVer "$r_perl_cmd")
 
-	[[ $r_nas_arch = armv5tel && ${installed_ver//./} -lt 5281 ]] || [[ $r_nas_arch != armv5tel && ${installed_ver//./} -lt $r_min_perl_version ]]
+	[[ $r_nas_arch = armv5tel && ${a//./} -lt 5281 ]] || [[ $r_nas_arch != armv5tel && ${a//./} -lt $r_min_perl_version ]]
 
 	}
 
@@ -8920,12 +9059,18 @@ UserGetLIBCCopyright()
 ShellGet()
 	{
 
+	# Inputs: (global)
+	#	$SHELL
+
 	printf '%s' "${SHELL:-undefined}"
 
 	}
 
 ShellGetVersion()
 	{
+
+	# Inputs: (global)
+	#	$SHELL
 
 	[[ -n ${SHELL:-} ]] || printf undefined
 
@@ -8936,6 +9081,9 @@ ShellGetVersion()
 ShellGetCopyright()
 	{
 
+	# Inputs: (global)
+	#	$SHELL
+
 	[[ -n ${SHELL:-} ]] || printf undefined
 
 	$SHELL --version | /bin/grep -i copyright | /bin/sed 's|\$||'
@@ -8944,6 +9092,9 @@ ShellGetCopyright()
 
 ShellGetTimeIn()
 	{
+
+	# Inputs: (global)
+	#	$LOADER_SCRIPT_PPID
 
 	local n=''
 
@@ -9030,7 +9181,15 @@ QpkgGetArch()
 
 	# Translate arch from local NAS (QTS/QuTS) to sherpa notation.
 	# sherpa arch for target NAS is a single 3 character-code.
-	# 'a' for ARM, 'i' for Intel.
+	# prefix is 'a' for ARM, 'i' for Intel.
+
+	# Inputs: (global)
+	#	$r_nas_arch
+	#	$r_nas_firmware_version
+	#	$r_nas_platform
+
+	# Outputs: (local)
+	#	stdout = translated QPKG arch.
 
 	if [[ $(get_display_name) = 'TS-269H' ]]; then
 		printf i53
@@ -9090,6 +9249,9 @@ QpkgGetEntwareType()
 UserGetSudoUID()
 	{
 
+	# Inputs: (global)
+	#	$SUDO_UID
+
 	printf '%s' "${SUDO_UID:-undefined}"
 
 	}
@@ -9139,6 +9301,9 @@ OsIsQNAP()
 OsIsSupported()
 	{
 
+	# Inputs: (global)
+	#	$r_nas_firmware_version
+
 	# Unable to test firmwares any earlier than 4.2.6 (but still have 4.2.0 available for TS-559Pro+):
 
 	[[ ${r_nas_firmware_version//.} -ge 400 ]]
@@ -9157,12 +9322,18 @@ OsIsSupportSecureDownload()
 	#	works in:
 	# 		QTS 4.5.4.2627
 
+	# Inputs: (global)
+	#	$r_nas_firmware_version
+
 	[[ ${r_nas_firmware_version//.} -ge 500 ]]
 
 	}
 
 OsIsSupportQpkgTimeout()
 	{
+
+	# Inputs: (global)
+	#	$r_nas_firmware_version
 
 	[[ ${r_nas_firmware_version//.} -ge 430 ]]
 
@@ -9171,9 +9342,10 @@ OsIsSupportQpkgTimeout()
 OsIsSupportSignedPackages()
 	{
 
-# 	[[ ${r_nas_firmware_version//.} -ge 435 ]]
+	# Inputs: (global)
+	#	$r_nas_firmware_version
 
-	# NOTE: signing failed on QTS 4.3.6 (x31). No cert database. So, let's go one-version-higher:
+# 	[[ ${r_nas_firmware_version//.} -ge 435 ]]	# NOTE: signing failed on QTS 4.3.6 (x31). No cert database. So, let's go one-version-higher:
 
 	[[ ${r_nas_firmware_version//.} -ge 440 ]]
 
@@ -9181,6 +9353,9 @@ OsIsSupportSignedPackages()
 
 OsIsCompatibleWithSigned()
 	{
+
+	# Inputs: (global)
+	#	$r_nas_firmware_version
 
 	# QTS builds released over these 6 days don't allow unsigned QPKGs to run at-all:
 
@@ -9190,6 +9365,9 @@ OsIsCompatibleWithSigned()
 
 OsIsSupportUnofficialPackages()
 	{
+
+	# Inputs: (global)
+	#	$r_nas_firmware_version
 
 	# Must check for "official QPKGs" on QTS 4.3.3 to QTS 4.3.6:
 
@@ -9225,7 +9403,12 @@ OsIsSupportDecimalSleepSeconds()
 OsIsSupportAutowidthTableColumns()
 	{
 
-	[[ -e $GNU_AWK_CMD ]]
+	# Inputs: (global)
+	#	$r_gnu_awk_cmd
+
+	[[ -e $r_gnu_awk_cmd ]]
+
+#  	false										#devdebug
 
 	}
 
@@ -9263,6 +9446,9 @@ OsIsStdKernelPageSize()
 	# Standard kernel page size for most QNAP NAS is 4kiB. Non-standard size is 32kiB (confirmed on the TS-431XeU, TS-431X3 & TS-1635).
 	# https://www.qnap.com/en-us/how-to/faq/article/why-do-the-installed-third-party-containers-not-run-successfully-on-specific-32-bit-arm-devices
 
+	# Inputs: (global)
+	#	$r_kernel_page_size
+
 	[[ ${r_kernel_page_size:=$(OsGetKernelPageSize)} = 4096B || $r_kernel_page_size = 4kiB ]]
 
 	}
@@ -9277,6 +9463,9 @@ OsIsNonStdKernelPageSize()
 OsIsLoadAverageElevated()
 	{
 
+	# Inputs: (global)
+	#	$r_cpu_cores
+
 	local a=$(OsGetSysLoad1MinAverage); a=${a/./}
 	local b=$((r_cpu_cores*2*100))
 
@@ -9286,6 +9475,9 @@ OsIsLoadAverageElevated()
 
 OsIsLoadAverageHigh()
 	{
+
+	# Inputs: (global)
+	#	$r_cpu_cores
 
 	local a=$(OsGetSysLoad1MinAverage); a=${a/./}
 	local b=$((r_cpu_cores*4*100))
@@ -9297,6 +9489,9 @@ OsIsLoadAverageHigh()
 OsIsLoadAverageInsane()
 	{
 
+	# Inputs: (global)
+	#	$r_cpu_cores
+
 	local a=$(OsGetSysLoad1MinAverage); a=${a/./}
 	local b=$((r_cpu_cores*8*100))
 
@@ -9306,6 +9501,10 @@ OsIsLoadAverageInsane()
 
 SetError()
 	{
+
+	# Outputs: (global)
+	#	$run_package_actions
+	#	$_script_error_flag_
 
 	run_package_actions=false
 	ErrorIsSet && return
@@ -9358,7 +9557,7 @@ ClaimLockfile()
 
 	for a in sherpa-manager.sh sherpa-manager.source; do
 		if [[ -e $r_lock_pathfile && -d /proc/$(<"$r_lock_pathfile") && $(< /proc/"$(<"$r_lock_pathfile")"/cmdline) =~ $a ]]; then
-			ShowAsAbort "a running $(ShowAsTitleName) instance was found (PID:$(<"$r_lock_pathfile")), can't continue"
+			ShowAsAbort "a running $(ShowAsTitleName) instance was found $(Parenthesise "PID:$(<"$r_lock_pathfile")"), can't continue"
 
 			return 1
 		fi
@@ -9622,10 +9821,10 @@ _QPKG:install_()
 	# Install the QPKG named in $qpkg_name.
 
 	# Inputs: (global)
-	#	$r_install_log_file
-	#	$r_logs_path
 	#	$qpkg_name
 	#	$QPKGs_were_installed_name[]
+	#	$r_install_log_file
+	#	$r_logs_path
 	#	$useropt_debug
 	#	$useropt_verbose
 
@@ -9694,7 +9893,7 @@ _QPKG:install_()
 	LogQpkgServiceResult
 	QpkgIsDatabaseWillLog && ! QpkgInstalledServiceResultWasOk && z=1
 
-	[[ $qpkg_name = Entware ]] && IsNtSysFileExist $OPKG_CMD && z=1		# Entware installation has failed.
+	[[ $qpkg_name = Entware ]] && IsNtSysFileExist $r_opkg_cmd && z=1		# Entware installation has failed.
 
 	if [[ $z -eq 0 || $z -eq 10 ]]; then	# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes user-aborts.
 		SendPackageStateChange ISinstalled
@@ -9791,7 +9990,7 @@ _QPKG:reinstall_()
 	LogQpkgServiceResult
 	QpkgIsDatabaseWillLog && ! QpkgInstalledServiceResultWasOk && z=1
 
-	[[ $qpkg_name = Entware ]] && IsNtSysFileExist $OPKG_CMD && z=1
+	[[ $qpkg_name = Entware ]] && IsNtSysFileExist $r_opkg_cmd && z=1
 
 	if [[ $z -eq 0 || $z -eq 10 ]]; then		# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes aborts.
 		if QpkgIsInstalledEnabled "$qpkg_name"; then
@@ -9929,7 +10128,7 @@ _QPKG:upgrade_()
 	LogQpkgServiceResult
 	QpkgIsDatabaseWillLog && ! QpkgInstalledServiceResultWasOk && z=1
 
-	[[ $qpkg_name = Entware ]] && IsNtSysFileExist $OPKG_CMD && z=1
+	[[ $qpkg_name = Entware ]] && IsNtSysFileExist $r_opkg_cmd && z=1
 
 	if [[ $z -eq 0 || $z -eq 10 ]]; then	# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes aborts.
 		SendPackageStateChange ISNTupgradable
@@ -10086,7 +10285,7 @@ _QPKG:activate_()
 
 	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_activate_log_file
 	local timeout=''
-	OsIsSupportQpkgTimeout && timeout=" -t $r_qpkg_start_timeout_seconds"
+	OsIsSupportQpkgTimeout && timeout=' -t '$r_qpkg_start_timeout_seconds
 	local service_pathfile=$(QpkgGetInstalledServicePathFile)
 
 	DebugAsProc "activating $(ShowAsPackageName)"
@@ -10174,7 +10373,7 @@ _QPKG:reactivate_()
 
 	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_reactivate_log_file
 	local timeout=''
-	OsIsSupportQpkgTimeout && timeout=" -t $r_qpkg_restart_timeout_seconds"
+	OsIsSupportQpkgTimeout && timeout=' -t '$r_qpkg_restart_timeout_seconds
 	local service_pathfile=$(QpkgGetInstalledServicePathFile)
 
 	DebugAsProc "reactivating $(ShowAsPackageName)"
@@ -10253,7 +10452,7 @@ _QPKG:deactivate_()
 
 	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_deactivate_log_file
 	local timeout=''
-	OsIsSupportQpkgTimeout && timeout=" -t $r_qpkg_stop_timeout_seconds"
+	OsIsSupportQpkgTimeout && timeout=' -t '$r_qpkg_stop_timeout_seconds
 	local service_pathfile=$(QpkgGetInstalledServicePathFile)
 
 	DebugAsProc "deactivating $(ShowAsPackageName)"
@@ -10338,7 +10537,7 @@ _QPKG:enable_()
 
 	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_enable_log_file
 	local timeout=''
-	OsIsSupportQpkgTimeout && timeout=" -t $r_qpkg_enable_timeout_seconds"
+	OsIsSupportQpkgTimeout && timeout=' -t '$r_qpkg_enable_timeout_seconds
 
 	DebugAsProc "enabling $(ShowAsPackageName)"
 
@@ -10396,7 +10595,7 @@ _QPKG:disable_()
 
 	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_disable_log_file
 	local timeout=''
-	OsIsSupportQpkgTimeout && timeout=" -t $r_qpkg_disable_timeout_seconds"
+	OsIsSupportQpkgTimeout && timeout=' -t '$r_qpkg_disable_timeout_seconds
 
 	DebugAsProc "disabling $(ShowAsPackageName)"
 
@@ -10871,8 +11070,8 @@ _QPKG:status_()
 	if [[ $a = builtin ]]; then
 		# Run status query with GNU `timeout` if-possible.
 
-		if [[ -e $GNU_TIMEOUT_CMD ]]; then
-			$GNU_TIMEOUT_CMD "$r_qpkg_status_check_timeout_seconds" /bin/bash -c "${b}$(QpkgGetInstalledServicePathFile) status"
+		if [[ -e $r_gnu_timeout_cmd ]]; then
+			$r_gnu_timeout_cmd "$r_qpkg_status_check_timeout_seconds" /bin/bash -c "${b}$(QpkgGetInstalledServicePathFile) status"
 			z=$?
 		else
 			RunAndLog "${b}$(QpkgGetInstalledServicePathFile) status" "$r_logs_path/$qpkg_name.$r_status_log_file" log:failure-only
@@ -11628,7 +11827,7 @@ QpkgGetDatabaseDependencies()
 		found=false
 
 		if [[ $x != *'|'* ]]; then
-			out+=" $x"
+			out+=' '$x
 			continue
 		fi
 
@@ -11640,7 +11839,7 @@ QpkgGetDatabaseDependencies()
 			# Test alternative for compatibility
 
 			if QpkgIsDatabaseArchOK "$alt"; then
-				out+=" $alt"
+				out+=' '$alt
 				found=true
 				break
 			fi
@@ -11649,7 +11848,7 @@ QpkgGetDatabaseDependencies()
 		[[ $IFS != "$oldIFS" ]] && IFS=$oldIFS
 
 		if [[ $found = false ]]; then
-			out+=" $first"
+			out+=' '$first
 			first=''
 		fi
 	done
@@ -12480,6 +12679,46 @@ QpkgIsInstalledEnabled()
 
 	}
 
+CreatePidFile()
+	{
+
+	# Inputs: (global)
+	#	$r_async_procs_path
+
+	# Outputs: (global)
+	#	$pidfile
+
+	pidfile=$(/bin/mktemp "$r_async_procs_path"/proc_XXXXXX)		# Set $pidfile before launching async process so $pidfile is inherited by that process.
+
+	}
+
+UpdatePidFile()
+	{
+
+	# Inputs: (local)
+	#   $1 = process ID to write into file.
+
+	# Inputs: (global)
+	#	$pidfile
+
+	[[ -n ${1:-} && -n ${pidfile:-} ]] || return
+
+	echo "$1" > "$pidfile"
+
+	}
+
+RemovePidFile()
+	{
+
+	# Inputs: (global)
+	#	$pidfile
+
+	[[ -n ${pidfile:-} && -e $pidfile ]] || return
+
+	rm -f "$pidfile"
+
+	}
+
 LoadQpkgSigning()
 	{
 
@@ -12679,6 +12918,9 @@ RunAndLog()
 DeDupeWords()
 	{
 
+	# Inputs: (local)
+	#   $1 = string with space-separated words. Duplicate words will be removed.
+
 	[[ -n ${1:-} ]] || return
 
 	tr ' ' '\n' <<< "$1" | /usr/bin/sort | /bin/uniq | tr '\n' ' ' | /bin/sed 's|^[[:blank:]]*||;s|[[:blank:]]*$||'
@@ -12715,6 +12957,24 @@ Capitalise()
 	else
 		printf '%s' "$(Uppercase ${1:0:1})${1:1}"
 	fi
+
+	}
+
+Parenthesise()
+	{
+
+	[[ -n ${1:-} ]] || return
+
+	printf '(%s)' "$1"
+
+	}
+
+AddPeriod()
+	{
+
+	[[ -n ${1:-} ]] || return
+
+	[[ ${1: -1} != ':' && ${1: -1} != '?' && ${1: -1} != '.' ]] && printf '%s.' "$1" || printf '%s' "$1"
 
 	}
 
@@ -12813,6 +13073,7 @@ ShowTitle()
 	{
 
 	# Inputs: (global)
+	#	$r_args_raw[]
 	# 	$show_title
 	# 	$title_shown
 	# 	$useropt_verbose
@@ -12950,12 +13211,18 @@ ShowAsExitcode()
 ShowAsLogFilename()
 	{
 
+	# Inputs: (global)
+	#	$r_chars_results
+
 	printf '%s' "${r_chars_results}log file: '${1:?${FUNCNAME[0]}'()': undefined filename}'"
 
 	}
 
 ShowAsCommand()
 	{
+
+	# Inputs: (global)
+	#	$r_chars_results
 
 	echo "${r_chars_results}command: '${1:?${FUNCNAME[0]}'()': undefined commandstring}'"
 
@@ -12996,7 +13263,7 @@ DisplayProcReport()
 
 	local a=''
 
-	[[ -n ${1:-} ]] && a="$1 "
+	[[ -n ${1:-} ]] && a=$1' '
 
 	ShowAsProc "${a}report"
 
@@ -13009,6 +13276,9 @@ DebugInfoMajSepr()
 
 	# Debug info major separator.
 
+	# Inputs: (global)
+	#	$r_debug_log_full_width
+
 	DebugInfo "$(eval printf '%0.s=' "{1..$r_debug_log_full_width}")"  # `seq` is unavailable in QTS, so must resort to `eval` trickery instead.
 
 	}
@@ -13018,6 +13288,9 @@ DebugInfoMinSepr()
 
 	# Debug info minor separator.
 
+	# Inputs: (global)
+	#	$r_debug_log_full_width
+
 	DebugInfo "$(eval printf '%0.s-' "{1..$r_debug_log_full_width}")"  # `seq` is unavailable in QTS, so must resort to `eval` trickery instead.
 
 	}
@@ -13026,6 +13299,9 @@ DebugExtLogMinSepr()
 	{
 
 	# Debug external log minor separator.
+
+	# Inputs: (global)
+	#	$r_debug_log_full_width
 
 	DebugAsLog "$(eval printf '%0.s-' "{1..$r_debug_log_full_width}")" # `seq` is unavailable in QTS, so must resort to `eval` trickery instead.
 
@@ -13323,13 +13599,24 @@ FuncExit()
 FuncForkInit()
 	{
 
-	# Debug forked function entry.
+	# Debug forked function entry. NOTE: $pidfile MUST be set before calling this function.
 
-	trap '[[ -n ${action_pidfile:-} && -e $action_pidfile ]] && rm -f "$action_pidfile" 2> /dev/null; [[ -n ${pidfile:-} && -e ${pidfile:-} ]] && rm -f "$pidfile" 2> /dev/null; exit' SIGINT
+	# Inputs: (global)
+	#	$pidfile
+	#	$r_action_logs_path
+	#	$sess_active_pathfile
+
+	# Outputs: (global)
+	#	$original_sess_active_pathfile
+	#	$sess_active_pathfile
+
+	[[ -n ${pidfile:?${FUNCNAME[0]}'()': undefined \$pidfile} ]] || return
+
+	trap '[[ -n ${pidfile:-} && -e $pidfile ]] && rm -f "$pidfile" 2> /dev/null; exit' SIGINT
 
 	# Redirect debug output to a temporary log, then add it to session log before exiting. This will keep action log progress in-order.
+
 	original_sess_active_pathfile=$sess_active_pathfile
-	MakePath "$r_action_logs_path" 'action logs'
 	sess_active_pathfile=$(/bin/mktemp "$r_action_logs_path"/"${FUNCNAME[1]}"_XXXXXX)
 
 	local -r r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
@@ -13350,9 +13637,7 @@ FuncForkExit()
 	#	$1 = return code to supply on exit.
 
 	# Inputs: (global)
-	#	$action_pidfile
 	#	$original_sess_active_pathfile
-	#	$pidfile
 	#	$sess_active_pathfile
 
 	local -r r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
@@ -13370,8 +13655,7 @@ FuncForkExit()
 		rm -f "$sess_active_pathfile"
 	fi
 
-	[[ -n ${action_pidfile:-} && -e $action_pidfile ]] && rm -f "$action_pidfile"
-	[[ -n ${pidfile:-} && -e $pidfile ]] && rm -f "$pidfile"
+	RemovePidFile
 
 	exit ${1:-0}
 
@@ -13632,10 +13916,12 @@ FormatAsLongMinutesSecs()
 	#	$1 = a time in long minutes and seconds to convert to 'MMMm:SSs'.
 
 	# Separate minutes from seconds
+
 	local m=${1%%:*}
 	local s=${1#*:}
 
 	# Remove leading whitespace
+
 	m=${m##* }
 	s=${s##* }
 
@@ -13737,6 +14023,9 @@ AddExtLogToSessLog()
 	{
 
 	# Add the contents of pathfile $1 to the session debug log, with each line formatted as an external log entry.
+
+	# Inputs: (global)
+	#	$useropt_verbose
 
 	local a=''
 	local b=false
@@ -13909,15 +14198,6 @@ ShowAsQuizDone()
 
 	}
 
-AddPeriod()
-	{
-
-	[[ -n ${1:-} ]] || return
-
-	[[ ${1: -1} != ':' && ${1: -1} != '?' && ${1: -1} != '.' ]] && printf '%s.' "$1" || printf '%s' "$1"
-
-	}
-
 ShowAsPercentProgress()
 	{
 
@@ -13971,7 +14251,7 @@ PercFrac()
 		a=$b
 		c='100%'
 	else
-		c="$((200*(a+1)/(b+1)%2+100*(a+1)/(b+1)))%"
+		c=$((200*(a+1)/(b+1)%2+100*(a+1)/(b+1)))%
 	fi
 
 	printf '%s' "$c ($(TextBrightWhite "$a")/$(TextBrightWhite "$b"))"
@@ -14050,7 +14330,7 @@ ShowAsActionLogDetail()
 			: # Don't shown 1's.
 			;;
 		*)
-			quantity_msg="$8 "
+			quantity_msg=$8' '
 	esac
 
 	if [[ ${8:-undefined} = undefined ]]; then
@@ -14158,6 +14438,9 @@ WriteToLog()
 TextBrightGreen()
 	{
 
+	# Inputs: (global)
+	#	$useropt_colourful
+
 	[[ -n ${1:-} ]] || return
 
 	if [[ ${useropt_colourful:=false} = true ]]; then
@@ -14170,6 +14453,9 @@ TextBrightGreen()
 
 TextBrightYellow()
 	{
+
+	# Inputs: (global)
+	#	$useropt_colourful
 
 	[[ -n ${1:-} ]] || return
 
@@ -14184,6 +14470,9 @@ TextBrightYellow()
 TextBrightOrange()
 	{
 
+	# Inputs: (global)
+	#	$useropt_colourful
+
 	[[ -n ${1:-} ]] || return
 
 	if [[ ${useropt_colourful:=false} = true ]]; then
@@ -14196,6 +14485,9 @@ TextBrightOrange()
 
 TextBrightOrangeBlink()
 	{
+
+	# Inputs: (global)
+	#	$useropt_colourful
 
 	[[ -n ${1:-} ]] || return
 
@@ -14210,6 +14502,9 @@ TextBrightOrangeBlink()
 TextBrightRed()
 	{
 
+	# Inputs: (global)
+	#	$useropt_colourful
+
 	[[ -n ${1:-} ]] || return
 
 	if [[ ${useropt_colourful:=false} = true ]]; then
@@ -14223,6 +14518,9 @@ TextBrightRed()
 TextBrightRedBlink()
 	{
 
+	# Inputs: (global)
+	#	$useropt_colourful
+
 	[[ -n ${1:-} ]] || return
 
 	if [[ ${useropt_colourful:=false} = true ]]; then
@@ -14233,8 +14531,11 @@ TextBrightRedBlink()
 
 	} 2> /dev/null
 
-#TextCyan()
+# TextCyan()
 # 	{
+#
+# 	# Inputs: (global)
+# 	#	$useropt_colourful
 #
 # 	[[ -n ${1:-} ]] || return
 #
@@ -14249,6 +14550,9 @@ TextBrightRedBlink()
 TextDarkGrey()
 	{
 
+	# Inputs: (global)
+	#	$useropt_colourful
+
 	[[ -n ${1:-} ]] || return
 
 	if [[ ${useropt_colourful:=false} = true ]]; then
@@ -14259,8 +14563,11 @@ TextDarkGrey()
 
 	} 2> /dev/null
 
-#TextUnderlined()
+# TextUnderlined()
 # 	{
+#
+# 	# Inputs: (global)
+# 	#	$useropt_colourful
 #
 # 	[[ -n ${1:-} ]] || return
 #
@@ -14275,6 +14582,9 @@ TextDarkGrey()
 TextUnderlinedCyan()
 	{
 
+	# Inputs: (global)
+	#	$useropt_colourful
+
 	[[ -n ${1:-} ]] || return
 
 	if [[ ${useropt_colourful:=false} = true ]]; then
@@ -14288,6 +14598,9 @@ TextUnderlinedCyan()
 TextBlackOnCyan()
 	{
 
+	# Inputs: (global)
+	#	$useropt_colourful
+
 	[[ -n ${1:-} ]] || return
 
 	if [[ ${useropt_colourful:=false} = true ]]; then
@@ -14300,6 +14613,16 @@ TextBlackOnCyan()
 
 TextBrightWhite()
 	{
+
+	# Inputs: (local)
+
+	# Inputs: (global)
+	#	$useropt_colourful
+
+	# Outputs: (local)
+
+	# Outputs: (global)
+	#	$useropt_colourful
 
 	[[ -n ${1:-} ]] || return
 
@@ -14319,7 +14642,13 @@ Tableise()
 	# With many thanks to Stéphane Chazelas for writing this, and to Josh Klodnicki for his enhancements.
 	#  	  https://unix.stackexchange.com/a/121139/259233
 
-	awk '{
+	# Inputs: (global)
+	#	$r_gnu_awk_cmd
+	#	$r_report_column_spacing
+
+	[[ -e $r_gnu_awk_cmd ]] || return
+
+	$r_gnu_awk_cmd '{
 		nf[NR]=NF
 		for (i = 1; i <= NF; i++) {
 			cell[NR,i] = $i
@@ -14334,13 +14663,15 @@ Tableise()
 				printf "%s%*s%s", cell[row,col], max[col]-len[row,col], "", OFS
 			print cell[row,nf[row]]
 		}
-
 	}' FS='|' OFS="$(printf "%$((r_report_column_spacing))s")"
 
 	}
 
 StripANSICodes()
 	{
+
+	# Inputs: (global)
+	#	$sed_ext_regex_supported
 
 	# QTS 4.2.6 BusyBox `sed` doesn't fully support extended-regexes, so code-stripping only works with a real `sed`.
 
@@ -14377,6 +14708,12 @@ UpdateColourisation()
 
 	# If it seems Entware is active, check if possible to return to colourful display.
 
+	# Inputs: (global)
+	#	$r_colourful_default
+
+	# Outputs: (global)
+	#	$useropt_colourful
+
 	if [[ -e /opt/bin/sed && -L /opt/etc/passwd && $(LoadSetting Colourful "$r_colourful_default") = true ]]; then
 		useropt_colourful=true
 		SendParentChangeEnv 'useropt_colourful=true'
@@ -14390,6 +14727,9 @@ UpdateColourisation()
 UpdateSedRexegSupport()
 	{
 
+	# Outputs: (global)
+	#	$sed_ext_regex_supported
+
 	OsIsSupportSedExtRegex && sed_ext_regex_supported=true || sed_ext_regex_supported=false
 
 	}
@@ -14397,12 +14737,18 @@ UpdateSedRexegSupport()
 UpdateSleepDecimalSecondsSupport()
 	{
 
+	# Outputs: (global)
+	#	$sleep_decimal_seconds_supported
+
 	OsIsSupportDecimalSleepSeconds && sleep_decimal_seconds_supported=true || sleep_decimal_seconds_supported=false
 
 	}
 
 HideCursor()
 	{
+
+	# Inputs: (global)
+	#	$useropt_verbose
 
 	[[ $useropt_verbose = false ]] && printf '\033[?25l'
 
@@ -14418,22 +14764,36 @@ ShowCursor()
 HideKeystrokes()
 	{
 
-	[[ $useropt_verbose = false && -e $GNU_STTY_CMD && -t 0 ]] && $GNU_STTY_CMD '-echo'
+	# Inputs: (global)
+	#	$r_gnu_stty_cmd
+	#	$useropt_verbose
+
+	[[ $useropt_verbose = false && -e $r_gnu_stty_cmd && -t 0 ]] && $r_gnu_stty_cmd '-echo'
 
 	}
 
 ShowKeystrokes()
 	{
 
-	[[ -n ${GNU_STTY_CMD:-} && -e $GNU_STTY_CMD && -t 0 ]] && $GNU_STTY_CMD 'echo'
+	# Inputs: (global)
+	#	$r_gnu_stty_cmd
+
+	[[ -n ${r_gnu_stty_cmd:-} && -e $r_gnu_stty_cmd && -t 0 ]] && $r_gnu_stty_cmd 'echo'
 
 	}
 
 sleep()
 	{
 
-	# Inputs:
+	# Inputs: (local)
 	#	$1 = seconds to sleep (decimal or integer) (optional), default is 1 second.
+
+	# Inputs: (global)
+	#	$r_gnu_sleep_cmd
+	#	$sleep_decimal_seconds_supported
+
+	# Outputs: (global)
+	#	$sleep_decimal_seconds_supported
 
 	local n=${1:-}
 
@@ -14441,8 +14801,8 @@ sleep()
 
 	if [[ ${sleep_decimal_seconds_supported:=false} = true ]]; then
 		/bin/sleep "$n"
-	elif [[ -e /opt/bin/sleep && -L /opt/etc/passwd ]]; then  				# Try to ensure Entware is active first.
-		/opt/bin/sleep "$n"
+	elif [[ -e $r_gnu_sleep_cmd && -L /opt/etc/passwd ]]; then  			# Try to ensure Entware is active first.
+		$r_gnu_sleep_cmd "$n"
 	else
 		/bin/sleep "$((${n%.*}+1))"											# Ensure decimal seconds are rounded-up to next integer.
 	fi
@@ -14455,6 +14815,17 @@ LoadObjects()
 	{
 
 	# Ensure `objects` in the local cache is up-to-date, then source it.
+
+	# Inputs: (global)
+	#	$r_cache_path
+	#	$r_file_change_threshold_minutes
+	#	$r_objects_archive_pathfile
+	#	$r_objects_archive_url
+	#	$r_objects_pathfile
+
+	# Outputs: (global)
+	#	$objects_loaded
+	#	$r_objects_epoch
 
 	[[ ${objects_loaded:=false} = false ]] || return 0
 
