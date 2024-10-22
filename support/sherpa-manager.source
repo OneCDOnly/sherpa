@@ -6030,11 +6030,20 @@ _GenerateBacksReportItemLine_()
 
 	# * This function runs asynchronously *
 
-	# Inputs:
+	# Inputs: (local)
 	#	$1 = last backup date in epoch seconds
 	#	$2 = backup filename
 	#	$3 = filesize in bytes
 	#	$4 = age threshold to highlight (optional) '1 week ago' (default)		e.g. '2 days ago', '2 weeks ago', etc ...
+
+	# Inputs: (global)
+	#	$r_chars_alert
+	#	$r_chars_blank
+	#	$r_chars_normal
+	#	$r_report_file_bytes_column_width
+	#	$r_report_file_change_date_column_width
+	#	$r_report_file_name_column_width
+	#	$r_report_flags_path
 
 	local epoch_time=${1:-0}
 	local epoch_time_msg=$r_chars_normal
@@ -6098,18 +6107,24 @@ GenerateReportLineItem()
 DisplayAsHelpTitle()
 	{
 
-	# Inputs:
+	# Inputs: (local)
 	#	$1 = string: text
 
-	printf "\n${r_chars_bullet}%s\n" "$(Capitalise "${1:-}" | tr -s ' ')"
+	# Inputs: (global)
+	#	$r_chars_bullet
+
+	printf '\n%s\n' "${r_chars_bullet}$(Capitalise "${1:-}" | tr -s ' ')"
 
 	}
 
 DisplayAsHelpTitleHighlighted()
 	{
 
-	# Inputs:
+	# Inputs: (local)
 	#	$1 = string: text
+
+	# Inputs: (global)
+	#	$r_chars_bullet
 
 	printf '\n%s\n' "$(TextBrightOrange "${r_chars_bullet}$(Capitalise "${1:-}")")"
 
@@ -6118,11 +6133,14 @@ DisplayAsHelpTitleHighlighted()
 DisplayAsIndentActionResultDurationReason()
 	{
 
-	# Inputs:
+	# Inputs: (local)
 	#	$1 = action
 	#	$2 = result message
 	#	$3 = duration in milliseconds (optional)
 	#	$4 = reason message (optional)
+
+	# Inputs: (global)
+	#	$r_report_action_result_indent
 
 	[[ -n ${1:-} && -n ${2:-} ]] || return
 
@@ -6218,18 +6236,13 @@ ShowHelpActions()
 		DisplayAsProjSynIndentExam '' "add $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam 'show application backup files' 'show backups'
 		DisplayAsProjSynIndentExam '' b
-# 		DisplayAsProjSynIndentExam "list $(ShowAsTitleName) object version numbers" 'list versions'
 		DisplayAsProjSynIndentExam 'reactivate these packages (this will upgrade internal applications where-supported)' "reactivate $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam '' "restart $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam "reassign packages to $(ShowAsTitleName). Detach packages previously installed via an online repository from further management by that repository" "reassign $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam "rebuild these packages ('install' packages, then 'restore' configuration backups)" "rebuild $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam 'reinstall these packages' "reinstall $(ShowAsPackages)"
-# 		DisplayAsProjSynIndentExam 'generate QPKG repository assignments report' repos
-# 		DisplayAsProjSynIndentExam '' r
 		DisplayAsProjSynIndentExam 'restore these application configurations from the backup location' "restore $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam 'digitally "sign" these QPKGs' "sign $(ShowAsPackages)"
-# 		DisplayAsProjSynIndentExam 'generate QPKG status report' status
-# 		DisplayAsProjSynIndentExam '' s
 		DisplayAsProjSynIndentExam 'uninstall these packages' "uninstall $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam '' "remove $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam '' "rm $(ShowAsPackages)"
@@ -6408,8 +6421,6 @@ ShowHelpLists()
 		ShowHelpBasic
 		DisplayAsHelpTitle "'list' usage examples:"
 		DisplayAsProjSynIndentExam 'list all available QPKGs' 'list all'
-# 		DisplayAsProjSynIndentExam 'list package backup files' 'list backups'
-# 		DisplayAsProjSynIndentExam '' b
 		DisplayAsProjSynIndentExam 'list only QPKGs that can be installed' 'list installable'
 		DisplayAsProjSynIndentExam '' installable
 		DisplayAsProjSynIndentExam 'list only installed QPKGs' 'list installed'
@@ -6767,6 +6778,12 @@ DisplayFileInViewport()
 PasteLogLast()
 	{
 
+	# Inputs: (global)
+	#	$r_session_last_pathfile
+
+	# Outputs: (global)
+	#	$show_action_results_zero
+
 	local link=''
 
 	DisableDebugToArchiveAndFile
@@ -6776,7 +6793,7 @@ PasteLogLast()
 		if Quiz "Press 'Y' to post the most-recent session in your $(ShowAsTitleName) log to a public pastebin, or any other key to abort"; then
 			ShowAsProc "upload $(ShowAsTitleName) log"
 
-			# with thanks to https://github.com/solusipse/fiche
+			# With thanks to https://github.com/solusipse/fiche
 			link=$(/bin/cat --number "$r_session_last_pathfile" | (exec 3<>/dev/tcp/termbin.com/9999; /bin/cat >&3; /bin/cat <&3; exec 3<&-))
 
 			if [[ $? -eq 0 ]]; then
@@ -6802,6 +6819,13 @@ PasteLogLast()
 PasteLogTail()
 	{
 
+	# Inputs: (global)
+	#	$r_log_tail_lines
+	#	$r_session_tail_pathfile
+
+	# Outputs: (global)
+	#	$show_action_results_zero
+
 	local link=''
 
 	DisableDebugToArchiveAndFile
@@ -6811,7 +6835,7 @@ PasteLogTail()
 		if Quiz "Press 'Y' to post the most-recent $(FormatAsThous "$r_log_tail_lines") lines in your $(ShowAsTitleName) log to a public pastebin, or any other key to abort"; then
 			ShowAsProc "upload $(ShowAsTitleName) log"
 
-			# with thanks to https://github.com/solusipse/fiche
+			# With thanks to https://github.com/solusipse/fiche
 			link=$(/bin/cat --number "$r_session_tail_pathfile" | (exec 3<>/dev/tcp/termbin.com/9999; /bin/cat >&3; /bin/cat <&3; exec 3<&-))
 
 			if [[ $? -eq 0 ]]; then
@@ -6837,8 +6861,11 @@ PasteLogTail()
 GetLogSessStartLine()
 	{
 
-	# Inputs:
+	# Inputs: (local)
 	#	$1 = how many sessions back? (optional) default = 1
+
+	# Inputs: (global)
+	#	$r_session_tail_pathfile
 
 	local -i linenum=$(($(/bin/grep -n 'SCRIPT:.*started:' "$r_session_tail_pathfile" | /usr/bin/tail -n${1:-1} | head -n1 | cut -d':' -f1)-1))
 	[[ $linenum -lt 1 ]] && linenum=1
@@ -6849,8 +6876,11 @@ GetLogSessStartLine()
 GetLogSessFinishLine()
 	{
 
-	# Inputs:
+	# Inputs: (local)
 	#	$1 = how many sessions back? (optional) default = 1
+
+	# Inputs: (global)
+	#	$r_session_tail_pathfile
 
 	local -i linenum=$(($(/bin/grep -n 'SCRIPT:.*finished:' "$r_session_tail_pathfile" | /usr/bin/tail -n${1:-1} | cut -d':' -f1)+2))
 	[[ $linenum -eq 2 ]] && linenum=3
@@ -6861,6 +6891,10 @@ GetLogSessFinishLine()
 ArchiveActiveSessLog()
 	{
 
+	# Inputs: (global)
+	#	$r_session_archive_pathfile
+	#	$sess_active_pathfile
+
 	[[ -n ${sess_active_pathfile:-} && -e $sess_active_pathfile ]] && /bin/cat "$sess_active_pathfile" >> "$r_session_archive_pathfile"
 
 	}
@@ -6869,6 +6903,11 @@ ArchivePriorSessLogs()
 	{
 
 	# Check for incomplete previous session logs (crashed, interrupted?) and save to archive.
+
+	# Inputs: (global)
+	#	$r_session_archive_pathfile
+	#	$r_this_package_path
+	#	$sess_active_pathfile
 
 	local f=''
 
@@ -6884,12 +6923,19 @@ ArchivePriorSessLogs()
 ResetActiveSessLog()
 	{
 
+	# Inputs: (global)
+	#	$sess_active_pathfile
+
 	rm -f "$sess_active_pathfile" 2> /dev/null
 
 	}
 
 ExtractPrevSessFromTail()
 	{
+
+	# Inputs: (global)
+	#	$r_session_last_pathfile
+	#	$r_session_tail_pathfile
 
 	local -i end_line=0
 	local -i old_session=1
@@ -6920,6 +6966,11 @@ ExtractPrevSessFromTail()
 
 ExtractTailFromLog()
 	{
+
+	# Inputs: (global)
+	#	$r_log_tail_lines
+	#	$r_session_archive_pathfile
+	#	$r_session_tail_pathfile
 
 	if [[ -e $r_session_archive_pathfile ]]; then
 		/usr/bin/tail -n${r_log_tail_lines} "$r_session_archive_pathfile" > "$r_session_tail_pathfile"	# Trim main log first so there's less to `grep`.
