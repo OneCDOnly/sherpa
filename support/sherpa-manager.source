@@ -207,29 +207,29 @@ LoadConsts()
 
 	readonly r_report_qpkg_abbreviations_column_width=84
 	readonly r_report_qpkg_action_column_width=27
-	readonly r_report_qpkg_active_test_builtin_column_width=11
+	readonly r_report_qpkg_active_test_builtin_column_width=9
 	readonly r_report_qpkg_appl_version_column_width=22
 	readonly r_report_qpkg_arch_column_width=15
 	readonly r_report_qpkg_author_column_width=40
-	readonly r_report_qpkg_auto_update_column_width=10
+	readonly r_report_qpkg_auto_update_column_width=8
 	readonly r_report_qpkg_dependencies_column_width=29
 	readonly r_report_qpkg_description_column_width=10
 	readonly r_report_qpkg_install_date_column_width=20
-	readonly r_report_qpkg_is_compatible_column_width=9
-	readonly r_report_qpkg_is_enabled_column_width=10
-	readonly r_report_qpkg_is_installed_column_width=12
-	readonly r_report_qpkg_is_managed_column_width=10
-	readonly r_report_qpkg_max_os_version_column_width=10
-	readonly r_report_qpkg_min_os_version_column_width=10
-	readonly r_report_qpkg_min_ram_column_width=14
+	readonly r_report_qpkg_is_compatible_column_width=11
+	readonly r_report_qpkg_is_enabled_column_width=8
+	readonly r_report_qpkg_is_installed_column_width=10
+	readonly r_report_qpkg_is_managed_column_width=8
+	readonly r_report_qpkg_max_os_version_column_width=8
+	readonly r_report_qpkg_min_os_version_column_width=8
+	readonly r_report_qpkg_min_ram_column_width=13
 	readonly r_report_qpkg_name_column_width=21
 	readonly r_report_qpkg_path_column_width=48
 	readonly r_report_qpkg_repo_column_width=40
 	readonly r_report_qpkg_status_column_width=23
-	readonly r_report_qpkg_supports_backup_column_width=10
-	readonly r_report_qpkg_supports_clean_column_width=11
-	readonly r_report_qpkg_supports_start_to_update_column_width=11
-	readonly r_report_qpkg_tier_column_width=8
+	readonly r_report_qpkg_supports_backup_column_width=8
+	readonly r_report_qpkg_supports_clean_column_width=9
+	readonly r_report_qpkg_supports_start_to_update_column_width=9
+	readonly r_report_qpkg_tier_column_width=12
 	readonly r_report_qpkg_version_column_width=15
 	readonly r_report_lazy_column_width=28				# Use this when I can't be bothered calculating an optimum fixed column width.
 
@@ -243,7 +243,7 @@ LoadConsts()
 	readonly r_help_syntax_indent=6
 	readonly r_report_action_result_indent=6
 	readonly r_report_column_spacing=2
-	readonly r_report_file_bytes_column_width=16
+	readonly r_report_file_bytes_column_width=14
 	readonly r_report_file_change_date_column_width=60
 	readonly r_report_file_name_column_width=$((r_report_qpkg_name_column_width+14))
 	readonly r_report_footer_name_column_width=14
@@ -4701,26 +4701,22 @@ GeneratePacksReportTitleLine()
 	#	$r_report_qpkg_description_column_width
 	# 	$r_report_qpkg_name_column_width
 
-	local a=''
-
-	# column 1: package name.
-	a='QPKG name:'
-	printf "%-$((r_report_qpkg_name_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 2: application version
-	a='Appl. version:'
-	printf "%-$((r_report_qpkg_appl_version_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 3: package description
-	a='Description:'
-	printf "%-$((r_report_qpkg_description_column_width+2+$(LenANSIDiff "$a")))s" "$a"
+	if OsIsSupportAutowidthTableColumns; then
+		printf 'QPKG name:|Appl. version:|Description:'
+	else
+		GenerateReportLineItem 'QPKG name:' "$r_report_qpkg_name_column_width"
+		GenerateReportLineItem 'Appl. version:' "$r_report_qpkg_appl_version_column_width"
+		GenerateReportLineItem 'Description:' "$r_report_qpkg_description_column_width"
+	fi
 
 	printf '\n'
 
 	}
 
-GeneratePacksReportDataLine()
+_GeneratePacksReportDataLine_()
 	{
+
+	# * This function runs asynchronously *
 
 	# Input (local):
 	#   $1 = QPKG name (optional).
@@ -4777,72 +4773,56 @@ GeneratePacksReportDataLine()
 	esac
 
 	if OsIsSupportAutowidthTableColumns; then
-		echo "$name_msg|$app_ver_msg|$description_msg"
+		printf '%s' "$name_msg|$app_ver_msg|$description_msg"
 
 		if [[ -n $notes ]]; then
-			printf "%s|%s|%$((${#r_chars_blank}))s%s\n" '' '' '' "$(TextBrightOrange "${r_chars_dropend}${r_chars_note}") $notes_msg"
+			printf "\n%s|%s|%$((${#r_chars_blank}))s%s\n" '' '' '' "$(TextBrightOrange "${r_chars_dropend}${r_chars_note}") $notes_msg"
 		fi
 	else
-		# column 1: package name.
-		printf "%-$((r_report_qpkg_name_column_width+$(LenANSIDiff "$name_msg")))s" "$name_msg"
-
-		# column 2: application version
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_qpkg_appl_version_column_width+$(LenANSIDiff "$app_ver_msg")))s" "$app_ver_msg"
-
-		# column 3: package description
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_qpkg_description_column_width+$(LenANSIDiff "$description_msg")))s" "$description_msg"
+		GenerateReportLineItem "$name_msg" "$r_report_qpkg_name_column_width"
+		GenerateReportLineItem "$app_ver_msg" "$r_report_qpkg_appl_version_column_width"
+		GenerateReportLineItem "$description_msg" "$r_report_qpkg_description_column_width"
 
 		if [[ -n $notes ]]; then
 			printf "\n%$((${#r_chars_blank}+r_report_qpkg_name_column_width+r_report_qpkg_appl_version_column_width+(r_report_column_spacing*2)))s$(TextBrightOrange "${r_chars_dropend}${r_chars_note}")%s" '' "$notes_msg"
 		fi
-
-		printf '\n'
 	fi
+
+	printf '\n'
 
 	}
 
 GenerateStatusReportTitleLine()
 	{
 
-	local a=''
+	# Inputs: (global)
+	# 	$r_report_qpkg_action_column_width
+	#	$r_report_qpkg_appl_version_column_width
+	# 	$r_report_qpkg_name_column_width
+	# 	$r_report_qpkg_path_column_width
+	#	$r_report_qpkg_status_column_width
+	# 	$r_report_qpkg_version_column_width
 
-	# column 1: package name.
-	a='QPKG name:'
-	printf "%-${r_report_qpkg_name_column_width}s" "$a"
+	local a='QPKG version'
 
-	# column 2: package statuses
-	printf "%$((r_report_column_spacing))s"
-	a='Status:'
-	printf "%-${r_report_qpkg_status_column_width}s" "$a"
-
-	# column 3: package action and result
-	printf "%$((r_report_column_spacing))s"
-	a='Action (result):'
-	printf "%-${r_report_qpkg_action_column_width}s" "$a"
-
-	# column 4: package version
-	printf "%$((r_report_column_spacing))s"
-	a='QPKG version'
 	QPKGs-ISupgradable.IsAny && a+=' '$(Parenthesise "$(TextBrightOrange new)")
-	printf "%-${r_report_qpkg_version_column_width}s" "$a:"
 
-	# column 5: application version
-	printf "%$((r_report_column_spacing))s"
-	a='Appl. version:'
-	printf "%-${r_report_qpkg_appl_version_column_width}s" "$a"
-
-	# column 6: package installation path
-	printf "%$((r_report_column_spacing))s"
-	a='Location:'
-	printf "%-${r_report_qpkg_path_column_width}s" "$a"
+	if OsIsSupportAutowidthTableColumns; then
+		printf '%s' "QPKG name:|Status:|Action (result):|$a:|Appl. version:|Location:"
+	else
+		GenerateReportLineItem 'QPKG name:' "$r_report_qpkg_name_column_width"
+		GenerateReportLineItem 'Status:' "$r_report_qpkg_status_column_width"
+		GenerateReportLineItem 'Action (result):' "$r_report_qpkg_action_column_width"
+		GenerateReportLineItem "$a:" "$r_report_qpkg_version_column_width"
+		GenerateReportLineItem 'Appl. version:' "$r_report_qpkg_appl_version_column_width"
+		GenerateReportLineItem 'Location:' "$r_report_qpkg_path_column_width"
+	fi
 
 	printf '\n'
 
 	}
 
-GenerateStatusReportDataLine()
+_GenerateStatusReportDataLine_()
 	{
 
 	# * This function runs asynchronously *
@@ -5045,33 +5025,17 @@ GenerateStatusReportDataLine()
 	fi
 
 	if OsIsSupportAutowidthTableColumns; then
-		echo "$name_msg|$status_msg|$action_msg|$ver_msg|$app_ver_msg|$path_msg"
+		printf '%s' "$name_msg|$status_msg|$action_msg|$ver_msg|$app_ver_msg|$path_msg"
 	else
-		# column 1: package name.
-		printf "%-$((r_report_qpkg_name_column_width+$(LenANSIDiff "$name_msg")))s" "$name_msg"
-
-		# column 2: package statuses
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_lazy_column_width+$(LenANSIDiff "$status_msg")))s" "$status_msg"
-
-		# column 3: package action and result
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_lazy_column_width+$(LenANSIDiff "$action_msg")))s" "$action_msg"
-
-		# column 4: package version
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_lazy_column_width+$(LenANSIDiff "$ver_msg")))s" "$ver_msg"
-
-		# column 5: application version
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_lazy_column_width+$(LenANSIDiff "$app_ver_msg")))s" "$app_ver_msg"
-
-		# column 6: package installation path
-	 	printf "%$((r_report_column_spacing))s"
-	 	printf "%-$((r_report_qpkg_path_column_width+$(LenANSIDiff "$path_msg")))s" "$path_msg"
-
-	 	printf '\n'
+		GenerateReportLineItem "$name_msg" "$r_report_qpkg_name_column_width"
+		GenerateReportLineItem "$status_msg" "$r_report_qpkg_status_column_width"
+		GenerateReportLineItem "$action_msg" "$r_report_qpkg_action_column_width"
+		GenerateReportLineItem "$ver_msg" "$r_report_qpkg_version_column_width"
+		GenerateReportLineItem "$app_ver_msg" "$r_report_qpkg_appl_version_column_width"
+		GenerateReportLineItem "$path_msg" "$r_report_qpkg_path_column_width"
 	fi
+
+	printf '\n'
 
 	}
 
@@ -5083,26 +5047,22 @@ GenerateReposReportTitleLine()
 	#	$r_report_qpkg_name_column_width
 	#	$r_report_qpkg_repo_column_width
 
-	local a=''
-
-	# column 1: package name.
-	a='QPKG name:'
-	printf "%-$((r_report_qpkg_name_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 2: package repository
-	a='Repository:'
-	printf "%-$((r_report_qpkg_repo_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 3: package installation date
-	a='Install date:'
-	printf "%-$((r_report_qpkg_install_date_column_width+2+$(LenANSIDiff "$a")))s" "$a"
+	if OsIsSupportAutowidthTableColumns; then
+		printf 'QPKG name:|Repository:|Install date:'
+	else
+		GenerateReportLineItem 'QPKG name:' "$r_report_qpkg_name_column_width"
+		GenerateReportLineItem 'Repository:' "$r_report_qpkg_repo_column_width"
+		GenerateReportLineItem 'Install date:' "$r_report_qpkg_install_date_column_width"
+	fi
 
 	printf '\n'
 
 	}
 
-GenerateReposReportDataLine()
+_GenerateReposReportDataLine_()
 	{
+
+	# * This function runs asynchronously *
 
 	# Inputs: (global)
 	# 	$qpkg_name
@@ -5204,46 +5164,38 @@ GenerateReposReportDataLine()
 	esac
 
 	if OsIsSupportAutowidthTableColumns; then
-		echo "$name_msg|$assigned_repo_msg|$install_date_msg"
+		printf '%s' "$name_msg|$assigned_repo_msg|$install_date_msg"
 	else
-		# column 1: package name.
-		printf "%-$((r_report_qpkg_name_column_width+$(LenANSIDiff "$name_msg")))s" "$name_msg"
-
-		# column 2: package repository
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_qpkg_repo_column_width+$(LenANSIDiff "$assigned_repo_msg")))s" "$assigned_repo_msg"
-
-		# column 3: package installation date
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_qpkg_install_date_column_width+$(LenANSIDiff "$install_date_msg")))s" "$install_date_msg"
-
-		printf '\n'
+		GenerateReportLineItem "$name_msg" "$r_report_qpkg_name_column_width"
+		GenerateReportLineItem "$assigned_repo_msg" "$r_report_qpkg_repo_column_width"
+		GenerateReportLineItem "$install_date_msg" "$r_report_qpkg_install_date_column_width"
 	fi
+
+	printf '\n'
 
 	}
 
 GenerateAbsReportTitleLine()
 	{
 
-	local a=''
+	# Inputs: (global)
+	#	$r_report_qpkg_abbreviations_column_width
+	#	$r_report_qpkg_is_installed_column_width
+	#	$r_report_qpkg_name_column_width
 
-	# column 1: package name.
-	a='QPKG name:'
-	printf "%-$((r_report_qpkg_name_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 2: QPKG is installed
-	a='Installed?'
-	printf "%-$((r_report_qpkg_is_installed_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 3: package abbreviations
-	a='Acceptable QPKG name abbreviations and aliases:'
-	printf "%-$((r_report_qpkg_abbreviations_column_width+2+$(LenANSIDiff "$a")))s" "$a"
+	if OsIsSupportAutowidthTableColumns; then
+		printf 'QPKG name:|Installed?|Acceptable QPKG name abbreviations and aliases:'
+	else
+		GenerateReportLineItem 'QPKG name:' "$r_report_qpkg_name_column_width"
+		GenerateReportLineItem 'Installed?' "$r_report_qpkg_is_installed_column_width"
+		GenerateReportLineItem 'Acceptable QPKG name abbreviations and aliases:' "$r_report_qpkg_abbreviations_column_width"
+	fi
 
 	printf '\n'
 
 	}
 
-GenerateAbsReportDataLine()
+_GenerateStatusReportDataLine_()
 	{
 
 	# * This function runs asynchronously *
@@ -5295,74 +5247,52 @@ GenerateAbsReportDataLine()
 	esac
 
 	if OsIsSupportAutowidthTableColumns; then
-		echo "$name_msg|$installed_msg|$abs_msg"
+		printf '%s' "$name_msg|$installed_msg|$abs_msg"
 	else
-		# column 1: package name.
-		printf "%-$((r_report_qpkg_name_column_width+$(LenANSIDiff "$name_msg")))s" "$name_msg"
-
-		# column 2: package is installed?
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_qpkg_is_installed_column_width+$(LenANSIDiff "$installed_msg")))s" "$installed_msg"
-
-		# column 3: package abbreviations
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_qpkg_abbreviations_column_width+$(LenANSIDiff "$abs_msg")))s" "$abs_msg"
-
-		printf '\n'
+		GenerateReportLineItem "$name_msg" "$r_report_qpkg_name_column_width"
+		GenerateReportLineItem "$installed_msg" "$r_report_qpkg_is_installed_column_width"
+		GenerateReportLineItem "$abs_msg" "$r_report_qpkg_abbreviations_column_width"
 	fi
+
+	printf '\n'
 
 	}
 
 GenerateDepsReportTitleLine()
 	{
 
-	local a=''
+	# Inputs: (global)
+	#	$r_report_lazy_column_width
+	#	$r_report_qpkg_arch_column_width
+	#	$r_report_qpkg_dependencies_column_width
+	#	$r_report_qpkg_is_enabled_column_width
+	#	$r_report_qpkg_is_installed_column_width
+	#	$r_report_qpkg_is_managed_column_width
+	#	$r_report_qpkg_max_os_version_column_width
+	#	$r_report_qpkg_min_os_version_column_width
+	#	$r_report_qpkg_min_ram_column_width
+	#	$r_report_qpkg_name_column_width
 
-	# column 1: package name.
-	a='QPKG name:'
-	printf "%-$((r_report_qpkg_name_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 2: package dependencies.
-	a='Dependencies:'
-	printf "%-$((r_report_qpkg_dependencies_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 3: QPKG is installed?
-	a='Installed?'
-	printf "%-$((r_report_qpkg_is_installed_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 4: QPKG is enabled?
-	a='Enabled?'
-	printf "%-$((r_report_qpkg_is_enabled_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 5: QPKG is managed by sherpa?
-	a='Managed?'
-	printf "%-$((r_report_qpkg_is_managed_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 6: minimum NAS RAM required.
-	a='Min. RAM:'
-	printf "%-$((r_report_qpkg_min_ram_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 7: minimum OS fimware version supported.
-	a='Min. OS:'
-	printf "%-$((r_report_qpkg_min_os_version_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 8: maximum OS fimware version supported.
-	a='Max. OS:'
-	printf "%-$((r_report_qpkg_max_os_version_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 9: arch is compatible?
-	a='Supported arch?'
-	printf "%-$((r_report_qpkg_arch_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 10: installed QPKG author
-	a='Installed QPKG author:'
-	printf "%-$((r_report_lazy_column_width+2+$(LenANSIDiff "$a")))s" "$a"
+	if OsIsSupportAutowidthTableColumns; then
+		printf 'QPKG name:|Dependencies:|Installed?|Enabled?|Managed?|Min. RAM:|Min. OS:|Max. OS:|Supported arch?|Installed QPKG author:'
+	else
+		GenerateReportLineItem 'QPKG name:' "$r_report_qpkg_name_column_width"
+		GenerateReportLineItem 'Dependencies:' "$r_report_qpkg_dependencies_column_width"
+		GenerateReportLineItem 'Installed?' "$r_report_qpkg_is_installed_column_width"
+		GenerateReportLineItem 'Enabled?' "$r_report_qpkg_is_enabled_column_width"
+		GenerateReportLineItem 'Managed?' "$r_report_qpkg_is_managed_column_width"
+		GenerateReportLineItem 'Min. RAM:' "$r_report_qpkg_min_ram_column_width"
+		GenerateReportLineItem 'Min. OS:' "$r_report_qpkg_min_os_version_column_width"
+		GenerateReportLineItem 'Max. OS:' "$r_report_qpkg_max_os_version_column_width"
+		GenerateReportLineItem 'Supported arch?' "$r_report_qpkg_arch_column_width"
+		GenerateReportLineItem 'Installed QPKG author:' "$r_report_lazy_column_width"
+	fi
 
 	printf '\n'
 
 	}
 
-GenerateDepsReportDataLine()
+_GenerateDepsReportDataLine_()
 	{
 
 	# * This function runs asynchronously *
@@ -5791,102 +5721,58 @@ GenerateDepsReportDataLine()
 	fi
 
 	if OsIsSupportAutowidthTableColumns; then
-		echo "$name_msg|$deps_msg|$installed_msg|$enabled_msg|$managed_msg|$min_ram_msg|$min_os_msg|$max_os_msg|$arch_msg|$author_msg"
+		printf '%s' "$name_msg|$deps_msg|$installed_msg|$enabled_msg|$managed_msg|$min_ram_msg|$min_os_msg|$max_os_msg|$arch_msg|$author_msg"
 	else
-		# column 1: package name.
-		printf "%-$((r_report_qpkg_name_column_width+$(LenANSIDiff "$name_msg")))s" "$name_msg"
-
-		# column 2: package dependencies.
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_qpkg_dependencies_column_width+$(LenANSIDiff "$deps_msg")))s" "$deps_msg"
-
-		# column 3: package is installed?
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_qpkg_is_installed_column_width+$(LenANSIDiff "$installed_msg")))s" "$installed_msg"
-
-		# column 4: package is enabled?
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_qpkg_is_enabled_column_width+$(LenANSIDiff "$enabled_msg")))s" "$enabled_msg"
-
-		# column 5: package is managed by sherpa?
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_qpkg_is_managed_column_width+$(LenANSIDiff "$managed_msg")))s" "$managed_msg"
-
-		# column 6: minimum NAS RAM required.
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_qpkg_min_ram_column_width+$(LenANSIDiff "$min_ram_msg")))s" "$min_ram_msg"
-
-		# column 7: minimum OS fimware version supported.
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_qpkg_min_os_version_column_width+$(LenANSIDiff "$min_os_msg")))s" "$min_os_msg"
-
-		# column 8: maximum OS fimware version supported.
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_qpkg_max_os_version_column_width+$(LenANSIDiff "$max_os_msg")))s" "$max_os_msg"
-
-		# column 9: NAS arch is compatible?
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_qpkg_arch_column_width+$(LenANSIDiff "$arch_msg")))s" "$arch_msg"
-
-		# column 10: installed QPKG author.
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_lazy_column_width+$(LenANSIDiff "$author_msg")))s" "$author_msg"
-
-		printf '\n'
+		GenerateReportLineItem "$name_msg" "$r_report_qpkg_name_column_width"
+		GenerateReportLineItem "$deps_msg" "$r_report_qpkg_dependencies_column_width"
+		GenerateReportLineItem "$installed_msg" "$r_report_qpkg_is_installed_column_width"
+		GenerateReportLineItem "$enabled_msg" "$r_report_qpkg_is_enabled_column_width"
+		GenerateReportLineItem "$managed_msg" "$r_report_qpkg_is_managed_column_width"
+		GenerateReportLineItem "$min_ram_msg" "$r_report_qpkg_min_ram_column_width"
+		GenerateReportLineItem "$min_os_msg" "$r_report_qpkg_min_os_version_column_width"
+		GenerateReportLineItem "$max_os_msg" "$r_report_qpkg_max_os_version_column_width"
+		GenerateReportLineItem "$arch_msg" "$r_report_qpkg_arch_column_width"
+		GenerateReportLineItem "$author_msg" "$r_report_lazy_column_width"
 	fi
+
+	printf '\n'
 
 	}
 
 GenerateFeaturesReportTitleLine()
 	{
 
-	local a=''
+	# Inputs: (global)
+	#	$r_report_lazy_column_width
+	#	$r_report_qpkg_active_test_builtin_column_width
+	#	$r_report_qpkg_auto_update_column_width
+	#	$r_report_qpkg_is_compatible_column_width
+	#	$r_report_qpkg_name_column_width
+	#	$r_report_qpkg_tier_column_width
+	#	$r_report_qpkg_supports_backup_column_width
+	#	$r_report_qpkg_supports_clean_column_width
+	#	$r_report_qpkg_supports_start_to_update_column_width
 
-	# column 1: package name.
-	a='QPKG name:'
-	printf "%-$((r_report_qpkg_name_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 2: package supports `backup` action?
-	a='CanBack?'
-	printf "%-$((r_report_qpkg_supports_backup_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 3: package supports `clean` action?
-	a='CanClean?'
-	printf "%-$((r_report_qpkg_supports_clean_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 4: package supports restart-to-update application action?
-	a='StartUpd?'
-	printf "%-$((r_report_qpkg_supports_start_to_update_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 5: package is set to auto-update on restart?
-	a='AutoUpd?'
-	printf "%-$((r_report_qpkg_auto_update_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 6: package active test is builtin?
-	a='LiveTest?'
-	printf "%-$((r_report_qpkg_active_test_builtin_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 7: package is independent?
-	a='Independent?'
-	printf "%-$((r_report_qpkg_tier_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 8: NAS arch is compatible?
-	a='ArchCompat?'
-	printf "%-$((r_report_qpkg_is_compatible_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 9: QPKG is sherpa-compatible?
-	a='Enhanced?'
-	printf "%-$((r_report_lazy_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 10: QPKG unpacks itself to unique path?
-	a='UniqueUnpack?'
-	printf "%-$((r_report_lazy_column_width+2+$(LenANSIDiff "$a")))s" "$a"
+	if OsIsSupportAutowidthTableColumns; then
+		printf 'QPKG name:|CanBack?|CanClean?|StartUpd?|AutoUpd?|LiveTest?|Independent?|ArchCompat?|Enhanced?|UniqueUnpack?'
+	else
+		GenerateReportLineItem 'QPKG name:' "$r_report_qpkg_name_column_width"
+		GenerateReportLineItem 'CanBack?' "$r_report_qpkg_supports_backup_column_width"
+		GenerateReportLineItem 'CanClean?' "$r_report_qpkg_supports_clean_column_width"
+		GenerateReportLineItem 'StartUpd?' "$r_report_qpkg_supports_start_to_update_column_width"
+		GenerateReportLineItem 'AutoUpd?' "$r_report_qpkg_auto_update_column_width"
+		GenerateReportLineItem 'LiveTest?' "$r_report_qpkg_active_test_builtin_column_width"
+		GenerateReportLineItem 'Independent?' "$r_report_qpkg_tier_column_width"
+		GenerateReportLineItem 'ArchCompat?' "$r_report_qpkg_is_compatible_column_width"
+		GenerateReportLineItem 'Enhanced?' "$r_report_lazy_column_width"
+		GenerateReportLineItem 'UniqueUnpack?' "$r_report_lazy_column_width"
+	fi
 
 	printf '\n'
 
 	}
 
-GenerateFeaturesReportDataLine()
+_GenerateFeaturesReportDataLine_()
 	{
 
 	# * This function runs asynchronously *
@@ -6100,75 +5986,48 @@ GenerateFeaturesReportDataLine()
 	fi
 
 	if OsIsSupportAutowidthTableColumns; then
-		echo "$name_msg|$backup_msg|$clean_msg|$restart_to_update_msg|$autoupdate_msg|$active_test_msg|$independent_msg|$arch_compatible_msg|$sherpa_compatible_msg|$uniqueunpack_msg"
+		printf '%s' "$name_msg|$backup_msg|$clean_msg|$restart_to_update_msg|$autoupdate_msg|$active_test_msg|$independent_msg|$arch_compatible_msg|$sherpa_compatible_msg|$uniqueunpack_msg"
 	else
-		# column 1: package name.
-		printf "%-$((r_report_qpkg_name_column_width+$(LenANSIDiff "$name_msg")))s" "$name_msg"
-
-		# column 2: package supports `backup` action?
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_qpkg_supports_backup_column_width+$(LenANSIDiff "$backup_msg")))s" "$backup_msg"
-
-		# column 3: package supports `clean` action?
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_qpkg_supports_clean_column_width+$(LenANSIDiff "$clean_msg")))s" "$clean_msg"
-
-		# column 4: package supports restart-to-update application action?
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_qpkg_supports_start_to_update_column_width+$(LenANSIDiff "$restart_to_update_msg")))s" "$restart_to_update_msg"
-
-		# column 5: package is set to auto-update on restart?
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_qpkg_auto_update_column_width+$(LenANSIDiff "$autoupdate_msg")))s" "$autoupdate_msg"
-
-		# column 6: package active test is builtin?
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_qpkg_active_test_builtin_column_width+$(LenANSIDiff "$active_test_msg")))s" "$active_test_msg"
-
-		# column 7: package is independent?
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_qpkg_tier_column_width+$(LenANSIDiff "$independent_msg")))s" "$independent_msg"
-
-		# column 8: NAS arch is compatible?
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_qpkg_is_compatible_column_width+$(LenANSIDiff "$arch_compatible_msg")))s" "$arch_compatible_msg"
-
-		# column 9: QPKG is sherpa-compatible?
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_lazy_column_width+$(LenANSIDiff "$sherpa_compatible_msg")))s" "$sherpa_compatible_msg"
-
-		# column 10: QPKG will unpack to unique path?
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_lazy_column_width+$(LenANSIDiff "$uniqueunpack_msg")))s" "$uniqueunpack_msg"
-
-		printf '\n'
+		GenerateReportLineItem "$name_msg" "$r_report_qpkg_name_column_width"
+		GenerateReportLineItem "$backup_msg" "$r_report_qpkg_supports_backup_column_width"
+		GenerateReportLineItem "$clean_msg" "$r_report_qpkg_supports_clean_column_width"
+		GenerateReportLineItem "$restart_to_update_msg" "$r_report_qpkg_supports_start_to_update_column_width"
+		GenerateReportLineItem "$autoupdate_msg" "$r_report_qpkg_auto_update_column_width"
+		GenerateReportLineItem "$active_test_msg" "$r_report_qpkg_active_test_builtin_column_width"
+		GenerateReportLineItem "$independent_msg" "$r_report_qpkg_tier_column_width"
+		GenerateReportLineItem "$arch_compatible_msg" "$r_report_qpkg_is_compatible_column_width"
+		GenerateReportLineItem "$sherpa_compatible_msg" "$r_report_lazy_column_width"
+		GenerateReportLineItem "$uniqueunpack_msg" "$r_report_lazy_column_width"
 	fi
+
+	printf '\n'
 
 	}
 
 GenerateBacksReportTitleLine()
 	{
 
-	local a=''
+	# Inputs: (global)
+	#	$r_report_file_bytes_column_width
+	#	$r_report_file_change_date_column_width
+	#	$r_report_file_name_column_width
 
-	# column 1: backup filename
-	a='Backup file:'
-	printf "%-$((r_report_file_name_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 2: filesize in bytes
-	a='Size in bytes:'
-	printf "%-$((r_report_file_bytes_column_width+2+$(LenANSIDiff "$a")))s" "$a"
-
-	# column 3: last backup date
-	a='Backup date:'
-	printf "%-$((r_report_file_change_date_column_width+2+$(LenANSIDiff "$a")))s" "$a"
+	if OsIsSupportAutowidthTableColumns; then
+		printf 'Backup file:|Size in bytes:|Backup date:'
+	else
+		GenerateReportLineItem 'Backup file:' "$r_report_file_name_column_width"
+		GenerateReportLineItem 'Size in bytes:' "$r_report_file_bytes_column_width"
+		GenerateReportLineItem 'Backup date:' "$r_report_file_change_date_column_width"
+	fi
 
 	printf '\n'
 
 	}
 
-GenerateBacksReportItemLine()
+_GenerateBacksReportItemLine_()
 	{
+
+	# * This function runs asynchronously *
 
 	# Inputs:
 	#	$1 = last backup date in epoch seconds
@@ -6207,21 +6066,31 @@ GenerateBacksReportItemLine()
 	esac
 
 	if OsIsSupportAutowidthTableColumns; then
-		echo "$file_name_msg|$file_bytes_msg|$epoch_time_msg"
+		printf '%s' "$file_name_msg|$file_bytes_msg|$epoch_time_msg"
 	else
-		# column 1: backup filename
-		printf "%-$((r_report_file_name_column_width+$(LenANSIDiff "$file_name_msg")))s" "$file_name_msg"
-
-		# column 2: filesize in bytes
-		printf "%$((r_report_column_spacing))s"
-		printf "%$((r_report_file_bytes_column_width+$(LenANSIDiff "$file_bytes_msg")))s" "$file_bytes_msg "	# append 1 x whitespace char to force right-justified numbers to the left a bit. Looks nicer.
-
-		# column 3: last backup date
-		printf "%$((r_report_column_spacing))s"
-		printf "%-$((r_report_file_change_date_column_width+$(LenANSIDiff "$epoch_time_msg")))s" "$epoch_time_msg"
-
-		printf '\n'
+		GenerateReportLineItem "$file_name_msg" "$r_report_file_name_column_width"
+		GenerateReportLineItem "$file_bytes_msg" "$r_report_file_bytes_column_width"
+		GenerateReportLineItem "$epoch_time_msg" "$r_report_file_change_date_column_width"
 	fi
+
+	printf '\n'
+
+	}
+
+GenerateReportLineItem()
+	{
+
+	# Inputs: (local)
+	#	$1 = string: field text with possible ANSI codes.
+	#	$2 = integer: field column width.
+
+	# Inputs: (global)
+	#	$r_report_column_spacing
+
+	[[ -n ${1:-} && -n ${2:-} ]] || return
+	[[ $2 -ge 0 ]] || return
+
+	printf "%-$(($(LenANSIDiff "$1")+$2+r_report_column_spacing))s" "$1"
 
 	}
 
@@ -6229,7 +6098,7 @@ DisplayAsHelpTitle()
 	{
 
 	# Inputs:
-	#	$1 = text
+	#	$1 = string: text
 
 	printf "\n${r_chars_bullet}%s\n" "$(Capitalise "${1:-}" | tr -s ' ')"
 
@@ -6239,7 +6108,7 @@ DisplayAsHelpTitleHighlighted()
 	{
 
 	# Inputs:
-	#	$1 = text
+	#	$1 = string: text
 
 	# shellcheck disable=2059
 	printf "\n$(TextBrightOrange "${r_chars_bullet}%s\n")" "$(Capitalise "${1:-}")"
@@ -6276,9 +6145,9 @@ DisplayAsIndentActionResultDurationReason()
 	printf "%${r_report_action_result_indent}s" ''
 
 	if [[ -z ${4:-} ]]; then
-		printf "%s %s%s" "$(Lowercase "$action")" "$2" "$([[ -n $duration ]] && printf ' in %s' "$duration")"
+		printf '%s %s%s' "$(Lowercase "$action")" "$2" "$([[ -n $duration ]] && printf ' in %s' "$duration")"
 	else
-		printf "%s %s%s (%s)" "$(Lowercase "$action")" "$2" "$([[ -n $duration ]] && printf ' in %s' "$duration")" "$4"
+		printf '%s %s%s (%s)' "$(Lowercase "$action")" "$2" "$([[ -n $duration ]] && printf ' in %s' "$duration")" "$4"
 	fi
 
 	printf '\n'
@@ -7908,7 +7777,7 @@ HelpAbbreviations()
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		QpkgSetIndex
-		GenerateAbsReportDataLine > "$r_reports_path/$n" &
+		_GenerateStatusReportDataLine_ > "$r_reports_path/$n" &
 	done
 
 	m=$n
@@ -7951,6 +7820,7 @@ ShowReportBackups()
 
 	local a=''
 	local epoch_time=0		# Allow float as seconds have a fractional component.
+	local f=''
 	local -i file_bytes=0
 	local file_date=''
 	local file_name=''
@@ -7962,18 +7832,14 @@ ShowReportBackups()
 	DisplayProcReport backups
 	ResetReportsPath &> /dev/null
 
-	if OsIsSupportAutowidthTableColumns; then
-		printf -v a '\n%s\n' 'Backup file:|Size in bytes:|Backup date:'
-	else
-		printf -v a '\n%s\n' "$(GenerateBacksReportTitleLine)"
-	fi
+	printf -v a '\n%s\n' "$(GenerateBacksReportTitleLine)"
 
 	if [[ -e $r_gnu_find_cmd ]]; then				# Prefer GNU `find` for this.
 		while read -r epoch_time file_name file_bytes; do
 			[[ -z $epoch_time || -z $file_name ]] && break
 
 			((n++))
-			GenerateBacksReportItemLine "$epoch_time" "$file_name" "$file_bytes" "$r_report_highlight_backups_older_than" > "$r_reports_path/$n" &
+			_GenerateBacksReportItemLine_ "$epoch_time" "$file_name" "$file_bytes" "$r_report_highlight_backups_older_than" > "$r_reports_path/$n" &
 		done <<< "$($r_gnu_find_cmd "$r_qpkg_bu_path"/*.config.tar.gz -maxdepth 1 -printf '%C@ %f %s\n' 2> /dev/null | /usr/bin/sort)"
 	else										# If GNU `find` isn't available, do-it the hard-way.
 		while read -r file_date file_time file_name file_bytes; do
@@ -7982,7 +7848,7 @@ ShowReportBackups()
 			file_name=$(/usr/bin/basename "$file_name")
 
 			((n++))
-			GenerateBacksReportItemLine "$epoch_time" "$file_name" "$file_bytes" "$r_report_highlight_backups_older_than" > "$r_reports_path/$n" &
+			_GenerateBacksReportItemLine_ "$epoch_time" "$file_name" "$file_bytes" "$r_report_highlight_backups_older_than" > "$r_reports_path/$n" &
 		done <<< "$(cd "$r_qpkg_bu_path" && ls -l1tr --time-style=+"%Y-%m-%d %H:%M:%S" ./*.config.tar.gz 2> /dev/null | /bin/awk '{print $6" "$7" "$8" "$5}')"
 	fi
 
@@ -8019,6 +7885,7 @@ ShowReportDependencies()
 	FuncInit
 
 	local a=''
+	local f=''
 	local -i m=0
 	local -i n=0
 
@@ -8026,16 +7893,12 @@ ShowReportDependencies()
 	DisplayProcReport dependency
 	ResetReportsPath &> /dev/null
 
-	if OsIsSupportAutowidthTableColumns; then
-		printf -v a '\n%s\n' 'QPKG name:|Dependencies:|Installed?|Enabled?|Managed?|Min. RAM:|Min. OS:|Max. OS:|Supported arch?|Installed QPKG author:'
-	else
-		printf -v a '\n%s\n' "$(GenerateDepsReportTitleLine)"
-	fi
+	printf -v a '\n%s\n' "$(GenerateDepsReportTitleLine)"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		QpkgSetIndex
-		GenerateDepsReportDataLine > "$r_reports_path/$n" &
+		_GenerateDepsReportDataLine_ > "$r_reports_path/$n" &
 	done
 
 	m=$n
@@ -8045,7 +7908,7 @@ ShowReportDependencies()
 
 	for ((n=1; n<=m; n++)); do
 		f=$r_reports_path/$n
-		[[ -e $f ]] && printf -v a '%s\n' "$a$(<$f)"		# Add newline to each imported report line.
+		[[ -e $f ]] && printf -v a '%s\n' "$a$(<$f)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
 	if [[ -n $a ]]; then
@@ -8072,6 +7935,7 @@ ShowReportFeatures()
 	FuncInit
 
 	local a=''
+	local f=''
 	local -i m=0
 	local -i n=0
 
@@ -8079,16 +7943,12 @@ ShowReportFeatures()
 	DisplayProcReport features
 	ResetReportsPath &> /dev/null
 
-	if OsIsSupportAutowidthTableColumns; then
-		printf -v a '\n%s\n' 'QPKG name:|CanBack?|CanClean?|StartUpd?|AutoUpd?|LiveTest?|Independent?|ArchCompat?|Enhanced?|UniqueUnpack?'
-	else
-		printf -v a '\n%s\n' "$(GenerateFeaturesReportTitleLine)"
-	fi
+	printf -v a '\n%s\n' "$(GenerateFeaturesReportTitleLine)"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		QpkgSetIndex
-		GenerateFeaturesReportDataLine > "$r_reports_path/$n" &
+		_GenerateFeaturesReportDataLine_ > "$r_reports_path/$n" &
 	done
 
 	m=$n
@@ -8098,7 +7958,7 @@ ShowReportFeatures()
 
 	for ((n=1; n<=m; n++)); do
 		f=$r_reports_path/$n
-		[[ -e $f ]] && printf -v a '%s\n' "$a$(<$f)"		# Add newline to each imported report line.
+		[[ -e $f ]] && printf -v a '%s\n' "$a$(<$f)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
 	if [[ -n $a ]]; then
@@ -8125,6 +7985,7 @@ ShowReportPackages()
 	FuncInit
 
 	local a=''
+	local f=''
 	local -i m=0
 	local -i n=0
 
@@ -8138,16 +7999,12 @@ ShowReportPackages()
 
 		} > "$r_report_output_pathfile"
 
-	if OsIsSupportAutowidthTableColumns; then
-		printf -v a '\n%s\n' 'QPKG name:|Appl. version:|Description:'
-	else
-		printf -v a '\n%s\n' "$(GeneratePacksReportTitleLine)"
-	fi
+	printf -v a '\n%s\n' "$(GeneratePacksReportTitleLine)"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		QpkgSetIndex
-		GeneratePacksReportDataLine "$qpkg_name" > "$r_reports_path/$n" &
+		_GeneratePacksReportDataLine_ "$qpkg_name" > "$r_reports_path/$n" &
 	done
 
 	m=$n
@@ -8156,7 +8013,7 @@ ShowReportPackages()
 
 	for ((n=1; n<=m; n++)); do
 		f=$r_reports_path/$n
-		[[ -e $f ]] && printf -v a '%s\n' "$a$(<$f)"		# Add newline to each imported report line.
+		[[ -e $f ]] && printf -v a '%s\n' "$a$(<$f)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
 	if [[ -n $a ]]; then
@@ -8190,6 +8047,7 @@ ShowReportRepos()
 	FuncInit
 
 	local a=''
+	local f=''
 	local -i m=0
 	local -i n=0
 
@@ -8197,16 +8055,12 @@ ShowReportRepos()
 	DisplayProcReport repository
 	ResetReportsPath &> /dev/null
 
-	if OsIsSupportAutowidthTableColumns; then
-		printf -v a '\n%s\n' 'QPKG name:|Repository:|Install date:'
-	else
-		printf -v a '\n%s\n' "$(GenerateReposReportTitleLine)"
-	fi
+	printf -v a '\n%s\n' "$(GenerateReposReportTitleLine)"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		QpkgSetIndex
-		GenerateReposReportDataLine > "$r_reports_path/$n" &
+		_GenerateReposReportDataLine_ > "$r_reports_path/$n" &
 	done
 
 	m=$n
@@ -8216,7 +8070,7 @@ ShowReportRepos()
 
 	for ((n=1; n<=m; n++)); do
 		f=$r_reports_path/$n
-		[[ -e $f ]] && printf -v a '%s\n' "$a$(<$f)"		# Add newline to each imported report line.
+		[[ -e $f ]] && printf -v a '%s\n' "$a$(<$f)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
 	if [[ -n $a ]]; then
@@ -8242,9 +8096,7 @@ ShowReportStatuses()
 
 	FuncInit
 
-	local a=false
-	local b=''
-	local c=''
+	local a=''
 	local f=''
 	local -i m=0
 	local -i n=0
@@ -8257,16 +8109,10 @@ ShowReportStatuses()
 		QPKGs-ACstatus-dn.Exist "$qpkg_name" || continue
 		((n++))
 		QpkgSetIndex
-		QPKGs-ISupgradable.Exist "$qpkg_name" && a=true
-		GenerateStatusReportDataLine > "$r_reports_path/$n" &
+		_GenerateStatusReportDataLine_ > "$r_reports_path/$n" &
 	done
 
-	if OsIsSupportAutowidthTableColumns; then
-		[[ $a = true ]] && b=' '$(Parenthesise "$(TextBrightOrange new)")
-		printf -v c '\n%s\n' "QPKG name:|Status:|Action (result):|QPKG version${b}:|Appl. version:|Location:"
-	else
-		printf -v c '\n%s\n' "$(GenerateStatusReportTitleLine)"
-	fi
+	printf -v a '\n%s\n' "$(GenerateStatusReportTitleLine)"
 
 	m=$n
 	wait 2> /dev/null
@@ -8276,14 +8122,14 @@ ShowReportStatuses()
 	for ((n=1; n<=m; n++)); do
 		f=$r_reports_path/$n
 		# shellcheck disable=2179
-		[[ -e $f ]] && printf -v c '%s\n' "$c$(<$f)"		# Add newline to each imported report line.
+		[[ -e $f ]] && printf -v a '%s\n' "$a$(<$f)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
-	if [[ -n $c ]]; then
+	if [[ -n $a ]]; then
 		if OsIsSupportAutowidthTableColumns; then
-			printf '%s' "$c" | Tableise
+			printf '%s' "$a" | Tableise
 		else
-			printf '%s' "$c"
+			printf '%s' "$a"
 		fi > "$r_report_output_pathfile"
 
 		GenerateReportFooter >> "$r_report_output_pathfile"
@@ -8305,13 +8151,13 @@ ShowReportAllActionResults()
 	{
 
 	local -i a=0
+	local action=''
 	local -i b=0
 	local -i c=0
 	local -i d=0
-	local -i e=0
-	local action=''
 	local -i datetime=0
 	local -i duration=0
+	local -i e=0
 	local package_name=''
 	local package_type=''
 	local -i quantity=0
@@ -8576,9 +8422,6 @@ GenerateReportFooter()
 
 	if compgen -G "${r_report_flags_path}/backup-file-*" > /dev/null; then			# https://stackoverflow.com/a/6364244
 		DisplayAsIndentItem "backups are listed oldest-first."
-	fi
-
-	if compgen -G "${r_report_flags_path}/backup-file-*" > /dev/null; then			# https://stackoverflow.com/a/6364244
 		DisplayAsIndentItem "all $(ShowAsTitleName) backup files are stored here: $r_qpkg_bu_path"
 	fi
 
@@ -9473,6 +9316,8 @@ OsIsSupportAutowidthTableColumns()
 	#	$r_gnu_awk_cmd
 
 	[[ -e $r_gnu_awk_cmd ]]
+
+#  	false										#devdebug
 
 	}
 
