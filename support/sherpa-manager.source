@@ -230,7 +230,8 @@ LoadConsts()
 	readonly r_report_qpkg_supports_clean_column_width=9
 	readonly r_report_qpkg_supports_start_to_update_column_width=9
 	readonly r_report_qpkg_tier_column_width=12
-	readonly r_report_qpkg_version_column_width=15
+	readonly r_report_qpkg_version_column_width=19
+
 	readonly r_report_lazy_column_width=28				# Use this when I can't be bothered calculating an optimum fixed column width.
 
 	# Report, help and debug formatting.
@@ -4776,7 +4777,7 @@ _GeneratePacksReportDataLine_()
 		printf '%s' "$name_msg|$app_ver_msg|$description_msg"
 
 		if [[ -n $notes ]]; then
-			printf "\n%s|%s|%$((${#r_chars_blank}))s%s\n" '' '' '' "$(TextBrightOrange "${r_chars_dropend}${r_chars_note}") $notes_msg"
+			printf "\n%s|%s|%$((${#r_chars_blank}))s$(TextBrightOrange "${r_chars_dropend}${r_chars_note}")%s" '' '' '' "$notes_msg"
 		fi
 	else
 		GenerateReportLineItem "$name_msg" "$r_report_qpkg_name_column_width"
@@ -5195,7 +5196,7 @@ GenerateAbsReportTitleLine()
 
 	}
 
-_GenerateStatusReportDataLine_()
+_GenerateAbsReportDataLine_()
 	{
 
 	# * This function runs asynchronously *
@@ -7768,16 +7769,12 @@ HelpAbbreviations()
 
 		} > "$r_report_output_pathfile"
 
-	if OsIsSupportAutowidthTableColumns; then
-		printf -v a '\n%s\n' 'QPKG name:|Installed?|Acceptable QPKG name abbreviations and aliases:'
-	else
-		printf -v a '\n%s\n' "$(GenerateAbsReportTitleLine)"
-	fi
+	printf -v a '\n%s\n' "$(GenerateAbsReportTitleLine)"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		QpkgSetIndex
-		_GenerateStatusReportDataLine_ > "$r_reports_path/$n" &
+		_GenerateAbsReportDataLine_ > "$r_reports_path/$n" &
 	done
 
 	m=$n
