@@ -78,7 +78,7 @@ Tested on:
 #*	 GNU bash, version 5.0.17(1)-release (aarch64-openwrt-linux-gnu)
 #*	   Copyright (C) 2019 Free Software Foundation, Inc.
 #
-#*	 All scripts are written for compatibility with bash 3.2 (via QTS BusyBox) as a minimum. Be-careful copypasting code for use in other shells, as these scripts contain syntax quirks that are often compatible only with bash.
+#*	 All scripts are optimised for compatibility with bash 3.2 (via QTS BusyBox) as a minimum. Please be-careful copypasting code for use in other shells, as these scripts contain syntax quirks often compatible only with bash.
 EOB
 
 read -rd '' license_msg << EOB

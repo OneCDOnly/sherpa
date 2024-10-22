@@ -6111,8 +6111,7 @@ DisplayAsHelpTitleHighlighted()
 	# Inputs:
 	#	$1 = string: text
 
-	# shellcheck disable=2059
-	printf "\n$(TextBrightOrange "${r_chars_bullet}%s\n")" "$(Capitalise "${1:-}")"
+	printf '\n%s\n' "$(TextBrightOrange "${r_chars_bullet}$(Capitalise "${1:-}")")"
 
 	}
 
@@ -7107,8 +7106,7 @@ ShowQPKGsMissing()
 		packages+=($(QPKGs-ISmissing:Array))
 	fi
 
-	# shellcheck disable=2322
-	for ((i=0; i<=((${#packages[@]}-1)); i++)); do
+	for ((i=0; i<=(${#packages[@]}-1); i++)); do
 		a+=$(TextBrightRed "${packages[$i]}")
 
 		if [[ $((i+1)) -ge $name_limit && $((${#packages[@]}-name_limit)) -gt 0 ]]; then
@@ -7160,8 +7158,7 @@ ShowQPKGsNewVers()
 		packages+=($(QPKGs-ISupgradable:Array))
 	fi
 
-	# shellcheck disable=2322
-	for ((i=0; i<=((${#packages[@]}-1)); i++)); do
+	for ((i=0; i<=(${#packages[@]}-1); i++)); do
 		a+=$(TextBrightOrange "${packages[$i]}")
 
 		if [[ $((i+1)) -ge $name_limit && $((${#packages[@]}-name_limit)) -gt 0 ]]; then
@@ -7195,7 +7192,6 @@ CheckQPKGsConflicts()
 	local a=''
 
 	if [[ -n ${r_base_qpkg_conflicts_with:-} ]]; then
-		# shellcheck disable=2068
 		for a in "${r_base_qpkg_conflicts_with[@]}"; do
 			if QpkgIsInstalledEnabled "$a"; then
 				ShowAsError "the '$a' QPKG is enabled. $(ShowAsTitleName) is incompatible with this package. Please consider stopping this QPKG in your App Center"
@@ -7213,10 +7209,12 @@ CheckQPKGsConflicts()
 CheckQPKGsWarnings()
 	{
 
+	# Inputs: (global)
+	#	$r_base_qpkg_warnings[]
+
 	local a=''
 
 	if [[ -n ${r_base_qpkg_warnings:-} ]]; then
-		# shellcheck disable=2068
 		for a in "${r_base_qpkg_warnings[@]}"; do
 			if QpkgIsInstalledEnabled "$a"; then
 				ShowAsWarn "the '$a' QPKG is enabled. This may cause problems with $(ShowAsTitleName) applications. Please consider stopping this QPKG in your App Center"
@@ -7232,6 +7230,10 @@ CheckQPKGsWarnings()
 
 ListQPKGsActions()
 	{
+
+	# Inputs: (global)
+	#	$r_qpkg_actions[]
+	#	$useropt_debug
 
 	[[ $useropt_debug = true ]] || return
 
@@ -7274,6 +7276,9 @@ ListQPKGsActionsAll()																						#devdebug
 
 	# Only used when debugging.																				#devdebug
 
+	# Inputs: (global)																						#devdebug
+	#	$r_qpkg_actions[]																					#devdebug
+
 	FuncInit																								#devdebug
 
 	local a=''																								#devdebug
@@ -7296,6 +7301,10 @@ ListQPKGsActionsAll()																						#devdebug
 
 ListIPKsActions()
 	{
+
+	# Inputs: (global)
+	#	$r_ipk_actions[]
+	#	$useropt_debug
 
 	[[ $useropt_debug = true ]] || return
 
@@ -7331,6 +7340,10 @@ ListIPKsActions()
 ListPIPsActions()
 	{
 
+	# Inputs: (global)
+	#	$r_pip_actions[]
+	#	$useropt_debug
+
 	[[ $useropt_debug = true ]] || return
 
 	FuncInit
@@ -7351,6 +7364,13 @@ ListPIPsActions()
 
 ListQPKGsStates()
 	{
+
+	# Inputs: (global)
+	#	$r_qpkg_is_states[]
+	#	$r_qpkg_isnt_states[]
+	#	$r_qpkg_service_results[]
+	#	$r_qpkg_states_transient[]
+	#	$useropt_debug
 
 	[[ $useropt_debug = true ]] || return
 
@@ -7384,7 +7404,6 @@ ListQPKGsStates()
 	done
 
 	for a in "${r_qpkg_states_transient[@]}"; do
-		# shellcheck disable=2043
 		QPKGs-IS${a}.IsAny && DebugQpkg info "IS${a}" "($(QPKGs-IS${a}:Count)) $(QPKGs-IS${a}:ListCSV) "
 	done
 
@@ -7397,13 +7416,22 @@ ListQPKGsStates()
 BuildQPKGsTiers()
 	{
 
-	FuncInit
-
 	# There are three tiers of package: `independent`, `auxiliary` and `dependent`.
 	# ... but only two tiers of QPKG: `independent` and `dependent`.
 
 	# `independent` QPKGs don't depend-on other QPKGs, but may be required for other QPKGs. They should be installed/activated before any `dependent` QPKGs.
 	# `dependent` QPKGs depend-on other QPKGs. They should be installed/activated after all `independent` QPKGs.
+
+	# Inputs: (global)
+	#	$qpkgs_tiers_built
+	#	$r_dependent_qpkgs_list_pathfile
+	#	$r_independent_qpkgs_list_pathfile
+	#	$r_qpkg_name[]
+
+	# Outputs: (global)
+	#	$qpkgs_tiers_built
+
+	FuncInit
 
 	if [[ ${qpkgs_tiers_built:=false} = true ]]; then
 		DebugAsDone "don't build tiers: they're already built"
@@ -7440,6 +7468,13 @@ BuildQPKGsTiers()
 
 InitQPKGsTiers()
 	{
+
+	# Inputs: (global)
+	#	$r_dependent_qpkgs_list_pathfile
+	#	$r_independent_qpkgs_list_pathfile
+
+	# Outputs: (global)
+	#	$qpkgs_tiers_built
 
 	rm -f "$r_dependent_qpkgs_list_pathfile" "$r_independent_qpkgs_list_pathfile" 2> /dev/null
 	qpkgs_tiers_built=false
@@ -7660,7 +7695,16 @@ BuildQPKGsStates()
 InitQPKGsStates()
 	{
 
-	# Clears in-memory state list objects
+	# Clear in-memory state list objects.
+
+	# Inputs: (global)
+	#	$r_qpkg_is_states[]
+	#	$r_qpkg_isnt_states[]
+	#	$r_qpkg_states_path
+	#	$r_qpkg_states_transient[]
+
+	# Outputs: (global)
+	#	$qpkgs_states_built
 
 	LoadObjects || return
 
@@ -7753,7 +7797,7 @@ HelpAbbreviations()
 	FuncInit
 
 	local a=''
-	local f=''
+	local b=''
 	local -i m=0
 	local -i n=0
 
@@ -7783,8 +7827,8 @@ HelpAbbreviations()
 	# Load report lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		f=$r_reports_path/$n
-		[[ -e $f ]] && printf -v a '%s\n' "$a$(<$f)"		# Add newline to each imported report line.
+		b=$r_reports_path/$n
+		[[ -e $b ]] && printf -v a '%s\n' "$a$(<$b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
 	if [[ -n $a ]]; then
@@ -7816,8 +7860,8 @@ ShowReportBackups()
 	FuncInit
 
 	local a=''
+	local b=''
 	local epoch_time=0		# Allow float as seconds have a fractional component.
-	local f=''
 	local -i file_bytes=0
 	local file_date=''
 	local file_name=''
@@ -7855,8 +7899,8 @@ ShowReportBackups()
 	# Load report lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		f=$r_reports_path/$n
-		[[ -e $f ]] && printf -v a '%s\n' "$a$(<$f)"		# Add newline to each imported report line.
+		b=$r_reports_path/$n
+		[[ -e $b ]] && printf -v a '%s\n' "$a$(<$b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
 	if [[ -n $a ]]; then
@@ -7882,7 +7926,7 @@ ShowReportDependencies()
 	FuncInit
 
 	local a=''
-	local f=''
+	local b=''
 	local -i m=0
 	local -i n=0
 
@@ -7904,8 +7948,8 @@ ShowReportDependencies()
 	# Load report lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		f=$r_reports_path/$n
-		[[ -e $f ]] && printf -v a '%s\n' "$a$(<$f)"		# Add newline to each imported report line and append to string accumulator ($a).
+		b=$r_reports_path/$n
+		[[ -e $b ]] && printf -v a '%s\n' "$a$(<$b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
 	if [[ -n $a ]]; then
@@ -7932,7 +7976,7 @@ ShowReportFeatures()
 	FuncInit
 
 	local a=''
-	local f=''
+	local b=''
 	local -i m=0
 	local -i n=0
 
@@ -7954,8 +7998,8 @@ ShowReportFeatures()
 	# Load report lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		f=$r_reports_path/$n
-		[[ -e $f ]] && printf -v a '%s\n' "$a$(<$f)"		# Add newline to each imported report line and append to string accumulator ($a).
+		b=$r_reports_path/$n
+		[[ -e $b ]] && printf -v a '%s\n' "$a$(<$b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
 	if [[ -n $a ]]; then
@@ -7982,7 +8026,7 @@ ShowReportPackages()
 	FuncInit
 
 	local a=''
-	local f=''
+	local b=''
 	local -i m=0
 	local -i n=0
 
@@ -8009,8 +8053,8 @@ ShowReportPackages()
 	# Load report data lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		f=$r_reports_path/$n
-		[[ -e $f ]] && printf -v a '%s\n' "$a$(<$f)"		# Add newline to each imported report line and append to string accumulator ($a).
+		b=$r_reports_path/$n
+		[[ -e $b ]] && printf -v a '%s\n' "$a$(<$b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
 	if [[ -n $a ]]; then
@@ -8044,7 +8088,7 @@ ShowReportRepos()
 	FuncInit
 
 	local a=''
-	local f=''
+	local b=''
 	local -i m=0
 	local -i n=0
 
@@ -8066,8 +8110,8 @@ ShowReportRepos()
 	# Load report data lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		f=$r_reports_path/$n
-		[[ -e $f ]] && printf -v a '%s\n' "$a$(<$f)"		# Add newline to each imported report line and append to string accumulator ($a).
+		b=$r_reports_path/$n
+		[[ -e $b ]] && printf -v a '%s\n' "$a$(<$b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
 	if [[ -n $a ]]; then
@@ -8094,7 +8138,7 @@ ShowReportStatuses()
 	FuncInit
 
 	local a=''
-	local f=''
+	local b=''
 	local -i m=0
 	local -i n=0
 
@@ -8117,9 +8161,8 @@ ShowReportStatuses()
 	# Load report lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		f=$r_reports_path/$n
-		# shellcheck disable=2179
-		[[ -e $f ]] && printf -v a '%s\n' "$a$(<$f)"		# Add newline to each imported report line and append to string accumulator ($a).
+		b=$r_reports_path/$n
+		[[ -e $b ]] && printf -v a '%s\n' "$a$(<$b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
 	if [[ -n $a ]]; then
