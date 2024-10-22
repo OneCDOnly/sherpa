@@ -70,6 +70,7 @@ EOB
 
 read -rd '' tested_msg << EOB
 Tested on:
+#*	 GNU bash, version 3.2.57(1)-release (x86_64-QNAP-linux-gnu)
 #*	 GNU bash, version 3.2.57(2)-release (i686-pc-linux-gnu)
 #*	 GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
 #*	   Copyright (C) 2007 Free Software Foundation, Inc.
@@ -78,7 +79,7 @@ Tested on:
 #*	 GNU bash, version 5.0.17(1)-release (aarch64-openwrt-linux-gnu)
 #*	   Copyright (C) 2019 Free Software Foundation, Inc.
 #
-#*	 All scripts are optimised for compatibility with bash 3.2 (via QTS BusyBox) as a minimum. Please be-careful copypasting code for use in other shells, as these scripts contain syntax quirks often compatible only with bash.
+#*	 All scripts are optimised for compatibility with bash 3.2 (via QTS BusyBox). Be-careful reusing code in other shells, as these scripts contain syntax quirks often compatible only with bash.
 EOB
 
 read -rd '' license_msg << EOB
