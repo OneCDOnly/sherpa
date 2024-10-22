@@ -47,7 +47,7 @@ cdn_onecd_url='https://raw.githubusercontent.com/OneCDOnly'
 		cdn_sherpa_packages_url=$cdn_sherpa_packages_base_url/'$useropt_branch/QPKGs/<?package_name?>/build'
 cdn_qnap_dev_packages_url='https://github.com/qnap-dev/<?package_name?>/releases/download/v<?version?>'
 
-copyright_basic='copyright (C) 2017-<?build_year?> OneCD'
+copyright_basic='Copyright (C) 2017-<?build_year?> OneCD'
 dont_edit_msg="Please don't edit this file directly, it was built/modified programmatically with the '$(basename "$0")' script."
 email=one.cd.only@gmail.com
 
