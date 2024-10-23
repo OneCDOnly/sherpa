@@ -7068,14 +7068,6 @@ IncForkProgressIndex()
 RefreshForkCounts()
 	{
 
-# 	fork_count=$(ls -A -1 "$proc_fork_count_path" 2> /dev/null | /usr/bin/wc -l | /bin/sed 's|^ *||')
-# 	ok_count=$(ls -A -1 "$proc_ok_count_path" 2> /dev/null | /usr/bin/wc -l | /bin/sed 's|^ *||')
-# 	skip_count=$(ls -A -1 "$proc_skip_count_path" 2> /dev/null | /usr/bin/wc -l | /bin/sed 's|^ *||')
-# 	skip_ok_count=$(ls -A -1 "$proc_skip_ok_count_path" 2> /dev/null | /usr/bin/wc -l | /bin/sed 's|^ *||')
-# 	skip_error_count=$(ls -A -1 "$proc_skip_error_count_path" 2> /dev/null | /usr/bin/wc -l | /bin/sed 's|^ *||')
-# 	skip_abort_count=$(ls -A -1 "$proc_skip_abort_count_path" 2> /dev/null | /usr/bin/wc -l | /bin/sed 's|^ *||')
-# 	fail_count=$(ls -A -1 "$proc_fail_count_path" 2> /dev/null | /usr/bin/wc -l | /bin/sed 's|^ *||')
-
 	fork_count=$(FileCountAll "$proc_fork_count_path")
 	ok_count=$(FileCountAll "$proc_ok_count_path")
 	skip_count=$(FileCountAll "$proc_skip_count_path")
@@ -7093,34 +7085,6 @@ EraseForkCountPaths()
 	[[ -e $r_action_abort_pathfile ]] && rm -f "$r_action_abort_pathfile"
 
 	} &> /dev/null
-
-FileCountAll()
-	{
-
-	# Return number of files in specified path.
-
-	# Inputs: (local)
-	#	$1 = path to examine
-
-	[[ -n ${1:-} ]] || return
-
-	compgen -G "$1/*" | /usr/bin/wc -l					# https://stackoverflow.com/a/6364244
-
-	}
-
-FileCountSpec()
-	{
-
-	# Return number of specific files in specified path.
-
-	# Inputs: (local)
-	#	$1 = path to examine with a wildcard specifier.
-
-	[[ -n ${1:-} ]] || return
-
-	compgen -G "$1" | /usr/bin/wc -l					# https://stackoverflow.com/a/6364244
-
-	}
 
 InitProgress()
 	{
@@ -12902,6 +12866,34 @@ ClearPath()
 
 	}
 
+FileCountAll()
+	{
+
+	# Return number of files in specified path.
+
+	# Inputs: (local)
+	#	$1 = path to examine
+
+	[[ -n ${1:-} ]] || return
+
+	compgen -G "$1/*" | /usr/bin/wc -l					# `compgen` usage found here: https://stackoverflow.com/a/6364244
+
+	}
+
+FileCountSpec()
+	{
+
+	# Return number of matching files in specified path.
+
+	# Inputs: (local)
+	#	$1 = path to examine with a wildcard specifier.
+
+	[[ -n ${1:-} ]] || return
+
+	compgen -G "$1" | /usr/bin/wc -l					# `compgen` usage found here: https://stackoverflow.com/a/6364244
+
+	}
+
 RunAndLog()
 	{
 
@@ -12936,7 +12928,7 @@ RunAndLog()
 	DebugAsProc "exec: '$1'"
 
 	if [[ $useropt_verbose = true ]]; then
-		eval "$1 > >(/usr/bin/tee $r_log_pathfile) 2>&1"		# NOTE: `tee` buffers stdout here
+		eval "$1 > >(/usr/bin/tee $r_log_pathfile) 2>&1"	# NOTE: `tee` buffers stdout here
 		z=$?
 	else
 		(eval "$1" > "$r_log_pathfile" 2>&1)				# run in a subshell to suppress 'Terminated' message later
@@ -13002,7 +12994,7 @@ Capitalise()
 
 	[[ -n ${1:-} ]] || return
 
-	if [[ $1 == sherpa* ]]; then
+	if [[ $1 == sherpa* ]]; then				# 'sherpa' is stylised in all lowercase, so don't captialise it.
 		printf '%s' "$1"
 	else
 		printf '%s' "$(Uppercase ${1:0:1})${1:1}"
