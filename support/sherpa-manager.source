@@ -556,55 +556,66 @@ LoadEnv()
 		readonly r_objects_archive_url='<?cdn_sherpa_base_url?>'/$useropt_branch/objects.tar.gz
 		readonly r_packages_archive_url='<?cdn_sherpa_packages_base_url?>'/$useropt_branch/packages.tar.gz
 		readonly r_this_script_ver=$(ConvertSecondsToDatecode $r_this_script_epoch)-$useropt_branch
+
+
+	# Essential paths.
+
 	readonly r_qpkg_bu_path=$(UserGetDefVol)/.qpkg_config_backup
 	readonly r_this_package_path=$(QpkgGetInstalledPath)
-		if [[ -z $r_this_package_path || $r_this_package_path = undefined || ! -d $r_this_package_path ]]; then
-			ShowAsError "$(ShowAsTitleName) installation path not found. Please reinstall the $(ShowAsTitleName) QPKG"
 
-			return 1
-		fi
+	if [[ -z $r_this_package_path || $r_this_package_path = undefined || ! -d $r_this_package_path ]]; then
+		ShowAsError "$(ShowAsTitleName) installation path not found. Please reinstall the $(ShowAsTitleName) QPKG"
 
-		readonly r_cache_path=$r_this_package_path/cache
-			readonly r_action_times_path=$r_cache_path/action.times
-			readonly r_dependent_qpkgs_list_pathfile=$r_cache_path/dependents
-			readonly r_independent_qpkgs_list_pathfile=$r_cache_path/independents
-			readonly r_inhibit_display_pathfile=$r_cache_path/display.inhibit
-			readonly r_ipk_cache_path=$r_cache_path/IPKs
-				readonly r_ipk_downgrade_path=$r_ipk_cache_path/downgrade
-				readonly r_ipk_download_path=$r_ipk_cache_path/downloads
-				readonly r_prev_ipk_list_pathfile=$r_ipk_cache_path/ipk.list.save
-			readonly r_objects_archive_pathfile=$r_cache_path/objects.tar.gz
-			readonly r_objects_pathfile=$r_cache_path/objects
-			readonly r_packages_archive_pathfile=$r_cache_path/packages.tar.gz
-			readonly r_packages_pathfile=$r_cache_path/packages
-			readonly r_pip_cache_path=$r_cache_path/PIPs
-				readonly r_prev_pip_list_pathfile=$r_pip_cache_path/pip.list.save
-			readonly r_qpkg_cache_path=$r_cache_path/QPKGs
-				readonly r_qpkg_download_path=$r_qpkg_cache_path/downloads
-		readonly r_logs_path=$r_this_package_path/logs
-			readonly r_oom_log_pathfile=$r_logs_path/oom.log
-			readonly r_ram_freeused_pathfile=$r_logs_path/ram.freeused
-			readonly r_ramfs_freespace_pathfile=$r_logs_path/ramfs.freespace
-			readonly r_screen_sessions_pathfile=$r_logs_path/screen.sessions
-			readonly r_session_action_results_pathfile=$r_logs_path/session.action.results.log
-			readonly r_session_archive_pathfile=$r_logs_path/session.archive.log
-			readonly r_session_last_pathfile=$r_logs_path/session.last.log
-			readonly r_session_tail_pathfile=$r_logs_path/session.tail.log
-		sess_active_pathfile=$r_this_package_path/session.$$.active.log
+		return 1
+	fi
 
-	# Ephemeral files.
+	readonly r_cache_path=$r_this_package_path/cache
+	readonly r_action_times_path=$r_cache_path/action.times
+	readonly r_ipk_cache_path=$r_cache_path/IPKs
+	readonly r_ipk_downgrade_path=$r_ipk_cache_path/downgrade
+	readonly r_ipk_download_path=$r_ipk_cache_path/downloads
+	readonly r_pip_cache_path=$r_cache_path/PIPs
+	readonly r_qpkg_cache_path=$r_cache_path/QPKGs
+	readonly r_qpkg_download_path=$r_qpkg_cache_path/downloads
+	readonly r_logs_path=$r_this_package_path/logs
 
-	readonly r_action_forks_count=/var/run/sherpa/actions/forks
+	# Essential files.
+
+	readonly r_dependent_qpkgs_list_pathfile=$r_cache_path/dependents
+	readonly r_independent_qpkgs_list_pathfile=$r_cache_path/independents
+	readonly r_inhibit_display_pathfile=$r_cache_path/display.inhibit
+	readonly r_objects_archive_pathfile=$r_cache_path/objects.tar.gz
+	readonly r_objects_pathfile=$r_cache_path/objects
+	readonly r_packages_archive_pathfile=$r_cache_path/packages.tar.gz
+	readonly r_packages_pathfile=$r_cache_path/packages
+	readonly r_prev_ipk_list_pathfile=$r_ipk_cache_path/ipk.list.save
+	readonly r_prev_pip_list_pathfile=$r_pip_cache_path/pip.list.save
+	readonly r_oom_log_pathfile=$r_logs_path/oom.log
+	readonly r_ram_freeused_pathfile=$r_logs_path/ram.freeused
+	readonly r_ramfs_freespace_pathfile=$r_logs_path/ramfs.freespace
+	readonly r_screen_sessions_pathfile=$r_logs_path/screen.sessions
+	readonly r_session_action_results_pathfile=$r_logs_path/session.action.results.log
+	readonly r_session_archive_pathfile=$r_logs_path/session.archive.log
+	readonly r_session_last_pathfile=$r_logs_path/session.last.log
+	readonly r_session_tail_pathfile=$r_logs_path/session.tail.log
+	sess_active_pathfile=$r_this_package_path/session.$$.active.log
+
+	# Ephemeral paths.
+
+	readonly r_action_counts_path=/var/run/sherpa/actions/counts
 	readonly r_action_logs_path=/var/log/sherpa/actions/logs
-	readonly r_async_procs_path=/var/run/sherpa/proc
+	readonly r_async_procs_path=/var/run/sherpa/procs
 	readonly r_qpkg_states_path=/var/run/sherpa/packages/states
-		readonly r_action_abort_pathfile=$r_qpkg_states_path/abort.action
-		readonly r_action_msg_pipe=$r_qpkg_states_path/action.messages.pipe
 	readonly r_report_columns_path=/var/run/sherpa/report/columns
 	readonly r_report_flags_path=/var/run/sherpa/report/flags
 	readonly r_reports_path=/var/log/sherpa/reports
-			readonly r_report_output_pathfile=$r_reports_path/report.ansi
 	readonly r_run_logs_path=/var/run/sherpa/logs
+
+	# Ephemeral files.
+
+	readonly r_action_abort_pathfile=$r_qpkg_states_path/abort.action
+	readonly r_action_msg_pipe=$r_qpkg_states_path/action.messages.pipe
+	readonly r_report_output_pathfile=$r_reports_path/report.ansi
 
 	# Entware
 
@@ -719,28 +730,31 @@ LoadLists()
 CreatePaths()
 	{
 
-	ClearPath "$r_cache_path" "$r_async_procs_path"
+	ClearPath /var/run/sherpa "$r_async_procs_path"
 	ClearPath "$r_cache_path" "$r_ipk_cache_path"
 	ClearPath "$r_cache_path" "$r_ipk_download_path"
 	ClearPath "$r_cache_path" "$r_pip_cache_path"
 	ClearPath /var/run/sherpa/report "$r_report_columns_path"
 	ClearPath /var/run/sherpa/report "$r_report_flags_path"
 
+	MakePath "$r_action_counts_path" 'action counts' || return
 	MakePath "$r_action_logs_path" 'action logs' || return
 	MakePath "$r_action_times_path" 'action times' || return
 	MakePath "$r_async_procs_path" 'asynchronous process tracking' || return
 	MakePath "$r_cache_path" cache || return
 	MakePath "$r_ipk_cache_path" 'IPK cache' || return
-	MakePath "$r_ipk_download_path" 'IPK download' || return
 	MakePath "$r_ipk_downgrade_path" 'IPK downgrade' || return
+	MakePath "$r_ipk_download_path" 'IPK download' || return
 	MakePath "$r_logs_path" logs || return
 	MakePath "$r_pip_cache_path" 'PIP cache' || return
+	MakePath "$r_qpkg_bu_path" 'QPKG backup' || return
+	MakePath "$r_qpkg_cache_path" 'QPKG cache' || return
+	MakePath "$r_qpkg_download_path" 'QPKG download' || return
+	MakePath "$r_qpkg_states_path" states || return
 	MakePath "$r_report_columns_path" 'report columns' || return
 	MakePath "$r_report_flags_path" 'report flags' || return
 	MakePath "$r_reports_path" reports || return
-	MakePath "$r_qpkg_bu_path" 'QPKG backup' || return
-	MakePath "$r_qpkg_download_path" 'QPKG download' || return
-	MakePath "$r_qpkg_states_path" states || return
+	MakePath "$r_run_logs_path" 'run logs' || return
 
 	}
 
@@ -6987,8 +7001,8 @@ InitForkCounts()
 
 	# Create directories so async processes can be monitored.
 
-	MakePath "$r_action_forks_count" 'action forks'
-	proc_counts_path=$(/bin/mktemp -d "$r_action_forks_count"/"${FUNCNAME[1]}"_XXXXXX)
+	MakePath "$r_action_counts_path" 'action forks'
+	proc_counts_path=$(/bin/mktemp -d "$r_action_counts_path"/"${FUNCNAME[1]}"_XXXXXX)
 	[[ -n ${proc_counts_path:?undefined proc counts path} ]] || return
 
 	EraseForkCountPaths
@@ -7054,23 +7068,59 @@ IncForkProgressIndex()
 RefreshForkCounts()
 	{
 
-	fork_count=$(ls -A -1 "$proc_fork_count_path" 2> /dev/null | /usr/bin/wc -l | /bin/sed 's|^ *||')
-	ok_count=$(ls -A -1 "$proc_ok_count_path" 2> /dev/null | /usr/bin/wc -l | /bin/sed 's|^ *||')
-	skip_count=$(ls -A -1 "$proc_skip_count_path" 2> /dev/null | /usr/bin/wc -l | /bin/sed 's|^ *||')
-	skip_ok_count=$(ls -A -1 "$proc_skip_ok_count_path" 2> /dev/null | /usr/bin/wc -l | /bin/sed 's|^ *||')
-	skip_error_count=$(ls -A -1 "$proc_skip_error_count_path" 2> /dev/null | /usr/bin/wc -l | /bin/sed 's|^ *||')
-	skip_abort_count=$(ls -A -1 "$proc_skip_abort_count_path" 2> /dev/null | /usr/bin/wc -l | /bin/sed 's|^ *||')
-	fail_count=$(ls -A -1 "$proc_fail_count_path" 2> /dev/null | /usr/bin/wc -l | /bin/sed 's|^ *||')
+# 	fork_count=$(ls -A -1 "$proc_fork_count_path" 2> /dev/null | /usr/bin/wc -l | /bin/sed 's|^ *||')
+# 	ok_count=$(ls -A -1 "$proc_ok_count_path" 2> /dev/null | /usr/bin/wc -l | /bin/sed 's|^ *||')
+# 	skip_count=$(ls -A -1 "$proc_skip_count_path" 2> /dev/null | /usr/bin/wc -l | /bin/sed 's|^ *||')
+# 	skip_ok_count=$(ls -A -1 "$proc_skip_ok_count_path" 2> /dev/null | /usr/bin/wc -l | /bin/sed 's|^ *||')
+# 	skip_error_count=$(ls -A -1 "$proc_skip_error_count_path" 2> /dev/null | /usr/bin/wc -l | /bin/sed 's|^ *||')
+# 	skip_abort_count=$(ls -A -1 "$proc_skip_abort_count_path" 2> /dev/null | /usr/bin/wc -l | /bin/sed 's|^ *||')
+# 	fail_count=$(ls -A -1 "$proc_fail_count_path" 2> /dev/null | /usr/bin/wc -l | /bin/sed 's|^ *||')
+
+	fork_count=$(FileCountAll "$proc_fork_count_path")
+	ok_count=$(FileCountAll "$proc_ok_count_path")
+	skip_count=$(FileCountAll "$proc_skip_count_path")
+	skip_ok_count=$(FileCountAll "$proc_skip_ok_count_path")
+	skip_error_count=$(FileCountAll "$proc_skip_error_count_path")
+	skip_abort_count=$(FileCountAll "$proc_skip_abort_count_path")
+	fail_count=$(FileCountAll "$proc_fail_count_path")
 
 	} &> /dev/null
 
 EraseForkCountPaths()
 	{
 
-	ClearPath /var/run/sherpa/actions/forks "$proc_counts_path"
+	ClearPath "$r_action_counts_path" "$proc_counts_path"
 	[[ -e $r_action_abort_pathfile ]] && rm -f "$r_action_abort_pathfile"
 
 	} &> /dev/null
+
+FileCountAll()
+	{
+
+	# Return number of files in specified path.
+
+	# Inputs: (local)
+	#	$1 = path to examine
+
+	[[ -n ${1:-} ]] || return
+
+	compgen -G "$1/*" | /usr/bin/wc -l					# https://stackoverflow.com/a/6364244
+
+	}
+
+FileCountSpec()
+	{
+
+	# Return number of specific files in specified path.
+
+	# Inputs: (local)
+	#	$1 = path to examine with a wildcard specifier.
+
+	[[ -n ${1:-} ]] || return
+
+	compgen -G "$1" | /usr/bin/wc -l					# https://stackoverflow.com/a/6364244
+
+	}
 
 InitProgress()
 	{
@@ -8511,7 +8561,7 @@ GenerateReportFooter()
 		DisplayAsHelpTitle "QPKG dependencies are automatically installed/started/stopped/restarted as-required by $(ShowAsTitleName)."
 	fi
 
-	if compgen -G "${r_report_flags_path}/backup-file-*" > /dev/null; then			# https://stackoverflow.com/a/6364244
+	if [[ $(FileCountSpec "$r_report_flags_path/backup-file-*") -gt 0 ]]; then
 		DisplayAsIndentItem "backups are listed oldest-first."
 		DisplayAsIndentItem "all $(ShowAsTitleName) backup files are stored here: $r_qpkg_bu_path"
 	fi
@@ -15033,8 +15083,8 @@ CaughtSIGINT()
 
 	trap - SIGINT
 
-	[[ -n ${r_inhibit_display_pathfile:-} ]] && [[ -d $(/usr/bin/dirname "$r_inhibit_display_pathfile") ]] && /bin/touch "$r_inhibit_display_pathfile"
-	[[ -n ${r_action_abort_pathfile:-} ]] && [[ -d $(/usr/bin/dirname "$r_action_abort_pathfile") ]] && /bin/touch "$r_action_abort_pathfile"
+	[[ -n ${r_inhibit_display_pathfile:-} ]] && /bin/touch "$r_inhibit_display_pathfile"
+	[[ -n ${r_action_abort_pathfile:-} ]] && /bin/touch "$r_action_abort_pathfile"
 	EraseThisLine
 	ShowAsAbort 'caught SIGINT'
 	CloseActionMsgPipe
