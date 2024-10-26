@@ -7505,6 +7505,7 @@ BuildQPKGsTiers()
 
 	if [[ ! -e $r_dependent_qpkgs_list_pathfile || ! -e $r_independent_qpkgs_list_pathfile ]]; then
 		ShowAsProc tiers
+
 		rm -f "$r_dependent_qpkgs_list_pathfile" "$r_independent_qpkgs_list_pathfile" 2> /dev/null
 
 		for qpkg_name in "${r_qpkg_name[@]}"; do
@@ -10001,9 +10002,7 @@ _QPKG:reinstall_()
 
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
-# set -e
-# [[ $made_up = test ]] || false
-# set +e
+
 	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
@@ -10408,7 +10407,7 @@ _QPKG:reactivate_()
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
-	if QpkgIsNtReallyInstalled "$qpkg_name"; then
+	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' skipped 'not installed'
 		MarkThisActionForkAsSkipped
 		z=1
