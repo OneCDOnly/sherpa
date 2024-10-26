@@ -4047,7 +4047,7 @@ _ExecOneActionWithManyForks_()
 		while [[ $fork_count -ge $max_forks ]]; do  	# Don't fork until an empty spot becomes available.
 			[[ ! -e $r_action_abort_pathfile ]] || break 2
 			sleep .2
-			RefreshActionForkCounts
+			UpdateActionForkProgress
 		done
 
 		MarkThisActionForkAsStarted 					# Create runfile here (it takes too-long to appear if created in async function).
@@ -4071,7 +4071,7 @@ _ExecOneActionWithManyForks_()
 	while [[ $fork_count -gt 0 ]]; do
 		[[ ! -e $r_action_abort_pathfile ]] || break
 		sleep .2
-		UpdateActionForkProgress                              # Update display while running forks complete their tasks.
+		UpdateActionForkProgress						# Update display while running forks complete their tasks.
 	done
 
 	# All action forks have exited.
@@ -4129,6 +4129,7 @@ _DirSizeMonitor_()
 
 		if [[ $stalled_seconds -ge $stalled_seconds_threshold ]]; then
 			# Append a message showing stalled time.
+
 			stalled_msg=' stalled for '
 
 			if [[ $stalled_seconds -lt 60 ]]; then
@@ -4186,9 +4187,11 @@ WriteMsgInPlace()
 			a=$((${#c}-${#prev_clean_msg}))
 
 			# Backspace to start of previous msg, print new msg, add additional spaces, then backspace to end of new msg.
+
 			printf "%${#prev_clean_msg}s" | tr ' ' '\b'; echo -en "$b"; printf "%${a}s"; printf "%${a}s" | tr ' ' '\b'
 		else
 			# Backspace to start of previous msg, print new msg.
+
 			printf "%${#prev_clean_msg}s" | tr ' ' '\b'; echo -en "$b"
 		fi
 
@@ -7134,7 +7137,7 @@ UpdateActionForkProgress()
 		b+=$(TextBrightYellow "$fork_count")' in-progress'
 	fi
 
-	[[ -n $b && ! -e $r_inhibit_display_pathfile ]] && ShowAsProc "${fork_progress_prefix:-}" "$b"
+	[[ -n $b ]] && ShowAsProc "${fork_progress_prefix:-}" "$b"
 
 	return 0
 
@@ -14137,7 +14140,7 @@ AddExtLogToSessLog()
 ShowAsProcLong()
 	{
 
-	ShowAsProc "${1:-} (might take a while)" "${2:-}"
+	[[ -n ${1:-} ]] && ShowAsProc "${1:-} (might take a while)" "${2:-}"
 
 	} >&2
 
@@ -14150,6 +14153,7 @@ ShowAsProc()
 
 	# Inputs: (global)
 	#	$r_chars_ellipsis
+	#	$r_inhibit_display_pathfile
 	#	$useropt_terse
 	#	$useropt_verbose
 
@@ -14160,10 +14164,12 @@ ShowAsProc()
 	[[ -n ${2:-} ]] && b=${2:-}
 	local c="$a $r_chars_ellipsis $b"
 
-	if [[ ${useropt_verbose:=false} = false && ${useropt_terse:=true} = true ]] || [[ ${useropt_verbose:=false} = false && -n ${2:-} ]]; then
-		OpStepClearWait "$(TextBrightYellow proc)" "$c"
-	else
-		OpStepClear "$(TextBrightYellow proc)" "$c"
+	if [[ -n ${r_inhibit_display_pathfile:-} && ! -e $r_inhibit_display_pathfile ]]; then
+		if [[ ${useropt_verbose:=false} = false && ${useropt_terse:=true} = true ]] || [[ ${useropt_verbose:=false} = false && -n ${2:-} ]]; then
+			OpStepClearWait "$(TextBrightYellow proc)" "$c"
+		else
+			OpStepClear "$(TextBrightYellow proc)" "$c"
+		fi
 	fi
 
 	WriteToLog proc "$c"
@@ -14173,9 +14179,7 @@ ShowAsProc()
 ShowAsDebug()
 	{
 
-	[[ -n ${1:-} ]] || return
-
-	OpStepClear "$(TextBlackOnCyan dbug)" "$1"
+	[[ -n ${1:-} ]] && OpStepClear "$(TextBlackOnCyan dbug)" "$1"
 
 	}
 
