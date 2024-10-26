@@ -1,13 +1,5 @@
 Observed issues:
 
-	* Check for write-access before creating /dev/fd:
-		--------------------------------------------------------------------------------------------------
-		@wstation:~/scripts/nas/sherpa/support$ ./sherpa-manager.source
-		ln: failed to create symbolic link '/dev/fd': Permission denied
-		bort: QNAP shell functions not found ... is this a QNAP NAS?
-		--------------------------------------------------------------------------------------------------
-		- also, not shown in colour.
-
 	* Service-script daemon PID shown twice consecutively during 'clean' action:
 		--------------------------------------------------------------------------------------------------
 		[/share/Public] # /etc/init.d/sabnzbd.sh clean

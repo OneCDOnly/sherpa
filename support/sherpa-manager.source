@@ -35,7 +35,7 @@
 set -o nounset -o pipefail
 shopt -s extglob
 [[ $- != *m* ]] || set +m			# Disable job control if-enabled (only needed for QTS 4.2.6).
-ln -fns /proc/self/fd /dev/fd		# KLUDGE: `/dev/fd` isn't always created by QTS.
+[[ -L /dev/fd ]] || ln -fns /proc/self/fd /dev/fd		# KLUDGE: `/dev/fd` isn't always created by QTS.
 readonly r_args_raw=$*
 
 Init()
@@ -9304,6 +9304,7 @@ OsIsOk()
 	{
 
 	if ! OsIsQNAP; then
+		useropt_colourful=true
 		ShowAsAbort 'QNAP shell functions not found ... is this a QNAP NAS?'
 
 		return 1
