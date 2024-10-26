@@ -172,7 +172,7 @@ Squeeze()
 
 	}
 
-QPKG.Abbrvs()
+QPKGAbbrvs()
 	{
 
 	# Input:
