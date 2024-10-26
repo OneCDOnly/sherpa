@@ -1,5 +1,13 @@
 Observed issues:
 
+	* Check for write-access before creating /dev/fd:
+		--------------------------------------------------------------------------------------------------
+		@wstation:~/scripts/nas/sherpa/support$ ./sherpa-manager.source
+		ln: failed to create symbolic link '/dev/fd': Permission denied
+		bort: QNAP shell functions not found ... is this a QNAP NAS?
+		--------------------------------------------------------------------------------------------------
+		- also, not shown in colour.
+
 	* Service-script daemon PID shown twice consecutively during 'clean' action:
 		--------------------------------------------------------------------------------------------------
 		[/share/Public] # /etc/init.d/sabnzbd.sh clean
@@ -39,20 +47,16 @@ Observed issues:
 
 	* QPKG version sort is not correctly sorting version numbers followed by an alpha as later than non-alpha.
 
-	# Action stalling
-
-		* If an action fork fails (such as with "unbound variable" error), main loop stalls.
-			- Must save stderr to file, and exit main loop.
-			- set trap for SIGERR?
-
-		* When aborting sherpa, must also ensure backgrounded procs abort.
-			- UPDATE: working fine, possibly won't need BG_PROCS_PATH anymore. Test to confirm.
-
 	# QTS/QuTS App Center
 
 		* Removing OMedusa QPKG via sherpa didn't update App Center 'live' (icon remained until App Center was manually refreshed).
 
 		* Upgrading QPKGs via sherpa didn't update App Center icons 'live'.
+
+	# Action stalling
+		* If an action fork fails (such as with "unbound variable" error), main loop stalls.
+			- Must save stderr to file, and exit main loop.
+			- set trap for SIGERR?
 
 Reported issues:
 
@@ -60,5 +64,4 @@ Reported issues:
 
 Hypothetical issues:
 
-	* If a forked action hangs, it might not be killed by its caller.
-		- Need to test this.
+	* none.

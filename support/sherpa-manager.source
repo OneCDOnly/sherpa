@@ -557,7 +557,6 @@ LoadEnv()
 		readonly r_packages_archive_url='<?cdn_sherpa_packages_base_url?>'/$useropt_branch/packages.tar.gz
 		readonly r_this_script_ver=$(ConvertSecondsToDatecode $r_this_script_epoch)-$useropt_branch
 
-
 	# Essential paths.
 
 	readonly r_qpkg_bu_path=$(UserGetDefVol)/.qpkg_config_backup
@@ -1074,10 +1073,10 @@ CheckEnv()
 					fi
 				fi
 
-				# These must be downgraded on armv7 as 2.45.2 versions can't clone a repo.
-				# 	https://github.com/Entware/Entware/issues/1072
-				# 	NOTE: this issue has been fixed.
-
+# 				# These must be downgraded on armv7 as 2.45.2 versions can't clone a repo.
+# 				# 	https://github.com/Entware/Entware/issues/1072
+# 				# 	NOTE: this issue has been fixed.
+#
 # 				target_packages='git git-http'
 #
 # 				# Assume first package version is same as remaining package versions.
@@ -1576,7 +1575,7 @@ ProcAction()
 			fi
 
 			SetMaxForks "$r_action"
-			InitForkCounts
+			InitActionForkCounters
 			OpenActionMsgPipe
 
 			re=\\bEntware\\b		# Bash 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
@@ -1698,11 +1697,11 @@ ProcAction()
 			[[ $ok_count -gt 0 ]] && show_action_results_ok=true
 			[[ $skip_count -gt 0 || $skip_ok_count -gt 0 || $skip_error_count -gt 0 || $skip_abort_count -gt 0 ]] && show_action_results_skipped=true
 
-# 			[[ ${#target_packages[@]} -gt 0 ]] && KillPID "$(<$pidfile)"		# Only needed if an action fork didn't exit properly.
+# 			[[ ${#target_packages[@]} -gt 0 ]] && KillPID "$(< $pidfile)"		# Only needed if an action fork didn't exit properly.
 			wait 2> /dev/null
 			CloseActionMsgPipe
 
-			# TODO: Process unactioned QPKGs here (if-any), and mark them as aborted.
+# 			# TODO: Process unactioned QPKGs here (if-any), and mark them as aborted.
 
 # 			for package in $(QPKGs-AC${r_action}-to:Array); do
 # 				if ! QPKGs-AC${r_action}-dn.Exist "$package"; then
@@ -1717,7 +1716,7 @@ ProcAction()
 			;;
 		IPK|PIP)
 			if [[ $ipks_downgrade = true || $ipks_install = true || $ipks_upgrade = true || $pips_install = true ]]; then
-				InitForkCounts
+				InitActionForkCounters
 				${r_package_type}s:${r_action}		# Only process these packages in groups, not individually.
 			fi
 	esac
@@ -1795,9 +1794,9 @@ CloseActionMsgPipe()
 
 	# Delete message pipe.
 
-	[[ -n ${r_action_msg_pipe:-} && -p $r_action_msg_pipe ]] && rm -f "$r_action_msg_pipe" 2> /dev/null
+	[[ -n ${r_action_msg_pipe:-} && -p $r_action_msg_pipe ]] && rm -f "$r_action_msg_pipe"
 
-	}
+	} 2> /dev/null
 
 SetMaxForks()
 	{
@@ -4012,9 +4011,9 @@ CloseIpkArchive()
 	# Inputs: (global)
 	#	$r_external_packages_pathfile
 
-	rm -f "$r_external_packages_pathfile" 2> /dev/null
+	rm -f "$r_external_packages_pathfile"
 
-	}
+	} 2> /dev/null
 
 _ExecOneActionWithManyForks_()
 	{
@@ -4031,7 +4030,6 @@ _ExecOneActionWithManyForks_()
 	#   $fork_count
 	#   $max_forks
 	#	$r_action_abort_pathfile
-	#	$r_async_procs_path
 
 	# Outputs: (global)
 	#	$pidfile
@@ -4042,9 +4040,6 @@ _ExecOneActionWithManyForks_()
 
 	shift   											# `shift` all arguments one position to the left.
 	local -a c=("$@")
-	fork_id=0
-
-	# Launching loop.
 
 	for qpkg_name in "${c[@]}"; do
 		[[ ! -e $r_action_abort_pathfile ]] || break
@@ -4052,11 +4047,10 @@ _ExecOneActionWithManyForks_()
 		while [[ $fork_count -ge $max_forks ]]; do  	# Don't fork until an empty spot becomes available.
 			[[ ! -e $r_action_abort_pathfile ]] || break 2
 			sleep .2
-			UpdateForkProgress
+			RefreshActionForkCounts
 		done
 
-		IncForkProgressIndex
-		MarkThisAcForkAsStarted 						# Must create runfile here, as it takes too-long to happen in async function.
+		MarkThisActionForkAsStarted 					# Create runfile here (it takes too-long to appear if created in async function).
 		QpkgSetIndex
 
 		(	# Keep updated $pidfile in a subshell, so the one for this function doesn't change.
@@ -4068,7 +4062,7 @@ _ExecOneActionWithManyForks_()
 		)
 
 		DebugAsDone "forked $a() instance for '$qpkg_name'"
-		UpdateForkProgress
+		UpdateActionForkProgress
 	done
 
 	# Monitoring loop.
@@ -4077,7 +4071,7 @@ _ExecOneActionWithManyForks_()
 	while [[ $fork_count -gt 0 ]]; do
 		[[ ! -e $r_action_abort_pathfile ]] || break
 		sleep .2
-		UpdateForkProgress								# Update display while running forks complete their tasks.
+		UpdateActionForkProgress                              # Update display while running forks complete their tasks.
 	done
 
 	# All action forks have exited.
@@ -6745,7 +6739,7 @@ DisplayFileInViewport()
 
 			return
 		else
-			echo "$(<$1)"
+			echo "$(< $1)"
 
 			return
 		fi
@@ -6785,7 +6779,7 @@ DisplayFileInViewport()
 
 	# and, when there's really no-better option ...
 
-	echo "$(<$1)"
+	echo "$(< $1)"
 
 	} 2> /dev/null
 
@@ -6928,11 +6922,11 @@ ArchivePriorSessLogs()
 	for f in "$r_this_package_path"/session.*.active.log; do
 		if [[ -f $f && $f != "$sess_active_pathfile" ]]; then
 			/bin/cat "$f" >> "$r_session_archive_pathfile"
-			rm -f "$f" 2> /dev/null
+			rm -f "$f"
 		fi
 	done
 
-	}
+	} 2> /dev/null
 
 ResetActiveSessLog()
 	{
@@ -6940,9 +6934,9 @@ ResetActiveSessLog()
 	# Inputs: (global)
 	#	$sess_active_pathfile
 
-	rm -f "$sess_active_pathfile" 2> /dev/null
+	rm -f "$sess_active_pathfile"
 
-	}
+	} 2> /dev/null
 
 ExtractPrevSessFromTail()
 	{
@@ -6971,12 +6965,12 @@ ExtractPrevSessFromTail()
 
 		/bin/sed "$start_line,$end_line!d" "$r_session_tail_pathfile" > "$r_session_last_pathfile"
 	else
-		rm -f "$r_session_last_pathfile" 2> /dev/null
+		rm -f "$r_session_last_pathfile"
 	fi
 
 	return 0
 
-	}
+	} 2> /dev/null
 
 ExtractTailFromLog()
 	{
@@ -6989,19 +6983,19 @@ ExtractTailFromLog()
 	if [[ -e $r_session_archive_pathfile ]]; then
 		/usr/bin/tail -n${r_log_tail_lines} "$r_session_archive_pathfile" > "$r_session_tail_pathfile"	# Trim main log first so there's less to `grep`.
 	else
-		rm -f "$r_session_tail_pathfile" 2> /dev/null
+		rm -f "$r_session_tail_pathfile"
 	fi
 
 	return 0
 
-	}
+	} 2> /dev/null
 
-InitForkCounts()
+InitActionForkCounters()
 	{
 
-	# Create directories so async processes can be monitored.
+	# Create directories so async action forks can be monitored.
 
-	MakePath "$r_action_counts_path" 'action forks'
+	MakePath "$r_action_counts_path" 'action fork counters'
 	proc_counts_path=$(/bin/mktemp -d "$r_action_counts_path"/"${FUNCNAME[1]}"_XXXXXX)
 	[[ -n ${proc_counts_path:?undefined proc counts path} ]] || return
 
@@ -7015,22 +7009,23 @@ InitForkCounts()
 	proc_skip_abort_count_path=$proc_counts_path/skip.abort.count
 	proc_fail_count_path=$proc_counts_path/fail.count
 
-	mkdir -p "$proc_fork_count_path"
-	mkdir -p "$proc_ok_count_path"
-	mkdir -p "$proc_skip_count_path"
-	mkdir -p "$proc_skip_ok_count_path"
-	mkdir -p "$proc_skip_error_count_path"
-	mkdir -p "$proc_skip_abort_count_path"
-	mkdir -p "$proc_fail_count_path"
+	MakePath "$proc_fork_count_path" 'fork count'
+	MakePath "$proc_ok_count_path" 'forks completed OK count'
+	MakePath "$proc_skip_count_path" 'forks skipped count'
+	MakePath "$proc_skip_ok_count_path" 'forks skipped-OK count'
+	MakePath "$proc_skip_error_count_path" 'forks skipped-error count'
+	MakePath "$proc_skip_abort_count_path" 'forks skipped-aborted count'
+	MakePath "$proc_fail_count_path" 'forks failed count'
 
 	InitProgress
 
 	}
 
-IncForkProgressIndex()
+IncrementActionForkIndex()
 	{
 
 	# Inputs: (global)
+	#	$fork_index
 	#	$proc_fail_count_path
 	#	$proc_fork_count_path
 	#	$proc_ok_count_path
@@ -7038,9 +7033,9 @@ IncForkProgressIndex()
 	#	$proc_skip_count_path
 	#	$proc_skip_error_count_path
 	#	$proc_skip_ok_count_path
-	#	$progress_index
 
 	# Outputs: (global)
+	#	$fork_index
 	#	$proc_fail_pathfile
 	#	$proc_fork_pathfile
 	#	$proc_ok_pathfile
@@ -7048,12 +7043,11 @@ IncForkProgressIndex()
 	#	$proc_skip_error_pathfile
 	#	$proc_skip_ok_pathfile
 	#	$proc_skip_pathfile
-	#	$progress_index
 
 	local a
 
-	((progress_index++))
-	printf -v a '%02d' "$progress_index"
+	((fork_index++))
+	printf -v a '%02d' "$fork_index"
 
 	proc_fork_pathfile=$proc_fork_count_path/$a
 	proc_ok_pathfile=$proc_ok_count_path/$a
@@ -7065,7 +7059,7 @@ IncForkProgressIndex()
 
 	}
 
-RefreshForkCounts()
+RefreshActionForkCounts()
 	{
 
 	fork_count=$(FileCountAll "$proc_fork_count_path")
@@ -7089,14 +7083,14 @@ EraseForkCountPaths()
 InitProgress()
 	{
 
-	progress_index=0
+	fork_index=0
 	prev_clean_msg=''
 
-	RefreshForkCounts
+	RefreshActionForkCounts
 
 	}
 
-UpdateForkProgress()
+UpdateActionForkProgress()
 	{
 
 	# Inputs: (global)
@@ -7114,10 +7108,10 @@ UpdateForkProgress()
 	local a=''
 	local b=''
 
-	RefreshForkCounts
+	RefreshActionForkCounts
 	[[ $useropt_verbose = false && ! -e $r_inhibit_display_pathfile ]] || return		# Don't display progress, difficult to read with so-many other writes to the screen.
 
-	a=$((skip_count+skip_ok_count+skip_error_count+skip_abort_count))
+	a=$((skip_count+skip_ok_count+skip_error_count+skip_abort_count))					# Compile all 'skip' types into a single number.
 	b=$(PercFrac "$ok_count" "$a" "$fail_count" "$total_count")
 
 	if [[ $ok_count -gt 0 ]]; then
@@ -7524,8 +7518,8 @@ BuildQPKGsTiers()
 		qpkgs_tiers_built=true
 	fi
 
-	[[ -e $r_dependent_qpkgs_list_pathfile ]] && QPKGs-GRdependent:Add "$(<$r_dependent_qpkgs_list_pathfile)"
-	[[ -e $r_independent_qpkgs_list_pathfile ]] && QPKGs-GRindependent:Add "$(<$r_independent_qpkgs_list_pathfile)"
+	[[ -e $r_dependent_qpkgs_list_pathfile ]] && QPKGs-GRdependent:Add "$(< $r_dependent_qpkgs_list_pathfile)"
+	[[ -e $r_independent_qpkgs_list_pathfile ]] && QPKGs-GRindependent:Add "$(< $r_independent_qpkgs_list_pathfile)"
 
 	FuncExit
 
@@ -7674,9 +7668,9 @@ BuildQPKGsStates()
 		b=/var/log/$qpkg_name.result
 
 		if [[ -e $a && -e $b ]]; then
-			case $(<$b) in
+			case $(< $b) in
 				in-progress)
-					case $(<$a) in
+					case $(< $a) in
 						start)
 							QPKGs-ISstarting:Add "$qpkg_name"
 							;;
@@ -7698,7 +7692,7 @@ BuildQPKGsStates()
 		a=$r_qpkg_states_path/$qpkg_name
 		[[ -e $a ]] || continue
 
-		for b in $(<$a); do
+		for b in $(< $a); do
 			case $b in
 				backedup)
 					QPKGs-ISbackedup:Add "$qpkg_name"
@@ -7893,7 +7887,7 @@ HelpAbbreviations()
 
 	for ((n=1; n<=m; n++)); do
 		b=$r_reports_path/$n
-		[[ -e $b ]] && printf -v a '%s\n' "$a$(<$b)"		# Add newline to each imported report line and append to string accumulator ($a).
+		[[ -e $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
 	if [[ -n $a ]]; then
@@ -7965,7 +7959,7 @@ ShowReportBackups()
 
 	for ((n=1; n<=m; n++)); do
 		b=$r_reports_path/$n
-		[[ -e $b ]] && printf -v a '%s\n' "$a$(<$b)"		# Add newline to each imported report line and append to string accumulator ($a).
+		[[ -e $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
 	if [[ -n $a ]]; then
@@ -8014,7 +8008,7 @@ ShowReportDependencies()
 
 	for ((n=1; n<=m; n++)); do
 		b=$r_reports_path/$n
-		[[ -e $b ]] && printf -v a '%s\n' "$a$(<$b)"		# Add newline to each imported report line and append to string accumulator ($a).
+		[[ -e $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
 	if [[ -n $a ]]; then
@@ -8064,7 +8058,7 @@ ShowReportFeatures()
 
 	for ((n=1; n<=m; n++)); do
 		b=$r_reports_path/$n
-		[[ -e $b ]] && printf -v a '%s\n' "$a$(<$b)"		# Add newline to each imported report line and append to string accumulator ($a).
+		[[ -e $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
 	if [[ -n $a ]]; then
@@ -8119,7 +8113,7 @@ ShowReportPackages()
 
 	for ((n=1; n<=m; n++)); do
 		b=$r_reports_path/$n
-		[[ -e $b ]] && printf -v a '%s\n' "$a$(<$b)"		# Add newline to each imported report line and append to string accumulator ($a).
+		[[ -e $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
 	if [[ -n $a ]]; then
@@ -8176,7 +8170,7 @@ ShowReportRepos()
 
 	for ((n=1; n<=m; n++)); do
 		b=$r_reports_path/$n
-		[[ -e $b ]] && printf -v a '%s\n' "$a$(<$b)"		# Add newline to each imported report line and append to string accumulator ($a).
+		[[ -e $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
 	if [[ -n $a ]]; then
@@ -8227,7 +8221,7 @@ ShowReportStatuses()
 
 	for ((n=1; n<=m; n++)); do
 		b=$r_reports_path/$n
-		[[ -e $b ]] && printf -v a '%s\n' "$a$(<$b)"		# Add newline to each imported report line and append to string accumulator ($a).
+		[[ -e $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
 	if [[ -n $a ]]; then
@@ -8774,14 +8768,15 @@ FindNextFD()
 
 	}
 
-MarkThisAcForkAsStarted()
+MarkThisActionForkAsStarted()
 	{
 
+	IncrementActionForkIndex
 	[[ -n $proc_fork_pathfile ]] && /bin/touch "$proc_fork_pathfile"
 
 	}
 
-MarkThisAcForkAsOk()
+MarkThisActionForkAsOk()
 	{
 
 	[[ -n $proc_fork_pathfile && -e $proc_fork_pathfile ]] && mv "$proc_fork_pathfile" "$proc_ok_pathfile"
@@ -8789,7 +8784,7 @@ MarkThisAcForkAsOk()
 
 	}
 
-MarkThisAcForkAsSkippedOk()
+MarkThisActionForkAsSkippedOk()
 	{
 
 	[[ -n $proc_fork_pathfile && -e $proc_fork_pathfile ]] && mv "$proc_fork_pathfile" "$proc_skip_ok_pathfile"
@@ -8797,7 +8792,7 @@ MarkThisAcForkAsSkippedOk()
 
 	}
 
-MarkThisAcForkAsSkipped()
+MarkThisActionForkAsSkipped()
 	{
 
 	[[ -n $proc_fork_pathfile && -e $proc_fork_pathfile ]] && mv "$proc_fork_pathfile" "$proc_skip_pathfile"
@@ -8805,7 +8800,7 @@ MarkThisAcForkAsSkipped()
 
 	}
 
-MarkThisAcForkAsSkippedError()
+MarkThisActionForkAsSkippedError()
 	{
 
 	[[ -n $proc_fork_pathfile && -e $proc_fork_pathfile ]] && mv "$proc_fork_pathfile" "$proc_skip_error_pathfile"
@@ -8813,7 +8808,7 @@ MarkThisAcForkAsSkippedError()
 
 	}
 
-MarkThisAcForkAsSkippedAbort()
+MarkThisActionForkAsSkippedAbort()
 	{
 
 	[[ -n $proc_fork_pathfile && -e $proc_fork_pathfile ]] && mv "$proc_fork_pathfile" "$proc_skip_abort_pathfile"
@@ -8821,13 +8816,28 @@ MarkThisAcForkAsSkippedAbort()
 
 	}
 
-MarkThisAcForkAsError()
+MarkThisActionForkAsError()
 	{
 
 	[[ -n $proc_fork_pathfile && -e $proc_fork_pathfile ]] && mv "$proc_fork_pathfile" "$proc_fail_pathfile"
 	SendActionStatus er
 
 	}
+
+# UpdateThisAcForkPid()
+# 	{
+#
+# 	# Inputs: (local)
+# 	#   $1 = process ID to write into file.
+#
+# 	# Inputs: (global)
+# 	#	$proc_fork_pathfile
+#
+# 	[[ -n ${1:-} && -n ${proc_fork_pathfile:-} ]] || return
+#
+# 	echo "$1" > "$proc_fork_pathfile"
+#
+# 	}
 
 NoteIpkAcAsOk()
 	{
@@ -9369,7 +9379,7 @@ OsIsCompatibleWithSigned()
 	{
 
 	# Inputs: (global)
-	#	$r_nas_firmware_version
+	#	$r_nas_firmware_date
 
 	# QTS builds released over these 6 days don't allow unsigned QPKGs to run at-all:
 
@@ -9463,6 +9473,9 @@ OsIsStdKernelPageSize()
 	# Inputs: (global)
 	#	$r_kernel_page_size
 
+	# Outputs: (global)
+	#	$r_kernel_page_size
+
 	[[ ${r_kernel_page_size:=$(OsGetKernelPageSize)} = 4096B || $r_kernel_page_size = 4kiB ]]
 
 	}
@@ -9530,6 +9543,12 @@ SetError()
 ErrorIsSet()
 	{
 
+	# Inputs: (global)
+	#	$_script_error_flag_
+
+	# Outputs: (global)
+	#	$_script_error_flag_
+
 	[[ ${_script_error_flag_:=false} = true ]]
 
 	}
@@ -9537,12 +9556,26 @@ ErrorIsSet()
 ErrorIsNt()
 	{
 
+	# Inputs: (global)
+	#	$_script_error_flag_
+
+	# Outputs: (global)
+	#	$_script_error_flag_
+
 	[[ ${_script_error_flag_:=false} != true ]]
 
 	}
 
 ShowZeroQpkgs()
 	{
+
+	# Inputs: (global)
+	#	$packages_loaded
+	#	$r_qpkg_is_states[]
+	#	$r_user_qpkg_actions[]
+
+	# Outputs: (global)
+	#	$packages_loaded
 
 	[[ ${packages_loaded:=false} = true ]] || return
 
@@ -9570,7 +9603,7 @@ ClaimLockfile()
 	readonly r_lock_pathfile=/var/run/sherpa.lock
 
 	for a in sherpa-manager.sh sherpa-manager.source; do
-		if [[ -e $r_lock_pathfile && -d /proc/$(<"$r_lock_pathfile") && $(< /proc/"$(<"$r_lock_pathfile")"/cmdline) =~ $a ]]; then
+		if [[ -e $r_lock_pathfile && -d /proc/$(< $r_lock_pathfile) && $(< /proc/"$(< $r_lock_pathfile)"/cmdline) =~ $a ]]; then
 			ShowAsAbort "a running $(ShowAsTitleName) instance was found $(Parenthesise "PID:$(<"$r_lock_pathfile")"), can't continue"
 
 			return 1
@@ -9638,6 +9671,10 @@ SaveActionResultToLog()
 	#   $4 = quantity (optional, default 1)		number of packages affected
 	#   $5 = result								`ok`, `skipped-ok`, `skipped`, `failed`
 	#   $6 = reason (optional)					"file already exists in local cache"
+
+	# Inputs: (global)
+	#	$r_action_times_path
+	#	$r_session_action_results_pathfile
 
 	# Calculate duration here.
 
@@ -9717,15 +9754,15 @@ _QPKG:reassign_()
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" reassign '' skipped 'not installed'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif QpkgIsNtInstalledAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" reassign '' skipped 'incompatible author'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif [[ $(QpkgGetInstalledStoreID) = sherpa || $(QpkgGetInstalledStoreID) = undefined ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" reassign '' skipped 'already assigned to sherpa'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	fi
 
@@ -9737,10 +9774,10 @@ _QPKG:reassign_()
 
 	if [[ $z -eq 0 ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" reassign '' ok
-		MarkThisAcForkAsOk
+		MarkThisActionForkAsOk
 	else
 		SaveActionResultToLog QPKG "$qpkg_name" reassign '' failed "$z"
-		MarkThisAcForkAsError
+		MarkThisActionForkAsError
 		z=1   # Remap to 1.
 	fi
 
@@ -9782,12 +9819,12 @@ _QPKG:download_()
 
 	if [[ -z $r_remote_url || -z $r_remote_hash ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" download '' skipped 'NAS arch is incompatible'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif [[ -f $r_local_pathfile ]]; then
 		if FileMatchesMD5 "$r_local_pathfile" "$r_remote_hash"; then
 			SaveActionResultToLog QPKG "$qpkg_name" download '' skipped-ok "existing file $(ShowAsFileName "$r_local_filename") checksum is correct"
-			MarkThisAcForkAsSkippedOk
+			MarkThisActionForkAsSkippedOk
 			z=2
 		else
 			DebugInfo "deleting $(ShowAsFileName "$r_local_filename") as checksum is incorrect"
@@ -9810,16 +9847,16 @@ _QPKG:download_()
 				[[ $(Lowercase "${r_local_pathfile##*.}") = zip ]] && /usr/bin/unzip -nq "$r_local_pathfile" -d "$r_qpkg_download_path"
 				SaveActionResultToLog QPKG "$qpkg_name" download '' ok
 				SendPackageStateChange ISdownloaded
-				MarkThisAcForkAsOk
+				MarkThisActionForkAsOk
 			else
 				SaveActionResultToLog QPKG "$qpkg_name" download '' failed "cache file $(ShowAsFileName "$r_local_filename") has incorrect checksum"
 				SendPackageStateChange ISNTdownloaded
-				MarkThisAcForkAsError
+				MarkThisActionForkAsError
 				z=1
 			fi
 		else
 			SaveActionResultToLog QPKG "$qpkg_name" download '' failed "$z"
-			MarkThisAcForkAsError
+			MarkThisActionForkAsError
 			z=1   # Remap to 1 (last time I checked, 'curl' had 92 return codes).
 		fi
 	fi
@@ -9855,23 +9892,23 @@ _QPKG:install_()
 
 	if QPKGs-ISinstalled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" install '' skipped 'already installed'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif QpkgIsReallyInstalled && QpkgIsNtInstalledAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" install '' skipped 'incompatible author'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif ! QpkgIsDatabaseArchOK "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" install '' skipped 'NAS arch is incompatible'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif ! QpkgIsDatabaseMinOSVerOk "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" install '' skipped "$(OsGetQnapOS) version is incompatible"
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif ! QpkgIsDatabaseMinRAMOk "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" install '' skipped 'NAS has insufficient RAM installed'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	fi
 
@@ -9881,7 +9918,7 @@ _QPKG:install_()
 
 	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" install '' skipped-error 'no local file found for processing: please report this issue'
-		MarkThisAcForkAsSkippedError
+		MarkThisActionForkAsSkippedError
 		z=4
 	fi
 
@@ -9935,11 +9972,11 @@ _QPKG:install_()
 		fi
 
 		OsIsSupportSignedPackages && SendParentChangeEnv "QPKGs-ACsign-to:Add $qpkg_name"
-		MarkThisAcForkAsOk
+		MarkThisActionForkAsOk
 		z=0   # Remap to zero.
 	else
 		SaveActionResultToLog QPKG "$qpkg_name" install '' failed "$z"
-		MarkThisAcForkAsError
+		MarkThisActionForkAsError
 		z=1   # Remap to 1.
 	fi
 
@@ -9960,7 +9997,9 @@ _QPKG:reinstall_()
 
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
-
+# set -e
+# [[ $made_up = test ]] || false
+# set +e
 	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
@@ -9971,15 +10010,15 @@ _QPKG:reinstall_()
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' skipped "not installed, please use 'install' instead."
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif QpkgIsNtInstalledAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' skipped 'incompatible author'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif QpkgIsNtInstalledRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	fi
 
@@ -9989,7 +10028,7 @@ _QPKG:reinstall_()
 
 	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' skipped-error 'no local file found for processing, please report this issue.'
-		MarkThisAcForkAsSkippedError
+		MarkThisActionForkAsSkippedError
 		z=4
 	fi
 
@@ -10014,11 +10053,11 @@ _QPKG:reinstall_()
 		fi
 
 		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' ok "v$(QpkgGetInstalledVer)"
-		MarkThisAcForkAsOk
+		MarkThisActionForkAsOk
 		z=0   # Remap to zero.
 	else
 		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' failed "$z"
-		MarkThisAcForkAsError
+		MarkThisActionForkAsError
 		z=1   # Remap to 1.
 	fi
 
@@ -10048,23 +10087,23 @@ _QPKG:rebuild_()
 
 	if ! QpkgIsDatabaseCanBackup; then
 		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' skipped 'does not support rebuild'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif QpkgIsReallyInstalled && QpkgIsNtInstalledAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' skipped 'incompatible author'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif QPKGs-ISinstalled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' skipped "already installed, please use 'restore' instead"
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif ! QpkgIsBackupExist; then
 		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' skipped 'backup file does not exist'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif QpkgIsNtInstalledRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	fi
 
@@ -10074,7 +10113,7 @@ _QPKG:rebuild_()
 	# Nothing-to-do here, real QPKG actions have already been assigned in CheckEnv().
 
 	SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' ok
-	MarkThisAcForkAsOk
+	MarkThisActionForkAsOk
 	ClearQpkgInstalledAppCenterNotifier
 
 	FuncForkExit $z
@@ -10103,19 +10142,19 @@ _QPKG:upgrade_()
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' skipped 'not installed'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif QpkgIsNtInstalledAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' skipped 'incompatible author'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif ! QPKGs-ISupgradable.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' skipped 'no new QPKG is available'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif QpkgIsNtInstalledRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	fi
 
@@ -10125,7 +10164,7 @@ _QPKG:upgrade_()
 
 	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' skipped-error 'no local file found for processing, please report this issue'
-		MarkThisAcForkAsSkippedError
+		MarkThisActionForkAsSkippedError
 		z=4
 	fi
 
@@ -10161,11 +10200,11 @@ _QPKG:upgrade_()
 			SaveActionResultToLog QPKG "$qpkg_name" upgrade '' ok "v${prev_ver} -> v${current_ver}"
 		fi
 
-		MarkThisAcForkAsOk
+		MarkThisActionForkAsOk
 		z=0   # Remap to zero.
 	else
 		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' failed "$z"
-		MarkThisAcForkAsError
+		MarkThisActionForkAsError
 		z=1   # Remap to 1.
 	fi
 
@@ -10197,19 +10236,19 @@ _QPKG:uninstall_()
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" uninstall '' skipped 'not installed'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif QpkgIsNtInstalledAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" uninstall '' skipped 'incompatible author'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif [[ $qpkg_name = sherpa ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" uninstall '' skipped "it's needed here! 😉"
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif QpkgIsNtInstalledRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" uninstall '' skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	fi
 
@@ -10241,16 +10280,16 @@ _QPKG:uninstall_()
 			SendPackageStateChange ISNTinstalled
 			SendPackageStateChange ISNTactive
 			SendPackageStateChange ISNTenabled
-			MarkThisAcForkAsOk
+			MarkThisActionForkAsOk
 		else
 			SaveActionResultToLog QPKG "$qpkg_name" uninstall '' failed "$z"
-			MarkThisAcForkAsError
+			MarkThisActionForkAsError
 			z=1   # Remap to 1.
 		fi
 	else
 		# Standard QPKG `.uninstall.sh` was not found, so can't continue with uninstallation (maybe force this instead with `rm -r` ?).
 		SaveActionResultToLog QPKG "$qpkg_name" uninstall '' failed "$(ShowAsFileName '.uninstall.sh') not found"
-		MarkThisAcForkAsError
+		MarkThisActionForkAsError
 	fi
 
 	FuncForkExit $z
@@ -10279,19 +10318,19 @@ _QPKG:activate_()
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" activate '' skipped 'not installed'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif QpkgIsNtInstalledAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" activate '' skipped 'incompatible author'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif QPKGs-ISNTenabled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" activate '' skipped "not enabled, please 'enable' it first"
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif QpkgIsNtInstalledRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" activate '' skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	fi
 
@@ -10306,7 +10345,7 @@ _QPKG:activate_()
 
 	if [[ $service_pathfile = undefined ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" activate '' skipped-error 'QPKG service-script file undefined'
-		MarkThisAcForkAsSkippedError
+		MarkThisActionForkAsSkippedError
 
 		FuncForkExit 4
 	elif [[ $useropt_debug = true ]]; then
@@ -10331,11 +10370,11 @@ _QPKG:activate_()
 		fi
 
 		SendPackageStateChange ISactive
-		MarkThisAcForkAsOk
+		MarkThisActionForkAsOk
 	else
 		SaveActionResultToLog QPKG "$qpkg_name" activate '' failed "$z"
 		SendPackageStateChange ISNTactive
-		MarkThisAcForkAsError
+		MarkThisActionForkAsError
 		z=1   # Remap to 1.
 	fi
 
@@ -10365,21 +10404,21 @@ _QPKG:reactivate_()
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
-	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
+	if QpkgIsNtReallyInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' skipped 'not installed'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif QpkgIsNtInstalledAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' skipped 'incompatible author'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif QPKGs-ISNTenabled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' skipped "not enabled, please 'enable' it first"
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif QpkgIsNtInstalledRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	fi
 
@@ -10394,7 +10433,7 @@ _QPKG:reactivate_()
 
 	if [[ $service_pathfile = undefined ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' skipped-error 'QPKG service-script file undefined'
-		MarkThisAcForkAsSkippedError
+		MarkThisActionForkAsSkippedError
 
 		FuncForkExit 4
 	elif [[ $useropt_debug = true ]]; then
@@ -10411,10 +10450,10 @@ _QPKG:reactivate_()
 	if [[ $z -eq 0 ]]; then
 		LogQpkgServiceResult
 		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' ok
-		MarkThisAcForkAsOk
+		MarkThisActionForkAsOk
 	else
 		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' failed "$z"
-		MarkThisAcForkAsError
+		MarkThisActionForkAsError
 		z=1   # Remap to 1.
 	fi
 
@@ -10446,19 +10485,19 @@ _QPKG:deactivate_()
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' skipped 'not installed'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif QpkgIsNtInstalledAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' skipped 'incompatible author'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 # 	elif [[ $qpkg_name = sherpa ]]; then
 # 		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' skipped "it's needed here! 😉"
-# 		MarkThisAcForkAsSkipped
+# 		MarkThisActionForkAsSkipped
 # 		z=1
 	elif QpkgIsNtInstalledRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	fi
 
@@ -10473,7 +10512,7 @@ _QPKG:deactivate_()
 
 	if [[ $service_pathfile = undefined ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' skipped-error 'QPKG service-script file undefined'
-		MarkThisAcForkAsSkippedError
+		MarkThisActionForkAsSkippedError
 
 		FuncForkExit 4
 	elif [[ $useropt_debug = true ]]; then
@@ -10498,10 +10537,10 @@ _QPKG:deactivate_()
 		fi
 
 		SendPackageStateChange ISNTactive
-		MarkThisAcForkAsOk
+		MarkThisActionForkAsOk
 	else
 		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' failed "$z"
-		MarkThisAcForkAsError
+		MarkThisActionForkAsError
 		z=1   # Remap to 1.
 	fi
 
@@ -10531,19 +10570,19 @@ _QPKG:enable_()
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" enable '' skipped 'not installed'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif QpkgIsNtInstalledAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" enable '' skipped 'incompatible author'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif QPKGs-ISenabled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" enable '' skipped 'already enabled'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif QpkgIsNtInstalledRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" enable '' skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	fi
 
@@ -10559,7 +10598,7 @@ _QPKG:enable_()
 	QpkgIsInstalledEnabled "$qpkg_name" && SendPackageStateChange ISenabled
 	ClearQpkgInstalledAppCenterNotifier
 	SaveActionResultToLog QPKG "$qpkg_name" enable '' ok
-	MarkThisAcForkAsOk
+	MarkThisActionForkAsOk
 
 	FuncForkExit $z
 
@@ -10585,23 +10624,23 @@ _QPKG:disable_()
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" disable '' skipped 'not installed'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif QpkgIsNtInstalledAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" disable '' skipped 'incompatible author'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif QPKGs-ISNTenabled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" disable '' skipped 'already disabled'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 # 	elif [[ $qpkg_name = sherpa ]]; then
 # 		SaveActionResultToLog QPKG "$qpkg_name" disable '' skipped "it's needed here! 😉"
-# 		MarkThisAcForkAsSkipped
+# 		MarkThisActionForkAsSkipped
 # 		z=1
 	elif QpkgIsNtInstalledRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" disable '' skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	fi
 
@@ -10618,7 +10657,7 @@ _QPKG:disable_()
 
 	ClearQpkgInstalledAppCenterNotifier
 	SaveActionResultToLog QPKG "$qpkg_name" disable '' ok
-	MarkThisAcForkAsOk
+	MarkThisActionForkAsOk
 
 	FuncForkExit $z
 
@@ -10646,23 +10685,23 @@ _QPKG:enableau_()
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" enableau '' skipped 'not installed'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif QpkgIsNtInstalledAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" enableau '' skipped 'incompatible author'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif [[ $qpkg_name = sherpa ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" enableau '' skipped 'auto-update is always enabled'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif ! QpkgIsDatabaseCanRestartToUpdate "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" enableau '' skipped 'auto-update is unsupported'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif QpkgIsNtInstalledRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" enableau '' skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	fi
 
@@ -10676,10 +10715,10 @@ _QPKG:enableau_()
 	if [[ $z -eq 0 ]]; then
 		LogQpkgServiceResult
 		SaveActionResultToLog QPKG "$qpkg_name" enableau '' ok
-		MarkThisAcForkAsOk
+		MarkThisActionForkAsOk
 	else
 		SaveActionResultToLog QPKG "$qpkg_name" enableau '' failed "$z"
-		MarkThisAcForkAsError
+		MarkThisActionForkAsError
 		z=1   # Remap to 1.
 	fi
 
@@ -10709,23 +10748,23 @@ _QPKG:disableau_()
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" disableau '' skipped 'not installed'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif QpkgIsNtInstalledAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" disableau '' skipped 'incompatible author'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif [[ $qpkg_name = sherpa ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" disableau '' skipped 'auto-update cannot be disabled'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif ! QpkgIsDatabaseCanRestartToUpdate "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" disableau '' skipped 'auto-update is unsupported'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif QpkgIsNtInstalledRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" disableau '' skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	fi
 
@@ -10739,10 +10778,10 @@ _QPKG:disableau_()
 	if [[ $z -eq 0 ]]; then
 		LogQpkgServiceResult
 		SaveActionResultToLog QPKG "$qpkg_name" disableau '' ok
-		MarkThisAcForkAsOk
+		MarkThisActionForkAsOk
 	else
 		SaveActionResultToLog QPKG "$qpkg_name" disableau '' failed "$z"
-		MarkThisAcForkAsError
+		MarkThisActionForkAsError
 		z=1   # Remap to 1.
 	fi
 
@@ -10772,19 +10811,19 @@ _QPKG:backup_()
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" backup '' skipped 'not installed'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif QpkgIsNtInstalledAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" backup '' skipped 'incompatible author'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif ! QpkgIsDatabaseCanBackup; then
 		SaveActionResultToLog QPKG "$qpkg_name" backup '' skipped 'backup is unsupported'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif QpkgIsNtInstalledRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" backup '' skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	fi
 
@@ -10799,10 +10838,10 @@ _QPKG:backup_()
 		LogQpkgServiceResult
 		SaveActionResultToLog QPKG "$qpkg_name" backup '' ok
 		SendPackageStateChange ISbackedup
-		MarkThisAcForkAsOk
+		MarkThisActionForkAsOk
 	else
 		SaveActionResultToLog QPKG "$qpkg_name" backup '' failed "$z"
-		MarkThisAcForkAsError
+		MarkThisActionForkAsError
 		z=1   # Remap to 1.
 	fi
 
@@ -10832,23 +10871,23 @@ _QPKG:restore_()
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" restore '' skipped "not installed, try 'rebuild' instead"
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif QpkgIsNtInstalledAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" restore '' skipped 'incompatible author'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif ! QpkgIsDatabaseCanBackup; then
 		SaveActionResultToLog QPKG "$qpkg_name" restore '' skipped 'restore is unsupported'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif ! QpkgIsBackupExist; then
 		SaveActionResultToLog QPKG "$qpkg_name" restore '' skipped 'backup file does not exist'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif QpkgIsNtInstalledRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" restore '' skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	fi
 
@@ -10863,10 +10902,10 @@ _QPKG:restore_()
 		LogQpkgServiceResult
 		SaveActionResultToLog QPKG "$qpkg_name" restore '' ok
 		SendPackageStateChange ISrestored
-		MarkThisAcForkAsOk
+		MarkThisActionForkAsOk
 	else
 		SaveActionResultToLog QPKG "$qpkg_name" restore '' failed "$z"
-		MarkThisAcForkAsError
+		MarkThisActionForkAsError
 		z=1   # Remap to 1.
 	fi
 
@@ -10896,19 +10935,19 @@ _QPKG:clean_()
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" clean '' skipped 'not installed'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif QpkgIsNtInstalledAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" clean '' skipped 'incompatible author'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif ! QpkgIsDatabaseCanClean; then
 		SaveActionResultToLog QPKG "$qpkg_name" clean '' skipped 'clean is unsupported'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif QpkgIsNtInstalledRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" clean '' skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	fi
 
@@ -10922,10 +10961,10 @@ _QPKG:clean_()
 	if [[ $z -eq 0 ]]; then
 		LogQpkgServiceResult
 		SaveActionResultToLog QPKG "$qpkg_name" clean '' ok
-		MarkThisAcForkAsOk
+		MarkThisActionForkAsOk
 	else
 		SaveActionResultToLog QPKG "$qpkg_name" clean '' failed "$z"
-		MarkThisAcForkAsError
+		MarkThisActionForkAsError
 		z=1   # Remap to 1.
 	fi
 
@@ -10959,7 +10998,7 @@ _QPKG:sign_()
 
 	if [[ -e $r_action_abort_pathfile ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped-abort 'abort requested, unable to continue'
-		MarkThisAcForkAsSkippedAbort
+		MarkThisActionForkAsSkippedAbort
 		z=3
 	fi
 
@@ -10969,27 +11008,27 @@ _QPKG:sign_()
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped 'not installed'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif QpkgIsNtInstalledAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped 'incompatible author'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif ! OsIsSupportSignedPackages; then
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped 'not required: firmware < 4.3.5'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif QpkgIsNtInstalledRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	elif [[ ! -e $sqlite_pathfile ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped-abort "$(ShowAsFileName sqlite3) binary not found"
-		MarkThisAcForkAsSkippedAbort
+		MarkThisActionForkAsSkippedAbort
 		z=3
 	elif [[ ! -e $r_cert_db_pathfile ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped-abort "$(OsGetQnapOS) QPKG certificate database not found"
-		MarkThisAcForkAsSkippedAbort
+		MarkThisActionForkAsSkippedAbort
 		z=3
 	else
 		a="SELECT 1 FROM Certificate WHERE QpkgName = '$qpkg_name' LIMIT 1;"
@@ -10997,7 +11036,7 @@ _QPKG:sign_()
 
 		if [[ $b = 1 ]]; then
 # 			SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped-ok 'already signed'
-# 			MarkThisAcForkAsSkippedOk
+# 			MarkThisActionForkAsSkippedOk
 # 			z=2
 
 			# KLUDGE: replace db entries created prior to 2024-06-08 as $r_qpkg_signature quoting was incorrect.
@@ -11036,11 +11075,11 @@ _QPKG:sign_()
 	if [[ $z -eq 0 ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' ok
 		SendPackageStateChange ISsigned
-		MarkThisAcForkAsOk
+		MarkThisActionForkAsOk
 	else
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' failed "($z) but don't know why. Please report this as a bug"
 		SendParentChangeEnv 'show_suggest_raise_issue=true'
-		MarkThisAcForkAsError
+		MarkThisActionForkAsError
 		z=1   # Remap to 1.
 	fi
 
@@ -11071,7 +11110,7 @@ _QPKG:status_()
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" status '' skipped 'not installed'
-		MarkThisAcForkAsSkipped
+		MarkThisActionForkAsSkipped
 		z=1
 	fi
 
@@ -11114,7 +11153,7 @@ _QPKG:status_()
 	esac
 
 	SaveActionResultToLog QPKG "$qpkg_name" status '' ok
-	MarkThisAcForkAsOk
+	MarkThisActionForkAsOk
 
 	FuncForkExit
 
@@ -12994,7 +13033,7 @@ Capitalise()
 
 	[[ -n ${1:-} ]] || return
 
-	if [[ $1 == sherpa* ]]; then				# 'sherpa' is stylised in all lowercase, so don't captialise it.
+	if [[ $1 == sherpa* ]]; then				# 'sherpa' is stylised in all lowercase, so don't capitalise it.
 		printf '%s' "$1"
 	else
 		printf '%s' "$(Uppercase ${1:0:1})${1:1}"
@@ -13685,6 +13724,10 @@ FuncForkExit()
 	local -r r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
 	local var_safe_name=${r_var_name//[.-]/_}
 	var_safe_name=${var_safe_name//:/_}
+
+	# $proc_fork_pathfile shouldn't exist at this point. If it does, then asyc action fork exited abnormally.
+
+	[[ -e $proc_fork_pathfile ]] && MarkThisActionForkAsError
 
 	SendActionStatus ex
 	DebugAsFuncEx "${1:-0}" "$(ConvertMillisecondsToFuncDuration "$(CalcMillisecondsDiffFromNanoseconds "${!var_safe_name}" "$(ConvertNowToNanoseconds)")")"
