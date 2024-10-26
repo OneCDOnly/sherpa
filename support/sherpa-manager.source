@@ -1585,9 +1585,7 @@ ProcAction()
 			fi
 
 			CreatePidFile
-
 			_ExecOneActionWithManyForks_ "_${r_package_type}:${r_action}_" "${target_packages[@]}" &
-
 			UpdatePidFile "$!"
 
 			# Read message pipe and process QPKGs and actions as-per requests contained within.
@@ -1697,20 +1695,8 @@ ProcAction()
 			[[ $ok_count -gt 0 ]] && show_action_results_ok=true
 			[[ $skip_count -gt 0 || $skip_ok_count -gt 0 || $skip_error_count -gt 0 || $skip_abort_count -gt 0 ]] && show_action_results_skipped=true
 
-# 			[[ ${#target_packages[@]} -gt 0 ]] && KillPID "$(< $pidfile)"		# Only needed if an action fork didn't exit properly.
 			wait 2> /dev/null
 			CloseActionMsgPipe
-
-# 			# TODO: Process unactioned QPKGs here (if-any), and mark them as aborted.
-
-# 			for package in $(QPKGs-AC${r_action}-to:Array); do
-# 				if ! QPKGs-AC${r_action}-dn.Exist "$package"; then
-# 					QPKGs-AC${r_action}-sa:Add "$package"
-# 					QPKGs-AC${r_action}-dn:Add "$package"
-# 				fi
-# 			done
-
-# 			RemovePidFile
 
 			[[ ${useropt_terse:=true} = false && $useropt_verbose = false ]] && echo
 			;;
@@ -4055,9 +4041,7 @@ _ExecOneActionWithManyForks_()
 
 		(	# Keep updated $pidfile in a subshell, so the one for this function doesn't change.
 			CreatePidFile
-
 			$a &
-
 			UpdatePidFile "$!"
 		)
 
@@ -13727,10 +13711,6 @@ FuncForkExit()
 	local -r r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
 	local var_safe_name=${r_var_name//[.-]/_}
 	var_safe_name=${var_safe_name//:/_}
-
-	# $proc_fork_pathfile shouldn't exist at this point. If it does, then asyc action fork exited abnormally.
-
-	[[ -e $proc_fork_pathfile ]] && MarkThisActionForkAsError
 
 	SendActionStatus ex
 	DebugAsFuncEx "${1:-0}" "$(ConvertMillisecondsToFuncDuration "$(CalcMillisecondsDiffFromNanoseconds "${!var_safe_name}" "$(ConvertNowToNanoseconds)")")"
