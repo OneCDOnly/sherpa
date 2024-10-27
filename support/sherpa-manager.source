@@ -12902,7 +12902,7 @@ FileCountAll()
 
 	[[ -n ${1:-} ]] || return
 
-	compgen -G "$1/*" | /usr/bin/wc -l					# `compgen` usage found here: https://stackoverflow.com/a/6364244
+	compgen -G "$1/*" | /usr/bin/wc -l | /bin/sed 's|^ *||'		# `compgen` usage found here: https://stackoverflow.com/a/6364244
 
 	}
 
@@ -12916,7 +12916,7 @@ FileCountSpec()
 
 	[[ -n ${1:-} ]] || return
 
-	compgen -G "$1" | /usr/bin/wc -l					# `compgen` usage found here: https://stackoverflow.com/a/6364244
+	compgen -G "$1" | /usr/bin/wc -l | /bin/sed 's|^ *||'		# `compgen` usage found here: https://stackoverflow.com/a/6364244
 
 	}
 
@@ -14140,7 +14140,7 @@ ShowAsProc()
 
 	local a=$1
 	local b=''
-	[[ -n ${2:-} ]] && b=${2:-}
+	[[ -n ${2:-} ]] && b=$2
 	local c="$a $r_chars_ellipsis $b"
 
 	if [[ -n ${r_inhibit_display_pathfile:-} && ! -e $r_inhibit_display_pathfile ]]; then
