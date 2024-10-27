@@ -9276,7 +9276,7 @@ OsGetUpState()
 	elif OsIsStopping; then
 		printf 'shutting-down'
 	else
-		printf stable
+		printf online
 	fi
 
 	}
