@@ -12951,7 +12951,12 @@ RunAndLog()
 	local -i z=0
 
 	ShowAsCommand "$1" > "$2"
-	DebugAsProc "exec: '$1'"
+
+	if [[ ${1: -1} = "'" ]]; then							# Change display quotes depending on final content char.
+		DebugAsProc "exec: \"$1\""
+	else
+		DebugAsProc "exec: '$1'"
+	fi
 
 	if [[ $useropt_verbose = true ]]; then
 		eval "$1 > >(/usr/bin/tee $r_log_pathfile) 2>&1"	# NOTE: `tee` buffers stdout here
