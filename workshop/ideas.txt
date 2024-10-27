@@ -1,3 +1,8 @@
+* Use extended rgexes for PyPI package removal:
+	-------------------------------------------------------------------------------------------------------------------------
+	/opt/bin/sed -iE '/^(requests|idna)$/Id' requirements.txt
+	-------------------------------------------------------------------------------------------------------------------------
+
 * Put 'sherpa about' display into a report window.
 
 * Check OOM killed pids against inactive daemons and report as-such on status report.

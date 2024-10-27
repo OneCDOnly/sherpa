@@ -48,7 +48,6 @@ Observed issues:
 	# Action stalling
 		* If an action fork fails (such as with "unbound variable" error), main loop stalls.
 			- Must save stderr to file, and exit main loop.
-			- set trap for SIGERR?
 
 Reported issues:
 
