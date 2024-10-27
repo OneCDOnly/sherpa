@@ -917,7 +917,7 @@ DebugLogEnv()
 	fi
 
 	[[ $useropt_show_aboutall = false ]] && DebugInfoMinSepr
-	RunAndLog "/bin/df -h | /bin/grep -iE '^(Filesystem|none|tmpfs|ram)'" "$r_ramfs_freespace_pathfile"
+	RunAndLog "/bin/df -h | /bin/grep -iE '^(filesystem|none|tmpfs|ram)'" "$r_ramfs_freespace_pathfile"
 	[[ $useropt_show_aboutall = false ]] && DebugInfoMinSepr
 	RunAndLog "/usr/sbin/screen -ls | /bin/sed '/^[[:space:]]*$/d'" "$r_screen_sessions_pathfile" '' 1
 	[[ $useropt_show_aboutall = false ]] && DebugInfoMinSepr
