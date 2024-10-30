@@ -1,5 +1,13 @@
 Observed issues:
 
+	* `sherpa stop deps disable deps` yields:
+		--------------------------------------------------------------------------------------------------
+		• These package actions were skipped (and why):
+			deactivate ClamAV QPKG (incompatible author)
+			disable ClamAV QPKG (incompatible author)
+		--------------------------------------------------------------------------------------------------
+		... although, no ClamAV QPKG is installed.
+
 	* Service-script daemon PID shown twice consecutively during 'clean' action:
 		--------------------------------------------------------------------------------------------------
 		[/share/Public] # /etc/init.d/sabnzbd.sh clean
