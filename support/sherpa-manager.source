@@ -12923,7 +12923,7 @@ FileCountSpec()
 RunAndLog()
 	{
 
-	# Run a commandstring, log the results, and show onscreen if required.
+	# Run a commandstring, log the results, and show onscreen if-requested.
 
 	# Inputs: (local)
 	#   $1 = commandstring to execute.
@@ -12949,20 +12949,22 @@ RunAndLog()
 
 	local -r r_log_pathfile=$(/bin/mktemp "$r_run_logs_path"/"${FUNCNAME[0]}"_XXXXXX)
 	local -i z=0
-
-	ShowAsCommand "$1" > "$2"
+	local exec_msg='exec:'
 
 	if [[ ${1: -1} = "'" ]]; then							# Change display quotes depending on final content char.
-		DebugAsProc "exec: \"$1\""
+		exec_msg+=" \"$1\""
 	else
-		DebugAsProc "exec: '$1'"
+		exec_msg+=" '$1'"
 	fi
 
+	DebugAsProc "$exec_msg"
+	ShowAsCommand "$1" > "$2"
+
 	if [[ $useropt_verbose = true ]]; then
-		eval "$1 > >(/usr/bin/tee $r_log_pathfile) 2>&1"	# NOTE: `tee` buffers stdout here
+		eval "$1 > >(/usr/bin/tee $r_log_pathfile) 2>&1"	# NOTE: `tee` buffers stdout here.
 		z=$?
 	else
-		(eval "$1" > "$r_log_pathfile" 2>&1)				# run in a subshell to suppress 'Terminated' message later
+		(eval "$1" > "$r_log_pathfile" 2>&1)				# Run in a subshell to suppress 'Terminated' message later.
 		z=$?
 	fi
 
@@ -12973,15 +12975,17 @@ RunAndLog()
 		ShowAsResultAndStdout "$z" '<null>' >> "$2"
 	fi
 
+	exec_msg='exec: completed'
+
 	case $z in
 		0|"${4:-}")
 			[[ ${3:-} != log:failure-only || $useropt_debug = true ]] && AddExtLogToSessLog "$2"
-			DebugAsDone 'exec: complete'
+			DebugAsDone "$exec_msg OK"
 			[[ $useropt_debug = false ]] && rm -f "$2" 2> /dev/null
 			;;
 		*)
 			AddExtLogToSessLog "$2"
-			DebugAsError 'exec: complete, but with errors'
+			DebugAsError "$exec_msg, but with errors"
 	esac
 
 	FuncExit $z
