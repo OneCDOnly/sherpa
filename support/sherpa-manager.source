@@ -806,11 +806,11 @@ DebugLogEnv()
 	DebugFirmware ok platform "$r_nas_platform"
 
 	case $r_os_upstate in
-		starting-up|shutting-down)
-			DebugOS warning state "$r_os_upstate"
+		online)
+			DebugOS ok state "$r_os_upstate"
 			;;
 		*)
-			DebugOS ok state "$r_os_upstate"
+			DebugOS warning state "$r_os_upstate"
 	esac
 
 	DebugOS ok uptime "$(OsGetUptime)"
@@ -4862,7 +4862,7 @@ _GenerateStatusReportDataLine_()
 				/bin/touch "$r_report_flags_path"/action-$action
 
 				if [[ $action = not-found ]]; then
-					if OsIsStarting && QpkgIsInstalledEnabled; then
+					if OsIsStartingPackages && QpkgIsInstalledEnabled; then
 						action_msg+=$(TextBrightOrange pending)
 						/bin/touch "$r_report_flags_path"/action-pending
 					else
@@ -7554,8 +7554,8 @@ BuildQPKGsStates()
 	LoadPackages
 	InitQPKGsStates
 
-	OsIsStarting && ShowAsWarn "$(OsGetQnapOS) is starting all enabled QPKGs $r_chars_ellipsis check again in a few minutes"
-	OsIsStopping && ShowAsWarn "$(OsGetQnapOS) is shutting-down and all QPKGs are stopping"
+	OsIsStartingPackages && ShowAsWarn "$(OsGetQnapOS) is starting all enabled QPKGs $r_chars_ellipsis check again in a few minutes"
+	OsIsStoppingPackages && ShowAsWarn "$(OsGetQnapOS) is shutting-down and all QPKGs are stopping"
 
 	if OsIsLoadAverageInsane; then
 		ShowAsWarn 'the NAS has an exceptionally-high system-load, recommend aborting and trying again later'
@@ -9271,10 +9271,10 @@ UserGetSudoUID()
 OsGetUpState()
 	{
 
-	if OsIsStarting; then
-		printf 'starting-up'
-	elif OsIsStopping; then
-		printf 'shutting-down'
+	if OsIsStartingPackages; then
+		printf 'starting QPKGs'
+	elif OsIsStoppingPackages; then
+		printf 'stopping QPKGs'
 	else
 		printf online
 	fi
@@ -9439,14 +9439,14 @@ OsIsAllowUnofficialPackages()
 
 	}
 
-OsIsStarting()
+OsIsStartingPackages()
 	{
 
 	/bin/ps | /bin/grep '/bin/sh /etc/init.d/rcS' | /bin/grep -v grep
 
 	} &> /dev/null
 
-OsIsStopping()
+OsIsStoppingPackages()
 	{
 
 	/bin/ps | /bin/grep '/bin/sh /etc/init.d/rcK' | /bin/grep -v grep
