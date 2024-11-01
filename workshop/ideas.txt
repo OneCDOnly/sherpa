@@ -1,3 +1,5 @@
+* Display warning when sherpa QPKG is not signed, and QTS App Center requires signed packages only.
+
 * Put 'sherpa about' display into a report window.
 
 * Check OOM killed pids against inactive daemons and report as-such on status report.
