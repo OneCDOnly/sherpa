@@ -7567,12 +7567,12 @@ BuildQPKGsStates()
 
 	ShowAsProc 'get QPKG states'
 
-	# Faster to launch several concurrent loops async, than a single loop. Launch those requiring more processing-time first.
+	# Faster to launch several concurrent loops async than a single loop. Launch those requiring more processing-time first.
 
-	# TODO: checking for 'upgradable' status is too-slow to run every time due to the number of checks that must be performed.
+	# TODO: checking 'upgradable' status is slow (due to the number of checks that must be performed). Consider only running this during `check` or `upgrade` actions.
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		if QpkgIsUpgradable $qpkg_name; then
+		if QpkgIsUpgradable; then
 			echo upgradable
 		else
 			echo notupgradable
@@ -7581,7 +7581,7 @@ BuildQPKGsStates()
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		if QpkgIsInstalled; then
-			if QpkgIsInstalledEnabled $qpkg_name; then
+			if QpkgIsInstalledEnabled; then
 				echo enabled
 			else
 				echo notenabled
@@ -7590,15 +7590,15 @@ BuildQPKGsStates()
 	done &
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		if QpkgIsInstalled $qpkg_name; then
+		if QpkgIsInstalled; then
 			echo installed
-		elif QpkgIsNtReallyInstalled $qpkg_name; then
+		elif QpkgIsNtReallyInstalled; then
 			echo notinstalled
 		fi >> "$r_qpkg_states_path/$qpkg_name"
 	done &
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		if QpkgIsInstallable $qpkg_name; then
+		if QpkgIsInstallable; then
 			echo installable
 		else
 			echo notinstallable
@@ -7606,7 +7606,7 @@ BuildQPKGsStates()
 	done &
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		if QpkgIsInstalledMissing $qpkg_name; then
+		if QpkgIsInstalledMissing; then
 			echo missing
 		else
 			echo notmissing
@@ -7614,7 +7614,7 @@ BuildQPKGsStates()
 	done &
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		if QpkgIsBackupExist $qpkg_name; then
+		if QpkgIsBackupExist; then
 			echo backedup
 		else
 			echo notbackedup
@@ -7625,7 +7625,7 @@ BuildQPKGsStates()
 
 	ShowAsProc 'store QPKG states'
 
-	# Load status lines from individual files.
+	# Load status lines from individual files into session arrays.
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		a=/var/log/$qpkg_name.action
@@ -12200,7 +12200,7 @@ QpkgIsUpgradable()
 
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
 
-	QpkgIsInstalled "$a" && QpkgIsInstalledAuthorOk "$a" && QpkgIsInstalledRepoSelfManaged "$a" && [[ $(QpkgGetInstalledVer "$a") != "$(QpkgGetDatabaseVer "$a")" ]] && QpkgIsDatabaseArchOK "$a" && QpkgIsDatabaseMinOSVerOk "$a" && QpkgIsDatabaseMaxOSVerOk "$a" && QpkgIsDatabaseMinRAMOk "$a"
+	QpkgIsInstalled "$a" && QpkgIsInstalledRepoSelfManaged "$a" && [[ $(QpkgGetInstalledVer "$a") != "$(QpkgGetDatabaseVer "$a")" ]] && QpkgIsDatabaseArchOK "$a" && QpkgIsDatabaseMinOSVerOk "$a" && QpkgIsDatabaseMaxOSVerOk "$a" && QpkgIsDatabaseMinRAMOk "$a"
 
 	}
 
