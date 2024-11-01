@@ -7565,89 +7565,65 @@ BuildQPKGsStates()
 		ShowAsNote 'the NAS has an elevated system-load, so this may take a little longer than usual'
 	fi
 
-	ShowAsProc 'QPKG states'
+	ShowAsProc 'get QPKG states'
 
 	# Faster to launch several concurrent loops async, than a single loop. Launch those requiring more processing-time first.
 
-	# This one should only be run when actioning 'installable' QPKGs.
+	# TODO: checking for 'upgradable' status is too-slow to run every time due to the number of checks that must be performed.
 
-# 	time for qpkg_name in $(QPKGs-GRall:Array); do
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		QpkgSetIndex
-
-		if QpkgIsInstallable; then
-			echo installable
-		else
-			echo notinstallable
-		fi >> "$r_qpkg_states_path/$qpkg_name"
-# 	done #&
-	done &
-
-# 	time for qpkg_name in $(QPKGs-GRall:Array); do
-	for qpkg_name in $(QPKGs-GRall:Array); do
-		QpkgSetIndex
-
-		if QpkgIsInstalledMissing; then
-			echo missing
-		else
-			echo notmissing
-		fi >> "$r_qpkg_states_path/$qpkg_name"
-# 	done #&
-	done &
-
-# 	time for qpkg_name in $(QPKGs-GRall:Array); do
-	for qpkg_name in $(QPKGs-GRall:Array); do
-		QpkgSetIndex
-
-		if QpkgIsUpgradable; then
+		if QpkgIsUpgradable $qpkg_name; then
 			echo upgradable
 		else
 			echo notupgradable
 		fi >> "$r_qpkg_states_path/$qpkg_name"
-# 	done #&
 	done &
 
-# 	time for qpkg_name in $(QPKGs-GRall:Array); do
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		QpkgSetIndex
-
 		if QpkgIsInstalled; then
-			if QpkgIsInstalledEnabled; then
+			if QpkgIsInstalledEnabled $qpkg_name; then
 				echo enabled
 			else
 				echo notenabled
 			fi
 		fi >> "$r_qpkg_states_path/$qpkg_name"
-# 	done #&
 	done &
 
-# 	time for qpkg_name in $(QPKGs-GRall:Array); do
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		QpkgSetIndex
-
-		if QpkgIsInstalled; then
+		if QpkgIsInstalled $qpkg_name; then
 			echo installed
-		elif QpkgIsNtReallyInstalled; then
+		elif QpkgIsNtReallyInstalled $qpkg_name; then
 			echo notinstalled
 		fi >> "$r_qpkg_states_path/$qpkg_name"
-# 	done #&
 	done &
 
-	# This one should only be run when actioning 'rebuild' or 'restore'.
-
-# 	time for qpkg_name in $(QPKGs-GRall:Array); do
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		QpkgSetIndex
+		if QpkgIsInstallable $qpkg_name; then
+			echo installable
+		else
+			echo notinstallable
+		fi >> "$r_qpkg_states_path/$qpkg_name"
+	done &
 
-		if QpkgIsBackupExist; then
+	for qpkg_name in $(QPKGs-GRall:Array); do
+		if QpkgIsInstalledMissing $qpkg_name; then
+			echo missing
+		else
+			echo notmissing
+		fi >> "$r_qpkg_states_path/$qpkg_name"
+	done &
+
+	for qpkg_name in $(QPKGs-GRall:Array); do
+		if QpkgIsBackupExist $qpkg_name; then
 			echo backedup
 		else
 			echo notbackedup
 		fi >> "$r_qpkg_states_path/$qpkg_name"
-# 	done #&
 	done &
 
 	wait 2> /dev/null
+
+	ShowAsProc 'store QPKG states'
 
 	# Load status lines from individual files.
 
@@ -9741,7 +9717,7 @@ _QPKG:reassign_()
 
 	local -i z=0
 
-	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
+	if QpkgIsNtInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" reassign '' skipped 'not installed'
 		MarkThisActionForkAsSkipped
 		z=1
@@ -9879,7 +9855,7 @@ _QPKG:install_()
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
-	if QPKGs-ISinstalled.Exist "$qpkg_name"; then
+	if QpkgIsInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" install '' skipped 'already installed'
 		MarkThisActionForkAsSkipped
 		z=1
@@ -9995,8 +9971,8 @@ _QPKG:reinstall_()
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
-	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' skipped "not installed, please use 'install' instead."
+	if QpkgIsNtInstalled "$qpkg_name"; then
+		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' skipped "not already installed, please use 'install' instead."
 		MarkThisActionForkAsSkipped
 		z=1
 	elif QpkgIsNtInstalledAuthorOk; then
@@ -10127,7 +10103,7 @@ _QPKG:upgrade_()
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
-	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
+	if QpkgIsNtInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' skipped 'not installed'
 		MarkThisActionForkAsSkipped
 		z=1
@@ -10221,7 +10197,7 @@ _QPKG:uninstall_()
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
-	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
+	if QpkgIsNtInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" uninstall '' skipped 'not installed'
 		MarkThisActionForkAsSkipped
 		z=1
@@ -10303,7 +10279,7 @@ _QPKG:activate_()
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
-	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
+	if QpkgIsNtInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" activate '' skipped 'not installed'
 		MarkThisActionForkAsSkipped
 		z=1
@@ -10391,7 +10367,7 @@ _QPKG:reactivate_()
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
-	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
+	if QpkgIsNtInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' skipped 'not installed'
 		MarkThisActionForkAsSkipped
 		z=1
@@ -10470,7 +10446,7 @@ _QPKG:deactivate_()
 	[[ $useropt_debug = true ]]	&& a+='DEBUG_QPKG=true '
 	local -i z=0
 
-	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
+	if QpkgIsNtInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' skipped 'not installed'
 		MarkThisActionForkAsSkipped
 		z=1
@@ -10555,7 +10531,7 @@ _QPKG:enable_()
 
 	local -i z=0
 
-	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
+	if QpkgIsNtInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" enable '' skipped 'not installed'
 		MarkThisActionForkAsSkipped
 		z=1
@@ -10609,7 +10585,7 @@ _QPKG:disable_()
 
 	local -i z=0
 
-	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
+	if QpkgIsNtInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" disable '' skipped 'not installed'
 		MarkThisActionForkAsSkipped
 		z=1
@@ -10670,7 +10646,7 @@ _QPKG:enableau_()
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
-	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
+	if QpkgIsNtInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" enableau '' skipped 'not installed'
 		MarkThisActionForkAsSkipped
 		z=1
@@ -10733,7 +10709,7 @@ _QPKG:disableau_()
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
-	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
+	if QpkgIsNtInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" disableau '' skipped 'not installed'
 		MarkThisActionForkAsSkipped
 		z=1
@@ -10796,7 +10772,7 @@ _QPKG:backup_()
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
-	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
+	if QpkgIsNtInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" backup '' skipped 'not installed'
 		MarkThisActionForkAsSkipped
 		z=1
@@ -10920,7 +10896,7 @@ _QPKG:clean_()
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
-	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
+	if QpkgIsNtInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" clean '' skipped 'not installed'
 		MarkThisActionForkAsSkipped
 		z=1
@@ -10993,7 +10969,7 @@ _QPKG:sign_()
 
 	DebugVar sqlite_cmd
 
-	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
+	if QpkgIsNtInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped 'not installed'
 		MarkThisActionForkAsSkipped
 		z=1
@@ -11095,7 +11071,7 @@ _QPKG:status_()
 	[[ $useropt_debug = true ]] && b+='DEBUG_QPKG=true '
 	local -i z=0
 
-	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
+	if QpkgIsNtInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" status '' skipped 'not installed'
 		MarkThisActionForkAsSkipped
 		z=1
