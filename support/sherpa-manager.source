@@ -182,9 +182,9 @@ DebugLogInit()
 	DebugScript started "$(ConvertSecondsToFullDate "$r_script_startseconds")"
 	DebugScript PID "$$"
 	DebugInfoMinSepr
-	DebugInfo 'Markers: (**) detected, (II) information, (WW) warning, (EE) error, (LL) log file, (--) processing,'
-	DebugInfo '(==) done, (>>) f entry, (<<) f exit, (aa) array name & values, (vv) variable name & value,'
-	DebugInfo '($1) positional argument value'
+	DebugInfo "Markers: $(Parenthesise '**') detected, $(Parenthesise II) information, $(Parenthesise WW) warning, $(Parenthesise EE) error, $(Parenthesise LL) log file, $(Parenthesise '--') processing,"
+	DebugInfo "$(Parenthesise '==') done, $(Parenthesise '>>') f entry, $(Parenthesise '<<') f exit, $(Parenthesise aa) array name & values, $(Parenthesise vv) variable name & value,"
+	DebugInfo "$(Parenthesise "$1") positional argument value"
 	DebugInfoMinSepr
 	DebugVar r_this_package_ver
 	DebugVar r_this_script_ver
@@ -544,7 +544,7 @@ LoadEnv()
 	readonly r_nas_platform=$(HardwareGetPlatform)
 	readonly r_nas_qpkg_arch=$(QpkgGetArch)
 	readonly r_nas_ram_kb=$(HardwareGetInstalledRAM)
-	readonly r_os_upstate=$(OsGetUpState)
+	readonly r_os_upstate=$(OsGetState)
 	readonly r_this_package_ver=$(QpkgGetInstalledVer)
 
 	args=()						# Command-line argument array.
@@ -1022,7 +1022,7 @@ CheckEnv()
 	local installed_version=''
 	local target_packages=''
 
-	if [[ $(/bin/grep -i 'out of memory\|oom-killer' /mnt/HDA_ROOT/.logs/kmsg | /usr/bin/wc -l) -gt 0 ]]; then
+	if [[ $(/bin/grep -iE 'out of memory|oom-killer' /mnt/HDA_ROOT/.logs/kmsg | /usr/bin/wc -l) -gt 0 ]]; then
 		ShowAsWarn "the $(TextBrightRed 'Out-Of-Memory killer') has been triggered ... check for $(TextBrightRed inactive) QPKGs"
 	fi
 
@@ -4804,11 +4804,11 @@ GenerateStatusReportTitleLine()
 	QPKGs-ISupgradable.IsAny && a+=' '$(Parenthesise "$(TextBrightOrange new)")
 
 	if OsIsSupportAutowidthTableColumns; then
-		printf '%s' "QPKG name:|Status:|Action (result):|$a:|Appl. version:|Location:"
+		printf '%s' "QPKG name:|Status:|Action $(Parenthesise result):|$a:|Appl. version:|Location:"
 	else
 		GenerateReportLineItem 'QPKG name:' "$r_report_qpkg_name_column_width"
 		GenerateReportLineItem 'Status:' "$r_report_qpkg_status_column_width"
-		GenerateReportLineItem 'Action (result):' "$r_report_qpkg_action_column_width"
+		GenerateReportLineItem "Action $(Parenthesise result):" "$r_report_qpkg_action_column_width"
 		GenerateReportLineItem "$a:" "$r_report_qpkg_version_column_width"
 		GenerateReportLineItem 'Appl. version:' "$r_report_qpkg_appl_version_column_width"
 		GenerateReportLineItem 'Location:' "$r_report_qpkg_path_column_width"
@@ -8307,10 +8307,10 @@ ShowReportActionResults()
 					DisplayAsHelpTitle "this package action completed $(TextBrightGreen OK):"
 					;;
 				skipped)
-					DisplayAsHelpTitle "this package action was $(TextBrightOrange skipped) (and why):"
+					DisplayAsHelpTitle "this package action was $(TextBrightOrange skipped) $(Parenthesise 'and why'):"
 					;;
 				failed)
-					DisplayAsHelpTitle "this package action $(TextBrightRed failed) (and why):"
+					DisplayAsHelpTitle "this package action $(TextBrightRed failed) $(Parenthesise 'and why'):"
 			esac
 		elif [[ $count -gt 1 ]]; then
 			case $1 in
@@ -8318,10 +8318,10 @@ ShowReportActionResults()
 					DisplayAsHelpTitle "these package actions completed $(TextBrightGreen OK):"
 					;;
 				skipped)
-					DisplayAsHelpTitle "these package actions were $(TextBrightOrange skipped) (and why):"
+					DisplayAsHelpTitle "these package actions were $(TextBrightOrange skipped) $(Parenthesise 'and why'):"
 					;;
 				failed)
-					DisplayAsHelpTitle "these package actions $(TextBrightRed failed) (and why):"
+					DisplayAsHelpTitle "these package actions $(TextBrightRed failed) $(Parenthesise 'and why'):"
 			esac
 		fi
 
@@ -9033,7 +9033,7 @@ UserGetLIBC()
 	{
 
 	local a=$(/sbin/ldd --version | head -n1)
-	printf '%s' "${a:4}"			# Trim 'ldd ' from front of string
+	printf '%s' "${a:4}"			# Trim 'ldd ' from front of string.
 
 	}
 
@@ -9244,7 +9244,7 @@ UserGetSudoUID()
 
 	}
 
-OsGetUpState()
+OsGetState()
 	{
 
 	if OsIsStartingPackages; then
@@ -11040,7 +11040,7 @@ _QPKG:sign_()
 		SendPackageStateChange ISsigned
 		MarkThisActionForkAsOk
 	else
-		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' failed "($z) but don't know why. Please report this as a bug"
+		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' failed "$(Parenthesise "$z") but don't know why. Please report this as a bug"
 		SendParentChangeEnv 'show_suggest_raise_issue=true'
 		MarkThisActionForkAsError
 		z=1   # Remap to 1.
@@ -11383,6 +11383,9 @@ QpkgGetInstalledOriginalPath()
 
 QpkgGetDatabasePathFilename()
 	{
+
+	# Inputs: (global)
+	#   $r_qpkg_download_path
 
 	# Outputs: (local)
 	#   stdout = pathfilename.
@@ -12024,7 +12027,7 @@ QpkgInstalledServiceResultWasOk()
 	# Outputs: (local)
 	#   $? = true/false
 
-	[[ -n $qpkg_name ]] || return
+	[[ -n ${qpkg_name:-} ]] || return
 
 	[[ $(QpkgGetInstalledServiceResult) = ok ]]
 
@@ -12043,6 +12046,8 @@ QpkgMatchAbbrv()
 	# Outputs: (local)
 	#   stdout = matched installable package name (empty if unmatched).
 	#   $? = 0 (matched) / !0 (unmatched)
+
+	[[ -n ${1:-} ]] || return
 
 	local -a ar=()
 	local -i i=0
@@ -13016,9 +13021,16 @@ Capitalise()
 Parenthesise()
 	{
 
+	printf '(%s)' "${1:-}"		# Allow empty $1.
+
+	}
+
+Bracketise()
+	{
+
 	[[ -n ${1:-} ]] || return
 
-	printf '(%s)' "$1"
+	printf '[%s]' "$1"
 
 	}
 
@@ -13089,7 +13101,9 @@ FormatAsThous()
 	# Inputs: (local)
 	# 	$1 = integer value
 
-	local a=$(/bin/sed 's/[^0-9]*//g' <<< "${1:-}")	# Strip non-digits.
+	[[ -n ${1:-} ]] || return
+
+	local a=${1//[!0-9]/}	# Strip non-digits.
 	local b=''
 	local c=''
 
@@ -13201,35 +13215,35 @@ ShowAsVersion()
 ShowAsAction()
 	{
 
-	TextBrightYellow '[action]'
+	TextBrightYellow "$(Bracketise action)"
 
 	}
 
 ShowAsSetting()
 	{
 
-	TextBrightYellow '[setting]'
+	TextBrightYellow "$(Bracketise setting)"
 
 	}
 
 ShowAsPackages()
 	{
 
-	TextBrightOrange '[packages]'
+	TextBrightOrange "$(Bracketise packages)"
 
 	}
 
 ShowAsPackageGroup()
 	{
 
-	TextBrightOrange '[package group]'
+	TextBrightOrange "$(Bracketise 'package group')"
 
 	}
 
 ShowAsOptions()
 	{
 
-	TextBrightRed '[options]'
+	TextBrightRed "$(Bracketise options)"
 
 	}
 
@@ -13772,7 +13786,7 @@ ConvertSecondsToDatecode()
 
 	[[ -n ${1:-} ]] || return
 
-	local a=$(/bin/sed 's/[^0-9]*//g' <<< "${1:-}")		# Strip non-digits.
+	local a=${1//[!0-9]/}	# Strip non-digits.
 
 	if [[ ${#a} -ne 10 ]]; then
 		printf 000000
@@ -13895,7 +13909,7 @@ ConvertAsSmartDate()
 
 	[[ -n ${1:-} ]] || return
 
-	local a=$(/bin/sed 's/[^0-9]*//g' <<< "$1")		# Strip non-digits.
+	local a=${1//[!0-9]/}	# Strip non-digits.
 	local b=''
 
 	case ${#a} in
@@ -13985,77 +13999,77 @@ FormatAsLongMinutesSecs()
 DebugAsFuncEn()
 	{
 
-	DebugThis "(>>) ${FUNCNAME[2]}()"
+	DebugThis "$(Parenthesise '>>') ${FUNCNAME[2]}()"
 
 	}
 
 DebugAsFuncEx()
 	{
 
-	DebugThis "(<<) ${FUNCNAME[2]}|${1:-0}|${2:-}"
+	DebugThis "$(Parenthesise '<<') ${FUNCNAME[2]}|${1:-0}|${2:-}"
 
 	}
 
 DebugAsProc()
 	{
 
-	[[ -n ${1:-} ]] && DebugThis "(--) $1"
+	[[ -n ${1:-} ]] && DebugThis "$(Parenthesise '--') $1"
 
 	}
 
 DebugAsDone()
 	{
 
-	[[ -n ${1:-} ]] && DebugThis "(==) $1"
+	[[ -n ${1:-} ]] && DebugThis "$(Parenthesise '==') $1"
 
 	}
 
 DebugAsDetect()
 	{
 
-	[[ -n ${1:-} ]] && DebugThis "(**) $1"
+	[[ -n ${1:-} ]] && DebugThis "$(Parenthesise '**') $1"
 
 	}
 
 DebugAsInfo()
 	{
 
-	[[ -n ${1:-} ]] && DebugThis "(II) $1"
+	[[ -n ${1:-} ]] && DebugThis "$(Parenthesise II) $1"
 
 	}
 
 DebugAsWarn()
 	{
 
-	[[ -n ${1:-} ]] && DebugThis "(WW) $1"
+	[[ -n ${1:-} ]] && DebugThis "$(Parenthesise WW) $1"
 
 	}
 
 DebugAsError()
 	{
 
-	[[ -n ${1:-} ]] && DebugThis "(EE) $1"
+	[[ -n ${1:-} ]] && DebugThis "$(Parenthesise EE) $1"
 
 	}
 
 DebugAsLog()
 	{
 
-	[[ -n ${1:-} ]] && DebugThis "(LL) $1"
+	[[ -n ${1:-} ]] && DebugThis "$(Parenthesise LL) $1"
 
 	}
 
 DebugAsVar()
 	{
 
-	[[ -n ${1:-} ]] && DebugThis "(vv) $1"
+	[[ -n ${1:-} ]] && DebugThis "$(Parenthesise vv) $1"
 
 	}
 
 DebugAsArray()
 	{
 
-	[[ -n ${1:-} ]] && DebugThis "(aa) $1"
+	[[ -n ${1:-} ]] && DebugThis "$(Parenthesise aa) $1"
 
 	}
 
