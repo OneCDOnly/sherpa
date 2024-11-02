@@ -184,7 +184,7 @@ DebugLogInit()
 	DebugInfoMinSepr
 	DebugInfo "Markers: $(Parenthesise '**') detected, $(Parenthesise II) information, $(Parenthesise WW) warning, $(Parenthesise EE) error, $(Parenthesise LL) log file, $(Parenthesise '--') processing,"
 	DebugInfo "$(Parenthesise '==') done, $(Parenthesise '>>') f entry, $(Parenthesise '<<') f exit, $(Parenthesise aa) array name & values, $(Parenthesise vv) variable name & value,"
-	DebugInfo "$(Parenthesise "$1") positional argument value"
+	DebugInfo "$(Parenthesise '$1') positional argument value"
 	DebugInfoMinSepr
 	DebugVar r_this_package_ver
 	DebugVar r_this_script_ver
