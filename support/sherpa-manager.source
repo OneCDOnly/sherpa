@@ -12700,6 +12700,13 @@ QpkgIsInstalledEnabled()
 
 	}
 
+QpkgIsSigned()
+	{		# TODO: include SQL to check $1/$qpkg_name has been signed in certificate database. Use Python modules for this instead of SQLite3 executable.
+
+	:
+
+	}
+
 CreatePidFile()
 	{
 
