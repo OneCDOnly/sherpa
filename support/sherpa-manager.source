@@ -12701,7 +12701,9 @@ QpkgIsInstalledEnabled()
 	}
 
 QpkgIsSigned()
-	{		# TODO: include SQL to check $1/$qpkg_name has been signed in certificate database. Use Python modules for this instead of SQLite3 executable.
+	{
+
+	# TODO: include SQL to check $1/$qpkg_name has been signed in certificate database. Use Python modules for this instead of SQLite3 executable.
 
 	:
 
@@ -12865,7 +12867,7 @@ ClearPath()
 	{
 
 	# Clear (empty) an existing directory, but don't delete the directory.
-	# Delete files in a relatively safe manner. Parent of directory MUST be specified to avoid an `rm -rf /*` situation because of empty args.
+	# Delete files in a relatively safe manner. Parent of directory MUST be separately specified to avoid an `rm -rf /*` situation because of empty args.
 
 	# Inputs: (local)
 	#	$1 = full path to parent of directory name to clear.
