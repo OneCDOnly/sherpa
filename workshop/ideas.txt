@@ -1,3 +1,6 @@
+* Include QPKG signing method via default QTS Python and modules.
+	- Won't require an sqlite binary.
+
 * Display warning when sherpa QPKG is not signed, and QTS App Center requires signed packages only.
 
 * Put 'sherpa about' display into a report window.

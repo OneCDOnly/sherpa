@@ -6333,7 +6333,7 @@ ShowHelpBasicExamples()
 
 		DisplayAsProjSynIndentExam "to see available $(ShowAsAction)s" 'help actions'
 		DisplayAsProjSynIndentExam "to see available $(ShowAsPackages)" 'show packages'
-		DisplayAsProjSynIndentExam '' p
+# 		DisplayAsProjSynIndentExam '' p
 		DisplayAsProjSynIndentExam "to see available $(ShowAsPackageGroup)s" 'help groups'
 		DisplayAsProjSynIndentExam "or, for more $(ShowAsOptions)" 'help options'
 		DisplayAsHelpTitle "more in the wiki: $(ShowAsURL 'https://github.com/OneCDOnly/sherpa/wiki')"
@@ -6548,7 +6548,7 @@ ShowHelpProblems()
 		DisplayAsProjSynIndentExam "view the entire $(ShowAsTitleName) session log" log
 		DisplayAsProjSynIndentExam "upload the most-recent session in your $(ShowAsTitleName) log to the $(ShowAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste last'
 		DisplayAsProjSynIndentExam "upload the most-recent $(FormatAsThous "$r_log_tail_lines") lines in your $(ShowAsTitleName) log to the $(ShowAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste log'
-		DisplayAsProjSynIndentExam 'reactivate installed QPKGs (upgrades internal applications where-supported)' 'reactivate all'
+		DisplayAsProjSynIndentExam 'reactivate installed QPKGs (upgrade internal applications where-supported)' 'reactivate all'
 		DisplayAsProjSynIndentExam "remove all cached $(ShowAsTitleName) items and logs" reset
 		DisplayAsProjSynIndentExam 'find the live status of each application in these QPKGs' "status $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam '' "s $(ShowAsPackages)"
@@ -12700,6 +12700,15 @@ QpkgIsInstalledEnabled()
 
 	}
 
+QpkgIsSigned()
+	{
+
+	# TODO: include SQL to check $1/$qpkg_name has been signed in certificate database. Use Python modules for this instead of SQLite3 executable.
+
+	:
+
+	}
+
 CreatePidFile()
 	{
 
@@ -12858,7 +12867,7 @@ ClearPath()
 	{
 
 	# Clear (empty) an existing directory, but don't delete the directory.
-	# Delete files in a relatively safe manner. Parent of directory MUST be specified to avoid an `rm -rf /*` situation because of empty args.
+	# Delete files in a relatively safe manner. Parent of directory MUST be separately specified to avoid an `rm -rf /*` situation because of empty args.
 
 	# Inputs: (local)
 	#	$1 = full path to parent of directory name to clear.
