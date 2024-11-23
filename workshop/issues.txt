@@ -1,5 +1,13 @@
 Observed issues:
 
+	* Service scripts don't show result of SIGKILL:
+		--------------------------------------------------------------------------------------------------
+		28 - daemon PID: '6778'
+		29 > stop daemon PID '6778' with SIGTERM (no-more than 120 seconds): failed!
+		30 > stop daemon PID '6778' with SIGKILL:
+		31 - daemon PID: none
+		--------------------------------------------------------------------------------------------------
+
 	* Service-script daemon PID shown twice consecutively during 'clean' action:
 		--------------------------------------------------------------------------------------------------
 		[/share/Public] # /etc/init.d/sabnzbd.sh clean
