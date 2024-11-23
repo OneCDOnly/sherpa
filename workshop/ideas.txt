@@ -1,5 +1,5 @@
-* Add new QPKG field: r_qpkg_addon+=(TrguiNG)
-	- If not-none, then listed QPKGs are addons to this QPKG. They are optionally and manually installed, are started before this QPKG, and stopped after this QPKG.
+* Add new QPKG field: r_qpkg_is_plugin_to+=(OTransmission)
+	- If not-none, then this QPKG is a plugin to listed QPKGs. This QPKG is optional and manually installed, is started before listed QPKGs, and stopped after listed QPKGs.
 
 * Include QPKG signing method via default QTS Python and modules.
 	- Won't require an sqlite binary.
