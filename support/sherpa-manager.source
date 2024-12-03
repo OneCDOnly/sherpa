@@ -4979,7 +4979,7 @@ _GenerateStatusReportDataLine_()
 
 				if [[ $action = not-found ]]; then
 					if OsIsStartingPackages && QpkgIsInstalledEnabled; then
-						action+=$(TextBrightOrange pending)
+						action=$(TextBrightOrange pending)
 						/bin/touch "$r_report_flags_path"/action-pending
 					else
 						action=$(TextDarkGrey not-found)
