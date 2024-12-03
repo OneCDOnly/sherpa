@@ -5442,6 +5442,13 @@ _GenerateDepsReportDataLine_()
 	max_os=$(QpkgGetDatabaseMaxOSVer "$name")
 	min_os=$(QpkgGetDatabaseMinOSVer "$name")
 	min_ram=$(QpkgGetDatabaseMinRAM "$name")
+	QpkgIsDatabaseArchOK && arch=true
+	QpkgIsInstalledRepoSelfManaged && managed=true
+	QpkgIsInstalledEnabled "$name" && enabled=true
+	[[ -z $deps_raw ]] && deps_raw=none
+	[[ -n $max_os && $max_os != none && ${#max_os} -eq 3 ]] && max_os=${max_os:0:1}.${max_os:1:1}.${max_os:2:1}
+	[[ -n $min_os && $min_os != none && ${#min_os} -eq 3 ]] && min_os=${min_os:0:1}.${min_os:1:1}.${min_os:2:1}
+	[[ $min_ram != none ]] && min_ram=$(FormatAsThous "$min_ram")kB
 
 	/bin/touch "$r_report_flags_path"/deps
 
@@ -5453,11 +5460,6 @@ _GenerateDepsReportDataLine_()
 		mode=mute
 		QpkgIsReallyInstalled && QpkgIsNtInstalledAuthorOk && mode=author
 	fi
-
-	[[ -z $deps_raw ]] && deps_raw=none
-	[[ -n $max_os && $max_os != none && ${#max_os} -eq 3 ]] && max_os=${max_os:0:1}.${max_os:1:1}.${max_os:2:1}
-	[[ -n $min_os && $min_os != none && ${#min_os} -eq 3 ]] && min_os=${min_os:0:1}.${min_os:1:1}.${min_os:2:1}
-	[[ $min_ram != none ]] && min_ram=$(FormatAsThous "$min_ram")kB
 
 	case $mode in
 		author)
@@ -5562,8 +5564,7 @@ _GenerateDepsReportDataLine_()
 						deps+=$(TextBrightGreen "$dep_name")
 					else
 						deps+=$(TextBrightRed "$dep_name")
-						deps_msg=$(TextBrightRed "$r_chars_alert")
-						req_alert=true
+						req_notice=true
 					fi
 				done
 			else
