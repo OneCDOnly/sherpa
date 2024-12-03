@@ -1,19 +1,6 @@
 * Include option to display alternating line highlighting on reports?
 	- $alternating_report_lines
 
-* Update message to indicate a directory is being added:
-	Example:
-		-------------------------------------------------------------------------------------------------------------------------
-		> add 'pip-cache' as 'pip' cache: OK
-		> add 'qpkg-wheels' to 'pip' search path: OK
-		-------------------------------------------------------------------------------------------------------------------------
-	- becomes:
-		-------------------------------------------------------------------------------------------------------------------------
-		> add location 'pip-cache' as 'pip' cache: OK
-		> add location 'qpkg-wheels' to 'pip' search path: OK
-		-------------------------------------------------------------------------------------------------------------------------
-	- Include absolute path?
-
 * Add new QPKG field: r_qpkg_is_plugin+=(true)
 	- If true, then this QPKG is a plugin. This QPKG is optional and manually installed, is started before dependent QPKGs, and stopped after dependent QPKGs.
 	- Also add this QPKG as post-install dependency of listed QPKGs. Needed to ensure correct startup sequence in QTS 5.2.0+
