@@ -1,3 +1,6 @@
+* Include option to display alternating line highlighting on reports?
+	- $alternating_lines
+
 * Update message to indicate a directory is being added:
 	Example:
 		-------------------------------------------------------------------------------------------------------------------------
