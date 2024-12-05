@@ -4978,7 +4978,7 @@ _GenerateStatusReportDataLine_()
 				/bin/touch "$r_report_flags_path"/action-$action
 
 				if [[ $action = not-found ]]; then
-					if OsIsStartingPackages && QpkgIsInstalledEnabled; then
+					if OsIsStartingPackages && QpkgIsEnabled; then
 						action=$(TextBrightOrange pending)
 						/bin/touch "$r_report_flags_path"/action-pending
 					else
@@ -5444,7 +5444,7 @@ _GenerateDepsReportDataLine_()
 	min_ram=$(QpkgGetDatabaseMinRAM "$name")
 	QpkgIsDatabaseArchOK && arch=true
 	QpkgIsInstalledRepoSelfManaged && managed=true
-	QpkgIsInstalledEnabled "$name" && enabled=true
+	QpkgIsEnabled "$name" && enabled=true
 	[[ -z $deps_raw ]] && deps_raw=none
 	[[ -n $max_os && $max_os != none && ${#max_os} -eq 3 ]] && max_os=${max_os:0:1}.${max_os:1:1}.${max_os:2:1}
 	[[ -n $min_os && $min_os != none && ${#min_os} -eq 3 ]] && min_os=${min_os:0:1}.${min_os:1:1}.${min_os:2:1}
@@ -5560,7 +5560,7 @@ _GenerateDepsReportDataLine_()
 				for dep_name in $deps_raw; do
 					[[ -n $deps ]] && deps+=' '
 
-					if QpkgIsInstalled "$dep_name" && QpkgIsInstalledEnabled "$dep_name"; then
+					if QpkgIsInstalled "$dep_name" && QpkgIsEnabled "$dep_name"; then
 						deps+=$(TextBrightGreen "$dep_name")
 					else
 						deps+=$(TextBrightRed "$dep_name")
@@ -5573,7 +5573,7 @@ _GenerateDepsReportDataLine_()
 
 			deps_msg=$(GenerateReportField "${deps// /, }")
 
-			if QpkgIsInstalledEnabled; then
+			if QpkgIsEnabled; then
 				enabled_msg=$(GenerateReportField "$enabled" highlight_ok)
 			else
 				enabled_msg=$(GenerateReportField "$enabled" notice)
@@ -7075,7 +7075,7 @@ CheckQPKGsConflicts()
 
 	if [[ -n ${r_base_qpkg_conflicts_with:-} ]]; then
 		for a in "${r_base_qpkg_conflicts_with[@]}"; do
-			if QpkgIsInstalledEnabled "$a"; then
+			if QpkgIsEnabled "$a"; then
 				ShowAsError "the '$a' QPKG is enabled. $(ShowAsTitleName) is incompatible with this package. Please consider stopping this QPKG in your App Center"
 				run_package_actions=false
 
@@ -7098,7 +7098,7 @@ CheckQPKGsWarnings()
 
 	if [[ -n ${r_base_qpkg_warnings:-} ]]; then
 		for a in "${r_base_qpkg_warnings[@]}"; do
-			if QpkgIsInstalledEnabled "$a"; then
+			if QpkgIsEnabled "$a"; then
 				ShowAsWarn "the '$a' QPKG is enabled. This may cause problems with $(ShowAsTitleName) applications. Please consider stopping this QPKG in your App Center"
 
 				return 1
@@ -7392,8 +7392,9 @@ BuildQPKGsStates()
 	LoadPackages
 	InitQPKGsStates
 
-	OsIsStartingPackages && ShowAsWarn "$(OsGetQnapOS) is starting all enabled QPKGs $r_chars_ellipsis check again in a few minutes"
-	OsIsStoppingPackages && ShowAsWarn "$(OsGetQnapOS) is shutting-down and all QPKGs are stopping"
+	OsIsStartingPackages && ShowAsNote "$(OsGetQnapOS) is starting all enabled QPKGs $r_chars_ellipsis check again in a few minutes"
+	OsIsStartingPackages && ShowAsNote "$(OsGetQnapOS) is starting all enabled QPKGs $r_chars_ellipsis check again in a few minutes"
+	OsIsStoppingPackages && ShowAsNote "$(OsGetQnapOS) is shutting-down and all QPKGs are stopping"
 
 	if OsIsLoadAverageInsane; then
 		ShowAsWarn 'the NAS has an exceptionally-high system-load, recommend aborting and trying again later'
@@ -7419,7 +7420,7 @@ BuildQPKGsStates()
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		if QpkgIsInstalled; then
-			if QpkgIsInstalledEnabled; then
+			if QpkgIsEnabled; then
 				echo enabled
 			else
 				echo notenabled
@@ -9752,7 +9753,7 @@ _QPKG:install_()
 	if [[ $z -eq 0 || $z -eq 10 ]]; then	# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes user-aborts.
 		SendPackageStateChange ISinstalled
 
-		if QpkgIsInstalledEnabled "$qpkg_name"; then
+		if QpkgIsEnabled "$qpkg_name"; then
 			SendPackageStateChange ISenabled
 		else
 			SendPackageStateChange ISNTenabled
@@ -9847,7 +9848,7 @@ _QPKG:reinstall_()
 	[[ $qpkg_name = Entware ]] && IsNtSysFileExist $r_opkg_cmd && z=1
 
 	if [[ $z -eq 0 || $z -eq 10 ]]; then		# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes aborts.
-		if QpkgIsInstalledEnabled "$qpkg_name"; then
+		if QpkgIsEnabled "$qpkg_name"; then
 			SendPackageStateChange ISenabled
 		else
 			SendPackageStateChange ISNTenabled
@@ -9987,7 +9988,7 @@ _QPKG:upgrade_()
 	if [[ $z -eq 0 || $z -eq 10 ]]; then	# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes aborts.
 		SendPackageStateChange ISNTupgradable
 
-		if QpkgIsInstalledEnabled "$qpkg_name"; then
+		if QpkgIsEnabled "$qpkg_name"; then
 			SendPackageStateChange ISenabled
 		else
 			SendPackageStateChange ISNTenabled
@@ -10396,7 +10397,7 @@ _QPKG:enable_()
 	DebugAsProc "enabling $(ShowAsPackageName)"
 
 	RunAndLog "/sbin/qpkg_service${timeout} enable $qpkg_name" "$r_log_pathfile" log:failure-only
-	QpkgIsInstalledEnabled "$qpkg_name" && SendPackageStateChange ISenabled
+	QpkgIsEnabled "$qpkg_name" && SendPackageStateChange ISenabled
 	ClearQpkgInstalledAppCenterNotifier
 	SaveActionResultToLog QPKG "$qpkg_name" enable '' ok
 	MarkThisActionForkAsOk
@@ -10454,7 +10455,7 @@ _QPKG:disable_()
 	DebugAsProc "disabling $(ShowAsPackageName)"
 
 	RunAndLog "/sbin/qpkg_service${timeout} disable $qpkg_name" "$r_log_pathfile" log:failure-only
-	! QpkgIsInstalledEnabled "$qpkg_name" && SendPackageStateChange ISNTenabled
+	! QpkgIsEnabled "$qpkg_name" && SendPackageStateChange ISNTenabled
 
 	ClearQpkgInstalledAppCenterNotifier
 	SaveActionResultToLog QPKG "$qpkg_name" disable '' ok
@@ -12556,7 +12557,7 @@ QpkgIsInstalledMissing()
 
 	}
 
-QpkgIsInstalledEnabled()
+QpkgIsEnabled()
 	{
 
 	# Inputs: (local)
