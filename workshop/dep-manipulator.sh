@@ -1,22 +1,5 @@
 #!/usr/bin/env bash
 
-# Dependency = packageA:packageB:packageC
-
-# dep='packageA:packageB:packageC'
-#
-# echo "dep=[$dep]"
-#
-# target=packageB
-#
-# re=\\b${target}\\b
-#
-# output=$(sed "s|${re}||" <<< "$dep")
-# echo "output=[$output]"
-#
-# output=$(tr -s ':' <<< $output)
-#
-# echo "output=[$output]"
-
 GetQPKGPostInstallDeps()
 	{
 
@@ -25,6 +8,9 @@ GetQPKGPostInstallDeps()
 
 	# Outputs: (local)
 	#	stdout = target QPKG dependency list, colon-separated.
+
+	# Layout:
+	# 	'Dependency = packageA:packageB:packageC'
 
 	[[ -n ${1:-} ]] || return
 
@@ -39,8 +25,20 @@ AddToQPKGPostInstallDeps()
 	#	$1 = target QPKG name.
 	#	$2 = QPKG to add as a post-install dependency.
 
-	/bin/grep -qw "$2" $(GetQPKGPostInstallDeps "$1") && return
+	# Layout:
+	# 	'Dependency = packageA:packageB:packageC'
 
+	[[ -n ${1:-} && -n ${2:-} ]] || return
+
+	local a=''
+
+	a=$(GetQPKGPostInstallDeps "$1")
+
+	# First, check if entry already exists.
+	/bin/grep -qw "$2" <<< "$a" && return
+
+	# Then, append entry to existing 'Dependency' string.
+	/sbin/setcfg "$1" Dependency "$a:$2" -f /etc/config/qpkg.conf
 
 	}
 
@@ -51,7 +49,8 @@ RemoveFromQPKGPostInstallDeps()
 	#	$1 = target QPKG name.
 	#	$2 = QPKG to remove as a post-install dependency.
 
-	# Dependency = packageA:packageB:packageC
+	# Layout:
+	# 	'Dependency = packageA:packageB:packageC'
 
 	[[ -n ${1:-} && -n ${2:-} ]] || return
 
