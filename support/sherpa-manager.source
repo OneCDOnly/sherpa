@@ -5456,25 +5456,25 @@ _GenerateDepsReportDataLine_()
 			if QpkgIsDatabaseMaxOSVerOk "$qpkg_name"; then
 				max_os_msg=$(GenerateReportField "$max_os" mute)
 			else
-				max_os_msg=$(GenerateReportField "$max_os" highlight)
+				max_os_msg=$(GenerateReportField "$max_os" attention)
 			fi
 
 			if QpkgIsDatabaseMinOSVerOk "$qpkg_name"; then
 				if [[ $min_os != none ]]; then
 					min_os_msg=$(GenerateReportField "$min_os" mute)
 				else
-					min_os_msg=$(GenerateReportField "$min_os" highlight)
+					min_os_msg=$(GenerateReportField "$min_os" attention)
 					req_attention=true
 				fi
 			else
-				min_os_msg=$(GenerateReportField "$min_os" highlight)
+				min_os_msg=$(GenerateReportField "$min_os" attention)
 				req_attention=true
 			fi
 
 			if QpkgIsDatabaseMinRAMOk "$qpkg_name"; then
 				min_ram_msg=$(GenerateReportField "$min_ram" mute)
 			else
-				min_ram_msg=$(GenerateReportField "$min_ram" highlight)
+				min_ram_msg=$(GenerateReportField "$min_ram" attention)
 				req_attention=true
 			fi
 			;;
