@@ -5681,6 +5681,7 @@ _GenerateFeaturesReportDataLine_()
 			QpkgIsDatabaseCanBackup && backup=true
 			QpkgIsDatabaseCanClean && clean=true
 			QpkgIsDatabaseIndependent && independent=true
+			QpkgIsDatabasePlugin && plugin=true
 
 			if QpkgIsDatabaseCanRestartToUpdate; then
 				restart_to_update=true
