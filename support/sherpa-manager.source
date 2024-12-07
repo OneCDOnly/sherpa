@@ -4724,72 +4724,6 @@ DisplayAsIndentQuotedInfoItem()
 
 	}
 
-GenerateReportField()
-	{
-
-	# Inputs: (local)
-	#	$1 = field text
-	# 	$2 (optional) = type of field prefix to generate ('attention', 'alert', 'blank', etc...)
-
-	# Inputs: (global)
-	#	$r_chars_alert
-	#	$r_chars_attention
-	#	$r_chars_blank
-	#	$r_chars_normal
-
-	local a=''
-	local b=''
-
-	case ${2:-blank} in
-		alert)
-			a=$(TextBrightRedBlink "$r_chars_alert")
-			b=$(TextBrightRedBlink "$1")
-			;;
-		attention)
-			a=$(TextBrightOrange "$r_chars_attention")
-			b=$(TextBrightOrange "$1")
-			;;
-		notice)
-			a=$(TextBrightRed "$r_chars_alert")
-			b=$(TextBrightRed "$1")
-			;;
-		oops)
-			a=$r_chars_blank
-			b=$(TextBrightRed "$1")
-			;;
-		normal)
-			a=$r_chars_normal
-			b=$1
-			;;
-		highlight)
-			a=$r_chars_blank
-			b=$(TextBrightOrange "$1")
-			;;
-		highlight_ok)
-			a=$r_chars_blank
-			b=$(TextBrightGreen "$1")
-			;;
-		highlight_normal)
-			a=$r_chars_normal
-			b=$(TextBrightGreen "$1")
-			;;
-		mute)
-			a=$r_chars_blank
-			b=$(TextDarkGrey "$1")
-			;;
-		mute_normal)
-			a=$(TextDarkGrey "$r_chars_normal")
-			b=$(TextDarkGrey "$1")
-			;;
-		*)
-			a=$r_chars_blank
-			b=$1
-	esac
-
-	printf '%s' "${a}${b}"
-
-	}
-
 GeneratePacksReportTitleLine()
 	{
 
@@ -4926,6 +4860,7 @@ _GenerateStatusReportDataLine_()
 
 	# Inputs: (global)
 	# 	$qpkg_name
+	#	$r_report_flags_path
 
 	local a=''
 	local -a column_vars=(action app_ver name path status ver)
@@ -5181,7 +5116,6 @@ _GenerateReposReportDataLine_()
 
 	# Inputs: (global)
 	# 	$qpkg_name
-	#	$r_report_column_spacing
 	#	$r_report_flags_path
 	#	$r_report_qpkg_install_date_column_width
 	#	$r_report_qpkg_name_column_width
@@ -5915,6 +5849,72 @@ _GenerateBacksReportItemLine_()
 	fi
 
 	printf '\n'
+
+	}
+
+GenerateReportField()
+	{
+
+	# Inputs: (local)
+	#	$1 = field text
+	# 	$2 (optional) = type of field prefix to generate ('attention', 'alert', 'blank', etc...)
+
+	# Inputs: (global)
+	#	$r_chars_alert
+	#	$r_chars_attention
+	#	$r_chars_blank
+	#	$r_chars_normal
+
+	local a=''
+	local b=''
+
+	case ${2:-blank} in
+		alert)
+			a=$(TextBrightRedBlink "$r_chars_alert")
+			b=$(TextBrightRedBlink "$1")
+			;;
+		attention)
+			a=$(TextBrightOrange "$r_chars_attention")
+			b=$(TextBrightOrange "$1")
+			;;
+		notice)
+			a=$(TextBrightRed "$r_chars_alert")
+			b=$(TextBrightRed "$1")
+			;;
+		oops)
+			a=$r_chars_blank
+			b=$(TextBrightRed "$1")
+			;;
+		normal)
+			a=$r_chars_normal
+			b=$1
+			;;
+		highlight)
+			a=$r_chars_blank
+			b=$(TextBrightOrange "$1")
+			;;
+		highlight_ok)
+			a=$r_chars_blank
+			b=$(TextBrightGreen "$1")
+			;;
+		highlight_normal)
+			a=$r_chars_normal
+			b=$(TextBrightGreen "$1")
+			;;
+		mute)
+			a=$r_chars_blank
+			b=$(TextDarkGrey "$1")
+			;;
+		mute_normal)
+			a=$(TextDarkGrey "$r_chars_normal")
+			b=$(TextDarkGrey "$1")
+			;;
+		*)
+			a=$r_chars_blank
+			b=$1
+	esac
+
+	printf '%s' "${a}${b}"
 
 	}
 
