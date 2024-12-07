@@ -4727,15 +4727,15 @@ DisplayAsIndentQuotedInfoItem()
 GenerateReportField()
 	{
 
+	# Inputs: (local)
+	#	$1 = field text
+	# 	$2 (optional) = type of field prefix to generate ('attention', 'alert', 'blank', etc...)
+
 	# Inputs: (global)
 	#	$r_chars_alert
 	#	$r_chars_attention
 	#	$r_chars_blank
 	#	$r_chars_normal
-
-	# Inputs: (local)
-	#	$1 = field text
-	# 	$2 (optional) = type of field prefix to generate ('attention', 'alert', 'blank', etc...)
 
 	local a=''
 	local b=''
@@ -4769,7 +4769,7 @@ GenerateReportField()
 			a=$r_chars_blank
 			b=$(TextBrightGreen "$1")
 			;;
-		normal_highlight)
+		highlight_normal)
 			a=$r_chars_normal
 			b=$(TextBrightGreen "$1")
 			;;
@@ -4777,7 +4777,7 @@ GenerateReportField()
 			a=$r_chars_blank
 			b=$(TextDarkGrey "$1")
 			;;
-		normal_mute)
+		mute_normal)
 			a=$(TextDarkGrey "$r_chars_normal")
 			b=$(TextDarkGrey "$1")
 			;;
@@ -5071,7 +5071,7 @@ _GenerateStatusReportDataLine_()
 						: # Do nothing, this is set later.
 						;;
 					status)
-						status_msg=$(GenerateReportField "$status" normal_mute)
+						status_msg=$(GenerateReportField "$status" mute_normal)
 						;;
 					*)
 						local ${a}_msg="$(GenerateReportField "${!a}" mute)"
@@ -5227,7 +5227,7 @@ _GenerateReposReportDataLine_()
 		highlight)
 			case $assigned_repo in
 				sherpa)
-					assigned_repo_msg=$(GenerateReportField "$assigned_repo" normal_highlight)
+					assigned_repo_msg=$(GenerateReportField "$assigned_repo" highlight_normal)
 					;;
 				unassigned)
 					assigned_repo_msg=$(GenerateReportField "$assigned_repo" highlight)
@@ -5253,13 +5253,13 @@ _GenerateReposReportDataLine_()
 				assigned_repo='not installed'
 			fi
 
-			assigned_repo_msg=$(GenerateReportField "$assigned_repo" normal_mute)
+			assigned_repo_msg=$(GenerateReportField "$assigned_repo" mute_normal)
 			install_date_msg=$(GenerateReportField N/A mute)
 			;;
 		*)
 			case $assigned_repo in
 				sherpa)
-					assigned_repo_msg=$(GenerateReportField "$assigned_repo" normal_highlight)
+					assigned_repo_msg=$(GenerateReportField "$assigned_repo" highlight_normal)
 					;;
 				undefined)
 					assigned_repo_msg=N/A
