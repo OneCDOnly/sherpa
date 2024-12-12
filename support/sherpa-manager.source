@@ -219,11 +219,11 @@ LoadConsts()
 	readonly r_report_qpkg_is_enabled_column_width=8
 	readonly r_report_qpkg_is_installed_column_width=10
 	readonly r_report_qpkg_is_managed_column_width=8
-	readonly r_report_qpkg_is_plugin_column_width=11
 	readonly r_report_qpkg_max_os_version_column_width=8
 	readonly r_report_qpkg_min_os_version_column_width=8
 	readonly r_report_qpkg_min_ram_column_width=13
 	readonly r_report_qpkg_name_column_width=21
+	readonly r_report_qpkg_opt_dependencies_column_width=29
 	readonly r_report_qpkg_path_column_width=48
 	readonly r_report_qpkg_repo_column_width=40
 	readonly r_report_qpkg_status_column_width=23
@@ -5330,10 +5330,11 @@ GenerateDepsReportTitleLine()
 	#	$r_report_qpkg_name_column_width
 
 	if OsIsSupportAutowidthTableColumns; then
-		printf 'QPKG name:|Dependencies:|Installed?|Enabled?|Managed?|Min. RAM:|Min. OS:|Max. OS:|Supported arch?|Installed QPKG author:'
+		printf 'QPKG name:|Dependencies:|Opt Dependencies:|Installed?|Enabled?|Managed?|Min. RAM:|Min. OS:|Max. OS:|Supported arch?|Installed QPKG author:'
 	else
 		GenerateReportLineItem 'QPKG name:' "$r_report_qpkg_name_column_width"
 		GenerateReportLineItem 'Dependencies:' "$r_report_qpkg_dependencies_column_width"
+		GenerateReportLineItem 'Opt Dependencies:' "$r_report_qpkg_opt_dependencies_column_width"
 		GenerateReportLineItem 'Installed?' "$r_report_qpkg_is_installed_column_width"
 		GenerateReportLineItem 'Enabled?' "$r_report_qpkg_is_enabled_column_width"
 		GenerateReportLineItem 'Managed?' "$r_report_qpkg_is_managed_column_width"
@@ -5358,9 +5359,10 @@ _GenerateDepsReportDataLine_()
 	#	$r_report_flags_path
 
 	local a=''
-	local -a column_vars=(author arch deps enabled installed managed max_os min_os min_ram name)
+	local -a column_vars=(author arch deps enabled installed managed max_os min_os min_ram name opt_deps)
 	local dep_name=''
 	local deps_raw=$(QpkgGetDatabaseDependencies "$qpkg_name")
+	local opt_deps_raw=$(QpkgGetDatabaseOptDependencies "$qpkg_name")
 	local mode=''
 	local req_alert=false
 	local req_attention=false
@@ -5380,6 +5382,7 @@ _GenerateDepsReportDataLine_()
 	QpkgIsInstalledRepoSelfManaged && managed=true
 	QpkgIsEnabled "$name" && enabled=true
 	[[ -z $deps_raw ]] && deps_raw=none
+	[[ -z $opt_deps_raw ]] && opt_deps_raw=none
 	[[ -n $max_os && $max_os != none && ${#max_os} -eq 3 ]] && max_os=${max_os:0:1}.${max_os:1:1}.${max_os:2:1}
 	[[ -n $min_os && $min_os != none && ${#min_os} -eq 3 ]] && min_os=${min_os:0:1}.${min_os:1:1}.${min_os:2:1}
 	[[ $min_ram != none ]] && min_ram=$(FormatAsThous "$min_ram")kB
@@ -5436,6 +5439,17 @@ _GenerateDepsReportDataLine_()
 				deps=$deps_raw
 			fi
 
+			opt_deps=''
+
+			if [[ $opt_deps_raw != none ]]; then
+				for dep_name in $opt_deps_raw; do
+					[[ -n $opt_deps ]] && opt_deps+=' '
+					opt_deps+=$dep_name
+				done
+			else
+				opt_deps=$opt_deps_raw
+			fi
+
 			/bin/touch "$r_report_flags_path"/na
 
 			# Assign & highlight field messages.
@@ -5449,6 +5463,7 @@ _GenerateDepsReportDataLine_()
 
 			author_msg=$(GenerateReportField N/A mute)
 			deps_msg=$(GenerateReportField "${deps// /, }" mute)
+			opt_deps_msg=$(GenerateReportField "${opt_deps// /, }" mute)
 			enabled_msg=$(GenerateReportField N/A mute)
 			installed_msg=$(GenerateReportField "$installed" mute)
 			managed_msg=$(GenerateReportField N/A mute)
@@ -5487,10 +5502,9 @@ _GenerateDepsReportDataLine_()
 			fi
 
 			author_msg=$(GenerateReportField "$author" highlight_ok)
+			deps=''
 
 			if [[ $deps_raw != none ]]; then
-				deps=''
-
 				for dep_name in $deps_raw; do
 					[[ -n $deps ]] && deps+=' '
 
@@ -5506,6 +5520,24 @@ _GenerateDepsReportDataLine_()
 			fi
 
 			deps_msg=$(GenerateReportField "${deps// /, }")
+			opt_deps=''
+
+			if [[ $opt_deps_raw != none ]]; then
+				for dep_name in $opt_deps_raw; do
+					[[ -n $opt_deps ]] && opt_deps+=' '
+
+					if QpkgIsInstalled "$dep_name" && QpkgIsEnabled "$dep_name"; then
+						opt_deps+=$(TextBrightGreen "$dep_name")
+					else
+						opt_deps+=$(TextBrightRed "$dep_name")
+# 						req_notice=true
+					fi
+				done
+			else
+				opt_deps=$opt_deps_raw
+			fi
+
+			opt_deps_msg=$(GenerateReportField "${opt_deps// /, }")
 
 			if QpkgIsEnabled; then
 				enabled_msg=$(GenerateReportField "$enabled" highlight_ok)
@@ -5572,10 +5604,11 @@ _GenerateDepsReportDataLine_()
 	fi
 
 	if OsIsSupportAutowidthTableColumns; then
-		printf '%s' "$name_msg|$deps_msg|$installed_msg|$enabled_msg|$managed_msg|$min_ram_msg|$min_os_msg|$max_os_msg|$arch_msg|$author_msg"
+		printf '%s' "$name_msg|$deps_msg|$opt_deps_msg|$installed_msg|$enabled_msg|$managed_msg|$min_ram_msg|$min_os_msg|$max_os_msg|$arch_msg|$author_msg"
 	else
 		GenerateReportLineItem "$name_msg" "$r_report_qpkg_name_column_width"
 		GenerateReportLineItem "$deps_msg" "$r_report_qpkg_dependencies_column_width"
+		GenerateReportLineItem "$opt_deps_msg" "$r_report_qpkg_opt_dependencies_column_width"
 		GenerateReportLineItem "$installed_msg" "$r_report_qpkg_is_installed_column_width"
 		GenerateReportLineItem "$enabled_msg" "$r_report_qpkg_is_enabled_column_width"
 		GenerateReportLineItem "$managed_msg" "$r_report_qpkg_is_managed_column_width"
@@ -5598,7 +5631,6 @@ GenerateFeaturesReportTitleLine()
 	#	$r_report_qpkg_active_test_builtin_column_width
 	#	$r_report_qpkg_auto_update_column_width
 	#	$r_report_qpkg_is_compatible_column_width
-	#	$r_report_qpkg_is_plugin_column_width
 	#	$r_report_qpkg_name_column_width
 	#	$r_report_qpkg_tier_column_width
 	#	$r_report_qpkg_supports_backup_column_width
@@ -5606,7 +5638,7 @@ GenerateFeaturesReportTitleLine()
 	#	$r_report_qpkg_supports_start_to_update_column_width
 
 	if OsIsSupportAutowidthTableColumns; then
-		printf 'QPKG name:|CanBack?|CanClean?|StartUpd?|AutoUpd?|LiveTest?|Independent?|ArchCompat?|Enhanced?|UniqueUnpack?|Plugin?'
+		printf 'QPKG name:|CanBack?|CanClean?|StartUpd?|AutoUpd?|LiveTest?|Independent?|ArchCompat?|Enhanced?|UniqueUnpack?'
 	else
 		GenerateReportLineItem 'QPKG name:' "$r_report_qpkg_name_column_width"
 		GenerateReportLineItem 'CanBack?' "$r_report_qpkg_supports_backup_column_width"
@@ -5618,7 +5650,6 @@ GenerateFeaturesReportTitleLine()
 		GenerateReportLineItem 'ArchCompat?' "$r_report_qpkg_is_compatible_column_width"
 		GenerateReportLineItem 'Enhanced?' "$r_report_lazy_column_width"
 		GenerateReportLineItem 'UniqueUnpack?' "$r_report_lazy_column_width"
-		GenerateReportLineItem 'Plugin?' "$r_report_qpkg_is_plugin_column_width"
 	fi
 
 	printf '\n'
@@ -5635,7 +5666,7 @@ _GenerateFeaturesReportDataLine_()
 	#	$r_report_flags_path
 
 	local a=''
-	local -a column_vars=(active_test arch_compatible autoupdate backup clean independent name plugin restart_to_update compatible uniqueunpack)
+	local -a column_vars=(active_test arch_compatible autoupdate backup clean independent name restart_to_update compatible uniqueunpack)
 	local mode=''
 	local req_alert=false
 	local req_attention=false
@@ -5681,7 +5712,6 @@ _GenerateFeaturesReportDataLine_()
 			QpkgIsDatabaseCanBackup && backup=true
 			QpkgIsDatabaseCanClean && clean=true
 			QpkgIsDatabaseIndependent && independent=true
-			QpkgIsDatabasePlugin && plugin=true
 
 			if QpkgIsDatabaseCanRestartToUpdate; then
 				restart_to_update=true
@@ -5715,7 +5745,6 @@ _GenerateFeaturesReportDataLine_()
 			QpkgIsDatabaseCanBackup && backup=true
 			QpkgIsDatabaseCanClean && clean=true
 			QpkgIsDatabaseIndependent && independent=true
-			QpkgIsDatabasePlugin && plugin=true
 
 			if QpkgIsDatabaseCanRestartToUpdate; then
 				restart_to_update=true
@@ -5752,7 +5781,7 @@ _GenerateFeaturesReportDataLine_()
 	fi
 
 	if OsIsSupportAutowidthTableColumns; then
-		printf '%s' "$name_msg|$backup_msg|$clean_msg|$restart_to_update_msg|$autoupdate_msg|$active_test_msg|$independent_msg|$arch_compatible_msg|$compatible_msg|$uniqueunpack_msg|$plugin_msg"
+		printf '%s' "$name_msg|$backup_msg|$clean_msg|$restart_to_update_msg|$autoupdate_msg|$active_test_msg|$independent_msg|$arch_compatible_msg|$compatible_msg|$uniqueunpack_msg"
 	else
 		GenerateReportLineItem "$name_msg" "$r_report_qpkg_name_column_width"
 		GenerateReportLineItem "$backup_msg" "$r_report_qpkg_supports_backup_column_width"
@@ -5764,7 +5793,6 @@ _GenerateFeaturesReportDataLine_()
 		GenerateReportLineItem "$arch_compatible_msg" "$r_report_qpkg_is_compatible_column_width"
 		GenerateReportLineItem "$compatible_msg" "$r_report_lazy_column_width"
 		GenerateReportLineItem "$uniqueunpack_msg" "$r_report_lazy_column_width"
-		GenerateReportLineItem "$plugin_msg" "$r_report_qpkg_is_plugin_column_width"
 	fi
 
 	printf '\n'
@@ -11674,11 +11702,85 @@ QpkgGetDatabaseDependencies()
 		return 0
 	fi
 
-	# If buffer contains a pipe character, then need to separately examine each name.
-	# 	Read each name by word boundaries.
-	# 	If name contains pipe, then read name with IFS as pipe.
-	# 		Test each alternative name for compatibility with this NAS. Only output the compatible one.
-	#		If none are compatible, then output the first name found.
+	# If field contains a pipe character, then need to separately examine each name.
+	#	- Read each name by word boundaries.
+	#	- If name contains pipe, then read name with IFS as pipe.
+	#		- Test each alternative name for compatibility with this NAS. Only output the compatible one.
+	#		- If none are compatible, then output the first name found.
+
+	IFS=' '
+
+	for x in $g; do
+		found=false
+
+		if [[ $x != *'|'* ]]; then
+			out+=' '$x
+			continue
+		fi
+
+		IFS='|'
+
+		for alt in $x; do
+			[[ -z $first && -n $alt ]] && first=$alt
+
+			# Test alternative for compatibility
+
+			if QpkgIsDatabaseArchOK "$alt"; then
+				out+=' '$alt
+				found=true
+				break
+			fi
+		done
+
+		[[ $IFS != "$oldIFS" ]] && IFS=$oldIFS
+
+		if [[ $found = false ]]; then
+			out+=' '$first
+			first=''
+		fi
+	done
+
+	printf '%s' "$out"
+
+	return 0
+
+	}
+
+QpkgGetDatabaseOptDependencies()
+	{
+
+	# Inputs:
+	#   $qpkg_default_index (global)
+	#   $qpkg_index (global)
+	#	$qpkg_name (global)
+
+	# Outputs:
+	#   stdout = list of QPKGs $qpkg_name optionally depends-upon.
+	#   $? = 0 (found), !0 (not-found)
+
+	local alt=''
+	local first=''
+	local found=false
+	local g=''
+	local oldIFS=$IFS
+	local out=''
+	local x=''
+
+	g=${r_qpkg_opt_depends_on[$qpkg_index]}
+	[[ $g = none ]] && return 1
+	[[ $g = default ]] && g=${r_qpkg_opt_depends_on[$qpkg_default_index]}
+
+	if [[ $g != *'|'* ]]; then		# no alternatives were listed.
+		printf '%s' "$g"
+
+		return 0
+	fi
+
+	# If field contains a pipe character, then need to separately examine each name.
+	#	- Read each name by word boundaries.
+	#	- If name contains pipe, then read name with IFS as pipe.
+	#		- Test each alternative name for compatibility with this NAS. Only output the compatible one.
+	#		- If none are compatible, then output the first name found.
 
 	IFS=' '
 
@@ -12290,7 +12392,7 @@ QpkgIsDatabasePlugin()
 	# Inputs: (global)
 	#   $qpkg_default_index
 	#   $qpkg_index
-	#	$r_qpkg_is_plugin[]
+	#	$r_qpkg_opt_depends_on[]
 	#	$qpkg_name (default for $1)
 
 	# Outputs: (local)
@@ -12302,12 +12404,12 @@ QpkgIsDatabasePlugin()
 	if [[ -n ${1:-} ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
 			[[ ${r_qpkg_name[$i]} = "$1" ]] || continue
-			a=${r_qpkg_is_plugin[$i]}			# Always grab first found as default.
+			a=${r_qpkg_opt_depends_on[$i]}			# Always grab first found as default.
 			break
 		done
 	else
-		a=${r_qpkg_is_plugin[$qpkg_index]}
-		[[ $a = default ]] && a=${r_qpkg_is_plugin[$qpkg_default_index]}
+		a=${r_qpkg_opt_depends_on[$qpkg_index]}
+		[[ $a = default ]] && a=${r_qpkg_opt_depends_on[$qpkg_default_index]}
 	fi
 
 	[[ -n $a ]] || a=none
@@ -14875,7 +14977,6 @@ LoadPackages()
 	unset r_qpkg_depends_on
 	unset r_qpkg_description
 	unset r_qpkg_hash
-	unset r_qpkg_is_plugin
 	unset r_qpkg_is_sherpa_compatible
 	unset r_qpkg_is_unique_unpack
 	unset r_qpkg_max_os_version
@@ -14883,6 +14984,7 @@ LoadPackages()
 	unset r_qpkg_min_ram_kb
 	unset r_qpkg_name
 	unset r_qpkg_note
+	unset r_qpkg_opt_depends_on
 	unset r_qpkg_requires_ipks
 	unset r_qpkg_test_for_active
 	unset r_qpkg_url
@@ -14908,7 +15010,6 @@ LoadPackages()
 	r_qpkg_depends_on+=('')					# Require these QPKGs to be installed first. Use 'none' if package is independent. Separate alternatives with '|'.
 	r_qpkg_description+=('')				# QPKG description.
 	r_qpkg_hash+=('') 						# MD5 checksum.
-	r_qpkg_is_plugin+=('')					# 'true'/'false': QPKG is a "plugin" for another QPKG. It will be started before and stopped after other QPKGs but only if-installed.
 	r_qpkg_is_sherpa_compatible+=('')		# 'true'/'false': the service-script responds to enhanced sherpa actions.
 	r_qpkg_is_unique_unpack+=('')			# 'true'/'false': QPKG will self-extract contents to a unique path. Requires build with QDK 2.3.14 or-later.
 	r_qpkg_max_os_version+=('')				# The maximum QTS/QuTS version supported by this QPKG.
@@ -14916,6 +15017,7 @@ LoadPackages()
 	r_qpkg_min_ram_kb+=('')					# QPKG requires at-least this much RAM installed in kiB. Use 'none' if no minimum.
 	r_qpkg_name+=('')						# Internal QPKG name.
 	r_qpkg_note+=('')						# An additional note to be prominently displayed.
+	r_qpkg_opt_depends_on+=('')				# Optionally use these QPKGs as dependencies, but only if they are installed. Don't install them as required dependencies. Use 'none' if package is independent. Separate alternatives with '|'.
 	r_qpkg_requires_ipks+=('')				# Require these IPKs to be installed first.
 	r_qpkg_test_for_active+=('')			# Test command-string to determine if this QPKG is active or inactive. Use 'builtin' if QPKG has its own status tests.
 	r_qpkg_url+=('') 						# Remote URL.
@@ -14942,7 +15044,6 @@ LoadPackages()
 	readonly r_qpkg_depends_on
 	readonly r_qpkg_description
 	readonly r_qpkg_hash
-	readonly r_qpkg_is_plugin
 	readonly r_qpkg_is_sherpa_compatible
 	readonly r_qpkg_is_unique_unpack
 	readonly r_qpkg_max_os_version
@@ -14950,6 +15051,7 @@ LoadPackages()
 	readonly r_qpkg_min_ram_kb
 	readonly r_qpkg_name
 	readonly r_qpkg_note
+	readonly r_qpkg_opt_depends_on
 	readonly r_qpkg_requires_ipks
 	readonly r_qpkg_test_for_active
 	readonly r_qpkg_url
