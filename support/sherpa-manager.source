@@ -899,7 +899,7 @@ DebugLogEnv()
 
 	if IsOsSupportQpkgTimeout; then
 		if IsQpkgReallyInstalled IncreaseTimeouts; then
-			if QPKGs.IsTimeoutsIncreased; then
+			if IsQpkgTimeoutsIncreased; then
 				DebugQpkg detect "$(ShowAsPackageName IncreaseTimeouts)" active
 			else
 				DebugQpkg warning "$(ShowAsPackageName IncreaseTimeouts)" inactive
@@ -1041,12 +1041,12 @@ CheckEnv()
 			ipks_upgrade=true
 			pips_install=true
 
-			if Python3IsOutdated; then
+			if IsPython3Outdated; then
 				ShowAsNote "the $(TextBrightOrange Python) environment will be auto-upgraded"
 				IPKs-ACuninstall-to:Add 'python*'
 			fi
 
-			if PerlIsOutdated; then
+			if IsPerlOutdated; then
 				ShowAsNote "the $(TextBrightOrange Perl) environment will be auto-upgraded"
 				IPKs-ACuninstall-to:Add 'perl*'
 			fi
@@ -7674,13 +7674,6 @@ BuildQPKGsIsCanClean()
 
 	}
 
-QPKGs.IsTimeoutsIncreased()
-	{
-
-	[[ -e /usr/local/sbin/qpkg_service.orig ]]
-
-	}
-
 HelpAbbreviations()
 	{
 
@@ -8804,7 +8797,7 @@ GetUserDefVol()
 
 	}
 
-Python3IsOutdated()
+IsPython3Outdated()
 	{
 
 	# Check if Python3 interpreter needs upgrading for this NAS arch.
@@ -8818,13 +8811,13 @@ Python3IsOutdated()
 	#   $? = 0 if outdated, !0 if not
 
 	[[ -e $r_python3_cmd ]] || return
-	local a=$(Python3GetVer "$r_python3_cmd")
+	local a=$(GetPython3Ver "$r_python3_cmd")
 
 	[[ $r_nas_arch = armv5tel && ${a//./} -lt 3114 ]] || [[ $r_nas_arch != armv5tel && ${a//./} -lt $r_min_python_version ]]
 
 	}
 
-Python3GetVer()
+GetPython3Ver()
 	{
 
 	GetPythonVer "${1:-python3}"
@@ -8838,7 +8831,7 @@ GetPythonVer()
 
 	}
 
-PerlIsOutdated()
+IsPerlOutdated()
 	{
 
 	# Check if Perl interpreter needs upgrading for this NAS arch.
@@ -9322,39 +9315,38 @@ IsOsNonStdKernelPageSize()
 IsOsLoadAverageElevated()
 	{
 
-	# Inputs: (global)
-	#	$r_cpu_cores
-
-	local a=$(GetOsSysLoad1MinAverage); a=${a/./}
-	local b=$((r_cpu_cores*2*100))
-
-	[[ $((10#$a)) -ge $((10#$b)) ]]
+	IsOsLoadAverageAboveTrigger 2
 
 	}
 
 IsOsLoadAverageHigh()
 	{
 
-	# Inputs: (global)
-	#	$r_cpu_cores
-
-	local a=$(GetOsSysLoad1MinAverage); a=${a/./}
-	local b=$((r_cpu_cores*4*100))
-
-	[[ $((10#$a)) -ge $((10#$b)) ]]
+	IsOsLoadAverageAboveTrigger 4
 
 	}
 
 IsOsLoadAverageInsane()
 	{
 
+	IsOsLoadAverageAboveTrigger 8
+
+	}
+
+IsOsLoadAverageAboveTrigger()
+	{
+
+	# Inputs: (local)
+	#	$1 = multiplier
+
 	# Inputs: (global)
 	#	$r_cpu_cores
 
-	local a=$(GetOsSysLoad1MinAverage); a=${a/./}
-	local b=$((r_cpu_cores*8*100))
+	local a=${1:-1}
+	local b=$(GetOsSysLoad1MinAverage); b=${b/./}
+	local c=$((r_cpu_cores*a*100))
 
-	[[ $((10#$a)) -ge $((10#$b)) ]]
+	[[ $((10#$b)) -ge $((10#$c)) ]]
 
 	}
 
@@ -12683,6 +12675,13 @@ IsQpkgSigned()
 	# TODO: include SQL to check $1/$qpkg_name has been signed in certificate database. Use Python modules for this instead of SQLite3 executable.
 
 	:
+
+	}
+
+IsQpkgTimeoutsIncreased()
+	{
+
+	[[ -e /usr/local/sbin/qpkg_service.orig ]]
 
 	}
 
