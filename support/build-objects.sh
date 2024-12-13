@@ -14,7 +14,7 @@ target=$support_path/$objects_file
 # sorted
 r_qpkg_is_states=(active backedup downloaded enabled installable installed missing signed upgradable)
 r_qpkg_isnt_states=(active backedup downloaded enabled installable installed missing signed upgradable)
-r_qpkg_is_groups=(all canbackup canclean canrestarttoupdate dependent hasdependents independent)
+r_qpkg_is_groups=(all canbackup canclean canrestarttoupdate dependent hasdependents independent optional)
 r_qpkg_isnt_groups=(canclean)
 r_qpkg_states_transient=(restarting slow starting stopping unknown)
 r_qpkg_service_results=(failed ok)
