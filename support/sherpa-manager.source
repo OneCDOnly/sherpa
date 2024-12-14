@@ -581,7 +581,6 @@ LoadEnv()
 
 	# Essential files.
 
-	readonly r_auxiliary_qpkgs_list_pathfile=$r_cache_path/auxiliary				# Unused.
 	readonly r_dependent_qpkgs_list_pathfile=$r_cache_path/dependents
 	readonly r_independent_qpkgs_list_pathfile=$r_cache_path/independents
 	readonly r_inhibit_display_pathfile=$r_cache_path/display.inhibit
@@ -658,6 +657,7 @@ LoadLists()
 	#	$r_qpkg_isnt_states[]
 	#	$r_qpkg_service_results[]
 	#	$r_qpkg_states_transient[]
+	#	$r_qpkg_tiers[]
 	#	$r_user_qpkg_actions[]
 	#	$r_"$(Lowercase "$action")"_log_file
 
@@ -675,12 +675,14 @@ LoadLists()
 	unset r_qpkg_isnt_states
 	unset r_qpkg_service_results
 	unset r_qpkg_states_transient
+	unset r_qpkg_tiers
 	unset r_user_qpkg_actions
 
 	# These are used internally by sherpa.
 	# ordered
 
 	r_package_tiers=(independent auxiliary optional dependent)
+	r_qpkg_tiers=(independent optional dependent)
 
 	# sorted
 
@@ -705,6 +707,7 @@ LoadLists()
 	# KLUDGE: for some reason, setting `readonly` while populating arrays causes their scope to become local, so need to set as `readonly` afterward to ensure global scope. GNU Bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
 
 	readonly r_package_tiers
+	readonly r_qpkg_tiers
 
 	readonly r_qpkg_is_states
 	readonly r_qpkg_isnt_states
@@ -5667,7 +5670,7 @@ GenerateFeaturesReportTitleLine()
 	#	$r_report_qpkg_supports_start_to_update_column_width
 
 	if IsOsSupportAutowidthTableColumns; then
-		printf 'QPKG name:|CanBack?|CanClean?|StartUpd?|AutoUpd?|LiveTest?|Independent?|ArchCompat?|Enhanced?|UniqueUnpack?'
+		printf 'QPKG name:|CanBack?|CanClean?|StartUpd?|AutoUpd?|LiveTest?|Independent?|Dependent?|Optional?|ArchCompat?|Enhanced?|UniqueUnpack?'
 	else
 		GenerateReportLineItem 'QPKG name:' "$r_report_qpkg_name_column_width"
 		GenerateReportLineItem 'CanBack?' "$r_report_qpkg_supports_backup_column_width"
@@ -5676,6 +5679,8 @@ GenerateFeaturesReportTitleLine()
 		GenerateReportLineItem 'AutoUpd?' "$r_report_qpkg_auto_update_column_width"
 		GenerateReportLineItem 'LiveTest?' "$r_report_qpkg_active_test_builtin_column_width"
 		GenerateReportLineItem 'Independent?' "$r_report_qpkg_tier_column_width"
+		GenerateReportLineItem 'Dependent?' "$r_report_qpkg_tier_column_width"
+		GenerateReportLineItem 'Optional?' "$r_report_qpkg_tier_column_width"
 		GenerateReportLineItem 'ArchCompat?' "$r_report_qpkg_is_compatible_column_width"
 		GenerateReportLineItem 'Enhanced?' "$r_report_lazy_column_width"
 		GenerateReportLineItem 'UniqueUnpack?' "$r_report_lazy_column_width"
@@ -5695,7 +5700,7 @@ _GenerateFeaturesReportDataLine_()
 	#	$r_report_flags_path
 
 	local a=''
-	local -a column_vars=(active_test arch_compatible autoupdate backup clean independent name restart_to_update compatible uniqueunpack)
+	local -a column_vars=(active_test arch_compatible autoupdate backup clean independent dependent optional name restart_to_update compatible uniqueunpack)
 	local mode=''
 	local req_alert=false
 	local req_attention=false
@@ -5741,6 +5746,8 @@ _GenerateFeaturesReportDataLine_()
 			IsQpkgDatabaseCanBackup && backup=true
 			IsQpkgDatabaseCanClean && clean=true
 			IsQpkgDatabaseIndependent && independent=true
+			IsQpkgDatabaseDependent && dependent=true
+			IsQpkgDatabaseOptional && optional=true
 
 			if IsQpkgDatabaseCanRestartToUpdate; then
 				restart_to_update=true
@@ -5774,6 +5781,8 @@ _GenerateFeaturesReportDataLine_()
 			IsQpkgDatabaseCanBackup && backup=true
 			IsQpkgDatabaseCanClean && clean=true
 			IsQpkgDatabaseIndependent && independent=true
+			IsQpkgDatabaseDependent && dependent=true
+			IsQpkgDatabaseOptional && optional=true
 
 			if IsQpkgDatabaseCanRestartToUpdate; then
 				restart_to_update=true
@@ -5810,7 +5819,7 @@ _GenerateFeaturesReportDataLine_()
 	fi
 
 	if IsOsSupportAutowidthTableColumns; then
-		printf '%s' "$name_msg|$backup_msg|$clean_msg|$restart_to_update_msg|$autoupdate_msg|$active_test_msg|$independent_msg|$arch_compatible_msg|$compatible_msg|$uniqueunpack_msg"
+		printf '%s' "$name_msg|$backup_msg|$clean_msg|$restart_to_update_msg|$autoupdate_msg|$active_test_msg|$independent_msg|$dependent_msg|$optional_msg|$arch_compatible_msg|$compatible_msg|$uniqueunpack_msg"
 	else
 		GenerateReportLineItem "$name_msg" "$r_report_qpkg_name_column_width"
 		GenerateReportLineItem "$backup_msg" "$r_report_qpkg_supports_backup_column_width"
@@ -5819,6 +5828,8 @@ _GenerateFeaturesReportDataLine_()
 		GenerateReportLineItem "$autoupdate_msg" "$r_report_qpkg_auto_update_column_width"
 		GenerateReportLineItem "$active_test_msg" "$r_report_qpkg_active_test_builtin_column_width"
 		GenerateReportLineItem "$independent_msg" "$r_report_qpkg_tier_column_width"
+		GenerateReportLineItem "$dependent_msg" "$r_report_qpkg_tier_column_width"
+		GenerateReportLineItem "$optional_msg" "$r_report_qpkg_tier_column_width"
 		GenerateReportLineItem "$arch_compatible_msg" "$r_report_qpkg_is_compatible_column_width"
 		GenerateReportLineItem "$compatible_msg" "$r_report_lazy_column_width"
 		GenerateReportLineItem "$uniqueunpack_msg" "$r_report_lazy_column_width"
@@ -7388,7 +7399,7 @@ BuildQPKGsTiers()
 	local previous=''
 	local qpkg_name=''
 
-	for a in "${r_package_tiers[@]}"; do
+	for a in "${r_qpkg_tiers[@]}"; do
 		b=r_${a}_qpkgs_list_pathfile
 		[[ -e ${!b} ]] && continue
 		c=true
@@ -7398,7 +7409,7 @@ BuildQPKGsTiers()
 	if [[ $c = true ]]; then
 		ShowAsProc tiers
 
-		for a in "${r_package_tiers[@]}"; do
+		for a in "${r_qpkg_tiers[@]}"; do
 			b=r_${a}_qpkgs_list_pathfile
 			[[ ! -e ${!b} ]] && continue
 			rm -f "${!b}" 2> /dev/null
@@ -7408,7 +7419,7 @@ BuildQPKGsTiers()
 			[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
 			SetQpkgIndex
 
-			if IsQpkgDatabaseOptDependent; then
+			if IsQpkgDatabaseOptional; then
 				echo "$qpkg_name" >> "$r_optional_qpkgs_list_pathfile"
 			elif IsQpkgDatabaseDependent; then
 				echo "$qpkg_name" >> "$r_dependent_qpkgs_list_pathfile"
@@ -7420,7 +7431,7 @@ BuildQPKGsTiers()
 		qpkgs_tiers_built=true
 	fi
 
-	for a in "${r_package_tiers[@]}"; do
+	for a in "${r_qpkg_tiers[@]}"; do
 		b=r_${a}_qpkgs_list_pathfile
 		[[ ! -e ${!b} ]] && continue
 		QPKGs-GR${a}:Add "$(< ${!b})"
@@ -12284,7 +12295,7 @@ IsQpkgDatabaseIndependent()
 
 	}
 
-IsQpkgDatabaseOptDependent()
+IsQpkgDatabaseOptional()
 	{
 
 	# Is this QPKG an optional dependency?
@@ -12299,12 +12310,28 @@ IsQpkgDatabaseOptDependent()
 	[[ $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
 
 	local a=''
+	local qpkg_name=''
+
+	# TODO: need a loop here to check through every database QPKG and check if this QPKG is mentioned as an optional dependency by any other QPKG. If so, output is true.
+
+# 	local -i i=0
+#
+# 	if [[ -n ${1:-} ]]; then
+# 		for i in "${!r_qpkg_name[@]}"; do
+# 			[[ ${r_qpkg_name[$i]} = "$1" ]] || continue
+# 			a=${r_qpkg_can_backup[$i]}			# Always grab first found as default.
+# 			break
+# 		done
+# 	else
+# 		a=${r_qpkg_can_backup[$qpkg_index]}
+# 		[[ $a = default ]] && a=${r_qpkg_can_backup[$qpkg_default_index]}
+# 	fi
+
 
 # 	a=${r_qpkg_depends_on[$qpkg_index]}
 # 	[[ $a = default ]] && a=${r_qpkg_depends_on[$qpkg_default_index]}
 # 	[[ $a != none ]]
 
-	# TODO: need a loop here to check through all database QPKGs and check if this QPKG is mentioned as an optional dependency by any other QPKG. If so, output is true.
 
 	}
 
