@@ -581,11 +581,13 @@ LoadEnv()
 
 	# Essential files.
 
+	readonly r_auxiliary_qpkgs_list_pathfile=$r_cache_path/auxiliary				# Unused.
 	readonly r_dependent_qpkgs_list_pathfile=$r_cache_path/dependents
 	readonly r_independent_qpkgs_list_pathfile=$r_cache_path/independents
 	readonly r_inhibit_display_pathfile=$r_cache_path/display.inhibit
 	readonly r_objects_archive_pathfile=$r_cache_path/objects.tar.gz
 	readonly r_objects_pathfile=$r_cache_path/objects
+	readonly r_optional_qpkgs_list_pathfile=$r_cache_path/optionals
 	readonly r_packages_archive_pathfile=$r_cache_path/packages.tar.gz
 	readonly r_packages_pathfile=$r_cache_path/packages
 	readonly r_prev_ipk_list_pathfile=$r_ipk_cache_path/ipk.list.save
@@ -678,13 +680,13 @@ LoadLists()
 	# These are used internally by sherpa.
 	# ordered
 
-	r_package_tiers=(optional independent auxiliary dependent)
+	r_package_tiers=(independent auxiliary optional dependent)
 
 	# sorted
 
 	r_qpkg_is_states=(active backedup downloaded enabled installable installed missing signed upgradable)
 	r_qpkg_isnt_states=(active backedup downloaded enabled installable installed missing signed upgradable)
-	r_qpkg_is_groups=(all canbackup canclean canrestarttoupdate dependent hasdependents independent)
+	r_qpkg_is_groups=(all canbackup canclean canrestarttoupdate dependent hasdependents independent optional)
 	r_qpkg_isnt_groups=(canclean)
 	r_qpkg_states_transient=(restarting slow starting stopping unknown)
 	r_qpkg_service_results=(failed ok)
@@ -1471,63 +1473,57 @@ ProcActions()
 		for ((tier_index=${#r_package_tiers[@]}-1; tier_index>=0; tier_index--)); do		# Process tiers in-reverse.
 			tier=${r_package_tiers[$tier_index]}
 
-			case $tier in
-				?(in)dependent)
-					ProcAction deactivate $tier QPKG deactivate
-					ProcAction disableau $tier QPKG 'disable auto-update'
-					ProcAction backup $tier QPKG backup
-					ProcAction disable $tier QPKG disable
-					ProcAction uninstall $tier QPKG uninstall
-					;;
-				auxiliary)
-					if QPKGs-ISenabled.Exist Entware; then
-						ModPathToEntware
-						PIPs:uninstall
-						IPKs:uninstall
-					fi
-			esac
+			if [[ $tier != auxiliary ]]; then
+				ProcAction deactivate $tier QPKG deactivate
+				ProcAction disableau $tier QPKG 'disable auto-update'
+				ProcAction backup $tier QPKG backup
+				ProcAction disable $tier QPKG disable
+				ProcAction uninstall $tier QPKG uninstall
+			elif QPKGs-ISenabled.Exist Entware; then
+				ModPathToEntware
+				PIPs:uninstall
+				IPKs:uninstall
+			fi
 		done
 
 		# -> Package installation phase <-
 
 		for tier in "${r_package_tiers[@]}"; do
-			case $tier in
-				?(in)dependent)
-					ProcAction upgrade $tier QPKG upgrade
-					ProcAction reinstall $tier QPKG reinstall
-					ProcAction install $tier QPKG install
-					ProcAction restore $tier QPKG restore
-					ProcAction enableau $tier QPKG 'enable auto-update'
-					ProcAction clean $tier QPKG clean
-					[[ $tier = dependent ]] && ProcAction sign $tier QPKG '"sign"'
-					ProcAction enable $tier QPKG enable
-					ProcAction reactivate $tier QPKG reactivate
-					ProcAction activate $tier QPKG activate
-					;;
-				auxiliary)
-					for action in status install reinstall upgrade activate; do
-						if (QPKGs-ACinstall-ok.Exist Entware) || QPKGs-AC${action}-to.IsAny && QPKGs-ISenabled.Exist Entware; then
-							ipks_downgrade=true
-							ipks_install=true
-							ipks_upgrade=true
-							pips_install=true
-							break
-						fi
-					done
-
-					if QPKGs-ISenabled.Exist Entware; then
-						ModPathToEntware
-						IPKs:upgrade
-						IPKs:install
-						IPKs:downgrade
-						PIPs:upgrade
-						PIPs:install
+			if [[ $tier != auxiliary ]]; then
+				ProcAction upgrade $tier QPKG upgrade
+				ProcAction reinstall $tier QPKG reinstall
+				ProcAction install $tier QPKG install
+				ProcAction restore $tier QPKG restore
+				ProcAction enableau $tier QPKG 'enable auto-update'
+				ProcAction clean $tier QPKG clean
+				[[ $tier = dependent ]] && ProcAction sign $tier QPKG '"sign"'
+				ProcAction enable $tier QPKG enable
+				ProcAction reactivate $tier QPKG reactivate
+				ProcAction activate $tier QPKG activate
+			else
+				for action in status install reinstall upgrade activate; do
+					if (QPKGs-ACinstall-ok.Exist Entware) || QPKGs-AC${action}-to.IsAny && QPKGs-ISenabled.Exist Entware; then
+						ipks_downgrade=true
+						ipks_install=true
+						ipks_upgrade=true
+						pips_install=true
+						break
 					fi
+				done
 
-					QPKGs-ACinstall-ok.Exist Entware && [[ $sqlite_pathfile = /opt/bin/sqlite3 && -e $sqlite_pathfile ]] && IsOsSupportSignedPackages && QPKGs-ACsign-to:Add "$(QPKGs-ISinstalled:Array)"
+				if QPKGs-ISenabled.Exist Entware; then
+					ModPathToEntware
+					IPKs:upgrade
+					IPKs:install
+					IPKs:downgrade
+					PIPs:upgrade
+					PIPs:install
+				fi
 
-					ProcAction sign independent QPKG '"sign"'
-			esac
+				QPKGs-ACinstall-ok.Exist Entware && [[ $sqlite_pathfile = /opt/bin/sqlite3 && -e $sqlite_pathfile ]] && IsOsSupportSignedPackages && QPKGs-ACsign-to:Add "$(QPKGs-ISinstalled:Array)"
+
+				ProcAction sign independent QPKG '"sign"'
+			fi
 		done
 	fi
 
@@ -7360,19 +7356,19 @@ ListQPKGsStates()
 BuildQPKGsTiers()
 	{
 
-	# There are 4 tiers of package: `optional`, `independent`, `auxiliary`, and `dependent`.
-	# ... but only 2 tiers of QPKG: `independent`, and `dependent`.
-	# ... additionally, both QPKG tiers may have `optional`.
+	# There are 4 tiers of package: `independent`, `auxiliary`, `optional`, and `dependent`.
+	# ... but only 3 tiers of QPKG: `independent`, `optional` and `dependent`.
 
-	# `optional` QPKGs are optionally depended-upon by other QPKGs. They should be installed/activated before other QPKGs within the same tier, and deactivated after other QPKGs within the same tier.
 	# `independent` QPKGs don't depend-on other QPKGs, but may be required for other QPKGs. They should be installed/activated before any `dependent` QPKGs.
 	# `auxiliary` Entware IPKs and Python PIP modules to support QPKGs.
-	# `dependent` QPKGs depend-on other QPKGs. They should be installed/activated after all `independent` QPKGs.
+	# `optional` QPKGs are loosely-depended-upon by other QPKGs (optional). They should be installed/activated before other QPKGs within the same tier, and deactivated after other QPKGs within the same tier.
+	# `dependent` QPKGs are tightly-dependent on other QPKGs (other packages are required). They should be installed/activated after all `independent` QPKGs.
 
 	# Inputs: (global)
 	#	$qpkgs_tiers_built
 	#	$r_dependent_qpkgs_list_pathfile
 	#	$r_independent_qpkgs_list_pathfile
+	#	$r_optional_qpkgs_list_pathfile
 	#	$r_qpkg_name[]
 
 	# Outputs: (global)
@@ -7386,18 +7382,35 @@ BuildQPKGsTiers()
 		FuncExit; return
 	fi
 
+	local a=''
+	local b=''
+	local c=false
 	local previous=''
+	local qpkg_name=''
 
-	if [[ ! -e $r_dependent_qpkgs_list_pathfile || ! -e $r_independent_qpkgs_list_pathfile ]]; then
+	for a in "${r_package_tiers[@]}"; do
+		b=r_${a}_qpkgs_list_pathfile
+		[[ -e ${!b} ]] && continue
+		c=true
+		break
+	done
+
+	if [[ $c = true ]]; then
 		ShowAsProc tiers
 
-		rm -f "$r_dependent_qpkgs_list_pathfile" "$r_independent_qpkgs_list_pathfile" 2> /dev/null
+		for a in "${r_package_tiers[@]}"; do
+			b=r_${a}_qpkgs_list_pathfile
+			[[ ! -e ${!b} ]] && continue
+			rm -f "${!b}" 2> /dev/null
+		done
 
 		for qpkg_name in "${r_qpkg_name[@]}"; do
 			[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
 			SetQpkgIndex
 
-			if IsQpkgDatabaseDependent; then
+			if IsQpkgDatabaseOptDependent; then
+				echo "$qpkg_name" >> "$r_optional_qpkgs_list_pathfile"
+			elif IsQpkgDatabaseDependent; then
 				echo "$qpkg_name" >> "$r_dependent_qpkgs_list_pathfile"
 			else
 				echo "$qpkg_name" >> "$r_independent_qpkgs_list_pathfile"
@@ -7407,8 +7420,11 @@ BuildQPKGsTiers()
 		qpkgs_tiers_built=true
 	fi
 
-	[[ -e $r_dependent_qpkgs_list_pathfile ]] && QPKGs-GRdependent:Add "$(< $r_dependent_qpkgs_list_pathfile)"
-	[[ -e $r_independent_qpkgs_list_pathfile ]] && QPKGs-GRindependent:Add "$(< $r_independent_qpkgs_list_pathfile)"
+	for a in "${r_package_tiers[@]}"; do
+		b=r_${a}_qpkgs_list_pathfile
+		[[ ! -e ${!b} ]] && continue
+		QPKGs-GR${a}:Add "$(< ${!b})"
+	done
 
 	FuncExit
 
@@ -11899,7 +11915,7 @@ GetQpkgDatabaseOptDependents()
 	local -i i=-1			# default to not-found.
 	local re=\\b${qpkg_name}\\b
 
-	if QPKGs-GRindependent.Exist "$qpkg_name"; then
+	if QPKGs-GRoptional.Exist "$qpkg_name"; then
 		for i in "${!r_qpkg_name[@]}"; do
 			if [[ ${r_qpkg_opt_depends_on[$i]} =~ $re ]]; then
 				[[ ${ar[*]:-} != "${r_qpkg_name[$i]}" ]] && ar+=(${r_qpkg_name[$i]})
@@ -12265,6 +12281,30 @@ IsQpkgDatabaseIndependent()
 	#   $? = true/false
 
 	! IsQpkgDatabaseDependent
+
+	}
+
+IsQpkgDatabaseOptDependent()
+	{
+
+	# Is this QPKG an optional dependency?
+
+	# Inputs: (global)
+	#   $qpkg_default_index
+	#   $qpkg_index
+
+	# Outputs: (local)
+	#   $? = true/false
+
+	[[ $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
+
+	local a=''
+
+# 	a=${r_qpkg_depends_on[$qpkg_index]}
+# 	[[ $a = default ]] && a=${r_qpkg_depends_on[$qpkg_default_index]}
+# 	[[ $a != none ]]
+
+	# TODO: need a loop here to check through all database QPKGs and check if this QPKG is mentioned as an optional dependency by any other QPKG. If so, output is true.
 
 	}
 
