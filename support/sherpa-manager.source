@@ -12291,7 +12291,7 @@ IsQpkgDatabaseIndependent()
 	# Outputs: (local)
 	#   $? = true/false
 
-	! IsQpkgDatabaseDependent
+	! IsQpkgDatabaseOptional && ! IsQpkgDatabaseDependent
 
 	}
 
@@ -12300,38 +12300,27 @@ IsQpkgDatabaseOptional()
 
 	# Is this QPKG an optional dependency?
 
+	# Inputs: (local)
+	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+
 	# Inputs: (global)
-	#   $qpkg_default_index
-	#   $qpkg_index
+	#	$qpkg_name (default for $1)
+	#	$r_qpkg_name[]
+	#	$r_qpkg_opt_depends_on[]
 
 	# Outputs: (local)
 	#   $? = true/false
 
-	[[ $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
+	local -i i=0
+	local re=\\b${a}\\b
 
-	local a=''
-	local qpkg_name=''
+	for i in "${!r_qpkg_name[@]}"; do
+		[[ ${r_qpkg_opt_depends_on[$i]} =~ $re ]] || continue
+		return 0
+	done
 
-	# TODO: need a loop here to check through every database QPKG and check if this QPKG is mentioned as an optional dependency by any other QPKG. If so, output is true.
-
-# 	local -i i=0
-#
-# 	if [[ -n ${1:-} ]]; then
-# 		for i in "${!r_qpkg_name[@]}"; do
-# 			[[ ${r_qpkg_name[$i]} = "$1" ]] || continue
-# 			a=${r_qpkg_can_backup[$i]}			# Always grab first found as default.
-# 			break
-# 		done
-# 	else
-# 		a=${r_qpkg_can_backup[$qpkg_index]}
-# 		[[ $a = default ]] && a=${r_qpkg_can_backup[$qpkg_default_index]}
-# 	fi
-
-
-# 	a=${r_qpkg_depends_on[$qpkg_index]}
-# 	[[ $a = default ]] && a=${r_qpkg_depends_on[$qpkg_default_index]}
-# 	[[ $a != none ]]
-
+	return 1
 
 	}
 
