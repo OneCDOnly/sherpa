@@ -7392,65 +7392,20 @@ BuildQPKGsTiers()
 
 	# Inputs: (global)
 	#	$qpkgs_tiers_built
-	#	$r_dependent_qpkgs_list_pathfile
-	#	$r_independent_qpkgs_list_pathfile
-	#	$r_optional_qpkgs_list_pathfile
-	#	$r_qpkg_name[]
-
-	# Outputs: (global)
-	#	$qpkgs_tiers_built
 
 	FuncInit
 
-	if [[ ${qpkgs_tiers_built:=false} = true ]]; then
+	CheckQPKGsTiers
+
+	if [[ $qpkgs_tiers_built = true ]]; then
 		DebugAsDone "don't build tiers: they're already built"
 
 		FuncExit; return
 	fi
 
-	local a=''
-	local b=''
-	local c=false
-	local previous=''
-	local qpkg_name=''
-
-	for a in "${r_qpkg_tiers[@]}"; do
-		b=r_${a}_qpkgs_list_pathfile
-		[[ -e ${!b} ]] && continue
-		c=true
-		break
-	done
-
-	if [[ $c = true ]]; then
-		ShowAsProc tiers
-
-		for a in "${r_qpkg_tiers[@]}"; do
-			b=r_${a}_qpkgs_list_pathfile
-			[[ ! -e ${!b} ]] && continue
-			rm -f "${!b}" 2> /dev/null
-		done
-
-		for qpkg_name in "${r_qpkg_name[@]}"; do
-			[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
-			SetQpkgIndex
-
-			if IsQpkgDatabaseOptional; then
-				echo "$qpkg_name" >> "$r_optional_qpkgs_list_pathfile"
-			elif IsQpkgDatabaseDependent; then
-				echo "$qpkg_name" >> "$r_dependent_qpkgs_list_pathfile"
-			else
-				echo "$qpkg_name" >> "$r_independent_qpkgs_list_pathfile"
-			fi
-		done
-
-		qpkgs_tiers_built=true
-	fi
-
-	for a in "${r_qpkg_tiers[@]}"; do
-		b=r_${a}_qpkgs_list_pathfile
-		[[ ! -e ${!b} ]] && continue
-		QPKGs-GR${a}:Add "$(< ${!b})"
-	done
+	ShowAsProc tiers
+	GenerateQPKGsTiers
+	LoadQPKGsTiers
 
 	FuncExit
 
@@ -7462,12 +7417,100 @@ InitQPKGsTiers()
 	# Inputs: (global)
 	#	$r_dependent_qpkgs_list_pathfile
 	#	$r_independent_qpkgs_list_pathfile
+	#	$r_optional_qpkgs_list_pathfile
+	#	$r_qpkg_tiers[]
 
 	# Outputs: (global)
 	#	$qpkgs_tiers_built
 
-	rm -f "$r_dependent_qpkgs_list_pathfile" "$r_independent_qpkgs_list_pathfile" 2> /dev/null
+	for a in "${r_qpkg_tiers[@]}"; do
+		b=r_${a}_qpkgs_list_pathfile
+		[[ ! -e ${!b} ]] && continue
+		rm -f "${!b}" 2> /dev/null
+	done
+
 	qpkgs_tiers_built=false
+
+	}
+
+CheckQPKGsTiers()
+	{
+
+	# Inputs: (global)
+	#	$r_dependent_qpkgs_list_pathfile
+	#	$r_independent_qpkgs_list_pathfile
+	#	$r_optional_qpkgs_list_pathfile
+	#	$r_qpkg_tiers[]
+
+	# Outputs: (global)
+	#	$qpkgs_tiers_built
+
+	qpkgs_tiers_built=true
+
+	for a in "${r_qpkg_tiers[@]}"; do
+		b=r_${a}_qpkgs_list_pathfile
+		[[ ! -e ${!b} ]] || continue
+		qpkgs_tiers_built=false
+		break
+	done
+
+	}
+
+GenerateQPKGsTiers()
+	{
+
+	# Inputs: (global)
+	#	$r_dependent_qpkgs_list_pathfile
+	#	$r_independent_qpkgs_list_pathfile
+	#	$r_optional_qpkgs_list_pathfile
+	#	$r_qpkg_name[]
+
+	# Outputs: (global)
+	#	$qpkgs_tiers_built
+
+	local previous=''
+	local qpkg_name=''
+
+	InitQPKGsTiers
+
+	for qpkg_name in "${r_qpkg_name[@]}"; do
+		[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
+		SetQpkgIndex
+
+		if IsQpkgDatabaseOptional; then
+			echo "$qpkg_name" >> "$r_optional_qpkgs_list_pathfile"
+		elif IsQpkgDatabaseDependent; then
+			echo "$qpkg_name" >> "$r_dependent_qpkgs_list_pathfile"
+		else
+			echo "$qpkg_name" >> "$r_independent_qpkgs_list_pathfile"
+		fi
+	done
+
+	qpkgs_tiers_built=true
+
+	}
+
+LoadQPKGsTiers()
+	{
+
+	# Inputs: (global)
+	#	$r_dependent_qpkgs_list_pathfile
+	#	$r_independent_qpkgs_list_pathfile
+	#	$r_optional_qpkgs_list_pathfile
+	#	$r_qpkg_tiers[]
+
+	# Outputs: (global)
+	#	QPKGs-GRdependent
+	#	QPKGs-GRindependent
+	#	QPKGs-GRoptional
+
+	[[ $qpkgs_tiers_built = true ]] || return
+
+	for a in "${r_qpkg_tiers[@]}"; do
+		b=r_${a}_qpkgs_list_pathfile
+		[[ ! -e ${!b} ]] && continue
+		QPKGs-GR${a}:Add "$(< ${!b})"
+	done
 
 	}
 
@@ -15085,8 +15128,6 @@ LoadPackages()
 			if /sbin/curl${curl_options} --silent --fail "$r_packages_archive_url" > "$r_packages_archive_pathfile"; then
 				/bin/tar --extract --gzip --no-same-owner --file="$r_packages_archive_pathfile" --directory="$r_cache_path"
 			fi
-
-			InitQPKGsTiers
 		fi
 	fi
 
