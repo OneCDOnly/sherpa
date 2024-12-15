@@ -1361,6 +1361,8 @@ QPKGsAssignToActions()
 		LoadQpkgSigning
 	fi
 
+	[[ $useropt_debug = true ]] && ListQPKGsActionsAll				#devdebug
+
 	FuncExit
 
 	}
@@ -1514,7 +1516,7 @@ ProcActions()
 				ProcAction restore $tier QPKG restore
 				ProcAction enableau $tier QPKG 'enable auto-update'
 				ProcAction clean $tier QPKG clean
-				[[ $tier = dependent || $tier = optional ]] && ProcAction sign $tier QPKG '"sign"'
+				[[ $tier != independent ]] && ProcAction sign $tier QPKG '"sign"'
 				ProcAction enable $tier QPKG enable
 				ProcAction reactivate $tier QPKG reactivate
 				ProcAction activate $tier QPKG activate
@@ -1572,9 +1574,9 @@ ProcAction()
 
 	# Inputs: (local)
 	#   $1 = an action to run 			e.g. `activate`, `reactivate` ...
-	#   $2 = target tier 				e.g. `independent`, `dependent`, `auxiliary`, `all`
+	#   $2 = target tier 				e.g. `independent`, `dependent`, `auxiliary`, `optional`, `all`
 	#   $3 = package type to process 	e.g. `QPKG`, `IPK`, `PIP`
-	#   $4 = action intransitive verb	e.g. `activate`
+	#   $4 = action intransitive verb	e.g. `activate`, `reactivate` ...
 
 	# Inputs: (global)
 	#   $fail_count
@@ -1634,9 +1636,9 @@ ProcAction()
 		QPKG)
 			target_object_name=AC${r_action}-to
 
-			if [[ $r_tier = all ]]; then  # Process all tiers.
+			if [[ $r_tier = all ]]; then	# Process all tiers.
 				target_packages=($(${r_package_type}s-$target_object_name:Array))
-			else						# Process a single tier only.
+			else							# Process a single tier only.
 				for package in $(${r_package_type}s-$target_object_name:Array); do
 					${r_package_type}s-GR${r_tier}.Exist "$package" && target_packages+=("$package")
 				done
@@ -7399,12 +7401,11 @@ BuildQPKGsTiers()
 
 	if [[ $qpkgs_tiers_built = true ]]; then
 		DebugAsDone "don't build tiers: they're already built"
-
-		FuncExit; return
+	else
+		ShowAsProc tiers
+		GenerateQPKGsTiers
 	fi
 
-	ShowAsProc tiers
-	GenerateQPKGsTiers
 	LoadQPKGsTiers
 
 	FuncExit
