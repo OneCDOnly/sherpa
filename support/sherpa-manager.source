@@ -1499,7 +1499,7 @@ ProcActions()
 				ProcAction restore $tier QPKG restore
 				ProcAction enableau $tier QPKG 'enable auto-update'
 				ProcAction clean $tier QPKG clean
-				[[ $tier = dependent ]] && ProcAction sign $tier QPKG '"sign"'
+				[[ $tier = dependent || $tier = optional ]] && ProcAction sign $tier QPKG '"sign"'
 				ProcAction enable $tier QPKG enable
 				ProcAction reactivate $tier QPKG reactivate
 				ProcAction activate $tier QPKG activate
