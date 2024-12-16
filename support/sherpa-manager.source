@@ -8771,7 +8771,7 @@ MarkThisActionForkAsError()
 
 	}
 
-# UpdateThisAcForkPid()
+#UpdateThisAcForkPid()
 # 	{
 #
 # 	# Inputs: (local)
@@ -12557,42 +12557,6 @@ IsQpkgDatabaseCanClean()
 	done
 
 	return 1
-
-	}
-
-IsQpkgDatabasePlugin()
-	{
-
-	# Is this QPKG a plugin for other QPKGs?
-
-	# Inputs: (local)
-	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
-
-	# Inputs: (global)
-	#   $qpkg_default_index
-	#   $qpkg_index
-	#	$r_qpkg_opt_depends_on[]
-	#	$qpkg_name (default for $1)
-
-	# Outputs: (local)
-	#   $? = true/false
-
-	local a=''
-	local -i i=0
-
-	if [[ -n ${1:-} ]]; then
-		for i in "${!r_qpkg_name[@]}"; do
-			[[ ${r_qpkg_name[$i]} = "$1" ]] || continue
-			a=${r_qpkg_opt_depends_on[$i]}			# Always grab first found as default.
-			break
-		done
-	else
-		a=${r_qpkg_opt_depends_on[$qpkg_index]}
-		[[ $a = default ]] && a=${r_qpkg_opt_depends_on[$qpkg_default_index]}
-	fi
-
-	[[ -n $a ]] || a=none
-	[[ $a = true ]]
 
 	}
 
