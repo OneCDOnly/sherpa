@@ -2598,7 +2598,7 @@ ParseListArgs()
 			case $action in
 				list)
 					case $group in
-						all|?(in)dependent)
+						all|?(in)dependent|optional)
 							LoadObjects
 							QPKGs.AClist.GR${group}:Set
 							action=''
@@ -2955,6 +2955,9 @@ MatchNoun()
 			;;
 		o|option?(s))
 			printf options
+			;;
+		optional?(s))
+			printf optional
 			;;
 		p|package?(s)|qpkg?(s))
 			printf packages
