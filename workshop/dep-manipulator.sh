@@ -61,7 +61,11 @@ RemoveFromQPKGPostInstallDeps()
 	a=$(/bin/sed "s|${re}||" <<< "$(/sbin/getcfg "$1" Dependency -f /etc/config/qpkg.conf)")
 	a=$(/bin/tr -s ':' <<< "$a")
 
-	/sbin/setcfg "$1" Dependency "$a" -f /etc/config/qpkg.conf
+	if [[ -n $a ]]; then
+		/sbin/setcfg "$1" Dependency "$a" -f /etc/config/qpkg.conf
+	else
+		/sbin/setcfg -e "$1" Dependency -f /etc/config/qpkg.conf
+	fi
 
 	}
 
