@@ -1154,7 +1154,7 @@ QPKGsAssignToActions()
 		done
 	fi
 
-	# Install independents are installed when processing these specific actions:
+	# Install independents when processing these specific actions:
 
 	for qpkg_name in $(QPKGs-ACinstall-to:Array) $(QPKGs-ACreinstall-to:Array); do
 		SetQpkgIndex
@@ -1176,34 +1176,16 @@ QPKGsAssignToActions()
 		fi
 	done
 
-	# If an independent has been selected for `reinstall`/`reactivate`/`upgrade`, need to `deactivate` its dependents first, and `activate` them again later.
+	# If an optional has been selected for any primary action, need to `reactivate` its dependents later.
 
-	for action in reinstall reactivate upgrade; do
-		for qpkg_name in $(QPKGs-AC${action}-to:Array); do
-			if QPKGs-GRindependent.Exist "$qpkg_name" && QPKGs-ISinstalled.Exist "$qpkg_name"; then
-				SetQpkgIndex
-
-				for prospect in $(GetQpkgDatabaseDependents); do
-					if QPKGs-ISenabled.Exist "$prospect"; then
-						QPKGs-ACdeactivate-to:Add "$prospect"
-						! QPKGs-ACuninstall-to.Exist "$prospect" && ! QPKGs-ACinstall-to.Exist "$prospect" && QPKGs-ACactivate-to:Add "$prospect"
-					fi
-				done
-			fi
-		done
-	done
-
-	# If an optional has been selected for `reinstall`/`reactivate`/`upgrade`, need to `deactivate` its dependents first, and `activate` them again later.
-
-	for action in reinstall reactivate upgrade; do
+	for action in activate deactivate disable enable install reinstall reactivate uninstall upgrade; do
 		for qpkg_name in $(QPKGs-AC${action}-to:Array); do
 			if QPKGs-GRoptional.Exist "$qpkg_name" && QPKGs-ISinstalled.Exist "$qpkg_name"; then
 				SetQpkgIndex
 
 				for prospect in $(GetQpkgDatabaseOptionals); do
 					if QPKGs-ISenabled.Exist "$prospect"; then
-						QPKGs-ACdeactivate-to:Add "$prospect"
-						! QPKGs-ACuninstall-to.Exist "$prospect" && ! QPKGs-ACinstall-to.Exist "$prospect" && QPKGs-ACactivate-to:Add "$prospect"
+						! QPKGs-ACuninstall-to.Exist "$prospect" && ! QPKGs-ACinstall-to.Exist "$prospect" && QPKGs-ACreactivate-to:Add "$prospect"
 					fi
 				done
 			fi
@@ -1219,23 +1201,6 @@ QPKGsAssignToActions()
 
 				for prospect in $(GetQpkgDatabaseDependents); do
 					QPKGs-ISinstalled.Exist "$prospect" && QPKGs-ACdeactivate-to:Add "$prospect"
-				done
-			fi
-		done
-	done
-
-	# If an optional has been selected for `deactivate` or `uninstall`, need to `deactivate` its dependents first, and `activate` them again later.
-
-	for action in deactivate uninstall; do
-		for qpkg_name in $(QPKGs-AC${action}-to:Array); do
-			if QPKGs-GRoptional.Exist "$qpkg_name" && QPKGs-ISinstalled.Exist "$qpkg_name"; then
-				SetQpkgIndex
-
-				for prospect in $(GetQpkgDatabaseOptionals); do
-					if QPKGs-ISenabled.Exist "$prospect"; then
-						QPKGs-ACdeactivate-to:Add "$prospect"
-						! QPKGs-ACuninstall-to.Exist "$prospect" && ! QPKGs-ACinstall-to.Exist "$prospect" && QPKGs-ACactivate-to:Add "$prospect"
-					fi
 				done
 			fi
 		done
@@ -1262,6 +1227,23 @@ QPKGsAssignToActions()
 				fi
 			done
 		fi
+	done
+
+	# If an independent has been selected for `reinstall`/`reactivate`/`upgrade`, need to `deactivate` its dependents first, and `activate` them again later.
+
+	for action in reinstall reactivate upgrade; do
+		for qpkg_name in $(QPKGs-AC${action}-to:Array); do
+			if QPKGs-GRindependent.Exist "$qpkg_name" && QPKGs-ISinstalled.Exist "$qpkg_name"; then
+				SetQpkgIndex
+
+				for prospect in $(GetQpkgDatabaseDependents); do
+					if QPKGs-ISenabled.Exist "$prospect"; then
+						QPKGs-ACdeactivate-to:Add "$prospect"
+						! QPKGs-ACuninstall-to.Exist "$prospect" && ! QPKGs-ACinstall-to.Exist "$prospect" && QPKGs-ACactivate-to:Add "$prospect"
+					fi
+				done
+			fi
+		done
 	done
 
 	# If an optional has been selected for `uninstall`, then `install`, need to `deactivate` its dependents first, and `activate` them again later.
