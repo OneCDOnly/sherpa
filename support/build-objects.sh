@@ -10,12 +10,11 @@ target=$support_path/$objects_file
 
 # These are used internally by sherpa. Must maintain separate lists for sherpa internal-use, and what user has requested.
 # ordered
-r_package_tiers=(independent auxiliary dependent)
 
 # sorted
 r_qpkg_is_states=(active backedup downloaded enabled installable installed missing signed upgradable)
 r_qpkg_isnt_states=(active backedup downloaded enabled installable installed missing signed upgradable)
-r_qpkg_is_groups=(all canbackup canclean canrestarttoupdate dependent hasdependents independent)
+r_qpkg_is_groups=(all canbackup canclean canrestarttoupdate dependent hasdependents independent optional)
 r_qpkg_isnt_groups=(canclean)
 r_qpkg_states_transient=(restarting slow starting stopping unknown)
 r_qpkg_service_results=(failed ok)
@@ -151,7 +150,7 @@ done
 # session list objects.
 
 for action in "${r_qpkg_actions[@]}"; do
-	for prefix in to ok er sk so se sa dn; do		# to-do, done ok, done error, skipped, skipped-but-ok, skipped-with-error, skipped-with-abort, done (all processed QPKGs are placed in the 'done' list, as-well as the regular exit status lists).
+	for prefix in to ok er sk so se sa dn; do		# 'to-do', 'done ok', 'done error', 'skipped', 'skipped-but-ok', 'skipped-with-error', 'skipped-with-abort', 'done' (all processed QPKGs are placed in the 'done' list, as-well as the regular exit status lists).
 		AddListObj "QPKGs-AC${action}-${prefix}"
 	done
 done
