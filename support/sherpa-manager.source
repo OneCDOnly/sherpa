@@ -15096,6 +15096,8 @@ LoadPackages()
 			if /sbin/curl${curl_options} --silent --fail "$r_packages_archive_url" > "$r_packages_archive_pathfile"; then
 				/bin/tar --extract --gzip --no-same-owner --file="$r_packages_archive_pathfile" --directory="$r_cache_path"
 			fi
+
+			InitQPKGsTiers
 		fi
 	fi
 
