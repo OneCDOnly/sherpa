@@ -1,11 +1,5 @@
 Observed issues:
 
-	* 'sherpa list installable' does not show QDK as installable, even though it is.
-		--------------------------------------------------------------------------------------------------
-		[/share/Public] # sherpa list installable
-		derp: unable to find any matching QPKGs.
-		--------------------------------------------------------------------------------------------------
-
 	* Service-script daemon PID shown twice consecutively during 'clean' action:
 		--------------------------------------------------------------------------------------------------
 		[/share/Public] # /etc/init.d/sabnzbd.sh clean
