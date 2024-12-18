@@ -5363,6 +5363,7 @@ GenerateDepsReportTitleLine()
 	#	$r_report_qpkg_min_os_version_column_width
 	#	$r_report_qpkg_min_ram_column_width
 	#	$r_report_qpkg_name_column_width
+	#	$r_report_qpkg_opt_dependencies_column_width
 
 	if IsOsSupportAutowidthTableColumns; then
 		printf 'QPKG name:|Dependencies:|Optionals:|Installed?|Enabled?|Managed?|Min. RAM:|Min. OS:|Max. OS:|Supported arch?|Installed QPKG author:'
