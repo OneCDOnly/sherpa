@@ -1,18 +1,5 @@
 Observed issues:
 
-	* 'sherpa list installable' does not show QDK (or ClamAV) as installable, but only when OS state is stable:
-		--------------------------------------------------------------------------------------------------
-		[/share/Public] # sherpa list installable
-		derp: unable to find any matching QPKGs.
-		--------------------------------------------------------------------------------------------------
-		- During QTS startup, QDK and ClamAV are correctly shown as installable:
-		--------------------------------------------------------------------------------------------------
-		[/share/Public] # sherpa list installable
-		note: QTS is starting all enabled QPKGs ... check again in a few minutes.
-		ClamAV
-		QDK
-		--------------------------------------------------------------------------------------------------
-
 	* Service-script daemon PID shown twice consecutively during 'clean' action:
 		--------------------------------------------------------------------------------------------------
 		[/share/Public] # /etc/init.d/sabnzbd.sh clean

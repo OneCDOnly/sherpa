@@ -12288,16 +12288,18 @@ IsQpkgInstallable()
 
 	# Can this QPKG be installed?
 
+	# Inputs: (local)
+	#   $1 (optional) = QPKG name.
+
 	# Inputs: (global)
-	#   $qpkg_default_index
-	#   $qpkg_index
+	#   $qpkg_name (default)
 
 	# Outputs: (local)
 	#   $? = true/false
 
-	[[ $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
 
-	IsNtQpkgReallyInstalled && IsQpkgDatabaseArchOK && IsQpkgDatabaseMinOSVerOk && IsQpkgDatabaseMaxOSVerOk && IsQpkgDatabaseMinRAMOk
+	IsNtQpkgReallyInstalled "$a" && IsQpkgDatabaseArchOK "$a" && IsQpkgDatabaseMinOSVerOk "$a" && IsQpkgDatabaseMaxOSVerOk "$a" && IsQpkgDatabaseMinRAMOk "$a"
 
 	}
 
