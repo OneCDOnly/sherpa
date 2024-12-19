@@ -7528,8 +7528,15 @@ BuildQPKGsStates()
 	LoadPackages
 	InitQPKGsStates
 
-	IsOsStartingPackages && ShowAsNote "$(GetOsName) is starting QPKGs $r_chars_ellipsis check again in a few minutes"
-	IsOsStoppingPackages && ShowAsNote "$(GetOsName) is shutting-down and all QPKGs are stopping"
+	if IsOsStarting; then
+		ShowAsNote "$(GetOsName) is booting $r_chars_ellipsis check again in a few minutes"
+	elif IsOsStartingPackages; then
+		ShowAsNote "$(GetOsName) is starting QPKGs $r_chars_ellipsis check again in a few minutes"
+	elif IsOsStopping; then
+		ShowAsNote "$(GetOsName) is shutting-down"
+	elif IsOsStoppingPackages; then
+		ShowAsNote "$(GetOsName) is stopping QPKGs"
+	fi
 
 	if IsOsLoadAverageInsane; then
 		ShowAsWarn 'the NAS has an exceptionally-high system-load, recommend aborting and trying again later'
@@ -9214,8 +9221,12 @@ GetUserSudoUID()
 GetOsState()
 	{
 
-	if IsOsStartingPackages; then
+	if IsOsStarting; then
+		printf 'booting'
+	elif IsOsStartingPackages; then
 		printf 'starting QPKGs'
+	elif IsOsStopping; then
+		printf 'shutting-down'
 	elif IsOsStoppingPackages; then
 		printf 'stopping QPKGs'
 	else
@@ -9392,13 +9403,27 @@ IsOsAllowUnofficialPackages()
 
 	}
 
+IsOsStarting()
+	{
+
+	/bin/ps | /bin/grep '/bin/sh /etc/init.d/rcS' | /bin/grep -v grep
+
+	} &> /dev/null
+
+IsOsStopping()
+	{
+
+	/bin/ps | /bin/grep '/bin/sh /etc/init.d/rcK' | /bin/grep -v grep
+
+	} &> /dev/null
+
 IsOsStartingPackages()
 	{
 
 	if IsOsSupportAsyncQpkgActions; then
 		/bin/ps | /bin/grep '/usr/local/sbin/qpkg_service start' | /bin/grep -v grep
 	else
-		/bin/ps | /bin/grep '/bin/sh /etc/init.d/rcS' | /bin/grep -v grep
+		IsOsStarting
 	fi
 
 	} &> /dev/null
@@ -9406,7 +9431,11 @@ IsOsStartingPackages()
 IsOsStoppingPackages()
 	{
 
-	/bin/ps | /bin/grep '/bin/sh /etc/init.d/rcK' | /bin/grep -v grep
+	if IsOsSupportAsyncQpkgActions; then
+		/bin/ps | /bin/grep '/usr/local/sbin/qpkg_service stop' | /bin/grep -v grep
+	else
+		IsOsStopping
+	fi
 
 	} &> /dev/null
 
