@@ -1339,7 +1339,7 @@ QPKGsAssignToActions()
 	QPKGs-ACuninstall-to:Remove sherpa
 
 	if QPKGs-ACsign-to.IsAny || QPKGs-ACinstall-to.IsAny; then
-		LoadQpkgSigning
+		LoadQpkgSigningCertDetails
 	fi
 
 	[[ $useropt_debug = true ]] && ListQPKGsActionsAll				#devdebug
@@ -9129,7 +9129,7 @@ GetOsFirmwareDate()
 GetOsName()
 	{
 
-	if /bin/grep -q zfs /proc/filesystems; then
+	if IsOsQuTS; then
 		printf 'QuTS hero'
 	else
 		printf QTS
@@ -9262,7 +9262,14 @@ IsOsQNAP()
 
 	[[ -e /etc/init.d/functions ]]
 
-	}
+	} &> /dev/null
+
+IsOsQuTS()
+	{
+
+    /bin/grep -q zfs /proc/filesystems
+
+	} &> /dev/null
 
 IsOsSupported()
 	{
@@ -9274,7 +9281,7 @@ IsOsSupported()
 
 	[[ ${r_nas_firmware_version//.} -ge 400 ]]
 
-	}
+	} &> /dev/null
 
 IsOsSupportAsyncQpkgActions()
 	{
@@ -9284,7 +9291,7 @@ IsOsSupportAsyncQpkgActions()
 
 	[[ ${r_nas_firmware_version//.} -ge 520 ]]
 
-	}
+	} &> /dev/null
 
 IsOsSupportSecureDownload()
 	{
@@ -9303,7 +9310,7 @@ IsOsSupportSecureDownload()
 
 	[[ ${r_nas_firmware_version//.} -ge 500 ]]
 
-	}
+	} &> /dev/null
 
 IsOsSupportQpkgTimeout()
 	{
@@ -9313,7 +9320,7 @@ IsOsSupportQpkgTimeout()
 
 	[[ ${r_nas_firmware_version//.} -ge 430 ]]
 
-	}
+	} &> /dev/null
 
 IsOsSupportSignedPackages()
 	{
@@ -9325,7 +9332,7 @@ IsOsSupportSignedPackages()
 
 	[[ ${r_nas_firmware_version//.} -ge 440 ]]
 
-	}
+	} &> /dev/null
 
 IsOsCompatibleWithSigned()
 	{
@@ -9337,7 +9344,7 @@ IsOsCompatibleWithSigned()
 
 	[[ $r_nas_firmware_date -lt 20201015 || $r_nas_firmware_date -gt 20201020 ]]
 
-	}
+	} &> /dev/null
 
 IsOsSupportUnofficialPackages()
 	{
@@ -9349,14 +9356,14 @@ IsOsSupportUnofficialPackages()
 
 	[[ ${r_nas_firmware_version//.} -gt 426 && ${r_nas_firmware_version//.} -le 436 ]]
 
-	}
+	} &> /dev/null
 
 IsOsSupportSudo()
 	{
 
 	[[ -e /usr/bin/sudo ]]
 
-	}
+	} &> /dev/null
 
 IsOsSupportSedExtRegex()
 	{
@@ -12905,7 +12912,7 @@ RemovePidFile()
 
 	}
 
-LoadQpkgSigning()
+LoadQpkgSigningCertDetails()
 	{
 
 	# Outputs: (global)
