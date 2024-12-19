@@ -7527,8 +7527,8 @@ BuildQPKGsStates()
 	LoadPackages
 	InitQPKGsStates
 
-	IsOsStartingPackages && ShowAsNote "$(GetOsName) is starting all enabled QPKGs $r_chars_ellipsis check again in a few minutes"
-	IsOsStoppingPackages && ShowAsNote "$(GetOsName) is shutting-down and all QPKGs are stopping"
+	IsOsStartingPackages && ShowAsNote "$(GetOsName) is starting QPKGs $r_chars_ellipsis check again in a few minutes"
+	IsOsStoppingPackages && ShowAsNote "$(GetOsName) is stopping QPKGs"
 
 	if IsOsLoadAverageInsane; then
 		ShowAsWarn 'the NAS has an exceptionally-high system-load, recommend aborting and trying again later'
@@ -9265,6 +9265,16 @@ IsOsSupported()
 
 	}
 
+IsOsSupportAsyncQpkgActions()
+	{
+
+	# Inputs: (global)
+	#	$r_nas_firmware_version
+
+	[[ ${r_nas_firmware_version//.} -ge 520 ]]
+
+	}
+
 IsOsSupportSecureDownload()
 	{
 
@@ -9384,14 +9394,22 @@ IsOsAllowUnofficialPackages()
 IsOsStartingPackages()
 	{
 
-	/bin/ps | /bin/grep '/bin/sh /etc/init.d/rcS' | /bin/grep -v grep
+	if IsOsSupportAsyncQpkgActions; then
+		/bin/ps | /bin/grep '/usr/local/sbin/qpkg_service start' | /bin/grep -v grep
+	else
+		/bin/ps | /bin/grep '/bin/sh /etc/init.d/rcS' | /bin/grep -v grep
+	fi
 
 	} &> /dev/null
 
 IsOsStoppingPackages()
 	{
 
-	/bin/ps | /bin/grep '/bin/sh /etc/init.d/rcK' | /bin/grep -v grep
+	if IsOsSupportAsyncQpkgActions; then
+		/bin/ps | /bin/grep '/usr/local/sbin/qpkg_service stop' | /bin/grep -v grep
+	else
+		/bin/ps | /bin/grep '/bin/sh /etc/init.d/rcK' | /bin/grep -v grep
+	fi
 
 	} &> /dev/null
 
