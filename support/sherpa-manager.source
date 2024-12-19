@@ -258,7 +258,6 @@ LoadConsts()
 	readonly r_chars_blank='  '
 	readonly r_chars_bullet='• '
 	readonly r_chars_dropend='└─ '
-	readonly r_chars_ellipsis='...'
 	readonly r_chars_normal='- '
 	readonly r_chars_note='* '
 	readonly r_chars_regular_prompt='$ '
@@ -7529,9 +7528,9 @@ BuildQPKGsStates()
 	InitQPKGsStates
 
 	if IsOsStarting; then
-		ShowAsNote "$(GetOsName) is booting $r_chars_ellipsis check again in a few minutes"
+		ShowAsNote "$(GetOsName) is booting ... check again in a few minutes"
 	elif IsOsStartingPackages; then
-		ShowAsNote "$(GetOsName) is starting QPKGs $r_chars_ellipsis check again in a few minutes"
+		ShowAsNote "$(GetOsName) is starting QPKGs ... check again in a few minutes"
 	elif IsOsStopping; then
 		ShowAsNote "$(GetOsName) is shutting-down"
 	elif IsOsStoppingPackages; then
@@ -14296,7 +14295,6 @@ ShowAsProc()
 	#	$2 = trailing task (after the ellipsis) (optional). If specified, $useropt_terse will be ignored.
 
 	# Inputs: (global)
-	#	$r_chars_ellipsis
 	#	$r_inhibit_display_pathfile
 	#	$useropt_terse
 	#	$useropt_verbose
@@ -14306,7 +14304,7 @@ ShowAsProc()
 	local a=$1
 	local b=''
 	[[ -n ${2:-} ]] && b=$2
-	local c="$a $r_chars_ellipsis $b"
+	local c="$a ... $b"
 
 	if [[ -n ${r_inhibit_display_pathfile:-} && ! -e $r_inhibit_display_pathfile ]]; then
 		if [[ ${useropt_verbose:=false} = false && ${useropt_terse:=true} = true ]] || [[ ${useropt_verbose:=false} = false && -n ${2:-} ]]; then
