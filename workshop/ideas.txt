@@ -1,12 +1,4 @@
-* Upgrade integrated signing cert details?
-	> License Center 1.9.43: cert expires 17th March 2025.
-	- Malware Remover 6.6.3: cert expires 27th November 2025.
-	- SMB Service 4.15.002: cert expires 30th August 2026.
-	- File Station 5.5.6.4715: cert expires 7th May 2027.
-	- Security Center 3.0.3.3481: cert expires 8th October 2027.
-	- Download Station 5.9.0.272: cert expires 11th October 2027.
-
-* Include option to display alternating line highlighting on reports?
+ Include option to display alternating line highlighting on reports?
 	- $alternating_report_lines
 
 * Include QPKG signing method via default QTS Python and modules.
