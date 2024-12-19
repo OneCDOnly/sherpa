@@ -5800,7 +5800,7 @@ _GenerateFeaturesReportDataLine_()
 
 			for a in "${column_vars[@]}"; do
 				case ${!a} in
-					true)
+					true|N/A)
 						local ${a}_msg="$(GenerateReportField "${!a}")"
 						;;
 					*)
