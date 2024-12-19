@@ -1,3 +1,8 @@
+* Upgrade integrated signing cert details?
+	> License Center cert expires 17th March 2025.
+	- SMB Service cert expires 30th August 2026.
+	- File Station 5 cert expires 7th May 2027.
+
 * Include option to display alternating line highlighting on reports?
 	- $alternating_report_lines
 
