@@ -1,7 +1,13 @@
 * Upgrade integrated signing cert details?
-	> License Center cert expires 17th March 2025.
-	- SMB Service cert expires 30th August 2026.
-	- File Station 5 cert expires 7th May 2027.
+	> License Center : cert expires 17th March 2025.
+	- SMB Service 4.15.002: cert expires 30th August 2026.
+	- File Station 5 : cert expires 7th May 2027.
+
+	- Must check these too:
+		- Download Station 5.8.6.285:
+		- Firefox 96.0.3:
+		- Hyper Data Protector 2.2.0.284:
+		- Security Center 3.0.3.3481:
 
 * Include option to display alternating line highlighting on reports?
 	- $alternating_report_lines
