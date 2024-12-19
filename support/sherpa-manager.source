@@ -7528,7 +7528,7 @@ BuildQPKGsStates()
 	InitQPKGsStates
 
 	IsOsStartingPackages && ShowAsNote "$(GetOsName) is starting QPKGs $r_chars_ellipsis check again in a few minutes"
-	IsOsStoppingPackages && ShowAsNote "$(GetOsName) is stopping QPKGs"
+	IsOsStoppingPackages && ShowAsNote "$(GetOsName) is shutting-down and all QPKGs are stopping"
 
 	if IsOsLoadAverageInsane; then
 		ShowAsWarn 'the NAS has an exceptionally-high system-load, recommend aborting and trying again later'
@@ -9405,11 +9405,7 @@ IsOsStartingPackages()
 IsOsStoppingPackages()
 	{
 
-	if IsOsSupportAsyncQpkgActions; then
-		/bin/ps | /bin/grep '/usr/local/sbin/qpkg_service stop' | /bin/grep -v grep
-	else
-		/bin/ps | /bin/grep '/bin/sh /etc/init.d/rcK' | /bin/grep -v grep
-	fi
+	/bin/ps | /bin/grep '/bin/sh /etc/init.d/rcK' | /bin/grep -v grep
 
 	} &> /dev/null
 
