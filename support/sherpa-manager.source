@@ -5508,6 +5508,7 @@ _GenerateDepsReportDataLine_()
 				max_os_msg=$(GenerateReportField "$max_os" mute)
 			else
 				max_os_msg=$(GenerateReportField "$max_os" attention)
+				req_attention=true
 			fi
 
 			if IsQpkgDatabaseMinOSVerOk "$qpkg_name"; then

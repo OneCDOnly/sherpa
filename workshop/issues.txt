@@ -1,7 +1,5 @@
 Observed issues:
 
-	* deps report: QPKG name not highlighted when not installed and max OS is incompatible.
-
 	* Service-script daemon PID shown twice consecutively during 'clean' action:
 		--------------------------------------------------------------------------------------------------
 		[/share/Public] # /etc/init.d/sabnzbd.sh clean
