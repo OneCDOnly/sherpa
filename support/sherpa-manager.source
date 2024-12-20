@@ -5090,7 +5090,7 @@ _GenerateStatusReportDataLine_()
 
 	if QPKGs-ISupgradable.Exist "$qpkg_name"; then
 		ver_msg+=' '$(Parenthesise "$(TextBrightOrange "$(GetQpkgDbVer)")")
-		/bin/touch "$r_report_flags_path"/status-upgradable
+		/bin/touch "$r_report_flags_path"/state-upgradable
 	fi
 
 	if [[ $req_alert = true ]]; then
@@ -7598,6 +7598,8 @@ BuildQPKGsStates()
 	# TODO: checking 'upgradable' status is slow (due to the number of checks that must be performed). Consider only running this during `check` or `upgrade` actions.
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
+# 		SetQpkgIndex			# TODO: alter upgradable checks to use qpkg index instead of name.
+
 		if IsQpkgUpgradable; then
 			echo upgradable
 		else
@@ -8409,8 +8411,9 @@ GenerateReportFooter()
 			DisplayAsIndentQuotedInfoItem "$(TextBrightRed '!')" "QPKG backup file was updated more-than $r_report_highlight_backups_older_than."
 		fi
 
-		if [[ -e "$r_report_flags_path"/status-upgradable ]]; then
-			DisplayAsIndentQuotedInfoItem "($(TextBrightOrange new))" 'an upgraded QPKG version is available'
+		if [[ -e "$r_report_flags_path"/state-upgradable ]]; then
+			DisplayAsIndentQuotedInfoItem "$(TextBrightOrange upgradable)" 'a new QPKG version is available'
+			DisplayAsIndentQuotedInfoItem "($(TextBrightOrange new))" 'the new QPKG version'
 		fi
 
 		if [[ -e "$r_report_flags_path"/status-wrongauthor ]]; then
