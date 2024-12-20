@@ -7527,11 +7527,21 @@ BuildQPKGsStates()
 	LoadPackages
 	InitQPKGsStates
 
-	if IsOsStarting; then
-		ShowAsNote "$(GetOsName) is booting ... check again in a few minutes"
-	elif IsOsStartingPackages; then
-		ShowAsNote "$(GetOsName) is starting QPKGs ... check again in a few minutes"
-	elif IsOsStopping; then
+	if IsOsSupportAsyncQpkgActions; then
+		if IsOsStarting; then
+			ShowAsNote "$(GetOsName) is still booting ... check again in a few minutes"
+		elif IsOsStartingPackages; then
+			ShowAsNote "$(GetOsName) is starting QPKGs ... check again in a few minutes"
+		fi
+	else		# Must check older QTS (< 5.2.0) differently as it remains in boot mode while launching QPKGs.
+		if IsOsStartingPackages; then
+			ShowAsNote "$(GetOsName) is starting QPKGs ... check again in a few minutes"
+		elif IsOsStarting; then
+			ShowAsNote "$(GetOsName) is still booting ... check again in a few minutes"
+		fi
+	fi
+
+	if IsOsStopping; then
 		ShowAsNote "$(GetOsName) is shutting-down"
 	elif IsOsStoppingPackages; then
 		ShowAsNote "$(GetOsName) is stopping QPKGs"
@@ -9129,7 +9139,7 @@ GetOsFirmwareDate()
 GetOsName()
 	{
 
-	if IsOsQuTS; then
+	if IsQuTS; then
 		printf 'QuTS hero'
 	else
 		printf QTS
@@ -9264,10 +9274,17 @@ IsOsQNAP()
 
 	} &> /dev/null
 
-IsOsQuTS()
+IsQuTS()
 	{
 
     /bin/grep -q zfs /proc/filesystems
+
+	} &> /dev/null
+
+IsQTS()
+	{
+
+    ! IsQuTS
 
 	} &> /dev/null
 
