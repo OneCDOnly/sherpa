@@ -1,18 +1,3 @@
-* Update firmware version in DebugLogEnv()
-	-------------------------------------------------------------------------------------------------------------------------
-	if [[ ${r_nas_firmware_version//.} -lt 400 || ${r_nas_firmware_version//.} -gt 518 ]]; then
-	-------------------------------------------------------------------------------------------------------------------------
-	- This should be:
-	-------------------------------------------------------------------------------------------------------------------------
-	if [[ ${r_nas_firmware_version//.} -lt 400 || ${r_nas_firmware_version//.} -ge 520 ]]; then
-	-------------------------------------------------------------------------------------------------------------------------
-
-* Update firmware version in IsOsCanSignedPackages()
-	- This should be '-ge 437'
-
-* Update firmware version in IsOsCanSecureDownload()
-	- This should be '-ge 455'
-
 * Include option to display alternating line highlighting on reports?
 	- $alternating_report_lines
 

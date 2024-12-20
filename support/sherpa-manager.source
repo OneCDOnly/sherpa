@@ -894,7 +894,7 @@ DebugLogEnv()
 	if IsQpkgReallyInstalled SortMyQPKGs; then
 		DebugQpkg detect "$(ShowAsPackageName SortMyQPKGs)" installed
 	else
-		if [[ ${r_nas_firmware_version//.} -lt 400 || ${r_nas_firmware_version//.} -gt 518 ]]; then
+		if [[ ${r_nas_firmware_version//.} -lt 400 || ${r_nas_firmware_version//.} -ge 520 ]]; then
 			DebugQpkg detect "$(ShowAsPackageName SortMyQPKGs)" 'not installed'
 		else
 			DebugQpkg warning "$(ShowAsPackageName SortMyQPKGs)" 'not installed'
@@ -9371,7 +9371,7 @@ IsOsCanSecureDownload()
 	# Inputs: (global)
 	#	$r_nas_firmware_version
 
-	[[ ${r_nas_firmware_version//.} -ge 500 ]]
+	[[ ${r_nas_firmware_version//.} -ge 455 ]]
 
 	} &> /dev/null
 
@@ -9393,7 +9393,7 @@ IsOsCanSignedPackages()
 
 # 	[[ ${r_nas_firmware_version//.} -ge 435 ]]	# NOTE: signing failed on QTS 4.3.6 (x31). No cert database. So, let's go one-version-higher:
 
-	[[ ${r_nas_firmware_version//.} -ge 440 ]]
+	[[ ${r_nas_firmware_version//.} -ge 437 ]]
 
 	} &> /dev/null
 
