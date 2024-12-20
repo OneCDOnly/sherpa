@@ -5627,7 +5627,7 @@ _GenerateDepsReportDataLine_()
 		/bin/touch "$r_report_flags_path"/req-alert
 		name_msg=$(GenerateReportField "$name" alert)
 	elif [[ $req_attention = true ]]; then
-		/bin/touch "$r_report_flags_path"/status-notinstallable
+		/bin/touch "$r_report_flags_path"/state-notinstallable
 		name_msg=$(GenerateReportField "$name" attention)
 	elif [[ $req_notice = true ]]; then
 		/bin/touch "$r_report_flags_path"/req-notice
@@ -8421,7 +8421,7 @@ GenerateReportFooter()
 			DisplayAsIndentQuotedInfoItem "$(TextBrightOrange '*')" "QPKG cannot be managed with $(ShowAsTitleName)"
 		fi
 
-		if [[ -e "$r_report_flags_path"/status-notinstallable ]]; then
+		if [[ -e "$r_report_flags_path"/state-notinstallable ]]; then
 			DisplayAsIndentQuotedInfoItem "$(TextBrightOrange '*')" 'QPKG cannot be installed'
 		fi
 
