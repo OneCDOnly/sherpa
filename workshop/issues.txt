@@ -19,8 +19,6 @@ Observed issues:
 			- active git branch: 'master'
 			--------------------------------------------------------------------------------------------------
 
-	* Will need a new method to detect if QTS 5.2.0 is starting/stopping QPKGs due to async starts/stops.
-
 	* Near the end of installing IPKs, monitored download path can remain at non-zero size while packages complete installation.
 		- Include a separate progress message when dir size stops increasing and shrinks instead?
 		- Maybe force increase to "100%" and stop monitoring?

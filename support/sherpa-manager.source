@@ -258,7 +258,6 @@ LoadConsts()
 	readonly r_chars_blank='  '
 	readonly r_chars_bullet='• '
 	readonly r_chars_dropend='└─ '
-	readonly r_chars_ellipsis='...'
 	readonly r_chars_normal='- '
 	readonly r_chars_note='* '
 	readonly r_chars_regular_prompt='$ '
@@ -1340,7 +1339,7 @@ QPKGsAssignToActions()
 	QPKGs-ACuninstall-to:Remove sherpa
 
 	if QPKGs-ACsign-to.IsAny || QPKGs-ACinstall-to.IsAny; then
-		LoadQpkgSigning
+		LoadQpkgSigningCertDetails
 	fi
 
 	[[ $useropt_debug = true ]] && ListQPKGsActionsAll				#devdebug
@@ -5363,6 +5362,7 @@ GenerateDepsReportTitleLine()
 	#	$r_report_qpkg_min_os_version_column_width
 	#	$r_report_qpkg_min_ram_column_width
 	#	$r_report_qpkg_name_column_width
+	#	$r_report_qpkg_opt_dependencies_column_width
 
 	if IsOsSupportAutowidthTableColumns; then
 		printf 'QPKG name:|Dependencies:|Optionals:|Installed?|Enabled?|Managed?|Min. RAM:|Min. OS:|Max. OS:|Supported arch?|Installed QPKG author:'
@@ -5507,6 +5507,7 @@ _GenerateDepsReportDataLine_()
 				max_os_msg=$(GenerateReportField "$max_os" mute)
 			else
 				max_os_msg=$(GenerateReportField "$max_os" attention)
+				req_attention=true
 			fi
 
 			if IsQpkgDatabaseMinOSVerOk "$qpkg_name"; then
@@ -5799,7 +5800,7 @@ _GenerateFeaturesReportDataLine_()
 
 			for a in "${column_vars[@]}"; do
 				case ${!a} in
-					true)
+					true|N/A)
 						local ${a}_msg="$(GenerateReportField "${!a}")"
 						;;
 					*)
@@ -7526,8 +7527,25 @@ BuildQPKGsStates()
 	LoadPackages
 	InitQPKGsStates
 
-	IsOsStartingPackages && ShowAsNote "$(GetOsName) is starting all enabled QPKGs $r_chars_ellipsis check again in a few minutes"
-	IsOsStoppingPackages && ShowAsNote "$(GetOsName) is shutting-down and all QPKGs are stopping"
+	if IsOsSupportAsyncQpkgActions; then
+		if IsOsStarting; then
+			ShowAsNote "$(GetOsName) is still booting ... check again in a few minutes"
+		elif IsOsStartingPackages; then
+			ShowAsNote "$(GetOsName) is starting QPKGs ... check again in a few minutes"
+		fi
+	else		# Must check older QTS (< 5.2.0) differently as it remains in boot mode while launching QPKGs.
+		if IsOsStartingPackages; then
+			ShowAsNote "$(GetOsName) is starting QPKGs ... check again in a few minutes"
+		elif IsOsStarting; then
+			ShowAsNote "$(GetOsName) is still booting ... check again in a few minutes"
+		fi
+	fi
+
+	if IsOsStopping; then
+		ShowAsNote "$(GetOsName) is shutting-down"
+	elif IsOsStoppingPackages; then
+		ShowAsNote "$(GetOsName) is stopping QPKGs"
+	fi
 
 	if IsOsLoadAverageInsane; then
 		ShowAsWarn 'the NAS has an exceptionally-high system-load, recommend aborting and trying again later'
@@ -9121,7 +9139,7 @@ GetOsFirmwareDate()
 GetOsName()
 	{
 
-	if /bin/grep -q zfs /proc/filesystems; then
+	if IsQuTS; then
 		printf 'QuTS hero'
 	else
 		printf QTS
@@ -9212,8 +9230,12 @@ GetUserSudoUID()
 GetOsState()
 	{
 
-	if IsOsStartingPackages; then
+	if IsOsStarting; then
+		printf 'booting'
+	elif IsOsStartingPackages; then
 		printf 'starting QPKGs'
+	elif IsOsStopping; then
+		printf 'shutting-down'
 	elif IsOsStoppingPackages; then
 		printf 'stopping QPKGs'
 	else
@@ -9250,7 +9272,21 @@ IsOsQNAP()
 
 	[[ -e /etc/init.d/functions ]]
 
-	}
+	} &> /dev/null
+
+IsQuTS()
+	{
+
+    /bin/grep -q zfs /proc/filesystems
+
+	} &> /dev/null
+
+IsQTS()
+	{
+
+    ! IsQuTS
+
+	} &> /dev/null
 
 IsOsSupported()
 	{
@@ -9262,7 +9298,17 @@ IsOsSupported()
 
 	[[ ${r_nas_firmware_version//.} -ge 400 ]]
 
-	}
+	} &> /dev/null
+
+IsOsSupportAsyncQpkgActions()
+	{
+
+	# Inputs: (global)
+	#	$r_nas_firmware_version
+
+	[[ ${r_nas_firmware_version//.} -ge 520 ]]
+
+	} &> /dev/null
 
 IsOsSupportSecureDownload()
 	{
@@ -9281,7 +9327,7 @@ IsOsSupportSecureDownload()
 
 	[[ ${r_nas_firmware_version//.} -ge 500 ]]
 
-	}
+	} &> /dev/null
 
 IsOsSupportQpkgTimeout()
 	{
@@ -9291,7 +9337,7 @@ IsOsSupportQpkgTimeout()
 
 	[[ ${r_nas_firmware_version//.} -ge 430 ]]
 
-	}
+	} &> /dev/null
 
 IsOsSupportSignedPackages()
 	{
@@ -9303,7 +9349,7 @@ IsOsSupportSignedPackages()
 
 	[[ ${r_nas_firmware_version//.} -ge 440 ]]
 
-	}
+	} &> /dev/null
 
 IsOsCompatibleWithSigned()
 	{
@@ -9315,7 +9361,7 @@ IsOsCompatibleWithSigned()
 
 	[[ $r_nas_firmware_date -lt 20201015 || $r_nas_firmware_date -gt 20201020 ]]
 
-	}
+	} &> /dev/null
 
 IsOsSupportUnofficialPackages()
 	{
@@ -9327,14 +9373,14 @@ IsOsSupportUnofficialPackages()
 
 	[[ ${r_nas_firmware_version//.} -gt 426 && ${r_nas_firmware_version//.} -le 436 ]]
 
-	}
+	} &> /dev/null
 
 IsOsSupportSudo()
 	{
 
 	[[ -e /usr/bin/sudo ]]
 
-	}
+	} &> /dev/null
 
 IsOsSupportSedExtRegex()
 	{
@@ -9380,17 +9426,39 @@ IsOsAllowUnofficialPackages()
 
 	}
 
-IsOsStartingPackages()
+IsOsStarting()
 	{
 
 	/bin/ps | /bin/grep '/bin/sh /etc/init.d/rcS' | /bin/grep -v grep
 
 	} &> /dev/null
 
-IsOsStoppingPackages()
+IsOsStopping()
 	{
 
 	/bin/ps | /bin/grep '/bin/sh /etc/init.d/rcK' | /bin/grep -v grep
+
+	} &> /dev/null
+
+IsOsStartingPackages()
+	{
+
+	if IsOsSupportAsyncQpkgActions; then
+		/bin/ps | /bin/grep '/usr/local/sbin/qpkg_service start' | /bin/grep -v grep
+	else
+		IsOsStarting
+	fi
+
+	} &> /dev/null
+
+IsOsStoppingPackages()
+	{
+
+	if IsOsSupportAsyncQpkgActions; then
+		/bin/ps | /bin/grep '/usr/local/sbin/qpkg_service stop' | /bin/grep -v grep
+	else
+		IsOsStopping
+	fi
 
 	} &> /dev/null
 
@@ -12288,16 +12356,18 @@ IsQpkgInstallable()
 
 	# Can this QPKG be installed?
 
+	# Inputs: (local)
+	#   $1 (optional) = QPKG name.
+
 	# Inputs: (global)
-	#   $qpkg_default_index
-	#   $qpkg_index
+	#   $qpkg_name (default)
 
 	# Outputs: (local)
 	#   $? = true/false
 
-	[[ $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
 
-	IsNtQpkgReallyInstalled && IsQpkgDatabaseArchOK && IsQpkgDatabaseMinOSVerOk && IsQpkgDatabaseMaxOSVerOk && IsQpkgDatabaseMinRAMOk
+	IsNtQpkgReallyInstalled "$a" && IsQpkgDatabaseArchOK "$a" && IsQpkgDatabaseMinOSVerOk "$a" && IsQpkgDatabaseMaxOSVerOk "$a" && IsQpkgDatabaseMinRAMOk "$a"
 
 	}
 
@@ -12859,7 +12929,7 @@ RemovePidFile()
 
 	}
 
-LoadQpkgSigning()
+LoadQpkgSigningCertDetails()
 	{
 
 	# Outputs: (global)
@@ -12869,34 +12939,38 @@ LoadQpkgSigning()
 	r_qpkg_certificate=''
 	r_qpkg_signature=''
 
-	# This certificate block is the same used by QNAP for LicenseCenter.
+	# This certificate block is the same used by QNAP for Download Station 5.9.0.272
+	# Expires 11th October 2027.
+
 	read -r -d '' r_qpkg_certificate << EOB
 -----BEGIN CERTIFICATE-----
-MIIDwzCCAqugAwIBAgIFALhDVuwwDQYJKoZIhvcNAQELBQAwgYAxCzAJBgNVBAYT
-AlRXMQ8wDQYDVQQIDAZUYWl3YW4xDzANBgNVBAcMBlRhaXBlaTENMAsGA1UECgwE
-UU5BUDEMMAoGA1UECwwDTkFTMRAwDgYDVQQDDAdRTkFQX0NBMSAwHgYJKoZIhvcN
-AQkBFhFzZWN1cml0eUBxbmFwLmNvbTAeFw0yMjAzMTgwNzM5MTRaFw0yNTAzMTcw
-NzM5MTRaMIGGMQswCQYDVQQGEwJUVzEPMA0GA1UECAwGVGFpd2FuMQ8wDQYDVQQH
-DAZUYWlwZWkxDTALBgNVBAoMBFFOQVAxDDAKBgNVBAsMA05BUzEWMBQGA1UEAwwN
-TGljZW5zZUNlbnRlcjEgMB4GCSqGSIb3DQEJARYRc2VjdXJpdHlAcW5hcC5jb20w
-ggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC/bAgbZryVvBXfpBHNUKQV
-sAkAfvDXjKnxa7lKHrRIcFcOnf+voUZcP1Ly9qWb782gB2eUHsUS1Xqj4CF/dUJf
-FEnOBrQUo9+Q9B3x4oTRpMdky7acP4dxAbt4T92swgaReQXAewy9s9//a52HIBca
-1dAA4JPwplqiZ/oh18GDCKxh84Iu9Gcu2J5e+VXEI/KUxCwKUd22aDTpv128MSoq
-dYexCerCJtQbgM3cwkkMiDnFpjrsta5iFpyrNKdLoBJ7YbY3d5Onkqy4DjE8hwR7
-0j7Qd+3xbMqv3FOCKeLLLn6N03IXHKP/big/MdXKY1dJQVA3/ks/knPH8mhcOM0d
-AgMBAAGjPDA6MDgGA1UdHwQxMC8wLaAroCmGJ2h0dHA6Ly9kb3dubG9hZC5xbmFw
-LmNvbS9jcmwvcXRzX3YxLmNybDANBgkqhkiG9w0BAQsFAAOCAQEAWlT1GDH6v8G3
-laIAs2/RdxhPgtKX4aL+fnTEFNF5V2yH0G4luyq5tHQw+VCHtDM6Z3GXWhciKPAR
-upbRcHq744JCFaUb6i8z1w1KVJDaQ38EVE5+JtpoPMrrnb+hKB/gGmi4PoMSpnvX
-VCxLbCbBnwi19o6t/MnPbz0shvUB2NDngnal6lYQFw/F8Sr6cSjV6GAY4TOZotdu
-+gunwqQtYUycEVfNyiWVk/flgED8R8oxTPl9ZoDGen+OgjkZrvgynKnqPLHyxZSd
-hYSoWyWcZWkMCQ+69kOgJVvrRa7z9F9y30uAHXIUrsLV2d/dImVjApMHbZ60iALG
-AVIlas0e4g==
+MIIDxDCCAqygAwIBAgIEFQDq5zANBgkqhkiG9w0BAQsFADCBgDELMAkGA1UEBhMC
+VFcxDzANBgNVBAgMBlRhaXdhbjEPMA0GA1UEBwwGVGFpcGVpMQ0wCwYDVQQKDARR
+TkFQMQwwCgYDVQQLDANOQVMxEDAOBgNVBAMMB1FOQVBfQ0ExIDAeBgkqhkiG9w0B
+CQEWEXNlY3VyaXR5QHFuYXAuY29tMB4XDTI0MTAxMTA0MTgzOFoXDTI3MTAxMTA0
+MTgzOFowgYgxCzAJBgNVBAYTAlRXMQ8wDQYDVQQIDAZUYWl3YW4xDzANBgNVBAcM
+BlRhaXBlaTENMAsGA1UECgwEUU5BUDEMMAoGA1UECwwDTkFTMRgwFgYDVQQDDA9E
+b3dubG9hZFN0YXRpb24xIDAeBgkqhkiG9w0BCQEWEXNlY3VyaXR5QHFuYXAuY29t
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA/Qkj1D64xGrzhK5bAI18
+CBCCd8fC4xYKbjn6wtUEFprZqhazDAlL+FOH/VdwolqnXnhleJY6/GujMTqc0cjr
+cZNNZi+vYH4HKQEZP9jCRrIe1xEqDPSnyn7/cT6VpWoFxFy6Bi44Rp8Y92SUDXac
+rpGFzwhxxKJ8y+7XxcCfkNdbP6cgZBDcToxKPL41ffhja58oNmWiy9+d7N7dGQiE
+tm5vWlRDLwz91vjYRqTgdUZh+41esh+KQP+NwXXufc4wcgYBpqJ9/qisuSrjG2hm
+h1GlX3rFDw6UIwAKwJIzFB5fqZ1ry4D21BenNzdyX/a76a9oePqZsaCVPlct7emg
+lwIDAQABozwwOjA4BgNVHR8EMTAvMC2gK6AphidodHRwOi8vZG93bmxvYWQucW5h
+cC5jb20vY3JsL3F0c192MS5jcmwwDQYJKoZIhvcNAQELBQADggEBADplp152NaL+
+Ov1rBztUSPt6EecPvTC4EMg1+uziqPz54LUuufvVjDHp+rEhKR9mBLPoPHYK2Pc5
+85iJ5fRcCSr+PNwH2ksfHUqbY0K2p2gFMTpsGYrXPVxmcS/t1l9IA0jFlCHkMHR6
+oKdbLHzxGrKFNXxhagbobdw65OUvwP5lJDnk4aInfkWqXPV5Mh/+ZchPaCaD5IE4
+GZFqR1gAlktHAhvwBJhurozMbd92mQt6AVHDWt1ump/qiUgkdz2VJrdCWRd51nJJ
+Ij1A6hFRu9wdulkzQlp43rmD30Eloq7mJFlgXX3mSfAa6DyWuYych75cnSbNn5VP
+/txPu6xSOp4=
 -----END CERTIFICATE-----
 EOB
 
-	# This digital signature block is the same used by QNAP for LicenseCenter.
+	# This digital signature block is the same used by QNAP for Download Station 5.9.0.272
+	# Expires 11th October 2027.
+
 	read -r -d '' r_qpkg_signature << EOB
 MIME-Version: 1.0
 Content-Disposition: attachment; filename=\"smime.p7m\"
@@ -12904,41 +12978,41 @@ Content-Type: application/pkcs7-mime; smime-type=signed-data; name=\"smime.p7m\"
 Content-Transfer-Encoding: base64
 
 MIIGtAYJKoZIhvcNAQcCoIIGpTCCBqECAQExDTALBglghkgBZQMEAgEwIwYJKoZI
-hvcNAQcBoBYEFAkoseBaFir08zCz63r2YA82DXzxoIIDxzCCA8MwggKroAMCAQIC
-BQC4Q1bsMA0GCSqGSIb3DQEBCwUAMIGAMQswCQYDVQQGEwJUVzEPMA0GA1UECAwG
-VGFpd2FuMQ8wDQYDVQQHDAZUYWlwZWkxDTALBgNVBAoMBFFOQVAxDDAKBgNVBAsM
-A05BUzEQMA4GA1UEAwwHUU5BUF9DQTEgMB4GCSqGSIb3DQEJARYRc2VjdXJpdHlA
-cW5hcC5jb20wHhcNMjIwMzE4MDczOTE0WhcNMjUwMzE3MDczOTE0WjCBhjELMAkG
-A1UEBhMCVFcxDzANBgNVBAgMBlRhaXdhbjEPMA0GA1UEBwwGVGFpcGVpMQ0wCwYD
-VQQKDARRTkFQMQwwCgYDVQQLDANOQVMxFjAUBgNVBAMMDUxpY2Vuc2VDZW50ZXIx
-IDAeBgkqhkiG9w0BCQEWEXNlY3VyaXR5QHFuYXAuY29tMIIBIjANBgkqhkiG9w0B
-AQEFAAOCAQ8AMIIBCgKCAQEAv2wIG2a8lbwV36QRzVCkFbAJAH7w14yp8Wu5Sh60
-SHBXDp3/r6FGXD9S8valm+/NoAdnlB7FEtV6o+Ahf3VCXxRJzga0FKPfkPQd8eKE
-0aTHZMu2nD+HcQG7eE/drMIGkXkFwHsMvbPf/2udhyAXGtXQAOCT8KZaomf6IdfB
-gwisYfOCLvRnLtieXvlVxCPylMQsClHdtmg06b9dvDEqKnWHsQnqwibUG4DN3MJJ
-DIg5xaY67LWuYhacqzSnS6ASe2G2N3eTp5KsuA4xPIcEe9I+0Hft8WzKr9xTgini
-yy5+jdNyFxyj/24oPzHVymNXSUFQN/5LP5Jzx/JoXDjNHQIDAQABozwwOjA4BgNV
-HR8EMTAvMC2gK6AphidodHRwOi8vZG93bmxvYWQucW5hcC5jb20vY3JsL3F0c192
-MS5jcmwwDQYJKoZIhvcNAQELBQADggEBAFpU9Rgx+r/Bt5WiALNv0XcYT4LSl+Gi
-/n50xBTReVdsh9BuJbsqubR0MPlQh7QzOmdxl1oXIijwEbqW0XB6u+OCQhWlG+ov
-M9cNSlSQ2kN/BFROfibaaDzK652/oSgf4BpouD6DEqZ711QsS2wmwZ8ItfaOrfzJ
-z289LIb1AdjQ54J2pepWEBcPxfEq+nEo1ehgGOEzmaLXbvoLp8KkLWFMnBFXzcol
-lZP35YBA/EfKMUz5fWaAxnp/joI5Ga74Mpyp6jyx8sWUnYWEqFslnGVpDAkPuvZD
-oCVb60Wu8/Rfct9LgB1yFK7C1dnf3SJlYwKTB22etIgCxgFSJWrNHuIxggKbMIIC
-lwIBATCBijCBgDELMAkGA1UEBhMCVFcxDzANBgNVBAgMBlRhaXdhbjEPMA0GA1UE
-BwwGVGFpcGVpMQ0wCwYDVQQKDARRTkFQMQwwCgYDVQQLDANOQVMxEDAOBgNVBAMM
-B1FOQVBfQ0ExIDAeBgkqhkiG9w0BCQEWEXNlY3VyaXR5QHFuYXAuY29tAgUAuENW
-7DALBglghkgBZQMEAgGggeQwGAYJKoZIhvcNAQkDMQsGCSqGSIb3DQEHATAcBgkq
-hkiG9w0BCQUxDxcNMjIxMjAyMDMwOTE3WjAvBgkqhkiG9w0BCQQxIgQgvtdZSm+m
-c7QevdJma9Em5ycFr3I7Wo4aG40Vcx/mT5IweQYJKoZIhvcNAQkPMWwwajALBglg
+hvcNAQcBoBYEFAQ/j77EF9kxli2d24Kj8bRyX+1GoIIDyDCCA8QwggKsoAMCAQIC
+BBUA6ucwDQYJKoZIhvcNAQELBQAwgYAxCzAJBgNVBAYTAlRXMQ8wDQYDVQQIDAZU
+YWl3YW4xDzANBgNVBAcMBlRhaXBlaTENMAsGA1UECgwEUU5BUDEMMAoGA1UECwwD
+TkFTMRAwDgYDVQQDDAdRTkFQX0NBMSAwHgYJKoZIhvcNAQkBFhFzZWN1cml0eUBx
+bmFwLmNvbTAeFw0yNDEwMTEwNDE4MzhaFw0yNzEwMTEwNDE4MzhaMIGIMQswCQYD
+VQQGEwJUVzEPMA0GA1UECAwGVGFpd2FuMQ8wDQYDVQQHDAZUYWlwZWkxDTALBgNV
+BAoMBFFOQVAxDDAKBgNVBAsMA05BUzEYMBYGA1UEAwwPRG93bmxvYWRTdGF0aW9u
+MSAwHgYJKoZIhvcNAQkBFhFzZWN1cml0eUBxbmFwLmNvbTCCASIwDQYJKoZIhvcN
+AQEBBQADggEPADCCAQoCggEBAP0JI9Q+uMRq84SuWwCNfAgQgnfHwuMWCm45+sLV
+BBaa2aoWswwJS/hTh/1XcKJap154ZXiWOvxrozE6nNHI63GTTWYvr2B+BykBGT/Y
+wkayHtcRKgz0p8p+/3E+laVqBcRcugYuOEafGPdklA12nK6Rhc8IccSifMvu18XA
+n5DXWz+nIGQQ3E6MSjy+NX34Y2ufKDZlosvfneze3RkIhLZub1pUQy8M/db42Eak
+4HVGYfuNXrIfikD/jcF17n3OMHIGAaaiff6orLkq4xtoZodRpV96xQ8OlCMACsCS
+MxQeX6mda8uA9tQXpzc3cl/2u+mvaHj6mbGglT5XLe3poJcCAwEAAaM8MDowOAYD
+VR0fBDEwLzAtoCugKYYnaHR0cDovL2Rvd25sb2FkLnFuYXAuY29tL2NybC9xdHNf
+djEuY3JsMA0GCSqGSIb3DQEBCwUAA4IBAQA6ZadedjWi/jr9awc7VEj7ehHnD70w
+uBDINfrs4qj8+eC1Lrn71Ywx6fqxISkfZgSz6Dx2Ctj3OfOYieX0XAkq/jzcB9pL
+Hx1Km2NCtqdoBTE6bBmK1z1cZnEv7dZfSANIxZQh5DB0eqCnWyx88RqyhTV8YWoG
+6G3cOuTlL8D+ZSQ55OGiJ35Fqlz1eTIf/mXIT2gmg+SBOBmRakdYAJZLRwIb8ASY
+bq6MzG3fdpkLegFRw1rdbpqf6olIJHc9lSa3QlkXedZySSI9QOoRUbvcHbpZM0Ja
+eN65g99BJaKu5iRZYF195knwGug8lrmMnIe+XJ0mzZ+VT/7cT7usUjqeMYICmjCC
+ApYCAQEwgYkwgYAxCzAJBgNVBAYTAlRXMQ8wDQYDVQQIDAZUYWl3YW4xDzANBgNV
+BAcMBlRhaXBlaTENMAsGA1UECgwEUU5BUDEMMAoGA1UECwwDTkFTMRAwDgYDVQQD
+DAdRTkFQX0NBMSAwHgYJKoZIhvcNAQkBFhFzZWN1cml0eUBxbmFwLmNvbQIEFQDq
+5zALBglghkgBZQMEAgGggeQwGAYJKoZIhvcNAQkDMQsGCSqGSIb3DQEHATAcBgkq
+hkiG9w0BCQUxDxcNMjQxMDE2MDgxNzQ0WjAvBgkqhkiG9w0BCQQxIgQggJireFTx
+DlvBWly/Q5HA1BSoAikTAPk0XVMmIIZ93yQweQYJKoZIhvcNAQkPMWwwajALBglg
 hkgBZQMEASowCwYJYIZIAWUDBAEWMAsGCWCGSAFlAwQBAjAKBggqhkiG9w0DBzAO
 BggqhkiG9w0DAgICAIAwDQYIKoZIhvcNAwICAUAwBwYFKw4DAgcwDQYIKoZIhvcN
-AwICASgwDQYJKoZIhvcNAQEBBQAEggEAuInAOUj+ebOkTqlqg3cf7v2FdKeCvZZn
-cunx1xRnHJRVAAvcH/UZ3t7RF6MV5NmEQdVN79NBZl0KU1x7K3zyvcXnkacNuHnI
-t+6neKKKkxJmB4hh4ljeYtx9a1RBgwH+PiYyH8+58S7+MF3MVhSH8jEiomgSbvsK
-BroOCFQDoYWk14K/VIXW1scmvpNvFNBWwm19pYwi977rF+lPWzMHx/0jVXspFSEd
-U48h9xKvPg6CsIlyfuKetHBjZZI6iSCvh2FZOWsD1/W2oGYkkY9Hdff24B34/res
-cKXk/K9/JFAONWBbXUpxtzpBCeVJlZS1wQgu4Q+Fr6imaBXJkiyiNg==
+AwICASgwDQYJKoZIhvcNAQEBBQAEggEA+rY8b+0bWHR5IENsfxZHEr1ya5ue4fGM
+imlmR0BjABr3KP9gTGYbLR+dDQNkCtw9Fy1TLOCSuxxm1gdlBLOC8+uDE86jTh5D
+RNyMsL/cNAdtGxmTVS2JsCE4zaI2IvlNsnJ4zZOnO1Hl4jBbJAlt7y0dQvbDbc/+
+Cy54p/JW3IS9NqJ2QYTQdeLptRSXDHglLNjyQV5xK+qq/4DrJ+ALoesmfS/2aHar
+1hBRm/B3nWXlh61rd4mMcSEU+rfOHaisa9OW97steR9TOb/xoyWI06qvSrBxoAxo
+x+auuROm7C3dgpY7klCWav/j95cGdSacac30zlEhndA/UeOj9JImQw==
 EOB
 
 	readonly r_qpkg_certificate
@@ -14249,7 +14323,6 @@ ShowAsProc()
 	#	$2 = trailing task (after the ellipsis) (optional). If specified, $useropt_terse will be ignored.
 
 	# Inputs: (global)
-	#	$r_chars_ellipsis
 	#	$r_inhibit_display_pathfile
 	#	$useropt_terse
 	#	$useropt_verbose
@@ -14259,7 +14332,7 @@ ShowAsProc()
 	local a=$1
 	local b=''
 	[[ -n ${2:-} ]] && b=$2
-	local c="$a $r_chars_ellipsis $b"
+	local c="$a ... $b"
 
 	if [[ -n ${r_inhibit_display_pathfile:-} && ! -e $r_inhibit_display_pathfile ]]; then
 		if [[ ${useropt_verbose:=false} = false && ${useropt_terse:=true} = true ]] || [[ ${useropt_verbose:=false} = false && -n ${2:-} ]]; then
