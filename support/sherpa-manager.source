@@ -5032,7 +5032,7 @@ _GenerateStatusReportDataLine_()
 				status='not installed'
 			fi
 
-			ver=$(GetQpkgDbVer "$qpkg_name")
+			ver=$(GetQpkgDbVer)
 
 			for a in "${column_vars[@]}"; do
 				case $a in
@@ -7597,15 +7597,13 @@ BuildQPKGsStates()
 
 	# TODO: checking 'upgradable' status is slow (due to the number of checks that must be performed). Consider only running this during `check` or `upgrade` actions.
 
-	for qpkg_name in $(QPKGs-GRall:Array); do
-# 		SetQpkgIndex			# TODO: alter upgradable checks to use qpkg index instead of name.
-
+  	for qpkg_name in $(QPKGs-GRall:Array); do
 		if IsQpkgUpgradable; then
 			echo upgradable
 		else
 			echo notupgradable
 		fi >> "$r_qpkg_states_path/$qpkg_name"
-	done &
+  	done &
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		if IsQpkgInstalled; then
@@ -7631,7 +7629,7 @@ BuildQPKGsStates()
 		else
 			echo notinstallable
 		fi >> "$r_qpkg_states_path/$qpkg_name"
-	done &
+  	done &
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		if IsQpkgMissing; then
@@ -7652,7 +7650,6 @@ BuildQPKGsStates()
 	wait 2> /dev/null
 
 	ShowAsProc 'store QPKG states'
-
 	# Load status lines from individual files into session arrays.
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
@@ -11354,15 +11351,7 @@ GetQpkgDbVer()
 	local a=''
 	local -i i=0
 
-	if [[ -n ${1:-} ]]; then
-		for i in "${!r_qpkg_name[@]}"; do
-			if [[ ${r_qpkg_name[$i]} = "$1" ]]; then
-				printf '%s' "${r_qpkg_version[$i]}"
-
-				return 0
-			fi
-		done
-	elif [[ $qpkg_index -gt 0 ]]; then
+	if [[ $qpkg_index -gt 0 ]]; then
 		a=${r_qpkg_version[$qpkg_index]}
 		[[ $a = default ]] && a=${r_qpkg_version[$qpkg_default_index]}
 		[[ $a != none ]] || return
@@ -11370,6 +11359,18 @@ GetQpkgDbVer()
 		printf '%s' "$a"
 
 		return 0
+	fi
+
+	a=${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}
+
+	if [[ -n $a ]]; then
+		for i in "${!r_qpkg_name[@]}"; do
+			if [[ ${r_qpkg_name[$i]} = "$a" ]]; then
+				printf '%s' "${r_qpkg_version[$i]}"
+
+				return 0
+			fi
+		done
 	fi
 
 	return 1
@@ -11381,17 +11382,14 @@ GetQpkgInstalledVer()
 
 	# Returns the version number of an installed QPKG.
 
-	# Inputs: (local)
-	#   $1 (optional) = QPKG name.
-
 	# Inputs: (global)
-	#   $qpkg_name (default)
+	#   $qpkg_name
 
 	# Outputs:
 	#   stdout = package version
 	#   $? = 0 if found, 250 if not.
 
-	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}" Version -d undefined -f /etc/config/qpkg.conf
+	/sbin/getcfg "${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}" Version -d undefined -f /etc/config/qpkg.conf
 
 	}
 
@@ -12385,18 +12383,13 @@ IsQpkgUpgradable()
 
 	# Does an upgraded QPKG exist?
 
-	# Inputs: (local)
-	#   $1 (optional) = QPKG name.
-
 	# Inputs: (global)
 	#   $qpkg_name (default)
 
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
-
-	IsQpkgInstalled "$a" && IsQpkgRepoSelfManaged "$a" && [[ $(GetQpkgInstalledVer "$a") != "$(GetQpkgDbVer "$a")" ]] && IsQpkgDbArchOK "$a" && IsQpkgDbMinOSVerOk "$a" && IsQpkgDbMaxOSVerOk "$a" && IsQpkgDbMinRAMOk "$a"
+   	IsQpkgInstalled && IsQpkgRepoSelfManaged && [[ $(GetQpkgInstalledVer) != "$(GetQpkgDbVer)" ]] && IsQpkgDbArchOK && IsQpkgDbMinOSVerOk && IsQpkgDbMaxOSVerOk && IsQpkgDbMinRAMOk
 
 	}
 
@@ -12405,18 +12398,13 @@ IsQpkgInstallable()
 
 	# Can this QPKG be installed?
 
-	# Inputs: (local)
-	#   $1 (optional) = QPKG name.
-
 	# Inputs: (global)
 	#   $qpkg_name (default)
 
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
-
-	IsNtQpkgReallyInstalled "$a" && IsQpkgDbArchOK "$a" && IsQpkgDbMinOSVerOk "$a" && IsQpkgDbMaxOSVerOk "$a" && IsQpkgDbMinRAMOk "$a"
+  	IsNtQpkgReallyInstalled && IsQpkgDbArchOK && IsQpkgDbMinOSVerOk && IsQpkgDbMaxOSVerOk && IsQpkgDbMinRAMOk
 
 	}
 
@@ -14244,7 +14232,7 @@ DebugAsFuncEn()
 DebugAsFuncEx()
 	{
 
-	DebugThis "$(Parenthesise '<<') ${FUNCNAME[2]}|${1:-0}|${2:-}"
+	DebugThis "$(Parenthesise '<<') ${FUNCNAME[2]}()|${1:-0}|${2:-}"
 
 	}
 
