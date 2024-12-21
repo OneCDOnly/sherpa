@@ -1,3 +1,6 @@
+* Checking 'upgradable' status is slow (due to the number of checks that must be performed).
+	- Consider only running this during `check` or `upgrade` actions.
+
 * Include option to display alternating line highlighting on reports?
 	- $alternating_report_lines
 
