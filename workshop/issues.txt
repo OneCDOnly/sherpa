@@ -1,5 +1,8 @@
 Observed issues:
 
+	* Showing indep QPKGs as upgradable during bootup and shutdown.
+		- upgradable status is correct when OS is online.
+
 	* Service-script daemon PID shown twice consecutively during 'clean' action:
 		--------------------------------------------------------------------------------------------------
 		[/share/Public] # /etc/init.d/sabnzbd.sh clean
