@@ -7517,6 +7517,7 @@ LoadQPKGsTiers()
 	{
 
 	# Inputs: (global)
+	#	$qpkgs_tiers_built
 	#	$r_dependent_qpkgs_list_pathfile
 	#	$r_independent_qpkgs_list_pathfile
 	#	$r_optional_qpkgs_list_pathfile
@@ -7528,6 +7529,9 @@ LoadQPKGsTiers()
 	#	QPKGs-GRoptional
 
 	[[ $qpkgs_tiers_built = true ]] || return
+
+	local a=''
+	local b=''
 
 	for a in "${r_qpkg_tiers[@]}"; do
 		b=r_${a}_qpkgs_list_pathfile
