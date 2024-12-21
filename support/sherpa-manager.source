@@ -7557,6 +7557,7 @@ BuildQPKGsStates()
 
 	local a=''
 	local b=''
+	qpkg_name=''
 
 	if [[ ${qpkgs_states_built:=false} = true ]]; then
 		DebugAsDone "don't build states: they're already built"
@@ -7567,21 +7568,11 @@ BuildQPKGsStates()
 	LoadPackages
 	InitQPKGsStates
 
-	if IsOsCanAsyncQpkgActions; then
-		if IsOsStarting; then
-			ShowAsNote "$(GetOsName) is still booting ... check again in a few minutes"
-		elif IsOsStartingPackages; then
-			ShowAsNote "$(GetOsName) is starting QPKGs ... check again in a few minutes"
-		fi
-	else		# Must check older QTS (< 5.2.0) differently as it remains in boot mode while launching QPKGs.
-		if IsOsStartingPackages; then
-			ShowAsNote "$(GetOsName) is starting QPKGs ... check again in a few minutes"
-		elif IsOsStarting; then
-			ShowAsNote "$(GetOsName) is still booting ... check again in a few minutes"
-		fi
-	fi
-
-	if IsOsStopping; then
+	if IsOsStartingPackages; then
+		ShowAsNote "$(GetOsName) is starting QPKGs ... check again in a few minutes"
+	elif IsOsStarting; then
+		ShowAsNote "$(GetOsName) is still booting ... check again in a few minutes"
+	elif IsOsStopping; then
 		ShowAsNote "$(GetOsName) is shutting-down"
 	elif IsOsStoppingPackages; then
 		ShowAsNote "$(GetOsName) is stopping QPKGs"
@@ -7598,8 +7589,6 @@ BuildQPKGsStates()
 	ShowAsProc 'get QPKG states'
 
 	# Faster to launch several concurrent loops async than a single loop. Launch those requiring more processing-time first.
-
-	# TODO: checking 'upgradable' status is slow (due to the number of checks that must be performed). Consider only running this during `check` or `upgrade` actions.
 
   	for qpkg_name in $(QPKGs-GRall:Array); do
 		if IsQpkgUpgradable; then
@@ -7747,7 +7736,7 @@ BuildQPKGsStates()
 InitQPKGsStates()
 	{
 
-	# Clear in-memory state list objects.
+	# Clear in-memory state list objects and on-disk lists.
 
 	# Inputs: (global)
 	#	$r_qpkg_is_states[]
@@ -11355,15 +11344,15 @@ GetQpkgDbVer()
 	local a=''
 	local -i i=0
 
-	if [[ $qpkg_index -gt 0 ]]; then
-		a=${r_qpkg_version[$qpkg_index]}
-		[[ $a = default ]] && a=${r_qpkg_version[$qpkg_default_index]}
-		[[ $a != none ]] || return
-
-		printf '%s' "$a"
-
-		return 0
-	fi
+# 	if [[ $qpkg_index -gt 0 ]]; then
+# 		a=${r_qpkg_version[$qpkg_index]}
+# 		[[ $a = default ]] && a=${r_qpkg_version[$qpkg_default_index]}
+# 		[[ $a != none ]] || return
+#
+# 		printf '%s' "$a"
+#
+# 		return 0
+# 	fi
 
 	a=${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}
 
@@ -12388,12 +12377,12 @@ IsQpkgUpgradable()
 	# Does an upgraded QPKG exist?
 
 	# Inputs: (global)
-	#   $qpkg_name (default)
+	#   $qpkg_name
 
 	# Outputs: (local)
 	#   $? = true/false
 
-   	IsQpkgInstalled && IsQpkgRepoSelfManaged && [[ $(GetQpkgInstalledVer) != "$(GetQpkgDbVer)" ]] && IsQpkgDbArchOK && IsQpkgDbMinOSVerOk && IsQpkgDbMaxOSVerOk && IsQpkgDbMinRAMOk
+	IsQpkgInstalled && IsQpkgRepoSelfManaged && IsQpkgDbArchOK && IsQpkgDbMinOSVerOk && IsQpkgDbMaxOSVerOk && IsQpkgDbMinRAMOk && [[ $(GetQpkgInstalledVer) != "$(GetQpkgDbVer)" ]]
 
 	}
 
@@ -12403,7 +12392,7 @@ IsQpkgInstallable()
 	# Can this QPKG be installed?
 
 	# Inputs: (global)
-	#   $qpkg_name (default)
+	#   $qpkg_name
 
 	# Outputs: (local)
 	#   $? = true/false
