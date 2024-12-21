@@ -9269,17 +9269,29 @@ GetUserSudoUID()
 GetOsState()
 	{
 
+	local a=''
+
 	if IsOsStarting; then
-		printf 'booting'
-	elif IsOsStartingPackages; then
-		printf 'starting QPKGs'
-	elif IsOsStopping; then
-		printf 'shutting-down'
-	elif IsOsStoppingPackages; then
-		printf 'stopping QPKGs'
-	else
-		printf online
+		a=booting
 	fi
+
+	if IsOsStartingPackages; then
+		[[ -n $a ]] && a+=', '
+		a+='starting QPKGs'
+	fi
+
+	if IsOsStopping; then
+		a='shutting-down'
+	fi
+
+	if IsOsStoppingPackages; then
+		[[ -n $a ]] && a+=', '
+		a+='stopping QPKGs'
+	fi
+
+	[[ -z $a ]] && a=online
+
+	printf '%s' "$a"
 
 	}
 
