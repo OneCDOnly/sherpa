@@ -1,7 +1,5 @@
 Observed issues:
 
-	* Installing TrguiNG on Helga and Laura adds Trguing twice as dependency in qpkg.conf
-
 	* Uninstalling TrguiNG QPKG also stops and disables Transmission QPKG.
 		- Enable Transmission again automatically after optional uninstall so it can be restarted?
 
