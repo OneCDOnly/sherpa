@@ -212,6 +212,9 @@ LoadConsts()
 	readonly r_report_qpkg_arch_column_width=15
 	readonly r_report_qpkg_author_column_width=40
 	readonly r_report_qpkg_auto_update_column_width=8
+	readonly r_report_qpkg_can_backup_column_width=8
+	readonly r_report_qpkg_can_clean_column_width=9
+	readonly r_report_qpkg_can_start_to_update_column_width=9
 	readonly r_report_qpkg_dependencies_column_width=29
 	readonly r_report_qpkg_description_column_width=10
 	readonly r_report_qpkg_install_date_column_width=20
@@ -227,9 +230,6 @@ LoadConsts()
 	readonly r_report_qpkg_path_column_width=48
 	readonly r_report_qpkg_repo_column_width=40
 	readonly r_report_qpkg_status_column_width=23
-	readonly r_report_qpkg_supports_backup_column_width=8
-	readonly r_report_qpkg_supports_clean_column_width=9
-	readonly r_report_qpkg_supports_start_to_update_column_width=9
 	readonly r_report_qpkg_tier_column_width=12
 	readonly r_report_qpkg_version_column_width=19
 
@@ -240,14 +240,14 @@ LoadConsts()
 	readonly r_debug_log_full_width=100
 	readonly r_debug_log_first_column_width=9
 	readonly r_debug_log_second_column_width=20
-		readonly r_debug_log_third_column_width=$((r_debug_log_full_width-r_debug_log_first_column_width-r_debug_log_second_column_width-4))
+# 		readonly r_debug_log_third_column_width=$((r_debug_log_full_width-r_debug_log_first_column_width-r_debug_log_second_column_width-4))
 	readonly r_help_desc_indent=3
 	readonly r_help_syntax_indent=6
 	readonly r_report_action_result_indent=6
 	readonly r_report_column_spacing=2
 	readonly r_report_file_bytes_column_width=14
 	readonly r_report_file_change_date_column_width=60
-	readonly r_report_file_name_column_width=$((r_report_qpkg_name_column_width+14))
+	readonly r_report_file_name_column_width=35
 	readonly r_report_footer_name_column_width=14
 	readonly r_report_highlight_backups_older_than='2 weeks ago'
 
@@ -267,7 +267,7 @@ LoadConsts()
 	readonly r_extended_datetime_format='+%a %-d %b %Y'
 		readonly r_full_datetime_format=$r_extended_datetime_format' %-I:%M:%S %p %Z'
 
-	if IsOsSupportSudo; then
+	if IsOsCanSudo; then
 		if [[ $(GetUserSudoUID) = undefined ]]; then
 			readonly r_help_syntax_prefix=$r_chars_super_prompt
 			readonly r_help_syntax_sudo_prefix=$r_chars_super_prompt
@@ -829,7 +829,7 @@ DebugLogEnv()
 	DebugUserspace ok libc "$(GetUserLIBC)"
 	DebugUserspace ok 'libc copyright' "$(GetUserLIBCCopyright)"
 
-	if IsOsSupportSudo; then
+	if IsOsCanSudo; then
 		DebugUserspace ok '$SUDO_UID' "$(GetUserSudoUID)"
 	else
 		DebugUserspace ok '$SUDO_UID' N/A
@@ -867,7 +867,7 @@ DebugLogEnv()
 	DebugScript 'logs path' "$r_logs_path"
 	DebugScript "'sqlite3' binary" "$sqlite_cmd"
 
-	if IsOsSupportUnofficialPackages; then
+	if IsOsCanUnofficialPackages; then
 		if IsOsAllowUnofficialPackages; then
 			DebugQpkg detect 'allow unofficial' yes
 		else
@@ -877,7 +877,7 @@ DebugLogEnv()
 		DebugQpkg detect 'allow unofficial' N/A
 	fi
 
-	if IsOsSupportSignedPackages; then
+	if IsOsCanSignedPackages; then
 		if IsOsAllowUnsignedPackages; then
 			DebugQpkg detect 'allow unsigned' yes
 		else
@@ -894,14 +894,14 @@ DebugLogEnv()
 	if IsQpkgReallyInstalled SortMyQPKGs; then
 		DebugQpkg detect "$(ShowAsPackageName SortMyQPKGs)" installed
 	else
-		if [[ ${r_nas_firmware_version//.} -lt 400 || ${r_nas_firmware_version//.} -gt 518 ]]; then
+		if [[ ${r_nas_firmware_version//.} -lt 400 || ${r_nas_firmware_version//.} -ge 520 ]]; then
 			DebugQpkg detect "$(ShowAsPackageName SortMyQPKGs)" 'not installed'
 		else
 			DebugQpkg warning "$(ShowAsPackageName SortMyQPKGs)" 'not installed'
 		fi
 	fi
 
-	if IsOsSupportQpkgTimeout; then
+	if IsOsCanQpkgTimeout; then
 		if IsQpkgReallyInstalled IncreaseTimeouts; then
 			if IsQpkgTimeoutsIncreased; then
 				DebugQpkg detect "$(ShowAsPackageName IncreaseTimeouts)" active
@@ -1045,7 +1045,7 @@ CheckEnv()
 			ipks_upgrade=true
 			pips_install=true
 
-			if IsPython3Outdated; then
+			if IsPythonOutdated; then
 				ShowAsNote "the $(TextBrightOrange Python) environment will be auto-upgraded"
 				IPKs-ACuninstall-to:Add 'python*'
 			fi
@@ -1158,7 +1158,7 @@ QPKGsAssignToActions()
 	for qpkg_name in $(QPKGs-ACinstall-to:Array) $(QPKGs-ACreinstall-to:Array); do
 		SetQpkgIndex
 
-		for prospect in $(GetQpkgDatabaseDependencies); do
+		for prospect in $(GetQpkgDbDependencies); do
 			QPKGs-ISNTinstalled.Exist "$prospect" && QPKGs-ACinstall-to:Add "$prospect"
 		done
 	done
@@ -1169,7 +1169,7 @@ QPKGsAssignToActions()
 		if [[ $useropt_check = true ]] || QPKGs-ACactivate-to.Exist "$qpkg_name"; then
 			SetQpkgIndex
 
-			for prospect in $(GetQpkgDatabaseDependencies); do
+			for prospect in $(GetQpkgDbDependencies); do
 				QPKGs-ISNTinstalled.Exist "$prospect" && QPKGs-ACinstall-to:Add "$prospect"
 			done
 		fi
@@ -1182,7 +1182,7 @@ QPKGsAssignToActions()
 			if QPKGs-GRoptional.Exist "$qpkg_name" && QPKGs-ISinstalled.Exist "$qpkg_name"; then
 				SetQpkgIndex
 
-				for prospect in $(GetQpkgDatabaseOptionals); do
+				for prospect in $(GetQpkgDbOptionals); do
 					if QPKGs-ISenabled.Exist "$prospect"; then
 						! QPKGs-ACuninstall-to.Exist "$prospect" && ! QPKGs-ACinstall-to.Exist "$prospect" && QPKGs-ACreactivate-to:Add "$prospect"
 					fi
@@ -1198,7 +1198,7 @@ QPKGsAssignToActions()
 			if QPKGs-GRindependent.Exist "$qpkg_name" && QPKGs-ISinstalled.Exist "$qpkg_name"; then
 				SetQpkgIndex
 
-				for prospect in $(GetQpkgDatabaseDependents); do
+				for prospect in $(GetQpkgDbDependents); do
 					QPKGs-ISinstalled.Exist "$prospect" && QPKGs-ACdeactivate-to:Add "$prospect"
 				done
 			fi
@@ -1219,7 +1219,7 @@ QPKGsAssignToActions()
 		if QPKGs-GRindependent.Exist "$qpkg_name" && QPKGs-ISinstalled.Exist "$qpkg_name" && QPKGs-ACinstall-to.Exist "$qpkg_name"; then
 			SetQpkgIndex
 
-			for prospect in $(GetQpkgDatabaseDependents); do
+			for prospect in $(GetQpkgDbDependents); do
 				if QPKGs-ISenabled.Exist "$prospect"; then
 					QPKGs-ACdeactivate-to:Add "$prospect"
 					! QPKGs-ACuninstall-to.Exist "$prospect" && ! QPKGs-ACinstall-to.Exist "$prospect" && QPKGs-ACactivate-to:Add "$prospect"
@@ -1235,7 +1235,7 @@ QPKGsAssignToActions()
 			if QPKGs-GRindependent.Exist "$qpkg_name" && QPKGs-ISinstalled.Exist "$qpkg_name"; then
 				SetQpkgIndex
 
-				for prospect in $(GetQpkgDatabaseDependents); do
+				for prospect in $(GetQpkgDbDependents); do
 					if QPKGs-ISenabled.Exist "$prospect"; then
 						QPKGs-ACdeactivate-to:Add "$prospect"
 						! QPKGs-ACuninstall-to.Exist "$prospect" && ! QPKGs-ACinstall-to.Exist "$prospect" && QPKGs-ACactivate-to:Add "$prospect"
@@ -1251,7 +1251,7 @@ QPKGsAssignToActions()
 		if QPKGs-GRoptional.Exist "$qpkg_name" && QPKGs-ISinstalled.Exist "$qpkg_name" && QPKGs-ACinstall-to.Exist "$qpkg_name"; then
 			SetQpkgIndex
 
-			for prospect in $(GetQpkgDatabaseOptionals); do
+			for prospect in $(GetQpkgDbOptionals); do
 				if QPKGs-ISenabled.Exist "$prospect"; then
 					QPKGs-ACdeactivate-to:Add "$prospect"
 					! QPKGs-ACuninstall-to.Exist "$prospect" && ! QPKGs-ACinstall-to.Exist "$prospect" && QPKGs-ACactivate-to:Add "$prospect"
@@ -1277,7 +1277,7 @@ QPKGsAssignToActions()
 		for qpkg_name in $(QPKGs-AC${action}-to:Array); do
 			SetQpkgIndex
 
-			for prospect in $(GetQpkgDatabaseDependencies) $(GetQpkgDatabaseOptionals); do
+			for prospect in $(GetQpkgDbDependencies) $(GetQpkgDbOptionals); do
 				QPKGs-ISinstalled.Exist "$prospect" && QPKGs-ACreactivate-to:Add "$prospect"
 			done
 		done
@@ -1328,7 +1328,7 @@ QPKGsAssignToActions()
 	# Check all packages.
 
 	if [[ $useropt_check = true ]]; then
-		IsOsSupportSignedPackages && QPKGs-ACsign-to:Add "$(QPKGs-ISinstalled:Array)"
+		IsOsCanSignedPackages && QPKGs-ACsign-to:Add "$(QPKGs-ISinstalled:Array)"
 
 		for qpkg_name in $(QPKGs-GRdependent:Array); do
 			QPKGs-ISenabled.Exist "$qpkg_name" && QPKGs-ACreactivate-to:Add "$qpkg_name"
@@ -1521,7 +1521,7 @@ ProcActions()
 					PIPs:install
 				fi
 
-				QPKGs-ACinstall-ok.Exist Entware && [[ $sqlite_pathfile = /opt/bin/sqlite3 && -e $sqlite_pathfile ]] && IsOsSupportSignedPackages && QPKGs-ACsign-to:Add "$(QPKGs-ISinstalled:Array)"
+				QPKGs-ACinstall-ok.Exist Entware && [[ $sqlite_pathfile = /opt/bin/sqlite3 && -e $sqlite_pathfile ]] && IsOsCanSignedPackages && QPKGs-ACsign-to:Add "$(QPKGs-ISinstalled:Array)"
 
 				ProcAction sign independent QPKG '"sign"'
 			fi
@@ -3353,7 +3353,7 @@ PatchEntwareService()
 
 	local -r r_tab_char=$'\t'
 	local -r r_prefix='# the following line was inserted by sherpa: https://git.io/sherpa'
-	local -r r_package_init_pathfile=$(GetQpkgInstalledServicePathFile Entware)
+	local -r r_package_init_pathfile=$(GetQpkgServicePathFile Entware)
 	local find=''
 	local insert=''
 
@@ -3777,7 +3777,7 @@ IPKs:install()
 		for qpkg_name in "${r_qpkg_name[@]}"; do
 			[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
 			SetQpkgIndex
-			IPKs-ACinstall-to:Add "$(GetQpkgDatabaseIPKs)"
+			IPKs-ACinstall-to:Add "$(GetQpkgDbIPKs)"
 		done
 	else
 		for qpkg_name in "${r_qpkg_name[@]}"; do
@@ -3785,7 +3785,7 @@ IPKs:install()
 
 			if QPKGs-ACinstall-to.Exist "$qpkg_name" || QPKGs-ISinstalled.Exist "$qpkg_name" || (QPKGs-ACreinstall-to.Exist "$qpkg_name" && QPKGs-ISinstalled.Exist "$qpkg_name"); then
 				SetQpkgIndex
-				IPKs-ACinstall-to:Add "$(GetQpkgDatabaseIPKs)"
+				IPKs-ACinstall-to:Add "$(GetQpkgDbIPKs)"
 			fi
 		done
 	fi
@@ -3861,7 +3861,7 @@ IPKs:downgrade()
 
 	IPKs-ACdownload-to:Init
 	total_count=$(IPKs-ACdowngrade-to:Count)
-	IsOsSupportSecureDownload || curl_options=' --insecure'
+	IsOsCanSecureDownload || curl_options=' --insecure'
 
 	if [[ $total_count -gt 0 ]]; then
 		package_type=IPK
@@ -4105,7 +4105,7 @@ _ExecOneActionWithManyForks_()
 			UpdateActionForkProgress
 		done
 
-		MarkThisActionForkAsStarted 					# Create runfile here (it takes too-long to appear if created in async function).
+		MarkActionForkAsStarted 					# Create runfile here (it takes too-long to appear if created in async function).
 		SetQpkgIndex
 
 		(	# Keep updated $pidfile in a subshell, so the one for this function doesn't change.
@@ -4522,7 +4522,7 @@ IsUserOk()
 	#	$r_chars_sudo_prompt
 
 	if ! IsUserSU; then
-		if IsOsSupportSudo; then
+		if IsOsCanSudo; then
 			ShowAsError 'this utility must be run with superuser privileges. Try again as:'
 			echo "${r_chars_sudo_prompt}sherpa $r_args_raw" >&2
 		else
@@ -4750,7 +4750,7 @@ DisplayAsIndentQuotedInfoItem()
 	# 	$r_help_desc_indent
 	#	$r_report_footer_name_column_width
 
-	if IsOsSupportAutowidthTableColumns; then
+	if IsOsCanAutowidthTableColumns; then
 		printf "%${r_help_desc_indent}s%s|%s\n" '' "'${1:-}'" "- $(AddPeriod "${2:-}")"
 	else
 		printf "%${r_help_desc_indent}s%-$((r_report_footer_name_column_width+2+$(LenANSIDiff "${1:-}")))s%s\n" '' "'${1:-}'" "- $(AddPeriod "${2:-}")"
@@ -4766,7 +4766,7 @@ GeneratePacksReportTitleLine()
 	#	$r_report_qpkg_description_column_width
 	# 	$r_report_qpkg_name_column_width
 
-	if IsOsSupportAutowidthTableColumns; then
+	if IsOsCanAutowidthTableColumns; then
 		printf 'QPKG name:|Appl. version:|Description:'
 	else
 		GenerateReportLineItem 'QPKG name:' "$r_report_qpkg_name_column_width"
@@ -4791,18 +4791,18 @@ _GeneratePacksReportDataLine_()
 
 	local app_ver=''
 	local app_ver_msg=$r_chars_blank
-# 	local author=$(GetQpkgDatabaseAuthor)
+# 	local author=$(GetQpkgDbAuthor)
 # 	local author_msg=$r_chars_blank
 	local description_msg=$r_chars_blank
 	local mode=''
 	local name=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
-		local description=$(GetQpkgDatabaseDesc "$name")
-		local notes=$(GetQpkgDatabaseNote "$name")
+		local description=$(GetQpkgDbDesc "$name")
+		local notes=$(GetQpkgDbNote "$name")
 		[[ $notes = none ]] && notes=''
 	local name_msg=$r_chars_normal
 	local notes_msg=$notes.
 
-	if IsQpkgInstalledMissing; then
+	if IsQpkgMissing; then
 		mode=highlight
 		/bin/touch "$r_report_flags_path"/status-missing
 	elif IsNtQpkgInstalled; then
@@ -4813,7 +4813,7 @@ _GeneratePacksReportDataLine_()
 		/bin/touch "$r_report_flags_path"/state-installed
 	fi
 
-	app_ver=$(GetQpkgDatabaseApplVer)
+	app_ver=$(GetQpkgDbApplVer)
 
 	case $app_ver in
 		dynamic|final|static)
@@ -4837,7 +4837,7 @@ _GeneratePacksReportDataLine_()
 			name_msg=$(TextBrightRed "$name_msg")
 	esac
 
-	if IsOsSupportAutowidthTableColumns; then
+	if IsOsCanAutowidthTableColumns; then
 		printf '%s' "$name_msg|$app_ver_msg|$description_msg"
 
 		if [[ -n $notes ]]; then
@@ -4872,7 +4872,7 @@ GenerateStatusReportTitleLine()
 
 	QPKGs-ISupgradable.IsAny && a+=' '$(Parenthesise "$(TextBrightOrange new)")
 
-	if IsOsSupportAutowidthTableColumns; then
+	if IsOsCanAutowidthTableColumns; then
 		printf '%s' "QPKG name:|Status:|Action $(Parenthesise result):|$a:|Appl. version:|Location:"
 	else
 		GenerateReportLineItem 'QPKG name:' "$r_report_qpkg_name_column_width"
@@ -4912,21 +4912,21 @@ _GenerateStatusReportDataLine_()
 		local ${a}_msg=''
 	done
 
-	app_ver=$(GetQpkgDatabaseApplVer)
+	app_ver=$(GetQpkgDbApplVer)
 	name=$qpkg_name
 	path=$(GetQpkgInstalledPath)
 	ver=$(GetQpkgInstalledVer)
 
 	# Set display mode.
 
-	if IsQpkgInstalledMissing; then
+	if IsQpkgMissing; then
 		mode=missing
 		/bin/touch "$r_report_flags_path"/status-missing
 	elif IsQpkgInstalled; then
 		mode=normal
 		/bin/touch "$r_report_flags_path"/state-installed
 	else
-		if IsQpkgReallyInstalled && IsNtQpkgInstalledAuthorOk; then
+		if IsQpkgReallyInstalled && IsNtQpkgAuthorOk; then
 			mode=author
 			/bin/touch "$r_report_flags_path"/status-wrongauthor
 		else
@@ -4942,8 +4942,8 @@ _GenerateStatusReportDataLine_()
 
 	case $mode in
 		missing|mute|normal)
-			if IsQpkgDatabaseSherpaCompatible; then
-				action=$(GetQpkgInstalledServiceAction)
+			if IsQpkgDbSherpaCompatible; then
+				action=$(GetQpkgServiceAction)
 				/bin/touch "$r_report_flags_path"/action-$action
 
 				if [[ $action = not-found ]]; then
@@ -4955,7 +4955,7 @@ _GenerateStatusReportDataLine_()
 					fi
 				fi
 
-				result=$(GetQpkgInstalledServiceResult)
+				result=$(GetQpkgServiceResult)
 				/bin/touch "$r_report_flags_path"/result-$result
 
 				case $result in
@@ -5022,17 +5022,17 @@ _GenerateStatusReportDataLine_()
 			path=N/A
 			/bin/touch "$r_report_flags_path"/na
 
-			if ! IsQpkgDatabaseArchOK; then
+			if ! IsQpkgDbArchOK; then
 				status='incompatible architecture'
-			elif ! IsQpkgDatabaseMinOSVerOk || ! IsQpkgDatabaseMaxOSVerOk; then
+			elif ! IsQpkgDbMinOSVerOk || ! IsQpkgDbMaxOSVerOk; then
 				status='incompatible '$(GetOsName)
-			elif ! IsQpkgDatabaseMinRAMOk; then
+			elif ! IsQpkgDbMinRAMOk; then
 				status='insufficient RAM installed'
 			else
 				status='not installed'
 			fi
 
-			ver=$(GetQpkgDatabaseVer "$qpkg_name")
+			ver=$(GetQpkgDbVer)
 
 			for a in "${column_vars[@]}"; do
 				case $a in
@@ -5089,8 +5089,8 @@ _GenerateStatusReportDataLine_()
 	esac
 
 	if QPKGs-ISupgradable.Exist "$qpkg_name"; then
-		ver_msg+=' '$(Parenthesise "$(TextBrightOrange "$(GetQpkgDatabaseVer)")")
-		/bin/touch "$r_report_flags_path"/status-upgradable
+		ver_msg+=' '$(Parenthesise "$(TextBrightOrange "$(GetQpkgDbVer)")")
+		/bin/touch "$r_report_flags_path"/state-upgradable
 	fi
 
 	if [[ $req_alert = true ]]; then
@@ -5108,7 +5108,7 @@ _GenerateStatusReportDataLine_()
 		name_msg=$(GenerateReportField "$name")
 	fi
 
-	if IsOsSupportAutowidthTableColumns; then
+	if IsOsCanAutowidthTableColumns; then
 		printf '%s' "$name_msg|$status_msg|$action_msg|$ver_msg|$app_ver_msg|$path_msg"
 	else
 		GenerateReportLineItem "$name_msg" "$r_report_qpkg_name_column_width"
@@ -5131,7 +5131,7 @@ GenerateReposReportTitleLine()
 	#	$r_report_qpkg_name_column_width
 	#	$r_report_qpkg_repo_column_width
 
-	if IsOsSupportAutowidthTableColumns; then
+	if IsOsCanAutowidthTableColumns; then
 		printf 'QPKG name:|Repository:|Install date:'
 	else
 		GenerateReportLineItem 'QPKG name:' "$r_report_qpkg_name_column_width"
@@ -5173,7 +5173,7 @@ _GenerateReposReportDataLine_()
 
 	name=$qpkg_name
 
-	if IsQpkgInstalledMissing; then
+	if IsQpkgMissing; then
 		mode=highlight
 		/bin/touch "$r_report_flags_path"/status-missing
 	elif IsQpkgInstalled; then
@@ -5211,11 +5211,11 @@ _GenerateReposReportDataLine_()
 		mute)
 			/bin/touch "$r_report_flags_path"/na
 
-			if ! IsQpkgDatabaseArchOK; then
+			if ! IsQpkgDbArchOK; then
 				assigned_repo='incompatible architecture'
-			elif ! IsQpkgDatabaseMinOSVerOk; then
+			elif ! IsQpkgDbMinOSVerOk; then
 				assigned_repo='incompatible '$(GetOsName)
-			elif ! IsQpkgDatabaseMinRAMOk; then
+			elif ! IsQpkgDbMinRAMOk; then
 				assigned_repo='insufficient RAM installed'
 			else
 				assigned_repo='not installed'
@@ -5253,7 +5253,7 @@ _GenerateReposReportDataLine_()
 		name_msg=$(GenerateReportField "$name")
 	fi
 
-	if IsOsSupportAutowidthTableColumns; then
+	if IsOsCanAutowidthTableColumns; then
 		printf '%s' "$name_msg|$assigned_repo_msg|$install_date_msg"
 	else
 		GenerateReportLineItem "$name_msg" "$r_report_qpkg_name_column_width"
@@ -5273,7 +5273,7 @@ GenerateAbsReportTitleLine()
 	#	$r_report_qpkg_is_installed_column_width
 	#	$r_report_qpkg_name_column_width
 
-	if IsOsSupportAutowidthTableColumns; then
+	if IsOsCanAutowidthTableColumns; then
 		printf 'QPKG name:|Installed?|Acceptable QPKG name abbreviations and aliases:'
 	else
 		GenerateReportLineItem 'QPKG name:' "$r_report_qpkg_name_column_width"
@@ -5298,7 +5298,7 @@ _GenerateAbsReportDataLine_()
 	local mode=''
 	local name_msg=$r_chars_blank
 
-	if IsQpkgInstalledMissing; then
+	if IsQpkgMissing; then
 		mode=highlight
 		/bin/touch "$r_report_flags_path"/status-missing
 	elif IsNtQpkgInstalled; then
@@ -5311,14 +5311,14 @@ _GenerateAbsReportDataLine_()
 
 	case $mode in
 		mute)
-			if ! IsQpkgDatabaseArchOK "$qpkg_name"; then
+			if ! IsQpkgDbArchOK "$qpkg_name"; then
 				abs_msg=$r_chars_alert'incompatible architecture'
-			elif ! IsQpkgDatabaseMinOSVerOk "$qpkg_name"; then
+			elif ! IsQpkgDbMinOSVerOk "$qpkg_name"; then
 				abs_msg=$r_chars_alert"incompatible $(GetOsName) version"
-			elif ! IsQpkgDatabaseMinRAMOk "$qpkg_name"; then
+			elif ! IsQpkgDbMinRAMOk "$qpkg_name"; then
 				abs_msg=$r_chars_alert'insufficient RAM installed'
 			else
-				abs_msg=${r_chars_normal}$(AddSeparators "$(GetQpkgDatabaseAbbrvs "$qpkg_name")")
+				abs_msg=${r_chars_normal}$(AddSeparators "$(GetQpkgDbAbbrvs "$qpkg_name")")
 			fi
 
 			abs_msg=$(TextDarkGrey "$abs_msg")
@@ -5326,17 +5326,17 @@ _GenerateAbsReportDataLine_()
 			name_msg+=$(TextDarkGrey "$qpkg_name")
 			;;
 		highlight)
-			abs_msg=$(TextBrightRed "${r_chars_alert}$(AddSeparators "$(GetQpkgDatabaseAbbrvs)")")
+			abs_msg=$(TextBrightRed "${r_chars_alert}$(AddSeparators "$(GetQpkgDbAbbrvs)")")
 			installed_msg=$(TextBrightRedBlink "${r_chars_alert}missing")
 			name_msg+=$(TextBrightRed "$qpkg_name")
 			;;
 		*)
-			abs_msg=${r_chars_normal}$(AddSeparators "$(GetQpkgDatabaseAbbrvs)")
+			abs_msg=${r_chars_normal}$(AddSeparators "$(GetQpkgDbAbbrvs)")
 			installed_msg+=true
 			name_msg+=$qpkg_name
 	esac
 
-	if IsOsSupportAutowidthTableColumns; then
+	if IsOsCanAutowidthTableColumns; then
 		printf '%s' "$name_msg|$installed_msg|$abs_msg"
 	else
 		GenerateReportLineItem "$name_msg" "$r_report_qpkg_name_column_width"
@@ -5364,7 +5364,7 @@ GenerateDepsReportTitleLine()
 	#	$r_report_qpkg_name_column_width
 	#	$r_report_qpkg_opt_dependencies_column_width
 
-	if IsOsSupportAutowidthTableColumns; then
+	if IsOsCanAutowidthTableColumns; then
 		printf 'QPKG name:|Dependencies:|Optionals:|Installed?|Enabled?|Managed?|Min. RAM:|Min. OS:|Max. OS:|Supported arch?|Installed QPKG author:'
 	else
 		GenerateReportLineItem 'QPKG name:' "$r_report_qpkg_name_column_width"
@@ -5396,8 +5396,8 @@ _GenerateDepsReportDataLine_()
 	local a=''
 	local -a column_vars=(author arch deps enabled installed managed max_os min_os min_ram name opt_deps)
 	local dep_name=''
-	local deps_raw=$(GetQpkgDatabaseDependencies "$qpkg_name")
-	local opt_deps_raw=$(GetQpkgDatabaseOptDependencies "$qpkg_name")
+	local deps_raw=$(GetQpkgDbDependencies "$qpkg_name")
+	local opt_deps_raw=$(GetQpkgDbOptDependencies "$qpkg_name")
 	local mode=''
 	local req_alert=false
 	local req_attention=false
@@ -5409,12 +5409,12 @@ _GenerateDepsReportDataLine_()
 	done
 
 	name=$qpkg_name
-	author=$(GetQpkgInstalledAuthor)
-	max_os=$(GetQpkgDatabaseMaxOSVer "$name")
-	min_os=$(GetQpkgDatabaseMinOSVer "$name")
-	min_ram=$(GetQpkgDatabaseMinRAM "$name")
-	IsQpkgDatabaseArchOK && arch=true
-	IsQpkgInstalledRepoSelfManaged && managed=true
+	author=$(GetQpkgAuthor)
+	max_os=$(GetQpkgDbMaxOSVer "$name")
+	min_os=$(GetQpkgDbMinOSVer "$name")
+	min_ram=$(GetQpkgDbMinRAM "$name")
+	IsQpkgDbArchOK && arch=true
+	IsQpkgRepoSelfManaged && managed=true
 	IsQpkgEnabled "$name" && enabled=true
 	[[ -z $deps_raw ]] && deps_raw=none
 	[[ -z $opt_deps_raw ]] && opt_deps_raw=none
@@ -5424,13 +5424,13 @@ _GenerateDepsReportDataLine_()
 
 	/bin/touch "$r_report_flags_path"/deps
 
-	if IsQpkgInstalledMissing; then
+	if IsQpkgMissing; then
 		mode=missing
 	elif IsQpkgInstalled; then
 		mode=normal
 	else
 		mode=mute
-		IsQpkgReallyInstalled && IsNtQpkgInstalledAuthorOk && mode=author
+		IsQpkgReallyInstalled && IsNtQpkgAuthorOk && mode=author
 	fi
 
 	case $mode in
@@ -5489,7 +5489,7 @@ _GenerateDepsReportDataLine_()
 
 			# Assign & highlight field messages.
 
-			if IsQpkgDatabaseArchOK; then
+			if IsQpkgDbArchOK; then
 				arch_msg=$(GenerateReportField "$arch" mute)
 			else
 				arch_msg=$(GenerateReportField "$arch" attention)
@@ -5503,14 +5503,14 @@ _GenerateDepsReportDataLine_()
 			installed_msg=$(GenerateReportField "$installed" mute)
 			managed_msg=$(GenerateReportField N/A mute)
 
-			if IsQpkgDatabaseMaxOSVerOk "$qpkg_name"; then
+			if IsQpkgDbMaxOSVerOk "$qpkg_name"; then
 				max_os_msg=$(GenerateReportField "$max_os" mute)
 			else
 				max_os_msg=$(GenerateReportField "$max_os" attention)
 				req_attention=true
 			fi
 
-			if IsQpkgDatabaseMinOSVerOk "$qpkg_name"; then
+			if IsQpkgDbMinOSVerOk "$qpkg_name"; then
 				if [[ $min_os != none ]]; then
 					min_os_msg=$(GenerateReportField "$min_os" mute)
 				else
@@ -5522,7 +5522,7 @@ _GenerateDepsReportDataLine_()
 				req_attention=true
 			fi
 
-			if IsQpkgDatabaseMinRAMOk "$qpkg_name"; then
+			if IsQpkgDbMinRAMOk "$qpkg_name"; then
 				min_ram_msg=$(GenerateReportField "$min_ram" mute)
 			else
 				min_ram_msg=$(GenerateReportField "$min_ram" attention)
@@ -5530,7 +5530,7 @@ _GenerateDepsReportDataLine_()
 			fi
 			;;
 		*)
-			if IsQpkgDatabaseArchOK; then
+			if IsQpkgDbArchOK; then
 				arch_msg=$(GenerateReportField "$arch" highlight_ok)
 			else
 				arch_msg=$(GenerateReportField "$arch" alert)
@@ -5583,13 +5583,13 @@ _GenerateDepsReportDataLine_()
 
 			installed_msg=$(GenerateReportField true highlight_ok)
 
-			if IsQpkgInstalledRepoSelfManaged; then
+			if IsQpkgRepoSelfManaged; then
 				managed_msg=$(GenerateReportField "$managed" highlight_ok)
 			else
 				managed_msg=$(GenerateReportField "$managed" highlight)
 			fi
 
-			if IsQpkgDatabaseMaxOSVerOk; then
+			if IsQpkgDbMaxOSVerOk; then
 				if [[ $max_os != none ]]; then
 					max_os_msg=$(GenerateReportField "$max_os" highlight_ok)
 				else
@@ -5600,7 +5600,7 @@ _GenerateDepsReportDataLine_()
 				req_alert=true
 			fi
 
-			if IsQpkgDatabaseMinOSVerOk; then
+			if IsQpkgDbMinOSVerOk; then
 				if [[ $min_os != none ]]; then
 					min_os_msg=$(GenerateReportField "$min_os" highlight_ok)
 				else
@@ -5611,7 +5611,7 @@ _GenerateDepsReportDataLine_()
 				req_alert=true
 			fi
 
-			if IsQpkgDatabaseMinRAMOk; then
+			if IsQpkgDbMinRAMOk; then
 				if [[ $min_ram != none ]]; then
 					min_ram_msg=$(GenerateReportField "$min_ram" highlight_ok)
 				else
@@ -5627,7 +5627,7 @@ _GenerateDepsReportDataLine_()
 		/bin/touch "$r_report_flags_path"/req-alert
 		name_msg=$(GenerateReportField "$name" alert)
 	elif [[ $req_attention = true ]]; then
-		/bin/touch "$r_report_flags_path"/req-attention
+		/bin/touch "$r_report_flags_path"/state-notinstallable
 		name_msg=$(GenerateReportField "$name" attention)
 	elif [[ $req_notice = true ]]; then
 		/bin/touch "$r_report_flags_path"/req-notice
@@ -5638,7 +5638,7 @@ _GenerateDepsReportDataLine_()
 		name_msg=$(GenerateReportField "$name")
 	fi
 
-	if IsOsSupportAutowidthTableColumns; then
+	if IsOsCanAutowidthTableColumns; then
 		printf '%s' "$name_msg|$deps_msg|$opt_deps_msg|$installed_msg|$enabled_msg|$managed_msg|$min_ram_msg|$min_os_msg|$max_os_msg|$arch_msg|$author_msg"
 	else
 		GenerateReportLineItem "$name_msg" "$r_report_qpkg_name_column_width"
@@ -5665,27 +5665,27 @@ GenerateFeaturesReportTitleLine()
 	#	$r_report_lazy_column_width
 	#	$r_report_qpkg_active_test_builtin_column_width
 	#	$r_report_qpkg_auto_update_column_width
+	#	$r_report_qpkg_can_backup_column_width
+	#	$r_report_qpkg_can_clean_column_width
+	#	$r_report_qpkg_can_start_to_update_column_width
 	#	$r_report_qpkg_is_compatible_column_width
 	#	$r_report_qpkg_name_column_width
 	#	$r_report_qpkg_tier_column_width
-	#	$r_report_qpkg_supports_backup_column_width
-	#	$r_report_qpkg_supports_clean_column_width
-	#	$r_report_qpkg_supports_start_to_update_column_width
 
-	if IsOsSupportAutowidthTableColumns; then
-		printf 'QPKG name:|CanBack?|CanClean?|StartUpd?|AutoUpd?|LiveTest?|Independent?|Dependent?|Optional?|ArchCompat?|Enhanced?|UniqueUnpack?'
+	if IsOsCanAutowidthTableColumns; then
+		printf 'QPKG name:|Independent?|Dependent?|Optional?|Enhanced?|CanBack?|CanClean?|StartUpd?|AutoUpd?|LiveTest?|ArchCompat?|UniqueUnpack?'
 	else
 		GenerateReportLineItem 'QPKG name:' "$r_report_qpkg_name_column_width"
-		GenerateReportLineItem 'CanBack?' "$r_report_qpkg_supports_backup_column_width"
-		GenerateReportLineItem 'CanClean?' "$r_report_qpkg_supports_clean_column_width"
-		GenerateReportLineItem 'StartUpd?' "$r_report_qpkg_supports_start_to_update_column_width"
-		GenerateReportLineItem 'AutoUpd?' "$r_report_qpkg_auto_update_column_width"
-		GenerateReportLineItem 'LiveTest?' "$r_report_qpkg_active_test_builtin_column_width"
 		GenerateReportLineItem 'Independent?' "$r_report_qpkg_tier_column_width"
 		GenerateReportLineItem 'Dependent?' "$r_report_qpkg_tier_column_width"
 		GenerateReportLineItem 'Optional?' "$r_report_qpkg_tier_column_width"
-		GenerateReportLineItem 'ArchCompat?' "$r_report_qpkg_is_compatible_column_width"
 		GenerateReportLineItem 'Enhanced?' "$r_report_lazy_column_width"
+		GenerateReportLineItem 'CanBack?' "$r_report_qpkg_can_backup_column_width"
+		GenerateReportLineItem 'CanClean?' "$r_report_qpkg_can_clean_column_width"
+		GenerateReportLineItem 'StartUpd?' "$r_report_qpkg_can_start_to_update_column_width"
+		GenerateReportLineItem 'AutoUpd?' "$r_report_qpkg_auto_update_column_width"
+		GenerateReportLineItem 'LiveTest?' "$r_report_qpkg_active_test_builtin_column_width"
+		GenerateReportLineItem 'ArchCompat?' "$r_report_qpkg_is_compatible_column_width"
 		GenerateReportLineItem 'UniqueUnpack?' "$r_report_lazy_column_width"
 	fi
 
@@ -5715,13 +5715,13 @@ _GenerateFeaturesReportDataLine_()
 
 	name=$qpkg_name
 
-	if IsQpkgInstalledMissing; then
+	if IsQpkgMissing; then
 		mode=missing
 	elif IsQpkgInstalled; then
 		mode=normal
 	else
 		mode=mute
-		IsQpkgReallyInstalled && IsNtQpkgInstalledAuthorOk && mode=author
+		IsQpkgReallyInstalled && IsNtQpkgAuthorOk && mode=author
 	fi
 
 	case $mode in
@@ -5743,23 +5743,23 @@ _GenerateFeaturesReportDataLine_()
 			;;
 		mute)
 			# Set field values.
-			[[ $(GetQpkgDatabaseActiveTest) = builtin ]] && active_test=true
-			IsQpkgDatabaseArchOK && arch_compatible=true
+			[[ $(GetQpkgDbActiveTest) = builtin ]] && active_test=true
+			IsQpkgDbArchOK && arch_compatible=true
 			autoupdate=N/A
-			IsQpkgDatabaseCanBackup && backup=true
-			IsQpkgDatabaseCanClean && clean=true
-			IsQpkgDatabaseIndependent && independent=true
-			IsQpkgDatabaseDependent && dependent=true
-			IsQpkgDatabaseOptional && optional=true
+			IsQpkgDbCanBackup && backup=true
+			IsQpkgDbCanClean && clean=true
+			IsQpkgDbIndependent && independent=true
+			IsQpkgDbDependent && dependent=true
+			IsQpkgDbOptional && optional=true
 
-			if IsQpkgDatabaseCanRestartToUpdate; then
+			if IsQpkgDbCanRestartToUpdate; then
 				restart_to_update=true
 			elif [[ $name = sherpa ]]; then
 				restart_to_update=true			# sherpa always auto-updates and this can't be disabled.
 			fi
 
-			IsQpkgDatabaseSherpaCompatible && compatible=true
-			IsQpkgDatabaseUniqueUnpack && uniqueunpack=true
+			IsQpkgDbSherpaCompatible && compatible=true
+			IsQpkgDbUniqueUnpack && uniqueunpack=true
 
 			# Assign & highlight field messages.
 
@@ -5769,11 +5769,11 @@ _GenerateFeaturesReportDataLine_()
 			;;
 		*)
 			# Set field values.
-			[[ $(GetQpkgDatabaseActiveTest) = builtin ]] && active_test=true
-			IsQpkgDatabaseArchOK && arch_compatible=true
+			[[ $(GetQpkgDbActiveTest) = builtin ]] && active_test=true
+			IsQpkgDbArchOK && arch_compatible=true
 
-			if IsQpkgInstalled && IsQpkgDatabaseCanRestartToUpdate; then
-				IsQpkgInstalledAutoUpdate && autoupdate=true
+			if IsQpkgInstalled && IsQpkgDbCanRestartToUpdate; then
+				IsQpkgAutoUpdate && autoupdate=true
 			elif [[ $name = sherpa ]]; then
 				autoupdate=true					# sherpa always auto-updates and this can't be disabled.
 			else
@@ -5781,20 +5781,20 @@ _GenerateFeaturesReportDataLine_()
 				/bin/touch "$r_report_flags_path"/na
 			fi
 
-			IsQpkgDatabaseCanBackup && backup=true
-			IsQpkgDatabaseCanClean && clean=true
-			IsQpkgDatabaseIndependent && independent=true
-			IsQpkgDatabaseDependent && dependent=true
-			IsQpkgDatabaseOptional && optional=true
+			IsQpkgDbCanBackup && backup=true
+			IsQpkgDbCanClean && clean=true
+			IsQpkgDbIndependent && independent=true
+			IsQpkgDbDependent && dependent=true
+			IsQpkgDbOptional && optional=true
 
-			if IsQpkgDatabaseCanRestartToUpdate; then
+			if IsQpkgDbCanRestartToUpdate; then
 				restart_to_update=true
 			elif [[ $name = sherpa ]]; then
 				restart_to_update=true			# sherpa always auto-updates and this can't be disabled.
 			fi
 
-			IsQpkgDatabaseSherpaCompatible && compatible=true
-			IsQpkgDatabaseUniqueUnpack && uniqueunpack=true
+			IsQpkgDbSherpaCompatible && compatible=true
+			IsQpkgDbUniqueUnpack && uniqueunpack=true
 
 			# Assign & highlight field messages.
 
@@ -5821,20 +5821,20 @@ _GenerateFeaturesReportDataLine_()
 		name_msg=$(GenerateReportField "$name")
 	fi
 
-	if IsOsSupportAutowidthTableColumns; then
-		printf '%s' "$name_msg|$backup_msg|$clean_msg|$restart_to_update_msg|$autoupdate_msg|$active_test_msg|$independent_msg|$dependent_msg|$optional_msg|$arch_compatible_msg|$compatible_msg|$uniqueunpack_msg"
+	if IsOsCanAutowidthTableColumns; then
+		printf '%s' "$name_msg|$independent_msg|$dependent_msg|$optional_msg|$compatible_msg|$backup_msg|$clean_msg|$restart_to_update_msg|$autoupdate_msg|$active_test_msg|$arch_compatible_msg|$uniqueunpack_msg"
 	else
 		GenerateReportLineItem "$name_msg" "$r_report_qpkg_name_column_width"
-		GenerateReportLineItem "$backup_msg" "$r_report_qpkg_supports_backup_column_width"
-		GenerateReportLineItem "$clean_msg" "$r_report_qpkg_supports_clean_column_width"
-		GenerateReportLineItem "$restart_to_update_msg" "$r_report_qpkg_supports_start_to_update_column_width"
-		GenerateReportLineItem "$autoupdate_msg" "$r_report_qpkg_auto_update_column_width"
-		GenerateReportLineItem "$active_test_msg" "$r_report_qpkg_active_test_builtin_column_width"
 		GenerateReportLineItem "$independent_msg" "$r_report_qpkg_tier_column_width"
 		GenerateReportLineItem "$dependent_msg" "$r_report_qpkg_tier_column_width"
 		GenerateReportLineItem "$optional_msg" "$r_report_qpkg_tier_column_width"
-		GenerateReportLineItem "$arch_compatible_msg" "$r_report_qpkg_is_compatible_column_width"
 		GenerateReportLineItem "$compatible_msg" "$r_report_lazy_column_width"
+		GenerateReportLineItem "$backup_msg" "$r_report_qpkg_can_backup_column_width"
+		GenerateReportLineItem "$clean_msg" "$r_report_qpkg_can_clean_column_width"
+		GenerateReportLineItem "$restart_to_update_msg" "$r_report_qpkg_can_start_to_update_column_width"
+		GenerateReportLineItem "$autoupdate_msg" "$r_report_qpkg_auto_update_column_width"
+		GenerateReportLineItem "$active_test_msg" "$r_report_qpkg_active_test_builtin_column_width"
+		GenerateReportLineItem "$arch_compatible_msg" "$r_report_qpkg_is_compatible_column_width"
 		GenerateReportLineItem "$uniqueunpack_msg" "$r_report_lazy_column_width"
 	fi
 
@@ -5850,7 +5850,7 @@ GenerateBacksReportTitleLine()
 	#	$r_report_file_change_date_column_width
 	#	$r_report_file_name_column_width
 
-	if IsOsSupportAutowidthTableColumns; then
+	if IsOsCanAutowidthTableColumns; then
 		printf 'Backup file:|Size in bytes:|Backup date:'
 	else
 		GenerateReportLineItem 'Backup file:' "$r_report_file_name_column_width"
@@ -5912,7 +5912,7 @@ _GenerateBacksReportItemLine_()
 			/bin/touch "$r_report_flags_path"/backup-file-old
 	esac
 
-	if IsOsSupportAutowidthTableColumns; then
+	if IsOsCanAutowidthTableColumns; then
 		printf '%s' "$file_name_msg|$file_bytes_msg|$epoch_time_msg"
 	else
 		GenerateReportLineItem "$file_name_msg" "$r_report_file_name_column_width"
@@ -6890,27 +6890,40 @@ InitActionForkCounters()
 
 	# Create directories so async action forks can be monitored.
 
+	# Inputs: (global)
+	#	$r_action_counts_path
+
+	# Outputs: (global)
+	#	$proc_counts_path
+	#	$proc_fail_count_path
+	#	$proc_fork_count_path
+	#	$proc_ok_count_path
+	#	$proc_skip_abort_count_path
+	#	$proc_skip_count_path
+	#	$proc_skip_error_count_path
+	#	$proc_skip_ok_count_path
+
 	MakePath "$r_action_counts_path" 'action fork counters'
 	proc_counts_path=$(/bin/mktemp -d "$r_action_counts_path"/"${FUNCNAME[1]}"_XXXXXX)
 	[[ -n ${proc_counts_path:?undefined proc counts path} ]] || return
 
 	EraseForkCountPaths
 
+	proc_fail_count_path=$proc_counts_path/fail.count
 	proc_fork_count_path=$proc_counts_path/fork.count
 	proc_ok_count_path=$proc_counts_path/ok.count
-	proc_skip_count_path=$proc_counts_path/skip.count
-	proc_skip_ok_count_path=$proc_counts_path/skip.ok.count
-	proc_skip_error_count_path=$proc_counts_path/skip.error.count
 	proc_skip_abort_count_path=$proc_counts_path/skip.abort.count
-	proc_fail_count_path=$proc_counts_path/fail.count
+	proc_skip_count_path=$proc_counts_path/skip.count
+	proc_skip_error_count_path=$proc_counts_path/skip.error.count
+	proc_skip_ok_count_path=$proc_counts_path/skip.ok.count
 
+	MakePath "$proc_fail_count_path" 'forks failed count'
 	MakePath "$proc_fork_count_path" 'fork count'
 	MakePath "$proc_ok_count_path" 'forks completed OK count'
-	MakePath "$proc_skip_count_path" 'forks skipped count'
-	MakePath "$proc_skip_ok_count_path" 'forks skipped-OK count'
-	MakePath "$proc_skip_error_count_path" 'forks skipped-error count'
 	MakePath "$proc_skip_abort_count_path" 'forks skipped-aborted count'
-	MakePath "$proc_fail_count_path" 'forks failed count'
+	MakePath "$proc_skip_count_path" 'forks skipped count'
+	MakePath "$proc_skip_error_count_path" 'forks skipped-error count'
+	MakePath "$proc_skip_ok_count_path" 'forks skipped-OK count'
 
 	InitProgress
 
@@ -6944,18 +6957,36 @@ IncrementActionForkIndex()
 	((fork_index++))
 	printf -v a '%02d' "$fork_index"
 
+	proc_fail_pathfile=$proc_fail_count_path/$a
 	proc_fork_pathfile=$proc_fork_count_path/$a
 	proc_ok_pathfile=$proc_ok_count_path/$a
-	proc_skip_pathfile=$proc_skip_count_path/$a
-	proc_skip_ok_pathfile=$proc_skip_ok_count_path/$a
-	proc_skip_error_pathfile=$proc_skip_error_count_path/$a
 	proc_skip_abort_pathfile=$proc_skip_abort_count_path/$a
-	proc_fail_pathfile=$proc_fail_count_path/$a
+	proc_skip_error_pathfile=$proc_skip_error_count_path/$a
+	proc_skip_ok_pathfile=$proc_skip_ok_count_path/$a
+	proc_skip_pathfile=$proc_skip_count_path/$a
 
 	}
 
 RefreshActionForkCounts()
 	{
+
+	# Inputs: (global)
+	#	$proc_fail_count_path
+	#	$proc_fork_count_path
+	#	$proc_ok_count_path
+	#	$proc_skip_abort_count_path
+	#	$proc_skip_count_path
+	#	$proc_skip_error_count_path
+	#	$proc_skip_ok_count_path
+
+	# Outputs: (global)
+	#	$fail_count
+	#	$fork_count
+	#	$ok_count
+	#	$skip_abort_count
+	#	$skip_count
+	#	$skip_error_count
+	#	$skip_ok_count
 
 	fork_count=$(FileCountAll "$proc_fork_count_path")
 	ok_count=$(FileCountAll "$proc_ok_count_path")
@@ -6969,6 +7000,11 @@ RefreshActionForkCounts()
 
 EraseForkCountPaths()
 	{
+
+	# Inputs: (global)
+	#	$proc_counts_path
+	#	$r_action_abort_pathfile
+	#	$r_action_counts_path
 
 	ClearPath "$r_action_counts_path" "$proc_counts_path"
 	[[ -e $r_action_abort_pathfile ]] && rm -f "$r_action_abort_pathfile"
@@ -7464,9 +7500,9 @@ GenerateQPKGsTiers()
 		[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
 		SetQpkgIndex
 
-		if IsQpkgDatabaseOptional; then
+		if IsQpkgDbOptional; then
 			echo "$qpkg_name" >> "$r_optional_qpkgs_list_pathfile"
-		elif IsQpkgDatabaseDependent; then
+		elif IsQpkgDbDependent; then
 			echo "$qpkg_name" >> "$r_dependent_qpkgs_list_pathfile"
 		else
 			echo "$qpkg_name" >> "$r_independent_qpkgs_list_pathfile"
@@ -7481,6 +7517,7 @@ LoadQPKGsTiers()
 	{
 
 	# Inputs: (global)
+	#	$qpkgs_tiers_built
 	#	$r_dependent_qpkgs_list_pathfile
 	#	$r_independent_qpkgs_list_pathfile
 	#	$r_optional_qpkgs_list_pathfile
@@ -7492,6 +7529,9 @@ LoadQPKGsTiers()
 	#	QPKGs-GRoptional
 
 	[[ $qpkgs_tiers_built = true ]] || return
+
+	local a=''
+	local b=''
 
 	for a in "${r_qpkg_tiers[@]}"; do
 		b=r_${a}_qpkgs_list_pathfile
@@ -7517,6 +7557,7 @@ BuildQPKGsStates()
 
 	local a=''
 	local b=''
+	qpkg_name=''
 
 	if [[ ${qpkgs_states_built:=false} = true ]]; then
 		DebugAsDone "don't build states: they're already built"
@@ -7527,21 +7568,11 @@ BuildQPKGsStates()
 	LoadPackages
 	InitQPKGsStates
 
-	if IsOsSupportAsyncQpkgActions; then
-		if IsOsStarting; then
-			ShowAsNote "$(GetOsName) is still booting ... check again in a few minutes"
-		elif IsOsStartingPackages; then
-			ShowAsNote "$(GetOsName) is starting QPKGs ... check again in a few minutes"
-		fi
-	else		# Must check older QTS (< 5.2.0) differently as it remains in boot mode while launching QPKGs.
-		if IsOsStartingPackages; then
-			ShowAsNote "$(GetOsName) is starting QPKGs ... check again in a few minutes"
-		elif IsOsStarting; then
-			ShowAsNote "$(GetOsName) is still booting ... check again in a few minutes"
-		fi
-	fi
-
-	if IsOsStopping; then
+	if IsOsStartingPackages; then
+		ShowAsNote "$(GetOsName) is starting QPKGs ... check again in a few minutes"
+	elif IsOsStarting; then
+		ShowAsNote "$(GetOsName) is still booting ... check again in a few minutes"
+	elif IsOsStopping; then
 		ShowAsNote "$(GetOsName) is shutting-down"
 	elif IsOsStoppingPackages; then
 		ShowAsNote "$(GetOsName) is stopping QPKGs"
@@ -7559,15 +7590,13 @@ BuildQPKGsStates()
 
 	# Faster to launch several concurrent loops async than a single loop. Launch those requiring more processing-time first.
 
-	# TODO: checking 'upgradable' status is slow (due to the number of checks that must be performed). Consider only running this during `check` or `upgrade` actions.
-
-	for qpkg_name in $(QPKGs-GRall:Array); do
+  	for qpkg_name in $(QPKGs-GRall:Array); do
 		if IsQpkgUpgradable; then
 			echo upgradable
 		else
 			echo notupgradable
 		fi >> "$r_qpkg_states_path/$qpkg_name"
-	done &
+  	done &
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		if IsQpkgInstalled; then
@@ -7593,10 +7622,10 @@ BuildQPKGsStates()
 		else
 			echo notinstallable
 		fi >> "$r_qpkg_states_path/$qpkg_name"
-	done &
+  	done &
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		if IsQpkgInstalledMissing; then
+		if IsQpkgMissing; then
 			echo missing
 		else
 			echo notmissing
@@ -7614,7 +7643,6 @@ BuildQPKGsStates()
 	wait 2> /dev/null
 
 	ShowAsProc 'store QPKG states'
-
 	# Load status lines from individual files into session arrays.
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
@@ -7708,7 +7736,7 @@ BuildQPKGsStates()
 InitQPKGsStates()
 	{
 
-	# Clear in-memory state list objects.
+	# Clear in-memory state list objects and on-disk lists.
 
 	# Inputs: (global)
 	#	$r_qpkg_is_states[]
@@ -7756,7 +7784,7 @@ BuildQPKGsIsCanBackup()
 	local qpkg_name=''
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		IsQpkgDatabaseCanBackup "$qpkg_name" && QPKGs-GRcanbackup:Add "$qpkg_name"
+		IsQpkgDbCanBackup "$qpkg_name" && QPKGs-GRcanbackup:Add "$qpkg_name"
 	done
 
 	FuncExit
@@ -7773,7 +7801,7 @@ BuildQPKGsIsCanRestartToUpdate()
 	local qpkg_name=''
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		IsQpkgDatabaseCanRestartToUpdate "$qpkg_name" && QPKGs-GRcanrestarttoupdate:Add "$qpkg_name"
+		IsQpkgDbCanRestartToUpdate "$qpkg_name" && QPKGs-GRcanrestarttoupdate:Add "$qpkg_name"
 	done
 
 	FuncExit
@@ -7790,7 +7818,7 @@ BuildQPKGsIsCanClean()
 	local qpkg_name=''
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		IsQpkgDatabaseCanClean "$qpkg_name" && QPKGs-GRcanclean:Add "$qpkg_name"
+		IsQpkgDbCanClean "$qpkg_name" && QPKGs-GRcanclean:Add "$qpkg_name"
 	done
 
 	FuncExit
@@ -7838,7 +7866,7 @@ HelpAbbreviations()
 	done
 
 	if [[ -n $a ]]; then
-		if IsOsSupportAutowidthTableColumns; then
+		if IsOsCanAutowidthTableColumns; then
 			printf '%s' "$a" | Tableise
 		else
 			printf '%s' "$a"
@@ -7910,7 +7938,7 @@ ShowReportBackups()
 	done
 
 	if [[ -n $a ]]; then
-		if IsOsSupportAutowidthTableColumns; then
+		if IsOsCanAutowidthTableColumns; then
 			printf '%s' "$a" | Tableise
 		else
 			printf '%s' "$a"
@@ -7959,7 +7987,7 @@ ShowReportDependencies()
 	done
 
 	if [[ -n $a ]]; then
-		if IsOsSupportAutowidthTableColumns; then
+		if IsOsCanAutowidthTableColumns; then
 			printf '%s' "$a" | Tableise
 		else
 			printf '%s' "$a"
@@ -8009,7 +8037,7 @@ ShowReportFeatures()
 	done
 
 	if [[ -n $a ]]; then
-		if IsOsSupportAutowidthTableColumns; then
+		if IsOsCanAutowidthTableColumns; then
 			printf '%s' "$a" | Tableise
 		else
 			printf '%s' "$a"
@@ -8064,7 +8092,7 @@ ShowReportPackages()
 	done
 
 	if [[ -n $a ]]; then
-		if IsOsSupportAutowidthTableColumns; then
+		if IsOsCanAutowidthTableColumns; then
 			printf '%s' "$a" | Tableise
 		else
 			printf '%s' "$a"
@@ -8121,7 +8149,7 @@ ShowReportRepos()
 	done
 
 	if [[ -n $a ]]; then
-		if IsOsSupportAutowidthTableColumns; then
+		if IsOsCanAutowidthTableColumns; then
 			printf '%s' "$a" | Tableise
 		else
 			printf '%s' "$a"
@@ -8172,7 +8200,7 @@ ShowReportStatuses()
 	done
 
 	if [[ -n $a ]]; then
-		if IsOsSupportAutowidthTableColumns; then
+		if IsOsCanAutowidthTableColumns; then
 			printf '%s' "$a" | Tableise
 		else
 			printf '%s' "$a"
@@ -8373,8 +8401,9 @@ GenerateReportFooter()
 			DisplayAsIndentQuotedInfoItem "$(TextBrightRed '!')" "QPKG backup file was updated more-than $r_report_highlight_backups_older_than."
 		fi
 
-		if [[ -e "$r_report_flags_path"/status-upgradable ]]; then
-			DisplayAsIndentQuotedInfoItem "($(TextBrightOrange new))" 'an upgraded QPKG version is available'
+		if [[ -e "$r_report_flags_path"/state-upgradable ]]; then
+			DisplayAsIndentQuotedInfoItem "$(TextBrightOrange upgradable)" 'a new QPKG version is available'
+			DisplayAsIndentQuotedInfoItem "($(TextBrightOrange new))" 'the new QPKG version'
 		fi
 
 		if [[ -e "$r_report_flags_path"/status-wrongauthor ]]; then
@@ -8383,6 +8412,10 @@ GenerateReportFooter()
 
 		if [[ -e "$r_report_flags_path"/req-attention ]]; then
 			DisplayAsIndentQuotedInfoItem "$(TextBrightOrange '*')" "QPKG cannot be managed with $(ShowAsTitleName)"
+		fi
+
+		if [[ -e "$r_report_flags_path"/state-notinstallable ]]; then
+			DisplayAsIndentQuotedInfoItem "$(TextBrightOrange '*')" 'QPKG cannot be installed'
 		fi
 
 		if [[ -e "$r_report_flags_path"/action-pending ]]; then
@@ -8455,7 +8488,7 @@ GenerateReportFooter()
 	})
 
 	if [[ -n $a ]]; then
-		if IsOsSupportAutowidthTableColumns; then
+		if IsOsCanAutowidthTableColumns; then
 			printf '%s' "$a" | Tableise
 		else
 			printf '%s\n' "$a"
@@ -8495,7 +8528,7 @@ GenerateReportHeadingsFooter()
 	})
 
 	if [[ -n $a ]]; then
-		if IsOsSupportAutowidthTableColumns; then
+		if IsOsCanAutowidthTableColumns; then
 			printf '%s' "$a" | Tableise
 		else
 			printf '%s\n' "$a"
@@ -8521,6 +8554,12 @@ ShowReport()
 
 ShowVersionsList()
 	{
+
+	# Inputs: (global)
+	#	$r_objects_epoch
+	#	$r_packages_epoch
+	#	$r_this_package_ver
+	#	$r_this_script_epoch
 
 	DisableDebugToArchiveAndFile
 	EraseThisLine
@@ -8715,7 +8754,7 @@ FindNextFD()
 
 	}
 
-MarkThisActionForkAsStarted()
+MarkActionForkAsStarted()
 	{
 
 	IncrementActionForkIndex
@@ -8723,7 +8762,7 @@ MarkThisActionForkAsStarted()
 
 	}
 
-MarkThisActionForkAsOk()
+MarkActionForkAsOk()
 	{
 
 	[[ -n $proc_fork_pathfile && -e $proc_fork_pathfile ]] && mv "$proc_fork_pathfile" "$proc_ok_pathfile"
@@ -8731,7 +8770,7 @@ MarkThisActionForkAsOk()
 
 	}
 
-MarkThisActionForkAsSkippedOk()
+MarkActionForkAsSkippedOk()
 	{
 
 	[[ -n $proc_fork_pathfile && -e $proc_fork_pathfile ]] && mv "$proc_fork_pathfile" "$proc_skip_ok_pathfile"
@@ -8739,7 +8778,7 @@ MarkThisActionForkAsSkippedOk()
 
 	}
 
-MarkThisActionForkAsSkipped()
+MarkActionForkAsSkipped()
 	{
 
 	[[ -n $proc_fork_pathfile && -e $proc_fork_pathfile ]] && mv "$proc_fork_pathfile" "$proc_skip_pathfile"
@@ -8747,7 +8786,7 @@ MarkThisActionForkAsSkipped()
 
 	}
 
-MarkThisActionForkAsSkippedError()
+MarkActionForkAsSkippedError()
 	{
 
 	[[ -n $proc_fork_pathfile && -e $proc_fork_pathfile ]] && mv "$proc_fork_pathfile" "$proc_skip_error_pathfile"
@@ -8755,7 +8794,7 @@ MarkThisActionForkAsSkippedError()
 
 	}
 
-MarkThisActionForkAsSkippedAbort()
+MarkActionForkAsSkippedAbort()
 	{
 
 	[[ -n $proc_fork_pathfile && -e $proc_fork_pathfile ]] && mv "$proc_fork_pathfile" "$proc_skip_abort_pathfile"
@@ -8763,7 +8802,7 @@ MarkThisActionForkAsSkippedAbort()
 
 	}
 
-MarkThisActionForkAsError()
+MarkActionForkAsError()
 	{
 
 	[[ -n $proc_fork_pathfile && -e $proc_fork_pathfile ]] && mv "$proc_fork_pathfile" "$proc_fail_pathfile"
@@ -8920,7 +8959,7 @@ GetUserDefVol()
 
 	}
 
-IsPython3Outdated()
+IsPythonOutdated()
 	{
 
 	# Check if Python3 interpreter needs upgrading for this NAS arch.
@@ -9230,17 +9269,29 @@ GetUserSudoUID()
 GetOsState()
 	{
 
+	local a=''
+
 	if IsOsStarting; then
-		printf 'booting'
-	elif IsOsStartingPackages; then
-		printf 'starting QPKGs'
-	elif IsOsStopping; then
-		printf 'shutting-down'
-	elif IsOsStoppingPackages; then
-		printf 'stopping QPKGs'
-	else
-		printf online
+		a=booting
 	fi
+
+	if IsOsStartingPackages; then
+		[[ -n $a ]] && a+=', '
+		a+='starting QPKGs'
+	fi
+
+	if IsOsStopping; then
+		a='shutting-down'
+	fi
+
+	if IsOsStoppingPackages; then
+		[[ -n $a ]] && a+=', '
+		a+='stopping QPKGs'
+	fi
+
+	[[ -z $a ]] && a=online
+
+	printf '%s' "$a"
 
 	}
 
@@ -9300,7 +9351,7 @@ IsOsSupported()
 
 	} &> /dev/null
 
-IsOsSupportAsyncQpkgActions()
+IsOsCanAsyncQpkgActions()
 	{
 
 	# Inputs: (global)
@@ -9310,7 +9361,7 @@ IsOsSupportAsyncQpkgActions()
 
 	} &> /dev/null
 
-IsOsSupportSecureDownload()
+IsOsCanSecureDownload()
 	{
 
 	# `/sbin/curl` with SSL certificate verification enabled:
@@ -9325,11 +9376,11 @@ IsOsSupportSecureDownload()
 	# Inputs: (global)
 	#	$r_nas_firmware_version
 
-	[[ ${r_nas_firmware_version//.} -ge 500 ]]
+	[[ ${r_nas_firmware_version//.} -ge 455 ]]
 
 	} &> /dev/null
 
-IsOsSupportQpkgTimeout()
+IsOsCanQpkgTimeout()
 	{
 
 	# Inputs: (global)
@@ -9339,7 +9390,7 @@ IsOsSupportQpkgTimeout()
 
 	} &> /dev/null
 
-IsOsSupportSignedPackages()
+IsOsCanSignedPackages()
 	{
 
 	# Inputs: (global)
@@ -9347,7 +9398,7 @@ IsOsSupportSignedPackages()
 
 # 	[[ ${r_nas_firmware_version//.} -ge 435 ]]	# NOTE: signing failed on QTS 4.3.6 (x31). No cert database. So, let's go one-version-higher:
 
-	[[ ${r_nas_firmware_version//.} -ge 440 ]]
+	[[ ${r_nas_firmware_version//.} -ge 437 ]]
 
 	} &> /dev/null
 
@@ -9363,7 +9414,7 @@ IsOsCompatibleWithSigned()
 
 	} &> /dev/null
 
-IsOsSupportUnofficialPackages()
+IsOsCanUnofficialPackages()
 	{
 
 	# Inputs: (global)
@@ -9375,14 +9426,14 @@ IsOsSupportUnofficialPackages()
 
 	} &> /dev/null
 
-IsOsSupportSudo()
+IsOsCanSudo()
 	{
 
 	[[ -e /usr/bin/sudo ]]
 
 	} &> /dev/null
 
-IsOsSupportSedExtRegex()
+IsOsCanSedExtRegex()
 	{
 
 	# Test if QTS `/bin/sed` can handle extended regexes (early BusyBox versions cannot):
@@ -9391,7 +9442,7 @@ IsOsSupportSedExtRegex()
 
 	}
 
-IsOsSupportDecimalSleepSeconds()
+IsOsCanDecimalSleepSeconds()
 	{
 
 	# Test if QTS `/bin/sleep` can handle decimal seconds (early BusyBox versions cannot):
@@ -9400,7 +9451,7 @@ IsOsSupportDecimalSleepSeconds()
 
 	} &> /dev/null
 
-IsOsSupportAutowidthTableColumns()
+IsOsCanAutowidthTableColumns()
 	{
 
 	# Inputs: (global)
@@ -9443,7 +9494,7 @@ IsOsStopping()
 IsOsStartingPackages()
 	{
 
-	if IsOsSupportAsyncQpkgActions; then
+	if IsOsCanAsyncQpkgActions; then
 		/bin/ps | /bin/grep '/usr/local/sbin/qpkg_service start' | /bin/grep -v grep
 	else
 		IsOsStarting
@@ -9454,7 +9505,7 @@ IsOsStartingPackages()
 IsOsStoppingPackages()
 	{
 
-	if IsOsSupportAsyncQpkgActions; then
+	if IsOsCanAsyncQpkgActions; then
 		/bin/ps | /bin/grep '/usr/local/sbin/qpkg_service stop' | /bin/grep -v grep
 	else
 		IsOsStopping
@@ -9751,15 +9802,15 @@ _QPKG:reassign_()
 
 	if IsNtQpkgInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" reassign '' skipped 'not installed'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
-	elif IsNtQpkgInstalledAuthorOk; then
+	elif IsNtQpkgAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" reassign '' skipped 'incompatible author'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
 	elif [[ $(GetQpkgInstalledStoreID) = sherpa || $(GetQpkgInstalledStoreID) = undefined ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" reassign '' skipped 'already assigned to sherpa'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
 	fi
 
@@ -9771,10 +9822,10 @@ _QPKG:reassign_()
 
 	if [[ $z -eq 0 ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" reassign '' ok
-		MarkThisActionForkAsOk
+		MarkActionForkAsOk
 	else
 		SaveActionResultToLog QPKG "$qpkg_name" reassign '' failed "$z"
-		MarkThisActionForkAsError
+		MarkActionForkAsError
 		z=1   # Remap to 1.
 	fi
 
@@ -9804,24 +9855,24 @@ _QPKG:download_()
 	FuncForkInit
 
 	local curl_options=''
-	local -r r_remote_hash=$(GetQpkgDatabaseHash)
-	local -r r_remote_url=$(GetQpkgDatabaseURL)
+	local -r r_remote_hash=$(GetQpkgDbHash)
+	local -r r_remote_url=$(GetQpkgDbURL)
 		local -r r_remote_filename=$(/usr/bin/basename "$r_remote_url")
 			local -r r_local_pathfile=$r_qpkg_download_path/$r_remote_filename
 				local -r r_local_filename=$(/usr/bin/basename "$r_local_pathfile")
 					local -r r_log_pathfile=$r_logs_path/$r_local_filename.$r_download_log_file
 	local -i z=0
 
-	IsOsSupportSecureDownload || curl_options=' --insecure'
+	IsOsCanSecureDownload || curl_options=' --insecure'
 
 	if [[ -z $r_remote_url || -z $r_remote_hash ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" download '' skipped 'NAS arch is incompatible'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
 	elif [[ -f $r_local_pathfile ]]; then
 		if FileMatchesMD5 "$r_local_pathfile" "$r_remote_hash"; then
 			SaveActionResultToLog QPKG "$qpkg_name" download '' skipped-ok "existing file $(ShowAsFileName "$r_local_filename") checksum is correct"
-			MarkThisActionForkAsSkippedOk
+			MarkActionForkAsSkippedOk
 			z=2
 		else
 			DebugInfo "deleting $(ShowAsFileName "$r_local_filename") as checksum is incorrect"
@@ -9844,16 +9895,16 @@ _QPKG:download_()
 				[[ $(Lowercase "${r_local_pathfile##*.}") = zip ]] && /usr/bin/unzip -nq "$r_local_pathfile" -d "$r_qpkg_download_path"
 				SaveActionResultToLog QPKG "$qpkg_name" download '' ok
 				SendPackageStateChange ISdownloaded
-				MarkThisActionForkAsOk
+				MarkActionForkAsOk
 			else
 				SaveActionResultToLog QPKG "$qpkg_name" download '' failed "cache file $(ShowAsFileName "$r_local_filename") has incorrect checksum"
 				SendPackageStateChange ISNTdownloaded
-				MarkThisActionForkAsError
+				MarkActionForkAsError
 				z=1
 			fi
 		else
 			SaveActionResultToLog QPKG "$qpkg_name" download '' failed "$z"
-			MarkThisActionForkAsError
+			MarkActionForkAsError
 			z=1   # Remap to 1 (last time I checked, 'curl' had 92 return codes).
 		fi
 	fi
@@ -9889,33 +9940,33 @@ _QPKG:install_()
 
 	if IsQpkgInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" install '' skipped 'already installed'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
-	elif IsQpkgReallyInstalled && IsNtQpkgInstalledAuthorOk; then
+	elif IsQpkgReallyInstalled && IsNtQpkgAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" install '' skipped 'incompatible author'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
-	elif ! IsQpkgDatabaseArchOK "$qpkg_name"; then
+	elif ! IsQpkgDbArchOK "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" install '' skipped 'NAS arch is incompatible'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
-	elif ! IsQpkgDatabaseMinOSVerOk "$qpkg_name"; then
+	elif ! IsQpkgDbMinOSVerOk "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" install '' skipped "$(GetOsName) version is incompatible"
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
-	elif ! IsQpkgDatabaseMinRAMOk "$qpkg_name"; then
+	elif ! IsQpkgDbMinRAMOk "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" install '' skipped 'NAS has insufficient RAM installed'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
 	fi
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	local local_pathfile=$(GetQpkgDatabasePathFilename)
+	local local_pathfile=$(GetQpkgDbPathFilename)
 
 	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" install '' skipped-error 'no local file found for processing: please report this issue'
-		MarkThisActionForkAsSkippedError
+		MarkActionForkAsSkippedError
 		z=4
 	fi
 
@@ -9939,7 +9990,7 @@ _QPKG:install_()
 	z=$?
 
 	LogQpkgServiceResult
-	IsQpkgDatabaseWillLog && ! QpkgInstalledServiceResultWasOk && z=1
+	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
 
 	[[ $qpkg_name = Entware ]] && IsNtSysFileExist $r_opkg_cmd && z=1		# Entware installation has failed.
 
@@ -9968,12 +10019,12 @@ _QPKG:install_()
 			fi
 		fi
 
-		IsOsSupportSignedPackages && SendParentChangeEnv "QPKGs-ACsign-to:Add $qpkg_name"
-		MarkThisActionForkAsOk
+		IsOsCanSignedPackages && SendParentChangeEnv "QPKGs-ACsign-to:Add $qpkg_name"
+		MarkActionForkAsOk
 		z=0   # Remap to zero.
 	else
 		SaveActionResultToLog QPKG "$qpkg_name" install '' failed "$z"
-		MarkThisActionForkAsError
+		MarkActionForkAsError
 		z=1   # Remap to 1.
 	fi
 
@@ -10005,25 +10056,25 @@ _QPKG:reinstall_()
 
 	if IsNtQpkgInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' skipped "not already installed, please use 'install' instead."
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
-	elif IsNtQpkgInstalledAuthorOk; then
+	elif IsNtQpkgAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' skipped 'incompatible author'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
-	elif IsNtQpkgInstalledRepoSelfManaged; then
+	elif IsNtQpkgRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
 	fi
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	local local_pathfile=$(GetQpkgDatabasePathFilename)
+	local local_pathfile=$(GetQpkgDbPathFilename)
 
 	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' skipped-error 'no local file found for processing, please report this issue.'
-		MarkThisActionForkAsSkippedError
+		MarkActionForkAsSkippedError
 		z=4
 	fi
 
@@ -10036,7 +10087,7 @@ _QPKG:reinstall_()
 	z=$?
 
 	LogQpkgServiceResult
-	IsQpkgDatabaseWillLog && ! QpkgInstalledServiceResultWasOk && z=1
+	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
 
 	[[ $qpkg_name = Entware ]] && IsNtSysFileExist $r_opkg_cmd && z=1
 
@@ -10048,11 +10099,11 @@ _QPKG:reinstall_()
 		fi
 
 		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' ok "v$(GetQpkgInstalledVer)"
-		MarkThisActionForkAsOk
+		MarkActionForkAsOk
 		z=0   # Remap to zero.
 	else
 		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' failed "$z"
-		MarkThisActionForkAsError
+		MarkActionForkAsError
 		z=1   # Remap to 1.
 	fi
 
@@ -10080,25 +10131,25 @@ _QPKG:rebuild_()
 
 	local -i z=0
 
-	if ! IsQpkgDatabaseCanBackup; then
+	if ! IsQpkgDbCanBackup; then
 		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' skipped 'does not support rebuild'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
-	elif IsQpkgReallyInstalled && IsNtQpkgInstalledAuthorOk; then
+	elif IsQpkgReallyInstalled && IsNtQpkgAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' skipped 'incompatible author'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
 	elif QPKGs-ISinstalled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' skipped "already installed, please use 'restore' instead"
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
 	elif ! IsQpkgBackupExist; then
 		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' skipped 'backup file does not exist'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
-	elif IsNtQpkgInstalledRepoSelfManaged; then
+	elif IsNtQpkgRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
 	fi
 
@@ -10108,7 +10159,7 @@ _QPKG:rebuild_()
 	# Nothing-to-do here, real QPKG actions have already been assigned in CheckEnv().
 
 	SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' ok
-	MarkThisActionForkAsOk
+	MarkActionForkAsOk
 	ClearQpkgInstalledAppCenterNotifier
 
 	FuncForkExit $z
@@ -10137,29 +10188,29 @@ _QPKG:upgrade_()
 
 	if IsNtQpkgInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' skipped 'not installed'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
-	elif IsNtQpkgInstalledAuthorOk; then
+	elif IsNtQpkgAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' skipped 'incompatible author'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
 	elif ! QPKGs-ISupgradable.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' skipped 'no new QPKG is available'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
-	elif IsNtQpkgInstalledRepoSelfManaged; then
+	elif IsNtQpkgRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
 	fi
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	local local_pathfile=$(GetQpkgDatabasePathFilename)
+	local local_pathfile=$(GetQpkgDbPathFilename)
 
 	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' skipped-error 'no local file found for processing, please report this issue'
-		MarkThisActionForkAsSkippedError
+		MarkActionForkAsSkippedError
 		z=4
 	fi
 
@@ -10174,7 +10225,7 @@ _QPKG:upgrade_()
 	z=$?
 
 	LogQpkgServiceResult
-	IsQpkgDatabaseWillLog && ! QpkgInstalledServiceResultWasOk && z=1
+	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
 
 	[[ $qpkg_name = Entware ]] && IsNtSysFileExist $r_opkg_cmd && z=1
 
@@ -10195,11 +10246,11 @@ _QPKG:upgrade_()
 			SaveActionResultToLog QPKG "$qpkg_name" upgrade '' ok "v${prev_ver} -> v${current_ver}"
 		fi
 
-		MarkThisActionForkAsOk
+		MarkActionForkAsOk
 		z=0   # Remap to zero.
 	else
 		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' failed "$z"
-		MarkThisActionForkAsError
+		MarkActionForkAsError
 		z=1   # Remap to 1.
 	fi
 
@@ -10231,19 +10282,19 @@ _QPKG:uninstall_()
 
 	if IsNtQpkgInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" uninstall '' skipped 'not installed'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
-	elif IsNtQpkgInstalledAuthorOk; then
+	elif IsNtQpkgAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" uninstall '' skipped 'incompatible author'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
 	elif [[ $qpkg_name = sherpa ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" uninstall '' skipped "it's needed here! 😉"
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
-	elif IsNtQpkgInstalledRepoSelfManaged; then
+	elif IsNtQpkgRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" uninstall '' skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
 	fi
 
@@ -10275,16 +10326,16 @@ _QPKG:uninstall_()
 			SendPackageStateChange ISNTinstalled
 			SendPackageStateChange ISNTactive
 			SendPackageStateChange ISNTenabled
-			MarkThisActionForkAsOk
+			MarkActionForkAsOk
 		else
 			SaveActionResultToLog QPKG "$qpkg_name" uninstall '' failed "$z"
-			MarkThisActionForkAsError
+			MarkActionForkAsError
 			z=1   # Remap to 1.
 		fi
 	else
 		# Standard QPKG `.uninstall.sh` was not found, so can't continue with uninstallation (maybe force this instead with `rm -r` ?).
 		SaveActionResultToLog QPKG "$qpkg_name" uninstall '' failed "$(ShowAsFileName '.uninstall.sh') not found"
-		MarkThisActionForkAsError
+		MarkActionForkAsError
 	fi
 
 	FuncForkExit $z
@@ -10313,19 +10364,19 @@ _QPKG:activate_()
 
 	if IsNtQpkgInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" activate '' skipped 'not installed'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
-	elif IsNtQpkgInstalledAuthorOk; then
+	elif IsNtQpkgAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" activate '' skipped 'incompatible author'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
 	elif QPKGs-ISNTenabled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" activate '' skipped "not enabled, please 'enable' it first"
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
-	elif IsNtQpkgInstalledRepoSelfManaged; then
+	elif IsNtQpkgRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" activate '' skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
 	fi
 
@@ -10333,22 +10384,22 @@ _QPKG:activate_()
 
 	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_activate_log_file
 	local timeout=''
-	IsOsSupportQpkgTimeout && timeout=' -t '$r_qpkg_start_timeout_seconds
-	local service_pathfile=$(GetQpkgInstalledServicePathFile)
+	IsOsCanQpkgTimeout && timeout=' -t '$r_qpkg_start_timeout_seconds
+	local service_pathfile=$(GetQpkgServicePathFile)
 
 	DebugAsProc "activating $(ShowAsPackageName)"
 
 	if [[ $service_pathfile = undefined ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" activate '' skipped-error 'QPKG service-script file undefined'
-		MarkThisActionForkAsSkippedError
+		MarkActionForkAsSkippedError
 
 		FuncForkExit 4
 	elif [[ $useropt_debug = true ]]; then
 		RunAndLog "${a}${service_pathfile} start" "$r_log_pathfile" log:failure-only
 		z=$?
-	elif IsQpkgDatabaseWillLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
+	elif IsQpkgDbWillLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
 		RunAndLog "/sbin/qpkg_service${timeout} start $qpkg_name" "$r_log_pathfile" log:failure-only
-		QpkgInstalledServiceResultWasOk && z=0 || z=1
+		QpkgServiceResultWasOk && z=0 || z=1
 	else
 		RunAndLog "$service_pathfile start" "$r_log_pathfile" log:failure-only
 		z=$?
@@ -10365,11 +10416,11 @@ _QPKG:activate_()
 		fi
 
 		SendPackageStateChange ISactive
-		MarkThisActionForkAsOk
+		MarkActionForkAsOk
 	else
 		SaveActionResultToLog QPKG "$qpkg_name" activate '' failed "$z"
 		SendPackageStateChange ISNTactive
-		MarkThisActionForkAsError
+		MarkActionForkAsError
 		z=1   # Remap to 1.
 	fi
 
@@ -10401,19 +10452,19 @@ _QPKG:reactivate_()
 
 	if IsNtQpkgInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' skipped 'not installed'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
-	elif IsNtQpkgInstalledAuthorOk; then
+	elif IsNtQpkgAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' skipped 'incompatible author'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
 	elif QPKGs-ISNTenabled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' skipped "not enabled, please 'enable' it first"
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
-	elif IsNtQpkgInstalledRepoSelfManaged; then
+	elif IsNtQpkgRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
 	fi
 
@@ -10421,22 +10472,22 @@ _QPKG:reactivate_()
 
 	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_reactivate_log_file
 	local timeout=''
-	IsOsSupportQpkgTimeout && timeout=' -t '$r_qpkg_restart_timeout_seconds
-	local service_pathfile=$(GetQpkgInstalledServicePathFile)
+	IsOsCanQpkgTimeout && timeout=' -t '$r_qpkg_restart_timeout_seconds
+	local service_pathfile=$(GetQpkgServicePathFile)
 
 	DebugAsProc "reactivating $(ShowAsPackageName)"
 
 	if [[ $service_pathfile = undefined ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' skipped-error 'QPKG service-script file undefined'
-		MarkThisActionForkAsSkippedError
+		MarkActionForkAsSkippedError
 
 		FuncForkExit 4
 	elif [[ $useropt_debug = true ]]; then
 		RunAndLog "${a}${service_pathfile} restart" "$r_log_pathfile" log:failure-only
 		z=$?
-	elif IsQpkgDatabaseWillLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
+	elif IsQpkgDbWillLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
 		RunAndLog "/sbin/qpkg_service${timeout} restart $qpkg_name" "$r_log_pathfile" log:failure-only
-		QpkgInstalledServiceResultWasOk && z=0 || z=1
+		QpkgServiceResultWasOk && z=0 || z=1
 	else
 		RunAndLog "$service_pathfile restart" "$r_log_pathfile" log:failure-only
 		z=$?
@@ -10445,10 +10496,10 @@ _QPKG:reactivate_()
 	if [[ $z -eq 0 ]]; then
 		LogQpkgServiceResult
 		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' ok
-		MarkThisActionForkAsOk
+		MarkActionForkAsOk
 	else
 		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' failed "$z"
-		MarkThisActionForkAsError
+		MarkActionForkAsError
 		z=1   # Remap to 1.
 	fi
 
@@ -10480,19 +10531,19 @@ _QPKG:deactivate_()
 
 	if IsNtQpkgInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' skipped 'not installed'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
-	elif IsNtQpkgInstalledAuthorOk; then
+	elif IsNtQpkgAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' skipped 'incompatible author'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
 # 	elif [[ $qpkg_name = sherpa ]]; then
 # 		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' skipped "it's needed here! 😉"
-# 		MarkThisActionForkAsSkipped
+# 		MarkActionForkAsSkipped
 # 		z=1
-	elif IsNtQpkgInstalledRepoSelfManaged; then
+	elif IsNtQpkgRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
 	fi
 
@@ -10500,22 +10551,22 @@ _QPKG:deactivate_()
 
 	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_deactivate_log_file
 	local timeout=''
-	IsOsSupportQpkgTimeout && timeout=' -t '$r_qpkg_stop_timeout_seconds
-	local service_pathfile=$(GetQpkgInstalledServicePathFile)
+	IsOsCanQpkgTimeout && timeout=' -t '$r_qpkg_stop_timeout_seconds
+	local service_pathfile=$(GetQpkgServicePathFile)
 
 	DebugAsProc "deactivating $(ShowAsPackageName)"
 
 	if [[ $service_pathfile = undefined ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' skipped-error 'QPKG service-script file undefined'
-		MarkThisActionForkAsSkippedError
+		MarkActionForkAsSkippedError
 
 		FuncForkExit 4
 	elif [[ $useropt_debug = true ]]; then
 		RunAndLog "${a}${service_pathfile} stop" "$r_log_pathfile" log:failure-only
 		z=$?
-	elif IsQpkgDatabaseWillLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
+	elif IsQpkgDbWillLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
 		RunAndLog "/sbin/qpkg_service${timeout} stop $qpkg_name" "$r_log_pathfile" log:failure-only
-		QpkgInstalledServiceResultWasOk && z=0 || z=1
+		QpkgServiceResultWasOk && z=0 || z=1
 	else
 		RunAndLog "$service_pathfile stop" "$r_log_pathfile" log:failure-only
 		z=$?
@@ -10532,10 +10583,10 @@ _QPKG:deactivate_()
 		fi
 
 		SendPackageStateChange ISNTactive
-		MarkThisActionForkAsOk
+		MarkActionForkAsOk
 	else
 		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' failed "$z"
-		MarkThisActionForkAsError
+		MarkActionForkAsError
 		z=1   # Remap to 1.
 	fi
 
@@ -10565,19 +10616,19 @@ _QPKG:enable_()
 
 	if IsNtQpkgInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" enable '' skipped 'not installed'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
-	elif IsNtQpkgInstalledAuthorOk; then
+	elif IsNtQpkgAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" enable '' skipped 'incompatible author'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
 	elif QPKGs-ISenabled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" enable '' skipped 'already enabled'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
-	elif IsNtQpkgInstalledRepoSelfManaged; then
+	elif IsNtQpkgRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" enable '' skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
 	fi
 
@@ -10585,7 +10636,7 @@ _QPKG:enable_()
 
 	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_enable_log_file
 	local timeout=''
-	IsOsSupportQpkgTimeout && timeout=' -t '$r_qpkg_enable_timeout_seconds
+	IsOsCanQpkgTimeout && timeout=' -t '$r_qpkg_enable_timeout_seconds
 
 	DebugAsProc "enabling $(ShowAsPackageName)"
 
@@ -10593,7 +10644,7 @@ _QPKG:enable_()
 	IsQpkgEnabled "$qpkg_name" && SendPackageStateChange ISenabled
 	ClearQpkgInstalledAppCenterNotifier
 	SaveActionResultToLog QPKG "$qpkg_name" enable '' ok
-	MarkThisActionForkAsOk
+	MarkActionForkAsOk
 
 	FuncForkExit $z
 
@@ -10619,23 +10670,23 @@ _QPKG:disable_()
 
 	if IsNtQpkgInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" disable '' skipped 'not installed'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
-	elif IsNtQpkgInstalledAuthorOk; then
+	elif IsNtQpkgAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" disable '' skipped 'incompatible author'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
 	elif QPKGs-ISNTenabled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" disable '' skipped 'already disabled'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
 # 	elif [[ $qpkg_name = sherpa ]]; then
 # 		SaveActionResultToLog QPKG "$qpkg_name" disable '' skipped "it's needed here! 😉"
-# 		MarkThisActionForkAsSkipped
+# 		MarkActionForkAsSkipped
 # 		z=1
-	elif IsNtQpkgInstalledRepoSelfManaged; then
+	elif IsNtQpkgRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" disable '' skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
 	fi
 
@@ -10643,7 +10694,7 @@ _QPKG:disable_()
 
 	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_disable_log_file
 	local timeout=''
-	IsOsSupportQpkgTimeout && timeout=' -t '$r_qpkg_disable_timeout_seconds
+	IsOsCanQpkgTimeout && timeout=' -t '$r_qpkg_disable_timeout_seconds
 
 	DebugAsProc "disabling $(ShowAsPackageName)"
 
@@ -10652,7 +10703,7 @@ _QPKG:disable_()
 
 	ClearQpkgInstalledAppCenterNotifier
 	SaveActionResultToLog QPKG "$qpkg_name" disable '' ok
-	MarkThisActionForkAsOk
+	MarkActionForkAsOk
 
 	FuncForkExit $z
 
@@ -10680,23 +10731,23 @@ _QPKG:enableau_()
 
 	if IsNtQpkgInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" enableau '' skipped 'not installed'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
-	elif IsNtQpkgInstalledAuthorOk; then
+	elif IsNtQpkgAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" enableau '' skipped 'incompatible author'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
 	elif [[ $qpkg_name = sherpa ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" enableau '' skipped 'auto-update is always enabled'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
-	elif ! IsQpkgDatabaseCanRestartToUpdate "$qpkg_name"; then
+	elif ! IsQpkgDbCanRestartToUpdate "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" enableau '' skipped 'auto-update is unsupported'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
-	elif IsNtQpkgInstalledRepoSelfManaged; then
+	elif IsNtQpkgRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" enableau '' skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
 	fi
 
@@ -10704,16 +10755,16 @@ _QPKG:enableau_()
 
 	DebugAsProc "enabling auto-update $(ShowAsPackageName)"
 
-	RunAndLog "${a}$(GetQpkgInstalledServicePathFile) enable-auto-update" "$r_logs_path/$qpkg_name.$r_enableau_log_file" log:failure-only
+	RunAndLog "${a}$(GetQpkgServicePathFile) enable-auto-update" "$r_logs_path/$qpkg_name.$r_enableau_log_file" log:failure-only
 	z=$?
 
 	if [[ $z -eq 0 ]]; then
 		LogQpkgServiceResult
 		SaveActionResultToLog QPKG "$qpkg_name" enableau '' ok
-		MarkThisActionForkAsOk
+		MarkActionForkAsOk
 	else
 		SaveActionResultToLog QPKG "$qpkg_name" enableau '' failed "$z"
-		MarkThisActionForkAsError
+		MarkActionForkAsError
 		z=1   # Remap to 1.
 	fi
 
@@ -10743,23 +10794,23 @@ _QPKG:disableau_()
 
 	if IsNtQpkgInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" disableau '' skipped 'not installed'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
-	elif IsNtQpkgInstalledAuthorOk; then
+	elif IsNtQpkgAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" disableau '' skipped 'incompatible author'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
 	elif [[ $qpkg_name = sherpa ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" disableau '' skipped 'auto-update cannot be disabled'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
-	elif ! IsQpkgDatabaseCanRestartToUpdate "$qpkg_name"; then
+	elif ! IsQpkgDbCanRestartToUpdate "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" disableau '' skipped 'auto-update is unsupported'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
-	elif IsNtQpkgInstalledRepoSelfManaged; then
+	elif IsNtQpkgRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" disableau '' skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
 	fi
 
@@ -10767,16 +10818,16 @@ _QPKG:disableau_()
 
 	DebugAsProc "disabling auto-update $(ShowAsPackageName)"
 
-	RunAndLog "${a}$(GetQpkgInstalledServicePathFile) disable-auto-update" "$r_logs_path/$qpkg_name.$r_disableau_log_file" log:failure-only
+	RunAndLog "${a}$(GetQpkgServicePathFile) disable-auto-update" "$r_logs_path/$qpkg_name.$r_disableau_log_file" log:failure-only
 	z=$?
 
 	if [[ $z -eq 0 ]]; then
 		LogQpkgServiceResult
 		SaveActionResultToLog QPKG "$qpkg_name" disableau '' ok
-		MarkThisActionForkAsOk
+		MarkActionForkAsOk
 	else
 		SaveActionResultToLog QPKG "$qpkg_name" disableau '' failed "$z"
-		MarkThisActionForkAsError
+		MarkActionForkAsError
 		z=1   # Remap to 1.
 	fi
 
@@ -10806,19 +10857,19 @@ _QPKG:backup_()
 
 	if IsNtQpkgInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" backup '' skipped 'not installed'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
-	elif IsNtQpkgInstalledAuthorOk; then
+	elif IsNtQpkgAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" backup '' skipped 'incompatible author'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
-	elif ! IsQpkgDatabaseCanBackup; then
+	elif ! IsQpkgDbCanBackup; then
 		SaveActionResultToLog QPKG "$qpkg_name" backup '' skipped 'backup is unsupported'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
-	elif IsNtQpkgInstalledRepoSelfManaged; then
+	elif IsNtQpkgRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" backup '' skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
 	fi
 
@@ -10826,17 +10877,17 @@ _QPKG:backup_()
 
 	DebugAsProc "backing-up $(ShowAsPackageName) configuration"
 
-	RunAndLog "${a}$(GetQpkgInstalledServicePathFile) backup" "$r_logs_path/$qpkg_name.$r_backup_log_file" log:failure-only
+	RunAndLog "${a}$(GetQpkgServicePathFile) backup" "$r_logs_path/$qpkg_name.$r_backup_log_file" log:failure-only
 	z=$?
 
 	if [[ $z -eq 0 ]]; then
 		LogQpkgServiceResult
 		SaveActionResultToLog QPKG "$qpkg_name" backup '' ok
 		SendPackageStateChange ISbackedup
-		MarkThisActionForkAsOk
+		MarkActionForkAsOk
 	else
 		SaveActionResultToLog QPKG "$qpkg_name" backup '' failed "$z"
-		MarkThisActionForkAsError
+		MarkActionForkAsError
 		z=1   # Remap to 1.
 	fi
 
@@ -10866,23 +10917,23 @@ _QPKG:restore_()
 
 	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" restore '' skipped "not installed, try 'rebuild' instead"
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
-	elif IsNtQpkgInstalledAuthorOk; then
+	elif IsNtQpkgAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" restore '' skipped 'incompatible author'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
-	elif ! IsQpkgDatabaseCanBackup; then
+	elif ! IsQpkgDbCanBackup; then
 		SaveActionResultToLog QPKG "$qpkg_name" restore '' skipped 'restore is unsupported'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
 	elif ! IsQpkgBackupExist; then
 		SaveActionResultToLog QPKG "$qpkg_name" restore '' skipped 'backup file does not exist'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
-	elif IsNtQpkgInstalledRepoSelfManaged; then
+	elif IsNtQpkgRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" restore '' skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
 	fi
 
@@ -10890,17 +10941,17 @@ _QPKG:restore_()
 
 	DebugAsProc "restoring $(ShowAsPackageName) configuration"
 
-	RunAndLog "${a}$(GetQpkgInstalledServicePathFile) restore" "$r_logs_path/$qpkg_name.$r_restore_log_file" log:failure-only
+	RunAndLog "${a}$(GetQpkgServicePathFile) restore" "$r_logs_path/$qpkg_name.$r_restore_log_file" log:failure-only
 	z=$?
 
 	if [[ $z -eq 0 ]]; then
 		LogQpkgServiceResult
 		SaveActionResultToLog QPKG "$qpkg_name" restore '' ok
 		SendPackageStateChange ISrestored
-		MarkThisActionForkAsOk
+		MarkActionForkAsOk
 	else
 		SaveActionResultToLog QPKG "$qpkg_name" restore '' failed "$z"
-		MarkThisActionForkAsError
+		MarkActionForkAsError
 		z=1   # Remap to 1.
 	fi
 
@@ -10930,19 +10981,19 @@ _QPKG:clean_()
 
 	if IsNtQpkgInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" clean '' skipped 'not installed'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
-	elif IsNtQpkgInstalledAuthorOk; then
+	elif IsNtQpkgAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" clean '' skipped 'incompatible author'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
-	elif ! IsQpkgDatabaseCanClean; then
+	elif ! IsQpkgDbCanClean; then
 		SaveActionResultToLog QPKG "$qpkg_name" clean '' skipped 'clean is unsupported'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
-	elif IsNtQpkgInstalledRepoSelfManaged; then
+	elif IsNtQpkgRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" clean '' skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
 	fi
 
@@ -10950,16 +11001,16 @@ _QPKG:clean_()
 
 	DebugAsProc "cleaning $(ShowAsPackageName)"
 
-	RunAndLog "${a}$(GetQpkgInstalledServicePathFile) clean" "$r_logs_path/$qpkg_name.$r_clean_log_file" log:failure-only
+	RunAndLog "${a}$(GetQpkgServicePathFile) clean" "$r_logs_path/$qpkg_name.$r_clean_log_file" log:failure-only
 	z=$?
 
 	if [[ $z -eq 0 ]]; then
 		LogQpkgServiceResult
 		SaveActionResultToLog QPKG "$qpkg_name" clean '' ok
-		MarkThisActionForkAsOk
+		MarkActionForkAsOk
 	else
 		SaveActionResultToLog QPKG "$qpkg_name" clean '' failed "$z"
-		MarkThisActionForkAsError
+		MarkActionForkAsError
 		z=1   # Remap to 1.
 	fi
 
@@ -10993,7 +11044,7 @@ _QPKG:sign_()
 
 	if [[ -e $r_action_abort_pathfile ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped-abort 'abort requested, unable to continue'
-		MarkThisActionForkAsSkippedAbort
+		MarkActionForkAsSkippedAbort
 		z=3
 	fi
 
@@ -11003,27 +11054,27 @@ _QPKG:sign_()
 
 	if IsNtQpkgInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped 'not installed'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
-	elif IsNtQpkgInstalledAuthorOk; then
+	elif IsNtQpkgAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped 'incompatible author'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
-	elif ! IsOsSupportSignedPackages; then
+	elif ! IsOsCanSignedPackages; then
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped 'not required: firmware < 4.3.5'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
-	elif IsNtQpkgInstalledRepoSelfManaged; then
+	elif IsNtQpkgRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped "assigned to another repository, please 'reassign' it first"
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
 	elif [[ ! -e $sqlite_pathfile ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped-abort "$(ShowAsFileName sqlite3) binary not found"
-		MarkThisActionForkAsSkippedAbort
+		MarkActionForkAsSkippedAbort
 		z=3
 	elif [[ ! -e $r_cert_db_pathfile ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped-abort "$(GetOsName) QPKG certificate database not found"
-		MarkThisActionForkAsSkippedAbort
+		MarkActionForkAsSkippedAbort
 		z=3
 	else
 		a="SELECT 1 FROM Certificate WHERE QpkgName = '$qpkg_name' LIMIT 1;"
@@ -11031,7 +11082,7 @@ _QPKG:sign_()
 
 		if [[ $b = 1 ]]; then
 # 			SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped-ok 'already signed'
-# 			MarkThisActionForkAsSkippedOk
+# 			MarkActionForkAsSkippedOk
 # 			z=2
 
 			# KLUDGE: replace db entries created prior to 2024-06-08 as $r_qpkg_signature quoting was incorrect.
@@ -11070,11 +11121,11 @@ _QPKG:sign_()
 	if [[ $z -eq 0 ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' ok
 		SendPackageStateChange ISsigned
-		MarkThisActionForkAsOk
+		MarkActionForkAsOk
 	else
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' failed "$(Parenthesise "$z") but don't know why. Please report this as a bug"
 		SendParentChangeEnv 'show_suggest_raise_issue=true'
-		MarkThisActionForkAsError
+		MarkActionForkAsError
 		z=1   # Remap to 1.
 	fi
 
@@ -11105,7 +11156,7 @@ _QPKG:status_()
 
 	if IsNtQpkgInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" status '' skipped 'not installed'
-		MarkThisActionForkAsSkipped
+		MarkActionForkAsSkipped
 		z=1
 	fi
 
@@ -11113,16 +11164,16 @@ _QPKG:status_()
 
 	DebugAsProc "status $(ShowAsPackageName)"
 
-	a=$(GetQpkgDatabaseActiveTest)
+	a=$(GetQpkgDbActiveTest)
 
 	if [[ $a = builtin ]]; then
 		# Run status query with GNU `timeout` if-possible.
 
 		if [[ -e $r_gnu_timeout_cmd ]]; then
-			$r_gnu_timeout_cmd "$r_qpkg_status_check_timeout_seconds" /bin/bash -c "${b}$(GetQpkgInstalledServicePathFile) status"
+			$r_gnu_timeout_cmd "$r_qpkg_status_check_timeout_seconds" /bin/bash -c "${b}$(GetQpkgServicePathFile) status"
 			z=$?
 		else
-			RunAndLog "${b}$(GetQpkgInstalledServicePathFile) status" "$r_logs_path/$qpkg_name.$r_status_log_file" log:failure-only
+			RunAndLog "${b}$(GetQpkgServicePathFile) status" "$r_logs_path/$qpkg_name.$r_status_log_file" log:failure-only
 			z=$?
 		fi
 	elif [[ $a != none ]]; then
@@ -11148,7 +11199,7 @@ _QPKG:status_()
 	esac
 
 	SaveActionResultToLog QPKG "$qpkg_name" status '' ok
-	MarkThisActionForkAsOk
+	MarkActionForkAsOk
 
 	FuncForkExit
 
@@ -11180,7 +11231,7 @@ LogQpkgServiceResult()
 	# Inputs: (global)
 	#   $qpkg_name
 
-	if ! local a=$(GetQpkgInstalledServiceResult); then
+	if ! local a=$(GetQpkgServiceResult); then
 		DebugAsWarn "unable to get status of $(ShowAsPackageName) service. It may be a non-sherpa package, or a sherpa package earlier than 200816c that doesn't support service results."
 
 		return 1
@@ -11226,7 +11277,7 @@ GetQpkgInstalledPath()
 
 	}
 
-GetQpkgInstalledServicePathFile()
+GetQpkgServicePathFile()
 	{
 
 	# Inputs: (local)
@@ -11243,7 +11294,7 @@ GetQpkgInstalledServicePathFile()
 
 	}
 
-GetQpkgDatabaseApplVer()
+GetQpkgDbApplVer()
 	{
 
 	# Returns the version number of the application contained within a QPKG.
@@ -11280,7 +11331,7 @@ GetQpkgDatabaseApplVer()
 	fi
 
 	[[ -n $a ]] || return
-	[[ $a = dynamic ]] && IsQpkgInstalled && ! IsQpkgInstalledAutoUpdate && a=static
+	[[ $a = dynamic ]] && IsQpkgInstalled && ! IsQpkgAutoUpdate && a=static
 
 	printf '%s' "$a"
 
@@ -11288,7 +11339,7 @@ GetQpkgDatabaseApplVer()
 
 	}
 
-GetQpkgDatabaseVer()
+GetQpkgDbVer()
 	{
 
 	# Returns the version number of an available (not-installed) QPKG.
@@ -11305,22 +11356,26 @@ GetQpkgDatabaseVer()
 	local a=''
 	local -i i=0
 
-	if [[ -n ${1:-} ]]; then
+# 	if [[ $qpkg_index -gt 0 ]]; then
+# 		a=${r_qpkg_version[$qpkg_index]}
+# 		[[ $a = default ]] && a=${r_qpkg_version[$qpkg_default_index]}
+# 		[[ $a != none ]] || return
+#
+# 		printf '%s' "$a"
+#
+# 		return 0
+# 	fi
+
+	a=${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}
+
+	if [[ -n $a ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
-			if [[ ${r_qpkg_name[$i]} = "$1" ]]; then
+			if [[ ${r_qpkg_name[$i]} = "$a" ]]; then
 				printf '%s' "${r_qpkg_version[$i]}"
 
 				return 0
 			fi
 		done
-	elif [[ $qpkg_index -gt 0 ]]; then
-		a=${r_qpkg_version[$qpkg_index]}
-		[[ $a = default ]] && a=${r_qpkg_version[$qpkg_default_index]}
-		[[ $a != none ]] || return
-
-		printf '%s' "$a"
-
-		return 0
 	fi
 
 	return 1
@@ -11332,17 +11387,14 @@ GetQpkgInstalledVer()
 
 	# Returns the version number of an installed QPKG.
 
-	# Inputs: (local)
-	#   $1 (optional) = QPKG name.
-
 	# Inputs: (global)
-	#   $qpkg_name (default)
+	#   $qpkg_name
 
 	# Outputs:
 	#   stdout = package version
 	#   $? = 0 if found, 250 if not.
 
-	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}" Version -d undefined -f /etc/config/qpkg.conf
+	/sbin/getcfg "${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}" Version -d undefined -f /etc/config/qpkg.conf
 
 	}
 
@@ -11413,7 +11465,7 @@ GetQpkgInstalledOriginalPath()
 
 	}
 
-GetQpkgDatabasePathFilename()
+GetQpkgDbPathFilename()
 	{
 
 	# Inputs: (global)
@@ -11425,7 +11477,7 @@ GetQpkgDatabasePathFilename()
 
 	local a=''
 
-	a=$(GetQpkgDatabaseURL)
+	a=$(GetQpkgDbURL)
 	[[ -n $a ]] || return
 
 	[[ $(Lowercase "${a##*.}") != qpkg ]] && a=${a%.*}.qpkg		# Swap 'zip' for 'qpkg' here (only for compatibilty with 'QDK.zip').
@@ -11436,7 +11488,7 @@ GetQpkgDatabasePathFilename()
 
 	}
 
-GetQpkgDatabaseHash()
+GetQpkgDbHash()
 	{
 
 	# Inputs: (global)
@@ -11462,7 +11514,7 @@ GetQpkgDatabaseHash()
 
 	}
 
-GetQpkgDatabaseURL()
+GetQpkgDbURL()
 	{
 
 	# Returns the URL of $qpkg_index.
@@ -11503,7 +11555,7 @@ GetQpkgDatabaseURL()
 
 	}
 
-GetQpkgDatabaseMinRAM()
+GetQpkgDbMinRAM()
 	{
 
 	# Inputs: (local)
@@ -11539,7 +11591,7 @@ GetQpkgDatabaseMinRAM()
 
 	}
 
-GetQpkgDatabaseMinOSVer()
+GetQpkgDbMinOSVer()
 	{
 
 	# Inputs: (local)
@@ -11575,7 +11627,7 @@ GetQpkgDatabaseMinOSVer()
 
 	}
 
-GetQpkgDatabaseMaxOSVer()
+GetQpkgDbMaxOSVer()
 	{
 
 	# Inputs: (local)
@@ -11611,7 +11663,7 @@ GetQpkgDatabaseMaxOSVer()
 
 	}
 
-GetQpkgDatabaseAuthor()
+GetQpkgDbAuthor()
 	{
 
 	# Return the maintainer of the specified QPKG.
@@ -11640,7 +11692,7 @@ GetQpkgDatabaseAuthor()
 
 	}
 
-GetQpkgInstalledAuthor()
+GetQpkgAuthor()
 	{
 
 	# Return the maintainer of the specified installed QPKG.
@@ -11733,7 +11785,7 @@ GetQpkgInstalledAuthor()
 #
 # 	}
 
-GetQpkgDatabaseDesc()
+GetQpkgDbDesc()
 	{
 
 	# Inputs:
@@ -11767,7 +11819,7 @@ GetQpkgDatabaseDesc()
 
 	}
 
-GetQpkgDatabaseNote()
+GetQpkgDbNote()
 	{
 
 	# Return any additional notes to be prominently displayed.
@@ -11802,7 +11854,7 @@ GetQpkgDatabaseNote()
 
 	}
 
-GetQpkgDatabaseAbbrvs()
+GetQpkgDbAbbrvs()
 	{
 
 	# Inputs:
@@ -11836,7 +11888,7 @@ GetQpkgDatabaseAbbrvs()
 
 	}
 
-GetQpkgDatabaseDependencies()
+GetQpkgDbDependencies()
 	{
 
 	# Inputs:
@@ -11889,7 +11941,7 @@ GetQpkgDatabaseDependencies()
 
 			# Test alternative for compatibility
 
-			if IsQpkgDatabaseArchOK "$alt"; then
+			if IsQpkgDbArchOK "$alt"; then
 				out+=' '$alt
 				found=true
 				break
@@ -11910,7 +11962,7 @@ GetQpkgDatabaseDependencies()
 
 	}
 
-GetQpkgDatabaseOptDependencies()
+GetQpkgDbOptDependencies()
 	{
 
 	# Inputs:
@@ -11963,7 +12015,7 @@ GetQpkgDatabaseOptDependencies()
 
 			# Test alternative for compatibility
 
-			if IsQpkgDatabaseArchOK "$alt"; then
+			if IsQpkgDbArchOK "$alt"; then
 				out+=' '$alt
 				found=true
 				break
@@ -11984,7 +12036,7 @@ GetQpkgDatabaseOptDependencies()
 
 	}
 
-GetQpkgDatabaseDependents()
+GetQpkgDbDependents()
 	{
 
 	# Inputs:
@@ -12020,7 +12072,7 @@ GetQpkgDatabaseDependents()
 
 	}
 
-GetQpkgDatabaseOptionals()
+GetQpkgDbOptionals()
 	{
 
 	# Inputs:
@@ -12056,7 +12108,7 @@ GetQpkgDatabaseOptionals()
 
 	}
 
-GetQpkgDatabaseIPKs()
+GetQpkgDbIPKs()
 	{
 
 	# Inputs:
@@ -12082,7 +12134,7 @@ GetQpkgDatabaseIPKs()
 
 	}
 
-GetQpkgDatabaseActiveTest()
+GetQpkgDbActiveTest()
 	{
 
 	# Return any custom commands required to determine if specified QPKG is active or not.
@@ -12108,7 +12160,7 @@ GetQpkgDatabaseActiveTest()
 
 	}
 
-GetQpkgInstalledServiceAction()
+GetQpkgServiceAction()
 	{
 
 	# Inputs: (local)
@@ -12133,7 +12185,7 @@ GetQpkgInstalledServiceAction()
 
 	}
 
-GetQpkgInstalledServiceResult()
+GetQpkgServiceResult()
 	{
 
 	# Inputs: (local)
@@ -12158,7 +12210,7 @@ GetQpkgInstalledServiceResult()
 
 	}
 
-QpkgInstalledServiceResultWasOk()
+QpkgServiceResultWasOk()
 	{
 
 	# Returns true if previous action for this package is 'ok'.
@@ -12171,7 +12223,7 @@ QpkgInstalledServiceResultWasOk()
 
 	[[ -n ${qpkg_name:-} ]] || return
 
-	[[ $(GetQpkgInstalledServiceResult) = ok ]]
+	[[ $(GetQpkgServiceResult) = ok ]]
 
 	}
 
@@ -12274,7 +12326,7 @@ SetQpkgDefaultIndex()
 
 	}
 
-IsQpkgInstalledRepoSelfManaged()
+IsQpkgRepoSelfManaged()
 	{
 
 	# Is this QPKG managable by sherpa?
@@ -12294,7 +12346,7 @@ IsQpkgInstalledRepoSelfManaged()
 
 	}
 
-IsNtQpkgInstalledRepoSelfManaged()
+IsNtQpkgRepoSelfManaged()
 	{
 
 	# Is this QPKG not managable by sherpa?
@@ -12308,7 +12360,7 @@ IsNtQpkgInstalledRepoSelfManaged()
 	# Outputs: (local)
 	#   $? = true/false
 
-	! IsQpkgInstalledRepoSelfManaged "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}"
+	! IsQpkgRepoSelfManaged "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}"
 
 	}
 
@@ -12336,18 +12388,13 @@ IsQpkgUpgradable()
 
 	# Does an upgraded QPKG exist?
 
-	# Inputs: (local)
-	#   $1 (optional) = QPKG name.
-
 	# Inputs: (global)
-	#   $qpkg_name (default)
+	#   $qpkg_name
 
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
-
-	IsQpkgInstalled "$a" && IsQpkgInstalledRepoSelfManaged "$a" && [[ $(GetQpkgInstalledVer "$a") != "$(GetQpkgDatabaseVer "$a")" ]] && IsQpkgDatabaseArchOK "$a" && IsQpkgDatabaseMinOSVerOk "$a" && IsQpkgDatabaseMaxOSVerOk "$a" && IsQpkgDatabaseMinRAMOk "$a"
+	IsQpkgInstalled && IsQpkgRepoSelfManaged && IsQpkgDbArchOK && IsQpkgDbMinOSVerOk && IsQpkgDbMaxOSVerOk && IsQpkgDbMinRAMOk && [[ $(GetQpkgInstalledVer) != "$(GetQpkgDbVer)" ]]
 
 	}
 
@@ -12356,22 +12403,17 @@ IsQpkgInstallable()
 
 	# Can this QPKG be installed?
 
-	# Inputs: (local)
-	#   $1 (optional) = QPKG name.
-
 	# Inputs: (global)
-	#   $qpkg_name (default)
+	#   $qpkg_name
 
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
-
-	IsNtQpkgReallyInstalled "$a" && IsQpkgDatabaseArchOK "$a" && IsQpkgDatabaseMinOSVerOk "$a" && IsQpkgDatabaseMaxOSVerOk "$a" && IsQpkgDatabaseMinRAMOk "$a"
+  	IsNtQpkgReallyInstalled && IsQpkgDbArchOK && IsQpkgDbMinOSVerOk && IsQpkgDbMaxOSVerOk && IsQpkgDbMinRAMOk
 
 	}
 
-IsQpkgDatabaseDependent()
+IsQpkgDbDependent()
 	{
 
 	# Does this QPKG depend on any other QPKGs?
@@ -12393,23 +12435,19 @@ IsQpkgDatabaseDependent()
 
 	}
 
-IsQpkgDatabaseIndependent()
+IsQpkgDbIndependent()
 	{
 
 	# Will this package run independent of other QPKGs?
 
-	# Inputs: (global)
-	#   $qpkg_default_index
-	#   $qpkg_index
-
 	# Outputs: (local)
 	#   $? = true/false
 
-	! IsQpkgDatabaseOptional && ! IsQpkgDatabaseDependent
+	! IsQpkgDbOptional && ! IsQpkgDbDependent
 
 	}
 
-IsQpkgDatabaseOptional()
+IsQpkgDbOptional()
 	{
 
 	# Is this QPKG an optional dependency?
@@ -12438,7 +12476,7 @@ IsQpkgDatabaseOptional()
 
 	}
 
-IsQpkgDatabaseArchOK()
+IsQpkgDbArchOK()
 	{
 
 	# Does an arch-compatible QPKG exist to suit this NAS?
@@ -12452,13 +12490,13 @@ IsQpkgDatabaseArchOK()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=$(GetQpkgDatabaseURL "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
+	local a=$(GetQpkgDbURL "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
 
 	[[ -n $a && $a != none ]]
 
 	}
 
-IsQpkgDatabaseMinRAMOk()
+IsQpkgDbMinRAMOk()
 	{
 
 	# Does this NAS meets the minimum RAM requirements for QPKG name?
@@ -12473,13 +12511,13 @@ IsQpkgDatabaseMinRAMOk()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=$(GetQpkgDatabaseMinRAM "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
+	local a=$(GetQpkgDbMinRAM "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
 
 	[[ -n $a ]] && [[ $a = none || $r_nas_ram_kb -ge $a ]]
 
 	}
 
-IsQpkgDatabaseMinOSVerOk()
+IsQpkgDbMinOSVerOk()
 	{
 
 	# Does this NAS meets the minimum OS firmware version requirements for QPKG name?
@@ -12494,13 +12532,13 @@ IsQpkgDatabaseMinOSVerOk()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=$(GetQpkgDatabaseMinOSVer "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
+	local a=$(GetQpkgDbMinOSVer "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
 
 	[[ -n $a ]] && [[ $a = none || ${r_nas_firmware_version//.} -ge $a ]]
 
 	}
 
-IsQpkgDatabaseMaxOSVerOk()
+IsQpkgDbMaxOSVerOk()
 	{
 
 	# Does this NAS meets the maximum OS firmware version requirements for QPKG name?
@@ -12515,13 +12553,13 @@ IsQpkgDatabaseMaxOSVerOk()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=$(GetQpkgDatabaseMaxOSVer "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
+	local a=$(GetQpkgDbMaxOSVer "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
 
 	[[ -n $a ]] && [[ $a = none || ${r_nas_firmware_version//.} -le $a ]]
 
 	}
 
-IsQpkgDatabaseCanBackup()
+IsQpkgDbCanBackup()
 	{
 
 	# Does this QPKG service-script support `backup` and `restore` actions?
@@ -12558,7 +12596,7 @@ IsQpkgDatabaseCanBackup()
 
 	}
 
-IsQpkgDatabaseCanRestartToUpdate()
+IsQpkgDbCanRestartToUpdate()
 	{
 
 	# Does this QPKG service-script support updating the internal application when the QPKG is restarted?
@@ -12586,7 +12624,7 @@ IsQpkgDatabaseCanRestartToUpdate()
 
 	}
 
-IsQpkgDatabaseCanClean()
+IsQpkgDbCanClean()
 	{
 
 	# Does this QPKG service-script support cleaning of the internal application?
@@ -12612,7 +12650,7 @@ IsQpkgDatabaseCanClean()
 
 	}
 
-IsQpkgDatabaseSherpaCompatible()
+IsQpkgDbSherpaCompatible()
 	{
 
 	# Is this QPKG service-script compatible with enhanced actions supplied by sherpa?
@@ -12648,7 +12686,7 @@ IsQpkgDatabaseSherpaCompatible()
 
 	}
 
-IsQpkgDatabaseUniqueUnpack()
+IsQpkgDbUniqueUnpack()
 	{
 
 	# Was this QPKG built to extract itself to a unique path? Requires QDK 2.3.14 or-later.
@@ -12685,7 +12723,7 @@ IsQpkgDatabaseUniqueUnpack()
 
 	}
 
-IsQpkgDatabaseWillLog()
+IsQpkgDbWillLog()
 	{
 
 	# Does this QPKG service-script log all actions? If so, when an action fails, user can be directed to check the service-script log.
@@ -12710,7 +12748,7 @@ IsQpkgDatabaseWillLog()
 
 	}
 
-IsQpkgInstalledAutoUpdate()
+IsQpkgAutoUpdate()
 	{
 
 	# Is the installed QPKG set to auto-update on restart?
@@ -12730,7 +12768,7 @@ IsQpkgInstalledAutoUpdate()
 
 	}
 
-IsQpkgInstalledAuthorOk()
+IsQpkgAuthorOk()
 	{
 
 	# Inputs: (local)
@@ -12744,11 +12782,11 @@ IsQpkgInstalledAuthorOk()
 
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
 
-	[[ $(GetQpkgDatabaseAuthor "$a") = "$(GetQpkgInstalledAuthor "$a")" ]]
+	[[ $(GetQpkgDbAuthor "$a") = "$(GetQpkgAuthor "$a")" ]]
 
 	}
 
-IsNtQpkgInstalledAuthorOk()
+IsNtQpkgAuthorOk()
 	{
 
 	# Inputs: (local)
@@ -12760,7 +12798,7 @@ IsNtQpkgInstalledAuthorOk()
 	# Outputs: (local)
 	#   $? = true/false
 
-	! IsQpkgInstalledAuthorOk "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}"
+	! IsQpkgAuthorOk "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}"
 
 	}
 
@@ -12780,7 +12818,7 @@ IsQpkgInstalled()
 
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
 
-	/bin/grep -q "^\[$a\]" /etc/config/qpkg.conf && IsQpkgInstalledAuthorOk "$a"
+	/bin/grep -q "^\[$a\]" /etc/config/qpkg.conf && IsQpkgAuthorOk "$a"
 
 	}
 
@@ -12836,7 +12874,7 @@ IsNtQpkgReallyInstalled()
 
 	}
 
-IsQpkgInstalledMissing()
+IsQpkgMissing()
 	{
 
 	# Inputs: (local)
@@ -14199,7 +14237,7 @@ DebugAsFuncEn()
 DebugAsFuncEx()
 	{
 
-	DebugThis "$(Parenthesise '<<') ${FUNCNAME[2]}|${1:-0}|${2:-}"
+	DebugThis "$(Parenthesise '<<') ${FUNCNAME[2]}()|${1:-0}|${2:-}"
 
 	}
 
@@ -14609,8 +14647,8 @@ ShowAsActionLogDetail()
 						DisplayAsIndentActionResultDurationReason "$3" "$2 $package_type" "$5" "$6"
 						;;
 					*)
-						if IsQpkgDatabaseWillLog "$2"; then
-							DisplayAsIndentActionResultDurationReason "$3" "$2 $package_type" "$5" "For more information: /etc/init.d/$(/usr/bin/basename "$(GetQpkgInstalledServicePathFile "$2")") log"
+						if IsQpkgDbWillLog "$2"; then
+							DisplayAsIndentActionResultDurationReason "$3" "$2 $package_type" "$5" "For more information: /etc/init.d/$(/usr/bin/basename "$(GetQpkgServicePathFile "$2")") log"
 						else
 							DisplayAsIndentActionResultDurationReason "$3" "$2 $package_type" "$5" "$6"
 						fi
@@ -14990,7 +15028,7 @@ UpdateSedRexegSupport()
 	# Outputs: (global)
 	#	$sed_ext_regex_supported
 
-	IsOsSupportSedExtRegex && sed_ext_regex_supported=true || sed_ext_regex_supported=false
+	IsOsCanSedExtRegex && sed_ext_regex_supported=true || sed_ext_regex_supported=false
 
 	}
 
@@ -15000,7 +15038,7 @@ UpdateSleepDecimalSecondsSupport()
 	# Outputs: (global)
 	#	$sleep_decimal_seconds_supported
 
-	IsOsSupportDecimalSleepSeconds && sleep_decimal_seconds_supported=true || sleep_decimal_seconds_supported=false
+	IsOsCanDecimalSleepSeconds && sleep_decimal_seconds_supported=true || sleep_decimal_seconds_supported=false
 
 	}
 
@@ -15093,7 +15131,7 @@ LoadObjects()
 
 	local curl_options=''
 
-	IsOsSupportSecureDownload || curl_options=' --insecure'
+	IsOsCanSecureDownload || curl_options=' --insecure'
 
 	LoadLists
 
@@ -15140,7 +15178,7 @@ LoadPackages()
 	local curl_options=''
 	local previous=''
 
-	IsOsSupportSecureDownload || curl_options=' --insecure'
+	IsOsCanSecureDownload || curl_options=' --insecure'
 
 	LoadObjects
 
