@@ -1,3 +1,23 @@
+* rename 'O' QPKGs:
+	# QPKGs to migrate from leading-'O'.
+
+	migration_qpkgs=(Lidarr Medusa qBittorrent Readarr SickGear Sonarr Tautulli Transmission Watcher3 Whisparr)
+
+	# Will need to modify:
+	#	'qpkg.conf'
+	#		[OTransmission]
+	# 		Name = OTransmission
+	# 		QPKG_File = OTransmission.qpkg
+	# 		Shell = /share/CACHEDEV1_DATA/.qpkg/OTransmission/otransmission.sh
+	# 		Install_Path = /share/CACHEDEV1_DATA/.qpkg/OTransmission
+
+	# 1. stop QPKG,
+	# 2. rename service script,
+	# 3. rename installation path,
+	# 4. 'sed' replace all remaining occurrences in 'qpkg.conf',
+	# 5. application config files? internal paths, etc...
+	# 6. start QPKG.
+
 * Checking 'upgradable' status is slow (due to the number of checks that must be performed).
 	- Consider only running this during `check` or `upgrade` actions.
 
