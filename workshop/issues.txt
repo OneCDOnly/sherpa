@@ -1,5 +1,12 @@
 Observed issues:
 
+	* Installing TrguiNG on Helga and Laura adds Trguing twice as dependency in qpkg.conf
+
+	* Uninstalling TrguiNG QPKG also stops and disables Transmission QPKG.
+		- Enable Transmission again automatically after optional uninstall so it can be restarted?
+
+	* Features report: incompatible author message shown in 'CanBack?' column.
+
 	* Service-script daemon PID shown twice consecutively during 'clean' action:
 		--------------------------------------------------------------------------------------------------
 		[/share/Public] # /etc/init.d/sabnzbd.sh clean
@@ -21,8 +28,8 @@ Observed issues:
 
 	* Near the end of installing IPKs, monitored download path can remain at non-zero size while packages complete installation.
 		- Include a separate progress message when dir size stops increasing and shrinks instead?
-		- Maybe force increase to "100%" and stop monitoring?
-		- Maybe change progress message to "installing"?
+		- Force increase to "100%" and stop monitoring?
+		- Change progress message to "installing"?
 
 	* 'sherpa' and 'opkg' were not available after installing Entware.
 		- Entware installation may be corrupt.

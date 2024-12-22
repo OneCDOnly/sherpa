@@ -1,4 +1,8 @@
-* rename 'O' QPKGs:
+* Make TrguiNG open Transmission UI:
+	WebUI = /
+	Web_Port = 9991
+
+* Rename 'O' QPKGs:
 	# QPKGs to migrate from leading-'O'.
 
 	migration_qpkgs=(Lidarr Medusa qBittorrent Readarr SickGear Sonarr Tautulli Transmission Watcher3 Whisparr)
