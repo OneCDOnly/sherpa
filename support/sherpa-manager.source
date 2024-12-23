@@ -784,6 +784,7 @@ DebugLogEnv()
 	DebugHardware ok CPU "$(GetHardwareCPUInfo)"
 	DebugHardware ok 'CPU cores' "$r_cpu_cores"
 	DebugHardware ok 'CPU architecture' "$r_nas_arch"
+	DebugHardware ok 'CPU benchmark' "$(GetHardwareCPUBenchmark)"
 	DebugHardware ok RAM "$(FormatAsThous "$r_nas_ram_kb")kiB"
 	DebugKernel ok name "$(GetOsKernelName)"
 	DebugKernel ok version "$(GetOsKernelVersion)"
@@ -8902,6 +8903,41 @@ GetHardwareCPUInfo()
 	fi
 
 	return 0
+
+	}
+
+GetHardwareCPUBenchmark()
+	{
+
+	# Get a basic CPU benchmark based-on time to calculate a single SHA checksum.
+
+	# Adapted from: https://bash-prompt.net/guides/bash-simple-bash-benchmark/ and modified to get a quick result that works in QTS. Less accurate, but this figure is for indication-only.
+
+	# QTS 4.3.3 has `sha1sum`, but no `sha256sum`.
+	# QTS 4.3.6 has both `sha1sum` and `sha256sum`.
+
+	# Use GNU `dd` because it generates speed statistics. BusyBox 1.01 `dd` does not.
+
+	if [[ ! -e /opt/bin/dd ]]; then
+		printf undefined
+		return
+	fi
+
+	# Run benchmark with highest priority.
+
+	/bin/renice -20 $$ &> /dev/null
+
+	# Capture stderr from `dd`.
+
+	local a=$({ /opt/bin/dd if=/dev/zero bs=1MB count=10 | /bin/sha1sum > /dev/null; } 2>&1)
+	a=$(/bin/grep copied <<< "$a")
+
+	/bin/renice 0 $$ &> /dev/null
+
+	a=$(cut -d, -f4 <<< "${a//[[:blank:]]/}")
+	[[ -n $a ]] || a=undefined
+
+	printf '%s' "$a"
 
 	}
 
