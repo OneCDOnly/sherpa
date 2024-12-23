@@ -1,8 +1,5 @@
 Observed issues:
 
-	* Uninstalling TrguiNG QPKG also stops and disables Transmission QPKG.
-		- Enable Transmission again automatically after optional uninstall so it can be restarted?
-
 	* Features report: incompatible author message shown in 'CanBack?' column.
 
 	* Service-script daemon PID shown twice consecutively during 'clean' action:
