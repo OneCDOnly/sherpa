@@ -9017,6 +9017,7 @@ IsPythonOutdated()
 	[[ -e $r_python3_cmd ]] || return
 
 	local a=$(GetPython3Ver "$r_python3_cmd")
+
 	[[ $r_nas_arch = armv5tel && ${a//./} -lt 3114 ]] || [[ $r_nas_arch != armv5tel && ${a//./} -lt $r_min_python_version ]]
 
 	}
@@ -9053,6 +9054,7 @@ IsPerlOutdated()
 	[[ -e $r_perl_cmd ]] || return
 
 	local a=$(GetPerlVer "$r_perl_cmd")
+
 	[[ $r_nas_arch = armv5tel && ${a//./} -lt 5281 ]] || [[ $r_nas_arch != armv5tel && ${a//./} -lt $r_min_perl_version ]]
 
 	}
@@ -9090,6 +9092,7 @@ GetOsUptime()
 	{
 
 	local n=$(< /proc/uptime)
+
 	ConvertSecondsToDuration "${n%%.*}"
 
 	}
@@ -9098,6 +9101,7 @@ GetUserLIBC()
 	{
 
 	local a=$(/sbin/ldd --version | head -n1)
+
 	printf '%s' "${a:4}"			# Trim 'ldd ' from front of string.
 
 	}
@@ -9125,8 +9129,11 @@ GetShellVersion()
 	# Inputs: (global)
 	#	$SHELL
 
-	[[ -n ${SHELL:-} ]] || printf undefined
-	$SHELL --version | head -n1
+	if [[ -z ${SHELL:-} ]]; then
+		printf undefined
+	else
+		$SHELL --version | head -n1
+	fi
 
 	}
 
@@ -9136,8 +9143,11 @@ GetShellCopyright()
 	# Inputs: (global)
 	#	$SHELL
 
-	[[ -n ${SHELL:-} ]] || printf undefined
-	$SHELL --version | /bin/grep -i copyright | /bin/sed 's|\$||'
+	if [[ -z ${SHELL:-} ]]; then
+		printf undefined
+	else
+		$SHELL --version | /bin/grep -i copyright | /bin/sed 's|\$||'
+	fi
 
 	}
 
@@ -9150,6 +9160,7 @@ GetShellTimeIn()
 	local n=''
 
 	[[ -n ${LOADER_SCRIPT_PPID:-} ]] && n=$(/bin/ps -o pid,etime | /bin/grep $LOADER_SCRIPT_PPID | head -n1)
+
 	FormatAsLongMinutesSecs "${n:6}"
 
 	}
@@ -9437,7 +9448,7 @@ IsOsCanSignedPackages()
 	# Inputs: (global)
 	#	$r_nas_firmware_version
 
-# 	[[ ${r_nas_firmware_version//.} -ge 435 ]]	# NOTE: signing failed on QTS 4.3.6 (x31). No cert database. So, let's go one-version-higher:
+	# NOTE: signing failed on QTS 4.3.6 (x31). No cert database.
 
 	[[ ${r_nas_firmware_version//.} -ge 437 ]]
 
@@ -9499,8 +9510,6 @@ IsOsCanAutowidthTableColumns()
 	#	$r_gnu_awk_cmd
 
 	[[ -e $r_gnu_awk_cmd ]]
-
-#  	false										#devdebug
 
 	}
 
@@ -9751,7 +9760,7 @@ DisableDebugToArchiveAndFile()
 SaveActionResultToLog()
 	{
 
-	# Write package type, package name, datetime in seconds, action, result, reason to actions logfile, and into actions durations file.
+	# Write package type, package name, datetime in seconds, action, result, reason into actions logfile and durations file.
 
 	# Inputs: (local)							Example:
 	#   $1 = package type						`QPKG`, `IPK`, `PIP`
@@ -10352,7 +10361,7 @@ _QPKG:uninstall_()
 		z=$?
 
 		if [[ $z -eq 0 ]]; then
-			# WARNING: beware of `qpkg_cli --remove`, it removes the QPKG installation path around 10-20 seconds after execution. If sherpa has moved-on and starts an install, `qpkg_cli` will remove the newly created QPKG installation path partway through the installation. So, check if QPKG is to be installed: if this is the case, don't use `qpkg_cli --remove`.
+			# WARNING: beware of `qpkg_cli --remove`: it removes the QPKG installation path around 10-20 seconds after execution. If sherpa has moved-on and starts an install, `qpkg_cli` will remove the newly created QPKG installation path partway through the installation. So, check if QPKG is to be installed again: if-so, don't use `qpkg_cli --remove`.
 			[[ -e /sbin/qpkg_cli ]] && ! QPKGs-ACinstall-to.Exist "$qpkg_name" && /sbin/qpkg_cli --remove "$qpkg_name" &> /dev/null
 			SaveActionResultToLog QPKG "$qpkg_name" uninstall '' ok
 			/sbin/rmcfg "$qpkg_name" -f /etc/config/qpkg.conf
@@ -11589,6 +11598,7 @@ GetQpkgDbURL()
 		a=${r_qpkg_url[$qpkg_index]}
 		[[ $a = default ]] && a=${r_qpkg_url[$qpkg_default_index]}
 		[[ -n $a ]] || a=none
+
 		printf '%s' "$a"
 	fi
 
@@ -11626,6 +11636,7 @@ GetQpkgDbMinRAM()
 	fi
 
 	[[ -n $a ]] || a=none
+
 	printf '%s' "$a"
 
 	return 0
@@ -11662,6 +11673,7 @@ GetQpkgDbMinOSVer()
 	fi
 
 	[[ -n $a ]] || a=none
+
 	printf '%s' "$a"
 
 	return 0
@@ -11698,6 +11710,7 @@ GetQpkgDbMaxOSVer()
 	fi
 
 	[[ -n $a ]] || a=none
+
 	printf '%s' "$a"
 
 	return 0
@@ -11724,6 +11737,7 @@ GetQpkgDbAuthor()
 
 	for i in "${!r_qpkg_name[@]}"; do
 		[[ ${r_qpkg_name[$i]} = "$a" ]] || continue
+
 		printf '%s' "${r_qpkg_author[$i]}"
 
 		return 0
@@ -11854,6 +11868,7 @@ GetQpkgDbDesc()
 	fi
 
 	[[ -n $a ]] || a=none
+
 	printf '%s' "$a"
 
 	return 0
@@ -11923,6 +11938,7 @@ GetQpkgDbAbbrvs()
 	fi
 
 	[[ -n $a ]] || a=none
+
 	printf '%s' "$a"
 
 	return 0
