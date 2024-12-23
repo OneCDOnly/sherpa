@@ -784,6 +784,7 @@ DebugLogEnv()
 	DebugHardware ok CPU "$(GetHardwareCPUInfo)"
 	DebugHardware ok 'CPU cores' "$r_cpu_cores"
 	DebugHardware ok 'CPU architecture' "$r_nas_arch"
+	DebugHardware ok 'CPU benchmark' "$(GetHardwareCPUBenchmark)"
 	DebugHardware ok RAM "$(FormatAsThous "$r_nas_ram_kb")kiB"
 	DebugKernel ok name "$(GetOsKernelName)"
 	DebugKernel ok version "$(GetOsKernelVersion)"
@@ -8870,11 +8871,13 @@ ModPathToEntware()
 
 	if QPKGs-ISenabled.Exist Entware; then
 		! [[ $PATH =~ $b ]] || return
+
 		a=$(/bin/sed "s|${b}:||" <<< "$PATH:")		# Append colon prior to searching, then remove existing Entware paths.
 		export PATH=$b:${a%:}						# ... now prepend Entware paths and remove trailing colon
 		DebugAsDone 'prepended Entware to $PATH'
 	else
 		[[ $PATH =~ $b ]] || return
+
 		a=$(/bin/sed "s|${b}:||" <<< "$PATH:")		# Append colon prior to searching, then remove existing Entware paths.
 		export PATH=${a%:}							# ... now remove trailing colon
 		DebugAsDone 'removed Entware from $PATH'
@@ -8900,6 +8903,43 @@ GetHardwareCPUInfo()
 
 		return 1
 	fi
+
+	return 0
+
+	}
+
+GetHardwareCPUBenchmark()
+	{
+
+	# Get a basic CPU benchmark based-on time to calculate a single SHA checksum.
+
+	# Adapted from: https://bash-prompt.net/guides/bash-simple-bash-benchmark/ and modified to get a quick result that works in QTS. Less accurate, but this figure is for indication-only.
+
+	# QTS 4.3.3 has `sha1sum`, but no `sha256sum`.
+	# QTS 4.3.6 has both `sha1sum` and `sha256sum`.
+
+	# Use GNU `dd` because it generates speed statistics. BusyBox 1.01 `dd` does not.
+
+	if [[ ! -e /opt/bin/dd ]]; then
+		printf undefined
+
+		return 1
+	fi
+
+	# Run benchmark with highest priority.
+
+	/bin/renice -20 $$ &> /dev/null
+
+	# Capture stderr from `dd`.
+
+	local a=$({ /opt/bin/dd if=/dev/zero bs=1MB count=10 | /bin/sha1sum > /dev/null; } 2>&1 | /bin/grep copied | cut -d, -f4)
+
+	/bin/renice 0 $$ &> /dev/null
+
+	a=${a//[[:blank:]]/}
+	[[ -n $a ]] || a=undefined
+
+	printf '%s' "$a"
 
 	return 0
 
@@ -8964,6 +9004,8 @@ IsPythonOutdated()
 
 	# Check if Python3 interpreter needs upgrading for this NAS arch.
 
+	# NOTE: Entware Python3 packages are no-longer updated for ARMv5 arches.
+
 	# Inputs: (global)
 	#	$r_min_python_version
 	#	$r_nas_arch
@@ -8973,8 +9015,8 @@ IsPythonOutdated()
 	#   $? = 0 if outdated, !0 if not
 
 	[[ -e $r_python3_cmd ]] || return
-	local a=$(GetPython3Ver "$r_python3_cmd")
 
+	local a=$(GetPython3Ver "$r_python3_cmd")
 	[[ $r_nas_arch = armv5tel && ${a//./} -lt 3114 ]] || [[ $r_nas_arch != armv5tel && ${a//./} -lt $r_min_python_version ]]
 
 	}
@@ -8998,6 +9040,8 @@ IsPerlOutdated()
 
 	# Check if Perl interpreter needs upgrading for this NAS arch.
 
+	# NOTE: Entware Perl packages are no-longer updated for ARMv5 arches.
+
 	# Inputs: (global)
 	#	$r_min_perl_version
 	#	$r_nas_arch
@@ -9007,8 +9051,8 @@ IsPerlOutdated()
 	#   $? = 0 if outdated, !0 if not
 
 	[[ -e $r_perl_cmd ]] || return
-	local a=$(GetPerlVer "$r_perl_cmd")
 
+	local a=$(GetPerlVer "$r_perl_cmd")
 	[[ $r_nas_arch = armv5tel && ${a//./} -lt 5281 ]] || [[ $r_nas_arch != armv5tel && ${a//./} -lt $r_min_perl_version ]]
 
 	}
@@ -9046,7 +9090,6 @@ GetOsUptime()
 	{
 
 	local n=$(< /proc/uptime)
-
 	ConvertSecondsToDuration "${n%%.*}"
 
 	}
@@ -9083,7 +9126,6 @@ GetShellVersion()
 	#	$SHELL
 
 	[[ -n ${SHELL:-} ]] || printf undefined
-
 	$SHELL --version | head -n1
 
 	}
@@ -9095,7 +9137,6 @@ GetShellCopyright()
 	#	$SHELL
 
 	[[ -n ${SHELL:-} ]] || printf undefined
-
 	$SHELL --version | /bin/grep -i copyright | /bin/sed 's|\$||'
 
 	}
