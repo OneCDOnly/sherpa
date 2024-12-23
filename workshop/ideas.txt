@@ -1,6 +1,18 @@
-* Make TrguiNG open Transmission UI:
-	WebUI = /
-	Web_Port = 9991
+* Include basic benchmark for CPU speed:
+	-------------------------------------------------------------------------------------------------------------------------
+	dd if=/dev/zero bs=1MB count=10 | sha256sum
+	-------------------------------------------------------------------------------------------------------------------------
+	- Adapted from: https://bash-prompt.net/guides/bash-simple-bash-benchmark/ and modified to get a quick result that works in QTS. Less accurate, but this figure is for indication-only.
+	- Include benchmark for default volume read/write too?
+	- Launch with lowest nice value? Preferably realtime.
+	- Try 'renice -19 $$' before launching benchmark
+	-------------------------------------------------------------------------------------------------------------------------
+	out=$({ dd if=/dev/zero bs=1MB count=10 | sha256sum > /dev/null; } 2>&1)
+	echo ${out//[[:blank:]]/} | cut -d, -f4
+	244MB/s
+	-------------------------------------------------------------------------------------------------------------------------
+	- Then 'renice 0 $$' after benchmark complete.
+	- See if 'chrt' exists in QTS BusyBox 1.01 and 1.24
 
 * Rename 'O' QPKGs:
 	# QPKGs to migrate from leading-'O'.
