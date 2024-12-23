@@ -30,6 +30,7 @@
 	- Won't require an 'sqlite3' binary.
 
 * Display a warning when sherpa QPKG is not signed, and QTS App Center requires signed packages only.
+	- Need a new test for QPKG "sign"ed status.
 
 * Put 'sherpa about' display into a report window.
 

@@ -389,9 +389,7 @@ LoadCMDs()
 	readonly r_gnu_find_cmd=/opt/bin/find
 	readonly r_gnu_grep_cmd=/opt/bin/grep
 	readonly r_gnu_less_cmd=/opt/bin/less
-	readonly r_gnu_sed_cmd=/opt/bin/sed
 	readonly r_gnu_sleep_cmd=/opt/bin/sleep
-	readonly r_gnu_sort_cmd=/opt/bin/sort
 	readonly r_gnu_stty_cmd=/opt/bin/stty
 	readonly r_gnu_timeout_cmd=/opt/bin/timeout
 	readonly r_opkg_cmd=/opt/bin/opkg
@@ -15026,6 +15024,9 @@ StripANSICodes()
 	{
 
 	# Inputs: (global)
+	#	$sed_ext_regex_supported
+
+	# Outputs: (global)
 	#	$sed_ext_regex_supported
 
 	# QTS 4.2.6 BusyBox `sed` doesn't fully support extended-regexes, so code-stripping only works with a real `sed`.
