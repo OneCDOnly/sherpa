@@ -8913,31 +8913,25 @@ GetHardwareCPUBenchmark()
 
 	# Adapted from: https://bash-prompt.net/guides/bash-simple-bash-benchmark/ and modified to get a quick result that works in QTS. Less accurate, but this figure is for indication-only.
 
-	# Should take no-more than 1 second to execute on my slowest NAS (TS-220). Run benchmark with highest priority.
-
 	# QTS 4.3.3 has `sha1sum`, but no `sha256sum`.
 	# QTS 4.3.6 has both `sha1sum` and `sha256sum`.
 
-	# Use GNU `dd` because it generates speed statistics. BusyBox 1.01 `dd` does not.
+	# Use GNU `dd` because it generates speed statistics in stderr. BusyBox 1.01 `dd` does not.
 
-	if [[ ! -e /opt/bin/dd || ! -e /bin/sha1sum ]]; then
-		printf undefined
+	local a=''
+	local -i b=16		# Maximum time to run is around 1 second on my slowest NAS (TS-220).
+	local -i c=-20		# Run benchmark with highest priority.
 
-		return 1
-	fi
+	if [[ -e /opt/bin/dd && -e /bin/sha1sum ]]; then
+		if [[ -e /opt/bin/nice ]]; then
+			a=$({ /opt/bin/nice -$c /opt/bin/dd if=/dev/zero bs=1MB count=$b | /bin/sha1sum > /dev/null; } 2>&1)
+		elif [[ -e /bin/renice ]]; then
+			/bin/renice $c $$ &> /dev/null
 
-	if [[ -e /opt/bin/nice ]]; then
-		# Capture stderr from `dd`.
+			a=$({ /opt/bin/dd if=/dev/zero bs=1MB count=$b | /bin/sha1sum > /dev/null; } 2>&1)
 
-		local a=$({ /opt/bin/nice --20 /opt/bin/dd if=/dev/zero bs=1MB count=10 | /bin/sha1sum > /dev/null; } 2>&1)
-	elif [[ -e /bin/renice ]]; then
-		/bin/renice -20 $$ &> /dev/null
-
-		# Capture stderr from `dd`.
-
-		local a=$({ /opt/bin/dd if=/dev/zero bs=1MB count=10 | /bin/sha1sum > /dev/null; } 2>&1)
-
-		/bin/renice 0 $$ &> /dev/null
+			/bin/renice 0 $$ &> /dev/null
+		fi
 	fi
 
 	a=$(/bin/grep copied <<< "$a" | cut -d, -f4)
