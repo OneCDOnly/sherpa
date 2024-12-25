@@ -4768,9 +4768,9 @@ GeneratePacksReportTitleLine()
 	if IsOsCanAutowidthTableColumns; then
 		printf 'QPKG name:|Appl. version:|Description:'
 	else
-		GenerateReportLineItem 'QPKG name:' "$r_report_qpkg_name_column_width"
-		GenerateReportLineItem 'Appl. version:' "$r_report_qpkg_appl_version_column_width"
-		GenerateReportLineItem 'Description:' "$r_report_qpkg_description_column_width"
+		FormatReportFieldWidth 'QPKG name:' "$r_report_qpkg_name_column_width"
+		FormatReportFieldWidth 'Appl. version:' "$r_report_qpkg_appl_version_column_width"
+		FormatReportFieldWidth 'Description:' "$r_report_qpkg_description_column_width"
 	fi
 
 	printf '\n'
@@ -4843,9 +4843,9 @@ _GeneratePacksReportDataLine_()
 			printf "\n%s|%s|%$((${#r_chars_blank}))s$(TextBrightOrange "${r_chars_dropend}${r_chars_note}")%s" '' '' '' "$notes_msg"
 		fi
 	else
-		GenerateReportLineItem "$name_msg" "$r_report_qpkg_name_column_width"
-		GenerateReportLineItem "$app_ver_msg" "$r_report_qpkg_appl_version_column_width"
-		GenerateReportLineItem "$description_msg" "$r_report_qpkg_description_column_width"
+		FormatReportFieldWidth "$name_msg" "$r_report_qpkg_name_column_width"
+		FormatReportFieldWidth "$app_ver_msg" "$r_report_qpkg_appl_version_column_width"
+		FormatReportFieldWidth "$description_msg" "$r_report_qpkg_description_column_width"
 
 		if [[ -n $notes ]]; then
 			printf "\n%$((${#r_chars_blank}+r_report_qpkg_name_column_width+r_report_qpkg_appl_version_column_width+(r_report_column_spacing*2)))s$(TextBrightOrange "${r_chars_dropend}${r_chars_note}")%s" '' "$notes_msg"
@@ -4874,12 +4874,12 @@ GenerateStatusReportTitleLine()
 	if IsOsCanAutowidthTableColumns; then
 		printf '%s' "QPKG name:|Status:|Action $(Parenthesise result):|$a:|Appl. version:|Location:"
 	else
-		GenerateReportLineItem 'QPKG name:' "$r_report_qpkg_name_column_width"
-		GenerateReportLineItem 'Status:' "$r_report_qpkg_status_column_width"
-		GenerateReportLineItem "Action $(Parenthesise result):" "$r_report_qpkg_action_column_width"
-		GenerateReportLineItem "$a:" "$r_report_qpkg_version_column_width"
-		GenerateReportLineItem 'Appl. version:' "$r_report_qpkg_appl_version_column_width"
-		GenerateReportLineItem 'Location:' "$r_report_qpkg_path_column_width"
+		FormatReportFieldWidth 'QPKG name:' "$r_report_qpkg_name_column_width"
+		FormatReportFieldWidth 'Status:' "$r_report_qpkg_status_column_width"
+		FormatReportFieldWidth "Action $(Parenthesise result):" "$r_report_qpkg_action_column_width"
+		FormatReportFieldWidth "$a:" "$r_report_qpkg_version_column_width"
+		FormatReportFieldWidth 'Appl. version:' "$r_report_qpkg_appl_version_column_width"
+		FormatReportFieldWidth 'Location:' "$r_report_qpkg_path_column_width"
 	fi
 
 	printf '\n'
@@ -4992,11 +4992,11 @@ _GenerateStatusReportDataLine_()
 						: # Do nothing, this is set later.
 						;;
 					auxiliary)
-						auxiliary_msg=$(GenerateReportField 'incompatible author' attention_highlight)
+						auxiliary_msg=$(FormatReportField 'incompatible author' attention_highlight)
 						req_attention=true
 						;;
 					*)
-						local ${a}_msg="$(GenerateReportField "${!a}" highlight)"
+						local ${a}_msg="$(FormatReportField "${!a}" highlight)"
 				esac
 			done
 			;;
@@ -5004,17 +5004,17 @@ _GenerateStatusReportDataLine_()
 			for a in "${column_vars[@]}"; do
 				case $a in
 					action)
-						local ${a}_msg="$(GenerateReportField "${!a}")"
+						local ${a}_msg="$(FormatReportField "${!a}")"
 						;;
 					name)
 						: # Do nothing, this is set later.
 						;;
 					auxiliary)
-						auxiliary_msg=$(GenerateReportField missing alert)
+						auxiliary_msg=$(FormatReportField missing alert)
 						req_alert=true
 						;;
 					*)
-						local ${a}_msg="$(GenerateReportField "${!a}" oops)"
+						local ${a}_msg="$(FormatReportField "${!a}" oops)"
 						req_oops=true
 				esac
 			done
@@ -5042,14 +5042,14 @@ _GenerateStatusReportDataLine_()
 						;;
 					auxiliary)
 						if [[ $auxiliary != false ]]; then
-							auxiliary_msg=$(GenerateReportField "$auxiliary" alert_mute)
+							auxiliary_msg=$(FormatReportField "$auxiliary" alert_mute)
 						fi
 						;;
 					status)
-						status_msg=$(GenerateReportField "$status" alert_mute)
+						status_msg=$(FormatReportField "$status" alert_mute)
 						;;
 					*)
-						local ${a}_msg="$(GenerateReportField "${!a}" mute)"
+						local ${a}_msg="$(FormatReportField "${!a}" mute)"
 				esac
 			done
 			;;
@@ -5089,10 +5089,10 @@ _GenerateStatusReportDataLine_()
 							status_msg+=' '$(TextBrightOrange upgradable)
 						fi
 
-						status_msg=$(GenerateReportField "$(AddSeparators "$status_msg")" normal)
+						status_msg=$(FormatReportField "$(AddSeparators "$status_msg")" normal)
 						;;
 					*)
-						local ${a}_msg="$(GenerateReportField "${!a}")"
+						local ${a}_msg="$(FormatReportField "${!a}")"
 				esac
 			done
 	esac
@@ -5106,28 +5106,28 @@ _GenerateStatusReportDataLine_()
 
 	if [[ $req_alert = true ]]; then
 		/bin/touch "$r_report_flags_path"/req-alert
-		name_msg=$(GenerateReportField "$name" alert)
+		name_msg=$(FormatReportField "$name" alert)
 	elif [[ $req_attention = true ]]; then
 		/bin/touch "$r_report_flags_path"/req-attention
-		name_msg=$(GenerateReportField "$name" attention_highlight)
+		name_msg=$(FormatReportField "$name" attention_highlight)
 	elif [[ $req_oops = true ]]; then
 		/bin/touch "$r_report_flags_path"/req-attention
-		name_msg=$(GenerateReportField "$name" oops)
+		name_msg=$(FormatReportField "$name" oops)
 	elif [[ $mode = mute ]]; then
-		name_msg=$(GenerateReportField "$name" mute)
+		name_msg=$(FormatReportField "$name" mute)
 	else
-		name_msg=$(GenerateReportField "$name")
+		name_msg=$(FormatReportField "$name")
 	fi
 
 	if IsOsCanAutowidthTableColumns; then
 		printf '%s' "$name_msg|$status_msg|$action_msg|$ver_msg|$app_ver_msg|$path_msg"
 	else
-		GenerateReportLineItem "$name_msg" "$r_report_qpkg_name_column_width"
-		GenerateReportLineItem "$status_msg" "$r_report_qpkg_status_column_width"
-		GenerateReportLineItem "$action_msg" "$r_report_qpkg_action_column_width"
-		GenerateReportLineItem "$ver_msg" "$r_report_qpkg_version_column_width"
-		GenerateReportLineItem "$app_ver_msg" "$r_report_qpkg_appl_version_column_width"
-		GenerateReportLineItem "$path_msg" "$r_report_qpkg_path_column_width"
+		FormatReportFieldWidth "$name_msg" "$r_report_qpkg_name_column_width"
+		FormatReportFieldWidth "$status_msg" "$r_report_qpkg_status_column_width"
+		FormatReportFieldWidth "$action_msg" "$r_report_qpkg_action_column_width"
+		FormatReportFieldWidth "$ver_msg" "$r_report_qpkg_version_column_width"
+		FormatReportFieldWidth "$app_ver_msg" "$r_report_qpkg_appl_version_column_width"
+		FormatReportFieldWidth "$path_msg" "$r_report_qpkg_path_column_width"
 	fi
 
 	printf '\n'
@@ -5145,9 +5145,9 @@ GenerateReposReportTitleLine()
 	if IsOsCanAutowidthTableColumns; then
 		printf 'QPKG name:|Repository:|Install date:'
 	else
-		GenerateReportLineItem 'QPKG name:' "$r_report_qpkg_name_column_width"
-		GenerateReportLineItem 'Repository:' "$r_report_qpkg_repo_column_width"
-		GenerateReportLineItem 'Install date:' "$r_report_qpkg_install_date_column_width"
+		FormatReportFieldWidth 'QPKG name:' "$r_report_qpkg_name_column_width"
+		FormatReportFieldWidth 'Repository:' "$r_report_qpkg_repo_column_width"
+		FormatReportFieldWidth 'Install date:' "$r_report_qpkg_install_date_column_width"
 	fi
 
 	printf '\n'
@@ -5205,8 +5205,8 @@ _GenerateReposReportDataLine_()
 
 	case $mode in
 		highlight)
-			auxiliary_msg=$(GenerateReportField missing alert)
-			install_date_msg=$(GenerateReportField "$(GetQpkgInstalledDate)" oops)
+			auxiliary_msg=$(FormatReportField missing alert)
+			install_date_msg=$(FormatReportField "$(GetQpkgInstalledDate)" oops)
 			req_alert=true
 			;;
 		mute)
@@ -5222,46 +5222,46 @@ _GenerateReposReportDataLine_()
 				auxiliary='not installed'
 			fi
 
-			auxiliary_msg=$(GenerateReportField "$auxiliary" alert_mute)
-			install_date_msg=$(GenerateReportField N/A mute)
+			auxiliary_msg=$(FormatReportField "$auxiliary" alert_mute)
+			install_date_msg=$(FormatReportField N/A mute)
 			;;
 		*)
 			case $assigned_repo in
 				sherpa)
-					assigned_repo_msg=$(GenerateReportField "$assigned_repo" normal_ok)
+					assigned_repo_msg=$(FormatReportField "$assigned_repo" normal_ok)
 					;;
 				undefined)
 					assigned_repo_msg=N/A
 					/bin/touch "$r_report_flags_path"/na
 					;;
 				*)
-					assigned_repo_msg=$(GenerateReportField "$assigned_repo" attention_highlight)
+					assigned_repo_msg=$(FormatReportField "$assigned_repo" attention_highlight)
 					/bin/touch "$r_report_flags_path"/repo-other
 			esac
 
-			install_date_msg=$(GenerateReportField "$(GetQpkgInstalledDate)")
+			install_date_msg=$(FormatReportField "$(GetQpkgInstalledDate)")
 	esac
 
 	[[ -n $auxiliary_msg ]] && eval "${auxiliary_column}_msg=\"$auxiliary_msg\""
 
 	if [[ $req_alert = true ]]; then
 		/bin/touch "$r_report_flags_path"/req-alert
-		name_msg=$(GenerateReportField "$name" alert)
+		name_msg=$(FormatReportField "$name" alert)
 	elif [[ $req_attention = true ]]; then
 		/bin/touch "$r_report_flags_path"/req-attention
-		name_msg=$(GenerateReportField "$name" attention_highlight)
+		name_msg=$(FormatReportField "$name" attention_highlight)
 	elif [[ $mode = mute ]]; then
-		name_msg=$(GenerateReportField "$name" mute)
+		name_msg=$(FormatReportField "$name" mute)
 	else
-		name_msg=$(GenerateReportField "$name")
+		name_msg=$(FormatReportField "$name")
 	fi
 
 	if IsOsCanAutowidthTableColumns; then
 		printf '%s' "$name_msg|$assigned_repo_msg|$install_date_msg"
 	else
-		GenerateReportLineItem "$name_msg" "$r_report_qpkg_name_column_width"
-		GenerateReportLineItem "$assigned_repo_msg" "$r_report_qpkg_repo_column_width"
-		GenerateReportLineItem "$install_date_msg" "$r_report_qpkg_install_date_column_width"
+		FormatReportFieldWidth "$name_msg" "$r_report_qpkg_name_column_width"
+		FormatReportFieldWidth "$assigned_repo_msg" "$r_report_qpkg_repo_column_width"
+		FormatReportFieldWidth "$install_date_msg" "$r_report_qpkg_install_date_column_width"
 	fi
 
 	printf '\n'
@@ -5279,9 +5279,9 @@ GenerateAbsReportTitleLine()
 	if IsOsCanAutowidthTableColumns; then
 		printf 'QPKG name:|Installed?|Acceptable QPKG name abbreviations and aliases:'
 	else
-		GenerateReportLineItem 'QPKG name:' "$r_report_qpkg_name_column_width"
-		GenerateReportLineItem 'Installed?' "$r_report_qpkg_is_installed_column_width"
-		GenerateReportLineItem 'Acceptable QPKG name abbreviations and aliases:' "$r_report_qpkg_abbreviations_column_width"
+		FormatReportFieldWidth 'QPKG name:' "$r_report_qpkg_name_column_width"
+		FormatReportFieldWidth 'Installed?' "$r_report_qpkg_is_installed_column_width"
+		FormatReportFieldWidth 'Acceptable QPKG name abbreviations and aliases:' "$r_report_qpkg_abbreviations_column_width"
 	fi
 
 	printf '\n'
@@ -5334,47 +5334,47 @@ _GenerateAbsReportDataLine_()
 			fi
 
 			if [[ $auxiliary != false ]]; then
-				auxiliary_msg=$(GenerateReportField "$auxiliary" alert_mute)
+				auxiliary_msg=$(FormatReportField "$auxiliary" alert_mute)
 			else
-				abs_msg=$(GenerateReportField "$abs" normal_mute)
+				abs_msg=$(FormatReportField "$abs" normal_mute)
 			fi
 
-			installed_msg=$(GenerateReportField false mute)
+			installed_msg=$(FormatReportField false mute)
 			;;
 		highlight)
 			req_alert=true
 
-			abs_msg=$(GenerateReportField "$abs" normal_notice)
-			auxiliary_msg=$(GenerateReportField missing alert)
+			abs_msg=$(FormatReportField "$abs" normal_notice)
+			auxiliary_msg=$(FormatReportField missing alert)
 			;;
 		*)
-			abs_msg=$(GenerateReportField "$abs" normal)
-			installed_msg=$(GenerateReportField true)
+			abs_msg=$(FormatReportField "$abs" normal)
+			installed_msg=$(FormatReportField true)
 	esac
 
 	[[ -n $auxiliary_msg ]] && eval "${auxiliary_column}_msg=\"$auxiliary_msg\""
 
 	if [[ $req_alert = true ]]; then
 		/bin/touch "$r_report_flags_path"/req-alert
-		name_msg=$(GenerateReportField "$name" alert)
+		name_msg=$(FormatReportField "$name" alert)
 	elif [[ $req_attention = true ]]; then
 		/bin/touch "$r_report_flags_path"/state-notinstallable
-		name_msg=$(GenerateReportField "$name" attention_highlight)
+		name_msg=$(FormatReportField "$name" attention_highlight)
 	elif [[ $req_notice = true ]]; then
 		/bin/touch "$r_report_flags_path"/req-notice
-		name_msg=$(GenerateReportField "$name" notice)
+		name_msg=$(FormatReportField "$name" notice)
 	elif [[ $mode = mute ]]; then
-		name_msg=$(GenerateReportField "$name" mute)
+		name_msg=$(FormatReportField "$name" mute)
 	else
-		name_msg=$(GenerateReportField "$name")
+		name_msg=$(FormatReportField "$name")
 	fi
 
 	if IsOsCanAutowidthTableColumns; then
 		printf '%s' "$name_msg|$installed_msg|$abs_msg"
 	else
-		GenerateReportLineItem "$name_msg" "$r_report_qpkg_name_column_width"
-		GenerateReportLineItem "$installed_msg" "$r_report_qpkg_is_installed_column_width"
-		GenerateReportLineItem "$abs_msg" "$r_report_qpkg_abbreviations_column_width"
+		FormatReportFieldWidth "$name_msg" "$r_report_qpkg_name_column_width"
+		FormatReportFieldWidth "$installed_msg" "$r_report_qpkg_is_installed_column_width"
+		FormatReportFieldWidth "$abs_msg" "$r_report_qpkg_abbreviations_column_width"
 	fi
 
 	printf '\n'
@@ -5400,17 +5400,17 @@ GenerateDepsReportTitleLine()
 	if IsOsCanAutowidthTableColumns; then
 		printf 'QPKG name:|Dependencies:|Optionals:|Installed?|Enabled?|Managed?|Min. RAM:|Min. OS:|Max. OS:|Supported arch?|Installed QPKG author:'
 	else
-		GenerateReportLineItem 'QPKG name:' "$r_report_qpkg_name_column_width"
-		GenerateReportLineItem 'Dependencies:' "$r_report_qpkg_dependencies_column_width"
-		GenerateReportLineItem 'Optionals:' "$r_report_qpkg_opt_dependencies_column_width"
-		GenerateReportLineItem 'Installed?' "$r_report_qpkg_is_installed_column_width"
-		GenerateReportLineItem 'Enabled?' "$r_report_qpkg_is_enabled_column_width"
-		GenerateReportLineItem 'Managed?' "$r_report_qpkg_is_managed_column_width"
-		GenerateReportLineItem 'Min. RAM:' "$r_report_qpkg_min_ram_column_width"
-		GenerateReportLineItem 'Min. OS:' "$r_report_qpkg_min_os_version_column_width"
-		GenerateReportLineItem 'Max. OS:' "$r_report_qpkg_max_os_version_column_width"
-		GenerateReportLineItem 'Supported arch?' "$r_report_qpkg_arch_column_width"
-		GenerateReportLineItem 'Installed QPKG author:' "$r_report_lazy_column_width"
+		FormatReportFieldWidth 'QPKG name:' "$r_report_qpkg_name_column_width"
+		FormatReportFieldWidth 'Dependencies:' "$r_report_qpkg_dependencies_column_width"
+		FormatReportFieldWidth 'Optionals:' "$r_report_qpkg_opt_dependencies_column_width"
+		FormatReportFieldWidth 'Installed?' "$r_report_qpkg_is_installed_column_width"
+		FormatReportFieldWidth 'Enabled?' "$r_report_qpkg_is_enabled_column_width"
+		FormatReportFieldWidth 'Managed?' "$r_report_qpkg_is_managed_column_width"
+		FormatReportFieldWidth 'Min. RAM:' "$r_report_qpkg_min_ram_column_width"
+		FormatReportFieldWidth 'Min. OS:' "$r_report_qpkg_min_os_version_column_width"
+		FormatReportFieldWidth 'Max. OS:' "$r_report_qpkg_max_os_version_column_width"
+		FormatReportFieldWidth 'Supported arch?' "$r_report_qpkg_arch_column_width"
+		FormatReportFieldWidth 'Installed QPKG author:' "$r_report_lazy_column_width"
 	fi
 
 	printf '\n'
@@ -5475,16 +5475,16 @@ _GenerateDepsReportDataLine_()
 			for a in "${column_vars[@]}"; do
 				case $a in
 					author)
-						author_msg=$(GenerateReportField "$author" attention_highlight)
+						author_msg=$(FormatReportField "$author" attention_highlight)
 						;;
 					auxiliary)
-						auxiliary_msg=$(GenerateReportField 'incompatible author' attention_highlight)
+						auxiliary_msg=$(FormatReportField 'incompatible author' attention_highlight)
 						;;
 					name)
 						: # Do nothing, this will be set later.
 						;;
 					*)
-						local ${a}_msg="$(GenerateReportField N/A highlight)"
+						local ${a}_msg="$(FormatReportField N/A highlight)"
 				esac
 			done
 			;;
@@ -5492,7 +5492,7 @@ _GenerateDepsReportDataLine_()
 			req_alert=true
 
 			# Assign field messages.
-			auxiliary_msg=$(GenerateReportField missing alert)
+			auxiliary_msg=$(FormatReportField missing alert)
 			;;
 		mute)
 			/bin/touch "$r_report_flags_path"/state-notinstalled
@@ -5524,54 +5524,54 @@ _GenerateDepsReportDataLine_()
 			# Assign & highlight field messages.
 
 			if IsQpkgDbArchOK; then
-				arch_msg=$(GenerateReportField "$arch" mute)
+				arch_msg=$(FormatReportField "$arch" mute)
 			else
-				arch_msg=$(GenerateReportField "$arch" attention_highlight)
+				arch_msg=$(FormatReportField "$arch" attention_highlight)
 				req_attention=true
 			fi
 
-			author_msg=$(GenerateReportField N/A mute)
-			deps_msg=$(GenerateReportField "${deps// /, }" mute)
-			opt_deps_msg=$(GenerateReportField "${opt_deps// /, }" mute)
-			enabled_msg=$(GenerateReportField N/A mute)
-			installed_msg=$(GenerateReportField "$installed" mute)
-			managed_msg=$(GenerateReportField N/A mute)
+			author_msg=$(FormatReportField N/A mute)
+			deps_msg=$(FormatReportField "${deps// /, }" mute)
+			opt_deps_msg=$(FormatReportField "${opt_deps// /, }" mute)
+			enabled_msg=$(FormatReportField N/A mute)
+			installed_msg=$(FormatReportField "$installed" mute)
+			managed_msg=$(FormatReportField N/A mute)
 
 			if IsQpkgDbMaxOSVerOk "$qpkg_name"; then
-				max_os_msg=$(GenerateReportField "$max_os" mute)
+				max_os_msg=$(FormatReportField "$max_os" mute)
 			else
-				max_os_msg=$(GenerateReportField "$max_os" attention_highlight)
+				max_os_msg=$(FormatReportField "$max_os" attention_highlight)
 				req_attention=true
 			fi
 
 			if IsQpkgDbMinOSVerOk "$qpkg_name"; then
 				if [[ $min_os != none ]]; then
-					min_os_msg=$(GenerateReportField "$min_os" mute)
+					min_os_msg=$(FormatReportField "$min_os" mute)
 				else
-					min_os_msg=$(GenerateReportField "$min_os" attention_highlight)
+					min_os_msg=$(FormatReportField "$min_os" attention_highlight)
 					req_attention=true
 				fi
 			else
-				min_os_msg=$(GenerateReportField "$min_os" attention_highlight)
+				min_os_msg=$(FormatReportField "$min_os" attention_highlight)
 				req_attention=true
 			fi
 
 			if IsQpkgDbMinRAMOk "$qpkg_name"; then
-				min_ram_msg=$(GenerateReportField "$min_ram" mute)
+				min_ram_msg=$(FormatReportField "$min_ram" mute)
 			else
-				min_ram_msg=$(GenerateReportField "$min_ram" attention_highlight)
+				min_ram_msg=$(FormatReportField "$min_ram" attention_highlight)
 				req_attention=true
 			fi
 			;;
 		*)
 			if IsQpkgDbArchOK; then
-				arch_msg=$(GenerateReportField "$arch" ok)
+				arch_msg=$(FormatReportField "$arch" ok)
 			else
-				arch_msg=$(GenerateReportField "$arch" alert)
+				arch_msg=$(FormatReportField "$arch" alert)
 				req_alert=true
 			fi
 
-			author_msg=$(GenerateReportField "$author" ok)
+			author_msg=$(FormatReportField "$author" ok)
 			deps=''
 
 			if [[ $deps_raw != none ]]; then
@@ -5589,7 +5589,7 @@ _GenerateDepsReportDataLine_()
 				deps=$deps_raw
 			fi
 
-			deps_msg=$(GenerateReportField "${deps// /, }")
+			deps_msg=$(FormatReportField "${deps// /, }")
 			opt_deps=''
 
 			if [[ $opt_deps_raw != none ]]; then
@@ -5606,53 +5606,53 @@ _GenerateDepsReportDataLine_()
 				opt_deps=$opt_deps_raw
 			fi
 
-			opt_deps_msg=$(GenerateReportField "${opt_deps// /, }")
+			opt_deps_msg=$(FormatReportField "${opt_deps// /, }")
 
 			if IsQpkgEnabled; then
-				enabled_msg=$(GenerateReportField "$enabled" ok)
+				enabled_msg=$(FormatReportField "$enabled" ok)
 			else
-				enabled_msg=$(GenerateReportField "$enabled" notice)
+				enabled_msg=$(FormatReportField "$enabled" notice)
 				req_notice=true
 			fi
 
-			installed_msg=$(GenerateReportField true ok)
+			installed_msg=$(FormatReportField true ok)
 
 			if IsQpkgRepoSelfManaged; then
-				managed_msg=$(GenerateReportField "$managed" ok)
+				managed_msg=$(FormatReportField "$managed" ok)
 			else
-				managed_msg=$(GenerateReportField "$managed" highlight)
+				managed_msg=$(FormatReportField "$managed" highlight)
 			fi
 
 			if IsQpkgDbMaxOSVerOk; then
 				if [[ $max_os != none ]]; then
-					max_os_msg=$(GenerateReportField "$max_os" ok)
+					max_os_msg=$(FormatReportField "$max_os" ok)
 				else
-					max_os_msg=$(GenerateReportField "$max_os")
+					max_os_msg=$(FormatReportField "$max_os")
 				fi
 			else
-				max_os_msg=$(GenerateReportField "$max_os" alert)
+				max_os_msg=$(FormatReportField "$max_os" alert)
 				req_alert=true
 			fi
 
 			if IsQpkgDbMinOSVerOk; then
 				if [[ $min_os != none ]]; then
-					min_os_msg=$(GenerateReportField "$min_os" ok)
+					min_os_msg=$(FormatReportField "$min_os" ok)
 				else
-					min_os_msg=$(GenerateReportField "$min_os")
+					min_os_msg=$(FormatReportField "$min_os")
 				fi
 			else
-				min_os_msg=$(GenerateReportField "$min_os" alert)
+				min_os_msg=$(FormatReportField "$min_os" alert)
 				req_alert=true
 			fi
 
 			if IsQpkgDbMinRAMOk; then
 				if [[ $min_ram != none ]]; then
-					min_ram_msg=$(GenerateReportField "$min_ram" ok)
+					min_ram_msg=$(FormatReportField "$min_ram" ok)
 				else
-					min_ram_msg=$(GenerateReportField "$min_ram")
+					min_ram_msg=$(FormatReportField "$min_ram")
 				fi
 			else
-				min_ram_msg=$(GenerateReportField "$min_ram" alert)
+				min_ram_msg=$(FormatReportField "$min_ram" alert)
 				req_alert=true
 			fi
 	esac
@@ -5661,33 +5661,33 @@ _GenerateDepsReportDataLine_()
 
 	if [[ $req_alert = true ]]; then
 		/bin/touch "$r_report_flags_path"/req-alert
-		name_msg=$(GenerateReportField "$name" alert)
+		name_msg=$(FormatReportField "$name" alert)
 	elif [[ $req_attention = true ]]; then
 		/bin/touch "$r_report_flags_path"/state-notinstallable
-		name_msg=$(GenerateReportField "$name" attention_highlight)
+		name_msg=$(FormatReportField "$name" attention_highlight)
 	elif [[ $req_notice = true ]]; then
 		/bin/touch "$r_report_flags_path"/req-notice
-		name_msg=$(GenerateReportField "$name" notice)
+		name_msg=$(FormatReportField "$name" notice)
 	elif [[ $mode = mute ]]; then
-		name_msg=$(GenerateReportField "$name" mute)
+		name_msg=$(FormatReportField "$name" mute)
 	else
-		name_msg=$(GenerateReportField "$name")
+		name_msg=$(FormatReportField "$name")
 	fi
 
 	if IsOsCanAutowidthTableColumns; then
 		printf '%s' "$name_msg|$deps_msg|$opt_deps_msg|$installed_msg|$enabled_msg|$managed_msg|$min_ram_msg|$min_os_msg|$max_os_msg|$arch_msg|$author_msg"
 	else
-		GenerateReportLineItem "$name_msg" "$r_report_qpkg_name_column_width"
-		GenerateReportLineItem "$deps_msg" "$r_report_qpkg_dependencies_column_width"
-		GenerateReportLineItem "$opt_deps_msg" "$r_report_qpkg_opt_dependencies_column_width"
-		GenerateReportLineItem "$installed_msg" "$r_report_qpkg_is_installed_column_width"
-		GenerateReportLineItem "$enabled_msg" "$r_report_qpkg_is_enabled_column_width"
-		GenerateReportLineItem "$managed_msg" "$r_report_qpkg_is_managed_column_width"
-		GenerateReportLineItem "$min_ram_msg" "$r_report_qpkg_min_ram_column_width"
-		GenerateReportLineItem "$min_os_msg" "$r_report_qpkg_min_os_version_column_width"
-		GenerateReportLineItem "$max_os_msg" "$r_report_qpkg_max_os_version_column_width"
-		GenerateReportLineItem "$arch_msg" "$r_report_qpkg_arch_column_width"
-		GenerateReportLineItem "$author_msg" "$r_report_lazy_column_width"
+		FormatReportFieldWidth "$name_msg" "$r_report_qpkg_name_column_width"
+		FormatReportFieldWidth "$deps_msg" "$r_report_qpkg_dependencies_column_width"
+		FormatReportFieldWidth "$opt_deps_msg" "$r_report_qpkg_opt_dependencies_column_width"
+		FormatReportFieldWidth "$installed_msg" "$r_report_qpkg_is_installed_column_width"
+		FormatReportFieldWidth "$enabled_msg" "$r_report_qpkg_is_enabled_column_width"
+		FormatReportFieldWidth "$managed_msg" "$r_report_qpkg_is_managed_column_width"
+		FormatReportFieldWidth "$min_ram_msg" "$r_report_qpkg_min_ram_column_width"
+		FormatReportFieldWidth "$min_os_msg" "$r_report_qpkg_min_os_version_column_width"
+		FormatReportFieldWidth "$max_os_msg" "$r_report_qpkg_max_os_version_column_width"
+		FormatReportFieldWidth "$arch_msg" "$r_report_qpkg_arch_column_width"
+		FormatReportFieldWidth "$author_msg" "$r_report_lazy_column_width"
 	fi
 
 	printf '\n'
@@ -5711,18 +5711,18 @@ GenerateFeaturesReportTitleLine()
 	if IsOsCanAutowidthTableColumns; then
 		printf 'QPKG name:|Independent?|Optional?|Dependent?|Enhanced?|CanBack?|CanClean?|StartUpd?|AutoUpd?|LiveTest?|ArchCompat?|UniqueUnpack?'
 	else
-		GenerateReportLineItem 'QPKG name:' "$r_report_qpkg_name_column_width"
-		GenerateReportLineItem 'Independent?' "$r_report_qpkg_tier_column_width"
-		GenerateReportLineItem 'Optional?' "$r_report_qpkg_tier_column_width"
-		GenerateReportLineItem 'Dependent?' "$r_report_qpkg_tier_column_width"
-		GenerateReportLineItem 'Enhanced?' "$r_report_lazy_column_width"
-		GenerateReportLineItem 'CanBack?' "$r_report_qpkg_can_backup_column_width"
-		GenerateReportLineItem 'CanClean?' "$r_report_qpkg_can_clean_column_width"
-		GenerateReportLineItem 'StartUpd?' "$r_report_qpkg_can_start_to_update_column_width"
-		GenerateReportLineItem 'AutoUpd?' "$r_report_qpkg_auto_update_column_width"
-		GenerateReportLineItem 'LiveTest?' "$r_report_qpkg_active_test_builtin_column_width"
-		GenerateReportLineItem 'ArchCompat?' "$r_report_qpkg_is_compatible_column_width"
-		GenerateReportLineItem 'UniqueUnpack?' "$r_report_lazy_column_width"
+		FormatReportFieldWidth 'QPKG name:' "$r_report_qpkg_name_column_width"
+		FormatReportFieldWidth 'Independent?' "$r_report_qpkg_tier_column_width"
+		FormatReportFieldWidth 'Optional?' "$r_report_qpkg_tier_column_width"
+		FormatReportFieldWidth 'Dependent?' "$r_report_qpkg_tier_column_width"
+		FormatReportFieldWidth 'Enhanced?' "$r_report_lazy_column_width"
+		FormatReportFieldWidth 'CanBack?' "$r_report_qpkg_can_backup_column_width"
+		FormatReportFieldWidth 'CanClean?' "$r_report_qpkg_can_clean_column_width"
+		FormatReportFieldWidth 'StartUpd?' "$r_report_qpkg_can_start_to_update_column_width"
+		FormatReportFieldWidth 'AutoUpd?' "$r_report_qpkg_auto_update_column_width"
+		FormatReportFieldWidth 'LiveTest?' "$r_report_qpkg_active_test_builtin_column_width"
+		FormatReportFieldWidth 'ArchCompat?' "$r_report_qpkg_is_compatible_column_width"
+		FormatReportFieldWidth 'UniqueUnpack?' "$r_report_lazy_column_width"
 	fi
 
 	printf '\n'
@@ -5768,7 +5768,7 @@ _GenerateFeaturesReportDataLine_()
 			req_attention=true
 
 			# Assign & highlight field messages.
-			auxiliary_msg=$(GenerateReportField "$auxiliary" attention_highlight)
+			auxiliary_msg=$(FormatReportField "$auxiliary" attention_highlight)
 			;;
 		missing)
 			# Set field values.
@@ -5776,7 +5776,7 @@ _GenerateFeaturesReportDataLine_()
 			req_alert=true
 
 			# Assign & highlight field messages.
-			auxiliary_msg=$(GenerateReportField "$auxiliary" alert)
+			auxiliary_msg=$(FormatReportField "$auxiliary" alert)
 			;;
 		mute)
 			# Set field values.
@@ -5806,7 +5806,7 @@ _GenerateFeaturesReportDataLine_()
 						: # Do nothing.
 						;;
 					*)
-						local ${a}_msg="$(GenerateReportField "${!a}" mute)"
+						local ${a}_msg="$(FormatReportField "${!a}" mute)"
 				esac
 			done
 			;;
@@ -5851,10 +5851,10 @@ _GenerateFeaturesReportDataLine_()
 					*)
 						case ${!a} in
 							true|N/A)
-								local ${a}_msg="$(GenerateReportField "${!a}")"
+								local ${a}_msg="$(FormatReportField "${!a}")"
 								;;
 							*)
-								local ${a}_msg="$(GenerateReportField "${!a}" highlight)"
+								local ${a}_msg="$(FormatReportField "${!a}" highlight)"
 						esac
 				esac
 			done
@@ -5864,31 +5864,31 @@ _GenerateFeaturesReportDataLine_()
 
 	if [[ $req_alert = true ]]; then
 		/bin/touch "$r_report_flags_path"/req-alert
-		name_msg=$(GenerateReportField "$name" alert)
+		name_msg=$(FormatReportField "$name" alert)
 	elif [[ $req_attention = true ]]; then
 		/bin/touch "$r_report_flags_path"/req-attention
-		name_msg=$(GenerateReportField "$name" attention_highlight)
+		name_msg=$(FormatReportField "$name" attention_highlight)
 	elif [[ $mode = mute ]]; then
-		name_msg=$(GenerateReportField "$name" mute)
+		name_msg=$(FormatReportField "$name" mute)
 	else
-		name_msg=$(GenerateReportField "$name")
+		name_msg=$(FormatReportField "$name")
 	fi
 
 	if IsOsCanAutowidthTableColumns; then
 		printf '%s' "$name_msg|$independent_msg|$optional_msg|$dependent_msg|$compatible_msg|$backup_msg|$clean_msg|$restart_to_update_msg|$autoupdate_msg|$active_test_msg|$arch_compatible_msg|$uniqueunpack_msg"
 	else
-		GenerateReportLineItem "$name_msg" "$r_report_qpkg_name_column_width"
-		GenerateReportLineItem "$independent_msg" "$r_report_qpkg_tier_column_width"
-		GenerateReportLineItem "$optional_msg" "$r_report_qpkg_tier_column_width"
-		GenerateReportLineItem "$dependent_msg" "$r_report_qpkg_tier_column_width"
-		GenerateReportLineItem "$compatible_msg" "$r_report_lazy_column_width"
-		GenerateReportLineItem "$backup_msg" "$r_report_qpkg_can_backup_column_width"
-		GenerateReportLineItem "$clean_msg" "$r_report_qpkg_can_clean_column_width"
-		GenerateReportLineItem "$restart_to_update_msg" "$r_report_qpkg_can_start_to_update_column_width"
-		GenerateReportLineItem "$autoupdate_msg" "$r_report_qpkg_auto_update_column_width"
-		GenerateReportLineItem "$active_test_msg" "$r_report_qpkg_active_test_builtin_column_width"
-		GenerateReportLineItem "$arch_compatible_msg" "$r_report_qpkg_is_compatible_column_width"
-		GenerateReportLineItem "$uniqueunpack_msg" "$r_report_lazy_column_width"
+		FormatReportFieldWidth "$name_msg" "$r_report_qpkg_name_column_width"
+		FormatReportFieldWidth "$independent_msg" "$r_report_qpkg_tier_column_width"
+		FormatReportFieldWidth "$optional_msg" "$r_report_qpkg_tier_column_width"
+		FormatReportFieldWidth "$dependent_msg" "$r_report_qpkg_tier_column_width"
+		FormatReportFieldWidth "$compatible_msg" "$r_report_lazy_column_width"
+		FormatReportFieldWidth "$backup_msg" "$r_report_qpkg_can_backup_column_width"
+		FormatReportFieldWidth "$clean_msg" "$r_report_qpkg_can_clean_column_width"
+		FormatReportFieldWidth "$restart_to_update_msg" "$r_report_qpkg_can_start_to_update_column_width"
+		FormatReportFieldWidth "$autoupdate_msg" "$r_report_qpkg_auto_update_column_width"
+		FormatReportFieldWidth "$active_test_msg" "$r_report_qpkg_active_test_builtin_column_width"
+		FormatReportFieldWidth "$arch_compatible_msg" "$r_report_qpkg_is_compatible_column_width"
+		FormatReportFieldWidth "$uniqueunpack_msg" "$r_report_lazy_column_width"
 	fi
 
 	printf '\n'
@@ -5906,9 +5906,9 @@ GenerateBacksReportTitleLine()
 	if IsOsCanAutowidthTableColumns; then
 		printf 'Backup file:|Size in bytes:|Backup date:'
 	else
-		GenerateReportLineItem 'Backup file:' "$r_report_file_name_column_width"
-		GenerateReportLineItem 'Size in bytes:' "$r_report_file_bytes_column_width"
-		GenerateReportLineItem 'Backup date:' "$r_report_file_change_date_column_width"
+		FormatReportFieldWidth 'Backup file:' "$r_report_file_name_column_width"
+		FormatReportFieldWidth 'Size in bytes:' "$r_report_file_bytes_column_width"
+		FormatReportFieldWidth 'Backup date:' "$r_report_file_change_date_column_width"
 	fi
 
 	printf '\n'
@@ -5955,31 +5955,31 @@ _GenerateBacksReportItemLine_()
 
 	case $mode in
 		normal)
-			epoch_time_msg=$(GenerateReportField "$(ConvertSecondsToFullDate "$epoch_time")")
-			file_bytes_msg=$(GenerateReportField "$file_bytes")
-			file_name_msg=$(GenerateReportField "$file_name" normal)
+			epoch_time_msg=$(FormatReportField "$(ConvertSecondsToFullDate "$epoch_time")")
+			file_bytes_msg=$(FormatReportField "$file_bytes")
+			file_name_msg=$(FormatReportField "$file_name" normal)
 			/bin/touch "$r_report_flags_path"/backup-file-ok
 			;;
 		highlight)
-			epoch_time_msg=$(GenerateReportField "$(ConvertSecondsToFullDate "$epoch_time")" notice)
-			file_bytes_msg=$(GenerateReportField "$file_bytes" oops)
-			file_name_msg=$(GenerateReportField "$file_name" notice)
+			epoch_time_msg=$(FormatReportField "$(ConvertSecondsToFullDate "$epoch_time")" notice)
+			file_bytes_msg=$(FormatReportField "$file_bytes" oops)
+			file_name_msg=$(FormatReportField "$file_name" notice)
 			/bin/touch "$r_report_flags_path"/backup-file-old
 	esac
 
 	if IsOsCanAutowidthTableColumns; then
 		printf '%s' "$file_name_msg|$file_bytes_msg|$epoch_time_msg"
 	else
-		GenerateReportLineItem "$file_name_msg" "$r_report_file_name_column_width"
-		GenerateReportLineItem "$file_bytes_msg" "$r_report_file_bytes_column_width"
-		GenerateReportLineItem "$epoch_time_msg" "$r_report_file_change_date_column_width"
+		FormatReportFieldWidth "$file_name_msg" "$r_report_file_name_column_width"
+		FormatReportFieldWidth "$file_bytes_msg" "$r_report_file_bytes_column_width"
+		FormatReportFieldWidth "$epoch_time_msg" "$r_report_file_change_date_column_width"
 	fi
 
 	printf '\n'
 
 	}
 
-GenerateReportField()
+FormatReportField()
 	{
 
 	# Inputs: (local)
@@ -6053,8 +6053,11 @@ GenerateReportField()
 
 	}
 
-GenerateReportLineItem()
+FormatReportFieldWidth()
 	{
+
+	# Build a report field with a minimum field width.
+	# Only needed when table columns can't be autowidth'd.
 
 	# Inputs: (local)
 	#	$1 = string: field text with possible ANSI codes.
