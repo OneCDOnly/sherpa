@@ -5854,7 +5854,7 @@ _GenerateFeaturesReportDataLine_()
 								local ${a}_msg="$(GenerateReportField "${!a}")"
 								;;
 							*)
-								local ${a}_msg="$(GenerateReportField "${!a}" highlight_ok)"
+								local ${a}_msg="$(GenerateReportField "${!a}" highlight)"
 						esac
 				esac
 			done
