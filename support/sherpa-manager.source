@@ -4896,7 +4896,8 @@ _GenerateStatusReportDataLine_()
 	#	$r_report_flags_path
 
 	local a=''
-	local -a column_vars=(action app_ver name path status ver)
+	local -a column_vars=(action app_ver auxiliary name path status ver)
+		local auxiliary_column=status		# Auxiliary messages are shown in this column name.
 	local mode=''
 	local -i n=0
 	local result=''
@@ -4990,8 +4991,8 @@ _GenerateStatusReportDataLine_()
 					name)
 						: # Do nothing, this is set later.
 						;;
-					status)
-						status_msg=$(GenerateReportField 'incompatible author' attention)
+					auxiliary)
+						auxiliary_msg=$(GenerateReportField 'incompatible author' attention_highlight)
 						req_attention=true
 						;;
 					*)
@@ -5008,8 +5009,9 @@ _GenerateStatusReportDataLine_()
 					name)
 						: # Do nothing, this is set later.
 						;;
-					status)
-						status_msg=$(GenerateReportField missing alert)
+					auxiliary)
+						auxiliary_msg=$(GenerateReportField missing alert)
+						req_alert=true
 						;;
 					*)
 						local ${a}_msg="$(GenerateReportField "${!a}" oops)"
@@ -5022,11 +5024,11 @@ _GenerateStatusReportDataLine_()
 			/bin/touch "$r_report_flags_path"/na
 
 			if ! IsQpkgDbArchOK; then
-				status='incompatible architecture'
+				auxiliary='incompatible architecture'
 			elif ! IsQpkgDbMinOSVerOk || ! IsQpkgDbMaxOSVerOk; then
-				status='incompatible '$(GetOsName)
+				auxiliary='incompatible '$(GetOsName)
 			elif ! IsQpkgDbMinRAMOk; then
-				status='insufficient RAM installed'
+				auxiliary='insufficient RAM installed'
 			else
 				status='not installed'
 			fi
@@ -5038,8 +5040,13 @@ _GenerateStatusReportDataLine_()
 					name)
 						: # Do nothing, this is set later.
 						;;
+					auxiliary)
+						if [[ $auxiliary != false ]]; then
+							auxiliary_msg=$(GenerateReportField "$auxiliary" alert_mute)
+						fi
+						;;
 					status)
-						status_msg=$(GenerateReportField "$status" mute_normal)
+						status_msg=$(GenerateReportField "$status" alert_mute)
 						;;
 					*)
 						local ${a}_msg="$(GenerateReportField "${!a}" mute)"
@@ -5051,6 +5058,9 @@ _GenerateStatusReportDataLine_()
 				case $a in
 					name)
 						: # Do nothing, this is set later.
+						;;
+					auxiliary)
+						: # Do nothing.
 						;;
 					status)
 						if QPKGs-ISenabled.Exist "$qpkg_name"; then
@@ -5092,12 +5102,14 @@ _GenerateStatusReportDataLine_()
 		/bin/touch "$r_report_flags_path"/state-upgradable
 	fi
 
+	[[ -n $auxiliary_msg ]] && eval "${auxiliary_column}_msg=\"$auxiliary_msg\""
+
 	if [[ $req_alert = true ]]; then
 		/bin/touch "$r_report_flags_path"/req-alert
 		name_msg=$(GenerateReportField "$name" alert)
 	elif [[ $req_attention = true ]]; then
 		/bin/touch "$r_report_flags_path"/req-attention
-		name_msg=$(GenerateReportField "$name" attention)
+		name_msg=$(GenerateReportField "$name" attention_highlight)
 	elif [[ $req_oops = true ]]; then
 		/bin/touch "$r_report_flags_path"/req-attention
 		name_msg=$(GenerateReportField "$name" oops)
@@ -5158,7 +5170,8 @@ _GenerateReposReportDataLine_()
 	# 	stdout = single report line with data fields.
 
 	local a=''
-	local -a column_vars=(assigned_repo install_date name)
+	local -a column_vars=(assigned_repo auxiliary install_date name)
+		local auxiliary_column=assigned_repo		# Auxiliary messages are shown in this column name.
 	local mode=''
 	local req_alert=false
 	local req_attention=false
@@ -5192,60 +5205,51 @@ _GenerateReposReportDataLine_()
 
 	case $mode in
 		highlight)
-			case $assigned_repo in
-				sherpa)
-					assigned_repo_msg=$(GenerateReportField "$assigned_repo" highlight_normal)
-					;;
-				unassigned)
-					assigned_repo_msg=$(GenerateReportField "$assigned_repo" highlight)
-					;;
-				*)
-					assigned_repo_msg=$(GenerateReportField "$assigned_repo")
-					/bin/touch "$r_report_flags_path"/repo-other
-			esac
-
-			install_date_msg=$(GenerateReportField missing alert)
+			auxiliary_msg=$(GenerateReportField missing alert)
+			install_date_msg=$(GenerateReportField "$(GetQpkgInstalledDate)" oops)
 			req_alert=true
 			;;
 		mute)
 			/bin/touch "$r_report_flags_path"/na
 
 			if ! IsQpkgDbArchOK; then
-				assigned_repo='incompatible architecture'
+				auxiliary='incompatible architecture'
 			elif ! IsQpkgDbMinOSVerOk; then
-				assigned_repo='incompatible '$(GetOsName)
+				auxiliary='incompatible '$(GetOsName)
 			elif ! IsQpkgDbMinRAMOk; then
-				assigned_repo='insufficient RAM installed'
+				auxiliary='insufficient RAM installed'
 			else
-				assigned_repo='not installed'
+				auxiliary='not installed'
 			fi
 
-			assigned_repo_msg=$(GenerateReportField "$assigned_repo" mute_normal)
+			auxiliary_msg=$(GenerateReportField "$auxiliary" alert_mute)
 			install_date_msg=$(GenerateReportField N/A mute)
 			;;
 		*)
 			case $assigned_repo in
 				sherpa)
-					assigned_repo_msg=$(GenerateReportField "$assigned_repo" highlight_normal)
+					assigned_repo_msg=$(GenerateReportField "$assigned_repo" normal_ok)
 					;;
 				undefined)
 					assigned_repo_msg=N/A
 					/bin/touch "$r_report_flags_path"/na
 					;;
 				*)
-					assigned_repo_msg=$(GenerateReportField "$assigned_repo" attention)
+					assigned_repo_msg=$(GenerateReportField "$assigned_repo" attention_highlight)
 					/bin/touch "$r_report_flags_path"/repo-other
 			esac
 
 			install_date_msg=$(GenerateReportField "$(GetQpkgInstalledDate)")
 	esac
 
+	[[ -n $auxiliary_msg ]] && eval "${auxiliary_column}_msg=\"$auxiliary_msg\""
+
 	if [[ $req_alert = true ]]; then
 		/bin/touch "$r_report_flags_path"/req-alert
 		name_msg=$(GenerateReportField "$name" alert)
 	elif [[ $req_attention = true ]]; then
 		/bin/touch "$r_report_flags_path"/req-attention
-		name_msg=$(GenerateReportField "$name" attention)
+		name_msg=$(GenerateReportField "$name" attention_highlight)
 	elif [[ $mode = mute ]]; then
 		name_msg=$(GenerateReportField "$name" mute)
 	else
@@ -5292,10 +5296,19 @@ _GenerateAbsReportDataLine_()
 	# Inputs: (global)
 	# 	$qpkg_name
 
-	local abs_msg=''
-	local installed_msg=$r_chars_blank
+	local -a column_vars=(abs auxiliary installed name)
+		local auxiliary_column=installed		# Auxiliary messages are shown in this column name.
+
+	for a in "${column_vars[@]}"; do
+		local ${a}=false
+		local ${a}_msg=''
+	done
+
+	name=$qpkg_name
 	local mode=''
-	local name_msg=$r_chars_blank
+	local req_alert=false
+	local req_attention=false
+	local req_notice=false
 
 	if IsQpkgMissing; then
 		mode=highlight
@@ -5308,32 +5321,53 @@ _GenerateAbsReportDataLine_()
 		/bin/touch "$r_report_flags_path"/state-installed
 	fi
 
+	abs=$(AddSeparators "$(GetQpkgDbAbbrvs "$qpkg_name")")
+
 	case $mode in
 		mute)
 			if ! IsQpkgDbArchOK "$qpkg_name"; then
-				abs_msg=$r_chars_alert'incompatible architecture'
+				auxiliary='incompatible architecture'
 			elif ! IsQpkgDbMinOSVerOk "$qpkg_name"; then
-				abs_msg=$r_chars_alert"incompatible $(GetOsName) version"
+				auxiliary="incompatible $(GetOsName) version"
 			elif ! IsQpkgDbMinRAMOk "$qpkg_name"; then
-				abs_msg=$r_chars_alert'insufficient RAM installed'
-			else
-				abs_msg=${r_chars_normal}$(AddSeparators "$(GetQpkgDbAbbrvs "$qpkg_name")")
+				auxiliary='insufficient RAM installed'
 			fi
 
-			abs_msg=$(TextDarkGrey "$abs_msg")
-			installed_msg+=$(TextDarkGrey false)
-			name_msg+=$(TextDarkGrey "$qpkg_name")
+			if [[ $auxiliary != false ]]; then
+				auxiliary_msg=$(GenerateReportField "$auxiliary" alert_mute)
+			else
+				abs_msg=$(GenerateReportField "$abs" normal_mute)
+			fi
+
+			installed_msg=$(GenerateReportField false mute)
 			;;
 		highlight)
-			abs_msg=$(TextBrightRed "${r_chars_alert}$(AddSeparators "$(GetQpkgDbAbbrvs)")")
-			installed_msg=$(TextBrightRedBlink "${r_chars_alert}missing")
-			name_msg+=$(TextBrightRed "$qpkg_name")
+			req_alert=true
+
+			abs_msg=$(GenerateReportField "$abs" normal_notice)
+			auxiliary_msg=$(GenerateReportField missing alert)
 			;;
 		*)
-			abs_msg=${r_chars_normal}$(AddSeparators "$(GetQpkgDbAbbrvs)")
-			installed_msg+=true
-			name_msg+=$qpkg_name
+			abs_msg=$(GenerateReportField "$abs" normal)
+			installed_msg=$(GenerateReportField true)
 	esac
+
+	[[ -n $auxiliary_msg ]] && eval "${auxiliary_column}_msg=\"$auxiliary_msg\""
+
+	if [[ $req_alert = true ]]; then
+		/bin/touch "$r_report_flags_path"/req-alert
+		name_msg=$(GenerateReportField "$name" alert)
+	elif [[ $req_attention = true ]]; then
+		/bin/touch "$r_report_flags_path"/state-notinstallable
+		name_msg=$(GenerateReportField "$name" attention_highlight)
+	elif [[ $req_notice = true ]]; then
+		/bin/touch "$r_report_flags_path"/req-notice
+		name_msg=$(GenerateReportField "$name" notice)
+	elif [[ $mode = mute ]]; then
+		name_msg=$(GenerateReportField "$name" mute)
+	else
+		name_msg=$(GenerateReportField "$name")
+	fi
 
 	if IsOsCanAutowidthTableColumns; then
 		printf '%s' "$name_msg|$installed_msg|$abs_msg"
@@ -5393,7 +5427,8 @@ _GenerateDepsReportDataLine_()
 	#	$r_report_flags_path
 
 	local a=''
-	local -a column_vars=(author arch deps enabled installed managed max_os min_os min_ram name opt_deps)
+	local -a column_vars=(author arch auxiliary deps enabled installed managed max_os min_os min_ram name opt_deps)
+		local auxiliary_column=deps		# Auxiliary messages are shown in this column name.
 	local dep_name=''
 	local deps_raw=$(GetQpkgDbDependencies "$qpkg_name")
 	local opt_deps_raw=$(GetQpkgDbOptDependencies "$qpkg_name")
@@ -5440,10 +5475,10 @@ _GenerateDepsReportDataLine_()
 			for a in "${column_vars[@]}"; do
 				case $a in
 					author)
-						author_msg=$(GenerateReportField "$author" attention)
+						author_msg=$(GenerateReportField "$author" attention_highlight)
 						;;
-					deps)
-						deps_msg=$(GenerateReportField 'incompatible author' attention)
+					auxiliary)
+						auxiliary_msg=$(GenerateReportField 'incompatible author' attention_highlight)
 						;;
 					name)
 						: # Do nothing, this will be set later.
@@ -5457,7 +5492,7 @@ _GenerateDepsReportDataLine_()
 			req_alert=true
 
 			# Assign field messages.
-			installed_msg=$(GenerateReportField missing alert)
+			auxiliary_msg=$(GenerateReportField missing alert)
 			;;
 		mute)
 			/bin/touch "$r_report_flags_path"/state-notinstalled
@@ -5491,7 +5526,7 @@ _GenerateDepsReportDataLine_()
 			if IsQpkgDbArchOK; then
 				arch_msg=$(GenerateReportField "$arch" mute)
 			else
-				arch_msg=$(GenerateReportField "$arch" attention)
+				arch_msg=$(GenerateReportField "$arch" attention_highlight)
 				req_attention=true
 			fi
 
@@ -5505,7 +5540,7 @@ _GenerateDepsReportDataLine_()
 			if IsQpkgDbMaxOSVerOk "$qpkg_name"; then
 				max_os_msg=$(GenerateReportField "$max_os" mute)
 			else
-				max_os_msg=$(GenerateReportField "$max_os" attention)
+				max_os_msg=$(GenerateReportField "$max_os" attention_highlight)
 				req_attention=true
 			fi
 
@@ -5513,30 +5548,30 @@ _GenerateDepsReportDataLine_()
 				if [[ $min_os != none ]]; then
 					min_os_msg=$(GenerateReportField "$min_os" mute)
 				else
-					min_os_msg=$(GenerateReportField "$min_os" attention)
+					min_os_msg=$(GenerateReportField "$min_os" attention_highlight)
 					req_attention=true
 				fi
 			else
-				min_os_msg=$(GenerateReportField "$min_os" attention)
+				min_os_msg=$(GenerateReportField "$min_os" attention_highlight)
 				req_attention=true
 			fi
 
 			if IsQpkgDbMinRAMOk "$qpkg_name"; then
 				min_ram_msg=$(GenerateReportField "$min_ram" mute)
 			else
-				min_ram_msg=$(GenerateReportField "$min_ram" attention)
+				min_ram_msg=$(GenerateReportField "$min_ram" attention_highlight)
 				req_attention=true
 			fi
 			;;
 		*)
 			if IsQpkgDbArchOK; then
-				arch_msg=$(GenerateReportField "$arch" highlight_ok)
+				arch_msg=$(GenerateReportField "$arch" ok)
 			else
 				arch_msg=$(GenerateReportField "$arch" alert)
 				req_alert=true
 			fi
 
-			author_msg=$(GenerateReportField "$author" highlight_ok)
+			author_msg=$(GenerateReportField "$author" ok)
 			deps=''
 
 			if [[ $deps_raw != none ]]; then
@@ -5574,23 +5609,23 @@ _GenerateDepsReportDataLine_()
 			opt_deps_msg=$(GenerateReportField "${opt_deps// /, }")
 
 			if IsQpkgEnabled; then
-				enabled_msg=$(GenerateReportField "$enabled" highlight_ok)
+				enabled_msg=$(GenerateReportField "$enabled" ok)
 			else
 				enabled_msg=$(GenerateReportField "$enabled" notice)
 				req_notice=true
 			fi
 
-			installed_msg=$(GenerateReportField true highlight_ok)
+			installed_msg=$(GenerateReportField true ok)
 
 			if IsQpkgRepoSelfManaged; then
-				managed_msg=$(GenerateReportField "$managed" highlight_ok)
+				managed_msg=$(GenerateReportField "$managed" ok)
 			else
 				managed_msg=$(GenerateReportField "$managed" highlight)
 			fi
 
 			if IsQpkgDbMaxOSVerOk; then
 				if [[ $max_os != none ]]; then
-					max_os_msg=$(GenerateReportField "$max_os" highlight_ok)
+					max_os_msg=$(GenerateReportField "$max_os" ok)
 				else
 					max_os_msg=$(GenerateReportField "$max_os")
 				fi
@@ -5601,7 +5636,7 @@ _GenerateDepsReportDataLine_()
 
 			if IsQpkgDbMinOSVerOk; then
 				if [[ $min_os != none ]]; then
-					min_os_msg=$(GenerateReportField "$min_os" highlight_ok)
+					min_os_msg=$(GenerateReportField "$min_os" ok)
 				else
 					min_os_msg=$(GenerateReportField "$min_os")
 				fi
@@ -5612,7 +5647,7 @@ _GenerateDepsReportDataLine_()
 
 			if IsQpkgDbMinRAMOk; then
 				if [[ $min_ram != none ]]; then
-					min_ram_msg=$(GenerateReportField "$min_ram" highlight_ok)
+					min_ram_msg=$(GenerateReportField "$min_ram" ok)
 				else
 					min_ram_msg=$(GenerateReportField "$min_ram")
 				fi
@@ -5622,12 +5657,14 @@ _GenerateDepsReportDataLine_()
 			fi
 	esac
 
+	[[ -n $auxiliary_msg ]] && eval "${auxiliary_column}_msg=\"$auxiliary_msg\""
+
 	if [[ $req_alert = true ]]; then
 		/bin/touch "$r_report_flags_path"/req-alert
 		name_msg=$(GenerateReportField "$name" alert)
 	elif [[ $req_attention = true ]]; then
 		/bin/touch "$r_report_flags_path"/state-notinstallable
-		name_msg=$(GenerateReportField "$name" attention)
+		name_msg=$(GenerateReportField "$name" attention_highlight)
 	elif [[ $req_notice = true ]]; then
 		/bin/touch "$r_report_flags_path"/req-notice
 		name_msg=$(GenerateReportField "$name" notice)
@@ -5702,7 +5739,8 @@ _GenerateFeaturesReportDataLine_()
 	#	$r_report_flags_path
 
 	local a=''
-	local -a column_vars=(active_test arch_compatible autoupdate backup clean independent dependent optional name restart_to_update compatible uniqueunpack)
+	local -a column_vars=(active_test arch_compatible autoupdate auxiliary backup clean independent dependent optional name restart_to_update compatible uniqueunpack)
+		local auxiliary_column=independent		# Auxiliary messages are shown in this column name.
 	local mode=''
 	local req_alert=false
 	local req_attention=false
@@ -5726,19 +5764,19 @@ _GenerateFeaturesReportDataLine_()
 	case $mode in
 		author)
 			# Set field values.
-			independent='incompatible author'
+			auxiliary='incompatible author'
 			req_attention=true
 
 			# Assign & highlight field messages.
-			independent_msg=$(GenerateReportField "$independent" attention)
+			auxiliary_msg=$(GenerateReportField "$auxiliary" attention_highlight)
 			;;
 		missing)
 			# Set field values.
-			independent=missing
+			auxiliary=missing
 			req_alert=true
 
 			# Assign & highlight field messages.
-			independent_msg=$(GenerateReportField "$independent" alert)
+			auxiliary_msg=$(GenerateReportField "$auxiliary" alert)
 			;;
 		mute)
 			# Set field values.
@@ -5763,10 +5801,18 @@ _GenerateFeaturesReportDataLine_()
 			# Assign & highlight field messages.
 
 			for a in "${column_vars[@]}"; do
-				local ${a}_msg="$(GenerateReportField "${!a}" mute)"
+				case $a in
+					auxiliary)
+						: # Do nothing.
+						;;
+					*)
+						local ${a}_msg="$(GenerateReportField "${!a}" mute)"
+				esac
 			done
 			;;
 		*)
+			auxiliary=''
+			auxiliary_msg=''
 			# Set field values.
 			[[ $(GetQpkgDbActiveTest) = builtin ]] && active_test=true
 			IsQpkgDbArchOK && arch_compatible=true
@@ -5798,22 +5844,30 @@ _GenerateFeaturesReportDataLine_()
 			# Assign & highlight field messages.
 
 			for a in "${column_vars[@]}"; do
-				case ${!a} in
-					true|N/A)
-						local ${a}_msg="$(GenerateReportField "${!a}")"
+				case $a in
+					auxiliary)
+						: # Do nothing.
 						;;
 					*)
-						local ${a}_msg="$(GenerateReportField "${!a}" highlight)"
+						case ${!a} in
+							true|N/A)
+								local ${a}_msg="$(GenerateReportField "${!a}")"
+								;;
+							*)
+								local ${a}_msg="$(GenerateReportField "${!a}" highlight_ok)"
+						esac
 				esac
 			done
 	esac
+
+  	[[ -n $auxiliary_msg ]] && eval "${auxiliary_column}_msg=\"$auxiliary_msg\""
 
 	if [[ $req_alert = true ]]; then
 		/bin/touch "$r_report_flags_path"/req-alert
 		name_msg=$(GenerateReportField "$name" alert)
 	elif [[ $req_attention = true ]]; then
 		/bin/touch "$r_report_flags_path"/req-attention
-		name_msg=$(GenerateReportField "$name" attention)
+		name_msg=$(GenerateReportField "$name" attention_highlight)
 	elif [[ $mode = mute ]]; then
 		name_msg=$(GenerateReportField "$name" mute)
 	else
@@ -5873,21 +5927,23 @@ _GenerateBacksReportItemLine_()
 	#	$4 = age threshold to highlight (optional) '1 week ago' (default)		e.g. '2 days ago', '2 weeks ago', etc ...
 
 	# Inputs: (global)
-	#	$r_chars_alert
-	#	$r_chars_blank
-	#	$r_chars_normal
 	#	$r_report_file_bytes_column_width
 	#	$r_report_file_change_date_column_width
 	#	$r_report_file_name_column_width
 	#	$r_report_flags_path
 
-	local epoch_time=${1:-0}
-	local epoch_time_msg=$r_chars_normal
-	local file_bytes=${3:-0}
-	local file_bytes_msg=$r_chars_blank
-	local file_name=${2:-}
-	local file_name_msg=$r_chars_blank
+	local -a column_vars=(epoch_time file_bytes file_name)
+		local auxiliary_column=installed		# Auxiliary messages are shown in this column name.
 	local mode=''
+
+	for a in "${column_vars[@]}"; do
+		local ${a}=false
+		local ${a}_msg=''
+	done
+
+	epoch_time=${1:-0}
+	file_name=${2:-}
+	file_bytes=${3:-0}
 
 	if [[ ${epoch_time%.*} -lt $(/bin/date --date="${4:-'1 week ago'}" +%s) ]]; then
 		mode=highlight
@@ -5899,15 +5955,15 @@ _GenerateBacksReportItemLine_()
 
 	case $mode in
 		normal)
-			epoch_time_msg+=$(ConvertSecondsToFullDate "$epoch_time")
-			file_bytes_msg+=$file_bytes
-			file_name_msg+=$file_name
+			epoch_time_msg=$(GenerateReportField "$(ConvertSecondsToFullDate "$epoch_time")")
+			file_bytes_msg=$(GenerateReportField "$file_bytes")
+			file_name_msg=$(GenerateReportField "$file_name" normal)
 			/bin/touch "$r_report_flags_path"/backup-file-ok
 			;;
 		highlight)
-			epoch_time_msg=$(TextBrightRed "${r_chars_alert}$(ConvertSecondsToFullDate "$epoch_time")")
-			file_bytes_msg+=$(TextBrightRed "$file_bytes")
-			file_name_msg+=$(TextBrightRed "$file_name")
+			epoch_time_msg=$(GenerateReportField "$(ConvertSecondsToFullDate "$epoch_time")" notice)
+			file_bytes_msg=$(GenerateReportField "$file_bytes" oops)
+			file_name_msg=$(GenerateReportField "$file_name" notice)
 			/bin/touch "$r_report_flags_path"/backup-file-old
 	esac
 
@@ -5944,41 +6000,49 @@ GenerateReportField()
 			a=$(TextBrightRedBlink "$r_chars_alert")
 			b=$(TextBrightRedBlink "$1")
 			;;
-		attention)
-			a=$(TextBrightOrange "$r_chars_attention")
-			b=$(TextBrightOrange "$1")
-			;;
 		notice)
 			a=$(TextBrightRed "$r_chars_alert")
+			b=$(TextBrightRed "$1")
+			;;
+		normal_notice)
+			a=$(TextBrightRed "$r_chars_normal")
 			b=$(TextBrightRed "$1")
 			;;
 		oops)
 			a=$r_chars_blank
 			b=$(TextBrightRed "$1")
 			;;
-		normal)
-			a=$r_chars_normal
-			b=$1
+		attention_highlight)
+			a=$(TextBrightOrange "$r_chars_attention")
+			b=$(TextBrightOrange "$1")
 			;;
 		highlight)
 			a=$r_chars_blank
 			b=$(TextBrightOrange "$1")
 			;;
-		highlight_ok)
+		normal_ok)
+			a=$r_chars_normal
+			b=$(TextBrightGreen "$1")
+			;;
+		ok)
 			a=$r_chars_blank
 			b=$(TextBrightGreen "$1")
 			;;
-		highlight_normal)
-			a=$r_chars_normal
-			b=$(TextBrightGreen "$1")
+		normal_mute)
+			a=$(TextDarkGrey "$r_chars_normal")
+			b=$(TextDarkGrey "$1")
+			;;
+		alert_mute)
+			a=$(TextDarkGrey "$r_chars_alert")
+			b=$(TextDarkGrey "$1")
 			;;
 		mute)
 			a=$r_chars_blank
 			b=$(TextDarkGrey "$1")
 			;;
-		mute_normal)
-			a=$(TextDarkGrey "$r_chars_normal")
-			b=$(TextDarkGrey "$1")
+		normal)
+			a=$r_chars_normal
+			b=$1
 			;;
 		*)
 			a=$r_chars_blank
