@@ -5726,19 +5726,19 @@ _GenerateFeaturesReportDataLine_()
 	case $mode in
 		author)
 			# Set field values.
-			backup='incompatible author'
+			independent='incompatible author'
 			req_attention=true
 
 			# Assign & highlight field messages.
-			backup_msg=$(GenerateReportField "$backup" attention)
+			independent_msg=$(GenerateReportField "$independent" attention)
 			;;
 		missing)
 			# Set field values.
-			backup=missing
+			independent=missing
 			req_alert=true
 
 			# Assign & highlight field messages.
-			backup_msg=$(GenerateReportField "$backup" alert)
+			independent_msg=$(GenerateReportField "$independent" alert)
 			;;
 		mute)
 			# Set field values.

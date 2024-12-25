@@ -1,7 +1,5 @@
 Observed issues:
 
-	* Features report: incompatible author message shown in 'CanBack?' column.
-
 	* Service-script daemon PID shown twice consecutively during 'clean' action:
 		--------------------------------------------------------------------------------------------------
 		[/share/Public] # /etc/init.d/sabnzbd.sh clean
