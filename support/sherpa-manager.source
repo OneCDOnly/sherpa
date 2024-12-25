@@ -10432,7 +10432,7 @@ _QPKG:uninstall_()
 
 			if [[ $qpkg_name = Entware ]]; then
 				SendParentChangeEnv ModPathToEntware
-				SetParentCapabilities
+				SendParentChangeEnv SetCapabilities
 				SetCapabilities
 			fi
 
@@ -10524,7 +10524,7 @@ _QPKG:activate_()
 
 		if [[ $qpkg_name = Entware ]]; then
 			SendParentChangeEnv ModPathToEntware
-			SetParentCapabilities
+			SendParentChangeEnv SetCapabilities
 			SetCapabilities
 		fi
 
@@ -10691,7 +10691,7 @@ _QPKG:deactivate_()
 
 		if [[ $qpkg_name = Entware ]]; then
 			SendParentChangeEnv ModPathToEntware
-			SetParentCapabilities
+			SendParentChangeEnv SetCapabilities
 			SetCapabilities
 		fi
 
@@ -15106,15 +15106,6 @@ StripANSICodes()
 
 	} 2> /dev/null
 
-SetParentCapabilities()
-	{
-
-	SendParentChangeEnv SetColourisation
-	SendParentChangeEnv SetSedRexegSupport
-	SendParentChangeEnv SetSleepDecimalSecondsSupport
-
-	}
-
 SetCapabilities()
 	{
 
@@ -15300,6 +15291,7 @@ LoadPackages()
 
 	local curl_options=''
 	local previous=''
+	local qpkg_name=''
 
 	IsOsCanSecureDownload || curl_options=' --insecure'
 
@@ -15357,6 +15349,13 @@ LoadPackages()
 	unset r_qpkg_version
 	unset r_qpkg_will_log
 
+	unset r_base_qpkg_conflicts_with
+	unset readonly r_base_qpkg_warnings
+	unset r_essential_ipks
+	unset r_essential_pips
+	unset r_exclusion_pips
+	unset r_min_perl_version
+	unset r_min_python_version
 	unset r_packages_epoch
 	r_packages_epoch=undefined
 
