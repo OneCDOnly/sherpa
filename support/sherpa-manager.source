@@ -45,7 +45,7 @@ Init()
 	IsUserOk || return
 	LoadConsts
 	LoadVars
-	UpdateCapabilities
+	SetCapabilities
 	LoadCMDs
 	CMDsIsOk || return
 	HideKeystrokes
@@ -1651,7 +1651,7 @@ ProcAction()
 
 			CreatePidFile
 			_ExecOneActionWithManyForks_ "_${r_package_type}:${r_action}_" "${target_packages[@]}" &
-			UpdatePidFile "$!"
+			WritePidFile "$!"
 
 			# Read message pipe and process QPKGs and actions as-per requests contained within.
 
@@ -2032,7 +2032,7 @@ ParseManagementArgs()
 							awaiting_group=false
 							switch_colour=true
 							user_colourful_value=$group
-							UpdateColourful
+							WriteColourful
 							;;
 						*)
 							args_remaining+=("$action")
@@ -2046,7 +2046,7 @@ ParseManagementArgs()
 							run_package_actions=false
 							switch_branch=true
 							user_branch_value=$group
-							UpdateBranch
+							WriteBranch
 							;;
 						*)
 							args_remaining+=("$action")
@@ -2077,7 +2077,7 @@ ParseManagementArgs()
 							awaiting_group=false
 							switch_report_footer=true
 							user_report_footer_value=$group
-							UpdateReportFooter
+							WriteReportFooter
 							;;
 						*)
 							args_remaining+=("$action")
@@ -2090,7 +2090,7 @@ ParseManagementArgs()
 							awaiting_group=false
 							switch_terse=true
 							user_terse_value=$group
-							UpdateTerse
+							WriteTerse
 							;;
 						*)
 							args_remaining+=("$action")
@@ -3811,7 +3811,7 @@ IPKs:install()
 			DebugAsDone "installed $desc"
 			SaveActionResultToLog IPK auxiliary install "$total_count" ok
 			HideKeystrokes
-			UpdateCapabilities
+			SetCapabilities
 
 			rm -f "$r_prev_ipk_list_pathfile.installing" 2> /dev/null
 		else
@@ -4110,7 +4110,7 @@ _ExecOneActionWithManyForks_()
 		(	# Keep updated $pidfile in a subshell, so the one for this function doesn't change.
 			CreatePidFile
 			$a &
-			UpdatePidFile "$!"
+			WritePidFile "$!"
 		)
 
 		DebugAsDone "forked $a() instance for '$qpkg_name'"
@@ -4278,7 +4278,7 @@ Reset()
 
 	}
 
-UpdateColourful()
+WriteColourful()
 	{
 
 	# Inputs: (local)
@@ -4322,7 +4322,7 @@ UpdateColourful()
 
 	}
 
-UpdateBranch()
+WriteBranch()
 	{
 
 	# Inputs: (local)
@@ -4368,7 +4368,7 @@ UpdateBranch()
 
 	}
 
-UpdateReportFooter()
+WriteReportFooter()
 	{
 
 	# Inputs: (local)
@@ -4412,7 +4412,7 @@ UpdateReportFooter()
 
 	}
 
-UpdateTerse()
+WriteTerse()
 	{
 
 	# Inputs: (local)
@@ -8809,7 +8809,7 @@ MarkActionForkAsError()
 
 	}
 
-#UpdateThisAcForkPid()
+#WriteThisAcForkPid()
 # 	{
 #
 # 	# Inputs: (local)
@@ -10368,8 +10368,8 @@ _QPKG:uninstall_()
 
 			if [[ $qpkg_name = Entware ]]; then
 				SendParentChangeEnv ModPathToEntware
-				UpdateParentCapabilities
-				UpdateCapabilities
+				SetParentCapabilities
+				SetCapabilities
 			fi
 
 			SendPackageStateChange ISNTinstalled
@@ -10460,8 +10460,8 @@ _QPKG:activate_()
 
 		if [[ $qpkg_name = Entware ]]; then
 			SendParentChangeEnv ModPathToEntware
-			UpdateParentCapabilities
-			UpdateCapabilities
+			SetParentCapabilities
+			SetCapabilities
 		fi
 
 		SendPackageStateChange ISactive
@@ -10627,8 +10627,8 @@ _QPKG:deactivate_()
 
 		if [[ $qpkg_name = Entware ]]; then
 			SendParentChangeEnv ModPathToEntware
-			UpdateParentCapabilities
-			UpdateCapabilities
+			SetParentCapabilities
+			SetCapabilities
 		fi
 
 		SendPackageStateChange ISNTactive
@@ -12996,7 +12996,7 @@ CreatePidFile()
 
 	}
 
-UpdatePidFile()
+WritePidFile()
 	{
 
 	# Inputs: (local)
@@ -15042,25 +15042,25 @@ StripANSICodes()
 
 	} 2> /dev/null
 
-UpdateParentCapabilities()
+SetParentCapabilities()
 	{
 
-	SendParentChangeEnv UpdateColourisation
-	SendParentChangeEnv UpdateSedRexegSupport
-	SendParentChangeEnv UpdateSleepDecimalSecondsSupport
+	SendParentChangeEnv SetColourisation
+	SendParentChangeEnv SetSedRexegSupport
+	SendParentChangeEnv SetSleepDecimalSecondsSupport
 
 	}
 
-UpdateCapabilities()
+SetCapabilities()
 	{
 
-	UpdateColourisation
-	UpdateSedRexegSupport
-	UpdateSleepDecimalSecondsSupport
+	SetColourisation
+	SetSedRexegSupport
+	SetSleepDecimalSecondsSupport
 
 	}
 
-UpdateColourisation()
+SetColourisation()
 	{
 
 	# If it seems Entware is active, check if possible to return to colourful display.
@@ -15081,7 +15081,7 @@ UpdateColourisation()
 
 	}
 
-UpdateSedRexegSupport()
+SetSedRexegSupport()
 	{
 
 	# Outputs: (global)
@@ -15091,7 +15091,7 @@ UpdateSedRexegSupport()
 
 	}
 
-UpdateSleepDecimalSecondsSupport()
+SetSleepDecimalSecondsSupport()
 	{
 
 	# Outputs: (global)
