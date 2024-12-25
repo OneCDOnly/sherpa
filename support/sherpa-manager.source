@@ -5709,12 +5709,12 @@ GenerateFeaturesReportTitleLine()
 	#	$r_report_qpkg_tier_column_width
 
 	if IsOsCanAutowidthTableColumns; then
-		printf 'QPKG name:|Independent?|Dependent?|Optional?|Enhanced?|CanBack?|CanClean?|StartUpd?|AutoUpd?|LiveTest?|ArchCompat?|UniqueUnpack?'
+		printf 'QPKG name:|Independent?|Optional?|Dependent?|Enhanced?|CanBack?|CanClean?|StartUpd?|AutoUpd?|LiveTest?|ArchCompat?|UniqueUnpack?'
 	else
 		GenerateReportLineItem 'QPKG name:' "$r_report_qpkg_name_column_width"
 		GenerateReportLineItem 'Independent?' "$r_report_qpkg_tier_column_width"
-		GenerateReportLineItem 'Dependent?' "$r_report_qpkg_tier_column_width"
 		GenerateReportLineItem 'Optional?' "$r_report_qpkg_tier_column_width"
+		GenerateReportLineItem 'Dependent?' "$r_report_qpkg_tier_column_width"
 		GenerateReportLineItem 'Enhanced?' "$r_report_lazy_column_width"
 		GenerateReportLineItem 'CanBack?' "$r_report_qpkg_can_backup_column_width"
 		GenerateReportLineItem 'CanClean?' "$r_report_qpkg_can_clean_column_width"
@@ -5875,12 +5875,12 @@ _GenerateFeaturesReportDataLine_()
 	fi
 
 	if IsOsCanAutowidthTableColumns; then
-		printf '%s' "$name_msg|$independent_msg|$dependent_msg|$optional_msg|$compatible_msg|$backup_msg|$clean_msg|$restart_to_update_msg|$autoupdate_msg|$active_test_msg|$arch_compatible_msg|$uniqueunpack_msg"
+		printf '%s' "$name_msg|$independent_msg|$optional_msg|$dependent_msg|$compatible_msg|$backup_msg|$clean_msg|$restart_to_update_msg|$autoupdate_msg|$active_test_msg|$arch_compatible_msg|$uniqueunpack_msg"
 	else
 		GenerateReportLineItem "$name_msg" "$r_report_qpkg_name_column_width"
 		GenerateReportLineItem "$independent_msg" "$r_report_qpkg_tier_column_width"
-		GenerateReportLineItem "$dependent_msg" "$r_report_qpkg_tier_column_width"
 		GenerateReportLineItem "$optional_msg" "$r_report_qpkg_tier_column_width"
+		GenerateReportLineItem "$dependent_msg" "$r_report_qpkg_tier_column_width"
 		GenerateReportLineItem "$compatible_msg" "$r_report_lazy_column_width"
 		GenerateReportLineItem "$backup_msg" "$r_report_qpkg_can_backup_column_width"
 		GenerateReportLineItem "$clean_msg" "$r_report_qpkg_can_clean_column_width"

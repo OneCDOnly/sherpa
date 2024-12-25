@@ -1,3 +1,5 @@
+* Make use of GenerateReportField() in packages report.
+
 * Include basic benchmark for storage speed read/write?
 
 * Rename 'O' QPKGs:
