@@ -9276,14 +9276,14 @@ GetQpkgArch()
 					printf a41
 					;;
 				*)
-					printf none
+					printf unknown
 			esac
 			;;
 		aarch64)
 			printf a64
 			;;
 		*)
-			printf none
+			printf unknown
 	esac
 
 	}
