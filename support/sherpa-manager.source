@@ -4788,18 +4788,26 @@ _GeneratePacksReportDataLine_()
 	# Inputs: (global)
 	# 	$qpkg_name
 
-	local app_ver=''
-	local app_ver_msg=$r_chars_blank
-# 	local author=$(GetQpkgDbAuthor)
-# 	local author_msg=$r_chars_blank
-	local description_msg=$r_chars_blank
+	local -a column_vars=(app_ver description name notes)
 	local mode=''
-	local name=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
-		local description=$(GetQpkgDbDesc "$name")
-		local notes=$(GetQpkgDbNote "$name")
-		[[ $notes = none ]] && notes=''
-	local name_msg=$r_chars_normal
-	local notes_msg=$notes.
+
+	# Init field messages.
+
+	for a in "${column_vars[@]}"; do
+		local ${a}=false
+		local ${a}_msg=''
+	done
+
+	name=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
+	app_ver=$(GetQpkgDbApplVer)
+	description=$(Capitalise "$(GetQpkgDbDesc "$name")")
+	notes=$(GetQpkgDbNote)
+	[[ $notes = none ]] && notes=''
+
+	case $app_ver in
+		dynamic|final|static)
+			/bin/touch "$r_report_flags_path"/app-$app_ver
+	esac
 
 	if IsQpkgMissing; then
 		mode=highlight
@@ -4812,29 +4820,22 @@ _GeneratePacksReportDataLine_()
 		/bin/touch "$r_report_flags_path"/state-installed
 	fi
 
-	app_ver=$(GetQpkgDbApplVer)
-
-	case $app_ver in
-		dynamic|final|static)
-			/bin/touch "$r_report_flags_path"/app-$app_ver
-	esac
-
-	app_ver_msg+=$app_ver
-# 	author_msg+=$author
-	description_msg+=$(Capitalise "$description").
-	name_msg+=$qpkg_name
-
 	case $mode in
 		mute)
-			app_ver_msg=$(TextDarkGrey "$app_ver_msg")
-# 			author_msg=$(TextDarkGrey "$author_msg")
-			description_msg=$(TextDarkGrey "$description_msg")
-			name_msg=$(TextDarkGrey "$name_msg")
+			app_ver_msg=$(FormatReportField "$app_ver" mute)
+			description_msg=$(FormatReportField "$description" normal_mute)
+			name_msg=$(FormatReportField "$name" mute)
 			;;
 		highlight)
-# 			[[ $author = missing ]] && author_msg=$(TextBrightRedBlink "${r_chars_alert}${author}")
-			name_msg=$(TextBrightRed "$name_msg")
+			name_msg=$(FormatReportField "$name" alert)
+			;;
+		*)
+			app_ver_msg=$(FormatReportField "$app_ver")
+			description_msg=$(FormatReportField "$description" normal)
+			name_msg=$(FormatReportField "$name")
 	esac
+
+	notes_msg=$notes
 
 	if IsOsCanAutowidthTableColumns; then
 		printf '%s' "$name_msg|$app_ver_msg|$description_msg"
