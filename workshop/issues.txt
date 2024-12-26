@@ -19,7 +19,7 @@ Observed issues:
 			- active git branch: 'master'
 			--------------------------------------------------------------------------------------------------
 
-	* Near the end of installing IPKs, monitored download path can remain at non-zero size while packages complete installation.
+	* Near the end of installing IPKs, monitored download path size can remain at non-zero while packages complete installation.
 		- Include a separate progress message when dir size stops increasing and shrinks instead?
 		- Force increase to "100%" and stop monitoring?
 		- Change progress message to "installing"?
