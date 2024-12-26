@@ -5692,7 +5692,7 @@ GenerateFeaturesReportTitleLine()
 	#	$r_report_qpkg_tier_column_width
 
 	if IsOsCanAutowidthTableColumns; then
-		printf 'QPKG name:|Indep?|Opt?|Dep?|Enh?|CanBack?|CanClean?|StartUpd?|AuUpd?|LiveTest?|ArchCompat?|UniqueUnpack?'
+		printf 'QPKG name:|Indep?|Opt?|Dep?|Enh?|CanBack?|CanClean?|StartUpd?|AutUpd?|LiveTest?|ArchCompat?|UniqueUnpack?'
 	else
 		FormatReportFieldWidth 'QPKG name:' "$r_report_qpkg_name_column_width"
 		FormatReportFieldWidth 'Indep?' "$r_report_qpkg_tier_column_width"
@@ -5702,7 +5702,7 @@ GenerateFeaturesReportTitleLine()
 		FormatReportFieldWidth 'CanBack?' "$r_report_qpkg_can_backup_column_width"
 		FormatReportFieldWidth 'CanClean?' "$r_report_qpkg_can_clean_column_width"
 		FormatReportFieldWidth 'StartUpd?' "$r_report_qpkg_can_start_to_update_column_width"
-		FormatReportFieldWidth 'AuUpd?' "$r_report_qpkg_auto_update_column_width"
+		FormatReportFieldWidth 'AutUpd?' "$r_report_qpkg_auto_update_column_width"
 		FormatReportFieldWidth 'LiveTest?' "$r_report_qpkg_active_test_builtin_column_width"
 		FormatReportFieldWidth 'ArchCompat?' "$r_report_qpkg_is_compatible_column_width"
 		FormatReportFieldWidth 'UniqueUnpack?' "$r_report_lazy_column_width"
@@ -8572,7 +8572,7 @@ GenerateReportHeadingsFooter()
 		DisplayAsIndentQuotedInfoItem 'CanBack?' "application config 'backup' and 'restore' are supported"
 		DisplayAsIndentQuotedInfoItem 'CanClean?' "application 'clean' is supported"
 		DisplayAsIndentQuotedInfoItem 'StartUpd?' 'application restart-to-update is supported'
-		DisplayAsIndentQuotedInfoItem 'AuUpd?' 'application restart-to-update is enabled'
+		DisplayAsIndentQuotedInfoItem 'AutUpd?' 'application restart-to-update is enabled'
 		DisplayAsIndentQuotedInfoItem 'LiveTest?' "has a built-in 'status' check, and can test for daemon live status"
 		DisplayAsIndentQuotedInfoItem 'ArchCompat?' 'has a release compatible with this NAS architecture'
 		DisplayAsIndentQuotedInfoItem 'UniqueUnpack?' 'QPKG unpacks itself to a unique path'
