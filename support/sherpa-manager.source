@@ -11971,12 +11971,14 @@ GetQpkgDbNote()
 
 	# Return any additional notes to be prominently displayed.
 
-	# Inputs:
-	#   $qpkg_default_index (global)
-	#   $qpkg_index (global)
-	#	$qpkg_name (global)
+	# Inputs: (global)
+	#   $qpkg_default_index
+	#   $qpkg_index
+	#	$qpkg_name
+	#	$r_qpkg_name[]
+	#	$r_qpkg_note[]
 
-	# Outputs:
+	# Outputs: (local)
 	#   stdout = package note (first package found).
 	#   $? = 0 (found), !0 (not-found)
 
@@ -12004,13 +12006,17 @@ GetQpkgDbNote()
 GetQpkgDbAbbrvs()
 	{
 
-	# Inputs:
+	# Inputs: (local)
 	#   $1 = QPKG name (optional): if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
-	#   $qpkg_default_index (global)
-	#   $qpkg_index (global)
-	#	$qpkg_name (global)
 
-	# Outputs:
+	# Inputs: (global)
+	#   $qpkg_default_index
+	#   $qpkg_index
+	#	$qpkg_name
+	#	$r_qpkg_abbrvs[]
+	#	$r_qpkg_name[]
+
+	# Outputs: (local)
 	#   stdout = list of abbreviations that may be used to specify this package
 	#   $? = 0 if found, !0 if not
 
@@ -12039,12 +12045,13 @@ GetQpkgDbAbbrvs()
 GetQpkgDbDependencies()
 	{
 
-	# Inputs:
-	#   $qpkg_default_index (global)
-	#   $qpkg_index (global)
-	#	$qpkg_name (global)
+	# Inputs: (global)
+	#   $qpkg_default_index
+	#   $qpkg_index
+	#	$qpkg_name
+	#	$r_qpkg_depends_on[]
 
-	# Outputs:
+	# Outputs: (local)
 	#   stdout = list of QPKGs $qpkg_name depends-upon.
 	#   $? = 0 (found), !0 (not-found)
 
@@ -12113,12 +12120,13 @@ GetQpkgDbDependencies()
 GetQpkgDbOptDependencies()
 	{
 
-	# Inputs:
-	#   $qpkg_default_index (global)
-	#   $qpkg_index (global)
-	#	$qpkg_name (global)
+	# Inputs: (global)
+	#   $qpkg_default_index
+	#   $qpkg_index
+	#	$qpkg_name
+	#	$r_qpkg_opt_depends_on[]
 
-	# Outputs:
+	# Outputs: (local)
 	#   stdout = list of QPKGs $qpkg_name optionally depends-upon.
 	#   $? = 0 (found), !0 (not-found)
 
@@ -12187,12 +12195,14 @@ GetQpkgDbOptDependencies()
 GetQpkgDbDependents()
 	{
 
-	# Inputs:
-	#   $qpkg_default_index (global)
-	#   $qpkg_index (global)
-	#	$qpkg_name (global)
+	# Inputs: (global)
+	#   $qpkg_default_index
+	#   $qpkg_index
+	#	$qpkg_name
+	#	$r_qpkg_depends_on[]
+	#	$r_qpkg_name[]
 
-	# Outputs:
+	# Outputs: (local)
 	#   stdout = list of QPKGs that depend-upon this QPKG.
 	#   $? = 0 (found), !0 (not-found)
 
@@ -12223,12 +12233,14 @@ GetQpkgDbDependents()
 GetQpkgDbOptionals()
 	{
 
-	# Inputs:
-	#   $qpkg_default_index (global)
-	#   $qpkg_index (global)
-	#	$qpkg_name (global)
+	# Inputs: (global)
+	#   $qpkg_default_index
+	#   $qpkg_index
+	#	$qpkg_name
+	#	$r_qpkg_name[]
+	#	$r_qpkg_opt_depends_on[]
 
-	# Outputs:
+	# Outputs: (local)
 	#   stdout = list of QPKGs that optionally depend-upon this QPKG.
 	#   $? = 0 (found), !0 (not-found)
 
@@ -12259,12 +12271,13 @@ GetQpkgDbOptionals()
 GetQpkgDbIPKs()
 	{
 
-	# Inputs:
-	#   $qpkg_default_index (global)
-	#   $qpkg_index (global)
-	#	$qpkg_name (global)
+	# Inputs: (global)
+	#   $qpkg_default_index
+	#   $qpkg_index
+	#	$qpkg_name
+	#	$r_qpkg_requires_ipks[]
 
-	# Outputs:
+	# Outputs: (local)
 	#   stdout = list of IPKs $qpkg_index depends-upon.
 	#   $? = 0 (found), !0 (not-found)
 
@@ -12287,13 +12300,14 @@ GetQpkgDbActiveTest()
 
 	# Return any custom commands required to determine if specified QPKG is active or not.
 
-	# Inputs:
-	#   $qpkg_default_index (global)
-	#   $qpkg_index (global)
-	#	$qpkg_name (global)
+	# Inputs: (global)
+	#   $qpkg_default_index
+	#   $qpkg_index
+	#	$qpkg_name
+	#	$r_qpkg_test_for_active[]
 
-	# Outputs:
-	#   stdout = Bash tests.
+	# Outputs: (local)
+	#   stdout = bash tests.
 	#   $? = 0 (found), !0 (not-found)
 
 	[[ -n $qpkg_name && $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
@@ -12569,6 +12583,7 @@ IsQpkgDbDependent()
 	# Inputs: (global)
 	#   $qpkg_default_index
 	#   $qpkg_index
+	#	$r_qpkg_depends_on[]
 
 	# Outputs: (local)
 	#   $? = true/false
@@ -13677,8 +13692,7 @@ FormatCommand()
 ShowAsResultAndStdout()
 	{
 
-	[[ -n ${1:-} ]] || return
-	[[ -n ${2:-} ]] || return
+	[[ -n ${1:-} && -n ${2:-} ]] || return
 
 	local a=$r_chars_results
 
@@ -13869,10 +13883,7 @@ DebugItem()
 	#	$3 = name
 	#	$4 = value
 
-	[[ -n ${1:-} ]] || return
-	[[ -n ${2:-} ]] || return
-	[[ -n ${3:-} ]] || return
-	[[ -n ${4:-} ]] || return
+	[[ -n ${1:-} && -n ${2:-} && -n ${3:-} && -n ${4:-} ]] || return
 
 	local a=$(Uppercase "$2")
 
