@@ -836,6 +836,7 @@ DebugLogEnv()
 
 	DebugUserspace ok '$EUID' "$EUID"
 	DebugUserspace ok 'default volume' "$(GetUserDefVol)"
+	DebugUserspace ok 'write benchmark' "$(GetHardwareVolumeBenchmark)"
 	DebugUserspace ok /opt "$(/usr/bin/readlink /opt 2> /dev/null || printf 'not present')"
 
 	local public_share=$(/sbin/getcfg SHARE_DEF defPublic -d Qpublic -f /etc/config/def_share.info)
@@ -851,13 +852,6 @@ DebugLogEnv()
 	DebugShell ok copyright "$(GetShellCopyright)"
 	DebugShell ok options "$-"
 	DebugShell ok 'time in shell' "$(GetShellTimeIn)"
-
-# 	if [[ ${#PATH} -le $r_debug_log_third_column_width ]]; then
-# 		DebugUserspace ok '$PATH' "$PATH"
-# 	else
-# 		DebugUserspace ok '$PATH (LHS-only)' "${PATH:0:$((r_debug_log_third_column_width-${#r_chars_ellipsis}))}${r_chars_ellipsis}"
-# 	fi
-
 	DebugScript 'QPKG version' "$(ConvertAsSmartDate "$r_this_package_ver")"
 	DebugScript 'manager version' "$r_this_script_ver"
 	DebugScript 'manager epoch' "$(ConvertAsSmartDate "$r_this_script_epoch")"
@@ -887,31 +881,31 @@ DebugLogEnv()
 	fi
 
 	DebugQpkg detect architecture "$r_nas_qpkg_arch"
-	DebugQpkg detect "$(ShowAsPackageName Entware) type" "$r_entware_type"
-	DebugQpkg detect "$(ShowAsPackageName Entware) install date" "$(ConvertAsSmartDate "$(GetQpkgInstalledDate Entware)")"
+	DebugQpkg detect "$(FormatPackageName Entware) type" "$r_entware_type"
+	DebugQpkg detect "$(FormatPackageName Entware) install date" "$(ConvertAsSmartDate "$(GetQpkgInstalledDate Entware)")"
 
 	if IsQpkgReallyInstalled SortMyQPKGs; then
-		DebugQpkg detect "$(ShowAsPackageName SortMyQPKGs)" installed
+		DebugQpkg detect "$(FormatPackageName SortMyQPKGs)" installed
 	else
 		if [[ ${r_nas_firmware_version//.} -lt 400 || ${r_nas_firmware_version//.} -ge 520 ]]; then
-			DebugQpkg detect "$(ShowAsPackageName SortMyQPKGs)" 'not installed'
+			DebugQpkg detect "$(FormatPackageName SortMyQPKGs)" 'not installed'
 		else
-			DebugQpkg warning "$(ShowAsPackageName SortMyQPKGs)" 'not installed'
+			DebugQpkg warning "$(FormatPackageName SortMyQPKGs)" 'not installed'
 		fi
 	fi
 
 	if IsOsCanQpkgTimeout; then
 		if IsQpkgReallyInstalled IncreaseTimeouts; then
 			if IsQpkgTimeoutsIncreased; then
-				DebugQpkg detect "$(ShowAsPackageName IncreaseTimeouts)" active
+				DebugQpkg detect "$(FormatPackageName IncreaseTimeouts)" active
 			else
-				DebugQpkg warning "$(ShowAsPackageName IncreaseTimeouts)" inactive
+				DebugQpkg warning "$(FormatPackageName IncreaseTimeouts)" inactive
 			fi
 		else
-			DebugQpkg warning "$(ShowAsPackageName IncreaseTimeouts)" 'not installed'
+			DebugQpkg warning "$(FormatPackageName IncreaseTimeouts)" 'not installed'
 		fi
 	else
-		DebugQpkg detect "$(ShowAsPackageName IncreaseTimeouts)" N/A
+		DebugQpkg detect "$(FormatPackageName IncreaseTimeouts)" N/A
 	fi
 
 	if [[ $useropt_show_about = true ]]; then
@@ -1034,7 +1028,7 @@ CheckEnv()
 		if [[ $r_entware_type != none ]]; then
 			_UpdateEntwarePackageList_ &			# Let's try launching this early.
 		else
-			DebugAsWarn "$(ShowAsPackageName Entware) appears to be installed but is inactive. Please consider starting the $(ShowAsPackageName Entware) QPKG."
+			DebugAsWarn "$(FormatPackageName Entware) appears to be installed but is inactive. Please consider starting the $(FormatPackageName Entware) QPKG."
 		fi
 
 		# Decide if specific IPKs and PIPs should be installed/upgraded.
@@ -3407,20 +3401,20 @@ _UpdateEntwarePackageList_()
 	# If Entware package list was recently updated, don't update again.
 
 	if ! IsThisFileRecent "$r_external_packages_archive_pathfile" "$r_file_change_threshold_minutes" || [[ ! -f $r_external_packages_archive_pathfile || $useropt_check = true ]]; then
-		DebugAsProc "updating $(ShowAsPackageName Entware) package list"
+		DebugAsProc "updating $(FormatPackageName Entware) package list"
 
 		RunAndLog "$r_opkg_cmd update" "$r_logs_path/Entware.$r_update_log_file" log:failure-only
 		z=$?
 
 		if [[ $z -eq 0 ]]; then
-			DebugAsDone "updated $(ShowAsPackageName Entware) package list"
+			DebugAsDone "updated $(FormatPackageName Entware) package list"
 			CloseIpkArchive
 		else
-			DebugAsWarn "Unable to update $(ShowAsPackageName Entware) package list $(ShowAsExitcode "$z")"
+			DebugAsWarn "Unable to update $(FormatPackageName Entware) package list $(FormatExitcode "$z")"
 			# no-big-deal
 		fi
 	else
-		DebugInfo "$(ShowAsPackageName Entware) package list was updated less-than $r_file_change_threshold_minutes minutes ago: skipping update"
+		DebugInfo "$(FormatPackageName Entware) package list was updated less-than $r_file_change_threshold_minutes minutes ago: skipping update"
 	fi
 
 	[[ -f $r_external_packages_archive_pathfile && ! -f $r_external_packages_pathfile ]] && OpenIpkArchive
@@ -3456,10 +3450,10 @@ SaveIpkAndPipList()
 	#	$r_prev_pip_list_pathfile
 
 	$r_pip_cmd freeze | cut -d'=' -f1 > "$r_prev_pip_list_pathfile"
-	[[ -e $r_prev_pip_list_pathfile ]] && DebugAsDone "saved current PIP list to $(ShowAsFileName "$r_prev_pip_list_pathfile")"
+	[[ -e $r_prev_pip_list_pathfile ]] && DebugAsDone "saved current PIP list to $(FormatFileName "$r_prev_pip_list_pathfile")"
 
 	$r_opkg_cmd list-installed > "$r_prev_ipk_list_pathfile"
-	[[ -e $r_prev_ipk_list_pathfile ]] && DebugAsDone "saved current $(ShowAsPackageName Entware) IPK list to $(ShowAsFileName "$r_prev_ipk_list_pathfile")"
+	[[ -e $r_prev_ipk_list_pathfile ]] && DebugAsDone "saved current $(FormatPackageName Entware) IPK list to $(FormatFileName "$r_prev_ipk_list_pathfile")"
 
 	} 2> /dev/null
 
@@ -3474,7 +3468,7 @@ LoadIpkList()
 	local version=''
 
 	if [[ -e $r_prev_ipk_list_pathfile ]]; then
-		DebugInfo "IPKs are being loaded from $(ShowAsFileName "$r_prev_ipk_list_pathfile")"
+		DebugInfo "IPKs are being loaded from $(FormatFileName "$r_prev_ipk_list_pathfile")"
 
 		while read -r name separator version; do
 			name=$(Lowercase "$name")
@@ -3495,7 +3489,7 @@ LoadPipList()
 	local re=''
 
 	if [[ -e $r_prev_pip_list_pathfile ]]; then
-		DebugInfo "PIPs are being loaded from $(ShowAsFileName "$r_prev_pip_list_pathfile")"
+		DebugInfo "PIPs are being loaded from $(FormatFileName "$r_prev_pip_list_pathfile")"
 
 		while read -r name; do
 			name=$(Lowercase "$name")
@@ -4593,7 +4587,7 @@ IsSysFileExist()
 	local a=${1%% *}		# Extract first word-group.
 
 	if ! [[ -f $a || -L $a ]]; then
-		ShowAsAbort "a required NAS system file $(ShowAsFileName "$a") is missing"
+		ShowAsAbort "a required NAS system file $(FormatFileName "$a") is missing"
 
 		return 1
 	fi
@@ -6675,7 +6669,7 @@ DisplayFileInViewport()
 	local wraplines=false
 
 	if [[ ! -e $filename ]]; then
-		echo "filename $(ShowAsFileName "$filename") not found"
+		echo "filename $(FormatFileName "$filename") not found"
 
 		return 1
 	fi
@@ -7942,7 +7936,7 @@ HelpAbbreviations()
 # 		GenerateReportFooter >> "$r_report_output_pathfile"
 	fi
 
-	DisplayAsProjSynExam "example: to install $(ShowAsPackageName SABnzbd), $(ShowAsPackageName Mylar3) and $(ShowAsPackageName nzbToMedia) all-at-once" 'install sab my nzb2' >> "$r_report_output_pathfile"
+	DisplayAsProjSynExam "example: to install $(FormatPackageName SABnzbd), $(FormatPackageName Mylar3) and $(FormatPackageName nzbToMedia) all-at-once" 'install sab my nzb2' >> "$r_report_output_pathfile"
 
 	EraseThisLine
 	ShowReport
@@ -8918,7 +8912,7 @@ NoteIpkAcAsEr()
 	#   $2 = action
 	#   $3 = reason (optional)
 
-	local a="failing request to $2 $(ShowAsPackageName "$1")"
+	local a="failing request to $2 $(FormatPackageName "$1")"
 
 	[[ -n ${3:-} ]] && a+=' as '$3
 	DebugAsError "$a" >&2
@@ -8977,7 +8971,7 @@ GetHardwareCPUInfo()
 GetHardwareCPUBenchmark()
 	{
 
-	# Get a basic CPU benchmark based-on time to calculate a single SHA checksum.
+	# Generate a basic CPU benchmark based-on time to calculate a single SHA checksum.
 
 	# Adapted from: https://bash-prompt.net/guides/bash-simple-bash-benchmark/ and modified to get a quick result that works in QTS. Less accurate, but this figure is for indication-only.
 
@@ -9000,6 +8994,46 @@ GetHardwareCPUBenchmark()
 
 			/bin/renice 0 $$ &> /dev/null
 		fi
+	fi
+
+	a=$(/bin/grep copied <<< "$a" | cut -d, -f4)
+	a=${a//[[:blank:]]/}
+	[[ -n $a ]] || a=undefined
+
+	printf '%s' "$a"
+
+	return 0
+
+	}
+
+GetHardwareVolumeBenchmark()
+	{
+
+	# Generate a basic write benchmark for the default userdata volume.
+
+	# Use GNU `dd` because it generates speed statistics in stderr. BusyBox 1.01 `dd` does not.
+
+	local a=''
+	local b=10k			# Maximum time to run is around 1 second on my slowest NAS (TS-220).
+	local -i c=-20		# Run benchmark with highest priority.
+	local d=$(GetUserDefVol)/zero
+
+	if [[ -d $(/usr/bin/dirname "$d") ]]; then
+		[[ -e $d ]] && rm -f "$d"
+
+		if [[ -e /opt/bin/dd && -e /bin/sha1sum ]]; then
+			if [[ -e /opt/bin/nice ]]; then
+				a=$(/opt/bin/nice -$c /opt/bin/dd if=/dev/zero of=$d bs=8k count=$b 2>&1)
+			elif [[ -e /bin/renice ]]; then
+				/bin/renice $c $$ &> /dev/null
+
+				a=$(/opt/bin/dd if=/dev/zero of=$d bs=8k count=$b 2>&1)
+
+				/bin/renice 0 $$ &> /dev/null
+			fi
+		fi
+
+		[[ -e $d ]] && rm -f "$d"
 	fi
 
 	a=$(/bin/grep copied <<< "$a" | cut -d, -f4)
@@ -9933,7 +9967,7 @@ _QPKG:reassign_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "reassigning $(ShowAsPackageName)"
+	DebugAsProc "reassigning $(FormatPackageName)"
 	RunAndLog "/sbin/setcfg -e $qpkg_name store -f /etc/config/qpkg.conf" "$r_logs_path/$qpkg_name.$r_reassign_log_file" log:failure-only
 	z=$?
 
@@ -9988,11 +10022,11 @@ _QPKG:download_()
 		z=1
 	elif [[ -f $r_local_pathfile ]]; then
 		if FileMatchesMD5 "$r_local_pathfile" "$r_remote_hash"; then
-			SaveActionResultToLog QPKG "$qpkg_name" download '' skipped-ok "existing file $(ShowAsFileName "$r_local_filename") checksum is correct"
+			SaveActionResultToLog QPKG "$qpkg_name" download '' skipped-ok "existing file $(FormatFileName "$r_local_filename") checksum is correct"
 			MarkActionForkAsSkippedOk
 			z=2
 		else
-			DebugInfo "deleting $(ShowAsFileName "$r_local_filename") as checksum is incorrect"
+			DebugInfo "deleting $(FormatFileName "$r_local_filename") as checksum is incorrect"
 			rm -f "$r_local_pathfile" 2> /dev/null
 		fi
 	fi
@@ -10000,7 +10034,7 @@ _QPKG:download_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	if [[ ! -f $r_local_pathfile ]]; then
-		DebugAsProc "downloading $(ShowAsFileName "$r_remote_filename")"
+		DebugAsProc "downloading $(FormatFileName "$r_remote_filename")"
 
 		rm -f "$r_log_pathfile" 2> /dev/null
 
@@ -10014,7 +10048,7 @@ _QPKG:download_()
 				SendPackageStateChange ISdownloaded
 				MarkActionForkAsOk
 			else
-				SaveActionResultToLog QPKG "$qpkg_name" download '' failed "cache file $(ShowAsFileName "$r_local_filename") has incorrect checksum"
+				SaveActionResultToLog QPKG "$qpkg_name" download '' failed "cache file $(FormatFileName "$r_local_filename") has incorrect checksum"
 				SendPackageStateChange ISNTdownloaded
 				MarkActionForkAsError
 				z=1
@@ -10100,7 +10134,7 @@ _QPKG:install_()
 		fi
 	fi
 
-	DebugAsProc "installing $(ShowAsPackageName)"
+	DebugAsProc "installing $(FormatPackageName)"
 	[[ ${QPKGs_were_installed_name[*]:-} = *"$qpkg_name"* ]] && a+="QINSTALL_PATH=$(GetQpkgInstalledOriginalPath "$qpkg_name") "
 
 	RunAndLog "${a}/bin/sh $local_pathfile" "$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_install_log_file" log:failure-only 10
@@ -10197,7 +10231,7 @@ _QPKG:reinstall_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "reinstalling $(ShowAsPackageName)"
+	DebugAsProc "reinstalling $(FormatPackageName)"
 	IsQpkgInstalled && a+="QINSTALL_PATH=$(/usr/bin/dirname "$(GetQpkgInstalledPath)") "
 
 	RunAndLog "${a}/bin/sh $local_pathfile" "$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_reinstall_log_file" log:failure-only 10
@@ -10272,7 +10306,7 @@ _QPKG:rebuild_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "meta-rebuilding $(ShowAsPackageName)"
+	DebugAsProc "meta-rebuilding $(FormatPackageName)"
 	# Nothing-to-do here, real QPKG actions have already been assigned in CheckEnv().
 
 	SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' ok
@@ -10335,7 +10369,7 @@ _QPKG:upgrade_()
 
 	local prev_ver=$(GetQpkgInstalledVer)
 
-	DebugAsProc "upgrading $(ShowAsPackageName)"
+	DebugAsProc "upgrading $(FormatPackageName)"
 	IsQpkgInstalled && a+="QINSTALL_PATH=$(/usr/bin/dirname "$(GetQpkgInstalledPath "$qpkg_name")") "
 
 	RunAndLog "${a}/bin/sh $local_pathfile" "$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_upgrade_log_file" log:failure-only 10
@@ -10422,7 +10456,7 @@ _QPKG:uninstall_()
 	[[ $qpkg_name = Entware ]] && SaveIpkAndPipList
 
 	if [[ -e $r_qpkg_uninstaller_pathfile ]]; then
-		DebugAsProc "uninstalling $(ShowAsPackageName)"
+		DebugAsProc "uninstalling $(FormatPackageName)"
 
 		RunAndLog "${a}/bin/sh $r_qpkg_uninstaller_pathfile" "$r_logs_path/$qpkg_name.$r_uninstall_log_file" log:failure-only
 		z=$?
@@ -10451,7 +10485,7 @@ _QPKG:uninstall_()
 		fi
 	else
 		# Standard QPKG `.uninstall.sh` was not found, so can't continue with uninstallation (maybe force this instead with `rm -r` ?).
-		SaveActionResultToLog QPKG "$qpkg_name" uninstall '' failed "$(ShowAsFileName '.uninstall.sh') not found"
+		SaveActionResultToLog QPKG "$qpkg_name" uninstall '' failed "$(FormatFileName '.uninstall.sh') not found"
 		MarkActionForkAsError
 	fi
 
@@ -10504,7 +10538,7 @@ _QPKG:activate_()
 	IsOsCanQpkgTimeout && timeout=' -t '$r_qpkg_start_timeout_seconds
 	local service_pathfile=$(GetQpkgServicePathFile)
 
-	DebugAsProc "activating $(ShowAsPackageName)"
+	DebugAsProc "activating $(FormatPackageName)"
 
 	if [[ $service_pathfile = undefined ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" activate '' skipped-error 'QPKG service-script file undefined'
@@ -10592,7 +10626,7 @@ _QPKG:reactivate_()
 	IsOsCanQpkgTimeout && timeout=' -t '$r_qpkg_restart_timeout_seconds
 	local service_pathfile=$(GetQpkgServicePathFile)
 
-	DebugAsProc "reactivating $(ShowAsPackageName)"
+	DebugAsProc "reactivating $(FormatPackageName)"
 
 	if [[ $service_pathfile = undefined ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' skipped-error 'QPKG service-script file undefined'
@@ -10671,7 +10705,7 @@ _QPKG:deactivate_()
 	IsOsCanQpkgTimeout && timeout=' -t '$r_qpkg_stop_timeout_seconds
 	local service_pathfile=$(GetQpkgServicePathFile)
 
-	DebugAsProc "deactivating $(ShowAsPackageName)"
+	DebugAsProc "deactivating $(FormatPackageName)"
 
 	if [[ $service_pathfile = undefined ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' skipped-error 'QPKG service-script file undefined'
@@ -10755,7 +10789,7 @@ _QPKG:enable_()
 	local timeout=''
 	IsOsCanQpkgTimeout && timeout=' -t '$r_qpkg_enable_timeout_seconds
 
-	DebugAsProc "enabling $(ShowAsPackageName)"
+	DebugAsProc "enabling $(FormatPackageName)"
 
 	RunAndLog "/sbin/qpkg_service${timeout} enable $qpkg_name" "$r_log_pathfile" log:failure-only
 	IsQpkgEnabled "$qpkg_name" && SendPackageStateChange ISenabled
@@ -10813,7 +10847,7 @@ _QPKG:disable_()
 	local timeout=''
 	IsOsCanQpkgTimeout && timeout=' -t '$r_qpkg_disable_timeout_seconds
 
-	DebugAsProc "disabling $(ShowAsPackageName)"
+	DebugAsProc "disabling $(FormatPackageName)"
 
 	RunAndLog "/sbin/qpkg_service${timeout} disable $qpkg_name" "$r_log_pathfile" log:failure-only
 	! IsQpkgEnabled "$qpkg_name" && SendPackageStateChange ISNTenabled
@@ -10870,7 +10904,7 @@ _QPKG:enableau_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "enabling auto-update $(ShowAsPackageName)"
+	DebugAsProc "enabling auto-update $(FormatPackageName)"
 
 	RunAndLog "${a}$(GetQpkgServicePathFile) enable-auto-update" "$r_logs_path/$qpkg_name.$r_enableau_log_file" log:failure-only
 	z=$?
@@ -10933,7 +10967,7 @@ _QPKG:disableau_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "disabling auto-update $(ShowAsPackageName)"
+	DebugAsProc "disabling auto-update $(FormatPackageName)"
 
 	RunAndLog "${a}$(GetQpkgServicePathFile) disable-auto-update" "$r_logs_path/$qpkg_name.$r_disableau_log_file" log:failure-only
 	z=$?
@@ -10992,7 +11026,7 @@ _QPKG:backup_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "backing-up $(ShowAsPackageName) configuration"
+	DebugAsProc "backing-up $(FormatPackageName) configuration"
 
 	RunAndLog "${a}$(GetQpkgServicePathFile) backup" "$r_logs_path/$qpkg_name.$r_backup_log_file" log:failure-only
 	z=$?
@@ -11056,7 +11090,7 @@ _QPKG:restore_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "restoring $(ShowAsPackageName) configuration"
+	DebugAsProc "restoring $(FormatPackageName) configuration"
 
 	RunAndLog "${a}$(GetQpkgServicePathFile) restore" "$r_logs_path/$qpkg_name.$r_restore_log_file" log:failure-only
 	z=$?
@@ -11116,7 +11150,7 @@ _QPKG:clean_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "cleaning $(ShowAsPackageName)"
+	DebugAsProc "cleaning $(FormatPackageName)"
 
 	RunAndLog "${a}$(GetQpkgServicePathFile) clean" "$r_logs_path/$qpkg_name.$r_clean_log_file" log:failure-only
 	z=$?
@@ -11186,7 +11220,7 @@ _QPKG:sign_()
 		MarkActionForkAsSkipped
 		z=1
 	elif [[ ! -e $sqlite_pathfile ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped-abort "$(ShowAsFileName sqlite3) binary not found"
+		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped-abort "$(FormatFileName sqlite3) binary not found"
 		MarkActionForkAsSkippedAbort
 		z=3
 	elif [[ ! -e $r_cert_db_pathfile ]]; then
@@ -11214,7 +11248,7 @@ _QPKG:sign_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "\"signing\" $(ShowAsPackageName)"
+	DebugAsProc "\"signing\" $(FormatPackageName)"
 
 # 	a="DELETE FROM Certificate WHERE QpkgName = '$qpkg_name'; INSERT INTO Certificate (Type,QpkgName,Cert,DigitalSignature) VALUES ('qpkg','$qpkg_name','$r_qpkg_certificate','$r_qpkg_signature');"
 
@@ -11279,7 +11313,7 @@ _QPKG:status_()
 
 	[[ $z -eq 0 ]] || FuncForkExit
 
-	DebugAsProc "status $(ShowAsPackageName)"
+	DebugAsProc "status $(FormatPackageName)"
 
 	a=$(GetQpkgDbActiveTest)
 
@@ -11349,28 +11383,28 @@ LogQpkgServiceResult()
 	#   $qpkg_name
 
 	if ! local a=$(GetQpkgServiceResult); then
-		DebugAsWarn "unable to get status of $(ShowAsPackageName) service. It may be a non-sherpa package, or a sherpa package earlier than 200816c that doesn't support service results."
+		DebugAsWarn "unable to get status of $(FormatPackageName) service. It may be a non-sherpa package, or a sherpa package earlier than 200816c that doesn't support service results."
 
 		return 1
 	fi
 
 	case $a in
 		in-progress)
-			DebugInfo "$(ShowAsPackageName) service action is in-progress"
+			DebugInfo "$(FormatPackageName) service action is in-progress"
 			;;
 		ok)
-			DebugInfo "$(ShowAsPackageName) service action completed OK"
+			DebugInfo "$(FormatPackageName) service action completed OK"
 			;;
 		failed)
 			if [[ -e /var/log/$qpkg_name.log ]]; then
-				DebugAsError "$(ShowAsPackageName) service action failed. Check $(ShowAsFileName "/var/log/$qpkg_name.log") for more information"
+				DebugAsError "$(FormatPackageName) service action failed. Check $(FormatFileName "/var/log/$qpkg_name.log") for more information"
 				AddExtLogToSessLog /var/log/$qpkg_name.log
 			else
-				DebugAsError "$(ShowAsPackageName) service action failed"
+				DebugAsError "$(FormatPackageName) service action failed"
 			fi
 			;;
 		*)
-			DebugAsWarn "$(ShowAsPackageName) service status is unrecognised or unsupported"
+			DebugAsWarn "$(FormatPackageName) service status is unrecognised or unsupported"
 	esac
 
 	return 0
@@ -13199,7 +13233,7 @@ MakePath()
 	[[ -n ${1:?${FUNCNAME[0]}'()': undefined path} && -n ${2:?${FUNCNAME[0]}'()': undefined reason} ]] || return
 
 	if [[ $1 != undefined ]] && ! mkdir -p "$1"; then
-		ShowAsError "unable to create $2 path $(ShowAsFileName "$1") $(ShowAsExitcode "$?")"
+		ShowAsError "unable to create $2 path $(FormatFileName "$1") $(FormatExitcode "$?")"
 		show_suggest_raise_issue=true
 
 		return 1
@@ -13294,7 +13328,7 @@ RunAndLog()
 	fi
 
 	DebugAsProc "$exec_msg"
-	ShowAsCommand "$1" > "$2"
+	FormatCommand "$1" > "$2"
 
 	if [[ $useropt_verbose = true ]]; then
 		eval "$1 > >(/usr/bin/tee $r_log_pathfile) 2>&1"	# NOTE: `tee` buffers stdout here.
@@ -13602,14 +13636,14 @@ ShowAsOptions()
 
 	}
 
-ShowAsPackageName()
+FormatPackageName()
 	{
 
 	printf '%s' "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}"
 
 	}
 
-ShowAsFileName()
+FormatFileName()
 	{
 
 	printf '%s' "'${1:?${FUNCNAME[0]}'()': undefined filename}'"
@@ -13623,14 +13657,14 @@ ShowAsURL()
 
 	}
 
-ShowAsExitcode()
+FormatExitcode()
 	{
 
 	printf '%s' "[${1:?${FUNCNAME[0]}'()': undefined exitcode}]"
 
 	}
 
-ShowAsLogFilename()
+FormatLogFilename()
 	{
 
 	# Inputs: (global)
@@ -13640,7 +13674,7 @@ ShowAsLogFilename()
 
 	}
 
-ShowAsCommand()
+FormatCommand()
 	{
 
 	# Inputs: (global)
@@ -13660,7 +13694,7 @@ ShowAsResultAndStdout()
 
 	[[ ${1:-0} -ne 0 ]] && a=$r_chars_alert
 
-	echo "${a}result_code: $(ShowAsExitcode "$1") ***** stdout/stderr begins below *****"
+	echo "${a}result_code: $(FormatExitcode "$1") ***** stdout/stderr begins below *****"
 	echo "$2"
 	echo "${a}***** stdout/stderr is complete *****"
 
@@ -14459,7 +14493,7 @@ AddExtLogToSessLog()
 
 	DebugAsLog 'adding external log to main log'
 	DebugExtLogMinSepr
-	DebugAsLog "$(ShowAsLogFilename "${1:?${FUNCNAME[0]}'()': undefined pathfile}")"
+	DebugAsLog "$(FormatLogFilename "${1:?${FUNCNAME[0]}'()': undefined pathfile}")"
 
 	while read -r a; do
 		DebugAsLog "$a"

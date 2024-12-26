@@ -1,5 +1,3 @@
-* Include basic benchmark for storage speed read/write?
-
 * Rename 'O' QPKGs:
 	# QPKGs to migrate from leading-'O'.
 
