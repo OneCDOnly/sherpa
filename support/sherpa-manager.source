@@ -5089,14 +5089,14 @@ _GenerateStatusReportDataLine_()
 	[[ -n $auxiliary_msg ]] && eval "${auxiliary_column}_msg=\"$auxiliary_msg\""
 
 	if [[ $req_alert = true ]]; then
-		/bin/touch "$r_report_flags_path"/req-alert
 		name_msg=$(FormatReportField "$name" alert)
+		/bin/touch "$r_report_flags_path"/req-alert
 	elif [[ $req_attention = true ]]; then
-		/bin/touch "$r_report_flags_path"/req-attention
 		name_msg=$(FormatReportField "$name" attention_highlight)
-	elif [[ $req_oops = true ]]; then
 		/bin/touch "$r_report_flags_path"/req-attention
+	elif [[ $req_oops = true ]]; then
 		name_msg=$(FormatReportField "$name" oops)
+		/bin/touch "$r_report_flags_path"/req-attention
 	elif [[ $mode = mute ]]; then
 		name_msg=$(FormatReportField "$name" mute)
 	else
@@ -5228,11 +5228,11 @@ _GenerateReposReportDataLine_()
 	[[ -n $auxiliary_msg ]] && eval "${auxiliary_column}_msg=\"$auxiliary_msg\""
 
 	if [[ $req_alert = true ]]; then
-		/bin/touch "$r_report_flags_path"/req-alert
 		name_msg=$(FormatReportField "$name" alert)
+		/bin/touch "$r_report_flags_path"/req-alert
 	elif [[ $req_attention = true ]]; then
-		/bin/touch "$r_report_flags_path"/req-attention
 		name_msg=$(FormatReportField "$name" attention_highlight)
+		/bin/touch "$r_report_flags_path"/req-attention
 	elif [[ $mode = mute ]]; then
 		name_msg=$(FormatReportField "$name" mute)
 	else
@@ -5295,6 +5295,7 @@ _GenerateAbsReportDataLine_()
 
 	if IsQpkgMissing; then
 		mode=highlight
+		req_alert=true
 		/bin/touch "$r_report_flags_path"/status-missing
 	elif IsNtQpkgInstalled; then
 		mode=mute
@@ -5325,8 +5326,6 @@ _GenerateAbsReportDataLine_()
 			installed_msg=$(FormatReportField false mute)
 			;;
 		highlight)
-			req_alert=true
-
 			abs_msg=$(FormatReportField "$abs" normal_notice)
 			auxiliary_msg=$(FormatReportField missing alert)
 			;;
@@ -5338,14 +5337,14 @@ _GenerateAbsReportDataLine_()
 	[[ -n $auxiliary_msg ]] && eval "${auxiliary_column}_msg=\"$auxiliary_msg\""
 
 	if [[ $req_alert = true ]]; then
-		/bin/touch "$r_report_flags_path"/req-alert
 		name_msg=$(FormatReportField "$name" alert)
+		/bin/touch "$r_report_flags_path"/req-alert
 	elif [[ $req_attention = true ]]; then
-		/bin/touch "$r_report_flags_path"/state-notinstallable
 		name_msg=$(FormatReportField "$name" attention_highlight)
+		/bin/touch "$r_report_flags_path"/state-notinstallable
 	elif [[ $req_notice = true ]]; then
-		/bin/touch "$r_report_flags_path"/req-notice
 		name_msg=$(FormatReportField "$name" notice)
+		/bin/touch "$r_report_flags_path"/req-notice
 	elif [[ $mode = mute ]]; then
 		name_msg=$(FormatReportField "$name" mute)
 	else
@@ -5443,17 +5442,21 @@ _GenerateDepsReportDataLine_()
 
 	if IsQpkgMissing; then
 		mode=missing
+		req_alert=true
 	elif IsQpkgInstalled; then
 		mode=normal
+	elif IsQpkgReallyInstalled && IsNtQpkgAuthorOk; then
+		mode=author
+		req_attention=true
+		/bin/touch "$r_report_flags_path"/status-wrongauthor
 	else
 		mode=mute
-		IsQpkgReallyInstalled && IsNtQpkgAuthorOk && mode=author
+		/bin/touch "$r_report_flags_path"/state-notinstalled
 	fi
 
 	case $mode in
 		author)
-			/bin/touch "$r_report_flags_path"/status-wrongauthor
-			req_attention=true
+			# Assign & highlight field messages.
 
 			for a in "${column_vars[@]}"; do
 				case $a in
@@ -5472,14 +5475,10 @@ _GenerateDepsReportDataLine_()
 			done
 			;;
 		missing)
-			req_alert=true
-
-			# Assign field messages.
+			# Assign & highlight field messages.
 			auxiliary_msg=$(FormatReportField missing alert)
 			;;
 		mute)
-			/bin/touch "$r_report_flags_path"/state-notinstalled
-
 			deps=''
 
 			if [[ $deps_raw != none ]]; then
@@ -5643,14 +5642,14 @@ _GenerateDepsReportDataLine_()
 	[[ -n $auxiliary_msg ]] && eval "${auxiliary_column}_msg=\"$auxiliary_msg\""
 
 	if [[ $req_alert = true ]]; then
-		/bin/touch "$r_report_flags_path"/req-alert
 		name_msg=$(FormatReportField "$name" alert)
+		/bin/touch "$r_report_flags_path"/req-alert
 	elif [[ $req_attention = true ]]; then
-		/bin/touch "$r_report_flags_path"/state-notinstallable
 		name_msg=$(FormatReportField "$name" attention_highlight)
+		/bin/touch "$r_report_flags_path"/state-notinstallable
 	elif [[ $req_notice = true ]]; then
-		/bin/touch "$r_report_flags_path"/req-notice
 		name_msg=$(FormatReportField "$name" notice)
+		/bin/touch "$r_report_flags_path"/req-notice
 	elif [[ $mode = mute ]]; then
 		name_msg=$(FormatReportField "$name" mute)
 	else
@@ -5692,7 +5691,7 @@ GenerateFeaturesReportTitleLine()
 	#	$r_report_qpkg_tier_column_width
 
 	if IsOsCanAutowidthTableColumns; then
-		printf 'QPKG name:|Indep?|Opt?|Dep?|Enh?|CanBack?|CanClean?|StartUpd?|AutUpd?|LiveTest?|ArchCompat?|UniqueUnpack?'
+		printf 'QPKG name:|Indep?|Opt?|Dep?|Enh?|CanBack?|CanClean?|StartUpd?|AutUpd?|LiveTest?|ArchCompat?|UniqUnpack?'
 	else
 		FormatReportFieldWidth 'QPKG name:' "$r_report_qpkg_name_column_width"
 		FormatReportFieldWidth 'Indep?' "$r_report_qpkg_tier_column_width"
@@ -5705,7 +5704,7 @@ GenerateFeaturesReportTitleLine()
 		FormatReportFieldWidth 'AutUpd?' "$r_report_qpkg_auto_update_column_width"
 		FormatReportFieldWidth 'LiveTest?' "$r_report_qpkg_active_test_builtin_column_width"
 		FormatReportFieldWidth 'ArchCompat?' "$r_report_qpkg_is_compatible_column_width"
-		FormatReportFieldWidth 'UniqueUnpack?' "$r_report_lazy_column_width"
+		FormatReportFieldWidth 'UniqUnpack?' "$r_report_lazy_column_width"
 	fi
 
 	printf '\n'
@@ -5737,18 +5736,20 @@ _GenerateFeaturesReportDataLine_()
 
 	if IsQpkgMissing; then
 		mode=missing
+		req_alert=true
 	elif IsQpkgInstalled; then
 		mode=normal
+	elif IsQpkgReallyInstalled && IsNtQpkgAuthorOk; then
+		mode=author
+		req_attention=true
 	else
 		mode=mute
-		IsQpkgReallyInstalled && IsNtQpkgAuthorOk && mode=author
 	fi
 
 	case $mode in
 		author)
 			# Set field values.
 			auxiliary='incompatible author'
-			req_attention=true
 
 			# Assign & highlight field messages.
 			auxiliary_msg=$(FormatReportField "$auxiliary" attention_highlight)
@@ -5756,7 +5757,6 @@ _GenerateFeaturesReportDataLine_()
 		missing)
 			# Set field values.
 			auxiliary=missing
-			req_alert=true
 
 			# Assign & highlight field messages.
 			auxiliary_msg=$(FormatReportField "$auxiliary" alert)
@@ -5796,6 +5796,7 @@ _GenerateFeaturesReportDataLine_()
 		*)
 			auxiliary=''
 			auxiliary_msg=''
+
 			# Set field values.
 			[[ $(GetQpkgDbActiveTest) = builtin ]] && active_test=true
 			IsQpkgDbArchOK && arch_compatible=true
@@ -5846,11 +5847,11 @@ _GenerateFeaturesReportDataLine_()
   	[[ -n $auxiliary_msg ]] && eval "${auxiliary_column}_msg=\"$auxiliary_msg\""
 
 	if [[ $req_alert = true ]]; then
-		/bin/touch "$r_report_flags_path"/req-alert
 		name_msg=$(FormatReportField "$name" alert)
+		/bin/touch "$r_report_flags_path"/req-alert
 	elif [[ $req_attention = true ]]; then
-		/bin/touch "$r_report_flags_path"/req-attention
 		name_msg=$(FormatReportField "$name" attention_highlight)
+		/bin/touch "$r_report_flags_path"/req-attention
 	elif [[ $mode = mute ]]; then
 		name_msg=$(FormatReportField "$name" mute)
 	else
@@ -5916,7 +5917,6 @@ _GenerateBacksReportItemLine_()
 	#	$r_report_flags_path
 
 	local -a column_vars=(epoch_time file_bytes file_name)
-		local auxiliary_column=installed		# Auxiliary messages are shown in this column name.
 	local mode=''
 
 	for a in "${column_vars[@]}"; do
@@ -5926,28 +5926,26 @@ _GenerateBacksReportItemLine_()
 
 	epoch_time=${1:-0}
 	file_name=${2:-}
-	file_bytes=${3:-0}
+	file_bytes=$(FormatAsThous "${3:-0}")
 
 	if [[ ${epoch_time%.*} -lt $(/bin/date --date="${4:-'1 week ago'}" +%s) ]]; then
 		mode=highlight
+		/bin/touch "$r_report_flags_path"/backup-file-old
 	else
 		mode=normal
+		/bin/touch "$r_report_flags_path"/backup-file-ok
 	fi
-
-	file_bytes=$(FormatAsThous "$file_bytes")
 
 	case $mode in
 		normal)
 			epoch_time_msg=$(FormatReportField "$(ConvertSecondsToFullDate "$epoch_time")")
 			file_bytes_msg=$(FormatReportField "$file_bytes")
 			file_name_msg=$(FormatReportField "$file_name" normal)
-			/bin/touch "$r_report_flags_path"/backup-file-ok
 			;;
 		highlight)
 			epoch_time_msg=$(FormatReportField "$(ConvertSecondsToFullDate "$epoch_time")" notice)
 			file_bytes_msg=$(FormatReportField "$file_bytes" oops)
 			file_name_msg=$(FormatReportField "$file_name" notice)
-			/bin/touch "$r_report_flags_path"/backup-file-old
 	esac
 
 	if IsOsCanAutowidthTableColumns; then
@@ -8575,7 +8573,7 @@ GenerateReportHeadingsFooter()
 		DisplayAsIndentQuotedInfoItem 'AutUpd?' 'application restart-to-update is enabled'
 		DisplayAsIndentQuotedInfoItem 'LiveTest?' "has a built-in 'status' check, and can test for daemon live status"
 		DisplayAsIndentQuotedInfoItem 'ArchCompat?' 'has a release compatible with this NAS architecture'
-		DisplayAsIndentQuotedInfoItem 'UniqueUnpack?' 'QPKG unpacks itself to a unique path'
+		DisplayAsIndentQuotedInfoItem 'UniqUnpack?' 'QPKG unpacks itself to a unique path'
 	})
 
 	if [[ -n $a ]]; then
