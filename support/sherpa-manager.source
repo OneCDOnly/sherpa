@@ -5019,29 +5019,21 @@ _GenerateStatusReportDataLine_()
 			/bin/touch "$r_report_flags_path"/na
 
 			if ! IsQpkgDbArchOK; then
-				auxiliary='incompatible architecture'
+				auxiliary_msg=$(FormatReportField 'incompatible architecture' alert_mute)
 			elif ! IsQpkgDbMinOSVerOk || ! IsQpkgDbMaxOSVerOk; then
-				auxiliary='incompatible '$(GetOsName)
+				auxiliary_msg=$(FormatReportField "incompatible $(GetOsName)" alert_mute)
 			elif ! IsQpkgDbMinRAMOk; then
-				auxiliary='insufficient RAM installed'
+				auxiliary_msg=$(FormatReportField 'insufficient RAM installed' alert_mute)
 			else
-				status='not installed'
+				status_msg=$(FormatReportField 'not installed' normal_mute)
 			fi
 
 			ver=$(GetQpkgDbVer)
 
 			for a in "${column_vars[@]}"; do
 				case $a in
-					name)
-						: # Do nothing, this is set later.
-						;;
-					auxiliary)
-						if [[ $auxiliary != false ]]; then
-							auxiliary_msg=$(FormatReportField "$auxiliary" alert_mute)
-						fi
-						;;
-					status)
-						status_msg=$(FormatReportField "$status" alert_mute)
+					name|auxiliary|status)
+						: # Do nothing.
 						;;
 					*)
 						local ${a}_msg="$(FormatReportField "${!a}" mute)"
@@ -5051,10 +5043,7 @@ _GenerateStatusReportDataLine_()
 		*)
 			for a in "${column_vars[@]}"; do
 				case $a in
-					name)
-						: # Do nothing, this is set later.
-						;;
-					auxiliary)
+					name|auxiliary)
 						: # Do nothing.
 						;;
 					status)
@@ -5208,16 +5197,15 @@ _GenerateReposReportDataLine_()
 			/bin/touch "$r_report_flags_path"/na
 
 			if ! IsQpkgDbArchOK; then
-				auxiliary='incompatible architecture'
+				auxiliary_msg=$(FormatReportField 'incompatible architecture' alert_mute)
 			elif ! IsQpkgDbMinOSVerOk; then
-				auxiliary='incompatible '$(GetOsName)
+				auxiliary_msg=$(FormatReportField "incompatible $(GetOsName)" alert_mute)
 			elif ! IsQpkgDbMinRAMOk; then
-				auxiliary='insufficient RAM installed'
+				auxiliary_msg=$(FormatReportField 'insufficient RAM installed' alert_mute)
 			else
-				auxiliary='not installed'
+				auxiliary_msg=$(FormatReportField 'not installed' normal_mute)
 			fi
 
-			auxiliary_msg=$(FormatReportField "$auxiliary" alert_mute)
 			install_date_msg=$(FormatReportField N/A mute)
 			;;
 		*)
@@ -5704,17 +5692,17 @@ GenerateFeaturesReportTitleLine()
 	#	$r_report_qpkg_tier_column_width
 
 	if IsOsCanAutowidthTableColumns; then
-		printf 'QPKG name:|Independent?|Optional?|Dependent?|Enhanced?|CanBack?|CanClean?|StartUpd?|AutoUpd?|LiveTest?|ArchCompat?|UniqueUnpack?'
+		printf 'QPKG name:|Indep?|Opt?|Dep?|Enh?|CanBack?|CanClean?|StartUpd?|AuUpd?|LiveTest?|ArchCompat?|UniqueUnpack?'
 	else
 		FormatReportFieldWidth 'QPKG name:' "$r_report_qpkg_name_column_width"
-		FormatReportFieldWidth 'Independent?' "$r_report_qpkg_tier_column_width"
-		FormatReportFieldWidth 'Optional?' "$r_report_qpkg_tier_column_width"
-		FormatReportFieldWidth 'Dependent?' "$r_report_qpkg_tier_column_width"
-		FormatReportFieldWidth 'Enhanced?' "$r_report_lazy_column_width"
+		FormatReportFieldWidth 'Indep?' "$r_report_qpkg_tier_column_width"
+		FormatReportFieldWidth 'Opt?' "$r_report_qpkg_tier_column_width"
+		FormatReportFieldWidth 'Dep?' "$r_report_qpkg_tier_column_width"
+		FormatReportFieldWidth 'Enh?' "$r_report_lazy_column_width"
 		FormatReportFieldWidth 'CanBack?' "$r_report_qpkg_can_backup_column_width"
 		FormatReportFieldWidth 'CanClean?' "$r_report_qpkg_can_clean_column_width"
 		FormatReportFieldWidth 'StartUpd?' "$r_report_qpkg_can_start_to_update_column_width"
-		FormatReportFieldWidth 'AutoUpd?' "$r_report_qpkg_auto_update_column_width"
+		FormatReportFieldWidth 'AuUpd?' "$r_report_qpkg_auto_update_column_width"
 		FormatReportFieldWidth 'LiveTest?' "$r_report_qpkg_active_test_builtin_column_width"
 		FormatReportFieldWidth 'ArchCompat?' "$r_report_qpkg_is_compatible_column_width"
 		FormatReportFieldWidth 'UniqueUnpack?' "$r_report_lazy_column_width"
@@ -8577,14 +8565,16 @@ GenerateReportHeadingsFooter()
 	local a=''
 
 	a=$({
+		DisplayAsIndentQuotedInfoItem 'Indep?' 'is independent of other QPKGs'
+		DisplayAsIndentQuotedInfoItem 'Opt?' 'is an optional addon for another QPKG'
+		DisplayAsIndentQuotedInfoItem 'Dep?' 'is dependent on other QPKGs'
+		DisplayAsIndentQuotedInfoItem 'Enh?' "$(ShowAsTitleName) enhanced service actions are supported"
 		DisplayAsIndentQuotedInfoItem 'CanBack?' "application config 'backup' and 'restore' are supported"
 		DisplayAsIndentQuotedInfoItem 'CanClean?' "application 'clean' is supported"
 		DisplayAsIndentQuotedInfoItem 'StartUpd?' 'application restart-to-update is supported'
-		DisplayAsIndentQuotedInfoItem 'AutoUpd?' 'application restart-to-update is enabled'
+		DisplayAsIndentQuotedInfoItem 'AuUpd?' 'application restart-to-update is enabled'
 		DisplayAsIndentQuotedInfoItem 'LiveTest?' "has a built-in 'status' check, and can test for daemon live status"
-		DisplayAsIndentQuotedInfoItem 'Independent?' 'is independent of other QPKGs'
 		DisplayAsIndentQuotedInfoItem 'ArchCompat?' 'has a release compatible with this NAS architecture'
-		DisplayAsIndentQuotedInfoItem 'Enhanced?' "$(ShowAsTitleName) enhanced service actions are supported"
 		DisplayAsIndentQuotedInfoItem 'UniqueUnpack?' 'QPKG unpacks itself to a unique path'
 	})
 
