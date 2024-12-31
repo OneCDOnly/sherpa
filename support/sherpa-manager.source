@@ -45,7 +45,7 @@ Init()
 	IsUserOk || return
 	LoadConsts
 	LoadVars
-	UpdateCapabilities
+	SetCapabilities
 	LoadCMDs
 	CMDsIsOk || return
 	HideKeystrokes
@@ -389,9 +389,7 @@ LoadCMDs()
 	readonly r_gnu_find_cmd=/opt/bin/find
 	readonly r_gnu_grep_cmd=/opt/bin/grep
 	readonly r_gnu_less_cmd=/opt/bin/less
-	readonly r_gnu_sed_cmd=/opt/bin/sed
 	readonly r_gnu_sleep_cmd=/opt/bin/sleep
-	readonly r_gnu_sort_cmd=/opt/bin/sort
 	readonly r_gnu_stty_cmd=/opt/bin/stty
 	readonly r_gnu_timeout_cmd=/opt/bin/timeout
 	readonly r_opkg_cmd=/opt/bin/opkg
@@ -784,7 +782,7 @@ DebugLogEnv()
 	DebugHardware ok CPU "$(GetHardwareCPUInfo)"
 	DebugHardware ok 'CPU cores' "$r_cpu_cores"
 	DebugHardware ok 'CPU architecture' "$r_nas_arch"
-	DebugHardware ok 'CPU benchmark' "$(GetHardwareCPUBenchmark)"
+	DebugHardware ok 'CPU SHA1 benchmark' "$(GetHardwareCPUBenchmark)"
 	DebugHardware ok RAM "$(FormatAsThous "$r_nas_ram_kb")kiB"
 	DebugKernel ok name "$(GetOsKernelName)"
 	DebugKernel ok version "$(GetOsKernelVersion)"
@@ -838,6 +836,7 @@ DebugLogEnv()
 
 	DebugUserspace ok '$EUID' "$EUID"
 	DebugUserspace ok 'default volume' "$(GetUserDefVol)"
+	DebugUserspace ok 'write benchmark' "$(GetHardwareVolumeBenchmark)"
 	DebugUserspace ok /opt "$(/usr/bin/readlink /opt 2> /dev/null || printf 'not present')"
 
 	local public_share=$(/sbin/getcfg SHARE_DEF defPublic -d Qpublic -f /etc/config/def_share.info)
@@ -853,13 +852,6 @@ DebugLogEnv()
 	DebugShell ok copyright "$(GetShellCopyright)"
 	DebugShell ok options "$-"
 	DebugShell ok 'time in shell' "$(GetShellTimeIn)"
-
-# 	if [[ ${#PATH} -le $r_debug_log_third_column_width ]]; then
-# 		DebugUserspace ok '$PATH' "$PATH"
-# 	else
-# 		DebugUserspace ok '$PATH (LHS-only)' "${PATH:0:$((r_debug_log_third_column_width-${#r_chars_ellipsis}))}${r_chars_ellipsis}"
-# 	fi
-
 	DebugScript 'QPKG version' "$(ConvertAsSmartDate "$r_this_package_ver")"
 	DebugScript 'manager version' "$r_this_script_ver"
 	DebugScript 'manager epoch' "$(ConvertAsSmartDate "$r_this_script_epoch")"
@@ -889,31 +881,31 @@ DebugLogEnv()
 	fi
 
 	DebugQpkg detect architecture "$r_nas_qpkg_arch"
-	DebugQpkg detect "$(ShowAsPackageName Entware) type" "$r_entware_type"
-	DebugQpkg detect "$(ShowAsPackageName Entware) install date" "$(ConvertAsSmartDate "$(GetQpkgInstalledDate Entware)")"
+	DebugQpkg detect "$(FormatPackageName Entware) type" "$r_entware_type"
+	DebugQpkg detect "$(FormatPackageName Entware) install date" "$(ConvertAsSmartDate "$(GetQpkgInstalledDate Entware)")"
 
 	if IsQpkgReallyInstalled SortMyQPKGs; then
-		DebugQpkg detect "$(ShowAsPackageName SortMyQPKGs)" installed
+		DebugQpkg detect "$(FormatPackageName SortMyQPKGs)" installed
 	else
 		if [[ ${r_nas_firmware_version//.} -lt 400 || ${r_nas_firmware_version//.} -ge 520 ]]; then
-			DebugQpkg detect "$(ShowAsPackageName SortMyQPKGs)" 'not installed'
+			DebugQpkg detect "$(FormatPackageName SortMyQPKGs)" 'not installed'
 		else
-			DebugQpkg warning "$(ShowAsPackageName SortMyQPKGs)" 'not installed'
+			DebugQpkg warning "$(FormatPackageName SortMyQPKGs)" 'not installed'
 		fi
 	fi
 
 	if IsOsCanQpkgTimeout; then
 		if IsQpkgReallyInstalled IncreaseTimeouts; then
 			if IsQpkgTimeoutsIncreased; then
-				DebugQpkg detect "$(ShowAsPackageName IncreaseTimeouts)" active
+				DebugQpkg detect "$(FormatPackageName IncreaseTimeouts)" active
 			else
-				DebugQpkg warning "$(ShowAsPackageName IncreaseTimeouts)" inactive
+				DebugQpkg warning "$(FormatPackageName IncreaseTimeouts)" inactive
 			fi
 		else
-			DebugQpkg warning "$(ShowAsPackageName IncreaseTimeouts)" 'not installed'
+			DebugQpkg warning "$(FormatPackageName IncreaseTimeouts)" 'not installed'
 		fi
 	else
-		DebugQpkg detect "$(ShowAsPackageName IncreaseTimeouts)" N/A
+		DebugQpkg detect "$(FormatPackageName IncreaseTimeouts)" N/A
 	fi
 
 	if [[ $useropt_show_about = true ]]; then
@@ -1036,7 +1028,7 @@ CheckEnv()
 		if [[ $r_entware_type != none ]]; then
 			_UpdateEntwarePackageList_ &			# Let's try launching this early.
 		else
-			DebugAsWarn "$(ShowAsPackageName Entware) appears to be installed but is inactive. Please consider starting the $(ShowAsPackageName Entware) QPKG."
+			DebugAsWarn "$(FormatPackageName Entware) appears to be installed but is inactive. Please consider starting the $(FormatPackageName Entware) QPKG."
 		fi
 
 		# Decide if specific IPKs and PIPs should be installed/upgraded.
@@ -1653,7 +1645,7 @@ ProcAction()
 
 			CreatePidFile
 			_ExecOneActionWithManyForks_ "_${r_package_type}:${r_action}_" "${target_packages[@]}" &
-			UpdatePidFile "$!"
+			WritePidFile "$!"
 
 			# Read message pipe and process QPKGs and actions as-per requests contained within.
 
@@ -2034,7 +2026,7 @@ ParseManagementArgs()
 							awaiting_group=false
 							switch_colour=true
 							user_colourful_value=$group
-							UpdateColourful
+							WriteColourful
 							;;
 						*)
 							args_remaining+=("$action")
@@ -2048,7 +2040,7 @@ ParseManagementArgs()
 							run_package_actions=false
 							switch_branch=true
 							user_branch_value=$group
-							UpdateBranch
+							WriteBranch
 							;;
 						*)
 							args_remaining+=("$action")
@@ -2079,7 +2071,7 @@ ParseManagementArgs()
 							awaiting_group=false
 							switch_report_footer=true
 							user_report_footer_value=$group
-							UpdateReportFooter
+							WriteReportFooter
 							;;
 						*)
 							args_remaining+=("$action")
@@ -2092,7 +2084,7 @@ ParseManagementArgs()
 							awaiting_group=false
 							switch_terse=true
 							user_terse_value=$group
-							UpdateTerse
+							WriteTerse
 							;;
 						*)
 							args_remaining+=("$action")
@@ -3409,20 +3401,20 @@ _UpdateEntwarePackageList_()
 	# If Entware package list was recently updated, don't update again.
 
 	if ! IsThisFileRecent "$r_external_packages_archive_pathfile" "$r_file_change_threshold_minutes" || [[ ! -f $r_external_packages_archive_pathfile || $useropt_check = true ]]; then
-		DebugAsProc "updating $(ShowAsPackageName Entware) package list"
+		DebugAsProc "updating $(FormatPackageName Entware) package list"
 
 		RunAndLog "$r_opkg_cmd update" "$r_logs_path/Entware.$r_update_log_file" log:failure-only
 		z=$?
 
 		if [[ $z -eq 0 ]]; then
-			DebugAsDone "updated $(ShowAsPackageName Entware) package list"
+			DebugAsDone "updated $(FormatPackageName Entware) package list"
 			CloseIpkArchive
 		else
-			DebugAsWarn "Unable to update $(ShowAsPackageName Entware) package list $(ShowAsExitcode "$z")"
+			DebugAsWarn "Unable to update $(FormatPackageName Entware) package list $(FormatExitcode "$z")"
 			# no-big-deal
 		fi
 	else
-		DebugInfo "$(ShowAsPackageName Entware) package list was updated less-than $r_file_change_threshold_minutes minutes ago: skipping update"
+		DebugInfo "$(FormatPackageName Entware) package list was updated less-than $r_file_change_threshold_minutes minutes ago: skipping update"
 	fi
 
 	[[ -f $r_external_packages_archive_pathfile && ! -f $r_external_packages_pathfile ]] && OpenIpkArchive
@@ -3458,10 +3450,10 @@ SaveIpkAndPipList()
 	#	$r_prev_pip_list_pathfile
 
 	$r_pip_cmd freeze | cut -d'=' -f1 > "$r_prev_pip_list_pathfile"
-	[[ -e $r_prev_pip_list_pathfile ]] && DebugAsDone "saved current PIP list to $(ShowAsFileName "$r_prev_pip_list_pathfile")"
+	[[ -e $r_prev_pip_list_pathfile ]] && DebugAsDone "saved current PIP list to $(FormatFileName "$r_prev_pip_list_pathfile")"
 
 	$r_opkg_cmd list-installed > "$r_prev_ipk_list_pathfile"
-	[[ -e $r_prev_ipk_list_pathfile ]] && DebugAsDone "saved current $(ShowAsPackageName Entware) IPK list to $(ShowAsFileName "$r_prev_ipk_list_pathfile")"
+	[[ -e $r_prev_ipk_list_pathfile ]] && DebugAsDone "saved current $(FormatPackageName Entware) IPK list to $(FormatFileName "$r_prev_ipk_list_pathfile")"
 
 	} 2> /dev/null
 
@@ -3476,7 +3468,7 @@ LoadIpkList()
 	local version=''
 
 	if [[ -e $r_prev_ipk_list_pathfile ]]; then
-		DebugInfo "IPKs are being loaded from $(ShowAsFileName "$r_prev_ipk_list_pathfile")"
+		DebugInfo "IPKs are being loaded from $(FormatFileName "$r_prev_ipk_list_pathfile")"
 
 		while read -r name separator version; do
 			name=$(Lowercase "$name")
@@ -3497,7 +3489,7 @@ LoadPipList()
 	local re=''
 
 	if [[ -e $r_prev_pip_list_pathfile ]]; then
-		DebugInfo "PIPs are being loaded from $(ShowAsFileName "$r_prev_pip_list_pathfile")"
+		DebugInfo "PIPs are being loaded from $(FormatFileName "$r_prev_pip_list_pathfile")"
 
 		while read -r name; do
 			name=$(Lowercase "$name")
@@ -3813,7 +3805,7 @@ IPKs:install()
 			DebugAsDone "installed $desc"
 			SaveActionResultToLog IPK auxiliary install "$total_count" ok
 			HideKeystrokes
-			UpdateCapabilities
+			SetCapabilities
 
 			rm -f "$r_prev_ipk_list_pathfile.installing" 2> /dev/null
 		else
@@ -4112,7 +4104,7 @@ _ExecOneActionWithManyForks_()
 		(	# Keep updated $pidfile in a subshell, so the one for this function doesn't change.
 			CreatePidFile
 			$a &
-			UpdatePidFile "$!"
+			WritePidFile "$!"
 		)
 
 		DebugAsDone "forked $a() instance for '$qpkg_name'"
@@ -4148,7 +4140,7 @@ _DirSizeMonitor_()
 	#   $r_inhibit_display_pathfile
 
 	# Outputs: (local)
-	#   stdout = formatted as: "percentage downloaded (downloaded bytes/total expected bytes)".
+	#   stdout = formatted as: "downloaded% (downloaded bytes/total expected bytes)".
 
 	[[ -n ${1:?${FUNCNAME[0]}'()': undefined path} ]] || exit
 	[[ -d $1 && ${2:-0} -gt 0 ]] || exit
@@ -4178,7 +4170,7 @@ _DirSizeMonitor_()
 		[[ $last_active_epoch -ne 0 ]] && stalled_seconds=$(CalcAmountDiff "$(ConvertNowToSeconds)" "$last_active_epoch")
 
 		perc_msg=$((200*(current_bytes)/(total_bytes)%2+100*(current_bytes)/(total_bytes)))%
-		[[ $current_bytes -lt $total_bytes && $perc_msg = '100%' ]] && perc_msg=99%	# Ensure we don't hit 100% until the last byte is downloaded.
+		[[ $current_bytes -lt $total_bytes && $perc_msg = '100%' ]] && perc_msg=99%		# Ensure we don't hit 100% until the last byte is downloaded.
 		progress_msg="$perc_msg ($(TextBrightWhite "$(FormatAsIsoBytes "$current_bytes")")/$(TextBrightWhite "$(FormatAsIsoBytes "$total_bytes")"))"
 
 		if [[ $stalled_seconds -ge $stalled_seconds_threshold ]]; then
@@ -4280,7 +4272,7 @@ Reset()
 
 	}
 
-UpdateColourful()
+WriteColourful()
 	{
 
 	# Inputs: (local)
@@ -4324,7 +4316,7 @@ UpdateColourful()
 
 	}
 
-UpdateBranch()
+WriteBranch()
 	{
 
 	# Inputs: (local)
@@ -4370,7 +4362,7 @@ UpdateBranch()
 
 	}
 
-UpdateReportFooter()
+WriteReportFooter()
 	{
 
 	# Inputs: (local)
@@ -4414,7 +4406,7 @@ UpdateReportFooter()
 
 	}
 
-UpdateTerse()
+WriteTerse()
 	{
 
 	# Inputs: (local)
@@ -4595,7 +4587,7 @@ IsSysFileExist()
 	local a=${1%% *}		# Extract first word-group.
 
 	if ! [[ -f $a || -L $a ]]; then
-		ShowAsAbort "a required NAS system file $(ShowAsFileName "$a") is missing"
+		ShowAsAbort "a required NAS system file $(FormatFileName "$a") is missing"
 
 		return 1
 	fi
@@ -4770,9 +4762,9 @@ GeneratePacksReportTitleLine()
 	if IsOsCanAutowidthTableColumns; then
 		printf 'QPKG name:|Appl. version:|Description:'
 	else
-		GenerateReportLineItem 'QPKG name:' "$r_report_qpkg_name_column_width"
-		GenerateReportLineItem 'Appl. version:' "$r_report_qpkg_appl_version_column_width"
-		GenerateReportLineItem 'Description:' "$r_report_qpkg_description_column_width"
+		FormatReportFieldWidth 'QPKG name:' "$r_report_qpkg_name_column_width"
+		FormatReportFieldWidth 'Appl. version:' "$r_report_qpkg_appl_version_column_width"
+		FormatReportFieldWidth 'Description:' "$r_report_qpkg_description_column_width"
 	fi
 
 	printf '\n'
@@ -4790,18 +4782,26 @@ _GeneratePacksReportDataLine_()
 	# Inputs: (global)
 	# 	$qpkg_name
 
-	local app_ver=''
-	local app_ver_msg=$r_chars_blank
-# 	local author=$(GetQpkgDbAuthor)
-# 	local author_msg=$r_chars_blank
-	local description_msg=$r_chars_blank
+	local -a column_vars=(app_ver description name notes)
 	local mode=''
-	local name=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
-		local description=$(GetQpkgDbDesc "$name")
-		local notes=$(GetQpkgDbNote "$name")
-		[[ $notes = none ]] && notes=''
-	local name_msg=$r_chars_normal
-	local notes_msg=$notes.
+
+	# Init field messages.
+
+	for a in "${column_vars[@]}"; do
+		local ${a}=false
+		local ${a}_msg=''
+	done
+
+	name=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
+	app_ver=$(GetQpkgDbApplVer)
+	description=$(Capitalise "$(GetQpkgDbDesc "$name")")
+	notes=$(GetQpkgDbNote)
+	[[ $notes = none ]] && notes=''
+
+	case $app_ver in
+		dynamic|final|static)
+			/bin/touch "$r_report_flags_path"/app-$app_ver
+	esac
 
 	if IsQpkgMissing; then
 		mode=highlight
@@ -4814,29 +4814,22 @@ _GeneratePacksReportDataLine_()
 		/bin/touch "$r_report_flags_path"/state-installed
 	fi
 
-	app_ver=$(GetQpkgDbApplVer)
-
-	case $app_ver in
-		dynamic|final|static)
-			/bin/touch "$r_report_flags_path"/app-$app_ver
-	esac
-
-	app_ver_msg+=$app_ver
-# 	author_msg+=$author
-	description_msg+=$(Capitalise "$description").
-	name_msg+=$qpkg_name
-
 	case $mode in
 		mute)
-			app_ver_msg=$(TextDarkGrey "$app_ver_msg")
-# 			author_msg=$(TextDarkGrey "$author_msg")
-			description_msg=$(TextDarkGrey "$description_msg")
-			name_msg=$(TextDarkGrey "$name_msg")
+			app_ver_msg=$(FormatReportField "$app_ver" mute)
+			description_msg=$(FormatReportField "$description" normal_mute)
+			name_msg=$(FormatReportField "$name" mute)
 			;;
 		highlight)
-# 			[[ $author = missing ]] && author_msg=$(TextBrightRedBlink "${r_chars_alert}${author}")
-			name_msg=$(TextBrightRed "$name_msg")
+			name_msg=$(FormatReportField "$name" alert)
+			;;
+		*)
+			app_ver_msg=$(FormatReportField "$app_ver")
+			description_msg=$(FormatReportField "$description" normal)
+			name_msg=$(FormatReportField "$name")
 	esac
+
+	notes_msg=$notes
 
 	if IsOsCanAutowidthTableColumns; then
 		printf '%s' "$name_msg|$app_ver_msg|$description_msg"
@@ -4845,9 +4838,9 @@ _GeneratePacksReportDataLine_()
 			printf "\n%s|%s|%$((${#r_chars_blank}))s$(TextBrightOrange "${r_chars_dropend}${r_chars_note}")%s" '' '' '' "$notes_msg"
 		fi
 	else
-		GenerateReportLineItem "$name_msg" "$r_report_qpkg_name_column_width"
-		GenerateReportLineItem "$app_ver_msg" "$r_report_qpkg_appl_version_column_width"
-		GenerateReportLineItem "$description_msg" "$r_report_qpkg_description_column_width"
+		FormatReportFieldWidth "$name_msg" "$r_report_qpkg_name_column_width"
+		FormatReportFieldWidth "$app_ver_msg" "$r_report_qpkg_appl_version_column_width"
+		FormatReportFieldWidth "$description_msg" "$r_report_qpkg_description_column_width"
 
 		if [[ -n $notes ]]; then
 			printf "\n%$((${#r_chars_blank}+r_report_qpkg_name_column_width+r_report_qpkg_appl_version_column_width+(r_report_column_spacing*2)))s$(TextBrightOrange "${r_chars_dropend}${r_chars_note}")%s" '' "$notes_msg"
@@ -4876,12 +4869,12 @@ GenerateStatusReportTitleLine()
 	if IsOsCanAutowidthTableColumns; then
 		printf '%s' "QPKG name:|Status:|Action $(Parenthesise result):|$a:|Appl. version:|Location:"
 	else
-		GenerateReportLineItem 'QPKG name:' "$r_report_qpkg_name_column_width"
-		GenerateReportLineItem 'Status:' "$r_report_qpkg_status_column_width"
-		GenerateReportLineItem "Action $(Parenthesise result):" "$r_report_qpkg_action_column_width"
-		GenerateReportLineItem "$a:" "$r_report_qpkg_version_column_width"
-		GenerateReportLineItem 'Appl. version:' "$r_report_qpkg_appl_version_column_width"
-		GenerateReportLineItem 'Location:' "$r_report_qpkg_path_column_width"
+		FormatReportFieldWidth 'QPKG name:' "$r_report_qpkg_name_column_width"
+		FormatReportFieldWidth 'Status:' "$r_report_qpkg_status_column_width"
+		FormatReportFieldWidth "Action $(Parenthesise result):" "$r_report_qpkg_action_column_width"
+		FormatReportFieldWidth "$a:" "$r_report_qpkg_version_column_width"
+		FormatReportFieldWidth 'Appl. version:' "$r_report_qpkg_appl_version_column_width"
+		FormatReportFieldWidth 'Location:' "$r_report_qpkg_path_column_width"
 	fi
 
 	printf '\n'
@@ -4898,7 +4891,8 @@ _GenerateStatusReportDataLine_()
 	#	$r_report_flags_path
 
 	local a=''
-	local -a column_vars=(action app_ver name path status ver)
+	local -a column_vars=(action app_ver auxiliary name path status ver)
+		local auxiliary_column=status		# Auxiliary messages are shown in this column name.
 	local mode=''
 	local -i n=0
 	local result=''
@@ -4992,12 +4986,12 @@ _GenerateStatusReportDataLine_()
 					name)
 						: # Do nothing, this is set later.
 						;;
-					status)
-						status_msg=$(GenerateReportField 'incompatible author' attention)
+					auxiliary)
+						auxiliary_msg=$(FormatReportField 'incompatible author' attention_highlight)
 						req_attention=true
 						;;
 					*)
-						local ${a}_msg="$(GenerateReportField "${!a}" highlight)"
+						local ${a}_msg="$(FormatReportField "${!a}" highlight)"
 				esac
 			done
 			;;
@@ -5005,16 +4999,17 @@ _GenerateStatusReportDataLine_()
 			for a in "${column_vars[@]}"; do
 				case $a in
 					action)
-						local ${a}_msg="$(GenerateReportField "${!a}")"
+						local ${a}_msg="$(FormatReportField "${!a}")"
 						;;
 					name)
 						: # Do nothing, this is set later.
 						;;
-					status)
-						status_msg=$(GenerateReportField missing alert)
+					auxiliary)
+						auxiliary_msg=$(FormatReportField missing alert)
+						req_alert=true
 						;;
 					*)
-						local ${a}_msg="$(GenerateReportField "${!a}" oops)"
+						local ${a}_msg="$(FormatReportField "${!a}" oops)"
 						req_oops=true
 				esac
 			done
@@ -5024,35 +5019,32 @@ _GenerateStatusReportDataLine_()
 			/bin/touch "$r_report_flags_path"/na
 
 			if ! IsQpkgDbArchOK; then
-				status='incompatible architecture'
+				auxiliary_msg=$(FormatReportField 'incompatible architecture' alert_mute)
 			elif ! IsQpkgDbMinOSVerOk || ! IsQpkgDbMaxOSVerOk; then
-				status='incompatible '$(GetOsName)
+				auxiliary_msg=$(FormatReportField "incompatible $(GetOsName)" alert_mute)
 			elif ! IsQpkgDbMinRAMOk; then
-				status='insufficient RAM installed'
+				auxiliary_msg=$(FormatReportField 'insufficient RAM installed' alert_mute)
 			else
-				status='not installed'
+				status_msg=$(FormatReportField 'not installed' normal_mute)
 			fi
 
 			ver=$(GetQpkgDbVer)
 
 			for a in "${column_vars[@]}"; do
 				case $a in
-					name)
-						: # Do nothing, this is set later.
-						;;
-					status)
-						status_msg=$(GenerateReportField "$status" mute_normal)
+					name|auxiliary|status)
+						: # Do nothing.
 						;;
 					*)
-						local ${a}_msg="$(GenerateReportField "${!a}" mute)"
+						local ${a}_msg="$(FormatReportField "${!a}" mute)"
 				esac
 			done
 			;;
 		*)
 			for a in "${column_vars[@]}"; do
 				case $a in
-					name)
-						: # Do nothing, this is set later.
+					name|auxiliary)
+						: # Do nothing.
 						;;
 					status)
 						if QPKGs-ISenabled.Exist "$qpkg_name"; then
@@ -5081,10 +5073,10 @@ _GenerateStatusReportDataLine_()
 							status_msg+=' '$(TextBrightOrange upgradable)
 						fi
 
-						status_msg=$(GenerateReportField "$(AddSeparators "$status_msg")" normal)
+						status_msg=$(FormatReportField "$(AddSeparators "$status_msg")" normal)
 						;;
 					*)
-						local ${a}_msg="$(GenerateReportField "${!a}")"
+						local ${a}_msg="$(FormatReportField "${!a}")"
 				esac
 			done
 	esac
@@ -5094,30 +5086,32 @@ _GenerateStatusReportDataLine_()
 		/bin/touch "$r_report_flags_path"/state-upgradable
 	fi
 
+	[[ -n $auxiliary_msg ]] && eval "${auxiliary_column}_msg=\"$auxiliary_msg\""
+
 	if [[ $req_alert = true ]]; then
+		name_msg=$(FormatReportField "$name" alert)
 		/bin/touch "$r_report_flags_path"/req-alert
-		name_msg=$(GenerateReportField "$name" alert)
 	elif [[ $req_attention = true ]]; then
+		name_msg=$(FormatReportField "$name" attention_highlight)
 		/bin/touch "$r_report_flags_path"/req-attention
-		name_msg=$(GenerateReportField "$name" attention)
 	elif [[ $req_oops = true ]]; then
+		name_msg=$(FormatReportField "$name" oops)
 		/bin/touch "$r_report_flags_path"/req-attention
-		name_msg=$(GenerateReportField "$name" oops)
 	elif [[ $mode = mute ]]; then
-		name_msg=$(GenerateReportField "$name" mute)
+		name_msg=$(FormatReportField "$name" mute)
 	else
-		name_msg=$(GenerateReportField "$name")
+		name_msg=$(FormatReportField "$name")
 	fi
 
 	if IsOsCanAutowidthTableColumns; then
 		printf '%s' "$name_msg|$status_msg|$action_msg|$ver_msg|$app_ver_msg|$path_msg"
 	else
-		GenerateReportLineItem "$name_msg" "$r_report_qpkg_name_column_width"
-		GenerateReportLineItem "$status_msg" "$r_report_qpkg_status_column_width"
-		GenerateReportLineItem "$action_msg" "$r_report_qpkg_action_column_width"
-		GenerateReportLineItem "$ver_msg" "$r_report_qpkg_version_column_width"
-		GenerateReportLineItem "$app_ver_msg" "$r_report_qpkg_appl_version_column_width"
-		GenerateReportLineItem "$path_msg" "$r_report_qpkg_path_column_width"
+		FormatReportFieldWidth "$name_msg" "$r_report_qpkg_name_column_width"
+		FormatReportFieldWidth "$status_msg" "$r_report_qpkg_status_column_width"
+		FormatReportFieldWidth "$action_msg" "$r_report_qpkg_action_column_width"
+		FormatReportFieldWidth "$ver_msg" "$r_report_qpkg_version_column_width"
+		FormatReportFieldWidth "$app_ver_msg" "$r_report_qpkg_appl_version_column_width"
+		FormatReportFieldWidth "$path_msg" "$r_report_qpkg_path_column_width"
 	fi
 
 	printf '\n'
@@ -5135,9 +5129,9 @@ GenerateReposReportTitleLine()
 	if IsOsCanAutowidthTableColumns; then
 		printf 'QPKG name:|Repository:|Install date:'
 	else
-		GenerateReportLineItem 'QPKG name:' "$r_report_qpkg_name_column_width"
-		GenerateReportLineItem 'Repository:' "$r_report_qpkg_repo_column_width"
-		GenerateReportLineItem 'Install date:' "$r_report_qpkg_install_date_column_width"
+		FormatReportFieldWidth 'QPKG name:' "$r_report_qpkg_name_column_width"
+		FormatReportFieldWidth 'Repository:' "$r_report_qpkg_repo_column_width"
+		FormatReportFieldWidth 'Install date:' "$r_report_qpkg_install_date_column_width"
 	fi
 
 	printf '\n'
@@ -5160,7 +5154,8 @@ _GenerateReposReportDataLine_()
 	# 	stdout = single report line with data fields.
 
 	local a=''
-	local -a column_vars=(assigned_repo install_date name)
+	local -a column_vars=(assigned_repo auxiliary install_date name)
+		local auxiliary_column=assigned_repo		# Auxiliary messages are shown in this column name.
 	local mode=''
 	local req_alert=false
 	local req_attention=false
@@ -5194,72 +5189,62 @@ _GenerateReposReportDataLine_()
 
 	case $mode in
 		highlight)
-			case $assigned_repo in
-				sherpa)
-					assigned_repo_msg=$(GenerateReportField "$assigned_repo" highlight_normal)
-					;;
-				unassigned)
-					assigned_repo_msg=$(GenerateReportField "$assigned_repo" highlight)
-					;;
-				*)
-					assigned_repo_msg=$(GenerateReportField "$assigned_repo")
-					/bin/touch "$r_report_flags_path"/repo-other
-			esac
-
-			install_date_msg=$(GenerateReportField missing alert)
+			auxiliary_msg=$(FormatReportField missing alert)
+			install_date_msg=$(FormatReportField "$(GetQpkgInstalledDate)" oops)
 			req_alert=true
 			;;
 		mute)
 			/bin/touch "$r_report_flags_path"/na
 
 			if ! IsQpkgDbArchOK; then
-				assigned_repo='incompatible architecture'
+				auxiliary_msg=$(FormatReportField 'incompatible architecture' alert_mute)
 			elif ! IsQpkgDbMinOSVerOk; then
-				assigned_repo='incompatible '$(GetOsName)
+				auxiliary_msg=$(FormatReportField "incompatible $(GetOsName)" alert_mute)
 			elif ! IsQpkgDbMinRAMOk; then
-				assigned_repo='insufficient RAM installed'
+				auxiliary_msg=$(FormatReportField 'insufficient RAM installed' alert_mute)
 			else
-				assigned_repo='not installed'
+				auxiliary_msg=$(FormatReportField 'not installed' normal_mute)
 			fi
 
-			assigned_repo_msg=$(GenerateReportField "$assigned_repo" mute_normal)
-			install_date_msg=$(GenerateReportField N/A mute)
+			install_date_msg=$(FormatReportField N/A mute)
 			;;
 		*)
 			case $assigned_repo in
 				sherpa)
-					assigned_repo_msg=$(GenerateReportField "$assigned_repo" highlight_normal)
+					assigned_repo_msg=$(FormatReportField "$assigned_repo" normal_ok)
 					;;
 				undefined)
 					assigned_repo_msg=N/A
 					/bin/touch "$r_report_flags_path"/na
 					;;
 				*)
-					assigned_repo_msg=$(GenerateReportField "$assigned_repo" attention)
+					assigned_repo_msg=$(FormatReportField "$assigned_repo" attention_highlight)
 					/bin/touch "$r_report_flags_path"/repo-other
 			esac
 
-			install_date_msg=$(GenerateReportField "$(GetQpkgInstalledDate)")
+			install_date_msg=$(FormatReportField "$(GetQpkgInstalledDate)")
 	esac
 
+	[[ -n $auxiliary_msg ]] && eval "${auxiliary_column}_msg=\"$auxiliary_msg\""
+
 	if [[ $req_alert = true ]]; then
+		name_msg=$(FormatReportField "$name" alert)
 		/bin/touch "$r_report_flags_path"/req-alert
-		name_msg=$(GenerateReportField "$name" alert)
 	elif [[ $req_attention = true ]]; then
+		name_msg=$(FormatReportField "$name" attention_highlight)
 		/bin/touch "$r_report_flags_path"/req-attention
-		name_msg=$(GenerateReportField "$name" attention)
 	elif [[ $mode = mute ]]; then
-		name_msg=$(GenerateReportField "$name" mute)
+		name_msg=$(FormatReportField "$name" mute)
 	else
-		name_msg=$(GenerateReportField "$name")
+		name_msg=$(FormatReportField "$name")
 	fi
 
 	if IsOsCanAutowidthTableColumns; then
 		printf '%s' "$name_msg|$assigned_repo_msg|$install_date_msg"
 	else
-		GenerateReportLineItem "$name_msg" "$r_report_qpkg_name_column_width"
-		GenerateReportLineItem "$assigned_repo_msg" "$r_report_qpkg_repo_column_width"
-		GenerateReportLineItem "$install_date_msg" "$r_report_qpkg_install_date_column_width"
+		FormatReportFieldWidth "$name_msg" "$r_report_qpkg_name_column_width"
+		FormatReportFieldWidth "$assigned_repo_msg" "$r_report_qpkg_repo_column_width"
+		FormatReportFieldWidth "$install_date_msg" "$r_report_qpkg_install_date_column_width"
 	fi
 
 	printf '\n'
@@ -5277,9 +5262,9 @@ GenerateAbsReportTitleLine()
 	if IsOsCanAutowidthTableColumns; then
 		printf 'QPKG name:|Installed?|Acceptable QPKG name abbreviations and aliases:'
 	else
-		GenerateReportLineItem 'QPKG name:' "$r_report_qpkg_name_column_width"
-		GenerateReportLineItem 'Installed?' "$r_report_qpkg_is_installed_column_width"
-		GenerateReportLineItem 'Acceptable QPKG name abbreviations and aliases:' "$r_report_qpkg_abbreviations_column_width"
+		FormatReportFieldWidth 'QPKG name:' "$r_report_qpkg_name_column_width"
+		FormatReportFieldWidth 'Installed?' "$r_report_qpkg_is_installed_column_width"
+		FormatReportFieldWidth 'Acceptable QPKG name abbreviations and aliases:' "$r_report_qpkg_abbreviations_column_width"
 	fi
 
 	printf '\n'
@@ -5294,13 +5279,23 @@ _GenerateAbsReportDataLine_()
 	# Inputs: (global)
 	# 	$qpkg_name
 
-	local abs_msg=''
-	local installed_msg=$r_chars_blank
+	local -a column_vars=(abs auxiliary installed name)
+		local auxiliary_column=installed		# Auxiliary messages are shown in this column name.
+
+	for a in "${column_vars[@]}"; do
+		local ${a}=false
+		local ${a}_msg=''
+	done
+
+	name=$qpkg_name
 	local mode=''
-	local name_msg=$r_chars_blank
+	local req_alert=false
+	local req_attention=false
+	local req_notice=false
 
 	if IsQpkgMissing; then
 		mode=highlight
+		req_alert=true
 		/bin/touch "$r_report_flags_path"/status-missing
 	elif IsNtQpkgInstalled; then
 		mode=mute
@@ -5310,39 +5305,58 @@ _GenerateAbsReportDataLine_()
 		/bin/touch "$r_report_flags_path"/state-installed
 	fi
 
+	abs=$(AddSeparators "$(GetQpkgDbAbbrvs "$qpkg_name")")
+
 	case $mode in
 		mute)
 			if ! IsQpkgDbArchOK "$qpkg_name"; then
-				abs_msg=$r_chars_alert'incompatible architecture'
+				auxiliary='incompatible architecture'
 			elif ! IsQpkgDbMinOSVerOk "$qpkg_name"; then
-				abs_msg=$r_chars_alert"incompatible $(GetOsName) version"
+				auxiliary="incompatible $(GetOsName) version"
 			elif ! IsQpkgDbMinRAMOk "$qpkg_name"; then
-				abs_msg=$r_chars_alert'insufficient RAM installed'
-			else
-				abs_msg=${r_chars_normal}$(AddSeparators "$(GetQpkgDbAbbrvs "$qpkg_name")")
+				auxiliary='insufficient RAM installed'
 			fi
 
-			abs_msg=$(TextDarkGrey "$abs_msg")
-			installed_msg+=$(TextDarkGrey false)
-			name_msg+=$(TextDarkGrey "$qpkg_name")
+			if [[ $auxiliary != false ]]; then
+				auxiliary_msg=$(FormatReportField "$auxiliary" alert_mute)
+			else
+				abs_msg=$(FormatReportField "$abs" normal_mute)
+			fi
+
+			installed_msg=$(FormatReportField false mute)
 			;;
 		highlight)
-			abs_msg=$(TextBrightRed "${r_chars_alert}$(AddSeparators "$(GetQpkgDbAbbrvs)")")
-			installed_msg=$(TextBrightRedBlink "${r_chars_alert}missing")
-			name_msg+=$(TextBrightRed "$qpkg_name")
+			abs_msg=$(FormatReportField "$abs" normal_notice)
+			auxiliary_msg=$(FormatReportField missing alert)
 			;;
 		*)
-			abs_msg=${r_chars_normal}$(AddSeparators "$(GetQpkgDbAbbrvs)")
-			installed_msg+=true
-			name_msg+=$qpkg_name
+			abs_msg=$(FormatReportField "$abs" normal)
+			installed_msg=$(FormatReportField true)
 	esac
+
+	[[ -n $auxiliary_msg ]] && eval "${auxiliary_column}_msg=\"$auxiliary_msg\""
+
+	if [[ $req_alert = true ]]; then
+		name_msg=$(FormatReportField "$name" alert)
+		/bin/touch "$r_report_flags_path"/req-alert
+	elif [[ $req_attention = true ]]; then
+		name_msg=$(FormatReportField "$name" attention_highlight)
+		/bin/touch "$r_report_flags_path"/state-notinstallable
+	elif [[ $req_notice = true ]]; then
+		name_msg=$(FormatReportField "$name" notice)
+		/bin/touch "$r_report_flags_path"/req-notice
+	elif [[ $mode = mute ]]; then
+		name_msg=$(FormatReportField "$name" mute)
+	else
+		name_msg=$(FormatReportField "$name")
+	fi
 
 	if IsOsCanAutowidthTableColumns; then
 		printf '%s' "$name_msg|$installed_msg|$abs_msg"
 	else
-		GenerateReportLineItem "$name_msg" "$r_report_qpkg_name_column_width"
-		GenerateReportLineItem "$installed_msg" "$r_report_qpkg_is_installed_column_width"
-		GenerateReportLineItem "$abs_msg" "$r_report_qpkg_abbreviations_column_width"
+		FormatReportFieldWidth "$name_msg" "$r_report_qpkg_name_column_width"
+		FormatReportFieldWidth "$installed_msg" "$r_report_qpkg_is_installed_column_width"
+		FormatReportFieldWidth "$abs_msg" "$r_report_qpkg_abbreviations_column_width"
 	fi
 
 	printf '\n'
@@ -5368,17 +5382,17 @@ GenerateDepsReportTitleLine()
 	if IsOsCanAutowidthTableColumns; then
 		printf 'QPKG name:|Dependencies:|Optionals:|Installed?|Enabled?|Managed?|Min. RAM:|Min. OS:|Max. OS:|Supported arch?|Installed QPKG author:'
 	else
-		GenerateReportLineItem 'QPKG name:' "$r_report_qpkg_name_column_width"
-		GenerateReportLineItem 'Dependencies:' "$r_report_qpkg_dependencies_column_width"
-		GenerateReportLineItem 'Optionals:' "$r_report_qpkg_opt_dependencies_column_width"
-		GenerateReportLineItem 'Installed?' "$r_report_qpkg_is_installed_column_width"
-		GenerateReportLineItem 'Enabled?' "$r_report_qpkg_is_enabled_column_width"
-		GenerateReportLineItem 'Managed?' "$r_report_qpkg_is_managed_column_width"
-		GenerateReportLineItem 'Min. RAM:' "$r_report_qpkg_min_ram_column_width"
-		GenerateReportLineItem 'Min. OS:' "$r_report_qpkg_min_os_version_column_width"
-		GenerateReportLineItem 'Max. OS:' "$r_report_qpkg_max_os_version_column_width"
-		GenerateReportLineItem 'Supported arch?' "$r_report_qpkg_arch_column_width"
-		GenerateReportLineItem 'Installed QPKG author:' "$r_report_lazy_column_width"
+		FormatReportFieldWidth 'QPKG name:' "$r_report_qpkg_name_column_width"
+		FormatReportFieldWidth 'Dependencies:' "$r_report_qpkg_dependencies_column_width"
+		FormatReportFieldWidth 'Optionals:' "$r_report_qpkg_opt_dependencies_column_width"
+		FormatReportFieldWidth 'Installed?' "$r_report_qpkg_is_installed_column_width"
+		FormatReportFieldWidth 'Enabled?' "$r_report_qpkg_is_enabled_column_width"
+		FormatReportFieldWidth 'Managed?' "$r_report_qpkg_is_managed_column_width"
+		FormatReportFieldWidth 'Min. RAM:' "$r_report_qpkg_min_ram_column_width"
+		FormatReportFieldWidth 'Min. OS:' "$r_report_qpkg_min_os_version_column_width"
+		FormatReportFieldWidth 'Max. OS:' "$r_report_qpkg_max_os_version_column_width"
+		FormatReportFieldWidth 'Supported arch?' "$r_report_qpkg_arch_column_width"
+		FormatReportFieldWidth 'Installed QPKG author:' "$r_report_lazy_column_width"
 	fi
 
 	printf '\n'
@@ -5395,7 +5409,8 @@ _GenerateDepsReportDataLine_()
 	#	$r_report_flags_path
 
 	local a=''
-	local -a column_vars=(author arch deps enabled installed managed max_os min_os min_ram name opt_deps)
+	local -a column_vars=(author arch auxiliary deps enabled installed managed max_os min_os min_ram name opt_deps)
+		local auxiliary_column=deps		# Auxiliary messages are shown in this column name.
 	local dep_name=''
 	local deps_raw=$(GetQpkgDbDependencies "$qpkg_name")
 	local opt_deps_raw=$(GetQpkgDbOptDependencies "$qpkg_name")
@@ -5427,43 +5442,43 @@ _GenerateDepsReportDataLine_()
 
 	if IsQpkgMissing; then
 		mode=missing
+		req_alert=true
 	elif IsQpkgInstalled; then
 		mode=normal
+	elif IsQpkgReallyInstalled && IsNtQpkgAuthorOk; then
+		mode=author
+		req_attention=true
+		/bin/touch "$r_report_flags_path"/status-wrongauthor
 	else
 		mode=mute
-		IsQpkgReallyInstalled && IsNtQpkgAuthorOk && mode=author
+		/bin/touch "$r_report_flags_path"/state-notinstalled
 	fi
 
 	case $mode in
 		author)
-			/bin/touch "$r_report_flags_path"/status-wrongauthor
-			req_attention=true
+			# Assign & highlight field messages.
 
 			for a in "${column_vars[@]}"; do
 				case $a in
 					author)
-						author_msg=$(GenerateReportField "$author" attention)
+						author_msg=$(FormatReportField "$author" attention_highlight)
 						;;
-					deps)
-						deps_msg=$(GenerateReportField 'incompatible author' attention)
+					auxiliary)
+						auxiliary_msg=$(FormatReportField 'incompatible author' attention_highlight)
 						;;
 					name)
 						: # Do nothing, this will be set later.
 						;;
 					*)
-						local ${a}_msg="$(GenerateReportField N/A highlight)"
+						local ${a}_msg="$(FormatReportField N/A highlight)"
 				esac
 			done
 			;;
 		missing)
-			req_alert=true
-
-			# Assign field messages.
-			installed_msg=$(GenerateReportField missing alert)
+			# Assign & highlight field messages.
+			auxiliary_msg=$(FormatReportField missing alert)
 			;;
 		mute)
-			/bin/touch "$r_report_flags_path"/state-notinstalled
-
 			deps=''
 
 			if [[ $deps_raw != none ]]; then
@@ -5491,54 +5506,54 @@ _GenerateDepsReportDataLine_()
 			# Assign & highlight field messages.
 
 			if IsQpkgDbArchOK; then
-				arch_msg=$(GenerateReportField "$arch" mute)
+				arch_msg=$(FormatReportField "$arch" mute)
 			else
-				arch_msg=$(GenerateReportField "$arch" attention)
+				arch_msg=$(FormatReportField "$arch" attention_highlight)
 				req_attention=true
 			fi
 
-			author_msg=$(GenerateReportField N/A mute)
-			deps_msg=$(GenerateReportField "${deps// /, }" mute)
-			opt_deps_msg=$(GenerateReportField "${opt_deps// /, }" mute)
-			enabled_msg=$(GenerateReportField N/A mute)
-			installed_msg=$(GenerateReportField "$installed" mute)
-			managed_msg=$(GenerateReportField N/A mute)
+			author_msg=$(FormatReportField N/A mute)
+			deps_msg=$(FormatReportField "${deps// /, }" mute)
+			opt_deps_msg=$(FormatReportField "${opt_deps// /, }" mute)
+			enabled_msg=$(FormatReportField N/A mute)
+			installed_msg=$(FormatReportField "$installed" mute)
+			managed_msg=$(FormatReportField N/A mute)
 
 			if IsQpkgDbMaxOSVerOk "$qpkg_name"; then
-				max_os_msg=$(GenerateReportField "$max_os" mute)
+				max_os_msg=$(FormatReportField "$max_os" mute)
 			else
-				max_os_msg=$(GenerateReportField "$max_os" attention)
+				max_os_msg=$(FormatReportField "$max_os" attention_highlight)
 				req_attention=true
 			fi
 
 			if IsQpkgDbMinOSVerOk "$qpkg_name"; then
 				if [[ $min_os != none ]]; then
-					min_os_msg=$(GenerateReportField "$min_os" mute)
+					min_os_msg=$(FormatReportField "$min_os" mute)
 				else
-					min_os_msg=$(GenerateReportField "$min_os" attention)
+					min_os_msg=$(FormatReportField "$min_os" attention_highlight)
 					req_attention=true
 				fi
 			else
-				min_os_msg=$(GenerateReportField "$min_os" attention)
+				min_os_msg=$(FormatReportField "$min_os" attention_highlight)
 				req_attention=true
 			fi
 
 			if IsQpkgDbMinRAMOk "$qpkg_name"; then
-				min_ram_msg=$(GenerateReportField "$min_ram" mute)
+				min_ram_msg=$(FormatReportField "$min_ram" mute)
 			else
-				min_ram_msg=$(GenerateReportField "$min_ram" attention)
+				min_ram_msg=$(FormatReportField "$min_ram" attention_highlight)
 				req_attention=true
 			fi
 			;;
 		*)
 			if IsQpkgDbArchOK; then
-				arch_msg=$(GenerateReportField "$arch" highlight_ok)
+				arch_msg=$(FormatReportField "$arch" ok)
 			else
-				arch_msg=$(GenerateReportField "$arch" alert)
+				arch_msg=$(FormatReportField "$arch" alert)
 				req_alert=true
 			fi
 
-			author_msg=$(GenerateReportField "$author" highlight_ok)
+			author_msg=$(FormatReportField "$author" ok)
 			deps=''
 
 			if [[ $deps_raw != none ]]; then
@@ -5556,7 +5571,7 @@ _GenerateDepsReportDataLine_()
 				deps=$deps_raw
 			fi
 
-			deps_msg=$(GenerateReportField "${deps// /, }")
+			deps_msg=$(FormatReportField "${deps// /, }")
 			opt_deps=''
 
 			if [[ $opt_deps_raw != none ]]; then
@@ -5573,86 +5588,88 @@ _GenerateDepsReportDataLine_()
 				opt_deps=$opt_deps_raw
 			fi
 
-			opt_deps_msg=$(GenerateReportField "${opt_deps// /, }")
+			opt_deps_msg=$(FormatReportField "${opt_deps// /, }")
 
 			if IsQpkgEnabled; then
-				enabled_msg=$(GenerateReportField "$enabled" highlight_ok)
+				enabled_msg=$(FormatReportField "$enabled" ok)
 			else
-				enabled_msg=$(GenerateReportField "$enabled" notice)
+				enabled_msg=$(FormatReportField "$enabled" notice)
 				req_notice=true
 			fi
 
-			installed_msg=$(GenerateReportField true highlight_ok)
+			installed_msg=$(FormatReportField true ok)
 
 			if IsQpkgRepoSelfManaged; then
-				managed_msg=$(GenerateReportField "$managed" highlight_ok)
+				managed_msg=$(FormatReportField "$managed" ok)
 			else
-				managed_msg=$(GenerateReportField "$managed" highlight)
+				managed_msg=$(FormatReportField "$managed" highlight)
 			fi
 
 			if IsQpkgDbMaxOSVerOk; then
 				if [[ $max_os != none ]]; then
-					max_os_msg=$(GenerateReportField "$max_os" highlight_ok)
+					max_os_msg=$(FormatReportField "$max_os" ok)
 				else
-					max_os_msg=$(GenerateReportField "$max_os")
+					max_os_msg=$(FormatReportField "$max_os")
 				fi
 			else
-				max_os_msg=$(GenerateReportField "$max_os" alert)
+				max_os_msg=$(FormatReportField "$max_os" alert)
 				req_alert=true
 			fi
 
 			if IsQpkgDbMinOSVerOk; then
 				if [[ $min_os != none ]]; then
-					min_os_msg=$(GenerateReportField "$min_os" highlight_ok)
+					min_os_msg=$(FormatReportField "$min_os" ok)
 				else
-					min_os_msg=$(GenerateReportField "$min_os")
+					min_os_msg=$(FormatReportField "$min_os")
 				fi
 			else
-				min_os_msg=$(GenerateReportField "$min_os" alert)
+				min_os_msg=$(FormatReportField "$min_os" alert)
 				req_alert=true
 			fi
 
 			if IsQpkgDbMinRAMOk; then
 				if [[ $min_ram != none ]]; then
-					min_ram_msg=$(GenerateReportField "$min_ram" highlight_ok)
+					min_ram_msg=$(FormatReportField "$min_ram" ok)
 				else
-					min_ram_msg=$(GenerateReportField "$min_ram")
+					min_ram_msg=$(FormatReportField "$min_ram")
 				fi
 			else
-				min_ram_msg=$(GenerateReportField "$min_ram" alert)
+				min_ram_msg=$(FormatReportField "$min_ram" alert)
 				req_alert=true
 			fi
 	esac
 
+	[[ -n $auxiliary_msg ]] && eval "${auxiliary_column}_msg=\"$auxiliary_msg\""
+
 	if [[ $req_alert = true ]]; then
+		name_msg=$(FormatReportField "$name" alert)
 		/bin/touch "$r_report_flags_path"/req-alert
-		name_msg=$(GenerateReportField "$name" alert)
 	elif [[ $req_attention = true ]]; then
+		name_msg=$(FormatReportField "$name" attention_highlight)
 		/bin/touch "$r_report_flags_path"/state-notinstallable
-		name_msg=$(GenerateReportField "$name" attention)
 	elif [[ $req_notice = true ]]; then
+		name_msg=$(FormatReportField "$name" notice)
 		/bin/touch "$r_report_flags_path"/req-notice
-		name_msg=$(GenerateReportField "$name" notice)
 	elif [[ $mode = mute ]]; then
-		name_msg=$(GenerateReportField "$name" mute)
+		name_msg=$(FormatReportField "$name" mute)
 	else
-		name_msg=$(GenerateReportField "$name")
+		name_msg=$(FormatReportField "$name")
 	fi
 
 	if IsOsCanAutowidthTableColumns; then
 		printf '%s' "$name_msg|$deps_msg|$opt_deps_msg|$installed_msg|$enabled_msg|$managed_msg|$min_ram_msg|$min_os_msg|$max_os_msg|$arch_msg|$author_msg"
 	else
-		GenerateReportLineItem "$name_msg" "$r_report_qpkg_name_column_width"
-		GenerateReportLineItem "$deps_msg" "$r_report_qpkg_dependencies_column_width"
-		GenerateReportLineItem "$opt_deps_msg" "$r_report_qpkg_opt_dependencies_column_width"
-		GenerateReportLineItem "$installed_msg" "$r_report_qpkg_is_installed_column_width"
-		GenerateReportLineItem "$enabled_msg" "$r_report_qpkg_is_enabled_column_width"
-		GenerateReportLineItem "$managed_msg" "$r_report_qpkg_is_managed_column_width"
-		GenerateReportLineItem "$min_ram_msg" "$r_report_qpkg_min_ram_column_width"
-		GenerateReportLineItem "$min_os_msg" "$r_report_qpkg_min_os_version_column_width"
-		GenerateReportLineItem "$max_os_msg" "$r_report_qpkg_max_os_version_column_width"
-		GenerateReportLineItem "$arch_msg" "$r_report_qpkg_arch_column_width"
-		GenerateReportLineItem "$author_msg" "$r_report_lazy_column_width"
+		FormatReportFieldWidth "$name_msg" "$r_report_qpkg_name_column_width"
+		FormatReportFieldWidth "$deps_msg" "$r_report_qpkg_dependencies_column_width"
+		FormatReportFieldWidth "$opt_deps_msg" "$r_report_qpkg_opt_dependencies_column_width"
+		FormatReportFieldWidth "$installed_msg" "$r_report_qpkg_is_installed_column_width"
+		FormatReportFieldWidth "$enabled_msg" "$r_report_qpkg_is_enabled_column_width"
+		FormatReportFieldWidth "$managed_msg" "$r_report_qpkg_is_managed_column_width"
+		FormatReportFieldWidth "$min_ram_msg" "$r_report_qpkg_min_ram_column_width"
+		FormatReportFieldWidth "$min_os_msg" "$r_report_qpkg_min_os_version_column_width"
+		FormatReportFieldWidth "$max_os_msg" "$r_report_qpkg_max_os_version_column_width"
+		FormatReportFieldWidth "$arch_msg" "$r_report_qpkg_arch_column_width"
+		FormatReportFieldWidth "$author_msg" "$r_report_lazy_column_width"
 	fi
 
 	printf '\n'
@@ -5674,20 +5691,20 @@ GenerateFeaturesReportTitleLine()
 	#	$r_report_qpkg_tier_column_width
 
 	if IsOsCanAutowidthTableColumns; then
-		printf 'QPKG name:|Independent?|Dependent?|Optional?|Enhanced?|CanBack?|CanClean?|StartUpd?|AutoUpd?|LiveTest?|ArchCompat?|UniqueUnpack?'
+		printf 'QPKG name:|Indep?|Opt?|Dep?|Enh?|CanBack?|CanClean?|StartUpd?|AutUpd?|LiveTest?|ArchCompat?|UniqUnpack?'
 	else
-		GenerateReportLineItem 'QPKG name:' "$r_report_qpkg_name_column_width"
-		GenerateReportLineItem 'Independent?' "$r_report_qpkg_tier_column_width"
-		GenerateReportLineItem 'Dependent?' "$r_report_qpkg_tier_column_width"
-		GenerateReportLineItem 'Optional?' "$r_report_qpkg_tier_column_width"
-		GenerateReportLineItem 'Enhanced?' "$r_report_lazy_column_width"
-		GenerateReportLineItem 'CanBack?' "$r_report_qpkg_can_backup_column_width"
-		GenerateReportLineItem 'CanClean?' "$r_report_qpkg_can_clean_column_width"
-		GenerateReportLineItem 'StartUpd?' "$r_report_qpkg_can_start_to_update_column_width"
-		GenerateReportLineItem 'AutoUpd?' "$r_report_qpkg_auto_update_column_width"
-		GenerateReportLineItem 'LiveTest?' "$r_report_qpkg_active_test_builtin_column_width"
-		GenerateReportLineItem 'ArchCompat?' "$r_report_qpkg_is_compatible_column_width"
-		GenerateReportLineItem 'UniqueUnpack?' "$r_report_lazy_column_width"
+		FormatReportFieldWidth 'QPKG name:' "$r_report_qpkg_name_column_width"
+		FormatReportFieldWidth 'Indep?' "$r_report_qpkg_tier_column_width"
+		FormatReportFieldWidth 'Opt?' "$r_report_qpkg_tier_column_width"
+		FormatReportFieldWidth 'Dep?' "$r_report_qpkg_tier_column_width"
+		FormatReportFieldWidth 'Enh?' "$r_report_lazy_column_width"
+		FormatReportFieldWidth 'CanBack?' "$r_report_qpkg_can_backup_column_width"
+		FormatReportFieldWidth 'CanClean?' "$r_report_qpkg_can_clean_column_width"
+		FormatReportFieldWidth 'StartUpd?' "$r_report_qpkg_can_start_to_update_column_width"
+		FormatReportFieldWidth 'AutUpd?' "$r_report_qpkg_auto_update_column_width"
+		FormatReportFieldWidth 'LiveTest?' "$r_report_qpkg_active_test_builtin_column_width"
+		FormatReportFieldWidth 'ArchCompat?' "$r_report_qpkg_is_compatible_column_width"
+		FormatReportFieldWidth 'UniqUnpack?' "$r_report_lazy_column_width"
 	fi
 
 	printf '\n'
@@ -5704,7 +5721,8 @@ _GenerateFeaturesReportDataLine_()
 	#	$r_report_flags_path
 
 	local a=''
-	local -a column_vars=(active_test arch_compatible autoupdate backup clean independent dependent optional name restart_to_update compatible uniqueunpack)
+	local -a column_vars=(active_test arch_compatible autoupdate auxiliary backup clean independent dependent optional name restart_to_update compatible uniqueunpack)
+		local auxiliary_column=independent		# Auxiliary messages are shown in this column name.
 	local mode=''
 	local req_alert=false
 	local req_attention=false
@@ -5718,29 +5736,30 @@ _GenerateFeaturesReportDataLine_()
 
 	if IsQpkgMissing; then
 		mode=missing
+		req_alert=true
 	elif IsQpkgInstalled; then
 		mode=normal
+	elif IsQpkgReallyInstalled && IsNtQpkgAuthorOk; then
+		mode=author
+		req_attention=true
 	else
 		mode=mute
-		IsQpkgReallyInstalled && IsNtQpkgAuthorOk && mode=author
 	fi
 
 	case $mode in
 		author)
 			# Set field values.
-			backup='incompatible author'
-			req_attention=true
+			auxiliary='incompatible author'
 
 			# Assign & highlight field messages.
-			backup_msg=$(GenerateReportField "$backup" attention)
+			auxiliary_msg=$(FormatReportField "$auxiliary" attention_highlight)
 			;;
 		missing)
 			# Set field values.
-			backup=missing
-			req_alert=true
+			auxiliary=missing
 
 			# Assign & highlight field messages.
-			backup_msg=$(GenerateReportField "$backup" alert)
+			auxiliary_msg=$(FormatReportField "$auxiliary" alert)
 			;;
 		mute)
 			# Set field values.
@@ -5765,10 +5784,19 @@ _GenerateFeaturesReportDataLine_()
 			# Assign & highlight field messages.
 
 			for a in "${column_vars[@]}"; do
-				local ${a}_msg="$(GenerateReportField "${!a}" mute)"
+				case $a in
+					auxiliary)
+						: # Do nothing.
+						;;
+					*)
+						local ${a}_msg="$(FormatReportField "${!a}" mute)"
+				esac
 			done
 			;;
 		*)
+			auxiliary=''
+			auxiliary_msg=''
+
 			# Set field values.
 			[[ $(GetQpkgDbActiveTest) = builtin ]] && active_test=true
 			IsQpkgDbArchOK && arch_compatible=true
@@ -5800,43 +5828,51 @@ _GenerateFeaturesReportDataLine_()
 			# Assign & highlight field messages.
 
 			for a in "${column_vars[@]}"; do
-				case ${!a} in
-					true|N/A)
-						local ${a}_msg="$(GenerateReportField "${!a}")"
+				case $a in
+					auxiliary)
+						: # Do nothing.
 						;;
 					*)
-						local ${a}_msg="$(GenerateReportField "${!a}" highlight)"
+						case ${!a} in
+							true|N/A)
+								local ${a}_msg="$(FormatReportField "${!a}")"
+								;;
+							*)
+								local ${a}_msg="$(FormatReportField "${!a}" highlight)"
+						esac
 				esac
 			done
 	esac
 
+  	[[ -n $auxiliary_msg ]] && eval "${auxiliary_column}_msg=\"$auxiliary_msg\""
+
 	if [[ $req_alert = true ]]; then
+		name_msg=$(FormatReportField "$name" alert)
 		/bin/touch "$r_report_flags_path"/req-alert
-		name_msg=$(GenerateReportField "$name" alert)
 	elif [[ $req_attention = true ]]; then
+		name_msg=$(FormatReportField "$name" attention_highlight)
 		/bin/touch "$r_report_flags_path"/req-attention
-		name_msg=$(GenerateReportField "$name" attention)
 	elif [[ $mode = mute ]]; then
-		name_msg=$(GenerateReportField "$name" mute)
+		name_msg=$(FormatReportField "$name" mute)
 	else
-		name_msg=$(GenerateReportField "$name")
+		name_msg=$(FormatReportField "$name")
 	fi
 
 	if IsOsCanAutowidthTableColumns; then
-		printf '%s' "$name_msg|$independent_msg|$dependent_msg|$optional_msg|$compatible_msg|$backup_msg|$clean_msg|$restart_to_update_msg|$autoupdate_msg|$active_test_msg|$arch_compatible_msg|$uniqueunpack_msg"
+		printf '%s' "$name_msg|$independent_msg|$optional_msg|$dependent_msg|$compatible_msg|$backup_msg|$clean_msg|$restart_to_update_msg|$autoupdate_msg|$active_test_msg|$arch_compatible_msg|$uniqueunpack_msg"
 	else
-		GenerateReportLineItem "$name_msg" "$r_report_qpkg_name_column_width"
-		GenerateReportLineItem "$independent_msg" "$r_report_qpkg_tier_column_width"
-		GenerateReportLineItem "$dependent_msg" "$r_report_qpkg_tier_column_width"
-		GenerateReportLineItem "$optional_msg" "$r_report_qpkg_tier_column_width"
-		GenerateReportLineItem "$compatible_msg" "$r_report_lazy_column_width"
-		GenerateReportLineItem "$backup_msg" "$r_report_qpkg_can_backup_column_width"
-		GenerateReportLineItem "$clean_msg" "$r_report_qpkg_can_clean_column_width"
-		GenerateReportLineItem "$restart_to_update_msg" "$r_report_qpkg_can_start_to_update_column_width"
-		GenerateReportLineItem "$autoupdate_msg" "$r_report_qpkg_auto_update_column_width"
-		GenerateReportLineItem "$active_test_msg" "$r_report_qpkg_active_test_builtin_column_width"
-		GenerateReportLineItem "$arch_compatible_msg" "$r_report_qpkg_is_compatible_column_width"
-		GenerateReportLineItem "$uniqueunpack_msg" "$r_report_lazy_column_width"
+		FormatReportFieldWidth "$name_msg" "$r_report_qpkg_name_column_width"
+		FormatReportFieldWidth "$independent_msg" "$r_report_qpkg_tier_column_width"
+		FormatReportFieldWidth "$optional_msg" "$r_report_qpkg_tier_column_width"
+		FormatReportFieldWidth "$dependent_msg" "$r_report_qpkg_tier_column_width"
+		FormatReportFieldWidth "$compatible_msg" "$r_report_lazy_column_width"
+		FormatReportFieldWidth "$backup_msg" "$r_report_qpkg_can_backup_column_width"
+		FormatReportFieldWidth "$clean_msg" "$r_report_qpkg_can_clean_column_width"
+		FormatReportFieldWidth "$restart_to_update_msg" "$r_report_qpkg_can_start_to_update_column_width"
+		FormatReportFieldWidth "$autoupdate_msg" "$r_report_qpkg_auto_update_column_width"
+		FormatReportFieldWidth "$active_test_msg" "$r_report_qpkg_active_test_builtin_column_width"
+		FormatReportFieldWidth "$arch_compatible_msg" "$r_report_qpkg_is_compatible_column_width"
+		FormatReportFieldWidth "$uniqueunpack_msg" "$r_report_lazy_column_width"
 	fi
 
 	printf '\n'
@@ -5854,9 +5890,9 @@ GenerateBacksReportTitleLine()
 	if IsOsCanAutowidthTableColumns; then
 		printf 'Backup file:|Size in bytes:|Backup date:'
 	else
-		GenerateReportLineItem 'Backup file:' "$r_report_file_name_column_width"
-		GenerateReportLineItem 'Size in bytes:' "$r_report_file_bytes_column_width"
-		GenerateReportLineItem 'Backup date:' "$r_report_file_change_date_column_width"
+		FormatReportFieldWidth 'Backup file:' "$r_report_file_name_column_width"
+		FormatReportFieldWidth 'Size in bytes:' "$r_report_file_bytes_column_width"
+		FormatReportFieldWidth 'Backup date:' "$r_report_file_change_date_column_width"
 	fi
 
 	printf '\n'
@@ -5875,57 +5911,56 @@ _GenerateBacksReportItemLine_()
 	#	$4 = age threshold to highlight (optional) '1 week ago' (default)		e.g. '2 days ago', '2 weeks ago', etc ...
 
 	# Inputs: (global)
-	#	$r_chars_alert
-	#	$r_chars_blank
-	#	$r_chars_normal
 	#	$r_report_file_bytes_column_width
 	#	$r_report_file_change_date_column_width
 	#	$r_report_file_name_column_width
 	#	$r_report_flags_path
 
-	local epoch_time=${1:-0}
-	local epoch_time_msg=$r_chars_normal
-	local file_bytes=${3:-0}
-	local file_bytes_msg=$r_chars_blank
-	local file_name=${2:-}
-	local file_name_msg=$r_chars_blank
+	local -a column_vars=(epoch_time file_bytes file_name)
 	local mode=''
+
+	for a in "${column_vars[@]}"; do
+		local ${a}=false
+		local ${a}_msg=''
+	done
+
+	epoch_time=${1:-0}
+	file_name=${2:-}
+	file_bytes=$(FormatAsThous "${3:-0}")
 
 	if [[ ${epoch_time%.*} -lt $(/bin/date --date="${4:-'1 week ago'}" +%s) ]]; then
 		mode=highlight
+		/bin/touch "$r_report_flags_path"/backup-file-old
 	else
 		mode=normal
+		/bin/touch "$r_report_flags_path"/backup-file-ok
 	fi
-
-	file_bytes=$(FormatAsThous "$file_bytes")
 
 	case $mode in
 		normal)
-			epoch_time_msg+=$(ConvertSecondsToFullDate "$epoch_time")
-			file_bytes_msg+=$file_bytes
-			file_name_msg+=$file_name
-			/bin/touch "$r_report_flags_path"/backup-file-ok
+			epoch_time_msg=$(FormatReportField "$(ConvertSecondsToFullDate "$epoch_time")")
+			file_bytes_msg=$(FormatReportField "$file_bytes")
+			file_name_msg=$(FormatReportField "$file_name" normal)
 			;;
 		highlight)
-			epoch_time_msg=$(TextBrightRed "${r_chars_alert}$(ConvertSecondsToFullDate "$epoch_time")")
-			file_bytes_msg+=$(TextBrightRed "$file_bytes")
-			file_name_msg+=$(TextBrightRed "$file_name")
-			/bin/touch "$r_report_flags_path"/backup-file-old
+			epoch_time_msg=$(FormatReportField "$(ConvertSecondsToFullDate "$epoch_time")" notice)
+			file_bytes_msg=$(FormatReportField "$file_bytes" oops)
+			file_name_msg=$(FormatReportField "$file_name" notice)
 	esac
 
 	if IsOsCanAutowidthTableColumns; then
 		printf '%s' "$file_name_msg|$file_bytes_msg|$epoch_time_msg"
 	else
-		GenerateReportLineItem "$file_name_msg" "$r_report_file_name_column_width"
-		GenerateReportLineItem "$file_bytes_msg" "$r_report_file_bytes_column_width"
-		GenerateReportLineItem "$epoch_time_msg" "$r_report_file_change_date_column_width"
+		FormatReportFieldWidth "$file_name_msg" "$r_report_file_name_column_width"
+		FormatReportFieldWidth "$file_bytes_msg" "$r_report_file_bytes_column_width"
+		FormatReportFieldWidth "$epoch_time_msg" "$r_report_file_change_date_column_width"
 	fi
 
 	printf '\n'
 
 	}
 
-GenerateReportField()
+FormatReportField()
 	{
 
 	# Inputs: (local)
@@ -5946,41 +5981,49 @@ GenerateReportField()
 			a=$(TextBrightRedBlink "$r_chars_alert")
 			b=$(TextBrightRedBlink "$1")
 			;;
-		attention)
-			a=$(TextBrightOrange "$r_chars_attention")
-			b=$(TextBrightOrange "$1")
-			;;
 		notice)
 			a=$(TextBrightRed "$r_chars_alert")
+			b=$(TextBrightRed "$1")
+			;;
+		normal_notice)
+			a=$(TextBrightRed "$r_chars_normal")
 			b=$(TextBrightRed "$1")
 			;;
 		oops)
 			a=$r_chars_blank
 			b=$(TextBrightRed "$1")
 			;;
-		normal)
-			a=$r_chars_normal
-			b=$1
+		attention_highlight)
+			a=$(TextBrightOrange "$r_chars_attention")
+			b=$(TextBrightOrange "$1")
 			;;
 		highlight)
 			a=$r_chars_blank
 			b=$(TextBrightOrange "$1")
 			;;
-		highlight_ok)
+		normal_ok)
+			a=$r_chars_normal
+			b=$(TextBrightGreen "$1")
+			;;
+		ok)
 			a=$r_chars_blank
 			b=$(TextBrightGreen "$1")
 			;;
-		highlight_normal)
-			a=$r_chars_normal
-			b=$(TextBrightGreen "$1")
+		normal_mute)
+			a=$(TextDarkGrey "$r_chars_normal")
+			b=$(TextDarkGrey "$1")
+			;;
+		alert_mute)
+			a=$(TextDarkGrey "$r_chars_alert")
+			b=$(TextDarkGrey "$1")
 			;;
 		mute)
 			a=$r_chars_blank
 			b=$(TextDarkGrey "$1")
 			;;
-		mute_normal)
-			a=$(TextDarkGrey "$r_chars_normal")
-			b=$(TextDarkGrey "$1")
+		normal)
+			a=$r_chars_normal
+			b=$1
 			;;
 		*)
 			a=$r_chars_blank
@@ -5991,8 +6034,11 @@ GenerateReportField()
 
 	}
 
-GenerateReportLineItem()
+FormatReportFieldWidth()
 	{
+
+	# Build a report field with a minimum field width.
+	# Only needed when table columns can't be autowidth'd.
 
 	# Inputs: (local)
 	#	$1 = string: field text with possible ANSI codes.
@@ -6609,7 +6655,7 @@ DisplayFileInViewport()
 	local wraplines=false
 
 	if [[ ! -e $filename ]]; then
-		echo "filename $(ShowAsFileName "$filename") not found"
+		echo "filename $(FormatFileName "$filename") not found"
 
 		return 1
 	fi
@@ -7876,7 +7922,7 @@ HelpAbbreviations()
 # 		GenerateReportFooter >> "$r_report_output_pathfile"
 	fi
 
-	DisplayAsProjSynExam "example: to install $(ShowAsPackageName SABnzbd), $(ShowAsPackageName Mylar3) and $(ShowAsPackageName nzbToMedia) all-at-once" 'install sab my nzb2' >> "$r_report_output_pathfile"
+	DisplayAsProjSynExam "example: to install $(FormatPackageName SABnzbd), $(FormatPackageName Mylar3) and $(FormatPackageName nzbToMedia) all-at-once" 'install sab my nzb2' >> "$r_report_output_pathfile"
 
 	EraseThisLine
 	ShowReport
@@ -8517,15 +8563,17 @@ GenerateReportHeadingsFooter()
 	local a=''
 
 	a=$({
+		DisplayAsIndentQuotedInfoItem 'Indep?' 'is independent of other QPKGs'
+		DisplayAsIndentQuotedInfoItem 'Opt?' 'is an optional addon for another QPKG'
+		DisplayAsIndentQuotedInfoItem 'Dep?' 'is dependent on other QPKGs'
+		DisplayAsIndentQuotedInfoItem 'Enh?' "$(ShowAsTitleName) enhanced service actions are supported"
 		DisplayAsIndentQuotedInfoItem 'CanBack?' "application config 'backup' and 'restore' are supported"
 		DisplayAsIndentQuotedInfoItem 'CanClean?' "application 'clean' is supported"
 		DisplayAsIndentQuotedInfoItem 'StartUpd?' 'application restart-to-update is supported'
-		DisplayAsIndentQuotedInfoItem 'AutoUpd?' 'application restart-to-update is enabled'
+		DisplayAsIndentQuotedInfoItem 'AutUpd?' 'application restart-to-update is enabled'
 		DisplayAsIndentQuotedInfoItem 'LiveTest?' "has a built-in 'status' check, and can test for daemon live status"
-		DisplayAsIndentQuotedInfoItem 'Independent?' 'is independent of other QPKGs'
 		DisplayAsIndentQuotedInfoItem 'ArchCompat?' 'has a release compatible with this NAS architecture'
-		DisplayAsIndentQuotedInfoItem 'Enhanced?' "$(ShowAsTitleName) enhanced service actions are supported"
-		DisplayAsIndentQuotedInfoItem 'UniqueUnpack?' 'QPKG unpacks itself to a unique path'
+		DisplayAsIndentQuotedInfoItem 'UniqUnpack?' 'QPKG unpacks itself to a unique path'
 	})
 
 	if [[ -n $a ]]; then
@@ -8811,7 +8859,7 @@ MarkActionForkAsError()
 
 	}
 
-#UpdateThisAcForkPid()
+#WriteThisAcForkPid()
 # 	{
 #
 # 	# Inputs: (local)
@@ -8852,7 +8900,7 @@ NoteIpkAcAsEr()
 	#   $2 = action
 	#   $3 = reason (optional)
 
-	local a="failing request to $2 $(ShowAsPackageName "$1")"
+	local a="failing request to $2 $(FormatPackageName "$1")"
 
 	[[ -n ${3:-} ]] && a+=' as '$3
 	DebugAsError "$a" >&2
@@ -8911,31 +8959,72 @@ GetHardwareCPUInfo()
 GetHardwareCPUBenchmark()
 	{
 
-	# Get a basic CPU benchmark based-on time to calculate a single SHA checksum.
+	# Generate a basic CPU benchmark based-on time to calculate a single SHA checksum.
 
 	# Adapted from: https://bash-prompt.net/guides/bash-simple-bash-benchmark/ and modified to get a quick result that works in QTS. Less accurate, but this figure is for indication-only.
 
 	# QTS 4.3.3 has `sha1sum`, but no `sha256sum`.
 	# QTS 4.3.6 has both `sha1sum` and `sha256sum`.
 
-	# Use GNU `dd` because it generates speed statistics. BusyBox 1.01 `dd` does not.
+	# Use GNU `dd` because it generates speed statistics in stderr. BusyBox 1.01 `dd` does not.
 
-	if [[ ! -e /opt/bin/dd ]]; then
-		printf undefined
+	local a=''
+	local -i b=16		# Maximum time to run is around 1 second on my slowest NAS (TS-220).
+	local -i c=-20		# Run benchmark with highest priority.
 
-		return 1
+	if [[ -e /opt/bin/dd && -e /bin/sha1sum ]]; then
+		if [[ -e /opt/bin/nice ]]; then
+			a=$({ /opt/bin/nice -$c /opt/bin/dd if=/dev/zero bs=1MB count=$b | /bin/sha1sum > /dev/null; } 2>&1)
+		elif [[ -e /bin/renice ]]; then
+			/bin/renice $c $$ &> /dev/null
+
+			a=$({ /opt/bin/dd if=/dev/zero bs=1MB count=$b | /bin/sha1sum > /dev/null; } 2>&1)
+
+			/bin/renice 0 $$ &> /dev/null
+		fi
 	fi
 
-	# Run benchmark with highest priority.
+	a=$(/bin/grep copied <<< "$a" | cut -d, -f4)
+	a=${a//[[:blank:]]/}
+	[[ -n $a ]] || a=undefined
 
-	/bin/renice -20 $$ &> /dev/null
+	printf '%s' "$a"
 
-	# Capture stderr from `dd`.
+	return 0
 
-	local a=$({ /opt/bin/dd if=/dev/zero bs=1MB count=10 | /bin/sha1sum > /dev/null; } 2>&1 | /bin/grep copied | cut -d, -f4)
+	}
 
-	/bin/renice 0 $$ &> /dev/null
+GetHardwareVolumeBenchmark()
+	{
 
+	# Generate a basic write benchmark for the default userdata volume.
+
+	# Use GNU `dd` because it generates speed statistics in stderr. BusyBox 1.01 `dd` does not.
+
+	local a=''
+	local b=10k			# Maximum time to run is around 1 second on my slowest NAS (TS-220).
+	local -i c=-20		# Run benchmark with highest priority.
+	local d=$(GetUserDefVol)/zero
+
+	if [[ -d $(/usr/bin/dirname "$d") ]]; then
+		[[ -e $d ]] && rm -f "$d"
+
+		if [[ -e /opt/bin/dd && -e /bin/sha1sum ]]; then
+			if [[ -e /opt/bin/nice ]]; then
+				a=$(/opt/bin/nice -$c /opt/bin/dd if=/dev/zero of=$d bs=8k count=$b 2>&1)
+			elif [[ -e /bin/renice ]]; then
+				/bin/renice $c $$ &> /dev/null
+
+				a=$(/opt/bin/dd if=/dev/zero of=$d bs=8k count=$b 2>&1)
+
+				/bin/renice 0 $$ &> /dev/null
+			fi
+		fi
+
+		[[ -e $d ]] && rm -f "$d"
+	fi
+
+	a=$(/bin/grep copied <<< "$a" | cut -d, -f4)
 	a=${a//[[:blank:]]/}
 	[[ -n $a ]] || a=undefined
 
@@ -9017,6 +9106,7 @@ IsPythonOutdated()
 	[[ -e $r_python3_cmd ]] || return
 
 	local a=$(GetPython3Ver "$r_python3_cmd")
+
 	[[ $r_nas_arch = armv5tel && ${a//./} -lt 3114 ]] || [[ $r_nas_arch != armv5tel && ${a//./} -lt $r_min_python_version ]]
 
 	}
@@ -9053,6 +9143,7 @@ IsPerlOutdated()
 	[[ -e $r_perl_cmd ]] || return
 
 	local a=$(GetPerlVer "$r_perl_cmd")
+
 	[[ $r_nas_arch = armv5tel && ${a//./} -lt 5281 ]] || [[ $r_nas_arch != armv5tel && ${a//./} -lt $r_min_perl_version ]]
 
 	}
@@ -9090,6 +9181,7 @@ GetOsUptime()
 	{
 
 	local n=$(< /proc/uptime)
+
 	ConvertSecondsToDuration "${n%%.*}"
 
 	}
@@ -9098,6 +9190,7 @@ GetUserLIBC()
 	{
 
 	local a=$(/sbin/ldd --version | head -n1)
+
 	printf '%s' "${a:4}"			# Trim 'ldd ' from front of string.
 
 	}
@@ -9125,8 +9218,11 @@ GetShellVersion()
 	# Inputs: (global)
 	#	$SHELL
 
-	[[ -n ${SHELL:-} ]] || printf undefined
-	$SHELL --version | head -n1
+	if [[ -z ${SHELL:-} ]]; then
+		printf undefined
+	else
+		$SHELL --version | head -n1
+	fi
 
 	}
 
@@ -9136,8 +9232,11 @@ GetShellCopyright()
 	# Inputs: (global)
 	#	$SHELL
 
-	[[ -n ${SHELL:-} ]] || printf undefined
-	$SHELL --version | /bin/grep -i copyright | /bin/sed 's|\$||'
+	if [[ -z ${SHELL:-} ]]; then
+		printf undefined
+	else
+		$SHELL --version | /bin/grep -i copyright | /bin/sed 's|\$||'
+	fi
 
 	}
 
@@ -9150,6 +9249,7 @@ GetShellTimeIn()
 	local n=''
 
 	[[ -n ${LOADER_SCRIPT_PPID:-} ]] && n=$(/bin/ps -o pid,etime | /bin/grep $LOADER_SCRIPT_PPID | head -n1)
+
 	FormatAsLongMinutesSecs "${n:6}"
 
 	}
@@ -9266,14 +9366,14 @@ GetQpkgArch()
 					printf a41
 					;;
 				*)
-					printf none
+					printf unknown
 			esac
 			;;
 		aarch64)
 			printf a64
 			;;
 		*)
-			printf none
+			printf unknown
 	esac
 
 	}
@@ -9437,7 +9537,7 @@ IsOsCanSignedPackages()
 	# Inputs: (global)
 	#	$r_nas_firmware_version
 
-# 	[[ ${r_nas_firmware_version//.} -ge 435 ]]	# NOTE: signing failed on QTS 4.3.6 (x31). No cert database. So, let's go one-version-higher:
+	# NOTE: signing failed on QTS 4.3.6 (x31). No cert database.
 
 	[[ ${r_nas_firmware_version//.} -ge 437 ]]
 
@@ -9499,8 +9599,6 @@ IsOsCanAutowidthTableColumns()
 	#	$r_gnu_awk_cmd
 
 	[[ -e $r_gnu_awk_cmd ]]
-
-#  	false										#devdebug
 
 	}
 
@@ -9751,7 +9849,7 @@ DisableDebugToArchiveAndFile()
 SaveActionResultToLog()
 	{
 
-	# Write package type, package name, datetime in seconds, action, result, reason to actions logfile, and into actions durations file.
+	# Write package type, package name, datetime in seconds, action, result, reason into actions logfile and durations file.
 
 	# Inputs: (local)							Example:
 	#   $1 = package type						`QPKG`, `IPK`, `PIP`
@@ -9857,7 +9955,7 @@ _QPKG:reassign_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "reassigning $(ShowAsPackageName)"
+	DebugAsProc "reassigning $(FormatPackageName)"
 	RunAndLog "/sbin/setcfg -e $qpkg_name store -f /etc/config/qpkg.conf" "$r_logs_path/$qpkg_name.$r_reassign_log_file" log:failure-only
 	z=$?
 
@@ -9912,11 +10010,11 @@ _QPKG:download_()
 		z=1
 	elif [[ -f $r_local_pathfile ]]; then
 		if FileMatchesMD5 "$r_local_pathfile" "$r_remote_hash"; then
-			SaveActionResultToLog QPKG "$qpkg_name" download '' skipped-ok "existing file $(ShowAsFileName "$r_local_filename") checksum is correct"
+			SaveActionResultToLog QPKG "$qpkg_name" download '' skipped-ok "existing file $(FormatFileName "$r_local_filename") checksum is correct"
 			MarkActionForkAsSkippedOk
 			z=2
 		else
-			DebugInfo "deleting $(ShowAsFileName "$r_local_filename") as checksum is incorrect"
+			DebugInfo "deleting $(FormatFileName "$r_local_filename") as checksum is incorrect"
 			rm -f "$r_local_pathfile" 2> /dev/null
 		fi
 	fi
@@ -9924,7 +10022,7 @@ _QPKG:download_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	if [[ ! -f $r_local_pathfile ]]; then
-		DebugAsProc "downloading $(ShowAsFileName "$r_remote_filename")"
+		DebugAsProc "downloading $(FormatFileName "$r_remote_filename")"
 
 		rm -f "$r_log_pathfile" 2> /dev/null
 
@@ -9938,7 +10036,7 @@ _QPKG:download_()
 				SendPackageStateChange ISdownloaded
 				MarkActionForkAsOk
 			else
-				SaveActionResultToLog QPKG "$qpkg_name" download '' failed "cache file $(ShowAsFileName "$r_local_filename") has incorrect checksum"
+				SaveActionResultToLog QPKG "$qpkg_name" download '' failed "cache file $(FormatFileName "$r_local_filename") has incorrect checksum"
 				SendPackageStateChange ISNTdownloaded
 				MarkActionForkAsError
 				z=1
@@ -10024,7 +10122,7 @@ _QPKG:install_()
 		fi
 	fi
 
-	DebugAsProc "installing $(ShowAsPackageName)"
+	DebugAsProc "installing $(FormatPackageName)"
 	[[ ${QPKGs_were_installed_name[*]:-} = *"$qpkg_name"* ]] && a+="QINSTALL_PATH=$(GetQpkgInstalledOriginalPath "$qpkg_name") "
 
 	RunAndLog "${a}/bin/sh $local_pathfile" "$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_install_log_file" log:failure-only 10
@@ -10121,7 +10219,7 @@ _QPKG:reinstall_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "reinstalling $(ShowAsPackageName)"
+	DebugAsProc "reinstalling $(FormatPackageName)"
 	IsQpkgInstalled && a+="QINSTALL_PATH=$(/usr/bin/dirname "$(GetQpkgInstalledPath)") "
 
 	RunAndLog "${a}/bin/sh $local_pathfile" "$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_reinstall_log_file" log:failure-only 10
@@ -10196,7 +10294,7 @@ _QPKG:rebuild_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "meta-rebuilding $(ShowAsPackageName)"
+	DebugAsProc "meta-rebuilding $(FormatPackageName)"
 	# Nothing-to-do here, real QPKG actions have already been assigned in CheckEnv().
 
 	SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' ok
@@ -10259,7 +10357,7 @@ _QPKG:upgrade_()
 
 	local prev_ver=$(GetQpkgInstalledVer)
 
-	DebugAsProc "upgrading $(ShowAsPackageName)"
+	DebugAsProc "upgrading $(FormatPackageName)"
 	IsQpkgInstalled && a+="QINSTALL_PATH=$(/usr/bin/dirname "$(GetQpkgInstalledPath "$qpkg_name")") "
 
 	RunAndLog "${a}/bin/sh $local_pathfile" "$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_upgrade_log_file" log:failure-only 10
@@ -10346,13 +10444,13 @@ _QPKG:uninstall_()
 	[[ $qpkg_name = Entware ]] && SaveIpkAndPipList
 
 	if [[ -e $r_qpkg_uninstaller_pathfile ]]; then
-		DebugAsProc "uninstalling $(ShowAsPackageName)"
+		DebugAsProc "uninstalling $(FormatPackageName)"
 
 		RunAndLog "${a}/bin/sh $r_qpkg_uninstaller_pathfile" "$r_logs_path/$qpkg_name.$r_uninstall_log_file" log:failure-only
 		z=$?
 
 		if [[ $z -eq 0 ]]; then
-			# WARNING: beware of `qpkg_cli --remove`, it removes the QPKG installation path around 10-20 seconds after execution. If sherpa has moved-on and starts an install, `qpkg_cli` will remove the newly created QPKG installation path partway through the installation. So, check if QPKG is to be installed: if this is the case, don't use `qpkg_cli --remove`.
+			# WARNING: beware of `qpkg_cli --remove`: it removes the QPKG installation path around 10-20 seconds after execution. If sherpa has moved-on and starts an install, `qpkg_cli` will remove the newly created QPKG installation path partway through the installation. So, check if QPKG is to be installed again: if-so, don't use `qpkg_cli --remove`.
 			[[ -e /sbin/qpkg_cli ]] && ! QPKGs-ACinstall-to.Exist "$qpkg_name" && /sbin/qpkg_cli --remove "$qpkg_name" &> /dev/null
 			SaveActionResultToLog QPKG "$qpkg_name" uninstall '' ok
 			/sbin/rmcfg "$qpkg_name" -f /etc/config/qpkg.conf
@@ -10360,8 +10458,8 @@ _QPKG:uninstall_()
 
 			if [[ $qpkg_name = Entware ]]; then
 				SendParentChangeEnv ModPathToEntware
-				UpdateParentCapabilities
-				UpdateCapabilities
+				SendParentChangeEnv SetCapabilities
+				SetCapabilities
 			fi
 
 			SendPackageStateChange ISNTinstalled
@@ -10375,7 +10473,7 @@ _QPKG:uninstall_()
 		fi
 	else
 		# Standard QPKG `.uninstall.sh` was not found, so can't continue with uninstallation (maybe force this instead with `rm -r` ?).
-		SaveActionResultToLog QPKG "$qpkg_name" uninstall '' failed "$(ShowAsFileName '.uninstall.sh') not found"
+		SaveActionResultToLog QPKG "$qpkg_name" uninstall '' failed "$(FormatFileName '.uninstall.sh') not found"
 		MarkActionForkAsError
 	fi
 
@@ -10428,7 +10526,7 @@ _QPKG:activate_()
 	IsOsCanQpkgTimeout && timeout=' -t '$r_qpkg_start_timeout_seconds
 	local service_pathfile=$(GetQpkgServicePathFile)
 
-	DebugAsProc "activating $(ShowAsPackageName)"
+	DebugAsProc "activating $(FormatPackageName)"
 
 	if [[ $service_pathfile = undefined ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" activate '' skipped-error 'QPKG service-script file undefined'
@@ -10452,8 +10550,8 @@ _QPKG:activate_()
 
 		if [[ $qpkg_name = Entware ]]; then
 			SendParentChangeEnv ModPathToEntware
-			UpdateParentCapabilities
-			UpdateCapabilities
+			SendParentChangeEnv SetCapabilities
+			SetCapabilities
 		fi
 
 		SendPackageStateChange ISactive
@@ -10516,7 +10614,7 @@ _QPKG:reactivate_()
 	IsOsCanQpkgTimeout && timeout=' -t '$r_qpkg_restart_timeout_seconds
 	local service_pathfile=$(GetQpkgServicePathFile)
 
-	DebugAsProc "reactivating $(ShowAsPackageName)"
+	DebugAsProc "reactivating $(FormatPackageName)"
 
 	if [[ $service_pathfile = undefined ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' skipped-error 'QPKG service-script file undefined'
@@ -10595,7 +10693,7 @@ _QPKG:deactivate_()
 	IsOsCanQpkgTimeout && timeout=' -t '$r_qpkg_stop_timeout_seconds
 	local service_pathfile=$(GetQpkgServicePathFile)
 
-	DebugAsProc "deactivating $(ShowAsPackageName)"
+	DebugAsProc "deactivating $(FormatPackageName)"
 
 	if [[ $service_pathfile = undefined ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' skipped-error 'QPKG service-script file undefined'
@@ -10619,8 +10717,8 @@ _QPKG:deactivate_()
 
 		if [[ $qpkg_name = Entware ]]; then
 			SendParentChangeEnv ModPathToEntware
-			UpdateParentCapabilities
-			UpdateCapabilities
+			SendParentChangeEnv SetCapabilities
+			SetCapabilities
 		fi
 
 		SendPackageStateChange ISNTactive
@@ -10679,7 +10777,7 @@ _QPKG:enable_()
 	local timeout=''
 	IsOsCanQpkgTimeout && timeout=' -t '$r_qpkg_enable_timeout_seconds
 
-	DebugAsProc "enabling $(ShowAsPackageName)"
+	DebugAsProc "enabling $(FormatPackageName)"
 
 	RunAndLog "/sbin/qpkg_service${timeout} enable $qpkg_name" "$r_log_pathfile" log:failure-only
 	IsQpkgEnabled "$qpkg_name" && SendPackageStateChange ISenabled
@@ -10737,7 +10835,7 @@ _QPKG:disable_()
 	local timeout=''
 	IsOsCanQpkgTimeout && timeout=' -t '$r_qpkg_disable_timeout_seconds
 
-	DebugAsProc "disabling $(ShowAsPackageName)"
+	DebugAsProc "disabling $(FormatPackageName)"
 
 	RunAndLog "/sbin/qpkg_service${timeout} disable $qpkg_name" "$r_log_pathfile" log:failure-only
 	! IsQpkgEnabled "$qpkg_name" && SendPackageStateChange ISNTenabled
@@ -10794,7 +10892,7 @@ _QPKG:enableau_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "enabling auto-update $(ShowAsPackageName)"
+	DebugAsProc "enabling auto-update $(FormatPackageName)"
 
 	RunAndLog "${a}$(GetQpkgServicePathFile) enable-auto-update" "$r_logs_path/$qpkg_name.$r_enableau_log_file" log:failure-only
 	z=$?
@@ -10857,7 +10955,7 @@ _QPKG:disableau_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "disabling auto-update $(ShowAsPackageName)"
+	DebugAsProc "disabling auto-update $(FormatPackageName)"
 
 	RunAndLog "${a}$(GetQpkgServicePathFile) disable-auto-update" "$r_logs_path/$qpkg_name.$r_disableau_log_file" log:failure-only
 	z=$?
@@ -10916,7 +11014,7 @@ _QPKG:backup_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "backing-up $(ShowAsPackageName) configuration"
+	DebugAsProc "backing-up $(FormatPackageName) configuration"
 
 	RunAndLog "${a}$(GetQpkgServicePathFile) backup" "$r_logs_path/$qpkg_name.$r_backup_log_file" log:failure-only
 	z=$?
@@ -10980,7 +11078,7 @@ _QPKG:restore_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "restoring $(ShowAsPackageName) configuration"
+	DebugAsProc "restoring $(FormatPackageName) configuration"
 
 	RunAndLog "${a}$(GetQpkgServicePathFile) restore" "$r_logs_path/$qpkg_name.$r_restore_log_file" log:failure-only
 	z=$?
@@ -11040,7 +11138,7 @@ _QPKG:clean_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "cleaning $(ShowAsPackageName)"
+	DebugAsProc "cleaning $(FormatPackageName)"
 
 	RunAndLog "${a}$(GetQpkgServicePathFile) clean" "$r_logs_path/$qpkg_name.$r_clean_log_file" log:failure-only
 	z=$?
@@ -11110,7 +11208,7 @@ _QPKG:sign_()
 		MarkActionForkAsSkipped
 		z=1
 	elif [[ ! -e $sqlite_pathfile ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped-abort "$(ShowAsFileName sqlite3) binary not found"
+		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped-abort "$(FormatFileName sqlite3) binary not found"
 		MarkActionForkAsSkippedAbort
 		z=3
 	elif [[ ! -e $r_cert_db_pathfile ]]; then
@@ -11138,7 +11236,7 @@ _QPKG:sign_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	DebugAsProc "\"signing\" $(ShowAsPackageName)"
+	DebugAsProc "\"signing\" $(FormatPackageName)"
 
 # 	a="DELETE FROM Certificate WHERE QpkgName = '$qpkg_name'; INSERT INTO Certificate (Type,QpkgName,Cert,DigitalSignature) VALUES ('qpkg','$qpkg_name','$r_qpkg_certificate','$r_qpkg_signature');"
 
@@ -11203,7 +11301,7 @@ _QPKG:status_()
 
 	[[ $z -eq 0 ]] || FuncForkExit
 
-	DebugAsProc "status $(ShowAsPackageName)"
+	DebugAsProc "status $(FormatPackageName)"
 
 	a=$(GetQpkgDbActiveTest)
 
@@ -11273,28 +11371,28 @@ LogQpkgServiceResult()
 	#   $qpkg_name
 
 	if ! local a=$(GetQpkgServiceResult); then
-		DebugAsWarn "unable to get status of $(ShowAsPackageName) service. It may be a non-sherpa package, or a sherpa package earlier than 200816c that doesn't support service results."
+		DebugAsWarn "unable to get status of $(FormatPackageName) service. It may be a non-sherpa package, or a sherpa package earlier than 200816c that doesn't support service results."
 
 		return 1
 	fi
 
 	case $a in
 		in-progress)
-			DebugInfo "$(ShowAsPackageName) service action is in-progress"
+			DebugInfo "$(FormatPackageName) service action is in-progress"
 			;;
 		ok)
-			DebugInfo "$(ShowAsPackageName) service action completed OK"
+			DebugInfo "$(FormatPackageName) service action completed OK"
 			;;
 		failed)
 			if [[ -e /var/log/$qpkg_name.log ]]; then
-				DebugAsError "$(ShowAsPackageName) service action failed. Check $(ShowAsFileName "/var/log/$qpkg_name.log") for more information"
+				DebugAsError "$(FormatPackageName) service action failed. Check $(FormatFileName "/var/log/$qpkg_name.log") for more information"
 				AddExtLogToSessLog /var/log/$qpkg_name.log
 			else
-				DebugAsError "$(ShowAsPackageName) service action failed"
+				DebugAsError "$(FormatPackageName) service action failed"
 			fi
 			;;
 		*)
-			DebugAsWarn "$(ShowAsPackageName) service status is unrecognised or unsupported"
+			DebugAsWarn "$(FormatPackageName) service status is unrecognised or unsupported"
 	esac
 
 	return 0
@@ -11589,6 +11687,7 @@ GetQpkgDbURL()
 		a=${r_qpkg_url[$qpkg_index]}
 		[[ $a = default ]] && a=${r_qpkg_url[$qpkg_default_index]}
 		[[ -n $a ]] || a=none
+
 		printf '%s' "$a"
 	fi
 
@@ -11626,6 +11725,7 @@ GetQpkgDbMinRAM()
 	fi
 
 	[[ -n $a ]] || a=none
+
 	printf '%s' "$a"
 
 	return 0
@@ -11662,6 +11762,7 @@ GetQpkgDbMinOSVer()
 	fi
 
 	[[ -n $a ]] || a=none
+
 	printf '%s' "$a"
 
 	return 0
@@ -11698,6 +11799,7 @@ GetQpkgDbMaxOSVer()
 	fi
 
 	[[ -n $a ]] || a=none
+
 	printf '%s' "$a"
 
 	return 0
@@ -11724,6 +11826,7 @@ GetQpkgDbAuthor()
 
 	for i in "${!r_qpkg_name[@]}"; do
 		[[ ${r_qpkg_name[$i]} = "$a" ]] || continue
+
 		printf '%s' "${r_qpkg_author[$i]}"
 
 		return 0
@@ -11854,6 +11957,7 @@ GetQpkgDbDesc()
 	fi
 
 	[[ -n $a ]] || a=none
+
 	printf '%s' "$a"
 
 	return 0
@@ -11865,12 +11969,14 @@ GetQpkgDbNote()
 
 	# Return any additional notes to be prominently displayed.
 
-	# Inputs:
-	#   $qpkg_default_index (global)
-	#   $qpkg_index (global)
-	#	$qpkg_name (global)
+	# Inputs: (global)
+	#   $qpkg_default_index
+	#   $qpkg_index
+	#	$qpkg_name
+	#	$r_qpkg_name[]
+	#	$r_qpkg_note[]
 
-	# Outputs:
+	# Outputs: (local)
 	#   stdout = package note (first package found).
 	#   $? = 0 (found), !0 (not-found)
 
@@ -11898,13 +12004,17 @@ GetQpkgDbNote()
 GetQpkgDbAbbrvs()
 	{
 
-	# Inputs:
+	# Inputs: (local)
 	#   $1 = QPKG name (optional): if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
-	#   $qpkg_default_index (global)
-	#   $qpkg_index (global)
-	#	$qpkg_name (global)
 
-	# Outputs:
+	# Inputs: (global)
+	#   $qpkg_default_index
+	#   $qpkg_index
+	#	$qpkg_name
+	#	$r_qpkg_abbrvs[]
+	#	$r_qpkg_name[]
+
+	# Outputs: (local)
 	#   stdout = list of abbreviations that may be used to specify this package
 	#   $? = 0 if found, !0 if not
 
@@ -11923,6 +12033,7 @@ GetQpkgDbAbbrvs()
 	fi
 
 	[[ -n $a ]] || a=none
+
 	printf '%s' "$a"
 
 	return 0
@@ -11932,12 +12043,13 @@ GetQpkgDbAbbrvs()
 GetQpkgDbDependencies()
 	{
 
-	# Inputs:
-	#   $qpkg_default_index (global)
-	#   $qpkg_index (global)
-	#	$qpkg_name (global)
+	# Inputs: (global)
+	#   $qpkg_default_index
+	#   $qpkg_index
+	#	$qpkg_name
+	#	$r_qpkg_depends_on[]
 
-	# Outputs:
+	# Outputs: (local)
 	#   stdout = list of QPKGs $qpkg_name depends-upon.
 	#   $? = 0 (found), !0 (not-found)
 
@@ -12006,12 +12118,13 @@ GetQpkgDbDependencies()
 GetQpkgDbOptDependencies()
 	{
 
-	# Inputs:
-	#   $qpkg_default_index (global)
-	#   $qpkg_index (global)
-	#	$qpkg_name (global)
+	# Inputs: (global)
+	#   $qpkg_default_index
+	#   $qpkg_index
+	#	$qpkg_name
+	#	$r_qpkg_opt_depends_on[]
 
-	# Outputs:
+	# Outputs: (local)
 	#   stdout = list of QPKGs $qpkg_name optionally depends-upon.
 	#   $? = 0 (found), !0 (not-found)
 
@@ -12080,12 +12193,14 @@ GetQpkgDbOptDependencies()
 GetQpkgDbDependents()
 	{
 
-	# Inputs:
-	#   $qpkg_default_index (global)
-	#   $qpkg_index (global)
-	#	$qpkg_name (global)
+	# Inputs: (global)
+	#   $qpkg_default_index
+	#   $qpkg_index
+	#	$qpkg_name
+	#	$r_qpkg_depends_on[]
+	#	$r_qpkg_name[]
 
-	# Outputs:
+	# Outputs: (local)
 	#   stdout = list of QPKGs that depend-upon this QPKG.
 	#   $? = 0 (found), !0 (not-found)
 
@@ -12116,12 +12231,14 @@ GetQpkgDbDependents()
 GetQpkgDbOptionals()
 	{
 
-	# Inputs:
-	#   $qpkg_default_index (global)
-	#   $qpkg_index (global)
-	#	$qpkg_name (global)
+	# Inputs: (global)
+	#   $qpkg_default_index
+	#   $qpkg_index
+	#	$qpkg_name
+	#	$r_qpkg_name[]
+	#	$r_qpkg_opt_depends_on[]
 
-	# Outputs:
+	# Outputs: (local)
 	#   stdout = list of QPKGs that optionally depend-upon this QPKG.
 	#   $? = 0 (found), !0 (not-found)
 
@@ -12152,12 +12269,13 @@ GetQpkgDbOptionals()
 GetQpkgDbIPKs()
 	{
 
-	# Inputs:
-	#   $qpkg_default_index (global)
-	#   $qpkg_index (global)
-	#	$qpkg_name (global)
+	# Inputs: (global)
+	#   $qpkg_default_index
+	#   $qpkg_index
+	#	$qpkg_name
+	#	$r_qpkg_requires_ipks[]
 
-	# Outputs:
+	# Outputs: (local)
 	#   stdout = list of IPKs $qpkg_index depends-upon.
 	#   $? = 0 (found), !0 (not-found)
 
@@ -12180,13 +12298,14 @@ GetQpkgDbActiveTest()
 
 	# Return any custom commands required to determine if specified QPKG is active or not.
 
-	# Inputs:
-	#   $qpkg_default_index (global)
-	#   $qpkg_index (global)
-	#	$qpkg_name (global)
+	# Inputs: (global)
+	#   $qpkg_default_index
+	#   $qpkg_index
+	#	$qpkg_name
+	#	$r_qpkg_test_for_active[]
 
-	# Outputs:
-	#   stdout = Bash tests.
+	# Outputs: (local)
+	#   stdout = bash tests.
 	#   $? = 0 (found), !0 (not-found)
 
 	[[ -n $qpkg_name && $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
@@ -12462,6 +12581,7 @@ IsQpkgDbDependent()
 	# Inputs: (global)
 	#   $qpkg_default_index
 	#   $qpkg_index
+	#	$r_qpkg_depends_on[]
 
 	# Outputs: (local)
 	#   $? = true/false
@@ -12981,7 +13101,7 @@ CreatePidFile()
 
 	}
 
-UpdatePidFile()
+WritePidFile()
 	{
 
 	# Inputs: (local)
@@ -13116,7 +13236,7 @@ MakePath()
 	[[ -n ${1:?${FUNCNAME[0]}'()': undefined path} && -n ${2:?${FUNCNAME[0]}'()': undefined reason} ]] || return
 
 	if [[ $1 != undefined ]] && ! mkdir -p "$1"; then
-		ShowAsError "unable to create $2 path $(ShowAsFileName "$1") $(ShowAsExitcode "$?")"
+		ShowAsError "unable to create $2 path $(FormatFileName "$1") $(FormatExitcode "$?")"
 		show_suggest_raise_issue=true
 
 		return 1
@@ -13211,7 +13331,7 @@ RunAndLog()
 	fi
 
 	DebugAsProc "$exec_msg"
-	ShowAsCommand "$1" > "$2"
+	FormatCommand "$1" > "$2"
 
 	if [[ $useropt_verbose = true ]]; then
 		eval "$1 > >(/usr/bin/tee $r_log_pathfile) 2>&1"	# NOTE: `tee` buffers stdout here.
@@ -13519,14 +13639,14 @@ ShowAsOptions()
 
 	}
 
-ShowAsPackageName()
+FormatPackageName()
 	{
 
 	printf '%s' "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}"
 
 	}
 
-ShowAsFileName()
+FormatFileName()
 	{
 
 	printf '%s' "'${1:?${FUNCNAME[0]}'()': undefined filename}'"
@@ -13540,14 +13660,14 @@ ShowAsURL()
 
 	}
 
-ShowAsExitcode()
+FormatExitcode()
 	{
 
 	printf '%s' "[${1:?${FUNCNAME[0]}'()': undefined exitcode}]"
 
 	}
 
-ShowAsLogFilename()
+FormatLogFilename()
 	{
 
 	# Inputs: (global)
@@ -13557,7 +13677,7 @@ ShowAsLogFilename()
 
 	}
 
-ShowAsCommand()
+FormatCommand()
 	{
 
 	# Inputs: (global)
@@ -13570,14 +13690,13 @@ ShowAsCommand()
 ShowAsResultAndStdout()
 	{
 
-	[[ -n ${1:-} ]] || return
-	[[ -n ${2:-} ]] || return
+	[[ -n ${1:-} && -n ${2:-} ]] || return
 
 	local a=$r_chars_results
 
 	[[ ${1:-0} -ne 0 ]] && a=$r_chars_alert
 
-	echo "${a}result_code: $(ShowAsExitcode "$1") ***** stdout/stderr begins below *****"
+	echo "${a}result_code: $(FormatExitcode "$1") ***** stdout/stderr begins below *****"
 	echo "$2"
 	echo "${a}***** stdout/stderr is complete *****"
 
@@ -13762,10 +13881,7 @@ DebugItem()
 	#	$3 = name
 	#	$4 = value
 
-	[[ -n ${1:-} ]] || return
-	[[ -n ${2:-} ]] || return
-	[[ -n ${3:-} ]] || return
-	[[ -n ${4:-} ]] || return
+	[[ -n ${1:-} && -n ${2:-} && -n ${3:-} && -n ${4:-} ]] || return
 
 	local a=$(Uppercase "$2")
 
@@ -14354,7 +14470,10 @@ DebugThis()
 	[[ -n ${1:-} ]] || return
 
 	[[ ${useropt_verbose:-false} = true ]] && ShowAsDebug "$1"
-	WriteToLog dbug "$1"
+
+	if [[ $useropt_show_about = false && $useropt_show_aboutall = false ]]; then
+		WriteToLog dbug "$1"
+	fi
 
 	}
 
@@ -14376,7 +14495,7 @@ AddExtLogToSessLog()
 
 	DebugAsLog 'adding external log to main log'
 	DebugExtLogMinSepr
-	DebugAsLog "$(ShowAsLogFilename "${1:?${FUNCNAME[0]}'()': undefined pathfile}")"
+	DebugAsLog "$(FormatLogFilename "${1:?${FUNCNAME[0]}'()': undefined pathfile}")"
 
 	while read -r a; do
 		DebugAsLog "$a"
@@ -15012,6 +15131,9 @@ StripANSICodes()
 	# Inputs: (global)
 	#	$sed_ext_regex_supported
 
+	# Outputs: (global)
+	#	$sed_ext_regex_supported
+
 	# QTS 4.2.6 BusyBox `sed` doesn't fully support extended-regexes, so code-stripping only works with a real `sed`.
 
 	if [[ ${sed_ext_regex_supported:=false} = true ]]; then
@@ -15024,25 +15146,16 @@ StripANSICodes()
 
 	} 2> /dev/null
 
-UpdateParentCapabilities()
+SetCapabilities()
 	{
 
-	SendParentChangeEnv UpdateColourisation
-	SendParentChangeEnv UpdateSedRexegSupport
-	SendParentChangeEnv UpdateSleepDecimalSecondsSupport
+	SetColourisation
+	SetSedRexegSupport
+	SetSleepDecimalSecondsSupport
 
 	}
 
-UpdateCapabilities()
-	{
-
-	UpdateColourisation
-	UpdateSedRexegSupport
-	UpdateSleepDecimalSecondsSupport
-
-	}
-
-UpdateColourisation()
+SetColourisation()
 	{
 
 	# If it seems Entware is active, check if possible to return to colourful display.
@@ -15063,7 +15176,7 @@ UpdateColourisation()
 
 	}
 
-UpdateSedRexegSupport()
+SetSedRexegSupport()
 	{
 
 	# Outputs: (global)
@@ -15073,7 +15186,7 @@ UpdateSedRexegSupport()
 
 	}
 
-UpdateSleepDecimalSecondsSupport()
+SetSleepDecimalSecondsSupport()
 	{
 
 	# Outputs: (global)
@@ -15218,6 +15331,7 @@ LoadPackages()
 
 	local curl_options=''
 	local previous=''
+	local qpkg_name=''
 
 	IsOsCanSecureDownload || curl_options=' --insecure'
 
@@ -15275,6 +15389,13 @@ LoadPackages()
 	unset r_qpkg_version
 	unset r_qpkg_will_log
 
+	unset r_base_qpkg_conflicts_with
+	unset readonly r_base_qpkg_warnings
+	unset r_essential_ipks
+	unset r_essential_pips
+	unset r_exclusion_pips
+	unset r_min_perl_version
+	unset r_min_python_version
 	unset r_packages_epoch
 	r_packages_epoch=undefined
 
@@ -15311,6 +15432,8 @@ LoadPackages()
 	# Third, source remaining elements from packages file.
 
 	. "$r_packages_pathfile"
+
+	r_name_migration_qpkgs=(Lidarr Medusa qBittorrent Readarr SickGear Sonarr Tautulli Transmission Watcher3 Whisparr)
 
 	# Fourth, lock list arrays and values.
 
@@ -15351,6 +15474,7 @@ LoadPackages()
 	readonly r_exclusion_pips
 	readonly r_min_perl_version
 	readonly r_min_python_version
+	readonly r_name_migration_qpkgs
 	readonly r_packages_epoch
 
 	DebugVar r_packages_epoch

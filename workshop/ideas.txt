@@ -1,5 +1,3 @@
-* Include basic benchmark for storage speed read/write?
-
 * Rename 'O' QPKGs:
 	# QPKGs to migrate from leading-'O'.
 
@@ -20,9 +18,6 @@
 	# 5. application config files? internal paths, etc...
 	# 6. start QPKG.
 
-* Checking 'upgradable' status is slow (due to the number of checks that must be performed).
-	- Consider only running this during `check` or `upgrade` actions.
-
 * Include option to display alternating line highlighting on reports?
 	- $alternating_report_lines
 
@@ -30,6 +25,8 @@
 	- Won't require an 'sqlite3' binary.
 
 * Display a warning when sherpa QPKG is not signed, and QTS App Center requires signed packages only.
+	- Need a new test for QPKG "sign"ed status.
+	- Include QPKG "signed" status in dependencies report?
 
 * Put 'sherpa about' display into a report window.
 
@@ -38,7 +35,7 @@
 * Takes 3.5 to 6 seconds to build QPKG states on Laura.
 	- Should be able to do this quicker.
 	- Calculate QPKG features separate to states and cache/load these from file next time?
-	- It's checking for upgradable QPKGs that takes most of the time.
+	- It's checking for upgradable QPKGs that takes most of the time. Consider only running this during `check` or `upgrade` actions.
 
 * Disable same-line display updates when not in a user terminal.
 	- No-need to record every progress message change in logs.
@@ -55,8 +52,6 @@
 	- Disable auto-update after installation if 'restore' is to be run, then enable it again after 'restore' completes?
 
 * Arg parser: use commas to separate actions & options?
-
-* Include QPKG "signed" status in dependencies report?
 
 * If using 'rustc' IPK, ensure $HOME is != /root before executing.
 
