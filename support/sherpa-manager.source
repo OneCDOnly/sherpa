@@ -14470,7 +14470,10 @@ DebugThis()
 	[[ -n ${1:-} ]] || return
 
 	[[ ${useropt_verbose:-false} = true ]] && ShowAsDebug "$1"
-	WriteToLog dbug "$1"
+
+	if [[ $useropt_show_about = false && $useropt_show_aboutall = false ]]; then
+		WriteToLog dbug "$1"
+	fi
 
 	}
 
@@ -15430,6 +15433,8 @@ LoadPackages()
 
 	. "$r_packages_pathfile"
 
+	r_name_migration_qpkgs=(Lidarr Medusa qBittorrent Readarr SickGear Sonarr Tautulli Transmission Watcher3 Whisparr)
+
 	# Fourth, lock list arrays and values.
 
 	readonly r_qpkg_abbrvs
@@ -15469,6 +15474,7 @@ LoadPackages()
 	readonly r_exclusion_pips
 	readonly r_min_perl_version
 	readonly r_min_python_version
+	readonly r_name_migration_qpkgs
 	readonly r_packages_epoch
 
 	DebugVar r_packages_epoch
