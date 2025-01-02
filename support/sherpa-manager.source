@@ -7616,9 +7616,9 @@ BuildQPKGsStates()
 	InitQPKGsStates
 
 	if IsOsStartingPackages; then
-		ShowAsNote "$(GetOsName) is starting QPKGs ... check again in a few minutes"
+		ShowAsNote "$(GetOsName) is starting QPKGs, check again in a few minutes"
 	elif IsOsStarting; then
-		ShowAsNote "$(GetOsName) is still booting ... check again in a few minutes"
+		ShowAsNote "$(GetOsName) is still booting, check again in a few minutes"
 	elif IsOsStopping; then
 		ShowAsNote "$(GetOsName) is shutting-down"
 	elif IsOsStoppingPackages; then
@@ -14808,7 +14808,7 @@ ShowAsActionLogDetail()
 						;;
 					*)
 						if IsQpkgDbWillLog "$2"; then
-							DisplayAsIndentActionResultDurationReason "$3" "$2 $package_type" "$5" "For more information: /etc/init.d/$(/usr/bin/basename "$(GetQpkgServicePathFile "$2")") log"
+							DisplayAsIndentActionResultDurationReason "$3" "$2 $package_type" "$5" "for more information: /etc/init.d/$(/usr/bin/basename "$(GetQpkgServicePathFile "$2")") log"
 						else
 							DisplayAsIndentActionResultDurationReason "$3" "$2 $package_type" "$5" "$6"
 						fi
