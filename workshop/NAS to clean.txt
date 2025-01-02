@@ -1,0 +1,7 @@
+NAS to clean all QPKGs:
+	helga
+	milla
+	laura
+	siena
+
+... then check for built wheels.
