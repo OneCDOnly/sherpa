@@ -13438,14 +13438,18 @@ AddPeriod()
 Uppercase()
 	{
 
-	tr 'a-z' 'A-Z' <<< "${1:-}"
+	[[ -n ${1:-} ]] || return
+
+	tr 'a-z' 'A-Z' <<< "$1"
 
 	}
 
 Lowercase()
 	{
 
-	tr 'A-Z' 'a-z' <<< "${1:-}"
+	[[ -n ${1:-} ]] || return
+
+	tr 'A-Z' 'a-z' <<< "$1"
 
 	}
 
@@ -14518,7 +14522,7 @@ ShowAsProc()
 
 	# Inputs: (local)
 	#	$1 = task being carried-out.
-	#	$2 = trailing task (after the ellipsis) (optional). If specified, $useropt_terse will be ignored.
+	#	$2 = trailing task, shown after the ellipsis (optional). If specified, $useropt_terse will be ignored.
 
 	# Inputs: (global)
 	#	$r_inhibit_display_pathfile
@@ -14533,7 +14537,7 @@ ShowAsProc()
 	local c="$a ... $b"
 
 	if [[ -n ${r_inhibit_display_pathfile:-} && ! -e $r_inhibit_display_pathfile ]]; then
-		if [[ ${useropt_verbose:=false} = false && ${useropt_terse:=true} = true ]] || [[ ${useropt_verbose:=false} = false && -n ${2:-} ]]; then
+		if [[ ${useropt_verbose:=false} = false && ${useropt_terse:=true} = true ]] || [[ ${useropt_verbose:=false} = false && -n $b ]]; then
 			OpStepClearWait "$(TextBrightYellow proc)" "$c"
 		else
 			OpStepClear "$(TextBrightYellow proc)" "$c"
