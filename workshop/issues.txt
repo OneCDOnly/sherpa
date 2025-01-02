@@ -1,5 +1,8 @@
 Observed issues:
 
+	* Slight pause before on-screen messages are shown on slower NAS models under heavier load.
+		- This happens before 'proc: args ...' is shown.
+
 	* Service-script daemon PID shown twice consecutively during 'clean' action:
 		--------------------------------------------------------------------------------------------------
 		[/share/Public] # /etc/init.d/sabnzbd.sh clean
