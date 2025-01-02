@@ -1,3 +1,6 @@
+* When package actions are in-progress and user SIGINT, abort remaining actions, then show regular results report.
+	- Must show which actions completed before SIGINT, and which had to be aborted.
+
 * Rename 'O' QPKGs:
 	# QPKGs to migrate from leading-'O'.
 
