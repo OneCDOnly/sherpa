@@ -459,7 +459,7 @@ LocateSQLiteBinary()
 		[[ -e $sqlite_pathfile ]] && sqlite_cmd=$sqlite_pathfile
 	fi
 
-	# If that can't be found, then try several other locations...
+	# If that can't be found, then try several other locations ...
 
 	# These use a specific path to the binary:
 	#	HybridBackup = `Hybrid Backup Sync`
@@ -5965,7 +5965,7 @@ FormatReportField()
 
 	# Inputs: (local)
 	#	$1 = field text
-	# 	$2 (optional) = type of field prefix to generate ('attention', 'alert', 'blank', etc...)
+	# 	$2 (optional) = type of field prefix to generate ('attention', 'alert', 'blank', etc ...)
 
 	# Inputs: (global)
 	#	$r_chars_alert
@@ -8677,7 +8677,7 @@ ShowQPKGList()
 	{
 
 	# Inputs: (local)
-	#	$1 = state or group list object name ('ISbackedup', 'ISNTbackedup', 'GRall', etc...)
+	#	$1 = state or group list object name ('ISbackedup', 'ISNTbackedup', 'GRall', etc ...)
 
 	[[ -n ${1:-} ]] || return
 
@@ -14760,7 +14760,7 @@ ShowAsActionLogDetail()
 	#   $4 = result							'ok', 'skipped-ok', 'skipped', 'failed'
 	#   $5 = duration in milliseconds
 	#   $6 = reason (optional)				"file already exists in local cache"
-	#   $7 = package type					'QPKG', 'IPK', etc...
+	#   $7 = package type					'QPKG', 'IPK', etc ...
 	#   $8 = quantity 						number of packages affected.
 
 	if [[ ${2:-undefined} = undefined ]]; then
