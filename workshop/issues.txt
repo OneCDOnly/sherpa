@@ -1,5 +1,11 @@
 Observed issues:
 
+	* Tableise() needs to support a new arg to change format of a single column.
+		- Needed for backup files report. Second column is filesize, which should be shown right-justified.
+
+	* Slight pause before on-screen messages are shown on slower NAS models under heavier load.
+		- This happens before 'proc: args ...' is shown.
+
 	* Service-script daemon PID shown twice consecutively during 'clean' action:
 		--------------------------------------------------------------------------------------------------
 		[/share/Public] # /etc/init.d/sabnzbd.sh clean

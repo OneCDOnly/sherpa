@@ -386,9 +386,11 @@ LoadCMDs()
 	# Cherry-pick Entware binaries.
 
 	readonly r_gnu_awk_cmd=/opt/bin/awk
+	readonly r_gnu_dd_cmd=/opt/bin/dd
 	readonly r_gnu_find_cmd=/opt/bin/find
 	readonly r_gnu_grep_cmd=/opt/bin/grep
 	readonly r_gnu_less_cmd=/opt/bin/less
+	readonly r_gnu_nice_cmd=/opt/bin/nice
 	readonly r_gnu_sleep_cmd=/opt/bin/sleep
 	readonly r_gnu_stty_cmd=/opt/bin/stty
 	readonly r_gnu_timeout_cmd=/opt/bin/timeout
@@ -424,6 +426,7 @@ CMDsIsOk()
 	IsSysFileExist /usr/sbin/screen || return
 	# `/bin/sed` has already been called before arriving here.
 	IsSysFileExist /bin/sh || return
+	IsSysFileExist /bin/sha1sum || return
 	# `/bin/sleep` has already been called before arriving here.
 	[[ ! -e /usr/bin/sort ]] && ln -s /bin/busybox /usr/bin/sort		# KLUDGE: `/usr/bin/sort` randomly disappears from QTS.
 	IsSysFileExist /usr/bin/tail || return
@@ -459,7 +462,7 @@ LocateSQLiteBinary()
 		[[ -e $sqlite_pathfile ]] && sqlite_cmd=$sqlite_pathfile
 	fi
 
-	# If that can't be found, then try several other locations...
+	# If that can't be found, then try several other locations ...
 
 	# These use a specific path to the binary:
 	#	HybridBackup = `Hybrid Backup Sync`
@@ -825,6 +828,18 @@ DebugLogEnv()
 		DebugOS ok 'load averages' "$(GetOsSysLoadAverages)"
 	fi
 
+	DebugStorage ok 'default volume' "$(GetUserDefVol)"
+	DebugStorage ok 'write benchmark' "$(GetHardwareVolumeBenchmark)"
+	DebugStorage ok /opt "$(/usr/bin/readlink /opt 2> /dev/null || printf 'not present')"
+
+	local public_share=$(/sbin/getcfg SHARE_DEF defPublic -d Qpublic -f /etc/config/def_share.info)
+
+	if [[ -L /share/$public_share ]]; then
+		DebugStorage ok "'$public_share' share" /share/$public_share
+	else
+		DebugStorage warning "'$public_share' share" 'not present'
+	fi
+
 	DebugUserspace ok libc "$(GetUserLIBC)"
 	DebugUserspace ok 'libc copyright' "$(GetUserLIBCCopyright)"
 
@@ -835,18 +850,6 @@ DebugLogEnv()
 	fi
 
 	DebugUserspace ok '$EUID' "$EUID"
-	DebugUserspace ok 'default volume' "$(GetUserDefVol)"
-	DebugUserspace ok 'write benchmark' "$(GetHardwareVolumeBenchmark)"
-	DebugUserspace ok /opt "$(/usr/bin/readlink /opt 2> /dev/null || printf 'not present')"
-
-	local public_share=$(/sbin/getcfg SHARE_DEF defPublic -d Qpublic -f /etc/config/def_share.info)
-
-	if [[ -L /share/$public_share ]]; then
-		DebugUserspace ok "'$public_share' share" /share/$public_share
-	else
-		DebugUserspace warning "'$public_share' share" 'not present'
-	fi
-
 	DebugUserspace ok '$SHELL' "$(GetShell)"
 	DebugShell ok version "$(GetShellVersion)"
 	DebugShell ok copyright "$(GetShellCopyright)"
@@ -1021,7 +1024,7 @@ CheckEnv()
 	local target_packages=''
 
 	if [[ $(/bin/grep -iE 'out of memory|oom-killer' /mnt/HDA_ROOT/.logs/kmsg | /usr/bin/wc -l) -gt 0 ]]; then
-		ShowAsWarn "the $(TextBrightRed 'Out-Of-Memory killer') has been triggered ... check for $(TextBrightRed inactive) QPKGs"
+		ShowAsWarn "the $(TextBrightRed 'Out-Of-Memory killer') has been triggered, check for $(TextBrightRed inactive) QPKGs"
 	fi
 
 	if IsQpkgInstalled Entware; then
@@ -5965,7 +5968,7 @@ FormatReportField()
 
 	# Inputs: (local)
 	#	$1 = field text
-	# 	$2 (optional) = type of field prefix to generate ('attention', 'alert', 'blank', etc...)
+	# 	$2 (optional) = type of field prefix to generate ('attention', 'alert', 'blank', etc ...)
 
 	# Inputs: (global)
 	#	$r_chars_alert
@@ -7616,9 +7619,9 @@ BuildQPKGsStates()
 	InitQPKGsStates
 
 	if IsOsStartingPackages; then
-		ShowAsNote "$(GetOsName) is starting QPKGs ... check again in a few minutes"
+		ShowAsNote "$(GetOsName) is starting QPKGs, check again in a few minutes"
 	elif IsOsStarting; then
-		ShowAsNote "$(GetOsName) is still booting ... check again in a few minutes"
+		ShowAsNote "$(GetOsName) is still booting, check again in a few minutes"
 	elif IsOsStopping; then
 		ShowAsNote "$(GetOsName) is shutting-down"
 	elif IsOsStoppingPackages; then
@@ -8677,7 +8680,7 @@ ShowQPKGList()
 	{
 
 	# Inputs: (local)
-	#	$1 = state or group list object name ('ISbackedup', 'ISNTbackedup', 'GRall', etc...)
+	#	$1 = state or group list object name ('ISbackedup', 'ISNTbackedup', 'GRall', etc ...)
 
 	[[ -n ${1:-} ]] || return
 
@@ -8972,13 +8975,13 @@ GetHardwareCPUBenchmark()
 	local -i b=16		# Maximum time to run is around 1 second on my slowest NAS (TS-220).
 	local -i c=-20		# Run benchmark with highest priority.
 
-	if [[ -e /opt/bin/dd && -e /bin/sha1sum ]]; then
-		if [[ -e /opt/bin/nice ]]; then
-			a=$({ /opt/bin/nice -$c /opt/bin/dd if=/dev/zero bs=1MB count=$b | /bin/sha1sum > /dev/null; } 2>&1)
+	if [[ -e $r_gnu_dd_cmd ]]; then
+		if [[ -e $r_gnu_nice_cmd ]]; then
+			a=$({ $r_gnu_nice_cmd -$c $r_gnu_dd_cmd if=/dev/zero bs=1MB count=$b | /bin/sha1sum > /dev/null; } 2>&1)
 		elif [[ -e /bin/renice ]]; then
 			/bin/renice $c $$ &> /dev/null
 
-			a=$({ /opt/bin/dd if=/dev/zero bs=1MB count=$b | /bin/sha1sum > /dev/null; } 2>&1)
+			a=$({ $r_gnu_dd_cmd if=/dev/zero bs=1MB count=$b | /bin/sha1sum > /dev/null; } 2>&1)
 
 			/bin/renice 0 $$ &> /dev/null
 		fi
@@ -9009,13 +9012,13 @@ GetHardwareVolumeBenchmark()
 	if [[ -d $(/usr/bin/dirname "$d") ]]; then
 		[[ -e $d ]] && rm -f "$d"
 
-		if [[ -e /opt/bin/dd && -e /bin/sha1sum ]]; then
-			if [[ -e /opt/bin/nice ]]; then
-				a=$(/opt/bin/nice -$c /opt/bin/dd if=/dev/zero of=$d bs=8k count=$b 2>&1)
+		if [[ -e $r_gnu_dd_cmd ]]; then
+			if [[ -e $r_gnu_nice_cmd ]]; then
+				a=$($r_gnu_nice_cmd -$c $r_gnu_dd_cmd if=/dev/zero of=$d bs=8k count=$b 2>&1)
 			elif [[ -e /bin/renice ]]; then
 				/bin/renice $c $$ &> /dev/null
 
-				a=$(/opt/bin/dd if=/dev/zero of=$d bs=8k count=$b 2>&1)
+				a=$($r_gnu_dd_cmd if=/dev/zero of=$d bs=8k count=$b 2>&1)
 
 				/bin/renice 0 $$ &> /dev/null
 			fi
@@ -13438,14 +13441,18 @@ AddPeriod()
 Uppercase()
 	{
 
-	tr 'a-z' 'A-Z' <<< "${1:-}"
+	[[ -n ${1:-} ]] || return
+
+	tr 'a-z' 'A-Z' <<< "$1"
 
 	}
 
 Lowercase()
 	{
 
-	tr 'A-Z' 'a-z' <<< "${1:-}"
+	[[ -n ${1:-} ]] || return
+
+	tr 'A-Z' 'a-z' <<< "$1"
 
 	}
 
@@ -13834,6 +13841,18 @@ DebugUserspace()
 	#	$3 = value
 
 	DebugItem "$1" userspace "$2" "$3"
+
+	}
+
+DebugStorage()
+	{
+
+	# Inputs: (local)
+	#	$1 = type
+	#	$2 = name
+	#	$3 = value
+
+	DebugItem "$1" storage "$2" "$3"
 
 	}
 
@@ -14518,7 +14537,7 @@ ShowAsProc()
 
 	# Inputs: (local)
 	#	$1 = task being carried-out.
-	#	$2 = trailing task (after the ellipsis) (optional). If specified, $useropt_terse will be ignored.
+	#	$2 = trailing task, shown after the ellipsis (optional). If specified, $useropt_terse will be ignored.
 
 	# Inputs: (global)
 	#	$r_inhibit_display_pathfile
@@ -14533,7 +14552,7 @@ ShowAsProc()
 	local c="$a ... $b"
 
 	if [[ -n ${r_inhibit_display_pathfile:-} && ! -e $r_inhibit_display_pathfile ]]; then
-		if [[ ${useropt_verbose:=false} = false && ${useropt_terse:=true} = true ]] || [[ ${useropt_verbose:=false} = false && -n ${2:-} ]]; then
+		if [[ ${useropt_verbose:=false} = false && ${useropt_terse:=true} = true ]] || [[ ${useropt_verbose:=false} = false && -n $b ]]; then
 			OpStepClearWait "$(TextBrightYellow proc)" "$c"
 		else
 			OpStepClear "$(TextBrightYellow proc)" "$c"
@@ -14760,7 +14779,7 @@ ShowAsActionLogDetail()
 	#   $4 = result							'ok', 'skipped-ok', 'skipped', 'failed'
 	#   $5 = duration in milliseconds
 	#   $6 = reason (optional)				"file already exists in local cache"
-	#   $7 = package type					'QPKG', 'IPK', etc...
+	#   $7 = package type					'QPKG', 'IPK', etc ...
 	#   $8 = quantity 						number of packages affected.
 
 	if [[ ${2:-undefined} = undefined ]]; then
@@ -14808,7 +14827,7 @@ ShowAsActionLogDetail()
 						;;
 					*)
 						if IsQpkgDbWillLog "$2"; then
-							DisplayAsIndentActionResultDurationReason "$3" "$2 $package_type" "$5" "For more information: /etc/init.d/$(/usr/bin/basename "$(GetQpkgServicePathFile "$2")") log"
+							DisplayAsIndentActionResultDurationReason "$3" "$2 $package_type" "$5" "for more information: /etc/init.d/$(/usr/bin/basename "$(GetQpkgServicePathFile "$2")") log"
 						else
 							DisplayAsIndentActionResultDurationReason "$3" "$2 $package_type" "$5" "$6"
 						fi

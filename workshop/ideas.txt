@@ -1,3 +1,6 @@
+* When package actions are in-progress and user SIGINT, abort remaining actions, then show regular results report.
+	- Must show which actions completed before SIGINT, and which had to be aborted.
+
 * Rename 'O' QPKGs:
 	# QPKGs to migrate from leading-'O'.
 
@@ -94,27 +97,6 @@
 
 * In production, sherpa 'stable' branch should only update once per-day.
     - 'unstable' should update once per 10 minutes.
-
-* Examine TS-231 QTS executables with 'file'.
-    - In what way are they different to x41 executables?
-
-	x31:
-		-------------------------------------------------------------------------------------------------------------------------
-		[/sbin] # file getcfg
-		getcfg: ELF 32-bit LSB executable, ARM, EABI5 version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux.so.3, for GNU/Linux 2.6.16, stripped
-		-------------------------------------------------------------------------------------------------------------------------
-		[/sbin] # cat /etc/platform.conf
-		Platform = ARM_MS
-		-------------------------------------------------------------------------------------------------------------------------
-
-	x41:
-		-------------------------------------------------------------------------------------------------------------------------
-		[/sbin] # file getcfg
-		getcfg: ELF 32-bit LSB executable, ARM, EABI5 version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux-armhf.so.3, for GNU/Linux 3.1.1, BuildID[sha1]=5ffd3652ef380f1a3665b325f0a171e3e34fca7a, stripped
-		-------------------------------------------------------------------------------------------------------------------------
-		[/sbin] # cat /etc/platform.conf
-		Platform = ARM_AL
-		-------------------------------------------------------------------------------------------------------------------------
 
 * QDK looks like it will now write installation scripts that extract to unique paths.
 	- Should now be able to install more than one QPKG simultaneously. https://github.com/qnap-dev/QDK/commit/f1eaf3bf0a9547d449592369e555cdfd6cc3c405
