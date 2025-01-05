@@ -15452,7 +15452,7 @@ LoadPackages()
 
 	. "$r_packages_pathfile"
 
-	r_name_migration_qpkgs=(Lidarr Medusa qBittorrent Readarr SickGear Sonarr Tautulli Transmission Watcher3 Whisparr)
+	r_qpkgs_name_migration=(Lidarr Medusa qBittorrent Readarr SickGear Sonarr Tautulli Transmission Watcher3 Whisparr)
 
 	# Fourth, lock list arrays and values.
 
@@ -15493,8 +15493,8 @@ LoadPackages()
 	readonly r_exclusion_pips
 	readonly r_min_perl_version
 	readonly r_min_python_version
-	readonly r_name_migration_qpkgs
 	readonly r_packages_epoch
+	readonly r_qpkgs_name_migration
 
 	DebugVar r_packages_epoch
 
