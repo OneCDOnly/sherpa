@@ -13219,7 +13219,7 @@ LoadQpkgSigningCertDetails()
 	r_qpkg_signature=''
 
 	# This certificate block is the same used by QNAP for Download Station 5.9.0.272
-	# Expires 11th October 2027.
+	# Expires: 11th October 2027
 
 	read -r -d '' r_qpkg_certificate << EOB
 -----BEGIN CERTIFICATE-----
@@ -13248,7 +13248,7 @@ Ij1A6hFRu9wdulkzQlp43rmD30Eloq7mJFlgXX3mSfAa6DyWuYych75cnSbNn5VP
 EOB
 
 	# This digital signature block is the same used by QNAP for Download Station 5.9.0.272
-	# Expires 11th October 2027.
+	# Expires: 11th October 2027
 
 	read -r -d '' r_qpkg_signature << EOB
 MIME-Version: 1.0
