@@ -240,7 +240,6 @@ LoadConsts()
 	readonly r_debug_log_full_width=100
 	readonly r_debug_log_first_column_width=9
 	readonly r_debug_log_second_column_width=20
-# 		readonly r_debug_log_third_column_width=$((r_debug_log_full_width-r_debug_log_first_column_width-r_debug_log_second_column_width-4))
 	readonly r_help_desc_indent=3
 	readonly r_help_syntax_indent=6
 	readonly r_report_action_result_indent=6
@@ -537,13 +536,7 @@ LoadEnv()
 	readonly r_cpu_cores=$(GetHardwareCPUCores)
 		readonly r_concurrency=$r_cpu_cores			# Maximum concurrent package actions to run. Should probably make this account for CPU speed too.
 	readonly r_entware_type=$(GetQpkgEntwareType)
-	readonly r_kernel_page_size=$(GetOsKernelPageSize)
-	readonly r_nas_arch=$(GetOsArch)
-	readonly r_nas_firmware_build=$(GetOsFirmwareBuild)
-	readonly r_nas_firmware_date=$(GetOsFirmwareDate)
-	readonly r_nas_firmware_version=$(GetOsFirmwareVer)
 	readonly r_nas_platform=$(GetHardwarePlatform)
-	readonly r_nas_qpkg_arch=$(GetQpkgArch)
 	readonly r_nas_ram_kb=$(GetHardwareInstalledRAM)
 	readonly r_os_upstate=$(GetOsState)
 	readonly r_this_package_ver=$(GetQpkgInstalledVer)
@@ -781,6 +774,8 @@ DebugLogEnv()
 		useropt_verbose=true
 	fi
 
+	SetNasArch
+
 	DebugHardware ok 'NAS model' "$(get_display_name)"
 	DebugHardware ok CPU "$(GetHardwareCPUInfo)"
 	DebugHardware ok 'CPU cores' "$r_cpu_cores"
@@ -798,11 +793,16 @@ DebugLogEnv()
 
 	DebugFirmware ok OS "$(GetOsName)"
 
+	SetOsFirmwareVersion
+	SetOsFirmwareBuild
+
 	if IsOsSupported; then
 		DebugFirmware ok version "$r_nas_firmware_version.$r_nas_firmware_build"
 	else
 		DebugFirmware warning version "$r_nas_firmware_version"
 	fi
+
+	SetOsFirmwareDate
 
 	if IsOsCompatibleWithSigned; then
 		DebugFirmware ok 'build date' "$(ConvertAsSmartDate "$r_nas_firmware_date")"
@@ -832,12 +832,12 @@ DebugLogEnv()
 	DebugStorage ok 'write benchmark' "$(GetHardwareVolumeBenchmark)"
 	DebugStorage ok /opt "$(/usr/bin/readlink /opt 2> /dev/null || printf 'not present')"
 
-	local public_share=$(/sbin/getcfg SHARE_DEF defPublic -d Qpublic -f /etc/config/def_share.info)
+	local public_share_name=$(/sbin/getcfg SHARE_DEF defPublic -d Qpublic -f /etc/config/def_share.info)
 
-	if [[ -L /share/$public_share ]]; then
-		DebugStorage ok "'$public_share' share" /share/$public_share
+	if [[ -L /share/$public_share_name ]]; then
+		DebugStorage ok "'$public_share_name' share" /share/$public_share_name
 	else
-		DebugStorage warning "'$public_share' share" 'not present'
+		DebugStorage warning "'$public_share_name' share" 'not present'
 	fi
 
 	DebugUserspace ok libc "$(GetUserLIBC)"
@@ -883,14 +883,18 @@ DebugLogEnv()
 		DebugQpkg detect 'allow unsigned' N/A
 	fi
 
+	SetQpkgArch
+
 	DebugQpkg detect architecture "$r_nas_qpkg_arch"
 	DebugQpkg detect "$(FormatPackageName Entware) type" "$r_entware_type"
 	DebugQpkg detect "$(FormatPackageName Entware) install date" "$(ConvertAsSmartDate "$(GetQpkgInstalledDate Entware)")"
 
+	SetOsFirmwareVer
+
 	if IsQpkgReallyInstalled SortMyQPKGs; then
 		DebugQpkg detect "$(FormatPackageName SortMyQPKGs)" installed
 	else
-		if [[ ${r_nas_firmware_version//.} -lt 400 || ${r_nas_firmware_version//.} -ge 520 ]]; then
+		if [[ $r_nas_firmware_ver -lt 400 || $r_nas_firmware_ver -ge 520 ]]; then
 			DebugQpkg detect "$(FormatPackageName SortMyQPKGs)" 'not installed'
 		else
 			DebugQpkg warning "$(FormatPackageName SortMyQPKGs)" 'not installed'
@@ -1053,6 +1057,8 @@ CheckEnv()
 		fi
 
 		# Decide if specific IPKs should be uninstalled/downgraded.
+
+		SetQpkgArch
 
 		case $r_nas_qpkg_arch in
 			a41)
@@ -3865,6 +3871,7 @@ IPKs:downgrade()
 		log_pathfile=$r_logs_path/ipks.$r_download_log_file
 
 		ShowAsProc "download $desc"
+		SetQpkgArch
 
 		case $r_nas_qpkg_arch in
 			a41)
@@ -9037,7 +9044,7 @@ GetHardwareVolumeBenchmark()
 
 	}
 
-GetOsArch()
+GetNasArch()
 	{
 
 	/bin/uname -m
@@ -9285,17 +9292,34 @@ GetHardwareCPUCores()
 GetHardwareInstalledRAM()
 	{
 
+	# Outputs: (local)
+	#	stdout = text string.
+
 	/bin/grep MemTotal /proc/meminfo | /bin/sed 's|.*: ||;s|kB||;s| ||g'
+
+	}
+
+GetOsFirmwareVersion()
+	{
+
+	# Outputs: (local)
+	#	stdout = text string.
+	#   $? = 0 if found, 250 if not.
+
+	/sbin/getcfg System Version -d undefined -f /etc/config/uLinux.conf
 
 	}
 
 GetOsFirmwareVer()
 	{
 
+	# Same as firmware version, but an integer-only (no periods).
+
 	# Outputs: (local)
+	#	stdout = integer.
 	#   $? = 0 if found, 250 if not.
 
-	/sbin/getcfg System Version -d undefined -f /etc/config/uLinux.conf
+	/sbin/getcfg System Version -d undefined -f /etc/config/uLinux.conf | tr -d '.'
 
 	}
 
@@ -9303,6 +9327,7 @@ GetOsFirmwareBuild()
 	{
 
 	# Outputs: (local)
+	#	stdout = text string.
 	#   $? = 0 if found, 250 if not.
 
 	/sbin/getcfg System Number -d undefined -f /etc/config/uLinux.conf
@@ -9313,6 +9338,7 @@ GetOsFirmwareDate()
 	{
 
 	# Outputs: (local)
+	#	stdout = text string.
 	#   $? = 0 if found, 250 if not.
 
 	/sbin/getcfg System 'Build Number' -d undefined -f /etc/config/uLinux.conf
@@ -9321,6 +9347,9 @@ GetOsFirmwareDate()
 
 GetOsName()
 	{
+
+	# Outputs: (local)
+	#	stdout = text string.
 
 	if IsQuTS; then
 		printf 'QuTS hero'
@@ -9339,7 +9368,7 @@ GetQpkgArch()
 
 	# Inputs: (global)
 	#	$r_nas_arch
-	#	$r_nas_firmware_version
+	#	$r_nas_firmware_ver
 	#	$r_nas_platform
 
 	# Outputs: (local)
@@ -9350,9 +9379,12 @@ GetQpkgArch()
 		return
 	fi
 
+	SetNasArch
+	SetOsFirmwareVer
+
 	case $r_nas_arch in
 		x86_64)
-			[[ ${r_nas_firmware_version//.} -ge 430 ]] && printf i64 || printf i86
+			[[ $r_nas_firmware_ver -ge 430 ]] && printf i64 || printf i86
 			;;
 		i686|x86)
 			printf i86
@@ -9487,11 +9519,13 @@ IsOsSupported()
 	{
 
 	# Inputs: (global)
-	#	$r_nas_firmware_version
+	#	$r_nas_firmware_ver
 
-	# Unable to test firmwares any earlier than 4.2.6 (but still have 4.2.0 available for TS-559Pro+):
+	# Unable to test firmwares any earlier than 4.2.6 (but still have 4.2.0 available for TS-559Pro+ ).
 
-	[[ ${r_nas_firmware_version//.} -ge 400 ]]
+	SetOsFirmwareVer
+
+	[[ $r_nas_firmware_ver -ge 400 ]]
 
 	} &> /dev/null
 
@@ -9499,9 +9533,11 @@ IsOsCanAsyncQpkgActions()
 	{
 
 	# Inputs: (global)
-	#	$r_nas_firmware_version
+	#	$r_nas_firmware_ver
 
-	[[ ${r_nas_firmware_version//.} -ge 520 ]]
+	SetOsFirmwareVer
+
+	[[ $r_nas_firmware_ver -ge 520 ]]
 
 	} &> /dev/null
 
@@ -9518,9 +9554,11 @@ IsOsCanSecureDownload()
 	# 		QTS 4.5.4.2627
 
 	# Inputs: (global)
-	#	$r_nas_firmware_version
+	#	$r_nas_firmware_ver
 
-	[[ ${r_nas_firmware_version//.} -ge 455 ]]
+	SetOsFirmwareVer
+
+	[[ $r_nas_firmware_ver -ge 455 ]]
 
 	} &> /dev/null
 
@@ -9528,9 +9566,11 @@ IsOsCanQpkgTimeout()
 	{
 
 	# Inputs: (global)
-	#	$r_nas_firmware_version
+	#	$r_nas_firmware_ver
 
-	[[ ${r_nas_firmware_version//.} -ge 430 ]]
+	SetOsFirmwareVer
+
+	[[ $r_nas_firmware_ver -ge 430 ]]
 
 	} &> /dev/null
 
@@ -9538,23 +9578,13 @@ IsOsCanSignedPackages()
 	{
 
 	# Inputs: (global)
-	#	$r_nas_firmware_version
+	#	$r_nas_firmware_ver
 
-	# NOTE: signing failed on QTS 4.3.6 (x31). No cert database.
+	# NOTE: signing fails on QTS 4.3.6 (x31). No cert database (appears to be a bug as 4.3.6 is supposed to support signed QPKGs).
 
-	[[ ${r_nas_firmware_version//.} -ge 437 ]]
+	SetOsFirmwareVer
 
-	} &> /dev/null
-
-IsOsCompatibleWithSigned()
-	{
-
-	# Inputs: (global)
-	#	$r_nas_firmware_date
-
-	# QTS builds released over these 6 days don't allow unsigned QPKGs to run at-all:
-
-	[[ $r_nas_firmware_date -lt 20201015 || $r_nas_firmware_date -gt 20201020 ]]
+	[[ $r_nas_firmware_ver -ge 437 ]]
 
 	} &> /dev/null
 
@@ -9562,11 +9592,13 @@ IsOsCanUnofficialPackages()
 	{
 
 	# Inputs: (global)
-	#	$r_nas_firmware_version
+	#	$r_nas_firmware_ver
 
 	# Must check for "official QPKGs" on QTS 4.3.3 to QTS 4.3.6:
 
-	[[ ${r_nas_firmware_version//.} -gt 426 && ${r_nas_firmware_version//.} -le 436 ]]
+	SetOsFirmwareVer
+
+	[[ $r_nas_firmware_ver -gt 426 && $r_nas_firmware_ver -le 436 ]]
 
 	} &> /dev/null
 
@@ -9604,6 +9636,20 @@ IsOsCanAutowidthTableColumns()
 	[[ -e $r_gnu_awk_cmd ]]
 
 	}
+
+IsOsCompatibleWithSigned()
+	{
+
+	# Inputs: (global)
+	#	$r_nas_firmware_date
+
+	# QTS builds released over these 6 days don't allow unsigned QPKGs to run at-all:
+
+	SetOsFirmwareDate
+
+	[[ $r_nas_firmware_date -lt 20201015 || $r_nas_firmware_date -gt 20201020 ]]
+
+	} &> /dev/null
 
 IsOsAllowUnsignedPackages()
 	{
@@ -9667,7 +9713,9 @@ IsOsStdKernelPageSize()
 	# Outputs: (global)
 	#	$r_kernel_page_size
 
-	[[ ${r_kernel_page_size:=$(GetOsKernelPageSize)} = 4096B || $r_kernel_page_size = 4kiB ]]
+	SetOsKernelPageSize
+
+	[[ $r_kernel_page_size = 4096B || $r_kernel_page_size = 4kiB ]]
 
 	}
 
@@ -9713,6 +9761,28 @@ IsOsLoadAverageAboveTrigger()
 	local c=$((r_cpu_cores*a*100))
 
 	[[ $((10#$b)) -ge $((10#$c)) ]]
+
+	}
+
+IsOsSedExtRegexSupported()
+	{
+
+	# Inputs: (global)
+	#	$sed_ext_regex_supported
+
+	[[ ${sed_ext_regex_supported-unset} = unset ]] && SetOsSedRegexSupport
+	[[ $sed_ext_regex_supported -eq 0 ]]
+
+	}
+
+IsOsDecimalSleepSecondsSupported()
+	{
+
+	# Inputs: (global)
+	#	$sleep_decimal_seconds_supported
+
+	[[ ${sleep_decimal_seconds_supported-unset} = unset ]] && SetOsDecimalSleepSecondsSupport
+	[[ $sleep_decimal_seconds_supported -eq 0 ]]
 
 	}
 
@@ -11676,6 +11746,8 @@ GetQpkgDbURL()
 	local a=''
 	local -i i=0
 
+	SetQpkgArch
+
 	if [[ -n ${1:-} ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
 			if [[ ${r_qpkg_name[$i]} = "$1" ]] && [[ ${r_qpkg_arch[$i]} = all || ${r_qpkg_arch[$i]} = "$r_nas_qpkg_arch" ]]; then
@@ -12446,6 +12518,7 @@ SetQpkgIndex()
 	[[ -n ${qpkg_name:-} ]] || return
 
 	SetQpkgDefaultIndex
+	SetQpkgArch
 
 	for qpkg_index in "${!r_qpkg_name[@]}"; do
 		[[ ${r_qpkg_name[$qpkg_index]} = "$qpkg_name" ]] || continue
@@ -12690,7 +12763,7 @@ IsQpkgDbMinOSVerOk()
 	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
-	#	$r_nas_firmware_version
+	#	$r_nas_firmware_ver
 	#	$qpkg_name (default for $1)
 
 	# Outputs: (local)
@@ -12698,7 +12771,9 @@ IsQpkgDbMinOSVerOk()
 
 	local a=$(GetQpkgDbMinOSVer "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
 
-	[[ -n $a ]] && [[ $a = none || ${r_nas_firmware_version//.} -ge $a ]]
+	SetOsFirmwareVer
+
+	[[ -n $a ]] && [[ $a = none || $r_nas_firmware_ver -ge $a ]]
 
 	}
 
@@ -12711,7 +12786,7 @@ IsQpkgDbMaxOSVerOk()
 	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
-	#	$r_nas_firmware_version
+	#	$r_nas_firmware_ver
 	#	$qpkg_name (default for $1)
 
 	# Outputs: (local)
@@ -12719,7 +12794,9 @@ IsQpkgDbMaxOSVerOk()
 
 	local a=$(GetQpkgDbMaxOSVer "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
 
-	[[ -n $a ]] && [[ $a = none || ${r_nas_firmware_version//.} -le $a ]]
+	SetOsFirmwareVer
+
+	[[ -n $a ]] && [[ $a = none || $r_nas_firmware_ver -le $a ]]
 
 	}
 
@@ -15147,15 +15224,18 @@ Tableise()
 StripANSICodes()
 	{
 
+	# Inputs: (local)
+	#	$1 = string containing ANSI codes.
+
 	# Inputs: (global)
 	#	$sed_ext_regex_supported
 
-	# Outputs: (global)
-	#	$sed_ext_regex_supported
+	# Ouputs: (local)
+	#	stdout = string without ANSI codes.
 
 	# QTS 4.2.6 BusyBox `sed` doesn't fully support extended-regexes, so code-stripping only works with a real `sed`.
 
-	if [[ ${sed_ext_regex_supported:=false} = true ]]; then
+	if IsOsSedExtRegexSupported; then
 		echo -en "${1:-}" | /bin/sed -r 's/\x1b\[[0-9;]*m//g' 			# https://superuser.com/a/380778
 	elif [[ -e /opt/bin/sed && -L /opt/etc/passwd ]]; then				# Try to ensure Entware is active first.
 		echo -en "${1:-}" | /opt/bin/sed -r 's/\x1b\[[0-9;]*m//g' 		# https://superuser.com/a/380778
@@ -15169,8 +15249,8 @@ SetCapabilities()
 	{
 
 	SetColourisation
-	SetSedRexegSupport
-	SetSleepDecimalSecondsSupport
+	UpdateOsSedRegexSupport
+	UpdateOsDecimalSleepSupport
 
 	}
 
@@ -15195,23 +15275,119 @@ SetColourisation()
 
 	}
 
-SetSedRexegSupport()
+SetOsSedRegexSupport()
 	{
 
 	# Outputs: (global)
 	#	$sed_ext_regex_supported
 
-	IsOsCanSedExtRegex && sed_ext_regex_supported=true || sed_ext_regex_supported=false
+	IsOsCanSedExtRegex
+	sed_ext_regex_supported=$?
 
 	}
 
-SetSleepDecimalSecondsSupport()
+SetOsDecimalSleepSecondsSupport()
 	{
 
 	# Outputs: (global)
 	#	$sleep_decimal_seconds_supported
 
-	IsOsCanDecimalSleepSeconds && sleep_decimal_seconds_supported=true || sleep_decimal_seconds_supported=false
+	IsOsCanDecimalSleepSeconds
+	sleep_decimal_seconds_supported=$?
+
+	}
+
+SetNasArch()
+	{
+
+	# Outputs: (global)
+	#	$r_nas_arch
+
+	[[ ${r_nas_arch-unset} = unset ]] && readonly r_nas_arch=$(GetNasArch)
+
+	}
+
+SetQpkgArch()
+	{
+
+	# Outputs: (global)
+	#	$r_nas_qpkg_arch
+
+	[[ ${r_nas_qpkg_arch-unset} = unset ]] && readonly r_nas_qpkg_arch=$(GetQpkgArch)
+
+	}
+
+SetOsKernelPageSize()
+	{
+
+	# Outputs: (global)
+	#	$r_kernel_page_size
+
+	[[ ${r_kernel_page_size-unset} = unset ]] && readonly r_kernel_page_size=$(GetOsKernelPageSize)
+
+	}
+
+SetOsFirmwareVersion()
+	{
+
+	# Outputs: (global)
+	#	$r_nas_firmware_version
+
+	[[ ${r_nas_firmware_version-unset} = unset ]] && readonly r_nas_firmware_version=$(GetOsFirmwareVersion)
+
+	}
+
+SetOsFirmwareVer()
+	{
+
+	# Same as firmware version, but as an integer-only (no periods).
+
+	# Outputs: (global)
+	#	$r_nas_firmware_ver
+
+	[[ ${r_nas_firmware_ver-unset} = unset ]] && readonly r_nas_firmware_ver=$(GetOsFirmwareVer)
+
+	}
+
+SetOsFirmwareDate()
+	{
+
+	# Outputs: (global)
+	#	$r_nas_firmware_date
+
+	[[ ${r_nas_firmware_date-unset} = unset ]] && readonly r_nas_firmware_date=$(GetOsFirmwareDate)
+
+	}
+
+SetOsFirmwareBuild()
+	{
+
+	# Outputs: (global)
+	#	$r_nas_firmware_build
+
+	[[ ${r_nas_firmware_build-unset} = unset ]] && readonly r_nas_firmware_build=$(GetOsFirmwareBuild)
+
+	}
+
+UpdateOsSedRegexSupport()
+	{
+
+	# Outputs: (global)
+	#	$sed_ext_regex_supported
+
+	unset sed_ext_regex_supported
+	SetOsSedRegexSupport
+
+	}
+
+UpdateOsDecimalSleepSupport()
+	{
+
+	# Outputs: (global)
+	#	$sleep_decimal_seconds_supported
+
+	unset sleep_decimal_seconds_supported
+	SetOsDecimalSleepSecondsSupport
 
 	}
 
@@ -15261,16 +15437,12 @@ sleep()
 
 	# Inputs: (global)
 	#	$r_gnu_sleep_cmd
-	#	$sleep_decimal_seconds_supported
-
-	# Outputs: (global)
-	#	$sleep_decimal_seconds_supported
 
 	local n=${1:-}
 
 	[[ ${n//.} -eq 0 ]] && n=1
 
-	if [[ ${sleep_decimal_seconds_supported:=false} = true ]]; then
+	if IsOsDecimalSleepSecondsSupported; then
 		/bin/sleep "$n"
 	elif [[ -e $r_gnu_sleep_cmd && -L /opt/etc/passwd ]]; then  			# Try to ensure Entware is active first.
 		$r_gnu_sleep_cmd "$n"
