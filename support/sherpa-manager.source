@@ -533,11 +533,12 @@ LoadEnv()
 
 	qpkg_name=sherpa
 	readonly r_cert_db_pathfile=/etc/config/nas_sign_qpkg.db
-	readonly r_cpu_cores=$(GetHardwareCPUCores)
-		readonly r_concurrency=$r_cpu_cores			# Maximum concurrent package actions to run. Should probably make this account for CPU speed too.
+
+	SetHardwareCPUCores
+	SetHardwareInstalledRAM
+
+	readonly r_concurrency=$r_cpu_cores			# Maximum concurrent package actions to run. Should probably make this account for CPU speed too.
 	readonly r_entware_type=$(GetQpkgEntwareType)
-	readonly r_nas_platform=$(GetHardwarePlatform)
-	readonly r_nas_ram_kb=$(GetHardwareInstalledRAM)
 	readonly r_os_upstate=$(GetOsState)
 	readonly r_this_package_ver=$(GetQpkgInstalledVer)
 
@@ -809,6 +810,8 @@ DebugLogEnv()
 	else
 		DebugFirmware warning 'build date' "$(ConvertAsSmartDate "$r_nas_firmware_date")"
 	fi
+
+	SetHardwarePlatform
 
 	DebugFirmware ok platform "$r_nas_platform"
 
@@ -9753,9 +9756,6 @@ IsOsLoadAverageAboveTrigger()
 	# Inputs: (local)
 	#	$1 = multiplier
 
-	# Inputs: (global)
-	#	$r_cpu_cores
-
 	local a=${1:-1}
 	local b=$(GetOsSysLoad1MinAverage); b=${b/./}
 	local c=$((r_cpu_cores*a*100))
@@ -15245,6 +15245,36 @@ StripANSICodes()
 
 	} 2> /dev/null
 
+SetHardwareCPUCores()
+	{
+
+	# Outputs: (global)
+	#	$r_cpu_cores
+
+	[[ ${r_cpu_cores-unset} = unset ]] && readonly r_cpu_cores=$(GetHardwareCPUCores)
+
+	}
+
+SetHardwareInstalledRAM()
+	{
+
+	# Outputs: (global)
+	#	$r_nas_ram_kb
+
+	[[ ${r_nas_ram_kb-unset} = unset ]] && readonly r_nas_ram_kb=$(GetHardwareInstalledRAM)
+
+	}
+
+SetHardwarePlatform()
+	{
+
+	# Outputs: (global)
+	#	$r_nas_platform
+
+	[[ ${r_nas_platform-unset} = unset ]] && readonly r_nas_platform=$(GetHardwarePlatform)
+
+	}
+
 SetCapabilities()
 	{
 
@@ -15297,26 +15327,6 @@ SetOsDecimalSleepSecondsSupport()
 
 	}
 
-SetNasArch()
-	{
-
-	# Outputs: (global)
-	#	$r_nas_arch
-
-	[[ ${r_nas_arch-unset} = unset ]] && readonly r_nas_arch=$(GetNasArch)
-
-	}
-
-SetQpkgArch()
-	{
-
-	# Outputs: (global)
-	#	$r_nas_qpkg_arch
-
-	[[ ${r_nas_qpkg_arch-unset} = unset ]] && readonly r_nas_qpkg_arch=$(GetQpkgArch)
-
-	}
-
 SetOsKernelPageSize()
 	{
 
@@ -15366,6 +15376,26 @@ SetOsFirmwareBuild()
 	#	$r_nas_firmware_build
 
 	[[ ${r_nas_firmware_build-unset} = unset ]] && readonly r_nas_firmware_build=$(GetOsFirmwareBuild)
+
+	}
+
+SetNasArch()
+	{
+
+	# Outputs: (global)
+	#	$r_nas_arch
+
+	[[ ${r_nas_arch-unset} = unset ]] && readonly r_nas_arch=$(GetNasArch)
+
+	}
+
+SetQpkgArch()
+	{
+
+	# Outputs: (global)
+	#	$r_nas_qpkg_arch
+
+	[[ ${r_nas_qpkg_arch-unset} = unset ]] && readonly r_nas_qpkg_arch=$(GetQpkgArch)
 
 	}
 
