@@ -524,8 +524,6 @@ LocateSQLiteBinary()
 LoadEnv()
 	{
 
-	ShowAsProc env
-
 	qpkg_name=sherpa
 	readonly r_cert_db_pathfile=/etc/config/nas_sign_qpkg.db
 
