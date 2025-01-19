@@ -15348,7 +15348,7 @@ LoadObjects()
 
 	if [[ ! -e $PWD/dont-refresh-objects ]]; then
 		if [[ ! -e $r_objects_pathfile ]] || ! IsThisFileRecent "$r_objects_pathfile" "$r_file_change_threshold_minutes"; then
-			ShowAsProc 'download objects'
+			ShowAsProc 'objects download'
 
 			if /sbin/curl${curl_options} --silent --fail "$r_objects_archive_url" > "$r_objects_archive_pathfile"; then
 				/bin/tar --extract --gzip --no-same-owner --file="$r_objects_archive_pathfile" --directory="$r_cache_path"
@@ -15396,7 +15396,7 @@ LoadPackages()
 
 	if [[ ! -e $PWD/dont-refresh-packages ]]; then
 		if [[ ! -e $r_packages_pathfile ]] || ! IsThisFileRecent "$r_packages_pathfile" "$r_file_change_threshold_minutes"; then
-			ShowAsProc 'download QPKG list'
+			ShowAsProc 'package list download'
 
 			if /sbin/curl${curl_options} --silent --fail "$r_packages_archive_url" > "$r_packages_archive_pathfile"; then
 				/bin/tar --extract --gzip --no-same-owner --file="$r_packages_archive_pathfile" --directory="$r_cache_path"
@@ -15407,12 +15407,12 @@ LoadPackages()
 	fi
 
 	if [[ ! -e $r_packages_pathfile ]]; then
-		ShowAsAbort 'QPKG list missing'
+		ShowAsAbort 'package list missing'
 
 		FuncExit 1; exit
 	fi
 
-	ShowAsProc QPKGs
+	ShowAsProc 'package list'
 
 	# Supported QPKG details - parallel arrays.
 
@@ -15451,8 +15451,6 @@ LoadPackages()
 	unset r_essential_ipks
 	unset r_essential_pips
 	unset r_exclusion_pips
-# 	unset r_min_perl_version
-# 	unset r_min_python_version
 	unset r_packages_epoch
 	r_packages_epoch=undefined
 
@@ -15529,8 +15527,6 @@ LoadPackages()
 	readonly r_essential_ipks
 	readonly r_essential_pips
 	readonly r_exclusion_pips
-# 	readonly r_min_perl_version
-# 	readonly r_min_python_version
 	readonly r_packages_epoch
 	readonly r_qpkgs_name_migration
 
