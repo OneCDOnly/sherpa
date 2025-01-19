@@ -1,6 +1,8 @@
 * Prefix action specifiers with a hyphen.
 	-start -disable etc...
 
+	* Arg parser: use commas to separate actions & options?
+
 * When package actions are in-progress and user SIGINT, abort remaining actions, then show regular results report.
 	- Must show which actions completed before SIGINT, and which had to be aborted.
 
@@ -30,6 +32,9 @@
 * Include QPKG signing method via default QTS Python and modules.
 	- Won't require an 'sqlite3' binary.
 
+	* LocateSQLiteBinary() should only run if processing QPKG actions.
+		- or 'check'ing, 'about'.
+
 * Display a warning when sherpa QPKG is not signed, and QTS App Center requires signed packages only.
 	- Need a new test for QPKG "sign"ed status.
 	- Include QPKG "signed" status in dependencies report?
@@ -56,8 +61,6 @@
 
 * When running 'sherpa rebuild sab', SAB is installed and auto-updates as usual. Then when 'restore' action runs, auto-update runs again.
 	- Disable auto-update after installation if 'restore' is to be run, then enable it again after 'restore' completes?
-
-* Arg parser: use commas to separate actions & options?
 
 * If using 'rustc' IPK, ensure $HOME is != /root before executing.
 
