@@ -292,8 +292,8 @@ LoadDefaults()
 
 	# Default flags.
 
-	if [[ -t 0 ]]; then			# Only enable ANSI colour codes if running in a user terminal.
-		readonly r_colourful_default=true
+	if IsUserTerminal; then
+		readonly r_colourful_default=true		# Only enable ANSI colour codes if running in a user terminal.
 	else
 		readonly r_colourful_default=false
 	fi
@@ -617,7 +617,7 @@ LoadEnv()
 
 	rm -f "$r_report_output_pathfile" "$r_ramfs_freespace_pathfile" "$r_inhibit_display_pathfile" 2> /dev/null
 
-	if [[ -e $r_gnu_stty_cmd && -t 0 ]]; then
+	if [[ -e $r_gnu_stty_cmd ]] && IsUserTerminal; then
 		local terminal_dimensions=$($r_gnu_stty_cmd size)
 		readonly r_sess_rows=${terminal_dimensions% *}
 		readonly r_sess_columns=${terminal_dimensions#* }
@@ -1136,7 +1136,7 @@ QPKGsAssignToActions()
 	if IsQpkgInstalled Entware; then
 		local entware_install_date=$(GetQpkgInstalledDate Entware)
 
-		if [[ $entware_install_date = undefined || ${entware_install_date//[!0-9]/} -le 20250119 ]] && [[ $r_nas_arch != armv5tel ]]; then
+		if [[ $entware_install_date = undefined || ${entware_install_date//[!0-9]/} -lt 20250119 ]] && [[ $r_nas_arch != armv5tel ]]; then
 			ShowAsNote "the $(TextBrightOrange Entware) QPKG will be auto-reinstalled (Entware packages were updated in mid-January 2025)"
 			QPKGs-ACreinstall-to:Add Entware
 		fi
@@ -3318,9 +3318,9 @@ Quiz()
 	local b=''
 
 	ShowAsQuiz "$a"
-	[[ -e $r_gnu_stty_cmd && -t 0 ]] && $r_gnu_stty_cmd igncr	# Ignore CR to prevent an onscreen linefeed (which disrupts same-line rewrite used later, and looks bad).
+	[[ -e $r_gnu_stty_cmd ]] && IsUserTerminal && $r_gnu_stty_cmd igncr	# Ignore CR to prevent an onscreen linefeed (which disrupts same-line rewrite used later, and looks bad).
 	read -rn1 b
-	[[ -e $r_gnu_stty_cmd && -t 0 ]] && $r_gnu_stty_cmd -igncr	# Re-allow CR.
+	[[ -e $r_gnu_stty_cmd ]] && IsUserTerminal && $r_gnu_stty_cmd -igncr	# Re-allow CR.
 	DebugVar b
 
 	ShowAsQuizDone "$a: $b"
@@ -9728,6 +9728,13 @@ IsOsDecimalSleepSecondsSupported()
 
 	}
 
+IsUserTerminal()
+	{
+
+	[[ -t 0 ]]
+
+	}
+
 SetError()
 	{
 
@@ -15387,7 +15394,7 @@ HideKeystrokes()
 	#	$r_gnu_stty_cmd
 	#	$useropt_verbose
 
-	[[ ${useropt_verbose:=false} = false && -e ${r_gnu_stty_cmd:-} && -t 0 ]] && $r_gnu_stty_cmd '-echo'
+	[[ ${useropt_verbose:=false} = false && -e ${r_gnu_stty_cmd:-} ]] && IsUserTerminal && $r_gnu_stty_cmd '-echo'
 
 	}
 
@@ -15397,7 +15404,7 @@ ShowKeystrokes()
 	# Inputs: (global)
 	#	$r_gnu_stty_cmd
 
-	[[ -n ${r_gnu_stty_cmd:-} && -e $r_gnu_stty_cmd && -t 0 ]] && $r_gnu_stty_cmd 'echo'
+	[[ -n ${r_gnu_stty_cmd:-} && -e $r_gnu_stty_cmd ]] && IsUserTerminal && $r_gnu_stty_cmd 'echo'
 
 	}
 
