@@ -43,9 +43,11 @@ Init()
 
 	HideKeystrokes
 	HideCursor
-	LoadDefaults
 	LoadConsts
+	LoadDefaults
+
 	ShowAsProc init
+
 	IsOsOk || return
 	IsUserOk || return
 	SetCapabilities
@@ -62,7 +64,9 @@ Init()
 	ParseShowArgs || return
 	ParseListArgs || return
 	ParseActionArgs || return
+
 	ShowTitle
+
 	ShowArgSuggestions
 	CheckQPKGsConflicts || return
 	CheckQPKGsWarnings
@@ -292,7 +296,7 @@ LoadDefaults()
 
 	# Default flags.
 
-	if IsUserTerminal; then
+	if IsInTerminal; then
 		readonly r_colourful_default=true		# Only enable ANSI colour codes if running in a user terminal.
 	else
 		readonly r_colourful_default=false
@@ -615,7 +619,7 @@ LoadEnv()
 
 	rm -f "$r_report_output_pathfile" "$r_ramfs_freespace_pathfile" "$r_inhibit_display_pathfile" 2> /dev/null
 
-	if [[ -e $r_gnu_stty_cmd ]] && IsUserTerminal; then
+	if [[ -e $r_gnu_stty_cmd ]] && IsInTerminal; then
 		local terminal_dimensions=$($r_gnu_stty_cmd size)
 		readonly r_sess_rows=${terminal_dimensions% *}
 		readonly r_sess_columns=${terminal_dimensions#* }
@@ -761,6 +765,7 @@ DebugLogEnv()
 	FuncInit
 
 	ShowAsProc 'log env'
+
 	DebugInfoMinSepr
 
 	if [[ $useropt_show_about = true || $useropt_show_aboutall = true ]]; then
@@ -3306,9 +3311,9 @@ Quiz()
 	local b=''
 
 	ShowAsQuiz "$a"
-	[[ -e $r_gnu_stty_cmd ]] && IsUserTerminal && $r_gnu_stty_cmd igncr	# Ignore CR to prevent an onscreen linefeed (which disrupts same-line rewrite used later, and looks bad).
+	[[ -e $r_gnu_stty_cmd ]] && IsInTerminal && $r_gnu_stty_cmd igncr	# Ignore CR to prevent an onscreen linefeed (which disrupts same-line rewrite used later, and looks bad).
 	read -rn1 b
-	[[ -e $r_gnu_stty_cmd ]] && IsUserTerminal && $r_gnu_stty_cmd -igncr	# Re-allow CR.
+	[[ -e $r_gnu_stty_cmd ]] && IsInTerminal && $r_gnu_stty_cmd -igncr	# Re-allow CR.
 	DebugVar b
 
 	ShowAsQuizDone "$a: $b"
@@ -3844,6 +3849,7 @@ IPKs:downgrade()
 		log_pathfile=$r_logs_path/ipks.$r_download_log_file
 
 		ShowAsProc "download $desc"
+
 		SetQpkgArch
 
 		case $r_nas_qpkg_arch in
@@ -7382,6 +7388,7 @@ BuildQPKGsTiers()
 		DebugAsDone "don't build tiers: they're already built"
 	else
 		ShowAsProc tiers
+
 		GenerateQPKGsTiers
 	fi
 
@@ -7600,6 +7607,7 @@ BuildQPKGsStates()
 	wait 2> /dev/null
 
 	ShowAsProc 'store QPKG states'
+
 	# Load status lines from individual files into session arrays.
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
@@ -9615,7 +9623,7 @@ IsOsDecimalSleepSecondsSupported()
 
 	}
 
-IsUserTerminal()
+IsInTerminal()
 	{
 
 	[[ -t 0 ]]
@@ -15281,7 +15289,7 @@ HideKeystrokes()
 	#	$r_gnu_stty_cmd
 	#	$useropt_verbose
 
-	[[ ${useropt_verbose:=false} = false && -n ${r_gnu_stty_cmd:-} && -e $r_gnu_stty_cmd ]] && IsUserTerminal && $r_gnu_stty_cmd '-echo'
+	[[ ${useropt_verbose:=false} = false && -n ${r_gnu_stty_cmd:-} && -e $r_gnu_stty_cmd ]] && IsInTerminal && $r_gnu_stty_cmd '-echo'
 
 	}
 
@@ -15291,7 +15299,7 @@ ShowKeystrokes()
 	# Inputs: (global)
 	#	$r_gnu_stty_cmd
 
-	[[ -n ${r_gnu_stty_cmd:-} && -e $r_gnu_stty_cmd ]] && IsUserTerminal && $r_gnu_stty_cmd 'echo'
+	[[ -n ${r_gnu_stty_cmd:-} && -e $r_gnu_stty_cmd ]] && IsInTerminal && $r_gnu_stty_cmd 'echo'
 
 	}
 
