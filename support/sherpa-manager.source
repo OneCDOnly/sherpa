@@ -1130,7 +1130,7 @@ QPKGsAssignToActions()
 		local entware_install_date=$(GetQpkgInstalledDate Entware)
 
 		if [[ $entware_install_date = undefined || ${entware_install_date//[!0-9]/} -le 20250118 ]] && [[ $r_nas_arch != armv5tel ]]; then
-			ShowAsNote "the $(TextBrightOrange Entware) QPKG will be auto-reinstalled (Entware packages were updated in mid-January 2025)"
+			ShowAsNote "the $(TextBrightOrange Entware) QPKG will be auto-reinstalled (Entware packages were last updated in mid-January 2025)"
 			QPKGs-ACreinstall-to:Add Entware
 		fi
 	fi
@@ -9222,6 +9222,7 @@ GetQpkgArch()
 
 	SetNasArch
 	SetOsFirmwareVer
+	SetHardwarePlatform
 
 	case $r_nas_arch in
 		x86_64)
