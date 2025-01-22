@@ -195,7 +195,7 @@ QPKGAbbrvs()
 
 	}
 
-ColourTextBrightGreen()
+TextBrightGreen()
 	{
 
 	if [[ $colourful = true ]]; then
@@ -206,7 +206,7 @@ ColourTextBrightGreen()
 
 	} 2>/dev/null
 
-ColourTextBrightYellow()
+TextBrightYellow()
 	{
 
 	if [[ $colourful = true ]]; then
@@ -217,7 +217,7 @@ ColourTextBrightYellow()
 
 	} 2>/dev/null
 
-ColourTextBrightOrange()
+TextBrightOrange()
 	{
 
 	if [[ $colourful = true ]]; then
@@ -228,7 +228,7 @@ ColourTextBrightOrange()
 
 	} 2>/dev/null
 
-ColourTextBrightOrangeBlink()
+TextBrightOrangeBlink()
 	{
 
 	if [[ $colourful = true ]]; then
@@ -239,7 +239,7 @@ ColourTextBrightOrangeBlink()
 
 	} 2>/dev/null
 
-ColourTextBrightRed()
+TextBrightRed()
 	{
 
 	if [[ $colourful = true ]]; then
@@ -250,7 +250,7 @@ ColourTextBrightRed()
 
 	} 2>/dev/null
 
-ColourTextBrightRedBlink()
+TextBrightRedBlink()
 	{
 
 	if [[ $colourful = true ]]; then
@@ -261,7 +261,7 @@ ColourTextBrightRedBlink()
 
 	} 2>/dev/null
 
-ColourTextCyan()
+TextCyan()
 	{
 
 	if [[ $colourful = true ]]; then
@@ -272,7 +272,7 @@ ColourTextCyan()
 
 	} 2>/dev/null
 
-ColourTextDarkGrey()
+TextDarkGrey()
 	{
 
 	if [[ $colourful = true ]]; then
@@ -283,7 +283,7 @@ ColourTextDarkGrey()
 
 	} 2>/dev/null
 
-ColourTextUnderlinedCyan()
+TextUnderlinedCyan()
 	{
 
 	if [[ $colourful = true ]]; then
@@ -294,7 +294,7 @@ ColourTextUnderlinedCyan()
 
 	} 2>/dev/null
 
-ColourTextBlackOnCyan()
+TextBlackOnCyan()
 	{
 
 	if [[ $colourful = true ]]; then
@@ -305,7 +305,7 @@ ColourTextBlackOnCyan()
 
 	} 2>/dev/null
 
-ColourTextBrightWhite()
+TextBrightWhite()
 	{
 
 	if [[ $colourful = true ]]; then
@@ -319,7 +319,7 @@ ColourTextBrightWhite()
 ShowPassed()
 	{
 
-	ColourTextBrightGreen passed
+	TextBrightGreen passed
 	echo
 
 	}
@@ -327,7 +327,7 @@ ShowPassed()
 ShowFailed()
 	{
 
-	ColourTextBrightRed failed
+	TextBrightRed failed
 	echo
 
 	}
@@ -335,7 +335,7 @@ ShowFailed()
 ShowDone()
 	{
 
-	ColourTextBrightGreen done
+	TextBrightGreen done
 	echo
 
 	}

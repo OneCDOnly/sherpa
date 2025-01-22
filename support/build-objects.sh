@@ -188,7 +188,7 @@ for action in "${r_pip_actions[@]}"; do
 done
 
 if [[ ! -e $target ]]; then
-	ColourTextBrightRed "'$target' was not written to disk"; echo
+	TextBrightRed "'$target' was not written to disk"; echo
 	exit 1
 else
 	ShowDone
@@ -197,7 +197,7 @@ fi
 SwapTags "$target" "$target"
 
 if grep -q '<?\|?>' "$target"; then
-	ColourTextBrightRed "'$target' contains unswapped tags, can't continue"; echo
+	TextBrightRed "'$target' contains unswapped tags, can't continue"; echo
 	exit 1
 fi
 

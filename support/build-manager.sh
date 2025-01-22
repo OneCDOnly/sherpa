@@ -9,7 +9,7 @@ manager_epoch=$(date +%s)
 SwapTags "$a" "$b"
 
 if grep -q '<?\|?>' "$b"; then
-	ColourTextBrightRed "'$b' contains unswapped tags, can't continue"; echo
+	TextBrightRed "'$b' contains unswapped tags, can't continue"; echo
 	exit 1
 fi
 

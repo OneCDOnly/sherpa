@@ -24,14 +24,14 @@ for i in "${!a[@]}"; do
 	[[ -e ${b[i]} ]] && rm -f "${b[i]}"
 
 	if [[ ! -e ${a[i]} ]]; then
-		ColourTextBrightRed "'${a[i]}' not found, "
+		TextBrightRed "'${a[i]}' not found, "
 		continue
 	fi
 
 	tar --create --gzip --numeric-owner --file="${b[i]}" --directory="$support_path" "$(basename "${a[i]}")"
 
 	if [[ ! -s ${b[i]} ]]; then
-		ColourTextBrightRed "'${b[i]}' was not written"; echo
+		TextBrightRed "'${b[i]}' was not written"; echo
 		exit 1
 	fi
 

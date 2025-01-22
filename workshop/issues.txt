@@ -1,10 +1,16 @@
 Observed issues:
 
+	* Upgradable packages were not seen when running:
+		--------------------------------------------------------------------------------------------------
+		[/share/Public] # sherpa disable deps stop deps upgrade new
+		sherpa v250103-stable
+		warn: unable to find any 'upgradable' QPKGs to 'upgrade'.
+		done: actions complete.
+		--------------------------------------------------------------------------------------------------
+		- even though 5 packages were upgradable
+
 	* Tableise() needs to support a new arg to change format of a single column.
 		- Needed for backup files report. Second column is filesize, which should be shown right-justified.
-
-	* Slight pause before on-screen messages are shown on slower NAS models under heavier load.
-		- This happens before 'proc: args ...' is shown.
 
 	* Service-script daemon PID shown twice consecutively during 'clean' action:
 		--------------------------------------------------------------------------------------------------

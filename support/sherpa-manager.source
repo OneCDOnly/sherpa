@@ -41,15 +41,18 @@ readonly r_args_raw=$*
 Init()
 	{
 
+	HideKeystrokes
+	HideCursor
+	LoadConsts
+	LoadDefaults
+
+	ShowAsProc init
+
 	IsOsOk || return
 	IsUserOk || return
-	LoadConsts
-	LoadVars
 	SetCapabilities
 	LoadCMDs
 	CMDsIsOk || return
-	HideKeystrokes
-	HideCursor
 	LoadEnv || return
 	ClaimLockfile || return
 	CreatePaths || return
@@ -61,7 +64,9 @@ Init()
 	ParseShowArgs || return
 	ParseListArgs || return
 	ParseActionArgs || return
+
 	ShowTitle
+
 	ShowArgSuggestions
 	CheckQPKGsConflicts || return
 	CheckQPKGsWarnings
@@ -240,7 +245,6 @@ LoadConsts()
 	readonly r_debug_log_full_width=100
 	readonly r_debug_log_first_column_width=9
 	readonly r_debug_log_second_column_width=20
-# 		readonly r_debug_log_third_column_width=$((r_debug_log_full_width-r_debug_log_first_column_width-r_debug_log_second_column_width-4))
 	readonly r_help_desc_indent=3
 	readonly r_help_syntax_indent=6
 	readonly r_report_action_result_indent=6
@@ -280,12 +284,6 @@ LoadConsts()
 		readonly r_help_syntax_sudo_prefix=$r_chars_super_prompt
 	fi
 
-	if [[ -t 0 ]]; then			# Only enable ANSI colour codes if running in a user terminal.
-		readonly r_colourful_default=true
-	else
-		readonly r_colourful_default=false
-	fi
-
 	# Various.
 
 	readonly r_file_change_threshold_minutes=60
@@ -293,12 +291,19 @@ LoadConsts()
 
 	}
 
-LoadVars()
+LoadDefaults()
 	{
 
 	# Default flags.
 
+	if IsInTerminal; then
+		readonly r_colourful_default=true		# Only enable ANSI colour codes if running in a user terminal.
+	else
+		readonly r_colourful_default=false
+	fi
+
 	archive_debug_afterward=false
+	colourful=$r_colourful_default
 	generate_help_report=false
 	generate_list_report=false
 	generate_show_report=false
@@ -330,7 +335,6 @@ LoadVars()
 	backup_stdin_fd=none
 	proc_counts_path=''
 	user_branch_value=''
-	user_colourful_value=''
 	user_report_footer_value=''
 	user_terse_value=''
 
@@ -367,12 +371,6 @@ LoadVars()
 	useropt_show_status=false
 	useropt_terse=$(LoadSetting Terse true)
 	useropt_verbose=false
-
-	if [[ -t 0 ]]; then			# Only enable ANSI colour codes if running in a user terminal.
-		useropt_colourful=$(LoadSetting Colourful "$r_colourful_default")
-	else
-		useropt_colourful=false
-	fi
 
 	# User-selectable values.
 
@@ -530,21 +528,14 @@ LocateSQLiteBinary()
 LoadEnv()
 	{
 
-	ShowAsProc env
-
 	qpkg_name=sherpa
 	readonly r_cert_db_pathfile=/etc/config/nas_sign_qpkg.db
-	readonly r_cpu_cores=$(GetHardwareCPUCores)
-		readonly r_concurrency=$r_cpu_cores			# Maximum concurrent package actions to run. Should probably make this account for CPU speed too.
+
+	SetHardwareCPUCores
+	SetHardwareInstalledRAM
+
+	readonly r_concurrency=$r_cpu_cores			# Maximum concurrent package actions to run. Should probably make this account for CPU speed too.
 	readonly r_entware_type=$(GetQpkgEntwareType)
-	readonly r_kernel_page_size=$(GetOsKernelPageSize)
-	readonly r_nas_arch=$(GetOsArch)
-	readonly r_nas_firmware_build=$(GetOsFirmwareBuild)
-	readonly r_nas_firmware_date=$(GetOsFirmwareDate)
-	readonly r_nas_firmware_version=$(GetOsFirmwareVer)
-	readonly r_nas_platform=$(GetHardwarePlatform)
-	readonly r_nas_qpkg_arch=$(GetQpkgArch)
-	readonly r_nas_ram_kb=$(GetHardwareInstalledRAM)
 	readonly r_os_upstate=$(GetOsState)
 	readonly r_this_package_ver=$(GetQpkgInstalledVer)
 
@@ -628,7 +619,7 @@ LoadEnv()
 
 	rm -f "$r_report_output_pathfile" "$r_ramfs_freespace_pathfile" "$r_inhibit_display_pathfile" 2> /dev/null
 
-	if [[ -e $r_gnu_stty_cmd && -t 0 ]]; then
+	if [[ -e $r_gnu_stty_cmd ]] && IsInTerminal; then
 		local terminal_dimensions=$($r_gnu_stty_cmd size)
 		readonly r_sess_rows=${terminal_dimensions% *}
 		readonly r_sess_columns=${terminal_dimensions#* }
@@ -774,12 +765,15 @@ DebugLogEnv()
 	FuncInit
 
 	ShowAsProc 'log env'
+
 	DebugInfoMinSepr
 
 	if [[ $useropt_show_about = true || $useropt_show_aboutall = true ]]; then
 		useropt_debug=true
 		useropt_verbose=true
 	fi
+
+	SetNasArch
 
 	DebugHardware ok 'NAS model' "$(get_display_name)"
 	DebugHardware ok CPU "$(GetHardwareCPUInfo)"
@@ -798,17 +792,24 @@ DebugLogEnv()
 
 	DebugFirmware ok OS "$(GetOsName)"
 
+	SetOsFirmwareVersion
+	SetOsFirmwareBuild
+
 	if IsOsSupported; then
 		DebugFirmware ok version "$r_nas_firmware_version.$r_nas_firmware_build"
 	else
 		DebugFirmware warning version "$r_nas_firmware_version"
 	fi
 
+	SetOsFirmwareDate
+
 	if IsOsCompatibleWithSigned; then
 		DebugFirmware ok 'build date' "$(ConvertAsSmartDate "$r_nas_firmware_date")"
 	else
 		DebugFirmware warning 'build date' "$(ConvertAsSmartDate "$r_nas_firmware_date")"
 	fi
+
+	SetHardwarePlatform
 
 	DebugFirmware ok platform "$r_nas_platform"
 
@@ -832,12 +833,12 @@ DebugLogEnv()
 	DebugStorage ok 'write benchmark' "$(GetHardwareVolumeBenchmark)"
 	DebugStorage ok /opt "$(/usr/bin/readlink /opt 2> /dev/null || printf 'not present')"
 
-	local public_share=$(/sbin/getcfg SHARE_DEF defPublic -d Qpublic -f /etc/config/def_share.info)
+	local public_share_name=$(/sbin/getcfg SHARE_DEF defPublic -d Qpublic -f /etc/config/def_share.info)
 
-	if [[ -L /share/$public_share ]]; then
-		DebugStorage ok "'$public_share' share" /share/$public_share
+	if [[ -L /share/$public_share_name ]]; then
+		DebugStorage ok "'$public_share_name' share" /share/$public_share_name
 	else
-		DebugStorage warning "'$public_share' share" 'not present'
+		DebugStorage warning "'$public_share_name' share" 'not present'
 	fi
 
 	DebugUserspace ok libc "$(GetUserLIBC)"
@@ -883,14 +884,18 @@ DebugLogEnv()
 		DebugQpkg detect 'allow unsigned' N/A
 	fi
 
+	SetQpkgArch
+
 	DebugQpkg detect architecture "$r_nas_qpkg_arch"
 	DebugQpkg detect "$(FormatPackageName Entware) type" "$r_entware_type"
 	DebugQpkg detect "$(FormatPackageName Entware) install date" "$(ConvertAsSmartDate "$(GetQpkgInstalledDate Entware)")"
 
+	SetOsFirmwareVer
+
 	if IsQpkgReallyInstalled SortMyQPKGs; then
 		DebugQpkg detect "$(FormatPackageName SortMyQPKGs)" installed
 	else
-		if [[ ${r_nas_firmware_version//.} -lt 400 || ${r_nas_firmware_version//.} -ge 520 ]]; then
+		if [[ $r_nas_firmware_ver -lt 400 || $r_nas_firmware_ver -ge 520 ]]; then
 			DebugQpkg detect "$(FormatPackageName SortMyQPKGs)" 'not installed'
 		else
 			DebugQpkg warning "$(FormatPackageName SortMyQPKGs)" 'not installed'
@@ -1027,6 +1032,8 @@ CheckEnv()
 		ShowAsWarn "the $(TextBrightRed 'Out-Of-Memory killer') has been triggered, check for $(TextBrightRed inactive) QPKGs"
 	fi
 
+	SetNasArch
+
 	if IsQpkgInstalled Entware; then
 		if [[ $r_entware_type != none ]]; then
 			_UpdateEntwarePackageList_ &			# Let's try launching this early.
@@ -1040,19 +1047,11 @@ CheckEnv()
 			ipks_install=true
 			ipks_upgrade=true
 			pips_install=true
-
-			if IsPythonOutdated; then
-				ShowAsNote "the $(TextBrightOrange Python) environment will be auto-upgraded"
-				IPKs-ACuninstall-to:Add 'python*'
-			fi
-
-			if IsPerlOutdated; then
-				ShowAsNote "the $(TextBrightOrange Perl) environment will be auto-upgraded"
-				IPKs-ACuninstall-to:Add 'perl*'
-			fi
 		fi
 
 		# Decide if specific IPKs should be uninstalled/downgraded.
+
+		SetQpkgArch
 
 		case $r_nas_qpkg_arch in
 			a41)
@@ -1130,8 +1129,8 @@ QPKGsAssignToActions()
 	if IsQpkgInstalled Entware; then
 		local entware_install_date=$(GetQpkgInstalledDate Entware)
 
-		if [[ $entware_install_date = undefined || ${entware_install_date//[!0-9]/} -le 20240809 ]] && [[ $r_nas_arch != armv5tel ]]; then
-			ShowAsNote "the $(TextBrightOrange Entware) QPKG will be auto-reinstalled (Entware packages were updated early in August 2024)"
+		if [[ $entware_install_date = undefined || ${entware_install_date//[!0-9]/} -le 20250118 ]] && [[ $r_nas_arch != armv5tel ]]; then
+			ShowAsNote "the $(TextBrightOrange Entware) QPKG will be auto-reinstalled (Entware packages were updated in mid-January 2025)"
 			QPKGs-ACreinstall-to:Add Entware
 		fi
 	fi
@@ -1947,7 +1946,6 @@ ParseManagementArgs()
 	#	$switch_report_footer
 	#	$switch_terse
 	#	$user_branch_value
-	#	$user_colourful_value
 	#	$user_report_footer_value
 	#	$user_terse_value
 	#	$useropt_check
@@ -1997,7 +1995,6 @@ ParseManagementArgs()
 					EnableDebugToArchiveAndFile
 					;;
 				reset)
-					DeleteSetting Colourful
 					DeleteSetting Git_Branch
 					DeleteSetting Terse
 
@@ -2022,19 +2019,6 @@ ParseManagementArgs()
 
 		if [[ -n $action && -n $group ]]; then
 			case $action in
-				colo?(u)r?(ful))
-					case $group in
-						true|false)
-							action=''
-							awaiting_group=false
-							switch_colour=true
-							user_colourful_value=$group
-							WriteColourful
-							;;
-						*)
-							args_remaining+=("$action")
-					esac
-					;;
 				follow)
 					case $group in
 						?(un)stable)
@@ -3327,9 +3311,9 @@ Quiz()
 	local b=''
 
 	ShowAsQuiz "$a"
-	[[ -e $r_gnu_stty_cmd && -t 0 ]] && $r_gnu_stty_cmd igncr	# Ignore CR to prevent an onscreen linefeed (which disrupts same-line rewrite used later, and looks bad).
+	[[ -e $r_gnu_stty_cmd ]] && IsInTerminal && $r_gnu_stty_cmd igncr	# Ignore CR to prevent an onscreen linefeed (which disrupts same-line rewrite used later, and looks bad).
 	read -rn1 b
-	[[ -e $r_gnu_stty_cmd && -t 0 ]] && $r_gnu_stty_cmd -igncr	# Re-allow CR.
+	[[ -e $r_gnu_stty_cmd ]] && IsInTerminal && $r_gnu_stty_cmd -igncr	# Re-allow CR.
 	DebugVar b
 
 	ShowAsQuizDone "$a: $b"
@@ -3866,6 +3850,8 @@ IPKs:downgrade()
 
 		ShowAsProc "download $desc"
 
+		SetQpkgArch
+
 		case $r_nas_qpkg_arch in
 			a41)
 				if IsOsNonStdKernelPageSize; then
@@ -4275,50 +4261,6 @@ Reset()
 
 	}
 
-WriteColourful()
-	{
-
-	# Inputs: (local)
-	# 	$1 = 'silent' (optional): don't announce setting was saved.
-
-	# Inputs: (global)
-	#	$switch_colour
-	#	$user_colourful_value
-	#	$useropt_colourful
-
-	# Outputs: (global)
-	#	$run_package_actions
-	#	$switch_colour
-	#	$useropt_colourful
-
-	local a=''
-
-	if [[ $switch_colour = true && -n $user_colourful_value ]]; then
-		# Validate before saving.
-
-		for a in true false; do
-			[[ $a != "$user_colourful_value" ]] && continue
-			useropt_colourful=$user_colourful_value
-
-			if [[ ${1:-} = silent ]]; then
-				SaveSetting Colourful "$useropt_colourful"
-			else
-				SaveSetting Colourful "$useropt_colourful" announce
-			fi
-
-			switch_colour=false
-
-			return
-		done
-
-		ShowAsAbort "user setting '$user_colourful_value' is not 'true' or 'false'"
-		run_package_actions=false
-
-		return 1
-	fi
-
-	}
-
 WriteBranch()
 	{
 
@@ -4492,6 +4434,11 @@ LoadSetting()
 	local a=${1:?${FUNCNAME[0]}'()': undefined name}
 	local b=$(Lowercase "${2:?${FUNCNAME[0]}'()': undefined default value}")
 
+	if [[ ! -e /sbin/getcfg ]]; then
+		printf '%s' "$b"
+		return
+	fi
+
 	Lowercase "$(/sbin/getcfg sherpa "$a" -d "$b" -f /etc/config/qpkg.conf)"
 
 	}
@@ -4541,40 +4488,6 @@ IsUserSU()
 	[[ $EUID -eq 0 ]]
 
 	}
-
-#DebugBinPathVerAndMinVer()
-# 	{
-#
-# 	# Inputs:
-# 	#	$1 = binary filename
-# 	#	$2 = current version found
-# 	#	$3 = minimum version required
-#
-# 	[[ -n ${1:?${FUNCNAME[0]}'()': undefined filename} ]] || return
-#
-# 	local a=$(GetThisBinPath "$1")
-#
-# 	if [[ -n $a ]]; then
-# 		DebugUserspace ok "'$1' path" "$a"
-# 	else
-# 		DebugUserspace warning "'$1' path" 'not present'
-# 	fi
-#
-# 	if [[ -n ${2:-} && ${2:-undefined} != undefined ]]; then
-# 		[[ -n ${3:-} && ${3:-undefined} != undefined ]] || return
-#
-# 		if [[ ${2//./} -ge ${3//./} ]]; then
-# 			DebugUserspace ok "'$1' version" "$2"
-# 		else
-# 			DebugUserspace warning "'$1' version" "$2"
-# 		fi
-# 	else
-# 		DebugUserspace warning "'$1' version" 'undefined'
-# 	fi
-#
-# 	return 0
-#
-# 	}
 
 IsSysFileExist()
 	{
@@ -7475,6 +7388,7 @@ BuildQPKGsTiers()
 		DebugAsDone "don't build tiers: they're already built"
 	else
 		ShowAsProc tiers
+
 		GenerateQPKGsTiers
 	fi
 
@@ -7693,6 +7607,7 @@ BuildQPKGsStates()
 	wait 2> /dev/null
 
 	ShowAsProc 'store QPKG states'
+
 	# Load status lines from individual files into session arrays.
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
@@ -9037,7 +8952,7 @@ GetHardwareVolumeBenchmark()
 
 	}
 
-GetOsArch()
+GetNasArch()
 	{
 
 	/bin/uname -m
@@ -9088,73 +9003,6 @@ GetUserDefVol()
 	#   $? = 0 if found, 250 if not.
 
 	/sbin/getcfg SHARE_DEF defVolMP -d undefined -f /etc/config/def_share.info
-
-	}
-
-IsPythonOutdated()
-	{
-
-	# Check if Python3 interpreter needs upgrading for this NAS arch.
-
-	# NOTE: Entware Python3 packages are no-longer updated for ARMv5 arches.
-
-	# Inputs: (global)
-	#	$r_min_python_version
-	#	$r_nas_arch
-	#	$r_python3_cmd
-
-	# Outputs: (local)
-	#   $? = 0 if outdated, !0 if not
-
-	[[ -e $r_python3_cmd ]] || return
-
-	local a=$(GetPython3Ver "$r_python3_cmd")
-
-	[[ $r_nas_arch = armv5tel && ${a//./} -lt 3114 ]] || [[ $r_nas_arch != armv5tel && ${a//./} -lt $r_min_python_version ]]
-
-	}
-
-GetPython3Ver()
-	{
-
-	GetPythonVer "${1:-python3}"
-
-	}
-
-GetPythonVer()
-	{
-
-	GetThisBinPath ${1:-python} &> /dev/null && ${1:-python} -V 2>&1 | /bin/sed 's|^Python ||'
-
-	}
-
-IsPerlOutdated()
-	{
-
-	# Check if Perl interpreter needs upgrading for this NAS arch.
-
-	# NOTE: Entware Perl packages are no-longer updated for ARMv5 arches.
-
-	# Inputs: (global)
-	#	$r_min_perl_version
-	#	$r_nas_arch
-	#	$r_perl_cmd
-
-	# Outputs: (local)
-	#   $? = 0 if outdated, !0 if not
-
-	[[ -e $r_perl_cmd ]] || return
-
-	local a=$(GetPerlVer "$r_perl_cmd")
-
-	[[ $r_nas_arch = armv5tel && ${a//./} -lt 5281 ]] || [[ $r_nas_arch != armv5tel && ${a//./} -lt $r_min_perl_version ]]
-
-	}
-
-GetPerlVer()
-	{
-
-	GetThisBinPath ${1:-perl} &> /dev/null && ${1:-perl} -e 'print "$^V\n"' 2> /dev/null | /bin/sed 's|v||'
 
 	}
 
@@ -9285,17 +9133,34 @@ GetHardwareCPUCores()
 GetHardwareInstalledRAM()
 	{
 
+	# Outputs: (local)
+	#	stdout = text string.
+
 	/bin/grep MemTotal /proc/meminfo | /bin/sed 's|.*: ||;s|kB||;s| ||g'
+
+	}
+
+GetOsFirmwareVersion()
+	{
+
+	# Outputs: (local)
+	#	stdout = text string.
+	#   $? = 0 if found, 250 if not.
+
+	/sbin/getcfg System Version -d undefined -f /etc/config/uLinux.conf
 
 	}
 
 GetOsFirmwareVer()
 	{
 
+	# Same as firmware version, but an integer-only (no periods).
+
 	# Outputs: (local)
+	#	stdout = integer.
 	#   $? = 0 if found, 250 if not.
 
-	/sbin/getcfg System Version -d undefined -f /etc/config/uLinux.conf
+	/sbin/getcfg System Version -d undefined -f /etc/config/uLinux.conf | tr -d '.'
 
 	}
 
@@ -9303,6 +9168,7 @@ GetOsFirmwareBuild()
 	{
 
 	# Outputs: (local)
+	#	stdout = text string.
 	#   $? = 0 if found, 250 if not.
 
 	/sbin/getcfg System Number -d undefined -f /etc/config/uLinux.conf
@@ -9313,6 +9179,7 @@ GetOsFirmwareDate()
 	{
 
 	# Outputs: (local)
+	#	stdout = text string.
 	#   $? = 0 if found, 250 if not.
 
 	/sbin/getcfg System 'Build Number' -d undefined -f /etc/config/uLinux.conf
@@ -9321,6 +9188,9 @@ GetOsFirmwareDate()
 
 GetOsName()
 	{
+
+	# Outputs: (local)
+	#	stdout = text string.
 
 	if IsQuTS; then
 		printf 'QuTS hero'
@@ -9339,7 +9209,7 @@ GetQpkgArch()
 
 	# Inputs: (global)
 	#	$r_nas_arch
-	#	$r_nas_firmware_version
+	#	$r_nas_firmware_ver
 	#	$r_nas_platform
 
 	# Outputs: (local)
@@ -9350,9 +9220,12 @@ GetQpkgArch()
 		return
 	fi
 
+	SetNasArch
+	SetOsFirmwareVer
+
 	case $r_nas_arch in
 		x86_64)
-			[[ ${r_nas_firmware_version//.} -ge 430 ]] && printf i64 || printf i86
+			[[ $r_nas_firmware_ver -ge 430 ]] && printf i64 || printf i86
 			;;
 		i686|x86)
 			printf i86
@@ -9450,7 +9323,6 @@ IsOsOk()
 	{
 
 	if ! IsOsQNAP; then
-		useropt_colourful=true
 		ShowAsAbort 'QNAP shell functions not found ... is this a QNAP NAS?'
 
 		return 1
@@ -9487,11 +9359,13 @@ IsOsSupported()
 	{
 
 	# Inputs: (global)
-	#	$r_nas_firmware_version
+	#	$r_nas_firmware_ver
 
-	# Unable to test firmwares any earlier than 4.2.6 (but still have 4.2.0 available for TS-559Pro+):
+	# Unable to test firmwares any earlier than 4.2.6 (but still have 4.2.0 available for TS-559Pro+ ).
 
-	[[ ${r_nas_firmware_version//.} -ge 400 ]]
+	SetOsFirmwareVer
+
+	[[ $r_nas_firmware_ver -ge 400 ]]
 
 	} &> /dev/null
 
@@ -9499,9 +9373,11 @@ IsOsCanAsyncQpkgActions()
 	{
 
 	# Inputs: (global)
-	#	$r_nas_firmware_version
+	#	$r_nas_firmware_ver
 
-	[[ ${r_nas_firmware_version//.} -ge 520 ]]
+	SetOsFirmwareVer
+
+	[[ $r_nas_firmware_ver -ge 520 ]]
 
 	} &> /dev/null
 
@@ -9518,9 +9394,11 @@ IsOsCanSecureDownload()
 	# 		QTS 4.5.4.2627
 
 	# Inputs: (global)
-	#	$r_nas_firmware_version
+	#	$r_nas_firmware_ver
 
-	[[ ${r_nas_firmware_version//.} -ge 455 ]]
+	SetOsFirmwareVer
+
+	[[ $r_nas_firmware_ver -ge 455 ]]
 
 	} &> /dev/null
 
@@ -9528,9 +9406,11 @@ IsOsCanQpkgTimeout()
 	{
 
 	# Inputs: (global)
-	#	$r_nas_firmware_version
+	#	$r_nas_firmware_ver
 
-	[[ ${r_nas_firmware_version//.} -ge 430 ]]
+	SetOsFirmwareVer
+
+	[[ $r_nas_firmware_ver -ge 430 ]]
 
 	} &> /dev/null
 
@@ -9538,23 +9418,13 @@ IsOsCanSignedPackages()
 	{
 
 	# Inputs: (global)
-	#	$r_nas_firmware_version
+	#	$r_nas_firmware_ver
 
-	# NOTE: signing failed on QTS 4.3.6 (x31). No cert database.
+	# NOTE: signing fails on QTS 4.3.6 (x31). No cert database (appears to be a bug as 4.3.6 is supposed to support signed QPKGs).
 
-	[[ ${r_nas_firmware_version//.} -ge 437 ]]
+	SetOsFirmwareVer
 
-	} &> /dev/null
-
-IsOsCompatibleWithSigned()
-	{
-
-	# Inputs: (global)
-	#	$r_nas_firmware_date
-
-	# QTS builds released over these 6 days don't allow unsigned QPKGs to run at-all:
-
-	[[ $r_nas_firmware_date -lt 20201015 || $r_nas_firmware_date -gt 20201020 ]]
+	[[ $r_nas_firmware_ver -ge 437 ]]
 
 	} &> /dev/null
 
@@ -9562,11 +9432,13 @@ IsOsCanUnofficialPackages()
 	{
 
 	# Inputs: (global)
-	#	$r_nas_firmware_version
+	#	$r_nas_firmware_ver
 
 	# Must check for "official QPKGs" on QTS 4.3.3 to QTS 4.3.6:
 
-	[[ ${r_nas_firmware_version//.} -gt 426 && ${r_nas_firmware_version//.} -le 436 ]]
+	SetOsFirmwareVer
+
+	[[ $r_nas_firmware_ver -gt 426 && $r_nas_firmware_ver -le 436 ]]
 
 	} &> /dev/null
 
@@ -9604,6 +9476,20 @@ IsOsCanAutowidthTableColumns()
 	[[ -e $r_gnu_awk_cmd ]]
 
 	}
+
+IsOsCompatibleWithSigned()
+	{
+
+	# Inputs: (global)
+	#	$r_nas_firmware_date
+
+	# QTS builds released over these 6 days don't allow unsigned QPKGs to run at-all:
+
+	SetOsFirmwareDate
+
+	[[ $r_nas_firmware_date -lt 20201015 || $r_nas_firmware_date -gt 20201020 ]]
+
+	} &> /dev/null
 
 IsOsAllowUnsignedPackages()
 	{
@@ -9667,7 +9553,9 @@ IsOsStdKernelPageSize()
 	# Outputs: (global)
 	#	$r_kernel_page_size
 
-	[[ ${r_kernel_page_size:=$(GetOsKernelPageSize)} = 4096B || $r_kernel_page_size = 4kiB ]]
+	SetOsKernelPageSize
+
+	[[ $r_kernel_page_size = 4096B || $r_kernel_page_size = 4kiB ]]
 
 	}
 
@@ -9705,14 +9593,40 @@ IsOsLoadAverageAboveTrigger()
 	# Inputs: (local)
 	#	$1 = multiplier
 
-	# Inputs: (global)
-	#	$r_cpu_cores
-
 	local a=${1:-1}
 	local b=$(GetOsSysLoad1MinAverage); b=${b/./}
 	local c=$((r_cpu_cores*a*100))
 
 	[[ $((10#$b)) -ge $((10#$c)) ]]
+
+	}
+
+IsOsSedExtRegexSupported()
+	{
+
+	# Inputs: (global)
+	#	$sed_ext_regex_supported
+
+	[[ ${sed_ext_regex_supported-unset} = unset ]] && SetOsSedRegexSupport
+	[[ $sed_ext_regex_supported -eq 0 ]]
+
+	}
+
+IsOsDecimalSleepSecondsSupported()
+	{
+
+	# Inputs: (global)
+	#	$sleep_decimal_seconds_supported
+
+	[[ ${sleep_decimal_seconds_supported-unset} = unset ]] && SetOsDecimalSleepSecondsSupport
+	[[ $sleep_decimal_seconds_supported -eq 0 ]]
+
+	}
+
+IsInTerminal()
+	{
+
+	[[ -t 0 ]]
 
 	}
 
@@ -11676,6 +11590,8 @@ GetQpkgDbURL()
 	local a=''
 	local -i i=0
 
+	SetQpkgArch
+
 	if [[ -n ${1:-} ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
 			if [[ ${r_qpkg_name[$i]} = "$1" ]] && [[ ${r_qpkg_arch[$i]} = all || ${r_qpkg_arch[$i]} = "$r_nas_qpkg_arch" ]]; then
@@ -12446,6 +12362,7 @@ SetQpkgIndex()
 	[[ -n ${qpkg_name:-} ]] || return
 
 	SetQpkgDefaultIndex
+	SetQpkgArch
 
 	for qpkg_index in "${!r_qpkg_name[@]}"; do
 		[[ ${r_qpkg_name[$qpkg_index]} = "$qpkg_name" ]] || continue
@@ -12690,7 +12607,7 @@ IsQpkgDbMinOSVerOk()
 	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
-	#	$r_nas_firmware_version
+	#	$r_nas_firmware_ver
 	#	$qpkg_name (default for $1)
 
 	# Outputs: (local)
@@ -12698,7 +12615,9 @@ IsQpkgDbMinOSVerOk()
 
 	local a=$(GetQpkgDbMinOSVer "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
 
-	[[ -n $a ]] && [[ $a = none || ${r_nas_firmware_version//.} -ge $a ]]
+	SetOsFirmwareVer
+
+	[[ -n $a ]] && [[ $a = none || $r_nas_firmware_ver -ge $a ]]
 
 	}
 
@@ -12711,7 +12630,7 @@ IsQpkgDbMaxOSVerOk()
 	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
-	#	$r_nas_firmware_version
+	#	$r_nas_firmware_ver
 	#	$qpkg_name (default for $1)
 
 	# Outputs: (local)
@@ -12719,7 +12638,9 @@ IsQpkgDbMaxOSVerOk()
 
 	local a=$(GetQpkgDbMaxOSVer "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
 
-	[[ -n $a ]] && [[ $a = none || ${r_nas_firmware_version//.} -le $a ]]
+	SetOsFirmwareVer
+
+	[[ -n $a ]] && [[ $a = none || $r_nas_firmware_ver -le $a ]]
 
 	}
 
@@ -13142,7 +13063,7 @@ LoadQpkgSigningCertDetails()
 	r_qpkg_signature=''
 
 	# This certificate block is the same used by QNAP for Download Station 5.9.0.272
-	# Expires 11th October 2027.
+	# Expires: 11th October 2027
 
 	read -r -d '' r_qpkg_certificate << EOB
 -----BEGIN CERTIFICATE-----
@@ -13171,7 +13092,7 @@ Ij1A6hFRu9wdulkzQlp43rmD30Eloq7mJFlgXX3mSfAa6DyWuYych75cnSbNn5VP
 EOB
 
 	# This digital signature block is the same used by QNAP for Download Station 5.9.0.272
-	# Expires 11th October 2027.
+	# Expires: 11th October 2027
 
 	read -r -d '' r_qpkg_signature << EOB
 MIME-Version: 1.0
@@ -14490,7 +14411,7 @@ DebugThis()
 
 	[[ ${useropt_verbose:-false} = true ]] && ShowAsDebug "$1"
 
-	if [[ $useropt_show_about = false && $useropt_show_aboutall = false ]]; then
+	if [[ ${useropt_show_about:=false} = false && ${useropt_show_aboutall:=false} = false ]]; then
 		WriteToLog dbug "$1"
 	fi
 
@@ -14551,7 +14472,7 @@ ShowAsProc()
 	[[ -n ${2:-} ]] && b=$2
 	local c="$a ... $b"
 
-	if [[ -n ${r_inhibit_display_pathfile:-} && ! -e $r_inhibit_display_pathfile ]]; then
+	if [[ -z ${r_inhibit_display_pathfile:-} ]] || [[ -n ${r_inhibit_display_pathfile:-} && ! -e $r_inhibit_display_pathfile ]]; then
 		if [[ ${useropt_verbose:=false} = false && ${useropt_terse:=true} = true ]] || [[ ${useropt_verbose:=false} = false && -n $b ]]; then
 			OpStepClearWait "$(TextBrightYellow proc)" "$c"
 		else
@@ -14861,11 +14782,11 @@ OpStepClearWait()
 	#	$2 = detailed message.
 
 	# Inputs: (global)
-	#	$useropt_colourful
+	#	$colourful
 
 	local -i n=4			# Width of the message type.
 
-	[[ ${useropt_colourful:=false} = true ]] && n=10  	# Allow extra length for ANSI codes in message type.
+	[[ ${colourful:=$r_colourful_default} = true ]] && n=10  	# Allow extra length for ANSI codes in message type.
 
 	DisplayWait "$(printf "\033[2K\r%-${n}s: %s" "${1:-}" "${2:-}")"
 
@@ -14883,11 +14804,11 @@ OpStepClear()
 	#	$2 = detailed message.
 
 	# Inputs: (global)
-	#	$useropt_colourful
+	#	$colourful
 
 	local -i n=4			# Width of the message type.
 
-	[[ ${useropt_colourful:=false} = true ]] && n=10  	# Allow extra length for ANSI codes in message type.
+	[[ $colourful = true ]] && n=10  	# Allow extra length for ANSI codes in message type.
 
 	Display "$(printf "\033[2K\r%-${n}s: %s" "${1:-}" "${2:-}")"
 
@@ -14916,11 +14837,11 @@ TextBrightGreen()
 	{
 
 	# Inputs: (global)
-	#	$useropt_colourful
+	#	$colourful
 
 	[[ -n ${1:-} ]] || return
 
-	if [[ ${useropt_colourful:=false} = true ]]; then
+	if [[ $colourful = true ]]; then
 		printf '\033[1;32m%s\033[0m' "$1"
 	else
 		printf '%s' "$1"
@@ -14932,11 +14853,11 @@ TextBrightYellow()
 	{
 
 	# Inputs: (global)
-	#	$useropt_colourful
+	#	$colourful
 
 	[[ -n ${1:-} ]] || return
 
-	if [[ ${useropt_colourful:=false} = true ]]; then
+	if [[ $colourful = true ]]; then
 		printf '\033[1;33m%s\033[0m' "$1"
 	else
 		printf '%s' "$1"
@@ -14948,11 +14869,11 @@ TextBrightOrange()
 	{
 
 	# Inputs: (global)
-	#	$useropt_colourful
+	#	$colourful
 
 	[[ -n ${1:-} ]] || return
 
-	if [[ ${useropt_colourful:=false} = true ]]; then
+	if [[ $colourful = true ]]; then
 		printf '\033[1;38;5;214m%s\033[0m' "$1"
 	else
 		printf '%s' "$1"
@@ -14964,11 +14885,11 @@ TextBrightOrangeBlink()
 	{
 
 	# Inputs: (global)
-	#	$useropt_colourful
+	#	$colourful
 
 	[[ -n ${1:-} ]] || return
 
-	if [[ ${useropt_colourful:=false} = true ]]; then
+	if [[ $colourful = true ]]; then
 		printf '\033[1;5;38;5;214m%s\033[0m' "$1"
 	else
 		printf '%s' "$1"
@@ -14980,11 +14901,11 @@ TextBrightRed()
 	{
 
 	# Inputs: (global)
-	#	$useropt_colourful
+	#	$colourful
 
 	[[ -n ${1:-} ]] || return
 
-	if [[ ${useropt_colourful:=false} = true ]]; then
+	if [[ $colourful = true ]]; then
 		printf '\033[1;31m%s\033[0m' "$1"
 	else
 		printf '%s' "$1"
@@ -14996,11 +14917,11 @@ TextBrightRedBlink()
 	{
 
 	# Inputs: (global)
-	#	$useropt_colourful
+	#	$colourful
 
 	[[ -n ${1:-} ]] || return
 
-	if [[ ${useropt_colourful:=false} = true ]]; then
+	if [[ $colourful = true ]]; then
 		printf '\033[1;5;31m%s\033[0m' "$1"
 	else
 		printf '%s' "$1"
@@ -15012,11 +14933,11 @@ TextBrightRedBlink()
 # 	{
 #
 # 	# Inputs: (global)
-# 	#	$useropt_colourful
+# 	#	$colourful
 #
 # 	[[ -n ${1:-} ]] || return
 #
-# 	if [[ ${useropt_colourful:=false} = true ]]; then
+# 	if [[ $colourful = true ]]; then
 # 		printf '\033[1;36m%s\033[0m' "$1"
 # 	else
 # 		printf '%s' "$1"
@@ -15028,11 +14949,11 @@ TextDarkGrey()
 	{
 
 	# Inputs: (global)
-	#	$useropt_colourful
+	#	$colourful
 
 	[[ -n ${1:-} ]] || return
 
-	if [[ ${useropt_colourful:=false} = true ]]; then
+	if [[ $colourful = true ]]; then
 		printf '\033[1;90m%s\033[0m' "$1"
 	else
 		printf '%s' "$1"
@@ -15044,11 +14965,11 @@ TextDarkGrey()
 # 	{
 #
 # 	# Inputs: (global)
-# 	#	$useropt_colourful
+# 	#	$colourful
 #
 # 	[[ -n ${1:-} ]] || return
 #
-# 	if [[ ${useropt_colourful:=false} = true ]]; then
+# 	if [[ $colourful = true ]]; then
 # 		printf '\033[4m%s\033[0m' "$1"
 # 	else
 # 		printf '%s' "$1"
@@ -15060,11 +14981,11 @@ TextUnderlinedCyan()
 	{
 
 	# Inputs: (global)
-	#	$useropt_colourful
+	#	$colourful
 
 	[[ -n ${1:-} ]] || return
 
-	if [[ ${useropt_colourful:=false} = true ]]; then
+	if [[ $colourful = true ]]; then
 		printf '\033[4;36m%s\033[0m' "$1"
 	else
 		printf '%s' "$1"
@@ -15076,11 +14997,11 @@ TextBlackOnCyan()
 	{
 
 	# Inputs: (global)
-	#	$useropt_colourful
+	#	$colourful
 
 	[[ -n ${1:-} ]] || return
 
-	if [[ ${useropt_colourful:=false} = true ]]; then
+	if [[ $colourful = true ]]; then
 		printf '\033[30;46m%s\033[0m' "$1"
 	else
 		printf '%s' "$1"
@@ -15094,16 +15015,16 @@ TextBrightWhite()
 	# Inputs: (local)
 
 	# Inputs: (global)
-	#	$useropt_colourful
+	#	$colourful
 
 	# Outputs: (local)
 
 	# Outputs: (global)
-	#	$useropt_colourful
+	#	$colourful
 
 	[[ -n ${1:-} ]] || return
 
-	if [[ ${useropt_colourful:=false} = true ]]; then
+	if [[ $colourful = true ]]; then
 		printf '\033[1;97m%s\033[0m' "$1"
 	else
 		printf '%s' "$1"
@@ -15147,15 +15068,18 @@ Tableise()
 StripANSICodes()
 	{
 
+	# Inputs: (local)
+	#	$1 = string containing ANSI codes.
+
 	# Inputs: (global)
 	#	$sed_ext_regex_supported
 
-	# Outputs: (global)
-	#	$sed_ext_regex_supported
+	# Ouputs: (local)
+	#	stdout = string without ANSI codes.
 
 	# QTS 4.2.6 BusyBox `sed` doesn't fully support extended-regexes, so code-stripping only works with a real `sed`.
 
-	if [[ ${sed_ext_regex_supported:=false} = true ]]; then
+	if IsOsSedExtRegexSupported; then
 		echo -en "${1:-}" | /bin/sed -r 's/\x1b\[[0-9;]*m//g' 			# https://superuser.com/a/380778
 	elif [[ -e /opt/bin/sed && -L /opt/etc/passwd ]]; then				# Try to ensure Entware is active first.
 		echo -en "${1:-}" | /opt/bin/sed -r 's/\x1b\[[0-9;]*m//g' 		# https://superuser.com/a/380778
@@ -15165,12 +15089,42 @@ StripANSICodes()
 
 	} 2> /dev/null
 
+SetHardwareCPUCores()
+	{
+
+	# Outputs: (global)
+	#	$r_cpu_cores
+
+	[[ ${r_cpu_cores-unset} = unset ]] && readonly r_cpu_cores=$(GetHardwareCPUCores)
+
+	}
+
+SetHardwareInstalledRAM()
+	{
+
+	# Outputs: (global)
+	#	$r_nas_ram_kb
+
+	[[ ${r_nas_ram_kb-unset} = unset ]] && readonly r_nas_ram_kb=$(GetHardwareInstalledRAM)
+
+	}
+
+SetHardwarePlatform()
+	{
+
+	# Outputs: (global)
+	#	$r_nas_platform
+
+	[[ ${r_nas_platform-unset} = unset ]] && readonly r_nas_platform=$(GetHardwarePlatform)
+
+	}
+
 SetCapabilities()
 	{
 
 	SetColourisation
-	SetSedRexegSupport
-	SetSleepDecimalSecondsSupport
+	UpdateOsSedRegexSupport
+	UpdateOsDecimalSleepSupport
 
 	}
 
@@ -15183,35 +15137,131 @@ SetColourisation()
 	#	$r_colourful_default
 
 	# Outputs: (global)
-	#	$useropt_colourful
+	#	$colourful
 
-	if [[ -e /opt/bin/sed && -L /opt/etc/passwd && $(LoadSetting Colourful "$r_colourful_default") = true ]]; then
-		useropt_colourful=true
-		SendParentChangeEnv 'useropt_colourful=true'
+	if [[ -e /opt/bin/sed && -L /opt/etc/passwd && $r_colourful_default = true ]]; then
+		colourful=true
+		SendParentChangeEnv 'colourful=true'
 	else
-		useropt_colourful=false
-		SendParentChangeEnv 'useropt_colourful=false'
+		colourful=false
+		SendParentChangeEnv 'colourful=false'
 	fi
 
 	}
 
-SetSedRexegSupport()
+SetOsSedRegexSupport()
 	{
 
 	# Outputs: (global)
 	#	$sed_ext_regex_supported
 
-	IsOsCanSedExtRegex && sed_ext_regex_supported=true || sed_ext_regex_supported=false
+	IsOsCanSedExtRegex
+	sed_ext_regex_supported=$?
 
 	}
 
-SetSleepDecimalSecondsSupport()
+SetOsDecimalSleepSecondsSupport()
 	{
 
 	# Outputs: (global)
 	#	$sleep_decimal_seconds_supported
 
-	IsOsCanDecimalSleepSeconds && sleep_decimal_seconds_supported=true || sleep_decimal_seconds_supported=false
+	IsOsCanDecimalSleepSeconds
+	sleep_decimal_seconds_supported=$?
+
+	}
+
+SetOsKernelPageSize()
+	{
+
+	# Outputs: (global)
+	#	$r_kernel_page_size
+
+	[[ ${r_kernel_page_size-unset} = unset ]] && readonly r_kernel_page_size=$(GetOsKernelPageSize)
+
+	}
+
+SetOsFirmwareVersion()
+	{
+
+	# Outputs: (global)
+	#	$r_nas_firmware_version
+
+	[[ ${r_nas_firmware_version-unset} = unset ]] && readonly r_nas_firmware_version=$(GetOsFirmwareVersion)
+
+	}
+
+SetOsFirmwareVer()
+	{
+
+	# Same as firmware version, but as an integer-only (no periods).
+
+	# Outputs: (global)
+	#	$r_nas_firmware_ver
+
+	[[ ${r_nas_firmware_ver-unset} = unset ]] && readonly r_nas_firmware_ver=$(GetOsFirmwareVer)
+
+	}
+
+SetOsFirmwareDate()
+	{
+
+	# Outputs: (global)
+	#	$r_nas_firmware_date
+
+	[[ ${r_nas_firmware_date-unset} = unset ]] && readonly r_nas_firmware_date=$(GetOsFirmwareDate)
+
+	}
+
+SetOsFirmwareBuild()
+	{
+
+	# Outputs: (global)
+	#	$r_nas_firmware_build
+
+	[[ ${r_nas_firmware_build-unset} = unset ]] && readonly r_nas_firmware_build=$(GetOsFirmwareBuild)
+
+	}
+
+SetNasArch()
+	{
+
+	# Outputs: (global)
+	#	$r_nas_arch
+
+	[[ ${r_nas_arch-unset} = unset ]] && readonly r_nas_arch=$(GetNasArch)
+
+	}
+
+SetQpkgArch()
+	{
+
+	# Outputs: (global)
+	#	$r_nas_qpkg_arch
+
+	[[ ${r_nas_qpkg_arch-unset} = unset ]] && readonly r_nas_qpkg_arch=$(GetQpkgArch)
+
+	}
+
+UpdateOsSedRegexSupport()
+	{
+
+	# Outputs: (global)
+	#	$sed_ext_regex_supported
+
+	unset sed_ext_regex_supported
+	SetOsSedRegexSupport
+
+	}
+
+UpdateOsDecimalSleepSupport()
+	{
+
+	# Outputs: (global)
+	#	$sleep_decimal_seconds_supported
+
+	unset sleep_decimal_seconds_supported
+	SetOsDecimalSleepSecondsSupport
 
 	}
 
@@ -15221,7 +15271,7 @@ HideCursor()
 	# Inputs: (global)
 	#	$useropt_verbose
 
-	[[ $useropt_verbose = false ]] && printf '\033[?25l'
+	[[ ${useropt_verbose:=false} = false ]] && printf '\033[?25l'
 
 	}
 
@@ -15239,7 +15289,7 @@ HideKeystrokes()
 	#	$r_gnu_stty_cmd
 	#	$useropt_verbose
 
-	[[ $useropt_verbose = false && -e $r_gnu_stty_cmd && -t 0 ]] && $r_gnu_stty_cmd '-echo'
+	[[ ${useropt_verbose:=false} = false && -n ${r_gnu_stty_cmd:-} && -e $r_gnu_stty_cmd ]] && IsInTerminal && $r_gnu_stty_cmd '-echo'
 
 	}
 
@@ -15249,7 +15299,7 @@ ShowKeystrokes()
 	# Inputs: (global)
 	#	$r_gnu_stty_cmd
 
-	[[ -n ${r_gnu_stty_cmd:-} && -e $r_gnu_stty_cmd && -t 0 ]] && $r_gnu_stty_cmd 'echo'
+	[[ -n ${r_gnu_stty_cmd:-} && -e $r_gnu_stty_cmd ]] && IsInTerminal && $r_gnu_stty_cmd 'echo'
 
 	}
 
@@ -15261,16 +15311,12 @@ sleep()
 
 	# Inputs: (global)
 	#	$r_gnu_sleep_cmd
-	#	$sleep_decimal_seconds_supported
-
-	# Outputs: (global)
-	#	$sleep_decimal_seconds_supported
 
 	local n=${1:-}
 
 	[[ ${n//.} -eq 0 ]] && n=1
 
-	if [[ ${sleep_decimal_seconds_supported:=false} = true ]]; then
+	if IsOsDecimalSleepSecondsSupported; then
 		/bin/sleep "$n"
 	elif [[ -e $r_gnu_sleep_cmd && -L /opt/etc/passwd ]]; then  			# Try to ensure Entware is active first.
 		$r_gnu_sleep_cmd "$n"
@@ -15310,7 +15356,7 @@ LoadObjects()
 
 	if [[ ! -e $PWD/dont-refresh-objects ]]; then
 		if [[ ! -e $r_objects_pathfile ]] || ! IsThisFileRecent "$r_objects_pathfile" "$r_file_change_threshold_minutes"; then
-			ShowAsProc 'download objects'
+			ShowAsProc 'objects download'
 
 			if /sbin/curl${curl_options} --silent --fail "$r_objects_archive_url" > "$r_objects_archive_pathfile"; then
 				/bin/tar --extract --gzip --no-same-owner --file="$r_objects_archive_pathfile" --directory="$r_cache_path"
@@ -15358,7 +15404,7 @@ LoadPackages()
 
 	if [[ ! -e $PWD/dont-refresh-packages ]]; then
 		if [[ ! -e $r_packages_pathfile ]] || ! IsThisFileRecent "$r_packages_pathfile" "$r_file_change_threshold_minutes"; then
-			ShowAsProc 'download QPKG list'
+			ShowAsProc 'package list download'
 
 			if /sbin/curl${curl_options} --silent --fail "$r_packages_archive_url" > "$r_packages_archive_pathfile"; then
 				/bin/tar --extract --gzip --no-same-owner --file="$r_packages_archive_pathfile" --directory="$r_cache_path"
@@ -15369,12 +15415,12 @@ LoadPackages()
 	fi
 
 	if [[ ! -e $r_packages_pathfile ]]; then
-		ShowAsAbort 'QPKG list missing'
+		ShowAsAbort 'package list missing'
 
 		FuncExit 1; exit
 	fi
 
-	ShowAsProc QPKGs
+	ShowAsProc 'package list'
 
 	# Supported QPKG details - parallel arrays.
 
@@ -15413,8 +15459,6 @@ LoadPackages()
 	unset r_essential_ipks
 	unset r_essential_pips
 	unset r_exclusion_pips
-	unset r_min_perl_version
-	unset r_min_python_version
 	unset r_packages_epoch
 	r_packages_epoch=undefined
 
@@ -15452,7 +15496,7 @@ LoadPackages()
 
 	. "$r_packages_pathfile"
 
-	r_name_migration_qpkgs=(Lidarr Medusa qBittorrent Readarr SickGear Sonarr Tautulli Transmission Watcher3 Whisparr)
+	r_qpkgs_name_migration=(Lidarr Medusa qBittorrent Readarr SickGear Sonarr Tautulli Transmission Watcher3 Whisparr)
 
 	# Fourth, lock list arrays and values.
 
@@ -15491,10 +15535,8 @@ LoadPackages()
 	readonly r_essential_ipks
 	readonly r_essential_pips
 	readonly r_exclusion_pips
-	readonly r_min_perl_version
-	readonly r_min_python_version
-	readonly r_name_migration_qpkgs
 	readonly r_packages_epoch
+	readonly r_qpkgs_name_migration
 
 	DebugVar r_packages_epoch
 
