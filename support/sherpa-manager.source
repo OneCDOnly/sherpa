@@ -15132,15 +15132,13 @@ SetCapabilities()
 SetColourisation()
 	{
 
-	# If it seems Entware is active, check if possible to return to colourful display.
-
 	# Inputs: (global)
 	#	$r_colourful_default
 
 	# Outputs: (global)
 	#	$colourful
 
-	if [[ -e /opt/bin/sed && -L /opt/etc/passwd && $r_colourful_default = true ]]; then
+	if [[ $r_colourful_default = true ]]; then
 		colourful=true
 		SendParentChangeEnv 'colourful=true'
 	else

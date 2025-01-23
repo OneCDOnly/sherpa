@@ -1,8 +1,5 @@
 Observed issues:
 
-	* sherpa title not shown in colour when Entware not installed.
-		Title should always be in colour.
-
 	* Upgradable packages were not seen when running:
 		--------------------------------------------------------------------------------------------------
 		[/share/Public] # sherpa disable deps stop deps upgrade new
