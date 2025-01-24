@@ -436,92 +436,7 @@ CMDsIsOk()
 	IsSysFileExist /usr/bin/uptime || return
 	# `/usr/bin/wc` has already been called before arriving here.
 
-	LocateSQLiteBinary
-
 	return 0
-
-	}
-
-LocateSQLiteBinary()
-	{
-
-	# Outputs: (global)
-	#   $sqlite_cmd
-	#   $sqlite_pathfile
-
-	local a=''
-	sqlite_cmd=''
-	sqlite_pathfile=''
-
-	# Prefer Entware-installed `sqlite3`.
-
-	if [[ -z ${sqlite_cmd:-} ]] && IsQpkgReallyInstalled Entware; then
-		sqlite_pathfile=/opt/bin/sqlite3
-		[[ -e $sqlite_pathfile ]] && sqlite_cmd=$sqlite_pathfile
-	fi
-
-	# If that can't be found, then try several other locations ...
-
-	# These use a specific path to the binary:
-	#	HybridBackup = `Hybrid Backup Sync`
-
-	if [[ -z $sqlite_cmd ]] && IsQpkgReallyInstalled HybridBackup; then
-		sqlite_pathfile=$(GetQpkgInstalledPath HybridBackup)/CloudConnector3/bin/sqlite3
-		[[ -e $sqlite_pathfile ]] && sqlite_cmd=$sqlite_pathfile
-	fi
-
-	if [[ -z $sqlite_cmd ]] && IsQpkgReallyInstalled ArchiwareP5; then	# untested.
-		sqlite_pathfile=$(GetQpkgInstalledPath ArchiwareP5)/binaries/Linux/unknown/64/sqlite3
-		[[ -e $sqlite_pathfile ]] && sqlite_cmd=$sqlite_pathfile
-	fi
-
-	# These use the same path to the binary:
-	#	container-station = `Container Station`
-
-	if [[ -z $sqlite_cmd ]]; then
-		for a in container-station HD_Station; do					# 'HD_Station' is untested.
-			if IsQpkgReallyInstalled "$a"; then
-				sqlite_pathfile=$(GetQpkgInstalledPath "$a")/usr/bin/sqlite3
-				[[ -e $sqlite_pathfile ]] || continue
-				sqlite_cmd=$sqlite_pathfile
-				break
-			fi
-		done
-	fi
-
-	#	CacheMount = `HybridMount`
-	# 	qmiixagent = `Qmiix Agent`
-
-	if [[ -z $sqlite_cmd ]]; then
-		for a in CacheMount qmiixagent qusbcam2 QPython312 QPython311 QPython39; do
-			if IsQpkgReallyInstalled "$a"; then
-				sqlite_pathfile=$(GetQpkgInstalledPath "$a")/bin/sqlite3
-				[[ -e $sqlite_pathfile ]] || continue
-				sqlite_cmd=$sqlite_pathfile
-				break
-			fi
-		done
-	fi
-
-	# These use the same path to the binary, and require the linked-library path to be set:
-	#	img2pdf = `Image2PDF`
-	#	OCR_Converter = `OCR Converter`
-
-	if [[ -z $sqlite_cmd ]]; then
-		for a in img2pdf Qsirch OCR_Converter; do
-			if IsQpkgReallyInstalled "$a"; then
-				sqlite_pathfile=$(GetQpkgInstalledPath "$a")/bin/sqlite3
-				[[ -e $sqlite_pathfile ]] || continue
-				sqlite_cmd="LD_LIBRARY_PATH=$(GetQpkgInstalledPath "$a")/lib $sqlite_pathfile"
-				break
-			fi
-		done
-	fi
-
-	if [[ -z $sqlite_cmd ]]; then				# Last-resort, hope Entware will be installed this session.
-		sqlite_pathfile=/opt/bin/sqlite3
-		sqlite_cmd=$sqlite_pathfile
-	fi
 
 	}
 
@@ -862,6 +777,9 @@ DebugLogEnv()
 	DebugScript 'objects epoch' "$(ConvertAsSmartDate "${r_objects_epoch:-not loaded}")"
 	DebugScript 'packages epoch' "$(ConvertAsSmartDate "${r_packages_epoch:-not loaded}")"
 	DebugScript 'logs path' "$r_logs_path"
+
+	LocateSQLiteBinary
+
 	DebugScript "'sqlite3' binary" "$sqlite_cmd"
 
 	if IsOsCanUnofficialPackages; then
@@ -1334,6 +1252,7 @@ QPKGsAssignToActions()
 	QPKGs-ACuninstall-to:Remove sherpa
 
 	if QPKGs-ACsign-to.IsAny || QPKGs-ACinstall-to.IsAny; then
+		LocateSQLiteBinary
 		LoadQpkgSigningCertDetails
 	fi
 
@@ -13050,6 +12969,89 @@ RemovePidFile()
 	[[ -n ${pidfile:-} && -e $pidfile ]] || return
 
 	rm -f "$pidfile"
+
+	}
+
+LocateSQLiteBinary()
+	{
+
+	# Outputs: (global)
+	#   $sqlite_cmd
+	#   $sqlite_pathfile
+
+	local a=''
+	sqlite_cmd=''
+	sqlite_pathfile=''
+
+	# Prefer Entware-installed `sqlite3`.
+
+	if [[ -z ${sqlite_cmd:-} ]] && IsQpkgReallyInstalled Entware; then
+		sqlite_pathfile=/opt/bin/sqlite3
+		[[ -e $sqlite_pathfile ]] && sqlite_cmd=$sqlite_pathfile
+	fi
+
+	# If that can't be found, then try several other locations ...
+
+	# These use a specific path to the binary:
+	#	HybridBackup = `Hybrid Backup Sync`
+
+	if [[ -z $sqlite_cmd ]] && IsQpkgReallyInstalled HybridBackup; then
+		sqlite_pathfile=$(GetQpkgInstalledPath HybridBackup)/CloudConnector3/bin/sqlite3
+		[[ -e $sqlite_pathfile ]] && sqlite_cmd=$sqlite_pathfile
+	fi
+
+	if [[ -z $sqlite_cmd ]] && IsQpkgReallyInstalled ArchiwareP5; then	# untested.
+		sqlite_pathfile=$(GetQpkgInstalledPath ArchiwareP5)/binaries/Linux/unknown/64/sqlite3
+		[[ -e $sqlite_pathfile ]] && sqlite_cmd=$sqlite_pathfile
+	fi
+
+	# These use the same path to the binary:
+	#	container-station = `Container Station`
+
+	if [[ -z $sqlite_cmd ]]; then
+		for a in container-station HD_Station; do					# 'HD_Station' is untested.
+			if IsQpkgReallyInstalled "$a"; then
+				sqlite_pathfile=$(GetQpkgInstalledPath "$a")/usr/bin/sqlite3
+				[[ -e $sqlite_pathfile ]] || continue
+				sqlite_cmd=$sqlite_pathfile
+				break
+			fi
+		done
+	fi
+
+	#	CacheMount = `HybridMount`
+	# 	qmiixagent = `Qmiix Agent`
+
+	if [[ -z $sqlite_cmd ]]; then
+		for a in CacheMount qmiixagent qusbcam2 QPython312 QPython311 QPython39; do
+			if IsQpkgReallyInstalled "$a"; then
+				sqlite_pathfile=$(GetQpkgInstalledPath "$a")/bin/sqlite3
+				[[ -e $sqlite_pathfile ]] || continue
+				sqlite_cmd=$sqlite_pathfile
+				break
+			fi
+		done
+	fi
+
+	# These use the same path to the binary, and require the linked-library path to be set:
+	#	img2pdf = `Image2PDF`
+	#	OCR_Converter = `OCR Converter`
+
+	if [[ -z $sqlite_cmd ]]; then
+		for a in img2pdf Qsirch OCR_Converter; do
+			if IsQpkgReallyInstalled "$a"; then
+				sqlite_pathfile=$(GetQpkgInstalledPath "$a")/bin/sqlite3
+				[[ -e $sqlite_pathfile ]] || continue
+				sqlite_cmd="LD_LIBRARY_PATH=$(GetQpkgInstalledPath "$a")/lib $sqlite_pathfile"
+				break
+			fi
+		done
+	fi
+
+	if [[ -z $sqlite_cmd ]]; then				# Last-resort, hope Entware will be installed this session.
+		sqlite_pathfile=/opt/bin/sqlite3
+		sqlite_cmd=$sqlite_pathfile
+	fi
 
 	}
 
