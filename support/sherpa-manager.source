@@ -458,11 +458,16 @@ LoadEnv()
 	args_incomplete=()
 	qpkg_default_index=0
 	qpkg_index=0
+	local build_script_epoch=0
 	readonly r_this_script_epoch='<?manager_epoch?>'
+	readonly r_build_tz_offset_seconds=36000
+
+	IsNumber $r_this_script_epoch && build_script_epoch=$((r_this_script_epoch+r_build_tz_offset_seconds))
+
 	useropt_branch=$(GetUserGitBranch)
 		readonly r_objects_archive_url='<?cdn_sherpa_base_url?>'/$useropt_branch/objects.tar.gz
 		readonly r_packages_archive_url='<?cdn_sherpa_packages_base_url?>'/$useropt_branch/packages.tar.gz
-		readonly r_this_script_ver=$(ConvertSecondsToDatecode $r_this_script_epoch)-$useropt_branch
+		readonly r_this_script_ver=$(ConvertSecondsToDatecode $build_script_epoch)-$useropt_branch
 
 	# Essential paths.
 
@@ -12929,6 +12934,23 @@ IsQpkgTimeoutsIncreased()
 	{
 
 	[[ -e /usr/local/sbin/qpkg_service.orig ]]
+
+	}
+
+IsNumber()
+	{
+
+	# Input: (local)
+	#	$1 = string
+
+	# Output: (local)
+	#	$? = 0 if $1 has any numerals.
+
+	[[ -n ${1:-} ]] || return
+
+	local a=${1//[!0-9]/}	# Strip non-digits.
+
+	[[ ${#a} -gt 0 ]]
 
 	}
 
