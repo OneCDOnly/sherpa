@@ -4859,13 +4859,17 @@ _GenerateStatusReportDataLine_()
 			/bin/touch "$r_report_flags_path"/na
 
 			if ! IsQpkgDbArchOK; then
-				auxiliary_msg=$(FormatReportField 'not installable, incompatible architecture' alert_mute)
+				auxiliary='not installable, incompatible architecture'
 			elif ! IsQpkgDbMinOSVerOk || ! IsQpkgDbMaxOSVerOk; then
-				auxiliary_msg=$(FormatReportField "not installable, incompatible $(GetOsName)" alert_mute)
+				auxiliary="not installable, incompatible $(GetOsName)"
 			elif ! IsQpkgDbMinRAMOk; then
-				auxiliary_msg=$(FormatReportField 'not installable, insufficient RAM installed' alert_mute)
+				auxiliary='not installable, insufficient RAM installed'
+			fi
+
+			if [[ $auxiliary != false ]]; then
+				auxiliary_msg=$(FormatReportField "$auxiliary" alert_mute)
 			else
-				status_msg=$(FormatReportField 'not installed' normal_mute)
+				auxiliary_msg=$(FormatReportField 'not installed' normal_mute)
 			fi
 
 			ver=$(GetQpkgDbVer)
@@ -5037,11 +5041,15 @@ _GenerateReposReportDataLine_()
 			/bin/touch "$r_report_flags_path"/na
 
 			if ! IsQpkgDbArchOK; then
-				auxiliary_msg=$(FormatReportField 'not installable, incompatible architecture' alert_mute)
+				auxiliary='not installable, incompatible architecture'
 			elif ! IsQpkgDbMinOSVerOk; then
-				auxiliary_msg=$(FormatReportField "not installable, incompatible $(GetOsName)" alert_mute)
+				auxiliary="not installable, incompatible $(GetOsName)"
 			elif ! IsQpkgDbMinRAMOk; then
-				auxiliary_msg=$(FormatReportField 'not installable, insufficient RAM installed' alert_mute)
+				auxiliary='not installable, insufficient RAM installed'
+			fi
+
+			if [[ $auxiliary != false ]]; then
+				auxiliary_msg=$(FormatReportField "$auxiliary" alert_mute)
 			else
 				auxiliary_msg=$(FormatReportField 'not installed' normal_mute)
 			fi
