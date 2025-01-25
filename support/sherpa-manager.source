@@ -436,92 +436,7 @@ CMDsIsOk()
 	IsSysFileExist /usr/bin/uptime || return
 	# `/usr/bin/wc` has already been called before arriving here.
 
-	LocateSQLiteBinary
-
 	return 0
-
-	}
-
-LocateSQLiteBinary()
-	{
-
-	# Outputs: (global)
-	#   $sqlite_cmd
-	#   $sqlite_pathfile
-
-	local a=''
-	sqlite_cmd=''
-	sqlite_pathfile=''
-
-	# Prefer Entware-installed `sqlite3`.
-
-	if [[ -z ${sqlite_cmd:-} ]] && IsQpkgReallyInstalled Entware; then
-		sqlite_pathfile=/opt/bin/sqlite3
-		[[ -e $sqlite_pathfile ]] && sqlite_cmd=$sqlite_pathfile
-	fi
-
-	# If that can't be found, then try several other locations ...
-
-	# These use a specific path to the binary:
-	#	HybridBackup = `Hybrid Backup Sync`
-
-	if [[ -z $sqlite_cmd ]] && IsQpkgReallyInstalled HybridBackup; then
-		sqlite_pathfile=$(GetQpkgInstalledPath HybridBackup)/CloudConnector3/bin/sqlite3
-		[[ -e $sqlite_pathfile ]] && sqlite_cmd=$sqlite_pathfile
-	fi
-
-	if [[ -z $sqlite_cmd ]] && IsQpkgReallyInstalled ArchiwareP5; then	# untested.
-		sqlite_pathfile=$(GetQpkgInstalledPath ArchiwareP5)/binaries/Linux/unknown/64/sqlite3
-		[[ -e $sqlite_pathfile ]] && sqlite_cmd=$sqlite_pathfile
-	fi
-
-	# These use the same path to the binary:
-	#	container-station = `Container Station`
-
-	if [[ -z $sqlite_cmd ]]; then
-		for a in container-station HD_Station; do					# 'HD_Station' is untested.
-			if IsQpkgReallyInstalled "$a"; then
-				sqlite_pathfile=$(GetQpkgInstalledPath "$a")/usr/bin/sqlite3
-				[[ -e $sqlite_pathfile ]] || continue
-				sqlite_cmd=$sqlite_pathfile
-				break
-			fi
-		done
-	fi
-
-	#	CacheMount = `HybridMount`
-	# 	qmiixagent = `Qmiix Agent`
-
-	if [[ -z $sqlite_cmd ]]; then
-		for a in CacheMount qmiixagent qusbcam2 QPython312 QPython311 QPython39; do
-			if IsQpkgReallyInstalled "$a"; then
-				sqlite_pathfile=$(GetQpkgInstalledPath "$a")/bin/sqlite3
-				[[ -e $sqlite_pathfile ]] || continue
-				sqlite_cmd=$sqlite_pathfile
-				break
-			fi
-		done
-	fi
-
-	# These use the same path to the binary, and require the linked-library path to be set:
-	#	img2pdf = `Image2PDF`
-	#	OCR_Converter = `OCR Converter`
-
-	if [[ -z $sqlite_cmd ]]; then
-		for a in img2pdf Qsirch OCR_Converter; do
-			if IsQpkgReallyInstalled "$a"; then
-				sqlite_pathfile=$(GetQpkgInstalledPath "$a")/bin/sqlite3
-				[[ -e $sqlite_pathfile ]] || continue
-				sqlite_cmd="LD_LIBRARY_PATH=$(GetQpkgInstalledPath "$a")/lib $sqlite_pathfile"
-				break
-			fi
-		done
-	fi
-
-	if [[ -z $sqlite_cmd ]]; then				# Last-resort, hope Entware will be installed this session.
-		sqlite_pathfile=/opt/bin/sqlite3
-		sqlite_cmd=$sqlite_pathfile
-	fi
 
 	}
 
@@ -543,11 +458,16 @@ LoadEnv()
 	args_incomplete=()
 	qpkg_default_index=0
 	qpkg_index=0
+	local build_script_epoch=0
 	readonly r_this_script_epoch='<?manager_epoch?>'
+	readonly r_build_tz_offset_seconds=36000
+
+	IsNumber $r_this_script_epoch && build_script_epoch=$((r_this_script_epoch+r_build_tz_offset_seconds))
+
 	useropt_branch=$(GetUserGitBranch)
 		readonly r_objects_archive_url='<?cdn_sherpa_base_url?>'/$useropt_branch/objects.tar.gz
 		readonly r_packages_archive_url='<?cdn_sherpa_packages_base_url?>'/$useropt_branch/packages.tar.gz
-		readonly r_this_script_ver=$(ConvertSecondsToDatecode $r_this_script_epoch)-$useropt_branch
+		readonly r_this_script_ver=$(ConvertSecondsToDatecode $build_script_epoch)-$useropt_branch
 
 	# Essential paths.
 
@@ -862,6 +782,9 @@ DebugLogEnv()
 	DebugScript 'objects epoch' "$(ConvertAsSmartDate "${r_objects_epoch:-not loaded}")"
 	DebugScript 'packages epoch' "$(ConvertAsSmartDate "${r_packages_epoch:-not loaded}")"
 	DebugScript 'logs path' "$r_logs_path"
+
+	LocateSQLiteBinary
+
 	DebugScript "'sqlite3' binary" "$sqlite_cmd"
 
 	if IsOsCanUnofficialPackages; then
@@ -1334,6 +1257,7 @@ QPKGsAssignToActions()
 	QPKGs-ACuninstall-to:Remove sherpa
 
 	if QPKGs-ACsign-to.IsAny || QPKGs-ACinstall-to.IsAny; then
+		LocateSQLiteBinary
 		LoadQpkgSigningCertDetails
 	fi
 
@@ -4935,11 +4859,11 @@ _GenerateStatusReportDataLine_()
 			/bin/touch "$r_report_flags_path"/na
 
 			if ! IsQpkgDbArchOK; then
-				auxiliary_msg=$(FormatReportField 'incompatible architecture' alert_mute)
+				auxiliary_msg=$(FormatReportField 'not installable, incompatible architecture' alert_mute)
 			elif ! IsQpkgDbMinOSVerOk || ! IsQpkgDbMaxOSVerOk; then
-				auxiliary_msg=$(FormatReportField "incompatible $(GetOsName)" alert_mute)
+				auxiliary_msg=$(FormatReportField "not installable, incompatible $(GetOsName)" alert_mute)
 			elif ! IsQpkgDbMinRAMOk; then
-				auxiliary_msg=$(FormatReportField 'insufficient RAM installed' alert_mute)
+				auxiliary_msg=$(FormatReportField 'not installable, insufficient RAM installed' alert_mute)
 			else
 				status_msg=$(FormatReportField 'not installed' normal_mute)
 			fi
@@ -5113,11 +5037,11 @@ _GenerateReposReportDataLine_()
 			/bin/touch "$r_report_flags_path"/na
 
 			if ! IsQpkgDbArchOK; then
-				auxiliary_msg=$(FormatReportField 'incompatible architecture' alert_mute)
+				auxiliary_msg=$(FormatReportField 'not installable, incompatible architecture' alert_mute)
 			elif ! IsQpkgDbMinOSVerOk; then
-				auxiliary_msg=$(FormatReportField "incompatible $(GetOsName)" alert_mute)
+				auxiliary_msg=$(FormatReportField "not installable, incompatible $(GetOsName)" alert_mute)
 			elif ! IsQpkgDbMinRAMOk; then
-				auxiliary_msg=$(FormatReportField 'insufficient RAM installed' alert_mute)
+				auxiliary_msg=$(FormatReportField 'not installable, insufficient RAM installed' alert_mute)
 			else
 				auxiliary_msg=$(FormatReportField 'not installed' normal_mute)
 			fi
@@ -5226,11 +5150,11 @@ _GenerateAbsReportDataLine_()
 	case $mode in
 		mute)
 			if ! IsQpkgDbArchOK "$qpkg_name"; then
-				auxiliary='incompatible architecture'
+				auxiliary='not installable, incompatible architecture'
 			elif ! IsQpkgDbMinOSVerOk "$qpkg_name"; then
-				auxiliary="incompatible $(GetOsName) version"
+				auxiliary="not installable, incompatible $(GetOsName) version"
 			elif ! IsQpkgDbMinRAMOk "$qpkg_name"; then
-				auxiliary='insufficient RAM installed'
+				auxiliary='not installable, insufficient RAM installed'
 			fi
 
 			if [[ $auxiliary != false ]]; then
@@ -13013,6 +12937,23 @@ IsQpkgTimeoutsIncreased()
 
 	}
 
+IsNumber()
+	{
+
+	# Input: (local)
+	#	$1 = string
+
+	# Output: (local)
+	#	$? = 0 if $1 has any numerals.
+
+	[[ -n ${1:-} ]] || return
+
+	local a=${1//[!0-9]/}	# Strip non-digits.
+
+	[[ ${#a} -gt 0 ]]
+
+	}
+
 CreatePidFile()
 	{
 
@@ -13050,6 +12991,89 @@ RemovePidFile()
 	[[ -n ${pidfile:-} && -e $pidfile ]] || return
 
 	rm -f "$pidfile"
+
+	}
+
+LocateSQLiteBinary()
+	{
+
+	# Outputs: (global)
+	#   $sqlite_cmd
+	#   $sqlite_pathfile
+
+	local a=''
+	sqlite_cmd=''
+	sqlite_pathfile=''
+
+	# Prefer Entware-installed `sqlite3`.
+
+	if [[ -z ${sqlite_cmd:-} ]] && IsQpkgReallyInstalled Entware; then
+		sqlite_pathfile=/opt/bin/sqlite3
+		[[ -e $sqlite_pathfile ]] && sqlite_cmd=$sqlite_pathfile
+	fi
+
+	# If that can't be found, then try several other locations ...
+
+	# These use a specific path to the binary:
+	#	HybridBackup = `Hybrid Backup Sync`
+
+	if [[ -z $sqlite_cmd ]] && IsQpkgReallyInstalled HybridBackup; then
+		sqlite_pathfile=$(GetQpkgInstalledPath HybridBackup)/CloudConnector3/bin/sqlite3
+		[[ -e $sqlite_pathfile ]] && sqlite_cmd=$sqlite_pathfile
+	fi
+
+	if [[ -z $sqlite_cmd ]] && IsQpkgReallyInstalled ArchiwareP5; then	# untested.
+		sqlite_pathfile=$(GetQpkgInstalledPath ArchiwareP5)/binaries/Linux/unknown/64/sqlite3
+		[[ -e $sqlite_pathfile ]] && sqlite_cmd=$sqlite_pathfile
+	fi
+
+	# These use the same path to the binary:
+	#	container-station = `Container Station`
+
+	if [[ -z $sqlite_cmd ]]; then
+		for a in container-station HD_Station; do					# 'HD_Station' is untested.
+			if IsQpkgReallyInstalled "$a"; then
+				sqlite_pathfile=$(GetQpkgInstalledPath "$a")/usr/bin/sqlite3
+				[[ -e $sqlite_pathfile ]] || continue
+				sqlite_cmd=$sqlite_pathfile
+				break
+			fi
+		done
+	fi
+
+	#	CacheMount = `HybridMount`
+	# 	qmiixagent = `Qmiix Agent`
+
+	if [[ -z $sqlite_cmd ]]; then
+		for a in CacheMount qmiixagent qusbcam2 QPython312 QPython311 QPython39; do
+			if IsQpkgReallyInstalled "$a"; then
+				sqlite_pathfile=$(GetQpkgInstalledPath "$a")/bin/sqlite3
+				[[ -e $sqlite_pathfile ]] || continue
+				sqlite_cmd=$sqlite_pathfile
+				break
+			fi
+		done
+	fi
+
+	# These use the same path to the binary, and require the linked-library path to be set:
+	#	img2pdf = `Image2PDF`
+	#	OCR_Converter = `OCR Converter`
+
+	if [[ -z $sqlite_cmd ]]; then
+		for a in img2pdf Qsirch OCR_Converter; do
+			if IsQpkgReallyInstalled "$a"; then
+				sqlite_pathfile=$(GetQpkgInstalledPath "$a")/bin/sqlite3
+				[[ -e $sqlite_pathfile ]] || continue
+				sqlite_cmd="LD_LIBRARY_PATH=$(GetQpkgInstalledPath "$a")/lib $sqlite_pathfile"
+				break
+			fi
+		done
+	fi
+
+	if [[ -z $sqlite_cmd ]]; then				# Last-resort, hope Entware will be installed this session.
+		sqlite_pathfile=/opt/bin/sqlite3
+		sqlite_cmd=$sqlite_pathfile
+	fi
 
 	}
 
@@ -15132,15 +15156,13 @@ SetCapabilities()
 SetColourisation()
 	{
 
-	# If it seems Entware is active, check if possible to return to colourful display.
-
 	# Inputs: (global)
 	#	$r_colourful_default
 
 	# Outputs: (global)
 	#	$colourful
 
-	if [[ -e /opt/bin/sed && -L /opt/etc/passwd && $r_colourful_default = true ]]; then
+	if [[ $r_colourful_default = true ]]; then
 		colourful=true
 		SendParentChangeEnv 'colourful=true'
 	else
