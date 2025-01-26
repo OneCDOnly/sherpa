@@ -8552,6 +8552,7 @@ SendParentChangeEnv()
 	{
 
 	# Send a message into message stream to change a sherpa parent environment variable or variables.
+
 	# This function is only called from within async functions.
 
 	# Inputs: (local)
@@ -8565,11 +8566,15 @@ SendPackageStateChange()
 	{
 
 	# Send a message into message stream to change the state of this QPKG to $1 in sherpa parent environment.
+
 	# This might be: `isinstalled`, `isntenabled`, `isstarted`, `scntupgradable`, etc ...
 	# This function is only called from within async functions.
 
 	# Inputs: (local)
 	#   $1 = action request
+
+	# Inputs: (global)
+	#	$qpkg_name
 
 	WriteToActionMsgPipe change "$1" package "$qpkg_name"
 
@@ -8579,11 +8584,15 @@ SendActionStatus()
 	{
 
 	# Send a message into message stream to update sherpa parent environment with the status of this action for $qpkg_name.
+
 	# This can be: `ok`, `so`, `sk`, `se`, `er`, `ex`. `ab`.
 	# This function is only called from within async functions.
 
 	# Inputs: (local)
 	#   $1 = status update
+
+	# Inputs: (global)
+	#	$qpkg_name
 
 	WriteToActionMsgPipe status "$1" package "$qpkg_name"
 
@@ -8816,11 +8825,11 @@ GetHardwareCPUBenchmark()
 	# QTS 4.3.3 has `sha1sum`, but no `sha256sum`.
 	# QTS 4.3.6 has both `sha1sum` and `sha256sum`.
 
-	# Use GNU `dd` because it generates speed statistics in stderr. BusyBox 1.01 `dd` does not.
+	# Use GNU `dd` because it generates speed statistics as stderr. BusyBox 1.01 `dd` does not generate stats at-all.
 
 	local a=''
 	local -i b=16		# Maximum time to run is around 1 second on my slowest NAS (TS-220).
-	local -i c=-20		# Run benchmark with highest priority.
+	local -i c=-20		# Execute benchmark with highest priority.
 
 	if [[ -e $r_gnu_dd_cmd ]]; then
 		if [[ -e $r_gnu_nice_cmd ]]; then
@@ -8849,7 +8858,7 @@ GetHardwareVolumeBenchmark()
 
 	# Generate a basic write benchmark for the default userdata volume.
 
-	# Use GNU `dd` because it generates speed statistics in stderr. BusyBox 1.01 `dd` does not.
+	# Use GNU `dd` because it generates speed statistics as stderr. BusyBox 1.01 `dd` does not generate stats at-all.
 
 	local a=''
 	local b=10k			# Maximum time to run is around 1 second on my slowest NAS (TS-220).
@@ -8949,7 +8958,7 @@ GetRepoURLFromStoreID()
 	{
 
 	# Inputs: (local)
-	#	$1 = store ID to lookup repo URL for
+	#	$1 = store ID to lookup repo URL for.
 
 	# Outputs: (local)
 	#   $? = 0 if found, 250 if not.
@@ -9136,7 +9145,8 @@ GetQpkgArch()
 	{
 
 	# Translate arch from local NAS (QTS/QuTS) to sherpa notation.
-	# sherpa arch for target NAS is a single 3 character-code.
+
+	# sherpa arch for NAS is a single 3-character code.
 	# prefix is 'a' for ARM, 'i' for Intel.
 
 	# Inputs: (global)
@@ -9318,12 +9328,12 @@ IsOsCanSecureDownload()
 	{
 
 	# `/sbin/curl` with SSL certificate verification enabled:
-	#	fails in:
+	#	- fails in:
 	# 		QTS 4.2.6
 	# 		QTS 4.4.1
 	# 		QTS 4.5.1
 	# 		QTS 4.5.4.1715
-	#	works in:
+	#	- works in:
 	# 		QTS 4.5.4.2627
 
 	# Inputs: (global)
@@ -9353,7 +9363,7 @@ IsOsCanSignedPackages()
 	# Inputs: (global)
 	#	$r_nas_firmware_ver
 
-	# NOTE: signing fails on QTS 4.3.6 (x31). No cert database (appears to be a bug as 4.3.6 is supposed to support signed QPKGs).
+	# NOTE: signing fails on QTS 4.3.6 (x31). No cert database (which appears to be a bug, as 4.3.6 is meant to support signed QPKGs).
 
 	SetOsFirmwareVer
 
@@ -9491,9 +9501,6 @@ IsOsStdKernelPageSize()
 	# Inputs: (global)
 	#	$r_kernel_page_size
 
-	# Outputs: (global)
-	#	$r_kernel_page_size
-
 	SetOsKernelPageSize
 
 	[[ $r_kernel_page_size = 4096B || $r_kernel_page_size = 4kiB ]]
@@ -9533,6 +9540,9 @@ IsOsLoadAverageAboveTrigger()
 
 	# Inputs: (local)
 	#	$1 = multiplier
+
+	# Inputs: (global)
+	#	$r_cpu_cores
 
 	local a=${1:-1}
 	local b=$(GetOsSysLoad1MinAverage); b=${b/./}
