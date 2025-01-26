@@ -1783,16 +1783,17 @@ SetMaxForks()
 	# Outputs: (global)
 	#   $max_forks
 
-	max_forks=$r_concurrency
+	local default_forks=$r_concurrency
+	max_forks=$default_forks
 
 	[[ -n ${1:-} ]] || return
 
 	local reason=''
 
-	if [[ $useropt_verbose = true ]]; then 					# No-point running async actions in verbose mode: stdout will be a confusing mess.
+	if [[ $useropt_verbose = true ]]; then 					# No-point running async actions in verbose mode: stdout would be a confusing mess.
 		max_forks=1
 		reason='verbose mode is active'
-	elif [[ $useropt_debug = true ]]; then 					# Same for debug mode: logs will be a mess.
+	elif [[ $useropt_debug = true ]]; then 					# Same for debug mode: log would be a mess.
 		max_forks=1
 		reason='debug mode is active'
 	else
@@ -1800,7 +1801,7 @@ SetMaxForks()
 			?(re)install|upgrade)							# QPKG built-in installer eventually aborts (QPKGs can only be managed one-at-a-time, else packages overwrite each other, and package source files end-up in the wrong install paths).
 				max_forks=1
 				;;
-			sign)											# Avoid "database busy" errors.
+			sign)											# Must avoid "database busy" errors.
 				max_forks=1
 				;;
 			clean)											# Don't make too-many calls to PyPI at the same time.
@@ -1813,11 +1814,10 @@ SetMaxForks()
 				max_forks=8
 		esac
 
-		[[ $max_forks -ne $r_concurrency ]] && reason="'$1' was requested"
+		[[ $max_forks -ne $default_forks ]] && reason="'$1' was requested"
 	fi
 
 	[[ -n $reason ]] && DebugInfo "setting \$max_forks to $max_forks because $reason"
-	DebugVar max_forks
 
 	}
 
