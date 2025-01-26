@@ -247,7 +247,7 @@ LoadConsts()
 	readonly r_debug_log_second_column_width=20
 	readonly r_help_desc_indent=3
 	readonly r_help_syntax_indent=6
-	readonly r_report_action_result_indent=6
+	readonly r_report_action_result_indent=4
 	readonly r_report_column_spacing=2
 	readonly r_report_file_bytes_column_width=14
 	readonly r_report_file_change_date_column_width=60
