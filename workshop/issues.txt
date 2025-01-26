@@ -1,5 +1,8 @@
 Observed issues:
 
+	* _DirSizeMonitor_() display needs to support 'proc: ' prefix.
+		- Incorrect formatting on QTS 4.2.6 while reinstalling Entware.
+
 	* Upgradable packages were not seen when running:
 		--------------------------------------------------------------------------------------------------
 		[/share/Public] # sherpa disable deps stop deps upgrade new

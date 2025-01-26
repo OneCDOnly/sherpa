@@ -93,17 +93,17 @@ ShowResults()
 			ViewLogTail
 		elif [[ $useropt_show_backups = true ]]; then
 			ReleaseLockfile
-			ShowReportBackups
+			ReportBackups
 		elif [[ $useropt_show_dependencies = true ]]; then
-			ShowReportDependencies
+			ReportDependencies
 		elif [[ $useropt_show_features = true ]]; then
-			ShowReportFeatures
+			ReportFeatures
 		elif [[ $useropt_show_packages = true ]]; then
-			ShowReportPackages
+			ReportPackages
 		elif [[ $useropt_show_repos = true ]]; then
-			ShowReportRepos
+			ReportRepos
 		elif [[ $useropt_show_status = true ]]; then
-			ShowReportStatuses
+			ReportStatuses
 			show_action_results_report=false
 		fi
 	fi
@@ -157,7 +157,7 @@ ShowResults()
 	fi
 
 	if [[ $show_action_results_report = true ]]; then
-		ShowReportAllActionResults
+		ReportAllActionResults
 	fi
 
 	[[ $show_backuploc = true ]] && ShowHelpBackupLocation
@@ -846,7 +846,7 @@ DebugLogEnv()
 	fi
 
 	[[ $useropt_show_aboutall = false ]] && DebugInfoMinSepr
-	RunAndLog "/bin/df -h | /bin/grep -iE '^(filesystem|none|tmpfs|ram)'" "$r_ramfs_freespace_pathfile"
+	RunAndLog "/bin/df -h | /bin/grep -iE '^(filesystem|none|tmpfs|/dev/ram)'" "$r_ramfs_freespace_pathfile"
 	[[ $useropt_show_aboutall = false ]] && DebugInfoMinSepr
 	RunAndLog "/usr/sbin/screen -ls | /bin/sed '/^[[:space:]]*$/d'" "$r_screen_sessions_pathfile" '' 1
 	[[ $useropt_show_aboutall = false ]] && DebugInfoMinSepr
@@ -1052,7 +1052,7 @@ QPKGsAssignToActions()
 	if IsQpkgInstalled Entware; then
 		local entware_install_date=$(GetQpkgInstalledDate Entware)
 
-		if [[ $entware_install_date = undefined || ${entware_install_date//[!0-9]/} -le 20250118 ]] && [[ $r_nas_arch != armv5tel ]]; then
+		if IsOsOnline && [[ $entware_install_date = undefined || ${entware_install_date//[!0-9]/} -le 20250118 ]] && [[ $r_nas_arch != armv5tel ]]; then
 			ShowAsNote "the $(TextBrightOrange Entware) QPKG will be auto-reinstalled (Entware packages were last updated in mid-January 2025)"
 			QPKGs-ACreinstall-to:Add Entware
 		fi
@@ -4859,13 +4859,17 @@ _GenerateStatusReportDataLine_()
 			/bin/touch "$r_report_flags_path"/na
 
 			if ! IsQpkgDbArchOK; then
-				auxiliary_msg=$(FormatReportField 'not installable, incompatible architecture' alert_mute)
+				auxiliary='not installable, incompatible architecture'
 			elif ! IsQpkgDbMinOSVerOk || ! IsQpkgDbMaxOSVerOk; then
-				auxiliary_msg=$(FormatReportField "not installable, incompatible $(GetOsName)" alert_mute)
+				auxiliary="not installable, incompatible $(GetOsName)"
 			elif ! IsQpkgDbMinRAMOk; then
-				auxiliary_msg=$(FormatReportField 'not installable, insufficient RAM installed' alert_mute)
+				auxiliary='not installable, insufficient RAM installed'
+			fi
+
+			if [[ $auxiliary != false ]]; then
+				auxiliary_msg=$(FormatReportField "$auxiliary" alert_mute)
 			else
-				status_msg=$(FormatReportField 'not installed' normal_mute)
+				auxiliary_msg=$(FormatReportField 'not installed' normal_mute)
 			fi
 
 			ver=$(GetQpkgDbVer)
@@ -5037,11 +5041,15 @@ _GenerateReposReportDataLine_()
 			/bin/touch "$r_report_flags_path"/na
 
 			if ! IsQpkgDbArchOK; then
-				auxiliary_msg=$(FormatReportField 'not installable, incompatible architecture' alert_mute)
+				auxiliary='not installable, incompatible architecture'
 			elif ! IsQpkgDbMinOSVerOk; then
-				auxiliary_msg=$(FormatReportField "not installable, incompatible $(GetOsName)" alert_mute)
+				auxiliary="not installable, incompatible $(GetOsName)"
 			elif ! IsQpkgDbMinRAMOk; then
-				auxiliary_msg=$(FormatReportField 'not installable, insufficient RAM installed' alert_mute)
+				auxiliary='not installable, insufficient RAM installed'
+			fi
+
+			if [[ $auxiliary != false ]]; then
+				auxiliary_msg=$(FormatReportField "$auxiliary" alert_mute)
 			else
 				auxiliary_msg=$(FormatReportField 'not installed' normal_mute)
 			fi
@@ -7774,7 +7782,7 @@ HelpAbbreviations()
 
 	}
 
-ShowReportBackups()
+ReportBackups()
 	{
 
 	# Inputs: (global)
@@ -7843,7 +7851,7 @@ ShowReportBackups()
 
 	}
 
-ShowReportDependencies()
+ReportDependencies()
 	{
 
 	FuncInit
@@ -7893,7 +7901,7 @@ ShowReportDependencies()
 
 	}
 
-ShowReportFeatures()
+ReportFeatures()
 	{
 
 	FuncInit
@@ -7943,7 +7951,7 @@ ShowReportFeatures()
 
 	}
 
-ShowReportPackages()
+ReportPackages()
 	{
 
 	FuncInit
@@ -8005,7 +8013,7 @@ ShowReportPackages()
 
 	}
 
-ShowReportRepos()
+ReportRepos()
 	{
 
 	FuncInit
@@ -8055,7 +8063,7 @@ ShowReportRepos()
 
 	}
 
-ShowReportStatuses()
+ReportStatuses()
 	{
 
 	FuncInit
@@ -8110,7 +8118,7 @@ ShowReportStatuses()
 
 	}
 
-ShowReportAllActionResults()
+ReportAllActionResults()
 	{
 
 	local -i a=0
@@ -8154,9 +8162,9 @@ ShowReportAllActionResults()
 
 			DisplayAsHelpTitle "package action$(Pluralise "$d") started @ $(ConvertSecondsToTime "$a"), ended @ $(ConvertSecondsToTime "$e"), elapsed = $(ConvertSecondsToDuration "$(CalcAmountDiff "$a" "$e")")"
 
-			[[ $show_action_results_ok = true ]] && ShowReportActionResults ok
-			[[ $show_action_results_skipped = true ]] && ShowReportActionResults skipped
-			[[ $show_action_results_failed = true ]] && ShowReportActionResults failed
+			[[ $show_action_results_ok = true ]] && ReportActionResults ok
+			[[ $show_action_results_skipped = true ]] && ReportActionResults skipped
+			[[ $show_action_results_failed = true ]] && ReportActionResults failed
 			[[ $show_action_results_zero = true ]] && ShowZeroQpkgs
 
 			} > "$r_report_output_pathfile"
@@ -8169,7 +8177,7 @@ ShowReportAllActionResults()
 
 	}
 
-ShowReportActionResults()
+ReportActionResults()
 	{
 
 	# Inputs: (local)
@@ -9465,6 +9473,14 @@ IsOsStoppingPackages()
 	fi
 
 	} &> /dev/null
+
+IsOsOnline()
+	{
+
+	[[ ${r_os_upstate-unset} = unset ]] && readonly r_os_upstate=$(GetOsState)
+	[[ $r_os_upstate = online ]]
+
+	}
 
 IsOsStdKernelPageSize()
 	{
@@ -13199,7 +13215,8 @@ ClearPath()
 	{
 
 	# Clear (empty) an existing directory, but don't delete the directory.
-	# Delete files in a relatively safe manner. Parent of directory MUST be separately specified to avoid an `rm -rf /*` situation because of empty args.
+
+	# Allows deletion of files in a relatively safe manner. Parent of directory MUST be separately specified to avoid an `rm -rf /*` situation because of empty args.
 
 	# Inputs: (local)
 	#	$1 = full path to parent of directory name to clear.
