@@ -1052,7 +1052,7 @@ QPKGsAssignToActions()
 	if IsQpkgInstalled Entware; then
 		local entware_install_date=$(GetQpkgInstalledDate Entware)
 
-		if [[ $entware_install_date = undefined || ${entware_install_date//[!0-9]/} -le 20250118 ]] && [[ $r_nas_arch != armv5tel ]]; then
+		if IsOsOnline && [[ $entware_install_date = undefined || ${entware_install_date//[!0-9]/} -le 20250118 ]] && [[ $r_nas_arch != armv5tel ]]; then
 			ShowAsNote "the $(TextBrightOrange Entware) QPKG will be auto-reinstalled (Entware packages were last updated in mid-January 2025)"
 			QPKGs-ACreinstall-to:Add Entware
 		fi
@@ -9473,6 +9473,14 @@ IsOsStoppingPackages()
 	fi
 
 	} &> /dev/null
+
+IsOsOnline()
+	{
+
+	[[ ${r_os_upstate-unset} = unset ]] && readonly r_os_upstate=$(GetOsState)
+	[[ $r_os_upstate = online ]]
+
+	}
 
 IsOsStdKernelPageSize()
 	{
