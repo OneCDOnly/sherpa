@@ -1,3 +1,6 @@
+* Separate IPK installation into 2 phases: download, then install.
+	- This should fix the issue with _DirSizeMonitor_() apparently reversing its progress as IPKs are installed.
+
 * Prefix action specifiers with a hyphen.
 	-start -disable etc...
 
