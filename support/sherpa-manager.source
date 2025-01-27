@@ -1433,6 +1433,7 @@ ProcActions()
 
 				if QPKGs-ISenabled.Exist Entware; then
 					ModPathToEntware
+# 					IPKs:download
 					IPKs:upgrade
 					IPKs:install
 					IPKs:downgrade
@@ -8947,12 +8948,12 @@ GetUserDefVol()
 
 	}
 
-GetThisBinPath()
-	{
-
-	[[ -n ${1:?${FUNCNAME[0]}'()': undefined binary} ]] && command -v "$1" 2>&1
-
-	}
+#GetThisBinPath()
+# 	{
+#
+# 	[[ -n ${1:?${FUNCNAME[0]}'()': undefined binary} ]] && command -v "$1" 2>&1
+#
+# 	}
 
 GetRepoURLFromStoreID()
 	{
@@ -9291,12 +9292,12 @@ IsQuTS()
 
 	} &> /dev/null
 
-IsQTS()
-	{
-
-    ! IsQuTS
-
-	} &> /dev/null
+#IsQTS()
+# 	{
+#
+#     ! IsQuTS
+#
+# 	} &> /dev/null
 
 IsOsSupported()
 	{
@@ -12947,14 +12948,14 @@ IsQpkgEnabled()
 
 	}
 
-IsQpkgSigned()
-	{
-
-	# TODO: include SQL to check $1/$qpkg_name has been signed in certificate database. Use Python modules for this instead of SQLite3 executable.
-
-	:
-
-	}
+#IsQpkgSigned()
+# 	{
+#
+# 	# TODO: include SQL to check $1/$qpkg_name has been signed in certificate database. Use Python modules for this instead of SQLite3 executable.
+#
+# 	:
+#
+# 	}
 
 IsQpkgTimeoutsIncreased()
 	{
@@ -14981,7 +14982,7 @@ TextBrightRedBlink()
 
 	} 2> /dev/null
 
-# TextCyan()
+#TextCyan()
 # 	{
 #
 # 	# Inputs: (global)
@@ -15013,7 +15014,7 @@ TextDarkGrey()
 
 	} 2> /dev/null
 
-# TextUnderlined()
+#TextUnderlined()
 # 	{
 #
 # 	# Inputs: (global)
