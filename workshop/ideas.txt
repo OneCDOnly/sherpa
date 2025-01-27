@@ -1,138 +1,141 @@
-* Prefix action specifiers with a hyphen.
-	-start -disable etc...
+Management:
 
-	* Arg parser: use commas to separate actions & options?
+	* Separate IPK installation into 2 phases: download, then install.
+		- This should fix the issue with _DirSizeMonitor_() apparently reversing its progress as IPKs are installed.
 
-* When package actions are in-progress and user SIGINT, abort remaining actions, then show regular results report.
-	- Must show which actions completed before SIGINT, and which had to be aborted.
+	* Only install IPKs for QPKGs that download successfully (or are already downloaded).
+		- ... and the installed ones, as-happens now.
 
-* Rename 'O' QPKGs:
-	# QPKGs to migrate from leading-'O'.
+	* Prefix action specifiers with a hyphen.
+		-start -disable etc...
 
-	migration_qpkgs=(Lidarr Medusa qBittorrent Readarr SickGear Sonarr Tautulli Transmission Watcher3 Whisparr)
+		* Arg parser: use commas to separate actions & options?
 
-	# Will need to modify:
-	#	'qpkg.conf'
-	#		[OTransmission]
-	# 		Name = OTransmission
-	# 		QPKG_File = OTransmission.qpkg
-	# 		Shell = /share/CACHEDEV1_DATA/.qpkg/OTransmission/otransmission.sh
-	# 		Install_Path = /share/CACHEDEV1_DATA/.qpkg/OTransmission
+	* When package actions are in-progress and user SIGINT, abort remaining actions, then show regular results report.
+		- Must show which actions completed before SIGINT, and which had to be aborted.
 
-	# 1. stop QPKG,
-	# 2. rename service script,
-	# 3. rename installation path,
-	# 4. 'sed' replace all remaining occurrences in 'qpkg.conf',
-	# 5. application config files? internal paths, etc...
-	# 6. start QPKG.
+	* Rename 'O' QPKGs:
 
-* Include option to display alternating line highlighting on reports?
-	- $alternating_report_lines
+		migration_qpkgs=(Lidarr Medusa qBittorrent Readarr SickGear Sonarr Tautulli Transmission Watcher3 Whisparr)
 
-* Include QPKG signing method via default QTS Python and modules.
-	- Won't require an 'sqlite3' binary.
+		# Will need to modify:
+		#	'qpkg.conf'
+		#		[OTransmission]
+		# 		Name = OTransmission
+		# 		QPKG_File = OTransmission.qpkg
+		# 		Shell = /share/CACHEDEV1_DATA/.qpkg/OTransmission/otransmission.sh
+		# 		Install_Path = /share/CACHEDEV1_DATA/.qpkg/OTransmission
 
-	* LocateSQLiteBinary() should only run if processing QPKG actions.
-		- or 'check'ing, 'about'.
+		# 1. stop QPKG,
+		# 2. rename service script,
+		# 3. rename installation path,
+		# 4. 'sed' replace all remaining occurrences in 'qpkg.conf',
+		# 5. application config files? internal paths, etc...
+		# 6. start QPKG.
 
-* Display a warning when sherpa QPKG is not signed, and QTS App Center requires signed packages only.
-	- Need a new test for QPKG "sign"ed status.
-	- Include QPKG "signed" status in dependencies report?
+	* Include option to display alternating line highlighting on reports?
+		- $alternating_report_lines
 
-* Put 'sherpa about' display into a report window.
+	* Include QPKG signing method via default QTS Python and modules.
+		- Won't require an 'sqlite3' binary.
 
-* Check OOM killed pids against inactive daemons and report as-such on status report.
+	* Display a warning when sherpa QPKG is not signed, and QTS App Center requires signed packages only.
+		- Need a new test for QPKG "sign"ed status.
+		- Include QPKG "signed" status in dependencies report?
 
-* Takes 3.5 to 6 seconds to build QPKG states on Laura.
-	- Should be able to do this quicker.
-	- Calculate QPKG features separate to states and cache/load these from file next time?
-	- It's checking for upgradable QPKGs that takes most of the time. Consider only running this during `check` or `upgrade` actions.
+	* Put 'sherpa about' display into a report window.
 
-* Disable same-line display updates when not in a user terminal.
-	- No-need to record every progress message change in logs.
+	* Check OOM killed pids against inactive daemons and report as-such on status report.
 
-* Only install IPKs for QPKGs that download successfully (or are already downloaded).
-	- ... and the installed ones, as-happens now.
+	* Takes 3.5 to 6 seconds to build QPKG states on Laura.
+		- Should be able to do this quicker.
+		- Calculate QPKG features separate to states and cache/load these from file next time?
+		- It's checking for upgradable QPKGs that takes time. Consider only running this during `check` or `upgrade` actions.
 
-* Default dependency report should only show installed QPKGs.
-	- ... but should allow 'sherpa d all' to see all QPKGs.
-	- Same for repository and repo reports.
-	- Add new $QPKG_ACTIONS element: 'report'
+	* Disable same-line display updates when not in a user terminal.
+		- No-need to record every progress message change in logs.
 
-* When running 'sherpa rebuild sab', SAB is installed and auto-updates as usual. Then when 'restore' action runs, auto-update runs again.
-	- Disable auto-update after installation if 'restore' is to be run, then enable it again after 'restore' completes?
+	* Default dependency report should only show installed QPKGs.
+		- ... but should allow 'sherpa d all' to see all QPKGs.
+		- Same for repository and repo reports.
+		- Add new $QPKG_ACTIONS element: 'report'
 
-* If using 'rustc' IPK, ensure $HOME is != /root before executing.
+	* When running 'sherpa rebuild sab', SAB is installed and auto-updates as usual. Then when 'restore' action runs, auto-update runs again.
+		- Disable auto-update after installation if 'restore' is to be run, then enable it again after 'restore' completes?
 
-* 'install'/'reinstall'/'upgrade' should check path QPKG is installed or is to-be installed to.
-	- If it starts with /root - abort.
+	* If using 'rustc' IPK, ensure $HOME is != /root before executing.
 
-* Reject useless action/group combinations like:
-	- 'stop/deactivate inactive'
-	- 'start/activate active'
-	- 'install installed'
-	- 'uninstall not-installed'
-	- 'enable enabled'
-	- 'disable disabled'
+	* 'install'/'reinstall'/'upgrade' should check path QPKG is installed or is to-be installed to.
+		- If it starts with /root - abort.
 
-* 'status' report: show new QPKG application version alongside current application version?
-	- Not sure about this. Installed application version is not stored. Maybe just display new version?
+	* Reject useless action/group combinations like:
+		- 'stop/deactivate inactive'
+		- 'start/activate active'
+		- 'install installed'
+		- 'uninstall not-installed'
+		- 'enable enabled'
+		- 'disable disabled'
 
-* Report column headings in bright white?
+	* 'status' report: show new QPKG application version alongside current application version?
+		- Not sure about this. Installed application version is not stored. Maybe just display new version?
 
-* Include QPKG version numbers in live progress messages?
+	* Report column headings in bright white?
 
-* Allow QPKGs to follow source git branch, release or tag.
-	# [[ $(git branch) =~ '(no branch)' ]] && echo none || echo one
-	# git describe --tags
+	* Include QPKG version numbers in live progress messages?
 
-* Add new arg to reshow the previously generated report.
-	- 'sherpa show report'.
+	* Add new arg to reshow the previously generated report.
+		- 'sherpa show report'.
 
-* Try each user arg as an action (verb).
-    - if not an action, try as a group (noun).
-    - if not a group, then it's unwanted.
-    - if it's a group, and an action has already been set, process action and group.
-    - if it's a group, and no action was set, then assign a default action, process action and group, then iterate.
+	* Try each user arg as an action (verb).
+		- if not an action, try as a group (noun).
+		- if not a group, then it's unwanted.
+		- if it's a group, and an action has already been set, process action and group.
+		- if it's a group, and no action was set, then assign a default action, process action and group, then iterate.
 
-* BASH completion.
+	* BASH completion.
 
-* Automate generation of 'Packages.md' in wiki using details from 'packages.source' ?
-    - Would need to store full application description, port numbers, application source.
-    - Maybe consider another local source file, that builds 'packages.source' first?
+	* Automate generation of 'Packages.md' in wiki using details from 'packages.source' ?
+		- Would need to store full application description, port numbers, application source.
+		- Maybe consider another local source file, that builds 'packages.source' first?
 
-* In production, sherpa 'stable' branch should only update once per-day.
-    - 'unstable' should update once per 10 minutes.
+	* In production, sherpa 'stable' branch should only update once per-day.
+		- 'unstable' should update once per 10 minutes.
 
-* QDK looks like it will now write installation scripts that extract to unique paths.
-	- Should now be able to install more than one QPKG simultaneously. https://github.com/qnap-dev/QDK/commit/f1eaf3bf0a9547d449592369e555cdfd6cc3c405
-	- It will take time for this ability to make its way into all QPKGs, so will need to note which QPKGs can be installed this way. 'packages' file will need an extra field to note this.
-	- Will also apply to reinstalls and upgrades.
+	* QDK looks like it will now write installation scripts that extract to unique paths.
+		- Should now be able to install more than one QPKG simultaneously. https://github.com/qnap-dev/QDK/commit/f1eaf3bf0a9547d449592369e555cdfd6cc3c405
+		- It will take time for this ability to make its way into all QPKGs, so will need to note which QPKGs can be installed this way. 'packages' file will need an extra field to note this.
+		- Will also apply to reinstalls and upgrades.
 
-* Create local sherpa App Center repository in UI.
-	- Place sherpa.xml in /home/httpd and add a 3rd-party repo to App Center with 'http://0.0.0.0:8080/sherpa.xml'
-	- Hide this repo in App Center, to prevent user installs via UI? Must check if this can be done. If can't hide, prohibit icon installs?
+	* Create local sherpa App Center repository in UI.
+		- Place sherpa.xml in /home/httpd and add a 3rd-party repo to App Center with 'http://0.0.0.0:8080/sherpa.xml'
+		- Hide this repo in App Center, to prevent user installs via UI? Must check if this can be done. If can't hide, prohibit icon installs?
 
-* Compare .git/ORIG_HEAD before-and-after 'git pull'. If different, then remove *.pyc before starting application.
+	* Add mini rolling CPU utilitisation graph to progress display while installing QPKGs?
+		while true; do top -b -n 2 -d 0.2 -p 1621 | tail -1 | awk '{print $9}'; done
+		while true; do /usr/bin/top -b -n2 -d1 | grep 20744 | tail -1 | awk '{print $7}'; done
 
-* Add mini rolling CPU utilitisation graph to progress display while installing QPKGs?
-    while true; do top -b -n 2 -d 0.2 -p 1621 | tail -1 | awk '{print $9}'; done
-    while true; do /usr/bin/top -b -n2 -d1 | grep 20744 | tail -1 | awk '{print $7}'; done
+	* Create a troubleshooting page for the wiki?
+		- Include explanations of various actions like 'clean' and 'check', so users will have a better idea which action to run when things go wrong.
 
-* Create a troubleshooting page for the wiki?
-    - Include explanations of various actions like 'clean' and 'check', so users will have a better idea which action to run when things go wrong.
+	* Download updates for installed QPKGs in background when running sherpa for any reason?
 
-* Download updates for installed QPKGs in background when running sherpa for any reason?
+	* Keep track of each package's action times and process the longest ones first next time?
+		- Add a new "launch policy" setting: 'none', 'longest', 'shortest', 'balanced'.
+			- 'none': QPKGs are processed in the same order they appear in 'packages'.
+			- 'longest': QPKGs that take a long time to execute are processed first, in-order, down to the shortest time to execute.
+			- 'shortest': QPKGs that take a short time to execute are processed first, in-order, up to the longest time to execute.
+			- 'balanced': QPKGs are processed as a mix of longest, then shortest, then next longest, then next shortest, and so-on.
 
-* Keep track of each package's action times and process the longest ones first next time?
-	- Add a new "launch policy" setting: 'none', 'longest', 'shortest', 'balanced'.
-		- 'none': QPKGs are processed in the same order they appear in 'packages'.
-		- 'longest': QPKGs that take a long time to execute are processed first, in-order, down to the shortest time to execute.
-		- 'shortest': QPKGs that take a short time to execute are processed first, in-order, up to the longest time to execute.
-		- 'balanced': QPKGs are processed as a mix of longest, then shortest, then next longest, then next shortest, and so-on.
+	* Wrap description column text in packages report?
+		- Use 'GNU column' for this? Nope, 'column' can't wrap text containing ANSI codes. Won't show a wrapped column in colour. :(
 
-* Wrap description column text in packages report?
-	- Use 'GNU column' for this? Nope, 'column' can't wrap text containing ANSI codes. Won't show a wrapped column in colour. :(
+	* Include new integrated help screens for all actions?
+		- Like: `sherpa paste help`, `sherpa install help`, `sherpa reassign help`
 
-* Include new integrated help screens for all actions?
-	- Like: `sherpa paste help`, `sherpa install help`, `sherpa reassign help`
+Service Library:
+
+	* Compare .git/ORIG_HEAD before-and-after 'git pull'. If different, then remove *.pyc before starting application.
+
+	* Allow QPKGs to follow source git branch, release or tag.
+		# [[ $(git branch) =~ '(no branch)' ]] && echo none || echo one
+		# git describe --tags
