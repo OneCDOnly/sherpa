@@ -525,7 +525,7 @@ LoadEnv()
 
 	# Ephemeral files.
 
-	readonly r_action_abort_pathfile=$r_qpkg_states_path/abort.action
+	readonly r_abort_actions_pathfile=$r_qpkg_states_path/abort.action
 	readonly r_action_msg_pipe=$r_qpkg_states_path/action.messages.pipe
 	readonly r_report_output_pathfile=$r_reports_path/report.ansi
 
@@ -1486,7 +1486,7 @@ ProcAction()
 	#	$ipks_upgrade
 	#   $ok_count
 	#	$pips_install
-	#	$r_action_abort_pathfile
+	#	$r_abort_actions_pathfile
 	#	$r_async_procs_path
 	#   $skip_abort_count
 	#   $skip_count
@@ -1576,7 +1576,7 @@ ProcAction()
 
 			# Read message pipe and process QPKGs and actions as-per requests contained within.
 
-			while [[ ${#target_packages[@]} -gt 0 && ! -e $r_action_abort_pathfile ]]; do
+			while [[ ${#target_packages[@]} -gt 0 && ! -e $r_abort_actions_pathfile ]]; do
 				ReadFromActionMsgPipe msg1_key msg1_value msg2_key msg2_value
 
 				case $msg1_key in
@@ -1643,7 +1643,7 @@ ProcAction()
 								;;
 							sa)		# Action was skipped and must immediately abort (don't attempt this action again).
 								((skip_abort_count++))
-								/bin/touch "$r_action_abort_pathfile"
+								/bin/touch "$r_abort_actions_pathfile"
 								;;
 							er)		# Action failed (uh-oh).
 								((fail_count++))
@@ -1674,7 +1674,7 @@ ProcAction()
 						DebugAsWarn "unidentified key in message queue: '$msg1_key'"
 				esac
 
-				[[ -e $r_action_abort_pathfile ]] && break
+				[[ -e $r_abort_actions_pathfile ]] && break
 			done
 
 			[[ $fail_count -gt 0 ]] && show_action_results_failed=true
@@ -3991,7 +3991,7 @@ _ExecOneActionWithManyForks_()
 	# Inputs: (global)
 	#   $fork_count
 	#   $max_forks
-	#	$r_action_abort_pathfile
+	#	$r_abort_actions_pathfile
 
 	# Outputs: (global)
 	#	$pidfile
@@ -4004,10 +4004,10 @@ _ExecOneActionWithManyForks_()
 	local -a c=("$@")
 
 	for qpkg_name in "${c[@]}"; do
-		[[ ! -e $r_action_abort_pathfile ]] || break
+		[[ ! -e $r_abort_actions_pathfile ]] || break
 
 		while [[ $fork_count -ge $max_forks ]]; do  	# Don't fork until an empty spot becomes available.
-			[[ ! -e $r_action_abort_pathfile ]] || break 2
+			[[ ! -e $r_abort_actions_pathfile ]] || break 2
 			sleep .2
 			UpdateActionForkProgress
 		done
@@ -4029,7 +4029,7 @@ _ExecOneActionWithManyForks_()
 	# All action forks have launched, now wait for them to exit.
 
 	while [[ $fork_count -gt 0 ]]; do
-		[[ ! -e $r_action_abort_pathfile ]] || break
+		[[ ! -e $r_abort_actions_pathfile ]] || break
 		sleep .2
 		UpdateActionForkProgress						# Update display while running forks complete their tasks.
 	done
@@ -6899,11 +6899,11 @@ EraseForkCountPaths()
 
 	# Inputs: (global)
 	#	$proc_counts_path
-	#	$r_action_abort_pathfile
+	#	$r_abort_actions_pathfile
 	#	$r_action_counts_path
 
 	ClearPath "$r_action_counts_path" "$proc_counts_path"
-	[[ -e $r_action_abort_pathfile ]] && rm -f "$r_action_abort_pathfile"
+	[[ -e $r_abort_actions_pathfile ]] && rm -f "$r_abort_actions_pathfile"
 
 	} &> /dev/null
 
@@ -11050,7 +11050,7 @@ _QPKG:sign_()
 	local b=''
 	local -i z=0
 
-	if [[ -e $r_action_abort_pathfile ]]; then
+	if [[ -e $r_abort_actions_pathfile ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped-abort 'abort requested, unable to continue'
 		MarkActionForkAsSkippedAbort
 		z=3
@@ -15606,13 +15606,13 @@ CaughtSIGINT()
 	{
 
 	# Inputs: (global)
-	#	$r_action_abort_pathfile
+	#	$r_abort_actions_pathfile
 	#	$r_inhibit_display_pathfile
 
 	trap - SIGINT
 
 	[[ -n ${r_inhibit_display_pathfile:-} ]] && /bin/touch "$r_inhibit_display_pathfile"
-	[[ -n ${r_action_abort_pathfile:-} ]] && /bin/touch "$r_action_abort_pathfile"
+	[[ -n ${r_abort_actions_pathfile:-} ]] && /bin/touch "$r_abort_actions_pathfile"
 	EraseThisLine
 	ShowAsAbort 'caught SIGINT'
 	CloseActionMsgPipe
