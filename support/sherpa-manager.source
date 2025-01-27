@@ -19,13 +19,13 @@
 # 			   functions: 'CamelCase'
 # asynchronous functions: '_CamelCaseWithLeadingAndTrailingUnderscores_'
 # 	utility interceptors: (same as original)
-#			   variables: 'snakecase'
 #  flag "object" methods: 'Capitalised.CamelCase.With.Inline.Periods.And.Colon.Before:Method'
 #	 flag "object" tests: 'Capitalised.CamelCase.With.Inline.Periods.And.Period.Before.Test'
 #  list "object" methods: 'Capitalised-CamelCase-With-Inline-Hyphens-And-Colon-Before:Method'
 #	 list "object" tests: 'Capitalised-CamelCase-With-Inline-Hyphens-And-Period-Before.Test'
 #	 "object" properties: '_snakecase_with_leading_and_trailing_underscores_' (these should be managed ONLY by the object's methods)
 #			   constants: 'r_snakecase_with_leading_r_underscore' (set as readonly ASAP)
+#			   variables: 'snakecase_with_inline_underscores'
 #				 indents: 1 x tab char (= 4 space chars)
 #
 # Notes:
