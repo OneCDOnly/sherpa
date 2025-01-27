@@ -497,12 +497,12 @@ LoadEnv()
 	readonly r_inhibit_display_pathfile=$r_cache_path/display.inhibit
 	readonly r_objects_archive_pathfile=$r_cache_path/objects.tar.gz
 	readonly r_objects_pathfile=$r_cache_path/objects
+	readonly r_oom_log_pathfile=$r_logs_path/oom.log
 	readonly r_optional_qpkgs_list_pathfile=$r_cache_path/optionals
 	readonly r_packages_archive_pathfile=$r_cache_path/packages.tar.gz
 	readonly r_packages_pathfile=$r_cache_path/packages
 	readonly r_prev_ipk_list_pathfile=$r_ipk_cache_path/ipk.list.save
 	readonly r_prev_pip_list_pathfile=$r_pip_cache_path/pip.list.save
-	readonly r_oom_log_pathfile=$r_logs_path/oom.log
 	readonly r_ram_freeused_pathfile=$r_logs_path/ram.freeused
 	readonly r_ramfs_freespace_pathfile=$r_logs_path/ramfs.freespace
 	readonly r_screen_sessions_pathfile=$r_logs_path/screen.sessions
