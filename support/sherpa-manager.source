@@ -41,8 +41,8 @@ readonly r_args_raw=$*
 Init()
 	{
 
-	HideKeystrokes
 	HideCursor
+	HideKeystrokes
 	LoadConsts
 	LoadDefaults
 
@@ -1049,10 +1049,10 @@ QPKGsAssignToActions()
 
 	# KLUDGE: ensure Entware is reinstalled when IPKs are upgraded.
 
-	if IsQpkgInstalled Entware; then
+	if IsQpkgInstalled Entware && IsOsOnline; then
 		local entware_install_date=$(GetQpkgInstalledDate Entware)
 
-		if IsOsOnline && [[ $entware_install_date = undefined || ${entware_install_date//[!0-9]/} -le 20250118 ]] && [[ $r_nas_arch != armv5tel ]]; then
+		if [[ $entware_install_date = undefined || ${entware_install_date//[!0-9]/} -le 20250116 ]] && [[ $r_nas_arch != armv5tel ]]; then
 			ShowAsNote "the $(TextBrightOrange Entware) QPKG will be auto-reinstalled (Entware packages were last updated in mid-January 2025)"
 			QPKGs-ACreinstall-to:Add Entware
 		fi
@@ -13469,6 +13469,7 @@ FormatAsThous()
 	# Format as thousands.
 
 	# A string-based thousands-group formatter totally unreliant on locale.
+
 	# Why? Because builtin `printf` in 32b ARM QTS versions doesn't follow locale. ¯\_(ツ)_/¯
 
 	# Inputs: (local)
@@ -14279,7 +14280,7 @@ ConvertAsSmartDate()
 	# Inputs: (local)
 	#	$1 = datecode in the format 'YYMMDD'. Example: '240928' with 6 digits.
 	#	$1 = longdatecode in the format 'YYYYMMDD'. Example: '20240928' with 8 digits.
-	#	$1 = epoch time. Example: '1234567890'. Since 9th September 2001, epoch time has-been 10 digits and will remain-so until 21st November 2286.
+	#	$1 = epoch time. Example: '1234567890' with 10 digits. Since 9th September 2001, epoch time has-been 10 digits and will remain-so until 21st November 2286.
 
 	# Inputs: (global)
 	#	$r_extended_datetime_format
@@ -15430,6 +15431,7 @@ LoadObjects()
 	objects_loaded=true
 
 	readonly r_objects_epoch
+
 	DebugVar r_objects_epoch
 
 	FuncExit
@@ -15546,8 +15548,9 @@ LoadPackages()
 	# Third, source remaining elements from packages file.
 
 	. "$r_packages_pathfile"
+	packages_loaded=true
 
-	r_qpkgs_name_migration=(Lidarr Medusa qBittorrent Readarr SickGear Sonarr Tautulli Transmission Watcher3 Whisparr)
+# 	r_qpkgs_name_migration=(Lidarr Medusa qBittorrent Readarr SickGear Sonarr Tautulli Transmission Watcher3 Whisparr)
 
 	# Fourth, lock list arrays and values.
 
@@ -15579,8 +15582,6 @@ LoadPackages()
 	readonly r_qpkg_version
 	readonly r_qpkg_will_log
 
-	packages_loaded=true
-
 	readonly r_base_qpkg_conflicts_with
 	readonly r_base_qpkg_warnings
 	readonly r_essential_ipks
@@ -15592,8 +15593,9 @@ LoadPackages()
 	DebugVar r_packages_epoch
 
 	for qpkg_name in "${r_qpkg_name[@]}"; do
-		[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name	# Ensure only first mention of each QPKG name is added to "GRall" array.
+		[[ $previous = "$qpkg_name" ]] && continue
 		QPKGs-GRall:Add "$qpkg_name"
+		previous=$qpkg_name					# Only add first mention of each QPKG name to "GRall" array.
 	done
 
 	BuildQPKGsTiers

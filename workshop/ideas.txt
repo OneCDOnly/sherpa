@@ -14,25 +14,6 @@ Management:
 	* When package actions are in-progress and user SIGINT, abort remaining actions, then show regular results report.
 		- Must show which actions completed before SIGINT, and which had to be aborted.
 
-	* Rename 'O' QPKGs:
-
-		migration_qpkgs=(Lidarr Medusa qBittorrent Readarr SickGear Sonarr Tautulli Transmission Watcher3 Whisparr)
-
-		# Will need to modify:
-		#	'qpkg.conf'
-		#		[OTransmission]
-		# 		Name = OTransmission
-		# 		QPKG_File = OTransmission.qpkg
-		# 		Shell = /share/CACHEDEV1_DATA/.qpkg/OTransmission/otransmission.sh
-		# 		Install_Path = /share/CACHEDEV1_DATA/.qpkg/OTransmission
-
-		# 1. stop QPKG,
-		# 2. rename service script,
-		# 3. rename installation path,
-		# 4. 'sed' replace all remaining occurrences in 'qpkg.conf',
-		# 5. application config files? internal paths, etc...
-		# 6. start QPKG.
-
 	* Include option to display alternating line highlighting on reports?
 		- $alternating_report_lines
 
@@ -139,3 +120,22 @@ Service Library:
 	* Allow QPKGs to follow source git branch, release or tag.
 		# [[ $(git branch) =~ '(no branch)' ]] && echo none || echo one
 		# git describe --tags
+
+	* Rename 'O' QPKGs:
+
+		migration_qpkgs=(Lidarr Medusa qBittorrent Readarr SickGear Sonarr Tautulli Transmission Watcher3 Whisparr)
+
+		# Will need to modify:
+		#	'qpkg.conf'
+		#		[OTransmission]
+		# 		Name = OTransmission
+		# 		QPKG_File = OTransmission.qpkg
+		# 		Shell = /share/CACHEDEV1_DATA/.qpkg/OTransmission/otransmission.sh
+		# 		Install_Path = /share/CACHEDEV1_DATA/.qpkg/OTransmission
+
+		# 1. stop QPKG,
+		# 2. rename service script,
+		# 3. rename installation path,
+		# 4. 'sed' replace all remaining occurrences in 'qpkg.conf',
+		# 5. application config files? internal paths, etc...
+		# 6. start QPKG.
