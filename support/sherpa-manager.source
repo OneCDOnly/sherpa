@@ -52,7 +52,7 @@ Init()
 	IsUserOk || return
 	SetCapabilities
 	LoadCMDs
-	CMDsIsOk || return
+	IsCMDsOk || return
 	LoadEnv || return
 	ClaimLockfile || return
 	CreatePaths || return
@@ -400,7 +400,7 @@ LoadCMDs()
 
 	}
 
-CMDsIsOk()
+IsCMDsOk()
 	{
 
 	# Confirm required binaries are present.
