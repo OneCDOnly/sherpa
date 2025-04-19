@@ -1,7 +1,7 @@
 Observed issues:
 
-	* _DirSizeMonitor_() display needs to support 'proc: ' prefix.
-		- Incorrect formatting on QTS 4.2.6 while reinstalling Entware.
+	* If a QPKG is already disabled, then 'disable' action is selected and QPKG is part of a group (like 'deps'), action should be skipped for this QPKG.
+		- This happens for single QPKGs, but not group QPKGs like 'deps'.
 
 	* Upgradable packages were not seen when running:
 		--------------------------------------------------------------------------------------------------

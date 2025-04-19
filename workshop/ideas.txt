@@ -130,12 +130,11 @@ Service Library:
 		#		[OTransmission]
 		# 		Name = OTransmission
 		# 		QPKG_File = OTransmission.qpkg
-		# 		Shell = /share/CACHEDEV1_DATA/.qpkg/OTransmission/otransmission.sh
+		# 		Shell = /share/CACHEDEV1_DATA/.qpkg/OTransmission/transmission.sh
 		# 		Install_Path = /share/CACHEDEV1_DATA/.qpkg/OTransmission
 
 		# 1. stop QPKG,
-		# 2. rename service script,
-		# 3. rename installation path,
-		# 4. 'sed' replace all remaining occurrences in 'qpkg.conf',
-		# 5. application config files? internal paths, etc...
-		# 6. start QPKG.
+		# 2. rename installation path,
+		# 3. 'sed' replace all remaining occurrences in 'qpkg.conf',
+		# 4. application config files? internal paths, etc...
+		# 5. start QPKG.
