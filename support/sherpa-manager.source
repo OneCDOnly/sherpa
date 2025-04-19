@@ -3605,15 +3605,20 @@ IPKs:upgrade()
 
 	if [[ $total_count -gt 0 ]]; then
 		desc="$total_count auxiliary IPK$(Pluralise "$total_count")"
+		dir_bytes=$(IPKs-ACdownload-to:Size)
+		dir_location=$r_ipk_download_path
 		dir_size_progress_prefix="upgrade $desc"
 
-		_DirSizeMonitor_ "$r_ipk_download_path" "$(IPKs-ACdownload-to:Size)" &
+		_DirSizeMonitor_ &
 		fork_pid=$!
 
 		RunAndLog "$r_opkg_cmd upgrade --force-overwrite $(IPKs-ACdownload-to:List) --cache $r_ipk_cache_path --tmp-dir $r_ipk_download_path" "$r_logs_path/ipks.$r_upgrade_log_file" log:failure-only
 		z=$?
 
 		KillPID "$fork_pid"
+
+		# Finish-up with 100% regardless of what happened.
+		UpdateDirSizeProgress true
 
 		if [[ $z -eq 0 ]]; then
 			NoteIpkAcAsOk "$(IPKs-ACupgrade-to:Array)" upgrade
@@ -3702,15 +3707,20 @@ IPKs:install()
 
 	if [[ $total_count -gt 0 ]]; then
 		desc="$total_count auxiliary IPK$(Pluralise "$total_count")"
+		dir_bytes=$(IPKs-ACdownload-to:Size)
+		dir_location=$r_ipk_download_path
 		dir_size_progress_prefix="install $desc"
 
-		_DirSizeMonitor_ "$r_ipk_download_path" "$(IPKs-ACdownload-to:Size)" &
+		_DirSizeMonitor_ &
 		fork_pid=$!
 
 		RunAndLog "$r_opkg_cmd install --force-overwrite $(IPKs-ACdownload-to:List) --cache $r_ipk_cache_path --tmp-dir $r_ipk_download_path" "$r_logs_path/ipks.$r_install_log_file" log:failure-only
 		z=$?
 
 		KillPID "$fork_pid"
+
+		# Finish-up with 100% regardless of what happened.
+		UpdateDirSizeProgress true
 
 		if [[ $z -eq 0 ]]; then
 			NoteIpkAcAsOk "$(IPKs-ACdownload-to:Array)" install
@@ -4045,44 +4055,31 @@ _DirSizeMonitor_()
 
 	# * This function runs asynchronously *
 
-	# Inputs: (local)
-	#   $1 = directory to monitor the size-of.
-	#   $2 = total expected bytes (100%) for specified path.
-
 	# Inputs: (global)
-	#	$dir_size_progress_prefix
-	#   $r_inhibit_display_pathfile
+	#	$dir_bytes
+	#	$dir_location
 
 	# Outputs: (global)
 	#   $last_active_epoch
-	#	$last_bytes
-	#	$stalled_seconds
-	#	$total_bytes
 
-	[[ -n ${1:?${FUNCNAME[0]}'()': undefined path} ]] || exit
-	[[ -d $1 && ${2:-0} -gt 0 ]] || exit
+	[[ -d $dir_location && $dir_bytes -gt 0 ]] || exit
+
+	local last_bytes=0
 
 	current_bytes=-1
 	last_active_epoch=0
-	last_bytes=0
-	stalled_seconds=0
-	total_bytes=${2:-0}
 
-# 	InitProgress
+	while [[ $current_bytes -lt $dir_bytes ]]; do
+		[[ ! -e $r_abort_actions_pathfile ]] || break
+		sleep .2
 
-	while [[ $current_bytes -lt $total_bytes ]]; do
-		RefreshDirSizeCount "$1"
+		UpdateDirSizeProgress
 
 		if [[ $current_bytes -ne $last_bytes ]]; then
 			last_active_epoch=$(ConvertNowToSeconds)
 			last_bytes=$current_bytes
 		fi
-
-		UpdateDirSizeProgress
-		sleep 1
 	done
-
-# 	[[ -n $progress_msg ]] && ShowAsProc "${3:-}" 'done!'
 
 	}
 
@@ -6823,23 +6820,20 @@ RefreshActionForkCounts()
 RefreshDirSizeCount()
 	{
 
-	# Inputs: (local)
-	#   $1 = directory to monitor the size-of.
-
 	# Inputs: (global)
+	#	$dir_location
 	#	$r_gnu_find_cmd
 
 	# Outputs: (global)
 	#   $current_bytes
 
-	[[ -n ${1:?${FUNCNAME[0]}'()': undefined path} ]] || exit
-	[[ -d $1 ]] || exit
+	[[ -d $dir_location ]] || exit
 	IsSysFileExist $r_gnu_find_cmd || exit
 
-	current_bytes=$($r_gnu_find_cmd "$1" -type f -name '*.ipk' -exec /usr/bin/du --bytes --total --apparent-size {} + 2> /dev/null | /bin/grep total$ | cut -f1)
+	current_bytes=$($r_gnu_find_cmd "$dir_location" -type f -name '*.ipk' -exec /usr/bin/du --bytes --total --apparent-size {} + 2> /dev/null | /bin/grep total$ | cut -f1)
 	[[ -z $current_bytes ]] && current_bytes=0
 
-	} &> /dev/null
+	} #&> /dev/null
 
 EraseForkCountPaths()
 	{
@@ -6917,27 +6911,37 @@ UpdateActionForkProgress()
 UpdateDirSizeProgress()
 	{
 
+	# Inputs: (local)
+	#	$1 = true (optional): force progress to 100%
+
 	# Inputs: (global)
 	#	$current_bytes
+	#	$dir_bytes
 	#	$dir_size_progress_prefix
 	#	$last_active_epoch
 	#   $r_inhibit_display_pathfile
-	#	$stalled_seconds
-	#	$total_bytes
 
 	# Outputs: (local)
 	#   stdout = formatted as: "downloaded% (downloaded bytes/total expected bytes)" with appended 'stalled' message as-required.
 
+	[[ $dir_bytes -gt 0 ]] || return
+
 	local perc_msg=''
 	local progress_msg=''
+	local -i stalled_seconds=0
 	local stalled_msg=''
 	local stalled_seconds_threshold=4
 
-	[[ $last_active_epoch -ne 0 ]] && stalled_seconds=$(CalcAmountDiff "$(ConvertNowToSeconds)" "$last_active_epoch")
+	if [[ ${1:-false} = false ]]; then
+		RefreshDirSizeCount
+		[[ ${last_active_epoch:=0} -ne 0 ]] && stalled_seconds=$(CalcAmountDiff "$(ConvertNowToSeconds)" "$last_active_epoch")
+	else
+		current_bytes=$dir_bytes
+	fi
 
-	perc_msg=$((200*(current_bytes)/(total_bytes)%2+100*(current_bytes)/(total_bytes)))%
-	[[ $current_bytes -lt $total_bytes && $perc_msg = '100%' ]] && perc_msg=99%		# Ensure we don't hit 100% until the last byte is downloaded.
-	progress_msg="$perc_msg ($(TextBrightWhite "$(FormatAsIsoBytes "$current_bytes")")/$(TextBrightWhite "$(FormatAsIsoBytes "$total_bytes")"))"
+	perc_msg=$((200*(current_bytes)/(dir_bytes)%2+100*(current_bytes)/(dir_bytes)))%
+	[[ $current_bytes -lt $dir_bytes && $perc_msg = '100%' ]] && perc_msg=99%		# Ensure we don't hit 100% until the last byte is downloaded.
+	progress_msg="$perc_msg ($(TextBrightWhite "$(FormatAsIsoBytes "$current_bytes")")/$(TextBrightWhite "$(FormatAsIsoBytes "$dir_bytes")"))"
 
 	if [[ $stalled_seconds -ge $stalled_seconds_threshold ]]; then
 		# Append a message showing stalled time.
@@ -6950,7 +6954,7 @@ UpdateDirSizeProgress()
 			stalled_msg+=$(ConvertSecondsToDuration "$stalled_seconds")
 		fi
 
-		# Add a suggestion to cancel if download is stalled for too-long.
+		# Append recommendation to cancel if download is stalled for too-long.
 
 		if [[ $stalled_seconds -ge 90 ]]; then
 			stalled_msg+=': cancel with CTRL+C and try again later'
@@ -6979,7 +6983,7 @@ UpdateDirSizeProgress()
 ShowQPKGsMissing()
 	{
 
-	# Check installed QPKGs and check if they're missing. If so, advise on-screen.
+	# Check installed QPKGs and check if they're missing. If-so, advise on-screen.
 
 	# Outputs:
 	#	$? = 0 if no packages are missing
@@ -12772,7 +12776,7 @@ IsQpkgDbUniqueUnpack()
 IsQpkgDbWillLog()
 	{
 
-	# Does this QPKG service-script log all actions? If so, when an action fails, user can be directed to check the service-script log.
+	# Does this QPKG service-script log all actions? If-so, when an action fails, user can be directed to check the service-script log.
 
 	# Inputs: (local)
 	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
