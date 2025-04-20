@@ -597,8 +597,8 @@ LoadLists()
 
 	# sorted
 
-	r_qpkg_is_states=(active backedup downloaded enabled installable installed missing signed upgradable)
-	r_qpkg_isnt_states=(active backedup downloaded enabled installable installed missing signed upgradable)
+	r_qpkg_is_states=(active backedup downloaded installable installed missing signed upgradable)
+	r_qpkg_isnt_states=(active backedup downloaded installable installed missing signed upgradable)
 	r_qpkg_is_groups=(all canbackup canclean canrestarttoupdate dependent hasdependents independent optional)
 	r_qpkg_isnt_groups=(canclean)
 	r_qpkg_states_transient=(restarting slow starting stopping unknown)
@@ -1101,7 +1101,7 @@ QPKGsAssignToActions()
 				SetQpkgIndex
 
 				for prospect in $(GetQpkgDbOptionals); do
-					if QPKGs-ISenabled.Exist "$prospect"; then
+					if IsQpkgEnabled "$prospect"; then
 						! QPKGs-ACuninstall-to.Exist "$prospect" && ! QPKGs-ACinstall-to.Exist "$prospect" && QPKGs-ACreactivate-to:Add "$prospect"
 					fi
 				done
@@ -1138,7 +1138,7 @@ QPKGsAssignToActions()
 			SetQpkgIndex
 
 			for prospect in $(GetQpkgDbDependents); do
-				if QPKGs-ISenabled.Exist "$prospect"; then
+				if IsQpkgEnabled "$prospect"; then
 					QPKGs-ACdeactivate-to:Add "$prospect"
 					! QPKGs-ACuninstall-to.Exist "$prospect" && ! QPKGs-ACinstall-to.Exist "$prospect" && QPKGs-ACactivate-to:Add "$prospect"
 				fi
@@ -1154,7 +1154,7 @@ QPKGsAssignToActions()
 				SetQpkgIndex
 
 				for prospect in $(GetQpkgDbDependents); do
-					if QPKGs-ISenabled.Exist "$prospect"; then
+					if IsQpkgEnabled "$prospect"; then
 						QPKGs-ACdeactivate-to:Add "$prospect"
 						! QPKGs-ACuninstall-to.Exist "$prospect" && ! QPKGs-ACinstall-to.Exist "$prospect" && QPKGs-ACactivate-to:Add "$prospect"
 					fi
@@ -1170,7 +1170,7 @@ QPKGsAssignToActions()
 			SetQpkgIndex
 
 			for prospect in $(GetQpkgDbOptionals); do
-				if QPKGs-ISenabled.Exist "$prospect"; then
+				if IsQpkgEnabled "$prospect"; then
 					QPKGs-ACdeactivate-to:Add "$prospect"
 					! QPKGs-ACuninstall-to.Exist "$prospect" && ! QPKGs-ACinstall-to.Exist "$prospect" && QPKGs-ACactivate-to:Add "$prospect"
 				fi
@@ -1182,7 +1182,7 @@ QPKGsAssignToActions()
 
 	for action in backup restore upgrade reinstall; do
 		for qpkg_name in $(QPKGs-AC${action}-to:Array); do
-			if QPKGs-ISenabled.Exist "$qpkg_name"; then
+			if IsQpkgEnabled "$qpkg_name"; then
 				QPKGs-ACdeactivate-to:Add "$qpkg_name"
 				! QPKGs-ACuninstall-to.Exist "$qpkg_name" && ! QPKGs-ACinstall-to.Exist "$qpkg_name" && QPKGs-ACactivate-to:Add "$qpkg_name"
 			fi
@@ -1249,7 +1249,7 @@ QPKGsAssignToActions()
 		IsOsCanSignedPackages && QPKGs-ACsign-to:Add "$(QPKGs-ISinstalled:Array)"
 
 		for qpkg_name in $(QPKGs-GRdependent:Array); do
-			QPKGs-ISenabled.Exist "$qpkg_name" && QPKGs-ACreactivate-to:Add "$qpkg_name"
+			IsQpkgEnabled "$qpkg_name" && QPKGs-ACreactivate-to:Add "$qpkg_name"
 		done
 	fi
 
@@ -1399,7 +1399,7 @@ ProcActions()
 				ProcAction backup $tier QPKG backup
 				ProcAction disable $tier QPKG disable
 				ProcAction uninstall $tier QPKG uninstall
-			elif QPKGs-ISenabled.Exist Entware; then
+			elif IsQpkgEnabled Entware; then
 				ModPathToEntware
 				PIPs:uninstall
 				IPKs:uninstall
@@ -1422,7 +1422,7 @@ ProcActions()
 				ProcAction activate $tier QPKG activate
 			else
 				for action in status install reinstall upgrade activate; do
-					if (QPKGs-ACinstall-ok.Exist Entware) || QPKGs-AC${action}-to.IsAny && QPKGs-ISenabled.Exist Entware; then
+					if QPKGs-ACinstall-ok.Exist Entware || QPKGs-AC${action}-to.IsAny; then
 						ipks_downgrade=true
 						ipks_install=true
 						ipks_upgrade=true
@@ -1431,7 +1431,7 @@ ProcActions()
 					fi
 				done
 
-				if QPKGs-ISenabled.Exist Entware; then
+				if IsQpkgEnabled Entware; then
 					ModPathToEntware
 # 					IPKs:download
 					IPKs:upgrade
@@ -3579,7 +3579,7 @@ IPKs:upgrade()
 	#	$useropt_verbose
 
 	[[ $ipks_upgrade = true ]] || return
-	QPKGs-ISenabled.Exist Entware || return
+	IsQpkgEnabled Entware || return
 	IsNtError || return
 
 	FuncInit
@@ -3642,6 +3642,7 @@ IPKs:install()
 	# Install IPKs required to support QPKGs.
 
 	# Inputs: (global)
+	#	$ipks_install
 	#	$r_opkg_cmd
 	#	$r_essential_ipks
 	#	$r_install_log_file
@@ -3660,7 +3661,7 @@ IPKs:install()
 	#	$useropt_verbose
 
 	[[ $ipks_install = true ]] || return
-	QPKGs-ISenabled.Exist Entware || return
+	IsQpkgEnabled Entware || return
 	IsNtError || return
 
 	FuncInit
@@ -3756,7 +3757,7 @@ IPKs:downgrade()
 	#	$r_opkg_cmd
 
 	[[ $ipks_downgrade = true ]] || return
-	QPKGs-ISenabled.Exist Entware || return
+	IsQpkgEnabled Entware || return
 	IsNtError || return
 
 	FuncInit
@@ -3883,7 +3884,7 @@ PIPs:install()
 	#	$useropt_verbose
 
 	[[ $pips_install = true ]] || return
-	QPKGs-ISenabled.Exist Entware || return
+	IsQpkgEnabled Entware || return
 	$r_opkg_cmd status python3-pip | /bin/grep -q "Status:.*installed" || return
 	IsNtError || return
 
@@ -4815,7 +4816,7 @@ _GenerateStatusReportDataLine_()
 						: # Do nothing.
 						;;
 					status)
-						if QPKGs-ISenabled.Exist "$qpkg_name"; then
+						if IsQpkgEnabled "$qpkg_name"; then
 							status_msg+=' '$(TextBrightGreen enabled)
 							/bin/touch "$r_report_flags_path"/state-enabled
 						else
@@ -7143,7 +7144,7 @@ ListQPKGsActions()
 	local border_shown=false
 
 	for a in "${r_qpkg_actions[@]}"; do
-		for b in ok er sk so se sa; do
+		for b in to ok er sk so se sa; do
 			if QPKGs-AC${a}-${b}.IsAny; then
 				if [[ $border_shown = false ]]; then
 					DebugInfoMinSepr
@@ -7151,7 +7152,7 @@ ListQPKGsActions()
 				fi
 
 				case $b in
-					ok|sk|so)
+					ok|sk|so|to)
 						DebugQpkg info "AC${a}-${b}" "($(QPKGs-AC${a}-${b}:Count)) $(QPKGs-AC${a}-${b}:ListCSV) "
 						;;
 					se|sa)
@@ -7510,16 +7511,6 @@ BuildQPKGsStates()
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		if IsQpkgInstalled; then
-			if IsQpkgEnabled; then
-				echo enabled
-			else
-				echo notenabled
-			fi
-		fi >> "$r_qpkg_states_path/$qpkg_name"
-	done &
-
-	for qpkg_name in $(QPKGs-GRall:Array); do
-		if IsQpkgInstalled; then
 			echo installed
 		elif IsNtQpkgReallyInstalled; then
 			echo notinstalled
@@ -7598,12 +7589,6 @@ BuildQPKGsStates()
 					;;
 				notbackupable)
 					: # ignore for now.
-					;;
-				enabled)
-					QPKGs-ISenabled:Add "$qpkg_name"
-					;;
-				notenabled)
-					QPKGs-ISNTenabled:Add "$qpkg_name"
 					;;
 				installable)
 					QPKGs-ISinstallable:Add "$qpkg_name"
@@ -8790,7 +8775,7 @@ ModPathToEntware()
 	local a=''
 	local b=/opt/bin:/opt/sbin
 
-	if QPKGs-ISenabled.Exist Entware; then
+	if IsQpkgEnabled Entware; then
 		! [[ $PATH =~ $b ]] || return
 
 		a=$(/bin/sed "s|${b}:||" <<< "$PATH:")		# Append colon prior to searching, then remove existing Entware paths.
@@ -10643,7 +10628,7 @@ _QPKG:enable_()
 		SaveActionResultToLog QPKG "$qpkg_name" enable '' skipped 'incompatible author'
 		MarkActionForkAsSkipped
 		z=1
-	elif QPKGs-ISenabled.Exist "$qpkg_name"; then
+	elif IsQpkgEnabled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" enable '' skipped 'already enabled'
 		MarkActionForkAsSkipped
 		z=1
