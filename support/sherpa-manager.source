@@ -460,7 +460,7 @@ LoadEnv()
 	qpkg_index=0
 	local build_script_epoch=0
 	readonly r_this_script_epoch='<?manager_epoch?>'
-	readonly r_build_tz_offset_seconds=36000
+	readonly r_build_tz_offset_seconds=0
 
 	IsNumber $r_this_script_epoch && build_script_epoch=$((r_this_script_epoch+r_build_tz_offset_seconds))
 
