@@ -1,5 +1,28 @@
 Observed issues:
 
+	* IPKs not checked-for and installed when running `sherpa upgrade new`
+
+	* Installation of RunLast and SortMyQPKGs installed OK on bella, but version numbers shown are incorrect:
+		--------------------------------------------------------------------------------------------------
+		install RunLast QPKG in 2 seconds (vundefined)
+		install SortMyQPKGs QPKG in 1 second (vundefined)
+		--------------------------------------------------------------------------------------------------
+
+	* sherpa attempted to start Transmission after QPKG upgrade, even though it was disabled before upgrade.
+		--------------------------------------------------------------------------------------------------
+		• This package action failed (and why):
+			reactivate OTransmission QPKG in 2 seconds (for more information: /etc/init.d/transmission.sh log)
+		--------------------------------------------------------------------------------------------------
+
+	* False install failure reported in sherpa but packages actually installed OK:
+		--------------------------------------------------------------------------------------------------
+		• These package actions failed (and why):
+			install OSonarr QPKG in 1 second (for more information: /etc/init.d/sonarr.sh log)
+			install Kapowarr QPKG in 1 second (for more information: /etc/init.d/kapowarr.sh log)
+		--------------------------------------------------------------------------------------------------
+
+	* If GNU utils are unavailable, strip ANSI codes from status report.
+
 	* If a QPKG is already disabled, then 'disable' action is selected and QPKG is part of a group (like 'deps'), action should be skipped for this QPKG.
 		- This happens for single QPKGs, but not group QPKGs like 'deps'.
 

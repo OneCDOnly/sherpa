@@ -1,5 +1,8 @@
 Management:
 
+	* Need a feature to mark upgradable QPKGs that will require a `clean` during/after upgrade.
+		- And support deletion of specific files not in `repo-cache` (like `pip-requirements.txt` copied from `repo-cache` into app directory.)
+
 	* Separate IPK installation into 2 phases: download, then install.
 		- This should fix the issue with _DirSizeMonitor_() apparently reversing its progress as IPKs are installed.
 
