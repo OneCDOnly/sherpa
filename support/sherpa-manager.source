@@ -3340,7 +3340,7 @@ IsThisFileRecent()
 
 	# Inputs: (local)
 	#   $1 = pathfilename: file to examine change time of.
-	#   $2 = integer (optional): threshold in minutes - default is `1440` (1 day).
+	#   $2 (optional) = integer - threshold in minutes. Default is `1440` (1 day).
 
 	# Outputs: (local)
 	#   $? = true/false
@@ -3617,7 +3617,7 @@ IPKs:upgrade()
 		KillPID "$fork_pid"
 
 		# Finish-up with 100% regardless of what happened.
-		UpdateDirSizeProgress true
+		UpdateDirSizeProgress finalise
 
 		if [[ $z -eq 0 ]]; then
 			NoteIpkAcAsOk "$(IPKs-ACupgrade-to:Array)" upgrade
@@ -3694,7 +3694,7 @@ IPKs:install()
 		for qpkg_name in "${r_qpkg_name[@]}"; do
 			[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
 
-			if QPKGs-ACinstall-to.Exist "$qpkg_name" || QPKGs-ISinstalled.Exist "$qpkg_name" || (QPKGs-ACreinstall-to.Exist "$qpkg_name" && QPKGs-ISinstalled.Exist "$qpkg_name"); then
+			if QPKGs-ACinstall-to.Exist "$qpkg_name" || IsQpkgInstalled "$qpkg_name" || (QPKGs-ACreinstall-to.Exist "$qpkg_name" && IsQpkgInstalled "$qpkg_name"); then
 				SetQpkgIndex
 				IPKs-ACinstall-to:Add "$(GetQpkgDbIPKs)"
 			fi
@@ -3720,7 +3720,7 @@ IPKs:install()
 		KillPID "$fork_pid"
 
 		# Finish-up with 100% regardless of what happened.
-		UpdateDirSizeProgress true
+		UpdateDirSizeProgress finalise
 
 		if [[ $z -eq 0 ]]; then
 			NoteIpkAcAsOk "$(IPKs-ACdownload-to:Array)" install
@@ -4113,7 +4113,7 @@ WriteBranch()
 	{
 
 	# Inputs: (local)
-	# 	$1 = 'silent' (optional): don't announce setting was saved.
+	# 	$1 (optional) = 'silent' - don't announce setting was saved.
 
 	# Inputs: (global)
 	#	$switch_branch
@@ -4159,7 +4159,7 @@ WriteReportFooter()
 	{
 
 	# Inputs: (local)
-	# 	$1 = 'silent' (optional): don't announce setting was saved.
+	# 	$1 (optional) = 'silent' - don't announce setting was saved.
 
 	# Inputs: (global)
 	#	$switch_terse
@@ -4203,7 +4203,7 @@ WriteTerse()
 	{
 
 	# Inputs: (local)
-	# 	$1 = 'silent' (optional): don't announce setting was saved.
+	# 	$1 (optional) = 'silent' - don't announce setting was saved.
 
 	# Inputs: (global)
 	#	$switch_terse
@@ -4251,7 +4251,7 @@ SaveSetting()
 	# Inputs: (local)
 	#   $1 = name
 	# 	$2 = value
-	# 	$3 = 'announce' (optional): display on-screen when setting has been saved.
+	# 	$3 (optional) = 'announce' - display on-screen when setting has been saved.
 
 	local a=${1:?${FUNCNAME[0]}'()': undefined name}
 	local b=$(Lowercase "${2:?${FUNCNAME[0]}'()': undefined value}")
@@ -4377,7 +4377,7 @@ LenANSIDiff()
 	{
 
 	# Inputs: (local)
-	#   $1 = (optional) text to find length-of.
+	#   $1 (optional) = text to find length-of.
 
 	local a=${1:-}
 	local b=$(StripANSICodes "$a")
@@ -4439,8 +4439,8 @@ DisplayAsProjSynIndentExam()
 	# Display as project syntax indented example.
 
 	# Inputs: (local)
-	#	$1 = description (optional)
-	#	$2 = example syntax
+	#	$1 (optional) = description.
+	#	$2 = example syntax.
 
 	# Inputs: (global)
 	#	$r_help_desc_indent
@@ -4541,7 +4541,7 @@ _GeneratePacksReportDataLine_()
 	# * This function runs asynchronously *
 
 	# Input (local):
-	#   $1 = QPKG name (optional).
+	#   $1 (optional) = QPKG name.
 
 	# Inputs: (global)
 	# 	$qpkg_name
@@ -5680,7 +5680,7 @@ _GenerateBacksReportItemLine_()
 	#	$1 = last backup date in epoch seconds
 	#	$2 = backup filename
 	#	$3 = filesize in bytes
-	#	$4 = age threshold to highlight (optional) '1 week ago' (default)		e.g. '2 days ago', '2 weeks ago', etc ...
+	#	$4 (optional) = age threshold to highlight, '1 week ago' (default)		e.g. '2 days ago', '2 weeks ago', etc ...
 
 	# Inputs: (global)
 	#	$r_report_file_bytes_column_width
@@ -5856,10 +5856,10 @@ DisplayAsIndentActionResultDurationReason()
 	{
 
 	# Inputs: (local)
-	#	$1 = action
-	#	$2 = result message
-	#	$3 = duration in milliseconds (optional)
-	#	$4 = reason message (optional)
+	#	$1 = action.
+	#	$2 = result message.
+	#	$3 (optional) = duration in milliseconds.
+	#	$4 (optional) = reason message.
 
 	# Inputs: (global)
 	#	$r_report_action_result_indent
@@ -6584,7 +6584,7 @@ GetLogSessStartLine()
 	{
 
 	# Inputs: (local)
-	#	$1 = how many sessions back? (optional) default = 1
+	#	$1 (optional) = how many sessions back? default = 1
 
 	# Inputs: (global)
 	#	$r_session_tail_pathfile
@@ -6599,7 +6599,7 @@ GetLogSessFinishLine()
 	{
 
 	# Inputs: (local)
-	#	$1 = how many sessions back? (optional) default = 1
+	#	$1 (optional) = how many sessions back? default = 1
 
 	# Inputs: (global)
 	#	$r_session_tail_pathfile
@@ -6912,7 +6912,7 @@ UpdateDirSizeProgress()
 	{
 
 	# Inputs: (local)
-	#	$1 = true (optional): force progress to 100%
+	#	$1 (optional) = 'finalise' - force progress to 100%.
 
 	# Inputs: (global)
 	#	$current_bytes
@@ -6932,11 +6932,11 @@ UpdateDirSizeProgress()
 	local stalled_msg=''
 	local stalled_seconds_threshold=4
 
-	if [[ ${1:-false} = false ]]; then
+	if [[ ${1:-} = finalise ]]; then
+		current_bytes=$dir_bytes
+	else
 		RefreshDirSizeCount
 		[[ ${last_active_epoch:=0} -ne 0 ]] && stalled_seconds=$(CalcAmountDiff "$(ConvertNowToSeconds)" "$last_active_epoch")
-	else
-		current_bytes=$dir_bytes
 	fi
 
 	perc_msg=$((200*(current_bytes)/(dir_bytes)%2+100*(current_bytes)/(dir_bytes)))%
@@ -7143,7 +7143,7 @@ ListQPKGsActions()
 	local border_shown=false
 
 	for a in "${r_qpkg_actions[@]}"; do
-		for b in to ok er sk so se sa; do
+		for b in ok er sk so se sa; do
 			if QPKGs-AC${a}-${b}.IsAny; then
 				if [[ $border_shown = false ]]; then
 					DebugInfoMinSepr
@@ -7151,7 +7151,7 @@ ListQPKGsActions()
 				fi
 
 				case $b in
-					ok|sk|so|to)
+					ok|sk|so)
 						DebugQpkg info "AC${a}-${b}" "($(QPKGs-AC${a}-${b}:Count)) $(QPKGs-AC${a}-${b}:ListCSV) "
 						;;
 					se|sa)
@@ -8753,9 +8753,9 @@ NoteIpkAcAsEr()
 	# Move specified IPK name from `to` action array into associated `er` array.
 
 	# Inputs: (local)
-	#   $1 = package name
-	#   $2 = action
-	#   $3 = reason (optional)
+	#   $1 = package name.
+	#   $2 = action.
+	#   $3 (optional) = reason.
 
 	local a="failing request to $2 $(FormatPackageName "$1")"
 
@@ -9723,7 +9723,7 @@ SaveActionResultToLog()
 	#   $3 = action								`download`, `activate`
 	#   $4 = quantity (optional, default 1)		number of packages affected
 	#   $5 = result								`ok`, `skipped-ok`, `skipped`, `failed`
-	#   $6 = reason (optional)					"file already exists in local cache"
+	#   $6 (optional) = reason 					"file already exists in local cache"
 
 	# Inputs: (global)
 	#	$r_action_times_path
@@ -11525,7 +11525,7 @@ GetQpkgDbURL()
 	# Returns the URL of $qpkg_index.
 
 	# Inputs: (local)
-	#   $1 = QPKG name (optional): if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) = QPKG name - if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#   $qpkg_default_index
@@ -11567,7 +11567,7 @@ GetQpkgDbMinRAM()
 	{
 
 	# Inputs: (local)
-	#   $1 = QPKG name (optional): if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) = QPKG name - if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#   $qpkg_default_index
@@ -11604,7 +11604,7 @@ GetQpkgDbMinOSVer()
 	{
 
 	# Inputs: (local)
-	#   $1 = QPKG name (optional): if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) = QPKG name - if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#   $qpkg_default_index
@@ -11641,7 +11641,7 @@ GetQpkgDbMaxOSVer()
 	{
 
 	# Inputs: (local)
-	#   $1 = QPKG name (optional): if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) = QPKG name - if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#   $qpkg_default_index
@@ -11801,7 +11801,7 @@ GetQpkgDbDesc()
 	{
 
 	# Inputs:
-	#   $1 = QPKG name (optional): if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) = QPKG name - if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
 	#   $qpkg_default_index (global)
 	#   $qpkg_index (global)
 	#	$qpkg_name (global)
@@ -11873,7 +11873,7 @@ GetQpkgDbAbbrvs()
 	{
 
 	# Inputs: (local)
-	#   $1 = QPKG name (optional): if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) = QPKG name - if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#   $qpkg_default_index
@@ -12483,7 +12483,7 @@ IsQpkgDbOptional()
 	# Is this QPKG an optional dependency?
 
 	# Inputs: (local)
-	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#	$qpkg_name (default for $1)
@@ -12553,7 +12553,7 @@ IsQpkgDbMinOSVerOk()
 	# Does this NAS meets the minimum OS firmware version requirements for QPKG name?
 
 	# Inputs: (local)
-	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#	$r_nas_firmware_ver
@@ -12576,7 +12576,7 @@ IsQpkgDbMaxOSVerOk()
 	# Does this NAS meets the maximum OS firmware version requirements for QPKG name?
 
 	# Inputs: (local)
-	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#	$r_nas_firmware_ver
@@ -12599,7 +12599,7 @@ IsQpkgDbCanBackup()
 	# Does this QPKG service-script support `backup` and `restore` actions?
 
 	# Inputs: (local)
-	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#	$r_qpkg_can_backup[]
@@ -12636,7 +12636,7 @@ IsQpkgDbCanRestartToUpdate()
 	# Does this QPKG service-script support updating the internal application when the QPKG is restarted?
 
 	# Inputs: (local)
-	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#	$qpkg_name (default for $1)
@@ -12664,7 +12664,7 @@ IsQpkgDbCanClean()
 	# Does this QPKG service-script support cleaning of the internal application?
 
 	# Inputs: (local)
-	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#	$qpkg_name (default for $1)
@@ -12690,7 +12690,7 @@ IsQpkgDbSherpaCompatible()
 	# Is this QPKG service-script compatible with enhanced actions supplied by sherpa?
 
 	# Inputs: (local)
-	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#   $qpkg_default_index
@@ -12727,7 +12727,7 @@ IsQpkgDbUniqueUnpack()
 	# If true, then this QPKG can be installed/reinstalled/upgraded concurrently with other QPKGs.
 
 	# Inputs: (local)
-	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#   $qpkg_default_index
@@ -12763,7 +12763,7 @@ IsQpkgDbWillLog()
 	# Does this QPKG service-script log all actions? If-so, when an action fails, user can be directed to check the service-script log.
 
 	# Inputs: (local)
-	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#	$qpkg_name (default for $1)
@@ -12788,7 +12788,7 @@ IsQpkgAutoUpdate()
 	# Is the installed QPKG set to auto-update on restart?
 
 	# Inputs: (local)
-	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#	$qpkg_name (default for $1)
@@ -12806,7 +12806,7 @@ IsQpkgAuthorOk()
 	{
 
 	# Inputs: (local)
-	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#	$qpkg_name (default for $1)
@@ -12824,7 +12824,7 @@ IsNtQpkgAuthorOk()
 	{
 
 	# Inputs: (local)
-	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#	$qpkg_name (default for $1)
@@ -12842,7 +12842,7 @@ IsQpkgInstalled()
 	# Check if specified QPKG is installed, and that QPKG author is valid.
 
 	# Inputs: (local)
-	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#	$qpkg_name (default for $1)
@@ -12860,7 +12860,7 @@ IsNtQpkgInstalled()
 	{
 
 	# Inputs: (local)
-	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#	$qpkg_name (default for $1)
@@ -12878,7 +12878,7 @@ IsQpkgReallyInstalled()
 	# Check if specified QPKG is installed, and don't check anything else.
 
 	# Inputs: (local)
-	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#	$qpkg_name (default for $1)
@@ -12896,7 +12896,7 @@ IsNtQpkgReallyInstalled()
 	{
 
 	# Inputs: (local)
-	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#	$qpkg_name (default for $1)
@@ -12912,7 +12912,7 @@ IsQpkgMissing()
 	{
 
 	# Inputs: (local)
-	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#	$qpkg_name (default for $1)
@@ -12931,7 +12931,7 @@ IsQpkgEnabled()
 	{
 
 	# Inputs: (local)
-	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#	$qpkg_name (default for $1)
@@ -13275,8 +13275,8 @@ RunAndLog()
 	# Inputs: (local)
 	#   $1 = commandstring to execute.
 	#   $2 = pathfile to record stdout and stderr for commandstring.
-	#   $3 = 'log:failure-only' (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed. Default is to always record stdout & stderr.
-	#   $4 = e.g. '10' (optional) - an additional acceptable result code. Any other non-zero result from command will be considered a failure.
+	#   $3 (optional) = 'log:failure-only' - if specified, stdout & stderr are only recorded in the specified log if the command failed. Default is to always record stdout & stderr.
+	#   $4 (optional) = e.g. '10' - an additional acceptable result code. Any other non-zero result from command will be considered a failure.
 
 	# Inputs: (global)
 	#   $r_run_logs_path
@@ -13685,7 +13685,7 @@ DisplayProcReport()
 	{
 
 	# Inputs: (local)
-	#	$1 = report type string (optional)
+	#	$1 (optional) = report type string.
 
 	# Inputs: (global)
 	#	$report_title_shown
@@ -14509,7 +14509,7 @@ ShowAsProc()
 
 	# Inputs: (local)
 	#	$1 = task being carried-out.
-	#	$2 = trailing task, shown after the ellipsis (optional). If specified, $useropt_terse will be ignored.
+	#	$2 (optional) = trailing task, shown after the ellipsis. If specified, $useropt_terse will be ignored.
 
 	# Inputs: (global)
 	#	$r_inhibit_display_pathfile
@@ -14653,8 +14653,8 @@ ShowAsPercentProgress()
 	# Show single action package progress as percent-complete and a fraction of the total.
 
 	# Inputs: (local)
-	#	$1 = verb (present) (optional)
-	#	$2 = expected action duration: 'long' (optional)
+	#	$1 (optional) = verb (present)
+	#	$2 (optional) = expected action duration: 'long'
 	#	$3 = ok count
 	#	$4 = skip count
 	#	$5 = fail count
@@ -14720,7 +14720,7 @@ ShowAsIterativeProgress()
 	#	$3 = suffix1		"iterations"
 	#	$4 = count2			560
 	#	$5 = suffix2		"packages"
-	#	$6 = expected action duration: 'long' (optional) 'short' (default)
+	#	$6 (optional) = expected action duration: 'long', 'short' (default)
 
 	local -r r_a=${1:?${FUNCNAME[0]}'()': undefined action}
 	local -i b=${2:-0}
@@ -14750,7 +14750,7 @@ ShowAsActionLogDetail()
 	#   $3 = action							'download', 'downloaded'
 	#   $4 = result							'ok', 'skipped-ok', 'skipped', 'failed'
 	#   $5 = duration in milliseconds
-	#   $6 = reason (optional)				"file already exists in local cache"
+	#   $6 (optional) = reason 				"file already exists in local cache"
 	#   $7 = package type					'QPKG', 'IPK', etc ...
 	#   $8 = quantity 						number of packages affected.
 
@@ -15356,7 +15356,7 @@ sleep()
 	{
 
 	# Inputs: (local)
-	#	$1 = seconds to sleep (decimal or integer) (optional), default is 1 second.
+	#	$1 (optional) = seconds to sleep (decimal or integer), default is 1 second.
 
 	# Inputs: (global)
 	#	$r_gnu_sleep_cmd
