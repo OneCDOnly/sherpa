@@ -156,10 +156,12 @@ for action in "${r_qpkg_actions[@]}"; do
 done
 
 for state in "${r_qpkg_is_states[@]}" "${r_qpkg_states_transient[@]}" "${r_qpkg_service_results[@]}"; do
+	[[ $state = installed ]] && continue
 	AddListObj QPKGs-IS"$state"
 done
 
 for state in "${r_qpkg_isnt_states[@]}" "${r_qpkg_states_transient[@]}" "${r_qpkg_service_results[@]}"; do
+	[[ $state = installed ]] && continue
 	AddListObj QPKGs-ISNT"$state"
 done
 

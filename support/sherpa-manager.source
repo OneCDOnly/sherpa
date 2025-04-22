@@ -1063,7 +1063,7 @@ QPKGsAssignToActions()
 		for qpkg_name in $(QPKGs-ACrebuild-to:Array); do
 			SetQpkgIndex
 
-			if QPKGs-ISNTinstalled.Exist "$qpkg_name" && IsQpkgBackupExist; then
+			if IsNtQpkgInstalled "$qpkg_name" && IsQpkgBackupExist; then
 				QPKGs-ACinstall-to:Add "$qpkg_name"
 				QPKGs-ACrestore-to:Add "$qpkg_name"
 			fi
@@ -1076,18 +1076,20 @@ QPKGsAssignToActions()
 		SetQpkgIndex
 
 		for prospect in $(GetQpkgDbDependencies); do
-			QPKGs-ISNTinstalled.Exist "$prospect" && QPKGs-ACinstall-to:Add "$prospect"
+			[[ $prospect != none ]] || continue
+			IsNtQpkgInstalled "$prospect" && QPKGs-ACinstall-to:Add "$prospect"
 		done
 	done
 
 	# Install independents for installed dependents.
 
-	for qpkg_name in $(QPKGs-ISinstalled:Array); do
+	for qpkg_name in $(GetQpkgsInstalled); do
 		if [[ $useropt_check = true ]] || QPKGs-ACactivate-to.Exist "$qpkg_name"; then
 			SetQpkgIndex
 
 			for prospect in $(GetQpkgDbDependencies); do
-				QPKGs-ISNTinstalled.Exist "$prospect" && QPKGs-ACinstall-to:Add "$prospect"
+				[[ $prospect != none ]] || continue
+				IsNtQpkgInstalled "$prospect" && QPKGs-ACinstall-to:Add "$prospect"
 			done
 		fi
 	done
@@ -1096,7 +1098,7 @@ QPKGsAssignToActions()
 
 	for action in activate deactivate disable enable install reinstall reactivate uninstall upgrade; do
 		for qpkg_name in $(QPKGs-AC${action}-to:Array); do
-			if QPKGs-GRoptional.Exist "$qpkg_name" && QPKGs-ISinstalled.Exist "$qpkg_name"; then
+			if QPKGs-GRoptional.Exist "$qpkg_name" && IsQpkgInstalled "$qpkg_name"; then
 				SetQpkgIndex
 
 				for prospect in $(GetQpkgDbOptionals); do
@@ -1112,11 +1114,11 @@ QPKGsAssignToActions()
 
 	for action in deactivate uninstall; do
 		for qpkg_name in $(QPKGs-AC${action}-to:Array); do
-			if QPKGs-GRindependent.Exist "$qpkg_name" && QPKGs-ISinstalled.Exist "$qpkg_name"; then
+			if QPKGs-GRindependent.Exist "$qpkg_name" && IsQpkgInstalled "$qpkg_name"; then
 				SetQpkgIndex
 
 				for prospect in $(GetQpkgDbDependents); do
-					QPKGs-ISinstalled.Exist "$prospect" && QPKGs-ACdeactivate-to:Add "$prospect"
+					IsQpkgInstalled "$prospect" && QPKGs-ACdeactivate-to:Add "$prospect"
 				done
 			fi
 		done
@@ -1133,7 +1135,7 @@ QPKGsAssignToActions()
 	# If an independent has been selected for `uninstall`, then `install`, need to `deactivate` its dependents first, and `activate` them again later.
 
 	for qpkg_name in $(QPKGs-ACuninstall-to:Array); do
-		if QPKGs-GRindependent.Exist "$qpkg_name" && QPKGs-ISinstalled.Exist "$qpkg_name" && QPKGs-ACinstall-to.Exist "$qpkg_name"; then
+		if QPKGs-GRindependent.Exist "$qpkg_name" && IsQpkgInstalled "$qpkg_name" && QPKGs-ACinstall-to.Exist "$qpkg_name"; then
 			SetQpkgIndex
 
 			for prospect in $(GetQpkgDbDependents); do
@@ -1149,7 +1151,7 @@ QPKGsAssignToActions()
 
 	for action in reinstall reactivate upgrade; do
 		for qpkg_name in $(QPKGs-AC${action}-to:Array); do
-			if QPKGs-GRindependent.Exist "$qpkg_name" && QPKGs-ISinstalled.Exist "$qpkg_name"; then
+			if QPKGs-GRindependent.Exist "$qpkg_name" && IsQpkgInstalled "$qpkg_name"; then
 				SetQpkgIndex
 
 				for prospect in $(GetQpkgDbDependents); do
@@ -1165,7 +1167,7 @@ QPKGsAssignToActions()
 	# If an optional has been selected for `uninstall`, then `install`, need to `deactivate` its dependents first, and `activate` them again later.
 
 	for qpkg_name in $(QPKGs-ACuninstall-to:Array); do
-		if QPKGs-GRoptional.Exist "$qpkg_name" && QPKGs-ISinstalled.Exist "$qpkg_name" && QPKGs-ACinstall-to.Exist "$qpkg_name"; then
+		if QPKGs-GRoptional.Exist "$qpkg_name" && IsQpkgInstalled "$qpkg_name" && QPKGs-ACinstall-to.Exist "$qpkg_name"; then
 			SetQpkgIndex
 
 			for prospect in $(GetQpkgDbOptionals); do
@@ -1195,7 +1197,7 @@ QPKGsAssignToActions()
 			SetQpkgIndex
 
 			for prospect in $(GetQpkgDbDependencies) $(GetQpkgDbOptionals); do
-				QPKGs-ISinstalled.Exist "$prospect" && QPKGs-ACreactivate-to:Add "$prospect"
+				IsQpkgInstalled "$prospect" && QPKGs-ACreactivate-to:Add "$prospect"
 			done
 		done
 	done
@@ -1220,7 +1222,7 @@ QPKGsAssignToActions()
 
 	if QPKGs-ACuninstall-to.IsAny; then
 		for qpkg_name in $(QPKGs-ACuninstall-to:Array); do
-			if QPKGs-ISinstalled.Exist "$qpkg_name" && QPKGs-ACinstall-to.Exist "$qpkg_name"; then
+			if IsQpkgInstalled "$qpkg_name" && QPKGs-ACinstall-to.Exist "$qpkg_name"; then
 				QPKGs_were_installed_name+=("$qpkg_name")
 				SetQpkgIndex
 				QPKGs_were_installed_path+=("$(/usr/bin/dirname "$(GetQpkgInstalledPath)")")
@@ -1235,7 +1237,7 @@ QPKGsAssignToActions()
 	QPKGs-ACdownload-to:Add "$(QPKGs-ACinstall-to:Array)"
 
 	for qpkg_name in $(QPKGs-ACreinstall-to:Array); do
-		QPKGs-ISinstalled.Exist "$qpkg_name" && QPKGs-ACdownload-to:Add "$qpkg_name"		# Only download files for reinstallable QPKGs.
+		IsQpkgInstalled "$qpkg_name" && QPKGs-ACdownload-to:Add "$qpkg_name"		# Only download files for reinstallable QPKGs.
 	done
 
 	for qpkg_name in $(QPKGs-ACupgrade-to:Array); do
@@ -1245,7 +1247,7 @@ QPKGsAssignToActions()
 	# Check all packages.
 
 	if [[ $useropt_check = true ]]; then
-		IsOsCanSignedPackages && QPKGs-ACsign-to:Add "$(QPKGs-ISinstalled:Array)"
+		IsOsCanSignedPackages && QPKGs-ACsign-to:Add "$(GetQpkgsInstalled)"
 
 		for qpkg_name in $(QPKGs-GRdependent:Array); do
 			IsQpkgEnabled "$qpkg_name" && QPKGs-ACreactivate-to:Add "$qpkg_name"
@@ -1440,7 +1442,7 @@ ProcActions()
 					PIPs:install
 				fi
 
-				QPKGs-ACinstall-ok.Exist Entware && [[ $sqlite_pathfile = /opt/bin/sqlite3 && -e $sqlite_pathfile ]] && IsOsCanSignedPackages && QPKGs-ACsign-to:Add "$(QPKGs-ISinstalled:Array)"
+				QPKGs-ACinstall-ok.Exist Entware && [[ $sqlite_pathfile = /opt/bin/sqlite3 && -e $sqlite_pathfile ]] && IsOsCanSignedPackages && QPKGs-ACsign-to:Add "$(GetQpkgsInstalled)"
 
 				ProcAction sign independent QPKG '"sign"'
 			fi
@@ -3129,6 +3131,8 @@ AllocPackStatesToAcs()
 			if QPKGs.AC${action}.IS${state}.IsSet; then
 				if [[ $state = active ]]; then
 					check_later=true
+				elif [[ $state = installed ]]; then
+					QPKGs-AC${action}-to:Add "$(GetQpkgsInstalled)"
 				else
 					QPKGs-AC${action}-to:Add "$(QPKGs-IS${state}:Array)"
 				fi
@@ -3151,6 +3155,8 @@ AllocPackStatesToAcs()
 			if QPKGs.AC${action}.ISNT${state}.IsSet; then
 				if [[ $state = active ]]; then
 					check_later=true
+				elif [[ $state = installed ]]; then
+					QPKGs-AC${action}-to:Add "$(GetQpkgsNtInstalled)"
 				else
 					QPKGs-AC${action}-to:Add "$(QPKGs-ISNT${state}:Array)"
 				fi
@@ -3685,13 +3691,13 @@ IPKs:install()
 	fi
 
 	if QPKGs.ACinstall.GRall.IsSet; then
-		for qpkg_name in "${r_qpkg_name[@]}"; do
+		for qpkg_name in $(QPKGs-GRall:Array); do
 			[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
 			SetQpkgIndex
 			IPKs-ACinstall-to:Add "$(GetQpkgDbIPKs)"
 		done
 	else
-		for qpkg_name in "${r_qpkg_name[@]}"; do
+		for qpkg_name in $(QPKGs-GRall:Array); do
 			[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
 
 			if QPKGs-ACinstall-to.Exist "$qpkg_name" || IsQpkgInstalled "$qpkg_name" || (QPKGs-ACreinstall-to.Exist "$qpkg_name" && IsQpkgInstalled "$qpkg_name"); then
@@ -4785,7 +4791,7 @@ _GenerateStatusReportDataLine_()
 			if ! IsQpkgDbArchOK; then
 				auxiliary='not installable, incompatible architecture'
 			elif ! IsQpkgDbMinOSVerOk || ! IsQpkgDbMaxOSVerOk; then
-				auxiliary="not installable, incompatible $(GetOsName)"
+				auxiliary="not installable, incompatible $(GetOsName) version"
 			elif ! IsQpkgDbMinRAMOk; then
 				auxiliary='not installable, insufficient RAM installed'
 			fi
@@ -4967,7 +4973,7 @@ _GenerateReposReportDataLine_()
 			if ! IsQpkgDbArchOK; then
 				auxiliary='not installable, incompatible architecture'
 			elif ! IsQpkgDbMinOSVerOk; then
-				auxiliary="not installable, incompatible $(GetOsName)"
+				auxiliary="not installable, incompatible $(GetOsName) version"
 			elif ! IsQpkgDbMinRAMOk; then
 				auxiliary='not installable, insufficient RAM installed'
 			fi
@@ -7509,14 +7515,6 @@ BuildQPKGsStates()
   	done &
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		if IsQpkgInstalled; then
-			echo installed
-		elif IsNtQpkgReallyInstalled; then
-			echo notinstalled
-		fi >> "$r_qpkg_states_path/$qpkg_name"
-	done &
-
-	for qpkg_name in $(QPKGs-GRall:Array); do
 		if IsQpkgInstallable; then
 			echo installable
 		else
@@ -7595,12 +7593,6 @@ BuildQPKGsStates()
 				notinstallable)
 					QPKGs-ISNTinstallable:Add "$qpkg_name"
 					;;
-				installed)
-					QPKGs-ISinstalled:Add "$qpkg_name"
-					;;
-				notinstalled)
-					QPKGs-ISNTinstalled:Add "$qpkg_name"
-					;;
 				missing)
 					QPKGs-ISmissing:Add "$qpkg_name"
 
@@ -7651,12 +7643,14 @@ InitQPKGsStates()
 	DebugAsProc 'initialising state lists'
 
 	for a in "${r_qpkg_is_states[@]:-}" "${r_qpkg_states_transient[@]:-}"; do
-		[[ $a = active ]] && continue		# don't reset.
+		[[ $a = active ]] && continue		# Don't reset.
+		[[ $a = installed ]] && continue	# No object exists.
 		QPKGs-IS${a}:Init
 	done
 
 	for a in "${r_qpkg_isnt_states[@]:-}"; do
-		[[ $a = active ]] && continue		# don't reset.
+		[[ $a = active ]] && continue		# Don't reset.
+		[[ $a = installed ]] && continue	# No object exists.
 		QPKGs-ISNT${a}:Init
 	done
 
@@ -8549,7 +8543,7 @@ ShowQPKGList()
 SendParentChangeEnv()
 	{
 
-	# Send a message into message stream to change a sherpa parent environment variable or variables.
+	# Send a message into message stream to change a parent environment variable or variables.
 
 	# This function is only called from within async functions.
 
@@ -8563,9 +8557,9 @@ SendParentChangeEnv()
 SendPackageStateChange()
 	{
 
-	# Send a message into message stream to change the state of this QPKG to $1 in sherpa parent environment.
+	# Send a message into message stream to change the state of this QPKG to $1 in parent environment.
 
-	# This might be: `isinstalled`, `isntenabled`, `isstarted`, `scntupgradable`, etc ...
+	# This might be: `ISstarted`, `SCNTupgradable`, etc ...
 	# This function is only called from within async functions.
 
 	# Inputs: (local)
@@ -8581,7 +8575,7 @@ SendPackageStateChange()
 SendActionStatus()
 	{
 
-	# Send a message into message stream to update sherpa parent environment with the status of this action for $qpkg_name.
+	# Send a message into message stream to update parent environment with the status of this action for $qpkg_name.
 
 	# This can be: `ok`, `so`, `sk`, `se`, `er`, `ex`. `ab`.
 	# This function is only called from within async functions.
@@ -8599,7 +8593,7 @@ SendActionStatus()
 WriteToActionMsgPipe()
 	{
 
-	# Send a message into message stream to update sherpa parent shell environment.
+	# Send a message into message stream to update parent shell environment.
 
 	# Inputs: (local)
 	#	$1 = message 1 key
@@ -9977,7 +9971,7 @@ _QPKG:install_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	if [[ $qpkg_name = Entware ]] && ! QPKGs-ISinstalled.Exist Entware && QPKGs-ACinstall-to.Exist Entware; then
+	if [[ $qpkg_name = Entware ]] && IsNtQpkgInstalled Entware && QPKGs-ACinstall-to.Exist Entware; then
 		local -r r_opt_path=/opt
 		local -r r_opt_bu_path=/opt.orig
 
@@ -10000,14 +9994,6 @@ _QPKG:install_()
 	[[ $qpkg_name = Entware ]] && IsNtSysFileExist $r_opkg_cmd && z=1		# Entware installation has failed.
 
 	if [[ $z -eq 0 || $z -eq 10 ]]; then	# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes user-aborts.
-		SendPackageStateChange ISinstalled
-
-		if IsQpkgEnabled "$qpkg_name"; then
-			SendPackageStateChange ISenabled
-		else
-			SendPackageStateChange ISNTenabled
-		fi
-
 		SaveActionResultToLog QPKG "$qpkg_name" install '' ok "v$(GetQpkgInstalledVer)"
 
 		if [[ $qpkg_name = Entware ]]; then
@@ -10097,12 +10083,6 @@ _QPKG:reinstall_()
 	[[ $qpkg_name = Entware ]] && IsNtSysFileExist $r_opkg_cmd && z=1
 
 	if [[ $z -eq 0 || $z -eq 10 ]]; then		# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes aborts.
-		if IsQpkgEnabled "$qpkg_name"; then
-			SendPackageStateChange ISenabled
-		else
-			SendPackageStateChange ISNTenabled
-		fi
-
 		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' ok "v$(GetQpkgInstalledVer)"
 		MarkActionForkAsOk
 		z=0   # Remap to zero.
@@ -10144,7 +10124,7 @@ _QPKG:rebuild_()
 		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' skipped 'incompatible author'
 		MarkActionForkAsSkipped
 		z=1
-	elif QPKGs-ISinstalled.Exist "$qpkg_name"; then
+	elif IsQpkgInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' skipped "already installed, please use 'restore' instead"
 		MarkActionForkAsSkipped
 		z=1
@@ -10237,12 +10217,6 @@ _QPKG:upgrade_()
 	if [[ $z -eq 0 || $z -eq 10 ]]; then	# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes aborts.
 		SendPackageStateChange ISNTupgradable
 
-		if IsQpkgEnabled "$qpkg_name"; then
-			SendPackageStateChange ISenabled
-		else
-			SendPackageStateChange ISNTenabled
-		fi
-
 		local current_ver=$(GetQpkgInstalledVer)
 
 		if [[ $current_ver = "$prev_ver" ]]; then
@@ -10328,9 +10302,7 @@ _QPKG:uninstall_()
 				SetCapabilities
 			fi
 
-			SendPackageStateChange ISNTinstalled
 			SendPackageStateChange ISNTactive
-			SendPackageStateChange ISNTenabled
 			MarkActionForkAsOk
 		else
 			SaveActionResultToLog QPKG "$qpkg_name" uninstall '' failed "$z"
@@ -10375,7 +10347,7 @@ _QPKG:activate_()
 		SaveActionResultToLog QPKG "$qpkg_name" activate '' skipped 'incompatible author'
 		MarkActionForkAsSkipped
 		z=1
-	elif QPKGs-ISNTenabled.Exist "$qpkg_name"; then
+	elif IsNtQpkgEnabled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" activate '' skipped "not enabled, please 'enable' it first"
 		MarkActionForkAsSkipped
 		z=1
@@ -10463,7 +10435,7 @@ _QPKG:reactivate_()
 		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' skipped 'incompatible author'
 		MarkActionForkAsSkipped
 		z=1
-	elif QPKGs-ISNTenabled.Exist "$qpkg_name"; then
+	elif IsNtQpkgEnabled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' skipped "not enabled, please 'enable' it first"
 		MarkActionForkAsSkipped
 		z=1
@@ -10646,7 +10618,6 @@ _QPKG:enable_()
 	DebugAsProc "enabling $(FormatPackageName)"
 
 	RunAndLog "/sbin/qpkg_service${timeout} enable $qpkg_name" "$r_log_pathfile" log:failure-only
-	IsQpkgEnabled "$qpkg_name" && SendPackageStateChange ISenabled
 	ClearQpkgInstalledAppCenterNotifier
 	SaveActionResultToLog QPKG "$qpkg_name" enable '' ok
 	MarkActionForkAsOk
@@ -10681,7 +10652,7 @@ _QPKG:disable_()
 		SaveActionResultToLog QPKG "$qpkg_name" disable '' skipped 'incompatible author'
 		MarkActionForkAsSkipped
 		z=1
-	elif QPKGs-ISNTenabled.Exist "$qpkg_name"; then
+	elif IsNtQpkgEnabled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" disable '' skipped 'already disabled'
 		MarkActionForkAsSkipped
 		z=1
@@ -10704,7 +10675,6 @@ _QPKG:disable_()
 	DebugAsProc "disabling $(FormatPackageName)"
 
 	RunAndLog "/sbin/qpkg_service${timeout} disable $qpkg_name" "$r_log_pathfile" log:failure-only
-	! IsQpkgEnabled "$qpkg_name" && SendPackageStateChange ISNTenabled
 
 	ClearQpkgInstalledAppCenterNotifier
 	SaveActionResultToLog QPKG "$qpkg_name" disable '' ok
@@ -10920,7 +10890,7 @@ _QPKG:restore_()
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
-	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
+	if IsNtQpkgInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" restore '' skipped "not installed, try 'rebuild' instead"
 		MarkActionForkAsSkipped
 		z=1
@@ -12238,6 +12208,31 @@ GetQpkgServiceResult()
 
 	}
 
+GetQpkgsInstalled()
+	{
+
+	local qpkg_name=''
+
+  	for qpkg_name in $(QPKGs-GRall:Array); do
+		IsQpkgInstalled || continue
+		IsQpkgAuthorOk || continue
+		echo "$qpkg_name"
+	done
+
+	}
+
+GetQpkgsNtInstalled()
+	{
+
+	local qpkg_name=''
+
+  	for qpkg_name in $(QPKGs-GRall:Array); do
+		IsNtQpkgInstalled || continue
+		echo "$qpkg_name"
+	done
+
+	}
+
 QpkgServiceResultWasOk()
 	{
 
@@ -12942,6 +12937,22 @@ IsQpkgEnabled()
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
 
 	[[ $(/sbin/getcfg "$a" Enable -u -f /etc/config/qpkg.conf) = TRUE ]]
+
+	}
+
+IsNtQpkgEnabled()
+	{
+
+	# Inputs: (local)
+	#   $1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+
+	# Inputs: (global)
+	#	$qpkg_name (default for $1)
+
+	# Outputs: (local)
+	#   $? = true/false
+
+	! IsQpkgEnabled "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}"
 
 	}
 
