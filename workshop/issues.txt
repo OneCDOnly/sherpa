@@ -1,5 +1,7 @@
 Observed issues:
 
+	* Restarting clamav.sh created lib symlink in cwd to /usr/lib
+
 	* Installation of RunLast and SortMyQPKGs installed OK on bella, but version numbers shown are incorrect:
 		--------------------------------------------------------------------------------------------------
 		install RunLast QPKG in 2 seconds (vundefined)
