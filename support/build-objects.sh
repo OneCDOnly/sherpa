@@ -12,8 +12,8 @@ target=$support_path/$objects_file
 # ordered
 
 # sorted
-r_qpkg_is_states=(active backedup downloaded installable installed missing signed upgradable)
-r_qpkg_isnt_states=(active backedup downloaded installable installed missing signed upgradable)
+r_qpkg_is_states=(active backedup downloaded enabled installable installed missing signed upgradable)
+r_qpkg_isnt_states=(active backedup downloaded enabled installable installed missing signed upgradable)
 r_qpkg_is_groups=(all canbackup canclean canrestarttoupdate dependent hasdependents independent optional)
 r_qpkg_isnt_groups=(canclean)
 r_qpkg_states_transient=(restarting slow starting stopping unknown)
@@ -156,11 +156,13 @@ for action in "${r_qpkg_actions[@]}"; do
 done
 
 for state in "${r_qpkg_is_states[@]}" "${r_qpkg_states_transient[@]}" "${r_qpkg_service_results[@]}"; do
+	[[ $state = enabled ]] && continue
 	[[ $state = installed ]] && continue
 	AddListObj QPKGs-IS"$state"
 done
 
 for state in "${r_qpkg_isnt_states[@]}" "${r_qpkg_states_transient[@]}" "${r_qpkg_service_results[@]}"; do
+	[[ $state = enabled ]] && continue
 	[[ $state = installed ]] && continue
 	AddListObj QPKGs-ISNT"$state"
 done
