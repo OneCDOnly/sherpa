@@ -1,5 +1,16 @@
 Observed issues:
 
+	* 'enabled' should be a valid state for status report:
+		--------------------------------------------------------------------------------------------------
+		[/share/Public] # sherpa s enabled
+		sherpa v250423-unstable
+		done: actions complete.
+
+		QPKG name:  Status:  Action (result):  QPKG version:  Appl. version:  Location:
+
+		[/share/Public] #
+		--------------------------------------------------------------------------------------------------
+
 	* Restarting clamav.sh created lib symlink in cwd to /usr/lib
 
 	* Installation of RunLast and SortMyQPKGs installed OK on bella, but version numbers shown are incorrect:
