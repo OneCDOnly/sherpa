@@ -130,6 +130,7 @@ ShowResults()
 
 	if [[ $generate_help_report = true ]]; then
 		ReleaseLockfile
+		! IsAnsiStrippingSupported && colourful=false
 
 		if [[ $useropt_help_tips = true ]]; then
 			ShowHelpTips
@@ -233,7 +234,7 @@ LoadConsts()
 	readonly r_report_qpkg_name_column_width=21
 	readonly r_report_qpkg_opt_dependencies_column_width=29
 	readonly r_report_qpkg_path_column_width=48
-	readonly r_report_qpkg_repo_column_width=40
+	readonly r_report_qpkg_repo_column_width=42
 	readonly r_report_qpkg_status_column_width=23
 	readonly r_report_qpkg_tier_column_width=12
 	readonly r_report_qpkg_version_column_width=19
@@ -904,17 +905,17 @@ CheckTasks()
 				break
 			fi
 
-			for group in "${r_qpkg_is_groups[@]}"; do
-				if QPKGs.AC${action}.GR${group}.IsSet; then
-					break 2
-				fi
-			done
-
-			for group in "${r_qpkg_isnt_groups[@]}"; do
-				if QPKGs.AC${action}.GRNT${group}.IsSet; then
-					break 2
-				fi
-			done
+# 			for group in "${r_qpkg_is_groups[@]}"; do
+# 				if QPKGs.AC${action}.GR${group}.IsSet; then
+# 					break 2
+# 				fi
+# 			done
+#
+# 			for group in "${r_qpkg_isnt_groups[@]}"; do
+# 				if QPKGs.AC${action}.GRNT${group}.IsSet; then
+# 					break 2
+# 				fi
+# 			done
 
 			for state in "${r_qpkg_is_states[@]}"; do
 				if QPKGs.AC${action}.IS${state}.IsSet; then
@@ -5479,7 +5480,7 @@ GenerateFeaturesReportTitleLine()
 		FormatReportFieldWidth 'Indep?' "$r_report_qpkg_tier_column_width"
 		FormatReportFieldWidth 'Opt?' "$r_report_qpkg_tier_column_width"
 		FormatReportFieldWidth 'Dep?' "$r_report_qpkg_tier_column_width"
-		FormatReportFieldWidth 'Enh?' "$r_report_lazy_column_width"
+		FormatReportFieldWidth 'Enh?' "$r_report_qpkg_tier_column_width"
 		FormatReportFieldWidth 'CanBack?' "$r_report_qpkg_can_backup_column_width"
 		FormatReportFieldWidth 'CanClean?' "$r_report_qpkg_can_clean_column_width"
 		FormatReportFieldWidth 'StartUpd?' "$r_report_qpkg_can_start_to_update_column_width"
@@ -5647,7 +5648,7 @@ _GenerateFeaturesReportDataLine_()
 		FormatReportFieldWidth "$independent_msg" "$r_report_qpkg_tier_column_width"
 		FormatReportFieldWidth "$optional_msg" "$r_report_qpkg_tier_column_width"
 		FormatReportFieldWidth "$dependent_msg" "$r_report_qpkg_tier_column_width"
-		FormatReportFieldWidth "$compatible_msg" "$r_report_lazy_column_width"
+		FormatReportFieldWidth "$compatible_msg" "$r_report_qpkg_tier_column_width"
 		FormatReportFieldWidth "$backup_msg" "$r_report_qpkg_can_backup_column_width"
 		FormatReportFieldWidth "$clean_msg" "$r_report_qpkg_can_clean_column_width"
 		FormatReportFieldWidth "$restart_to_update_msg" "$r_report_qpkg_can_start_to_update_column_width"
@@ -7863,6 +7864,8 @@ ReportDependencies()
 	DisplayProcReport dependency
 	ResetReportsPath &> /dev/null
 
+	! IsAnsiStrippingSupported && colourful=false
+
 	printf -v a '\n%s\n' "$(GenerateDepsReportTitleLine)"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
@@ -7913,6 +7916,8 @@ ReportFeatures()
 	DisplayProcReport features
 	ResetReportsPath &> /dev/null
 
+	! IsAnsiStrippingSupported && colourful=false
+
 	printf -v a '\n%s\n' "$(GenerateFeaturesReportTitleLine)"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
@@ -7961,6 +7966,8 @@ ReportPackages()
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport package
+
+	! IsAnsiStrippingSupported && colourful=false
 
 		{
 
@@ -8025,6 +8032,8 @@ ReportRepos()
 	DisplayProcReport repository
 	ResetReportsPath &> /dev/null
 
+	! IsAnsiStrippingSupported && colourful=false
+
 	printf -v a '\n%s\n' "$(GenerateReposReportTitleLine)"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
@@ -8074,6 +8083,8 @@ ReportStatuses()
 	DisableDebugToArchiveAndFile
 	DisplayProcReport status
 	ResetReportsPath &> /dev/null
+
+	! IsAnsiStrippingSupported && colourful=false
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		QPKGs-ACstatus-dn.Exist "$qpkg_name" || continue
@@ -13020,6 +13031,21 @@ IsNumber()
 
 	}
 
+IsAnsiStrippingSupported()
+	{
+
+	# Can ANSI codes be removed from text with available utilities?
+
+	if IsOsSedExtRegexSupported; then
+		true
+	elif [[ -e /opt/bin/sed && -L /opt/etc/passwd ]]; then				# Try to ensure Entware is active first.
+		true
+	else
+		false
+	fi
+
+	}
+
 CreatePidFile()
 	{
 
@@ -15396,6 +15422,8 @@ ShowKeystrokes()
 
 sleep()
 	{
+
+	# MITM an internal command.
 
 	# Inputs: (local)
 	#	$1 (optional) = seconds to sleep (decimal or integer), default is 1 second.
