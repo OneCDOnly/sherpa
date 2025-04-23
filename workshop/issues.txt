@@ -2,8 +2,6 @@ Observed issues:
 
 	* Restarting clamav.sh created lib symlink in cwd to /usr/lib
 
-	* If GNU utils are unavailable, strip ANSI codes from status report.
-
 	* Tableise() needs to support a new arg to change format of a single column.
 		- Needed for backup files report. Second column is filesize, which should be shown right-justified.
 
