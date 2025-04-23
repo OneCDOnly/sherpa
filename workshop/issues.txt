@@ -2,26 +2,7 @@ Observed issues:
 
 	* Restarting clamav.sh created lib symlink in cwd to /usr/lib
 
-	* False install failure reported in sherpa (packages actually installed OK):
-		--------------------------------------------------------------------------------------------------
-		• These package actions failed (and why):
-			install OSonarr QPKG in 1 second (for more information: /etc/init.d/sonarr.sh log)
-			install Kapowarr QPKG in 1 second (for more information: /etc/init.d/kapowarr.sh log)
-		--------------------------------------------------------------------------------------------------
-
 	* If GNU utils are unavailable, strip ANSI codes from status report.
-
-	* If a QPKG is already disabled, then 'disable' action is selected and QPKG is part of a group (like 'deps'), action should be skipped for this QPKG.
-		- This happens for single QPKGs, but not group QPKGs like 'deps'.
-
-	* Upgradable packages were not seen when running:
-		--------------------------------------------------------------------------------------------------
-		[/share/Public] # sherpa disable deps stop deps upgrade new
-		sherpa v250103-stable
-		warn: unable to find any 'upgradable' QPKGs to 'upgrade'.
-		done: actions complete.
-		--------------------------------------------------------------------------------------------------
-		- even though 5 packages were upgradable
 
 	* Tableise() needs to support a new arg to change format of a single column.
 		- Needed for backup files report. Second column is filesize, which should be shown right-justified.
