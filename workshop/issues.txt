@@ -2,12 +2,6 @@ Observed issues:
 
 	* Restarting clamav.sh created lib symlink in cwd to /usr/lib
 
-	* sherpa attempted to start Transmission (and others) after QPKG upgrade, even though it was disabled before upgrade.
-		--------------------------------------------------------------------------------------------------
-		• This package action failed (and why):
-			reactivate OTransmission QPKG in 2 seconds (for more information: /etc/init.d/transmission.sh log)
-		--------------------------------------------------------------------------------------------------
-
 	* False install failure reported in sherpa (packages actually installed OK):
 		--------------------------------------------------------------------------------------------------
 		• These package actions failed (and why):
