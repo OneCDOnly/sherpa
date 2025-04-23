@@ -9,7 +9,7 @@ Management:
 	* Only install IPKs for QPKGs that download successfully (or are already downloaded).
 		- ... and the installed ones, as-happens now.
 
-	* Prefix action specifiers with a hyphen.
+	* Prefix action specifiers with a hyphen?
 		-start -disable etc...
 
 		* Arg parser: use commas to separate actions & options?
@@ -52,7 +52,7 @@ Management:
 	* 'install'/'reinstall'/'upgrade' should check path QPKG is installed or is to-be installed to.
 		- If it starts with /root - abort.
 
-	* Reject useless action/group combinations like:
+	* Reject useless action:group combinations like:
 		- 'stop/deactivate inactive'
 		- 'start/activate active'
 		- 'install installed'
