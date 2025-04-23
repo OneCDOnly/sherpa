@@ -1,16 +1,5 @@
 Observed issues:
 
-	* 'enabled' should be a valid state for status report:
-		--------------------------------------------------------------------------------------------------
-		[/share/Public] # sherpa s enabled
-		sherpa v250423-unstable
-		done: actions complete.
-
-		QPKG name:  Status:  Action (result):  QPKG version:  Appl. version:  Location:
-
-		[/share/Public] #
-		--------------------------------------------------------------------------------------------------
-
 	* Restarting clamav.sh created lib symlink in cwd to /usr/lib
 
 	* sherpa attempted to start Transmission (and others) after QPKG upgrade, even though it was disabled before upgrade.

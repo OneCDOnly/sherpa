@@ -596,8 +596,8 @@ LoadLists()
 
 	# sorted
 
-	r_qpkg_is_states=(active backedup downloaded installable installed missing signed upgradable)
-	r_qpkg_isnt_states=(active backedup downloaded installable installed missing signed upgradable)
+	r_qpkg_is_states=(active backedup downloaded enabled installable installed missing signed upgradable)
+	r_qpkg_isnt_states=(active backedup downloaded enabled installable installed missing signed upgradable)
 	r_qpkg_is_groups=(all canbackup canclean canrestarttoupdate dependent hasdependents independent optional)
 	r_qpkg_isnt_groups=(canclean)
 	r_qpkg_states_transient=(restarting slow starting stopping unknown)
@@ -1083,7 +1083,7 @@ QPKGsAssignToActions()
 
 	# Install independents for installed dependents.
 
-	for qpkg_name in $(GetQpkgsInstalled); do
+	for qpkg_name in $(GetQpkgsIsInstalled); do
 		if [[ $useropt_check = true ]] || QPKGs-ACactivate-to.Exist "$qpkg_name"; then
 			SetQpkgIndex
 
@@ -1247,7 +1247,7 @@ QPKGsAssignToActions()
 	# Check all packages.
 
 	if [[ $useropt_check = true ]]; then
-		IsOsCanSignedPackages && QPKGs-ACsign-to:Add "$(GetQpkgsInstalled)"
+		IsOsCanSignedPackages && QPKGs-ACsign-to:Add "$(GetQpkgsIsInstalled)"
 
 		for qpkg_name in $(QPKGs-GRdependent:Array); do
 			IsQpkgEnabled "$qpkg_name" && QPKGs-ACreactivate-to:Add "$qpkg_name"
@@ -1442,7 +1442,7 @@ ProcActions()
 					PIPs:install
 				fi
 
-				QPKGs-ACinstall-ok.Exist Entware && [[ $sqlite_pathfile = /opt/bin/sqlite3 && -e $sqlite_pathfile ]] && IsOsCanSignedPackages && QPKGs-ACsign-to:Add "$(GetQpkgsInstalled)"
+				QPKGs-ACinstall-ok.Exist Entware && [[ $sqlite_pathfile = /opt/bin/sqlite3 && -e $sqlite_pathfile ]] && IsOsCanSignedPackages && QPKGs-ACsign-to:Add "$(GetQpkgsIsInstalled)"
 
 				ProcAction sign independent QPKG '"sign"'
 			fi
@@ -2777,7 +2777,7 @@ MatchNoun()
 		action?(s)-all|all-action?(s))
 			printf all-actions
 			;;
-		active|no@(n|t)-inactive|no@(n|t)-stopped|started)
+		active|n?(o)@(n|t)?(-)inactive|no@(n|t)?(-)stopped|started)
 			printf active
 			;;
 		all|entire|everything)
@@ -2792,7 +2792,7 @@ MatchNoun()
 		disable|false|no|off|unset)
 			printf false
 			;;
-		disabled|no@(n|t)-enabled)
+		disabled|n?(o)@(n|t)?(-)enabled)
 			printf NTenabled
 			;;
 		enable|on|set|true|yes)
@@ -2804,7 +2804,7 @@ MatchNoun()
 		group?(s))
 			printf groups
 			;;
-		inactive|no@(n|t)-active|no@(n|t)-started|stopped)
+		inactive|n?(o)@(n|t)?(-)active|n?(o)@(n|t)?(-)started|stopped)
 			printf NTactive
 			;;
 		indep?(endent)?(s))
@@ -2828,16 +2828,16 @@ MatchNoun()
 		no@(n|t)-back?(ed)up)
 			printf NTbackedup
 			;;
-		no@(n|t)-installable)
+		n?(o)@(n|t)?(-)installable)
 			printf NTinstallable
 			;;
-		no@(n|t)-installed)
+		n?(o)@(n|t)?(-)installed)
 			printf NTinstalled
 			;;
-		no@(n|t)-missing)
+		n?(o)@(n|t)?(-)missing)
 			printf NTmissing
 			;;
-		no@(n|t)-upgradable)
+		n?(o)@(n|t)?(-)upgradable)
 			printf NTupgradable
 			;;
 		o|option?(s))
@@ -3132,7 +3132,9 @@ AllocPackStatesToAcs()
 				if [[ $state = active ]]; then
 					check_later=true
 				elif [[ $state = installed ]]; then
-					QPKGs-AC${action}-to:Add "$(GetQpkgsInstalled)"
+					QPKGs-AC${action}-to:Add "$(GetQpkgsIsInstalled)"
+				elif [[ $state = enabled ]]; then
+					QPKGs-AC${action}-to:Add "$(GetQpkgsIsEnabled)"
 				else
 					QPKGs-AC${action}-to:Add "$(QPKGs-IS${state}:Array)"
 				fi
@@ -3157,6 +3159,8 @@ AllocPackStatesToAcs()
 					check_later=true
 				elif [[ $state = installed ]]; then
 					QPKGs-AC${action}-to:Add "$(GetQpkgsNtInstalled)"
+				elif [[ $state = enabled ]]; then
+					QPKGs-AC${action}-to:Add "$(GetQpkgsNtEnabled)"
 				else
 					QPKGs-AC${action}-to:Add "$(QPKGs-ISNT${state}:Array)"
 				fi
@@ -7644,13 +7648,15 @@ InitQPKGsStates()
 
 	for a in "${r_qpkg_is_states[@]:-}" "${r_qpkg_states_transient[@]:-}"; do
 		[[ $a = active ]] && continue		# Don't reset.
-		[[ $a = installed ]] && continue	# No object exists.
+		[[ $a = enabled ]] && continue		# No list object exists.
+		[[ $a = installed ]] && continue	# No list object exists.
 		QPKGs-IS${a}:Init
 	done
 
 	for a in "${r_qpkg_isnt_states[@]:-}"; do
 		[[ $a = active ]] && continue		# Don't reset.
-		[[ $a = installed ]] && continue	# No object exists.
+		[[ $a = enabled ]] && continue		# No list object exists.
+		[[ $a = installed ]] && continue	# No list object exists.
 		QPKGs-ISNT${a}:Init
 	done
 
@@ -12208,7 +12214,7 @@ GetQpkgServiceResult()
 
 	}
 
-GetQpkgsInstalled()
+GetQpkgsIsInstalled()
 	{
 
 	local qpkg_name=''
@@ -12228,6 +12234,31 @@ GetQpkgsNtInstalled()
 
   	for qpkg_name in $(QPKGs-GRall:Array); do
 		IsNtQpkgInstalled || continue
+		echo "$qpkg_name"
+	done
+
+	}
+
+GetQpkgsIsEnabled()
+	{
+
+	local qpkg_name=''
+
+  	for qpkg_name in $(QPKGs-GRall:Array); do
+		IsQpkgEnabled || continue
+		echo "$qpkg_name"
+	done
+
+	}
+
+GetQpkgsNtEnabled()
+	{
+
+	local qpkg_name=''
+
+  	for qpkg_name in $(QPKGs-GRall:Array); do
+		IsQpkgInstalled || continue
+		IsNtQpkgEnabled || continue
 		echo "$qpkg_name"
 	done
 
