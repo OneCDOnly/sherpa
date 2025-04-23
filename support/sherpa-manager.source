@@ -9949,7 +9949,7 @@ _QPKG:install_()
 		SaveActionResultToLog QPKG "$qpkg_name" install '' skipped 'NAS arch is incompatible'
 		MarkActionForkAsSkipped
 		z=1
-	elif ! IsQpkgDbMinOSVerOk "$qpkg_name"; then
+	elif ! IsQpkgDbMinOSVerOk "$qpkg_name" || ! IsQpkgDbMaxOSVerOk "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" install '' skipped "$(GetOsName) version is incompatible"
 		MarkActionForkAsSkipped
 		z=1

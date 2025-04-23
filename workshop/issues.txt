@@ -13,12 +13,6 @@ Observed issues:
 
 	* Restarting clamav.sh created lib symlink in cwd to /usr/lib
 
-	* RunLast and SortMyQPKGs correctly failed to install on bella (due to incompatible QTS version), but display suggests install went OK. And version numbers shown are incorrect:
-		--------------------------------------------------------------------------------------------------
-		install RunLast QPKG in 2 seconds (vundefined)
-		install SortMyQPKGs QPKG in 1 second (vundefined)
-		--------------------------------------------------------------------------------------------------
-
 	* sherpa attempted to start Transmission (and others) after QPKG upgrade, even though it was disabled before upgrade.
 		--------------------------------------------------------------------------------------------------
 		• This package action failed (and why):
