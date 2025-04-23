@@ -1,20 +1,8 @@
 Observed issues:
 
-	* IPKs not checked-for and installed when running `sherpa upgrade new`
+	* Restarting clamav.sh created lib symlink in cwd to /usr/lib
 
-	* Installation of RunLast and SortMyQPKGs installed OK on bella, but version numbers shown are incorrect:
-		--------------------------------------------------------------------------------------------------
-		install RunLast QPKG in 2 seconds (vundefined)
-		install SortMyQPKGs QPKG in 1 second (vundefined)
-		--------------------------------------------------------------------------------------------------
-
-	* sherpa attempted to start Transmission after QPKG upgrade, even though it was disabled before upgrade.
-		--------------------------------------------------------------------------------------------------
-		• This package action failed (and why):
-			reactivate OTransmission QPKG in 2 seconds (for more information: /etc/init.d/transmission.sh log)
-		--------------------------------------------------------------------------------------------------
-
-	* False install failure reported in sherpa but packages actually installed OK:
+	* False install failure reported in sherpa (packages actually installed OK):
 		--------------------------------------------------------------------------------------------------
 		• These package actions failed (and why):
 			install OSonarr QPKG in 1 second (for more information: /etc/init.d/sonarr.sh log)

@@ -596,8 +596,8 @@ LoadLists()
 
 	# sorted
 
-	r_qpkg_is_states=(active backedup downloaded installable installed missing signed upgradable)
-	r_qpkg_isnt_states=(active backedup downloaded installable installed missing signed upgradable)
+	r_qpkg_is_states=(active backedup downloaded enabled installable installed missing signed upgradable)
+	r_qpkg_isnt_states=(active backedup downloaded enabled installable installed missing signed upgradable)
 	r_qpkg_is_groups=(all canbackup canclean canrestarttoupdate dependent hasdependents independent optional)
 	r_qpkg_isnt_groups=(canclean)
 	r_qpkg_states_transient=(restarting slow starting stopping unknown)
@@ -1063,7 +1063,7 @@ QPKGsAssignToActions()
 		for qpkg_name in $(QPKGs-ACrebuild-to:Array); do
 			SetQpkgIndex
 
-			if QPKGs-ISNTinstalled.Exist "$qpkg_name" && IsQpkgBackupExist; then
+			if IsNtQpkgInstalled "$qpkg_name" && IsQpkgBackupExist; then
 				QPKGs-ACinstall-to:Add "$qpkg_name"
 				QPKGs-ACrestore-to:Add "$qpkg_name"
 			fi
@@ -1076,18 +1076,20 @@ QPKGsAssignToActions()
 		SetQpkgIndex
 
 		for prospect in $(GetQpkgDbDependencies); do
-			QPKGs-ISNTinstalled.Exist "$prospect" && QPKGs-ACinstall-to:Add "$prospect"
+			[[ $prospect != none ]] || continue
+			IsNtQpkgInstalled "$prospect" && QPKGs-ACinstall-to:Add "$prospect"
 		done
 	done
 
 	# Install independents for installed dependents.
 
-	for qpkg_name in $(QPKGs-ISinstalled:Array); do
+	for qpkg_name in $(GetQpkgsIsInstalled); do
 		if [[ $useropt_check = true ]] || QPKGs-ACactivate-to.Exist "$qpkg_name"; then
 			SetQpkgIndex
 
 			for prospect in $(GetQpkgDbDependencies); do
-				QPKGs-ISNTinstalled.Exist "$prospect" && QPKGs-ACinstall-to:Add "$prospect"
+				[[ $prospect != none ]] || continue
+				IsNtQpkgInstalled "$prospect" && QPKGs-ACinstall-to:Add "$prospect"
 			done
 		fi
 	done
@@ -1096,7 +1098,7 @@ QPKGsAssignToActions()
 
 	for action in activate deactivate disable enable install reinstall reactivate uninstall upgrade; do
 		for qpkg_name in $(QPKGs-AC${action}-to:Array); do
-			if QPKGs-GRoptional.Exist "$qpkg_name" && QPKGs-ISinstalled.Exist "$qpkg_name"; then
+			if QPKGs-GRoptional.Exist "$qpkg_name" && IsQpkgInstalled "$qpkg_name"; then
 				SetQpkgIndex
 
 				for prospect in $(GetQpkgDbOptionals); do
@@ -1112,11 +1114,11 @@ QPKGsAssignToActions()
 
 	for action in deactivate uninstall; do
 		for qpkg_name in $(QPKGs-AC${action}-to:Array); do
-			if QPKGs-GRindependent.Exist "$qpkg_name" && QPKGs-ISinstalled.Exist "$qpkg_name"; then
+			if QPKGs-GRindependent.Exist "$qpkg_name" && IsQpkgInstalled "$qpkg_name"; then
 				SetQpkgIndex
 
 				for prospect in $(GetQpkgDbDependents); do
-					QPKGs-ISinstalled.Exist "$prospect" && QPKGs-ACdeactivate-to:Add "$prospect"
+					IsQpkgInstalled "$prospect" && QPKGs-ACdeactivate-to:Add "$prospect"
 				done
 			fi
 		done
@@ -1133,7 +1135,7 @@ QPKGsAssignToActions()
 	# If an independent has been selected for `uninstall`, then `install`, need to `deactivate` its dependents first, and `activate` them again later.
 
 	for qpkg_name in $(QPKGs-ACuninstall-to:Array); do
-		if QPKGs-GRindependent.Exist "$qpkg_name" && QPKGs-ISinstalled.Exist "$qpkg_name" && QPKGs-ACinstall-to.Exist "$qpkg_name"; then
+		if QPKGs-GRindependent.Exist "$qpkg_name" && IsQpkgInstalled "$qpkg_name" && QPKGs-ACinstall-to.Exist "$qpkg_name"; then
 			SetQpkgIndex
 
 			for prospect in $(GetQpkgDbDependents); do
@@ -1149,7 +1151,7 @@ QPKGsAssignToActions()
 
 	for action in reinstall reactivate upgrade; do
 		for qpkg_name in $(QPKGs-AC${action}-to:Array); do
-			if QPKGs-GRindependent.Exist "$qpkg_name" && QPKGs-ISinstalled.Exist "$qpkg_name"; then
+			if QPKGs-GRindependent.Exist "$qpkg_name" && IsQpkgInstalled "$qpkg_name"; then
 				SetQpkgIndex
 
 				for prospect in $(GetQpkgDbDependents); do
@@ -1165,7 +1167,7 @@ QPKGsAssignToActions()
 	# If an optional has been selected for `uninstall`, then `install`, need to `deactivate` its dependents first, and `activate` them again later.
 
 	for qpkg_name in $(QPKGs-ACuninstall-to:Array); do
-		if QPKGs-GRoptional.Exist "$qpkg_name" && QPKGs-ISinstalled.Exist "$qpkg_name" && QPKGs-ACinstall-to.Exist "$qpkg_name"; then
+		if QPKGs-GRoptional.Exist "$qpkg_name" && IsQpkgInstalled "$qpkg_name" && QPKGs-ACinstall-to.Exist "$qpkg_name"; then
 			SetQpkgIndex
 
 			for prospect in $(GetQpkgDbOptionals); do
@@ -1195,7 +1197,7 @@ QPKGsAssignToActions()
 			SetQpkgIndex
 
 			for prospect in $(GetQpkgDbDependencies) $(GetQpkgDbOptionals); do
-				QPKGs-ISinstalled.Exist "$prospect" && QPKGs-ACreactivate-to:Add "$prospect"
+				IsQpkgInstalled "$prospect" && QPKGs-ACreactivate-to:Add "$prospect"
 			done
 		done
 	done
@@ -1220,7 +1222,7 @@ QPKGsAssignToActions()
 
 	if QPKGs-ACuninstall-to.IsAny; then
 		for qpkg_name in $(QPKGs-ACuninstall-to:Array); do
-			if QPKGs-ISinstalled.Exist "$qpkg_name" && QPKGs-ACinstall-to.Exist "$qpkg_name"; then
+			if IsQpkgInstalled "$qpkg_name" && QPKGs-ACinstall-to.Exist "$qpkg_name"; then
 				QPKGs_were_installed_name+=("$qpkg_name")
 				SetQpkgIndex
 				QPKGs_were_installed_path+=("$(/usr/bin/dirname "$(GetQpkgInstalledPath)")")
@@ -1235,7 +1237,7 @@ QPKGsAssignToActions()
 	QPKGs-ACdownload-to:Add "$(QPKGs-ACinstall-to:Array)"
 
 	for qpkg_name in $(QPKGs-ACreinstall-to:Array); do
-		QPKGs-ISinstalled.Exist "$qpkg_name" && QPKGs-ACdownload-to:Add "$qpkg_name"		# Only download files for reinstallable QPKGs.
+		IsQpkgInstalled "$qpkg_name" && QPKGs-ACdownload-to:Add "$qpkg_name"		# Only download files for reinstallable QPKGs.
 	done
 
 	for qpkg_name in $(QPKGs-ACupgrade-to:Array); do
@@ -1245,7 +1247,7 @@ QPKGsAssignToActions()
 	# Check all packages.
 
 	if [[ $useropt_check = true ]]; then
-		IsOsCanSignedPackages && QPKGs-ACsign-to:Add "$(QPKGs-ISinstalled:Array)"
+		IsOsCanSignedPackages && QPKGs-ACsign-to:Add "$(GetQpkgsIsInstalled)"
 
 		for qpkg_name in $(QPKGs-GRdependent:Array); do
 			IsQpkgEnabled "$qpkg_name" && QPKGs-ACreactivate-to:Add "$qpkg_name"
@@ -1440,7 +1442,7 @@ ProcActions()
 					PIPs:install
 				fi
 
-				QPKGs-ACinstall-ok.Exist Entware && [[ $sqlite_pathfile = /opt/bin/sqlite3 && -e $sqlite_pathfile ]] && IsOsCanSignedPackages && QPKGs-ACsign-to:Add "$(QPKGs-ISinstalled:Array)"
+				QPKGs-ACinstall-ok.Exist Entware && [[ $sqlite_pathfile = /opt/bin/sqlite3 && -e $sqlite_pathfile ]] && IsOsCanSignedPackages && QPKGs-ACsign-to:Add "$(GetQpkgsIsInstalled)"
 
 				ProcAction sign independent QPKG '"sign"'
 			fi
@@ -2775,7 +2777,7 @@ MatchNoun()
 		action?(s)-all|all-action?(s))
 			printf all-actions
 			;;
-		active|no@(n|t)-inactive|no@(n|t)-stopped|started)
+		active|n?(o)@(n|t)?(-)inactive|no@(n|t)?(-)stopped|started)
 			printf active
 			;;
 		all|entire|everything)
@@ -2790,7 +2792,7 @@ MatchNoun()
 		disable|false|no|off|unset)
 			printf false
 			;;
-		disabled|no@(n|t)-enabled)
+		disabled|n?(o)@(n|t)?(-)enabled)
 			printf NTenabled
 			;;
 		enable|on|set|true|yes)
@@ -2802,7 +2804,7 @@ MatchNoun()
 		group?(s))
 			printf groups
 			;;
-		inactive|no@(n|t)-active|no@(n|t)-started|stopped)
+		inactive|n?(o)@(n|t)?(-)active|n?(o)@(n|t)?(-)started|stopped)
 			printf NTactive
 			;;
 		indep?(endent)?(s))
@@ -2826,16 +2828,16 @@ MatchNoun()
 		no@(n|t)-back?(ed)up)
 			printf NTbackedup
 			;;
-		no@(n|t)-installable)
+		n?(o)@(n|t)?(-)installable)
 			printf NTinstallable
 			;;
-		no@(n|t)-installed)
+		n?(o)@(n|t)?(-)installed)
 			printf NTinstalled
 			;;
-		no@(n|t)-missing)
+		n?(o)@(n|t)?(-)missing)
 			printf NTmissing
 			;;
-		no@(n|t)-upgradable)
+		n?(o)@(n|t)?(-)upgradable)
 			printf NTupgradable
 			;;
 		o|option?(s))
@@ -3129,6 +3131,10 @@ AllocPackStatesToAcs()
 			if QPKGs.AC${action}.IS${state}.IsSet; then
 				if [[ $state = active ]]; then
 					check_later=true
+				elif [[ $state = installed ]]; then
+					QPKGs-AC${action}-to:Add "$(GetQpkgsIsInstalled)"
+				elif [[ $state = enabled ]]; then
+					QPKGs-AC${action}-to:Add "$(GetQpkgsIsEnabled)"
 				else
 					QPKGs-AC${action}-to:Add "$(QPKGs-IS${state}:Array)"
 				fi
@@ -3151,6 +3157,10 @@ AllocPackStatesToAcs()
 			if QPKGs.AC${action}.ISNT${state}.IsSet; then
 				if [[ $state = active ]]; then
 					check_later=true
+				elif [[ $state = installed ]]; then
+					QPKGs-AC${action}-to:Add "$(GetQpkgsNtInstalled)"
+				elif [[ $state = enabled ]]; then
+					QPKGs-AC${action}-to:Add "$(GetQpkgsNtEnabled)"
 				else
 					QPKGs-AC${action}-to:Add "$(QPKGs-ISNT${state}:Array)"
 				fi
@@ -3340,7 +3350,7 @@ IsThisFileRecent()
 
 	# Inputs: (local)
 	#   $1 = pathfilename: file to examine change time of.
-	#   $2 = integer (optional): threshold in minutes - default is `1440` (1 day).
+	#   $2 (optional) = integer - threshold in minutes. Default is `1440` (1 day).
 
 	# Outputs: (local)
 	#   $? = true/false
@@ -3617,7 +3627,7 @@ IPKs:upgrade()
 		KillPID "$fork_pid"
 
 		# Finish-up with 100% regardless of what happened.
-		UpdateDirSizeProgress true
+		UpdateDirSizeProgress finalise
 
 		if [[ $z -eq 0 ]]; then
 			NoteIpkAcAsOk "$(IPKs-ACupgrade-to:Array)" upgrade
@@ -3685,16 +3695,16 @@ IPKs:install()
 	fi
 
 	if QPKGs.ACinstall.GRall.IsSet; then
-		for qpkg_name in "${r_qpkg_name[@]}"; do
+		for qpkg_name in $(QPKGs-GRall:Array); do
 			[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
 			SetQpkgIndex
 			IPKs-ACinstall-to:Add "$(GetQpkgDbIPKs)"
 		done
 	else
-		for qpkg_name in "${r_qpkg_name[@]}"; do
+		for qpkg_name in $(QPKGs-GRall:Array); do
 			[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
 
-			if QPKGs-ACinstall-to.Exist "$qpkg_name" || QPKGs-ISinstalled.Exist "$qpkg_name" || (QPKGs-ACreinstall-to.Exist "$qpkg_name" && QPKGs-ISinstalled.Exist "$qpkg_name"); then
+			if QPKGs-ACinstall-to.Exist "$qpkg_name" || IsQpkgInstalled "$qpkg_name" || (QPKGs-ACreinstall-to.Exist "$qpkg_name" && IsQpkgInstalled "$qpkg_name"); then
 				SetQpkgIndex
 				IPKs-ACinstall-to:Add "$(GetQpkgDbIPKs)"
 			fi
@@ -3720,7 +3730,7 @@ IPKs:install()
 		KillPID "$fork_pid"
 
 		# Finish-up with 100% regardless of what happened.
-		UpdateDirSizeProgress true
+		UpdateDirSizeProgress finalise
 
 		if [[ $z -eq 0 ]]; then
 			NoteIpkAcAsOk "$(IPKs-ACdownload-to:Array)" install
@@ -4113,7 +4123,7 @@ WriteBranch()
 	{
 
 	# Inputs: (local)
-	# 	$1 = 'silent' (optional): don't announce setting was saved.
+	# 	$1 (optional) = 'silent' - don't announce setting was saved.
 
 	# Inputs: (global)
 	#	$switch_branch
@@ -4159,7 +4169,7 @@ WriteReportFooter()
 	{
 
 	# Inputs: (local)
-	# 	$1 = 'silent' (optional): don't announce setting was saved.
+	# 	$1 (optional) = 'silent' - don't announce setting was saved.
 
 	# Inputs: (global)
 	#	$switch_terse
@@ -4203,7 +4213,7 @@ WriteTerse()
 	{
 
 	# Inputs: (local)
-	# 	$1 = 'silent' (optional): don't announce setting was saved.
+	# 	$1 (optional) = 'silent' - don't announce setting was saved.
 
 	# Inputs: (global)
 	#	$switch_terse
@@ -4251,7 +4261,7 @@ SaveSetting()
 	# Inputs: (local)
 	#   $1 = name
 	# 	$2 = value
-	# 	$3 = 'announce' (optional): display on-screen when setting has been saved.
+	# 	$3 (optional) = 'announce' - display on-screen when setting has been saved.
 
 	local a=${1:?${FUNCNAME[0]}'()': undefined name}
 	local b=$(Lowercase "${2:?${FUNCNAME[0]}'()': undefined value}")
@@ -4377,7 +4387,7 @@ LenANSIDiff()
 	{
 
 	# Inputs: (local)
-	#   $1 = (optional) text to find length-of.
+	#   $1 (optional) = text to find length-of.
 
 	local a=${1:-}
 	local b=$(StripANSICodes "$a")
@@ -4439,8 +4449,8 @@ DisplayAsProjSynIndentExam()
 	# Display as project syntax indented example.
 
 	# Inputs: (local)
-	#	$1 = description (optional)
-	#	$2 = example syntax
+	#	$1 (optional) = description.
+	#	$2 = example syntax.
 
 	# Inputs: (global)
 	#	$r_help_desc_indent
@@ -4541,7 +4551,7 @@ _GeneratePacksReportDataLine_()
 	# * This function runs asynchronously *
 
 	# Input (local):
-	#   $1 = QPKG name (optional).
+	#   $1 (optional) = QPKG name.
 
 	# Inputs: (global)
 	# 	$qpkg_name
@@ -4785,7 +4795,7 @@ _GenerateStatusReportDataLine_()
 			if ! IsQpkgDbArchOK; then
 				auxiliary='not installable, incompatible architecture'
 			elif ! IsQpkgDbMinOSVerOk || ! IsQpkgDbMaxOSVerOk; then
-				auxiliary="not installable, incompatible $(GetOsName)"
+				auxiliary="not installable, incompatible $(GetOsName) version"
 			elif ! IsQpkgDbMinRAMOk; then
 				auxiliary='not installable, insufficient RAM installed'
 			fi
@@ -4967,7 +4977,7 @@ _GenerateReposReportDataLine_()
 			if ! IsQpkgDbArchOK; then
 				auxiliary='not installable, incompatible architecture'
 			elif ! IsQpkgDbMinOSVerOk; then
-				auxiliary="not installable, incompatible $(GetOsName)"
+				auxiliary="not installable, incompatible $(GetOsName) version"
 			elif ! IsQpkgDbMinRAMOk; then
 				auxiliary='not installable, insufficient RAM installed'
 			fi
@@ -5680,7 +5690,7 @@ _GenerateBacksReportItemLine_()
 	#	$1 = last backup date in epoch seconds
 	#	$2 = backup filename
 	#	$3 = filesize in bytes
-	#	$4 = age threshold to highlight (optional) '1 week ago' (default)		e.g. '2 days ago', '2 weeks ago', etc ...
+	#	$4 (optional) = age threshold to highlight, '1 week ago' (default)		e.g. '2 days ago', '2 weeks ago', etc ...
 
 	# Inputs: (global)
 	#	$r_report_file_bytes_column_width
@@ -5856,10 +5866,10 @@ DisplayAsIndentActionResultDurationReason()
 	{
 
 	# Inputs: (local)
-	#	$1 = action
-	#	$2 = result message
-	#	$3 = duration in milliseconds (optional)
-	#	$4 = reason message (optional)
+	#	$1 = action.
+	#	$2 = result message.
+	#	$3 (optional) = duration in milliseconds.
+	#	$4 (optional) = reason message.
 
 	# Inputs: (global)
 	#	$r_report_action_result_indent
@@ -6584,7 +6594,7 @@ GetLogSessStartLine()
 	{
 
 	# Inputs: (local)
-	#	$1 = how many sessions back? (optional) default = 1
+	#	$1 (optional) = how many sessions back? default = 1
 
 	# Inputs: (global)
 	#	$r_session_tail_pathfile
@@ -6599,7 +6609,7 @@ GetLogSessFinishLine()
 	{
 
 	# Inputs: (local)
-	#	$1 = how many sessions back? (optional) default = 1
+	#	$1 (optional) = how many sessions back? default = 1
 
 	# Inputs: (global)
 	#	$r_session_tail_pathfile
@@ -6912,7 +6922,7 @@ UpdateDirSizeProgress()
 	{
 
 	# Inputs: (local)
-	#	$1 = true (optional): force progress to 100%
+	#	$1 (optional) = 'finalise' - force progress to 100%.
 
 	# Inputs: (global)
 	#	$current_bytes
@@ -6932,11 +6942,11 @@ UpdateDirSizeProgress()
 	local stalled_msg=''
 	local stalled_seconds_threshold=4
 
-	if [[ ${1:-false} = false ]]; then
+	if [[ ${1:-} = finalise ]]; then
+		current_bytes=$dir_bytes
+	else
 		RefreshDirSizeCount
 		[[ ${last_active_epoch:=0} -ne 0 ]] && stalled_seconds=$(CalcAmountDiff "$(ConvertNowToSeconds)" "$last_active_epoch")
-	else
-		current_bytes=$dir_bytes
 	fi
 
 	perc_msg=$((200*(current_bytes)/(dir_bytes)%2+100*(current_bytes)/(dir_bytes)))%
@@ -7143,7 +7153,7 @@ ListQPKGsActions()
 	local border_shown=false
 
 	for a in "${r_qpkg_actions[@]}"; do
-		for b in to ok er sk so se sa; do
+		for b in ok er sk so se sa; do
 			if QPKGs-AC${a}-${b}.IsAny; then
 				if [[ $border_shown = false ]]; then
 					DebugInfoMinSepr
@@ -7151,7 +7161,7 @@ ListQPKGsActions()
 				fi
 
 				case $b in
-					ok|sk|so|to)
+					ok|sk|so)
 						DebugQpkg info "AC${a}-${b}" "($(QPKGs-AC${a}-${b}:Count)) $(QPKGs-AC${a}-${b}:ListCSV) "
 						;;
 					se|sa)
@@ -7509,14 +7519,6 @@ BuildQPKGsStates()
   	done &
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		if IsQpkgInstalled; then
-			echo installed
-		elif IsNtQpkgReallyInstalled; then
-			echo notinstalled
-		fi >> "$r_qpkg_states_path/$qpkg_name"
-	done &
-
-	for qpkg_name in $(QPKGs-GRall:Array); do
 		if IsQpkgInstallable; then
 			echo installable
 		else
@@ -7595,12 +7597,6 @@ BuildQPKGsStates()
 				notinstallable)
 					QPKGs-ISNTinstallable:Add "$qpkg_name"
 					;;
-				installed)
-					QPKGs-ISinstalled:Add "$qpkg_name"
-					;;
-				notinstalled)
-					QPKGs-ISNTinstalled:Add "$qpkg_name"
-					;;
 				missing)
 					QPKGs-ISmissing:Add "$qpkg_name"
 
@@ -7651,12 +7647,16 @@ InitQPKGsStates()
 	DebugAsProc 'initialising state lists'
 
 	for a in "${r_qpkg_is_states[@]:-}" "${r_qpkg_states_transient[@]:-}"; do
-		[[ $a = active ]] && continue		# don't reset.
+		[[ $a = active ]] && continue		# Don't reset.
+		[[ $a = enabled ]] && continue		# No list object exists.
+		[[ $a = installed ]] && continue	# No list object exists.
 		QPKGs-IS${a}:Init
 	done
 
 	for a in "${r_qpkg_isnt_states[@]:-}"; do
-		[[ $a = active ]] && continue		# don't reset.
+		[[ $a = active ]] && continue		# Don't reset.
+		[[ $a = enabled ]] && continue		# No list object exists.
+		[[ $a = installed ]] && continue	# No list object exists.
 		QPKGs-ISNT${a}:Init
 	done
 
@@ -8549,7 +8549,7 @@ ShowQPKGList()
 SendParentChangeEnv()
 	{
 
-	# Send a message into message stream to change a sherpa parent environment variable or variables.
+	# Send a message into message stream to change a parent environment variable or variables.
 
 	# This function is only called from within async functions.
 
@@ -8563,9 +8563,9 @@ SendParentChangeEnv()
 SendPackageStateChange()
 	{
 
-	# Send a message into message stream to change the state of this QPKG to $1 in sherpa parent environment.
+	# Send a message into message stream to change the state of this QPKG to $1 in parent environment.
 
-	# This might be: `isinstalled`, `isntenabled`, `isstarted`, `scntupgradable`, etc ...
+	# This might be: `ISstarted`, `SCNTupgradable`, etc ...
 	# This function is only called from within async functions.
 
 	# Inputs: (local)
@@ -8581,7 +8581,7 @@ SendPackageStateChange()
 SendActionStatus()
 	{
 
-	# Send a message into message stream to update sherpa parent environment with the status of this action for $qpkg_name.
+	# Send a message into message stream to update parent environment with the status of this action for $qpkg_name.
 
 	# This can be: `ok`, `so`, `sk`, `se`, `er`, `ex`. `ab`.
 	# This function is only called from within async functions.
@@ -8599,7 +8599,7 @@ SendActionStatus()
 WriteToActionMsgPipe()
 	{
 
-	# Send a message into message stream to update sherpa parent shell environment.
+	# Send a message into message stream to update parent shell environment.
 
 	# Inputs: (local)
 	#	$1 = message 1 key
@@ -8753,9 +8753,9 @@ NoteIpkAcAsEr()
 	# Move specified IPK name from `to` action array into associated `er` array.
 
 	# Inputs: (local)
-	#   $1 = package name
-	#   $2 = action
-	#   $3 = reason (optional)
+	#   $1 = package name.
+	#   $2 = action.
+	#   $3 (optional) = reason.
 
 	local a="failing request to $2 $(FormatPackageName "$1")"
 
@@ -9723,7 +9723,7 @@ SaveActionResultToLog()
 	#   $3 = action								`download`, `activate`
 	#   $4 = quantity (optional, default 1)		number of packages affected
 	#   $5 = result								`ok`, `skipped-ok`, `skipped`, `failed`
-	#   $6 = reason (optional)					"file already exists in local cache"
+	#   $6 (optional) = reason 					"file already exists in local cache"
 
 	# Inputs: (global)
 	#	$r_action_times_path
@@ -9955,7 +9955,7 @@ _QPKG:install_()
 		SaveActionResultToLog QPKG "$qpkg_name" install '' skipped 'NAS arch is incompatible'
 		MarkActionForkAsSkipped
 		z=1
-	elif ! IsQpkgDbMinOSVerOk "$qpkg_name"; then
+	elif ! IsQpkgDbMinOSVerOk "$qpkg_name" || ! IsQpkgDbMaxOSVerOk "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" install '' skipped "$(GetOsName) version is incompatible"
 		MarkActionForkAsSkipped
 		z=1
@@ -9977,7 +9977,7 @@ _QPKG:install_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	if [[ $qpkg_name = Entware ]] && ! QPKGs-ISinstalled.Exist Entware && QPKGs-ACinstall-to.Exist Entware; then
+	if [[ $qpkg_name = Entware ]] && IsNtQpkgInstalled Entware && QPKGs-ACinstall-to.Exist Entware; then
 		local -r r_opt_path=/opt
 		local -r r_opt_bu_path=/opt.orig
 
@@ -10000,14 +10000,6 @@ _QPKG:install_()
 	[[ $qpkg_name = Entware ]] && IsNtSysFileExist $r_opkg_cmd && z=1		# Entware installation has failed.
 
 	if [[ $z -eq 0 || $z -eq 10 ]]; then	# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes user-aborts.
-		SendPackageStateChange ISinstalled
-
-		if IsQpkgEnabled "$qpkg_name"; then
-			SendPackageStateChange ISenabled
-		else
-			SendPackageStateChange ISNTenabled
-		fi
-
 		SaveActionResultToLog QPKG "$qpkg_name" install '' ok "v$(GetQpkgInstalledVer)"
 
 		if [[ $qpkg_name = Entware ]]; then
@@ -10097,12 +10089,6 @@ _QPKG:reinstall_()
 	[[ $qpkg_name = Entware ]] && IsNtSysFileExist $r_opkg_cmd && z=1
 
 	if [[ $z -eq 0 || $z -eq 10 ]]; then		# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes aborts.
-		if IsQpkgEnabled "$qpkg_name"; then
-			SendPackageStateChange ISenabled
-		else
-			SendPackageStateChange ISNTenabled
-		fi
-
 		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' ok "v$(GetQpkgInstalledVer)"
 		MarkActionForkAsOk
 		z=0   # Remap to zero.
@@ -10144,7 +10130,7 @@ _QPKG:rebuild_()
 		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' skipped 'incompatible author'
 		MarkActionForkAsSkipped
 		z=1
-	elif QPKGs-ISinstalled.Exist "$qpkg_name"; then
+	elif IsQpkgInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' skipped "already installed, please use 'restore' instead"
 		MarkActionForkAsSkipped
 		z=1
@@ -10237,12 +10223,6 @@ _QPKG:upgrade_()
 	if [[ $z -eq 0 || $z -eq 10 ]]; then	# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes aborts.
 		SendPackageStateChange ISNTupgradable
 
-		if IsQpkgEnabled "$qpkg_name"; then
-			SendPackageStateChange ISenabled
-		else
-			SendPackageStateChange ISNTenabled
-		fi
-
 		local current_ver=$(GetQpkgInstalledVer)
 
 		if [[ $current_ver = "$prev_ver" ]]; then
@@ -10328,9 +10308,7 @@ _QPKG:uninstall_()
 				SetCapabilities
 			fi
 
-			SendPackageStateChange ISNTinstalled
 			SendPackageStateChange ISNTactive
-			SendPackageStateChange ISNTenabled
 			MarkActionForkAsOk
 		else
 			SaveActionResultToLog QPKG "$qpkg_name" uninstall '' failed "$z"
@@ -10375,7 +10353,7 @@ _QPKG:activate_()
 		SaveActionResultToLog QPKG "$qpkg_name" activate '' skipped 'incompatible author'
 		MarkActionForkAsSkipped
 		z=1
-	elif QPKGs-ISNTenabled.Exist "$qpkg_name"; then
+	elif IsNtQpkgEnabled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" activate '' skipped "not enabled, please 'enable' it first"
 		MarkActionForkAsSkipped
 		z=1
@@ -10463,7 +10441,7 @@ _QPKG:reactivate_()
 		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' skipped 'incompatible author'
 		MarkActionForkAsSkipped
 		z=1
-	elif QPKGs-ISNTenabled.Exist "$qpkg_name"; then
+	elif IsNtQpkgEnabled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' skipped "not enabled, please 'enable' it first"
 		MarkActionForkAsSkipped
 		z=1
@@ -10646,7 +10624,6 @@ _QPKG:enable_()
 	DebugAsProc "enabling $(FormatPackageName)"
 
 	RunAndLog "/sbin/qpkg_service${timeout} enable $qpkg_name" "$r_log_pathfile" log:failure-only
-	IsQpkgEnabled "$qpkg_name" && SendPackageStateChange ISenabled
 	ClearQpkgInstalledAppCenterNotifier
 	SaveActionResultToLog QPKG "$qpkg_name" enable '' ok
 	MarkActionForkAsOk
@@ -10681,7 +10658,7 @@ _QPKG:disable_()
 		SaveActionResultToLog QPKG "$qpkg_name" disable '' skipped 'incompatible author'
 		MarkActionForkAsSkipped
 		z=1
-	elif QPKGs-ISNTenabled.Exist "$qpkg_name"; then
+	elif IsNtQpkgEnabled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" disable '' skipped 'already disabled'
 		MarkActionForkAsSkipped
 		z=1
@@ -10704,7 +10681,6 @@ _QPKG:disable_()
 	DebugAsProc "disabling $(FormatPackageName)"
 
 	RunAndLog "/sbin/qpkg_service${timeout} disable $qpkg_name" "$r_log_pathfile" log:failure-only
-	! IsQpkgEnabled "$qpkg_name" && SendPackageStateChange ISNTenabled
 
 	ClearQpkgInstalledAppCenterNotifier
 	SaveActionResultToLog QPKG "$qpkg_name" disable '' ok
@@ -10920,7 +10896,7 @@ _QPKG:restore_()
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
-	if QPKGs-ISNTinstalled.Exist "$qpkg_name"; then
+	if IsNtQpkgInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" restore '' skipped "not installed, try 'rebuild' instead"
 		MarkActionForkAsSkipped
 		z=1
@@ -11525,7 +11501,7 @@ GetQpkgDbURL()
 	# Returns the URL of $qpkg_index.
 
 	# Inputs: (local)
-	#   $1 = QPKG name (optional): if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) = QPKG name - if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#   $qpkg_default_index
@@ -11567,7 +11543,7 @@ GetQpkgDbMinRAM()
 	{
 
 	# Inputs: (local)
-	#   $1 = QPKG name (optional): if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) = QPKG name - if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#   $qpkg_default_index
@@ -11604,7 +11580,7 @@ GetQpkgDbMinOSVer()
 	{
 
 	# Inputs: (local)
-	#   $1 = QPKG name (optional): if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) = QPKG name - if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#   $qpkg_default_index
@@ -11641,7 +11617,7 @@ GetQpkgDbMaxOSVer()
 	{
 
 	# Inputs: (local)
-	#   $1 = QPKG name (optional): if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) = QPKG name - if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#   $qpkg_default_index
@@ -11801,7 +11777,7 @@ GetQpkgDbDesc()
 	{
 
 	# Inputs:
-	#   $1 = QPKG name (optional): if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) = QPKG name - if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
 	#   $qpkg_default_index (global)
 	#   $qpkg_index (global)
 	#	$qpkg_name (global)
@@ -11873,7 +11849,7 @@ GetQpkgDbAbbrvs()
 	{
 
 	# Inputs: (local)
-	#   $1 = QPKG name (optional): if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) = QPKG name - if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#   $qpkg_default_index
@@ -12238,6 +12214,56 @@ GetQpkgServiceResult()
 
 	}
 
+GetQpkgsIsInstalled()
+	{
+
+	local qpkg_name=''
+
+  	for qpkg_name in $(QPKGs-GRall:Array); do
+		IsQpkgInstalled || continue
+		IsQpkgAuthorOk || continue
+		echo "$qpkg_name"
+	done
+
+	}
+
+GetQpkgsNtInstalled()
+	{
+
+	local qpkg_name=''
+
+  	for qpkg_name in $(QPKGs-GRall:Array); do
+		IsNtQpkgInstalled || continue
+		echo "$qpkg_name"
+	done
+
+	}
+
+GetQpkgsIsEnabled()
+	{
+
+	local qpkg_name=''
+
+  	for qpkg_name in $(QPKGs-GRall:Array); do
+		IsQpkgEnabled || continue
+		echo "$qpkg_name"
+	done
+
+	}
+
+GetQpkgsNtEnabled()
+	{
+
+	local qpkg_name=''
+
+  	for qpkg_name in $(QPKGs-GRall:Array); do
+		IsQpkgInstalled || continue
+		IsNtQpkgEnabled || continue
+		echo "$qpkg_name"
+	done
+
+	}
+
 QpkgServiceResultWasOk()
 	{
 
@@ -12483,7 +12509,7 @@ IsQpkgDbOptional()
 	# Is this QPKG an optional dependency?
 
 	# Inputs: (local)
-	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#	$qpkg_name (default for $1)
@@ -12553,7 +12579,7 @@ IsQpkgDbMinOSVerOk()
 	# Does this NAS meets the minimum OS firmware version requirements for QPKG name?
 
 	# Inputs: (local)
-	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#	$r_nas_firmware_ver
@@ -12576,7 +12602,7 @@ IsQpkgDbMaxOSVerOk()
 	# Does this NAS meets the maximum OS firmware version requirements for QPKG name?
 
 	# Inputs: (local)
-	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#	$r_nas_firmware_ver
@@ -12599,7 +12625,7 @@ IsQpkgDbCanBackup()
 	# Does this QPKG service-script support `backup` and `restore` actions?
 
 	# Inputs: (local)
-	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#	$r_qpkg_can_backup[]
@@ -12636,7 +12662,7 @@ IsQpkgDbCanRestartToUpdate()
 	# Does this QPKG service-script support updating the internal application when the QPKG is restarted?
 
 	# Inputs: (local)
-	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#	$qpkg_name (default for $1)
@@ -12664,7 +12690,7 @@ IsQpkgDbCanClean()
 	# Does this QPKG service-script support cleaning of the internal application?
 
 	# Inputs: (local)
-	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#	$qpkg_name (default for $1)
@@ -12690,7 +12716,7 @@ IsQpkgDbSherpaCompatible()
 	# Is this QPKG service-script compatible with enhanced actions supplied by sherpa?
 
 	# Inputs: (local)
-	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#   $qpkg_default_index
@@ -12727,7 +12753,7 @@ IsQpkgDbUniqueUnpack()
 	# If true, then this QPKG can be installed/reinstalled/upgraded concurrently with other QPKGs.
 
 	# Inputs: (local)
-	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#   $qpkg_default_index
@@ -12763,7 +12789,7 @@ IsQpkgDbWillLog()
 	# Does this QPKG service-script log all actions? If-so, when an action fails, user can be directed to check the service-script log.
 
 	# Inputs: (local)
-	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#	$qpkg_name (default for $1)
@@ -12788,7 +12814,7 @@ IsQpkgAutoUpdate()
 	# Is the installed QPKG set to auto-update on restart?
 
 	# Inputs: (local)
-	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#	$qpkg_name (default for $1)
@@ -12806,7 +12832,7 @@ IsQpkgAuthorOk()
 	{
 
 	# Inputs: (local)
-	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#	$qpkg_name (default for $1)
@@ -12824,7 +12850,7 @@ IsNtQpkgAuthorOk()
 	{
 
 	# Inputs: (local)
-	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#	$qpkg_name (default for $1)
@@ -12842,7 +12868,7 @@ IsQpkgInstalled()
 	# Check if specified QPKG is installed, and that QPKG author is valid.
 
 	# Inputs: (local)
-	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#	$qpkg_name (default for $1)
@@ -12860,7 +12886,7 @@ IsNtQpkgInstalled()
 	{
 
 	# Inputs: (local)
-	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#	$qpkg_name (default for $1)
@@ -12878,7 +12904,7 @@ IsQpkgReallyInstalled()
 	# Check if specified QPKG is installed, and don't check anything else.
 
 	# Inputs: (local)
-	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#	$qpkg_name (default for $1)
@@ -12896,7 +12922,7 @@ IsNtQpkgReallyInstalled()
 	{
 
 	# Inputs: (local)
-	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#	$qpkg_name (default for $1)
@@ -12912,7 +12938,7 @@ IsQpkgMissing()
 	{
 
 	# Inputs: (local)
-	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#	$qpkg_name (default for $1)
@@ -12931,7 +12957,7 @@ IsQpkgEnabled()
 	{
 
 	# Inputs: (local)
-	#   $1 (string, optional override for $qpkg_name) = QPKG name: if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+	#   $1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
 	#	$qpkg_name (default for $1)
@@ -12942,6 +12968,22 @@ IsQpkgEnabled()
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
 
 	[[ $(/sbin/getcfg "$a" Enable -u -f /etc/config/qpkg.conf) = TRUE ]]
+
+	}
+
+IsNtQpkgEnabled()
+	{
+
+	# Inputs: (local)
+	#   $1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+
+	# Inputs: (global)
+	#	$qpkg_name (default for $1)
+
+	# Outputs: (local)
+	#   $? = true/false
+
+	! IsQpkgEnabled "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}"
 
 	}
 
@@ -13275,8 +13317,8 @@ RunAndLog()
 	# Inputs: (local)
 	#   $1 = commandstring to execute.
 	#   $2 = pathfile to record stdout and stderr for commandstring.
-	#   $3 = 'log:failure-only' (optional) - if specified, stdout & stderr are only recorded in the specified log if the command failed. Default is to always record stdout & stderr.
-	#   $4 = e.g. '10' (optional) - an additional acceptable result code. Any other non-zero result from command will be considered a failure.
+	#   $3 (optional) = 'log:failure-only' - if specified, stdout & stderr are only recorded in the specified log if the command failed. Default is to always record stdout & stderr.
+	#   $4 (optional) = e.g. '10' - an additional acceptable result code. Any other non-zero result from command will be considered a failure.
 
 	# Inputs: (global)
 	#   $r_run_logs_path
@@ -13685,7 +13727,7 @@ DisplayProcReport()
 	{
 
 	# Inputs: (local)
-	#	$1 = report type string (optional)
+	#	$1 (optional) = report type string.
 
 	# Inputs: (global)
 	#	$report_title_shown
@@ -14509,7 +14551,7 @@ ShowAsProc()
 
 	# Inputs: (local)
 	#	$1 = task being carried-out.
-	#	$2 = trailing task, shown after the ellipsis (optional). If specified, $useropt_terse will be ignored.
+	#	$2 (optional) = trailing task, shown after the ellipsis. If specified, $useropt_terse will be ignored.
 
 	# Inputs: (global)
 	#	$r_inhibit_display_pathfile
@@ -14653,8 +14695,8 @@ ShowAsPercentProgress()
 	# Show single action package progress as percent-complete and a fraction of the total.
 
 	# Inputs: (local)
-	#	$1 = verb (present) (optional)
-	#	$2 = expected action duration: 'long' (optional)
+	#	$1 (optional) = verb (present)
+	#	$2 (optional) = expected action duration: 'long'
 	#	$3 = ok count
 	#	$4 = skip count
 	#	$5 = fail count
@@ -14720,7 +14762,7 @@ ShowAsIterativeProgress()
 	#	$3 = suffix1		"iterations"
 	#	$4 = count2			560
 	#	$5 = suffix2		"packages"
-	#	$6 = expected action duration: 'long' (optional) 'short' (default)
+	#	$6 (optional) = expected action duration: 'long', 'short' (default)
 
 	local -r r_a=${1:?${FUNCNAME[0]}'()': undefined action}
 	local -i b=${2:-0}
@@ -14750,7 +14792,7 @@ ShowAsActionLogDetail()
 	#   $3 = action							'download', 'downloaded'
 	#   $4 = result							'ok', 'skipped-ok', 'skipped', 'failed'
 	#   $5 = duration in milliseconds
-	#   $6 = reason (optional)				"file already exists in local cache"
+	#   $6 (optional) = reason 				"file already exists in local cache"
 	#   $7 = package type					'QPKG', 'IPK', etc ...
 	#   $8 = quantity 						number of packages affected.
 
@@ -15356,7 +15398,7 @@ sleep()
 	{
 
 	# Inputs: (local)
-	#	$1 = seconds to sleep (decimal or integer) (optional), default is 1 second.
+	#	$1 (optional) = seconds to sleep (decimal or integer), default is 1 second.
 
 	# Inputs: (global)
 	#	$r_gnu_sleep_cmd
