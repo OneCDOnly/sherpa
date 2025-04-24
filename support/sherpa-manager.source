@@ -815,7 +815,7 @@ DebugLogEnv()
 
 	SetOsFirmwareVer
 
-	if IsQpkgReallyInstalled SortMyQPKGs; then
+	if IsQpkgInstalled SortMyQPKGs; then
 		DebugQpkg detect "$(FormatPackageName SortMyQPKGs)" installed
 	else
 		if [[ $r_nas_firmware_ver -lt 400 || $r_nas_firmware_ver -ge 520 ]]; then
@@ -826,7 +826,7 @@ DebugLogEnv()
 	fi
 
 	if IsOsCanQpkgTimeout; then
-		if IsQpkgReallyInstalled IncreaseTimeouts; then
+		if IsQpkgInstalled IncreaseTimeouts; then
 			if IsQpkgTimeoutsIncreased; then
 				DebugQpkg detect "$(FormatPackageName IncreaseTimeouts)" active
 			else
@@ -957,7 +957,7 @@ CheckEnv()
 
 	SetNasArch
 
-	if IsQpkgInstalled Entware; then
+	if IsValidQpkgInstalled Entware; then
 		if [[ $r_entware_type != none ]]; then
 			_UpdateEntwarePackageList_ &			# Let's try launching this early.
 		else
@@ -1049,7 +1049,7 @@ QPKGsAssignToActions()
 
 	# KLUDGE: ensure Entware is reinstalled when IPKs are upgraded.
 
-	if IsQpkgInstalled Entware && IsOsOnline; then
+	if IsValidQpkgInstalled Entware && IsOsOnline; then
 		local entware_install_date=$(GetQpkgInstalledDate Entware)
 
 		if [[ $entware_install_date = undefined || ${entware_install_date//[!0-9]/} -le 20250116 ]] && [[ $r_nas_arch != armv5tel ]]; then
@@ -1064,7 +1064,7 @@ QPKGsAssignToActions()
 		for qpkg_name in $(QPKGs-ACrebuild-to:Array); do
 			SetQpkgIndex
 
-			if IsNtQpkgInstalled "$qpkg_name" && IsQpkgBackupExist; then
+			if IsNtValidQpkgInstalled "$qpkg_name" && IsQpkgBackupExist; then
 				QPKGs-ACinstall-to:Add "$qpkg_name"
 				QPKGs-ACrestore-to:Add "$qpkg_name"
 			fi
@@ -1078,7 +1078,7 @@ QPKGsAssignToActions()
 
 		for prospect in $(GetQpkgDbDependencies); do
 			[[ $prospect != none ]] || continue
-			IsNtQpkgInstalled "$prospect" && QPKGs-ACinstall-to:Add "$prospect"
+			IsNtValidQpkgInstalled "$prospect" && QPKGs-ACinstall-to:Add "$prospect"
 		done
 	done
 
@@ -1090,7 +1090,7 @@ QPKGsAssignToActions()
 
 			for prospect in $(GetQpkgDbDependencies); do
 				[[ $prospect != none ]] || continue
-				IsNtQpkgInstalled "$prospect" && QPKGs-ACinstall-to:Add "$prospect"
+				IsNtValidQpkgInstalled "$prospect" && QPKGs-ACinstall-to:Add "$prospect"
 			done
 		fi
 	done
@@ -1099,7 +1099,7 @@ QPKGsAssignToActions()
 
 	for action in activate deactivate disable enable install reinstall reactivate uninstall upgrade; do
 		for qpkg_name in $(QPKGs-AC${action}-to:Array); do
-			if QPKGs-GRoptional.Exist "$qpkg_name" && IsQpkgInstalled "$qpkg_name"; then
+			if QPKGs-GRoptional.Exist "$qpkg_name" && IsValidQpkgInstalled "$qpkg_name"; then
 				SetQpkgIndex
 
 				for prospect in $(GetQpkgDbOptionals); do
@@ -1115,11 +1115,11 @@ QPKGsAssignToActions()
 
 	for action in deactivate uninstall; do
 		for qpkg_name in $(QPKGs-AC${action}-to:Array); do
-			if QPKGs-GRindependent.Exist "$qpkg_name" && IsQpkgInstalled "$qpkg_name"; then
+			if QPKGs-GRindependent.Exist "$qpkg_name" && IsValidQpkgInstalled "$qpkg_name"; then
 				SetQpkgIndex
 
 				for prospect in $(GetQpkgDbDependents); do
-					IsQpkgInstalled "$prospect" && QPKGs-ACdeactivate-to:Add "$prospect"
+					IsValidQpkgInstalled "$prospect" && QPKGs-ACdeactivate-to:Add "$prospect"
 				done
 			fi
 		done
@@ -1136,7 +1136,7 @@ QPKGsAssignToActions()
 	# If an independent has been selected for `uninstall`, then `install`, need to `deactivate` its dependents first, and `activate` them again later.
 
 	for qpkg_name in $(QPKGs-ACuninstall-to:Array); do
-		if QPKGs-GRindependent.Exist "$qpkg_name" && IsQpkgInstalled "$qpkg_name" && QPKGs-ACinstall-to.Exist "$qpkg_name"; then
+		if QPKGs-GRindependent.Exist "$qpkg_name" && IsValidQpkgInstalled "$qpkg_name" && QPKGs-ACinstall-to.Exist "$qpkg_name"; then
 			SetQpkgIndex
 
 			for prospect in $(GetQpkgDbDependents); do
@@ -1152,7 +1152,7 @@ QPKGsAssignToActions()
 
 	for action in reinstall reactivate upgrade; do
 		for qpkg_name in $(QPKGs-AC${action}-to:Array); do
-			if QPKGs-GRindependent.Exist "$qpkg_name" && IsQpkgInstalled "$qpkg_name"; then
+			if QPKGs-GRindependent.Exist "$qpkg_name" && IsValidQpkgInstalled "$qpkg_name"; then
 				SetQpkgIndex
 
 				for prospect in $(GetQpkgDbDependents); do
@@ -1168,7 +1168,7 @@ QPKGsAssignToActions()
 	# If an optional has been selected for `uninstall`, then `install`, need to `deactivate` its dependents first, and `activate` them again later.
 
 	for qpkg_name in $(QPKGs-ACuninstall-to:Array); do
-		if QPKGs-GRoptional.Exist "$qpkg_name" && IsQpkgInstalled "$qpkg_name" && QPKGs-ACinstall-to.Exist "$qpkg_name"; then
+		if QPKGs-GRoptional.Exist "$qpkg_name" && IsValidQpkgInstalled "$qpkg_name" && QPKGs-ACinstall-to.Exist "$qpkg_name"; then
 			SetQpkgIndex
 
 			for prospect in $(GetQpkgDbOptionals); do
@@ -1198,7 +1198,7 @@ QPKGsAssignToActions()
 			SetQpkgIndex
 
 			for prospect in $(GetQpkgDbDependencies) $(GetQpkgDbOptionals); do
-				IsQpkgInstalled "$prospect" && QPKGs-ACreactivate-to:Add "$prospect"
+				IsValidQpkgInstalled "$prospect" && QPKGs-ACreactivate-to:Add "$prospect"
 			done
 		done
 	done
@@ -1223,7 +1223,7 @@ QPKGsAssignToActions()
 
 	if QPKGs-ACuninstall-to.IsAny; then
 		for qpkg_name in $(QPKGs-ACuninstall-to:Array); do
-			if IsQpkgInstalled "$qpkg_name" && QPKGs-ACinstall-to.Exist "$qpkg_name"; then
+			if IsValidQpkgInstalled "$qpkg_name" && QPKGs-ACinstall-to.Exist "$qpkg_name"; then
 				QPKGs_were_installed_name+=("$qpkg_name")
 				SetQpkgIndex
 				QPKGs_were_installed_path+=("$(/usr/bin/dirname "$(GetQpkgInstalledPath)")")
@@ -1238,11 +1238,11 @@ QPKGsAssignToActions()
 	QPKGs-ACdownload-to:Add "$(QPKGs-ACinstall-to:Array)"
 
 	for qpkg_name in $(QPKGs-ACreinstall-to:Array); do
-		IsQpkgInstalled "$qpkg_name" && QPKGs-ACdownload-to:Add "$qpkg_name"		# Only download files for reinstallable QPKGs.
+		IsValidQpkgInstalled "$qpkg_name" && QPKGs-ACdownload-to:Add "$qpkg_name"		# Only download files for reinstallable QPKGs.
 	done
 
 	for qpkg_name in $(QPKGs-ACupgrade-to:Array); do
-		QPKGs-ISupgradable.Exist "$qpkg_name" && QPKGs-ACdownload-to:Add "$qpkg_name"		# Only download files for upgradable QPKGs.
+		QPKGs-ISupgradable.Exist "$qpkg_name" && QPKGs-ACdownload-to:Add "$qpkg_name"	# Only download files for upgradable QPKGs.
 	done
 
 	# Check all packages.
@@ -3686,7 +3686,7 @@ IPKs:install()
 	IPKs-ACinstall-to:Init
 	IPKs-ACdownload-to:Init
 
-	if QPKGs-ACinstall-ok.Exist Entware || ([[ $useropt_check = true ]] && IsQpkgInstalled Entware); then
+	if QPKGs-ACinstall-ok.Exist Entware || ([[ $useropt_check = true ]] && IsValidQpkgInstalled Entware); then
 		IPKs-ACinstall-to:Add "$r_essential_ipks"
 
 		if [[ -e $r_prev_ipk_list_pathfile && $useropt_check = false ]]; then		# Don't load previous IPK list during 'check'.
@@ -3697,15 +3697,12 @@ IPKs:install()
 
 	if QPKGs.ACinstall.GRall.IsSet; then
 		for qpkg_name in $(QPKGs-GRall:Array); do
-			[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
 			SetQpkgIndex
 			IPKs-ACinstall-to:Add "$(GetQpkgDbIPKs)"
 		done
 	else
 		for qpkg_name in $(QPKGs-GRall:Array); do
-			[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
-
-			if QPKGs-ACinstall-to.Exist "$qpkg_name" || IsQpkgInstalled "$qpkg_name" || (QPKGs-ACreinstall-to.Exist "$qpkg_name" && IsQpkgInstalled "$qpkg_name"); then
+			if QPKGs-ACinstall-to.Exist "$qpkg_name" || IsValidQpkgInstalled "$qpkg_name" || (QPKGs-ACreinstall-to.Exist "$qpkg_name" && IsValidQpkgInstalled "$qpkg_name"); then
 				SetQpkgIndex
 				IPKs-ACinstall-to:Add "$(GetQpkgDbIPKs)"
 			fi
@@ -4581,7 +4578,7 @@ _GeneratePacksReportDataLine_()
 	if IsQpkgMissing; then
 		mode=highlight
 		/bin/touch "$r_report_flags_path"/status-missing
-	elif IsNtQpkgInstalled; then
+	elif IsNtValidQpkgInstalled; then
 		mode=mute
 		/bin/touch "$r_report_flags_path"/state-notinstalled
 	else
@@ -4692,11 +4689,11 @@ _GenerateStatusReportDataLine_()
 	if IsQpkgMissing; then
 		mode=missing
 		/bin/touch "$r_report_flags_path"/status-missing
-	elif IsQpkgInstalled; then
+	elif IsValidQpkgInstalled; then
 		mode=normal
 		/bin/touch "$r_report_flags_path"/state-installed
 	else
-		if IsQpkgReallyInstalled && IsNtQpkgAuthorOk; then
+		if IsQpkgInstalled && IsNtQpkgAuthorOk; then
 			mode=author
 			/bin/touch "$r_report_flags_path"/status-wrongauthor
 		else
@@ -4951,7 +4948,7 @@ _GenerateReposReportDataLine_()
 	if IsQpkgMissing; then
 		mode=highlight
 		/bin/touch "$r_report_flags_path"/status-missing
-	elif IsQpkgInstalled; then
+	elif IsValidQpkgInstalled; then
 		mode=normal
 		/bin/touch "$r_report_flags_path"/state-installed
 	else
@@ -5080,7 +5077,7 @@ _GenerateAbsReportDataLine_()
 		mode=highlight
 		req_alert=true
 		/bin/touch "$r_report_flags_path"/status-missing
-	elif IsNtQpkgInstalled; then
+	elif IsNtValidQpkgInstalled; then
 		mode=mute
 		/bin/touch "$r_report_flags_path"/state-notinstalled
 	else
@@ -5226,9 +5223,9 @@ _GenerateDepsReportDataLine_()
 	if IsQpkgMissing; then
 		mode=missing
 		req_alert=true
-	elif IsQpkgInstalled; then
+	elif IsValidQpkgInstalled; then
 		mode=normal
-	elif IsQpkgReallyInstalled && IsNtQpkgAuthorOk; then
+	elif IsQpkgInstalled && IsNtQpkgAuthorOk; then
 		mode=author
 		req_attention=true
 		/bin/touch "$r_report_flags_path"/status-wrongauthor
@@ -5343,7 +5340,7 @@ _GenerateDepsReportDataLine_()
 				for dep_name in $deps_raw; do
 					[[ -n $deps ]] && deps+=' '
 
-					if IsQpkgInstalled "$dep_name" && IsQpkgEnabled "$dep_name"; then
+					if IsValidQpkgInstalled "$dep_name" && IsQpkgEnabled "$dep_name"; then
 						deps+=$(TextBrightGreen "$dep_name")
 					else
 						deps+=$(TextBrightRed "$dep_name")
@@ -5361,7 +5358,7 @@ _GenerateDepsReportDataLine_()
 				for dep_name in $opt_deps_raw; do
 					[[ -n $opt_deps ]] && opt_deps+=' '
 
-					if IsQpkgInstalled "$dep_name" && IsQpkgEnabled "$dep_name"; then
+					if IsValidQpkgInstalled "$dep_name" && IsQpkgEnabled "$dep_name"; then
 						opt_deps+=$(TextBrightGreen "$dep_name")
 					else
 						opt_deps+=$dep_name
@@ -5520,9 +5517,9 @@ _GenerateFeaturesReportDataLine_()
 	if IsQpkgMissing; then
 		mode=missing
 		req_alert=true
-	elif IsQpkgInstalled; then
+	elif IsValidQpkgInstalled; then
 		mode=normal
-	elif IsQpkgReallyInstalled && IsNtQpkgAuthorOk; then
+	elif IsQpkgInstalled && IsNtQpkgAuthorOk; then
 		mode=author
 		req_attention=true
 	else
@@ -5584,7 +5581,7 @@ _GenerateFeaturesReportDataLine_()
 			[[ $(GetQpkgDbActiveTest) = builtin ]] && active_test=true
 			IsQpkgDbArchOK && arch_compatible=true
 
-			if IsQpkgInstalled && IsQpkgDbCanRestartToUpdate; then
+			if IsValidQpkgInstalled && IsQpkgDbCanRestartToUpdate; then
 				IsQpkgAutoUpdate && autoupdate=true
 			elif [[ $name = sherpa ]]; then
 				autoupdate=true					# sherpa always auto-updates and this can't be disabled.
@@ -9209,7 +9206,7 @@ GetQpkgArch()
 GetQpkgEntwareType()
 	{
 
-	if IsQpkgReallyInstalled Entware; then
+	if IsQpkgInstalled Entware; then
 		if [[ -e /opt/etc/passwd ]]; then
 			if [[ -L /opt/etc/passwd ]]; then
 				printf std
@@ -9816,7 +9813,7 @@ _QPKG:reassign_()
 
 	local -i z=0
 
-	if IsNtQpkgInstalled "$qpkg_name"; then
+	if IsNtValidQpkgInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" reassign '' skipped 'not installed'
 		MarkActionForkAsSkipped
 		z=1
@@ -9954,11 +9951,11 @@ _QPKG:install_()
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
-	if IsQpkgInstalled "$qpkg_name"; then
+	if IsValidQpkgInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" install '' skipped 'already installed'
 		MarkActionForkAsSkipped
 		z=1
-	elif IsQpkgReallyInstalled && IsNtQpkgAuthorOk; then
+	elif IsQpkgInstalled && IsNtQpkgAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" install '' skipped 'incompatible author'
 		MarkActionForkAsSkipped
 		z=1
@@ -9988,7 +9985,7 @@ _QPKG:install_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	if [[ $qpkg_name = Entware ]] && IsNtQpkgInstalled Entware && QPKGs-ACinstall-to.Exist Entware; then
+	if [[ $qpkg_name = Entware ]] && IsNtValidQpkgInstalled Entware && QPKGs-ACinstall-to.Exist Entware; then
 		local -r r_opt_path=/opt
 		local -r r_opt_bu_path=/opt.orig
 
@@ -10062,7 +10059,7 @@ _QPKG:reinstall_()
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
-	if IsNtQpkgInstalled "$qpkg_name"; then
+	if IsNtValidQpkgInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' skipped "not already installed, please use 'install' instead."
 		MarkActionForkAsSkipped
 		z=1
@@ -10089,7 +10086,7 @@ _QPKG:reinstall_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "reinstalling $(FormatPackageName)"
-	IsQpkgInstalled && a+="QINSTALL_PATH=$(/usr/bin/dirname "$(GetQpkgInstalledPath)") "
+	IsValidQpkgInstalled && a+="QINSTALL_PATH=$(/usr/bin/dirname "$(GetQpkgInstalledPath)") "
 
 	RunAndLog "${a}/bin/sh $local_pathfile" "$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_reinstall_log_file" log:failure-only 10
 	z=$?
@@ -10133,16 +10130,16 @@ _QPKG:rebuild_()
 
 	local -i z=0
 
-	if ! IsQpkgDbCanBackup; then
-		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' skipped 'does not support rebuild'
+	if IsValidQpkgInstalled "$qpkg_name"; then
+		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' skipped "already installed, please use 'restore' instead"
 		MarkActionForkAsSkipped
 		z=1
-	elif IsQpkgReallyInstalled && IsNtQpkgAuthorOk; then
+	elif IsQpkgInstalled && IsNtQpkgAuthorOk; then
 		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' skipped 'incompatible author'
 		MarkActionForkAsSkipped
 		z=1
-	elif IsQpkgInstalled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' skipped "already installed, please use 'restore' instead"
+	elif ! IsQpkgDbCanBackup; then
+		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' skipped 'does not support rebuild'
 		MarkActionForkAsSkipped
 		z=1
 	elif ! IsQpkgBackupExist; then
@@ -10188,7 +10185,7 @@ _QPKG:upgrade_()
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
-	if IsNtQpkgInstalled "$qpkg_name"; then
+	if IsNtValidQpkgInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' skipped 'not installed'
 		MarkActionForkAsSkipped
 		z=1
@@ -10221,7 +10218,7 @@ _QPKG:upgrade_()
 	local prev_ver=$(GetQpkgInstalledVer)
 
 	DebugAsProc "upgrading $(FormatPackageName)"
-	IsQpkgInstalled && a+="QINSTALL_PATH=$(/usr/bin/dirname "$(GetQpkgInstalledPath "$qpkg_name")") "
+	IsValidQpkgInstalled && a+="QINSTALL_PATH=$(/usr/bin/dirname "$(GetQpkgInstalledPath "$qpkg_name")") "
 
 	RunAndLog "${a}/bin/sh $local_pathfile" "$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_upgrade_log_file" log:failure-only 10
 	z=$?
@@ -10276,7 +10273,7 @@ _QPKG:uninstall_()
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
-	if IsNtQpkgInstalled "$qpkg_name"; then
+	if IsNtValidQpkgInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" uninstall '' skipped 'not installed'
 		MarkActionForkAsSkipped
 		z=1
@@ -10356,7 +10353,7 @@ _QPKG:activate_()
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
-	if IsNtQpkgInstalled "$qpkg_name"; then
+	if IsNtValidQpkgInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" activate '' skipped 'not installed'
 		MarkActionForkAsSkipped
 		z=1
@@ -10444,7 +10441,7 @@ _QPKG:reactivate_()
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
-	if IsNtQpkgInstalled "$qpkg_name"; then
+	if IsNtValidQpkgInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' skipped 'not installed'
 		MarkActionForkAsSkipped
 		z=1
@@ -10523,7 +10520,7 @@ _QPKG:deactivate_()
 	[[ $useropt_debug = true ]]	&& a+='DEBUG_QPKG=true '
 	local -i z=0
 
-	if IsNtQpkgInstalled "$qpkg_name"; then
+	if IsNtValidQpkgInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' skipped 'not installed'
 		MarkActionForkAsSkipped
 		z=1
@@ -10608,7 +10605,7 @@ _QPKG:enable_()
 
 	local -i z=0
 
-	if IsNtQpkgInstalled "$qpkg_name"; then
+	if IsNtValidQpkgInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" enable '' skipped 'not installed'
 		MarkActionForkAsSkipped
 		z=1
@@ -10661,7 +10658,7 @@ _QPKG:disable_()
 
 	local -i z=0
 
-	if IsNtQpkgInstalled "$qpkg_name"; then
+	if IsNtValidQpkgInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" disable '' skipped 'not installed'
 		MarkActionForkAsSkipped
 		z=1
@@ -10721,7 +10718,7 @@ _QPKG:enableau_()
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
-	if IsNtQpkgInstalled "$qpkg_name"; then
+	if IsNtValidQpkgInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" enableau '' skipped 'not installed'
 		MarkActionForkAsSkipped
 		z=1
@@ -10784,7 +10781,7 @@ _QPKG:disableau_()
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
-	if IsNtQpkgInstalled "$qpkg_name"; then
+	if IsNtValidQpkgInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" disableau '' skipped 'not installed'
 		MarkActionForkAsSkipped
 		z=1
@@ -10847,7 +10844,7 @@ _QPKG:backup_()
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
-	if IsNtQpkgInstalled "$qpkg_name"; then
+	if IsNtValidQpkgInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" backup '' skipped 'not installed'
 		MarkActionForkAsSkipped
 		z=1
@@ -10907,7 +10904,7 @@ _QPKG:restore_()
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
-	if IsNtQpkgInstalled "$qpkg_name"; then
+	if IsNtValidQpkgInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" restore '' skipped "not installed, try 'rebuild' instead"
 		MarkActionForkAsSkipped
 		z=1
@@ -10971,7 +10968,7 @@ _QPKG:clean_()
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
-	if IsNtQpkgInstalled "$qpkg_name"; then
+	if IsNtValidQpkgInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" clean '' skipped 'not installed'
 		MarkActionForkAsSkipped
 		z=1
@@ -11044,7 +11041,7 @@ _QPKG:sign_()
 
 	DebugVar sqlite_cmd
 
-	if IsNtQpkgInstalled "$qpkg_name"; then
+	if IsNtValidQpkgInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped 'not installed'
 		MarkActionForkAsSkipped
 		z=1
@@ -11146,7 +11143,7 @@ _QPKG:status_()
 	[[ $useropt_debug = true ]] && b+='DEBUG_QPKG=true '
 	local -i z=0
 
-	if IsNtQpkgInstalled "$qpkg_name"; then
+	if IsNtValidQpkgInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" status '' skipped 'not installed'
 		MarkActionForkAsSkipped
 		z=1
@@ -11208,7 +11205,7 @@ ClearQpkgInstalledAppCenterNotifier()
 	# KLUDGE: `clean` QTS 4.5.1+ App Center notifier status.
 	[[ -e /sbin/qpkg_cli ]] && /sbin/qpkg_cli --cancel "$qpkg_name"
 
-	IsNtQpkgInstalled && return
+	IsNtValidQpkgInstalled && return
 
 	# Must also do this when installing QPKGs at the CLI.
 	/sbin/setcfg "$qpkg_name" Status complete -f /etc/config/qpkg.conf
@@ -11323,7 +11320,7 @@ GetQpkgDbApplVer()
 	fi
 
 	[[ -n $a ]] || return
-	[[ $a = dynamic ]] && IsQpkgInstalled && ! IsQpkgAutoUpdate && a=static
+	[[ $a = dynamic ]] && IsValidQpkgInstalled && ! IsQpkgAutoUpdate && a=static
 
 	printf '%s' "$a"
 
@@ -12231,8 +12228,7 @@ GetQpkgsIsInstalled()
 	local qpkg_name=''
 
   	for qpkg_name in $(QPKGs-GRall:Array); do
-		IsQpkgInstalled || continue
-		IsQpkgAuthorOk || continue
+		IsValidQpkgInstalled || continue
 		echo "$qpkg_name"
 	done
 
@@ -12244,7 +12240,7 @@ GetQpkgsNtInstalled()
 	local qpkg_name=''
 
   	for qpkg_name in $(QPKGs-GRall:Array); do
-		IsNtQpkgInstalled || continue
+		IsNtValidQpkgInstalled || continue
 		echo "$qpkg_name"
 	done
 
@@ -12268,7 +12264,7 @@ GetQpkgsNtEnabled()
 	local qpkg_name=''
 
   	for qpkg_name in $(QPKGs-GRall:Array); do
-		IsQpkgInstalled || continue
+		IsValidQpkgInstalled || continue
 		IsNtQpkgEnabled || continue
 		echo "$qpkg_name"
 	done
@@ -12460,7 +12456,7 @@ IsQpkgUpgradable()
 	# Outputs: (local)
 	#   $? = true/false
 
-	IsQpkgInstalled && IsQpkgRepoSelfManaged && IsQpkgDbArchOK && IsQpkgDbMinOSVerOk && IsQpkgDbMaxOSVerOk && IsQpkgDbMinRAMOk && [[ $(GetQpkgInstalledVer) != "$(GetQpkgDbVer)" ]]
+	IsValidQpkgInstalled && IsQpkgRepoSelfManaged && IsQpkgDbArchOK && IsQpkgDbMinOSVerOk && IsQpkgDbMaxOSVerOk && IsQpkgDbMinRAMOk && [[ $(GetQpkgInstalledVer) != "$(GetQpkgDbVer)" ]]
 
 	}
 
@@ -12475,7 +12471,7 @@ IsQpkgInstallable()
 	# Outputs: (local)
 	#   $? = true/false
 
-  	IsNtQpkgReallyInstalled && IsQpkgDbArchOK && IsQpkgDbMinOSVerOk && IsQpkgDbMaxOSVerOk && IsQpkgDbMinRAMOk
+  	IsNtQpkgInstalled && IsQpkgDbArchOK && IsQpkgDbMinOSVerOk && IsQpkgDbMaxOSVerOk && IsQpkgDbMinRAMOk
 
 	}
 
@@ -12873,10 +12869,10 @@ IsNtQpkgAuthorOk()
 
 	}
 
-IsQpkgInstalled()
+IsValidQpkgInstalled()
 	{
 
-	# Check if specified QPKG is installed, and that QPKG author is valid.
+	# Check if specified QPKG is installed, and the QPKG author is valid.
 
 	# Inputs: (local)
 	#   $1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
@@ -12893,7 +12889,7 @@ IsQpkgInstalled()
 
 	}
 
-IsNtQpkgInstalled()
+IsNtValidQpkgInstalled()
 	{
 
 	# Inputs: (local)
@@ -12905,11 +12901,11 @@ IsNtQpkgInstalled()
 	# Outputs: (local)
 	#   $? = true/false
 
-	! IsQpkgInstalled "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}"
+	! IsValidQpkgInstalled "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}"
 
 	}
 
-IsQpkgReallyInstalled()
+IsQpkgInstalled()
 	{
 
 	# Check if specified QPKG is installed, and don't check anything else.
@@ -12929,7 +12925,7 @@ IsQpkgReallyInstalled()
 
 	}
 
-IsNtQpkgReallyInstalled()
+IsNtQpkgInstalled()
 	{
 
 	# Inputs: (local)
@@ -12941,7 +12937,7 @@ IsNtQpkgReallyInstalled()
 	# Outputs: (local)
 	#   $? = true/false
 
-	! IsQpkgReallyInstalled "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}"
+	! IsQpkgInstalled "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}"
 
 	}
 
@@ -13099,7 +13095,7 @@ LocateSQLiteBinary()
 
 	# Prefer Entware-installed `sqlite3`.
 
-	if [[ -z ${sqlite_cmd:-} ]] && IsQpkgReallyInstalled Entware; then
+	if [[ -z ${sqlite_cmd:-} ]] && IsQpkgInstalled Entware; then
 		sqlite_pathfile=/opt/bin/sqlite3
 		[[ -e $sqlite_pathfile ]] && sqlite_cmd=$sqlite_pathfile
 	fi
@@ -13109,12 +13105,12 @@ LocateSQLiteBinary()
 	# These use a specific path to the binary:
 	#	HybridBackup = `Hybrid Backup Sync`
 
-	if [[ -z $sqlite_cmd ]] && IsQpkgReallyInstalled HybridBackup; then
+	if [[ -z $sqlite_cmd ]] && IsQpkgInstalled HybridBackup; then
 		sqlite_pathfile=$(GetQpkgInstalledPath HybridBackup)/CloudConnector3/bin/sqlite3
 		[[ -e $sqlite_pathfile ]] && sqlite_cmd=$sqlite_pathfile
 	fi
 
-	if [[ -z $sqlite_cmd ]] && IsQpkgReallyInstalled ArchiwareP5; then	# untested.
+	if [[ -z $sqlite_cmd ]] && IsQpkgInstalled ArchiwareP5; then	# untested.
 		sqlite_pathfile=$(GetQpkgInstalledPath ArchiwareP5)/binaries/Linux/unknown/64/sqlite3
 		[[ -e $sqlite_pathfile ]] && sqlite_cmd=$sqlite_pathfile
 	fi
@@ -13124,7 +13120,7 @@ LocateSQLiteBinary()
 
 	if [[ -z $sqlite_cmd ]]; then
 		for a in container-station HD_Station; do					# 'HD_Station' is untested.
-			if IsQpkgReallyInstalled "$a"; then
+			if IsQpkgInstalled "$a"; then
 				sqlite_pathfile=$(GetQpkgInstalledPath "$a")/usr/bin/sqlite3
 				[[ -e $sqlite_pathfile ]] || continue
 				sqlite_cmd=$sqlite_pathfile
@@ -13138,7 +13134,7 @@ LocateSQLiteBinary()
 
 	if [[ -z $sqlite_cmd ]]; then
 		for a in CacheMount qmiixagent qusbcam2 QPython312 QPython311 QPython39; do
-			if IsQpkgReallyInstalled "$a"; then
+			if IsQpkgInstalled "$a"; then
 				sqlite_pathfile=$(GetQpkgInstalledPath "$a")/bin/sqlite3
 				[[ -e $sqlite_pathfile ]] || continue
 				sqlite_cmd=$sqlite_pathfile
@@ -13153,7 +13149,7 @@ LocateSQLiteBinary()
 
 	if [[ -z $sqlite_cmd ]]; then
 		for a in img2pdf Qsirch OCR_Converter; do
-			if IsQpkgReallyInstalled "$a"; then
+			if IsQpkgInstalled "$a"; then
 				sqlite_pathfile=$(GetQpkgInstalledPath "$a")/bin/sqlite3
 				[[ -e $sqlite_pathfile ]] || continue
 				sqlite_cmd="LD_LIBRARY_PATH=$(GetQpkgInstalledPath "$a")/lib $sqlite_pathfile"
