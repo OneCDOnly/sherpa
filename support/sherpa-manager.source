@@ -597,8 +597,8 @@ LoadLists()
 
 	# sorted
 
-	r_qpkg_is_states=(active backedup downloaded enabled installable installed missing signed upgradable)
-	r_qpkg_isnt_states=(active backedup downloaded enabled installable installed missing signed upgradable)
+	r_qpkg_is_states=(active backedup complete downloaded enabled installable installed missing signed upgradable)
+	r_qpkg_isnt_states=(active backedup complete downloaded enabled installable installed missing signed upgradable)
 	r_qpkg_is_groups=(all canbackup canclean canrestarttoupdate dependent hasdependents independent optional)
 	r_qpkg_isnt_groups=(canclean)
 	r_qpkg_states_transient=(restarting slow starting stopping unknown)
@@ -7463,10 +7463,8 @@ BuildQPKGsStates()
 	{
 
 	# Build several lists of QPKGs:
-	#   - installed/not.
 	#   - installable/not.
 	#   - upgradable/not.
-	#   - enabled/disabled.
 	#   - have backup files in backup location/not.
 	#   - have config blocks in [/etc/config/qpkg.conf], but no files on-disk (missing).
 	#   - starting, stopping, or restarting.
@@ -7580,20 +7578,11 @@ BuildQPKGsStates()
 				backedup)
 					QPKGs-ISbackedup:Add "$qpkg_name"
 					;;
-				notbackedup)
-					QPKGs-ISNTbackedup:Add "$qpkg_name"
-					;;
 				backupable)
-					: # ignore for now.
-					;;
-				notbackupable)
 					: # ignore for now.
 					;;
 				installable)
 					QPKGs-ISinstallable:Add "$qpkg_name"
-					;;
-				notinstallable)
-					QPKGs-ISNTinstallable:Add "$qpkg_name"
 					;;
 				missing)
 					QPKGs-ISmissing:Add "$qpkg_name"
@@ -7602,14 +7591,23 @@ BuildQPKGsStates()
 					QPKGs-ISok:Remove "$qpkg_name"
 					QPKGs-ISNTok:Add "$qpkg_name"
 					;;
+				notbackedup)
+					QPKGs-ISNTbackedup:Add "$qpkg_name"
+					;;
+				notbackupable)
+					: # ignore for now.
+					;;
+				notinstallable)
+					QPKGs-ISNTinstallable:Add "$qpkg_name"
+					;;
 				notmissing)
 					QPKGs-ISNTmissing:Add "$qpkg_name"
 					;;
-				upgradable)
-					QPKGs-ISupgradable:Add "$qpkg_name"
-					;;
 				notupgradable)
 					QPKGs-ISNTupgradable:Add "$qpkg_name"
+					;;
+				upgradable)
+					QPKGs-ISupgradable:Add "$qpkg_name"
 			esac
 		done
 	done
@@ -7645,16 +7643,20 @@ InitQPKGsStates()
 	DebugAsProc 'initialising state lists'
 
 	for a in "${r_qpkg_is_states[@]:-}" "${r_qpkg_states_transient[@]:-}"; do
-		[[ $a = active ]] && continue		# Don't reset.
-		[[ $a = enabled ]] && continue		# No list object exists.
-		[[ $a = installed ]] && continue	# No list object exists.
+		case $a in
+			active|complete|enabled|installed)
+				continue
+		esac
+
 		QPKGs-IS${a}:Init
 	done
 
 	for a in "${r_qpkg_isnt_states[@]:-}"; do
-		[[ $a = active ]] && continue		# Don't reset.
-		[[ $a = enabled ]] && continue		# No list object exists.
-		[[ $a = installed ]] && continue	# No list object exists.
+		case $a in
+			active|complete|enabled|installed)
+				continue
+		esac
+
 		QPKGs-ISNT${a}:Init
 	done
 
@@ -12957,6 +12959,25 @@ IsQpkgMissing()
 	local a=$(GetQpkgInstalledPath "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
 
 	[[ $a != undefined && ! -d $a ]]
+
+	}
+
+IsQpkgComplete()
+	{
+
+	# Inputs: (local)
+	#   $1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+
+	# Inputs: (global)
+	#	$qpkg_name (default for $1)
+
+	# Outputs: (local)
+	#   stdout = package installation date.
+	#   $? = true (found) / false (not-found).
+
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
+
+	[[ $(/sbin/getcfg "$a" Status -f /etc/config/qpkg.conf) = complete ]]
 
 	}
 
