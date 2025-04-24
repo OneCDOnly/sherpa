@@ -1,5 +1,8 @@
 Observed issues:
 
+	* `sherpa list not-installed` isn't listing 'not-installed' QPKGs.
+		- Not listing anything.
+
 	* Restarting clamav.sh created lib symlink in cwd to /usr/lib
 
 	* Service-script daemon PID shown twice consecutively during 'clean' action:
