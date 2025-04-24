@@ -7644,7 +7644,10 @@ InitQPKGsStates()
 
 	for a in "${r_qpkg_is_states[@]:-}" "${r_qpkg_states_transient[@]:-}"; do
 		case $a in
-			active|complete|enabled|installed)
+			active)							# Don't reset.
+				continue
+				;;
+			complete|enabled|installed)		# No list objects exist.
 				continue
 		esac
 
@@ -7653,7 +7656,10 @@ InitQPKGsStates()
 
 	for a in "${r_qpkg_isnt_states[@]:-}"; do
 		case $a in
-			active|complete|enabled|installed)
+			active)							# Don't reset.
+				continue
+				;;
+			complete|enabled|installed)		# No list objects exist.
 				continue
 		esac
 
