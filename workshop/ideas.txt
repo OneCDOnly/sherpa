@@ -1,10 +1,9 @@
 Management:
 
+	* Include test to confirm QPKG installation is complete.
+
 	* Tableise() needs to support a new arg to change format of a single column.
 		- Needed for backup files report. Second column is filesize, which should be shown right-justified.
-
-	* Need a feature to mark upgradable QPKGs that will require a `clean` during/after upgrade.
-		- And support deletion of specific files not in `repo-cache` (like `pip-requirements.txt` copied from `repo-cache` into app directory.)
 
 	* Separate IPK installation into 2 phases: download, then install.
 		- This should fix the issue with _DirSizeMonitor_() apparently reversing its progress as IPKs are installed.
@@ -120,6 +119,9 @@ Management:
 		- Like: `sherpa paste help`, `sherpa install help`, `sherpa reassign help`
 
 Service Library:
+
+	* Need a feature to mark upgradable QPKGs that will require a `clean` during/after upgrade.
+		- And support deletion of specific files not in `repo-cache` (like `pip-requirements.txt` copied from `repo-cache` into app directory.)
 
 	* Compare .git/ORIG_HEAD before-and-after 'git pull'. If different, then remove *.pyc before starting application.
 
