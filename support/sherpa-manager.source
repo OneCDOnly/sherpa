@@ -7643,27 +7643,13 @@ InitQPKGsStates()
 	DebugAsProc 'initialising state lists'
 
 	for a in "${r_qpkg_is_states[@]:-}" "${r_qpkg_states_transient[@]:-}"; do
-		case $a in
-			active)							# Don't reset.
-				continue
-				;;
-			complete|enabled|installed)		# No list objects exist.
-				continue
-		esac
-
-		QPKGs-IS${a}:Init
+		[[ $a = active ]] && continue 		# Don't reset.
+		[[ $(type -t QPKGs-IS${a}:Init) = function ]] && QPKGs-IS${a}:Init
 	done
 
-	for a in "${r_qpkg_isnt_states[@]:-}"; do
-		case $a in
-			active)							# Don't reset.
-				continue
-				;;
-			complete|enabled|installed)		# No list objects exist.
-				continue
-		esac
-
-		QPKGs-ISNT${a}:Init
+	for a in "${r_qpkg_isnt_states[@]:-}" "${r_qpkg_states_transient[@]:-}"; do
+		[[ $a = active ]] && continue 		# Don't reset.
+		[[ $(type -t QPKGs-ISNT${a}:Init) = function ]] && QPKGs-ISNT${a}:Init
 	done
 
 	ClearPath /var/run/sherpa/packages "$r_qpkg_states_path"
