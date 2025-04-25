@@ -1,5 +1,8 @@
 Observed issues:
 
+	* `sherpa upgrade new` initially finds upgradable QPKGs, but does not attempt to upgrade them.
+		- Appears `dependents` and `independents` cache tier files are not being fully populated.
+
 	* `sherpa list not-installed` isn't listing 'not-installed' QPKGs.
 		- Not listing anything.
 
