@@ -7279,14 +7279,14 @@ ListQPKGsFlagsAll()																							#devdebug
 	DebugInfoMinSepr																						#devdebug
 
 	for a in "${r_qpkg_actions[@]}"; do																		#devdebug
-		for b in "${r_qpkg_is_states[@]}"; do
-			if [[ $(type -t QPKGs.AC${a}IS${b}.IsSet) = function ]]; then
+		for b in "${r_qpkg_is_states[@]}"; do																#devdebug
+			if [[ $(type -t QPKGs.AC${a}IS${b}.IsSet) = function ]]; then									#devdebug
 				if QPKGs.AC${a}IS${b}.IsSet; then															#devdebug
-					DebugQpkg info "AC${a}IS${b}" "set"													#devdebug
-# 				else
+					DebugQpkg info "AC${a}IS${b}" "set"														#devdebug
+# 				else																						#devdebug
 # 					DebugQpkg info "AC${a}IS${b}" "unset"													#devdebug
 				fi																							#devdebug
-			fi
+			fi																								#devdebug
 		done																								#devdebug
 	done																									#devdebug
 
