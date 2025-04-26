@@ -23,7 +23,7 @@
 #	 flag "object" tests: 'Capitalised.CamelCase.With.Inline.Periods.And.Period.Before.Test'
 #  list "object" methods: 'Capitalised-CamelCase-With-Inline-Hyphens-And-Colon-Before:Method'
 #	 list "object" tests: 'Capitalised-CamelCase-With-Inline-Hyphens-And-Period-Before.Test'
-#	 "object" properties: '_snakecase_with_leading_and_trailing_underscores_' (these should be managed ONLY by the object's methods)
+#	 "object" properties: 'o_snakecase_with_leading_o_underscore' (these should be managed ONLY by the object's methods)
 #			   constants: 'r_snakecase_with_leading_r_underscore' (set as readonly ASAP)
 #			   variables: 'snakecase_with_inline_underscores'
 #				 indents: 1 x tab char (= 4 space chars)
@@ -73,7 +73,7 @@ Init()
 	DebugLogEnv
 	CheckTasks
 	CheckEnv
-	QPKGsAssignToActions
+	AssignQpkgsToActions
 
 	return 0
 
@@ -309,7 +309,7 @@ LoadDefaults()
 	generate_list_report=false
 	generate_show_report=false
 	get_qpkg_active_status=false
-	get_qpkg_states=false
+	get_qpkg_extended_states=false
 	ipks_downgrade=false
 	ipks_install=false
 	ipks_upgrade=false
@@ -567,7 +567,7 @@ LoadLists()
 	#	$r_qpkg_isnt_groups[]
 	#	$r_qpkg_isnt_states[]
 	#	$r_qpkg_service_results[]
-	#	$r_qpkg_states_transient[]
+	#	$r_qpkg_transient_states[]
 	#	$r_qpkg_tiers[]
 	#	$r_user_qpkg_actions[]
 	#	$r_"$(Lowercase "$action")"_log_file
@@ -576,17 +576,22 @@ LoadLists()
 
 	# First, clear existing list arrays (if-any).
 
-	unset r_ipk_actions
 	unset r_package_tiers
-	unset r_pip_actions
-	unset r_qpkg_actions
+	unset r_qpkg_tiers
+
+	unset r_qpkg_basic_states
+	unset r_qpkg_extended_states
 	unset r_qpkg_is_groups
 	unset r_qpkg_is_states
 	unset r_qpkg_isnt_groups
 	unset r_qpkg_isnt_states
 	unset r_qpkg_service_results
-	unset r_qpkg_states_transient
-	unset r_qpkg_tiers
+	unset r_qpkg_transient_states
+
+	unset r_qpkg_actions
+	unset r_ipk_actions
+	unset r_pip_actions
+
 	unset r_user_qpkg_actions
 
 	# These are used internally by sherpa.
@@ -597,11 +602,13 @@ LoadLists()
 
 	# sorted
 
-	r_qpkg_is_states=(active backedup complete downloaded enabled installable installed missing signed upgradable)
-	r_qpkg_isnt_states=(active backedup complete downloaded enabled installable installed missing signed upgradable)
+	r_qpkg_basic_states=(complete enabled installed)
+	r_qpkg_extended_states=(active backedup downloaded installable missing signed upgradable)
+	r_qpkg_transient_states=(restarting slow starting stopping unknown)
+		r_qpkg_is_states=(${r_qpkg_basic_states[*]} ${r_qpkg_extended_states[*]} ${r_qpkg_transient_states[*]})
+		r_qpkg_isnt_states=(${r_qpkg_basic_states[*]} ${r_qpkg_extended_states[*]} ${r_qpkg_transient_states[*]})
 	r_qpkg_is_groups=(all canbackup canclean canrestarttoupdate dependent hasdependents independent optional)
 	r_qpkg_isnt_groups=(canclean)
-	r_qpkg_states_transient=(restarting slow starting stopping unknown)
 	r_qpkg_service_results=(failed ok)
 
 	# ordered
@@ -620,12 +627,14 @@ LoadLists()
 	readonly r_package_tiers
 	readonly r_qpkg_tiers
 
-	readonly r_qpkg_is_states
-	readonly r_qpkg_isnt_states
+	readonly r_qpkg_basic_states
+	readonly r_qpkg_extended_states
 	readonly r_qpkg_is_groups
+	readonly r_qpkg_is_states
 	readonly r_qpkg_isnt_groups
-	readonly r_qpkg_states_transient
+	readonly r_qpkg_isnt_states
 	readonly r_qpkg_service_results
+	readonly r_qpkg_transient_states
 
 	readonly r_qpkg_actions
 	readonly r_ipk_actions
@@ -877,23 +886,24 @@ CheckTasks()
 		generate_list_report=false
 		generate_show_report=false
 		get_qpkg_active_status=false
-		get_qpkg_states=false
+		get_qpkg_extended_states=false
 		run_package_actions=false
 	fi
 
-	[[ $get_qpkg_states = true ]] || return 0
+	[[ $get_qpkg_extended_states = true ]] || return 0
 
 	FuncInit
 
 	local action=''
-	local build_states=false
+	local build_basic_states=false				# These are found in /etc/config/qpkg.conf
+	local build_extended_states=false			# These cannot be found in /etc/config/qpkg.conf
 	local group=''
 	local state=''
 
 	if [[ $useropt_check = true || $useropt_show_status = true ]]; then
-		build_states=true
+		build_extended_states=true
 	elif [[ $useropt_help_abbreviations = true || $useropt_show_backups = true || $useropt_show_dependencies = true || $useropt_show_features = true || $useropt_show_packages = true || $useropt_show_repos = true ]]; then
-		build_states=true
+		build_extended_states=true
 	elif [[ $useropt_help_actions = true || $useropt_help_actions_all = true || $useropt_help_basic = true || $useropt_help_groups = true || $useropt_help_lists = true || $useropt_help_options = true || $useropt_help_packages = true || $useropt_help_problems = true || $useropt_help_show = true || $useropt_help_tips = true || $useropt_help_upgrades = true || $useropt_list_versions = true || $useropt_paste_log_last = true || $useropt_paste_log_tail = true || $useropt_show_about = true || $useropt_show_about = true || $useropt_show_previous_action_results_report = true || $useropt_show_log_last = true || $useropt_show_log_tail = true || $switch_branch = true || $switch_colour = true || $switch_report_footer = true || $switch_terse = true ]]; then
 		: # don't do anything
 	else
@@ -901,39 +911,63 @@ CheckTasks()
 
 		for action in "${r_user_qpkg_actions[@]}"; do
 			if QPKGs-AC${action}-to.IsAny; then
-				build_states=true
+				build_extended_states=true
 				break
 			fi
 
 # 			for group in "${r_qpkg_is_groups[@]}"; do
-# 				if QPKGs.AC${action}.GR${group}.IsSet; then
+# 				if QPKGs.AC${action}GR${group}.IsSet; then
 # 					break 2
+# 				fi
+# 			done
+
+# 			for group in "${r_qpkg_isnt_groups[@]}"; do
+# 				if QPKGs.AC${action}GRNT${group}.IsSet; then
+# 					break 2
+# 				fi
+# 			done
+
+# 			for state in "${r_qpkg_basic_states[@]}"; do
+# 				if QPKGs.AC${action}IS${state}.IsSet; then
+# 					build_basic_states=true
 # 				fi
 # 			done
 #
-# 			for group in "${r_qpkg_isnt_groups[@]}"; do
-# 				if QPKGs.AC${action}.GRNT${group}.IsSet; then
-# 					break 2
+# 			for state in "${r_qpkg_basic_states[@]}"; do
+# 				if QPKGs.AC${action}ISNT${state}.IsSet; then
+# 					build_basic_states=true
 # 				fi
 # 			done
 
-			for state in "${r_qpkg_is_states[@]}"; do
-				if QPKGs.AC${action}.IS${state}.IsSet; then
-					build_states=true
-					break 2
-				fi
+			for state in "${r_qpkg_extended_states[@]}"; do
+				case $state in
+					downloaded)
+						continue
+						;;
+					*)
+						if QPKGs.AC${action}IS${state}.IsSet; then
+							build_extended_states=true
+							break 2
+						fi
+				esac
 			done
 
-			for state in "${r_qpkg_isnt_states[@]}"; do
-				if QPKGs.AC${action}.ISNT${state}.IsSet; then
-					build_states=true
-					break 2
-				fi
+			for state in "${r_qpkg_extended_states[@]}"; do
+				case $state in
+					downloaded)
+						continue
+						;;
+					*)
+						if QPKGs.AC${action}ISNT${state}.IsSet; then
+							build_extended_states=true
+							break 2
+						fi
+				esac
 			done
 		done
 	fi
 
-	[[ $build_states = true ]] && BuildQPKGsStates
+	[[ $build_extended_states = true ]] && BuildExtendedQPKGsStates
 
 	FuncExit
 
@@ -1032,7 +1066,7 @@ CheckEnv()
 
 	}
 
-QPKGsAssignToActions()
+AssignQpkgsToActions()
 	{
 
 	# This function handles most of the high-level logic for package actions.
@@ -1205,7 +1239,7 @@ QPKGsAssignToActions()
 
 	# No-need to `reactivate` or `disable` packages that are to be uninstalled.
 
-	if QPKGs.ACuninstall.GRall.IsSet; then
+	if QPKGs.ACuninstallGRall.IsSet; then
 		QPKGs-ACreactivate-to:Init
 		QPKGs-ACdisable-to:Init
 	else
@@ -1374,11 +1408,23 @@ ProcActions()
 
 		for action in "${r_user_qpkg_actions[@]}"; do
 			for state in "${r_qpkg_is_states[@]}"; do
-				QPKGs.AC${action}.IS${state}.IsSet && QPKGs-AC${action}-to:Add "$(QPKGs-IS${state}:Array)"
+				case $state in
+					downloaded)
+						continue
+						;;
+					*)
+						QPKGs.AC${action}IS${state}.IsSet && QPKGs-AC${action}-to:Add "$(QPKGs-IS${state}:Array)"
+				esac
 			done
 
 			for state in "${r_qpkg_isnt_states[@]}"; do
-				QPKGs.AC${action}.ISNT${state}.IsSet && QPKGs-AC${action}-to:Add "$(QPKGs-ISNT${state}:Array)"
+				case $state in
+					enabled|downloaded)
+						continue
+						;;
+					*)
+						QPKGs.AC${action}ISNT${state}.IsSet && QPKGs-AC${action}-to:Add "$(QPKGs-ISNT${state}:Array)"
+				esac
 			done
 		done
 	fi
@@ -1588,7 +1634,7 @@ ProcAction()
 						;;
 					change)			# Change the state of a single QPKG in the parent shell.
 						while true; do
-							for state in "${r_qpkg_is_states[@]}" "${r_qpkg_states_transient[@]}"; do
+							for state in "${r_qpkg_is_states[@]}"; do
 								case $msg1_value in
 									"IS${state}")
 										[[ $(type -t QPKGs-ISNT${state}:Init) = function ]] && QPKGs-ISNT${state}:Remove "$msg2_value"
@@ -1597,7 +1643,7 @@ ProcAction()
 								esac
 							done
 
-							for state in "${r_qpkg_isnt_states[@]}" "${r_qpkg_states_transient[@]}"; do
+							for state in "${r_qpkg_isnt_states[@]}"; do
 								case $msg1_value in
 									"ISNT${state}")
 										[[ $(type -t QPKGs-IS${state}:Init) = function ]] && QPKGs-IS${state}:Remove "$msg2_value"
@@ -1866,7 +1912,7 @@ ParseManagementArgs()
 	#   $args[]
 	#   $args_incomplete[]
 	#	$generate_show_report
-	#	$get_qpkg_states
+	#	$get_qpkg_extended_states
 	#	$run_package_actions
 	#	$switch_branch
 	#	$switch_colour
@@ -1905,7 +1951,7 @@ ParseManagementArgs()
 			case $action in
 				check)
 					generate_show_report=true
-					get_qpkg_states=true
+					get_qpkg_extended_states=true
 					requires_group=false
 					run_package_actions=true
 					user_action=$arg
@@ -2295,7 +2341,7 @@ ParseShowArgs()
 							LoadPackages
 							action=''
 							awaiting_group=false
-							get_qpkg_states=false
+							get_qpkg_extended_states=false
 							run_package_actions=false
 							useropt_show_about=true
 							;;
@@ -2303,7 +2349,7 @@ ParseShowArgs()
 							LoadPackages
 							action=''
 							awaiting_group=false
-							get_qpkg_states=false
+							get_qpkg_extended_states=false
 							run_package_actions=false
 							useropt_show_aboutall=true
 							;;
@@ -2311,7 +2357,7 @@ ParseShowArgs()
 							action=''
 							awaiting_group=false
 							generate_help_report=true
-							get_qpkg_states=false
+							get_qpkg_extended_states=false
 							run_package_actions=false
 							useropt_help_abbreviations=true
 							;;
@@ -2319,7 +2365,7 @@ ParseShowArgs()
 							action=''
 							awaiting_group=false
 							generate_show_report=true
-							get_qpkg_states=false
+							get_qpkg_extended_states=false
 							run_package_actions=false
 							useropt_show_backups=true
 							;;
@@ -2343,7 +2389,7 @@ ParseShowArgs()
 							action=''
 							awaiting_group=false
 							generate_show_report=true
-							get_qpkg_states=false
+							get_qpkg_extended_states=false
 							run_package_actions=false
 							useropt_show_log_last=true
 							;;
@@ -2352,7 +2398,7 @@ ParseShowArgs()
 							action=''
 							awaiting_group=false
 							generate_show_report=true
-							get_qpkg_states=false
+							get_qpkg_extended_states=false
 							run_package_actions=false
 							useropt_show_packages=true
 							;;
@@ -2368,18 +2414,18 @@ ParseShowArgs()
 							action=''
 							awaiting_group=false
 							generate_show_report=true
-							get_qpkg_states=false
+							get_qpkg_extended_states=false
 							run_package_actions=false
 							useropt_show_previous_action_results_report=true
 							show_action_results_report=true
 							;;
 						status)
 							LoadObjects
-							QPKGs.ACstatus.GRall:Set
+							QPKGs.ACstatusGRall:Set
 							action=''
 							awaiting_group=false
 							generate_show_report=true
-							get_qpkg_states=true
+							get_qpkg_extended_states=true
 							run_package_actions=true
 							useropt_show_status=true
 							;;
@@ -2387,7 +2433,7 @@ ParseShowArgs()
 							action=''
 							awaiting_group=false
 							generate_show_report=true
-							get_qpkg_states=false
+							get_qpkg_extended_states=false
 							run_package_actions=false
 							useropt_show_log_tail=true
 							;;
@@ -2488,33 +2534,33 @@ ParseListArgs()
 					case $group in
 						all|?(in)dependent|optional)
 							LoadObjects
-							QPKGs.AClist.GR${group}:Set
+							QPKGs.AClistGR${group}:Set
 							action=''
 							awaiting_group=false
 							generate_list_report=true
-							get_qpkg_states=true
+							get_qpkg_extended_states=true
 							run_package_actions=false
 							show_title=false
 							;;
 						?(NT)active)
 							LoadObjects
-							QPKGs.AClist.IS${group}:Set
-							QPKGs.ACstatus.ISinstalled:Set
+							QPKGs.AClistIS${group}:Set
+							QPKGs.ACstatusISinstalled:Set
 							action=''
 							awaiting_group=false
 							generate_list_report=true
 							get_qpkg_active_status=true
-							get_qpkg_states=true
+							get_qpkg_extended_states=true
 							run_package_actions=true
 							show_title=false
 							;;
 						?(NT)backedup|?(NT)enabled|?(NT)installable|?(NT)installed|?(NT)missing|?(NT)upgradable)
 							LoadObjects
-							QPKGs.AClist.IS${group}:Set
+							QPKGs.AClistIS${group}:Set
 							action=''
 							awaiting_group=false
 							generate_list_report=true
-							get_qpkg_states=true
+							get_qpkg_extended_states=true
 							run_package_actions=false
 							show_title=false
 							;;
@@ -2542,6 +2588,7 @@ ParseListArgs()
 		args_incomplete+=("$user_action")									# Save the actual action word, phrase or char specified by the user.
 	fi
 
+	DebugVar generate_list_report 											#devdebug
 	DebugArray args_incomplete "${args_incomplete[*]:-}"					#devdebug
 
 	args=(${args_remaining[@]:-})
@@ -2594,7 +2641,7 @@ ParseActionArgs()
 					;;
 				status)
 					generate_show_report=true
-					get_qpkg_states=true
+					get_qpkg_extended_states=true
 					requires_group=true
 					user_action=$arg
 					useropt_show_status=true
@@ -2621,12 +2668,12 @@ ParseActionArgs()
 					case $group in
 						?(NT)active)
 							LoadObjects
-							QPKGs.AC${action}.IS${group}:Set
-							QPKGs.ACstatus.ISinstalled:Set
+							QPKGs.AC${action}IS${group}:Set
+							QPKGs.ACstatusISinstalled:Set
 							awaiting_group=false
 							show_action_results_report=true
 							get_qpkg_active_status=true
-							get_qpkg_states=true
+							get_qpkg_extended_states=true
 							run_package_actions=true
 					esac
 			esac
@@ -2634,19 +2681,19 @@ ParseActionArgs()
 			case $group in
 				all|canbackup|?(NT)canclean|canrestarttoupdate|?(in)dependent|hasdependents)
 					LoadObjects
-					QPKGs.AC${action}.GR${group}:Set
+					QPKGs.AC${action}GR${group}:Set
 					awaiting_group=false
 					show_action_results_report=true
 					get_qpkg_active_status=false
-					get_qpkg_states=true
+					get_qpkg_extended_states=true
 					run_package_actions=true
 					;;
 				?(NT)backedup|?(NT)enabled|?(NT)installable|?(NT)installed|?(NT)missing|?(NT)upgradable)
 					LoadObjects
-					QPKGs.AC${action}.IS${group}:Set
+					QPKGs.AC${action}IS${group}:Set
 					awaiting_group=false
 					show_action_results_report=true
-					get_qpkg_states=true
+					get_qpkg_extended_states=true
 					run_package_actions=true
 					;;
 				*)
@@ -2655,7 +2702,7 @@ ParseActionArgs()
 					QPKGs-AC${action}-to:Add "$group"
 					awaiting_group=false
 					show_action_results_report=true
-					get_qpkg_states=true
+					get_qpkg_extended_states=true
 					run_package_actions=true
 			esac
 		else
@@ -2673,9 +2720,9 @@ ParseActionArgs()
 		case $action in
 			status)
 				LoadObjects
-				QPKGs.ACstatus.ISinstalled:Set								# If status is specified without a group, then group is `installed`.
+				QPKGs.ACstatusISinstalled:Set								# If status is specified without a group, then group is `installed`.
 				generate_show_report=true
-				get_qpkg_states=true
+				get_qpkg_extended_states=true
 				run_package_actions=true
 
 				# Remove this arg from incomplete array.
@@ -3075,7 +3122,7 @@ AllocPackGroupsToAcs()
 		# Positive groups.
 
 		for group in "${r_qpkg_is_groups[@]}"; do
-			if QPKGs.AC${action}.GR${group}.IsSet; then
+			if QPKGs.AC${action}GR${group}.IsSet; then
 				QPKGs-AC${action}-to:Add "$(QPKGs-GR${group}:Array)"
 
 				if QPKGs-AC${action}-to.IsAny; then
@@ -3089,7 +3136,7 @@ AllocPackGroupsToAcs()
 		# Negative groups.
 
 		for group in "${r_qpkg_isnt_groups[@]}"; do
-			if QPKGs.AC${action}.GRNT${group}.IsSet; then
+			if QPKGs.AC${action}GRNT${group}.IsSet; then
 				QPKGs-AC${action}-to:Add "$(QPKGs-GRNT${group}:Array)"
 
 				if QPKGs-AC${action}-to.IsAny; then
@@ -3128,12 +3175,21 @@ AllocPackStatesToAcs()
 
 		for state in "${r_qpkg_is_states[@]}"; do
 			check_later=false
+			[[ $state = downloaded ]] && continue
 
-			if QPKGs.AC${action}.IS${state}.IsSet; then
+			if QPKGs.AC${action}IS${state}.IsSet; then
+# 				case $state in
+# 					complete|enabled|installed)
+# 						continue
+# 						;;
+# 					*)
+# 						QPKGs-AC${action}-to:Add "$(GetQpkgsIsValidInstalled)"
+# 				esac
+
 				if [[ $state = active ]]; then
 					check_later=true					# This should be checked after proc actions have begun.
 				elif [[ $state = installed ]]; then
-					QPKGs-AC${action}-to:Add "$(GetQpkgsIsValidInstalled)"
+					QPKGs-AC${action}-to:Add "$(GetQpkgsIsInstalled)"
 				elif [[ $state = enabled ]]; then
 					QPKGs-AC${action}-to:Add "$(GetQpkgsIsEnabled)"
 				else
@@ -3154,8 +3210,9 @@ AllocPackStatesToAcs()
 
 		for state in "${r_qpkg_isnt_states[@]}"; do
 			check_later=false
+			[[ $state = downloaded ]] && continue
 
-			if QPKGs.AC${action}.ISNT${state}.IsSet; then
+			if QPKGs.AC${action}ISNT${state}.IsSet; then
 				if [[ $state = active ]]; then
 					check_later=true					# This should be checked after proc actions have begun.
 				elif [[ $state = installed ]]; then
@@ -3695,7 +3752,7 @@ IPKs:install()
 		fi
 	fi
 
-	if QPKGs.ACinstall.GRall.IsSet; then
+	if QPKGs.ACinstallGRall.IsSet; then
 		for qpkg_name in $(QPKGs-GRall:Array); do
 			SetQpkgIndex
 			IPKs-ACinstall-to:Add "$(GetQpkgDbIPKs)"
@@ -6997,8 +7054,8 @@ ShowQPKGsMissing()
 	#	$? = 0 if no packages are missing
 	#	$? = 1 if one-or-more packages are missing
 
-	! QPKGs.AClist.ISmissing.IsSet || return 0
-	! QPKGs.ACreinstall.ISmissing.IsSet || return 0
+	! QPKGs.AClistISmissing.IsSet || return 0
+	! QPKGs.ACreinstallISmissing.IsSet || return 0
 
 	local a=''
 	local b=''
@@ -7049,8 +7106,8 @@ ShowQPKGsNewVers()
 	#	$? = 0 if all packages are up-to-date
 	#	$? = 1 if one-or-more packages can be upgraded
 
-	! QPKGs.AClist.ISupgradable.IsSet || return 0
-	! QPKGs.ACupgrade.ISupgradable.IsSet || return 0
+	! QPKGs.AClistISupgradable.IsSet || return 0
+	! QPKGs.ACupgradeISupgradable.IsSet || return 0
 
 	local a=''
 	local b=''
@@ -7206,6 +7263,39 @@ ListQPKGsActionsAll()																						#devdebug
 
 	}																										#devdebug
 
+ListQPKGsFlagsAll()																							#devdebug
+	{																										#devdebug
+
+	# Only used when debugging.																				#devdebug
+
+	# Inputs: (global)																						#devdebug
+	#	$r_qpkg_actions[]																					#devdebug
+	#	$r_qpkg_is_states[]																					#devdebug
+
+	FuncInit																								#devdebug
+
+	local a=''																								#devdebug
+	local b=''																								#devdebug
+	DebugInfoMinSepr																						#devdebug
+
+	for a in "${r_qpkg_actions[@]}"; do																		#devdebug
+		for b in "${r_qpkg_is_states[@]}"; do
+			if [[ $(type -t QPKGs.AC${a}IS${b}.IsSet) = function ]]; then
+				if QPKGs.AC${a}IS${b}.IsSet; then															#devdebug
+					DebugQpkg info "AC${a}IS${b}" "set"													#devdebug
+# 				else
+# 					DebugQpkg info "AC${a}IS${b}" "unset"													#devdebug
+				fi																							#devdebug
+			fi
+		done																								#devdebug
+	done																									#devdebug
+
+	DebugInfoMinSepr																						#devdebug
+
+	FuncExit																								#devdebug
+
+	}																										#devdebug
+
 ListIPKsActions()
 	{
 
@@ -7276,7 +7366,7 @@ ListQPKGsStates()
 	#	$r_qpkg_is_states[]
 	#	$r_qpkg_isnt_states[]
 	#	$r_qpkg_service_results[]
-	#	$r_qpkg_states_transient[]
+	#	$r_qpkg_transient_states[]
 	#	$useropt_debug
 
 	[[ $useropt_debug = true ]] || return
@@ -7285,7 +7375,7 @@ ListQPKGsStates()
 
 	local a=''
 
-	BuildQPKGsStates
+	BuildExtendedQPKGsStates
 	DebugInfoMinSepr
 
 	for a in "${r_qpkg_is_states[@]}" "${r_qpkg_service_results[@]}"; do
@@ -7310,7 +7400,7 @@ ListQPKGsStates()
 		fi
 	done
 
-	for a in "${r_qpkg_states_transient[@]}"; do
+	for a in "${r_qpkg_transient_states[@]}"; do
 		QPKGs-IS${a}.IsAny && DebugQpkg info "IS${a}" "($(QPKGs-IS${a}:Count)) $(QPKGs-IS${a}:ListCSV) "
 	done
 
@@ -7459,15 +7549,14 @@ LoadQPKGsTiers()
 
 	}
 
-BuildQPKGsStates()
+BuildExtendedQPKGsStates()
 	{
 
 	# Build several lists of QPKGs:
 	#   - installable/not.
 	#   - upgradable/not.
 	#   - have backup files in backup location/not.
-	#   - have config blocks in [/etc/config/qpkg.conf], but no files on-disk (missing).
-	#   - starting, stopping, or restarting.
+	#   - have config blocks in /etc/config/qpkg.conf, but no files on-disk (i.e. missing).
 
 	FuncInit
 
@@ -7654,7 +7743,7 @@ InitQPKGsStates()
 	#	$r_qpkg_is_states[]
 	#	$r_qpkg_isnt_states[]
 	#	$r_qpkg_states_path
-	#	$r_qpkg_states_transient[]
+	#	$r_qpkg_transient_states[]
 
 	# Outputs: (global)
 	#	$qpkgs_states_built
@@ -7667,12 +7756,12 @@ InitQPKGsStates()
 
 	DebugAsProc 'initialising state lists'
 
-	for a in "${r_qpkg_is_states[@]:-}" "${r_qpkg_states_transient[@]:-}"; do
+	for a in "${r_qpkg_is_states[@]:-}"; do
 		[[ $a = active ]] && continue 		# Don't reset.
 		[[ $(type -t QPKGs-IS${a}:Init) = function ]] && QPKGs-IS${a}:Init
 	done
 
-	for a in "${r_qpkg_isnt_states[@]:-}" "${r_qpkg_states_transient[@]:-}"; do
+	for a in "${r_qpkg_isnt_states[@]:-}"; do
 		[[ $a = active ]] && continue 		# Don't reset.
 		[[ $(type -t QPKGs-ISNT${a}:Init) = function ]] && QPKGs-ISNT${a}:Init
 	done
@@ -8504,17 +8593,54 @@ ShowQPKGLists()
 
 	local a=''
 
-	for a in "${r_qpkg_is_states[@]}"; do
+	for a in "${r_qpkg_basic_states[@]}"; do
+		case $a in
+			complete)
+				if QPKGs.AClistIS${a}.IsSet; then
+					QPKGs-AClist-to:Add "$(GetQpkgsIsComplete)"
+					ShowQPKGList AClist-to
+					return
+				elif QPKGs.AClistISNT${a}.IsSet; then
+					QPKGs-AClist-to:Add "$(GetQpkgsNtComplete)"
+					ShowQPKGList AClist-to
+					return
+				fi
+				;;
+			enabled)
+				if QPKGs.AClistIS${a}.IsSet; then
+					QPKGs-AClist-to:Add "$(GetQpkgsIsEnabled)"
+					ShowQPKGList AClist-to
+					return
+				elif QPKGs.AClistISNT${a}.IsSet; then
+					QPKGs-AClist-to:Add "$(GetQpkgsNtEnabled)"
+					ShowQPKGList AClist-to
+					return
+				fi
+				;;
+			installed)
+				if QPKGs.AClistIS${a}.IsSet; then
+					QPKGs-AClist-to:Add "$(GetQpkgsIsValidInstalled)"
+					ShowQPKGList AClist-to
+					return
+				elif QPKGs.AClistISNT${a}.IsSet; then
+					QPKGs-AClist-to:Add "$(GetQpkgsNtInstalled)"
+					ShowQPKGList AClist-to
+					return
+				fi
+		esac
+	done
+
+	for a in "${r_qpkg_extended_states[@]}"; do
 		case $a in
 			downloaded|signed)						# Never show these.
 				: # Do nothing.
 				;;
 			*)
-				if QPKGs.AClist.IS${a}.IsSet; then
-					ShowQPKGList "IS${a}"
+				if QPKGs.AClistIS${a}.IsSet; then
+					ShowQPKGList IS${a}
 					return
-				elif QPKGs.AClist.ISNT${a}.IsSet; then
-					ShowQPKGList "ISNT${a}"
+				elif QPKGs.AClistISNT${a}.IsSet; then
+					ShowQPKGList ISNT${a}
 					return
 				fi
 		esac
@@ -8526,8 +8652,8 @@ ShowQPKGLists()
 				: # Do nothing.
 				;;
 			*)
-				if QPKGs.AClist.GR${a}.IsSet; then
-					ShowQPKGList "GR${a}"
+				if QPKGs.AClistGR${a}.IsSet; then
+					ShowQPKGList GR${a}
 					return
 				fi
 		esac
@@ -8539,8 +8665,8 @@ ShowQPKGLists()
 				: # Do nothing.
 				;;
 			*)
-				if QPKGs.AClist.GRNT${a}.IsSet; then
-					ShowQPKGList "GRNT${a}"
+				if QPKGs.AClistGRNT${a}.IsSet; then
+					ShowQPKGList GRNT${a}
 					return
 				fi
 		esac
@@ -9665,7 +9791,7 @@ ShowZeroQpkgs()
 	for a in "${r_qpkg_is_states[@]:-}"; do
 		for b in "${r_user_qpkg_actions[@]:-}"; do
 			[[ $b = list ]] && continue			# Action results lists are unavailable for these.
-			QPKGs.AC${b}.IS${a}.IsSet && QPKGs-AC${b}-ok.IsNone && ShowAsWarn "no QPKGs were able to $(Lowercase "$b")"
+			QPKGs.AC${b}IS${a}.IsSet && QPKGs-AC${b}-ok.IsNone && ShowAsWarn "no QPKGs were able to $(Lowercase "$b")"
 		done
 	done
 
@@ -12258,7 +12384,7 @@ GetQpkgsIsValidInstalled()
 
 	local qpkg_name=''
 
-  	for qpkg_name in $(QPKGs-GRall:Array); do
+	for qpkg_name in $(QPKGs-GRall:Array); do
 		IsValidQpkgInstalled || continue
 		echo "$qpkg_name"
 	done
@@ -12282,7 +12408,7 @@ GetQpkgsNtValidInstalled()
 
 	local qpkg_name=''
 
-  	for qpkg_name in $(QPKGs-GRall:Array); do
+	for qpkg_name in $(QPKGs-GRall:Array); do
 		IsNtValidQpkgInstalled || continue
 		echo "$qpkg_name"
 	done
@@ -12294,7 +12420,7 @@ GetQpkgsIsEnabled()
 
 	local qpkg_name=''
 
-  	for qpkg_name in $(QPKGs-GRall:Array); do
+	for qpkg_name in $(QPKGs-GRall:Array); do
 		IsQpkgEnabled || continue
 		echo "$qpkg_name"
 	done
@@ -12306,9 +12432,34 @@ GetQpkgsNtEnabled()
 
 	local qpkg_name=''
 
-  	for qpkg_name in $(QPKGs-GRall:Array); do
+	for qpkg_name in $(QPKGs-GRall:Array); do
 		IsValidQpkgInstalled || continue
 		IsNtQpkgEnabled || continue
+		echo "$qpkg_name"
+	done
+
+	}
+
+GetQpkgsIsComplete()
+	{
+
+	local qpkg_name=''
+
+	for qpkg_name in $(QPKGs-GRall:Array); do
+		IsQpkgComplete || continue
+		echo "$qpkg_name"
+	done
+
+	}
+
+GetQpkgsNtComplete()
+	{
+
+	local qpkg_name=''
+
+	for qpkg_name in $(QPKGs-GRall:Array); do
+		IsValidQpkgInstalled || continue
+		IsNtQpkgComplete || continue
 		echo "$qpkg_name"
 	done
 
@@ -13019,6 +13170,22 @@ IsQpkgComplete()
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
 
 	[[ $(/sbin/getcfg "$a" Status -f /etc/config/qpkg.conf) = complete ]]
+
+	}
+
+IsNtQpkgComplete()
+	{
+
+	# Inputs: (local)
+	#   $1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+
+	# Inputs: (global)
+	#	$qpkg_name (default for $1)
+
+	# Outputs: (local)
+	#   $? = true/false
+
+	! IsQpkgComplete "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}"
 
 	}
 

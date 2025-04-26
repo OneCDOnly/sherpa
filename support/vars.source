@@ -163,7 +163,8 @@ Squeeze()
 		buffer=$(sed -e 's/^[[:space:]]*//' <<< "$buffer")											# Remove line leading whitespace.
 		buffer=$(sed 's/[[:space:]]*$//' <<< "$buffer")												# Remove line trailing whitespace.
 		buffer=$(sed '/^$/d' <<< "$buffer")															# Remove empty lines.
-		buffer=$(sed 's/\;[[:space:]]/;/' <<< "$buffer")											# Remove whitespace after semicolons.
+		buffer=$(sed 's/\;[[:space:]]/;/g' <<< "$buffer")											# Remove whitespace after semicolons.
+		buffer=$(sed 's/[[:space:]]\;/;/g' <<< "$buffer")											# Remove whitespace before semicolons.
 		buffer=$(sed "s|Content-Transfer-Encoding: base64|Content-Transfer-Encoding: base64\n|" <<< "$buffer")	# Need to add a newline after this string so signature block is accepted by QTS.
 
 		[[ -e $2 ]] && chmod +w "$2"
