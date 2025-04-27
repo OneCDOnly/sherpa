@@ -1410,7 +1410,7 @@ ProcActions()
 		for action in "${r_user_qpkg_actions[@]}"; do
 			for state in "${r_qpkg_is_states[@]}"; do
 				case $state in
-					downloaded)
+					downloaded|installed)
 						continue
 						;;
 					*)
@@ -4750,12 +4750,12 @@ _GenerateStatusReportDataLine_()
 
 	# Set display mode.
 
-	if IsQpkgMissing; then
-		mode=missing
-		/bin/touch "$r_report_flags_path"/status-missing
-	elif IsValidQpkgInstalled; then
+	if IsValidQpkgInstalled; then
 		mode=normal
 		/bin/touch "$r_report_flags_path"/state-installed
+	elif IsQpkgMissing; then
+		mode=missing
+		/bin/touch "$r_report_flags_path"/status-missing
 	elif IsQpkgInstalled; then
 		if IsNtQpkgComplete "$name"; then
 			mode=incomplete
@@ -4763,10 +4763,10 @@ _GenerateStatusReportDataLine_()
 		elif IsNtQpkgAuthorOk; then
 			mode=author
 			/bin/touch "$r_report_flags_path"/status-wrongauthor
-		else
-			mode=mute
-			/bin/touch "$r_report_flags_path"/state-notinstalled
 		fi
+	else
+		mode=mute
+		/bin/touch "$r_report_flags_path"/state-notinstalled
 	fi
 
 	case $app_ver in
@@ -6941,7 +6941,7 @@ RefreshDirSizeCount()
 	current_bytes=$($r_gnu_find_cmd "$dir_location" -type f -name '*.ipk' -exec /usr/bin/du --bytes --total --apparent-size {} + 2>/dev/null | /bin/grep total$ | cut -f1)
 	[[ -z $current_bytes ]] && current_bytes=0
 
-	} #&>/dev/null
+	} &>/dev/null
 
 EraseForkCountPaths()
 	{
@@ -7093,7 +7093,7 @@ ShowQPKGsMissing()
 
 	# Check installed QPKGs and check if they're missing. If-so, advise on-screen.
 
-	# Outputs:
+	# Outputs (local):
 	#	$? = 0 if no packages are missing
 	#	$? = 1 if one-or-more packages are missing
 
@@ -7145,7 +7145,7 @@ ShowQPKGsNewVers()
 
 	# Check installed QPKGs and compare versions against upgradable array. If new versions are available, advise on-screen.
 
-	# Outputs:
+	# Outputs (local):
 	#	$? = 0 if all packages are up-to-date
 	#	$? = 1 if one-or-more packages can be upgraded
 
