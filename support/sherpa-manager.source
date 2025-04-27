@@ -2816,7 +2816,7 @@ MatchNoun()
 		a|abs|abbreviations)
 			printf abs
 			;;
-		about|about-all|backedup|canbackup|enabled|installable|installed|missing|results|show|?(un)stable)
+		about|about-all|backedup|canbackup|installable|installed|missing|results|show|?(un)stable)
 			printf '%s' "$a"
 			;;
 		action?(s))
@@ -2845,6 +2845,9 @@ MatchNoun()
 			;;
 		enable|on|set|true|yes)
 			printf true
+			;;
+		enabled|n?(o)@(n|t)?(-)disabled)
+			printf enabled
 			;;
 		f|features)
 			printf features
@@ -7442,6 +7445,29 @@ BuildQPKGsTiers()
 
 	}
 
+CheckQPKGsTiers()
+	{
+
+	# Inputs: (global)
+	#	$r_dependent_qpkgs_list_pathfile
+	#	$r_independent_qpkgs_list_pathfile
+	#	$r_optional_qpkgs_list_pathfile
+	#	$r_qpkg_tiers[]
+
+	# Outputs: (global)
+	#	$qpkgs_tiers_built
+
+	qpkgs_tiers_built=true
+
+	for a in "${r_qpkg_tiers[@]}"; do
+		b=r_${a}_qpkgs_list_pathfile
+		[[ -e ${!b} ]] && continue
+		qpkgs_tiers_built=false
+		break
+	done
+
+	}
+
 InitQPKGsTiers()
 	{
 
@@ -7461,29 +7487,6 @@ InitQPKGsTiers()
 	done
 
 	qpkgs_tiers_built=false
-
-	}
-
-CheckQPKGsTiers()
-	{
-
-	# Inputs: (global)
-	#	$r_dependent_qpkgs_list_pathfile
-	#	$r_independent_qpkgs_list_pathfile
-	#	$r_optional_qpkgs_list_pathfile
-	#	$r_qpkg_tiers[]
-
-	# Outputs: (global)
-	#	$qpkgs_tiers_built
-
-	qpkgs_tiers_built=true
-
-	for a in "${r_qpkg_tiers[@]}"; do
-		b=r_${a}_qpkgs_list_pathfile
-		[[ ! -e ${!b} ]] || continue
-		qpkgs_tiers_built=false
-		break
-	done
 
 	}
 
