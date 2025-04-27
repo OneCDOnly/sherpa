@@ -4756,8 +4756,11 @@ _GenerateStatusReportDataLine_()
 	elif IsValidQpkgInstalled; then
 		mode=normal
 		/bin/touch "$r_report_flags_path"/state-installed
-	else
-		if IsQpkgInstalled && IsNtQpkgAuthorOk; then
+	elif IsQpkgInstalled; then
+		if IsNtQpkgComplete "$name"; then
+			mode=incomplete
+			/bin/touch "$r_report_flags_path"/status-incomplete
+		elif IsNtQpkgAuthorOk; then
 			mode=author
 			/bin/touch "$r_report_flags_path"/status-wrongauthor
 		else
@@ -4824,6 +4827,26 @@ _GenerateStatusReportDataLine_()
 						;;
 					auxiliary)
 						auxiliary_msg=$(FormatReportField 'incompatible author' attention_highlight)
+						req_attention=true
+						;;
+					*)
+						local ${a}_msg="$(FormatReportField "${!a}" highlight)"
+				esac
+			done
+			;;
+		incomplete)
+			app_ver=N/A
+			action=N/A
+			ver=N/A
+			/bin/touch "$r_report_flags_path"/na
+
+			for a in "${column_vars[@]}"; do
+				case $a in
+					name)
+						: # Do nothing, this is set later.
+						;;
+					auxiliary)
+						auxiliary_msg=$(FormatReportField 'incomplete installation' attention_highlight)
 						req_attention=true
 						;;
 					*)
@@ -12478,7 +12501,7 @@ GetQpkgsNtComplete()
 	local qpkg_name=''
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		IsValidQpkgInstalled || continue
+		IsQpkgInstalled || continue
 		IsNtQpkgComplete || continue
 		echo "$qpkg_name"
 	done
@@ -13187,7 +13210,7 @@ IsQpkgComplete()
 
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
 
-	[[ $(/sbin/getcfg "$a" Status -f /etc/config/qpkg.conf) = complete ]] && [[ $(/sbin/getcfg "$a" Incomplete_Conf -d 0 -f /etc/config/qpkg.conf) != 1 ]]
+	[[ $(/sbin/getcfg "$a" Status -d undefined -f /etc/config/qpkg.conf) = complete ]] && [[ $(/sbin/getcfg "$a" Incomplete_Conf -d undefined -f /etc/config/qpkg.conf) != 1 ]]
 
 	}
 
@@ -13221,7 +13244,7 @@ IsQpkgEnabled()
 
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
 
-	[[ $(/sbin/getcfg "$a" Enable -u -f /etc/config/qpkg.conf) = TRUE ]]
+	[[ $(/sbin/getcfg "$a" Enable -u -d undefined -f /etc/config/qpkg.conf) = TRUE ]]
 
 	}
 
