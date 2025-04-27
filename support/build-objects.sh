@@ -88,12 +88,14 @@ AddListObj()
 
 	_placeholder_size_=o_s${safe_function_name}
 	_placeholder_array_=o_a${safe_function_name}
-	_placeholder_array_index_=o_i${safe_function_name}
 
 echo $public_function_name':Add()
 	{
 
-	local ar=(${1:-}) it='\'\''; [[ ${#ar[@]} -eq 0 ]] && return
+	local ar=(${1:-}) it='\'\''
+
+	[[ ${#ar[@]} -eq 0 ]] && return
+
 	for it in "${ar[@]:-}"; do
 		! '$public_function_name'.Exist "$it" && '$_placeholder_array_'+=("$it")
 	done
@@ -117,14 +119,16 @@ echo $public_function_name':Add()
 '$public_function_name'.Exist()
 	{
 
-	local patt="\b${1:-}\b"; [[ "${'$_placeholder_array_'[*]:-}" =~ $patt ]]
+	local patt="\b${1:-}\b"
+
+	[[ "${'$_placeholder_array_'[*]:-}" =~ $patt ]]
 
 	}
 
 '$public_function_name':Init()
 	{
 
-	'$_placeholder_size_'=0 '$_placeholder_array_'=() '$_placeholder_array_index_'=1
+	'$_placeholder_size_'=0 '$_placeholder_array_'=()
 
 	}
 
@@ -161,8 +165,16 @@ echo $public_function_name':Add()
 
 	local agar=(${1:-}) tmar=() ag='\'\'' it='\'\'' m=false
 
-	for it in "${'$_placeholder_array_'[@]:-}";do m=false
-		for ag in "${agar[@]+"${agar[@]}"}"; do if [[ $ag = "$it" ]]; then m=true; break; fi; done
+	for it in "${'$_placeholder_array_'[@]:-}"; do
+		m=false
+
+		for ag in "${agar[@]+"${agar[@]}"}"; do
+			if [[ $ag = "$it" ]]; then
+				m=true
+				break
+			fi
+		done
+
 		$m || tmar+=("$it")
 	done
 
@@ -174,7 +186,10 @@ echo $public_function_name':Add()
 '$public_function_name':Size()
 	{
 
-	if [[ -n ${1:-} && ${1:-} = "=" ]];then '$_placeholder_size_'=$2;else echo -n "$'$_placeholder_size_'"
+	if [[ -n ${1:-} && ${1:-} = "=" ]];then
+		'$_placeholder_size_'=$2
+	else
+		echo -n "$'$_placeholder_size_'"
 	fi
 
 	}

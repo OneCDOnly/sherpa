@@ -12564,7 +12564,7 @@ QpkgMatchAbbrv()
 SetQpkgIndex()
 	{
 
-	# Find and set the 1-based indexed reference of the named arch-specific QPKG in `packages` file.
+	# Find and set the 1-based index reference of the named arch-specific QPKG in `packages` file.
 
 	# Inputs: (global)
 	#   $r_nas_qpkg_arch
@@ -12599,7 +12599,7 @@ SetQpkgIndex()
 SetQpkgDefaultIndex()
 	{
 
-	# Find and set the 1-based indexed reference of the named QPKG in `packages` file.
+	# Find and set the 1-based index reference of the named QPKG in `packages` file.
 
 	# Inputs: (global)
 	#   $qpkg_name
