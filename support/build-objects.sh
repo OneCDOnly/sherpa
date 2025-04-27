@@ -8,24 +8,29 @@ objects_epoch=$(date +%s)
 
 target=$support_path/$objects_file
 
-# These are used internally by sherpa. Must maintain separate lists for sherpa internal-use, and what user has requested.
+# These are used internally by sherpa. Maintain separate lists for sherpa internal-use, and what user has requested.
 # ordered
 
 # sorted
-r_qpkg_is_states=(active backedup downloaded enabled installable installed missing signed upgradable)
-r_qpkg_isnt_states=(active backedup downloaded enabled installable installed missing signed upgradable)
+
+r_qpkg_basic_states=(complete enabled installed)
+r_qpkg_extended_states=(active backedup downloaded installable missing signed upgradable)
+r_qpkg_transient_states=(restarting slow starting stopping unknown)
+	r_qpkg_is_states=(${r_qpkg_basic_states[*]} ${r_qpkg_extended_states[*]} ${r_qpkg_transient_states[*]})
+	r_qpkg_isnt_states=(${r_qpkg_basic_states[*]} ${r_qpkg_extended_states[*]} ${r_qpkg_transient_states[*]})
 r_qpkg_is_groups=(all canbackup canclean canrestarttoupdate dependent hasdependents independent optional)
 r_qpkg_isnt_groups=(canclean)
-r_qpkg_states_transient=(restarting slow starting stopping unknown)
 r_qpkg_service_results=(failed ok)
 
 # ordered
+
 r_qpkg_actions=(status list rebuild reassign download backup deactivate disable uninstall upgrade reinstall install enableau disableau sign restore clean enable activate reactivate)
 r_ipk_actions=(downgrade download uninstall upgrade install)
 r_pip_actions=(uninstall upgrade install)
 
 # These actions may be specified by the user.
 # sorted
+
 r_user_qpkg_actions=(activate backup clean deactivate disable disableau enable enableau install list reactivate reassign rebuild reinstall restore sign status uninstall upgrade)
 
 AddFlagObj()
@@ -40,20 +45,20 @@ AddFlagObj()
 	local state_default=${2:-false}
 	local state_logmods=${3:-true}
 
-	_placeholder_flag_=_ob_${safe_function_name}_fl_
-	_placeholder_log_changes_flag_=_ob_${safe_function_name}_chfl_
+	_placeholder_main_flag_=o_f${safe_function_name}
+	_placeholder_log_changes_flag_=o_c${safe_function_name}
 
 echo $public_function_name':Init()
-	{ '$_placeholder_flag_'='$state_default'
+	{ '$_placeholder_main_flag_'='$state_default'
 	'$_placeholder_log_changes_flag_'='$state_logmods' ;}
 
 '$public_function_name'.IsSet()
-	{ [[ $'$_placeholder_flag_' = '\'true\'' ]] ;}
+	{ $'$_placeholder_main_flag_' ;}
 
 '$public_function_name':Set()
-	{ [[ $'$_placeholder_flag_' = '\'true\'' ]] && return
-	'$_placeholder_flag_'=true
-	[[ $'$_placeholder_log_changes_flag_' = '\'true\'' ]] && DebugVar '$_placeholder_flag_' ;}
+	{ $'$_placeholder_main_flag_' && return
+	'$_placeholder_main_flag_'=true
+	$'$_placeholder_log_changes_flag_' && DebugVar '$_placeholder_main_flag_' ;}
 
 '$public_function_name':Init' >> "$target"
 
@@ -69,9 +74,9 @@ AddListObj()
 	local public_function_name=${1:?no object name supplied}
 	local safe_function_name=$(tr '[:upper:]' '[:lower:]' <<< "${public_function_name//[.-]/_}")
 
-	_placeholder_size_=_ob_${safe_function_name}_sz_
-	_placeholder_array_=_ob_${safe_function_name}_ar_
-	_placeholder_array_index_=_ob_${safe_function_name}_arin_
+	_placeholder_size_=o_s${safe_function_name}
+	_placeholder_array_=o_a${safe_function_name}
+	_placeholder_array_index_=o_i${safe_function_name}
 
 echo $public_function_name':Add()
 	{ local ar=(${1:-}) it='\'\''; [[ ${#ar[@]} -eq 0 ]] && return
@@ -105,16 +110,15 @@ echo $public_function_name':Add()
 
 '$public_function_name':Remove()
 	{ local agar=(${1:-}) tmar=() ag='\'\'' it='\'\'' m=false
-	for it in "${'$_placeholder_array_'[@]:-}"; do m=false
-		for ag in "${agar[@]+"${agar[@]}"}"; do if [[ $ag = "$it" ]]; then m=true; break; fi
-		done
-		[[ $m = false ]] && tmar+=("$it")
+	for it in "${'$_placeholder_array_'[@]:-}";do m=false
+		for ag in "${agar[@]+"${agar[@]}"}"; do if [[ $ag = "$it" ]]; then m=true; break; fi; done
+		$m || tmar+=("$it")
 	done
 	'$_placeholder_array_'=("${tmar[@]+"${tmar[@]}"}")
 	[[ -z ${'$_placeholder_array_'[*]+"${'$_placeholder_array_'[@]}"} ]] && '$_placeholder_array_'=() ;}
 
 '$public_function_name':Size()
-	{ if [[ -n ${1:-} && ${1:-} = "=" ]]; then '$_placeholder_size_'=$2; else echo -n "$'$_placeholder_size_'"
+	{ if [[ -n ${1:-} && ${1:-} = "=" ]];then '$_placeholder_size_'=$2;else echo -n "$'$_placeholder_size_'"
 	fi ;}
 
 '$public_function_name':Init' >> "$target"
@@ -131,19 +135,31 @@ echo "#* <?dont_edit?>" >> "$target"
 
 for action in "${r_user_qpkg_actions[@]}"; do
 	for state in "${r_qpkg_is_states[@]}"; do
-		AddFlagObj QPKGs.AC"$action".IS"$state"
+		case $state in
+			downloaded)
+				continue
+				;;
+			*)
+				AddFlagObj QPKGs.AC"$action"IS"$state"
+		esac
 	done
 
 	for state in "${r_qpkg_isnt_states[@]}"; do
-		AddFlagObj QPKGs.AC"$action".ISNT"$state"
+		case $state in
+			downloaded)
+				continue
+				;;
+			*)
+				AddFlagObj QPKGs.AC"$action"ISNT"$state"
+		esac
 	done
 
 	for group in "${r_qpkg_is_groups[@]}"; do
-		AddFlagObj QPKGs.AC"$action".GR"$group"
+		AddFlagObj QPKGs.AC"$action"GR"$group"
 	done
 
 	for group in "${r_qpkg_isnt_groups[@]}"; do
-		AddFlagObj QPKGs.AC"$action".GRNT"$group"
+		AddFlagObj QPKGs.AC"$action"GRNT"$group"
 	done
 done
 
@@ -155,15 +171,8 @@ for action in "${r_qpkg_actions[@]}"; do
 	done
 done
 
-for state in "${r_qpkg_is_states[@]}" "${r_qpkg_states_transient[@]}" "${r_qpkg_service_results[@]}"; do
-	[[ $state = enabled ]] && continue
-	[[ $state = installed ]] && continue
+for state in "${r_qpkg_extended_states[@]}" "${r_qpkg_transient_states[@]}" "${r_qpkg_service_results[@]}"; do
 	AddListObj QPKGs-IS"$state"
-done
-
-for state in "${r_qpkg_isnt_states[@]}" "${r_qpkg_states_transient[@]}" "${r_qpkg_service_results[@]}"; do
-	[[ $state = enabled ]] && continue
-	[[ $state = installed ]] && continue
 	AddListObj QPKGs-ISNT"$state"
 done
 
