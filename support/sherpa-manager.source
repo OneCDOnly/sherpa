@@ -1606,7 +1606,7 @@ ProcAction()
 			if [[ $total_count -eq 1 ]]; then
 				fork_progress_prefix="$r_action_intransitive_msg $(TextBrightOrange "${target_packages[0]}") $r_package_type"
 			else
-				fork_progress_prefix="$r_action_intransitive_msg $([[ $r_tier != all ]] && echo "$r_tier ")$(Uppercase "$r_package_type")$(Pluralise "$total_count")"
+				fork_progress_prefix="$r_action_intransitive_msg $([[ $r_tier != all ]] && TextBrightOrange "$r_tier ")$(Uppercase "$r_package_type")$(Pluralise "$total_count")"
 			fi
 
 			SetMaxForks "$r_action"
