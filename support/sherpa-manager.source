@@ -13165,8 +13165,7 @@ IsQpkgMissing()
 	#	$qpkg_name (default for $1)
 
 	# Outputs: (local)
-	#   stdout = package installation date.
-	#   $? = true (found) / false (not-found).
+	#   $? = true/false.
 
 	local a=$(GetQpkgInstalledPath "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
 
@@ -13184,12 +13183,11 @@ IsQpkgComplete()
 	#	$qpkg_name (default for $1)
 
 	# Outputs: (local)
-	#   stdout = package installation date.
-	#   $? = true (found) / false (not-found).
+	#   $? = true/false.
 
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
 
-	[[ $(/sbin/getcfg "$a" Status -f /etc/config/qpkg.conf) = complete ]]
+	[[ $(/sbin/getcfg "$a" Status -f /etc/config/qpkg.conf) = complete ]] && [[ $(/sbin/getcfg "$a" Incomplete_Conf -d 0 -f /etc/config/qpkg.conf) != 1 ]]
 
 	}
 
