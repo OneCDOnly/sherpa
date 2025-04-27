@@ -225,6 +225,7 @@ LoadConsts()
 	readonly r_report_qpkg_description_column_width=10
 	readonly r_report_qpkg_install_date_column_width=20
 	readonly r_report_qpkg_is_compatible_column_width=11
+	readonly r_report_qpkg_is_complete_column_width=8
 	readonly r_report_qpkg_is_enabled_column_width=8
 	readonly r_report_qpkg_is_installed_column_width=10
 	readonly r_report_qpkg_is_managed_column_width=8
@@ -2554,7 +2555,7 @@ ParseListArgs()
 							run_package_actions=true
 							show_title=false
 							;;
-						?(NT)backedup|?(NT)enabled|?(NT)installable|?(NT)installed|?(NT)missing|?(NT)upgradable)
+						?(NT)backedup|?(NT)complete|?(NT)enabled|?(NT)installable|?(NT)installed|?(NT)missing|?(NT)upgradable)
 							LoadObjects
 							QPKGs.AClistIS${group}:Set
 							action=''
@@ -2816,7 +2817,7 @@ MatchNoun()
 		a|abs|abbreviations)
 			printf abs
 			;;
-		about|about-all|backedup|canbackup|installable|installed|missing|results|show|?(un)stable)
+		about|about-all|backedup|canbackup|complete|installable|installed|missing|results|show|?(un)stable)
 			printf '%s' "$a"
 			;;
 		action?(s))
@@ -2825,7 +2826,7 @@ MatchNoun()
 		action?(s)-all|all-action?(s))
 			printf all-actions
 			;;
-		active|n?(o)@(n|t)?(-)inactive|no@(n|t)?(-)stopped|started)
+		active|n?(o)@(n|t)?(-)inactive|n?(o)@(n|t)?(-)stopped|started)
 			printf active
 			;;
 		all|entire|everything)
@@ -2890,6 +2891,9 @@ MatchNoun()
 			;;
 		n?(o)@(n|t)?(-)upgradable)
 			printf NTupgradable
+			;;
+		@(in|nt|not)?(-)complete)
+			printf NTcomplete
 			;;
 		o|option?(s))
 			printf options
@@ -5210,6 +5214,7 @@ GenerateDepsReportTitleLine()
 	#	$r_report_lazy_column_width
 	#	$r_report_qpkg_arch_column_width
 	#	$r_report_qpkg_dependencies_column_width
+	#	$r_report_qpkg_is_complete_column_width
 	#	$r_report_qpkg_is_enabled_column_width
 	#	$r_report_qpkg_is_installed_column_width
 	#	$r_report_qpkg_is_managed_column_width
@@ -5220,13 +5225,14 @@ GenerateDepsReportTitleLine()
 	#	$r_report_qpkg_opt_dependencies_column_width
 
 	if IsOsCanAutowidthTableColumns; then
-		printf 'QPKG name:|Dependencies:|Optionals:|Installed?|Enabled?|Managed?|Min. RAM:|Min. OS:|Max. OS:|Supported arch?|Installed QPKG author:'
+		printf 'QPKG name:|Dependencies:|Optionals:|Installed?|Enabled?|Complete?|Managed?|Min. RAM:|Min. OS:|Max. OS:|Supported arch?|Installed QPKG author:'
 	else
 		FormatReportFieldWidth 'QPKG name:' "$r_report_qpkg_name_column_width"
 		FormatReportFieldWidth 'Dependencies:' "$r_report_qpkg_dependencies_column_width"
 		FormatReportFieldWidth 'Optionals:' "$r_report_qpkg_opt_dependencies_column_width"
 		FormatReportFieldWidth 'Installed?' "$r_report_qpkg_is_installed_column_width"
 		FormatReportFieldWidth 'Enabled?' "$r_report_qpkg_is_enabled_column_width"
+		FormatReportFieldWidth 'Complete?' "$r_report_qpkg_is_complete_column_width"
 		FormatReportFieldWidth 'Managed?' "$r_report_qpkg_is_managed_column_width"
 		FormatReportFieldWidth 'Min. RAM:' "$r_report_qpkg_min_ram_column_width"
 		FormatReportFieldWidth 'Min. OS:' "$r_report_qpkg_min_os_version_column_width"
@@ -5249,7 +5255,7 @@ _GenerateDepsReportDataLine_()
 	#	$r_report_flags_path
 
 	local a=''
-	local -a column_vars=(author arch auxiliary deps enabled installed managed max_os min_os min_ram name opt_deps)
+	local -a column_vars=(author arch auxiliary deps enabled installed complete managed max_os min_os min_ram name opt_deps)
 		local auxiliary_column=deps		# Auxiliary messages are shown in this column name.
 	local dep_name=''
 	local deps_raw=$(GetQpkgDbDependencies "$qpkg_name")
@@ -5272,6 +5278,8 @@ _GenerateDepsReportDataLine_()
 	IsQpkgDbArchOK && arch=true
 	IsQpkgRepoSelfManaged && managed=true
 	IsQpkgEnabled "$name" && enabled=true
+	IsQpkgComplete "$name" && complete=true
+
 	[[ -z $deps_raw ]] && deps_raw=none
 	[[ -z $opt_deps_raw ]] && opt_deps_raw=none
 	[[ -n $max_os && $max_os != none && ${#max_os} -eq 3 ]] && max_os=${max_os:0:1}.${max_os:1:1}.${max_os:2:1}
@@ -5357,6 +5365,7 @@ _GenerateDepsReportDataLine_()
 			opt_deps_msg=$(FormatReportField "${opt_deps// /, }" mute)
 			enabled_msg=$(FormatReportField N/A mute)
 			installed_msg=$(FormatReportField "$installed" mute)
+			complete_msg=$(FormatReportField N/A mute)
 			managed_msg=$(FormatReportField N/A mute)
 
 			if IsQpkgDbMaxOSVerOk "$qpkg_name"; then
@@ -5439,6 +5448,13 @@ _GenerateDepsReportDataLine_()
 
 			installed_msg=$(FormatReportField true ok)
 
+			if IsQpkgComplete; then
+				complete_msg=$(FormatReportField "$complete" ok)
+			else
+				complete_msg=$(FormatReportField "$complete" notice)
+				req_notice=true
+			fi
+
 			if IsQpkgRepoSelfManaged; then
 				managed_msg=$(FormatReportField "$managed" ok)
 			else
@@ -5497,13 +5513,14 @@ _GenerateDepsReportDataLine_()
 	fi
 
 	if IsOsCanAutowidthTableColumns; then
-		printf '%s' "$name_msg|$deps_msg|$opt_deps_msg|$installed_msg|$enabled_msg|$managed_msg|$min_ram_msg|$min_os_msg|$max_os_msg|$arch_msg|$author_msg"
+		printf '%s' "$name_msg|$deps_msg|$opt_deps_msg|$installed_msg|$enabled_msg|$complete_msg|$managed_msg|$min_ram_msg|$min_os_msg|$max_os_msg|$arch_msg|$author_msg"
 	else
 		FormatReportFieldWidth "$name_msg" "$r_report_qpkg_name_column_width"
 		FormatReportFieldWidth "$deps_msg" "$r_report_qpkg_dependencies_column_width"
 		FormatReportFieldWidth "$opt_deps_msg" "$r_report_qpkg_opt_dependencies_column_width"
 		FormatReportFieldWidth "$installed_msg" "$r_report_qpkg_is_installed_column_width"
 		FormatReportFieldWidth "$enabled_msg" "$r_report_qpkg_is_enabled_column_width"
+		FormatReportFieldWidth "$complete_msg" "$r_report_qpkg_is_complete_column_width"
 		FormatReportFieldWidth "$managed_msg" "$r_report_qpkg_is_managed_column_width"
 		FormatReportFieldWidth "$min_ram_msg" "$r_report_qpkg_min_ram_column_width"
 		FormatReportFieldWidth "$min_os_msg" "$r_report_qpkg_min_os_version_column_width"
