@@ -1958,7 +1958,7 @@ ParseManagementArgs()
 					user_action=$arg
 					useropt_check=true
 					;;
-				colo?(u)r?(ful)|follow|paste|report-footer|terse)
+				follow|paste|report-footer|terse)
 					requires_group=true
 					user_action=$arg
 					;;
@@ -2767,8 +2767,11 @@ MatchVerb()
 		add|install)
 			printf install
 			;;
-		backup|clean|colo?(u)r?(ful)|@(dis|en)able|follow|help|list|paste|reassign|rebuild|reinstall|report-footer|reset|restore|sign|terse)
+		backup|clean|@(dis|en)able|follow|help|list|paste|reassign|rebuild|reinstall|reset|restore|sign|terse)
 			printf '%s' "$a"
+			;;
+		report-footer?(s))
+			printf report-footer
 			;;
 		c|check)
 			printf check
@@ -2954,7 +2957,7 @@ ShowArgSuggestions()
 					arg_problem=true
 					useropt_help_basic=false
 					;;
-				colo?(u)r?(ful)|terse)
+				terse)
 					DisplayAsProjSynExam "please provide a valid boolean after '$arg' like" "$arg true"
 					DisplayAsProjSynIndentExam '' "$arg false"
 					DisplayAsProjSynIndentExam '' "$arg on"
@@ -3066,8 +3069,7 @@ ShowArgSuggestions()
 					useropt_help_basic=false
 					;;
 				@(dis|en)able|false|off|no|on|true|yes)
-					DisplayAsProjSynExam "please provide a valid $(ShowAsSetting) before '$arg' like" "colour $arg"
-					DisplayAsProjSynIndentExam '' "terse $arg"
+					DisplayAsProjSynExam "please provide a valid $(ShowAsSetting) before '$arg' like" "terse $arg"
 					arg_problem=true
 					useropt_help_basic=false
 					;;
