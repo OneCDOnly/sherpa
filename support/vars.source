@@ -165,7 +165,8 @@ Squeeze()
 		buffer=$(sed '/^$/d' <<< "$buffer")															# Remove empty lines.
 		buffer=$(sed 's/\;[[:space:]]/;/g' <<< "$buffer")											# Remove whitespace after semicolons.
 		buffer=$(sed 's/[[:space:]]\;/;/g' <<< "$buffer")											# Remove whitespace before semicolons.
-		buffer=$(sed "s|Content-Transfer-Encoding: base64|Content-Transfer-Encoding: base64\n|" <<< "$buffer")	# Need to add a newline after this string so signature block is accepted by QTS.
+		buffer=$(sed "s|Content-Transfer-Encoding: base64|Content-Transfer-Encoding: base64\n|" <<< "$buffer")	# Add a newline after this string so signature block is accepted by QTS.
+		buffer=$(sed -e ':a' -e 'N' -e '$!ba' -e 's/()\n{\n/(){\n/g' <<< "$buffer")					# Reposition function start braces onto function name line. https://stackoverflow.com/a/1252191
 
 		[[ -e $2 ]] && chmod +w "$2"
 		echo "$buffer" > "$2"

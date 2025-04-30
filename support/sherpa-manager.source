@@ -268,6 +268,7 @@ LoadConsts()
 	readonly r_chars_note='* '
 	readonly r_chars_regular_prompt='$ '
 		readonly r_chars_sudo_prompt=$r_chars_regular_prompt'sudo '
+
 	readonly r_chars_results='= '
 	readonly r_chars_super_prompt='# '
 	readonly r_extended_datetime_format='+%a %-d %b %Y'
@@ -453,22 +454,21 @@ LoadEnv()
 
 	readonly r_concurrency=$r_cpu_cores			# Maximum concurrent package actions to run. Should probably make this account for CPU speed too.
 	readonly r_entware_type=$(GetQpkgEntwareType)
-	readonly r_os_upstate=$(GetOsState)
 	readonly r_this_package_ver=$(GetQpkgInstalledVer)
 
 	args=()						# Command-line argument array.
 	args_incomplete=()
 	qpkg_default_index=0
 	qpkg_index=0
-	local build_script_epoch=0
-	readonly r_this_script_epoch='<?manager_epoch?>'
+	readonly r_script_built_epoch='<?manager_epoch?>'
+	local script_epoch=0
 
-	IsNumber $r_this_script_epoch && build_script_epoch=$r_this_script_epoch
+	IsNumber $r_script_built_epoch && script_epoch=$r_script_built_epoch
 
 	useropt_branch=$(GetUserGitBranch)
 		readonly r_objects_archive_url='<?cdn_sherpa_base_url?>'/$useropt_branch/objects.tar.gz
 		readonly r_packages_archive_url='<?cdn_sherpa_packages_base_url?>'/$useropt_branch/packages.tar.gz
-		readonly r_this_script_ver=$(ConvertSecondsToDatecode $build_script_epoch)-$useropt_branch
+		readonly r_this_script_ver=$(ConvertSecondsToDatecode $script_epoch)-$useropt_branch
 
 	# Essential paths.
 
@@ -482,13 +482,15 @@ LoadEnv()
 	fi
 
 	readonly r_cache_path=$r_this_package_path/cache
-	readonly r_action_times_path=$r_cache_path/action.times
-	readonly r_ipk_cache_path=$r_cache_path/IPKs
-	readonly r_ipk_downgrade_path=$r_ipk_cache_path/downgrade
-	readonly r_ipk_download_path=$r_ipk_cache_path/downloads
-	readonly r_pip_cache_path=$r_cache_path/PIPs
-	readonly r_qpkg_cache_path=$r_cache_path/QPKGs
-	readonly r_qpkg_download_path=$r_qpkg_cache_path/downloads
+		readonly r_action_times_path=$r_cache_path/action.times
+		readonly r_ipk_cache_path=$r_cache_path/IPKs
+			readonly r_ipk_downgrade_path=$r_ipk_cache_path/downgrade
+			readonly r_ipk_download_path=$r_ipk_cache_path/downloads
+
+		readonly r_pip_cache_path=$r_cache_path/PIPs
+		readonly r_qpkg_cache_path=$r_cache_path/QPKGs
+		readonly r_qpkg_download_path=$r_qpkg_cache_path/downloads
+
 	readonly r_logs_path=$r_this_package_path/logs
 
 	# Essential files.
@@ -498,12 +500,15 @@ LoadEnv()
 	readonly r_inhibit_display_pathfile=$r_cache_path/display.inhibit
 	readonly r_objects_archive_pathfile=$r_cache_path/objects.tar.gz
 	readonly r_objects_pathfile=$r_cache_path/objects
-	readonly r_oom_log_pathfile=$r_logs_path/oom.log
 	readonly r_optional_qpkgs_list_pathfile=$r_cache_path/optionals
 	readonly r_packages_archive_pathfile=$r_cache_path/packages.tar.gz
 	readonly r_packages_pathfile=$r_cache_path/packages
+
 	readonly r_prev_ipk_list_pathfile=$r_ipk_cache_path/ipk.list.save
+
 	readonly r_prev_pip_list_pathfile=$r_pip_cache_path/pip.list.save
+
+	readonly r_oom_log_pathfile=$r_logs_path/oom.log
 	readonly r_ram_freeused_pathfile=$r_logs_path/ram.freeused
 	readonly r_ramfs_freespace_pathfile=$r_logs_path/ramfs.freespace
 	readonly r_screen_sessions_pathfile=$r_logs_path/screen.sessions
@@ -511,6 +516,7 @@ LoadEnv()
 	readonly r_session_archive_pathfile=$r_logs_path/session.archive.log
 	readonly r_session_last_pathfile=$r_logs_path/session.last.log
 	readonly r_session_tail_pathfile=$r_logs_path/session.tail.log
+
 	sess_active_pathfile=$r_this_package_path/session.$$.active.log
 
 	# Ephemeral paths.
@@ -743,13 +749,11 @@ DebugLogEnv()
 
 	DebugFirmware ok platform "$r_nas_platform"
 
-	case $r_os_upstate in
-		online)
-			DebugOS ok state "$r_os_upstate"
-			;;
-		*)
-			DebugOS warning state "$r_os_upstate"
-	esac
+	if IsOsOnline; then
+		DebugOS ok state online
+	else
+		DebugOS warning state "$(GetOsState)"
+	fi
 
 	DebugOS ok uptime "$(GetOsUptime)"
 
@@ -788,7 +792,7 @@ DebugLogEnv()
 	DebugShell ok 'time in shell' "$(GetShellTimeIn)"
 	DebugScript 'QPKG version' "$(ConvertAsSmartDate "$r_this_package_ver")"
 	DebugScript 'manager version' "$r_this_script_ver"
-	DebugScript 'manager epoch' "$(ConvertAsSmartDate "$r_this_script_epoch")"
+	DebugScript 'manager epoch' "$(ConvertAsSmartDate "$r_script_built_epoch")"
 	DebugScript 'objects epoch' "$(ConvertAsSmartDate "${r_objects_epoch:-not loaded}")"
 	DebugScript 'packages epoch' "$(ConvertAsSmartDate "${r_packages_epoch:-not loaded}")"
 	DebugScript 'logs path' "$r_logs_path"
@@ -1410,7 +1414,7 @@ ProcActions()
 		for action in "${r_user_qpkg_actions[@]}"; do
 			for state in "${r_qpkg_is_states[@]}"; do
 				case $state in
-					downloaded)
+					downloaded|installed)
 						continue
 						;;
 					*)
@@ -1958,7 +1962,7 @@ ParseManagementArgs()
 					user_action=$arg
 					useropt_check=true
 					;;
-				colo?(u)r?(ful)|follow|paste|report-footer|terse)
+				follow|paste|report-footer|terse)
 					requires_group=true
 					user_action=$arg
 					;;
@@ -2767,8 +2771,11 @@ MatchVerb()
 		add|install)
 			printf install
 			;;
-		backup|clean|colo?(u)r?(ful)|@(dis|en)able|follow|help|list|paste|reassign|rebuild|reinstall|report-footer|reset|restore|sign|terse)
+		backup|clean|@(dis|en)able|follow|help|list|paste|reassign|rebuild|reinstall|reset|restore|sign|terse)
 			printf '%s' "$a"
+			;;
+		report-footer?(s))
+			printf report-footer
 			;;
 		c|check)
 			printf check
@@ -2954,7 +2961,7 @@ ShowArgSuggestions()
 					arg_problem=true
 					useropt_help_basic=false
 					;;
-				colo?(u)r?(ful)|terse)
+				terse)
 					DisplayAsProjSynExam "please provide a valid boolean after '$arg' like" "$arg true"
 					DisplayAsProjSynIndentExam '' "$arg false"
 					DisplayAsProjSynIndentExam '' "$arg on"
@@ -3066,8 +3073,7 @@ ShowArgSuggestions()
 					useropt_help_basic=false
 					;;
 				@(dis|en)able|false|off|no|on|true|yes)
-					DisplayAsProjSynExam "please provide a valid $(ShowAsSetting) before '$arg' like" "colour $arg"
-					DisplayAsProjSynIndentExam '' "terse $arg"
+					DisplayAsProjSynExam "please provide a valid $(ShowAsSetting) before '$arg' like" "terse $arg"
 					arg_problem=true
 					useropt_help_basic=false
 					;;
@@ -4750,20 +4756,23 @@ _GenerateStatusReportDataLine_()
 
 	# Set display mode.
 
-	if IsQpkgMissing; then
-		mode=missing
-		/bin/touch "$r_report_flags_path"/status-missing
-	elif IsValidQpkgInstalled; then
+	if IsValidQpkgInstalled; then
 		mode=normal
 		/bin/touch "$r_report_flags_path"/state-installed
-	else
-		if IsQpkgInstalled && IsNtQpkgAuthorOk; then
+	elif IsQpkgMissing; then
+		mode=missing
+		/bin/touch "$r_report_flags_path"/status-missing
+	elif IsQpkgInstalled; then
+		if IsNtQpkgComplete "$name"; then
+			mode=incomplete
+			/bin/touch "$r_report_flags_path"/status-incomplete
+		elif IsNtQpkgAuthorOk; then
 			mode=author
 			/bin/touch "$r_report_flags_path"/status-wrongauthor
-		else
-			mode=mute
-			/bin/touch "$r_report_flags_path"/state-notinstalled
 		fi
+	else
+		mode=mute
+		/bin/touch "$r_report_flags_path"/state-notinstalled
 	fi
 
 	case $app_ver in
@@ -4824,6 +4833,26 @@ _GenerateStatusReportDataLine_()
 						;;
 					auxiliary)
 						auxiliary_msg=$(FormatReportField 'incompatible author' attention_highlight)
+						req_attention=true
+						;;
+					*)
+						local ${a}_msg="$(FormatReportField "${!a}" highlight)"
+				esac
+			done
+			;;
+		incomplete)
+			app_ver=N/A
+			action=N/A
+			ver=N/A
+			/bin/touch "$r_report_flags_path"/na
+
+			for a in "${column_vars[@]}"; do
+				case $a in
+					name)
+						: # Do nothing, this is set later.
+						;;
+					auxiliary)
+						auxiliary_msg=$(FormatReportField 'incomplete installation' attention_highlight)
 						req_attention=true
 						;;
 					*)
@@ -6918,7 +6947,7 @@ RefreshDirSizeCount()
 	current_bytes=$($r_gnu_find_cmd "$dir_location" -type f -name '*.ipk' -exec /usr/bin/du --bytes --total --apparent-size {} + 2>/dev/null | /bin/grep total$ | cut -f1)
 	[[ -z $current_bytes ]] && current_bytes=0
 
-	} #&>/dev/null
+	} &>/dev/null
 
 EraseForkCountPaths()
 	{
@@ -7070,7 +7099,7 @@ ShowQPKGsMissing()
 
 	# Check installed QPKGs and check if they're missing. If-so, advise on-screen.
 
-	# Outputs:
+	# Outputs (local):
 	#	$? = 0 if no packages are missing
 	#	$? = 1 if one-or-more packages are missing
 
@@ -7122,7 +7151,7 @@ ShowQPKGsNewVers()
 
 	# Check installed QPKGs and compare versions against upgradable array. If new versions are available, advise on-screen.
 
-	# Outputs:
+	# Outputs (local):
 	#	$? = 0 if all packages are up-to-date
 	#	$? = 1 if one-or-more packages can be upgraded
 
@@ -8591,14 +8620,14 @@ ShowVersionsList()
 	# Inputs: (global)
 	#	$r_objects_epoch
 	#	$r_packages_epoch
+	#	$r_script_built_epoch
 	#	$r_this_package_ver
-	#	$r_this_script_epoch
 
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
 	Display "QPKG: $(ConvertAsSmartDate "$r_this_package_ver")"
-	Display "manager: $(ConvertAsSmartDate "$r_this_script_epoch")"
+	Display "manager: $(ConvertAsSmartDate "$r_script_built_epoch")"
 	Display "objects: $(ConvertAsSmartDate "${r_objects_epoch:-not loaded}")"
 	Display "packages: $(ConvertAsSmartDate "${r_packages_epoch:-not loaded}")"
 
@@ -9658,8 +9687,7 @@ IsOsStoppingPackages()
 IsOsOnline()
 	{
 
-	[[ ${r_os_upstate-unset} = unset ]] && readonly r_os_upstate=$(GetOsState)
-	[[ $r_os_upstate = online ]]
+	[[ $(GetOsState) = online ]]
 
 	}
 
@@ -12478,7 +12506,7 @@ GetQpkgsNtComplete()
 	local qpkg_name=''
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		IsValidQpkgInstalled || continue
+		IsQpkgInstalled || continue
 		IsNtQpkgComplete || continue
 		echo "$qpkg_name"
 	done
@@ -12541,7 +12569,7 @@ QpkgMatchAbbrv()
 SetQpkgIndex()
 	{
 
-	# Find and set the 1-based indexed reference of the named arch-specific QPKG in `packages` file.
+	# Find and set the 1-based index reference of the named arch-specific QPKG in `packages` file.
 
 	# Inputs: (global)
 	#   $r_nas_qpkg_arch
@@ -12576,7 +12604,7 @@ SetQpkgIndex()
 SetQpkgDefaultIndex()
 	{
 
-	# Find and set the 1-based indexed reference of the named QPKG in `packages` file.
+	# Find and set the 1-based index reference of the named QPKG in `packages` file.
 
 	# Inputs: (global)
 	#   $qpkg_name
@@ -13165,8 +13193,7 @@ IsQpkgMissing()
 	#	$qpkg_name (default for $1)
 
 	# Outputs: (local)
-	#   stdout = package installation date.
-	#   $? = true (found) / false (not-found).
+	#   $? = true/false.
 
 	local a=$(GetQpkgInstalledPath "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
 
@@ -13184,12 +13211,11 @@ IsQpkgComplete()
 	#	$qpkg_name (default for $1)
 
 	# Outputs: (local)
-	#   stdout = package installation date.
-	#   $? = true (found) / false (not-found).
+	#   $? = true/false.
 
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
 
-	[[ $(/sbin/getcfg "$a" Status -f /etc/config/qpkg.conf) = complete ]]
+	[[ $(/sbin/getcfg "$a" Status -d undefined -f /etc/config/qpkg.conf) = complete ]] && [[ $(/sbin/getcfg "$a" Incomplete_Conf -d undefined -f /etc/config/qpkg.conf) != 1 ]]
 
 	}
 
@@ -13223,7 +13249,7 @@ IsQpkgEnabled()
 
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
 
-	[[ $(/sbin/getcfg "$a" Enable -u -f /etc/config/qpkg.conf) = TRUE ]]
+	[[ $(/sbin/getcfg "$a" Enable -u -d undefined -f /etc/config/qpkg.conf) = TRUE ]]
 
 	}
 

@@ -49,16 +49,28 @@ AddFlagObj()
 	_placeholder_log_changes_flag_=o_c${safe_function_name}
 
 echo $public_function_name':Init()
-	{ '$_placeholder_main_flag_'='$state_default'
-	'$_placeholder_log_changes_flag_'='$state_logmods' ;}
+	{
+
+	'$_placeholder_main_flag_'='$state_default'
+	'$_placeholder_log_changes_flag_'='$state_logmods'
+
+	}
 
 '$public_function_name'.IsSet()
-	{ $'$_placeholder_main_flag_' ;}
+	{
+
+	$'$_placeholder_main_flag_'
+
+	}
 
 '$public_function_name':Set()
-	{ $'$_placeholder_main_flag_' && return
+	{
+
+	$'$_placeholder_main_flag_' && return
 	'$_placeholder_main_flag_'=true
-	$'$_placeholder_log_changes_flag_' && DebugVar '$_placeholder_main_flag_' ;}
+	$'$_placeholder_log_changes_flag_' && DebugVar '$_placeholder_main_flag_'
+
+	}
 
 '$public_function_name':Init' >> "$target"
 
@@ -76,50 +88,111 @@ AddListObj()
 
 	_placeholder_size_=o_s${safe_function_name}
 	_placeholder_array_=o_a${safe_function_name}
-	_placeholder_array_index_=o_i${safe_function_name}
 
 echo $public_function_name':Add()
-	{ local ar=(${1:-}) it='\'\''; [[ ${#ar[@]} -eq 0 ]] && return
+	{
+
+	local ar=(${1:-}) it='\'\''
+
+	[[ ${#ar[@]} -eq 0 ]] && return
+
 	for it in "${ar[@]:-}"; do
 		! '$public_function_name'.Exist "$it" && '$_placeholder_array_'+=("$it")
-	done ;}
+	done
+
+	}
 
 '$public_function_name':Array()
-	{ echo -n "${'$_placeholder_array_'[@]:-}" ;}
+	{
+
+	echo -n "${'$_placeholder_array_'[@]:-}"
+
+	}
 
 '$public_function_name':Count()
-	{ echo "${#'$_placeholder_array_'[@]}" ;}
+	{
+
+	echo "${#'$_placeholder_array_'[@]}"
+
+	}
 
 '$public_function_name'.Exist()
-	{ local patt="\b${1:-}\b"; [[ "${'$_placeholder_array_'[*]:-}" =~ $patt ]] ;}
+	{
+
+	local patt="\b${1:-}\b"
+
+	[[ "${'$_placeholder_array_'[*]:-}" =~ $patt ]]
+
+	}
 
 '$public_function_name':Init()
-	{ '$_placeholder_size_'=0 '$_placeholder_array_'=() '$_placeholder_array_index_'=1 ;}
+	{
+
+	'$_placeholder_size_'=0 '$_placeholder_array_'=()
+
+	}
 
 '$public_function_name'.IsAny()
-	{ [[ ${#'$_placeholder_array_'[@]} -gt 0 ]] ;}
+	{
+
+	[[ ${#'$_placeholder_array_'[@]} -gt 0 ]]
+
+	}
 
 '$public_function_name'.IsNone()
-	{ [[ ${#'$_placeholder_array_'[@]} -eq 0 ]] ;}
+	{
+
+	[[ ${#'$_placeholder_array_'[@]} -eq 0 ]]
+
+	}
 
 '$public_function_name':List()
-	{ echo -n "${'$_placeholder_array_'[*]:-}" ;}
+	{
+
+	echo -n "${'$_placeholder_array_'[*]:-}"
+
+	}
 
 '$public_function_name':ListCSV()
-	{ echo -n "${'$_placeholder_array_'[*]:-}" | tr '\' \'' '\',\'' ;}
+	{
+
+	echo -n "${'$_placeholder_array_'[*]:-}" | tr '\' \'' '\',\''
+
+	}
 
 '$public_function_name':Remove()
-	{ local agar=(${1:-}) tmar=() ag='\'\'' it='\'\'' m=false
-	for it in "${'$_placeholder_array_'[@]:-}";do m=false
-		for ag in "${agar[@]+"${agar[@]}"}"; do if [[ $ag = "$it" ]]; then m=true; break; fi; done
+	{
+
+	local agar=(${1:-}) tmar=() ag='\'\'' it='\'\'' m=false
+
+	for it in "${'$_placeholder_array_'[@]:-}"; do
+		m=false
+
+		for ag in "${agar[@]+"${agar[@]}"}"; do
+			if [[ $ag = "$it" ]]; then
+				m=true
+				break
+			fi
+		done
+
 		$m || tmar+=("$it")
 	done
+
 	'$_placeholder_array_'=("${tmar[@]+"${tmar[@]}"}")
-	[[ -z ${'$_placeholder_array_'[*]+"${'$_placeholder_array_'[@]}"} ]] && '$_placeholder_array_'=() ;}
+	[[ -z ${'$_placeholder_array_'[*]+"${'$_placeholder_array_'[@]}"} ]] && '$_placeholder_array_'=()
+
+	}
 
 '$public_function_name':Size()
-	{ if [[ -n ${1:-} && ${1:-} = "=" ]];then '$_placeholder_size_'=$2;else echo -n "$'$_placeholder_size_'"
-	fi ;}
+	{
+
+	if [[ -n ${1:-} && ${1:-} = "=" ]];then
+		'$_placeholder_size_'=$2
+	else
+		echo -n "$'$_placeholder_size_'"
+	fi
+
+	}
 
 '$public_function_name':Init' >> "$target"
 
