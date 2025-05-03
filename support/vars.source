@@ -169,7 +169,7 @@ Squeeze()
 		buffer=$(sed 's/\;[[:space:]]/;/g' <<< "$buffer")											# Remove whitespace after semicolons.
 		buffer=$(sed 's/[[:space:]]\;/;/g' <<< "$buffer")											# Remove whitespace before semicolons.
 
-		buffer=$(sed '/>[[:space:]]>/! s/>[[:space:]]/>/g' <<< "$buffer")							# Remove whitespace after fd1 redirects.
+		buffer=$(sed '/>[[:space:]][>v]/! s/>[[:space:]]/>/g' <<< "$buffer")						# Remove whitespace after fd1 redirects.
 		buffer=$(sed 's/<[[:space:]]/</g' <<< "$buffer")											# Remove whitespace after fd0 redirects.
 		buffer=$(sed '/>[[:space:]]>/! s/[[:space:]]>/>/g' <<< "$buffer")							# Remove whitespace before fd1 redirects.
 		buffer=$(sed 's/[[:space:]]</</g' <<< "$buffer")											# Remove whitespace before fd0 redirects.
