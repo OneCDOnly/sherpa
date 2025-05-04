@@ -158,15 +158,25 @@ Squeeze()
 	if [[ -f "$1" ]]; then			# ignore symlinks.
 		local buffer=$(<"$1")
 
-		buffer=$(sed -e '/#devdebug/d' <<< "$buffer")												# Remove '#devdebug' lines.
-		buffer=$(sed -e '/^#[[:space:]].*/d;/#$/d;s/[[:space:]]#[[:space:]].*//' <<< "$buffer")		# Remove comment lines and line comments.
-		buffer=$(sed -e 's/^[[:space:]]*//' <<< "$buffer")											# Remove line leading whitespace.
-		buffer=$(sed 's/[[:space:]]*$//' <<< "$buffer")												# Remove line trailing whitespace.
-		buffer=$(sed '/^$/d' <<< "$buffer")															# Remove empty lines.
-		buffer=$(sed 's/\;[[:space:]]/;/g' <<< "$buffer")											# Remove whitespace after semicolons.
-		buffer=$(sed 's/[[:space:]]\;/;/g' <<< "$buffer")											# Remove whitespace before semicolons.
-		buffer=$(sed "s|Content-Transfer-Encoding: base64|Content-Transfer-Encoding: base64\n|" <<< "$buffer")	# Add a newline after this string so signature block is accepted by QTS.
-		buffer=$(sed -e ':a' -e 'N' -e '$!ba' -e 's/()\n{\n/(){\n/g' <<< "$buffer")					# Reposition function start braces onto function name line. https://stackoverflow.com/a/1252191
+		buffer=$(sed '/devdebug/d' <<< "$buffer")												# Remove lines with 'devdebug' tag.
+
+		buffer=$(sed '/[#>][[:space:]]>/! s/[[:space:]]>/>/g' <<< "$buffer")					# Remove whitespace before fd1 redirects.
+		buffer=$(sed '/squeezer-ignore/! s/>[[:space:]]/>/g' <<< "$buffer")						# Remove whitespace after fd1 redirects, except for lines with 'squeezer-ignore' tag.
+		buffer=$(sed 's/<[[:space:]]/</g' <<< "$buffer")										# Remove whitespace after fd0 redirects.
+		buffer=$(sed 's/[[:space:]]</</g' <<< "$buffer")										# Remove whitespace before fd0 redirects.
+
+		buffer=$(sed '/^#[[:space:]].*/d;/#$/d;s/[[:space:]]#[[:space:]].*//' <<< "$buffer")	# Remove comment lines and line comments. Comment tags won't be seen beyond this point.
+
+		buffer=$(sed 's/^[[:space:]]*//' <<< "$buffer")											# Remove line leading whitespace.
+		buffer=$(sed 's/[[:space:]]*$//' <<< "$buffer")											# Remove line trailing whitespace.
+		buffer=$(sed '/^$/d' <<< "$buffer")														# Remove empty lines.
+
+		buffer=$(sed 's/\;[[:space:]]/;/g' <<< "$buffer")										# Remove whitespace after semicolons.
+		buffer=$(sed 's/[[:space:]]\;/;/g' <<< "$buffer")										# Remove whitespace before semicolons.
+
+		buffer=$(sed "s|Transfer-Encoding: base64|Transfer-Encoding: base64\n|" <<< "$buffer")	# Add a newline after this string so signature block is accepted by QTS.
+
+		buffer=$(sed -e ':a' -e 'N' -e '$!ba' -e 's/()\n{\n/(){\n/g' <<< "$buffer")				# Reposition function start braces onto function name line. https://stackoverflow.com/a/1252191
 
 		[[ -e $2 ]] && chmod +w "$2"
 		echo "$buffer" > "$2"
