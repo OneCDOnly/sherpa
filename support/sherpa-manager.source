@@ -1302,7 +1302,7 @@ AssignQpkgsToActions()
 		LoadQpkgSigningCertDetails
 	fi
 
-	[[ $useropt_debug = true ]] && ListQPKGsActionsAll				#devdebug
+	[[ $useropt_debug = true ]] && ListQPKGsActionsAll				# devdebug
 
 	FuncExit
 
@@ -1897,7 +1897,7 @@ PrepareArgs()
 	args=(${a/--/})
 	arg_problem=false
 
-	DebugArray args "${args[*]:-}"							#devdebug
+	DebugArray args "${args[*]:-}"							# devdebug
 
 	[[ -z $r_args_raw ]] && useropt_help_basic=true
 
@@ -2067,10 +2067,10 @@ ParseManagementArgs()
 		args_incomplete+=("$user_action")									# Save the actual action word, phrase or char specified by the user.
 	fi
 
-	DebugArray args_incomplete "${args_incomplete[*]:-}"					#devdebug
+	DebugArray args_incomplete "${args_incomplete[*]:-}"					# devdebug
 
 	args=(${args_remaining[@]:-})
-	DebugArray args "${args[*]:-}"											#devdebug
+	DebugArray args "${args[*]:-}"											# devdebug
 
 	FuncExit
 
@@ -2263,10 +2263,10 @@ ParseHelpArgs()
 		esac
 	done
 
-	DebugArray args_incomplete "${args_incomplete[*]:-}"					#devdebug
+	DebugArray args_incomplete "${args_incomplete[*]:-}"					# devdebug
 
 	args=(${args_remaining[@]:-})
-	DebugArray args "${args[*]:-}"											#devdebug
+	DebugArray args "${args[*]:-}"											# devdebug
 
 	FuncExit
 
@@ -2458,10 +2458,10 @@ ParseShowArgs()
 		args_incomplete+=("$user_action")									# Save the actual action word, phrase or char specified by the user.
 	fi
 
-	DebugArray args_incomplete "${args_incomplete[*]:-}"					#devdebug
+	DebugArray args_incomplete "${args_incomplete[*]:-}"					# devdebug
 
 	args=(${args_remaining[@]:-})
-	DebugArray args "${args[*]:-}"											#devdebug
+	DebugArray args "${args[*]:-}"											# devdebug
 
 	FuncExit
 
@@ -2593,11 +2593,11 @@ ParseListArgs()
 		args_incomplete+=("$user_action")									# Save the actual action word, phrase or char specified by the user.
 	fi
 
-	DebugVar generate_list_report 											#devdebug
-	DebugArray args_incomplete "${args_incomplete[*]:-}"					#devdebug
+	DebugVar generate_list_report 											# devdebug
+	DebugArray args_incomplete "${args_incomplete[*]:-}"					# devdebug
 
 	args=(${args_remaining[@]:-})
-	DebugArray args "${args[*]:-}"											#devdebug
+	DebugArray args "${args[*]:-}"											# devdebug
 
 	FuncExit
 
@@ -2748,10 +2748,10 @@ ParseActionArgs()
 		esac
 	done
 
-	DebugArray args_incomplete "${args_incomplete[*]:-}"					#devdebug
+	DebugArray args_incomplete "${args_incomplete[*]:-}"					# devdebug
 
 	args=(${args_remaining[@]:-})
-	DebugArray args "${args[*]:-}"											#devdebug
+	DebugArray args "${args[*]:-}"											# devdebug
 
 	FuncExit
 
@@ -7284,66 +7284,66 @@ ListQPKGsActions()
 
 	}
 
-ListQPKGsActionsAll()																						#devdebug
-	{																										#devdebug
+ListQPKGsActionsAll()																						# devdebug
+	{																										# devdebug
 
-	# Only used when debugging.																				#devdebug
+	# Only used when debugging.																				# devdebug
 
-	# Inputs: (global)																						#devdebug
-	#	$r_qpkg_actions[]																					#devdebug
+	# Inputs: (global)																						# devdebug
+	#	$r_qpkg_actions[]																					# devdebug
 
-	FuncInit																								#devdebug
+	FuncInit																								# devdebug
 
-	local a=''																								#devdebug
-	local b=''																								#devdebug
-	DebugInfoMinSepr																						#devdebug
+	local a=''																								# devdebug
+	local b=''																								# devdebug
+	DebugInfoMinSepr																						# devdebug
 
-	for a in "${r_qpkg_actions[@]}"; do																		#devdebug
-		for b in to ok er sk so se sa; do																	#devdebug
-			if QPKGs-AC${a}-${b}.IsAny; then																#devdebug
-				DebugQpkg info "AC${a}-${b}" "($(QPKGs-AC${a}-${b}:Count)) $(QPKGs-AC${a}-${b}:ListCSV) "	#devdebug
-			fi																								#devdebug
-		done																								#devdebug
-	done																									#devdebug
+	for a in "${r_qpkg_actions[@]}"; do																		# devdebug
+		for b in to ok er sk so se sa; do																	# devdebug
+			if QPKGs-AC${a}-${b}.IsAny; then																# devdebug
+				DebugQpkg info "AC${a}-${b}" "($(QPKGs-AC${a}-${b}:Count)) $(QPKGs-AC${a}-${b}:ListCSV) "	# devdebug
+			fi																								# devdebug
+		done																								# devdebug
+	done																									# devdebug
 
-	DebugInfoMinSepr																						#devdebug
+	DebugInfoMinSepr																						# devdebug
 
-	FuncExit																								#devdebug
+	FuncExit																								# devdebug
 
-	}																										#devdebug
+	}																										# devdebug
 
-ListQPKGsFlagsAll()																							#devdebug
-	{																										#devdebug
+ListQPKGsFlagsAll()																							# devdebug
+	{																										# devdebug
 
-	# Only used when debugging.																				#devdebug
+	# Only used when debugging.																				# devdebug
 
-	# Inputs: (global)																						#devdebug
-	#	$r_qpkg_actions[]																					#devdebug
-	#	$r_qpkg_is_states[]																					#devdebug
+	# Inputs: (global)																						# devdebug
+	#	$r_qpkg_actions[]																					# devdebug
+	#	$r_qpkg_is_states[]																					# devdebug
 
-	FuncInit																								#devdebug
+	FuncInit																								# devdebug
 
-	local a=''																								#devdebug
-	local b=''																								#devdebug
-	DebugInfoMinSepr																						#devdebug
+	local a=''																								# devdebug
+	local b=''																								# devdebug
+	DebugInfoMinSepr																						# devdebug
 
-	for a in "${r_qpkg_actions[@]}"; do																		#devdebug
-		for b in "${r_qpkg_is_states[@]}"; do																#devdebug
-			if [[ $(type -t QPKGs.AC${a}IS${b}.IsSet) = function ]]; then									#devdebug
-				if QPKGs.AC${a}IS${b}.IsSet; then															#devdebug
-					DebugQpkg info "AC${a}IS${b}" "set"														#devdebug
-# 				else																						#devdebug
-# 					DebugQpkg info "AC${a}IS${b}" "unset"													#devdebug
-				fi																							#devdebug
-			fi																								#devdebug
-		done																								#devdebug
-	done																									#devdebug
+	for a in "${r_qpkg_actions[@]}"; do																		# devdebug
+		for b in "${r_qpkg_is_states[@]}"; do																# devdebug
+			if [[ $(type -t QPKGs.AC${a}IS${b}.IsSet) = function ]]; then									# devdebug
+				if QPKGs.AC${a}IS${b}.IsSet; then															# devdebug
+					DebugQpkg info "AC${a}IS${b}" "set"														# devdebug
+# 				else																						# devdebug
+# 					DebugQpkg info "AC${a}IS${b}" "unset"													# devdebug
+				fi																							# devdebug
+			fi																								# devdebug
+		done																								# devdebug
+	done																									# devdebug
 
-	DebugInfoMinSepr																						#devdebug
+	DebugInfoMinSepr																						# devdebug
 
-	FuncExit																								#devdebug
+	FuncExit																								# devdebug
 
-	}																										#devdebug
+	}																										# devdebug
 
 ListIPKsActions()
 	{
@@ -10429,7 +10429,7 @@ _QPKG:upgrade_()
 		if [[ $current_ver = "$prev_ver" ]]; then
 			SaveActionResultToLog QPKG "$qpkg_name" upgrade '' ok "v${current_ver}"
 		else
-			SaveActionResultToLog QPKG "$qpkg_name" upgrade '' ok "v${prev_ver} -> v${current_ver}"
+			SaveActionResultToLog QPKG "$qpkg_name" upgrade '' ok "v${prev_ver} -> v${current_ver}" 	# squeezer-ignore
 		fi
 
 		MarkActionForkAsOk
@@ -13647,7 +13647,7 @@ RunAndLog()
 	FormatCommand "$1" >"$2"
 
 	if [[ $useropt_verbose = true ]]; then
-		eval "$1 > >(/usr/bin/tee $r_log_pathfile) 2>&1"	# NOTE: `tee` buffers stdout here.
+		eval "$1 > >(/usr/bin/tee $r_log_pathfile) 2>&1"	# NOTE: `tee` buffers stdout here.		# squeezer-ignore
 		z=$?
 	else
 		(eval "$1" >"$r_log_pathfile" 2>&1)				# Run in a subshell to suppress 'Terminated' message later.
