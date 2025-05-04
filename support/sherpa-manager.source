@@ -1083,15 +1083,6 @@ CheckEnv()
 
 	}
 
-IsEntwareUpgradable()
-	{
-
-	local a=$(GetQpkgInstalledDate Entware)
-
-	[[ $a = undefined || ${a//[!0-9]/} -le $r_entware_packages_last_updated ]] && [[ $r_nas_arch != armv5tel ]]
-
-	}
-
 AssignQpkgsToActions()
 	{
 
@@ -3435,22 +3426,6 @@ _UpdateEntwarePackageList_()
 
 	}
 
-IsThisFileRecent()
-	{
-
-	# Inputs: (local)
-	#   $1 = pathfilename: file to examine change time of.
-	#   $2 (optional) = integer - threshold in minutes. Default is `1440` (1 day).
-
-	# Outputs: (local)
-	#   $? = true/false
-
-	# Examine `change` time as this is updated even if file content isn't modified.
-
-	[[ -e ${1:-} && $((($(ConvertNowToSeconds)-$(/usr/bin/stat "$1" -c %Z))/60)) -le ${2:-1440} ]]		# https://stackoverflow.com/a/55622661
-
-	}
-
 SaveIpkAndPipList()
 	{
 
@@ -4399,74 +4374,6 @@ DeleteSetting()
 	local a=${1:?${FUNCNAME[0]}'()': $r_noname}
 
 	/sbin/setcfg -e sherpa "$a" -f /etc/config/qpkg.conf
-
-	}
-
-IsUserOk()
-	{
-
-	# Inputs: (global)
-	#	$r_args_raw
-	#	$r_chars_sudo_prompt
-
-	if ! IsUserSU; then
-		if IsOsCanSudo; then
-			ShowAsError 'this utility must be run with superuser privileges. Try again as:'
-			echo "${r_chars_sudo_prompt}sherpa $r_args_raw" >&2
-		else
-			ShowAsError "this utility must be run as the 'admin' user. Please login via SSH as 'admin' and try again"
-		fi
-
-		return 1
-	fi
-
-	return 0
-
-	}
-
-IsUserSU()
-	{
-
-	# Inputs: (global)
-	#	$EUID
-
-	[[ $EUID -eq 0 ]]
-
-	}
-
-IsSysFileExist()
-	{
-
-	# Inputs: (local)
-	#   $1 = pathfile to check
-
-	# Outputs: (local)
-	#   $? = 0 (exists) or 1 (not exists)
-
-	[[ -n ${1:?${FUNCNAME[0]}'()': $r_nopfile} ]] || exit
-
-	local a=${1%% *}		# Extract first word-group.
-
-	if ! [[ -f $a || -L $a ]]; then
-		ShowAsAbort "a required NAS system file $(FormatFileName "$a") is missing"
-
-		return 1
-	fi
-
-	return 0
-
-	}
-
-IsNtSysFileExist()
-	{
-
-	# Inputs: (local)
-	#   $1 = pathfile to check
-
-	# Outputs: (local)
-	#   $? = 0 (not exists) or 1 (exists)
-
-	! IsSysFileExist "${1:?${FUNCNAME[0]}'()': $r_nopfile}"
 
 	}
 
@@ -9481,364 +9388,6 @@ GetUserGitBranch()
 
 	}
 
-IsOsOk()
-	{
-
-	if ! IsOsQNAP; then
-		ShowAsAbort 'QNAP shell functions not found ... is this a QNAP NAS?'
-
-		return 1
-	fi
-
-	return 0
-
-	}
-
-IsOsQNAP()
-	{
-
-	# Is this a QNAP NAS?
-
-	[[ -e /etc/init.d/functions ]]
-
-	} &>/dev/null
-
-IsQuTS()
-	{
-
-    /bin/grep -q zfs /proc/filesystems
-
-	} &>/dev/null
-
-#IsQTS()
-# 	{
-#
-#     ! IsQuTS
-#
-# 	} &>/dev/null
-
-IsOsSupported()
-	{
-
-	# Inputs: (global)
-	#	$r_nas_firmware_ver
-
-	# Unable to test firmwares any earlier than 4.2.6 (but still have 4.2.0 available for TS-559Pro+ ).
-
-	SetOsFirmwareVer
-
-	[[ $r_nas_firmware_ver -ge 400 ]]
-
-	} &>/dev/null
-
-IsOsCanAsyncQpkgActions()
-	{
-
-	# Inputs: (global)
-	#	$r_nas_firmware_ver
-
-	SetOsFirmwareVer
-
-	[[ $r_nas_firmware_ver -ge 520 ]]
-
-	} &>/dev/null
-
-IsOsCanSecureDownload()
-	{
-
-	# `/sbin/curl` with SSL certificate verification enabled:
-	#	- fails in:
-	# 		QTS 4.2.6
-	# 		QTS 4.4.1
-	# 		QTS 4.5.1
-	# 		QTS 4.5.4.1715
-	#	- works in:
-	# 		QTS 4.5.4.2627
-
-	# Inputs: (global)
-	#	$r_nas_firmware_ver
-
-	SetOsFirmwareVer
-
-	[[ $r_nas_firmware_ver -ge 455 ]]
-
-	} &>/dev/null
-
-IsOsCanQpkgTimeout()
-	{
-
-	# Inputs: (global)
-	#	$r_nas_firmware_ver
-
-	SetOsFirmwareVer
-
-	[[ $r_nas_firmware_ver -ge 430 ]]
-
-	} &>/dev/null
-
-IsOsCanSignedPackages()
-	{
-
-	# Inputs: (global)
-	#	$r_nas_firmware_ver
-
-	# NOTE: signing fails on QTS 4.3.6 (x31). No cert database (which appears to be a bug, as 4.3.6 is meant to support signed QPKGs).
-
-	SetOsFirmwareVer
-
-	[[ $r_nas_firmware_ver -ge 437 ]]
-
-	} &>/dev/null
-
-IsOsCanUnofficialPackages()
-	{
-
-	# Inputs: (global)
-	#	$r_nas_firmware_ver
-
-	# Must check for "official QPKGs" on QTS 4.3.3 to QTS 4.3.6:
-
-	SetOsFirmwareVer
-
-	[[ $r_nas_firmware_ver -gt 426 && $r_nas_firmware_ver -le 436 ]]
-
-	} &>/dev/null
-
-IsOsCanSudo()
-	{
-
-	[[ -e /usr/bin/sudo ]]
-
-	} &>/dev/null
-
-IsOsCanSedExtRegex()
-	{
-
-	# Test if QTS `/bin/sed` can handle extended regexes (early BusyBox versions cannot):
-
-	[[ $(echo -en "\033[1;97ma" | /bin/sed -r 's/\x1b\[[0-9;]*m//g' | /usr/bin/wc -c) -eq 1 ]]
-
-	}
-
-IsOsCanDecimalSleepSeconds()
-	{
-
-	# Test if QTS `/bin/sleep` can handle decimal seconds (early BusyBox versions cannot):
-
-	/bin/sleep .01
-
-	} &>/dev/null
-
-IsOsCanAutowidthTableColumns()
-	{
-
-	# Inputs: (global)
-	#	$r_gnu_awk_cmd
-
-	[[ -e $r_gnu_awk_cmd ]]
-
-	}
-
-IsOsCompatibleWithSigned()
-	{
-
-	# Inputs: (global)
-	#	$r_nas_firmware_date
-
-	# QTS builds released over these 6 days don't allow unsigned QPKGs to run at-all:
-
-	SetOsFirmwareDate
-
-	[[ $r_nas_firmware_date -lt 20201015 || $r_nas_firmware_date -gt 20201020 ]]
-
-	} &>/dev/null
-
-IsOsAllowUnsignedPackages()
-	{
-
-	[[ $(/sbin/getcfg 'QPKG Management' Ignore_Cert -d FALSE) = TRUE ]]
-
-	}
-
-IsOsAllowUnofficialPackages()
-	{
-
-	[[ $(/sbin/getcfg 'QPKG Management' Check_Official -d TRUE) = FALSE ]]
-
-	}
-
-IsOsStarting()
-	{
-
-	/bin/ps | /bin/grep '/bin/sh /etc/init.d/rcS' | /bin/grep -v grep
-
-	} &>/dev/null
-
-IsOsStopping()
-	{
-
-	/bin/ps | /bin/grep '/bin/sh /etc/init.d/rcK' | /bin/grep -v grep
-
-	} &>/dev/null
-
-IsOsStartingPackages()
-	{
-
-	if IsOsCanAsyncQpkgActions; then
-		/bin/ps | /bin/grep '/usr/local/sbin/qpkg_service start' | /bin/grep -v grep
-	else
-		IsOsStarting
-	fi
-
-	} &>/dev/null
-
-IsOsStoppingPackages()
-	{
-
-	if IsOsCanAsyncQpkgActions; then
-		/bin/ps | /bin/grep '/usr/local/sbin/qpkg_service stop' | /bin/grep -v grep
-	else
-		IsOsStopping
-	fi
-
-	} &>/dev/null
-
-IsOsOnline()
-	{
-
-	[[ $(GetOsState) = online ]]
-
-	}
-
-IsOsStdKernelPageSize()
-	{
-
-	# Standard kernel page size for most QNAP NAS is 4kiB. Non-standard size is 32kiB (confirmed on the TS-431XeU, TS-431X3 & TS-1635).
-	# https://www.qnap.com/en-us/how-to/faq/article/why-do-the-installed-third-party-containers-not-run-successfully-on-specific-32-bit-arm-devices
-
-	# Inputs: (global)
-	#	$r_kernel_page_size
-
-	SetOsKernelPageSize
-
-	[[ $r_kernel_page_size = 4096B || $r_kernel_page_size = 4kiB ]]
-
-	}
-
-IsOsNonStdKernelPageSize()
-	{
-
-	! IsOsStdKernelPageSize
-
-	}
-
-IsOsLoadAverageElevated()
-	{
-
-	IsOsLoadAverageAboveTrigger 2
-
-	}
-
-IsOsLoadAverageHigh()
-	{
-
-	IsOsLoadAverageAboveTrigger 4
-
-	}
-
-IsOsLoadAverageInsane()
-	{
-
-	IsOsLoadAverageAboveTrigger 8
-
-	}
-
-IsOsLoadAverageAboveTrigger()
-	{
-
-	# Inputs: (local)
-	#	$1 = multiplier
-
-	# Inputs: (global)
-	#	$r_cpu_cores
-
-	local a=${1:-1}
-	local b=$(GetOsSysLoad1MinAverage); b=${b/./}
-	local c=$((r_cpu_cores*a*100))
-
-	[[ $((10#$b)) -ge $((10#$c)) ]]
-
-	}
-
-IsOsSedExtRegexSupported()
-	{
-
-	# Inputs: (global)
-	#	$sed_ext_regex_supported
-
-	[[ ${sed_ext_regex_supported-unset} = unset ]] && SetOsSedRegexSupport
-	[[ $sed_ext_regex_supported -eq 0 ]]
-
-	}
-
-IsOsDecimalSleepSecondsSupported()
-	{
-
-	# Inputs: (global)
-	#	$sleep_decimal_seconds_supported
-
-	[[ ${sleep_decimal_seconds_supported-unset} = unset ]] && SetOsDecimalSleepSecondsSupport
-	[[ $sleep_decimal_seconds_supported -eq 0 ]]
-
-	}
-
-IsInTerminal()
-	{
-
-	[[ -t 0 ]]
-
-	}
-
-SetError()
-	{
-
-	# Outputs: (global)
-	#	$run_package_actions
-	#	$_script_error_flag_
-
-	run_package_actions=false
-	IsError && return
-	_script_error_flag_=true
-	DebugVar _script_error_flag_
-
-	}
-
-IsError()
-	{
-
-	# Inputs: (global)
-	#	$_script_error_flag_
-
-	# Outputs: (global)
-	#	$_script_error_flag_
-
-	[[ ${_script_error_flag_:=false} = true ]]
-
-	}
-
-IsNtError()
-	{
-
-	# Inputs: (global)
-	#	$_script_error_flag_
-
-	# Outputs: (global)
-	#	$_script_error_flag_
-
-	[[ ${_script_error_flag_:=false} != true ]]
-
-	}
-
 ShowZeroQpkgs()
 	{
 
@@ -12585,67 +12134,440 @@ QpkgMatchAbbrv()
 
 	}
 
-SetQpkgIndex()
+IsUserOk()
 	{
 
-	# Find and set the 1-based index reference of the named arch-specific QPKG in `packages` file.
-
 	# Inputs: (global)
-	#   $r_nas_qpkg_arch
-	#   $r_qpkg_arch[]
-	#   $qpkg_name
-	#   $r_qpkg_name[]
+	#	$r_args_raw
+	#	$r_chars_sudo_prompt
 
-	# Outputs: (local)
-	#   $? = 0 (successful) / !0 (failed)
+	if ! IsUserSU; then
+		if IsOsCanSudo; then
+			ShowAsError 'this utility must be run with superuser privileges. Try again as:'
+			echo "${r_chars_sudo_prompt}sherpa $r_args_raw" >&2
+		else
+			ShowAsError "this utility must be run as the 'admin' user. Please login via SSH as 'admin' and try again"
+		fi
 
-	# Outputs: (global)
-	#   $qpkg_index ('0' if QPKG a compatible arch could not be found).
+		return 1
+	fi
 
-	[[ -n ${qpkg_name:-} ]] || return
-
-	SetQpkgDefaultIndex
-	SetQpkgArch
-
-	for qpkg_index in "${!r_qpkg_name[@]}"; do
-		[[ ${r_qpkg_name[$qpkg_index]} = "$qpkg_name" ]] || continue
-		[[ ${r_qpkg_arch[$qpkg_index]} = all || ${r_qpkg_arch[$qpkg_index]} = "$r_nas_qpkg_arch" ]] || continue
-
-		return 0
-	done
-
-	qpkg_index=0
-
-	return 1
+	return 0
 
 	}
 
-SetQpkgDefaultIndex()
+IsUserSU()
 	{
 
-	# Find and set the 1-based index reference of the named QPKG in `packages` file.
-
 	# Inputs: (global)
-	#   $qpkg_name
-	#   $r_qpkg_name[]
+	#	$EUID
+
+	[[ $EUID -eq 0 ]]
+
+	}
+
+IsSysFileExist()
+	{
+
+	# Inputs: (local)
+	#   $1 = pathfile to check
 
 	# Outputs: (local)
-	#   $? = 0 (successful) / !0 (failed)
+	#   $? = 0 (exists) or 1 (not exists)
+
+	[[ -n ${1:?${FUNCNAME[0]}'()': $r_nopfile} ]] || exit
+
+	local a=${1%% *}		# Extract first word-group.
+
+	if ! [[ -f $a || -L $a ]]; then
+		ShowAsAbort "a required NAS system file $(FormatFileName "$a") is missing"
+
+		return 1
+	fi
+
+	return 0
+
+	}
+
+IsNtSysFileExist()
+	{
+
+	# Inputs: (local)
+	#   $1 = pathfile to check
+
+	# Outputs: (local)
+	#   $? = 0 (not exists) or 1 (exists)
+
+	! IsSysFileExist "${1:?${FUNCNAME[0]}'()': $r_nopfile}"
+
+	}
+
+IsThisFileRecent()
+	{
+
+	# Inputs: (local)
+	#   $1 = pathfilename: file to examine change time of.
+	#   $2 (optional) = integer - threshold in minutes. Default is `1440` (1 day).
+
+	# Outputs: (local)
+	#   $? = true/false
+
+	# Examine `change` time as this is updated even if file content isn't modified.
+
+	[[ -e ${1:-} && $((($(ConvertNowToSeconds)-$(/usr/bin/stat "$1" -c %Z))/60)) -le ${2:-1440} ]]		# https://stackoverflow.com/a/55622661
+
+	}
+
+IsEntwareUpgradable()
+	{
+
+	local a=$(GetQpkgInstalledDate Entware)
+
+	[[ $a = undefined || ${a//[!0-9]/} -le $r_entware_packages_last_updated ]] && [[ $r_nas_arch != armv5tel ]]
+
+	}
+
+IsOsOk()
+	{
+
+	if ! IsOsQNAP; then
+		ShowAsAbort 'QNAP shell functions not found ... is this a QNAP NAS?'
+
+		return 1
+	fi
+
+	return 0
+
+	}
+
+IsOsQNAP()
+	{
+
+	# Is this a QNAP NAS?
+
+	[[ -e /etc/init.d/functions ]]
+
+	} &>/dev/null
+
+IsQuTS()
+	{
+
+    /bin/grep -q zfs /proc/filesystems
+
+	} &>/dev/null
+
+#IsQTS()
+# 	{
+#
+#     ! IsQuTS
+#
+# 	} &>/dev/null
+
+IsOsSupported()
+	{
+
+	# Inputs: (global)
+	#	$r_nas_firmware_ver
+
+	# Unable to test firmwares any earlier than 4.2.6 (but still have 4.2.0 available for TS-559Pro+ ).
+
+	SetOsFirmwareVer
+
+	[[ $r_nas_firmware_ver -ge 400 ]]
+
+	} &>/dev/null
+
+IsOsCanAsyncQpkgActions()
+	{
+
+	# Inputs: (global)
+	#	$r_nas_firmware_ver
+
+	SetOsFirmwareVer
+
+	[[ $r_nas_firmware_ver -ge 520 ]]
+
+	} &>/dev/null
+
+IsOsCanSecureDownload()
+	{
+
+	# `/sbin/curl` with SSL certificate verification enabled:
+	#	- fails in:
+	# 		QTS 4.2.6
+	# 		QTS 4.4.1
+	# 		QTS 4.5.1
+	# 		QTS 4.5.4.1715
+	#	- works in:
+	# 		QTS 4.5.4.2627
+
+	# Inputs: (global)
+	#	$r_nas_firmware_ver
+
+	SetOsFirmwareVer
+
+	[[ $r_nas_firmware_ver -ge 455 ]]
+
+	} &>/dev/null
+
+IsOsCanQpkgTimeout()
+	{
+
+	# Inputs: (global)
+	#	$r_nas_firmware_ver
+
+	SetOsFirmwareVer
+
+	[[ $r_nas_firmware_ver -ge 430 ]]
+
+	} &>/dev/null
+
+IsOsCanSignedPackages()
+	{
+
+	# Inputs: (global)
+	#	$r_nas_firmware_ver
+
+	# NOTE: signing fails on QTS 4.3.6 (x31). No cert database (which appears to be a bug, as 4.3.6 is meant to support signed QPKGs).
+
+	SetOsFirmwareVer
+
+	[[ $r_nas_firmware_ver -ge 437 ]]
+
+	} &>/dev/null
+
+IsOsCanUnofficialPackages()
+	{
+
+	# Inputs: (global)
+	#	$r_nas_firmware_ver
+
+	# Must check for "official QPKGs" on QTS 4.3.3 to QTS 4.3.6:
+
+	SetOsFirmwareVer
+
+	[[ $r_nas_firmware_ver -gt 426 && $r_nas_firmware_ver -le 436 ]]
+
+	} &>/dev/null
+
+IsOsCanSudo()
+	{
+
+	[[ -e /usr/bin/sudo ]]
+
+	} &>/dev/null
+
+IsOsCanSedExtRegex()
+	{
+
+	# Test if QTS `/bin/sed` can handle extended regexes (early BusyBox versions cannot):
+
+	[[ $(echo -en "\033[1;97ma" | /bin/sed -r 's/\x1b\[[0-9;]*m//g' | /usr/bin/wc -c) -eq 1 ]]
+
+	}
+
+IsOsCanDecimalSleepSeconds()
+	{
+
+	# Test if QTS `/bin/sleep` can handle decimal seconds (early BusyBox versions cannot):
+
+	/bin/sleep .01
+
+	} &>/dev/null
+
+IsOsCanAutowidthTableColumns()
+	{
+
+	# Inputs: (global)
+	#	$r_gnu_awk_cmd
+
+	[[ -e $r_gnu_awk_cmd ]]
+
+	}
+
+IsOsCompatibleWithSigned()
+	{
+
+	# Inputs: (global)
+	#	$r_nas_firmware_date
+
+	# QTS builds released over these 6 days don't allow unsigned QPKGs to run at-all:
+
+	SetOsFirmwareDate
+
+	[[ $r_nas_firmware_date -lt 20201015 || $r_nas_firmware_date -gt 20201020 ]]
+
+	} &>/dev/null
+
+IsOsAllowUnsignedPackages()
+	{
+
+	[[ $(/sbin/getcfg 'QPKG Management' Ignore_Cert -d FALSE) = TRUE ]]
+
+	}
+
+IsOsAllowUnofficialPackages()
+	{
+
+	[[ $(/sbin/getcfg 'QPKG Management' Check_Official -d TRUE) = FALSE ]]
+
+	}
+
+IsOsStarting()
+	{
+
+	/bin/ps | /bin/grep '/bin/sh /etc/init.d/rcS' | /bin/grep -v grep
+
+	} &>/dev/null
+
+IsOsStopping()
+	{
+
+	/bin/ps | /bin/grep '/bin/sh /etc/init.d/rcK' | /bin/grep -v grep
+
+	} &>/dev/null
+
+IsOsStartingPackages()
+	{
+
+	if IsOsCanAsyncQpkgActions; then
+		/bin/ps | /bin/grep '/usr/local/sbin/qpkg_service start' | /bin/grep -v grep
+	else
+		IsOsStarting
+	fi
+
+	} &>/dev/null
+
+IsOsStoppingPackages()
+	{
+
+	if IsOsCanAsyncQpkgActions; then
+		/bin/ps | /bin/grep '/usr/local/sbin/qpkg_service stop' | /bin/grep -v grep
+	else
+		IsOsStopping
+	fi
+
+	} &>/dev/null
+
+IsOsOnline()
+	{
+
+	[[ $(GetOsState) = online ]]
+
+	}
+
+IsOsStdKernelPageSize()
+	{
+
+	# Standard kernel page size for most QNAP NAS is 4kiB. Non-standard size is 32kiB (confirmed on the TS-431XeU, TS-431X3 & TS-1635).
+	# https://www.qnap.com/en-us/how-to/faq/article/why-do-the-installed-third-party-containers-not-run-successfully-on-specific-32-bit-arm-devices
+
+	# Inputs: (global)
+	#	$r_kernel_page_size
+
+	SetOsKernelPageSize
+
+	[[ $r_kernel_page_size = 4096B || $r_kernel_page_size = 4kiB ]]
+
+	}
+
+IsOsNonStdKernelPageSize()
+	{
+
+	! IsOsStdKernelPageSize
+
+	}
+
+IsOsLoadAverageElevated()
+	{
+
+	IsOsLoadAverageAboveTrigger 2
+
+	}
+
+IsOsLoadAverageHigh()
+	{
+
+	IsOsLoadAverageAboveTrigger 4
+
+	}
+
+IsOsLoadAverageInsane()
+	{
+
+	IsOsLoadAverageAboveTrigger 8
+
+	}
+
+IsOsLoadAverageAboveTrigger()
+	{
+
+	# Inputs: (local)
+	#	$1 = multiplier
+
+	# Inputs: (global)
+	#	$r_cpu_cores
+
+	local a=${1:-1}
+	local b=$(GetOsSysLoad1MinAverage); b=${b/./}
+	local c=$((r_cpu_cores*a*100))
+
+	[[ $((10#$b)) -ge $((10#$c)) ]]
+
+	}
+
+IsOsSedExtRegexSupported()
+	{
+
+	# Inputs: (global)
+	#	$sed_ext_regex_supported
+
+	[[ ${sed_ext_regex_supported-unset} = unset ]] && SetOsSedRegexSupport
+	[[ $sed_ext_regex_supported -eq 0 ]]
+
+	}
+
+IsOsDecimalSleepSecondsSupported()
+	{
+
+	# Inputs: (global)
+	#	$sleep_decimal_seconds_supported
+
+	[[ ${sleep_decimal_seconds_supported-unset} = unset ]] && SetOsDecimalSleepSecondsSupport
+	[[ $sleep_decimal_seconds_supported -eq 0 ]]
+
+	}
+
+IsInTerminal()
+	{
+
+	[[ -t 0 ]]
+
+	}
+
+IsError()
+	{
+
+	# Inputs: (global)
+	#	$_script_error_flag_
 
 	# Outputs: (global)
-	#   $qpkg_default_index ('0' if QPKG could not be found).
+	#	$_script_error_flag_
 
-	[[ -n ${qpkg_name:-} ]] || return
+	[[ ${_script_error_flag_:=false} = true ]]
 
-	for qpkg_default_index in "${!r_qpkg_name[@]}"; do
-		[[ ${r_qpkg_name[$qpkg_default_index]} = "$qpkg_name" ]] || continue
+	}
 
-		return 0
-	done
+IsNtError()
+	{
 
-	qpkg_default_index=0
+	# Inputs: (global)
+	#	$_script_error_flag_
 
-	return 1
+	# Outputs: (global)
+	#	$_script_error_flag_
+
+	[[ ${_script_error_flag_:=false} != true ]]
 
 	}
 
@@ -14666,14 +14588,14 @@ ConvertLongDateAsHuman()
 		return 1
 	fi
 
-	local d=${a:4:2}
+	b=${a:4:2}
 
-	if ((d < 1 || d > 12)); then
+	if ((b < 1 || b > 12)); then
 		printf 'invalid month code'
 		return 1
 	fi
 
-	printf '%s-%s %s' "$c" "$(/bin/date -d 2025-$d-01 '+%B')" "${a::4}"
+	printf '%s-%s %s' "$c" "$(/bin/date -d 2025-$b-01 '+%B')" "${a::4}"
 
 	}
 
@@ -15547,6 +15469,84 @@ StripANSICodes()
 	fi
 
 	} 2>/dev/null
+
+SetQpkgIndex()
+	{
+
+	# Find and set the 1-based index reference of the named arch-specific QPKG in `packages` file.
+
+	# Inputs: (global)
+	#   $r_nas_qpkg_arch
+	#   $r_qpkg_arch[]
+	#   $qpkg_name
+	#   $r_qpkg_name[]
+
+	# Outputs: (local)
+	#   $? = 0 (successful) / !0 (failed)
+
+	# Outputs: (global)
+	#   $qpkg_index ('0' if QPKG a compatible arch could not be found).
+
+	[[ -n ${qpkg_name:-} ]] || return
+
+	SetQpkgDefaultIndex
+	SetQpkgArch
+
+	for qpkg_index in "${!r_qpkg_name[@]}"; do
+		[[ ${r_qpkg_name[$qpkg_index]} = "$qpkg_name" ]] || continue
+		[[ ${r_qpkg_arch[$qpkg_index]} = all || ${r_qpkg_arch[$qpkg_index]} = "$r_nas_qpkg_arch" ]] || continue
+
+		return 0
+	done
+
+	qpkg_index=0
+
+	return 1
+
+	}
+
+SetQpkgDefaultIndex()
+	{
+
+	# Find and set the 1-based index reference of the named QPKG in `packages` file.
+
+	# Inputs: (global)
+	#   $qpkg_name
+	#   $r_qpkg_name[]
+
+	# Outputs: (local)
+	#   $? = 0 (successful) / !0 (failed)
+
+	# Outputs: (global)
+	#   $qpkg_default_index ('0' if QPKG could not be found).
+
+	[[ -n ${qpkg_name:-} ]] || return
+
+	for qpkg_default_index in "${!r_qpkg_name[@]}"; do
+		[[ ${r_qpkg_name[$qpkg_default_index]} = "$qpkg_name" ]] || continue
+
+		return 0
+	done
+
+	qpkg_default_index=0
+
+	return 1
+
+	}
+
+SetError()
+	{
+
+	# Outputs: (global)
+	#	$run_package_actions
+	#	$_script_error_flag_
+
+	run_package_actions=false
+	IsError && return
+	_script_error_flag_=true
+	DebugVar _script_error_flag_
+
+	}
 
 SetHardwareCPUCores()
 	{
