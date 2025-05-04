@@ -246,7 +246,7 @@ LoadConsts()
 
 	readonly r_debug_log_full_width=100
 	readonly r_debug_log_first_column_width=9
-	readonly r_debug_log_second_column_width=22
+	readonly r_debug_log_second_column_width=24
 	readonly r_help_desc_indent=3
 	readonly r_help_syntax_indent=6
 	readonly r_report_action_result_indent=4
@@ -715,7 +715,7 @@ DebugLogEnv()
 	DebugHardware ok CPU "$(GetHardwareCPUInfo)"
 	DebugHardware ok 'CPU cores' "$r_cpu_cores"
 	DebugHardware ok 'CPU architecture' "$r_nas_arch"
-	DebugHardware ok 'CPU SHA1 benchmark' "$(GetHardwareCPUBenchmark)"
+	DebugHardware ok 'basic CPU SHA1 benchmark' "$(GetHardwareCPUBenchmark)"
 	DebugHardware ok RAM "$(FormatAsThous "$r_nas_ram_kb")kiB"
 	DebugKernel ok name "$(GetOsKernelName)"
 	DebugKernel ok version "$(GetOsKernelVersion)"
@@ -764,7 +764,7 @@ DebugLogEnv()
 	fi
 
 	DebugStorage ok 'default volume mounted' "$(GetUserDefVol)"
-	DebugStorage ok 'write benchmark' "$(GetHardwareVolumeBenchmark)"
+	DebugStorage ok 'basic write benchmark' "$(GetHardwareVolumeBenchmark)"
 	DebugStorage ok /opt "$(/usr/bin/readlink /opt 2>/dev/null || printf 'not present')"
 
 	local public_share_name=$(/sbin/getcfg SHARE_DEF defPublic -d Qpublic -f /etc/config/def_share.info)
