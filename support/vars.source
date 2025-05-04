@@ -160,9 +160,9 @@ Squeeze()
 
 		buffer=$(sed '/devdebug/d' <<< "$buffer")												# Remove lines with 'devdebug' tag.
 
+		buffer=$(sed '/[#>][[:space:]]>/! s/[[:space:]]>/>/g' <<< "$buffer")					# Remove whitespace before fd1 redirects.
 		buffer=$(sed '/squeezer-ignore/! s/>[[:space:]]/>/g' <<< "$buffer")						# Remove whitespace after fd1 redirects, except for lines with 'squeezer-ignore' tag.
 		buffer=$(sed 's/<[[:space:]]/</g' <<< "$buffer")										# Remove whitespace after fd0 redirects.
-		buffer=$(sed '/>[[:space:]]>/! s/[[:space:]]>/>/g' <<< "$buffer")						# Remove whitespace before fd1 redirects.
 		buffer=$(sed 's/[[:space:]]</</g' <<< "$buffer")										# Remove whitespace before fd0 redirects.
 
 		buffer=$(sed '/^#[[:space:]].*/d;/#$/d;s/[[:space:]]#[[:space:]].*//' <<< "$buffer")	# Remove comment lines and line comments. Comment tags won't be seen beyond this point.
