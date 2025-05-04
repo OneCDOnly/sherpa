@@ -28,7 +28,8 @@ for i in "${!a[@]}"; do
 		continue
 	fi
 
-	tar --create --gzip --numeric-owner --file="${b[i]}" --directory="$support_path" "$(basename "${a[i]}")"
+ 	tar --create --gzip --numeric-owner --file="${b[i]}" --directory="$support_path" "$(basename "${a[i]}")"
+# 	tar --create --bzip2 --numeric-owner --file="${b[i]}" --directory="$support_path" "$(basename "${a[i]}")"
 
 	if [[ ! -s ${b[i]} ]]; then
 		TextBrightRed "'${b[i]}' was not written"; echo

@@ -9236,7 +9236,7 @@ GetShellTimeIn()
 	{
 
 	# Inputs: (global)
-	#	$LOADER_SCRIPT_PPID
+	#	$LOADER_SCRIPT_PPID (this is generated in `sherpa-loader.source`)
 
 	local n=''
 
