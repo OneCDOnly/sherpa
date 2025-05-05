@@ -1,7 +1,8 @@
 Management:
 
-	* Generate tier lists and package inside `packages.tar.gz` file.
-		- Don't download `packages.tar.gz` then render tier lists locally.
+	* Only regenerate tier lists when checksum of 'packages.tag.gz' changes.
+
+	* squeezer: remove whitespaces either side of || and &&
 
 	* Include test to confirm QPKG installation is complete.
 
