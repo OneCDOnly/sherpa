@@ -167,6 +167,12 @@ Squeeze()
 		buffer=$(sed 's/\;[[:space:]]/;/g' <<< "$buffer")										# Remove whitespace after semicolons.
 		buffer=$(sed 's/[[:space:]]\;/;/g' <<< "$buffer")										# Remove whitespace before semicolons.
 
+		buffer=$(sed 's/\&\&[[:space:]]/\&\&/g' <<< "$buffer")									# Remove whitespace after inline true test.
+		buffer=$(sed 's/[[:space:]]\&\&/\&\&/g' <<< "$buffer")									# Remove whitespace before inline true test.
+
+		buffer=$(sed 's/||[[:space:]]/||/g' <<< "$buffer")										# Remove whitespace after inline false test.
+		buffer=$(sed 's/[[:space:]]||/||/g' <<< "$buffer")										# Remove whitespace before inline false test.
+
 		buffer=$(sed '/^#[[:space:]].*/d;/#$/d;s/[[:space:]]#[[:space:]].*//' <<< "$buffer")	# Remove comment lines and line comments. Comment tags won't be seen beyond this point.
 
 		buffer=$(sed 's/^[[:space:]]*//' <<< "$buffer")											# Remove line leading whitespace.
