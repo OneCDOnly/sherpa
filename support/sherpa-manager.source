@@ -3542,7 +3542,7 @@ CalcIpkDepsToInstall()
 		printf -v ipk_titles '^Package: %s$\|' "${this_list[@]}"
 		ipk_titles=${ipk_titles%??}		# Remove last 2 characters.
 
-		this_list=($($r_gnu_grep_cmd --word-regexp --after-context 1 --no-group-separator '^Package:\|^Depends:' "$r_external_packages_pathfile" | $r_gnu_grep_cmd -vG '^Section:\|^Version:' | $r_gnu_grep_cmd --word-regexp --after-context 1 --no-group-separator "$ipk_titles" | $r_gnu_grep_cmd -vG "$ipk_titles" | $r_gnu_grep_cmd -vG '^Package: ' | /bin/sed 's|^Depends: ||;s|, |\n|g' | /usr/bin/sort | /bin/uniq))
+		this_list=($($r_gnu_grep_cmd --word-regexp --after-context 1 --no-group-separator '^Package:\|^Depends:' "$r_external_packages_pathfile" | $r_gnu_grep_cmd -vG '^Section:\|^Version:' | $r_gnu_grep_cmd --word-regexp --after-context 1 --no-group-separator "$ipk_titles" | $r_gnu_grep_cmd -vG "$ipk_titles" | $r_gnu_grep_cmd -vG '^Package: ' | /bin/sed 's/^Depends: //;s/, /\n/g' | /usr/bin/sort | /bin/uniq))
 
 		# Update progress twice per loop.
 		ShowAsIterativeProgress 'resolve IPK dependencies' "$iterations" iteration "${#dep_acc[@]}" 'unique IPK'
@@ -3620,7 +3620,7 @@ CalcIpkDownloadSize()
 		ShowAsProc "calculate size of IPK$(Pluralise "$size_count") to download"
 
 		DebugAsDone "$size_count IPK$(Pluralise "$size_count") to download: '$(IPKs-ACdownload-to:List)'"
-		size_array=($($r_gnu_grep_cmd -w '^Package:\|^Size:' "$r_external_packages_pathfile" | $r_gnu_grep_cmd --after-context 1 --no-group-separator ": $(/bin/sed 's/ /$ /g;s/\$ /\$\\\|: /g' <<<"$(IPKs-ACdownload-to:List)")" | /bin/grep '^Size:' | /bin/sed 's|^Size: ||'))
+		size_array=($($r_gnu_grep_cmd -w '^Package:\|^Size:' "$r_external_packages_pathfile" | $r_gnu_grep_cmd --after-context 1 --no-group-separator ": $(/bin/sed 's/ /$ /g;s/\$ /\$\\\|: /g' <<<"$(IPKs-ACdownload-to:List)")" | /bin/grep '^Size:' | /bin/sed 's/^Size: //'))
 
 		# shellcheck disable=2283
 		IPKs-ACdownload-to:Size = "$(IFS=+; echo "$((${size_array[*]:-}))")"		# nifty sizing shortcut found here https://stackoverflow.com/a/13635566/6182835
@@ -8929,9 +8929,9 @@ GetHardwareCPUInfo()
 	# BusyBox 1.01 doesn't support `grep -m`, so extract first mention the hard-way with `head`.
 
 	if /bin/grep -q '^model name' /proc/cpuinfo; then
-		/bin/grep '^model name' /proc/cpuinfo | head -n1 | /bin/sed 's|^.*: ||' | tr -s ' '
+		/bin/grep '^model name' /proc/cpuinfo | head -n1 | /bin/sed 's/^.*: //' | tr -s ' '
 	elif /bin/grep -q '^Processor name' /proc/cpuinfo; then
-		/bin/grep '^Processor name' /proc/cpuinfo | head -n1 | /bin/sed 's|^.*: ||' | tr -s ' '
+		/bin/grep '^Processor name' /proc/cpuinfo | head -n1 | /bin/sed 's/^.*: //' | tr -s ' '
 	else
 		printf unknown
 
@@ -9049,7 +9049,7 @@ GetOsKernelPageSize()
 	if [[ -e /sbin/hal_app ]]; then
 		echo -n "$(/sbin/hal_app --get_pagesize)B"
 	else
-		/bin/grep KernelPageSize /proc/1/smaps | head -n1 | cut -f2 -d':' | tr -d ' ' | /bin/sed 's|kB|kiB|'
+		/bin/grep KernelPageSize /proc/1/smaps | head -n1 | cut -f2 -d':' | tr -d ' ' | /bin/sed 's/kB/kiB/'
 	fi
 
 	}
@@ -9117,7 +9117,7 @@ GetUserLIBC()
 GetUserLIBCCopyright()
 	{
 
-	/sbin/ldd --version | /bin/grep -i copyright | /bin/sed 's|\$||'
+	/sbin/ldd --version | /bin/grep -i copyright | /bin/sed 's/\$//'
 
 	}
 
@@ -9154,7 +9154,7 @@ GetShellCopyright()
 	if [[ -z ${SHELL:-} ]]; then
 		printf undefined
 	else
-		$SHELL --version | /bin/grep -i copyright | /bin/sed 's|\$||'
+		$SHELL --version | /bin/grep -i copyright | /bin/sed 's/\$//'
 	fi
 
 	}
@@ -9176,14 +9176,14 @@ GetShellTimeIn()
 GetOsSysLoadAverages()
 	{
 
-	/usr/bin/uptime | /bin/sed 's|.*load average: ||' | /bin/awk -F', ' '{print "1m:"$1", 5m:"$2", 15m:"$3}' | tr -d ' '
+	/usr/bin/uptime | /bin/sed 's/.*load average: //' | /bin/awk -F', ' '{print "1m:"$1", 5m:"$2", 15m:"$3}'
 
 	}
 
 GetOsSysLoad1MinAverage()
 	{
 
-	/usr/bin/uptime | /bin/sed 's|.*load average: ||' | /bin/awk -F', ' '{print $1}' | tr -d ' '
+	/usr/bin/uptime | /bin/sed 's/.*load average: //' | /bin/awk -F', ' '{print $1}'
 
 	}
 
@@ -9204,7 +9204,7 @@ GetHardwareInstalledRAM()
 	# Outputs: (local)
 	#	stdout = text string.
 
-	/bin/grep MemTotal /proc/meminfo | /bin/sed 's|.*: ||;s|kB||;s| ||g'
+	/bin/grep MemTotal /proc/meminfo | /bin/sed 's/.*: //;s/kB//;s/ //g'
 
 	}
 
@@ -13530,7 +13530,7 @@ FileCountAll()
 
 	[[ -n ${1:-} ]] || return
 
-	compgen -G "$1/*" | /usr/bin/wc -l | /bin/sed 's|^ *||'		# `compgen` usage found here: https://stackoverflow.com/a/6364244
+	compgen -G "$1/*" | /usr/bin/wc -l | /bin/sed 's/^ *//'		# `compgen` usage found here: https://stackoverflow.com/a/6364244
 
 	}
 
@@ -13544,7 +13544,7 @@ FileCountSpec()
 
 	[[ -n ${1:-} ]] || return
 
-	compgen -G "$1" | /usr/bin/wc -l | /bin/sed 's|^ *||'		# `compgen` usage found here: https://stackoverflow.com/a/6364244
+	compgen -G "$1" | /usr/bin/wc -l | /bin/sed 's/^ *//'		# `compgen` usage found here: https://stackoverflow.com/a/6364244
 
 	}
 
@@ -13628,7 +13628,7 @@ DeDupeWords()
 
 	[[ -n ${1:-} ]] || return
 
-	tr ' ' '\n' <<<"$1" | /usr/bin/sort | /bin/uniq | tr '\n' ' ' | /bin/sed 's|^[[:blank:]]*||;s|[[:blank:]]*$||'
+	tr ' ' '\n' <<<"$1" | /usr/bin/sort | /bin/uniq | tr '\n' ' ' | /bin/sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'
 
 	}
 
@@ -14201,7 +14201,7 @@ DebugDetectTabld()
 	elif [[ ${3:-} = ' ' ]]; then		# If $3 is only a whitespace then print $2 with trailing colon and 'none' as third field.
 		DebugAsDetect "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: none\n" "${1:-}" "${2:-}")"
 	elif [[ ${3: -1} = ' ' ]]; then		# If $3 has a trailing whitespace then print $3 without the trailing whitespace.
-		DebugAsDetect "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "$(/bin/sed 's| *$||' <<<"${3:-}")")"
+		DebugAsDetect "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "$(/bin/sed 's/ *$//' <<<"${3:-}")")"
 	else
 		DebugAsDetect "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "${3:-}")"
 	fi
@@ -14218,7 +14218,7 @@ DebugInfoTabld()
 	elif [[ ${3:-} = ' ' ]]; then		# If $3 is only a whitespace then print $2 with trailing colon and 'none' as third field.
 		DebugAsInfo "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: none\n" "${1:-}" "${2:-}")"
 	elif [[ ${3: -1} = ' ' ]]; then		# If $3 has a trailing whitespace then print $3 without the trailing whitespace.
-		DebugAsInfo "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "$(/bin/sed 's| *$||' <<<"${3:-}")")"
+		DebugAsInfo "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "$(/bin/sed 's/ *$//' <<<"${3:-}")")"
 	else
 		DebugAsInfo "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "${3:-}")"
 	fi
@@ -14235,7 +14235,7 @@ DebugWarningTabld()
 	elif [[ ${3:-} = ' ' ]]; then		# If $3 is only a whitespace then print $2 with trailing colon and 'none' as third field
 		DebugAsWarn "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: none\n" "${1:-}" "${2:-}")"
 	elif [[ ${3: -1} = ' ' ]]; then		# If $3 has a trailing whitespace then print $3 without the trailing whitespace
-		DebugAsWarn "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "$(/bin/sed 's| *$||' <<<"${3:-}")")"
+		DebugAsWarn "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "$(/bin/sed 's/ *$//' <<<"${3:-}")")"
 	else
 		DebugAsWarn "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "${3:-}")"
 	fi
@@ -14252,7 +14252,7 @@ DebugErrorTabld()
 	elif [[ ${3:-} = ' ' ]]; then		# If $3 is only a whitespace then print $2 with trailing colon and 'none' as third field.
 		DebugAsError "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: none\n" "${1:-}" "${2:-}")"
 	elif [[ ${3: -1} = ' ' ]]; then		# If $3 has a trailing whitespace then print $3 without the trailing whitespace.
-		DebugAsError "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "$(/bin/sed 's| *$||' <<<"${3:-}")")"
+		DebugAsError "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "$(/bin/sed 's/ *$//' <<<"${3:-}")")"
 	else
 		DebugAsError "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "${3:-}")"
 	fi
