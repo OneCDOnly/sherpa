@@ -183,6 +183,8 @@ Squeeze()
 
 		buffer=$(sed -e ':a' -e 'N' -e '$!ba' -e 's/()\n{\n/(){\n/g' <<< "$buffer")				# Reposition function start braces onto function name line. https://stackoverflow.com/a/1252191
 
+		buffer=$(sed -e ':a' -e 'N' -e '$!ba' -e 's/\n;;\n/;;\n/g' <<< "$buffer")				# Reposition pattern block ends onto last statement. https://stackoverflow.com/a/1252191
+
 		[[ -e $2 ]] && chmod +w "$2"
 		echo "$buffer" > "$2"
 	fi
