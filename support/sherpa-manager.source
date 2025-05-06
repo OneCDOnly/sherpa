@@ -15862,11 +15862,13 @@ LoadObjects()
 
 	LoadLists
 
+	ShowAsProc objects
+
 	if [[ ! -e $PWD/dont-refresh-objects ]]; then
 		IsFile "$r_objects_archive_pathfile" && original_archive_checksum=$(GenerateMD5 "$r_objects_archive_pathfile")
 
 		if IsNtFile "$r_objects_archive_pathfile" || ! IsFileRecent "$r_objects_archive_pathfile" "$r_file_change_threshold_minutes"; then
-			ShowAsProc 'objects archive download'
+			DebugAsProc 'download objects archive'
 
 			IsOsCanSecureDownload || curl_options=' --insecure'
 			/sbin/curl${curl_options} --silent --fail "$r_objects_archive_url" >"$r_objects_archive_pathfile"
@@ -15908,8 +15910,6 @@ LoadObjects()
 		FuncExit 1; exit
 	fi
 
-	ShowAsProc objects
-
 	unset r_objects_epoch
 	r_objects_epoch=undefined
 
@@ -15948,19 +15948,21 @@ LoadPackages()
 
 	LoadObjects
 
+	ShowAsProc database
+
 	if [[ ! -e $PWD/dont-refresh-packages ]]; then
 		IsFile "$r_packages_archive_pathfile" && original_archive_checksum=$(GenerateMD5 "$r_packages_archive_pathfile")
 
 		if IsNtFile "$r_packages_archive_pathfile" || ! IsFileRecent "$r_packages_archive_pathfile" "$r_file_change_threshold_minutes"; then
-			ShowAsProc 'package archive download'
+			DebugAsProc 'download database archive'
 
 			IsOsCanSecureDownload || curl_options=' --insecure'
 			/sbin/curl${curl_options} --silent --fail "$r_packages_archive_url" >"$r_packages_archive_pathfile"
 
 			if IsFile "$r_packages_archive_pathfile"; then
-				DebugAsDone 'package archive downloaded'
+				DebugAsDone 'database archive downloaded'
 			else
-				DebugAsWarn 'package archive download failed'
+				DebugAsWarn 'database archive download failed'
 			fi
 		fi
 	fi
@@ -15968,35 +15970,33 @@ LoadPackages()
 	if IsFile "$r_packages_archive_pathfile"; then
 		new_archive_checksum=$(GenerateMD5 "$r_packages_archive_pathfile")
 	else
-		DebugAsWarn 'package archive missing'
+		DebugAsWarn 'database archive missing'
 	fi
 
 	if IsNtFile "$r_packages_pathfile" || [[ $original_archive_checksum != "$new_archive_checksum" ]]; then
 		if IsFile "$r_packages_archive_pathfile"; then
-			DebugAsProc 'extracting packages list from archive'
+			DebugAsProc 'extracting database from archive'
 			/bin/tar --extract --gzip --no-same-owner --file="$r_packages_archive_pathfile" --directory="$r_cache_path"
 
 			if IsFile "$r_packages_pathfile"; then
-				DebugAsDone 'extracted packages list from archive'
+				DebugAsDone 'extracted database from archive'
 			else
 				DebugAsWarn 'extraction from archive failed'
 			fi
 
 			InitQPKGsTiers
 		else
-			ShowAsAbort 'no package archive exists to extract from'
+			ShowAsAbort 'no database archive exists to extract from'
 
 			FuncExit 1; exit
 		fi
 	fi
 
 	if IsNtFile "$r_packages_pathfile"; then
-		ShowAsAbort 'package list missing'
+		ShowAsAbort 'database missing'
 
 		FuncExit 1; exit
 	fi
-
-	ShowAsProc 'package list'
 
 	# Supported QPKG details - parallel arrays.
 
