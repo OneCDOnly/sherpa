@@ -16,17 +16,18 @@
 #* <?license?>
 #
 # Project variable and function naming style-guide:
-# 			   functions: 'CamelCase'
-# asynchronous functions: '_CamelCaseWithLeadingAndTrailingUnderscores_'
-# 	utility interceptors: (same as original)
-#  flag "object" methods: 'Capitalised.CamelCase.With.Inline.Periods.And.Colon.Before:Method'
-#	 flag "object" tests: 'Capitalised.CamelCase.With.Inline.Periods.And.Period.Before.Test'
-#  list "object" methods: 'Capitalised-CamelCase-With-Inline-Hyphens-And-Colon-Before:Method'
-#	 list "object" tests: 'Capitalised-CamelCase-With-Inline-Hyphens-And-Period-Before.Test'
-#	 "object" properties: 'o_snakecase_with_leading_o_underscore' (these should be managed ONLY by the object's methods)
-#			   constants: 'r_snakecase_with_leading_r_underscore' (set as readonly ASAP)
-#			   variables: 'snakecase_with_inline_underscores'
-#				 indents: 1 x tab char (= 4 space chars)
+#					function names: 'CamelCase'
+#	   asynchronous function names: '_CamelCaseWithLeadingAndTrailingUnderscores_'
+#	 utility interceptor functions: (same as original)
+#			 flag "object" methods: 'Capitalised.CamelCase.With.Inline.Periods.And.Colon.Before:Method'
+#			   flag "object" tests: 'Capitalised.CamelCase.With.Inline.Periods.And.Period.Before.Test'
+#			 list "object" methods: 'Capitalised-CamelCase-With-Inline-Hyphens-And-Colon-Before:Method'
+#			   list "object" tests: 'Capitalised-CamelCase-With-Inline-Hyphens-And-Period-Before.Test'
+#			   "object" properties: 'o_snakecase_with_leading_o_underscore' (these should be managed ONLY by the object's methods)
+#						 constants: 'r_snakecase_with_leading_r_underscore' (set as readonly ASAP)
+#						 variables: 'snakecase_with_inline_underscores'
+#						   indents: 1 x tab char (= 4 space chars)
+# when calling ShowAs*() functions: separated before-and-after with single line spaces unless first-or-last line in a code block.
 #
 # Notes:
 #   If on-screen line-spacing is required, this should only be done by the next function to print output.
@@ -7417,6 +7418,28 @@ BuildQPKGsTiers()
 
 	}
 
+InitQPKGsTiers()
+	{
+
+	# Inputs: (global)
+	#	$r_dependent_qpkgs_list_pathfile
+	#	$r_independent_qpkgs_list_pathfile
+	#	$r_optional_qpkgs_list_pathfile
+	#	$r_qpkg_tiers[]
+
+	# Outputs: (global)
+	#	$qpkgs_tiers_built
+
+	for a in "${r_qpkg_tiers[@]}"; do
+		b=r_${a}_qpkgs_list_pathfile
+		[[ ! -e ${!b} ]] && continue
+		rm -f "${!b}" 2>/dev/null
+	done
+
+	qpkgs_tiers_built=false
+
+	}
+
 CheckQPKGsTiers()
 	{
 
@@ -7437,28 +7460,6 @@ CheckQPKGsTiers()
 		qpkgs_tiers_built=false
 		break
 	done
-
-	}
-
-InitQPKGsTiers()
-	{
-
-	# Inputs: (global)
-	#	$r_dependent_qpkgs_list_pathfile
-	#	$r_independent_qpkgs_list_pathfile
-	#	$r_optional_qpkgs_list_pathfile
-	#	$r_qpkg_tiers[]
-
-	# Outputs: (global)
-	#	$qpkgs_tiers_built
-
-	for a in "${r_qpkg_tiers[@]}"; do
-		b=r_${a}_qpkgs_list_pathfile
-		[[ ! -e ${!b} ]] && continue
-		rm -f "${!b}" 2>/dev/null
-	done
-
-	qpkgs_tiers_built=false
 
 	}
 
@@ -9175,14 +9176,14 @@ GetShellTimeIn()
 GetOsSysLoadAverages()
 	{
 
-	/usr/bin/uptime | /bin/sed 's|.*load average: ||' | /bin/awk -F', ' '{print "1m:"$1", 5m:"$2", 15m:"$3}'
+	/usr/bin/uptime | /bin/sed 's|.*load average: ||' | /bin/awk -F', ' '{print "1m:"$1", 5m:"$2", 15m:"$3}' | tr -d ' '
 
 	}
 
 GetOsSysLoad1MinAverage()
 	{
 
-	/usr/bin/uptime | /bin/sed 's|.*load average: ||' | /bin/awk -F', ' '{print $1}'
+	/usr/bin/uptime | /bin/sed 's|.*load average: ||' | /bin/awk -F', ' '{print $1}' | tr -d ' '
 
 	}
 
@@ -13638,7 +13639,25 @@ FileMatchesMD5()
 	#   $1 = pathfile to generate an MD5 checksum for.
 	#   $2 = MD5 checksum to compare against.
 
-	[[ $(/bin/md5sum "${1:?${FUNCNAME[0]}'()': $r_nopfile}" | cut -f1 -d' ') = "${2:?${FUNCNAME[0]}'()': undefined checksum}" ]]
+	# Outputs: (local)
+	#	$? = true if checksums match.
+
+	[[ $(GenerateMD5 "${1:?${FUNCNAME[0]}'()': $r_nopfile}") = "${2:?${FUNCNAME[0]}'()': undefined checksum}" ]]
+
+	}
+
+
+GenerateMD5()
+	{
+
+	# Inputs: (local)
+	#   $1 = pathfile to generate an MD5 checksum for.
+
+	# Outputs: (local)
+	#   stdout = MD5 checksum.
+	#	$? = false if file not found.
+
+	[[ -e ${1:?${FUNCNAME[0]}'()': $r_nopfile} ]] && /bin/md5sum "${1:?${FUNCNAME[0]}'()': $r_nopfile}" | cut -f1 -d' '
 
 	}
 
@@ -15850,28 +15869,46 @@ LoadPackages()
 
 	# Ensure `packages` in the local cache is up-to-date, then source it.
 
+	# Inputs: (global)
+	#	$r_cache_path
+	#	$r_file_change_threshold_minutes
+	#	$r_packages_archive_pathfile
+	#	$r_packages_archive_url
+	#	$r_packages_pathfile
+
 	[[ ${packages_loaded:=false} = false ]] || return 0
 
 	FuncInit
 
 	local curl_options=''
+	local archive_checksum=''
 	local previous=''
 	local qpkg_name=''
-
-	IsOsCanSecureDownload || curl_options=' --insecure'
 
 	LoadObjects
 
 	if [[ ! -e $PWD/dont-refresh-packages ]]; then
-		if [[ ! -e $r_packages_pathfile ]] || ! IsThisFileRecent "$r_packages_pathfile" "$r_file_change_threshold_minutes"; then
-			ShowAsProc 'package list download'
-
-			if /sbin/curl${curl_options} --silent --fail "$r_packages_archive_url" >"$r_packages_archive_pathfile"; then
-				/bin/tar --extract --gzip --no-same-owner --file="$r_packages_archive_pathfile" --directory="$r_cache_path"
-			fi
-
-			InitQPKGsTiers
+		if [[ -e $r_packages_archive_pathfile && -s $r_packages_archive_pathfile ]]; then
+			archive_checksum=$(GenerateMD5 "$r_packages_archive_pathfile")
 		fi
+
+		if [[ ! -e $r_packages_archive_pathfile ]] || ! IsThisFileRecent "$r_packages_pathfile" "$r_file_change_threshold_minutes"; then
+			ShowAsProc 'package archive download'
+
+			IsOsCanSecureDownload || curl_options=' --insecure'
+			/sbin/curl${curl_options} --silent --fail "$r_packages_archive_url" >"$r_packages_archive_pathfile"
+		fi
+	fi
+
+	if [[ ! -e $r_packages_archive_pathfile || ! -s $r_packages_archive_pathfile ]]; then
+		ShowAsAbort 'package archive missing'
+
+		FuncExit 1; exit
+	fi
+
+	if [[ ! -e $r_packages_pathfile || $archive_checksum != $(GenerateMD5 "$r_packages_archive_pathfile") ]]; then
+		/bin/tar --extract --gzip --no-same-owner --file="$r_packages_archive_pathfile" --directory="$r_cache_path"
+		InitQPKGsTiers
 	fi
 
 	if [[ ! -e $r_packages_pathfile ]]; then
