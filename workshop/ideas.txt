@@ -1,9 +1,5 @@
 Management:
 
-	* Only regenerate tier lists when checksum of 'packages.tag.gz' changes.
-
-	* squeezer: remove whitespaces either side of || and &&
-
 	* Include test to confirm QPKG installation is complete.
 
 	* Tableise() needs to support a new arg to change format of a single column.

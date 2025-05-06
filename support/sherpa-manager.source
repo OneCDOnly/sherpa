@@ -416,35 +416,35 @@ IsCMDsOk()
 
 	# Confirm required binaries are present.
 
-	IsSysFileExist /bin/awk || return
-	IsSysFileExist /usr/bin/basename || return
-	IsSysFileExist /bin/cat || return
-	IsSysFileExist /sbin/curl || return
+	IsCriticalFile /bin/awk || return
+	IsCriticalFile /usr/bin/basename || return
+	IsCriticalFile /bin/cat || return
+	IsCriticalFile /sbin/curl || return
 	# `/bin/date` has already been called before arriving here.
-	IsSysFileExist /bin/df || return
-	IsSysFileExist /usr/bin/dirname || return
-	IsSysFileExist /usr/bin/du || return
-	IsSysFileExist /bin/grep || return
+	IsCriticalFile /bin/df || return
+	IsCriticalFile /usr/bin/dirname || return
+	IsCriticalFile /usr/bin/du || return
+	IsCriticalFile /bin/grep || return
 	# Don't check for `/bin/less` because it's not always there.
-	IsSysFileExist /bin/md5sum || return
-	IsSysFileExist /bin/mknod || return
-	IsSysFileExist /bin/mktemp || return
+	IsCriticalFile /bin/md5sum || return
+	IsCriticalFile /bin/mknod || return
+	IsCriticalFile /bin/mktemp || return
 	# Don't check for `/bin/more` because it's a very low-priority utility (non-essential).
-	IsSysFileExist /bin/ps || return
-	IsSysFileExist /usr/bin/readlink || return
-	IsSysFileExist /usr/sbin/screen || return
+	IsCriticalFile /bin/ps || return
+	IsCriticalFile /usr/bin/readlink || return
+	IsCriticalFile /usr/sbin/screen || return
 	# `/bin/sed` has already been called before arriving here.
-	IsSysFileExist /bin/sh || return
-	IsSysFileExist /bin/sha1sum || return
+	IsCriticalFile /bin/sh || return
+	IsCriticalFile /bin/sha1sum || return
 	# `/bin/sleep` has already been called before arriving here.
 	[[ ! -e /usr/bin/sort ]] && ln -s /bin/busybox /usr/bin/sort		# KLUDGE: `/usr/bin/sort` randomly disappears from QTS.
-	IsSysFileExist /usr/bin/tail || return
-	IsSysFileExist /bin/tar || return
-	IsSysFileExist /usr/bin/tee || return
-	IsSysFileExist /bin/uname || return
-	IsSysFileExist /bin/uniq || return
-	IsSysFileExist /usr/bin/unzip || return
-	IsSysFileExist /usr/bin/uptime || return
+	IsCriticalFile /usr/bin/tail || return
+	IsCriticalFile /bin/tar || return
+	IsCriticalFile /usr/bin/tee || return
+	IsCriticalFile /bin/uname || return
+	IsCriticalFile /bin/uniq || return
+	IsCriticalFile /usr/bin/unzip || return
+	IsCriticalFile /usr/bin/uptime || return
 	# `/usr/bin/wc` has already been called before arriving here.
 
 	return 0
@@ -3391,7 +3391,7 @@ _UpdateEntwarePackageList_()
 	# Outputs: (global)
 	#	$r_entware_package_list_uptodate
 
-	if IsNtSysFileExist $r_opkg_cmd; then
+	if IsNtCriticalFile $r_opkg_cmd; then
 		DisplayAsProjSynExam 'try reactivating Entware' 'reactivate ew'
 
 		return 1
@@ -3403,7 +3403,7 @@ _UpdateEntwarePackageList_()
 
 	# If Entware package list was recently updated, don't update again.
 
-	if ! IsThisFileRecent "$r_external_packages_archive_pathfile" "$r_file_change_threshold_minutes" || [[ ! -f $r_external_packages_archive_pathfile || $useropt_check = true ]]; then
+	if ! IsFileRecent "$r_external_packages_archive_pathfile" "$r_file_change_threshold_minutes" || [[ ! -f $r_external_packages_archive_pathfile || $useropt_check = true ]]; then
 		DebugAsProc "updating $(FormatPackageName Entware) package list"
 
 		RunAndLog "$r_opkg_cmd update" "$r_logs_path/Entware.$r_update_log_file" log:failure-only
@@ -3420,7 +3420,7 @@ _UpdateEntwarePackageList_()
 		DebugInfo "$(FormatPackageName Entware) package list was updated less-than $r_file_change_threshold_minutes minutes ago: skipping update"
 	fi
 
-	[[ -f $r_external_packages_archive_pathfile && ! -f $r_external_packages_pathfile ]] && OpenIpkArchive
+	IsFile "$r_external_packages_archive_pathfile" && IsNtFile "$r_external_packages_pathfile" && OpenIpkArchive
 	readonly r_entware_package_list_uptodate=true
 
 	return 0
@@ -3505,7 +3505,7 @@ CalcIpkDepsToInstall()
 	#	$useropt_terse
 	#	$useropt_verbose
 
-	IsSysFileExist $r_gnu_grep_cmd || return
+	IsCriticalFile $r_gnu_grep_cmd || return
 
 	FuncInit
 
@@ -6869,7 +6869,7 @@ RefreshDirSizeCount()
 	#   $current_bytes
 
 	[[ -d $dir_location ]] || exit
-	IsSysFileExist $r_gnu_find_cmd || exit
+	IsCriticalFile $r_gnu_find_cmd || exit
 
 	current_bytes=$($r_gnu_find_cmd "$dir_location" -type f -name '*.ipk' -exec /usr/bin/du --bytes --total --apparent-size {} + 2>/dev/null | /bin/grep total$ | cut -f1)
 	[[ -z $current_bytes ]] && current_bytes=0
@@ -7405,7 +7405,7 @@ BuildQPKGsTiers()
 	CheckQPKGsTiers
 
 	if [[ $qpkgs_tiers_built = true ]]; then
-		DebugAsDone "don't build tiers: they're already built"
+		DebugAsDetect 'tiers are already built'
 	else
 		ShowAsProc tiers
 
@@ -7537,7 +7537,7 @@ BuildExtendedQPKGsStates()
 	FuncInit
 
 	if [[ ${qpkgs_states_built:=false} = true ]]; then
-		DebugAsDone "don't build states: they're already built"
+		DebugAsDetect 'states are already built'
 
 		FuncExit; return
 	fi
@@ -9644,7 +9644,7 @@ _QPKG:download_()
 		SaveActionResultToLog QPKG "$qpkg_name" download '' skipped 'NAS arch is incompatible'
 		MarkActionForkAsSkipped
 		z=1
-	elif [[ -f $r_local_pathfile ]]; then
+	elif IsFile "$r_local_pathfile"; then
 		if FileMatchesMD5 "$r_local_pathfile" "$r_remote_hash"; then
 			SaveActionResultToLog QPKG "$qpkg_name" download '' skipped-ok "existing file $(FormatFileName "$r_local_filename") checksum is correct"
 			MarkActionForkAsSkippedOk
@@ -9657,7 +9657,7 @@ _QPKG:download_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	if [[ ! -f $r_local_pathfile ]]; then
+	if IsNtFile "$r_local_pathfile"; then
 		DebugAsProc "downloading $(FormatFileName "$r_remote_filename")"
 
 		rm -f "$r_log_pathfile" 2>/dev/null
@@ -9767,7 +9767,7 @@ _QPKG:install_()
 	LogQpkgServiceResult
 	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
 
-	[[ $qpkg_name = Entware ]] && IsNtSysFileExist $r_opkg_cmd && z=1		# Entware installation has failed.
+	[[ $qpkg_name = Entware ]] && IsNtCriticalFile $r_opkg_cmd && z=1		# Entware installation has failed.
 
 	if [[ $z -eq 0 || $z -eq 10 ]]; then	# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes user-aborts.
 		SaveActionResultToLog QPKG "$qpkg_name" install '' ok "v$(GetQpkgInstalledVer)"
@@ -9856,7 +9856,7 @@ _QPKG:reinstall_()
 	LogQpkgServiceResult
 	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
 
-	[[ $qpkg_name = Entware ]] && IsNtSysFileExist $r_opkg_cmd && z=1
+	[[ $qpkg_name = Entware ]] && IsNtCriticalFile $r_opkg_cmd && z=1
 
 	if [[ $z -eq 0 || $z -eq 10 ]]; then		# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes aborts.
 		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' ok "v$(GetQpkgInstalledVer)"
@@ -9988,7 +9988,7 @@ _QPKG:upgrade_()
 	LogQpkgServiceResult
 	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
 
-	[[ $qpkg_name = Entware ]] && IsNtSysFileExist $r_opkg_cmd && z=1
+	[[ $qpkg_name = Entware ]] && IsNtCriticalFile $r_opkg_cmd && z=1
 
 	if [[ $z -eq 0 || $z -eq 10 ]]; then	# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes aborts.
 		SendPackageStateChange ISNTupgradable
@@ -10059,7 +10059,7 @@ _QPKG:uninstall_()
 
 	[[ $qpkg_name = Entware ]] && SaveIpkAndPipList
 
-	if [[ -e $r_qpkg_uninstaller_pathfile ]]; then
+	if IsFile "$r_qpkg_uninstaller_pathfile"; then
 		DebugAsProc "uninstalling $(FormatPackageName)"
 
 		RunAndLog "${a}/bin/sh $r_qpkg_uninstaller_pathfile" "$r_logs_path/$qpkg_name.$r_uninstall_log_file" log:failure-only
@@ -12167,7 +12167,7 @@ IsUserSU()
 
 	}
 
-IsSysFileExist()
+IsCriticalFile()
 	{
 
 	# Inputs: (local)
@@ -12190,7 +12190,7 @@ IsSysFileExist()
 
 	}
 
-IsNtSysFileExist()
+IsNtCriticalFile()
 	{
 
 	# Inputs: (local)
@@ -12199,11 +12199,41 @@ IsNtSysFileExist()
 	# Outputs: (local)
 	#   $? = 0 (not exists) or 1 (exists)
 
-	! IsSysFileExist "${1:?${FUNCNAME[0]}'()': $r_nopfile}"
+	! IsCriticalFile "${1:?${FUNCNAME[0]}'()': $r_nopfile}"
 
 	}
 
-IsThisFileRecent()
+IsFile()
+	{
+
+	# Inputs: (local)
+	#   $1 = pathfile to check
+
+	# Outputs: (local)
+	#   $? = 0 (exists and is non-zero bytes) or 1 (not exists or is zero bytes)
+
+	[[ -n ${1:?${FUNCNAME[0]}'()': $r_nopfile} ]] || exit
+
+	local a=${1%% *}		# Extract first word-group.
+
+	[[ -f $a && -s $a ]]
+
+	}
+
+IsNtFile()
+	{
+
+	# Inputs: (local)
+	#   $1 = pathfile to check
+
+	# Outputs: (local)
+	#   $? = 0 (not exists or is zero bytes) or 1 (exists and is non-zero bytes)
+
+	! IsFile "${1:?${FUNCNAME[0]}'()': $r_nopfile}"
+
+	}
+
+IsFileRecent()
 	{
 
 	# Inputs: (local)
@@ -15827,22 +15857,52 @@ LoadObjects()
 	FuncInit
 
 	local curl_options=''
-
-	IsOsCanSecureDownload || curl_options=' --insecure'
+	local new_archive_checksum=''
+	local original_archive_checksum=''
 
 	LoadLists
 
 	if [[ ! -e $PWD/dont-refresh-objects ]]; then
-		if [[ ! -e $r_objects_pathfile ]] || ! IsThisFileRecent "$r_objects_pathfile" "$r_file_change_threshold_minutes"; then
-			ShowAsProc 'objects download'
+		IsFile "$r_objects_archive_pathfile" && original_archive_checksum=$(GenerateMD5 "$r_objects_archive_pathfile")
 
-			if /sbin/curl${curl_options} --silent --fail "$r_objects_archive_url" >"$r_objects_archive_pathfile"; then
-				/bin/tar --extract --gzip --no-same-owner --file="$r_objects_archive_pathfile" --directory="$r_cache_path"
+		if IsNtFile "$r_objects_archive_pathfile" || ! IsFileRecent "$r_objects_archive_pathfile" "$r_file_change_threshold_minutes"; then
+			ShowAsProc 'objects archive download'
+
+			IsOsCanSecureDownload || curl_options=' --insecure'
+			/sbin/curl${curl_options} --silent --fail "$r_objects_archive_url" >"$r_objects_archive_pathfile"
+
+			if IsFile "$r_objects_archive_pathfile"; then
+				DebugAsDone 'objects archive downloaded'
+			else
+				DebugAsWarn 'objects archive download failed'
 			fi
 		fi
 	fi
 
-	if [[ ! -e $r_objects_pathfile ]]; then
+	if IsFile "$r_objects_archive_pathfile"; then
+		new_archive_checksum=$(GenerateMD5 "$r_objects_archive_pathfile")
+	else
+		DebugAsWarn 'object archive missing'
+	fi
+
+	if IsNtFile "$r_objects_pathfile" || [[ $original_archive_checksum != "$new_archive_checksum" ]]; then
+		if IsFile "$r_objects_archive_pathfile"; then
+			DebugAsProc 'extracting objects from archive'
+			/bin/tar --extract --gzip --no-same-owner --file="$r_objects_archive_pathfile" --directory="$r_cache_path"
+
+			if IsFile "$r_objects_pathfile"; then
+				DebugAsDone 'extracted objects from archive'
+			else
+				DebugAsWarn 'extraction from archive failed'
+			fi
+		else
+			ShowAsAbort 'no object archive exists to extract from'
+
+			FuncExit 1; exit
+		fi
+	fi
+
+	if IsNtFile "$r_objects_pathfile"; then
 		ShowAsAbort 'objects missing'
 
 		FuncExit 1; exit
@@ -15880,38 +15940,57 @@ LoadPackages()
 
 	FuncInit
 
+	local new_archive_checksum=''
+	local original_archive_checksum=''
 	local curl_options=''
-	local archive_checksum=''
 	local previous=''
 	local qpkg_name=''
 
 	LoadObjects
 
 	if [[ ! -e $PWD/dont-refresh-packages ]]; then
-		if [[ -e $r_packages_archive_pathfile && -s $r_packages_archive_pathfile ]]; then
-			archive_checksum=$(GenerateMD5 "$r_packages_archive_pathfile")
-		fi
+		IsFile "$r_packages_archive_pathfile" && original_archive_checksum=$(GenerateMD5 "$r_packages_archive_pathfile")
 
-		if [[ ! -e $r_packages_archive_pathfile ]] || ! IsThisFileRecent "$r_packages_pathfile" "$r_file_change_threshold_minutes"; then
+		if IsNtFile "$r_packages_archive_pathfile" || ! IsFileRecent "$r_packages_archive_pathfile" "$r_file_change_threshold_minutes"; then
 			ShowAsProc 'package archive download'
 
 			IsOsCanSecureDownload || curl_options=' --insecure'
 			/sbin/curl${curl_options} --silent --fail "$r_packages_archive_url" >"$r_packages_archive_pathfile"
+
+			if IsFile "$r_packages_archive_pathfile"; then
+				DebugAsDone 'package archive downloaded'
+			else
+				DebugAsWarn 'package archive download failed'
+			fi
 		fi
 	fi
 
-	if [[ ! -e $r_packages_archive_pathfile || ! -s $r_packages_archive_pathfile ]]; then
-		ShowAsAbort 'package archive missing'
-
-		FuncExit 1; exit
+	if IsFile "$r_packages_archive_pathfile"; then
+		new_archive_checksum=$(GenerateMD5 "$r_packages_archive_pathfile")
+	else
+		DebugAsWarn 'package archive missing'
 	fi
 
-	if [[ ! -e $r_packages_pathfile || $archive_checksum != $(GenerateMD5 "$r_packages_archive_pathfile") ]]; then
-		/bin/tar --extract --gzip --no-same-owner --file="$r_packages_archive_pathfile" --directory="$r_cache_path"
-		InitQPKGsTiers
+	if IsNtFile "$r_packages_pathfile" || [[ $original_archive_checksum != "$new_archive_checksum" ]]; then
+		if IsFile "$r_packages_archive_pathfile"; then
+			DebugAsProc 'extracting packages list from archive'
+			/bin/tar --extract --gzip --no-same-owner --file="$r_packages_archive_pathfile" --directory="$r_cache_path"
+
+			if IsFile "$r_packages_pathfile"; then
+				DebugAsDone 'extracted packages list from archive'
+			else
+				DebugAsWarn 'extraction from archive failed'
+			fi
+
+			InitQPKGsTiers
+		else
+			ShowAsAbort 'no package archive exists to extract from'
+
+			FuncExit 1; exit
+		fi
 	fi
 
-	if [[ ! -e $r_packages_pathfile ]]; then
+	if IsNtFile "$r_packages_pathfile"; then
 		ShowAsAbort 'package list missing'
 
 		FuncExit 1; exit
