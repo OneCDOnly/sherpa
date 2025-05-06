@@ -153,26 +153,31 @@ Squeeze()
 	# Output:
 	# 	$? = 0
 
-	echo -n 'squeezing ... '
-
 	if [[ -f "$1" ]]; then			# ignore symlinks.
+		echo -n 'squeezing ... '
 		local buffer=$(<"$1")
 
 		buffer=$(sed '/devdebug/d' <<< "$buffer")												# Remove lines with 'devdebug' tag.
 
 		buffer=$(sed '/[#>][[:space:]]>/! s/[[:space:]]>/>/g' <<< "$buffer")					# Remove whitespace before fd1 redirects.
 		buffer=$(sed '/squeezer-ignore/! s/>[[:space:]]/>/g' <<< "$buffer")						# Remove whitespace after fd1 redirects, except for lines with 'squeezer-ignore' tag.
+		buffer=$(sed '/[#<][[:space:]]</! s/[[:space:]]</</g' <<< "$buffer")					# Remove whitespace before fd0 redirects.
 		buffer=$(sed 's/<[[:space:]]/</g' <<< "$buffer")										# Remove whitespace after fd0 redirects.
-		buffer=$(sed 's/[[:space:]]</</g' <<< "$buffer")										# Remove whitespace before fd0 redirects.
+
+		buffer=$(sed 's/\;[[:space:]]/;/g' <<< "$buffer")										# Remove whitespace after semicolons.
+		buffer=$(sed 's/[[:space:]]\;/;/g' <<< "$buffer")										# Remove whitespace before semicolons.
+
+		buffer=$(sed 's/\&\&[[:space:]]/\&\&/g' <<< "$buffer")									# Remove whitespace after inline true test.
+		buffer=$(sed 's/[[:space:]]\&\&/\&\&/g' <<< "$buffer")									# Remove whitespace before inline true test.
+
+		buffer=$(sed 's/||[[:space:]]/||/g' <<< "$buffer")										# Remove whitespace after inline false test.
+		buffer=$(sed 's/[[:space:]]||/||/g' <<< "$buffer")										# Remove whitespace before inline false test.
 
 		buffer=$(sed '/^#[[:space:]].*/d;/#$/d;s/[[:space:]]#[[:space:]].*//' <<< "$buffer")	# Remove comment lines and line comments. Comment tags won't be seen beyond this point.
 
 		buffer=$(sed 's/^[[:space:]]*//' <<< "$buffer")											# Remove line leading whitespace.
 		buffer=$(sed 's/[[:space:]]*$//' <<< "$buffer")											# Remove line trailing whitespace.
 		buffer=$(sed '/^$/d' <<< "$buffer")														# Remove empty lines.
-
-		buffer=$(sed 's/\;[[:space:]]/;/g' <<< "$buffer")										# Remove whitespace after semicolons.
-		buffer=$(sed 's/[[:space:]]\;/;/g' <<< "$buffer")										# Remove whitespace before semicolons.
 
 		buffer=$(sed "s|Transfer-Encoding: base64|Transfer-Encoding: base64\n|" <<< "$buffer")	# Add a newline after this string so signature block is accepted by QTS.
 

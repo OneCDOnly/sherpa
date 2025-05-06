@@ -16,17 +16,18 @@
 #* <?license?>
 #
 # Project variable and function naming style-guide:
-# 			   functions: 'CamelCase'
-# asynchronous functions: '_CamelCaseWithLeadingAndTrailingUnderscores_'
-# 	utility interceptors: (same as original)
-#  flag "object" methods: 'Capitalised.CamelCase.With.Inline.Periods.And.Colon.Before:Method'
-#	 flag "object" tests: 'Capitalised.CamelCase.With.Inline.Periods.And.Period.Before.Test'
-#  list "object" methods: 'Capitalised-CamelCase-With-Inline-Hyphens-And-Colon-Before:Method'
-#	 list "object" tests: 'Capitalised-CamelCase-With-Inline-Hyphens-And-Period-Before.Test'
-#	 "object" properties: 'o_snakecase_with_leading_o_underscore' (these should be managed ONLY by the object's methods)
-#			   constants: 'r_snakecase_with_leading_r_underscore' (set as readonly ASAP)
-#			   variables: 'snakecase_with_inline_underscores'
-#				 indents: 1 x tab char (= 4 space chars)
+#					function names: 'CamelCase'
+#	   asynchronous function names: '_CamelCaseWithLeadingAndTrailingUnderscores_'
+#	 utility interceptor functions: (same as original)
+#			 flag "object" methods: 'Capitalised.CamelCase.With.Inline.Periods.And.Colon.Before:Method'
+#			   flag "object" tests: 'Capitalised.CamelCase.With.Inline.Periods.And.Period.Before.Test'
+#			 list "object" methods: 'Capitalised-CamelCase-With-Inline-Hyphens-And-Colon-Before:Method'
+#			   list "object" tests: 'Capitalised-CamelCase-With-Inline-Hyphens-And-Period-Before.Test'
+#			   "object" properties: 'o_snakecase_with_leading_o_underscore' (these should be managed ONLY by the object's methods)
+#						 constants: 'r_snakecase_with_leading_r_underscore' (set as readonly ASAP)
+#						 variables: 'snakecase_with_inline_underscores'
+#						   indents: 1 x tab char (= 4 space chars)
+# when calling ShowAs*() functions: separated before-and-after with single line spaces unless first-or-last line in a code block.
 #
 # Notes:
 #   If on-screen line-spacing is required, this should only be done by the next function to print output.
@@ -274,6 +275,12 @@ LoadConsts()
 	readonly r_extended_datetime_format='+%a %-d %b %Y'
 		readonly r_full_datetime_format=$r_extended_datetime_format' %-I:%M:%S %p %Z'
 
+	readonly r_nofile='undefined filename'
+	readonly r_noname='undefined name'
+	readonly r_nopackname='undefined package name'
+	readonly r_nopacktype='undefined package type'
+	readonly r_nopfile='undefined pathfile'
+
 	if IsOsCanSudo; then
 		if [[ $(GetUserSudoUID) = undefined ]]; then
 			readonly r_help_syntax_prefix=$r_chars_super_prompt
@@ -289,6 +296,7 @@ LoadConsts()
 
 	# Various.
 
+	readonly r_entware_packages_last_updated=20250116
 	readonly r_file_change_threshold_minutes=60
 	readonly r_log_tail_lines=5000
 
@@ -299,8 +307,8 @@ LoadDefaults()
 
 	# Default flags.
 
-	if IsInTerminal; then
-		readonly r_colourful_default=true		# Only enable ANSI colour codes if running in a user terminal.
+	if IsInTerminal; then						# Only enable ANSI colour codes if running in a user terminal.
+		readonly r_colourful_default=true
 	else
 		readonly r_colourful_default=false
 	fi
@@ -408,35 +416,35 @@ IsCMDsOk()
 
 	# Confirm required binaries are present.
 
-	IsSysFileExist /bin/awk || return
-	IsSysFileExist /usr/bin/basename || return
-	IsSysFileExist /bin/cat || return
-	IsSysFileExist /sbin/curl || return
+	IsCriticalFile /bin/awk || return
+	IsCriticalFile /usr/bin/basename || return
+	IsCriticalFile /bin/cat || return
+	IsCriticalFile /sbin/curl || return
 	# `/bin/date` has already been called before arriving here.
-	IsSysFileExist /bin/df || return
-	IsSysFileExist /usr/bin/dirname || return
-	IsSysFileExist /usr/bin/du || return
-	IsSysFileExist /bin/grep || return
+	IsCriticalFile /bin/df || return
+	IsCriticalFile /usr/bin/dirname || return
+	IsCriticalFile /usr/bin/du || return
+	IsCriticalFile /bin/grep || return
 	# Don't check for `/bin/less` because it's not always there.
-	IsSysFileExist /bin/md5sum || return
-	IsSysFileExist /bin/mknod || return
-	IsSysFileExist /bin/mktemp || return
+	IsCriticalFile /bin/md5sum || return
+	IsCriticalFile /bin/mknod || return
+	IsCriticalFile /bin/mktemp || return
 	# Don't check for `/bin/more` because it's a very low-priority utility (non-essential).
-	IsSysFileExist /bin/ps || return
-	IsSysFileExist /usr/bin/readlink || return
-	IsSysFileExist /usr/sbin/screen || return
+	IsCriticalFile /bin/ps || return
+	IsCriticalFile /usr/bin/readlink || return
+	IsCriticalFile /usr/sbin/screen || return
 	# `/bin/sed` has already been called before arriving here.
-	IsSysFileExist /bin/sh || return
-	IsSysFileExist /bin/sha1sum || return
+	IsCriticalFile /bin/sh || return
+	IsCriticalFile /bin/sha1sum || return
 	# `/bin/sleep` has already been called before arriving here.
 	[[ ! -e /usr/bin/sort ]] && ln -s /bin/busybox /usr/bin/sort		# KLUDGE: `/usr/bin/sort` randomly disappears from QTS.
-	IsSysFileExist /usr/bin/tail || return
-	IsSysFileExist /bin/tar || return
-	IsSysFileExist /usr/bin/tee || return
-	IsSysFileExist /bin/uname || return
-	IsSysFileExist /bin/uniq || return
-	IsSysFileExist /usr/bin/unzip || return
-	IsSysFileExist /usr/bin/uptime || return
+	IsCriticalFile /usr/bin/tail || return
+	IsCriticalFile /bin/tar || return
+	IsCriticalFile /usr/bin/tee || return
+	IsCriticalFile /bin/uname || return
+	IsCriticalFile /bin/uniq || return
+	IsCriticalFile /usr/bin/unzip || return
+	IsCriticalFile /usr/bin/uptime || return
 	# `/usr/bin/wc` has already been called before arriving here.
 
 	return 0
@@ -825,7 +833,12 @@ DebugLogEnv()
 
 	DebugQpkg detect architecture "$r_nas_qpkg_arch"
 	DebugQpkg detect "$(FormatPackageName Entware) type" "$r_entware_type"
-	DebugQpkg detect "$(FormatPackageName Entware) install date" "$(ConvertAsSmartDate "$(GetQpkgInstalledDate Entware)")"
+
+	if ! IsEntwareUpgradable; then
+		DebugQpkg detect "$(FormatPackageName Entware) install date" "$(ConvertAsSmartDate "$(GetQpkgInstalledDate Entware)")"
+	else
+		DebugQpkg warning "$(FormatPackageName Entware) install date" "$(ConvertAsSmartDate "$(GetQpkgInstalledDate Entware)")"
+	fi
 
 	SetOsFirmwareVer
 
@@ -1089,10 +1102,8 @@ AssignQpkgsToActions()
 	# KLUDGE: ensure Entware is reinstalled when IPKs are upgraded.
 
 	if IsValidQpkgInstalled Entware && IsOsOnline; then
-		local entware_install_date=$(GetQpkgInstalledDate Entware)
-
-		if [[ $entware_install_date = undefined || ${entware_install_date//[!0-9]/} -le 20250116 ]] && [[ $r_nas_arch != armv5tel ]]; then
-			ShowAsNote "the $(TextBrightOrange Entware) QPKG will be auto-reinstalled (Entware packages were last updated in mid-January 2025)"
+		if IsEntwareUpgradable; then
+			ShowAsNote "the $(TextBrightOrange Entware) QPKG will be auto-reinstalled (Entware packages were last updated in $(ConvertLongDateAsHuman $r_entware_packages_last_updated))"
 			QPKGs-ACreinstall-to:Add Entware
 		fi
 	fi
@@ -1574,7 +1585,7 @@ ProcAction()
 	local -i package_index=0
 	local -r r_action=${1:?${FUNCNAME[0]}'()': undefined action}
 	local -r r_action_intransitive_msg=${4:?${FUNCNAME[0]}'()': undefined action message}
-	local -r r_package_type=${3:?${FUNCNAME[0]}'()': undefined package type}
+	local -r r_package_type=${3:?${FUNCNAME[0]}'()': $r_nopacktype}
 	local -r r_tier=${2:?${FUNCNAME[0]}'()': undefined tier}
 	local re=''
 	local state=''
@@ -3380,7 +3391,7 @@ _UpdateEntwarePackageList_()
 	# Outputs: (global)
 	#	$r_entware_package_list_uptodate
 
-	if IsNtSysFileExist $r_opkg_cmd; then
+	if IsNtCriticalFile $r_opkg_cmd; then
 		DisplayAsProjSynExam 'try reactivating Entware' 'reactivate ew'
 
 		return 1
@@ -3392,7 +3403,7 @@ _UpdateEntwarePackageList_()
 
 	# If Entware package list was recently updated, don't update again.
 
-	if ! IsThisFileRecent "$r_external_packages_archive_pathfile" "$r_file_change_threshold_minutes" || [[ ! -f $r_external_packages_archive_pathfile || $useropt_check = true ]]; then
+	if ! IsFileRecent "$r_external_packages_archive_pathfile" "$r_file_change_threshold_minutes" || [[ ! -f $r_external_packages_archive_pathfile || $useropt_check = true ]]; then
 		DebugAsProc "updating $(FormatPackageName Entware) package list"
 
 		RunAndLog "$r_opkg_cmd update" "$r_logs_path/Entware.$r_update_log_file" log:failure-only
@@ -3409,26 +3420,10 @@ _UpdateEntwarePackageList_()
 		DebugInfo "$(FormatPackageName Entware) package list was updated less-than $r_file_change_threshold_minutes minutes ago: skipping update"
 	fi
 
-	[[ -f $r_external_packages_archive_pathfile && ! -f $r_external_packages_pathfile ]] && OpenIpkArchive
+	IsFile "$r_external_packages_archive_pathfile" && IsNtFile "$r_external_packages_pathfile" && OpenIpkArchive
 	readonly r_entware_package_list_uptodate=true
 
 	return 0
-
-	}
-
-IsThisFileRecent()
-	{
-
-	# Inputs: (local)
-	#   $1 = pathfilename: file to examine change time of.
-	#   $2 (optional) = integer - threshold in minutes. Default is `1440` (1 day).
-
-	# Outputs: (local)
-	#   $? = true/false
-
-	# Examine `change` time as this is updated even if file content isn't modified.
-
-	[[ -e ${1:-} && $((($(ConvertNowToSeconds)-$(/usr/bin/stat "$1" -c %Z))/60)) -le ${2:-1440} ]]		# https://stackoverflow.com/a/55622661
 
 	}
 
@@ -3510,7 +3505,7 @@ CalcIpkDepsToInstall()
 	#	$useropt_terse
 	#	$useropt_verbose
 
-	IsSysFileExist $r_gnu_grep_cmd || return
+	IsCriticalFile $r_gnu_grep_cmd || return
 
 	FuncInit
 
@@ -3547,7 +3542,7 @@ CalcIpkDepsToInstall()
 		printf -v ipk_titles '^Package: %s$\|' "${this_list[@]}"
 		ipk_titles=${ipk_titles%??}		# Remove last 2 characters.
 
-		this_list=($($r_gnu_grep_cmd --word-regexp --after-context 1 --no-group-separator '^Package:\|^Depends:' "$r_external_packages_pathfile" | $r_gnu_grep_cmd -vG '^Section:\|^Version:' | $r_gnu_grep_cmd --word-regexp --after-context 1 --no-group-separator "$ipk_titles" | $r_gnu_grep_cmd -vG "$ipk_titles" | $r_gnu_grep_cmd -vG '^Package: ' | /bin/sed 's|^Depends: ||;s|, |\n|g' | /usr/bin/sort | /bin/uniq))
+		this_list=($($r_gnu_grep_cmd --word-regexp --after-context 1 --no-group-separator '^Package:\|^Depends:' "$r_external_packages_pathfile" | $r_gnu_grep_cmd -vG '^Section:\|^Version:' | $r_gnu_grep_cmd --word-regexp --after-context 1 --no-group-separator "$ipk_titles" | $r_gnu_grep_cmd -vG "$ipk_titles" | $r_gnu_grep_cmd -vG '^Package: ' | /bin/sed 's/^Depends: //;s/, /\n/g' | /usr/bin/sort | /bin/uniq))
 
 		# Update progress twice per loop.
 		ShowAsIterativeProgress 'resolve IPK dependencies' "$iterations" iteration "${#dep_acc[@]}" 'unique IPK'
@@ -3625,7 +3620,7 @@ CalcIpkDownloadSize()
 		ShowAsProc "calculate size of IPK$(Pluralise "$size_count") to download"
 
 		DebugAsDone "$size_count IPK$(Pluralise "$size_count") to download: '$(IPKs-ACdownload-to:List)'"
-		size_array=($($r_gnu_grep_cmd -w '^Package:\|^Size:' "$r_external_packages_pathfile" | $r_gnu_grep_cmd --after-context 1 --no-group-separator ": $(/bin/sed 's/ /$ /g;s/\$ /\$\\\|: /g' <<<"$(IPKs-ACdownload-to:List)")" | /bin/grep '^Size:' | /bin/sed 's|^Size: ||'))
+		size_array=($($r_gnu_grep_cmd -w '^Package:\|^Size:' "$r_external_packages_pathfile" | $r_gnu_grep_cmd --after-context 1 --no-group-separator ": $(/bin/sed 's/ /$ /g;s/\$ /\$\\\|: /g' <<<"$(IPKs-ACdownload-to:List)")" | /bin/grep '^Size:' | /bin/sed 's/^Size: //'))
 
 		# shellcheck disable=2283
 		IPKs-ACdownload-to:Size = "$(IFS=+; echo "$((${size_array[*]:-}))")"		# nifty sizing shortcut found here https://stackoverflow.com/a/13635566/6182835
@@ -4331,7 +4326,7 @@ SaveSetting()
 	# 	$2 = value
 	# 	$3 (optional) = 'announce' - display on-screen when setting has been saved.
 
-	local a=${1:?${FUNCNAME[0]}'()': undefined name}
+	local a=${1:?${FUNCNAME[0]}'()': $r_noname}
 	local b=$(Lowercase "${2:?${FUNCNAME[0]}'()': undefined value}")
 
 	case $b in
@@ -4357,7 +4352,7 @@ LoadSetting()
 	# Outputs: (local)
 	#   stdout = setting value
 
-	local a=${1:?${FUNCNAME[0]}'()': undefined name}
+	local a=${1:?${FUNCNAME[0]}'()': $r_noname}
 	local b=$(Lowercase "${2:?${FUNCNAME[0]}'()': undefined default value}")
 
 	if [[ ! -e /sbin/getcfg ]]; then
@@ -4377,77 +4372,9 @@ DeleteSetting()
 	# Inputs: (local)
 	#   $1 = name
 
-	local a=${1:?${FUNCNAME[0]}'()': undefined name}
+	local a=${1:?${FUNCNAME[0]}'()': $r_noname}
 
 	/sbin/setcfg -e sherpa "$a" -f /etc/config/qpkg.conf
-
-	}
-
-IsUserOk()
-	{
-
-	# Inputs: (global)
-	#	$r_args_raw
-	#	$r_chars_sudo_prompt
-
-	if ! IsUserSU; then
-		if IsOsCanSudo; then
-			ShowAsError 'this utility must be run with superuser privileges. Try again as:'
-			echo "${r_chars_sudo_prompt}sherpa $r_args_raw" >&2
-		else
-			ShowAsError "this utility must be run as the 'admin' user. Please login via SSH as 'admin' and try again"
-		fi
-
-		return 1
-	fi
-
-	return 0
-
-	}
-
-IsUserSU()
-	{
-
-	# Inputs: (global)
-	#	$EUID
-
-	[[ $EUID -eq 0 ]]
-
-	}
-
-IsSysFileExist()
-	{
-
-	# Inputs: (local)
-	#   $1 = pathfile to check
-
-	# Outputs: (local)
-	#   $? = 0 (exists) or 1 (not exists)
-
-	[[ -n ${1:?${FUNCNAME[0]}'()': undefined pathfile} ]] || exit
-
-	local a=${1%% *}		# Extract first word-group.
-
-	if ! [[ -f $a || -L $a ]]; then
-		ShowAsAbort "a required NAS system file $(FormatFileName "$a") is missing"
-
-		return 1
-	fi
-
-	return 0
-
-	}
-
-IsNtSysFileExist()
-	{
-
-	# Inputs: (local)
-	#   $1 = pathfile to check
-
-	# Outputs: (local)
-	#   $? = 0 (not exists) or 1 (exists)
-
-	! IsSysFileExist "${1:?${FUNCNAME[0]}'()': undefined pathfile}"
 
 	}
 
@@ -4634,7 +4561,7 @@ _GeneratePacksReportDataLine_()
 		local ${a}_msg=''
 	done
 
-	name=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
+	name=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}
 	app_ver=$(GetQpkgDbApplVer)
 	description=$(Capitalise "$(GetQpkgDbDesc "$name")")
 	notes=$(GetQpkgDbNote)
@@ -6942,7 +6869,7 @@ RefreshDirSizeCount()
 	#   $current_bytes
 
 	[[ -d $dir_location ]] || exit
-	IsSysFileExist $r_gnu_find_cmd || exit
+	IsCriticalFile $r_gnu_find_cmd || exit
 
 	current_bytes=$($r_gnu_find_cmd "$dir_location" -type f -name '*.ipk' -exec /usr/bin/du --bytes --total --apparent-size {} + 2>/dev/null | /bin/grep total$ | cut -f1)
 	[[ -z $current_bytes ]] && current_bytes=0
@@ -7478,7 +7405,7 @@ BuildQPKGsTiers()
 	CheckQPKGsTiers
 
 	if [[ $qpkgs_tiers_built = true ]]; then
-		DebugAsDone "don't build tiers: they're already built"
+		DebugAsDetect 'tiers are already built'
 	else
 		ShowAsProc tiers
 
@@ -7488,6 +7415,28 @@ BuildQPKGsTiers()
 	LoadQPKGsTiers
 
 	FuncExit
+
+	}
+
+InitQPKGsTiers()
+	{
+
+	# Inputs: (global)
+	#	$r_dependent_qpkgs_list_pathfile
+	#	$r_independent_qpkgs_list_pathfile
+	#	$r_optional_qpkgs_list_pathfile
+	#	$r_qpkg_tiers[]
+
+	# Outputs: (global)
+	#	$qpkgs_tiers_built
+
+	for a in "${r_qpkg_tiers[@]}"; do
+		b=r_${a}_qpkgs_list_pathfile
+		[[ ! -e ${!b} ]] && continue
+		rm -f "${!b}" 2>/dev/null
+	done
+
+	qpkgs_tiers_built=false
 
 	}
 
@@ -7511,28 +7460,6 @@ CheckQPKGsTiers()
 		qpkgs_tiers_built=false
 		break
 	done
-
-	}
-
-InitQPKGsTiers()
-	{
-
-	# Inputs: (global)
-	#	$r_dependent_qpkgs_list_pathfile
-	#	$r_independent_qpkgs_list_pathfile
-	#	$r_optional_qpkgs_list_pathfile
-	#	$r_qpkg_tiers[]
-
-	# Outputs: (global)
-	#	$qpkgs_tiers_built
-
-	for a in "${r_qpkg_tiers[@]}"; do
-		b=r_${a}_qpkgs_list_pathfile
-		[[ ! -e ${!b} ]] && continue
-		rm -f "${!b}" 2>/dev/null
-	done
-
-	qpkgs_tiers_built=false
 
 	}
 
@@ -7610,7 +7537,7 @@ BuildExtendedQPKGsStates()
 	FuncInit
 
 	if [[ ${qpkgs_states_built:=false} = true ]]; then
-		DebugAsDone "don't build states: they're already built"
+		DebugAsDetect 'states are already built'
 
 		FuncExit; return
 	fi
@@ -9002,9 +8929,9 @@ GetHardwareCPUInfo()
 	# BusyBox 1.01 doesn't support `grep -m`, so extract first mention the hard-way with `head`.
 
 	if /bin/grep -q '^model name' /proc/cpuinfo; then
-		/bin/grep '^model name' /proc/cpuinfo | head -n1 | /bin/sed 's|^.*: ||' | tr -s ' '
+		/bin/grep '^model name' /proc/cpuinfo | head -n1 | /bin/sed 's/^.*: //' | tr -s ' '
 	elif /bin/grep -q '^Processor name' /proc/cpuinfo; then
-		/bin/grep '^Processor name' /proc/cpuinfo | head -n1 | /bin/sed 's|^.*: ||' | tr -s ' '
+		/bin/grep '^Processor name' /proc/cpuinfo | head -n1 | /bin/sed 's/^.*: //' | tr -s ' '
 	else
 		printf unknown
 
@@ -9122,7 +9049,7 @@ GetOsKernelPageSize()
 	if [[ -e /sbin/hal_app ]]; then
 		echo -n "$(/sbin/hal_app --get_pagesize)B"
 	else
-		/bin/grep KernelPageSize /proc/1/smaps | head -n1 | cut -f2 -d':' | tr -d ' ' | /bin/sed 's|kB|kiB|'
+		/bin/grep KernelPageSize /proc/1/smaps | head -n1 | cut -f2 -d':' | tr -d ' ' | /bin/sed 's/kB/kiB/'
 	fi
 
 	}
@@ -9190,7 +9117,7 @@ GetUserLIBC()
 GetUserLIBCCopyright()
 	{
 
-	/sbin/ldd --version | /bin/grep -i copyright | /bin/sed 's|\$||'
+	/sbin/ldd --version | /bin/grep -i copyright | /bin/sed 's/\$//'
 
 	}
 
@@ -9227,7 +9154,7 @@ GetShellCopyright()
 	if [[ -z ${SHELL:-} ]]; then
 		printf undefined
 	else
-		$SHELL --version | /bin/grep -i copyright | /bin/sed 's|\$||'
+		$SHELL --version | /bin/grep -i copyright | /bin/sed 's/\$//'
 	fi
 
 	}
@@ -9249,14 +9176,14 @@ GetShellTimeIn()
 GetOsSysLoadAverages()
 	{
 
-	/usr/bin/uptime | /bin/sed 's|.*load average: ||' | /bin/awk -F', ' '{print "1m:"$1", 5m:"$2", 15m:"$3}'
+	/usr/bin/uptime | /bin/sed 's/.*load average: //' | /bin/awk -F', ' '{print "1m:"$1", 5m:"$2", 15m:"$3}'
 
 	}
 
 GetOsSysLoad1MinAverage()
 	{
 
-	/usr/bin/uptime | /bin/sed 's|.*load average: ||' | /bin/awk -F', ' '{print $1}'
+	/usr/bin/uptime | /bin/sed 's/.*load average: //' | /bin/awk -F', ' '{print $1}'
 
 	}
 
@@ -9277,7 +9204,7 @@ GetHardwareInstalledRAM()
 	# Outputs: (local)
 	#	stdout = text string.
 
-	/bin/grep MemTotal /proc/meminfo | /bin/sed 's|.*: ||;s|kB||;s| ||g'
+	/bin/grep MemTotal /proc/meminfo | /bin/sed 's/.*: //;s/kB//;s/ //g'
 
 	}
 
@@ -9462,364 +9389,6 @@ GetUserGitBranch()
 
 	}
 
-IsOsOk()
-	{
-
-	if ! IsOsQNAP; then
-		ShowAsAbort 'QNAP shell functions not found ... is this a QNAP NAS?'
-
-		return 1
-	fi
-
-	return 0
-
-	}
-
-IsOsQNAP()
-	{
-
-	# Is this a QNAP NAS?
-
-	[[ -e /etc/init.d/functions ]]
-
-	} &>/dev/null
-
-IsQuTS()
-	{
-
-    /bin/grep -q zfs /proc/filesystems
-
-	} &>/dev/null
-
-#IsQTS()
-# 	{
-#
-#     ! IsQuTS
-#
-# 	} &>/dev/null
-
-IsOsSupported()
-	{
-
-	# Inputs: (global)
-	#	$r_nas_firmware_ver
-
-	# Unable to test firmwares any earlier than 4.2.6 (but still have 4.2.0 available for TS-559Pro+ ).
-
-	SetOsFirmwareVer
-
-	[[ $r_nas_firmware_ver -ge 400 ]]
-
-	} &>/dev/null
-
-IsOsCanAsyncQpkgActions()
-	{
-
-	# Inputs: (global)
-	#	$r_nas_firmware_ver
-
-	SetOsFirmwareVer
-
-	[[ $r_nas_firmware_ver -ge 520 ]]
-
-	} &>/dev/null
-
-IsOsCanSecureDownload()
-	{
-
-	# `/sbin/curl` with SSL certificate verification enabled:
-	#	- fails in:
-	# 		QTS 4.2.6
-	# 		QTS 4.4.1
-	# 		QTS 4.5.1
-	# 		QTS 4.5.4.1715
-	#	- works in:
-	# 		QTS 4.5.4.2627
-
-	# Inputs: (global)
-	#	$r_nas_firmware_ver
-
-	SetOsFirmwareVer
-
-	[[ $r_nas_firmware_ver -ge 455 ]]
-
-	} &>/dev/null
-
-IsOsCanQpkgTimeout()
-	{
-
-	# Inputs: (global)
-	#	$r_nas_firmware_ver
-
-	SetOsFirmwareVer
-
-	[[ $r_nas_firmware_ver -ge 430 ]]
-
-	} &>/dev/null
-
-IsOsCanSignedPackages()
-	{
-
-	# Inputs: (global)
-	#	$r_nas_firmware_ver
-
-	# NOTE: signing fails on QTS 4.3.6 (x31). No cert database (which appears to be a bug, as 4.3.6 is meant to support signed QPKGs).
-
-	SetOsFirmwareVer
-
-	[[ $r_nas_firmware_ver -ge 437 ]]
-
-	} &>/dev/null
-
-IsOsCanUnofficialPackages()
-	{
-
-	# Inputs: (global)
-	#	$r_nas_firmware_ver
-
-	# Must check for "official QPKGs" on QTS 4.3.3 to QTS 4.3.6:
-
-	SetOsFirmwareVer
-
-	[[ $r_nas_firmware_ver -gt 426 && $r_nas_firmware_ver -le 436 ]]
-
-	} &>/dev/null
-
-IsOsCanSudo()
-	{
-
-	[[ -e /usr/bin/sudo ]]
-
-	} &>/dev/null
-
-IsOsCanSedExtRegex()
-	{
-
-	# Test if QTS `/bin/sed` can handle extended regexes (early BusyBox versions cannot):
-
-	[[ $(echo -en "\033[1;97ma" | /bin/sed -r 's/\x1b\[[0-9;]*m//g' | /usr/bin/wc -c) -eq 1 ]]
-
-	}
-
-IsOsCanDecimalSleepSeconds()
-	{
-
-	# Test if QTS `/bin/sleep` can handle decimal seconds (early BusyBox versions cannot):
-
-	/bin/sleep .01
-
-	} &>/dev/null
-
-IsOsCanAutowidthTableColumns()
-	{
-
-	# Inputs: (global)
-	#	$r_gnu_awk_cmd
-
-	[[ -e $r_gnu_awk_cmd ]]
-
-	}
-
-IsOsCompatibleWithSigned()
-	{
-
-	# Inputs: (global)
-	#	$r_nas_firmware_date
-
-	# QTS builds released over these 6 days don't allow unsigned QPKGs to run at-all:
-
-	SetOsFirmwareDate
-
-	[[ $r_nas_firmware_date -lt 20201015 || $r_nas_firmware_date -gt 20201020 ]]
-
-	} &>/dev/null
-
-IsOsAllowUnsignedPackages()
-	{
-
-	[[ $(/sbin/getcfg 'QPKG Management' Ignore_Cert -d FALSE) = TRUE ]]
-
-	}
-
-IsOsAllowUnofficialPackages()
-	{
-
-	[[ $(/sbin/getcfg 'QPKG Management' Check_Official -d TRUE) = FALSE ]]
-
-	}
-
-IsOsStarting()
-	{
-
-	/bin/ps | /bin/grep '/bin/sh /etc/init.d/rcS' | /bin/grep -v grep
-
-	} &>/dev/null
-
-IsOsStopping()
-	{
-
-	/bin/ps | /bin/grep '/bin/sh /etc/init.d/rcK' | /bin/grep -v grep
-
-	} &>/dev/null
-
-IsOsStartingPackages()
-	{
-
-	if IsOsCanAsyncQpkgActions; then
-		/bin/ps | /bin/grep '/usr/local/sbin/qpkg_service start' | /bin/grep -v grep
-	else
-		IsOsStarting
-	fi
-
-	} &>/dev/null
-
-IsOsStoppingPackages()
-	{
-
-	if IsOsCanAsyncQpkgActions; then
-		/bin/ps | /bin/grep '/usr/local/sbin/qpkg_service stop' | /bin/grep -v grep
-	else
-		IsOsStopping
-	fi
-
-	} &>/dev/null
-
-IsOsOnline()
-	{
-
-	[[ $(GetOsState) = online ]]
-
-	}
-
-IsOsStdKernelPageSize()
-	{
-
-	# Standard kernel page size for most QNAP NAS is 4kiB. Non-standard size is 32kiB (confirmed on the TS-431XeU, TS-431X3 & TS-1635).
-	# https://www.qnap.com/en-us/how-to/faq/article/why-do-the-installed-third-party-containers-not-run-successfully-on-specific-32-bit-arm-devices
-
-	# Inputs: (global)
-	#	$r_kernel_page_size
-
-	SetOsKernelPageSize
-
-	[[ $r_kernel_page_size = 4096B || $r_kernel_page_size = 4kiB ]]
-
-	}
-
-IsOsNonStdKernelPageSize()
-	{
-
-	! IsOsStdKernelPageSize
-
-	}
-
-IsOsLoadAverageElevated()
-	{
-
-	IsOsLoadAverageAboveTrigger 2
-
-	}
-
-IsOsLoadAverageHigh()
-	{
-
-	IsOsLoadAverageAboveTrigger 4
-
-	}
-
-IsOsLoadAverageInsane()
-	{
-
-	IsOsLoadAverageAboveTrigger 8
-
-	}
-
-IsOsLoadAverageAboveTrigger()
-	{
-
-	# Inputs: (local)
-	#	$1 = multiplier
-
-	# Inputs: (global)
-	#	$r_cpu_cores
-
-	local a=${1:-1}
-	local b=$(GetOsSysLoad1MinAverage); b=${b/./}
-	local c=$((r_cpu_cores*a*100))
-
-	[[ $((10#$b)) -ge $((10#$c)) ]]
-
-	}
-
-IsOsSedExtRegexSupported()
-	{
-
-	# Inputs: (global)
-	#	$sed_ext_regex_supported
-
-	[[ ${sed_ext_regex_supported-unset} = unset ]] && SetOsSedRegexSupport
-	[[ $sed_ext_regex_supported -eq 0 ]]
-
-	}
-
-IsOsDecimalSleepSecondsSupported()
-	{
-
-	# Inputs: (global)
-	#	$sleep_decimal_seconds_supported
-
-	[[ ${sleep_decimal_seconds_supported-unset} = unset ]] && SetOsDecimalSleepSecondsSupport
-	[[ $sleep_decimal_seconds_supported -eq 0 ]]
-
-	}
-
-IsInTerminal()
-	{
-
-	[[ -t 0 ]]
-
-	}
-
-SetError()
-	{
-
-	# Outputs: (global)
-	#	$run_package_actions
-	#	$_script_error_flag_
-
-	run_package_actions=false
-	IsError && return
-	_script_error_flag_=true
-	DebugVar _script_error_flag_
-
-	}
-
-IsError()
-	{
-
-	# Inputs: (global)
-	#	$_script_error_flag_
-
-	# Outputs: (global)
-	#	$_script_error_flag_
-
-	[[ ${_script_error_flag_:=false} = true ]]
-
-	}
-
-IsNtError()
-	{
-
-	# Inputs: (global)
-	#	$_script_error_flag_
-
-	# Outputs: (global)
-	#	$_script_error_flag_
-
-	[[ ${_script_error_flag_:=false} != true ]]
-
-	}
-
 ShowZeroQpkgs()
 	{
 
@@ -9934,8 +9503,8 @@ SaveActionResultToLog()
 
 	local -r r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
 		local var_safe_name=${r_var_name//[.-]/_}; var_safe_name=${var_safe_name//:/_}
-	local -r r_package_type=${1:?${FUNCNAME[0]}'()': undefined package type}
-	local -r r_name=${2:?${FUNCNAME[0]}'()': undefined package name}
+	local -r r_package_type=${1:?${FUNCNAME[0]}'()': $r_nopacktype}
+	local -r r_name=${2:?${FUNCNAME[0]}'()': $r_nopackname}
 	local -r r_action=${3:?${FUNCNAME[0]}'()': undefined action}
 	local -r r_qty=${4:-1}
 	local -r r_clean_action=${r_action//\"/}
@@ -10075,7 +9644,7 @@ _QPKG:download_()
 		SaveActionResultToLog QPKG "$qpkg_name" download '' skipped 'NAS arch is incompatible'
 		MarkActionForkAsSkipped
 		z=1
-	elif [[ -f $r_local_pathfile ]]; then
+	elif IsFile "$r_local_pathfile"; then
 		if FileMatchesMD5 "$r_local_pathfile" "$r_remote_hash"; then
 			SaveActionResultToLog QPKG "$qpkg_name" download '' skipped-ok "existing file $(FormatFileName "$r_local_filename") checksum is correct"
 			MarkActionForkAsSkippedOk
@@ -10088,7 +9657,7 @@ _QPKG:download_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	if [[ ! -f $r_local_pathfile ]]; then
+	if IsNtFile "$r_local_pathfile"; then
 		DebugAsProc "downloading $(FormatFileName "$r_remote_filename")"
 
 		rm -f "$r_log_pathfile" 2>/dev/null
@@ -10198,7 +9767,7 @@ _QPKG:install_()
 	LogQpkgServiceResult
 	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
 
-	[[ $qpkg_name = Entware ]] && IsNtSysFileExist $r_opkg_cmd && z=1		# Entware installation has failed.
+	[[ $qpkg_name = Entware ]] && IsNtCriticalFile $r_opkg_cmd && z=1		# Entware installation has failed.
 
 	if [[ $z -eq 0 || $z -eq 10 ]]; then	# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes user-aborts.
 		SaveActionResultToLog QPKG "$qpkg_name" install '' ok "v$(GetQpkgInstalledVer)"
@@ -10287,7 +9856,7 @@ _QPKG:reinstall_()
 	LogQpkgServiceResult
 	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
 
-	[[ $qpkg_name = Entware ]] && IsNtSysFileExist $r_opkg_cmd && z=1
+	[[ $qpkg_name = Entware ]] && IsNtCriticalFile $r_opkg_cmd && z=1
 
 	if [[ $z -eq 0 || $z -eq 10 ]]; then		# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes aborts.
 		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' ok "v$(GetQpkgInstalledVer)"
@@ -10419,7 +9988,7 @@ _QPKG:upgrade_()
 	LogQpkgServiceResult
 	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
 
-	[[ $qpkg_name = Entware ]] && IsNtSysFileExist $r_opkg_cmd && z=1
+	[[ $qpkg_name = Entware ]] && IsNtCriticalFile $r_opkg_cmd && z=1
 
 	if [[ $z -eq 0 || $z -eq 10 ]]; then	# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes aborts.
 		SendPackageStateChange ISNTupgradable
@@ -10490,7 +10059,7 @@ _QPKG:uninstall_()
 
 	[[ $qpkg_name = Entware ]] && SaveIpkAndPipList
 
-	if [[ -e $r_qpkg_uninstaller_pathfile ]]; then
+	if IsFile "$r_qpkg_uninstaller_pathfile"; then
 		DebugAsProc "uninstalling $(FormatPackageName)"
 
 		RunAndLog "${a}/bin/sh $r_qpkg_uninstaller_pathfile" "$r_logs_path/$qpkg_name.$r_uninstall_log_file" log:failure-only
@@ -11455,7 +11024,7 @@ GetQpkgInstalledPath()
 	#   stdout = package installation date.
 	#   $? = 0 (found), 250 (not-found).
 
-	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}" Install_Path -d undefined -f /etc/config/qpkg.conf
+	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}" Install_Path -d undefined -f /etc/config/qpkg.conf
 
 	}
 
@@ -11472,7 +11041,7 @@ GetQpkgServicePathFile()
 	#   stdout = service-script pathfile
 	#   $? = 0 if found, 250 if not.
 
-	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}" Shell -d undefined -f /etc/config/qpkg.conf
+	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}" Shell -d undefined -f /etc/config/qpkg.conf
 
 	}
 
@@ -11548,7 +11117,7 @@ GetQpkgDbVer()
 # 		return 0
 # 	fi
 
-	a=${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}
+	a=${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}
 
 	if [[ -n $a ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
@@ -11576,7 +11145,7 @@ GetQpkgInstalledVer()
 	#   stdout = package version
 	#   $? = 0 if found, 250 if not.
 
-	/sbin/getcfg "${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}" Version -d undefined -f /etc/config/qpkg.conf
+	/sbin/getcfg "${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}" Version -d undefined -f /etc/config/qpkg.conf
 
 	}
 
@@ -11595,7 +11164,7 @@ GetQpkgInstalledStoreID()
 	#   stdout = package store ID
 	#   $? = 0 if found, 250 if not.
 
-	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}" store -d undefined -f /etc/config/qpkg.conf
+	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}" store -d undefined -f /etc/config/qpkg.conf
 
 	}
 
@@ -11614,7 +11183,7 @@ GetQpkgInstalledDate()
 	#   stdout = package installation date
 	#   $? = 0 if found, 1 if QPKG name unspecified, 250 if not found
 
-	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}" date -d undefined -f /etc/config/qpkg.conf
+	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}" date -d undefined -f /etc/config/qpkg.conf
 
 	}
 
@@ -11631,7 +11200,7 @@ GetQpkgInstalledOriginalPath()
 	#   stdout = the original installation path of this QPKG (even if it was migrated to another volume).
 	#   $? = 0 if successful, 1 if failed
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}
 	local -i i=0
 
 	if [[ ${#QPKGs_were_installed_name[@]} -gt 0 ]]; then
@@ -11866,7 +11435,7 @@ GetQpkgDbAuthor()
 	#   stdout = QPKG author (first package found).
 	#   $? = 0 (found), !0 (not-found)
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}
 	local -i i=0
 
 	for i in "${!r_qpkg_name[@]}"; do
@@ -11895,7 +11464,7 @@ GetQpkgAuthor()
 	# Outputs: (local)
 	#   stdout = installed QPKG author.
 
-	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}" Author -f /etc/config/qpkg.conf
+	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}" Author -f /etc/config/qpkg.conf
 
 	}
 
@@ -11914,7 +11483,7 @@ GetQpkgAuthor()
 # 	local -i i=0
 #
 # 	for i in "${!r_qpkg_name[@]}"; do
-# 		[[ ${r_qpkg_name[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]] || continue
+# 		[[ ${r_qpkg_name[$i]} = "${1:?${FUNCNAME[0]}'()': $r_nopackname}" ]] || continue
 # 		printf '%s' "${r_qpkg_author_email[$i]}"
 #
 # 		return 0
@@ -11939,7 +11508,7 @@ GetQpkgAuthor()
 # 	local -i i=0
 #
 # 	for i in "${!r_qpkg_name[@]}"; do
-# 		[[ ${r_qpkg_name[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]] || continue
+# 		[[ ${r_qpkg_name[$i]} = "${1:?${FUNCNAME[0]}'()': $r_nopackname}" ]] || continue
 # 		printf '%s' "${r_qpkg_appl_author[$i]}"
 #
 # 		return 0
@@ -11964,7 +11533,7 @@ GetQpkgAuthor()
 # 	local -i i=0
 #
 # 	for i in "${!r_qpkg_name[@]}"; do
-# 		[[ ${r_qpkg_name[$i]} = "${1:?${FUNCNAME[0]}'()': undefined package name}" ]] || continue
+# 		[[ ${r_qpkg_name[$i]} = "${1:?${FUNCNAME[0]}'()': $r_nopackname}" ]] || continue
 # 		printf '%s' "${r_qpkg_appl_author_email[$i]}"
 #
 # 		return 0
@@ -12378,7 +11947,7 @@ GetQpkgServiceAction()
 	#   $stdout = previous action requested.
 	#   $? = 0 (found), !0 (not-found)
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}
 	local b=''
 	[[ -e /var/log/$a.action ]] && b=$(</var/log/${a}.action)
 
@@ -12403,7 +11972,7 @@ GetQpkgServiceResult()
 	#   $stdout = last known package service status.
 	#   $? = 0 (found), !0 (not-found)
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}
 	local b=''
 	[[ -e /var/log/$a.result ]] && b=$(</var/log/${a}.result)
 
@@ -12451,17 +12020,17 @@ GetQpkgsNtInstalled()
 
 	}
 
-GetQpkgsNtValidInstalled()
-	{
-
-	local qpkg_name=''
-
-	for qpkg_name in $(QPKGs-GRall:Array); do
-		IsNtValidQpkgInstalled || continue
-		echo "$qpkg_name"
-	done
-
-	}
+#GetQpkgsNtValidInstalled()
+# 	{
+#
+# 	local qpkg_name=''
+#
+# 	for qpkg_name in $(QPKGs-GRall:Array); do
+# 		IsNtValidQpkgInstalled || continue
+# 		echo "$qpkg_name"
+# 	done
+#
+# 	}
 
 GetQpkgsIsEnabled()
 	{
@@ -12566,67 +12135,470 @@ QpkgMatchAbbrv()
 
 	}
 
-SetQpkgIndex()
+IsUserOk()
 	{
 
-	# Find and set the 1-based index reference of the named arch-specific QPKG in `packages` file.
-
 	# Inputs: (global)
-	#   $r_nas_qpkg_arch
-	#   $r_qpkg_arch[]
-	#   $qpkg_name
-	#   $r_qpkg_name[]
+	#	$r_args_raw
+	#	$r_chars_sudo_prompt
 
-	# Outputs: (local)
-	#   $? = 0 (successful) / !0 (failed)
+	if ! IsUserSU; then
+		if IsOsCanSudo; then
+			ShowAsError 'this utility must be run with superuser privileges. Try again as:'
+			echo "${r_chars_sudo_prompt}sherpa $r_args_raw" >&2
+		else
+			ShowAsError "this utility must be run as the 'admin' user. Please login via SSH as 'admin' and try again"
+		fi
 
-	# Outputs: (global)
-	#   $qpkg_index ('0' if QPKG a compatible arch could not be found).
+		return 1
+	fi
 
-	[[ -n ${qpkg_name:-} ]] || return
-
-	SetQpkgDefaultIndex
-	SetQpkgArch
-
-	for qpkg_index in "${!r_qpkg_name[@]}"; do
-		[[ ${r_qpkg_name[$qpkg_index]} = "$qpkg_name" ]] || continue
-		[[ ${r_qpkg_arch[$qpkg_index]} = all || ${r_qpkg_arch[$qpkg_index]} = "$r_nas_qpkg_arch" ]] || continue
-
-		return 0
-	done
-
-	qpkg_index=0
-
-	return 1
+	return 0
 
 	}
 
-SetQpkgDefaultIndex()
+IsUserSU()
 	{
 
-	# Find and set the 1-based index reference of the named QPKG in `packages` file.
-
 	# Inputs: (global)
-	#   $qpkg_name
-	#   $r_qpkg_name[]
+	#	$EUID
+
+	[[ $EUID -eq 0 ]]
+
+	}
+
+IsCriticalFile()
+	{
+
+	# Inputs: (local)
+	#   $1 = pathfile to check
 
 	# Outputs: (local)
-	#   $? = 0 (successful) / !0 (failed)
+	#   $? = 0 (exists) or 1 (not exists)
+
+	[[ -n ${1:?${FUNCNAME[0]}'()': $r_nopfile} ]] || exit
+
+	local a=${1%% *}		# Extract first word-group.
+
+	if ! [[ -f $a || -L $a ]]; then
+		ShowAsAbort "a required NAS system file $(FormatFileName "$a") is missing"
+
+		return 1
+	fi
+
+	return 0
+
+	}
+
+IsNtCriticalFile()
+	{
+
+	# Inputs: (local)
+	#   $1 = pathfile to check
+
+	# Outputs: (local)
+	#   $? = 0 (not exists) or 1 (exists)
+
+	! IsCriticalFile "${1:?${FUNCNAME[0]}'()': $r_nopfile}"
+
+	}
+
+IsFile()
+	{
+
+	# Inputs: (local)
+	#   $1 = pathfile to check
+
+	# Outputs: (local)
+	#   $? = 0 (exists and is non-zero bytes) or 1 (not exists or is zero bytes)
+
+	[[ -n ${1:?${FUNCNAME[0]}'()': $r_nopfile} ]] || exit
+
+	local a=${1%% *}		# Extract first word-group.
+
+	[[ -f $a && -s $a ]]
+
+	}
+
+IsNtFile()
+	{
+
+	# Inputs: (local)
+	#   $1 = pathfile to check
+
+	# Outputs: (local)
+	#   $? = 0 (not exists or is zero bytes) or 1 (exists and is non-zero bytes)
+
+	! IsFile "${1:?${FUNCNAME[0]}'()': $r_nopfile}"
+
+	}
+
+IsFileRecent()
+	{
+
+	# Inputs: (local)
+	#   $1 = pathfilename: file to examine change time of.
+	#   $2 (optional) = integer - threshold in minutes. Default is `1440` (1 day).
+
+	# Outputs: (local)
+	#   $? = true/false
+
+	# Examine `change` time as this is updated even if file content isn't modified.
+
+	[[ -e ${1:-} && $((($(ConvertNowToSeconds)-$(/usr/bin/stat "$1" -c %Z))/60)) -le ${2:-1440} ]]		# https://stackoverflow.com/a/55622661
+
+	}
+
+IsEntwareUpgradable()
+	{
+
+	local a=$(GetQpkgInstalledDate Entware)
+
+	[[ $a = undefined || ${a//[!0-9]/} -le $r_entware_packages_last_updated ]] && [[ $r_nas_arch != armv5tel ]]
+
+	}
+
+IsOsOk()
+	{
+
+	if ! IsOsQNAP; then
+		ShowAsAbort 'QNAP shell functions not found ... is this a QNAP NAS?'
+
+		return 1
+	fi
+
+	return 0
+
+	}
+
+IsOsQNAP()
+	{
+
+	# Is this a QNAP NAS?
+
+	[[ -e /etc/init.d/functions ]]
+
+	} &>/dev/null
+
+IsQuTS()
+	{
+
+    /bin/grep -q zfs /proc/filesystems
+
+	} &>/dev/null
+
+#IsQTS()
+# 	{
+#
+#     ! IsQuTS
+#
+# 	} &>/dev/null
+
+IsOsSupported()
+	{
+
+	# Inputs: (global)
+	#	$r_nas_firmware_ver
+
+	# Unable to test firmwares any earlier than 4.2.6 (but still have 4.2.0 available for TS-559Pro+ ).
+
+	SetOsFirmwareVer
+
+	[[ $r_nas_firmware_ver -ge 400 ]]
+
+	} &>/dev/null
+
+IsOsCanAsyncQpkgActions()
+	{
+
+	# Inputs: (global)
+	#	$r_nas_firmware_ver
+
+	SetOsFirmwareVer
+
+	[[ $r_nas_firmware_ver -ge 520 ]]
+
+	} &>/dev/null
+
+IsOsCanSecureDownload()
+	{
+
+	# `/sbin/curl` with SSL certificate verification enabled:
+	#	- fails in:
+	# 		QTS 4.2.6
+	# 		QTS 4.4.1
+	# 		QTS 4.5.1
+	# 		QTS 4.5.4.1715
+	#	- works in:
+	# 		QTS 4.5.4.2627
+
+	# Inputs: (global)
+	#	$r_nas_firmware_ver
+
+	SetOsFirmwareVer
+
+	[[ $r_nas_firmware_ver -ge 455 ]]
+
+	} &>/dev/null
+
+IsOsCanQpkgTimeout()
+	{
+
+	# Inputs: (global)
+	#	$r_nas_firmware_ver
+
+	SetOsFirmwareVer
+
+	[[ $r_nas_firmware_ver -ge 430 ]]
+
+	} &>/dev/null
+
+IsOsCanSignedPackages()
+	{
+
+	# Inputs: (global)
+	#	$r_nas_firmware_ver
+
+	# NOTE: signing fails on QTS 4.3.6 (x31). No cert database (which appears to be a bug, as 4.3.6 is meant to support signed QPKGs).
+
+	SetOsFirmwareVer
+
+	[[ $r_nas_firmware_ver -ge 437 ]]
+
+	} &>/dev/null
+
+IsOsCanUnofficialPackages()
+	{
+
+	# Inputs: (global)
+	#	$r_nas_firmware_ver
+
+	# Must check for "official QPKGs" on QTS 4.3.3 to QTS 4.3.6:
+
+	SetOsFirmwareVer
+
+	[[ $r_nas_firmware_ver -gt 426 && $r_nas_firmware_ver -le 436 ]]
+
+	} &>/dev/null
+
+IsOsCanSudo()
+	{
+
+	[[ -e /usr/bin/sudo ]]
+
+	} &>/dev/null
+
+IsOsCanSedExtRegex()
+	{
+
+	# Test if QTS `/bin/sed` can handle extended regexes (early BusyBox versions cannot):
+
+	[[ $(echo -en "\033[1;97ma" | /bin/sed -r 's/\x1b\[[0-9;]*m//g' | /usr/bin/wc -c) -eq 1 ]]
+
+	}
+
+IsOsCanDecimalSleepSeconds()
+	{
+
+	# Test if QTS `/bin/sleep` can handle decimal seconds (early BusyBox versions cannot):
+
+	/bin/sleep .01
+
+	} &>/dev/null
+
+IsOsCanAutowidthTableColumns()
+	{
+
+	# Inputs: (global)
+	#	$r_gnu_awk_cmd
+
+	[[ -e $r_gnu_awk_cmd ]]
+
+	}
+
+IsOsCompatibleWithSigned()
+	{
+
+	# Inputs: (global)
+	#	$r_nas_firmware_date
+
+	# QTS builds released over these 6 days don't allow unsigned QPKGs to run at-all:
+
+	SetOsFirmwareDate
+
+	[[ $r_nas_firmware_date -lt 20201015 || $r_nas_firmware_date -gt 20201020 ]]
+
+	} &>/dev/null
+
+IsOsAllowUnsignedPackages()
+	{
+
+	[[ $(/sbin/getcfg 'QPKG Management' Ignore_Cert -d FALSE) = TRUE ]]
+
+	}
+
+IsOsAllowUnofficialPackages()
+	{
+
+	[[ $(/sbin/getcfg 'QPKG Management' Check_Official -d TRUE) = FALSE ]]
+
+	}
+
+IsOsStarting()
+	{
+
+	/bin/ps | /bin/grep '/bin/sh /etc/init.d/rcS' | /bin/grep -v grep
+
+	} &>/dev/null
+
+IsOsStopping()
+	{
+
+	/bin/ps | /bin/grep '/bin/sh /etc/init.d/rcK' | /bin/grep -v grep
+
+	} &>/dev/null
+
+IsOsStartingPackages()
+	{
+
+	if IsOsCanAsyncQpkgActions; then
+		/bin/ps | /bin/grep '/usr/local/sbin/qpkg_service start' | /bin/grep -v grep
+	else
+		IsOsStarting
+	fi
+
+	} &>/dev/null
+
+IsOsStoppingPackages()
+	{
+
+	if IsOsCanAsyncQpkgActions; then
+		/bin/ps | /bin/grep '/usr/local/sbin/qpkg_service stop' | /bin/grep -v grep
+	else
+		IsOsStopping
+	fi
+
+	} &>/dev/null
+
+IsOsOnline()
+	{
+
+	[[ $(GetOsState) = online ]]
+
+	}
+
+IsOsStdKernelPageSize()
+	{
+
+	# Standard kernel page size for most QNAP NAS is 4kiB. Non-standard size is 32kiB (confirmed on the TS-431XeU, TS-431X3 & TS-1635).
+	# https://www.qnap.com/en-us/how-to/faq/article/why-do-the-installed-third-party-containers-not-run-successfully-on-specific-32-bit-arm-devices
+
+	# Inputs: (global)
+	#	$r_kernel_page_size
+
+	SetOsKernelPageSize
+
+	[[ $r_kernel_page_size = 4096B || $r_kernel_page_size = 4kiB ]]
+
+	}
+
+IsOsNonStdKernelPageSize()
+	{
+
+	! IsOsStdKernelPageSize
+
+	}
+
+IsOsLoadAverageElevated()
+	{
+
+	IsOsLoadAverageAboveTrigger 2
+
+	}
+
+IsOsLoadAverageHigh()
+	{
+
+	IsOsLoadAverageAboveTrigger 4
+
+	}
+
+IsOsLoadAverageInsane()
+	{
+
+	IsOsLoadAverageAboveTrigger 8
+
+	}
+
+IsOsLoadAverageAboveTrigger()
+	{
+
+	# Inputs: (local)
+	#	$1 = multiplier
+
+	# Inputs: (global)
+	#	$r_cpu_cores
+
+	local a=${1:-1}
+	local b=$(GetOsSysLoad1MinAverage); b=${b/./}
+	local c=$((r_cpu_cores*a*100))
+
+	[[ $((10#$b)) -ge $((10#$c)) ]]
+
+	}
+
+IsOsSedExtRegexSupported()
+	{
+
+	# Inputs: (global)
+	#	$sed_ext_regex_supported
+
+	[[ ${sed_ext_regex_supported-unset} = unset ]] && SetOsSedRegexSupport
+	[[ $sed_ext_regex_supported -eq 0 ]]
+
+	}
+
+IsOsDecimalSleepSecondsSupported()
+	{
+
+	# Inputs: (global)
+	#	$sleep_decimal_seconds_supported
+
+	[[ ${sleep_decimal_seconds_supported-unset} = unset ]] && SetOsDecimalSleepSecondsSupport
+	[[ $sleep_decimal_seconds_supported -eq 0 ]]
+
+	}
+
+IsInTerminal()
+	{
+
+	[[ -t 0 ]]
+
+	}
+
+IsError()
+	{
+
+	# Inputs: (global)
+	#	$_script_error_flag_
 
 	# Outputs: (global)
-	#   $qpkg_default_index ('0' if QPKG could not be found).
+	#	$_script_error_flag_
 
-	[[ -n ${qpkg_name:-} ]] || return
+	[[ ${_script_error_flag_:=false} = true ]]
 
-	for qpkg_default_index in "${!r_qpkg_name[@]}"; do
-		[[ ${r_qpkg_name[$qpkg_default_index]} = "$qpkg_name" ]] || continue
+	}
 
-		return 0
-	done
+IsNtError()
+	{
 
-	qpkg_default_index=0
+	# Inputs: (global)
+	#	$_script_error_flag_
 
-	return 1
+	# Outputs: (global)
+	#	$_script_error_flag_
+
+	[[ ${_script_error_flag_:=false} != true ]]
 
 	}
 
@@ -12644,7 +12616,7 @@ IsQpkgRepoSelfManaged()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=$(GetQpkgInstalledStoreID "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
+	local a=$(GetQpkgInstalledStoreID "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}")
 
 	[[ -z $a || $a = undefined || $a = sherpa ]]
 
@@ -12664,7 +12636,7 @@ IsNtQpkgRepoSelfManaged()
 	# Outputs: (local)
 	#   $? = true/false
 
-	! IsQpkgRepoSelfManaged "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}"
+	! IsQpkgRepoSelfManaged "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}"
 
 	}
 
@@ -12683,7 +12655,7 @@ IsQpkgBackupExist()
 	# Outputs: (local)
 	#   $? = true/false
 
-	[[ -e $r_qpkg_bu_path/${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}.config.tar.gz ]]
+	[[ -e $r_qpkg_bu_path/${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}.config.tar.gz ]]
 
 	}
 
@@ -12768,7 +12740,7 @@ IsQpkgDbOptional()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}
 	local -i i=0
 	local re=\\b${a}\\b
 
@@ -12795,7 +12767,7 @@ IsQpkgDbArchOK()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=$(GetQpkgDbURL "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
+	local a=$(GetQpkgDbURL "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}")
 
 	[[ -n $a && $a != none ]]
 
@@ -12816,7 +12788,7 @@ IsQpkgDbMinRAMOk()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=$(GetQpkgDbMinRAM "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
+	local a=$(GetQpkgDbMinRAM "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}")
 
 	[[ -n $a ]] && [[ $a = none || $r_nas_ram_kb -ge $a ]]
 
@@ -12837,7 +12809,7 @@ IsQpkgDbMinOSVerOk()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=$(GetQpkgDbMinOSVer "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
+	local a=$(GetQpkgDbMinOSVer "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}")
 
 	SetOsFirmwareVer
 
@@ -12860,7 +12832,7 @@ IsQpkgDbMaxOSVerOk()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=$(GetQpkgDbMaxOSVer "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
+	local a=$(GetQpkgDbMaxOSVer "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}")
 
 	SetOsFirmwareVer
 
@@ -12921,7 +12893,7 @@ IsQpkgDbCanRestartToUpdate()
 	# Outputs: (local)
 	#   $? = 0 (true), !0 (false) (first package found).
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}
 	local -i i=0
 
 	for i in "${!r_qpkg_name[@]}"; do
@@ -12947,7 +12919,7 @@ IsQpkgDbCanClean()
 	# Outputs: (local)
 	#   $? = 0 (true), 1 (false) (first package found).
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}
 	local -i i=0
 
 	for i in "${!r_qpkg_name[@]}"; do
@@ -13049,7 +13021,7 @@ IsQpkgDbWillLog()
 	local -i i=0
 
 	for i in "${!r_qpkg_name[@]}"; do
-		[[ ${r_qpkg_name[$i]} = "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}" ]] || continue
+		[[ ${r_qpkg_name[$i]} = "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}" ]] || continue
 		${r_qpkg_will_log[$i]} && return 0 || break
 	done
 
@@ -13071,7 +13043,7 @@ IsQpkgAutoUpdate()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}
 
 	[[ $(/sbin/getcfg "$a" Auto_Update -u -f /etc/config/qpkg.conf) = TRUE ]]
 
@@ -13089,7 +13061,7 @@ IsQpkgAuthorOk()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}
 
 	[[ $(GetQpkgDbAuthor "$a") = "$(GetQpkgAuthor "$a")" ]]
 
@@ -13107,7 +13079,7 @@ IsNtQpkgAuthorOk()
 	# Outputs: (local)
 	#   $? = true/false
 
-	! IsQpkgAuthorOk "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}"
+	! IsQpkgAuthorOk "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}"
 
 	}
 
@@ -13125,7 +13097,7 @@ IsValidQpkgInstalled()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}
 
 	/bin/grep -q "^\[$a\]" /etc/config/qpkg.conf && IsQpkgAuthorOk "$a"
 
@@ -13143,7 +13115,7 @@ IsNtValidQpkgInstalled()
 	# Outputs: (local)
 	#   $? = true/false
 
-	! IsValidQpkgInstalled "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}"
+	! IsValidQpkgInstalled "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}"
 
 	}
 
@@ -13161,7 +13133,7 @@ IsQpkgInstalled()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}
 
 	/bin/grep -q "^\[$a\]" /etc/config/qpkg.conf
 
@@ -13179,7 +13151,7 @@ IsNtQpkgInstalled()
 	# Outputs: (local)
 	#   $? = true/false
 
-	! IsQpkgInstalled "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}"
+	! IsQpkgInstalled "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}"
 
 	}
 
@@ -13195,7 +13167,7 @@ IsQpkgMissing()
 	# Outputs: (local)
 	#   $? = true/false.
 
-	local a=$(GetQpkgInstalledPath "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}")
+	local a=$(GetQpkgInstalledPath "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}")
 
 	[[ $a != undefined && ! -d $a ]]
 
@@ -13213,7 +13185,7 @@ IsQpkgComplete()
 	# Outputs: (local)
 	#   $? = true/false.
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}
 
 	[[ $(/sbin/getcfg "$a" Status -d undefined -f /etc/config/qpkg.conf) = complete ]] && [[ $(/sbin/getcfg "$a" Incomplete_Conf -d undefined -f /etc/config/qpkg.conf) != 1 ]]
 
@@ -13231,7 +13203,7 @@ IsNtQpkgComplete()
 	# Outputs: (local)
 	#   $? = true/false
 
-	! IsQpkgComplete "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}"
+	! IsQpkgComplete "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}"
 
 	}
 
@@ -13247,7 +13219,7 @@ IsQpkgEnabled()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}
 
 	[[ $(/sbin/getcfg "$a" Enable -u -d undefined -f /etc/config/qpkg.conf) = TRUE ]]
 
@@ -13265,7 +13237,7 @@ IsNtQpkgEnabled()
 	# Outputs: (local)
 	#   $? = true/false
 
-	! IsQpkgEnabled "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}"
+	! IsQpkgEnabled "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}"
 
 	}
 
@@ -13588,7 +13560,7 @@ FileCountAll()
 
 	[[ -n ${1:-} ]] || return
 
-	compgen -G "$1/*" | /usr/bin/wc -l | /bin/sed 's|^ *||'		# `compgen` usage found here: https://stackoverflow.com/a/6364244
+	compgen -G "$1/*" | /usr/bin/wc -l | /bin/sed 's/^ *//'		# `compgen` usage found here: https://stackoverflow.com/a/6364244
 
 	}
 
@@ -13602,7 +13574,7 @@ FileCountSpec()
 
 	[[ -n ${1:-} ]] || return
 
-	compgen -G "$1" | /usr/bin/wc -l | /bin/sed 's|^ *||'		# `compgen` usage found here: https://stackoverflow.com/a/6364244
+	compgen -G "$1" | /usr/bin/wc -l | /bin/sed 's/^ *//'		# `compgen` usage found here: https://stackoverflow.com/a/6364244
 
 	}
 
@@ -13627,7 +13599,7 @@ RunAndLog()
 	#   pathfile (specified as $2) = stdout and stderr from commandstring (specified as $1).
 	#   $? = result_code of commandstring.
 
-	[[ -n ${1:?${FUNCNAME[0]}'()': undefined commandstring} && -n ${2:?${FUNCNAME[0]}'()': undefined pathfile} ]] || return
+	[[ -n ${1:?${FUNCNAME[0]}'()': undefined commandstring} && -n ${2:?${FUNCNAME[0]}'()': $r_nopfile} ]] || return
 
 	FuncInit
 
@@ -13686,7 +13658,7 @@ DeDupeWords()
 
 	[[ -n ${1:-} ]] || return
 
-	tr ' ' '\n' <<<"$1" | /usr/bin/sort | /bin/uniq | tr '\n' ' ' | /bin/sed 's|^[[:blank:]]*||;s|[[:blank:]]*$||'
+	tr ' ' '\n' <<<"$1" | /usr/bin/sort | /bin/uniq | tr '\n' ' ' | /bin/sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'
 
 	}
 
@@ -13697,7 +13669,25 @@ FileMatchesMD5()
 	#   $1 = pathfile to generate an MD5 checksum for.
 	#   $2 = MD5 checksum to compare against.
 
-	[[ $(/bin/md5sum "${1:?${FUNCNAME[0]}'()': undefined pathfile}" | cut -f1 -d' ') = "${2:?${FUNCNAME[0]}'()': undefined checksum}" ]]
+	# Outputs: (local)
+	#	$? = true if checksums match.
+
+	[[ $(GenerateMD5 "${1:?${FUNCNAME[0]}'()': $r_nopfile}") = "${2:?${FUNCNAME[0]}'()': undefined checksum}" ]]
+
+	}
+
+
+GenerateMD5()
+	{
+
+	# Inputs: (local)
+	#   $1 = pathfile to generate an MD5 checksum for.
+
+	# Outputs: (local)
+	#   stdout = MD5 checksum.
+	#	$? = false if file not found.
+
+	[[ -e ${1:?${FUNCNAME[0]}'()': $r_nopfile} ]] && /bin/md5sum "${1:?${FUNCNAME[0]}'()': $r_nopfile}" | cut -f1 -d' '
 
 	}
 
@@ -13960,14 +13950,14 @@ ShowAsOptions()
 FormatPackageName()
 	{
 
-	printf '%s' "${1:-${qpkg_name:?${FUNCNAME[0]}'()': undefined package name}}"
+	printf '%s' "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}"
 
 	}
 
 FormatFileName()
 	{
 
-	printf '%s' "'${1:?${FUNCNAME[0]}'()': undefined filename}'"
+	printf '%s' "'${1:?${FUNCNAME[0]}'()': $r_nofile}'"
 
 	}
 
@@ -13991,7 +13981,7 @@ FormatLogFilename()
 	# Inputs: (global)
 	#	$r_chars_results
 
-	printf '%s' "${r_chars_results}log file: '${1:?${FUNCNAME[0]}'()': undefined filename}'"
+	printf '%s' "${r_chars_results}log file: '${1:?${FUNCNAME[0]}'()': $r_nofile}'"
 
 	}
 
@@ -14241,7 +14231,7 @@ DebugDetectTabld()
 	elif [[ ${3:-} = ' ' ]]; then		# If $3 is only a whitespace then print $2 with trailing colon and 'none' as third field.
 		DebugAsDetect "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: none\n" "${1:-}" "${2:-}")"
 	elif [[ ${3: -1} = ' ' ]]; then		# If $3 has a trailing whitespace then print $3 without the trailing whitespace.
-		DebugAsDetect "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "$(/bin/sed 's| *$||' <<<"${3:-}")")"
+		DebugAsDetect "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "$(/bin/sed 's/ *$//' <<<"${3:-}")")"
 	else
 		DebugAsDetect "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "${3:-}")"
 	fi
@@ -14258,7 +14248,7 @@ DebugInfoTabld()
 	elif [[ ${3:-} = ' ' ]]; then		# If $3 is only a whitespace then print $2 with trailing colon and 'none' as third field.
 		DebugAsInfo "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: none\n" "${1:-}" "${2:-}")"
 	elif [[ ${3: -1} = ' ' ]]; then		# If $3 has a trailing whitespace then print $3 without the trailing whitespace.
-		DebugAsInfo "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "$(/bin/sed 's| *$||' <<<"${3:-}")")"
+		DebugAsInfo "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "$(/bin/sed 's/ *$//' <<<"${3:-}")")"
 	else
 		DebugAsInfo "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "${3:-}")"
 	fi
@@ -14275,7 +14265,7 @@ DebugWarningTabld()
 	elif [[ ${3:-} = ' ' ]]; then		# If $3 is only a whitespace then print $2 with trailing colon and 'none' as third field
 		DebugAsWarn "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: none\n" "${1:-}" "${2:-}")"
 	elif [[ ${3: -1} = ' ' ]]; then		# If $3 has a trailing whitespace then print $3 without the trailing whitespace
-		DebugAsWarn "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "$(/bin/sed 's| *$||' <<<"${3:-}")")"
+		DebugAsWarn "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "$(/bin/sed 's/ *$//' <<<"${3:-}")")"
 	else
 		DebugAsWarn "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "${3:-}")"
 	fi
@@ -14292,7 +14282,7 @@ DebugErrorTabld()
 	elif [[ ${3:-} = ' ' ]]; then		# If $3 is only a whitespace then print $2 with trailing colon and 'none' as third field.
 		DebugAsError "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: none\n" "${1:-}" "${2:-}")"
 	elif [[ ${3: -1} = ' ' ]]; then		# If $3 has a trailing whitespace then print $3 without the trailing whitespace.
-		DebugAsError "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "$(/bin/sed 's| *$||' <<<"${3:-}")")"
+		DebugAsError "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "$(/bin/sed 's/ *$//' <<<"${3:-}")")"
 	else
 		DebugAsError "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "${3:-}")"
 	fi
@@ -14608,6 +14598,56 @@ ConvertNanosecondsToMilliseconds()
 
 	} 2>/dev/null
 
+ConvertLongDateAsHuman()
+	{
+
+	# Convert 'YYYYMMDD' to a more human-friendly string.
+
+	# Examples:
+	# 	'20250101' to 'early-January 2025'.
+	# 	'20250115' to 'mid-January 2025'.
+	# 	'20250130' to 'late-January 2025'.
+
+	# Inputs: (local)
+	#	$1 = longdatecode in the format 'YYYYMMDD'. Example: '20240928' with 8 digits.
+
+	# Outputs: (local)
+	#	stdout = string conversion.
+
+	[[ -n ${1:-} ]] || return
+
+	local a=${1//[!0-9]/}	# Strip non-digits.
+
+	if [[ ${#a} -ne 8 ]]; then
+		printf 'invalid longdate code length'
+		return 1
+	fi
+
+	local b=${a:6:2}
+	local c=''
+
+	if ((b >= 1 && b <= 10)); then
+		c=early
+	elif ((b >= 11 && b <= 20)); then
+		c=mid
+	elif ((b >= 21 && b <= 31)); then
+		c=late
+	else
+		printf 'invalid day code'
+		return 1
+	fi
+
+	b=${a:4:2}
+
+	if ((b < 1 || b > 12)); then
+		printf 'invalid month code'
+		return 1
+	fi
+
+	printf '%s-%s %s' "$c" "$(/bin/date -d 2025-$b-01 '+%B')" "${a::4}"
+
+	}
+
 ConvertAsSmartDate()
 	{
 
@@ -14825,7 +14865,7 @@ AddExtLogToSessLog()
 
 	DebugAsLog 'adding external log to main log'
 	DebugExtLogMinSepr
-	DebugAsLog "$(FormatLogFilename "${1:?${FUNCNAME[0]}'()': undefined pathfile}")"
+	DebugAsLog "$(FormatLogFilename "${1:?${FUNCNAME[0]}'()': $r_nopfile}")"
 
 	while read -r a; do
 		DebugAsLog "$a"
@@ -15479,6 +15519,84 @@ StripANSICodes()
 
 	} 2>/dev/null
 
+SetQpkgIndex()
+	{
+
+	# Find and set the 1-based index reference of the named arch-specific QPKG in `packages` file.
+
+	# Inputs: (global)
+	#   $r_nas_qpkg_arch
+	#   $r_qpkg_arch[]
+	#   $qpkg_name
+	#   $r_qpkg_name[]
+
+	# Outputs: (local)
+	#   $? = 0 (successful) / !0 (failed)
+
+	# Outputs: (global)
+	#   $qpkg_index ('0' if QPKG a compatible arch could not be found).
+
+	[[ -n ${qpkg_name:-} ]] || return
+
+	SetQpkgDefaultIndex
+	SetQpkgArch
+
+	for qpkg_index in "${!r_qpkg_name[@]}"; do
+		[[ ${r_qpkg_name[$qpkg_index]} = "$qpkg_name" ]] || continue
+		[[ ${r_qpkg_arch[$qpkg_index]} = all || ${r_qpkg_arch[$qpkg_index]} = "$r_nas_qpkg_arch" ]] || continue
+
+		return 0
+	done
+
+	qpkg_index=0
+
+	return 1
+
+	}
+
+SetQpkgDefaultIndex()
+	{
+
+	# Find and set the 1-based index reference of the named QPKG in `packages` file.
+
+	# Inputs: (global)
+	#   $qpkg_name
+	#   $r_qpkg_name[]
+
+	# Outputs: (local)
+	#   $? = 0 (successful) / !0 (failed)
+
+	# Outputs: (global)
+	#   $qpkg_default_index ('0' if QPKG could not be found).
+
+	[[ -n ${qpkg_name:-} ]] || return
+
+	for qpkg_default_index in "${!r_qpkg_name[@]}"; do
+		[[ ${r_qpkg_name[$qpkg_default_index]} = "$qpkg_name" ]] || continue
+
+		return 0
+	done
+
+	qpkg_default_index=0
+
+	return 1
+
+	}
+
+SetError()
+	{
+
+	# Outputs: (global)
+	#	$run_package_actions
+	#	$_script_error_flag_
+
+	run_package_actions=false
+	IsError && return
+	_script_error_flag_=true
+	DebugVar _script_error_flag_
+
+	}
+
 SetHardwareCPUCores()
 	{
 
@@ -15739,22 +15857,52 @@ LoadObjects()
 	FuncInit
 
 	local curl_options=''
-
-	IsOsCanSecureDownload || curl_options=' --insecure'
+	local new_archive_checksum=''
+	local original_archive_checksum=''
 
 	LoadLists
 
 	if [[ ! -e $PWD/dont-refresh-objects ]]; then
-		if [[ ! -e $r_objects_pathfile ]] || ! IsThisFileRecent "$r_objects_pathfile" "$r_file_change_threshold_minutes"; then
-			ShowAsProc 'objects download'
+		IsFile "$r_objects_archive_pathfile" && original_archive_checksum=$(GenerateMD5 "$r_objects_archive_pathfile")
 
-			if /sbin/curl${curl_options} --silent --fail "$r_objects_archive_url" >"$r_objects_archive_pathfile"; then
-				/bin/tar --extract --gzip --no-same-owner --file="$r_objects_archive_pathfile" --directory="$r_cache_path"
+		if IsNtFile "$r_objects_archive_pathfile" || ! IsFileRecent "$r_objects_archive_pathfile" "$r_file_change_threshold_minutes"; then
+			ShowAsProc 'objects archive download'
+
+			IsOsCanSecureDownload || curl_options=' --insecure'
+			/sbin/curl${curl_options} --silent --fail "$r_objects_archive_url" >"$r_objects_archive_pathfile"
+
+			if IsFile "$r_objects_archive_pathfile"; then
+				DebugAsDone 'objects archive downloaded'
+			else
+				DebugAsWarn 'objects archive download failed'
 			fi
 		fi
 	fi
 
-	if [[ ! -e $r_objects_pathfile ]]; then
+	if IsFile "$r_objects_archive_pathfile"; then
+		new_archive_checksum=$(GenerateMD5 "$r_objects_archive_pathfile")
+	else
+		DebugAsWarn 'object archive missing'
+	fi
+
+	if IsNtFile "$r_objects_pathfile" || [[ $original_archive_checksum != "$new_archive_checksum" ]]; then
+		if IsFile "$r_objects_archive_pathfile"; then
+			DebugAsProc 'extracting objects from archive'
+			/bin/tar --extract --gzip --no-same-owner --file="$r_objects_archive_pathfile" --directory="$r_cache_path"
+
+			if IsFile "$r_objects_pathfile"; then
+				DebugAsDone 'extracted objects from archive'
+			else
+				DebugAsWarn 'extraction from archive failed'
+			fi
+		else
+			ShowAsAbort 'no object archive exists to extract from'
+
+			FuncExit 1; exit
+		fi
+	fi
+
+	if IsNtFile "$r_objects_pathfile"; then
 		ShowAsAbort 'objects missing'
 
 		FuncExit 1; exit
@@ -15781,31 +15929,68 @@ LoadPackages()
 
 	# Ensure `packages` in the local cache is up-to-date, then source it.
 
+	# Inputs: (global)
+	#	$r_cache_path
+	#	$r_file_change_threshold_minutes
+	#	$r_packages_archive_pathfile
+	#	$r_packages_archive_url
+	#	$r_packages_pathfile
+
 	[[ ${packages_loaded:=false} = false ]] || return 0
 
 	FuncInit
 
+	local new_archive_checksum=''
+	local original_archive_checksum=''
 	local curl_options=''
 	local previous=''
 	local qpkg_name=''
 
-	IsOsCanSecureDownload || curl_options=' --insecure'
-
 	LoadObjects
 
 	if [[ ! -e $PWD/dont-refresh-packages ]]; then
-		if [[ ! -e $r_packages_pathfile ]] || ! IsThisFileRecent "$r_packages_pathfile" "$r_file_change_threshold_minutes"; then
-			ShowAsProc 'package list download'
+		IsFile "$r_packages_archive_pathfile" && original_archive_checksum=$(GenerateMD5 "$r_packages_archive_pathfile")
 
-			if /sbin/curl${curl_options} --silent --fail "$r_packages_archive_url" >"$r_packages_archive_pathfile"; then
-				/bin/tar --extract --gzip --no-same-owner --file="$r_packages_archive_pathfile" --directory="$r_cache_path"
+		if IsNtFile "$r_packages_archive_pathfile" || ! IsFileRecent "$r_packages_archive_pathfile" "$r_file_change_threshold_minutes"; then
+			ShowAsProc 'package archive download'
+
+			IsOsCanSecureDownload || curl_options=' --insecure'
+			/sbin/curl${curl_options} --silent --fail "$r_packages_archive_url" >"$r_packages_archive_pathfile"
+
+			if IsFile "$r_packages_archive_pathfile"; then
+				DebugAsDone 'package archive downloaded'
+			else
+				DebugAsWarn 'package archive download failed'
 			fi
-
-			InitQPKGsTiers
 		fi
 	fi
 
-	if [[ ! -e $r_packages_pathfile ]]; then
+	if IsFile "$r_packages_archive_pathfile"; then
+		new_archive_checksum=$(GenerateMD5 "$r_packages_archive_pathfile")
+	else
+		DebugAsWarn 'package archive missing'
+	fi
+
+	if IsNtFile "$r_packages_pathfile" || [[ $original_archive_checksum != "$new_archive_checksum" ]]; then
+		if IsFile "$r_packages_archive_pathfile"; then
+			DebugAsProc 'extracting packages list from archive'
+			/bin/tar --extract --gzip --no-same-owner --file="$r_packages_archive_pathfile" --directory="$r_cache_path"
+
+			if IsFile "$r_packages_pathfile"; then
+				DebugAsDone 'extracted packages list from archive'
+			else
+				DebugAsWarn 'extraction from archive failed'
+			fi
+
+			InitQPKGsTiers
+		else
+			ShowAsAbort 'no package archive exists to extract from'
+
+			FuncExit 1; exit
+		fi
+	fi
+
+	if IsNtFile "$r_packages_pathfile"; then
 		ShowAsAbort 'package list missing'
 
 		FuncExit 1; exit

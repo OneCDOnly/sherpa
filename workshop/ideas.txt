@@ -1,8 +1,5 @@
 Management:
 
-	* Generate tier lists and package inside `packages.tar.gz` file.
-		- Don't download `packages.tar.gz` then render tier lists locally.
-
 	* Include test to confirm QPKG installation is complete.
 
 	* Tableise() needs to support a new arg to change format of a single column.
