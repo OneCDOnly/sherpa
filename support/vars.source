@@ -146,6 +146,8 @@ SwapTags()
 Squeeze()
 	{
 
+	# Throwaway as many unnecessary bytes as-possible.
+
 	# Input:
 	# 	$1 = Input pathfile to process for excess material.
 	# 	$2 = Output pathfile.
@@ -173,6 +175,8 @@ Squeeze()
 		buffer=$(sed 's/||[[:space:]]/||/g' <<< "$buffer")										# Remove whitespace after inline false test.
 		buffer=$(sed 's/[[:space:]]||/||/g' <<< "$buffer")										# Remove whitespace before inline false test.
 
+		buffer=$(sed 's/[[:space:]]((/((/g' <<< "$buffer")										# Remove whitespace before inline arithmetic start.
+
 		buffer=$(sed '/^#[[:space:]].*/d;/#$/d;s/[[:space:]]#[[:space:]].*//' <<< "$buffer")	# Remove comment lines and line comments. Comment tags won't be seen beyond this point.
 
 		buffer=$(sed 's/^[[:space:]]*//' <<< "$buffer")											# Remove line leading whitespace.
@@ -181,9 +185,15 @@ Squeeze()
 
 		buffer=$(sed "s|Transfer-Encoding: base64|Transfer-Encoding: base64\n|" <<< "$buffer")	# Add a newline after this string so signature block is accepted by QTS.
 
-		buffer=$(sed -e ':a' -e 'N' -e '$!ba' -e 's/()\n{\n/(){\n/g' <<< "$buffer")				# Reposition function start braces onto function name line. https://stackoverflow.com/a/1252191
+		buffer=$(sed -e ':a' -e 'N' -e '$!ba' -e 's/()\n{\n/(){\n/g' <<< "$buffer")				# Function start braces: move to function name line. https://stackoverflow.com/a/1252191
 
-		buffer=$(sed -e ':a' -e 'N' -e '$!ba' -e 's/\n;;\n/;;\n/g' <<< "$buffer")				# Reposition pattern block ends onto last statement. https://stackoverflow.com/a/1252191
+		buffer=$(sed -e ':a' -e 'N' -e '$!ba' -e 's/\n;;\n/;;\n/g' <<< "$buffer")				# 'case' pattern block ends: move to last statement.
+
+		buffer=$(sed -e ':a' -e 'N' -e '$!ba' -e 's/\*)\n/*)/g' <<< "$buffer")					# 'case' pattern definitions of any '*)': move first statement to definition line.
+
+		# These don't save any bytes, but reduce the number of lines.
+
+		buffer=$(sed -e ':a' -e 'N' -e '$!ba' -e 's/\n}\n/;}\n/g' <<< "$buffer")				# Function end braces: move to last statement.
 
 		[[ -e $2 ]] && chmod +w "$2"
 		echo "$buffer" > "$2"
