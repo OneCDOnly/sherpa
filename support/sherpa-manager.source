@@ -8837,7 +8837,7 @@ MarkActionForkAsError()
 
 	}
 
-#WriteThisAcForkPid()
+# #WriteThisAcForkPid()
 # 	{
 #
 # 	# Inputs: (local)
@@ -9066,7 +9066,7 @@ GetUserDefVol()
 
 	}
 
-#GetThisBinPath()
+# #GetThisBinPath()
 # 	{
 #
 # 	[[ -n ${1:?${FUNCNAME[0]}'()': undefined binary} ]] && command -v "$1" 2>&1
@@ -11460,7 +11460,7 @@ GetQpkgAuthor()
 
 	}
 
-#GetQpkgAuthorEmail()
+# #GetQpkgAuthorEmail()
 # 	{
 #
 # 	# Return the email address for the maintainer of the specified QPKG.
@@ -11485,7 +11485,7 @@ GetQpkgAuthor()
 #
 # 	}
 
-#GetQpkgAppAuthor()
+# #GetQpkgAppAuthor()
 # 	{
 #
 # 	# Return the author of the application contained within the specified QPKG.
@@ -11510,7 +11510,7 @@ GetQpkgAuthor()
 #
 # 	}
 
-#GetQpkgAppAuthorEmail()
+# #GetQpkgAppAuthorEmail()
 # 	{
 #
 # 	# Return the email address for the author of the application contained within the specified QPKG.
@@ -12012,7 +12012,7 @@ GetQpkgsNtInstalled()
 
 	}
 
-#GetQpkgsNtValidInstalled()
+# #GetQpkgsNtValidInstalled()
 # 	{
 #
 # 	local qpkg_name=''
@@ -12279,7 +12279,7 @@ IsQuTS()
 
 	} &>/dev/null
 
-#IsQTS()
+# #IsQTS()
 # 	{
 #
 #     ! IsQuTS
@@ -13233,7 +13233,7 @@ IsNtQpkgEnabled()
 
 	}
 
-#IsQpkgSigned()
+# #IsQpkgSigned()
 # 	{
 #
 # 	# TODO: include SQL to check $1/$qpkg_name has been signed in certificate database. Use Python modules for this instead of SQLite3 executable.
@@ -13866,12 +13866,12 @@ ShowAsTitleName()
 ShowTitleArt()
 	{
 
-	Display "$(TextBrightOrange '     _')"
-	Display "$(TextBrightOrange ' ___| |__   ___ _ __ _ __   __ _')"
-	Display "$(TextBrightOrange "/ __| '_ \ / _ \ '__| '_ \ / _\` |")  $(ShowAsDescription)"
-	Display "$(TextBrightOrange '\__ \ | | |  __/ |  | |_) | (_| |')  $(ShowAsCopyrightBasic)"
-	Display "$(TextBrightOrange '|___/_| |_|\___|_|  | .__/ \__,_|')  $(ShowAsVersion)"
-	Display "$(TextBrightOrange '                    |_|')"
+	Display "$(TextBrightOrange '     _')"														# squeezer-ignore
+	Display "$(TextBrightOrange ' ___| |__   ___ _ __ _ __   __ _')"							# squeezer-ignore
+	Display "$(TextBrightOrange "/ __| '_ \ / _ \ '__| '_ \ / _\` |")  $(ShowAsDescription)"	# squeezer-ignore
+	Display "$(TextBrightOrange '\__ \ | | |  __/ |  | |_) | (_| |')  $(ShowAsCopyrightBasic)" 	# squeezer-ignore
+	Display "$(TextBrightOrange '|___/_| |_|\___|_|  | .__/ \__,_|')  $(ShowAsVersion)"			# squeezer-ignore
+	Display "$(TextBrightOrange '                    |_|')"										# squeezer-ignore
 
 	}
 
@@ -13896,7 +13896,7 @@ ShowAsVersion()
 
 	}
 
-#ShowAsEmail()
+# #ShowAsEmail()
 # 	{
 #
 # # 	printf '%s' '<?email?>'
@@ -15351,7 +15351,7 @@ TextBrightRedBlink()
 
 	} 2>/dev/null
 
-#TextCyan()
+# #TextCyan()
 # 	{
 #
 # 	# Inputs: (global)
@@ -15383,7 +15383,7 @@ TextDarkGrey()
 
 	} 2>/dev/null
 
-#TextUnderlined()
+# #TextUnderlined()
 # 	{
 #
 # 	# Inputs: (global)
