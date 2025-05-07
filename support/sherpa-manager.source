@@ -217,7 +217,7 @@ LoadConsts()
 	readonly r_report_qpkg_active_test_builtin_column_width=9
 	readonly r_report_qpkg_appl_version_column_width=22
 	readonly r_report_qpkg_arch_column_width=15
-	readonly r_report_qpkg_author_column_width=40
+# 	readonly r_report_qpkg_author_column_width=40
 	readonly r_report_qpkg_auto_update_column_width=8
 	readonly r_report_qpkg_can_backup_column_width=8
 	readonly r_report_qpkg_can_clean_column_width=9
@@ -318,13 +318,11 @@ LoadDefaults()
 	generate_help_report=false
 	generate_list_report=false
 	generate_show_report=false
-	get_qpkg_active_status=false
 	get_qpkg_extended_states=false
 	ipks_downgrade=false
 	ipks_install=false
 	ipks_upgrade=false
 	pips_install=false
-	qpkg_timeouts_increased=false
 	run_package_actions=false
 	show_action_results_failed=false
 	show_action_results_ok=false
@@ -404,7 +402,6 @@ LoadCMDs()
 	readonly r_gnu_stty_cmd=/opt/bin/stty
 	readonly r_gnu_timeout_cmd=/opt/bin/timeout
 	readonly r_opkg_cmd=/opt/bin/opkg
-	readonly r_perl_cmd=/opt/bin/perl
 	readonly r_python_cmd=/opt/bin/python
 	readonly r_python3_cmd=/opt/bin/python3
 		readonly r_pip_cmd=$r_python3_cmd' -m pip'
@@ -903,7 +900,6 @@ CheckTasks()
 		generate_help_report=false
 		generate_list_report=false
 		generate_show_report=false
-		get_qpkg_active_status=false
 		get_qpkg_extended_states=false
 		run_package_actions=false
 	fi
@@ -913,7 +909,7 @@ CheckTasks()
 	FuncInit
 
 	local action=''
-	local build_basic_states=false				# These are found in /etc/config/qpkg.conf
+# 	local build_basic_states=false				# These are found in /etc/config/qpkg.conf
 	local build_extended_states=false			# These cannot be found in /etc/config/qpkg.conf
 	local group=''
 	local state=''
@@ -2565,7 +2561,6 @@ ParseListArgs()
 							action=''
 							awaiting_group=false
 							generate_list_report=true
-							get_qpkg_active_status=true
 							get_qpkg_extended_states=true
 							run_package_actions=true
 							show_title=false
@@ -2688,7 +2683,6 @@ ParseActionArgs()
 							QPKGs.ACstatusISinstalled:Set
 							awaiting_group=false
 							show_action_results_report=true
-							get_qpkg_active_status=true
 							get_qpkg_extended_states=true
 							run_package_actions=true
 					esac
@@ -2700,7 +2694,6 @@ ParseActionArgs()
 					QPKGs.AC${action}GR${group}:Set
 					awaiting_group=false
 					show_action_results_report=true
-					get_qpkg_active_status=false
 					get_qpkg_extended_states=true
 					run_package_actions=true
 					;;
@@ -6893,7 +6886,6 @@ InitProgress()
 	{
 
 	fork_index=0
-	prev_clean_msg=''
 
 	RefreshActionForkCounts
 
