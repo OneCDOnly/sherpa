@@ -921,7 +921,7 @@ CheckTasks()
 	elif [[ $useropt_help_actions = true || $useropt_help_actions_all = true || $useropt_help_basic = true || $useropt_help_groups = true || $useropt_help_lists = true || $useropt_help_options = true || $useropt_help_packages = true || $useropt_help_problems = true || $useropt_help_show = true || $useropt_help_tips = true || $useropt_help_upgrades = true || $useropt_list_versions = true || $useropt_paste_log_last = true || $useropt_paste_log_tail = true || $useropt_show_about = true || $useropt_show_about = true || $useropt_show_previous_action_results_report = true || $useropt_show_log_last = true || $useropt_show_log_tail = true || $switch_branch = true || $switch_colour = true || $switch_report_footer = true || $switch_terse = true ]]; then
 		: # don't do anything
 	else
-		LoadPackages
+		LoadDatabase
 
 		for action in "${r_user_qpkg_actions[@]}"; do
 			if QPKGs-AC${action}-to.IsAny; then
@@ -2350,7 +2350,7 @@ ParseShowArgs()
 				show)
 					case $group in
 						about)
-							LoadPackages
+							LoadDatabase
 							action=''
 							awaiting_group=false
 							get_qpkg_extended_states=false
@@ -2358,7 +2358,7 @@ ParseShowArgs()
 							useropt_show_about=true
 							;;
 						about-all)
-							LoadPackages
+							LoadDatabase
 							action=''
 							awaiting_group=false
 							get_qpkg_extended_states=false
@@ -2382,7 +2382,7 @@ ParseShowArgs()
 							useropt_show_backups=true
 							;;
 						dependent)
-							LoadPackages
+							LoadDatabase
 							action=''
 							awaiting_group=false
 							generate_show_report=true
@@ -2390,7 +2390,7 @@ ParseShowArgs()
 							useropt_show_dependencies=true
 							;;
 						features)
-							LoadPackages
+							LoadDatabase
 							action=''
 							awaiting_group=false
 							generate_show_report=true
@@ -2406,7 +2406,7 @@ ParseShowArgs()
 							useropt_show_log_last=true
 							;;
 						packages)
-							LoadPackages
+							LoadDatabase
 							action=''
 							awaiting_group=false
 							generate_show_report=true
@@ -2415,7 +2415,7 @@ ParseShowArgs()
 							useropt_show_packages=true
 							;;
 						repositories)
-							LoadPackages
+							LoadDatabase
 							action=''
 							awaiting_group=false
 							generate_show_report=true
@@ -2576,7 +2576,7 @@ ParseListArgs()
 							show_title=false
 							;;
 						versions)
-							LoadPackages
+							LoadDatabase
 							action=''
 							awaiting_group=false
 							generate_list_report=true
@@ -2632,7 +2632,7 @@ ParseActionArgs()
 	local requires_group=false
 	local user_action=''				# The original user argument, detected as an action. There may be many variants per-action.
 
-	[[ -n ${args[*]:-} ]] && LoadPackages
+	[[ -n ${args[*]:-} ]] && LoadDatabase
 
 	for arg in "${args[@]:-}"; do
 		[[ -n $arg ]] || continue
@@ -7552,7 +7552,7 @@ BuildExtendedQPKGsStates()
 		ShowAsNote 'the NAS has an elevated system-load, so this may take a little longer than usual'
 	fi
 
-	LoadPackages
+	LoadDatabase
 	InitQPKGsStates
 	GetQpkgStates
 	StoreQpkgStates
@@ -7804,7 +7804,7 @@ HelpAbbreviations()
 	local -i m=0
 	local -i n=0
 
-	LoadPackages
+	LoadDatabase
 	DisableDebugToArchiveAndFile
 	DisplayProcReport abbreviations
 	ResetReportsPath &>/dev/null
@@ -15916,7 +15916,7 @@ LoadObjects()
 
 	}
 
-LoadPackages()
+LoadDatabase()
 	{
 
 	# Ensure `packages` in the local cache is up-to-date, then source it.
