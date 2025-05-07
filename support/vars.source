@@ -110,11 +110,11 @@ SwapTags()
 
 		buffer=$(sed "s|<?dont_edit?>|$dont_edit_msg (source: '$(basename "$1")')|g" <<< "$buffer")
 		buffer=$(sed "s|<?filename?>|$(basename "$2")|g" <<< "$buffer")
-		buffer=$(sed "s|<?copyright?>|${copyright_msg//$'\n'/\\n}|g" <<< "$buffer")					# Escape newlines.
-		buffer=$(sed "s|<?copyright_basic?>|${copyright_basic//$'\n'/\\n}|g" <<< "$buffer")			# Escape newlines.
-		buffer=$(sed "s|<?project?>|${project_msg//$'\n'/\\n}|g" <<< "$buffer")						# Escape newlines.
-		buffer=$(sed "s|<?tested?>|${tested_msg//$'\n'/\\n}|g" <<< "$buffer")						# Escape newlines.
-		buffer=$(sed "s|<?license?>|${license_msg//$'\n'/\\n}|g" <<< "$buffer")						# Escape newlines.
+		buffer=$(sed "s|<?copyright?>|${copyright_msg//$'\n'/\\n}|g" <<< "$buffer")				# Escape newlines.
+		buffer=$(sed "s|<?copyright_basic?>|${copyright_basic//$'\n'/\\n}|g" <<< "$buffer")		# Escape newlines.
+		buffer=$(sed "s|<?project?>|${project_msg//$'\n'/\\n}|g" <<< "$buffer")					# Escape newlines.
+		buffer=$(sed "s|<?tested?>|${tested_msg//$'\n'/\\n}|g" <<< "$buffer")					# Escape newlines.
+		buffer=$(sed "s|<?license?>|${license_msg//$'\n'/\\n}|g" <<< "$buffer")					# Escape newlines.
 		buffer=$(sed "s|<?build_date?>|$build_date|g" <<< "$buffer")
 		buffer=$(sed "s|<?build_year?>|$build_year|g" <<< "$buffer")
 		buffer=$(sed "s|<?manager_epoch?>|$manager_epoch|g" <<< "$buffer")
@@ -146,6 +146,8 @@ SwapTags()
 Squeeze()
 	{
 
+	# Throwaway as many unnecessary bytes as-possible.
+
 	# Input:
 	# 	$1 = Input pathfile to process for excess material.
 	# 	$2 = Output pathfile.
@@ -168,12 +170,20 @@ Squeeze()
 		buffer=$(sed 's/[[:space:]]\;/;/g' <<< "$buffer")										# Remove whitespace before semicolons.
 
 		buffer=$(sed 's/\&\&[[:space:]]/\&\&/g' <<< "$buffer")									# Remove whitespace after inline true test.
-		buffer=$(sed 's/[[:space:]]\&\&/\&\&/g' <<< "$buffer")									# Remove whitespace before inline true test.
+# 		buffer=$(sed 's/[[:space:]]\&\&/\&\&/g' <<< "$buffer")									# Remove whitespace before inline true test. WARNING: can't remove whitespace before inline true test within a double-test block.
+		buffer=$(sed 's/\]][[:space:]]\&\&/]]\&\&/g' <<< "$buffer")								# Remove whitespace before inline true test preceded by double-test exit.
 
 		buffer=$(sed 's/||[[:space:]]/||/g' <<< "$buffer")										# Remove whitespace after inline false test.
-		buffer=$(sed 's/[[:space:]]||/||/g' <<< "$buffer")										# Remove whitespace before inline false test.
+# 		buffer=$(sed 's/[[:space:]]||/||/g' <<< "$buffer")										# Remove whitespace before inline false test. WARNING: can't remove whitespace before inline false test within a double-test block.
+		buffer=$(sed 's/\]\][[:space:]]||/]]||/g' <<< "$buffer")								# Remove whitespace before inline false test preceded by double-test exit.
 
-		buffer=$(sed '/^#[[:space:]].*/d;/#$/d;s/[[:space:]]#[[:space:]].*//' <<< "$buffer")	# Remove comment lines and line comments. Comment tags won't be seen beyond this point.
+		buffer=$(sed 's/[[:space:]]((/((/g' <<< "$buffer")										# Remove whitespace before inline arithmetic start.
+
+		buffer=$(sed '/squeezer-ignore/! s/[[:space:]]|[[:space:]]/|/g' <<< "$buffer")			# Remove whitespace before-and-after pipe, except for lines with 'squeezer-ignore' tag.
+
+		# CAUTION: comment tags won't be seen beyond this point.
+
+		buffer=$(sed '/^#[[:space:]].*/d;/#$/d;s/[[:space:]]#[[:space:]].*//' <<< "$buffer")	# Remove comment lines and line comments.
 
 		buffer=$(sed 's/^[[:space:]]*//' <<< "$buffer")											# Remove line leading whitespace.
 		buffer=$(sed 's/[[:space:]]*$//' <<< "$buffer")											# Remove line trailing whitespace.
@@ -181,7 +191,15 @@ Squeeze()
 
 		buffer=$(sed "s|Transfer-Encoding: base64|Transfer-Encoding: base64\n|" <<< "$buffer")	# Add a newline after this string so signature block is accepted by QTS.
 
-		buffer=$(sed -e ':a' -e 'N' -e '$!ba' -e 's/()\n{\n/(){\n/g' <<< "$buffer")				# Reposition function start braces onto function name line. https://stackoverflow.com/a/1252191
+		buffer=$(sed -e ':a' -e 'N' -e '$!ba' -e 's/()\n{\n/(){\n/g' <<< "$buffer")				# Function start braces: move to function name line. https://stackoverflow.com/a/1252191
+
+		buffer=$(sed -e ':a' -e 'N' -e '$!ba' -e 's/\n;;\n/;;\n/g' <<< "$buffer")				# 'case' pattern block ends: move to last statement.
+
+		buffer=$(sed -e ':a' -e 'N' -e '$!ba' -e 's/\*)\n/*)/g' <<< "$buffer")					# 'case' pattern definitions of any '*)': move first statement to definition line.
+
+		# NOTE: these don't save any bytes, but do reduce the number of lines.
+
+		buffer=$(sed -e ':a' -e 'N' -e '$!ba' -e 's/\n}\n/;}\n/g' <<< "$buffer")				# Function end braces: move to last statement.
 
 		[[ -e $2 ]] && chmod +w "$2"
 		echo "$buffer" > "$2"

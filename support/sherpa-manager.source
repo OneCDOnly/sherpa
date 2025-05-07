@@ -217,7 +217,7 @@ LoadConsts()
 	readonly r_report_qpkg_active_test_builtin_column_width=9
 	readonly r_report_qpkg_appl_version_column_width=22
 	readonly r_report_qpkg_arch_column_width=15
-	readonly r_report_qpkg_author_column_width=40
+# 	readonly r_report_qpkg_author_column_width=40
 	readonly r_report_qpkg_auto_update_column_width=8
 	readonly r_report_qpkg_can_backup_column_width=8
 	readonly r_report_qpkg_can_clean_column_width=9
@@ -318,13 +318,11 @@ LoadDefaults()
 	generate_help_report=false
 	generate_list_report=false
 	generate_show_report=false
-	get_qpkg_active_status=false
 	get_qpkg_extended_states=false
 	ipks_downgrade=false
 	ipks_install=false
 	ipks_upgrade=false
 	pips_install=false
-	qpkg_timeouts_increased=false
 	run_package_actions=false
 	show_action_results_failed=false
 	show_action_results_ok=false
@@ -404,7 +402,6 @@ LoadCMDs()
 	readonly r_gnu_stty_cmd=/opt/bin/stty
 	readonly r_gnu_timeout_cmd=/opt/bin/timeout
 	readonly r_opkg_cmd=/opt/bin/opkg
-	readonly r_perl_cmd=/opt/bin/perl
 	readonly r_python_cmd=/opt/bin/python
 	readonly r_python3_cmd=/opt/bin/python3
 		readonly r_pip_cmd=$r_python3_cmd' -m pip'
@@ -710,12 +707,12 @@ DebugLogEnv()
 
 	ShowAsProc 'log env'
 
-	DebugInfoMinSepr
-
 	if [[ $useropt_show_about = true || $useropt_show_aboutall = true ]]; then
 		useropt_debug=true
 		useropt_verbose=true
 	fi
+
+	DebugInfoMinSepr
 
 	SetNasArch
 
@@ -866,28 +863,28 @@ DebugLogEnv()
 		DebugQpkg detect "$(FormatPackageName IncreaseTimeouts)" N/A
 	fi
 
+	DebugInfoMinSepr
+
 	if [[ $useropt_show_about = true ]]; then
 		useropt_debug=false
 		useropt_verbose=false
 		return
 	fi
 
-	[[ $useropt_show_aboutall = false ]] && DebugInfoMinSepr
 	RunAndLog "/bin/df -h | /bin/grep -iE '^(filesystem|none|tmpfs|devtmpfs|/dev/ram)'" "$r_ramfs_freespace_pathfile"
-	[[ $useropt_show_aboutall = false ]] && DebugInfoMinSepr
+	DebugInfoMinSepr
 	RunAndLog "/usr/sbin/screen -ls | /bin/sed '/^[[:space:]]*$/d'" "$r_screen_sessions_pathfile" '' 1
-	[[ $useropt_show_aboutall = false ]] && DebugInfoMinSepr
+	DebugInfoMinSepr
 	RunAndLog '/usr/bin/free' "$r_ram_freeused_pathfile" '' 1
-	[[ $useropt_show_aboutall = false ]] && DebugInfoMinSepr
+	DebugInfoMinSepr
 	RunAndLog "/bin/grep -iE 'out of memory|oom-killer' /mnt/HDA_ROOT/.logs/kmsg" "$r_oom_log_pathfile" '' 1
+	DebugInfoMinSepr
 
 	if [[ $useropt_show_aboutall = true ]]; then
 		useropt_debug=false
 		useropt_verbose=false
 		return
 	fi
-
-	DebugInfoMinSepr
 
 	FuncExit
 
@@ -903,7 +900,6 @@ CheckTasks()
 		generate_help_report=false
 		generate_list_report=false
 		generate_show_report=false
-		get_qpkg_active_status=false
 		get_qpkg_extended_states=false
 		run_package_actions=false
 	fi
@@ -913,7 +909,7 @@ CheckTasks()
 	FuncInit
 
 	local action=''
-	local build_basic_states=false				# These are found in /etc/config/qpkg.conf
+# 	local build_basic_states=false				# These are found in /etc/config/qpkg.conf
 	local build_extended_states=false			# These cannot be found in /etc/config/qpkg.conf
 	local group=''
 	local state=''
@@ -925,7 +921,7 @@ CheckTasks()
 	elif [[ $useropt_help_actions = true || $useropt_help_actions_all = true || $useropt_help_basic = true || $useropt_help_groups = true || $useropt_help_lists = true || $useropt_help_options = true || $useropt_help_packages = true || $useropt_help_problems = true || $useropt_help_show = true || $useropt_help_tips = true || $useropt_help_upgrades = true || $useropt_list_versions = true || $useropt_paste_log_last = true || $useropt_paste_log_tail = true || $useropt_show_about = true || $useropt_show_about = true || $useropt_show_previous_action_results_report = true || $useropt_show_log_last = true || $useropt_show_log_tail = true || $switch_branch = true || $switch_colour = true || $switch_report_footer = true || $switch_terse = true ]]; then
 		: # don't do anything
 	else
-		LoadPackages
+		LoadDatabase
 
 		for action in "${r_user_qpkg_actions[@]}"; do
 			if QPKGs-AC${action}-to.IsAny; then
@@ -2354,7 +2350,7 @@ ParseShowArgs()
 				show)
 					case $group in
 						about)
-							LoadPackages
+							LoadDatabase
 							action=''
 							awaiting_group=false
 							get_qpkg_extended_states=false
@@ -2362,7 +2358,7 @@ ParseShowArgs()
 							useropt_show_about=true
 							;;
 						about-all)
-							LoadPackages
+							LoadDatabase
 							action=''
 							awaiting_group=false
 							get_qpkg_extended_states=false
@@ -2386,7 +2382,7 @@ ParseShowArgs()
 							useropt_show_backups=true
 							;;
 						dependent)
-							LoadPackages
+							LoadDatabase
 							action=''
 							awaiting_group=false
 							generate_show_report=true
@@ -2394,7 +2390,7 @@ ParseShowArgs()
 							useropt_show_dependencies=true
 							;;
 						features)
-							LoadPackages
+							LoadDatabase
 							action=''
 							awaiting_group=false
 							generate_show_report=true
@@ -2410,7 +2406,7 @@ ParseShowArgs()
 							useropt_show_log_last=true
 							;;
 						packages)
-							LoadPackages
+							LoadDatabase
 							action=''
 							awaiting_group=false
 							generate_show_report=true
@@ -2419,7 +2415,7 @@ ParseShowArgs()
 							useropt_show_packages=true
 							;;
 						repositories)
-							LoadPackages
+							LoadDatabase
 							action=''
 							awaiting_group=false
 							generate_show_report=true
@@ -2565,7 +2561,6 @@ ParseListArgs()
 							action=''
 							awaiting_group=false
 							generate_list_report=true
-							get_qpkg_active_status=true
 							get_qpkg_extended_states=true
 							run_package_actions=true
 							show_title=false
@@ -2581,7 +2576,7 @@ ParseListArgs()
 							show_title=false
 							;;
 						versions)
-							LoadPackages
+							LoadDatabase
 							action=''
 							awaiting_group=false
 							generate_list_report=true
@@ -2637,7 +2632,7 @@ ParseActionArgs()
 	local requires_group=false
 	local user_action=''				# The original user argument, detected as an action. There may be many variants per-action.
 
-	[[ -n ${args[*]:-} ]] && LoadPackages
+	[[ -n ${args[*]:-} ]] && LoadDatabase
 
 	for arg in "${args[@]:-}"; do
 		[[ -n $arg ]] || continue
@@ -2688,7 +2683,6 @@ ParseActionArgs()
 							QPKGs.ACstatusISinstalled:Set
 							awaiting_group=false
 							show_action_results_report=true
-							get_qpkg_active_status=true
 							get_qpkg_extended_states=true
 							run_package_actions=true
 					esac
@@ -2700,7 +2694,6 @@ ParseActionArgs()
 					QPKGs.AC${action}GR${group}:Set
 					awaiting_group=false
 					show_action_results_report=true
-					get_qpkg_active_status=false
 					get_qpkg_extended_states=true
 					run_package_actions=true
 					;;
@@ -6893,7 +6886,6 @@ InitProgress()
 	{
 
 	fork_index=0
-	prev_clean_msg=''
 
 	RefreshActionForkCounts
 
@@ -7560,7 +7552,7 @@ BuildExtendedQPKGsStates()
 		ShowAsNote 'the NAS has an elevated system-load, so this may take a little longer than usual'
 	fi
 
-	LoadPackages
+	LoadDatabase
 	InitQPKGsStates
 	GetQpkgStates
 	StoreQpkgStates
@@ -7812,7 +7804,7 @@ HelpAbbreviations()
 	local -i m=0
 	local -i n=0
 
-	LoadPackages
+	LoadDatabase
 	DisableDebugToArchiveAndFile
 	DisplayProcReport abbreviations
 	ResetReportsPath &>/dev/null
@@ -8845,7 +8837,7 @@ MarkActionForkAsError()
 
 	}
 
-#WriteThisAcForkPid()
+# #WriteThisAcForkPid()
 # 	{
 #
 # 	# Inputs: (local)
@@ -9074,7 +9066,7 @@ GetUserDefVol()
 
 	}
 
-#GetThisBinPath()
+# #GetThisBinPath()
 # 	{
 #
 # 	[[ -n ${1:?${FUNCNAME[0]}'()': undefined binary} ]] && command -v "$1" 2>&1
@@ -11468,7 +11460,7 @@ GetQpkgAuthor()
 
 	}
 
-#GetQpkgAuthorEmail()
+# #GetQpkgAuthorEmail()
 # 	{
 #
 # 	# Return the email address for the maintainer of the specified QPKG.
@@ -11493,7 +11485,7 @@ GetQpkgAuthor()
 #
 # 	}
 
-#GetQpkgAppAuthor()
+# #GetQpkgAppAuthor()
 # 	{
 #
 # 	# Return the author of the application contained within the specified QPKG.
@@ -11518,7 +11510,7 @@ GetQpkgAuthor()
 #
 # 	}
 
-#GetQpkgAppAuthorEmail()
+# #GetQpkgAppAuthorEmail()
 # 	{
 #
 # 	# Return the email address for the author of the application contained within the specified QPKG.
@@ -12020,7 +12012,7 @@ GetQpkgsNtInstalled()
 
 	}
 
-#GetQpkgsNtValidInstalled()
+# #GetQpkgsNtValidInstalled()
 # 	{
 #
 # 	local qpkg_name=''
@@ -12287,7 +12279,7 @@ IsQuTS()
 
 	} &>/dev/null
 
-#IsQTS()
+# #IsQTS()
 # 	{
 #
 #     ! IsQuTS
@@ -13241,7 +13233,7 @@ IsNtQpkgEnabled()
 
 	}
 
-#IsQpkgSigned()
+# #IsQpkgSigned()
 # 	{
 #
 # 	# TODO: include SQL to check $1/$qpkg_name has been signed in certificate database. Use Python modules for this instead of SQLite3 executable.
@@ -13874,12 +13866,12 @@ ShowAsTitleName()
 ShowTitleArt()
 	{
 
-	Display "$(TextBrightOrange '     _')"
-	Display "$(TextBrightOrange ' ___| |__   ___ _ __ _ __   __ _')"
-	Display "$(TextBrightOrange "/ __| '_ \ / _ \ '__| '_ \ / _\` |")  $(ShowAsDescription)"
-	Display "$(TextBrightOrange '\__ \ | | |  __/ |  | |_) | (_| |')  $(ShowAsCopyrightBasic)"
-	Display "$(TextBrightOrange '|___/_| |_|\___|_|  | .__/ \__,_|')  $(ShowAsVersion)"
-	Display "$(TextBrightOrange '                    |_|')"
+	Display "$(TextBrightOrange '     _')"														# squeezer-ignore
+	Display "$(TextBrightOrange ' ___| |__   ___ _ __ _ __   __ _')"							# squeezer-ignore
+	Display "$(TextBrightOrange "/ __| '_ \ / _ \ '__| '_ \ / _\` |")  $(ShowAsDescription)"	# squeezer-ignore
+	Display "$(TextBrightOrange '\__ \ | | |  __/ |  | |_) | (_| |')  $(ShowAsCopyrightBasic)" 	# squeezer-ignore
+	Display "$(TextBrightOrange '|___/_| |_|\___|_|  | .__/ \__,_|')  $(ShowAsVersion)"			# squeezer-ignore
+	Display "$(TextBrightOrange '                    |_|')"										# squeezer-ignore
 
 	}
 
@@ -13904,7 +13896,7 @@ ShowAsVersion()
 
 	}
 
-#ShowAsEmail()
+# #ShowAsEmail()
 # 	{
 #
 # # 	printf '%s' '<?email?>'
@@ -15359,7 +15351,7 @@ TextBrightRedBlink()
 
 	} 2>/dev/null
 
-#TextCyan()
+# #TextCyan()
 # 	{
 #
 # 	# Inputs: (global)
@@ -15391,7 +15383,7 @@ TextDarkGrey()
 
 	} 2>/dev/null
 
-#TextUnderlined()
+# #TextUnderlined()
 # 	{
 #
 # 	# Inputs: (global)
@@ -15862,11 +15854,13 @@ LoadObjects()
 
 	LoadLists
 
+	ShowAsProc objects
+
 	if [[ ! -e $PWD/dont-refresh-objects ]]; then
 		IsFile "$r_objects_archive_pathfile" && original_archive_checksum=$(GenerateMD5 "$r_objects_archive_pathfile")
 
 		if IsNtFile "$r_objects_archive_pathfile" || ! IsFileRecent "$r_objects_archive_pathfile" "$r_file_change_threshold_minutes"; then
-			ShowAsProc 'objects archive download'
+			DebugAsProc 'download objects archive'
 
 			IsOsCanSecureDownload || curl_options=' --insecure'
 			/sbin/curl${curl_options} --silent --fail "$r_objects_archive_url" >"$r_objects_archive_pathfile"
@@ -15908,8 +15902,6 @@ LoadObjects()
 		FuncExit 1; exit
 	fi
 
-	ShowAsProc objects
-
 	unset r_objects_epoch
 	r_objects_epoch=undefined
 
@@ -15924,7 +15916,7 @@ LoadObjects()
 
 	}
 
-LoadPackages()
+LoadDatabase()
 	{
 
 	# Ensure `packages` in the local cache is up-to-date, then source it.
@@ -15948,19 +15940,21 @@ LoadPackages()
 
 	LoadObjects
 
+	ShowAsProc database
+
 	if [[ ! -e $PWD/dont-refresh-packages ]]; then
 		IsFile "$r_packages_archive_pathfile" && original_archive_checksum=$(GenerateMD5 "$r_packages_archive_pathfile")
 
 		if IsNtFile "$r_packages_archive_pathfile" || ! IsFileRecent "$r_packages_archive_pathfile" "$r_file_change_threshold_minutes"; then
-			ShowAsProc 'package archive download'
+			DebugAsProc 'download database archive'
 
 			IsOsCanSecureDownload || curl_options=' --insecure'
 			/sbin/curl${curl_options} --silent --fail "$r_packages_archive_url" >"$r_packages_archive_pathfile"
 
 			if IsFile "$r_packages_archive_pathfile"; then
-				DebugAsDone 'package archive downloaded'
+				DebugAsDone 'database archive downloaded'
 			else
-				DebugAsWarn 'package archive download failed'
+				DebugAsWarn 'database archive download failed'
 			fi
 		fi
 	fi
@@ -15968,35 +15962,33 @@ LoadPackages()
 	if IsFile "$r_packages_archive_pathfile"; then
 		new_archive_checksum=$(GenerateMD5 "$r_packages_archive_pathfile")
 	else
-		DebugAsWarn 'package archive missing'
+		DebugAsWarn 'database archive missing'
 	fi
 
 	if IsNtFile "$r_packages_pathfile" || [[ $original_archive_checksum != "$new_archive_checksum" ]]; then
 		if IsFile "$r_packages_archive_pathfile"; then
-			DebugAsProc 'extracting packages list from archive'
+			DebugAsProc 'extracting database from archive'
 			/bin/tar --extract --gzip --no-same-owner --file="$r_packages_archive_pathfile" --directory="$r_cache_path"
 
 			if IsFile "$r_packages_pathfile"; then
-				DebugAsDone 'extracted packages list from archive'
+				DebugAsDone 'extracted database from archive'
 			else
 				DebugAsWarn 'extraction from archive failed'
 			fi
 
 			InitQPKGsTiers
 		else
-			ShowAsAbort 'no package archive exists to extract from'
+			ShowAsAbort 'no database archive exists to extract from'
 
 			FuncExit 1; exit
 		fi
 	fi
 
 	if IsNtFile "$r_packages_pathfile"; then
-		ShowAsAbort 'package list missing'
+		ShowAsAbort 'database missing'
 
 		FuncExit 1; exit
 	fi
-
-	ShowAsProc 'package list'
 
 	# Supported QPKG details - parallel arrays.
 

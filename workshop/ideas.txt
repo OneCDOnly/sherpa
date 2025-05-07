@@ -1,5 +1,9 @@
 Management:
 
+	* Squeezer:
+		- Remove newline between case pattern definition and statement block?
+		- Combine successive 'local' statements into a single line. Maybe 'readonly' too?
+
 	* Include test to confirm QPKG installation is complete.
 
 	* Tableise() needs to support a new arg to change format of a single column.
