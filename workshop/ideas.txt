@@ -124,6 +124,8 @@ Management:
 
 Service Library:
 
+	* Add datetime stamp to each line in service log.
+
 	* Need a feature to mark upgradable QPKGs that will require a `clean` during/after upgrade.
 		- And support deletion of specific files not in `repo-cache` (like `pip-requirements.txt` copied from `repo-cache` into app directory.)
 
