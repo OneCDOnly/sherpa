@@ -1,5 +1,8 @@
 Management:
 
+	* Always 'clean' after 'upgrade' (and before 'activate')?
+		- But only if 'upgrade' actually occurred.
+
 	* Squeezer:
 		- Remove newline between case pattern definition and statement block?
 		- Combine successive 'local' statements into a single line. Maybe 'readonly' too?
@@ -126,8 +129,7 @@ Service Library:
 
 	* Add datetime stamp to each line in service log.
 
-	* Need a feature to mark upgradable QPKGs that will require a `clean` during/after upgrade.
-		- And support deletion of specific files not in `repo-cache` (like `pip-requirements.txt` copied from `repo-cache` into app directory.)
+	* Support deletion of specific files not in `repo-cache` (like `pip-requirements.txt` copied from `repo-cache` into app directory) during 'clean'.
 
 	* Compare .git/ORIG_HEAD before-and-after 'git pull'. If different, then remove *.pyc before starting application.
 
