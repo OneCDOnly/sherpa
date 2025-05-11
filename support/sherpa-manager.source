@@ -1090,7 +1090,7 @@ AssignQpkgsToActions()
 
 	FuncInit
 
-	ShowAsProc 'QPKG assignment'
+	ShowAsProc 'auto-assign actions'
 
 	local action=''
 	local prospect=''
@@ -3128,7 +3128,7 @@ AllocPackGroupsToAcs()
 
 	FuncInit
 
-	ShowAsProc 'match QPKG groups to actions'
+	ShowAsProc 'allocate QPKG groups to actions'
 
 	local action=''
 	local group=''
@@ -3179,7 +3179,7 @@ AllocPackStatesToAcs()
 
 	FuncInit
 
-	ShowAsProc 'match QPKG states to actions'
+	ShowAsProc 'allocate QPKG states to actions'
 
 	local action=''
 	local check_later=false
