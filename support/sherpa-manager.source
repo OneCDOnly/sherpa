@@ -1622,7 +1622,7 @@ ProcAction()
 
 			SetMaxForks "$r_action"
 			InitActionForkCounters
-			OpenActionMsgPipe
+			OpenMsgPipe
 
 			re=\\bEntware\\b		# Bash 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
 
@@ -1634,10 +1634,10 @@ ProcAction()
 			_ExecOneActionWithManyForks_ "_${r_package_type}:${r_action}_" "${target_packages[@]}" &
 			WritePidFile "$!"
 
-			# Read message pipe and process QPKGs and actions as-per requests contained within.
+			# Read message pipe and process QPKGs and mark action statuses as-per requests contained within.
 
 			while [[ ${#target_packages[@]} -gt 0 && ! -e $r_abort_actions_pathfile ]]; do
-				ReadFromActionMsgPipe msg1_key msg1_value msg2_key msg2_value
+				ReadFromMsgPipe msg1_key msg1_value msg2_key msg2_value
 
 				case $msg1_key in
 					env)			# Change the state of the parent environment.
@@ -1742,7 +1742,7 @@ ProcAction()
 			[[ $skip_count -gt 0 || $skip_ok_count -gt 0 || $skip_error_count -gt 0 || $skip_abort_count -gt 0 ]] && show_action_results_skipped=true
 
 			wait 2>/dev/null
-			CloseActionMsgPipe
+			CloseMsgPipe
 
 			[[ ${useropt_terse:=true} = false && $useropt_verbose = false ]] && echo
 			;;
@@ -1761,7 +1761,7 @@ ProcAction()
 
 	}
 
-OpenActionMsgPipe()
+OpenMsgPipe()
 	{
 
 	# Create a message pipe, so action forks can send data back to parent.
@@ -1800,7 +1800,7 @@ OpenActionMsgPipe()
 
 	} 2>/dev/null
 
-CloseActionMsgPipe()
+CloseMsgPipe()
 	{
 
 	# Inputs: (global)
@@ -8677,7 +8677,7 @@ SendParentChangeEnv()
 	# Inputs: (local)
 	#   $1 = action request
 
-	WriteToActionMsgPipe env "$1" '' ''
+	WriteToMsgPipe env "$1"
 
 	}
 
@@ -8695,14 +8695,14 @@ SendPackageStateChange()
 	# Inputs: (global)
 	#	$qpkg_name
 
-	WriteToActionMsgPipe change "$1" package "$qpkg_name"
+	WriteToMsgPipe change "$1" package "$qpkg_name"
 
 	}
 
 SendActionStatus()
 	{
 
-	# Send a message into message stream to update parent environment with the status of this action for $qpkg_name.
+	# Send a message into message stream to update parent environment with the status of the current action for $qpkg_name.
 
 	# This can be: `ok`, `so`, `sk`, `se`, `er`, `ex`. `ab`.
 	# This function is only called from within async functions.
@@ -8713,14 +8713,14 @@ SendActionStatus()
 	# Inputs: (global)
 	#	$qpkg_name
 
-	WriteToActionMsgPipe status "$1" package "$qpkg_name"
+	WriteToMsgPipe status "$1" package "$qpkg_name"
 
 	}
 
-WriteToActionMsgPipe()
+WriteToMsgPipe()
 	{
 
-	# Send a message into message stream to update parent shell environment.
+	# Send a message into message stream to update parent shell environment with the details in $1 to $4. Always write 4 elements.
 
 	# Inputs: (local)
 	#	$1 = message 1 key
@@ -8731,32 +8731,35 @@ WriteToActionMsgPipe()
 	# Inputs: (global)
 	#	$action_msg_pipe_fd
 
-	[[ $action_msg_pipe_fd != none && -e /proc/$$/fd/$action_msg_pipe_fd ]] && echo "$1|$2|$3|$4" >&$action_msg_pipe_fd
+	[[ $action_msg_pipe_fd != none && -e /proc/$$/fd/$action_msg_pipe_fd ]] && echo "${1:-undefined}|${2:-undefined}|${3:-undefined}|${4:-undefined}" >&$action_msg_pipe_fd
 
 	return 0
 
 	}
 
-ReadFromActionMsgPipe()
+ReadFromMsgPipe()
 	{
 
+	# Read from message stream, and assign each element to the variable names specified as $1 to $4. Always read 4 elements.
+
 	# Inputs: (local)
-	#	$1 = message 1 key
-	#	$2 = message 1 value
-	#	$3 = message 2 key
-	#	$4 = message 2 value
+	#	$1 = message 1 key variable name
+	#	$2 = message 1 value variable name
+	#	$3 = message 2 key variable name
+	#	$4 = message 2 value variable name
 
 	# Inputs: (global)
 	#	$action_msg_pipe_fd
 
-	local _msg1_key
-	local _msg1_value
-	local _msg2_key
-	local _msg2_value
+	# Outputs: (global)
+	#	named variable with message 1 key
+	#	named variable with message 1 value
+	#	named variable with message 2 key
+	#	named variable with message 2 value
 
 	IFS='|' read -r _msg1_key _msg1_value _msg2_key _msg2_value <&$action_msg_pipe_fd
 
-	eval "$1='$_msg1_key' $2='$_msg1_value' $3='$_msg2_key' $4='$_msg2_value'"
+	eval "$1='${_msg1_key:-null}' $2='${_msg1_value:-null}' $3='${_msg2_key:-null}' $4='${_msg2_value:-null}'"
 
 	return 0
 
@@ -13614,7 +13617,7 @@ RunAndLog()
 		eval "$1 > >(/usr/bin/tee $r_log_pathfile) 2>&1"	# NOTE: `tee` buffers stdout here.		# squeezer-ignore
 		z=$?
 	else
-		(eval "$1" >"$r_log_pathfile" 2>&1)				# Run in a subshell to suppress 'Terminated' message later.
+		(eval "$1" >"$r_log_pathfile" 2>&1)					# Run in a subshell to suppress 'Terminated' message later.
 		z=$?
 	fi
 
@@ -16132,7 +16135,7 @@ CaughtSIGINT()
 	[[ -n ${r_abort_actions_pathfile:-} ]] && /bin/touch "$r_abort_actions_pathfile"
 	EraseThisLine
 	ShowAsAbort 'caught SIGINT'
-	CloseActionMsgPipe
+	CloseMsgPipe
 
 	# TODO: send SIGTERM to each PID in $r_async_procs_path here.
 
