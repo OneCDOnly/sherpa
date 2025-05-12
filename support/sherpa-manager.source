@@ -13284,6 +13284,20 @@ IsAnsiStrippingSupported()
 
 	}
 
+IsHaveSingleQuote()
+	{
+
+	# Inputs: (local)
+	#	$1 = string to be tested.
+
+	# Outputs: (local)
+	#	$? = true if $1 contains a single quote.
+	#	$? = false if $1 does not contain a single quote.
+
+	/bin/grep -q "'" <<<"${1:-}"
+
+	}
+
 CreatePidFile()
 	{
 
@@ -13604,7 +13618,7 @@ RunAndLog()
 	local -i z=0
 	local exec_msg='exec:'
 
-	if /bin/grep -q "'" <<<"$1"; then						# Change display quotes depending-on content quote chars.
+	if IsHaveSingleQuote "$1"; then							# Change display quotes depending-on content quote chars.
 		exec_msg+=" \"$1\""
 	else
 		exec_msg+=" '$1'"
