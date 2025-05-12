@@ -1,5 +1,7 @@
 Management:
 
+	* When installing sherpa, make QTS allow unsigned packages, then disallow this after 'sign'ing action but only if it was disallowed before.
+
 	* Always 'clean' after 'upgrade' (and before 'activate')?
 		- But only if 'upgrade' actually occurred.
 
