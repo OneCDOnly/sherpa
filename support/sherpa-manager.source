@@ -26,6 +26,7 @@
 #			   "object" properties: 'o_snakecase_with_leading_o_underscore' (these should be managed ONLY by the object's methods)
 #						 constants: 'r_snakecase_with_leading_r_underscore' (set as readonly ASAP)
 #						 variables: 'snakecase_with_inline_underscores'
+#					error messages: 'e_snakecase_with_leading_e_underscore' (set as readonly)
 #						   indents: 1 x tab char (= 4 space chars)
 # when calling ShowAs*() functions: separated before-and-after with single line spaces unless first-or-last line in a code block.
 #
@@ -201,6 +202,23 @@ DebugLogInit()
 LoadConsts()
 	{
 
+	# Error messages.
+
+	readonly e_noaction='undefined action'
+	readonly e_nocmd='undefined commandstring'
+	readonly e_noexit='undefined exitcode'
+	readonly e_nofile='undefined filename'
+	readonly e_noname='undefined name'
+	readonly e_nopackname='undefined package name'
+	readonly e_nopacktype='undefined package type'
+	readonly e_nopfile='undefined pathfile'
+	readonly e_noprmpt='undefined prompt'
+	readonly e_noreas='undefined reason'
+	readonly e_nores='undefined result'
+	readonly e_notier='undefined tier'
+	readonly e_nourl='undefined URL'
+	readonly e_noval='undefined value'
+
 	# QPKG actions.
 
 	readonly r_qpkg_disable_timeout_seconds=10
@@ -274,12 +292,6 @@ LoadConsts()
 	readonly r_chars_super_prompt='# '
 	readonly r_extended_datetime_format='+%a %-d %b %Y'
 		readonly r_full_datetime_format=$r_extended_datetime_format' %-I:%M:%S %p %Z'
-
-	readonly r_nofile='undefined filename'
-	readonly r_noname='undefined name'
-	readonly r_nopackname='undefined package name'
-	readonly r_nopacktype='undefined package type'
-	readonly r_nopfile='undefined pathfile'
 
 	if IsOsCanSudo; then
 		if [[ $(GetUserSudoUID) = undefined ]]; then
@@ -1579,10 +1591,10 @@ ProcAction()
 	local msg2_value=''
 	local package=''
 	local -i package_index=0
-	local -r r_action=${1:?${FUNCNAME[0]}'()': undefined action}
-	local -r r_action_intransitive_msg=${4:?${FUNCNAME[0]}'()': undefined action message}
-	local -r r_package_type=${3:?${FUNCNAME[0]}'()': $r_nopacktype}
-	local -r r_tier=${2:?${FUNCNAME[0]}'()': undefined tier}
+	local -r r_action=${1:?${FUNCNAME[0]}'()': $e_noaction}
+	local -r r_action_intransitive_msg=${4:?${FUNCNAME[0]}'()': $e_noaction message}
+	local -r r_package_type=${3:?${FUNCNAME[0]}'()': $e_nopacktype}
+	local -r r_tier=${2:?${FUNCNAME[0]}'()': $e_notier}
 	local re=''
 	local state=''
 	local target_object_name=''
@@ -3316,7 +3328,7 @@ Quiz()
 	# Outputs: (local)
 	#   $? = 0 if "y", 1 if anything else
 
-	local a=${1:?${FUNCNAME[0]}'()': undefined prompt}
+	local a=${1:?${FUNCNAME[0]}'()': $e_noprmpt}
 	local b=''
 
 	ShowAsQuiz "$a"
@@ -4319,8 +4331,8 @@ SaveSetting()
 	# 	$2 = value
 	# 	$3 (optional) = 'announce' - display on-screen when setting has been saved.
 
-	local a=${1:?${FUNCNAME[0]}'()': $r_noname}
-	local b=$(Lowercase "${2:?${FUNCNAME[0]}'()': undefined value}")
+	local a=${1:?${FUNCNAME[0]}'()': $e_noname}
+	local b=$(Lowercase "${2:?${FUNCNAME[0]}'()': $e_noval}")
 
 	case $b in
 		true|false)
@@ -4345,8 +4357,8 @@ LoadSetting()
 	# Outputs: (local)
 	#   stdout = setting value
 
-	local a=${1:?${FUNCNAME[0]}'()': $r_noname}
-	local b=$(Lowercase "${2:?${FUNCNAME[0]}'()': undefined default value}")
+	local a=${1:?${FUNCNAME[0]}'()': $e_noname}
+	local b=$(Lowercase "${2:?${FUNCNAME[0]}'()': $e_noval}")
 
 	if [[ ! -e /sbin/getcfg ]]; then
 		printf '%s' "$b"
@@ -4365,7 +4377,7 @@ DeleteSetting()
 	# Inputs: (local)
 	#   $1 = name
 
-	local a=${1:?${FUNCNAME[0]}'()': $r_noname}
+	local a=${1:?${FUNCNAME[0]}'()': $e_noname}
 
 	/sbin/setcfg -e sherpa "$a" -f /etc/config/qpkg.conf
 
@@ -4554,7 +4566,7 @@ _GeneratePacksReportDataLine_()
 		local ${a}_msg=''
 	done
 
-	name=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}
+	name=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopackname}}
 	app_ver=$(GetQpkgDbApplVer)
 	description=$(Capitalise "$(GetQpkgDbDesc "$name")")
 	notes=$(GetQpkgDbNote)
@@ -9498,12 +9510,12 @@ SaveActionResultToLog()
 
 	local -r r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
 		local var_safe_name=${r_var_name//[.-]/_}; var_safe_name=${var_safe_name//:/_}
-	local -r r_package_type=${1:?${FUNCNAME[0]}'()': $r_nopacktype}
-	local -r r_name=${2:?${FUNCNAME[0]}'()': $r_nopackname}
-	local -r r_action=${3:?${FUNCNAME[0]}'()': undefined action}
+	local -r r_package_type=${1:?${FUNCNAME[0]}'()': $e_nopacktype}
+	local -r r_name=${2:?${FUNCNAME[0]}'()': $e_nopackname}
+	local -r r_action=${3:?${FUNCNAME[0]}'()': $e_noaction}
 	local -r r_qty=${4:-1}
 	local -r r_clean_action=${r_action//\"/}
-	local -r r_result=${5:?${FUNCNAME[0]}'()': undefined result}
+	local -r r_result=${5:?${FUNCNAME[0]}'()': $e_nores}
 	local -r r_reason=${6:-}
 	local -r r_starttime=$(ConvertNanosecondsToMilliseconds "${!var_safe_name}")
 	local -r r_duration=$(CalcAmountDiff "$r_starttime" "$(ConvertNowToMilliseconds)")
@@ -11019,7 +11031,7 @@ GetQpkgInstalledPath()
 	#   stdout = package installation date.
 	#   $? = 0 (found), 250 (not-found).
 
-	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}" Install_Path -d undefined -f /etc/config/qpkg.conf
+	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopackname}}" Install_Path -d undefined -f /etc/config/qpkg.conf
 
 	}
 
@@ -11036,7 +11048,7 @@ GetQpkgServicePathFile()
 	#   stdout = service-script pathfile
 	#   $? = 0 if found, 250 if not.
 
-	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}" Shell -d undefined -f /etc/config/qpkg.conf
+	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopackname}}" Shell -d undefined -f /etc/config/qpkg.conf
 
 	}
 
@@ -11112,7 +11124,7 @@ GetQpkgDbVer()
 # 		return 0
 # 	fi
 
-	a=${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}
+	a=${qpkg_name:?${FUNCNAME[0]}'()': $e_nopackname}
 
 	if [[ -n $a ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
@@ -11140,7 +11152,7 @@ GetQpkgInstalledVer()
 	#   stdout = package version
 	#   $? = 0 if found, 250 if not.
 
-	/sbin/getcfg "${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}" Version -d undefined -f /etc/config/qpkg.conf
+	/sbin/getcfg "${qpkg_name:?${FUNCNAME[0]}'()': $e_nopackname}" Version -d undefined -f /etc/config/qpkg.conf
 
 	}
 
@@ -11159,7 +11171,7 @@ GetQpkgInstalledStoreID()
 	#   stdout = package store ID
 	#   $? = 0 if found, 250 if not.
 
-	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}" store -d undefined -f /etc/config/qpkg.conf
+	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopackname}}" store -d undefined -f /etc/config/qpkg.conf
 
 	}
 
@@ -11178,7 +11190,7 @@ GetQpkgInstalledDate()
 	#   stdout = package installation date
 	#   $? = 0 if found, 1 if QPKG name unspecified, 250 if not found
 
-	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}" date -d undefined -f /etc/config/qpkg.conf
+	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopackname}}" date -d undefined -f /etc/config/qpkg.conf
 
 	}
 
@@ -11195,7 +11207,7 @@ GetQpkgInstalledOriginalPath()
 	#   stdout = the original installation path of this QPKG (even if it was migrated to another volume).
 	#   $? = 0 if successful, 1 if failed
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopackname}}
 	local -i i=0
 
 	if [[ ${#QPKGs_were_installed_name[@]} -gt 0 ]]; then
@@ -11430,7 +11442,7 @@ GetQpkgDbAuthor()
 	#   stdout = QPKG author (first package found).
 	#   $? = 0 (found), !0 (not-found)
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopackname}}
 	local -i i=0
 
 	for i in "${!r_qpkg_name[@]}"; do
@@ -11459,7 +11471,7 @@ GetQpkgAuthor()
 	# Outputs: (local)
 	#   stdout = installed QPKG author.
 
-	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}" Author -f /etc/config/qpkg.conf
+	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopackname}}" Author -f /etc/config/qpkg.conf
 
 	}
 
@@ -11478,7 +11490,7 @@ GetQpkgAuthor()
 # 	local -i i=0
 #
 # 	for i in "${!r_qpkg_name[@]}"; do
-# 		[[ ${r_qpkg_name[$i]} = "${1:?${FUNCNAME[0]}'()': $r_nopackname}" ]] || continue
+# 		[[ ${r_qpkg_name[$i]} = "${1:?${FUNCNAME[0]}'()': $e_nopackname}" ]] || continue
 # 		printf '%s' "${r_qpkg_author_email[$i]}"
 #
 # 		return 0
@@ -11503,7 +11515,7 @@ GetQpkgAuthor()
 # 	local -i i=0
 #
 # 	for i in "${!r_qpkg_name[@]}"; do
-# 		[[ ${r_qpkg_name[$i]} = "${1:?${FUNCNAME[0]}'()': $r_nopackname}" ]] || continue
+# 		[[ ${r_qpkg_name[$i]} = "${1:?${FUNCNAME[0]}'()': $e_nopackname}" ]] || continue
 # 		printf '%s' "${r_qpkg_appl_author[$i]}"
 #
 # 		return 0
@@ -11528,7 +11540,7 @@ GetQpkgAuthor()
 # 	local -i i=0
 #
 # 	for i in "${!r_qpkg_name[@]}"; do
-# 		[[ ${r_qpkg_name[$i]} = "${1:?${FUNCNAME[0]}'()': $r_nopackname}" ]] || continue
+# 		[[ ${r_qpkg_name[$i]} = "${1:?${FUNCNAME[0]}'()': $e_nopackname}" ]] || continue
 # 		printf '%s' "${r_qpkg_appl_author_email[$i]}"
 #
 # 		return 0
@@ -11942,7 +11954,7 @@ GetQpkgServiceAction()
 	#   $stdout = previous action requested.
 	#   $? = 0 (found), !0 (not-found)
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopackname}}
 	local b=''
 	[[ -e /var/log/$a.action ]] && b=$(</var/log/${a}.action)
 
@@ -11967,7 +11979,7 @@ GetQpkgServiceResult()
 	#   $stdout = last known package service status.
 	#   $? = 0 (found), !0 (not-found)
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopackname}}
 	local b=''
 	[[ -e /var/log/$a.result ]] && b=$(</var/log/${a}.result)
 
@@ -12171,7 +12183,7 @@ IsCriticalFile()
 	# Outputs: (local)
 	#   $? = 0 (exists) or 1 (not exists)
 
-	[[ -n ${1:?${FUNCNAME[0]}'()': $r_nopfile} ]] || exit
+	[[ -n ${1:?${FUNCNAME[0]}'()': $e_nopfile} ]] || exit
 
 	local a=${1%% *}		# Extract first word-group.
 
@@ -12194,7 +12206,7 @@ IsNtCriticalFile()
 	# Outputs: (local)
 	#   $? = 0 (not exists) or 1 (exists)
 
-	! IsCriticalFile "${1:?${FUNCNAME[0]}'()': $r_nopfile}"
+	! IsCriticalFile "${1:?${FUNCNAME[0]}'()': $e_nopfile}"
 
 	}
 
@@ -12207,7 +12219,7 @@ IsFile()
 	# Outputs: (local)
 	#   $? = 0 (exists and is non-zero bytes) or 1 (not exists or is zero bytes)
 
-	[[ -n ${1:?${FUNCNAME[0]}'()': $r_nopfile} ]] || exit
+	[[ -n ${1:?${FUNCNAME[0]}'()': $e_nopfile} ]] || exit
 
 	local a=${1%% *}		# Extract first word-group.
 
@@ -12224,7 +12236,7 @@ IsNtFile()
 	# Outputs: (local)
 	#   $? = 0 (not exists or is zero bytes) or 1 (exists and is non-zero bytes)
 
-	! IsFile "${1:?${FUNCNAME[0]}'()': $r_nopfile}"
+	! IsFile "${1:?${FUNCNAME[0]}'()': $e_nopfile}"
 
 	}
 
@@ -12611,7 +12623,7 @@ IsQpkgRepoSelfManaged()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=$(GetQpkgInstalledStoreID "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}")
+	local a=$(GetQpkgInstalledStoreID "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopackname}}")
 
 	[[ -z $a || $a = undefined || $a = sherpa ]]
 
@@ -12631,7 +12643,7 @@ IsNtQpkgRepoSelfManaged()
 	# Outputs: (local)
 	#   $? = true/false
 
-	! IsQpkgRepoSelfManaged "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}"
+	! IsQpkgRepoSelfManaged "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopackname}}"
 
 	}
 
@@ -12650,7 +12662,7 @@ IsQpkgBackupExist()
 	# Outputs: (local)
 	#   $? = true/false
 
-	[[ -e $r_qpkg_bu_path/${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}.config.tar.gz ]]
+	[[ -e $r_qpkg_bu_path/${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopackname}}.config.tar.gz ]]
 
 	}
 
@@ -12735,7 +12747,7 @@ IsQpkgDbOptional()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopackname}}
 	local -i i=0
 	local re=\\b${a}\\b
 
@@ -12762,7 +12774,7 @@ IsQpkgDbArchOK()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=$(GetQpkgDbURL "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}")
+	local a=$(GetQpkgDbURL "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopackname}}")
 
 	[[ -n $a && $a != none ]]
 
@@ -12783,7 +12795,7 @@ IsQpkgDbMinRAMOk()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=$(GetQpkgDbMinRAM "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}")
+	local a=$(GetQpkgDbMinRAM "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopackname}}")
 
 	[[ -n $a ]] && [[ $a = none || $r_nas_ram_kb -ge $a ]]
 
@@ -12804,7 +12816,7 @@ IsQpkgDbMinOSVerOk()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=$(GetQpkgDbMinOSVer "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}")
+	local a=$(GetQpkgDbMinOSVer "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopackname}}")
 
 	SetOsFirmwareVer
 
@@ -12827,7 +12839,7 @@ IsQpkgDbMaxOSVerOk()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=$(GetQpkgDbMaxOSVer "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}")
+	local a=$(GetQpkgDbMaxOSVer "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopackname}}")
 
 	SetOsFirmwareVer
 
@@ -12888,7 +12900,7 @@ IsQpkgDbCanRestartToUpdate()
 	# Outputs: (local)
 	#   $? = 0 (true), !0 (false) (first package found).
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopackname}}
 	local -i i=0
 
 	for i in "${!r_qpkg_name[@]}"; do
@@ -12914,7 +12926,7 @@ IsQpkgDbCanClean()
 	# Outputs: (local)
 	#   $? = 0 (true), 1 (false) (first package found).
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopackname}}
 	local -i i=0
 
 	for i in "${!r_qpkg_name[@]}"; do
@@ -13016,7 +13028,7 @@ IsQpkgDbWillLog()
 	local -i i=0
 
 	for i in "${!r_qpkg_name[@]}"; do
-		[[ ${r_qpkg_name[$i]} = "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}" ]] || continue
+		[[ ${r_qpkg_name[$i]} = "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopackname}}" ]] || continue
 		${r_qpkg_will_log[$i]} && return 0 || break
 	done
 
@@ -13038,7 +13050,7 @@ IsQpkgAutoUpdate()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopackname}}
 
 	[[ $(/sbin/getcfg "$a" Auto_Update -u -f /etc/config/qpkg.conf) = TRUE ]]
 
@@ -13056,7 +13068,7 @@ IsQpkgAuthorOk()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopackname}}
 
 	[[ $(GetQpkgDbAuthor "$a") = "$(GetQpkgAuthor "$a")" ]]
 
@@ -13074,7 +13086,7 @@ IsNtQpkgAuthorOk()
 	# Outputs: (local)
 	#   $? = true/false
 
-	! IsQpkgAuthorOk "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}"
+	! IsQpkgAuthorOk "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopackname}}"
 
 	}
 
@@ -13092,7 +13104,7 @@ IsValidQpkgInstalled()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopackname}}
 
 	/bin/grep -q "^\[$a\]" /etc/config/qpkg.conf && IsQpkgAuthorOk "$a"
 
@@ -13110,7 +13122,7 @@ IsNtValidQpkgInstalled()
 	# Outputs: (local)
 	#   $? = true/false
 
-	! IsValidQpkgInstalled "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}"
+	! IsValidQpkgInstalled "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopackname}}"
 
 	}
 
@@ -13128,7 +13140,7 @@ IsQpkgInstalled()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopackname}}
 
 	/bin/grep -q "^\[$a\]" /etc/config/qpkg.conf
 
@@ -13146,7 +13158,7 @@ IsNtQpkgInstalled()
 	# Outputs: (local)
 	#   $? = true/false
 
-	! IsQpkgInstalled "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}"
+	! IsQpkgInstalled "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopackname}}"
 
 	}
 
@@ -13162,7 +13174,7 @@ IsQpkgMissing()
 	# Outputs: (local)
 	#   $? = true/false.
 
-	local a=$(GetQpkgInstalledPath "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}")
+	local a=$(GetQpkgInstalledPath "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopackname}}")
 
 	[[ $a != undefined && ! -d $a ]]
 
@@ -13180,7 +13192,7 @@ IsQpkgComplete()
 	# Outputs: (local)
 	#   $? = true/false.
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopackname}}
 
 	[[ $(/sbin/getcfg "$a" Status -d undefined -f /etc/config/qpkg.conf) = complete ]] && [[ $(/sbin/getcfg "$a" Incomplete_Conf -d undefined -f /etc/config/qpkg.conf) != 1 ]]
 
@@ -13198,7 +13210,7 @@ IsNtQpkgComplete()
 	# Outputs: (local)
 	#   $? = true/false
 
-	! IsQpkgComplete "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}"
+	! IsQpkgComplete "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopackname}}"
 
 	}
 
@@ -13214,7 +13226,7 @@ IsQpkgEnabled()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopackname}}
 
 	[[ $(/sbin/getcfg "$a" Enable -u -d undefined -f /etc/config/qpkg.conf) = TRUE ]]
 
@@ -13232,7 +13244,7 @@ IsNtQpkgEnabled()
 	# Outputs: (local)
 	#   $? = true/false
 
-	! IsQpkgEnabled "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}"
+	! IsQpkgEnabled "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopackname}}"
 
 	}
 
@@ -13526,7 +13538,7 @@ MakePath()
 	# Outputs: (global)
 	#	$show_suggest_raise_issue
 
-	[[ -n ${1:?${FUNCNAME[0]}'()': undefined path} && -n ${2:?${FUNCNAME[0]}'()': undefined reason} ]] || return
+	[[ -n ${1:?${FUNCNAME[0]}'()': undefined path} && -n ${2:?${FUNCNAME[0]}'()': $e_noreas} ]] || return
 
 	if [[ $1 != undefined ]] && ! mkdir -p "$1"; then
 		ShowAsError "unable to create $2 path $(FormatFileName "$1") $(FormatExitcode "$?")"
@@ -13599,7 +13611,7 @@ Executer()
 	#   $4 (optional) = e.g. '10' - an additional acceptable result code. Any other non-zero result from command will be considered a failure.
 
 	# Inputs: (global)
-	#	$r_nopfile
+	#	$e_nopfile
 	#   $r_run_logs_path
 	#   $useropt_debug
 	#   $useropt_verbose
@@ -13609,7 +13621,7 @@ Executer()
 	#   /pathfile (specified as $2) = stdout and stderr from commandstring (specified as $1).
 	#   $? = result_code of commandstring.
 
-	[[ -n ${1:?${FUNCNAME[0]}'()': undefined commandstring} && -n ${2:?${FUNCNAME[0]}'()': $r_nopfile} ]] || return
+	[[ -n ${1:?${FUNCNAME[0]}'()': $e_nocmd} && -n ${2:?${FUNCNAME[0]}'()': $e_nopfile} ]] || return
 
 	FuncInit
 
@@ -13682,7 +13694,7 @@ FileMatchesMD5()
 	# Outputs: (local)
 	#	$? = true if checksums match.
 
-	[[ $(GenerateMD5 "${1:?${FUNCNAME[0]}'()': $r_nopfile}") = "${2:?${FUNCNAME[0]}'()': undefined checksum}" ]]
+	[[ $(GenerateMD5 "${1:?${FUNCNAME[0]}'()': $e_nopfile}") = "${2:?${FUNCNAME[0]}'()': undefined checksum}" ]]
 
 	}
 
@@ -13697,7 +13709,7 @@ GenerateMD5()
 	#   stdout = MD5 checksum.
 	#	$? = false if file not found.
 
-	[[ -e ${1:?${FUNCNAME[0]}'()': $r_nopfile} ]] && /bin/md5sum "${1:?${FUNCNAME[0]}'()': $r_nopfile}" | cut -f1 -d' '
+	[[ -e ${1:?${FUNCNAME[0]}'()': $e_nopfile} ]] && /bin/md5sum "${1:?${FUNCNAME[0]}'()': $e_nopfile}" | cut -f1 -d' '
 
 	}
 
@@ -13960,28 +13972,28 @@ ShowAsOptions()
 FormatPackageName()
 	{
 
-	printf '%s' "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}"
+	printf '%s' "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopackname}}"
 
 	}
 
 FormatFileName()
 	{
 
-	printf '%s' "'${1:?${FUNCNAME[0]}'()': $r_nofile}'"
+	printf '%s' "'${1:?${FUNCNAME[0]}'()': $e_nofile}'"
 
 	}
 
 ShowAsURL()
 	{
 
-	TextUnderlinedCyan "${1:?${FUNCNAME[0]}'()': undefined URL}"
+	TextUnderlinedCyan "${1:?${FUNCNAME[0]}'()': $e_nourl}"
 
 	}
 
 FormatExitcode()
 	{
 
-	printf '%s' "[${1:?${FUNCNAME[0]}'()': undefined exitcode}]"
+	printf '%s' "[${1:?${FUNCNAME[0]}'()': $e_noexit}]"
 
 	}
 
@@ -13991,7 +14003,7 @@ FormatLogFilename()
 	# Inputs: (global)
 	#	$r_chars_results
 
-	printf '%s' "${r_chars_results}log file: '${1:?${FUNCNAME[0]}'()': $r_nofile}'"
+	printf '%s' "${r_chars_results}log file: '${1:?${FUNCNAME[0]}'()': $e_nofile}'"
 
 	}
 
@@ -14001,7 +14013,7 @@ FormatCommand()
 	# Inputs: (global)
 	#	$r_chars_results
 
-	echo "${r_chars_results}command: '${1:?${FUNCNAME[0]}'()': undefined commandstring}'"
+	echo "${r_chars_results}command: '${1:?${FUNCNAME[0]}'()': $e_nocmd}'"
 
 	}
 
@@ -14875,7 +14887,7 @@ AddExtLogToSessLog()
 
 	DebugAsLog 'adding external log to main log'
 	DebugExtLogMinSepr
-	DebugAsLog "$(FormatLogFilename "${1:?${FUNCNAME[0]}'()': $r_nopfile}")"
+	DebugAsLog "$(FormatLogFilename "${1:?${FUNCNAME[0]}'()': $e_nopfile}")"
 
 	while read -r a; do
 		DebugAsLog "$a"
@@ -15111,7 +15123,7 @@ ShowAsIterativeProgress()
 	#	$5 = suffix2		"packages"
 	#	$6 (optional) = expected action duration: 'long', 'short' (default)
 
-	local -r r_a=${1:?${FUNCNAME[0]}'()': undefined action}
+	local -r r_a=${1:?${FUNCNAME[0]}'()': $e_noaction}
 	local -i b=${2:-0}
 	local -r r_c=${3:?${FUNCNAME[0]}'()': undefined suffix1}
 	local -i d=${4:-0}
