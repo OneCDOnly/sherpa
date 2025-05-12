@@ -871,13 +871,13 @@ DebugLogEnv()
 		return
 	fi
 
-	RunAndLog "/bin/df -h | /bin/grep -iE '^(filesystem|none|tmpfs|devtmpfs|/dev/ram)'" "$r_ramfs_freespace_pathfile"
+	Executer "/bin/df -h | /bin/grep -iE '^(filesystem|none|tmpfs|devtmpfs|/dev/ram)'" "$r_ramfs_freespace_pathfile"
 	DebugInfoMinSepr
-	RunAndLog "/usr/sbin/screen -ls | /bin/sed '/^[[:space:]]*$/d'" "$r_screen_sessions_pathfile" '' 1
+	Executer "/usr/sbin/screen -ls | /bin/sed '/^[[:space:]]*$/d'" "$r_screen_sessions_pathfile" '' 1
 	DebugInfoMinSepr
-	RunAndLog '/usr/bin/free' "$r_ram_freeused_pathfile" '' 1
+	Executer '/usr/bin/free' "$r_ram_freeused_pathfile" '' 1
 	DebugInfoMinSepr
-	RunAndLog "/bin/grep -iE 'out of memory|oom-killer' /mnt/HDA_ROOT/.logs/kmsg" "$r_oom_log_pathfile" '' 1
+	Executer "/bin/grep -iE 'out of memory|oom-killer' /mnt/HDA_ROOT/.logs/kmsg" "$r_oom_log_pathfile" '' 1
 	DebugInfoMinSepr
 
 	if [[ $useropt_show_aboutall = true ]]; then
@@ -3399,7 +3399,7 @@ _UpdateEntwarePackageList_()
 	if ! IsFileRecent "$r_external_packages_archive_pathfile" "$r_file_change_threshold_minutes" || [[ ! -f $r_external_packages_archive_pathfile || $useropt_check = true ]]; then
 		DebugAsProc "updating $(FormatPackageName Entware) package list"
 
-		RunAndLog "$r_opkg_cmd update" "$r_logs_path/Entware.$r_update_log_file" log:failure-only
+		Executer "$r_opkg_cmd update" "$r_logs_path/Entware.$r_update_log_file" log:failure-only
 		z=$?
 
 		if [[ $z -eq 0 ]]; then
@@ -3680,7 +3680,7 @@ IPKs:upgrade()
 		_DirSizeMonitor_ &
 		fork_pid=$!
 
-		RunAndLog "$r_opkg_cmd upgrade --force-overwrite $(IPKs-ACdownload-to:List) --cache $r_ipk_cache_path --tmp-dir $r_ipk_download_path" "$r_logs_path/ipks.$r_upgrade_log_file" log:failure-only
+		Executer "$r_opkg_cmd upgrade --force-overwrite $(IPKs-ACdownload-to:List) --cache $r_ipk_cache_path --tmp-dir $r_ipk_download_path" "$r_logs_path/ipks.$r_upgrade_log_file" log:failure-only
 		z=$?
 
 		KillPID "$fork_pid"
@@ -3780,7 +3780,7 @@ IPKs:install()
 		_DirSizeMonitor_ &
 		fork_pid=$!
 
-		RunAndLog "$r_opkg_cmd install --force-overwrite $(IPKs-ACdownload-to:List) --cache $r_ipk_cache_path --tmp-dir $r_ipk_download_path" "$r_logs_path/ipks.$r_install_log_file" log:failure-only
+		Executer "$r_opkg_cmd install --force-overwrite $(IPKs-ACdownload-to:List) --cache $r_ipk_cache_path --tmp-dir $r_ipk_download_path" "$r_logs_path/ipks.$r_install_log_file" log:failure-only
 		z=$?
 
 		KillPID "$fork_pid"
@@ -3865,7 +3865,7 @@ IPKs:downgrade()
 
 						remote_url=${url_prefix}${name}${url_suffix}
 						local_pathfile=$r_ipk_downgrade_path/$(/usr/bin/basename "$remote_url")
-						RunAndLog "/sbin/curl${curl_options} --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
+						Executer "/sbin/curl${curl_options} --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
 					done
 
 					ShowAsPercentProgress "download $desc" '' "$ok_count" 0 "$fail_count" "$total_count"
@@ -3880,7 +3880,7 @@ IPKs:downgrade()
 
 					remote_url=${url_prefix}${name}${url_suffix}
 					local_pathfile=$r_ipk_downgrade_path/$(/usr/bin/basename "$remote_url")
-					RunAndLog "/sbin/curl${curl_options} --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
+					Executer "/sbin/curl${curl_options} --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
 				done
 
 				ShowAsPercentProgress "download $desc" '' "$ok_count" 0 "$fail_count" "$total_count"
@@ -3897,7 +3897,7 @@ IPKs:downgrade()
 		ShowAsProc "downgrade $desc"
 
 		ShowAsPercentProgress "downgrade $desc" '' "$ok_count" 0 "$fail_count" "$total_count"
-		RunAndLog "$r_opkg_cmd install --force-downgrade --cache $r_ipk_cache_path --tmp-dir $r_ipk_downgrade_path $r_ipk_downgrade_path/*.ipk" "$log_pathfile" log:failure-only
+		Executer "$r_opkg_cmd install --force-downgrade --cache $r_ipk_cache_path --tmp-dir $r_ipk_downgrade_path $r_ipk_downgrade_path/*.ipk" "$log_pathfile" log:failure-only
 		z=$?
 
 		if [[ $z -eq 0 ]]; then
@@ -3978,7 +3978,7 @@ PIPs:install()
 		desc="$total_count auxiliary PIP$(Pluralise "$total_count")"
 
 		ShowAsPercentProgress "install $desc" '' "$ok_count" 0 0 "$total_count"
-		RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
+		Executer "$exec_cmd" "$log_pathfile" log:failure-only
 		z=$?
 
 		if [[ $z -eq 0 ]]; then
@@ -4031,7 +4031,7 @@ OpenIpkArchive()
 		return 1
 	fi
 
-	RunAndLog "/usr/local/sbin/7z e -o$(/usr/bin/dirname "$r_external_packages_pathfile") $r_external_packages_archive_pathfile" "$r_cache_path/ipk.archive.extract" log:failure-only
+	Executer "/usr/local/sbin/7z e -o$(/usr/bin/dirname "$r_external_packages_pathfile") $r_external_packages_archive_pathfile" "$r_cache_path/ipk.archive.extract" log:failure-only
 
 	if [[ ! -e $r_external_packages_pathfile ]]; then
 		ShowAsError 'unable to open the IPK list file'
@@ -9587,7 +9587,7 @@ _QPKG:reassign_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "reassigning $(FormatPackageName)"
-	RunAndLog "/sbin/setcfg -e $qpkg_name store -f /etc/config/qpkg.conf" "$r_logs_path/$qpkg_name.$r_reassign_log_file" log:failure-only
+	Executer "/sbin/setcfg -e $qpkg_name store -f /etc/config/qpkg.conf" "$r_logs_path/$qpkg_name.$r_reassign_log_file" log:failure-only
 	z=$?
 
 	if [[ $z -eq 0 ]]; then
@@ -9657,7 +9657,7 @@ _QPKG:download_()
 
 		rm -f "$r_log_pathfile" 2>/dev/null
 
-		RunAndLog "/sbin/curl${curl_options} --location --output $r_local_pathfile $r_remote_url" "$r_log_pathfile" log:failure-only
+		Executer "/sbin/curl${curl_options} --location --output $r_local_pathfile $r_remote_url" "$r_log_pathfile" log:failure-only
 		z=$?
 
 		if [[ $z -eq 0 ]]; then
@@ -9756,7 +9756,7 @@ _QPKG:install_()
 	DebugAsProc "installing $(FormatPackageName)"
 	[[ ${QPKGs_were_installed_name[*]:-} = *"$qpkg_name"* ]] && a+="QINSTALL_PATH=$(GetQpkgInstalledOriginalPath "$qpkg_name") "
 
-	RunAndLog "${a}/bin/sh $local_pathfile" "$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_install_log_file" log:failure-only 10
+	Executer "${a}/bin/sh $local_pathfile" "$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_install_log_file" log:failure-only 10
 	z=$?
 
 	LogQpkgServiceResult
@@ -9845,7 +9845,7 @@ _QPKG:reinstall_()
 	DebugAsProc "reinstalling $(FormatPackageName)"
 	IsValidQpkgInstalled && a+="QINSTALL_PATH=$(/usr/bin/dirname "$(GetQpkgInstalledPath)") "
 
-	RunAndLog "${a}/bin/sh $local_pathfile" "$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_reinstall_log_file" log:failure-only 10
+	Executer "${a}/bin/sh $local_pathfile" "$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_reinstall_log_file" log:failure-only 10
 	z=$?
 
 	LogQpkgServiceResult
@@ -9977,7 +9977,7 @@ _QPKG:upgrade_()
 	DebugAsProc "upgrading $(FormatPackageName)"
 	IsValidQpkgInstalled && a+="QINSTALL_PATH=$(/usr/bin/dirname "$(GetQpkgInstalledPath "$qpkg_name")") "
 
-	RunAndLog "${a}/bin/sh $local_pathfile" "$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_upgrade_log_file" log:failure-only 10
+	Executer "${a}/bin/sh $local_pathfile" "$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_upgrade_log_file" log:failure-only 10
 	z=$?
 
 	LogQpkgServiceResult
@@ -10057,7 +10057,7 @@ _QPKG:uninstall_()
 	if IsFile "$r_qpkg_uninstaller_pathfile"; then
 		DebugAsProc "uninstalling $(FormatPackageName)"
 
-		RunAndLog "${a}/bin/sh $r_qpkg_uninstaller_pathfile" "$r_logs_path/$qpkg_name.$r_uninstall_log_file" log:failure-only
+		Executer "${a}/bin/sh $r_qpkg_uninstaller_pathfile" "$r_logs_path/$qpkg_name.$r_uninstall_log_file" log:failure-only
 		z=$?
 
 		if [[ $z -eq 0 ]]; then
@@ -10143,13 +10143,13 @@ _QPKG:activate_()
 
 		FuncForkExit 4
 	elif [[ $useropt_debug = true ]]; then
-		RunAndLog "${a}${service_pathfile} start" "$r_log_pathfile" log:failure-only
+		Executer "${a}${service_pathfile} start" "$r_log_pathfile" log:failure-only
 		z=$?
 	elif IsQpkgDbWillLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
-		RunAndLog "/sbin/qpkg_service${timeout} start $qpkg_name" "$r_log_pathfile" log:failure-only
+		Executer "/sbin/qpkg_service${timeout} start $qpkg_name" "$r_log_pathfile" log:failure-only
 		QpkgServiceResultWasOk && z=0 || z=1
 	else
-		RunAndLog "$service_pathfile start" "$r_log_pathfile" log:failure-only
+		Executer "$service_pathfile start" "$r_log_pathfile" log:failure-only
 		z=$?
 	fi
 
@@ -10231,13 +10231,13 @@ _QPKG:reactivate_()
 
 		FuncForkExit 4
 	elif [[ $useropt_debug = true ]]; then
-		RunAndLog "${a}${service_pathfile} restart" "$r_log_pathfile" log:failure-only
+		Executer "${a}${service_pathfile} restart" "$r_log_pathfile" log:failure-only
 		z=$?
 	elif IsQpkgDbWillLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
-		RunAndLog "/sbin/qpkg_service${timeout} restart $qpkg_name" "$r_log_pathfile" log:failure-only
+		Executer "/sbin/qpkg_service${timeout} restart $qpkg_name" "$r_log_pathfile" log:failure-only
 		QpkgServiceResultWasOk && z=0 || z=1
 	else
-		RunAndLog "$service_pathfile restart" "$r_log_pathfile" log:failure-only
+		Executer "$service_pathfile restart" "$r_log_pathfile" log:failure-only
 		z=$?
 	fi
 
@@ -10310,13 +10310,13 @@ _QPKG:deactivate_()
 
 		FuncForkExit 4
 	elif [[ $useropt_debug = true ]]; then
-		RunAndLog "${a}${service_pathfile} stop" "$r_log_pathfile" log:failure-only
+		Executer "${a}${service_pathfile} stop" "$r_log_pathfile" log:failure-only
 		z=$?
 	elif IsQpkgDbWillLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
-		RunAndLog "/sbin/qpkg_service${timeout} stop $qpkg_name" "$r_log_pathfile" log:failure-only
+		Executer "/sbin/qpkg_service${timeout} stop $qpkg_name" "$r_log_pathfile" log:failure-only
 		QpkgServiceResultWasOk && z=0 || z=1
 	else
-		RunAndLog "$service_pathfile stop" "$r_log_pathfile" log:failure-only
+		Executer "$service_pathfile stop" "$r_log_pathfile" log:failure-only
 		z=$?
 	fi
 
@@ -10388,7 +10388,7 @@ _QPKG:enable_()
 
 	DebugAsProc "enabling $(FormatPackageName)"
 
-	RunAndLog "/sbin/qpkg_service${timeout} enable $qpkg_name" "$r_log_pathfile" log:failure-only
+	Executer "/sbin/qpkg_service${timeout} enable $qpkg_name" "$r_log_pathfile" log:failure-only
 	ClearQpkgInstalledAppCenterNotifier
 	SaveActionResultToLog QPKG "$qpkg_name" enable '' ok
 	MarkActionForkAsOk
@@ -10445,7 +10445,7 @@ _QPKG:disable_()
 
 	DebugAsProc "disabling $(FormatPackageName)"
 
-	RunAndLog "/sbin/qpkg_service${timeout} disable $qpkg_name" "$r_log_pathfile" log:failure-only
+	Executer "/sbin/qpkg_service${timeout} disable $qpkg_name" "$r_log_pathfile" log:failure-only
 
 	ClearQpkgInstalledAppCenterNotifier
 	SaveActionResultToLog QPKG "$qpkg_name" disable '' ok
@@ -10501,7 +10501,7 @@ _QPKG:enableau_()
 
 	DebugAsProc "enabling auto-update $(FormatPackageName)"
 
-	RunAndLog "${a}$(GetQpkgServicePathFile) enable-auto-update" "$r_logs_path/$qpkg_name.$r_enableau_log_file" log:failure-only
+	Executer "${a}$(GetQpkgServicePathFile) enable-auto-update" "$r_logs_path/$qpkg_name.$r_enableau_log_file" log:failure-only
 	z=$?
 
 	if [[ $z -eq 0 ]]; then
@@ -10564,7 +10564,7 @@ _QPKG:disableau_()
 
 	DebugAsProc "disabling auto-update $(FormatPackageName)"
 
-	RunAndLog "${a}$(GetQpkgServicePathFile) disable-auto-update" "$r_logs_path/$qpkg_name.$r_disableau_log_file" log:failure-only
+	Executer "${a}$(GetQpkgServicePathFile) disable-auto-update" "$r_logs_path/$qpkg_name.$r_disableau_log_file" log:failure-only
 	z=$?
 
 	if [[ $z -eq 0 ]]; then
@@ -10623,7 +10623,7 @@ _QPKG:backup_()
 
 	DebugAsProc "backing-up $(FormatPackageName) configuration"
 
-	RunAndLog "${a}$(GetQpkgServicePathFile) backup" "$r_logs_path/$qpkg_name.$r_backup_log_file" log:failure-only
+	Executer "${a}$(GetQpkgServicePathFile) backup" "$r_logs_path/$qpkg_name.$r_backup_log_file" log:failure-only
 	z=$?
 
 	if [[ $z -eq 0 ]]; then
@@ -10687,7 +10687,7 @@ _QPKG:restore_()
 
 	DebugAsProc "restoring $(FormatPackageName) configuration"
 
-	RunAndLog "${a}$(GetQpkgServicePathFile) restore" "$r_logs_path/$qpkg_name.$r_restore_log_file" log:failure-only
+	Executer "${a}$(GetQpkgServicePathFile) restore" "$r_logs_path/$qpkg_name.$r_restore_log_file" log:failure-only
 	z=$?
 
 	if [[ $z -eq 0 ]]; then
@@ -10747,7 +10747,7 @@ _QPKG:clean_()
 
 	DebugAsProc "cleaning $(FormatPackageName)"
 
-	RunAndLog "${a}$(GetQpkgServicePathFile) clean" "$r_logs_path/$qpkg_name.$r_clean_log_file" log:failure-only
+	Executer "${a}$(GetQpkgServicePathFile) clean" "$r_logs_path/$qpkg_name.$r_clean_log_file" log:failure-only
 	z=$?
 
 	if [[ $z -eq 0 ]]; then
@@ -10919,7 +10919,7 @@ _QPKG:status_()
 			$r_gnu_timeout_cmd "$r_qpkg_status_check_timeout_seconds" /bin/bash -c "${b}$(GetQpkgServicePathFile) status"
 			z=$?
 		else
-			RunAndLog "${b}$(GetQpkgServicePathFile) status" "$r_logs_path/$qpkg_name.$r_status_log_file" log:failure-only
+			Executer "${b}$(GetQpkgServicePathFile) status" "$r_logs_path/$qpkg_name.$r_status_log_file" log:failure-only
 			z=$?
 		fi
 	elif [[ $a != none ]]; then
@@ -13587,7 +13587,7 @@ FileCountSpec()
 
 	}
 
-RunAndLog()
+Executer()
 	{
 
 	# Run a commandstring, log the results, and show onscreen if-requested.
@@ -13599,13 +13599,14 @@ RunAndLog()
 	#   $4 (optional) = e.g. '10' - an additional acceptable result code. Any other non-zero result from command will be considered a failure.
 
 	# Inputs: (global)
+	#	$r_nopfile
 	#   $r_run_logs_path
 	#   $useropt_debug
 	#   $useropt_verbose
 
 	# Outputs: (local)
 	#   stdout = commandstring stdout and stderr if script is in 'debug' mode.
-	#   pathfile (specified as $2) = stdout and stderr from commandstring (specified as $1).
+	#   /pathfile (specified as $2) = stdout and stderr from commandstring (specified as $1).
 	#   $? = result_code of commandstring.
 
 	[[ -n ${1:?${FUNCNAME[0]}'()': undefined commandstring} && -n ${2:?${FUNCNAME[0]}'()': $r_nopfile} ]] || return
