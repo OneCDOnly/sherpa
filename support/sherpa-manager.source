@@ -13604,7 +13604,7 @@ RunAndLog()
 	local -i z=0
 	local exec_msg='exec:'
 
-	if [[ ${1: -1} = "'" ]]; then							# Change display quotes depending on final content char.
+	if /bin/grep -q "'" <<<"$1"; then						# Change display quotes depending-on content quote chars.
 		exec_msg+=" \"$1\""
 	else
 		exec_msg+=" '$1'"
