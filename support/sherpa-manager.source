@@ -5117,15 +5117,15 @@ _GenerateAbsReportDataLine_()
 	case $mode in
 		mute)
 			if ! IsQpkgDbArchOK "$qpkg_name"; then
-				auxiliary='not installable, incompatible architecture'
-			elif ! IsQpkgDbMinOSVerOk "$qpkg_name"; then
-				auxiliary="not installable, incompatible $(GetOsName) version"
+				auxiliary='incompatible architecture'
+			elif ! IsQpkgDbMinOSVerOk "$qpkg_name" || ! IsQpkgDbMaxOSVerOk "$qpkg_name"; then
+				auxiliary="incompatible $(GetOsName) version"
 			elif ! IsQpkgDbMinRAMOk "$qpkg_name"; then
-				auxiliary='not installable, insufficient RAM installed'
+				auxiliary='insufficient RAM installed'
 			fi
 
 			if [[ $auxiliary != false ]]; then
-				auxiliary_msg=$(FormatReportField "$auxiliary" alert_mute)
+				auxiliary_msg=$(FormatReportField "not installable, $auxiliary" alert_mute)
 			else
 				abs_msg=$(FormatReportField "$abs" normal_mute)
 			fi
@@ -13613,7 +13613,7 @@ Executer()
 	#   $4 (optional) = e.g. '10' - an additional acceptable result code. Any other non-zero result from command will be considered a failure.
 
 	# Inputs: (global)
-	#	$e_nopfi
+	#	$e_nocmd
 	#	$e_nopfi
 	#   $r_run_logs_path
 	#   $useropt_debug
