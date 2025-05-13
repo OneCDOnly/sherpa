@@ -3,6 +3,7 @@ Observed issues:
 	* When 'clean'ing packages, some were reported as finished in 1 second, even though they're still performing the 'clean' action.
 		- Tatutulli, Watcher3, Unmanic.
 		- Cleaning process for each continues until complete, unless terminal is closed.
+		- Possibly a remnant from an older service script library. Retest.
 
 	* Restarting clamav.sh created lib symlink in cwd to /usr/lib
 
