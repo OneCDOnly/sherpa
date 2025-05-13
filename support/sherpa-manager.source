@@ -205,12 +205,14 @@ LoadConsts()
 	# Error messages.
 
 	readonly e_noaction='undefined action'
+	readonly e_nochk='undefined checksum'
 	readonly e_nocmd='undefined commandstring'
 	readonly e_noexit='undefined exitcode'
 	readonly e_nofile='undefined filename'
 	readonly e_noname='undefined name'
 	readonly e_nopackname='undefined package name'
 	readonly e_nopacktype='undefined package type'
+	readonly e_nopath='undefined path'
 	readonly e_nopfile='undefined pathfile'
 	readonly e_noprmpt='undefined prompt'
 	readonly e_noreas='undefined reason'
@@ -13538,7 +13540,7 @@ MakePath()
 	# Outputs: (global)
 	#	$show_suggest_raise_issue
 
-	[[ -n ${1:?${FUNCNAME[0]}'()': undefined path} && -n ${2:?${FUNCNAME[0]}'()': $e_noreas} ]] || return
+	[[ -n ${1:?${FUNCNAME[0]}'()': $e_nopath} && -n ${2:?${FUNCNAME[0]}'()': $e_noreas} ]] || return
 
 	if [[ $1 != undefined ]] && ! mkdir -p "$1"; then
 		ShowAsError "unable to create $2 path $(FormatFileName "$1") $(FormatExitcode "$?")"
@@ -13562,7 +13564,7 @@ ClearPath()
 	#	$1 = full path to parent of directory name to clear.
 	#   $2 = directory name to clear.
 
-	[[ -n ${1:?${FUNCNAME[0]}'()': undefined parent path} && -n ${2:?${FUNCNAME[0]}'()': undefined target path} ]] || return
+	[[ -n ${1:?${FUNCNAME[0]}'()': $e_nopath} && -n ${2:?${FUNCNAME[0]}'()': $e_nopath} ]] || return
 
 	local parent=${1:-undefined}
 	local target=$(/usr/bin/basename "${2:-undefined}")
@@ -13694,7 +13696,7 @@ FileMatchesMD5()
 	# Outputs: (local)
 	#	$? = true if checksums match.
 
-	[[ $(GenerateMD5 "${1:?${FUNCNAME[0]}'()': $e_nopfile}") = "${2:?${FUNCNAME[0]}'()': undefined checksum}" ]]
+	[[ $(GenerateMD5 "${1:?${FUNCNAME[0]}'()': $e_nopfile}") = "${2:?${FUNCNAME[0]}'()': $e_nochk}" ]]
 
 	}
 
@@ -14407,7 +14409,7 @@ FuncForkInit()
 	#	$original_sess_active_pathfile
 	#	$sess_active_pathfile
 
-	[[ -n ${pidfile:?${FUNCNAME[0]}'()': undefined \$pidfile} ]] || return
+	[[ -n ${pidfile:?${FUNCNAME[0]}'()': $e_nopfile} ]] || return
 
 	trap '[[ -n ${pidfile:-} && -e $pidfile ]] && rm -f "$pidfile" 2>/dev/null; exit' SIGINT
 
@@ -15858,14 +15860,92 @@ sleep()
 
 	} 2>/dev/null
 
+RefreshAndExtractFromArchive()
+	{
+
+	# Inputs: (global)
+	#	$archive_name
+	#	$archive_pathfile
+	#	$archive_url
+	#	$dont_refresh_pathfile
+	#	$extracted
+	#	$r_cache_path
+	#	$r_file_change_threshold_minutes
+	#	$target_pathfile
+
+	# Outputs: (global)
+	#	$extracted = true : file was successfully extracted from archive. This will trigger post-extraction processing.
+
+	[[ -n ${archive_name:?${FUNCNAME[0]}'()': $e_noname} ]] || return
+	[[ -n ${archive_pathfile:?${FUNCNAME[0]}'()': $e_nopfile} ]] || return
+	[[ -n ${archive_url:?${FUNCNAME[0]}'()': $e_nourl} ]] || return
+	[[ -n ${dont_refresh_pathfile:?${FUNCNAME[0]}'()': $e_nopfile} ]] || return
+	[[ -n ${target_pathfile:?${FUNCNAME[0]}'()': $e_nopfile} ]] || return
+
+	FuncInit
+
+	local curl_options=''
+	local new_archive_checksum=''
+	local original_archive_checksum=''
+
+	if [[ ! -e $dont_refresh_pathfile ]]; then
+		IsFile "$archive_pathfile" && original_archive_checksum=$(GenerateMD5 "$archive_pathfile")
+
+		if IsNtFile "$archive_pathfile" || ! IsFileRecent "$archive_pathfile" "$r_file_change_threshold_minutes"; then
+			DebugAsProc "download $archive_name archive"
+
+			IsOsCanSecureDownload || curl_options=' --insecure'
+			/sbin/curl${curl_options} --silent --fail "$archive_url" >"$archive_pathfile"
+
+			if IsFile "$archive_pathfile"; then
+				DebugAsDone "$archive_name archive downloaded"
+			else
+				DebugAsWarn "$archive_name archive download failed"
+			fi
+		fi
+	fi
+
+	if IsFile "$archive_pathfile"; then
+		new_archive_checksum=$(GenerateMD5 "$archive_pathfile")
+	else
+		DebugAsWarn "$archive_name archive missing"
+	fi
+
+	if IsNtFile "$target_pathfile" || [[ $original_archive_checksum != "$new_archive_checksum" ]]; then
+		if IsFile "$archive_pathfile"; then
+			DebugAsProc "extracting $archive_name from archive"
+			/bin/tar --extract --gzip --no-same-owner --file="$archive_pathfile" --directory="$r_cache_path"
+
+			if IsFile "$target_pathfile"; then
+				DebugAsDone "extracted $archive_name from archive"
+				extracted=true
+			else
+				DebugAsWarn 'extraction from archive failed'
+			fi
+		else
+			ShowAsAbort "no $archive_name archive exists to extract from"
+
+			FuncExit 1; exit
+		fi
+	fi
+
+	if IsNtFile "$target_pathfile"; then
+		ShowAsAbort "$archive_name missing"
+
+		FuncExit 1; exit
+	fi
+
+	FuncExit
+
+	}
+
 LoadObjects()
 	{
 
 	# Ensure `objects` in the local cache is up-to-date, then source it.
 
 	# Inputs: (global)
-	#	$r_cache_path
-	#	$r_file_change_threshold_minutes
+	#	$objects_loaded
 	#	$r_objects_archive_pathfile
 	#	$r_objects_archive_url
 	#	$r_objects_pathfile
@@ -15878,57 +15958,20 @@ LoadObjects()
 
 	FuncInit
 
-	local curl_options=''
-	local new_archive_checksum=''
-	local original_archive_checksum=''
-
 	LoadLists
 
 	ShowAsProc objects
 
-	if [[ ! -e $PWD/dont-refresh-objects ]]; then
-		IsFile "$r_objects_archive_pathfile" && original_archive_checksum=$(GenerateMD5 "$r_objects_archive_pathfile")
+	# Must set these prior to calling RefreshAndExtractFromArchive()
 
-		if IsNtFile "$r_objects_archive_pathfile" || ! IsFileRecent "$r_objects_archive_pathfile" "$r_file_change_threshold_minutes"; then
-			DebugAsProc 'download objects archive'
+	local archive_name=objects
+	local archive_pathfile=$r_objects_archive_pathfile
+	local archive_url=$r_objects_archive_url
+	local dont_refresh_pathfile=$PWD/dont-refresh-objects
+	local extracted=false
+	local target_pathfile=$r_objects_pathfile
 
-			IsOsCanSecureDownload || curl_options=' --insecure'
-			/sbin/curl${curl_options} --silent --fail "$r_objects_archive_url" >"$r_objects_archive_pathfile"
-
-			if IsFile "$r_objects_archive_pathfile"; then
-				DebugAsDone 'objects archive downloaded'
-			else
-				DebugAsWarn 'objects archive download failed'
-			fi
-		fi
-	fi
-
-	if IsFile "$r_objects_archive_pathfile"; then
-		new_archive_checksum=$(GenerateMD5 "$r_objects_archive_pathfile")
-	else
-		DebugAsWarn 'object archive missing'
-	fi
-
-	if IsNtFile "$r_objects_pathfile" || [[ $original_archive_checksum != "$new_archive_checksum" ]]; then
-		if IsFile "$r_objects_archive_pathfile"; then
-			DebugAsProc 'extracting objects from archive'
-			/bin/tar --extract --gzip --no-same-owner --file="$r_objects_archive_pathfile" --directory="$r_cache_path"
-
-			if IsFile "$r_objects_pathfile"; then
-				DebugAsDone 'extracted objects from archive'
-			else
-				DebugAsWarn 'extraction from archive failed'
-			fi
-		else
-			ShowAsAbort 'no object archive exists to extract from'
-
-			FuncExit 1; exit
-		fi
-	fi
-
-	if IsNtFile "$r_objects_pathfile"; then
-		ShowAsAbort 'objects missing'
-
+	if ! RefreshAndExtractFromArchive; then
 		FuncExit 1; exit
 	fi
 
@@ -15952,73 +15995,39 @@ LoadDatabase()
 	# Ensure `packages` in the local cache is up-to-date, then source it.
 
 	# Inputs: (global)
-	#	$r_cache_path
-	#	$r_file_change_threshold_minutes
+	#	$packages_loaded
 	#	$r_packages_archive_pathfile
 	#	$r_packages_archive_url
 	#	$r_packages_pathfile
+
+	# Outputs: (global)
+	#	$packages_loaded
+	#	$r_packages_epoch
 
 	[[ ${packages_loaded:=false} = false ]] || return 0
 
 	FuncInit
 
-	local new_archive_checksum=''
-	local original_archive_checksum=''
-	local curl_options=''
-	local previous=''
-	local qpkg_name=''
-
 	LoadObjects
 
 	ShowAsProc database
 
-	if [[ ! -e $PWD/dont-refresh-packages ]]; then
-		IsFile "$r_packages_archive_pathfile" && original_archive_checksum=$(GenerateMD5 "$r_packages_archive_pathfile")
+	# Must set these prior to calling RefreshAndExtractFromArchive()
 
-		if IsNtFile "$r_packages_archive_pathfile" || ! IsFileRecent "$r_packages_archive_pathfile" "$r_file_change_threshold_minutes"; then
-			DebugAsProc 'download database archive'
+	local archive_name=database
+	local archive_pathfile=$r_packages_archive_pathfile
+	local archive_url=$r_packages_archive_url
+	local dont_refresh_pathfile=$PWD/dont-refresh-database
+	local extracted=false
+	local previous=''
+	local qpkg_name=''
+	local target_pathfile=$r_packages_pathfile
 
-			IsOsCanSecureDownload || curl_options=' --insecure'
-			/sbin/curl${curl_options} --silent --fail "$r_packages_archive_url" >"$r_packages_archive_pathfile"
-
-			if IsFile "$r_packages_archive_pathfile"; then
-				DebugAsDone 'database archive downloaded'
-			else
-				DebugAsWarn 'database archive download failed'
-			fi
-		fi
-	fi
-
-	if IsFile "$r_packages_archive_pathfile"; then
-		new_archive_checksum=$(GenerateMD5 "$r_packages_archive_pathfile")
-	else
-		DebugAsWarn 'database archive missing'
-	fi
-
-	if IsNtFile "$r_packages_pathfile" || [[ $original_archive_checksum != "$new_archive_checksum" ]]; then
-		if IsFile "$r_packages_archive_pathfile"; then
-			DebugAsProc 'extracting database from archive'
-			/bin/tar --extract --gzip --no-same-owner --file="$r_packages_archive_pathfile" --directory="$r_cache_path"
-
-			if IsFile "$r_packages_pathfile"; then
-				DebugAsDone 'extracted database from archive'
-			else
-				DebugAsWarn 'extraction from archive failed'
-			fi
-
-			InitQPKGsTiers
-		else
-			ShowAsAbort 'no database archive exists to extract from'
-
-			FuncExit 1; exit
-		fi
-	fi
-
-	if IsNtFile "$r_packages_pathfile"; then
-		ShowAsAbort 'database missing'
-
+	if ! RefreshAndExtractFromArchive; then
 		FuncExit 1; exit
 	fi
+
+	[[ $extracted = true ]] && InitQPKGsTiers
 
 	# Supported QPKG details - parallel arrays.
 
