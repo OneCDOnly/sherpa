@@ -26,6 +26,7 @@
 #			   "object" properties: 'o_snakecase_with_leading_o_underscore' (these should be managed ONLY by the object's methods)
 #						 constants: 'r_snakecase_with_leading_r_underscore' (set as readonly ASAP)
 #						 variables: 'snakecase_with_inline_underscores'
+#					error messages: 'e_snakecase_with_leading_e_underscore' (set as readonly)
 #						   indents: 1 x tab char (= 4 space chars)
 # when calling ShowAs*() functions: separated before-and-after with single line spaces unless first-or-last line in a code block.
 #
@@ -201,6 +202,25 @@ DebugLogInit()
 LoadConsts()
 	{
 
+	# Error messages.
+
+	readonly e_noact='undefined action'
+	readonly e_nochk='undefined checksum'
+	readonly e_nocmd='undefined command'
+	readonly e_noext='undefined exitcode'
+	readonly e_nofil='undefined filename'
+	readonly e_nonam='undefined name'
+	readonly e_nopfi='undefined pathfile'
+	readonly e_nopnm='undefined package name'
+	readonly e_nopth='undefined path'
+	readonly e_nopty='undefined package type'
+	readonly e_noprm='undefined prompt'
+	readonly e_norea='undefined reason'
+	readonly e_nores='undefined result'
+	readonly e_notir='undefined tier'
+	readonly e_nourl='undefined URL'
+	readonly e_noval='undefined value'
+
 	# QPKG actions.
 
 	readonly r_qpkg_disable_timeout_seconds=10
@@ -274,12 +294,6 @@ LoadConsts()
 	readonly r_chars_super_prompt='# '
 	readonly r_extended_datetime_format='+%a %-d %b %Y'
 		readonly r_full_datetime_format=$r_extended_datetime_format' %-I:%M:%S %p %Z'
-
-	readonly r_nofile='undefined filename'
-	readonly r_noname='undefined name'
-	readonly r_nopackname='undefined package name'
-	readonly r_nopacktype='undefined package type'
-	readonly r_nopfile='undefined pathfile'
 
 	if IsOsCanSudo; then
 		if [[ $(GetUserSudoUID) = undefined ]]; then
@@ -871,13 +885,13 @@ DebugLogEnv()
 		return
 	fi
 
-	RunAndLog "/bin/df -h | /bin/grep -iE '^(filesystem|none|tmpfs|devtmpfs|/dev/ram)'" "$r_ramfs_freespace_pathfile"
+	Executer "/bin/df -h | /bin/grep -iE '^(filesystem|none|tmpfs|devtmpfs|/dev/ram)'" "$r_ramfs_freespace_pathfile"
 	DebugInfoMinSepr
-	RunAndLog "/usr/sbin/screen -ls | /bin/sed '/^[[:space:]]*$/d'" "$r_screen_sessions_pathfile" '' 1
+	Executer "/usr/sbin/screen -ls | /bin/sed '/^[[:space:]]*$/d'" "$r_screen_sessions_pathfile" '' 1
 	DebugInfoMinSepr
-	RunAndLog '/usr/bin/free' "$r_ram_freeused_pathfile" '' 1
+	Executer '/usr/bin/free' "$r_ram_freeused_pathfile" '' 1
 	DebugInfoMinSepr
-	RunAndLog "/bin/grep -iE 'out of memory|oom-killer' /mnt/HDA_ROOT/.logs/kmsg" "$r_oom_log_pathfile" '' 1
+	Executer "/bin/grep -iE 'out of memory|oom-killer' /mnt/HDA_ROOT/.logs/kmsg" "$r_oom_log_pathfile" '' 1
 	DebugInfoMinSepr
 
 	if [[ $useropt_show_aboutall = true ]]; then
@@ -1090,7 +1104,7 @@ AssignQpkgsToActions()
 
 	FuncInit
 
-	ShowAsProc 'QPKG assignment'
+	ShowAsProc 'auto-assign actions'
 
 	local action=''
 	local prospect=''
@@ -1579,10 +1593,10 @@ ProcAction()
 	local msg2_value=''
 	local package=''
 	local -i package_index=0
-	local -r r_action=${1:?${FUNCNAME[0]}'()': undefined action}
-	local -r r_action_intransitive_msg=${4:?${FUNCNAME[0]}'()': undefined action message}
-	local -r r_package_type=${3:?${FUNCNAME[0]}'()': $r_nopacktype}
-	local -r r_tier=${2:?${FUNCNAME[0]}'()': undefined tier}
+	local -r r_action=${1:?${FUNCNAME[0]}'()': $e_noact}
+	local -r r_action_intransitive_msg=${4:?${FUNCNAME[0]}'()': $e_noact message}
+	local -r r_package_type=${3:?${FUNCNAME[0]}'()': $e_nopty}
+	local -r r_tier=${2:?${FUNCNAME[0]}'()': $e_notir}
 	local re=''
 	local state=''
 	local target_object_name=''
@@ -1622,7 +1636,7 @@ ProcAction()
 
 			SetMaxForks "$r_action"
 			InitActionForkCounters
-			OpenActionMsgPipe
+			OpenMsgPipe
 
 			re=\\bEntware\\b		# Bash 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
 
@@ -1634,10 +1648,10 @@ ProcAction()
 			_ExecOneActionWithManyForks_ "_${r_package_type}:${r_action}_" "${target_packages[@]}" &
 			WritePidFile "$!"
 
-			# Read message pipe and process QPKGs and actions as-per requests contained within.
+			# Read message pipe and process QPKGs and mark action statuses as-per requests contained within.
 
 			while [[ ${#target_packages[@]} -gt 0 && ! -e $r_abort_actions_pathfile ]]; do
-				ReadFromActionMsgPipe msg1_key msg1_value msg2_key msg2_value
+				ReadFromMsgPipe msg1_key msg1_value msg2_key msg2_value
 
 				case $msg1_key in
 					env)			# Change the state of the parent environment.
@@ -1742,7 +1756,7 @@ ProcAction()
 			[[ $skip_count -gt 0 || $skip_ok_count -gt 0 || $skip_error_count -gt 0 || $skip_abort_count -gt 0 ]] && show_action_results_skipped=true
 
 			wait 2>/dev/null
-			CloseActionMsgPipe
+			CloseMsgPipe
 
 			[[ ${useropt_terse:=true} = false && $useropt_verbose = false ]] && echo
 			;;
@@ -1761,7 +1775,7 @@ ProcAction()
 
 	}
 
-OpenActionMsgPipe()
+OpenMsgPipe()
 	{
 
 	# Create a message pipe, so action forks can send data back to parent.
@@ -1800,7 +1814,7 @@ OpenActionMsgPipe()
 
 	} 2>/dev/null
 
-CloseActionMsgPipe()
+CloseMsgPipe()
 	{
 
 	# Inputs: (global)
@@ -3128,7 +3142,7 @@ AllocPackGroupsToAcs()
 
 	FuncInit
 
-	ShowAsProc 'match QPKG groups to actions'
+	ShowAsProc 'allocate QPKG groups to actions'
 
 	local action=''
 	local group=''
@@ -3179,7 +3193,7 @@ AllocPackStatesToAcs()
 
 	FuncInit
 
-	ShowAsProc 'match QPKG states to actions'
+	ShowAsProc 'allocate QPKG states to actions'
 
 	local action=''
 	local check_later=false
@@ -3316,7 +3330,7 @@ Quiz()
 	# Outputs: (local)
 	#   $? = 0 if "y", 1 if anything else
 
-	local a=${1:?${FUNCNAME[0]}'()': undefined prompt}
+	local a=${1:?${FUNCNAME[0]}'()': $e_noprm}
 	local b=''
 
 	ShowAsQuiz "$a"
@@ -3399,7 +3413,7 @@ _UpdateEntwarePackageList_()
 	if ! IsFileRecent "$r_external_packages_archive_pathfile" "$r_file_change_threshold_minutes" || [[ ! -f $r_external_packages_archive_pathfile || $useropt_check = true ]]; then
 		DebugAsProc "updating $(FormatPackageName Entware) package list"
 
-		RunAndLog "$r_opkg_cmd update" "$r_logs_path/Entware.$r_update_log_file" log:failure-only
+		Executer "$r_opkg_cmd update" "$r_logs_path/Entware.$r_update_log_file" log:failure-only
 		z=$?
 
 		if [[ $z -eq 0 ]]; then
@@ -3680,7 +3694,7 @@ IPKs:upgrade()
 		_DirSizeMonitor_ &
 		fork_pid=$!
 
-		RunAndLog "$r_opkg_cmd upgrade --force-overwrite $(IPKs-ACdownload-to:List) --cache $r_ipk_cache_path --tmp-dir $r_ipk_download_path" "$r_logs_path/ipks.$r_upgrade_log_file" log:failure-only
+		Executer "$r_opkg_cmd upgrade --force-overwrite $(IPKs-ACdownload-to:List) --cache $r_ipk_cache_path --tmp-dir $r_ipk_download_path" "$r_logs_path/ipks.$r_upgrade_log_file" log:failure-only
 		z=$?
 
 		KillPID "$fork_pid"
@@ -3780,7 +3794,7 @@ IPKs:install()
 		_DirSizeMonitor_ &
 		fork_pid=$!
 
-		RunAndLog "$r_opkg_cmd install --force-overwrite $(IPKs-ACdownload-to:List) --cache $r_ipk_cache_path --tmp-dir $r_ipk_download_path" "$r_logs_path/ipks.$r_install_log_file" log:failure-only
+		Executer "$r_opkg_cmd install --force-overwrite $(IPKs-ACdownload-to:List) --cache $r_ipk_cache_path --tmp-dir $r_ipk_download_path" "$r_logs_path/ipks.$r_install_log_file" log:failure-only
 		z=$?
 
 		KillPID "$fork_pid"
@@ -3865,7 +3879,7 @@ IPKs:downgrade()
 
 						remote_url=${url_prefix}${name}${url_suffix}
 						local_pathfile=$r_ipk_downgrade_path/$(/usr/bin/basename "$remote_url")
-						RunAndLog "/sbin/curl${curl_options} --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
+						Executer "/sbin/curl${curl_options} --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
 					done
 
 					ShowAsPercentProgress "download $desc" '' "$ok_count" 0 "$fail_count" "$total_count"
@@ -3880,7 +3894,7 @@ IPKs:downgrade()
 
 					remote_url=${url_prefix}${name}${url_suffix}
 					local_pathfile=$r_ipk_downgrade_path/$(/usr/bin/basename "$remote_url")
-					RunAndLog "/sbin/curl${curl_options} --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
+					Executer "/sbin/curl${curl_options} --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
 				done
 
 				ShowAsPercentProgress "download $desc" '' "$ok_count" 0 "$fail_count" "$total_count"
@@ -3897,7 +3911,7 @@ IPKs:downgrade()
 		ShowAsProc "downgrade $desc"
 
 		ShowAsPercentProgress "downgrade $desc" '' "$ok_count" 0 "$fail_count" "$total_count"
-		RunAndLog "$r_opkg_cmd install --force-downgrade --cache $r_ipk_cache_path --tmp-dir $r_ipk_downgrade_path $r_ipk_downgrade_path/*.ipk" "$log_pathfile" log:failure-only
+		Executer "$r_opkg_cmd install --force-downgrade --cache $r_ipk_cache_path --tmp-dir $r_ipk_downgrade_path $r_ipk_downgrade_path/*.ipk" "$log_pathfile" log:failure-only
 		z=$?
 
 		if [[ $z -eq 0 ]]; then
@@ -3978,7 +3992,7 @@ PIPs:install()
 		desc="$total_count auxiliary PIP$(Pluralise "$total_count")"
 
 		ShowAsPercentProgress "install $desc" '' "$ok_count" 0 0 "$total_count"
-		RunAndLog "$exec_cmd" "$log_pathfile" log:failure-only
+		Executer "$exec_cmd" "$log_pathfile" log:failure-only
 		z=$?
 
 		if [[ $z -eq 0 ]]; then
@@ -4031,7 +4045,7 @@ OpenIpkArchive()
 		return 1
 	fi
 
-	RunAndLog "/usr/local/sbin/7z e -o$(/usr/bin/dirname "$r_external_packages_pathfile") $r_external_packages_archive_pathfile" "$r_cache_path/ipk.archive.extract" log:failure-only
+	Executer "/usr/local/sbin/7z e -o$(/usr/bin/dirname "$r_external_packages_pathfile") $r_external_packages_archive_pathfile" "$r_cache_path/ipk.archive.extract" log:failure-only
 
 	if [[ ! -e $r_external_packages_pathfile ]]; then
 		ShowAsError 'unable to open the IPK list file'
@@ -4319,8 +4333,8 @@ SaveSetting()
 	# 	$2 = value
 	# 	$3 (optional) = 'announce' - display on-screen when setting has been saved.
 
-	local a=${1:?${FUNCNAME[0]}'()': $r_noname}
-	local b=$(Lowercase "${2:?${FUNCNAME[0]}'()': undefined value}")
+	local a=${1:?${FUNCNAME[0]}'()': $e_nonam}
+	local b=$(Lowercase "${2:?${FUNCNAME[0]}'()': $e_noval}")
 
 	case $b in
 		true|false)
@@ -4345,8 +4359,8 @@ LoadSetting()
 	# Outputs: (local)
 	#   stdout = setting value
 
-	local a=${1:?${FUNCNAME[0]}'()': $r_noname}
-	local b=$(Lowercase "${2:?${FUNCNAME[0]}'()': undefined default value}")
+	local a=${1:?${FUNCNAME[0]}'()': $e_nonam}
+	local b=$(Lowercase "${2:?${FUNCNAME[0]}'()': $e_noval}")
 
 	if [[ ! -e /sbin/getcfg ]]; then
 		printf '%s' "$b"
@@ -4365,7 +4379,7 @@ DeleteSetting()
 	# Inputs: (local)
 	#   $1 = name
 
-	local a=${1:?${FUNCNAME[0]}'()': $r_noname}
+	local a=${1:?${FUNCNAME[0]}'()': $e_nonam}
 
 	/sbin/setcfg -e sherpa "$a" -f /etc/config/qpkg.conf
 
@@ -4554,7 +4568,7 @@ _GeneratePacksReportDataLine_()
 		local ${a}_msg=''
 	done
 
-	name=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}
+	name=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}
 	app_ver=$(GetQpkgDbApplVer)
 	description=$(Capitalise "$(GetQpkgDbDesc "$name")")
 	notes=$(GetQpkgDbNote)
@@ -8677,7 +8691,7 @@ SendParentChangeEnv()
 	# Inputs: (local)
 	#   $1 = action request
 
-	WriteToActionMsgPipe env "$1" '' ''
+	WriteToMsgPipe env "$1"
 
 	}
 
@@ -8695,14 +8709,14 @@ SendPackageStateChange()
 	# Inputs: (global)
 	#	$qpkg_name
 
-	WriteToActionMsgPipe change "$1" package "$qpkg_name"
+	WriteToMsgPipe change "$1" package "$qpkg_name"
 
 	}
 
 SendActionStatus()
 	{
 
-	# Send a message into message stream to update parent environment with the status of this action for $qpkg_name.
+	# Send a message into message stream to update parent environment with the status of the current action for $qpkg_name.
 
 	# This can be: `ok`, `so`, `sk`, `se`, `er`, `ex`. `ab`.
 	# This function is only called from within async functions.
@@ -8713,14 +8727,14 @@ SendActionStatus()
 	# Inputs: (global)
 	#	$qpkg_name
 
-	WriteToActionMsgPipe status "$1" package "$qpkg_name"
+	WriteToMsgPipe status "$1" package "$qpkg_name"
 
 	}
 
-WriteToActionMsgPipe()
+WriteToMsgPipe()
 	{
 
-	# Send a message into message stream to update parent shell environment.
+	# Send a message into message stream to update parent shell environment with the details in $1 to $4. Always write 4 elements.
 
 	# Inputs: (local)
 	#	$1 = message 1 key
@@ -8731,32 +8745,35 @@ WriteToActionMsgPipe()
 	# Inputs: (global)
 	#	$action_msg_pipe_fd
 
-	[[ $action_msg_pipe_fd != none && -e /proc/$$/fd/$action_msg_pipe_fd ]] && echo "$1|$2|$3|$4" >&$action_msg_pipe_fd
+	[[ $action_msg_pipe_fd != none && -e /proc/$$/fd/$action_msg_pipe_fd ]] && echo "${1:-null}|${2:-null}|${3:-null}|${4:-null}" >&$action_msg_pipe_fd
 
 	return 0
 
 	}
 
-ReadFromActionMsgPipe()
+ReadFromMsgPipe()
 	{
 
+	# Read from message stream, and assign each element to the variable names specified as $1 to $4. Always read 4 elements.
+
 	# Inputs: (local)
-	#	$1 = message 1 key
-	#	$2 = message 1 value
-	#	$3 = message 2 key
-	#	$4 = message 2 value
+	#	$1 = message 1 key variable name
+	#	$2 = message 1 value variable name
+	#	$3 = message 2 key variable name
+	#	$4 = message 2 value variable name
 
 	# Inputs: (global)
 	#	$action_msg_pipe_fd
 
-	local _msg1_key
-	local _msg1_value
-	local _msg2_key
-	local _msg2_value
+	# Outputs: (global)
+	#	named variable with message 1 key
+	#	named variable with message 1 value
+	#	named variable with message 2 key
+	#	named variable with message 2 value
 
 	IFS='|' read -r _msg1_key _msg1_value _msg2_key _msg2_value <&$action_msg_pipe_fd
 
-	eval "$1='$_msg1_key' $2='$_msg1_value' $3='$_msg2_key' $4='$_msg2_value'"
+	eval "$1='${_msg1_key:-null}' $2='${_msg1_value:-null}' $3='${_msg2_key:-null}' $4='${_msg2_value:-null}'"
 
 	return 0
 
@@ -9495,12 +9512,12 @@ SaveActionResultToLog()
 
 	local -r r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
 		local var_safe_name=${r_var_name//[.-]/_}; var_safe_name=${var_safe_name//:/_}
-	local -r r_package_type=${1:?${FUNCNAME[0]}'()': $r_nopacktype}
-	local -r r_name=${2:?${FUNCNAME[0]}'()': $r_nopackname}
-	local -r r_action=${3:?${FUNCNAME[0]}'()': undefined action}
+	local -r r_package_type=${1:?${FUNCNAME[0]}'()': $e_nopty}
+	local -r r_name=${2:?${FUNCNAME[0]}'()': $e_nopnm}
+	local -r r_action=${3:?${FUNCNAME[0]}'()': $e_noact}
 	local -r r_qty=${4:-1}
 	local -r r_clean_action=${r_action//\"/}
-	local -r r_result=${5:?${FUNCNAME[0]}'()': undefined result}
+	local -r r_result=${5:?${FUNCNAME[0]}'()': $e_nores}
 	local -r r_reason=${6:-}
 	local -r r_starttime=$(ConvertNanosecondsToMilliseconds "${!var_safe_name}")
 	local -r r_duration=$(CalcAmountDiff "$r_starttime" "$(ConvertNowToMilliseconds)")
@@ -9584,7 +9601,7 @@ _QPKG:reassign_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "reassigning $(FormatPackageName)"
-	RunAndLog "/sbin/setcfg -e $qpkg_name store -f /etc/config/qpkg.conf" "$r_logs_path/$qpkg_name.$r_reassign_log_file" log:failure-only
+	Executer "/sbin/setcfg -e $qpkg_name store -f /etc/config/qpkg.conf" "$r_logs_path/$qpkg_name.$r_reassign_log_file" log:failure-only
 	z=$?
 
 	if [[ $z -eq 0 ]]; then
@@ -9654,7 +9671,7 @@ _QPKG:download_()
 
 		rm -f "$r_log_pathfile" 2>/dev/null
 
-		RunAndLog "/sbin/curl${curl_options} --location --output $r_local_pathfile $r_remote_url" "$r_log_pathfile" log:failure-only
+		Executer "/sbin/curl${curl_options} --location --output $r_local_pathfile $r_remote_url" "$r_log_pathfile" log:failure-only
 		z=$?
 
 		if [[ $z -eq 0 ]]; then
@@ -9753,7 +9770,7 @@ _QPKG:install_()
 	DebugAsProc "installing $(FormatPackageName)"
 	[[ ${QPKGs_were_installed_name[*]:-} = *"$qpkg_name"* ]] && a+="QINSTALL_PATH=$(GetQpkgInstalledOriginalPath "$qpkg_name") "
 
-	RunAndLog "${a}/bin/sh $local_pathfile" "$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_install_log_file" log:failure-only 10
+	Executer "${a}/bin/sh $local_pathfile" "$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_install_log_file" log:failure-only 10
 	z=$?
 
 	LogQpkgServiceResult
@@ -9842,7 +9859,7 @@ _QPKG:reinstall_()
 	DebugAsProc "reinstalling $(FormatPackageName)"
 	IsValidQpkgInstalled && a+="QINSTALL_PATH=$(/usr/bin/dirname "$(GetQpkgInstalledPath)") "
 
-	RunAndLog "${a}/bin/sh $local_pathfile" "$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_reinstall_log_file" log:failure-only 10
+	Executer "${a}/bin/sh $local_pathfile" "$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_reinstall_log_file" log:failure-only 10
 	z=$?
 
 	LogQpkgServiceResult
@@ -9974,7 +9991,7 @@ _QPKG:upgrade_()
 	DebugAsProc "upgrading $(FormatPackageName)"
 	IsValidQpkgInstalled && a+="QINSTALL_PATH=$(/usr/bin/dirname "$(GetQpkgInstalledPath "$qpkg_name")") "
 
-	RunAndLog "${a}/bin/sh $local_pathfile" "$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_upgrade_log_file" log:failure-only 10
+	Executer "${a}/bin/sh $local_pathfile" "$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_upgrade_log_file" log:failure-only 10
 	z=$?
 
 	LogQpkgServiceResult
@@ -10054,7 +10071,7 @@ _QPKG:uninstall_()
 	if IsFile "$r_qpkg_uninstaller_pathfile"; then
 		DebugAsProc "uninstalling $(FormatPackageName)"
 
-		RunAndLog "${a}/bin/sh $r_qpkg_uninstaller_pathfile" "$r_logs_path/$qpkg_name.$r_uninstall_log_file" log:failure-only
+		Executer "${a}/bin/sh $r_qpkg_uninstaller_pathfile" "$r_logs_path/$qpkg_name.$r_uninstall_log_file" log:failure-only
 		z=$?
 
 		if [[ $z -eq 0 ]]; then
@@ -10140,13 +10157,13 @@ _QPKG:activate_()
 
 		FuncForkExit 4
 	elif [[ $useropt_debug = true ]]; then
-		RunAndLog "${a}${service_pathfile} start" "$r_log_pathfile" log:failure-only
+		Executer "${a}${service_pathfile} start" "$r_log_pathfile" log:failure-only
 		z=$?
 	elif IsQpkgDbWillLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
-		RunAndLog "/sbin/qpkg_service${timeout} start $qpkg_name" "$r_log_pathfile" log:failure-only
+		Executer "/sbin/qpkg_service${timeout} start $qpkg_name" "$r_log_pathfile" log:failure-only
 		QpkgServiceResultWasOk && z=0 || z=1
 	else
-		RunAndLog "$service_pathfile start" "$r_log_pathfile" log:failure-only
+		Executer "$service_pathfile start" "$r_log_pathfile" log:failure-only
 		z=$?
 	fi
 
@@ -10228,13 +10245,13 @@ _QPKG:reactivate_()
 
 		FuncForkExit 4
 	elif [[ $useropt_debug = true ]]; then
-		RunAndLog "${a}${service_pathfile} restart" "$r_log_pathfile" log:failure-only
+		Executer "${a}${service_pathfile} restart" "$r_log_pathfile" log:failure-only
 		z=$?
 	elif IsQpkgDbWillLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
-		RunAndLog "/sbin/qpkg_service${timeout} restart $qpkg_name" "$r_log_pathfile" log:failure-only
+		Executer "/sbin/qpkg_service${timeout} restart $qpkg_name" "$r_log_pathfile" log:failure-only
 		QpkgServiceResultWasOk && z=0 || z=1
 	else
-		RunAndLog "$service_pathfile restart" "$r_log_pathfile" log:failure-only
+		Executer "$service_pathfile restart" "$r_log_pathfile" log:failure-only
 		z=$?
 	fi
 
@@ -10307,13 +10324,13 @@ _QPKG:deactivate_()
 
 		FuncForkExit 4
 	elif [[ $useropt_debug = true ]]; then
-		RunAndLog "${a}${service_pathfile} stop" "$r_log_pathfile" log:failure-only
+		Executer "${a}${service_pathfile} stop" "$r_log_pathfile" log:failure-only
 		z=$?
 	elif IsQpkgDbWillLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
-		RunAndLog "/sbin/qpkg_service${timeout} stop $qpkg_name" "$r_log_pathfile" log:failure-only
+		Executer "/sbin/qpkg_service${timeout} stop $qpkg_name" "$r_log_pathfile" log:failure-only
 		QpkgServiceResultWasOk && z=0 || z=1
 	else
-		RunAndLog "$service_pathfile stop" "$r_log_pathfile" log:failure-only
+		Executer "$service_pathfile stop" "$r_log_pathfile" log:failure-only
 		z=$?
 	fi
 
@@ -10385,7 +10402,7 @@ _QPKG:enable_()
 
 	DebugAsProc "enabling $(FormatPackageName)"
 
-	RunAndLog "/sbin/qpkg_service${timeout} enable $qpkg_name" "$r_log_pathfile" log:failure-only
+	Executer "/sbin/qpkg_service${timeout} enable $qpkg_name" "$r_log_pathfile" log:failure-only
 	ClearQpkgInstalledAppCenterNotifier
 	SaveActionResultToLog QPKG "$qpkg_name" enable '' ok
 	MarkActionForkAsOk
@@ -10442,7 +10459,7 @@ _QPKG:disable_()
 
 	DebugAsProc "disabling $(FormatPackageName)"
 
-	RunAndLog "/sbin/qpkg_service${timeout} disable $qpkg_name" "$r_log_pathfile" log:failure-only
+	Executer "/sbin/qpkg_service${timeout} disable $qpkg_name" "$r_log_pathfile" log:failure-only
 
 	ClearQpkgInstalledAppCenterNotifier
 	SaveActionResultToLog QPKG "$qpkg_name" disable '' ok
@@ -10498,7 +10515,7 @@ _QPKG:enableau_()
 
 	DebugAsProc "enabling auto-update $(FormatPackageName)"
 
-	RunAndLog "${a}$(GetQpkgServicePathFile) enable-auto-update" "$r_logs_path/$qpkg_name.$r_enableau_log_file" log:failure-only
+	Executer "${a}$(GetQpkgServicePathFile) enable-auto-update" "$r_logs_path/$qpkg_name.$r_enableau_log_file" log:failure-only
 	z=$?
 
 	if [[ $z -eq 0 ]]; then
@@ -10561,7 +10578,7 @@ _QPKG:disableau_()
 
 	DebugAsProc "disabling auto-update $(FormatPackageName)"
 
-	RunAndLog "${a}$(GetQpkgServicePathFile) disable-auto-update" "$r_logs_path/$qpkg_name.$r_disableau_log_file" log:failure-only
+	Executer "${a}$(GetQpkgServicePathFile) disable-auto-update" "$r_logs_path/$qpkg_name.$r_disableau_log_file" log:failure-only
 	z=$?
 
 	if [[ $z -eq 0 ]]; then
@@ -10620,7 +10637,7 @@ _QPKG:backup_()
 
 	DebugAsProc "backing-up $(FormatPackageName) configuration"
 
-	RunAndLog "${a}$(GetQpkgServicePathFile) backup" "$r_logs_path/$qpkg_name.$r_backup_log_file" log:failure-only
+	Executer "${a}$(GetQpkgServicePathFile) backup" "$r_logs_path/$qpkg_name.$r_backup_log_file" log:failure-only
 	z=$?
 
 	if [[ $z -eq 0 ]]; then
@@ -10684,7 +10701,7 @@ _QPKG:restore_()
 
 	DebugAsProc "restoring $(FormatPackageName) configuration"
 
-	RunAndLog "${a}$(GetQpkgServicePathFile) restore" "$r_logs_path/$qpkg_name.$r_restore_log_file" log:failure-only
+	Executer "${a}$(GetQpkgServicePathFile) restore" "$r_logs_path/$qpkg_name.$r_restore_log_file" log:failure-only
 	z=$?
 
 	if [[ $z -eq 0 ]]; then
@@ -10744,7 +10761,7 @@ _QPKG:clean_()
 
 	DebugAsProc "cleaning $(FormatPackageName)"
 
-	RunAndLog "${a}$(GetQpkgServicePathFile) clean" "$r_logs_path/$qpkg_name.$r_clean_log_file" log:failure-only
+	Executer "${a}$(GetQpkgServicePathFile) clean" "$r_logs_path/$qpkg_name.$r_clean_log_file" log:failure-only
 	z=$?
 
 	if [[ $z -eq 0 ]]; then
@@ -10916,7 +10933,7 @@ _QPKG:status_()
 			$r_gnu_timeout_cmd "$r_qpkg_status_check_timeout_seconds" /bin/bash -c "${b}$(GetQpkgServicePathFile) status"
 			z=$?
 		else
-			RunAndLog "${b}$(GetQpkgServicePathFile) status" "$r_logs_path/$qpkg_name.$r_status_log_file" log:failure-only
+			Executer "${b}$(GetQpkgServicePathFile) status" "$r_logs_path/$qpkg_name.$r_status_log_file" log:failure-only
 			z=$?
 		fi
 	elif [[ $a != none ]]; then
@@ -11016,7 +11033,7 @@ GetQpkgInstalledPath()
 	#   stdout = package installation date.
 	#   $? = 0 (found), 250 (not-found).
 
-	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}" Install_Path -d undefined -f /etc/config/qpkg.conf
+	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}" Install_Path -d undefined -f /etc/config/qpkg.conf
 
 	}
 
@@ -11033,7 +11050,7 @@ GetQpkgServicePathFile()
 	#   stdout = service-script pathfile
 	#   $? = 0 if found, 250 if not.
 
-	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}" Shell -d undefined -f /etc/config/qpkg.conf
+	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}" Shell -d undefined -f /etc/config/qpkg.conf
 
 	}
 
@@ -11109,7 +11126,7 @@ GetQpkgDbVer()
 # 		return 0
 # 	fi
 
-	a=${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}
+	a=${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}
 
 	if [[ -n $a ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
@@ -11137,7 +11154,7 @@ GetQpkgInstalledVer()
 	#   stdout = package version
 	#   $? = 0 if found, 250 if not.
 
-	/sbin/getcfg "${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}" Version -d undefined -f /etc/config/qpkg.conf
+	/sbin/getcfg "${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}" Version -d undefined -f /etc/config/qpkg.conf
 
 	}
 
@@ -11156,7 +11173,7 @@ GetQpkgInstalledStoreID()
 	#   stdout = package store ID
 	#   $? = 0 if found, 250 if not.
 
-	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}" store -d undefined -f /etc/config/qpkg.conf
+	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}" store -d undefined -f /etc/config/qpkg.conf
 
 	}
 
@@ -11175,7 +11192,7 @@ GetQpkgInstalledDate()
 	#   stdout = package installation date
 	#   $? = 0 if found, 1 if QPKG name unspecified, 250 if not found
 
-	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}" date -d undefined -f /etc/config/qpkg.conf
+	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}" date -d undefined -f /etc/config/qpkg.conf
 
 	}
 
@@ -11192,7 +11209,7 @@ GetQpkgInstalledOriginalPath()
 	#   stdout = the original installation path of this QPKG (even if it was migrated to another volume).
 	#   $? = 0 if successful, 1 if failed
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}
 	local -i i=0
 
 	if [[ ${#QPKGs_were_installed_name[@]} -gt 0 ]]; then
@@ -11427,7 +11444,7 @@ GetQpkgDbAuthor()
 	#   stdout = QPKG author (first package found).
 	#   $? = 0 (found), !0 (not-found)
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}
 	local -i i=0
 
 	for i in "${!r_qpkg_name[@]}"; do
@@ -11456,7 +11473,7 @@ GetQpkgAuthor()
 	# Outputs: (local)
 	#   stdout = installed QPKG author.
 
-	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}" Author -f /etc/config/qpkg.conf
+	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}" Author -f /etc/config/qpkg.conf
 
 	}
 
@@ -11475,7 +11492,7 @@ GetQpkgAuthor()
 # 	local -i i=0
 #
 # 	for i in "${!r_qpkg_name[@]}"; do
-# 		[[ ${r_qpkg_name[$i]} = "${1:?${FUNCNAME[0]}'()': $r_nopackname}" ]] || continue
+# 		[[ ${r_qpkg_name[$i]} = "${1:?${FUNCNAME[0]}'()': $e_nopnm}" ]] || continue
 # 		printf '%s' "${r_qpkg_author_email[$i]}"
 #
 # 		return 0
@@ -11500,7 +11517,7 @@ GetQpkgAuthor()
 # 	local -i i=0
 #
 # 	for i in "${!r_qpkg_name[@]}"; do
-# 		[[ ${r_qpkg_name[$i]} = "${1:?${FUNCNAME[0]}'()': $r_nopackname}" ]] || continue
+# 		[[ ${r_qpkg_name[$i]} = "${1:?${FUNCNAME[0]}'()': $e_nopnm}" ]] || continue
 # 		printf '%s' "${r_qpkg_appl_author[$i]}"
 #
 # 		return 0
@@ -11525,7 +11542,7 @@ GetQpkgAuthor()
 # 	local -i i=0
 #
 # 	for i in "${!r_qpkg_name[@]}"; do
-# 		[[ ${r_qpkg_name[$i]} = "${1:?${FUNCNAME[0]}'()': $r_nopackname}" ]] || continue
+# 		[[ ${r_qpkg_name[$i]} = "${1:?${FUNCNAME[0]}'()': $e_nopnm}" ]] || continue
 # 		printf '%s' "${r_qpkg_appl_author_email[$i]}"
 #
 # 		return 0
@@ -11939,7 +11956,7 @@ GetQpkgServiceAction()
 	#   $stdout = previous action requested.
 	#   $? = 0 (found), !0 (not-found)
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}
 	local b=''
 	[[ -e /var/log/$a.action ]] && b=$(</var/log/${a}.action)
 
@@ -11964,7 +11981,7 @@ GetQpkgServiceResult()
 	#   $stdout = last known package service status.
 	#   $? = 0 (found), !0 (not-found)
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}
 	local b=''
 	[[ -e /var/log/$a.result ]] && b=$(</var/log/${a}.result)
 
@@ -12168,7 +12185,7 @@ IsCriticalFile()
 	# Outputs: (local)
 	#   $? = 0 (exists) or 1 (not exists)
 
-	[[ -n ${1:?${FUNCNAME[0]}'()': $r_nopfile} ]] || exit
+	[[ -n ${1:?${FUNCNAME[0]}'()': $e_nopfi} ]] || exit
 
 	local a=${1%% *}		# Extract first word-group.
 
@@ -12191,7 +12208,7 @@ IsNtCriticalFile()
 	# Outputs: (local)
 	#   $? = 0 (not exists) or 1 (exists)
 
-	! IsCriticalFile "${1:?${FUNCNAME[0]}'()': $r_nopfile}"
+	! IsCriticalFile "${1:?${FUNCNAME[0]}'()': $e_nopfi}"
 
 	}
 
@@ -12204,7 +12221,7 @@ IsFile()
 	# Outputs: (local)
 	#   $? = 0 (exists and is non-zero bytes) or 1 (not exists or is zero bytes)
 
-	[[ -n ${1:?${FUNCNAME[0]}'()': $r_nopfile} ]] || exit
+	[[ -n ${1:?${FUNCNAME[0]}'()': $e_nopfi} ]] || exit
 
 	local a=${1%% *}		# Extract first word-group.
 
@@ -12221,7 +12238,7 @@ IsNtFile()
 	# Outputs: (local)
 	#   $? = 0 (not exists or is zero bytes) or 1 (exists and is non-zero bytes)
 
-	! IsFile "${1:?${FUNCNAME[0]}'()': $r_nopfile}"
+	! IsFile "${1:?${FUNCNAME[0]}'()': $e_nopfi}"
 
 	}
 
@@ -12608,7 +12625,7 @@ IsQpkgRepoSelfManaged()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=$(GetQpkgInstalledStoreID "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}")
+	local a=$(GetQpkgInstalledStoreID "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}")
 
 	[[ -z $a || $a = undefined || $a = sherpa ]]
 
@@ -12628,7 +12645,7 @@ IsNtQpkgRepoSelfManaged()
 	# Outputs: (local)
 	#   $? = true/false
 
-	! IsQpkgRepoSelfManaged "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}"
+	! IsQpkgRepoSelfManaged "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}"
 
 	}
 
@@ -12647,7 +12664,7 @@ IsQpkgBackupExist()
 	# Outputs: (local)
 	#   $? = true/false
 
-	[[ -e $r_qpkg_bu_path/${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}.config.tar.gz ]]
+	[[ -e $r_qpkg_bu_path/${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}.config.tar.gz ]]
 
 	}
 
@@ -12732,7 +12749,7 @@ IsQpkgDbOptional()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}
 	local -i i=0
 	local re=\\b${a}\\b
 
@@ -12759,7 +12776,7 @@ IsQpkgDbArchOK()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=$(GetQpkgDbURL "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}")
+	local a=$(GetQpkgDbURL "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}")
 
 	[[ -n $a && $a != none ]]
 
@@ -12780,7 +12797,7 @@ IsQpkgDbMinRAMOk()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=$(GetQpkgDbMinRAM "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}")
+	local a=$(GetQpkgDbMinRAM "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}")
 
 	[[ -n $a ]] && [[ $a = none || $r_nas_ram_kb -ge $a ]]
 
@@ -12801,7 +12818,7 @@ IsQpkgDbMinOSVerOk()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=$(GetQpkgDbMinOSVer "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}")
+	local a=$(GetQpkgDbMinOSVer "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}")
 
 	SetOsFirmwareVer
 
@@ -12824,7 +12841,7 @@ IsQpkgDbMaxOSVerOk()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=$(GetQpkgDbMaxOSVer "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}")
+	local a=$(GetQpkgDbMaxOSVer "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}")
 
 	SetOsFirmwareVer
 
@@ -12885,7 +12902,7 @@ IsQpkgDbCanRestartToUpdate()
 	# Outputs: (local)
 	#   $? = 0 (true), !0 (false) (first package found).
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}
 	local -i i=0
 
 	for i in "${!r_qpkg_name[@]}"; do
@@ -12911,7 +12928,7 @@ IsQpkgDbCanClean()
 	# Outputs: (local)
 	#   $? = 0 (true), 1 (false) (first package found).
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}
 	local -i i=0
 
 	for i in "${!r_qpkg_name[@]}"; do
@@ -13013,7 +13030,7 @@ IsQpkgDbWillLog()
 	local -i i=0
 
 	for i in "${!r_qpkg_name[@]}"; do
-		[[ ${r_qpkg_name[$i]} = "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}" ]] || continue
+		[[ ${r_qpkg_name[$i]} = "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}" ]] || continue
 		${r_qpkg_will_log[$i]} && return 0 || break
 	done
 
@@ -13035,7 +13052,7 @@ IsQpkgAutoUpdate()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}
 
 	[[ $(/sbin/getcfg "$a" Auto_Update -u -f /etc/config/qpkg.conf) = TRUE ]]
 
@@ -13053,7 +13070,7 @@ IsQpkgAuthorOk()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}
 
 	[[ $(GetQpkgDbAuthor "$a") = "$(GetQpkgAuthor "$a")" ]]
 
@@ -13071,7 +13088,7 @@ IsNtQpkgAuthorOk()
 	# Outputs: (local)
 	#   $? = true/false
 
-	! IsQpkgAuthorOk "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}"
+	! IsQpkgAuthorOk "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}"
 
 	}
 
@@ -13089,7 +13106,7 @@ IsValidQpkgInstalled()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}
 
 	/bin/grep -q "^\[$a\]" /etc/config/qpkg.conf && IsQpkgAuthorOk "$a"
 
@@ -13107,7 +13124,7 @@ IsNtValidQpkgInstalled()
 	# Outputs: (local)
 	#   $? = true/false
 
-	! IsValidQpkgInstalled "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}"
+	! IsValidQpkgInstalled "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}"
 
 	}
 
@@ -13125,7 +13142,7 @@ IsQpkgInstalled()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}
 
 	/bin/grep -q "^\[$a\]" /etc/config/qpkg.conf
 
@@ -13143,7 +13160,7 @@ IsNtQpkgInstalled()
 	# Outputs: (local)
 	#   $? = true/false
 
-	! IsQpkgInstalled "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}"
+	! IsQpkgInstalled "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}"
 
 	}
 
@@ -13159,7 +13176,7 @@ IsQpkgMissing()
 	# Outputs: (local)
 	#   $? = true/false.
 
-	local a=$(GetQpkgInstalledPath "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}")
+	local a=$(GetQpkgInstalledPath "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}")
 
 	[[ $a != undefined && ! -d $a ]]
 
@@ -13177,7 +13194,7 @@ IsQpkgComplete()
 	# Outputs: (local)
 	#   $? = true/false.
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}
 
 	[[ $(/sbin/getcfg "$a" Status -d undefined -f /etc/config/qpkg.conf) = complete ]] && [[ $(/sbin/getcfg "$a" Incomplete_Conf -d undefined -f /etc/config/qpkg.conf) != 1 ]]
 
@@ -13195,7 +13212,7 @@ IsNtQpkgComplete()
 	# Outputs: (local)
 	#   $? = true/false
 
-	! IsQpkgComplete "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}"
+	! IsQpkgComplete "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}"
 
 	}
 
@@ -13211,7 +13228,7 @@ IsQpkgEnabled()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}
 
 	[[ $(/sbin/getcfg "$a" Enable -u -d undefined -f /etc/config/qpkg.conf) = TRUE ]]
 
@@ -13229,7 +13246,7 @@ IsNtQpkgEnabled()
 	# Outputs: (local)
 	#   $? = true/false
 
-	! IsQpkgEnabled "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}"
+	! IsQpkgEnabled "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}"
 
 	}
 
@@ -13278,6 +13295,20 @@ IsAnsiStrippingSupported()
 	else
 		false
 	fi
+
+	}
+
+IsHaveSingleQuote()
+	{
+
+	# Inputs: (local)
+	#	$1 = string to be tested.
+
+	# Outputs: (local)
+	#	$? = true if $1 contains a single quote.
+	#	$? = false if $1 does not contain a single quote.
+
+	/bin/grep -q "'" <<<"${1:-}"
 
 	}
 
@@ -13509,7 +13540,7 @@ MakePath()
 	# Outputs: (global)
 	#	$show_suggest_raise_issue
 
-	[[ -n ${1:?${FUNCNAME[0]}'()': undefined path} && -n ${2:?${FUNCNAME[0]}'()': undefined reason} ]] || return
+	[[ -n ${1:?${FUNCNAME[0]}'()': $e_nopth} && -n ${2:?${FUNCNAME[0]}'()': $e_norea} ]] || return
 
 	if [[ $1 != undefined ]] && ! mkdir -p "$1"; then
 		ShowAsError "unable to create $2 path $(FormatFileName "$1") $(FormatExitcode "$?")"
@@ -13533,7 +13564,7 @@ ClearPath()
 	#	$1 = full path to parent of directory name to clear.
 	#   $2 = directory name to clear.
 
-	[[ -n ${1:?${FUNCNAME[0]}'()': undefined parent path} && -n ${2:?${FUNCNAME[0]}'()': undefined target path} ]] || return
+	[[ -n ${1:?${FUNCNAME[0]}'()': $e_nopth} && -n ${2:?${FUNCNAME[0]}'()': $e_nopth} ]] || return
 
 	local parent=${1:-undefined}
 	local target=$(/usr/bin/basename "${2:-undefined}")
@@ -13570,7 +13601,7 @@ FileCountSpec()
 
 	}
 
-RunAndLog()
+Executer()
 	{
 
 	# Run a commandstring, log the results, and show onscreen if-requested.
@@ -13582,16 +13613,18 @@ RunAndLog()
 	#   $4 (optional) = e.g. '10' - an additional acceptable result code. Any other non-zero result from command will be considered a failure.
 
 	# Inputs: (global)
+	#	$e_nopfi
+	#	$e_nopfi
 	#   $r_run_logs_path
 	#   $useropt_debug
 	#   $useropt_verbose
 
 	# Outputs: (local)
 	#   stdout = commandstring stdout and stderr if script is in 'debug' mode.
-	#   pathfile (specified as $2) = stdout and stderr from commandstring (specified as $1).
+	#   /pathfile (specified as $2) = stdout and stderr from commandstring (specified as $1).
 	#   $? = result_code of commandstring.
 
-	[[ -n ${1:?${FUNCNAME[0]}'()': undefined commandstring} && -n ${2:?${FUNCNAME[0]}'()': $r_nopfile} ]] || return
+	[[ -n ${1:?${FUNCNAME[0]}'()': $e_nocmd} && -n ${2:?${FUNCNAME[0]}'()': $e_nopfi} ]] || return
 
 	FuncInit
 
@@ -13601,7 +13634,7 @@ RunAndLog()
 	local -i z=0
 	local exec_msg='exec:'
 
-	if [[ ${1: -1} = "'" ]]; then							# Change display quotes depending on final content char.
+	if IsHaveSingleQuote "$1"; then							# Change display quotes depending-on content quote chars.
 		exec_msg+=" \"$1\""
 	else
 		exec_msg+=" '$1'"
@@ -13614,7 +13647,7 @@ RunAndLog()
 		eval "$1 > >(/usr/bin/tee $r_log_pathfile) 2>&1"	# NOTE: `tee` buffers stdout here.		# squeezer-ignore
 		z=$?
 	else
-		(eval "$1" >"$r_log_pathfile" 2>&1)				# Run in a subshell to suppress 'Terminated' message later.
+		(eval "$1" >"$r_log_pathfile" 2>&1)					# Run in a subshell to suppress 'Terminated' message later.
 		z=$?
 	fi
 
@@ -13664,7 +13697,7 @@ FileMatchesMD5()
 	# Outputs: (local)
 	#	$? = true if checksums match.
 
-	[[ $(GenerateMD5 "${1:?${FUNCNAME[0]}'()': $r_nopfile}") = "${2:?${FUNCNAME[0]}'()': undefined checksum}" ]]
+	[[ $(GenerateMD5 "${1:?${FUNCNAME[0]}'()': $e_nopfi}") = "${2:?${FUNCNAME[0]}'()': $e_nochk}" ]]
 
 	}
 
@@ -13679,7 +13712,7 @@ GenerateMD5()
 	#   stdout = MD5 checksum.
 	#	$? = false if file not found.
 
-	[[ -e ${1:?${FUNCNAME[0]}'()': $r_nopfile} ]] && /bin/md5sum "${1:?${FUNCNAME[0]}'()': $r_nopfile}" | cut -f1 -d' '
+	[[ -e ${1:?${FUNCNAME[0]}'()': $e_nopfi} ]] && /bin/md5sum "${1:?${FUNCNAME[0]}'()': $e_nopfi}" | cut -f1 -d' '
 
 	}
 
@@ -13942,28 +13975,28 @@ ShowAsOptions()
 FormatPackageName()
 	{
 
-	printf '%s' "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $r_nopackname}}"
+	printf '%s' "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}"
 
 	}
 
 FormatFileName()
 	{
 
-	printf '%s' "'${1:?${FUNCNAME[0]}'()': $r_nofile}'"
+	printf '%s' "'${1:?${FUNCNAME[0]}'()': $e_nofil}'"
 
 	}
 
 ShowAsURL()
 	{
 
-	TextUnderlinedCyan "${1:?${FUNCNAME[0]}'()': undefined URL}"
+	TextUnderlinedCyan "${1:?${FUNCNAME[0]}'()': $e_nourl}"
 
 	}
 
 FormatExitcode()
 	{
 
-	printf '%s' "[${1:?${FUNCNAME[0]}'()': undefined exitcode}]"
+	printf '%s' "[${1:?${FUNCNAME[0]}'()': $e_noext}]"
 
 	}
 
@@ -13973,7 +14006,7 @@ FormatLogFilename()
 	# Inputs: (global)
 	#	$r_chars_results
 
-	printf '%s' "${r_chars_results}log file: '${1:?${FUNCNAME[0]}'()': $r_nofile}'"
+	printf '%s' "${r_chars_results}log file: '${1:?${FUNCNAME[0]}'()': $e_nofil}'"
 
 	}
 
@@ -13983,7 +14016,7 @@ FormatCommand()
 	# Inputs: (global)
 	#	$r_chars_results
 
-	echo "${r_chars_results}command: '${1:?${FUNCNAME[0]}'()': undefined commandstring}'"
+	echo "${r_chars_results}command: '${1:?${FUNCNAME[0]}'()': $e_nocmd}'"
 
 	}
 
@@ -14377,7 +14410,7 @@ FuncForkInit()
 	#	$original_sess_active_pathfile
 	#	$sess_active_pathfile
 
-	[[ -n ${pidfile:?${FUNCNAME[0]}'()': undefined \$pidfile} ]] || return
+	[[ -n ${pidfile:?${FUNCNAME[0]}'()': $e_nopfi} ]] || return
 
 	trap '[[ -n ${pidfile:-} && -e $pidfile ]] && rm -f "$pidfile" 2>/dev/null; exit' SIGINT
 
@@ -14857,7 +14890,7 @@ AddExtLogToSessLog()
 
 	DebugAsLog 'adding external log to main log'
 	DebugExtLogMinSepr
-	DebugAsLog "$(FormatLogFilename "${1:?${FUNCNAME[0]}'()': $r_nopfile}")"
+	DebugAsLog "$(FormatLogFilename "${1:?${FUNCNAME[0]}'()': $e_nopfi}")"
 
 	while read -r a; do
 		DebugAsLog "$a"
@@ -15093,7 +15126,7 @@ ShowAsIterativeProgress()
 	#	$5 = suffix2		"packages"
 	#	$6 (optional) = expected action duration: 'long', 'short' (default)
 
-	local -r r_a=${1:?${FUNCNAME[0]}'()': undefined action}
+	local -r r_a=${1:?${FUNCNAME[0]}'()': $e_noact}
 	local -i b=${2:-0}
 	local -r r_c=${3:?${FUNCNAME[0]}'()': undefined suffix1}
 	local -i d=${4:-0}
@@ -15828,14 +15861,93 @@ sleep()
 
 	} 2>/dev/null
 
+RefreshArchive()
+	{
+
+	# Inputs: (global)
+	#	$archive_name
+	#	$archive_pathfile
+	#	$archive_url
+	#	$dont_refresh_pathfile
+	#	$extracted
+	#	$r_cache_path
+	#	$r_file_change_threshold_minutes
+	#	$target_pathfile
+
+	# Outputs: (global)
+	#	$extracted = true : file was successfully extracted from archive. This will trigger post-extraction processing.
+
+	[[ -n ${archive_name:?${FUNCNAME[0]}'()': $e_nonam} ]] || return
+	[[ -n ${archive_pathfile:?${FUNCNAME[0]}'()': $e_nopfi} ]] || return
+	[[ -n ${archive_url:?${FUNCNAME[0]}'()': $e_nourl} ]] || return
+	[[ -n ${dont_refresh_pathfile:?${FUNCNAME[0]}'()': $e_nopfi} ]] || return
+	[[ -n ${target_pathfile:?${FUNCNAME[0]}'()': $e_nopfi} ]] || return
+
+	FuncInit
+
+	local curl_options=''
+	extracted=false
+	local new_archive_checksum=''
+	local original_archive_checksum=''
+
+	if [[ ! -e $dont_refresh_pathfile ]]; then
+		IsFile "$archive_pathfile" && original_archive_checksum=$(GenerateMD5 "$archive_pathfile")
+
+		if IsNtFile "$archive_pathfile" || ! IsFileRecent "$archive_pathfile" "$r_file_change_threshold_minutes"; then
+			DebugAsProc "download $archive_name archive"
+
+			IsOsCanSecureDownload || curl_options=' --insecure'
+			/sbin/curl${curl_options} --silent --fail "$archive_url" >"$archive_pathfile"
+
+			if IsFile "$archive_pathfile"; then
+				DebugAsDone "$archive_name archive downloaded"
+			else
+				DebugAsWarn "$archive_name archive download failed"
+			fi
+		fi
+	fi
+
+	if IsFile "$archive_pathfile"; then
+		new_archive_checksum=$(GenerateMD5 "$archive_pathfile")
+	else
+		DebugAsWarn "$archive_name archive missing"
+	fi
+
+	if IsNtFile "$target_pathfile" || [[ $original_archive_checksum != "$new_archive_checksum" ]]; then
+		if IsFile "$archive_pathfile"; then
+			DebugAsProc "extracting $archive_name from archive"
+			/bin/tar --extract --gzip --no-same-owner --file="$archive_pathfile" --directory="$r_cache_path"
+
+			if IsFile "$target_pathfile"; then
+				DebugAsDone "extracted $archive_name from archive"
+				extracted=true
+			else
+				DebugAsWarn "extraction of $archive_name from archive failed"
+			fi
+		else
+			ShowAsAbort "no $archive_name archive exists to extract from"
+
+			FuncExit 1; exit
+		fi
+	fi
+
+	if IsNtFile "$target_pathfile"; then
+		ShowAsAbort "$archive_name missing"
+
+		FuncExit 1; exit
+	fi
+
+	FuncExit
+
+	}
+
 LoadObjects()
 	{
 
 	# Ensure `objects` in the local cache is up-to-date, then source it.
 
 	# Inputs: (global)
-	#	$r_cache_path
-	#	$r_file_change_threshold_minutes
+	#	$objects_loaded
 	#	$r_objects_archive_pathfile
 	#	$r_objects_archive_url
 	#	$r_objects_pathfile
@@ -15848,57 +15960,20 @@ LoadObjects()
 
 	FuncInit
 
-	local curl_options=''
-	local new_archive_checksum=''
-	local original_archive_checksum=''
-
 	LoadLists
 
 	ShowAsProc objects
 
-	if [[ ! -e $PWD/dont-refresh-objects ]]; then
-		IsFile "$r_objects_archive_pathfile" && original_archive_checksum=$(GenerateMD5 "$r_objects_archive_pathfile")
+	# Must set these prior to calling RefreshArchive()
 
-		if IsNtFile "$r_objects_archive_pathfile" || ! IsFileRecent "$r_objects_archive_pathfile" "$r_file_change_threshold_minutes"; then
-			DebugAsProc 'download objects archive'
+	local archive_name=objects
+	local archive_pathfile=$r_objects_archive_pathfile
+	local archive_url=$r_objects_archive_url
+	local dont_refresh_pathfile=$PWD/dont-refresh-objects
+	local extracted=false
+	local target_pathfile=$r_objects_pathfile
 
-			IsOsCanSecureDownload || curl_options=' --insecure'
-			/sbin/curl${curl_options} --silent --fail "$r_objects_archive_url" >"$r_objects_archive_pathfile"
-
-			if IsFile "$r_objects_archive_pathfile"; then
-				DebugAsDone 'objects archive downloaded'
-			else
-				DebugAsWarn 'objects archive download failed'
-			fi
-		fi
-	fi
-
-	if IsFile "$r_objects_archive_pathfile"; then
-		new_archive_checksum=$(GenerateMD5 "$r_objects_archive_pathfile")
-	else
-		DebugAsWarn 'object archive missing'
-	fi
-
-	if IsNtFile "$r_objects_pathfile" || [[ $original_archive_checksum != "$new_archive_checksum" ]]; then
-		if IsFile "$r_objects_archive_pathfile"; then
-			DebugAsProc 'extracting objects from archive'
-			/bin/tar --extract --gzip --no-same-owner --file="$r_objects_archive_pathfile" --directory="$r_cache_path"
-
-			if IsFile "$r_objects_pathfile"; then
-				DebugAsDone 'extracted objects from archive'
-			else
-				DebugAsWarn 'extraction from archive failed'
-			fi
-		else
-			ShowAsAbort 'no object archive exists to extract from'
-
-			FuncExit 1; exit
-		fi
-	fi
-
-	if IsNtFile "$r_objects_pathfile"; then
-		ShowAsAbort 'objects missing'
-
+	if ! RefreshArchive; then
 		FuncExit 1; exit
 	fi
 
@@ -15922,73 +15997,40 @@ LoadDatabase()
 	# Ensure `packages` in the local cache is up-to-date, then source it.
 
 	# Inputs: (global)
-	#	$r_cache_path
-	#	$r_file_change_threshold_minutes
+	#	$packages_loaded
 	#	$r_packages_archive_pathfile
 	#	$r_packages_archive_url
 	#	$r_packages_pathfile
+
+	# Outputs: (global)
+	#	$packages_loaded
+	#	$r_packages_epoch
 
 	[[ ${packages_loaded:=false} = false ]] || return 0
 
 	FuncInit
 
-	local new_archive_checksum=''
-	local original_archive_checksum=''
-	local curl_options=''
-	local previous=''
-	local qpkg_name=''
-
 	LoadObjects
 
 	ShowAsProc database
 
-	if [[ ! -e $PWD/dont-refresh-packages ]]; then
-		IsFile "$r_packages_archive_pathfile" && original_archive_checksum=$(GenerateMD5 "$r_packages_archive_pathfile")
+	# Must set these prior to calling RefreshArchive()
 
-		if IsNtFile "$r_packages_archive_pathfile" || ! IsFileRecent "$r_packages_archive_pathfile" "$r_file_change_threshold_minutes"; then
-			DebugAsProc 'download database archive'
+	local archive_name=database
+	local archive_pathfile=$r_packages_archive_pathfile
+	local archive_url=$r_packages_archive_url
+	local dont_refresh_pathfile=$PWD/dont-refresh-database
+	local extracted=false
+	local target_pathfile=$r_packages_pathfile
 
-			IsOsCanSecureDownload || curl_options=' --insecure'
-			/sbin/curl${curl_options} --silent --fail "$r_packages_archive_url" >"$r_packages_archive_pathfile"
-
-			if IsFile "$r_packages_archive_pathfile"; then
-				DebugAsDone 'database archive downloaded'
-			else
-				DebugAsWarn 'database archive download failed'
-			fi
-		fi
-	fi
-
-	if IsFile "$r_packages_archive_pathfile"; then
-		new_archive_checksum=$(GenerateMD5 "$r_packages_archive_pathfile")
-	else
-		DebugAsWarn 'database archive missing'
-	fi
-
-	if IsNtFile "$r_packages_pathfile" || [[ $original_archive_checksum != "$new_archive_checksum" ]]; then
-		if IsFile "$r_packages_archive_pathfile"; then
-			DebugAsProc 'extracting database from archive'
-			/bin/tar --extract --gzip --no-same-owner --file="$r_packages_archive_pathfile" --directory="$r_cache_path"
-
-			if IsFile "$r_packages_pathfile"; then
-				DebugAsDone 'extracted database from archive'
-			else
-				DebugAsWarn 'extraction from archive failed'
-			fi
-
-			InitQPKGsTiers
-		else
-			ShowAsAbort 'no database archive exists to extract from'
-
-			FuncExit 1; exit
-		fi
-	fi
-
-	if IsNtFile "$r_packages_pathfile"; then
-		ShowAsAbort 'database missing'
-
+	if ! RefreshArchive; then
 		FuncExit 1; exit
 	fi
+
+	[[ $extracted = true ]] && InitQPKGsTiers
+
+	local previous=''
+	local qpkg_name=''
 
 	# Supported QPKG details - parallel arrays.
 
@@ -16132,7 +16174,7 @@ CaughtSIGINT()
 	[[ -n ${r_abort_actions_pathfile:-} ]] && /bin/touch "$r_abort_actions_pathfile"
 	EraseThisLine
 	ShowAsAbort 'caught SIGINT'
-	CloseActionMsgPipe
+	CloseMsgPipe
 
 	# TODO: send SIGTERM to each PID in $r_async_procs_path here.
 
