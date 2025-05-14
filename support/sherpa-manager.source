@@ -4818,15 +4818,15 @@ _GenerateStatusReportDataLine_()
 			/bin/touch "$r_report_flags_path"/na
 
 			if ! IsQpkgDbArchOK; then
-				auxiliary='not installable, incompatible architecture'
+				auxiliary='incompatible architecture'
 			elif ! IsQpkgDbMinOSVerOk || ! IsQpkgDbMaxOSVerOk; then
-				auxiliary="not installable, incompatible $(GetOsName) version"
+				auxiliary="incompatible $(GetOsName) version"
 			elif ! IsQpkgDbMinRAMOk; then
-				auxiliary='not installable, insufficient RAM installed'
+				auxiliary='insufficient RAM installed'
 			fi
 
 			if [[ $auxiliary != false ]]; then
-				auxiliary_msg=$(FormatReportField "$auxiliary" alert_mute)
+				auxiliary_msg=$(FormatReportField "not installable, $auxiliary" alert_mute)
 			else
 				auxiliary_msg=$(FormatReportField 'not installed' normal_mute)
 			fi
@@ -5000,15 +5000,15 @@ _GenerateReposReportDataLine_()
 			/bin/touch "$r_report_flags_path"/na
 
 			if ! IsQpkgDbArchOK; then
-				auxiliary='not installable, incompatible architecture'
-			elif ! IsQpkgDbMinOSVerOk; then
-				auxiliary="not installable, incompatible $(GetOsName) version"
+				auxiliary='incompatible architecture'
+			elif ! IsQpkgDbMinOSVerOk || ! IsQpkgDbMaxOSVerOk; then
+				auxiliary="incompatible $(GetOsName) version"
 			elif ! IsQpkgDbMinRAMOk; then
-				auxiliary='not installable, insufficient RAM installed'
+				auxiliary='insufficient RAM installed'
 			fi
 
 			if [[ $auxiliary != false ]]; then
-				auxiliary_msg=$(FormatReportField "$auxiliary" alert_mute)
+				auxiliary_msg=$(FormatReportField "not installable, $auxiliary" alert_mute)
 			else
 				auxiliary_msg=$(FormatReportField 'not installed' normal_mute)
 			fi
@@ -5116,11 +5116,11 @@ _GenerateAbsReportDataLine_()
 
 	case $mode in
 		mute)
-			if ! IsQpkgDbArchOK "$qpkg_name"; then
+			if ! IsQpkgDbArchOK; then
 				auxiliary='incompatible architecture'
-			elif ! IsQpkgDbMinOSVerOk "$qpkg_name" || ! IsQpkgDbMaxOSVerOk "$qpkg_name"; then
+			elif ! IsQpkgDbMinOSVerOk || ! IsQpkgDbMaxOSVerOk; then
 				auxiliary="incompatible $(GetOsName) version"
-			elif ! IsQpkgDbMinRAMOk "$qpkg_name"; then
+			elif ! IsQpkgDbMinRAMOk; then
 				auxiliary='insufficient RAM installed'
 			fi
 
