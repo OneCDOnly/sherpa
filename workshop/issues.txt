@@ -1,5 +1,20 @@
 Observed issues:
 
+	* Error on QTS 4.2.6:
+		--------------------------------------------------------------------------------------------------
+		[/share/Public] # sherpa upgrade new
+		/usr/sbin/sherpa: line 58: /sbin/curl --insecure: No such file or directory
+		warn: Remote file download failed
+		sherpa v250514-unstable
+		bort: caught SIGINT.
+		--------------------------------------------------------------------------------------------------
+
+	* Random start issue on bootup for Glances.
+		- https://github.com/nicolargo/glances/issues/3176
+		- Needs a network connectivity check.
+		- Scan each interface name in /proc/net/dev
+		- with [[ -n $(ip a | sed -rn '/: '"$if"':.*state UP/{N;N;s/.*inet (\S*).*/\1/p}') ]] # https://unix.stackexchange.com/a/121525
+
 	* When 'clean'ing packages, some were reported as finished in 1 second, even though they're still performing the 'clean' action.
 		- Tatutulli, Watcher3, Unmanic.
 		- Cleaning process for each continues until complete, unless terminal is closed.
