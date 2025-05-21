@@ -9,16 +9,7 @@ Observed issues:
 			install Unmanic QPKG in 1 second (for more information: /etc/init.d/unmanic.sh log)
 		--------------------------------------------------------------------------------------------------
 		- But, checking the service log for each shows successful install.
-
-	* Installing Transmission was skipped on TS-216G as 'incompatible author'.
-		- Also, 'qpkg.conf' shows an incomplete config block for Transmission:
-		--------------------------------------------------------------------------------------------------
-
-		[OTransmission]
-		Dependency = TrguiNG
-
-		--------------------------------------------------------------------------------------------------
-		- Best-guess: TrguiNG is writing the 'Dependency' key-value for Tranmission before Transmission is installed. This then causes the installation for Transmission to be skipped, as author appears to be incorrect.
+		- Retest.
 
 	* When 'clean'ing packages, some were reported as finished in 1 second, even though they're still performing the 'clean' action.
 		- Tatutulli, Watcher3, Unmanic.
