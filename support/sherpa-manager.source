@@ -8798,7 +8798,6 @@ CloseMsgPipeLog()
 
 	}
 
-
 WriteToMsgPipeLog()
 	{
 
@@ -8823,6 +8822,7 @@ GenerateMsgPipeLogLine()
 	fi
 
 	}
+
 FindNextFD()
 	{
 
