@@ -16,7 +16,7 @@ Observed issues:
 			- Tatutulli, Watcher3, Unmanic.
 			- Cleaning process for each continues until complete, unless terminal is closed.
 
-	* Restarting clamav.sh created lib symlink in cwd to /usr/lib
+	* Restarting clamav.sh creates `lib` symlink in cwd to `/usr/lib`
 
 	* Service-script daemon PID shown twice consecutively during 'clean' action:
 		--------------------------------------------------------------------------------------------------
