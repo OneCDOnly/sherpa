@@ -1,5 +1,25 @@
 Observed issues:
 
+	* When 'install'ing packages on TS-216G, some were reported as finished in 1 second, even though they're still performing the 'install' action.
+		--------------------------------------------------------------------------------------------------
+		• These package actions failed (and why):
+			install LazyLibrarian QPKG in 1 second (for more information: /etc/init.d/lazylibrarian.sh log)
+			install OMedusa QPKG in 1 second (for more information: /etc/init.d/medusa.sh log)
+			install OqBittorrent QPKG in 1 second (for more information: /etc/init.d/qbittorrent.sh log)
+			install Unmanic QPKG in 1 second (for more information: /etc/init.d/unmanic.sh log)
+		--------------------------------------------------------------------------------------------------
+		- But, checking the service log for each shows successful install.
+
+	* Installing Transmission was skipped on TS-216G as 'incompatible author'.
+		- Also, 'qpkg.conf' shows an incomplete config block for Transmission:
+		--------------------------------------------------------------------------------------------------
+
+		[OTransmission]
+		Dependency = TrguiNG
+
+		--------------------------------------------------------------------------------------------------
+		- Best-guess: TrguiNG is writing the 'Dependency' key-value for Tranmission before Transmission is installed. This then causes the installation for Transmission to be skipped, as author appears to be incorrect.
+
 	* When 'clean'ing packages, some were reported as finished in 1 second, even though they're still performing the 'clean' action.
 		- Tatutulli, Watcher3, Unmanic.
 		- Cleaning process for each continues until complete, unless terminal is closed.
