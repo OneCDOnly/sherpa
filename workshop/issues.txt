@@ -1,5 +1,7 @@
 Observed issues:
 
+	* If Entware is separately installed, it won't ensure packages already installed are signed.
+
 	* When 'install'ing packages on TS-216G, some were reported as finished in 1 second, even though they're still performing the 'install' action.
 		--------------------------------------------------------------------------------------------------
 		• These package actions failed (and why):
