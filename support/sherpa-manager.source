@@ -553,6 +553,7 @@ LoadEnv()
 
 	readonly r_abort_actions_pathfile=$r_qpkg_states_path/abort.action
 	readonly r_action_msg_pipe=$r_qpkg_states_path/action.messages.pipe
+	readonly r_action_msg_pipe_log_pathfile=$r_cache_path/action.messages.pipe.log
 	readonly r_report_output_pathfile=$r_reports_path/report.ansi
 
 	# Entware
@@ -1424,13 +1425,14 @@ ProcActions()
 	local -i tier_index=0
 
 	rm -f "$r_session_action_results_pathfile" 2>/dev/null
+	OpenMsgPipeLog
 
 	# -> Package preparation phase <-
 
 	ProcAction status all QPKG 'live status'
 
 	if [[ $useropt_show_status = false ]]; then
-		ShowAsProc 'assign QPKGs by state'				# Update action lists based-on QPKG `status`.
+		ShowAsProc 'assign QPKGs by state'						# Update action lists based-on QPKG `status`.
 
 		for action in "${r_user_qpkg_actions[@]}"; do
 			for state in "${r_qpkg_is_states[@]}"; do
@@ -1537,6 +1539,7 @@ ProcActions()
 	fi
 
 	show_action_results_report=true
+	CloseMsgPipeLog
 
 	FuncExit
 
@@ -4818,15 +4821,15 @@ _GenerateStatusReportDataLine_()
 			/bin/touch "$r_report_flags_path"/na
 
 			if ! IsQpkgDbArchOK; then
-				auxiliary='not installable, incompatible architecture'
+				auxiliary='incompatible architecture'
 			elif ! IsQpkgDbMinOSVerOk || ! IsQpkgDbMaxOSVerOk; then
-				auxiliary="not installable, incompatible $(GetOsName) version"
+				auxiliary="incompatible $(GetOsName) version"
 			elif ! IsQpkgDbMinRAMOk; then
-				auxiliary='not installable, insufficient RAM installed'
+				auxiliary='insufficient RAM installed'
 			fi
 
 			if [[ $auxiliary != false ]]; then
-				auxiliary_msg=$(FormatReportField "$auxiliary" alert_mute)
+				auxiliary_msg=$(FormatReportField "not installable, $auxiliary" alert_mute)
 			else
 				auxiliary_msg=$(FormatReportField 'not installed' normal_mute)
 			fi
@@ -5000,15 +5003,15 @@ _GenerateReposReportDataLine_()
 			/bin/touch "$r_report_flags_path"/na
 
 			if ! IsQpkgDbArchOK; then
-				auxiliary='not installable, incompatible architecture'
-			elif ! IsQpkgDbMinOSVerOk; then
-				auxiliary="not installable, incompatible $(GetOsName) version"
+				auxiliary='incompatible architecture'
+			elif ! IsQpkgDbMinOSVerOk || ! IsQpkgDbMaxOSVerOk; then
+				auxiliary="incompatible $(GetOsName) version"
 			elif ! IsQpkgDbMinRAMOk; then
-				auxiliary='not installable, insufficient RAM installed'
+				auxiliary='insufficient RAM installed'
 			fi
 
 			if [[ $auxiliary != false ]]; then
-				auxiliary_msg=$(FormatReportField "$auxiliary" alert_mute)
+				auxiliary_msg=$(FormatReportField "not installable, $auxiliary" alert_mute)
 			else
 				auxiliary_msg=$(FormatReportField 'not installed' normal_mute)
 			fi
@@ -5116,16 +5119,16 @@ _GenerateAbsReportDataLine_()
 
 	case $mode in
 		mute)
-			if ! IsQpkgDbArchOK "$qpkg_name"; then
-				auxiliary='not installable, incompatible architecture'
-			elif ! IsQpkgDbMinOSVerOk "$qpkg_name"; then
-				auxiliary="not installable, incompatible $(GetOsName) version"
-			elif ! IsQpkgDbMinRAMOk "$qpkg_name"; then
-				auxiliary='not installable, insufficient RAM installed'
+			if ! IsQpkgDbArchOK; then
+				auxiliary='incompatible architecture'
+			elif ! IsQpkgDbMinOSVerOk || ! IsQpkgDbMaxOSVerOk; then
+				auxiliary="incompatible $(GetOsName) version"
+			elif ! IsQpkgDbMinRAMOk; then
+				auxiliary='insufficient RAM installed'
 			fi
 
 			if [[ $auxiliary != false ]]; then
-				auxiliary_msg=$(FormatReportField "$auxiliary" alert_mute)
+				auxiliary_msg=$(FormatReportField "not installable, $auxiliary" alert_mute)
 			else
 				abs_msg=$(FormatReportField "$abs" normal_mute)
 			fi
@@ -8775,7 +8778,48 @@ ReadFromMsgPipe()
 
 	eval "$1='${_msg1_key:-null}' $2='${_msg1_value:-null}' $3='${_msg2_key:-null}' $4='${_msg2_value:-null}'"
 
+	AppendToMsgPipeLog
+
 	return 0
+
+	}
+
+OpenMsgPipeLog()
+	{
+
+	WriteToMsgPipeLog 'opened new log session.'
+
+	}
+
+CloseMsgPipeLog()
+	{
+
+	AppendToMsgPipeLog 'closed log session.'
+
+	}
+
+WriteToMsgPipeLog()
+	{
+
+	GenerateMsgPipeLogLine "${1:-}"
+
+	} > "$r_action_msg_pipe_log_pathfile"
+
+AppendToMsgPipeLog()
+	{
+
+	GenerateMsgPipeLogLine "${1:-}"
+
+	} >> "$r_action_msg_pipe_log_pathfile"
+
+GenerateMsgPipeLogLine()
+	{
+
+	if [[ -n ${1:-} ]]; then
+		printf '[%s] %s\n' "$(ConvertNowToFullDate)" "$1"
+	else
+		printf '[%s] %s | %s | %s | %s | %s\n' "$(ConvertNowToFullDate)" "$r_action" "$_msg1_key" "$_msg1_value" "$_msg2_key" "$_msg2_value"
+	fi
 
 	}
 
@@ -13613,7 +13657,7 @@ Executer()
 	#   $4 (optional) = e.g. '10' - an additional acceptable result code. Any other non-zero result from command will be considered a failure.
 
 	# Inputs: (global)
-	#	$e_nopfi
+	#	$e_nocmd
 	#	$e_nopfi
 	#   $r_run_logs_path
 	#   $useropt_debug
