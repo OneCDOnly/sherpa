@@ -275,8 +275,8 @@ LoadConsts()
 	readonly r_report_file_bytes_column_width=14
 	readonly r_report_file_change_date_column_width=60
 	readonly r_report_file_name_column_width=35
-	readonly r_report_info_name_column_width=14
 	readonly r_report_highlight_backups_older_than='2 weeks ago'
+	readonly r_report_info_name_column_width=14
 
 	# Report, help and onscreen messages.
 
@@ -553,7 +553,7 @@ LoadEnv()
 
 	readonly r_abort_actions_pathfile=$r_qpkg_states_path/abort.action
 	readonly r_action_msg_pipe=$r_qpkg_states_path/action.messages.pipe
-	readonly r_action_msg_pipe_log_pathfile=$r_logs_path/action.messages.pipe.log
+	readonly r_action_msg_pipe_log_pathfile=$r_logs_path/action.messages.pipe.log			# devdebug
 	readonly r_report_output_pathfile=$r_reports_path/report.ansi
 
 	# Entware
@@ -1425,7 +1425,7 @@ ProcActions()
 	local -i tier_index=0
 
 	rm -f "$r_session_action_results_pathfile" 2>/dev/null
-	OpenMsgPipeLog
+	OpenMsgPipeLog												# devdebug
 
 	# -> Package preparation phase <-
 
@@ -1539,7 +1539,7 @@ ProcActions()
 	fi
 
 	show_action_results_report=true
-	CloseMsgPipeLog
+	CloseMsgPipeLog												# devdebug
 
 	FuncExit
 
@@ -8777,38 +8777,38 @@ ReadFromMsgPipe()
 
 	eval "$1='${_msg1_key:-null}' $2='${_msg1_value:-null}' $3='${_msg2_key:-null}' $4='${_msg2_value:-null}'"
 
-	AppendToMsgPipeLog
+	AppendToMsgPipeLog																		# devdebug
 
 	return 0
 
 	}
 
-OpenMsgPipeLog()
-	{
+OpenMsgPipeLog()																			# devdebug
+	{																						# devdebug
 
-	[[ -e $r_action_msg_pipe_log_pathfile ]] && rm -f "$r_action_msg_pipe_log_pathfile"
+	[[ -e $r_action_msg_pipe_log_pathfile ]] && rm -f "$r_action_msg_pipe_log_pathfile"		# devdebug
 
-	AppendToMsgPipeLog 'opened new log session.'
+	AppendToMsgPipeLog 'opened new log session.'											# devdebug
 
-	}
+	}																						# devdebug
 
-CloseMsgPipeLog()
-	{
+CloseMsgPipeLog()																			# devdebug
+	{																						# devdebug
 
-	AppendToMsgPipeLog 'closed log session.'
+	AppendToMsgPipeLog 'closed log session.'												# devdebug
 
-	}
+	}																						# devdebug
 
-AppendToMsgPipeLog()
-	{
+AppendToMsgPipeLog()																		# devdebug
+	{																						# devdebug
 
-	if [[ -n ${1:-} ]]; then
-		printf '[%s] %s\n' "$(ConvertNowToFullDate)" "$1"
-	else
-		printf '[%s] %s | %s | %s | %s | %s\n' "$(ConvertNowToFullDate)" "$r_action" "$_msg1_key" "$_msg1_value" "$_msg2_key" "$_msg2_value"
-	fi
+	if [[ -n ${1:-} ]]; then																# devdebug
+		printf '[%s] %s\n' "$(ConvertNowToFullDate)" "$1"									# devdebug
+	else																					# devdebug
+		printf '[%s] %s | %s | %s | %s | %s\n' "$(ConvertNowToFullDate)" "$r_action" "$_msg1_key" "$_msg1_value" "$_msg2_key" "$_msg2_value"	# devdebug
+	fi																						# devdebug
 
-	} >> "$r_action_msg_pipe_log_pathfile"
+	} >> "$r_action_msg_pipe_log_pathfile"													# devdebug
 
 FindNextFD()
 	{
