@@ -275,7 +275,7 @@ LoadConsts()
 	readonly r_report_file_bytes_column_width=14
 	readonly r_report_file_change_date_column_width=60
 	readonly r_report_file_name_column_width=35
-	readonly r_report_footer_name_column_width=14
+	readonly r_report_info_name_column_width=14
 	readonly r_report_highlight_backups_older_than='2 weeks ago'
 
 	# Report, help and onscreen messages.
@@ -348,7 +348,7 @@ LoadDefaults()
 	show_title=true
 	switch_branch=false
 	switch_colour=false
-	switch_report_footer=false
+	switch_report_info=false
 	switch_terse=false
 	title_shown=false
 
@@ -358,7 +358,7 @@ LoadDefaults()
 	backup_stdin_fd=none
 	proc_counts_path=''
 	user_branch_value=''
-	user_report_footer_value=''
+	user_report_info_value=''
 	user_terse_value=''
 
 	# User-selectable flags.
@@ -380,7 +380,6 @@ LoadDefaults()
 	useropt_list_versions=false
 	useropt_paste_log_last=false
 	useropt_paste_log_tail=false
-	useropt_report_footer=$(LoadSetting ReportFooter true)
 	useropt_show_about=false
 	useropt_show_aboutall=false
 	useropt_show_backups=false
@@ -390,6 +389,7 @@ LoadDefaults()
 	useropt_show_log_tail=false
 	useropt_show_packages=false
 	useropt_show_previous_action_results_report=false
+	useropt_show_report_info=$(LoadSetting ReportInfo true)
 	useropt_show_repos=false
 	useropt_show_status=false
 	useropt_terse=$(LoadSetting Terse true)
@@ -933,7 +933,7 @@ CheckTasks()
 		build_extended_states=true
 	elif [[ $useropt_help_abbreviations = true || $useropt_show_backups = true || $useropt_show_dependencies = true || $useropt_show_features = true || $useropt_show_packages = true || $useropt_show_repos = true ]]; then
 		build_extended_states=true
-	elif [[ $useropt_help_actions = true || $useropt_help_actions_all = true || $useropt_help_basic = true || $useropt_help_groups = true || $useropt_help_lists = true || $useropt_help_options = true || $useropt_help_packages = true || $useropt_help_problems = true || $useropt_help_show = true || $useropt_help_tips = true || $useropt_help_upgrades = true || $useropt_list_versions = true || $useropt_paste_log_last = true || $useropt_paste_log_tail = true || $useropt_show_about = true || $useropt_show_about = true || $useropt_show_previous_action_results_report = true || $useropt_show_log_last = true || $useropt_show_log_tail = true || $switch_branch = true || $switch_colour = true || $switch_report_footer = true || $switch_terse = true ]]; then
+	elif [[ $useropt_help_actions = true || $useropt_help_actions_all = true || $useropt_help_basic = true || $useropt_help_groups = true || $useropt_help_lists = true || $useropt_help_options = true || $useropt_help_packages = true || $useropt_help_problems = true || $useropt_help_show = true || $useropt_help_tips = true || $useropt_help_upgrades = true || $useropt_list_versions = true || $useropt_paste_log_last = true || $useropt_paste_log_tail = true || $useropt_show_about = true || $useropt_show_about = true || $useropt_show_previous_action_results_report = true || $useropt_show_log_last = true || $useropt_show_log_tail = true || $switch_branch = true || $switch_colour = true || $switch_report_info = true || $switch_terse = true ]]; then
 		: # don't do anything
 	else
 		LoadDatabase
@@ -1945,10 +1945,10 @@ ParseManagementArgs()
 	#	$run_package_actions
 	#	$switch_branch
 	#	$switch_colour
-	#	$switch_report_footer
+	#	$switch_report_info
 	#	$switch_terse
 	#	$user_branch_value
-	#	$user_report_footer_value
+	#	$user_report_info_value
 	#	$user_terse_value
 	#	$useropt_check
 	#	$useropt_paste_log_last
@@ -1986,7 +1986,7 @@ ParseManagementArgs()
 					user_action=$arg
 					useropt_check=true
 					;;
-				follow|paste|report-footer|terse)
+				follow|paste|report-info|terse)
 					requires_group=true
 					user_action=$arg
 					;;
@@ -2053,14 +2053,14 @@ ParseManagementArgs()
 							args_remaining+=("$action")
 					esac
 					;;
-				report-footer)
+				report-info)
 					case $group in
 						true|false)
 							action=''
 							awaiting_group=false
-							switch_report_footer=true
-							user_report_footer_value=$group
-							WriteReportFooter
+							switch_report_info=true
+							user_report_info_value=$group
+							WriteReportInfo
 							;;
 						*)
 							args_remaining+=("$action")
@@ -2792,11 +2792,8 @@ MatchVerb()
 		add|install)
 			printf install
 			;;
-		backup|clean|@(dis|en)able|follow|help|list|paste|reassign|rebuild|reinstall|reset|restore|sign|terse)
+		backup|clean|@(dis|en)able|follow|help|list|paste|reassign|rebuild|reinstall|report-info|reset|restore|sign|terse)
 			printf '%s' "$a"
-			;;
-		report-footer?(s))
-			printf report-footer
 			;;
 		c|check)
 			printf check
@@ -4238,7 +4235,7 @@ WriteBranch()
 
 	}
 
-WriteReportFooter()
+WriteReportInfo()
 	{
 
 	# Inputs: (local)
@@ -4246,35 +4243,35 @@ WriteReportFooter()
 
 	# Inputs: (global)
 	#	$switch_terse
-	#	$user_report_footer_value
-	#	$useropt_report_footer
+	#	$user_report_info_value
+	#	$useropt_show_report_info
 
 	# Outputs: (global)
 	#	$run_package_actions
-	#	$switch_report_footer
-	#	$useropt_report_footer
+	#	$switch_report_info
+	#	$useropt_show_report_info
 
 	local a=''
 
-	if [[ $switch_report_footer = true && -n $user_report_footer_value ]]; then
+	if [[ $switch_report_info = true && -n $user_report_info_value ]]; then
 		# Validate before saving.
 
 		for a in true false; do
-			[[ $a != "$user_report_footer_value" ]] && continue
-			useropt_report_footer=$user_report_footer_value
+			[[ $a != "$user_report_info_value" ]] && continue
+			useropt_show_report_info=$user_report_info_value
 
 			if [[ ${1:-} = silent ]]; then
-				SaveSetting ReportFooter "$useropt_report_footer"
+				SaveSetting ReportInfo "$useropt_show_report_info"
 			else
-				SaveSetting ReportFooter "$useropt_report_footer" announce
+				SaveSetting ReportInfo "$useropt_show_report_info" announce
 			fi
 
-			switch_report_footer=false
+			switch_report_info=false
 
 			return
 		done
 
-		ShowAsAbort "user setting '$user_report_footer_value' is not 'true' or 'false'"
+		ShowAsAbort "user setting '$user_report_info_value' is not 'true' or 'false'"
 		run_package_actions=false
 
 		return 1
@@ -4520,12 +4517,12 @@ DisplayAsIndentQuotedInfoItem()
 
 	# Inputs: (global)
 	# 	$r_help_desc_indent
-	#	$r_report_footer_name_column_width
+	#	$r_report_info_name_column_width
 
 	if IsOsCanAutowidthTableColumns; then
 		printf "%${r_help_desc_indent}s%s|%s\n" '' "'${1:-}'" "- $(AddPeriod "${2:-}")"
 	else
-		printf "%${r_help_desc_indent}s%-$((r_report_footer_name_column_width+2+$(LenANSIDiff "${1:-}")))s%s\n" '' "'${1:-}'" "- $(AddPeriod "${2:-}")"
+		printf "%${r_help_desc_indent}s%-$((r_report_info_name_column_width+2+$(LenANSIDiff "${1:-}")))s%s\n" '' "'${1:-}'" "- $(AddPeriod "${2:-}")"
 	fi
 
 	}
@@ -7858,7 +7855,7 @@ HelpAbbreviations()
 			printf '%s' "$a"
 		fi >>"$r_report_output_pathfile"
 
-# 		GenerateReportFooter >>"$r_report_output_pathfile"
+# 		GenerateReportInfo >>"$r_report_output_pathfile"
 	fi
 
 	DisplayAsProjSynExam "example: to install $(FormatPackageName SABnzbd), $(FormatPackageName Mylar3) and $(FormatPackageName nzbToMedia) all-at-once" 'install sab my nzb2' >>"$r_report_output_pathfile"
@@ -7930,7 +7927,7 @@ ReportBackups()
 			printf '%s' "$a"
 		fi >"$r_report_output_pathfile"
 
-		GenerateReportFooter >>"$r_report_output_pathfile"
+		GenerateReportInfo >>"$r_report_output_pathfile"
 	fi
 
 	EraseThisLine
@@ -7981,7 +7978,7 @@ ReportDependencies()
 			printf '%s' "$a"
 		fi >"$r_report_output_pathfile"
 
-		GenerateReportFooter >>"$r_report_output_pathfile"
+		GenerateReportInfo >>"$r_report_output_pathfile"
 	fi
 
 	EraseThisLine
@@ -8033,7 +8030,7 @@ ReportFeatures()
 			printf '%s' "$a"
 		fi >"$r_report_output_pathfile"
 
-		GenerateReportHeadingsFooter >>"$r_report_output_pathfile"
+		GenerateReportHeadingsInfo >>"$r_report_output_pathfile"
 	fi
 
 	EraseThisLine
@@ -8090,7 +8087,7 @@ ReportPackages()
 			printf '%s' "$a"
 		fi >>"$r_report_output_pathfile"
 
-		GenerateReportFooter >>"$r_report_output_pathfile"
+		GenerateReportInfo >>"$r_report_output_pathfile"
 	fi
 
 		{
@@ -8149,7 +8146,7 @@ ReportRepos()
 			printf '%s' "$a"
 		fi >"$r_report_output_pathfile"
 
-		GenerateReportFooter >>"$r_report_output_pathfile"
+		GenerateReportInfo >>"$r_report_output_pathfile"
 	fi
 
 	EraseThisLine
@@ -8202,7 +8199,7 @@ ReportStatuses()
 			printf '%s' "$a"
 		fi >"$r_report_output_pathfile"
 
-		GenerateReportFooter >>"$r_report_output_pathfile"
+		GenerateReportInfo >>"$r_report_output_pathfile"
 	fi
 
 	EraseThisLine
@@ -8359,10 +8356,10 @@ ReportActionResults()
 
 	}
 
-GenerateReportFooter()
+GenerateReportInfo()
 	{
 
-	[[ $useropt_report_footer = true ]] || return
+	[[ $useropt_show_report_info = true ]] || return
 
 	DisplayAsHelpTitle 'report information:'
 
@@ -8500,14 +8497,14 @@ GenerateReportFooter()
 		DisplayAsIndentItem "all $(ShowAsTitleName) backup files are stored here: $r_qpkg_bu_path"
 	fi
 
-	DisplayAsProjSynIndentExam 'to omit this report information panel' 'report-footer off'
+	DisplayAsProjSynIndentExam 'to omit this report information panel' 'report-info off'
 
 	}
 
-GenerateReportHeadingsFooter()
+GenerateReportHeadingsInfo()
 	{
 
-	[[ $useropt_report_footer = true ]] || return
+	[[ $useropt_show_report_info = true ]] || return
 
 	DisplayAsHelpTitle 'column headings:'
 
