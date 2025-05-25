@@ -2,8 +2,6 @@ Management:
 
 	* During `sherpa install trguing trans` TrguiNG must be restarted after Transmission is installed to update Transmission 'Dependency' key.
 
-	* Colourise warnings (WW) in debug log.
-
 	* When installing sherpa, make QTS allow unsigned packages, then disallow this after 'sign'ing action but only if it was disallowed before.
 
 	* Always 'clean' after 'upgrade' (and before 'activate')?

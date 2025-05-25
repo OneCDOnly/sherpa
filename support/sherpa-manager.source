@@ -14870,14 +14870,14 @@ DebugAsInfo()
 DebugAsWarn()
 	{
 
-	[[ -n ${1:-} ]] && DebugThis "$(Parenthesise WW) $1"
+	[[ -n ${1:-} ]] && DebugThis "$(TextBrightOrange "$(Parenthesise WW) $1")"
 
 	}
 
 DebugAsError()
 	{
 
-	[[ -n ${1:-} ]] && DebugThis "$(Parenthesise EE) $1"
+	[[ -n ${1:-} ]] && DebugThis "$(TextBrightRed "$(Parenthesise EE) $1")"
 
 	}
 
