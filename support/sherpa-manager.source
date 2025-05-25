@@ -8500,6 +8500,8 @@ GenerateReportFooter()
 		DisplayAsIndentItem "all $(ShowAsTitleName) backup files are stored here: $r_qpkg_bu_path"
 	fi
 
+	DisplayAsProjSynIndentExam 'to omit this report information panel' 'report-footer off'
+
 	}
 
 GenerateReportHeadingsFooter()
