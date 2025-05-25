@@ -553,7 +553,7 @@ LoadEnv()
 
 	readonly r_abort_actions_pathfile=$r_qpkg_states_path/abort.action
 	readonly r_action_msg_pipe=$r_qpkg_states_path/action.messages.pipe
-	readonly r_action_msg_pipe_log_pathfile=$r_cache_path/action.messages.pipe.log
+	readonly r_action_msg_pipe_log_pathfile=$r_logs_path/action.messages.pipe.log
 	readonly r_report_output_pathfile=$r_reports_path/report.ansi
 
 	# Entware
@@ -8786,7 +8786,9 @@ ReadFromMsgPipe()
 OpenMsgPipeLog()
 	{
 
-	WriteToMsgPipeLog 'opened new log session.'
+	[[ -e $r_action_msg_pipe_log_pathfile ]] && rm -f "$r_action_msg_pipe_log_pathfile"
+
+	AppendToMsgPipeLog 'opened new log session.'
 
 	}
 
@@ -8797,21 +8799,7 @@ CloseMsgPipeLog()
 
 	}
 
-WriteToMsgPipeLog()
-	{
-
-	GenerateMsgPipeLogLine "${1:-}"
-
-	} > "$r_action_msg_pipe_log_pathfile"
-
 AppendToMsgPipeLog()
-	{
-
-	GenerateMsgPipeLogLine "${1:-}"
-
-	} >> "$r_action_msg_pipe_log_pathfile"
-
-GenerateMsgPipeLogLine()
 	{
 
 	if [[ -n ${1:-} ]]; then
@@ -8820,7 +8808,7 @@ GenerateMsgPipeLogLine()
 		printf '[%s] %s | %s | %s | %s | %s\n' "$(ConvertNowToFullDate)" "$r_action" "$_msg1_key" "$_msg1_value" "$_msg2_key" "$_msg2_value"
 	fi
 
-	}
+	} >> "$r_action_msg_pipe_log_pathfile"
 
 FindNextFD()
 	{
