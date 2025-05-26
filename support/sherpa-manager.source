@@ -15993,14 +15993,14 @@ RefreshArchive()
 
 	if [[ $extract = true ]]; then
 		if IsFile "$archive_pathfile"; then
-			DebugAsProc "extracting '$archive_name' from archive"
+			DebugAsProc "extract '$archive_name' from archive"
 			/bin/tar --extract --gzip --no-same-owner --file="$archive_pathfile" --directory="$r_cache_path"
 
 			if IsFile "$target_pathfile"; then
-				DebugAsDone "extracted '$archive_name' from archive"
+				DebugAsDone "extract '$archive_name' from archive OK"
 				extracted=true
 			else
-				DebugAsWarn "extraction of '$archive_name' from archive failed"
+				DebugAsWarn "extract '$archive_name' from archive failed"
 			fi
 		elif IsNtFile "$target_pathfile"; then
 			ShowAsAbort "no '$archive_name' archive exists to extract from, can't continue"
