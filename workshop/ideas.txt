@@ -44,7 +44,7 @@ Management:
 
 	* Check OOM killed pids against inactive daemons and report as-such on status report.
 
-	* Takes 3.5 to 6 seconds to build QPKG states on Laura.
+	* Takes 3.5 to 6 seconds to build QPKG states.
 		- Should be able to do this quicker.
 		- Calculate QPKG features separate to states and cache/load these from file next time?
 		- It's checking for upgradable QPKGs that takes time. Consider only running this during `check` or `upgrade` actions.
