@@ -15917,53 +15917,106 @@ RefreshArchive()
 	FuncInit
 
 	local curl_options=''
+	local download=false
+	local downloaded=false
+	local extract=false
 	extracted=false
 	local new_archive_checksum=''
 	local original_archive_checksum=''
 
-	if [[ ! -e $dont_refresh_pathfile ]]; then
-		IsFile "$archive_pathfile" && original_archive_checksum=$(GenerateMD5 "$archive_pathfile")
+	if IsFile "$archive_pathfile"; then
+		DebugAsDetect "'$archive_name' archive found"
+		original_archive_checksum=$(GenerateMD5 "$archive_pathfile")
 
-		if IsNtFile "$archive_pathfile" || ! IsFileRecent "$archive_pathfile" "$r_file_change_threshold_minutes"; then
-			DebugAsProc "download $archive_name archive"
+		if IsFileRecent "$archive_pathfile" "$r_file_change_threshold_minutes"; then
+			DebugAsDetect "'$archive_name' archive is recent"
+		else
+			DebugAsDetect "'$archive_name' archive is not recent"
+			download=true
+		fi
+	else
+		DebugAsDetect "'$archive_name' archive missing"
+		download=true
+	fi
 
-			IsOsCanSecureDownload || curl_options=' --insecure'
-			/sbin/curl${curl_options} --silent --fail "$archive_url" >"$archive_pathfile"
+	if [[ $download = true && -e $dont_refresh_pathfile ]]; then
+		DebugAsInfo "ignoring request to download because '$dont_refresh_pathfile' exists"
+		download=false
+	fi
 
-			if IsFile "$archive_pathfile"; then
-				DebugAsDone "$archive_name archive downloaded"
-			else
-				DebugAsWarn "$archive_name archive download failed"
-			fi
+	if [[ $download = true ]]; then
+		DebugAsProc "download '$archive_name' archive"
+		IsOsCanSecureDownload || curl_options=' --insecure'
+		/sbin/curl${curl_options} --silent --fail "$archive_url" >"$archive_pathfile"
+
+		if IsFile "$archive_pathfile"; then
+			DebugAsDone "download '$archive_name' archive OK"
+			downloaded=true
+		else
+			DebugAsWarn "download '$archive_name' archive failed"
 		fi
 	fi
 
 	if IsFile "$archive_pathfile"; then
 		new_archive_checksum=$(GenerateMD5 "$archive_pathfile")
+
+		if [[ $downloaded = true ]]; then
+			if [[ $original_archive_checksum = "$new_archive_checksum" ]]; then
+				DebugAsDetect "downloaded '$archive_name' archive is same as previous archive"
+			else
+				DebugAsDetect "downloaded '$archive_name' archive is different to previous archive"
+				extract=true
+			fi
+		else
+			if [[ $original_archive_checksum = "$new_archive_checksum" ]]; then
+				DebugAsDetect "'$archive_name' archive is unchanged"
+			else
+				DebugAsDetect "'$archive_name' archive is different"
+				extract=true
+			fi
+		fi
 	else
-		DebugAsWarn "$archive_name archive missing"
+		DebugAsWarn "'$archive_name' archive missing"
 	fi
 
-	if IsNtFile "$target_pathfile" || [[ $original_archive_checksum != "$new_archive_checksum" ]]; then
+	if IsFile "$target_pathfile"; then
+		DebugAsDetect "'$archive_name' found"
+	else
+		DebugAsDetect "'$archive_name' missing"
+		extract=true
+	fi
+
+	if [[ $extract = true && -e $dont_refresh_pathfile ]]; then
+		DebugAsInfo "ignoring request to extract because '$dont_refresh_pathfile' exists"
+		extract=false
+	fi
+
+	if [[ $extract = true ]]; then
 		if IsFile "$archive_pathfile"; then
-			DebugAsProc "extracting $archive_name from archive"
+			DebugAsProc "extracting '$archive_name' from archive"
 			/bin/tar --extract --gzip --no-same-owner --file="$archive_pathfile" --directory="$r_cache_path"
 
 			if IsFile "$target_pathfile"; then
-				DebugAsDone "extracted $archive_name from archive"
+				DebugAsDone "extracted '$archive_name' from archive"
 				extracted=true
 			else
-				DebugAsWarn "extraction of $archive_name from archive failed"
+				DebugAsWarn "extraction of '$archive_name' from archive failed"
 			fi
-		else
-			ShowAsAbort "no $archive_name archive exists to extract from"
+		elif IsNtFile "$target_pathfile"; then
+			ShowAsAbort "no '$archive_name' archive exists to extract from, can't continue"
 
 			FuncExit 1; exit
 		fi
 	fi
 
-	if IsNtFile "$target_pathfile"; then
-		ShowAsAbort "$archive_name missing"
+	if IsFile "$target_pathfile"; then
+		if [[ $extracted = true ]]; then
+			DebugAsInfo "continue with extracted '$archive_name'"
+		else
+			DebugAsInfo "continue with original '$archive_name'"
+		fi
+	else
+		ShowAsAbort "'$archive_name' missing, can't continue"
 
 		FuncExit 1; exit
 	fi
