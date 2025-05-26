@@ -886,9 +886,9 @@ DebugLogEnv()
 		return
 	fi
 
-	Executer "/bin/df -h | /bin/grep -iE '^(filesystem|none|tmpfs|devtmpfs|/dev/ram)'" "$r_ramfs_freespace_pathfile"
+	Executer "/bin/df -h | /bin/grep -iEv '^(devtmpfs|cgroup_root)'" "$r_ramfs_freespace_pathfile"
 	DebugInfoMinSepr
-	Executer "/usr/sbin/screen -ls | /bin/sed '/^[[:space:]]*$/d'" "$r_screen_sessions_pathfile" '' 1
+	Executer "/usr/sbin/screen -ls | /bin/sed '/^[[:space:]]*$/d;s/^[[:space:]]*//'" "$r_screen_sessions_pathfile" '' 1
 	DebugInfoMinSepr
 	Executer '/usr/bin/free' "$r_ram_freeused_pathfile" '' 1
 	DebugInfoMinSepr
@@ -13692,14 +13692,19 @@ Executer()
 	exec_msg='exec: completed'
 
 	case $z in
-		0|"${4:-}")
+		0)
 			[[ ${3:-} != log:failure-only || $useropt_debug = true ]] && AddExtLogToSessLog "$2"
 			DebugAsDone "$exec_msg OK"
 			[[ $useropt_debug = false ]] && rm -f "$2" 2>/dev/null
 			;;
+		"${4:-}")
+			[[ ${3:-} != log:failure-only || $useropt_debug = true ]] && AddExtLogToSessLog "$2"
+			DebugAsWarn "$exec_msg with permitted errors"
+			[[ $useropt_debug = false ]] && rm -f "$2" 2>/dev/null
+			;;
 		*)
 			AddExtLogToSessLog "$2"
-			DebugAsError "$exec_msg, but with errors"
+			DebugAsError "$exec_msg with errors"
 	esac
 
 	FuncExit $z
@@ -14855,14 +14860,14 @@ DebugAsInfo()
 DebugAsWarn()
 	{
 
-	[[ -n ${1:-} ]] && DebugThis "$(TextBrightOrange "$(Parenthesise WW) $1")"
+	[[ -n ${1:-} ]] && DebugThis "$(Parenthesise "$(TextBrightOrange WW)") $(TextBrightOrange "$1")"
 
 	}
 
 DebugAsError()
 	{
 
-	[[ -n ${1:-} ]] && DebugThis "$(TextBrightRed "$(Parenthesise EE) $1")"
+	[[ -n ${1:-} ]] && DebugThis "$(Parenthesise "$(TextBrightRed EE)") $(TextBrightRed "$1")"
 
 	}
 
