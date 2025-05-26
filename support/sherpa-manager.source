@@ -3031,7 +3031,7 @@ ShowArgSuggestions()
 					arg_problem=true
 					args_remaining+=("$arg")
 			esac
-		done >"$r_report_output_pathfile"
+		done > "$r_report_output_pathfile"
 
 		if [[ ${#args_remaining[@]:-} -gt 0 ]]; then
 			ShowAsError "incomplete argument$(Pluralise "${#args_remaining[@]}") \"${args_remaining[*]}\". Please check the arguments again"
@@ -3114,7 +3114,7 @@ ShowArgSuggestions()
 					arg_problem=true
 					args_remaining+=("$arg")
 			esac
-		done >>"$r_report_output_pathfile"
+		done >> "$r_report_output_pathfile"
 
 		if [[ ${#args_remaining[@]:-} -gt 0 ]]; then
 			ShowAsError "unknown argument$(Pluralise "${#args_remaining[@]}") \"${args_remaining[*]}\". Please check the arguments again"
@@ -3279,7 +3279,7 @@ ResetArchivedLogs()
 
 	if [[ -n $r_logs_path && -d $r_logs_path ]]; then
 		ClearPath "$r_this_package_path" "$r_logs_path"
-		echo 'log reset' >"$sess_active_pathfile"
+		echo 'log reset' > "$sess_active_pathfile"
 		ShowAsDone 'logs cleared'
 	fi
 
@@ -3443,10 +3443,10 @@ SaveIpkAndPipList()
 	#	$r_prev_ipk_list_pathfile
 	#	$r_prev_pip_list_pathfile
 
-	$r_pip_cmd freeze | cut -d'=' -f1 >"$r_prev_pip_list_pathfile"
+	$r_pip_cmd freeze | cut -d'=' -f1 > "$r_prev_pip_list_pathfile"
 	[[ -e $r_prev_pip_list_pathfile ]] && DebugAsDone "saved current PIP list to $(FormatFileName "$r_prev_pip_list_pathfile")"
 
-	$r_opkg_cmd list-installed >"$r_prev_ipk_list_pathfile"
+	$r_opkg_cmd list-installed > "$r_prev_ipk_list_pathfile"
 	[[ -e $r_prev_ipk_list_pathfile ]] && DebugAsDone "saved current $(FormatPackageName Entware) IPK list to $(FormatFileName "$r_prev_ipk_list_pathfile")"
 
 	} 2>/dev/null
@@ -3468,7 +3468,7 @@ LoadIpkList()
 			name=$(Lowercase "$name")
 
 			IPKs-ACinstall-to:Add "$name"
-		done <"$r_prev_ipk_list_pathfile"
+		done < "$r_prev_ipk_list_pathfile"
 	fi
 
 	}
@@ -3490,7 +3490,7 @@ LoadPipList()
 			re=\\b$name\\b
 
 			[[ ${r_exclusion_pips[*]} =~ $re ]] || PIPs-ACinstall-to:Add "$name"
-		done <"$r_prev_pip_list_pathfile"
+		done < "$r_prev_pip_list_pathfile"
 	fi
 
 	}
@@ -3532,7 +3532,7 @@ CalcIpkDepsToInstall()
 	req_list=$(DeDupeWords "$(IPKs-ACinstall-to:List)")
 	dep_acc=($req_list)
 	this_list=($req_list)
-	requested_count=$(/usr/bin/wc -w <<<"$req_list")
+	requested_count=$(/usr/bin/wc -w <<< "$req_list")
 
 	if [[ $requested_count -eq 0 ]]; then
 		DebugAsWarn 'no IPKs requested'
@@ -3576,7 +3576,7 @@ CalcIpkDepsToInstall()
 
 	# Exclude already installed IPKs.
 	pre_exclude_list=${dep_acc[*]}
-	pre_exclude_count=$(/usr/bin/wc -w <<<"$pre_exclude_list")
+	pre_exclude_count=$(/usr/bin/wc -w <<< "$pre_exclude_list")
 
 	if [[ $pre_exclude_count -gt 0 ]]; then
 		ShowAsProc 'exclude IPKs already installed'
@@ -3627,7 +3627,7 @@ CalcIpkDownloadSize()
 		ShowAsProc "calculate size of IPK$(Pluralise "$size_count") to download"
 
 		DebugAsDone "$size_count IPK$(Pluralise "$size_count") to download: '$(IPKs-ACdownload-to:List)'"
-		size_array=($($r_gnu_grep_cmd -w '^Package:\|^Size:' "$r_external_packages_pathfile" | $r_gnu_grep_cmd --after-context 1 --no-group-separator ": $(/bin/sed 's/ /$ /g;s/\$ /\$\\\|: /g' <<<"$(IPKs-ACdownload-to:List)")" | /bin/grep '^Size:' | /bin/sed 's/^Size: //'))
+		size_array=($($r_gnu_grep_cmd -w '^Package:\|^Size:' "$r_external_packages_pathfile" | $r_gnu_grep_cmd --after-context 1 --no-group-separator ": $(/bin/sed 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKs-ACdownload-to:List)")" | /bin/grep '^Size:' | /bin/sed 's/^Size: //'))
 
 		# shellcheck disable=2283
 		IPKs-ACdownload-to:Size = "$(IFS=+; echo "$((${size_array[*]:-}))")"		# nifty sizing shortcut found here https://stackoverflow.com/a/13635566/6182835
@@ -6023,7 +6023,7 @@ ShowHelpActions()
 		DisplayAsProjSynExam "multiple $(ShowAsAction)s are supported like this" "$(ShowAsAction) $(ShowAsPackages) $(ShowAsAction) $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam '' 'install sabnzbd sickgear reactivate transmission uninstall lazy nzbget upgrade nzbtomedia'
 
-		} >"$r_report_output_pathfile"
+		} > "$r_report_output_pathfile"
 
 	EraseThisLine
 	ShowReport
@@ -6068,7 +6068,7 @@ ShowHelpActionsAll()
 		DisplayAsProjSynIndentExam 'uninstall all QPKGs' 'uninstall all'
 		DisplayAsProjSynIndentExam 'upgrade all QPKGs (and internal applications where-supported)' 'upgrade all'
 
-		} >"$r_report_output_pathfile"
+		} > "$r_report_output_pathfile"
 
 	EraseThisLine
 	ShowReport
@@ -6113,7 +6113,7 @@ ShowHelpBasicExamples()
 		DisplayAsProjSynIndentExam "or, for more $(ShowAsOptions)" 'help options'
 		DisplayAsHelpTitle "more in the wiki: $(ShowAsURL 'https://github.com/OneCDOnly/sherpa/wiki')"
 
-		} >"$r_report_output_pathfile"
+		} > "$r_report_output_pathfile"
 
 	ShowReport
 
@@ -6151,7 +6151,7 @@ ShowHelpGroups()
 		DisplayAsProjSynIndentExam 'select only missing QPKGs (these are partly-installed and broken)' "$(ShowAsAction) missing"
 		DisplayAsProjSynExam 'multiple groups are supported like this' "$(ShowAsAction) $(ShowAsPackageGroup) $(ShowAsPackageGroup)"
 
-		} >"$r_report_output_pathfile"
+		} > "$r_report_output_pathfile"
 
 	EraseThisLine
 	ShowReport
@@ -6204,7 +6204,7 @@ ShowHelpLists()
 		DisplayAsProjSynIndentExam "list $(ShowAsTitleName) object version numbers" 'list versions'
 		DisplayAsProjSynIndentExam '' versions
 
-		} >"$r_report_output_pathfile"
+		} > "$r_report_output_pathfile"
 
 	EraseThisLine
 	ShowReport
@@ -6240,7 +6240,7 @@ ShowHelpShow()
 		DisplayAsProjSynIndentExam 'show last session action results' 'show results'
 		DisplayAsProjSynIndentExam '' results
 
-		} >"$r_report_output_pathfile"
+		} > "$r_report_output_pathfile"
 
 	EraseThisLine
 	ShowReport
@@ -6266,7 +6266,7 @@ ShowHelpOptions()
 		DisplayAsProjSynIndentExam '' "$(ShowAsAction) $(ShowAsPackages) verbose"
 		DisplayAsProjSynIndentExam '' "$(ShowAsAction) $(ShowAsPackages) v"
 
-		} >"$r_report_output_pathfile"
+		} > "$r_report_output_pathfile"
 
 	EraseThisLine
 	ShowReport
@@ -6289,7 +6289,7 @@ ShowHelpPackages()
 		ShowHelpBasic
 		DisplayAsHelpTitle 'usage examples for QPKGs will go here:'
 
-		} >"$r_report_output_pathfile"
+		} > "$r_report_output_pathfile"
 
 	EraseThisLine
 	ShowReport
@@ -6332,7 +6332,7 @@ ShowHelpProblems()
 		DisplayAsProjSynIndentExam '' "$(ShowAsAction) $(ShowAsPackages) v"
 		DisplayAsHelpTitleHighlighted "if you need help, please include a copy of your $(ShowAsTitleName) $(TextBrightOrange "log for analysis!")"
 
-		} >"$r_report_output_pathfile"
+		} > "$r_report_output_pathfile"
 
 	EraseThisLine
 	ShowReport
@@ -6362,7 +6362,7 @@ ShowHelpUpgrades()
 		DisplayAsProjSynIndentExam '' 's upgradable'
 		DisplayAsProjSynIndentExam '' 's new'
 
-		} >"$r_report_output_pathfile"
+		} > "$r_report_output_pathfile"
 
 	EraseThisLine
 	ShowReport
@@ -6396,7 +6396,7 @@ ShowHelpTips()
 		DisplayAsProjSynIndentExam 'upgrade the internal applications only' "reactivate $(ShowAsPackages)"
 		ShowHelpBackupLocation
 
-		} >"$r_report_output_pathfile"
+		} > "$r_report_output_pathfile"
 
 	EraseThisLine
 	ShowReport
@@ -6501,13 +6501,13 @@ DisplayFileInViewport()
 
 			return
 		else
-			echo "$(<$1)"
+			echo "$(< $1)"
 
 			return
 		fi
 	fi
 
-	if [[ $(/usr/bin/wc -l <"$filename") -ge $r_sess_rows || $(/usr/bin/wc -L <"$filename") -ge $r_sess_columns ]]; then
+	if [[ $(/usr/bin/wc -l < "$filename") -ge $r_sess_rows || $(/usr/bin/wc -L < "$filename") -ge $r_sess_columns ]]; then
 		if [[ -e $r_gnu_less_cmd ]]; then
 			options='--quit-on-intr --tilde --mouse --RAW-CONTROL-CHARS --shift=4 --redraw-on-quit --quit-if-one-screen'
 			[[ $wraplines = false ]] && options+=' --chop-long-lines'
@@ -6541,7 +6541,7 @@ DisplayFileInViewport()
 
 	# and, when there's really no-better option ...
 
-	echo "$(<$1)"
+	echo "$(< $1)"
 
 	} 2>/dev/null
 
@@ -6665,7 +6665,7 @@ ArchiveActiveSessLog()
 	#	$r_session_archive_pathfile
 	#	$sess_active_pathfile
 
-	[[ -n ${sess_active_pathfile:-} && -e $sess_active_pathfile ]] && /bin/cat "$sess_active_pathfile" >>"$r_session_archive_pathfile"
+	[[ -n ${sess_active_pathfile:-} && -e $sess_active_pathfile ]] && /bin/cat "$sess_active_pathfile" >> "$r_session_archive_pathfile"
 
 	}
 
@@ -6683,7 +6683,7 @@ ArchivePriorSessLogs()
 
 	for f in "$r_this_package_path"/session.*.active.log; do
 		if [[ -f $f && $f != "$sess_active_pathfile" ]]; then
-			/bin/cat "$f" >>"$r_session_archive_pathfile"
+			/bin/cat "$f" >> "$r_session_archive_pathfile"
 			rm -f "$f"
 		fi
 	done
@@ -6725,7 +6725,7 @@ ExtractPrevSessFromTail()
 			[[ $old_session -gt $old_session_limit ]] && break
 		done
 
-		/bin/sed "$start_line,$end_line!d" "$r_session_tail_pathfile" >"$r_session_last_pathfile"
+		/bin/sed "$start_line,$end_line!d" "$r_session_tail_pathfile" > "$r_session_last_pathfile"
 	else
 		rm -f "$r_session_last_pathfile"
 	fi
@@ -6743,7 +6743,7 @@ ExtractTailFromLog()
 	#	$r_session_tail_pathfile
 
 	if [[ -e $r_session_archive_pathfile ]]; then
-		/usr/bin/tail -n${r_log_tail_lines} "$r_session_archive_pathfile" >"$r_session_tail_pathfile"	# Trim main log first so there's less to `grep`.
+		/usr/bin/tail -n${r_log_tail_lines} "$r_session_archive_pathfile" > "$r_session_tail_pathfile"	# Trim main log first so there's less to `grep`.
 	else
 		rm -f "$r_session_tail_pathfile"
 	fi
@@ -7491,11 +7491,11 @@ GenerateQPKGsTiers()
 		SetQpkgIndex
 
 		if IsQpkgDbOptional; then
-			echo "$qpkg_name" >>"$r_optional_qpkgs_list_pathfile"
+			echo "$qpkg_name" >> "$r_optional_qpkgs_list_pathfile"
 		elif IsQpkgDbDependent; then
-			echo "$qpkg_name" >>"$r_dependent_qpkgs_list_pathfile"
+			echo "$qpkg_name" >> "$r_dependent_qpkgs_list_pathfile"
 		else
-			echo "$qpkg_name" >>"$r_independent_qpkgs_list_pathfile"
+			echo "$qpkg_name" >> "$r_independent_qpkgs_list_pathfile"
 		fi
 	done
 
@@ -7526,7 +7526,7 @@ LoadQPKGsTiers()
 	for a in "${r_qpkg_tiers[@]}"; do
 		b=r_${a}_qpkgs_list_pathfile
 		[[ ! -e ${!b} ]] && continue
-		QPKGs-GR${a}:Add "$(<${!b})"
+		QPKGs-GR${a}:Add "$(< ${!b})"
 	done
 
 	}
@@ -7596,7 +7596,7 @@ GetQpkgStates()
 			echo upgradable
 		else
 			echo notupgradable
-		fi >>"$r_qpkg_states_path/$qpkg_name"
+		fi >> "$r_qpkg_states_path/$qpkg_name"
   	done &
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
@@ -7604,7 +7604,7 @@ GetQpkgStates()
 			echo installable
 		else
 			echo notinstallable
-		fi >>"$r_qpkg_states_path/$qpkg_name"
+		fi >> "$r_qpkg_states_path/$qpkg_name"
   	done &
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
@@ -7612,7 +7612,7 @@ GetQpkgStates()
 			echo missing
 		else
 			echo notmissing
-		fi >>"$r_qpkg_states_path/$qpkg_name"
+		fi >> "$r_qpkg_states_path/$qpkg_name"
 	done &
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
@@ -7620,7 +7620,7 @@ GetQpkgStates()
 			echo backedup
 		else
 			echo notbackedup
-		fi >>"$r_qpkg_states_path/$qpkg_name"
+		fi >> "$r_qpkg_states_path/$qpkg_name"
 	done &
 
 	wait 2>/dev/null
@@ -7647,9 +7647,9 @@ StoreQpkgStates()
 		b=/var/log/$qpkg_name.result
 
 		if [[ -e $a && -e $b ]]; then
-			case $(<$b) in
+			case $(< $b) in
 				in-progress)
-					case $(<$a) in
+					case $(< $a) in
 						start)
 							QPKGs-ISstarting:Add "$qpkg_name"
 							;;
@@ -7671,7 +7671,7 @@ StoreQpkgStates()
 		a=$r_qpkg_states_path/$qpkg_name
 		[[ -e $a ]] || continue
 
-		for b in $(<$a); do
+		for b in $(< $a); do
 			case $b in
 				backedup)
 					QPKGs-ISbackedup:Add "$qpkg_name"
@@ -7828,14 +7828,14 @@ HelpAbbreviations()
 		ShowHelpBasic
 		DisplayAsHelpTitle "$(ShowAsTitleName) can recognise various abbreviations and aliases as $(ShowAsPackages)."
 
-		} >"$r_report_output_pathfile"
+		} > "$r_report_output_pathfile"
 
 	printf -v a '\n%s\n' "$(GenerateAbsReportTitleLine)"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		SetQpkgIndex
-		_GenerateAbsReportDataLine_ >"$r_reports_path/$n" &
+		_GenerateAbsReportDataLine_ > "$r_reports_path/$n" &
 	done
 
 	m=$n
@@ -7845,7 +7845,7 @@ HelpAbbreviations()
 
 	for ((n=1; n<=m; n++)); do
 		b=$r_reports_path/$n
-		[[ -e $b ]] && printf -v a '%s\n' "$a$(<$b)"		# Add newline to each imported report line and append to string accumulator ($a).
+		[[ -e $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
 	if [[ -n $a ]]; then
@@ -7853,12 +7853,12 @@ HelpAbbreviations()
 			printf '%s' "$a" | Tableise
 		else
 			printf '%s' "$a"
-		fi >>"$r_report_output_pathfile"
+		fi >> "$r_report_output_pathfile"
 
-# 		GenerateReportInfo >>"$r_report_output_pathfile"
+# 		GenerateReportInfo >> "$r_report_output_pathfile"
 	fi
 
-	DisplayAsProjSynExam "example: to install $(FormatPackageName SABnzbd), $(FormatPackageName Mylar3) and $(FormatPackageName nzbToMedia) all-at-once" 'install sab my nzb2' >>"$r_report_output_pathfile"
+	DisplayAsProjSynExam "example: to install $(FormatPackageName SABnzbd), $(FormatPackageName Mylar3) and $(FormatPackageName nzbToMedia) all-at-once" 'install sab my nzb2' >> "$r_report_output_pathfile"
 
 	EraseThisLine
 	ShowReport
@@ -7897,8 +7897,8 @@ ReportBackups()
 			[[ -z $epoch_time || -z $file_name ]] && break
 
 			((n++))
-			_GenerateBacksReportItemLine_ "$epoch_time" "$file_name" "$file_bytes" "$r_report_highlight_backups_older_than" >"$r_reports_path/$n" &
-		done <<<"$($r_gnu_find_cmd "$r_qpkg_bu_path"/*.config.tar.gz -maxdepth 1 -printf '%C@ %f %s\n' 2>/dev/null | /usr/bin/sort)"
+			_GenerateBacksReportItemLine_ "$epoch_time" "$file_name" "$file_bytes" "$r_report_highlight_backups_older_than" > "$r_reports_path/$n" &
+		done <<< "$($r_gnu_find_cmd "$r_qpkg_bu_path"/*.config.tar.gz -maxdepth 1 -printf '%C@ %f %s\n' 2>/dev/null | /usr/bin/sort)"
 	else										# If GNU `find` isn't available, do-it the hard-way.
 		while read -r file_date file_time file_name file_bytes; do
 			[[ -z $file_date || -z $file_name ]] && break
@@ -7906,8 +7906,8 @@ ReportBackups()
 			file_name=$(/usr/bin/basename "$file_name")
 
 			((n++))
-			_GenerateBacksReportItemLine_ "$epoch_time" "$file_name" "$file_bytes" "$r_report_highlight_backups_older_than" >"$r_reports_path/$n" &
-		done <<<"$(cd "$r_qpkg_bu_path" && ls -l1tr --time-style=+"%Y-%m-%d %H:%M:%S" ./*.config.tar.gz 2>/dev/null | /bin/awk '{print $6" "$7" "$8" "$5}')"
+			_GenerateBacksReportItemLine_ "$epoch_time" "$file_name" "$file_bytes" "$r_report_highlight_backups_older_than" > "$r_reports_path/$n" &
+		done <<< "$(cd "$r_qpkg_bu_path" && ls -l1tr --time-style=+"%Y-%m-%d %H:%M:%S" ./*.config.tar.gz 2>/dev/null | /bin/awk '{print $6" "$7" "$8" "$5}')"
 	fi
 
 	m=$n
@@ -7917,7 +7917,7 @@ ReportBackups()
 
 	for ((n=1; n<=m; n++)); do
 		b=$r_reports_path/$n
-		[[ -e $b ]] && printf -v a '%s\n' "$a$(<$b)"		# Add newline to each imported report line and append to string accumulator ($a).
+		[[ -e $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
 	if [[ -n $a ]]; then
@@ -7925,9 +7925,9 @@ ReportBackups()
 			printf '%s' "$a" | Tableise
 		else
 			printf '%s' "$a"
-		fi >"$r_report_output_pathfile"
+		fi > "$r_report_output_pathfile"
 
-		GenerateReportInfo >>"$r_report_output_pathfile"
+		GenerateReportInfo >> "$r_report_output_pathfile"
 	fi
 
 	EraseThisLine
@@ -7958,7 +7958,7 @@ ReportDependencies()
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		SetQpkgIndex
-		_GenerateDepsReportDataLine_ >"$r_reports_path/$n" &
+		_GenerateDepsReportDataLine_ > "$r_reports_path/$n" &
 	done
 
 	m=$n
@@ -7968,7 +7968,7 @@ ReportDependencies()
 
 	for ((n=1; n<=m; n++)); do
 		b=$r_reports_path/$n
-		[[ -e $b ]] && printf -v a '%s\n' "$a$(<$b)"		# Add newline to each imported report line and append to string accumulator ($a).
+		[[ -e $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
 	if [[ -n $a ]]; then
@@ -7976,9 +7976,9 @@ ReportDependencies()
 			printf '%s' "$a" | Tableise
 		else
 			printf '%s' "$a"
-		fi >"$r_report_output_pathfile"
+		fi > "$r_report_output_pathfile"
 
-		GenerateReportInfo >>"$r_report_output_pathfile"
+		GenerateReportInfo >> "$r_report_output_pathfile"
 	fi
 
 	EraseThisLine
@@ -8010,7 +8010,7 @@ ReportFeatures()
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		SetQpkgIndex
-		_GenerateFeaturesReportDataLine_ >"$r_reports_path/$n" &
+		_GenerateFeaturesReportDataLine_ > "$r_reports_path/$n" &
 	done
 
 	m=$n
@@ -8020,7 +8020,7 @@ ReportFeatures()
 
 	for ((n=1; n<=m; n++)); do
 		b=$r_reports_path/$n
-		[[ -e $b ]] && printf -v a '%s\n' "$a$(<$b)"		# Add newline to each imported report line and append to string accumulator ($a).
+		[[ -e $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
 	if [[ -n $a ]]; then
@@ -8028,9 +8028,9 @@ ReportFeatures()
 			printf '%s' "$a" | Tableise
 		else
 			printf '%s' "$a"
-		fi >"$r_report_output_pathfile"
+		fi > "$r_report_output_pathfile"
 
-		GenerateReportHeadingsInfo >>"$r_report_output_pathfile"
+		GenerateReportHeadingsInfo >> "$r_report_output_pathfile"
 	fi
 
 	EraseThisLine
@@ -8061,14 +8061,14 @@ ReportPackages()
 		ShowHelpBasic
 		DisplayAsHelpTitle "one-or-more $(ShowAsPackages) may be specified at-once."
 
-		} >"$r_report_output_pathfile"
+		} > "$r_report_output_pathfile"
 
 	printf -v a '\n%s\n' "$(GeneratePacksReportTitleLine)"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		SetQpkgIndex
-		_GeneratePacksReportDataLine_ "$qpkg_name" >"$r_reports_path/$n" &
+		_GeneratePacksReportDataLine_ "$qpkg_name" > "$r_reports_path/$n" &
 	done
 
 	m=$n
@@ -8077,7 +8077,7 @@ ReportPackages()
 
 	for ((n=1; n<=m; n++)); do
 		b=$r_reports_path/$n
-		[[ -e $b ]] && printf -v a '%s\n' "$a$(<$b)"		# Add newline to each imported report line and append to string accumulator ($a).
+		[[ -e $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
 	if [[ -n $a ]]; then
@@ -8085,9 +8085,9 @@ ReportPackages()
 			printf '%s' "$a" | Tableise
 		else
 			printf '%s' "$a"
-		fi >>"$r_report_output_pathfile"
+		fi >> "$r_report_output_pathfile"
 
-		GenerateReportInfo >>"$r_report_output_pathfile"
+		GenerateReportInfo >> "$r_report_output_pathfile"
 	fi
 
 		{
@@ -8095,7 +8095,7 @@ ReportPackages()
 		DisplayAsProjSynExam "abbreviations and aliases may also be used to specify $(ShowAsPackages). To list these" 'help abs'
 		DisplayAsProjSynIndentExam '' a
 
-		} >>"$r_report_output_pathfile"
+		} >> "$r_report_output_pathfile"
 
 	EraseThisLine
 	ShowReport
@@ -8126,7 +8126,7 @@ ReportRepos()
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		SetQpkgIndex
-		_GenerateReposReportDataLine_ >"$r_reports_path/$n" &
+		_GenerateReposReportDataLine_ > "$r_reports_path/$n" &
 	done
 
 	m=$n
@@ -8136,7 +8136,7 @@ ReportRepos()
 
 	for ((n=1; n<=m; n++)); do
 		b=$r_reports_path/$n
-		[[ -e $b ]] && printf -v a '%s\n' "$a$(<$b)"		# Add newline to each imported report line and append to string accumulator ($a).
+		[[ -e $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
 	if [[ -n $a ]]; then
@@ -8144,9 +8144,9 @@ ReportRepos()
 			printf '%s' "$a" | Tableise
 		else
 			printf '%s' "$a"
-		fi >"$r_report_output_pathfile"
+		fi > "$r_report_output_pathfile"
 
-		GenerateReportInfo >>"$r_report_output_pathfile"
+		GenerateReportInfo >> "$r_report_output_pathfile"
 	fi
 
 	EraseThisLine
@@ -8177,7 +8177,7 @@ ReportStatuses()
 		QPKGs-ACstatus-dn.Exist "$qpkg_name" || continue
 		((n++))
 		SetQpkgIndex
-		_GenerateStatusReportDataLine_ >"$r_reports_path/$n" &
+		_GenerateStatusReportDataLine_ > "$r_reports_path/$n" &
 	done
 
 	printf -v a '\n%s\n' "$(GenerateStatusReportTitleLine)"
@@ -8189,7 +8189,7 @@ ReportStatuses()
 
 	for ((n=1; n<=m; n++)); do
 		b=$r_reports_path/$n
-		[[ -e $b ]] && printf -v a '%s\n' "$a$(<$b)"		# Add newline to each imported report line and append to string accumulator ($a).
+		[[ -e $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
 	if [[ -n $a ]]; then
@@ -8197,9 +8197,9 @@ ReportStatuses()
 			printf '%s' "$a" | Tableise
 		else
 			printf '%s' "$a"
-		fi >"$r_report_output_pathfile"
+		fi > "$r_report_output_pathfile"
 
-		GenerateReportInfo >>"$r_report_output_pathfile"
+		GenerateReportInfo >> "$r_report_output_pathfile"
 	fi
 
 	EraseThisLine
@@ -8245,7 +8245,7 @@ ReportAllActionResults()
 				c=$duration
 				((d++))
 			fi
-		done <"$r_session_action_results_pathfile"
+		done < "$r_session_action_results_pathfile"
 
 		a=$(ConvertMillisecondsToSeconds "$a")
 		b=$(ConvertMillisecondsToSeconds "$b")
@@ -8263,7 +8263,7 @@ ReportAllActionResults()
 			[[ $show_action_results_failed = true ]] && ReportActionResults failed
 			[[ $show_action_results_zero = true ]] && ShowZeroQpkgs
 
-			} >"$r_report_output_pathfile"
+			} > "$r_report_output_pathfile"
 
 			ShowReport
 		fi
@@ -8301,7 +8301,7 @@ ReportActionResults()
 				((count++))
 				[[ $count -gt 1 ]] && break			# Two-or-more of the same action so must pluralise messages.
 			fi
-		done <"$r_session_action_results_pathfile"
+		done < "$r_session_action_results_pathfile"
 
 		# Display action titles and QPKGs.
 
@@ -8335,7 +8335,7 @@ ReportActionResults()
 					[[ $action = status && $useropt_show_previous_action_results_report = false ]] && continue		# Don't need to see the result of `status` checks unless a 'results' report has been requested.
 					ShowAsActionLogDetail "$datetime" "$package_name" "$action" "$result" "$duration" "$reason" "$package_type" "$quantity"
 				fi
-			done <"$r_session_action_results_pathfile"
+			done < "$r_session_action_results_pathfile"
 		fi
 	fi
 
@@ -8896,7 +8896,7 @@ MarkActionForkAsError()
 #
 # 	[[ -n ${1:-} && -n ${proc_fork_pathfile:-} ]] || return
 #
-# 	echo "$1" >"$proc_fork_pathfile"
+# 	echo "$1" > "$proc_fork_pathfile"
 #
 # 	}
 
@@ -8946,13 +8946,13 @@ ModPathToEntware()
 	if IsQpkgEnabled Entware; then
 		! [[ $PATH =~ $b ]] || return
 
-		a=$(/bin/sed "s|${b}:||" <<<"$PATH:")		# Append colon prior to searching, then remove existing Entware paths.
+		a=$(/bin/sed "s|${b}:||" <<< "$PATH:")		# Append colon prior to searching, then remove existing Entware paths.
 		export PATH=$b:${a%:}						# ... now prepend Entware paths and remove trailing colon
 		DebugAsDone 'prepended Entware to $PATH'
 	else
 		[[ $PATH =~ $b ]] || return
 
-		a=$(/bin/sed "s|${b}:||" <<<"$PATH:")		# Append colon prior to searching, then remove existing Entware paths.
+		a=$(/bin/sed "s|${b}:||" <<< "$PATH:")		# Append colon prior to searching, then remove existing Entware paths.
 		export PATH=${a%:}							# ... now remove trailing colon
 		DebugAsDone 'removed Entware from $PATH'
 	fi
@@ -9010,7 +9010,7 @@ GetHardwareCPUBenchmark()
 		fi
 	fi
 
-	a=$(/bin/grep copied <<<"$a" | cut -d, -f4)
+	a=$(/bin/grep copied <<< "$a" | cut -d, -f4)
 	a=${a//[[:blank:]]/}
 	[[ -n $a ]] || a=undefined
 
@@ -9050,7 +9050,7 @@ GetHardwareVolumeBenchmark()
 		[[ -e $d ]] && rm -f "$d"
 	fi
 
-	a=$(/bin/grep copied <<<"$a" | cut -d, -f4)
+	a=$(/bin/grep copied <<< "$a" | cut -d, -f4)
 	a=${a//[[:blank:]]/}
 	[[ -n $a ]] || a=undefined
 
@@ -9466,14 +9466,14 @@ ClaimLockfile()
 	readonly r_lock_pathfile=/var/run/sherpa.lock
 
 	for a in sherpa-manager.sh sherpa-manager.source; do
-		if [[ -e $r_lock_pathfile && -d /proc/$(<$r_lock_pathfile) && $(</proc/"$(<$r_lock_pathfile)"/cmdline) =~ $a ]]; then
-			ShowAsAbort "a running $(ShowAsTitleName) instance was found $(Parenthesise "PID:$(<"$r_lock_pathfile")"), can't continue"
+		if [[ -e $r_lock_pathfile && -d /proc/$(< $r_lock_pathfile) && $(</proc/"$(< $r_lock_pathfile)"/cmdline) =~ $a ]]; then
+			ShowAsAbort "a running $(ShowAsTitleName) instance was found $(Parenthesise "PID:$(< "$r_lock_pathfile")"), can't continue"
 
 			return 1
 		fi
 	done
 
-	echo "$$" >"$r_lock_pathfile"
+	echo "$$" > "$r_lock_pathfile"
 
 	return 0
 
@@ -9561,16 +9561,16 @@ SaveActionResultToLog()
 	fi
 
 	# Add new action results entry.
-	echo "$r_starttime|$r_action|$r_qty|$r_name|$r_package_type|$r_result|$r_duration|$r_reason" >>"$r_session_action_results_pathfile"
+	echo "$r_starttime|$r_action|$r_qty|$r_name|$r_package_type|$r_result|$r_duration|$r_reason" >> "$r_session_action_results_pathfile"
 
 	# Remove previous action duration entry if one exists.
 
-	if [[ -e $r_action_times_pathfile ]] && /bin/grep -q "^$r_name|" <"$r_action_times_pathfile"; then
+	if [[ -e $r_action_times_pathfile ]] && /bin/grep -q "^$r_name|" < "$r_action_times_pathfile"; then
 		/bin/sed -i "/^$r_name|/d" "$r_action_times_pathfile"
 	fi
 
 	# Add new action duration entry.
-	echo "$r_name|$r_duration" >>"$r_action_times_pathfile"
+	echo "$r_name|$r_duration" >> "$r_action_times_pathfile"
 
 	case $4 in
 		ok|skipped-ok)
@@ -13339,7 +13339,7 @@ IsHaveSingleQuote()
 	#	$? = true if $1 contains a single quote.
 	#	$? = false if $1 does not contain a single quote.
 
-	/bin/grep -q "'" <<<"${1:-}"
+	/bin/grep -q "'" <<< "${1:-}"
 
 	}
 
@@ -13367,7 +13367,7 @@ WritePidFile()
 
 	[[ -n ${1:-} && -n ${pidfile:-} ]] || return
 
-	echo "$1" >"$pidfile"
+	echo "$1" > "$pidfile"
 
 	}
 
@@ -13672,21 +13672,21 @@ Executer()
 	fi
 
 	DebugAsProc "$exec_msg"
-	FormatCommand "$1" >"$2"
+	FormatCommand "$1" > "$2"
 
 	if [[ $useropt_verbose = true ]]; then
 		eval "$1 > >(/usr/bin/tee $r_log_pathfile) 2>&1"	# NOTE: `tee` buffers stdout here.		# squeezer-ignore
 		z=$?
 	else
-		(eval "$1" >"$r_log_pathfile" 2>&1)					# Run in a subshell to suppress 'Terminated' message later.
+		(eval "$1" > "$r_log_pathfile" 2>&1)					# Run in a subshell to suppress 'Terminated' message later.
 		z=$?
 	fi
 
 	if [[ -e $r_log_pathfile ]]; then
-		ShowAsResultAndStdout "$z" "$(<"$r_log_pathfile")" >>"$2"
+		ShowAsResultAndStdout "$z" "$(< "$r_log_pathfile")" >> "$2"
 		rm -f "$r_log_pathfile" 2>/dev/null
 	else
-		ShowAsResultAndStdout "$z" '<null>' >>"$2"
+		ShowAsResultAndStdout "$z" '<null>' >> "$2"
 	fi
 
 	exec_msg='exec: completed'
@@ -13714,7 +13714,7 @@ DeDupeWords()
 
 	[[ -n ${1:-} ]] || return
 
-	tr ' ' '\n' <<<"$1" | /usr/bin/sort | /bin/uniq | tr '\n' ' ' | /bin/sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'
+	tr ' ' '\n' <<< "$1" | /usr/bin/sort | /bin/uniq | tr '\n' ' ' | /bin/sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'
 
 	}
 
@@ -13799,7 +13799,7 @@ Uppercase()
 
 	[[ -n ${1:-} ]] || return
 
-	tr 'a-z' 'A-Z' <<<"$1"
+	tr 'a-z' 'A-Z' <<< "$1"
 
 	}
 
@@ -13808,7 +13808,7 @@ Lowercase()
 
 	[[ -n ${1:-} ]] || return
 
-	tr 'A-Z' 'a-z' <<<"$1"
+	tr 'A-Z' 'a-z' <<< "$1"
 
 	}
 
@@ -13888,7 +13888,7 @@ FormatAsThous()
 FormatAsIsoBytes()
 	{
 
-	/bin/awk 'BEGIN{ u[0]="B"; u[1]="kB"; u[2]="MB"; u[3]="GB"} { n = $1; i = 0; while(n > 1000) { i+=1; n= int((n/1000)+0.5) } print n u[i] } ' <<<"$1"
+	/bin/awk 'BEGIN{ u[0]="B"; u[1]="kB"; u[2]="MB"; u[3]="GB"} { n = $1; i = 0; while(n > 1000) { i+=1; n= int((n/1000)+0.5) } print n u[i] } ' <<< "$1"
 
 	}
 
@@ -14287,7 +14287,7 @@ DebugDetectTabld()
 	elif [[ ${3:-} = ' ' ]]; then		# If $3 is only a whitespace then print $2 with trailing colon and 'none' as third field.
 		DebugAsDetect "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: none\n" "${1:-}" "${2:-}")"
 	elif [[ ${3: -1} = ' ' ]]; then		# If $3 has a trailing whitespace then print $3 without the trailing whitespace.
-		DebugAsDetect "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "$(/bin/sed 's/ *$//' <<<"${3:-}")")"
+		DebugAsDetect "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "$(/bin/sed 's/ *$//' <<< "${3:-}")")"
 	else
 		DebugAsDetect "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "${3:-}")"
 	fi
@@ -14304,7 +14304,7 @@ DebugInfoTabld()
 	elif [[ ${3:-} = ' ' ]]; then		# If $3 is only a whitespace then print $2 with trailing colon and 'none' as third field.
 		DebugAsInfo "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: none\n" "${1:-}" "${2:-}")"
 	elif [[ ${3: -1} = ' ' ]]; then		# If $3 has a trailing whitespace then print $3 without the trailing whitespace.
-		DebugAsInfo "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "$(/bin/sed 's/ *$//' <<<"${3:-}")")"
+		DebugAsInfo "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "$(/bin/sed 's/ *$//' <<< "${3:-}")")"
 	else
 		DebugAsInfo "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "${3:-}")"
 	fi
@@ -14321,7 +14321,7 @@ DebugWarningTabld()
 	elif [[ ${3:-} = ' ' ]]; then		# If $3 is only a whitespace then print $2 with trailing colon and 'none' as third field
 		DebugAsWarn "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: none\n" "${1:-}" "${2:-}")"
 	elif [[ ${3: -1} = ' ' ]]; then		# If $3 has a trailing whitespace then print $3 without the trailing whitespace
-		DebugAsWarn "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "$(/bin/sed 's/ *$//' <<<"${3:-}")")"
+		DebugAsWarn "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "$(/bin/sed 's/ *$//' <<< "${3:-}")")"
 	else
 		DebugAsWarn "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "${3:-}")"
 	fi
@@ -14338,7 +14338,7 @@ DebugErrorTabld()
 	elif [[ ${3:-} = ' ' ]]; then		# If $3 is only a whitespace then print $2 with trailing colon and 'none' as third field.
 		DebugAsError "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: none\n" "${1:-}" "${2:-}")"
 	elif [[ ${3: -1} = ' ' ]]; then		# If $3 has a trailing whitespace then print $3 without the trailing whitespace.
-		DebugAsError "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "$(/bin/sed 's/ *$//' <<<"${3:-}")")"
+		DebugAsError "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "$(/bin/sed 's/ *$//' <<< "${3:-}")")"
 	else
 		DebugAsError "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" "${3:-}")"
 	fi
@@ -14480,7 +14480,7 @@ FuncForkExit()
 
 	if [[ -n ${sess_active_pathfile:-} && -e $sess_active_pathfile ]]; then
 		if [[ -s $sess_active_pathfile ]]; then
-			/bin/cat "$sess_active_pathfile" >>"$original_sess_active_pathfile"
+			/bin/cat "$sess_active_pathfile" >> "$original_sess_active_pathfile"
 		fi
 
 		rm -f "$sess_active_pathfile"
@@ -14925,7 +14925,7 @@ AddExtLogToSessLog()
 
 	while read -r a; do
 		DebugAsLog "$a"
-	done <"$1"
+	done < "$1"
 
 	DebugExtLogMinSepr
 	useropt_verbose=$b
@@ -15315,7 +15315,7 @@ WriteToLog()
 
 	[[ -n ${1:-} && -n ${2:-} ]] || return
 
-	[[ ${useropt_debug:=false} = true && -n ${sess_active_pathfile:-} ]] && printf '%-4s: %s\n' "$(StripANSICodes "$1")" "$(StripANSICodes "$2")" >>"$sess_active_pathfile"
+	[[ ${useropt_debug:=false} = true && -n ${sess_active_pathfile:-} ]] && printf '%-4s: %s\n' "$(StripANSICodes "$1")" "$(StripANSICodes "$2")" >> "$sess_active_pathfile"
 
 	}
 
@@ -15947,7 +15947,7 @@ RefreshArchive()
 	if [[ $download = true ]]; then
 		DebugAsProc "download '$archive_name' archive"
 		IsOsCanSecureDownload || curl_options=' --insecure'
-		/sbin/curl${curl_options} --silent --fail "$archive_url" >"$archive_pathfile"
+		/sbin/curl${curl_options} --silent --fail "$archive_url" > "$archive_pathfile"
 
 		if IsFile "$archive_pathfile"; then
 			DebugAsDone "download '$archive_name' archive OK"
