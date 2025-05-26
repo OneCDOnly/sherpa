@@ -192,7 +192,7 @@ DebugLogInit()
 	DebugInfoMinSepr
 	DebugInfo "Markers: $(Parenthesise '**') detected, $(Parenthesise II) information, $(Parenthesise WW) warning, $(Parenthesise EE) error, $(Parenthesise LL) log file, $(Parenthesise '--') processing,"
 	DebugInfo "$(Parenthesise '==') done, $(Parenthesise '>>') f entry, $(Parenthesise '<<') f exit, $(Parenthesise aa) array name & values, $(Parenthesise vv) variable name & value,"
-	DebugInfo "$(Parenthesise '$1') positional argument value"
+	DebugInfo "$(Parenthesise 'NA') not-applicable, $(Parenthesise '$1') positional argument value"
 	DebugInfoMinSepr
 	DebugVar r_this_package_ver
 	DebugVar r_this_script_ver
@@ -14287,7 +14287,9 @@ DebugDetectTabld()
 
 	# Debug detected tabulated.
 
-	if [[ -z ${3:-} ]]; then			# If $3 is nothing, then assume only 2 fields are required.
+	if [[ ${3:-} = N/A ]]; then
+		DebugAsNA "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: %-s\n" "${1:-}" "${2:-}" N/A)"
+	elif [[ -z ${3:-} ]]; then			# If $3 is nothing, then assume only 2 fields are required.
 		DebugAsDetect "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s\n" "${1:-}" "${2:-}")"
 	elif [[ ${3:-} = ' ' ]]; then		# If $3 is only a whitespace then print $2 with trailing colon and 'none' as third field.
 		DebugAsDetect "$(printf "%${r_debug_log_first_column_width}s: %${r_debug_log_second_column_width}s: none\n" "${1:-}" "${2:-}")"
@@ -14889,6 +14891,13 @@ DebugAsArray()
 	{
 
 	[[ -n ${1:-} ]] && DebugThis "$(Parenthesise aa) $1"
+
+	}
+
+DebugAsNA()
+	{
+
+	[[ -n ${1:-} ]] && DebugThis "$(Parenthesise "$(TextDarkGrey NA)") $(TextDarkGrey "$1")"
 
 	}
 
@@ -16053,7 +16062,7 @@ LoadObjects()
 
 	ShowAsProc objects
 
-	# Must set these prior to calling RefreshArchive()
+	# NOTE: Must set these prior to calling RefreshArchive()
 
 	local archive_name=objects
 	local archive_pathfile=$r_objects_archive_pathfile
@@ -16103,7 +16112,7 @@ LoadDatabase()
 
 	ShowAsProc database
 
-	# Must set these prior to calling RefreshArchive()
+	# NOTE: Must set these prior to calling RefreshArchive()
 
 	local archive_name=database
 	local archive_pathfile=$r_packages_archive_pathfile
