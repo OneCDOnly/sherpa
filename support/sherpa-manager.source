@@ -31,8 +31,9 @@
 # when calling ShowAs*() functions: separated before-and-after with single line spaces unless first-or-last line in a code block.
 #
 # Notes:
-#   If on-screen line-spacing is required, this should only be done by the next function to print output.
-#   Display functions should never finish by putting an empty line on-screen for spacing.
+#   * If on-screen line-spacing is required, this should only be done by the next function to print output.
+#   * Display functions should never finish by putting an empty line on-screen for spacing.
+#	* Comment lines should always be separated from code with whitespace lines. This doesn't apply to disabled code lines.
 
 set -o nounset -o pipefail
 shopt -s extglob
@@ -314,6 +315,23 @@ LoadConsts()
 	readonly r_file_change_threshold_minutes=60
 	readonly r_log_tail_lines=5000
 
+	# These are for formatting output to the message pipe enhanced log.
+
+	local date_field_longest_string='Tue 27 May 2025 4:55:42 PM EST '						# devdebug
+	readonly r_date_field_length=${#date_field_longest_string}								# devdebug
+
+	local tier_field_longest_string=independent												# devdebug
+	readonly r_tier_field_length=${#tier_field_longest_string}								# devdebug
+
+	local action_field_longest_string=reactivate											# devdebug
+	readonly r_action_field_length=${#action_field_longest_string}							# devdebug
+
+	local key1_field_longest_string=update													# devdebug
+	readonly r_key1_field_length=${#key1_field_longest_string}								# devdebug
+
+	local key2_field_longest_string=package													# devdebug
+	readonly r_key2_field_length=${#key2_field_longest_string}								# devdebug
+
 	}
 
 LoadDefaults()
@@ -475,7 +493,7 @@ LoadEnv()
 	readonly r_entware_type=$(GetQpkgEntwareType)
 	readonly r_this_package_ver=$(GetQpkgInstalledVer)
 
-	args=()						# Command-line argument array.
+	args=()										# Command-line argument array.
 	args_incomplete=()
 	qpkg_default_index=0
 	qpkg_index=0
@@ -523,18 +541,18 @@ LoadEnv()
 	readonly r_packages_archive_pathfile=$r_cache_path/packages.tar.gz
 	readonly r_packages_pathfile=$r_cache_path/packages
 
-	readonly r_prev_ipk_list_pathfile=$r_ipk_cache_path/ipk.list.save
+	readonly r_prev_ipk_list_pathfile=$r_ipk_cache_path/ipk-list.save
 
-	readonly r_prev_pip_list_pathfile=$r_pip_cache_path/pip.list.save
+	readonly r_prev_pip_list_pathfile=$r_pip_cache_path/pip-list.save
 
 	readonly r_oom_log_pathfile=$r_logs_path/oom.log
 	readonly r_ram_freeused_pathfile=$r_logs_path/ram.freeused
 	readonly r_ramfs_freespace_pathfile=$r_logs_path/ramfs.freespace
 	readonly r_screen_sessions_pathfile=$r_logs_path/screen.sessions
-	readonly r_session_action_results_pathfile=$r_logs_path/session.action.results.log
-	readonly r_session_archive_pathfile=$r_logs_path/session.archive.log
-	readonly r_session_last_pathfile=$r_logs_path/session.last.log
-	readonly r_session_tail_pathfile=$r_logs_path/session.tail.log
+	readonly r_session_action_results_pathfile=$r_logs_path/session-action-results.log
+	readonly r_session_archive_pathfile=$r_logs_path/session-archive.log
+	readonly r_session_last_pathfile=$r_logs_path/session-last.log
+	readonly r_session_tail_pathfile=$r_logs_path/session-tail.log
 
 	sess_active_pathfile=$r_this_package_path/session.$$.active.log
 
@@ -552,8 +570,8 @@ LoadEnv()
 	# Ephemeral files.
 
 	readonly r_abort_actions_pathfile=$r_qpkg_states_path/abort.action
-	readonly r_action_msg_pipe=$r_qpkg_states_path/action.messages.pipe
-	readonly r_action_msg_pipe_log_pathfile=$r_logs_path/action.messages.pipe.log			# devdebug
+	readonly r_action_msg_pipe=$r_qpkg_states_path/action-messages.pipe
+	readonly r_action_msg_pipe_log_pathfile=$r_logs_path/action-messages-pipe-enhanced.log			# devdebug
 	readonly r_report_output_pathfile=$r_reports_path/report.ansi
 
 	# Entware
@@ -1657,11 +1675,10 @@ ProcAction()
 				ReadFromMsgPipe msg1_key msg1_value msg2_key msg2_value
 
 				case $msg1_key in
-					env)			# Change the state of the parent environment.
-						eval "$msg1_value"	# Run this as executable.
-
+					run)				# Run a command string in the parent environment.
+						eval "$msg1_value"
 						;;
-					change)			# Change the state of a single QPKG in the parent shell.
+					change)				# Change the state of a single QPKG in the parent shell.
 						while true; do
 							for state in "${r_qpkg_is_states[@]}"; do
 								case $msg1_value in
@@ -1702,9 +1719,8 @@ ProcAction()
 							DebugAsWarn "unidentified change request in message queue: '$msg1_value'"
 							break
 						done
-
 						;;
-					state)			# Update the state of a single action fork in the parent shell.
+					update)				# Update the parent shell with the current progress of a single action fork.
 						case $msg1_value in
 							ok)			# Completed OK (wonderful!)
 								[[ $r_action != status ]] && ((ok_count++))		# No-need to count result of `status` checks.
@@ -1747,7 +1763,7 @@ ProcAction()
 								done
 								;;
 							*)
-								DebugAsWarn "unidentified state in message queue: '$msg1_value'"
+								DebugAsWarn "unidentified update in message queue: '$msg1_value'"
 						esac
 						;;
 					*)
@@ -8695,24 +8711,24 @@ ShowQPKGList()
 
 	}
 
-SendParentChangeEnv()
+SendParentCommand()
 	{
 
-	# Send a message into message stream to change a parent environment variable or variables.
+	# Send a command string into message stream to be executed in the parent environment.
 
 	# This function is only called from within async functions.
 
 	# Inputs: (local)
 	#   $1 = action request
 
-	WriteToMsgPipe env "$1"
+	WriteToMsgPipe run "$1"
 
 	}
 
 SendPackageStateChange()
 	{
 
-	# Send a message into message stream to change the state of this QPKG to $1 in parent environment.
+	# Send a message into message stream to change the state of this QPKG to $1 in the parent environment.
 
 	# This might be: `ISstarted`, `SCNTupgradable`, etc ...
 	# This function is only called from within async functions.
@@ -8729,7 +8745,7 @@ SendPackageStateChange()
 
 	}
 
-SendActionStateChange()
+SendActionStateUpdate()
 	{
 
 	# Send a message into message stream to update parent environment with the status of the current action for $qpkg_name.
@@ -8745,7 +8761,7 @@ SendActionStateChange()
 
 	[[ -n ${1:-} ]] || return
 
-	WriteToMsgPipe state "$1" package "$qpkg_name"
+	WriteToMsgPipe update "$1" package "$qpkg_name"
 
 	}
 
@@ -8828,7 +8844,12 @@ AppendToMsgPipeEnhancedLog()																# devdebug
 	#	$_msg1_value
 	#	$_msg2_key
 	#	$_msg2_value
+	#	$r_action_field_length
 	#	$r_action_msg_pipe_log_pathfile
+	#	$r_date_field_length
+	#	$r_key1_field_length
+	#	$r_key2_field_length
+	#	$r_tier_field_length
 
 	# Inputs: (local)
 	#	$1 (optional) : custom message
@@ -8836,57 +8857,57 @@ AppendToMsgPipeEnhancedLog()																# devdebug
 	# Outputs: (global)
 	#	stdout -> $r_action_msg_pipe_log_pathfile
 
-	local a=$(ExpandMsgPipeShortcodes "${_msg1_value:-null}")							# devdebug
+	local a=$(ExpandMsgPipeShortcodes "${_msg1_value:-null}")								# devdebug
 
 	if [[ -n ${1:-} ]]; then																# devdebug
-		printf '[%-31s] %s\n' "$(ConvertNowToFullDate)" "$1"								# devdebug
-	elif [[ $_msg1_key = env ]]; then														# devdebug
-		printf '[%-31s] tier: %-12s action: %-11s key1: %-8s value1: %s\n' "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "'$a'"																									# devdebug
+		printf "[%-${r_date_field_length}s] %s\n" "$(ConvertNowToFullDate)" "$1"			# devdebug
+	elif [[ $_msg1_key = run ]]; then														# devdebug
+		printf "[%-${r_date_field_length}s] tier:%-${r_tier_field_length}s action:%-${r_action_field_length}s key1:%-${r_key1_field_length}s val1:%s\n" "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "'$a'"					# devdebug
+	elif [[ $_msg1_key = state || $msg1_key = update ]]; then								# devdebug
+		printf "[%-${r_date_field_length}s] tier:%-${r_tier_field_length}s action:%-${r_action_field_length}s key1:%-${r_key1_field_length}s val1:%-38s key2:%-${r_key2_field_length}s val2:%s\n" "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "$a" "$_msg2_key" "$_msg2_value" # devdebug
 	elif [[ $_msg2_key = null && $_msg2_value = null ]]; then								# devdebug
-		printf '[%-31s] tier: %-12s action: %-11s key1: %-8s value1: %s\n' "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "$a"																									# devdebug
-	elif [[ $_msg1_key = state ]]; then														# devdebug
-		printf '[%-31s] tier: %-12s action: %-11s key1: %-8s value1: %-38s key2: %-10s value2: %s\n' "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "$a" "$_msg2_key" "$_msg2_value"										# devdebug
+		printf "[%-${r_date_field_length}s] tier:%-${r_tier_field_length}s action:%-${r_action_field_length}s key1:%-${r_key1_field_length}s val1:%s\n" "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "$a"					# devdebug
 	else																					# devdebug
-		printf '[%-31s] tier: %-12s action: %-11s key1: %-8s value1: %-38s key2: %-10s value2: %s\n' "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "'$a'" "$_msg2_key" "$_msg2_value"										# devdebug
+		printf "[%-${r_date_field_length}s] tier:%-${r_tier_field_length}s action:%-${r_action_field_length}s key1:%-${r_key1_field_length}s val1:%-38s key2:%-${r_key2_field_length}s val2:%s\n" "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "'$a'" "$_msg2_key" "$_msg2_value" # devdebug
 	fi																						# devdebug
 
 	} >> "$r_action_msg_pipe_log_pathfile"													# devdebug
 
-ExpandMsgPipeShortcodes()
-	{
+ExpandMsgPipeShortcodes()																	# devdebug
+	{																						# devdebug
 
-	[[ -n $1 ]] || return
+	[[ -n $1 ]] || return																	# devdebug
 
-	case $1 in
-		ok)
-			printf 'completed ok'
-			;;
-		er)
-			printf 'completed with errors'
-			;;
-		so)
-			printf 'skipped but ok'
-			;;
-		sk)
-			printf skipped
-			;;
-		se)
-			printf 'skipped with errors'
-			;;
-		sa)
-			printf 'skipped and abort'
-			;;
-		en)
-			printf entry
-			;;
-		ex)
-			printf exit
-			;;
-		*)
-			printf '%s' "$1"
-	esac
+	case $1 in																				# devdebug
+		ok)																					# devdebug
+			printf 'completed ok'															# devdebug
+			;;																				# devdebug
+		er)																					# devdebug
+			printf 'completed with errors'													# devdebug
+			;;																				# devdebug
+		so)																					# devdebug
+			printf 'skipped but ok'															# devdebug
+			;;																				# devdebug
+		sk)																					# devdebug
+			printf skipped																	# devdebug
+			;;																				# devdebug
+		se)																					# devdebug
+			printf 'skipped with errors'													# devdebug
+			;;																				# devdebug
+		sa)																					# devdebug
+			printf 'skipped and abort'														# devdebug
+			;;																				# devdebug
+		en)																					# devdebug
+			printf entry																	# devdebug
+			;;																				# devdebug
+		ex)																					# devdebug
+			printf exit																		# devdebug
+			;;																				# devdebug
+		*)																					# devdebug
+			printf '%s' "$1"																# devdebug
+	esac																					# devdebug
 
-	}
+	}																						# devdebug
 
 FindNextFD()
 	{
@@ -8919,14 +8940,14 @@ MarkActionForkAsEntry()
 	{
 
 	[[ -n ${proc_queued_pathfile:-} && -e $proc_queued_pathfile ]] && mv "$proc_queued_pathfile" "$proc_work_pathfile"
-	SendActionStateChange en
+	SendActionStateUpdate en
 
 	}
 
 MarkActionForkAsExit()
 	{
 
-	SendActionStateChange ex
+	SendActionStateUpdate ex
 
 	}
 
@@ -8934,7 +8955,7 @@ MarkActionForkAsOk()
 	{
 
 	[[ -n $proc_work_pathfile && -e $proc_work_pathfile ]] && mv "$proc_work_pathfile" "$proc_ok_pathfile"
-	SendActionStateChange ok
+	SendActionStateUpdate ok
 
 	}
 
@@ -8942,7 +8963,7 @@ MarkActionForkAsError()
 	{
 
 	[[ -n $proc_work_pathfile && -e $proc_work_pathfile ]] && mv "$proc_work_pathfile" "$proc_fail_pathfile"
-	SendActionStateChange er
+	SendActionStateUpdate er
 
 	}
 
@@ -8950,7 +8971,7 @@ MarkActionForkAsSkippedOk()
 	{
 
 	[[ -n $proc_work_pathfile && -e $proc_work_pathfile ]] && mv "$proc_work_pathfile" "$proc_skip_ok_pathfile"
-	SendActionStateChange so
+	SendActionStateUpdate so
 
 	}
 
@@ -8958,7 +8979,7 @@ MarkActionForkAsSkipped()
 	{
 
 	[[ -n $proc_work_pathfile && -e $proc_work_pathfile ]] && mv "$proc_work_pathfile" "$proc_skip_pathfile"
-	SendActionStateChange sk
+	SendActionStateUpdate sk
 
 	}
 
@@ -8966,7 +8987,7 @@ MarkActionForkAsSkippedError()
 	{
 
 	[[ -n $proc_work_pathfile && -e $proc_work_pathfile ]] && mv "$proc_work_pathfile" "$proc_skip_error_pathfile"
-	SendActionStateChange se
+	SendActionStateUpdate se
 
 	}
 
@@ -8974,7 +8995,7 @@ MarkActionForkAsSkippedAbort()
 	{
 
 	[[ -n $proc_work_pathfile && -e $proc_work_pathfile ]] && mv "$proc_work_pathfile" "$proc_skip_abort_pathfile"
-	SendActionStateChange sa
+	SendActionStateUpdate sa
 
 	}
 
@@ -9648,6 +9669,7 @@ SaveActionResultToLog()
 	local -r r_action_times_pathfile=$r_action_times_path/$r_clean_action.milliseconds
 
 	# Add new action results entry.
+
 	echo "$r_starttime|$r_action|$r_qty|$r_name|$r_package_type|$r_result|$r_duration|$r_reason" >> "$r_session_action_results_pathfile"
 
 	# Remove previous action duration entry if one exists.
@@ -9657,6 +9679,7 @@ SaveActionResultToLog()
 	fi
 
 	# Add new action duration entry.
+
 	echo "$r_name|$r_duration" >> "$r_action_times_pathfile"
 
 	case $r_result in
@@ -9900,8 +9923,8 @@ _QPKG:install_()
 		SaveActionResultToLog QPKG "$qpkg_name" install '' ok "v$(GetQpkgInstalledVer)"
 
 		if [[ $qpkg_name = Entware ]]; then
-			SendParentChangeEnv ModPathToEntware
-			SendParentChangeEnv _UpdateEntwarePackageList_
+			SendParentCommand ModPathToEntware
+			SendParentCommand _UpdateEntwarePackageList_
 			PatchEntwareService
 
 			# Shift all files from original [/opt] into new [/opt]
@@ -9913,7 +9936,7 @@ _QPKG:install_()
 			fi
 		fi
 
-		IsOsCanSignedPackages && SendParentChangeEnv "QPKGs-ACsign-to:Add $qpkg_name"
+		IsOsCanSignedPackages && SendParentCommand "QPKGs-ACsign-to:Add $qpkg_name"
 		MarkActionForkAsOk
 		z=0   # Remap to zero.
 	else
@@ -10200,8 +10223,8 @@ _QPKG:uninstall_()
 			DebugAsDone 'removed icon information from App Center'
 
 			if [[ $qpkg_name = Entware ]]; then
-				SendParentChangeEnv ModPathToEntware
-				SendParentChangeEnv SetCapabilities
+				SendParentCommand ModPathToEntware
+				SendParentCommand SetCapabilities
 				SetCapabilities
 			fi
 
@@ -10290,8 +10313,8 @@ _QPKG:activate_()
 		SaveActionResultToLog QPKG "$qpkg_name" activate '' ok
 
 		if [[ $qpkg_name = Entware ]]; then
-			SendParentChangeEnv ModPathToEntware
-			SendParentChangeEnv SetCapabilities
+			SendParentCommand ModPathToEntware
+			SendParentCommand SetCapabilities
 			SetCapabilities
 		fi
 
@@ -10457,8 +10480,8 @@ _QPKG:deactivate_()
 		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' ok
 
 		if [[ $qpkg_name = Entware ]]; then
-			SendParentChangeEnv ModPathToEntware
-			SendParentChangeEnv SetCapabilities
+			SendParentCommand ModPathToEntware
+			SendParentCommand SetCapabilities
 			SetCapabilities
 		fi
 
@@ -11002,7 +11025,7 @@ _QPKG:sign_()
 		MarkActionForkAsOk
 	else
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' er "$(Parenthesise "$z") but don't know why. Please report this as a bug"
-		SendParentChangeEnv 'show_suggest_raise_issue=true'
+		SendParentCommand 'show_suggest_raise_issue=true'
 		MarkActionForkAsError
 		z=1   # Remap to 1.
 	fi
@@ -15805,10 +15828,10 @@ SetColourisation()
 
 	if [[ $r_colourful_default = true ]]; then
 		colourful=true
-		SendParentChangeEnv 'colourful=true'
+		SendParentCommand 'colourful=true'
 	else
 		colourful=false
-		SendParentChangeEnv 'colourful=false'
+		SendParentCommand 'colourful=false'
 	fi
 
 	}
