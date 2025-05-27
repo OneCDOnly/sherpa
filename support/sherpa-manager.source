@@ -1425,7 +1425,7 @@ ProcActions()
 	local -i tier_index=0
 
 	rm -f "$r_session_action_results_pathfile" 2>/dev/null
-	OpenMsgPipeLog												# devdebug
+	OpenMsgPipeEnhancedLog												# devdebug
 
 	# -> Package preparation phase <-
 
@@ -1539,7 +1539,7 @@ ProcActions()
 	fi
 
 	show_action_results_report=true
-	CloseMsgPipeLog												# devdebug
+	CloseMsgPipeEnhancedLog												# devdebug
 
 	FuncExit
 
@@ -1704,37 +1704,40 @@ ProcAction()
 						done
 
 						;;
-					status)			# Update the status of a single action fork in the parent shell.
+					state)			# Update the state of a single action fork in the parent shell.
 						case $msg1_value in
-							ok)		# Completed OK (wonderful!)
+							completed-ok)		# Completed OK (wonderful!)
 								[[ $r_action != status ]] && ((ok_count++))		# No-need to count result of `status` checks.
 								;;
-							so)		# Action was skipped, but this is normal (no-big-deal).
+							completed-error)	# Action failed (uh-oh).
+								((fail_count++))
+								;;
+							skipped-ok)			# Action was skipped, but this is normal (no-big-deal).
 								((skip_ok_count++))
 								;;
-							sk)		# Action was skipped (and there's a good reason for it).
+							skipped)			# Action was skipped (and there's a good reason for it).
 								((skip_count++))
 								;;
-							se)		# Action was skipped due to error prior to action being attempted (might be a big-deal).
+							skipped-error)		# Action was skipped due to error prior to action being attempted (might be a big-deal).
 								((skip_error_count++))
 								;;
-							sa)		# Action was skipped and must immediately abort (don't attempt this action again).
+							skipped-abort)		# Action was skipped and must immediately abort (don't attempt this action again).
 								((skip_abort_count++))
 								/bin/touch "$r_abort_actions_pathfile"
-								;;
-							er)		# Action failed (uh-oh).
-								((fail_count++))
 						esac
 
 						case $msg1_value in
-							ok|so|sk|se|sa|er)
+							entry)
+								:		# Do nothing.
+								;;
+							completed-ok|completed-error|skipped-ok|skipped|skipped-error|skipped-abort)
 								[[ $(type -t QPKGs-AC${r_action}-to:Init) = function ]] && QPKGs-AC${r_action}-to:Remove "$msg2_value"
 								[[ $(type -t QPKGs-AC${r_action}-${msg1_value}:Init) = function ]] && QPKGs-AC${r_action}-${msg1_value}:Add "$msg2_value"
 
 								# Also add to 'done' list.
 								[[ $(type -t QPKGs-AC${r_action}-dn:Init) = function ]] && QPKGs-AC${r_action}-dn:Add "$msg2_value"
 								;;
-							ex)		# Action is about to exit.
+							exit)		# Action is about to exit.
 								for package_index in "${!target_packages[@]}"; do
 									if [[ ${target_packages[package_index]} = "$msg2_value" ]]; then
 										unset 'target_packages[package_index]'
@@ -1743,7 +1746,7 @@ ProcAction()
 								done
 								;;
 							*)
-								DebugAsWarn "unidentified status in message queue: '$msg1_value'"
+								DebugAsWarn "unidentified state in message queue: '$msg1_value'"
 						esac
 
 						;;
@@ -4079,7 +4082,7 @@ _ExecOneActionWithManyForks_()
 	#   $2 = an array of QPKG names to process with $1
 
 	# Inputs: (global)
-	#   $fork_count
+	#   $work_count
 	#   $max_forks
 	#	$r_abort_actions_pathfile
 
@@ -4096,13 +4099,13 @@ _ExecOneActionWithManyForks_()
 	for qpkg_name in "${c[@]}"; do
 		[[ ! -e $r_abort_actions_pathfile ]] || break
 
-		while [[ $fork_count -ge $max_forks ]]; do  	# Don't fork until an empty spot becomes available.
+		while [[ $work_count -ge $max_forks ]]; do  	# Don't fork until an empty spot becomes available.
 			[[ ! -e $r_abort_actions_pathfile ]] || break 2
 			sleep .2
 			UpdateActionForkProgress
 		done
 
-		MarkActionForkAsStarted 						# Create runfile here (it takes too-long to appear if created in async function).
+		MarkActionForkAsQueued 							# Create runfile here (it takes too-long to appear if created in async function).
 		SetQpkgIndex
 
 		(	# Keep updated $pidfile in a subshell, so the one for this function doesn't change.
@@ -4118,7 +4121,7 @@ _ExecOneActionWithManyForks_()
 	# Monitoring loop.
 	# All action forks have launched, now wait for them to exit.
 
-	while [[ $fork_count -gt 0 ]]; do
+	while [[ $work_count -gt 0 ]]; do
 		[[ ! -e $r_abort_actions_pathfile ]] || break
 		sleep .2
 		UpdateActionForkProgress						# Update display while running forks complete their tasks.
@@ -6763,12 +6766,13 @@ InitActionForkCounters()
 	# Outputs: (global)
 	#	$proc_counts_path
 	#	$proc_fail_count_path
-	#	$proc_fork_count_path
 	#	$proc_ok_count_path
+	#	$proc_queued_count_path
 	#	$proc_skip_abort_count_path
 	#	$proc_skip_count_path
 	#	$proc_skip_error_count_path
 	#	$proc_skip_ok_count_path
+	#	$proc_work_count_path
 
 	MakePath "$r_action_counts_path" 'action fork counters'
 	proc_counts_path=$(/bin/mktemp -d "$r_action_counts_path"/"${FUNCNAME[1]}"_XXXXXX)
@@ -6777,20 +6781,22 @@ InitActionForkCounters()
 	EraseForkCountPaths
 
 	proc_fail_count_path=$proc_counts_path/fail.count
-	proc_fork_count_path=$proc_counts_path/fork.count
 	proc_ok_count_path=$proc_counts_path/ok.count
+	proc_queued_count_path=$proc_counts_path/queued.count
 	proc_skip_abort_count_path=$proc_counts_path/skip.abort.count
 	proc_skip_count_path=$proc_counts_path/skip.count
 	proc_skip_error_count_path=$proc_counts_path/skip.error.count
 	proc_skip_ok_count_path=$proc_counts_path/skip.ok.count
+	proc_work_count_path=$proc_counts_path/work.count
 
 	MakePath "$proc_fail_count_path" 'forks failed count'
-	MakePath "$proc_fork_count_path" 'fork count'
 	MakePath "$proc_ok_count_path" 'forks completed OK count'
+	MakePath "$proc_queued_count_path" 'forks queued count'
 	MakePath "$proc_skip_abort_count_path" 'forks skipped-aborted count'
 	MakePath "$proc_skip_count_path" 'forks skipped count'
 	MakePath "$proc_skip_error_count_path" 'forks skipped-error count'
 	MakePath "$proc_skip_ok_count_path" 'forks skipped-OK count'
+	MakePath "$proc_work_count_path" 'fork entry count'
 
 	InitProgress
 
@@ -6802,22 +6808,24 @@ IncrementActionForkIndex()
 	# Inputs: (global)
 	#	$fork_index
 	#	$proc_fail_count_path
-	#	$proc_fork_count_path
 	#	$proc_ok_count_path
+	#	$proc_queued_count_path
 	#	$proc_skip_abort_count_path
 	#	$proc_skip_count_path
 	#	$proc_skip_error_count_path
 	#	$proc_skip_ok_count_path
+	#	$proc_work_count_path
 
 	# Outputs: (global)
 	#	$fork_index
 	#	$proc_fail_pathfile
-	#	$proc_fork_pathfile
 	#	$proc_ok_pathfile
+	#	$proc_queued_pathfile
 	#	$proc_skip_abort_pathfile
 	#	$proc_skip_error_pathfile
 	#	$proc_skip_ok_pathfile
 	#	$proc_skip_pathfile
+	#	$proc_work_pathfile
 
 	local a
 
@@ -6825,12 +6833,13 @@ IncrementActionForkIndex()
 	printf -v a '%02d' "$fork_index"
 
 	proc_fail_pathfile=$proc_fail_count_path/$a
-	proc_fork_pathfile=$proc_fork_count_path/$a
+	proc_queued_pathfile=$proc_queued_count_path/$a
 	proc_ok_pathfile=$proc_ok_count_path/$a
 	proc_skip_abort_pathfile=$proc_skip_abort_count_path/$a
 	proc_skip_error_pathfile=$proc_skip_error_count_path/$a
 	proc_skip_ok_pathfile=$proc_skip_ok_count_path/$a
 	proc_skip_pathfile=$proc_skip_count_path/$a
+	proc_work_pathfile=$proc_work_count_path/$a
 
 	}
 
@@ -6839,29 +6848,32 @@ RefreshActionForkCounts()
 
 	# Inputs: (global)
 	#	$proc_fail_count_path
-	#	$proc_fork_count_path
 	#	$proc_ok_count_path
+	#	$proc_queued_count_path
 	#	$proc_skip_abort_count_path
 	#	$proc_skip_count_path
 	#	$proc_skip_error_count_path
 	#	$proc_skip_ok_count_path
+	#	$proc_work_count_path
 
 	# Outputs: (global)
 	#	$fail_count
-	#	$fork_count
 	#	$ok_count
+	#	$queued_count
 	#	$skip_abort_count
 	#	$skip_count
 	#	$skip_error_count
 	#	$skip_ok_count
+	#	$work_count
 
-	fork_count=$(FileCountAll "$proc_fork_count_path")
-	ok_count=$(FileCountAll "$proc_ok_count_path")
-	skip_count=$(FileCountAll "$proc_skip_count_path")
-	skip_ok_count=$(FileCountAll "$proc_skip_ok_count_path")
-	skip_error_count=$(FileCountAll "$proc_skip_error_count_path")
-	skip_abort_count=$(FileCountAll "$proc_skip_abort_count_path")
 	fail_count=$(FileCountAll "$proc_fail_count_path")
+	ok_count=$(FileCountAll "$proc_ok_count_path")
+	queued_count=$(FileCountAll "$proc_queued_count_path")
+	skip_abort_count=$(FileCountAll "$proc_skip_abort_count_path")
+	skip_count=$(FileCountAll "$proc_skip_count_path")
+	skip_error_count=$(FileCountAll "$proc_skip_error_count_path")
+	skip_ok_count=$(FileCountAll "$proc_skip_ok_count_path")
+	work_count=$(FileCountAll "$proc_work_count_path")
 
 	} &>/dev/null
 
@@ -6911,7 +6923,6 @@ UpdateActionForkProgress()
 	# Inputs: (global)
 	#	$fail_count
 	#	$fork_progress_prefix
-	#	$fork_count
 	#	$ok_count
 	#	$r_inhibit_display_pathfile
 	#	$skip_abort_count
@@ -6919,6 +6930,7 @@ UpdateActionForkProgress()
 	#	$skip_error_count
 	#	$skip_ok_count
 	#	$useropt_verbose
+	#	$work_count
 
 	local a=''
 	local b=''
@@ -6944,9 +6956,9 @@ UpdateActionForkProgress()
 		b+=$(TextBrightRed "$fail_count")' failed'
 	fi
 
-	if [[ $fork_count -gt 0 ]]; then
+	if [[ $work_count -gt 0 ]]; then
 		[[ -n $b ]] && b+=', '
-		b+=$(TextBrightYellow "$fork_count")' in-progress'
+		b+=$(TextBrightYellow "$work_count")' in-progress'
 	fi
 
 	[[ -n $b ]] && ShowAsProc "${fork_progress_prefix:-}" "$b"
@@ -8715,7 +8727,7 @@ SendPackageStateChange()
 
 	}
 
-SendActionStatus()
+SendActionStateChange()
 	{
 
 	# Send a message into message stream to update parent environment with the status of the current action for $qpkg_name.
@@ -8729,7 +8741,7 @@ SendActionStatus()
 	# Inputs: (global)
 	#	$qpkg_name
 
-	WriteToMsgPipe status "$1" package "$qpkg_name"
+	WriteToMsgPipe state "$1" package "$qpkg_name"
 
 	}
 
@@ -8777,35 +8789,59 @@ ReadFromMsgPipe()
 
 	eval "$1='${_msg1_key:-null}' $2='${_msg1_value:-null}' $3='${_msg2_key:-null}' $4='${_msg2_value:-null}'"
 
-	AppendToMsgPipeLog																		# devdebug
+	AppendToMsgPipeEnhancedLog																# devdebug
 
 	return 0
 
 	}
 
-OpenMsgPipeLog()																			# devdebug
+OpenMsgPipeEnhancedLog()																	# devdebug
 	{																						# devdebug
+
+	# Inputs: (global)
+	#	$r_action_msg_pipe_log_pathfile
 
 	[[ -e $r_action_msg_pipe_log_pathfile ]] && rm -f "$r_action_msg_pipe_log_pathfile"		# devdebug
 
-	AppendToMsgPipeLog 'opened new log session.'											# devdebug
+	AppendToMsgPipeEnhancedLog 'opened new log session.'									# devdebug
 
 	}																						# devdebug
 
-CloseMsgPipeLog()																			# devdebug
+CloseMsgPipeEnhancedLog()																	# devdebug
 	{																						# devdebug
 
-	AppendToMsgPipeLog 'closed log session.'												# devdebug
+	AppendToMsgPipeEnhancedLog 'closed log session.'										# devdebug
 
 	}																						# devdebug
 
-AppendToMsgPipeLog()																		# devdebug
+AppendToMsgPipeEnhancedLog()																# devdebug
 	{																						# devdebug
+
+	# Inputs: (global)
+	#	$r_action
+	#	$r_tier
+	#	$_msg1_key
+	#	$_msg1_value
+	#	$_msg2_key
+	#	$_msg2_value
+	#	$r_action_msg_pipe_log_pathfile
+
+	# Inputs: (local)
+	#	$1 (optional) : custom message
+
+	# Outputs: (global)
+	#	stdout -> $r_action_msg_pipe_log_pathfile
 
 	if [[ -n ${1:-} ]]; then																# devdebug
-		printf '[%s] %s\n' "$(ConvertNowToFullDate)" "$1"									# devdebug
+		printf '[%-31s] %s\n' "$(ConvertNowToFullDate)" "$1"								# devdebug
+	elif [[ $_msg1_key = env ]]; then														# devdebug
+		printf '[%-31s] tier: %-12s action: %-11s key1: %-8s value1: %s\n' "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "'$_msg1_value'"
+	elif [[ $_msg2_key = null && $_msg2_value = null ]]; then								# devdebug
+		printf '[%-31s] tier: %-12s action: %-11s key1: %-8s value1: %s\n' "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "$_msg1_value"
+	elif [[ $_msg1_key = state || $msg1_key = change ]]; then								# devdebug
+		printf '[%-31s] tier: %-12s action: %-11s key1: %-8s value1: %-38s key2: %-10s value2: %s\n' "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "$_msg1_value" "$_msg2_key" "$_msg2_value"								# devdebug
 	else																					# devdebug
-		printf '[%s] %s | %s | %s | %s | %s\n' "$(ConvertNowToFullDate)" "$r_action" "$_msg1_key" "$_msg1_value" "$_msg2_key" "$_msg2_value"	# devdebug
+		printf '[%-31s] tier: %-12s action: %-11s key1: %-8s value1: %-38s key2: %-10s value2: %s\n' "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "'$_msg1_value'" "$_msg2_key" "'$_msg2_value'"							# devdebug
 	fi																						# devdebug
 
 	} >> "$r_action_msg_pipe_log_pathfile"													# devdebug
@@ -8829,59 +8865,74 @@ FindNextFD()
 
 	}
 
-MarkActionForkAsStarted()
+MarkActionForkAsQueued()
 	{
 
 	IncrementActionForkIndex
-	[[ -n $proc_fork_pathfile ]] && /bin/touch "$proc_fork_pathfile"
+	[[ -n $proc_queued_pathfile ]] && /bin/touch "$proc_queued_pathfile"
+
+	}
+
+MarkActionForkAsEntry()
+	{
+
+	[[ -n ${proc_queued_pathfile:-} && -e $proc_queued_pathfile ]] && mv "$proc_queued_pathfile" "$proc_work_pathfile"
+	SendActionStateChange entry
+
+	}
+
+MarkActionForkAsExit()
+	{
+
+	SendActionStateChange exit
 
 	}
 
 MarkActionForkAsOk()
 	{
 
-	[[ -n $proc_fork_pathfile && -e $proc_fork_pathfile ]] && mv "$proc_fork_pathfile" "$proc_ok_pathfile"
-	SendActionStatus ok
+	[[ -n $proc_work_pathfile && -e $proc_work_pathfile ]] && mv "$proc_work_pathfile" "$proc_ok_pathfile"
+	SendActionStateChange completed-ok
 
 	}
 
 MarkActionForkAsSkippedOk()
 	{
 
-	[[ -n $proc_fork_pathfile && -e $proc_fork_pathfile ]] && mv "$proc_fork_pathfile" "$proc_skip_ok_pathfile"
-	SendActionStatus so
+	[[ -n $proc_work_pathfile && -e $proc_work_pathfile ]] && mv "$proc_work_pathfile" "$proc_skip_ok_pathfile"
+	SendActionStateChange skipped-ok
 
 	}
 
 MarkActionForkAsSkipped()
 	{
 
-	[[ -n $proc_fork_pathfile && -e $proc_fork_pathfile ]] && mv "$proc_fork_pathfile" "$proc_skip_pathfile"
-	SendActionStatus sk
+	[[ -n $proc_work_pathfile && -e $proc_work_pathfile ]] && mv "$proc_work_pathfile" "$proc_skip_pathfile"
+	SendActionStateChange skipped
 
 	}
 
 MarkActionForkAsSkippedError()
 	{
 
-	[[ -n $proc_fork_pathfile && -e $proc_fork_pathfile ]] && mv "$proc_fork_pathfile" "$proc_skip_error_pathfile"
-	SendActionStatus se
+	[[ -n $proc_work_pathfile && -e $proc_work_pathfile ]] && mv "$proc_work_pathfile" "$proc_skip_error_pathfile"
+	SendActionStateChange skipped-error
 
 	}
 
 MarkActionForkAsSkippedAbort()
 	{
 
-	[[ -n $proc_fork_pathfile && -e $proc_fork_pathfile ]] && mv "$proc_fork_pathfile" "$proc_skip_abort_pathfile"
-	SendActionStatus sa
+	[[ -n $proc_work_pathfile && -e $proc_work_pathfile ]] && mv "$proc_work_pathfile" "$proc_skip_abort_pathfile"
+	SendActionStateChange skipped-abort
 
 	}
 
 MarkActionForkAsError()
 	{
 
-	[[ -n $proc_fork_pathfile && -e $proc_fork_pathfile ]] && mv "$proc_fork_pathfile" "$proc_fail_pathfile"
-	SendActionStatus er
+	[[ -n $proc_work_pathfile && -e $proc_work_pathfile ]] && mv "$proc_work_pathfile" "$proc_fail_pathfile"
+	SendActionStateChange completed-error
 
 	}
 
@@ -8892,11 +8943,11 @@ MarkActionForkAsError()
 # 	#   $1 = process ID to write into file.
 #
 # 	# Inputs: (global)
-# 	#	$proc_fork_pathfile
+# 	#	$proc_work_pathfile
 #
-# 	[[ -n ${1:-} && -n ${proc_fork_pathfile:-} ]] || return
+# 	[[ -n ${1:-} && -n ${proc_work_pathfile:-} ]] || return
 #
-# 	echo "$1" > "$proc_fork_pathfile"
+# 	echo "$1" > "$proc_work_pathfile"
 #
 # 	}
 
@@ -14463,6 +14514,7 @@ FuncForkInit()
 	eval "$var_safe_name=$(ConvertNowToNanoseconds)"
 
 	DebugAsFuncEn
+	[[ ${FUNCNAME[1]} != _ExecOneActionWithManyForks_ ]] && MarkActionForkAsEntry	# Ignore entry into primary action launcher as it's not an action fork.
 
 	}
 
@@ -14482,7 +14534,7 @@ FuncForkExit()
 	local var_safe_name=${r_var_name//[.-]/_}
 	var_safe_name=${var_safe_name//:/_}
 
-	SendActionStatus ex
+	[[ ${FUNCNAME[1]} != _ExecOneActionWithManyForks_ ]] && MarkActionForkAsExit	# Ignore exit from primary action launcher as it's not an action fork.
 	DebugAsFuncEx "${1:-0}" "$(ConvertMillisecondsToFuncDuration "$(CalcMillisecondsDiffFromNanoseconds "${!var_safe_name}" "$(ConvertNowToNanoseconds)")")"
 
 	if [[ -n ${sess_active_pathfile:-} && -e $sess_active_pathfile ]]; then
