@@ -3374,7 +3374,7 @@ PatchEntwareService()
 	{
 
 	local -r r_tab_char=$'\t'
-	local -r r_prefix='# the following line was inserted by sherpa: https://git.io/sherpa'
+	local -r r_prefix='# The following line was inserted by sherpa: https://git.io/sherpa'
 	local -r r_package_init_pathfile=$(GetQpkgServicePathFile Entware)
 	local find=''
 	local insert=''
