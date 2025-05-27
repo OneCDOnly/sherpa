@@ -3,6 +3,7 @@ Observed issues:
 	* Newly-installed QPKGs can be disabled by QTS due to "no valid signature" in the few minutes between installing and signing.
 		- This signing check occurs at 7:50am each day, and when App Center is opened.
 		- Try signing packages before installing them?
+		- Done, perform testing.
 
 	* Add kill pause-then-recheck pid to Bazarr service script.
 

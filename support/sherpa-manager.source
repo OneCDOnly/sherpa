@@ -1361,70 +1361,53 @@ AssignQpkgsToActions()
 #	8. disable dependents
 #   9. uninstall dependents
 
-#  10. stop/deactivate plugins for dependents
-#  11. disable-auto-update plugins for dependents
-#  12. backup plugins for dependents
-#  13. disable plugins for dependents
-#  14. uninstall plugins for dependents
+#  10. stop/deactivate optionals
+#  11. disable-auto-update optionals
+#  12. backup optionals
+#  13. disable optionals
+#  14. uninstall optionals
 
 #  15. stop/deactivate independents
 #  16. disable-auto-update independents
 #  17. backup independents
 #  18. disable independents
 #  19. uninstall independents
-#
-#  20. stop/deactivate plugins for independents
-#  21. disable-auto-update plugins for independents
-#  22. backup plugins for independents
-#  23. disable plugins for independents
-#  24. uninstall plugins for independents
 
-#  25. upgrade plugins for independents
-#  26. reinstall plugins for independents
-#  27. install plugins for independents
-#  28. restore plugins for independents
-#  29. enable-auto-update plugins for independents
-#  30. clean plugins for independents
-#  31. enable plugins for independents
-#  32. restart/reactivate plugins for independents
-#  33. start/activate plugins for independents
+#  20. upgrade independents
+#  21. reinstall independents
+#  22. install independents
+#  23. restore independents
+#  24. enable-auto-update independents
+#  25. clean independents
+#  26. enable independents
+#  27. restart/reactivate independents
+#  28. start/activate independents
 
-#  34. upgrade independents
-#  35. reinstall independents
-#  36. install independents
-#  37. restore independents
-#  38. enable-auto-update independents
-#  39. clean independents
-#  40. enable independents
-#  41. restart/reactivate independents
-#  42. start/activate independents
+#  29. auxiliary packages (IPKs and PIPs) are managed here.
 
-#  43. auxiliary packages (IPKs and PIPs) are managed here.
+#  30. "sign" independents
 
-#  44. "sign" plugins for independents
-#  45. "sign" independents
+#  31. "sign" optionals
+#  32. upgrade optionals
+#  33. reinstall optionals
+#  34. install optionals
+#  35. restore optionals
+#  36. enable-auto-update optionals
+#  37. clean optionals
+#  38. enable optionals
+#  39. restart/reactivate optionals
+#  40. start/activate optionals
 
-#  46. upgrade plugins for dependents
-#  47. reinstall plugins for dependents
-#  48. install plugins for dependents
-#  49. restore plugins for dependents
-#  50. enable-auto-update plugins for dependents
-#  51. clean plugins for dependents
-#  52. "sign" plugins for dependents
-#  53. enable plugins for dependents
-#  54. restart/reactivate plugins for dependents
-#  55. start/activate plugins for dependents
-
-#  56. upgrade dependents
-#  57. reinstall dependents
-#  58. install dependents
-#  59. restore dependents
-#  60. enable-auto-update dependents
-#  61. clean dependents
-#  62. "sign" dependents
-#  63. enable dependents
-#  64. restart/reactivate dependents
-#  65. start/activate dependents
+#  41. "sign" dependents
+#  42. upgrade dependents
+#  43. reinstall dependents
+#  44. install dependents
+#  45. restore dependents
+#  46. enable-auto-update dependents
+#  47. clean dependents
+#  48. enable dependents
+#  49. restart/reactivate dependents
+#  50. start/activate dependents
 
 ProcActions()
 	{
@@ -1504,13 +1487,13 @@ ProcActions()
 
 		for tier in "${r_package_tiers[@]}"; do
 			if [[ $tier != auxiliary ]]; then
+				[[ $tier != independent ]] && ProcAction sign $tier QPKG '"sign"'
 				ProcAction upgrade $tier QPKG upgrade
 				ProcAction reinstall $tier QPKG reinstall
 				ProcAction install $tier QPKG install
 				ProcAction restore $tier QPKG restore
 				ProcAction enableau $tier QPKG 'enable auto-update'
 				ProcAction clean $tier QPKG clean
-				[[ $tier != independent ]] && ProcAction sign $tier QPKG '"sign"'
 				ProcAction enable $tier QPKG enable
 				ProcAction reactivate $tier QPKG reactivate
 				ProcAction activate $tier QPKG activate
@@ -4571,7 +4554,7 @@ _GeneratePacksReportDataLine_()
 
 	# * This function runs asynchronously *
 
-	# Input (local):
+	# Inputs: (local)
 	#   $1 (optional) = QPKG name.
 
 	# Inputs: (global)
@@ -7060,7 +7043,7 @@ ShowQPKGsMissing()
 
 	# Check installed QPKGs and check if they're missing. If-so, advise on-screen.
 
-	# Outputs (local):
+	# Outputs: (local)
 	#	$? = 0 if no packages are missing
 	#	$? = 1 if one-or-more packages are missing
 
@@ -7112,7 +7095,7 @@ ShowQPKGsNewVers()
 
 	# Check installed QPKGs and compare versions against upgradable array. If new versions are available, advise on-screen.
 
-	# Outputs (local):
+	# Outputs: (local)
 	#	$? = 0 if all packages are up-to-date
 	#	$? = 1 if one-or-more packages can be upgraded
 
@@ -9697,17 +9680,11 @@ SaveActionResultToLog()
 
 	}
 
-# * Action return codes (only recorded in debug log).
-# 	0 = ok
-# 	1 = sk: skipped
-# 	2 = so: skipped-ok
-# 	3 = sa: skipped-abort
-# 	4 = se: skipped-error
-
 _QPKG:reassign_()
 	{
 
 	# * This function runs asynchronously *
+
 	# Remove the `storeid` assignment for the QPKG named in $qpkg_name.
 
 	# Inputs: (global)
@@ -9762,6 +9739,7 @@ _QPKG:download_()
 	{
 
 	# * This function runs asynchronously *
+
 	# Download the QPKG named in $qpkg_name.
 
 	# Inputs: (global)
@@ -9842,6 +9820,7 @@ _QPKG:install_()
 	{
 
 	# * This function runs asynchronously *
+
 	# Install the QPKG named in $qpkg_name.
 
 	# Inputs: (global)
@@ -9936,7 +9915,6 @@ _QPKG:install_()
 			fi
 		fi
 
-		IsOsCanSignedPackages && SendParentCommand "QPKGs-ACsign-to:Add $qpkg_name"
 		MarkActionForkAsOk
 		z=0   # Remap to zero.
 	else
@@ -9955,6 +9933,7 @@ _QPKG:reinstall_()
 	{
 
 	# * This function runs asynchronously *
+
 	# Reinstall the QPKG named in $qpkg_name.
 
 	# Inputs: (global)
@@ -10028,6 +10007,7 @@ _QPKG:rebuild_()
 	{
 
 	# * This function runs asynchronously *
+
 	# Meta-action: rebuild the QPKG named in $qpkg_name. This is a `download`, `install` and `restore`, but only if a backup file exists for this QPKG.
 
 	# Inputs: (global)
@@ -10081,6 +10061,7 @@ _QPKG:upgrade_()
 	{
 
 	# * This function runs asynchronously *
+
 	# Upgrade the QPKG named in $qpkg_name.
 
 	# Inputs: (global)
@@ -10169,6 +10150,7 @@ _QPKG:uninstall_()
 	{
 
 	# * This function runs asynchronously *
+
 	# Uninstall the QPKG named in $qpkg_name.
 
 	# Inputs: (global)
@@ -10249,6 +10231,7 @@ _QPKG:activate_()
 	{
 
 	# * This function runs asynchronously *
+
 	# Activate/start the service-script for the QPKG named in $qpkg_name.
 
 	# Inputs: (global)
@@ -10337,6 +10320,7 @@ _QPKG:reactivate_()
 	{
 
 	# * This function runs asynchronously *
+
 	# Reactivate/restart the service-script for the QPKG named in $qpkg_name.
 
 	# Inputs: (global)
@@ -10416,6 +10400,7 @@ _QPKG:deactivate_()
 	{
 
 	# * This function runs asynchronously *
+
 	# Deactivate/stop the service-script for the QPKG named in $qpkg_name.
 
 	# Inputs: (global)
@@ -10503,6 +10488,7 @@ _QPKG:enable_()
 	{
 
 	# * This function runs asynchronously *
+
 	# Enable the QPKG named in $qpkg_name.
 
 	# Inputs: (global)
@@ -10556,6 +10542,7 @@ _QPKG:disable_()
 	{
 
 	# * This function runs asynchronously *
+
 	# Disable the QPKG named in $qpkg_name.
 
 	# Inputs: (global)
@@ -10614,6 +10601,7 @@ _QPKG:enableau_()
 	{
 
 	# * This function runs asynchronously *
+
 	# Enable auto-updating of the QPKG named in $qpkg_name.
 
 	# Inputs: (global)
@@ -10677,6 +10665,7 @@ _QPKG:disableau_()
 	{
 
 	# * This function runs asynchronously *
+
 	#  Disable auto-updating of the QPKG named in $qpkg_name.
 
 	# Inputs: (global)
@@ -10740,6 +10729,7 @@ _QPKG:backup_()
 	{
 
 	# * This function runs asynchronously *
+
 	#  Run a `backup` action for the QPKG named in $qpkg_name.
 
 	# Inputs: (global)
@@ -10800,6 +10790,7 @@ _QPKG:restore_()
 	{
 
 	# * This function runs asynchronously *
+
 	#  Run a `restore` action for the QPKG named in $qpkg_name.
 
 	# Inputs: (global)
@@ -10864,6 +10855,7 @@ _QPKG:clean_()
 	{
 
 	# * This function runs asynchronously *
+
 	#  Run a `clean` action for the QPKG named in $qpkg_name.
 
 	# Inputs: (global)
@@ -10923,6 +10915,7 @@ _QPKG:sign_()
 	{
 
 	# * This function runs asynchronously *
+
 	# Modify the QTS App Center certificate dB, and add an unsigned QPKG as-if it were signed. It adds a QNAP-generated certificate and digital signature to the certificate database for the unsigned QPKG.
 
 	# Running the code below makes the target QPKG effectively "signed", and allows user to install and run this QPKG with the 'Allow installation of applications without a valid digital signature' App Center option unticked.
@@ -11038,6 +11031,7 @@ _QPKG:status_()
 	{
 
 	# * This function runs asynchronously *
+
 	# Query a QPKG for its 'status'. Each compatible QPKG will return 0 if application process is active or ready-to-run, 0 if not.
 
 	# Inputs: (global)
