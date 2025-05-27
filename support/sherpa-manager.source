@@ -1706,38 +1706,39 @@ ProcAction()
 						;;
 					state)			# Update the state of a single action fork in the parent shell.
 						case $msg1_value in
-							completed-ok)		# Completed OK (wonderful!)
+							ok)			# Completed OK (wonderful!)
 								[[ $r_action != status ]] && ((ok_count++))		# No-need to count result of `status` checks.
 								;;
-							completed-error)	# Action failed (uh-oh).
+							er)			# Action failed (uh-oh).
 								((fail_count++))
 								;;
-							skipped-ok)			# Action was skipped, but this is normal (no-big-deal).
+							so)			# Action was skipped, but this is normal (no-big-deal).
 								((skip_ok_count++))
 								;;
-							skipped)			# Action was skipped (and there's a good reason for it).
+							sk)			# Action was skipped (and there's a good reason for it).
 								((skip_count++))
 								;;
-							skipped-error)		# Action was skipped due to error prior to action being attempted (might be a big-deal).
+							se)			# Action was skipped due to error prior to action being attempted (might be a big-deal).
 								((skip_error_count++))
 								;;
-							skipped-abort)		# Action was skipped and must immediately abort (don't attempt this action again).
+							sa)			# Action was skipped and must immediately abort (don't attempt this action again).
 								((skip_abort_count++))
 								/bin/touch "$r_abort_actions_pathfile"
 						esac
 
 						case $msg1_value in
-							entry)
-								:		# Do nothing.
+							en)
+								:		# Ignore this.
 								;;
-							completed-ok|completed-error|skipped-ok|skipped|skipped-error|skipped-abort)
+							ok|er|so|sk|se|sa)
+
 								[[ $(type -t QPKGs-AC${r_action}-to:Init) = function ]] && QPKGs-AC${r_action}-to:Remove "$msg2_value"
 								[[ $(type -t QPKGs-AC${r_action}-${msg1_value}:Init) = function ]] && QPKGs-AC${r_action}-${msg1_value}:Add "$msg2_value"
 
 								# Also add to 'done' list.
 								[[ $(type -t QPKGs-AC${r_action}-dn:Init) = function ]] && QPKGs-AC${r_action}-dn:Add "$msg2_value"
 								;;
-							exit)		# Action is about to exit.
+							ex)			# Action is about to exit.
 								for package_index in "${!target_packages[@]}"; do
 									if [[ ${target_packages[package_index]} = "$msg2_value" ]]; then
 										unset 'target_packages[package_index]'
@@ -1748,7 +1749,6 @@ ProcAction()
 							*)
 								DebugAsWarn "unidentified state in message queue: '$msg1_value'"
 						esac
-
 						;;
 					*)
 						DebugAsWarn "unidentified key in message queue: '$msg1_key'"
@@ -3711,7 +3711,7 @@ IPKs:upgrade()
 			SaveActionResultToLog IPK auxiliary upgrade "$total_count" ok
 		else
 			NoteIpkAcAsEr "$(IPKs-ACupgrade-to:Array)" upgrade
-			SaveActionResultToLog IPK auxiliary upgrade "$total_count" failed "$z"
+			SaveActionResultToLog IPK auxiliary upgrade "$total_count" er "$z"
 		fi
 
 		[[ ${useropt_terse:=true} = false && ${useropt_verbose:=false} = false ]] && echo
@@ -3815,7 +3815,7 @@ IPKs:install()
 			rm -f "$r_prev_ipk_list_pathfile.installing" 2>/dev/null
 		else
 			NoteIpkAcAsEr "$(IPKs-ACdownload-to:Array)" install
-			SaveActionResultToLog IPK auxiliary install "$total_count" failed "$z"
+			SaveActionResultToLog IPK auxiliary install "$total_count" er "$z"
 
 			if [[ -e $r_prev_ipk_list_pathfile.installing ]]; then
 				mv -f "$r_prev_ipk_list_pathfile.installing" "$r_prev_ipk_list_pathfile"
@@ -3925,7 +3925,7 @@ IPKs:downgrade()
 		else
 			((fail_count++))
 			NoteIpkAcAsEr "$(IPKs-ACdowngrade-to:Array)" downgrade
-			SaveActionResultToLog IPK auxiliary downgrade "$fail_count" failed "$z"
+			SaveActionResultToLog IPK auxiliary downgrade "$fail_count" er "$z"
 		fi
 
 		ShowAsPercentProgress "downgrade $desc" '' "$ok_count" 0 "$fail_count" "$total_count"
@@ -4006,7 +4006,7 @@ PIPs:install()
 			rm -f "$r_prev_pip_list_pathfile.installing" 2>/dev/null
 		else
 			((fail_count++))
-			SaveActionResultToLog PIP auxiliary install "$fail_count" failed "$z"
+			SaveActionResultToLog PIP auxiliary install "$fail_count" er "$z"
 
 			if [[ -e $r_prev_pip_list_pathfile.installing ]]; then
 				mv -f "$r_prev_pip_list_pathfile.installing" "$r_prev_pip_list_pathfile"
@@ -8271,8 +8271,8 @@ ReportAllActionResults()
 			DisplayAsHelpTitle "package action$(Pluralise "$d") started @ $(ConvertSecondsToTime "$a"), ended @ $(ConvertSecondsToTime "$e"), elapsed = $(ConvertSecondsToDuration "$(CalcAmountDiff "$a" "$e")")"
 
 			[[ $show_action_results_ok = true ]] && ReportActionResults ok
-			[[ $show_action_results_skipped = true ]] && ReportActionResults skipped
-			[[ $show_action_results_failed = true ]] && ReportActionResults failed
+			[[ $show_action_results_skipped = true ]] && ReportActionResults sk
+			[[ $show_action_results_failed = true ]] && ReportActionResults er
 			[[ $show_action_results_zero = true ]] && ShowZeroQpkgs
 
 			} > "$r_report_output_pathfile"
@@ -8308,7 +8308,7 @@ ReportActionResults()
 		# Obtain count of same results. Need to know if action applied to one QPKG or many.
 
 		while IFS='|' read -r datetime action quantity package_name package_type result duration reason; do
-			if [[ $result = "$1" ]] || [[ $1 = skipped && ($result = 'skipped-ok' || $result = 'skipped-error' || $result = 'skipped-abort') ]]; then
+			if [[ $result = "$1" ]] || [[ $1 = sk && ($result = so || $result = se || $result = sa) ]]; then
 				[[ $action = status && $useropt_show_previous_action_results_report = false ]] && continue		# Don't need to see the result of `status` checks unless a 'results' report has been requested.
 				((count++))
 				[[ $count -gt 1 ]] && break			# Two-or-more of the same action so must pluralise messages.
@@ -8322,10 +8322,10 @@ ReportActionResults()
 				ok)
 					DisplayAsHelpTitle "this package action completed $(TextBrightGreen OK):"
 					;;
-				skipped)
+				sk)
 					DisplayAsHelpTitle "this package action was $(TextBrightOrange skipped) $(Parenthesise 'and why'):"
 					;;
-				failed)
+				er)
 					DisplayAsHelpTitle "this package action $(TextBrightRed failed) $(Parenthesise 'and why'):"
 			esac
 		elif [[ $count -gt 1 ]]; then
@@ -8333,17 +8333,17 @@ ReportActionResults()
 				ok)
 					DisplayAsHelpTitle "these package actions completed $(TextBrightGreen OK):"
 					;;
-				skipped)
+				sk)
 					DisplayAsHelpTitle "these package actions were $(TextBrightOrange skipped) $(Parenthesise 'and why'):"
 					;;
-				failed)
+				er)
 					DisplayAsHelpTitle "these package actions $(TextBrightRed failed) $(Parenthesise 'and why'):"
 			esac
 		fi
 
 		if [[ $count -ge 1 ]]; then
 			while IFS='|' read -r datetime action quantity package_name package_type result duration reason; do
-				if [[ $result = "$1" ]] || [[ $1 = skipped && ($result = 'skipped-ok' || $result = 'skipped-error' || $result = 'skipped-abort') ]]; then
+				if [[ $result = "$1" ]] || [[ $1 = sk && ($result = so || $result = se || $result = sa) ]]; then
 					[[ $action = status && $useropt_show_previous_action_results_report = false ]] && continue		# Don't need to see the result of `status` checks unless a 'results' report has been requested.
 					ShowAsActionLogDetail "$datetime" "$package_name" "$action" "$result" "$duration" "$reason" "$package_type" "$quantity"
 				fi
@@ -8356,10 +8356,10 @@ ReportActionResults()
 			ok)
 				DisplayAsHelpTitle "no package actions completed $(TextBrightGreen OK)."
 				;;
-			skipped)
+			sk)
 				DisplayAsHelpTitle "no package actions were $(TextBrightOrange skipped)."
 				;;
-			failed)
+			er)
 				DisplayAsHelpTitle "no package actions $(TextBrightRed failed)."
 		esac
 	fi
@@ -8723,6 +8723,8 @@ SendPackageStateChange()
 	# Inputs: (global)
 	#	$qpkg_name
 
+	[[ -n ${1:-} ]] || return
+
 	WriteToMsgPipe change "$1" package "$qpkg_name"
 
 	}
@@ -8732,7 +8734,7 @@ SendActionStateChange()
 
 	# Send a message into message stream to update parent environment with the status of the current action for $qpkg_name.
 
-	# This can be: `ok`, `so`, `sk`, `se`, `er`, `ex`. `ab`.
+	# This can be: `ok`, `so`, `sk`, `se`, `er`, `en`, `ex`.
 	# This function is only called from within async functions.
 
 	# Inputs: (local)
@@ -8740,6 +8742,8 @@ SendActionStateChange()
 
 	# Inputs: (global)
 	#	$qpkg_name
+
+	[[ -n ${1:-} ]] || return
 
 	WriteToMsgPipe state "$1" package "$qpkg_name"
 
@@ -8832,19 +8836,57 @@ AppendToMsgPipeEnhancedLog()																# devdebug
 	# Outputs: (global)
 	#	stdout -> $r_action_msg_pipe_log_pathfile
 
+	local a=$(ExpandMsgPipeShortcodes "${_msg1_value:-null}")							# devdebug
+
 	if [[ -n ${1:-} ]]; then																# devdebug
 		printf '[%-31s] %s\n' "$(ConvertNowToFullDate)" "$1"								# devdebug
 	elif [[ $_msg1_key = env ]]; then														# devdebug
-		printf '[%-31s] tier: %-12s action: %-11s key1: %-8s value1: %s\n' "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "'$_msg1_value'"
+		printf '[%-31s] tier: %-12s action: %-11s key1: %-8s value1: %s\n' "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "'$a'"																									# devdebug
 	elif [[ $_msg2_key = null && $_msg2_value = null ]]; then								# devdebug
-		printf '[%-31s] tier: %-12s action: %-11s key1: %-8s value1: %s\n' "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "$_msg1_value"
-	elif [[ $_msg1_key = state || $msg1_key = change ]]; then								# devdebug
-		printf '[%-31s] tier: %-12s action: %-11s key1: %-8s value1: %-38s key2: %-10s value2: %s\n' "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "$_msg1_value" "$_msg2_key" "$_msg2_value"								# devdebug
+		printf '[%-31s] tier: %-12s action: %-11s key1: %-8s value1: %s\n' "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "$a"																									# devdebug
+	elif [[ $_msg1_key = state ]]; then														# devdebug
+		printf '[%-31s] tier: %-12s action: %-11s key1: %-8s value1: %-38s key2: %-10s value2: %s\n' "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "$a" "$_msg2_key" "$_msg2_value"										# devdebug
 	else																					# devdebug
-		printf '[%-31s] tier: %-12s action: %-11s key1: %-8s value1: %-38s key2: %-10s value2: %s\n' "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "'$_msg1_value'" "$_msg2_key" "'$_msg2_value'"							# devdebug
+		printf '[%-31s] tier: %-12s action: %-11s key1: %-8s value1: %-38s key2: %-10s value2: %s\n' "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "'$a'" "$_msg2_key" "$_msg2_value"										# devdebug
 	fi																						# devdebug
 
 	} >> "$r_action_msg_pipe_log_pathfile"													# devdebug
+
+ExpandMsgPipeShortcodes()
+	{
+
+	[[ -n $1 ]] || return
+
+	case $1 in
+		ok)
+			printf 'completed ok'
+			;;
+		er)
+			printf 'completed with errors'
+			;;
+		so)
+			printf 'skipped but ok'
+			;;
+		sk)
+			printf skipped
+			;;
+		se)
+			printf 'skipped with errors'
+			;;
+		sa)
+			printf 'skipped and abort'
+			;;
+		en)
+			printf entry
+			;;
+		ex)
+			printf exit
+			;;
+		*)
+			printf '%s' "$1"
+	esac
+
+	}
 
 FindNextFD()
 	{
@@ -8877,14 +8919,14 @@ MarkActionForkAsEntry()
 	{
 
 	[[ -n ${proc_queued_pathfile:-} && -e $proc_queued_pathfile ]] && mv "$proc_queued_pathfile" "$proc_work_pathfile"
-	SendActionStateChange entry
+	SendActionStateChange en
 
 	}
 
 MarkActionForkAsExit()
 	{
 
-	SendActionStateChange exit
+	SendActionStateChange ex
 
 	}
 
@@ -8892,39 +8934,7 @@ MarkActionForkAsOk()
 	{
 
 	[[ -n $proc_work_pathfile && -e $proc_work_pathfile ]] && mv "$proc_work_pathfile" "$proc_ok_pathfile"
-	SendActionStateChange completed-ok
-
-	}
-
-MarkActionForkAsSkippedOk()
-	{
-
-	[[ -n $proc_work_pathfile && -e $proc_work_pathfile ]] && mv "$proc_work_pathfile" "$proc_skip_ok_pathfile"
-	SendActionStateChange skipped-ok
-
-	}
-
-MarkActionForkAsSkipped()
-	{
-
-	[[ -n $proc_work_pathfile && -e $proc_work_pathfile ]] && mv "$proc_work_pathfile" "$proc_skip_pathfile"
-	SendActionStateChange skipped
-
-	}
-
-MarkActionForkAsSkippedError()
-	{
-
-	[[ -n $proc_work_pathfile && -e $proc_work_pathfile ]] && mv "$proc_work_pathfile" "$proc_skip_error_pathfile"
-	SendActionStateChange skipped-error
-
-	}
-
-MarkActionForkAsSkippedAbort()
-	{
-
-	[[ -n $proc_work_pathfile && -e $proc_work_pathfile ]] && mv "$proc_work_pathfile" "$proc_skip_abort_pathfile"
-	SendActionStateChange skipped-abort
+	SendActionStateChange ok
 
 	}
 
@@ -8932,7 +8942,39 @@ MarkActionForkAsError()
 	{
 
 	[[ -n $proc_work_pathfile && -e $proc_work_pathfile ]] && mv "$proc_work_pathfile" "$proc_fail_pathfile"
-	SendActionStateChange completed-error
+	SendActionStateChange er
+
+	}
+
+MarkActionForkAsSkippedOk()
+	{
+
+	[[ -n $proc_work_pathfile && -e $proc_work_pathfile ]] && mv "$proc_work_pathfile" "$proc_skip_ok_pathfile"
+	SendActionStateChange so
+
+	}
+
+MarkActionForkAsSkipped()
+	{
+
+	[[ -n $proc_work_pathfile && -e $proc_work_pathfile ]] && mv "$proc_work_pathfile" "$proc_skip_pathfile"
+	SendActionStateChange sk
+
+	}
+
+MarkActionForkAsSkippedError()
+	{
+
+	[[ -n $proc_work_pathfile && -e $proc_work_pathfile ]] && mv "$proc_work_pathfile" "$proc_skip_error_pathfile"
+	SendActionStateChange se
+
+	}
+
+MarkActionForkAsSkippedAbort()
+	{
+
+	[[ -n $proc_work_pathfile && -e $proc_work_pathfile ]] && mv "$proc_work_pathfile" "$proc_skip_abort_pathfile"
+	SendActionStateChange sa
 
 	}
 
@@ -9583,7 +9625,7 @@ SaveActionResultToLog()
 	#   $2 = package or group name				`SABnzbd`, `essential`
 	#   $3 = action								`download`, `activate`
 	#   $4 = quantity (optional, default 1)		number of packages affected
-	#   $5 = result								`ok`, `skipped-ok`, `skipped`, `failed`
+	#   $5 = result								`ok`, `so`, `sk`, `sa`, `er`
 	#   $6 (optional) = reason 					"file already exists in local cache"
 
 	# Inputs: (global)
@@ -9605,12 +9647,6 @@ SaveActionResultToLog()
 	local -r r_duration=$(CalcAmountDiff "$r_starttime" "$(ConvertNowToMilliseconds)")
 	local -r r_action_times_pathfile=$r_action_times_path/$r_clean_action.milliseconds
 
-	if [[ $2 = undefined ]]; then
-		ShowAsError "${FUNCNAME[0]}() was provided an undefined value for \$2"
-
-		return 1
-	fi
-
 	# Add new action results entry.
 	echo "$r_starttime|$r_action|$r_qty|$r_name|$r_package_type|$r_result|$r_duration|$r_reason" >> "$r_session_action_results_pathfile"
 
@@ -9623,14 +9659,14 @@ SaveActionResultToLog()
 	# Add new action duration entry.
 	echo "$r_name|$r_duration" >> "$r_action_times_pathfile"
 
-	case $4 in
-		ok|skipped-ok)
+	case $r_result in
+		ok|so)
 			DebugAsInfo "$r_reason"
 			;;
-		skipped)
+		sk)
 			DebugAsWarn "$r_reason"
 			;;
-		failed|skipped-@(error|abort))
+		er|se|sa)
 			DebugAsError "$r_reason"
 	esac
 
@@ -9640,10 +9676,10 @@ SaveActionResultToLog()
 
 # * Action return codes (only recorded in debug log).
 # 	0 = ok
-# 	1 = skipped
-# 	2 = skipped-ok
-# 	3 = skipped-abort
-# 	4 = skipped-error
+# 	1 = sk: skipped
+# 	2 = so: skipped-ok
+# 	3 = sa: skipped-abort
+# 	4 = se: skipped-error
 
 _QPKG:reassign_()
 	{
@@ -9667,15 +9703,15 @@ _QPKG:reassign_()
 	local -i z=0
 
 	if IsNtValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" reassign '' skipped 'not installed'
+		SaveActionResultToLog QPKG "$qpkg_name" reassign '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=1
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" reassign '' skipped 'incompatible author'
+		SaveActionResultToLog QPKG "$qpkg_name" reassign '' sk 'incompatible author'
 		MarkActionForkAsSkipped
 		z=1
 	elif [[ $(GetQpkgInstalledStoreID) = sherpa || $(GetQpkgInstalledStoreID) = undefined ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" reassign '' skipped 'already assigned to sherpa'
+		SaveActionResultToLog QPKG "$qpkg_name" reassign '' sk 'already assigned to sherpa'
 		MarkActionForkAsSkipped
 		z=1
 	fi
@@ -9690,7 +9726,7 @@ _QPKG:reassign_()
 		SaveActionResultToLog QPKG "$qpkg_name" reassign '' ok
 		MarkActionForkAsOk
 	else
-		SaveActionResultToLog QPKG "$qpkg_name" reassign '' failed "$z"
+		SaveActionResultToLog QPKG "$qpkg_name" reassign '' er "$z"
 		MarkActionForkAsError
 		z=1   # Remap to 1.
 	fi
@@ -9732,12 +9768,12 @@ _QPKG:download_()
 	IsOsCanSecureDownload || curl_options=' --insecure'
 
 	if [[ -z $r_remote_url || -z $r_remote_hash ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" download '' skipped 'NAS arch is incompatible'
+		SaveActionResultToLog QPKG "$qpkg_name" download '' sk 'NAS arch is incompatible'
 		MarkActionForkAsSkipped
 		z=1
 	elif IsFile "$r_local_pathfile"; then
 		if FileMatchesMD5 "$r_local_pathfile" "$r_remote_hash"; then
-			SaveActionResultToLog QPKG "$qpkg_name" download '' skipped-ok "existing file $(FormatFileName "$r_local_filename") checksum is correct"
+			SaveActionResultToLog QPKG "$qpkg_name" download '' so "existing file $(FormatFileName "$r_local_filename") checksum is correct"
 			MarkActionForkAsSkippedOk
 			z=2
 		else
@@ -9763,13 +9799,13 @@ _QPKG:download_()
 				SendPackageStateChange ISdownloaded
 				MarkActionForkAsOk
 			else
-				SaveActionResultToLog QPKG "$qpkg_name" download '' failed "cache file $(FormatFileName "$r_local_filename") has incorrect checksum"
+				SaveActionResultToLog QPKG "$qpkg_name" download '' er "cache file $(FormatFileName "$r_local_filename") has incorrect checksum"
 				SendPackageStateChange ISNTdownloaded
 				MarkActionForkAsError
 				z=1
 			fi
 		else
-			SaveActionResultToLog QPKG "$qpkg_name" download '' failed "$z"
+			SaveActionResultToLog QPKG "$qpkg_name" download '' er "$z"
 			MarkActionForkAsError
 			z=1   # Remap to 1 (last time I checked, 'curl' had 92 return codes).
 		fi
@@ -9805,23 +9841,23 @@ _QPKG:install_()
 	local -i z=0
 
 	if IsValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" install '' skipped 'already installed'
+		SaveActionResultToLog QPKG "$qpkg_name" install '' sk 'already installed'
 		MarkActionForkAsSkipped
 		z=1
 	elif IsQpkgInstalled && IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" install '' skipped 'incompatible author'
+		SaveActionResultToLog QPKG "$qpkg_name" install '' sk 'incompatible author'
 		MarkActionForkAsSkipped
 		z=1
 	elif ! IsQpkgDbArchOK "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" install '' skipped 'NAS arch is incompatible'
+		SaveActionResultToLog QPKG "$qpkg_name" install '' sk 'NAS arch is incompatible'
 		MarkActionForkAsSkipped
 		z=1
 	elif ! IsQpkgDbMinOSVerOk "$qpkg_name" || ! IsQpkgDbMaxOSVerOk "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" install '' skipped "$(GetOsName) version is incompatible"
+		SaveActionResultToLog QPKG "$qpkg_name" install '' sk "$(GetOsName) version is incompatible"
 		MarkActionForkAsSkipped
 		z=1
 	elif ! IsQpkgDbMinRAMOk "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" install '' skipped 'NAS has insufficient RAM installed'
+		SaveActionResultToLog QPKG "$qpkg_name" install '' sk 'NAS has insufficient RAM installed'
 		MarkActionForkAsSkipped
 		z=1
 	fi
@@ -9831,7 +9867,7 @@ _QPKG:install_()
 	local local_pathfile=$(GetQpkgDbPathFilename)
 
 	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" install '' skipped-error 'no local file found for processing: please report this issue'
+		SaveActionResultToLog QPKG "$qpkg_name" install '' se 'no local file found for processing: please report this issue'
 		MarkActionForkAsSkippedError
 		z=4
 	fi
@@ -9881,7 +9917,7 @@ _QPKG:install_()
 		MarkActionForkAsOk
 		z=0   # Remap to zero.
 	else
-		SaveActionResultToLog QPKG "$qpkg_name" install '' failed "$z"
+		SaveActionResultToLog QPKG "$qpkg_name" install '' er "$z"
 		MarkActionForkAsError
 		z=1   # Remap to 1.
 	fi
@@ -9913,15 +9949,15 @@ _QPKG:reinstall_()
 	local -i z=0
 
 	if IsNtValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' skipped "not already installed, please use 'install' instead."
+		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' sk "not already installed, please use 'install' instead."
 		MarkActionForkAsSkipped
 		z=1
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' skipped 'incompatible author'
+		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' sk 'incompatible author'
 		MarkActionForkAsSkipped
 		z=1
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' skipped "assigned to another repository, please 'reassign' it first"
+		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=1
 	fi
@@ -9931,7 +9967,7 @@ _QPKG:reinstall_()
 	local local_pathfile=$(GetQpkgDbPathFilename)
 
 	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' skipped-error 'no local file found for processing, please report this issue.'
+		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' se 'no local file found for processing, please report this issue.'
 		MarkActionForkAsSkippedError
 		z=4
 	fi
@@ -9954,7 +9990,7 @@ _QPKG:reinstall_()
 		MarkActionForkAsOk
 		z=0   # Remap to zero.
 	else
-		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' failed "$z"
+		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' er "$z"
 		MarkActionForkAsError
 		z=1   # Remap to 1.
 	fi
@@ -9984,23 +10020,23 @@ _QPKG:rebuild_()
 	local -i z=0
 
 	if IsValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' skipped "already installed, please use 'restore' instead"
+		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' sk "already installed, please use 'restore' instead"
 		MarkActionForkAsSkipped
 		z=1
 	elif IsQpkgInstalled && IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' skipped 'incompatible author'
+		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' sk 'incompatible author'
 		MarkActionForkAsSkipped
 		z=1
 	elif ! IsQpkgDbCanBackup; then
-		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' skipped 'does not support rebuild'
+		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' sk 'does not support rebuild'
 		MarkActionForkAsSkipped
 		z=1
 	elif ! IsQpkgBackupExist; then
-		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' skipped 'backup file does not exist'
+		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' sk 'backup file does not exist'
 		MarkActionForkAsSkipped
 		z=1
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' skipped "assigned to another repository, please 'reassign' it first"
+		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=1
 	fi
@@ -10039,19 +10075,19 @@ _QPKG:upgrade_()
 	local -i z=0
 
 	if IsNtValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' skipped 'not installed'
+		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=1
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' skipped 'incompatible author'
+		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' sk 'incompatible author'
 		MarkActionForkAsSkipped
 		z=1
 	elif ! QPKGs-ISupgradable.Exist "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' skipped 'no new QPKG is available'
+		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' sk 'no new QPKG is available'
 		MarkActionForkAsSkipped
 		z=1
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' skipped "assigned to another repository, please 'reassign' it first"
+		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=1
 	fi
@@ -10061,7 +10097,7 @@ _QPKG:upgrade_()
 	local local_pathfile=$(GetQpkgDbPathFilename)
 
 	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' skipped-error 'no local file found for processing, please report this issue'
+		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' se 'no local file found for processing, please report this issue'
 		MarkActionForkAsSkippedError
 		z=4
 	fi
@@ -10095,7 +10131,7 @@ _QPKG:upgrade_()
 		MarkActionForkAsOk
 		z=0   # Remap to zero.
 	else
-		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' failed "$z"
+		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' er "$z"
 		MarkActionForkAsError
 		z=1   # Remap to 1.
 	fi
@@ -10127,19 +10163,19 @@ _QPKG:uninstall_()
 	local -i z=0
 
 	if IsNtValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" uninstall '' skipped 'not installed'
+		SaveActionResultToLog QPKG "$qpkg_name" uninstall '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=1
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" uninstall '' skipped 'incompatible author'
+		SaveActionResultToLog QPKG "$qpkg_name" uninstall '' sk 'incompatible author'
 		MarkActionForkAsSkipped
 		z=1
 	elif [[ $qpkg_name = sherpa ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" uninstall '' skipped "it's needed here! 😉"
+		SaveActionResultToLog QPKG "$qpkg_name" uninstall '' sk "it's needed here! 😉"
 		MarkActionForkAsSkipped
 		z=1
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultToLog QPKG "$qpkg_name" uninstall '' skipped "assigned to another repository, please 'reassign' it first"
+		SaveActionResultToLog QPKG "$qpkg_name" uninstall '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=1
 	fi
@@ -10172,13 +10208,13 @@ _QPKG:uninstall_()
 			SendPackageStateChange ISNTactive
 			MarkActionForkAsOk
 		else
-			SaveActionResultToLog QPKG "$qpkg_name" uninstall '' failed "$z"
+			SaveActionResultToLog QPKG "$qpkg_name" uninstall '' er "$z"
 			MarkActionForkAsError
 			z=1   # Remap to 1.
 		fi
 	else
 		# Standard QPKG `.uninstall.sh` was not found, so can't continue with uninstallation (maybe force this instead with `rm -r` ?).
-		SaveActionResultToLog QPKG "$qpkg_name" uninstall '' failed "$(FormatFileName '.uninstall.sh') not found"
+		SaveActionResultToLog QPKG "$qpkg_name" uninstall '' er "$(FormatFileName '.uninstall.sh') not found"
 		MarkActionForkAsError
 	fi
 
@@ -10207,19 +10243,19 @@ _QPKG:activate_()
 	local -i z=0
 
 	if IsNtValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" activate '' skipped 'not installed'
+		SaveActionResultToLog QPKG "$qpkg_name" activate '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=1
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" activate '' skipped 'incompatible author'
+		SaveActionResultToLog QPKG "$qpkg_name" activate '' sk 'incompatible author'
 		MarkActionForkAsSkipped
 		z=1
 	elif IsNtQpkgEnabled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" activate '' skipped "not enabled, please 'enable' it first"
+		SaveActionResultToLog QPKG "$qpkg_name" activate '' sk "not enabled, please 'enable' it first"
 		MarkActionForkAsSkipped
 		z=1
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultToLog QPKG "$qpkg_name" activate '' skipped "assigned to another repository, please 'reassign' it first"
+		SaveActionResultToLog QPKG "$qpkg_name" activate '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=1
 	fi
@@ -10234,7 +10270,7 @@ _QPKG:activate_()
 	DebugAsProc "activating $(FormatPackageName)"
 
 	if [[ $service_pathfile = undefined ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" activate '' skipped-error 'QPKG service-script file undefined'
+		SaveActionResultToLog QPKG "$qpkg_name" activate '' se 'QPKG service-script file undefined'
 		MarkActionForkAsSkippedError
 
 		FuncForkExit 4
@@ -10262,7 +10298,7 @@ _QPKG:activate_()
 		SendPackageStateChange ISactive
 		MarkActionForkAsOk
 	else
-		SaveActionResultToLog QPKG "$qpkg_name" activate '' failed "$z"
+		SaveActionResultToLog QPKG "$qpkg_name" activate '' er "$z"
 		SendPackageStateChange ISNTactive
 		MarkActionForkAsError
 		z=1   # Remap to 1.
@@ -10295,19 +10331,19 @@ _QPKG:reactivate_()
 	local -i z=0
 
 	if IsNtValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' skipped 'not installed'
+		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=1
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' skipped 'incompatible author'
+		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' sk 'incompatible author'
 		MarkActionForkAsSkipped
 		z=1
 	elif IsNtQpkgEnabled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' skipped "not enabled, please 'enable' it first"
+		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' sk "not enabled, please 'enable' it first"
 		MarkActionForkAsSkipped
 		z=1
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' skipped "assigned to another repository, please 'reassign' it first"
+		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=1
 	fi
@@ -10322,7 +10358,7 @@ _QPKG:reactivate_()
 	DebugAsProc "reactivating $(FormatPackageName)"
 
 	if [[ $service_pathfile = undefined ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' skipped-error 'QPKG service-script file undefined'
+		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' se 'QPKG service-script file undefined'
 		MarkActionForkAsSkippedError
 
 		FuncForkExit 4
@@ -10342,7 +10378,7 @@ _QPKG:reactivate_()
 		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' ok
 		MarkActionForkAsOk
 	else
-		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' failed "$z"
+		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' er "$z"
 		MarkActionForkAsError
 		z=1   # Remap to 1.
 	fi
@@ -10374,19 +10410,19 @@ _QPKG:deactivate_()
 	local -i z=0
 
 	if IsNtValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' skipped 'not installed'
+		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=1
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' skipped 'incompatible author'
+		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' sk 'incompatible author'
 		MarkActionForkAsSkipped
 		z=1
 # 	elif [[ $qpkg_name = sherpa ]]; then
-# 		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' skipped "it's needed here! 😉"
+# 		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' sk "it's needed here! 😉"
 # 		MarkActionForkAsSkipped
 # 		z=1
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' skipped "assigned to another repository, please 'reassign' it first"
+		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=1
 	fi
@@ -10401,7 +10437,7 @@ _QPKG:deactivate_()
 	DebugAsProc "deactivating $(FormatPackageName)"
 
 	if [[ $service_pathfile = undefined ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' skipped-error 'QPKG service-script file undefined'
+		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' se 'QPKG service-script file undefined'
 		MarkActionForkAsSkippedError
 
 		FuncForkExit 4
@@ -10429,7 +10465,7 @@ _QPKG:deactivate_()
 		SendPackageStateChange ISNTactive
 		MarkActionForkAsOk
 	else
-		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' failed "$z"
+		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' er "$z"
 		MarkActionForkAsError
 		z=1   # Remap to 1.
 	fi
@@ -10459,19 +10495,19 @@ _QPKG:enable_()
 	local -i z=0
 
 	if IsNtValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" enable '' skipped 'not installed'
+		SaveActionResultToLog QPKG "$qpkg_name" enable '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=1
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" enable '' skipped 'incompatible author'
+		SaveActionResultToLog QPKG "$qpkg_name" enable '' sk 'incompatible author'
 		MarkActionForkAsSkipped
 		z=1
 	elif IsQpkgEnabled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" enable '' skipped 'already enabled'
+		SaveActionResultToLog QPKG "$qpkg_name" enable '' sk 'already enabled'
 		MarkActionForkAsSkipped
 		z=1
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultToLog QPKG "$qpkg_name" enable '' skipped "assigned to another repository, please 'reassign' it first"
+		SaveActionResultToLog QPKG "$qpkg_name" enable '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=1
 	fi
@@ -10512,23 +10548,23 @@ _QPKG:disable_()
 	local -i z=0
 
 	if IsNtValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" disable '' skipped 'not installed'
+		SaveActionResultToLog QPKG "$qpkg_name" disable '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=1
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" disable '' skipped 'incompatible author'
+		SaveActionResultToLog QPKG "$qpkg_name" disable '' sk 'incompatible author'
 		MarkActionForkAsSkipped
 		z=1
 	elif IsNtQpkgEnabled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" disable '' skipped 'already disabled'
+		SaveActionResultToLog QPKG "$qpkg_name" disable '' sk 'already disabled'
 		MarkActionForkAsSkipped
 		z=1
 # 	elif [[ $qpkg_name = sherpa ]]; then
-# 		SaveActionResultToLog QPKG "$qpkg_name" disable '' skipped "it's needed here! 😉"
+# 		SaveActionResultToLog QPKG "$qpkg_name" disable '' sk "it's needed here! 😉"
 # 		MarkActionForkAsSkipped
 # 		z=1
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultToLog QPKG "$qpkg_name" disable '' skipped "assigned to another repository, please 'reassign' it first"
+		SaveActionResultToLog QPKG "$qpkg_name" disable '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=1
 	fi
@@ -10572,23 +10608,23 @@ _QPKG:enableau_()
 	local -i z=0
 
 	if IsNtValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" enableau '' skipped 'not installed'
+		SaveActionResultToLog QPKG "$qpkg_name" enableau '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=1
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" enableau '' skipped 'incompatible author'
+		SaveActionResultToLog QPKG "$qpkg_name" enableau '' sk 'incompatible author'
 		MarkActionForkAsSkipped
 		z=1
 	elif [[ $qpkg_name = sherpa ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" enableau '' skipped 'auto-update is always enabled'
+		SaveActionResultToLog QPKG "$qpkg_name" enableau '' sk 'auto-update is always enabled'
 		MarkActionForkAsSkipped
 		z=1
 	elif ! IsQpkgDbCanRestartToUpdate "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" enableau '' skipped 'auto-update is unsupported'
+		SaveActionResultToLog QPKG "$qpkg_name" enableau '' sk 'auto-update is unsupported'
 		MarkActionForkAsSkipped
 		z=1
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultToLog QPKG "$qpkg_name" enableau '' skipped "assigned to another repository, please 'reassign' it first"
+		SaveActionResultToLog QPKG "$qpkg_name" enableau '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=1
 	fi
@@ -10605,7 +10641,7 @@ _QPKG:enableau_()
 		SaveActionResultToLog QPKG "$qpkg_name" enableau '' ok
 		MarkActionForkAsOk
 	else
-		SaveActionResultToLog QPKG "$qpkg_name" enableau '' failed "$z"
+		SaveActionResultToLog QPKG "$qpkg_name" enableau '' er "$z"
 		MarkActionForkAsError
 		z=1   # Remap to 1.
 	fi
@@ -10635,23 +10671,23 @@ _QPKG:disableau_()
 	local -i z=0
 
 	if IsNtValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" disableau '' skipped 'not installed'
+		SaveActionResultToLog QPKG "$qpkg_name" disableau '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=1
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" disableau '' skipped 'incompatible author'
+		SaveActionResultToLog QPKG "$qpkg_name" disableau '' sk 'incompatible author'
 		MarkActionForkAsSkipped
 		z=1
 	elif [[ $qpkg_name = sherpa ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" disableau '' skipped 'auto-update cannot be disabled'
+		SaveActionResultToLog QPKG "$qpkg_name" disableau '' sk 'auto-update cannot be disabled'
 		MarkActionForkAsSkipped
 		z=1
 	elif ! IsQpkgDbCanRestartToUpdate "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" disableau '' skipped 'auto-update is unsupported'
+		SaveActionResultToLog QPKG "$qpkg_name" disableau '' sk 'auto-update is unsupported'
 		MarkActionForkAsSkipped
 		z=1
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultToLog QPKG "$qpkg_name" disableau '' skipped "assigned to another repository, please 'reassign' it first"
+		SaveActionResultToLog QPKG "$qpkg_name" disableau '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=1
 	fi
@@ -10668,7 +10704,7 @@ _QPKG:disableau_()
 		SaveActionResultToLog QPKG "$qpkg_name" disableau '' ok
 		MarkActionForkAsOk
 	else
-		SaveActionResultToLog QPKG "$qpkg_name" disableau '' failed "$z"
+		SaveActionResultToLog QPKG "$qpkg_name" disableau '' er "$z"
 		MarkActionForkAsError
 		z=1   # Remap to 1.
 	fi
@@ -10698,19 +10734,19 @@ _QPKG:backup_()
 	local -i z=0
 
 	if IsNtValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" backup '' skipped 'not installed'
+		SaveActionResultToLog QPKG "$qpkg_name" backup '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=1
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" backup '' skipped 'incompatible author'
+		SaveActionResultToLog QPKG "$qpkg_name" backup '' sk 'incompatible author'
 		MarkActionForkAsSkipped
 		z=1
 	elif ! IsQpkgDbCanBackup; then
-		SaveActionResultToLog QPKG "$qpkg_name" backup '' skipped 'backup is unsupported'
+		SaveActionResultToLog QPKG "$qpkg_name" backup '' sk 'backup is unsupported'
 		MarkActionForkAsSkipped
 		z=1
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultToLog QPKG "$qpkg_name" backup '' skipped "assigned to another repository, please 'reassign' it first"
+		SaveActionResultToLog QPKG "$qpkg_name" backup '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=1
 	fi
@@ -10728,7 +10764,7 @@ _QPKG:backup_()
 		SendPackageStateChange ISbackedup
 		MarkActionForkAsOk
 	else
-		SaveActionResultToLog QPKG "$qpkg_name" backup '' failed "$z"
+		SaveActionResultToLog QPKG "$qpkg_name" backup '' er "$z"
 		MarkActionForkAsError
 		z=1   # Remap to 1.
 	fi
@@ -10758,23 +10794,23 @@ _QPKG:restore_()
 	local -i z=0
 
 	if IsNtValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" restore '' skipped "not installed, try 'rebuild' instead"
+		SaveActionResultToLog QPKG "$qpkg_name" restore '' sk "not installed, try 'rebuild' instead"
 		MarkActionForkAsSkipped
 		z=1
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" restore '' skipped 'incompatible author'
+		SaveActionResultToLog QPKG "$qpkg_name" restore '' sk 'incompatible author'
 		MarkActionForkAsSkipped
 		z=1
 	elif ! IsQpkgDbCanBackup; then
-		SaveActionResultToLog QPKG "$qpkg_name" restore '' skipped 'restore is unsupported'
+		SaveActionResultToLog QPKG "$qpkg_name" restore '' sk 'restore is unsupported'
 		MarkActionForkAsSkipped
 		z=1
 	elif ! IsQpkgBackupExist; then
-		SaveActionResultToLog QPKG "$qpkg_name" restore '' skipped 'backup file does not exist'
+		SaveActionResultToLog QPKG "$qpkg_name" restore '' sk 'backup file does not exist'
 		MarkActionForkAsSkipped
 		z=1
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultToLog QPKG "$qpkg_name" restore '' skipped "assigned to another repository, please 'reassign' it first"
+		SaveActionResultToLog QPKG "$qpkg_name" restore '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=1
 	fi
@@ -10792,7 +10828,7 @@ _QPKG:restore_()
 		SendPackageStateChange ISrestored
 		MarkActionForkAsOk
 	else
-		SaveActionResultToLog QPKG "$qpkg_name" restore '' failed "$z"
+		SaveActionResultToLog QPKG "$qpkg_name" restore '' er "$z"
 		MarkActionForkAsError
 		z=1   # Remap to 1.
 	fi
@@ -10822,19 +10858,19 @@ _QPKG:clean_()
 	local -i z=0
 
 	if IsNtValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" clean '' skipped 'not installed'
+		SaveActionResultToLog QPKG "$qpkg_name" clean '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=1
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" clean '' skipped 'incompatible author'
+		SaveActionResultToLog QPKG "$qpkg_name" clean '' sk 'incompatible author'
 		MarkActionForkAsSkipped
 		z=1
 	elif ! IsQpkgDbCanClean; then
-		SaveActionResultToLog QPKG "$qpkg_name" clean '' skipped 'clean is unsupported'
+		SaveActionResultToLog QPKG "$qpkg_name" clean '' sk 'clean is unsupported'
 		MarkActionForkAsSkipped
 		z=1
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultToLog QPKG "$qpkg_name" clean '' skipped "assigned to another repository, please 'reassign' it first"
+		SaveActionResultToLog QPKG "$qpkg_name" clean '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=1
 	fi
@@ -10851,7 +10887,7 @@ _QPKG:clean_()
 		SaveActionResultToLog QPKG "$qpkg_name" clean '' ok
 		MarkActionForkAsOk
 	else
-		SaveActionResultToLog QPKG "$qpkg_name" clean '' failed "$z"
+		SaveActionResultToLog QPKG "$qpkg_name" clean '' er "$z"
 		MarkActionForkAsError
 		z=1   # Remap to 1.
 	fi
@@ -10885,7 +10921,7 @@ _QPKG:sign_()
 	local -i z=0
 
 	if [[ -e $r_abort_actions_pathfile ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped-abort 'abort requested, unable to continue'
+		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sa 'abort requested, unable to continue'
 		MarkActionForkAsSkippedAbort
 		z=3
 	fi
@@ -10895,27 +10931,27 @@ _QPKG:sign_()
 	DebugVar sqlite_cmd
 
 	if IsNtValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped 'not installed'
+		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=1
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped 'incompatible author'
+		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sk 'incompatible author'
 		MarkActionForkAsSkipped
 		z=1
 	elif ! IsOsCanSignedPackages; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped 'not required: firmware < 4.3.5'
+		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sk 'not required: firmware < 4.3.5'
 		MarkActionForkAsSkipped
 		z=1
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped "assigned to another repository, please 'reassign' it first"
+		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=1
 	elif [[ ! -e $sqlite_pathfile ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped-abort "$(FormatFileName sqlite3) binary not found"
+		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sa "$(FormatFileName sqlite3) binary not found"
 		MarkActionForkAsSkippedAbort
 		z=3
 	elif [[ ! -e $r_cert_db_pathfile ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped-abort "$(GetOsName) QPKG certificate database not found"
+		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sa "$(GetOsName) QPKG certificate database not found"
 		MarkActionForkAsSkippedAbort
 		z=3
 	else
@@ -10923,7 +10959,7 @@ _QPKG:sign_()
 		b=$(eval "$sqlite_cmd" "$r_cert_db_pathfile" \"$a\")
 
 		if [[ $b = 1 ]]; then
-# 			SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' skipped-ok 'already signed'
+# 			SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' so 'already signed'
 # 			MarkActionForkAsSkippedOk
 # 			z=2
 
@@ -10965,7 +11001,7 @@ _QPKG:sign_()
 		SendPackageStateChange ISsigned
 		MarkActionForkAsOk
 	else
-		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' failed "$(Parenthesise "$z") but don't know why. Please report this as a bug"
+		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' er "$(Parenthesise "$z") but don't know why. Please report this as a bug"
 		SendParentChangeEnv 'show_suggest_raise_issue=true'
 		MarkActionForkAsError
 		z=1   # Remap to 1.
@@ -10997,7 +11033,7 @@ _QPKG:status_()
 	local -i z=0
 
 	if IsNtValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" status '' skipped 'not installed'
+		SaveActionResultToLog QPKG "$qpkg_name" status '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=1
 	fi
