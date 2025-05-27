@@ -1,5 +1,7 @@
 Management:
 
+	* Remove kludge in _QPKG:sign_() on-or-after 2025-06-07
+
 	* During `sherpa install trguing trans` TrguiNG must be restarted after Transmission is installed to update Transmission 'Dependency' key.
 
 	* Always 'clean' after 'upgrade' (and before 'activate')?

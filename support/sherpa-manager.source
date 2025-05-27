@@ -33,7 +33,7 @@
 # Notes:
 #   * If on-screen line-spacing is required, this should only be done by the next function to print output.
 #   * Display functions should never finish by putting an empty line on-screen for spacing.
-#	* Comment lines should always be separated from code with whitespace lines. This doesn't apply to disabled code lines.
+#	* Comment lines should always be separated from code with whitespace lines, except for ShellCheck directives.
 
 set -o nounset -o pipefail
 shopt -s extglob
@@ -571,15 +571,16 @@ LoadEnv()
 
 	readonly r_abort_actions_pathfile=$r_qpkg_states_path/abort.action
 	readonly r_action_msg_pipe=$r_qpkg_states_path/action-messages.pipe
-	readonly r_action_msg_pipe_log_pathfile=$r_logs_path/action-messages-pipe-enhanced.log			# devdebug
+	readonly r_action_msg_pipe_log_pathfile=$r_logs_path/action-messages-pipe-enhanced.log		# devdebug
 	readonly r_report_output_pathfile=$r_reports_path/report.ansi
 
-	# Entware
+	# Entware.
 
 	readonly r_external_packages_archive_pathfile=/opt/var/opkg-lists/entware
 	readonly r_external_packages_pathfile=$r_cache_path/Packages
 
-	# KLUDGE: just in-case `python` has disappeared again ... ¯\_(ツ)_/¯
+	# KLUDGE: in-case `python` has disappeared again ... ¯\_(ツ)_/¯
+
 	[[ -e $r_python3_cmd && ! -L $r_python_cmd ]] && ln -s "$r_python3_cmd" "$r_python_cmd"
 
 	rm -f "$r_report_output_pathfile" "$r_ramfs_freespace_pathfile" "$r_inhibit_display_pathfile" 2>/dev/null
@@ -1066,6 +1067,7 @@ CheckEnv()
 					target_packages='ar binutils libbfd libctf libopcodes objdump'
 
 					# Assume first package version is same as remaining package versions.
+
 					installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${target_packages%% *} *" | head -n1 | cut -d' ' -f3 | cut -d'-' -f1)
 
 					if [[ ${installed_version//.} -gt 238 ]]; then
@@ -1084,6 +1086,7 @@ CheckEnv()
 # 				target_packages='git git-http'
 #
 # 				# Assume first package version is same as remaining package versions.
+#
 # 				installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${target_packages%% *} *" | head -n1 | cut -d' ' -f3 | cut -d'-' -f1)
 #
 # 				if [[ ${installed_version//.} -gt 2392 ]]; then
@@ -1297,6 +1300,7 @@ AssignQpkgsToActions()
 
 	# Build a list of original storage paths for packages to be uninstalled, then installed again later this session (a "complex reinstall").
 	# This will ensure user-migrated packages end-up in the correct locations.
+
 	QPKGs_were_installed_name=()
 	QPKGs_were_installed_path=()
 
@@ -1349,7 +1353,7 @@ AssignQpkgsToActions()
 	}
 
 # QPKG action processing shall-be conducted in this order:
-#
+
 #	1. status all
 #	2. rebuild all				(meta-action: `download`, `install` & `restore` QPKG, but only if package has an existing backup file)
 #	3. reassign all
@@ -1412,7 +1416,7 @@ AssignQpkgsToActions()
 ProcActions()
 	{
 
-	# Run all actions on selected packages in all tiers.
+	# Run all actions on all tiers.
 
 	[[ $run_package_actions = true ]] || return
 
@@ -1433,7 +1437,7 @@ ProcActions()
 	ProcAction status all QPKG 'live status'
 
 	if [[ $useropt_show_status = false ]]; then
-		ShowAsProc 'assign QPKGs by state'						# Update action lists based-on QPKG `status`.
+		ShowAsProc 'assign QPKGs by state'								# Update action lists based-on QPKG `status`.
 
 		for action in "${r_user_qpkg_actions[@]}"; do
 			for state in "${r_qpkg_is_states[@]}"; do
@@ -1467,7 +1471,7 @@ ProcActions()
 	if QPKGs-ACdownload-er.IsNone && QPKGs-ACdownload-se.IsNone && QPKGs-ACdownload-sa.IsNone; then
 		# -> Package removal phase <-
 
-		for ((tier_index=${#r_package_tiers[@]}-1; tier_index>=0; tier_index--)); do		# Process tiers in-reverse.
+		for ((tier_index=${#r_package_tiers[@]}-1; tier_index>=0; tier_index--)); do	# Process tiers in-reverse.
 			tier=${r_package_tiers[$tier_index]}
 
 			if [[ $tier != auxiliary ]]; then
@@ -1549,7 +1553,7 @@ ProcActions()
 ProcAction()
 	{
 
-	# Run a single action on an entire tier of packages, asynchronously where-possible.
+	# Run a single action on a single/all tier(s), asynchronously where-possible.
 
 	# Inputs: (local)
 	#   $1 = an action to run 			e.g. `activate`, `reactivate` ...
@@ -1730,11 +1734,11 @@ ProcAction()
 								:		# Ignore this.
 								;;
 							ok|er|so|sk|se|sa)
-
 								[[ $(type -t QPKGs-AC${r_action}-to:Init) = function ]] && QPKGs-AC${r_action}-to:Remove "$msg2_value"
 								[[ $(type -t QPKGs-AC${r_action}-${msg1_value}:Init) = function ]] && QPKGs-AC${r_action}-${msg1_value}:Add "$msg2_value"
 
 								# Also add to 'done' list.
+
 								[[ $(type -t QPKGs-AC${r_action}-dn:Init) = function ]] && QPKGs-AC${r_action}-dn:Add "$msg2_value"
 								;;
 							ex)			# Action is about to exit.
@@ -2272,6 +2276,7 @@ ParseHelpArgs()
 				useropt_help_basic=true
 
 				# Remove this arg from incomplete array.
+
 				local a=''
 				local tmp=()
 
@@ -2754,6 +2759,7 @@ ParseActionArgs()
 				run_package_actions=true
 
 				# Remove this arg from incomplete array.
+
 				local a=''
 				local tmp=()
 
@@ -3366,11 +3372,13 @@ PatchEntwareService()
 		DebugInfo 'patch: do the "/opt shuffle" - already done'
 	else
 		# Ensure existing files are moved out of the way before creating /opt symlink.
+
 		find='# sym-link $QPKG_DIR to /opt'
 		insert='opt_path="/opt"; opt_backup_path="/opt.orig"; [[ -d "$opt_path" \&\& ! -L "$opt_path" \&\& ! -e "$opt_backup_path" ]] \&\& mv "$opt_path" "$opt_backup_path"'
 		/bin/sed -i "s|$find|$find\n\n${r_tab_char}${r_prefix}\n${r_tab_char}${insert}\n|" "$r_package_init_pathfile"
 
 		# ... then restored after creating /opt symlink.
+
 		find='/bin/ln -sf $QPKG_DIR /opt'
 		insert='[[ -L "$opt_path" \&\& -d "$opt_backup_path" ]] \&\& cp "$opt_backup_path"/* --target-directory "$opt_path" \&\& rm -r "$opt_backup_path"'
 		/bin/sed -i "s|$find|$find\n\n${r_tab_char}${r_prefix}\n${r_tab_char}${insert}\n|" "$r_package_init_pathfile"
@@ -3421,9 +3429,8 @@ _UpdateEntwarePackageList_()
 		if [[ $z -eq 0 ]]; then
 			DebugAsDone "updated $(FormatPackageName Entware) package list"
 			CloseIpkArchive
-		else
+		else		# no-big-deal
 			DebugAsWarn "Unable to update $(FormatPackageName Entware) package list $(FormatExitcode "$z")"
-			# no-big-deal
 		fi
 	else
 		DebugInfo "$(FormatPackageName Entware) package list was updated less-than $r_file_change_threshold_minutes minutes ago: skipping update"
@@ -3531,6 +3538,7 @@ CalcIpkDepsToInstall()
 	local -a this_list=()
 
 	# Remove duplicate entries.
+
 	req_list=$(DeDupeWords "$(IPKs-ACinstall-to:List)")
 	dep_acc=($req_list)
 	this_list=($req_list)
@@ -3554,6 +3562,7 @@ CalcIpkDepsToInstall()
 		this_list=($($r_gnu_grep_cmd --word-regexp --after-context 1 --no-group-separator '^Package:\|^Depends:' "$r_external_packages_pathfile" | $r_gnu_grep_cmd -vG '^Section:\|^Version:' | $r_gnu_grep_cmd --word-regexp --after-context 1 --no-group-separator "$ipk_titles" | $r_gnu_grep_cmd -vG "$ipk_titles" | $r_gnu_grep_cmd -vG '^Package: ' | /bin/sed 's/^Depends: //;s/, /\n/g' | /usr/bin/sort | /bin/uniq))
 
 		# Update progress twice per loop.
+
 		ShowAsIterativeProgress 'resolve IPK dependencies' "$iterations" iteration "${#dep_acc[@]}" 'unique IPK'
 
 		if [[ ${#this_list[@]} -eq 0 ]]; then
@@ -3577,6 +3586,7 @@ CalcIpkDepsToInstall()
 	fi
 
 	# Exclude already installed IPKs.
+
 	pre_exclude_list=${dep_acc[*]}
 	pre_exclude_count=$(/usr/bin/wc -w <<< "$pre_exclude_list")
 
@@ -3679,6 +3689,7 @@ IPKs:upgrade()
 	IPKs-ACupgrade-to:Add "$($r_opkg_cmd list-upgradable | cut -f1 -d' ')"
 
 	# Don't upgrade IPKs that must remain downgraded.
+
 	IPKs-ACupgrade-to:Remove "$(IPKs-ACdowngrade-to:Array)"
 	IPKs-ACupgrade-to:Remove "$(IPKs-ACdowngrade-sk:Array)"
 
@@ -3702,6 +3713,7 @@ IPKs:upgrade()
 		KillPID "$fork_pid"
 
 		# Finish-up with 100% regardless of what happened.
+
 		UpdateDirSizeProgress final
 
 		if [[ $z -eq 0 ]]; then
@@ -3802,6 +3814,7 @@ IPKs:install()
 		KillPID "$fork_pid"
 
 		# Finish-up with 100% regardless of what happened.
+
 		UpdateDirSizeProgress final
 
 		if [[ $z -eq 0 ]]; then
@@ -4108,6 +4121,7 @@ _ExecOneActionWithManyForks_()
 		SetQpkgIndex
 
 		(	# Keep updated $pidfile in a subshell, so the one for this function doesn't change.
+
 			CreatePidFile
 			$a &
 			WritePidFile "$!"
@@ -5289,6 +5303,7 @@ _GenerateDepsReportDataLine_()
 			;;
 		missing)
 			# Assign & highlight field messages.
+
 			auxiliary_msg=$(FormatReportField missing alert)
 			;;
 		mute)
@@ -5571,20 +5586,25 @@ _GenerateFeaturesReportDataLine_()
 	case $mode in
 		author)
 			# Set field values.
+
 			auxiliary='incompatible author'
 
 			# Assign & highlight field messages.
+
 			auxiliary_msg=$(FormatReportField "$auxiliary" attention_highlight)
 			;;
 		missing)
 			# Set field values.
+
 			auxiliary=missing
 
 			# Assign & highlight field messages.
+
 			auxiliary_msg=$(FormatReportField "$auxiliary" alert)
 			;;
 		mute)
 			# Set field values.
+
 			[[ $(GetQpkgDbActiveTest) = builtin ]] && active_test=true
 			IsQpkgDbArchOK && arch_compatible=true
 			autoupdate=N/A
@@ -5620,6 +5640,7 @@ _GenerateFeaturesReportDataLine_()
 			auxiliary_msg=''
 
 			# Set field values.
+
 			[[ $(GetQpkgDbActiveTest) = builtin ]] && active_test=true
 			IsQpkgDbArchOK && arch_compatible=true
 
@@ -6566,6 +6587,7 @@ PasteLogLast()
 			ShowAsProc "upload $(ShowAsTitleName) log"
 
 			# With thanks to https://github.com/solusipse/fiche
+
 			link=$(/bin/cat --number "$r_session_last_pathfile" | (exec 3<>/dev/tcp/termbin.com/9999; /bin/cat >&3; /bin/cat <&3; exec 3<&-))
 
 			if [[ $? -eq 0 ]]; then
@@ -6608,6 +6630,7 @@ PasteLogTail()
 			ShowAsProc "upload $(ShowAsTitleName) log"
 
 			# With thanks to https://github.com/solusipse/fiche
+
 			link=$(/bin/cat --number "$r_session_tail_pathfile" | (exec 3<>/dev/tcp/termbin.com/9999; /bin/cat >&3; /bin/cat <&3; exec 3<&-))
 
 			if [[ $? -eq 0 ]]; then
@@ -7697,6 +7720,7 @@ StoreQpkgStates()
 					QPKGs-ISmissing:Add "$qpkg_name"
 
 					# Also mark as not OK.
+
 					QPKGs-ISok:Remove "$qpkg_name"
 					QPKGs-ISNTok:Add "$qpkg_name"
 					;;
@@ -10047,6 +10071,7 @@ _QPKG:rebuild_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "meta-rebuilding $(FormatPackageName)"
+
 	# Nothing-to-do here, real QPKG actions have already been assigned in CheckEnv().
 
 	SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' ok
@@ -10199,6 +10224,7 @@ _QPKG:uninstall_()
 
 		if [[ $z -eq 0 ]]; then
 			# WARNING: beware of `qpkg_cli --remove`: it removes the QPKG installation path around 10-20 seconds after execution. If sherpa has moved-on and starts an install, `qpkg_cli` will remove the newly created QPKG installation path partway through the installation. So, check if QPKG is to be installed again: if-so, don't use `qpkg_cli --remove`.
+
 			[[ -e /sbin/qpkg_cli ]] && ! QPKGs-ACinstall-to.Exist "$qpkg_name" && /sbin/qpkg_cli --remove "$qpkg_name" &>/dev/null
 			SaveActionResultToLog QPKG "$qpkg_name" uninstall '' ok
 			/sbin/rmcfg "$qpkg_name" -f /etc/config/qpkg.conf
@@ -10219,6 +10245,7 @@ _QPKG:uninstall_()
 		fi
 	else
 		# Standard QPKG `.uninstall.sh` was not found, so can't continue with uninstallation (maybe force this instead with `rm -r` ?).
+
 		SaveActionResultToLog QPKG "$qpkg_name" uninstall '' er "$(FormatFileName '.uninstall.sh') not found"
 		MarkActionForkAsError
 	fi
@@ -11079,6 +11106,7 @@ _QPKG:status_()
 	DebugVar z
 
 	# returncodes 124 and-up are generated by GNU `timeout`.
+
 	case $z in
 		0)
 			SendPackageStateChange ISactive
@@ -11109,11 +11137,13 @@ ClearQpkgInstalledAppCenterNotifier()
 	#   $qpkg_name
 
 	# KLUDGE: `clean` QTS 4.5.1+ App Center notifier status.
+
 	[[ -e /sbin/qpkg_cli ]] && /sbin/qpkg_cli --cancel "$qpkg_name"
 
 	IsNtValidQpkgInstalled && return
 
 	# Must also do this when installing QPKGs at the CLI.
+
 	/sbin/setcfg "$qpkg_name" Status complete -f /etc/config/qpkg.conf
 
 	return 0
@@ -11823,7 +11853,7 @@ GetQpkgDbDependencies()
 	[[ $g = none ]] && return 1
 	[[ $g = default ]] && g=${r_qpkg_depends_on[$qpkg_default_index]}
 
-	if [[ $g != *'|'* ]]; then		# no alternatives were listed.
+	if [[ $g != *'|'* ]]; then		# No alternatives were listed.
 		printf '%s' "$g"
 
 		return 0
@@ -11850,7 +11880,7 @@ GetQpkgDbDependencies()
 		for alt in $x; do
 			[[ -z $first && -n $alt ]] && first=$alt
 
-			# Test alternative for compatibility
+			# Test alternative for compatibility.
 
 			if IsQpkgDbArchOK "$alt"; then
 				out+=' '$alt
@@ -11898,7 +11928,7 @@ GetQpkgDbOptDependencies()
 	[[ $g = none ]] && return 1
 	[[ $g = default ]] && g=${r_qpkg_opt_depends_on[$qpkg_default_index]}
 
-	if [[ $g != *'|'* ]]; then		# no alternatives were listed.
+	if [[ $g != *'|'* ]]; then		# No alternatives were listed.
 		printf '%s' "$g"
 
 		return 0
@@ -11925,7 +11955,7 @@ GetQpkgDbOptDependencies()
 		for alt in $x; do
 			[[ -z $first && -n $alt ]] && first=$alt
 
-			# Test alternative for compatibility
+			# Test alternative for compatibility.
 
 			if IsQpkgDbArchOK "$alt"; then
 				out+=' '$alt
@@ -11965,7 +11995,7 @@ GetQpkgDbDependents()
 	[[ -n $qpkg_name && $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
 
 	local -a ar=()
-	local -i i=-1			# default to not-found.
+	local -i i=-1			# Default to not-found.
 	local re=\\b${qpkg_name}\\b
 
 	if QPKGs-GRindependent.Exist "$qpkg_name"; then
@@ -12003,7 +12033,7 @@ GetQpkgDbOptionals()
 	[[ -n $qpkg_name && $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
 
 	local -a ar=()
-	local -i i=-1			# default to not-found.
+	local -i i=-1			# Default to not-found.
 	local re=\\b${qpkg_name}\\b
 
 	if QPKGs-GRoptional.Exist "$qpkg_name"; then
@@ -12467,7 +12497,7 @@ IsOsCanAsyncQpkgActions()
 IsOsCanSecureDownload()
 	{
 
-	# `/sbin/curl` with SSL certificate verification enabled:
+	# NOTE: `/sbin/curl` with SSL certificate verification enabled:
 	#	- fails in:
 	# 		QTS 4.2.6
 	# 		QTS 4.4.1
@@ -13388,7 +13418,7 @@ IsNtQpkgEnabled()
 # #IsQpkgSigned()
 # 	{
 #
-# 	# TODO: include SQL to check $1/$qpkg_name has been signed in certificate database. Use Python modules for this instead of SQLite3 executable.
+# 	# TODO: include SQL to check $1/$qpkg_name has been signed in certificate database. Use Python2 modules for this instead of SQLite3 executable.
 #
 # 	:
 #
@@ -13782,7 +13812,7 @@ Executer()
 		eval "$1 > >(/usr/bin/tee $r_log_pathfile) 2>&1"	# NOTE: `tee` buffers stdout here.		# squeezer-ignore
 		z=$?
 	else
-		(eval "$1" > "$r_log_pathfile" 2>&1)					# Run in a subshell to suppress 'Terminated' message later.
+		(eval "$1" > "$r_log_pathfile" 2>&1)				# Run in a subshell to suppress 'Terminated' message later.
 		z=$?
 	fi
 
@@ -15623,9 +15653,6 @@ TextBrightWhite()
 	#	$colourful
 
 	# Outputs: (local)
-
-	# Outputs: (global)
-	#	$colourful
 
 	[[ -n ${1:-} ]] || return
 
