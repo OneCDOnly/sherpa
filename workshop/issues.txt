@@ -1,29 +1,8 @@
 Observed issues:
 
-	* `sherpa install all` in TS-216G skipped installation of valid QPKGs due to "incompatible author"?
-		--------------------------------------------------------------------------------------------------
-		...
-		1748319980502|install|1|duf|QPKG|ok|7986|v240731
-		1748319988819|install|1|Entware|QPKG|ok|53567|v1.03a
-		1748320042739|install|1|HideThatBanner|QPKG|ok|8199|v240807
-		1748320051252|install|1|IncreaseTimeouts|QPKG|ok|8222|v240808
-		1748320059887|install|1|OLidarr|QPKG|ok|66353|v250521
-		1748320126679|install|1|nzbget|QPKG|ok|9608|v25.0
-		1748320136665|install|1|OliveTin|QPKG|ok|14622|v250521
-		1748320151738|install|1|Par2|QPKG|skipped|102|NAS arch is incompatible
-		1748320152303|install|1|Par2turbo|QPKG|ok|8473|v1.1.0
-		1748320161210|install|1|QDK|QPKG|ok|8553|v2.3.14
-		1748320170192|install|1|OReadarr|QPKG|ok|60871|v250521
-		1748320231486|install|1|RunLast|QPKG|skipped|217|QTS version is incompatible
-		1748320232184|install|1|sha3sum|QPKG|skipped|153|NAS arch is incompatible
-		1748320232847|install|1|sherpa|QPKG|skipped|143|already installed
-		1748320233536|install|1|OSonarr|QPKG|ok|668|vundefined
-		1748320234711|install|1|SortMyQPKGs|QPKG|skipped|149|incompatible author
-		1748320235372|install|1|TorrServer|QPKG|skipped|145|incompatible author
-		1748320236058|install|1|Unrar|QPKG|ok|642|vundefined
-		1748320237174|install|1|OWhisparr|QPKG|skipped|188|incompatible author
-		...
-		--------------------------------------------------------------------------------------------------
+	* Newly-installed QPKGs can be disabled by QTS due to "no valid signature" in the few minutes between installing and signing.
+		- This signing check occurs at 7:50am each day, and when App Center is opened.
+		- Try signing packages before installing them?
 
 	* Add kill pause-then-recheck pid to Bazarr service script.
 
@@ -47,7 +26,7 @@ Observed issues:
 		install WebSSH QPKG in 1m:06s (v250521)
 		...
 		--------------------------------------------------------------------------------------------------
-		- Observation: all 'undefined' versions are for QPKGs that "completed" installation in 1 second.
+		- Observation: all 'undefined' versions are for QPKGs that "completed" installation in less-than 1 second.
 
 	* Restarting clamav.sh creates `lib` symlink in cwd to `/usr/lib`
 
