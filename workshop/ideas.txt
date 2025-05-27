@@ -1,5 +1,8 @@
 Management:
 
+	* Consider removing "essential" IPKs that are already installed automatically with Entware like:
+		- grep, findutils
+
 	* During `sherpa install trguing trans` TrguiNG must be restarted after Transmission is installed to update Transmission 'Dependency' key.
 
 	* When installing sherpa, make QTS allow unsigned packages, then disallow this after 'sign'ing action but only if it was disallowed before.

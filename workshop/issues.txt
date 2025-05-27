@@ -1,20 +1,28 @@
 Observed issues:
 
-	* The following issues may have been resolved by ensuring Transmission installation works after installing TrguiNG. Need to retest and examine message pipe log.
+	* Esential IPKs are not being installed when Entware is reinstalled.
 
-		* When 'install'ing packages on TS-216G, some were reported as finished in 1 second, even though they're still performing the 'install' action.
-			--------------------------------------------------------------------------------------------------
-			• These package actions failed (and why):
-				install LazyLibrarian QPKG in 1 second (for more information: /etc/init.d/lazylibrarian.sh log)
-				install OMedusa QPKG in 1 second (for more information: /etc/init.d/medusa.sh log)
-				install OqBittorrent QPKG in 1 second (for more information: /etc/init.d/qbittorrent.sh log)
-				install Unmanic QPKG in 1 second (for more information: /etc/init.d/unmanic.sh log)
-			--------------------------------------------------------------------------------------------------
-			- But, checking the service log for each shows successful install.
-
-		* When 'clean'ing packages, some were reported as finished in 1 second, even though they're still performing the 'clean' action.
-			- Tatutulli, Watcher3, Unmanic.
-			- Cleaning process for each continues until complete, unless terminal is closed.
+	* `sherpa install all` in TS-216G results included "undefined" versions?
+		--------------------------------------------------------------------------------------------------
+		...
+		install TrguiNG QPKG in 10 seconds (v250522)
+		"sign" TrguiNG QPKG in 1 second
+		install Bazarr QPKG in 2m:09s (v250521)
+		install ClamAV QPKG in 11 seconds (v250521)
+		install Glances QPKG in 3m:00s (v250521)
+		install Headphones QPKG in 1 second (vundefined)
+		install inxi QPKG in 1 second (vundefined)
+		install Kapowarr QPKG in 1m:42s (v250521)
+		install LazyLibrarian QPKG in 1 second (vundefined)
+		install OMedusa QPKG in 1 second (vundefined)
+		install NZBHydra2 QPKG in 1m:19s (v250521)
+		install nzbToMedia QPKG in 28 seconds (v240205)
+		install pyLoad QPKG in 1 second (vundefined)
+		install OTransmission QPKG in 23 seconds (v250521)
+		install WebSSH QPKG in 1m:06s (v250521)
+		...
+		--------------------------------------------------------------------------------------------------
+		- Observation: all 'undefined' versions are for QPKGs that "completed" installation in 1 second.
 
 	* Restarting clamav.sh creates `lib` symlink in cwd to `/usr/lib`
 
