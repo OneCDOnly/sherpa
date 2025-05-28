@@ -583,7 +583,7 @@ LoadEnv()
 
 	[[ -e $r_python3_cmd && ! -L $r_python_cmd ]] && ln -s "$r_python3_cmd" "$r_python_cmd"
 
-	rm -f "$r_report_output_pathfile" "$r_ramfs_freespace_pathfile" "$r_inhibit_display_pathfile" 2>/dev/null
+	rm -f "$r_report_output_pathfile" "$r_ramfs_freespace_pathfile" "$r_inhibit_display_pathfile" 2> /dev/null
 
 	if [[ -e $r_gnu_stty_cmd ]] && IsInTerminal; then
 		local terminal_dimensions=$($r_gnu_stty_cmd size)
@@ -804,7 +804,7 @@ DebugLogEnv()
 
 	DebugStorage ok 'default volume mounted' "$(GetUserDefVol)"
 	DebugStorage ok 'basic write benchmark' "$(GetHardwareVolumeBenchmark)"
-	DebugStorage ok /opt "$(/usr/bin/readlink /opt 2>/dev/null || printf 'not present')"
+	DebugStorage ok /opt "$(/usr/bin/readlink /opt 2> /dev/null || printf 'not present')"
 
 	local public_share_name=$(/sbin/getcfg SHARE_DEF defPublic -d Qpublic -f /etc/config/def_share.info)
 
@@ -1110,7 +1110,7 @@ CheckEnv()
 		QPKGs-ACupgrade-to:Add sherpa
 	fi
 
-	wait 2>/dev/null			# Ensure Entware package updater completes before continuing.
+	wait 2> /dev/null			# Ensure Entware package updater completes before continuing.
 
 	FuncExit
 
@@ -1429,7 +1429,7 @@ ProcActions()
 	local tier=''
 	local -i tier_index=0
 
-	rm -f "$r_session_action_results_pathfile" 2>/dev/null
+	rm -f "$r_session_action_results_pathfile" 2> /dev/null
 	OpenMsgPipeEnhancedLog												# devdebug
 
 	# -> Package preparation phase <-
@@ -1764,7 +1764,7 @@ ProcAction()
 			[[ $ok_count -gt 0 ]] && show_action_results_ok=true
 			[[ $skip_count -gt 0 || $skip_ok_count -gt 0 || $skip_error_count -gt 0 || $skip_abort_count -gt 0 ]] && show_action_results_skipped=true
 
-			wait 2>/dev/null
+			wait 2> /dev/null
 			CloseMsgPipe
 
 			[[ ${useropt_terse:=true} = false && $useropt_verbose = false ]] && echo
@@ -1821,7 +1821,7 @@ OpenMsgPipe()
 
 	[[ $action_msg_pipe_fd != none ]] && eval "exec $action_msg_pipe_fd<>$r_action_msg_pipe"
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 CloseMsgPipe()
 	{
@@ -1851,7 +1851,7 @@ CloseMsgPipe()
 
 	[[ -n ${r_action_msg_pipe:-} && -p $r_action_msg_pipe ]] && rm -f "$r_action_msg_pipe"
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 SetMaxForks()
 	{
@@ -3458,7 +3458,7 @@ SaveIpkAndPipList()
 	$r_opkg_cmd list-installed > "$r_prev_ipk_list_pathfile"
 	[[ -e $r_prev_ipk_list_pathfile ]] && DebugAsDone "saved current $(FormatPackageName Entware) IPK list to $(FormatFileName "$r_prev_ipk_list_pathfile")"
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 LoadIpkList()
 	{
@@ -3642,7 +3642,7 @@ CalcIpkDownloadSize()
 		size_array=($($r_gnu_grep_cmd -w '^Package:\|^Size:' "$r_external_packages_pathfile" | $r_gnu_grep_cmd --after-context 1 --no-group-separator ": $(/bin/sed 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKs-ACdownload-to:List)")" | /bin/grep '^Size:' | /bin/sed 's/^Size: //'))
 
 		# shellcheck disable=2283
-		IPKs-ACdownload-to:Size = "$(IFS=+; echo "$((${size_array[*]:-}))")"		# nifty sizing shortcut found here https://stackoverflow.com/a/13635566/6182835
+		IPKs-ACdownload-to:Size = "$(IFS=+; echo "$((${size_array[*]:-}))")"	# Rather nifty sizing shortcut found here: https://stackoverflow.com/a/13635566/6182835
 		DebugAsDone "$(FormatAsThous "$(IPKs-ACdownload-to:Size)") bytes ($(FormatAsIsoBytes "$(IPKs-ACdownload-to:Size)")) to download"
 	else
 		DebugAsDone 'no IPKs to size'
@@ -3824,7 +3824,7 @@ IPKs:install()
 			HideKeystrokes
 			SetCapabilities
 
-			rm -f "$r_prev_ipk_list_pathfile.installing" 2>/dev/null
+			rm -f "$r_prev_ipk_list_pathfile.installing" 2> /dev/null
 		else
 			NoteIpkAcAsEr "$(IPKs-ACdownload-to:Array)" install
 			SaveActionResultToLog IPK auxiliary install "$total_count" er "$z"
@@ -4015,7 +4015,7 @@ PIPs:install()
 			DebugAsDone "installed $desc"
 			SaveActionResultToLog PIP auxiliary install "$ok_count" ok
 
-			rm -f "$r_prev_pip_list_pathfile.installing" 2>/dev/null
+			rm -f "$r_prev_pip_list_pathfile.installing" 2> /dev/null
 		else
 			((fail_count++))
 			SaveActionResultToLog PIP auxiliary install "$fail_count" er "$z"
@@ -4080,7 +4080,7 @@ CloseIpkArchive()
 
 	rm -f "$r_external_packages_pathfile"
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 _ExecOneActionWithManyForks_()
 	{
@@ -6566,7 +6566,7 @@ DisplayFileInViewport()
 
 	echo "$(< $1)"
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 PasteLogLast()
 	{
@@ -6713,7 +6713,7 @@ ArchivePriorSessLogs()
 		fi
 	done
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 ResetActiveSessLog()
 	{
@@ -6723,7 +6723,7 @@ ResetActiveSessLog()
 
 	rm -f "$sess_active_pathfile"
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 ExtractPrevSessFromTail()
 	{
@@ -6757,7 +6757,7 @@ ExtractPrevSessFromTail()
 
 	return 0
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 ExtractTailFromLog()
 	{
@@ -6775,7 +6775,7 @@ ExtractTailFromLog()
 
 	return 0
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 InitActionForkCounters()
 	{
@@ -6912,7 +6912,7 @@ RefreshDirSizeCount()
 	[[ -d $dir_location ]] || exit
 	IsCriticalFile $r_gnu_find_cmd || exit
 
-	current_bytes=$($r_gnu_find_cmd "$dir_location" -type f -name '*.ipk' -exec /usr/bin/du --bytes --total --apparent-size {} + 2>/dev/null | /bin/grep total$ | cut -f1)
+	current_bytes=$($r_gnu_find_cmd "$dir_location" -type f -name '*.ipk' -exec /usr/bin/du --bytes --total --apparent-size {} + 2> /dev/null | /bin/grep total$ | cut -f1)
 	[[ -z $current_bytes ]] && current_bytes=0
 
 	} &>/dev/null
@@ -7473,7 +7473,7 @@ InitQPKGsTiers()
 	for a in "${r_qpkg_tiers[@]}"; do
 		b=r_${a}_qpkgs_list_pathfile
 		[[ ! -e ${!b} ]] && continue
-		rm -f "${!b}" 2>/dev/null
+		rm -f "${!b}" 2> /dev/null
 	done
 
 	qpkgs_tiers_built=false
@@ -7657,7 +7657,7 @@ GetQpkgStates()
 		fi >> "$r_qpkg_states_path/$qpkg_name"
 	done &
 
-	wait 2>/dev/null
+	wait 2> /dev/null
 
 	FuncExit
 
@@ -7874,7 +7874,7 @@ HelpAbbreviations()
 	done
 
 	m=$n
-	wait 2>/dev/null
+	wait 2> /dev/null
 
 	# Load report lines from individual files.
 
@@ -7933,7 +7933,7 @@ ReportBackups()
 
 			((n++))
 			_GenerateBacksReportItemLine_ "$epoch_time" "$file_name" "$file_bytes" "$r_report_highlight_backups_older_than" > "$r_reports_path/$n" &
-		done <<< "$($r_gnu_find_cmd "$r_qpkg_bu_path"/*.config.tar.gz -maxdepth 1 -printf '%C@ %f %s\n' 2>/dev/null | /usr/bin/sort)"
+		done <<< "$($r_gnu_find_cmd "$r_qpkg_bu_path"/*.config.tar.gz -maxdepth 1 -printf '%C@ %f %s\n' 2> /dev/null | /usr/bin/sort)"
 	else										# If GNU `find` isn't available, do-it the hard-way.
 		while read -r file_date file_time file_name file_bytes; do
 			[[ -z $file_date || -z $file_name ]] && break
@@ -7942,11 +7942,11 @@ ReportBackups()
 
 			((n++))
 			_GenerateBacksReportItemLine_ "$epoch_time" "$file_name" "$file_bytes" "$r_report_highlight_backups_older_than" > "$r_reports_path/$n" &
-		done <<< "$(cd "$r_qpkg_bu_path" && ls -l1tr --time-style=+"%Y-%m-%d %H:%M:%S" ./*.config.tar.gz 2>/dev/null | /bin/awk '{print $6" "$7" "$8" "$5}')"
+		done <<< "$(cd "$r_qpkg_bu_path" && ls -l1tr --time-style=+"%Y-%m-%d %H:%M:%S" ./*.config.tar.gz 2> /dev/null | /bin/awk '{print $6" "$7" "$8" "$5}')"
 	fi
 
 	m=$n
-	wait 2>/dev/null
+	wait 2> /dev/null
 
 	# Load report lines from individual files.
 
@@ -7997,7 +7997,7 @@ ReportDependencies()
 	done
 
 	m=$n
-	wait 2>/dev/null
+	wait 2> /dev/null
 
 	# Load report lines from individual files.
 
@@ -8049,7 +8049,7 @@ ReportFeatures()
 	done
 
 	m=$n
-	wait 2>/dev/null
+	wait 2> /dev/null
 
 	# Load report lines from individual files.
 
@@ -8165,7 +8165,7 @@ ReportRepos()
 	done
 
 	m=$n
-	wait 2>/dev/null
+	wait 2> /dev/null
 
 	# Load report data lines from individual files.
 
@@ -8218,7 +8218,7 @@ ReportStatuses()
 	printf -v a '\n%s\n' "$(GenerateStatusReportTitleLine)"
 
 	m=$n
-	wait 2>/dev/null
+	wait 2> /dev/null
 
 	# Load report lines from individual files.
 
@@ -9195,7 +9195,7 @@ GetOsKernelName()
 
 	/bin/uname -o || /bin/uname
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 GetOsKernelVersion()
 	{
@@ -9502,7 +9502,7 @@ GetQpkgEntwareType()
 		printf 'not-installed'
 	fi
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 GetUserSudoUID()
 	{
@@ -9606,7 +9606,7 @@ ReleaseLockfile()
 	# Inputs: (global)
 	#	$r_lock_pathfile
 
-	[[ -n ${r_lock_pathfile:-} ]] && rm -f "$r_lock_pathfile" 2>/dev/null
+	[[ -n ${r_lock_pathfile:-} ]] && rm -f "$r_lock_pathfile" 2> /dev/null
 
 	}
 
@@ -9803,7 +9803,7 @@ _QPKG:download_()
 			z=2
 		else
 			DebugInfo "deleting $(FormatFileName "$r_local_filename") as checksum is incorrect"
-			rm -f "$r_local_pathfile" 2>/dev/null
+			rm -f "$r_local_pathfile" 2> /dev/null
 		fi
 	fi
 
@@ -9812,7 +9812,7 @@ _QPKG:download_()
 	if IsNtFile "$r_local_pathfile"; then
 		DebugAsProc "downloading $(FormatFileName "$r_remote_filename")"
 
-		rm -f "$r_log_pathfile" 2>/dev/null
+		rm -f "$r_log_pathfile" 2> /dev/null
 
 		Executer "/sbin/curl${curl_options} --location --output $r_local_pathfile $r_remote_url" "$r_log_pathfile" log:failure-only
 		z=$?
@@ -13818,7 +13818,7 @@ Executer()
 
 	if [[ -e $r_log_pathfile ]]; then
 		ShowAsResultAndStdout "$z" "$(< "$r_log_pathfile")" >> "$2"
-		rm -f "$r_log_pathfile" 2>/dev/null
+		rm -f "$r_log_pathfile" 2> /dev/null
 	else
 		ShowAsResultAndStdout "$z" '<null>' >> "$2"
 	fi
@@ -13829,12 +13829,12 @@ Executer()
 		0)
 			[[ ${3:-} != log:failure-only || $useropt_debug = true ]] && AddExtLogToSessLog "$2"
 			DebugAsDone "$exec_msg OK"
-			[[ $useropt_debug = false ]] && rm -f "$2" 2>/dev/null
+			[[ $useropt_debug = false ]] && rm -f "$2" 2> /dev/null
 			;;
 		"${4:-}")
 			[[ ${3:-} != log:failure-only || $useropt_debug = true ]] && AddExtLogToSessLog "$2"
 			DebugAsWarn "$exec_msg with permitted errors"
-			[[ $useropt_debug = false ]] && rm -f "$2" 2>/dev/null
+			[[ $useropt_debug = false ]] && rm -f "$2" 2> /dev/null
 			;;
 		*)
 			AddExtLogToSessLog "$2"
@@ -14584,7 +14584,7 @@ FuncForkInit()
 
 	[[ -n ${pidfile:?${FUNCNAME[0]}'()': $e_nopfi} ]] || return
 
-	trap '[[ -n ${pidfile:-} && -e $pidfile ]] && rm -f "$pidfile" 2>/dev/null; exit' SIGINT
+	trap '[[ -n ${pidfile:-} && -e $pidfile ]] && rm -f "$pidfile" 2> /dev/null; exit' SIGINT
 
 	# Redirect debug output to a temporary log, then add it to session log before exiting. This will keep action log progress in-order.
 
@@ -14632,7 +14632,7 @@ FuncForkExit()
 
 	exit ${1:-0}
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 CalcAmountDiff()
 	{
@@ -14650,7 +14650,7 @@ CalcAmountDiff()
 		printf '%s' "$(($1-$2))"
 	fi
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 CalcMillisecondsDiffFromNanoseconds()
 	{
@@ -14664,7 +14664,7 @@ CalcMillisecondsDiffFromNanoseconds()
 
 	printf '%s' "$((($2-$1)/(10**6)))"
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 ConvertSecondsToFullDate()
 	{
@@ -14677,7 +14677,7 @@ ConvertSecondsToFullDate()
 
 	/bin/date -d @"$1" "$r_full_datetime_format"
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 ConvertSecondsToDatecode()
 	{
@@ -14701,7 +14701,7 @@ ConvertSecondsToDatecode()
 
 	/bin/date -d @"$a" '+%y%m%d'
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 ConvertSecondsToTime()
 	{
@@ -14714,7 +14714,7 @@ ConvertSecondsToTime()
 
 	/bin/date -d @"$1" '+%-l:%M:%S %p' | tr -s ' '
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 ConvertSecondsToDuration()
 	{
@@ -14742,7 +14742,7 @@ ConvertSecondsToDuration()
 		fi
 	fi
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 ConvertMillisecondsToSeconds()
 	{
@@ -14755,7 +14755,7 @@ ConvertMillisecondsToSeconds()
 
 	printf '%s' "$(($1/(10**3)))"
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 ConvertMillisecondsToDuration()
 	{
@@ -14765,7 +14765,7 @@ ConvertMillisecondsToDuration()
 
 	ConvertSecondsToDuration "$(ConvertMillisecondsToSeconds "$1")"
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 ConvertMillisecondsToFuncDuration()
 	{
@@ -14781,7 +14781,7 @@ ConvertMillisecondsToFuncDuration()
 		ConvertMillisecondsToDuration "$1"
 	fi
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 ConvertNanosecondsToMilliseconds()
 	{
@@ -14794,7 +14794,7 @@ ConvertNanosecondsToMilliseconds()
 
 	printf '%s' "$(($1/(10**6)))"
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 ConvertLongDateAsHuman()
 	{
@@ -14887,7 +14887,7 @@ ConvertAsSmartDate()
 
 	return
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 ConvertNowToFullDate()
 	{
@@ -14900,7 +14900,7 @@ ConvertNowToFullDate()
 
 	/bin/date "$r_full_datetime_format"
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 ConvertNowToSeconds()
 	{
@@ -14910,7 +14910,7 @@ ConvertNowToSeconds()
 
 	/bin/date +%s
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 ConvertNowToMilliseconds()
 	{
@@ -14920,7 +14920,7 @@ ConvertNowToMilliseconds()
 
 	ConvertNanosecondsToMilliseconds "$(ConvertNowToNanoseconds)"
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 ConvertNowToNanoseconds()
 	{
@@ -14930,7 +14930,7 @@ ConvertNowToNanoseconds()
 
 	/bin/date +%s%N
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 FormatAsLongMinutesSecs()
 	{
@@ -14950,7 +14950,7 @@ FormatAsLongMinutesSecs()
 
 	printf '%01dm:%02ds\n' "$((10#$m))" "$((10#$s))"
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 DebugAsFuncEn()
 	{
@@ -15291,7 +15291,7 @@ PercFrac()
 
 	return 0
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 ShowAsIterativeProgress()
 	{
@@ -15482,7 +15482,7 @@ TextBrightGreen()
 		printf '%s' "$1"
 	fi
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 TextBrightYellow()
 	{
@@ -15498,7 +15498,7 @@ TextBrightYellow()
 		printf '%s' "$1"
 	fi
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 TextBrightOrange()
 	{
@@ -15514,7 +15514,7 @@ TextBrightOrange()
 		printf '%s' "$1"
 	fi
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 TextBrightOrangeBlink()
 	{
@@ -15530,7 +15530,7 @@ TextBrightOrangeBlink()
 		printf '%s' "$1"
 	fi
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 TextBrightRed()
 	{
@@ -15546,7 +15546,7 @@ TextBrightRed()
 		printf '%s' "$1"
 	fi
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 TextBrightRedBlink()
 	{
@@ -15562,7 +15562,7 @@ TextBrightRedBlink()
 		printf '%s' "$1"
 	fi
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 # #TextCyan()
 # 	{
@@ -15578,7 +15578,7 @@ TextBrightRedBlink()
 # 		printf '%s' "$1"
 # 	fi
 #
-# 	} 2>/dev/null
+# 	} 2> /dev/null
 
 TextDarkGrey()
 	{
@@ -15594,7 +15594,7 @@ TextDarkGrey()
 		printf '%s' "$1"
 	fi
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 # #TextUnderlined()
 # 	{
@@ -15610,7 +15610,7 @@ TextDarkGrey()
 # 		printf '%s' "$1"
 # 	fi
 #
-# 	} 2>/dev/null
+# 	} 2> /dev/null
 
 TextUnderlinedCyan()
 	{
@@ -15626,7 +15626,7 @@ TextUnderlinedCyan()
 		printf '%s' "$1"
 	fi
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 TextBlackOnCyan()
 	{
@@ -15642,7 +15642,7 @@ TextBlackOnCyan()
 		printf '%s' "$1"
 	fi
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 TextBrightWhite()
 	{
@@ -15662,7 +15662,7 @@ TextBrightWhite()
 		printf '%s' "$1"
 	fi
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 Tableise()
 	{
@@ -15719,7 +15719,7 @@ StripANSICodes()
 		echo -en "${1:-}" 												# Can't strip, so pass thru original message unaltered.
 	fi
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 SetQpkgIndex()
 	{
@@ -16036,7 +16036,7 @@ sleep()
 
 	return 0
 
-	} 2>/dev/null
+	} 2> /dev/null
 
 RefreshArchive()
 	{
