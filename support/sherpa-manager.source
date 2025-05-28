@@ -1,20 +1,20 @@
 #!/usr/bin/env bash
 #* <?dont_edit?>
-#
+
 #* <?filename?>
-#
+
 #* <?copyright?>
-#
+
 #* Description:
 #*   This is the management script for the sherpa mini-package-manager.
 #*   It's automatically downloaded via the `sherpa-loader.sh` script in the `sherpa` QPKG no-more than once-per-hour.
-#
+
 #* <?project?>
-#
+
 #* <?tested?>
-#
+
 #* <?license?>
-#
+
 # Project variable and function naming style-guide:
 #					function names: 'CamelCase'
 #	   asynchronous function names: '_CamelCaseWithLeadingAndTrailingUnderscores_'
@@ -29,11 +29,19 @@
 #					error messages: 'e_snakecase_with_leading_e_underscore' (set as readonly)
 #						   indents: 1 x tab char (= 4 space chars)
 # when calling ShowAs*() functions: separated before-and-after with single line spaces unless first-or-last line in a code block.
-#
+
 # Notes:
 #   * If on-screen line-spacing is required, this should only be done by the next function to print output.
 #   * Display functions should never finish by putting an empty line on-screen for spacing.
 #	* Comment lines should always be separated from code with whitespace lines, except for ShellCheck directives.
+
+# Return codes:
+#	from async actions (only recorded in debug log):
+# 		0 = ok
+# 		1 = sk: skipped (and remapped error)
+# 		2 = so: skipped-ok
+# 		3 = sa: skipped-abort
+# 		4 = se: skipped-error
 
 set -o nounset -o pipefail
 shopt -s extglob
@@ -317,20 +325,20 @@ LoadConsts()
 
 	# These are for formatting output to the message pipe enhanced log.
 
-	local date_field_longest_string='Tue 27 May 2025 4:55:42 PM EST '						# devdebug
-	readonly r_date_field_length=${#date_field_longest_string}								# devdebug
+	local date_field_longest_string='Tue 27 May 2025 4:55:42 PM EST '	# devdebug
+	readonly r_date_field_length=${#date_field_longest_string}			# devdebug
 
-	local tier_field_longest_string=independent												# devdebug
-	readonly r_tier_field_length=${#tier_field_longest_string}								# devdebug
+	local tier_field_longest_string=independent							# devdebug
+	readonly r_tier_field_length=${#tier_field_longest_string}			# devdebug
 
-	local action_field_longest_string=reactivate											# devdebug
-	readonly r_action_field_length=${#action_field_longest_string}							# devdebug
+	local action_field_longest_string=reactivate						# devdebug
+	readonly r_action_field_length=${#action_field_longest_string}		# devdebug
 
-	local key1_field_longest_string=update													# devdebug
-	readonly r_key1_field_length=${#key1_field_longest_string}								# devdebug
+	local key1_field_longest_string=update								# devdebug
+	readonly r_key1_field_length=${#key1_field_longest_string}			# devdebug
 
-	local key2_field_longest_string=package													# devdebug
-	readonly r_key2_field_length=${#key2_field_longest_string}								# devdebug
+	local key2_field_longest_string=package								# devdebug
+	readonly r_key2_field_length=${#key2_field_longest_string}			# devdebug
 
 	}
 
@@ -1328,6 +1336,12 @@ AssignQpkgsToActions()
 		QPKGs-ISupgradable.Exist "$qpkg_name" && QPKGs-ACdownload-to:Add "$qpkg_name"	# Only download files for upgradable QPKGs.
 	done
 
+	# Ensure packages to be installed will be signed.
+
+	if IsOsCanSignedPackages && QPKGs-ACinstall-to.IsAny; then
+		QPKGs-ACsign-to:Add "$(QPKGs-ACinstall-to:Array)"
+	fi
+
 	# Check all packages.
 
 	if [[ $useropt_check = true ]]; then
@@ -1346,7 +1360,7 @@ AssignQpkgsToActions()
 		LoadQpkgSigningCertDetails
 	fi
 
-	[[ $useropt_debug = true ]] && ListQPKGsActionsAll				# devdebug
+	[[ $useropt_debug = true ]] && ListQPKGsActionsAll					# devdebug
 
 	FuncExit
 
@@ -1491,7 +1505,11 @@ ProcActions()
 
 		for tier in "${r_package_tiers[@]}"; do
 			if [[ $tier != auxiliary ]]; then
-				[[ $tier != independent ]] && ProcAction sign $tier QPKG '"sign"'
+				if IsOsCanSignedPackages; then
+					[[ $tier = independent ]] && IsQpkgEnabled Entware && ProcAction sign $tier QPKG '"sign"'
+					[[ $tier != independent ]] && ProcAction sign $tier QPKG '"sign"'
+				fi
+
 				ProcAction upgrade $tier QPKG upgrade
 				ProcAction reinstall $tier QPKG reinstall
 				ProcAction install $tier QPKG install
@@ -1522,9 +1540,10 @@ ProcActions()
 					PIPs:install
 				fi
 
-				QPKGs-ACinstall-ok.Exist Entware && [[ $sqlite_pathfile = /opt/bin/sqlite3 && -e $sqlite_pathfile ]] && IsOsCanSignedPackages && QPKGs-ACsign-to:Add "$(GetQpkgsIsValidInstalled)"
-
-				ProcAction sign independent QPKG '"sign"'
+				if IsOsCanSignedPackages; then
+					QPKGs-ACsign-to.Exist Entware && QPKGs-ACsign-to:Add "$(GetQpkgsIsValidInstalled)"
+					ProcAction sign independent QPKG '"sign"'
+				fi
 			fi
 		done
 	fi
@@ -1927,7 +1946,7 @@ PrepareArgs()
 	args=(${a/--/})
 	arg_problem=false
 
-	DebugArray args "${args[*]:-}"							# devdebug
+	DebugArray args "${args[*]:-}"										# devdebug
 
 	[[ -z $r_args_raw ]] && useropt_help_basic=true
 
@@ -2093,14 +2112,14 @@ ParseManagementArgs()
 		fi
 	done
 
-	if [[ $requires_group = true && $awaiting_group = true ]]; then			# Only if the last action specified was not followed by a group.
-		args_incomplete+=("$user_action")									# Save the actual action word, phrase or char specified by the user.
+	if [[ $requires_group = true && $awaiting_group = true ]]; then		# Only if the last action specified was not followed by a group.
+		args_incomplete+=("$user_action")								# Save the actual action word, phrase or char specified by the user.
 	fi
 
-	DebugArray args_incomplete "${args_incomplete[*]:-}"					# devdebug
+	DebugArray args_incomplete "${args_incomplete[*]:-}"				# devdebug
 
 	args=(${args_remaining[@]:-})
-	DebugArray args "${args[*]:-}"											# devdebug
+	DebugArray args "${args[*]:-}"										# devdebug
 
 	FuncExit
 
@@ -2265,8 +2284,8 @@ ParseHelpArgs()
 		fi
 	done
 
-	if [[ $requires_group = true && $awaiting_group = true ]]; then			# Only if the last action specified was not followed by a group.
-		args_incomplete+=("$user_action")									# Save the actual action word, phrase or char specified by the user.
+	if [[ $requires_group = true && $awaiting_group = true ]]; then		# Only if the last action specified was not followed by a group.
+		args_incomplete+=("$user_action")								# Save the actual action word, phrase or char specified by the user.
 	fi
 
 	for arg in "${args_incomplete[@]:-}"; do
@@ -2294,10 +2313,10 @@ ParseHelpArgs()
 		esac
 	done
 
-	DebugArray args_incomplete "${args_incomplete[*]:-}"					# devdebug
+	DebugArray args_incomplete "${args_incomplete[*]:-}"				# devdebug
 
 	args=(${args_remaining[@]:-})
-	DebugArray args "${args[*]:-}"											# devdebug
+	DebugArray args "${args[*]:-}"										# devdebug
 
 	FuncExit
 
@@ -2485,14 +2504,14 @@ ParseShowArgs()
 		fi
 	done
 
-	if [[ $requires_group = true && $awaiting_group = true ]]; then			# Only if the last action specified was not followed by a group.
-		args_incomplete+=("$user_action")									# Save the actual action word, phrase or char specified by the user.
+	if [[ $requires_group = true && $awaiting_group = true ]]; then		# Only if the last action specified was not followed by a group.
+		args_incomplete+=("$user_action")								# Save the actual action word, phrase or char specified by the user.
 	fi
 
-	DebugArray args_incomplete "${args_incomplete[*]:-}"					# devdebug
+	DebugArray args_incomplete "${args_incomplete[*]:-}"				# devdebug
 
 	args=(${args_remaining[@]:-})
-	DebugArray args "${args[*]:-}"											# devdebug
+	DebugArray args "${args[*]:-}"										# devdebug
 
 	FuncExit
 
@@ -2619,15 +2638,15 @@ ParseListArgs()
 		fi
 	done
 
-	if [[ $requires_group = true && $awaiting_group = true ]]; then			# Only if the last action specified was not followed by a group.
-		args_incomplete+=("$user_action")									# Save the actual action word, phrase or char specified by the user.
+	if [[ $requires_group = true && $awaiting_group = true ]]; then		# Only if the last action specified was not followed by a group.
+		args_incomplete+=("$user_action")								# Save the actual action word, phrase or char specified by the user.
 	fi
 
-	DebugVar generate_list_report 											# devdebug
-	DebugArray args_incomplete "${args_incomplete[*]:-}"					# devdebug
+	DebugVar generate_list_report 										# devdebug
+	DebugArray args_incomplete "${args_incomplete[*]:-}"				# devdebug
 
 	args=(${args_remaining[@]:-})
-	DebugArray args "${args[*]:-}"											# devdebug
+	DebugArray args "${args[*]:-}"										# devdebug
 
 	FuncExit
 
@@ -2743,8 +2762,8 @@ ParseActionArgs()
 		fi
 	done
 
-	if [[ $requires_group = true && $awaiting_group = true ]]; then			# Only if the last action specified was not followed by a group.
-		args_incomplete+=("$user_action")									# Save the actual action word, phrase or char specified by the user.
+	if [[ $requires_group = true && $awaiting_group = true ]]; then		# Only if the last action specified was not followed by a group.
+		args_incomplete+=("$user_action")								# Save the actual action word, phrase or char specified by the user.
 	fi
 
 	for arg in "${args_incomplete[@]:-}"; do
@@ -2753,7 +2772,7 @@ ParseActionArgs()
 		case $action in
 			status)
 				LoadObjects
-				QPKGs.ACstatusISinstalled:Set								# If status is specified without a group, then group is `installed`.
+				QPKGs.ACstatusISinstalled:Set							# If status is specified without a group, then group is `installed`.
 				generate_show_report=true
 				get_qpkg_extended_states=true
 				run_package_actions=true
@@ -2777,10 +2796,10 @@ ParseActionArgs()
 		esac
 	done
 
-	DebugArray args_incomplete "${args_incomplete[*]:-}"					# devdebug
+	DebugArray args_incomplete "${args_incomplete[*]:-}"				# devdebug
 
 	args=(${args_remaining[@]:-})
-	DebugArray args "${args[*]:-}"											# devdebug
+	DebugArray args "${args[*]:-}"										# devdebug
 
 	FuncExit
 
@@ -10973,15 +10992,7 @@ _QPKG:sign_()
 
 	DebugVar sqlite_cmd
 
-	if IsNtValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sk 'not installed'
-		MarkActionForkAsSkipped
-		z=1
-	elif IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sk 'incompatible author'
-		MarkActionForkAsSkipped
-		z=1
-	elif ! IsOsCanSignedPackages; then
+	if ! IsOsCanSignedPackages; then
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sk 'not required: firmware < 4.3.5'
 		MarkActionForkAsSkipped
 		z=1
@@ -13829,12 +13840,18 @@ Executer()
 		0)
 			[[ ${3:-} != log:failure-only || $useropt_debug = true ]] && AddExtLogToSessLog "$2"
 			DebugAsDone "$exec_msg OK"
-			[[ $useropt_debug = false ]] && rm -f "$2" 2> /dev/null
+
+			if true; then												# devdebug
+				[[ $useropt_debug = false ]] && rm -f "$2" 2> /dev/null
+			fi															# devdebug
 			;;
 		"${4:-}")
 			[[ ${3:-} != log:failure-only || $useropt_debug = true ]] && AddExtLogToSessLog "$2"
 			DebugAsWarn "$exec_msg with permitted errors"
-			[[ $useropt_debug = false ]] && rm -f "$2" 2> /dev/null
+
+			if true; then												# devdebug
+				[[ $useropt_debug = false ]] && rm -f "$2" 2> /dev/null
+			fi															# devdebug
 			;;
 		*)
 			AddExtLogToSessLog "$2"
