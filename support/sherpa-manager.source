@@ -14188,7 +14188,7 @@ ShowAsURL()
 FormatExitcode()
 	{
 
-	printf '%s' "[${1:?${FUNCNAME[0]}'()': $e_noext}]"
+	printf '%s' "'${1:?${FUNCNAME[0]}'()': $e_noext}'"
 
 	}
 
@@ -14221,9 +14221,10 @@ ShowAsResultAndStdout()
 
 	[[ ${1:-0} -ne 0 ]] && a=$r_chars_alert
 
-	echo "${a}result_code: $(FormatExitcode "$1") ***** stdout/stderr begins below *****"
+	echo "${a}result: $(FormatExitcode "$1")"
+	echo "${a}────────── stdout/stderr begins below ──────────"
 	echo "$2"
-	echo "${a}***** stdout/stderr is complete *****"
+	echo "${a}────────── stdout/stderr is complete ──────────"
 
 	}
 
