@@ -518,6 +518,7 @@ LoadEnv()
 	# Essential paths.
 
 	readonly r_qpkg_bu_path=$(GetUserDefVol)/.qpkg_config_backup
+	readonly r_qpkg_service_results_path=/var/log
 	readonly r_this_package_path=$(GetQpkgInstalledPath)
 
 	if [[ -z $r_this_package_path || $r_this_package_path = undefined || ! -d $r_this_package_path ]]; then
@@ -6945,6 +6946,7 @@ EraseForkCountPaths()
 	#	$r_action_counts_path
 
 	ClearPath "$r_action_counts_path" "$proc_counts_path"
+	rmdir "$proc_counts_path"
 	[[ -e $r_abort_actions_pathfile ]] && rm -f "$r_abort_actions_pathfile"
 
 	} &>/dev/null
@@ -7696,8 +7698,8 @@ StoreQpkgStates()
 	# Load status lines from individual files into session arrays.
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		a=/var/log/$qpkg_name.action
-		b=/var/log/$qpkg_name.result
+		a=$r_qpkg_service_results_path/$qpkg_name.action
+		b=$r_qpkg_service_results_path/$qpkg_name.result
 
 		if [[ -e $a && -e $b ]]; then
 			case $(< $b) in
@@ -9279,7 +9281,7 @@ GetRepoURLFromStoreID()
 GetOsUptime()
 	{
 
-	local n=$(</proc/uptime)
+	local n=$(< /proc/uptime)
 
 	ConvertSecondsToDuration "${n%%.*}"
 
@@ -9606,7 +9608,7 @@ ClaimLockfile()
 	readonly r_lock_pathfile=/var/run/sherpa.lock
 
 	for a in sherpa-manager.sh sherpa-manager.source; do
-		if [[ -e $r_lock_pathfile && -d /proc/$(< $r_lock_pathfile) && $(</proc/"$(< $r_lock_pathfile)"/cmdline) =~ $a ]]; then
+		if [[ -e $r_lock_pathfile && -d /proc/$(< $r_lock_pathfile) && $(< /proc/"$(< $r_lock_pathfile)"/cmdline) =~ $a ]]; then
 			ShowAsAbort "a running $(ShowAsTitleName) instance was found $(Parenthesise "PID:$(< "$r_lock_pathfile")"), can't continue"
 
 			return 1
@@ -11167,26 +11169,28 @@ LogQpkgServiceResult()
 	# Inputs: (global)
 	#   $qpkg_name
 
-	if ! local a=$(GetQpkgServiceResult); then
+	local a=$r_qpkg_service_results_path/$qpkg_name.log
+
+	if ! local b=$(GetQpkgServiceResult); then
 		DebugAsWarn "unable to get status of $(FormatPackageName) service. It may be a non-sherpa package, or a sherpa package earlier than 200816c that doesn't support service results."
 
 		return 1
 	fi
 
-	case $a in
+	case $b in
+		failed)
+			if [[ -e $a ]]; then
+				DebugAsError "$(FormatPackageName) service action failed. Check $(FormatFileName "$a") for more information"
+				AddExtLogToSessLog "$a"
+			else
+				DebugAsError "$(FormatPackageName) service action failed"
+			fi
+			;;
 		in-progress)
 			DebugInfo "$(FormatPackageName) service action is in-progress"
 			;;
 		ok)
 			DebugInfo "$(FormatPackageName) service action completed OK"
-			;;
-		failed)
-			if [[ -e /var/log/$qpkg_name.log ]]; then
-				DebugAsError "$(FormatPackageName) service action failed. Check $(FormatFileName "/var/log/$qpkg_name.log") for more information"
-				AddExtLogToSessLog /var/log/$qpkg_name.log
-			else
-				DebugAsError "$(FormatPackageName) service action failed"
-			fi
 			;;
 		*)
 			DebugAsWarn "$(FormatPackageName) service status is unrecognised or unsupported"
@@ -12134,7 +12138,7 @@ GetQpkgServiceAction()
 
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}
 	local b=''
-	[[ -e /var/log/$a.action ]] && b=$(</var/log/${a}.action)
+	[[ -e $r_qpkg_service_results_path/$a.action ]] && b=$(< $r_qpkg_service_results_path/${a}.action)
 
 	if [[ -n $b ]]; then
 		printf '%s' "$b"
@@ -12159,7 +12163,7 @@ GetQpkgServiceResult()
 
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}
 	local b=''
-	[[ -e /var/log/$a.result ]] && b=$(</var/log/${a}.result)
+	[[ -e $r_qpkg_service_results_path/$a.result ]] && b=$(< $r_qpkg_service_results_path/${a}.result)
 
 	if [[ -n $b ]]; then
 		printf '%s' "$b"
@@ -13804,8 +13808,6 @@ Executer()
 
 	FuncInit
 
-	MakePath "$r_run_logs_path" 'runtime logs'
-
 	local -r r_log_pathfile=$(/bin/mktemp "$r_run_logs_path"/"${FUNCNAME[0]}"_XXXXXX)
 	local -i z=0
 	local exec_msg='exec:'
@@ -13829,7 +13831,10 @@ Executer()
 
 	if [[ -e $r_log_pathfile ]]; then
 		ShowAsResultAndStdout "$z" "$(< "$r_log_pathfile")" >> "$2"
-		rm -f "$r_log_pathfile" 2> /dev/null
+
+		if false; then													# devdebug
+			rm -f "$r_log_pathfile" 2> /dev/null
+		fi																# devdebug
 	else
 		ShowAsResultAndStdout "$z" '<null>' >> "$2"
 	fi
@@ -13841,7 +13846,7 @@ Executer()
 			[[ ${3:-} != log:failure-only || $useropt_debug = true ]] && AddExtLogToSessLog "$2"
 			DebugAsDone "$exec_msg OK"
 
-			if true; then												# devdebug
+			if false; then												# devdebug
 				[[ $useropt_debug = false ]] && rm -f "$2" 2> /dev/null
 			fi															# devdebug
 			;;
@@ -13849,7 +13854,7 @@ Executer()
 			[[ ${3:-} != log:failure-only || $useropt_debug = true ]] && AddExtLogToSessLog "$2"
 			DebugAsWarn "$exec_msg with permitted errors"
 
-			if true; then												# devdebug
+			if false; then												# devdebug
 				[[ $useropt_debug = false ]] && rm -f "$2" 2> /dev/null
 			fi															# devdebug
 			;;
@@ -15073,6 +15078,9 @@ AddExtLogToSessLog()
 	{
 
 	# Add the contents of pathfile $1 to the session debug log, with each line formatted as an external log entry.
+
+	# Inputs: (local)
+	#	$1 = pathfilename to the source log.
 
 	# Inputs: (global)
 	#	$useropt_verbose
