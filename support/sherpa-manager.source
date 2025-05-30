@@ -9888,7 +9888,7 @@ _QPKG:install_()
 	local -i z=0
 
 	if IsValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" install '' sk 'already installed'
+		SaveActionResultToLog QPKG "$qpkg_name" install '' sk "already installed, to reinstall use 'reinstall' instead."
 		MarkActionForkAsSkipped
 		z=1
 	elif IsQpkgInstalled && IsNtQpkgAuthorOk; then
