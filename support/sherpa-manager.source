@@ -3391,13 +3391,13 @@ PatchEntwareService()
 	if /bin/grep -q 'opt.orig' "$r_package_init_pathfile"; then
 		DebugInfo 'patch: do the "/opt shuffle" - already done'
 	else
-		# Ensure existing files are moved out of the way before creating /opt symlink.
+		# Ensure existing files are moved out of the way before creating '/opt' symlink.
 
 		find='# sym-link $QPKG_DIR to /opt'
 		insert='opt_path="/opt"; opt_backup_path="/opt.orig"; [[ -d "$opt_path" \&\& ! -L "$opt_path" \&\& ! -e "$opt_backup_path" ]] \&\& mv "$opt_path" "$opt_backup_path"'
 		/bin/sed -i "s|$find|$find\n\n${r_tab_char}${r_prefix}\n${r_tab_char}${insert}\n|" "$r_package_init_pathfile"
 
-		# ... then restored after creating /opt symlink.
+		# ... then restored after creating '/opt' symlink.
 
 		find='/bin/ln -sf $QPKG_DIR /opt'
 		insert='[[ -L "$opt_path" \&\& -d "$opt_backup_path" ]] \&\& cp "$opt_backup_path"/* --target-directory "$opt_path" \&\& rm -r "$opt_backup_path"'
@@ -9951,7 +9951,7 @@ _QPKG:install_()
 			SendParentCommand _UpdateEntwarePackageList_
 			PatchEntwareService
 
-			# Shift all files from original [/opt] into new [/opt]
+			# Shift all files from original '/opt' into new '/opt'
 
 			if [[ -L ${r_opt_path:-} && -d ${r_opt_bu_path:-} ]]; then
 				DebugAsProc 'restoring original /opt'
@@ -13143,7 +13143,7 @@ IsQpkgDbSherpaCompatible()
 	if [[ -n ${1:-} ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
 			[[ ${r_qpkg_name[$i]} = "$1" ]] || continue
-			a=${r_qpkg_is_sherpa_compatible[$i]}			# Always grab first found as default.
+			a=${r_qpkg_is_sherpa_compatible[$i]}						# Always grab first found as default.
 			break
 		done
 	else
@@ -13501,7 +13501,7 @@ CreatePidFile()
 	# Outputs: (global)
 	#	$pidfile
 
-	pidfile=$(/bin/mktemp "$r_async_procs_path"/proc_XXXXXX)		# Set $pidfile before launching async process so $pidfile is inherited by that process.
+	pidfile=$(/bin/mktemp "$r_async_procs_path"/proc_XXXXXX)			# Set $pidfile before launching async process so $pidfile is inherited by that process.
 
 	}
 
@@ -13763,7 +13763,7 @@ FileCountAll()
 
 	[[ -n ${1:-} ]] || return
 
-	compgen -G "$1/*" | /usr/bin/wc -l | /bin/sed 's/^ *//'		# `compgen` usage found here: https://stackoverflow.com/a/6364244
+	compgen -G "$1/*" | /usr/bin/wc -l | /bin/sed 's/^ *//'				# `compgen` usage found here: https://stackoverflow.com/a/6364244
 
 	}
 
@@ -13777,7 +13777,7 @@ FileCountSpec()
 
 	[[ -n ${1:-} ]] || return
 
-	compgen -G "$1" | /usr/bin/wc -l | /bin/sed 's/^ *//'		# `compgen` usage found here: https://stackoverflow.com/a/6364244
+	compgen -G "$1" | /usr/bin/wc -l | /bin/sed 's/^ *//'				# `compgen` usage found here: https://stackoverflow.com/a/6364244
 
 	}
 
