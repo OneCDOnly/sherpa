@@ -1,5 +1,13 @@
 Management:
 
+	* Consider re-ordering forkfunc returncodes?
+		0 = ok
+		1 = er
+		2 = sk
+		3 = so
+		4 = se
+		5 = sa
+
 	* Retain action logging in dev version.
 
 	* Remove kludge in _QPKG:sign_() on-or-after 2025-06-07
@@ -55,7 +63,7 @@ Management:
 		- No-need to record every progress message change in logs.
 
 	* Default dependency report should only show installed QPKGs.
-		- ... but should allow 'sherpa d all' to see all QPKGs.
+		- ... but should allow 'sherpa d all' to see all QPKGs (same as status report).
 		- Same for repository and repo reports.
 		- Add new $QPKG_ACTIONS element: 'report'
 

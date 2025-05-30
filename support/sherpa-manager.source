@@ -9667,14 +9667,14 @@ DisableDebugToArchiveAndFile()
 SaveActionResultToLog()
 	{
 
-	# Write package type, package name, datetime in seconds, action, result, reason into actions logfile and durations file.
+	# Write various action metrics into log and durations files.
 
 	# Inputs: (local)							Example:
 	#   $1 = package type						`QPKG`, `IPK`, `PIP`
 	#   $2 = package or group name				`SABnzbd`, `essential`
 	#   $3 = action								`download`, `activate`
 	#   $4 = quantity (optional, default 1)		number of packages affected
-	#   $5 = result								`ok`, `so`, `sk`, `sa`, `er`
+	#   $5 = result code						`ok`, `so`, `sk`, `sa`, `se`, `er`
 	#   $6 (optional) = reason 					"file already exists in local cache"
 
 	# Inputs: (global)
@@ -9690,7 +9690,7 @@ SaveActionResultToLog()
 	local -r r_action=${3:?${FUNCNAME[0]}'()': $e_noact}
 	local -r r_qty=${4:-1}
 	local -r r_clean_action=${r_action//\"/}
-	local -r r_result=${5:?${FUNCNAME[0]}'()': $e_nores}
+	local -r r_result_code=${5:?${FUNCNAME[0]}'()': $e_nores}
 	local -r r_reason=${6:-}
 	local -r r_starttime=$(ConvertNanosecondsToMilliseconds "${!var_safe_name}")
 	local -r r_duration=$(CalcAmountDiff "$r_starttime" "$(ConvertNowToMilliseconds)")
@@ -9698,7 +9698,7 @@ SaveActionResultToLog()
 
 	# Add new action results entry.
 
-	echo "$r_starttime|$r_action|$r_qty|$r_name|$r_package_type|$r_result|$r_duration|$r_reason" >> "$r_session_action_results_pathfile"
+	echo "$r_starttime|$r_action|$r_qty|$r_name|$r_package_type|$r_result_code|$r_duration|$r_reason" >> "$r_session_action_results_pathfile"
 
 	# Remove previous action duration entry if one exists.
 
@@ -9710,7 +9710,7 @@ SaveActionResultToLog()
 
 	echo "$r_name|$r_duration" >> "$r_action_times_pathfile"
 
-	case $r_result in
+	case $r_result_code in
 		ok|so)
 			DebugAsInfo "$r_reason"
 			;;
@@ -10244,7 +10244,7 @@ _QPKG:uninstall_()
 		z=$?
 
 		if [[ $z -eq 0 ]]; then
-			# WARNING: beware of `qpkg_cli --remove`: it removes the QPKG installation path around 10-20 seconds after execution. If sherpa has moved-on and starts an install, `qpkg_cli` will remove the newly created QPKG installation path partway through the installation. So, check if QPKG is to be installed again: if-so, don't use `qpkg_cli --remove`.
+			# WARNING: beware of `qpkg_cli --remove`. It removes the QPKG installation path around 10-20 seconds after execution. If sherpa has moved-on and starts an install, `qpkg_cli` will remove the newly created QPKG installation path partway through the installation. So, check if QPKG is to be installed again. If-so, don't use `qpkg_cli --remove`.
 
 			[[ -e /sbin/qpkg_cli ]] && ! QPKGs-ACinstall-to.Exist "$qpkg_name" && /sbin/qpkg_cli --remove "$qpkg_name" &>/dev/null
 			SaveActionResultToLog QPKG "$qpkg_name" uninstall '' ok
