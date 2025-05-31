@@ -6561,14 +6561,16 @@ DisplayFileInViewport()
 			return
 		fi
 
-		if [[ -e /bin/less ]]; then
-			options='-~'
-			[[ $wraplines = false ]] && options+='S'
-			[[ $showlinenumbers = true ]] && options+='N'
-			/bin/less "$options" "$filename"
+# Disable the use of built-in `less` for-now as it doesn't support ANSI chars. Let's see if there are any problems (other than not being able to scroll output).
 
-			return
-		fi
+# 		if [[ -e /bin/less ]]; then
+# 			options='-~'
+# 			[[ $wraplines = false ]] && options+='S'
+# 			[[ $showlinenumbers = true ]] && options+='N'
+# 			/bin/less "$options" "$filename"
+#
+# 			return
+# 		fi
 	fi
 
 	if [[ -e /bin/cat ]]; then
