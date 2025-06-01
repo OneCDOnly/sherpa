@@ -1,23 +1,13 @@
 Observed issues:
 
-	* RunLast install shows incompatible author:
-		--------------------------------------------------------------------------------------------------
-		dbug: (==) forked _QPKG:install_() instance for 'RunLast'
-		dbug: (>>) _QPKG:install_()
-		dbug: (WW) incompatible author
-		dbug: (<<) _QPKG:install_()|1|204ms
-		--------------------------------------------------------------------------------------------------
-		... and others:
+	* SortMyQPKGs install shows "QuTS Hero":
 		--------------------------------------------------------------------------------------------------
 		dbug: (==) forked _QPKG:install_() instance for 'SortMyQPKGs'
 		dbug: (>>) _QPKG:install_()
-		dbug: (WW) incompatible author
-		dbug: (<<) _QPKG:install_()|1|239ms
-		dbug: (==) forked _QPKG:install_() instance for 'TorrServer'
-		dbug: (>>) _QPKG:install_()
-		dbug: (WW) incompatible author
-		dbug: (<<) _QPKG:install_()|1|246ms
+		dbug: (WW) QuTS hero version is incompatible
+		dbug: (<<) _QPKG:install_()|1|326ms
 		--------------------------------------------------------------------------------------------------
+		- Other packages were correctly skipped with "QTS".
 
 	* QDK install throws error:
 		--------------------------------------------------------------------------------------------------
