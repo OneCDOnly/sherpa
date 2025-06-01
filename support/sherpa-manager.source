@@ -9886,7 +9886,7 @@ _QPKG:install_()
 	local a=''
 	local -i z=0
 
-	if IsValidQpkgInstalled "$qpkg_name"; then
+	if IsQpkgInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" install '' sk "already installed, to reinstall use 'reinstall' instead."
 		MarkActionForkAsSkipped
 		z=1
@@ -9990,7 +9990,7 @@ _QPKG:reinstall_()
 	local a='REINSTALL_QPKG=true '
 	local -i z=0
 
-	if IsNtValidQpkgInstalled "$qpkg_name"; then
+	if IsNtQpkgInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' sk "not already installed, please use 'install' instead."
 		MarkActionForkAsSkipped
 		z=1
