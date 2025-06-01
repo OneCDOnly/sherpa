@@ -13810,9 +13810,12 @@ Executer()
 
 	FuncInit
 
-	local -r r_log_pathfile=$(/bin/mktemp "$r_run_logs_path"/"${FUNCNAME[0]}"_XXXXXX)
-	local -i z=0
+# 	local cmd=''
 	local exec_msg='exec:'
+# 	local -i pid=0
+	local -r r_log_pathfile=$(/bin/mktemp "$r_run_logs_path"/"${FUNCNAME[0]}"_XXXXXX)
+# 		local -r r_pid_pathfile=$r_log_pathfile.pid
+	local -i z=0
 
 	if IsHaveSingleQuote "$1"; then							# Change display quotes depending-on content quote chars.
 		exec_msg+=" \"$1\""
@@ -13829,6 +13832,19 @@ Executer()
 	else
 		(eval "$1" > "$r_log_pathfile" 2>&1)				# Run in a subshell to suppress 'Terminated' message later.
 		z=$?
+
+# 		cmd="\"$1\" > $r_log_pathfile 2>&1"
+#
+# 		# Let's try this: https://serverfault.com/a/903631
+#
+#		/bin/sh -c "echo \$\$ > $r_pid_pathfile; exec \"$cmd\""
+#		z=$?
+#
+# 		if [[ -e $r_pid_pathfile ]]; then
+# 			[[ -s $r_pid_pathfile ]] && pid=$(< $r_pid_pathfile)
+# 			[[ $pid -gt 0 ]] && wait $pid 2> /dev/null
+# 			rm "$r_pid_pathfile"
+# 		fi
 	fi
 
 	if [[ -e $r_log_pathfile ]]; then
@@ -16121,7 +16137,7 @@ RefreshArchive()
 	if [[ $download = true ]]; then
 		DebugAsProc "download '$archive_name' archive"
 		IsOsCanSecureDownload || curl_options=' --insecure'
-		/sbin/curl${curl_options} --silent --fail "$archive_url" > "$archive_pathfile"
+		/sbin/curl${curl_options} --silent --fail "$archive_url" > "$archive_pathfile" 2> /dev/null
 
 		if IsFile "$archive_pathfile"; then
 			DebugAsDone "download '$archive_name' archive OK"
