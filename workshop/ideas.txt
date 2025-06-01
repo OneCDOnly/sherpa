@@ -1,5 +1,13 @@
 Management:
 
+	* Add 'unsign' QPKG as non-user action (similar to 'download' action).
+		- Remove signature entry from QTS database.
+		- Do this early in ProcActions().
+
+	* Cache CPU and storage benchmark results for reuse.
+
+	* Need an enhanced action results log builder.
+
 	* Consider re-ordering forkfunc returncodes?
 		0 = ok
 		1 = er

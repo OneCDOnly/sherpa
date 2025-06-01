@@ -1,5 +1,64 @@
 Observed issues:
 
+	* RunLast install shows incompatible author:
+		--------------------------------------------------------------------------------------------------
+		dbug: (==) forked _QPKG:install_() instance for 'RunLast'
+		dbug: (>>) _QPKG:install_()
+		dbug: (WW) incompatible author
+		dbug: (<<) _QPKG:install_()|1|204ms
+		--------------------------------------------------------------------------------------------------
+		... and others:
+		--------------------------------------------------------------------------------------------------
+		dbug: (==) forked _QPKG:install_() instance for 'SortMyQPKGs'
+		dbug: (>>) _QPKG:install_()
+		dbug: (WW) incompatible author
+		dbug: (<<) _QPKG:install_()|1|239ms
+		dbug: (==) forked _QPKG:install_() instance for 'TorrServer'
+		dbug: (>>) _QPKG:install_()
+		dbug: (WW) incompatible author
+		dbug: (<<) _QPKG:install_()|1|246ms
+		--------------------------------------------------------------------------------------------------
+
+	* QDK install throws error:
+		--------------------------------------------------------------------------------------------------
+		dbug: (--) exec: 'DEBUG_QPKG=true /bin/sh /share/CACHEDEV1_DATA/.qpkg/sherpa/cache/QPKGs/downloads/QDK_2.3.14.qpkg'
+		Install QNAP package on TS-NAS...
+		./
+		./built_info
+		./qinstall.sh
+		./package_routines
+		./qpkg.cfg
+		123+1 records in
+		123+1 records out
+		2940099 bytes (2.8MB) copied, 0.051226 seconds, 54.7MB/s
+		2869+0 records in
+		2869+0 records out
+		2937856 bytes (2.8MB) copied, 0.049176 seconds, 57.0MB/s
+		qinstall.sh: line 470: /share/CACHEDEV1_DATA/.qpkg/QDK/.list: No such file or directory
+		Firmware check is fine.
+		Link service start/stop script: qdk
+		Set QPKG information in /etc/config/qpkg.conf
+		bin/
+		bin/xzcmp
+		bin/xzegrep
+		bin/xzless
+		bin/xzcat
+		bin/xzmore
+		bin/xzfgrep
+		bin/xzgrep
+		bin/xzdec
+		bin/xz
+		bin/xzdiff
+		lib/
+		lib/liblzma.so.5
+		lib/liblzma.so
+		lib/liblzma.la
+		lib/liblzma.so.5.0.7
+		--------------------------------------------------------------------------------------------------
+		- Report to dev.
+
+	* service script library: if $REINSTALL_QPKG=true, then don't show/log 'stop' and aborted-'start' actions.
+
 	* `sherpa install all` in TS-216G results included "undefined" versions?
 		--------------------------------------------------------------------------------------------------
 		...
