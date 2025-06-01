@@ -9813,8 +9813,6 @@ _QPKG:download_()
 					local -r r_log_pathfile=$r_logs_path/$r_local_filename.$r_download_log_file
 	local -i z=0
 
-	IsOsCanSecureDownload || curl_options=' --insecure'
-
 	if [[ -z $r_remote_url || -z $r_remote_hash ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" download '' sk 'NAS arch is incompatible'
 		MarkActionForkAsSkipped
@@ -9834,7 +9832,7 @@ _QPKG:download_()
 
 	if IsNtFile "$r_local_pathfile"; then
 		DebugAsProc "downloading $(FormatFileName "$r_remote_filename")"
-
+		IsOsCanSecureDownload || curl_options=' --insecure'
 		rm -f "$r_log_pathfile" 2> /dev/null
 
 		Executer "/sbin/curl${curl_options} --location --output $r_local_pathfile $r_remote_url" "$r_log_pathfile" log:failure-only
@@ -9886,17 +9884,12 @@ _QPKG:install_()
 	FuncForkInit
 
 	local a=''
-	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
 	if IsValidQpkgInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" install '' sk "already installed, to reinstall use 'reinstall' instead."
 		MarkActionForkAsSkipped
 		z=1
-# 	elif IsQpkgInstalled && IsNtQpkgAuthorOk; then
-# 		SaveActionResultToLog QPKG "$qpkg_name" install '' sk 'incompatible author'
-# 		MarkActionForkAsSkipped
-# 		z=1
 	elif ! IsQpkgDbArchOK "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" install '' sk 'NAS arch is incompatible'
 		MarkActionForkAsSkipped
@@ -9935,6 +9928,7 @@ _QPKG:install_()
 	fi
 
 	DebugAsProc "installing $(FormatPackageName)"
+	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	[[ ${QPKGs_were_installed_name[*]:-} = *"$qpkg_name"* ]] && a+="QINSTALL_PATH=$(GetQpkgInstalledOriginalPath "$qpkg_name") "
 
 	Executer "${a}/bin/sh $local_pathfile" "$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_install_log_file" log:failure-only 10
@@ -9994,7 +9988,6 @@ _QPKG:reinstall_()
 	FuncForkInit
 
 	local a='REINSTALL_QPKG=true '
-	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
 	if IsNtValidQpkgInstalled "$qpkg_name"; then
@@ -10024,6 +10017,7 @@ _QPKG:reinstall_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "reinstalling $(FormatPackageName)"
+	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	IsValidQpkgInstalled && a+="QINSTALL_PATH=$(/usr/bin/dirname "$(GetQpkgInstalledPath)") "
 
 	Executer "${a}/bin/sh $local_pathfile" "$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_reinstall_log_file" log:failure-only 10
@@ -10073,10 +10067,10 @@ _QPKG:rebuild_()
 		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' sk "already installed, please use 'restore' instead"
 		MarkActionForkAsSkipped
 		z=1
-	elif IsQpkgInstalled && IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' sk 'incompatible author'
-		MarkActionForkAsSkipped
-		z=1
+# 	elif IsNtQpkgAuthorOk; then
+# 		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' sk 'incompatible author'
+# 		MarkActionForkAsSkipped
+# 		z=1
 	elif ! IsQpkgDbCanBackup; then
 		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' sk 'does not support rebuild'
 		MarkActionForkAsSkipped
@@ -10123,7 +10117,6 @@ _QPKG:upgrade_()
 	FuncForkInit
 
 	local a='UPGRADE_QPKG=true '
-	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
 	if IsNtValidQpkgInstalled "$qpkg_name"; then
@@ -10159,6 +10152,7 @@ _QPKG:upgrade_()
 	local prev_ver=$(GetQpkgInstalledVer)
 
 	DebugAsProc "upgrading $(FormatPackageName)"
+	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	IsValidQpkgInstalled && a+="QINSTALL_PATH=$(/usr/bin/dirname "$(GetQpkgInstalledPath "$qpkg_name")") "
 
 	Executer "${a}/bin/sh $local_pathfile" "$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_upgrade_log_file" log:failure-only 10
@@ -10212,7 +10206,6 @@ _QPKG:uninstall_()
 	FuncForkInit
 
 	local a=''
-	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
 	if IsNtValidQpkgInstalled "$qpkg_name"; then
@@ -10241,6 +10234,7 @@ _QPKG:uninstall_()
 
 	if IsFile "$r_qpkg_uninstaller_pathfile"; then
 		DebugAsProc "uninstalling $(FormatPackageName)"
+		[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 
 		Executer "${a}/bin/sh $r_qpkg_uninstaller_pathfile" "$r_logs_path/$qpkg_name.$r_uninstall_log_file" log:failure-only
 		z=$?
@@ -10295,7 +10289,6 @@ _QPKG:activate_()
 	FuncForkInit
 
 	local a=''
-	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
 	if IsNtValidQpkgInstalled "$qpkg_name"; then
@@ -10331,6 +10324,8 @@ _QPKG:activate_()
 
 		FuncForkExit 4
 	elif [[ $useropt_debug = true ]]; then
+		[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
+
 		Executer "${a}${service_pathfile} start" "$r_log_pathfile" log:failure-only
 		z=$?
 	elif IsQpkgDbWillLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
@@ -10384,7 +10379,6 @@ _QPKG:reactivate_()
 	FuncForkInit
 
 	local a=''
-	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
 	if IsNtValidQpkgInstalled "$qpkg_name"; then
@@ -10420,6 +10414,8 @@ _QPKG:reactivate_()
 
 		FuncForkExit 4
 	elif [[ $useropt_debug = true ]]; then
+		[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
+
 		Executer "${a}${service_pathfile} restart" "$r_log_pathfile" log:failure-only
 		z=$?
 	elif IsQpkgDbWillLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
@@ -10464,7 +10460,6 @@ _QPKG:deactivate_()
 	FuncForkInit
 
 	local a=''
-	[[ $useropt_debug = true ]]	&& a+='DEBUG_QPKG=true '
 	local -i z=0
 
 	if IsNtValidQpkgInstalled "$qpkg_name"; then
@@ -10500,6 +10495,8 @@ _QPKG:deactivate_()
 
 		FuncForkExit 4
 	elif [[ $useropt_debug = true ]]; then
+		[[ $useropt_debug = true ]]	&& a+='DEBUG_QPKG=true '
+
 		Executer "${a}${service_pathfile} stop" "$r_log_pathfile" log:failure-only
 		z=$?
 	elif IsQpkgDbWillLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
@@ -10665,7 +10662,6 @@ _QPKG:enableau_()
 	FuncForkInit
 
 	local a=''
-	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
 	if IsNtValidQpkgInstalled "$qpkg_name"; then
@@ -10693,6 +10689,7 @@ _QPKG:enableau_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "enabling auto-update $(FormatPackageName)"
+	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 
 	Executer "${a}$(GetQpkgServicePathFile) enable-auto-update" "$r_logs_path/$qpkg_name.$r_enableau_log_file" log:failure-only
 	z=$?
@@ -10729,7 +10726,6 @@ _QPKG:disableau_()
 	FuncForkInit
 
 	local a=''
-	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
 	if IsNtValidQpkgInstalled "$qpkg_name"; then
@@ -10757,6 +10753,7 @@ _QPKG:disableau_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "disabling auto-update $(FormatPackageName)"
+	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 
 	Executer "${a}$(GetQpkgServicePathFile) disable-auto-update" "$r_logs_path/$qpkg_name.$r_disableau_log_file" log:failure-only
 	z=$?
@@ -10793,7 +10790,6 @@ _QPKG:backup_()
 	FuncForkInit
 
 	local a=''
-	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
 	if IsNtValidQpkgInstalled "$qpkg_name"; then
@@ -10817,6 +10813,7 @@ _QPKG:backup_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "backing-up $(FormatPackageName) configuration"
+	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 
 	Executer "${a}$(GetQpkgServicePathFile) backup" "$r_logs_path/$qpkg_name.$r_backup_log_file" log:failure-only
 	z=$?
@@ -10854,7 +10851,6 @@ _QPKG:restore_()
 	FuncForkInit
 
 	local a=''
-	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
 	if IsNtValidQpkgInstalled "$qpkg_name"; then
@@ -10882,6 +10878,7 @@ _QPKG:restore_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "restoring $(FormatPackageName) configuration"
+	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 
 	Executer "${a}$(GetQpkgServicePathFile) restore" "$r_logs_path/$qpkg_name.$r_restore_log_file" log:failure-only
 	z=$?
@@ -10919,7 +10916,6 @@ _QPKG:clean_()
 	FuncForkInit
 
 	local a=''
-	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	local -i z=0
 
 	if IsNtValidQpkgInstalled "$qpkg_name"; then
@@ -10943,6 +10939,7 @@ _QPKG:clean_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "cleaning $(FormatPackageName)"
+	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 
 	Executer "${a}$(GetQpkgServicePathFile) clean" "$r_logs_path/$qpkg_name.$r_clean_log_file" log:failure-only
 	z=$?
@@ -11088,7 +11085,6 @@ _QPKG:status_()
 
 	local a=''
 	local b=''
-	[[ $useropt_debug = true ]] && b+='DEBUG_QPKG=true '
 	local -i z=0
 
 	if IsNtValidQpkgInstalled "$qpkg_name"; then
@@ -11102,6 +11098,7 @@ _QPKG:status_()
 	DebugAsProc "status $(FormatPackageName)"
 
 	a=$(GetQpkgDbActiveTest)
+	[[ $useropt_debug = true ]] && b+='DEBUG_QPKG=true '
 
 	if [[ $a = builtin ]]; then
 		# Run status query with GNU `timeout` if-possible.
