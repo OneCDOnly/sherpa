@@ -9893,10 +9893,10 @@ _QPKG:install_()
 		SaveActionResultToLog QPKG "$qpkg_name" install '' sk "already installed, to reinstall use 'reinstall' instead."
 		MarkActionForkAsSkipped
 		z=1
-	elif IsQpkgInstalled && IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" install '' sk 'incompatible author'
-		MarkActionForkAsSkipped
-		z=1
+# 	elif IsQpkgInstalled && IsNtQpkgAuthorOk; then
+# 		SaveActionResultToLog QPKG "$qpkg_name" install '' sk 'incompatible author'
+# 		MarkActionForkAsSkipped
+# 		z=1
 	elif ! IsQpkgDbArchOK "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" install '' sk 'NAS arch is incompatible'
 		MarkActionForkAsSkipped
