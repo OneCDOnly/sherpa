@@ -1106,6 +1106,23 @@ CheckEnv()
 # 					IPKs-ACdowngrade-sk:Add "$target_packages"
 # 				fi
 		esac
+
+# 		# Downgrade Transmission as 4.0.6 has an undefined issue.
+# 		# 	https://github.com/OneCDOnly/sherpa/issues/306
+#
+# 		target_packages='transmission-daemon transmission-web'
+#
+# 		# Assume first package version is same as remaining package versions.
+#
+# 		installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${target_packages%% *} *" | head -n1 | cut -d' ' -f3 | cut -d'-' -f1)
+#
+# 		if [[ ${installed_version//.} -gt 4041 ]]; then
+# 			ipks_downgrade=true
+# 			ShowAsNote "Transmission IPKs will be downgraded back to a working version"
+# 			IPKs-ACdowngrade-to:Add "$target_packages"
+# 		else
+# 			IPKs-ACdowngrade-sk:Add "$target_packages"
+# 		fi
 	fi
 
 	BuildQPKGsIsCanBackup
@@ -3933,6 +3950,21 @@ IPKs:downgrade()
 				done
 
 				ShowAsPercentProgress "download $desc" '' "$ok_count" 0 "$fail_count" "$total_count"
+# 				;;
+# 			a64)
+# 				url_prefix=http://bin.entware.net/armv7sf-k3.2/archive/
+# 				url_suffix=_2.39.2-1_armv7-3.2.ipk
+#
+# 				for name in $(IPKs-ACdowngrade-to:Array); do
+# 					ShowAsPercentProgress "download $desc" '' "$ok_count" 0 0 "$total_count"
+# 					((ok_count++))
+#
+# 					remote_url=${url_prefix}${name}${url_suffix}
+# 					local_pathfile=$r_ipk_downgrade_path/$(/usr/bin/basename "$remote_url")
+# 					Executer "/sbin/curl${curl_options} --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
+# 				done
+#
+# 				ShowAsPercentProgress "download $desc" '' "$ok_count" 0 "$fail_count" "$total_count"
 		esac
 
 		[[ ${useropt_terse:=true} = false && ${useropt_verbose:=false} = false ]] && echo
@@ -12473,14 +12505,14 @@ IsQuTS()
 
     /bin/grep -q zfs /proc/filesystems
 
-	} &>/dev/null
+	}
 
 # #IsQTS()
 # 	{
 #
 #     ! IsQuTS
 #
-# 	} &>/dev/null
+# 	}
 
 IsOsSupported()
 	{
