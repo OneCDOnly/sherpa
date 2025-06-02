@@ -872,12 +872,18 @@ DebugLogEnv()
 	SetQpkgArch
 
 	DebugQpkg detect architecture "$r_nas_qpkg_arch"
-	DebugQpkg detect "$(FormatPackageName Entware) type" "$r_entware_type"
 
-	if ! IsEntwareUpgradable; then
-		DebugQpkg detect "$(FormatPackageName Entware) install date" "$(ConvertAsSmartDate "$(GetQpkgInstalledDate Entware)")"
+	if IsQpkgInstalled Entware; then
+		DebugQpkg detect "$(FormatPackageName Entware) type" "$r_entware_type"
+
+		if ! IsEntwareUpgradable; then
+			DebugQpkg detect "$(FormatPackageName Entware) install date" "$(ConvertAsSmartDate "$(GetQpkgInstalledDate Entware)")"
+		else
+			DebugQpkg warning "$(FormatPackageName Entware) install date" "$(ConvertAsSmartDate "$(GetQpkgInstalledDate Entware)")"
+		fi
 	else
-		DebugQpkg warning "$(FormatPackageName Entware) install date" "$(ConvertAsSmartDate "$(GetQpkgInstalledDate Entware)")"
+		DebugQpkg detect "$(FormatPackageName Entware)" 'not installed'
+		DebugQpkg detect "$(FormatPackageName Entware) install date" 'N/A'
 	fi
 
 	SetOsFirmwareVer
@@ -900,7 +906,7 @@ DebugLogEnv()
 				DebugQpkg warning "$(FormatPackageName IncreaseTimeouts)" inactive
 			fi
 		else
-			DebugQpkg warning "$(FormatPackageName IncreaseTimeouts)" 'not installed'
+			DebugQpkg detect "$(FormatPackageName IncreaseTimeouts)" 'not installed'
 		fi
 	else
 		DebugQpkg detect "$(FormatPackageName IncreaseTimeouts)" N/A
