@@ -3018,7 +3018,7 @@ ShowArgSuggestions()
 	local arg=''
 	local -a args_remaining=()
 
-	ResetReportsPath &>/dev/null
+	ResetReportsPath &> /dev/null
 
 	if [[ ${#args_incomplete[@]:-} -gt 0 ]]; then
 		run_package_actions=false
@@ -3411,7 +3411,7 @@ PatchEntwareService()
 	local find=''
 	local insert=''
 
-	if /bin/grep -q 'opt.orig' "$r_package_init_pathfile"; then
+	if /bin/grep 'opt.orig' "$r_package_init_pathfile" &> /dev/null; then
 		DebugInfo 'patch: do the "/opt shuffle" - already done'
 	else
 		# Ensure existing files are moved out of the way before creating '/opt' symlink.
@@ -3647,10 +3647,10 @@ CalcIpkDepsToInstall()
 				# KLUDGE: `libjpeg` appears to have been replaced by `libjpeg-turbo`, but many packages still have `libjpeg` as a dependency, so replace it with `libjpeg-turbo`.
 
 				if [[ $element != 'libjpeg' ]]; then
-					if ! $r_opkg_cmd status "$element" | /bin/grep -q "Status:.*installed"; then
+					if ! $r_opkg_cmd status "$element" | /bin/grep "Status:.*installed" &> /dev/null; then
 						IPKs-ACdownload-to:Add "$element"
 					fi
-				elif ! $r_opkg_cmd status 'libjpeg-turbo' | /bin/grep -q "Status:.*installed"; then
+				elif ! $r_opkg_cmd status 'libjpeg-turbo' | /bin/grep "Status:.*installed" &> /dev/null; then
 					IPKs-ACdownload-to:Add 'libjpeg-turbo'
 				fi
 			fi
@@ -4037,7 +4037,7 @@ PIPs:install()
 
 	[[ $pips_install = true ]] || return
 	IsQpkgEnabled Entware || return
-	$r_opkg_cmd status python3-pip | /bin/grep -q "Status:.*installed" || return
+	$r_opkg_cmd status python3-pip | /bin/grep "Status:.*installed" &> /dev/null|| return
 	IsNtError || return
 
 	FuncInit
@@ -4248,7 +4248,7 @@ KillPID()
 	kill -9 "$1"
 	wait
 
-	} &>/dev/null
+	} &> /dev/null
 
 Reset()
 	{
@@ -6648,7 +6648,7 @@ PasteLogLast()
 
 			# With thanks to https://github.com/solusipse/fiche
 
-			link=$(/bin/cat --number "$r_session_last_pathfile" | (exec 3<>/dev/tcp/termbin.com/9999; /bin/cat >&3; /bin/cat <&3; exec 3<&-))
+			link=$(/bin/cat --number "$r_session_last_pathfile" | (exec 3<> /dev/tcp/termbin.com/9999; /bin/cat >&3; /bin/cat <&3; exec 3<&-))
 
 			if [[ $? -eq 0 ]]; then
 				ShowAsDone "your $(ShowAsTitleName) log is now online at $(ShowAsURL "$link") and will be deleted in 1 month"
@@ -6691,7 +6691,7 @@ PasteLogTail()
 
 			# With thanks to https://github.com/solusipse/fiche
 
-			link=$(/bin/cat --number "$r_session_tail_pathfile" | (exec 3<>/dev/tcp/termbin.com/9999; /bin/cat >&3; /bin/cat <&3; exec 3<&-))
+			link=$(/bin/cat --number "$r_session_tail_pathfile" | (exec 3<> /dev/tcp/termbin.com/9999; /bin/cat >&3; /bin/cat <&3; exec 3<&-))
 
 			if [[ $? -eq 0 ]]; then
 				ShowAsDone "your $(ShowAsTitleName) log is now online at $(ShowAsURL "$link") and will be deleted in 1 month"
@@ -6957,7 +6957,7 @@ RefreshActionForkCounts()
 	skip_ok_count=$(FileCountAll "$proc_skip_ok_count_path")
 	work_count=$(FileCountAll "$proc_work_count_path")
 
-	} &>/dev/null
+	} &> /dev/null
 
 RefreshDirSizeCount()
 	{
@@ -6975,7 +6975,7 @@ RefreshDirSizeCount()
 	current_bytes=$($r_gnu_find_cmd "$dir_location" -type f -name '*.ipk' -exec /usr/bin/du --bytes --total --apparent-size {} + 2> /dev/null | /bin/grep total$ | cut -f1)
 	[[ -z $current_bytes ]] && current_bytes=0
 
-	} &>/dev/null
+	} &> /dev/null
 
 EraseForkCountPaths()
 	{
@@ -6989,7 +6989,7 @@ EraseForkCountPaths()
 	rmdir "$proc_counts_path"
 	[[ -e $r_abort_actions_pathfile ]] && rm -f "$r_abort_actions_pathfile"
 
-	} &>/dev/null
+	} &> /dev/null
 
 InitProgress()
 	{
@@ -7917,7 +7917,7 @@ HelpAbbreviations()
 	LoadDatabase
 	DisableDebugToArchiveAndFile
 	DisplayProcReport abbreviations
-	ResetReportsPath &>/dev/null
+	ResetReportsPath &> /dev/null
 
 		{
 
@@ -7984,7 +7984,7 @@ ReportBackups()
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport backups
-	ResetReportsPath &>/dev/null
+	ResetReportsPath &> /dev/null
 
 	printf -v a '\n%s\n' "$(GenerateBacksReportTitleLine)"
 
@@ -8045,7 +8045,7 @@ ReportDependencies()
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport dependency
-	ResetReportsPath &>/dev/null
+	ResetReportsPath &> /dev/null
 
 	! IsAnsiStrippingSupported && colourful=false
 
@@ -8097,7 +8097,7 @@ ReportFeatures()
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport features
-	ResetReportsPath &>/dev/null
+	ResetReportsPath &> /dev/null
 
 	! IsAnsiStrippingSupported && colourful=false
 
@@ -8213,7 +8213,7 @@ ReportRepos()
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport repository
-	ResetReportsPath &>/dev/null
+	ResetReportsPath &> /dev/null
 
 	! IsAnsiStrippingSupported && colourful=false
 
@@ -8265,7 +8265,7 @@ ReportStatuses()
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport status
-	ResetReportsPath &>/dev/null
+	ResetReportsPath &> /dev/null
 
 	! IsAnsiStrippingSupported && colourful=false
 
@@ -9150,9 +9150,9 @@ GetHardwareCPUInfo()
 
 	# BusyBox 1.01 doesn't support `grep -m`, so extract first mention the hard-way with `head`.
 
-	if /bin/grep -q '^model name' /proc/cpuinfo; then
+	if /bin/grep '^model name' /proc/cpuinfo &> /dev/null; then
 		/bin/grep '^model name' /proc/cpuinfo | head -n1 | /bin/sed 's/^.*: //' | tr -s ' '
-	elif /bin/grep -q '^Processor name' /proc/cpuinfo; then
+	elif /bin/grep '^Processor name' /proc/cpuinfo &> /dev/null; then
 		/bin/grep '^Processor name' /proc/cpuinfo | head -n1 | /bin/sed 's/^.*: //' | tr -s ' '
 	else
 		printf unknown
@@ -9182,13 +9182,13 @@ GetHardwareCPUBenchmark()
 
 	if [[ -e $r_gnu_dd_cmd ]]; then
 		if [[ -e $r_gnu_nice_cmd ]]; then
-			a=$({ $r_gnu_nice_cmd -$c $r_gnu_dd_cmd if=/dev/zero bs=1MB count=$b | /bin/sha1sum >/dev/null; } 2>&1)
+			a=$({ $r_gnu_nice_cmd -$c $r_gnu_dd_cmd if=/dev/zero bs=1MB count=$b | /bin/sha1sum > /dev/null; } 2>&1)
 		elif [[ -e /bin/renice ]]; then
-			/bin/renice $c $$ &>/dev/null
+			/bin/renice $c $$ &> /dev/null
 
-			a=$({ $r_gnu_dd_cmd if=/dev/zero bs=1MB count=$b | /bin/sha1sum >/dev/null; } 2>&1)
+			a=$({ $r_gnu_dd_cmd if=/dev/zero bs=1MB count=$b | /bin/sha1sum > /dev/null; } 2>&1)
 
-			/bin/renice 0 $$ &>/dev/null
+			/bin/renice 0 $$ &> /dev/null
 		fi
 	fi
 
@@ -9221,11 +9221,11 @@ GetHardwareVolumeBenchmark()
 			if [[ -e $r_gnu_nice_cmd ]]; then
 				a=$($r_gnu_nice_cmd -$c $r_gnu_dd_cmd if=/dev/zero of=$d bs=8k count=$b 2>&1)
 			elif [[ -e /bin/renice ]]; then
-				/bin/renice $c $$ &>/dev/null
+				/bin/renice $c $$ &> /dev/null
 
 				a=$($r_gnu_dd_cmd if=/dev/zero of=$d bs=8k count=$b 2>&1)
 
-				/bin/renice 0 $$ &>/dev/null
+				/bin/renice 0 $$ &> /dev/null
 			fi
 		fi
 
@@ -9742,7 +9742,7 @@ SaveActionResultToLog()
 
 	# Remove previous action duration entry if one exists.
 
-	if [[ -e $r_action_times_pathfile ]] && /bin/grep -q "^$r_name|" < "$r_action_times_pathfile"; then
+	if [[ -e $r_action_times_pathfile ]] && /bin/grep "^$r_name|" < "$r_action_times_pathfile" &> /dev/null; then
 		/bin/sed -i "/^$r_name|/d" "$r_action_times_pathfile"
 	fi
 
@@ -9781,7 +9781,7 @@ _QPKG:reassign_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -9838,7 +9838,7 @@ _QPKG:download_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -9917,7 +9917,7 @@ _QPKG:install_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10021,7 +10021,7 @@ _QPKG:reinstall_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10095,7 +10095,7 @@ _QPKG:rebuild_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10150,7 +10150,7 @@ _QPKG:upgrade_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10239,7 +10239,7 @@ _QPKG:uninstall_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10280,7 +10280,7 @@ _QPKG:uninstall_()
 		if [[ $z -eq 0 ]]; then
 			# WARNING: beware of `qpkg_cli --remove`. It removes the QPKG installation path around 10-20 seconds after execution. If sherpa has moved-on and starts an install, `qpkg_cli` will remove the newly created QPKG installation path partway through the installation. So, check if QPKG is to be installed again. If-so, don't use `qpkg_cli --remove`.
 
-			[[ -e /sbin/qpkg_cli ]] && ! QPKGs-ACinstall-to.Exist "$qpkg_name" && /sbin/qpkg_cli --remove "$qpkg_name" &>/dev/null
+			[[ -e /sbin/qpkg_cli ]] && ! QPKGs-ACinstall-to.Exist "$qpkg_name" && /sbin/qpkg_cli --remove "$qpkg_name" &> /dev/null
 			SaveActionResultToLog QPKG "$qpkg_name" uninstall '' ok
 			/sbin/rmcfg "$qpkg_name" -f /etc/config/qpkg.conf
 			DebugAsDone 'removed icon information from App Center'
@@ -10322,7 +10322,7 @@ _QPKG:activate_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10412,7 +10412,7 @@ _QPKG:reactivate_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10493,7 +10493,7 @@ _QPKG:deactivate_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10582,7 +10582,7 @@ _QPKG:enable_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10636,7 +10636,7 @@ _QPKG:disable_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10695,7 +10695,7 @@ _QPKG:enableau_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10759,7 +10759,7 @@ _QPKG:disableau_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10823,7 +10823,7 @@ _QPKG:backup_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10884,7 +10884,7 @@ _QPKG:restore_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10949,7 +10949,7 @@ _QPKG:clean_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -11013,7 +11013,7 @@ _QPKG:sign_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -11117,7 +11117,7 @@ _QPKG:status_()
 	# Outputs:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &>/dev/null
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -11149,7 +11149,7 @@ _QPKG:status_()
 			z=$?
 		fi
 	elif [[ $a != none ]]; then
-		eval "$a" &>/dev/null
+		eval "$a" &> /dev/null
 		z=$?
 	fi
 
@@ -11198,7 +11198,7 @@ ClearQpkgInstalledAppCenterNotifier()
 
 	return 0
 
-	} &>/dev/null
+	} &> /dev/null
 
 LogQpkgServiceResult()
 	{
@@ -12504,14 +12504,14 @@ IsOsQNAP()
 
 	[[ -e /etc/init.d/functions ]]
 
-	} &>/dev/null
+	} &> /dev/null
 
 IsQuTS()
 	{
 
-    /bin/grep -q zfs /proc/filesystems
+    /bin/grep zfs /proc/filesystems
 
-	}
+	} &> /dev/null
 
 # #IsQTS()
 # 	{
@@ -12532,7 +12532,7 @@ IsOsSupported()
 
 	[[ $r_nas_firmware_ver -ge 400 ]]
 
-	} &>/dev/null
+	} &> /dev/null
 
 IsOsCanAsyncQpkgActions()
 	{
@@ -12544,7 +12544,7 @@ IsOsCanAsyncQpkgActions()
 
 	[[ $r_nas_firmware_ver -ge 520 ]]
 
-	} &>/dev/null
+	} &> /dev/null
 
 IsOsCanSecureDownload()
 	{
@@ -12565,7 +12565,7 @@ IsOsCanSecureDownload()
 
 	[[ $r_nas_firmware_ver -ge 455 ]]
 
-	} &>/dev/null
+	} &> /dev/null
 
 IsOsCanQpkgTimeout()
 	{
@@ -12577,7 +12577,7 @@ IsOsCanQpkgTimeout()
 
 	[[ $r_nas_firmware_ver -ge 430 ]]
 
-	} &>/dev/null
+	} &> /dev/null
 
 IsOsCanSignedPackages()
 	{
@@ -12591,7 +12591,7 @@ IsOsCanSignedPackages()
 
 	[[ $r_nas_firmware_ver -ge 437 ]]
 
-	} &>/dev/null
+	} &> /dev/null
 
 IsOsCanUnofficialPackages()
 	{
@@ -12605,14 +12605,14 @@ IsOsCanUnofficialPackages()
 
 	[[ $r_nas_firmware_ver -gt 426 && $r_nas_firmware_ver -le 436 ]]
 
-	} &>/dev/null
+	} &> /dev/null
 
 IsOsCanSudo()
 	{
 
 	[[ -e /usr/bin/sudo ]]
 
-	} &>/dev/null
+	} &> /dev/null
 
 IsOsCanSedExtRegex()
 	{
@@ -12630,7 +12630,7 @@ IsOsCanDecimalSleepSeconds()
 
 	/bin/sleep .01
 
-	} &>/dev/null
+	} &> /dev/null
 
 IsOsCanAutowidthTableColumns()
 	{
@@ -12654,7 +12654,7 @@ IsOsCompatibleWithSigned()
 
 	[[ $r_nas_firmware_date -lt 20201015 || $r_nas_firmware_date -gt 20201020 ]]
 
-	} &>/dev/null
+	} &> /dev/null
 
 IsOsAllowUnsignedPackages()
 	{
@@ -12675,14 +12675,14 @@ IsOsStarting()
 
 	/bin/ps | /bin/grep '/bin/sh /etc/init.d/rcS' | /bin/grep -v grep
 
-	} &>/dev/null
+	} &> /dev/null
 
 IsOsStopping()
 	{
 
 	/bin/ps | /bin/grep '/bin/sh /etc/init.d/rcK' | /bin/grep -v grep
 
-	} &>/dev/null
+	} &> /dev/null
 
 IsOsStartingPackages()
 	{
@@ -12693,7 +12693,7 @@ IsOsStartingPackages()
 		IsOsStarting
 	fi
 
-	} &>/dev/null
+	} &> /dev/null
 
 IsOsStoppingPackages()
 	{
@@ -12704,7 +12704,7 @@ IsOsStoppingPackages()
 		IsOsStopping
 	fi
 
-	} &>/dev/null
+	} &> /dev/null
 
 IsOsOnline()
 	{
@@ -13325,9 +13325,9 @@ IsValidQpkgInstalled()
 
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}
 
-	/bin/grep -q "^\[$a\]" /etc/config/qpkg.conf && IsQpkgAuthorOk "$a"
+	/bin/grep "^\[$a\]" /etc/config/qpkg.conf && IsQpkgAuthorOk "$a"
 
-	}
+	} &> /dev/null
 
 IsNtValidQpkgInstalled()
 	{
@@ -13361,9 +13361,9 @@ IsQpkgInstalled()
 
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}
 
-	/bin/grep -q "^\[$a\]" /etc/config/qpkg.conf
+	/bin/grep "^\[$a\]" /etc/config/qpkg.conf
 
-	}
+	} &> /dev/null
 
 IsNtQpkgInstalled()
 	{
@@ -13525,9 +13525,9 @@ IsHaveSingleQuote()
 	#	$? = true if $1 contains a single quote.
 	#	$? = false if $1 does not contain a single quote.
 
-	/bin/grep -q "'" <<< "${1:-}"
+	/bin/grep "'" <<< "${1:-}"
 
-	}
+	} &> /dev/null
 
 CreatePidFile()
 	{

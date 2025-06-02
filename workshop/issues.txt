@@ -3,15 +3,6 @@ Observed issues:
 	* Downgrade Transmission IPKs back to 4.0.4
 		- https://github.com/OneCDOnly/sherpa/issues/306
 
-	* SortMyQPKGs install shows "QuTS Hero":
-		--------------------------------------------------------------------------------------------------
-		dbug: (==) forked _QPKG:install_() instance for 'SortMyQPKGs'
-		dbug: (>>) _QPKG:install_()
-		dbug: (WW) QuTS hero version is incompatible
-		dbug: (<<) _QPKG:install_()|1|326ms
-		--------------------------------------------------------------------------------------------------
-		- Other packages were correctly skipped with "QTS".
-
 	* QDK install throws error:
 		--------------------------------------------------------------------------------------------------
 		dbug: (--) exec: 'DEBUG_QPKG=true /bin/sh /share/CACHEDEV1_DATA/.qpkg/sherpa/cache/QPKGs/downloads/QDK_2.3.14.qpkg'
@@ -51,28 +42,6 @@ Observed issues:
 		- Reported to dev: https://github.com/qnap-dev/QDK/issues/43
 
 	* service script library: if $REINSTALL_QPKG=true, then don't show/log 'stop' and aborted-'start' actions.
-
-	* `sherpa install all` in TS-216G results included "undefined" versions?
-		--------------------------------------------------------------------------------------------------
-		...
-		install TrguiNG QPKG in 10 seconds (v250522)
-		"sign" TrguiNG QPKG in 1 second
-		install Bazarr QPKG in 2m:09s (v250521)
-		install ClamAV QPKG in 11 seconds (v250521)
-		install Glances QPKG in 3m:00s (v250521)
-		install Headphones QPKG in 1 second (vundefined)
-		install inxi QPKG in 1 second (vundefined)
-		install Kapowarr QPKG in 1m:42s (v250521)
-		install LazyLibrarian QPKG in 1 second (vundefined)
-		install OMedusa QPKG in 1 second (vundefined)
-		install NZBHydra2 QPKG in 1m:19s (v250521)
-		install nzbToMedia QPKG in 28 seconds (v240205)
-		install pyLoad QPKG in 1 second (vundefined)
-		install OTransmission QPKG in 23 seconds (v250521)
-		install WebSSH QPKG in 1m:06s (v250521)
-		...
-		--------------------------------------------------------------------------------------------------
-		- Observation: all 'undefined' versions are for QPKGs that "completed" installation in less-than 1 second.
 
 	* Restarting clamav.sh creates `lib` symlink in cwd to `/usr/lib`
 
