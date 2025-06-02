@@ -1,5 +1,8 @@
 Observed issues:
 
+	* Downgrade Transmission IPKs back to 4.0.4
+		- https://github.com/OneCDOnly/sherpa/issues/306
+
 	* SortMyQPKGs install shows "QuTS Hero":
 		--------------------------------------------------------------------------------------------------
 		dbug: (==) forked _QPKG:install_() instance for 'SortMyQPKGs'
