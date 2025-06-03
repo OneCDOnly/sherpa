@@ -9927,7 +9927,13 @@ _QPKG:install_()
 	local a=''
 	local -i z=0
 
-	if IsQpkgInstalled "$qpkg_name"; then
+	local local_pathfile=$(GetQpkgDbPathFilename)
+
+	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
+		SaveActionResultToLog QPKG "$qpkg_name" install '' sk 'no installation package found'
+		MarkActionForkAsSkippedError
+		z=1
+	elif IsQpkgInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" install '' sk "already installed, to reinstall use 'reinstall' instead."
 		MarkActionForkAsSkipped
 		z=1
@@ -9943,16 +9949,6 @@ _QPKG:install_()
 		SaveActionResultToLog QPKG "$qpkg_name" install '' sk 'NAS has insufficient RAM installed'
 		MarkActionForkAsSkipped
 		z=1
-	fi
-
-	[[ $z -eq 0 ]] || FuncForkExit $z
-
-	local local_pathfile=$(GetQpkgDbPathFilename)
-
-	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" install '' se 'no local file found for processing: please report this issue'
-		MarkActionForkAsSkippedError
-		z=4
 	fi
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
@@ -12782,7 +12778,7 @@ IsOsSedExtRegexSupported()
 	# Inputs: (global)
 	#	$sed_ext_regex_supported
 
-	[[ ${sed_ext_regex_supported-unset} = unset ]] && SetOsSedRegexSupport
+	[[ ${sed_ext_regex_supported:-unset} = unset ]] && SetOsSedRegexSupport
 	[[ $sed_ext_regex_supported -eq 0 ]]
 
 	}
@@ -12793,7 +12789,7 @@ IsOsDecimalSleepSecondsSupported()
 	# Inputs: (global)
 	#	$sleep_decimal_seconds_supported
 
-	[[ ${sleep_decimal_seconds_supported-unset} = unset ]] && SetOsDecimalSleepSecondsSupport
+	[[ ${sleep_decimal_seconds_supported:-unset} = unset ]] && SetOsDecimalSleepSecondsSupport
 	[[ $sleep_decimal_seconds_supported -eq 0 ]]
 
 	}
@@ -15889,7 +15885,7 @@ SetHardwareCPUCores()
 	# Outputs: (global)
 	#	$r_cpu_cores
 
-	[[ ${r_cpu_cores-unset} = unset ]] && readonly r_cpu_cores=$(GetHardwareCPUCores)
+	[[ ${r_cpu_cores:-unset} = unset ]] && readonly r_cpu_cores=$(GetHardwareCPUCores)
 
 	}
 
@@ -15899,7 +15895,7 @@ SetHardwareInstalledRAM()
 	# Outputs: (global)
 	#	$r_nas_ram_kb
 
-	[[ ${r_nas_ram_kb-unset} = unset ]] && readonly r_nas_ram_kb=$(GetHardwareInstalledRAM)
+	[[ ${r_nas_ram_kb:-unset} = unset ]] && readonly r_nas_ram_kb=$(GetHardwareInstalledRAM)
 
 	}
 
@@ -15909,7 +15905,7 @@ SetHardwarePlatform()
 	# Outputs: (global)
 	#	$r_nas_platform
 
-	[[ ${r_nas_platform-unset} = unset ]] && readonly r_nas_platform=$(GetHardwarePlatform)
+	[[ ${r_nas_platform:-unset} = unset ]] && readonly r_nas_platform=$(GetHardwarePlatform)
 
 	}
 
@@ -15969,7 +15965,7 @@ SetOsKernelPageSize()
 	# Outputs: (global)
 	#	$r_kernel_page_size
 
-	[[ ${r_kernel_page_size-unset} = unset ]] && readonly r_kernel_page_size=$(GetOsKernelPageSize)
+	[[ ${r_kernel_page_size:-unset} = unset ]] && readonly r_kernel_page_size=$(GetOsKernelPageSize)
 
 	}
 
@@ -15979,7 +15975,7 @@ SetOsFirmwareVersion()
 	# Outputs: (global)
 	#	$r_nas_firmware_version
 
-	[[ ${r_nas_firmware_version-unset} = unset ]] && readonly r_nas_firmware_version=$(GetOsFirmwareVersion)
+	[[ ${r_nas_firmware_version:-unset} = unset ]] && readonly r_nas_firmware_version=$(GetOsFirmwareVersion)
 
 	}
 
@@ -15991,7 +15987,7 @@ SetOsFirmwareVer()
 	# Outputs: (global)
 	#	$r_nas_firmware_ver
 
-	[[ ${r_nas_firmware_ver-unset} = unset ]] && readonly r_nas_firmware_ver=$(GetOsFirmwareVer)
+	[[ ${r_nas_firmware_ver:-unset} = unset ]] && readonly r_nas_firmware_ver=$(GetOsFirmwareVer)
 
 	}
 
@@ -16001,7 +15997,7 @@ SetOsFirmwareDate()
 	# Outputs: (global)
 	#	$r_nas_firmware_date
 
-	[[ ${r_nas_firmware_date-unset} = unset ]] && readonly r_nas_firmware_date=$(GetOsFirmwareDate)
+	[[ ${r_nas_firmware_date:-unset} = unset ]] && readonly r_nas_firmware_date=$(GetOsFirmwareDate)
 
 	}
 
@@ -16011,7 +16007,7 @@ SetOsFirmwareBuild()
 	# Outputs: (global)
 	#	$r_nas_firmware_build
 
-	[[ ${r_nas_firmware_build-unset} = unset ]] && readonly r_nas_firmware_build=$(GetOsFirmwareBuild)
+	[[ ${r_nas_firmware_build:-unset} = unset ]] && readonly r_nas_firmware_build=$(GetOsFirmwareBuild)
 
 	}
 
@@ -16021,7 +16017,7 @@ SetNasArch()
 	# Outputs: (global)
 	#	$r_nas_arch
 
-	[[ ${r_nas_arch-unset} = unset ]] && readonly r_nas_arch=$(GetNasArch)
+	[[ ${r_nas_arch:-unset} = unset ]] && readonly r_nas_arch=$(GetNasArch)
 
 	}
 
@@ -16031,7 +16027,7 @@ SetQpkgArch()
 	# Outputs: (global)
 	#	$r_nas_qpkg_arch
 
-	[[ ${r_nas_qpkg_arch-unset} = unset ]] && readonly r_nas_qpkg_arch=$(GetQpkgArch)
+	[[ ${r_nas_qpkg_arch:-unset} = unset ]] && readonly r_nas_qpkg_arch=$(GetQpkgArch)
 
 	}
 
