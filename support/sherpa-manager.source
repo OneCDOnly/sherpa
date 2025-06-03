@@ -9785,7 +9785,7 @@ _QPKG:reassign_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &> /dev/null
+# 	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -9842,7 +9842,7 @@ _QPKG:download_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &> /dev/null
+# 	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -9921,7 +9921,7 @@ _QPKG:install_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &> /dev/null
+# 	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10025,7 +10025,7 @@ _QPKG:reinstall_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &> /dev/null
+# 	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10099,7 +10099,7 @@ _QPKG:rebuild_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &> /dev/null
+# 	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10154,7 +10154,7 @@ _QPKG:upgrade_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &> /dev/null
+# 	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10243,7 +10243,7 @@ _QPKG:uninstall_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &> /dev/null
+# 	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10326,7 +10326,7 @@ _QPKG:activate_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &> /dev/null
+# 	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10416,7 +10416,7 @@ _QPKG:reactivate_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &> /dev/null
+# 	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10497,7 +10497,7 @@ _QPKG:deactivate_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &> /dev/null
+# 	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10586,7 +10586,7 @@ _QPKG:enable_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &> /dev/null
+# 	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10640,7 +10640,7 @@ _QPKG:disable_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &> /dev/null
+# 	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10699,7 +10699,7 @@ _QPKG:enableau_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &> /dev/null
+# 	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10763,7 +10763,7 @@ _QPKG:disableau_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &> /dev/null
+# 	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10827,7 +10827,7 @@ _QPKG:backup_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &> /dev/null
+# 	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10888,7 +10888,7 @@ _QPKG:restore_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &> /dev/null
+# 	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10953,7 +10953,7 @@ _QPKG:clean_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &> /dev/null
+# 	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -11017,7 +11017,7 @@ _QPKG:sign_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &> /dev/null
+# 	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -11121,7 +11121,7 @@ _QPKG:status_()
 	# Outputs:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-	[[ $useropt_verbose != true ]] && exec &> /dev/null
+# 	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -11146,10 +11146,10 @@ _QPKG:status_()
 		# Run status query with GNU `timeout` if-possible.
 
 		if [[ -e $r_gnu_timeout_cmd ]]; then
-			$r_gnu_timeout_cmd "$r_qpkg_status_check_timeout_seconds" /bin/bash -c "${b}$(GetQpkgServicePathFile) status"
+			$r_gnu_timeout_cmd "$r_qpkg_status_check_timeout_seconds" /bin/bash -c "${b}$(GetQpkgServicePathFile) status &> /dev/null"
 			z=$?
 		else
-			Executer "${b}$(GetQpkgServicePathFile) status" "$r_logs_path/$qpkg_name.$r_status_log_file" log:failure-only
+			Executer "${b}$(GetQpkgServicePathFile) status &> /dev/null" "$r_logs_path/$qpkg_name.$r_status_log_file" log:failure-only
 			z=$?
 		fi
 	elif [[ $a != none ]]; then
@@ -13867,14 +13867,16 @@ Executer()
 
 	if [[ $useropt_verbose = true ]]; then
 		eval "$1 > >(/usr/bin/tee $r_log_pathfile) 2>&1"	# NOTE: `tee` buffers stdout here.		# squeezer-ignore
+		z=${PIPESTATUS[0]}									# Must use $PIPESTATUS after `tee` to get returncode of previous command: https://stackoverflow.com/questions/1221833/pipe-output-and-capture-exit-status-in-bash
 		z=$?
 	else
-		(eval "$1" > "$r_log_pathfile" 2>&1)				# Run in a subshell to suppress 'Terminated' message later.
+		(eval "$1" > "$r_log_pathfile" 2>&1)				# Run in a subshell to suppress "Terminated" message later.
 		z=$?
+
+# 		# Let's try this: https://serverfault.com/a/903631
 
 # 		cmd="\"$1\" > $r_log_pathfile 2>&1"
 #
-# 		# Let's try this: https://serverfault.com/a/903631
 #
 #		/bin/sh -c "echo \$\$ > $r_pid_pathfile; exec \"$cmd\""
 #		z=$?
