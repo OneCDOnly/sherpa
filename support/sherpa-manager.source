@@ -825,14 +825,18 @@ DebugLogEnv()
 
 	DebugUserspace ok libc "$(GetUserLIBC)"
 	DebugUserspace ok 'libc copyright' "$(GetUserLIBCCopyright)"
+	DebugUserspace ok '$EUID' "$EUID"
 
 	if IsOsCanSudo; then
-		DebugUserspace ok '$SUDO_UID' "$(GetUserSudoUID)"
+		if [[ $EUID = 0 ]]; then
+			DebugUserspace ok '$SUDO_UID' N/A
+		else
+			DebugUserspace ok '$SUDO_UID' "$(GetUserSudoUID)"
+		fi
 	else
 		DebugUserspace ok '$SUDO_UID' N/A
 	fi
 
-	DebugUserspace ok '$EUID' "$EUID"
 	DebugUserspace ok '$SHELL' "$(GetShell)"
 	DebugShell ok version "$(GetShellVersion)"
 	DebugShell ok copyright "$(GetShellCopyright)"
@@ -886,7 +890,7 @@ DebugLogEnv()
 			DebugQpkg warning "$(FormatPackageName Entware) type" "$r_entware_type"
 		fi
 	else
-		DebugQpkg detect "$(FormatPackageName Entware) install date" 'N/A'
+		DebugQpkg detect "$(FormatPackageName Entware) install date" N/A
 	fi
 
 	SetOsFirmwareVer
