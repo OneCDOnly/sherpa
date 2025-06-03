@@ -874,7 +874,11 @@ DebugLogEnv()
 	DebugQpkg detect architecture "$r_nas_qpkg_arch"
 
 	if IsQpkgInstalled Entware; then
-		DebugQpkg detect "$(FormatPackageName Entware) type" "$r_entware_type"
+		if [[ $r_entware_type = std ]]; then
+			DebugQpkg detect "$(FormatPackageName Entware) type" "$r_entware_type"
+		else
+			DebugQpkg warning "$(FormatPackageName Entware) type" "$r_entware_type"
+		fi
 
 		if ! IsEntwareUpgradable; then
 			DebugQpkg detect "$(FormatPackageName Entware) install date" "$(ConvertAsSmartDate "$(GetQpkgInstalledDate Entware)")"
