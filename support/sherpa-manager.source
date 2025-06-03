@@ -9925,9 +9925,8 @@ _QPKG:install_()
 	FuncForkInit
 
 	local a=''
-	local -i z=0
-
 	local local_pathfile=$(GetQpkgDbPathFilename)
+	local -i z=0
 
 	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" install '' sk 'no installation package found'
@@ -10025,9 +10024,14 @@ _QPKG:reinstall_()
 	FuncForkInit
 
 	local a='REINSTALL_QPKG=true '
+	local local_pathfile=$(GetQpkgDbPathFilename)
 	local -i z=0
 
-	if IsNtQpkgInstalled "$qpkg_name"; then
+	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
+		SaveActionResultToLog QPKG "$qpkg_name" install '' sk 'no installation package found'
+		MarkActionForkAsSkippedError
+		z=1
+	elif IsNtQpkgInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' sk "not already installed, please use 'install' instead."
 		MarkActionForkAsSkipped
 		z=1
@@ -10039,16 +10043,6 @@ _QPKG:reinstall_()
 		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=1
-	fi
-
-	[[ $z -eq 0 ]] || FuncForkExit $z
-
-	local local_pathfile=$(GetQpkgDbPathFilename)
-
-	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' se 'no local file found for processing, please report this issue.'
-		MarkActionForkAsSkippedError
-		z=4
 	fi
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
@@ -10154,9 +10148,14 @@ _QPKG:upgrade_()
 	FuncForkInit
 
 	local a='UPGRADE_QPKG=true '
+	local local_pathfile=$(GetQpkgDbPathFilename)
 	local -i z=0
 
-	if IsNtValidQpkgInstalled "$qpkg_name"; then
+	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
+		SaveActionResultToLog QPKG "$qpkg_name" install '' sk 'no installation package found'
+		MarkActionForkAsSkippedError
+		z=1
+	elif IsNtValidQpkgInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=1
@@ -10172,16 +10171,6 @@ _QPKG:upgrade_()
 		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=1
-	fi
-
-	[[ $z -eq 0 ]] || FuncForkExit $z
-
-	local local_pathfile=$(GetQpkgDbPathFilename)
-
-	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' se 'no local file found for processing, please report this issue'
-		MarkActionForkAsSkippedError
-		z=4
 	fi
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
