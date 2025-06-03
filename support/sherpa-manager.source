@@ -9784,8 +9784,6 @@ _QPKG:reassign_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-# 	[[ $useropt_verbose != true ]] && exec &> /dev/null
-
 	FuncForkInit
 
 	local -i z=0
@@ -9841,8 +9839,6 @@ _QPKG:download_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-# 	[[ $useropt_verbose != true ]] && exec &> /dev/null
-
 	FuncForkInit
 
 	local curl_options=''
@@ -9860,7 +9856,7 @@ _QPKG:download_()
 		z=1
 	elif IsFile "$r_local_pathfile"; then
 		if FileMatchesMD5 "$r_local_pathfile" "$r_remote_hash"; then
-			SaveActionResultToLog QPKG "$qpkg_name" download '' so "existing file $(FormatFileName "$r_local_filename") checksum is correct"
+			SaveActionResultToLog QPKG "$qpkg_name" download '' so 'existing file checksum is correct'
 			MarkActionForkAsSkippedOk
 			z=2
 		else
@@ -9920,8 +9916,6 @@ _QPKG:install_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-# 	[[ $useropt_verbose != true ]] && exec &> /dev/null
-
 	FuncForkInit
 
 	local a=''
@@ -9933,7 +9927,7 @@ _QPKG:install_()
 		MarkActionForkAsSkippedError
 		z=1
 	elif IsQpkgInstalled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" install '' sk "already installed, to reinstall use 'reinstall' instead."
+		SaveActionResultToLog QPKG "$qpkg_name" install '' sk "already installed, to reinstall use 'reinstall' instead"
 		MarkActionForkAsSkipped
 		z=1
 	elif ! IsQpkgDbArchOK "$qpkg_name"; then
@@ -10019,8 +10013,6 @@ _QPKG:reinstall_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-# 	[[ $useropt_verbose != true ]] && exec &> /dev/null
-
 	FuncForkInit
 
 	local a='REINSTALL_QPKG=true '
@@ -10028,11 +10020,11 @@ _QPKG:reinstall_()
 	local -i z=0
 
 	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" install '' sk 'no installation package found'
+		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' sk 'no installation package found'
 		MarkActionForkAsSkippedError
 		z=1
 	elif IsNtQpkgInstalled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' sk "not already installed, please use 'install' instead."
+		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' sk "not already installed, please use 'install' instead"
 		MarkActionForkAsSkipped
 		z=1
 	elif IsNtQpkgAuthorOk; then
@@ -10088,8 +10080,6 @@ _QPKG:rebuild_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-# 	[[ $useropt_verbose != true ]] && exec &> /dev/null
-
 	FuncForkInit
 
 	local -i z=0
@@ -10143,8 +10133,6 @@ _QPKG:upgrade_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-# 	[[ $useropt_verbose != true ]] && exec &> /dev/null
-
 	FuncForkInit
 
 	local a='UPGRADE_QPKG=true '
@@ -10152,7 +10140,7 @@ _QPKG:upgrade_()
 	local -i z=0
 
 	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" install '' sk 'no installation package found'
+		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' sk 'no installation package found'
 		MarkActionForkAsSkippedError
 		z=1
 	elif IsNtValidQpkgInstalled "$qpkg_name"; then
@@ -10226,8 +10214,6 @@ _QPKG:uninstall_()
 
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
-
-# 	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10309,8 +10295,6 @@ _QPKG:activate_()
 
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
-
-# 	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10400,8 +10384,6 @@ _QPKG:reactivate_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-# 	[[ $useropt_verbose != true ]] && exec &> /dev/null
-
 	FuncForkInit
 
 	local a=''
@@ -10480,8 +10462,6 @@ _QPKG:deactivate_()
 
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
-
-# 	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10570,8 +10550,6 @@ _QPKG:enable_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-# 	[[ $useropt_verbose != true ]] && exec &> /dev/null
-
 	FuncForkInit
 
 	local -i z=0
@@ -10623,8 +10601,6 @@ _QPKG:disable_()
 
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
-
-# 	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10682,8 +10658,6 @@ _QPKG:enableau_()
 
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
-
-# 	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10747,8 +10721,6 @@ _QPKG:disableau_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-# 	[[ $useropt_verbose != true ]] && exec &> /dev/null
-
 	FuncForkInit
 
 	local a=''
@@ -10811,8 +10783,6 @@ _QPKG:backup_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-# 	[[ $useropt_verbose != true ]] && exec &> /dev/null
-
 	FuncForkInit
 
 	local a=''
@@ -10871,8 +10841,6 @@ _QPKG:restore_()
 
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
-
-# 	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -10937,8 +10905,6 @@ _QPKG:clean_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
-# 	[[ $useropt_verbose != true ]] && exec &> /dev/null
-
 	FuncForkInit
 
 	local a=''
@@ -11000,8 +10966,6 @@ _QPKG:sign_()
 
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
-
-# 	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -11104,8 +11068,6 @@ _QPKG:status_()
 
 	# Outputs:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
-
-# 	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
