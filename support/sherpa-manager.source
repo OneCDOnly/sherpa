@@ -650,12 +650,12 @@ LoadLists()
 	unset r_user_qpkg_actions
 
 	# These are used internally by sherpa.
-	# ordered
+	# Ordered.
 
 	r_package_tiers=(independent auxiliary optional dependent)
 	r_qpkg_tiers=(independent optional dependent)
 
-	# sorted
+	# Sorted.
 
 	r_qpkg_basic_states=(complete enabled installed)
 	r_qpkg_extended_states=(active backedup downloaded installable missing signed upgradable)
@@ -666,14 +666,14 @@ LoadLists()
 	r_qpkg_isnt_groups=(canclean)
 	r_qpkg_service_results=(failed ok)
 
-	# ordered
+	# Ordered.
 
 	r_qpkg_actions=(status list rebuild reassign download backup deactivate disable uninstall upgrade reinstall install enableau disableau sign restore clean enable activate reactivate)
 	r_ipk_actions=(downgrade download uninstall upgrade install)
 	r_pip_actions=(uninstall upgrade install)
 
 	# These actions may be specified by the user.
-	# sorted
+	# Sorted.
 
 	r_user_qpkg_actions=(activate backup clean deactivate disable disableau enable enableau install list reactivate reassign rebuild reinstall restore sign status uninstall upgrade)
 
@@ -9690,6 +9690,17 @@ EnableVerbose()
 
 	}
 
+DisableVerbose()
+	{
+
+	useropt_verbose=false
+	DebugVar useropt_verbose
+
+	HideCursor
+	HideKeystrokes
+
+	}
+
 EnableDebugToArchiveAndFile()
 	{
 
@@ -9931,7 +9942,7 @@ _QPKG:install_()
 		MarkActionForkAsSkippedError
 		z=1
 	elif IsQpkgInstalled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" install '' sk "already installed, to reinstall use 'reinstall' instead"
+		SaveActionResultToLog QPKG "$qpkg_name" install '' sk "already installed, please use 'reinstall' instead"
 		MarkActionForkAsSkipped
 		z=1
 	elif ! IsQpkgDbArchOK "$qpkg_name"; then
@@ -10971,19 +10982,13 @@ _QPKG:sign_()
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
+	[[ ! -e $r_abort_actions_pathfile ]] || exit
+
 	FuncForkInit
 
 	local a=''
 	local b=''
 	local -i z=0
-
-	if [[ -e $r_abort_actions_pathfile ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sa 'abort requested, unable to continue'
-		MarkActionForkAsSkippedAbort
-		z=3
-	fi
-
-	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugVar sqlite_cmd
 
@@ -10996,7 +11001,7 @@ _QPKG:sign_()
 		MarkActionForkAsSkipped
 		z=1
 	elif [[ ! -e $sqlite_pathfile ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sa "$(FormatFileName sqlite3) binary not found"
+		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sa "$(FormatFileName sqlite3) binary not found, no further signing will occur"
 		MarkActionForkAsSkippedAbort
 		z=3
 	elif [[ ! -e $r_cert_db_pathfile ]]; then
@@ -13820,17 +13825,15 @@ Executer()
 		z=${PIPESTATUS[0]}									# Must use $PIPESTATUS after `tee` to get returncode of previous command: https://stackoverflow.com/questions/1221833/pipe-output-and-capture-exit-status-in-bash
 		z=$?
 	else
-		(eval "$1" > "$r_log_pathfile" 2>&1)				# Run in a subshell to suppress "Terminated" message later.
+		(eval "$1") > "$r_log_pathfile" 2>&1				# Run in a subshell to suppress "Terminated" message later.
+# 		$1 > "$r_log_pathfile" 2>&1
 		z=$?
 
 # 		# Let's try this: https://serverfault.com/a/903631
 
-# 		cmd="\"$1\" > $r_log_pathfile 2>&1"
-#
-#
-#		/bin/sh -c "echo \$\$ > $r_pid_pathfile; exec \"$cmd\""
-#		z=$?
-#
+# 		/bin/sh -c "echo \$\$ > $r_pid_pathfile; exec $1" > $r_log_pathfile 2>&1
+# 		z=$?
+
 # 		if [[ -e $r_pid_pathfile ]]; then
 # 			[[ -s $r_pid_pathfile ]] && pid=$(< $r_pid_pathfile)
 # 			[[ $pid -gt 0 ]] && wait $pid 2> /dev/null
