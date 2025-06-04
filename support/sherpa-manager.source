@@ -176,8 +176,8 @@ ShowResults()
 	[[ $show_suggest_raise_issue = true ]] && ShowHelpIssue
 
 	DebugInfoMinSepr
-	DebugScript finished "$(ConvertNowToFullDate)"
-	DebugScript 'elapsed time' "$(ConvertSecondsToDuration "$(($(ConvertNowToSeconds)-r_script_startseconds))")"
+	DebugScript info finished "$(ConvertNowToFullDate)"
+	DebugScript info 'elapsed time' "$(ConvertSecondsToDuration "$(($(ConvertNowToSeconds)-r_script_startseconds))")"
 	DebugInfoMajSepr
 
 	FuncExit
@@ -196,8 +196,8 @@ DebugLogInit()
 	#	$r_this_script_ver
 
 	DebugInfoMajSepr
-	DebugScript started "$(ConvertSecondsToFullDate "$r_script_startseconds")"
-	DebugScript PID "$$"
+	DebugScript info started "$(ConvertSecondsToFullDate "$r_script_startseconds")"
+	DebugScript info PID "$$"
 	DebugInfoMinSepr
 	DebugInfo "Markers: $(Parenthesise '**') detected, $(Parenthesise II) information, $(Parenthesise WW) warning, $(Parenthesise EE) error, $(Parenthesise LL) log file, $(Parenthesise '--') processing,"
 	DebugInfo "$(Parenthesise '==') done, $(Parenthesise '>>') f entry, $(Parenthesise '<<') f exit, $(Parenthesise aa) array name & values, $(Parenthesise vv) variable name & value,"
@@ -842,16 +842,20 @@ DebugLogEnv()
 	DebugShell ok copyright "$(GetShellCopyright)"
 	DebugShell ok options "$-"
 	DebugShell ok 'time in shell' "$(GetShellTimeIn)"
-	DebugScript 'QPKG version' "$(ConvertAsSmartDate "$r_this_package_ver")"
-	DebugScript 'manager version' "$r_this_script_ver"
-	DebugScript 'manager epoch' "$(ConvertAsSmartDate "$r_script_built_epoch")"
-	DebugScript 'objects epoch' "$(ConvertAsSmartDate "${r_objects_epoch:-not loaded}")"
-	DebugScript 'packages epoch' "$(ConvertAsSmartDate "${r_packages_epoch:-not loaded}")"
-	DebugScript 'logs path' "$r_logs_path"
+	DebugScript ok 'QPKG version' "$(ConvertAsSmartDate "$r_this_package_ver")"
+	DebugScript ok 'manager version' "$r_this_script_ver"
+	DebugScript ok 'manager epoch' "$(ConvertAsSmartDate "$r_script_built_epoch")"
+	DebugScript ok 'objects epoch' "$(ConvertAsSmartDate "${r_objects_epoch:-not loaded}")"
+	DebugScript ok 'packages epoch' "$(ConvertAsSmartDate "${r_packages_epoch:-not loaded}")"
+	DebugScript ok 'logs path' "$r_logs_path"
 
 	LocateSQLiteBinary
 
-	DebugScript "'sqlite3' binary" "$sqlite_cmd"
+	if [[ -e $sqlite_cmd ]]; then
+		DebugScript ok "'sqlite3' binary" "$sqlite_cmd"
+	else
+		DebugScript warning "'sqlite3' binary" "$sqlite_cmd (unavailable)"
+	fi
 
 	if IsOsCanUnofficialPackages; then
 		if IsOsAllowUnofficialPackages; then
@@ -6664,7 +6668,7 @@ PasteLogLast()
 			fi
 		else
 			DebugInfoMinSepr
-			DebugScript 'user abort'
+			DebugScript warning 'user abort'
 			show_action_results_zero=false
 
 			return 1
@@ -6707,7 +6711,7 @@ PasteLogTail()
 			fi
 		else
 			DebugInfoMinSepr
-			DebugScript 'user abort'
+			DebugScript warning 'user abort'
 			show_action_results_zero=false
 
 			return 1
@@ -14391,10 +14395,11 @@ DebugScript()
 	{
 
 	# Inputs: (local)
-	#	$1 = name
-	#	$2 = value
+	#	$1 = type
+	#	$2 = name
+	#	$3 = value
 
-	DebugItem ok script "$1" "$2"
+	DebugItem "$1" script "$2" "$3"
 
 	}
 
