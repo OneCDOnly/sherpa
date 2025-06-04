@@ -11105,10 +11105,10 @@ _QPKG:status_()
 		# Run status query with GNU `timeout` if-possible.
 
 		if [[ -e $r_gnu_timeout_cmd ]]; then
-			$r_gnu_timeout_cmd "$r_qpkg_status_check_timeout_seconds" /bin/bash -c "${b}$(GetQpkgServicePathFile) status &> /dev/null"
+			$r_gnu_timeout_cmd "$r_qpkg_status_check_timeout_seconds" /bin/bash -c "${b}$(GetQpkgServicePathFile) status"
 			z=$?
 		else
-			Executer "${b}$(GetQpkgServicePathFile) status &> /dev/null" "$r_logs_path/$qpkg_name.$r_status_log_file" log:failure-only
+			Executer "${b}$(GetQpkgServicePathFile) status" "$r_logs_path/$qpkg_name.$r_status_log_file" log:failure-only
 			z=$?
 		fi
 	elif [[ $a != none ]]; then
