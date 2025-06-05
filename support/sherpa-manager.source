@@ -838,6 +838,9 @@ DebugLogEnv()
 	fi
 
 	DebugUserspace ok '$SHELL' "$(GetShell)"
+	DebugUserspace ok 'BusyBox version' "$(GetBusyBoxVersion)"
+	DebugUserspace ok 'BusyBox copyright' "$(GetBusyBoxCopyright)"
+	DebugUserspace ok 'BusyBox builtins' "$(GetBusyBoxFunctionCount)"
 	DebugShell ok version "$(GetShellVersion)"
 	DebugShell ok copyright "$(GetShellCopyright)"
 	DebugShell ok options "$-"
@@ -9392,6 +9395,27 @@ GetShellCopyright()
 
 	}
 
+GetBusyBoxVersion()
+	{
+
+	/bin/busybox | head -n1
+
+	}
+
+GetBusyBoxCopyright()
+	{
+
+	/bin/busybox | head -n2 | tail -n1
+
+	}
+
+GetBusyBoxFunctionCount()
+	{
+
+	/bin/busybox --list | wc -l
+
+	} 2> /dev/null
+
 GetShellTimeIn()
 	{
 
@@ -11105,7 +11129,7 @@ _QPKG:status_()
 		# Run status query with GNU `timeout` if-possible.
 
 		if [[ -e $r_gnu_timeout_cmd ]]; then
-			$r_gnu_timeout_cmd "$r_qpkg_status_check_timeout_seconds" /bin/bash -c "${b}$(GetQpkgServicePathFile) status"
+			$r_gnu_timeout_cmd "$r_qpkg_status_check_timeout_seconds" /bin/sh -c "${b}$(GetQpkgServicePathFile) status"
 			z=$?
 		else
 			Executer "${b}$(GetQpkgServicePathFile) status" "$r_logs_path/$qpkg_name.$r_status_log_file" log:failure-only
