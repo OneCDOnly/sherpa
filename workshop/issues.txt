@@ -1,6 +1,11 @@
 Observed issues:
 
-	* Still seeing 'vundefined' (and 1 second installation time) on random packages:
+	* Update 'package' notes. Some packages arches are incomplete.
+		- Check: Sonarr, Readarr, Whisparr, Lidarr.
+
+	* Still seeing 'vundefined' (and 1 second installation time) on random packages on TS-216G (arm64) only:
+		- OK on TS-231P2 on QTS 5.2.2.2950
+
 		--------------------------------------------------------------------------------------------------
 		• These package actions completed OK:
 			install duf QPKG in 8 seconds (v240731)
