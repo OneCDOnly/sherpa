@@ -1703,7 +1703,7 @@ ProcAction()
 			InitActionForkCounters
 			OpenMsgPipe
 
-			re=\\bEntware\\b		# Bash 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
+			re=\\bEntware\\b		# bash 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
 
 			if [[ $r_action = uninstall && ${target_packages[*]} =~ $re ]]; then
 				ShowKeystrokes		# Enable before removing Entware (& GNU `stty`).
@@ -3486,7 +3486,7 @@ _UpdateEntwarePackageList_()
 		if [[ $z -eq 0 ]]; then
 			DebugAsDone "updated $(FormatPackageName Entware) package list"
 			CloseIpkArchive
-		else		# no-big-deal
+		else		# No-big-deal.
 			DebugAsWarn "Unable to update $(FormatPackageName Entware) package list $(FormatExitcode "$z")"
 		fi
 	else
