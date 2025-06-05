@@ -13232,9 +13232,7 @@ IsQpkgAutoUpdate()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}
-
-	[[ $(/sbin/getcfg "$a" Auto_Update -u -f /etc/config/qpkg.conf) = TRUE ]]
+	[[ $(/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}" Auto_Update -u -f /etc/config/qpkg.conf) = TRUE ]]
 
 	}
 
@@ -13288,9 +13286,9 @@ IsValidQpkgInstalled()
 
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}
 
-	/bin/grep "^\[$a\]" /etc/config/qpkg.conf && IsQpkgAuthorOk "$a"
+	IsQpkgInstalled "$a" && IsQpkgAuthorOk "$a"
 
-	} &> /dev/null
+	}
 
 IsNtValidQpkgInstalled()
 	{
@@ -13322,11 +13320,10 @@ IsQpkgInstalled()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}
+	# shellcheck disable=2076
+	[[ "$(< /etc/config/qpkg.conf)" =~ "[${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}]" ]]
 
-	/bin/grep "^\[$a\]" /etc/config/qpkg.conf
-
-	} &> /dev/null
+	}
 
 IsNtQpkgInstalled()
 	{
@@ -13408,9 +13405,7 @@ IsQpkgEnabled()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}
-
-	[[ $(/sbin/getcfg "$a" Enable -u -d undefined -f /etc/config/qpkg.conf) = TRUE ]]
+	[[ $(/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}" Enable -u -d undefined -f /etc/config/qpkg.conf) = TRUE ]]
 
 	}
 
@@ -13830,20 +13825,27 @@ Executer()
 		z=$?
 	else
 		(eval "$1") > "$r_log_pathfile" 2>&1				# Run in a subshell to suppress "Terminated" message later.
-# 		$1 > "$r_log_pathfile" 2>&1
 		z=$?
 
-# 		# Let's try this: https://serverfault.com/a/903631
-
-# 		/bin/sh -c "echo \$\$ > $r_pid_pathfile; exec $1" > $r_log_pathfile 2>&1
+# 		/bin/sh -c "echo \$\$ > $r_pid_pathfile; exec \"$1\"" > $r_log_pathfile 2>&1					# https://serverfault.com/a/903631
 # 		z=$?
-
-# 		if [[ -e $r_pid_pathfile ]]; then
-# 			[[ -s $r_pid_pathfile ]] && pid=$(< $r_pid_pathfile)
-# 			[[ $pid -gt 0 ]] && wait $pid 2> /dev/null
+#
+# 		if [[ -e $r_pid_pathfile && -s $r_pid_pathfile ]]; then
+# 			pid=$(< $r_pid_pathfile)
+#
+# 			if [[ $pid -gt 0 && -d /proc/$pid ]]; then
+# echo -e "waiting for pid '$pid' to exit..."
+# 				time wait $pid #2> /dev/null
+# echo -e 'wait complete'
+# 			fi
+#
 # 			rm "$r_pid_pathfile"
 # 		fi
 	fi
+
+
+# ./sherpa-manager.source add duf HideThatBanner IncreaseTimeouts OLidarr nzbget OliveTin Par2turbo QDK OReadarr OSonarr TorrServer Unrar OWhisparr
+
 
 	if [[ -e $r_log_pathfile ]]; then
 		ShowAsResultAndStdout "$z" "$(< "$r_log_pathfile")" >> "$2"
