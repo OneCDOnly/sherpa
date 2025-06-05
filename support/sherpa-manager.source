@@ -841,10 +841,10 @@ DebugLogEnv()
 	DebugUserspace ok 'BusyBox version' "$(GetBusyBoxVersion)"
 	DebugUserspace ok 'BusyBox copyright' "$(GetBusyBoxCopyright)"
 	DebugUserspace ok 'BusyBox builtins' "$(GetBusyBoxFunctionCount)"
-	DebugShell ok version "$(GetShellVersion)"
-	DebugShell ok copyright "$(GetShellCopyright)"
-	DebugShell ok options "$-"
-	DebugShell ok 'time in shell' "$(GetShellTimeIn)"
+	DebugUserspace ok 'shell version' "$(GetShellVersion)"
+	DebugUserspace ok 'shell copyright' "$(GetShellCopyright)"
+	DebugUserspace ok 'shell options' "$-"
+	DebugUserspace ok 'time in shell' "$(GetShellTimeIn)"
 	DebugScript ok 'QPKG version' "$(ConvertAsSmartDate "$r_this_package_ver")"
 	DebugScript ok 'manager version' "$r_this_script_ver"
 	DebugScript ok 'manager epoch' "$(ConvertAsSmartDate "$r_script_built_epoch")"
@@ -13851,6 +13851,8 @@ Executer()
 		(eval "$1") > "$r_log_pathfile" 2>&1				# Run in a subshell to suppress "Terminated" message later.
 		z=$?
 
+		# ./sherpa-manager.source add duf HideThatBanner IncreaseTimeouts OLidarr nzbget OliveTin Par2turbo QDK OReadarr OSonarr TorrServer Unrar OWhisparr
+
 # 		/bin/sh -c "echo \$\$ > $r_pid_pathfile; exec \"$1\"" > $r_log_pathfile 2>&1					# https://serverfault.com/a/903631
 # 		z=$?
 #
@@ -13866,10 +13868,6 @@ Executer()
 # 			rm "$r_pid_pathfile"
 # 		fi
 	fi
-
-
-# ./sherpa-manager.source add duf HideThatBanner IncreaseTimeouts OLidarr nzbget OliveTin Par2turbo QDK OReadarr OSonarr TorrServer Unrar OWhisparr
-
 
 	if [[ -e $r_log_pathfile ]]; then
 		ShowAsResultAndStdout "$z" "$(< "$r_log_pathfile")" >> "$2"
