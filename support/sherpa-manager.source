@@ -12491,7 +12491,7 @@ IsOsQNAP()
 
 	[[ -e /etc/init.d/functions ]]
 
-	} &> /dev/null
+	}
 
 IsQuTS()
 	{
@@ -12519,7 +12519,7 @@ IsOsSupported()
 
 	[[ $r_nas_firmware_ver -ge 400 ]]
 
-	} &> /dev/null
+	}
 
 IsOsCanAsyncQpkgActions()
 	{
@@ -12531,7 +12531,7 @@ IsOsCanAsyncQpkgActions()
 
 	[[ $r_nas_firmware_ver -ge 520 ]]
 
-	} &> /dev/null
+	}
 
 IsOsCanSecureDownload()
 	{
@@ -12552,7 +12552,7 @@ IsOsCanSecureDownload()
 
 	[[ $r_nas_firmware_ver -ge 455 ]]
 
-	} &> /dev/null
+	}
 
 IsOsCanQpkgTimeout()
 	{
@@ -12564,7 +12564,7 @@ IsOsCanQpkgTimeout()
 
 	[[ $r_nas_firmware_ver -ge 430 ]]
 
-	} &> /dev/null
+	}
 
 IsOsCanSignedPackages()
 	{
@@ -12578,7 +12578,7 @@ IsOsCanSignedPackages()
 
 	[[ $r_nas_firmware_ver -ge 437 ]]
 
-	} &> /dev/null
+	}
 
 IsOsCanUnofficialPackages()
 	{
@@ -12592,14 +12592,14 @@ IsOsCanUnofficialPackages()
 
 	[[ $r_nas_firmware_ver -gt 426 && $r_nas_firmware_ver -le 436 ]]
 
-	} &> /dev/null
+	}
 
 IsOsCanSudo()
 	{
 
 	[[ -e /usr/bin/sudo ]]
 
-	} &> /dev/null
+	}
 
 IsOsCanSedExtRegex()
 	{
@@ -12641,7 +12641,7 @@ IsOsCompatibleWithSigned()
 
 	[[ $r_nas_firmware_date -lt 20201015 || $r_nas_firmware_date -gt 20201020 ]]
 
-	} &> /dev/null
+	}
 
 IsOsAllowUnsignedPackages()
 	{
