@@ -9963,6 +9963,7 @@ _QPKG:install_()
 
 	local a=''
 	local local_pathfile=$(GetQpkgDbPathFilename)
+		local log_pathfile=$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_install_log_file
 	local -i z=0
 
 	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
@@ -10004,7 +10005,7 @@ _QPKG:install_()
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	[[ ${QPKGs_were_installed_name[*]:-} = *"$qpkg_name"* ]] && a+="QINSTALL_PATH=$(GetQpkgInstalledOriginalPath "$qpkg_name") "
 
-	Executer "${a}/bin/sh $local_pathfile" "$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_install_log_file" log:failure-only 10
+	Executer "${a}/bin/sh $local_pathfile" "$log_pathfile" log:failure-only 10
 	z=$?
 
 	LogQpkgServiceResult
@@ -13807,7 +13808,7 @@ Executer()
 
 	# Inputs: (local)
 	#   $1 = commandstring to execute.
-	#   $2 = pathfile to record stdout and stderr for commandstring.
+	#   $2 = pathfile to record stdout and stderr to.
 	#   $3 (optional) = 'log:failure-only' - if specified, stdout & stderr are only recorded in the specified log if the command failed. Default is to always record stdout & stderr.
 	#   $4 (optional) = e.g. '10' - an additional acceptable result code. Any other non-zero result from command will be considered a failure.
 
@@ -13827,11 +13828,8 @@ Executer()
 
 	FuncInit
 
-# 	local cmd=''
 	local exec_msg='exec:'
-# 	local -i pid=0
 	local -r r_log_pathfile=$(/bin/mktemp "$r_run_logs_path"/"${FUNCNAME[0]}"_XXXXXX)
-# 		local -r r_pid_pathfile=$r_log_pathfile.pid
 	local -i z=0
 
 	if IsHaveSingleQuote "$1"; then							# Change display quotes depending-on content quote chars.
@@ -13844,29 +13842,13 @@ Executer()
 	FormatCommand "$1" > "$2"
 
 	if [[ $useropt_verbose = true ]]; then
-		eval "$1 > >(/usr/bin/tee $r_log_pathfile) 2>&1"	# NOTE: `tee` buffers stdout here.		# squeezer-ignore
+		eval $1 > >(/usr/bin/tee $r_log_pathfile) 2>&1		# NOTE: `tee` buffers stdout here.		# squeezer-ignore
 		z=${PIPESTATUS[0]}									# Must use $PIPESTATUS after `tee` to get returncode of previous command: https://stackoverflow.com/questions/1221833/pipe-output-and-capture-exit-status-in-bash
 		z=$?
 	else
-		(eval "$1") > "$r_log_pathfile" 2>&1				# Run in a subshell to suppress "Terminated" message later.
+		(eval $1 > "$r_log_pathfile" 2>&1)					# Run in a subshell to suppress "Terminated" message later.
 		z=$?
 
-		# ./sherpa-manager.source add duf HideThatBanner IncreaseTimeouts OLidarr nzbget OliveTin Par2turbo QDK OReadarr OSonarr TorrServer Unrar OWhisparr
-
-# 		/bin/sh -c "echo \$\$ > $r_pid_pathfile; exec \"$1\"" > $r_log_pathfile 2>&1					# https://serverfault.com/a/903631
-# 		z=$?
-#
-# 		if [[ -e $r_pid_pathfile && -s $r_pid_pathfile ]]; then
-# 			pid=$(< $r_pid_pathfile)
-#
-# 			if [[ $pid -gt 0 && -d /proc/$pid ]]; then
-# echo -e "waiting for pid '$pid' to exit..."
-# 				time wait $pid #2> /dev/null
-# echo -e 'wait complete'
-# 			fi
-#
-# 			rm "$r_pid_pathfile"
-# 		fi
 	fi
 
 	if [[ -e $r_log_pathfile ]]; then
