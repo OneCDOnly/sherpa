@@ -1,5 +1,17 @@
 Observed issues:
 
+	* 'duf' service-script should not report second attempt to remove symlink as a failure:
+		--------------------------------------------------------------------------------------------------
+		[/share/Public] # /etc/init.d/duf.sh
+		run service script as: /etc/init.d/duf.sh {start|stop|restart|status}
+		to launch 'duf', type: duf
+		[/share/Public] # /etc/init.d/duf.sh stop
+		symlink removed: /usr/bin/duf
+		[/share/Public] # /etc/init.d/duf.sh stop
+		error: unable to remove symlink to 'duf' launcher!
+		--------------------------------------------------------------------------------------------------
+		- This happens during QPKG uninstallation.
+
 	* Some packages arches are incomplete in `sherpa show packages`.
 		- Might be missing notes.
 		- Check: Sonarr, Readarr, Whisparr, Lidarr.
@@ -73,6 +85,7 @@ Observed issues:
 			> update QPKG icon with UI ports: OK
 			[30;42m= source: torrserver.sh, action: start, time: Tue 3 Jun 2025 9:40:23 AM EST, result: OK, elapsed: 0h:00m:11s, load: 2.37 [0m
 		--------------------------------------------------------------------------------------------------
+		- If I shortcut Executer() in _QPKG:install_(), works fine everytime.
 
 	* Downgrade Transmission IPKs back to 4.0.4
 		- https://github.com/OneCDOnly/sherpa/issues/306
