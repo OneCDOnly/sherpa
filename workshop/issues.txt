@@ -12,9 +12,6 @@ Observed issues:
 		--------------------------------------------------------------------------------------------------
 		- This happens during QPKG uninstallation.
 
-	* one packages missing from `sherpa show packages`.
-		- Whisparr.
-
 	* Getting 'vundefined' QPKG version (and 1 second installation time) on random packages on TS-216G (arm64) only:
 		--------------------------------------------------------------------------------------------------
 		• These package actions completed OK:
@@ -32,59 +29,8 @@ Observed issues:
 			install TorrServer QPKG in 1 second (vundefined)
 			install 35 auxiliary IPKs in 1m:46s
 		--------------------------------------------------------------------------------------------------
-		[Tue 3 Jun 2025 9:40:09 AM EST  ] tier:independent action:install    key1:update val1:entry                                  key2:package val2:TorrServer
-		[Tue 3 Jun 2025 9:40:10 AM EST  ] tier:independent action:install    key1:update val1:completed ok                           key2:package val2:TorrServer
-		[Tue 3 Jun 2025 9:40:10 AM EST  ] tier:independent action:install    key1:update val1:exit                                   key2:package val2:TorrServer
-		--------------------------------------------------------------------------------------------------
-		1748907609325|install|1|TorrServer|QPKG|ok|739|vundefined
-		--------------------------------------------------------------------------------------------------
-		TorrServer_250521_arm_64.qpkg.install.log
-			= command: '/bin/sh /share/CACHEDEV1_DATA/.qpkg/sherpa/cache/QPKGs/downloads/TorrServer_250521_arm_64.qpkg'
-		--------------------------------------------------------------------------------------------------
-		Process execution log:
-		--------------------------------------------------------------------------------------------------
-			Install QNAP package on TS-NAS...
-			13+1 records in
-			13+1 records out
-			59676 bytes (58.3KB) copied, 0.000795 seconds, 71.6MB/s
-			./
-			./qinstall.sh
-			./qpkg.cfg
-			./package_routines
-			./built_info
-			1+1 records in
-			1+1 records out
-			39196 bytes (38.3KB) copied, 0.000154 seconds, 242.7MB/s
-			38+1 records in
-			38+1 records out
-			39196 bytes (38.3KB) copied, 0.000580 seconds, 64.4MB/s
-			Firmware check is fine.
-			Link service start/stop script: torrserver.sh
-			Set QPKG information in /etc/config/qpkg.conf
-			> no configuration file found: using default
-			[7m> source: torrserver.sh, action: start, time: Tue 3 Jun 2025 9:40:12 AM EST, load: 2.62 [0m
-			- package: 250521, service: 250521, library: 250521
-			- daemon PID: none
-			- QPKG enabled: 'true'
-			- application auto-update: 'true'
-			> get latest release package URL: OK
-			- release package URL: 'https://github.com/YouROK/TorrServer/releases/download/MatriX.135/TorrServer-linux-arm64'
-			- release package exists locally: false
-			> download latest release package: OK
-			> copy release package: OK
-			> make release package executable: OK
-			> load ports from configuration file: OK
-			> start daemon (in screen session): OK
-			- daemon PID: none
-			> watch for daemon process name to appear (no-more than 120 seconds): 1, OK
-			- daemon listening address: '0.0.0.0'
-			- HTTPS port enabled: 'false'
-			- HTTP port: '8090'
-			> test for port '8090' response (no-more than 120 seconds): OK
-			> update QPKG icon with UI ports: OK
-			[30;42m= source: torrserver.sh, action: start, time: Tue 3 Jun 2025 9:40:23 AM EST, result: OK, elapsed: 0h:00m:11s, load: 2.37 [0m
-		--------------------------------------------------------------------------------------------------
 		- If I shortcut Executer() in _QPKG:install_(), works fine everytime.
+		- Appears process is placed in run queue, then control returns to the shell. Weird!
 
 	* Downgrade Transmission IPKs back to 4.0.4
 		- https://github.com/OneCDOnly/sherpa/issues/306
