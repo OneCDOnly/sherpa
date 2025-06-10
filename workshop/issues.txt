@@ -12,9 +12,8 @@ Observed issues:
 		--------------------------------------------------------------------------------------------------
 		- This happens during QPKG uninstallation.
 
-	* Some packages arches are incomplete in `sherpa show packages`.
-		- Might be missing notes.
-		- Check: Sonarr, Readarr, Whisparr, Lidarr.
+	* one packages missing from `sherpa show packages`.
+		- Whisparr.
 
 	* Getting 'vundefined' QPKG version (and 1 second installation time) on random packages on TS-216G (arm64) only:
 		--------------------------------------------------------------------------------------------------
@@ -89,6 +88,7 @@ Observed issues:
 
 	* Downgrade Transmission IPKs back to 4.0.4
 		- https://github.com/OneCDOnly/sherpa/issues/306
+		- Rethinking this. The problem only affects a single user, and they've switched to Stephanes's QPKG as a workaround. This is probably better than downgrading everyone for an unspecified issue.
 
 	* QDK install throws error:
 		--------------------------------------------------------------------------------------------------
