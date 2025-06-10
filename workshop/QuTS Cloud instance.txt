@@ -1,0 +1,80 @@
+QuTS cloud instance running sherpa
+
+[qnap@QNAP-Demo /]$ sudo sherpa about-all
+sherpa v250427-stable
+dbug: (**)  HARDWARE:              NAS model: QuTScloud
+dbug: (**)  HARDWARE:                    CPU: Intel(R) Xeon(R) Platinum 8259CL CPU @ 2.50GHz
+dbug: (**)  HARDWARE:              CPU cores: 2
+dbug: (**)  HARDWARE:       CPU architecture: x86_64
+dbug: (**)  HARDWARE:     CPU SHA1 benchmark: 134MB/s
+dbug: (**)  HARDWARE:                    RAM: 3,965,400kiB
+dbug: (**)    KERNEL:                   name: GNU/Linux
+dbug: (**)    KERNEL:                version: 5.10.60-qnap
+dbug: (**)    KERNEL:              page size: 4096B
+dbug: (**)  FIRMWARE:                     OS: QTS
+dbug: (**)  FIRMWARE:                version: 5.2.4.3041
+dbug: (**)  FIRMWARE:             build date: 20250211 (Tue 11 Feb 2025)
+dbug: (**)  FIRMWARE:               platform: X86_KVM
+dbug: (**)        OS:                  state: online
+dbug: (**)        OS:                 uptime: 2h:46m:00s
+dbug: (**)        OS:          load averages: 1m:2.06, 5m:1.11, 15m:0.76
+dbug: (**)   STORAGE: default volume mounted: /share/CACHEDEV1_DATA
+dbug: (**)   STORAGE:        write benchmark: 1.3GB/s
+dbug: (**)   STORAGE:                   /opt: /share/CACHEDEV1_DATA/.qpkg/Entware
+dbug: (**)   STORAGE:         'Public' share: /share/Public
+dbug: (**) USERSPACE:                   libc: (GNU libc) 2.21
+dbug: (**) USERSPACE:         libc copyright: Copyright (C) 2015 Free Software Foundation, Inc.
+dbug: (**) USERSPACE:              $SUDO_UID: 1000
+dbug: (**) USERSPACE:                  $EUID: 0
+dbug: (**) USERSPACE:                 $SHELL: /bin/sh
+dbug: (**)     SHELL:                version: GNU bash, version 3.2.57(1)-release (x86_64-QNAP-linux-gnu)
+dbug: (**)     SHELL:              copyright: Copyright (C) 2007 Free Software Foundation, Inc.
+dbug: (**)     SHELL:                options: huB
+dbug: (**)     SHELL:          time in shell: 1m:03s
+dbug: (**)    SCRIPT:           QPKG version: 241001 (Tue 1 Oct 2024)
+dbug: (**)    SCRIPT:        manager version: 250427-stable
+dbug: (**)    SCRIPT:          manager epoch: 1745723099 (Sun 27 Apr 2025 11:04:59 AM CST)
+dbug: (**)    SCRIPT:          objects epoch: 1745723093 (Sun 27 Apr 2025 11:04:53 AM CST)
+dbug: (**)    SCRIPT:         packages epoch: 1745723203 (Sun 27 Apr 2025 11:06:43 AM CST)
+dbug: (**)    SCRIPT:              logs path: /share/CACHEDEV1_DATA/.qpkg/sherpa/logs
+dbug: (**)    SCRIPT:       'sqlite3' binary: /opt/bin/sqlite3
+dbug: (**)      QPKG:       allow unofficial: N/A
+dbug: (**)      QPKG:         allow unsigned: no
+dbug: (**)      QPKG:           architecture: i64
+dbug: (**)      QPKG:           Entware type: std
+dbug: (**)      QPKG:   Entware install date: 2025-04-28 (Mon 28 Apr 2025)
+dbug: (**)      QPKG:            SortMyQPKGs: not installed
+dbug: (WW)      QPKG:       IncreaseTimeouts: not installed
+dbug: (>>) RunAndLog()
+dbug: (--) exec: "/bin/df -h | /bin/grep -iE '^(filesystem|none|tmpfs|devtmpfs|/dev/ram)'"
+Filesystem                Size      Used Available Use% Mounted on
+none                    450.0M    321.1M    128.9M  71% /
+devtmpfs                  1.9G      4.0K      1.9G   0% /dev
+tmpfs                    64.0M    628.0K     63.4M   1% /tmp
+tmpfs                     1.9G    136.0K      1.9G   0% /dev/shm
+tmpfs                    16.0M         0     16.0M   0% /share
+tmpfs                    16.0M         0     16.0M   0% /mnt/snapshot/export
+tmpfs                    32.0M     27.2M      4.8M  85% /samba_third_party
+tmpfs                    48.0M     32.0K     48.0M   0% /share/CACHEDEV1_DATA/.samba/lock/msg.lock
+tmpfs                    16.0M         0     16.0M   0% /mnt/ext/opt/samba/private/msg.sock
+tmpfs                    29.0M     20.4M      8.6M  70% /mnt/ext/opt/FileStation5
+tmpfs                    10.0M         0     10.0M   0% /tmp/wfm
+dbug: (==) exec: completed OK
+dbug: (<<) RunAndLog()|0|27ms
+dbug: (>>) RunAndLog()
+dbug: (--) exec: "/usr/sbin/screen -ls | /bin/sed '/^[[:space:]]*$/d'"
+No Sockets found in /tmp/screens/S-admin.
+dbug: (==) exec: completed OK
+dbug: (<<) RunAndLog()|1|29ms
+dbug: (>>) RunAndLog()
+dbug: (--) exec: '/usr/bin/free'
+             total       used       free     shared    buffers     cached
+Mem:       3965400    2408036    1557364     382972      55236    1486916
+-/+ buffers/cache:     865884    3099516
+Swap:      7232760          0    7232760
+dbug: (==) exec: completed OK
+dbug: (<<) RunAndLog()|0|41ms
+dbug: (>>) RunAndLog()
+dbug: (--) exec: '/bin/grep -iE 'out of memory|oom-killer' /mnt/HDA_ROOT/.logs/kmsg'
+dbug: (==) exec: completed OK
+dbug: (<<) RunAndLog()|1|29ms

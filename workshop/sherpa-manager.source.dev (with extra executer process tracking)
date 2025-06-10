@@ -4187,6 +4187,8 @@ _ExecOneActionWithManyForks_()
 			[[ ! -e $r_abort_actions_pathfile ]] || break 2
 			sleep .2
 			UpdateActionForkProgress
+sleep .2
+UpdateActionForkProgress
 		done
 
 		MarkActionForkAsQueued 							# Create runfile here (it takes too-long to appear if created in async function).
@@ -9963,29 +9965,29 @@ _QPKG:install_()
 
 	local a=''
 	local local_pathfile=$(GetQpkgDbPathFilename)
-		local log_pathfile=$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_install_log_file
+		local logfile=$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_install_log_file
 	local -i z=0
 
 	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" install '' sk 'no installation package found'
 		MarkActionForkAsSkippedError
-		z=1
+		z=2
 	elif IsQpkgInstalled "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" install '' sk "already installed, please use 'reinstall' instead"
 		MarkActionForkAsSkipped
-		z=1
+		z=3
 	elif ! IsQpkgDbArchOK "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" install '' sk 'NAS arch is incompatible'
 		MarkActionForkAsSkipped
-		z=1
+		z=4
 	elif ! IsQpkgDbMinOSVerOk "$qpkg_name" || ! IsQpkgDbMaxOSVerOk "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" install '' sk "$(GetOsName) version is incompatible"
 		MarkActionForkAsSkipped
-		z=1
+		z=5
 	elif ! IsQpkgDbMinRAMOk "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" install '' sk 'NAS has insufficient RAM installed'
 		MarkActionForkAsSkipped
-		z=1
+		z=6
 	fi
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
@@ -10005,13 +10007,18 @@ _QPKG:install_()
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	[[ ${QPKGs_were_installed_name[*]:-} = *"$qpkg_name"* ]] && a+="QINSTALL_PATH=$(GetQpkgInstalledOriginalPath "$qpkg_name") "
 
-	Executer "${a}/bin/sh $local_pathfile" "$log_pathfile" log:failure-only 10
+# 	Executer "${a}/bin/sh $local_pathfile" "$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_install_log_file" log:failure-only 10
+ 	Executer "${a}/bin/sh $local_pathfile" "$logfile" log:failure-only 10
 	z=$?
 
-	LogQpkgServiceResult
-	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
+# 	local cmd="${a}/bin/sh $local_pathfile"
+#  	$cmd > "$logfile" 2>&1
+# 	z=$?
 
-	[[ $qpkg_name = Entware ]] && IsNtCriticalFile $r_opkg_cmd && z=1		# Entware installation has failed.
+	LogQpkgServiceResult
+	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=7
+
+	[[ $qpkg_name = Entware ]] && IsNtCriticalFile $r_opkg_cmd && z=8		# Entware installation has failed.
 
 	if [[ $z -eq 0 || $z -eq 10 ]]; then	# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes user-aborts.
 		SaveActionResultToLog QPKG "$qpkg_name" install '' ok "v$(GetQpkgInstalledVer)"
@@ -10035,7 +10042,7 @@ _QPKG:install_()
 	else
 		SaveActionResultToLog QPKG "$qpkg_name" install '' er "$z"
 		MarkActionForkAsError
-		z=1   # Remap to 1.
+		z=9   # Remap to 1.
 	fi
 
 	ClearQpkgInstalledAppCenterNotifier
@@ -11003,7 +11010,7 @@ _QPKG:sign_()
 
 	# Running the code below makes the target QPKG effectively "signed", and allows user to install and run this QPKG with the 'Allow installation of applications without a valid digital signature' App Center option unticked.
 
-	# Only required for QTS 4.3.5 and-later firmwares.
+	# Should only be required for QTS 4.3.5-and-later firmwares.
 
 	# Inputs: (global)
 	#	$qpkg_name
@@ -11034,7 +11041,7 @@ _QPKG:sign_()
 		MarkActionForkAsSkippedAbort
 		z=3
 	elif [[ ! -e $r_cert_db_pathfile ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sa "$(GetOsName) QPKG certificate database not found, no further signing will occur"
+		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sa "$(GetOsName) QPKG certificate database not found"
 		MarkActionForkAsSkippedAbort
 		z=3
 	else
@@ -11042,18 +11049,17 @@ _QPKG:sign_()
 		b=$(eval "$sqlite_cmd" "$r_cert_db_pathfile" \"$a\")
 
 		if [[ $b = 1 ]]; then
-			SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' so 'already signed'
-			MarkActionForkAsSkippedOk
-			z=2
+# 			SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' so 'already signed'
+# 			MarkActionForkAsSkippedOk
+# 			z=2
 
 			# KLUDGE: replace db entries created prior to 2024-06-08 as $r_qpkg_signature quoting was incorrect.
 			# So, remove existing entry now, and re-add it later in this function.
 			# Keep this in-place until 2025-06-07.
-			# Disabled on 2025-06-11.
 
-# 			a="DELETE FROM Certificate WHERE QpkgName = '$qpkg_name';"
-# 			b=$(eval "$sqlite_cmd" "$r_cert_db_pathfile" \"$a\")
-# 			z=0		# Disregard errors generated while deleting record.
+			a="DELETE FROM Certificate WHERE QpkgName = '$qpkg_name';"
+			b=$(eval "$sqlite_cmd" "$r_cert_db_pathfile" \"$a\")
+			z=0		# Disregard errors generated while deleting record.
 		fi
 	fi
 
@@ -11107,8 +11113,6 @@ _QPKG:status_()
 
 	# Outputs:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
-
-	[[ $useropt_verbose != true ]] && exec &> /dev/null
 
 	FuncForkInit
 
@@ -13827,15 +13831,30 @@ Executer()
 	#   /pathfile (specified as $2) = stdout and stderr from commandstring (specified as $1).
 	#   $? = result_code of commandstring.
 
-	[[ -n ${1:?${FUNCNAME[0]}'()': $e_nocmd} && -n ${2:?${FUNCNAME[0]}'()': $e_nopfi} ]] || return
+# 	[[ -n ${1:?${FUNCNAME[0]}'()': $e_nocmd} && -n ${2:?${FUNCNAME[0]}'()': $e_nopfi} ]] || return
 
 	FuncInit
 
-	local exec_msg='exec:'
-	local -r r_log_pathfile=$(/bin/mktemp "$r_run_logs_path"/"${FUNCNAME[0]}"_XXXXXX)
-	local -i z=0
+# 	local cmd=''
+# 	local exec_msg='exec:'
+# 	local -r r_log_pathfile=$(/bin/mktemp "$r_run_logs_path"/"${FUNCNAME[0]}"_XXXXXX)
 
-	if IsHaveSingleQuote "$1"; then										# Change display quotes depending-on content quote chars.
+# echo
+# echo "\$r_run_logs_path: [$r_run_logs_path]"
+#
+# local -r test=$(/bin/mktemp "$r_run_logs_path"/"${FUNCNAME[0]}"_XXXXXX)
+# echo "\$test: [$test]"
+#
+# echo "something, something" > "$test"
+# echo "something else, something else" >> "$test"
+# echo
+# echo "contents: [$(cat -A "$test")]"
+# echo
+	local -r r_log_pathfile=/share/Public/executer.log
+	local -i z=0
+# echo "\$r_log_pathfile: [$r_log_pathfile]"
+# echo
+	if IsHaveSingleQuote "$1"; then							# Change display quotes depending-on content quote chars.
 		exec_msg+=" \"$1\""
 	else
 		exec_msg+=" '$1'"
@@ -13844,14 +13863,90 @@ Executer()
 	DebugAsProc "$exec_msg"
 	FormatCommand "$1" > "$2"
 
-	if [[ $useropt_verbose = true ]]; then
-		eval "$1 > >(/usr/bin/tee \"$r_log_pathfile\") 2>&1"			# NOTE: `tee` buffers stdout here.		# squeezer-ignore
-		z=${PIPESTATUS[0]}												# Examine $PIPESTATUS after `tee` to get returncode of previous command: https://stackoverflow.com/questions/1221833/pipe-output-and-capture-exit-status-in-bash
-		z=$?
-	else
-		(eval "$1" > "$r_log_pathfile" 2>&1)							# Run in a subshell to suppress "Terminated" message later.
-		z=$?
-	fi
+# $1 > "$2" 2>&1
+# z=$?
+#
+# FuncExit $z
+#
+# return
+
+# 	if [[ $useropt_verbose = true ]]; then
+# 		eval $1 > >(/usr/bin/tee $r_log_pathfile) 2>&1		# NOTE: `tee` buffers stdout here.		# squeezer-ignore
+# 		z=${PIPESTATUS[0]}									# Must use $PIPESTATUS after `tee` to get returncode of previous command: https://stackoverflow.com/questions/1221833/pipe-output-and-capture-exit-status-in-bash
+# 		z=$?
+# 	else
+# 		(eval $1 > "$r_log_pathfile" 2>&1)					# Run in a subshell to suppress "Terminated" message later.
+# $1 > "$2" 2>&1
+
+echo
+echo "\$1: [$1]"
+echo
+echo "$(TextBlackOnCyan "before cmd, shells: '$SHLVL', count: '$(/bin/ps | /bin/grep 'sh ' | /bin/grep -v grep | wc -l)'")"
+
+# echo
+# ps | grep 'sh \|bash ' | grep -v grep
+# set -x
+echo
+# sh -c "$1"
+# bash -c "$1" #> "$r_log_pathfile" 2>&1
+eval "$1"
+z=$?
+echo
+# set +x
+# bgpid=$!
+# echo
+echo "$(TextBlackOnCyan "after cmd, shells: '$SHLVL', count: '$(/bin/ps | /bin/grep 'sh ' | /bin/grep -v grep | wc -l)'")"
+# ps | grep "sh \|bash \|$bgpid" | grep -v grep
+# echo
+
+
+# BusyBox 1.01 doesn't support `grep -m`, so extract first mention the hard-way with `head`.
+
+pid=$(/bin/ps | /bin/grep "$1" | /bin/grep -v grep | head -n1 | /bin/sed 's/^.*: //' | tr -s ' ' | cut -d' ' -f1)
+
+if IsNumber $pid && [[ $pid -gt 0 && -d /proc/$pid ]]; then				# Proc has been pushed into the 'sleeping' or 'runnable' queue.
+	local i=0
+	local state=''
+	local timeout=60
+
+	for ((i=1; i<=timeout; i++)); do
+		[[ -d /proc/$pid ]] || break
+		state=$(/bin/grep -i state < /proc/$pid/status)
+		echo "$(TextBrightRed "pid: '$pid', state: '$state', sleep: '$i'")"
+		sleep 1
+	done
+
+fi
+
+# TODO: at this point, exitcode from installation command is completely lost. Try writing it to file immediately after execution.
+z=0
+
+echo
+echo "\$z: [$z]"
+echo "------- about to exit ---------"
+# 		eval $1 > "$r_log_pathfile" 2>&1
+
+		# ./sherpa-manager.source add duf HideThatBanner IncreaseTimeouts OLidarr nzbget OliveTin Par2turbo QDK OReadarr OSonarr TorrServer Unrar OWhisparr
+
+# 		/bin/sh -c "echo \$\$ > $r_pid_pathfile; exec \"$1\"" > $r_log_pathfile 2>&1					# https://serverfault.com/a/903631
+# 		z=$?
+#
+# 		if [[ -e $r_pid_pathfile && -s $r_pid_pathfile ]]; then
+# 			pid=$(< $r_pid_pathfile)
+#
+# 			if [[ $pid -gt 0 && -d /proc/$pid ]]; then
+# echo -e "waiting for pid '$pid' to exit..."
+# 				time wait $pid #2> /dev/null
+# echo -e 'wait complete'
+# 			fi
+#
+# 			rm "$r_pid_pathfile"
+# 		fi
+# 	fi
+
+FuncExit $z
+
+return
 
 	if [[ -e $r_log_pathfile ]]; then
 		ShowAsResultAndStdout "$z" "$(< "$r_log_pathfile")" >> "$2"

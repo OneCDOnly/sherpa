@@ -1,20 +1,80 @@
 Observed issues:
 
-	* The following issues may have been resolved by ensuring Transmission installation works after installing TrguiNG. Need to retest and examine message pipe log.
+	* 'duf' service-script should not report second attempt to remove symlink as a failure:
+		--------------------------------------------------------------------------------------------------
+		[/share/Public] # /etc/init.d/duf.sh
+		run service script as: /etc/init.d/duf.sh {start|stop|restart|status}
+		to launch 'duf', type: duf
+		[/share/Public] # /etc/init.d/duf.sh stop
+		symlink removed: /usr/bin/duf
+		[/share/Public] # /etc/init.d/duf.sh stop
+		error: unable to remove symlink to 'duf' launcher!
+		--------------------------------------------------------------------------------------------------
+		- This happens during QPKG uninstallation.
 
-		* When 'install'ing packages on TS-216G, some were reported as finished in 1 second, even though they're still performing the 'install' action.
-			--------------------------------------------------------------------------------------------------
-			• These package actions failed (and why):
-				install LazyLibrarian QPKG in 1 second (for more information: /etc/init.d/lazylibrarian.sh log)
-				install OMedusa QPKG in 1 second (for more information: /etc/init.d/medusa.sh log)
-				install OqBittorrent QPKG in 1 second (for more information: /etc/init.d/qbittorrent.sh log)
-				install Unmanic QPKG in 1 second (for more information: /etc/init.d/unmanic.sh log)
-			--------------------------------------------------------------------------------------------------
-			- But, checking the service log for each shows successful install.
+	* Getting 'vundefined' QPKG version (and 1 second installation time) on random packages on TS-216G (arm64) only:
+		--------------------------------------------------------------------------------------------------
+		• These package actions completed OK:
+			install duf QPKG in 8 seconds (v240731)
+			install Entware QPKG in 55 seconds (v1.03a)
+			install HideThatBanner QPKG in 8 seconds (v240807)
+			install IncreaseTimeouts QPKG in 8 seconds (v240808)
+			install OLidarr QPKG in 1m:06s (v250521)
+			install nzbget QPKG in 9 seconds (v25.0)
+			install OliveTin QPKG in 14 seconds (v250521)
+			install Par2turbo QPKG in 8 seconds (v1.1.0)
+			install QDK QPKG in 8 seconds (v2.3.14)
+			install OReadarr QPKG in 1m:00s (v250521)
+			install OSonarr QPKG in 1m:16s (v250521)
+			install TorrServer QPKG in 1 second (vundefined)
+			install 35 auxiliary IPKs in 1m:46s
+		--------------------------------------------------------------------------------------------------
+		- If I shortcut Executer() in _QPKG:install_(), works fine everytime.
+		- Appears process is placed in run queue, then control returns to the shell. Weird!
 
-		* When 'clean'ing packages, some were reported as finished in 1 second, even though they're still performing the 'clean' action.
-			- Tatutulli, Watcher3, Unmanic.
-			- Cleaning process for each continues until complete, unless terminal is closed.
+	* Downgrade Transmission IPKs back to 4.0.4
+		- https://github.com/OneCDOnly/sherpa/issues/306
+		- Rethinking this. The problem only affects a single user, and they've switched to Stephanes's QPKG as a workaround. This is probably better than downgrading everyone for an unspecified issue.
+
+	* QDK install throws error:
+		--------------------------------------------------------------------------------------------------
+		dbug: (--) exec: 'DEBUG_QPKG=true /bin/sh /share/CACHEDEV1_DATA/.qpkg/sherpa/cache/QPKGs/downloads/QDK_2.3.14.qpkg'
+		Install QNAP package on TS-NAS...
+		./
+		./built_info
+		./qinstall.sh
+		./package_routines
+		./qpkg.cfg
+		123+1 records in
+		123+1 records out
+		2940099 bytes (2.8MB) copied, 0.051226 seconds, 54.7MB/s
+		2869+0 records in
+		2869+0 records out
+		2937856 bytes (2.8MB) copied, 0.049176 seconds, 57.0MB/s
+		qinstall.sh: line 470: /share/CACHEDEV1_DATA/.qpkg/QDK/.list: No such file or directory
+		Firmware check is fine.
+		Link service start/stop script: qdk
+		Set QPKG information in /etc/config/qpkg.conf
+		bin/
+		bin/xzcmp
+		bin/xzegrep
+		bin/xzless
+		bin/xzcat
+		bin/xzmore
+		bin/xzfgrep
+		bin/xzgrep
+		bin/xzdec
+		bin/xz
+		bin/xzdiff
+		lib/
+		lib/liblzma.so.5
+		lib/liblzma.so
+		lib/liblzma.la
+		lib/liblzma.so.5.0.7
+		--------------------------------------------------------------------------------------------------
+		- Reported to dev: https://github.com/qnap-dev/QDK/issues/43
+
+	* service script library: if $REINSTALL_QPKG=true, then don't show/log 'stop' and aborted-'start' actions.
 
 	* Restarting clamav.sh creates `lib` symlink in cwd to `/usr/lib`
 

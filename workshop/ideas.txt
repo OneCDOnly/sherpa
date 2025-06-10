@@ -1,8 +1,24 @@
 Management:
 
-	* During `sherpa install trguing trans` TrguiNG must be restarted after Transmission is installed to update Transmission 'Dependency' key.
+	* Add 'unsign' QPKG as non-user action (similar to 'download' action).
+		- Remove signature entry from QTS database.
+		- Do this early in ProcActions().
 
-	* When installing sherpa, make QTS allow unsigned packages, then disallow this after 'sign'ing action but only if it was disallowed before.
+	* Cache CPU and storage benchmark results for reuse.
+
+	* Need an action results log translator.
+
+	* Consider re-ordering forkfunc returncodes?
+		0 = ok
+		1 = er
+		2 = sk
+		3 = so
+		4 = se
+		5 = sa
+
+	* Retain action logging in dev version.
+
+	* During `sherpa install trguing trans` TrguiNG must be restarted after Transmission is installed to update Transmission 'Dependency' key.
 
 	* Always 'clean' after 'upgrade' (and before 'activate')?
 		- But only if 'upgrade' actually occurred.
@@ -44,7 +60,7 @@ Management:
 
 	* Check OOM killed pids against inactive daemons and report as-such on status report.
 
-	* Takes 3.5 to 6 seconds to build QPKG states on Laura.
+	* Takes 3.5 to 6 seconds to build QPKG states.
 		- Should be able to do this quicker.
 		- Calculate QPKG features separate to states and cache/load these from file next time?
 		- It's checking for upgradable QPKGs that takes time. Consider only running this during `check` or `upgrade` actions.
@@ -53,7 +69,7 @@ Management:
 		- No-need to record every progress message change in logs.
 
 	* Default dependency report should only show installed QPKGs.
-		- ... but should allow 'sherpa d all' to see all QPKGs.
+		- ... but should allow 'sherpa d all' to see all QPKGs (same as status report).
 		- Same for repository and repo reports.
 		- Add new $QPKG_ACTIONS element: 'report'
 
