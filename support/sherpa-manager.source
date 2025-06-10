@@ -11107,6 +11107,8 @@ _QPKG:status_()
 	# Outputs:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
 
+	[[ $useropt_verbose != true ]] && exec &> /dev/null
+
 	FuncForkInit
 
 	local a=''
@@ -13832,7 +13834,7 @@ Executer()
 	local -r r_log_pathfile=$(/bin/mktemp "$r_run_logs_path"/"${FUNCNAME[0]}"_XXXXXX)
 	local -i z=0
 
-	if IsHaveSingleQuote "$1"; then							# Change display quotes depending-on content quote chars.
+	if IsHaveSingleQuote "$1"; then										# Change display quotes depending-on content quote chars.
 		exec_msg+=" \"$1\""
 	else
 		exec_msg+=" '$1'"
@@ -13842,13 +13844,12 @@ Executer()
 	FormatCommand "$1" > "$2"
 
 	if [[ $useropt_verbose = true ]]; then
-		eval $1 > >(/usr/bin/tee $r_log_pathfile) 2>&1		# NOTE: `tee` buffers stdout here.		# squeezer-ignore
-		z=${PIPESTATUS[0]}									# Must use $PIPESTATUS after `tee` to get returncode of previous command: https://stackoverflow.com/questions/1221833/pipe-output-and-capture-exit-status-in-bash
+		eval "$1 > >(/usr/bin/tee \"$r_log_pathfile\") 2>&1"			# NOTE: `tee` buffers stdout here.		# squeezer-ignore
+		z=${PIPESTATUS[0]}												# Examine $PIPESTATUS after `tee` to get returncode of previous command: https://stackoverflow.com/questions/1221833/pipe-output-and-capture-exit-status-in-bash
 		z=$?
 	else
-		(eval $1 > "$r_log_pathfile" 2>&1)					# Run in a subshell to suppress "Terminated" message later.
+		(eval "$1" > "$r_log_pathfile" 2>&1)							# Run in a subshell to suppress "Terminated" message later.
 		z=$?
-
 	fi
 
 	if [[ -e $r_log_pathfile ]]; then
