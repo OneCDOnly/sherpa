@@ -1,16 +1,8 @@
 Observed issues:
 
-	* 'duf' service-script should not report second attempt to remove symlink as a failure:
-		--------------------------------------------------------------------------------------------------
-		[/share/Public] # /etc/init.d/duf.sh
-		run service script as: /etc/init.d/duf.sh {start|stop|restart|status}
-		to launch 'duf', type: duf
-		[/share/Public] # /etc/init.d/duf.sh stop
-		symlink removed: /usr/bin/duf
-		[/share/Public] # /etc/init.d/duf.sh stop
-		error: unable to remove symlink to 'duf' launcher!
-		--------------------------------------------------------------------------------------------------
-		- This happens during QPKG uninstallation.
+	* Whisparr randomly(?) does not appear in `show packages` report.
+		- Whisparr lines are not being generated in report.ansi
+		- NOTE: it's the last package in the database.
 
 	* Getting 'vundefined' QPKG version (and 1 second installation time) on random packages on TS-216G (arm64) only:
 		--------------------------------------------------------------------------------------------------
@@ -102,9 +94,10 @@ Observed issues:
 		- TODO: Other QPKGs to be signed were not shown in either list. Must add them to 'skipped-abort' list.
 
 	* Function durations can become incorrect when functions with the same name are called recursively.
-		- Need to make vars holding start-times unique. Maybe measure nest depth? Use nanosecond epoch time in var names?
+		- Need to make vars holding start-times unique. Maybe use nanosecond epoch time in var names?
 
 	* QPKG version sort is not correctly sorting version numbers followed by an alpha as later than non-alpha.
+		- Workaround: use numbers only.
 
 	# QTS/QuTS App Center
 		* Removing OMedusa QPKG via sherpa didn't update App Center 'live' (icon remained until App Center was manually refreshed).

@@ -147,9 +147,13 @@ Management:
 
 Service Library:
 
+	* Don't record every QPKG daemon retry in system log.
+		- Only if the last available retry failed.
+
 	* Add datetime stamp to each line in service log.
 
 	* Support deletion of specific files not in `repo-cache` (like `pip-requirements.txt` copied from `repo-cache` into app directory) during 'clean'.
+		- Check for files duplicated between `repo-cache` and app directory before clearing `repo-cache`.
 
 	* Compare .git/ORIG_HEAD before-and-after 'git pull'. If different, then remove *.pyc before starting application.
 
