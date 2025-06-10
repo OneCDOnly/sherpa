@@ -11003,7 +11003,7 @@ _QPKG:sign_()
 
 	# Running the code below makes the target QPKG effectively "signed", and allows user to install and run this QPKG with the 'Allow installation of applications without a valid digital signature' App Center option unticked.
 
-	# Should only be required for QTS 4.3.5-and-later firmwares.
+	# Only required for QTS 4.3.5 and-later firmwares.
 
 	# Inputs: (global)
 	#	$qpkg_name
@@ -11034,7 +11034,7 @@ _QPKG:sign_()
 		MarkActionForkAsSkippedAbort
 		z=3
 	elif [[ ! -e $r_cert_db_pathfile ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sa "$(GetOsName) QPKG certificate database not found"
+		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sa "$(GetOsName) QPKG certificate database not found, no further signing will occur"
 		MarkActionForkAsSkippedAbort
 		z=3
 	else
@@ -11042,17 +11042,18 @@ _QPKG:sign_()
 		b=$(eval "$sqlite_cmd" "$r_cert_db_pathfile" \"$a\")
 
 		if [[ $b = 1 ]]; then
-# 			SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' so 'already signed'
-# 			MarkActionForkAsSkippedOk
-# 			z=2
+			SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' so 'already signed'
+			MarkActionForkAsSkippedOk
+			z=2
 
 			# KLUDGE: replace db entries created prior to 2024-06-08 as $r_qpkg_signature quoting was incorrect.
 			# So, remove existing entry now, and re-add it later in this function.
 			# Keep this in-place until 2025-06-07.
+			# Disabled on 2025-06-11.
 
-			a="DELETE FROM Certificate WHERE QpkgName = '$qpkg_name';"
-			b=$(eval "$sqlite_cmd" "$r_cert_db_pathfile" \"$a\")
-			z=0		# Disregard errors generated while deleting record.
+# 			a="DELETE FROM Certificate WHERE QpkgName = '$qpkg_name';"
+# 			b=$(eval "$sqlite_cmd" "$r_cert_db_pathfile" \"$a\")
+# 			z=0		# Disregard errors generated while deleting record.
 		fi
 	fi
 
