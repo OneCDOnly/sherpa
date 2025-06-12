@@ -1,8 +1,11 @@
 Observed issues:
 
-	* Whisparr randomly(?) does not appear in `show packages` report.
-		- Whisparr lines are not being generated in report.ansi
-		- NOTE: it's the last package in the database.
+	* System log errors:
+		--------------------------------------------------------------------------------------------------
+		- [App Center] Failed to stop Par2cmdline Turbo (CLI). You must first stop SABnzbd (web).
+		- [App Center] Failed to stop Unrar. You must first stop SABnzbd (web).
+		- [App Center] Failed to stop Entware-std. You must first stop SABnzbd (web).
+		--------------------------------------------------------------------------------------------------
 
 	* Getting 'vundefined' QPKG version (and 1 second installation time) on random packages on TS-216G (arm64) only:
 		--------------------------------------------------------------------------------------------------
@@ -23,6 +26,10 @@ Observed issues:
 		--------------------------------------------------------------------------------------------------
 		- If I shortcut Executer() in _QPKG:install_(), works fine everytime.
 		- Appears process is placed in run queue, then control returns to the shell. Weird!
+
+	* Whisparr randomly(?) does not appear in `show packages` report on TS-216G (arm64).
+		- Whisparr lines are not being generated in report.ansi
+		- NOTE: it's the last package in the database.
 
 	* Downgrade Transmission IPKs back to 4.0.4
 		- https://github.com/OneCDOnly/sherpa/issues/306
