@@ -1,18 +1,13 @@
 Management:
 
-	* Modify `sign` to be a non-user QPKG action.
+	* NAS arch telemetry?
+		- Once-per-day background request of an arch specific file from GitHub (as a release asset).
 
 	* Add 'unsign' non-user QPKG action (similar to 'download' action).
 		- Remove signature entry from QTS database.
-		- Do this early in ProcActions(). Also run it late to remove signing for QPKGs that were not/could not be installed.
+		- Do this early in ProcActions(). Also run it late to remove signing for QPKGs that were-not/could-not be installed.
 
-	* Add 're-sign' as non-user QPKG meta-action (similar to 'download' action).
-		- Remove signature entry from QTS database.
-		- Add signature to QTS database.
-		- This will be used only by `check` operation.
-		- Needed as signatures expire and must be periodically refreshed.
-
-	* Cache CPU and storage benchmark results for reuse.
+	* Cache CPU and storage benchmark results for reuse. But only if load averages were low when calculated.
 
 	* Need an action results log translator.
 
@@ -154,9 +149,6 @@ Management:
 		- Like: `sherpa paste help`, `sherpa install help`, `sherpa reassign help`
 
 Service Library:
-
-	* Don't record every QPKG daemon retry and failure in system log.
-		- Only if the last available retry failed.
 
 	* Add datetime stamp to each line in service log.
 
