@@ -1,7 +1,5 @@
 Observed issues:
 
-	* Update integrated issue URL from old forum to new.
-
 	* Bazarr: pip-requirements.txt is being overwritten with repo version.
 
 	* System log errors:

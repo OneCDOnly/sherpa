@@ -150,6 +150,8 @@ Management:
 
 Service Library:
 
+	* Include details about `screen` instance PID and hint how to re-attach this `screen`.
+
 	* Add datetime stamp to each line in service log.
 
 	* Support deletion of specific files not in `repo-cache` (like `pip-requirements.txt` copied from `repo-cache` into app directory) during 'clean'.
