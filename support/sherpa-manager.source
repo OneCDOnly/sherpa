@@ -839,7 +839,7 @@ DebugLogEnv()
 	DebugUserspace ok '$SHELL' "$(GetShell)"
 	DebugUserspace ok 'BusyBox version' "$(GetBusyBoxVersion)"
 	DebugUserspace ok 'BusyBox copyright' "$(GetBusyBoxCopyright)"
-	DebugUserspace ok 'BusyBox builtins' "$(GetBusyBoxFunctionCount)"
+	DebugUserspace ok 'BusyBox function count' "$(GetBusyBoxFunctionCount)"
 	DebugUserspace ok 'shell version' "$(GetShellVersion)"
 	DebugUserspace ok 'shell copyright' "$(GetShellCopyright)"
 	DebugUserspace ok 'shell options' "$-"
