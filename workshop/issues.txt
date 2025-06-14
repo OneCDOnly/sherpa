@@ -1,5 +1,9 @@
 Observed issues:
 
+	* Counting BusyBox functions fails on QTS 4.2.6
+		- BusyBox 1.01 does not support `--list` arg.
+		- Try counting commas below "Currently defined functions:"
+
 	* `sherpa status` report formatting without Entware looks awful.
 		- Consider a simpler report when GNU `awk` isn't available.
 

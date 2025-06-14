@@ -133,6 +133,8 @@ Management:
 
 Service Library:
 
+	* The action outcome line should start with '<'
+
 	* Include details about `screen` instance PID and hint how to re-attach this `screen`.
 
 	* Add datetime stamp to each line in service log.
