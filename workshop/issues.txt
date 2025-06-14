@@ -1,5 +1,7 @@
 Observed issues:
 
+	* During `sherpa install trguing trans` TrguiNG must be restarted after Transmission is installed to update Transmission 'Dependency' key.
+
 	* System log errors:
 		--------------------------------------------------------------------------------------------------
 		- [App Center] Failed to stop Par2cmdline Turbo (CLI). You must first stop SABnzbd (web).

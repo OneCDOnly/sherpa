@@ -11,11 +11,6 @@ Management:
 
 	* Retain action logging in dev version.
 
-	* During `sherpa install trguing trans` TrguiNG must be restarted after Transmission is installed to update Transmission 'Dependency' key.
-
-	* Always 'clean' after 'upgrade' (and before 'activate')?
-		- But only if 'upgrade' actually occurred.
-
 	* Squeezer:
 		- Remove newline between case pattern definition and statement block?
 		- Combine successive 'local' statements into a single line. Maybe 'readonly' too?
