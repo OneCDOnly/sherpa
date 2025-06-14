@@ -9896,15 +9896,15 @@ _QPKG:download_()
 	local -i z=0
 
 	if [[ -z $r_remote_url || -z $r_remote_hash ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" download '' sk 'NAS arch is incompatible'
+		SaveActionResultToLog QPKG "$qpkg_name" download '' sk 'incompatible NAS arch'
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinOSVerOk "$qpkg_name" || ! IsQpkgDbMaxOSVerOk "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" download '' sk "$(GetOsName) version is incompatible"
+		SaveActionResultToLog QPKG "$qpkg_name" download '' sk "incompatible $(GetOsName) version"
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinRAMOk "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" download '' sk 'NAS has insufficient RAM installed'
+		SaveActionResultToLog QPKG "$qpkg_name" download '' sk 'insufficient RAM installed'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsFile "$r_local_pathfile"; then
@@ -9986,17 +9986,17 @@ _QPKG:install_()
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbArchOK "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" install '' sk 'NAS arch is incompatible'
+		SaveActionResultToLog QPKG "$qpkg_name" install '' sk 'incompatible NAS arch'
 		IsOsCanSignedPackages && IsQpkgSigned && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinOSVerOk "$qpkg_name" || ! IsQpkgDbMaxOSVerOk "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" install '' sk "$(GetOsName) version is incompatible"
+		SaveActionResultToLog QPKG "$qpkg_name" install '' sk "incompatible $(GetOsName) version"
 		IsOsCanSignedPackages && IsQpkgSigned && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinRAMOk "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" install '' sk 'NAS has insufficient RAM installed'
+		SaveActionResultToLog QPKG "$qpkg_name" install '' sk 'insufficient RAM installed'
 		IsOsCanSignedPackages && IsQpkgSigned && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
 		MarkActionForkAsSkipped
 		z=2
@@ -10372,7 +10372,7 @@ _QPKG:activate_()
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgEnabled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" activate '' sk "not enabled, please 'enable' it first"
+		SaveActionResultToLog QPKG "$qpkg_name" activate '' sk "disabled, please 'enable' it first"
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
@@ -10460,7 +10460,7 @@ _QPKG:reactivate_()
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgEnabled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' sk "not enabled, please 'enable' it first"
+		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' sk "disabled, please 'enable' it first"
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
@@ -11043,15 +11043,15 @@ _QPKG:sign_()
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbArchOK "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sk 'NAS arch is incompatible with this QPKG'
+		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sk 'incompatible NAS arch'
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinOSVerOk "$qpkg_name" || ! IsQpkgDbMaxOSVerOk "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sk "$(GetOsName) version is incompatible with this QPKG"
+		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sk "incompatible $(GetOsName) version"
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinRAMOk "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sk 'NAS has insufficient RAM installed'
+		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sk 'insufficient RAM installed'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
@@ -11135,15 +11135,15 @@ _QPKG:unsign_()
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbArchOK "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sk 'NAS arch is incompatible with this QPKG'
+		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sk 'incompatible NAS arch'
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinOSVerOk "$qpkg_name" || ! IsQpkgDbMaxOSVerOk "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sk "$(GetOsName) version is incompatible with this QPKG"
+		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sk "incompatible $(GetOsName) version"
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinRAMOk "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sk 'NAS has insufficient RAM installed'
+		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sk 'insufficient RAM installed'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
