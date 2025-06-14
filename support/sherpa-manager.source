@@ -10100,6 +10100,7 @@ _QPKG:reinstall_()
 
 	if [[ $z -eq 0 || $z -eq 10 ]]; then		# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes aborts.
 		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' ok "v$(GetQpkgInstalledVer)"
+		IsQpkgDbCanClean && SendParentCommand "QPKGs-ACclean-to:Add $qpkg_name"
 		MarkActionForkAsOk
 		z=0   # Remap to zero.
 	else
