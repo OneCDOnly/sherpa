@@ -1415,7 +1415,7 @@ AssignQpkgsToActions()
 
 	}
 
-# QPKG action processing shall-be conducted in this order:
+# QPKG action processing shall-be conducted in the following order:
 
 #	1. status all
 #	2. rebuild all				(meta-action: `download`, `install` & `restore` QPKG, but only if QPKG has an existing backup file)
@@ -1481,7 +1481,7 @@ AssignQpkgsToActions()
 #  54. restart/reactivate dependents
 #  55. start/activate dependents
 
-#  56. unsign all 				(QPKGs that failed to `install` only)
+#  56. unsign all 				(only QPKGs that failed to `install`)
 
 ProcActions()
 	{
@@ -1550,7 +1550,7 @@ ProcActions()
 				ProcAction backup $tier QPKG backup
 				ProcAction disable $tier QPKG disable
 				ProcAction uninstall $tier QPKG uninstall
-				ProcAction unsign $tier QPKG unsign
+				IsOsCanSignedPackages && ProcAction unsign $tier QPKG unsign
 			elif IsQpkgEnabled Entware; then
 				ModPathToEntware
 				PIPs:uninstall
@@ -1563,8 +1563,11 @@ ProcActions()
 		for tier in "${r_package_tiers[@]}"; do
 			if [[ $tier != auxiliary ]]; then
 				if IsOsCanSignedPackages; then
-					[[ $tier = independent ]] && IsQpkgEnabled Entware && ProcAction sign $tier QPKG '"sign"'
-					[[ $tier != independent ]] && ProcAction sign $tier QPKG '"sign"'
+					if [[ $tier = independent ]]; then
+						IsQpkgEnabled Entware && ProcAction sign $tier QPKG '"sign"'
+					else
+						ProcAction sign $tier QPKG '"sign"'
+					fi
 				fi
 
 				ProcAction upgrade $tier QPKG upgrade
