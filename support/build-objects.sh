@@ -248,8 +248,11 @@ for action in "${r_qpkg_actions[@]}"; do
 	done
 done
 
-for state in "${r_qpkg_extended_states[@]}" "${r_qpkg_transient_states[@]}" "${r_qpkg_service_results[@]}"; do
+for state in "${r_qpkg_is_states[@]}" "${r_qpkg_service_results[@]}"; do
 	AddListObj QPKGs-IS"$state"
+done
+
+for state in "${r_qpkg_isnt_states[@]}" "${r_qpkg_service_results[@]}"; do
 	AddListObj QPKGs-ISNT"$state"
 done
 

@@ -1,7 +1,5 @@
 Management:
 
-	* Don't download QPKGs that are incompatible because of QTS version, ram size, etc...
-
 	* NAS arch telemetry?
 		- Once-per-day background request of an arch specific file from GitHub (as a release asset).
 

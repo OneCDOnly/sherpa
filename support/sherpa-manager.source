@@ -9900,6 +9900,14 @@ _QPKG:download_()
 		SaveActionResultToLog QPKG "$qpkg_name" download '' sk 'NAS arch is incompatible'
 		MarkActionForkAsSkipped
 		z=2
+	elif ! IsQpkgDbMinOSVerOk "$qpkg_name" || ! IsQpkgDbMaxOSVerOk "$qpkg_name"; then
+		SaveActionResultToLog QPKG "$qpkg_name" download '' sk "$(GetOsName) version is incompatible"
+		MarkActionForkAsSkipped
+		z=2
+	elif ! IsQpkgDbMinRAMOk "$qpkg_name"; then
+		SaveActionResultToLog QPKG "$qpkg_name" download '' sk 'NAS has insufficient RAM installed'
+		MarkActionForkAsSkipped
+		z=2
 	elif IsFile "$r_local_pathfile"; then
 		if FileMatchesMD5 "$r_local_pathfile" "$r_remote_hash"; then
 			SaveActionResultToLog QPKG "$qpkg_name" download '' sk 'existing file checksum is correct'
@@ -9971,7 +9979,7 @@ _QPKG:install_()
 
 	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" install '' se 'no installation package found'
-		IsOsCanSignedPackages && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
+		IsOsCanSignedPackages && IsQpkgSigned && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
 		MarkActionForkAsSkippedError
 		z=4
 	elif IsQpkgInstalled "$qpkg_name"; then
@@ -9980,17 +9988,17 @@ _QPKG:install_()
 		z=2
 	elif ! IsQpkgDbArchOK "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" install '' sk 'NAS arch is incompatible'
-		IsOsCanSignedPackages && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
+		IsOsCanSignedPackages && IsQpkgSigned && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinOSVerOk "$qpkg_name" || ! IsQpkgDbMaxOSVerOk "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" install '' sk "$(GetOsName) version is incompatible"
-		IsOsCanSignedPackages && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
+		IsOsCanSignedPackages && IsQpkgSigned && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinRAMOk "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" install '' sk 'NAS has insufficient RAM installed'
-		IsOsCanSignedPackages && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
+		IsOsCanSignedPackages && IsQpkgSigned && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -10041,7 +10049,7 @@ _QPKG:install_()
 		z=0   # Remap to zero.
 	else
 		SaveActionResultToLog QPKG "$qpkg_name" install '' er "$z"
-		IsOsCanSignedPackages && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
+		IsOsCanSignedPackages && IsQpkgSigned && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
 		MarkActionForkAsError
 		z=1   # Remap to 1.
 	fi
@@ -11027,7 +11035,6 @@ _QPKG:sign_()
 	FuncForkInit
 
 	local a=''
-	local b=''
 	local -i z=0
 
 	DebugVar sqlite_cmd
@@ -11036,12 +11043,20 @@ _QPKG:sign_()
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sk 'not required: firmware < 4.3.5'
 		MarkActionForkAsSkipped
 		z=2
-	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sk "assigned to another repository, please 'reassign' it first"
+	elif ! IsQpkgDbArchOK "$qpkg_name"; then
+		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sk 'NAS arch is incompatible with this QPKG'
 		MarkActionForkAsSkipped
 		z=2
-	elif IsQpkgSigned; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sk 'already signed'
+	elif ! IsQpkgDbMinOSVerOk "$qpkg_name" || ! IsQpkgDbMaxOSVerOk "$qpkg_name"; then
+		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sk "$(GetOsName) version is incompatible with this QPKG"
+		MarkActionForkAsSkipped
+		z=2
+	elif ! IsQpkgDbMinRAMOk "$qpkg_name"; then
+		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sk 'NAS has insufficient RAM installed'
+		MarkActionForkAsSkipped
+		z=2
+	elif IsNtQpkgRepoSelfManaged; then
+		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=2
 	elif [[ ! -e $sqlite_pathfile ]]; then
@@ -11052,15 +11067,15 @@ _QPKG:sign_()
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sa "$(GetOsName) QPKG certificate database not found, no further signing will occur"
 		MarkActionForkAsSkippedAbort
 		z=3
+	elif IsQpkgSigned; then
+		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sk 'already signed'
+		MarkActionForkAsSkipped
+		z=2
 	fi
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "\"signing\" $(FormatPackageName)"
-
-# 	a="DELETE FROM Certificate WHERE QpkgName = '$qpkg_name'; INSERT INTO Certificate (Type,QpkgName,Cert,DigitalSignature) VALUES ('qpkg','$qpkg_name','$r_qpkg_certificate','$r_qpkg_signature');"
-
-#	a="INSERT INTO Certificate (Type, QpkgName, Cert, DigitalSignature) SELECT 'qpkg','$qpkg_name','$r_qpkg_certificate','$r_qpkg_signature' WHERE NOT EXISTS (SELECT * FROM Certificate WHERE QpkgName = '$qpkg_name');"
 
 	a="BEGIN TRANSACTION; INSERT INTO Certificate (Type,QpkgName,Cert,DigitalSignature) VALUES ('qpkg','$qpkg_name','$r_qpkg_certificate','$r_qpkg_signature'); COMMIT;"
 
@@ -11120,12 +11135,20 @@ _QPKG:unsign_()
 		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sk 'not required: firmware < 4.3.5'
 		MarkActionForkAsSkipped
 		z=2
-	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sk "assigned to another repository, please 'reassign' it first"
+	elif ! IsQpkgDbArchOK "$qpkg_name"; then
+		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sk 'NAS arch is incompatible with this QPKG'
 		MarkActionForkAsSkipped
 		z=2
-	elif ! IsQpkgSigned; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sk 'not signed'
+	elif ! IsQpkgDbMinOSVerOk "$qpkg_name" || ! IsQpkgDbMaxOSVerOk "$qpkg_name"; then
+		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sk "$(GetOsName) version is incompatible with this QPKG"
+		MarkActionForkAsSkipped
+		z=2
+	elif ! IsQpkgDbMinRAMOk "$qpkg_name"; then
+		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sk 'NAS has insufficient RAM installed'
+		MarkActionForkAsSkipped
+		z=2
+	elif IsNtQpkgRepoSelfManaged; then
+		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=2
 	elif [[ ! -e $sqlite_pathfile ]]; then
@@ -11133,9 +11156,13 @@ _QPKG:unsign_()
 		MarkActionForkAsSkippedAbort
 		z=3
 	elif [[ ! -e $r_cert_db_pathfile ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sa "$(GetOsName) QPKG certificate database not found, no further signing will occur"
+		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sa "$(GetOsName) QPKG certificate database not found, no further unsigning will occur"
 		MarkActionForkAsSkippedAbort
 		z=3
+	elif ! IsQpkgSigned; then
+		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sk 'not signed'
+		MarkActionForkAsSkipped
+		z=2
 	fi
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
