@@ -3,21 +3,33 @@ Management:
 	* NAS arch telemetry?
 		- Once-per-day background request of an arch specific file from GitHub (as a release asset).
 
-	* Add 'unsign' non-user QPKG action (similar to 'download' action).
-		- Remove signature entry from QTS database.
-		- Do this early in ProcActions(). Also run it late to remove signing for QPKGs that were-not/could-not be installed.
+	* Run `unsign` again late to remove signing for QPKGs that were-not/could-not be installed.
 
 	* Cache CPU and storage benchmark results for reuse. But only if load averages were low when calculated.
 
 	* Need an action results log translator.
 
+	* Is there really any difference between 'skipped' and 'skipped-ok'? Can one be removed?
+		- Majority of the time, 'skipped' is used.
+		- Current uses of 'skipped-ok':
+			- during download, and the required file already exists locally.
+			- signing, and the QPKG is already signed.
+			- unsigning, and the QPKG is not signed.
+		# Return codes:
+		#	from async actions (only recorded in debug log):
+		# 		0 = ok
+		# 		1 = sk: skipped (and remapped error)
+		# 		2 = so: skipped-ok
+		# 		3 = sa: skipped-abort
+		# 		4 = se: skipped-error
+		- Convert 'skipped-ok' to 'skipped'. 'skipped-ok' (so) to be removed as an action result.
+
 	* Consider re-ordering forkfunc returncodes?
 		0 = ok
 		1 = er
 		2 = sk
-		3 = so
+		3 = sa
 		4 = se
-		5 = sa
 
 	* Retain action logging in dev version.
 
