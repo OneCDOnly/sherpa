@@ -10226,6 +10226,7 @@ _QPKG:upgrade_()
 
 	if [[ $z -eq 0 || $z -eq 10 ]]; then	# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes aborts.
 		SendPackageStateChange ISNTupgradable
+		IsQpkgDbCanClean && SendParentCommand "QPKGs-ACclean-to:Add $qpkg_name"
 
 		local current_ver=$(GetQpkgInstalledVer)
 
