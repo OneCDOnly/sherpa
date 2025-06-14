@@ -1,16 +1,13 @@
 Observed issues:
 
-	* 'duf' service-script should not report second attempt to remove symlink as a failure:
+	* Bazarr: pip-requirements.txt is being overwritten with repo version.
+
+	* System log errors:
 		--------------------------------------------------------------------------------------------------
-		[/share/Public] # /etc/init.d/duf.sh
-		run service script as: /etc/init.d/duf.sh {start|stop|restart|status}
-		to launch 'duf', type: duf
-		[/share/Public] # /etc/init.d/duf.sh stop
-		symlink removed: /usr/bin/duf
-		[/share/Public] # /etc/init.d/duf.sh stop
-		error: unable to remove symlink to 'duf' launcher!
+		- [App Center] Failed to stop Par2cmdline Turbo (CLI). You must first stop SABnzbd (web).
+		- [App Center] Failed to stop Unrar. You must first stop SABnzbd (web).
+		- [App Center] Failed to stop Entware-std. You must first stop SABnzbd (web).
 		--------------------------------------------------------------------------------------------------
-		- This happens during QPKG uninstallation.
 
 	* Getting 'vundefined' QPKG version (and 1 second installation time) on random packages on TS-216G (arm64) only:
 		--------------------------------------------------------------------------------------------------
@@ -31,6 +28,10 @@ Observed issues:
 		--------------------------------------------------------------------------------------------------
 		- If I shortcut Executer() in _QPKG:install_(), works fine everytime.
 		- Appears process is placed in run queue, then control returns to the shell. Weird!
+
+	* Whisparr randomly(?) does not appear in `show packages` report on TS-216G (arm64).
+		- Whisparr lines are not being generated in report.ansi
+		- NOTE: it's the last package in the database.
 
 	* Downgrade Transmission IPKs back to 4.0.4
 		- https://github.com/OneCDOnly/sherpa/issues/306
@@ -102,9 +103,10 @@ Observed issues:
 		- TODO: Other QPKGs to be signed were not shown in either list. Must add them to 'skipped-abort' list.
 
 	* Function durations can become incorrect when functions with the same name are called recursively.
-		- Need to make vars holding start-times unique. Maybe measure nest depth? Use nanosecond epoch time in var names?
+		- Need to make vars holding start-times unique. Maybe use nanosecond epoch time in var names?
 
 	* QPKG version sort is not correctly sorting version numbers followed by an alpha as later than non-alpha.
+		- Workaround: use numbers only.
 
 	# QTS/QuTS App Center
 		* Removing OMedusa QPKG via sherpa didn't update App Center 'live' (icon remained until App Center was manually refreshed).

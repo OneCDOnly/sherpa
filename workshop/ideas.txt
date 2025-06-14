@@ -1,10 +1,13 @@
 Management:
 
-	* Add 'unsign' QPKG as non-user action (similar to 'download' action).
-		- Remove signature entry from QTS database.
-		- Do this early in ProcActions().
+	* NAS arch telemetry?
+		- Once-per-day background request of an arch specific file from GitHub (as a release asset).
 
-	* Cache CPU and storage benchmark results for reuse.
+	* Add 'unsign' non-user QPKG action (similar to 'download' action).
+		- Remove signature entry from QTS database.
+		- Do this early in ProcActions(). Also run it late to remove signing for QPKGs that were-not/could-not be installed.
+
+	* Cache CPU and storage benchmark results for reuse. But only if load averages were low when calculated.
 
 	* Need an action results log translator.
 
@@ -147,9 +150,12 @@ Management:
 
 Service Library:
 
+	* Include details about `screen` instance PID and hint how to re-attach this `screen`.
+
 	* Add datetime stamp to each line in service log.
 
 	* Support deletion of specific files not in `repo-cache` (like `pip-requirements.txt` copied from `repo-cache` into app directory) during 'clean'.
+		- Check for files duplicated between `repo-cache` and app directory before clearing `repo-cache`.
 
 	* Compare .git/ORIG_HEAD before-and-after 'git pull'. If different, then remove *.pyc before starting application.
 

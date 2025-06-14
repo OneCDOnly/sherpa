@@ -9,9 +9,9 @@ objects_epoch=$(date +%s)
 target=$support_path/$objects_file
 
 # These are used internally by sherpa. Maintain separate lists for sherpa internal-use, and what user has requested.
-# ordered
+# Ordered.
 
-# sorted
+# Sorted.
 
 r_qpkg_basic_states=(complete enabled installed)
 r_qpkg_extended_states=(active backedup downloaded installable missing signed upgradable)
@@ -22,16 +22,16 @@ r_qpkg_is_groups=(all canbackup canclean canrestarttoupdate dependent hasdepende
 r_qpkg_isnt_groups=(canclean)
 r_qpkg_service_results=(failed ok)
 
-# ordered
+# Ordered.
 
-r_qpkg_actions=(status list rebuild reassign download backup deactivate disable uninstall upgrade reinstall install enableau disableau sign restore clean enable activate reactivate)
+r_qpkg_actions=(status list rebuild reassign download backup resign unsign deactivate disable uninstall upgrade reinstall install enableau disableau sign restore clean enable activate reactivate)
 r_ipk_actions=(downgrade download uninstall upgrade install)
 r_pip_actions=(uninstall upgrade install)
 
 # These actions may be specified by the user.
-# sorted
+# Sorted.
 
-r_user_qpkg_actions=(activate backup clean deactivate disable disableau enable enableau install list reactivate reassign rebuild reinstall restore sign status uninstall upgrade)
+r_user_qpkg_actions=(activate backup clean deactivate disable disableau enable enableau install list reactivate reassign rebuild reinstall resign restore status uninstall upgrade)
 
 AddFlagObj()
 	{
@@ -47,6 +47,8 @@ AddFlagObj()
 
 	_placeholder_main_flag_=o_f${safe_function_name}
 	_placeholder_log_changes_flag_=o_c${safe_function_name}
+
+# NOTE: quoting below is inside-out.
 
 echo $public_function_name':Init()
 	{
@@ -88,6 +90,8 @@ AddListObj()
 
 	_placeholder_size_=o_s${safe_function_name}
 	_placeholder_array_=o_a${safe_function_name}
+
+# NOTE: quoting below is inside-out.
 
 echo $public_function_name':Add()
 	{
