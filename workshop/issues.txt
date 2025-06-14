@@ -1,5 +1,8 @@
 Observed issues:
 
+	* `sherpa status` report formatting without Entware looks awful.
+		- Consider a simpler report when GNU `awk` isn't available.
+
 	* During `sherpa install trguing trans` TrguiNG must be restarted after Transmission is installed to update Transmission 'Dependency' key.
 
 	* System log errors:
