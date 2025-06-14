@@ -9971,6 +9971,7 @@ _QPKG:install_()
 
 	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" install '' se 'no installation package found'
+		IsOsCanSignedPackages && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
 		MarkActionForkAsSkippedError
 		z=4
 	elif IsQpkgInstalled "$qpkg_name"; then
@@ -9979,14 +9980,17 @@ _QPKG:install_()
 		z=2
 	elif ! IsQpkgDbArchOK "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" install '' sk 'NAS arch is incompatible'
+		IsOsCanSignedPackages && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinOSVerOk "$qpkg_name" || ! IsQpkgDbMaxOSVerOk "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" install '' sk "$(GetOsName) version is incompatible"
+		IsOsCanSignedPackages && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinRAMOk "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" install '' sk 'NAS has insufficient RAM installed'
+		IsOsCanSignedPackages && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -10037,6 +10041,7 @@ _QPKG:install_()
 		z=0   # Remap to zero.
 	else
 		SaveActionResultToLog QPKG "$qpkg_name" install '' er "$z"
+		IsOsCanSignedPackages && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
 		MarkActionForkAsError
 		z=1   # Remap to 1.
 	fi

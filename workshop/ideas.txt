@@ -1,9 +1,9 @@
 Management:
 
+	* Don't download QPKGs that are incompatible because of QTS version, ram size, etc...
+
 	* NAS arch telemetry?
 		- Once-per-day background request of an arch specific file from GitHub (as a release asset).
-
-	* Run `unsign` again late to remove signing for QPKGs that were-not/could-not be installed.
 
 	* Cache CPU and storage benchmark results for reuse. But only if load averages were low when calculated.
 
