@@ -1,6 +1,30 @@
 Observed issues:
 
-	* Bazarr: pip-requirements.txt is being overwritten with repo version.
+	* Problematic PyPI packages are not being removed if they are not the only thing on the line:
+		Example: 'requests' should be removed but this was ignored: 'requests ~= 2.31'
+
+	* Was able to `clean` Kapowarr on x86 even though daemon was reported to be running:
+		--------------------------------------------------------------------------------------------------
+		[/share/Public] # /etc/init.d/kapowarr.sh clean
+		> source: kapowarr.sh, action: clean, time: Sun 15 Jun 2025 6:50:19 AM EST, load: 0.18
+		- package: 250614, service: 250614, library: 250614
+		> QPKG enabled: true
+		> application auto-update: true
+		- active git branch: main
+		- daemon PID: 28069
+		> clean local repository: OK
+		> clean virtual Python environment: OK
+		> clean PyPI cache: OK
+		> remove previous screen log: OK
+		> clean temp path: OK
+		= source: kapowarr.sh, action: clean, time: Sun 15 Jun 2025 6:50:21 AM EST, result: OK, elapsed: 2,175ms, load: 0.25
+		--------------------------------------------------------------------------------------------------
+		- A later `clean` did result in daemon shutdown, so it seems daemon live checking is inconsistent.
+
+	* `sherpa status` report formatting without Entware looks awful.
+		- Consider a simpler report when GNU `awk` isn't available.
+
+	* During `sherpa install trguing trans` TrguiNG must be restarted after Transmission is installed to update Transmission 'Dependency' key.
 
 	* System log errors:
 		--------------------------------------------------------------------------------------------------
@@ -9,7 +33,7 @@ Observed issues:
 		- [App Center] Failed to stop Entware-std. You must first stop SABnzbd (web).
 		--------------------------------------------------------------------------------------------------
 
-	* Getting 'vundefined' QPKG version (and 1 second installation time) on random packages on TS-216G (arm64) only:
+	* Getting 'vundefined' QPKG version (and < 1 second action time) when installing random packages on TS-216G (arm64) only:
 		--------------------------------------------------------------------------------------------------
 		• These package actions completed OK:
 			install duf QPKG in 8 seconds (v240731)
@@ -26,12 +50,12 @@ Observed issues:
 			install TorrServer QPKG in 1 second (vundefined)
 			install 35 auxiliary IPKs in 1m:46s
 		--------------------------------------------------------------------------------------------------
-		- If I shortcut Executer() in _QPKG:install_(), works fine everytime.
-		- Appears process is placed in run queue, then control returns to the shell. Weird!
+		- If I shortcut Executer() in _QPKG:install_(), appears to work fine everytime.
+		- Appears process is placed in run queue, then control returns to the shell. Don't know why this happens.
 
 	* Whisparr randomly(?) does not appear in `show packages` report on TS-216G (arm64).
 		- Whisparr lines are not being generated in report.ansi
-		- NOTE: it's the last package in the database.
+		- Note: it's the last package in the database.
 
 	* Downgrade Transmission IPKs back to 4.0.4
 		- https://github.com/OneCDOnly/sherpa/issues/306
@@ -78,25 +102,6 @@ Observed issues:
 	* service script library: if $REINSTALL_QPKG=true, then don't show/log 'stop' and aborted-'start' actions.
 
 	* Restarting clamav.sh creates `lib` symlink in cwd to `/usr/lib`
-
-	* Service-script daemon PID shown twice consecutively during 'clean' action:
-		--------------------------------------------------------------------------------------------------
-		[/share/Public] # /etc/init.d/sabnzbd.sh clean
-		> source: sabnzbd.sh, action: clean, time: Sat 12 Oct 2024 10:55:01 AM EST, load: 1.23
-		- package: 241007, service: 241007, library: <?build_date?>
-		- daemon PID: '26013'
-		- daemon PID: '26013'
-		> stop daemon PID '26013' with SIGTERM (no-more than 120 seconds): 1, OK
-		- daemon PID: none
-		...
-		--------------------------------------------------------------------------------------------------
-		- Should show this too:
-			--------------------------------------------------------------------------------------------------
-			- package: 241007, service: 241007, library: <?build_date?>
-			- QPKG enabled: 'true'
-			- application auto-update: 'true'
-			- active git branch: 'master'
-			--------------------------------------------------------------------------------------------------
 
 	* FIXED: When a QPKG couldn't be signed (due to no 'sqlite3'), it's not shown by QPKGs.Actions:List() at-all.
 		- QPKG was 'skipped-abort', and is shown as 'skipped' in results.
