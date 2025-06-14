@@ -9414,7 +9414,17 @@ GetBusyBoxCopyright()
 GetBusyBoxFunctionCount()
 	{
 
-	/bin/busybox --list | wc -l
+	local a=''
+
+	a=$(/bin/busybox --list 2>/dev/null | wc -l)
+
+	if [[ -n $a ]] && IsNumber $a && [[ $a -gt 0 ]]; then
+		printf '%s' "$a"
+	else										# BusyBox 1.01 doesn't support the `--list` arg, but can get a rough count of included functions by counting the commas shown by the BusyBox help screen.
+		a=$(/bin/busybox)
+		a=${a//[!\,]/}							# Remove all chars except commas.
+		printf '%s' "${#a}"
+	fi
 
 	} 2> /dev/null
 
