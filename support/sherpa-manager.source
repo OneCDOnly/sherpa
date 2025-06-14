@@ -274,7 +274,7 @@ LoadConsts()
 
 	# Report, help and debug formatting.
 
-	readonly r_debug_log_full_width=100
+	readonly r_debug_log_full_width=105
 	readonly r_debug_log_first_column_width=9
 	readonly r_debug_log_second_column_width=24
 	readonly r_help_desc_indent=3
@@ -755,10 +755,9 @@ DebugLogEnv()
 		useropt_verbose=true
 	fi
 
-	DebugInfoMinSepr
-
 	SetNasArch
 
+	DebugInfoMinSepr
 	DebugHardware ok 'NAS model' "$(get_display_name)"
 	DebugHardware ok CPU "$(GetHardwareCPUInfo)"
 	DebugHardware ok 'CPU cores' "$r_cpu_cores"
