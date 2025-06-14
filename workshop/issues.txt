@@ -1,8 +1,25 @@
 Observed issues:
 
-	* Counting BusyBox functions fails on QTS 4.2.6
-		- BusyBox 1.01 does not support `--list` arg.
-		- Try counting commas below "Currently defined functions:"
+	* Problematic PyPI packages are not being removed if they are not the only thing on the line:
+		Example: 'requests' should be removed but this was ignored: 'requests ~= 2.31'
+
+	* Was able to `clean` Kapowarr on x86 even though daemon was reported to be running:
+		--------------------------------------------------------------------------------------------------
+		[/share/Public] # /etc/init.d/kapowarr.sh clean
+		> source: kapowarr.sh, action: clean, time: Sun 15 Jun 2025 6:50:19 AM EST, load: 0.18
+		- package: 250614, service: 250614, library: 250614
+		> QPKG enabled: true
+		> application auto-update: true
+		- active git branch: main
+		- daemon PID: 28069
+		> clean local repository: OK
+		> clean virtual Python environment: OK
+		> clean PyPI cache: OK
+		> remove previous screen log: OK
+		> clean temp path: OK
+		= source: kapowarr.sh, action: clean, time: Sun 15 Jun 2025 6:50:21 AM EST, result: OK, elapsed: 2,175ms, load: 0.25
+		--------------------------------------------------------------------------------------------------
+		- A later `clean` did result in daemon shutdown, so it seems daemon live checking is inconsistent.
 
 	* `sherpa status` report formatting without Entware looks awful.
 		- Consider a simpler report when GNU `awk` isn't available.
