@@ -1,8 +1,5 @@
 Observed issues:
 
-	* Problematic PyPI packages are not being removed if they are not the only thing on the line:
-		Example: 'requests' should be removed but this was ignored: 'requests ~= 2.31'
-
 	* Was able to `clean` Kapowarr on x86 even though daemon was reported to be running:
 		--------------------------------------------------------------------------------------------------
 		[/share/Public] # /etc/init.d/kapowarr.sh clean
@@ -20,9 +17,10 @@ Observed issues:
 		= source: kapowarr.sh, action: clean, time: Sun 15 Jun 2025 6:50:21 AM EST, result: OK, elapsed: 2,175ms, load: 0.25
 		--------------------------------------------------------------------------------------------------
 		- A later `clean` did result in daemon shutdown, so it seems daemon live checking is inconsistent.
+		- The daemon check may have found `screen` session process instead of daemon process.
 
 	* `sherpa status` report formatting without GNU `awk` looks awful.
-		- Consider a simpler report (fewer columns) when GNU `awk` isn't available.
+		- Consider a simpler report (with fewer columns) when GNU `awk` isn't available.
 
 	* During `sherpa install trguing trans` TrguiNG must be restarted after Transmission is installed to update Transmission 'Dependency' key.
 
