@@ -854,10 +854,14 @@ DebugLogEnv()
 	DebugScript ok 'packages epoch' "$(ConvertAsSmartDate "${r_packages_epoch:-not loaded}")"
 	DebugScript ok 'logs path' "$r_logs_path"
 
-	if [[ -e $sqlite_pathfile ]]; then
-		DebugScript ok "'sqlite3' binary" "$sqlite_pathfile"
-	else
-		DebugScript warning "'sqlite3' binary" "$sqlite_pathfile (unavailable)"
+	if IsOsCanManageSignedPackages; then
+		FindSQLiteBinary
+
+		if [[ -e $sqlite_pathfile ]]; then
+			DebugScript ok "'sqlite3' binary" "$sqlite_pathfile"
+		else
+			DebugScript warning "'sqlite3' binary" "$sqlite_pathfile (unavailable)"
+		fi
 	fi
 
 	if IsOsCanUnofficialPackages; then
