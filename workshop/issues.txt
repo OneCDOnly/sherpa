@@ -22,7 +22,7 @@ Observed issues:
 		- A later `clean` did result in daemon shutdown, so it seems daemon live checking is inconsistent.
 
 	* `sherpa status` report formatting without GNU `awk` looks awful.
-		- Consider a simpler report when GNU `awk` isn't available.
+		- Consider a simpler report (fewer columns) when GNU `awk` isn't available.
 
 	* During `sherpa install trguing trans` TrguiNG must be restarted after Transmission is installed to update Transmission 'Dependency' key.
 
@@ -51,7 +51,7 @@ Observed issues:
 			install 35 auxiliary IPKs in 1m:46s
 		--------------------------------------------------------------------------------------------------
 		- If I shortcut Executer() in _QPKG:install_(), appears to work fine everytime.
-		- Appears process is placed in run queue, then control returns to the shell. Don't know why this happens.
+		- Appears process is placed in run queue, then control returns to the shell.
 
 	* Whisparr randomly(?) does not appear in `show packages` report on TS-216G (arm64).
 		- Whisparr lines are not being generated in report.ansi
