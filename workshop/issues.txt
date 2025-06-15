@@ -21,6 +21,7 @@ Observed issues:
 
 	* `sherpa status` report formatting without GNU `awk` looks awful.
 		- Consider a simpler report (with fewer columns) when GNU `awk` isn't available.
+		- Only show columns for qpkg name, status (but only the last word), and action (& result). Should be able to show these in colour.
 
 	* During `sherpa install trguing trans` TrguiNG must be restarted after Transmission is installed to update Transmission 'Dependency' key.
 
