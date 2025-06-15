@@ -759,12 +759,13 @@ DebugLogEnv()
 	fi
 
 	SetNasArch
+	SetHardwarePlatform
 
 	DebugInfoMinSepr
 	DebugHardware ok 'NAS model' "$(get_display_name)"
 	DebugHardware ok CPU "$(GetHardwareCPUInfo)"
 	DebugHardware ok 'CPU cores' "$r_cpu_cores"
-	DebugHardware ok 'CPU architecture' "$r_nas_arch"
+	DebugHardware ok 'CPU architecture' "$(GetNasFancyArch)"
 	DebugHardware ok 'basic CPU SHA1 benchmark' "$(GetHardwareCPUBenchmark)"
 	DebugHardware ok RAM "$(FormatAsThous "$r_nas_ram_kb")kiB"
 	DebugKernel ok name "$(GetOsKernelName)"
@@ -794,8 +795,6 @@ DebugLogEnv()
 	else
 		DebugFirmware warning 'build date' "$(ConvertAsSmartDate "$r_nas_firmware_date")"
 	fi
-
-	SetHardwarePlatform
 
 	DebugFirmware ok platform "$r_nas_platform"
 
@@ -9282,6 +9281,38 @@ GetNasArch()
 	{
 
 	/bin/uname -m
+
+	}
+
+GetNasFancyArch()
+	{
+
+	local a=''
+
+	case $r_nas_arch in
+		x86_64|aarch64)
+			a=64b
+			;;
+		i686|x86)
+			a=32b
+			;;
+		armv7l)
+			case $r_nas_platform in
+				ARM_AL|ARM_MS)
+					a=32b
+					;;
+				*)
+					a=unknown
+			esac
+			;;
+		armv5tel)
+			a=16b/32b
+			;;
+		*)
+			a=unknown
+	esac
+
+	printf '%s (%s)' "$r_nas_arch" "$a"
 
 	}
 
