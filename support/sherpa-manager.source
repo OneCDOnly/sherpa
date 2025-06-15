@@ -78,6 +78,7 @@ Init()
 
 	ShowTitle
 
+	CheckIfSelfSigned
 	ShowArgSuggestions
 	CheckQPKGsConflicts || return
 	CheckQPKGsWarnings
@@ -376,6 +377,7 @@ LoadDefaults()
 	switch_colour=false
 	switch_report_info=false
 	switch_terse=false
+	title_art_shown=false
 	title_shown=false
 
 	# Default values.
@@ -851,12 +853,10 @@ DebugLogEnv()
 	DebugScript ok 'packages epoch' "$(ConvertAsSmartDate "${r_packages_epoch:-not loaded}")"
 	DebugScript ok 'logs path' "$r_logs_path"
 
-	LocateOpportunisticSQLiteBinary
-
-	if [[ -e $sqlite_cmd ]]; then
-		DebugScript ok "'sqlite3' binary" "$sqlite_cmd"
+	if [[ -e $sqlite_pathfile ]]; then
+		DebugScript ok "'sqlite3' binary" "$sqlite_pathfile"
 	else
-		DebugScript warning "'sqlite3' binary" "$sqlite_cmd (unavailable)"
+		DebugScript warning "'sqlite3' binary" "$sqlite_pathfile (unavailable)"
 	fi
 
 	if IsOsCanUnofficialPackages; then
@@ -869,14 +869,14 @@ DebugLogEnv()
 		DebugQpkg detect 'allow unofficial' N/A
 	fi
 
-	if IsOsCanSignedPackages; then
-		if IsOsAllowUnsignedPackages; then
-			DebugQpkg detect 'allow unsigned' yes
+	if IsOsCanManageSignedPackages; then
+		if IsOsRequireSignedPackages; then
+			DebugQpkg detect 'require signed' yes
 		else
-			DebugQpkg detect 'allow unsigned' no
+			DebugQpkg detect 'require signed' no
 		fi
 	else
-		DebugQpkg detect 'allow unsigned' N/A
+		DebugQpkg detect 'require signed' N/A
 	fi
 
 	SetQpkgArch
@@ -949,6 +949,21 @@ DebugLogEnv()
 	fi
 
 	FuncExit
+
+	}
+
+CheckIfSelfSigned()
+	{
+
+	if IsOsCanManageSignedPackages; then
+		FindSQLiteBinary
+
+		if IsOsRequireSignedPackages && IsNtQpkgSigned sherpa; then
+			[[ $title_art_shown = true ]] && Display
+			ShowAsWarn "$(ShowAsTitleName) is unsigned, and $(GetOsName) is presently configured to require all packages to be signed."
+			ShowAsWarn "Please either self-sign $(ShowAsTitleName) with 'sherpa resign self', or allow unsigned QPKGs in your $(GetOsName) App Center"
+		fi
+	fi
 
 	}
 
@@ -1341,6 +1356,7 @@ AssignQpkgsToActions()
 	fi
 
 	# No-need to `activate` packages that are to be reactivated.
+
 	QPKGs-ACactivate-to:Remove "$(QPKGs-ACreactivate-to:Array)"
 
 	# Build a list of original storage paths for packages to be uninstalled, then installed again later this session (a "complex reinstall").
@@ -1375,7 +1391,7 @@ AssignQpkgsToActions()
 
 	# Ensure packages to be installed will be signed.
 
-	if IsOsCanSignedPackages && QPKGs-ACinstall-to.IsAny; then
+	if IsOsCanManageSignedPackages && QPKGs-ACinstall-to.IsAny; then
 		QPKGs-ACsign-to:Add "$(QPKGs-ACinstall-to:Array)"
 	fi
 
@@ -1393,7 +1409,7 @@ AssignQpkgsToActions()
 	# Check all packages.
 
 	if [[ $useropt_check = true ]]; then
-		IsOsCanSignedPackages && QPKGs-ACsign-to:Add "$(GetQpkgsIsValidInstalled)"
+		IsOsCanManageSignedPackages && QPKGs-ACsign-to:Add "$(GetQpkgsIsValidInstalled)"
 
 		for qpkg_name in $(QPKGs-GRdependent:Array); do
 			IsQpkgEnabled "$qpkg_name" && QPKGs-ACreactivate-to:Add "$qpkg_name"
@@ -1404,8 +1420,7 @@ AssignQpkgsToActions()
 	QPKGs-ACuninstall-to:Remove sherpa
 
 	if QPKGs-ACsign-to.IsAny || QPKGs-ACinstall-to.IsAny; then
-		LocateOpportunisticSQLiteBinary
-		LoadQpkgSigningCertDetails
+		LoadQpkgSigningCert
 	fi
 
 	[[ $useropt_debug = true ]] && ListQPKGsActionsAll					# devdebug
@@ -1549,7 +1564,7 @@ ProcActions()
 				ProcAction backup $tier QPKG backup
 				ProcAction disable $tier QPKG disable
 				ProcAction uninstall $tier QPKG uninstall
-				IsOsCanSignedPackages && ProcAction unsign $tier QPKG unsign
+				IsOsCanManageSignedPackages && ProcAction unsign $tier QPKG unsign
 			elif IsQpkgEnabled Entware; then
 				ModPathToEntware
 				PIPs:uninstall
@@ -1561,7 +1576,7 @@ ProcActions()
 
 		for tier in "${r_package_tiers[@]}"; do
 			if [[ $tier != auxiliary ]]; then
-				if IsOsCanSignedPackages; then
+				if IsOsCanManageSignedPackages; then
 					if [[ $tier = independent ]]; then
 						IsQpkgEnabled Entware && ProcAction sign $tier QPKG '"sign"'
 					else
@@ -1599,7 +1614,7 @@ ProcActions()
 					PIPs:install
 				fi
 
-				if IsOsCanSignedPackages; then
+				if IsOsCanManageSignedPackages; then
 					QPKGs-ACsign-to.Exist Entware && QPKGs-ACsign-to:Add "$(GetQpkgsIsValidInstalled)"
 					ProcAction sign independent QPKG '"sign"'
 				fi
@@ -9988,7 +10003,7 @@ _QPKG:install_()
 
 	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" install '' se 'no installation package found'
-		IsOsCanSignedPackages && IsQpkgSigned && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
+		IsOsCanManageSignedPackages && IsQpkgSigned && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
 		MarkActionForkAsSkippedError
 		z=4
 	elif IsQpkgInstalled "$qpkg_name"; then
@@ -9997,17 +10012,17 @@ _QPKG:install_()
 		z=2
 	elif ! IsQpkgDbArchOK "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" install '' sk 'incompatible NAS arch'
-		IsOsCanSignedPackages && IsQpkgSigned && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
+		IsOsCanManageSignedPackages && IsQpkgSigned && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinOSVerOk "$qpkg_name" || ! IsQpkgDbMaxOSVerOk "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" install '' sk "incompatible $(GetOsName) version"
-		IsOsCanSignedPackages && IsQpkgSigned && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
+		IsOsCanManageSignedPackages && IsQpkgSigned && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinRAMOk "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" install '' sk 'insufficient RAM installed'
-		IsOsCanSignedPackages && IsQpkgSigned && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
+		IsOsCanManageSignedPackages && IsQpkgSigned && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -10058,7 +10073,7 @@ _QPKG:install_()
 		z=0   # Remap to zero.
 	else
 		SaveActionResultToLog QPKG "$qpkg_name" install '' er "$z"
-		IsOsCanSignedPackages && IsQpkgSigned && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
+		IsOsCanManageSignedPackages && IsQpkgSigned && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
 		MarkActionForkAsError
 		z=1   # Remap to 1.
 	fi
@@ -11048,7 +11063,7 @@ _QPKG:sign_()
 
 	DebugVar sqlite_cmd
 
-	if ! IsOsCanSignedPackages; then
+	if ! IsOsCanManageSignedPackages; then
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sk 'not required: firmware < 4.3.5'
 		MarkActionForkAsSkipped
 		z=2
@@ -11140,7 +11155,7 @@ _QPKG:unsign_()
 
 	DebugVar sqlite_cmd
 
-	if ! IsOsCanSignedPackages; then
+	if ! IsOsCanManageSignedPackages; then
 		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sk 'not required: firmware < 4.3.5'
 		MarkActionForkAsSkipped
 		z=2
@@ -11168,7 +11183,7 @@ _QPKG:unsign_()
 		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sa "$(GetOsName) QPKG certificate database not found, no further unsigning will occur"
 		MarkActionForkAsSkippedAbort
 		z=3
-	elif ! IsQpkgSigned; then
+	elif IsNtQpkgSigned; then
 		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sk 'not signed'
 		MarkActionForkAsSkipped
 		z=2
@@ -12684,7 +12699,7 @@ IsOsCanQpkgTimeout()
 
 	}
 
-IsOsCanSignedPackages()
+IsOsCanManageSignedPackages()
 	{
 
 	# Inputs: (global)
@@ -12761,10 +12776,10 @@ IsOsCompatibleWithSigned()
 
 	}
 
-IsOsAllowUnsignedPackages()
+IsOsRequireSignedPackages()
 	{
 
-	[[ $(/sbin/getcfg 'QPKG Management' Ignore_Cert -d FALSE) = TRUE ]]
+	[[ $(/sbin/getcfg 'QPKG Management' Ignore_Cert -d FALSE) = FALSE ]]
 
 	}
 
@@ -13588,6 +13603,13 @@ IsQpkgSigned()
 
 	}
 
+IsNtQpkgSigned()
+	{
+
+	! IsQpkgSigned "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}"
+
+	}
+
 IsQpkgTimeoutsIncreased()
 	{
 
@@ -13681,12 +13703,14 @@ RemovePidFile()
 
 	}
 
-LocateOpportunisticSQLiteBinary()
+FindSQLiteBinary()
 	{
 
 	# Outputs: (global)
 	#   $sqlite_cmd
 	#   $sqlite_pathfile
+
+	[[ -z ${sqlite_pathfile:-} ]] || return
 
 	local a=''
 	sqlite_cmd=''
@@ -13764,7 +13788,7 @@ LocateOpportunisticSQLiteBinary()
 
 	}
 
-LoadQpkgSigningCertDetails()
+LoadQpkgSigningCert()
 	{
 
 	# Outputs: (global)
@@ -13774,7 +13798,7 @@ LoadQpkgSigningCertDetails()
 	r_qpkg_certificate=''
 	r_qpkg_signature=''
 
-	# This certificate block is the same used by QNAP for Download Station 5.9.0.272
+	# This certificate is the same used by QNAP for Download Station 5.9.0.272
 	# Expires: 11th October 2027
 
 	read -r -d '' r_qpkg_certificate <<EOB
@@ -13803,7 +13827,7 @@ Ij1A6hFRu9wdulkzQlp43rmD30Eloq7mJFlgXX3mSfAa6DyWuYych75cnSbNn5VP
 -----END CERTIFICATE-----
 EOB
 
-	# This digital signature block is the same used by QNAP for Download Station 5.9.0.272
+	# This digital signature is the same used by QNAP for Download Station 5.9.0.272
 	# Expires: 11th October 2027
 
 	read -r -d '' r_qpkg_signature <<EOB
@@ -14223,6 +14247,7 @@ ShowTitle()
 
 	if [[ -z ${r_args_raw[*]:-} ]]; then
 		Display "$(ShowTitleArt)"
+		title_art_shown=true
 	else
 		Display "$(ShowAsTitleName) $(ShowAsVersion)"
 	fi
