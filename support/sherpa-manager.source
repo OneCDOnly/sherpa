@@ -9927,19 +9927,43 @@ _QPKG:download_()
 
 	if [[ -z $r_remote_url || -z $r_remote_hash ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" download '' sk 'NAS arch incompatible'
+
+		if IsOsRequireSignedPackages; then
+			SendParentCommand "QPKGs-ACsign-to:Remove $qpkg_name"
+			SendParentCommand "QPKGs-ACinstall-to:Remove $qpkg_name"
+			SendParentCommand "QPKGs-ACreinstall-to:Remove $qpkg_name"
+			SendParentCommand "QPKGs-ACupgrade-to:Remove $qpkg_name"
+		fi
+
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinOSVerOk "$qpkg_name" || ! IsQpkgDbMaxOSVerOk "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" download '' sk "$(GetOsName) version incompatible"
+
+		if IsOsRequireSignedPackages; then
+			SendParentCommand "QPKGs-ACsign-to:Remove $qpkg_name"
+			SendParentCommand "QPKGs-ACinstall-to:Remove $qpkg_name"
+			SendParentCommand "QPKGs-ACreinstall-to:Remove $qpkg_name"
+			SendParentCommand "QPKGs-ACupgrade-to:Remove $qpkg_name"
+		fi
+
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinRAMOk "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" download '' sk 'installed RAM insufficient'
+
+		if IsOsRequireSignedPackages; then
+			SendParentCommand "QPKGs-ACsign-to:Remove $qpkg_name"
+			SendParentCommand "QPKGs-ACinstall-to:Remove $qpkg_name"
+			SendParentCommand "QPKGs-ACreinstall-to:Remove $qpkg_name"
+			SendParentCommand "QPKGs-ACupgrade-to:Remove $qpkg_name"
+		fi
+
 		MarkActionForkAsSkipped
 		z=2
 	elif IsFile "$r_local_pathfile"; then
 		if FileMatchesMD5 "$r_local_pathfile" "$r_remote_hash"; then
-			SaveActionResultToLog QPKG "$qpkg_name" download '' sk 'existing file checksum is correct'
+			SaveActionResultToLog QPKG "$qpkg_name" download '' sk 'already downloaded'
 			MarkActionForkAsSkipped
 			z=2
 		else
@@ -10008,7 +10032,6 @@ _QPKG:install_()
 
 	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" install '' se 'installation package unavailable'
-		IsOsCanManageSignedPackages && IsQpkgSigned && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
 		MarkActionForkAsSkippedError
 		z=4
 	elif IsQpkgInstalled "$qpkg_name"; then
@@ -10017,17 +10040,14 @@ _QPKG:install_()
 		z=2
 	elif ! IsQpkgDbArchOK "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" install '' sk 'NAS arch incompatible'
-		IsOsCanManageSignedPackages && IsQpkgSigned && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinOSVerOk "$qpkg_name" || ! IsQpkgDbMaxOSVerOk "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" install '' sk "$(GetOsName) version incompatible"
-		IsOsCanManageSignedPackages && IsQpkgSigned && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinRAMOk "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" install '' sk 'installed RAM insufficient'
-		IsOsCanManageSignedPackages && IsQpkgSigned && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
 		MarkActionForkAsSkipped
 		z=2
 	fi
