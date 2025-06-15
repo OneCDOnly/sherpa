@@ -21,7 +21,7 @@ Observed issues:
 		--------------------------------------------------------------------------------------------------
 		- A later `clean` did result in daemon shutdown, so it seems daemon live checking is inconsistent.
 
-	* `sherpa status` report formatting without Entware looks awful.
+	* `sherpa status` report formatting without GNU `awk` looks awful.
 		- Consider a simpler report when GNU `awk` isn't available.
 
 	* During `sherpa install trguing trans` TrguiNG must be restarted after Transmission is installed to update Transmission 'Dependency' key.
