@@ -31,6 +31,7 @@ Observed issues:
 		- [App Center] Failed to stop Unrar. You must first stop SABnzbd (web).
 		- [App Center] Failed to stop Entware-std. You must first stop SABnzbd (web).
 		--------------------------------------------------------------------------------------------------
+		- Don't know what caused this. A manual `stop` via the service-script doesn't generate this error, and a manual `stop` via the App Center stops the dependent QPKGs automatically.
 
 	* Getting 'vundefined' QPKG version (and < 1 second action time) when installing random packages on TS-216G (arm64) only:
 		--------------------------------------------------------------------------------------------------
