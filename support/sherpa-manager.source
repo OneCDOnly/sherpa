@@ -78,6 +78,7 @@ Init()
 
 	ShowTitle
 
+	CheckIfSelfSigned
 	ShowArgSuggestions
 	CheckQPKGsConflicts || return
 	CheckQPKGsWarnings
@@ -274,7 +275,8 @@ LoadConsts()
 
 	# Report, help and debug formatting.
 
-	readonly r_debug_log_full_width=105
+	local debug_log_datawidth_longest_string="    SCRIPT:         'sqlite3' binary: /share/CACHEDEV1_DATA/.qpkg/HybridBackup/CloudConnector3/bin/sqlite3"
+	readonly r_debug_log_full_width=${#debug_log_datawidth_longest_string}
 	readonly r_debug_log_first_column_width=9
 	readonly r_debug_log_second_column_width=24
 	readonly r_help_desc_indent=3
@@ -376,6 +378,7 @@ LoadDefaults()
 	switch_colour=false
 	switch_report_info=false
 	switch_terse=false
+	title_art_shown=false
 	title_shown=false
 
 	# Default values.
@@ -756,12 +759,13 @@ DebugLogEnv()
 	fi
 
 	SetNasArch
+	SetHardwarePlatform
 
 	DebugInfoMinSepr
 	DebugHardware ok 'NAS model' "$(get_display_name)"
 	DebugHardware ok CPU "$(GetHardwareCPUInfo)"
 	DebugHardware ok 'CPU cores' "$r_cpu_cores"
-	DebugHardware ok 'CPU architecture' "$r_nas_arch"
+	DebugHardware ok 'CPU architecture' "$(GetNasFancyArch)"
 	DebugHardware ok 'basic CPU SHA1 benchmark' "$(GetHardwareCPUBenchmark)"
 	DebugHardware ok RAM "$(FormatAsThous "$r_nas_ram_kb")kiB"
 	DebugKernel ok name "$(GetOsKernelName)"
@@ -791,8 +795,6 @@ DebugLogEnv()
 	else
 		DebugFirmware warning 'build date' "$(ConvertAsSmartDate "$r_nas_firmware_date")"
 	fi
-
-	SetHardwarePlatform
 
 	DebugFirmware ok platform "$r_nas_platform"
 
@@ -851,12 +853,14 @@ DebugLogEnv()
 	DebugScript ok 'packages epoch' "$(ConvertAsSmartDate "${r_packages_epoch:-not loaded}")"
 	DebugScript ok 'logs path' "$r_logs_path"
 
-	LocateOpportunisticSQLiteBinary
+	if IsOsCanManageSignedPackages; then
+		FindSQLiteBinary
 
-	if [[ -e $sqlite_cmd ]]; then
-		DebugScript ok "'sqlite3' binary" "$sqlite_cmd"
-	else
-		DebugScript warning "'sqlite3' binary" "$sqlite_cmd (unavailable)"
+		if [[ -e $sqlite_pathfile ]]; then
+			DebugScript ok "'sqlite3' binary" "$sqlite_pathfile"
+		else
+			DebugScript warning "'sqlite3' binary" "$sqlite_pathfile (unavailable)"
+		fi
 	fi
 
 	if IsOsCanUnofficialPackages; then
@@ -869,14 +873,14 @@ DebugLogEnv()
 		DebugQpkg detect 'allow unofficial' N/A
 	fi
 
-	if IsOsCanSignedPackages; then
-		if IsOsAllowUnsignedPackages; then
-			DebugQpkg detect 'allow unsigned' yes
+	if IsOsCanManageSignedPackages; then
+		if IsOsRequireSignedPackages; then
+			DebugQpkg detect 'require signed' yes
 		else
-			DebugQpkg detect 'allow unsigned' no
+			DebugQpkg detect 'require signed' no
 		fi
 	else
-		DebugQpkg detect 'allow unsigned' N/A
+		DebugQpkg detect 'require signed' N/A
 	fi
 
 	SetQpkgArch
@@ -885,9 +889,9 @@ DebugLogEnv()
 
 	if IsQpkgInstalled Entware; then
 		if ! IsEntwareUpgradable; then
-			DebugQpkg detect "$(FormatPackageName Entware) install date" "$(ConvertAsSmartDate "$(GetQpkgInstalledDate Entware)")"
+			DebugQpkg detect "date $(FormatPackageName Entware) installed" "$(ConvertAsSmartDate "$(GetQpkgInstalledDate Entware)")"
 		else
-			DebugQpkg warning "$(FormatPackageName Entware) install date" "$(ConvertAsSmartDate "$(GetQpkgInstalledDate Entware)")"
+			DebugQpkg warning "date $(FormatPackageName Entware) installed" "$(ConvertAsSmartDate "$(GetQpkgInstalledDate Entware)")"
 		fi
 
 		if [[ $r_entware_type = std ]]; then
@@ -896,7 +900,7 @@ DebugLogEnv()
 			DebugQpkg warning "$(FormatPackageName Entware) type" "$r_entware_type"
 		fi
 	else
-		DebugQpkg detect "$(FormatPackageName Entware) install date" N/A
+		DebugQpkg detect "date $(FormatPackageName Entware) installed" N/A
 	fi
 
 	SetOsFirmwareVer
@@ -949,6 +953,21 @@ DebugLogEnv()
 	fi
 
 	FuncExit
+
+	}
+
+CheckIfSelfSigned()
+	{
+
+	if IsOsCanManageSignedPackages; then
+		FindSQLiteBinary
+
+		if IsOsRequireSignedPackages && IsNtQpkgSigned sherpa; then
+			[[ $title_art_shown = true ]] && Display
+			ShowAsWarn "$(ShowAsTitleName) is unsigned, and $(GetOsName) is presently configured to require all packages to be signed."
+			ShowAsWarn "Please either self-sign $(ShowAsTitleName) with 'sherpa resign self', or allow unsigned QPKGs in your $(GetOsName) App Center"
+		fi
+	fi
 
 	}
 
@@ -1341,6 +1360,7 @@ AssignQpkgsToActions()
 	fi
 
 	# No-need to `activate` packages that are to be reactivated.
+
 	QPKGs-ACactivate-to:Remove "$(QPKGs-ACreactivate-to:Array)"
 
 	# Build a list of original storage paths for packages to be uninstalled, then installed again later this session (a "complex reinstall").
@@ -1375,7 +1395,7 @@ AssignQpkgsToActions()
 
 	# Ensure packages to be installed will be signed.
 
-	if IsOsCanSignedPackages && QPKGs-ACinstall-to.IsAny; then
+	if IsOsCanManageSignedPackages && QPKGs-ACinstall-to.IsAny; then
 		QPKGs-ACsign-to:Add "$(QPKGs-ACinstall-to:Array)"
 	fi
 
@@ -1393,7 +1413,7 @@ AssignQpkgsToActions()
 	# Check all packages.
 
 	if [[ $useropt_check = true ]]; then
-		IsOsCanSignedPackages && QPKGs-ACsign-to:Add "$(GetQpkgsIsValidInstalled)"
+		IsOsCanManageSignedPackages && QPKGs-ACsign-to:Add "$(GetQpkgsIsValidInstalled)"
 
 		for qpkg_name in $(QPKGs-GRdependent:Array); do
 			IsQpkgEnabled "$qpkg_name" && QPKGs-ACreactivate-to:Add "$qpkg_name"
@@ -1404,8 +1424,7 @@ AssignQpkgsToActions()
 	QPKGs-ACuninstall-to:Remove sherpa
 
 	if QPKGs-ACsign-to.IsAny || QPKGs-ACinstall-to.IsAny; then
-		LocateOpportunisticSQLiteBinary
-		LoadQpkgSigningCertDetails
+		LoadQpkgSigningCert
 	fi
 
 	[[ $useropt_debug = true ]] && ListQPKGsActionsAll					# devdebug
@@ -1549,7 +1568,7 @@ ProcActions()
 				ProcAction backup $tier QPKG backup
 				ProcAction disable $tier QPKG disable
 				ProcAction uninstall $tier QPKG uninstall
-				IsOsCanSignedPackages && ProcAction unsign $tier QPKG unsign
+				IsOsCanManageSignedPackages && ProcAction unsign $tier QPKG unsign
 			elif IsQpkgEnabled Entware; then
 				ModPathToEntware
 				PIPs:uninstall
@@ -1561,7 +1580,7 @@ ProcActions()
 
 		for tier in "${r_package_tiers[@]}"; do
 			if [[ $tier != auxiliary ]]; then
-				if IsOsCanSignedPackages; then
+				if IsOsCanManageSignedPackages; then
 					if [[ $tier = independent ]]; then
 						IsQpkgEnabled Entware && ProcAction sign $tier QPKG '"sign"'
 					else
@@ -1599,7 +1618,7 @@ ProcActions()
 					PIPs:install
 				fi
 
-				if IsOsCanSignedPackages; then
+				if IsOsCanManageSignedPackages; then
 					QPKGs-ACsign-to.Exist Entware && QPKGs-ACsign-to:Add "$(GetQpkgsIsValidInstalled)"
 					ProcAction sign independent QPKG '"sign"'
 				fi
@@ -4875,7 +4894,7 @@ _GenerateStatusReportDataLine_()
 						: # Do nothing, this is set later.
 						;;
 					auxiliary)
-						auxiliary_msg=$(FormatReportField 'incompatible author' attention_highlight)
+						auxiliary_msg=$(FormatReportField 'author incompatible' attention_highlight)
 						req_attention=true
 						;;
 					*)
@@ -4927,11 +4946,11 @@ _GenerateStatusReportDataLine_()
 			/bin/touch "$r_report_flags_path"/na
 
 			if ! IsQpkgDbArchOK; then
-				auxiliary='incompatible architecture'
+				auxiliary='architecture incompatible'
 			elif ! IsQpkgDbMinOSVerOk || ! IsQpkgDbMaxOSVerOk; then
-				auxiliary="incompatible $(GetOsName) version"
+				auxiliary="$(GetOsName) version incompatible"
 			elif ! IsQpkgDbMinRAMOk; then
-				auxiliary='insufficient RAM installed'
+				auxiliary='installed RAM insufficient'
 			fi
 
 			if [[ $auxiliary != false ]]; then
@@ -5109,11 +5128,11 @@ _GenerateReposReportDataLine_()
 			/bin/touch "$r_report_flags_path"/na
 
 			if ! IsQpkgDbArchOK; then
-				auxiliary='incompatible architecture'
+				auxiliary='architecture incompatible'
 			elif ! IsQpkgDbMinOSVerOk || ! IsQpkgDbMaxOSVerOk; then
-				auxiliary="incompatible $(GetOsName) version"
+				auxiliary="$(GetOsName) version incompatible"
 			elif ! IsQpkgDbMinRAMOk; then
-				auxiliary='insufficient RAM installed'
+				auxiliary='installed RAM insufficient'
 			fi
 
 			if [[ $auxiliary != false ]]; then
@@ -5226,11 +5245,11 @@ _GenerateAbsReportDataLine_()
 	case $mode in
 		mute)
 			if ! IsQpkgDbArchOK; then
-				auxiliary='incompatible architecture'
+				auxiliary='architecture incompatible'
 			elif ! IsQpkgDbMinOSVerOk || ! IsQpkgDbMaxOSVerOk; then
-				auxiliary="incompatible $(GetOsName) version"
+				auxiliary="$(GetOsName) version incompatible"
 			elif ! IsQpkgDbMinRAMOk; then
-				auxiliary='insufficient RAM installed'
+				auxiliary='installed RAM insufficient'
 			fi
 
 			if [[ $auxiliary != false ]]; then
@@ -5384,7 +5403,7 @@ _GenerateDepsReportDataLine_()
 						author_msg=$(FormatReportField "$author" attention_highlight)
 						;;
 					auxiliary)
-						auxiliary_msg=$(FormatReportField 'incompatible author' attention_highlight)
+						auxiliary_msg=$(FormatReportField 'author incompatible' attention_highlight)
 						;;
 					name)
 						: # Do nothing, this will be set later.
@@ -5680,7 +5699,7 @@ _GenerateFeaturesReportDataLine_()
 		author)
 			# Set field values.
 
-			auxiliary='incompatible author'
+			auxiliary='author incompatible'
 
 			# Assign & highlight field messages.
 
@@ -8523,7 +8542,7 @@ GenerateReportInfo()
 		fi
 
 		if [[ -e "$r_report_flags_path"/status-wrongauthor ]]; then
-			DisplayAsIndentQuotedInfoItem "$(TextBrightOrange 'incompatible author')" "QPKG is a non-compatible, identically-named duplicate of a $(ShowAsTitleName) QPKG"
+			DisplayAsIndentQuotedInfoItem "$(TextBrightOrange 'author incompatible')" "QPKG is a non-compatible, identically-named duplicate of a $(ShowAsTitleName) QPKG"
 		fi
 
 		if [[ -e "$r_report_flags_path"/req-attention ]]; then
@@ -9265,6 +9284,38 @@ GetNasArch()
 
 	}
 
+GetNasFancyArch()
+	{
+
+	local a=''
+
+	case $r_nas_arch in
+		x86_64|aarch64)
+			a=64b
+			;;
+		i686|x86)
+			a=32b
+			;;
+		armv7l)
+			case $r_nas_platform in
+				ARM_AL|ARM_MS)
+					a=32b
+					;;
+				*)
+					a=unknown
+			esac
+			;;
+		armv5tel)
+			a=16b/32b
+			;;
+		*)
+			a=unknown
+	esac
+
+	printf '%s (%s)' "$r_nas_arch" "$a"
+
+	}
+
 GetOsKernelName()
 	{
 
@@ -9848,7 +9899,7 @@ _QPKG:reassign_()
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" reassign '' sk 'incompatible author'
+		SaveActionResultToLog QPKG "$qpkg_name" reassign '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif [[ $(GetQpkgInstalledStoreID) = sherpa || $(GetQpkgInstalledStoreID) = undefined ]]; then
@@ -9906,20 +9957,44 @@ _QPKG:download_()
 	local -i z=0
 
 	if [[ -z $r_remote_url || -z $r_remote_hash ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" download '' sk 'incompatible NAS arch'
+		SaveActionResultToLog QPKG "$qpkg_name" download '' sk 'NAS arch incompatible'
+
+		if IsOsRequireSignedPackages; then
+			SendParentCommand "QPKGs-ACsign-to:Remove $qpkg_name"
+			SendParentCommand "QPKGs-ACinstall-to:Remove $qpkg_name"
+			SendParentCommand "QPKGs-ACreinstall-to:Remove $qpkg_name"
+			SendParentCommand "QPKGs-ACupgrade-to:Remove $qpkg_name"
+		fi
+
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinOSVerOk "$qpkg_name" || ! IsQpkgDbMaxOSVerOk "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" download '' sk "incompatible $(GetOsName) version"
+		SaveActionResultToLog QPKG "$qpkg_name" download '' sk "$(GetOsName) version incompatible"
+
+		if IsOsRequireSignedPackages; then
+			SendParentCommand "QPKGs-ACsign-to:Remove $qpkg_name"
+			SendParentCommand "QPKGs-ACinstall-to:Remove $qpkg_name"
+			SendParentCommand "QPKGs-ACreinstall-to:Remove $qpkg_name"
+			SendParentCommand "QPKGs-ACupgrade-to:Remove $qpkg_name"
+		fi
+
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinRAMOk "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" download '' sk 'insufficient RAM installed'
+		SaveActionResultToLog QPKG "$qpkg_name" download '' sk 'installed RAM insufficient'
+
+		if IsOsRequireSignedPackages; then
+			SendParentCommand "QPKGs-ACsign-to:Remove $qpkg_name"
+			SendParentCommand "QPKGs-ACinstall-to:Remove $qpkg_name"
+			SendParentCommand "QPKGs-ACreinstall-to:Remove $qpkg_name"
+			SendParentCommand "QPKGs-ACupgrade-to:Remove $qpkg_name"
+		fi
+
 		MarkActionForkAsSkipped
 		z=2
 	elif IsFile "$r_local_pathfile"; then
 		if FileMatchesMD5 "$r_local_pathfile" "$r_remote_hash"; then
-			SaveActionResultToLog QPKG "$qpkg_name" download '' sk 'existing file checksum is correct'
+			SaveActionResultToLog QPKG "$qpkg_name" download '' sk 'already downloaded'
 			MarkActionForkAsSkipped
 			z=2
 		else
@@ -9987,8 +10062,7 @@ _QPKG:install_()
 	local -i z=0
 
 	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" install '' se 'no installation package found'
-		IsOsCanSignedPackages && IsQpkgSigned && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
+		SaveActionResultToLog QPKG "$qpkg_name" install '' se 'installation package unavailable'
 		MarkActionForkAsSkippedError
 		z=4
 	elif IsQpkgInstalled "$qpkg_name"; then
@@ -9996,18 +10070,15 @@ _QPKG:install_()
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbArchOK "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" install '' sk 'incompatible NAS arch'
-		IsOsCanSignedPackages && IsQpkgSigned && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
+		SaveActionResultToLog QPKG "$qpkg_name" install '' sk 'NAS arch incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinOSVerOk "$qpkg_name" || ! IsQpkgDbMaxOSVerOk "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" install '' sk "incompatible $(GetOsName) version"
-		IsOsCanSignedPackages && IsQpkgSigned && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
+		SaveActionResultToLog QPKG "$qpkg_name" install '' sk "$(GetOsName) version incompatible"
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinRAMOk "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" install '' sk 'insufficient RAM installed'
-		IsOsCanSignedPackages && IsQpkgSigned && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
+		SaveActionResultToLog QPKG "$qpkg_name" install '' sk 'installed RAM insufficient'
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -10058,7 +10129,7 @@ _QPKG:install_()
 		z=0   # Remap to zero.
 	else
 		SaveActionResultToLog QPKG "$qpkg_name" install '' er "$z"
-		IsOsCanSignedPackages && IsQpkgSigned && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
+		IsOsCanManageSignedPackages && IsQpkgSigned && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
 		MarkActionForkAsError
 		z=1   # Remap to 1.
 	fi
@@ -10089,7 +10160,7 @@ _QPKG:reinstall_()
 	local -i z=0
 
 	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' se 'no installation package found'
+		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' se 'installation package unavailable'
 		MarkActionForkAsSkippedError
 		z=4
 	elif IsNtQpkgInstalled "$qpkg_name"; then
@@ -10097,7 +10168,7 @@ _QPKG:reinstall_()
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' sk 'incompatible author'
+		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
@@ -10159,11 +10230,11 @@ _QPKG:rebuild_()
 		MarkActionForkAsSkipped
 		z=2
 # 	elif IsNtQpkgAuthorOk; then
-# 		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' sk 'incompatible author'
+# 		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' sk 'author incompatible'
 # 		MarkActionForkAsSkipped
 # 		z=2
 	elif ! IsQpkgDbCanBackup; then
-		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' sk 'does not support rebuild'
+		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' sk 'rebuild is not supported by this QPKG'
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgBackupExist; then
@@ -10210,7 +10281,7 @@ _QPKG:upgrade_()
 	local -i z=0
 
 	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' se 'no installation package found'
+		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' se 'installation package unavailable'
 		MarkActionForkAsSkippedError
 		z=4
 	elif IsNtValidQpkgInstalled "$qpkg_name"; then
@@ -10218,7 +10289,7 @@ _QPKG:upgrade_()
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' sk 'incompatible author'
+		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif ! QPKGs-ISupgradable.Exist "$qpkg_name"; then
@@ -10296,7 +10367,7 @@ _QPKG:uninstall_()
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" uninstall '' sk 'incompatible author'
+		SaveActionResultToLog QPKG "$qpkg_name" uninstall '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif [[ $qpkg_name = sherpa ]]; then
@@ -10378,7 +10449,7 @@ _QPKG:activate_()
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" activate '' sk 'incompatible author'
+		SaveActionResultToLog QPKG "$qpkg_name" activate '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgEnabled "$qpkg_name"; then
@@ -10466,7 +10537,7 @@ _QPKG:reactivate_()
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' sk 'incompatible author'
+		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgEnabled "$qpkg_name"; then
@@ -10545,7 +10616,7 @@ _QPKG:deactivate_()
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' sk 'incompatible author'
+		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
 # 	elif [[ $qpkg_name = sherpa ]]; then
@@ -10631,7 +10702,7 @@ _QPKG:enable_()
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" enable '' sk 'incompatible author'
+		SaveActionResultToLog QPKG "$qpkg_name" enable '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsQpkgEnabled "$qpkg_name"; then
@@ -10683,7 +10754,7 @@ _QPKG:disable_()
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" disable '' sk 'incompatible author'
+		SaveActionResultToLog QPKG "$qpkg_name" disable '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgEnabled "$qpkg_name"; then
@@ -10741,7 +10812,7 @@ _QPKG:enableau_()
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" enableau '' sk 'incompatible author'
+		SaveActionResultToLog QPKG "$qpkg_name" enableau '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif [[ $qpkg_name = sherpa ]]; then
@@ -10749,7 +10820,7 @@ _QPKG:enableau_()
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbCanRestartToUpdate "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" enableau '' sk 'auto-update is unsupported'
+		SaveActionResultToLog QPKG "$qpkg_name" enableau '' sk 'auto-update is unsupported by this QPKG'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
@@ -10803,7 +10874,7 @@ _QPKG:disableau_()
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" disableau '' sk 'incompatible author'
+		SaveActionResultToLog QPKG "$qpkg_name" disableau '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif [[ $qpkg_name = sherpa ]]; then
@@ -10811,7 +10882,7 @@ _QPKG:disableau_()
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbCanRestartToUpdate "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" disableau '' sk 'auto-update is unsupported'
+		SaveActionResultToLog QPKG "$qpkg_name" disableau '' sk 'auto-update is unsupported by this QPKG'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
@@ -10865,11 +10936,11 @@ _QPKG:backup_()
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" backup '' sk 'incompatible author'
+		SaveActionResultToLog QPKG "$qpkg_name" backup '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbCanBackup; then
-		SaveActionResultToLog QPKG "$qpkg_name" backup '' sk 'backup is unsupported'
+		SaveActionResultToLog QPKG "$qpkg_name" backup '' sk 'backup is unsupported by this QPKG'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
@@ -10924,11 +10995,11 @@ _QPKG:restore_()
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" restore '' sk 'incompatible author'
+		SaveActionResultToLog QPKG "$qpkg_name" restore '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbCanBackup; then
-		SaveActionResultToLog QPKG "$qpkg_name" restore '' sk 'restore is unsupported'
+		SaveActionResultToLog QPKG "$qpkg_name" restore '' sk 'restore is unsupported by this QPKG'
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgBackupExist; then
@@ -10987,11 +11058,11 @@ _QPKG:clean_()
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" clean '' sk 'incompatible author'
+		SaveActionResultToLog QPKG "$qpkg_name" clean '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbCanClean; then
-		SaveActionResultToLog QPKG "$qpkg_name" clean '' sk 'clean is unsupported'
+		SaveActionResultToLog QPKG "$qpkg_name" clean '' sk 'clean is unsupported by this QPKG'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
@@ -11048,20 +11119,20 @@ _QPKG:sign_()
 
 	DebugVar sqlite_cmd
 
-	if ! IsOsCanSignedPackages; then
+	if ! IsOsCanManageSignedPackages; then
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sk 'not required: firmware < 4.3.5'
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbArchOK "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sk 'incompatible NAS arch'
+		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sk 'NAS arch incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinOSVerOk "$qpkg_name" || ! IsQpkgDbMaxOSVerOk "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sk "incompatible $(GetOsName) version"
+		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sk "$(GetOsName) version incompatible"
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinRAMOk "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sk 'insufficient RAM installed'
+		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sk 'installed RAM insufficient'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
@@ -11069,11 +11140,11 @@ _QPKG:sign_()
 		MarkActionForkAsSkipped
 		z=2
 	elif [[ ! -e $sqlite_pathfile ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sa "$(FormatFileName sqlite3) binary not found, no further signing will occur"
+		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sa "$(FormatFileName sqlite3) binary unavailable, no further signing will occur"
 		MarkActionForkAsSkippedAbort
 		z=3
 	elif [[ ! -e $r_cert_db_pathfile ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sa "$(GetOsName) QPKG certificate database not found, no further signing will occur"
+		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sa "$(GetOsName) QPKG certificate database unavailable, no further signing will occur"
 		MarkActionForkAsSkippedAbort
 		z=3
 	elif IsQpkgSigned; then
@@ -11140,20 +11211,20 @@ _QPKG:unsign_()
 
 	DebugVar sqlite_cmd
 
-	if ! IsOsCanSignedPackages; then
+	if ! IsOsCanManageSignedPackages; then
 		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sk 'not required: firmware < 4.3.5'
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbArchOK "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sk 'incompatible NAS arch'
+		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sk 'NAS arch incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinOSVerOk "$qpkg_name" || ! IsQpkgDbMaxOSVerOk "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sk "incompatible $(GetOsName) version"
+		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sk "$(GetOsName) version incompatible"
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinRAMOk "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sk 'insufficient RAM installed'
+		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sk 'installed RAM insufficient'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
@@ -11161,14 +11232,14 @@ _QPKG:unsign_()
 		MarkActionForkAsSkipped
 		z=2
 	elif [[ ! -e $sqlite_pathfile ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sa "$(FormatFileName sqlite3) binary not found, no further signing will occur"
+		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sa "$(FormatFileName sqlite3) binary unavailable, no further signing will occur"
 		MarkActionForkAsSkippedAbort
 		z=3
 	elif [[ ! -e $r_cert_db_pathfile ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sa "$(GetOsName) QPKG certificate database not found, no further unsigning will occur"
+		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sa "$(GetOsName) QPKG certificate database unavailable, no further unsigning will occur"
 		MarkActionForkAsSkippedAbort
 		z=3
-	elif ! IsQpkgSigned; then
+	elif IsNtQpkgSigned; then
 		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sk 'not signed'
 		MarkActionForkAsSkipped
 		z=2
@@ -12684,7 +12755,7 @@ IsOsCanQpkgTimeout()
 
 	}
 
-IsOsCanSignedPackages()
+IsOsCanManageSignedPackages()
 	{
 
 	# Inputs: (global)
@@ -12761,10 +12832,10 @@ IsOsCompatibleWithSigned()
 
 	}
 
-IsOsAllowUnsignedPackages()
+IsOsRequireSignedPackages()
 	{
 
-	[[ $(/sbin/getcfg 'QPKG Management' Ignore_Cert -d FALSE) = TRUE ]]
+	[[ $(/sbin/getcfg 'QPKG Management' Ignore_Cert -d FALSE) = FALSE ]]
 
 	}
 
@@ -13588,6 +13659,13 @@ IsQpkgSigned()
 
 	}
 
+IsNtQpkgSigned()
+	{
+
+	! IsQpkgSigned "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}"
+
+	}
+
 IsQpkgTimeoutsIncreased()
 	{
 
@@ -13681,12 +13759,14 @@ RemovePidFile()
 
 	}
 
-LocateOpportunisticSQLiteBinary()
+FindSQLiteBinary()
 	{
 
 	# Outputs: (global)
 	#   $sqlite_cmd
 	#   $sqlite_pathfile
+
+	[[ -z ${sqlite_pathfile:-} ]] || return
 
 	local a=''
 	sqlite_cmd=''
@@ -13764,7 +13844,7 @@ LocateOpportunisticSQLiteBinary()
 
 	}
 
-LoadQpkgSigningCertDetails()
+LoadQpkgSigningCert()
 	{
 
 	# Outputs: (global)
@@ -13774,7 +13854,7 @@ LoadQpkgSigningCertDetails()
 	r_qpkg_certificate=''
 	r_qpkg_signature=''
 
-	# This certificate block is the same used by QNAP for Download Station 5.9.0.272
+	# This certificate is the same used by QNAP for Download Station 5.9.0.272
 	# Expires: 11th October 2027
 
 	read -r -d '' r_qpkg_certificate <<EOB
@@ -13803,7 +13883,7 @@ Ij1A6hFRu9wdulkzQlp43rmD30Eloq7mJFlgXX3mSfAa6DyWuYych75cnSbNn5VP
 -----END CERTIFICATE-----
 EOB
 
-	# This digital signature block is the same used by QNAP for Download Station 5.9.0.272
+	# This digital signature is the same used by QNAP for Download Station 5.9.0.272
 	# Expires: 11th October 2027
 
 	read -r -d '' r_qpkg_signature <<EOB
@@ -14223,6 +14303,7 @@ ShowTitle()
 
 	if [[ -z ${r_args_raw[*]:-} ]]; then
 		Display "$(ShowTitleArt)"
+		title_art_shown=true
 	else
 		Display "$(ShowAsTitleName) $(ShowAsVersion)"
 	fi
