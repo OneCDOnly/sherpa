@@ -8224,6 +8224,7 @@ ReportPackages()
 	done
 
 	m=$n
+	wait 2> /dev/null
 
 	# Load report data lines from individual files.
 

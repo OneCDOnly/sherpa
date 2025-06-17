@@ -49,11 +49,6 @@ Observed issues:
 		- If I shortcut Executer() in _QPKG:install_(), appears to work fine everytime.
 		- Appears process is placed in run queue, then control returns to the shell.
 
-	* Whisparr randomly(?) does not appear in `show packages` report on TS-216G (arm64).
-		- Whisparr lines are not being generated in report.ansi
-		- Note: it's the last package in the database.
-		- Bah! Now getting the same thing on TS-251+ (x86-64) too. Sometimes entire report lines for WebSSH and Whisparr are empty, so there's a linespace, but no data. Sometimes, QPKG name only is shown, but nothing else.
-
 	* Downgrade Transmission IPKs back to 4.0.4
 		- https://github.com/OneCDOnly/sherpa/issues/306
 		- Rethinking this. The problem only affects a single user, and they've switched to Stephanes's QPKG as a workaround. This is probably better than downgrading everyone for an unspecified issue.
