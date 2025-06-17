@@ -4668,7 +4668,7 @@ GeneratePacksReportTitleLine()
 	else
 		FormatReportFieldWidth 'QPKG name:' "$r_report_qpkg_name_column_width"
 		FormatReportFieldWidth 'Appl. version:' "$r_report_qpkg_appl_version_column_width"
-		FormatReportFieldWidth 'Description:' "$r_report_qpkg_description_column_width"
+# 		FormatReportFieldWidth 'Description:' "$r_report_qpkg_description_column_width"
 	fi
 
 	printf '\n'
@@ -4744,11 +4744,11 @@ _GeneratePacksReportDataLine_()
 	else
 		FormatReportFieldWidth "$name_msg" "$r_report_qpkg_name_column_width"
 		FormatReportFieldWidth "$app_ver_msg" "$r_report_qpkg_appl_version_column_width"
-		FormatReportFieldWidth "$description_msg" "$r_report_qpkg_description_column_width"
+# 		FormatReportFieldWidth "$description_msg" "$r_report_qpkg_description_column_width"
 
-		if [[ -n $notes ]]; then
-			printf "\n%$((${#r_chars_blank}+r_report_qpkg_name_column_width+r_report_qpkg_appl_version_column_width+(r_report_column_spacing*2)))s$(TextBrightOrange "${r_chars_dropend}${r_chars_note}")%s" '' "$notes_msg"
-		fi
+# 		if [[ -n $notes ]]; then
+# 			printf "\n%$((${#r_chars_blank}+r_report_qpkg_name_column_width+r_report_qpkg_appl_version_column_width+(r_report_column_spacing*2)))s$(TextBrightOrange "${r_chars_dropend}${r_chars_note}")%s" '' "$notes_msg"
+# 		fi
 	fi
 
 	printf '\n'
@@ -8206,7 +8206,7 @@ ReportPackages()
 	DisableDebugToArchiveAndFile
 	DisplayProcReport package
 
-	! IsAnsiStrippingSupported && colourful=false
+# 	! IsAnsiStrippingSupported && colourful=false
 
 		{
 
