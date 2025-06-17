@@ -52,6 +52,7 @@ Observed issues:
 	* Whisparr randomly(?) does not appear in `show packages` report on TS-216G (arm64).
 		- Whisparr lines are not being generated in report.ansi
 		- Note: it's the last package in the database.
+		- Bah! Now getting the same thing on TS-251+ (x86-64) too. Sometimes entire report lines for WebSSH and Whisparr are empty, so there's a linespace, but no data. Sometimes, QPKG name only is shown, but nothing else.
 
 	* Downgrade Transmission IPKs back to 4.0.4
 		- https://github.com/OneCDOnly/sherpa/issues/306
