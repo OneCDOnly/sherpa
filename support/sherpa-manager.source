@@ -10111,7 +10111,24 @@ _QPKG:install_()
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	[[ ${QPKGs_were_installed_name[*]:-} = *"$qpkg_name"* ]] && a+="QINSTALL_PATH=$(GetQpkgInstalledOriginalPath "$qpkg_name") "
 
-	Executer "${a}/bin/sh $local_pathfile" "$log_pathfile" log:failure-only 10
+# 	Executer "${a}/bin/sh $local_pathfile" "$log_pathfile" log:failure-only 10
+# 	z=$?
+
+	# Instead of running QPKG installer through Executer(), let's run it here for-now. Installing on my TS-216G (arm64) results in the installer process randomly not waiting for the installer script to finish, and proceeding to the next step`.
+
+	# ./sherpa-manager.source add duf HideThatBanner IncreaseTimeouts OLidarr nzbget OliveTin Par2turbo QDK OReadarr sherpa OSonarr TorrServer Unrar OWhisparr
+
+	if [[ $useropt_verbose = true ]]; then
+		[[ -n $a ]] && export ${a?}
+		/bin/sh "$local_pathfile" > >(/usr/bin/tee "$log_pathfile") 2>&1 &	# NOTE: `tee` buffers stdout here.		# squeezer-ignore
+		z=${PIPESTATUS[0]}													# Examine $PIPESTATUS after `tee` to get returncode of previous command: https://stackoverflow.com/questions/1221833/pipe-output-and-capture-exit-status-in-bash
+	else
+		[[ -n $a ]] && export ${a?}
+		/bin/sh "$local_pathfile" > "$log_pathfile" 2>&1 &
+	fi
+
+	[[ $r_nas_arch = aarch64 ]] && sleep 1
+	wait $!
 	z=$?
 
 	LogQpkgServiceResult
