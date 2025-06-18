@@ -4236,6 +4236,7 @@ _ExecOneActionWithManyForks_()
 
 			CreatePidFile
 			$a &
+			[[ $r_nas_arch = aarch64 ]] && sleep .1
 			WritePidFile "$!"
 		)
 
@@ -7068,6 +7069,7 @@ UpdateActionForkProgress()
 	#	$skip_abort_count
 	#	$skip_count
 	#	$skip_error_count
+	#	$total_count
 	#	$useropt_verbose
 	#	$work_count
 
