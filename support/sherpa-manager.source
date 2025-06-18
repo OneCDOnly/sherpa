@@ -4668,7 +4668,7 @@ GeneratePacksReportTitleLine()
 	else
 		FormatReportFieldWidth 'QPKG name:' "$r_report_qpkg_name_column_width"
 		FormatReportFieldWidth 'Appl. version:' "$r_report_qpkg_appl_version_column_width"
-		FormatReportFieldWidth 'Description:' "$r_report_qpkg_description_column_width"
+# 		FormatReportFieldWidth 'Description:' "$r_report_qpkg_description_column_width"
 	fi
 
 	printf '\n'
@@ -4744,11 +4744,11 @@ _GeneratePacksReportDataLine_()
 	else
 		FormatReportFieldWidth "$name_msg" "$r_report_qpkg_name_column_width"
 		FormatReportFieldWidth "$app_ver_msg" "$r_report_qpkg_appl_version_column_width"
-		FormatReportFieldWidth "$description_msg" "$r_report_qpkg_description_column_width"
+# 		FormatReportFieldWidth "$description_msg" "$r_report_qpkg_description_column_width"
 
-		if [[ -n $notes ]]; then
-			printf "\n%$((${#r_chars_blank}+r_report_qpkg_name_column_width+r_report_qpkg_appl_version_column_width+(r_report_column_spacing*2)))s$(TextBrightOrange "${r_chars_dropend}${r_chars_note}")%s" '' "$notes_msg"
-		fi
+# 		if [[ -n $notes ]]; then
+# 			printf "\n%$((${#r_chars_blank}+r_report_qpkg_name_column_width+r_report_qpkg_appl_version_column_width+(r_report_column_spacing*2)))s$(TextBrightOrange "${r_chars_dropend}${r_chars_note}")%s" '' "$notes_msg"
+# 		fi
 	fi
 
 	printf '\n'
@@ -4758,13 +4758,10 @@ _GeneratePacksReportDataLine_()
 GenerateStatusReportTitleLine()
 	{
 
+	# Requires 72 columns when auto-column-width isn't available.
+
 	# Inputs: (global)
-	# 	$r_report_qpkg_action_column_width
-	#	$r_report_qpkg_appl_version_column_width
 	# 	$r_report_qpkg_name_column_width
-	# 	$r_report_qpkg_path_column_width
-	#	$r_report_qpkg_status_column_width
-	# 	$r_report_qpkg_version_column_width
 
 	local a='QPKG version'
 
@@ -4774,11 +4771,7 @@ GenerateStatusReportTitleLine()
 		printf '%s' "QPKG name:|Status:|Action $(Parenthesise result):|$a:|Appl. version:|Location:"
 	else
 		FormatReportFieldWidth 'QPKG name:' "$r_report_qpkg_name_column_width"
-		FormatReportFieldWidth 'Status:' "$r_report_qpkg_status_column_width"
-		FormatReportFieldWidth "Action $(Parenthesise result):" "$r_report_qpkg_action_column_width"
-		FormatReportFieldWidth "$a:" "$r_report_qpkg_version_column_width"
-		FormatReportFieldWidth 'Appl. version:' "$r_report_qpkg_appl_version_column_width"
-		FormatReportFieldWidth 'Location:' "$r_report_qpkg_path_column_width"
+		printf '%s' "Status & Action $(Parenthesise result):"
 	fi
 
 	printf '\n'
@@ -4793,6 +4786,7 @@ _GenerateStatusReportDataLine_()
 	# Inputs: (global)
 	# 	$qpkg_name
 	#	$r_report_flags_path
+	# 	$r_report_qpkg_name_column_width
 
 	local a=''
 	local -a column_vars=(action app_ver auxiliary name path status ver)
@@ -4954,9 +4948,17 @@ _GenerateStatusReportDataLine_()
 			fi
 
 			if [[ $auxiliary != false ]]; then
-				auxiliary_msg=$(FormatReportField "not installable, $auxiliary" alert_mute)
+				if IsOsCanAutowidthTableColumns; then
+					auxiliary_msg=$(FormatReportField "not installable, $auxiliary" alert_mute)
+				else
+					auxiliary_msg="not installable, $auxiliary"
+				fi
 			else
-				auxiliary_msg=$(FormatReportField 'not installed' normal_mute)
+				if IsOsCanAutowidthTableColumns; then
+					auxiliary_msg=$(FormatReportField 'not installed' normal_mute)
+				else
+					auxiliary_msg='not installed'
+				fi
 			fi
 
 			ver=$(GetQpkgDbVer)
@@ -5037,12 +5039,12 @@ _GenerateStatusReportDataLine_()
 	if IsOsCanAutowidthTableColumns; then
 		printf '%s' "$name_msg|$status_msg|$action_msg|$ver_msg|$app_ver_msg|$path_msg"
 	else
-		FormatReportFieldWidth "$name_msg" "$r_report_qpkg_name_column_width"
-		FormatReportFieldWidth "$status_msg" "$r_report_qpkg_status_column_width"
-		FormatReportFieldWidth "$action_msg" "$r_report_qpkg_action_column_width"
-		FormatReportFieldWidth "$ver_msg" "$r_report_qpkg_version_column_width"
-		FormatReportFieldWidth "$app_ver_msg" "$r_report_qpkg_appl_version_column_width"
-		FormatReportFieldWidth "$path_msg" "$r_report_qpkg_path_column_width"
+		if [[ -z $auxiliary_msg ]]; then
+			FormatReportFieldWidth "$name_msg" "$r_report_qpkg_name_column_width"
+			printf '%s' "$(LTrim "$status_msg"), $(LTrim "$action_msg")"
+		else
+			printf '%s %s' "$(TextDarkGrey "$name_msg")" "$(TextDarkGrey "($(LTrim "$status_msg"), $(LTrim "$action_msg"))")"
+		fi
 	fi
 
 	printf '\n'
@@ -5052,17 +5054,16 @@ _GenerateStatusReportDataLine_()
 GenerateReposReportTitleLine()
 	{
 
+	# Requires 57 columns when auto-column-width isn't available.
+
 	# Inputs: (global)
-	#	$r_report_qpkg_install_date_column_width
 	#	$r_report_qpkg_name_column_width
-	#	$r_report_qpkg_repo_column_width
 
 	if IsOsCanAutowidthTableColumns; then
 		printf 'QPKG name:|Repository:|Install date:'
 	else
 		FormatReportFieldWidth 'QPKG name:' "$r_report_qpkg_name_column_width"
-		FormatReportFieldWidth 'Repository:' "$r_report_qpkg_repo_column_width"
-		FormatReportFieldWidth 'Install date:' "$r_report_qpkg_install_date_column_width"
+		printf '%s' 'Repository:'
 	fi
 
 	printf '\n'
@@ -5077,9 +5078,7 @@ _GenerateReposReportDataLine_()
 	# Inputs: (global)
 	# 	$qpkg_name
 	#	$r_report_flags_path
-	#	$r_report_qpkg_install_date_column_width
 	#	$r_report_qpkg_name_column_width
-	#	$r_report_qpkg_repo_column_width
 
 	# Outputs: (local)
 	# 	stdout = single report line with data fields.
@@ -5136,9 +5135,17 @@ _GenerateReposReportDataLine_()
 			fi
 
 			if [[ $auxiliary != false ]]; then
-				auxiliary_msg=$(FormatReportField "not installable, $auxiliary" alert_mute)
+				if IsOsCanAutowidthTableColumns; then
+					auxiliary_msg=$(FormatReportField "not installable, $auxiliary" alert_mute)
+				else
+					auxiliary_msg="not installable, $auxiliary"
+				fi
 			else
-				auxiliary_msg=$(FormatReportField 'not installed' normal_mute)
+				if IsOsCanAutowidthTableColumns; then
+					auxiliary_msg=$(FormatReportField 'not installed' normal_mute)
+				else
+					auxiliary_msg='not installed'
+				fi
 			fi
 
 			install_date_msg=$(FormatReportField N/A mute)
@@ -5177,9 +5184,12 @@ _GenerateReposReportDataLine_()
 	if IsOsCanAutowidthTableColumns; then
 		printf '%s' "$name_msg|$assigned_repo_msg|$install_date_msg"
 	else
-		FormatReportFieldWidth "$name_msg" "$r_report_qpkg_name_column_width"
-		FormatReportFieldWidth "$assigned_repo_msg" "$r_report_qpkg_repo_column_width"
-		FormatReportFieldWidth "$install_date_msg" "$r_report_qpkg_install_date_column_width"
+		if [[ -z $auxiliary_msg ]]; then
+			FormatReportFieldWidth "$name_msg" "$r_report_qpkg_name_column_width"
+			printf ' %s' "$assigned_repo_msg"
+		else
+			printf '%s %s' "$(TextDarkGrey "$name_msg")" "$(TextDarkGrey "($(LTrim "$assigned_repo_msg"))")"
+		fi
 	fi
 
 	printf '\n'
@@ -8196,7 +8206,7 @@ ReportPackages()
 	DisableDebugToArchiveAndFile
 	DisplayProcReport package
 
-	! IsAnsiStrippingSupported && colourful=false
+# 	! IsAnsiStrippingSupported && colourful=false
 
 		{
 
@@ -8214,6 +8224,7 @@ ReportPackages()
 	done
 
 	m=$n
+	wait 2> /dev/null
 
 	# Load report data lines from individual files.
 
@@ -8261,7 +8272,7 @@ ReportRepos()
 	DisplayProcReport repository
 	ResetReportsPath &> /dev/null
 
-	! IsAnsiStrippingSupported && colourful=false
+# 	! IsAnsiStrippingSupported && colourful=false
 
 	printf -v a '\n%s\n' "$(GenerateReposReportTitleLine)"
 
@@ -8313,7 +8324,7 @@ ReportStatuses()
 	DisplayProcReport status
 	ResetReportsPath &> /dev/null
 
-	! IsAnsiStrippingSupported && colourful=false
+# 	! IsAnsiStrippingSupported && colourful=false
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		QPKGs-ACstatus-dn.Exist "$qpkg_name" || continue
@@ -10100,7 +10111,24 @@ _QPKG:install_()
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	[[ ${QPKGs_were_installed_name[*]:-} = *"$qpkg_name"* ]] && a+="QINSTALL_PATH=$(GetQpkgInstalledOriginalPath "$qpkg_name") "
 
-	Executer "${a}/bin/sh $local_pathfile" "$log_pathfile" log:failure-only 10
+# 	Executer "${a}/bin/sh $local_pathfile" "$log_pathfile" log:failure-only 10
+# 	z=$?
+
+	# Instead of running QPKG installer through Executer(), let's run it here for-now. Installing on my TS-216G (arm64) results in the installer process randomly not waiting for the installer script to finish, and proceeding to the next step`.
+
+	# ./sherpa-manager.source add duf HideThatBanner IncreaseTimeouts OLidarr nzbget OliveTin Par2turbo QDK OReadarr sherpa OSonarr TorrServer Unrar OWhisparr
+
+	if [[ $useropt_verbose = true ]]; then
+		[[ -n $a ]] && export ${a?}
+		/bin/sh "$local_pathfile" > >(/usr/bin/tee "$log_pathfile") 2>&1 &	# NOTE: `tee` buffers stdout here.		# squeezer-ignore
+		z=${PIPESTATUS[0]}													# Examine $PIPESTATUS after `tee` to get returncode of previous command: https://stackoverflow.com/questions/1221833/pipe-output-and-capture-exit-status-in-bash
+	else
+		[[ -n $a ]] && export ${a?}
+		/bin/sh "$local_pathfile" > "$log_pathfile" 2>&1 &
+	fi
+
+	[[ $r_nas_arch = aarch64 ]] && sleep 1
+	wait $!
 	z=$?
 
 	LogQpkgServiceResult
