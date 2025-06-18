@@ -9895,10 +9895,9 @@ _QPKG:reassign_()
 	# Remove the `storeid` assignment for the QPKG named in $qpkg_name.
 
 	# Inputs: (global)
-	#	$r_logs_path
 	#	$qpkg_name
+	#	$r_logs_path
 	#	$r_reassign_log_file
-	#	$useropt_verbose
 
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
@@ -9948,12 +9947,10 @@ _QPKG:download_()
 	# Download the QPKG named in $qpkg_name.
 
 	# Inputs: (global)
+	#	$qpkg_name
 	#	$r_download_log_file
 	#	$r_logs_path
 	#	$r_qpkg_download_path
-	#	$qpkg_name
-	#	$r_remote_filename
-	#	$useropt_verbose
 
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
@@ -10061,6 +10058,8 @@ _QPKG:install_()
 	#	$QPKGs_were_installed_name[]
 	#	$r_install_log_file
 	#	$r_logs_path
+	#	$r_nas_arch
+	#	$r_opkg_cmd
 	#	$useropt_debug
 	#	$useropt_verbose
 
@@ -10179,6 +10178,10 @@ _QPKG:reinstall_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_logs_path
+	#	$r_opkg_cmd
+	#	$r_reinstall_log_file
+	#	$useropt_debug
 
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
@@ -10300,6 +10303,9 @@ _QPKG:upgrade_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_logs_path
+	#	$r_upgrade_log_file
+	#	$useropt_debug
 
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
@@ -10383,6 +10389,9 @@ _QPKG:uninstall_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_logs_path
+	#	$r_uninstall_log_file
+	#	$useropt_debug
 
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
@@ -10465,6 +10474,10 @@ _QPKG:activate_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_activate_log_file
+	#	$r_logs_path
+	#	$r_qpkg_start_timeout_seconds
+	#	$useropt_debug
 
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
@@ -10507,7 +10520,7 @@ _QPKG:activate_()
 
 		FuncForkExit 4
 	elif [[ $useropt_debug = true ]]; then
-		[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
+		a+='DEBUG_QPKG=true '
 
 		Executer "${a}${service_pathfile} start" "$r_log_pathfile" log:failure-only
 		z=$?
@@ -10553,6 +10566,10 @@ _QPKG:reactivate_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_logs_path
+	#	$r_qpkg_restart_timeout_seconds
+	#	$r_reactivate_log_file
+	#	$useropt_debug
 
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
@@ -10595,7 +10612,7 @@ _QPKG:reactivate_()
 
 		FuncForkExit 4
 	elif [[ $useropt_debug = true ]]; then
-		[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
+		a+='DEBUG_QPKG=true '
 
 		Executer "${a}${service_pathfile} restart" "$r_log_pathfile" log:failure-only
 		z=$?
@@ -10632,6 +10649,10 @@ _QPKG:deactivate_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_deactivate_log_file
+	#	$r_logs_path
+	#	$r_qpkg_stop_timeout_seconds
+	#	$useropt_debug
 
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
@@ -10674,7 +10695,7 @@ _QPKG:deactivate_()
 
 		FuncForkExit 4
 	elif [[ $useropt_debug = true ]]; then
-		[[ $useropt_debug = true ]]	&& a+='DEBUG_QPKG=true '
+		a+='DEBUG_QPKG=true '
 
 		Executer "${a}${service_pathfile} stop" "$r_log_pathfile" log:failure-only
 		z=$?
@@ -10719,6 +10740,9 @@ _QPKG:enable_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_enable_log_file
+	#	$r_logs_path
+	#	$r_qpkg_enable_timeout_seconds
 
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
@@ -10771,6 +10795,9 @@ _QPKG:disable_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_disable_log_file
+	#	$r_logs_path
+	#	$r_qpkg_disable_timeout_seconds
 
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
@@ -10828,6 +10855,9 @@ _QPKG:enableau_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_enableau_log_file
+	#	$r_logs_path
+	#	$useropt_debug
 
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
@@ -10890,6 +10920,9 @@ _QPKG:disableau_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_disableau_log_file
+	#	$r_logs_path
+	#	$useropt_debug
 
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
@@ -10952,6 +10985,9 @@ _QPKG:backup_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_backup_log_file
+	#	$r_logs_path
+	#	$useropt_debug
 
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
@@ -11011,6 +11047,9 @@ _QPKG:restore_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_logs_path
+	#	$r_restore_log_file
+	#	$useropt_debug
 
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
@@ -11032,12 +11071,12 @@ _QPKG:restore_()
 		SaveActionResultToLog QPKG "$qpkg_name" restore '' sk 'restore is unsupported by this QPKG'
 		MarkActionForkAsSkipped
 		z=2
-	elif ! IsQpkgBackupExist; then
-		SaveActionResultToLog QPKG "$qpkg_name" restore '' sk 'backup file does not exist'
-		MarkActionForkAsSkipped
-		z=2
 	elif IsNtQpkgRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" restore '' sk "assigned to another repository, please 'reassign' it first"
+		MarkActionForkAsSkipped
+		z=2
+	elif ! IsQpkgBackupExist; then
+		SaveActionResultToLog QPKG "$qpkg_name" restore '' sk 'backup file does not exist'
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -11074,6 +11113,9 @@ _QPKG:clean_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_clean_log_file
+	#	$r_logs_path
+	#	$useropt_debug
 
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
@@ -11136,6 +11178,12 @@ _QPKG:sign_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_abort_actions_pathfile
+	#	$r_cert_db_pathfile
+	#	$r_qpkg_certificate
+	#	$r_qpkg_signature
+	#	$sqlite_cmd
+	#	$sqlite_pathfile
 
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
@@ -11145,6 +11193,7 @@ _QPKG:sign_()
 	FuncForkInit
 
 	local a=''
+	local -i retries=0
 	local -i z=0
 
 	DebugVar sqlite_cmd
@@ -11169,12 +11218,12 @@ _QPKG:sign_()
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=2
-	elif [[ ! -e $sqlite_pathfile ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sa "$(FormatFileName sqlite3) binary unavailable, no further signing will occur"
-		MarkActionForkAsSkippedAbort
-		z=3
 	elif [[ ! -e $r_cert_db_pathfile ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sa "$(GetOsName) QPKG certificate database unavailable, no further signing will occur"
+		MarkActionForkAsSkippedAbort
+		z=3
+	elif [[ ! -e $sqlite_pathfile ]]; then
+		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sa "$(FormatFileName sqlite3) binary unavailable, no further signing will occur"
 		MarkActionForkAsSkippedAbort
 		z=3
 	elif IsQpkgSigned; then
@@ -11228,6 +11277,10 @@ _QPKG:unsign_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_abort_actions_pathfile
+	#	$r_cert_db_pathfile
+	#	$sqlite_cmd
+	#	$sqlite_pathfile
 
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
@@ -11237,6 +11290,7 @@ _QPKG:unsign_()
 	FuncForkInit
 
 	local a=''
+	local -i retries=0
 	local -i z=0
 
 	DebugVar sqlite_cmd
@@ -11261,12 +11315,12 @@ _QPKG:unsign_()
 		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=2
-	elif [[ ! -e $sqlite_pathfile ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sa "$(FormatFileName sqlite3) binary unavailable, no further signing will occur"
-		MarkActionForkAsSkippedAbort
-		z=3
 	elif [[ ! -e $r_cert_db_pathfile ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sa "$(GetOsName) QPKG certificate database unavailable, no further unsigning will occur"
+		MarkActionForkAsSkippedAbort
+		z=3
+	elif [[ ! -e $sqlite_pathfile ]]; then
+		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sa "$(FormatFileName sqlite3) binary unavailable, no further signing will occur"
 		MarkActionForkAsSkippedAbort
 		z=3
 	elif IsNtQpkgSigned; then
@@ -11319,6 +11373,12 @@ _QPKG:status_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_gnu_timeout_cmd
+	#	$r_logs_path
+	#	$r_qpkg_status_check_timeout_seconds
+	#	$r_status_log_file
+	#	$useropt_debug
+	#	$useropt_verbose
 
 	# Outputs:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
