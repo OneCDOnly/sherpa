@@ -1,6 +1,7 @@
 Management:
 
-	* Add 'report' as an alternative CLI arg to 'show'.
+	* verb, noun, scope?
+		- `sherpa report status all`
 
 	* NAS arch telemetry?
 		- Once-per-day background request of an arch specific file from GitHub (as a release asset).

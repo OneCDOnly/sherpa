@@ -2891,14 +2891,14 @@ MatchVerb()
 		remove|rm|uninstall)
 			printf uninstall
 			;;
+		report|show|view)
+			printf show
+			;;
 		resign|re-sign)
 			printf resign
 			;;
 		s|status?(es))
 			printf status
-			;;
-		show|view)
-			printf show
 			;;
 		update|upgrade)
 			printf upgrade
