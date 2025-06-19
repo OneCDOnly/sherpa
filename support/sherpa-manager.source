@@ -1449,7 +1449,7 @@ AssignQpkgsToActions()
 #  22. uninstall independents
 #  23. "unsign" independents
 
-#  24. "sign" independents		(if possible, but don't 'skip-abort' if not)
+#  24. "sign" independents
 #  25. upgrade independents
 #  26. reinstall independents
 #  27. install independents
@@ -1462,31 +1462,29 @@ AssignQpkgsToActions()
 
 #  34. auxiliary packages (IPKs and PIPs) are managed here.
 
-#  35. "sign" independents		(if there are QPKGs remaining to be signed)
+#  35. "sign" optionals
+#  36. upgrade optionals
+#  37. reinstall optionals
+#  38. install optionals
+#  39. restore optionals
+#  40. enable-auto-update optionals
+#  41. clean optionals
+#  42. enable optionals
+#  43. restart/reactivate optionals
+#  44. start/activate optionals
 
-#  36. "sign" optionals
-#  37. upgrade optionals
-#  38. reinstall optionals
-#  39. install optionals
-#  40. restore optionals
-#  41. enable-auto-update optionals
-#  42. clean optionals
-#  43. enable optionals
-#  44. restart/reactivate optionals
-#  45. start/activate optionals
+#  45. "sign" dependents
+#  46. upgrade dependents
+#  47. reinstall dependents
+#  48. install dependents
+#  49. restore dependents
+#  50. enable-auto-update dependents
+#  51. clean dependents
+#  52. enable dependents
+#  53. restart/reactivate dependents
+#  54. start/activate dependents
 
-#  46. "sign" dependents
-#  47. upgrade dependents
-#  48. reinstall dependents
-#  49. install dependents
-#  50. restore dependents
-#  51. enable-auto-update dependents
-#  52. clean dependents
-#  53. enable dependents
-#  54. restart/reactivate dependents
-#  55. start/activate dependents
-
-#  56. unsign all 				(only QPKGs that failed to `install`)
+#  55. unsign all 				(only QPKGs that failed to `install`)
 
 ProcActions()
 	{
@@ -1567,14 +1565,7 @@ ProcActions()
 
 		for tier in "${r_package_tiers[@]}"; do
 			if [[ $tier != auxiliary ]]; then
-				if IsOsCanManageSignedPackages; then
-					if [[ $tier = independent ]]; then
-						IsQpkgEnabled Entware && ProcAction sign $tier QPKG '"sign"'
-					else
-						ProcAction sign $tier QPKG '"sign"'
-					fi
-				fi
-
+				IsOsCanManageSignedPackages && ProcAction sign $tier QPKG '"sign"'
 				ProcAction upgrade $tier QPKG upgrade
 				ProcAction reinstall $tier QPKG reinstall
 				ProcAction install $tier QPKG install
@@ -1604,16 +1595,11 @@ ProcActions()
 					PIPs:upgrade
 					PIPs:install
 				fi
-
-				if IsOsCanManageSignedPackages; then
-					QPKGs-ACsign-to.Exist Entware && QPKGs-ACsign-to:Add "$(GetQpkgsIsValidInstalled)"
-					ProcAction sign independent QPKG '"sign"'
-				fi
 			fi
 		done
 	fi
 
-	ProcAction unsign all QPKG unsign
+	IsOsCanManageSignedPackages && ProcAction unsign all QPKG unsign	# For QPKGs that failed to install.
 
 	if [[ $useropt_debug = true ]]; then
 		ListQPKGsActions
