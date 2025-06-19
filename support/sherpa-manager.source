@@ -471,6 +471,7 @@ IsCMDsOk()
 	IsCriticalFile /bin/mktemp || return
 	# Don't check for `/bin/more` because it's a very low-priority utility (non-essential).
 	IsCriticalFile /bin/ps || return
+	IsCriticalFile /usr/local/bin/python2 || return
 	IsCriticalFile /usr/bin/readlink || return
 	IsCriticalFile /usr/sbin/screen || return
 	# `/bin/sed` has already been called before arriving here.
@@ -13724,28 +13725,47 @@ IsNtQpkgEnabled()
 	# Outputs: (local)
 	#   $? = true/false
 
-	! IsQpkgEnabled "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}"
+	! IsQpkgEnabled "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}"
 
 	}
 
 IsQpkgSigned()
 	{
 
-	# SQL to check $qpkg_name has been signed in certificate database.
+	# SQL to check $qpkg_name has an entry in OS signed certificate database.
 
-	# TODO: Use Python2 modules for this instead of SQLite3 executable.
+	# Inputs: (local)
+	#   $1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
-	#	$qpkg_name
+	#	$qpkg_name (default for $1)
 
 	# Output: (local)
-	#	$? = 0 if $qpkg_name is signed, !0 if not.
+	#   $? = true/false
 
-	[[ -n $sqlite_cmd && -n $r_cert_db_pathfile && -e $r_cert_db_pathfile ]] || return
+	[[ -n $r_cert_db_pathfile && -e $r_cert_db_pathfile ]] || return
 
-	local a="BEGIN TRANSACTION; SELECT 1 FROM Certificate WHERE QpkgName = '$qpkg_name' LIMIT 1; COMMIT;"
+	local a=''
 
-	[[ $(eval "$sqlite_cmd" -readonly "$r_cert_db_pathfile" "\"$a\"") -eq 1 ]]
+	read -r -d '' a <<EOB
+import sqlite3, sys
+
+try:
+    sqliteConnection = sqlite3.connect('$r_cert_db_pathfile')
+
+    cursor = sqliteConnection.cursor()
+    sqlite_select_query = """SELECT 1 from Certificate WHERE QpkgName = '${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}'"""
+    cursor.execute(sqlite_select_query)
+    records = cursor.fetchall()
+    sys.exit(len(records) == 0)
+    cursor.close()
+
+finally:
+    if sqliteConnection:
+        sqliteConnection.close()
+EOB
+
+	/usr/local/bin/python2 -c "$a"
 
 	}
 
