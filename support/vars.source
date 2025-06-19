@@ -181,11 +181,11 @@ Squeeze()
 
 		buffer=$(sed '/squeezer-ignore/! s/[[:space:]]|[[:space:]]/|/g' <<< "$buffer")			# Remove whitespace before-and-after pipe, except for lines with 'squeezer-ignore' tag.
 
+		buffer=$(sed '/squeezer-ignore/! s/^[[:space:]]*//' <<< "$buffer")						# Remove line leading whitespace, except for lines with 'squeezer-ignore' tag.
+
 		# CAUTION: comment tags won't be seen beyond this point.
 
 		buffer=$(sed '/^#[[:space:]].*/d;/#$/d;s/[[:space:]]#[[:space:]].*//' <<< "$buffer")	# Remove comment lines and line comments.
-
-		buffer=$(sed 's/^[[:space:]]*//' <<< "$buffer")											# Remove line leading whitespace.
 		buffer=$(sed 's/[[:space:]]*$//' <<< "$buffer")											# Remove line trailing whitespace.
 		buffer=$(sed '/^$/d' <<< "$buffer")														# Remove empty lines.
 

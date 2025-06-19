@@ -471,6 +471,7 @@ IsCMDsOk()
 	IsCriticalFile /bin/mktemp || return
 	# Don't check for `/bin/more` because it's a very low-priority utility (non-essential).
 	IsCriticalFile /bin/ps || return
+	IsCriticalFile /usr/local/bin/python2 || return
 	IsCriticalFile /usr/bin/readlink || return
 	IsCriticalFile /usr/sbin/screen || return
 	# `/bin/sed` has already been called before arriving here.
@@ -853,16 +854,6 @@ DebugLogEnv()
 	DebugScript ok 'packages epoch' "$(ConvertAsSmartDate "${r_packages_epoch:-not loaded}")"
 	DebugScript ok 'logs path' "$r_logs_path"
 
-	if IsOsCanManageSignedPackages; then
-		FindSQLiteBinary
-
-		if [[ -e $sqlite_pathfile ]]; then
-			DebugScript ok "'sqlite3' binary" "$sqlite_pathfile"
-		else
-			DebugScript warning "'sqlite3' binary" "$sqlite_pathfile (unavailable)"
-		fi
-	fi
-
 	if IsOsCanUnofficialPackages; then
 		if IsOsAllowUnofficialPackages; then
 			DebugQpkg detect 'allow unofficial' yes
@@ -959,14 +950,10 @@ DebugLogEnv()
 CheckIfSelfSigned()
 	{
 
-	if IsOsCanManageSignedPackages; then
-		FindSQLiteBinary
-
-		if IsOsRequireSignedPackages && IsNtQpkgSigned sherpa; then
-			[[ $title_art_shown = true ]] && Display
-			ShowAsWarn "$(ShowAsTitleName) is unsigned, and $(GetOsName) is presently configured to require all packages to be signed."
-			ShowAsWarn "Please either self-sign $(ShowAsTitleName) with 'sherpa resign self', or allow unsigned QPKGs in your $(GetOsName) App Center"
-		fi
+	if IsOsRequireSignedPackages && IsNtQpkgSigned sherpa; then
+		[[ $title_art_shown = true ]] && Display
+		ShowAsWarn "$(ShowAsTitleName) is unsigned, and $(GetOsName) is presently configured to require all packages to be signed."
+		ShowAsWarn "Please either self-sign $(ShowAsTitleName) with 'sherpa resign self', or allow unsigned QPKGs in your $(GetOsName) App Center"
 	fi
 
 	}
@@ -1462,7 +1449,7 @@ AssignQpkgsToActions()
 #  22. uninstall independents
 #  23. "unsign" independents
 
-#  24. "sign" independents		(if possible, but don't 'skip-abort' if not)
+#  24. "sign" independents
 #  25. upgrade independents
 #  26. reinstall independents
 #  27. install independents
@@ -1475,31 +1462,29 @@ AssignQpkgsToActions()
 
 #  34. auxiliary packages (IPKs and PIPs) are managed here.
 
-#  35. "sign" independents		(if there are QPKGs remaining to be signed)
+#  35. "sign" optionals
+#  36. upgrade optionals
+#  37. reinstall optionals
+#  38. install optionals
+#  39. restore optionals
+#  40. enable-auto-update optionals
+#  41. clean optionals
+#  42. enable optionals
+#  43. restart/reactivate optionals
+#  44. start/activate optionals
 
-#  36. "sign" optionals
-#  37. upgrade optionals
-#  38. reinstall optionals
-#  39. install optionals
-#  40. restore optionals
-#  41. enable-auto-update optionals
-#  42. clean optionals
-#  43. enable optionals
-#  44. restart/reactivate optionals
-#  45. start/activate optionals
+#  45. "sign" dependents
+#  46. upgrade dependents
+#  47. reinstall dependents
+#  48. install dependents
+#  49. restore dependents
+#  50. enable-auto-update dependents
+#  51. clean dependents
+#  52. enable dependents
+#  53. restart/reactivate dependents
+#  54. start/activate dependents
 
-#  46. "sign" dependents
-#  47. upgrade dependents
-#  48. reinstall dependents
-#  49. install dependents
-#  50. restore dependents
-#  51. enable-auto-update dependents
-#  52. clean dependents
-#  53. enable dependents
-#  54. restart/reactivate dependents
-#  55. start/activate dependents
-
-#  56. unsign all 				(only QPKGs that failed to `install`)
+#  55. unsign all 				(only QPKGs that failed to `install`)
 
 ProcActions()
 	{
@@ -1580,14 +1565,7 @@ ProcActions()
 
 		for tier in "${r_package_tiers[@]}"; do
 			if [[ $tier != auxiliary ]]; then
-				if IsOsCanManageSignedPackages; then
-					if [[ $tier = independent ]]; then
-						IsQpkgEnabled Entware && ProcAction sign $tier QPKG '"sign"'
-					else
-						ProcAction sign $tier QPKG '"sign"'
-					fi
-				fi
-
+				IsOsCanManageSignedPackages && ProcAction sign $tier QPKG '"sign"'
 				ProcAction upgrade $tier QPKG upgrade
 				ProcAction reinstall $tier QPKG reinstall
 				ProcAction install $tier QPKG install
@@ -1617,16 +1595,11 @@ ProcActions()
 					PIPs:upgrade
 					PIPs:install
 				fi
-
-				if IsOsCanManageSignedPackages; then
-					QPKGs-ACsign-to.Exist Entware && QPKGs-ACsign-to:Add "$(GetQpkgsIsValidInstalled)"
-					ProcAction sign independent QPKG '"sign"'
-				fi
 			fi
 		done
 	fi
 
-	ProcAction unsign all QPKG unsign
+	IsOsCanManageSignedPackages && ProcAction unsign all QPKG unsign	# For QPKGs that failed to install.
 
 	if [[ $useropt_debug = true ]]; then
 		ListQPKGsActions
@@ -1698,10 +1671,10 @@ ProcAction()
 	local msg2_value=''
 	local package=''
 	local -i package_index=0
-	local -r r_action=${1:?${FUNCNAME[0]}'()': $e_noact}
-	local -r r_action_intransitive_msg=${4:?${FUNCNAME[0]}'()': $e_noact message}
-	local -r r_package_type=${3:?${FUNCNAME[0]}'()': $e_nopty}
-	local -r r_tier=${2:?${FUNCNAME[0]}'()': $e_notir}
+	local -r r_action=${1:?${FUNCNAME[0]}(): $e_noact}
+	local -r r_action_intransitive_msg=${4:?${FUNCNAME[0]}(): $e_noact message}
+	local -r r_package_type=${3:?${FUNCNAME[0]}(): $e_nopty}
+	local -r r_tier=${2:?${FUNCNAME[0]}(): $e_notir}
 	local re=''
 	local state=''
 	local target_object_name=''
@@ -3435,7 +3408,7 @@ Quiz()
 	# Outputs: (local)
 	#   $? = 0 if "y", 1 if anything else
 
-	local a=${1:?${FUNCNAME[0]}'()': $e_noprm}
+	local a=${1:?${FUNCNAME[0]}(): $e_noprm}
 	local b=''
 
 	ShowAsQuiz "$a"
@@ -4236,6 +4209,7 @@ _ExecOneActionWithManyForks_()
 
 			CreatePidFile
 			$a &
+			[[ $r_nas_arch = aarch64 ]] && sleep .1
 			WritePidFile "$!"
 		)
 
@@ -4461,8 +4435,8 @@ SaveSetting()
 	# 	$2 = value
 	# 	$3 (optional) = 'announce' - display on-screen when setting has been saved.
 
-	local a=${1:?${FUNCNAME[0]}'()': $e_nonam}
-	local b=$(Lowercase "${2:?${FUNCNAME[0]}'()': $e_noval}")
+	local a=${1:?${FUNCNAME[0]}(): $e_nonam}
+	local b=$(Lowercase "${2:?${FUNCNAME[0]}(): $e_noval}")
 
 	case $b in
 		true|false)
@@ -4487,8 +4461,8 @@ LoadSetting()
 	# Outputs: (local)
 	#   stdout = setting value
 
-	local a=${1:?${FUNCNAME[0]}'()': $e_nonam}
-	local b=$(Lowercase "${2:?${FUNCNAME[0]}'()': $e_noval}")
+	local a=${1:?${FUNCNAME[0]}(): $e_nonam}
+	local b=$(Lowercase "${2:?${FUNCNAME[0]}(): $e_noval}")
 
 	if [[ ! -e /sbin/getcfg ]]; then
 		printf '%s' "$b"
@@ -4507,7 +4481,7 @@ DeleteSetting()
 	# Inputs: (local)
 	#   $1 = name
 
-	local a=${1:?${FUNCNAME[0]}'()': $e_nonam}
+	local a=${1:?${FUNCNAME[0]}(): $e_nonam}
 
 	/sbin/setcfg -e sherpa "$a" -f /etc/config/qpkg.conf
 
@@ -4696,7 +4670,7 @@ _GeneratePacksReportDataLine_()
 		local ${a}_msg=''
 	done
 
-	name=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}
+	name=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
 	app_ver=$(GetQpkgDbApplVer)
 	description=$(Capitalise "$(GetQpkgDbDesc "$name")")
 	notes=$(GetQpkgDbNote)
@@ -7068,6 +7042,7 @@ UpdateActionForkProgress()
 	#	$skip_abort_count
 	#	$skip_count
 	#	$skip_error_count
+	#	$total_count
 	#	$useropt_verbose
 	#	$work_count
 
@@ -9377,7 +9352,7 @@ GetUserDefVol()
 # #GetThisBinPath()
 # 	{
 #
-# 	[[ -n ${1:?${FUNCNAME[0]}'()': undefined binary} ]] && command -v "$1" 2>&1
+# 	[[ -n ${1:?${FUNCNAME[0]}(): undefined binary} ]] && command -v "$1" 2>&1
 #
 # 	}
 
@@ -9845,12 +9820,12 @@ SaveActionResultToLog()
 
 	local -r r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
 		local var_safe_name=${r_var_name//[.-]/_}; var_safe_name=${var_safe_name//:/_}
-	local -r r_package_type=${1:?${FUNCNAME[0]}'()': $e_nopty}
-	local -r r_name=${2:?${FUNCNAME[0]}'()': $e_nopnm}
-	local -r r_action=${3:?${FUNCNAME[0]}'()': $e_noact}
+	local -r r_package_type=${1:?${FUNCNAME[0]}(): $e_nopty}
+	local -r r_name=${2:?${FUNCNAME[0]}(): $e_nopnm}
+	local -r r_action=${3:?${FUNCNAME[0]}(): $e_noact}
 	local -r r_qty=${4:-1}
 	local -r r_clean_action=${r_action//\"/}
-	local -r r_result_code=${5:?${FUNCNAME[0]}'()': $e_nores}
+	local -r r_result_code=${5:?${FUNCNAME[0]}(): $e_nores}
 	local -r r_reason=${6:-}
 	local -r r_starttime=$(ConvertNanosecondsToMilliseconds "${!var_safe_name}")
 	local -r r_duration=$(CalcAmountDiff "$r_starttime" "$(ConvertNowToMilliseconds)")
@@ -9893,10 +9868,9 @@ _QPKG:reassign_()
 	# Remove the `storeid` assignment for the QPKG named in $qpkg_name.
 
 	# Inputs: (global)
-	#	$r_logs_path
 	#	$qpkg_name
+	#	$r_logs_path
 	#	$r_reassign_log_file
-	#	$useropt_verbose
 
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
@@ -9946,12 +9920,10 @@ _QPKG:download_()
 	# Download the QPKG named in $qpkg_name.
 
 	# Inputs: (global)
+	#	$qpkg_name
 	#	$r_download_log_file
 	#	$r_logs_path
 	#	$r_qpkg_download_path
-	#	$qpkg_name
-	#	$r_remote_filename
-	#	$useropt_verbose
 
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
@@ -10059,6 +10031,8 @@ _QPKG:install_()
 	#	$QPKGs_were_installed_name[]
 	#	$r_install_log_file
 	#	$r_logs_path
+	#	$r_nas_arch
+	#	$r_opkg_cmd
 	#	$useropt_debug
 	#	$useropt_verbose
 
@@ -10177,6 +10151,10 @@ _QPKG:reinstall_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_logs_path
+	#	$r_opkg_cmd
+	#	$r_reinstall_log_file
+	#	$useropt_debug
 
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
@@ -10298,6 +10276,9 @@ _QPKG:upgrade_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_logs_path
+	#	$r_upgrade_log_file
+	#	$useropt_debug
 
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
@@ -10381,6 +10362,9 @@ _QPKG:uninstall_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_logs_path
+	#	$r_uninstall_log_file
+	#	$useropt_debug
 
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
@@ -10463,6 +10447,10 @@ _QPKG:activate_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_activate_log_file
+	#	$r_logs_path
+	#	$r_qpkg_start_timeout_seconds
+	#	$useropt_debug
 
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
@@ -10505,7 +10493,7 @@ _QPKG:activate_()
 
 		FuncForkExit 4
 	elif [[ $useropt_debug = true ]]; then
-		[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
+		a+='DEBUG_QPKG=true '
 
 		Executer "${a}${service_pathfile} start" "$r_log_pathfile" log:failure-only
 		z=$?
@@ -10551,6 +10539,10 @@ _QPKG:reactivate_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_logs_path
+	#	$r_qpkg_restart_timeout_seconds
+	#	$r_reactivate_log_file
+	#	$useropt_debug
 
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
@@ -10593,7 +10585,7 @@ _QPKG:reactivate_()
 
 		FuncForkExit 4
 	elif [[ $useropt_debug = true ]]; then
-		[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
+		a+='DEBUG_QPKG=true '
 
 		Executer "${a}${service_pathfile} restart" "$r_log_pathfile" log:failure-only
 		z=$?
@@ -10630,6 +10622,10 @@ _QPKG:deactivate_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_deactivate_log_file
+	#	$r_logs_path
+	#	$r_qpkg_stop_timeout_seconds
+	#	$useropt_debug
 
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
@@ -10672,7 +10668,7 @@ _QPKG:deactivate_()
 
 		FuncForkExit 4
 	elif [[ $useropt_debug = true ]]; then
-		[[ $useropt_debug = true ]]	&& a+='DEBUG_QPKG=true '
+		a+='DEBUG_QPKG=true '
 
 		Executer "${a}${service_pathfile} stop" "$r_log_pathfile" log:failure-only
 		z=$?
@@ -10717,6 +10713,9 @@ _QPKG:enable_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_enable_log_file
+	#	$r_logs_path
+	#	$r_qpkg_enable_timeout_seconds
 
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
@@ -10769,6 +10768,9 @@ _QPKG:disable_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_disable_log_file
+	#	$r_logs_path
+	#	$r_qpkg_disable_timeout_seconds
 
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
@@ -10826,6 +10828,9 @@ _QPKG:enableau_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_enableau_log_file
+	#	$r_logs_path
+	#	$useropt_debug
 
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
@@ -10888,6 +10893,9 @@ _QPKG:disableau_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_disableau_log_file
+	#	$r_logs_path
+	#	$useropt_debug
 
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
@@ -10950,6 +10958,9 @@ _QPKG:backup_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_backup_log_file
+	#	$r_logs_path
+	#	$useropt_debug
 
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
@@ -11009,6 +11020,9 @@ _QPKG:restore_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_logs_path
+	#	$r_restore_log_file
+	#	$useropt_debug
 
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
@@ -11030,12 +11044,12 @@ _QPKG:restore_()
 		SaveActionResultToLog QPKG "$qpkg_name" restore '' sk 'restore is unsupported by this QPKG'
 		MarkActionForkAsSkipped
 		z=2
-	elif ! IsQpkgBackupExist; then
-		SaveActionResultToLog QPKG "$qpkg_name" restore '' sk 'backup file does not exist'
-		MarkActionForkAsSkipped
-		z=2
 	elif IsNtQpkgRepoSelfManaged; then
 		SaveActionResultToLog QPKG "$qpkg_name" restore '' sk "assigned to another repository, please 'reassign' it first"
+		MarkActionForkAsSkipped
+		z=2
+	elif ! IsQpkgBackupExist; then
+		SaveActionResultToLog QPKG "$qpkg_name" restore '' sk 'backup file does not exist'
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -11072,6 +11086,9 @@ _QPKG:clean_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_clean_log_file
+	#	$r_logs_path
+	#	$useropt_debug
 
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
@@ -11134,6 +11151,10 @@ _QPKG:sign_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_abort_actions_pathfile
+	#	$r_cert_db_pathfile
+	#	$r_qpkg_certificate
+	#	$r_qpkg_signature
 
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
@@ -11143,9 +11164,9 @@ _QPKG:sign_()
 	FuncForkInit
 
 	local a=''
+	local b=''
+	local -i retries=0
 	local -i z=0
-
-	DebugVar sqlite_cmd
 
 	if ! IsOsCanManageSignedPackages; then
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sk 'not required: firmware < 4.3.5'
@@ -11167,10 +11188,6 @@ _QPKG:sign_()
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=2
-	elif [[ ! -e $sqlite_pathfile ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sa "$(FormatFileName sqlite3) binary unavailable, no further signing will occur"
-		MarkActionForkAsSkippedAbort
-		z=3
 	elif [[ ! -e $r_cert_db_pathfile ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sa "$(GetOsName) QPKG certificate database unavailable, no further signing will occur"
 		MarkActionForkAsSkippedAbort
@@ -11185,10 +11202,28 @@ _QPKG:sign_()
 
 	DebugAsProc "\"signing\" $(FormatPackageName)"
 
-	a="BEGIN TRANSACTION; INSERT INTO Certificate (Type,QpkgName,Cert,DigitalSignature) VALUES ('qpkg','$qpkg_name','$r_qpkg_certificate','$r_qpkg_signature'); COMMIT;"
+	a="INSERT INTO Certificate (Type,QpkgName,Cert,DigitalSignature) VALUES ('qpkg','$qpkg_name','$r_qpkg_certificate','$r_qpkg_signature')"
+
+	read -r -d '' b <<EOB
+import sqlite3, sys
+
+try:
+    sqliteConnection = sqlite3.connect('$r_cert_db_pathfile')			# squeezer-ignore
+
+    cursor = sqliteConnection.cursor()									# squeezer-ignore
+    sqlite_add_query = """$a"""											# squeezer-ignore
+    cursor.execute(sqlite_add_query)									# squeezer-ignore
+    sqliteConnection.commit()											# squeezer-ignore
+    cursor.close()														# squeezer-ignore
+    sys.exit()															# squeezer-ignore
+
+finally:
+    if sqliteConnection:												# squeezer-ignore
+        sqliteConnection.close()										# squeezer-ignore
+EOB
 
 	for ((retries=0; retries<10; retries++)); do
-		eval "$sqlite_cmd" "$r_cert_db_pathfile" "\"$a\""
+		/usr/local/bin/python2 -c "$b"
 		z=$?
 
 		case $z in
@@ -11226,6 +11261,8 @@ _QPKG:unsign_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_abort_actions_pathfile
+	#	$r_cert_db_pathfile
 
 	# Outputs: (local)
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
@@ -11235,9 +11272,9 @@ _QPKG:unsign_()
 	FuncForkInit
 
 	local a=''
+	local b=''
+	local -i retries=0
 	local -i z=0
-
-	DebugVar sqlite_cmd
 
 	if ! IsOsCanManageSignedPackages; then
 		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sk 'not required: firmware < 4.3.5'
@@ -11259,10 +11296,6 @@ _QPKG:unsign_()
 		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=2
-	elif [[ ! -e $sqlite_pathfile ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sa "$(FormatFileName sqlite3) binary unavailable, no further signing will occur"
-		MarkActionForkAsSkippedAbort
-		z=3
 	elif [[ ! -e $r_cert_db_pathfile ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sa "$(GetOsName) QPKG certificate database unavailable, no further unsigning will occur"
 		MarkActionForkAsSkippedAbort
@@ -11277,10 +11310,28 @@ _QPKG:unsign_()
 
 	DebugAsProc "\"unsigning\" $(FormatPackageName)"
 
-	a="BEGIN TRANSACTION; DELETE FROM Certificate WHERE QpkgName = '$qpkg_name'; COMMIT;"
+	a="DELETE from Certificate WHERE QpkgName = '$qpkg_name'"
+
+	read -r -d '' b <<EOB
+import sqlite3, sys
+
+try:
+    sqliteConnection = sqlite3.connect('$r_cert_db_pathfile')			# squeezer-ignore
+
+    cursor = sqliteConnection.cursor()									# squeezer-ignore
+    sqlite_delete_query = """$a"""										# squeezer-ignore
+    cursor.execute(sqlite_delete_query)									# squeezer-ignore
+    sqliteConnection.commit()											# squeezer-ignore
+    cursor.close()														# squeezer-ignore
+    sys.exit()															# squeezer-ignore
+
+finally:
+    if sqliteConnection:												# squeezer-ignore
+        sqliteConnection.close()										# squeezer-ignore
+EOB
 
 	for ((retries=0; retries<10; retries++)); do
-		eval "$sqlite_cmd" "$r_cert_db_pathfile" "\"$a\""
+		/usr/local/bin/python2 -c "$b"
 		z=$?
 
 		case $z in
@@ -11317,6 +11368,12 @@ _QPKG:status_()
 
 	# Inputs: (global)
 	#	$qpkg_name
+	#	$r_gnu_timeout_cmd
+	#	$r_logs_path
+	#	$r_qpkg_status_check_timeout_seconds
+	#	$r_status_log_file
+	#	$useropt_debug
+	#	$useropt_verbose
 
 	# Outputs:
 	#   $? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
@@ -11454,7 +11511,7 @@ GetQpkgInstalledPath()
 	#   stdout = package installation date.
 	#   $? = 0 (found), 250 (not-found).
 
-	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}" Install_Path -d undefined -f /etc/config/qpkg.conf
+	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}" Install_Path -d undefined -f /etc/config/qpkg.conf
 
 	}
 
@@ -11471,7 +11528,7 @@ GetQpkgServicePathFile()
 	#   stdout = service-script pathfile
 	#   $? = 0 if found, 250 if not.
 
-	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}" Shell -d undefined -f /etc/config/qpkg.conf
+	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}" Shell -d undefined -f /etc/config/qpkg.conf
 
 	}
 
@@ -11547,7 +11604,7 @@ GetQpkgDbVer()
 # 		return 0
 # 	fi
 
-	a=${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}
+	a=${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}
 
 	if [[ -n $a ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
@@ -11575,7 +11632,7 @@ GetQpkgInstalledVer()
 	#   stdout = package version
 	#   $? = 0 if found, 250 if not.
 
-	/sbin/getcfg "${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}" Version -d undefined -f /etc/config/qpkg.conf
+	/sbin/getcfg "${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}" Version -d undefined -f /etc/config/qpkg.conf
 
 	}
 
@@ -11594,7 +11651,7 @@ GetQpkgInstalledStoreID()
 	#   stdout = package store ID
 	#   $? = 0 if found, 250 if not.
 
-	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}" store -d undefined -f /etc/config/qpkg.conf
+	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}" store -d undefined -f /etc/config/qpkg.conf
 
 	}
 
@@ -11613,7 +11670,7 @@ GetQpkgInstalledDate()
 	#   stdout = package installation date
 	#   $? = 0 if found, 1 if QPKG name unspecified, 250 if not found
 
-	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}" date -d undefined -f /etc/config/qpkg.conf
+	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}" date -d undefined -f /etc/config/qpkg.conf
 
 	}
 
@@ -11630,7 +11687,7 @@ GetQpkgInstalledOriginalPath()
 	#   stdout = the original installation path of this QPKG (even if it was migrated to another volume).
 	#   $? = 0 if successful, 1 if failed
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
 	local -i i=0
 
 	if [[ ${#QPKGs_were_installed_name[@]} -gt 0 ]]; then
@@ -11865,7 +11922,7 @@ GetQpkgDbAuthor()
 	#   stdout = QPKG author (first package found).
 	#   $? = 0 (found), !0 (not-found)
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
 	local -i i=0
 
 	for i in "${!r_qpkg_name[@]}"; do
@@ -11894,7 +11951,7 @@ GetQpkgAuthor()
 	# Outputs: (local)
 	#   stdout = installed QPKG author.
 
-	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}" Author -f /etc/config/qpkg.conf
+	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}" Author -f /etc/config/qpkg.conf
 
 	}
 
@@ -11913,7 +11970,7 @@ GetQpkgAuthor()
 # 	local -i i=0
 #
 # 	for i in "${!r_qpkg_name[@]}"; do
-# 		[[ ${r_qpkg_name[$i]} = "${1:?${FUNCNAME[0]}'()': $e_nopnm}" ]] || continue
+# 		[[ ${r_qpkg_name[$i]} = "${1:?${FUNCNAME[0]}(): $e_nopnm}" ]] || continue
 # 		printf '%s' "${r_qpkg_author_email[$i]}"
 #
 # 		return 0
@@ -11938,7 +11995,7 @@ GetQpkgAuthor()
 # 	local -i i=0
 #
 # 	for i in "${!r_qpkg_name[@]}"; do
-# 		[[ ${r_qpkg_name[$i]} = "${1:?${FUNCNAME[0]}'()': $e_nopnm}" ]] || continue
+# 		[[ ${r_qpkg_name[$i]} = "${1:?${FUNCNAME[0]}(): $e_nopnm}" ]] || continue
 # 		printf '%s' "${r_qpkg_appl_author[$i]}"
 #
 # 		return 0
@@ -11963,7 +12020,7 @@ GetQpkgAuthor()
 # 	local -i i=0
 #
 # 	for i in "${!r_qpkg_name[@]}"; do
-# 		[[ ${r_qpkg_name[$i]} = "${1:?${FUNCNAME[0]}'()': $e_nopnm}" ]] || continue
+# 		[[ ${r_qpkg_name[$i]} = "${1:?${FUNCNAME[0]}(): $e_nopnm}" ]] || continue
 # 		printf '%s' "${r_qpkg_appl_author_email[$i]}"
 #
 # 		return 0
@@ -12377,7 +12434,7 @@ GetQpkgServiceAction()
 	#   $stdout = previous action requested.
 	#   $? = 0 (found), !0 (not-found)
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
 	local b=''
 	[[ -e $r_qpkg_service_results_path/$a.action ]] && b=$(< $r_qpkg_service_results_path/${a}.action)
 
@@ -12402,7 +12459,7 @@ GetQpkgServiceResult()
 	#   $stdout = last known package service status.
 	#   $? = 0 (found), !0 (not-found)
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
 	local b=''
 	[[ -e $r_qpkg_service_results_path/$a.result ]] && b=$(< $r_qpkg_service_results_path/${a}.result)
 
@@ -12606,7 +12663,7 @@ IsCriticalFile()
 	# Outputs: (local)
 	#   $? = 0 (exists) or 1 (not exists)
 
-	[[ -n ${1:?${FUNCNAME[0]}'()': $e_nopfi} ]] || exit
+	[[ -n ${1:?${FUNCNAME[0]}(): $e_nopfi} ]] || exit
 
 	local a=${1%% *}		# Extract first word-group.
 
@@ -12629,7 +12686,7 @@ IsNtCriticalFile()
 	# Outputs: (local)
 	#   $? = 0 (not exists) or 1 (exists)
 
-	! IsCriticalFile "${1:?${FUNCNAME[0]}'()': $e_nopfi}"
+	! IsCriticalFile "${1:?${FUNCNAME[0]}(): $e_nopfi}"
 
 	}
 
@@ -12642,7 +12699,7 @@ IsFile()
 	# Outputs: (local)
 	#   $? = 0 (exists and is non-zero bytes) or 1 (not exists or is zero bytes)
 
-	[[ -n ${1:?${FUNCNAME[0]}'()': $e_nopfi} ]] || exit
+	[[ -n ${1:?${FUNCNAME[0]}(): $e_nopfi} ]] || exit
 
 	local a=${1%% *}		# Extract first word-group.
 
@@ -12659,7 +12716,7 @@ IsNtFile()
 	# Outputs: (local)
 	#   $? = 0 (not exists or is zero bytes) or 1 (exists and is non-zero bytes)
 
-	! IsFile "${1:?${FUNCNAME[0]}'()': $e_nopfi}"
+	! IsFile "${1:?${FUNCNAME[0]}(): $e_nopfi}"
 
 	}
 
@@ -13046,7 +13103,7 @@ IsQpkgRepoSelfManaged()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=$(GetQpkgInstalledStoreID "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}")
+	local a=$(GetQpkgInstalledStoreID "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}")
 
 	[[ -z $a || $a = undefined || $a = sherpa ]]
 
@@ -13066,7 +13123,7 @@ IsNtQpkgRepoSelfManaged()
 	# Outputs: (local)
 	#   $? = true/false
 
-	! IsQpkgRepoSelfManaged "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}"
+	! IsQpkgRepoSelfManaged "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}"
 
 	}
 
@@ -13085,7 +13142,7 @@ IsQpkgBackupExist()
 	# Outputs: (local)
 	#   $? = true/false
 
-	[[ -e $r_qpkg_bu_path/${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}.config.tar.gz ]]
+	[[ -e $r_qpkg_bu_path/${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}.config.tar.gz ]]
 
 	}
 
@@ -13170,7 +13227,7 @@ IsQpkgDbOptional()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
 	local -i i=0
 	local re=\\b${a}\\b
 
@@ -13197,7 +13254,7 @@ IsQpkgDbArchOK()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=$(GetQpkgDbURL "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}")
+	local a=$(GetQpkgDbURL "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}")
 
 	[[ -n $a && $a != none ]]
 
@@ -13218,7 +13275,7 @@ IsQpkgDbMinRAMOk()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=$(GetQpkgDbMinRAM "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}")
+	local a=$(GetQpkgDbMinRAM "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}")
 
 	[[ -n $a ]] && [[ $a = none || $r_nas_ram_kb -ge $a ]]
 
@@ -13239,7 +13296,7 @@ IsQpkgDbMinOSVerOk()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=$(GetQpkgDbMinOSVer "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}")
+	local a=$(GetQpkgDbMinOSVer "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}")
 
 	SetOsFirmwareVer
 
@@ -13262,7 +13319,7 @@ IsQpkgDbMaxOSVerOk()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=$(GetQpkgDbMaxOSVer "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}")
+	local a=$(GetQpkgDbMaxOSVer "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}")
 
 	SetOsFirmwareVer
 
@@ -13323,7 +13380,7 @@ IsQpkgDbCanRestartToUpdate()
 	# Outputs: (local)
 	#   $? = 0 (true), !0 (false) (first package found).
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
 	local -i i=0
 
 	for i in "${!r_qpkg_name[@]}"; do
@@ -13349,7 +13406,7 @@ IsQpkgDbCanClean()
 	# Outputs: (local)
 	#   $? = 0 (true), 1 (false) (first package found).
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
 	local -i i=0
 
 	for i in "${!r_qpkg_name[@]}"; do
@@ -13451,7 +13508,7 @@ IsQpkgDbWillLog()
 	local -i i=0
 
 	for i in "${!r_qpkg_name[@]}"; do
-		[[ ${r_qpkg_name[$i]} = "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}" ]] || continue
+		[[ ${r_qpkg_name[$i]} = "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}" ]] || continue
 		${r_qpkg_will_log[$i]} && return 0 || break
 	done
 
@@ -13473,7 +13530,7 @@ IsQpkgAutoUpdate()
 	# Outputs: (local)
 	#   $? = true/false
 
-	[[ $(/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}" Auto_Update -u -f /etc/config/qpkg.conf) = TRUE ]]
+	[[ $(/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}" Auto_Update -u -f /etc/config/qpkg.conf) = TRUE ]]
 
 	}
 
@@ -13489,7 +13546,7 @@ IsQpkgAuthorOk()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
 
 	[[ $(GetQpkgDbAuthor "$a") = "$(GetQpkgAuthor "$a")" ]]
 
@@ -13507,7 +13564,7 @@ IsNtQpkgAuthorOk()
 	# Outputs: (local)
 	#   $? = true/false
 
-	! IsQpkgAuthorOk "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}"
+	! IsQpkgAuthorOk "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}"
 
 	}
 
@@ -13525,7 +13582,7 @@ IsValidQpkgInstalled()
 	# Outputs: (local)
 	#   $? = true/false
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
 
 	IsQpkgInstalled "$a" && IsQpkgAuthorOk "$a"
 
@@ -13543,7 +13600,7 @@ IsNtValidQpkgInstalled()
 	# Outputs: (local)
 	#   $? = true/false
 
-	! IsValidQpkgInstalled "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}"
+	! IsValidQpkgInstalled "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}"
 
 	}
 
@@ -13562,7 +13619,7 @@ IsQpkgInstalled()
 	#   $? = true/false
 
 	# shellcheck disable=2076
-	[[ "$(< /etc/config/qpkg.conf)" =~ "[${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}]" ]]
+	[[ "$(< /etc/config/qpkg.conf)" =~ "[${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}]" ]]
 
 	}
 
@@ -13578,7 +13635,7 @@ IsNtQpkgInstalled()
 	# Outputs: (local)
 	#   $? = true/false
 
-	! IsQpkgInstalled "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}"
+	! IsQpkgInstalled "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}"
 
 	}
 
@@ -13594,7 +13651,7 @@ IsQpkgMissing()
 	# Outputs: (local)
 	#   $? = true/false.
 
-	local a=$(GetQpkgInstalledPath "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}")
+	local a=$(GetQpkgInstalledPath "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}")
 
 	[[ $a != undefined && ! -d $a ]]
 
@@ -13612,7 +13669,7 @@ IsQpkgComplete()
 	# Outputs: (local)
 	#   $? = true/false.
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
 
 	[[ $(/sbin/getcfg "$a" Status -d undefined -f /etc/config/qpkg.conf) = complete ]] && [[ $(/sbin/getcfg "$a" Incomplete_Conf -d undefined -f /etc/config/qpkg.conf) != 1 ]]
 
@@ -13630,7 +13687,7 @@ IsNtQpkgComplete()
 	# Outputs: (local)
 	#   $? = true/false
 
-	! IsQpkgComplete "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}"
+	! IsQpkgComplete "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}"
 
 	}
 
@@ -13646,7 +13703,7 @@ IsQpkgEnabled()
 	# Outputs: (local)
 	#   $? = true/false
 
-	[[ $(/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}" Enable -u -d undefined -f /etc/config/qpkg.conf) = TRUE ]]
+	[[ $(/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}" Enable -u -d undefined -f /etc/config/qpkg.conf) = TRUE ]]
 
 	}
 
@@ -13662,35 +13719,55 @@ IsNtQpkgEnabled()
 	# Outputs: (local)
 	#   $? = true/false
 
-	! IsQpkgEnabled "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}"
+	! IsQpkgEnabled "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}"
 
 	}
 
 IsQpkgSigned()
 	{
 
-	# SQL to check $qpkg_name has been signed in certificate database.
+	# SQL to check $qpkg_name has an entry in OS signed certificate database.
 
-	# TODO: Use Python2 modules for this instead of SQLite3 executable.
+	# Inputs: (local)
+	#   $1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
-	#	$qpkg_name
+	#	$qpkg_name (default for $1)
 
 	# Output: (local)
-	#	$? = 0 if $qpkg_name is signed, !0 if not.
+	#   $? = true/false
 
-	[[ -n $sqlite_cmd && -n $r_cert_db_pathfile && -e $r_cert_db_pathfile ]] || return
+	[[ -n $r_cert_db_pathfile && -e $r_cert_db_pathfile ]] || return
 
-	local a="BEGIN TRANSACTION; SELECT 1 FROM Certificate WHERE QpkgName = '$qpkg_name' LIMIT 1; COMMIT;"
+	local a="SELECT 1 from Certificate WHERE QpkgName = '${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}'"
+	local b=''
 
-	[[ $(eval "$sqlite_cmd" -readonly "$r_cert_db_pathfile" "\"$a\"") -eq 1 ]]
+	read -r -d '' b <<EOB
+import sqlite3, sys
+
+try:
+    sqliteConnection = sqlite3.connect('$r_cert_db_pathfile')			# squeezer-ignore
+
+    cursor = sqliteConnection.cursor()									# squeezer-ignore
+    sqlite_select_query = """$a"""										# squeezer-ignore
+    cursor.execute(sqlite_select_query)									# squeezer-ignore
+    records = cursor.fetchall()											# squeezer-ignore
+    sys.exit(len(records) == 0)											# squeezer-ignore
+    cursor.close()														# squeezer-ignore
+
+finally:
+    if sqliteConnection:												# squeezer-ignore
+        sqliteConnection.close()										# squeezer-ignore
+EOB
+
+	/usr/local/bin/python2 -c "$b"
 
 	}
 
 IsNtQpkgSigned()
 	{
 
-	! IsQpkgSigned "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}"
+	! IsQpkgSigned "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}"
 
 	}
 
@@ -13784,91 +13861,6 @@ RemovePidFile()
 	[[ -n ${pidfile:-} && -e $pidfile ]] || return
 
 	rm -f "$pidfile"
-
-	}
-
-FindSQLiteBinary()
-	{
-
-	# Outputs: (global)
-	#   $sqlite_cmd
-	#   $sqlite_pathfile
-
-	[[ -z ${sqlite_pathfile:-} ]] || return
-
-	local a=''
-	sqlite_cmd=''
-	sqlite_pathfile=''
-
-	# Prefer Entware-installed `sqlite3`.
-
-	if [[ -z ${sqlite_cmd:-} ]] && IsQpkgInstalled Entware; then
-		sqlite_pathfile=/opt/bin/sqlite3
-		[[ -e $sqlite_pathfile ]] && sqlite_cmd=$sqlite_pathfile
-	fi
-
-	# If that can't be found, then try several other locations ...
-
-	# These use a specific path to the binary:
-	#	HybridBackup = `Hybrid Backup Sync`
-
-	if [[ -z $sqlite_cmd ]] && IsQpkgInstalled HybridBackup; then
-		sqlite_pathfile=$(GetQpkgInstalledPath HybridBackup)/CloudConnector3/bin/sqlite3
-		[[ -e $sqlite_pathfile ]] && sqlite_cmd=$sqlite_pathfile
-	fi
-
-	if [[ -z $sqlite_cmd ]] && IsQpkgInstalled ArchiwareP5; then	# untested.
-		sqlite_pathfile=$(GetQpkgInstalledPath ArchiwareP5)/binaries/Linux/unknown/64/sqlite3
-		[[ -e $sqlite_pathfile ]] && sqlite_cmd=$sqlite_pathfile
-	fi
-
-	# These use the same path to the binary:
-	#	container-station = `Container Station`
-
-	if [[ -z $sqlite_cmd ]]; then
-		for a in container-station HD_Station; do					# 'HD_Station' is untested.
-			if IsQpkgInstalled "$a"; then
-				sqlite_pathfile=$(GetQpkgInstalledPath "$a")/usr/bin/sqlite3
-				[[ -e $sqlite_pathfile ]] || continue
-				sqlite_cmd=$sqlite_pathfile
-				break
-			fi
-		done
-	fi
-
-	#	CacheMount = `HybridMount`
-	# 	qmiixagent = `Qmiix Agent`
-
-	if [[ -z $sqlite_cmd ]]; then
-		for a in CacheMount qmiixagent qusbcam2 QPython312 QPython311 QPython39; do
-			if IsQpkgInstalled "$a"; then
-				sqlite_pathfile=$(GetQpkgInstalledPath "$a")/bin/sqlite3
-				[[ -e $sqlite_pathfile ]] || continue
-				sqlite_cmd=$sqlite_pathfile
-				break
-			fi
-		done
-	fi
-
-	# These use the same path to the binary, and require the linked-library path to be set:
-	#	img2pdf = `Image2PDF`
-	#	OCR_Converter = `OCR Converter`
-
-	if [[ -z $sqlite_cmd ]]; then
-		for a in img2pdf Qsirch OCR_Converter; do
-			if IsQpkgInstalled "$a"; then
-				sqlite_pathfile=$(GetQpkgInstalledPath "$a")/bin/sqlite3
-				[[ -e $sqlite_pathfile ]] || continue
-				sqlite_cmd="LD_LIBRARY_PATH=$(GetQpkgInstalledPath "$a")/lib $sqlite_pathfile"
-				break
-			fi
-		done
-	fi
-
-	if [[ -z $sqlite_cmd ]]; then				# Last-resort, hope Entware will be installed this session.
-		sqlite_pathfile=/opt/bin/sqlite3
-		sqlite_cmd=$sqlite_pathfile
-	fi
 
 	}
 
@@ -13977,7 +13969,7 @@ MakePath()
 	# Outputs: (global)
 	#	$show_suggest_raise_issue
 
-	[[ -n ${1:?${FUNCNAME[0]}'()': $e_nopth} && -n ${2:?${FUNCNAME[0]}'()': $e_norea} ]] || return
+	[[ -n ${1:?${FUNCNAME[0]}(): $e_nopth} && -n ${2:?${FUNCNAME[0]}(): $e_norea} ]] || return
 
 	if [[ $1 != undefined ]] && ! mkdir -p "$1"; then
 		ShowAsError "unable to create $2 path $(FormatFileName "$1") $(FormatExitcode "$?")"
@@ -14001,7 +13993,7 @@ ClearPath()
 	#	$1 = full path to parent of directory name to clear.
 	#   $2 = directory name to clear.
 
-	[[ -n ${1:?${FUNCNAME[0]}'()': $e_nopth} && -n ${2:?${FUNCNAME[0]}'()': $e_nopth} ]] || return
+	[[ -n ${1:?${FUNCNAME[0]}(): $e_nopth} && -n ${2:?${FUNCNAME[0]}(): $e_nopth} ]] || return
 
 	local parent=${1:-undefined}
 	local target=$(/usr/bin/basename "${2:-undefined}")
@@ -14061,7 +14053,7 @@ Executer()
 	#   /pathfile (specified as $2) = stdout and stderr from commandstring (specified as $1).
 	#   $? = result_code of commandstring.
 
-	[[ -n ${1:?${FUNCNAME[0]}'()': $e_nocmd} && -n ${2:?${FUNCNAME[0]}'()': $e_nopfi} ]] || return
+	[[ -n ${1:?${FUNCNAME[0]}(): $e_nocmd} && -n ${2:?${FUNCNAME[0]}(): $e_nopfi} ]] || return
 
 	FuncInit
 
@@ -14147,7 +14139,7 @@ FileMatchesMD5()
 	# Outputs: (local)
 	#	$? = true if checksums match.
 
-	[[ $(GenerateMD5 "${1:?${FUNCNAME[0]}'()': $e_nopfi}") = "${2:?${FUNCNAME[0]}'()': $e_nochk}" ]]
+	[[ $(GenerateMD5 "${1:?${FUNCNAME[0]}(): $e_nopfi}") = "${2:?${FUNCNAME[0]}(): $e_nochk}" ]]
 
 	}
 
@@ -14162,7 +14154,7 @@ GenerateMD5()
 	#   stdout = MD5 checksum.
 	#	$? = false if file not found.
 
-	[[ -e ${1:?${FUNCNAME[0]}'()': $e_nopfi} ]] && /bin/md5sum "${1:?${FUNCNAME[0]}'()': $e_nopfi}" | cut -f1 -d' '
+	[[ -e ${1:?${FUNCNAME[0]}(): $e_nopfi} ]] && /bin/md5sum "${1:?${FUNCNAME[0]}(): $e_nopfi}" | cut -f1 -d' '
 
 	}
 
@@ -14426,28 +14418,28 @@ ShowAsOptions()
 FormatPackageName()
 	{
 
-	printf '%s' "${1:-${qpkg_name:?${FUNCNAME[0]}'()': $e_nopnm}}"
+	printf '%s' "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}"
 
 	}
 
 FormatFileName()
 	{
 
-	printf '%s' "'${1:?${FUNCNAME[0]}'()': $e_nofil}'"
+	printf '%s' "'${1:?${FUNCNAME[0]}(): $e_nofil}'"
 
 	}
 
 ShowAsURL()
 	{
 
-	TextUnderlinedCyan "${1:?${FUNCNAME[0]}'()': $e_nourl}"
+	TextUnderlinedCyan "${1:?${FUNCNAME[0]}(): $e_nourl}"
 
 	}
 
 FormatExitcode()
 	{
 
-	printf '%s' "'${1:?${FUNCNAME[0]}'()': $e_noext}'"
+	printf '%s' "'${1:?${FUNCNAME[0]}(): $e_noext}'"
 
 	}
 
@@ -14457,7 +14449,7 @@ FormatLogFilename()
 	# Inputs: (global)
 	#	$r_chars_results
 
-	printf '%s' "${r_chars_results}log file: '${1:?${FUNCNAME[0]}'()': $e_nofil}'"
+	printf '%s' "${r_chars_results}log file: '${1:?${FUNCNAME[0]}(): $e_nofil}'"
 
 	}
 
@@ -14467,7 +14459,7 @@ FormatCommand()
 	# Inputs: (global)
 	#	$r_chars_results
 
-	echo "${r_chars_results}command: '${1:?${FUNCNAME[0]}'()': $e_nocmd}'"
+	echo "${r_chars_results}command: '${1:?${FUNCNAME[0]}(): $e_nocmd}'"
 
 	}
 
@@ -14865,7 +14857,7 @@ FuncForkInit()
 	#	$original_sess_active_pathfile
 	#	$sess_active_pathfile
 
-	[[ -n ${pidfile:?${FUNCNAME[0]}'()': $e_nopfi} ]] || return
+	[[ -n ${pidfile:?${FUNCNAME[0]}(): $e_nopfi} ]] || return
 
 	trap '[[ -n ${pidfile:-} && -e $pidfile ]] && rm -f "$pidfile" 2> /dev/null; exit' SIGINT
 
@@ -15356,7 +15348,7 @@ AddExtLogToSessLog()
 
 	DebugAsLog 'adding external log to main log'
 	DebugExtLogMinSepr
-	DebugAsLog "$(FormatLogFilename "${1:?${FUNCNAME[0]}'()': $e_nopfi}")"
+	DebugAsLog "$(FormatLogFilename "${1:?${FUNCNAME[0]}(): $e_nopfi}")"
 
 	while read -r a; do
 		DebugAsLog "$a"
@@ -15592,11 +15584,11 @@ ShowAsIterativeProgress()
 	#	$5 = suffix2		"packages"
 	#	$6 (optional) = expected action duration: 'long', 'short' (default)
 
-	local -r r_a=${1:?${FUNCNAME[0]}'()': $e_noact}
+	local -r r_a=${1:?${FUNCNAME[0]}(): $e_noact}
 	local -i b=${2:-0}
-	local -r r_c=${3:?${FUNCNAME[0]}'()': undefined suffix1}
+	local -r r_c=${3:?${FUNCNAME[0]}(): undefined suffix1}
 	local -i d=${4:-0}
-	local -r r_e=${5:?${FUNCNAME[0]}'()': undefined suffix2}
+	local -r r_e=${5:?${FUNCNAME[0]}(): undefined suffix2}
 	local f=''
 
 	f="$(TextBrightWhite "$b") ${r_c}$(Pluralise "$b") ($(TextBrightWhite "$d") ${r_e}$(Pluralise "$d"))"
@@ -16344,11 +16336,11 @@ RefreshArchive()
 	# Outputs: (global)
 	#	$extracted = true : file was successfully extracted from archive. This will trigger post-extraction processing.
 
-	[[ -n ${archive_name:?${FUNCNAME[0]}'()': $e_nonam} ]] || return
-	[[ -n ${archive_pathfile:?${FUNCNAME[0]}'()': $e_nopfi} ]] || return
-	[[ -n ${archive_url:?${FUNCNAME[0]}'()': $e_nourl} ]] || return
-	[[ -n ${dont_refresh_pathfile:?${FUNCNAME[0]}'()': $e_nopfi} ]] || return
-	[[ -n ${target_pathfile:?${FUNCNAME[0]}'()': $e_nopfi} ]] || return
+	[[ -n ${archive_name:?${FUNCNAME[0]}(): $e_nonam} ]] || return
+	[[ -n ${archive_pathfile:?${FUNCNAME[0]}(): $e_nopfi} ]] || return
+	[[ -n ${archive_url:?${FUNCNAME[0]}(): $e_nourl} ]] || return
+	[[ -n ${dont_refresh_pathfile:?${FUNCNAME[0]}(): $e_nopfi} ]] || return
+	[[ -n ${target_pathfile:?${FUNCNAME[0]}(): $e_nopfi} ]] || return
 
 	FuncInit
 

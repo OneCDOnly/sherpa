@@ -37,10 +37,6 @@ Management:
 	* Include option to display alternating line highlighting on reports?
 		- $alternating_report_lines
 
-	* Include QPKG signing method via default QTS Python and modules.
-		- Won't require an 'sqlite3' binary.
-		- This looks promising: https://pynative.com/python-sqlite-insert-into-table/
-
 	* Include QPKG "signed" status in dependencies report?
 
 	* Put 'sherpa about' display into a report window.
