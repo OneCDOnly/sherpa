@@ -37,8 +37,6 @@ Management:
 	* Include option to display alternating line highlighting on reports?
 		- $alternating_report_lines
 
-	* Include QPKG "signed" status in dependencies report?
-
 	* Put 'sherpa about' display into a report window.
 
 	* Check OOM killed pids against inactive daemons and report as-such on status report.
