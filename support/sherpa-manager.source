@@ -950,7 +950,7 @@ DebugLogEnv()
 CheckIfSelfSigned()
 	{
 
-	if IsOsRequireSignedPackages && IsNtQpkgSigned sherpa; then
+	if IsOsCanManageSignedPackages && IsOsRequireSignedPackages && IsNtQpkgSigned sherpa; then
 		[[ $title_art_shown = true ]] && Display
 		ShowAsWarn "$(ShowAsTitleName) is unsigned, and $(GetOsName) is presently configured to require all packages to be signed."
 		ShowAsWarn "Please either self-sign $(ShowAsTitleName) with 'sherpa resign self', or allow unsigned QPKGs in your $(GetOsName) App Center"
@@ -9957,7 +9957,7 @@ _QPKG:download_()
 	if [[ -z $r_remote_url || -z $r_remote_hash ]]; then
 		SaveActionResultToLog QPKG "$qpkg_name" download '' sk 'NAS arch incompatible'
 
-		if IsOsRequireSignedPackages; then
+		if IsOsCanManageSignedPackages && IsOsRequireSignedPackages; then
 			SendParentCommand "QPKGs-ACsign-to:Remove $qpkg_name"
 			SendParentCommand "QPKGs-ACinstall-to:Remove $qpkg_name"
 			SendParentCommand "QPKGs-ACreinstall-to:Remove $qpkg_name"
@@ -9969,7 +9969,7 @@ _QPKG:download_()
 	elif ! IsQpkgDbMinOSVerOk "$qpkg_name" || ! IsQpkgDbMaxOSVerOk "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" download '' sk "$(GetOsName) version incompatible"
 
-		if IsOsRequireSignedPackages; then
+		if IsOsCanManageSignedPackages && IsOsRequireSignedPackages; then
 			SendParentCommand "QPKGs-ACsign-to:Remove $qpkg_name"
 			SendParentCommand "QPKGs-ACinstall-to:Remove $qpkg_name"
 			SendParentCommand "QPKGs-ACreinstall-to:Remove $qpkg_name"
@@ -9981,7 +9981,7 @@ _QPKG:download_()
 	elif ! IsQpkgDbMinRAMOk "$qpkg_name"; then
 		SaveActionResultToLog QPKG "$qpkg_name" download '' sk 'installed RAM insufficient'
 
-		if IsOsRequireSignedPackages; then
+		if IsOsCanManageSignedPackages && IsOsRequireSignedPackages; then
 			SendParentCommand "QPKGs-ACsign-to:Remove $qpkg_name"
 			SendParentCommand "QPKGs-ACinstall-to:Remove $qpkg_name"
 			SendParentCommand "QPKGs-ACreinstall-to:Remove $qpkg_name"
