@@ -1,5 +1,8 @@
 Management:
 
+	* Include sherpa QPKG post-install message with an example of how to run sherpa.
+		- Check if UID=0 and adjust example prompt appropriately.
+
 	* verb, noun, scope?
 		- `sherpa report status all`
 
