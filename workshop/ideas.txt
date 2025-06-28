@@ -1,6 +1,7 @@
 Management:
 
-	* Add 'report' as an alternative CLI arg to 'show'.
+	* verb, noun, scope?
+		- `sherpa report status all`
 
 	* NAS arch telemetry?
 		- Once-per-day background request of an arch specific file from GitHub (as a release asset).
@@ -36,8 +37,6 @@ Management:
 
 	* Include option to display alternating line highlighting on reports?
 		- $alternating_report_lines
-
-	* Include QPKG "signed" status in dependencies report?
 
 	* Put 'sherpa about' display into a report window.
 
