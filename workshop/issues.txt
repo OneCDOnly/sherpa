@@ -1,5 +1,8 @@
 Observed issues:
 
+	* During QPKG 'start', git clone failed, but rest of startup continued, even though it could only fail.
+		- 'start' should abort.
+
 	* Was able to `clean` Kapowarr on x86 even though daemon was reported to be running:
 		--------------------------------------------------------------------------------------------------
 		[/share/Public] # /etc/init.d/kapowarr.sh clean
