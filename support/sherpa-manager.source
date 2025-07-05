@@ -11220,6 +11220,8 @@ _QPKG:sign_()
 
 	DebugAsProc "\"signing\" $(FormatPackageName)"
 
+	# https://pynative.com/python-sqlite-insert-into-table/
+
 	a="INSERT INTO Certificate (Type,QpkgName,Cert,DigitalSignature) VALUES ('qpkg','$qpkg_name','$r_qpkg_certificate','$r_qpkg_signature')"
 
 	read -r -d '' b <<EOB
@@ -11327,6 +11329,8 @@ _QPKG:unsign_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "\"unsigning\" $(FormatPackageName)"
+
+	# https://pynative.com/python-sqlite-insert-into-table/
 
 	a="DELETE from Certificate WHERE QpkgName = '$qpkg_name'"
 
@@ -13756,6 +13760,8 @@ IsQpkgSigned()
 	#   $? = true/false
 
 	[[ -n $r_cert_db_pathfile && -e $r_cert_db_pathfile ]] || return
+
+	# https://pynative.com/python-sqlite-select-from-table/
 
 	local a="SELECT 1 from Certificate WHERE QpkgName = '${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}'"
 	local b=''

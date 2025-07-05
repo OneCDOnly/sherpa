@@ -1,5 +1,35 @@
 Observed issues:
 
+	* Bella is getting random curl 56 errors when downloading QPKGs:
+		--------------------------------------------------------------------------------------------------
+		= command: '/sbin/curl --location --output /share/CACHEDEV1_DATA/.qpkg/sherpa/cache/QPKGs/downloads/Unmanic_250628_arm-x41.qpkg https://raw.githubusercontent.com/OneCDOnly/sherpa.packages/stable/QPKGs/Unmanic/build/Unmanic_250628_arm-x41.qpkg'
+		! result: '56'
+		! ────────── stdout/stderr begins below ──────────
+		% Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+										Dload  Upload   Total   Spent    Left  Speed
+
+		0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+		0  732k    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+		85  732k   85  624k    0     0  1225k      0 --:--:-- --:--:-- --:--:-- 1225k
+		curl: (56) OpenSSL SSL_read: OpenSSL/3.0.9: error:0A000119:SSL routines::decryption failed or bad record mac, errno 0
+		! ────────── stdout/stderr is complete ──────────
+
+
+		= command: '/sbin/curl --location --output /share/CACHEDEV1_DATA/.qpkg/sherpa/cache/QPKGs/downloads/QDK_2.3.14.zip https://github.com/qnap-dev/QDK/releases/download/v2.3.14/QDK_2.3.14.zip'
+		! result: '56'
+		! ────────── stdout/stderr begins below ──────────
+		% Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+										Dload  Upload   Total   Spent    Left  Speed
+
+		0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+		0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+
+		0 2882k    0     0    0     0      0      0 --:--:--  0:00:01 --:--:--     0
+		9 2882k    9  265k    0     0   225k      0  0:00:12  0:00:01  0:00:11 3407k
+		curl: (56) OpenSSL SSL_read: OpenSSL/3.0.9: error:0A000119:SSL routines::decryption failed or bad record mac, errno 0
+		! ────────── stdout/stderr is complete ──────────
+		--------------------------------------------------------------------------------------------------
+
 	* During QPKG 'start', git clone failed, but rest of startup continued, even though it could only fail.
 		- 'start' should abort.
 
