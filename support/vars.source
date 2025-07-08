@@ -191,15 +191,15 @@ Squeeze()
 
 		buffer=$(sed "s|Transfer-Encoding: base64|Transfer-Encoding: base64\n|" <<< "$buffer")	# Add a newline after this string so signature block is accepted by QTS.
 
-		buffer=$(sed -e ':a' -e 'N' -e '$!ba' -e 's/()\n{\n/(){\n/g' <<< "$buffer")				# Function start braces: move to function name line. https://stackoverflow.com/a/1252191
+		buffer=$(sed ':a;N;$!ba; s/()\n{\n/(){\n/g' <<< "$buffer")		# Function start braces: move to function name line. https://stackoverflow.com/a/1252191
 
-		buffer=$(sed -e ':a' -e 'N' -e '$!ba' -e 's/\n;;\n/;;\n/g' <<< "$buffer")				# 'case' pattern block ends: move to last statement.
+		buffer=$(sed ':a;N;$!ba; s/\n;;\n/;;\n/g' <<< "$buffer")		# 'case' pattern block ends: move to last statement.
 
-		buffer=$(sed -e ':a' -e 'N' -e '$!ba' -e 's/\*)\n/*)/g' <<< "$buffer")					# 'case' pattern definitions of any '*)': move first statement to definition line.
+		buffer=$(sed ':a;N;$!ba; s/\*)\n/*)/g' <<< "$buffer")			# 'case' pattern definitions of any '*)': move first statement to definition line.
 
 		# NOTE: these don't save any bytes, but do reduce the number of lines.
 
-		buffer=$(sed -e ':a' -e 'N' -e '$!ba' -e 's/\n}\n/;}\n/g' <<< "$buffer")				# Function end braces: move to last statement.
+		buffer=$(sed ':a;N;$!ba; s/\n}\n/;}\n/g' <<< "$buffer")			# Function end braces: move to last statement.
 
 		[[ -e $2 ]] && chmod +w "$2"
 		echo "$buffer" > "$2"
