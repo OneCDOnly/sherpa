@@ -36,9 +36,10 @@ r_user_qpkg_actions=(activate backup clean deactivate disable disableau enable e
 AddFlagObj()
 	{
 
-	# $1 = object name to create.
-	# $2 = set flag state on init (optional) default is 'false'.
-	# $3 = set 'log boolean changes' on init (optional) default is 'true'.
+	# Inputs: (local)
+	#	$1 = object name to create.
+	#	$2 = set flag state on init (optional) default is 'false'.
+	#	$3 = set 'log boolean changes' on init (optional) default is 'true'.
 
 	local public_function_name=${1:?no object name supplied}
 	local safe_function_name=$(tr '[:upper:]' '[:lower:]' <<< "${public_function_name//[.-]/_}")

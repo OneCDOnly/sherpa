@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Input:
+# Inputs: (local)
 #	$1 = commit message (optional)
 #	$1 = 'nocheck' (optional) = skip syntax check. Default is to perform syntax check before committing.
 

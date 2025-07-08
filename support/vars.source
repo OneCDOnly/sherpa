@@ -96,12 +96,12 @@ EOB
 SwapTags()
 	{
 
-	# Input:
-	# 	$1 = Input pathfile to process for tags. This always has a '.source' extension.
-	# 	$2 = Output pathfile.
+	# Inputs: (local)
+	#	$1 = Input pathfile to process for tags. This always has a '.source' extension.
+	#	$2 = Output pathfile.
 
-	# Output:
-	# 	$? = 0
+	# Outputs: (local)
+	#	$? = 0
 
 	echo -n "swapping tags (in: '$(basename $1)', out: '$(basename $2)') ... "
 
@@ -148,12 +148,12 @@ Squeeze()
 
 	# Throwaway as many unnecessary bytes as-possible.
 
-	# Input:
-	# 	$1 = Input pathfile to process for excess material.
-	# 	$2 = Output pathfile.
+	# Inputs: (local)
+	#	$1 = Input pathfile to process for excess material.
+	#	$2 = Output pathfile.
 
-	# Output:
-	# 	$? = 0
+	# Outputs: (local)
+	#	$? = 0
 
 	if [[ -f "$1" ]]; then			# ignore symlinks.
 		echo -n 'squeezing ... '
@@ -170,11 +170,11 @@ Squeeze()
 		buffer=$(sed 's/[[:space:]]\;/;/g' <<< "$buffer")										# Remove whitespace before semicolons.
 
 		buffer=$(sed 's/\&\&[[:space:]]/\&\&/g' <<< "$buffer")									# Remove whitespace after inline true test.
-# 		buffer=$(sed 's/[[:space:]]\&\&/\&\&/g' <<< "$buffer")									# Remove whitespace before inline true test. WARNING: can't remove whitespace before inline true test within a double-test block.
+#		buffer=$(sed 's/[[:space:]]\&\&/\&\&/g' <<< "$buffer")									# Remove whitespace before inline true test. WARNING: can't remove whitespace before inline true test within a double-test block.
 		buffer=$(sed 's/\]][[:space:]]\&\&/]]\&\&/g' <<< "$buffer")								# Remove whitespace before inline true test preceded by double-test exit.
 
 		buffer=$(sed 's/||[[:space:]]/||/g' <<< "$buffer")										# Remove whitespace after inline false test.
-# 		buffer=$(sed 's/[[:space:]]||/||/g' <<< "$buffer")										# Remove whitespace before inline false test. WARNING: can't remove whitespace before inline false test within a double-test block.
+#		buffer=$(sed 's/[[:space:]]||/||/g' <<< "$buffer")										# Remove whitespace before inline false test. WARNING: can't remove whitespace before inline false test within a double-test block.
 		buffer=$(sed 's/\]\][[:space:]]||/]]||/g' <<< "$buffer")								# Remove whitespace before inline false test preceded by double-test exit.
 
 		buffer=$(sed 's/[[:space:]]((/((/g' <<< "$buffer")										# Remove whitespace before inline arithmetic start.
@@ -212,12 +212,12 @@ Squeeze()
 QPKGAbbrvs()
 	{
 
-	# Input:
-	#   $1 = QPKG name.
+	# Inputs: (local)
+	#	$1 = QPKG name.
 
-	# Output:
-	#   stdout = list of abbreviations that may be used to specify this package (first package found).
-	#   $? = 0 if successful, 1 if failed.
+	# Outputs: (local)
+	#	stdout = list of abbreviations that may be used to specify this package (first package found).
+	#	$? = 0 if successful, 1 if failed.
 
 	local -i i=0
 
