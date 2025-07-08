@@ -275,10 +275,10 @@ LoadConsts()
 
 	# Report, help and debug formatting.
 
-	local debug_log_datawidth_longest_string="  HARDWARE:                      CPU: Annapurna Labs Alpine AL314 Quad-core ARM Cortex-A15 CPU @ 1.70GHz"
-#											 " USERSPACE:            shell version: GNU bash, version 3.2.57(3)-release (arm-unknown-linux-gnueabihf)"
-#											 " USERSPACE:            shell version: GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)"
-#											 " USERSPACE:            shell version: GNU bash, version 3.2.57(1)-release (arm-openwrt-linux-gnu)"
+	local debug_log_datawidth_longest_string="  HARDWARE:                      CPU: Annapurna Labs Alpine AL314 Quad-core ARM Cortex-A15 CPU @ 1.70GHz"		# whitespace-ignore
+#											 " USERSPACE:            shell version: GNU bash, version 3.2.57(3)-release (arm-unknown-linux-gnueabihf)"			# whitespace-ignore
+#											 " USERSPACE:            shell version: GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)"				# whitespace-ignore
+#											 " USERSPACE:            shell version: GNU bash, version 3.2.57(1)-release (arm-openwrt-linux-gnu)"				# whitespace-ignore
 	readonly r_debug_log_full_width=${#debug_log_datawidth_longest_string}
 	readonly r_debug_log_first_column_width=9
 	readonly r_debug_log_second_column_width=24
@@ -1098,7 +1098,7 @@ CheckEnv()
 		case $r_nas_qpkg_arch in
 			a41)
 				# These must be downgraded on armv7 when QTS has a non-standard kernel page size.
-				# 	https://forum.qnap.com/viewtopic.php?p=850945#p850945
+				#	https://forum.qnap.com/viewtopic.php?p=850945#p850945
 
 				if IsOsNonStdKernelPageSize; then
 					target_packages='ar binutils libbfd libctf libopcodes objdump'
@@ -1117,8 +1117,8 @@ CheckEnv()
 				fi
 
 #				# These must be downgraded on armv7 as 2.45.2 versions can't clone a repo.
-#				# 	https://github.com/Entware/Entware/issues/1072
-#				# 	NOTE: this issue has been fixed.
+#				#	https://github.com/Entware/Entware/issues/1072
+#				#	NOTE: this issue has been fixed.
 
 #				target_packages='git git-http'
 
@@ -1136,7 +1136,7 @@ CheckEnv()
 		esac
 
 #		# Downgrade Transmission as 4.0.6 has an undefined issue.
-#		# 	https://github.com/OneCDOnly/sherpa/issues/306
+#		#	https://github.com/OneCDOnly/sherpa/issues/306
 
 #		target_packages='transmission-daemon transmission-web'
 
@@ -2083,7 +2083,7 @@ ParseManagementArgs()
 				[[ $awaiting_group = true ]] && args_incomplete+=("$user_action")
 				awaiting_group=$requires_group
 				current_action=$user_action
-				group=''	 			# When action changes, must clear group.
+				group=''				# When action changes, must clear group.
 				continue
 			fi
 		fi
@@ -4298,7 +4298,7 @@ WriteBranch()
 	{
 
 	# Inputs: (local)
-	# 	$1 (optional) = 'silent' - don't announce setting was saved.
+	#	$1 (optional) = 'silent' - don't announce setting was saved.
 
 	# Inputs: (global)
 	#	$switch_branch
@@ -4612,9 +4612,6 @@ DisplayAsIndentQuotedInfoItem()
 	{
 
 	# Display as indented two fields, first field quoted, second field hyphenated.
-
-	# Example:
-	# "  'inactive'     - application is dead or not-started. Try starting/activating it."
 
 	# Inputs: (local)
 	#	$1 = word
@@ -7884,12 +7881,12 @@ InitQPKGsStates()
 	DebugAsProc 'initialising state lists'
 
 	for a in "${r_qpkg_is_states[@]:-}"; do
-		[[ $a = active ]] && continue 		# Don't reset.
+		[[ $a = active ]] && continue		# Don't reset.
 		[[ $(type -t QPKGs-IS${a}:Init) = function ]] && QPKGs-IS${a}:Init
 	done
 
 	for a in "${r_qpkg_isnt_states[@]:-}"; do
-		[[ $a = active ]] && continue 		# Don't reset.
+		[[ $a = active ]] && continue		# Don't reset.
 		[[ $(type -t QPKGs-ISNT${a}:Init) = function ]] && QPKGs-ISNT${a}:Init
 	done
 
@@ -10354,7 +10351,7 @@ _QPKG:upgrade_()
 		if [[ $current_ver = "$prev_ver" ]]; then
 			SaveActionResultToLog QPKG "$qpkg_name" upgrade '' ok "v${current_ver}"
 		else
-			SaveActionResultToLog QPKG "$qpkg_name" upgrade '' ok "v${prev_ver} -> v${current_ver}" 	# squeezer-ignore
+			SaveActionResultToLog QPKG "$qpkg_name" upgrade '' ok "v${prev_ver} -> v${current_ver}"		# squeezer-ignore
 		fi
 
 		MarkActionForkAsOk
@@ -11247,7 +11244,7 @@ EOB
 		z=$?
 
 		case $z in
-			5) 		# SQLITE_BUSY
+			5)		# SQLITE_BUSY
 				sleep 0.5
 				;;
 			*)
@@ -15601,7 +15598,7 @@ ShowAsIterativeProgress()
 	# Show single action package progress as an incrementing amount with no limit.
 
 	# Inputs: (local)
-	#	$1 = operation 		"calculating"
+	#	$1 = operation		"calculating"
 	#	$2 = count1			15
 	#	$3 = suffix1		"iterations"
 	#	$4 = count2			560
@@ -16643,7 +16640,7 @@ LoadDatabase()
 	. "$r_packages_pathfile"
 	packages_loaded=true
 
-# 	r_qpkgs_name_migration=(Lidarr Medusa qBittorrent Readarr SickGear Sonarr Tautulli Transmission Watcher3 Whisparr)
+#	r_qpkgs_name_migration=(Lidarr Medusa qBittorrent Readarr SickGear Sonarr Tautulli Transmission Watcher3 Whisparr)
 
 	# Fourth, lock list arrays and values.
 

@@ -9,7 +9,11 @@ this_path=$PWD
 
 cd "$support_path" || exit
 ./clean-source.sh
-[[ ${1:-} != nocheck ]] && { ./check-syntax.sh || exit ;}
+
+if [[ ${1:-} != nocheck ]]; then
+	./check-syntax.sh || exit
+	./check-whitespace.sh || exit
+fi
 
 [[ -e $objects_file ]] && rm -f "$objects_file"
 [[ -e $management_file ]] && rm -f "$management_file"
