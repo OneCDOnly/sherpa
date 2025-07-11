@@ -1,5 +1,7 @@
 Observed issues:
 
+	* Siena shows Unmanic PyPi deps have changed. Broken for now.
+
 	* Bella is getting random curl 56 errors when downloading QPKGs:
 		--------------------------------------------------------------------------------------------------
 		= command: '/sbin/curl --location --output /share/CACHEDEV1_DATA/.qpkg/sherpa/cache/QPKGs/downloads/Unmanic_250628_arm-x41.qpkg https://raw.githubusercontent.com/OneCDOnly/sherpa.packages/stable/QPKGs/Unmanic/build/Unmanic_250628_arm-x41.qpkg'
