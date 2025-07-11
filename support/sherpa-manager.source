@@ -1,20 +1,12 @@
 #!/usr/bin/env bash
-#* <?dont_edit?>
-
-#* <?filename?>
-
-#* <?copyright?>
-
+#*
+#* <?preamble?>
+#*
 #* Description:
-#*	This is the management script for the sherpa mini-package-manager.
-#*	It's automatically downloaded via the `sherpa-loader.sh` script in the `sherpa` QPKG no-more than once-per-hour.
-
-#* <?project?>
-
-#* <?tested?>
-
-#* <?license?>
-
+#*	  This is the management script for the sherpa mini-package-manager. It's automatically downloaded via the `sherpa-loader.sh` script in the `sherpa` QPKG no-more than once-per-hour.
+#*
+#* <?postamble?>
+#*
 # Project variable and function naming style-guide:
 #					function names: 'CamelCase'
 #	   asynchronous function names: '_CamelCaseWithLeadingAndTrailingUnderscores_'
