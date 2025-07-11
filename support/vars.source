@@ -101,7 +101,7 @@ EOB
 
 read -rd '' notes_msg << EOB
 Notes:
-#*	  All scripts are optimised for compatibility with bash 3.2 (via QTS BusyBox). Be-careful reusing code in other shells, as these scripts contain syntax quirks often compatible only with bash.
+#*	  All sherpa scripts are optimised for compatibility with bash 3.2 (via QTS BusyBox) as this is the native QNAP NAS shell. Be-careful reusing code in other shells, as these scripts contain syntax quirks often compatible only with bash.
 EOB
 
 read -rd '' license_msg << EOB
