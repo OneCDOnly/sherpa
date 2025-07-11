@@ -16,7 +16,7 @@ for i in "${!a[@]}"; do
 	echo -n "checking syntax '${a[i]}' ... "
 
 	if shellcheck --shell=bash --exclude="${b[i]}" "${a[i]}"; then
-		ShowPassed
+		ShowDone
 	else
 		ShowFailed
 		exit 1

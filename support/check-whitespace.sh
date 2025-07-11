@@ -15,7 +15,7 @@ for i in "${!a[@]}"; do
 	b+=$(grep -nF '    ' "${a[i]}" | grep -v 'squeezer-ignore\|whitespace-ignore')	# check for 4 consecutive space chars.
 
 	if [[ -z $b ]]; then
-		ShowPassed
+		ShowDone
 	else
 		ShowFailed
 		echo "$b"

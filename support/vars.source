@@ -376,13 +376,13 @@ TextBrightWhite()
 
 	} 2>/dev/null
 
-ShowPassed()
-	{
-
-	TextBrightGreen passed
-	echo
-
-	}
+# ShowPassed()
+# 	{
+#
+# 	TextBrightGreen passed
+# 	echo
+#
+# 	}
 
 ShowFailed()
 	{
