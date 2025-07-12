@@ -15090,12 +15090,12 @@ ConvertLongDateAsHuman()
 	# Convert 'YYYYMMDD' to a more human-friendly string.
 
 	# Examples:
-	#	'20250101' to 'early-January 2025'.
-	#	'20250115' to 'mid-January 2025'.
-	#	'20250130' to 'late-January 2025'.
+	#	'20250101' to 'early-January 2025'
+	#	'20250115' to 'mid-January 2025'
+	#	'20250130' to 'late-January 2025'
 
 	# Inputs: (local)
-	#	$1 = longdatecode in the format 'YYYYMMDD'. Example: '20240928' with 8 digits.
+	#	$1 = longdatecode in the format 'YYYYMMDD' with 8 digits. Example: '20240928'
 
 	# Outputs: (local)
 	#	stdout = string conversion.
