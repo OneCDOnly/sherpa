@@ -1,8 +1,6 @@
 Observed issues:
 
-	* Siena shows Unmanic PyPi deps have changed. Broken for now.
-
-	* Bella is getting random curl 56 errors when downloading QPKGs:
+	* bella getting random curl 56 errors when downloading QPKGs and during 'git clone':
 		--------------------------------------------------------------------------------------------------
 		= command: '/sbin/curl --location --output /share/CACHEDEV1_DATA/.qpkg/sherpa/cache/QPKGs/downloads/Unmanic_250628_arm-x41.qpkg https://raw.githubusercontent.com/OneCDOnly/sherpa.packages/stable/QPKGs/Unmanic/build/Unmanic_250628_arm-x41.qpkg'
 		! result: '56'
@@ -15,7 +13,6 @@ Observed issues:
 		85  732k   85  624k    0     0  1225k      0 --:--:-- --:--:-- --:--:-- 1225k
 		curl: (56) OpenSSL SSL_read: OpenSSL/3.0.9: error:0A000119:SSL routines::decryption failed or bad record mac, errno 0
 		! ────────── stdout/stderr is complete ──────────
-
 
 		= command: '/sbin/curl --location --output /share/CACHEDEV1_DATA/.qpkg/sherpa/cache/QPKGs/downloads/QDK_2.3.14.zip https://github.com/qnap-dev/QDK/releases/download/v2.3.14/QDK_2.3.14.zip'
 		! result: '56'
@@ -30,6 +27,20 @@ Observed issues:
 		9 2882k    9  265k    0     0   225k      0  0:00:12  0:00:01  0:00:11 3407k
 		curl: (56) OpenSSL SSL_read: OpenSSL/3.0.9: error:0A000119:SSL routines::decryption failed or bad record mac, errno 0
 		! ────────── stdout/stderr is complete ──────────
+		--------------------------------------------------------------------------------------------------
+
+	* milla getting SSL errors during 'git clone':
+		--------------------------------------------------------------------------------------------------
+		> create 'Mylar3' from remote repository: failed
+		dbug: (LL) adding external log to main log ...
+		dbug: (LL) ----------------------------------------------------------------------------------------------------
+		dbug: (LL) log file: '/var/log/DisplayRunAndLog_Somzfh'
+		dbug: (LL) command: 'cd /tmp;/opt/bin/git clone --branch master --depth 1 -c advice.detachedHead=false https://github.com/mylar3/mylar3.git /share/CACHEDEV1_DATA/.qpkg/Mylar3/repo-cache'
+		dbug: (LL) = result_code: [128]
+		dbug: (LL) ••••••••••••••••••••••••••••••••••• stdout & stderr begins below •••••••••••••••••••••••••••••••••••
+		dbug: (LL) Cloning into '/share/CACHEDEV1_DATA/.qpkg/Mylar3/repo-cache'...
+		dbug: (LL) /opt/lib/git-core/git-remote-https: /opt/lib/libssl.so.3: version `OPENSSL_3.2.0' not found (required by /opt/lib/libcurl.so.4)
+		dbug: (LL) ••••••••••••••••••••••••••••••••••• stdout & stderr is complete ••••••••••••••••••••••••••••••••••••
 		--------------------------------------------------------------------------------------------------
 
 	* During QPKG 'start', git clone failed, but rest of startup continued, even though it could only fail.
@@ -84,10 +95,6 @@ Observed issues:
 		- If I shortcut Executer() in _QPKG:install_(), appears to work fine everytime.
 		- Appears process is placed in run queue, then control returns to the shell.
 
-	* Downgrade Transmission IPKs back to 4.0.4
-		- https://github.com/OneCDOnly/sherpa/issues/306
-		- Rethinking this. The problem only affects a single user, and they've switched to Stephanes's QPKG as a workaround. This is probably better than downgrading everyone for an unspecified issue.
-
 	* QDK install throws error:
 		--------------------------------------------------------------------------------------------------
 		dbug: (--) exec: 'DEBUG_QPKG=true /bin/sh /share/CACHEDEV1_DATA/.qpkg/sherpa/cache/QPKGs/downloads/QDK_2.3.14.qpkg'
@@ -129,6 +136,7 @@ Observed issues:
 	* service script library: if $REINSTALL_QPKG=true, then don't show/log 'stop' and aborted-'start' actions.
 
 	* Restarting clamav.sh creates `lib` symlink in cwd to `/usr/lib`
+		This may be happening in /etc/init.d/antivirus.sh
 
 	* FIXED: When a QPKG couldn't be signed (due to no 'sqlite3'), it's not shown by QPKGs.Actions:List() at-all.
 		- QPKG was 'skipped-abort', and is shown as 'skipped' in results.
