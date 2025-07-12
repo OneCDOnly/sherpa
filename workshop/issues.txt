@@ -28,9 +28,7 @@ Observed issues:
 		curl: (56) OpenSSL SSL_read: OpenSSL/3.0.9: error:0A000119:SSL routines::decryption failed or bad record mac, errno 0
 		! ────────── stdout/stderr is complete ──────────
 		--------------------------------------------------------------------------------------------------
-
-	* During QPKG 'start', git clone failed, but rest of startup continued, even though it could only fail.
-		- 'start' should abort.
+		- Don't know what is causing this, but seems a TTY logout/login gets things working again. Suspect an SSL library issue arises that affects remainder of the TTY session.
 
 	* Was able to `clean` Kapowarr on x86 even though daemon was reported to be running:
 		--------------------------------------------------------------------------------------------------
