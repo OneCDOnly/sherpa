@@ -139,10 +139,11 @@ SwapTags()
 		buffer=$(sed "s|<?notes?>|${notes_msg//$'\n'/\\n}|g" <<< "$buffer")						# Escape newlines.
 		buffer=$(sed "s|<?license?>|${license_msg//$'\n'/\\n}|g" <<< "$buffer")					# Escape newlines.
 		buffer=$(sed "s|'<?build_date?>'|$build_date|g" <<< "$buffer")
+		buffer=$(sed "s|<?build_date?>|$build_date|g" <<< "$buffer")
 		buffer=$(sed "s|<?build_year?>|$build_year|g" <<< "$buffer")
 		buffer=$(sed "s|'<?manager_epoch?>'|$manager_epoch|g" <<< "$buffer")
 		buffer=$(sed "s|<?objects_epoch?>|$objects_epoch|g" <<< "$buffer")
-		buffer=$(sed "s|<?packages_epoch?>|$packages_epoch|g" <<< "$buffer")
+		buffer=$(sed "s|'<?packages_epoch?>'|$packages_epoch|g" <<< "$buffer")
 		buffer=$(sed "s|<?email?>|$email|g" <<< "$buffer")
 		buffer=$(sed "s|<?cdn_sherpa_base_url?>|$cdn_sherpa_base_url|g" <<< "$buffer")
 		buffer=$(sed "s|<?management_file?>|$management_file|g" <<< "$buffer")
