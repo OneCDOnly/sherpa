@@ -48,72 +48,95 @@ cdn_onecd_url='https://raw.githubusercontent.com/OneCDOnly'
 cdn_qnap_dev_packages_url='https://github.com/qnap-dev/<?package_name?>/releases/download/v<?version?>'
 
 copyright_basic='Copyright (C) 2017-<?build_year?> OneCD'
-dont_edit_msg="Please don't edit this file directly, it was built/modified programmatically with the '$(basename "$0")' script."
+dont_edit_msg="Please don't edit this file directly, it has been programmatically built or modified with the '$(basename "$0")' script."
 email=one.cd.only@gmail.com
 
 # Must escape ampersand chars in `read` blocks for compatibility with `sed` regex.
 
+read -rd '' preamble_msg << EOB
+<?dont_edit?>
+#*
+#* <?filename?>
+#*	  <?copyright?>
+EOB
+
+read -rd '' postamble_msg << EOB
+<?project?>
+#*
+#* <?tested?>
+#*
+#* <?notes?>
+#*
+#* <?license?>
+EOB
+
 read -rd '' copyright_msg << EOB
 <?copyright_basic?>.
-#
+#*
 #* Contact:
-#*   <?email?>
+#*	  <?email?>
 EOB
 
 read -rd '' project_msg << EOB
 Project:
-#*	 https://git.io/sherpa
-#
+#*	  https://git.io/sherpa
+#*
 #* Support forums:
-#*	 https://community.qnap.com/t/qpkg-sherpa-a-mini-package-manager-cli/1081
-#*	 https://forum.qnap.com/viewtopic.php?t=132373
+#*	  https://community.qnap.com/t/qpkg-sherpa-a-mini-package-manager-cli/1081
+#*	  https://forum.qnap.com/viewtopic.php?t=132373
 
 EOB
 
 read -rd '' tested_msg << EOB
 Tested on:
-#*	 GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
-#*	 GNU bash, version 3.2.57(1)-release (x86_64-QNAP-linux-gnu)
-#*	 GNU bash, version 3.2.57(2)-release (i686-pc-linux-gnu)
-#*	   Copyright (C) 2007 Free Software Foundation, Inc.
+#*	  GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
+#*	  GNU bash, version 3.2.57(1)-release (x86_64-QNAP-linux-gnu)
+#*	  GNU bash, version 3.2.57(2)-release (i686-pc-linux-gnu)
+#*		 Copyright (C) 2007 Free Software Foundation, Inc.
 #
-#*   ... and periodically on:
-#*	 GNU bash, version 5.0.17(1)-release (aarch64-openwrt-linux-gnu)
-#*	   Copyright (C) 2019 Free Software Foundation, Inc.
-#
-#*	 All scripts are optimised for compatibility with bash 3.2 (via QTS BusyBox). Be-careful reusing code in other shells, as these scripts contain syntax quirks often compatible only with bash.
+#* and periodically on:
+#*	  GNU bash, version 5.0.17(1)-release (aarch64-openwrt-linux-gnu)
+#*		 Copyright (C) 2019 Free Software Foundation, Inc.
+EOB
+
+read -rd '' notes_msg << EOB
+Notes:
+#*	  All sherpa scripts are optimised for compatibility with bash 3.2 (via QTS BusyBox) as this is the native QNAP NAS shell. Be-careful reusing code in other shells, as these scripts contain syntax quirks often compatible only with bash.
 EOB
 
 read -rd '' license_msg << EOB
 License:
-#*   This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+#*	  This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 #
-#*	 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY, without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#*	  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY, without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #
-#*	 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
+#*	  You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
 EOB
 
 SwapTags()
 	{
 
-	# Input:
-	# 	$1 = Input pathfile to process for tags. This always has a '.source' extension.
-	# 	$2 = Output pathfile.
+	# Inputs: (local)
+	#	$1 = Input pathfile to process for tags. This always has a '.source' extension.
+	#	$2 = Output pathfile.
 
-	# Output:
-	# 	$? = 0
+	# Outputs: (local)
+	#	$? = 0
 
 	echo -n "swapping tags (in: '$(basename $1)', out: '$(basename $2)') ... "
 
 	if [[ -f "$1" ]]; then			# ignore symlinks.
 		local buffer=$(<"$1")
 
+		buffer=$(sed "s|<?preamble?>|${preamble_msg//$'\n'/\\n}|g" <<< "$buffer")				# Escape newlines.
+		buffer=$(sed "s|<?postamble?>|${postamble_msg//$'\n'/\\n}|g" <<< "$buffer")				# Escape newlines.
 		buffer=$(sed "s|<?dont_edit?>|$dont_edit_msg (source: '$(basename "$1")')|g" <<< "$buffer")
 		buffer=$(sed "s|<?filename?>|$(basename "$2")|g" <<< "$buffer")
 		buffer=$(sed "s|<?copyright?>|${copyright_msg//$'\n'/\\n}|g" <<< "$buffer")				# Escape newlines.
 		buffer=$(sed "s|<?copyright_basic?>|${copyright_basic//$'\n'/\\n}|g" <<< "$buffer")		# Escape newlines.
 		buffer=$(sed "s|<?project?>|${project_msg//$'\n'/\\n}|g" <<< "$buffer")					# Escape newlines.
 		buffer=$(sed "s|<?tested?>|${tested_msg//$'\n'/\\n}|g" <<< "$buffer")					# Escape newlines.
+		buffer=$(sed "s|<?notes?>|${notes_msg//$'\n'/\\n}|g" <<< "$buffer")						# Escape newlines.
 		buffer=$(sed "s|<?license?>|${license_msg//$'\n'/\\n}|g" <<< "$buffer")					# Escape newlines.
 		buffer=$(sed "s|<?build_date?>|$build_date|g" <<< "$buffer")
 		buffer=$(sed "s|<?build_year?>|$build_year|g" <<< "$buffer")
@@ -148,12 +171,12 @@ Squeeze()
 
 	# Throwaway as many unnecessary bytes as-possible.
 
-	# Input:
-	# 	$1 = Input pathfile to process for excess material.
-	# 	$2 = Output pathfile.
+	# Inputs: (local)
+	#	$1 = Input pathfile to process for excess material.
+	#	$2 = Output pathfile.
 
-	# Output:
-	# 	$? = 0
+	# Outputs: (local)
+	#	$? = 0
 
 	if [[ -f "$1" ]]; then			# ignore symlinks.
 		echo -n 'squeezing ... '
@@ -170,11 +193,11 @@ Squeeze()
 		buffer=$(sed 's/[[:space:]]\;/;/g' <<< "$buffer")										# Remove whitespace before semicolons.
 
 		buffer=$(sed 's/\&\&[[:space:]]/\&\&/g' <<< "$buffer")									# Remove whitespace after inline true test.
-# 		buffer=$(sed 's/[[:space:]]\&\&/\&\&/g' <<< "$buffer")									# Remove whitespace before inline true test. WARNING: can't remove whitespace before inline true test within a double-test block.
+#		buffer=$(sed 's/[[:space:]]\&\&/\&\&/g' <<< "$buffer")									# Remove whitespace before inline true test. WARNING: can't remove whitespace before inline true test within a double-test block.
 		buffer=$(sed 's/\]][[:space:]]\&\&/]]\&\&/g' <<< "$buffer")								# Remove whitespace before inline true test preceded by double-test exit.
 
 		buffer=$(sed 's/||[[:space:]]/||/g' <<< "$buffer")										# Remove whitespace after inline false test.
-# 		buffer=$(sed 's/[[:space:]]||/||/g' <<< "$buffer")										# Remove whitespace before inline false test. WARNING: can't remove whitespace before inline false test within a double-test block.
+#		buffer=$(sed 's/[[:space:]]||/||/g' <<< "$buffer")										# Remove whitespace before inline false test. WARNING: can't remove whitespace before inline false test within a double-test block.
 		buffer=$(sed 's/\]\][[:space:]]||/]]||/g' <<< "$buffer")								# Remove whitespace before inline false test preceded by double-test exit.
 
 		buffer=$(sed 's/[[:space:]]((/((/g' <<< "$buffer")										# Remove whitespace before inline arithmetic start.
@@ -191,15 +214,15 @@ Squeeze()
 
 		buffer=$(sed "s|Transfer-Encoding: base64|Transfer-Encoding: base64\n|" <<< "$buffer")	# Add a newline after this string so signature block is accepted by QTS.
 
-		buffer=$(sed -e ':a' -e 'N' -e '$!ba' -e 's/()\n{\n/(){\n/g' <<< "$buffer")				# Function start braces: move to function name line. https://stackoverflow.com/a/1252191
+		buffer=$(sed ':a;N;$!ba; s/()\n{\n/(){\n/g' <<< "$buffer")		# Function start braces: move to function name line. https://stackoverflow.com/a/1252191
 
-		buffer=$(sed -e ':a' -e 'N' -e '$!ba' -e 's/\n;;\n/;;\n/g' <<< "$buffer")				# 'case' pattern block ends: move to last statement.
+		buffer=$(sed ':a;N;$!ba; s/\n;;\n/;;\n/g' <<< "$buffer")		# 'case' pattern block ends: move to last statement.
 
-		buffer=$(sed -e ':a' -e 'N' -e '$!ba' -e 's/\*)\n/*)/g' <<< "$buffer")					# 'case' pattern definitions of any '*)': move first statement to definition line.
+		buffer=$(sed ':a;N;$!ba; s/\*)\n/*)/g' <<< "$buffer")			# 'case' pattern definitions of any '*)': move first statement to definition line.
 
 		# NOTE: these don't save any bytes, but do reduce the number of lines.
 
-		buffer=$(sed -e ':a' -e 'N' -e '$!ba' -e 's/\n}\n/;}\n/g' <<< "$buffer")				# Function end braces: move to last statement.
+		buffer=$(sed ':a;N;$!ba; s/\n}\n/;}\n/g' <<< "$buffer")			# Function end braces: move to last statement.
 
 		[[ -e $2 ]] && chmod +w "$2"
 		echo "$buffer" > "$2"
@@ -212,12 +235,12 @@ Squeeze()
 QPKGAbbrvs()
 	{
 
-	# Input:
-	#   $1 = QPKG name.
+	# Inputs: (local)
+	#	$1 = QPKG name.
 
-	# Output:
-	#   stdout = list of abbreviations that may be used to specify this package (first package found).
-	#   $? = 0 if successful, 1 if failed.
+	# Outputs: (local)
+	#	stdout = list of abbreviations that may be used to specify this package (first package found).
+	#	$? = 0 if successful, 1 if failed.
 
 	local -i i=0
 
@@ -353,13 +376,13 @@ TextBrightWhite()
 
 	} 2>/dev/null
 
-ShowPassed()
-	{
-
-	TextBrightGreen passed
-	echo
-
-	}
+# ShowPassed()
+# 	{
+#
+# 	TextBrightGreen passed
+# 	echo
+#
+# 	}
 
 ShowFailed()
 	{
