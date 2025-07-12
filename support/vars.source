@@ -140,7 +140,7 @@ SwapTags()
 		buffer=$(sed "s|<?license?>|${license_msg//$'\n'/\\n}|g" <<< "$buffer")					# Escape newlines.
 		buffer=$(sed "s|<?build_date?>|$build_date|g" <<< "$buffer")
 		buffer=$(sed "s|<?build_year?>|$build_year|g" <<< "$buffer")
-		buffer=$(sed "s|<?manager_epoch?>|$manager_epoch|g" <<< "$buffer")
+		buffer=$(sed "s|'<?manager_epoch?>'|$manager_epoch|g" <<< "$buffer")
 		buffer=$(sed "s|<?objects_epoch?>|$objects_epoch|g" <<< "$buffer")
 		buffer=$(sed "s|<?packages_epoch?>|$packages_epoch|g" <<< "$buffer")
 		buffer=$(sed "s|<?email?>|$email|g" <<< "$buffer")
@@ -199,6 +199,15 @@ Squeeze()
 		buffer=$(sed 's/||[[:space:]]/||/g' <<< "$buffer")										# Remove whitespace after inline false test.
 #		buffer=$(sed 's/[[:space:]]||/||/g' <<< "$buffer")										# Remove whitespace before inline false test. WARNING: can't remove whitespace before inline false test within a double-test block.
 		buffer=$(sed 's/\]\][[:space:]]||/]]||/g' <<< "$buffer")								# Remove whitespace before inline false test preceded by double-test exit.
+		buffer=$(sed 's/[[:space:]]||return/||return/g' <<< "$buffer")							# Remove whitespace before inline false test followed by 'return'.
+		buffer=$(sed 's/[[:space:]]\&\&return/\&\&return/g' <<< "$buffer")						# Remove whitespace before inline true test followed by 'return'.
+		buffer=$(sed 's/[[:space:]]\&\&Is/\&\&Is/g' <<< "$buffer")								# Remove whitespace before inline true test followed by 'Is'.
+		buffer=$(sed 's/[[:space:]]||exit/||exit/g' <<< "$buffer")								# Remove whitespace before inline false test followed by 'exit'.
+		buffer=$(sed 's/[[:space:]]||continue/||continue/g' <<< "$buffer")						# Remove whitespace before inline false test followed by 'continue'.
+		buffer=$(sed 's/[[:space:]]||break/||break/g' <<< "$buffer")							# Remove whitespace before inline false test followed by 'break'.
+		buffer=$(sed 's/[[:space:]]||printf/||printf/g' <<< "$buffer")							# Remove whitespace before inline false test followed by 'printf'.
+		buffer=$(sed 's/[[:space:]]||\//||\//g' <<< "$buffer")									# Remove whitespace before inline false test followed by '/'.
+		buffer=$(sed 's/[[:space:]]||z/||z/g' <<< "$buffer")									# Remove whitespace before inline false test followed by 'z'.
 
 		buffer=$(sed 's/[[:space:]]((/((/g' <<< "$buffer")										# Remove whitespace before inline arithmetic start.
 
