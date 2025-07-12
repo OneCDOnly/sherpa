@@ -1,7 +1,5 @@
 Management:
 
-	* Check source files for space+tab.
-
 	* Include sherpa QPKG post-install message with an example of how to run sherpa.
 		- Check if UID=0 and adjust example prompt appropriately.
 
@@ -10,6 +8,7 @@ Management:
 
 	* NAS arch telemetry?
 		- Once-per-day background request of an arch specific file from GitHub (as a release asset).
+		- Maybe separate arches into distinct release files (like Entware)?
 
 	* Cache CPU and storage benchmark results for reuse. But only if load averages were low when calculated.
 
@@ -133,6 +132,8 @@ Management:
 		- Like: `sherpa paste help`, `sherpa install help`, `sherpa reassign help`
 
 Service Library:
+
+	* Check source files for space+tab.
 
 	* The action outcome line should start with '<'
 

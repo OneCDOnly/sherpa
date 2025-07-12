@@ -76,7 +76,6 @@ Observed issues:
 			install TorrServer QPKG in 1 second (vundefined)
 			install 35 auxiliary IPKs in 1m:46s
 		--------------------------------------------------------------------------------------------------
-		- If I shortcut Executer() in _QPKG:install_(), appears to work fine everytime.
 		- Appears process is placed in run queue, then control returns to the shell.
 
 	* QDK install throws error:
@@ -122,7 +121,7 @@ Observed issues:
 	* Restarting clamav.sh creates `lib` symlink in cwd to `/usr/lib`
 		This may be happening in /etc/init.d/antivirus.sh
 
-	* FIXED: When a QPKG couldn't be signed (due to no 'sqlite3'), it's not shown by QPKGs.Actions:List() at-all.
+	* FIXED: When a QPKG couldn't be signed, it's not shown by QPKGs.Actions:List() at-all.
 		- QPKG was 'skipped-abort', and is shown as 'skipped' in results.
 		- TODO: Other QPKGs to be signed were not shown in either list. Must add them to 'skipped-abort' list.
 
