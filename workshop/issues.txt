@@ -29,20 +29,6 @@ Observed issues:
 		! ────────── stdout/stderr is complete ──────────
 		--------------------------------------------------------------------------------------------------
 
-	* milla getting SSL errors during 'git clone':
-		--------------------------------------------------------------------------------------------------
-		> create 'Mylar3' from remote repository: failed
-		dbug: (LL) adding external log to main log ...
-		dbug: (LL) ----------------------------------------------------------------------------------------------------
-		dbug: (LL) log file: '/var/log/DisplayRunAndLog_Somzfh'
-		dbug: (LL) command: 'cd /tmp;/opt/bin/git clone --branch master --depth 1 -c advice.detachedHead=false https://github.com/mylar3/mylar3.git /share/CACHEDEV1_DATA/.qpkg/Mylar3/repo-cache'
-		dbug: (LL) = result_code: [128]
-		dbug: (LL) ••••••••••••••••••••••••••••••••••• stdout & stderr begins below •••••••••••••••••••••••••••••••••••
-		dbug: (LL) Cloning into '/share/CACHEDEV1_DATA/.qpkg/Mylar3/repo-cache'...
-		dbug: (LL) /opt/lib/git-core/git-remote-https: /opt/lib/libssl.so.3: version `OPENSSL_3.2.0' not found (required by /opt/lib/libcurl.so.4)
-		dbug: (LL) ••••••••••••••••••••••••••••••••••• stdout & stderr is complete ••••••••••••••••••••••••••••••••••••
-		--------------------------------------------------------------------------------------------------
-
 	* During QPKG 'start', git clone failed, but rest of startup continued, even though it could only fail.
 		- 'start' should abort.
 
