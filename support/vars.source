@@ -51,6 +51,11 @@ copyright_basic='Copyright (C) 2017-<?build_year?> OneCD'
 dont_edit_msg="Please don't edit this file directly, it has been programmatically built or modified with the '$(basename "$0")' script."
 email=one.cd.only@gmail.com
 
+management_debug_log_longest_string="  HARDWARE:                      CPU: Annapurna Labs Alpine AL314 Quad-core ARM Cortex-A15 CPU @ 1.70GHz"
+#									" USERSPACE:            shell version: GNU bash, version 3.2.57(3)-release (arm-unknown-linux-gnueabihf)"
+#									" USERSPACE:            shell version: GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)"
+#									" USERSPACE:            shell version: GNU bash, version 3.2.57(1)-release (arm-openwrt-linux-gnu)"
+
 # Must escape ampersand chars in `read` blocks for compatibility with `sed` regex.
 
 read -rd '' preamble_msg << EOB
@@ -152,6 +157,7 @@ SwapTags()
 		buffer=$(sed "s|<?essential_ipks?>|${essential_ipks:=essential ipks}|g" <<< "$buffer")
 		buffer=$(sed "s|<?essential_pips?>|${essential_pips:=essential pips}|g" <<< "$buffer")
 		buffer=$(sed "s|<?exclusion_pips?>|${exclusion_pips:=exclusion pips}|g" <<< "$buffer")
+		buffer=$(sed "s|'<?management_debug_log_longest_string_length?>'|${#management_debug_log_longest_string}|g" <<< "$buffer")
 
 		buffer=$(sed "s|<?cdn_nzbget_dev_packages_url?>|$cdn_nzbget_dev_packages_url|g" <<< "$buffer")
 		buffer=$(sed "s|<?cdn_other_packages_url?>|$cdn_other_packages_url|g" <<< "$buffer")

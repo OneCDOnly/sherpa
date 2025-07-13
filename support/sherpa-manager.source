@@ -267,11 +267,12 @@ LoadConsts()
 
 	# Report, help and debug formatting.
 
-	local debug_log_datawidth_longest_string="  HARDWARE:                      CPU: Annapurna Labs Alpine AL314 Quad-core ARM Cortex-A15 CPU @ 1.70GHz"		# whitespace-ignore
-#											 " USERSPACE:            shell version: GNU bash, version 3.2.57(3)-release (arm-unknown-linux-gnueabihf)"			# whitespace-ignore
-#											 " USERSPACE:            shell version: GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)"				# whitespace-ignore
-#											 " USERSPACE:            shell version: GNU bash, version 3.2.57(1)-release (arm-openwrt-linux-gnu)"				# whitespace-ignore
-	readonly r_debug_log_full_width=${#debug_log_datawidth_longest_string}
+	readonly r_debug_log_string_length='<?management_debug_log_longest_string_length?>'
+	r_debug_log_width=80								# Default for dev use only.
+
+	IsNumber $r_debug_log_string_length && r_debug_log_width=$r_debug_log_string_length
+	readonly r_debug_log_width
+
 	readonly r_debug_log_first_column_width=9
 	readonly r_debug_log_second_column_width=24
 	readonly r_help_desc_indent=3
@@ -14524,9 +14525,9 @@ DebugInfoMajSepr()
 	# Debug info major separator.
 
 	# Inputs: (global)
-	#	$r_debug_log_full_width
+	#	$r_debug_log_width
 
-	DebugInfo "$(eval printf '%0.s=' "{1..$r_debug_log_full_width}")"	# `seq` is unavailable in QTS, so must resort to `eval` trickery instead.
+	DebugInfo "$(eval printf '%0.s=' "{1..$r_debug_log_width}")"	# `seq` is unavailable in QTS, so must resort to `eval` trickery instead.
 
 	}
 
@@ -14536,9 +14537,9 @@ DebugInfoMinSepr()
 	# Debug info minor separator.
 
 	# Inputs: (global)
-	#	$r_debug_log_full_width
+	#	$r_debug_log_width
 
-	DebugInfo "$(eval printf '%0.s-' "{1..$r_debug_log_full_width}")"	# `seq` is unavailable in QTS, so must resort to `eval` trickery instead.
+	DebugInfo "$(eval printf '%0.s-' "{1..$r_debug_log_width}")"	# `seq` is unavailable in QTS, so must resort to `eval` trickery instead.
 
 	}
 
@@ -14548,9 +14549,9 @@ DebugExtLogMinSepr()
 	# Debug external log minor separator.
 
 	# Inputs: (global)
-	#	$r_debug_log_full_width
+	#	$r_debug_log_width
 
-	DebugAsLog "$(eval printf '%0.s-' "{1..$r_debug_log_full_width}")"	# `seq` is unavailable in QTS, so must resort to `eval` trickery instead.
+	DebugAsLog "$(eval printf '%0.s-' "{1..$r_debug_log_width}")"	# `seq` is unavailable in QTS, so must resort to `eval` trickery instead.
 
 	}
 
