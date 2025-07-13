@@ -8,7 +8,7 @@ Management:
 
 	* NAS arch telemetry?
 		- Once-per-day background request of an arch specific file from GitHub (as a release asset).
-		- Maybe separate arches into distinct release files (like Entware)?
+		- Maybe create distinct arch release files (like Entware)?
 
 	* Cache CPU and storage benchmark results for reuse. But only if load averages were low when calculated.
 
