@@ -1,5 +1,8 @@
 Observed issues:
 
+	* `upgrade all` didn't upgrade all:
+		- See https://github.com/OneCDOnly/sherpa/discussions/308
+
 	* x41 getting random curl 56 errors when downloading QPKGs and during 'git clone':
 		--------------------------------------------------------------------------------------------------
 		= command: '/sbin/curl --location --output /share/CACHEDEV1_DATA/.qpkg/sherpa/cache/QPKGs/downloads/Unmanic_250628_arm-x41.qpkg https://raw.githubusercontent.com/OneCDOnly/sherpa.packages/stable/QPKGs/Unmanic/build/Unmanic_250628_arm-x41.qpkg'
