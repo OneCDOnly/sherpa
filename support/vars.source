@@ -51,6 +51,11 @@ copyright_basic='Copyright (C) 2017-<?build_year?> OneCD'
 dont_edit_msg="Please don't edit this file directly, it has been programmatically built or modified with the '$(basename "$0")' script."
 email=one.cd.only@gmail.com
 
+management_debug_log_longest_string="  HARDWARE:                      CPU: Annapurna Labs Alpine AL314 Quad-core ARM Cortex-A15 CPU @ 1.70GHz"
+#									" USERSPACE:            shell version: GNU bash, version 3.2.57(3)-release (arm-unknown-linux-gnueabihf)"
+#									" USERSPACE:            shell version: GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)"
+#									" USERSPACE:            shell version: GNU bash, version 3.2.57(1)-release (arm-openwrt-linux-gnu)"
+
 # Must escape ampersand chars in `read` blocks for compatibility with `sed` regex.
 
 read -rd '' preamble_msg << EOB
@@ -138,11 +143,12 @@ SwapTags()
 		buffer=$(sed "s|<?tested?>|${tested_msg//$'\n'/\\n}|g" <<< "$buffer")					# Escape newlines.
 		buffer=$(sed "s|<?notes?>|${notes_msg//$'\n'/\\n}|g" <<< "$buffer")						# Escape newlines.
 		buffer=$(sed "s|<?license?>|${license_msg//$'\n'/\\n}|g" <<< "$buffer")					# Escape newlines.
+		buffer=$(sed "s|'<?build_date?>'|$build_date|g" <<< "$buffer")
 		buffer=$(sed "s|<?build_date?>|$build_date|g" <<< "$buffer")
 		buffer=$(sed "s|<?build_year?>|$build_year|g" <<< "$buffer")
-		buffer=$(sed "s|<?manager_epoch?>|$manager_epoch|g" <<< "$buffer")
+		buffer=$(sed "s|'<?manager_epoch?>'|$manager_epoch|g" <<< "$buffer")
 		buffer=$(sed "s|<?objects_epoch?>|$objects_epoch|g" <<< "$buffer")
-		buffer=$(sed "s|<?packages_epoch?>|$packages_epoch|g" <<< "$buffer")
+		buffer=$(sed "s|'<?packages_epoch?>'|$packages_epoch|g" <<< "$buffer")
 		buffer=$(sed "s|<?email?>|$email|g" <<< "$buffer")
 		buffer=$(sed "s|<?cdn_sherpa_base_url?>|$cdn_sherpa_base_url|g" <<< "$buffer")
 		buffer=$(sed "s|<?management_file?>|$management_file|g" <<< "$buffer")
@@ -151,6 +157,7 @@ SwapTags()
 		buffer=$(sed "s|<?essential_ipks?>|${essential_ipks:=essential ipks}|g" <<< "$buffer")
 		buffer=$(sed "s|<?essential_pips?>|${essential_pips:=essential pips}|g" <<< "$buffer")
 		buffer=$(sed "s|<?exclusion_pips?>|${exclusion_pips:=exclusion pips}|g" <<< "$buffer")
+		buffer=$(sed "s|'<?management_debug_log_longest_string_length?>'|${#management_debug_log_longest_string}|g" <<< "$buffer")
 
 		buffer=$(sed "s|<?cdn_nzbget_dev_packages_url?>|$cdn_nzbget_dev_packages_url|g" <<< "$buffer")
 		buffer=$(sed "s|<?cdn_other_packages_url?>|$cdn_other_packages_url|g" <<< "$buffer")
@@ -199,6 +206,15 @@ Squeeze()
 		buffer=$(sed 's/||[[:space:]]/||/g' <<< "$buffer")										# Remove whitespace after inline false test.
 #		buffer=$(sed 's/[[:space:]]||/||/g' <<< "$buffer")										# Remove whitespace before inline false test. WARNING: can't remove whitespace before inline false test within a double-test block.
 		buffer=$(sed 's/\]\][[:space:]]||/]]||/g' <<< "$buffer")								# Remove whitespace before inline false test preceded by double-test exit.
+		buffer=$(sed 's/[[:space:]]||return/||return/g' <<< "$buffer")							# Remove whitespace before inline false test followed by 'return'.
+		buffer=$(sed 's/[[:space:]]\&\&return/\&\&return/g' <<< "$buffer")						# Remove whitespace before inline true test followed by 'return'.
+		buffer=$(sed 's/[[:space:]]\&\&Is/\&\&Is/g' <<< "$buffer")								# Remove whitespace before inline true test followed by 'Is'.
+		buffer=$(sed 's/[[:space:]]||exit/||exit/g' <<< "$buffer")								# Remove whitespace before inline false test followed by 'exit'.
+		buffer=$(sed 's/[[:space:]]||continue/||continue/g' <<< "$buffer")						# Remove whitespace before inline false test followed by 'continue'.
+		buffer=$(sed 's/[[:space:]]||break/||break/g' <<< "$buffer")							# Remove whitespace before inline false test followed by 'break'.
+		buffer=$(sed 's/[[:space:]]||printf/||printf/g' <<< "$buffer")							# Remove whitespace before inline false test followed by 'printf'.
+		buffer=$(sed 's/[[:space:]]||\//||\//g' <<< "$buffer")									# Remove whitespace before inline false test followed by '/'.
+		buffer=$(sed 's/[[:space:]]||z/||z/g' <<< "$buffer")									# Remove whitespace before inline false test followed by 'z'.
 
 		buffer=$(sed 's/[[:space:]]((/((/g' <<< "$buffer")										# Remove whitespace before inline arithmetic start.
 

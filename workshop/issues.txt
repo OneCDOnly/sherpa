@@ -1,6 +1,9 @@
 Observed issues:
 
-	* bella getting random curl 56 errors when downloading QPKGs and during 'git clone':
+	* `upgrade all` didn't upgrade all:
+		- See https://github.com/OneCDOnly/sherpa/discussions/308
+
+	* x41 getting random curl 56 errors when downloading QPKGs and during 'git clone':
 		--------------------------------------------------------------------------------------------------
 		= command: '/sbin/curl --location --output /share/CACHEDEV1_DATA/.qpkg/sherpa/cache/QPKGs/downloads/Unmanic_250628_arm-x41.qpkg https://raw.githubusercontent.com/OneCDOnly/sherpa.packages/stable/QPKGs/Unmanic/build/Unmanic_250628_arm-x41.qpkg'
 		! result: '56'
@@ -28,9 +31,7 @@ Observed issues:
 		curl: (56) OpenSSL SSL_read: OpenSSL/3.0.9: error:0A000119:SSL routines::decryption failed or bad record mac, errno 0
 		! ────────── stdout/stderr is complete ──────────
 		--------------------------------------------------------------------------------------------------
-
-	* During QPKG 'start', git clone failed, but rest of startup continued, even though it could only fail.
-		- 'start' should abort.
+		- Don't know what is causing this, but seems a TTY logout/login gets things working again. Suspect an SSL library issue arises that affects remainder of the TTY session.
 
 	* Was able to `clean` Kapowarr on x86 even though daemon was reported to be running:
 		--------------------------------------------------------------------------------------------------
@@ -78,7 +79,6 @@ Observed issues:
 			install TorrServer QPKG in 1 second (vundefined)
 			install 35 auxiliary IPKs in 1m:46s
 		--------------------------------------------------------------------------------------------------
-		- If I shortcut Executer() in _QPKG:install_(), appears to work fine everytime.
 		- Appears process is placed in run queue, then control returns to the shell.
 
 	* QDK install throws error:
@@ -124,7 +124,7 @@ Observed issues:
 	* Restarting clamav.sh creates `lib` symlink in cwd to `/usr/lib`
 		This may be happening in /etc/init.d/antivirus.sh
 
-	* FIXED: When a QPKG couldn't be signed (due to no 'sqlite3'), it's not shown by QPKGs.Actions:List() at-all.
+	* FIXED: When a QPKG couldn't be signed, it's not shown by QPKGs.Actions:List() at-all.
 		- QPKG was 'skipped-abort', and is shown as 'skipped' in results.
 		- TODO: Other QPKGs to be signed were not shown in either list. Must add them to 'skipped-abort' list.
 
