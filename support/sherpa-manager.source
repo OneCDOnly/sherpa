@@ -1091,7 +1091,7 @@ CheckEnv()
 
 		case $r_nas_qpkg_arch in
 			a41)
-				# These must be downgraded on armv7 when QTS has a non-standard kernel page size.
+				# These must be downgraded on ARMv7 when QTS has a non-standard kernel page size.
 				#	https://forum.qnap.com/viewtopic.php?p=850945#p850945
 
 				if IsOsNonStdKernelPageSize; then
@@ -1110,7 +1110,7 @@ CheckEnv()
 					fi
 				fi
 
-#				# These must be downgraded on armv7 as 2.45.2 versions can't clone a repo.
+#				# These must be downgraded on ARMv7 as 2.45.2 versions can't clone a repo.
 #				#	https://github.com/Entware/Entware/issues/1072
 #				#	NOTE: this issue has been fixed.
 
@@ -12754,7 +12754,9 @@ IsEntwareUpgradable()
 
 	local a=$(GetQpkgInstalledDate Entware)
 
-	[[ $a = undefined || ${a//[!0-9]/} -le $r_entware_packages_last_updated ]] && [[ $r_nas_arch != armv5tel ]]
+	# NOTE: Entware are not updating packages anymore for ARMv5: https://entware.net/2024/02/23/Changelog.html
+
+	[[ $a = undefined || ${a//[!0-9]/} -lt $r_entware_packages_last_updated ]] && [[ $r_nas_arch != armv5tel ]]
 
 	}
 
