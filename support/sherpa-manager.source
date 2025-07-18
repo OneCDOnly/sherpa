@@ -993,11 +993,12 @@ CheckTasks()
 				break
 			fi
 
-#			for group in "${r_qpkg_is_groups[@]}"; do
-#				if QPKGs.AC${action}GR${group}.IsSet; then
-#					break 2
-#				fi
-#			done
+			for group in "${r_qpkg_is_groups[@]}"; do
+				if QPKGs.AC${action}GR${group}.IsSet; then
+					build_extended_states=true
+					break 2
+				fi
+			done
 
 #			for group in "${r_qpkg_isnt_groups[@]}"; do
 #				if QPKGs.AC${action}GRNT${group}.IsSet; then
