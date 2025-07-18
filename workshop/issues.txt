@@ -2,11 +2,7 @@ Observed issues:
 
 	* arm64: Tautulli not started again after upgrade.
 
-	* arm64: Unmanic and Watcher3 were aborted during upgrade, clean, start.
-
-	* `upgrade all` didn't upgrade all:
-		- See https://github.com/OneCDOnly/sherpa/discussions/308
-		- Observation: zero packages were selected for download.
+	* arm64: Unmanic and Watcher3 were aborted during upgrade -> clean -> start.
 
 	* x41 getting random curl 56 errors when downloading QPKGs and during 'git clone':
 		--------------------------------------------------------------------------------------------------

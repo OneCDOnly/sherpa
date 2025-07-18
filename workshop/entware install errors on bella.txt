@@ -1,0 +1,6 @@
+Collected errors:
+ * opkg_conf_set_option: Duplicate option tmp_dir, using first seen value "/share/CACHEDEV1_DATA/.qpkg/sherpa/cache/IPKs/downloads".
+ * opkg_install_pkg: Checksum or size mismatch for package gcc. Either the opkg or the package index are corrupt. Try 'opkg update'.
+ * opkg_install_cmd: Cannot install package gcc.
+ * opkg_install_pkg: Checksum or size mismatch for package python3-dev. Either the opkg or the package index are corrupt. Try 'opkg update'.
+ * opkg_install_cmd: Cannot install package python3-dev.
