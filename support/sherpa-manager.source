@@ -214,9 +214,9 @@ LoadConsts()
 	readonly e_nonam='undefined name'
 	readonly e_nopfi='undefined pathfile'
 	readonly e_nopnm='undefined package name'
+	readonly e_noprm='undefined prompt'
 	readonly e_nopth='undefined path'
 	readonly e_nopty='undefined package type'
-	readonly e_noprm='undefined prompt'
 	readonly e_norea='undefined reason'
 	readonly e_nores='undefined result'
 	readonly e_notir='undefined tier'
@@ -16593,7 +16593,7 @@ LoadDatabase()
 	unset r_qpkg_will_log
 
 	unset r_base_qpkg_conflicts_with
-	unset readonly r_base_qpkg_warnings
+	unset r_base_qpkg_warnings
 	unset r_essential_ipks
 	unset r_essential_pips
 	unset r_exclusion_pips
