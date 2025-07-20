@@ -4,7 +4,7 @@ Observed issues:
 
 	* arm64: Unmanic and Watcher3 were aborted during upgrade -> clean -> start.
 
-	* x41 getting random curl 56 errors when downloading QPKGs and during 'git clone':
+	* x41 getting random curl 56 errors when downloading QPKGs and during `git clone`:
 		--------------------------------------------------------------------------------------------------
 		= command: '/sbin/curl --location --output /share/CACHEDEV1_DATA/.qpkg/sherpa/cache/QPKGs/downloads/Unmanic_250628_arm-x41.qpkg https://raw.githubusercontent.com/OneCDOnly/sherpa.packages/stable/QPKGs/Unmanic/build/Unmanic_250628_arm-x41.qpkg'
 		! result: '56'
@@ -46,7 +46,7 @@ Observed issues:
 		--------------------------------------------------------------------------------------------------
 		- Don't know what is causing this, but seems a TTY logout/login gets things working again. Suspect an SSL library issue arises that affects remainder of the TTY session.
 
-	* Was able to `clean` Kapowarr on x86 even though daemon was reported to be running:
+	* Was able to clean Kapowarr on x86 even though daemon was reported to be running:
 		--------------------------------------------------------------------------------------------------
 		[/share/Public] # /etc/init.d/kapowarr.sh clean
 		> source: kapowarr.sh, action: clean, time: Sun 15 Jun 2025 6:50:19 AM EST, load: 0.18
@@ -73,7 +73,7 @@ Observed issues:
 		- [App Center] Failed to stop Unrar. You must first stop SABnzbd (web).
 		- [App Center] Failed to stop Entware-std. You must first stop SABnzbd (web).
 		--------------------------------------------------------------------------------------------------
-		- Don't know what caused this. A manual `stop` via the service-script doesn't generate this error, and a manual `stop` via the App Center stops the dependent QPKGs automatically. Suspect a QTS shutdown bug, where QPKGs are not being stopped according to dependencies.
+		- Don't know what caused this. A manual stop via the service-script doesn't generate this error, and a manual stop via the App Center stops the dependent QPKGs automatically. Suspect a QTS shutdown bug, where QPKGs are not being stopped according to dependencies.
 
 	* Getting 'vundefined' QPKG version (and < 1 second action time) when installing random packages on arm64 only:
 		--------------------------------------------------------------------------------------------------
@@ -134,7 +134,7 @@ Observed issues:
 
 	* service script library: if $REINSTALL_QPKG=true, then don't show/log 'stop' and aborted-'start' actions.
 
-	* Restarting clamav.sh creates `lib` symlink in cwd to `/usr/lib`
+	* Restarting clamav.sh creates 'lib' symlink in cwd to /usr/lib
 		This may be happening in /etc/init.d/antivirus.sh
 
 	* FIXED: When a QPKG couldn't be signed, it's not shown by QPKGs.Actions:List() at-all.
