@@ -317,6 +317,7 @@ LoadConsts()
 
 	# Various.
 
+	readonly r_char_tab=$'\t'
 	readonly r_entware_packages_last_updated=20250602
 	readonly r_file_change_threshold_minutes=60
 	readonly r_log_tail_lines=5000
@@ -585,7 +586,9 @@ LoadEnv()
 
 	# Entware.
 
-	readonly r_external_packages_archive_pathfile=/opt/var/opkg-lists/entware
+	readonly r_external_apps_path=/opt
+		readonly r_external_apps_backup_path=$r_external_apps_path.bak
+		readonly r_external_packages_archive_pathfile=$r_external_apps_path/var/opkg-lists/entware
 	readonly r_external_packages_pathfile=$r_cache_path/Packages
 
 	# KLUDGE: in-case `python` has disappeared again ... ¯\_(ツ)_/¯
@@ -1713,7 +1716,7 @@ ProcAction()
 			InitActionForkCounters
 			OpenMsgPipe
 
-			re=\\bEntware\\b		# bash 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
+			re=\\bEntware\\b			# bash 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
 
 			if [[ $r_action = uninstall && ${target_packages[*]} =~ $re ]]; then
 				ShowKeystrokes		# Enable before removing Entware (& GNU `stty`).
@@ -3429,28 +3432,27 @@ Quiz()
 PatchEntwareService()
 	{
 
-	local -r r_tab_char=$'\t'
-	local -r r_prefix='# The following line was inserted by sherpa: https://git.io/sherpa'
+	local append_text=''
+	local find_text=''
 	local -r r_package_init_pathfile=$(GetQpkgServicePathFile Entware)
-	local find=''
-	local insert=''
+	local -r r_prefix='# The following line was inserted by sherpa: https://git.io/sherpa'
 
-	if /bin/grep 'opt.orig' "$r_package_init_pathfile" &> /dev/null; then
-		DebugInfo 'patch: do the "/opt shuffle" - already done'
+	if /bin/grep "$r_external_apps_backup_path" "$r_package_init_pathfile" &> /dev/null; then
+		DebugInfo 'patch: "'$r_external_apps_path' shuffle" - already done'
 	else
-		# Ensure existing files are moved out of the way before creating '/opt' symlink.
+		# Ensure existing /opt files are moved out of the way before creating new /opt symlink:
 
-		find='# sym-link $QPKG_DIR to /opt'
-		insert='opt_path="/opt"; opt_backup_path="/opt.orig"; [[ -d "$opt_path" \&\& ! -L "$opt_path" \&\& ! -e "$opt_backup_path" ]] \&\& mv "$opt_path" "$opt_backup_path"'
-		/bin/sed -i "s|$find|$find\n\n${r_tab_char}${r_prefix}\n${r_tab_char}${insert}\n|" "$r_package_init_pathfile"
+		find_text='# sym-link $QPKG_DIR to /opt'
+		append_text='opt_path='$r_external_apps_path' opt_backup_path='$r_external_apps_backup_path'; [[ -d $opt_path \&\& ! -L $opt_path \&\& ! -d $opt_backup_path ]] \&\& mv $opt_path $opt_backup_path'
+		/bin/sed -i "s|$find_text|$find_text\n\n${r_char_tab}${r_prefix}\n${r_char_tab}${append_text}\n|" "$r_package_init_pathfile"
 
-		# ... then restored after creating '/opt' symlink.
+		# ... then restored afterward:
 
-		find='/bin/ln -sf $QPKG_DIR /opt'
-		insert='[[ -L "$opt_path" \&\& -d "$opt_backup_path" ]] \&\& cp "$opt_backup_path"/* --target-directory "$opt_path" \&\& rm -r "$opt_backup_path"'
-		/bin/sed -i "s|$find|$find\n\n${r_tab_char}${r_prefix}\n${r_tab_char}${insert}\n|" "$r_package_init_pathfile"
+		find_text='/bin/ln -sf $QPKG_DIR /opt'
+		append_text='(shopt -s dotglob; [[ -L $opt_path \&\& -d $opt_backup_path ]] \&\& mv $opt_backup_path/* $opt_path/ \&\& rmdir $opt_backup_path)'
+		/bin/sed -i "s|$find_text|$find_text\n\n${r_char_tab}${r_prefix}\n${r_char_tab}${append_text}\n|" "$r_package_init_pathfile"
 
-		DebugAsDone 'patch: do the "opt shuffle"'
+		DebugAsDone 'patch: "'$r_external_apps_path' shuffle"'
 	fi
 
 	return 0
@@ -3563,7 +3565,7 @@ LoadPipList()
 
 		while read -r name; do
 			name=$(Lowercase "$name")
-			re=\\b$name\\b
+			re=\\b${name}\\b
 
 			[[ ${r_exclusion_pips[*]} =~ $re ]] || PIPs-ACinstall-to:Add "$name"
 		done < "$r_prev_pip_list_pathfile"
@@ -9776,16 +9778,16 @@ EnableVerbose()
 
 	}
 
-DisableVerbose()
-	{
+DisableVerbose()								# devdebug
+	{											# devdebug
 
-	useropt_verbose=false
-	DebugVar useropt_verbose
+	useropt_verbose=false						# devdebug
+	DebugVar useropt_verbose					# devdebug
 
-	HideCursor
-	HideKeystrokes
+	HideCursor									# devdebug
+	HideKeystrokes								# devdebug
 
-	}
+	}											# devdebug
 
 EnableDebugToArchiveAndFile()
 	{
@@ -10036,8 +10038,10 @@ _QPKG:install_()
 	# Install the QPKG named in $qpkg_name.
 
 	# Inputs: (global)
-	#	$qpkg_name
 	#	$QPKGs_were_installed_name[]
+	#	$qpkg_name
+	#	$r_external_apps_backup_path
+	#	$r_external_apps_path
 	#	$r_install_log_file
 	#	$r_logs_path
 	#	$r_nas_arch
@@ -10080,12 +10084,10 @@ _QPKG:install_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	if [[ $qpkg_name = Entware ]] && IsNtValidQpkgInstalled Entware && QPKGs-ACinstall-to.Exist Entware; then
-		local -r r_opt_path=/opt
-		local -r r_opt_bu_path=/opt.orig
 
-		if [[ -d $r_opt_path && ! -L $r_opt_path && ! -e $r_opt_bu_path ]]; then
-			DebugAsProc 'backup original /opt'
-			mv "$r_opt_path" "$r_opt_bu_path"
+		if [[ -d $r_external_apps_path && ! -L $r_external_apps_path && ! -e $r_external_apps_backup_path ]]; then
+			DebugAsProc "move-aside $r_external_apps_path"
+			mv "$r_external_apps_path" "$r_external_apps_backup_path"
 			DebugAsDone complete
 		fi
 	fi
@@ -10127,11 +10129,12 @@ _QPKG:install_()
 			SendParentCommand _UpdateEntwarePackageList_
 			PatchEntwareService
 
-			# Shift all files from original '/opt' into new '/opt'
+			# Shift all files from /opt into /opt.bak
 
-			if [[ -L ${r_opt_path:-} && -d ${r_opt_bu_path:-} ]]; then
-				DebugAsProc 'restoring original /opt'
-				mv "$r_opt_bu_path"/* "$r_opt_path" && ClearPath / "$r_opt_bu_path"
+			if [[ -L $r_external_apps_path && -d $r_external_apps_backup_path ]]; then
+				DebugAsProc "move-into $r_external_apps_path"
+				(shopt -s dotglob; mv "$r_external_apps_backup_path"/* "$r_external_apps_path"/)
+				rmdir "$r_external_apps_backup_path"
 				DebugAsDone complete
 			fi
 		fi
@@ -14603,18 +14606,6 @@ DebugOS()
 	#	$3 = value
 
 	DebugItem "$1" os "$2" "$3"
-
-	}
-
-DebugShell()
-	{
-
-	# Inputs: (local)
-	#	$1 = type
-	#	$2 = name
-	#	$3 = value
-
-	DebugItem "$1" shell "$2" "$3"
 
 	}
 
