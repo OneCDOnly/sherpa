@@ -12757,9 +12757,19 @@ IsEntwareUpgradable()
 
 	local a=$(GetQpkgInstalledDate Entware)
 
-	# NOTE: Entware are not updating packages anymore for ARMv5: https://entware.net/2024/02/23/Changelog.html
+	# NOTE: Entware are not updating packages anymore for older arches: https://entware.net/2024/02/23/Changelog.html
 
-	[[ $a = undefined || ${a//[!0-9]/} -lt $r_entware_packages_last_updated ]] && [[ $r_nas_arch != armv5tel ]]
+	if [[ $a = undefined || ${a//[!0-9]/} -lt $r_entware_packages_last_updated ]]; then
+		case $r_nas_arch in
+			armv5tel|i686|x86)
+				: # Do nothing.
+				;;
+			*)
+				return
+		esac
+	fi
+
+	false
 
 	}
 
