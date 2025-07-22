@@ -442,9 +442,9 @@ LoadCMDs()
 	readonly r_gnu_stty_cmd=/opt/bin/stty
 	readonly r_gnu_timeout_cmd=/opt/bin/timeout
 	readonly r_opkg_cmd=/opt/bin/opkg
-	readonly r_python_cmd=/opt/bin/python
 	readonly r_python3_cmd=/opt/bin/python3
 		readonly r_pip_cmd=$r_python3_cmd' -m pip'
+	readonly r_python_cmd=/opt/bin/python
 
 	}
 
@@ -12850,9 +12850,10 @@ IsOsCanSecureDownload()
 	# Inputs: (global)
 	#	$r_nas_firmware_ver
 
+	SetQpkgArch
 	SetOsFirmwareVer
 
-	[[ $r_nas_firmware_ver -ge 455 ]]
+	[[ $r_nas_firmware_ver -ge 455 ]] && [[ $r_nas_qpkg_arch != a41 ]]		# KLUDGE: secure `curl` ops fail on a41 running QTS 5.2.5
 
 	}
 
