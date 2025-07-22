@@ -12949,14 +12949,14 @@ IsOsCompatibleWithSigned()
 IsOsRequireSignedPackages()
 	{
 
-	[[ $(/sbin/getcfg 'QPKG Management' Ignore_Cert -d FALSE) = FALSE ]]
+	[[ $(/sbin/getcfg 'QPKG Management' Ignore_Cert -u -d FALSE) = FALSE ]]
 
 	}
 
 IsOsAllowUnofficialPackages()
 	{
 
-	[[ $(/sbin/getcfg 'QPKG Management' Check_Official -d TRUE) = FALSE ]]
+	[[ $(/sbin/getcfg 'QPKG Management' Check_Official -u -d TRUE) = FALSE ]]
 
 	}
 
