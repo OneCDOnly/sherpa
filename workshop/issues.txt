@@ -1,8 +1,8 @@
 Observed issues:
 
-	* arm64: Tautulli not started again after upgrade.
+	* arm64: Tautulli not started again after upgrade. Last action was clean.
 
-	* arm64: Unmanic and Watcher3 were aborted during upgrade -> clean -> start.
+	* arm64: Unmanic, Watcher3, WebSSH were aborted during upgrade -> clean -> start.
 
 	* x41 getting random curl 56 errors when downloading QPKGs and during `git clone`:
 		--------------------------------------------------------------------------------------------------
@@ -44,7 +44,7 @@ Observed issues:
 		fatal: fetch-pack: invalid index-pack output
 		} exec: completed, but with errors
 		--------------------------------------------------------------------------------------------------
-		- Don't know what is causing this, but seems a TTY logout/login gets things working again. Suspect an SSL library issue arises that affects remainder of the TTY session.
+		- Don't know what is causing this. Suspect an SSL library issue.
 
 	* Was able to clean Kapowarr on x86 even though daemon was reported to be running:
 		--------------------------------------------------------------------------------------------------
