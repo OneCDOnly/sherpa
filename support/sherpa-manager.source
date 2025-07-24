@@ -899,7 +899,7 @@ DebugLogEnv()
 		DebugQpkg detect "$(FormatPackageName SortMyQPKGs)" installed
 	else
 		if [[ $r_nas_firmware_ver -lt 400 || $r_nas_firmware_ver -ge 520 ]]; then
-			DebugQpkg detect "$(FormatPackageName SortMyQPKGs)" 'not installed'
+			DebugQpkg detect "$(FormatPackageName SortMyQPKGs)" N/A
 		else
 			DebugQpkg warning "$(FormatPackageName SortMyQPKGs)" 'not installed'
 		fi
