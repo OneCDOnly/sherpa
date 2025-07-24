@@ -317,6 +317,7 @@ LoadConsts()
 
 	# Various.
 
+	readonly r_char_tab=$'\t'
 	readonly r_entware_packages_last_updated=20250602
 	readonly r_file_change_threshold_minutes=60
 	readonly r_log_tail_lines=5000
@@ -441,9 +442,9 @@ LoadCMDs()
 	readonly r_gnu_stty_cmd=/opt/bin/stty
 	readonly r_gnu_timeout_cmd=/opt/bin/timeout
 	readonly r_opkg_cmd=/opt/bin/opkg
-	readonly r_python_cmd=/opt/bin/python
 	readonly r_python3_cmd=/opt/bin/python3
 		readonly r_pip_cmd=$r_python3_cmd' -m pip'
+	readonly r_python_cmd=/opt/bin/python
 
 	}
 
@@ -585,7 +586,9 @@ LoadEnv()
 
 	# Entware.
 
-	readonly r_external_packages_archive_pathfile=/opt/var/opkg-lists/entware
+	readonly r_external_apps_path=/opt
+		readonly r_external_apps_backup_path=$r_external_apps_path.bak
+		readonly r_external_packages_archive_pathfile=$r_external_apps_path/var/opkg-lists/entware
 	readonly r_external_packages_pathfile=$r_cache_path/Packages
 
 	# KLUDGE: in-case `python` has disappeared again ... ¯\_(ツ)_/¯
@@ -896,7 +899,7 @@ DebugLogEnv()
 		DebugQpkg detect "$(FormatPackageName SortMyQPKGs)" installed
 	else
 		if [[ $r_nas_firmware_ver -lt 400 || $r_nas_firmware_ver -ge 520 ]]; then
-			DebugQpkg detect "$(FormatPackageName SortMyQPKGs)" 'not installed'
+			DebugQpkg detect "$(FormatPackageName SortMyQPKGs)" N/A
 		else
 			DebugQpkg warning "$(FormatPackageName SortMyQPKGs)" 'not installed'
 		fi
@@ -1000,11 +1003,12 @@ CheckTasks()
 				fi
 			done
 
-#			for group in "${r_qpkg_isnt_groups[@]}"; do
-#				if QPKGs.AC${action}GRNT${group}.IsSet; then
-#					break 2
-#				fi
-#			done
+			for group in "${r_qpkg_isnt_groups[@]}"; do
+				if QPKGs.AC${action}GRNT${group}.IsSet; then
+					build_extended_states=true
+					break 2
+				fi
+			done
 
 #			for state in "${r_qpkg_basic_states[@]}"; do
 #				if QPKGs.AC${action}IS${state}.IsSet; then
@@ -1713,7 +1717,7 @@ ProcAction()
 			InitActionForkCounters
 			OpenMsgPipe
 
-			re=\\bEntware\\b		# bash 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
+			re=\\bEntware\\b			# bash 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
 
 			if [[ $r_action = uninstall && ${target_packages[*]} =~ $re ]]; then
 				ShowKeystrokes		# Enable before removing Entware (& GNU `stty`).
@@ -3429,28 +3433,27 @@ Quiz()
 PatchEntwareService()
 	{
 
-	local -r r_tab_char=$'\t'
-	local -r r_prefix='# The following line was inserted by sherpa: https://git.io/sherpa'
+	local append_text=''
+	local find_text=''
 	local -r r_package_init_pathfile=$(GetQpkgServicePathFile Entware)
-	local find=''
-	local insert=''
+	local -r r_prefix='# The following line was inserted by sherpa: https://git.io/sherpa'
 
-	if /bin/grep 'opt.orig' "$r_package_init_pathfile" &> /dev/null; then
-		DebugInfo 'patch: do the "/opt shuffle" - already done'
+	if /bin/grep "$r_external_apps_backup_path" "$r_package_init_pathfile" &> /dev/null; then
+		DebugInfo 'patch: "'$r_external_apps_path' shuffle" - already done'
 	else
-		# Ensure existing files are moved out of the way before creating '/opt' symlink.
+		# Ensure existing /opt files are moved out of the way before creating new /opt symlink:
 
-		find='# sym-link $QPKG_DIR to /opt'
-		insert='opt_path="/opt"; opt_backup_path="/opt.orig"; [[ -d "$opt_path" \&\& ! -L "$opt_path" \&\& ! -e "$opt_backup_path" ]] \&\& mv "$opt_path" "$opt_backup_path"'
-		/bin/sed -i "s|$find|$find\n\n${r_tab_char}${r_prefix}\n${r_tab_char}${insert}\n|" "$r_package_init_pathfile"
+		find_text='# sym-link $QPKG_DIR to /opt'
+		append_text='opt_path='$r_external_apps_path' opt_backup_path='$r_external_apps_backup_path'; [[ -d $opt_path \&\& ! -L $opt_path \&\& ! -d $opt_backup_path ]] \&\& mv $opt_path $opt_backup_path'
+		/bin/sed -i "s|$find_text|$find_text\n\n${r_char_tab}${r_prefix}\n${r_char_tab}${append_text}\n|" "$r_package_init_pathfile"
 
-		# ... then restored after creating '/opt' symlink.
+		# ... then restored afterward:
 
-		find='/bin/ln -sf $QPKG_DIR /opt'
-		insert='[[ -L "$opt_path" \&\& -d "$opt_backup_path" ]] \&\& cp "$opt_backup_path"/* --target-directory "$opt_path" \&\& rm -r "$opt_backup_path"'
-		/bin/sed -i "s|$find|$find\n\n${r_tab_char}${r_prefix}\n${r_tab_char}${insert}\n|" "$r_package_init_pathfile"
+		find_text='/bin/ln -sf $QPKG_DIR /opt'
+		append_text='(shopt -s dotglob; [[ -L $opt_path \&\& -d $opt_backup_path ]] \&\& mv $opt_backup_path/* $opt_path/ \&\& rmdir $opt_backup_path)'
+		/bin/sed -i "s|$find_text|$find_text\n\n${r_char_tab}${r_prefix}\n${r_char_tab}${append_text}\n|" "$r_package_init_pathfile"
 
-		DebugAsDone 'patch: do the "opt shuffle"'
+		DebugAsDone 'patch: "'$r_external_apps_path' shuffle"'
 	fi
 
 	return 0
@@ -3563,7 +3566,7 @@ LoadPipList()
 
 		while read -r name; do
 			name=$(Lowercase "$name")
-			re=\\b$name\\b
+			re=\\b${name}\\b
 
 			[[ ${r_exclusion_pips[*]} =~ $re ]] || PIPs-ACinstall-to:Add "$name"
 		done < "$r_prev_pip_list_pathfile"
@@ -3786,10 +3789,10 @@ IPKs:upgrade()
 		if [[ $z -eq 0 ]]; then
 			NoteIpkAcAsOk "$(IPKs-ACupgrade-to:Array)" upgrade
 			DebugAsDone "upgraded $desc"
-			SaveActionResultToLog IPK auxiliary upgrade "$total_count" ok
+			SaveActionResultMetrics IPK auxiliary upgrade "$total_count" ok
 		else
 			NoteIpkAcAsEr "$(IPKs-ACupgrade-to:Array)" upgrade
-			SaveActionResultToLog IPK auxiliary upgrade "$total_count" er "$z"
+			SaveActionResultMetrics IPK auxiliary upgrade "$total_count" er "$z"
 		fi
 
 		[[ ${useropt_terse:=true} = false && ${useropt_verbose:=false} = false ]] && echo
@@ -3887,14 +3890,14 @@ IPKs:install()
 		if [[ $z -eq 0 ]]; then
 			NoteIpkAcAsOk "$(IPKs-ACdownload-to:Array)" install
 			DebugAsDone "installed $desc"
-			SaveActionResultToLog IPK auxiliary install "$total_count" ok
+			SaveActionResultMetrics IPK auxiliary install "$total_count" ok
 			HideKeystrokes
 			SetCapabilities
 
 			rm -f "$r_prev_ipk_list_pathfile.installing" 2> /dev/null
 		else
 			NoteIpkAcAsEr "$(IPKs-ACdownload-to:Array)" install
-			SaveActionResultToLog IPK auxiliary install "$total_count" er "$z"
+			SaveActionResultMetrics IPK auxiliary install "$total_count" er "$z"
 
 			if [[ -e $r_prev_ipk_list_pathfile.installing ]]; then
 				mv -f "$r_prev_ipk_list_pathfile.installing" "$r_prev_ipk_list_pathfile"
@@ -3923,7 +3926,7 @@ IPKs:downgrade()
 
 	FuncInit
 
-	local curl_options=''
+	local curl_insecure_opt=''
 	local desc=''
 	local -i fail_count=0
 	local log_pathfile=''
@@ -3938,7 +3941,7 @@ IPKs:downgrade()
 
 	IPKs-ACdownload-to:Init
 	total_count=$(IPKs-ACdowngrade-to:Count)
-	IsOsCanSecureDownload || curl_options=' --insecure'
+	IsOsCanSecureDownload || curl_insecure_opt=' --insecure'
 
 	if [[ $total_count -gt 0 ]]; then
 		package_type=IPK
@@ -3961,7 +3964,7 @@ IPKs:downgrade()
 
 						remote_url=${url_prefix}${name}${url_suffix}
 						local_pathfile=$r_ipk_downgrade_path/$(/usr/bin/basename "$remote_url")
-						Executer "/sbin/curl${curl_options} --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
+						Executer "/sbin/curl${curl_insecure_opt} --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
 					done
 
 					ShowAsPercentProgress "download $desc" '' "$ok_count" 0 "$fail_count" "$total_count"
@@ -3976,7 +3979,7 @@ IPKs:downgrade()
 
 					remote_url=${url_prefix}${name}${url_suffix}
 					local_pathfile=$r_ipk_downgrade_path/$(/usr/bin/basename "$remote_url")
-					Executer "/sbin/curl${curl_options} --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
+					Executer "/sbin/curl${curl_insecure_opt} --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
 				done
 
 				ShowAsPercentProgress "download $desc" '' "$ok_count" 0 "$fail_count" "$total_count"
@@ -3991,7 +3994,7 @@ IPKs:downgrade()
 
 #					remote_url=${url_prefix}${name}${url_suffix}
 #					local_pathfile=$r_ipk_downgrade_path/$(/usr/bin/basename "$remote_url")
-#					Executer "/sbin/curl${curl_options} --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
+#					Executer "/sbin/curl${curl_insecure_opt} --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
 #				done
 
 #				ShowAsPercentProgress "download $desc" '' "$ok_count" 0 "$fail_count" "$total_count"
@@ -4015,11 +4018,11 @@ IPKs:downgrade()
 			((ok_count++))
 			NoteIpkAcAsOk "$(IPKs-ACdowngrade-to:Array)" downgrade
 			DebugAsDone "downgraded $desc"
-			SaveActionResultToLog IPK auxiliary downgrade "$ok_count" ok
+			SaveActionResultMetrics IPK auxiliary downgrade "$ok_count" ok
 		else
 			((fail_count++))
 			NoteIpkAcAsEr "$(IPKs-ACdowngrade-to:Array)" downgrade
-			SaveActionResultToLog IPK auxiliary downgrade "$fail_count" er "$z"
+			SaveActionResultMetrics IPK auxiliary downgrade "$fail_count" er "$z"
 		fi
 
 		ShowAsPercentProgress "downgrade $desc" '' "$ok_count" 0 "$fail_count" "$total_count"
@@ -4095,12 +4098,12 @@ PIPs:install()
 		if [[ $z -eq 0 ]]; then
 			((ok_count++))
 			DebugAsDone "installed $desc"
-			SaveActionResultToLog PIP auxiliary install "$ok_count" ok
+			SaveActionResultMetrics PIP auxiliary install "$ok_count" ok
 
 			rm -f "$r_prev_pip_list_pathfile.installing" 2> /dev/null
 		else
 			((fail_count++))
-			SaveActionResultToLog PIP auxiliary install "$fail_count" er "$z"
+			SaveActionResultMetrics PIP auxiliary install "$fail_count" er "$z"
 
 			if [[ -e $r_prev_pip_list_pathfile.installing ]]; then
 				mv -f "$r_prev_pip_list_pathfile.installing" "$r_prev_pip_list_pathfile"
@@ -9097,21 +9100,6 @@ MarkActionForkAsSkippedError()
 
 	}
 
-# #WriteThisAcForkPid()
-#	{
-
-#	# Inputs: (local)
-#	#	$1 = process ID to write into file.
-
-#	# Inputs: (global)
-#	#	$proc_work_pathfile
-
-#	[[ -n ${1:-} && -n ${proc_work_pathfile:-} ]] || return
-
-#	echo "$1" > "$proc_work_pathfile"
-
-#	}
-
 NoteIpkAcAsOk()
 	{
 
@@ -9358,13 +9346,6 @@ GetUserDefVol()
 
 	}
 
-# #GetThisBinPath()
-#	{
-
-#	[[ -n ${1:?${FUNCNAME[0]}(): undefined binary} ]] && command -v "$1" 2>&1
-
-#	}
-
 GetRepoURLFromStoreID()
 	{
 
@@ -9462,7 +9443,7 @@ GetBusyBoxFunctionCount()
 
 	local a=''
 
-	a=$(/bin/busybox --list 2>/dev/null | wc -l)
+	a=$(/bin/busybox --list 2> /dev/null | wc -l)
 
 	if [[ -n $a ]] && IsNumber $a && [[ $a -gt 0 ]]; then
 		printf '%s' "$a"
@@ -9776,16 +9757,16 @@ EnableVerbose()
 
 	}
 
-DisableVerbose()
-	{
+DisableVerbose()								# devdebug
+	{											# devdebug
 
-	useropt_verbose=false
-	DebugVar useropt_verbose
+	useropt_verbose=false						# devdebug
+	DebugVar useropt_verbose					# devdebug
 
-	HideCursor
-	HideKeystrokes
+	HideCursor									# devdebug
+	HideKeystrokes								# devdebug
 
-	}
+	}											# devdebug
 
 EnableDebugToArchiveAndFile()
 	{
@@ -9808,7 +9789,7 @@ DisableDebugToArchiveAndFile()
 
 	}
 
-SaveActionResultToLog()
+SaveActionResultMetrics()
 	{
 
 	# Write various action metrics into log and durations files.
@@ -9889,15 +9870,15 @@ _QPKG:reassign_()
 	local -i z=0
 
 	if IsNtValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" reassign '' sk 'not installed'
+		SaveActionResultMetrics QPKG "$qpkg_name" reassign '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" reassign '' sk 'author incompatible'
+		SaveActionResultMetrics QPKG "$qpkg_name" reassign '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif [[ $(GetQpkgInstalledStoreID) = sherpa || $(GetQpkgInstalledStoreID) = undefined ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" reassign '' sk 'already assigned to sherpa'
+		SaveActionResultMetrics QPKG "$qpkg_name" reassign '' sk 'already assigned to sherpa'
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -9909,10 +9890,10 @@ _QPKG:reassign_()
 	z=$?
 
 	if [[ $z -eq 0 ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" reassign '' ok
+		SaveActionResultMetrics QPKG "$qpkg_name" reassign '' ok
 		MarkActionForkAsOk
 	else
-		SaveActionResultToLog QPKG "$qpkg_name" reassign '' er "$z"
+		SaveActionResultMetrics QPKG "$qpkg_name" reassign '' er "$z"
 		MarkActionForkAsError
 		z=1		# Remap to 1.
 	fi
@@ -9939,7 +9920,7 @@ _QPKG:download_()
 
 	FuncForkInit
 
-	local curl_options=''
+	local curl_insecure_opt=''
 	local -r r_remote_hash=$(GetQpkgDbHash)
 	local -r r_remote_url=$(GetQpkgDbURL)
 		local -r r_remote_filename=$(/usr/bin/basename "$r_remote_url")
@@ -9949,7 +9930,7 @@ _QPKG:download_()
 	local -i z=0
 
 	if [[ -z $r_remote_url || -z $r_remote_hash ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" download '' sk 'NAS arch incompatible'
+		SaveActionResultMetrics QPKG "$qpkg_name" download '' sk 'NAS arch incompatible'
 
 		if IsOsCanManageSignedPackages && IsOsRequireSignedPackages; then
 			SendParentCommand "QPKGs-ACsign-to:Remove $qpkg_name"
@@ -9961,7 +9942,7 @@ _QPKG:download_()
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinOSVerOk "$qpkg_name" || ! IsQpkgDbMaxOSVerOk "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" download '' sk "$(GetOsName) version incompatible"
+		SaveActionResultMetrics QPKG "$qpkg_name" download '' sk "$(GetOsName) version incompatible"
 
 		if IsOsCanManageSignedPackages && IsOsRequireSignedPackages; then
 			SendParentCommand "QPKGs-ACsign-to:Remove $qpkg_name"
@@ -9973,7 +9954,7 @@ _QPKG:download_()
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinRAMOk "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" download '' sk 'installed RAM insufficient'
+		SaveActionResultMetrics QPKG "$qpkg_name" download '' sk 'installed RAM insufficient'
 
 		if IsOsCanManageSignedPackages && IsOsRequireSignedPackages; then
 			SendParentCommand "QPKGs-ACsign-to:Remove $qpkg_name"
@@ -9986,7 +9967,7 @@ _QPKG:download_()
 		z=2
 	elif IsFile "$r_local_pathfile"; then
 		if FileMatchesMD5 "$r_local_pathfile" "$r_remote_hash"; then
-			SaveActionResultToLog QPKG "$qpkg_name" download '' sk 'already downloaded'
+			SaveActionResultMetrics QPKG "$qpkg_name" download '' sk 'already downloaded'
 			MarkActionForkAsSkipped
 			z=2
 		else
@@ -9999,26 +9980,26 @@ _QPKG:download_()
 
 	if IsNtFile "$r_local_pathfile"; then
 		DebugAsProc "downloading $(FormatFileName "$r_remote_filename")"
-		IsOsCanSecureDownload || curl_options=' --insecure'
+		IsOsCanSecureDownload || curl_insecure_opt=' --insecure'
 		rm -f "$r_log_pathfile" 2> /dev/null
 
-		Executer "/sbin/curl${curl_options} --location --output $r_local_pathfile $r_remote_url" "$r_log_pathfile" log:failure-only
+		Executer "/sbin/curl${curl_insecure_opt} --location --output $r_local_pathfile $r_remote_url" "$r_log_pathfile" log:failure-only
 		z=$?
 
 		if [[ $z -eq 0 ]]; then
 			if FileMatchesMD5 "$r_local_pathfile" "$r_remote_hash"; then
 				[[ $(Lowercase "${r_local_pathfile##*.}") = zip ]] && /usr/bin/unzip -nq "$r_local_pathfile" -d "$r_qpkg_download_path"
-				SaveActionResultToLog QPKG "$qpkg_name" download '' ok
+				SaveActionResultMetrics QPKG "$qpkg_name" download '' ok
 				SendPackageStateChange ISdownloaded
 				MarkActionForkAsOk
 			else
-				SaveActionResultToLog QPKG "$qpkg_name" download '' er "cache file $(FormatFileName "$r_local_filename") has incorrect checksum"
+				SaveActionResultMetrics QPKG "$qpkg_name" download '' er "cache file $(FormatFileName "$r_local_filename") has incorrect checksum"
 				SendPackageStateChange ISNTdownloaded
 				MarkActionForkAsError
 				z=1
 			fi
 		else
-			SaveActionResultToLog QPKG "$qpkg_name" download '' er "$z"
+			SaveActionResultMetrics QPKG "$qpkg_name" download '' er "$z"
 			MarkActionForkAsError
 			z=1		# Remap to 1 (last time I checked, 'curl' had 92 return codes).
 		fi
@@ -10036,8 +10017,10 @@ _QPKG:install_()
 	# Install the QPKG named in $qpkg_name.
 
 	# Inputs: (global)
-	#	$qpkg_name
 	#	$QPKGs_were_installed_name[]
+	#	$qpkg_name
+	#	$r_external_apps_backup_path
+	#	$r_external_apps_path
 	#	$r_install_log_file
 	#	$r_logs_path
 	#	$r_nas_arch
@@ -10056,23 +10039,23 @@ _QPKG:install_()
 	local -i z=0
 
 	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" install '' se 'installation package unavailable'
+		SaveActionResultMetrics QPKG "$qpkg_name" install '' se 'installation package unavailable'
 		MarkActionForkAsSkippedError
 		z=4
 	elif IsQpkgInstalled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" install '' sk "already installed, please use 'reinstall' instead"
+		SaveActionResultMetrics QPKG "$qpkg_name" install '' sk "already installed, please use 'reinstall' instead"
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbArchOK "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" install '' sk 'NAS arch incompatible'
+		SaveActionResultMetrics QPKG "$qpkg_name" install '' sk 'NAS arch incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinOSVerOk "$qpkg_name" || ! IsQpkgDbMaxOSVerOk "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" install '' sk "$(GetOsName) version incompatible"
+		SaveActionResultMetrics QPKG "$qpkg_name" install '' sk "$(GetOsName) version incompatible"
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinRAMOk "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" install '' sk 'installed RAM insufficient'
+		SaveActionResultMetrics QPKG "$qpkg_name" install '' sk 'installed RAM insufficient'
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -10080,12 +10063,10 @@ _QPKG:install_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	if [[ $qpkg_name = Entware ]] && IsNtValidQpkgInstalled Entware && QPKGs-ACinstall-to.Exist Entware; then
-		local -r r_opt_path=/opt
-		local -r r_opt_bu_path=/opt.orig
 
-		if [[ -d $r_opt_path && ! -L $r_opt_path && ! -e $r_opt_bu_path ]]; then
-			DebugAsProc 'backup original /opt'
-			mv "$r_opt_path" "$r_opt_bu_path"
+		if [[ -d $r_external_apps_path && ! -L $r_external_apps_path && ! -e $r_external_apps_backup_path ]]; then
+			DebugAsProc "move-aside $r_external_apps_path"
+			mv "$r_external_apps_path" "$r_external_apps_backup_path"
 			DebugAsDone complete
 		fi
 	fi
@@ -10120,18 +10101,19 @@ _QPKG:install_()
 	[[ $qpkg_name = Entware ]] && IsNtCriticalFile $r_opkg_cmd && z=1		# Entware installation has failed.
 
 	if [[ $z -eq 0 || $z -eq 10 ]]; then	# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes user-aborts.
-		SaveActionResultToLog QPKG "$qpkg_name" install '' ok "v$(GetQpkgInstalledVer)"
+		SaveActionResultMetrics QPKG "$qpkg_name" install '' ok "v$(GetQpkgInstalledVer)"
 
 		if [[ $qpkg_name = Entware ]]; then
 			SendParentCommand ModPathToEntware
 			SendParentCommand _UpdateEntwarePackageList_
 			PatchEntwareService
 
-			# Shift all files from original '/opt' into new '/opt'
+			# Shift all files from /opt into /opt.bak
 
-			if [[ -L ${r_opt_path:-} && -d ${r_opt_bu_path:-} ]]; then
-				DebugAsProc 'restoring original /opt'
-				mv "$r_opt_bu_path"/* "$r_opt_path" && ClearPath / "$r_opt_bu_path"
+			if [[ -L $r_external_apps_path && -d $r_external_apps_backup_path ]]; then
+				DebugAsProc "move-into $r_external_apps_path"
+				(shopt -s dotglob; mv "$r_external_apps_backup_path"/* "$r_external_apps_path"/)
+				rmdir "$r_external_apps_backup_path"
 				DebugAsDone complete
 			fi
 		fi
@@ -10139,7 +10121,7 @@ _QPKG:install_()
 		MarkActionForkAsOk
 		z=0		# Remap to zero.
 	else
-		SaveActionResultToLog QPKG "$qpkg_name" install '' er "$z"
+		SaveActionResultMetrics QPKG "$qpkg_name" install '' er "$z"
 		IsOsCanManageSignedPackages && IsQpkgSigned && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
 		MarkActionForkAsError
 		z=1		# Remap to 1.
@@ -10175,19 +10157,19 @@ _QPKG:reinstall_()
 	local -i z=0
 
 	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' se 'installation package unavailable'
+		SaveActionResultMetrics QPKG "$qpkg_name" reinstall '' se 'installation package unavailable'
 		MarkActionForkAsSkippedError
 		z=4
 	elif IsNtQpkgInstalled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' sk "not already installed, please use 'install' instead"
+		SaveActionResultMetrics QPKG "$qpkg_name" reinstall '' sk "not already installed, please use 'install' instead"
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' sk 'author incompatible'
+		SaveActionResultMetrics QPKG "$qpkg_name" reinstall '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics QPKG "$qpkg_name" reinstall '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -10207,12 +10189,12 @@ _QPKG:reinstall_()
 	[[ $qpkg_name = Entware ]] && IsNtCriticalFile $r_opkg_cmd && z=1
 
 	if [[ $z -eq 0 || $z -eq 10 ]]; then		# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes aborts.
-		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' ok "v$(GetQpkgInstalledVer)"
+		SaveActionResultMetrics QPKG "$qpkg_name" reinstall '' ok "v$(GetQpkgInstalledVer)"
 		IsQpkgDbCanClean && SendParentCommand "QPKGs-ACclean-to:Add $qpkg_name"
 		MarkActionForkAsOk
 		z=0		# Remap to zero.
 	else
-		SaveActionResultToLog QPKG "$qpkg_name" reinstall '' er "$z"
+		SaveActionResultMetrics QPKG "$qpkg_name" reinstall '' er "$z"
 		MarkActionForkAsError
 		z=1		# Remap to 1.
 	fi
@@ -10241,23 +10223,23 @@ _QPKG:rebuild_()
 	local -i z=0
 
 	if IsValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' sk "already installed, please use 'restore' instead"
+		SaveActionResultMetrics QPKG "$qpkg_name" meta-rebuild '' sk "already installed, please use 'restore' instead"
 		MarkActionForkAsSkipped
 		z=2
 #	elif IsNtQpkgAuthorOk; then
-#		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' sk 'author incompatible'
+#		SaveActionResultMetrics QPKG "$qpkg_name" meta-rebuild '' sk 'author incompatible'
 #		MarkActionForkAsSkipped
 #		z=2
 	elif ! IsQpkgDbCanBackup; then
-		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' sk 'rebuild is not supported by this QPKG'
+		SaveActionResultMetrics QPKG "$qpkg_name" meta-rebuild '' sk 'rebuild is not supported by this QPKG'
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgBackupExist; then
-		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' sk 'backup file does not exist'
+		SaveActionResultMetrics QPKG "$qpkg_name" meta-rebuild '' sk 'backup file does not exist'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics QPKG "$qpkg_name" meta-rebuild '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -10268,7 +10250,7 @@ _QPKG:rebuild_()
 
 	# Nothing-to-do here, real QPKG actions have already been assigned in CheckEnv().
 
-	SaveActionResultToLog QPKG "$qpkg_name" meta-rebuild '' ok
+	SaveActionResultMetrics QPKG "$qpkg_name" meta-rebuild '' ok
 	MarkActionForkAsOk
 	ClearQpkgInstalledAppCenterNotifier
 
@@ -10299,23 +10281,23 @@ _QPKG:upgrade_()
 	local -i z=0
 
 	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' se 'installation package unavailable'
+		SaveActionResultMetrics QPKG "$qpkg_name" upgrade '' se 'installation package unavailable'
 		MarkActionForkAsSkippedError
 		z=4
 	elif IsNtValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' sk 'not installed'
+		SaveActionResultMetrics QPKG "$qpkg_name" upgrade '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' sk 'author incompatible'
+		SaveActionResultMetrics QPKG "$qpkg_name" upgrade '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif ! QPKGs-ISupgradable.Exist "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' sk 'no new QPKG is available'
+		SaveActionResultMetrics QPKG "$qpkg_name" upgrade '' sk 'no new QPKG is available'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics QPKG "$qpkg_name" upgrade '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -10343,15 +10325,15 @@ _QPKG:upgrade_()
 		local current_ver=$(GetQpkgInstalledVer)
 
 		if [[ $current_ver = "$prev_ver" ]]; then
-			SaveActionResultToLog QPKG "$qpkg_name" upgrade '' ok "v${current_ver}"
+			SaveActionResultMetrics QPKG "$qpkg_name" upgrade '' ok "v${current_ver}"
 		else
-			SaveActionResultToLog QPKG "$qpkg_name" upgrade '' ok "v${prev_ver} -> v${current_ver}"		# squeezer-ignore
+			SaveActionResultMetrics QPKG "$qpkg_name" upgrade '' ok "v${prev_ver} -> v${current_ver}"		# squeezer-ignore
 		fi
 
 		MarkActionForkAsOk
 		z=0		# Remap to zero.
 	else
-		SaveActionResultToLog QPKG "$qpkg_name" upgrade '' er "$z"
+		SaveActionResultMetrics QPKG "$qpkg_name" upgrade '' er "$z"
 		MarkActionForkAsError
 		z=1		# Remap to 1.
 	fi
@@ -10384,19 +10366,19 @@ _QPKG:uninstall_()
 	local -i z=0
 
 	if IsNtValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" uninstall '' sk 'not installed'
+		SaveActionResultMetrics QPKG "$qpkg_name" uninstall '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" uninstall '' sk 'author incompatible'
+		SaveActionResultMetrics QPKG "$qpkg_name" uninstall '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif [[ $qpkg_name = sherpa ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" uninstall '' sk "it's needed here! 😉"
+		SaveActionResultMetrics QPKG "$qpkg_name" uninstall '' sk "it's needed here! 😉"
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultToLog QPKG "$qpkg_name" uninstall '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics QPKG "$qpkg_name" uninstall '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -10418,7 +10400,7 @@ _QPKG:uninstall_()
 			# WARNING: beware of `qpkg_cli --remove`. It removes the QPKG installation path around 10-20 seconds after execution. If sherpa has moved-on and starts an install, `qpkg_cli` will remove the newly created QPKG installation path partway through the installation. So, check if QPKG is to be installed again. If-so, don't use `qpkg_cli --remove`.
 
 			[[ -e /sbin/qpkg_cli ]] && ! QPKGs-ACinstall-to.Exist "$qpkg_name" && /sbin/qpkg_cli --remove "$qpkg_name" &> /dev/null
-			SaveActionResultToLog QPKG "$qpkg_name" uninstall '' ok
+			SaveActionResultMetrics QPKG "$qpkg_name" uninstall '' ok
 			/sbin/rmcfg "$qpkg_name" -f /etc/config/qpkg.conf
 			DebugAsDone 'removed icon information from App Center'
 
@@ -10431,14 +10413,14 @@ _QPKG:uninstall_()
 			SendPackageStateChange ISNTactive
 			MarkActionForkAsOk
 		else
-			SaveActionResultToLog QPKG "$qpkg_name" uninstall '' er "$z"
+			SaveActionResultMetrics QPKG "$qpkg_name" uninstall '' er "$z"
 			MarkActionForkAsError
 			z=1		# Remap to 1.
 		fi
 	else
 		# Standard QPKG `.uninstall.sh` was not found, so can't continue with uninstallation (maybe force this instead with `rm -r` ?).
 
-		SaveActionResultToLog QPKG "$qpkg_name" uninstall '' er "$(FormatFileName '.uninstall.sh') not found"
+		SaveActionResultMetrics QPKG "$qpkg_name" uninstall '' er "$(FormatFileName '.uninstall.sh') not found"
 		MarkActionForkAsError
 		z=1
 	fi
@@ -10470,19 +10452,19 @@ _QPKG:activate_()
 	local -i z=0
 
 	if IsNtValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" activate '' sk 'not installed'
+		SaveActionResultMetrics QPKG "$qpkg_name" activate '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" activate '' sk 'author incompatible'
+		SaveActionResultMetrics QPKG "$qpkg_name" activate '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgEnabled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" activate '' sk "disabled, please 'enable' it first"
+		SaveActionResultMetrics QPKG "$qpkg_name" activate '' sk "disabled, please 'enable' it first"
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultToLog QPKG "$qpkg_name" activate '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics QPKG "$qpkg_name" activate '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -10497,7 +10479,7 @@ _QPKG:activate_()
 	DebugAsProc "activating $(FormatPackageName)"
 
 	if [[ $service_pathfile = undefined ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" activate '' se 'QPKG service-script file undefined'
+		SaveActionResultMetrics QPKG "$qpkg_name" activate '' se 'QPKG service-script file undefined'
 		MarkActionForkAsSkippedError
 
 		FuncForkExit 4
@@ -10514,9 +10496,11 @@ _QPKG:activate_()
 		z=$?
 	fi
 
+	LogQpkgServiceResult
+	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
+
 	if [[ $z -eq 0 ]]; then
-		LogQpkgServiceResult
-		SaveActionResultToLog QPKG "$qpkg_name" activate '' ok
+		SaveActionResultMetrics QPKG "$qpkg_name" activate '' ok
 
 		if [[ $qpkg_name = Entware ]]; then
 			SendParentCommand ModPathToEntware
@@ -10527,7 +10511,7 @@ _QPKG:activate_()
 		SendPackageStateChange ISactive
 		MarkActionForkAsOk
 	else
-		SaveActionResultToLog QPKG "$qpkg_name" activate '' er "$z"
+		SaveActionResultMetrics QPKG "$qpkg_name" activate '' er "$z"
 		SendPackageStateChange ISNTactive
 		MarkActionForkAsError
 		z=1		# Remap to 1.
@@ -10562,19 +10546,19 @@ _QPKG:reactivate_()
 	local -i z=0
 
 	if IsNtValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' sk 'not installed'
+		SaveActionResultMetrics QPKG "$qpkg_name" reactivate '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' sk 'author incompatible'
+		SaveActionResultMetrics QPKG "$qpkg_name" reactivate '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgEnabled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' sk "disabled, please 'enable' it first"
+		SaveActionResultMetrics QPKG "$qpkg_name" reactivate '' sk "disabled, please 'enable' it first"
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics QPKG "$qpkg_name" reactivate '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -10589,7 +10573,7 @@ _QPKG:reactivate_()
 	DebugAsProc "reactivating $(FormatPackageName)"
 
 	if [[ $service_pathfile = undefined ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' se 'QPKG service-script file undefined'
+		SaveActionResultMetrics QPKG "$qpkg_name" reactivate '' se 'QPKG service-script file undefined'
 		MarkActionForkAsSkippedError
 
 		FuncForkExit 4
@@ -10606,12 +10590,14 @@ _QPKG:reactivate_()
 		z=$?
 	fi
 
+	LogQpkgServiceResult
+	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
+
 	if [[ $z -eq 0 ]]; then
-		LogQpkgServiceResult
-		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' ok
+		SaveActionResultMetrics QPKG "$qpkg_name" reactivate '' ok
 		MarkActionForkAsOk
 	else
-		SaveActionResultToLog QPKG "$qpkg_name" reactivate '' er "$z"
+		SaveActionResultMetrics QPKG "$qpkg_name" reactivate '' er "$z"
 		MarkActionForkAsError
 		z=1		# Remap to 1.
 	fi
@@ -10645,19 +10631,19 @@ _QPKG:deactivate_()
 	local -i z=0
 
 	if IsNtValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' sk 'not installed'
+		SaveActionResultMetrics QPKG "$qpkg_name" deactivate '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' sk 'author incompatible'
+		SaveActionResultMetrics QPKG "$qpkg_name" deactivate '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
 #	elif [[ $qpkg_name = sherpa ]]; then
-#		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' sk "it's needed here! 😉"
+#		SaveActionResultMetrics QPKG "$qpkg_name" deactivate '' sk "it's needed here! 😉"
 #		MarkActionForkAsSkipped
 #		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics QPKG "$qpkg_name" deactivate '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -10672,7 +10658,7 @@ _QPKG:deactivate_()
 	DebugAsProc "deactivating $(FormatPackageName)"
 
 	if [[ $service_pathfile = undefined ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' se 'QPKG service-script file undefined'
+		SaveActionResultMetrics QPKG "$qpkg_name" deactivate '' se 'QPKG service-script file undefined'
 		MarkActionForkAsSkippedError
 
 		FuncForkExit 4
@@ -10689,9 +10675,11 @@ _QPKG:deactivate_()
 		z=$?
 	fi
 
+	LogQpkgServiceResult
+	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
+
 	if [[ $z -eq 0 ]]; then
-		LogQpkgServiceResult
-		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' ok
+		SaveActionResultMetrics QPKG "$qpkg_name" deactivate '' ok
 
 		if [[ $qpkg_name = Entware ]]; then
 			SendParentCommand ModPathToEntware
@@ -10702,7 +10690,7 @@ _QPKG:deactivate_()
 		SendPackageStateChange ISNTactive
 		MarkActionForkAsOk
 	else
-		SaveActionResultToLog QPKG "$qpkg_name" deactivate '' er "$z"
+		SaveActionResultMetrics QPKG "$qpkg_name" deactivate '' er "$z"
 		MarkActionForkAsError
 		z=1		# Remap to 1.
 	fi
@@ -10734,19 +10722,19 @@ _QPKG:enable_()
 	local -i z=0
 
 	if IsNtValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" enable '' sk 'not installed'
+		SaveActionResultMetrics QPKG "$qpkg_name" enable '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" enable '' sk 'author incompatible'
+		SaveActionResultMetrics QPKG "$qpkg_name" enable '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsQpkgEnabled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" enable '' sk 'already enabled'
+		SaveActionResultMetrics QPKG "$qpkg_name" enable '' sk 'already enabled'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultToLog QPKG "$qpkg_name" enable '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics QPKG "$qpkg_name" enable '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -10761,7 +10749,7 @@ _QPKG:enable_()
 
 	Executer "/sbin/qpkg_service${timeout} enable $qpkg_name" "$r_log_pathfile" log:failure-only
 	ClearQpkgInstalledAppCenterNotifier
-	SaveActionResultToLog QPKG "$qpkg_name" enable '' ok
+	SaveActionResultMetrics QPKG "$qpkg_name" enable '' ok
 	MarkActionForkAsOk
 
 	FuncForkExit $z
@@ -10789,23 +10777,23 @@ _QPKG:disable_()
 	local -i z=0
 
 	if IsNtValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" disable '' sk 'not installed'
+		SaveActionResultMetrics QPKG "$qpkg_name" disable '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" disable '' sk 'author incompatible'
+		SaveActionResultMetrics QPKG "$qpkg_name" disable '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgEnabled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" disable '' sk 'already disabled'
+		SaveActionResultMetrics QPKG "$qpkg_name" disable '' sk 'already disabled'
 		MarkActionForkAsSkipped
 		z=2
 #	elif [[ $qpkg_name = sherpa ]]; then
-#		SaveActionResultToLog QPKG "$qpkg_name" disable '' sk "it's needed here! 😉"
+#		SaveActionResultMetrics QPKG "$qpkg_name" disable '' sk "it's needed here! 😉"
 #		MarkActionForkAsSkipped
 #		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultToLog QPKG "$qpkg_name" disable '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics QPKG "$qpkg_name" disable '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -10821,7 +10809,7 @@ _QPKG:disable_()
 	Executer "/sbin/qpkg_service${timeout} disable $qpkg_name" "$r_log_pathfile" log:failure-only
 
 	ClearQpkgInstalledAppCenterNotifier
-	SaveActionResultToLog QPKG "$qpkg_name" disable '' ok
+	SaveActionResultMetrics QPKG "$qpkg_name" disable '' ok
 	MarkActionForkAsOk
 
 	FuncForkExit $z
@@ -10850,23 +10838,23 @@ _QPKG:enableau_()
 	local -i z=0
 
 	if IsNtValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" enableau '' sk 'not installed'
+		SaveActionResultMetrics QPKG "$qpkg_name" enableau '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" enableau '' sk 'author incompatible'
+		SaveActionResultMetrics QPKG "$qpkg_name" enableau '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif [[ $qpkg_name = sherpa ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" enableau '' sk 'auto-update is always enabled'
+		SaveActionResultMetrics QPKG "$qpkg_name" enableau '' sk 'auto-update is always enabled'
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbCanRestartToUpdate "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" enableau '' sk 'auto-update is unsupported by this QPKG'
+		SaveActionResultMetrics QPKG "$qpkg_name" enableau '' sk 'auto-update is unsupported by this QPKG'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultToLog QPKG "$qpkg_name" enableau '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics QPKG "$qpkg_name" enableau '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -10879,12 +10867,14 @@ _QPKG:enableau_()
 	Executer "${a}$(GetQpkgServicePathFile) enable-auto-update" "$r_logs_path/$qpkg_name.$r_enableau_log_file" log:failure-only
 	z=$?
 
+	LogQpkgServiceResult
+	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
+
 	if [[ $z -eq 0 ]]; then
-		LogQpkgServiceResult
-		SaveActionResultToLog QPKG "$qpkg_name" enableau '' ok
+		SaveActionResultMetrics QPKG "$qpkg_name" enableau '' ok
 		MarkActionForkAsOk
 	else
-		SaveActionResultToLog QPKG "$qpkg_name" enableau '' er "$z"
+		SaveActionResultMetrics QPKG "$qpkg_name" enableau '' er "$z"
 		MarkActionForkAsError
 		z=1		# Remap to 1.
 	fi
@@ -10915,23 +10905,23 @@ _QPKG:disableau_()
 	local -i z=0
 
 	if IsNtValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" disableau '' sk 'not installed'
+		SaveActionResultMetrics QPKG "$qpkg_name" disableau '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" disableau '' sk 'author incompatible'
+		SaveActionResultMetrics QPKG "$qpkg_name" disableau '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif [[ $qpkg_name = sherpa ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" disableau '' sk 'auto-update cannot be disabled'
+		SaveActionResultMetrics QPKG "$qpkg_name" disableau '' sk 'auto-update cannot be disabled'
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbCanRestartToUpdate "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" disableau '' sk 'auto-update is unsupported by this QPKG'
+		SaveActionResultMetrics QPKG "$qpkg_name" disableau '' sk 'auto-update is unsupported by this QPKG'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultToLog QPKG "$qpkg_name" disableau '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics QPKG "$qpkg_name" disableau '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -10944,12 +10934,14 @@ _QPKG:disableau_()
 	Executer "${a}$(GetQpkgServicePathFile) disable-auto-update" "$r_logs_path/$qpkg_name.$r_disableau_log_file" log:failure-only
 	z=$?
 
+	LogQpkgServiceResult
+	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
+
 	if [[ $z -eq 0 ]]; then
-		LogQpkgServiceResult
-		SaveActionResultToLog QPKG "$qpkg_name" disableau '' ok
+		SaveActionResultMetrics QPKG "$qpkg_name" disableau '' ok
 		MarkActionForkAsOk
 	else
-		SaveActionResultToLog QPKG "$qpkg_name" disableau '' er "$z"
+		SaveActionResultMetrics QPKG "$qpkg_name" disableau '' er "$z"
 		MarkActionForkAsError
 		z=1		# Remap to 1.
 	fi
@@ -10980,19 +10972,19 @@ _QPKG:backup_()
 	local -i z=0
 
 	if IsNtValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" backup '' sk 'not installed'
+		SaveActionResultMetrics QPKG "$qpkg_name" backup '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" backup '' sk 'author incompatible'
+		SaveActionResultMetrics QPKG "$qpkg_name" backup '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbCanBackup; then
-		SaveActionResultToLog QPKG "$qpkg_name" backup '' sk 'backup is unsupported by this QPKG'
+		SaveActionResultMetrics QPKG "$qpkg_name" backup '' sk 'backup is unsupported by this QPKG'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultToLog QPKG "$qpkg_name" backup '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics QPKG "$qpkg_name" backup '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -11005,13 +10997,15 @@ _QPKG:backup_()
 	Executer "${a}$(GetQpkgServicePathFile) backup" "$r_logs_path/$qpkg_name.$r_backup_log_file" log:failure-only
 	z=$?
 
+	LogQpkgServiceResult
+	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
+
 	if [[ $z -eq 0 ]]; then
-		LogQpkgServiceResult
-		SaveActionResultToLog QPKG "$qpkg_name" backup '' ok
+		SaveActionResultMetrics QPKG "$qpkg_name" backup '' ok
 		SendPackageStateChange ISbackedup
 		MarkActionForkAsOk
 	else
-		SaveActionResultToLog QPKG "$qpkg_name" backup '' er "$z"
+		SaveActionResultMetrics QPKG "$qpkg_name" backup '' er "$z"
 		MarkActionForkAsError
 		z=1		# Remap to 1.
 	fi
@@ -11042,23 +11036,23 @@ _QPKG:restore_()
 	local -i z=0
 
 	if IsNtValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" restore '' sk "not installed, try 'rebuild' instead"
+		SaveActionResultMetrics QPKG "$qpkg_name" restore '' sk "not installed, try 'rebuild' instead"
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" restore '' sk 'author incompatible'
+		SaveActionResultMetrics QPKG "$qpkg_name" restore '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbCanBackup; then
-		SaveActionResultToLog QPKG "$qpkg_name" restore '' sk 'restore is unsupported by this QPKG'
+		SaveActionResultMetrics QPKG "$qpkg_name" restore '' sk 'restore is unsupported by this QPKG'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultToLog QPKG "$qpkg_name" restore '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics QPKG "$qpkg_name" restore '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgBackupExist; then
-		SaveActionResultToLog QPKG "$qpkg_name" restore '' sk 'backup file does not exist'
+		SaveActionResultMetrics QPKG "$qpkg_name" restore '' sk 'backup file does not exist'
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -11071,13 +11065,15 @@ _QPKG:restore_()
 	Executer "${a}$(GetQpkgServicePathFile) restore" "$r_logs_path/$qpkg_name.$r_restore_log_file" log:failure-only
 	z=$?
 
+	LogQpkgServiceResult
+	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
+
 	if [[ $z -eq 0 ]]; then
-		LogQpkgServiceResult
-		SaveActionResultToLog QPKG "$qpkg_name" restore '' ok
+		SaveActionResultMetrics QPKG "$qpkg_name" restore '' ok
 		SendPackageStateChange ISrestored
 		MarkActionForkAsOk
 	else
-		SaveActionResultToLog QPKG "$qpkg_name" restore '' er "$z"
+		SaveActionResultMetrics QPKG "$qpkg_name" restore '' er "$z"
 		MarkActionForkAsError
 		z=1		# Remap to 1.
 	fi
@@ -11108,19 +11104,19 @@ _QPKG:clean_()
 	local -i z=0
 
 	if IsNtValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" clean '' sk 'not installed'
+		SaveActionResultMetrics QPKG "$qpkg_name" clean '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultToLog QPKG "$qpkg_name" clean '' sk 'author incompatible'
+		SaveActionResultMetrics QPKG "$qpkg_name" clean '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbCanClean; then
-		SaveActionResultToLog QPKG "$qpkg_name" clean '' sk 'clean is unsupported by this QPKG'
+		SaveActionResultMetrics QPKG "$qpkg_name" clean '' sk 'clean is unsupported by this QPKG'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultToLog QPKG "$qpkg_name" clean '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics QPKG "$qpkg_name" clean '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -11133,12 +11129,14 @@ _QPKG:clean_()
 	Executer "${a}$(GetQpkgServicePathFile) clean" "$r_logs_path/$qpkg_name.$r_clean_log_file" log:failure-only
 	z=$?
 
+	LogQpkgServiceResult
+	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
+
 	if [[ $z -eq 0 ]]; then
-		LogQpkgServiceResult
-		SaveActionResultToLog QPKG "$qpkg_name" clean '' ok
+		SaveActionResultMetrics QPKG "$qpkg_name" clean '' ok
 		MarkActionForkAsOk
 	else
-		SaveActionResultToLog QPKG "$qpkg_name" clean '' er "$z"
+		SaveActionResultMetrics QPKG "$qpkg_name" clean '' er "$z"
 		MarkActionForkAsError
 		z=1		# Remap to 1.
 	fi
@@ -11178,31 +11176,31 @@ _QPKG:sign_()
 	local -i z=0
 
 	if ! IsOsCanManageSignedPackages; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sk 'not required: firmware < 4.3.5'
+		SaveActionResultMetrics QPKG "$qpkg_name" '"sign"' '' sk 'not required: firmware < 4.3.5'
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbArchOK "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sk 'NAS arch incompatible'
+		SaveActionResultMetrics QPKG "$qpkg_name" '"sign"' '' sk 'NAS arch incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinOSVerOk "$qpkg_name" || ! IsQpkgDbMaxOSVerOk "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sk "$(GetOsName) version incompatible"
+		SaveActionResultMetrics QPKG "$qpkg_name" '"sign"' '' sk "$(GetOsName) version incompatible"
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinRAMOk "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sk 'installed RAM insufficient'
+		SaveActionResultMetrics QPKG "$qpkg_name" '"sign"' '' sk 'installed RAM insufficient'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics QPKG "$qpkg_name" '"sign"' '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=2
 	elif [[ ! -e $r_cert_db_pathfile ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sa "$(GetOsName) QPKG certificate database unavailable, no further signing will occur"
+		SaveActionResultMetrics QPKG "$qpkg_name" '"sign"' '' sa "$(GetOsName) QPKG certificate database unavailable, no further signing will occur"
 		MarkActionForkAsSkippedAbort
 		z=3
 	elif IsQpkgSigned; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' sk 'already signed'
+		SaveActionResultMetrics QPKG "$qpkg_name" '"sign"' '' sk 'already signed'
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -11247,11 +11245,11 @@ EOB
 	done
 
 	if [[ $z -eq 0 ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' ok
+		SaveActionResultMetrics QPKG "$qpkg_name" '"sign"' '' ok
 		SendPackageStateChange ISsigned
 		MarkActionForkAsOk
 	else
-		SaveActionResultToLog QPKG "$qpkg_name" '"sign"' '' er "$(Parenthesise "$z") but don't know why. Please report this as a bug"
+		SaveActionResultMetrics QPKG "$qpkg_name" '"sign"' '' er "$(Parenthesise "$z") but don't know why. Please report this as a bug"
 		SendParentCommand 'show_suggest_raise_issue=true'
 		MarkActionForkAsError
 		z=1		# Remap to 1.
@@ -11288,31 +11286,31 @@ _QPKG:unsign_()
 	local -i z=0
 
 	if ! IsOsCanManageSignedPackages; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sk 'not required: firmware < 4.3.5'
+		SaveActionResultMetrics QPKG "$qpkg_name" '"unsign"' '' sk 'not required: firmware < 4.3.5'
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbArchOK "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sk 'NAS arch incompatible'
+		SaveActionResultMetrics QPKG "$qpkg_name" '"unsign"' '' sk 'NAS arch incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinOSVerOk "$qpkg_name" || ! IsQpkgDbMaxOSVerOk "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sk "$(GetOsName) version incompatible"
+		SaveActionResultMetrics QPKG "$qpkg_name" '"unsign"' '' sk "$(GetOsName) version incompatible"
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinRAMOk "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sk 'installed RAM insufficient'
+		SaveActionResultMetrics QPKG "$qpkg_name" '"unsign"' '' sk 'installed RAM insufficient'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics QPKG "$qpkg_name" '"unsign"' '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=2
 	elif [[ ! -e $r_cert_db_pathfile ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sa "$(GetOsName) QPKG certificate database unavailable, no further unsigning will occur"
+		SaveActionResultMetrics QPKG "$qpkg_name" '"unsign"' '' sa "$(GetOsName) QPKG certificate database unavailable, no further unsigning will occur"
 		MarkActionForkAsSkippedAbort
 		z=3
 	elif IsNtQpkgSigned; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' sk 'not signed'
+		SaveActionResultMetrics QPKG "$qpkg_name" '"unsign"' '' sk 'not signed'
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -11358,11 +11356,11 @@ EOB
 	done
 
 	if [[ $z -eq 0 ]]; then
-		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' ok
+		SaveActionResultMetrics QPKG "$qpkg_name" '"unsign"' '' ok
 		SendPackageStateChange ISsigned
 		MarkActionForkAsOk
 	else
-		SaveActionResultToLog QPKG "$qpkg_name" '"unsign"' '' er "$(Parenthesise "$z") but don't know why. Please report this as a bug"
+		SaveActionResultMetrics QPKG "$qpkg_name" '"unsign"' '' er "$(Parenthesise "$z") but don't know why. Please report this as a bug"
 		SendParentCommand 'show_suggest_raise_issue=true'
 		MarkActionForkAsError
 		z=1		# Remap to 1.
@@ -11400,7 +11398,7 @@ _QPKG:status_()
 	local -i z=0
 
 	if IsNtValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultToLog QPKG "$qpkg_name" status '' sk 'not installed'
+		SaveActionResultMetrics QPKG "$qpkg_name" status '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -11445,7 +11443,7 @@ _QPKG:status_()
 			SendPackageStateChange ISunknown
 	esac
 
-	SaveActionResultToLog QPKG "$qpkg_name" status '' ok
+	SaveActionResultMetrics QPKG "$qpkg_name" status '' ok
 	MarkActionForkAsOk
 
 	FuncForkExit
@@ -11968,81 +11966,6 @@ GetQpkgAuthor()
 
 	}
 
-# #GetQpkgAuthorEmail()
-#	{
-
-#	# Return the email address for the maintainer of the specified QPKG.
-
-#	# Inputs:
-#	#	$1 = QPKG name
-
-#	# Outputs:
-#	#	stdout = QPKG author (first package found).
-#	#	$? = 0 (found), !0 (not-found)
-
-#	local -i i=0
-
-#	for i in "${!r_qpkg_name[@]}"; do
-#		[[ ${r_qpkg_name[$i]} = "${1:?${FUNCNAME[0]}(): $e_nopnm}" ]] || continue
-#		printf '%s' "${r_qpkg_author_email[$i]}"
-
-#		return 0
-#	done
-
-#	return 1
-
-#	}
-
-# #GetQpkgAppAuthor()
-#	{
-
-#	# Return the author of the application contained within the specified QPKG.
-
-#	# Inputs:
-#	#	$1 = QPKG name
-
-#	# Outputs:
-#	#	stdout = application author (first package found).
-#	#	$? = 0 (found), !0 (not-found)
-
-#	local -i i=0
-
-#	for i in "${!r_qpkg_name[@]}"; do
-#		[[ ${r_qpkg_name[$i]} = "${1:?${FUNCNAME[0]}(): $e_nopnm}" ]] || continue
-#		printf '%s' "${r_qpkg_appl_author[$i]}"
-
-#		return 0
-#	done
-
-#	return 1
-
-#	}
-
-# #GetQpkgAppAuthorEmail()
-#	{
-
-#	# Return the email address for the author of the application contained within the specified QPKG.
-
-#	# Inputs:
-#	#	$1 = QPKG name
-
-#	# Outputs:
-#	#	stdout = application author (first package found).
-#	#	$? = 0 (found), !0 (not-found)
-
-#	local -i i=0
-
-#	for i in "${!r_qpkg_name[@]}"; do
-#		[[ ${r_qpkg_name[$i]} = "${1:?${FUNCNAME[0]}(): $e_nopnm}" ]] || continue
-#		printf '%s' "${r_qpkg_appl_author_email[$i]}"
-
-#		return 0
-#	done
-
-#	return 1
-
-#	}
-
 GetQpkgDbDesc()
 	{
 
@@ -12520,18 +12443,6 @@ GetQpkgsNtInstalled()
 
 	}
 
-# #GetQpkgsNtValidInstalled()
-#	{
-
-#	local qpkg_name=''
-
-#	for qpkg_name in $(QPKGs-GRall:Array); do
-#		IsNtValidQpkgInstalled || continue
-#		echo "$qpkg_name"
-#	done
-
-#	}
-
 GetQpkgsIsEnabled()
 	{
 
@@ -12754,9 +12665,19 @@ IsEntwareUpgradable()
 
 	local a=$(GetQpkgInstalledDate Entware)
 
-	# NOTE: Entware are not updating packages anymore for ARMv5: https://entware.net/2024/02/23/Changelog.html
+	# NOTE: Entware are not updating packages anymore for older arches: https://entware.net/2024/02/23/Changelog.html
 
-	[[ $a = undefined || ${a//[!0-9]/} -lt $r_entware_packages_last_updated ]] && [[ $r_nas_arch != armv5tel ]]
+	if [[ $a = undefined || ${a//[!0-9]/} -lt $r_entware_packages_last_updated ]]; then
+		case $r_nas_arch in
+			armv5tel|i686|x86)
+				: # Do nothing.
+				;;
+			*)
+				return
+		esac
+	fi
+
+	false
 
 	}
 
@@ -12788,13 +12709,6 @@ IsQuTS()
 	/bin/grep zfs /proc/filesystems
 
 	} &> /dev/null
-
-# #IsQTS()
-#	{
-
-#	! IsQuTS
-
-#	}
 
 IsOsSupported()
 	{
@@ -12837,9 +12751,10 @@ IsOsCanSecureDownload()
 	# Inputs: (global)
 	#	$r_nas_firmware_ver
 
+	SetQpkgArch
 	SetOsFirmwareVer
 
-	[[ $r_nas_firmware_ver -ge 455 ]]
+	[[ $r_nas_firmware_ver -ge 455 ]] && [[ $r_nas_qpkg_arch != a41 ]]		# KLUDGE: secure `curl` ops fail on a41 running QTS 5.2.5
 
 	}
 
@@ -12935,14 +12850,14 @@ IsOsCompatibleWithSigned()
 IsOsRequireSignedPackages()
 	{
 
-	[[ $(/sbin/getcfg 'QPKG Management' Ignore_Cert -d FALSE) = FALSE ]]
+	[[ $(/sbin/getcfg 'QPKG Management' Ignore_Cert -u -d FALSE) = FALSE ]]
 
 	}
 
 IsOsAllowUnofficialPackages()
 	{
 
-	[[ $(/sbin/getcfg 'QPKG Management' Check_Official -d TRUE) = FALSE ]]
+	[[ $(/sbin/getcfg 'QPKG Management' Check_Official -u -d TRUE) = FALSE ]]
 
 	}
 
@@ -14388,14 +14303,6 @@ ShowAsVersion()
 
 	}
 
-# #ShowAsEmail()
-#	{
-
-#	#printf '%s' '<?email?>'
-#	TextUnderlinedCyan '<?email?>'
-
-#	}
-
 ShowAsAction()
 	{
 
@@ -14603,18 +14510,6 @@ DebugOS()
 	#	$3 = value
 
 	DebugItem "$1" os "$2" "$3"
-
-	}
-
-DebugShell()
-	{
-
-	# Inputs: (local)
-	#	$1 = type
-	#	$2 = name
-	#	$3 = value
-
-	DebugItem "$1" shell "$2" "$3"
 
 	}
 
@@ -15858,22 +15753,6 @@ TextBrightRedBlink()
 
 	} 2> /dev/null
 
-# #TextCyan()
-#	{
-
-#	# Inputs: (global)
-#	#	$colourful
-
-#	[[ -n ${1:-} ]] || return
-
-#	if [[ $colourful = true ]]; then
-#		printf '\033[1;36m%s\033[0m' "$1"
-#	else
-#		printf '%s' "$1"
-#	fi
-
-#	} 2> /dev/null
-
 TextDarkGrey()
 	{
 
@@ -15889,22 +15768,6 @@ TextDarkGrey()
 	fi
 
 	} 2> /dev/null
-
-# #TextUnderlined()
-#	{
-
-#	# Inputs: (global)
-#	#	$colourful
-
-#	[[ -n ${1:-} ]] || return
-
-#	if [[ $colourful = true ]]; then
-#		printf '\033[4m%s\033[0m' "$1"
-#	else
-#		printf '%s' "$1"
-#	fi
-
-#	} 2> /dev/null
 
 TextUnderlinedCyan()
 	{
@@ -16360,7 +16223,7 @@ RefreshArchive()
 
 	FuncInit
 
-	local curl_options=''
+	local curl_insecure_opt=''
 	local download=false
 	local downloaded=false
 	local extract=false
@@ -16390,8 +16253,8 @@ RefreshArchive()
 
 	if [[ $download = true ]]; then
 		DebugAsProc "download '$archive_name' archive"
-		IsOsCanSecureDownload || curl_options=' --insecure'
-		/sbin/curl${curl_options} --silent --fail "$archive_url" > "$archive_pathfile" 2> /dev/null
+		IsOsCanSecureDownload || curl_insecure_opt=' --insecure'
+		/sbin/curl${curl_insecure_opt} --silent --fail "$archive_url" > "$archive_pathfile" 2> /dev/null
 
 		if IsFile "$archive_pathfile"; then
 			DebugAsDone "download '$archive_name' archive OK"

@@ -1,8 +1,20 @@
 Observed issues:
 
-	* arm64: Tautulli not started again after upgrade.
+	* arm64: Tautulli not started again after upgrade. Last action was clean.
 
-	* arm64: Unmanic and Watcher3 were aborted during upgrade -> clean -> start.
+	* arm64: Unmanic, Watcher3, WebSSH were aborted during upgrade -> clean -> start.
+		- also, randomly other packages too - usually 2 to 3. Each is aborted like:
+			--------------------------------------------------------------------------------------------------
+			59 > source: sickgear.sh, action: start, time: Fri 25 Jul 2025 6:45:12 AM EST, load: 6.31
+			60 - package: 250724, service: 250724, library: 250724
+			61 > QPKG enabled: true
+			62 > application auto-update: true
+			63 - active git branch:
+			64 - daemon PID: none
+			65 - file exists: /opt/bin/git
+			66 > create 'OSickGear' from remote repository: w caught EXIT: abort
+			67 = source: sickgear.sh, action: start, time: Fri 25 Jul 2025 6:45:20 AM EST, result: ABORTED, elapsed: 8,699ms, load: 5.93
+			--------------------------------------------------------------------------------------------------
 
 	* x41 getting random curl 56 errors when downloading QPKGs and during `git clone`:
 		--------------------------------------------------------------------------------------------------
@@ -44,7 +56,7 @@ Observed issues:
 		fatal: fetch-pack: invalid index-pack output
 		} exec: completed, but with errors
 		--------------------------------------------------------------------------------------------------
-		- Don't know what is causing this, but seems a TTY logout/login gets things working again. Suspect an SSL library issue arises that affects remainder of the TTY session.
+		- Don't know what is causing this. Suspect an SSL library issue.
 
 	* Was able to clean Kapowarr on x86 even though daemon was reported to be running:
 		--------------------------------------------------------------------------------------------------
