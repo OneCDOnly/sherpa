@@ -560,11 +560,11 @@ LoadEnv()
 	readonly r_ramfs_freespace_pathfile=$r_logs_path/ramfs.freespace
 	readonly r_screen_sessions_pathfile=$r_logs_path/screen.sessions
 	readonly r_session_action_results_pathfile=$r_logs_path/session-action-results.log
-	readonly r_session_archive_pathfile=$r_logs_path/session-archive.log
+	readonly r_session_archive_log_pathfile=$r_logs_path/session-archive.log
 	readonly r_session_last_pathfile=$r_logs_path/session-last.log
 	readonly r_session_tail_pathfile=$r_logs_path/session-tail.log
 
-	sess_active_pathfile=$r_this_package_path/session.$$.active.log
+	session_active_log_pathfile=$r_this_package_path/session.$$.active.log
 
 	# Ephemeral paths.
 
@@ -1798,7 +1798,7 @@ ProcAction()
 						esac
 
 						case $msg1_value in
-							en)
+							en)			# Action has been entered.
 								:		# Ignore this.
 								;;
 							ok|er|sk|se|sa)
@@ -1826,6 +1826,8 @@ ProcAction()
 				esac
 
 				[[ -e $r_abort_actions_pathfile ]] && break
+
+				# TODO: Check for remaining $target_packages[] status here. If $proc_work_count_path has no entries, then no action workers should be running. $target_packages[] is out-of-sync and contains package names that haven't been marked as exited.
 			done
 
 			[[ $fail_count -gt 0 ]] && show_action_results_failed=true
@@ -1995,7 +1997,7 @@ PrepareArgs()
 	args=(${a/--/})
 	arg_problem=false
 
-	DebugArray args "${args[*]:-}"										# devdebug
+	DebugArray args ${args[@]+"${args[@]}"}								# devdebug
 
 	[[ -z $r_args_raw ]] && useropt_help_basic=true
 
@@ -2040,7 +2042,7 @@ ParseManagementArgs()
 	local requires_group=false
 	local user_action=''				# The original user argument, detected as an action. There may be many variants per-action.
 
-	for arg in "${args[@]:-}"; do
+	for arg in ${args[@]+"${args[@]}"}; do
 		[[ -n $arg ]] || continue
 
 		# Identify action.
@@ -2165,10 +2167,10 @@ ParseManagementArgs()
 		args_incomplete+=("$user_action")								# Save the actual action word, phrase or char specified by the user.
 	fi
 
-	DebugArray args_incomplete "${args_incomplete[*]:-}"				# devdebug
+	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}	# devdebug
 
-	args=(${args_remaining[@]:-})
-	DebugArray args "${args[*]:-}"										# devdebug
+	args=(${args_remaining[@]+"${args_remaining[@]}"})
+	DebugArray args ${args[@]+"${args[@]}"}										# devdebug
 
 	FuncExit
 
@@ -2200,7 +2202,7 @@ ParseHelpArgs()
 	local requires_group=false
 	local user_action=''				# The original user argument, detected as an action. There may be many variants per-action.
 
-	for arg in "${args[@]:-}"; do
+	for arg in ${args[@]+"${args[@]}"}; do
 		[[ -n $arg ]] || continue
 
 		# Identify action.
@@ -2337,7 +2339,7 @@ ParseHelpArgs()
 		args_incomplete+=("$user_action")								# Save the actual action word, phrase or char specified by the user.
 	fi
 
-	for arg in "${args_incomplete[@]:-}"; do
+	for arg in ${args_incomplete[@]+"${args_incomplete[@]}"}; do
 		case $arg in
 			help)							# If `help` is specified without a valid group, then show basic help.
 				run_package_actions=false
@@ -2348,11 +2350,11 @@ ParseHelpArgs()
 				local a=''
 				local tmp=()
 
-				for a in "${args_incomplete[@]}"; do
+				for a in ${args_incomplete[@]+"${args_incomplete[@]}"}; do
 					[[ $a != "$arg" ]] && tmp+=($a)
 				done
 
-				if [[ ${#tmp[@]:-} -eq 0 ]]; then
+				if [[ ${#tmp[@]} -eq 0 ]]; then
 					args_incomplete=()
 				else
 					args_incomplete=("${tmp[@]}")
@@ -2362,10 +2364,10 @@ ParseHelpArgs()
 		esac
 	done
 
-	DebugArray args_incomplete "${args_incomplete[*]:-}"				# devdebug
+	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}	# devdebug
 
-	args=(${args_remaining[@]:-})
-	DebugArray args "${args[*]:-}"										# devdebug
+	args=(${args_remaining[@]+"${args_remaining[@]}"})
+	DebugArray args ${args[@]+"${args[@]}"}										# devdebug
 
 	FuncExit
 
@@ -2397,7 +2399,7 @@ ParseShowArgs()
 	local requires_group=false
 	local user_action=''				# The original user argument, detected as an action. There may be many variants per-action.
 
-	for arg in "${args[@]:-}"; do
+	for arg in ${args[@]+"${args[@]}"}; do
 		[[ -n $arg ]] || continue
 
 		# Identify action.
@@ -2557,10 +2559,10 @@ ParseShowArgs()
 		args_incomplete+=("$user_action")								# Save the actual action word, phrase or char specified by the user.
 	fi
 
-	DebugArray args_incomplete "${args_incomplete[*]:-}"				# devdebug
+	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}	# devdebug
 
-	args=(${args_remaining[@]:-})
-	DebugArray args "${args[*]:-}"										# devdebug
+	args=(${args_remaining[@]+"${args_remaining[@]}"})
+	DebugArray args ${args[@]+"${args[@]}"}										# devdebug
 
 	FuncExit
 
@@ -2592,7 +2594,7 @@ ParseListArgs()
 	local requires_group=false
 	local user_action=''				# The original user argument, detected as an action. There may be many variants per-action.
 
-	for arg in "${args[@]:-}"; do
+	for arg in ${args[@]+"${args[@]}"}; do
 		[[ -n $arg ]] || continue
 
 		# Identify action.
@@ -2692,10 +2694,10 @@ ParseListArgs()
 	fi
 
 	DebugVar generate_list_report										# devdebug
-	DebugArray args_incomplete "${args_incomplete[*]:-}"				# devdebug
+	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}	# devdebug
 
-	args=(${args_remaining[@]:-})
-	DebugArray args "${args[*]:-}"										# devdebug
+	args=(${args_remaining[@]+"${args_remaining[@]}"})
+	DebugArray args ${args[@]+"${args[@]}"}										# devdebug
 
 	FuncExit
 
@@ -2724,9 +2726,10 @@ ParseActionArgs()
 	local requires_group=false
 	local user_action=''				# The original user argument, detected as an action. There may be many variants per-action.
 
-	[[ -n ${args[*]:-} ]] && LoadDatabase
+	# shellcheck disable=2199
+	[[ -n ${args[@]+"${args[@]}"} ]] && LoadDatabase
 
-	for arg in "${args[@]:-}"; do
+	for arg in ${args[@]+"${args[@]}"}; do
 		[[ -n $arg ]] || continue
 
 		# Identify action.
@@ -2815,7 +2818,7 @@ ParseActionArgs()
 		args_incomplete+=("$user_action")								# Save the actual action word, phrase or char specified by the user.
 	fi
 
-	for arg in "${args_incomplete[@]:-}"; do
+	for arg in ${args_incomplete[@]+"${args_incomplete[@]}"}; do
 		action=$(MatchVerb "$arg")
 
 		case $action in
@@ -2831,11 +2834,11 @@ ParseActionArgs()
 				local a=''
 				local tmp=()
 
-				for a in "${args_incomplete[@]}"; do
+				for a in ${args_incomplete[@]+"${args_incomplete[@]}"}; do
 					[[ $a != "$arg" ]] && tmp+=($a)
 				done
 
-				if [[ ${#tmp[@]:-} -eq 0 ]]; then
+				if [[ ${#tmp[@]} -eq 0 ]]; then
 					args_incomplete=()
 				else
 					args_incomplete=("${tmp[@]}")
@@ -2845,10 +2848,10 @@ ParseActionArgs()
 		esac
 	done
 
-	DebugArray args_incomplete "${args_incomplete[*]:-}"				# devdebug
+	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}	# devdebug
 
-	args=(${args_remaining[@]:-})
-	DebugArray args "${args[*]:-}"										# devdebug
+	args=(${args_remaining[@]+"${args_remaining[@]}"})
+	DebugArray args ${args[@]+"${args[@]}"}										# devdebug
 
 	FuncExit
 
@@ -3048,10 +3051,11 @@ ShowArgSuggestions()
 
 	ResetReportsPath &> /dev/null
 
-	if [[ ${#args_incomplete[@]:-} -gt 0 ]]; then
+	# shellcheck disable=2199
+	if [[ -n ${args_incomplete[@]+"${args_incomplete[@]}"} ]]; then
 		run_package_actions=false
 
-		for arg in "${args_incomplete[@]}"; do
+		for arg in ${args_incomplete[@]+"${args_incomplete[@]}"}; do
 			case $arg in
 				?(de|re)activate|backup|clean|@(dis|en)able|@(dis|en)able-auto-update|reassign|@(re|un)install|?(re)start|restore|rm|sign|stop)
 					DisplayAsProjSynExam "please provide valid $(ShowAsPackages) or a $(ShowAsPackageGroup) after '$arg' like" "$arg installed"
@@ -3112,17 +3116,17 @@ ShowArgSuggestions()
 			esac
 		done > "$r_report_output_pathfile"
 
-		if [[ ${#args_remaining[@]:-} -gt 0 ]]; then
+		if [[ ${#args_remaining[@]} -gt 0 ]]; then
 			ShowAsError "incomplete argument$(Pluralise "${#args_remaining[@]}") \"${args_remaining[*]}\". Please check the arguments again"
 			arg_problem=true
 			args_remaining=()
 		fi
 	fi
 
-	if [[ ${#args[@]:-} -gt 0 ]]; then
+	if [[ ${#args[@]} -gt 0 ]]; then
 		run_package_actions=false
 
-		for arg in "${args[@]}"; do
+		for arg in ${args[@]+"${args[@]}"}; do
 			case $arg in
 				active|all|@(dis|en)abled|started)
 					DisplayAsProjSynExam "please provide a valid $(ShowAsAction) before '$arg' like" "deactivate $arg"
@@ -3195,7 +3199,7 @@ ShowArgSuggestions()
 			esac
 		done >> "$r_report_output_pathfile"
 
-		if [[ ${#args_remaining[@]:-} -gt 0 ]]; then
+		if [[ ${#args_remaining[@]} -gt 0 ]]; then
 			ShowAsError "unknown argument$(Pluralise "${#args_remaining[@]}") \"${args_remaining[*]}\". Please check the arguments again"
 			arg_problem=true
 			useropt_help_basic=false
@@ -3204,8 +3208,8 @@ ShowArgSuggestions()
 
 	[[ -e $r_report_output_pathfile ]] && /bin/cat "$r_report_output_pathfile"
 
-	DebugArray args_incomplete "${args_incomplete[*]:-}"
-	DebugArray args_remaining "${args_remaining[*]:-}"
+	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}
+	DebugArray args_remaining ${args_remaining[@]+"${args_remaining[@]}"}
 
 	FuncExit
 
@@ -3354,11 +3358,11 @@ ResetArchivedLogs()
 	# Inputs: (global)
 	#	$r_logs_path
 	#	$r_this_package_path
-	#	$sess_active_pathfile
+	#	$session_active_log_pathfile
 
 	if [[ -n $r_logs_path && -d $r_logs_path ]]; then
 		ClearPath "$r_this_package_path" "$r_logs_path"
-		echo 'log reset' > "$sess_active_pathfile"
+		echo 'log reset' > "$session_active_log_pathfile"
 		ShowAsDone 'logs cleared'
 	fi
 
@@ -3712,7 +3716,7 @@ CalcIpkDownloadSize()
 		size_array=($($r_gnu_grep_cmd -w '^Package:\|^Size:' "$r_external_packages_pathfile" | $r_gnu_grep_cmd --after-context 1 --no-group-separator ": $(/bin/sed 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKs-ACdownload-to:List)")" | /bin/grep '^Size:' | /bin/sed 's/^Size: //'))
 
 		# shellcheck disable=2283
-		IPKs-ACdownload-to:Size = "$(IFS=+; echo "$((${size_array[*]:-}))")"	# Rather nifty sizing shortcut found here: https://stackoverflow.com/a/13635566/6182835
+		IPKs-ACdownload-to:Size = "$(IFS=+; echo "$((${size_array[*]}))")"	# Rather nifty sizing shortcut found here: https://stackoverflow.com/a/13635566/6182835
 		DebugAsDone "$(FormatAsThous "$(IPKs-ACdownload-to:Size)") bytes ($(FormatAsIsoBytes "$(IPKs-ACdownload-to:Size)")) to download"
 	else
 		DebugAsDone 'no IPKs to size'
@@ -6799,10 +6803,10 @@ ArchiveActiveSessLog()
 	{
 
 	# Inputs: (global)
-	#	$r_session_archive_pathfile
-	#	$sess_active_pathfile
+	#	$r_session_archive_log_pathfile
+	#	$session_active_log_pathfile
 
-	[[ -n ${sess_active_pathfile:-} && -e $sess_active_pathfile ]] && /bin/cat "$sess_active_pathfile" >> "$r_session_archive_pathfile"
+	[[ -n ${session_active_log_pathfile:-} && -e $session_active_log_pathfile ]] && /bin/cat "$session_active_log_pathfile" >> "$r_session_archive_log_pathfile"
 
 	}
 
@@ -6812,15 +6816,15 @@ ArchivePriorSessLogs()
 	# Check for incomplete previous session logs (crashed, interrupted?) and save to archive.
 
 	# Inputs: (global)
-	#	$r_session_archive_pathfile
+	#	$r_session_archive_log_pathfile
 	#	$r_this_package_path
-	#	$sess_active_pathfile
+	#	$session_active_log_pathfile
 
 	local f=''
 
 	for f in "$r_this_package_path"/session.*.active.log; do
-		if [[ -f $f && $f != "$sess_active_pathfile" ]]; then
-			/bin/cat "$f" >> "$r_session_archive_pathfile"
+		if [[ -f $f && $f != "$session_active_log_pathfile" ]]; then
+			/bin/cat "$f" >> "$r_session_archive_log_pathfile"
 			rm -f "$f"
 		fi
 	done
@@ -6831,9 +6835,9 @@ ResetActiveSessLog()
 	{
 
 	# Inputs: (global)
-	#	$sess_active_pathfile
+	#	$session_active_log_pathfile
 
-	rm -f "$sess_active_pathfile"
+	rm -f "$session_active_log_pathfile"
 
 	} 2> /dev/null
 
@@ -6876,11 +6880,11 @@ ExtractTailFromLog()
 
 	# Inputs: (global)
 	#	$r_log_tail_lines
-	#	$r_session_archive_pathfile
+	#	$r_session_archive_log_pathfile
 	#	$r_session_tail_pathfile
 
-	if [[ -e $r_session_archive_pathfile ]]; then
-		/usr/bin/tail -n${r_log_tail_lines} "$r_session_archive_pathfile" > "$r_session_tail_pathfile"	# Trim main log first so there's less to `grep`.
+	if [[ -e $r_session_archive_log_pathfile ]]; then
+		/usr/bin/tail -n${r_log_tail_lines} "$r_session_archive_log_pathfile" > "$r_session_tail_pathfile"	# Trim main log first so there's less to `grep`.
 	else
 		rm -f "$r_session_tail_pathfile"
 	fi
@@ -7877,12 +7881,12 @@ InitQPKGsStates()
 
 	DebugAsProc 'initialising state lists'
 
-	for a in "${r_qpkg_is_states[@]:-}"; do
+	for a in "${r_qpkg_is_states[@]}"; do
 		[[ $a = active ]] && continue		# Don't reset.
 		[[ $(type -t QPKGs-IS${a}:Init) = function ]] && QPKGs-IS${a}:Init
 	done
 
-	for a in "${r_qpkg_isnt_states[@]:-}"; do
+	for a in "${r_qpkg_isnt_states[@]}"; do
 		[[ $a = active ]] && continue		# Don't reset.
 		[[ $(type -t QPKGs-ISNT${a}:Init) = function ]] && QPKGs-ISNT${a}:Init
 	done
@@ -9701,8 +9705,8 @@ ShowZeroQpkgs()
 	local a=''
 	local b=''
 
-	for a in "${r_qpkg_is_states[@]:-}"; do
-		for b in "${r_user_qpkg_actions[@]:-}"; do
+	for a in "${r_qpkg_is_states[@]}"; do
+		for b in "${r_user_qpkg_actions[@]}"; do
 			[[ $b = list ]] && continue			# Action results lists are unavailable for these.
 			QPKGs.AC${b}IS${a}.IsSet && QPKGs-AC${b}-ok.IsNone && ShowAsWarn "no QPKGs were able to $(Lowercase "$b")"
 		done
@@ -9895,7 +9899,6 @@ _QPKG:reassign_()
 	else
 		SaveActionResultMetrics QPKG "$qpkg_name" reassign '' er "$z"
 		MarkActionForkAsError
-		z=1		# Remap to 1.
 	fi
 
 	FuncForkExit $z
@@ -10124,7 +10127,6 @@ _QPKG:install_()
 		SaveActionResultMetrics QPKG "$qpkg_name" install '' er "$z"
 		IsOsCanManageSignedPackages && IsQpkgSigned && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
 		MarkActionForkAsError
-		z=1		# Remap to 1.
 	fi
 
 	ClearQpkgInstalledAppCenterNotifier
@@ -10196,7 +10198,6 @@ _QPKG:reinstall_()
 	else
 		SaveActionResultMetrics QPKG "$qpkg_name" reinstall '' er "$z"
 		MarkActionForkAsError
-		z=1		# Remap to 1.
 	fi
 
 	ClearQpkgInstalledAppCenterNotifier
@@ -10335,7 +10336,6 @@ _QPKG:upgrade_()
 	else
 		SaveActionResultMetrics QPKG "$qpkg_name" upgrade '' er "$z"
 		MarkActionForkAsError
-		z=1		# Remap to 1.
 	fi
 
 	ClearQpkgInstalledAppCenterNotifier
@@ -10415,7 +10415,6 @@ _QPKG:uninstall_()
 		else
 			SaveActionResultMetrics QPKG "$qpkg_name" uninstall '' er "$z"
 			MarkActionForkAsError
-			z=1		# Remap to 1.
 		fi
 	else
 		# Standard QPKG `.uninstall.sh` was not found, so can't continue with uninstallation (maybe force this instead with `rm -r` ?).
@@ -10514,7 +10513,6 @@ _QPKG:activate_()
 		SaveActionResultMetrics QPKG "$qpkg_name" activate '' er "$z"
 		SendPackageStateChange ISNTactive
 		MarkActionForkAsError
-		z=1		# Remap to 1.
 	fi
 
 	ClearQpkgInstalledAppCenterNotifier
@@ -10599,7 +10597,6 @@ _QPKG:reactivate_()
 	else
 		SaveActionResultMetrics QPKG "$qpkg_name" reactivate '' er "$z"
 		MarkActionForkAsError
-		z=1		# Remap to 1.
 	fi
 
 	ClearQpkgInstalledAppCenterNotifier
@@ -10692,7 +10689,6 @@ _QPKG:deactivate_()
 	else
 		SaveActionResultMetrics QPKG "$qpkg_name" deactivate '' er "$z"
 		MarkActionForkAsError
-		z=1		# Remap to 1.
 	fi
 
 	ClearQpkgInstalledAppCenterNotifier
@@ -10876,7 +10872,6 @@ _QPKG:enableau_()
 	else
 		SaveActionResultMetrics QPKG "$qpkg_name" enableau '' er "$z"
 		MarkActionForkAsError
-		z=1		# Remap to 1.
 	fi
 
 	FuncForkExit $z
@@ -10943,7 +10938,6 @@ _QPKG:disableau_()
 	else
 		SaveActionResultMetrics QPKG "$qpkg_name" disableau '' er "$z"
 		MarkActionForkAsError
-		z=1		# Remap to 1.
 	fi
 
 	FuncForkExit $z
@@ -11007,7 +11001,6 @@ _QPKG:backup_()
 	else
 		SaveActionResultMetrics QPKG "$qpkg_name" backup '' er "$z"
 		MarkActionForkAsError
-		z=1		# Remap to 1.
 	fi
 
 	FuncForkExit $z
@@ -11075,7 +11068,6 @@ _QPKG:restore_()
 	else
 		SaveActionResultMetrics QPKG "$qpkg_name" restore '' er "$z"
 		MarkActionForkAsError
-		z=1		# Remap to 1.
 	fi
 
 	FuncForkExit $z
@@ -11138,7 +11130,6 @@ _QPKG:clean_()
 	else
 		SaveActionResultMetrics QPKG "$qpkg_name" clean '' er "$z"
 		MarkActionForkAsError
-		z=1		# Remap to 1.
 	fi
 
 	FuncForkExit $z
@@ -11252,7 +11243,6 @@ EOB
 		SaveActionResultMetrics QPKG "$qpkg_name" '"sign"' '' er "$(Parenthesise "$z") but don't know why. Please report this as a bug"
 		SendParentCommand 'show_suggest_raise_issue=true'
 		MarkActionForkAsError
-		z=1		# Remap to 1.
 	fi
 
 	FuncForkExit $z
@@ -11363,7 +11353,6 @@ EOB
 		SaveActionResultMetrics QPKG "$qpkg_name" '"unsign"' '' er "$(Parenthesise "$z") but don't know why. Please report this as a bug"
 		SendParentCommand 'show_suggest_raise_issue=true'
 		MarkActionForkAsError
-		z=1		# Remap to 1.
 	fi
 
 	FuncForkExit $z
@@ -12250,7 +12239,7 @@ GetQpkgDbDependents()
 	if QPKGs-GRindependent.Exist "$qpkg_name"; then
 		for i in "${!r_qpkg_name[@]}"; do
 			if [[ ${r_qpkg_depends_on[$i]} =~ $re ]]; then
-				[[ ${ar[*]:-} != "${r_qpkg_name[$i]}" ]] && ar+=(${r_qpkg_name[$i]})
+				[[ ${ar[*]} != "${r_qpkg_name[$i]}" ]] && ar+=(${r_qpkg_name[$i]})
 			fi
 		done
 	fi
@@ -12288,7 +12277,7 @@ GetQpkgDbOptionals()
 	if QPKGs-GRoptional.Exist "$qpkg_name"; then
 		for i in "${!r_qpkg_name[@]}"; do
 			if [[ ${r_qpkg_opt_depends_on[$i]} =~ $re ]]; then
-				[[ ${ar[*]:-} != "${r_qpkg_name[$i]}" ]] && ar+=(${r_qpkg_name[$i]})
+				[[ ${ar[*]} != "${r_qpkg_name[$i]}" ]] && ar+=(${r_qpkg_name[$i]})
 			fi
 		done
 	fi
@@ -14252,7 +14241,7 @@ ShowTitle()
 
 	# Only show ASCII title when no arguments have been specified.
 
-	if [[ -z ${r_args_raw[*]:-} ]]; then
+	if [[ -z ${r_args_raw[*]} ]]; then
 		Display "$(ShowTitleArt)"
 		title_art_shown=true
 	else
@@ -14762,20 +14751,20 @@ FuncForkInit()
 	# Inputs: (global)
 	#	$pidfile
 	#	$r_action_logs_path
-	#	$sess_active_pathfile
+	#	$session_active_log_pathfile
 
 	# Outputs: (global)
-	#	$original_sess_active_pathfile
-	#	$sess_active_pathfile
+	#	$orig_session_active_log_pathfile
+	#	$session_active_log_pathfile
 
 	[[ -n ${pidfile:?${FUNCNAME[0]}(): $e_nopfi} ]] || return
 
 	trap '[[ -n ${pidfile:-} && -e $pidfile ]] && rm -f "$pidfile" 2> /dev/null; exit' SIGINT
 
-	# Redirect debug output to a temporary log, then add it to session log before exiting. This will keep action log progress in-order.
+	# Redirect debug output to a temporary log, then add it to session log before exiting. This will keep action log lines in-order.
 
-	original_sess_active_pathfile=$sess_active_pathfile
-	sess_active_pathfile=$(/bin/mktemp "$r_action_logs_path"/"${FUNCNAME[1]}"_XXXXXX)
+	orig_session_active_log_pathfile=$session_active_log_pathfile
+	session_active_log_pathfile=$(/bin/mktemp "$r_action_logs_path"/"${FUNCNAME[1]}"_XXXXXX)
 
 	local -r r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
 	local var_safe_name=${r_var_name//[.-]/_}
@@ -14796,8 +14785,8 @@ FuncForkExit()
 	#	$1 = return code to supply on exit.
 
 	# Inputs: (global)
-	#	$original_sess_active_pathfile
-	#	$sess_active_pathfile
+	#	$orig_session_active_log_pathfile
+	#	$session_active_log_pathfile
 
 	local -r r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
 	local var_safe_name=${r_var_name//[.-]/_}
@@ -14806,12 +14795,12 @@ FuncForkExit()
 	[[ ${FUNCNAME[1]} != _ExecOneActionWithManyForks_ ]] && MarkActionForkAsExit	# Ignore exit from primary action launcher as it's not an action fork.
 	DebugAsFuncEx "${1:-0}" "$(ConvertMillisecondsToFuncDuration "$(CalcMillisecondsDiffFromNanoseconds "${!var_safe_name}" "$(ConvertNowToNanoseconds)")")"
 
-	if [[ -n ${sess_active_pathfile:-} && -e $sess_active_pathfile ]]; then
-		if [[ -s $sess_active_pathfile ]]; then
-			/bin/cat "$sess_active_pathfile" >> "$original_sess_active_pathfile"
+	if [[ -n ${session_active_log_pathfile:-} && -e $session_active_log_pathfile ]]; then
+		if [[ -s $session_active_log_pathfile ]]; then
+			/bin/cat "$session_active_log_pathfile" >> "$orig_session_active_log_pathfile"
 		fi
 
-		rm -f "$sess_active_pathfile"
+		rm -f "$session_active_log_pathfile"
 	fi
 
 	RemovePidFile
@@ -15648,12 +15637,12 @@ WriteToLog()
 	#	$2 = message
 
 	# Inputs: (global)
-	#	$sess_active_pathfile
+	#	$session_active_log_pathfile
 	#	$useropt_debug
 
 	[[ -n ${1:-} && -n ${2:-} ]] || return
 
-	[[ ${useropt_debug:=false} = true && -n ${sess_active_pathfile:-} ]] && printf '%-4s: %s\n' "$(StripANSICodes "$1")" "$(StripANSICodes "$2")" >> "$sess_active_pathfile"
+	[[ ${useropt_debug:=false} = true && -n ${session_active_log_pathfile:-} ]] && printf '%-4s: %s\n' "$(StripANSICodes "$1")" "$(StripANSICodes "$2")" >> "$session_active_log_pathfile"
 
 	}
 
@@ -16229,11 +16218,11 @@ RefreshArchive()
 	local extract=false
 	extracted=false
 	local new_archive_checksum=''
-	local original_archive_checksum=''
+	local orig_archive_checksum=''
 
 	if IsFile "$archive_pathfile"; then
 		DebugAsDetect "'$archive_name' archive found"
-		original_archive_checksum=$(GenerateMD5 "$archive_pathfile")
+		orig_archive_checksum=$(GenerateMD5 "$archive_pathfile")
 
 		if IsFileRecent "$archive_pathfile" "$r_file_change_threshold_minutes"; then
 			DebugAsDetect "'$archive_name' archive is recent"
@@ -16268,14 +16257,14 @@ RefreshArchive()
 		new_archive_checksum=$(GenerateMD5 "$archive_pathfile")
 
 		if [[ $downloaded = true ]]; then
-			if [[ $original_archive_checksum = "$new_archive_checksum" ]]; then
+			if [[ $orig_archive_checksum = "$new_archive_checksum" ]]; then
 				DebugAsDetect "downloaded '$archive_name' archive is same as previous archive"
 			else
 				DebugAsDetect "downloaded '$archive_name' archive is different to previous archive"
 				extract=true
 			fi
 		else
-			if [[ $original_archive_checksum = "$new_archive_checksum" ]]; then
+			if [[ $orig_archive_checksum = "$new_archive_checksum" ]]; then
 				DebugAsDetect "'$archive_name' archive is unchanged"
 			else
 				DebugAsDetect "'$archive_name' archive is different"
