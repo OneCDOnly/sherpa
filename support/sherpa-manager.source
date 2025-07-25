@@ -839,13 +839,17 @@ DebugLogEnv()
 	fi
 
 	DebugUserspace ok '$SHELL' "$(GetShell)"
+	DebugUserspace ok 'default shell version' "$(GetShellVersion)"
+	DebugUserspace ok 'default shell copyright' "$(GetShellCopyright)"
+	DebugUserspace ok 'default shell options' "$-"
+	DebugUserspace ok '$BASH' "$(GetBash)"
+	DebugUserspace ok 'bash version' "$(GetBashVersion)"
+	DebugUserspace ok 'bash copyright' "$(GetBashCopyright)"
+	DebugUserspace ok 'bash options' "$(GetBashOpts)"
+	DebugUserspace ok 'time in shell' "$(GetShellTimeIn)"
 	DebugUserspace ok 'BusyBox version' "$(GetBusyBoxVersion)"
 	DebugUserspace ok 'BusyBox copyright' "$(GetBusyBoxCopyright)"
 	DebugUserspace ok 'BusyBox function count' "$(GetBusyBoxFunctionCount)"
-	DebugUserspace ok 'shell version' "$(GetShellVersion)"
-	DebugUserspace ok 'shell copyright' "$(GetShellCopyright)"
-	DebugUserspace ok 'shell options' "$-"
-	DebugUserspace ok 'time in shell' "$(GetShellTimeIn)"
 	DebugScript ok 'QPKG version' "$(ConvertAsSmartDate "$r_this_package_ver")"
 	DebugScript ok 'manager version' "$r_this_script_ver"
 	DebugScript ok 'manager epoch' "$(ConvertAsSmartDate "$r_script_built_epoch")"
@@ -9400,6 +9404,20 @@ GetShell()
 
 	}
 
+GetBash()
+	{
+
+	# Inputs: (global)
+	#	$BASH
+
+	if [[ -z ${BASH:-} ]]; then
+		printf undefined
+	else
+		echo "$BASH"
+	fi
+
+	}
+
 GetShellVersion()
 	{
 
@@ -9414,6 +9432,20 @@ GetShellVersion()
 
 	}
 
+GetBashVersion()
+	{
+
+	# Inputs: (global)
+	#	$BASH_VERSION
+
+	if [[ -z ${BASH_VERSION:-} ]]; then
+		printf undefined
+	else
+		echo "$BASH_VERSION"
+	fi
+
+	}
+
 GetShellCopyright()
 	{
 
@@ -9424,6 +9456,34 @@ GetShellCopyright()
 		printf undefined
 	else
 		$SHELL --version | /bin/grep -i copyright | /bin/sed 's/\$//'
+	fi
+
+	}
+
+GetBashCopyright()
+	{
+
+	# Inputs: (global)
+	#	$BASH
+
+	if [[ -z ${BASH:-} ]]; then
+		printf undefined
+	else
+		$BASH --version | /bin/grep -i copyright | /bin/sed 's/\$//'
+	fi
+
+	}
+
+GetBashOpts()
+	{
+
+	# Inputs: (global)
+	#	$BASHOPTS
+
+	if [[ -z ${BASHOPTS:-} ]]; then
+		printf undefined
+	else
+		echo "$BASHOPTS"
 	fi
 
 	}
