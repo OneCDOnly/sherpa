@@ -13935,7 +13935,7 @@ Executer()
 	FormatCommand "$1" > "$2"
 
 	if [[ $useropt_verbose = true ]]; then
-		eval "$1 > >(/usr/bin/tee \"$r_log_pathfile\") 2>&1"			# NOTE: `tee` buffers stdout here.		# squeezer-ignore
+		eval "$1 2>&1 | /usr/bin/tee $r_log_pathfile"					# NOTE: stdout is buffered here.
 		z=${PIPESTATUS[0]}												# Examine $PIPESTATUS after `tee` to get returncode of previous command: https://stackoverflow.com/questions/1221833/pipe-output-and-capture-exit-status-in-bash
 	else
 		(eval "$1" > "$r_log_pathfile" 2>&1)							# Run in a subshell to suppress "Terminated" message later.
