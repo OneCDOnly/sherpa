@@ -26,10 +26,10 @@ cd "$root_path" || exit
 
 git checkout "$stable_branch" || exit
 git merge --no-ff -m "[merge] from \`$unstable_branch\` into \`$stable_branch\`" "$unstable_branch" && git push || exit
-git tag "$release_tag"
-git push --tags
+#git tag "$release_tag"
+#git push --tags
 git checkout "$unstable_branch" || exit
 
-gh release create "$release_tag" --generate-notes "$qpkgs_path/sherpa/build/sherpa.qpkg"
+#gh release create "$release_tag" --generate-notes "$qpkgs_path/sherpa/build/sherpa.qpkg"
 
 cd "$support_path" || exit
