@@ -1,8 +1,9 @@
 Observed issues:
 
 	* x86-64: Bazarr - `sherpa clean debug` results in long pause after service-script action is complete.
-		- sherpa management script shows process activity. Must find out what is actually happening during this time.
 		- sherpa debug log exited Executer() with returncode 0 after exactly 5 minutes, even though script finished task in 1m:39s.
+		- doesn't happen in non-debug mode.
+		- appears it's because pipe input is buffered when not attached to a tty.
 
 	* arm64: Tautulli not started again after upgrade. Last action was clean.
 
