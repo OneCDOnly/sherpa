@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 #*
 #* <?preamble?>
 #*
@@ -560,11 +560,11 @@ LoadEnv()
 	readonly r_ramfs_freespace_pathfile=$r_logs_path/ramfs.freespace
 	readonly r_screen_sessions_pathfile=$r_logs_path/screen.sessions
 	readonly r_session_action_results_pathfile=$r_logs_path/session-action-results.log
-	readonly r_session_archive_pathfile=$r_logs_path/session-archive.log
+	readonly r_session_archive_log_pathfile=$r_logs_path/session-archive.log
 	readonly r_session_last_pathfile=$r_logs_path/session-last.log
 	readonly r_session_tail_pathfile=$r_logs_path/session-tail.log
 
-	sess_active_pathfile=$r_this_package_path/session.$$.active.log
+	session_active_log_pathfile=$r_this_package_path/session.$$.active.log
 
 	# Ephemeral paths.
 
@@ -838,14 +838,9 @@ DebugLogEnv()
 		DebugUserspace ok '$SUDO_UID' N/A
 	fi
 
-	DebugUserspace ok '$SHELL' "$(GetShell)"
 	DebugUserspace ok 'BusyBox version' "$(GetBusyBoxVersion)"
 	DebugUserspace ok 'BusyBox copyright' "$(GetBusyBoxCopyright)"
 	DebugUserspace ok 'BusyBox function count' "$(GetBusyBoxFunctionCount)"
-	DebugUserspace ok 'shell version' "$(GetShellVersion)"
-	DebugUserspace ok 'shell copyright' "$(GetShellCopyright)"
-	DebugUserspace ok 'shell options' "$-"
-	DebugUserspace ok 'time in shell' "$(GetShellTimeIn)"
 	DebugScript ok 'QPKG version' "$(ConvertAsSmartDate "$r_this_package_ver")"
 	DebugScript ok 'manager version' "$r_this_script_ver"
 	DebugScript ok 'manager epoch' "$(ConvertAsSmartDate "$r_script_built_epoch")"
@@ -1798,7 +1793,7 @@ ProcAction()
 						esac
 
 						case $msg1_value in
-							en)
+							en)			# Action has been entered.
 								:		# Ignore this.
 								;;
 							ok|er|sk|se|sa)
@@ -1826,6 +1821,8 @@ ProcAction()
 				esac
 
 				[[ -e $r_abort_actions_pathfile ]] && break
+
+				# TODO: Check for remaining $target_packages[] status here. If $proc_work_count_path has no entries, then no action workers should be running. $target_packages[] is out-of-sync and contains package names that haven't been marked as exited.
 			done
 
 			[[ $fail_count -gt 0 ]] && show_action_results_failed=true
@@ -3354,11 +3351,11 @@ ResetArchivedLogs()
 	# Inputs: (global)
 	#	$r_logs_path
 	#	$r_this_package_path
-	#	$sess_active_pathfile
+	#	$session_active_log_pathfile
 
 	if [[ -n $r_logs_path && -d $r_logs_path ]]; then
 		ClearPath "$r_this_package_path" "$r_logs_path"
-		echo 'log reset' > "$sess_active_pathfile"
+		echo 'log reset' > "$session_active_log_pathfile"
 		ShowAsDone 'logs cleared'
 	fi
 
@@ -6799,10 +6796,10 @@ ArchiveActiveSessLog()
 	{
 
 	# Inputs: (global)
-	#	$r_session_archive_pathfile
-	#	$sess_active_pathfile
+	#	$r_session_archive_log_pathfile
+	#	$session_active_log_pathfile
 
-	[[ -n ${sess_active_pathfile:-} && -e $sess_active_pathfile ]] && /bin/cat "$sess_active_pathfile" >> "$r_session_archive_pathfile"
+	[[ -n ${session_active_log_pathfile:-} && -e $session_active_log_pathfile ]] && /bin/cat "$session_active_log_pathfile" >> "$r_session_archive_log_pathfile"
 
 	}
 
@@ -6812,15 +6809,15 @@ ArchivePriorSessLogs()
 	# Check for incomplete previous session logs (crashed, interrupted?) and save to archive.
 
 	# Inputs: (global)
-	#	$r_session_archive_pathfile
+	#	$r_session_archive_log_pathfile
 	#	$r_this_package_path
-	#	$sess_active_pathfile
+	#	$session_active_log_pathfile
 
 	local f=''
 
 	for f in "$r_this_package_path"/session.*.active.log; do
-		if [[ -f $f && $f != "$sess_active_pathfile" ]]; then
-			/bin/cat "$f" >> "$r_session_archive_pathfile"
+		if [[ -f $f && $f != "$session_active_log_pathfile" ]]; then
+			/bin/cat "$f" >> "$r_session_archive_log_pathfile"
 			rm -f "$f"
 		fi
 	done
@@ -6831,9 +6828,9 @@ ResetActiveSessLog()
 	{
 
 	# Inputs: (global)
-	#	$sess_active_pathfile
+	#	$session_active_log_pathfile
 
-	rm -f "$sess_active_pathfile"
+	rm -f "$session_active_log_pathfile"
 
 	} 2> /dev/null
 
@@ -6876,11 +6873,11 @@ ExtractTailFromLog()
 
 	# Inputs: (global)
 	#	$r_log_tail_lines
-	#	$r_session_archive_pathfile
+	#	$r_session_archive_log_pathfile
 	#	$r_session_tail_pathfile
 
-	if [[ -e $r_session_archive_pathfile ]]; then
-		/usr/bin/tail -n${r_log_tail_lines} "$r_session_archive_pathfile" > "$r_session_tail_pathfile"	# Trim main log first so there's less to `grep`.
+	if [[ -e $r_session_archive_log_pathfile ]]; then
+		/usr/bin/tail -n${r_log_tail_lines} "$r_session_archive_log_pathfile" > "$r_session_tail_pathfile"	# Trim main log first so there's less to `grep`.
 	else
 		rm -f "$r_session_tail_pathfile"
 	fi
@@ -9386,44 +9383,6 @@ GetUserLIBCCopyright()
 
 	}
 
-GetShell()
-	{
-
-	# Inputs: (global)
-	#	$SHELL
-
-	printf '%s' "${SHELL:-undefined}"
-
-	}
-
-GetShellVersion()
-	{
-
-	# Inputs: (global)
-	#	$SHELL
-
-	if [[ -z ${SHELL:-} ]]; then
-		printf undefined
-	else
-		$SHELL --version | head -n1
-	fi
-
-	}
-
-GetShellCopyright()
-	{
-
-	# Inputs: (global)
-	#	$SHELL
-
-	if [[ -z ${SHELL:-} ]]; then
-		printf undefined
-	else
-		$SHELL --version | /bin/grep -i copyright | /bin/sed 's/\$//'
-	fi
-
-	}
-
 GetBusyBoxVersion()
 	{
 
@@ -9454,20 +9413,6 @@ GetBusyBoxFunctionCount()
 	fi
 
 	} 2> /dev/null
-
-GetShellTimeIn()
-	{
-
-	# Inputs: (global)
-	#	$LOADER_SCRIPT_PPID (this is generated in `sherpa-loader.source`)
-
-	local n=''
-
-	[[ -n ${LOADER_SCRIPT_PPID:-} ]] && n=$(/bin/ps -o pid,etime | /bin/grep $LOADER_SCRIPT_PPID | head -n1)
-
-	FormatAsLongMinutesSecs "${n:6}"
-
-	}
 
 GetOsSysLoadAverages()
 	{
@@ -9895,7 +9840,6 @@ _QPKG:reassign_()
 	else
 		SaveActionResultMetrics QPKG "$qpkg_name" reassign '' er "$z"
 		MarkActionForkAsError
-		z=1		# Remap to 1.
 	fi
 
 	FuncForkExit $z
@@ -10124,7 +10068,6 @@ _QPKG:install_()
 		SaveActionResultMetrics QPKG "$qpkg_name" install '' er "$z"
 		IsOsCanManageSignedPackages && IsQpkgSigned && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
 		MarkActionForkAsError
-		z=1		# Remap to 1.
 	fi
 
 	ClearQpkgInstalledAppCenterNotifier
@@ -10196,7 +10139,6 @@ _QPKG:reinstall_()
 	else
 		SaveActionResultMetrics QPKG "$qpkg_name" reinstall '' er "$z"
 		MarkActionForkAsError
-		z=1		# Remap to 1.
 	fi
 
 	ClearQpkgInstalledAppCenterNotifier
@@ -10335,7 +10277,6 @@ _QPKG:upgrade_()
 	else
 		SaveActionResultMetrics QPKG "$qpkg_name" upgrade '' er "$z"
 		MarkActionForkAsError
-		z=1		# Remap to 1.
 	fi
 
 	ClearQpkgInstalledAppCenterNotifier
@@ -10415,7 +10356,6 @@ _QPKG:uninstall_()
 		else
 			SaveActionResultMetrics QPKG "$qpkg_name" uninstall '' er "$z"
 			MarkActionForkAsError
-			z=1		# Remap to 1.
 		fi
 	else
 		# Standard QPKG `.uninstall.sh` was not found, so can't continue with uninstallation (maybe force this instead with `rm -r` ?).
@@ -10514,7 +10454,6 @@ _QPKG:activate_()
 		SaveActionResultMetrics QPKG "$qpkg_name" activate '' er "$z"
 		SendPackageStateChange ISNTactive
 		MarkActionForkAsError
-		z=1		# Remap to 1.
 	fi
 
 	ClearQpkgInstalledAppCenterNotifier
@@ -10599,7 +10538,6 @@ _QPKG:reactivate_()
 	else
 		SaveActionResultMetrics QPKG "$qpkg_name" reactivate '' er "$z"
 		MarkActionForkAsError
-		z=1		# Remap to 1.
 	fi
 
 	ClearQpkgInstalledAppCenterNotifier
@@ -10692,7 +10630,6 @@ _QPKG:deactivate_()
 	else
 		SaveActionResultMetrics QPKG "$qpkg_name" deactivate '' er "$z"
 		MarkActionForkAsError
-		z=1		# Remap to 1.
 	fi
 
 	ClearQpkgInstalledAppCenterNotifier
@@ -10876,7 +10813,6 @@ _QPKG:enableau_()
 	else
 		SaveActionResultMetrics QPKG "$qpkg_name" enableau '' er "$z"
 		MarkActionForkAsError
-		z=1		# Remap to 1.
 	fi
 
 	FuncForkExit $z
@@ -10943,7 +10879,6 @@ _QPKG:disableau_()
 	else
 		SaveActionResultMetrics QPKG "$qpkg_name" disableau '' er "$z"
 		MarkActionForkAsError
-		z=1		# Remap to 1.
 	fi
 
 	FuncForkExit $z
@@ -11007,7 +10942,6 @@ _QPKG:backup_()
 	else
 		SaveActionResultMetrics QPKG "$qpkg_name" backup '' er "$z"
 		MarkActionForkAsError
-		z=1		# Remap to 1.
 	fi
 
 	FuncForkExit $z
@@ -11075,7 +11009,6 @@ _QPKG:restore_()
 	else
 		SaveActionResultMetrics QPKG "$qpkg_name" restore '' er "$z"
 		MarkActionForkAsError
-		z=1		# Remap to 1.
 	fi
 
 	FuncForkExit $z
@@ -11138,7 +11071,6 @@ _QPKG:clean_()
 	else
 		SaveActionResultMetrics QPKG "$qpkg_name" clean '' er "$z"
 		MarkActionForkAsError
-		z=1		# Remap to 1.
 	fi
 
 	FuncForkExit $z
@@ -11252,7 +11184,6 @@ EOB
 		SaveActionResultMetrics QPKG "$qpkg_name" '"sign"' '' er "$(Parenthesise "$z") but don't know why. Please report this as a bug"
 		SendParentCommand 'show_suggest_raise_issue=true'
 		MarkActionForkAsError
-		z=1		# Remap to 1.
 	fi
 
 	FuncForkExit $z
@@ -11363,7 +11294,6 @@ EOB
 		SaveActionResultMetrics QPKG "$qpkg_name" '"unsign"' '' er "$(Parenthesise "$z") but don't know why. Please report this as a bug"
 		SendParentCommand 'show_suggest_raise_issue=true'
 		MarkActionForkAsError
-		z=1		# Remap to 1.
 	fi
 
 	FuncForkExit $z
@@ -14005,7 +13935,6 @@ Executer()
 	if [[ $useropt_verbose = true ]]; then
 		eval "$1 > >(/usr/bin/tee \"$r_log_pathfile\") 2>&1"			# NOTE: `tee` buffers stdout here.		# squeezer-ignore
 		z=${PIPESTATUS[0]}												# Examine $PIPESTATUS after `tee` to get returncode of previous command: https://stackoverflow.com/questions/1221833/pipe-output-and-capture-exit-status-in-bash
-		z=$?
 	else
 		(eval "$1" > "$r_log_pathfile" 2>&1)							# Run in a subshell to suppress "Terminated" message later.
 		z=$?
@@ -14762,20 +14691,20 @@ FuncForkInit()
 	# Inputs: (global)
 	#	$pidfile
 	#	$r_action_logs_path
-	#	$sess_active_pathfile
+	#	$session_active_log_pathfile
 
 	# Outputs: (global)
-	#	$original_sess_active_pathfile
-	#	$sess_active_pathfile
+	#	$orig_session_active_log_pathfile
+	#	$session_active_log_pathfile
 
 	[[ -n ${pidfile:?${FUNCNAME[0]}(): $e_nopfi} ]] || return
 
 	trap '[[ -n ${pidfile:-} && -e $pidfile ]] && rm -f "$pidfile" 2> /dev/null; exit' SIGINT
 
-	# Redirect debug output to a temporary log, then add it to session log before exiting. This will keep action log progress in-order.
+	# Redirect debug output to a temporary log, then add it to session log before exiting. This will keep action log lines in-order.
 
-	original_sess_active_pathfile=$sess_active_pathfile
-	sess_active_pathfile=$(/bin/mktemp "$r_action_logs_path"/"${FUNCNAME[1]}"_XXXXXX)
+	orig_session_active_log_pathfile=$session_active_log_pathfile
+	session_active_log_pathfile=$(/bin/mktemp "$r_action_logs_path"/"${FUNCNAME[1]}"_XXXXXX)
 
 	local -r r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
 	local var_safe_name=${r_var_name//[.-]/_}
@@ -14796,8 +14725,8 @@ FuncForkExit()
 	#	$1 = return code to supply on exit.
 
 	# Inputs: (global)
-	#	$original_sess_active_pathfile
-	#	$sess_active_pathfile
+	#	$orig_session_active_log_pathfile
+	#	$session_active_log_pathfile
 
 	local -r r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
 	local var_safe_name=${r_var_name//[.-]/_}
@@ -14806,12 +14735,12 @@ FuncForkExit()
 	[[ ${FUNCNAME[1]} != _ExecOneActionWithManyForks_ ]] && MarkActionForkAsExit	# Ignore exit from primary action launcher as it's not an action fork.
 	DebugAsFuncEx "${1:-0}" "$(ConvertMillisecondsToFuncDuration "$(CalcMillisecondsDiffFromNanoseconds "${!var_safe_name}" "$(ConvertNowToNanoseconds)")")"
 
-	if [[ -n ${sess_active_pathfile:-} && -e $sess_active_pathfile ]]; then
-		if [[ -s $sess_active_pathfile ]]; then
-			/bin/cat "$sess_active_pathfile" >> "$original_sess_active_pathfile"
+	if [[ -n ${session_active_log_pathfile:-} && -e $session_active_log_pathfile ]]; then
+		if [[ -s $session_active_log_pathfile ]]; then
+			/bin/cat "$session_active_log_pathfile" >> "$orig_session_active_log_pathfile"
 		fi
 
-		rm -f "$sess_active_pathfile"
+		rm -f "$session_active_log_pathfile"
 	fi
 
 	RemovePidFile
@@ -15115,26 +15044,6 @@ ConvertNowToNanoseconds()
 	#	stdout = epoch nanoseconds.
 
 	/bin/date +%s%N
-
-	} 2> /dev/null
-
-FormatAsLongMinutesSecs()
-	{
-
-	# Inputs: (local)
-	#	$1 = a time in long minutes and seconds to convert to 'MMMm:SSs'.
-
-	# Separate minutes from seconds
-
-	local m=${1%%:*}
-	local s=${1#*:}
-
-	# Remove leading whitespace
-
-	m=${m##* }
-	s=${s##* }
-
-	printf '%01dm:%02ds\n' "$((10#$m))" "$((10#$s))"
 
 	} 2> /dev/null
 
@@ -15648,12 +15557,12 @@ WriteToLog()
 	#	$2 = message
 
 	# Inputs: (global)
-	#	$sess_active_pathfile
+	#	$session_active_log_pathfile
 	#	$useropt_debug
 
 	[[ -n ${1:-} && -n ${2:-} ]] || return
 
-	[[ ${useropt_debug:=false} = true && -n ${sess_active_pathfile:-} ]] && printf '%-4s: %s\n' "$(StripANSICodes "$1")" "$(StripANSICodes "$2")" >> "$sess_active_pathfile"
+	[[ ${useropt_debug:=false} = true && -n ${session_active_log_pathfile:-} ]] && printf '%-4s: %s\n' "$(StripANSICodes "$1")" "$(StripANSICodes "$2")" >> "$session_active_log_pathfile"
 
 	}
 
@@ -16229,11 +16138,11 @@ RefreshArchive()
 	local extract=false
 	extracted=false
 	local new_archive_checksum=''
-	local original_archive_checksum=''
+	local orig_archive_checksum=''
 
 	if IsFile "$archive_pathfile"; then
 		DebugAsDetect "'$archive_name' archive found"
-		original_archive_checksum=$(GenerateMD5 "$archive_pathfile")
+		orig_archive_checksum=$(GenerateMD5 "$archive_pathfile")
 
 		if IsFileRecent "$archive_pathfile" "$r_file_change_threshold_minutes"; then
 			DebugAsDetect "'$archive_name' archive is recent"
@@ -16268,14 +16177,14 @@ RefreshArchive()
 		new_archive_checksum=$(GenerateMD5 "$archive_pathfile")
 
 		if [[ $downloaded = true ]]; then
-			if [[ $original_archive_checksum = "$new_archive_checksum" ]]; then
+			if [[ $orig_archive_checksum = "$new_archive_checksum" ]]; then
 				DebugAsDetect "downloaded '$archive_name' archive is same as previous archive"
 			else
 				DebugAsDetect "downloaded '$archive_name' archive is different to previous archive"
 				extract=true
 			fi
 		else
-			if [[ $original_archive_checksum = "$new_archive_checksum" ]]; then
+			if [[ $orig_archive_checksum = "$new_archive_checksum" ]]; then
 				DebugAsDetect "'$archive_name' archive is unchanged"
 			else
 				DebugAsDetect "'$archive_name' archive is different"
