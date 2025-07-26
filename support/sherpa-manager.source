@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 #*
 #* <?preamble?>
 #*
@@ -838,15 +838,6 @@ DebugLogEnv()
 		DebugUserspace ok '$SUDO_UID' N/A
 	fi
 
-	DebugUserspace ok '$SHELL' "$(GetShell)"
-	DebugUserspace ok 'default shell version' "$(GetShellVersion)"
-	DebugUserspace ok 'default shell copyright' "$(GetShellCopyright)"
-	DebugUserspace ok 'default shell options' "$-"
-	DebugUserspace ok '$BASH' "$(GetBash)"
-	DebugUserspace ok 'bash version' "$(GetBashVersion)"
-	DebugUserspace ok 'bash copyright' "$(GetBashCopyright)"
-	DebugUserspace ok 'bash options' "$(GetBashOpts)"
-	DebugUserspace ok 'time in shell' "$(GetShellTimeIn)"
 	DebugUserspace ok 'BusyBox version' "$(GetBusyBoxVersion)"
 	DebugUserspace ok 'BusyBox copyright' "$(GetBusyBoxCopyright)"
 	DebugUserspace ok 'BusyBox function count' "$(GetBusyBoxFunctionCount)"
@@ -2001,7 +1992,7 @@ PrepareArgs()
 	args=(${a/--/})
 	arg_problem=false
 
-	DebugArray args ${args[@]+"${args[@]}"}								# devdebug
+	DebugArray args "${args[*]:-}"										# devdebug
 
 	[[ -z $r_args_raw ]] && useropt_help_basic=true
 
@@ -2046,7 +2037,7 @@ ParseManagementArgs()
 	local requires_group=false
 	local user_action=''				# The original user argument, detected as an action. There may be many variants per-action.
 
-	for arg in ${args[@]+"${args[@]}"}; do
+	for arg in "${args[@]:-}"; do
 		[[ -n $arg ]] || continue
 
 		# Identify action.
@@ -2171,10 +2162,10 @@ ParseManagementArgs()
 		args_incomplete+=("$user_action")								# Save the actual action word, phrase or char specified by the user.
 	fi
 
-	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}	# devdebug
+	DebugArray args_incomplete "${args_incomplete[*]:-}"				# devdebug
 
-	args=(${args_remaining[@]+"${args_remaining[@]}"})
-	DebugArray args ${args[@]+"${args[@]}"}										# devdebug
+	args=(${args_remaining[@]:-})
+	DebugArray args "${args[*]:-}"										# devdebug
 
 	FuncExit
 
@@ -2206,7 +2197,7 @@ ParseHelpArgs()
 	local requires_group=false
 	local user_action=''				# The original user argument, detected as an action. There may be many variants per-action.
 
-	for arg in ${args[@]+"${args[@]}"}; do
+	for arg in "${args[@]:-}"; do
 		[[ -n $arg ]] || continue
 
 		# Identify action.
@@ -2343,7 +2334,7 @@ ParseHelpArgs()
 		args_incomplete+=("$user_action")								# Save the actual action word, phrase or char specified by the user.
 	fi
 
-	for arg in ${args_incomplete[@]+"${args_incomplete[@]}"}; do
+	for arg in "${args_incomplete[@]:-}"; do
 		case $arg in
 			help)							# If `help` is specified without a valid group, then show basic help.
 				run_package_actions=false
@@ -2354,11 +2345,11 @@ ParseHelpArgs()
 				local a=''
 				local tmp=()
 
-				for a in ${args_incomplete[@]+"${args_incomplete[@]}"}; do
+				for a in "${args_incomplete[@]}"; do
 					[[ $a != "$arg" ]] && tmp+=($a)
 				done
 
-				if [[ ${#tmp[@]} -eq 0 ]]; then
+				if [[ ${#tmp[@]:-} -eq 0 ]]; then
 					args_incomplete=()
 				else
 					args_incomplete=("${tmp[@]}")
@@ -2368,10 +2359,10 @@ ParseHelpArgs()
 		esac
 	done
 
-	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}	# devdebug
+	DebugArray args_incomplete "${args_incomplete[*]:-}"				# devdebug
 
-	args=(${args_remaining[@]+"${args_remaining[@]}"})
-	DebugArray args ${args[@]+"${args[@]}"}										# devdebug
+	args=(${args_remaining[@]:-})
+	DebugArray args "${args[*]:-}"										# devdebug
 
 	FuncExit
 
@@ -2403,7 +2394,7 @@ ParseShowArgs()
 	local requires_group=false
 	local user_action=''				# The original user argument, detected as an action. There may be many variants per-action.
 
-	for arg in ${args[@]+"${args[@]}"}; do
+	for arg in "${args[@]:-}"; do
 		[[ -n $arg ]] || continue
 
 		# Identify action.
@@ -2563,10 +2554,10 @@ ParseShowArgs()
 		args_incomplete+=("$user_action")								# Save the actual action word, phrase or char specified by the user.
 	fi
 
-	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}	# devdebug
+	DebugArray args_incomplete "${args_incomplete[*]:-}"				# devdebug
 
-	args=(${args_remaining[@]+"${args_remaining[@]}"})
-	DebugArray args ${args[@]+"${args[@]}"}										# devdebug
+	args=(${args_remaining[@]:-})
+	DebugArray args "${args[*]:-}"										# devdebug
 
 	FuncExit
 
@@ -2598,7 +2589,7 @@ ParseListArgs()
 	local requires_group=false
 	local user_action=''				# The original user argument, detected as an action. There may be many variants per-action.
 
-	for arg in ${args[@]+"${args[@]}"}; do
+	for arg in "${args[@]:-}"; do
 		[[ -n $arg ]] || continue
 
 		# Identify action.
@@ -2698,10 +2689,10 @@ ParseListArgs()
 	fi
 
 	DebugVar generate_list_report										# devdebug
-	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}	# devdebug
+	DebugArray args_incomplete "${args_incomplete[*]:-}"				# devdebug
 
-	args=(${args_remaining[@]+"${args_remaining[@]}"})
-	DebugArray args ${args[@]+"${args[@]}"}										# devdebug
+	args=(${args_remaining[@]:-})
+	DebugArray args "${args[*]:-}"										# devdebug
 
 	FuncExit
 
@@ -2730,10 +2721,9 @@ ParseActionArgs()
 	local requires_group=false
 	local user_action=''				# The original user argument, detected as an action. There may be many variants per-action.
 
-	# shellcheck disable=2199
-	[[ -n ${args[@]+"${args[@]}"} ]] && LoadDatabase
+	[[ -n ${args[*]:-} ]] && LoadDatabase
 
-	for arg in ${args[@]+"${args[@]}"}; do
+	for arg in "${args[@]:-}"; do
 		[[ -n $arg ]] || continue
 
 		# Identify action.
@@ -2822,7 +2812,7 @@ ParseActionArgs()
 		args_incomplete+=("$user_action")								# Save the actual action word, phrase or char specified by the user.
 	fi
 
-	for arg in ${args_incomplete[@]+"${args_incomplete[@]}"}; do
+	for arg in "${args_incomplete[@]:-}"; do
 		action=$(MatchVerb "$arg")
 
 		case $action in
@@ -2838,11 +2828,11 @@ ParseActionArgs()
 				local a=''
 				local tmp=()
 
-				for a in ${args_incomplete[@]+"${args_incomplete[@]}"}; do
+				for a in "${args_incomplete[@]}"; do
 					[[ $a != "$arg" ]] && tmp+=($a)
 				done
 
-				if [[ ${#tmp[@]} -eq 0 ]]; then
+				if [[ ${#tmp[@]:-} -eq 0 ]]; then
 					args_incomplete=()
 				else
 					args_incomplete=("${tmp[@]}")
@@ -2852,10 +2842,10 @@ ParseActionArgs()
 		esac
 	done
 
-	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}	# devdebug
+	DebugArray args_incomplete "${args_incomplete[*]:-}"				# devdebug
 
-	args=(${args_remaining[@]+"${args_remaining[@]}"})
-	DebugArray args ${args[@]+"${args[@]}"}										# devdebug
+	args=(${args_remaining[@]:-})
+	DebugArray args "${args[*]:-}"										# devdebug
 
 	FuncExit
 
@@ -3055,11 +3045,10 @@ ShowArgSuggestions()
 
 	ResetReportsPath &> /dev/null
 
-	# shellcheck disable=2199
-	if [[ -n ${args_incomplete[@]+"${args_incomplete[@]}"} ]]; then
+	if [[ ${#args_incomplete[@]:-} -gt 0 ]]; then
 		run_package_actions=false
 
-		for arg in ${args_incomplete[@]+"${args_incomplete[@]}"}; do
+		for arg in "${args_incomplete[@]}"; do
 			case $arg in
 				?(de|re)activate|backup|clean|@(dis|en)able|@(dis|en)able-auto-update|reassign|@(re|un)install|?(re)start|restore|rm|sign|stop)
 					DisplayAsProjSynExam "please provide valid $(ShowAsPackages) or a $(ShowAsPackageGroup) after '$arg' like" "$arg installed"
@@ -3120,17 +3109,17 @@ ShowArgSuggestions()
 			esac
 		done > "$r_report_output_pathfile"
 
-		if [[ ${#args_remaining[@]} -gt 0 ]]; then
+		if [[ ${#args_remaining[@]:-} -gt 0 ]]; then
 			ShowAsError "incomplete argument$(Pluralise "${#args_remaining[@]}") \"${args_remaining[*]}\". Please check the arguments again"
 			arg_problem=true
 			args_remaining=()
 		fi
 	fi
 
-	if [[ ${#args[@]} -gt 0 ]]; then
+	if [[ ${#args[@]:-} -gt 0 ]]; then
 		run_package_actions=false
 
-		for arg in ${args[@]+"${args[@]}"}; do
+		for arg in "${args[@]}"; do
 			case $arg in
 				active|all|@(dis|en)abled|started)
 					DisplayAsProjSynExam "please provide a valid $(ShowAsAction) before '$arg' like" "deactivate $arg"
@@ -3203,7 +3192,7 @@ ShowArgSuggestions()
 			esac
 		done >> "$r_report_output_pathfile"
 
-		if [[ ${#args_remaining[@]} -gt 0 ]]; then
+		if [[ ${#args_remaining[@]:-} -gt 0 ]]; then
 			ShowAsError "unknown argument$(Pluralise "${#args_remaining[@]}") \"${args_remaining[*]}\". Please check the arguments again"
 			arg_problem=true
 			useropt_help_basic=false
@@ -3212,8 +3201,8 @@ ShowArgSuggestions()
 
 	[[ -e $r_report_output_pathfile ]] && /bin/cat "$r_report_output_pathfile"
 
-	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}
-	DebugArray args_remaining ${args_remaining[@]+"${args_remaining[@]}"}
+	DebugArray args_incomplete "${args_incomplete[*]:-}"
+	DebugArray args_remaining "${args_remaining[*]:-}"
 
 	FuncExit
 
@@ -3720,7 +3709,7 @@ CalcIpkDownloadSize()
 		size_array=($($r_gnu_grep_cmd -w '^Package:\|^Size:' "$r_external_packages_pathfile" | $r_gnu_grep_cmd --after-context 1 --no-group-separator ": $(/bin/sed 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKs-ACdownload-to:List)")" | /bin/grep '^Size:' | /bin/sed 's/^Size: //'))
 
 		# shellcheck disable=2283
-		IPKs-ACdownload-to:Size = "$(IFS=+; echo "$((${size_array[*]}))")"	# Rather nifty sizing shortcut found here: https://stackoverflow.com/a/13635566/6182835
+		IPKs-ACdownload-to:Size = "$(IFS=+; echo "$((${size_array[*]:-}))")"	# Rather nifty sizing shortcut found here: https://stackoverflow.com/a/13635566/6182835
 		DebugAsDone "$(FormatAsThous "$(IPKs-ACdownload-to:Size)") bytes ($(FormatAsIsoBytes "$(IPKs-ACdownload-to:Size)")) to download"
 	else
 		DebugAsDone 'no IPKs to size'
@@ -7885,12 +7874,12 @@ InitQPKGsStates()
 
 	DebugAsProc 'initialising state lists'
 
-	for a in "${r_qpkg_is_states[@]}"; do
+	for a in "${r_qpkg_is_states[@]:-}"; do
 		[[ $a = active ]] && continue		# Don't reset.
 		[[ $(type -t QPKGs-IS${a}:Init) = function ]] && QPKGs-IS${a}:Init
 	done
 
-	for a in "${r_qpkg_isnt_states[@]}"; do
+	for a in "${r_qpkg_isnt_states[@]:-}"; do
 		[[ $a = active ]] && continue		# Don't reset.
 		[[ $(type -t QPKGs-ISNT${a}:Init) = function ]] && QPKGs-ISNT${a}:Init
 	done
@@ -9394,100 +9383,6 @@ GetUserLIBCCopyright()
 
 	}
 
-GetShell()
-	{
-
-	# Inputs: (global)
-	#	$SHELL
-
-	printf '%s' "${SHELL:-undefined}"
-
-	}
-
-GetBash()
-	{
-
-	# Inputs: (global)
-	#	$BASH
-
-	if [[ -z ${BASH:-} ]]; then
-		printf undefined
-	else
-		echo "$BASH"
-	fi
-
-	}
-
-GetShellVersion()
-	{
-
-	# Inputs: (global)
-	#	$SHELL
-
-	if [[ -z ${SHELL:-} ]]; then
-		printf undefined
-	else
-		$SHELL --version | head -n1
-	fi
-
-	}
-
-GetBashVersion()
-	{
-
-	# Inputs: (global)
-	#	$BASH_VERSION
-
-	if [[ -z ${BASH_VERSION:-} ]]; then
-		printf undefined
-	else
-		echo "$BASH_VERSION"
-	fi
-
-	}
-
-GetShellCopyright()
-	{
-
-	# Inputs: (global)
-	#	$SHELL
-
-	if [[ -z ${SHELL:-} ]]; then
-		printf undefined
-	else
-		$SHELL --version | /bin/grep -i copyright | /bin/sed 's/\$//'
-	fi
-
-	}
-
-GetBashCopyright()
-	{
-
-	# Inputs: (global)
-	#	$BASH
-
-	if [[ -z ${BASH:-} ]]; then
-		printf undefined
-	else
-		$BASH --version | /bin/grep -i copyright | /bin/sed 's/\$//'
-	fi
-
-	}
-
-GetBashOpts()
-	{
-
-	# Inputs: (global)
-	#	$BASHOPTS
-
-	if [[ -z ${BASHOPTS:-} ]]; then
-		printf undefined
-	else
-		echo "$BASHOPTS"
-	fi
-
-	}
-
 GetBusyBoxVersion()
 	{
 
@@ -9518,20 +9413,6 @@ GetBusyBoxFunctionCount()
 	fi
 
 	} 2> /dev/null
-
-GetShellTimeIn()
-	{
-
-	# Inputs: (global)
-	#	$LOADER_SCRIPT_PPID (this is generated in `sherpa-loader.source`)
-
-	local n=''
-
-	[[ -n ${LOADER_SCRIPT_PPID:-} ]] && n=$(/bin/ps -o pid,etime | /bin/grep $LOADER_SCRIPT_PPID | head -n1)
-
-	FormatAsLongMinutesSecs "${n:6}"
-
-	}
 
 GetOsSysLoadAverages()
 	{
@@ -9765,8 +9646,8 @@ ShowZeroQpkgs()
 	local a=''
 	local b=''
 
-	for a in "${r_qpkg_is_states[@]}"; do
-		for b in "${r_user_qpkg_actions[@]}"; do
+	for a in "${r_qpkg_is_states[@]:-}"; do
+		for b in "${r_user_qpkg_actions[@]:-}"; do
 			[[ $b = list ]] && continue			# Action results lists are unavailable for these.
 			QPKGs.AC${b}IS${a}.IsSet && QPKGs-AC${b}-ok.IsNone && ShowAsWarn "no QPKGs were able to $(Lowercase "$b")"
 		done
@@ -12299,7 +12180,7 @@ GetQpkgDbDependents()
 	if QPKGs-GRindependent.Exist "$qpkg_name"; then
 		for i in "${!r_qpkg_name[@]}"; do
 			if [[ ${r_qpkg_depends_on[$i]} =~ $re ]]; then
-				[[ ${ar[*]} != "${r_qpkg_name[$i]}" ]] && ar+=(${r_qpkg_name[$i]})
+				[[ ${ar[*]:-} != "${r_qpkg_name[$i]}" ]] && ar+=(${r_qpkg_name[$i]})
 			fi
 		done
 	fi
@@ -12337,7 +12218,7 @@ GetQpkgDbOptionals()
 	if QPKGs-GRoptional.Exist "$qpkg_name"; then
 		for i in "${!r_qpkg_name[@]}"; do
 			if [[ ${r_qpkg_opt_depends_on[$i]} =~ $re ]]; then
-				[[ ${ar[*]} != "${r_qpkg_name[$i]}" ]] && ar+=(${r_qpkg_name[$i]})
+				[[ ${ar[*]:-} != "${r_qpkg_name[$i]}" ]] && ar+=(${r_qpkg_name[$i]})
 			fi
 		done
 	fi
@@ -14300,7 +14181,7 @@ ShowTitle()
 
 	# Only show ASCII title when no arguments have been specified.
 
-	if [[ -z ${r_args_raw[*]} ]]; then
+	if [[ -z ${r_args_raw[*]:-} ]]; then
 		Display "$(ShowTitleArt)"
 		title_art_shown=true
 	else
@@ -15163,26 +15044,6 @@ ConvertNowToNanoseconds()
 	#	stdout = epoch nanoseconds.
 
 	/bin/date +%s%N
-
-	} 2> /dev/null
-
-FormatAsLongMinutesSecs()
-	{
-
-	# Inputs: (local)
-	#	$1 = a time in long minutes and seconds to convert to 'MMMm:SSs'.
-
-	# Separate minutes from seconds
-
-	local m=${1%%:*}
-	local s=${1#*:}
-
-	# Remove leading whitespace
-
-	m=${m##* }
-	s=${s##* }
-
-	printf '%01dm:%02ds\n' "$((10#$m))" "$((10#$s))"
 
 	} 2> /dev/null
 
