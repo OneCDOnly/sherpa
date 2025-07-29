@@ -815,15 +815,6 @@ DebugLogEnv()
 	DebugStorage ok 'default volume mounted' "$(GetUserDefVol)"
 	DebugStorage ok 'basic write benchmark' "$(GetHardwareVolumeBenchmark)"
 	DebugStorage ok /opt "$(/usr/bin/readlink /opt 2> /dev/null || printf 'not present')"
-
-	local public_share_name=$(/sbin/getcfg SHARE_DEF defPublic -d Qpublic -f /etc/config/def_share.info)
-
-	if [[ -L /share/$public_share_name ]]; then
-		DebugStorage ok "'$public_share_name' share" /share/$public_share_name
-	else
-		DebugStorage warning "'$public_share_name' share" 'not present'
-	fi
-
 	DebugUserspace ok libc "$(GetUserLIBC)"
 	DebugUserspace ok 'libc copyright' "$(GetUserLIBCCopyright)"
 	DebugUserspace ok '$EUID' "$EUID"
