@@ -12182,12 +12182,14 @@ GetQpkgDbDependents()
 	if QPKGs-GRindependent.Exist "$qpkg_name"; then
 		for i in "${!r_qpkg_name[@]}"; do
 			if [[ ${r_qpkg_depends_on[$i]} =~ $re ]]; then
-				[[ ${ar[*]} != "${r_qpkg_name[$i]}" ]] && ar+=(${r_qpkg_name[$i]})
+				# shellcheck disable=2199
+				[[ ${ar[@]+"${ar[@]}"} != "${r_qpkg_name[$i]}" ]] && ar+=(${r_qpkg_name[$i]})
 			fi
 		done
 	fi
 
-	if [[ ${#ar[@]} -gt 0 ]]; then
+	# shellcheck disable=2199
+	if [[ -n ${ar[@]+"${ar[@]}"} ]]; then
 		printf '%s' "${ar[*]}"
 
 		return 0
@@ -12220,12 +12222,14 @@ GetQpkgDbOptionals()
 	if QPKGs-GRoptional.Exist "$qpkg_name"; then
 		for i in "${!r_qpkg_name[@]}"; do
 			if [[ ${r_qpkg_opt_depends_on[$i]} =~ $re ]]; then
-				[[ ${ar[*]} != "${r_qpkg_name[$i]}" ]] && ar+=(${r_qpkg_name[$i]})
+				# shellcheck disable=2199
+				[[ ${ar[@]+"${ar[@]}"} != "${r_qpkg_name[$i]}" ]] && ar+=(${r_qpkg_name[$i]})
 			fi
 		done
 	fi
 
-	if [[ ${#ar[@]} -gt 0 ]]; then
+	# shellcheck disable=2199
+	if [[ -n ${ar[@]+"${ar[@]}"} ]]; then
 		printf '%s' "${ar[*]}"
 
 		return 0
