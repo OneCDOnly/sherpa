@@ -815,15 +815,6 @@ DebugLogEnv()
 	DebugStorage ok 'default volume mounted' "$(GetUserDefVol)"
 	DebugStorage ok 'basic write benchmark' "$(GetHardwareVolumeBenchmark)"
 	DebugStorage ok /opt "$(/usr/bin/readlink /opt 2> /dev/null || printf 'not present')"
-
-	local public_share_name=$(/sbin/getcfg SHARE_DEF defPublic -d Qpublic -f /etc/config/def_share.info)
-
-	if [[ -L /share/$public_share_name ]]; then
-		DebugStorage ok "'$public_share_name' share" /share/$public_share_name
-	else
-		DebugStorage warning "'$public_share_name' share" 'not present'
-	fi
-
 	DebugUserspace ok libc "$(GetUserLIBC)"
 	DebugUserspace ok 'libc copyright' "$(GetUserLIBCCopyright)"
 	DebugUserspace ok '$EUID' "$EUID"
@@ -3968,35 +3959,6 @@ IPKs:downgrade()
 
 					ShowAsPercentProgress "download $desc" '' "$ok_count" 0 "$fail_count" "$total_count"
 				fi
-
-				url_prefix=http://bin.entware.net/armv7sf-k3.2/archive/
-				url_suffix=_2.39.2-1_armv7-3.2.ipk
-
-				for name in $(IPKs-ACdowngrade-to:Array); do
-					ShowAsPercentProgress "download $desc" '' "$ok_count" 0 0 "$total_count"
-					((ok_count++))
-
-					remote_url=${url_prefix}${name}${url_suffix}
-					local_pathfile=$r_ipk_downgrade_path/$(/usr/bin/basename "$remote_url")
-					Executer "/sbin/curl${curl_insecure_opt} --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
-				done
-
-				ShowAsPercentProgress "download $desc" '' "$ok_count" 0 "$fail_count" "$total_count"
-#				;;
-#			a64)
-#				url_prefix=http://bin.entware.net/armv7sf-k3.2/archive/
-#				url_suffix=_2.39.2-1_armv7-3.2.ipk
-
-#				for name in $(IPKs-ACdowngrade-to:Array); do
-#					ShowAsPercentProgress "download $desc" '' "$ok_count" 0 0 "$total_count"
-#					((ok_count++))
-
-#					remote_url=${url_prefix}${name}${url_suffix}
-#					local_pathfile=$r_ipk_downgrade_path/$(/usr/bin/basename "$remote_url")
-#					Executer "/sbin/curl${curl_insecure_opt} --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
-#				done
-
-#				ShowAsPercentProgress "download $desc" '' "$ok_count" 0 "$fail_count" "$total_count"
 		esac
 
 		[[ ${useropt_terse:=true} = false && ${useropt_verbose:=false} = false ]] && echo
@@ -12182,12 +12144,14 @@ GetQpkgDbDependents()
 	if QPKGs-GRindependent.Exist "$qpkg_name"; then
 		for i in "${!r_qpkg_name[@]}"; do
 			if [[ ${r_qpkg_depends_on[$i]} =~ $re ]]; then
-				[[ ${ar[*]} != "${r_qpkg_name[$i]}" ]] && ar+=(${r_qpkg_name[$i]})
+				# shellcheck disable=2199
+				[[ ${ar[@]+"${ar[@]}"} != "${r_qpkg_name[$i]}" ]] && ar+=(${r_qpkg_name[$i]})
 			fi
 		done
 	fi
 
-	if [[ ${#ar[@]} -gt 0 ]]; then
+	# shellcheck disable=2199
+	if [[ -n ${ar[@]+"${ar[@]}"} ]]; then
 		printf '%s' "${ar[*]}"
 
 		return 0
@@ -12220,12 +12184,14 @@ GetQpkgDbOptionals()
 	if QPKGs-GRoptional.Exist "$qpkg_name"; then
 		for i in "${!r_qpkg_name[@]}"; do
 			if [[ ${r_qpkg_opt_depends_on[$i]} =~ $re ]]; then
-				[[ ${ar[*]} != "${r_qpkg_name[$i]}" ]] && ar+=(${r_qpkg_name[$i]})
+				# shellcheck disable=2199
+				[[ ${ar[@]+"${ar[@]}"} != "${r_qpkg_name[$i]}" ]] && ar+=(${r_qpkg_name[$i]})
 			fi
 		done
 	fi
 
-	if [[ ${#ar[@]} -gt 0 ]]; then
+	# shellcheck disable=2199
+	if [[ -n ${ar[@]+"${ar[@]}"} ]]; then
 		printf '%s' "${ar[*]}"
 
 		return 0
@@ -13935,7 +13901,7 @@ Executer()
 	FormatCommand "$1" > "$2"
 
 	if [[ $useropt_verbose = true ]]; then
-		eval "$1 > >(/usr/bin/tee \"$r_log_pathfile\") 2>&1"			# NOTE: `tee` buffers stdout here.		# squeezer-ignore
+		eval "$1 2>&1 | /usr/bin/tee $r_log_pathfile"					# NOTE: stdout is buffered here.
 		z=${PIPESTATUS[0]}												# Examine $PIPESTATUS after `tee` to get returncode of previous command: https://stackoverflow.com/questions/1221833/pipe-output-and-capture-exit-status-in-bash
 	else
 		(eval "$1" > "$r_log_pathfile" 2>&1)							# Run in a subshell to suppress "Terminated" message later.

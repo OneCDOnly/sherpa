@@ -1,8 +1,9 @@
 Observed issues:
 
 	* x86-64: Bazarr - `sherpa clean debug` results in long pause after service-script action is complete.
-		- sherpa management script shows process activity. Must find out what is actually happening during this time.
 		- sherpa debug log exited Executer() with returncode 0 after exactly 5 minutes, even though script finished task in 1m:39s.
+		- doesn't happen in non-debug mode.
+		- appears it's because pipe input is buffered when not attached to a tty.
 
 	* arm64: Tautulli not started again after upgrade. Last action was clean.
 
@@ -148,10 +149,8 @@ Observed issues:
 		--------------------------------------------------------------------------------------------------
 		- Reported to dev: https://github.com/qnap-dev/QDK/issues/43
 
-	* service script library: if $REINSTALL_QPKG=true, then don't show/log 'stop' and aborted-'start' actions.
-
 	* Restarting clamav.sh creates 'lib' symlink in cwd to /usr/lib
-		This may be happening in /etc/init.d/antivirus.sh
+		- This may be happening in /etc/init.d/antivirus.sh
 
 	* FIXED: When a QPKG couldn't be signed, it's not shown by QPKGs.Actions:List() at-all.
 		- QPKG was 'skipped-abort', and is shown as 'skipped' in results.
