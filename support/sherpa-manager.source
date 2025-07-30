@@ -3958,36 +3958,7 @@ IPKs:downgrade()
 					done
 
 					ShowAsPercentProgress "download $desc" '' "$ok_count" 0 "$fail_count" "$total_count"
-#				else
-#					url_prefix=http://bin.entware.net/armv7sf-k3.2/archive/
-#					url_suffix=_2.39.2-1_armv7-3.2.ipk		# NOTE: 2.39.2 is no-longer available in the Entware archive: https://github.com/OneCDOnly/sherpa/issues/314#issuecomment-3134137821
-
-#					for name in $(IPKs-ACdowngrade-to:Array); do
-#						ShowAsPercentProgress "download $desc" '' "$ok_count" 0 0 "$total_count"
-#						((ok_count++))
-
-#						remote_url=${url_prefix}${name}${url_suffix}
-#						local_pathfile=$r_ipk_downgrade_path/$(/usr/bin/basename "$remote_url")
-#						Executer "/sbin/curl${curl_insecure_opt} --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
-#					done
-
-#					ShowAsPercentProgress "download $desc" '' "$ok_count" 0 "$fail_count" "$total_count"
 				fi
-#				;;
-#			a64)
-#				url_prefix=http://bin.entware.net/armv7sf-k3.2/archive/
-#				url_suffix=_2.39.2-1_armv7-3.2.ipk
-
-#				for name in $(IPKs-ACdowngrade-to:Array); do
-#					ShowAsPercentProgress "download $desc" '' "$ok_count" 0 0 "$total_count"
-#					((ok_count++))
-
-#					remote_url=${url_prefix}${name}${url_suffix}
-#					local_pathfile=$r_ipk_downgrade_path/$(/usr/bin/basename "$remote_url")
-#					Executer "/sbin/curl${curl_insecure_opt} --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
-#				done
-
-#				ShowAsPercentProgress "download $desc" '' "$ok_count" 0 "$fail_count" "$total_count"
 		esac
 
 		[[ ${useropt_terse:=true} = false && ${useropt_verbose:=false} = false ]] && echo
