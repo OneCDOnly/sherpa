@@ -1,5 +1,7 @@
 Observed issues:
 
+	* x86: Upgrading TruiNG extracted from release package twice.
+
 	* x86-64: Bazarr - `sherpa clean debug` results in long pause after service-script action is complete.
 		- sherpa debug log exited Executer() with returncode 0 after exactly 5 minutes, even though script finished task in 1m:39s.
 		- doesn't happen in non-debug mode.
