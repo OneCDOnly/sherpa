@@ -1,5 +1,47 @@
 Observed issues:
 
+	* x41 (sasha): new sherpa installation, no Entware yet, `sherpa show packages` columns are not aligned.
+		--------------------------------------------------------------------------------------------------
+		[/share/Public] # sherpa show packages
+		sherpa v250731-stable
+
+		• Usage: sherpa [action] [packages] [package group] [options]
+
+		• One-or-more [packages] may be specified at-once.
+
+		QPKG name:             Appl. version:
+		Bazarr      dynamic
+		ClamAV      0.104.4
+		duf         0.8.1
+		Entware     1.03a
+		Glances     3.4.0.5
+		Headphones  dynamic
+		HideThatBanner  250706
+		IncreaseTimeouts  250706
+		inxi        3.3.34
+		Kapowarr    dynamic
+		LazyLibrarian  dynamic
+		OLidarr     dynamic
+		OMedusa     dynamic
+		Mylar3      dynamic
+		nzbget      25.2
+		NZBHydra2   dynamic
+		nzbToMedia  dynamic
+		OliveTin    dynamic
+		Par2        0.8.1
+		Par2turbo   1.1.0
+		pyLoad      dynamic
+		OqBittorrent  4.6.5
+		QDK         2.3.14
+		OReadarr    final
+		RunLast     250712
+		SABnzbd     dynamic
+		sha3sum     1.23.1
+		sherpa                 250726
+		OSickGear   dynamic
+		OSonarr     dynamic
+		--------------------------------------------------------------------------------------------------
+
 	* x86: Upgrading TruiNG extracted from release package twice.
 
 	* x86-64: Bazarr - `sherpa clean debug` results in long pause after service-script action is complete.

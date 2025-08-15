@@ -1,5 +1,7 @@
 Management:
 
+	* Hint to omit report panel should say "disable" instead.
+
 	* Add retry for git clone.
 
 	* Include QTS UI info page for CLI applications, advising how-to access and use them.
