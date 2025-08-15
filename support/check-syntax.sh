@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-. vars.source || exit
+. $HOME/scripts/nas/sherpa/support/environment.sourced || exit
 
 declare -a a
 declare -a b

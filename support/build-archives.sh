@@ -2,7 +2,7 @@
 
 # compiler for sherpa management archives.
 
-. vars.source || exit
+. $HOME/scripts/nas/sherpa/support/environment.sourced || exit
 
 echo -n 'building archives ... '
 
@@ -10,13 +10,13 @@ declare -a a
 declare -a b
 declare -i i=0
 
-a+=("$support_path/$objects_file")
-b+=("$root_path/$objects_archive_file")
+a+=($support_path/$objects_file)
+b+=($root_path/$objects_archive_file)
 
 [[ ! -e $support_path/$objects_file ]] && $support_path/build-objects.sh
 
-a+=("$support_path/$management_file")
-b+=("$root_path/$management_archive_file")
+a+=($support_path/$management_file)
+b+=($root_path/$management_archive_file)
 
 [[ ! -e $support_path/$management_file ]] && $support_path/build-manager.sh
 

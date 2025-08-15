@@ -1,0 +1,118 @@
+#!/usr/bin/env bash
+
+[[ ${sherpa_environment_vars_loaded:=false} = false ]] || return 0
+
+build_date=$(date '+%y%m%d')
+build_year=$(date '+%Y')
+manager_epoch=0				# Only update before building `sherpa-manager.sh` file.
+objects_epoch=0				# Only update before building `objects` file.
+packages_epoch=0			# Only update before building `packages` file.
+title_description='a mini-package-manager for QNAP NAS'
+
+checksum_root_path=$HOME/scripts/nas
+qpkgs_root_path=$HOME/scripts/nas/sherpa.packages
+	qpkgs_docs_path=$qpkgs_root_path/docs
+	qpkgs_path=$qpkgs_root_path/QPKGs
+	qpkgs_support_path=$qpkgs_root_path/support
+root_path=$HOME/scripts/nas/sherpa
+	docs_path=$root_path/docs
+	support_path=$root_path/support
+wiki_path=$HOME/documents/sherpa.wiki
+
+highest_package_versions_found_pathfile=$qpkgs_support_path/highest_package_versions_found.raw
+highest_package_versions_found_sorted_pathfile=$qpkgs_support_path/highest_package_versions_found.tbl
+
+management_archive_file=sherpa-manager.tar.gz
+management_file=sherpa-manager.sh
+management_source_file=sherpa-manager.source
+
+objects_archive_file=objects.tar.gz
+objects_file=objects
+
+packages_archive_file=packages.tar.gz
+packages_file=packages
+packages_source_file=packages.source
+
+service_library_file=service.lib
+service_library_source_file=service-library.source
+
+stable_branch=stable
+unstable_branch=unstable
+
+cdn_nzbget_dev_packages_url='https://github.com/nzbgetcom/<?package_name?>/releases/download/v<?version?>'
+cdn_onecd_url='https://raw.githubusercontent.com/OneCDOnly'
+	cdn_other_packages_url=$cdn_onecd_url/'<?package_name?>/main/build'
+	cdn_sherpa_base_url=$cdn_onecd_url/sherpa
+		cdn_sherpa_url=$cdn_sherpa_base_url/'$useropt_branch'
+	cdn_sherpa_packages_base_url=$cdn_onecd_url/sherpa.packages
+		cdn_sherpa_packages_url=$cdn_sherpa_packages_base_url/'$useropt_branch/QPKGs/<?package_name?>/build'
+cdn_qnap_dev_packages_url='https://github.com/qnap-dev/<?package_name?>/releases/download/v<?version?>'
+
+copyright_basic='Copyright (C) 2017-<?build_year?> OneCD'
+dont_edit_msg="Please don't edit this file directly, it has been programmatically built or modified with the '$(basename "$0")' script."
+email=one.cd.only@gmail.com
+
+management_debug_log_longest_string="  HARDWARE:                      CPU: Annapurna Labs Alpine AL314 Quad-core ARM Cortex-A15 CPU @ 1.70GHz"
+#									" USERSPACE:            shell version: GNU bash, version 3.2.57(3)-release (arm-unknown-linux-gnueabihf)"
+#									" USERSPACE:            shell version: GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)"
+#									" USERSPACE:            shell version: GNU bash, version 3.2.57(1)-release (arm-openwrt-linux-gnu)"
+
+# Must escape ampersand chars in `read` blocks for compatibility with `sed` regex.
+
+read -rd '' preamble_msg << EOB
+<?dont_edit?>
+#*
+#* <?filename?>
+#*	  <?copyright?>
+EOB
+
+read -rd '' postamble_msg << EOB
+<?project?>
+#*
+#* <?tested?>
+#*
+#* <?notes?>
+#*
+#* <?license?>
+EOB
+
+read -rd '' copyright_msg << EOB
+<?copyright_basic?>.
+#*
+#* Contact:
+#*	  <?email?>
+EOB
+
+read -rd '' project_msg << EOB
+Project:
+#*	  https://git.io/sherpa
+#*
+#* Support forums:
+#*	  https://community.qnap.com/t/qpkg-sherpa-a-mini-package-manager-cli/1081
+#*	  https://forum.qnap.com/viewtopic.php?t=132373
+EOB
+
+read -rd '' tested_msg << EOB
+Tested on:
+#*	  GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
+#*	  GNU bash, version 3.2.57(1)-release (x86_64-QNAP-linux-gnu)
+#*	  GNU bash, version 3.2.57(2)-release (i686-pc-linux-gnu)
+#*		 Copyright (C) 2007 Free Software Foundation, Inc.
+EOB
+
+read -rd '' notes_msg << EOB
+Notes:
+#*	  All sherpa scripts are optimised for compatibility with bash 3.2 (via QTS BusyBox) as this is the native QNAP NAS shell. Be-careful reusing code in other shells, as these scripts contain syntax quirks often compatible only with bash.
+EOB
+
+read -rd '' license_msg << EOB
+License:
+#*	  This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+#
+#*	  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY, without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#
+#*	  You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/
+EOB
+
+sherpa_environment_vars_loaded=true
+true

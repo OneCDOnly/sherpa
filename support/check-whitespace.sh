@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
-. vars.source || exit
+. $HOME/scripts/nas/sherpa/support/environment.sourced || exit
 
 declare -a a
 declare -a b
 declare -i i=0
 
-a+=("$support_path/$management_source_file")
+a+=($support_path/$management_source_file)
 
 for i in "${!a[@]}"; do
 	echo -n "checking for unwanted whitespace '${a[i]}' ... "

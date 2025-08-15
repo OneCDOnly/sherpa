@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-. $HOME/scripts/nas/sherpa/support/vars.source || exit				# Use full address as this script is called from outside its directory.
+. $HOME/scripts/nas/sherpa/support/environment.sourced || exit
 
 echo -n "building 'objects' file ... "
 

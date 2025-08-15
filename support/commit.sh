@@ -5,7 +5,7 @@
 #	$1 = 'nocheck' (optional) = skip syntax check. Default is to perform syntax check before committing.
 
 this_path=$PWD
-. $HOME/scripts/nas/sherpa/support/vars.source || exit
+. $HOME/scripts/nas/sherpa/support/environment.sourced || exit
 
 cd "$support_path" || exit
 ./clean-source.sh
