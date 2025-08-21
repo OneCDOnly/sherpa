@@ -13912,7 +13912,7 @@ Executer()
 		z=${PIPESTATUS[0]}												# Examine $PIPESTATUS after `tee` to get returncode of previous command: https://stackoverflow.com/questions/1221833/pipe-output-and-capture-exit-status-in-bash
 
 #		eval "$1 2>&1"
-		z=$?
+#		z=$?
 	else
 		(eval "$1" > "$r_log_pathfile" 2>&1)							# Run within a subshell to suppress "Terminated" message later.
 		z=$?
