@@ -138,6 +138,9 @@ Management:
 
 Service Library:
 
+	* When checking for daemon start in screen session, keep checking screen session is still active.
+		- If ended, then abort check.
+
 	* Check source files for space+tab.
 
 	* The action outcome line should start with '<'
