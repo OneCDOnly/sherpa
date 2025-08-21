@@ -1,11 +1,5 @@
 Observed issues:
 
-	* i64 (siena) not starting TorrServer due to GLIBC version error:
-		--------------------------------------------------------------------------------------------------
-		/share/CACHEDEV1_DATA/.qpkg/TorrServer/repo-cache/torrserver.package: /lib/libc.so.6: version `GLIBC_2.34' not found (required by /share/CACHEDEV1_DATA/.qpkg/TorrServer/repo-cache/torrserver.package)
-		--------------------------------------------------------------------------------------------------
-		- Not good. libc 2.34 isn't part of any QTS version, and isn't installable through Entware (only has 2.27 available). Looks like the end-of-the-road for TorrServer. :(
-
 	* x41 (sasha): new sherpa installation, no Entware yet, `sherpa show packages` columns are not aligned.
 		--------------------------------------------------------------------------------------------------
 		[/share/Public] # sherpa show packages

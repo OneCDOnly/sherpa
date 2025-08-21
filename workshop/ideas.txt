@@ -1,10 +1,8 @@
 Management:
 
-	* Hint to omit report panel should say "disable" instead.
-
 	* Add retry for git clone.
 
-	* Include QTS UI info page for CLI applications, advising how-to access and use them.
+	* Include QTS web UI info page for all CLI applications, advising how-to access and use them.
 
 	* Include sherpa QPKG post-install message with an example of how to run sherpa.
 		- Check if UID=0 and adjust example prompt appropriately.
