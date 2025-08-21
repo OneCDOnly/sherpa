@@ -10997,6 +10997,7 @@ _QPKG:clean_()
 
 	FuncForkInit
 
+	local a=''
 	local -i z=0
 
 	if IsNtValidQpkgInstalled "$qpkg_name"; then
