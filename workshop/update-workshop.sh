@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-source_path="$HOME"/scripts/nas/sherpa/support
+source_path=$HOME/scripts/nas/sherpa/support
 this_path=$PWD
-. $source_path/vars.source || exit
+. $HOME/scripts/nas/sherpa/support/environment.sourced || exit
 
 [[ -e $source_path/$objects_file ]] && rm -f "$source_path/$objects_file"
 [[ -e $source_path/$management_file ]] && rm -f "$source_path/$management_file"

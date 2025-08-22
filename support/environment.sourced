@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+[[ ${sherpa_environment_loaded:=false} = false ]] || return 0
+
+. $HOME/scripts/nas/sherpa/support/vars.sourced || exit
+. $HOME/scripts/nas/sherpa/support/functions.sourced || exit
+
+sherpa_environment_loaded=true
+true

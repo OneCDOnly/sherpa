@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
-. vars.source || exit
+. $HOME/scripts/nas/sherpa/support/environment.sourced || exit
 
 declare -a a
 declare -i i=0
 
-a+=("$management_source_file")
+a+=($management_source_file)
 
 for i in "${!a[@]}"; do
 	echo -n "cleaning '${a[i]}' ... "

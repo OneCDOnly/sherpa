@@ -2,7 +2,7 @@ Management:
 
 	* Add retry for git clone.
 
-	* Include QTS UI info page for CLI applications, advising how-to access and use them.
+	* Include QTS web UI info page for all CLI applications, advising how-to access and use them.
 
 	* Include sherpa QPKG post-install message with an example of how to run sherpa.
 		- Check if UID=0 and adjust example prompt appropriately.
@@ -135,6 +135,9 @@ Management:
 		- Like: `sherpa paste help`, `sherpa install help`, `sherpa reassign help`
 
 Service Library:
+
+	* When checking for daemon start in screen session, keep checking screen session is still active.
+		- If ended, then abort check.
 
 	* Check source files for space+tab.
 

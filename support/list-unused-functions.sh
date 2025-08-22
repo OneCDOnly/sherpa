@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-. vars.source || exit
+. $HOME/scripts/nas/sherpa/support/environment.sourced || exit
 
 a=$support_path/$management_source_file
 b=''

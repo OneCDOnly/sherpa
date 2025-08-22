@@ -8598,7 +8598,7 @@ GenerateReportInfo()
 		DisplayAsIndentItem "all $(ShowAsTitleName) backup files are stored here: $r_qpkg_bu_path"
 	fi
 
-	DisplayAsProjSynIndentExam 'to omit this report information panel' 'report-info off'
+	DisplayAsProjSynIndentExam 'to disable this report information panel' 'report-info off'
 
 	}
 
@@ -10231,9 +10231,9 @@ _QPKG:upgrade_()
 		local current_ver=$(GetQpkgInstalledVer)
 
 		if [[ $current_ver = "$prev_ver" ]]; then
-			SaveActionResultMetrics QPKG "$qpkg_name" upgrade '' ok "v${current_ver}"
+			SaveActionResultMetrics QPKG "$qpkg_name" upgrade '' ok "v$current_ver"
 		else
-			SaveActionResultMetrics QPKG "$qpkg_name" upgrade '' ok "v${prev_ver} -> v${current_ver}"		# squeezer-ignore
+			SaveActionResultMetrics QPKG "$qpkg_name" upgrade '' ok "v$prev_ver -> v$current_ver"		# squeezer-ignore
 		fi
 
 		MarkActionForkAsOk
@@ -11024,6 +11024,13 @@ _QPKG:clean_()
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 
 	Executer "${a}$(GetQpkgServicePathFile) clean" "$r_logs_path/$qpkg_name.$r_clean_log_file" log:failure-only
+
+#	if [[ $useropt_debug = true ]]; then
+#		DEBUG_QPKG=true $(GetQpkgServicePathFile) clean
+#	else
+#		$(GetQpkgServicePathFile) clean > "$r_logs_path/$qpkg_name.$r_clean_log_file" 2>&1
+#	fi
+
 	z=$?
 
 	LogQpkgServiceResult
@@ -11035,6 +11042,7 @@ _QPKG:clean_()
 	else
 		SaveActionResultMetrics QPKG "$qpkg_name" clean '' er "$z"
 		MarkActionForkAsError
+		# TODO: if debug mode, save action log to session log.
 	fi
 
 	FuncForkExit $z
@@ -13903,8 +13911,11 @@ Executer()
 	if [[ $useropt_verbose = true ]]; then
 		eval "$1 2>&1 | /usr/bin/tee $r_log_pathfile"					# NOTE: stdout is buffered here.
 		z=${PIPESTATUS[0]}												# Examine $PIPESTATUS after `tee` to get returncode of previous command: https://stackoverflow.com/questions/1221833/pipe-output-and-capture-exit-status-in-bash
+
+#		eval "$1 2>&1"
+#		z=$?
 	else
-		(eval "$1" > "$r_log_pathfile" 2>&1)							# Run in a subshell to suppress "Terminated" message later.
+		(eval "$1" > "$r_log_pathfile" 2>&1)							# Run within a subshell to suppress "Terminated" message later.
 		z=$?
 	fi
 
@@ -13923,7 +13934,7 @@ Executer()
 	case $z in
 		0)
 			[[ ${3:-} != log:failure-only || $useropt_debug = true ]] && AddExtLogToSessLog "$2"
-			DebugAsDone "$exec_msg OK"
+			DebugAsDone "$exec_msg OK ($z)"
 
 			if false; then												# devdebug
 				[[ $useropt_debug = false ]] && rm -f "$2" 2> /dev/null
@@ -13931,7 +13942,7 @@ Executer()
 			;;
 		"${4:-}")
 			[[ ${3:-} != log:failure-only || $useropt_debug = true ]] && AddExtLogToSessLog "$2"
-			DebugAsWarn "$exec_msg with permitted errors"
+			DebugAsWarn "$exec_msg with permitted errors ($z)"
 
 			if false; then												# devdebug
 				[[ $useropt_debug = false ]] && rm -f "$2" 2> /dev/null
@@ -13939,7 +13950,7 @@ Executer()
 			;;
 		*)
 			AddExtLogToSessLog "$2"
-			DebugAsError "$exec_msg with errors"
+			DebugAsError "$exec_msg with errors ($z)"
 	esac
 
 	FuncExit $z

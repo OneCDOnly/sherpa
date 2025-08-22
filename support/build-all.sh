@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
-. vars.source || exit
+. $HOME/scripts/nas/sherpa/support/environment.sourced || exit
 
 declare -a a
 declare -i i=0
 
-a+=("$support_path/$objects_file")
-a+=("$support_path/$management_file")
+a+=($support_path/$objects_file)
+a+=($support_path/$management_file)
 
 for i in "${!a[@]}"; do
 	[[ -e ${a[i]} ]] && rm -f "${a[i]}"
