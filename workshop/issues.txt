@@ -1,5 +1,7 @@
 Observed issues:
 
+	* Ensure daemon target exists before attempting to launch it in a `screen` session.
+
 	* x41 (sasha): new sherpa installation, no Entware yet, `sherpa show packages` columns are not aligned.
 		--------------------------------------------------------------------------------------------------
 		[/share/Public] # sherpa show packages
