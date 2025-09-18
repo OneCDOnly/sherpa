@@ -75,17 +75,19 @@ SwapTags()
 		a=$(sed "s|<?cdn_sherpa_base_url?>|$cdn_sherpa_base_url|g" <<< "$a")
 		a=$(sed "s|<?management_file?>|$management_file|g" <<< "$a")
 		a=$(sed "s|<?latest_release_version?>|${latest_release_version:-0}|g" <<< "$a")
+		a=$(sed "s|<?release_version?>|${release_version:-0}|g" <<< "$a")
 		a=$(sed "s|<?title_description?>|$title_description|g" <<< "$a")
 		a=$(sed "s|<?essential_ipks?>|${essential_ipks:=essential ipks}|g" <<< "$a")
 		a=$(sed "s|<?essential_pips?>|${essential_pips:=essential pips}|g" <<< "$a")
 		a=$(sed "s|<?exclusion_pips?>|${exclusion_pips:=exclusion pips}|g" <<< "$a")
 		a=$(sed "s|'<?management_debug_log_longest_string_length?>'|${#management_debug_log_longest_string}|g" <<< "$a")
 
-		a=$(sed "s|<?cdn_nzbget_dev_packages_url?>|$cdn_nzbget_dev_packages_url|g" <<< "$a")
 		a=$(sed "s|<?cdn_other_packages_url?>|$cdn_other_packages_url|g" <<< "$a")
-		a=$(sed "s|<?cdn_qnap_dev_packages_url?>|$cdn_qnap_dev_packages_url|g" <<< "$a")
 		a=$(sed "s|<?cdn_sherpa_packages_url?>|$cdn_sherpa_packages_url|g" <<< "$a")
 		a=$(sed "s|<?cdn_sherpa_packages_base_url?>|$cdn_sherpa_packages_base_url|g" <<< "$a")
+		a=$(sed "s|<?sherpa_packages_latest_release_asset_base_url?>|$sherpa_packages_latest_release_asset_base_url|g" <<< "$a")
+		a=$(sed "s|<?sherpa_packages_static_release_asset_base_url?>|$sherpa_packages_static_release_asset_base_url|g" <<< "$a")
+		[[ -n $package_release_version && $package_release_version -gt 0 ]] && a=$(sed "s|<?package_release_version?>|$package_release_version|g" <<< "$a")
 
 		[[ -e $2 ]] && chmod +w "$2"
 		echo "$a" > "$2"
@@ -214,6 +216,40 @@ QPKGAbbrvs()
 	done
 
 	return 1
+
+	}
+
+CheckPlaceholdersInPackages()
+	{
+
+	local f=$qpkgs_support_path/$packages_file
+
+	echo -n 'confirm all placeholders were processed ... '
+
+	if grep -q '<?\|?>' "$f"; then
+		echo; TextBrightRed "'$f' contains unprocessed placeholders, can't continue"; echo
+		exit 1
+	fi
+
+	ShowDone
+
+	}
+
+CheckPlaceholdersInMultiplePackages()
+	{
+
+	local f=''
+
+	echo -n 'confirm all placeholders were processed ... '
+
+	for f in $qpkgs_support_path/*.packages; do
+		if grep -q '<?\|?>' "$f"; then
+			echo; TextBrightRed "'$f' contains unprocessed placeholders, can't continue"; echo
+			exit 1
+		fi
+	done
+
+	ShowDone
 
 	}
 

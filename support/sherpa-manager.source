@@ -16293,6 +16293,8 @@ LoadDatabase()
 
 	ShowAsProc database
 
+	SetQpkgArch
+
 	# NOTE: Must set these prior to calling RefreshArchive()
 
 	local archive_name=database
