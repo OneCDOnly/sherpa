@@ -20,7 +20,7 @@ root_path=$HOME/scripts/nas/sherpa
 	support_path=$root_path/support
 wiki_path=$HOME/documents/sherpa.wiki
 
-highest_package_versions_found_pathfile=$qpkgs_support_path/highest_package_versions_found.tab
+highest_package_versions_found_pathfile=$qpkgs_support_path/qpkg-versions.tab
 
 management_archive_file=sherpa-manager.tar.gz
 management_file=sherpa-manager.sh
