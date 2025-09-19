@@ -15,12 +15,11 @@ qpkgs_root_path=$HOME/scripts/nas/sherpa.packages
 	qpkgs_path=$qpkgs_root_path/QPKGs
 	qpkgs_staging_path=$qpkgs_root_path/staging
 	qpkgs_support_path=$qpkgs_root_path/support
+		highest_package_versions_found_pathfile=$qpkgs_support_path/qpkg-versions.tab
 root_path=$HOME/scripts/nas/sherpa
 	docs_path=$root_path/docs
 	support_path=$root_path/support
 wiki_path=$HOME/documents/sherpa.wiki
-
-highest_package_versions_found_pathfile=$qpkgs_support_path/qpkg-versions.tab
 
 management_archive_file=sherpa-manager.tar.gz
 management_file=sherpa-manager.sh
@@ -63,7 +62,7 @@ management_debug_log_longest_string="  HARDWARE:                      CPU: Annap
 #									" USERSPACE:            shell version: GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)"
 #									" USERSPACE:            shell version: GNU bash, version 3.2.57(1)-release (arm-openwrt-linux-gnu)"
 
-# Must escape ampersand chars in `read` blocks for compatibility with `sed` regex.
+# NOTE: must escape ampersand chars in `read` blocks for compatibility with `sed` regex.
 
 read -rd '' preamble_msg << EOB
 <?dont_edit?>
