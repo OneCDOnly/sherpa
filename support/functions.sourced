@@ -87,7 +87,6 @@ SwapTags()
 		a=$(sed "s|<?cdn_sherpa_packages_base_url?>|$cdn_sherpa_packages_base_url|g" <<< "$a")
 		a=$(sed "s|<?sherpa_packages_latest_release_asset_base_url?>|$sherpa_packages_latest_release_asset_base_url|g" <<< "$a")
 		a=$(sed "s|<?sherpa_packages_static_release_asset_base_url?>|$sherpa_packages_static_release_asset_base_url|g" <<< "$a")
-		[[ -n $package_release_version && $package_release_version -gt 0 ]] && a=$(sed "s|<?package_release_version?>|$package_release_version|g" <<< "$a")
 
 		[[ -e $2 ]] && chmod +w "$2"
 		echo "$a" > "$2"
