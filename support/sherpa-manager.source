@@ -13816,7 +13816,7 @@ DeDupeWords()
 
 	[[ -n ${1:-} ]] || return
 
-	tr ' ' '\n' <<< "$1" | /usr/bin/sort | /bin/uniq | tr '\n' ' ' | /bin/sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'
+	tr ' ' '\n' <<< "$1" | /usr/bin/sort -f | /bin/uniq | tr '\n' ' ' | /bin/sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'
 
 	}
 
@@ -16128,9 +16128,6 @@ LoadDatabase()
 
 	[[ $extracted = true ]] && InitQPKGsTiers
 
-	local previous=''
-	local qpkg_name=''
-
 	# Supported QPKG details - parallel arrays.
 
 	# First, clear existing list arrays (if-any).
@@ -16242,11 +16239,7 @@ LoadDatabase()
 
 	DebugVar r_packages_epoch
 
-	for qpkg_name in "${r_qpkg_name[@]}"; do
-		[[ $previous = "$qpkg_name" ]] && continue
-		QPKGs-GRall:Add "$qpkg_name"
-		previous=$qpkg_name					# Only add first mention of each QPKG name to "GRall" array.
-	done
+	QPKGs-GRall:Add "$(DeDupeWords "${r_qpkg_name[*]}")"		# Sort QPKG names.
 
 	BuildQPKGsTiers
 
