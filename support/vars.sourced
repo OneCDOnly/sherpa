@@ -6,21 +6,20 @@ build_date=$(date '+%y%m%d')
 build_year=$(date '+%Y')
 manager_epoch=0				# Only update before building `sherpa-manager.sh` file.
 objects_epoch=0				# Only update before building `objects` file.
-packages_epoch=0			# Only update before building `packages` file.
+packages_epoch=0			# Only update before building `packages` file(s).
 title_description='a mini-package-manager for QNAP NAS'
 
 checksum_root_path=$HOME/scripts/nas
 qpkgs_root_path=$HOME/scripts/nas/sherpa.packages
 	qpkgs_docs_path=$qpkgs_root_path/docs
 	qpkgs_path=$qpkgs_root_path/QPKGs
+	qpkgs_staging_path=$qpkgs_root_path/staging
 	qpkgs_support_path=$qpkgs_root_path/support
+		highest_package_versions_found_pathfile=$qpkgs_support_path/qpkg-versions.tab
 root_path=$HOME/scripts/nas/sherpa
 	docs_path=$root_path/docs
 	support_path=$root_path/support
 wiki_path=$HOME/documents/sherpa.wiki
-
-highest_package_versions_found_pathfile=$qpkgs_support_path/highest_package_versions_found.raw
-highest_package_versions_found_sorted_pathfile=$qpkgs_support_path/highest_package_versions_found.tbl
 
 management_archive_file=sherpa-manager.tar.gz
 management_file=sherpa-manager.sh
@@ -39,14 +38,20 @@ service_library_source_file=service-library.source
 stable_branch=stable
 unstable_branch=unstable
 
-cdn_nzbget_dev_packages_url='https://github.com/nzbgetcom/<?package_name?>/releases/download/v<?version?>'
-cdn_onecd_url='https://raw.githubusercontent.com/OneCDOnly'
-	cdn_other_packages_url=$cdn_onecd_url/'<?package_name?>/main/build'
-	cdn_sherpa_base_url=$cdn_onecd_url/sherpa
-		cdn_sherpa_url=$cdn_sherpa_base_url/'$useropt_branch'
-	cdn_sherpa_packages_base_url=$cdn_onecd_url/sherpa.packages
-		cdn_sherpa_packages_url=$cdn_sherpa_packages_base_url/'$useropt_branch/QPKGs/<?package_name?>/build'
-cdn_qnap_dev_packages_url='https://github.com/qnap-dev/<?package_name?>/releases/download/v<?version?>'
+# Original single-package archive.
+
+	cdn_onecd_url=https://raw.githubusercontent.com/OneCDOnly
+		cdn_other_packages_url=$cdn_onecd_url/'<?package_name?>'/main/build
+		cdn_sherpa_base_url=$cdn_onecd_url/sherpa
+			cdn_sherpa_url=$cdn_sherpa_base_url/'$useropt_branch'
+		cdn_sherpa_packages_base_url=$cdn_onecd_url/sherpa.packages
+			cdn_sherpa_packages_url=$cdn_sherpa_packages_base_url/'$useropt_branch'/QPKGs/'<?package_name?>'/build
+
+# Multiple package archives.
+
+	sherpa_packages_base_url=https://github.com/OneCDOnly/sherpa.packages
+		sherpa_packages_latest_release_asset_base_url=$sherpa_packages_base_url/releases/latest/download
+		sherpa_packages_static_release_asset_base_url=$sherpa_packages_base_url/releases/download/'$package_release_version'
 
 copyright_basic='Copyright (C) 2017-<?build_year?> OneCD'
 dont_edit_msg="Please don't edit this file directly, it has been programmatically built or modified with the '$(basename "$0")' script."
@@ -57,7 +62,7 @@ management_debug_log_longest_string="  HARDWARE:                      CPU: Annap
 #									" USERSPACE:            shell version: GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)"
 #									" USERSPACE:            shell version: GNU bash, version 3.2.57(1)-release (arm-openwrt-linux-gnu)"
 
-# Must escape ampersand chars in `read` blocks for compatibility with `sed` regex.
+# NOTE: must escape ampersand chars in `read` blocks for compatibility with `sed` regex.
 
 read -rd '' preamble_msg << EOB
 <?dont_edit?>

@@ -53,42 +53,43 @@ SwapTags()
 	echo -n "swapping tags (in: '$(basename $1)', out: '$(basename $2)') ... "
 
 	if [[ -f "$1" ]]; then			# ignore symlinks.
-		local buffer=$(<"$1")
+		local a=$(<"$1")
 
-		buffer=$(sed "s|<?preamble?>|${preamble_msg//$'\n'/\\n}|g" <<< "$buffer")				# Escape newlines.
-		buffer=$(sed "s|<?postamble?>|${postamble_msg//$'\n'/\\n}|g" <<< "$buffer")				# Escape newlines.
-		buffer=$(sed "s|<?dont_edit?>|$dont_edit_msg (source: '$(basename "$1")')|g" <<< "$buffer")
-		buffer=$(sed "s|<?filename?>|$(basename "$2")|g" <<< "$buffer")
-		buffer=$(sed "s|<?copyright?>|${copyright_msg//$'\n'/\\n}|g" <<< "$buffer")				# Escape newlines.
-		buffer=$(sed "s|<?copyright_basic?>|${copyright_basic//$'\n'/\\n}|g" <<< "$buffer")		# Escape newlines.
-		buffer=$(sed "s|<?project?>|${project_msg//$'\n'/\\n}|g" <<< "$buffer")					# Escape newlines.
-		buffer=$(sed "s|<?tested?>|${tested_msg//$'\n'/\\n}|g" <<< "$buffer")					# Escape newlines.
-		buffer=$(sed "s|<?notes?>|${notes_msg//$'\n'/\\n}|g" <<< "$buffer")						# Escape newlines.
-		buffer=$(sed "s|<?license?>|${license_msg//$'\n'/\\n}|g" <<< "$buffer")					# Escape newlines.
-		buffer=$(sed "s|'<?build_date?>'|$build_date|g" <<< "$buffer")
-		buffer=$(sed "s|<?build_date?>|$build_date|g" <<< "$buffer")
-		buffer=$(sed "s|<?build_year?>|$build_year|g" <<< "$buffer")
-		buffer=$(sed "s|'<?manager_epoch?>'|$manager_epoch|g" <<< "$buffer")
-		buffer=$(sed "s|<?objects_epoch?>|$objects_epoch|g" <<< "$buffer")
-		buffer=$(sed "s|'<?packages_epoch?>'|$packages_epoch|g" <<< "$buffer")
-		buffer=$(sed "s|<?email?>|$email|g" <<< "$buffer")
-		buffer=$(sed "s|<?cdn_sherpa_base_url?>|$cdn_sherpa_base_url|g" <<< "$buffer")
-		buffer=$(sed "s|<?management_file?>|$management_file|g" <<< "$buffer")
-		buffer=$(sed "s|<?latest_release_version?>|${latest_release_version:-0}|g" <<< "$buffer")
-		buffer=$(sed "s|<?title_description?>|$title_description|g" <<< "$buffer")
-		buffer=$(sed "s|<?essential_ipks?>|${essential_ipks:=essential ipks}|g" <<< "$buffer")
-		buffer=$(sed "s|<?essential_pips?>|${essential_pips:=essential pips}|g" <<< "$buffer")
-		buffer=$(sed "s|<?exclusion_pips?>|${exclusion_pips:=exclusion pips}|g" <<< "$buffer")
-		buffer=$(sed "s|'<?management_debug_log_longest_string_length?>'|${#management_debug_log_longest_string}|g" <<< "$buffer")
+		a=$(sed "s|<?preamble?>|${preamble_msg//$'\n'/\\n}|g" <<< "$a")					# Escape newlines.
+		a=$(sed "s|<?postamble?>|${postamble_msg//$'\n'/\\n}|g" <<< "$a")				# Escape newlines.
+		a=$(sed "s|<?dont_edit?>|$dont_edit_msg (source: '$(basename "$1")')|g" <<< "$a")
+		a=$(sed "s|<?filename?>|$(basename "$2")|g" <<< "$a")
+		a=$(sed "s|<?copyright?>|${copyright_msg//$'\n'/\\n}|g" <<< "$a")				# Escape newlines.
+		a=$(sed "s|<?copyright_basic?>|${copyright_basic//$'\n'/\\n}|g" <<< "$a")		# Escape newlines.
+		a=$(sed "s|<?project?>|${project_msg//$'\n'/\\n}|g" <<< "$a")					# Escape newlines.
+		a=$(sed "s|<?tested?>|${tested_msg//$'\n'/\\n}|g" <<< "$a")						# Escape newlines.
+		a=$(sed "s|<?notes?>|${notes_msg//$'\n'/\\n}|g" <<< "$a")						# Escape newlines.
+		a=$(sed "s|<?license?>|${license_msg//$'\n'/\\n}|g" <<< "$a")					# Escape newlines.
+		a=$(sed "s|'<?build_date?>'|$build_date|g" <<< "$a")
+		a=$(sed "s|<?build_date?>|$build_date|g" <<< "$a")
+		a=$(sed "s|<?build_year?>|$build_year|g" <<< "$a")
+		a=$(sed "s|'<?manager_epoch?>'|$manager_epoch|g" <<< "$a")
+		a=$(sed "s|<?objects_epoch?>|$objects_epoch|g" <<< "$a")
+		a=$(sed "s|'<?packages_epoch?>'|$packages_epoch|g" <<< "$a")
+		a=$(sed "s|<?email?>|$email|g" <<< "$a")
+		a=$(sed "s|<?cdn_sherpa_base_url?>|$cdn_sherpa_base_url|g" <<< "$a")
+		a=$(sed "s|<?management_file?>|$management_file|g" <<< "$a")
+		a=$(sed "s|<?latest_release_version?>|${latest_release_version:-0}|g" <<< "$a")
+		a=$(sed "s|<?release_version?>|${release_version:-0}|g" <<< "$a")
+		a=$(sed "s|<?title_description?>|$title_description|g" <<< "$a")
+		a=$(sed "s|<?essential_ipks?>|${essential_ipks:=essential ipks}|g" <<< "$a")
+		a=$(sed "s|<?essential_pips?>|${essential_pips:=essential pips}|g" <<< "$a")
+		a=$(sed "s|<?exclusion_pips?>|${exclusion_pips:=exclusion pips}|g" <<< "$a")
+		a=$(sed "s|'<?management_debug_log_longest_string_length?>'|${#management_debug_log_longest_string}|g" <<< "$a")
 
-		buffer=$(sed "s|<?cdn_nzbget_dev_packages_url?>|$cdn_nzbget_dev_packages_url|g" <<< "$buffer")
-		buffer=$(sed "s|<?cdn_other_packages_url?>|$cdn_other_packages_url|g" <<< "$buffer")
-		buffer=$(sed "s|<?cdn_qnap_dev_packages_url?>|$cdn_qnap_dev_packages_url|g" <<< "$buffer")
-		buffer=$(sed "s|<?cdn_sherpa_packages_url?>|$cdn_sherpa_packages_url|g" <<< "$buffer")
-		buffer=$(sed "s|<?cdn_sherpa_packages_base_url?>|$cdn_sherpa_packages_base_url|g" <<< "$buffer")
+		a=$(sed "s|<?cdn_other_packages_url?>|$cdn_other_packages_url|g" <<< "$a")
+		a=$(sed "s|<?cdn_sherpa_packages_url?>|$cdn_sherpa_packages_url|g" <<< "$a")
+		a=$(sed "s|<?cdn_sherpa_packages_base_url?>|$cdn_sherpa_packages_base_url|g" <<< "$a")
+		a=$(sed "s|<?sherpa_packages_latest_release_asset_base_url?>|$sherpa_packages_latest_release_asset_base_url|g" <<< "$a")
+		a=$(sed "s|<?sherpa_packages_static_release_asset_base_url?>|$sherpa_packages_static_release_asset_base_url|g" <<< "$a")
 
 		[[ -e $2 ]] && chmod +w "$2"
-		echo "$buffer" > "$2"
+		echo "$a" > "$2"
 	fi
 
 	ShowDone
@@ -109,64 +110,88 @@ Squeeze()
 
 	if [[ -f "$1" ]]; then			# ignore symlinks.
 		echo -n 'squeezing ... '
-		local buffer=$(<"$1")
+		local a=$(<"$1")
 
-		buffer=$(sed '/devdebug/d' <<< "$buffer")												# Remove lines with 'devdebug' tag.
+		a=$(sed '/devdebug/d' <<< "$a")													# Remove lines with 'devdebug' tag.
 
-		buffer=$(sed '/[#>][[:space:]]>/! s/[[:space:]]>/>/g' <<< "$buffer")					# Remove whitespace before fd1 redirects.
-		buffer=$(sed '/squeezer-ignore/! s/>[[:space:]]/>/g' <<< "$buffer")						# Remove whitespace after fd1 redirects, except for lines with 'squeezer-ignore' tag.
-		buffer=$(sed '/[#<][[:space:]]</! s/[[:space:]]</</g' <<< "$buffer")					# Remove whitespace before fd0 redirects.
-		buffer=$(sed 's/<[[:space:]]/</g' <<< "$buffer")										# Remove whitespace after fd0 redirects.
+		a=$(sed '/[#>][[:space:]]>/! s/[[:space:]]>/>/g' <<< "$a")						# Remove whitespace before fd1 redirects.
+		a=$(sed '/squeezer-ignore/! s/>[[:space:]]/>/g' <<< "$a")						# Remove whitespace after fd1 redirects, except for lines with 'squeezer-ignore' tag.
+		a=$(sed '/[#<][[:space:]]</! s/[[:space:]]</</g' <<< "$a")						# Remove whitespace before fd0 redirects.
+		a=$(sed 's/<[[:space:]]/</g' <<< "$a")											# Remove whitespace after fd0 redirects.
 
-		buffer=$(sed 's/\;[[:space:]]/;/g' <<< "$buffer")										# Remove whitespace after semicolons.
-		buffer=$(sed 's/[[:space:]]\;/;/g' <<< "$buffer")										# Remove whitespace before semicolons.
+		a=$(sed 's/\;[[:space:]]/;/g' <<< "$a")											# Remove whitespace after semicolons.
+		a=$(sed 's/[[:space:]]\;/;/g' <<< "$a")											# Remove whitespace before semicolons.
 
-		buffer=$(sed 's/\&\&[[:space:]]/\&\&/g' <<< "$buffer")									# Remove whitespace after inline true test.
-#		buffer=$(sed 's/[[:space:]]\&\&/\&\&/g' <<< "$buffer")									# Remove whitespace before inline true test. WARNING: can't remove whitespace before inline true test within a double-test block.
-		buffer=$(sed 's/\]][[:space:]]\&\&/]]\&\&/g' <<< "$buffer")								# Remove whitespace before inline true test preceded by double-test exit.
+		a=$(sed 's/\&\&[[:space:]]/\&\&/g' <<< "$a")									# Remove whitespace after inline true test.
+#		a=$(sed 's/[[:space:]]\&\&/\&\&/g' <<< "$a")									# Remove whitespace before inline true test. WARNING: can't remove whitespace before inline true test within a double-test block.
+		a=$(sed 's/\]][[:space:]]\&\&/]]\&\&/g' <<< "$a")								# Remove whitespace before inline true test preceded by double-test exit.
 
-		buffer=$(sed 's/||[[:space:]]/||/g' <<< "$buffer")										# Remove whitespace after inline false test.
-#		buffer=$(sed 's/[[:space:]]||/||/g' <<< "$buffer")										# Remove whitespace before inline false test. WARNING: can't remove whitespace before inline false test within a double-test block.
-		buffer=$(sed 's/\]\][[:space:]]||/]]||/g' <<< "$buffer")								# Remove whitespace before inline false test preceded by double-test exit.
-		buffer=$(sed 's/[[:space:]]||return/||return/g' <<< "$buffer")							# Remove whitespace before inline false test followed by 'return'.
-		buffer=$(sed 's/[[:space:]]\&\&return/\&\&return/g' <<< "$buffer")						# Remove whitespace before inline true test followed by 'return'.
-		buffer=$(sed 's/[[:space:]]\&\&Is/\&\&Is/g' <<< "$buffer")								# Remove whitespace before inline true test followed by 'Is'.
-		buffer=$(sed 's/[[:space:]]||exit/||exit/g' <<< "$buffer")								# Remove whitespace before inline false test followed by 'exit'.
-		buffer=$(sed 's/[[:space:]]||continue/||continue/g' <<< "$buffer")						# Remove whitespace before inline false test followed by 'continue'.
-		buffer=$(sed 's/[[:space:]]||break/||break/g' <<< "$buffer")							# Remove whitespace before inline false test followed by 'break'.
-		buffer=$(sed 's/[[:space:]]||printf/||printf/g' <<< "$buffer")							# Remove whitespace before inline false test followed by 'printf'.
-		buffer=$(sed 's/[[:space:]]||\//||\//g' <<< "$buffer")									# Remove whitespace before inline false test followed by '/'.
-		buffer=$(sed 's/[[:space:]]||z/||z/g' <<< "$buffer")									# Remove whitespace before inline false test followed by 'z'.
+		a=$(sed 's/||[[:space:]]/||/g' <<< "$a")										# Remove whitespace after inline false test.
+#		a=$(sed 's/[[:space:]]||/||/g' <<< "$a")										# Remove whitespace before inline false test. WARNING: can't remove whitespace before inline false test within a double-test block.
+		a=$(sed 's/\]\][[:space:]]||/]]||/g' <<< "$a")									# Remove whitespace before inline false test preceded by double-test exit.
+		a=$(sed 's/[[:space:]]||return/||return/g' <<< "$a")							# Remove whitespace before inline false test followed by 'return'.
+		a=$(sed 's/[[:space:]]\&\&return/\&\&return/g' <<< "$a")						# Remove whitespace before inline true test followed by 'return'.
+		a=$(sed 's/[[:space:]]\&\&Is/\&\&Is/g' <<< "$a")								# Remove whitespace before inline true test followed by 'Is'.
+		a=$(sed 's/[[:space:]]||exit/||exit/g' <<< "$a")								# Remove whitespace before inline false test followed by 'exit'.
+		a=$(sed 's/[[:space:]]||continue/||continue/g' <<< "$a")						# Remove whitespace before inline false test followed by 'continue'.
+		a=$(sed 's/[[:space:]]||break/||break/g' <<< "$a")								# Remove whitespace before inline false test followed by 'break'.
+		a=$(sed 's/[[:space:]]||printf/||printf/g' <<< "$a")							# Remove whitespace before inline false test followed by 'printf'.
+		a=$(sed 's/[[:space:]]||\//||\//g' <<< "$a")									# Remove whitespace before inline false test followed by '/'.
+		a=$(sed 's/[[:space:]]||z/||z/g' <<< "$a")										# Remove whitespace before inline false test followed by 'z'.
 
-		buffer=$(sed 's/[[:space:]]((/((/g' <<< "$buffer")										# Remove whitespace before inline arithmetic start.
+		a=$(sed 's/[[:space:]]((/((/g' <<< "$a")										# Remove whitespace before inline arithmetic start.
 
-		buffer=$(sed '/squeezer-ignore/! s/[[:space:]]|[[:space:]]/|/g' <<< "$buffer")			# Remove whitespace before-and-after pipe, except for lines with 'squeezer-ignore' tag.
+		a=$(sed '/squeezer-ignore/! s/[[:space:]]|[[:space:]]/|/g' <<< "$a")			# Remove whitespace before-and-after pipe, except for lines with 'squeezer-ignore' tag.
 
-		buffer=$(sed '/squeezer-ignore/! s/^[[:space:]]*//' <<< "$buffer")						# Remove line leading whitespace, except for lines with 'squeezer-ignore' tag.
+		a=$(sed '/squeezer-ignore/! s/^[[:space:]]*//' <<< "$a")						# Remove line leading whitespace, except for lines with 'squeezer-ignore' tag.
 
 		# CAUTION: comment tags won't be seen beyond this point.
 
-		buffer=$(sed '/^#[[:space:]].*/d;/#$/d;s/[[:space:]]#[[:space:]].*//' <<< "$buffer")	# Remove comment lines and line comments.
-		buffer=$(sed 's/[[:space:]]*$//' <<< "$buffer")											# Remove line trailing whitespace.
-		buffer=$(sed '/^$/d' <<< "$buffer")														# Remove empty lines.
+		a=$(sed '/^#[[:space:]].*/d;/#$/d;s/[[:space:]]#[[:space:]].*//' <<< "$a")		# Remove comment lines and line comments.
+		a=$(sed 's/[[:space:]]*$//' <<< "$a")											# Remove line trailing whitespace.
+		a=$(sed '/^$/d' <<< "$a")														# Remove empty lines.
 
-		buffer=$(sed "s|Transfer-Encoding: base64|Transfer-Encoding: base64\n|" <<< "$buffer")	# Add a newline after this string so signature block is accepted by QTS.
+		a=$(sed "s|Transfer-Encoding: base64|Transfer-Encoding: base64\n|" <<< "$a")	# Add a newline after this string so signature block is accepted by QTS.
 
-		buffer=$(sed ':a;N;$!ba; s/()\n{\n/(){\n/g' <<< "$buffer")		# Function start braces: move to function name line. https://stackoverflow.com/a/1252191
+		a=$(sed ':a;N;$!ba; s/()\n{\n/(){\n/g' <<< "$a")								# Function start braces: move to function name line. https://stackoverflow.com/a/1252191
 
-		buffer=$(sed ':a;N;$!ba; s/\n;;\n/;;\n/g' <<< "$buffer")		# 'case' pattern block ends: move to last statement.
+		a=$(sed ':a;N;$!ba; s/\n;;\n/;;\n/g' <<< "$a")									# 'case' pattern block ends: move to last statement.
 
-		buffer=$(sed ':a;N;$!ba; s/\*)\n/*)/g' <<< "$buffer")			# 'case' pattern definitions of any '*)': move first statement to definition line.
+		a=$(sed ':a;N;$!ba; s/\*)\n/*)/g' <<< "$a")										# 'case' pattern definitions of any '*)': move first statement to definition line.
 
 		# NOTE: these don't save any bytes, but do reduce the number of lines.
 
-		buffer=$(sed ':a;N;$!ba; s/\n}\n/;}\n/g' <<< "$buffer")			# Function end braces: move to last statement.
+		a=$(sed ':a;N;$!ba; s/\n}\n/;}\n/g' <<< "$a")									# Function end braces: move to last statement.
 
 		[[ -e $2 ]] && chmod +w "$2"
-		echo "$buffer" > "$2"
+		echo "$a" > "$2"
 	fi
 
 	ShowDone
+
+	}
+
+StripComments()
+	{
+
+	# A simpler version of Squeeze() only used when building package lists.
+
+	# Inputs: (local)
+	#   $1 = string to strip comment lines, empty lines, and so-on.
+
+	# Outputs: (local)
+	#   stdout = stripped string.
+
+	[[ -n $1 ]] || return
+
+	local a="$1"
+
+	a=$(sed '/^#[[:space:]].*/d;/#$/d;s/[[:space:]]#[[:space:]].*//' <<< "$a")			# Remove comment lines and line comments.
+	a=$(sed 's/^[[:space:]]*//' <<< "$a")												# Remove leading whitespace.
+	a=$(sed 's/[[:space:]]*$//' <<< "$a")												# Remove trailing whitespace.
+# 	a=$(sed "/^$/d" <<< "$a")															# Remove empty lines.
+
+	echo "$a"
 
 	}
 
@@ -190,6 +215,40 @@ QPKGAbbrvs()
 	done
 
 	return 1
+
+	}
+
+CheckPlaceholdersInPackages()
+	{
+
+	local f=$qpkgs_support_path/$packages_file
+
+	echo -n 'confirm all placeholders were processed ... '
+
+	if grep -q '<?\|?>' "$f"; then
+		echo; TextBrightRed "'$f' contains unprocessed placeholders, can't continue"; echo
+		exit 1
+	fi
+
+	ShowDone
+
+	}
+
+CheckPlaceholdersInMultiplePackages()
+	{
+
+	local f=''
+
+	echo -n 'confirm all placeholders were processed ... '
+
+	for f in $qpkgs_support_path/*.packages; do
+		if grep -q '<?\|?>' "$f"; then
+			echo; TextBrightRed "'$f' contains unprocessed placeholders, can't continue"; echo
+			exit 1
+		fi
+	done
+
+	ShowDone
 
 	}
 
