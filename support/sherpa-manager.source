@@ -238,8 +238,6 @@ LoadConsts()
 	readonly r_report_qpkg_action_column_width=27
 	readonly r_report_qpkg_active_test_builtin_column_width=9
 	readonly r_report_qpkg_appl_version_column_width=22
-	readonly r_report_qpkg_arch_column_width=15
-#	readonly r_report_qpkg_author_column_width=40
 	readonly r_report_qpkg_auto_update_column_width=8
 	readonly r_report_qpkg_can_backup_column_width=8
 	readonly r_report_qpkg_can_clean_column_width=9
@@ -247,7 +245,6 @@ LoadConsts()
 	readonly r_report_qpkg_dependencies_column_width=29
 	readonly r_report_qpkg_description_column_width=10
 	readonly r_report_qpkg_install_date_column_width=20
-	readonly r_report_qpkg_is_compatible_column_width=11
 	readonly r_report_qpkg_is_complete_column_width=8
 	readonly r_report_qpkg_is_enabled_column_width=8
 	readonly r_report_qpkg_is_installed_column_width=10
@@ -493,28 +490,32 @@ LoadEnv()
 	{
 
 	qpkg_name=sherpa
-	readonly r_cert_db_pathfile=/etc/config/nas_sign_qpkg.db
 
 	SetHardwareCPUCores
 	SetHardwareInstalledRAM
+	SetQpkgArch
 
-	readonly r_concurrency=$r_cpu_cores			# Maximum concurrent package actions to run. Should probably make this account for CPU speed too.
-	readonly r_entware_type=$(GetQpkgEntwareType)
-	readonly r_this_package_ver=$(GetQpkgInstalledVer)
-
-	args=()										# Command-line argument array.
+	args=()
 	args_incomplete=()
-	qpkg_default_index=0
 	qpkg_index=0
+	readonly r_cert_db_pathfile=/etc/config/nas_sign_qpkg.db
+	readonly r_concurrency=$r_cpu_cores				# Maximum concurrent package actions to run. Should probably make this account for CPU speed too.
+	readonly r_entware_type=$(GetQpkgEntwareType)
 	readonly r_script_built_epoch='<?manager_epoch?>'
+	local -r r_sherpa_packages_base_url=https://github.com/OneCDOnly/sherpa.packages
+	readonly r_this_package_ver=$(GetQpkgInstalledVer)
 	local script_epoch=0
+	package_release_version=v250921
 
 	IsNumber $r_script_built_epoch && script_epoch=$r_script_built_epoch
 
 	useropt_branch=$(GetUserGitBranch)
 		readonly r_objects_archive_url='<?cdn_sherpa_base_url?>'/$useropt_branch/objects.tar.gz
-		readonly r_packages_archive_url='<?cdn_sherpa_packages_base_url?>'/$useropt_branch/packages.tar.gz
 		readonly r_this_script_ver=$(ConvertSecondsToDatecode $script_epoch)-$useropt_branch
+
+	[[ $useropt_branch = unstable ]] && package_release_version=unstable
+
+	readonly r_packages_archive_url=$r_sherpa_packages_base_url/releases/download/$package_release_version/$r_nas_qpkg_arch.packages.tar.gz
 
 	# Essential paths.
 
@@ -548,8 +549,8 @@ LoadEnv()
 	readonly r_objects_archive_pathfile=$r_cache_path/objects.tar.gz
 	readonly r_objects_pathfile=$r_cache_path/objects
 	readonly r_optional_qpkgs_list_pathfile=$r_cache_path/optionals
-	readonly r_packages_archive_pathfile=$r_cache_path/packages.tar.gz
-	readonly r_packages_pathfile=$r_cache_path/packages
+	readonly r_packages_archive_pathfile=$r_cache_path/$r_nas_qpkg_arch.packages.tar.gz
+	readonly r_packages_pathfile=$r_cache_path/$r_nas_qpkg_arch.packages
 
 	readonly r_prev_ipk_list_pathfile=$r_ipk_cache_path/ipk-list.save
 
@@ -4618,7 +4619,7 @@ _GeneratePacksReportDataLine_()
 	# Inputs: (global)
 	#	$qpkg_name
 
-	local -a column_vars=(app_ver description name notes)
+	local -a column_vars=(app_ver description name)
 	local mode=''
 
 	# Init field messages.
@@ -4631,8 +4632,6 @@ _GeneratePacksReportDataLine_()
 	name=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
 	app_ver=$(GetQpkgDbApplVer)
 	description=$(Capitalise "$(GetQpkgDbDesc "$name")")
-	notes=$(GetQpkgDbNote)
-	[[ $notes = none ]] && notes=''
 
 	case $app_ver in
 		dynamic|final|static)
@@ -4665,22 +4664,12 @@ _GeneratePacksReportDataLine_()
 			name_msg=$(FormatReportField "$name")
 	esac
 
-	notes_msg=$notes
-
 	if IsOsCanAutowidthTableColumns; then
 		printf '%s' "$name_msg|$app_ver_msg|$description_msg"
-
-		if [[ -n $notes ]]; then
-			printf "\n%s|%s|%$((${#r_chars_blank}))s$(TextBrightOrange "${r_chars_dropend}${r_chars_note}")%s" '' '' '' "$notes_msg"
-		fi
 	else
 		FormatReportFieldWidth "$name_msg" "$r_report_qpkg_name_column_width"
 		FormatReportFieldWidth "$app_ver_msg" "$r_report_qpkg_appl_version_column_width"
 #		FormatReportFieldWidth "$description_msg" "$r_report_qpkg_description_column_width"
-
-#		if [[ -n $notes ]]; then
-#			printf "\n%$((${#r_chars_blank}+r_report_qpkg_name_column_width+r_report_qpkg_appl_version_column_width+(r_report_column_spacing*2)))s$(TextBrightOrange "${r_chars_dropend}${r_chars_note}")%s" '' "$notes_msg"
-#		fi
 	fi
 
 	printf '\n'
@@ -4871,9 +4860,7 @@ _GenerateStatusReportDataLine_()
 			path=N/A
 			/bin/touch "$r_report_flags_path"/na
 
-			if ! IsQpkgDbArchOK; then
-				auxiliary='architecture incompatible'
-			elif ! IsQpkgDbMinOSVerOk || ! IsQpkgDbMaxOSVerOk; then
+			if ! IsQpkgDbMinOSVerOk || ! IsQpkgDbMaxOSVerOk; then
 				auxiliary="$(GetOsName) version incompatible"
 			elif ! IsQpkgDbMinRAMOk; then
 				auxiliary='installed RAM insufficient'
@@ -5058,9 +5045,7 @@ _GenerateReposReportDataLine_()
 		mute)
 			/bin/touch "$r_report_flags_path"/na
 
-			if ! IsQpkgDbArchOK; then
-				auxiliary='architecture incompatible'
-			elif ! IsQpkgDbMinOSVerOk || ! IsQpkgDbMaxOSVerOk; then
+			if ! IsQpkgDbMinOSVerOk || ! IsQpkgDbMaxOSVerOk; then
 				auxiliary="$(GetOsName) version incompatible"
 			elif ! IsQpkgDbMinRAMOk; then
 				auxiliary='installed RAM insufficient'
@@ -5186,9 +5171,7 @@ _GenerateAbsReportDataLine_()
 
 	case $mode in
 		mute)
-			if ! IsQpkgDbArchOK; then
-				auxiliary='architecture incompatible'
-			elif ! IsQpkgDbMinOSVerOk || ! IsQpkgDbMaxOSVerOk; then
+			if ! IsQpkgDbMinOSVerOk || ! IsQpkgDbMaxOSVerOk; then
 				auxiliary="$(GetOsName) version incompatible"
 			elif ! IsQpkgDbMinRAMOk; then
 				auxiliary='installed RAM insufficient'
@@ -5245,7 +5228,6 @@ GenerateDepsReportTitleLine()
 
 	# Inputs: (global)
 	#	$r_report_lazy_column_width
-	#	$r_report_qpkg_arch_column_width
 	#	$r_report_qpkg_dependencies_column_width
 	#	$r_report_qpkg_is_complete_column_width
 	#	$r_report_qpkg_is_enabled_column_width
@@ -5258,7 +5240,7 @@ GenerateDepsReportTitleLine()
 	#	$r_report_qpkg_opt_dependencies_column_width
 
 	if IsOsCanAutowidthTableColumns; then
-		printf 'QPKG name:|Dependencies:|Optionals:|Installed?|Enabled?|Complete?|Managed?|Signed?|Min. RAM:|Min. OS:|Max. OS:|Supported arch?|Installed QPKG author:'
+		printf 'QPKG name:|Dependencies:|Optionals:|Installed?|Enabled?|Complete?|Managed?|Signed?|Min. RAM:|Min. OS:|Max. OS:|Installed QPKG author:'
 	else
 		FormatReportFieldWidth 'QPKG name:' "$r_report_qpkg_name_column_width"
 		FormatReportFieldWidth 'Dependencies:' "$r_report_qpkg_dependencies_column_width"
@@ -5271,7 +5253,6 @@ GenerateDepsReportTitleLine()
 		FormatReportFieldWidth 'Min. RAM:' "$r_report_qpkg_min_ram_column_width"
 		FormatReportFieldWidth 'Min. OS:' "$r_report_qpkg_min_os_version_column_width"
 		FormatReportFieldWidth 'Max. OS:' "$r_report_qpkg_max_os_version_column_width"
-		FormatReportFieldWidth 'Supported arch?' "$r_report_qpkg_arch_column_width"
 		FormatReportFieldWidth 'Installed QPKG author:' "$r_report_lazy_column_width"
 	fi
 
@@ -5289,7 +5270,7 @@ _GenerateDepsReportDataLine_()
 	#	$r_report_flags_path
 
 	local a=''
-	local -a column_vars=(author arch auxiliary deps enabled installed complete managed signed max_os min_os min_ram name opt_deps)
+	local -a column_vars=(author auxiliary deps enabled installed complete managed signed max_os min_os min_ram name opt_deps)
 		local auxiliary_column=deps		# Auxiliary messages are shown in this column name.
 	local dep_name=''
 	local deps_raw=$(GetQpkgDbDependencies "$qpkg_name")
@@ -5309,7 +5290,6 @@ _GenerateDepsReportDataLine_()
 	max_os=$(GetQpkgDbMaxOSVer "$name")
 	min_os=$(GetQpkgDbMinOSVer "$name")
 	min_ram=$(GetQpkgDbMinRAM "$name")
-	IsQpkgDbArchOK && arch=true
 	IsQpkgRepoSelfManaged && managed=true
 	IsQpkgEnabled "$name" && enabled=true
 	IsQpkgComplete "$name" && complete=true
@@ -5389,13 +5369,6 @@ _GenerateDepsReportDataLine_()
 
 			# Assign & highlight field messages.
 
-			if IsQpkgDbArchOK; then
-				arch_msg=$(FormatReportField "$arch" mute)
-			else
-				arch_msg=$(FormatReportField "$arch" attention_highlight)
-				req_attention=true
-			fi
-
 			author_msg=$(FormatReportField N/A mute)
 			deps_msg=$(FormatReportField "${deps// /, }" mute)
 			opt_deps_msg=$(FormatReportField "${opt_deps// /, }" mute)
@@ -5432,13 +5405,6 @@ _GenerateDepsReportDataLine_()
 			fi
 			;;
 		*)
-			if IsQpkgDbArchOK; then
-				arch_msg=$(FormatReportField "$arch" ok)
-			else
-				arch_msg=$(FormatReportField "$arch" alert)
-				req_alert=true
-			fi
-
 			author_msg=$(FormatReportField "$author" ok)
 			deps=''
 
@@ -5561,7 +5527,7 @@ _GenerateDepsReportDataLine_()
 	fi
 
 	if IsOsCanAutowidthTableColumns; then
-		printf '%s' "$name_msg|$deps_msg|$opt_deps_msg|$installed_msg|$enabled_msg|$complete_msg|$managed_msg|$signed_msg|$min_ram_msg|$min_os_msg|$max_os_msg|$arch_msg|$author_msg"
+		printf '%s' "$name_msg|$deps_msg|$opt_deps_msg|$installed_msg|$enabled_msg|$complete_msg|$managed_msg|$signed_msg|$min_ram_msg|$min_os_msg|$max_os_msg|$author_msg"
 	else
 		FormatReportFieldWidth "$name_msg" "$r_report_qpkg_name_column_width"
 		FormatReportFieldWidth "$deps_msg" "$r_report_qpkg_dependencies_column_width"
@@ -5574,7 +5540,6 @@ _GenerateDepsReportDataLine_()
 		FormatReportFieldWidth "$min_ram_msg" "$r_report_qpkg_min_ram_column_width"
 		FormatReportFieldWidth "$min_os_msg" "$r_report_qpkg_min_os_version_column_width"
 		FormatReportFieldWidth "$max_os_msg" "$r_report_qpkg_max_os_version_column_width"
-		FormatReportFieldWidth "$arch_msg" "$r_report_qpkg_arch_column_width"
 		FormatReportFieldWidth "$author_msg" "$r_report_lazy_column_width"
 	fi
 
@@ -5592,12 +5557,11 @@ GenerateFeaturesReportTitleLine()
 	#	$r_report_qpkg_can_backup_column_width
 	#	$r_report_qpkg_can_clean_column_width
 	#	$r_report_qpkg_can_start_to_update_column_width
-	#	$r_report_qpkg_is_compatible_column_width
 	#	$r_report_qpkg_name_column_width
 	#	$r_report_qpkg_tier_column_width
 
 	if IsOsCanAutowidthTableColumns; then
-		printf 'QPKG name:|Indep?|Opt?|Dep?|Enh?|CanBack?|CanClean?|StartUpd?|AutUpd?|LiveTest?|ArchCompat?|UniqUnpack?'
+		printf 'QPKG name:|Indep?|Opt?|Dep?|Enh?|CanBack?|CanClean?|StartUpd?|AutUpd?|LiveTest?|UniqUnpack?'
 	else
 		FormatReportFieldWidth 'QPKG name:' "$r_report_qpkg_name_column_width"
 		FormatReportFieldWidth 'Indep?' "$r_report_qpkg_tier_column_width"
@@ -5609,7 +5573,6 @@ GenerateFeaturesReportTitleLine()
 		FormatReportFieldWidth 'StartUpd?' "$r_report_qpkg_can_start_to_update_column_width"
 		FormatReportFieldWidth 'AutUpd?' "$r_report_qpkg_auto_update_column_width"
 		FormatReportFieldWidth 'LiveTest?' "$r_report_qpkg_active_test_builtin_column_width"
-		FormatReportFieldWidth 'ArchCompat?' "$r_report_qpkg_is_compatible_column_width"
 		FormatReportFieldWidth 'UniqUnpack?' "$r_report_lazy_column_width"
 	fi
 
@@ -5627,7 +5590,7 @@ _GenerateFeaturesReportDataLine_()
 	#	$r_report_flags_path
 
 	local a=''
-	local -a column_vars=(active_test arch_compatible autoupdate auxiliary backup clean independent dependent optional name restart_to_update compatible uniqueunpack)
+	local -a column_vars=(active_test autoupdate auxiliary backup clean independent dependent optional name restart_to_update compatible uniqueunpack)
 		local auxiliary_column=independent		# Auxiliary messages are shown in this column name.
 	local mode=''
 	local req_alert=false
@@ -5675,7 +5638,6 @@ _GenerateFeaturesReportDataLine_()
 			# Set field values.
 
 			[[ $(GetQpkgDbActiveTest) = builtin ]] && active_test=true
-			IsQpkgDbArchOK && arch_compatible=true
 			autoupdate=N/A
 			IsQpkgDbCanBackup && backup=true
 			IsQpkgDbCanClean && clean=true
@@ -5711,7 +5673,6 @@ _GenerateFeaturesReportDataLine_()
 			# Set field values.
 
 			[[ $(GetQpkgDbActiveTest) = builtin ]] && active_test=true
-			IsQpkgDbArchOK && arch_compatible=true
 
 			if IsValidQpkgInstalled && IsQpkgDbCanRestartToUpdate; then
 				IsQpkgAutoUpdate && autoupdate=true
@@ -5771,7 +5732,7 @@ _GenerateFeaturesReportDataLine_()
 	fi
 
 	if IsOsCanAutowidthTableColumns; then
-		printf '%s' "$name_msg|$independent_msg|$optional_msg|$dependent_msg|$compatible_msg|$backup_msg|$clean_msg|$restart_to_update_msg|$autoupdate_msg|$active_test_msg|$arch_compatible_msg|$uniqueunpack_msg"
+		printf '%s' "$name_msg|$independent_msg|$optional_msg|$dependent_msg|$compatible_msg|$backup_msg|$clean_msg|$restart_to_update_msg|$autoupdate_msg|$active_test_msg|$uniqueunpack_msg"
 	else
 		FormatReportFieldWidth "$name_msg" "$r_report_qpkg_name_column_width"
 		FormatReportFieldWidth "$independent_msg" "$r_report_qpkg_tier_column_width"
@@ -5783,7 +5744,6 @@ _GenerateFeaturesReportDataLine_()
 		FormatReportFieldWidth "$restart_to_update_msg" "$r_report_qpkg_can_start_to_update_column_width"
 		FormatReportFieldWidth "$autoupdate_msg" "$r_report_qpkg_auto_update_column_width"
 		FormatReportFieldWidth "$active_test_msg" "$r_report_qpkg_active_test_builtin_column_width"
-		FormatReportFieldWidth "$arch_compatible_msg" "$r_report_qpkg_is_compatible_column_width"
 		FormatReportFieldWidth "$uniqueunpack_msg" "$r_report_lazy_column_width"
 	fi
 
@@ -9954,10 +9914,6 @@ _QPKG:install_()
 		SaveActionResultMetrics QPKG "$qpkg_name" install '' sk "already installed, please use 'reinstall' instead"
 		MarkActionForkAsSkipped
 		z=2
-	elif ! IsQpkgDbArchOK "$qpkg_name"; then
-		SaveActionResultMetrics QPKG "$qpkg_name" install '' sk 'NAS arch incompatible'
-		MarkActionForkAsSkipped
-		z=2
 	elif ! IsQpkgDbMinOSVerOk "$qpkg_name" || ! IsQpkgDbMaxOSVerOk "$qpkg_name"; then
 		SaveActionResultMetrics QPKG "$qpkg_name" install '' sk "$(GetOsName) version incompatible"
 		MarkActionForkAsSkipped
@@ -11083,10 +11039,6 @@ _QPKG:sign_()
 		SaveActionResultMetrics QPKG "$qpkg_name" '"sign"' '' sk 'not required: firmware < 4.3.5'
 		MarkActionForkAsSkipped
 		z=2
-	elif ! IsQpkgDbArchOK "$qpkg_name"; then
-		SaveActionResultMetrics QPKG "$qpkg_name" '"sign"' '' sk 'NAS arch incompatible'
-		MarkActionForkAsSkipped
-		z=2
 	elif ! IsQpkgDbMinOSVerOk "$qpkg_name" || ! IsQpkgDbMaxOSVerOk "$qpkg_name"; then
 		SaveActionResultMetrics QPKG "$qpkg_name" '"sign"' '' sk "$(GetOsName) version incompatible"
 		MarkActionForkAsSkipped
@@ -11190,10 +11142,6 @@ _QPKG:unsign_()
 
 	if ! IsOsCanManageSignedPackages; then
 		SaveActionResultMetrics QPKG "$qpkg_name" '"unsign"' '' sk 'not required: firmware < 4.3.5'
-		MarkActionForkAsSkipped
-		z=2
-	elif ! IsQpkgDbArchOK "$qpkg_name"; then
-		SaveActionResultMetrics QPKG "$qpkg_name" '"unsign"' '' sk 'NAS arch incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinOSVerOk "$qpkg_name" || ! IsQpkgDbMaxOSVerOk "$qpkg_name"; then
@@ -11452,7 +11400,6 @@ GetQpkgDbApplVer()
 
 	# Inputs: (global)
 	#	$r_qpkg_appl_version
-	#	$qpkg_default_index
 	#	$qpkg_index
 	#	$qpkg_name
 	#	$r_qpkg_name
@@ -11467,14 +11414,11 @@ GetQpkgDbApplVer()
 
 	if [[ $qpkg_index -gt 0 ]]; then
 		a=${r_qpkg_appl_version[$qpkg_index]}
-		[[ $a = default ]] && a=${r_qpkg_appl_version[$qpkg_default_index]}
-		[[ $a = version ]] && a=${r_qpkg_version[$qpkg_default_index]}
 		[[ $a != none ]] || return
 	else
 		for i in "${!r_qpkg_name[@]}"; do
 			if [[ ${r_qpkg_name[$i]} = "$qpkg_name" ]]; then
 				a=${r_qpkg_appl_version[$i]}
-				[[ $a = version ]] && a=${r_qpkg_version[$qpkg_default_index]}
 				[[ $a != none ]] || return
 				break
 			fi
@@ -11496,7 +11440,6 @@ GetQpkgDbVer()
 	# Returns the version number of an available (not-installed) QPKG.
 
 	# Inputs: (global)
-	#	$qpkg_default_index
 	#	$qpkg_index
 	#	$qpkg_name
 
@@ -11509,7 +11452,6 @@ GetQpkgDbVer()
 
 #	if [[ $qpkg_index -gt 0 ]]; then
 #		a=${r_qpkg_version[$qpkg_index]}
-#		[[ $a = default ]] && a=${r_qpkg_version[$qpkg_default_index]}
 #		[[ $a != none ]] || return
 
 #		printf '%s' "$a"
@@ -11643,7 +11585,6 @@ GetQpkgDbHash()
 	{
 
 	# Inputs: (global)
-	#	$qpkg_default_index
 	#	$qpkg_index
 	#	$qpkg_name
 
@@ -11651,12 +11592,11 @@ GetQpkgDbHash()
 	#	stdout = QPKG MD5
 	#	$? = 0 if found, !0 if not
 
-	[[ -n $qpkg_name && $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
+	[[ -n $qpkg_name && $qpkg_index -gt 0 ]] || return
 
 	local a=''
 
 	a=${r_qpkg_hash[$qpkg_index]}
-	[[ $a = default ]] && a=${r_qpkg_hash[$qpkg_default_index]}
 	[[ $a != none ]] || return
 
 	printf '%s' "$a"
@@ -11674,7 +11614,6 @@ GetQpkgDbURL()
 	#	$1 (optional) = QPKG name - if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
-	#	$qpkg_default_index
 	#	$qpkg_index
 	#	$qpkg_name
 
@@ -11685,11 +11624,9 @@ GetQpkgDbURL()
 	local a=''
 	local -i i=0
 
-	SetQpkgArch
-
 	if [[ -n ${1:-} ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
-			if [[ ${r_qpkg_name[$i]} = "$1" ]] && [[ ${r_qpkg_arch[$i]} = all || ${r_qpkg_arch[$i]} = "$r_nas_qpkg_arch" ]]; then
+			if [[ ${r_qpkg_name[$i]} = "$1" ]]; then
 				printf '%s' "${r_qpkg_url[$i]}"
 
 				return 0
@@ -11699,7 +11636,6 @@ GetQpkgDbURL()
 		return 1
 	else
 		a=${r_qpkg_url[$qpkg_index]}
-		[[ $a = default ]] && a=${r_qpkg_url[$qpkg_default_index]}
 		[[ -n $a ]] || a=none
 
 		printf '%s' "$a"
@@ -11716,7 +11652,6 @@ GetQpkgDbMinRAM()
 	#	$1 (optional) = QPKG name - if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
-	#	$qpkg_default_index
 	#	$qpkg_index
 	#	$qpkg_name
 
@@ -11730,12 +11665,11 @@ GetQpkgDbMinRAM()
 	if [[ -n ${1:-} ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
 			[[ ${r_qpkg_name[$i]} = "$1" ]] || continue
-			a=${r_qpkg_min_ram_kb[$i]}			# Always grab first found as default.
+			a=${r_qpkg_min_ram_kb[$i]}
 			break
 		done
 	else
 		a=${r_qpkg_min_ram_kb[$qpkg_index]}
-		[[ $a = default ]] && a=${r_qpkg_min_ram_kb[$qpkg_default_index]}
 	fi
 
 	[[ -n $a ]] || a=none
@@ -11753,7 +11687,6 @@ GetQpkgDbMinOSVer()
 	#	$1 (optional) = QPKG name - if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
-	#	$qpkg_default_index
 	#	$qpkg_index
 	#	$qpkg_name
 
@@ -11767,12 +11700,11 @@ GetQpkgDbMinOSVer()
 	if [[ -n ${1:-} ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
 			[[ ${r_qpkg_name[$i]} = "$1" ]] || continue
-			a=${r_qpkg_min_os_version[$i]}			# Always grab first found as default.
+			a=${r_qpkg_min_os_version[$i]}
 			break
 		done
 	else
 		a=${r_qpkg_min_os_version[$qpkg_index]}
-		[[ $a = default ]] && a=${r_qpkg_min_os_version[$qpkg_default_index]}
 	fi
 
 	[[ -n $a ]] || a=none
@@ -11790,7 +11722,6 @@ GetQpkgDbMaxOSVer()
 	#	$1 (optional) = QPKG name - if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
-	#	$qpkg_default_index
 	#	$qpkg_index
 	#	$qpkg_name
 
@@ -11804,12 +11735,11 @@ GetQpkgDbMaxOSVer()
 	if [[ -n ${1:-} ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
 			[[ ${r_qpkg_name[$i]} = "$1" ]] || continue
-			a=${r_qpkg_max_os_version[$i]}			# Always grab first found as default.
+			a=${r_qpkg_max_os_version[$i]}
 			break
 		done
 	else
 		a=${r_qpkg_max_os_version[$qpkg_index]}
-		[[ $a = default ]] && a=${r_qpkg_max_os_version[$qpkg_default_index]}
 	fi
 
 	[[ -n $a ]] || a=none
@@ -11873,7 +11803,6 @@ GetQpkgDbDesc()
 
 	# Inputs:
 	#	$1 (optional) = QPKG name - if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
-	#	$qpkg_default_index (global)
 	#	$qpkg_index (global)
 	#	$qpkg_name (global)
 
@@ -11887,52 +11816,14 @@ GetQpkgDbDesc()
 	if [[ -n ${1:-} ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
 			[[ ${r_qpkg_name[$i]} = "$1" ]] || continue
-			a=${r_qpkg_description[$i]}			# Always grab first found as default.
+			a=${r_qpkg_description[$i]}
 			break
 		done
 	else
 		a=${r_qpkg_description[$qpkg_index]}
-		[[ $a = default ]] && a=${r_qpkg_description[$qpkg_default_index]}
 	fi
 
 	[[ -n $a ]] || a=none
-
-	printf '%s' "$a"
-
-	return 0
-
-	}
-
-GetQpkgDbNote()
-	{
-
-	# Return any additional notes to be prominently displayed.
-
-	# Inputs: (global)
-	#	$qpkg_default_index
-	#	$qpkg_index
-	#	$qpkg_name
-	#	$r_qpkg_name[]
-	#	$r_qpkg_note[]
-
-	# Outputs: (local)
-	#	stdout = package note (first package found).
-	#	$? = 0 (found), !0 (not-found)
-
-	local a=''
-	local -i i=0
-
-	if [[ -n ${1:-} ]]; then
-		for i in "${!r_qpkg_name[@]}"; do
-			[[ ${r_qpkg_name[$i]} = "$1" ]] || continue
-			a=${r_qpkg_note[$i]}			# Always grab first found as default.
-			break
-		done
-	else
-		a=${r_qpkg_note[$qpkg_index]}
-		[[ $a = default ]] && a=${r_qpkg_note[$qpkg_default_index]}
-		[[ $a = none ]] && return 1
-	fi
 
 	printf '%s' "$a"
 
@@ -11947,7 +11838,6 @@ GetQpkgDbAbbrvs()
 	#	$1 (optional) = QPKG name - if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
-	#	$qpkg_default_index
 	#	$qpkg_index
 	#	$qpkg_name
 	#	$r_qpkg_abbrvs[]
@@ -11963,12 +11853,11 @@ GetQpkgDbAbbrvs()
 	if [[ -n ${1:-} ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
 			[[ ${r_qpkg_name[$i]} = "$1" ]] || continue
-			a=${r_qpkg_abbrvs[$i]}			# Always grab first found as default.
+			a=${r_qpkg_abbrvs[$i]}
 			break
 		done
 	else
 		a=${r_qpkg_abbrvs[$qpkg_index]}
-		[[ $a = default ]] && a=${r_qpkg_abbrvs[$qpkg_default_index]}
 	fi
 
 	[[ -n $a ]] || a=none
@@ -11983,7 +11872,6 @@ GetQpkgDbDependencies()
 	{
 
 	# Inputs: (global)
-	#	$qpkg_default_index
 	#	$qpkg_index
 	#	$qpkg_name
 	#	$r_qpkg_depends_on[]
@@ -12002,7 +11890,6 @@ GetQpkgDbDependencies()
 
 	g=${r_qpkg_depends_on[$qpkg_index]}
 	[[ $g = none ]] && return 1
-	[[ $g = default ]] && g=${r_qpkg_depends_on[$qpkg_default_index]}
 
 	if [[ $g != *'|'* ]]; then		# No alternatives were listed.
 		printf '%s' "$g"
@@ -12033,11 +11920,11 @@ GetQpkgDbDependencies()
 
 			# Test alternative for compatibility.
 
-			if IsQpkgDbArchOK "$alt"; then
+#			if IsQpkgDbArchOK "$alt"; then
 				out+=' '$alt
 				found=true
 				break
-			fi
+#			fi
 		done
 
 		[[ $IFS != "$oldIFS" ]] && IFS=$oldIFS
@@ -12058,7 +11945,6 @@ GetQpkgDbOptDependencies()
 	{
 
 	# Inputs: (global)
-	#	$qpkg_default_index
 	#	$qpkg_index
 	#	$qpkg_name
 	#	$r_qpkg_opt_depends_on[]
@@ -12077,7 +11963,6 @@ GetQpkgDbOptDependencies()
 
 	g=${r_qpkg_opt_depends_on[$qpkg_index]}
 	[[ $g = none ]] && return 1
-	[[ $g = default ]] && g=${r_qpkg_opt_depends_on[$qpkg_default_index]}
 
 	if [[ $g != *'|'* ]]; then		# No alternatives were listed.
 		printf '%s' "$g"
@@ -12108,11 +11993,11 @@ GetQpkgDbOptDependencies()
 
 			# Test alternative for compatibility.
 
-			if IsQpkgDbArchOK "$alt"; then
+#			if IsQpkgDbArchOK "$alt"; then
 				out+=' '$alt
 				found=true
 				break
-			fi
+#			fi
 		done
 
 		[[ $IFS != "$oldIFS" ]] && IFS=$oldIFS
@@ -12133,7 +12018,6 @@ GetQpkgDbDependents()
 	{
 
 	# Inputs: (global)
-	#	$qpkg_default_index
 	#	$qpkg_index
 	#	$qpkg_name
 	#	$r_qpkg_depends_on[]
@@ -12143,7 +12027,7 @@ GetQpkgDbDependents()
 	#	stdout = list of QPKGs that depend-upon this QPKG.
 	#	$? = 0 (found), !0 (not-found)
 
-	[[ -n $qpkg_name && $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
+	[[ -n $qpkg_name && $qpkg_index -gt 0 ]] || return
 
 	local -a ar=()
 	local -i i=-1			# Default to not-found.
@@ -12173,7 +12057,6 @@ GetQpkgDbOptionals()
 	{
 
 	# Inputs: (global)
-	#	$qpkg_default_index
 	#	$qpkg_index
 	#	$qpkg_name
 	#	$r_qpkg_name[]
@@ -12183,7 +12066,7 @@ GetQpkgDbOptionals()
 	#	stdout = list of QPKGs that optionally depend-upon this QPKG.
 	#	$? = 0 (found), !0 (not-found)
 
-	[[ -n $qpkg_name && $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
+	[[ -n $qpkg_name && $qpkg_index -gt 0 ]] || return
 
 	local -a ar=()
 	local -i i=-1			# Default to not-found.
@@ -12213,7 +12096,6 @@ GetQpkgDbIPKs()
 	{
 
 	# Inputs: (global)
-	#	$qpkg_default_index
 	#	$qpkg_index
 	#	$qpkg_name
 	#	$r_qpkg_requires_ipks[]
@@ -12222,12 +12104,11 @@ GetQpkgDbIPKs()
 	#	stdout = list of IPKs $qpkg_index depends-upon.
 	#	$? = 0 (found), !0 (not-found)
 
-	[[ -n $qpkg_name && $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
+	[[ -n $qpkg_name && $qpkg_index -gt 0 ]] || return
 
 	local a=''
 
 	a=${r_qpkg_requires_ipks[$qpkg_index]}
-	[[ $a = default ]] && a=${r_qpkg_requires_ipks[$qpkg_default_index]}
 	[[ $a = none ]] && return 1
 
 	printf '%s' "$a"
@@ -12242,7 +12123,6 @@ GetQpkgDbActiveTest()
 	# Return any custom commands required to determine if specified QPKG is active or not.
 
 	# Inputs: (global)
-	#	$qpkg_default_index
 	#	$qpkg_index
 	#	$qpkg_name
 	#	$r_qpkg_test_for_active[]
@@ -12251,10 +12131,9 @@ GetQpkgDbActiveTest()
 	#	stdout = bash tests.
 	#	$? = 0 (found), !0 (not-found)
 
-	[[ -n $qpkg_name && $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
+	[[ -n $qpkg_name && $qpkg_index -gt 0 ]] || return
 
 	a=${r_qpkg_test_for_active[$qpkg_index]}
-	[[ $a = default ]] && a=${r_qpkg_test_for_active[$qpkg_default_index]}
 	[[ $a = none ]] && return 1
 
 	printf '%s' "$a"
@@ -12993,7 +12872,7 @@ IsQpkgUpgradable()
 	# Outputs: (local)
 	#	$? = true/false
 
-	IsValidQpkgInstalled && IsQpkgRepoSelfManaged && IsQpkgDbArchOK && IsQpkgDbMinOSVerOk && IsQpkgDbMaxOSVerOk && IsQpkgDbMinRAMOk && [[ $(GetQpkgInstalledVer) != "$(GetQpkgDbVer)" ]]
+	IsValidQpkgInstalled && IsQpkgRepoSelfManaged && IsQpkgDbMinOSVerOk && IsQpkgDbMaxOSVerOk && IsQpkgDbMinRAMOk && [[ $(GetQpkgInstalledVer) != "$(GetQpkgDbVer)" ]]
 
 	}
 
@@ -13008,7 +12887,7 @@ IsQpkgInstallable()
 	# Outputs: (local)
 	#	$? = true/false
 
-	IsNtQpkgInstalled && IsNtValidQpkgInstalled && IsQpkgDbArchOK && IsQpkgDbMinOSVerOk && IsQpkgDbMaxOSVerOk && IsQpkgDbMinRAMOk
+	IsNtQpkgInstalled && IsNtValidQpkgInstalled && IsQpkgDbMinOSVerOk && IsQpkgDbMaxOSVerOk && IsQpkgDbMinRAMOk
 
 	}
 
@@ -13018,19 +12897,17 @@ IsQpkgDbDependent()
 	# Does this QPKG depend on any other QPKGs?
 
 	# Inputs: (global)
-	#	$qpkg_default_index
 	#	$qpkg_index
 	#	$r_qpkg_depends_on[]
 
 	# Outputs: (local)
 	#	$? = true/false
 
-	[[ $qpkg_index -gt 0 && $qpkg_default_index -gt 0 ]] || return
+	[[ $qpkg_index -gt 0 ]] || return
 
 	local a=''
 
 	a=${r_qpkg_depends_on[$qpkg_index]}
-	[[ $a = default ]] && a=${r_qpkg_depends_on[$qpkg_default_index]}
 	[[ $a != none ]]
 
 	}
@@ -13073,26 +12950,6 @@ IsQpkgDbOptional()
 	done
 
 	return 1
-
-	}
-
-IsQpkgDbArchOK()
-	{
-
-	# Does an arch-compatible QPKG exist to suit this NAS?
-
-	# Inputs: (local)
-	#	$1 (optional) = QPKG name.
-
-	# Inputs: (global)
-	#	$qpkg_name (default)
-
-	# Outputs: (local)
-	#	$? = true/false
-
-	local a=$(GetQpkgDbURL "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}")
-
-	[[ -n $a && $a != none ]]
 
 	}
 
@@ -13173,7 +13030,6 @@ IsQpkgDbCanBackup()
 
 	# Inputs: (global)
 	#	$r_qpkg_can_backup[]
-	#	$qpkg_default_index
 	#	$qpkg_index
 	#	$qpkg_name (default for $1)
 	#	$r_qpkg_name[]
@@ -13187,12 +13043,11 @@ IsQpkgDbCanBackup()
 	if [[ -n ${1:-} ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
 			[[ ${r_qpkg_name[$i]} = "$1" ]] || continue
-			a=${r_qpkg_can_backup[$i]}			# Always grab first found as default.
+			a=${r_qpkg_can_backup[$i]}
 			break
 		done
 	else
 		a=${r_qpkg_can_backup[$qpkg_index]}
-		[[ $a = default ]] && a=${r_qpkg_can_backup[$qpkg_default_index]}
 	fi
 
 	[[ -n $a ]] || a=none
@@ -13263,7 +13118,6 @@ IsQpkgDbSherpaCompatible()
 	#	$1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
-	#	$qpkg_default_index
 	#	$qpkg_index
 	#	$r_qpkg_is_sherpa_compatible[]
 	#	$qpkg_name (default for $1)
@@ -13277,12 +13131,11 @@ IsQpkgDbSherpaCompatible()
 	if [[ -n ${1:-} ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
 			[[ ${r_qpkg_name[$i]} = "$1" ]] || continue
-			a=${r_qpkg_is_sherpa_compatible[$i]}						# Always grab first found as default.
+			a=${r_qpkg_is_sherpa_compatible[$i]}
 			break
 		done
 	else
 		a=${r_qpkg_is_sherpa_compatible[$qpkg_index]}
-		[[ $a = default ]] && a=${r_qpkg_is_sherpa_compatible[$qpkg_default_index]}
 	fi
 
 	[[ -n $a ]] || a=none
@@ -13300,7 +13153,6 @@ IsQpkgDbUniqueUnpack()
 	#	$1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
 
 	# Inputs: (global)
-	#	$qpkg_default_index
 	#	$qpkg_index
 	#	$r_qpkg_is_unique_unpack[]
 	#	$qpkg_name (default for $1)
@@ -13314,12 +13166,11 @@ IsQpkgDbUniqueUnpack()
 	if [[ -n ${1:-} ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
 			[[ ${r_qpkg_name[$i]} = "$1" ]] || continue
-			a=${r_qpkg_is_unique_unpack[$i]}			# Always grab first found as default.
+			a=${r_qpkg_is_unique_unpack[$i]}
 			break
 		done
 	else
 		a=${r_qpkg_is_unique_unpack[$qpkg_index]}
-		[[ $a = default ]] && a=${r_qpkg_is_unique_unpack[$qpkg_default_index]}
 	fi
 
 	[[ -n $a ]] || a=none
@@ -15777,7 +15628,6 @@ SetQpkgIndex()
 
 	# Inputs: (global)
 	#	$r_nas_qpkg_arch
-	#	$r_qpkg_arch[]
 	#	$qpkg_name
 	#	$r_qpkg_name[]
 
@@ -15789,46 +15639,15 @@ SetQpkgIndex()
 
 	[[ -n ${qpkg_name:-} ]] || return
 
-	SetQpkgDefaultIndex
 	SetQpkgArch
 
 	for qpkg_index in "${!r_qpkg_name[@]}"; do
 		[[ ${r_qpkg_name[$qpkg_index]} = "$qpkg_name" ]] || continue
-		[[ ${r_qpkg_arch[$qpkg_index]} = all || ${r_qpkg_arch[$qpkg_index]} = "$r_nas_qpkg_arch" ]] || continue
 
 		return 0
 	done
 
 	qpkg_index=0
-
-	return 1
-
-	}
-
-SetQpkgDefaultIndex()
-	{
-
-	# Find and set the 1-based index reference of the named QPKG in `packages` file.
-
-	# Inputs: (global)
-	#	$qpkg_name
-	#	$r_qpkg_name[]
-
-	# Outputs: (local)
-	#	$? = 0 (successful) / !0 (failed)
-
-	# Outputs: (global)
-	#	$qpkg_default_index ('0' if QPKG could not be found).
-
-	[[ -n ${qpkg_name:-} ]] || return
-
-	for qpkg_default_index in "${!r_qpkg_name[@]}"; do
-		[[ ${r_qpkg_name[$qpkg_default_index]} = "$qpkg_name" ]] || continue
-
-		return 0
-	done
-
-	qpkg_default_index=0
 
 	return 1
 
@@ -16130,7 +15949,7 @@ RefreshArchive()
 			download=true
 		fi
 	else
-		DebugAsDetect "'$archive_name' archive missing"
+		DebugAsDetect "'$archive_name' archive missing ($archive_pathfile)"
 		download=true
 	fi
 
@@ -16141,8 +15960,9 @@ RefreshArchive()
 
 	if [[ $download = true ]]; then
 		DebugAsProc "download '$archive_name' archive"
+		DebugVar archive_url
 		IsOsCanSecureDownload || curl_insecure_opt=' --insecure'
-		/sbin/curl${curl_insecure_opt} --silent --fail "$archive_url" > "$archive_pathfile" 2> /dev/null
+		/sbin/curl --silent --location --fail $curl_insecure_opt "$archive_url" > "$archive_pathfile" 2> /dev/null
 
 		if IsFile "$archive_pathfile"; then
 			DebugAsDone "download '$archive_name' archive OK"
@@ -16293,8 +16113,6 @@ LoadDatabase()
 
 	ShowAsProc database
 
-	SetQpkgArch
-
 	# NOTE: Must set these prior to calling RefreshArchive()
 
 	local archive_name=database
@@ -16321,7 +16139,6 @@ LoadDatabase()
 	unset r_qpkg_appl_author
 	unset r_qpkg_appl_author_email
 	unset r_qpkg_appl_version
-	unset r_qpkg_arch
 	unset r_qpkg_author
 	unset r_qpkg_author_email
 	unset r_qpkg_can_backup
@@ -16337,7 +16154,6 @@ LoadDatabase()
 	unset r_qpkg_min_os_version
 	unset r_qpkg_min_ram_kb
 	unset r_qpkg_name
-	unset r_qpkg_note
 	unset r_qpkg_opt_depends_on
 	unset r_qpkg_requires_ipks
 	unset r_qpkg_test_for_active
@@ -16359,7 +16175,6 @@ LoadDatabase()
 	r_qpkg_appl_author+=('')				# Name of the person or group maintaining the internal application.
 	r_qpkg_appl_author_email+=('')			# Email address for the internal application developer.
 	r_qpkg_appl_version+=('')				# The application version contained within this QPKG. QPKGs can update their own versions in 'qpkg.conf'. Use 'version' if the application version is the same as $r_qpkg_version.
-	r_qpkg_arch+=('')						# QPKG supports this architecture. Use 'all' if every arch is supported. Use 'none' to disable installation.
 	r_qpkg_author+=('')						# Name of the person or group maintaining this QPKG.
 	r_qpkg_author_email+=('')				# Email address of the package maintainer.
 	r_qpkg_can_backup+=('')					# 'true'/'false': this QPKG service-script supports configuration 'backup' and 'restore' actions.
@@ -16375,7 +16190,6 @@ LoadDatabase()
 	r_qpkg_min_os_version+=('')				# The minimum QTS/QuTS version supported by this QPKG.
 	r_qpkg_min_ram_kb+=('')					# QPKG requires at-least this much RAM installed in kiB. Use 'none' if no minimum.
 	r_qpkg_name+=('')						# Internal QPKG name.
-	r_qpkg_note+=('')						# An additional note to be prominently displayed.
 	r_qpkg_opt_depends_on+=('')				# Optionally use these QPKGs as dependencies, but only if they are installed. Don't install them as required dependencies. Use 'none' if package is independent. Separate alternatives with '|'.
 	r_qpkg_requires_ipks+=('')				# Require these IPKs to be installed first.
 	r_qpkg_test_for_active+=('')			# Test command-string to determine if this QPKG is active or inactive. Use 'builtin' if QPKG has its own status tests.
@@ -16396,7 +16210,6 @@ LoadDatabase()
 	readonly r_qpkg_appl_author
 	readonly r_qpkg_appl_author_email
 	readonly r_qpkg_appl_version
-	readonly r_qpkg_arch
 	readonly r_qpkg_author
 	readonly r_qpkg_author_email
 	readonly r_qpkg_can_backup
@@ -16412,7 +16225,6 @@ LoadDatabase()
 	readonly r_qpkg_min_os_version
 	readonly r_qpkg_min_ram_kb
 	readonly r_qpkg_name
-	readonly r_qpkg_note
 	readonly r_qpkg_opt_depends_on
 	readonly r_qpkg_requires_ipks
 	readonly r_qpkg_test_for_active

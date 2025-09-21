@@ -51,7 +51,7 @@ unstable_branch=unstable
 
 	sherpa_packages_base_url=https://github.com/OneCDOnly/sherpa.packages
 		sherpa_packages_latest_release_asset_base_url=$sherpa_packages_base_url/releases/latest/download
-		sherpa_packages_static_release_asset_base_url=$sherpa_packages_base_url/releases/download/'$sherpa_package_release_version'
+		sherpa_packages_static_release_asset_base_url=$sherpa_packages_base_url/releases/download/'$package_release_version'
 
 copyright_basic='Copyright (C) 2017-<?build_year?> OneCD'
 dont_edit_msg="Please don't edit this file directly, it has been programmatically built or modified with the '$(basename "$0")' script."
