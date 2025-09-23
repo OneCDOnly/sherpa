@@ -252,6 +252,18 @@ CheckPlaceholdersInMultiplePackages()
 
 	}
 
+SortNames()
+	{
+
+	# Inputs: (local)
+	#	$1 = string with space-separated words. Duplicate words will be removed.
+
+	[[ -n ${1:-} ]] || return
+
+	tr ' ' '\n' <<< "$1" | sort -f | uniq | tr '\n' ' '
+
+	}
+
 TextBrightGreen()
 	{
 

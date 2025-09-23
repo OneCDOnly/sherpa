@@ -11414,11 +11414,13 @@ GetQpkgDbApplVer()
 
 	if [[ $qpkg_index -gt 0 ]]; then
 		a=${r_qpkg_appl_version[$qpkg_index]}
+		[[ $a = version ]] && a=${r_qpkg_version[$qpkg_index]}
 		[[ $a != none ]] || return
 	else
 		for i in "${!r_qpkg_name[@]}"; do
 			if [[ ${r_qpkg_name[$i]} = "$qpkg_name" ]]; then
 				a=${r_qpkg_appl_version[$i]}
+				[[ $a = version ]] && a=${r_qpkg_version[$i]}
 				[[ $a != none ]] || return
 				break
 			fi
