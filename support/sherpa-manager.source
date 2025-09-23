@@ -13835,17 +13835,16 @@ SortNames()
 	local c=''
 	local d=''
 
-	if (/usr/bin/sort -f < /dev/null &> /dev/null); then			# Only use the ignore-case option '-f' if supported by 'sort'.
+	if (/usr/bin/sort -f < /dev/null &> /dev/null); then		# Only use the ignore-case option '-f' if supported by 'sort'.
 		tr ' ' '\n' <<< "$1" | /usr/bin/sort -f | /bin/uniq | tr '\n' ' '
-	else												# If only basic 'sort' is available, sort the hard-way.
+	else														# If only basic 'sort' is available, sort the hard-way.
 		a=$(tr ' ' '\n' <<< "$(Lowercase "$1")" | /usr/bin/sort | /bin/uniq | tr '\n' ' ')
 
 		for b in $a; do
 			for c in $1; do
-				if [[ $(Lowercase "$c") = "$b" ]]; then
-					d+=" $c"
-					break
-				fi
+				[[ $(Lowercase "$c") = "$b" ]] || continue
+				d+=" $c"
+				break
 			done
 		done
 
