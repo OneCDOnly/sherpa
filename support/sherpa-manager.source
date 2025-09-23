@@ -315,6 +315,7 @@ LoadConsts()
 	# Various.
 
 	readonly r_char_tab=$'\t'
+	package_release_version=v250921
 	readonly r_entware_packages_last_updated=20250602
 	readonly r_file_change_threshold_minutes=60
 	readonly r_log_tail_lines=5000
@@ -505,7 +506,6 @@ LoadEnv()
 	local -r r_sherpa_packages_base_url=https://github.com/OneCDOnly/sherpa.packages
 	readonly r_this_package_ver=$(GetQpkgInstalledVer)
 	local script_epoch=0
-	package_release_version=v250921
 
 	IsNumber $r_script_built_epoch && script_epoch=$r_script_built_epoch
 
@@ -11414,11 +11414,13 @@ GetQpkgDbApplVer()
 
 	if [[ $qpkg_index -gt 0 ]]; then
 		a=${r_qpkg_appl_version[$qpkg_index]}
+		[[ $a = version ]] && a=${r_qpkg_version[$qpkg_index]}
 		[[ $a != none ]] || return
 	else
 		for i in "${!r_qpkg_name[@]}"; do
 			if [[ ${r_qpkg_name[$i]} = "$qpkg_name" ]]; then
 				a=${r_qpkg_appl_version[$i]}
+				[[ $a = version ]] && a=${r_qpkg_version[$i]}
 				[[ $a != none ]] || return
 				break
 			fi
@@ -13816,7 +13818,38 @@ DeDupeWords()
 
 	[[ -n ${1:-} ]] || return
 
-	tr ' ' '\n' <<< "$1" | /usr/bin/sort -f | /bin/uniq | tr '\n' ' ' | /bin/sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'
+	tr ' ' '\n' <<< "$1" | /usr/bin/sort | /bin/uniq | tr '\n' ' ' | /bin/sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'
+
+	}
+
+SortNames()
+	{
+
+	# Inputs: (local)
+	#	$1 = string with space-separated words. Duplicate words will be removed.
+
+	[[ -n ${1:-} ]] || return
+
+	local a=''
+	local b=''
+	local c=''
+	local d=''
+
+	if (/usr/bin/sort -f < /dev/null &> /dev/null); then		# Only use the ignore-case option '-f' if supported by 'sort'.
+		tr ' ' '\n' <<< "$1" | /usr/bin/sort -f | /bin/uniq | tr '\n' ' '
+	else														# If only basic 'sort' is available, sort the hard-way.
+		a=$(tr ' ' '\n' <<< "$(Lowercase "$1")" | /usr/bin/sort | /bin/uniq | tr '\n' ' ')
+
+		for b in $a; do
+			for c in $1; do
+				[[ $(Lowercase "$c") = "$b" ]] || continue
+				d+=" $c"
+				break
+			done
+		done
+
+		[[ -n $d ]] && tr '\n' ' ' <<< "$d"
+	fi
 
 	}
 
@@ -16239,7 +16272,7 @@ LoadDatabase()
 
 	DebugVar r_packages_epoch
 
-	QPKGs-GRall:Add "$(DeDupeWords "${r_qpkg_name[*]}")"		# Sort QPKG names.
+	QPKGs-GRall:Add "$(SortNames "${r_qpkg_name[*]}")"
 
 	BuildQPKGsTiers
 
