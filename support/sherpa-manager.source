@@ -840,6 +840,12 @@ DebugLogEnv()
 	DebugScript ok 'packages epoch' "$(ConvertAsSmartDate "${r_packages_epoch:-not loaded}")"
 	DebugScript ok 'logs path' "$r_logs_path"
 
+	if ! [[ $package_release_version = unstable ]]; then
+		DebugQpkg ok 'packages release' "$(ConvertAsSmartDate "$package_release_version")"
+	else
+		DebugQpkg warning 'packages release' "$package_release_version"
+	fi
+
 	if IsOsCanUnofficialPackages; then
 		if IsOsAllowUnofficialPackages; then
 			DebugQpkg detect 'allow unofficial' yes
@@ -14831,6 +14837,7 @@ ConvertAsSmartDate()
 
 	# Inputs: (local)
 	#	$1 = datecode in the format 'YYMMDD'. Example: '240928' with 6 digits.
+	#	$1 = datecode in the format 'vYYMMDD'. Example: 'v240928' with 7 characters.
 	#	$1 = longdatecode in the format 'YYYYMMDD'. Example: '20240928' with 8 digits.
 	#	$1 = epoch time. Example: '1234567890' with 10 digits. Since 9th September 2001, epoch time has-been 10 digits and will remain-so until 21st November 2286.
 
@@ -14849,6 +14856,9 @@ ConvertAsSmartDate()
 	case ${#a} in
 		6)		# Assume input is datecode, so convert to extended date format.
 			b=$(/bin/date -d "${a::2}-${a:2:2}-${a:4:2}" "$r_extended_datetime_format")
+			;;
+		7)		# Assume input is datecode with a 'v' prefix, so convert to extended date format.
+			b=$(/bin/date -d "${a:1:2}-${a:3:2}-${a:5:2}" "$r_extended_datetime_format")
 			;;
 		8)		# Assume input is longdatecode, so convert to extended date format.
 			b=$(/bin/date -d ${a::4}-${a:4:2}-${a:6:2} "$r_extended_datetime_format")
