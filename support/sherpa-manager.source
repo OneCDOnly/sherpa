@@ -1342,7 +1342,7 @@ AssignQpkgsToActions()
 
 	# No-need to `activate` packages that are to be reactivated.
 
-	QPKGs-ACactivate-to:Remove "$(QPKGs-ACreactivate-to:Array)"
+#	QPKGs-ACactivate-to:Remove "$(QPKGs-ACreactivate-to:Array)"
 
 	# Build a list of original storage paths for packages to be uninstalled, then installed again later this session (a "complex reinstall").
 	# This will ensure user-migrated packages end-up in the correct locations.
@@ -9803,19 +9803,7 @@ _QPKG:download_()
 					local -r r_log_pathfile=$r_logs_path/$r_local_filename.$r_download_log_file
 	local -i z=0
 
-	if [[ -z $r_remote_url || -z $r_remote_hash ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" download '' sk 'NAS arch incompatible'
-
-		if IsOsCanManageSignedPackages && IsOsRequireSignedPackages; then
-			SendParentCommand "QPKGs-ACsign-to:Remove $qpkg_name"
-			SendParentCommand "QPKGs-ACinstall-to:Remove $qpkg_name"
-			SendParentCommand "QPKGs-ACreinstall-to:Remove $qpkg_name"
-			SendParentCommand "QPKGs-ACupgrade-to:Remove $qpkg_name"
-		fi
-
-		MarkActionForkAsSkipped
-		z=2
-	elif ! IsQpkgDbMinOSVerOk "$qpkg_name" || ! IsQpkgDbMaxOSVerOk "$qpkg_name"; then
+	if ! IsQpkgDbMinOSVerOk "$qpkg_name" || ! IsQpkgDbMaxOSVerOk "$qpkg_name"; then
 		SaveActionResultMetrics QPKG "$qpkg_name" download '' sk "$(GetOsName) version incompatible"
 
 		if IsOsCanManageSignedPackages && IsOsRequireSignedPackages; then
@@ -10460,6 +10448,7 @@ _QPKG:reactivate_()
 
 	if [[ $z -eq 0 ]]; then
 		SaveActionResultMetrics QPKG "$qpkg_name" reactivate '' ok
+		SendParentCommand "QPKGs-ACactivate-to:Remove $qpkg_name"
 		MarkActionForkAsOk
 	else
 		SaveActionResultMetrics QPKG "$qpkg_name" reactivate '' er "$z"
