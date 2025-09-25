@@ -840,7 +840,7 @@ DebugLogEnv()
 	DebugScript ok 'packages epoch' "$(ConvertAsSmartDate "${r_packages_epoch:-not loaded}")"
 	DebugScript ok 'logs path' "$r_logs_path"
 
-	if ! [[ $package_release_version = unstable ]]; then
+	if ! [[ $package_release_version = testing ]]; then
 		DebugQpkg ok 'packages release' "$(ConvertAsSmartDate "$package_release_version")"
 	else
 		DebugQpkg warning 'packages release' "$package_release_version"
