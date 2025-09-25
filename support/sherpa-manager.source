@@ -513,7 +513,7 @@ LoadEnv()
 		readonly r_objects_archive_url='<?cdn_sherpa_base_url?>'/$useropt_branch/objects.tar.gz
 		readonly r_this_script_ver=$(ConvertSecondsToDatecode $script_epoch)-$useropt_branch
 
-	[[ $useropt_branch = unstable ]] && package_release_version=unstable
+	[[ $useropt_branch = unstable ]] && package_release_version=testing
 
 	readonly r_packages_archive_url=$r_sherpa_packages_base_url/releases/download/$package_release_version/$r_nas_qpkg_arch.packages.tar.gz
 
