@@ -315,7 +315,7 @@ LoadConsts()
 	# Various.
 
 	readonly r_char_tab=$'\t'
-	package_release_version=v250921
+	package_release_version=v250928
 	readonly r_entware_packages_last_updated=20250602
 	readonly r_file_change_threshold_minutes=60
 	readonly r_log_tail_lines=5000
@@ -840,7 +840,7 @@ DebugLogEnv()
 	DebugScript ok 'packages epoch' "$(ConvertAsSmartDate "${r_packages_epoch:-not loaded}")"
 	DebugScript ok 'logs path' "$r_logs_path"
 
-	if ! [[ $package_release_version = unstable ]]; then
+	if ! [[ $package_release_version = testing ]]; then
 		DebugQpkg ok 'packages release' "$(ConvertAsSmartDate "$package_release_version")"
 	else
 		DebugQpkg warning 'packages release' "$package_release_version"
@@ -2864,7 +2864,7 @@ MatchVerb()
 		add|install)
 			printf install
 			;;
-		backup|clean|@(dis|en)able|follow|help|list|paste|reassign|rebuild|reinstall|report-info|reset|restore|terse)
+		backup|clean|@(dis|en)able|follow|help|list|paste|reassign|rebuild|reinstall|report-info|reset|restore|terse)	# NOTE: There should be no single characters in this list.
 			printf '%s' "$a"
 			;;
 		c|check)
@@ -2914,10 +2914,13 @@ MatchNoun()
 	local a=${1:-}
 
 	case $a in
-		a|abs|abbreviations)
+		a|about)
+			printf about
+			;;
+		abs|abbreviations)
 			printf abs
 			;;
-		about|about-all|backedup|canbackup|complete|installable|installed|missing|results|show|?(un)stable)
+		about-all|backedup|canbackup|complete|installable|installed|missing|results|show|?(un)stable)	# NOTE: There should be no single characters in this list.
 			printf '%s' "$a"
 			;;
 		action?(s))
