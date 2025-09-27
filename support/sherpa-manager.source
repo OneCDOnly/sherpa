@@ -2864,7 +2864,7 @@ MatchVerb()
 		add|install)
 			printf install
 			;;
-		backup|clean|@(dis|en)able|follow|help|list|paste|reassign|rebuild|reinstall|report-info|reset|restore|terse)
+		backup|clean|@(dis|en)able|follow|help|list|paste|reassign|rebuild|reinstall|report-info|reset|restore|terse)	# NOTE: There should be no single characters in this list.
 			printf '%s' "$a"
 			;;
 		c|check)
@@ -2914,10 +2914,13 @@ MatchNoun()
 	local a=${1:-}
 
 	case $a in
-		a|abs|abbreviations)
+		a|about)
+			printf about
+			;;
+		abs|abbreviations)
 			printf abs
 			;;
-		about|about-all|backedup|canbackup|complete|installable|installed|missing|results|show|?(un)stable)
+		about-all|backedup|canbackup|complete|installable|installed|missing|results|show|?(un)stable)	# NOTE: There should be no single characters in this list.
 			printf '%s' "$a"
 			;;
 		action?(s))
