@@ -815,7 +815,15 @@ DebugLogEnv()
 
 	DebugStorage ok 'default volume mounted' "$(GetUserDefVol)"
 	DebugStorage ok 'basic write benchmark' "$(GetHardwareVolumeBenchmark)"
-	DebugStorage ok /opt "$(/usr/bin/readlink /opt 2> /dev/null || printf 'not present')"
+
+	if [[ -L /opt ]]; then
+		DebugStorage ok /opt "$(/usr/bin/readlink /opt 2> /dev/null)"
+	elif [[ -d /opt ]]; then
+		DebugStorage ok /opt 'is a directory, not a symlink'
+	else
+		DebugStorage ok /opt 'not present'
+	fi
+
 	DebugUserspace ok libc "$(GetUserLIBC)"
 	DebugUserspace ok 'libc copyright' "$(GetUserLIBCCopyright)"
 	DebugUserspace ok '$EUID' "$EUID"
@@ -9152,21 +9160,28 @@ GetHardwareCPUBenchmark()
 	local -i b=16		# Maximum time-to-run is around 1 second on my slowest NAS (TS-220).
 	local -i c=-20		# Execute benchmark with highest priority.
 
-	if [[ -e $r_gnu_dd_cmd ]]; then
-		if [[ -e $r_gnu_nice_cmd ]]; then
-			a=$({ $r_gnu_nice_cmd -$c $r_gnu_dd_cmd if=/dev/zero bs=1MB count=$b | /bin/sha1sum > /dev/null; } 2>&1)
-		elif [[ -e /bin/renice ]]; then
-			/bin/renice $c $$ &> /dev/null
+	if [[ ! -e $r_gnu_dd_cmd ]]; then
+		printf "unable to measure, GNU 'dd' is unavailable"
+		return 1
+	fi
 
-			a=$({ $r_gnu_dd_cmd if=/dev/zero bs=1MB count=$b | /bin/sha1sum > /dev/null; } 2>&1)
+	if [[ -e $r_gnu_nice_cmd ]]; then
+		a=$({ $r_gnu_nice_cmd -$c $r_gnu_dd_cmd if=/dev/zero bs=1MB count=$b | /bin/sha1sum > /dev/null; } 2>&1)
+	elif [[ -e /bin/renice ]]; then
+		/bin/renice $c $$ &> /dev/null
 
-			/bin/renice 0 $$ &> /dev/null
-		fi
+		a=$({ $r_gnu_dd_cmd if=/dev/zero bs=1MB count=$b | /bin/sha1sum > /dev/null; } 2>&1)
+
+		/bin/renice 0 $$ &> /dev/null
 	fi
 
 	a=$(/bin/grep copied <<< "$a" | cut -d, -f4)
 	a=${a//[[:blank:]]/}
-	[[ -n $a ]] || a=undefined
+
+	if [[ -z $a ]]; then
+		printf 'unable to measure'
+		return 1
+	fi
 
 	printf '%s' "$a"
 
@@ -9189,16 +9204,19 @@ GetHardwareVolumeBenchmark()
 	if [[ -d $(/usr/bin/dirname "$d") ]]; then
 		[[ -e $d ]] && rm -f "$d"
 
-		if [[ -e $r_gnu_dd_cmd ]]; then
-			if [[ -e $r_gnu_nice_cmd ]]; then
-				a=$($r_gnu_nice_cmd -$c $r_gnu_dd_cmd if=/dev/zero of=$d bs=8k count=$b 2>&1)
-			elif [[ -e /bin/renice ]]; then
-				/bin/renice $c $$ &> /dev/null
+		if [[ ! -e $r_gnu_dd_cmd ]]; then
+			printf "unable to measure, GNU 'dd' is unavailable"
+			return 1
+		fi
 
-				a=$($r_gnu_dd_cmd if=/dev/zero of=$d bs=8k count=$b 2>&1)
+		if [[ -e $r_gnu_nice_cmd ]]; then
+			a=$($r_gnu_nice_cmd -$c $r_gnu_dd_cmd if=/dev/zero of=$d bs=8k count=$b 2>&1)
+		elif [[ -e /bin/renice ]]; then
+			/bin/renice $c $$ &> /dev/null
 
-				/bin/renice 0 $$ &> /dev/null
-			fi
+			a=$($r_gnu_dd_cmd if=/dev/zero of=$d bs=8k count=$b 2>&1)
+
+			/bin/renice 0 $$ &> /dev/null
 		fi
 
 		[[ -e $d ]] && rm -f "$d"
@@ -9206,7 +9224,11 @@ GetHardwareVolumeBenchmark()
 
 	a=$(/bin/grep copied <<< "$a" | cut -d, -f4)
 	a=${a//[[:blank:]]/}
-	[[ -n $a ]] || a=undefined
+
+	if [[ -z $a ]]; then
+		printf 'unable to measure'
+		return 1
+	fi
 
 	printf '%s' "$a"
 
