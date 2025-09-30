@@ -1362,6 +1362,11 @@ AssignQpkgsToActions()
 		done
 	fi
 
+# EnableVerbose
+# EnableDebugToArchiveAndFile
+#
+# [[ $useropt_debug = true ]] && ListQPKGsActionsAll
+
 	# Build list to download.
 
 	QPKGs-ACdownload-to:Add "$(QPKGs-ACinstall-to:Array)"
@@ -1374,6 +1379,9 @@ AssignQpkgsToActions()
 		QPKGs-ISupgradable.Exist "$qpkg_name" && QPKGs-ACdownload-to:Add "$qpkg_name"	# Only download files for upgradable QPKGs.
 	done
 
+# [[ $useropt_debug = true ]] && ListQPKGsActionsAll
+#
+# exit
 	# Ensure packages to be installed will be signed.
 
 	if IsOsCanManageSignedPackages && QPKGs-ACinstall-to.IsAny; then
@@ -1946,9 +1954,13 @@ SetMaxForks()
 	else
 		case $1 in
 			?(re)install|upgrade)							# QPKG built-in installer eventually aborts (QPKGs can only be managed one-at-a-time, else packages overwrite each other, and package source files end-up in the wrong install paths).
+															# Concurrent installs might now be possible: https://github.com/qnap-dev/QDK/commit/f1eaf3bf0a9547d449592369e555cdfd6cc3c405
 				max_forks=1
 				;;
-			sign|unsign)									# Must avoid "database busy/locked" errors.
+			sign|unsign)									# Avoid "database busy/locked" errors on certificate db.
+				max_forks=1
+				;;
+			@(dis|en)able)									# Avoid concurrent access to 'qpkg.conf' by `setcfg`.
 				max_forks=1
 				;;
 			clean)											# Don't make too-many calls to PyPI at the same time.
@@ -1957,7 +1969,7 @@ SetMaxForks()
 			backup|deactivate|download|uninstall)			# Low-resource actions, so allow multiple forks, even on ARMv5.
 				max_forks=4
 				;;
-			@(dis|en)able?(au)|rebuild|status)				# Really-low-resource actions.
+			@(dis|en)ableau|rebuild|status)					# Really-low-resource actions.
 				max_forks=8
 		esac
 
@@ -2734,7 +2746,12 @@ ParseActionArgs()
 			potential_action=''
 
 			case $action in
-				?(de|re)activate|backup|clean|@(dis|en)able?(au)|reassign|rebuild|?(re|un)install|resign|restore|upgrade)
+				?(de|re)activate|backup|clean|@(dis|en)able?(au)|reassign|rebuild|?(re|un)install|resign|restore)
+					requires_group=true
+					user_action=$arg
+					;;
+				upgrade)
+					get_qpkg_extended_states=true
 					requires_group=true
 					user_action=$arg
 					;;
@@ -4698,10 +4715,10 @@ GenerateStatusReportTitleLine()
 	QPKGs-ISupgradable.IsAny && a+=' '$(Parenthesise "$(TextBrightOrange new)")
 
 	if IsOsCanAutowidthTableColumns; then
-		printf '%s' "QPKG name:|Status:|Action $(Parenthesise result):|$a:|Appl. version:|Location:"
+		printf '%s' "QPKG name:|Status:|Last action $(Parenthesise result):|$a:|Appl. version:|Location:"
 	else
 		FormatReportFieldWidth 'QPKG name:' "$r_report_qpkg_name_column_width"
-		printf '%s' "Status & Action $(Parenthesise result):"
+		printf '%s' "Status & Last action $(Parenthesise result):"
 	fi
 
 	printf '\n'
@@ -7700,6 +7717,9 @@ GetQpkgStates()
 StoreQpkgStates()
 	{
 
+	# Outputs: (global)
+	#	$qpkgs_states_built
+
 	FuncInit
 
 	local a=''
@@ -9601,7 +9621,7 @@ ClaimLockfile()
 
 	for a in sherpa-manager.sh sherpa-manager.source; do
 		if [[ -e $r_lock_pathfile && -d /proc/$(< $r_lock_pathfile) && $(< /proc/"$(< $r_lock_pathfile)"/cmdline) =~ $a ]]; then
-			ShowAsAbort "a running $(ShowAsTitleName) instance was found $(Parenthesise "PID:$(< "$r_lock_pathfile")"), can't continue"
+			ShowAsAbort "a running $(ShowAsTitleName) instance was found $(Parenthesise "PID:$(< "$r_lock_pathfile")"), please wait for it to complete"
 
 			return 1
 		fi
