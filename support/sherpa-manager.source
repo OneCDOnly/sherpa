@@ -360,6 +360,7 @@ LoadDefaults()
 	ipks_install=false
 	ipks_upgrade=false
 	pips_install=false
+	release_lock=true
 	run_package_actions=false
 	show_action_results_failed=false
 	show_action_results_ok=false
@@ -9648,7 +9649,7 @@ ClaimLockfile()
 	for a in sherpa-manager.sh sherpa-manager.source; do
 		if [[ -e $r_lock_pathfile && -d /proc/$(< $r_lock_pathfile) && $(< /proc/"$(< $r_lock_pathfile)"/cmdline) =~ $a ]]; then
 			ShowAsAbort "a running $(ShowAsTitleName) instance was found $(Parenthesise "PID:$(< "$r_lock_pathfile")"), please wait for it to complete"
-
+			release_lock=false
 			return 1
 		fi
 	done
@@ -9665,6 +9666,7 @@ ReleaseLockfile()
 	# Inputs: (global)
 	#	$r_lock_pathfile
 
+	[[ ${release_lock:=true} = true ]] || return
 	[[ -n ${r_lock_pathfile:-} ]] && rm -f "$r_lock_pathfile" 2> /dev/null
 
 	}
