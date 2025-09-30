@@ -1325,7 +1325,7 @@ AssignQpkgsToActions()
 			SetQpkgIndex
 
 			for prospect in $(GetQpkgDbDependencies) $(GetQpkgDbOptionals); do
-				IsValidQpkgInstalled "$prospect" && QPKGs-ACreactivate-to:Add "$prospect"
+				IsValidQpkgInstalled "$prospect" && IsQpkgEnabled "$prospect" && QPKGs-ACreactivate-to:Add "$prospect"
 			done
 		done
 	done
