@@ -315,7 +315,7 @@ LoadConsts()
 	# Various.
 
 	readonly r_char_tab=$'\t'
-	package_release_version=v250928
+	package_release_version=v251002
 	readonly r_entware_packages_last_updated=20250602
 	readonly r_file_change_threshold_minutes=60
 	readonly r_log_tail_lines=5000
@@ -360,6 +360,7 @@ LoadDefaults()
 	ipks_install=false
 	ipks_upgrade=false
 	pips_install=false
+	release_lock=true
 	run_package_actions=false
 	show_action_results_failed=false
 	show_action_results_ok=false
@@ -815,7 +816,15 @@ DebugLogEnv()
 
 	DebugStorage ok 'default volume mounted' "$(GetUserDefVol)"
 	DebugStorage ok 'basic write benchmark' "$(GetHardwareVolumeBenchmark)"
-	DebugStorage ok /opt "$(/usr/bin/readlink /opt 2> /dev/null || printf 'not present')"
+
+	if [[ -L /opt ]]; then
+		DebugStorage ok /opt "$(/usr/bin/readlink /opt 2> /dev/null)"
+	elif [[ -d /opt ]]; then
+		DebugStorage ok /opt 'is a directory, not a symlink'
+	else
+		DebugStorage ok /opt 'not present'
+	fi
+
 	DebugUserspace ok libc "$(GetUserLIBC)"
 	DebugUserspace ok 'libc copyright' "$(GetUserLIBCCopyright)"
 	DebugUserspace ok '$EUID' "$EUID"
@@ -1063,6 +1072,10 @@ CheckEnv()
 
 	if [[ $(/bin/grep -iE 'out of memory|oom-killer' /mnt/HDA_ROOT/.logs/kmsg | /usr/bin/wc -l) -gt 0 ]]; then
 		ShowAsWarn "the $(TextBrightRed 'Out-Of-Memory killer') has been triggered, check for $(TextBrightRed inactive) QPKGs"
+	fi
+
+	if IsQpkgInstalled OMedusa; then
+		ShowAsImportant "Medusa support to be discontinued: $(ShowAsURL 'https://github.com/OneCDOnly/sherpa/discussions/318')"
 	fi
 
 	SetNasArch
@@ -1325,7 +1338,7 @@ AssignQpkgsToActions()
 			SetQpkgIndex
 
 			for prospect in $(GetQpkgDbDependencies) $(GetQpkgDbOptionals); do
-				IsValidQpkgInstalled "$prospect" && QPKGs-ACreactivate-to:Add "$prospect"
+				IsValidQpkgInstalled "$prospect" && IsQpkgEnabled "$prospect" && QPKGs-ACreactivate-to:Add "$prospect"
 			done
 		done
 	done
@@ -1362,6 +1375,11 @@ AssignQpkgsToActions()
 		done
 	fi
 
+# EnableVerbose
+# EnableDebugToArchiveAndFile
+#
+# [[ $useropt_debug = true ]] && ListQPKGsActionsAll
+
 	# Build list to download.
 
 	QPKGs-ACdownload-to:Add "$(QPKGs-ACinstall-to:Array)"
@@ -1374,6 +1392,9 @@ AssignQpkgsToActions()
 		QPKGs-ISupgradable.Exist "$qpkg_name" && QPKGs-ACdownload-to:Add "$qpkg_name"	# Only download files for upgradable QPKGs.
 	done
 
+# [[ $useropt_debug = true ]] && ListQPKGsActionsAll
+#
+# exit
 	# Ensure packages to be installed will be signed.
 
 	if IsOsCanManageSignedPackages && QPKGs-ACinstall-to.IsAny; then
@@ -1946,9 +1967,13 @@ SetMaxForks()
 	else
 		case $1 in
 			?(re)install|upgrade)							# QPKG built-in installer eventually aborts (QPKGs can only be managed one-at-a-time, else packages overwrite each other, and package source files end-up in the wrong install paths).
+															# Concurrent installs might now be possible: https://github.com/qnap-dev/QDK/commit/f1eaf3bf0a9547d449592369e555cdfd6cc3c405
 				max_forks=1
 				;;
-			sign|unsign)									# Must avoid "database busy/locked" errors.
+			sign|unsign)									# Avoid "database busy/locked" errors on certificate db.
+				max_forks=1
+				;;
+			@(dis|en)able)									# Avoid concurrent access to 'qpkg.conf' by `setcfg`.
 				max_forks=1
 				;;
 			clean)											# Don't make too-many calls to PyPI at the same time.
@@ -1957,7 +1982,7 @@ SetMaxForks()
 			backup|deactivate|download|uninstall)			# Low-resource actions, so allow multiple forks, even on ARMv5.
 				max_forks=4
 				;;
-			@(dis|en)able?(au)|rebuild|status)				# Really-low-resource actions.
+			@(dis|en)ableau|rebuild|status)					# Really-low-resource actions.
 				max_forks=8
 		esac
 
@@ -2069,7 +2094,7 @@ ParseManagementArgs()
 					DeleteSetting Git_Branch
 					DeleteSetting Terse
 
-					Reset				# <-- Processing will terminate in this function (no-return).
+					Reset				# <-- NOTE: Processing will terminate in this function (no-return).
 			esac
 
 			if [[ -n $user_action && $user_action != "$current_action" ]]; then
@@ -2734,7 +2759,12 @@ ParseActionArgs()
 			potential_action=''
 
 			case $action in
-				?(de|re)activate|backup|clean|@(dis|en)able?(au)|reassign|rebuild|?(re|un)install|resign|restore|upgrade)
+				?(de|re)activate|backup|clean|@(dis|en)able?(au)|reassign|rebuild|?(re|un)install|resign|restore)
+					requires_group=true
+					user_action=$arg
+					;;
+				upgrade)
+					get_qpkg_extended_states=true
 					requires_group=true
 					user_action=$arg
 					;;
@@ -4292,7 +4322,7 @@ WriteBranch()
 			else
 				SaveSetting Git_Branch "$useropt_branch" announce
 
-				Reset					# <-- Processing will terminate in this function (no-return).
+				Reset					# <-- NOTE: Processing will terminate in this function (no-return).
 			fi
 
 			switch_branch=false
@@ -4698,10 +4728,10 @@ GenerateStatusReportTitleLine()
 	QPKGs-ISupgradable.IsAny && a+=' '$(Parenthesise "$(TextBrightOrange new)")
 
 	if IsOsCanAutowidthTableColumns; then
-		printf '%s' "QPKG name:|Status:|Action $(Parenthesise result):|$a:|Appl. version:|Location:"
+		printf '%s' "QPKG name:|Status:|Last action $(Parenthesise result):|$a:|Appl. version:|Location:"
 	else
 		FormatReportFieldWidth 'QPKG name:' "$r_report_qpkg_name_column_width"
-		printf '%s' "Status & Action $(Parenthesise result):"
+		printf '%s' "Status & Last action $(Parenthesise result):"
 	fi
 
 	printf '\n'
@@ -7700,6 +7730,9 @@ GetQpkgStates()
 StoreQpkgStates()
 	{
 
+	# Outputs: (global)
+	#	$qpkgs_states_built
+
 	FuncInit
 
 	local a=''
@@ -9128,21 +9161,28 @@ GetHardwareCPUBenchmark()
 	local -i b=16		# Maximum time-to-run is around 1 second on my slowest NAS (TS-220).
 	local -i c=-20		# Execute benchmark with highest priority.
 
-	if [[ -e $r_gnu_dd_cmd ]]; then
-		if [[ -e $r_gnu_nice_cmd ]]; then
-			a=$({ $r_gnu_nice_cmd -$c $r_gnu_dd_cmd if=/dev/zero bs=1MB count=$b | /bin/sha1sum > /dev/null; } 2>&1)
-		elif [[ -e /bin/renice ]]; then
-			/bin/renice $c $$ &> /dev/null
+	if [[ ! -e $r_gnu_dd_cmd ]]; then
+		printf "unable to measure, GNU 'dd' is unavailable"
+		return 1
+	fi
 
-			a=$({ $r_gnu_dd_cmd if=/dev/zero bs=1MB count=$b | /bin/sha1sum > /dev/null; } 2>&1)
+	if [[ -e $r_gnu_nice_cmd ]]; then
+		a=$({ $r_gnu_nice_cmd -$c $r_gnu_dd_cmd if=/dev/zero bs=1MB count=$b | /bin/sha1sum > /dev/null; } 2>&1)
+	elif [[ -e /bin/renice ]]; then
+		/bin/renice $c $$ &> /dev/null
 
-			/bin/renice 0 $$ &> /dev/null
-		fi
+		a=$({ $r_gnu_dd_cmd if=/dev/zero bs=1MB count=$b | /bin/sha1sum > /dev/null; } 2>&1)
+
+		/bin/renice 0 $$ &> /dev/null
 	fi
 
 	a=$(/bin/grep copied <<< "$a" | cut -d, -f4)
 	a=${a//[[:blank:]]/}
-	[[ -n $a ]] || a=undefined
+
+	if [[ -z $a ]]; then
+		printf 'unable to measure'
+		return 1
+	fi
 
 	printf '%s' "$a"
 
@@ -9165,16 +9205,19 @@ GetHardwareVolumeBenchmark()
 	if [[ -d $(/usr/bin/dirname "$d") ]]; then
 		[[ -e $d ]] && rm -f "$d"
 
-		if [[ -e $r_gnu_dd_cmd ]]; then
-			if [[ -e $r_gnu_nice_cmd ]]; then
-				a=$($r_gnu_nice_cmd -$c $r_gnu_dd_cmd if=/dev/zero of=$d bs=8k count=$b 2>&1)
-			elif [[ -e /bin/renice ]]; then
-				/bin/renice $c $$ &> /dev/null
+		if [[ ! -e $r_gnu_dd_cmd ]]; then
+			printf "unable to measure, GNU 'dd' is unavailable"
+			return 1
+		fi
 
-				a=$($r_gnu_dd_cmd if=/dev/zero of=$d bs=8k count=$b 2>&1)
+		if [[ -e $r_gnu_nice_cmd ]]; then
+			a=$($r_gnu_nice_cmd -$c $r_gnu_dd_cmd if=/dev/zero of=$d bs=8k count=$b 2>&1)
+		elif [[ -e /bin/renice ]]; then
+			/bin/renice $c $$ &> /dev/null
 
-				/bin/renice 0 $$ &> /dev/null
-			fi
+			a=$($r_gnu_dd_cmd if=/dev/zero of=$d bs=8k count=$b 2>&1)
+
+			/bin/renice 0 $$ &> /dev/null
 		fi
 
 		[[ -e $d ]] && rm -f "$d"
@@ -9182,7 +9225,11 @@ GetHardwareVolumeBenchmark()
 
 	a=$(/bin/grep copied <<< "$a" | cut -d, -f4)
 	a=${a//[[:blank:]]/}
-	[[ -n $a ]] || a=undefined
+
+	if [[ -z $a ]]; then
+		printf 'unable to measure'
+		return 1
+	fi
 
 	printf '%s' "$a"
 
@@ -9601,8 +9648,8 @@ ClaimLockfile()
 
 	for a in sherpa-manager.sh sherpa-manager.source; do
 		if [[ -e $r_lock_pathfile && -d /proc/$(< $r_lock_pathfile) && $(< /proc/"$(< $r_lock_pathfile)"/cmdline) =~ $a ]]; then
-			ShowAsAbort "a running $(ShowAsTitleName) instance was found $(Parenthesise "PID:$(< "$r_lock_pathfile")"), can't continue"
-
+			ShowAsAbort "a running $(ShowAsTitleName) instance was found $(Parenthesise "PID:$(< "$r_lock_pathfile")"), please wait for it to complete"
+			release_lock=false
 			return 1
 		fi
 	done
@@ -9619,6 +9666,7 @@ ReleaseLockfile()
 	# Inputs: (global)
 	#	$r_lock_pathfile
 
+	[[ ${release_lock:=true} = true ]] || return
 	[[ -n ${r_lock_pathfile:-} ]] && rm -f "$r_lock_pathfile" 2> /dev/null
 
 	}
@@ -11223,7 +11271,7 @@ _QPKG:status_()
 
 	# * This function runs asynchronously *
 
-	# Query a QPKG for its 'status'. Each compatible QPKG will return 0 if application process is active or ready-to-run, 0 if not.
+	# Query a QPKG for its 'status'. Each compatible QPKG will return 0 if application process is active or ready-to-run, 1 if not.
 
 	# Inputs: (global)
 	#	$qpkg_name
@@ -11259,7 +11307,7 @@ _QPKG:status_()
 	[[ $useropt_debug = true ]] && b+='DEBUG_QPKG=true '
 
 	if [[ $a = builtin ]]; then
-		# Run status query with GNU `timeout` if-possible.
+		# Run 'status' query with GNU `timeout` (if-possible).
 
 		if [[ -e $r_gnu_timeout_cmd ]]; then
 			$r_gnu_timeout_cmd "$r_qpkg_status_check_timeout_seconds" /bin/sh -c "${b}$(GetQpkgServicePathFile) status"
@@ -11275,7 +11323,15 @@ _QPKG:status_()
 
 	DebugVar z
 
-	# returncodes 124 and-up are generated by GNU `timeout`.
+	# Returncodes 124 and-up are generated by GNU `timeout`.
+
+	# The below is an extract from GNU `timeout` help:
+	#	124	if COMMAND times out, and --preserve-status is not specified
+	#	125	if the timeout command itself fails
+	#	126	if COMMAND is found but cannot be invoked
+	#	127	if COMMAND cannot be found
+	#	137	if COMMAND (or timeout itself) is sent the KILL (9) signal (128+9)
+	#	-	the exit status of COMMAND otherwise
 
 	case $z in
 		0)
@@ -11291,10 +11347,10 @@ _QPKG:status_()
 			SendPackageStateChange ISunknown
 	esac
 
-	SaveActionResultMetrics QPKG "$qpkg_name" status '' ok
+	SaveActionResultMetrics QPKG "$qpkg_name" status '' ok "returned: $z"
 	MarkActionForkAsOk
 
-	FuncForkExit
+	FuncForkExit $z
 
 	}
 
@@ -15117,6 +15173,17 @@ ShowAsDone()
 
 	} >&2
 
+ShowAsImportant()
+	{
+
+	# Important note to user.
+
+	[[ -n ${1:-} ]] || return
+
+	OpStepClear "$(TextBrightYellowBlink note)" "${1:-}"
+
+	} >&2
+
 ShowAsWarn()
 	{
 
@@ -15457,6 +15524,22 @@ TextBrightYellow()
 
 	if [[ $colourful = true ]]; then
 		printf '\033[1;33m%s\033[0m' "$1"
+	else
+		printf '%s' "$1"
+	fi
+
+	} 2> /dev/null
+
+TextBrightYellowBlink()
+	{
+
+	# Inputs: (global)
+	#	$colourful
+
+	[[ -n ${1:-} ]] || return
+
+	if [[ $colourful = true ]]; then
+		printf '\033[1;5;33m%s\033[0m' "$1"
 	else
 		printf '%s' "$1"
 	fi
