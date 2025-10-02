@@ -10255,7 +10255,7 @@ _QPKG:uninstall_()
 
 	# * This function runs asynchronously *
 
-	# Uninstall the QPKG named in $qpkg_name.
+	# Uninstall the QPKG named in $qpkg_name. Digital signature will be removed automatically by OS.
 
 	# Inputs: (global)
 	#	$qpkg_name
@@ -10268,7 +10268,7 @@ _QPKG:uninstall_()
 
 	FuncForkInit
 
-	local a=''
+	local a='UNINSTALL_QPKG=true '
 	local -i z=0
 
 	if IsNtValidQpkgInstalled "$qpkg_name"; then
