@@ -1074,7 +1074,7 @@ CheckEnv()
 		ShowAsWarn "the $(TextBrightRed 'Out-Of-Memory killer') has been triggered, check for $(TextBrightRed inactive) QPKGs"
 	fi
 
-	if IsQpkgInstalled OMedusa; then
+	if IsQpkgInstalled OMedusa || IsQpkgInstalled Medusa; then
 		ShowAsImportant "Medusa support to be discontinued: $(ShowAsURL 'https://github.com/OneCDOnly/sherpa/discussions/318')"
 	fi
 
@@ -1385,11 +1385,11 @@ AssignQpkgsToActions()
 	QPKGs-ACdownload-to:Add "$(QPKGs-ACinstall-to:Array)"
 
 	for qpkg_name in $(QPKGs-ACreinstall-to:Array); do
-		IsValidQpkgInstalled "$qpkg_name" && QPKGs-ACdownload-to:Add "$qpkg_name"		# Only download files for reinstallable QPKGs.
+		IsValidQpkgInstalled "$qpkg_name" && QPKGs-ACdownload-to:Add "$qpkg_name"		# Download files for reinstallable QPKGs.
 	done
 
 	for qpkg_name in $(QPKGs-ACupgrade-to:Array); do
-		QPKGs-ISupgradable.Exist "$qpkg_name" && QPKGs-ACdownload-to:Add "$qpkg_name"	# Only download files for upgradable QPKGs.
+		QPKGs-ISupgradable.Exist "$qpkg_name" && QPKGs-ACdownload-to:Add "$qpkg_name"	# Download files for upgradable QPKGs.
 	done
 
 # [[ $useropt_debug = true ]] && ListQPKGsActionsAll
@@ -4903,6 +4903,8 @@ _GenerateStatusReportDataLine_()
 				auxiliary="$(GetOsName) version incompatible"
 			elif ! IsQpkgDbMinRAMOk; then
 				auxiliary='installed RAM insufficient'
+			elif IsQpkgProhibited; then
+				auxiliary='prohibited package'
 			fi
 
 			if [[ $auxiliary != false ]]; then
@@ -9795,7 +9797,7 @@ _QPKG:reassign_()
 
 	local -i z=0
 
-	if IsNtValidQpkgInstalled "$qpkg_name"; then
+	if IsNtValidQpkgInstalled; then
 		SaveActionResultMetrics QPKG "$qpkg_name" reassign '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
@@ -9854,10 +9856,10 @@ _QPKG:download_()
 					local -r r_log_pathfile=$r_logs_path/$r_local_filename.$r_download_log_file
 	local -i z=0
 
-	if ! IsQpkgDbMinOSVerOk "$qpkg_name" || ! IsQpkgDbMaxOSVerOk "$qpkg_name"; then
+	if ! IsQpkgDbMinOSVerOk || ! IsQpkgDbMaxOSVerOk; then
 		SaveActionResultMetrics QPKG "$qpkg_name" download '' sk "$(GetOsName) version incompatible"
 
-		if IsOsCanManageSignedPackages && IsOsRequireSignedPackages; then
+		if IsOsCanManageSignedPackages; then
 			SendParentCommand "QPKGs-ACsign-to:Remove $qpkg_name"
 			SendParentCommand "QPKGs-ACinstall-to:Remove $qpkg_name"
 			SendParentCommand "QPKGs-ACreinstall-to:Remove $qpkg_name"
@@ -9866,10 +9868,22 @@ _QPKG:download_()
 
 		MarkActionForkAsSkipped
 		z=2
-	elif ! IsQpkgDbMinRAMOk "$qpkg_name"; then
+	elif ! IsQpkgDbMinRAMOk; then
 		SaveActionResultMetrics QPKG "$qpkg_name" download '' sk 'installed RAM insufficient'
 
-		if IsOsCanManageSignedPackages && IsOsRequireSignedPackages; then
+		if IsOsCanManageSignedPackages; then
+			SendParentCommand "QPKGs-ACsign-to:Remove $qpkg_name"
+			SendParentCommand "QPKGs-ACinstall-to:Remove $qpkg_name"
+			SendParentCommand "QPKGs-ACreinstall-to:Remove $qpkg_name"
+			SendParentCommand "QPKGs-ACupgrade-to:Remove $qpkg_name"
+		fi
+
+		MarkActionForkAsSkipped
+		z=2
+	elif IsQpkgProhibited; then
+		SaveActionResultMetrics QPKG "$qpkg_name" download '' sk 'prohibited package'
+
+		if IsOsCanManageSignedPackages; then
 			SendParentCommand "QPKGs-ACsign-to:Remove $qpkg_name"
 			SendParentCommand "QPKGs-ACinstall-to:Remove $qpkg_name"
 			SendParentCommand "QPKGs-ACreinstall-to:Remove $qpkg_name"
@@ -9955,16 +9969,20 @@ _QPKG:install_()
 		SaveActionResultMetrics QPKG "$qpkg_name" install '' se 'installation package unavailable'
 		MarkActionForkAsSkippedError
 		z=4
-	elif IsQpkgInstalled "$qpkg_name"; then
+	elif IsQpkgInstalled; then
 		SaveActionResultMetrics QPKG "$qpkg_name" install '' sk "already installed, please use 'reinstall' instead"
 		MarkActionForkAsSkipped
 		z=2
-	elif ! IsQpkgDbMinOSVerOk "$qpkg_name" || ! IsQpkgDbMaxOSVerOk "$qpkg_name"; then
+	elif ! IsQpkgDbMinOSVerOk || ! IsQpkgDbMaxOSVerOk; then
 		SaveActionResultMetrics QPKG "$qpkg_name" install '' sk "$(GetOsName) version incompatible"
 		MarkActionForkAsSkipped
 		z=2
-	elif ! IsQpkgDbMinRAMOk "$qpkg_name"; then
+	elif ! IsQpkgDbMinRAMOk; then
 		SaveActionResultMetrics QPKG "$qpkg_name" install '' sk 'installed RAM insufficient'
+		MarkActionForkAsSkipped
+		z=2
+	elif IsQpkgProhibited; then
+		SaveActionResultMetrics QPKG "$qpkg_name" install '' sk 'prohibited package'
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -10068,7 +10086,7 @@ _QPKG:reinstall_()
 		SaveActionResultMetrics QPKG "$qpkg_name" reinstall '' se 'installation package unavailable'
 		MarkActionForkAsSkippedError
 		z=4
-	elif IsNtQpkgInstalled "$qpkg_name"; then
+	elif IsNtQpkgInstalled; then
 		SaveActionResultMetrics QPKG "$qpkg_name" reinstall '' sk "not already installed, please use 'install' instead"
 		MarkActionForkAsSkipped
 		z=2
@@ -10078,6 +10096,10 @@ _QPKG:reinstall_()
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
 		SaveActionResultMetrics QPKG "$qpkg_name" reinstall '' sk "assigned to another repository, please 'reassign' it first"
+		MarkActionForkAsSkipped
+		z=2
+	elif IsQpkgProhibited; then
+		SaveActionResultMetrics QPKG "$qpkg_name" reinstall '' sk 'prohibited package'
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -10129,7 +10151,7 @@ _QPKG:rebuild_()
 
 	local -i z=0
 
-	if IsValidQpkgInstalled "$qpkg_name"; then
+	if IsValidQpkgInstalled; then
 		SaveActionResultMetrics QPKG "$qpkg_name" meta-rebuild '' sk "already installed, please use 'restore' instead"
 		MarkActionForkAsSkipped
 		z=2
@@ -10147,6 +10169,10 @@ _QPKG:rebuild_()
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
 		SaveActionResultMetrics QPKG "$qpkg_name" meta-rebuild '' sk "assigned to another repository, please 'reassign' it first"
+		MarkActionForkAsSkipped
+		z=2
+	elif IsQpkgProhibited; then
+		SaveActionResultMetrics QPKG "$qpkg_name" meta-rebuild '' sk 'prohibited package'
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -10191,7 +10217,7 @@ _QPKG:upgrade_()
 		SaveActionResultMetrics QPKG "$qpkg_name" upgrade '' se 'installation package unavailable'
 		MarkActionForkAsSkippedError
 		z=4
-	elif IsNtValidQpkgInstalled "$qpkg_name"; then
+	elif IsNtValidQpkgInstalled; then
 		SaveActionResultMetrics QPKG "$qpkg_name" upgrade '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
@@ -10205,6 +10231,10 @@ _QPKG:upgrade_()
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
 		SaveActionResultMetrics QPKG "$qpkg_name" upgrade '' sk "assigned to another repository, please 'reassign' it first"
+		MarkActionForkAsSkipped
+		z=2
+	elif IsQpkgProhibited; then
+		SaveActionResultMetrics QPKG "$qpkg_name" upgrade '' sk 'prohibited package'
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -10271,7 +10301,7 @@ _QPKG:uninstall_()
 	local a='UNINSTALL_QPKG=true '
 	local -i z=0
 
-	if IsNtValidQpkgInstalled "$qpkg_name"; then
+	if IsNtValidQpkgInstalled; then
 		SaveActionResultMetrics QPKG "$qpkg_name" uninstall '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
@@ -10356,7 +10386,7 @@ _QPKG:activate_()
 	local a=''
 	local -i z=0
 
-	if IsNtValidQpkgInstalled "$qpkg_name"; then
+	if IsNtValidQpkgInstalled; then
 		SaveActionResultMetrics QPKG "$qpkg_name" activate '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
@@ -10364,7 +10394,7 @@ _QPKG:activate_()
 		SaveActionResultMetrics QPKG "$qpkg_name" activate '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
-	elif IsNtQpkgEnabled "$qpkg_name"; then
+	elif IsNtQpkgEnabled; then
 		SaveActionResultMetrics QPKG "$qpkg_name" activate '' sk "disabled, please 'enable' it first"
 		MarkActionForkAsSkipped
 		z=2
@@ -10449,7 +10479,7 @@ _QPKG:reactivate_()
 	local a=''
 	local -i z=0
 
-	if IsNtValidQpkgInstalled "$qpkg_name"; then
+	if IsNtValidQpkgInstalled; then
 		SaveActionResultMetrics QPKG "$qpkg_name" reactivate '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
@@ -10457,7 +10487,7 @@ _QPKG:reactivate_()
 		SaveActionResultMetrics QPKG "$qpkg_name" reactivate '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
-	elif IsNtQpkgEnabled "$qpkg_name"; then
+	elif IsNtQpkgEnabled; then
 		SaveActionResultMetrics QPKG "$qpkg_name" reactivate '' sk "disabled, please 'enable' it first"
 		MarkActionForkAsSkipped
 		z=2
@@ -10534,7 +10564,7 @@ _QPKG:deactivate_()
 	local a=''
 	local -i z=0
 
-	if IsNtValidQpkgInstalled "$qpkg_name"; then
+	if IsNtValidQpkgInstalled; then
 		SaveActionResultMetrics QPKG "$qpkg_name" deactivate '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
@@ -10624,7 +10654,7 @@ _QPKG:enable_()
 
 	local -i z=0
 
-	if IsNtValidQpkgInstalled "$qpkg_name"; then
+	if IsNtValidQpkgInstalled; then
 		SaveActionResultMetrics QPKG "$qpkg_name" enable '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
@@ -10632,7 +10662,7 @@ _QPKG:enable_()
 		SaveActionResultMetrics QPKG "$qpkg_name" enable '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
-	elif IsQpkgEnabled "$qpkg_name"; then
+	elif IsQpkgEnabled; then
 		SaveActionResultMetrics QPKG "$qpkg_name" enable '' sk 'already enabled'
 		MarkActionForkAsSkipped
 		z=2
@@ -10679,7 +10709,7 @@ _QPKG:disable_()
 
 	local -i z=0
 
-	if IsNtValidQpkgInstalled "$qpkg_name"; then
+	if IsNtValidQpkgInstalled; then
 		SaveActionResultMetrics QPKG "$qpkg_name" disable '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
@@ -10687,7 +10717,7 @@ _QPKG:disable_()
 		SaveActionResultMetrics QPKG "$qpkg_name" disable '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
-	elif IsNtQpkgEnabled "$qpkg_name"; then
+	elif IsNtQpkgEnabled; then
 		SaveActionResultMetrics QPKG "$qpkg_name" disable '' sk 'already disabled'
 		MarkActionForkAsSkipped
 		z=2
@@ -10740,7 +10770,7 @@ _QPKG:enableau_()
 	local a=''
 	local -i z=0
 
-	if IsNtValidQpkgInstalled "$qpkg_name"; then
+	if IsNtValidQpkgInstalled; then
 		SaveActionResultMetrics QPKG "$qpkg_name" enableau '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
@@ -10752,7 +10782,7 @@ _QPKG:enableau_()
 		SaveActionResultMetrics QPKG "$qpkg_name" enableau '' sk 'auto-update is always enabled'
 		MarkActionForkAsSkipped
 		z=2
-	elif ! IsQpkgDbCanRestartToUpdate "$qpkg_name"; then
+	elif ! IsQpkgDbCanRestartToUpdate; then
 		SaveActionResultMetrics QPKG "$qpkg_name" enableau '' sk 'auto-update is unsupported by this QPKG'
 		MarkActionForkAsSkipped
 		z=2
@@ -10806,7 +10836,7 @@ _QPKG:disableau_()
 	local a=''
 	local -i z=0
 
-	if IsNtValidQpkgInstalled "$qpkg_name"; then
+	if IsNtValidQpkgInstalled; then
 		SaveActionResultMetrics QPKG "$qpkg_name" disableau '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
@@ -10818,7 +10848,7 @@ _QPKG:disableau_()
 		SaveActionResultMetrics QPKG "$qpkg_name" disableau '' sk 'auto-update cannot be disabled'
 		MarkActionForkAsSkipped
 		z=2
-	elif ! IsQpkgDbCanRestartToUpdate "$qpkg_name"; then
+	elif ! IsQpkgDbCanRestartToUpdate; then
 		SaveActionResultMetrics QPKG "$qpkg_name" disableau '' sk 'auto-update is unsupported by this QPKG'
 		MarkActionForkAsSkipped
 		z=2
@@ -10872,7 +10902,7 @@ _QPKG:backup_()
 	local a=''
 	local -i z=0
 
-	if IsNtValidQpkgInstalled "$qpkg_name"; then
+	if IsNtValidQpkgInstalled; then
 		SaveActionResultMetrics QPKG "$qpkg_name" backup '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
@@ -10937,7 +10967,7 @@ _QPKG:restore_()
 	local a=''
 	local -i z=0
 
-	if IsNtValidQpkgInstalled "$qpkg_name"; then
+	if IsNtValidQpkgInstalled; then
 		SaveActionResultMetrics QPKG "$qpkg_name" restore '' sk "not installed, try 'rebuild' instead"
 		MarkActionForkAsSkipped
 		z=2
@@ -11004,7 +11034,7 @@ _QPKG:clean_()
 	local a=''
 	local -i z=0
 
-	if IsNtValidQpkgInstalled "$qpkg_name"; then
+	if IsNtValidQpkgInstalled; then
 		SaveActionResultMetrics QPKG "$qpkg_name" clean '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
@@ -11087,11 +11117,11 @@ _QPKG:sign_()
 		SaveActionResultMetrics QPKG "$qpkg_name" '"sign"' '' sk 'not required: firmware < 4.3.5'
 		MarkActionForkAsSkipped
 		z=2
-	elif ! IsQpkgDbMinOSVerOk "$qpkg_name" || ! IsQpkgDbMaxOSVerOk "$qpkg_name"; then
+	elif ! IsQpkgDbMinOSVerOk || ! IsQpkgDbMaxOSVerOk; then
 		SaveActionResultMetrics QPKG "$qpkg_name" '"sign"' '' sk "$(GetOsName) version incompatible"
 		MarkActionForkAsSkipped
 		z=2
-	elif ! IsQpkgDbMinRAMOk "$qpkg_name"; then
+	elif ! IsQpkgDbMinRAMOk; then
 		SaveActionResultMetrics QPKG "$qpkg_name" '"sign"' '' sk 'installed RAM insufficient'
 		MarkActionForkAsSkipped
 		z=2
@@ -11105,6 +11135,10 @@ _QPKG:sign_()
 		z=3
 	elif IsQpkgSigned; then
 		SaveActionResultMetrics QPKG "$qpkg_name" '"sign"' '' sk 'already signed'
+		MarkActionForkAsSkipped
+		z=2
+	elif IsQpkgProhibited; then
+		SaveActionResultMetrics QPKG "$qpkg_name" '"sign"' '' sk 'prohibited package'
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -11192,11 +11226,11 @@ _QPKG:unsign_()
 		SaveActionResultMetrics QPKG "$qpkg_name" '"unsign"' '' sk 'not required: firmware < 4.3.5'
 		MarkActionForkAsSkipped
 		z=2
-	elif ! IsQpkgDbMinOSVerOk "$qpkg_name" || ! IsQpkgDbMaxOSVerOk "$qpkg_name"; then
+	elif ! IsQpkgDbMinOSVerOk || ! IsQpkgDbMaxOSVerOk; then
 		SaveActionResultMetrics QPKG "$qpkg_name" '"unsign"' '' sk "$(GetOsName) version incompatible"
 		MarkActionForkAsSkipped
 		z=2
-	elif ! IsQpkgDbMinRAMOk "$qpkg_name"; then
+	elif ! IsQpkgDbMinRAMOk; then
 		SaveActionResultMetrics QPKG "$qpkg_name" '"unsign"' '' sk 'installed RAM insufficient'
 		MarkActionForkAsSkipped
 		z=2
@@ -11295,7 +11329,7 @@ _QPKG:status_()
 	local b=''
 	local -i z=0
 
-	if IsNtValidQpkgInstalled "$qpkg_name"; then
+	if IsNtValidQpkgInstalled; then
 		SaveActionResultMetrics QPKG "$qpkg_name" status '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
