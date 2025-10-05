@@ -10907,6 +10907,8 @@ _QPKG:backup_()
 		MarkActionForkAsOk
 	else
 		SaveActionResultMetrics QPKG "$qpkg_name" backup '' er "$z"
+		SendParentCommand "QPKGs-ACuninstall-to:Remove $qpkg_name"
+		SendParentCommand "QPKGs-ACrestore-to:Remove $qpkg_name"
 		MarkActionForkAsError
 	fi
 
