@@ -9795,18 +9795,19 @@ _QPKG:reassign_()
 
 	FuncForkInit
 
+	local action=reassign
 	local -i z=0
 
 	if IsNtValidQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" reassign '' sk 'not installed'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" reassign '' sk 'author incompatible'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif [[ $(GetQpkgInstalledStoreID) = sherpa || $(GetQpkgInstalledStoreID) = undefined ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" reassign '' sk 'already assigned to sherpa'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'already assigned to sherpa'
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -9818,10 +9819,10 @@ _QPKG:reassign_()
 	z=$?
 
 	if [[ $z -eq 0 ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" reassign '' ok
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 		MarkActionForkAsOk
 	else
-		SaveActionResultMetrics QPKG "$qpkg_name" reassign '' er "$z"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
 		MarkActionForkAsError
 	fi
 
@@ -9847,6 +9848,7 @@ _QPKG:download_()
 
 	FuncForkInit
 
+	local action=download
 	local curl_insecure_opt=''
 	local -r r_remote_hash=$(GetQpkgDbHash)
 	local -r r_remote_url=$(GetQpkgDbURL)
@@ -9857,7 +9859,7 @@ _QPKG:download_()
 	local -i z=0
 
 	if ! IsQpkgDbMinOSVerOk || ! IsQpkgDbMaxOSVerOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" download '' sk "$(GetOsName) version incompatible"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "$(GetOsName) version incompatible"
 
 		if IsOsCanManageSignedPackages; then
 			SendParentCommand "QPKGs-ACsign-to:Remove $qpkg_name"
@@ -9869,7 +9871,7 @@ _QPKG:download_()
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinRAMOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" download '' sk 'installed RAM insufficient'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'installed RAM insufficient'
 
 		if IsOsCanManageSignedPackages; then
 			SendParentCommand "QPKGs-ACsign-to:Remove $qpkg_name"
@@ -9881,7 +9883,7 @@ _QPKG:download_()
 		MarkActionForkAsSkipped
 		z=2
 	elif IsQpkgProhibited; then
-		SaveActionResultMetrics QPKG "$qpkg_name" download '' sk 'prohibited package'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'prohibited package'
 
 		if IsOsCanManageSignedPackages; then
 			SendParentCommand "QPKGs-ACsign-to:Remove $qpkg_name"
@@ -9894,7 +9896,7 @@ _QPKG:download_()
 		z=2
 	elif IsFile "$r_local_pathfile"; then
 		if FileMatchesMD5 "$r_local_pathfile" "$r_remote_hash"; then
-			SaveActionResultMetrics QPKG "$qpkg_name" download '' sk 'already downloaded'
+			SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'already downloaded'
 			MarkActionForkAsSkipped
 			z=2
 		else
@@ -9916,17 +9918,17 @@ _QPKG:download_()
 		if [[ $z -eq 0 ]]; then
 			if FileMatchesMD5 "$r_local_pathfile" "$r_remote_hash"; then
 				[[ $(Lowercase "${r_local_pathfile##*.}") = zip ]] && /usr/bin/unzip -nq "$r_local_pathfile" -d "$r_qpkg_download_path"
-				SaveActionResultMetrics QPKG "$qpkg_name" download '' ok
+				SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 				SendPackageStateChange ISdownloaded
 				MarkActionForkAsOk
 			else
-				SaveActionResultMetrics QPKG "$qpkg_name" download '' er "cache file $(FormatFileName "$r_local_filename") has incorrect checksum"
+				SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "cache file $(FormatFileName "$r_local_filename") has incorrect checksum"
 				SendPackageStateChange ISNTdownloaded
 				MarkActionForkAsError
 				z=1
 			fi
 		else
-			SaveActionResultMetrics QPKG "$qpkg_name" download '' er "$z"
+			SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
 			MarkActionForkAsError
 			z=1		# Remap to 1 (last time I checked, 'curl' had 92 return codes).
 		fi
@@ -9961,28 +9963,29 @@ _QPKG:install_()
 	FuncForkInit
 
 	local a=''
+	local action=install
 	local local_pathfile=$(GetQpkgDbPathFilename)
 		local log_pathfile=$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_install_log_file
 	local -i z=0
 
 	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" install '' se 'installation package unavailable'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'installation package unavailable'
 		MarkActionForkAsSkippedError
 		z=4
 	elif IsQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" install '' sk "already installed, please use 'reinstall' instead"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "already installed, please use 'reinstall' instead"
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinOSVerOk || ! IsQpkgDbMaxOSVerOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" install '' sk "$(GetOsName) version incompatible"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "$(GetOsName) version incompatible"
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinRAMOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" install '' sk 'installed RAM insufficient'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'installed RAM insufficient'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsQpkgProhibited; then
-		SaveActionResultMetrics QPKG "$qpkg_name" install '' sk 'prohibited package'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'prohibited package'
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -10028,7 +10031,7 @@ _QPKG:install_()
 	[[ $qpkg_name = Entware ]] && IsNtCriticalFile $r_opkg_cmd && z=1		# Entware installation has failed.
 
 	if [[ $z -eq 0 || $z -eq 10 ]]; then	# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes user-aborts.
-		SaveActionResultMetrics QPKG "$qpkg_name" install '' ok "v$(GetQpkgInstalledVer)"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok "v$(GetQpkgInstalledVer)"
 
 		if [[ $qpkg_name = Entware ]]; then
 			SendParentCommand ModPathToEntware
@@ -10048,7 +10051,7 @@ _QPKG:install_()
 		MarkActionForkAsOk
 		z=0		# Remap to zero.
 	else
-		SaveActionResultMetrics QPKG "$qpkg_name" install '' er "$z"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
 		IsOsCanManageSignedPackages && IsQpkgSigned && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
 		MarkActionForkAsError
 	fi
@@ -10079,27 +10082,28 @@ _QPKG:reinstall_()
 	FuncForkInit
 
 	local a='REINSTALL_QPKG=true '
+	local action=reinstall
 	local local_pathfile=$(GetQpkgDbPathFilename)
 	local -i z=0
 
 	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" reinstall '' se 'installation package unavailable'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'installation package unavailable'
 		MarkActionForkAsSkippedError
 		z=4
 	elif IsNtQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" reinstall '' sk "not already installed, please use 'install' instead"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "not already installed, please use 'install' instead"
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" reinstall '' sk 'author incompatible'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" reinstall '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=2
 	elif IsQpkgProhibited; then
-		SaveActionResultMetrics QPKG "$qpkg_name" reinstall '' sk 'prohibited package'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'prohibited package'
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -10119,12 +10123,12 @@ _QPKG:reinstall_()
 	[[ $qpkg_name = Entware ]] && IsNtCriticalFile $r_opkg_cmd && z=1
 
 	if [[ $z -eq 0 || $z -eq 10 ]]; then		# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes aborts.
-		SaveActionResultMetrics QPKG "$qpkg_name" reinstall '' ok "v$(GetQpkgInstalledVer)"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok "v$(GetQpkgInstalledVer)"
 		IsQpkgDbCanClean && SendParentCommand "QPKGs-ACclean-to:Add $qpkg_name"
 		MarkActionForkAsOk
 		z=0		# Remap to zero.
 	else
-		SaveActionResultMetrics QPKG "$qpkg_name" reinstall '' er "$z"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
 		MarkActionForkAsError
 	fi
 
@@ -10149,30 +10153,31 @@ _QPKG:rebuild_()
 
 	FuncForkInit
 
+	local action=meta-rebuild
 	local -i z=0
 
 	if IsValidQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" meta-rebuild '' sk "already installed, please use 'restore' instead"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "already installed, please use 'restore' instead"
 		MarkActionForkAsSkipped
 		z=2
 #	elif IsNtQpkgAuthorOk; then
-#		SaveActionResultMetrics QPKG "$qpkg_name" meta-rebuild '' sk 'author incompatible'
+#		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
 #		MarkActionForkAsSkipped
 #		z=2
 	elif ! IsQpkgDbCanBackup; then
-		SaveActionResultMetrics QPKG "$qpkg_name" meta-rebuild '' sk 'rebuild is not supported by this QPKG'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'rebuild is not supported by this QPKG'
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgBackupExist; then
-		SaveActionResultMetrics QPKG "$qpkg_name" meta-rebuild '' sk 'backup file does not exist'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'backup file does not exist'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" meta-rebuild '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=2
 	elif IsQpkgProhibited; then
-		SaveActionResultMetrics QPKG "$qpkg_name" meta-rebuild '' sk 'prohibited package'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'prohibited package'
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -10183,7 +10188,7 @@ _QPKG:rebuild_()
 
 	# Nothing-to-do here, real QPKG actions have already been assigned in CheckEnv().
 
-	SaveActionResultMetrics QPKG "$qpkg_name" meta-rebuild '' ok
+	SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 	MarkActionForkAsOk
 	ClearQpkgInstalledAppCenterNotifier
 
@@ -10210,31 +10215,32 @@ _QPKG:upgrade_()
 	FuncForkInit
 
 	local a='UPGRADE_QPKG=true '
+	local action=upgrade
 	local local_pathfile=$(GetQpkgDbPathFilename)
 	local -i z=0
 
 	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" upgrade '' se 'installation package unavailable'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'installation package unavailable'
 		MarkActionForkAsSkippedError
 		z=4
 	elif IsNtValidQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" upgrade '' sk 'not installed'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" upgrade '' sk 'author incompatible'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif ! QPKGs-ISupgradable.Exist "$qpkg_name"; then
-		SaveActionResultMetrics QPKG "$qpkg_name" upgrade '' sk 'no new QPKG is available'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'no new QPKG is available'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" upgrade '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=2
 	elif IsQpkgProhibited; then
-		SaveActionResultMetrics QPKG "$qpkg_name" upgrade '' sk 'prohibited package'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'prohibited package'
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -10262,15 +10268,15 @@ _QPKG:upgrade_()
 		local current_ver=$(GetQpkgInstalledVer)
 
 		if [[ $current_ver = "$prev_ver" ]]; then
-			SaveActionResultMetrics QPKG "$qpkg_name" upgrade '' ok "v$current_ver"
+			SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok "v$current_ver"
 		else
-			SaveActionResultMetrics QPKG "$qpkg_name" upgrade '' ok "v$prev_ver -> v$current_ver"		# squeezer-ignore
+			SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok "v$prev_ver -> v$current_ver"		# squeezer-ignore
 		fi
 
 		MarkActionForkAsOk
 		z=0		# Remap to zero.
 	else
-		SaveActionResultMetrics QPKG "$qpkg_name" upgrade '' er "$z"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
 		MarkActionForkAsError
 	fi
 
@@ -10299,22 +10305,23 @@ _QPKG:uninstall_()
 	FuncForkInit
 
 	local a='UNINSTALL_QPKG=true '
+	local action=uninstall
 	local -i z=0
 
 	if IsNtValidQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" uninstall '' sk 'not installed'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" uninstall '' sk 'author incompatible'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif [[ $qpkg_name = sherpa ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" uninstall '' sk "it's needed here! 😉"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "it's needed here! 😉"
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" uninstall '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -10336,7 +10343,7 @@ _QPKG:uninstall_()
 			# WARNING: beware of `qpkg_cli --remove`. It removes the QPKG installation path around 10-20 seconds after execution. If sherpa has moved-on and starts an install, `qpkg_cli` will remove the newly created QPKG installation path partway through the installation. So, check if QPKG is to be installed again. If-so, don't use `qpkg_cli --remove`.
 
 			[[ -e /sbin/qpkg_cli ]] && ! QPKGs-ACinstall-to.Exist "$qpkg_name" && /sbin/qpkg_cli --remove "$qpkg_name" &> /dev/null
-			SaveActionResultMetrics QPKG "$qpkg_name" uninstall '' ok
+			SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 			/sbin/rmcfg "$qpkg_name" -f /etc/config/qpkg.conf
 			DebugAsDone 'removed icon information from App Center'
 
@@ -10349,13 +10356,13 @@ _QPKG:uninstall_()
 			SendPackageStateChange ISNTactive
 			MarkActionForkAsOk
 		else
-			SaveActionResultMetrics QPKG "$qpkg_name" uninstall '' er "$z"
+			SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
 			MarkActionForkAsError
 		fi
 	else
 		# Standard QPKG `.uninstall.sh` was not found, so can't continue with uninstallation (maybe force this instead with `rm -r` ?).
 
-		SaveActionResultMetrics QPKG "$qpkg_name" uninstall '' er "$(FormatFileName '.uninstall.sh') not found"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$(FormatFileName '.uninstall.sh') not found"
 		MarkActionForkAsError
 		z=1
 	fi
@@ -10384,22 +10391,23 @@ _QPKG:activate_()
 	FuncForkInit
 
 	local a=''
+	local action=activate
 	local -i z=0
 
 	if IsNtValidQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" activate '' sk 'not installed'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" activate '' sk 'author incompatible'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgEnabled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" activate '' sk "disabled, please 'enable' it first"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "disabled, please 'enable' it first"
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" activate '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -10414,7 +10422,7 @@ _QPKG:activate_()
 	DebugAsProc "activating $(FormatPackageName)"
 
 	if [[ $service_pathfile = undefined ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" activate '' se 'QPKG service-script file undefined'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file undefined'
 		MarkActionForkAsSkippedError
 
 		FuncForkExit 4
@@ -10435,7 +10443,7 @@ _QPKG:activate_()
 	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
 
 	if [[ $z -eq 0 ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" activate '' ok
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 
 		if [[ $qpkg_name = Entware ]]; then
 			SendParentCommand ModPathToEntware
@@ -10446,7 +10454,7 @@ _QPKG:activate_()
 		SendPackageStateChange ISactive
 		MarkActionForkAsOk
 	else
-		SaveActionResultMetrics QPKG "$qpkg_name" activate '' er "$z"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
 		SendPackageStateChange ISNTactive
 		MarkActionForkAsError
 	fi
@@ -10477,22 +10485,23 @@ _QPKG:reactivate_()
 	FuncForkInit
 
 	local a=''
+	local action=reactivate
 	local -i z=0
 
 	if IsNtValidQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" reactivate '' sk 'not installed'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" reactivate '' sk 'author incompatible'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgEnabled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" reactivate '' sk "disabled, please 'enable' it first"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "disabled, please 'enable' it first"
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" reactivate '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -10507,7 +10516,7 @@ _QPKG:reactivate_()
 	DebugAsProc "reactivating $(FormatPackageName)"
 
 	if [[ $service_pathfile = undefined ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" reactivate '' se 'QPKG service-script file undefined'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file undefined'
 		MarkActionForkAsSkippedError
 
 		FuncForkExit 4
@@ -10528,11 +10537,11 @@ _QPKG:reactivate_()
 	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
 
 	if [[ $z -eq 0 ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" reactivate '' ok
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 		SendParentCommand "QPKGs-ACactivate-to:Remove $qpkg_name"
 		MarkActionForkAsOk
 	else
-		SaveActionResultMetrics QPKG "$qpkg_name" reactivate '' er "$z"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
 		MarkActionForkAsError
 	fi
 
@@ -10562,22 +10571,23 @@ _QPKG:deactivate_()
 	FuncForkInit
 
 	local a=''
+	local action=deactivate
 	local -i z=0
 
 	if IsNtValidQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" deactivate '' sk 'not installed'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" deactivate '' sk 'author incompatible'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
 #	elif [[ $qpkg_name = sherpa ]]; then
-#		SaveActionResultMetrics QPKG "$qpkg_name" deactivate '' sk "it's needed here! 😉"
+#		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "it's needed here! 😉"
 #		MarkActionForkAsSkipped
 #		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" deactivate '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -10592,7 +10602,7 @@ _QPKG:deactivate_()
 	DebugAsProc "deactivating $(FormatPackageName)"
 
 	if [[ $service_pathfile = undefined ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" deactivate '' se 'QPKG service-script file undefined'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file undefined'
 		MarkActionForkAsSkippedError
 
 		FuncForkExit 4
@@ -10613,7 +10623,7 @@ _QPKG:deactivate_()
 	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
 
 	if [[ $z -eq 0 ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" deactivate '' ok
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 
 		if [[ $qpkg_name = Entware ]]; then
 			SendParentCommand ModPathToEntware
@@ -10624,7 +10634,7 @@ _QPKG:deactivate_()
 		SendPackageStateChange ISNTactive
 		MarkActionForkAsOk
 	else
-		SaveActionResultMetrics QPKG "$qpkg_name" deactivate '' er "$z"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
 		MarkActionForkAsError
 	fi
 
@@ -10652,22 +10662,23 @@ _QPKG:enable_()
 
 	FuncForkInit
 
+	local action=enable
 	local -i z=0
 
 	if IsNtValidQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" enable '' sk 'not installed'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" enable '' sk 'author incompatible'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsQpkgEnabled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" enable '' sk 'already enabled'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'already enabled'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" enable '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -10682,7 +10693,7 @@ _QPKG:enable_()
 
 	Executer "/sbin/qpkg_service${timeout} enable $qpkg_name" "$r_log_pathfile" log:failure-only
 	ClearQpkgInstalledAppCenterNotifier
-	SaveActionResultMetrics QPKG "$qpkg_name" enable '' ok
+	SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 	MarkActionForkAsOk
 
 	FuncForkExit $z
@@ -10707,26 +10718,27 @@ _QPKG:disable_()
 
 	FuncForkInit
 
+	local action=disable
 	local -i z=0
 
 	if IsNtValidQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" disable '' sk 'not installed'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" disable '' sk 'author incompatible'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgEnabled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" disable '' sk 'already disabled'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'already disabled'
 		MarkActionForkAsSkipped
 		z=2
 #	elif [[ $qpkg_name = sherpa ]]; then
-#		SaveActionResultMetrics QPKG "$qpkg_name" disable '' sk "it's needed here! 😉"
+#		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "it's needed here! 😉"
 #		MarkActionForkAsSkipped
 #		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" disable '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -10742,7 +10754,7 @@ _QPKG:disable_()
 	Executer "/sbin/qpkg_service${timeout} disable $qpkg_name" "$r_log_pathfile" log:failure-only
 
 	ClearQpkgInstalledAppCenterNotifier
-	SaveActionResultMetrics QPKG "$qpkg_name" disable '' ok
+	SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 	MarkActionForkAsOk
 
 	FuncForkExit $z
@@ -10768,26 +10780,27 @@ _QPKG:enableau_()
 	FuncForkInit
 
 	local a=''
+	local action=enableau
 	local -i z=0
 
 	if IsNtValidQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" enableau '' sk 'not installed'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" enableau '' sk 'author incompatible'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif [[ $qpkg_name = sherpa ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" enableau '' sk 'auto-update is always enabled'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'auto-update is always enabled'
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbCanRestartToUpdate; then
-		SaveActionResultMetrics QPKG "$qpkg_name" enableau '' sk 'auto-update is unsupported by this QPKG'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'auto-update is unsupported by this QPKG'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" enableau '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -10804,10 +10817,10 @@ _QPKG:enableau_()
 	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
 
 	if [[ $z -eq 0 ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" enableau '' ok
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 		MarkActionForkAsOk
 	else
-		SaveActionResultMetrics QPKG "$qpkg_name" enableau '' er "$z"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
 		MarkActionForkAsError
 	fi
 
@@ -10834,26 +10847,27 @@ _QPKG:disableau_()
 	FuncForkInit
 
 	local a=''
+	local action=disableau
 	local -i z=0
 
 	if IsNtValidQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" disableau '' sk 'not installed'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" disableau '' sk 'author incompatible'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif [[ $qpkg_name = sherpa ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" disableau '' sk 'auto-update cannot be disabled'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'auto-update cannot be disabled'
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbCanRestartToUpdate; then
-		SaveActionResultMetrics QPKG "$qpkg_name" disableau '' sk 'auto-update is unsupported by this QPKG'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'auto-update is unsupported by this QPKG'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" disableau '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -10870,10 +10884,10 @@ _QPKG:disableau_()
 	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
 
 	if [[ $z -eq 0 ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" disableau '' ok
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 		MarkActionForkAsOk
 	else
-		SaveActionResultMetrics QPKG "$qpkg_name" disableau '' er "$z"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
 		MarkActionForkAsError
 	fi
 
@@ -10900,22 +10914,23 @@ _QPKG:backup_()
 	FuncForkInit
 
 	local a=''
+	local action=backup
 	local -i z=0
 
 	if IsNtValidQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" backup '' sk 'not installed'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" backup '' sk 'author incompatible'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbCanBackup; then
-		SaveActionResultMetrics QPKG "$qpkg_name" backup '' sk 'backup is unsupported by this QPKG'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'backup is unsupported by this QPKG'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" backup '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -10932,11 +10947,11 @@ _QPKG:backup_()
 	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
 
 	if [[ $z -eq 0 ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" backup '' ok
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 		SendPackageStateChange ISbackedup
 		MarkActionForkAsOk
 	else
-		SaveActionResultMetrics QPKG "$qpkg_name" backup '' er "$z"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
 		SendParentCommand "QPKGs-ACuninstall-to:Remove $qpkg_name"
 		SendParentCommand "QPKGs-ACrestore-to:Remove $qpkg_name"
 		MarkActionForkAsError
@@ -10965,26 +10980,27 @@ _QPKG:restore_()
 	FuncForkInit
 
 	local a=''
+	local action=restore
 	local -i z=0
 
 	if IsNtValidQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" restore '' sk "not installed, try 'rebuild' instead"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "not installed, try 'rebuild' instead"
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" restore '' sk 'author incompatible'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbCanBackup; then
-		SaveActionResultMetrics QPKG "$qpkg_name" restore '' sk 'restore is unsupported by this QPKG'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'restore is unsupported by this QPKG'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" restore '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgBackupExist; then
-		SaveActionResultMetrics QPKG "$qpkg_name" restore '' sk 'backup file does not exist'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'backup file does not exist'
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -11001,11 +11017,11 @@ _QPKG:restore_()
 	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
 
 	if [[ $z -eq 0 ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" restore '' ok
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 		SendPackageStateChange ISrestored
 		MarkActionForkAsOk
 	else
-		SaveActionResultMetrics QPKG "$qpkg_name" restore '' er "$z"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
 		MarkActionForkAsError
 	fi
 
@@ -11032,22 +11048,23 @@ _QPKG:clean_()
 	FuncForkInit
 
 	local a=''
+	local action=clean
 	local -i z=0
 
 	if IsNtValidQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" clean '' sk 'not installed'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" clean '' sk 'author incompatible'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbCanClean; then
-		SaveActionResultMetrics QPKG "$qpkg_name" clean '' sk 'clean is unsupported by this QPKG'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'clean is unsupported by this QPKG'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" clean '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -11071,10 +11088,10 @@ _QPKG:clean_()
 	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
 
 	if [[ $z -eq 0 ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" clean '' ok
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 		MarkActionForkAsOk
 	else
-		SaveActionResultMetrics QPKG "$qpkg_name" clean '' er "$z"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
 		MarkActionForkAsError
 		# TODO: if debug mode, save action log to session log.
 	fi
@@ -11109,36 +11126,37 @@ _QPKG:sign_()
 	FuncForkInit
 
 	local a=''
+	local action='"sign"'
 	local b=''
 	local -i retries=0
 	local -i z=0
 
 	if ! IsOsCanManageSignedPackages; then
-		SaveActionResultMetrics QPKG "$qpkg_name" '"sign"' '' sk 'not required: firmware < 4.3.5'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not required: firmware < 4.3.5'
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinOSVerOk || ! IsQpkgDbMaxOSVerOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" '"sign"' '' sk "$(GetOsName) version incompatible"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "$(GetOsName) version incompatible"
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinRAMOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" '"sign"' '' sk 'installed RAM insufficient'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'installed RAM insufficient'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" '"sign"' '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=2
 	elif [[ ! -e $r_cert_db_pathfile ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" '"sign"' '' sa "$(GetOsName) QPKG certificate database unavailable, no further signing will occur"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sa "$(GetOsName) QPKG certificate database unavailable, no further signing will occur"
 		MarkActionForkAsSkippedAbort
 		z=3
 	elif IsQpkgSigned; then
-		SaveActionResultMetrics QPKG "$qpkg_name" '"sign"' '' sk 'already signed'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'already signed'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsQpkgProhibited; then
-		SaveActionResultMetrics QPKG "$qpkg_name" '"sign"' '' sk 'prohibited package'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'prohibited package'
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -11183,11 +11201,11 @@ EOB
 	done
 
 	if [[ $z -eq 0 ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" '"sign"' '' ok
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 		SendPackageStateChange ISsigned
 		MarkActionForkAsOk
 	else
-		SaveActionResultMetrics QPKG "$qpkg_name" '"sign"' '' er "$(Parenthesise "$z") but don't know why. Please report this as a bug"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$(Parenthesise "$z") but don't know why. Please report this as a bug"
 		SendParentCommand 'show_suggest_raise_issue=true'
 		MarkActionForkAsError
 	fi
@@ -11218,32 +11236,33 @@ _QPKG:unsign_()
 	FuncForkInit
 
 	local a=''
+	local action='"unsign"'
 	local b=''
 	local -i retries=0
 	local -i z=0
 
 	if ! IsOsCanManageSignedPackages; then
-		SaveActionResultMetrics QPKG "$qpkg_name" '"unsign"' '' sk 'not required: firmware < 4.3.5'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not required: firmware < 4.3.5'
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinOSVerOk || ! IsQpkgDbMaxOSVerOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" '"unsign"' '' sk "$(GetOsName) version incompatible"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "$(GetOsName) version incompatible"
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinRAMOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" '"unsign"' '' sk 'installed RAM insufficient'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'installed RAM insufficient'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" '"unsign"' '' sk "assigned to another repository, please 'reassign' it first"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=2
 	elif [[ ! -e $r_cert_db_pathfile ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" '"unsign"' '' sa "$(GetOsName) QPKG certificate database unavailable, no further unsigning will occur"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sa "$(GetOsName) QPKG certificate database unavailable, no further unsigning will occur"
 		MarkActionForkAsSkippedAbort
 		z=3
 	elif IsNtQpkgSigned; then
-		SaveActionResultMetrics QPKG "$qpkg_name" '"unsign"' '' sk 'not signed'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not signed'
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -11289,11 +11308,11 @@ EOB
 	done
 
 	if [[ $z -eq 0 ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" '"unsign"' '' ok
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 		SendPackageStateChange ISsigned
 		MarkActionForkAsOk
 	else
-		SaveActionResultMetrics QPKG "$qpkg_name" '"unsign"' '' er "$(Parenthesise "$z") but don't know why. Please report this as a bug"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$(Parenthesise "$z") but don't know why. Please report this as a bug"
 		SendParentCommand 'show_suggest_raise_issue=true'
 		MarkActionForkAsError
 	fi
@@ -11326,11 +11345,12 @@ _QPKG:status_()
 	FuncForkInit
 
 	local a=''
+	local action=status
 	local b=''
 	local -i z=0
 
 	if IsNtValidQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" status '' sk 'not installed'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -11383,7 +11403,7 @@ _QPKG:status_()
 			SendPackageStateChange ISunknown
 	esac
 
-	SaveActionResultMetrics QPKG "$qpkg_name" status '' ok "returned: $z"
+	SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok "returned: $z"
 	MarkActionForkAsOk
 
 	FuncForkExit $z
