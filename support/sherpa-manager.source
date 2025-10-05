@@ -12943,7 +12943,7 @@ IsQpkgInstallable()
 	# Outputs: (local)
 	#	$? = true/false
 
-	IsNtQpkgInstalled && IsNtValidQpkgInstalled && IsQpkgDbMinOSVerOk && IsQpkgDbMaxOSVerOk && IsQpkgDbMinRAMOk
+	IsNtQpkgInstalled && IsNtQpkgProhibited && IsNtValidQpkgInstalled && IsQpkgDbMinOSVerOk && IsQpkgDbMaxOSVerOk && IsQpkgDbMinRAMOk
 
 	}
 
@@ -13379,6 +13379,42 @@ IsNtQpkgInstalled()
 	#	$? = true/false
 
 	! IsQpkgInstalled "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}"
+
+	}
+
+IsQpkgProhibited()
+	{
+
+	# Check if specified QPKG is prohibited (not to be installed), and don't check anything else.
+
+	# Inputs: (local)
+	#	$1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+
+	# Inputs: (global)
+	#	$qpkg_name (default for $1)
+
+	# Outputs: (local)
+	#	$? = true/false
+
+	local re=\\b${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}\\b			# bash 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
+
+	[[ ${r_qpkgs_name_prohibited[*]} =~ $re ]]
+
+	}
+
+IsNtQpkgProhibited()
+	{
+
+	# Inputs: (local)
+	#	$1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+
+	# Inputs: (global)
+	#	$qpkg_name (default for $1)
+
+	# Outputs: (local)
+	#	$? = true/false
+
+	! IsQpkgProhibited "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}"
 
 	}
 
@@ -16317,7 +16353,7 @@ LoadDatabase()
 	. "$r_packages_pathfile"
 	packages_loaded=true
 
-#	r_qpkgs_name_migration=(Lidarr Medusa qBittorrent Readarr SickGear Sonarr Tautulli Transmission Watcher3 Whisparr)
+	r_qpkgs_name_prohibited=(OLidarr OMedusa OqBittorrent OReadarr OSickGear OSonarr OTautulli OTransmission OWatcher3 OWhisparr)
 
 	# Fourth, lock list arrays and values.
 
@@ -16353,7 +16389,7 @@ LoadDatabase()
 	readonly r_essential_pips
 	readonly r_exclusion_pips
 	readonly r_packages_epoch
-	readonly r_qpkgs_name_migration
+	readonly r_qpkgs_name_prohibited
 
 	DebugVar r_packages_epoch
 
