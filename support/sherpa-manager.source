@@ -1554,7 +1554,7 @@ ProcActions()
 	ProcAction reassign all QPKG reassign
 	ProcAction download all QPKG download
 
-	# If any QPKG download failed, don't attempt further actions.
+	# If any QPKG download fails, don't attempt further actions. Skipped (sk) downloads are not failures.
 
 	if QPKGs-ACdownload-er.IsNone && QPKGs-ACdownload-se.IsNone && QPKGs-ACdownload-sa.IsNone; then
 		# -> Package removal phase <-
@@ -9858,45 +9858,50 @@ _QPKG:download_()
 					local -r r_log_pathfile=$r_logs_path/$r_local_filename.$r_download_log_file
 	local -i z=0
 
-	if ! IsQpkgDbMinOSVerOk || ! IsQpkgDbMaxOSVerOk; then
+	if IsQpkgProhibited; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'prohibited package'
+
+		IsOsCanManageSignedPackages && SendParentCommand "QPKGs-ACsign-to:Remove $qpkg_name"
+		SendParentCommand "QPKGs-ACinstall-to:Remove $qpkg_name"
+		SendParentCommand "QPKGs-ACreinstall-to:Remove $qpkg_name"
+		SendParentCommand "QPKGs-ACupgrade-to:Remove $qpkg_name"
+
+		MarkActionForkAsSkipped
+		z=2
+	elif IsQpkgConflicts; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'conflicting package installed'
+
+		IsOsCanManageSignedPackages && SendParentCommand "QPKGs-ACsign-to:Remove $qpkg_name"
+		SendParentCommand "QPKGs-ACinstall-to:Remove $qpkg_name"
+		SendParentCommand "QPKGs-ACreinstall-to:Remove $qpkg_name"
+		SendParentCommand "QPKGs-ACupgrade-to:Remove $qpkg_name"
+
+		MarkActionForkAsSkipped
+		z=2
+	elif ! IsQpkgDbMinOSVerOk || ! IsQpkgDbMaxOSVerOk; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "$(GetOsName) version incompatible"
 
-		if IsOsCanManageSignedPackages; then
-			SendParentCommand "QPKGs-ACsign-to:Remove $qpkg_name"
-			SendParentCommand "QPKGs-ACinstall-to:Remove $qpkg_name"
-			SendParentCommand "QPKGs-ACreinstall-to:Remove $qpkg_name"
-			SendParentCommand "QPKGs-ACupgrade-to:Remove $qpkg_name"
-		fi
+		IsOsCanManageSignedPackages && SendParentCommand "QPKGs-ACsign-to:Remove $qpkg_name"
+		SendParentCommand "QPKGs-ACinstall-to:Remove $qpkg_name"
+		SendParentCommand "QPKGs-ACreinstall-to:Remove $qpkg_name"
+		SendParentCommand "QPKGs-ACupgrade-to:Remove $qpkg_name"
 
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinRAMOk; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'installed RAM insufficient'
 
-		if IsOsCanManageSignedPackages; then
-			SendParentCommand "QPKGs-ACsign-to:Remove $qpkg_name"
-			SendParentCommand "QPKGs-ACinstall-to:Remove $qpkg_name"
-			SendParentCommand "QPKGs-ACreinstall-to:Remove $qpkg_name"
-			SendParentCommand "QPKGs-ACupgrade-to:Remove $qpkg_name"
-		fi
-
-		MarkActionForkAsSkipped
-		z=2
-	elif IsQpkgProhibited; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'prohibited package'
-
-		if IsOsCanManageSignedPackages; then
-			SendParentCommand "QPKGs-ACsign-to:Remove $qpkg_name"
-			SendParentCommand "QPKGs-ACinstall-to:Remove $qpkg_name"
-			SendParentCommand "QPKGs-ACreinstall-to:Remove $qpkg_name"
-			SendParentCommand "QPKGs-ACupgrade-to:Remove $qpkg_name"
-		fi
+		IsOsCanManageSignedPackages && SendParentCommand "QPKGs-ACsign-to:Remove $qpkg_name"
+		SendParentCommand "QPKGs-ACinstall-to:Remove $qpkg_name"
+		SendParentCommand "QPKGs-ACreinstall-to:Remove $qpkg_name"
+		SendParentCommand "QPKGs-ACupgrade-to:Remove $qpkg_name"
 
 		MarkActionForkAsSkipped
 		z=2
 	elif IsFile "$r_local_pathfile"; then
 		if FileMatchesMD5 "$r_local_pathfile" "$r_remote_hash"; then
 			SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'already downloaded'
+
 			MarkActionForkAsSkipped
 			z=2
 		else
@@ -9968,12 +9973,12 @@ _QPKG:install_()
 		local log_pathfile=$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_install_log_file
 	local -i z=0
 
-	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'installation package unavailable'
-		MarkActionForkAsSkippedError
-		z=4
-	elif IsQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "already installed, please use 'reinstall' instead"
+	if IsQpkgProhibited; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'prohibited package'
+		MarkActionForkAsSkipped
+		z=2
+	elif IsQpkgConflicts; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'conflicting package installed'
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinOSVerOk || ! IsQpkgDbMaxOSVerOk; then
@@ -9984,10 +9989,14 @@ _QPKG:install_()
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'installed RAM insufficient'
 		MarkActionForkAsSkipped
 		z=2
-	elif IsQpkgProhibited; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'prohibited package'
+	elif IsQpkgInstalled; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "already installed, please use 'reinstall' instead"
 		MarkActionForkAsSkipped
 		z=2
+	elif [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'installation package unavailable'
+		MarkActionForkAsSkippedError
+		z=4
 	fi
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
@@ -10021,7 +10030,11 @@ _QPKG:install_()
 		/bin/sh "$local_pathfile" > "$log_pathfile" 2>&1 &
 	fi
 
-	[[ $r_nas_arch = aarch64 ]] && sleep 1
+	case $r_nas_qpkg_arch in
+		a19|a31|a41|a64)
+			sleep 1				# Allow for slower CPU arches.
+	esac
+
 	wait $!
 	z=$?
 
@@ -12204,6 +12217,44 @@ GetQpkgDbOptionals()
 
 	}
 
+GetQpkgConflicts()
+	{
+
+	# Inputs: (local)
+	#	$1 (optional) = QPKG name - if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
+
+	# Inputs: (global)
+	#	$qpkg_index
+	#	$qpkg_name
+	#	$r_qpkg_conflicts_with[]
+	#	$r_qpkg_name[]
+
+	# Outputs: (local)
+	#	stdout = string of space-separated QPKGs that conflict with this QPKG.
+	#	$? = 0 (found), !0 (not-found)
+
+	local a=''
+	local -i i=0
+
+	if [[ -n ${1:-} ]]; then
+		for i in "${!r_qpkg_name[@]}"; do
+			[[ ${r_qpkg_name[$i]} = "$1" ]] || continue
+			a=${r_qpkg_conflicts_with[$i]}
+			break
+		done
+	else
+		a=${r_qpkg_conflicts_with[$qpkg_index]}
+	fi
+
+	[[ -n $a ]] || a=none
+	[[ $a = none ]] && return 1
+
+	printf '%s' "$a"
+
+	return 0
+
+	}
+
 GetQpkgDbIPKs()
 	{
 
@@ -12218,9 +12269,7 @@ GetQpkgDbIPKs()
 
 	[[ -n $qpkg_name && $qpkg_index -gt 0 ]] || return
 
-	local a=''
-
-	a=${r_qpkg_requires_ipks[$qpkg_index]}
+	local a=${r_qpkg_requires_ipks[$qpkg_index]}
 	[[ $a = none ]] && return 1
 
 	printf '%s' "$a"
@@ -12245,7 +12294,7 @@ GetQpkgDbActiveTest()
 
 	[[ -n $qpkg_name && $qpkg_index -gt 0 ]] || return
 
-	a=${r_qpkg_test_for_active[$qpkg_index]}
+	local a=${r_qpkg_test_for_active[$qpkg_index]}
 	[[ $a = none ]] && return 1
 
 	printf '%s' "$a"
@@ -13417,10 +13466,9 @@ IsQpkgInstalled()
 	# Outputs: (local)
 	#	$? = true/false
 
-	# shellcheck disable=2076
-	[[ "$(< /etc/config/qpkg.conf)" =~ "[${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}]" ]]
+	/bin/grep -F "[${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}]" /etc/config/qpkg.conf
 
-	}
+	} &> /dev/null
 
 IsNtQpkgInstalled()
 	{
@@ -13471,6 +13519,46 @@ IsNtQpkgProhibited()
 	#	$? = true/false
 
 	! IsQpkgProhibited "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}"
+
+	}
+
+IsQpkgConflicts()
+	{
+
+	# Does specified QPKG conflict with any installed QPKGs?
+
+	# Inputs: (local)
+	#	$1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+
+	# Inputs: (global)
+	#	$qpkg_name (default for $1)
+
+	# Outputs: (local)
+	#	$? = true/false
+
+	local a=''
+
+	for a in $(GetQpkgConflicts "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}"); do
+		IsQpkgInstalled $a && return
+	done
+
+	return 1
+
+	}
+
+IsNtQpkgConflicts()
+	{
+
+	# Inputs: (local)
+	#	$1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+
+	# Inputs: (global)
+	#	$qpkg_name (default for $1)
+
+	# Outputs: (local)
+	#	$? = true/false
+
+	! IsQpkgConflicts "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}"
 
 	}
 
