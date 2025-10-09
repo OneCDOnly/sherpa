@@ -1204,7 +1204,7 @@ AssignQpkgsToActions()
 		for qpkg_name in $(QPKGs-ACrebuild-to:Array); do
 			SetQpkgIndex
 
-			if IsNtValidQpkgInstalled "$qpkg_name" && IsQpkgBackupExist; then
+			if IsNtValidQpkgInstalled "$qpkg_name" && (IsQpkgBackupExist || (QPKGs-ACbackup-to.Exist "O$qpkg_name" && QPKGs-ACuninstall-to.Exist "O$qpkg_name")); then						# KLUDGE: Permit 'rebuild' of non-'O' QPKG if an 'O' QPKG is marked for 'backup' and 'uninstall'. Allows 'rebuild' of non-'O' to be run in same session as 'backup' & 'uninstall' of 'O'.
 				QPKGs-ACinstall-to:Add "$qpkg_name"
 				QPKGs-ACrestore-to:Add "$qpkg_name"
 			fi
@@ -10260,7 +10260,19 @@ _QPKG:rebuild_()
 
 	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
 
-	if IsValidQpkgInstalled; then
+	if IsQpkgProhibited; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'prohibited package'
+		MarkActionForkAsSkipped
+		z=2
+	elif ! IsQpkgDbCanBackup; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'rebuild is not supported by this QPKG'
+		MarkActionForkAsSkipped
+		z=2
+	elif IsNtQpkgRepoSelfManaged; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
+		MarkActionForkAsSkipped
+		z=2
+	elif IsValidQpkgInstalled; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "already installed, please use 'restore' instead"
 		MarkActionForkAsSkipped
 		z=2
@@ -10268,20 +10280,8 @@ _QPKG:rebuild_()
 #		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
 #		MarkActionForkAsSkipped
 #		z=2
-	elif ! IsQpkgDbCanBackup; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'rebuild is not supported by this QPKG'
-		MarkActionForkAsSkipped
-		z=2
-	elif ! IsQpkgBackupExist; then
+	elif ! IsQpkgBackupExist && ! (QPKGs-ACbackup-to.Exist "O$qpkg_name" && QPKGs-ACuninstall-to.Exist "O$qpkg_name"); then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'backup file does not exist'
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
-		MarkActionForkAsSkipped
-		z=2
-	elif IsQpkgProhibited; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'prohibited package'
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -11144,7 +11144,7 @@ _QPKG:restore_()
 
 	if [[ $z -eq 0 ]]; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
-		SendPackageStateChange ISrestored
+#		SendPackageStateChange ISrestored			# TODO: this doesn't yet exist as an object.
 		MarkActionForkAsOk
 	else
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
@@ -13069,7 +13069,7 @@ IsQpkgUpgradable()
 	# Outputs: (local)
 	#	$? = true/false
 
-	IsValidQpkgInstalled && IsQpkgRepoSelfManaged && IsQpkgDbMinOSVerOk && IsQpkgDbMaxOSVerOk && IsQpkgDbMinRAMOk && [[ $(GetQpkgInstalledVer) != "$(GetQpkgDbVer)" ]]
+	IsNtQpkgProhibited && IsValidQpkgInstalled && IsQpkgRepoSelfManaged && IsQpkgDbMinOSVerOk && IsQpkgDbMaxOSVerOk && IsQpkgDbMinRAMOk && [[ $(GetQpkgInstalledVer) != "$(GetQpkgDbVer)" ]]
 
 	}
 
@@ -13084,7 +13084,7 @@ IsQpkgInstallable()
 	# Outputs: (local)
 	#	$? = true/false
 
-	IsNtQpkgInstalled && IsNtQpkgProhibited && IsNtValidQpkgInstalled && IsQpkgDbMinOSVerOk && IsQpkgDbMaxOSVerOk && IsQpkgDbMinRAMOk
+	IsNtQpkgProhibited && IsNtQpkgInstalled && IsNtValidQpkgInstalled && IsQpkgDbMinOSVerOk && IsQpkgDbMaxOSVerOk && IsQpkgDbMinRAMOk
 
 	}
 
