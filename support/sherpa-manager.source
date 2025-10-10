@@ -1358,7 +1358,7 @@ AssignQpkgsToActions()
 #	QPKGs-ACactivate-to:Remove "$(QPKGs-ACreactivate-to:Array)"
 
 	# Build a list of original storage paths for packages to be uninstalled, then installed again later this session (a "complex reinstall").
-	# This will ensure user-migrated packages end-up in the correct locations.
+	# This will ensure volume-migrated packages end-up in the correct locations.
 
 	QPKGs_were_installed_name=()
 	QPKGs_were_installed_path=()
@@ -13050,9 +13050,11 @@ IsQpkgBackupExist()
 
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}.config.tar.gz
 
-	# KLUDGE: rename prohibited QPKG name (with a leading 'O') backup to replacement QPKG name backup.
+	# KLUDGE: rename prohibited QPKG name (with a leading 'O') backup to migrated QPKG name backup.
 
-	[[ -e $r_qpkg_bu_path/O$a && ! -e $r_qpkg_bu_path/$a ]] && mv "$r_qpkg_bu_path/O$a" "$r_qpkg_bu_path/$a"
+	if [[ -e $r_qpkg_bu_path/O$a && ! -e $r_qpkg_bu_path/$a ]]; then
+		mv "$r_qpkg_bu_path/O$a" "$r_qpkg_bu_path/$a"
+	fi
 
 	[[ -e $r_qpkg_bu_path/$a ]]
 
@@ -13579,22 +13581,6 @@ IsQpkgConflicts()
 	done
 
 	return 1
-
-	}
-
-IsNtQpkgConflicts()
-	{
-
-	# Inputs: (local)
-	#	$1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
-
-	# Inputs: (global)
-	#	$qpkg_name (default for $1)
-
-	# Outputs: (local)
-	#	$? = true/false
-
-	! IsQpkgConflicts "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}"
 
 	}
 
