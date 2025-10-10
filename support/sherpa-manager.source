@@ -9965,6 +9965,16 @@ _QPKG:download_()
 
 		MarkActionForkAsSkipped
 		z=2
+	elif IsQpkgConflicts && ! QPKGs-ACuninstall-to.Exist "O$qpkg_name"; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'conflicting package installed'
+
+		IsOsCanManageSignedPackages && SendParentCommand "QPKGs-ACsign-to:Remove $qpkg_name"
+		SendParentCommand "QPKGs-ACinstall-to:Remove $qpkg_name"
+		SendParentCommand "QPKGs-ACreinstall-to:Remove $qpkg_name"
+		SendParentCommand "QPKGs-ACupgrade-to:Remove $qpkg_name"
+
+		MarkActionForkAsSkipped
+		z=2
 	elif ! IsQpkgDbMinOSVerOk || ! IsQpkgDbMaxOSVerOk; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "$(GetOsName) version incompatible"
 
