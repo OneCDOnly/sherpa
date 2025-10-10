@@ -4905,6 +4905,8 @@ _GenerateStatusReportDataLine_()
 				auxiliary='installed RAM insufficient'
 			elif IsQpkgProhibited; then
 				auxiliary='prohibited package'
+			elif IsQpkgConflicts; then
+				auxiliary='conflict exists'
 			fi
 
 			if [[ $auxiliary != false ]]; then
@@ -13053,7 +13055,13 @@ IsQpkgBackupExist()
 	# KLUDGE: rename prohibited QPKG name (with a leading 'O') backup to migrated QPKG name backup.
 
 	if [[ -e $r_qpkg_bu_path/O$a && ! -e $r_qpkg_bu_path/$a ]]; then
-		mv "$r_qpkg_bu_path/O$a" "$r_qpkg_bu_path/$a"
+		# If backup file is less than 500MB, make a copy of it. If it's larger than this, move it (to copy it would take an unacceptably long time).
+
+		if [[ $(/usr/bin/stat -c %s "$r_qpkg_bu_path/O$a") -le $((500*(2**20))) ]]; then
+			cp "$r_qpkg_bu_path/O$a" "$r_qpkg_bu_path/$a"
+		else
+			mv "$r_qpkg_bu_path/O$a" "$r_qpkg_bu_path/$a"
+		fi
 	fi
 
 	[[ -e $r_qpkg_bu_path/$a ]]
