@@ -13061,20 +13061,22 @@ IsQpkgBackupExist()
 	#	$? = true/false
 
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}.config.tar.gz
+	local old=$r_qpkg_bu_path/O$a
+	local new=$r_qpkg_bu_path/$a
 
 	# KLUDGE: rename prohibited QPKG name (with a leading 'O') backup to migrated QPKG name backup.
 
-	if [[ -e $r_qpkg_bu_path/O$a && ! -e $r_qpkg_bu_path/$a ]]; then
-		# If backup file is less than 500MB, make a copy of it. If it's larger than this, move it (to copy it would take an unacceptably long time).
+	if [[ -e $old && ! -e $new ]]; then
+		# If backup file is less than 500MiB, make a copy of it. If it's larger than this, move it (to copy it would take an unacceptably long time).
 
-		if [[ $(/usr/bin/stat -c %s "$r_qpkg_bu_path/O$a") -le $((500*(2**20))) ]]; then
-			cp "$r_qpkg_bu_path/O$a" "$r_qpkg_bu_path/$a"
+		if [[ $(/usr/bin/stat -c %s "$old") -le $((500*(2**20))) ]]; then
+			cp "$old" "$new"
 		else
-			mv "$r_qpkg_bu_path/O$a" "$r_qpkg_bu_path/$a"
+			mv "$old" "$new"
 		fi
 	fi
 
-	[[ -e $r_qpkg_bu_path/$a ]]
+	[[ -e $new ]]
 
 	}
 
