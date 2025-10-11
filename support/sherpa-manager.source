@@ -315,7 +315,7 @@ LoadConsts()
 	# Various.
 
 	readonly r_char_tab=$'\t'
-	package_release_version=v251002
+	package_release_version=v251011
 	readonly r_entware_packages_last_updated=20250602
 	readonly r_file_change_threshold_minutes=60
 	readonly r_log_tail_lines=5000
@@ -1074,7 +1074,7 @@ CheckEnv()
 		ShowAsWarn "the $(TextBrightRed 'Out-Of-Memory killer') has been triggered, check for $(TextBrightRed inactive) QPKGs"
 	fi
 
-	if IsQpkgInstalled OMedusa; then
+	if IsQpkgInstalled OMedusa || IsQpkgInstalled Medusa; then
 		ShowAsImportant "Medusa support to be discontinued: $(ShowAsURL 'https://github.com/OneCDOnly/sherpa/discussions/318')"
 	fi
 
@@ -1204,7 +1204,7 @@ AssignQpkgsToActions()
 		for qpkg_name in $(QPKGs-ACrebuild-to:Array); do
 			SetQpkgIndex
 
-			if IsNtValidQpkgInstalled "$qpkg_name" && IsQpkgBackupExist; then
+			if IsNtValidQpkgInstalled "$qpkg_name" && (IsQpkgBackupExist || (QPKGs-ACbackup-to.Exist "O$qpkg_name" && QPKGs-ACuninstall-to.Exist "O$qpkg_name")); then						# KLUDGE: Permit 'rebuild' of non-'O' QPKG if an 'O' QPKG is marked for 'backup' and 'uninstall'. Allows 'rebuild' of non-'O' to be run in same session as 'backup' & 'uninstall' of 'O'.
 				QPKGs-ACinstall-to:Add "$qpkg_name"
 				QPKGs-ACrestore-to:Add "$qpkg_name"
 			fi
@@ -1358,7 +1358,7 @@ AssignQpkgsToActions()
 #	QPKGs-ACactivate-to:Remove "$(QPKGs-ACreactivate-to:Array)"
 
 	# Build a list of original storage paths for packages to be uninstalled, then installed again later this session (a "complex reinstall").
-	# This will ensure user-migrated packages end-up in the correct locations.
+	# This will ensure volume-migrated packages end-up in the correct locations.
 
 	QPKGs_were_installed_name=()
 	QPKGs_were_installed_path=()
@@ -1385,11 +1385,11 @@ AssignQpkgsToActions()
 	QPKGs-ACdownload-to:Add "$(QPKGs-ACinstall-to:Array)"
 
 	for qpkg_name in $(QPKGs-ACreinstall-to:Array); do
-		IsValidQpkgInstalled "$qpkg_name" && QPKGs-ACdownload-to:Add "$qpkg_name"		# Only download files for reinstallable QPKGs.
+		IsValidQpkgInstalled "$qpkg_name" && QPKGs-ACdownload-to:Add "$qpkg_name"		# Download files for reinstallable QPKGs.
 	done
 
 	for qpkg_name in $(QPKGs-ACupgrade-to:Array); do
-		QPKGs-ISupgradable.Exist "$qpkg_name" && QPKGs-ACdownload-to:Add "$qpkg_name"	# Only download files for upgradable QPKGs.
+		QPKGs-ISupgradable.Exist "$qpkg_name" && QPKGs-ACdownload-to:Add "$qpkg_name"	# Download files for upgradable QPKGs.
 	done
 
 # [[ $useropt_debug = true ]] && ListQPKGsActionsAll
@@ -1554,7 +1554,7 @@ ProcActions()
 	ProcAction reassign all QPKG reassign
 	ProcAction download all QPKG download
 
-	# If any QPKG download failed, don't attempt further actions.
+	# If any QPKG download fails, don't attempt further actions. Skipped (sk) downloads are not failures.
 
 	if QPKGs-ACdownload-er.IsNone && QPKGs-ACdownload-se.IsNone && QPKGs-ACdownload-sa.IsNone; then
 		# -> Package removal phase <-
@@ -4903,6 +4903,10 @@ _GenerateStatusReportDataLine_()
 				auxiliary="$(GetOsName) version incompatible"
 			elif ! IsQpkgDbMinRAMOk; then
 				auxiliary='installed RAM insufficient'
+			elif IsQpkgProhibited; then
+				auxiliary='prohibited package'
+			elif IsQpkgConflicts; then
+				auxiliary='conflict exists'
 			fi
 
 			if [[ $auxiliary != false ]]; then
@@ -9776,1496 +9780,6 @@ SaveActionResultMetrics()
 
 	}
 
-_QPKG:reassign_()
-	{
-
-	# * This function runs asynchronously *
-
-	# Remove the `storeid` assignment for the QPKG named in $qpkg_name.
-
-	# Inputs: (global)
-	#	$qpkg_name
-	#	$r_logs_path
-	#	$r_reassign_log_file
-
-	# Outputs: (local)
-	#	$? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
-
-	FuncForkInit
-
-	local -i z=0
-
-	if IsNtValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultMetrics QPKG "$qpkg_name" reassign '' sk 'not installed'
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" reassign '' sk 'author incompatible'
-		MarkActionForkAsSkipped
-		z=2
-	elif [[ $(GetQpkgInstalledStoreID) = sherpa || $(GetQpkgInstalledStoreID) = undefined ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" reassign '' sk 'already assigned to sherpa'
-		MarkActionForkAsSkipped
-		z=2
-	fi
-
-	[[ $z -eq 0 ]] || FuncForkExit $z
-
-	DebugAsProc "reassigning $(FormatPackageName)"
-	Executer "/sbin/setcfg -e $qpkg_name store -f /etc/config/qpkg.conf" "$r_logs_path/$qpkg_name.$r_reassign_log_file" log:failure-only
-	z=$?
-
-	if [[ $z -eq 0 ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" reassign '' ok
-		MarkActionForkAsOk
-	else
-		SaveActionResultMetrics QPKG "$qpkg_name" reassign '' er "$z"
-		MarkActionForkAsError
-	fi
-
-	FuncForkExit $z
-
-	}
-
-_QPKG:download_()
-	{
-
-	# * This function runs asynchronously *
-
-	# Download the QPKG named in $qpkg_name.
-
-	# Inputs: (global)
-	#	$qpkg_name
-	#	$r_download_log_file
-	#	$r_logs_path
-	#	$r_qpkg_download_path
-
-	# Outputs: (local)
-	#	$? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
-
-	FuncForkInit
-
-	local curl_insecure_opt=''
-	local -r r_remote_hash=$(GetQpkgDbHash)
-	local -r r_remote_url=$(GetQpkgDbURL)
-		local -r r_remote_filename=$(/usr/bin/basename "$r_remote_url")
-			local -r r_local_pathfile=$r_qpkg_download_path/$r_remote_filename
-				local -r r_local_filename=$(/usr/bin/basename "$r_local_pathfile")
-					local -r r_log_pathfile=$r_logs_path/$r_local_filename.$r_download_log_file
-	local -i z=0
-
-	if ! IsQpkgDbMinOSVerOk "$qpkg_name" || ! IsQpkgDbMaxOSVerOk "$qpkg_name"; then
-		SaveActionResultMetrics QPKG "$qpkg_name" download '' sk "$(GetOsName) version incompatible"
-
-		if IsOsCanManageSignedPackages && IsOsRequireSignedPackages; then
-			SendParentCommand "QPKGs-ACsign-to:Remove $qpkg_name"
-			SendParentCommand "QPKGs-ACinstall-to:Remove $qpkg_name"
-			SendParentCommand "QPKGs-ACreinstall-to:Remove $qpkg_name"
-			SendParentCommand "QPKGs-ACupgrade-to:Remove $qpkg_name"
-		fi
-
-		MarkActionForkAsSkipped
-		z=2
-	elif ! IsQpkgDbMinRAMOk "$qpkg_name"; then
-		SaveActionResultMetrics QPKG "$qpkg_name" download '' sk 'installed RAM insufficient'
-
-		if IsOsCanManageSignedPackages && IsOsRequireSignedPackages; then
-			SendParentCommand "QPKGs-ACsign-to:Remove $qpkg_name"
-			SendParentCommand "QPKGs-ACinstall-to:Remove $qpkg_name"
-			SendParentCommand "QPKGs-ACreinstall-to:Remove $qpkg_name"
-			SendParentCommand "QPKGs-ACupgrade-to:Remove $qpkg_name"
-		fi
-
-		MarkActionForkAsSkipped
-		z=2
-	elif IsFile "$r_local_pathfile"; then
-		if FileMatchesMD5 "$r_local_pathfile" "$r_remote_hash"; then
-			SaveActionResultMetrics QPKG "$qpkg_name" download '' sk 'already downloaded'
-			MarkActionForkAsSkipped
-			z=2
-		else
-			DebugInfo "deleting $(FormatFileName "$r_local_filename") as checksum is incorrect"
-			rm -f "$r_local_pathfile" 2> /dev/null
-		fi
-	fi
-
-	[[ $z -eq 0 ]] || FuncForkExit $z
-
-	if IsNtFile "$r_local_pathfile"; then
-		DebugAsProc "downloading $(FormatFileName "$r_remote_filename")"
-		IsOsCanSecureDownload || curl_insecure_opt=' --insecure'
-		rm -f "$r_log_pathfile" 2> /dev/null
-
-		Executer "/sbin/curl${curl_insecure_opt} --location --output $r_local_pathfile $r_remote_url" "$r_log_pathfile" log:failure-only
-		z=$?
-
-		if [[ $z -eq 0 ]]; then
-			if FileMatchesMD5 "$r_local_pathfile" "$r_remote_hash"; then
-				[[ $(Lowercase "${r_local_pathfile##*.}") = zip ]] && /usr/bin/unzip -nq "$r_local_pathfile" -d "$r_qpkg_download_path"
-				SaveActionResultMetrics QPKG "$qpkg_name" download '' ok
-				SendPackageStateChange ISdownloaded
-				MarkActionForkAsOk
-			else
-				SaveActionResultMetrics QPKG "$qpkg_name" download '' er "cache file $(FormatFileName "$r_local_filename") has incorrect checksum"
-				SendPackageStateChange ISNTdownloaded
-				MarkActionForkAsError
-				z=1
-			fi
-		else
-			SaveActionResultMetrics QPKG "$qpkg_name" download '' er "$z"
-			MarkActionForkAsError
-			z=1		# Remap to 1 (last time I checked, 'curl' had 92 return codes).
-		fi
-	fi
-
-	FuncForkExit $z
-
-	}
-
-_QPKG:install_()
-	{
-
-	# * This function runs asynchronously *
-
-	# Install the QPKG named in $qpkg_name.
-
-	# Inputs: (global)
-	#	$QPKGs_were_installed_name[]
-	#	$qpkg_name
-	#	$r_external_apps_backup_path
-	#	$r_external_apps_path
-	#	$r_install_log_file
-	#	$r_logs_path
-	#	$r_nas_arch
-	#	$r_opkg_cmd
-	#	$useropt_debug
-	#	$useropt_verbose
-
-	# Outputs: (local)
-	#	$? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
-
-	FuncForkInit
-
-	local a=''
-	local local_pathfile=$(GetQpkgDbPathFilename)
-		local log_pathfile=$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_install_log_file
-	local -i z=0
-
-	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" install '' se 'installation package unavailable'
-		MarkActionForkAsSkippedError
-		z=4
-	elif IsQpkgInstalled "$qpkg_name"; then
-		SaveActionResultMetrics QPKG "$qpkg_name" install '' sk "already installed, please use 'reinstall' instead"
-		MarkActionForkAsSkipped
-		z=2
-	elif ! IsQpkgDbMinOSVerOk "$qpkg_name" || ! IsQpkgDbMaxOSVerOk "$qpkg_name"; then
-		SaveActionResultMetrics QPKG "$qpkg_name" install '' sk "$(GetOsName) version incompatible"
-		MarkActionForkAsSkipped
-		z=2
-	elif ! IsQpkgDbMinRAMOk "$qpkg_name"; then
-		SaveActionResultMetrics QPKG "$qpkg_name" install '' sk 'installed RAM insufficient'
-		MarkActionForkAsSkipped
-		z=2
-	fi
-
-	[[ $z -eq 0 ]] || FuncForkExit $z
-
-	if [[ $qpkg_name = Entware ]] && IsNtValidQpkgInstalled Entware && QPKGs-ACinstall-to.Exist Entware; then
-
-		if [[ -d $r_external_apps_path && ! -L $r_external_apps_path && ! -e $r_external_apps_backup_path ]]; then
-			DebugAsProc "move-aside $r_external_apps_path"
-			mv "$r_external_apps_path" "$r_external_apps_backup_path"
-			DebugAsDone complete
-		fi
-	fi
-
-	DebugAsProc "installing $(FormatPackageName)"
-	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
-	[[ ${QPKGs_were_installed_name[*]:-} = *"$qpkg_name"* ]] && a+="QINSTALL_PATH=$(GetQpkgInstalledOriginalPath "$qpkg_name") "
-
-#	Executer "${a}/bin/sh $local_pathfile" "$log_pathfile" log:failure-only 10
-#	z=$?
-
-	# Instead of running QPKG installer through Executer(), let's run it here for-now. Installing on my TS-216G (arm64) results in the installer process randomly not waiting for the installer script to finish, and proceeding to the next step`.
-
-	# ./sherpa-manager.source add duf HideThatBanner IncreaseTimeouts OLidarr nzbget OliveTin Par2turbo QDK OReadarr sherpa OSonarr TorrServer Unrar OWhisparr
-
-	if [[ $useropt_verbose = true ]]; then
-		[[ -n $a ]] && export ${a?}
-		/bin/sh "$local_pathfile" > >(/usr/bin/tee "$log_pathfile") 2>&1 &	# NOTE: `tee` buffers stdout here.		# squeezer-ignore
-		z=${PIPESTATUS[0]}													# Examine $PIPESTATUS after `tee` to get returncode of previous command: https://stackoverflow.com/questions/1221833/pipe-output-and-capture-exit-status-in-bash
-	else
-		[[ -n $a ]] && export ${a?}
-		/bin/sh "$local_pathfile" > "$log_pathfile" 2>&1 &
-	fi
-
-	[[ $r_nas_arch = aarch64 ]] && sleep 1
-	wait $!
-	z=$?
-
-	LogQpkgServiceResult
-	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
-
-	[[ $qpkg_name = Entware ]] && IsNtCriticalFile $r_opkg_cmd && z=1		# Entware installation has failed.
-
-	if [[ $z -eq 0 || $z -eq 10 ]]; then	# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes user-aborts.
-		SaveActionResultMetrics QPKG "$qpkg_name" install '' ok "v$(GetQpkgInstalledVer)"
-
-		if [[ $qpkg_name = Entware ]]; then
-			SendParentCommand ModPathToEntware
-			SendParentCommand _UpdateEntwarePackageList_
-			PatchEntwareService
-
-			# Shift all files from /opt into /opt.bak
-
-			if [[ -L $r_external_apps_path && -d $r_external_apps_backup_path ]]; then
-				DebugAsProc "move-into $r_external_apps_path"
-				(shopt -s dotglob; mv "$r_external_apps_backup_path"/* "$r_external_apps_path"/)
-				rmdir "$r_external_apps_backup_path"
-				DebugAsDone complete
-			fi
-		fi
-
-		MarkActionForkAsOk
-		z=0		# Remap to zero.
-	else
-		SaveActionResultMetrics QPKG "$qpkg_name" install '' er "$z"
-		IsOsCanManageSignedPackages && IsQpkgSigned && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
-		MarkActionForkAsError
-	fi
-
-	ClearQpkgInstalledAppCenterNotifier
-
-	FuncForkExit $z
-
-	}
-
-_QPKG:reinstall_()
-	{
-
-	# * This function runs asynchronously *
-
-	# Reinstall the QPKG named in $qpkg_name.
-
-	# Inputs: (global)
-	#	$qpkg_name
-	#	$r_logs_path
-	#	$r_opkg_cmd
-	#	$r_reinstall_log_file
-	#	$useropt_debug
-
-	# Outputs: (local)
-	#	$? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
-
-	FuncForkInit
-
-	local a='REINSTALL_QPKG=true '
-	local local_pathfile=$(GetQpkgDbPathFilename)
-	local -i z=0
-
-	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" reinstall '' se 'installation package unavailable'
-		MarkActionForkAsSkippedError
-		z=4
-	elif IsNtQpkgInstalled "$qpkg_name"; then
-		SaveActionResultMetrics QPKG "$qpkg_name" reinstall '' sk "not already installed, please use 'install' instead"
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" reinstall '' sk 'author incompatible'
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" reinstall '' sk "assigned to another repository, please 'reassign' it first"
-		MarkActionForkAsSkipped
-		z=2
-	fi
-
-	[[ $z -eq 0 ]] || FuncForkExit $z
-
-	DebugAsProc "reinstalling $(FormatPackageName)"
-	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
-	IsValidQpkgInstalled && a+="QINSTALL_PATH=$(/usr/bin/dirname "$(GetQpkgInstalledPath)") "
-
-	Executer "${a}/bin/sh $local_pathfile" "$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_reinstall_log_file" log:failure-only 10
-	z=$?
-
-	LogQpkgServiceResult
-	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
-
-	[[ $qpkg_name = Entware ]] && IsNtCriticalFile $r_opkg_cmd && z=1
-
-	if [[ $z -eq 0 || $z -eq 10 ]]; then		# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes aborts.
-		SaveActionResultMetrics QPKG "$qpkg_name" reinstall '' ok "v$(GetQpkgInstalledVer)"
-		IsQpkgDbCanClean && SendParentCommand "QPKGs-ACclean-to:Add $qpkg_name"
-		MarkActionForkAsOk
-		z=0		# Remap to zero.
-	else
-		SaveActionResultMetrics QPKG "$qpkg_name" reinstall '' er "$z"
-		MarkActionForkAsError
-	fi
-
-	ClearQpkgInstalledAppCenterNotifier
-
-	FuncForkExit $z
-
-	}
-
-_QPKG:rebuild_()
-	{
-
-	# * This function runs asynchronously *
-
-	# Meta-action: rebuild the QPKG named in $qpkg_name. This is a `download`, `install` and `restore`, but only if a backup file exists for this QPKG.
-
-	# Inputs: (global)
-	#	$qpkg_name
-
-	# Outputs: (local)
-	#	$? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
-
-	FuncForkInit
-
-	local -i z=0
-
-	if IsValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultMetrics QPKG "$qpkg_name" meta-rebuild '' sk "already installed, please use 'restore' instead"
-		MarkActionForkAsSkipped
-		z=2
-#	elif IsNtQpkgAuthorOk; then
-#		SaveActionResultMetrics QPKG "$qpkg_name" meta-rebuild '' sk 'author incompatible'
-#		MarkActionForkAsSkipped
-#		z=2
-	elif ! IsQpkgDbCanBackup; then
-		SaveActionResultMetrics QPKG "$qpkg_name" meta-rebuild '' sk 'rebuild is not supported by this QPKG'
-		MarkActionForkAsSkipped
-		z=2
-	elif ! IsQpkgBackupExist; then
-		SaveActionResultMetrics QPKG "$qpkg_name" meta-rebuild '' sk 'backup file does not exist'
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" meta-rebuild '' sk "assigned to another repository, please 'reassign' it first"
-		MarkActionForkAsSkipped
-		z=2
-	fi
-
-	[[ $z -eq 0 ]] || FuncForkExit $z
-
-	DebugAsProc "meta-rebuilding $(FormatPackageName)"
-
-	# Nothing-to-do here, real QPKG actions have already been assigned in CheckEnv().
-
-	SaveActionResultMetrics QPKG "$qpkg_name" meta-rebuild '' ok
-	MarkActionForkAsOk
-	ClearQpkgInstalledAppCenterNotifier
-
-	FuncForkExit $z
-
-	}
-
-_QPKG:upgrade_()
-	{
-
-	# * This function runs asynchronously *
-
-	# Upgrade the QPKG named in $qpkg_name.
-
-	# Inputs: (global)
-	#	$qpkg_name
-	#	$r_logs_path
-	#	$r_upgrade_log_file
-	#	$useropt_debug
-
-	# Outputs: (local)
-	#	$? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
-
-	FuncForkInit
-
-	local a='UPGRADE_QPKG=true '
-	local local_pathfile=$(GetQpkgDbPathFilename)
-	local -i z=0
-
-	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" upgrade '' se 'installation package unavailable'
-		MarkActionForkAsSkippedError
-		z=4
-	elif IsNtValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultMetrics QPKG "$qpkg_name" upgrade '' sk 'not installed'
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" upgrade '' sk 'author incompatible'
-		MarkActionForkAsSkipped
-		z=2
-	elif ! QPKGs-ISupgradable.Exist "$qpkg_name"; then
-		SaveActionResultMetrics QPKG "$qpkg_name" upgrade '' sk 'no new QPKG is available'
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" upgrade '' sk "assigned to another repository, please 'reassign' it first"
-		MarkActionForkAsSkipped
-		z=2
-	fi
-
-	[[ $z -eq 0 ]] || FuncForkExit $z
-
-	local prev_ver=$(GetQpkgInstalledVer)
-
-	DebugAsProc "upgrading $(FormatPackageName)"
-	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
-	IsValidQpkgInstalled && a+="QINSTALL_PATH=$(/usr/bin/dirname "$(GetQpkgInstalledPath "$qpkg_name")") "
-
-	Executer "${a}/bin/sh $local_pathfile" "$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_upgrade_log_file" log:failure-only 10
-	z=$?
-
-	LogQpkgServiceResult
-	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
-
-	[[ $qpkg_name = Entware ]] && IsNtCriticalFile $r_opkg_cmd && z=1
-
-	if [[ $z -eq 0 || $z -eq 10 ]]; then	# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes aborts.
-		SendPackageStateChange ISNTupgradable
-		IsQpkgDbCanClean && SendParentCommand "QPKGs-ACclean-to:Add $qpkg_name"
-
-		local current_ver=$(GetQpkgInstalledVer)
-
-		if [[ $current_ver = "$prev_ver" ]]; then
-			SaveActionResultMetrics QPKG "$qpkg_name" upgrade '' ok "v$current_ver"
-		else
-			SaveActionResultMetrics QPKG "$qpkg_name" upgrade '' ok "v$prev_ver -> v$current_ver"		# squeezer-ignore
-		fi
-
-		MarkActionForkAsOk
-		z=0		# Remap to zero.
-	else
-		SaveActionResultMetrics QPKG "$qpkg_name" upgrade '' er "$z"
-		MarkActionForkAsError
-	fi
-
-	ClearQpkgInstalledAppCenterNotifier
-
-	FuncForkExit $z
-
-	}
-
-_QPKG:uninstall_()
-	{
-
-	# * This function runs asynchronously *
-
-	# Uninstall the QPKG named in $qpkg_name.
-
-	# Inputs: (global)
-	#	$qpkg_name
-	#	$r_logs_path
-	#	$r_uninstall_log_file
-	#	$useropt_debug
-
-	# Outputs: (local)
-	#	$? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
-
-	FuncForkInit
-
-	local a=''
-	local -i z=0
-
-	if IsNtValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultMetrics QPKG "$qpkg_name" uninstall '' sk 'not installed'
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" uninstall '' sk 'author incompatible'
-		MarkActionForkAsSkipped
-		z=2
-	elif [[ $qpkg_name = sherpa ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" uninstall '' sk "it's needed here! 😉"
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" uninstall '' sk "assigned to another repository, please 'reassign' it first"
-		MarkActionForkAsSkipped
-		z=2
-	fi
-
-	[[ $z -eq 0 ]] || FuncForkExit $z
-
-	local -r r_qpkg_uninstaller_pathfile=$(GetQpkgInstalledPath)/.uninstall.sh
-
-	[[ $qpkg_name = Entware ]] && SaveIpkAndPipList
-
-	if IsFile "$r_qpkg_uninstaller_pathfile"; then
-		DebugAsProc "uninstalling $(FormatPackageName)"
-		[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
-
-		Executer "${a}/bin/sh $r_qpkg_uninstaller_pathfile" "$r_logs_path/$qpkg_name.$r_uninstall_log_file" log:failure-only
-		z=$?
-
-		if [[ $z -eq 0 ]]; then
-			# WARNING: beware of `qpkg_cli --remove`. It removes the QPKG installation path around 10-20 seconds after execution. If sherpa has moved-on and starts an install, `qpkg_cli` will remove the newly created QPKG installation path partway through the installation. So, check if QPKG is to be installed again. If-so, don't use `qpkg_cli --remove`.
-
-			[[ -e /sbin/qpkg_cli ]] && ! QPKGs-ACinstall-to.Exist "$qpkg_name" && /sbin/qpkg_cli --remove "$qpkg_name" &> /dev/null
-			SaveActionResultMetrics QPKG "$qpkg_name" uninstall '' ok
-			/sbin/rmcfg "$qpkg_name" -f /etc/config/qpkg.conf
-			DebugAsDone 'removed icon information from App Center'
-
-			if [[ $qpkg_name = Entware ]]; then
-				SendParentCommand ModPathToEntware
-				SendParentCommand SetCapabilities
-				SetCapabilities
-			fi
-
-			SendPackageStateChange ISNTactive
-			MarkActionForkAsOk
-		else
-			SaveActionResultMetrics QPKG "$qpkg_name" uninstall '' er "$z"
-			MarkActionForkAsError
-		fi
-	else
-		# Standard QPKG `.uninstall.sh` was not found, so can't continue with uninstallation (maybe force this instead with `rm -r` ?).
-
-		SaveActionResultMetrics QPKG "$qpkg_name" uninstall '' er "$(FormatFileName '.uninstall.sh') not found"
-		MarkActionForkAsError
-		z=1
-	fi
-
-	FuncForkExit $z
-
-	}
-
-_QPKG:activate_()
-	{
-
-	# * This function runs asynchronously *
-
-	# Activate/start the service-script for the QPKG named in $qpkg_name.
-
-	# Inputs: (global)
-	#	$qpkg_name
-	#	$r_activate_log_file
-	#	$r_logs_path
-	#	$r_qpkg_start_timeout_seconds
-	#	$useropt_debug
-
-	# Outputs: (local)
-	#	$? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
-
-	FuncForkInit
-
-	local a=''
-	local -i z=0
-
-	if IsNtValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultMetrics QPKG "$qpkg_name" activate '' sk 'not installed'
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" activate '' sk 'author incompatible'
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtQpkgEnabled "$qpkg_name"; then
-		SaveActionResultMetrics QPKG "$qpkg_name" activate '' sk "disabled, please 'enable' it first"
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" activate '' sk "assigned to another repository, please 'reassign' it first"
-		MarkActionForkAsSkipped
-		z=2
-	fi
-
-	[[ $z -eq 0 ]] || FuncForkExit $z
-
-	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_activate_log_file
-	local timeout=''
-	IsOsCanQpkgTimeout && timeout=' -t '$r_qpkg_start_timeout_seconds
-	local service_pathfile=$(GetQpkgServicePathFile)
-
-	DebugAsProc "activating $(FormatPackageName)"
-
-	if [[ $service_pathfile = undefined ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" activate '' se 'QPKG service-script file undefined'
-		MarkActionForkAsSkippedError
-
-		FuncForkExit 4
-	elif [[ $useropt_debug = true ]]; then
-		a+='DEBUG_QPKG=true '
-
-		Executer "${a}${service_pathfile} start" "$r_log_pathfile" log:failure-only
-		z=$?
-	elif IsQpkgDbWillLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
-		Executer "/sbin/qpkg_service${timeout} start $qpkg_name" "$r_log_pathfile" log:failure-only
-		QpkgServiceResultWasOk && z=0 || z=1
-	else
-		Executer "$service_pathfile start" "$r_log_pathfile" log:failure-only
-		z=$?
-	fi
-
-	LogQpkgServiceResult
-	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
-
-	if [[ $z -eq 0 ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" activate '' ok
-
-		if [[ $qpkg_name = Entware ]]; then
-			SendParentCommand ModPathToEntware
-			SendParentCommand SetCapabilities
-			SetCapabilities
-		fi
-
-		SendPackageStateChange ISactive
-		MarkActionForkAsOk
-	else
-		SaveActionResultMetrics QPKG "$qpkg_name" activate '' er "$z"
-		SendPackageStateChange ISNTactive
-		MarkActionForkAsError
-	fi
-
-	ClearQpkgInstalledAppCenterNotifier
-
-	FuncForkExit $z
-
-	}
-
-_QPKG:reactivate_()
-	{
-
-	# * This function runs asynchronously *
-
-	# Reactivate/restart the service-script for the QPKG named in $qpkg_name.
-
-	# Inputs: (global)
-	#	$qpkg_name
-	#	$r_logs_path
-	#	$r_qpkg_restart_timeout_seconds
-	#	$r_reactivate_log_file
-	#	$useropt_debug
-
-	# Outputs: (local)
-	#	$? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
-
-	FuncForkInit
-
-	local a=''
-	local -i z=0
-
-	if IsNtValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultMetrics QPKG "$qpkg_name" reactivate '' sk 'not installed'
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" reactivate '' sk 'author incompatible'
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtQpkgEnabled "$qpkg_name"; then
-		SaveActionResultMetrics QPKG "$qpkg_name" reactivate '' sk "disabled, please 'enable' it first"
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" reactivate '' sk "assigned to another repository, please 'reassign' it first"
-		MarkActionForkAsSkipped
-		z=2
-	fi
-
-	[[ $z -eq 0 ]] || FuncForkExit $z
-
-	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_reactivate_log_file
-	local timeout=''
-	IsOsCanQpkgTimeout && timeout=' -t '$r_qpkg_restart_timeout_seconds
-	local service_pathfile=$(GetQpkgServicePathFile)
-
-	DebugAsProc "reactivating $(FormatPackageName)"
-
-	if [[ $service_pathfile = undefined ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" reactivate '' se 'QPKG service-script file undefined'
-		MarkActionForkAsSkippedError
-
-		FuncForkExit 4
-	elif [[ $useropt_debug = true ]]; then
-		a+='DEBUG_QPKG=true '
-
-		Executer "${a}${service_pathfile} restart" "$r_log_pathfile" log:failure-only
-		z=$?
-	elif IsQpkgDbWillLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
-		Executer "/sbin/qpkg_service${timeout} restart $qpkg_name" "$r_log_pathfile" log:failure-only
-		QpkgServiceResultWasOk && z=0 || z=1
-	else
-		Executer "$service_pathfile restart" "$r_log_pathfile" log:failure-only
-		z=$?
-	fi
-
-	LogQpkgServiceResult
-	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
-
-	if [[ $z -eq 0 ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" reactivate '' ok
-		SendParentCommand "QPKGs-ACactivate-to:Remove $qpkg_name"
-		MarkActionForkAsOk
-	else
-		SaveActionResultMetrics QPKG "$qpkg_name" reactivate '' er "$z"
-		MarkActionForkAsError
-	fi
-
-	ClearQpkgInstalledAppCenterNotifier
-
-	FuncForkExit $z
-
-	}
-
-_QPKG:deactivate_()
-	{
-
-	# * This function runs asynchronously *
-
-	# Deactivate/stop the service-script for the QPKG named in $qpkg_name.
-
-	# Inputs: (global)
-	#	$qpkg_name
-	#	$r_deactivate_log_file
-	#	$r_logs_path
-	#	$r_qpkg_stop_timeout_seconds
-	#	$useropt_debug
-
-	# Outputs: (local)
-	#	$? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
-
-	FuncForkInit
-
-	local a=''
-	local -i z=0
-
-	if IsNtValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultMetrics QPKG "$qpkg_name" deactivate '' sk 'not installed'
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" deactivate '' sk 'author incompatible'
-		MarkActionForkAsSkipped
-		z=2
-#	elif [[ $qpkg_name = sherpa ]]; then
-#		SaveActionResultMetrics QPKG "$qpkg_name" deactivate '' sk "it's needed here! 😉"
-#		MarkActionForkAsSkipped
-#		z=2
-	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" deactivate '' sk "assigned to another repository, please 'reassign' it first"
-		MarkActionForkAsSkipped
-		z=2
-	fi
-
-	[[ $z -eq 0 ]] || FuncForkExit $z
-
-	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_deactivate_log_file
-	local timeout=''
-	IsOsCanQpkgTimeout && timeout=' -t '$r_qpkg_stop_timeout_seconds
-	local service_pathfile=$(GetQpkgServicePathFile)
-
-	DebugAsProc "deactivating $(FormatPackageName)"
-
-	if [[ $service_pathfile = undefined ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" deactivate '' se 'QPKG service-script file undefined'
-		MarkActionForkAsSkippedError
-
-		FuncForkExit 4
-	elif [[ $useropt_debug = true ]]; then
-		a+='DEBUG_QPKG=true '
-
-		Executer "${a}${service_pathfile} stop" "$r_log_pathfile" log:failure-only
-		z=$?
-	elif IsQpkgDbWillLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
-		Executer "/sbin/qpkg_service${timeout} stop $qpkg_name" "$r_log_pathfile" log:failure-only
-		QpkgServiceResultWasOk && z=0 || z=1
-	else
-		Executer "$service_pathfile stop" "$r_log_pathfile" log:failure-only
-		z=$?
-	fi
-
-	LogQpkgServiceResult
-	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
-
-	if [[ $z -eq 0 ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" deactivate '' ok
-
-		if [[ $qpkg_name = Entware ]]; then
-			SendParentCommand ModPathToEntware
-			SendParentCommand SetCapabilities
-			SetCapabilities
-		fi
-
-		SendPackageStateChange ISNTactive
-		MarkActionForkAsOk
-	else
-		SaveActionResultMetrics QPKG "$qpkg_name" deactivate '' er "$z"
-		MarkActionForkAsError
-	fi
-
-	ClearQpkgInstalledAppCenterNotifier
-
-	FuncForkExit $z
-
-	}
-
-_QPKG:enable_()
-	{
-
-	# * This function runs asynchronously *
-
-	# Enable the QPKG named in $qpkg_name.
-
-	# Inputs: (global)
-	#	$qpkg_name
-	#	$r_enable_log_file
-	#	$r_logs_path
-	#	$r_qpkg_enable_timeout_seconds
-
-	# Outputs: (local)
-	#	$? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
-
-	FuncForkInit
-
-	local -i z=0
-
-	if IsNtValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultMetrics QPKG "$qpkg_name" enable '' sk 'not installed'
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" enable '' sk 'author incompatible'
-		MarkActionForkAsSkipped
-		z=2
-	elif IsQpkgEnabled "$qpkg_name"; then
-		SaveActionResultMetrics QPKG "$qpkg_name" enable '' sk 'already enabled'
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" enable '' sk "assigned to another repository, please 'reassign' it first"
-		MarkActionForkAsSkipped
-		z=2
-	fi
-
-	[[ $z -eq 0 ]] || FuncForkExit $z
-
-	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_enable_log_file
-	local timeout=''
-	IsOsCanQpkgTimeout && timeout=' -t '$r_qpkg_enable_timeout_seconds
-
-	DebugAsProc "enabling $(FormatPackageName)"
-
-	Executer "/sbin/qpkg_service${timeout} enable $qpkg_name" "$r_log_pathfile" log:failure-only
-	ClearQpkgInstalledAppCenterNotifier
-	SaveActionResultMetrics QPKG "$qpkg_name" enable '' ok
-	MarkActionForkAsOk
-
-	FuncForkExit $z
-
-	}
-
-_QPKG:disable_()
-	{
-
-	# * This function runs asynchronously *
-
-	# Disable the QPKG named in $qpkg_name.
-
-	# Inputs: (global)
-	#	$qpkg_name
-	#	$r_disable_log_file
-	#	$r_logs_path
-	#	$r_qpkg_disable_timeout_seconds
-
-	# Outputs: (local)
-	#	$? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
-
-	FuncForkInit
-
-	local -i z=0
-
-	if IsNtValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultMetrics QPKG "$qpkg_name" disable '' sk 'not installed'
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" disable '' sk 'author incompatible'
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtQpkgEnabled "$qpkg_name"; then
-		SaveActionResultMetrics QPKG "$qpkg_name" disable '' sk 'already disabled'
-		MarkActionForkAsSkipped
-		z=2
-#	elif [[ $qpkg_name = sherpa ]]; then
-#		SaveActionResultMetrics QPKG "$qpkg_name" disable '' sk "it's needed here! 😉"
-#		MarkActionForkAsSkipped
-#		z=2
-	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" disable '' sk "assigned to another repository, please 'reassign' it first"
-		MarkActionForkAsSkipped
-		z=2
-	fi
-
-	[[ $z -eq 0 ]] || FuncForkExit $z
-
-	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_disable_log_file
-	local timeout=''
-	IsOsCanQpkgTimeout && timeout=' -t '$r_qpkg_disable_timeout_seconds
-
-	DebugAsProc "disabling $(FormatPackageName)"
-
-	Executer "/sbin/qpkg_service${timeout} disable $qpkg_name" "$r_log_pathfile" log:failure-only
-
-	ClearQpkgInstalledAppCenterNotifier
-	SaveActionResultMetrics QPKG "$qpkg_name" disable '' ok
-	MarkActionForkAsOk
-
-	FuncForkExit $z
-
-	}
-
-_QPKG:enableau_()
-	{
-
-	# * This function runs asynchronously *
-
-	# Enable auto-updating of the QPKG named in $qpkg_name.
-
-	# Inputs: (global)
-	#	$qpkg_name
-	#	$r_enableau_log_file
-	#	$r_logs_path
-	#	$useropt_debug
-
-	# Outputs: (local)
-	#	$? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
-
-	FuncForkInit
-
-	local a=''
-	local -i z=0
-
-	if IsNtValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultMetrics QPKG "$qpkg_name" enableau '' sk 'not installed'
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" enableau '' sk 'author incompatible'
-		MarkActionForkAsSkipped
-		z=2
-	elif [[ $qpkg_name = sherpa ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" enableau '' sk 'auto-update is always enabled'
-		MarkActionForkAsSkipped
-		z=2
-	elif ! IsQpkgDbCanRestartToUpdate "$qpkg_name"; then
-		SaveActionResultMetrics QPKG "$qpkg_name" enableau '' sk 'auto-update is unsupported by this QPKG'
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" enableau '' sk "assigned to another repository, please 'reassign' it first"
-		MarkActionForkAsSkipped
-		z=2
-	fi
-
-	[[ $z -eq 0 ]] || FuncForkExit $z
-
-	DebugAsProc "enabling auto-update $(FormatPackageName)"
-	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
-
-	Executer "${a}$(GetQpkgServicePathFile) enable-auto-update" "$r_logs_path/$qpkg_name.$r_enableau_log_file" log:failure-only
-	z=$?
-
-	LogQpkgServiceResult
-	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
-
-	if [[ $z -eq 0 ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" enableau '' ok
-		MarkActionForkAsOk
-	else
-		SaveActionResultMetrics QPKG "$qpkg_name" enableau '' er "$z"
-		MarkActionForkAsError
-	fi
-
-	FuncForkExit $z
-
-	}
-
-_QPKG:disableau_()
-	{
-
-	# * This function runs asynchronously *
-
-	# Disable auto-updating of the QPKG named in $qpkg_name.
-
-	# Inputs: (global)
-	#	$qpkg_name
-	#	$r_disableau_log_file
-	#	$r_logs_path
-	#	$useropt_debug
-
-	# Outputs: (local)
-	#	$? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
-
-	FuncForkInit
-
-	local a=''
-	local -i z=0
-
-	if IsNtValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultMetrics QPKG "$qpkg_name" disableau '' sk 'not installed'
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" disableau '' sk 'author incompatible'
-		MarkActionForkAsSkipped
-		z=2
-	elif [[ $qpkg_name = sherpa ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" disableau '' sk 'auto-update cannot be disabled'
-		MarkActionForkAsSkipped
-		z=2
-	elif ! IsQpkgDbCanRestartToUpdate "$qpkg_name"; then
-		SaveActionResultMetrics QPKG "$qpkg_name" disableau '' sk 'auto-update is unsupported by this QPKG'
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" disableau '' sk "assigned to another repository, please 'reassign' it first"
-		MarkActionForkAsSkipped
-		z=2
-	fi
-
-	[[ $z -eq 0 ]] || FuncForkExit $z
-
-	DebugAsProc "disabling auto-update $(FormatPackageName)"
-	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
-
-	Executer "${a}$(GetQpkgServicePathFile) disable-auto-update" "$r_logs_path/$qpkg_name.$r_disableau_log_file" log:failure-only
-	z=$?
-
-	LogQpkgServiceResult
-	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
-
-	if [[ $z -eq 0 ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" disableau '' ok
-		MarkActionForkAsOk
-	else
-		SaveActionResultMetrics QPKG "$qpkg_name" disableau '' er "$z"
-		MarkActionForkAsError
-	fi
-
-	FuncForkExit $z
-
-	}
-
-_QPKG:backup_()
-	{
-
-	# * This function runs asynchronously *
-
-	# Run a `backup` action for the QPKG named in $qpkg_name.
-
-	# Inputs: (global)
-	#	$qpkg_name
-	#	$r_backup_log_file
-	#	$r_logs_path
-	#	$useropt_debug
-
-	# Outputs: (local)
-	#	$? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
-
-	FuncForkInit
-
-	local a=''
-	local -i z=0
-
-	if IsNtValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultMetrics QPKG "$qpkg_name" backup '' sk 'not installed'
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" backup '' sk 'author incompatible'
-		MarkActionForkAsSkipped
-		z=2
-	elif ! IsQpkgDbCanBackup; then
-		SaveActionResultMetrics QPKG "$qpkg_name" backup '' sk 'backup is unsupported by this QPKG'
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" backup '' sk "assigned to another repository, please 'reassign' it first"
-		MarkActionForkAsSkipped
-		z=2
-	fi
-
-	[[ $z -eq 0 ]] || FuncForkExit $z
-
-	DebugAsProc "backing-up $(FormatPackageName) configuration"
-	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
-
-	Executer "${a}$(GetQpkgServicePathFile) backup" "$r_logs_path/$qpkg_name.$r_backup_log_file" log:failure-only
-	z=$?
-
-	LogQpkgServiceResult
-	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
-
-	if [[ $z -eq 0 ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" backup '' ok
-		SendPackageStateChange ISbackedup
-		MarkActionForkAsOk
-	else
-		SaveActionResultMetrics QPKG "$qpkg_name" backup '' er "$z"
-		MarkActionForkAsError
-	fi
-
-	FuncForkExit $z
-
-	}
-
-_QPKG:restore_()
-	{
-
-	# * This function runs asynchronously *
-
-	# Run a `restore` action for the QPKG named in $qpkg_name.
-
-	# Inputs: (global)
-	#	$qpkg_name
-	#	$r_logs_path
-	#	$r_restore_log_file
-	#	$useropt_debug
-
-	# Outputs: (local)
-	#	$? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
-
-	FuncForkInit
-
-	local a=''
-	local -i z=0
-
-	if IsNtValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultMetrics QPKG "$qpkg_name" restore '' sk "not installed, try 'rebuild' instead"
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" restore '' sk 'author incompatible'
-		MarkActionForkAsSkipped
-		z=2
-	elif ! IsQpkgDbCanBackup; then
-		SaveActionResultMetrics QPKG "$qpkg_name" restore '' sk 'restore is unsupported by this QPKG'
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" restore '' sk "assigned to another repository, please 'reassign' it first"
-		MarkActionForkAsSkipped
-		z=2
-	elif ! IsQpkgBackupExist; then
-		SaveActionResultMetrics QPKG "$qpkg_name" restore '' sk 'backup file does not exist'
-		MarkActionForkAsSkipped
-		z=2
-	fi
-
-	[[ $z -eq 0 ]] || FuncForkExit $z
-
-	DebugAsProc "restoring $(FormatPackageName) configuration"
-	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
-
-	Executer "${a}$(GetQpkgServicePathFile) restore" "$r_logs_path/$qpkg_name.$r_restore_log_file" log:failure-only
-	z=$?
-
-	LogQpkgServiceResult
-	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
-
-	if [[ $z -eq 0 ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" restore '' ok
-		SendPackageStateChange ISrestored
-		MarkActionForkAsOk
-	else
-		SaveActionResultMetrics QPKG "$qpkg_name" restore '' er "$z"
-		MarkActionForkAsError
-	fi
-
-	FuncForkExit $z
-
-	}
-
-_QPKG:clean_()
-	{
-
-	# * This function runs asynchronously *
-
-	# Run a `clean` action for the QPKG named in $qpkg_name.
-
-	# Inputs: (global)
-	#	$qpkg_name
-	#	$r_clean_log_file
-	#	$r_logs_path
-	#	$useropt_debug
-
-	# Outputs: (local)
-	#	$? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
-
-	FuncForkInit
-
-	local a=''
-	local -i z=0
-
-	if IsNtValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultMetrics QPKG "$qpkg_name" clean '' sk 'not installed'
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" clean '' sk 'author incompatible'
-		MarkActionForkAsSkipped
-		z=2
-	elif ! IsQpkgDbCanClean; then
-		SaveActionResultMetrics QPKG "$qpkg_name" clean '' sk 'clean is unsupported by this QPKG'
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" clean '' sk "assigned to another repository, please 'reassign' it first"
-		MarkActionForkAsSkipped
-		z=2
-	fi
-
-	[[ $z -eq 0 ]] || FuncForkExit $z
-
-	DebugAsProc "cleaning $(FormatPackageName)"
-	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
-
-	Executer "${a}$(GetQpkgServicePathFile) clean" "$r_logs_path/$qpkg_name.$r_clean_log_file" log:failure-only
-
-#	if [[ $useropt_debug = true ]]; then
-#		DEBUG_QPKG=true $(GetQpkgServicePathFile) clean
-#	else
-#		$(GetQpkgServicePathFile) clean > "$r_logs_path/$qpkg_name.$r_clean_log_file" 2>&1
-#	fi
-
-	z=$?
-
-	LogQpkgServiceResult
-	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
-
-	if [[ $z -eq 0 ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" clean '' ok
-		MarkActionForkAsOk
-	else
-		SaveActionResultMetrics QPKG "$qpkg_name" clean '' er "$z"
-		MarkActionForkAsError
-		# TODO: if debug mode, save action log to session log.
-	fi
-
-	FuncForkExit $z
-
-	}
-
-_QPKG:sign_()
-	{
-
-	# * This function runs asynchronously *
-
-	# Modify the QTS App Center certificate dB, and add an unsigned QPKG as-if it were signed. It adds a QNAP-generated certificate and digital signature to the certificate database for the unsigned QPKG.
-
-	# Running the code below makes the target QPKG effectively "signed", and allows user to install and run this QPKG with the 'Allow installation of applications without a valid digital signature' App Center option unticked.
-
-	# Only required for QTS 4.3.5 and-later firmwares.
-
-	# Inputs: (global)
-	#	$qpkg_name
-	#	$r_abort_actions_pathfile
-	#	$r_cert_db_pathfile
-	#	$r_qpkg_certificate
-	#	$r_qpkg_signature
-
-	# Outputs: (local)
-	#	$? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
-
-	[[ ! -e $r_abort_actions_pathfile ]] || exit
-
-	FuncForkInit
-
-	local a=''
-	local b=''
-	local -i retries=0
-	local -i z=0
-
-	if ! IsOsCanManageSignedPackages; then
-		SaveActionResultMetrics QPKG "$qpkg_name" '"sign"' '' sk 'not required: firmware < 4.3.5'
-		MarkActionForkAsSkipped
-		z=2
-	elif ! IsQpkgDbMinOSVerOk "$qpkg_name" || ! IsQpkgDbMaxOSVerOk "$qpkg_name"; then
-		SaveActionResultMetrics QPKG "$qpkg_name" '"sign"' '' sk "$(GetOsName) version incompatible"
-		MarkActionForkAsSkipped
-		z=2
-	elif ! IsQpkgDbMinRAMOk "$qpkg_name"; then
-		SaveActionResultMetrics QPKG "$qpkg_name" '"sign"' '' sk 'installed RAM insufficient'
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" '"sign"' '' sk "assigned to another repository, please 'reassign' it first"
-		MarkActionForkAsSkipped
-		z=2
-	elif [[ ! -e $r_cert_db_pathfile ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" '"sign"' '' sa "$(GetOsName) QPKG certificate database unavailable, no further signing will occur"
-		MarkActionForkAsSkippedAbort
-		z=3
-	elif IsQpkgSigned; then
-		SaveActionResultMetrics QPKG "$qpkg_name" '"sign"' '' sk 'already signed'
-		MarkActionForkAsSkipped
-		z=2
-	fi
-
-	[[ $z -eq 0 ]] || FuncForkExit $z
-
-	DebugAsProc "\"signing\" $(FormatPackageName)"
-
-	# https://pynative.com/python-sqlite-insert-into-table/
-
-	a="INSERT INTO Certificate (Type,QpkgName,Cert,DigitalSignature) VALUES ('qpkg','$qpkg_name','$r_qpkg_certificate','$r_qpkg_signature')"
-
-	read -r -d '' b <<EOB
-import sqlite3, sys														# squeezer-ignore
-
-try:																	# squeezer-ignore
-    sqliteConnection = sqlite3.connect('$r_cert_db_pathfile')			# squeezer-ignore
-
-    cursor = sqliteConnection.cursor()									# squeezer-ignore
-    sqlite_add_query = """$a"""											# squeezer-ignore
-    cursor.execute(sqlite_add_query)									# squeezer-ignore
-    sqliteConnection.commit()											# squeezer-ignore
-    cursor.close()														# squeezer-ignore
-    sys.exit()															# squeezer-ignore
-
-finally:																# squeezer-ignore
-    if sqliteConnection:												# squeezer-ignore
-        sqliteConnection.close()										# squeezer-ignore
-EOB
-
-	for ((retries=0; retries<10; retries++)); do
-		/usr/local/bin/python2 -c "$b"
-		z=$?
-
-		case $z in
-			5)		# SQLITE_BUSY
-				sleep 0.5
-				;;
-			*)
-				break
-		esac
-	done
-
-	if [[ $z -eq 0 ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" '"sign"' '' ok
-		SendPackageStateChange ISsigned
-		MarkActionForkAsOk
-	else
-		SaveActionResultMetrics QPKG "$qpkg_name" '"sign"' '' er "$(Parenthesise "$z") but don't know why. Please report this as a bug"
-		SendParentCommand 'show_suggest_raise_issue=true'
-		MarkActionForkAsError
-	fi
-
-	FuncForkExit $z
-
-	}
-
-_QPKG:unsign_()
-	{
-
-	# * This function runs asynchronously *
-
-	# Modify the QTS App Center certificate dB, and remove signing details for a QPKG.
-
-	# Only required for QTS 4.3.5 and-later firmwares.
-
-	# Inputs: (global)
-	#	$qpkg_name
-	#	$r_abort_actions_pathfile
-	#	$r_cert_db_pathfile
-
-	# Outputs: (local)
-	#	$? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
-
-	[[ ! -e $r_abort_actions_pathfile ]] || exit
-
-	FuncForkInit
-
-	local a=''
-	local b=''
-	local -i retries=0
-	local -i z=0
-
-	if ! IsOsCanManageSignedPackages; then
-		SaveActionResultMetrics QPKG "$qpkg_name" '"unsign"' '' sk 'not required: firmware < 4.3.5'
-		MarkActionForkAsSkipped
-		z=2
-	elif ! IsQpkgDbMinOSVerOk "$qpkg_name" || ! IsQpkgDbMaxOSVerOk "$qpkg_name"; then
-		SaveActionResultMetrics QPKG "$qpkg_name" '"unsign"' '' sk "$(GetOsName) version incompatible"
-		MarkActionForkAsSkipped
-		z=2
-	elif ! IsQpkgDbMinRAMOk "$qpkg_name"; then
-		SaveActionResultMetrics QPKG "$qpkg_name" '"unsign"' '' sk 'installed RAM insufficient'
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" '"unsign"' '' sk "assigned to another repository, please 'reassign' it first"
-		MarkActionForkAsSkipped
-		z=2
-	elif [[ ! -e $r_cert_db_pathfile ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" '"unsign"' '' sa "$(GetOsName) QPKG certificate database unavailable, no further unsigning will occur"
-		MarkActionForkAsSkippedAbort
-		z=3
-	elif IsNtQpkgSigned; then
-		SaveActionResultMetrics QPKG "$qpkg_name" '"unsign"' '' sk 'not signed'
-		MarkActionForkAsSkipped
-		z=2
-	fi
-
-	[[ $z -eq 0 ]] || FuncForkExit $z
-
-	DebugAsProc "\"unsigning\" $(FormatPackageName)"
-
-	# https://pynative.com/python-sqlite-delete-from-table/
-
-	a="DELETE from Certificate WHERE QpkgName = '$qpkg_name'"
-
-	read -r -d '' b <<EOB
-import sqlite3, sys														# squeezer-ignore
-
-try:																	# squeezer-ignore
-    sqliteConnection = sqlite3.connect('$r_cert_db_pathfile')			# squeezer-ignore
-
-    cursor = sqliteConnection.cursor()									# squeezer-ignore
-    sqlite_delete_query = """$a"""										# squeezer-ignore
-    cursor.execute(sqlite_delete_query)									# squeezer-ignore
-    sqliteConnection.commit()											# squeezer-ignore
-    cursor.close()														# squeezer-ignore
-    sys.exit()															# squeezer-ignore
-
-finally:																# squeezer-ignore
-    if sqliteConnection:												# squeezer-ignore
-        sqliteConnection.close()										# squeezer-ignore
-EOB
-
-	for ((retries=0; retries<10; retries++)); do
-		/usr/local/bin/python2 -c "$b"
-		z=$?
-
-		case $z in
-			5)		# SQLITE_BUSY
-				sleep 0.5
-				;;
-			*)
-				z=0		# Disregard errors generated while deleting record.
-				break
-		esac
-	done
-
-	if [[ $z -eq 0 ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" '"unsign"' '' ok
-		SendPackageStateChange ISsigned
-		MarkActionForkAsOk
-	else
-		SaveActionResultMetrics QPKG "$qpkg_name" '"unsign"' '' er "$(Parenthesise "$z") but don't know why. Please report this as a bug"
-		SendParentCommand 'show_suggest_raise_issue=true'
-		MarkActionForkAsError
-	fi
-
-	FuncForkExit $z
-
-	}
-
 _QPKG:status_()
 	{
 
@@ -11290,11 +9804,14 @@ _QPKG:status_()
 	FuncForkInit
 
 	local a=''
+	local action=status
 	local b=''
 	local -i z=0
 
-	if IsNtValidQpkgInstalled "$qpkg_name"; then
-		SaveActionResultMetrics QPKG "$qpkg_name" status '' sk 'not installed'
+	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
+
+	if IsNtValidQpkgInstalled; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -11347,8 +9864,1602 @@ _QPKG:status_()
 			SendPackageStateChange ISunknown
 	esac
 
-	SaveActionResultMetrics QPKG "$qpkg_name" status '' ok "returned: $z"
+	SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok "returned: $z"
 	MarkActionForkAsOk
+
+	FuncForkExit $z
+
+	}
+
+_QPKG:reassign_()
+	{
+
+	# * This function runs asynchronously *
+
+	# Remove the `storeid` assignment for the QPKG named in $qpkg_name.
+
+	# Inputs: (global)
+	#	$qpkg_name
+	#	$r_logs_path
+	#	$r_reassign_log_file
+
+	# Outputs: (local)
+	#	$? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
+
+	FuncForkInit
+
+	local action=reassign
+	local -i z=0
+
+	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
+
+	if IsNtValidQpkgInstalled; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
+		MarkActionForkAsSkipped
+		z=2
+	elif IsNtQpkgAuthorOk; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
+		MarkActionForkAsSkipped
+		z=2
+	elif [[ $(GetQpkgInstalledStoreID) = sherpa || $(GetQpkgInstalledStoreID) = undefined ]]; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'already assigned to sherpa'
+		MarkActionForkAsSkipped
+		z=2
+	fi
+
+	[[ $z -eq 0 ]] || FuncForkExit $z
+
+	DebugAsProc "reassigning $(FormatPackageName)"
+	Executer "/sbin/setcfg -e $qpkg_name store -f /etc/config/qpkg.conf" "$r_logs_path/$qpkg_name.$r_reassign_log_file" log:failure-only
+	z=$?
+
+	if [[ $z -eq 0 ]]; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
+		MarkActionForkAsOk
+	else
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
+		MarkActionForkAsError
+	fi
+
+	FuncForkExit $z
+
+	}
+
+_QPKG:download_()
+	{
+
+	# * This function runs asynchronously *
+
+	# Download the QPKG named in $qpkg_name.
+
+	# Inputs: (global)
+	#	$qpkg_name
+	#	$r_download_log_file
+	#	$r_logs_path
+	#	$r_qpkg_download_path
+
+	# Outputs: (local)
+	#	$? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
+
+	FuncForkInit
+
+	local action=download
+	local curl_insecure_opt=''
+	local -r r_remote_hash=$(GetQpkgDbHash)
+	local -r r_remote_url=$(GetQpkgDbURL)
+		local -r r_remote_filename=$(/usr/bin/basename "$r_remote_url")
+			local -r r_local_pathfile=$r_qpkg_download_path/$r_remote_filename
+				local -r r_local_filename=$(/usr/bin/basename "$r_local_pathfile")
+					local -r r_log_pathfile=$r_logs_path/$r_local_filename.$r_download_log_file
+	local -i z=0
+
+	# Reactive checks performed just before the action is carried-out. NOTE: predictive checks are permitted here for time-saving purposes (don't run future actions if this action isn't permitted).
+
+	if IsQpkgProhibited; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'prohibited package'
+
+		IsOsCanManageSignedPackages && SendParentCommand "QPKGs-ACsign-to:Remove $qpkg_name"
+		SendParentCommand "QPKGs-ACinstall-to:Remove $qpkg_name"
+		SendParentCommand "QPKGs-ACreinstall-to:Remove $qpkg_name"
+		SendParentCommand "QPKGs-ACupgrade-to:Remove $qpkg_name"
+
+		MarkActionForkAsSkipped
+		z=2
+	elif IsQpkgConflicts && ! QPKGs-ACuninstall-to.Exist "O$qpkg_name"; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'conflicting package installed'
+
+		IsOsCanManageSignedPackages && SendParentCommand "QPKGs-ACsign-to:Remove $qpkg_name"
+		SendParentCommand "QPKGs-ACinstall-to:Remove $qpkg_name"
+		SendParentCommand "QPKGs-ACreinstall-to:Remove $qpkg_name"
+		SendParentCommand "QPKGs-ACupgrade-to:Remove $qpkg_name"
+
+		MarkActionForkAsSkipped
+		z=2
+	elif ! IsQpkgDbMinOSVerOk || ! IsQpkgDbMaxOSVerOk; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "$(GetOsName) version incompatible"
+
+		IsOsCanManageSignedPackages && SendParentCommand "QPKGs-ACsign-to:Remove $qpkg_name"
+		SendParentCommand "QPKGs-ACinstall-to:Remove $qpkg_name"
+		SendParentCommand "QPKGs-ACreinstall-to:Remove $qpkg_name"
+		SendParentCommand "QPKGs-ACupgrade-to:Remove $qpkg_name"
+
+		MarkActionForkAsSkipped
+		z=2
+	elif ! IsQpkgDbMinRAMOk; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'installed RAM insufficient'
+
+		IsOsCanManageSignedPackages && SendParentCommand "QPKGs-ACsign-to:Remove $qpkg_name"
+		SendParentCommand "QPKGs-ACinstall-to:Remove $qpkg_name"
+		SendParentCommand "QPKGs-ACreinstall-to:Remove $qpkg_name"
+		SendParentCommand "QPKGs-ACupgrade-to:Remove $qpkg_name"
+
+		MarkActionForkAsSkipped
+		z=2
+	elif IsFile "$r_local_pathfile"; then
+		if FileMatchesMD5 "$r_local_pathfile" "$r_remote_hash"; then
+			SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'already downloaded'
+
+			MarkActionForkAsSkipped
+			z=2
+		else
+			DebugInfo "deleting $(FormatFileName "$r_local_filename") as checksum is incorrect"
+			rm -f "$r_local_pathfile" 2> /dev/null
+		fi
+	fi
+
+	[[ $z -eq 0 ]] || FuncForkExit $z
+
+	if IsNtFile "$r_local_pathfile"; then
+		DebugAsProc "downloading $(FormatFileName "$r_remote_filename")"
+		IsOsCanSecureDownload || curl_insecure_opt=' --insecure'
+		rm -f "$r_log_pathfile" 2> /dev/null
+
+		Executer "/sbin/curl${curl_insecure_opt} --location --output $r_local_pathfile $r_remote_url" "$r_log_pathfile" log:failure-only
+		z=$?
+
+		if [[ $z -eq 0 ]]; then
+			if FileMatchesMD5 "$r_local_pathfile" "$r_remote_hash"; then
+				[[ $(Lowercase "${r_local_pathfile##*.}") = zip ]] && /usr/bin/unzip -nq "$r_local_pathfile" -d "$r_qpkg_download_path"
+				SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
+				SendPackageStateChange ISdownloaded
+				MarkActionForkAsOk
+			else
+				SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "cache file $(FormatFileName "$r_local_filename") has incorrect checksum"
+				SendPackageStateChange ISNTdownloaded
+				MarkActionForkAsError
+				z=1
+			fi
+		else
+			SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
+			MarkActionForkAsError
+			z=1		# Remap to 1 (last time I checked, 'curl' had 92 return codes).
+		fi
+	fi
+
+	FuncForkExit $z
+
+	}
+
+_QPKG:install_()
+	{
+
+	# * This function runs asynchronously *
+
+	# Install the QPKG named in $qpkg_name.
+
+	# Inputs: (global)
+	#	$QPKGs_were_installed_name[]
+	#	$qpkg_name
+	#	$r_external_apps_backup_path
+	#	$r_external_apps_path
+	#	$r_install_log_file
+	#	$r_logs_path
+	#	$r_nas_arch
+	#	$r_opkg_cmd
+	#	$useropt_debug
+	#	$useropt_verbose
+
+	# Outputs: (local)
+	#	$? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
+
+	FuncForkInit
+
+	local a=''
+	local action=install
+	local local_pathfile=$(GetQpkgDbPathFilename)
+		local log_pathfile=$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_install_log_file
+	local -i z=0
+
+	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
+
+	if IsQpkgProhibited; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'prohibited package'
+		MarkActionForkAsSkipped
+		z=2
+	elif IsQpkgConflicts; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'conflicting package installed'
+		MarkActionForkAsSkipped
+		z=2
+	elif ! IsQpkgDbMinOSVerOk || ! IsQpkgDbMaxOSVerOk; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "$(GetOsName) version incompatible"
+		MarkActionForkAsSkipped
+		z=2
+	elif ! IsQpkgDbMinRAMOk; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'installed RAM insufficient'
+		MarkActionForkAsSkipped
+		z=2
+	elif IsQpkgInstalled; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "already installed, please use 'reinstall' instead"
+		MarkActionForkAsSkipped
+		z=2
+	elif [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'installation package unavailable'
+		MarkActionForkAsSkippedError
+		z=4
+	fi
+
+	[[ $z -eq 0 ]] || FuncForkExit $z
+
+	if [[ $qpkg_name = Entware ]] && IsNtValidQpkgInstalled Entware && QPKGs-ACinstall-to.Exist Entware; then
+
+		if [[ -d $r_external_apps_path && ! -L $r_external_apps_path && ! -e $r_external_apps_backup_path ]]; then
+			DebugAsProc "move-aside $r_external_apps_path"
+			mv "$r_external_apps_path" "$r_external_apps_backup_path"
+			DebugAsDone complete
+		fi
+	fi
+
+	DebugAsProc "installing $(FormatPackageName)"
+	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
+	[[ ${QPKGs_were_installed_name[*]:-} = *"$qpkg_name"* ]] && a+="QINSTALL_PATH=$(GetQpkgInstalledOriginalPath "$qpkg_name") "
+
+#	Executer "${a}/bin/sh $local_pathfile" "$log_pathfile" log:failure-only 10
+#	z=$?
+
+	# Instead of running QPKG installer through Executer(), let's run it here for-now. Installing on my TS-216G (arm64) results in the installer process randomly not waiting for the installer script to finish, and proceeding to the next step`.
+
+	# ./sherpa-manager.source add duf HideThatBanner IncreaseTimeouts OLidarr nzbget OliveTin Par2turbo QDK OReadarr sherpa OSonarr TorrServer Unrar OWhisparr
+
+	if [[ $useropt_verbose = true ]]; then
+		[[ -n $a ]] && export ${a?}
+		/bin/sh "$local_pathfile" > >(/usr/bin/tee "$log_pathfile") 2>&1 &	# NOTE: `tee` buffers stdout here.		# squeezer-ignore
+		z=${PIPESTATUS[0]}													# Examine $PIPESTATUS after `tee` to get returncode of previous command: https://stackoverflow.com/questions/1221833/pipe-output-and-capture-exit-status-in-bash
+	else
+		[[ -n $a ]] && export ${a?}
+		/bin/sh "$local_pathfile" > "$log_pathfile" 2>&1 &
+	fi
+
+	case $r_nas_qpkg_arch in
+		a19|a31|a41|a64)
+			sleep 1				# Allow for slower CPU arches.
+	esac
+
+	wait $!
+	z=$?
+
+	LogQpkgServiceResult
+	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
+
+	[[ $qpkg_name = Entware ]] && IsNtCriticalFile $r_opkg_cmd && z=1		# Entware installation has failed.
+
+	if [[ $z -eq 0 || $z -eq 10 ]]; then	# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes user-aborts.
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok "v$(GetQpkgInstalledVer)"
+
+		if [[ $qpkg_name = Entware ]]; then
+			SendParentCommand ModPathToEntware
+			SendParentCommand _UpdateEntwarePackageList_
+			PatchEntwareService
+
+			# Shift all files from /opt into /opt.bak
+
+			if [[ -L $r_external_apps_path && -d $r_external_apps_backup_path ]]; then
+				DebugAsProc "move-into $r_external_apps_path"
+				(shopt -s dotglob; mv "$r_external_apps_backup_path"/* "$r_external_apps_path"/)
+				rmdir "$r_external_apps_backup_path"
+				DebugAsDone complete
+			fi
+		fi
+
+		MarkActionForkAsOk
+		z=0		# Remap to zero.
+	else
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
+		IsOsCanManageSignedPackages && IsQpkgSigned && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
+		MarkActionForkAsError
+	fi
+
+	ClearQpkgInstalledAppCenterNotifier
+
+	FuncForkExit $z
+
+	}
+
+_QPKG:reinstall_()
+	{
+
+	# * This function runs asynchronously *
+
+	# Reinstall the QPKG named in $qpkg_name.
+
+	# Inputs: (global)
+	#	$qpkg_name
+	#	$r_logs_path
+	#	$r_opkg_cmd
+	#	$r_reinstall_log_file
+	#	$useropt_debug
+
+	# Outputs: (local)
+	#	$? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
+
+	FuncForkInit
+
+	local a='REINSTALL_QPKG=true '
+	local action=reinstall
+	local local_pathfile=$(GetQpkgDbPathFilename)
+	local -i z=0
+
+	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
+
+	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'installation package unavailable'
+		MarkActionForkAsSkippedError
+		z=4
+	elif IsNtQpkgInstalled; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "not already installed, please use 'install' instead"
+		MarkActionForkAsSkipped
+		z=2
+	elif IsNtQpkgAuthorOk; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
+		MarkActionForkAsSkipped
+		z=2
+	elif IsNtQpkgRepoSelfManaged; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
+		MarkActionForkAsSkipped
+		z=2
+	elif IsQpkgProhibited; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'prohibited package'
+		MarkActionForkAsSkipped
+		z=2
+	fi
+
+	[[ $z -eq 0 ]] || FuncForkExit $z
+
+	DebugAsProc "reinstalling $(FormatPackageName)"
+	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
+	IsValidQpkgInstalled && a+="QINSTALL_PATH=$(/usr/bin/dirname "$(GetQpkgInstalledPath)") "
+
+	Executer "${a}/bin/sh $local_pathfile" "$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_reinstall_log_file" log:failure-only 10
+	z=$?
+
+	LogQpkgServiceResult
+	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
+
+	[[ $qpkg_name = Entware ]] && IsNtCriticalFile $r_opkg_cmd && z=1
+
+	if [[ $z -eq 0 || $z -eq 10 ]]; then		# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes aborts.
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok "v$(GetQpkgInstalledVer)"
+		IsQpkgDbCanClean && SendParentCommand "QPKGs-ACclean-to:Add $qpkg_name"
+		MarkActionForkAsOk
+		z=0		# Remap to zero.
+	else
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
+		MarkActionForkAsError
+	fi
+
+	ClearQpkgInstalledAppCenterNotifier
+
+	FuncForkExit $z
+
+	}
+
+_QPKG:rebuild_()
+	{
+
+	# * This function runs asynchronously *
+
+	# Meta-action: rebuild the QPKG named in $qpkg_name. This is a `download`, `install` and `restore`, but only if a backup file exists for this QPKG.
+
+	# Inputs: (global)
+	#	$qpkg_name
+
+	# Outputs: (local)
+	#	$? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
+
+	FuncForkInit
+
+	local action=meta-rebuild
+	local -i z=0
+
+	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
+
+	if IsQpkgProhibited; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'prohibited package'
+		MarkActionForkAsSkipped
+		z=2
+	elif ! IsQpkgDbCanBackup; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'rebuild is not supported by this QPKG'
+		MarkActionForkAsSkipped
+		z=2
+	elif IsNtQpkgRepoSelfManaged; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
+		MarkActionForkAsSkipped
+		z=2
+	elif IsValidQpkgInstalled; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "already installed, please use 'restore' instead"
+		MarkActionForkAsSkipped
+		z=2
+#	elif IsNtQpkgAuthorOk; then
+#		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
+#		MarkActionForkAsSkipped
+#		z=2
+	elif ! IsQpkgBackupExist && ! (QPKGs-ACbackup-to.Exist "O$qpkg_name" && QPKGs-ACuninstall-to.Exist "O$qpkg_name"); then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'backup file does not exist'
+		MarkActionForkAsSkipped
+		z=2
+	fi
+
+	[[ $z -eq 0 ]] || FuncForkExit $z
+
+	DebugAsProc "meta-rebuilding $(FormatPackageName)"
+
+	# Nothing-to-do here, real QPKG actions have already been assigned in CheckEnv().
+
+	SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
+	MarkActionForkAsOk
+	ClearQpkgInstalledAppCenterNotifier
+
+	FuncForkExit $z
+
+	}
+
+_QPKG:upgrade_()
+	{
+
+	# * This function runs asynchronously *
+
+	# Upgrade the QPKG named in $qpkg_name.
+
+	# Inputs: (global)
+	#	$qpkg_name
+	#	$r_logs_path
+	#	$r_upgrade_log_file
+	#	$useropt_debug
+
+	# Outputs: (local)
+	#	$? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
+
+	FuncForkInit
+
+	local a='UPGRADE_QPKG=true '
+	local action=upgrade
+	local local_pathfile=$(GetQpkgDbPathFilename)
+	local -i z=0
+
+	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
+
+	if [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'installation package unavailable'
+		MarkActionForkAsSkippedError
+		z=4
+	elif IsNtValidQpkgInstalled; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
+		MarkActionForkAsSkipped
+		z=2
+	elif IsNtQpkgAuthorOk; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
+		MarkActionForkAsSkipped
+		z=2
+	elif ! QPKGs-ISupgradable.Exist "$qpkg_name"; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'no new QPKG is available'
+		MarkActionForkAsSkipped
+		z=2
+	elif IsNtQpkgRepoSelfManaged; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
+		MarkActionForkAsSkipped
+		z=2
+	elif IsQpkgProhibited; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'prohibited package'
+		MarkActionForkAsSkipped
+		z=2
+	fi
+
+	[[ $z -eq 0 ]] || FuncForkExit $z
+
+	local prev_ver=$(GetQpkgInstalledVer)
+
+	DebugAsProc "upgrading $(FormatPackageName)"
+	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
+	IsValidQpkgInstalled && a+="QINSTALL_PATH=$(/usr/bin/dirname "$(GetQpkgInstalledPath "$qpkg_name")") "
+
+	Executer "${a}/bin/sh $local_pathfile" "$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_upgrade_log_file" log:failure-only 10
+	z=$?
+
+	LogQpkgServiceResult
+	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
+
+	[[ $qpkg_name = Entware ]] && IsNtCriticalFile $r_opkg_cmd && z=1
+
+	if [[ $z -eq 0 || $z -eq 10 ]]; then	# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes aborts.
+		SendPackageStateChange ISNTupgradable
+		IsQpkgDbCanClean && SendParentCommand "QPKGs-ACclean-to:Add $qpkg_name"
+
+		local current_ver=$(GetQpkgInstalledVer)
+
+		if [[ $current_ver = "$prev_ver" ]]; then
+			SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok "v$current_ver"
+		else
+			SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok "v$prev_ver -> v$current_ver"		# squeezer-ignore
+		fi
+
+		MarkActionForkAsOk
+		z=0		# Remap to zero.
+	else
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
+		MarkActionForkAsError
+	fi
+
+	ClearQpkgInstalledAppCenterNotifier
+
+	FuncForkExit $z
+
+	}
+
+_QPKG:uninstall_()
+	{
+
+	# * This function runs asynchronously *
+
+	# Uninstall the QPKG named in $qpkg_name. Digital signature will be removed automatically by OS.
+
+	# Inputs: (global)
+	#	$qpkg_name
+	#	$r_logs_path
+	#	$r_uninstall_log_file
+	#	$useropt_debug
+
+	# Outputs: (local)
+	#	$? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
+
+	FuncForkInit
+
+	local a='UNINSTALL_QPKG=true '
+	local action=uninstall
+	local -i z=0
+
+	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
+
+	if IsNtValidQpkgInstalled; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
+		MarkActionForkAsSkipped
+		z=2
+	elif IsNtQpkgAuthorOk; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
+		MarkActionForkAsSkipped
+		z=2
+	elif [[ $qpkg_name = sherpa ]]; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "it's needed here! 😉"
+		MarkActionForkAsSkipped
+		z=2
+	elif IsNtQpkgRepoSelfManaged; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
+		MarkActionForkAsSkipped
+		z=2
+	fi
+
+	[[ $z -eq 0 ]] || FuncForkExit $z
+
+	local -r r_qpkg_uninstaller_pathfile=$(GetQpkgInstalledPath)/.uninstall.sh
+
+	[[ $qpkg_name = Entware ]] && SaveIpkAndPipList
+
+	if IsFile "$r_qpkg_uninstaller_pathfile"; then
+		DebugAsProc "uninstalling $(FormatPackageName)"
+		[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
+
+		Executer "${a}/bin/sh $r_qpkg_uninstaller_pathfile" "$r_logs_path/$qpkg_name.$r_uninstall_log_file" log:failure-only
+		z=$?
+
+		if [[ $z -eq 0 ]]; then
+			# WARNING: beware of `qpkg_cli --remove`. It removes the QPKG installation path around 10-20 seconds after execution. If sherpa has moved-on and starts an install, `qpkg_cli` will remove the newly created QPKG installation path partway through the installation. So, check if QPKG is to be installed again. If-so, don't use `qpkg_cli --remove`.
+
+			[[ -e /sbin/qpkg_cli ]] && ! QPKGs-ACinstall-to.Exist "$qpkg_name" && /sbin/qpkg_cli --remove "$qpkg_name" &> /dev/null
+			SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
+			/sbin/rmcfg "$qpkg_name" -f /etc/config/qpkg.conf
+			DebugAsDone 'removed icon information from App Center'
+
+			if [[ $qpkg_name = Entware ]]; then
+				SendParentCommand ModPathToEntware
+				SendParentCommand SetCapabilities
+				SetCapabilities
+			fi
+
+			SendPackageStateChange ISNTactive
+			MarkActionForkAsOk
+		else
+			SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
+			MarkActionForkAsError
+		fi
+	else
+		# Standard QPKG `.uninstall.sh` was not found, so can't continue with uninstallation (maybe force this instead with `rm -r` ?).
+
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$(FormatFileName '.uninstall.sh') not found"
+		MarkActionForkAsError
+		z=1
+	fi
+
+	FuncForkExit $z
+
+	}
+
+_QPKG:activate_()
+	{
+
+	# * This function runs asynchronously *
+
+	# Activate/start the service-script for the QPKG named in $qpkg_name.
+
+	# Inputs: (global)
+	#	$qpkg_name
+	#	$r_activate_log_file
+	#	$r_logs_path
+	#	$r_qpkg_start_timeout_seconds
+	#	$useropt_debug
+
+	# Outputs: (local)
+	#	$? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
+
+	FuncForkInit
+
+	local a=''
+	local action=activate
+	local -i z=0
+
+	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
+
+	if IsNtValidQpkgInstalled; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
+		MarkActionForkAsSkipped
+		z=2
+	elif IsNtQpkgAuthorOk; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
+		MarkActionForkAsSkipped
+		z=2
+	elif IsNtQpkgEnabled; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "disabled, please 'enable' it first"
+		MarkActionForkAsSkipped
+		z=2
+	elif IsNtQpkgRepoSelfManaged; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
+		MarkActionForkAsSkipped
+		z=2
+	fi
+
+	[[ $z -eq 0 ]] || FuncForkExit $z
+
+	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_activate_log_file
+	local timeout=''
+	IsOsCanQpkgTimeout && timeout=' -t '$r_qpkg_start_timeout_seconds
+	local service_pathfile=$(GetQpkgServicePathFile)
+
+	DebugAsProc "activating $(FormatPackageName)"
+
+	if [[ $service_pathfile = undefined ]]; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file undefined'
+		MarkActionForkAsSkippedError
+
+		FuncForkExit 4
+	elif [[ $useropt_debug = true ]]; then
+		a+='DEBUG_QPKG=true '
+
+		Executer "${a}${service_pathfile} start" "$r_log_pathfile" log:failure-only
+		z=$?
+	elif IsQpkgDbWillLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
+		Executer "/sbin/qpkg_service${timeout} start $qpkg_name" "$r_log_pathfile" log:failure-only
+		QpkgServiceResultWasOk && z=0 || z=1
+	else
+		Executer "$service_pathfile start" "$r_log_pathfile" log:failure-only
+		z=$?
+	fi
+
+	LogQpkgServiceResult
+	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
+
+	if [[ $z -eq 0 ]]; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
+
+		if [[ $qpkg_name = Entware ]]; then
+			SendParentCommand ModPathToEntware
+			SendParentCommand SetCapabilities
+			SetCapabilities
+		fi
+
+		SendPackageStateChange ISactive
+		MarkActionForkAsOk
+	else
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
+		SendPackageStateChange ISNTactive
+		MarkActionForkAsError
+	fi
+
+	ClearQpkgInstalledAppCenterNotifier
+
+	FuncForkExit $z
+
+	}
+
+_QPKG:reactivate_()
+	{
+
+	# * This function runs asynchronously *
+
+	# Reactivate/restart the service-script for the QPKG named in $qpkg_name.
+
+	# Inputs: (global)
+	#	$qpkg_name
+	#	$r_logs_path
+	#	$r_qpkg_restart_timeout_seconds
+	#	$r_reactivate_log_file
+	#	$useropt_debug
+
+	# Outputs: (local)
+	#	$? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
+
+	FuncForkInit
+
+	local a=''
+	local action=reactivate
+	local -i z=0
+
+	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
+
+	if IsNtValidQpkgInstalled; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
+		MarkActionForkAsSkipped
+		z=2
+	elif IsNtQpkgAuthorOk; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
+		MarkActionForkAsSkipped
+		z=2
+	elif IsNtQpkgEnabled; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "disabled, please 'enable' it first"
+		MarkActionForkAsSkipped
+		z=2
+	elif IsNtQpkgRepoSelfManaged; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
+		MarkActionForkAsSkipped
+		z=2
+	fi
+
+	[[ $z -eq 0 ]] || FuncForkExit $z
+
+	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_reactivate_log_file
+	local timeout=''
+	IsOsCanQpkgTimeout && timeout=' -t '$r_qpkg_restart_timeout_seconds
+	local service_pathfile=$(GetQpkgServicePathFile)
+
+	DebugAsProc "reactivating $(FormatPackageName)"
+
+	if [[ $service_pathfile = undefined ]]; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file undefined'
+		MarkActionForkAsSkippedError
+
+		FuncForkExit 4
+	elif [[ $useropt_debug = true ]]; then
+		a+='DEBUG_QPKG=true '
+
+		Executer "${a}${service_pathfile} restart" "$r_log_pathfile" log:failure-only
+		z=$?
+	elif IsQpkgDbWillLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
+		Executer "/sbin/qpkg_service${timeout} restart $qpkg_name" "$r_log_pathfile" log:failure-only
+		QpkgServiceResultWasOk && z=0 || z=1
+	else
+		Executer "$service_pathfile restart" "$r_log_pathfile" log:failure-only
+		z=$?
+	fi
+
+	LogQpkgServiceResult
+	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
+
+	if [[ $z -eq 0 ]]; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
+		SendParentCommand "QPKGs-ACactivate-to:Remove $qpkg_name"
+		MarkActionForkAsOk
+	else
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
+		MarkActionForkAsError
+	fi
+
+	ClearQpkgInstalledAppCenterNotifier
+
+	FuncForkExit $z
+
+	}
+
+_QPKG:deactivate_()
+	{
+
+	# * This function runs asynchronously *
+
+	# Deactivate/stop the service-script for the QPKG named in $qpkg_name.
+
+	# Inputs: (global)
+	#	$qpkg_name
+	#	$r_deactivate_log_file
+	#	$r_logs_path
+	#	$r_qpkg_stop_timeout_seconds
+	#	$useropt_debug
+
+	# Outputs: (local)
+	#	$? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
+
+	FuncForkInit
+
+	local a=''
+	local action=deactivate
+	local -i z=0
+
+	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
+
+	if IsNtValidQpkgInstalled; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
+		MarkActionForkAsSkipped
+		z=2
+	elif IsNtQpkgAuthorOk; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
+		MarkActionForkAsSkipped
+		z=2
+#	elif [[ $qpkg_name = sherpa ]]; then
+#		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "it's needed here! 😉"
+#		MarkActionForkAsSkipped
+#		z=2
+	elif IsNtQpkgRepoSelfManaged; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
+		MarkActionForkAsSkipped
+		z=2
+	fi
+
+	[[ $z -eq 0 ]] || FuncForkExit $z
+
+	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_deactivate_log_file
+	local timeout=''
+	IsOsCanQpkgTimeout && timeout=' -t '$r_qpkg_stop_timeout_seconds
+	local service_pathfile=$(GetQpkgServicePathFile)
+
+	DebugAsProc "deactivating $(FormatPackageName)"
+
+	if [[ $service_pathfile = undefined ]]; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file undefined'
+		MarkActionForkAsSkippedError
+
+		FuncForkExit 4
+	elif [[ $useropt_debug = true ]]; then
+		a+='DEBUG_QPKG=true '
+
+		Executer "${a}${service_pathfile} stop" "$r_log_pathfile" log:failure-only
+		z=$?
+	elif IsQpkgDbWillLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
+		Executer "/sbin/qpkg_service${timeout} stop $qpkg_name" "$r_log_pathfile" log:failure-only
+		QpkgServiceResultWasOk && z=0 || z=1
+	else
+		Executer "$service_pathfile stop" "$r_log_pathfile" log:failure-only
+		z=$?
+	fi
+
+	LogQpkgServiceResult
+	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
+
+	if [[ $z -eq 0 ]]; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
+
+		if [[ $qpkg_name = Entware ]]; then
+			SendParentCommand ModPathToEntware
+			SendParentCommand SetCapabilities
+			SetCapabilities
+		fi
+
+		SendPackageStateChange ISNTactive
+		MarkActionForkAsOk
+	else
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
+		MarkActionForkAsError
+	fi
+
+	ClearQpkgInstalledAppCenterNotifier
+
+	FuncForkExit $z
+
+	}
+
+_QPKG:enable_()
+	{
+
+	# * This function runs asynchronously *
+
+	# Enable the QPKG named in $qpkg_name.
+
+	# Inputs: (global)
+	#	$qpkg_name
+	#	$r_enable_log_file
+	#	$r_logs_path
+	#	$r_qpkg_enable_timeout_seconds
+
+	# Outputs: (local)
+	#	$? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
+
+	FuncForkInit
+
+	local action=enable
+	local -i z=0
+
+	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
+
+	if IsNtValidQpkgInstalled; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
+		MarkActionForkAsSkipped
+		z=2
+	elif IsNtQpkgAuthorOk; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
+		MarkActionForkAsSkipped
+		z=2
+	elif IsQpkgEnabled; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'already enabled'
+		MarkActionForkAsSkipped
+		z=2
+	elif IsNtQpkgRepoSelfManaged; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
+		MarkActionForkAsSkipped
+		z=2
+	fi
+
+	[[ $z -eq 0 ]] || FuncForkExit $z
+
+	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_enable_log_file
+	local timeout=''
+	IsOsCanQpkgTimeout && timeout=' -t '$r_qpkg_enable_timeout_seconds
+
+	DebugAsProc "enabling $(FormatPackageName)"
+
+	Executer "/sbin/qpkg_service${timeout} enable $qpkg_name" "$r_log_pathfile" log:failure-only
+	ClearQpkgInstalledAppCenterNotifier
+	SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
+	MarkActionForkAsOk
+
+	FuncForkExit $z
+
+	}
+
+_QPKG:disable_()
+	{
+
+	# * This function runs asynchronously *
+
+	# Disable the QPKG named in $qpkg_name.
+
+	# Inputs: (global)
+	#	$qpkg_name
+	#	$r_disable_log_file
+	#	$r_logs_path
+	#	$r_qpkg_disable_timeout_seconds
+
+	# Outputs: (local)
+	#	$? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
+
+	FuncForkInit
+
+	local action=disable
+	local -i z=0
+
+	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
+
+	if IsNtValidQpkgInstalled; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
+		MarkActionForkAsSkipped
+		z=2
+	elif IsNtQpkgAuthorOk; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
+		MarkActionForkAsSkipped
+		z=2
+	elif IsNtQpkgEnabled; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'already disabled'
+		MarkActionForkAsSkipped
+		z=2
+#	elif [[ $qpkg_name = sherpa ]]; then
+#		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "it's needed here! 😉"
+#		MarkActionForkAsSkipped
+#		z=2
+	elif IsNtQpkgRepoSelfManaged; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
+		MarkActionForkAsSkipped
+		z=2
+	fi
+
+	[[ $z -eq 0 ]] || FuncForkExit $z
+
+	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_disable_log_file
+	local timeout=''
+	IsOsCanQpkgTimeout && timeout=' -t '$r_qpkg_disable_timeout_seconds
+
+	DebugAsProc "disabling $(FormatPackageName)"
+
+	Executer "/sbin/qpkg_service${timeout} disable $qpkg_name" "$r_log_pathfile" log:failure-only
+
+	ClearQpkgInstalledAppCenterNotifier
+	SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
+	MarkActionForkAsOk
+
+	FuncForkExit $z
+
+	}
+
+_QPKG:enableau_()
+	{
+
+	# * This function runs asynchronously *
+
+	# Enable auto-updating of the QPKG named in $qpkg_name.
+
+	# Inputs: (global)
+	#	$qpkg_name
+	#	$r_enableau_log_file
+	#	$r_logs_path
+	#	$useropt_debug
+
+	# Outputs: (local)
+	#	$? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
+
+	FuncForkInit
+
+	local a=''
+	local action=enableau
+	local -i z=0
+
+	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
+
+	if IsNtValidQpkgInstalled; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
+		MarkActionForkAsSkipped
+		z=2
+	elif IsNtQpkgAuthorOk; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
+		MarkActionForkAsSkipped
+		z=2
+	elif [[ $qpkg_name = sherpa ]]; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'auto-update is always enabled'
+		MarkActionForkAsSkipped
+		z=2
+	elif ! IsQpkgDbCanRestartToUpdate; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'auto-update is unsupported by this QPKG'
+		MarkActionForkAsSkipped
+		z=2
+	elif IsNtQpkgRepoSelfManaged; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
+		MarkActionForkAsSkipped
+		z=2
+	fi
+
+	[[ $z -eq 0 ]] || FuncForkExit $z
+
+	DebugAsProc "enabling auto-update $(FormatPackageName)"
+	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
+
+	Executer "${a}$(GetQpkgServicePathFile) enable-auto-update" "$r_logs_path/$qpkg_name.$r_enableau_log_file" log:failure-only
+	z=$?
+
+	LogQpkgServiceResult
+	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
+
+	if [[ $z -eq 0 ]]; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
+		MarkActionForkAsOk
+	else
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
+		MarkActionForkAsError
+	fi
+
+	FuncForkExit $z
+
+	}
+
+_QPKG:disableau_()
+	{
+
+	# * This function runs asynchronously *
+
+	# Disable auto-updating of the QPKG named in $qpkg_name.
+
+	# Inputs: (global)
+	#	$qpkg_name
+	#	$r_disableau_log_file
+	#	$r_logs_path
+	#	$useropt_debug
+
+	# Outputs: (local)
+	#	$? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
+
+	FuncForkInit
+
+	local a=''
+	local action=disableau
+	local -i z=0
+
+	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
+
+	if IsNtValidQpkgInstalled; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
+		MarkActionForkAsSkipped
+		z=2
+	elif IsNtQpkgAuthorOk; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
+		MarkActionForkAsSkipped
+		z=2
+	elif [[ $qpkg_name = sherpa ]]; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'auto-update cannot be disabled'
+		MarkActionForkAsSkipped
+		z=2
+	elif ! IsQpkgDbCanRestartToUpdate; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'auto-update is unsupported by this QPKG'
+		MarkActionForkAsSkipped
+		z=2
+	elif IsNtQpkgRepoSelfManaged; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
+		MarkActionForkAsSkipped
+		z=2
+	fi
+
+	[[ $z -eq 0 ]] || FuncForkExit $z
+
+	DebugAsProc "disabling auto-update $(FormatPackageName)"
+	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
+
+	Executer "${a}$(GetQpkgServicePathFile) disable-auto-update" "$r_logs_path/$qpkg_name.$r_disableau_log_file" log:failure-only
+	z=$?
+
+	LogQpkgServiceResult
+	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
+
+	if [[ $z -eq 0 ]]; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
+		MarkActionForkAsOk
+	else
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
+		MarkActionForkAsError
+	fi
+
+	FuncForkExit $z
+
+	}
+
+_QPKG:backup_()
+	{
+
+	# * This function runs asynchronously *
+
+	# Run a `backup` action for the QPKG named in $qpkg_name.
+
+	# Inputs: (global)
+	#	$qpkg_name
+	#	$r_backup_log_file
+	#	$r_logs_path
+	#	$useropt_debug
+
+	# Outputs: (local)
+	#	$? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
+
+	FuncForkInit
+
+	local a=''
+	local action=backup
+	local -i z=0
+
+	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
+
+	if IsNtValidQpkgInstalled; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
+		MarkActionForkAsSkipped
+		z=2
+	elif IsNtQpkgAuthorOk; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
+		MarkActionForkAsSkipped
+		z=2
+	elif ! IsQpkgDbCanBackup; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'backup is unsupported by this QPKG'
+		MarkActionForkAsSkipped
+		z=2
+	elif IsNtQpkgRepoSelfManaged; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
+		MarkActionForkAsSkipped
+		z=2
+	fi
+
+	[[ $z -eq 0 ]] || FuncForkExit $z
+
+	DebugAsProc "backing-up $(FormatPackageName) configuration"
+	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
+
+	Executer "${a}$(GetQpkgServicePathFile) backup" "$r_logs_path/$qpkg_name.$r_backup_log_file" log:failure-only
+	z=$?
+
+	LogQpkgServiceResult
+	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
+
+	if [[ $z -eq 0 ]]; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
+		SendPackageStateChange ISbackedup
+		MarkActionForkAsOk
+	else
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
+		SendParentCommand "QPKGs-ACuninstall-to:Remove $qpkg_name"
+		SendParentCommand "QPKGs-ACrestore-to:Remove $qpkg_name"
+		MarkActionForkAsError
+	fi
+
+	FuncForkExit $z
+
+	}
+
+_QPKG:restore_()
+	{
+
+	# * This function runs asynchronously *
+
+	# Run a `restore` action for the QPKG named in $qpkg_name.
+
+	# Inputs: (global)
+	#	$qpkg_name
+	#	$r_logs_path
+	#	$r_restore_log_file
+	#	$useropt_debug
+
+	# Outputs: (local)
+	#	$? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
+
+	FuncForkInit
+
+	local a=''
+	local action=restore
+	local -i z=0
+
+	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
+
+	if IsNtValidQpkgInstalled; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "not installed, try 'rebuild' instead"
+		MarkActionForkAsSkipped
+		z=2
+	elif IsNtQpkgAuthorOk; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
+		MarkActionForkAsSkipped
+		z=2
+	elif ! IsQpkgDbCanBackup; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'restore is unsupported by this QPKG'
+		MarkActionForkAsSkipped
+		z=2
+	elif IsNtQpkgRepoSelfManaged; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
+		MarkActionForkAsSkipped
+		z=2
+	elif ! IsQpkgBackupExist; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'backup file does not exist'
+		MarkActionForkAsSkipped
+		z=2
+	fi
+
+	[[ $z -eq 0 ]] || FuncForkExit $z
+
+	DebugAsProc "restoring $(FormatPackageName) configuration"
+	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
+
+	Executer "${a}$(GetQpkgServicePathFile) restore" "$r_logs_path/$qpkg_name.$r_restore_log_file" log:failure-only
+	z=$?
+
+	LogQpkgServiceResult
+	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
+
+	if [[ $z -eq 0 ]]; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
+#		SendPackageStateChange ISrestored			# TODO: this doesn't yet exist as an object.
+		MarkActionForkAsOk
+	else
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
+		MarkActionForkAsError
+	fi
+
+	FuncForkExit $z
+
+	}
+
+_QPKG:clean_()
+	{
+
+	# * This function runs asynchronously *
+
+	# Run a `clean` action for the QPKG named in $qpkg_name.
+
+	# Inputs: (global)
+	#	$qpkg_name
+	#	$r_clean_log_file
+	#	$r_logs_path
+	#	$useropt_debug
+
+	# Outputs: (local)
+	#	$? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
+
+	FuncForkInit
+
+	local a=''
+	local action=clean
+	local -i z=0
+
+	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
+
+	if IsNtValidQpkgInstalled; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
+		MarkActionForkAsSkipped
+		z=2
+	elif IsNtQpkgAuthorOk; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
+		MarkActionForkAsSkipped
+		z=2
+	elif ! IsQpkgDbCanClean; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'clean is unsupported by this QPKG'
+		MarkActionForkAsSkipped
+		z=2
+	elif IsNtQpkgRepoSelfManaged; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
+		MarkActionForkAsSkipped
+		z=2
+	fi
+
+	[[ $z -eq 0 ]] || FuncForkExit $z
+
+	DebugAsProc "cleaning $(FormatPackageName)"
+	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
+
+	Executer "${a}$(GetQpkgServicePathFile) clean" "$r_logs_path/$qpkg_name.$r_clean_log_file" log:failure-only
+
+#	if [[ $useropt_debug = true ]]; then
+#		DEBUG_QPKG=true $(GetQpkgServicePathFile) clean
+#	else
+#		$(GetQpkgServicePathFile) clean > "$r_logs_path/$qpkg_name.$r_clean_log_file" 2>&1
+#	fi
+
+	z=$?
+
+	LogQpkgServiceResult
+	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
+
+	if [[ $z -eq 0 ]]; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
+		MarkActionForkAsOk
+	else
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
+		MarkActionForkAsError
+		# TODO: if debug mode, save action log to session log.
+	fi
+
+	FuncForkExit $z
+
+	}
+
+_QPKG:sign_()
+	{
+
+	# * This function runs asynchronously *
+
+	# Modify the QTS App Center certificate dB, and add an unsigned QPKG as-if it were signed. It adds a QNAP-generated certificate and digital signature to the certificate database for the unsigned QPKG.
+
+	# Running the code below makes the target QPKG effectively "signed", and allows user to install and run this QPKG with the 'Allow installation of applications without a valid digital signature' App Center option unticked.
+
+	# Only required for QTS 4.3.5 and-later firmwares.
+
+	# Inputs: (global)
+	#	$qpkg_name
+	#	$r_abort_actions_pathfile
+	#	$r_cert_db_pathfile
+	#	$r_qpkg_certificate
+	#	$r_qpkg_signature
+
+	# Outputs: (local)
+	#	$? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
+
+	[[ ! -e $r_abort_actions_pathfile ]] || exit
+
+	FuncForkInit
+
+	local a=''
+	local action='"sign"'
+	local b=''
+	local -i retries=0
+	local -i z=0
+
+	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
+
+	if ! IsOsCanManageSignedPackages; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not required: firmware < 4.3.5'
+		MarkActionForkAsSkipped
+		z=2
+	elif ! IsQpkgDbMinOSVerOk || ! IsQpkgDbMaxOSVerOk; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "$(GetOsName) version incompatible"
+		MarkActionForkAsSkipped
+		z=2
+	elif ! IsQpkgDbMinRAMOk; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'installed RAM insufficient'
+		MarkActionForkAsSkipped
+		z=2
+	elif IsNtQpkgRepoSelfManaged; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
+		MarkActionForkAsSkipped
+		z=2
+	elif [[ ! -e $r_cert_db_pathfile ]]; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sa "$(GetOsName) QPKG certificate database unavailable, no further signing will occur"
+		MarkActionForkAsSkippedAbort
+		z=3
+	elif IsQpkgSigned; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'already signed'
+		MarkActionForkAsSkipped
+		z=2
+	elif IsQpkgProhibited; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'prohibited package'
+		MarkActionForkAsSkipped
+		z=2
+	fi
+
+	[[ $z -eq 0 ]] || FuncForkExit $z
+
+	DebugAsProc "\"signing\" $(FormatPackageName)"
+
+	# https://pynative.com/python-sqlite-insert-into-table/
+
+	a="INSERT INTO Certificate (Type,QpkgName,Cert,DigitalSignature) VALUES ('qpkg','$qpkg_name','$r_qpkg_certificate','$r_qpkg_signature')"
+
+	read -r -d '' b <<EOB
+import sqlite3, sys														# squeezer-ignore
+
+try:																	# squeezer-ignore
+    sqliteConnection = sqlite3.connect('$r_cert_db_pathfile')			# squeezer-ignore
+
+    cursor = sqliteConnection.cursor()									# squeezer-ignore
+    sqlite_add_query = """$a"""											# squeezer-ignore
+    cursor.execute(sqlite_add_query)									# squeezer-ignore
+    sqliteConnection.commit()											# squeezer-ignore
+    cursor.close()														# squeezer-ignore
+    sys.exit()															# squeezer-ignore
+
+finally:																# squeezer-ignore
+    if sqliteConnection:												# squeezer-ignore
+        sqliteConnection.close()										# squeezer-ignore
+EOB
+
+	for ((retries=0; retries<10; retries++)); do
+		/usr/local/bin/python2 -c "$b"
+		z=$?
+
+		case $z in
+			5)		# SQLITE_BUSY
+				sleep 0.5
+				;;
+			*)
+				break
+		esac
+	done
+
+	if [[ $z -eq 0 ]]; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
+		SendPackageStateChange ISsigned
+		MarkActionForkAsOk
+	else
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$(Parenthesise "$z") but don't know why. Please report this as a bug"
+		SendParentCommand 'show_suggest_raise_issue=true'
+		MarkActionForkAsError
+	fi
+
+	FuncForkExit $z
+
+	}
+
+_QPKG:unsign_()
+	{
+
+	# * This function runs asynchronously *
+
+	# Modify the QTS App Center certificate dB, and remove signing details for a QPKG.
+
+	# Only required for QTS 4.3.5 and-later firmwares.
+
+	# Inputs: (global)
+	#	$qpkg_name
+	#	$r_abort_actions_pathfile
+	#	$r_cert_db_pathfile
+
+	# Outputs: (local)
+	#	$? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
+
+	[[ ! -e $r_abort_actions_pathfile ]] || exit
+
+	FuncForkInit
+
+	local a=''
+	local action='"unsign"'
+	local b=''
+	local -i retries=0
+	local -i z=0
+
+	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
+
+	if ! IsOsCanManageSignedPackages; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not required: firmware < 4.3.5'
+		MarkActionForkAsSkipped
+		z=2
+	elif ! IsQpkgDbMinOSVerOk || ! IsQpkgDbMaxOSVerOk; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "$(GetOsName) version incompatible"
+		MarkActionForkAsSkipped
+		z=2
+	elif ! IsQpkgDbMinRAMOk; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'installed RAM insufficient'
+		MarkActionForkAsSkipped
+		z=2
+	elif IsNtQpkgRepoSelfManaged; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
+		MarkActionForkAsSkipped
+		z=2
+	elif [[ ! -e $r_cert_db_pathfile ]]; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sa "$(GetOsName) QPKG certificate database unavailable, no further unsigning will occur"
+		MarkActionForkAsSkippedAbort
+		z=3
+	elif IsNtQpkgSigned; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not signed'
+		MarkActionForkAsSkipped
+		z=2
+	fi
+
+	[[ $z -eq 0 ]] || FuncForkExit $z
+
+	DebugAsProc "\"unsigning\" $(FormatPackageName)"
+
+	# https://pynative.com/python-sqlite-delete-from-table/
+
+	a="DELETE from Certificate WHERE QpkgName = '$qpkg_name'"
+
+	read -r -d '' b <<EOB
+import sqlite3, sys														# squeezer-ignore
+
+try:																	# squeezer-ignore
+    sqliteConnection = sqlite3.connect('$r_cert_db_pathfile')			# squeezer-ignore
+
+    cursor = sqliteConnection.cursor()									# squeezer-ignore
+    sqlite_delete_query = """$a"""										# squeezer-ignore
+    cursor.execute(sqlite_delete_query)									# squeezer-ignore
+    sqliteConnection.commit()											# squeezer-ignore
+    cursor.close()														# squeezer-ignore
+    sys.exit()															# squeezer-ignore
+
+finally:																# squeezer-ignore
+    if sqliteConnection:												# squeezer-ignore
+        sqliteConnection.close()										# squeezer-ignore
+EOB
+
+	for ((retries=0; retries<10; retries++)); do
+		/usr/local/bin/python2 -c "$b"
+		z=$?
+
+		case $z in
+			5)		# SQLITE_BUSY
+				sleep 0.5
+				;;
+			*)
+				z=0		# Disregard errors generated while deleting record.
+				break
+		esac
+	done
+
+	if [[ $z -eq 0 ]]; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
+		SendPackageStateChange ISsigned
+		MarkActionForkAsOk
+	else
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$(Parenthesise "$z") but don't know why. Please report this as a bug"
+		SendParentCommand 'show_suggest_raise_issue=true'
+		MarkActionForkAsError
+	fi
 
 	FuncForkExit $z
 
@@ -12148,6 +12259,44 @@ GetQpkgDbOptionals()
 
 	}
 
+GetQpkgConflicts()
+	{
+
+	# Inputs: (local)
+	#	$1 (optional) = QPKG name - if QPKG name is explicitly stated, then lookup QPKG name in package lists, ignoring current $qpkg_name and $qpkg_index.
+
+	# Inputs: (global)
+	#	$qpkg_index
+	#	$qpkg_name
+	#	$r_qpkg_conflicts_with[]
+	#	$r_qpkg_name[]
+
+	# Outputs: (local)
+	#	stdout = string of space-separated QPKGs that conflict with this QPKG.
+	#	$? = 0 (found), !0 (not-found)
+
+	local a=''
+	local -i i=0
+
+	if [[ -n ${1:-} ]]; then
+		for i in "${!r_qpkg_name[@]}"; do
+			[[ ${r_qpkg_name[$i]} = "$1" ]] || continue
+			a=${r_qpkg_conflicts_with[$i]}
+			break
+		done
+	else
+		a=${r_qpkg_conflicts_with[$qpkg_index]}
+	fi
+
+	[[ -n $a ]] || a=none
+	[[ $a = none ]] && return 1
+
+	printf '%s' "$a"
+
+	return 0
+
+	}
+
 GetQpkgDbIPKs()
 	{
 
@@ -12162,9 +12311,7 @@ GetQpkgDbIPKs()
 
 	[[ -n $qpkg_name && $qpkg_index -gt 0 ]] || return
 
-	local a=''
-
-	a=${r_qpkg_requires_ipks[$qpkg_index]}
+	local a=${r_qpkg_requires_ipks[$qpkg_index]}
 	[[ $a = none ]] && return 1
 
 	printf '%s' "$a"
@@ -12189,7 +12336,7 @@ GetQpkgDbActiveTest()
 
 	[[ -n $qpkg_name && $qpkg_index -gt 0 ]] || return
 
-	a=${r_qpkg_test_for_active[$qpkg_index]}
+	local a=${r_qpkg_test_for_active[$qpkg_index]}
 	[[ $a = none ]] && return 1
 
 	printf '%s' "$a"
@@ -12913,7 +13060,21 @@ IsQpkgBackupExist()
 	# Outputs: (local)
 	#	$? = true/false
 
-	[[ -e $r_qpkg_bu_path/${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}.config.tar.gz ]]
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}.config.tar.gz
+
+	# KLUDGE: rename prohibited QPKG name (with a leading 'O') backup to migrated QPKG name backup.
+
+	if [[ -e $r_qpkg_bu_path/O$a && ! -e $r_qpkg_bu_path/$a ]]; then
+		# If backup file is less than 500MB, make a copy of it. If it's larger than this, move it (to copy it would take an unacceptably long time).
+
+		if [[ $(/usr/bin/stat -c %s "$r_qpkg_bu_path/O$a") -le $((500*(2**20))) ]]; then
+			cp "$r_qpkg_bu_path/O$a" "$r_qpkg_bu_path/$a"
+		else
+			mv "$r_qpkg_bu_path/O$a" "$r_qpkg_bu_path/$a"
+		fi
+	fi
+
+	[[ -e $r_qpkg_bu_path/$a ]]
 
 	}
 
@@ -12928,7 +13089,7 @@ IsQpkgUpgradable()
 	# Outputs: (local)
 	#	$? = true/false
 
-	IsValidQpkgInstalled && IsQpkgRepoSelfManaged && IsQpkgDbMinOSVerOk && IsQpkgDbMaxOSVerOk && IsQpkgDbMinRAMOk && [[ $(GetQpkgInstalledVer) != "$(GetQpkgDbVer)" ]]
+	IsNtQpkgProhibited && IsValidQpkgInstalled && IsQpkgRepoSelfManaged && IsQpkgDbMinOSVerOk && IsQpkgDbMaxOSVerOk && IsQpkgDbMinRAMOk && [[ $(GetQpkgInstalledVer) != "$(GetQpkgDbVer)" ]]
 
 	}
 
@@ -12943,7 +13104,7 @@ IsQpkgInstallable()
 	# Outputs: (local)
 	#	$? = true/false
 
-	IsNtQpkgInstalled && IsNtValidQpkgInstalled && IsQpkgDbMinOSVerOk && IsQpkgDbMaxOSVerOk && IsQpkgDbMinRAMOk
+	IsNtQpkgProhibited && IsNtQpkgInstalled && IsNtValidQpkgInstalled && IsQpkgDbMinOSVerOk && IsQpkgDbMaxOSVerOk && IsQpkgDbMinRAMOk
 
 	}
 
@@ -13361,10 +13522,9 @@ IsQpkgInstalled()
 	# Outputs: (local)
 	#	$? = true/false
 
-	# shellcheck disable=2076
-	[[ "$(< /etc/config/qpkg.conf)" =~ "[${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}]" ]]
+	/bin/grep -F "[${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}]" /etc/config/qpkg.conf
 
-	}
+	} &> /dev/null
 
 IsNtQpkgInstalled()
 	{
@@ -13379,6 +13539,66 @@ IsNtQpkgInstalled()
 	#	$? = true/false
 
 	! IsQpkgInstalled "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}"
+
+	}
+
+IsQpkgProhibited()
+	{
+
+	# Check if specified QPKG is prohibited (not to be installed), and don't check anything else.
+
+	# Inputs: (local)
+	#	$1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+
+	# Inputs: (global)
+	#	$qpkg_name (default for $1)
+
+	# Outputs: (local)
+	#	$? = true/false
+
+	local re=\\b${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}\\b			# bash 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
+
+	[[ ${r_qpkgs_name_prohibited[*]} =~ $re ]]
+
+	}
+
+IsNtQpkgProhibited()
+	{
+
+	# Inputs: (local)
+	#	$1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+
+	# Inputs: (global)
+	#	$qpkg_name (default for $1)
+
+	# Outputs: (local)
+	#	$? = true/false
+
+	! IsQpkgProhibited "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}"
+
+	}
+
+IsQpkgConflicts()
+	{
+
+	# Does specified QPKG conflict with any installed QPKGs?
+
+	# Inputs: (local)
+	#	$1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
+
+	# Inputs: (global)
+	#	$qpkg_name (default for $1)
+
+	# Outputs: (local)
+	#	$? = true/false
+
+	local a=''
+
+	for a in $(GetQpkgConflicts "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}"); do
+		IsQpkgInstalled $a && return
+	done
+
+	return 1
 
 	}
 
@@ -16317,7 +16537,7 @@ LoadDatabase()
 	. "$r_packages_pathfile"
 	packages_loaded=true
 
-#	r_qpkgs_name_migration=(Lidarr Medusa qBittorrent Readarr SickGear Sonarr Tautulli Transmission Watcher3 Whisparr)
+	r_qpkgs_name_prohibited=(OLidarr OMedusa OqBittorrent OReadarr OSickGear OSonarr OTautulli OTransmission OWatcher3 OWhisparr)
 
 	# Fourth, lock list arrays and values.
 
@@ -16353,7 +16573,7 @@ LoadDatabase()
 	readonly r_essential_pips
 	readonly r_exclusion_pips
 	readonly r_packages_epoch
-	readonly r_qpkgs_name_migration
+	readonly r_qpkgs_name_prohibited
 
 	DebugVar r_packages_epoch
 
