@@ -8945,7 +8945,7 @@ AppendToMsgPipeEnhancedLog()																# devdebug
 	elif [[ $_msg1_key = state || $msg1_key = update ]]; then								# devdebug
 		printf "[%-${r_date_field_length}s] tier:%-${r_tier_field_length}s action:%-${r_action_field_length}s key1:%-${r_key1_field_length}s val1:%-38s key2:%-${r_key2_field_length}s val2:%s\n" "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "$a" "$_msg2_key" "$_msg2_value" # devdebug
 	elif [[ $_msg2_key = null && $_msg2_value = null ]]; then								# devdebug
-		printf "[%-${r_date_field_length}s] tier:%-${r_tier_field_length}s action:%-${r_action_field_length}s key1:%-${r_key1_field_length}s val1:%s\n" "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "$a"					# devdebug
+		printf "[%-${r_date_field_length}s] tier:%-${r_tier_field_length}s action:%-${r_action_field_length}s key1:%-${r_key1_field_length}s val1:%s\n" "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "$a"						# devdebug
 	else																					# devdebug
 		printf "[%-${r_date_field_length}s] tier:%-${r_tier_field_length}s action:%-${r_action_field_length}s key1:%-${r_key1_field_length}s val1:%-38s key2:%-${r_key2_field_length}s val2:%s\n" "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "'$a'" "$_msg2_key" "$_msg2_value" # devdebug
 	fi																						# devdebug
@@ -13061,20 +13061,22 @@ IsQpkgBackupExist()
 	#	$? = true/false
 
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}.config.tar.gz
+	local old=$r_qpkg_bu_path/O$a
+	local new=$r_qpkg_bu_path/$a
 
 	# KLUDGE: rename prohibited QPKG name (with a leading 'O') backup to migrated QPKG name backup.
 
-	if [[ -e $r_qpkg_bu_path/O$a && ! -e $r_qpkg_bu_path/$a ]]; then
-		# If backup file is less than 500MB, make a copy of it. If it's larger than this, move it (to copy it would take an unacceptably long time).
+	if [[ -e $old && ! -e $new ]]; then
+		# If backup file is less than 500MiB, make a copy of it. If it's larger than this, move it (to copy it would take an unacceptably long time).
 
-		if [[ $(/usr/bin/stat -c %s "$r_qpkg_bu_path/O$a") -le $((500*(2**20))) ]]; then
-			cp "$r_qpkg_bu_path/O$a" "$r_qpkg_bu_path/$a"
+		if [[ $(/usr/bin/stat -c %s "$old") -le $((500*(2**20))) ]]; then
+			cp "$old" "$new"
 		else
-			mv "$r_qpkg_bu_path/O$a" "$r_qpkg_bu_path/$a"
+			mv "$old" "$new"
 		fi
 	fi
 
-	[[ -e $r_qpkg_bu_path/$a ]]
+	[[ -e $new ]]
 
 	}
 
@@ -13511,7 +13513,7 @@ IsNtValidQpkgInstalled()
 IsQpkgInstalled()
 	{
 
-	# Check if specified QPKG is installed, and don't check anything else.
+	# Check if specified QPKG is installed.
 
 	# Inputs: (local)
 	#	$1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
@@ -13522,9 +13524,11 @@ IsQpkgInstalled()
 	# Outputs: (local)
 	#	$? = true/false
 
-	/bin/grep -F "[${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}]" /etc/config/qpkg.conf
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
 
-	} &> /dev/null
+	[[ $(/sbin/getcfg "$a" Name -d undefined -f /etc/config/qpkg.conf) = "$a" ]]
+
+	}
 
 IsNtQpkgInstalled()
 	{
@@ -13545,7 +13549,7 @@ IsNtQpkgInstalled()
 IsQpkgProhibited()
 	{
 
-	# Check if specified QPKG is prohibited (not to be installed), and don't check anything else.
+	# Check if specified QPKG is prohibited (not to be installed).
 
 	# Inputs: (local)
 	#	$1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
@@ -13595,7 +13599,7 @@ IsQpkgConflicts()
 	local a=''
 
 	for a in $(GetQpkgConflicts "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}"); do
-		IsQpkgInstalled $a && return
+		IsQpkgInstalled "$a" && return
 	done
 
 	return 1
