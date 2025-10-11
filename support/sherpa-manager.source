@@ -13513,7 +13513,7 @@ IsNtValidQpkgInstalled()
 IsQpkgInstalled()
 	{
 
-	# Check if specified QPKG is installed, and don't check anything else.
+	# Check if specified QPKG is installed.
 
 	# Inputs: (local)
 	#	$1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
@@ -13524,9 +13524,11 @@ IsQpkgInstalled()
 	# Outputs: (local)
 	#	$? = true/false
 
-	/bin/grep -F "[${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}]" /etc/config/qpkg.conf
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
 
-	} &> /dev/null
+	[[ $(/sbin/getcfg "$a" Name -d undefined -f /etc/config/qpkg.conf) = "$a" ]]
+
+	}
 
 IsNtQpkgInstalled()
 	{
@@ -13547,7 +13549,7 @@ IsNtQpkgInstalled()
 IsQpkgProhibited()
 	{
 
-	# Check if specified QPKG is prohibited (not to be installed), and don't check anything else.
+	# Check if specified QPKG is prohibited (not to be installed).
 
 	# Inputs: (local)
 	#	$1 (optional) (string) = QPKG name - if $1 is explicitly stated, lookup $1 in package lists, ignoring current $qpkg_name and $qpkg_index.
@@ -13597,7 +13599,7 @@ IsQpkgConflicts()
 	local a=''
 
 	for a in $(GetQpkgConflicts "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}"); do
-		IsQpkgInstalled $a && return
+		IsQpkgInstalled "$a" && return
 	done
 
 	return 1
