@@ -12754,7 +12754,7 @@ IsOsCanQpkgTimeout()
 
 	SetOsFirmwareVer
 
-	[[ $r_nas_firmware_ver -ge 430 ]]
+	[[ $r_nas_firmware_ver -ge 430 && $r_nas_firmware_ver -le 519 && $r_nas_qpkg_arch != i86 ]]
 
 	}
 
