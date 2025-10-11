@@ -4993,7 +4993,11 @@ _GenerateStatusReportDataLine_()
 		name_msg=$(FormatReportField "$name" oops)
 		/bin/touch "$r_report_flags_path"/req-attention
 	elif [[ $mode = mute ]]; then
-		name_msg=$(FormatReportField "$name" mute)
+		if IsOsCanAutowidthTableColumns; then
+			name_msg=$(FormatReportField "$name" mute)
+		else
+			name_msg=$(FormatReportField "$name")
+		fi
 	else
 		name_msg=$(FormatReportField "$name")
 	fi
@@ -5001,11 +5005,12 @@ _GenerateStatusReportDataLine_()
 	if IsOsCanAutowidthTableColumns; then
 		printf '%s' "$name_msg|$status_msg|$action_msg|$ver_msg|$app_ver_msg|$path_msg"
 	else
+		FormatReportFieldWidth "$name_msg" "$r_report_qpkg_name_column_width"
+
 		if [[ -z $auxiliary_msg ]]; then
-			FormatReportFieldWidth "$name_msg" "$r_report_qpkg_name_column_width"
 			printf '%s' "$(LTrim "$status_msg"), $(LTrim "$action_msg")"
 		else
-			printf '%s %s' "$(TextDarkGrey "$name_msg")" "$(TextDarkGrey "($(LTrim "$status_msg"), $(LTrim "$action_msg"))")"
+			printf '%s' "$(TextDarkGrey "! $status_msg, $(LTrim "$action_msg")")"
 		fi
 	fi
 
