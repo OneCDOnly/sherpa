@@ -13067,7 +13067,8 @@ IsQpkgBackupExist()
 	# KLUDGE: rename prohibited QPKG name (with a leading 'O') backup to migrated QPKG name backup.
 
 	if [[ -e $old && ! -e $new ]]; then
-		# If backup file is less than 500MiB, make a copy of it. If it's larger than this, move it (to copy it would take an unacceptably long time).
+		# If backup file is 500MiB or-less, make a copy of it.
+		# If it's larger than this, move it (to copy it would take an unacceptably long time).
 
 		if [[ $(/usr/bin/stat -c %s "$old") -le $((500*(2**20))) ]]; then
 			cp "$old" "$new"
