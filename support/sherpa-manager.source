@@ -10123,7 +10123,7 @@ _QPKG:install_()
 
 	# Instead of running QPKG installer through Executer(), let's run it here for-now. Installing on my TS-216G (arm64) results in the installer process randomly not waiting for the installer script to finish, and proceeding to the next step`.
 
-	# ./sherpa-manager.source add duf HideThatBanner IncreaseTimeouts OLidarr nzbget OliveTin Par2turbo QDK OReadarr sherpa OSonarr TorrServer Unrar OWhisparr
+	# ./sherpa-manager.source add duf HideThatBanner IncreaseTimeouts Lidarr nzbget OliveTin Par2turbo QDK Readarr sherpa Sonarr TorrServer Unrar Whisparr
 
 	if [[ $useropt_verbose = true ]]; then
 		[[ -n $a ]] && export ${a?}
