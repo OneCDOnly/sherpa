@@ -9909,7 +9909,7 @@ _QPKG:rebuild_()
 	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
 
 	if IsNtQpkgCanRebuild; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "'rebuild' is unsupported by this QPKG, please 'install' it instead"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "unsupported by this QPKG, please 'install' it instead"
 
 		MarkActionForkAsSkipped
 		z=2
@@ -10939,7 +10939,7 @@ _QPKG:enableau_()
 	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
 
 	if ! IsQpkgDbCanRestartToUpdate; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "'auto-update' is unsupported by this QPKG"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'unsupported by this QPKG'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
@@ -11008,7 +11008,7 @@ _QPKG:disableau_()
 	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
 
 	if ! IsQpkgDbCanRestartToUpdate; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "'auto-update' is unsupported by this QPKG"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'unsupported by this QPKG'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
@@ -11077,7 +11077,7 @@ _QPKG:backup_()
 	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
 
 	if ! IsQpkgDbCanBackup; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "'backup' is unsupported by this QPKG"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'unsupported by this QPKG'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
@@ -11145,7 +11145,7 @@ _QPKG:restore_()
 	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
 
 	if ! IsQpkgDbCanBackup; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "'restore' is unsupported by this QPKG"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'unsupported by this QPKG'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
@@ -11220,7 +11220,7 @@ _QPKG:clean_()
 	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
 
 	if ! IsQpkgDbCanClean; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "'clean' is unsupported by this QPKG"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'unsupported by this QPKG'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
