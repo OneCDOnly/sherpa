@@ -4848,7 +4848,7 @@ _GenerateStatusReportDataLine_()
 						: # Do nothing, this is set later.
 						;;
 					auxiliary)
-						auxiliary_msg=$(FormatReportField 'author incompatible' attention_highlight)
+						auxiliary_msg=$(FormatReportField 'incompatible author' attention_highlight)
 						req_attention=true
 						;;
 					*)
@@ -4900,7 +4900,7 @@ _GenerateStatusReportDataLine_()
 			/bin/touch "$r_report_flags_path"/na
 
 			if ! IsQpkgDbMinOSVerOk || ! IsQpkgDbMaxOSVerOk; then
-				auxiliary="$(GetOsName) version incompatible"
+				auxiliary="incompatible $(GetOsName) version"
 			elif ! IsQpkgDbMinRAMOk; then
 				auxiliary='installed RAM insufficient'
 			elif IsQpkgProhibited; then
@@ -9787,10 +9787,10 @@ SaveActionResultMetrics()
 
 # QPKG action general pre-execution check priorities:
 
-#  1. Is this action supported by the target QPKG?
-#  2. Is the NAS OS version compatible with the requirements of this action?
-#  3. Any database QPKG conflicts or incompatibilities? (prohibited, OS version, RAM, no conflicting QPKGs already installed)
-#  4. Is target QPKG installed? (if-applicable)
+#  1. Is target QPKG installed? (if-applicable)
+#  2. Is this action supported by the target QPKG?
+#  3. Is the NAS OS version compatible with the requirements of this action?
+#  4. Any database QPKG conflicts or incompatibilities? (prohibited, OS version, RAM, no conflicting QPKGs already installed)
 #  5. Any installed QPKG conflicts or incompatibilities? (author, repo assignment, enabled)
 #  6. Are all required supporting files (e.g. backup file, installation package, database, or utility binary) available?
 #  7. Does this action still need to run? (e.g. 'disable' QPKG that is already disabled)
@@ -9927,7 +9927,7 @@ _QPKG:rebuild_()
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'incompatible author'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
@@ -9981,7 +9981,7 @@ _QPKG:reassign_()
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'incompatible author'
 		MarkActionForkAsSkipped
 		z=2
 	elif [[ $(GetQpkgInstalledStoreID) = sherpa || $(GetQpkgInstalledStoreID) = undefined ]]; then
@@ -10049,7 +10049,7 @@ _QPKG:download_()
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinOSVerOk || ! IsQpkgDbMaxOSVerOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "$(GetOsName) version incompatible"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "incompatible $(GetOsName) version"
 
 		IsOsCanManageSignedPackages && SendParentCommand "QPKGs-ACsign-to:Remove $qpkg_name"
 		SendParentCommand "QPKGs-ACinstall-to:Remove $qpkg_name"
@@ -10059,7 +10059,7 @@ _QPKG:download_()
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinRAMOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'installed RAM insufficient'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'insufficient installed RAM'
 
 		IsOsCanManageSignedPackages && SendParentCommand "QPKGs-ACsign-to:Remove $qpkg_name"
 		SendParentCommand "QPKGs-ACinstall-to:Remove $qpkg_name"
@@ -10155,16 +10155,20 @@ _QPKG:install_()
 
 	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
 
-	if IsQpkgProhibited; then
+	if IsQpkgInstalled; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "already installed, please use 'reinstall' instead"
+		MarkActionForkAsSkipped
+		z=2
+	elif IsQpkgProhibited; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'prohibited package'
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinOSVerOk || ! IsQpkgDbMaxOSVerOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "$(GetOsName) version incompatible"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "incompatible $(GetOsName) version"
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgDbMinRAMOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'installed RAM insufficient'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'insufficient installed RAM'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsQpkgConflicts; then
@@ -10175,10 +10179,6 @@ _QPKG:install_()
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'installation package unavailable'
 		MarkActionForkAsSkippedError
 		z=4
-	elif IsQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "already installed, please use 'reinstall' instead"
-		MarkActionForkAsSkipped
-		z=2
 	fi
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
@@ -10283,20 +10283,20 @@ _QPKG:reinstall_()
 
 	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
 
-	if IsQpkgProhibited; then
+	if IsNtQpkgInstalled; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "not already installed, please use 'install' instead"
+		MarkActionForkAsSkipped
+		z=2
+	elif IsQpkgProhibited; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'prohibited package'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'incompatible author'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "not already installed, please use 'install' instead"
 		MarkActionForkAsSkipped
 		z=2
 	elif [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
@@ -10360,20 +10360,20 @@ _QPKG:upgrade_()
 
 	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
 
-	if IsQpkgProhibited; then
+	if IsNtValidQpkgInstalled; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
+		MarkActionForkAsSkipped
+		z=2
+	elif IsQpkgProhibited; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'prohibited package'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'incompatible author'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtValidQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
 	elif ! QPKGs-ISupgradable.Exist "$qpkg_name"; then
@@ -10451,16 +10451,16 @@ _QPKG:uninstall_()
 
 	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
 
-	if IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
+	if IsNtValidQpkgInstalled; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
+		MarkActionForkAsSkipped
+		z=2
+	elif IsNtQpkgAuthorOk; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'incompatible author'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtValidQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
 	elif [[ $qpkg_name = sherpa ]]; then
@@ -10539,16 +10539,16 @@ _QPKG:activate_()
 
 	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
 
-	if IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
+	if IsNtValidQpkgInstalled; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
+		MarkActionForkAsSkipped
+		z=2
+	elif IsNtQpkgAuthorOk; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'incompatible author'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtValidQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgEnabled; then
@@ -10635,16 +10635,16 @@ _QPKG:reactivate_()
 
 	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
 
-	if IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
+	if IsNtValidQpkgInstalled; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
+		MarkActionForkAsSkipped
+		z=2
+	elif IsNtQpkgAuthorOk; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'incompatible author'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtValidQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgEnabled; then
@@ -10723,16 +10723,16 @@ _QPKG:deactivate_()
 
 	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
 
-	if IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
+	if IsNtValidQpkgInstalled; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
+		MarkActionForkAsSkipped
+		z=2
+	elif IsNtQpkgAuthorOk; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'incompatible author'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtValidQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
 #	elif [[ $qpkg_name = sherpa ]]; then
@@ -10816,16 +10816,16 @@ _QPKG:enable_()
 
 	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
 
-	if IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
+	if IsNtValidQpkgInstalled; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
+		MarkActionForkAsSkipped
+		z=2
+	elif IsNtQpkgAuthorOk; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'incompatible author'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtValidQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsQpkgEnabled; then
@@ -10874,16 +10874,16 @@ _QPKG:disable_()
 
 	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
 
-	if IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
+	if IsNtValidQpkgInstalled; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
+		MarkActionForkAsSkipped
+		z=2
+	elif IsNtQpkgAuthorOk; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'incompatible author'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtValidQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgEnabled; then
@@ -10938,20 +10938,20 @@ _QPKG:enableau_()
 
 	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
 
-	if ! IsQpkgDbCanRestartToUpdate; then
+	if IsNtValidQpkgInstalled; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
+		MarkActionForkAsSkipped
+		z=2
+	elif ! IsQpkgDbCanRestartToUpdate; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'unsupported by this QPKG'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'incompatible author'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtValidQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
 	elif [[ $qpkg_name = sherpa ]]; then
@@ -11007,20 +11007,20 @@ _QPKG:disableau_()
 
 	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
 
-	if ! IsQpkgDbCanRestartToUpdate; then
+	if IsNtValidQpkgInstalled; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
+		MarkActionForkAsSkipped
+		z=2
+	elif ! IsQpkgDbCanRestartToUpdate; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'unsupported by this QPKG'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'incompatible author'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtValidQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
 	elif [[ $qpkg_name = sherpa ]]; then
@@ -11076,20 +11076,20 @@ _QPKG:backup_()
 
 	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
 
-	if ! IsQpkgDbCanBackup; then
+	if IsNtValidQpkgInstalled; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
+		MarkActionForkAsSkipped
+		z=2
+	elif ! IsQpkgDbCanBackup; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'unsupported by this QPKG'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'incompatible author'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtValidQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -11144,12 +11144,21 @@ _QPKG:restore_()
 
 	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
 
-	if ! IsQpkgDbCanBackup; then
+	if IsNtValidQpkgInstalled; then
+		if IsQpkgBackupExist; then
+			SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "not installed, try 'rebuild' instead"
+		else
+			SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed & backup file unavailable'
+		fi
+
+		MarkActionForkAsSkipped
+		z=2
+	elif ! IsQpkgDbCanBackup; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'unsupported by this QPKG'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'incompatible author'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
@@ -11158,15 +11167,6 @@ _QPKG:restore_()
 		z=2
 	elif ! IsQpkgBackupExist; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'backup file unavailable'
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtValidQpkgInstalled; then
-		if IsQpkgBackupExist; then
-			SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "not installed, try 'rebuild' instead"
-		else
-			SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed & backup file unavailable'
-		fi
-
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -11219,20 +11219,20 @@ _QPKG:clean_()
 
 	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
 
-	if ! IsQpkgDbCanClean; then
+	if IsNtValidQpkgInstalled; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
+		MarkActionForkAsSkipped
+		z=2
+	elif ! IsQpkgDbCanClean; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'unsupported by this QPKG'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'author incompatible'
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'incompatible author'
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtValidQpkgInstalled; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
 		MarkActionForkAsSkipped
 		z=2
 	fi
@@ -11302,7 +11302,7 @@ _QPKG:sign_()
 	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
 
 	if ! IsOsCanManageSignedPackages; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "$(GetOsName) version incompatible"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "incompatible $(GetOsName) version"
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
@@ -11402,7 +11402,7 @@ _QPKG:unsign_()
 	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
 
 	if ! IsOsCanManageSignedPackages; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "$(GetOsName) version incompatible"
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "incompatible $(GetOsName) version"
 		MarkActionForkAsSkipped
 		z=2
 	elif IsNtQpkgRepoSelfManaged; then
