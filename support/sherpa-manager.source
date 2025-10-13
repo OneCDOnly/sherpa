@@ -9906,14 +9906,9 @@ _QPKG:rebuild_()
 	local action=meta-rebuild
 	local -i z=0
 
-	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
+	# Reactive checks performed just before the action is carried-out. NOTE: predictive checks are permitted here for time-saving purposes (don't run future actions if this action isn't permitted).
 
-	if IsNtQpkgCanRebuild; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "unsupported by this QPKG, please 'install' it instead"
-
-		MarkActionForkAsSkipped
-		z=2
-	elif IsQpkgProhibited; then
+	if IsQpkgProhibited; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'prohibited package'
 		MarkActionForkAsSkipped
 		z=2
@@ -9924,14 +9919,6 @@ _QPKG:rebuild_()
 			SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'already installed & backup file unavailable'
 		fi
 
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtQpkgAuthorOk; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'incompatible author'
-		MarkActionForkAsSkipped
-		z=2
-	elif IsNtQpkgRepoSelfManaged; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkipped
 		z=2
 	elif ! IsQpkgBackupExist && ! (QPKGs-ACbackup-to.Exist "O$qpkg_name" && QPKGs-ACuninstall-to.Exist "O$qpkg_name"); then
@@ -13116,36 +13103,6 @@ IsQpkgInstallable()
 	#	$? = true/false
 
 	IsNtQpkgProhibited && IsNtQpkgInstalled && IsNtValidQpkgInstalled && IsQpkgDbMinOSVerOk && IsQpkgDbMaxOSVerOk && IsQpkgDbMinRAMOk
-
-	}
-
-IsQpkgCanRebuild()
-	{
-
-	# Is this QPKG not installed, and a backup file is available so it can be rebuilt?
-
-	# Inputs: (global)
-	#	$qpkg_name
-
-	# Outputs: (local)
-	#	$? = 0 (true), !0 (false).
-
-	IsQpkgDbCanBackup && IsNtValidQpkgInstalled && IsQpkgBackupExist
-
-	}
-
-IsNtQpkgCanRebuild()
-	{
-
-	# Is this QPKG already installed or a backup file is unavailable?
-
-	# Inputs: (global)
-	#	$qpkg_name
-
-	# Outputs: (local)
-	#	$? = true/false
-
-	! IsQpkgCanRebuild
 
 	}
 
