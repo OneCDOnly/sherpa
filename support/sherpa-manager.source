@@ -1075,7 +1075,7 @@ CheckEnv()
 	fi
 
 	if IsQpkgInstalled OMedusa || IsQpkgInstalled Medusa; then
-		ShowAsImportant "Medusa support to be discontinued: $(ShowAsURL 'https://github.com/OneCDOnly/sherpa/discussions/318')"
+		ShowAsNews "Medusa support to be discontinued: $(ShowAsURL 'https://github.com/OneCDOnly/sherpa/discussions/318')"
 	fi
 
 	SetNasArch
@@ -15393,14 +15393,14 @@ ShowAsDone()
 
 	} >&2
 
-ShowAsImportant()
+ShowAsNews()
 	{
 
-	# Important note to user.
+	# News note to user.
 
 	[[ -n ${1:-} ]] || return
 
-	OpStepClear "$(TextBrightYellowBlink note)" "${1:-}"
+	OpStepClear "$(TextBrightWhiteBlink news)" "${1:-}"
 
 	} >&2
 
@@ -15892,6 +15892,22 @@ TextBrightWhite()
 
 	if [[ $colourful = true ]]; then
 		printf '\033[1;97m%s\033[0m' "$1"
+	else
+		printf '%s' "$1"
+	fi
+
+	} 2> /dev/null
+
+TextBrightWhiteBlink()
+	{
+
+	# Inputs: (global)
+	#	$colourful
+
+	[[ -n ${1:-} ]] || return
+
+	if [[ $colourful = true ]]; then
+		printf '\033[1;5;97m%s\033[0m' "$1"
 	else
 		printf '%s' "$1"
 	fi
