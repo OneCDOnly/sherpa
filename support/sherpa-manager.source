@@ -10134,7 +10134,7 @@ _QPKG:install_()
 
 	FuncForkInit
 
-	local a=''
+	local a='INSTALL_QPKG=true '
 	local action=install
 	local local_pathfile=$(GetQpkgDbPathFilename)
 		local log_pathfile=$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_install_log_file
