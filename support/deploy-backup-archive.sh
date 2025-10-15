@@ -56,18 +56,18 @@ IsPathEmpty()
 IsOsOk || exit
 
 qpkg_bu_path=$(GetUserDefVol)/.qpkg_config_backup
-source_pathfile=/share/Public/sherpa-config-backups.tar.gz
+config_archive_pathfile=/share/Public/sherpa-config-archive.tar.gz
 
 mkdir -p "$qpkg_bu_path"
 
-if [[ ! -s $source_pathfile ]]; then
+if [[ ! -s $config_archive_pathfile ]]; then
 	echo '! backup archive is empty or missing'
 
 	exit 1
 fi
 
-echo -n '> restore config backups from archive ... '
-a=$(/bin/tar --extract --gzip --file="$source_pathfile" --directory="$qpkg_bu_path" 2>&1)
+echo -n '> restore backups from archive ... '
+a=$(/bin/tar --extract --gzip --file="$config_archive_pathfile" --directory="$qpkg_bu_path" 2>&1)
 z=$?
 
 [[ -z $a ]] && echo done || echo
