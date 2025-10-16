@@ -67,10 +67,10 @@ GetOsFirmwareVersion()
 SaveVolumeInfo()
 	{
 
-	UpdateInfoFile Model "$(get_display_name)"
+	UpdateInfoFile Model "'$(get_display_name)'"
 	UpdateInfoFile Hostname "$HOSTNAME"
 	UpdateInfoFile DefaultVolume "$(GetUserDefVol)"
-	UpdateInfoFile FirmwareVersion "$(GetOsFirmwareVersion)"
+	UpdateInfoFile FirmwareVersion "'$(GetOsFirmwareVersion)'"
 
 	}
 
@@ -85,6 +85,7 @@ UpdateInfoFile()
 	{
 
 	[[ -n $1 && -n $2 ]] || return
+	[[ -e "$volume_info_pathfile" ]] || touch "$volume_info_pathfile"	# Must ensure config file exists before attempting to write into it.
 
 	/sbin/setcfg Source "$1" "$2" -f "$volume_info_pathfile"
 
@@ -93,8 +94,8 @@ UpdateInfoFile()
 IsOsOk || exit
 
 qpkg_bu_path=$(GetUserDefVol)/.qpkg_config_backup
-config_archive_pathfile=/share/Public/sherpa-config-archive.tar.gz
-volume_info_pathfile=$qpkg_bu_path/volume.cfg
+config_archive_pathfile=/share/Public/sherpa-backup-archive.tar.gz
+volume_info_pathfile=$qpkg_bu_path/volume-info.conf
 
 if [[ ! -d $qpkg_bu_path ]]; then
 	echo '! no config backup path found'

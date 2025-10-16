@@ -56,7 +56,7 @@ IsPathEmpty()
 IsOsOk || exit
 
 qpkg_bu_path=$(GetUserDefVol)/.qpkg_config_backup
-config_archive_pathfile=/share/Public/sherpa-config-archive.tar.gz
+config_archive_pathfile=/share/Public/sherpa-backup-archive.tar.gz
 
 mkdir -p "$qpkg_bu_path"
 
