@@ -3471,16 +3471,16 @@ PatchEntwareService()
 	if /bin/grep "$r_external_apps_backup_path" "$r_package_init_pathfile" &> /dev/null; then
 		DebugInfo 'patch: "'$r_external_apps_path' shuffle" - already done'
 	else
-		# Ensure existing /opt files are moved out of the way before creating new /opt symlink:
+		# Ensure existing /opt files are moved out-of-the-way before creating new /opt symlink:
 
 		find_text='# sym-link $QPKG_DIR to /opt'
-		append_text='opt_path='$r_external_apps_path' opt_backup_path='$r_external_apps_backup_path'; [[ -d $opt_path \&\& ! -L $opt_path \&\& ! -d $opt_backup_path ]] \&\& mv $opt_path $opt_backup_path'
+		append_text='opt_path='$r_external_apps_path' opt_backup_path='$r_external_apps_backup_path'; rmdir "$opt_path" 2> /dev/null; [[ -d $opt_path \&\& ! -L $opt_path \&\& ! -d $opt_backup_path ]] \&\& mv "$opt_path" "$opt_backup_path"'
 		/bin/sed -i "s|$find_text|$find_text\n\n${r_char_tab}${r_prefix}\n${r_char_tab}${append_text}\n|" "$r_package_init_pathfile"
 
 		# ... then restored afterward:
 
 		find_text='/bin/ln -sf $QPKG_DIR /opt'
-		append_text='(shopt -s dotglob; [[ -L $opt_path \&\& -d $opt_backup_path ]] \&\& mv $opt_backup_path/* $opt_path/ \&\& rmdir $opt_backup_path)'
+		append_text='(shopt -s dotglob; [[ -L $opt_path \&\& -d $opt_backup_path ]] \&\& mv "$opt_backup_path"/* "$opt_path"/ \&\& rmdir "$opt_backup_path")'
 		/bin/sed -i "s|$find_text|$find_text\n\n${r_char_tab}${r_prefix}\n${r_char_tab}${append_text}\n|" "$r_package_init_pathfile"
 
 		DebugAsDone 'patch: "'$r_external_apps_path' shuffle"'
