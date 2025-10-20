@@ -589,7 +589,7 @@ LoadEnv()
 	# Entware.
 
 	readonly r_external_apps_path=/opt
-		readonly r_external_apps_backup_path=$r_external_apps_path.bak
+		readonly r_external_apps_backup_path=$r_external_apps_path.temp
 		readonly r_external_packages_archive_pathfile=$r_external_apps_path/var/opkg-lists/entware
 	readonly r_external_packages_pathfile=$r_cache_path/Packages
 
@@ -3471,16 +3471,16 @@ PatchEntwareService()
 	if /bin/grep "$r_external_apps_backup_path" "$r_package_init_pathfile" &> /dev/null; then
 		DebugInfo 'patch: "'$r_external_apps_path' shuffle" - already done'
 	else
-		# Ensure existing /opt files are moved out-of-the-way before creating new /opt symlink:
+		# Ensure existing /opt files are moved out-of-the-way before Entware creates new /opt symlink:
 
 		find_text='# sym-link $QPKG_DIR to /opt'
-		append_text='opt_path='$r_external_apps_path' opt_backup_path='$r_external_apps_backup_path'; rmdir "$opt_path" 2> /dev/null; [[ -d $opt_path \&\& ! -L $opt_path \&\& ! -d $opt_backup_path ]] \&\& mv "$opt_path" "$opt_backup_path"'
+		append_text='external_apps_path='$r_external_apps_path' external_apps_temp_path='$r_external_apps_backup_path'; rmdir "$external_apps_path" "$external_apps_temp_path" 2> /dev/null; [[ -d $external_apps_path \&\& ! -L $external_apps_path \&\& ! -d $external_apps_temp_path ]] \&\& mv "$external_apps_path" "$external_apps_temp_path"'
 		/bin/sed -i "s|$find_text|$find_text\n\n${r_char_tab}${r_prefix}\n${r_char_tab}${append_text}\n|" "$r_package_init_pathfile"
 
 		# ... then restored afterward:
 
 		find_text='/bin/ln -sf $QPKG_DIR /opt'
-		append_text='(shopt -s dotglob; [[ -L $opt_path \&\& -d $opt_backup_path ]] \&\& mv "$opt_backup_path"/* "$opt_path"/ \&\& rmdir "$opt_backup_path")'
+		append_text='(shopt -s dotglob; [[ -L $external_apps_path \&\& -d $external_apps_temp_path ]] \&\& { mv "$external_apps_temp_path"/* "$external_apps_path"/; rm -rf "${external_apps_temp_path:?no path specified}" ;})'
 		/bin/sed -i "s|$find_text|$find_text\n\n${r_char_tab}${r_prefix}\n${r_char_tab}${append_text}\n|" "$r_package_init_pathfile"
 
 		DebugAsDone 'patch: "'$r_external_apps_path' shuffle"'
@@ -10263,12 +10263,12 @@ _QPKG:install_()
 			SendParentCommand _UpdateEntwarePackageList_
 			PatchEntwareService
 
-			# Shift all files from /opt into /opt.bak
+			# Shift all files from temporary path back into /opt
 
 			if [[ -L $r_external_apps_path && -d $r_external_apps_backup_path ]]; then
-				DebugAsProc "move-into $r_external_apps_path"
+				DebugAsProc "restore-into $r_external_apps_path"
 				(shopt -s dotglob; mv "$r_external_apps_backup_path"/* "$r_external_apps_path"/)
-				rmdir "$r_external_apps_backup_path"
+				rm -rf "${r_external_apps_backup_path:?${FUNCNAME[0]}(): $e_nopth}"
 				DebugAsDone complete
 			fi
 		fi
