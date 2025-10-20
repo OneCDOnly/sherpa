@@ -315,7 +315,7 @@ LoadConsts()
 	# Various.
 
 	readonly r_char_tab=$'\t'
-	package_release_version=v251018
+	package_release_version=v251021
 	readonly r_entware_packages_last_updated=20250602
 	readonly r_file_change_threshold_minutes=60
 	readonly r_log_tail_lines=5000
@@ -767,7 +767,7 @@ DebugLogEnv()
 	DebugHardware ok 'NAS model' "$(get_display_name)"
 	DebugHardware ok CPU "$(GetHardwareCPUInfo)"
 	DebugHardware ok 'CPU cores' "$r_cpu_cores"
-	DebugHardware ok 'CPU architecture' "$(GetNasFancyArch)"
+	DebugHardware ok 'CPU architecture' "$(GetCpuDataWidth)"
 	DebugHardware ok 'basic CPU SHA1 benchmark' "$(GetHardwareCPUBenchmark)"
 	DebugHardware ok RAM "$(FormatAsThous "$r_nas_ram_kb")kiB"
 	DebugKernel ok name "$(GetOsKernelName)"
@@ -877,7 +877,7 @@ DebugLogEnv()
 
 	SetQpkgArch
 
-	DebugQpkg detect architecture "$r_nas_qpkg_arch"
+	DebugQpkg detect architecture "$r_nas_qpkg_arch ($(DecodeQpkgArch $r_nas_qpkg_arch))"
 
 	if IsQpkgInstalled Entware; then
 		if ! IsEntwareUpgradable; then
@@ -1074,9 +1074,9 @@ CheckEnv()
 		ShowAsWarn "the $(TextBrightRed 'Out-Of-Memory killer') has been triggered, check for $(TextBrightRed inactive) QPKGs"
 	fi
 
-	if IsQpkgInstalled OMedusa || IsQpkgInstalled Medusa; then
-		ShowAsNews "Medusa support to be discontinued: $(ShowAsURL 'https://github.com/OneCDOnly/sherpa/discussions/318')"
-	fi
+#	if IsQpkgInstalled OMedusa || IsQpkgInstalled Medusa; then
+#		ShowAsNews "Medusa support to be discontinued: $(ShowAsURL 'https://github.com/OneCDOnly/sherpa/discussions/318')"
+#	fi
 
 	SetNasArch
 
@@ -3471,16 +3471,16 @@ PatchEntwareService()
 	if /bin/grep "$r_external_apps_backup_path" "$r_package_init_pathfile" &> /dev/null; then
 		DebugInfo 'patch: "'$r_external_apps_path' shuffle" - already done'
 	else
-		# Ensure existing /opt files are moved out of the way before creating new /opt symlink:
+		# Ensure existing /opt files are moved out-of-the-way before creating new /opt symlink:
 
 		find_text='# sym-link $QPKG_DIR to /opt'
-		append_text='opt_path='$r_external_apps_path' opt_backup_path='$r_external_apps_backup_path'; [[ -d $opt_path \&\& ! -L $opt_path \&\& ! -d $opt_backup_path ]] \&\& mv $opt_path $opt_backup_path'
+		append_text='opt_path='$r_external_apps_path' opt_backup_path='$r_external_apps_backup_path'; rmdir "$opt_path" 2> /dev/null; [[ -d $opt_path \&\& ! -L $opt_path \&\& ! -d $opt_backup_path ]] \&\& mv "$opt_path" "$opt_backup_path"'
 		/bin/sed -i "s|$find_text|$find_text\n\n${r_char_tab}${r_prefix}\n${r_char_tab}${append_text}\n|" "$r_package_init_pathfile"
 
 		# ... then restored afterward:
 
 		find_text='/bin/ln -sf $QPKG_DIR /opt'
-		append_text='(shopt -s dotglob; [[ -L $opt_path \&\& -d $opt_backup_path ]] \&\& mv $opt_backup_path/* $opt_path/ \&\& rmdir $opt_backup_path)'
+		append_text='(shopt -s dotglob; [[ -L $opt_path \&\& -d $opt_backup_path ]] \&\& mv "$opt_backup_path"/* "$opt_path"/ \&\& rmdir "$opt_backup_path")'
 		/bin/sed -i "s|$find_text|$find_text\n\n${r_char_tab}${r_prefix}\n${r_char_tab}${append_text}\n|" "$r_package_init_pathfile"
 
 		DebugAsDone 'patch: "'$r_external_apps_path' shuffle"'
@@ -9253,7 +9253,7 @@ GetNasArch()
 
 	}
 
-GetNasFancyArch()
+GetCpuDataWidth()
 	{
 
 	local a=''
@@ -9547,6 +9547,49 @@ GetQpkgArch()
 			;;
 		aarch64)
 			printf a64
+			;;
+		*)
+			printf unknown
+	esac
+
+	}
+
+DecodeQpkgArch()
+	{
+
+	# Translate arch from sherpa notation to NAS notation.
+
+	# sherpa arch for NAS is a single 3-character code.
+	# prefix is 'a' for ARM, 'i' for Intel.
+
+	# Inputs: (global)
+	#	$r_nas_arch
+	#	$r_nas_firmware_ver
+	#	$r_nas_platform
+
+	# Outputs: (local)
+	#	stdout = translated QPKG arch.
+
+	[[ -n ${1:-} ]] || return
+
+	case $1 in
+		a19)
+			printf ARMv5tel
+			;;
+		a31|a41)
+			printf ARMv7l
+			;;
+		a64)
+			printf aarch64
+			;;
+		i53)
+			printf 'Intel x86_CE53xx'
+			;;
+		i64)
+			printf 'Intel x86-64'
+			;;
+		i86)
+			printf 'Intel x86'
 			;;
 		*)
 			printf unknown
