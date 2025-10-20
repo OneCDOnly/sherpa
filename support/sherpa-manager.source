@@ -315,7 +315,7 @@ LoadConsts()
 	# Various.
 
 	readonly r_char_tab=$'\t'
-	package_release_version=v251018
+	package_release_version=v251021
 	readonly r_entware_packages_last_updated=20250602
 	readonly r_file_change_threshold_minutes=60
 	readonly r_log_tail_lines=5000
@@ -1074,9 +1074,9 @@ CheckEnv()
 		ShowAsWarn "the $(TextBrightRed 'Out-Of-Memory killer') has been triggered, check for $(TextBrightRed inactive) QPKGs"
 	fi
 
-	if IsQpkgInstalled OMedusa || IsQpkgInstalled Medusa; then
-		ShowAsNews "Medusa support to be discontinued: $(ShowAsURL 'https://github.com/OneCDOnly/sherpa/discussions/318')"
-	fi
+#	if IsQpkgInstalled OMedusa || IsQpkgInstalled Medusa; then
+#		ShowAsNews "Medusa support to be discontinued: $(ShowAsURL 'https://github.com/OneCDOnly/sherpa/discussions/318')"
+#	fi
 
 	SetNasArch
 
