@@ -9978,7 +9978,6 @@ _QPKG:rebuild_()
 
 	SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 	MarkActionForkAsOk
-	ClearQpkgInstalledAppCenterNotifier
 
 	FuncForkExit $z
 
@@ -10817,8 +10816,6 @@ _QPKG:deactivate_()
 		MarkActionForkAsError
 	fi
 
-	ClearQpkgInstalledAppCenterNotifier
-
 	FuncForkExit $z
 
 	}
@@ -10873,9 +10870,9 @@ _QPKG:enable_()
 	DebugAsProc "enabling $(FormatPackageName)"
 
 	Executer "/sbin/qpkg_service${timeout} enable $qpkg_name" "$r_log_pathfile" log:failure-only
-	ClearQpkgInstalledAppCenterNotifier
 	SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 	MarkActionForkAsOk
+	ClearQpkgInstalledAppCenterNotifier
 
 	FuncForkExit $z
 
@@ -10936,9 +10933,9 @@ _QPKG:disable_()
 
 	Executer "/sbin/qpkg_service${timeout} disable $qpkg_name" "$r_log_pathfile" log:failure-only
 
-	ClearQpkgInstalledAppCenterNotifier
 	SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 	MarkActionForkAsOk
+	ClearQpkgInstalledAppCenterNotifier
 
 	FuncForkExit $z
 
@@ -11294,6 +11291,8 @@ _QPKG:clean_()
 		# TODO: if debug mode, save action log to session log.
 	fi
 
+	ClearQpkgInstalledAppCenterNotifier
+
 	FuncForkExit $z
 
 	}
@@ -11397,6 +11396,8 @@ EOB
 		SendParentCommand 'show_suggest_raise_issue=true'
 		MarkActionForkAsError
 	fi
+
+	ClearQpkgInstalledAppCenterNotifier
 
 	FuncForkExit $z
 
@@ -11515,7 +11516,7 @@ ClearQpkgInstalledAppCenterNotifier()
 
 	[[ -e /sbin/qpkg_cli ]] && /sbin/qpkg_cli --cancel "$qpkg_name"
 
-	IsNtValidQpkgInstalled && return
+	IsValidQpkgInstalled || return
 
 	# Must also do this when installing QPKGs at the CLI.
 
