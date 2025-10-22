@@ -315,7 +315,7 @@ LoadConsts()
 	# Various.
 
 	readonly r_char_tab=$'\t'
-	package_release_version=v251021
+	package_release_version=v251023
 	readonly r_entware_packages_last_updated=20250602
 	readonly r_file_change_threshold_minutes=60
 	readonly r_log_tail_lines=5000
@@ -589,7 +589,7 @@ LoadEnv()
 	# Entware.
 
 	readonly r_external_apps_path=/opt
-		readonly r_external_apps_backup_path=$r_external_apps_path.bak
+		readonly r_external_apps_backup_path=$r_external_apps_path.temp
 		readonly r_external_packages_archive_pathfile=$r_external_apps_path/var/opkg-lists/entware
 	readonly r_external_packages_pathfile=$r_cache_path/Packages
 
@@ -3471,16 +3471,16 @@ PatchEntwareService()
 	if /bin/grep "$r_external_apps_backup_path" "$r_package_init_pathfile" &> /dev/null; then
 		DebugInfo 'patch: "'$r_external_apps_path' shuffle" - already done'
 	else
-		# Ensure existing /opt files are moved out-of-the-way before creating new /opt symlink:
+		# Ensure existing /opt files are moved out-of-the-way before Entware creates new /opt symlink:
 
 		find_text='# sym-link $QPKG_DIR to /opt'
-		append_text='opt_path='$r_external_apps_path' opt_backup_path='$r_external_apps_backup_path'; rmdir "$opt_path" 2> /dev/null; [[ -d $opt_path \&\& ! -L $opt_path \&\& ! -d $opt_backup_path ]] \&\& mv "$opt_path" "$opt_backup_path"'
+		append_text='external_apps_path='$r_external_apps_path' external_apps_temp_path='$r_external_apps_backup_path'; rmdir "$external_apps_path" "$external_apps_temp_path" 2> /dev/null; [[ -d $external_apps_path \&\& ! -L $external_apps_path \&\& ! -d $external_apps_temp_path ]] \&\& mv "$external_apps_path" "$external_apps_temp_path"'
 		/bin/sed -i "s|$find_text|$find_text\n\n${r_char_tab}${r_prefix}\n${r_char_tab}${append_text}\n|" "$r_package_init_pathfile"
 
 		# ... then restored afterward:
 
 		find_text='/bin/ln -sf $QPKG_DIR /opt'
-		append_text='(shopt -s dotglob; [[ -L $opt_path \&\& -d $opt_backup_path ]] \&\& mv "$opt_backup_path"/* "$opt_path"/ \&\& rmdir "$opt_backup_path")'
+		append_text='(shopt -s dotglob; [[ -L $external_apps_path \&\& -d $external_apps_temp_path ]] \&\& { mv "$external_apps_temp_path"/* "$external_apps_path"/; rm -rf "${external_apps_temp_path:?no path specified}" ;})'
 		/bin/sed -i "s|$find_text|$find_text\n\n${r_char_tab}${r_prefix}\n${r_char_tab}${append_text}\n|" "$r_package_init_pathfile"
 
 		DebugAsDone 'patch: "'$r_external_apps_path' shuffle"'
@@ -6611,7 +6611,7 @@ DisplayFileInViewport()
 
 	if [[ $(/usr/bin/wc -l < "$filename") -ge $r_sess_rows || $(/usr/bin/wc -L < "$filename") -ge $r_sess_columns ]]; then
 		if [[ -e $r_gnu_less_cmd ]]; then
-			options='--quit-on-intr --tilde --mouse --RAW-CONTROL-CHARS --shift=4 --redraw-on-quit --quit-if-one-screen'
+			options='--quit-on-intr --tilde --mouse --RAW-CONTROL-CHARS --shift=4 --redraw-on-quit --quit-if-one-screen --quiet --no-vbell --clear-screen'
 			[[ $wraplines = false ]] && options+=' --chop-long-lines'
 			[[ $showlinenumbers = true ]] && options+=' --LINE-NUMBERS'
 			[[ $jumptoend = true ]] && options+=' +G'
@@ -9978,7 +9978,6 @@ _QPKG:rebuild_()
 
 	SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 	MarkActionForkAsOk
-	ClearQpkgInstalledAppCenterNotifier
 
 	FuncForkExit $z
 
@@ -10263,12 +10262,12 @@ _QPKG:install_()
 			SendParentCommand _UpdateEntwarePackageList_
 			PatchEntwareService
 
-			# Shift all files from /opt into /opt.bak
+			# Shift all files from temporary path back into /opt
 
 			if [[ -L $r_external_apps_path && -d $r_external_apps_backup_path ]]; then
-				DebugAsProc "move-into $r_external_apps_path"
+				DebugAsProc "restore-into $r_external_apps_path"
 				(shopt -s dotglob; mv "$r_external_apps_backup_path"/* "$r_external_apps_path"/)
-				rmdir "$r_external_apps_backup_path"
+				rm -rf "${r_external_apps_backup_path:?${FUNCNAME[0]}(): $e_nopth}"
 				DebugAsDone complete
 			fi
 		fi
@@ -10817,8 +10816,6 @@ _QPKG:deactivate_()
 		MarkActionForkAsError
 	fi
 
-	ClearQpkgInstalledAppCenterNotifier
-
 	FuncForkExit $z
 
 	}
@@ -10873,9 +10870,9 @@ _QPKG:enable_()
 	DebugAsProc "enabling $(FormatPackageName)"
 
 	Executer "/sbin/qpkg_service${timeout} enable $qpkg_name" "$r_log_pathfile" log:failure-only
-	ClearQpkgInstalledAppCenterNotifier
 	SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 	MarkActionForkAsOk
+	ClearQpkgInstalledAppCenterNotifier
 
 	FuncForkExit $z
 
@@ -10936,9 +10933,9 @@ _QPKG:disable_()
 
 	Executer "/sbin/qpkg_service${timeout} disable $qpkg_name" "$r_log_pathfile" log:failure-only
 
-	ClearQpkgInstalledAppCenterNotifier
 	SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 	MarkActionForkAsOk
+	ClearQpkgInstalledAppCenterNotifier
 
 	FuncForkExit $z
 
@@ -11294,6 +11291,8 @@ _QPKG:clean_()
 		# TODO: if debug mode, save action log to session log.
 	fi
 
+	ClearQpkgInstalledAppCenterNotifier
+
 	FuncForkExit $z
 
 	}
@@ -11397,6 +11396,8 @@ EOB
 		SendParentCommand 'show_suggest_raise_issue=true'
 		MarkActionForkAsError
 	fi
+
+	ClearQpkgInstalledAppCenterNotifier
 
 	FuncForkExit $z
 
@@ -11515,7 +11516,7 @@ ClearQpkgInstalledAppCenterNotifier()
 
 	[[ -e /sbin/qpkg_cli ]] && /sbin/qpkg_cli --cancel "$qpkg_name"
 
-	IsNtValidQpkgInstalled && return
+	IsValidQpkgInstalled || return
 
 	# Must also do this when installing QPKGs at the CLI.
 
