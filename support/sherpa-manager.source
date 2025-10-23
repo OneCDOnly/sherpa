@@ -6616,7 +6616,7 @@ DisplayFileInViewport()
 
 	if [[ $(/usr/bin/wc -l < "$filename") -ge $r_sess_rows || $(/usr/bin/wc -L < "$filename") -ge $r_sess_columns ]]; then
 		if [[ -e $r_gnu_less_cmd ]]; then
-			options='--quit-on-intr --tilde --mouse --RAW-CONTROL-CHARS --shift=4 --redraw-on-quit --quit-if-one-screen --quiet --no-vbell --clear-screen'
+			options='--quit-on-intr --tilde --mouse --RAW-CONTROL-CHARS --shift=4 --redraw-on-quit --quit-if-one-screen --no-init --quiet'
 			[[ $wraplines = false ]] && options+=' --chop-long-lines'
 			[[ $showlinenumbers = true ]] && options+=' --LINE-NUMBERS'
 			[[ $jumptoend = true ]] && options+=' +G'
@@ -6652,7 +6652,7 @@ DisplayFileInViewport()
 
 	echo "$(< $1)"
 
-	} 2> /dev/null
+	}
 
 PasteLogLast()
 	{
