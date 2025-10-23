@@ -315,7 +315,7 @@ LoadConsts()
 	# Various.
 
 	readonly r_char_tab=$'\t'
-	package_release_version=v251023
+	package_release_version=v251024
 	readonly r_entware_packages_last_updated=20250602
 	readonly r_file_change_threshold_minutes=60
 	readonly r_log_tail_lines=5000
@@ -589,7 +589,7 @@ LoadEnv()
 	# Entware.
 
 	readonly r_external_apps_path=/opt
-		readonly r_external_apps_backup_path=$r_external_apps_path.temp
+		readonly r_external_apps_temp_path=$r_external_apps_path.temp
 		readonly r_external_packages_archive_pathfile=$r_external_apps_path/var/opkg-lists/entware
 	readonly r_external_packages_pathfile=$r_cache_path/Packages
 
@@ -3463,18 +3463,23 @@ Quiz()
 PatchEntwareService()
 	{
 
+	# Inputs: (global)
+	#	$r_char_tab
+	#	$r_external_apps_path
+	#	$r_external_apps_temp_path
+
 	local append_text=''
 	local find_text=''
 	local -r r_package_init_pathfile=$(GetQpkgServicePathFile Entware)
 	local -r r_prefix='# The following line was inserted by sherpa: https://git.io/sherpa'
 
-	if /bin/grep "$r_external_apps_backup_path" "$r_package_init_pathfile" &> /dev/null; then
+	if /bin/grep "$r_external_apps_temp_path" "$r_package_init_pathfile" &> /dev/null; then
 		DebugInfo 'patch: "'$r_external_apps_path' shuffle" - already done'
 	else
 		# Ensure existing /opt files are moved out-of-the-way before Entware creates new /opt symlink:
 
 		find_text='# sym-link $QPKG_DIR to /opt'
-		append_text='external_apps_path='$r_external_apps_path' external_apps_temp_path='$r_external_apps_backup_path'; rmdir "$external_apps_path" "$external_apps_temp_path" 2> /dev/null; [[ -d $external_apps_path \&\& ! -L $external_apps_path \&\& ! -d $external_apps_temp_path ]] \&\& mv "$external_apps_path" "$external_apps_temp_path"'
+		append_text='external_apps_path='$r_external_apps_path' external_apps_temp_path='$r_external_apps_temp_path'; rmdir "$external_apps_path" "$external_apps_temp_path" 2> /dev/null; [[ -d $external_apps_path \&\& ! -L $external_apps_path \&\& ! -d $external_apps_temp_path ]] \&\& mv "$external_apps_path" "$external_apps_temp_path"'
 		/bin/sed -i "s|$find_text|$find_text\n\n${r_char_tab}${r_prefix}\n${r_char_tab}${append_text}\n|" "$r_package_init_pathfile"
 
 		# ... then restored afterward:
@@ -6611,7 +6616,7 @@ DisplayFileInViewport()
 
 	if [[ $(/usr/bin/wc -l < "$filename") -ge $r_sess_rows || $(/usr/bin/wc -L < "$filename") -ge $r_sess_columns ]]; then
 		if [[ -e $r_gnu_less_cmd ]]; then
-			options='--quit-on-intr --tilde --mouse --RAW-CONTROL-CHARS --shift=4 --redraw-on-quit --quit-if-one-screen --quiet --no-vbell --clear-screen'
+			options='--quit-on-intr --tilde --mouse --RAW-CONTROL-CHARS --shift=4 --redraw-on-quit --quit-if-one-screen --no-init --quiet'
 			[[ $wraplines = false ]] && options+=' --chop-long-lines'
 			[[ $showlinenumbers = true ]] && options+=' --LINE-NUMBERS'
 			[[ $jumptoend = true ]] && options+=' +G'
@@ -10162,7 +10167,7 @@ _QPKG:install_()
 	# Inputs: (global)
 	#	$QPKGs_were_installed_name[]
 	#	$qpkg_name
-	#	$r_external_apps_backup_path
+	#	$r_external_apps_temp_path
 	#	$r_external_apps_path
 	#	$r_install_log_file
 	#	$r_logs_path
@@ -10213,10 +10218,11 @@ _QPKG:install_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	if [[ $qpkg_name = Entware ]] && IsNtValidQpkgInstalled Entware && QPKGs-ACinstall-to.Exist Entware; then
+		if [[ -d $r_external_apps_path && ! -L $r_external_apps_path && ! -e $r_external_apps_temp_path ]]; then
+			# Shift all files from /opt into temporary path.
 
-		if [[ -d $r_external_apps_path && ! -L $r_external_apps_path && ! -e $r_external_apps_backup_path ]]; then
 			DebugAsProc "move-aside $r_external_apps_path"
-			mv "$r_external_apps_path" "$r_external_apps_backup_path"
+			mv "$r_external_apps_path" "$r_external_apps_temp_path"
 			DebugAsDone complete
 		fi
 	fi
@@ -10262,12 +10268,12 @@ _QPKG:install_()
 			SendParentCommand _UpdateEntwarePackageList_
 			PatchEntwareService
 
-			# Shift all files from temporary path back into /opt
+			if [[ -L $r_external_apps_path && -d $r_external_apps_temp_path ]]; then
+				# Shift all files from temporary path back into /opt
 
-			if [[ -L $r_external_apps_path && -d $r_external_apps_backup_path ]]; then
 				DebugAsProc "restore-into $r_external_apps_path"
-				(shopt -s dotglob; mv "$r_external_apps_backup_path"/* "$r_external_apps_path"/)
-				rm -rf "${r_external_apps_backup_path:?${FUNCNAME[0]}(): $e_nopth}"
+				(shopt -s dotglob; mv "$r_external_apps_temp_path"/* "$r_external_apps_path"/)
+				rm -rf "${r_external_apps_temp_path:?${FUNCNAME[0]}(): $e_nopth}"
 				DebugAsDone complete
 			fi
 		fi
