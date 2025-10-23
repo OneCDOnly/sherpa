@@ -6652,7 +6652,7 @@ DisplayFileInViewport()
 
 	echo "$(< $1)"
 
-	}
+	} 2> /dev/null
 
 PasteLogLast()
 	{
