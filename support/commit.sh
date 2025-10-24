@@ -7,6 +7,9 @@
 this_path=$PWD
 . $HOME/scripts/nas/sherpa/support/environment.sourced || exit
 
+[[ -e $objects_file ]] && rm -f "$objects_file"
+[[ -e $management_file ]] && rm -f "$management_file"
+
 cd "$support_path" || exit
 ./clean-source.sh
 
@@ -14,9 +17,6 @@ if [[ ${1:-} != nocheck ]]; then
 	./check-syntax.sh || exit
 	./check-whitespace.sh || exit
 fi
-
-[[ -e $objects_file ]] && rm -f "$objects_file"
-[[ -e $management_file ]] && rm -f "$management_file"
 
 cd "$root_path" || exit
 

@@ -5,6 +5,7 @@
 a=$support_path/$management_source_file
 b=$support_path/$management_file
 manager_epoch=$(date +%s)
+package_release_version=$(cd "$qpkgs_root_path"; gh release view --json name --jq '.name')
 
 SwapTags "$a" "$b"
 
