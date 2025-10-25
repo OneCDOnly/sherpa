@@ -12,7 +12,7 @@ for i in "${!a[@]}"; do
 	echo -n "checking for unwanted whitespace '${a[i]}' ... "
 
 	b=$(grep -nP ' \t' "${a[i]}")													# check for space char followed by tab char (should never happen)
-	b+=$(grep -nF '    ' "${a[i]}" | grep -v 'squeezer-ignore\|whitespace-ignore')	# check for 4 consecutive space chars.
+	b+=$(grep -nF '    ' "${a[i]}" | grep -v 'squeezer-ignore\|whitespace-ignore\|leader-ignore')	# check for 4 consecutive space chars.
 
 	if [[ -z $b ]]; then
 		ShowDone

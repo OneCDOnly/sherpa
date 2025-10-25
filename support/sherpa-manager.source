@@ -11363,21 +11363,21 @@ _QPKG:sign_()
 	a="INSERT INTO Certificate (Type,QpkgName,Cert,DigitalSignature) VALUES ('qpkg','$qpkg_name','$r_qpkg_certificate','$r_qpkg_signature')"
 
 	read -r -d '' b <<EOB
-import sqlite3, sys														# squeezer-ignore
+import sqlite3, sys
 
-try:																	# squeezer-ignore
-    sqliteConnection = sqlite3.connect('$r_cert_db_pathfile')			# squeezer-ignore
+try:
+    sqliteConnection = sqlite3.connect('$r_cert_db_pathfile')			# leader-ignore
 
-    cursor = sqliteConnection.cursor()									# squeezer-ignore
-    sqlite_add_query = """$a"""											# squeezer-ignore
-    cursor.execute(sqlite_add_query)									# squeezer-ignore
-    sqliteConnection.commit()											# squeezer-ignore
-    cursor.close()														# squeezer-ignore
-    sys.exit()															# squeezer-ignore
+    cursor = sqliteConnection.cursor()									# leader-ignore
+    sqlite_add_query = """$a"""											# leader-ignore
+    cursor.execute(sqlite_add_query)									# leader-ignore
+    sqliteConnection.commit()											# leader-ignore
+    cursor.close()														# leader-ignore
+    sys.exit()															# leader-ignore
 
-finally:																# squeezer-ignore
-    if sqliteConnection:												# squeezer-ignore
-        sqliteConnection.close()										# squeezer-ignore
+finally:
+    if sqliteConnection:												# leader-ignore
+        sqliteConnection.close()										# leader-ignore
 EOB
 
 	for ((retries=0; retries<10; retries++)); do
@@ -11465,21 +11465,21 @@ _QPKG:unsign_()
 	a="DELETE from Certificate WHERE QpkgName = '$qpkg_name'"
 
 	read -r -d '' b <<EOB
-import sqlite3, sys														# squeezer-ignore
+import sqlite3, sys
 
-try:																	# squeezer-ignore
-    sqliteConnection = sqlite3.connect('$r_cert_db_pathfile')			# squeezer-ignore
+try:
+    sqliteConnection = sqlite3.connect('$r_cert_db_pathfile')			# leader-ignore
 
-    cursor = sqliteConnection.cursor()									# squeezer-ignore
-    sqlite_delete_query = """$a"""										# squeezer-ignore
-    cursor.execute(sqlite_delete_query)									# squeezer-ignore
-    sqliteConnection.commit()											# squeezer-ignore
-    cursor.close()														# squeezer-ignore
-    sys.exit()															# squeezer-ignore
+    cursor = sqliteConnection.cursor()									# leader-ignore
+    sqlite_delete_query = """$a"""										# leader-ignore
+    cursor.execute(sqlite_delete_query)									# leader-ignore
+    sqliteConnection.commit()											# leader-ignore
+    cursor.close()														# leader-ignore
+    sys.exit()															# leader-ignore
 
-finally:																# squeezer-ignore
-    if sqliteConnection:												# squeezer-ignore
-        sqliteConnection.close()										# squeezer-ignore
+finally:
+    if sqliteConnection:												# leader-ignore
+        sqliteConnection.close()										# leader-ignore
 EOB
 
 	for ((retries=0; retries<10; retries++)); do
@@ -13758,21 +13758,21 @@ IsQpkgSigned()
 	local b=''
 
 	read -r -d '' b <<EOB
-import sqlite3, sys														# squeezer-ignore
+import sqlite3, sys
 
-try:																	# squeezer-ignore
-    sqliteConnection = sqlite3.connect('$r_cert_db_pathfile')			# squeezer-ignore
+try:
+    sqliteConnection = sqlite3.connect('$r_cert_db_pathfile')			# leader-ignore
 
-    cursor = sqliteConnection.cursor()									# squeezer-ignore
-    sqlite_select_query = """$a"""										# squeezer-ignore
-    cursor.execute(sqlite_select_query)									# squeezer-ignore
-    records = cursor.fetchall()											# squeezer-ignore
-    sys.exit(len(records) == 0)											# squeezer-ignore
-    cursor.close()														# squeezer-ignore
+    cursor = sqliteConnection.cursor()									# leader-ignore
+    sqlite_select_query = """$a"""										# leader-ignore
+    cursor.execute(sqlite_select_query)									# leader-ignore
+    records = cursor.fetchall()											# leader-ignore
+    sys.exit(len(records) == 0)											# leader-ignore
+    cursor.close()														# leader-ignore
 
-finally:																# squeezer-ignore
-    if sqliteConnection:												# squeezer-ignore
-        sqliteConnection.close()										# squeezer-ignore
+finally:
+    if sqliteConnection:												# leader-ignore
+        sqliteConnection.close()										# leader-ignore
 EOB
 
 	/usr/local/bin/python2 -c "$b"
