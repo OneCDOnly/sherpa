@@ -3469,7 +3469,7 @@ PatchEntwareService()
 	#	$r_external_apps_temp_path
 
 	local append_text=''
-	local find_text=''
+	local match_text=''
 	local -r r_package_init_pathfile=$(GetQpkgServicePathFile Entware)
 	local -r r_prefix='# The following line was inserted by sherpa: https://git.io/sherpa'
 
@@ -3478,15 +3478,15 @@ PatchEntwareService()
 	else
 		# Ensure existing /opt files are moved out-of-the-way before Entware creates new /opt symlink:
 
-		find_text='# sym-link $QPKG_DIR to /opt'
 		append_text='external_apps_path='$r_external_apps_path' external_apps_temp_path='$r_external_apps_temp_path'; rmdir "$external_apps_path" "$external_apps_temp_path" 2> /dev/null; [[ -d $external_apps_path \&\& ! -L $external_apps_path \&\& ! -d $external_apps_temp_path ]] \&\& mv "$external_apps_path" "$external_apps_temp_path"'
-		/bin/sed -i "s|$find_text|$find_text\n\n${r_char_tab}${r_prefix}\n${r_char_tab}${append_text}\n|" "$r_package_init_pathfile"
+		match_text='# sym-link $QPKG_DIR to /opt'
+		/bin/sed -i "s|$match_text|${match_text}\n\n${r_char_tab}${r_prefix}\n${r_char_tab}${append_text}\n|" "$r_package_init_pathfile"
 
 		# ... then restored afterward:
 
-		find_text='/bin/ln -sf $QPKG_DIR /opt'
 		append_text='(shopt -s dotglob; [[ -L $external_apps_path \&\& -d $external_apps_temp_path ]] \&\& { mv "$external_apps_temp_path"/* "$external_apps_path"/; rm -rf "${external_apps_temp_path:?no path specified}" ;})'
-		/bin/sed -i "s|$find_text|$find_text\n\n${r_char_tab}${r_prefix}\n${r_char_tab}${append_text}\n|" "$r_package_init_pathfile"
+		match_text='/bin/ln -sf $QPKG_DIR /opt'
+		/bin/sed -i "s|$match_text|${match_text}\n\n${r_char_tab}${r_prefix}\n${r_char_tab}${append_text}\n|" "$r_package_init_pathfile"
 
 		DebugAsDone 'patch: "'$r_external_apps_path' shuffle"'
 	fi
@@ -16327,10 +16327,15 @@ RefreshArchive()
 	#	$extracted = true : file was successfully extracted from archive. This will trigger post-extraction processing.
 
 	[[ -n ${archive_name:?${FUNCNAME[0]}(): $e_nonam} ]] || return
+	[[ $archive_name != undefined ]] || { echo "${FUNCNAME[0]}(): $e_nonam}"; return ;}
 	[[ -n ${archive_pathfile:?${FUNCNAME[0]}(): $e_nopfi} ]] || return
+	[[ $archive_pathfile != undefined ]] || { echo "${FUNCNAME[0]}(): $e_nopfi}"; return ;}
 	[[ -n ${archive_url:?${FUNCNAME[0]}(): $e_nourl} ]] || return
+	[[ $archive_url != undefined ]] || { echo "${FUNCNAME[0]}(): $e_nourl}"; return ;}
 	[[ -n ${dont_refresh_pathfile:?${FUNCNAME[0]}(): $e_nopfi} ]] || return
+	[[ $dont_refresh_pathfile != undefined ]] || { echo "${FUNCNAME[0]}(): $e_nopfi}"; return ;}
 	[[ -n ${target_pathfile:?${FUNCNAME[0]}(): $e_nopfi} ]] || return
+	[[ $target_pathfile != undefined ]] || { echo "${FUNCNAME[0]}(): $e_nopfi}"; return ;}
 
 	FuncInit
 
