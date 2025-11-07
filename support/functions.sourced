@@ -132,6 +132,7 @@ Squeeze()
 		a=$(sed 's/\]\][[:space:]]||/]]||/g' <<< "$a")									# Remove whitespace before inline false test preceded by double-test exit.
 		a=$(sed 's/[[:space:]]||return/||return/g' <<< "$a")							# Remove whitespace before inline false test followed by 'return'.
 		a=$(sed 's/[[:space:]]\&\&return/\&\&return/g' <<< "$a")						# Remove whitespace before inline true test followed by 'return'.
+
 		a=$(sed 's/[[:space:]]\&\&Is/\&\&Is/g' <<< "$a")								# Remove whitespace before inline true test followed by 'Is'.
 		a=$(sed 's/[[:space:]]||exit/||exit/g' <<< "$a")								# Remove whitespace before inline false test followed by 'exit'.
 		a=$(sed 's/[[:space:]]||continue/||continue/g' <<< "$a")						# Remove whitespace before inline false test followed by 'continue'.
@@ -144,9 +145,9 @@ Squeeze()
 
 		a=$(sed '/squeezer-ignore/! s/[[:space:]]|[[:space:]]/|/g' <<< "$a")			# Remove whitespace before-and-after pipe, except for lines with 'squeezer-ignore' tag.
 
-		a=$(sed '/squeezer-ignore/! s/^[[:space:]]*//' <<< "$a")						# Remove line leading whitespace, except for lines with 'squeezer-ignore' tag.
+		a=$(sed '/leader-ignore/! s/^[[:space:]]*//' <<< "$a")							# Remove leading line whitespace, except for lines with 'leader-ignore' tag.
 
-		# CAUTION: comment tags won't be seen beyond this point.
+		# CAUTION: comment tags are not seen beyond this point.
 
 		a=$(sed '/^#[[:space:]].*/d;/#$/d;s/[[:space:]]#[[:space:]].*//' <<< "$a")		# Remove comment lines and line comments.
 		a=$(sed 's/[[:space:]]*$//' <<< "$a")											# Remove line trailing whitespace.
