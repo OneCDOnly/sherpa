@@ -222,6 +222,7 @@ LoadConsts()
 	readonly e_notir='undefined tier'
 	readonly e_nourl='undefined URL'
 	readonly e_noval='undefined value'
+	readonly e_novar='undefined variable'
 
 	# QPKG actions.
 
@@ -6885,7 +6886,7 @@ InitActionForkCounters()
 
 	MakePath "$r_action_counts_path" 'action fork counters'
 	proc_counts_path=$(/bin/mktemp -d "$r_action_counts_path"/"${FUNCNAME[1]}"_XXXXXX)
-	[[ -n ${proc_counts_path:?undefined proc counts path} ]] || return
+	ConfirmVarIsDefined proc_counts_path "${proc_counts_path:-}" "$e_nopth" || return
 
 	EraseForkCountPaths
 
@@ -13979,6 +13980,10 @@ MakePath()
 	#	$1 = path to create.
 	#	$2 = reason for this path.
 
+	# Inputs: (global)
+	#	$e_nopth
+	#	$e_norea
+
 	# Outputs: (local)
 	#	$? : 0 = created OK.
 	#	   : 1 = creation failed.
@@ -13986,10 +13991,10 @@ MakePath()
 	# Outputs: (global)
 	#	$show_suggest_raise_issue
 
-	ConfirmVarIsDefined "${1:-}" "$e_nopth" || return
-	ConfirmVarIsDefined "${2:-}" "$e_norea" || return
+	ConfirmVarIsDefined 1 "${1:-}" "$e_nopth" || return
+	ConfirmVarIsDefined 2 "${2:-}" "$e_norea" || return
 
-	if [[ $1 != undefined ]] && ! mkdir -p "$1"; then
+	if ! mkdir -p "$1"; then
 		ShowAsError "unable to create $2 path $(FormatFileName "$1") $(FormatExitcode "$?")"
 		show_suggest_raise_issue=true
 
@@ -14011,11 +14016,13 @@ ClearPath()
 	#	$1 = full path to parent of directory name to clear.
 	#	$2 = directory name to clear.
 
-	ConfirmVarIsDefined "${1:-}" "$e_nopth" || return
-	ConfirmVarIsDefined "${2:-}" "$e_nopth" || return
+	ConfirmVarIsDefined 1 "${1:-}" "$e_nopth" || return
+	ConfirmVarIsDefined 2 "${2:-}" "$e_nopth" || return
 
 	local parent=$1
 	local target=$(/usr/bin/basename "$2")
+
+	ConfirmVarIsDefined target "${target:-}" "$e_nopth" || return
 
 	[[ -d $parent/$target ]] && rm -rf "${parent:?}/${target:?}"/*
 
@@ -14025,12 +14032,20 @@ ConfirmVarIsDefined()
 	{
 
 	# Inputs: (local)
-	#	$1 = variable name to check.
-	#	$2 = error message reason shown if empty or undefined.
+	#	$1 = test variable name.
+	#	$2 = test variable value.
+	#	$3 = error message reason shown if empty or undefined.
 
-	[[ -n ${2:?${FUNCNAME[1]}(): $e_norea} ]] || return
-	[[ -n ${1:?${FUNCNAME[1]}(): $2} ]] || return
-	[[ $1 != undefined ]] || { echo "${FUNCNAME[0]}(): \$$1 $2"; return ;}
+	# Inputs: (global)
+	#	$e_norea
+
+	local -i backdepth=1			# 0 = this function, 1 = calling function, etc...
+
+	local first=${1:-undefined}
+	local second=${2:-undefined}
+	local third=${3:-undefined}
+
+	[[ $second != undefined ]] || { ShowAsBug "${FUNCNAME[$backdepth]}" "\$$first: '$third'"; return ;}
 
 	return 0
 
@@ -15531,6 +15546,39 @@ ShowAsError()
 
 	} >&2
 
+ShowAsBug()
+	{
+
+	# Fatal development error.
+
+	# Inputs: (local)
+	#	$1 = Problem function name.
+	#	$2 = Error message to display.
+
+	[[ -n ${1:-} ]] || return
+	[[ -n ${2:-} ]] || return
+
+	local a='fstack: '
+	local -i i=0
+
+	# Re-order FUNCNAME[] elements in-reverse.
+
+	for ((i=${#FUNCNAME[@]}-1; i>=0; i--)); do
+		[[ $i -ne $((${#FUNCNAME[@]}-1)) ]] && a+=' > '		# Insert separators.
+
+		if [[ ${FUNCNAME[$i]} = "$1" ]]; then
+			a+="${FUNCNAME[$i]}($2)"
+		else
+			a+="${FUNCNAME[$i]}()"
+		fi
+	done
+
+	OpStepClear "$(TextBrightRed buug)" "$a"
+	WriteToLog buug "$a"
+	SetError
+
+	} >&2
+
 ShowAsQuiz()
 	{
 
@@ -15625,11 +15673,13 @@ ShowAsIterativeProgress()
 	#	$5 = suffix2		"packages"
 	#	$6 (optional) = expected action duration: 'long', 'short' (default)
 
-	local -r r_a=${1:?${FUNCNAME[0]}(): $e_noact}
+	local -i backdepth=0			# 0 = this function, 1 = calling function, etc...
+
+	local -r r_a=${1:?${FUNCNAME[$backdepth]}(): $e_noact}
 	local -i b=${2:-0}
-	local -r r_c=${3:?${FUNCNAME[0]}(): undefined suffix1}
+	local -r r_c=${3:?${FUNCNAME[$backdepth]}(): undefined suffix1}
 	local -i d=${4:-0}
-	local -r r_e=${5:?${FUNCNAME[0]}(): undefined suffix2}
+	local -r r_e=${5:?${FUNCNAME[$backdepth]}(): undefined suffix2}
 	local f=''
 
 	f="$(TextBrightWhite "$b") ${r_c}$(Pluralise "$b") ($(TextBrightWhite "$d") ${r_e}$(Pluralise "$d"))"
@@ -15657,17 +15707,8 @@ ShowAsActionLogDetail()
 	#	$7 = package type					'QPKG', 'IPK', etc ...
 	#	$8 = quantity						number of packages affected.
 
-	if [[ ${2:-undefined} = undefined ]]; then
-		ShowAsError "${FUNCNAME[0]}() was provided an undefined value for \$2"
-
-		return 1
-	fi
-
-	if [[ ${7:-undefined} = undefined ]]; then
-		ShowAsError "${FUNCNAME[0]}() was provided an undefined value for \$7"
-
-		return 1
-	fi
+	ConfirmVarIsDefined 2 "${2:-}" "$e_nopnm" || return
+	ConfirmVarIsDefined 7 "${7:-}" "$e_noval" || return
 
 	local package_type=''
 	local quantity_msg=''
@@ -15685,11 +15726,7 @@ ShowAsActionLogDetail()
 			quantity_msg=$8' '
 	esac
 
-	if [[ ${8:-undefined} = undefined ]]; then
-		ShowAsError "${FUNCNAME[0]}() was provided an undefined value for \$8"
-
-		return 1
-	fi
+	ConfirmVarIsDefined 8 "${8:-}" "$e_noval" || return
 
 	case ${4:-} in
 		failed)
