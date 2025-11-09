@@ -206,140 +206,139 @@ LoadConsts()
 
 	# Error messages.
 
-	# QPKG actions.
-	readonly e_noact='undefined action'
-	readonly e_nochk='undefined checksum'
-	readonly e_nocmd='undefined command'
-	readonly e_noext='undefined exitcode'
-	readonly e_nofil='undefined filename'
-	readonly e_nonam='undefined name'
-	readonly e_noopr='undefined operation'
-	readonly e_nopfi='undefined pathfile'
-	readonly e_nopnm='undefined package name'
-	readonly e_noprm='undefined prompt'
-	readonly e_nopth='undefined path'
-	readonly e_nopty='undefined package type'
-	readonly e_norea='undefined reason'
-	readonly e_nores='undefined result'
-	readonly e_nostr='undefined string'
-	readonly e_notir='undefined tier'
-	readonly e_nourl='undefined URL'
-	readonly e_noval='undefined value'
-	readonly e_novar='undefined variable'
+		readonly e_noact='undefined action'
+		readonly e_nochk='undefined checksum'
+		readonly e_nocmd='undefined command'
+		readonly e_noext='undefined exitcode'
+		readonly e_nofil='undefined filename'
+		readonly e_nonam='undefined name'
+		readonly e_noopr='undefined operation'
+		readonly e_nopfi='undefined pathfile'
+		readonly e_nopnm='undefined package name'
+		readonly e_noprm='undefined prompt'
+		readonly e_nopth='undefined path'
+		readonly e_nopty='undefined package type'
+		readonly e_norea='undefined reason'
+		readonly e_nores='undefined result'
+		readonly e_nostr='undefined string'
+		readonly e_notir='undefined tier'
+		readonly e_nourl='undefined URL'
+		readonly e_noval='undefined value'
+		readonly e_novar='undefined variable'
 
 	# QPKG actions.
 
-	readonly r_qpkg_disable_timeout_seconds=10
-	readonly r_qpkg_enable_timeout_seconds=10
-	readonly r_qpkg_restart_timeout_seconds=1800		# 30 minutes
-	readonly r_qpkg_start_timeout_seconds=1500			# 25 minutes
-	readonly r_qpkg_status_check_timeout_seconds=15
-	readonly r_qpkg_stop_timeout_seconds=300			# 5 minutes
+		readonly r_qpkg_disable_timeout_seconds=10
+		readonly r_qpkg_enable_timeout_seconds=10
+		readonly r_qpkg_restart_timeout_seconds=1800		# 30 minutes
+		readonly r_qpkg_start_timeout_seconds=1500			# 25 minutes
+		readonly r_qpkg_status_check_timeout_seconds=15
+		readonly r_qpkg_stop_timeout_seconds=300			# 5 minutes
 
 	# Fixed-widths for report columns when GNU `awk` isn't available.
 
-	readonly r_report_qpkg_abbreviations_column_width=84
-	readonly r_report_qpkg_action_column_width=27
-	readonly r_report_qpkg_active_test_builtin_column_width=9
-	readonly r_report_qpkg_appl_version_column_width=22
-	readonly r_report_qpkg_auto_update_column_width=8
-	readonly r_report_qpkg_can_backup_column_width=8
-	readonly r_report_qpkg_can_clean_column_width=9
-	readonly r_report_qpkg_can_start_to_update_column_width=9
-	readonly r_report_qpkg_dependencies_column_width=29
-	readonly r_report_qpkg_description_column_width=10
-	readonly r_report_qpkg_install_date_column_width=20
-	readonly r_report_qpkg_is_complete_column_width=8
-	readonly r_report_qpkg_is_enabled_column_width=8
-	readonly r_report_qpkg_is_installed_column_width=10
-	readonly r_report_qpkg_is_managed_column_width=8
-	readonly r_report_qpkg_max_os_version_column_width=8
-	readonly r_report_qpkg_min_os_version_column_width=8
-	readonly r_report_qpkg_min_ram_column_width=13
-	readonly r_report_qpkg_name_column_width=21
-	readonly r_report_qpkg_opt_dependencies_column_width=29
-	readonly r_report_qpkg_path_column_width=48
-	readonly r_report_qpkg_repo_column_width=42
-	readonly r_report_qpkg_status_column_width=23
-	readonly r_report_qpkg_tier_column_width=12
-	readonly r_report_qpkg_version_column_width=19
+		readonly r_report_qpkg_abbreviations_column_width=84
+		readonly r_report_qpkg_action_column_width=27
+		readonly r_report_qpkg_active_test_builtin_column_width=9
+		readonly r_report_qpkg_appl_version_column_width=22
+		readonly r_report_qpkg_auto_update_column_width=8
+		readonly r_report_qpkg_can_backup_column_width=8
+		readonly r_report_qpkg_can_clean_column_width=9
+		readonly r_report_qpkg_can_start_to_update_column_width=9
+		readonly r_report_qpkg_dependencies_column_width=29
+		readonly r_report_qpkg_description_column_width=10
+		readonly r_report_qpkg_install_date_column_width=20
+		readonly r_report_qpkg_is_complete_column_width=8
+		readonly r_report_qpkg_is_enabled_column_width=8
+		readonly r_report_qpkg_is_installed_column_width=10
+		readonly r_report_qpkg_is_managed_column_width=8
+		readonly r_report_qpkg_max_os_version_column_width=8
+		readonly r_report_qpkg_min_os_version_column_width=8
+		readonly r_report_qpkg_min_ram_column_width=13
+		readonly r_report_qpkg_name_column_width=21
+		readonly r_report_qpkg_opt_dependencies_column_width=29
+		readonly r_report_qpkg_path_column_width=48
+		readonly r_report_qpkg_repo_column_width=42
+		readonly r_report_qpkg_status_column_width=23
+		readonly r_report_qpkg_tier_column_width=12
+		readonly r_report_qpkg_version_column_width=19
 
-	readonly r_report_lazy_column_width=28				# Use this when I can't be bothered calculating an optimum fixed column width.
+		readonly r_report_lazy_column_width=28				# Use this when I can't be bothered calculating an optimum fixed column width.
 
 	# Report, help and debug formatting.
 
-	readonly r_debug_log_string_length='<?management_debug_log_longest_string_length?>'
-	r_debug_log_width=80								# Default for dev use only.
+		readonly r_debug_log_string_length='<?management_debug_log_longest_string_length?>'
+		r_debug_log_width=80								# Default for dev use only.
 
-	IsNumber $r_debug_log_string_length && r_debug_log_width=$r_debug_log_string_length
-	readonly r_debug_log_width
+		IsNumber $r_debug_log_string_length && r_debug_log_width=$r_debug_log_string_length
+		readonly r_debug_log_width
 
-	readonly r_debug_log_first_column_width=9
-	readonly r_debug_log_second_column_width=24
-	readonly r_help_desc_indent=3
-	readonly r_help_syntax_indent=6
-	readonly r_report_action_result_indent=4
-	readonly r_report_column_spacing=2
-	readonly r_report_file_bytes_column_width=14
-	readonly r_report_file_change_date_column_width=60
-	readonly r_report_file_name_column_width=35
-	readonly r_report_highlight_backups_older_than='2 weeks ago'
-	readonly r_report_info_name_column_width=14
+		readonly r_debug_log_first_column_width=9
+		readonly r_debug_log_second_column_width=24
+		readonly r_help_desc_indent=3
+		readonly r_help_syntax_indent=6
+		readonly r_report_action_result_indent=4
+		readonly r_report_column_spacing=2
+		readonly r_report_file_bytes_column_width=14
+		readonly r_report_file_change_date_column_width=60
+		readonly r_report_file_name_column_width=35
+		readonly r_report_highlight_backups_older_than='2 weeks ago'
+		readonly r_report_info_name_column_width=14
 
 	# Report, help and onscreen messages.
 
-	readonly r_chars_alert='! '
-	readonly r_chars_attention='* '
-	readonly r_chars_blank='  '
-	readonly r_chars_bullet='• '
-	readonly r_chars_dropend='└─ '
-	readonly r_chars_normal='- '
-	readonly r_chars_note='* '
-	readonly r_chars_regular_prompt='$ '
-		readonly r_chars_sudo_prompt=$r_chars_regular_prompt'sudo '
+		readonly r_chars_alert='! '
+		readonly r_chars_attention='* '
+		readonly r_chars_blank='  '
+		readonly r_chars_bullet='• '
+		readonly r_chars_dropend='└─ '
+		readonly r_chars_normal='- '
+		readonly r_chars_note='* '
+		readonly r_chars_regular_prompt='$ '
+			readonly r_chars_sudo_prompt=$r_chars_regular_prompt'sudo '
 
-	readonly r_chars_results='= '
-	readonly r_chars_super_prompt='# '
-	readonly r_extended_datetime_format='+%a %-d %b %Y'
-		readonly r_full_datetime_format=$r_extended_datetime_format' %-I:%M:%S %p %Z'
+		readonly r_chars_results='= '
+		readonly r_chars_super_prompt='# '
+		readonly r_extended_datetime_format='+%a %-d %b %Y'
+			readonly r_full_datetime_format=$r_extended_datetime_format' %-I:%M:%S %p %Z'
 
-	if IsOsCanSudo; then
-		if [[ $(GetUserSudoUID) = undefined ]]; then
+		if IsOsCanSudo; then
+			if [[ $(GetUserSudoUID) = undefined ]]; then
+				readonly r_help_syntax_prefix=$r_chars_super_prompt
+				readonly r_help_syntax_sudo_prefix=$r_chars_super_prompt
+			else
+				readonly r_help_syntax_prefix=$r_chars_regular_prompt
+				readonly r_help_syntax_sudo_prefix=$r_chars_sudo_prompt
+			fi
+		else
 			readonly r_help_syntax_prefix=$r_chars_super_prompt
 			readonly r_help_syntax_sudo_prefix=$r_chars_super_prompt
-		else
-			readonly r_help_syntax_prefix=$r_chars_regular_prompt
-			readonly r_help_syntax_sudo_prefix=$r_chars_sudo_prompt
 		fi
-	else
-		readonly r_help_syntax_prefix=$r_chars_super_prompt
-		readonly r_help_syntax_sudo_prefix=$r_chars_super_prompt
-	fi
 
 	# Various.
 
-	readonly r_char_tab=$'\t'
-	package_release_version='<?package_release_version?>'
-	readonly r_entware_packages_last_updated=20250602
-	readonly r_file_change_threshold_minutes=60
-	readonly r_log_tail_lines=5000
+		readonly r_char_tab=$'\t'
+		package_release_version='<?package_release_version?>'
+		readonly r_entware_packages_last_updated=20250602
+		readonly r_file_change_threshold_minutes=60
+		readonly r_log_tail_lines=5000
 
 	# These are for formatting output to the message pipe enhanced log.
 
-	local date_field_longest_string='Tue 27 May 2025 4:55:42 PM EST '	# devdebug
-	readonly r_date_field_length=${#date_field_longest_string}			# devdebug
+		local date_field_longest_string='Tue 27 May 2025 4:55:42 PM EST '	# devdebug
+		readonly r_date_field_length=${#date_field_longest_string}			# devdebug
 
-	local tier_field_longest_string=independent							# devdebug
-	readonly r_tier_field_length=${#tier_field_longest_string}			# devdebug
+		local tier_field_longest_string=independent							# devdebug
+		readonly r_tier_field_length=${#tier_field_longest_string}			# devdebug
 
-	local action_field_longest_string=reactivate						# devdebug
-	readonly r_action_field_length=${#action_field_longest_string}		# devdebug
+		local action_field_longest_string=reactivate						# devdebug
+		readonly r_action_field_length=${#action_field_longest_string}		# devdebug
 
-	local key1_field_longest_string=update								# devdebug
-	readonly r_key1_field_length=${#key1_field_longest_string}			# devdebug
+		local key1_field_longest_string=update								# devdebug
+		readonly r_key1_field_length=${#key1_field_longest_string}			# devdebug
 
-	local key2_field_longest_string=package								# devdebug
-	readonly r_key2_field_length=${#key2_field_longest_string}			# devdebug
+		local key2_field_longest_string=package								# devdebug
+		readonly r_key2_field_length=${#key2_field_longest_string}			# devdebug
 
 	}
 
