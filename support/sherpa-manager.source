@@ -14043,11 +14043,7 @@ ConfirmVarIsDefined()
 	#	$2 = test variable value.
 	#	$3 = error message reason shown if empty or undefined.
 
-	# Inputs: (global)
-	#	$e_norea
-
 	local -i backdepth=1			# 0 = this function, 1 = calling function, etc...
-
 	local first=${1:-undefined}
 	local second=${2:-undefined}
 	local third=${3:-undefined}
