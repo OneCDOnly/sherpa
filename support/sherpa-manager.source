@@ -6573,7 +6573,7 @@ ViewLogLast()
 	ExtractPrevSessFromTail
 	EraseThisLine
 
-	if [[ -e $r_session_last_pathfile ]]; then
+	if [[ -s $r_session_last_pathfile ]]; then
 		DisplayFileInViewport "$r_session_last_pathfile" linenumbers
 		Display
 	else
@@ -6596,7 +6596,7 @@ ViewLogTail()
 	ExtractTailFromLog
 	EraseThisLine
 
-	if [[ -e $r_session_tail_pathfile ]]; then
+	if [[ -s $r_session_tail_pathfile ]]; then
 		DisplayFileInViewport "$r_session_tail_pathfile" linenumbers
 		Display
 	else
@@ -6623,15 +6623,16 @@ DisplayFileInViewport()
 	#	$r_sess_rows
 	#	$useropt_verbose
 
-	local filename=${1:-}
+	ConfirmVarIsDefined 1 "${1:-}" "$e_nopfi" || return
+
 	local jumptoend=false
 	local options=''
 	local prompt=' use arrow-keys to scroll up-down & left-right, press Q to quit '
 	local showlinenumbers=false
 	local wraplines=false
 
-	if [[ ! -e $filename ]]; then
-		echo "filename $(FormatFileName "$filename") not found"
+	if [[ ! -s $1 ]]; then
+		echo "filename $(FormatFileName "$1") not found"
 
 		return 1
 	fi
@@ -6653,7 +6654,7 @@ DisplayFileInViewport()
 
 	if [[ $useropt_verbose = true ]]; then
 		if [[ -e /bin/cat ]]; then
-			/bin/cat "$filename"
+			/bin/cat "$1"
 
 			return
 		else
@@ -6663,14 +6664,14 @@ DisplayFileInViewport()
 		fi
 	fi
 
-	if [[ $(/usr/bin/wc -l < "$filename") -ge $r_sess_rows || $(/usr/bin/wc -L < "$filename") -ge $r_sess_columns ]]; then
+	if [[ $(/usr/bin/wc -l < "$1") -ge $r_sess_rows || $(/usr/bin/wc -L < "$1") -ge $r_sess_columns ]]; then
 		if [[ -e $r_gnu_less_cmd ]]; then
 			options='--quit-on-intr --tilde --mouse --RAW-CONTROL-CHARS --shift=4 --redraw-on-quit --quit-if-one-screen --no-init'
 			[[ $wraplines = false ]] && options+=' --chop-long-lines'
 			[[ $showlinenumbers = true ]] && options+=' --LINE-NUMBERS'
 			[[ $jumptoend = true ]] && options+=' +G'
 			# options+=' --header=1,20' # TODO: investigate header row (and columns?). Supported from `less` 600-onwards.
-			LESSSECURE=1 $r_gnu_less_cmd "$options" --prompt "$prompt" "$filename"
+			LESSSECURE=1 $r_gnu_less_cmd "$options" --prompt "$prompt" "$1"
 
 			return
 		fi
@@ -6681,7 +6682,7 @@ DisplayFileInViewport()
 #			options='-~'
 #			[[ $wraplines = false ]] && options+='S'
 #			[[ $showlinenumbers = true ]] && options+='N'
-#			/bin/less "$options" "$filename"
+#			/bin/less "$options" "$1"
 
 #			return
 #		fi
@@ -6689,11 +6690,11 @@ DisplayFileInViewport()
 
 	if [[ -e /bin/cat ]]; then
 		[[ $showlinenumbers = true ]] && options='--number'
-		/bin/cat "$options" "$filename"
+		/bin/cat "$options" "$1"
 
 		return
 	elif [[ -e /bin/more ]]; then
-		/bin/more "$filename"
+		/bin/more "$1"
 
 		return
 	fi
@@ -6718,7 +6719,7 @@ PasteLogLast()
 	DisableDebugToArchiveAndFile
 	ExtractPrevSessFromTail
 
-	if [[ -e $r_session_last_pathfile ]]; then
+	if [[ -s $r_session_last_pathfile ]]; then
 		if Quiz "Press 'Y' to post the most-recent session in your $(ShowAsTitleName) log to a public pastebin, or any other key to abort"; then
 			ShowAsProc "upload $(ShowAsTitleName) log"
 
@@ -6761,7 +6762,7 @@ PasteLogTail()
 	DisableDebugToArchiveAndFile
 	ExtractTailFromLog
 
-	if [[ -e $r_session_tail_pathfile ]]; then
+	if [[ -s $r_session_tail_pathfile ]]; then
 		if Quiz "Press 'Y' to post the most-recent $(FormatAsThous "$r_log_tail_lines") lines in your $(ShowAsTitleName) log to a public pastebin, or any other key to abort"; then
 			ShowAsProc "upload $(ShowAsTitleName) log"
 
@@ -6826,7 +6827,7 @@ ArchiveActiveSessLog()
 	#	$r_session_archive_log_pathfile
 	#	$session_active_log_pathfile
 
-	[[ -n ${session_active_log_pathfile:-} && -e $session_active_log_pathfile ]] && /bin/cat "$session_active_log_pathfile" >> "$r_session_archive_log_pathfile"
+	[[ -n ${session_active_log_pathfile:-} && -s $session_active_log_pathfile ]] && /bin/cat "$session_active_log_pathfile" >> "$r_session_archive_log_pathfile"
 
 	}
 
@@ -6875,7 +6876,7 @@ ExtractPrevSessFromTail()
 
 	ExtractTailFromLog
 
-	if [[ -e $r_session_tail_pathfile ]]; then
+	if [[ -s $r_session_tail_pathfile ]]; then
 		end_line=$(GetLogSessFinishLine "$old_session")
 		start_line=$((end_line+1))		# Ensure an invalid condition, to be solved by the loop.
 
@@ -6903,7 +6904,7 @@ ExtractTailFromLog()
 	#	$r_session_archive_log_pathfile
 	#	$r_session_tail_pathfile
 
-	if [[ -e $r_session_archive_log_pathfile ]]; then
+	if [[ -s $r_session_archive_log_pathfile ]]; then
 		/usr/bin/tail -n${r_log_tail_lines} "$r_session_archive_log_pathfile" > "$r_session_tail_pathfile"	# Trim main log first so there's less to `grep`.
 	else
 		rm -f "$r_session_tail_pathfile"
