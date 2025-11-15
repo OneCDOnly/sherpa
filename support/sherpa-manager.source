@@ -6670,7 +6670,7 @@ DisplayFileInViewport()
 			[[ $wraplines = false ]] && options+=' --chop-long-lines'
 			[[ $showlinenumbers = true ]] && options+=' --LINE-NUMBERS'
 			[[ $jumptoend = true ]] && options+=' +G'
-			# options+=' --header=1,20' # TODO: investigate header row (and columns?). Supported from `less` 600-onwards.
+			# options+=' --header=1,20' # TODO: investigate header row (and columns?). Supported from `less` v600-onwards.
 			LESSSECURE=1 $r_gnu_less_cmd "$options" --prompt "$prompt" "$1"
 
 			return
