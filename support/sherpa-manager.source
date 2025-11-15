@@ -211,6 +211,7 @@ LoadConsts()
 		readonly e_nocmd='undefined command'
 		readonly e_noext='undefined exitcode'
 		readonly e_nofil='undefined filename'
+		readonly e_nofun='undefined function'
 		readonly e_nonam='undefined name'
 		readonly e_noopr='undefined operation'
 		readonly e_nopfi='undefined pathfile'
@@ -3391,7 +3392,7 @@ ResetArchivedLogs()
 
 	if [[ -n $r_logs_path && -d $r_logs_path ]]; then
 		ClearPath "$r_this_package_path" "$r_logs_path"
-		echo 'log reset' > "$session_active_log_pathfile"
+		echo "$(date): log cleared" > "$session_active_log_pathfile"
 		ShowAsDone 'logs cleared'
 	fi
 
@@ -4188,24 +4189,32 @@ _ExecOneActionWithManyForks_()
 	#	$2 = an array of QPKG names to process with $1
 
 	# Inputs: (global)
-	#	$working_count
+	#	$e_nofun
 	#	$max_forks
 	#	$r_abort_actions_pathfile
+	#	$working_count
 
 	# Outputs: (global)
 	#	$pidfile
 
+	ConfirmVarIsDefined 1 "${1:-}" "$e_nofun" || return
+
 	FuncForkInit
 
-	local a=${1:-function null}
+	local a=$1
+	local -i prevpid=0
+	local qpkg_name=''
+	local -i testpid=0
 
 	shift												# `shift` all arguments one position to the left.
 	local -a c=("$@")
 
+	SaveActionPidsToLog entry
+
 	for qpkg_name in "${c[@]}"; do
 		[[ ! -e $r_abort_actions_pathfile ]] || break
 
-		while [[ $working_count -ge $max_forks ]]; do		# Don't fork until an empty spot becomes available.
+		while [[ $working_count -ge $max_forks ]]; do	# Don't fork until an empty spot becomes available.
 			[[ ! -e $r_abort_actions_pathfile ]] || break 2
 			sleep .2
 			UpdateActionForkProgress
@@ -4214,12 +4223,21 @@ _ExecOneActionWithManyForks_()
 		MarkActionForkAsQueued							# Create runfile here (it takes too-long to appear if created in async function).
 		SetQpkgIndex
 
-		(	# Keep updated $pidfile in a subshell, so the one for this function doesn't change.
+		(	# Update $pidfile in a subshell, so $pidfile for _ExecOneActionWithManyForks_() isn't altered.
 
 			CreatePidFile
 			$a &
-			[[ $r_nas_arch = aarch64 ]] && sleep .1
-			WritePidFile "$!"
+			testpid=$!
+
+			if [[ $testpid -eq $prevpid ]]; then
+				SaveActionPidsToLog launched-dup
+			else
+				SaveActionPidsToLog launched
+			fi
+
+			WritePidFile "$testpid"
+			prevpid=$testpid
+
 		)
 
 		DebugAsDone "forked $a() instance for '$qpkg_name'"
@@ -4229,8 +4247,11 @@ _ExecOneActionWithManyForks_()
 	# Monitoring loop.
 	# All action forks have launched, now wait for them to exit.
 
+	SaveActionPidsToLog exit-launch
+
 	while [[ $working_count -gt 0 ]]; do
 		[[ ! -e $r_abort_actions_pathfile ]] || break
+		SaveActionPidsToLog waiting
 		sleep .2
 		UpdateActionForkProgress						# Update display while running forks complete their tasks.
 	done
@@ -4239,7 +4260,25 @@ _ExecOneActionWithManyForks_()
 
 	# All action forks have exited.
 
+	SaveActionPidsToLog exit
+
 	FuncForkExit
+
+	}
+
+SaveActionPidsToLog()
+	{
+
+	# Inputs: (local)
+	#	$1 = string description of processing stage.
+
+	# Inputs: (global)
+	#	$a
+	#	$pidfile
+	#	$qpkg_name
+	#	$testpid
+
+	printf '[%s],%-16s,func[0]:%s,qpkg_name:%s,pidfile:%s,testpid:%s,a:%s\n' "$(date)" "$1" "${FUNCNAME[1]}" "$qpkg_name" "$pidfile" "$testpid" "$a" >> "$r_logs_path"/action-pids.txt
 
 	}
 
@@ -15562,12 +15601,13 @@ ShowAsBug()
 	[[ -n ${2:-} ]] || return
 
 	local a='fstack: '
+	local b=' '
 	local -i i=0
 
 	# Re-order FUNCNAME[] elements in-reverse.
 
 	for ((i=${#FUNCNAME[@]}-1; i>=0; i--)); do
-		[[ $i -ne $((${#FUNCNAME[@]}-1)) ]] && a+=' > '		# Insert separators.
+		[[ $i -ne $((${#FUNCNAME[@]}-1)) ]] && a+="${b}>${b}"		# Insert separators.
 
 		if [[ ${FUNCNAME[$i]} = "$1" ]]; then
 			a+="${FUNCNAME[$i]}($2)"
