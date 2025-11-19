@@ -79,7 +79,7 @@ SwapTags()
 		a=$(sed "s|<?release_version?>|${release_version:-0}|g" <<< "$a")
 		a=$(sed "s|<?title_description?>|$title_description|g" <<< "$a")
 		a=$(sed "s|<?essential_ipks?>|${essential_ipks:=essential ipks}|g" <<< "$a")
-		a=$(sed "s|<?essential_pips?>|${essential_pips:=essential pips}|g" <<< "$a")
+		a=$(sed "s|<?base_pips?>|${base_pips:=base pips}|g" <<< "$a")
 		a=$(sed "s|<?exclusion_pips?>|${exclusion_pips:=exclusion pips}|g" <<< "$a")
 		a=$(sed "s|'<?management_debug_log_longest_string_length?>'|${#management_debug_log_longest_string}|g" <<< "$a")
 
