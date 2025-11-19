@@ -6729,7 +6729,8 @@ CalcReportFirstColumnWidth()
 	b=$(cut -f2 -d: <<< "$a"):															# Grab second field characters.
 	b=$(/bin/sed 's/^[[:space:]]*//' <<< "$b")											# Remove leading whitespace.
 
-	c=${a%%"$b"*}																		# Extract second column characters from header row.
+	# shellcheck disable=2295
+	c=${a%%$b*}																			# Extract second column characters from header row.
 
 	printf '%s' "${#c}"
 
