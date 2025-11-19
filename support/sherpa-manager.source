@@ -4062,11 +4062,11 @@ PIPs:install()
 	{
 
 	# Inputs: (global)
-	#	$r_pip_cmd
-	#	$r_essential_pips
+	#	$r_base_pips
 	#	$r_install_log_file
 	#	$r_logs_path
 	#	$r_pip_cache_path
+	#	$r_pip_cmd
 	#	$r_prev_pip_list_pathfile
 	#	$useropt_check
 	#	$useropt_terse
@@ -4089,7 +4089,7 @@ PIPs:install()
 	local -i z=0
 
 	if [[ $useropt_check = true ]] || IPKs-ACinstall-ok.Exist python3-pip; then
-		PIPs-ACinstall-to:Add "$r_essential_pips"
+		PIPs-ACinstall-to:Add "$r_base_pips"
 
 		if [[ -e $r_prev_pip_list_pathfile && $useropt_check = false ]]; then		# Don't load previous PIP list during 'check'.
 			LoadPipList
@@ -6574,7 +6574,7 @@ ViewLogLast()
 	EraseThisLine
 
 	if [[ -s $r_session_last_pathfile ]]; then
-		DisplayFileInViewport "$r_session_last_pathfile" linenumbers
+		DisplayFileInViewport "$r_session_last_pathfile" showlinenumbers
 		Display
 	else
 		ShowAsError 'no last session log to display'
@@ -6597,7 +6597,7 @@ ViewLogTail()
 	EraseThisLine
 
 	if [[ -s $r_session_tail_pathfile ]]; then
-		DisplayFileInViewport "$r_session_tail_pathfile" linenumbers
+		DisplayFileInViewport "$r_session_tail_pathfile" showlinenumbers
 		Display
 	else
 		ShowAsError 'no session log tail to display'
@@ -6611,99 +6611,129 @@ DisplayFileInViewport()
 	{
 
 	# Inputs: (local)
-	#	$1 = pathfile to display
-	#	$2/$3/$4 (optional, in any order)
-	#		= 'linenumbers'	: display file contents with line numbers.
-	#		= 'jumptoend'	: display file contents scrolled to the last line.
-	#		= 'wrap'		: wrap lines of text to displayport.
+	#	$1 = pathfile to display.
+	#	$2/$3/$4/$5 (optional, and in any order)
+	#		= 'fixed-headers'	: use both first row and first data column as scroll headers.
+	#		= 'jumptoend'		: display file contents scrolled to the last line.
+	#		= 'showlinenumbers'	: display file contents with line numbers.
+	#		= 'wraplines'		: wrap lines of text to displayport.
 
 	# Inputs: (global)
+	#	$e_nopfi
 	#	$r_gnu_less_cmd
 	#	$r_sess_columns
 	#	$r_sess_rows
 	#	$useropt_verbose
 
 	ConfirmVarIsDefined 1 "${1:-}" "$e_nopfi" || return
+	[[ -s $1 ]] || return
 
+	local a=$1
+	shift												# `shift` all arguments one position to the left.
+	local arg=''
+	local -a b=("$@")
+	local headers=false
 	local jumptoend=false
+	local linenumbers=false
 	local options=''
 	local prompt=' use arrow-keys to scroll up-down & left-right, press Q to quit '
-	local showlinenumbers=false
-	local wraplines=false
+	local wrap=false
 
-	if [[ ! -s $1 ]]; then
-		echo "filename $(FormatFileName "$1") not found"
-
-		return 1
-	fi
-
-	case 'linenumbers' in
-		${2:-}|${3:-}|${4:-})
-			showlinenumbers=true
-	esac
-
-	case 'jumptoend' in
-		${2:-}|${3:-}|${4:-})
-			jumptoend=true
-	esac
-
-	case 'wrap' in
-		${2:-}|${3:-}|${4:-})
-			wraplines=true
-	esac
+	for arg in "${b[@]}"; do
+		[[ $arg = fixed-headers ]] && headers=true
+		[[ $arg = jumptoend ]] && jumptoend=true
+		[[ $arg = showlinenumbers ]] && linenumbers=true
+		[[ $arg = wraplines ]] && wrap=true
+	done
 
 	if [[ $useropt_verbose = true ]]; then
 		if [[ -e /bin/cat ]]; then
-			/bin/cat "$1"
+			/bin/cat "$a"
 
 			return
 		else
-			echo "$(< $1)"
+			echo "$(< $a)"
 
 			return
 		fi
 	fi
 
-	if [[ $(/usr/bin/wc -l < "$1") -ge $r_sess_rows || $(/usr/bin/wc -L < "$1") -ge $r_sess_columns ]]; then
+	if [[ $(/usr/bin/wc -l < "$a") -ge $r_sess_rows || $(/usr/bin/wc -L < "$a") -ge $r_sess_columns ]]; then
 		if [[ -e $r_gnu_less_cmd ]]; then
-			options='--quit-on-intr --tilde --mouse --RAW-CONTROL-CHARS --shift=4 --redraw-on-quit --quit-if-one-screen --no-init'
-			[[ $wraplines = false ]] && options+=' --chop-long-lines'
-			[[ $showlinenumbers = true ]] && options+=' --LINE-NUMBERS'
-			[[ $jumptoend = true ]] && options+=' +G'
-			# options+=' --header=1,20' # TODO: investigate header row (and columns?). Supported from `less` v600-onwards.
-			LESSSECURE=1 $r_gnu_less_cmd "$options" --prompt "$prompt" "$1"
+			options='--quit-on-intr --tilde --mouse --RAW-CONTROL-CHARS --shift=4 --redraw-on-quit --quit-if-one-screen --no-init '
+			[[ $headers = true ]] && options+="--header=1,$(CalcReportFirstColumnWidth "$a") "
+			[[ $jumptoend = true ]] && options+='+G '
+			[[ $linenumbers = true ]] && options+='--LINE-NUMBERS '
+			[[ $wrap = false ]] && options+='--chop-long-lines '
+
+			LESSSECURE=1 $r_gnu_less_cmd "$options" --prompt "$prompt" "$a"
 
 			return
 		fi
 
-# Disable the use of built-in `less` for-now as it doesn't support ANSI chars. Let's see if there are any problems (other than not being able to scroll output).
+# Disable the use of built-in `less` for-now as it doesn't support ANSI codes. Let's see if there are any problems (other than not being able to scroll output).
 
 #		if [[ -e /bin/less ]]; then
 #			options='-~'
-#			[[ $wraplines = false ]] && options+='S'
-#			[[ $showlinenumbers = true ]] && options+='N'
-#			/bin/less "$options" "$1"
+#			[[ $linenumbers = true ]] && options+='N'
+#			[[ $wrap = false ]] && options+='S'
+
+#			/bin/less "$options" "$a"
 
 #			return
 #		fi
 	fi
 
 	if [[ -e /bin/cat ]]; then
-		[[ $showlinenumbers = true ]] && options='--number'
-		/bin/cat "$options" "$1"
+		[[ $linenumbers = true ]] && options='--number'
+
+		/bin/cat "$options" "$a"
 
 		return
 	elif [[ -e /bin/more ]]; then
-		/bin/more "$1"
+		/bin/more "$a"
 
 		return
 	fi
 
 	# and, when there's really no-better option ...
 
-	echo "$(< $1)"
+	echo "$(< $a)"
 
 	} 2> /dev/null
+
+CalcReportFirstColumnWidth()
+	{
+
+	# Inputs: (local)
+	#	$1 = pathfile of report ('report.ansi') to examine.
+
+	# Inputs: (global)
+	#	$e_nopfi
+
+	# Outputs: (local)
+	#	stdout = width of report table first data column in characters.
+
+	ConfirmVarIsDefined 1 "${1:-}" "$e_nopfi" || return
+	[[ -s $1 ]] || return
+
+	local a=$(<"$1")
+	local b=''
+	local c=''
+
+	a=$(/bin/sed '/^#[[:space:]].*/d;/#$/d;s/[[:space:]]#[[:space:]].*//' <<< "$a")		# Remove comment lines and line comments.
+	a=$(/bin/sed 's/[[:space:]]*$//' <<< "$a")											# Remove line trailing whitespace.
+	a=$(/bin/sed '/^$/d' <<< "$a")														# Remove empty lines.
+	a=$(head -n1 <<< "$a")																# Only use header row (column titles).
+
+	b=$(cut -f2 -d: <<< "$a"):															# Grab second field characters.
+	b=$(/bin/sed 's/^[[:space:]]*//' <<< "$b")											# Remove leading whitespace.
+
+	c=${a%%"$b"*}																		# Extract second column characters from header row.
+
+	printf '%s' "${#c}"
+
+	}
 
 PasteLogLast()
 	{
@@ -6920,6 +6950,7 @@ InitActionForkCounters()
 	# Create directories so async action forks can be monitored.
 
 	# Inputs: (global)
+	#	$e_nopth
 	#	$r_action_counts_path
 
 	# Outputs: (global)
@@ -8348,7 +8379,7 @@ ReportStatuses()
 		_GenerateStatusReportDataLine_ > "$r_reports_path/$n" &
 	done
 
-	printf -v a '\n%s\n' "$(GenerateStatusReportTitleLine)"
+	printf -v a '%s\n' "$(GenerateStatusReportTitleLine)"
 
 	m=$n
 	wait 2> /dev/null
@@ -8709,7 +8740,7 @@ ShowReport()
 	#	$r_report_output_pathfile
 
 	if [[ -e $r_report_output_pathfile ]]; then
-		DisplayFileInViewport "$r_report_output_pathfile"
+		DisplayFileInViewport "$r_report_output_pathfile" fixed-headers
 		Display
 	else
 		ShowAsError 'report not found'
@@ -16668,12 +16699,13 @@ LoadDatabase()
 	unset r_qpkg_version
 	unset r_qpkg_will_log
 
+	unset r_base_pips
 	unset r_base_qpkg_conflicts_with
 	unset r_base_qpkg_warnings
 	unset r_essential_ipks
-	unset r_essential_pips
 	unset r_exclusion_pips
 	unset r_packages_epoch
+
 	r_packages_epoch=undefined
 
 	# Second, create an index 0 element for each array. This element is used to indicate no matching QPKG when searching array.
@@ -16739,10 +16771,10 @@ LoadDatabase()
 	readonly r_qpkg_version
 	readonly r_qpkg_will_log
 
+	readonly r_base_pips
 	readonly r_base_qpkg_conflicts_with
 	readonly r_base_qpkg_warnings
 	readonly r_essential_ipks
-	readonly r_essential_pips
 	readonly r_exclusion_pips
 	readonly r_packages_epoch
 	readonly r_qpkgs_name_prohibited
