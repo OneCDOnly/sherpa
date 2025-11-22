@@ -1845,7 +1845,7 @@ ProcAction()
 
 				[[ -e $r_abort_actions_pathfile ]] && break
 
-				# TODO: Check for remaining $target_packages[] status here. If $proc_working_count_path has no entries, then no action workers should be running. $target_packages[] is out-of-sync and contains package names that haven't been marked as exited.
+				# TODO: Check for remaining $target_packages[] status here. If $proc_queued_count_path and $proc_working_count_path have no entries, then no action workers should be active. $target_packages[] is out-of-sync and contains package names that haven't been marked as exited.
 			done
 
 			[[ $done_fail_count -gt 0 ]] && show_action_results_failed=true
@@ -4062,11 +4062,11 @@ PIPs:install()
 	{
 
 	# Inputs: (global)
-	#	$r_pip_cmd
-	#	$r_essential_pips
+	#	$r_base_pips
 	#	$r_install_log_file
 	#	$r_logs_path
 	#	$r_pip_cache_path
+	#	$r_pip_cmd
 	#	$r_prev_pip_list_pathfile
 	#	$useropt_check
 	#	$useropt_terse
@@ -4089,7 +4089,7 @@ PIPs:install()
 	local -i z=0
 
 	if [[ $useropt_check = true ]] || IPKs-ACinstall-ok.Exist python3-pip; then
-		PIPs-ACinstall-to:Add "$r_essential_pips"
+		PIPs-ACinstall-to:Add "$r_base_pips"
 
 		if [[ -e $r_prev_pip_list_pathfile && $useropt_check = false ]]; then		# Don't load previous PIP list during 'check'.
 			LoadPipList
@@ -4180,7 +4180,7 @@ CloseIpkArchive()
 _ExecOneActionWithManyForks_()
 	{
 
-	# Execute actions concurrently, but only as many as $max_forks will allow given the circumstances.
+	# Execute one action on multiple QPKGs concurrently, but only as-many as $max_forks will allow given the circumstances.
 
 	# * This function runs as an asynchronous process *
 
@@ -4192,7 +4192,8 @@ _ExecOneActionWithManyForks_()
 	#	$e_nofun
 	#	$max_forks
 	#	$r_abort_actions_pathfile
-	#	$working_count
+	#	$skipper_count
+	#	$worker_count
 
 	# Outputs: (global)
 	#	$pidfile
@@ -4202,19 +4203,16 @@ _ExecOneActionWithManyForks_()
 	FuncForkInit
 
 	local a=$1
-	local -i prevpid=0
+	local -i pid=0
 	local qpkg_name=''
-	local -i testpid=0
 
 	shift												# `shift` all arguments one position to the left.
 	local -a c=("$@")
 
-	SaveActionPidsToLog entry
-
 	for qpkg_name in "${c[@]}"; do
 		[[ ! -e $r_abort_actions_pathfile ]] || break
 
-		while [[ $working_count -ge $max_forks ]]; do	# Don't fork until an empty spot becomes available.
+		while [[ $worker_count -ge $max_forks ]]; do		# Don't fork until an empty spot becomes available.
 			[[ ! -e $r_abort_actions_pathfile ]] || break 2
 			sleep .2
 			UpdateActionForkProgress
@@ -4227,16 +4225,9 @@ _ExecOneActionWithManyForks_()
 
 			CreatePidFile
 			$a &
-			testpid=$!
+			pid=$!
 
-			if [[ $testpid -eq $prevpid ]]; then
-				SaveActionPidsToLog launched-dup
-			else
-				SaveActionPidsToLog launched
-			fi
-
-			WritePidFile "$testpid"
-			prevpid=$testpid
+			WritePidFile "$pid"
 
 		)
 
@@ -4247,38 +4238,17 @@ _ExecOneActionWithManyForks_()
 	# Monitoring loop.
 	# All action forks have launched, now wait for them to exit.
 
-	SaveActionPidsToLog exit-launch
-
-	while [[ $working_count -gt 0 ]]; do
+	while [[ $worker_count -gt 0 ]]; do
 		[[ ! -e $r_abort_actions_pathfile ]] || break
-		SaveActionPidsToLog waiting
 		sleep .2
-		UpdateActionForkProgress						# Update display while running forks complete their tasks.
+		UpdateActionForkProgress						# Update display while active forks complete their tasks.
 	done
 
 	wait 2> /dev/null
 
 	# All action forks have exited.
 
-	SaveActionPidsToLog exit
-
 	FuncForkExit
-
-	}
-
-SaveActionPidsToLog()
-	{
-
-	# Inputs: (local)
-	#	$1 = string description of processing stage.
-
-	# Inputs: (global)
-	#	$a
-	#	$pidfile
-	#	$qpkg_name
-	#	$testpid
-
-	printf '[%s],%-16s,func[0]:%s,qpkg_name:%s,pidfile:%s,testpid:%s,a:%s\n' "$(date)" "$1" "${FUNCNAME[1]}" "$qpkg_name" "$pidfile" "$testpid" "$a" >> "$r_logs_path"/action-pids.txt
 
 	}
 
@@ -6574,7 +6544,7 @@ ViewLogLast()
 	EraseThisLine
 
 	if [[ -s $r_session_last_pathfile ]]; then
-		DisplayFileInViewport "$r_session_last_pathfile" linenumbers
+		DisplayFileInViewport "$r_session_last_pathfile" showlinenumbers
 		Display
 	else
 		ShowAsError 'no last session log to display'
@@ -6597,7 +6567,7 @@ ViewLogTail()
 	EraseThisLine
 
 	if [[ -s $r_session_tail_pathfile ]]; then
-		DisplayFileInViewport "$r_session_tail_pathfile" linenumbers
+		DisplayFileInViewport "$r_session_tail_pathfile" showlinenumbers
 		Display
 	else
 		ShowAsError 'no session log tail to display'
@@ -6611,13 +6581,15 @@ DisplayFileInViewport()
 	{
 
 	# Inputs: (local)
-	#	$1 = pathfile to display
-	#	$2/$3/$4 (optional, in any order)
-	#		= 'linenumbers'	: display file contents with line numbers.
-	#		= 'jumptoend'	: display file contents scrolled to the last line.
-	#		= 'wrap'		: wrap lines of text to displayport.
+	#	$1 = pathfile to display.
+	#	$2/$3/$4/$5 (optional, and in any order)
+	#		= 'fixed-headers'	: use both first row and first data column as scroll headers.
+	#		= 'jumptoend'		: display file contents scrolled to the last line.
+	#		= 'showlinenumbers'	: display file contents with line numbers.
+	#		= 'wraplines'		: wrap lines of text to displayport.
 
 	# Inputs: (global)
+	#	$e_nopfi
 	#	$r_gnu_less_cmd
 	#	$r_sess_columns
 	#	$r_sess_rows
@@ -6625,85 +6597,118 @@ DisplayFileInViewport()
 
 	ConfirmVarIsDefined 1 "${1:-}" "$e_nopfi" || return
 
+	/bin/sed -i '1{/^[[:space:]]*$/d};${/^[[:space:]]*$/d}' "$1"	# Remove first and last lines if empty: https://stackoverflow.com/a/11230764
+	[[ -s $1 ]] || return
+
+	local a=$1
+	shift															# `shift` all arguments one position to the left.
+	local arg=''
+	local -a b=("$@")
+	local headers=false
 	local jumptoend=false
+	local linenumbers=false
 	local options=''
 	local prompt=' use arrow-keys to scroll up-down & left-right, press Q to quit '
-	local showlinenumbers=false
-	local wraplines=false
+	local wrap=false
 
-	if [[ ! -s $1 ]]; then
-		echo "filename $(FormatFileName "$1") not found"
+	for arg in "${b[@]}"; do
+		[[ $arg = fixed-headers ]] && headers=true
+		[[ $arg = jumptoend ]] && jumptoend=true
+		[[ $arg = showlinenumbers ]] && linenumbers=true
+		[[ $arg = wraplines ]] && wrap=true
+	done
 
-		return 1
-	fi
-
-	case 'linenumbers' in
-		${2:-}|${3:-}|${4:-})
-			showlinenumbers=true
-	esac
-
-	case 'jumptoend' in
-		${2:-}|${3:-}|${4:-})
-			jumptoend=true
-	esac
-
-	case 'wrap' in
-		${2:-}|${3:-}|${4:-})
-			wraplines=true
-	esac
+	echo
 
 	if [[ $useropt_verbose = true ]]; then
 		if [[ -e /bin/cat ]]; then
-			/bin/cat "$1"
+			/bin/cat "$a"
 
 			return
 		else
-			echo "$(< $1)"
+			echo "$(< $a)"
 
 			return
 		fi
 	fi
 
-	if [[ $(/usr/bin/wc -l < "$1") -ge $r_sess_rows || $(/usr/bin/wc -L < "$1") -ge $r_sess_columns ]]; then
+	if [[ $(/usr/bin/wc -l < "$a") -ge $r_sess_rows || $(/usr/bin/wc -L < "$a") -ge $r_sess_columns ]]; then
 		if [[ -e $r_gnu_less_cmd ]]; then
-			options='--quit-on-intr --tilde --mouse --RAW-CONTROL-CHARS --shift=4 --redraw-on-quit --quit-if-one-screen --no-init'
-			[[ $wraplines = false ]] && options+=' --chop-long-lines'
-			[[ $showlinenumbers = true ]] && options+=' --LINE-NUMBERS'
-			[[ $jumptoend = true ]] && options+=' +G'
-			# options+=' --header=1,20' # TODO: investigate header row (and columns?). Supported from `less` v600-onwards.
-			LESSSECURE=1 $r_gnu_less_cmd "$options" --prompt "$prompt" "$1"
+			options='--quit-on-intr --tilde --mouse --RAW-CONTROL-CHARS --shift=4 --redraw-on-quit --quit-if-one-screen --no-init '
+#			[[ $headers = true ]] && options+="--header=1,$(CalcReportFirstColumnWidth "$a") "		# NOTE: if enabled, and report does not fill terminal window, header row is pushed-off the top of the terminal. GNU `less` v661, fixed in v668. Might be able to work-around this by altering `less` args based-on $r_sess_rows.
+			[[ $jumptoend = true ]] && options+='+G '
+			[[ $linenumbers = true ]] && options+='--LINE-NUMBERS '
+			[[ $wrap = false ]] && options+='--chop-long-lines '
+
+			LESSSECURE=1 $r_gnu_less_cmd "$options" --prompt "$prompt" "$a"
 
 			return
 		fi
 
-# Disable the use of built-in `less` for-now as it doesn't support ANSI chars. Let's see if there are any problems (other than not being able to scroll output).
+# Disable the use of built-in `less` for-now as it doesn't support ANSI codes. Let's see if there are any problems (other than not being able to scroll output).
 
 #		if [[ -e /bin/less ]]; then
 #			options='-~'
-#			[[ $wraplines = false ]] && options+='S'
-#			[[ $showlinenumbers = true ]] && options+='N'
-#			/bin/less "$options" "$1"
+#			[[ $linenumbers = true ]] && options+='N'
+#			[[ $wrap = false ]] && options+='S'
+
+#			/bin/less "$options" "$a"
 
 #			return
 #		fi
 	fi
 
 	if [[ -e /bin/cat ]]; then
-		[[ $showlinenumbers = true ]] && options='--number'
-		/bin/cat "$options" "$1"
+		[[ $linenumbers = true ]] && options='--number'
+
+		/bin/cat "$options" "$a"
 
 		return
 	elif [[ -e /bin/more ]]; then
-		/bin/more "$1"
+		/bin/more "$a"
 
 		return
 	fi
 
 	# and, when there's really no-better option ...
 
-	echo "$(< $1)"
+	echo "$(< $a)"
 
 	} 2> /dev/null
+
+CalcReportFirstColumnWidth()
+	{
+
+	# Inputs: (local)
+	#	$1 = pathfile of report ('report.ansi') to examine.
+
+	# Inputs: (global)
+	#	$e_nopfi
+
+	# Outputs: (local)
+	#	stdout = width of report table first data column in characters.
+
+	ConfirmVarIsDefined 1 "${1:-}" "$e_nopfi" || return
+	[[ -s $1 ]] || return
+
+	local a=$(<"$1")
+	local b=''
+	local c=''
+
+	a=$(/bin/sed '/^#[[:space:]].*/d;/#$/d;s/[[:space:]]#[[:space:]].*//' <<< "$a")		# Remove comment lines and line comments.
+	a=$(/bin/sed 's/[[:space:]]*$//' <<< "$a")											# Remove line trailing whitespace.
+	a=$(/bin/sed '/^$/d' <<< "$a")														# Remove empty lines.
+	a=$(head -n1 <<< "$a")																# Only use header row (column titles).
+
+	b=$(cut -f2 -d: <<< "$a"):															# Grab second field characters.
+	b=$(/bin/sed 's/^[[:space:]]*//' <<< "$b")											# Remove leading whitespace.
+
+	# shellcheck disable=2295
+	c=${a%%$b*}																			# Extract second column characters from header row.
+
+	printf '%s' "${#c}"
+
+	}
 
 PasteLogLast()
 	{
@@ -6920,6 +6925,7 @@ InitActionForkCounters()
 	# Create directories so async action forks can be monitored.
 
 	# Inputs: (global)
+	#	$e_nopth
 	#	$r_action_counts_path
 
 	# Outputs: (global)
@@ -7015,6 +7021,8 @@ RefreshActionForkCounts()
 	#	$skip_abort_count
 	#	$skip_error_count
 	#	$skip_ok_count
+	#	$skipper_count
+	#	$worker_count
 	#	$working_count
 
 	done_fail_count=$(FileCountAll "$proc_done_fail_count_path")
@@ -7024,6 +7032,9 @@ RefreshActionForkCounts()
 	skip_error_count=$(FileCountAll "$proc_skip_error_count_path")
 	skip_ok_count=$(FileCountAll "$proc_skip_ok_count_path")
 	working_count=$(FileCountAll "$proc_working_count_path")
+
+	skipper_count=$((skip_ok_count+skip_error_count+skip_abort_count))		# Compile all 'skip' types into a single number.
+	worker_count=$((queued_count+working_count))							# Compile all 'work' types into a single number.
 
 	} &> /dev/null
 
@@ -7073,46 +7084,42 @@ UpdateActionForkProgress()
 
 	# Inputs: (global)
 	#	$done_fail_count
-	#	$fork_progress_prefix
 	#	$done_ok_count
+	#	$fork_progress_prefix
 	#	$r_inhibit_display_pathfile
-	#	$skip_abort_count
-	#	$skip_ok_count
-	#	$skip_error_count
+	#	$skipper_count
 	#	$total_count
 	#	$useropt_verbose
-	#	$working_count
+	#	$worker_count
 
 	local a=''
-	local b=''
 
 	RefreshActionForkCounts
 	[[ $useropt_verbose = false && ! -e $r_inhibit_display_pathfile ]] || return	# Don't display progress, difficult to read with so-many other writes to the screen.
 
-	a=$((skip_ok_count+skip_error_count+skip_abort_count))								# Compile all 'skip' types into a single number.
-	b=$(PercFrac "$done_ok_count" "$a" "$done_fail_count" "$total_count")
+	a=$(PercFrac "$done_ok_count" "$skipper_count" "$done_fail_count" "$total_count")
 
 	if [[ $done_ok_count -gt 0 ]]; then
-		[[ -n $b ]] && b+=', '
-		b+=$(TextBrightGreen "$done_ok_count")' OK'
+		[[ -n $a ]] && a+=', '
+		a+=$(TextBrightGreen "$done_ok_count")' OK'
 	fi
 
-	if [[ $a -gt 0 ]]; then
-		[[ -n $b ]] && b+=', '
-		b+=$(TextBrightOrange "$a")' skipped'
+	if [[ $skipper_count -gt 0 ]]; then
+		[[ -n $a ]] && a+=', '
+		a+=$(TextBrightOrange "$skipper_count")' skipped'
 	fi
 
 	if [[ $done_fail_count -gt 0 ]]; then
-		[[ -n $b ]] && b+=', '
-		b+=$(TextBrightRed "$done_fail_count")' failed'
+		[[ -n $a ]] && a+=', '
+		a+=$(TextBrightRed "$done_fail_count")' failed'
 	fi
 
-	if [[ $working_count -gt 0 ]]; then
-		[[ -n $b ]] && b+=', '
-		b+=$(TextBrightYellow "$working_count")' in-progress'
+	if [[ $worker_count -gt 0 ]]; then
+		[[ -n $a ]] && a+=', '
+		a+=$(TextBrightYellow "$worker_count")' in-progress'
 	fi
 
-	[[ -n $b ]] && ShowAsProc "${fork_progress_prefix:-}" "$b"
+	[[ -n $a ]] && ShowAsProc "${fork_progress_prefix:-}" "$a"
 
 	return 0
 
@@ -8348,7 +8355,7 @@ ReportStatuses()
 		_GenerateStatusReportDataLine_ > "$r_reports_path/$n" &
 	done
 
-	printf -v a '\n%s\n' "$(GenerateStatusReportTitleLine)"
+	printf -v a '%s\n' "$(GenerateStatusReportTitleLine)"
 
 	m=$n
 	wait 2> /dev/null
@@ -8709,7 +8716,7 @@ ShowReport()
 	#	$r_report_output_pathfile
 
 	if [[ -e $r_report_output_pathfile ]]; then
-		DisplayFileInViewport "$r_report_output_pathfile"
+		DisplayFileInViewport "$r_report_output_pathfile" fixed-headers
 		Display
 	else
 		ShowAsError 'report not found'
@@ -10237,6 +10244,7 @@ _QPKG:install_()
 	local local_pathfile=$(GetQpkgDbPathFilename)
 		local log_pathfile=$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_install_log_file
 	local -i z=0
+	local -i pid=0
 
 	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
 
@@ -10285,10 +10293,6 @@ _QPKG:install_()
 #	Executer "${a}/bin/sh $local_pathfile" "$log_pathfile" log:failure-only 10
 #	z=$?
 
-	# Instead of running QPKG installer through Executer(), let's run it here for-now. Installing on my TS-216G (arm64) results in the installer process randomly not waiting for the installer script to finish, and proceeding to the next step`.
-
-	# ./sherpa-manager.source add duf HideThatBanner IncreaseTimeouts nzbget OliveTin Par2turbo QDK Readarr sherpa Sonarr Unrar Whisparr
-
 	if [[ $useropt_verbose = true ]]; then
 		[[ -n $a ]] && export ${a?}
 		/bin/sh "$local_pathfile" > >(/usr/bin/tee "$log_pathfile") 2>&1 &	# NOTE: `tee` buffers stdout here.		# squeezer-ignore
@@ -10296,14 +10300,10 @@ _QPKG:install_()
 	else
 		[[ -n $a ]] && export ${a?}
 		/bin/sh "$local_pathfile" > "$log_pathfile" 2>&1 &
+		pid=$!
 	fi
 
-	case $r_nas_qpkg_arch in
-		a19|a31|a41|a64)
-			sleep 1				# Allow for slower CPU arches.
-	esac
-
-	wait $!
+	wait $pid
 	z=$?
 
 	LogQpkgServiceResult
@@ -16668,12 +16668,13 @@ LoadDatabase()
 	unset r_qpkg_version
 	unset r_qpkg_will_log
 
+	unset r_base_pips
 	unset r_base_qpkg_conflicts_with
 	unset r_base_qpkg_warnings
 	unset r_essential_ipks
-	unset r_essential_pips
 	unset r_exclusion_pips
 	unset r_packages_epoch
+
 	r_packages_epoch=undefined
 
 	# Second, create an index 0 element for each array. This element is used to indicate no matching QPKG when searching array.
@@ -16739,10 +16740,10 @@ LoadDatabase()
 	readonly r_qpkg_version
 	readonly r_qpkg_will_log
 
+	readonly r_base_pips
 	readonly r_base_qpkg_conflicts_with
 	readonly r_base_qpkg_warnings
 	readonly r_essential_ipks
-	readonly r_essential_pips
 	readonly r_exclusion_pips
 	readonly r_packages_epoch
 	readonly r_qpkgs_name_prohibited

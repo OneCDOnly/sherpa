@@ -16,6 +16,7 @@ qpkgs_root_path=$HOME/scripts/nas/sherpa.packages
 	qpkgs_staging_path=$qpkgs_root_path/staging
 	qpkgs_support_path=$qpkgs_root_path/support
 		highest_package_versions_found_pathfile=$qpkgs_support_path/qpkg-versions.tab
+		qpkgs_pypi_module_lists_path=$qpkgs_support_path/pypi-lists
 root_path=$HOME/scripts/nas/sherpa
 	docs_path=$root_path/docs
 	support_path=$root_path/support
