@@ -4248,6 +4248,9 @@ _ExecOneActionWithManyForks_()
 
 	# All action forks have exited.
 
+	UpdateActionForkProgress
+	sleep .2
+
 	FuncForkExit
 
 	}
