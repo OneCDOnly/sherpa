@@ -6596,10 +6596,12 @@ DisplayFileInViewport()
 	#	$useropt_verbose
 
 	ConfirmVarIsDefined 1 "${1:-}" "$e_nopfi" || return
+
+	/bin/sed -i '1{/^[[:space:]]*$/d};${/^[[:space:]]*$/d}' "$1"	# Remove first and last lines if empty: https://stackoverflow.com/a/11230764
 	[[ -s $1 ]] || return
 
 	local a=$1
-	shift												# `shift` all arguments one position to the left.
+	shift															# `shift` all arguments one position to the left.
 	local arg=''
 	local -a b=("$@")
 	local headers=false
@@ -6615,6 +6617,8 @@ DisplayFileInViewport()
 		[[ $arg = showlinenumbers ]] && linenumbers=true
 		[[ $arg = wraplines ]] && wrap=true
 	done
+
+	echo
 
 	if [[ $useropt_verbose = true ]]; then
 		if [[ -e /bin/cat ]]; then
