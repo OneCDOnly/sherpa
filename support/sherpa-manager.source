@@ -1845,7 +1845,7 @@ ProcAction()
 
 				[[ -e $r_abort_actions_pathfile ]] && break
 
-				# TODO: Check for remaining $target_packages[] status here. If $proc_working_count_path has no entries, then no action workers should be running. $target_packages[] is out-of-sync and contains package names that haven't been marked as exited.
+				# TODO: Check for remaining $target_packages[] status here. If $proc_queued_count_path and $proc_working_count_path have no entries, then no action workers should be active. $target_packages[] is out-of-sync and contains package names that haven't been marked as exited.
 			done
 
 			[[ $done_fail_count -gt 0 ]] && show_action_results_failed=true
@@ -4180,7 +4180,7 @@ CloseIpkArchive()
 _ExecOneActionWithManyForks_()
 	{
 
-	# Execute actions concurrently, but only as many as $max_forks will allow given the circumstances.
+	# Execute one action on multiple QPKGs concurrently, but only as-many as $max_forks will allow given the circumstances.
 
 	# * This function runs as an asynchronous process *
 
@@ -4192,7 +4192,8 @@ _ExecOneActionWithManyForks_()
 	#	$e_nofun
 	#	$max_forks
 	#	$r_abort_actions_pathfile
-	#	$working_count
+	#	$skipper_count
+	#	$worker_count
 
 	# Outputs: (global)
 	#	$pidfile
@@ -4202,19 +4203,16 @@ _ExecOneActionWithManyForks_()
 	FuncForkInit
 
 	local a=$1
-	local -i prevpid=0
+	local -i pid=0
 	local qpkg_name=''
-	local -i testpid=0
 
 	shift												# `shift` all arguments one position to the left.
 	local -a c=("$@")
 
-	SaveActionPidsToLog entry
-
 	for qpkg_name in "${c[@]}"; do
 		[[ ! -e $r_abort_actions_pathfile ]] || break
 
-		while [[ $working_count -ge $max_forks ]]; do	# Don't fork until an empty spot becomes available.
+		while [[ $worker_count -ge $max_forks ]]; do		# Don't fork until an empty spot becomes available.
 			[[ ! -e $r_abort_actions_pathfile ]] || break 2
 			sleep .2
 			UpdateActionForkProgress
@@ -4227,16 +4225,9 @@ _ExecOneActionWithManyForks_()
 
 			CreatePidFile
 			$a &
-			testpid=$!
+			pid=$!
 
-			if [[ $testpid -eq $prevpid ]]; then
-				SaveActionPidsToLog launched-dup
-			else
-				SaveActionPidsToLog launched
-			fi
-
-			WritePidFile "$testpid"
-			prevpid=$testpid
+			WritePidFile "$pid"
 
 		)
 
@@ -4247,38 +4238,17 @@ _ExecOneActionWithManyForks_()
 	# Monitoring loop.
 	# All action forks have launched, now wait for them to exit.
 
-	SaveActionPidsToLog exit-launch
-
-	while [[ $working_count -gt 0 ]]; do
+	while [[ $worker_count -gt 0 ]]; do
 		[[ ! -e $r_abort_actions_pathfile ]] || break
-		SaveActionPidsToLog waiting
 		sleep .2
-		UpdateActionForkProgress						# Update display while running forks complete their tasks.
+		UpdateActionForkProgress						# Update display while active forks complete their tasks.
 	done
 
 	wait 2> /dev/null
 
 	# All action forks have exited.
 
-	SaveActionPidsToLog exit
-
 	FuncForkExit
-
-	}
-
-SaveActionPidsToLog()
-	{
-
-	# Inputs: (local)
-	#	$1 = string description of processing stage.
-
-	# Inputs: (global)
-	#	$a
-	#	$pidfile
-	#	$qpkg_name
-	#	$testpid
-
-	printf '[%s],%-16s,func[0]:%s,qpkg_name:%s,pidfile:%s,testpid:%s,a:%s\n' "$(date)" "$1" "${FUNCNAME[1]}" "$qpkg_name" "$pidfile" "$testpid" "$a" >> "$r_logs_path"/action-pids.txt
 
 	}
 
@@ -6661,7 +6631,7 @@ DisplayFileInViewport()
 	if [[ $(/usr/bin/wc -l < "$a") -ge $r_sess_rows || $(/usr/bin/wc -L < "$a") -ge $r_sess_columns ]]; then
 		if [[ -e $r_gnu_less_cmd ]]; then
 			options='--quit-on-intr --tilde --mouse --RAW-CONTROL-CHARS --shift=4 --redraw-on-quit --quit-if-one-screen --no-init '
-#			[[ $headers = true ]] && options+="--header=1,$(CalcReportFirstColumnWidth "$a") "		# NOTE: if enabled, and report does not fill terminal window, header row is pushed-off the top of the terminal. GNU `less` v661. Might be able to work-around this by altering `less` args based-on $r_sess_rows.
+#			[[ $headers = true ]] && options+="--header=1,$(CalcReportFirstColumnWidth "$a") "		# NOTE: if enabled, and report does not fill terminal window, header row is pushed-off the top of the terminal. GNU `less` v661, fixed in v668. Might be able to work-around this by altering `less` args based-on $r_sess_rows.
 			[[ $jumptoend = true ]] && options+='+G '
 			[[ $linenumbers = true ]] && options+='--LINE-NUMBERS '
 			[[ $wrap = false ]] && options+='--chop-long-lines '
@@ -7047,6 +7017,8 @@ RefreshActionForkCounts()
 	#	$skip_abort_count
 	#	$skip_error_count
 	#	$skip_ok_count
+	#	$skipper_count
+	#	$worker_count
 	#	$working_count
 
 	done_fail_count=$(FileCountAll "$proc_done_fail_count_path")
@@ -7056,6 +7028,9 @@ RefreshActionForkCounts()
 	skip_error_count=$(FileCountAll "$proc_skip_error_count_path")
 	skip_ok_count=$(FileCountAll "$proc_skip_ok_count_path")
 	working_count=$(FileCountAll "$proc_working_count_path")
+
+	skipper_count=$((skip_ok_count+skip_error_count+skip_abort_count))		# Compile all 'skip' types into a single number.
+	worker_count=$((queued_count+working_count))							# Compile all 'work' types into a single number.
 
 	} &> /dev/null
 
@@ -7105,46 +7080,42 @@ UpdateActionForkProgress()
 
 	# Inputs: (global)
 	#	$done_fail_count
-	#	$fork_progress_prefix
 	#	$done_ok_count
+	#	$fork_progress_prefix
 	#	$r_inhibit_display_pathfile
-	#	$skip_abort_count
-	#	$skip_ok_count
-	#	$skip_error_count
+	#	$skipper_count
 	#	$total_count
 	#	$useropt_verbose
-	#	$working_count
+	#	$worker_count
 
 	local a=''
-	local b=''
 
 	RefreshActionForkCounts
 	[[ $useropt_verbose = false && ! -e $r_inhibit_display_pathfile ]] || return	# Don't display progress, difficult to read with so-many other writes to the screen.
 
-	a=$((skip_ok_count+skip_error_count+skip_abort_count))								# Compile all 'skip' types into a single number.
-	b=$(PercFrac "$done_ok_count" "$a" "$done_fail_count" "$total_count")
+	a=$(PercFrac "$done_ok_count" "$skipper_count" "$done_fail_count" "$total_count")
 
 	if [[ $done_ok_count -gt 0 ]]; then
-		[[ -n $b ]] && b+=', '
-		b+=$(TextBrightGreen "$done_ok_count")' OK'
+		[[ -n $a ]] && a+=', '
+		a+=$(TextBrightGreen "$done_ok_count")' OK'
 	fi
 
-	if [[ $a -gt 0 ]]; then
-		[[ -n $b ]] && b+=', '
-		b+=$(TextBrightOrange "$a")' skipped'
+	if [[ $skipper_count -gt 0 ]]; then
+		[[ -n $a ]] && a+=', '
+		a+=$(TextBrightOrange "$skipper_count")' skipped'
 	fi
 
 	if [[ $done_fail_count -gt 0 ]]; then
-		[[ -n $b ]] && b+=', '
-		b+=$(TextBrightRed "$done_fail_count")' failed'
+		[[ -n $a ]] && a+=', '
+		a+=$(TextBrightRed "$done_fail_count")' failed'
 	fi
 
-	if [[ $working_count -gt 0 ]]; then
-		[[ -n $b ]] && b+=', '
-		b+=$(TextBrightYellow "$working_count")' in-progress'
+	if [[ $worker_count -gt 0 ]]; then
+		[[ -n $a ]] && a+=', '
+		a+=$(TextBrightYellow "$worker_count")' in-progress'
 	fi
 
-	[[ -n $b ]] && ShowAsProc "${fork_progress_prefix:-}" "$b"
+	[[ -n $a ]] && ShowAsProc "${fork_progress_prefix:-}" "$a"
 
 	return 0
 
@@ -10269,6 +10240,7 @@ _QPKG:install_()
 	local local_pathfile=$(GetQpkgDbPathFilename)
 		local log_pathfile=$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_install_log_file
 	local -i z=0
+	local -i pid=0
 
 	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
 
@@ -10317,10 +10289,6 @@ _QPKG:install_()
 #	Executer "${a}/bin/sh $local_pathfile" "$log_pathfile" log:failure-only 10
 #	z=$?
 
-	# Instead of running QPKG installer through Executer(), let's run it here for-now. Installing on my TS-216G (arm64) results in the installer process randomly not waiting for the installer script to finish, and proceeding to the next step`.
-
-	# ./sherpa-manager.source add duf HideThatBanner IncreaseTimeouts nzbget OliveTin Par2turbo QDK Readarr sherpa Sonarr Unrar Whisparr
-
 	if [[ $useropt_verbose = true ]]; then
 		[[ -n $a ]] && export ${a?}
 		/bin/sh "$local_pathfile" > >(/usr/bin/tee "$log_pathfile") 2>&1 &	# NOTE: `tee` buffers stdout here.		# squeezer-ignore
@@ -10328,14 +10296,10 @@ _QPKG:install_()
 	else
 		[[ -n $a ]] && export ${a?}
 		/bin/sh "$local_pathfile" > "$log_pathfile" 2>&1 &
+		pid=$!
 	fi
 
-	case $r_nas_qpkg_arch in
-		a19|a31|a41|a64)
-			sleep 1				# Allow for slower CPU arches.
-	esac
-
-	wait $!
+	wait $pid
 	z=$?
 
 	LogQpkgServiceResult
