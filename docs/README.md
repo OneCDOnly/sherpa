@@ -30,4 +30,4 @@ If you have suggestions, advice, comments or concerns, please either create a ne
 
 This project is a community effort, and was built with combined feedback from many members of the [QNAP](https://forum.qnap.com/viewtopic.php?f=320&t=132373) community forum. Thank you to everyone who has contributed. 🤓
 
-Checkout the wiki for more information: [https://github.com/OneCDOnly/sherpa/wiki](https://github.com/OneCDOnly/sherpa/wiki)
+See the wiki for more information: [https://github.com/OneCDOnly/sherpa/wiki](https://github.com/OneCDOnly/sherpa/wiki)
