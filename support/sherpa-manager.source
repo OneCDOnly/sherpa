@@ -10385,6 +10385,8 @@ _QPKG:reinstall_()
 	local a='REINSTALL_QPKG=true '
 	local action=reinstall
 	local local_pathfile=$(GetQpkgDbPathFilename)
+		local log_pathfile=$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_reinstall_log_file
+	local -i pid=0
 	local -i z=0
 
 	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
@@ -10416,10 +10418,41 @@ _QPKG:reinstall_()
 	DebugAsProc "reinstalling $(FormatPackageName)"
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	IsValidQpkgInstalled && a+="QINSTALL_PATH=$(/usr/bin/dirname "$(GetQpkgInstalledPath)") "
+	a+="/bin/sh \"$local_pathfile\""
 
-	Executer "${a}/bin/sh $local_pathfile" "$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_reinstall_log_file" log:failure-only 10
-	z=$?
+# Executer "${a}/bin/sh $local_pathfile" "$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_reinstall_log_file" log:failure-only 10
+# z=$?
 
+	if [[ $useropt_verbose = true ]]; then
+		eval "$a 2>&1 | /usr/bin/tee $log_pathfile" &					# Force background process here, and capture PID. NOTE: stdout is buffered here.
+	else
+		eval "$a" > "$log_pathfile" 2>&1 &								# Force background process here, and capture PID.
+	fi
+
+	pid=$!
+
+	PidLogger															# devdebug
+	PidLogger pre-background-wait "$pid" "$PPID" "$a"					# devdebug
+
+	if [[ $pid -gt 1 ]]; then
+		wait $pid
+		z=$?
+	fi
+
+	PidLogger post-background-wait "$pid" "$PPID" "$a"					# devdebug
+	PidLogger pre-detached-wait "$pid" "$PPID" "$a"						# devdebug
+
+	pid=$(FindPid '/bin/sh' "$local_pathfile")
+
+	# If $pid = 0 then process isn't running.
+
+	if [[ $pid -gt 1 ]]; then											# Process has been detached.
+		while [[ -e /proc/$pid ]]; do
+			sleep .5
+		done
+	fi
+
+	PidLogger post-detached-wait "$pid" "$PPID" "$a"					# devdebug
 	LogQpkgServiceResult
 	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
 
@@ -10462,6 +10495,8 @@ _QPKG:upgrade_()
 	local a='UPGRADE_QPKG=true '
 	local action=upgrade
 	local local_pathfile=$(GetQpkgDbPathFilename)
+		local log_pathfile=$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_upgrade_log_file
+	local -i pid=0
 	local -i z=0
 
 	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
@@ -10499,10 +10534,41 @@ _QPKG:upgrade_()
 	DebugAsProc "upgrading $(FormatPackageName)"
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	IsValidQpkgInstalled && a+="QINSTALL_PATH=$(/usr/bin/dirname "$(GetQpkgInstalledPath "$qpkg_name")") "
+	a+="/bin/sh \"$local_pathfile\""
 
-	Executer "${a}/bin/sh $local_pathfile" "$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_upgrade_log_file" log:failure-only 10
-	z=$?
+# Executer "${a}/bin/sh $local_pathfile" "$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_upgrade_log_file" log:failure-only 10
+# z=$?
 
+	if [[ $useropt_verbose = true ]]; then
+		eval "$a 2>&1 | /usr/bin/tee $log_pathfile" &					# Force background process here, and capture PID. NOTE: stdout is buffered here.
+	else
+		eval "$a" > "$log_pathfile" 2>&1 &								# Force background process here, and capture PID.
+	fi
+
+	pid=$!
+
+	PidLogger															# devdebug
+	PidLogger pre-background-wait "$pid" "$PPID" "$a"					# devdebug
+
+	if [[ $pid -gt 1 ]]; then
+		wait $pid
+		z=$?
+	fi
+
+	PidLogger post-background-wait "$pid" "$PPID" "$a"					# devdebug
+	PidLogger pre-detached-wait "$pid" "$PPID" "$a"						# devdebug
+
+	pid=$(FindPid '/bin/sh' "$local_pathfile")
+
+	# If $pid = 0 then process isn't running.
+
+	if [[ $pid -gt 1 ]]; then											# Process has been detached.
+		while [[ -e /proc/$pid ]]; do
+			sleep .5
+		done
+	fi
+
+	PidLogger post-detached-wait "$pid" "$PPID" "$a"					# devdebug
 	LogQpkgServiceResult
 	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
 
@@ -10667,7 +10733,7 @@ _QPKG:activate_()
 
 	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_activate_log_file
 	local timeout=''
-	IsOsCanQpkgTimeout && timeout=' -t '$r_qpkg_start_timeout_seconds
+	IsOsCanQpkgTimeout && timeout='-t '$r_qpkg_start_timeout_seconds
 	local service_pathfile=$(GetQpkgServicePathFile)
 
 	DebugAsProc "activating $(FormatPackageName)"
@@ -10680,10 +10746,10 @@ _QPKG:activate_()
 	elif [[ $useropt_debug = true ]]; then
 		a+='DEBUG_QPKG=true '
 
-		Executer "${a}${service_pathfile} start" "$r_log_pathfile" log:failure-only
+		Executer "$a $service_pathfile start" "$r_log_pathfile" log:failure-only
 		z=$?
 	elif IsQpkgDbWillLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
-		Executer "/sbin/qpkg_service${timeout} start $qpkg_name" "$r_log_pathfile" log:failure-only
+		Executer "/sbin/qpkg_service $timeout start $qpkg_name" "$r_log_pathfile" log:failure-only
 		QpkgServiceResultWasOk && z=0 || z=1
 	else
 		Executer "$service_pathfile start" "$r_log_pathfile" log:failure-only
@@ -10763,7 +10829,7 @@ _QPKG:reactivate_()
 
 	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_reactivate_log_file
 	local timeout=''
-	IsOsCanQpkgTimeout && timeout=' -t '$r_qpkg_restart_timeout_seconds
+	IsOsCanQpkgTimeout && timeout='-t '$r_qpkg_restart_timeout_seconds
 	local service_pathfile=$(GetQpkgServicePathFile)
 
 	DebugAsProc "reactivating $(FormatPackageName)"
@@ -10774,12 +10840,12 @@ _QPKG:reactivate_()
 
 		FuncForkExit 4
 	elif [[ $useropt_debug = true ]]; then
-		a+='DEBUG_QPKG=true '
+		a+='DEBUG_QPKG=true'
 
-		Executer "${a}${service_pathfile} restart" "$r_log_pathfile" log:failure-only
+		Executer "$a $service_pathfile restart" "$r_log_pathfile" log:failure-only
 		z=$?
 	elif IsQpkgDbWillLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
-		Executer "/sbin/qpkg_service${timeout} restart $qpkg_name" "$r_log_pathfile" log:failure-only
+		Executer "/sbin/qpkg_service $timeout restart $qpkg_name" "$r_log_pathfile" log:failure-only
 		QpkgServiceResultWasOk && z=0 || z=1
 	else
 		Executer "$service_pathfile restart" "$r_log_pathfile" log:failure-only
@@ -10851,7 +10917,7 @@ _QPKG:deactivate_()
 
 	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_deactivate_log_file
 	local timeout=''
-	IsOsCanQpkgTimeout && timeout=' -t '$r_qpkg_stop_timeout_seconds
+	IsOsCanQpkgTimeout && timeout='-t '$r_qpkg_stop_timeout_seconds
 	local service_pathfile=$(GetQpkgServicePathFile)
 
 	DebugAsProc "deactivating $(FormatPackageName)"
@@ -10862,12 +10928,12 @@ _QPKG:deactivate_()
 
 		FuncForkExit 4
 	elif [[ $useropt_debug = true ]]; then
-		a+='DEBUG_QPKG=true '
+		a+='DEBUG_QPKG=true'
 
-		Executer "${a}${service_pathfile} stop" "$r_log_pathfile" log:failure-only
+		Executer "$a $service_pathfile stop" "$r_log_pathfile" log:failure-only
 		z=$?
 	elif IsQpkgDbWillLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
-		Executer "/sbin/qpkg_service${timeout} stop $qpkg_name" "$r_log_pathfile" log:failure-only
+		Executer "/sbin/qpkg_service $timeout stop $qpkg_name" "$r_log_pathfile" log:failure-only
 		QpkgServiceResultWasOk && z=0 || z=1
 	else
 		Executer "$service_pathfile stop" "$r_log_pathfile" log:failure-only
@@ -10942,11 +11008,11 @@ _QPKG:enable_()
 
 	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_enable_log_file
 	local timeout=''
-	IsOsCanQpkgTimeout && timeout=' -t '$r_qpkg_enable_timeout_seconds
+	IsOsCanQpkgTimeout && timeout='-t '$r_qpkg_enable_timeout_seconds
 
 	DebugAsProc "enabling $(FormatPackageName)"
 
-	Executer "/sbin/qpkg_service${timeout} enable $qpkg_name" "$r_log_pathfile" log:failure-only
+	Executer "/sbin/qpkg_service $timeout enable $qpkg_name" "$r_log_pathfile" log:failure-only
 	SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 	MarkActionForkAsDoneOk
 	ClearQpkgInstalledAppCenterNotifier
@@ -11004,11 +11070,11 @@ _QPKG:disable_()
 
 	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_disable_log_file
 	local timeout=''
-	IsOsCanQpkgTimeout && timeout=' -t '$r_qpkg_disable_timeout_seconds
+	IsOsCanQpkgTimeout && timeout='-t '$r_qpkg_disable_timeout_seconds
 
 	DebugAsProc "disabling $(FormatPackageName)"
 
-	Executer "/sbin/qpkg_service${timeout} disable $qpkg_name" "$r_log_pathfile" log:failure-only
+	Executer "/sbin/qpkg_service $timeout disable $qpkg_name" "$r_log_pathfile" log:failure-only
 
 	SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 	MarkActionForkAsDoneOk
@@ -11067,9 +11133,9 @@ _QPKG:enableau_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "enabling auto-update $(FormatPackageName)"
-	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
+	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true'
 
-	Executer "${a}$(GetQpkgServicePathFile) enable-auto-update" "$r_logs_path/$qpkg_name.$r_enableau_log_file" log:failure-only
+	Executer "$a $(GetQpkgServicePathFile) enable-auto-update" "$r_logs_path/$qpkg_name.$r_enableau_log_file" log:failure-only
 	z=$?
 
 	LogQpkgServiceResult
@@ -11136,9 +11202,9 @@ _QPKG:disableau_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "disabling auto-update $(FormatPackageName)"
-	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
+	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true'
 
-	Executer "${a}$(GetQpkgServicePathFile) disable-auto-update" "$r_logs_path/$qpkg_name.$r_disableau_log_file" log:failure-only
+	Executer "$a $(GetQpkgServicePathFile) disable-auto-update" "$r_logs_path/$qpkg_name.$r_disableau_log_file" log:failure-only
 	z=$?
 
 	LogQpkgServiceResult
@@ -11201,9 +11267,9 @@ _QPKG:backup_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "backing-up $(FormatPackageName) configuration"
-	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
+	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true'
 
-	Executer "${a}$(GetQpkgServicePathFile) backup" "$r_logs_path/$qpkg_name.$r_backup_log_file" log:failure-only
+	Executer "$a $(GetQpkgServicePathFile) backup" "$r_logs_path/$qpkg_name.$r_backup_log_file" log:failure-only
 	z=$?
 
 	LogQpkgServiceResult
@@ -11278,9 +11344,9 @@ _QPKG:restore_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "restoring $(FormatPackageName) configuration"
-	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
+	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true'
 
-	Executer "${a}$(GetQpkgServicePathFile) restore" "$r_logs_path/$qpkg_name.$r_restore_log_file" log:failure-only
+	Executer "$a $(GetQpkgServicePathFile) restore" "$r_logs_path/$qpkg_name.$r_restore_log_file" log:failure-only
 	z=$?
 
 	LogQpkgServiceResult
@@ -11344,9 +11410,9 @@ _QPKG:clean_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "cleaning $(FormatPackageName)"
-	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
+	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true'
 
-	Executer "${a}$(GetQpkgServicePathFile) clean" "$r_logs_path/$qpkg_name.$r_clean_log_file" log:failure-only
+	Executer "$a $(GetQpkgServicePathFile) clean" "$r_logs_path/$qpkg_name.$r_clean_log_file" log:failure-only
 
 #	if [[ $useropt_debug = true ]]; then
 #		DEBUG_QPKG=true $(GetQpkgServicePathFile) clean
