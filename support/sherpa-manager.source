@@ -8698,16 +8698,15 @@ GenerateReportHeadingsInfo()
 		DisplayAsIndentQuotedInfoItem 'StartUpd?' 'application restart-to-update is supported'
 		DisplayAsIndentQuotedInfoItem 'AutUpd?' 'application restart-to-update is enabled'
 		DisplayAsIndentQuotedInfoItem 'LiveTest?' "has a built-in 'status' check, and can test for daemon live status"
-		DisplayAsIndentQuotedInfoItem 'ArchCompat?' 'has a release compatible with this NAS architecture'
 		DisplayAsIndentQuotedInfoItem 'UniqUnpack?' 'QPKG unpacks itself to a unique path'
 	})
 
-	if [[ -n $a ]]; then
-		if IsOsCanAutowidthTableColumns; then
-			printf '%s' "$a" | Tableise
-		else
-			printf '%s\n' "$a"
-		fi
+	[[ -n $a ]] || return
+
+	if IsOsCanAutowidthTableColumns; then
+		printf '%s' "$a" | Tableise
+	else
+		printf '%s\n' "$a"
 	fi
 
 	}
