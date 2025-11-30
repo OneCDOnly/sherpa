@@ -3980,7 +3980,7 @@ IPKs:downgrade()
 
 	IPKs-ACdownload-to:Init
 	total_count=$(IPKs-ACdowngrade-to:Count)
-	IsOsCanSecureDownload || curl_insecure_opt=' --insecure'
+	IsOsCanSecureDownload || curl_insecure_opt='--insecure'
 
 	if [[ $total_count -gt 0 ]]; then
 		package_type=IPK
@@ -4003,7 +4003,7 @@ IPKs:downgrade()
 
 						remote_url=${url_prefix}${name}${url_suffix}
 						local_pathfile=$r_ipk_downgrade_path/$(/usr/bin/basename "$remote_url")
-						Executer "/sbin/curl${curl_insecure_opt} --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
+						Executer "/sbin/curl $curl_insecure_opt --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
 					done
 
 					ShowAsPercentProgress "download $desc" '' "$done_ok_count" 0 "$done_fail_count" "$total_count"
@@ -9928,9 +9928,7 @@ _QPKG:status_()
 
 	FuncForkInit
 
-	local a=''
 	local action=status
-	local b=''
 	local -i z=0
 
 	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
@@ -9945,17 +9943,20 @@ _QPKG:status_()
 
 	DebugAsProc "status $(FormatPackageName)"
 
-	a=$(GetQpkgDbActiveTest)
+	local a=$(GetQpkgDbActiveTest)
+	local b=''
+	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_status_log_file
+
 	[[ $useropt_debug = true ]] && b+='DEBUG_QPKG=true '
 
 	if [[ $a = builtin ]]; then
-		# Run 'status' query with GNU `timeout` (if-possible).
+		local -r r_local_pathfile=$(GetQpkgServicePathFile)
 
-		if [[ -e $r_gnu_timeout_cmd ]]; then
-			$r_gnu_timeout_cmd "$r_qpkg_status_check_timeout_seconds" /bin/sh -c "${b}$(GetQpkgServicePathFile) status"
+		if [[ -e $r_gnu_timeout_cmd ]]; then			# Run 'status' query with GNU `timeout` (if-possible).
+			$r_gnu_timeout_cmd "$r_qpkg_status_check_timeout_seconds" /bin/sh -c "$b \"$r_local_pathfile\" status"
 			z=$?
 		else
-			Executer "${b}$(GetQpkgServicePathFile) status" "$r_logs_path/$qpkg_name.$r_status_log_file" log:failure-only
+			Executer "$b \"$r_local_pathfile\" status" "$r_log_pathfile" log:failure-only
 			z=$?
 		fi
 	elif [[ $a != none ]]; then
@@ -10087,7 +10088,10 @@ _QPKG:reassign_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "reassigning $(FormatPackageName)"
-	Executer "/sbin/setcfg -e $qpkg_name store -f /etc/config/qpkg.conf" "$r_logs_path/$qpkg_name.$r_reassign_log_file" log:failure-only
+
+	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_reassign_log_file
+
+	Executer "/sbin/setcfg -e $qpkg_name store -f /etc/config/qpkg.conf" "$r_log_pathfile" log:failure-only
 	z=$?
 
 	if [[ $z -eq 0 ]]; then
@@ -10121,13 +10125,11 @@ _QPKG:download_()
 	FuncForkInit
 
 	local action=download
-	local curl_insecure_opt=''
 	local -r r_remote_hash=$(GetQpkgDbHash)
 	local -r r_remote_url=$(GetQpkgDbURL)
 		local -r r_remote_filename=$(/usr/bin/basename "$r_remote_url")
 			local -r r_local_pathfile=$r_qpkg_download_path/$r_remote_filename
 				local -r r_local_filename=$(/usr/bin/basename "$r_local_pathfile")
-					local -r r_log_pathfile=$r_logs_path/$r_local_filename.$r_download_log_file
 	local -i z=0
 
 	# Reactive checks performed just before the action is carried-out. NOTE: predictive checks are permitted here for time-saving purposes (don't run future actions if this action isn't permitted).
@@ -10188,10 +10190,14 @@ _QPKG:download_()
 
 	if IsNtFile "$r_local_pathfile"; then
 		DebugAsProc "downloading $(FormatFileName "$r_remote_filename")"
-		IsOsCanSecureDownload || curl_insecure_opt=' --insecure'
+
+		local curl_insecure_opt=''
+		local -r r_log_pathfile=$r_logs_path/$r_local_filename.$r_download_log_file
+		IsOsCanSecureDownload || curl_insecure_opt='--insecure'
+
 		rm -f "$r_log_pathfile" 2> /dev/null
 
-		Executer "/sbin/curl${curl_insecure_opt} --location --output $r_local_pathfile $r_remote_url" "$r_log_pathfile" log:failure-only
+		Executer "/sbin/curl $curl_insecure_opt --location --output \"$r_local_pathfile\" \"$r_remote_url\"" "$r_log_pathfile" log:failure-only
 		z=$?
 
 		if [[ $z -eq 0 ]]; then
@@ -10241,11 +10247,8 @@ _QPKG:install_()
 
 	FuncForkInit
 
-	local a='INSTALL_QPKG=true '
 	local action=install
-	local local_pathfile=$(GetQpkgDbPathFilename)
-		local log_pathfile=$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_install_log_file
-	local -i pid=0
+	local -r r_local_pathfile=$(GetQpkgDbPathFilename)
 	local -i z=0
 
 	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
@@ -10270,7 +10273,7 @@ _QPKG:install_()
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'conflicting package installed'
 		MarkActionForkAsSkippedOk
 		z=2
-	elif [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
+	elif [[ -z $r_local_pathfile || ! -e $r_local_pathfile ]]; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'installation package unavailable'
 		MarkActionForkAsSkippedError
 		z=4
@@ -10289,20 +10292,17 @@ _QPKG:install_()
 	fi
 
 	DebugAsProc "installing $(FormatPackageName)"
+
+	local a='INSTALL_QPKG=true '
+	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_install_log_file
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	[[ ${QPKGs_were_installed_name[*]:-} = *"$qpkg_name"* ]] && a+="QINSTALL_PATH=$(GetQpkgInstalledOriginalPath "$qpkg_name") "
 	a+="/bin/sh \"$local_pathfile\""
 
-#	Executer "$a $local_pathfile" "$log_pathfile" log:failure-only 10
+#	Executer "$a $r_local_pathfile" "$r_log_pathfile" log:failure-only 10
 #	z=$?
 
-	if [[ $useropt_verbose = true ]]; then
-		eval "$a 2>&1 | /usr/bin/tee $log_pathfile" &					# Force background process here, and capture PID. NOTE: stdout is buffered here.
-	else
-		eval "$a" > "$log_pathfile" 2>&1 &								# Force background process here, and capture PID.
-	fi
-
-	pid=$!
+	KludgeExecuter "$a /bin/sh \"$r_local_pathfile\"" "$r_log_pathfile" log:failure-only 10
 
 	PidLogger															# devdebug
 	PidLogger pre-background-wait "$pid" "$PPID" "$a"					# devdebug
@@ -10353,7 +10353,7 @@ _QPKG:install_()
 		z=0		# Remap to zero.
 	else
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
-		IsOsCanManageSignedPackages && IsQpkgSigned && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
+#		IsOsCanManageSignedPackages && IsQpkgSigned && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
 		MarkActionForkAsDoneError
 	fi
 
@@ -10382,9 +10382,8 @@ _QPKG:reinstall_()
 
 	FuncForkInit
 
-	local a='REINSTALL_QPKG=true '
 	local action=reinstall
-	local local_pathfile=$(GetQpkgDbPathFilename)
+	local -r r_local_pathfile=$(GetQpkgDbPathFilename)
 	local -i z=0
 
 	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
@@ -10405,7 +10404,7 @@ _QPKG:reinstall_()
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkippedOk
 		z=2
-	elif [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
+	elif [[ -z $r_local_pathfile || ! -e $r_local_pathfile ]]; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'installation package unavailable'
 		MarkActionForkAsSkippedError
 		z=4
@@ -10414,11 +10413,16 @@ _QPKG:reinstall_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "reinstalling $(FormatPackageName)"
+
+	local a='REINSTALL_QPKG=true '
+	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_reinstall_log_file
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	IsValidQpkgInstalled && a+="QINSTALL_PATH=$(/usr/bin/dirname "$(GetQpkgInstalledPath)") "
 
-	Executer "${a}/bin/sh $local_pathfile" "$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_reinstall_log_file" log:failure-only 10
-	z=$?
+#	Executer "${a}/bin/sh $r_local_pathfile" "$r_logs_path/$(/usr/bin/basename "$r_local_pathfile").$r_reinstall_log_file" log:failure-only 10
+#	z=$?
+
+	KludgeExecuter "$a /bin/sh \"$r_local_pathfile\"" "$r_log_pathfile" log:failure-only 10
 
 	LogQpkgServiceResult
 	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
@@ -10459,9 +10463,8 @@ _QPKG:upgrade_()
 
 	FuncForkInit
 
-	local a='UPGRADE_QPKG=true '
 	local action=upgrade
-	local local_pathfile=$(GetQpkgDbPathFilename)
+	local -r r_local_pathfile=$(GetQpkgDbPathFilename)
 	local -i z=0
 
 	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
@@ -10486,7 +10489,7 @@ _QPKG:upgrade_()
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'no new QPKG is available'
 		MarkActionForkAsSkippedOk
 		z=2
-	elif [[ -z $local_pathfile || ! -e $local_pathfile ]]; then
+	elif [[ -z $r_local_pathfile || ! -e $r_local_pathfile ]]; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'installation package unavailable'
 		MarkActionForkAsSkippedError
 		z=4
@@ -10494,14 +10497,18 @@ _QPKG:upgrade_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	local prev_ver=$(GetQpkgInstalledVer)
-
 	DebugAsProc "upgrading $(FormatPackageName)"
+
+	local a='UPGRADE_QPKG=true '
+	local prev_ver=$(GetQpkgInstalledVer)
+	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_upgrade_log_file
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	IsValidQpkgInstalled && a+="QINSTALL_PATH=$(/usr/bin/dirname "$(GetQpkgInstalledPath "$qpkg_name")") "
 
-	Executer "${a}/bin/sh $local_pathfile" "$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_upgrade_log_file" log:failure-only 10
-	z=$?
+#	Executer "${a}/bin/sh $r_local_pathfile" "$r_logs_path/$(/usr/bin/basename "$r_local_pathfile").$r_upgrade_log_file" log:failure-only 10
+#	z=$?
+
+	KludgeExecuter "$a /bin/sh \"$r_local_pathfile\"" "$r_log_pathfile" log:failure-only 10
 
 	LogQpkgServiceResult
 	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
@@ -10551,8 +10558,8 @@ _QPKG:uninstall_()
 
 	FuncForkInit
 
-	local a='UNINSTALL_QPKG=true '
 	local action=uninstall
+	local -r r_local_pathfile=$(GetQpkgInstalledPath)/.uninstall.sh
 	local -i z=0
 
 	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
@@ -10573,47 +10580,51 @@ _QPKG:uninstall_()
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "it's needed here! 😉"
 		MarkActionForkAsSkippedOk
 		z=2
-	fi
 
-	[[ $z -eq 0 ]] || FuncForkExit $z
-
-	local -r r_qpkg_uninstaller_pathfile=$(GetQpkgInstalledPath)/.uninstall.sh
-
-	[[ $qpkg_name = Entware ]] && SaveIpkAndPipList
-
-	if IsFile "$r_qpkg_uninstaller_pathfile"; then
-		DebugAsProc "uninstalling $(FormatPackageName)"
-		[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
-
-		Executer "${a}/bin/sh $r_qpkg_uninstaller_pathfile" "$r_logs_path/$qpkg_name.$r_uninstall_log_file" log:failure-only
-		z=$?
-
-		if [[ $z -eq 0 ]]; then
-			# WARNING: beware of `qpkg_cli --remove`. It removes the QPKG installation path around 10-20 seconds after execution. If sherpa has moved-on and starts an install, `qpkg_cli` will remove the newly created QPKG installation path partway through the installation. So, check if QPKG is to be installed again. If-so, don't use `qpkg_cli --remove`.
-
-			[[ -e /sbin/qpkg_cli ]] && ! QPKGs-ACinstall-to.Exist "$qpkg_name" && /sbin/qpkg_cli --remove "$qpkg_name" &> /dev/null
-			SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
-			/sbin/rmcfg "$qpkg_name" -f /etc/config/qpkg.conf
-			DebugAsDone 'removed icon information from App Center'
-
-			if [[ $qpkg_name = Entware ]]; then
-				SendParentCommand ModPathToEntware
-				SendParentCommand SetCapabilities
-				SetCapabilities
-			fi
-
-			SendPackageStateChange ISNTactive
-			MarkActionForkAsDoneOk
-		else
-			SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
-			MarkActionForkAsDoneError
-		fi
-	else
+	elif [[ $r_local_pathfile = undefined ]]; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se "$(FormatFileName '.uninstall.sh') undefined"
+		MarkActionForkAsSkippedError
+		z=4
+	elif [[ ! -e $r_local_pathfile ]]; then
 		# Standard QPKG `.uninstall.sh` was not found, so can't continue with uninstallation (maybe force this instead with `rm -r` ?).
 
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$(FormatFileName '.uninstall.sh') not found"
 		MarkActionForkAsDoneError
 		z=1
+	fi
+
+	[[ $z -eq 0 ]] || FuncForkExit $z
+
+	[[ $qpkg_name = Entware ]] && SaveIpkAndPipList
+
+	DebugAsProc "uninstalling $(FormatPackageName)"
+
+	local a='UNINSTALL_QPKG=true '
+	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_uninstall_log_file
+	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
+
+	Executer "$a /bin/sh \"$r_local_pathfile\"" "$r_log_pathfile" log:failure-only
+	z=$?
+
+	if [[ $z -eq 0 ]]; then
+		# WARNING: beware of `qpkg_cli --remove`. It removes the QPKG installation path around 10-20 seconds after execution. If sherpa has moved-on and starts an install, `qpkg_cli` will remove the newly created QPKG installation path partway through the installation. So, check if QPKG is to be installed again. If-so, don't use `qpkg_cli --remove`.
+
+		[[ -e /sbin/qpkg_cli ]] && ! QPKGs-ACinstall-to.Exist "$qpkg_name" && /sbin/qpkg_cli --remove "$qpkg_name" &> /dev/null
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
+		/sbin/rmcfg "$qpkg_name" -f /etc/config/qpkg.conf
+		DebugAsDone 'removed icon information from App Center'
+
+		if [[ $qpkg_name = Entware ]]; then
+			SendParentCommand ModPathToEntware
+			SendParentCommand SetCapabilities
+			SetCapabilities
+		fi
+
+		SendPackageStateChange ISNTactive
+		MarkActionForkAsDoneOk
+	else
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
+		MarkActionForkAsDoneError
 	fi
 
 	FuncForkExit $z
@@ -10639,8 +10650,8 @@ _QPKG:activate_()
 
 	FuncForkInit
 
-	local a=''
 	local action=activate
+	local -r r_local_pathfile=$(GetQpkgServicePathFile)
 	local -i z=0
 
 	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
@@ -10661,32 +10672,35 @@ _QPKG:activate_()
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "disabled, please 'enable' it first"
 		MarkActionForkAsSkippedOk
 		z=2
+	elif [[ $r_local_pathfile = undefined ]]; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file undefined'
+		MarkActionForkAsSkippedError
+		z=4
+	elif [[ ! -e $r_local_pathfile ]]; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file not found'
+		MarkActionForkAsSkippedError
+		z=4
 	fi
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_activate_log_file
-	local timeout=''
-	IsOsCanQpkgTimeout && timeout=' -t '$r_qpkg_start_timeout_seconds
-	local service_pathfile=$(GetQpkgServicePathFile)
-
 	DebugAsProc "activating $(FormatPackageName)"
 
-	if [[ $service_pathfile = undefined ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file undefined'
-		MarkActionForkAsSkippedError
+	local a=''
+	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_activate_log_file
+	local timeout=''
+	IsOsCanQpkgTimeout && timeout='-t '$r_qpkg_start_timeout_seconds
 
-		FuncForkExit 4
-	elif [[ $useropt_debug = true ]]; then
+	if [[ $useropt_debug = true ]]; then
 		a+='DEBUG_QPKG=true '
 
-		Executer "${a}${service_pathfile} start" "$r_log_pathfile" log:failure-only
+		Executer "$a \"$r_local_pathfile\" start" "$r_log_pathfile" log:failure-only
 		z=$?
 	elif IsQpkgDbWillLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
-		Executer "/sbin/qpkg_service${timeout} start $qpkg_name" "$r_log_pathfile" log:failure-only
+		Executer "/sbin/qpkg_service $timeout start $qpkg_name" "$r_log_pathfile" log:failure-only
 		QpkgServiceResultWasOk && z=0 || z=1
 	else
-		Executer "$service_pathfile start" "$r_log_pathfile" log:failure-only
+		Executer "\"$r_local_pathfile\" start" "$r_log_pathfile" log:failure-only
 		z=$?
 	fi
 
@@ -10735,8 +10749,8 @@ _QPKG:reactivate_()
 
 	FuncForkInit
 
-	local a=''
 	local action=reactivate
+	local -r r_local_pathfile=$(GetQpkgServicePathFile)
 	local -i z=0
 
 	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
@@ -10757,32 +10771,35 @@ _QPKG:reactivate_()
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "disabled, please 'enable' it first"
 		MarkActionForkAsSkippedOk
 		z=2
+	elif [[ $r_local_pathfile = undefined ]]; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file undefined'
+		MarkActionForkAsSkippedError
+		z=4
+	elif [[ ! -e $r_local_pathfile ]]; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file not found'
+		MarkActionForkAsSkippedError
+		z=4
 	fi
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_reactivate_log_file
-	local timeout=''
-	IsOsCanQpkgTimeout && timeout=' -t '$r_qpkg_restart_timeout_seconds
-	local service_pathfile=$(GetQpkgServicePathFile)
-
 	DebugAsProc "reactivating $(FormatPackageName)"
 
-	if [[ $service_pathfile = undefined ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file undefined'
-		MarkActionForkAsSkippedError
+	local a=''
+	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_reactivate_log_file
+	local timeout=''
+	IsOsCanQpkgTimeout && timeout='-t '$r_qpkg_restart_timeout_seconds
 
-		FuncForkExit 4
-	elif [[ $useropt_debug = true ]]; then
+	if [[ $useropt_debug = true ]]; then
 		a+='DEBUG_QPKG=true '
 
-		Executer "${a}${service_pathfile} restart" "$r_log_pathfile" log:failure-only
+		Executer "$a \"$r_local_pathfile\" restart" "$r_log_pathfile" log:failure-only
 		z=$?
 	elif IsQpkgDbWillLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
-		Executer "/sbin/qpkg_service${timeout} restart $qpkg_name" "$r_log_pathfile" log:failure-only
+		Executer "/sbin/qpkg_service $timeout restart $qpkg_name" "$r_log_pathfile" log:failure-only
 		QpkgServiceResultWasOk && z=0 || z=1
 	else
-		Executer "$service_pathfile restart" "$r_log_pathfile" log:failure-only
+		Executer "\"$r_local_pathfile\" restart" "$r_log_pathfile" log:failure-only
 		z=$?
 	fi
 
@@ -10823,8 +10840,8 @@ _QPKG:deactivate_()
 
 	FuncForkInit
 
-	local a=''
 	local action=deactivate
+	local -r r_local_pathfile=$(GetQpkgServicePathFile)
 	local -i z=0
 
 	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
@@ -10845,32 +10862,35 @@ _QPKG:deactivate_()
 #		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "it's needed here! 😉"
 #		MarkActionForkAsSkippedOk
 #		z=2
+	elif [[ $r_local_pathfile = undefined ]]; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file undefined'
+		MarkActionForkAsSkippedError
+		z=4
+	elif [[ ! -e $r_local_pathfile ]]; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file not found'
+		MarkActionForkAsSkippedError
+		z=4
 	fi
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
+	local a=''
 	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_deactivate_log_file
 	local timeout=''
-	IsOsCanQpkgTimeout && timeout=' -t '$r_qpkg_stop_timeout_seconds
-	local service_pathfile=$(GetQpkgServicePathFile)
+	IsOsCanQpkgTimeout && timeout='-t '$r_qpkg_stop_timeout_seconds
 
 	DebugAsProc "deactivating $(FormatPackageName)"
 
-	if [[ $service_pathfile = undefined ]]; then
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file undefined'
-		MarkActionForkAsSkippedError
-
-		FuncForkExit 4
-	elif [[ $useropt_debug = true ]]; then
+	if [[ $useropt_debug = true ]]; then
 		a+='DEBUG_QPKG=true '
 
-		Executer "${a}${service_pathfile} stop" "$r_log_pathfile" log:failure-only
+		Executer "$a \"$r_local_pathfile\" stop" "$r_log_pathfile" log:failure-only
 		z=$?
 	elif IsQpkgDbWillLog; then		# Use `qpkg_service` if-possible, so package icon in App Center will dynamically update.
-		Executer "/sbin/qpkg_service${timeout} stop $qpkg_name" "$r_log_pathfile" log:failure-only
+		Executer "/sbin/qpkg_service $timeout stop $qpkg_name" "$r_log_pathfile" log:failure-only
 		QpkgServiceResultWasOk && z=0 || z=1
 	else
-		Executer "$service_pathfile stop" "$r_log_pathfile" log:failure-only
+		Executer "\"$r_local_pathfile\" stop" "$r_log_pathfile" log:failure-only
 		z=$?
 	fi
 
@@ -10942,11 +10962,11 @@ _QPKG:enable_()
 
 	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_enable_log_file
 	local timeout=''
-	IsOsCanQpkgTimeout && timeout=' -t '$r_qpkg_enable_timeout_seconds
+	IsOsCanQpkgTimeout && timeout='-t '$r_qpkg_enable_timeout_seconds
 
 	DebugAsProc "enabling $(FormatPackageName)"
 
-	Executer "/sbin/qpkg_service${timeout} enable $qpkg_name" "$r_log_pathfile" log:failure-only
+	Executer "/sbin/qpkg_service $timeout enable $qpkg_name" "$r_log_pathfile" log:failure-only
 	SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 	MarkActionForkAsDoneOk
 	ClearQpkgInstalledAppCenterNotifier
@@ -11004,11 +11024,11 @@ _QPKG:disable_()
 
 	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_disable_log_file
 	local timeout=''
-	IsOsCanQpkgTimeout && timeout=' -t '$r_qpkg_disable_timeout_seconds
+	IsOsCanQpkgTimeout && timeout='-t '$r_qpkg_disable_timeout_seconds
 
 	DebugAsProc "disabling $(FormatPackageName)"
 
-	Executer "/sbin/qpkg_service${timeout} disable $qpkg_name" "$r_log_pathfile" log:failure-only
+	Executer "/sbin/qpkg_service $timeout disable $qpkg_name" "$r_log_pathfile" log:failure-only
 
 	SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 	MarkActionForkAsDoneOk
@@ -11036,8 +11056,8 @@ _QPKG:enableau_()
 
 	FuncForkInit
 
-	local a=''
 	local action=enableau
+	local -r r_local_pathfile=$(GetQpkgServicePathFile)
 	local -i z=0
 
 	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
@@ -11062,14 +11082,25 @@ _QPKG:enableau_()
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "'auto-update' is always enabled"
 		MarkActionForkAsSkippedOk
 		z=2
+	elif [[ $r_local_pathfile = undefined ]]; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file undefined'
+		MarkActionForkAsSkippedError
+		z=4
+	elif [[ ! -e $r_local_pathfile ]]; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file not found'
+		MarkActionForkAsSkippedError
+		z=4
 	fi
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "enabling auto-update $(FormatPackageName)"
+
+	local a=''
+	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_enableau_log_file
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 
-	Executer "${a}$(GetQpkgServicePathFile) enable-auto-update" "$r_logs_path/$qpkg_name.$r_enableau_log_file" log:failure-only
+	Executer "$a \"$r_local_pathfile\" enable-auto-update" "$r_log_pathfile" log:failure-only
 	z=$?
 
 	LogQpkgServiceResult
@@ -11105,8 +11136,8 @@ _QPKG:disableau_()
 
 	FuncForkInit
 
-	local a=''
 	local action=disableau
+	local -r r_local_pathfile=$(GetQpkgServicePathFile)
 	local -i z=0
 
 	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
@@ -11131,14 +11162,25 @@ _QPKG:disableau_()
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "'auto-update' cannot be disabled"
 		MarkActionForkAsSkippedOk
 		z=2
+	elif [[ $r_local_pathfile = undefined ]]; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file undefined'
+		MarkActionForkAsSkippedError
+		z=4
+	elif [[ ! -e $r_local_pathfile ]]; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file not found'
+		MarkActionForkAsSkippedError
+		z=4
 	fi
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "disabling auto-update $(FormatPackageName)"
+
+	local a=''
+	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_disableau_log_file
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 
-	Executer "${a}$(GetQpkgServicePathFile) disable-auto-update" "$r_logs_path/$qpkg_name.$r_disableau_log_file" log:failure-only
+	Executer "$a \"$r_local_pathfile\" disable-auto-update" "$r_log_pathfile" log:failure-only
 	z=$?
 
 	LogQpkgServiceResult
@@ -11174,8 +11216,8 @@ _QPKG:backup_()
 
 	FuncForkInit
 
-	local a=''
 	local action=backup
+	local -r r_local_pathfile=$(GetQpkgServicePathFile)
 	local -i z=0
 
 	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
@@ -11196,14 +11238,25 @@ _QPKG:backup_()
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkippedOk
 		z=2
+	elif [[ $r_local_pathfile = undefined ]]; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file undefined'
+		MarkActionForkAsSkippedError
+		z=4
+	elif [[ ! -e $r_local_pathfile ]]; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file not found'
+		MarkActionForkAsSkippedError
+		z=4
 	fi
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "backing-up $(FormatPackageName) configuration"
+
+	local a=''
+	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_backup_log_file
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 
-	Executer "${a}$(GetQpkgServicePathFile) backup" "$r_logs_path/$qpkg_name.$r_backup_log_file" log:failure-only
+	Executer "$a \"$r_local_pathfile\" backup" "$r_log_pathfile" log:failure-only
 	z=$?
 
 	LogQpkgServiceResult
@@ -11242,8 +11295,8 @@ _QPKG:restore_()
 
 	FuncForkInit
 
-	local a=''
 	local action=restore
+	local -r r_local_pathfile=$(GetQpkgServicePathFile)
 	local -i z=0
 
 	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
@@ -11273,14 +11326,25 @@ _QPKG:restore_()
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'backup file unavailable'
 		MarkActionForkAsSkippedOk
 		z=2
+	elif [[ $r_local_pathfile = undefined ]]; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file undefined'
+		MarkActionForkAsSkippedError
+		z=4
+	elif [[ ! -e $r_local_pathfile ]]; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file not found'
+		MarkActionForkAsSkippedError
+		z=4
 	fi
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "restoring $(FormatPackageName) configuration"
+
+	local a=''
+	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_restore_log_file
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 
-	Executer "${a}$(GetQpkgServicePathFile) restore" "$r_logs_path/$qpkg_name.$r_restore_log_file" log:failure-only
+	Executer "$a \"$r_local_pathfile\" restore" "$r_log_pathfile" log:failure-only
 	z=$?
 
 	LogQpkgServiceResult
@@ -11317,8 +11381,8 @@ _QPKG:clean_()
 
 	FuncForkInit
 
-	local a=''
 	local action=clean
+	local -r r_local_pathfile=$(GetQpkgServicePathFile)
 	local -i z=0
 
 	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
@@ -11339,14 +11403,25 @@ _QPKG:clean_()
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkippedOk
 		z=2
+	elif [[ $r_local_pathfile = undefined ]]; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file undefined'
+		MarkActionForkAsSkippedError
+		z=4
+	elif [[ ! -e $r_local_pathfile ]]; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file not found'
+		MarkActionForkAsSkippedError
+		z=4
 	fi
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "cleaning $(FormatPackageName)"
+
+	local a=''
+	local -r r_log_pathfile=$r_logs_path/$qpkg_name.$r_clean_log_file
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 
-	Executer "${a}$(GetQpkgServicePathFile) clean" "$r_logs_path/$qpkg_name.$r_clean_log_file" log:failure-only
+	Executer "$a \"$r_local_pathfile\" clean" "$r_log_pathfile" log:failure-only
 
 #	if [[ $useropt_debug = true ]]; then
 #		DEBUG_QPKG=true $(GetQpkgServicePathFile) clean
@@ -11399,10 +11474,7 @@ _QPKG:sign_()
 
 	FuncForkInit
 
-	local a=''
 	local action='"sign"'
-	local b=''
-	local -i retries=0
 	local -i z=0
 
 	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
@@ -11428,6 +11500,10 @@ _QPKG:sign_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "\"signing\" $(FormatPackageName)"
+
+	local a=''
+	local b=''
+	local -i retries=0
 
 	# https://pynative.com/python-sqlite-insert-into-table/
 
@@ -11501,10 +11577,7 @@ _QPKG:unsign_()
 
 	FuncForkInit
 
-	local a=''
 	local action='"unsign"'
-	local b=''
-	local -i retries=0
 	local -i z=0
 
 	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
@@ -11530,6 +11603,10 @@ _QPKG:unsign_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	DebugAsProc "\"unsigning\" $(FormatPackageName)"
+
+	local a=''
+	local b=''
+	local -i retries=0
 
 	# https://pynative.com/python-sqlite-delete-from-table/
 
@@ -14193,6 +14270,7 @@ Executer()
 
 	FuncInit
 
+	local a=$(tr -s ' ' <<< "$1")
 	local exec_msg='exec:'
 	local -r r_log_pathfile=$(/bin/mktemp "$r_run_logs_path"/"${FUNCNAME[0]}"_XXXXXX)
 	local -i z=0
@@ -14247,6 +14325,58 @@ Executer()
 			AddExtLogToSessLog "$2"
 			DebugAsError "$exec_msg with errors ($z)"
 	esac
+
+	FuncExit $z
+
+	}
+
+KludgeExecuter()
+	{
+
+	# A workaround for QTS procs being randomly(?) disowned by their parents.
+
+	# Inputs: (local)
+	#	$1 = commandstring to execute.
+	#	$2 = pathfile to record stdout and stderr to.
+
+	[[ -n ${1:?${FUNCNAME[0]}(): $e_nocmd} && -n ${2:?${FUNCNAME[0]}(): $e_nopfi} ]] || return
+
+	FuncInit
+
+	local a=$(tr -s ' ' <<< "$1")
+	local -i pid=0
+	local -i z=0
+
+	if [[ $useropt_verbose = true ]]; then
+		eval "$a 2>&1 | /usr/bin/tee $2" &					# Force background process here, and capture PID. NOTE: stdout is buffered here.
+	else
+		eval "$a" > "$2" 2>&1 &								# Force background process here, and capture PID.
+	fi
+
+	pid=$!
+
+	PidLogger												# devdebug
+	PidLogger pre-background-wait "$pid" "$PPID" "$a"		# devdebug
+
+	if [[ $pid -gt 1 ]]; then
+		wait $pid 2> /dev/null
+		z=$?
+	fi
+
+	PidLogger post-background-wait "$pid" "$PPID" "$a"		# devdebug
+	PidLogger pre-detached-wait "$pid" "$PPID" "$a"			# devdebug
+
+	pid=$(FindPid '/bin/sh' "$r_local_pathfile")
+
+	# If $pid = 0 then process isn't running.
+
+	if [[ $pid -gt 1 ]]; then								# Process has been detached.
+		while [[ -e /proc/$pid ]]; do
+			sleep .5
+		done
+	fi
+
+	PidLogger post-detached-wait "$pid" "$PPID" "$a"		# devdebug
 
 	FuncExit $z
 
