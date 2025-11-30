@@ -4228,10 +4228,10 @@ _ExecOneActionWithManyForks_()
 			pid=$!
 
 			WritePidFile "$pid"
+			DebugAsDone "forked $a() instance for '$qpkg_name' with PID $pid"
 
 		)
 
-		DebugAsDone "forked $a() instance for '$qpkg_name'"
 		UpdateActionForkProgress
 	done
 
@@ -10246,8 +10246,8 @@ _QPKG:install_()
 	local action=install
 	local local_pathfile=$(GetQpkgDbPathFilename)
 		local log_pathfile=$r_logs_path/$(/usr/bin/basename "$local_pathfile").$r_install_log_file
-	local -i z=0
 	local -i pid=0
+	local -i z=0
 
 	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
 
@@ -10292,27 +10292,45 @@ _QPKG:install_()
 	DebugAsProc "installing $(FormatPackageName)"
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	[[ ${QPKGs_were_installed_name[*]:-} = *"$qpkg_name"* ]] && a+="QINSTALL_PATH=$(GetQpkgInstalledOriginalPath "$qpkg_name") "
+	a+="/bin/sh \"$local_pathfile\""
 
-#	Executer "${a}/bin/sh $local_pathfile" "$log_pathfile" log:failure-only 10
+#	Executer "$a $local_pathfile" "$log_pathfile" log:failure-only 10
 #	z=$?
 
 	if [[ $useropt_verbose = true ]]; then
-		[[ -n $a ]] && export ${a?}
-		/bin/sh "$local_pathfile" > >(/usr/bin/tee "$log_pathfile") 2>&1 &	# NOTE: `tee` buffers stdout here.		# squeezer-ignore
-		z=${PIPESTATUS[0]}													# Examine $PIPESTATUS after `tee` to get returncode of previous command: https://stackoverflow.com/questions/1221833/pipe-output-and-capture-exit-status-in-bash
+		eval "$a 2>&1 | /usr/bin/tee $log_pathfile" &					# Force background process here, and capture PID. NOTE: stdout is buffered here.
 	else
-		[[ -n $a ]] && export ${a?}
-		/bin/sh "$local_pathfile" > "$log_pathfile" 2>&1 &
-		pid=$!
+		eval "$a" > "$log_pathfile" 2>&1 &								# Force background process here, and capture PID.
 	fi
 
-	wait $pid
-	z=$?
+	pid=$!
 
+	PidLogger															# devdebug
+	PidLogger pre-background-wait "$pid" "$PPID" "$a"					# devdebug
+
+	if [[ $pid -gt 1 ]]; then
+		wait $pid
+		z=$?
+	fi
+
+	PidLogger post-background-wait "$pid" "$PPID" "$a"					# devdebug
+	PidLogger pre-detached-wait "$pid" "$PPID" "$a"						# devdebug
+
+	pid=$(FindPid '/bin/sh' "$local_pathfile")
+
+	# If $pid = 0 then process isn't running.
+
+	if [[ $pid -gt 1 ]]; then											# Process has been detached.
+		while [[ -e /proc/$pid ]]; do
+			sleep .5
+		done
+	fi
+
+	PidLogger post-detached-wait "$pid" "$PPID" "$a"					# devdebug
 	LogQpkgServiceResult
 	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
 
-	[[ $qpkg_name = Entware ]] && IsNtCriticalFile $r_opkg_cmd && z=1		# Entware installation has failed.
+	[[ $qpkg_name = Entware ]] && IsNtCriticalFile $r_opkg_cmd && z=1	# Entware installation has failed.
 
 	if [[ $z -eq 0 || $z -eq 10 ]]; then	# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes user-aborts.
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok "v$(GetQpkgInstalledVer)"
@@ -14126,6 +14144,27 @@ FileCountSpec()
 
 	}
 
+PidLogger()																# devdebug
+	{																	# devdebug
+
+	# Inputs: (local)
+	#	$1 = stage descriptor.
+	#	$2 = PID.
+	#	$3 = PPID.
+	#	$4 = command string.
+
+	if [[ -z ${1:-} ]]; then											# devdebug
+		echo >> /var/log/sherpa/pids/PidLogger.log						# devdebug
+
+		return															# devdebug
+	fi																	# devdebug
+
+	printf "[%s] stage: '%-20s' ppid: '%-5s' pid: '%-5s' cmd: '%s'\n" "$(date)" "$1" "$3" "$2" "$4" >> /var/log/sherpa/pids/PidLogger.log # devdebug
+# printf "[%s] stage: '%-20s' pid: '%-5s' cmdline: '%s'\n" "$(date)" "$1" "$2" "$(tr '\0' ' ' < /proc/$2/cmdline)" >> /var/log/sherpa/pids/PidLogger-pid-$2.log # devdebug
+# printf "[%s] stage: '%-20s' ppid: '%-5s' cmdline: '%s'\n" "$(date)" "$1" "$3" "$(tr '\0' ' ' < /proc/$3/cmdline)" >> /var/log/sherpa/pids/PidLogger-pid-$3.log # devdebug
+
+	}
+
 Executer()
 	{
 
@@ -14151,29 +14190,28 @@ Executer()
 
 	[[ -n ${1:?${FUNCNAME[0]}(): $e_nocmd} && -n ${2:?${FUNCNAME[0]}(): $e_nopfi} ]] || return
 
+	local a=$(tr -s ' ' <<< "$1")
+
 	FuncInit
 
 	local exec_msg='exec:'
 	local -r r_log_pathfile=$(/bin/mktemp "$r_run_logs_path"/"${FUNCNAME[0]}"_XXXXXX)
 	local -i z=0
 
-	if IsHaveSingleQuote "$1"; then										# Change display quotes depending-on content quote chars.
-		exec_msg+=" \"$1\""
+	if IsHaveSingleQuote "$a"; then										# Change display quotes depending-on content quote chars.
+		exec_msg+=" \"$a\""
 	else
-		exec_msg+=" '$1'"
+		exec_msg+=" '$a'"
 	fi
 
 	DebugAsProc "$exec_msg"
-	FormatCommand "$1" > "$2"
+	FormatCommand "$a" > "$2"
 
 	if [[ $useropt_verbose = true ]]; then
-		eval "$1 2>&1 | /usr/bin/tee $r_log_pathfile"					# NOTE: stdout is buffered here.
+		eval "$a 2>&1 | /usr/bin/tee $r_log_pathfile"					# NOTE: stdout is buffered here.
 		z=${PIPESTATUS[0]}												# Examine $PIPESTATUS after `tee` to get returncode of previous command: https://stackoverflow.com/questions/1221833/pipe-output-and-capture-exit-status-in-bash
-
-#		eval "$1 2>&1"
-#		z=$?
 	else
-		(eval "$1" > "$r_log_pathfile" 2>&1)							# Run within a subshell to suppress "Terminated" message later.
+		eval "$a" > "$r_log_pathfile" 2>&1
 		z=$?
 	fi
 
@@ -14212,6 +14250,43 @@ Executer()
 	esac
 
 	FuncExit $z
+
+	}
+
+FindPid()
+	{
+
+	# Inputs: (local)
+	#	$1 = Process pathfilename to find.
+	#	$2 (optional) = additional string to match if there are multiple processes with identical pathfilenames.
+
+	# Outputs: (local)
+	#	$? = 0 (found) or 1 (not found)
+	#	stdout = PID
+
+	ConfirmVarIsDefined 1 "${1:-}" "$e_nopfi" || return
+
+	local -i a=0
+	local b=''
+
+	[[ -n ${2:-} && $2 != undefined ]] && b=$2
+
+	for a in $(/bin/pidof "$(/usr/bin/basename "$1")"); do
+		[[ $a -gt 1 ]] || continue
+		[[ -d /proc/$a ]] || continue
+		[[ -e /proc/$a/cmdline && -L /proc/$a/exe ]] || continue
+		[[ $(</proc/$a/cmdline) =~ $1 || $(/usr/bin/readlink /proc/$a/exe) = "$1" ]] || continue
+
+		if [[ -n $b ]]; then
+			[[ $(</proc/$a/cmdline) =~ $b ]] || continue	# Check for additional string (if-specified).
+		fi
+
+		printf '%s' "$a"
+
+		return
+	done
+
+	return 1
 
 	}
 
@@ -16797,6 +16872,9 @@ readonly r_script_startseconds=$(ConvertNowToSeconds)
 
 trap CaughtSIGINT SIGINT
 trap CaughtEXIT EXIT
+
+rm -rf /var/log/sherpa/pids					# devdebug
+mkdir -p /var/log/sherpa/pids				# devdebug
 
 Init || exit
 ProcActions
