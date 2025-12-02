@@ -1523,6 +1523,8 @@ ProcActions()
 	local tier=''
 	local -i tier_index=0
 
+	rm -rf /var/log/sherpa/pids											# devdebug
+	mkdir -p /var/log/sherpa/pids										# devdebug
 	rm -f "$r_session_action_results_pathfile" 2> /dev/null
 	OpenMsgPipeEnhancedLog												# devdebug
 
@@ -17058,9 +17060,6 @@ readonly r_script_startseconds=$(ConvertNowToSeconds)
 
 trap CaughtSIGINT SIGINT
 trap CaughtEXIT EXIT
-
-rm -rf /var/log/sherpa/pids					# devdebug
-mkdir -p /var/log/sherpa/pids				# devdebug
 
 Init || exit
 ProcActions
