@@ -9928,7 +9928,7 @@ ClaimLockfile()
 	#	$r_lock_pathfile
 
 	local a=''
-	readonly r_lock_pathfile=/var/run/sherpa.lock
+	readonly r_lock_pathfile=/var/lock/sherpa.pid
 
 	for a in sherpa-manager.sh sherpa-manager.source; do
 		if [[ -e $r_lock_pathfile && -d /proc/$(< $r_lock_pathfile) && $(< /proc/"$(< $r_lock_pathfile)"/cmdline) =~ $a ]]; then
