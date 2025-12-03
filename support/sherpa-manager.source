@@ -7895,7 +7895,7 @@ BuildExtendedQPKGsStates()
 
 	if [[ $(FileCountAll "$r_qpkg_states_path") -eq 0 ]]; then
 		DebugAsInfo 'no QPKG state files found'
-		FindAndStoreQPKGsStates
+		RefreshAndStoreQPKGsStates
 	fi
 
 	LoadQPKGsStates
@@ -7944,7 +7944,7 @@ InitQPKGsStates()
 
 	}
 
-FindAndStoreQPKGsStates()
+RefreshAndStoreQPKGsStates()
 	{
 
 	# Inputs: (global)
@@ -7954,7 +7954,7 @@ FindAndStoreQPKGsStates()
 
 	qpkg_name=''
 
-	ShowAsProc 'find QPKG states'
+	ShowAsProc 'refresh QPKG states'
 
 	# Faster to launch several concurrent loops async than a single loop. Launch those requiring more processing-time first.
 
