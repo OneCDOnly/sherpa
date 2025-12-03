@@ -481,6 +481,7 @@ IsCMDsOk()
 	IsCriticalFile /bin/sha1sum || return
 	# `/bin/sleep` has already been called before arriving here.
 	[[ ! -e /usr/bin/sort ]] && ln -s /bin/busybox /usr/bin/sort		# KLUDGE: `/usr/bin/sort` randomly disappears from QTS.
+	IsCriticalFile /usr/bin/stat || return
 	IsCriticalFile /usr/bin/tail || return
 	IsCriticalFile /bin/tar || return
 	IsCriticalFile /usr/bin/tee || return
@@ -563,10 +564,6 @@ LoadEnv()
 
 	readonly r_prev_pip_list_pathfile=$r_pip_cache_path/pip-list.save
 
-	readonly r_oom_log_pathfile=$r_logs_path/oom.log
-	readonly r_ram_freeused_pathfile=$r_logs_path/ram.freeused
-	readonly r_ramfs_freespace_pathfile=$r_logs_path/ramfs.freespace
-	readonly r_screen_sessions_pathfile=$r_logs_path/screen.sessions
 	readonly r_session_action_results_pathfile=$r_logs_path/session-action-results.log
 	readonly r_session_archive_log_pathfile=$r_logs_path/session-archive.log
 	readonly r_session_last_pathfile=$r_logs_path/session-last.log
@@ -576,21 +573,29 @@ LoadEnv()
 
 	# Ephemeral paths.
 
-	readonly r_action_counts_path=/var/run/sherpa/actions/counts
-	readonly r_action_logs_path=/var/log/sherpa/actions/logs
-	readonly r_async_procs_path=/var/run/sherpa/procs
-	readonly r_qpkg_states_path=/var/run/sherpa/packages/states
-	readonly r_report_columns_path=/var/run/sherpa/report/columns
-	readonly r_report_flags_path=/var/run/sherpa/report/flags
-	readonly r_reports_path=/var/log/sherpa/reports
-	readonly r_run_logs_path=/var/run/sherpa/logs
+	readonly r_temp_run_path=/var/run/sherpa
+		readonly r_action_counts_path=$r_temp_run_path/action/count
+		readonly r_async_procs_path=$r_temp_run_path/proc
+		readonly r_qpkg_states_path=$r_temp_run_path/package/state
+		readonly r_run_logs_path=$r_temp_run_path/log
+		readonly r_temp_report_path=$r_temp_run_path/report
+			readonly r_report_columns_path=$r_temp_report_path/column
+			readonly r_report_flags_path=$r_temp_report_path/flag
+
+	readonly r_temp_log_path=/var/log/sherpa
+		readonly r_action_logs_path=$r_temp_log_path/action/log
+		readonly r_reports_path=$r_temp_log_path/report
 
 	# Ephemeral files.
 
-	readonly r_abort_actions_pathfile=$r_qpkg_states_path/abort.action
-	readonly r_action_msg_pipe=$r_qpkg_states_path/action-messages.pipe
-	readonly r_action_msg_pipe_log_pathfile=$r_logs_path/action-messages-pipe-enhanced.log		# devdebug
+	readonly r_abort_actions_pathfile=$r_temp_run_path/abort.action
+	readonly r_action_msg_pipe=$r_temp_run_path/action-messages.pipe
+	readonly r_action_msg_pipe_log_pathfile=$r_temp_run_path/enhanced-action-messages-pipe.log		# devdebug
+	readonly r_oom_log_pathfile=$r_temp_log_path/oom.log
+	readonly r_ram_freeused_pathfile=$r_temp_log_path/ram.freeused
+	readonly r_ramfs_freespace_pathfile=$r_temp_log_path/ramfs.freespace
 	readonly r_report_output_pathfile=$r_reports_path/report.ansi
+	readonly r_screen_sessions_pathfile=$r_temp_log_path/screen.sessions
 
 	# Entware.
 
@@ -728,6 +733,10 @@ CreatePaths()
 	ClearPath /var/run/sherpa/report "$r_report_columns_path"
 	ClearPath /var/run/sherpa/report "$r_report_flags_path"
 
+	MakePath "$r_temp_log_path" 'temporary logs' || return
+	MakePath "$r_temp_report_path" 'temporary reports' || return
+	MakePath "$r_temp_run_path" 'temporary runtime files' || return
+
 	MakePath "$r_action_counts_path" 'action counts' || return
 	MakePath "$r_action_logs_path" 'action logs' || return
 	MakePath "$r_action_times_path" 'action times' || return
@@ -736,7 +745,7 @@ CreatePaths()
 	MakePath "$r_ipk_cache_path" 'IPK cache' || return
 	MakePath "$r_ipk_downgrade_path" 'IPK downgrade' || return
 	MakePath "$r_ipk_download_path" 'IPK download' || return
-	MakePath "$r_logs_path" logs || return
+	MakePath "$r_logs_path" 'persistent logs' || return
 	MakePath "$r_pip_cache_path" 'PIP cache' || return
 	MakePath "$r_qpkg_bu_path" 'QPKG backup' || return
 	MakePath "$r_qpkg_cache_path" 'QPKG cache' || return
@@ -7785,22 +7794,10 @@ LoadQPKGsTiers()
 
 	}
 
-BuildExtendedQPKGsStates()
+CheckSystemLoad()
 	{
 
-	# Build several lists of QPKGs:
-	#	- installable/not.
-	#	- upgradable/not.
-	#	- have backup files in backup location/not.
-	#	- have config blocks in /etc/config/qpkg.conf, but no files on-disk (i.e. missing).
-
 	FuncInit
-
-	if [[ ${qpkgs_states_built:=false} = true ]]; then
-		DebugAsDetect 'states are already built'
-
-		FuncExit; return
-	fi
 
 	if IsOsStartingPackages; then
 		ShowAsNote "$(GetOsName) is starting QPKGs, check again in a few minutes"
@@ -7820,10 +7817,51 @@ BuildExtendedQPKGsStates()
 		ShowAsNote 'the NAS has an elevated system-load, so this may take a little longer than usual'
 	fi
 
+	FuncExit
+
+	}
+
+BuildExtendedQPKGsStates()
+	{
+
+	# Build several lists of QPKGs:
+	#	- installable/not.
+	#	- upgradable/not.
+	#	- have backup files in backup location/not.
+	#	- have config blocks in /etc/config/qpkg.conf, but no files on-disk (i.e. missing).
+
+	FuncInit
+
+	if [[ ${qpkgs_states_built:=false} = true ]]; then
+		DebugAsDetect 'states are already built'
+
+		FuncExit; return
+	fi
+
+	local a=''
+
+	CheckSystemLoad
 	LoadDatabase
-	InitQPKGsStates
-	GetQpkgStates
-	StoreQpkgStates
+
+	if [[ $(FileCountAll "$r_qpkg_states_path") -gt 0 ]]; then
+		a=$r_qpkg_states_path/$(ls "$r_qpkg_states_path" -t | head -n1)			# Find most recently modified file.
+
+		DebugAsInfo "comparison file (last modified QPKG state file): '$a'"
+
+		if IsFileNewer /etc/config/qpkg.conf "$a"; then
+			DebugAsInfo "'/etc/config/qpkg.conf' is newer than the comparison file"
+			InitQPKGsStates
+		else
+			DebugAsInfo "'/etc/config/qpkg.conf' is older than the comparison file"
+		fi
+	fi
+
+	if [[ $(FileCountAll "$r_qpkg_states_path") -eq 0 ]]; then
+		DebugAsInfo 'no QPKG state files found'
+		FindAndStoreQPKGsStates
+	fi
+
+	LoadQPKGsStates
 	ShowQPKGsMissing
 	ShowQPKGsNewVers
 
@@ -7831,7 +7869,7 @@ BuildExtendedQPKGsStates()
 
 	}
 
-GetQpkgStates()
+FindAndStoreQPKGsStates()
 	{
 
 	# Inputs: (global)
@@ -7841,7 +7879,7 @@ GetQpkgStates()
 
 	qpkg_name=''
 
-	ShowAsProc 'get QPKG states'
+	ShowAsProc 'find QPKG states'
 
 	# Faster to launch several concurrent loops async than a single loop. Launch those requiring more processing-time first.
 
@@ -7883,7 +7921,7 @@ GetQpkgStates()
 
 	}
 
-StoreQpkgStates()
+LoadQPKGsStates()
 	{
 
 	# Outputs: (global)
@@ -7895,7 +7933,7 @@ StoreQpkgStates()
 	local b=''
 	qpkg_name=''
 
-	ShowAsProc 'store QPKG states'
+	ShowAsProc 'load QPKG states'
 
 	# Load status lines from individual files into session arrays.
 
@@ -7994,8 +8032,6 @@ InitQPKGsStates()
 
 	local a=''
 
-	DebugAsProc 'initialising state lists'
-
 	for a in "${r_qpkg_is_states[@]}"; do
 		[[ $a = active ]] && continue		# Don't reset.
 		[[ $(type -t QPKGs-IS${a}:Init) = function ]] && QPKGs-IS${a}:Init
@@ -8006,9 +8042,8 @@ InitQPKGsStates()
 		[[ $(type -t QPKGs-ISNT${a}:Init) = function ]] && QPKGs-ISNT${a}:Init
 	done
 
-	ClearPath /var/run/sherpa/packages "$r_qpkg_states_path"
+	ClearPath /var/run/sherpa/package "$r_qpkg_states_path"
 
-	DebugAsDone 'initialised state lists'
 	qpkgs_states_built=false
 
 	FuncExit
@@ -12893,9 +12928,28 @@ IsFileRecent()
 	# Outputs: (local)
 	#	$? = true/false
 
-	# Examine `change` time as this is updated even if file content isn't modified.
+	# Examine 'status change' time, as this is updated even if file content isn't modified.
 
-	[[ -e ${1:-} && $((($(ConvertNowToSeconds)-$(/usr/bin/stat "$1" -c %Z))/60)) -le ${2:-1440} ]]		# https://stackoverflow.com/a/55622661
+	[[ -e ${1:-} && $((($(ConvertNowToSeconds)-$(FileLastStatusChangeEpoch "$1"))/60)) -le ${2:-1440} ]]		# https://stackoverflow.com/a/55622661
+
+	}
+
+IsFileNewer()
+	{
+
+	# If $1 is newer than $2, then return true, else return false.
+
+	# Inputs: (local)
+	#	$1 = pathfilename: file to examine 'last-modified' time of.
+	#	$2 = pathfilename: file to examine 'last-modified' time of.
+
+	# Outputs: (local)
+	#	$? = true/false
+
+	[[ -n ${1:-} && -e $1 ]] || return
+	[[ -n ${2:-} && -e $2 ]] || return 0				# Treat a non-existent $2 as older than $1.
+
+	[[ $(FileLastModifiedEpoch "$1") -gt $(FileLastModifiedEpoch "$2") ]]
 
 	}
 
@@ -14532,6 +14586,38 @@ FileMatchesMD5()
 	#	$? = true if checksums match.
 
 	[[ $(GenerateMD5 "${1:?${FUNCNAME[0]}(): $e_nopfi}") = "${2:?${FUNCNAME[0]}(): $e_nochk}" ]]
+
+	}
+
+FileLastModifiedEpoch()
+	{
+
+	# Inputs: (local)
+	#	$1 = pathfilename: file to examine 'last-modified' time of.
+
+	# Outputs: (local)
+	#	stdout = epoch seconds.
+
+	[[ -n ${1:-} && -e $1 ]] || return
+
+	/usr/bin/stat "$1" -c %Y
+
+	}
+
+FileLastStatusChangeEpoch()
+	{
+
+	# Examine 'last status change' time, as this is updated even if file content isn't modified.
+
+	# Inputs: (local)
+	#	$1 = pathfilename: file to examine 'last status change' time of.
+
+	# Outputs: (local)
+	#	stdout = epoch seconds.
+
+	[[ -n ${1:-} && -e $1 ]] || return
+
+	/usr/bin/stat "$1" -c %Z
 
 	}
 
