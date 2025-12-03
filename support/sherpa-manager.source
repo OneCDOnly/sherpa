@@ -784,7 +784,7 @@ DebugLogEnv()
 	DebugHardware ok 'CPU cores' "$r_cpu_cores"
 	DebugHardware ok 'CPU architecture' "$(GetCpuDataWidth)"
 	DebugHardware ok 'basic CPU SHA1 benchmark' "$(GetHardwareCPUBenchmark)"
-	DebugHardware ok RAM "$(FormatAsThous "$r_nas_ram_kb")kiB"
+	DebugHardware ok RAM "${r_nas_ram_gb}GiB"
 	DebugKernel ok name "$(GetOsKernelName)"
 	DebugKernel ok version "$(GetOsKernelVersion)"
 
@@ -9646,13 +9646,27 @@ GetHardwareCPUCores()
 
 	}
 
-GetHardwareInstalledRAM()
+GetHardwareInstalledRAMkb()
 	{
 
 	# Outputs: (local)
 	#	stdout = text string.
 
 	/bin/grep MemTotal /proc/meminfo | /bin/sed 's/.*: //;s/kB//;s/ //g'
+
+	}
+
+GetHardwareInstalledRAMgb()
+	{
+
+	# Outputs: (local)
+	#	stdout = text string.
+
+	local a=$(/bin/grep MemTotal /proc/meminfo | /bin/sed 's/.*: //;s/kB//;s/ //g')
+	local b=$((((a/1024)*1000)/1024))
+	local c=${b%???}.${b:${#b}<3?0:-3}
+
+	printf '%.2f' "$c"
 
 	}
 
@@ -16578,8 +16592,10 @@ SetHardwareInstalledRAM()
 
 	# Outputs: (global)
 	#	$r_nas_ram_kb
+	#	$r_nas_ram_gb
 
-	[[ ${r_nas_ram_kb:-unset} = unset ]] && readonly r_nas_ram_kb=$(GetHardwareInstalledRAM)
+	[[ ${r_nas_ram_kb:-unset} = unset ]] && readonly r_nas_ram_kb=$(GetHardwareInstalledRAMkb)
+	[[ ${r_nas_ram_gb:-unset} = unset ]] && readonly r_nas_ram_gb=$(GetHardwareInstalledRAMgb)
 
 	}
 
