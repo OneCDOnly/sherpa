@@ -7869,6 +7869,44 @@ BuildExtendedQPKGsStates()
 
 	}
 
+InitQPKGsStates()
+	{
+
+	# Clear in-memory state list objects and on-disk lists.
+
+	# Inputs: (global)
+	#	$r_qpkg_is_states[]
+	#	$r_qpkg_isnt_states[]
+	#	$r_qpkg_states_path
+	#	$r_qpkg_transient_states[]
+
+	# Outputs: (global)
+	#	$qpkgs_states_built
+
+	LoadObjects || return
+
+	FuncInit
+
+	local a=''
+
+	for a in "${r_qpkg_is_states[@]}"; do
+		[[ $a = active ]] && continue		# Don't reset.
+		[[ $(type -t QPKGs-IS${a}:Init) = function ]] && QPKGs-IS${a}:Init
+	done
+
+	for a in "${r_qpkg_isnt_states[@]}"; do
+		[[ $a = active ]] && continue		# Don't reset.
+		[[ $(type -t QPKGs-ISNT${a}:Init) = function ]] && QPKGs-ISNT${a}:Init
+	done
+
+	ClearPath /var/run/sherpa/package "$r_qpkg_states_path"
+
+	qpkgs_states_built=false
+
+	FuncExit
+
+	}
+
 FindAndStoreQPKGsStates()
 	{
 
@@ -8007,44 +8045,6 @@ LoadQPKGsStates()
 	done
 
 	qpkgs_states_built=true
-
-	FuncExit
-
-	}
-
-InitQPKGsStates()
-	{
-
-	# Clear in-memory state list objects and on-disk lists.
-
-	# Inputs: (global)
-	#	$r_qpkg_is_states[]
-	#	$r_qpkg_isnt_states[]
-	#	$r_qpkg_states_path
-	#	$r_qpkg_transient_states[]
-
-	# Outputs: (global)
-	#	$qpkgs_states_built
-
-	LoadObjects || return
-
-	FuncInit
-
-	local a=''
-
-	for a in "${r_qpkg_is_states[@]}"; do
-		[[ $a = active ]] && continue		# Don't reset.
-		[[ $(type -t QPKGs-IS${a}:Init) = function ]] && QPKGs-IS${a}:Init
-	done
-
-	for a in "${r_qpkg_isnt_states[@]}"; do
-		[[ $a = active ]] && continue		# Don't reset.
-		[[ $(type -t QPKGs-ISNT${a}:Init) = function ]] && QPKGs-ISNT${a}:Init
-	done
-
-	ClearPath /var/run/sherpa/package "$r_qpkg_states_path"
-
-	qpkgs_states_built=false
 
 	FuncExit
 
@@ -16988,7 +16988,10 @@ LoadDatabase()
 		FuncExit 1; exit
 	fi
 
-	[[ $extracted = true ]] && InitQPKGsTiers
+	if [[ $extracted = true ]]; then
+		InitQPKGsTiers
+		InitQPKGsStates
+	fi
 
 	# Supported QPKG details - parallel arrays.
 
