@@ -538,14 +538,13 @@ LoadEnv()
 	fi
 
 	readonly r_cache_path=$r_this_package_path/cache
-		readonly r_action_times_path=$r_cache_path/action.times
 		readonly r_ipk_cache_path=$r_cache_path/IPKs
 			readonly r_ipk_downgrade_path=$r_ipk_cache_path/downgrade
 			readonly r_ipk_download_path=$r_ipk_cache_path/downloads
 
 		readonly r_pip_cache_path=$r_cache_path/PIPs
 		readonly r_qpkg_cache_path=$r_cache_path/QPKGs
-		readonly r_qpkg_download_path=$r_qpkg_cache_path/downloads
+			readonly r_qpkg_download_path=$r_qpkg_cache_path/downloads
 
 	readonly r_log_path=$r_this_package_path/log
 
@@ -559,17 +558,9 @@ LoadEnv()
 	readonly r_optional_qpkgs_list_pathfile=$r_cache_path/optionals
 	readonly r_packages_archive_pathfile=$r_cache_path/$r_nas_qpkg_arch.packages.tar.gz
 	readonly r_packages_pathfile=$r_cache_path/$r_nas_qpkg_arch.packages
-
 	readonly r_prev_ipk_list_pathfile=$r_ipk_cache_path/ipk-list.save
-
 	readonly r_prev_pip_list_pathfile=$r_pip_cache_path/pip-list.save
-
-	readonly r_session_action_results_pathfile=$r_log_path/session-action-results.log
 	readonly r_session_archive_log_pathfile=$r_log_path/session-archive.log
-	readonly r_session_last_pathfile=$r_log_path/session-last.log
-	readonly r_session_tail_pathfile=$r_log_path/session-tail.log
-
-	session_active_log_pathfile=$r_this_package_path/session.$$.active.log
 
 	# Ephemeral paths.
 
@@ -591,17 +582,23 @@ LoadEnv()
 	readonly r_abort_actions_pathfile=$r_temp_run_path/abort.action
 	readonly r_action_msg_pipe=$r_temp_run_path/action-messages.pipe
 	readonly r_action_msg_pipe_log_pathfile=/share/Public/enhanced-action-messages-pipe.log		# devdebug
+	readonly r_action_results_pathfile=$r_action_logs_path/action-results.log
+	readonly r_action_times_path=$r_temp_log_path/action.times
 	readonly r_oom_log_pathfile=$r_temp_log_path/oom.log
 	readonly r_ram_freeused_pathfile=$r_temp_log_path/ram.freeused
 	readonly r_ramfs_freespace_pathfile=$r_temp_log_path/ramfs.freespace
 	readonly r_report_output_pathfile=$r_reports_path/report.ansi
 	readonly r_screen_sessions_pathfile=$r_temp_log_path/screen.sessions
+	readonly r_session_last_pathfile=$r_temp_log_path/session-last.log
+	readonly r_session_tail_pathfile=$r_temp_log_path/session-tail.log
+	session_active_log_pathfile=$r_temp_log_path/session.$$.active.log
 
 	# Entware.
 
 	readonly r_external_apps_path=/opt
 		readonly r_external_apps_temp_path=$r_external_apps_path.temp
 		readonly r_external_packages_archive_pathfile=$r_external_apps_path/var/opkg-lists/entware
+
 	readonly r_external_packages_pathfile=$r_cache_path/Packages
 
 	# KLUDGE: in-case `python` has disappeared again ... ¯\_(ツ)_/¯
@@ -1532,7 +1529,7 @@ ProcActions()
 	local tier=''
 	local -i tier_index=0
 
-	rm -f "$r_session_action_results_pathfile" 2> /dev/null
+	rm -f "$r_action_results_pathfile" 2> /dev/null
 	OpenMsgPipeEnhancedLog												# devdebug
 
 	# -> Package preparation phase <-
@@ -8566,7 +8563,7 @@ ReportAllActionResults()
 		show_action_results_skipped=true
 	fi
 
-	if [[ -e $r_session_action_results_pathfile ]]; then
+	if [[ -e $r_action_results_pathfile ]]; then
 		while IFS='|' read -r datetime action quantity package_name package_type result duration reason; do
 			if [[ $datetime -gt 0 && $duration -gt 0 ]]; then
 				[[ $a -eq 0 ]] && a=$datetime		# Only use first entry as start time.
@@ -8574,7 +8571,7 @@ ReportAllActionResults()
 				c=$duration
 				((d++))
 			fi
-		done < "$r_session_action_results_pathfile"
+		done < "$r_action_results_pathfile"
 
 		a=$(ConvertMillisecondsToSeconds "$a")
 		b=$(ConvertMillisecondsToSeconds "$b")
@@ -8609,7 +8606,7 @@ ReportActionResults()
 	#	$1 = `ok`, `skipped`, `failed`
 
 	# Inputs: (global)
-	#	$r_session_action_results_pathfile
+	#	$r_action_results_pathfile
 
 	local action=''
 	local -i count=0
@@ -8621,7 +8618,7 @@ ReportActionResults()
 	local reason=''
 	local result=''
 
-	if [[ -e $r_session_action_results_pathfile ]]; then
+	if [[ -e $r_action_results_pathfile ]]; then
 		# Obtain count of same results. Need to know if action applied to one QPKG or many.
 
 		while IFS='|' read -r datetime action quantity package_name package_type result duration reason; do
@@ -8630,7 +8627,7 @@ ReportActionResults()
 				((count++))
 				[[ $count -gt 1 ]] && break			# Two-or-more of the same action so must pluralise messages.
 			fi
-		done < "$r_session_action_results_pathfile"
+		done < "$r_action_results_pathfile"
 
 		# Display action titles and QPKGs.
 
@@ -8664,7 +8661,7 @@ ReportActionResults()
 					[[ $action = status && $useropt_show_previous_action_results_report = false ]] && continue		# Don't need to see the result of `status` checks unless a 'results' report has been requested.
 					ShowAsActionLogDetail "$datetime" "$package_name" "$action" "$result" "$duration" "$reason" "$package_type" "$quantity"
 				fi
-			done < "$r_session_action_results_pathfile"
+			done < "$r_action_results_pathfile"
 		fi
 	fi
 
@@ -10012,7 +10009,7 @@ SaveActionResultMetrics()
 
 	# Inputs: (global)
 	#	$r_action_times_path
-	#	$r_session_action_results_pathfile
+	#	$r_action_results_pathfile
 
 	# Calculate duration here.
 
@@ -10031,7 +10028,7 @@ SaveActionResultMetrics()
 
 	# Add new action results entry.
 
-	echo "$r_starttime|$r_action|$r_qty|$r_name|$r_package_type|$r_result_code|$r_duration|$r_reason" >> "$r_session_action_results_pathfile"
+	echo "$r_starttime|$r_action|$r_qty|$r_name|$r_package_type|$r_result_code|$r_duration|$r_reason" >> "$r_action_results_pathfile"
 
 	# Remove previous action duration entry if one exists.
 
