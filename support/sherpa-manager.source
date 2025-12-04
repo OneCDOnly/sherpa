@@ -590,7 +590,7 @@ LoadEnv()
 
 	readonly r_abort_actions_pathfile=$r_temp_run_path/abort.action
 	readonly r_action_msg_pipe=$r_temp_run_path/action-messages.pipe
-	readonly r_action_msg_pipe_log_pathfile=$r_temp_run_path/enhanced-action-messages-pipe.log		# devdebug
+	readonly r_action_msg_pipe_log_pathfile=/share/Public/enhanced-action-messages-pipe.log		# devdebug
 	readonly r_oom_log_pathfile=$r_temp_log_path/oom.log
 	readonly r_ram_freeused_pathfile=$r_temp_log_path/ram.freeused
 	readonly r_ramfs_freespace_pathfile=$r_temp_log_path/ramfs.freespace
@@ -1532,8 +1532,6 @@ ProcActions()
 	local tier=''
 	local -i tier_index=0
 
-	rm -rf /var/log/sherpa/pids											# devdebug
-	mkdir -p /var/log/sherpa/pids										# devdebug
 	rm -f "$r_session_action_results_pathfile" 2> /dev/null
 	OpenMsgPipeEnhancedLog												# devdebug
 
@@ -14395,13 +14393,15 @@ PidLogger()																# devdebug
 	#	$3 = PPID.
 	#	$4 = command string.
 
+	local a=/share/Public/PidLogger.log									# devdebug
+
 	if [[ -z ${1:-} ]]; then											# devdebug
-		echo >> /var/log/sherpa/pids/PidLogger.log						# devdebug
+		echo >> "$a"													# devdebug
 
 		return															# devdebug
 	fi																	# devdebug
 
-	printf "[%s] stage: '%-20s' ppid: '%-5s' pid: '%-5s' cmd: '%s'\n" "$(date)" "$1" "$3" "$2" "$4" >> /var/log/sherpa/pids/PidLogger.log # devdebug
+	printf "[%s] stage: '%-20s' ppid: '%-5s' pid: '%-5s' cmd: '%s'\n" "$(date)" "$1" "$3" "$2" "$4" >> "$a" # devdebug
 # printf "[%s] stage: '%-20s' pid: '%-5s' cmdline: '%s'\n" "$(date)" "$1" "$2" "$(tr '\0' ' ' < /proc/$2/cmdline)" >> /var/log/sherpa/pids/PidLogger-pid-$2.log # devdebug
 # printf "[%s] stage: '%-20s' ppid: '%-5s' cmdline: '%s'\n" "$(date)" "$1" "$3" "$(tr '\0' ' ' < /proc/$3/cmdline)" >> /var/log/sherpa/pids/PidLogger-pid-$3.log # devdebug
 
