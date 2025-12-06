@@ -527,8 +527,11 @@ LoadEnv()
 
 	# Essential paths.
 
+		readonly r_sys_log_path=/var/log
+			readonly r_qpkg_service_results_path=$r_sys_log_path
+		readonly r_sys_run_path=/var/run
+
 		readonly r_qpkg_bu_path=$(GetUserDefVol)/.qpkg_config_backup
-		readonly r_qpkg_service_results_path=/var/log
 		readonly r_this_package_path=$(GetQpkgInstalledPath)
 
 		if [[ -z $r_this_package_path || $r_this_package_path = undefined || ! -d $r_this_package_path ]]; then
@@ -564,17 +567,18 @@ LoadEnv()
 
 	# Ephemeral paths.
 
-		readonly r_temp_run_path=/var/run/sherpa
+		readonly r_temp_run_path=$r_sys_run_path/sherpa
 			readonly r_action_counts_path=$r_temp_run_path/action/count
 			readonly r_async_procs_path=$r_temp_run_path/proc
-			readonly r_qpkg_states_path=$r_temp_run_path/package/state
+			readonly r_qpkg_states_path=$r_temp_run_path/qpkg/state
 			readonly r_run_logs_path=$r_temp_run_path/log
 			readonly r_temp_report_path=$r_temp_run_path/report
-				readonly r_report_columns_path=$r_temp_report_path/column
 				readonly r_report_flags_path=$r_temp_report_path/flag
+				readonly r_report_rows_path=$r_temp_report_path/row
 
-		readonly r_temp_log_path=/var/log/sherpa
+		readonly r_temp_log_path=$r_sys_log_path/sherpa
 			readonly r_action_log_path=$r_temp_log_path/action/log
+				readonly r_action_times_path=$r_action_log_path/times
 			readonly r_report_path=$r_temp_log_path/report
 
 	# Ephemeral files.
@@ -583,11 +587,10 @@ LoadEnv()
 		readonly r_action_msg_pipe=$r_temp_run_path/action-messages.pipe
 		readonly r_action_msg_pipe_log_pathfile=/share/Public/enhanced-action-messages-pipe.log		# devdebug
 		readonly r_action_results_pathfile=$r_action_log_path/action-results.log
-		readonly r_action_times_path=$r_temp_log_path/action.times
 		readonly r_oom_log_pathfile=$r_temp_log_path/oom.log
 		readonly r_ram_freeused_pathfile=$r_temp_log_path/ram.freeused
 		readonly r_ramfs_freespace_pathfile=$r_temp_log_path/ramfs.freespace
-		readonly r_report_output_pathfile=$r_report_path/report.ansi
+		readonly r_report_output_pathfile=$r_temp_log_path/report.ansi
 		readonly r_screen_sessions_pathfile=$r_temp_log_path/screen.sessions
 		readonly r_session_last_pathfile=$r_temp_log_path/session-last.log
 		readonly r_session_tail_pathfile=$r_temp_log_path/session-tail.log
@@ -723,35 +726,111 @@ LoadLists()
 CreatePaths()
 	{
 
-	ClearPath /var/run/sherpa "$r_async_procs_path"
-	ClearPath "$r_cache_path" "$r_ipk_cache_path"
-	ClearPath "$r_cache_path" "$r_ipk_download_path"
-	ClearPath "$r_cache_path" "$r_pip_cache_path"
-	ClearPath /var/run/sherpa/report "$r_report_columns_path"
-	ClearPath /var/run/sherpa/report "$r_report_flags_path"
+	ClearPath "$r_temp_run_path" "$r_async_procs_path"
 
 	MakePath "$r_temp_log_path" 'temporary logs' || return
-	MakePath "$r_temp_report_path" 'temporary reports' || return
 	MakePath "$r_temp_run_path" 'temporary runtime files' || return
 
 	MakePath "$r_action_counts_path" 'action counts' || return
 	MakePath "$r_action_log_path" 'action logs' || return
 	MakePath "$r_action_times_path" 'action times' || return
 	MakePath "$r_async_procs_path" 'asynchronous process tracking' || return
+	MakePath "$r_log_path" 'persistent logs' || return
+	MakePath "$r_qpkg_bu_path" 'QPKG backup' || return
+	MakePath "$r_qpkg_states_path" states || return
+	MakePath "$r_run_logs_path" 'run logs' || return
+
 	MakePath "$r_cache_path" cache || return
+
+	CreatePackagePaths
+
+	}
+
+CreatePackagePaths()
+	{
+
+	ClearPath "$r_cache_path" "$r_ipk_cache_path"
+	ClearPath "$r_cache_path" "$r_ipk_download_path"
+	ClearPath "$r_cache_path" "$r_pip_cache_path"
+
 	MakePath "$r_ipk_cache_path" 'IPK cache' || return
 	MakePath "$r_ipk_downgrade_path" 'IPK downgrade' || return
 	MakePath "$r_ipk_download_path" 'IPK download' || return
-	MakePath "$r_log_path" 'persistent logs' || return
 	MakePath "$r_pip_cache_path" 'PIP cache' || return
-	MakePath "$r_qpkg_bu_path" 'QPKG backup' || return
 	MakePath "$r_qpkg_cache_path" 'QPKG cache' || return
 	MakePath "$r_qpkg_download_path" 'QPKG download' || return
-	MakePath "$r_qpkg_states_path" states || return
-	MakePath "$r_report_columns_path" 'report columns' || return
+
+	}
+
+CreateReportPaths()
+	{
+
+	# Only create these if generating a report.
+
+	ClearPath "$r_temp_report_path" "$r_report_flags_path"
+	ClearPath "$r_temp_report_path" "$r_report_rows_path"
+
+	MakePath "$r_temp_report_path" 'temporary reports' || return
 	MakePath "$r_report_flags_path" 'report flags' || return
-	MakePath "$r_report_path" reports || return
-	MakePath "$r_run_logs_path" 'run logs' || return
+	MakePath "$r_report_rows_path" 'report rows' || return
+
+	}
+
+ClearCachePath()
+	{
+
+	# Inputs: (global)
+	#	$r_cache_path
+	#	$r_this_package_path
+
+	if [[ -n $r_cache_path && -d $r_cache_path ]]; then
+		ClearPath "$r_this_package_path" "$r_cache_path"
+		ShowAsDone 'persistent cache cleared'
+	fi
+
+	return 0
+
+	}
+
+ClearTempReportPath()
+	{
+
+	if [[ -n $r_temp_report_path && -d $r_temp_report_path ]]; then
+		ClearPath "$r_temp_run_path" "$r_temp_report_path"
+		ShowAsDone 'temp reports cleared'
+	fi
+
+	return 0
+
+	}
+
+ClearTempRunPath()
+	{
+
+	# Inputs: (global)
+	#	$r_temp_run_path
+
+	if [[ -n $r_temp_run_path && -d $r_temp_run_path ]]; then
+		ClearPath "$r_sys_run_path" "$r_temp_run_path"
+		ShowAsDone 'temp runtime cleared'
+	fi
+
+	return 0
+
+	}
+
+ClearTempLogPath()
+	{
+
+	# Inputs: (global)
+	#	$r_temp_log_path
+
+	if [[ -n $r_temp_log_path && -d $r_temp_log_path ]]; then
+		ClearPath "$r_sys_log_path"/sherpa "$r_temp_log_path"
+		ShowAsDone 'temp logs cleared'
+	fi
+
+	return 0
 
 	}
 
@@ -3088,7 +3167,7 @@ ShowArgSuggestions()
 	local arg=''
 	local -a args_remaining=()
 
-	ResetReportsPath &> /dev/null
+	CreateReportPaths
 
 	# shellcheck disable=2199
 	if [[ -n ${args_incomplete[@]+"${args_incomplete[@]}"} ]]; then
@@ -3400,67 +3479,6 @@ ResetArchivedLogs()
 		ClearPath "$r_this_package_path" "$r_log_path"
 		echo "$(date): log cleared" > "$session_active_log_pathfile"
 		ShowAsDone 'persistent logs cleared'
-	fi
-
-	return 0
-
-	}
-
-ResetCachePath()
-	{
-
-	# Inputs: (global)
-	#	$r_cache_path
-	#	$r_this_package_path
-
-	if [[ -n $r_cache_path && -d $r_cache_path ]]; then
-		ClearPath "$r_this_package_path" "$r_cache_path"
-		ShowAsDone 'persistent cache cleared'
-	fi
-
-	return 0
-
-	}
-
-ResetReportsPath()
-	{
-
-	# Inputs: (global)
-	#	$r_report_path
-
-	if [[ -n $r_report_path && -d $r_report_path ]]; then
-		ClearPath /var/log/sherpa "$r_report_path"
-		ShowAsDone 'temp reports cleared'
-	fi
-
-	return 0
-
-	}
-
-ResetTempRunPath()
-	{
-
-	# Inputs: (global)
-	#	$r_temp_run_path
-
-	if [[ -n $r_temp_run_path && -d $r_temp_run_path ]]; then
-		ClearPath /var/run "$r_temp_run_path"
-		ShowAsDone 'temp runtime cleared'
-	fi
-
-	return 0
-
-	}
-
-ResetTempLogPath()
-	{
-
-	# Inputs: (global)
-	#	$r_temp_log_path
-
-	if [[ -n $r_temp_log_path && -d $r_temp_log_path ]]; then
-		ClearPath /var/log "$r_temp_log_path"
-		ShowAsDone 'temp logs cleared'
 	fi
 
 	return 0
@@ -4340,12 +4358,12 @@ KillPID()
 Reset()
 	{
 
-	ResetCachePath
+	ClearCachePath
 	ResetArchivedLogs
 	ArchiveActiveSessLog
 	ResetActiveSessLog
-	ResetTempLogPath
-	ResetTempRunPath
+	ClearTempLogPath
+	ClearTempRunPath
 
 	exit 0
 
@@ -4696,7 +4714,7 @@ DisplayAsIndentQuotedInfoItem()
 
 	}
 
-GeneratePacksReportTitleLine()
+GeneratePacksReportTitleRow()
 	{
 
 	# Inputs: (global)
@@ -4723,7 +4741,7 @@ GeneratePacksReportTitleLine()
 
 	}
 
-_GeneratePacksReportDataLine_()
+_GeneratePacksReportDataRow_()
 	{
 
 	# * This function runs asynchronously *
@@ -4791,7 +4809,7 @@ _GeneratePacksReportDataLine_()
 
 	}
 
-GenerateStatusReportTitleLine()
+GenerateStatusReportTitleRow()
 	{
 
 	# Inputs: (global)
@@ -4817,7 +4835,7 @@ GenerateStatusReportTitleLine()
 
 	}
 
-_GenerateStatusReportDataLine_()
+_GenerateStatusReportDataRow_()
 	{
 
 	# * This function runs asynchronously *
@@ -5097,7 +5115,7 @@ _GenerateStatusReportDataLine_()
 
 	}
 
-GenerateReposReportTitleLine()
+GenerateReposReportTitleRow()
 	{
 
 	# Requires 57 columns when auto-column-width isn't available. TODO: recheck this.
@@ -5123,7 +5141,7 @@ GenerateReposReportTitleLine()
 
 	}
 
-_GenerateReposReportDataLine_()
+_GenerateReposReportDataRow_()
 	{
 
 	# * This function runs asynchronously *
@@ -5249,7 +5267,7 @@ _GenerateReposReportDataLine_()
 
 	}
 
-GenerateAbsReportTitleLine()
+GenerateAbsReportTitleRow()
 	{
 
 	# Inputs: (global)
@@ -5276,7 +5294,7 @@ GenerateAbsReportTitleLine()
 
 	}
 
-_GenerateAbsReportDataLine_()
+_GenerateAbsReportDataRow_()
 	{
 
 	# * This function runs asynchronously *
@@ -5368,7 +5386,7 @@ _GenerateAbsReportDataLine_()
 
 	}
 
-GenerateDepsReportTitleLine()
+GenerateDepsReportTitleRow()
 	{
 
 	# Inputs: (global)
@@ -5414,7 +5432,7 @@ GenerateDepsReportTitleLine()
 
 	}
 
-_GenerateDepsReportDataLine_()
+_GenerateDepsReportDataRow_()
 	{
 
 	# * This function runs asynchronously *
@@ -5729,7 +5747,7 @@ _GenerateDepsReportDataLine_()
 
 	}
 
-GenerateFeaturesReportTitleLine()
+GenerateFeaturesReportTitleRow()
 	{
 
 	# Inputs: (global)
@@ -5770,7 +5788,7 @@ GenerateFeaturesReportTitleLine()
 
 	}
 
-_GenerateFeaturesReportDataLine_()
+_GenerateFeaturesReportDataRow_()
 	{
 
 	# * This function runs asynchronously *
@@ -5941,7 +5959,7 @@ _GenerateFeaturesReportDataLine_()
 
 	}
 
-GenerateBacksReportTitleLine()
+GenerateBacksReportTitleRow()
 	{
 
 	# Inputs: (global)
@@ -7931,7 +7949,7 @@ InitQPKGsStates()
 		[[ $(type -t QPKGs-ISNT${a}:Init) = function ]] && QPKGs-ISNT${a}:Init
 	done
 
-	ClearPath /var/run/sherpa/package "$r_qpkg_states_path"
+	ClearPath "$r_temp_run_path"/qpkg "$r_qpkg_states_path"
 
 	qpkgs_states_built=false
 
@@ -8146,7 +8164,7 @@ HelpAbbreviations()
 	LoadDatabase
 	DisableDebugToArchiveAndFile
 	DisplayProcReport abbreviations
-	ResetReportsPath &> /dev/null
+	CreateReportPaths
 
 		{
 
@@ -8155,12 +8173,12 @@ HelpAbbreviations()
 
 		} > "$r_report_output_pathfile"
 
-	printf -v a '\n%s\n' "$(GenerateAbsReportTitleLine)"
+	printf -v a '\n%s\n' "$(GenerateAbsReportTitleRow)"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		SetQpkgIndex
-		_GenerateAbsReportDataLine_ > "$r_report_path/$n" &
+		_GenerateAbsReportDataRow_ > "$r_report_rows_path/$n" &
 	done
 
 	m=$n
@@ -8169,7 +8187,7 @@ HelpAbbreviations()
 	# Load report lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		b=$r_report_path/$n
+		b=$r_report_rows_path/$n
 		[[ -e $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
@@ -8213,16 +8231,16 @@ ReportBackups()
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport backups
-	ResetReportsPath &> /dev/null
+	CreateReportPaths
 
-	printf -v a '\n%s\n' "$(GenerateBacksReportTitleLine)"
+	printf -v a '\n%s\n' "$(GenerateBacksReportTitleRow)"
 
 	if [[ -e $r_gnu_find_cmd ]]; then				# Prefer GNU `find` for this.
 		while read -r epoch_time file_name file_bytes; do
 			[[ -z $epoch_time || -z $file_name ]] && break
 
 			((n++))
-			_GenerateBacksReportItemLine_ "$epoch_time" "$file_name" "$file_bytes" "$r_report_highlight_backups_older_than" > "$r_report_path/$n" &
+			_GenerateBacksReportItemLine_ "$epoch_time" "$file_name" "$file_bytes" "$r_report_highlight_backups_older_than" > "$r_report_rows_path/$n" &
 		done <<< "$($r_gnu_find_cmd "$r_qpkg_bu_path"/*.config.tar.gz -maxdepth 1 -printf '%C@ %f %s\n' 2> /dev/null | /usr/bin/sort)"
 	else										# If GNU `find` isn't available, do-it the hard-way.
 		while read -r file_date file_time file_name file_bytes; do
@@ -8231,7 +8249,7 @@ ReportBackups()
 			file_name=$(/usr/bin/basename "$file_name")
 
 			((n++))
-			_GenerateBacksReportItemLine_ "$epoch_time" "$file_name" "$file_bytes" "$r_report_highlight_backups_older_than" > "$r_report_path/$n" &
+			_GenerateBacksReportItemLine_ "$epoch_time" "$file_name" "$file_bytes" "$r_report_highlight_backups_older_than" > "$r_report_rows_path/$n" &
 		done <<< "$(cd "$r_qpkg_bu_path" && ls -l1tr --time-style=+"%Y-%m-%d %H:%M:%S" ./*.config.tar.gz 2> /dev/null | /bin/awk '{print $6" "$7" "$8" "$5}')"
 	fi
 
@@ -8241,7 +8259,7 @@ ReportBackups()
 	# Load report lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		b=$r_report_path/$n
+		b=$r_report_rows_path/$n
 		[[ -e $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
@@ -8274,16 +8292,16 @@ ReportDependencies()
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport dependency
-	ResetReportsPath &> /dev/null
+	CreateReportPaths
 
 	! IsAnsiStrippingSupported && colourful=false
 
-	printf -v a '\n%s\n' "$(GenerateDepsReportTitleLine)"
+	printf -v a '\n%s\n' "$(GenerateDepsReportTitleRow)"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		SetQpkgIndex
-		_GenerateDepsReportDataLine_ > "$r_report_path/$n" &
+		_GenerateDepsReportDataRow_ > "$r_report_rows_path/$n" &
 	done
 
 	m=$n
@@ -8292,7 +8310,7 @@ ReportDependencies()
 	# Load report lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		b=$r_report_path/$n
+		b=$r_report_rows_path/$n
 		[[ -e $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
@@ -8326,16 +8344,16 @@ ReportFeatures()
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport features
-	ResetReportsPath &> /dev/null
+	CreateReportPaths
 
 	! IsAnsiStrippingSupported && colourful=false
 
-	printf -v a '\n%s\n' "$(GenerateFeaturesReportTitleLine)"
+	printf -v a '\n%s\n' "$(GenerateFeaturesReportTitleRow)"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		SetQpkgIndex
-		_GenerateFeaturesReportDataLine_ > "$r_report_path/$n" &
+		_GenerateFeaturesReportDataRow_ > "$r_report_rows_path/$n" &
 	done
 
 	m=$n
@@ -8344,7 +8362,7 @@ ReportFeatures()
 	# Load report lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		b=$r_report_path/$n
+		b=$r_report_rows_path/$n
 		[[ -e $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
@@ -8378,6 +8396,7 @@ ReportPackages()
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport package
+	CreateReportPaths
 
 #	! IsAnsiStrippingSupported && colourful=false
 
@@ -8388,12 +8407,12 @@ ReportPackages()
 
 		} > "$r_report_output_pathfile"
 
-	printf -v a '\n%s\n' "$(GeneratePacksReportTitleLine)"
+	printf -v a '\n%s\n' "$(GeneratePacksReportTitleRow)"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		SetQpkgIndex
-		_GeneratePacksReportDataLine_ "$qpkg_name" > "$r_report_path/$n" &
+		_GeneratePacksReportDataRow_ "$qpkg_name" > "$r_report_rows_path/$n" &
 	done
 
 	m=$n
@@ -8402,7 +8421,7 @@ ReportPackages()
 	# Load report data lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		b=$r_report_path/$n
+		b=$r_report_rows_path/$n
 		[[ -e $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
@@ -8443,16 +8462,16 @@ ReportRepos()
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport repository
-	ResetReportsPath &> /dev/null
+	CreateReportPaths
 
 #	! IsAnsiStrippingSupported && colourful=false
 
-	printf -v a '\n%s\n' "$(GenerateReposReportTitleLine)"
+	printf -v a '\n%s\n' "$(GenerateReposReportTitleRow)"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		SetQpkgIndex
-		_GenerateReposReportDataLine_ > "$r_report_path/$n" &
+		_GenerateReposReportDataRow_ > "$r_report_rows_path/$n" &
 	done
 
 	m=$n
@@ -8461,7 +8480,7 @@ ReportRepos()
 	# Load report data lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		b=$r_report_path/$n
+		b=$r_report_rows_path/$n
 		[[ -e $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
@@ -8495,7 +8514,7 @@ ReportStatuses()
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport status
-	ResetReportsPath &> /dev/null
+	CreateReportPaths
 
 #	! IsAnsiStrippingSupported && colourful=false
 
@@ -8503,10 +8522,10 @@ ReportStatuses()
 		QPKGs-ACstatus-dn.Exist "$qpkg_name" || continue
 		((n++))
 		SetQpkgIndex
-		_GenerateStatusReportDataLine_ > "$r_report_path/$n" &
+		_GenerateStatusReportDataRow_ > "$r_report_rows_path/$n" &
 	done
 
-	printf -v a '%s\n' "$(GenerateStatusReportTitleLine)"
+	printf -v a '%s\n' "$(GenerateStatusReportTitleRow)"
 
 	m=$n
 	wait 2> /dev/null
@@ -8514,7 +8533,7 @@ ReportStatuses()
 	# Load report lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		b=$r_report_path/$n
+		b=$r_report_rows_path/$n
 		[[ -e $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
@@ -14399,8 +14418,8 @@ PidLogger()																# devdebug
 	fi																	# devdebug
 
 	printf "[%s] stage: '%-20s' ppid: '%-5s' pid: '%-5s' cmd: '%s'\n" "$(date)" "$1" "$3" "$2" "$4" >> "$a" # devdebug
-# printf "[%s] stage: '%-20s' pid: '%-5s' cmdline: '%s'\n" "$(date)" "$1" "$2" "$(tr '\0' ' ' < /proc/$2/cmdline)" >> /var/log/sherpa/pids/PidLogger-pid-$2.log # devdebug
-# printf "[%s] stage: '%-20s' ppid: '%-5s' cmdline: '%s'\n" "$(date)" "$1" "$3" "$(tr '\0' ' ' < /proc/$3/cmdline)" >> /var/log/sherpa/pids/PidLogger-pid-$3.log # devdebug
+# printf "[%s] stage: '%-20s' pid: '%-5s' cmdline: '%s'\n" "$(date)" "$1" "$2" "$(tr '\0' ' ' < /proc/$2/cmdline)" >> $r_sys_log_path/sherpa/pids/PidLogger-pid-$2.log # devdebug
+# printf "[%s] stage: '%-20s' ppid: '%-5s' cmdline: '%s'\n" "$(date)" "$1" "$3" "$(tr '\0' ' ' < /proc/$3/cmdline)" >> $r_sys_log_path/sherpa/pids/PidLogger-pid-$3.log # devdebug
 
 	}																	# devdebug
 
