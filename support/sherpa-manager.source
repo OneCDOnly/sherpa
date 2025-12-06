@@ -62,7 +62,7 @@ Init()
 	PrepareArgs
 	ParseManagementArgs || return
 	ParseHelpArgs || return
-	ArchivePriorSessLogs
+	ArchivePriorSessLog
 	DebugLogInit
 	ParseShowArgs || return
 	ParseListArgs || return
@@ -527,79 +527,79 @@ LoadEnv()
 
 	# Essential paths.
 
-	readonly r_qpkg_bu_path=$(GetUserDefVol)/.qpkg_config_backup
-	readonly r_qpkg_service_results_path=/var/log
-	readonly r_this_package_path=$(GetQpkgInstalledPath)
+		readonly r_qpkg_bu_path=$(GetUserDefVol)/.qpkg_config_backup
+		readonly r_qpkg_service_results_path=/var/log
+		readonly r_this_package_path=$(GetQpkgInstalledPath)
 
-	if [[ -z $r_this_package_path || $r_this_package_path = undefined || ! -d $r_this_package_path ]]; then
-		ShowAsError "$(ShowAsTitleName) installation path not found. Please reinstall the $(ShowAsTitleName) QPKG"
+		if [[ -z $r_this_package_path || $r_this_package_path = undefined || ! -d $r_this_package_path ]]; then
+			ShowAsError "$(ShowAsTitleName) installation path not found. Please reinstall the $(ShowAsTitleName) QPKG"
 
-		return 1
-	fi
+			return 1
+		fi
 
-	readonly r_cache_path=$r_this_package_path/cache
-		readonly r_ipk_cache_path=$r_cache_path/IPKs
-			readonly r_ipk_downgrade_path=$r_ipk_cache_path/downgrade
-			readonly r_ipk_download_path=$r_ipk_cache_path/downloads
+		readonly r_cache_path=$r_this_package_path/cache
+			readonly r_ipk_cache_path=$r_cache_path/IPKs
+				readonly r_ipk_downgrade_path=$r_ipk_cache_path/downgrade
+				readonly r_ipk_download_path=$r_ipk_cache_path/downloads
 
-		readonly r_pip_cache_path=$r_cache_path/PIPs
-		readonly r_qpkg_cache_path=$r_cache_path/QPKGs
-			readonly r_qpkg_download_path=$r_qpkg_cache_path/downloads
+			readonly r_pip_cache_path=$r_cache_path/PIPs
+			readonly r_qpkg_cache_path=$r_cache_path/QPKGs
+				readonly r_qpkg_download_path=$r_qpkg_cache_path/downloads
 
-	readonly r_log_path=$r_this_package_path/log
+		readonly r_log_path=$r_this_package_path/log
 
 	# Essential files.
 
-	readonly r_dependent_qpkgs_list_pathfile=$r_cache_path/dependents
-	readonly r_independent_qpkgs_list_pathfile=$r_cache_path/independents
-	readonly r_inhibit_display_pathfile=$r_cache_path/display.inhibit
-	readonly r_objects_archive_pathfile=$r_cache_path/objects.tar.gz
-	readonly r_objects_pathfile=$r_cache_path/objects
-	readonly r_optional_qpkgs_list_pathfile=$r_cache_path/optionals
-	readonly r_packages_archive_pathfile=$r_cache_path/$r_nas_qpkg_arch.packages.tar.gz
-	readonly r_packages_pathfile=$r_cache_path/$r_nas_qpkg_arch.packages
-	readonly r_prev_ipk_list_pathfile=$r_ipk_cache_path/ipk-list.save
-	readonly r_prev_pip_list_pathfile=$r_pip_cache_path/pip-list.save
-	readonly r_session_archive_log_pathfile=$r_log_path/session-archive.log
+		readonly r_dependent_qpkgs_list_pathfile=$r_cache_path/dependents
+		readonly r_independent_qpkgs_list_pathfile=$r_cache_path/independents
+		readonly r_inhibit_display_pathfile=$r_cache_path/display.inhibit
+		readonly r_objects_archive_pathfile=$r_cache_path/objects.tar.gz
+		readonly r_objects_pathfile=$r_cache_path/objects
+		readonly r_optional_qpkgs_list_pathfile=$r_cache_path/optionals
+		readonly r_packages_archive_pathfile=$r_cache_path/$r_nas_qpkg_arch.packages.tar.gz
+		readonly r_packages_pathfile=$r_cache_path/$r_nas_qpkg_arch.packages
+		readonly r_prev_ipk_list_pathfile=$r_ipk_cache_path/ipk-list.save
+		readonly r_prev_pip_list_pathfile=$r_pip_cache_path/pip-list.save
+		readonly r_session_archive_log_pathfile=$r_log_path/session.archive.log
 
 	# Ephemeral paths.
 
-	readonly r_temp_run_path=/var/run/sherpa
-		readonly r_action_counts_path=$r_temp_run_path/action/count
-		readonly r_async_procs_path=$r_temp_run_path/proc
-		readonly r_qpkg_states_path=$r_temp_run_path/package/state
-		readonly r_run_logs_path=$r_temp_run_path/log
-		readonly r_temp_report_path=$r_temp_run_path/report
-			readonly r_report_columns_path=$r_temp_report_path/column
-			readonly r_report_flags_path=$r_temp_report_path/flag
+		readonly r_temp_run_path=/var/run/sherpa
+			readonly r_action_counts_path=$r_temp_run_path/action/count
+			readonly r_async_procs_path=$r_temp_run_path/proc
+			readonly r_qpkg_states_path=$r_temp_run_path/package/state
+			readonly r_run_logs_path=$r_temp_run_path/log
+			readonly r_temp_report_path=$r_temp_run_path/report
+				readonly r_report_columns_path=$r_temp_report_path/column
+				readonly r_report_flags_path=$r_temp_report_path/flag
 
-	readonly r_temp_log_path=/var/log/sherpa
-		readonly r_action_logs_path=$r_temp_log_path/action/log
-		readonly r_reports_path=$r_temp_log_path/report
+		readonly r_temp_log_path=/var/log/sherpa
+			readonly r_action_log_path=$r_temp_log_path/action/log
+			readonly r_report_path=$r_temp_log_path/report
 
 	# Ephemeral files.
 
-	readonly r_abort_actions_pathfile=$r_temp_run_path/abort.action
-	readonly r_action_msg_pipe=$r_temp_run_path/action-messages.pipe
-	readonly r_action_msg_pipe_log_pathfile=/share/Public/enhanced-action-messages-pipe.log		# devdebug
-	readonly r_action_results_pathfile=$r_action_logs_path/action-results.log
-	readonly r_action_times_path=$r_temp_log_path/action.times
-	readonly r_oom_log_pathfile=$r_temp_log_path/oom.log
-	readonly r_ram_freeused_pathfile=$r_temp_log_path/ram.freeused
-	readonly r_ramfs_freespace_pathfile=$r_temp_log_path/ramfs.freespace
-	readonly r_report_output_pathfile=$r_reports_path/report.ansi
-	readonly r_screen_sessions_pathfile=$r_temp_log_path/screen.sessions
-	readonly r_session_last_pathfile=$r_temp_log_path/session-last.log
-	readonly r_session_tail_pathfile=$r_temp_log_path/session-tail.log
-	session_active_log_pathfile=$r_temp_log_path/session.$$.active.log
+		readonly r_abort_actions_pathfile=$r_temp_run_path/abort.action
+		readonly r_action_msg_pipe=$r_temp_run_path/action-messages.pipe
+		readonly r_action_msg_pipe_log_pathfile=/share/Public/enhanced-action-messages-pipe.log		# devdebug
+		readonly r_action_results_pathfile=$r_action_log_path/action-results.log
+		readonly r_action_times_path=$r_temp_log_path/action.times
+		readonly r_oom_log_pathfile=$r_temp_log_path/oom.log
+		readonly r_ram_freeused_pathfile=$r_temp_log_path/ram.freeused
+		readonly r_ramfs_freespace_pathfile=$r_temp_log_path/ramfs.freespace
+		readonly r_report_output_pathfile=$r_report_path/report.ansi
+		readonly r_screen_sessions_pathfile=$r_temp_log_path/screen.sessions
+		readonly r_session_last_pathfile=$r_temp_log_path/session-last.log
+		readonly r_session_tail_pathfile=$r_temp_log_path/session-tail.log
+		session_active_log_pathfile=$r_temp_log_path/session.$$.active.log
 
 	# Entware.
 
-	readonly r_external_apps_path=/opt
-		readonly r_external_apps_temp_path=$r_external_apps_path.temp
-		readonly r_external_packages_archive_pathfile=$r_external_apps_path/var/opkg-lists/entware
+		readonly r_external_apps_path=/opt
+			readonly r_external_apps_temp_path=$r_external_apps_path.temp
+			readonly r_external_packages_archive_pathfile=$r_external_apps_path/var/opkg-lists/entware
 
-	readonly r_external_packages_pathfile=$r_cache_path/Packages
+		readonly r_external_packages_pathfile=$r_cache_path/Packages
 
 	# KLUDGE: in-case `python` has disappeared again ... ¯\_(ツ)_/¯
 
@@ -735,7 +735,7 @@ CreatePaths()
 	MakePath "$r_temp_run_path" 'temporary runtime files' || return
 
 	MakePath "$r_action_counts_path" 'action counts' || return
-	MakePath "$r_action_logs_path" 'action logs' || return
+	MakePath "$r_action_log_path" 'action logs' || return
 	MakePath "$r_action_times_path" 'action times' || return
 	MakePath "$r_async_procs_path" 'asynchronous process tracking' || return
 	MakePath "$r_cache_path" cache || return
@@ -750,7 +750,7 @@ CreatePaths()
 	MakePath "$r_qpkg_states_path" states || return
 	MakePath "$r_report_columns_path" 'report columns' || return
 	MakePath "$r_report_flags_path" 'report flags' || return
-	MakePath "$r_reports_path" reports || return
+	MakePath "$r_report_path" reports || return
 	MakePath "$r_run_logs_path" 'run logs' || return
 
 	}
@@ -3426,10 +3426,10 @@ ResetReportsPath()
 	{
 
 	# Inputs: (global)
-	#	$r_reports_path
+	#	$r_report_path
 
-	if [[ -n $r_reports_path && -d $r_reports_path ]]; then
-		ClearPath /var/log/sherpa "$r_reports_path"
+	if [[ -n $r_report_path && -d $r_report_path ]]; then
+		ClearPath /var/log/sherpa "$r_report_path"
 		ShowAsDone 'temp reports cleared'
 	fi
 
@@ -3568,7 +3568,7 @@ _UpdateEntwarePackageList_()
 	if ! IsFileRecent "$r_external_packages_archive_pathfile" "$r_file_change_threshold_minutes" || [[ ! -f $r_external_packages_archive_pathfile || $useropt_check = true ]]; then
 		DebugAsProc "updating $(FormatPackageName Entware) package list"
 
-		Executer "$r_opkg_cmd update" "$r_log_path/Entware.$r_update_log_file" log:failure-only
+		Executer "$r_opkg_cmd update" "$r_action_log_path/Entware.$r_update_log_file" log:failure-only
 		z=$?
 
 		if [[ $z -eq 0 ]]; then
@@ -4118,7 +4118,7 @@ PIPs:install()
 	local desc=''
 	local exec_cmd=''
 	local -i done_fail_count=0
-	local log_pathfile=$r_log_path/pips.$r_install_log_file
+	local log_pathfile=$r_action_log_path/pips.$r_install_log_file
 	local -i done_ok_count=0
 	local package_type=PIP
 	local -i total_count=0
@@ -6961,7 +6961,7 @@ ArchiveActiveSessLog()
 
 	}
 
-ArchivePriorSessLogs()
+ArchivePriorSessLog()
 	{
 
 	# Check for incomplete previous session logs (crashed, interrupted?) and save to archive.
@@ -6973,7 +6973,7 @@ ArchivePriorSessLogs()
 
 	local f=''
 
-	for f in "$r_this_package_path"/session.*.active.log; do
+	for f in "$r_log_path"/session.*.active.log; do
 		if [[ -f $f && $f != "$session_active_log_pathfile" ]]; then
 			/bin/cat "$f" >> "$r_session_archive_log_pathfile"
 			rm -f "$f"
@@ -8160,7 +8160,7 @@ HelpAbbreviations()
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		SetQpkgIndex
-		_GenerateAbsReportDataLine_ > "$r_reports_path/$n" &
+		_GenerateAbsReportDataLine_ > "$r_report_path/$n" &
 	done
 
 	m=$n
@@ -8169,7 +8169,7 @@ HelpAbbreviations()
 	# Load report lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		b=$r_reports_path/$n
+		b=$r_report_path/$n
 		[[ -e $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
@@ -8222,7 +8222,7 @@ ReportBackups()
 			[[ -z $epoch_time || -z $file_name ]] && break
 
 			((n++))
-			_GenerateBacksReportItemLine_ "$epoch_time" "$file_name" "$file_bytes" "$r_report_highlight_backups_older_than" > "$r_reports_path/$n" &
+			_GenerateBacksReportItemLine_ "$epoch_time" "$file_name" "$file_bytes" "$r_report_highlight_backups_older_than" > "$r_report_path/$n" &
 		done <<< "$($r_gnu_find_cmd "$r_qpkg_bu_path"/*.config.tar.gz -maxdepth 1 -printf '%C@ %f %s\n' 2> /dev/null | /usr/bin/sort)"
 	else										# If GNU `find` isn't available, do-it the hard-way.
 		while read -r file_date file_time file_name file_bytes; do
@@ -8231,7 +8231,7 @@ ReportBackups()
 			file_name=$(/usr/bin/basename "$file_name")
 
 			((n++))
-			_GenerateBacksReportItemLine_ "$epoch_time" "$file_name" "$file_bytes" "$r_report_highlight_backups_older_than" > "$r_reports_path/$n" &
+			_GenerateBacksReportItemLine_ "$epoch_time" "$file_name" "$file_bytes" "$r_report_highlight_backups_older_than" > "$r_report_path/$n" &
 		done <<< "$(cd "$r_qpkg_bu_path" && ls -l1tr --time-style=+"%Y-%m-%d %H:%M:%S" ./*.config.tar.gz 2> /dev/null | /bin/awk '{print $6" "$7" "$8" "$5}')"
 	fi
 
@@ -8241,7 +8241,7 @@ ReportBackups()
 	# Load report lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		b=$r_reports_path/$n
+		b=$r_report_path/$n
 		[[ -e $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
@@ -8283,7 +8283,7 @@ ReportDependencies()
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		SetQpkgIndex
-		_GenerateDepsReportDataLine_ > "$r_reports_path/$n" &
+		_GenerateDepsReportDataLine_ > "$r_report_path/$n" &
 	done
 
 	m=$n
@@ -8292,7 +8292,7 @@ ReportDependencies()
 	# Load report lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		b=$r_reports_path/$n
+		b=$r_report_path/$n
 		[[ -e $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
@@ -8335,7 +8335,7 @@ ReportFeatures()
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		SetQpkgIndex
-		_GenerateFeaturesReportDataLine_ > "$r_reports_path/$n" &
+		_GenerateFeaturesReportDataLine_ > "$r_report_path/$n" &
 	done
 
 	m=$n
@@ -8344,7 +8344,7 @@ ReportFeatures()
 	# Load report lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		b=$r_reports_path/$n
+		b=$r_report_path/$n
 		[[ -e $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
@@ -8393,7 +8393,7 @@ ReportPackages()
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		SetQpkgIndex
-		_GeneratePacksReportDataLine_ "$qpkg_name" > "$r_reports_path/$n" &
+		_GeneratePacksReportDataLine_ "$qpkg_name" > "$r_report_path/$n" &
 	done
 
 	m=$n
@@ -8402,7 +8402,7 @@ ReportPackages()
 	# Load report data lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		b=$r_reports_path/$n
+		b=$r_report_path/$n
 		[[ -e $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
@@ -8452,7 +8452,7 @@ ReportRepos()
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		SetQpkgIndex
-		_GenerateReposReportDataLine_ > "$r_reports_path/$n" &
+		_GenerateReposReportDataLine_ > "$r_report_path/$n" &
 	done
 
 	m=$n
@@ -8461,7 +8461,7 @@ ReportRepos()
 	# Load report data lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		b=$r_reports_path/$n
+		b=$r_report_path/$n
 		[[ -e $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
@@ -8503,7 +8503,7 @@ ReportStatuses()
 		QPKGs-ACstatus-dn.Exist "$qpkg_name" || continue
 		((n++))
 		SetQpkgIndex
-		_GenerateStatusReportDataLine_ > "$r_reports_path/$n" &
+		_GenerateStatusReportDataLine_ > "$r_report_path/$n" &
 	done
 
 	printf -v a '%s\n' "$(GenerateStatusReportTitleLine)"
@@ -8514,7 +8514,7 @@ ReportStatuses()
 	# Load report lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		b=$r_reports_path/$n
+		b=$r_report_path/$n
 		[[ -e $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
@@ -10107,7 +10107,7 @@ _QPKG:status_()
 
 	local a=$(GetQpkgDbActiveTest)
 	local b=''
-	local -r r_log_pathfile=$r_log_path/$qpkg_name.$r_status_log_file
+	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_status_log_file
 
 	[[ $useropt_debug = true ]] && b+='DEBUG_QPKG=true '
 
@@ -10251,7 +10251,7 @@ _QPKG:reassign_()
 
 	DebugAsProc "reassigning $(FormatPackageName)"
 
-	local -r r_log_pathfile=$r_log_path/$qpkg_name.$r_reassign_log_file
+	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_reassign_log_file
 
 	Executer "/sbin/setcfg -e $qpkg_name store -f /etc/config/qpkg.conf" "$r_log_pathfile" log:failure-only
 	z=$?
@@ -10354,7 +10354,7 @@ _QPKG:download_()
 		DebugAsProc "downloading $(FormatFileName "$r_remote_filename")"
 
 		local curl_insecure_opt=''
-		local -r r_log_pathfile=$r_log_path/$r_local_filename.$r_download_log_file
+		local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_download_log_file
 		IsOsCanSecureDownload || curl_insecure_opt='--insecure'
 
 		rm -f "$r_log_pathfile" 2> /dev/null
@@ -10456,7 +10456,7 @@ _QPKG:install_()
 	DebugAsProc "installing $(FormatPackageName)"
 
 	local a='INSTALL_QPKG=true '
-	local -r r_log_pathfile=$r_log_path/$qpkg_name.$r_install_log_file
+	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_install_log_file
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	[[ ${QPKGs_were_installed_name[*]:-} = *"$qpkg_name"* ]] && a+="QINSTALL_PATH=$(GetQpkgInstalledOriginalPath "$qpkg_name") "
 
@@ -10554,7 +10554,7 @@ _QPKG:reinstall_()
 	DebugAsProc "reinstalling $(FormatPackageName)"
 
 	local a='REINSTALL_QPKG=true '
-	local -r r_log_pathfile=$r_log_path/$qpkg_name.$r_reinstall_log_file
+	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_reinstall_log_file
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	IsValidQpkgInstalled && a+="QINSTALL_PATH=$(/usr/bin/dirname "$(GetQpkgInstalledPath)") "
 
@@ -10640,7 +10640,7 @@ _QPKG:upgrade_()
 
 	local a='UPGRADE_QPKG=true '
 	local prev_ver=$(GetQpkgInstalledVer)
-	local -r r_log_pathfile=$r_log_path/$qpkg_name.$r_upgrade_log_file
+	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_upgrade_log_file
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	IsValidQpkgInstalled && a+="QINSTALL_PATH=$(/usr/bin/dirname "$(GetQpkgInstalledPath "$qpkg_name")") "
 
@@ -10739,7 +10739,7 @@ _QPKG:uninstall_()
 	DebugAsProc "uninstalling $(FormatPackageName)"
 
 	local a='UNINSTALL_QPKG=true '
-	local -r r_log_pathfile=$r_log_path/$qpkg_name.$r_uninstall_log_file
+	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_uninstall_log_file
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 
 	Executer "$a /bin/sh \"$r_local_pathfile\"" "$r_log_pathfile" log:failure-only
@@ -10826,7 +10826,7 @@ _QPKG:activate_()
 	DebugAsProc "activating $(FormatPackageName)"
 
 	local a=''
-	local -r r_log_pathfile=$r_log_path/$qpkg_name.$r_activate_log_file
+	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_activate_log_file
 	local timeout=''
 	IsOsCanQpkgTimeout && timeout='-t '$r_qpkg_start_timeout_seconds
 
@@ -10925,7 +10925,7 @@ _QPKG:reactivate_()
 	DebugAsProc "reactivating $(FormatPackageName)"
 
 	local a=''
-	local -r r_log_pathfile=$r_log_path/$qpkg_name.$r_reactivate_log_file
+	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_reactivate_log_file
 	local timeout=''
 	IsOsCanQpkgTimeout && timeout='-t '$r_qpkg_restart_timeout_seconds
 
@@ -11014,7 +11014,7 @@ _QPKG:deactivate_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	local a=''
-	local -r r_log_pathfile=$r_log_path/$qpkg_name.$r_deactivate_log_file
+	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_deactivate_log_file
 	local timeout=''
 	IsOsCanQpkgTimeout && timeout='-t '$r_qpkg_stop_timeout_seconds
 
@@ -11099,7 +11099,7 @@ _QPKG:enable_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	local -r r_log_pathfile=$r_log_path/$qpkg_name.$r_enable_log_file
+	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_enable_log_file
 	local timeout=''
 	IsOsCanQpkgTimeout && timeout='-t '$r_qpkg_enable_timeout_seconds
 
@@ -11161,7 +11161,7 @@ _QPKG:disable_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	local -r r_log_pathfile=$r_log_path/$qpkg_name.$r_disable_log_file
+	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_disable_log_file
 	local timeout=''
 	IsOsCanQpkgTimeout && timeout='-t '$r_qpkg_disable_timeout_seconds
 
@@ -11236,7 +11236,7 @@ _QPKG:enableau_()
 	DebugAsProc "enabling auto-update $(FormatPackageName)"
 
 	local a=''
-	local -r r_log_pathfile=$r_log_path/$qpkg_name.$r_enableau_log_file
+	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_enableau_log_file
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 
 	Executer "$a \"$r_local_pathfile\" enable-auto-update" "$r_log_pathfile" log:failure-only
@@ -11316,7 +11316,7 @@ _QPKG:disableau_()
 	DebugAsProc "disabling auto-update $(FormatPackageName)"
 
 	local a=''
-	local -r r_log_pathfile=$r_log_path/$qpkg_name.$r_disableau_log_file
+	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_disableau_log_file
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 
 	Executer "$a \"$r_local_pathfile\" disable-auto-update" "$r_log_pathfile" log:failure-only
@@ -11392,7 +11392,7 @@ _QPKG:backup_()
 	DebugAsProc "backing-up $(FormatPackageName) configuration"
 
 	local a=''
-	local -r r_log_pathfile=$r_log_path/$qpkg_name.$r_backup_log_file
+	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_backup_log_file
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 
 	Executer "$a \"$r_local_pathfile\" backup" "$r_log_pathfile" log:failure-only
@@ -11480,7 +11480,7 @@ _QPKG:restore_()
 	DebugAsProc "restoring $(FormatPackageName) configuration"
 
 	local a=''
-	local -r r_log_pathfile=$r_log_path/$qpkg_name.$r_restore_log_file
+	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_restore_log_file
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 
 	Executer "$a \"$r_local_pathfile\" restore" "$r_log_pathfile" log:failure-only
@@ -11557,7 +11557,7 @@ _QPKG:clean_()
 	DebugAsProc "cleaning $(FormatPackageName)"
 
 	local a=''
-	local -r r_log_pathfile=$r_log_path/$qpkg_name.$r_clean_log_file
+	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_clean_log_file
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 
 	Executer "$a \"$r_local_pathfile\" clean" "$r_log_pathfile" log:failure-only
@@ -15355,7 +15355,7 @@ FuncForkInit()
 
 	# Inputs: (global)
 	#	$pidfile
-	#	$r_action_logs_path
+	#	$r_action_log_path
 	#	$session_active_log_pathfile
 
 	# Outputs: (global)
@@ -15369,7 +15369,7 @@ FuncForkInit()
 	# Redirect debug output to a temporary log, then add it to session log before exiting. This will keep action log lines in-order.
 
 	orig_session_active_log_pathfile=$session_active_log_pathfile
-	session_active_log_pathfile=$(/bin/mktemp "$r_action_logs_path"/"${FUNCNAME[1]}"_XXXXXX)
+	session_active_log_pathfile=$(/bin/mktemp "$r_action_log_path"/"${FUNCNAME[1]}"_XXXXXX)
 
 	local -r r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
 	local var_safe_name=${r_var_name//[.-]/_}
