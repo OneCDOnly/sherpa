@@ -12711,7 +12711,7 @@ GetQpkgServiceAction()
 
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
 	local b=''
-	[[ -e $r_qpkg_service_result_path/$a.action ]] && b=$(< $r_qpkg_service_result_path/${a}.action)
+	[[ -e $r_qpkg_service_result_path/$a.action ]] && b=$(< "$r_qpkg_service_result_path/$a.action")
 
 	if [[ -n $b ]]; then
 		printf '%s' "$b"
@@ -12736,7 +12736,7 @@ GetQpkgServiceResult()
 
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
 	local b=''
-	[[ -e $r_qpkg_service_result_path/$a.result ]] && b=$(< $r_qpkg_service_result_path/${a}.result)
+	[[ -e $r_qpkg_service_result_path/$a.result ]] && b=$(< "$r_qpkg_service_result_path/$a.result")
 
 	if [[ -n $b ]]; then
 		printf '%s' "$b"
