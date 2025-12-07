@@ -528,7 +528,7 @@ LoadEnv()
 	# Essential paths.
 
 		readonly r_sys_log_path=/var/log
-			readonly r_qpkg_service_results_path=$r_sys_log_path
+			readonly r_qpkg_service_result_path=$r_sys_log_path
 		readonly r_sys_run_path=/var/run
 
 		readonly r_qpkg_bu_path=$(GetUserDefVol)/.qpkg_config_backup
@@ -551,7 +551,7 @@ LoadEnv()
 
 		readonly r_log_path=$r_this_package_path/log
 
-	# Essential files.
+	# Essential pathfilenames.
 
 		readonly r_dependent_qpkgs_list_pathfile=$r_cache_path/dependents
 		readonly r_independent_qpkgs_list_pathfile=$r_cache_path/independents
@@ -581,7 +581,7 @@ LoadEnv()
 				readonly r_action_times_path=$r_action_log_path/times
 			readonly r_report_path=$r_temp_log_path/report
 
-	# Ephemeral files.
+	# Ephemeral pathfilenames.
 
 		readonly r_abort_actions_pathfile=$r_temp_run_path/abort.action
 		readonly r_action_msg_pipe=$r_temp_run_path/action-messages.pipe
@@ -8026,8 +8026,8 @@ LoadQPKGsStates()
 	# Load status lines from individual files into session arrays.
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		a=$r_qpkg_service_results_path/$qpkg_name.action
-		b=$r_qpkg_service_results_path/$qpkg_name.result
+		a=$r_qpkg_service_result_path/$qpkg_name.action
+		b=$r_qpkg_service_result_path/$qpkg_name.result
 
 		if [[ -e $a && -e $b ]]; then
 			case $(< $b) in
@@ -11844,7 +11844,7 @@ LogQpkgServiceResult()
 	# Inputs: (global)
 	#	$qpkg_name
 
-	local a=$r_qpkg_service_results_path/$qpkg_name.log
+	local a=$r_qpkg_service_result_path/$qpkg_name.log
 
 	if ! local b=$(GetQpkgServiceResult); then
 		DebugAsWarn "unable to get status of $(FormatPackageName) service. It may be a non-sherpa package, or a sherpa package earlier than 200816c that doesn't support service results."
@@ -12711,7 +12711,7 @@ GetQpkgServiceAction()
 
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
 	local b=''
-	[[ -e $r_qpkg_service_results_path/$a.action ]] && b=$(< $r_qpkg_service_results_path/${a}.action)
+	[[ -e $r_qpkg_service_result_path/$a.action ]] && b=$(< $r_qpkg_service_result_path/${a}.action)
 
 	if [[ -n $b ]]; then
 		printf '%s' "$b"
@@ -12736,7 +12736,7 @@ GetQpkgServiceResult()
 
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
 	local b=''
-	[[ -e $r_qpkg_service_results_path/$a.result ]] && b=$(< $r_qpkg_service_results_path/${a}.result)
+	[[ -e $r_qpkg_service_result_path/$a.result ]] && b=$(< $r_qpkg_service_result_path/${a}.result)
 
 	if [[ -n $b ]]; then
 		printf '%s' "$b"
