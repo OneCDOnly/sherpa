@@ -271,7 +271,7 @@ LoadConsts()
 	# Report, help and debug formatting.
 
 		readonly r_debug_log_string_length='<?management_debug_log_longest_string_length?>'
-		r_debug_log_width=80								# Default for dev use only.
+		r_debug_log_width=80								# devdebug
 
 		IsNumber $r_debug_log_string_length && r_debug_log_width=$r_debug_log_string_length
 		readonly r_debug_log_width
@@ -326,7 +326,7 @@ LoadConsts()
 		readonly r_file_change_threshold_minutes=60
 		readonly r_log_tail_lines=5000
 
-	# These are for formatting output to the message pipe enhanced log.
+	# Format output to the message pipe enhanced log.
 
 		local date_field_longest_string='Tue 27 May 2025 4:55:42 PM EST '	# devdebug
 		readonly r_date_field_length=${#date_field_longest_string}			# devdebug
@@ -350,85 +350,85 @@ LoadDefaults()
 
 	# Default flags.
 
-	if IsInTerminal; then						# Only enable ANSI colour codes if running in a user terminal.
-		readonly r_colourful_default=true
-	else
-		readonly r_colourful_default=false
-	fi
+		if IsInTerminal; then						# Only enable ANSI colour codes if running in a user terminal.
+			readonly r_colourful_default=true
+		else
+			readonly r_colourful_default=false
+		fi
 
-	archive_debug_afterward=false
-	colourful=$r_colourful_default
-	generate_help_report=false
-	generate_list_report=false
-	generate_show_report=false
-	get_qpkg_extended_states=false
-	ipks_downgrade=false
-	ipks_install=false
-	ipks_upgrade=false
-	pips_install=false
-	release_lock=true
-	run_package_actions=false
-	show_action_results_failed=false
-	show_action_results_ok=false
-	show_action_results_report=false
-	show_action_results_skipped=false
-	show_action_results_zero=false
-	show_backuploc=false
-	show_suggest_raise_issue=false
-	show_title=true
-	switch_branch=false
-	switch_colour=false
-	switch_report_info=false
-	switch_terse=false
-	title_art_shown=false
-	title_shown=false
+		archive_debug_afterward=false
+		colourful=$r_colourful_default
+		generate_help_report=false
+		generate_list_report=false
+		generate_show_report=false
+		get_qpkg_extended_states=false
+		ipks_downgrade=false
+		ipks_install=false
+		ipks_upgrade=false
+		pips_install=false
+		release_lock=true
+		run_package_actions=false
+		show_action_results_failed=false
+		show_action_results_ok=false
+		show_action_results_report=false
+		show_action_results_skipped=false
+		show_action_results_zero=false
+		show_backuploc=false
+		show_suggest_raise_issue=false
+		show_title=true
+		switch_branch=false
+		switch_colour=false
+		switch_report_info=false
+		switch_terse=false
+		title_art_shown=false
+		title_shown=false
 
 	# Default values.
 
-	action_msg_pipe_fd=none
-	backup_stdin_fd=none
-	proc_counts_path=''
-	user_branch_value=''
-	user_report_info_value=''
-	user_terse_value=''
+		action_msg_pipe_fd=none
+		backup_stdin_fd=none
+		proc_counts_path=''
+		user_branch_value=''
+		user_report_info_value=''
+		user_terse_value=''
 
 	# User-selectable flags.
 
-	useropt_check=false
-	useropt_debug=false
-	useropt_help_abbreviations=false
-	useropt_help_actions=false
-	useropt_help_actions_all=false
-	useropt_help_basic=false
-	useropt_help_groups=false
-	useropt_help_lists=false
-	useropt_help_options=false
-	useropt_help_packages=false
-	useropt_help_problems=false
-	useropt_help_show=false
-	useropt_help_tips=false
-	useropt_help_upgrades=false
-	useropt_list_versions=false
-	useropt_paste_log_last=false
-	useropt_paste_log_tail=false
-	useropt_show_about=false
-	useropt_show_aboutall=false
-	useropt_show_backups=false
-	useropt_show_dependencies=false
-	useropt_show_features=false
-	useropt_show_log_last=false
-	useropt_show_log_tail=false
-	useropt_show_packages=false
-	useropt_show_previous_action_results_report=false
-	useropt_show_report_info=$(LoadSetting ReportInfo true)
-	useropt_show_repos=false
-	useropt_show_status=false
-	useropt_terse=$(LoadSetting Terse true)
-	useropt_verbose=false
+		useropt_check=false
+		useropt_debug=false
+		useropt_help_abbreviations=false
+		useropt_help_actions=false
+		useropt_help_actions_all=false
+		useropt_help_basic=false
+		useropt_help_groups=false
+		useropt_help_lists=false
+		useropt_help_options=false
+		useropt_help_packages=false
+		useropt_help_problems=false
+		useropt_help_show=false
+		useropt_help_tips=false
+		useropt_help_upgrades=false
+		useropt_list_versions=false
+		useropt_paste_log_last=false
+		useropt_paste_log_tail=false
+		useropt_show_about=false
+		useropt_show_aboutall=false
+		useropt_show_backups=false
+		useropt_show_dependencies=false
+		useropt_show_features=false
+		useropt_show_log_last=false
+		useropt_show_log_tail=false
+		useropt_show_packages=false
+		useropt_show_previous_action_results_report=false
+		useropt_show_report_info=$(LoadSetting ReportInfo true)
+		useropt_show_repos=false
+		useropt_show_status=false
+		useropt_terse=$(LoadSetting Terse true)
+		useropt_verbose=false
 
 	# User-selectable values.
 
-	useropt_branch=$(LoadSetting Git_Branch stable)
+		useropt_branch=$(LoadSetting Git_Branch stable)
 
 	}
 
@@ -437,19 +437,19 @@ LoadCMDs()
 
 	# Cherry-pick Entware binaries.
 
-	readonly r_gnu_awk_cmd=/opt/bin/awk
-	readonly r_gnu_dd_cmd=/opt/bin/dd
-	readonly r_gnu_find_cmd=/opt/bin/find
-	readonly r_gnu_grep_cmd=/opt/bin/grep
-	readonly r_gnu_less_cmd=/opt/bin/less
-	readonly r_gnu_nice_cmd=/opt/bin/nice
-	readonly r_gnu_sleep_cmd=/opt/bin/sleep
-	readonly r_gnu_stty_cmd=/opt/bin/stty
-	readonly r_gnu_timeout_cmd=/opt/bin/timeout
-	readonly r_opkg_cmd=/opt/bin/opkg
-	readonly r_python3_cmd=/opt/bin/python3
-		readonly r_pip_cmd=$r_python3_cmd' -m pip'
-	readonly r_python_cmd=/opt/bin/python
+		readonly r_gnu_awk_cmd=/opt/bin/awk
+		readonly r_gnu_dd_cmd=/opt/bin/dd
+		readonly r_gnu_find_cmd=/opt/bin/find
+		readonly r_gnu_grep_cmd=/opt/bin/grep
+		readonly r_gnu_less_cmd=/opt/bin/less
+		readonly r_gnu_nice_cmd=/opt/bin/nice
+		readonly r_gnu_sleep_cmd=/opt/bin/sleep
+		readonly r_gnu_stty_cmd=/opt/bin/stty
+		readonly r_gnu_timeout_cmd=/opt/bin/timeout
+		readonly r_opkg_cmd=/opt/bin/opkg
+		readonly r_python3_cmd=/opt/bin/python3
+			readonly r_pip_cmd=$r_python3_cmd' -m pip'
+		readonly r_python_cmd=/opt/bin/python
 
 	}
 
@@ -606,7 +606,7 @@ LoadEnv()
 
 	# KLUDGE: in-case `python` has disappeared again ... ¯\_(ツ)_/¯
 
-	[[ -e $r_python3_cmd && ! -L $r_python_cmd ]] && ln -s "$r_python3_cmd" "$r_python_cmd"
+		[[ -e $r_python3_cmd && ! -L $r_python_cmd ]] && ln -s "$r_python3_cmd" "$r_python_cmd"
 
 	rm -f "$r_report_output_pathfile" "$r_ramfs_freespace_pathfile" "$r_inhibit_display_pathfile" 2> /dev/null
 
@@ -12710,11 +12710,10 @@ GetQpkgServiceAction()
 	#	$? = 0 (found), !0 (not-found)
 
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
-	local b=''
-	[[ -e $r_qpkg_service_result_path/$a.action ]] && b=$(< "$r_qpkg_service_result_path/$a.action")
+	local b=$r_qpkg_service_result_path/$a.action
 
-	if [[ -n $b ]]; then
-		printf '%s' "$b"
+	if [[ -s $b ]]; then
+		printf '%s' "$(< $b)"
 	else
 		printf not-found
 	fi
@@ -12735,11 +12734,10 @@ GetQpkgServiceResult()
 	#	$? = 0 (found), !0 (not-found)
 
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
-	local b=''
-	[[ -e $r_qpkg_service_result_path/$a.result ]] && b=$(< "$r_qpkg_service_result_path/$a.result")
+	local b=$r_qpkg_service_result_path/$a.result
 
-	if [[ -n $b ]]; then
-		printf '%s' "$b"
+	if [[ -s $b ]]; then
+		printf '%s' "$(< $b)"
 	else
 		printf not-found
 	fi
