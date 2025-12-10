@@ -326,7 +326,7 @@ LoadConsts()
 		readonly r_file_change_threshold_minutes=60
 		readonly r_log_tail_lines=5000
 
-	# Format output to the message pipe enhanced log.
+	# Only for the message pipe enhanced log.
 
 		local date_field_longest_string='Tue 27 May 2025 4:55:42 PM EST '	# devdebug
 		readonly r_date_field_length=${#date_field_longest_string}			# devdebug
