@@ -15417,7 +15417,7 @@ FuncForkExit()
 	[[ ${FUNCNAME[1]} != _ExecOneActionWithManyForks_ ]] && MarkActionForkAsExit	# Ignore exit from primary action launcher as it's not an action fork.
 	DebugAsFuncEx "${1:-0}" "$(ConvertMillisecondsToFuncDuration "$(CalcMillisecondsDiffFromNanoseconds "${!var_safe_name}" "$(ConvertNowToNanoseconds)")")"
 
-	if [[ -n ${session_active_log_pathfile:-} && -s $session_active_log_pathfile ]]; then
+	if [[ -n ${session_active_log_pathfile:-} && -e $session_active_log_pathfile ]]; then
 		if [[ -s $session_active_log_pathfile ]]; then
 			/bin/cat "$session_active_log_pathfile" >> "$orig_session_active_log_pathfile"
 		fi
