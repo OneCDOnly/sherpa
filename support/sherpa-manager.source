@@ -62,7 +62,7 @@ Init()
 	PrepareArgs
 	ParseManagementArgs || return
 	ParseHelpArgs || return
-	ArchivePriorSessLogs
+	ArchivePriorSessLog
 	DebugLogInit
 	ParseShowArgs || return
 	ParseListArgs || return
@@ -271,7 +271,7 @@ LoadConsts()
 	# Report, help and debug formatting.
 
 		readonly r_debug_log_string_length='<?management_debug_log_longest_string_length?>'
-		r_debug_log_width=80								# Default for dev use only.
+		r_debug_log_width=80								# devdebug
 
 		IsNumber $r_debug_log_string_length && r_debug_log_width=$r_debug_log_string_length
 		readonly r_debug_log_width
@@ -326,7 +326,7 @@ LoadConsts()
 		readonly r_file_change_threshold_minutes=60
 		readonly r_log_tail_lines=5000
 
-	# These are for formatting output to the message pipe enhanced log.
+	# Only for the message pipe enhanced log.
 
 		local date_field_longest_string='Tue 27 May 2025 4:55:42 PM EST '	# devdebug
 		readonly r_date_field_length=${#date_field_longest_string}			# devdebug
@@ -350,85 +350,85 @@ LoadDefaults()
 
 	# Default flags.
 
-	if IsInTerminal; then						# Only enable ANSI colour codes if running in a user terminal.
-		readonly r_colourful_default=true
-	else
-		readonly r_colourful_default=false
-	fi
+		if IsInTerminal; then						# Only enable ANSI colour codes if running in a user terminal.
+			readonly r_colourful_default=true
+		else
+			readonly r_colourful_default=false
+		fi
 
-	archive_debug_afterward=false
-	colourful=$r_colourful_default
-	generate_help_report=false
-	generate_list_report=false
-	generate_show_report=false
-	get_qpkg_extended_states=false
-	ipks_downgrade=false
-	ipks_install=false
-	ipks_upgrade=false
-	pips_install=false
-	release_lock=true
-	run_package_actions=false
-	show_action_results_failed=false
-	show_action_results_ok=false
-	show_action_results_report=false
-	show_action_results_skipped=false
-	show_action_results_zero=false
-	show_backuploc=false
-	show_suggest_raise_issue=false
-	show_title=true
-	switch_branch=false
-	switch_colour=false
-	switch_report_info=false
-	switch_terse=false
-	title_art_shown=false
-	title_shown=false
+		archive_debug_afterward=false
+		colourful=$r_colourful_default
+		generate_help_report=false
+		generate_list_report=false
+		generate_show_report=false
+		get_qpkg_extended_states=false
+		ipks_downgrade=false
+		ipks_install=false
+		ipks_upgrade=false
+		pips_install=false
+		release_lock=true
+		run_package_actions=false
+		show_action_results_failed=false
+		show_action_results_ok=false
+		show_action_results_report=false
+		show_action_results_skipped=false
+		show_action_results_zero=false
+		show_backuploc=false
+		show_suggest_raise_issue=false
+		show_title=true
+		switch_branch=false
+		switch_colour=false
+		switch_report_info=false
+		switch_terse=false
+		title_art_shown=false
+		title_shown=false
 
 	# Default values.
 
-	action_msg_pipe_fd=none
-	backup_stdin_fd=none
-	proc_counts_path=''
-	user_branch_value=''
-	user_report_info_value=''
-	user_terse_value=''
+		action_msg_pipe_fd=none
+		backup_stdin_fd=none
+		proc_counts_path=''
+		user_branch_value=''
+		user_report_info_value=''
+		user_terse_value=''
 
 	# User-selectable flags.
 
-	useropt_check=false
-	useropt_debug=false
-	useropt_help_abbreviations=false
-	useropt_help_actions=false
-	useropt_help_actions_all=false
-	useropt_help_basic=false
-	useropt_help_groups=false
-	useropt_help_lists=false
-	useropt_help_options=false
-	useropt_help_packages=false
-	useropt_help_problems=false
-	useropt_help_show=false
-	useropt_help_tips=false
-	useropt_help_upgrades=false
-	useropt_list_versions=false
-	useropt_paste_log_last=false
-	useropt_paste_log_tail=false
-	useropt_show_about=false
-	useropt_show_aboutall=false
-	useropt_show_backups=false
-	useropt_show_dependencies=false
-	useropt_show_features=false
-	useropt_show_log_last=false
-	useropt_show_log_tail=false
-	useropt_show_packages=false
-	useropt_show_previous_action_results_report=false
-	useropt_show_report_info=$(LoadSetting ReportInfo true)
-	useropt_show_repos=false
-	useropt_show_status=false
-	useropt_terse=$(LoadSetting Terse true)
-	useropt_verbose=false
+		useropt_check=false
+		useropt_debug=false
+		useropt_help_abbreviations=false
+		useropt_help_actions=false
+		useropt_help_actions_all=false
+		useropt_help_basic=false
+		useropt_help_groups=false
+		useropt_help_lists=false
+		useropt_help_options=false
+		useropt_help_packages=false
+		useropt_help_problems=false
+		useropt_help_show=false
+		useropt_help_tips=false
+		useropt_help_upgrades=false
+		useropt_list_versions=false
+		useropt_paste_log_last=false
+		useropt_paste_log_tail=false
+		useropt_show_about=false
+		useropt_show_aboutall=false
+		useropt_show_backups=false
+		useropt_show_dependencies=false
+		useropt_show_features=false
+		useropt_show_log_last=false
+		useropt_show_log_tail=false
+		useropt_show_packages=false
+		useropt_show_previous_action_results_report=false
+		useropt_show_report_info=$(LoadSetting ReportInfo true)
+		useropt_show_repos=false
+		useropt_show_status=false
+		useropt_terse=$(LoadSetting Terse true)
+		useropt_verbose=false
 
 	# User-selectable values.
 
-	useropt_branch=$(LoadSetting Git_Branch stable)
+		useropt_branch=$(LoadSetting Git_Branch stable)
 
 	}
 
@@ -437,19 +437,19 @@ LoadCMDs()
 
 	# Cherry-pick Entware binaries.
 
-	readonly r_gnu_awk_cmd=/opt/bin/awk
-	readonly r_gnu_dd_cmd=/opt/bin/dd
-	readonly r_gnu_find_cmd=/opt/bin/find
-	readonly r_gnu_grep_cmd=/opt/bin/grep
-	readonly r_gnu_less_cmd=/opt/bin/less
-	readonly r_gnu_nice_cmd=/opt/bin/nice
-	readonly r_gnu_sleep_cmd=/opt/bin/sleep
-	readonly r_gnu_stty_cmd=/opt/bin/stty
-	readonly r_gnu_timeout_cmd=/opt/bin/timeout
-	readonly r_opkg_cmd=/opt/bin/opkg
-	readonly r_python3_cmd=/opt/bin/python3
-		readonly r_pip_cmd=$r_python3_cmd' -m pip'
-	readonly r_python_cmd=/opt/bin/python
+		readonly r_gnu_awk_cmd=/opt/bin/awk
+		readonly r_gnu_dd_cmd=/opt/bin/dd
+		readonly r_gnu_find_cmd=/opt/bin/find
+		readonly r_gnu_grep_cmd=/opt/bin/grep
+		readonly r_gnu_less_cmd=/opt/bin/less
+		readonly r_gnu_nice_cmd=/opt/bin/nice
+		readonly r_gnu_sleep_cmd=/opt/bin/sleep
+		readonly r_gnu_stty_cmd=/opt/bin/stty
+		readonly r_gnu_timeout_cmd=/opt/bin/timeout
+		readonly r_opkg_cmd=/opt/bin/opkg
+		readonly r_python3_cmd=/opt/bin/python3
+			readonly r_pip_cmd=$r_python3_cmd' -m pip'
+		readonly r_python_cmd=/opt/bin/python
 
 	}
 
@@ -480,7 +480,7 @@ IsCMDsOk()
 	IsCriticalFile /bin/sh || return
 	IsCriticalFile /bin/sha1sum || return
 	# `/bin/sleep` has already been called before arriving here.
-	[[ ! -e /usr/bin/sort ]] && ln -s /bin/busybox /usr/bin/sort		# KLUDGE: `/usr/bin/sort` randomly disappears from QTS.
+	[[ ! -x /usr/bin/sort ]] && ln -s /bin/busybox /usr/bin/sort		# KLUDGE: `/usr/bin/sort` randomly disappears from QTS.
 	IsCriticalFile /usr/bin/stat || return
 	IsCriticalFile /usr/bin/tail || return
 	IsCriticalFile /bin/tar || return
@@ -527,90 +527,90 @@ LoadEnv()
 
 	# Essential paths.
 
-	readonly r_qpkg_bu_path=$(GetUserDefVol)/.qpkg_config_backup
-	readonly r_qpkg_service_results_path=/var/log
-	readonly r_this_package_path=$(GetQpkgInstalledPath)
+		readonly r_sys_log_path=/var/log
+			readonly r_qpkg_service_result_path=$r_sys_log_path
+		readonly r_sys_run_path=/var/run
 
-	if [[ -z $r_this_package_path || $r_this_package_path = undefined || ! -d $r_this_package_path ]]; then
-		ShowAsError "$(ShowAsTitleName) installation path not found. Please reinstall the $(ShowAsTitleName) QPKG"
+		readonly r_qpkg_bu_path=$(GetUserDefVol)/.qpkg_config_backup
+		readonly r_this_package_path=$(GetQpkgInstalledPath)
 
-		return 1
-	fi
+		if [[ -z $r_this_package_path || $r_this_package_path = undefined || ! -d $r_this_package_path ]]; then
+			ShowAsError "$(ShowAsTitleName) installation path not found. Please reinstall the $(ShowAsTitleName) QPKG"
 
-	readonly r_cache_path=$r_this_package_path/cache
-		readonly r_action_times_path=$r_cache_path/action.times
-		readonly r_ipk_cache_path=$r_cache_path/IPKs
-			readonly r_ipk_downgrade_path=$r_ipk_cache_path/downgrade
-			readonly r_ipk_download_path=$r_ipk_cache_path/downloads
+			return 1
+		fi
 
-		readonly r_pip_cache_path=$r_cache_path/PIPs
-		readonly r_qpkg_cache_path=$r_cache_path/QPKGs
-		readonly r_qpkg_download_path=$r_qpkg_cache_path/downloads
+		readonly r_cache_path=$r_this_package_path/cache
+			readonly r_ipk_cache_path=$r_cache_path/IPKs
+				readonly r_ipk_downgrade_path=$r_ipk_cache_path/downgrade
+				readonly r_ipk_download_path=$r_ipk_cache_path/downloads
 
-	readonly r_log_path=$r_this_package_path/log
+			readonly r_pip_cache_path=$r_cache_path/PIPs
+			readonly r_qpkg_cache_path=$r_cache_path/QPKGs
+				readonly r_qpkg_download_path=$r_qpkg_cache_path/downloads
 
-	# Essential files.
+		readonly r_log_path=$r_this_package_path/log
 
-	readonly r_dependent_qpkgs_list_pathfile=$r_cache_path/dependents
-	readonly r_independent_qpkgs_list_pathfile=$r_cache_path/independents
-	readonly r_inhibit_display_pathfile=$r_cache_path/display.inhibit
-	readonly r_objects_archive_pathfile=$r_cache_path/objects.tar.gz
-	readonly r_objects_pathfile=$r_cache_path/objects
-	readonly r_optional_qpkgs_list_pathfile=$r_cache_path/optionals
-	readonly r_packages_archive_pathfile=$r_cache_path/$r_nas_qpkg_arch.packages.tar.gz
-	readonly r_packages_pathfile=$r_cache_path/$r_nas_qpkg_arch.packages
+	# Essential pathfilenames.
 
-	readonly r_prev_ipk_list_pathfile=$r_ipk_cache_path/ipk-list.save
-
-	readonly r_prev_pip_list_pathfile=$r_pip_cache_path/pip-list.save
-
-	readonly r_session_action_results_pathfile=$r_log_path/session-action-results.log
-	readonly r_session_archive_log_pathfile=$r_log_path/session-archive.log
-	readonly r_session_last_pathfile=$r_log_path/session-last.log
-	readonly r_session_tail_pathfile=$r_log_path/session-tail.log
-
-	session_active_log_pathfile=$r_this_package_path/session.$$.active.log
+		readonly r_dependent_qpkgs_list_pathfile=$r_cache_path/dependents
+		readonly r_independent_qpkgs_list_pathfile=$r_cache_path/independents
+		readonly r_inhibit_display_pathfile=$r_cache_path/display.inhibit
+		readonly r_objects_archive_pathfile=$r_cache_path/objects.tar.gz
+		readonly r_objects_pathfile=$r_cache_path/objects
+		readonly r_optional_qpkgs_list_pathfile=$r_cache_path/optionals
+		readonly r_packages_archive_pathfile=$r_cache_path/$r_nas_qpkg_arch.packages.tar.gz
+		readonly r_packages_pathfile=$r_cache_path/$r_nas_qpkg_arch.packages
+		readonly r_prev_ipk_list_pathfile=$r_ipk_cache_path/ipk-list.save
+		readonly r_prev_pip_list_pathfile=$r_pip_cache_path/pip-list.save
+		readonly r_session_archive_log_pathfile=$r_log_path/session.archive.log
 
 	# Ephemeral paths.
 
-	readonly r_temp_run_path=/var/run/sherpa
-		readonly r_action_counts_path=$r_temp_run_path/action/count
-		readonly r_async_procs_path=$r_temp_run_path/proc
-		readonly r_qpkg_states_path=$r_temp_run_path/package/state
-		readonly r_run_logs_path=$r_temp_run_path/log
-		readonly r_temp_report_path=$r_temp_run_path/report
-			readonly r_report_columns_path=$r_temp_report_path/column
-			readonly r_report_flags_path=$r_temp_report_path/flag
+		readonly r_temp_run_path=$r_sys_run_path/sherpa
+			readonly r_action_counts_path=$r_temp_run_path/action/count
+			readonly r_async_procs_path=$r_temp_run_path/proc
+			readonly r_qpkg_states_path=$r_temp_run_path/qpkg/state
+			readonly r_run_logs_path=$r_temp_run_path/log
+			readonly r_temp_report_path=$r_temp_run_path/report
+				readonly r_report_flags_path=$r_temp_report_path/flag
+				readonly r_report_rows_path=$r_temp_report_path/row
 
-	readonly r_temp_log_path=/var/log/sherpa
-		readonly r_action_logs_path=$r_temp_log_path/action/log
-		readonly r_reports_path=$r_temp_log_path/report
+		readonly r_temp_log_path=$r_sys_log_path/sherpa
+			readonly r_action_log_path=$r_temp_log_path/action/log
+				readonly r_action_times_path=$r_action_log_path/times
+			readonly r_report_path=$r_temp_log_path/report
 
-	# Ephemeral files.
+	# Ephemeral pathfilenames.
 
-	readonly r_abort_actions_pathfile=$r_temp_run_path/abort.action
-	readonly r_action_msg_pipe=$r_temp_run_path/action-messages.pipe
-	readonly r_action_msg_pipe_log_pathfile=$r_temp_run_path/enhanced-action-messages-pipe.log		# devdebug
-	readonly r_oom_log_pathfile=$r_temp_log_path/oom.log
-	readonly r_ram_freeused_pathfile=$r_temp_log_path/ram.freeused
-	readonly r_ramfs_freespace_pathfile=$r_temp_log_path/ramfs.freespace
-	readonly r_report_output_pathfile=$r_reports_path/report.ansi
-	readonly r_screen_sessions_pathfile=$r_temp_log_path/screen.sessions
+		readonly r_abort_actions_pathfile=$r_temp_run_path/abort.action
+		readonly r_action_msg_pipe=$r_temp_run_path/action-messages.pipe
+		readonly r_action_msg_pipe_log_pathfile=/share/Public/enhanced-action-messages-pipe.log		# devdebug
+		readonly r_action_results_pathfile=$r_action_log_path/action-results.log
+		readonly r_oom_log_pathfile=$r_temp_log_path/oom.log
+		readonly r_ram_freeused_pathfile=$r_temp_log_path/ram.freeused
+		readonly r_ramfs_freespace_pathfile=$r_temp_log_path/ramfs.freespace
+		readonly r_report_output_pathfile=$r_temp_log_path/report.ansi
+		readonly r_screen_sessions_pathfile=$r_temp_log_path/screen.sessions
+		readonly r_session_last_pathfile=$r_temp_log_path/session-last.log
+		readonly r_session_tail_pathfile=$r_temp_log_path/session-tail.log
+		session_active_log_pathfile=$r_temp_log_path/session.$$.active.log
 
 	# Entware.
 
-	readonly r_external_apps_path=/opt
-		readonly r_external_apps_temp_path=$r_external_apps_path.temp
-		readonly r_external_packages_archive_pathfile=$r_external_apps_path/var/opkg-lists/entware
-	readonly r_external_packages_pathfile=$r_cache_path/Packages
+		readonly r_external_apps_path=/opt
+			readonly r_external_apps_temp_path=$r_external_apps_path.temp
+			readonly r_external_packages_archive_pathfile=$r_external_apps_path/var/opkg-lists/entware
+
+		readonly r_external_packages_pathfile=$r_cache_path/Packages
 
 	# KLUDGE: in-case `python` has disappeared again ... ¯\_(ツ)_/¯
 
-	[[ -e $r_python3_cmd && ! -L $r_python_cmd ]] && ln -s "$r_python3_cmd" "$r_python_cmd"
+		[[ -x $r_python3_cmd && ! -L $r_python_cmd ]] && ln -s "$r_python3_cmd" "$r_python_cmd"
 
 	rm -f "$r_report_output_pathfile" "$r_ramfs_freespace_pathfile" "$r_inhibit_display_pathfile" 2> /dev/null
 
-	if [[ -e $r_gnu_stty_cmd ]] && IsInTerminal; then
+	if [[ -x $r_gnu_stty_cmd ]] && IsInTerminal; then
 		local terminal_dimensions=$($r_gnu_stty_cmd size)
 		readonly r_sess_rows=${terminal_dimensions% *}
 		readonly r_sess_columns=${terminal_dimensions#* }
@@ -726,35 +726,111 @@ LoadLists()
 CreatePaths()
 	{
 
-	ClearPath /var/run/sherpa "$r_async_procs_path"
-	ClearPath "$r_cache_path" "$r_ipk_cache_path"
-	ClearPath "$r_cache_path" "$r_ipk_download_path"
-	ClearPath "$r_cache_path" "$r_pip_cache_path"
-	ClearPath /var/run/sherpa/report "$r_report_columns_path"
-	ClearPath /var/run/sherpa/report "$r_report_flags_path"
+	ClearPath "$r_temp_run_path" "$r_async_procs_path"
 
 	MakePath "$r_temp_log_path" 'temporary logs' || return
-	MakePath "$r_temp_report_path" 'temporary reports' || return
 	MakePath "$r_temp_run_path" 'temporary runtime files' || return
 
 	MakePath "$r_action_counts_path" 'action counts' || return
-	MakePath "$r_action_logs_path" 'action logs' || return
+	MakePath "$r_action_log_path" 'action logs' || return
 	MakePath "$r_action_times_path" 'action times' || return
 	MakePath "$r_async_procs_path" 'asynchronous process tracking' || return
+	MakePath "$r_log_path" 'persistent logs' || return
+	MakePath "$r_qpkg_bu_path" 'QPKG backup' || return
+	MakePath "$r_qpkg_states_path" states || return
+	MakePath "$r_run_logs_path" 'run logs' || return
+
 	MakePath "$r_cache_path" cache || return
+
+	CreatePackagePaths
+
+	}
+
+CreatePackagePaths()
+	{
+
+	ClearPath "$r_cache_path" "$r_ipk_cache_path"
+	ClearPath "$r_cache_path" "$r_ipk_download_path"
+	ClearPath "$r_cache_path" "$r_pip_cache_path"
+
 	MakePath "$r_ipk_cache_path" 'IPK cache' || return
 	MakePath "$r_ipk_downgrade_path" 'IPK downgrade' || return
 	MakePath "$r_ipk_download_path" 'IPK download' || return
-	MakePath "$r_log_path" 'persistent logs' || return
 	MakePath "$r_pip_cache_path" 'PIP cache' || return
-	MakePath "$r_qpkg_bu_path" 'QPKG backup' || return
 	MakePath "$r_qpkg_cache_path" 'QPKG cache' || return
 	MakePath "$r_qpkg_download_path" 'QPKG download' || return
-	MakePath "$r_qpkg_states_path" states || return
-	MakePath "$r_report_columns_path" 'report columns' || return
+
+	}
+
+CreateReportPaths()
+	{
+
+	# Only create these if generating a report.
+
+	ClearPath "$r_temp_report_path" "$r_report_flags_path"
+	ClearPath "$r_temp_report_path" "$r_report_rows_path"
+
+	MakePath "$r_temp_report_path" 'temporary reports' || return
 	MakePath "$r_report_flags_path" 'report flags' || return
-	MakePath "$r_reports_path" reports || return
-	MakePath "$r_run_logs_path" 'run logs' || return
+	MakePath "$r_report_rows_path" 'report rows' || return
+
+	}
+
+ClearCachePath()
+	{
+
+	# Inputs: (global)
+	#	$r_cache_path
+	#	$r_this_package_path
+
+	if [[ -n $r_cache_path && -d $r_cache_path ]]; then
+		ClearPath "$r_this_package_path" "$r_cache_path"
+		ShowAsDone 'persistent cache cleared'
+	fi
+
+	return 0
+
+	}
+
+ClearTempReportPath()
+	{
+
+	if [[ -n $r_temp_report_path && -d $r_temp_report_path ]]; then
+		ClearPath "$r_temp_run_path" "$r_temp_report_path"
+		ShowAsDone 'temp reports cleared'
+	fi
+
+	return 0
+
+	}
+
+ClearTempRunPath()
+	{
+
+	# Inputs: (global)
+	#	$r_temp_run_path
+
+	if [[ -n $r_temp_run_path && -d $r_temp_run_path ]]; then
+		ClearPath "$r_sys_run_path" "$r_temp_run_path"
+		ShowAsDone 'temp runtime cleared'
+	fi
+
+	return 0
+
+	}
+
+ClearTempLogPath()
+	{
+
+	# Inputs: (global)
+	#	$r_temp_log_path
+
+	if [[ -n $r_temp_log_path && -d $r_temp_log_path ]]; then
+		ClearPath "$r_sys_log_path"/sherpa "$r_temp_log_path"
+		ShowAsDone 'temp logs cleared'
+	fi
+
+	return 0
 
 	}
 
@@ -1532,9 +1608,7 @@ ProcActions()
 	local tier=''
 	local -i tier_index=0
 
-	rm -rf /var/log/sherpa/pids											# devdebug
-	mkdir -p /var/log/sherpa/pids										# devdebug
-	rm -f "$r_session_action_results_pathfile" 2> /dev/null
+	rm -f "$r_action_results_pathfile" 2> /dev/null
 	OpenMsgPipeEnhancedLog												# devdebug
 
 	# -> Package preparation phase <-
@@ -3093,7 +3167,7 @@ ShowArgSuggestions()
 	local arg=''
 	local -a args_remaining=()
 
-	ResetReportsPath &> /dev/null
+	CreateReportPaths
 
 	# shellcheck disable=2199
 	if [[ -n ${args_incomplete[@]+"${args_incomplete[@]}"} ]]; then
@@ -3250,7 +3324,7 @@ ShowArgSuggestions()
 		fi
 	fi
 
-	[[ -e $r_report_output_pathfile ]] && /bin/cat "$r_report_output_pathfile"
+	[[ -s $r_report_output_pathfile ]] && /bin/cat "$r_report_output_pathfile"
 
 	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}
 	DebugArray args_remaining ${args_remaining[@]+"${args_remaining[@]}"}
@@ -3411,67 +3485,6 @@ ResetArchivedLogs()
 
 	}
 
-ResetCachePath()
-	{
-
-	# Inputs: (global)
-	#	$r_cache_path
-	#	$r_this_package_path
-
-	if [[ -n $r_cache_path && -d $r_cache_path ]]; then
-		ClearPath "$r_this_package_path" "$r_cache_path"
-		ShowAsDone 'persistent cache cleared'
-	fi
-
-	return 0
-
-	}
-
-ResetReportsPath()
-	{
-
-	# Inputs: (global)
-	#	$r_reports_path
-
-	if [[ -n $r_reports_path && -d $r_reports_path ]]; then
-		ClearPath /var/log/sherpa "$r_reports_path"
-		ShowAsDone 'temp reports cleared'
-	fi
-
-	return 0
-
-	}
-
-ResetTempRunPath()
-	{
-
-	# Inputs: (global)
-	#	$r_temp_run_path
-
-	if [[ -n $r_temp_run_path && -d $r_temp_run_path ]]; then
-		ClearPath /var/run "$r_temp_run_path"
-		ShowAsDone 'temp runtime cleared'
-	fi
-
-	return 0
-
-	}
-
-ResetTempLogPath()
-	{
-
-	# Inputs: (global)
-	#	$r_temp_log_path
-
-	if [[ -n $r_temp_log_path && -d $r_temp_log_path ]]; then
-		ClearPath /var/log "$r_temp_log_path"
-		ShowAsDone 'temp logs cleared'
-	fi
-
-	return 0
-
-	}
-
 Quiz()
 	{
 
@@ -3488,9 +3501,9 @@ Quiz()
 	local b=''
 
 	ShowAsQuiz "$a"
-	[[ -e $r_gnu_stty_cmd ]] && IsInTerminal && $r_gnu_stty_cmd igncr	# Ignore CR to prevent an onscreen linefeed (which disrupts same-line rewrite used later, and looks bad).
+	[[ -x $r_gnu_stty_cmd ]] && IsInTerminal && $r_gnu_stty_cmd igncr	# Ignore CR to prevent an onscreen linefeed (which disrupts same-line rewrite used later, and looks bad).
 	read -rn1 b
-	[[ -e $r_gnu_stty_cmd ]] && IsInTerminal && $r_gnu_stty_cmd -igncr	# Re-allow CR.
+	[[ -x $r_gnu_stty_cmd ]] && IsInTerminal && $r_gnu_stty_cmd -igncr	# Re-allow CR.
 	DebugVar b
 
 	ShowAsQuizDone "$a: $b"
@@ -3573,7 +3586,7 @@ _UpdateEntwarePackageList_()
 	if ! IsFileRecent "$r_external_packages_archive_pathfile" "$r_file_change_threshold_minutes" || [[ ! -f $r_external_packages_archive_pathfile || $useropt_check = true ]]; then
 		DebugAsProc "updating $(FormatPackageName Entware) package list"
 
-		Executer "$r_opkg_cmd update" "$r_log_path/Entware.$r_update_log_file" log:failure-only
+		Executer "$r_opkg_cmd update" "$r_action_log_path/Entware.$r_update_log_file" log:failure-only
 		z=$?
 
 		if [[ $z -eq 0 ]]; then
@@ -3603,10 +3616,10 @@ SaveIpkAndPipList()
 	#	$r_prev_pip_list_pathfile
 
 	$r_pip_cmd freeze | cut -d'=' -f1 > "$r_prev_pip_list_pathfile"
-	[[ -e $r_prev_pip_list_pathfile ]] && DebugAsDone "saved current PIP list to $(FormatFileName "$r_prev_pip_list_pathfile")"
+	[[ -s $r_prev_pip_list_pathfile ]] && DebugAsDone "saved current PIP list to $(FormatFileName "$r_prev_pip_list_pathfile")"
 
 	$r_opkg_cmd list-installed > "$r_prev_ipk_list_pathfile"
-	[[ -e $r_prev_ipk_list_pathfile ]] && DebugAsDone "saved current $(FormatPackageName Entware) IPK list to $(FormatFileName "$r_prev_ipk_list_pathfile")"
+	[[ -s $r_prev_ipk_list_pathfile ]] && DebugAsDone "saved current $(FormatPackageName Entware) IPK list to $(FormatFileName "$r_prev_ipk_list_pathfile")"
 
 	} 2> /dev/null
 
@@ -3620,7 +3633,7 @@ LoadIpkList()
 	local separator=''
 	local version=''
 
-	if [[ -e $r_prev_ipk_list_pathfile ]]; then
+	if [[ -s $r_prev_ipk_list_pathfile ]]; then
 		DebugInfo "IPKs are being loaded from $(FormatFileName "$r_prev_ipk_list_pathfile")"
 
 		while read -r name separator version; do
@@ -3641,7 +3654,7 @@ LoadPipList()
 	local name=''
 	local re=''
 
-	if [[ -e $r_prev_pip_list_pathfile ]]; then
+	if [[ -s $r_prev_pip_list_pathfile ]]; then
 		DebugInfo "PIPs are being loaded from $(FormatFileName "$r_prev_pip_list_pathfile")"
 
 		while read -r name; do
@@ -3925,7 +3938,7 @@ IPKs:install()
 	if QPKGs-ACinstall-ok.Exist Entware || ([[ $useropt_check = true ]] && IsValidQpkgInstalled Entware); then
 		IPKs-ACinstall-to:Add "$r_essential_ipks"
 
-		if [[ -e $r_prev_ipk_list_pathfile && $useropt_check = false ]]; then		# Don't load previous IPK list during 'check'.
+		if [[ -s $r_prev_ipk_list_pathfile && $useropt_check = false ]]; then		# Don't load previous IPK list during 'check'.
 			LoadIpkList
 			mv -f "$r_prev_ipk_list_pathfile" "$r_prev_ipk_list_pathfile.installing"
 		fi
@@ -3979,7 +3992,7 @@ IPKs:install()
 			NoteIpkAcAsEr "$(IPKs-ACdownload-to:Array)" install
 			SaveActionResultMetrics IPK auxiliary install "$total_count" er "$z"
 
-			if [[ -e $r_prev_ipk_list_pathfile.installing ]]; then
+			if [[ -s $r_prev_ipk_list_pathfile.installing ]]; then
 				mv -f "$r_prev_ipk_list_pathfile.installing" "$r_prev_ipk_list_pathfile"
 			fi
 		fi
@@ -4123,7 +4136,7 @@ PIPs:install()
 	local desc=''
 	local exec_cmd=''
 	local -i done_fail_count=0
-	local log_pathfile=$r_log_path/pips.$r_install_log_file
+	local log_pathfile=$r_action_log_path/pips.$r_install_log_file
 	local -i done_ok_count=0
 	local package_type=PIP
 	local -i total_count=0
@@ -4132,7 +4145,7 @@ PIPs:install()
 	if [[ $useropt_check = true ]] || IPKs-ACinstall-ok.Exist python3-pip; then
 		PIPs-ACinstall-to:Add "$r_base_pips"
 
-		if [[ -e $r_prev_pip_list_pathfile && $useropt_check = false ]]; then		# Don't load previous PIP list during 'check'.
+		if [[ -s $r_prev_pip_list_pathfile && $useropt_check = false ]]; then		# Don't load previous PIP list during 'check'.
 			LoadPipList
 			mv -f "$r_prev_pip_list_pathfile" "$r_prev_pip_list_pathfile.installing"
 		fi
@@ -4156,7 +4169,7 @@ PIPs:install()
 			((done_fail_count++))
 			SaveActionResultMetrics PIP auxiliary install "$done_fail_count" er "$z"
 
-			if [[ -e $r_prev_pip_list_pathfile.installing ]]; then
+			if [[ -s $r_prev_pip_list_pathfile.installing ]]; then
 				mv -f "$r_prev_pip_list_pathfile.installing" "$r_prev_pip_list_pathfile"
 			fi
 		fi
@@ -4190,7 +4203,7 @@ OpenIpkArchive()
 	# Outputs: (local)
 	#	$? = 0 if successful, 1 if failed
 
-	if [[ ! -e $r_external_packages_archive_pathfile ]]; then
+	if [[ ! -s $r_external_packages_archive_pathfile ]]; then
 		ShowAsError 'unable to locate the IPK list file'
 
 		return 1
@@ -4198,7 +4211,7 @@ OpenIpkArchive()
 
 	Executer "/usr/local/sbin/7z e -o$(/usr/bin/dirname "$r_external_packages_pathfile") $r_external_packages_archive_pathfile" "$r_cache_path/ipk.archive.extract" log:failure-only
 
-	if [[ ! -e $r_external_packages_pathfile ]]; then
+	if [[ ! -s $r_external_packages_pathfile ]]; then
 		ShowAsError 'unable to open the IPK list file'
 
 		return 1
@@ -4345,12 +4358,12 @@ KillPID()
 Reset()
 	{
 
-	ResetCachePath
+	ClearCachePath
 	ResetArchivedLogs
 	ArchiveActiveSessLog
 	ResetActiveSessLog
-	ResetTempLogPath
-	ResetTempRunPath
+	ClearTempLogPath
+	ClearTempRunPath
 
 	exit 0
 
@@ -4534,7 +4547,7 @@ LoadSetting()
 
 	local a=$(Lowercase "$2")
 
-	if [[ ! -e /sbin/getcfg ]]; then
+	if [[ ! -x /sbin/getcfg ]]; then
 		printf '%s' "$a"
 		return
 	fi
@@ -4701,7 +4714,7 @@ DisplayAsIndentQuotedInfoItem()
 
 	}
 
-GeneratePacksReportTitleLine()
+GeneratePacksReportTitleRow()
 	{
 
 	# Inputs: (global)
@@ -4728,7 +4741,7 @@ GeneratePacksReportTitleLine()
 
 	}
 
-_GeneratePacksReportDataLine_()
+_GeneratePacksReportDataRow_()
 	{
 
 	# * This function runs asynchronously *
@@ -4796,7 +4809,7 @@ _GeneratePacksReportDataLine_()
 
 	}
 
-GenerateStatusReportTitleLine()
+GenerateStatusReportTitleRow()
 	{
 
 	# Inputs: (global)
@@ -4822,7 +4835,7 @@ GenerateStatusReportTitleLine()
 
 	}
 
-_GenerateStatusReportDataLine_()
+_GenerateStatusReportDataRow_()
 	{
 
 	# * This function runs asynchronously *
@@ -5102,7 +5115,7 @@ _GenerateStatusReportDataLine_()
 
 	}
 
-GenerateReposReportTitleLine()
+GenerateReposReportTitleRow()
 	{
 
 	# Requires 57 columns when auto-column-width isn't available. TODO: recheck this.
@@ -5128,7 +5141,7 @@ GenerateReposReportTitleLine()
 
 	}
 
-_GenerateReposReportDataLine_()
+_GenerateReposReportDataRow_()
 	{
 
 	# * This function runs asynchronously *
@@ -5254,7 +5267,7 @@ _GenerateReposReportDataLine_()
 
 	}
 
-GenerateAbsReportTitleLine()
+GenerateAbsReportTitleRow()
 	{
 
 	# Inputs: (global)
@@ -5281,7 +5294,7 @@ GenerateAbsReportTitleLine()
 
 	}
 
-_GenerateAbsReportDataLine_()
+_GenerateAbsReportDataRow_()
 	{
 
 	# * This function runs asynchronously *
@@ -5373,7 +5386,7 @@ _GenerateAbsReportDataLine_()
 
 	}
 
-GenerateDepsReportTitleLine()
+GenerateDepsReportTitleRow()
 	{
 
 	# Inputs: (global)
@@ -5419,7 +5432,7 @@ GenerateDepsReportTitleLine()
 
 	}
 
-_GenerateDepsReportDataLine_()
+_GenerateDepsReportDataRow_()
 	{
 
 	# * This function runs asynchronously *
@@ -5734,7 +5747,7 @@ _GenerateDepsReportDataLine_()
 
 	}
 
-GenerateFeaturesReportTitleLine()
+GenerateFeaturesReportTitleRow()
 	{
 
 	# Inputs: (global)
@@ -5775,7 +5788,7 @@ GenerateFeaturesReportTitleLine()
 
 	}
 
-_GenerateFeaturesReportDataLine_()
+_GenerateFeaturesReportDataRow_()
 	{
 
 	# * This function runs asynchronously *
@@ -5946,7 +5959,7 @@ _GenerateFeaturesReportDataLine_()
 
 	}
 
-GenerateBacksReportTitleLine()
+GenerateBacksReportTitleRow()
 	{
 
 	# Inputs: (global)
@@ -6751,7 +6764,7 @@ DisplayFileInViewport()
 	echo
 
 	if [[ $useropt_verbose = true ]]; then
-		if [[ -e /bin/cat ]]; then
+		if [[ -x /bin/cat ]]; then
 			/bin/cat "$a"
 
 			return
@@ -6763,7 +6776,7 @@ DisplayFileInViewport()
 	fi
 
 	if [[ $(/usr/bin/wc -l < "$a") -ge $r_sess_rows || $(/usr/bin/wc -L < "$a") -ge $r_sess_columns ]]; then
-		if [[ -e $r_gnu_less_cmd ]]; then
+		if [[ -x $r_gnu_less_cmd ]]; then
 			options='--quit-on-intr --tilde --mouse --RAW-CONTROL-CHARS --shift=4 --redraw-on-quit --quit-if-one-screen --no-init '
 #			[[ $headers = true ]] && options+="--header=1,$(CalcReportFirstColumnWidth "$a") "		# NOTE: if enabled, and report does not fill terminal window, header row is pushed-off the top of the terminal. GNU `less` v661, fixed in v668. Might be able to work-around this by altering `less` args based-on $r_sess_rows.
 			[[ $jumptoend = true ]] && options+='+G '
@@ -6777,7 +6790,7 @@ DisplayFileInViewport()
 
 # Disable the use of built-in `less` for-now as it doesn't support ANSI codes. Let's see if there are any problems (other than not being able to scroll output).
 
-#		if [[ -e /bin/less ]]; then
+#		if [[ -x /bin/less ]]; then
 #			options='-~'
 #			[[ $linenumbers = true ]] && options+='N'
 #			[[ $wrap = false ]] && options+='S'
@@ -6788,13 +6801,13 @@ DisplayFileInViewport()
 #		fi
 	fi
 
-	if [[ -e /bin/cat ]]; then
+	if [[ -x /bin/cat ]]; then
 		[[ $linenumbers = true ]] && options='--number'
 
 		/bin/cat "$options" "$a"
 
 		return
-	elif [[ -e /bin/more ]]; then
+	elif [[ -x /bin/more ]]; then
 		/bin/more "$a"
 
 		return
@@ -6966,7 +6979,7 @@ ArchiveActiveSessLog()
 
 	}
 
-ArchivePriorSessLogs()
+ArchivePriorSessLog()
 	{
 
 	# Check for incomplete previous session logs (crashed, interrupted?) and save to archive.
@@ -6978,7 +6991,7 @@ ArchivePriorSessLogs()
 
 	local f=''
 
-	for f in "$r_this_package_path"/session.*.active.log; do
+	for f in "$r_log_path"/session.*.active.log; do
 		if [[ -f $f && $f != "$session_active_log_pathfile" ]]; then
 			/bin/cat "$f" >> "$r_session_archive_log_pathfile"
 			rm -f "$f"
@@ -7738,7 +7751,7 @@ InitQPKGsTiers()
 
 	for a in "${r_qpkg_tiers[@]}"; do
 		b=r_${a}_qpkgs_list_pathfile
-		[[ ! -e ${!b} ]] && continue
+		[[ ! -s ${!b} ]] && continue
 		rm -f "${!b}" 2> /dev/null
 	done
 
@@ -7762,7 +7775,7 @@ CheckQPKGsTiers()
 
 	for a in "${r_qpkg_tiers[@]}"; do
 		b=r_${a}_qpkgs_list_pathfile
-		[[ -e ${!b} ]] && continue
+		[[ -s ${!b} ]] && continue
 		qpkgs_tiers_built=false
 		break
 	done
@@ -7825,7 +7838,7 @@ LoadQPKGsTiers()
 
 	for a in "${r_qpkg_tiers[@]}"; do
 		b=r_${a}_qpkgs_list_pathfile
-		[[ ! -e ${!b} ]] && continue
+		[[ ! -s ${!b} ]] && continue
 		QPKGs-GR${a}:Add "$(< ${!b})"
 	done
 
@@ -7936,7 +7949,7 @@ InitQPKGsStates()
 		[[ $(type -t QPKGs-ISNT${a}:Init) = function ]] && QPKGs-ISNT${a}:Init
 	done
 
-	ClearPath /var/run/sherpa/package "$r_qpkg_states_path"
+	ClearPath "$r_temp_run_path"/qpkg "$r_qpkg_states_path"
 
 	qpkgs_states_built=false
 
@@ -8013,10 +8026,10 @@ LoadQPKGsStates()
 	# Load status lines from individual files into session arrays.
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
-		a=$r_qpkg_service_results_path/$qpkg_name.action
-		b=$r_qpkg_service_results_path/$qpkg_name.result
+		a=$r_qpkg_service_result_path/$qpkg_name.action
+		b=$r_qpkg_service_result_path/$qpkg_name.result
 
-		if [[ -e $a && -e $b ]]; then
+		if [[ -s $a && -s $b ]]; then
 			case $(< $b) in
 				in-progress)
 					case $(< $a) in
@@ -8039,7 +8052,7 @@ LoadQPKGsStates()
 		fi
 
 		a=$r_qpkg_states_path/$qpkg_name
-		[[ -e $a ]] || continue
+		[[ -s $a ]] || continue
 
 		for b in $(< $a); do
 			case $b in
@@ -8151,7 +8164,7 @@ HelpAbbreviations()
 	LoadDatabase
 	DisableDebugToArchiveAndFile
 	DisplayProcReport abbreviations
-	ResetReportsPath &> /dev/null
+	CreateReportPaths
 
 		{
 
@@ -8160,12 +8173,12 @@ HelpAbbreviations()
 
 		} > "$r_report_output_pathfile"
 
-	printf -v a '\n%s\n' "$(GenerateAbsReportTitleLine)"
+	printf -v a '\n%s\n' "$(GenerateAbsReportTitleRow)"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		SetQpkgIndex
-		_GenerateAbsReportDataLine_ > "$r_reports_path/$n" &
+		_GenerateAbsReportDataRow_ > "$r_report_rows_path/$n" &
 	done
 
 	m=$n
@@ -8174,8 +8187,8 @@ HelpAbbreviations()
 	# Load report lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		b=$r_reports_path/$n
-		[[ -e $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
+		b=$r_report_rows_path/$n
+		[[ -s $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
 	if [[ -n $a ]]; then
@@ -8218,16 +8231,16 @@ ReportBackups()
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport backups
-	ResetReportsPath &> /dev/null
+	CreateReportPaths
 
-	printf -v a '\n%s\n' "$(GenerateBacksReportTitleLine)"
+	printf -v a '\n%s\n' "$(GenerateBacksReportTitleRow)"
 
-	if [[ -e $r_gnu_find_cmd ]]; then				# Prefer GNU `find` for this.
+	if [[ -x $r_gnu_find_cmd ]]; then				# Prefer GNU `find` for this.
 		while read -r epoch_time file_name file_bytes; do
 			[[ -z $epoch_time || -z $file_name ]] && break
 
 			((n++))
-			_GenerateBacksReportItemLine_ "$epoch_time" "$file_name" "$file_bytes" "$r_report_highlight_backups_older_than" > "$r_reports_path/$n" &
+			_GenerateBacksReportItemLine_ "$epoch_time" "$file_name" "$file_bytes" "$r_report_highlight_backups_older_than" > "$r_report_rows_path/$n" &
 		done <<< "$($r_gnu_find_cmd "$r_qpkg_bu_path"/*.config.tar.gz -maxdepth 1 -printf '%C@ %f %s\n' 2> /dev/null | /usr/bin/sort)"
 	else										# If GNU `find` isn't available, do-it the hard-way.
 		while read -r file_date file_time file_name file_bytes; do
@@ -8236,7 +8249,7 @@ ReportBackups()
 			file_name=$(/usr/bin/basename "$file_name")
 
 			((n++))
-			_GenerateBacksReportItemLine_ "$epoch_time" "$file_name" "$file_bytes" "$r_report_highlight_backups_older_than" > "$r_reports_path/$n" &
+			_GenerateBacksReportItemLine_ "$epoch_time" "$file_name" "$file_bytes" "$r_report_highlight_backups_older_than" > "$r_report_rows_path/$n" &
 		done <<< "$(cd "$r_qpkg_bu_path" && ls -l1tr --time-style=+"%Y-%m-%d %H:%M:%S" ./*.config.tar.gz 2> /dev/null | /bin/awk '{print $6" "$7" "$8" "$5}')"
 	fi
 
@@ -8246,8 +8259,8 @@ ReportBackups()
 	# Load report lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		b=$r_reports_path/$n
-		[[ -e $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
+		b=$r_report_rows_path/$n
+		[[ -s $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
 	if [[ -n $a ]]; then
@@ -8279,16 +8292,16 @@ ReportDependencies()
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport dependency
-	ResetReportsPath &> /dev/null
+	CreateReportPaths
 
 	! IsAnsiStrippingSupported && colourful=false
 
-	printf -v a '\n%s\n' "$(GenerateDepsReportTitleLine)"
+	printf -v a '\n%s\n' "$(GenerateDepsReportTitleRow)"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		SetQpkgIndex
-		_GenerateDepsReportDataLine_ > "$r_reports_path/$n" &
+		_GenerateDepsReportDataRow_ > "$r_report_rows_path/$n" &
 	done
 
 	m=$n
@@ -8297,8 +8310,8 @@ ReportDependencies()
 	# Load report lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		b=$r_reports_path/$n
-		[[ -e $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
+		b=$r_report_rows_path/$n
+		[[ -s $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
 	if [[ -n $a ]]; then
@@ -8331,16 +8344,16 @@ ReportFeatures()
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport features
-	ResetReportsPath &> /dev/null
+	CreateReportPaths
 
 	! IsAnsiStrippingSupported && colourful=false
 
-	printf -v a '\n%s\n' "$(GenerateFeaturesReportTitleLine)"
+	printf -v a '\n%s\n' "$(GenerateFeaturesReportTitleRow)"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		SetQpkgIndex
-		_GenerateFeaturesReportDataLine_ > "$r_reports_path/$n" &
+		_GenerateFeaturesReportDataRow_ > "$r_report_rows_path/$n" &
 	done
 
 	m=$n
@@ -8349,8 +8362,8 @@ ReportFeatures()
 	# Load report lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		b=$r_reports_path/$n
-		[[ -e $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
+		b=$r_report_rows_path/$n
+		[[ -s $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
 	if [[ -n $a ]]; then
@@ -8383,6 +8396,7 @@ ReportPackages()
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport package
+	CreateReportPaths
 
 #	! IsAnsiStrippingSupported && colourful=false
 
@@ -8393,12 +8407,12 @@ ReportPackages()
 
 		} > "$r_report_output_pathfile"
 
-	printf -v a '\n%s\n' "$(GeneratePacksReportTitleLine)"
+	printf -v a '\n%s\n' "$(GeneratePacksReportTitleRow)"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		SetQpkgIndex
-		_GeneratePacksReportDataLine_ "$qpkg_name" > "$r_reports_path/$n" &
+		_GeneratePacksReportDataRow_ "$qpkg_name" > "$r_report_rows_path/$n" &
 	done
 
 	m=$n
@@ -8407,8 +8421,8 @@ ReportPackages()
 	# Load report data lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		b=$r_reports_path/$n
-		[[ -e $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
+		b=$r_report_rows_path/$n
+		[[ -s $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
 	if [[ -n $a ]]; then
@@ -8448,16 +8462,16 @@ ReportRepos()
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport repository
-	ResetReportsPath &> /dev/null
+	CreateReportPaths
 
 #	! IsAnsiStrippingSupported && colourful=false
 
-	printf -v a '\n%s\n' "$(GenerateReposReportTitleLine)"
+	printf -v a '\n%s\n' "$(GenerateReposReportTitleRow)"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		((n++))
 		SetQpkgIndex
-		_GenerateReposReportDataLine_ > "$r_reports_path/$n" &
+		_GenerateReposReportDataRow_ > "$r_report_rows_path/$n" &
 	done
 
 	m=$n
@@ -8466,8 +8480,8 @@ ReportRepos()
 	# Load report data lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		b=$r_reports_path/$n
-		[[ -e $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
+		b=$r_report_rows_path/$n
+		[[ -s $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
 	if [[ -n $a ]]; then
@@ -8500,7 +8514,7 @@ ReportStatuses()
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport status
-	ResetReportsPath &> /dev/null
+	CreateReportPaths
 
 #	! IsAnsiStrippingSupported && colourful=false
 
@@ -8508,10 +8522,10 @@ ReportStatuses()
 		QPKGs-ACstatus-dn.Exist "$qpkg_name" || continue
 		((n++))
 		SetQpkgIndex
-		_GenerateStatusReportDataLine_ > "$r_reports_path/$n" &
+		_GenerateStatusReportDataRow_ > "$r_report_rows_path/$n" &
 	done
 
-	printf -v a '%s\n' "$(GenerateStatusReportTitleLine)"
+	printf -v a '%s\n' "$(GenerateStatusReportTitleRow)"
 
 	m=$n
 	wait 2> /dev/null
@@ -8519,8 +8533,8 @@ ReportStatuses()
 	# Load report lines from individual files.
 
 	for ((n=1; n<=m; n++)); do
-		b=$r_reports_path/$n
-		[[ -e $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
+		b=$r_report_rows_path/$n
+		[[ -s $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
 	if [[ -n $a ]]; then
@@ -8568,7 +8582,7 @@ ReportAllActionResults()
 		show_action_results_skipped=true
 	fi
 
-	if [[ -e $r_session_action_results_pathfile ]]; then
+	if [[ -s $r_action_results_pathfile ]]; then
 		while IFS='|' read -r datetime action quantity package_name package_type result duration reason; do
 			if [[ $datetime -gt 0 && $duration -gt 0 ]]; then
 				[[ $a -eq 0 ]] && a=$datetime		# Only use first entry as start time.
@@ -8576,7 +8590,7 @@ ReportAllActionResults()
 				c=$duration
 				((d++))
 			fi
-		done < "$r_session_action_results_pathfile"
+		done < "$r_action_results_pathfile"
 
 		a=$(ConvertMillisecondsToSeconds "$a")
 		b=$(ConvertMillisecondsToSeconds "$b")
@@ -8611,7 +8625,7 @@ ReportActionResults()
 	#	$1 = `ok`, `skipped`, `failed`
 
 	# Inputs: (global)
-	#	$r_session_action_results_pathfile
+	#	$r_action_results_pathfile
 
 	local action=''
 	local -i count=0
@@ -8623,7 +8637,7 @@ ReportActionResults()
 	local reason=''
 	local result=''
 
-	if [[ -e $r_session_action_results_pathfile ]]; then
+	if [[ -s $r_action_results_pathfile ]]; then
 		# Obtain count of same results. Need to know if action applied to one QPKG or many.
 
 		while IFS='|' read -r datetime action quantity package_name package_type result duration reason; do
@@ -8632,7 +8646,7 @@ ReportActionResults()
 				((count++))
 				[[ $count -gt 1 ]] && break			# Two-or-more of the same action so must pluralise messages.
 			fi
-		done < "$r_session_action_results_pathfile"
+		done < "$r_action_results_pathfile"
 
 		# Display action titles and QPKGs.
 
@@ -8666,7 +8680,7 @@ ReportActionResults()
 					[[ $action = status && $useropt_show_previous_action_results_report = false ]] && continue		# Don't need to see the result of `status` checks unless a 'results' report has been requested.
 					ShowAsActionLogDetail "$datetime" "$package_name" "$action" "$result" "$duration" "$reason" "$package_type" "$quantity"
 				fi
-			done < "$r_session_action_results_pathfile"
+			done < "$r_action_results_pathfile"
 		fi
 	fi
 
@@ -8819,7 +8833,7 @@ GenerateReportInfo()
 		fi
 	fi
 
-	if [[ -e "$r_report_flags_path"/deps ]]; then
+	if [[ -e $r_report_flags_path/deps ]]; then
 		DisplayAsHelpTitle "QPKG dependencies are automatically installed/started/stopped/restarted as-required by $(ShowAsTitleName)."
 	fi
 
@@ -8870,7 +8884,7 @@ ShowReport()
 	# Inputs: (global)
 	#	$r_report_output_pathfile
 
-	if [[ -e $r_report_output_pathfile ]]; then
+	if [[ -s $r_report_output_pathfile ]]; then
 		DisplayFileInViewport "$r_report_output_pathfile" fixed-headers
 		Display
 	else
@@ -9388,14 +9402,14 @@ GetHardwareCPUBenchmark()
 	local -i b=16		# Maximum time-to-run is around 1 second on my slowest NAS (TS-220).
 	local -i c=-20		# Execute benchmark with highest priority.
 
-	if [[ ! -e $r_gnu_dd_cmd ]]; then
+	if [[ ! -x $r_gnu_dd_cmd ]]; then
 		printf "unable to measure, GNU 'dd' is unavailable"
 		return 1
 	fi
 
-	if [[ -e $r_gnu_nice_cmd ]]; then
+	if [[ -x $r_gnu_nice_cmd ]]; then
 		a=$({ $r_gnu_nice_cmd -$c $r_gnu_dd_cmd if=/dev/zero bs=1MB count=$b | /bin/sha1sum > /dev/null; } 2>&1)
-	elif [[ -e /bin/renice ]]; then
+	elif [[ -x /bin/renice ]]; then
 		/bin/renice $c $$ &> /dev/null
 
 		a=$({ $r_gnu_dd_cmd if=/dev/zero bs=1MB count=$b | /bin/sha1sum > /dev/null; } 2>&1)
@@ -9432,14 +9446,14 @@ GetHardwareVolumeBenchmark()
 	if [[ -d $(/usr/bin/dirname "$d") ]]; then
 		[[ -e $d ]] && rm -f "$d"
 
-		if [[ ! -e $r_gnu_dd_cmd ]]; then
+		if [[ ! -x $r_gnu_dd_cmd ]]; then
 			printf "unable to measure, GNU 'dd' is unavailable"
 			return 1
 		fi
 
-		if [[ -e $r_gnu_nice_cmd ]]; then
+		if [[ -x $r_gnu_nice_cmd ]]; then
 			a=$($r_gnu_nice_cmd -$c $r_gnu_dd_cmd if=/dev/zero of=$d bs=8k count=$b 2>&1)
-		elif [[ -e /bin/renice ]]; then
+		elif [[ -x /bin/renice ]]; then
 			/bin/renice $c $$ &> /dev/null
 
 			a=$($r_gnu_dd_cmd if=/dev/zero of=$d bs=8k count=$b 2>&1)
@@ -9522,7 +9536,7 @@ GetOsKernelVersion()
 GetOsKernelPageSize()
 	{
 
-	if [[ -e /sbin/hal_app ]]; then
+	if [[ -x /sbin/hal_app ]]; then
 		echo -n "$(/sbin/hal_app --get_pagesize)B"
 	else
 		/bin/grep KernelPageSize /proc/1/smaps | head -n1 | cut -f2 -d':' | tr -d ' ' | /bin/sed 's/kB/kiB/'
@@ -9928,7 +9942,7 @@ ClaimLockfile()
 	#	$r_lock_pathfile
 
 	local a=''
-	readonly r_lock_pathfile=/var/run/sherpa.lock
+	readonly r_lock_pathfile=/var/lock/sherpa.pid
 
 	for a in sherpa-manager.sh sherpa-manager.source; do
 		if [[ -e $r_lock_pathfile && -d /proc/$(< $r_lock_pathfile) && $(< /proc/"$(< $r_lock_pathfile)"/cmdline) =~ $a ]]; then
@@ -10014,7 +10028,7 @@ SaveActionResultMetrics()
 
 	# Inputs: (global)
 	#	$r_action_times_path
-	#	$r_session_action_results_pathfile
+	#	$r_action_results_pathfile
 
 	# Calculate duration here.
 
@@ -10033,11 +10047,11 @@ SaveActionResultMetrics()
 
 	# Add new action results entry.
 
-	echo "$r_starttime|$r_action|$r_qty|$r_name|$r_package_type|$r_result_code|$r_duration|$r_reason" >> "$r_session_action_results_pathfile"
+	echo "$r_starttime|$r_action|$r_qty|$r_name|$r_package_type|$r_result_code|$r_duration|$r_reason" >> "$r_action_results_pathfile"
 
 	# Remove previous action duration entry if one exists.
 
-	if [[ -e $r_action_times_pathfile ]] && /bin/grep "^$r_name|" < "$r_action_times_pathfile" &> /dev/null; then
+	if [[ -s $r_action_times_pathfile ]] && /bin/grep "^$r_name|" < "$r_action_times_pathfile" &> /dev/null; then
 		/bin/sed -i "/^$r_name|/d" "$r_action_times_pathfile"
 	fi
 
@@ -10112,14 +10126,14 @@ _QPKG:status_()
 
 	local a=$(GetQpkgDbActiveTest)
 	local b=''
-	local -r r_log_pathfile=$r_log_path/$qpkg_name.$r_status_log_file
+	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_status_log_file
 
 	[[ $useropt_debug = true ]] && b+='DEBUG_QPKG=true '
 
 	if [[ $a = builtin ]]; then
 		local -r r_local_pathfile=$(GetQpkgServicePathFile)
 
-		if [[ -e $r_gnu_timeout_cmd ]]; then			# Run 'status' query with GNU `timeout` (if-possible).
+		if [[ -x $r_gnu_timeout_cmd ]]; then			# Run 'status' query with GNU `timeout` (if-possible).
 			$r_gnu_timeout_cmd "$r_qpkg_status_check_timeout_seconds" /bin/sh -c "$b \"$r_local_pathfile\" status"
 			z=$?
 		else
@@ -10256,7 +10270,7 @@ _QPKG:reassign_()
 
 	DebugAsProc "reassigning $(FormatPackageName)"
 
-	local -r r_log_pathfile=$r_log_path/$qpkg_name.$r_reassign_log_file
+	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_reassign_log_file
 
 	Executer "/sbin/setcfg -e $qpkg_name store -f /etc/config/qpkg.conf" "$r_log_pathfile" log:failure-only
 	z=$?
@@ -10359,7 +10373,7 @@ _QPKG:download_()
 		DebugAsProc "downloading $(FormatFileName "$r_remote_filename")"
 
 		local curl_insecure_opt=''
-		local -r r_log_pathfile=$r_log_path/$r_local_filename.$r_download_log_file
+		local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_download_log_file
 		IsOsCanSecureDownload || curl_insecure_opt='--insecure'
 
 		rm -f "$r_log_pathfile" 2> /dev/null
@@ -10440,7 +10454,7 @@ _QPKG:install_()
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'conflicting package installed'
 		MarkActionForkAsSkippedOk
 		z=2
-	elif [[ -z $r_local_pathfile || ! -e $r_local_pathfile ]]; then
+	elif [[ -z $r_local_pathfile || ! -s $r_local_pathfile ]]; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'installation package unavailable'
 		MarkActionForkAsSkippedError
 		z=4
@@ -10461,7 +10475,7 @@ _QPKG:install_()
 	DebugAsProc "installing $(FormatPackageName)"
 
 	local a='INSTALL_QPKG=true '
-	local -r r_log_pathfile=$r_log_path/$qpkg_name.$r_install_log_file
+	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_install_log_file
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	[[ ${QPKGs_were_installed_name[*]:-} = *"$qpkg_name"* ]] && a+="QINSTALL_PATH=$(GetQpkgInstalledOriginalPath "$qpkg_name") "
 
@@ -10548,7 +10562,7 @@ _QPKG:reinstall_()
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkippedOk
 		z=2
-	elif [[ -z $r_local_pathfile || ! -e $r_local_pathfile ]]; then
+	elif [[ -z $r_local_pathfile || ! -s $r_local_pathfile ]]; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'installation package unavailable'
 		MarkActionForkAsSkippedError
 		z=4
@@ -10559,7 +10573,7 @@ _QPKG:reinstall_()
 	DebugAsProc "reinstalling $(FormatPackageName)"
 
 	local a='REINSTALL_QPKG=true '
-	local -r r_log_pathfile=$r_log_path/$qpkg_name.$r_reinstall_log_file
+	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_reinstall_log_file
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	IsValidQpkgInstalled && a+="QINSTALL_PATH=$(/usr/bin/dirname "$(GetQpkgInstalledPath)") "
 
@@ -10633,7 +10647,7 @@ _QPKG:upgrade_()
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'no new QPKG is available'
 		MarkActionForkAsSkippedOk
 		z=2
-	elif [[ -z $r_local_pathfile || ! -e $r_local_pathfile ]]; then
+	elif [[ -z $r_local_pathfile || ! -s $r_local_pathfile ]]; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'installation package unavailable'
 		MarkActionForkAsSkippedError
 		z=4
@@ -10645,7 +10659,7 @@ _QPKG:upgrade_()
 
 	local a='UPGRADE_QPKG=true '
 	local prev_ver=$(GetQpkgInstalledVer)
-	local -r r_log_pathfile=$r_log_path/$qpkg_name.$r_upgrade_log_file
+	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_upgrade_log_file
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 	IsValidQpkgInstalled && a+="QINSTALL_PATH=$(/usr/bin/dirname "$(GetQpkgInstalledPath "$qpkg_name")") "
 
@@ -10729,7 +10743,7 @@ _QPKG:uninstall_()
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se "$(FormatFileName '.uninstall.sh') undefined"
 		MarkActionForkAsSkippedError
 		z=4
-	elif [[ ! -e $r_local_pathfile ]]; then
+	elif [[ ! -s $r_local_pathfile ]]; then
 		# Standard QPKG `.uninstall.sh` was not found, so can't continue with uninstallation (maybe force this instead with `rm -r` ?).
 
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$(FormatFileName '.uninstall.sh') not found"
@@ -10744,7 +10758,7 @@ _QPKG:uninstall_()
 	DebugAsProc "uninstalling $(FormatPackageName)"
 
 	local a='UNINSTALL_QPKG=true '
-	local -r r_log_pathfile=$r_log_path/$qpkg_name.$r_uninstall_log_file
+	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_uninstall_log_file
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 
 	Executer "$a /bin/sh \"$r_local_pathfile\"" "$r_log_pathfile" log:failure-only
@@ -10753,7 +10767,7 @@ _QPKG:uninstall_()
 	if [[ $z -eq 0 ]]; then
 		# WARNING: beware of `qpkg_cli --remove`. It removes the QPKG installation path around 10-20 seconds after execution. If sherpa has moved-on and starts an install, `qpkg_cli` will remove the newly created QPKG installation path partway through the installation. So, check if QPKG is to be installed again. If-so, don't use `qpkg_cli --remove`.
 
-		[[ -e /sbin/qpkg_cli ]] && ! QPKGs-ACinstall-to.Exist "$qpkg_name" && /sbin/qpkg_cli --remove "$qpkg_name" &> /dev/null
+		[[ -x /sbin/qpkg_cli ]] && ! QPKGs-ACinstall-to.Exist "$qpkg_name" && /sbin/qpkg_cli --remove "$qpkg_name" &> /dev/null
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 		/sbin/rmcfg "$qpkg_name" -f /etc/config/qpkg.conf
 		DebugAsDone 'removed icon information from App Center'
@@ -10820,7 +10834,7 @@ _QPKG:activate_()
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file undefined'
 		MarkActionForkAsSkippedError
 		z=4
-	elif [[ ! -e $r_local_pathfile ]]; then
+	elif [[ ! -s $r_local_pathfile ]]; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file not found'
 		MarkActionForkAsSkippedError
 		z=4
@@ -10831,7 +10845,7 @@ _QPKG:activate_()
 	DebugAsProc "activating $(FormatPackageName)"
 
 	local a=''
-	local -r r_log_pathfile=$r_log_path/$qpkg_name.$r_activate_log_file
+	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_activate_log_file
 	local timeout=''
 	IsOsCanQpkgTimeout && timeout='-t '$r_qpkg_start_timeout_seconds
 
@@ -10919,7 +10933,7 @@ _QPKG:reactivate_()
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file undefined'
 		MarkActionForkAsSkippedError
 		z=4
-	elif [[ ! -e $r_local_pathfile ]]; then
+	elif [[ ! -s $r_local_pathfile ]]; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file not found'
 		MarkActionForkAsSkippedError
 		z=4
@@ -10930,7 +10944,7 @@ _QPKG:reactivate_()
 	DebugAsProc "reactivating $(FormatPackageName)"
 
 	local a=''
-	local -r r_log_pathfile=$r_log_path/$qpkg_name.$r_reactivate_log_file
+	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_reactivate_log_file
 	local timeout=''
 	IsOsCanQpkgTimeout && timeout='-t '$r_qpkg_restart_timeout_seconds
 
@@ -11010,7 +11024,7 @@ _QPKG:deactivate_()
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file undefined'
 		MarkActionForkAsSkippedError
 		z=4
-	elif [[ ! -e $r_local_pathfile ]]; then
+	elif [[ ! -s $r_local_pathfile ]]; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file not found'
 		MarkActionForkAsSkippedError
 		z=4
@@ -11019,7 +11033,7 @@ _QPKG:deactivate_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	local a=''
-	local -r r_log_pathfile=$r_log_path/$qpkg_name.$r_deactivate_log_file
+	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_deactivate_log_file
 	local timeout=''
 	IsOsCanQpkgTimeout && timeout='-t '$r_qpkg_stop_timeout_seconds
 
@@ -11104,7 +11118,7 @@ _QPKG:enable_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	local -r r_log_pathfile=$r_log_path/$qpkg_name.$r_enable_log_file
+	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_enable_log_file
 	local timeout=''
 	IsOsCanQpkgTimeout && timeout='-t '$r_qpkg_enable_timeout_seconds
 
@@ -11166,7 +11180,7 @@ _QPKG:disable_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	local -r r_log_pathfile=$r_log_path/$qpkg_name.$r_disable_log_file
+	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_disable_log_file
 	local timeout=''
 	IsOsCanQpkgTimeout && timeout='-t '$r_qpkg_disable_timeout_seconds
 
@@ -11230,7 +11244,7 @@ _QPKG:enableau_()
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file undefined'
 		MarkActionForkAsSkippedError
 		z=4
-	elif [[ ! -e $r_local_pathfile ]]; then
+	elif [[ ! -s $r_local_pathfile ]]; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file not found'
 		MarkActionForkAsSkippedError
 		z=4
@@ -11241,7 +11255,7 @@ _QPKG:enableau_()
 	DebugAsProc "enabling auto-update $(FormatPackageName)"
 
 	local a=''
-	local -r r_log_pathfile=$r_log_path/$qpkg_name.$r_enableau_log_file
+	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_enableau_log_file
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 
 	Executer "$a \"$r_local_pathfile\" enable-auto-update" "$r_log_pathfile" log:failure-only
@@ -11310,7 +11324,7 @@ _QPKG:disableau_()
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file undefined'
 		MarkActionForkAsSkippedError
 		z=4
-	elif [[ ! -e $r_local_pathfile ]]; then
+	elif [[ ! -s $r_local_pathfile ]]; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file not found'
 		MarkActionForkAsSkippedError
 		z=4
@@ -11321,7 +11335,7 @@ _QPKG:disableau_()
 	DebugAsProc "disabling auto-update $(FormatPackageName)"
 
 	local a=''
-	local -r r_log_pathfile=$r_log_path/$qpkg_name.$r_disableau_log_file
+	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_disableau_log_file
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 
 	Executer "$a \"$r_local_pathfile\" disable-auto-update" "$r_log_pathfile" log:failure-only
@@ -11386,7 +11400,7 @@ _QPKG:backup_()
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file undefined'
 		MarkActionForkAsSkippedError
 		z=4
-	elif [[ ! -e $r_local_pathfile ]]; then
+	elif [[ ! -s $r_local_pathfile ]]; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file not found'
 		MarkActionForkAsSkippedError
 		z=4
@@ -11397,7 +11411,7 @@ _QPKG:backup_()
 	DebugAsProc "backing-up $(FormatPackageName) configuration"
 
 	local a=''
-	local -r r_log_pathfile=$r_log_path/$qpkg_name.$r_backup_log_file
+	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_backup_log_file
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 
 	Executer "$a \"$r_local_pathfile\" backup" "$r_log_pathfile" log:failure-only
@@ -11474,7 +11488,7 @@ _QPKG:restore_()
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file undefined'
 		MarkActionForkAsSkippedError
 		z=4
-	elif [[ ! -e $r_local_pathfile ]]; then
+	elif [[ ! -s $r_local_pathfile ]]; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file not found'
 		MarkActionForkAsSkippedError
 		z=4
@@ -11485,7 +11499,7 @@ _QPKG:restore_()
 	DebugAsProc "restoring $(FormatPackageName) configuration"
 
 	local a=''
-	local -r r_log_pathfile=$r_log_path/$qpkg_name.$r_restore_log_file
+	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_restore_log_file
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 
 	Executer "$a \"$r_local_pathfile\" restore" "$r_log_pathfile" log:failure-only
@@ -11551,7 +11565,7 @@ _QPKG:clean_()
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file undefined'
 		MarkActionForkAsSkippedError
 		z=4
-	elif [[ ! -e $r_local_pathfile ]]; then
+	elif [[ ! -s $r_local_pathfile ]]; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file not found'
 		MarkActionForkAsSkippedError
 		z=4
@@ -11562,7 +11576,7 @@ _QPKG:clean_()
 	DebugAsProc "cleaning $(FormatPackageName)"
 
 	local a=''
-	local -r r_log_pathfile=$r_log_path/$qpkg_name.$r_clean_log_file
+	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_clean_log_file
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 
 	Executer "$a \"$r_local_pathfile\" clean" "$r_log_pathfile" log:failure-only
@@ -11631,7 +11645,7 @@ _QPKG:sign_()
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkippedOk
 		z=2
-	elif [[ ! -e $r_cert_db_pathfile ]]; then
+	elif [[ ! -s $r_cert_db_pathfile ]]; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sa "$(GetOsName) QPKG certificate database unavailable, no further signing will occur"
 		MarkActionForkAsSkippedAbort
 		z=3
@@ -11734,7 +11748,7 @@ _QPKG:unsign_()
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
 		MarkActionForkAsSkippedOk
 		z=2
-	elif [[ ! -e $r_cert_db_pathfile ]]; then
+	elif [[ ! -s $r_cert_db_pathfile ]]; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sa "$(GetOsName) QPKG certificate database unavailable, no further unsigning will occur"
 		MarkActionForkAsSkippedAbort
 		z=3
@@ -11812,7 +11826,7 @@ ClearQpkgInstalledAppCenterNotifier()
 
 	# KLUDGE: `clean` QTS 4.5.1+ App Center notifier status.
 
-	[[ -e /sbin/qpkg_cli ]] && /sbin/qpkg_cli --cancel "$qpkg_name"
+	[[ -x /sbin/qpkg_cli ]] && /sbin/qpkg_cli --cancel "$qpkg_name"
 
 	IsValidQpkgInstalled || return
 
@@ -11830,7 +11844,7 @@ LogQpkgServiceResult()
 	# Inputs: (global)
 	#	$qpkg_name
 
-	local a=$r_qpkg_service_results_path/$qpkg_name.log
+	local a=$r_qpkg_service_result_path/$qpkg_name.log
 
 	if ! local b=$(GetQpkgServiceResult); then
 		DebugAsWarn "unable to get status of $(FormatPackageName) service. It may be a non-sherpa package, or a sherpa package earlier than 200816c that doesn't support service results."
@@ -11840,7 +11854,7 @@ LogQpkgServiceResult()
 
 	case $b in
 		failed)
-			if [[ -e $a ]]; then
+			if [[ -s $a ]]; then
 				DebugAsError "$(FormatPackageName) service action failed. Check $(FormatFileName "$a") for more information"
 				AddExtLogToSessLog "$a"
 			else
@@ -12696,11 +12710,10 @@ GetQpkgServiceAction()
 	#	$? = 0 (found), !0 (not-found)
 
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
-	local b=''
-	[[ -e $r_qpkg_service_results_path/$a.action ]] && b=$(< $r_qpkg_service_results_path/${a}.action)
+	local b=$r_qpkg_service_result_path/$a.action
 
-	if [[ -n $b ]]; then
-		printf '%s' "$b"
+	if [[ -s $b ]]; then
+		printf '%s' "$(< $b)"
 	else
 		printf not-found
 	fi
@@ -12721,11 +12734,10 @@ GetQpkgServiceResult()
 	#	$? = 0 (found), !0 (not-found)
 
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
-	local b=''
-	[[ -e $r_qpkg_service_results_path/$a.result ]] && b=$(< $r_qpkg_service_results_path/${a}.result)
+	local b=$r_qpkg_service_result_path/$a.result
 
-	if [[ -n $b ]]; then
-		printf '%s' "$b"
+	if [[ -s $b ]]; then
+		printf '%s' "$(< $b)"
 	else
 		printf not-found
 	fi
@@ -13043,7 +13055,7 @@ IsOsQNAP()
 
 	# Is this a QNAP NAS?
 
-	[[ -e /etc/init.d/functions ]]
+	[[ -s /etc/init.d/functions ]]
 
 	}
 
@@ -13145,7 +13157,7 @@ IsOsCanUnofficialPackages()
 IsOsCanSudo()
 	{
 
-	[[ -e /usr/bin/sudo ]]
+	[[ -x /usr/bin/sudo ]]
 
 	}
 
@@ -13173,7 +13185,7 @@ IsOsCanAutowidthTableColumns()
 	# Inputs: (global)
 	#	$r_gnu_awk_cmd
 
-	[[ -e $r_gnu_awk_cmd ]]
+	[[ -x $r_gnu_awk_cmd ]]
 
 	}
 
@@ -14064,7 +14076,7 @@ IsQpkgSigned()
 	# Output: (local)
 	#	$? = true/false
 
-	[[ -n $r_cert_db_pathfile && -e $r_cert_db_pathfile ]] || return
+	[[ -s $r_cert_db_pathfile ]] || return
 
 	# https://pynative.com/python-sqlite-select-from-table/
 
@@ -14131,7 +14143,7 @@ IsAnsiStrippingSupported()
 
 	if IsOsSedExtRegexSupported; then
 		true
-	elif [[ -e /opt/bin/sed && -L /opt/etc/passwd ]]; then				# Try to ensure Entware is active first.
+	elif [[ -x /opt/bin/sed && -L /opt/etc/passwd ]]; then				# Try to ensure Entware is active first.
 		true
 	else
 		false
@@ -14395,15 +14407,17 @@ PidLogger()																# devdebug
 	#	$3 = PPID.
 	#	$4 = command string.
 
+	local a=/share/Public/PidLogger.log									# devdebug
+
 	if [[ -z ${1:-} ]]; then											# devdebug
-		echo >> /var/log/sherpa/pids/PidLogger.log						# devdebug
+		echo >> "$a"													# devdebug
 
 		return															# devdebug
 	fi																	# devdebug
 
-	printf "[%s] stage: '%-20s' ppid: '%-5s' pid: '%-5s' cmd: '%s'\n" "$(date)" "$1" "$3" "$2" "$4" >> /var/log/sherpa/pids/PidLogger.log # devdebug
-# printf "[%s] stage: '%-20s' pid: '%-5s' cmdline: '%s'\n" "$(date)" "$1" "$2" "$(tr '\0' ' ' < /proc/$2/cmdline)" >> /var/log/sherpa/pids/PidLogger-pid-$2.log # devdebug
-# printf "[%s] stage: '%-20s' ppid: '%-5s' cmdline: '%s'\n" "$(date)" "$1" "$3" "$(tr '\0' ' ' < /proc/$3/cmdline)" >> /var/log/sherpa/pids/PidLogger-pid-$3.log # devdebug
+	printf "[%s] stage: '%-20s' ppid: '%-5s' pid: '%-5s' cmd: '%s'\n" "$(date)" "$1" "$3" "$2" "$4" >> "$a" # devdebug
+# printf "[%s] stage: '%-20s' pid: '%-5s' cmdline: '%s'\n" "$(date)" "$1" "$2" "$(tr '\0' ' ' < /proc/$2/cmdline)" >> $r_sys_log_path/sherpa/pids/PidLogger-pid-$2.log # devdebug
+# printf "[%s] stage: '%-20s' ppid: '%-5s' cmdline: '%s'\n" "$(date)" "$1" "$3" "$(tr '\0' ' ' < /proc/$3/cmdline)" >> $r_sys_log_path/sherpa/pids/PidLogger-pid-$3.log # devdebug
 
 	}																	# devdebug
 
@@ -14456,7 +14470,7 @@ Executer()
 		z=$?
 	fi
 
-	if [[ -e $r_log_pathfile ]]; then
+	if [[ -s $r_log_pathfile ]]; then
 		ShowAsResultAndStdout "$z" "$(< "$r_log_pathfile")" >> "$2"
 
 		if false; then													# devdebug
@@ -15358,7 +15372,7 @@ FuncForkInit()
 
 	# Inputs: (global)
 	#	$pidfile
-	#	$r_action_logs_path
+	#	$r_action_log_path
 	#	$session_active_log_pathfile
 
 	# Outputs: (global)
@@ -15372,7 +15386,7 @@ FuncForkInit()
 	# Redirect debug output to a temporary log, then add it to session log before exiting. This will keep action log lines in-order.
 
 	orig_session_active_log_pathfile=$session_active_log_pathfile
-	session_active_log_pathfile=$(/bin/mktemp "$r_action_logs_path"/"${FUNCNAME[1]}"_XXXXXX)
+	session_active_log_pathfile=$(/bin/mktemp "$r_action_log_path"/"${FUNCNAME[1]}"_XXXXXX)
 
 	local -r r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
 	local var_safe_name=${r_var_name//[.-]/_}
@@ -16486,7 +16500,7 @@ Tableise()
 	#	$r_gnu_awk_cmd
 	#	$r_report_column_spacing
 
-	[[ -e $r_gnu_awk_cmd ]] || return
+	[[ -x $r_gnu_awk_cmd ]] || return
 
 	$r_gnu_awk_cmd '{
 		nf[NR]=NF
@@ -16523,7 +16537,7 @@ StripANSICodes()
 
 	if IsOsSedExtRegexSupported; then
 		echo -en "${1:-}" | /bin/sed -r 's/\x1b\[[0-9;]*m//g'			# https://superuser.com/a/380778
-	elif [[ -e /opt/bin/sed && -L /opt/etc/passwd ]]; then				# Try to ensure Entware is active first.
+	elif [[ -x /opt/bin/sed && -L /opt/etc/passwd ]]; then				# Try to ensure Entware is active first.
 		echo -en "${1:-}" | /opt/bin/sed -r 's/\x1b\[[0-9;]*m//g'		# https://superuser.com/a/380778
 	else
 		echo -en "${1:-}"												# Can't strip, so pass thru original message unaltered.
@@ -16777,7 +16791,7 @@ HideKeystrokes()
 	#	$r_gnu_stty_cmd
 	#	$useropt_verbose
 
-	[[ ${useropt_verbose:=false} = false && -n ${r_gnu_stty_cmd:-} && -e $r_gnu_stty_cmd ]] && IsInTerminal && $r_gnu_stty_cmd '-echo'
+	[[ ${useropt_verbose:=false} = false && -n ${r_gnu_stty_cmd:-} && -x $r_gnu_stty_cmd ]] && IsInTerminal && $r_gnu_stty_cmd '-echo'
 
 	}
 
@@ -16787,7 +16801,7 @@ ShowKeystrokes()
 	# Inputs: (global)
 	#	$r_gnu_stty_cmd
 
-	[[ -n ${r_gnu_stty_cmd:-} && -e $r_gnu_stty_cmd ]] && IsInTerminal && $r_gnu_stty_cmd 'echo'
+	[[ -n ${r_gnu_stty_cmd:-} && -x $r_gnu_stty_cmd ]] && IsInTerminal && $r_gnu_stty_cmd 'echo'
 
 	}
 
@@ -16808,7 +16822,7 @@ sleep()
 
 	if IsOsDecimalSleepSecondsSupported; then
 		/bin/sleep "$n"
-	elif [[ -e $r_gnu_sleep_cmd && -L /opt/etc/passwd ]]; then				# Try to ensure Entware is active first.
+	elif [[ -x $r_gnu_sleep_cmd && -L /opt/etc/passwd ]]; then				# Try to ensure Entware is active first.
 		$r_gnu_sleep_cmd "$n"
 	else
 		/bin/sleep "$((${n%.*}+1))"											# Ensure decimal seconds are rounded-up to next integer.
