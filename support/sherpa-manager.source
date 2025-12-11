@@ -10279,7 +10279,8 @@ _QPKG:reassign_()
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 		MarkActionForkAsDoneOk
 	else
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
+		local b=$(GetQpkgServiceExplanation) || b=$z
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		MarkActionForkAsDoneError
 	fi
 
@@ -10510,7 +10511,8 @@ _QPKG:install_()
 		MarkActionForkAsDoneOk
 		z=0		# Remap to zero.
 	else
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
+		local b=$(GetQpkgServiceExplanation) || b=$z
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 #		IsOsCanManageSignedPackages && IsQpkgSigned && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
 		MarkActionForkAsDoneError
 	fi
@@ -10593,7 +10595,8 @@ _QPKG:reinstall_()
 		MarkActionForkAsDoneOk
 		z=0		# Remap to zero.
 	else
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
+		local b=$(GetQpkgServiceExplanation) || b=$z
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		MarkActionForkAsDoneError
 	fi
 
@@ -10688,7 +10691,8 @@ _QPKG:upgrade_()
 		MarkActionForkAsDoneOk
 		z=0		# Remap to zero.
 	else
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
+		local b=$(GetQpkgServiceExplanation) || b=$z
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		MarkActionForkAsDoneError
 	fi
 
@@ -10781,7 +10785,8 @@ _QPKG:uninstall_()
 		SendPackageStateChange ISNTactive
 		MarkActionForkAsDoneOk
 	else
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
+		local b=$(GetQpkgServiceExplanation) || b=$z
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		MarkActionForkAsDoneError
 	fi
 
@@ -10877,7 +10882,8 @@ _QPKG:activate_()
 		SendPackageStateChange ISactive
 		MarkActionForkAsDoneOk
 	else
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
+		local b=$(GetQpkgServiceExplanation) || b=$z
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		SendPackageStateChange ISNTactive
 		MarkActionForkAsDoneError
 	fi
@@ -10969,7 +10975,8 @@ _QPKG:reactivate_()
 		SendParentCommand "QPKGs-ACactivate-to:Remove $qpkg_name"
 		MarkActionForkAsDoneOk
 	else
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
+		local b=$(GetQpkgServiceExplanation) || b=$z
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		MarkActionForkAsDoneError
 	fi
 
@@ -11067,7 +11074,8 @@ _QPKG:deactivate_()
 		SendPackageStateChange ISNTactive
 		MarkActionForkAsDoneOk
 	else
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
+		local b=$(GetQpkgServiceExplanation) || b=$z
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		MarkActionForkAsDoneError
 	fi
 
@@ -11268,7 +11276,8 @@ _QPKG:enableau_()
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 		MarkActionForkAsDoneOk
 	else
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
+		local b=$(GetQpkgServiceExplanation) || b=$z
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		MarkActionForkAsDoneError
 	fi
 
@@ -11348,7 +11357,8 @@ _QPKG:disableau_()
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 		MarkActionForkAsDoneOk
 	else
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
+		local b=$(GetQpkgServiceExplanation) || b=$z
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		MarkActionForkAsDoneError
 	fi
 
@@ -11425,7 +11435,8 @@ _QPKG:backup_()
 		SendPackageStateChange ISbackedup
 		MarkActionForkAsDoneOk
 	else
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
+		local b=$(GetQpkgServiceExplanation) || b=$z
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		SendParentCommand "QPKGs-ACuninstall-to:Remove $qpkg_name"
 		SendParentCommand "QPKGs-ACrestore-to:Remove $qpkg_name"
 		MarkActionForkAsDoneError
@@ -11513,7 +11524,8 @@ _QPKG:restore_()
 #		SendPackageStateChange ISrestored			# TODO: this doesn't yet exist as an object.
 		MarkActionForkAsDoneOk
 	else
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
+		local b=$(GetQpkgServiceExplanation) || b=$z
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		MarkActionForkAsDoneError
 	fi
 
@@ -11596,7 +11608,8 @@ _QPKG:clean_()
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 		MarkActionForkAsDoneOk
 	else
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
+		local b=$(GetQpkgServiceExplanation) || b=$z
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		MarkActionForkAsDoneError
 		# TODO: if debug mode, save action log to session log.
 	fi
@@ -12714,8 +12727,36 @@ GetQpkgServiceAction()
 
 	if [[ -s $b ]]; then
 		printf '%s' "$(< $b)"
+		return 0
 	else
 		printf not-found
+		return 1
+	fi
+
+	}
+
+GetQpkgServiceExplanation()
+	{
+
+	# Inputs: (local)
+	#	$1 (optional) = QPKG name.
+
+	# Inputs: (global)
+	#	$qpkg_name (default)
+
+	# Outputs: (local)
+	#	$stdout = previous action explanation requested.
+	#	$? = 0 (found), !0 (not-found)
+
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
+	local b=$r_qpkg_service_result_path/$a.explanation
+
+	if [[ -s $b ]]; then
+		printf '%s' "$(< $b)"
+		return 0
+	else
+		printf not-found
+		return 1
 	fi
 
 	}
@@ -12738,8 +12779,10 @@ GetQpkgServiceResult()
 
 	if [[ -s $b ]]; then
 		printf '%s' "$(< $b)"
+		return 0
 	else
 		printf not-found
+		return 1
 	fi
 
 	}
