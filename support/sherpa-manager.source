@@ -10112,7 +10112,7 @@ _QPKG:status_()
 	local action=status
 	local -i z=0
 
-	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
+	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
 	if IsNtValidQpkgInstalled; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
@@ -10196,7 +10196,7 @@ _QPKG:rebuild_()
 	local action=meta-rebuild
 	local -i z=0
 
-	# Reactive checks performed just before the action is carried-out. NOTE: predictive checks are permitted here for time-saving purposes (don't run future actions if this action isn't permitted).
+	# Reactive checks performed just-before the action is carried-out. NOTE: predictive checks are permitted here for time-saving purposes (don't run future actions if this action isn't permitted).
 
 	if IsQpkgProhibited; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'prohibited package'
@@ -10250,7 +10250,7 @@ _QPKG:reassign_()
 	local action=reassign
 	local -i z=0
 
-	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
+	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
 	if IsNtValidQpkgInstalled; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
@@ -10279,7 +10279,8 @@ _QPKG:reassign_()
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 		MarkActionForkAsDoneOk
 	else
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
+		local b=$(GetQpkgServiceExplanation) || b=$z
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		MarkActionForkAsDoneError
 	fi
 
@@ -10313,7 +10314,7 @@ _QPKG:download_()
 				local -r r_local_filename=$(/usr/bin/basename "$r_local_pathfile")
 	local -i z=0
 
-	# Reactive checks performed just before the action is carried-out. NOTE: predictive checks are permitted here for time-saving purposes (don't run future actions if this action isn't permitted).
+	# Reactive checks performed just-before the action is carried-out. NOTE: predictive checks are permitted here for time-saving purposes (don't run future actions if this action isn't permitted).
 
 	if IsQpkgProhibited; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'prohibited package'
@@ -10432,7 +10433,7 @@ _QPKG:install_()
 	local -r r_local_pathfile=$(GetQpkgDbPathFilename)
 	local -i z=0
 
-	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
+	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
 	if IsQpkgInstalled; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "already installed, please use 'reinstall' instead"
@@ -10510,7 +10511,8 @@ _QPKG:install_()
 		MarkActionForkAsDoneOk
 		z=0		# Remap to zero.
 	else
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
+		local b=$(GetQpkgServiceExplanation) || b=$z
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 #		IsOsCanManageSignedPackages && IsQpkgSigned && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
 		MarkActionForkAsDoneError
 	fi
@@ -10544,7 +10546,7 @@ _QPKG:reinstall_()
 	local -r r_local_pathfile=$(GetQpkgDbPathFilename)
 	local -i z=0
 
-	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
+	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
 	if IsNtQpkgInstalled; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "not already installed, please use 'install' instead"
@@ -10593,7 +10595,8 @@ _QPKG:reinstall_()
 		MarkActionForkAsDoneOk
 		z=0		# Remap to zero.
 	else
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
+		local b=$(GetQpkgServiceExplanation) || b=$z
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		MarkActionForkAsDoneError
 	fi
 
@@ -10625,7 +10628,7 @@ _QPKG:upgrade_()
 	local -r r_local_pathfile=$(GetQpkgDbPathFilename)
 	local -i z=0
 
-	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
+	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
 	if IsNtValidQpkgInstalled; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
@@ -10688,7 +10691,8 @@ _QPKG:upgrade_()
 		MarkActionForkAsDoneOk
 		z=0		# Remap to zero.
 	else
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
+		local b=$(GetQpkgServiceExplanation) || b=$z
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		MarkActionForkAsDoneError
 	fi
 
@@ -10720,7 +10724,7 @@ _QPKG:uninstall_()
 	local -r r_local_pathfile=$(GetQpkgInstalledPath)/.uninstall.sh
 	local -i z=0
 
-	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
+	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
 	if IsNtValidQpkgInstalled; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
@@ -10781,7 +10785,8 @@ _QPKG:uninstall_()
 		SendPackageStateChange ISNTactive
 		MarkActionForkAsDoneOk
 	else
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
+		local b=$(GetQpkgServiceExplanation) || b=$z
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		MarkActionForkAsDoneError
 	fi
 
@@ -10812,7 +10817,7 @@ _QPKG:activate_()
 	local -r r_local_pathfile=$(GetQpkgServicePathFile)
 	local -i z=0
 
-	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
+	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
 	if IsNtValidQpkgInstalled; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
@@ -10877,7 +10882,8 @@ _QPKG:activate_()
 		SendPackageStateChange ISactive
 		MarkActionForkAsDoneOk
 	else
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
+		local b=$(GetQpkgServiceExplanation) || b=$z
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		SendPackageStateChange ISNTactive
 		MarkActionForkAsDoneError
 	fi
@@ -10911,7 +10917,7 @@ _QPKG:reactivate_()
 	local -r r_local_pathfile=$(GetQpkgServicePathFile)
 	local -i z=0
 
-	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
+	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
 	if IsNtValidQpkgInstalled; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
@@ -10969,7 +10975,8 @@ _QPKG:reactivate_()
 		SendParentCommand "QPKGs-ACactivate-to:Remove $qpkg_name"
 		MarkActionForkAsDoneOk
 	else
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
+		local b=$(GetQpkgServiceExplanation) || b=$z
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		MarkActionForkAsDoneError
 	fi
 
@@ -11002,7 +11009,7 @@ _QPKG:deactivate_()
 	local -r r_local_pathfile=$(GetQpkgServicePathFile)
 	local -i z=0
 
-	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
+	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
 	if IsNtValidQpkgInstalled; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
@@ -11067,7 +11074,8 @@ _QPKG:deactivate_()
 		SendPackageStateChange ISNTactive
 		MarkActionForkAsDoneOk
 	else
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
+		local b=$(GetQpkgServiceExplanation) || b=$z
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		MarkActionForkAsDoneError
 	fi
 
@@ -11096,7 +11104,7 @@ _QPKG:enable_()
 	local action=enable
 	local -i z=0
 
-	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
+	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
 	if IsNtValidQpkgInstalled; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
@@ -11154,7 +11162,7 @@ _QPKG:disable_()
 	local action=disable
 	local -i z=0
 
-	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
+	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
 	if IsNtValidQpkgInstalled; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
@@ -11218,7 +11226,7 @@ _QPKG:enableau_()
 	local -r r_local_pathfile=$(GetQpkgServicePathFile)
 	local -i z=0
 
-	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
+	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
 	if IsNtValidQpkgInstalled; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
@@ -11268,7 +11276,8 @@ _QPKG:enableau_()
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 		MarkActionForkAsDoneOk
 	else
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
+		local b=$(GetQpkgServiceExplanation) || b=$z
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		MarkActionForkAsDoneError
 	fi
 
@@ -11298,7 +11307,7 @@ _QPKG:disableau_()
 	local -r r_local_pathfile=$(GetQpkgServicePathFile)
 	local -i z=0
 
-	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
+	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
 	if IsNtValidQpkgInstalled; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
@@ -11348,7 +11357,8 @@ _QPKG:disableau_()
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 		MarkActionForkAsDoneOk
 	else
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
+		local b=$(GetQpkgServiceExplanation) || b=$z
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		MarkActionForkAsDoneError
 	fi
 
@@ -11378,7 +11388,7 @@ _QPKG:backup_()
 	local -r r_local_pathfile=$(GetQpkgServicePathFile)
 	local -i z=0
 
-	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
+	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
 	if IsNtValidQpkgInstalled; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
@@ -11425,7 +11435,8 @@ _QPKG:backup_()
 		SendPackageStateChange ISbackedup
 		MarkActionForkAsDoneOk
 	else
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
+		local b=$(GetQpkgServiceExplanation) || b=$z
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		SendParentCommand "QPKGs-ACuninstall-to:Remove $qpkg_name"
 		SendParentCommand "QPKGs-ACrestore-to:Remove $qpkg_name"
 		MarkActionForkAsDoneError
@@ -11457,7 +11468,7 @@ _QPKG:restore_()
 	local -r r_local_pathfile=$(GetQpkgServicePathFile)
 	local -i z=0
 
-	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
+	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
 	if IsNtValidQpkgInstalled; then
 		if IsQpkgBackupExist; then
@@ -11513,7 +11524,8 @@ _QPKG:restore_()
 #		SendPackageStateChange ISrestored			# TODO: this doesn't yet exist as an object.
 		MarkActionForkAsDoneOk
 	else
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
+		local b=$(GetQpkgServiceExplanation) || b=$z
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		MarkActionForkAsDoneError
 	fi
 
@@ -11543,7 +11555,7 @@ _QPKG:clean_()
 	local -r r_local_pathfile=$(GetQpkgServicePathFile)
 	local -i z=0
 
-	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
+	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
 	if IsNtValidQpkgInstalled; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
@@ -11596,7 +11608,8 @@ _QPKG:clean_()
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 		MarkActionForkAsDoneOk
 	else
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$z"
+		local b=$(GetQpkgServiceExplanation) || b=$z
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		MarkActionForkAsDoneError
 		# TODO: if debug mode, save action log to session log.
 	fi
@@ -11635,7 +11648,7 @@ _QPKG:sign_()
 	local action='"sign"'
 	local -i z=0
 
-	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
+	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
 	if ! IsOsCanManageSignedPackages; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "incompatible $(GetOsName) version"
@@ -11738,7 +11751,7 @@ _QPKG:unsign_()
 	local action='"unsign"'
 	local -i z=0
 
-	# Reactive checks performed just before the action is carried-out. There should be no predictive checks here.
+	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
 	if ! IsOsCanManageSignedPackages; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "incompatible $(GetOsName) version"
@@ -12714,8 +12727,36 @@ GetQpkgServiceAction()
 
 	if [[ -s $b ]]; then
 		printf '%s' "$(< $b)"
+		return 0
 	else
 		printf not-found
+		return 1
+	fi
+
+	}
+
+GetQpkgServiceExplanation()
+	{
+
+	# Inputs: (local)
+	#	$1 (optional) = QPKG name.
+
+	# Inputs: (global)
+	#	$qpkg_name (default)
+
+	# Outputs: (local)
+	#	$stdout = previous action explanation requested.
+	#	$? = 0 (found), !0 (not-found)
+
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
+	local b=$r_qpkg_service_result_path/$a.explanation
+
+	if [[ -s $b ]]; then
+		printf '%s' "$(< $b)"
+		return 0
+	else
+		printf not-found
+		return 1
 	fi
 
 	}
@@ -12738,8 +12779,10 @@ GetQpkgServiceResult()
 
 	if [[ -s $b ]]; then
 		printf '%s' "$(< $b)"
+		return 0
 	else
 		printf not-found
+		return 1
 	fi
 
 	}
