@@ -394,8 +394,8 @@ LoadDefaults()
 
 	# User-selectable flags.
 
-		useropt_check=false
 		useropt_debug=false
+		useropt_fix=false
 		useropt_help_abbreviations=false
 		useropt_help_actions=false
 		useropt_help_actions_all=false
@@ -715,7 +715,7 @@ LoadLists()
 
 	local action=''
 
-	for action in "${r_qpkg_actions[@]}" check debug downgrade update; do
+	for action in "${r_qpkg_actions[@]}" debug downgrade fix update; do
 		readonly r_"$(Lowercase "$action")"_log_file=$action.log
 	done
 
@@ -1074,7 +1074,7 @@ CheckTasks()
 	local group=''
 	local state=''
 
-	if [[ $useropt_check = true || $useropt_show_status = true ]]; then
+	if [[ $useropt_fix = true || $useropt_show_status = true ]]; then
 		build_extended_states=true
 	elif [[ $useropt_help_abbreviations = true || $useropt_show_backups = true || $useropt_show_dependencies = true || $useropt_show_features = true || $useropt_show_packages = true || $useropt_show_repos = true ]]; then
 		build_extended_states=true
@@ -1180,7 +1180,7 @@ CheckEnv()
 
 		# Decide if specific IPKs and PIPs should be installed/upgraded.
 
-		if [[ $useropt_check = true ]] || QPKGs-ACupgrade-to.Exist Entware; then
+		if [[ $useropt_fix = true ]] || QPKGs-ACupgrade-to.Exist Entware; then
 			ipks_install=true
 			ipks_upgrade=true
 			pips_install=true
@@ -1316,7 +1316,7 @@ AssignQpkgsToActions()
 	# Install independents for installed dependents.
 
 	for qpkg_name in $(GetQpkgsIsValidInstalled); do
-		if [[ $useropt_check = true ]] || QPKGs-ACactivate-to.Exist "$qpkg_name"; then
+		if [[ $useropt_fix = true ]] || QPKGs-ACactivate-to.Exist "$qpkg_name"; then
 			SetQpkgIndex
 
 			for prospect in $(GetQpkgDbDependencies); do
@@ -1505,7 +1505,7 @@ AssignQpkgsToActions()
 
 	# Check all packages.
 
-	if [[ $useropt_check = true ]]; then
+	if [[ $useropt_fix = true ]]; then
 		IsOsCanManageSignedPackages && QPKGs-ACsign-to:Add "$(GetQpkgsIsValidInstalled)"
 
 		for qpkg_name in $(QPKGs-GRdependent:Array); do
@@ -2135,7 +2135,7 @@ ParseManagementArgs()
 	#	$user_branch_value
 	#	$user_report_info_value
 	#	$user_terse_value
-	#	$useropt_check
+	#	$useropt_fix
 	#	$useropt_paste_log_last
 	#	$useropt_paste_log_tail
 
@@ -2163,23 +2163,23 @@ ParseManagementArgs()
 			potential_action=''
 
 			case $action in
-				check)
-					generate_show_report=true
-					get_qpkg_extended_states=true
-					requires_group=false
-					run_package_actions=true
-					user_action=$arg
-					useropt_check=true
-					;;
-				follow|paste|report-info|terse)
-					requires_group=true
-					user_action=$arg
-					;;
 				debug|verbose)
 					requires_group=false
 					user_action=$arg
 					EnableVerbose
 					EnableDebugToArchiveAndFile
+					;;
+				fix)
+					generate_show_report=true
+					get_qpkg_extended_states=true
+					requires_group=false
+					run_package_actions=true
+					user_action=$arg
+					useropt_fix=true
+					;;
+				follow|paste|report-info|terse)
+					requires_group=true
+					user_action=$arg
 					;;
 				reset)
 					DeleteSetting Git_Branch announce
@@ -2989,9 +2989,6 @@ MatchVerb()
 		backup|clean|@(dis|en)able|follow|help|list|paste|reassign|rebuild|reinstall|report-info|reset|restore|terse)	# NOTE: There should be no single characters in this list.
 			printf '%s' "$1"
 			;;
-		c|check)
-			printf check
-			;;
 		deactivate|stop)
 			printf deactivate
 			;;
@@ -3003,6 +3000,9 @@ MatchVerb()
 			;;
 		enable-auto-update)
 			printf enableau
+			;;
+		fix)
+			printf fix
 			;;
 		reactivate|restart)
 			printf reactivate
@@ -3291,6 +3291,11 @@ ShowArgSuggestions()
 					arg_problem=true
 					useropt_help_basic=false
 					;;
+				check)
+					DisplayAsProjSynExam "'check' has been replaced by 'fix'" fix
+					arg_problem=true
+					useropt_help_basic=false
+					;;
 				@(dis|en)able|false|off|no|on|true|yes)
 					DisplayAsProjSynExam "please provide a valid $(ShowAsSetting) before '$arg' like" "terse $arg"
 					arg_problem=true
@@ -3566,7 +3571,7 @@ _UpdateEntwarePackageList_()
 	#	$r_log_path
 	#	$r_opkg_cmd
 	#	$r_update_log_file
-	#	$useropt_check
+	#	$useropt_fix
 
 	# Outputs: (global)
 	#	$r_entware_package_list_uptodate
@@ -3583,7 +3588,7 @@ _UpdateEntwarePackageList_()
 
 	# If Entware package list was recently updated, don't update again.
 
-	if ! IsFileRecent "$r_external_packages_archive_pathfile" "$r_file_change_threshold_minutes" || [[ ! -f $r_external_packages_archive_pathfile || $useropt_check = true ]]; then
+	if ! IsFileRecent "$r_external_packages_archive_pathfile" "$r_file_change_threshold_minutes" || [[ ! -f $r_external_packages_archive_pathfile || $useropt_fix = true ]]; then
 		DebugAsProc "updating $(FormatPackageName Entware) package list"
 
 		Executer "$r_opkg_cmd update" "$r_action_log_path/Entware.$r_update_log_file" log:failure-only
@@ -3910,7 +3915,7 @@ IPKs:install()
 	#	$r_log_path
 	#	$r_prev_ipk_list_pathfile
 	#	$r_qpkg_name[]
-	#	$useropt_check
+	#	$useropt_fix
 	#	$useropt_terse
 	#	$useropt_verbose
 
@@ -3935,10 +3940,10 @@ IPKs:install()
 	IPKs-ACinstall-to:Init
 	IPKs-ACdownload-to:Init
 
-	if QPKGs-ACinstall-ok.Exist Entware || ([[ $useropt_check = true ]] && IsValidQpkgInstalled Entware); then
+	if QPKGs-ACinstall-ok.Exist Entware || ([[ $useropt_fix = true ]] && IsValidQpkgInstalled Entware); then
 		IPKs-ACinstall-to:Add "$r_essential_ipks"
 
-		if [[ -s $r_prev_ipk_list_pathfile && $useropt_check = false ]]; then		# Don't load previous IPK list during 'check'.
+		if [[ -s $r_prev_ipk_list_pathfile && $useropt_fix = false ]]; then		# Don't load previous IPK list during 'check'.
 			LoadIpkList
 			mv -f "$r_prev_ipk_list_pathfile" "$r_prev_ipk_list_pathfile.installing"
 		fi
@@ -4122,7 +4127,7 @@ PIPs:install()
 	#	$r_pip_cache_path
 	#	$r_pip_cmd
 	#	$r_prev_pip_list_pathfile
-	#	$useropt_check
+	#	$useropt_fix
 	#	$useropt_terse
 	#	$useropt_verbose
 
@@ -4142,10 +4147,10 @@ PIPs:install()
 	local -i total_count=0
 	local -i z=0
 
-	if [[ $useropt_check = true ]] || IPKs-ACinstall-ok.Exist python3-pip; then
+	if [[ $useropt_fix = true ]] || IPKs-ACinstall-ok.Exist python3-pip; then
 		PIPs-ACinstall-to:Add "$r_base_pips"
 
-		if [[ -s $r_prev_pip_list_pathfile && $useropt_check = false ]]; then		# Don't load previous PIP list during 'check'.
+		if [[ -s $r_prev_pip_list_pathfile && $useropt_fix = false ]]; then		# Don't load previous PIP list during 'check'.
 			LoadPipList
 			mv -f "$r_prev_pip_list_pathfile" "$r_prev_pip_list_pathfile.installing"
 		fi
