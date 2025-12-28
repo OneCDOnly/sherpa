@@ -938,12 +938,11 @@ DebugLogEnv()
 	DebugScript ok 'manager epoch' "$(ConvertAsSmartDate "$r_script_built_epoch")"
 	DebugScript ok 'objects epoch' "$(ConvertAsSmartDate "${r_objects_epoch:-not loaded}")"
 	DebugScript ok 'packages epoch' "$(ConvertAsSmartDate "${r_packages_epoch:-not loaded}")"
-	DebugScript ok 'logs path' "$r_log_path"
 
 	if ! [[ $package_release_version = testing ]]; then
-		DebugQpkg ok 'packages release' "$(ConvertAsSmartDate "$package_release_version")"
+		DebugQpkg ok 'package release' "$(ConvertAsSmartDate "$package_release_version")"
 	else
-		DebugQpkg warning 'packages release' "$package_release_version"
+		DebugQpkg warning 'package release' "$package_release_version"
 	fi
 
 	if IsOsCanUnofficialPackages; then
