@@ -567,7 +567,7 @@ LoadEnv()
 
 	# Ephemeral paths.
 
-		readonly r_temp_run_path=$r_sys_run_path/sherpa
+		readonly r_temp_run_path=$r_sys_run_path/sherpa.d
 			readonly r_action_counts_path=$r_temp_run_path/action/count
 			readonly r_async_procs_path=$r_temp_run_path/proc
 			readonly r_qpkg_states_path=$r_temp_run_path/qpkg/state
@@ -576,7 +576,7 @@ LoadEnv()
 				readonly r_report_flags_path=$r_temp_report_path/flag
 				readonly r_report_rows_path=$r_temp_report_path/row
 
-		readonly r_temp_log_path=$r_sys_log_path/sherpa
+		readonly r_temp_log_path=$r_sys_log_path/sherpa.d
 			readonly r_action_log_path=$r_temp_log_path/action/log
 				readonly r_action_times_path=$r_action_log_path/times
 			readonly r_report_path=$r_temp_log_path/report
