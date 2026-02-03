@@ -55,7 +55,7 @@ unstable_branch=unstable
 		sherpa_packages_static_release_asset_base_url=$sherpa_packages_base_url/releases/download/'$package_release_version'
 
 copyright_basic='Copyright (C) 2017-<?build_year?> OneCD'
-dont_edit_msg="Please don't edit this file directly, it has been programmatically built or modified with the '$(basename "$0")' script."
+dont_edit_msg="Please don't edit this file directly, it was built or modified programmatically with the '$(basename "$0")' script."
 email=one.cd.only@gmail.com
 
 management_debug_log_longest_string="  HARDWARE:                      CPU: Annapurna Labs Alpine AL314 Quad-core ARM Cortex-A15 CPU @ 1.70GHz"

@@ -567,7 +567,7 @@ LoadEnv()
 
 	# Ephemeral paths.
 
-		readonly r_temp_run_path=$r_sys_run_path/sherpa
+		readonly r_temp_run_path=$r_sys_run_path/sherpa.d
 			readonly r_action_counts_path=$r_temp_run_path/action/count
 			readonly r_async_procs_path=$r_temp_run_path/proc
 			readonly r_qpkg_states_path=$r_temp_run_path/qpkg/state
@@ -576,7 +576,7 @@ LoadEnv()
 				readonly r_report_flags_path=$r_temp_report_path/flag
 				readonly r_report_rows_path=$r_temp_report_path/row
 
-		readonly r_temp_log_path=$r_sys_log_path/sherpa
+		readonly r_temp_log_path=$r_sys_log_path/sherpa.d
 			readonly r_action_log_path=$r_temp_log_path/action/log
 				readonly r_action_times_path=$r_action_log_path/times
 			readonly r_report_path=$r_temp_log_path/report
@@ -938,12 +938,11 @@ DebugLogEnv()
 	DebugScript ok 'manager epoch' "$(ConvertAsSmartDate "$r_script_built_epoch")"
 	DebugScript ok 'objects epoch' "$(ConvertAsSmartDate "${r_objects_epoch:-not loaded}")"
 	DebugScript ok 'packages epoch' "$(ConvertAsSmartDate "${r_packages_epoch:-not loaded}")"
-	DebugScript ok 'logs path' "$r_log_path"
 
 	if ! [[ $package_release_version = testing ]]; then
-		DebugQpkg ok 'packages release' "$(ConvertAsSmartDate "$package_release_version")"
+		DebugQpkg ok 'package release' "$(ConvertAsSmartDate "$package_release_version")"
 	else
-		DebugQpkg warning 'packages release' "$package_release_version"
+		DebugQpkg warning 'package release' "$package_release_version"
 	fi
 
 	if IsOsCanUnofficialPackages; then
