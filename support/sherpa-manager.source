@@ -6259,8 +6259,6 @@ ShowHelpActions()
 		DisplayAsProjSynIndentExam 'activate these QPKGs (this will upgrade internal applications where-supported)' "activate $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam '' "start $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam 'backup these application configurations to the backup location' "backup $(ShowAsPackages)"
-		DisplayAsProjSynIndentExam 'check all application dependencies are installed' check
-		DisplayAsProjSynIndentExam '' c
 		DisplayAsProjSynIndentExam 'clean local repository files from these QPKGs (your config is safe, application files will be downloaded again)' "clean $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam 'deactivate these QPKGs' "deactivate $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam '' "stop $(ShowAsPackages)"
@@ -6270,6 +6268,7 @@ ShowHelpActions()
 		DisplayAsProjSynIndentExam 'disable auto-updating the application on package activation (where-supported)' "disable-auto-update $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam 'enable these QPKGs. Packages must be enabled before they can be activated' "enable $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam 'enable auto-updating the application on package activation (where-supported)' "enable-auto-update $(ShowAsPackages)"
+		DisplayAsProjSynIndentExam 'ensure all required application dependencies are installed' fix
 		DisplayAsProjSynIndentExam 'install these QPKGs' "install $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam '' "add $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam 'show application backup files' 'show backups'
@@ -6583,10 +6582,9 @@ ShowHelpProblems()
 		ShowHelpBasic
 		DisplayAsHelpTitle 'usage examples for dealing with problems:'
 		DisplayAsProjSynIndentExam 'activate these QPKGs' "activate $(ShowAsPackages)"
-		DisplayAsProjSynIndentExam 'ensure all dependencies exist for installed QPKGs' check
-		DisplayAsProjSynIndentExam '' c
 		DisplayAsProjSynIndentExam 'clear local repository files from these QPKGs' "clean $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam 'deactivate these QPKGs' "deactivate $(ShowAsPackages)"
+		DisplayAsProjSynIndentExam 'ensure all required application dependencies are installed' fix
 		DisplayAsProjSynIndentExam "increase the default 'qpkg_service' timeouts from 3 minutes to 30 minutes" 'install increasetimeouts'
 		DisplayAsProjSynIndentExam "view only the most recent $(ShowAsTitleName) session log" last
 		DisplayAsProjSynIndentExam '' l
