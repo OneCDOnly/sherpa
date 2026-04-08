@@ -1210,13 +1210,13 @@ CheckEnv()
 					fi
 				fi
 
-#				# These must be downgraded on ARMv7 as 2.45.2 versions can't clone a repo.
-#				#	https://github.com/Entware/Entware/issues/1072
-#				#	NOTE: this issue has been fixed.
+				# These must be downgraded on ARMv7 as 2.45.2 versions can't clone a repo.
+				#	https://github.com/Entware/Entware/issues/1072
+				#	NOTE: this issue has been fixed.
 
 #				target_packages='git git-http'
 
-#				# Assume first package version is same as remaining package versions.
+				# Assume first package version is same as remaining package versions.
 
 #				installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${target_packages%% *} *" | head -n1 | cut -d' ' -f3 | cut -d'-' -f1)
 
@@ -1229,18 +1229,38 @@ CheckEnv()
 #				fi
 		esac
 
-#		# Downgrade Transmission as 4.0.6 has an undefined issue.
-#		#	https://github.com/OneCDOnly/sherpa/issues/306
+#		case $r_nas_qpkg_arch in
+#			a64|a41|i64)
+				# These must be downgraded as 2.50.1 versions are inoperative.
+				#	https://github.com/Entware/Entware/issues/1241
+#
+#				target_packages='git git-http'
+#
+				# Assume first package version is same as remaining package versions.
+#
+#				installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${target_packages%% *} *" | head -n1 | cut -d' ' -f3 | cut -d'-' -f1)
+#
+#				if [[ ${installed_version//.} -gt 2462 ]]; then
+#					ipks_downgrade=true
+#					ShowAsNote "git IPKs will be downgraded back to working versions"
+#					IPKs-ACdowngrade-to:Add "$target_packages"
+#				else
+#					IPKs-ACdowngrade-sk:Add "$target_packages"
+#				fi
+#		esac
+
+		# Downgrade Transmission as 4.0.6 has an undefined issue.
+		#	https://github.com/OneCDOnly/sherpa/issues/306
 
 #		target_packages='transmission-daemon transmission-web'
 
-#		# Assume first package version is same as remaining package versions.
+		# Assume first package version is same as remaining package versions.
 
 #		installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${target_packages%% *} *" | head -n1 | cut -d' ' -f3 | cut -d'-' -f1)
 
 #		if [[ ${installed_version//.} -gt 4041 ]]; then
 #			ipks_downgrade=true
-#			ShowAsNote "Transmission IPKs will be downgraded back to a working version"
+#			ShowAsNote "Transmission IPKs will be downgraded back to working versions"
 #			IPKs-ACdowngrade-to:Add "$target_packages"
 #		else
 #			IPKs-ACdowngrade-sk:Add "$target_packages"
@@ -4062,8 +4082,41 @@ IPKs:downgrade()
 					done
 
 					ShowAsPercentProgress "download $desc" '' "$done_ok_count" 0 "$done_fail_count" "$total_count"
+
+					url_prefix=''
+					url_suffix=''
 				fi
 		esac
+
+#		case $r_nas_qpkg_arch in
+#			a41)
+#				url_prefix=http://bin.entware.net/armv7sf-k3.2/archive/
+#				url_suffix=_2.46.2-2_armv7-3.2.ipk
+#				;;
+#			a64)
+#				url_prefix=http://bin.entware.net/aarch64-k3.10/archive/
+#				url_suffix=_2.46.2-2_aarch64-3.10.ipk
+#				;;
+#			i64)
+#				url_prefix=http://bin.entware.net/x64-k3.2/archive/
+#				url_suffix=_2.46.2-2_x64-3.2.ipk
+#		esac
+#
+#		if [[ -n $url_prefix && -n $url_suffix ]]; then
+#			for name in $(IPKs-ACdowngrade-to:Array); do
+#				ShowAsPercentProgress "download $desc" '' "$done_ok_count" 0 0 "$total_count"
+#				((done_ok_count++))
+#
+#				remote_url=${url_prefix}${name}${url_suffix}
+#				local_pathfile=$r_ipk_downgrade_path/$(/usr/bin/basename "$remote_url")
+#				Executer "/sbin/curl $curl_insecure_opt --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
+#			done
+#
+#			ShowAsPercentProgress "download $desc" '' "$done_ok_count" 0 "$done_fail_count" "$total_count"
+#
+#			url_prefix=''
+#			url_suffix=''
+#		fi
 
 		[[ ${useropt_terse:=true} = false && ${useropt_verbose:=false} = false ]] && echo
 
@@ -8200,7 +8253,7 @@ HelpAbbreviations()
 #		GenerateReportInfo >> "$r_report_output_pathfile"
 	fi
 
-	DisplayAsProjSynExam "example: to install $(FormatPackageName SABnzbd), $(FormatPackageName Mylar3) and $(FormatPackageName nzbToMedia) all-at-once" 'install sab my nzb2' >> "$r_report_output_pathfile"
+	DisplayAsProjSynExam "example: to install $(FormatPackageName SABnzbd), $(FormatPackageName HeadPhones) and $(FormatPackageName nzbToMedia) all-at-once" 'install sab hp nzb2' >> "$r_report_output_pathfile"
 
 	EraseThisLine
 	ShowReport
@@ -17174,7 +17227,7 @@ LoadDatabase()
 	. "$r_packages_pathfile"
 	packages_loaded=true
 
-	r_qpkgs_name_prohibited=(OMedusa OqBittorrent OReadarr OSickGear OSonarr OTautulli OTransmission OWatcher3 OWhisparr)
+	r_qpkgs_name_prohibited=(OMedusa OqBittorrent OReadarr OSickGear OSonarr OTautulli OTransmission OWhisparr)
 
 	# Fourth, lock list arrays and values.
 
