@@ -35,7 +35,7 @@
 #		3 = sa: skipped-abort
 #		4 = se: skipped-error
 
-set -o nounset -o pipefail
+set -o nounset
 shopt -s extglob
 [[ $- != *m* ]] || set +m								# Disable job control if-enabled (only needed for QTS 4.2.6).
 [[ -L /dev/fd ]] || ln -fns /proc/self/fd /dev/fd		# KLUDGE: `/dev/fd` isn't always created by QTS.
@@ -322,7 +322,7 @@ LoadConsts()
 
 		readonly r_char_tab=$'\t'
 		package_release_version='<?package_release_version?>'
-		readonly r_entware_packages_last_updated=20250602
+		readonly r_entware_packages_last_updated=20260407
 		readonly r_file_change_threshold_minutes=60
 		readonly r_log_tail_lines=5000
 
@@ -1210,13 +1210,13 @@ CheckEnv()
 					fi
 				fi
 
-#				# These must be downgraded on ARMv7 as 2.45.2 versions can't clone a repo.
-#				#	https://github.com/Entware/Entware/issues/1072
-#				#	NOTE: this issue has been fixed.
+				# These must be downgraded on ARMv7 as 2.45.2 versions can't clone a repo.
+				#	https://github.com/Entware/Entware/issues/1072
+				#	NOTE: this issue has been fixed.
 
 #				target_packages='git git-http'
 
-#				# Assume first package version is same as remaining package versions.
+				# Assume first package version is same as remaining package versions.
 
 #				installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${target_packages%% *} *" | head -n1 | cut -d' ' -f3 | cut -d'-' -f1)
 
@@ -1229,18 +1229,38 @@ CheckEnv()
 #				fi
 		esac
 
-#		# Downgrade Transmission as 4.0.6 has an undefined issue.
-#		#	https://github.com/OneCDOnly/sherpa/issues/306
+#		case $r_nas_qpkg_arch in
+#			a64|a41|i64)
+				# These must be downgraded as 2.50.1 versions are inoperative.
+				#	https://github.com/Entware/Entware/issues/1241
+#
+#				target_packages='git git-http'
+#
+				# Assume first package version is same as remaining package versions.
+#
+#				installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${target_packages%% *} *" | head -n1 | cut -d' ' -f3 | cut -d'-' -f1)
+#
+#				if [[ ${installed_version//.} -gt 2462 ]]; then
+#					ipks_downgrade=true
+#					ShowAsNote "git IPKs will be downgraded back to working versions"
+#					IPKs-ACdowngrade-to:Add "$target_packages"
+#				else
+#					IPKs-ACdowngrade-sk:Add "$target_packages"
+#				fi
+#		esac
+
+		# Downgrade Transmission as 4.0.6 has an undefined issue.
+		#	https://github.com/OneCDOnly/sherpa/issues/306
 
 #		target_packages='transmission-daemon transmission-web'
 
-#		# Assume first package version is same as remaining package versions.
+		# Assume first package version is same as remaining package versions.
 
 #		installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${target_packages%% *} *" | head -n1 | cut -d' ' -f3 | cut -d'-' -f1)
 
 #		if [[ ${installed_version//.} -gt 4041 ]]; then
 #			ipks_downgrade=true
-#			ShowAsNote "Transmission IPKs will be downgraded back to a working version"
+#			ShowAsNote "Transmission IPKs will be downgraded back to working versions"
 #			IPKs-ACdowngrade-to:Add "$target_packages"
 #		else
 #			IPKs-ACdowngrade-sk:Add "$target_packages"
@@ -4062,8 +4082,41 @@ IPKs:downgrade()
 					done
 
 					ShowAsPercentProgress "download $desc" '' "$done_ok_count" 0 "$done_fail_count" "$total_count"
+
+					url_prefix=''
+					url_suffix=''
 				fi
 		esac
+
+#		case $r_nas_qpkg_arch in
+#			a41)
+#				url_prefix=http://bin.entware.net/armv7sf-k3.2/archive/
+#				url_suffix=_2.46.2-2_armv7-3.2.ipk
+#				;;
+#			a64)
+#				url_prefix=http://bin.entware.net/aarch64-k3.10/archive/
+#				url_suffix=_2.46.2-2_aarch64-3.10.ipk
+#				;;
+#			i64)
+#				url_prefix=http://bin.entware.net/x64-k3.2/archive/
+#				url_suffix=_2.46.2-2_x64-3.2.ipk
+#		esac
+#
+#		if [[ -n $url_prefix && -n $url_suffix ]]; then
+#			for name in $(IPKs-ACdowngrade-to:Array); do
+#				ShowAsPercentProgress "download $desc" '' "$done_ok_count" 0 0 "$total_count"
+#				((done_ok_count++))
+#
+#				remote_url=${url_prefix}${name}${url_suffix}
+#				local_pathfile=$r_ipk_downgrade_path/$(/usr/bin/basename "$remote_url")
+#				Executer "/sbin/curl $curl_insecure_opt --location --output $local_pathfile $remote_url" "$log_pathfile" log:failure-only
+#			done
+#
+#			ShowAsPercentProgress "download $desc" '' "$done_ok_count" 0 "$done_fail_count" "$total_count"
+#
+#			url_prefix=''
+#			url_suffix=''
+#		fi
 
 		[[ ${useropt_terse:=true} = false && ${useropt_verbose:=false} = false ]] && echo
 
@@ -6259,8 +6312,6 @@ ShowHelpActions()
 		DisplayAsProjSynIndentExam 'activate these QPKGs (this will upgrade internal applications where-supported)' "activate $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam '' "start $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam 'backup these application configurations to the backup location' "backup $(ShowAsPackages)"
-		DisplayAsProjSynIndentExam 'check all application dependencies are installed' check
-		DisplayAsProjSynIndentExam '' c
 		DisplayAsProjSynIndentExam 'clean local repository files from these QPKGs (your config is safe, application files will be downloaded again)' "clean $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam 'deactivate these QPKGs' "deactivate $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam '' "stop $(ShowAsPackages)"
@@ -6270,6 +6321,7 @@ ShowHelpActions()
 		DisplayAsProjSynIndentExam 'disable auto-updating the application on package activation (where-supported)' "disable-auto-update $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam 'enable these QPKGs. Packages must be enabled before they can be activated' "enable $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam 'enable auto-updating the application on package activation (where-supported)' "enable-auto-update $(ShowAsPackages)"
+		DisplayAsProjSynIndentExam 'ensure all required application dependencies are installed' fix
 		DisplayAsProjSynIndentExam 'install these QPKGs' "install $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam '' "add $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam 'show application backup files' 'show backups'
@@ -6583,10 +6635,9 @@ ShowHelpProblems()
 		ShowHelpBasic
 		DisplayAsHelpTitle 'usage examples for dealing with problems:'
 		DisplayAsProjSynIndentExam 'activate these QPKGs' "activate $(ShowAsPackages)"
-		DisplayAsProjSynIndentExam 'ensure all dependencies exist for installed QPKGs' check
-		DisplayAsProjSynIndentExam '' c
 		DisplayAsProjSynIndentExam 'clear local repository files from these QPKGs' "clean $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam 'deactivate these QPKGs' "deactivate $(ShowAsPackages)"
+		DisplayAsProjSynIndentExam 'ensure all required application dependencies are installed' fix
 		DisplayAsProjSynIndentExam "increase the default 'qpkg_service' timeouts from 3 minutes to 30 minutes" 'install increasetimeouts'
 		DisplayAsProjSynIndentExam "view only the most recent $(ShowAsTitleName) session log" last
 		DisplayAsProjSynIndentExam '' l
@@ -8202,7 +8253,7 @@ HelpAbbreviations()
 #		GenerateReportInfo >> "$r_report_output_pathfile"
 	fi
 
-	DisplayAsProjSynExam "example: to install $(FormatPackageName SABnzbd), $(FormatPackageName Mylar3) and $(FormatPackageName nzbToMedia) all-at-once" 'install sab my nzb2' >> "$r_report_output_pathfile"
+	DisplayAsProjSynExam "example: to install $(FormatPackageName SABnzbd), $(FormatPackageName HeadPhones) and $(FormatPackageName nzbToMedia) all-at-once" 'install sab hp nzb2' >> "$r_report_output_pathfile"
 
 	EraseThisLine
 	ShowReport
@@ -14626,10 +14677,10 @@ FindPid()
 		[[ $a -gt 1 ]] || continue
 		[[ -d /proc/$a ]] || continue
 		[[ -e /proc/$a/cmdline && -L /proc/$a/exe ]] || continue
-		[[ $(</proc/$a/cmdline) =~ $1 || $(/usr/bin/readlink /proc/$a/exe) = "$1" ]] || continue
+		[[ $(< /proc/$a/cmdline) =~ $1 || $(/usr/bin/readlink /proc/$a/exe) = "$1" ]] || continue
 
 		if [[ -n $b ]]; then
-			[[ $(</proc/$a/cmdline) =~ $b ]] || continue	# Check for additional string (if-specified).
+			[[ $(< /proc/$a/cmdline) =~ $b ]] || continue	# Check for additional string (if-specified).
 		fi
 
 		printf '%s' "$a"
@@ -17176,7 +17227,7 @@ LoadDatabase()
 	. "$r_packages_pathfile"
 	packages_loaded=true
 
-	r_qpkgs_name_prohibited=(OMedusa OqBittorrent OReadarr OSickGear OSonarr OTautulli OTransmission OWatcher3 OWhisparr)
+	r_qpkgs_name_prohibited=(OMedusa OqBittorrent OReadarr OSickGear OSonarr OTautulli OTransmission OWhisparr)
 
 	# Fourth, lock list arrays and values.
 
