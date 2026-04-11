@@ -1299,13 +1299,11 @@ AssignQpkgsToActions()
 	local action=''
 	local prospect=''
 
-	# KLUDGE: ensure Entware is reinstalled when IPKs are upgraded.
+	# KLUDGE: ensure Entware is reinstalled when IPKs database is upgraded.
 
-	if IsValidQpkgInstalled Entware && IsOsOnline; then
-		if IsEntwareUpgradable; then
-			ShowAsNote "the $(TextBrightOrange Entware) QPKG will be auto-reinstalled (Entware packages were last updated in $(ConvertLongDateAsHuman $r_entware_packages_last_updated))"
-			QPKGs-ACreinstall-to:Add Entware
-		fi
+	if IsOsOnline && IsValidQpkgInstalled Entware && IsEntwareUpgradable && (IsNonStatusActionRequested || [[ $useropt_fix = true ]]); then
+		ShowAsNote "the $(TextBrightOrange Entware) QPKG will be auto-reinstalled (Entware packages were last updated in $(ConvertLongDateAsHuman $r_entware_packages_last_updated))"
+		QPKGs-ACreinstall-to:Add Entware
 	fi
 
 	# Meta-action pre-processing: perform check for backup file here, to determine if QPKG should be downloaded, installed and restored.
@@ -13127,6 +13125,22 @@ IsEntwareUpgradable()
 				return
 		esac
 	fi
+
+	false
+
+	}
+
+IsNonStatusActionRequested()
+	{
+
+	local action=''
+
+	for action in "${r_qpkg_actions[@]}"; do
+		if QPKGs-AC${action}-to.IsAny; then
+			[[ $action != status ]] || continue		# Don't auto re-install Entware if only 'status' action is requested.
+			return
+		fi
+	done
 
 	false
 
