@@ -16142,8 +16142,7 @@ ShowAsBug()
 	#	$1 = Problem function name.
 	#	$2 = Error message to display.
 
-	[[ -n ${1:-} ]] || return
-	[[ -n ${2:-} ]] || return
+	[[ -n ${1:-} && -n ${2:-} ]] || return
 
 	local a=buug
 	local b='fstack: '
@@ -16174,7 +16173,7 @@ ShowAsQuiz()
 	[[ -n ${1:-} ]] || return
 
 	local a=quiz
-	local b="$1:"
+	local b=$1:
 
 	OpStepClearWait "$(TextBrightOrangeBlink "$a")" "$b"
 	WriteToLog "$a" "$b"
