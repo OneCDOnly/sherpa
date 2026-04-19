@@ -10810,6 +10810,8 @@ _QPKG:uninstall_()
 
 	[[ $qpkg_name = Entware ]] && SaveIpkAndPipList
 
+	local current_ver=$(GetQpkgInstalledVer)
+
 	DebugAsProc "uninstalling $(FormatPackageName)"
 
 	local a='UNINSTALL_QPKG=true '
@@ -10823,7 +10825,7 @@ _QPKG:uninstall_()
 		# WARNING: beware of `qpkg_cli --remove`. It removes the QPKG installation path around 10-20 seconds after execution. If sherpa has moved-on and starts an install, `qpkg_cli` will remove the newly created QPKG installation path partway through the installation. So, check if QPKG is to be installed again. If-so, don't use `qpkg_cli --remove`.
 
 		[[ -x /sbin/qpkg_cli ]] && ! QPKGs-ACinstall-to.Exist "$qpkg_name" && /sbin/qpkg_cli --remove "$qpkg_name" &> /dev/null
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok "v$current_ver"
 		/sbin/rmcfg "$qpkg_name" -f /etc/config/qpkg.conf
 		DebugAsDone 'removed icon information from App Center'
 
