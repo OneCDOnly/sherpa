@@ -15935,10 +15935,13 @@ DebugThis()
 
 	[[ -n ${1:-} ]] || return
 
-	[[ ${useropt_verbose:-false} = true ]] && ShowAsDebug "$1"
+	local a=dbug
+	local b=$1
+
+	[[ ${useropt_verbose:-false} = true ]] && ShowAsDebug "$b"
 
 	if [[ ${useropt_show_about:=false} = false && ${useropt_show_aboutall:=false} = false ]]; then
-		WriteToLog dbug "$1"
+		WriteToLog "$a" "$b"
 	fi
 
 	}
@@ -15996,20 +15999,21 @@ ShowAsProc()
 
 	[[ -n ${1:-} ]] || return
 
-	local a=$1
-	local b=''
-	[[ -n ${2:-} ]] && b=$2
-	local c="$a ... $b"
+	local a=proc
+	local b=$1
+	local c=''
+	[[ -n ${2:-} ]] && c=$2
+	local d="$b ... $c"
 
 	if [[ -z ${r_inhibit_display_pathfile:-} ]] || [[ -n ${r_inhibit_display_pathfile:-} && ! -e $r_inhibit_display_pathfile ]]; then
-		if [[ ${useropt_verbose:=false} = false && ${useropt_terse:=true} = true ]] || [[ ${useropt_verbose:=false} = false && -n $b ]]; then
-			OpStepClearWait "$(TextBrightYellow proc)" "$c"
+		if [[ ${useropt_verbose:=false} = false && ${useropt_terse:=true} = true ]] || [[ ${useropt_verbose:=false} = false && -n $c ]]; then
+			OpStepClearWait "$(TextBrightYellow "$a")" "$d"
 		else
-			OpStepClear "$(TextBrightYellow proc)" "$c"
+			OpStepClear "$(TextBrightYellow "$a")" "$d"
 		fi
 	fi
 
-	WriteToLog proc "$c"
+	WriteToLog "$a" "$d"
 
 	} >&2
 
@@ -16025,12 +16029,15 @@ ShowAsNote()
 
 	# Note to user.
 
-	local a=''
+	[[ -n ${1:-} ]] || return
 
-	[[ -n ${1:-} ]] && a=$(AddPeriod "$1") || return
+	local a=note
+	local b=''
 
-	OpStepClear "$(TextBrightYellow note)" "$a"
-	WriteToLog note "$a"
+	b=$(AddPeriod "$1") || return
+
+	OpStepClear "$(TextBrightYellow "$a")" "$b"
+	WriteToLog "$a" "$b"
 
 	} >&2
 
@@ -16039,12 +16046,15 @@ ShowAsDone()
 
 	# Process completed OK.
 
-	local a=''
+	[[ -n ${1:-} ]] || return
 
-	[[ -n ${1:-} ]] && a=$(AddPeriod "$1") || return
+	local a='done'
+	local b=''
 
-	OpStepClear "$(TextBrightGreen 'done')" "$a"
-	WriteToLog 'done' "$a"
+	b=$(AddPeriod "$1") || return
+
+	OpStepClear "$(TextBrightGreen "$a")" "$b"
+	WriteToLog "$a" "$b"
 
 	} >&2
 
@@ -16055,7 +16065,10 @@ ShowAsNews()
 
 	[[ -n ${1:-} ]] || return
 
-	OpStepClear "$(TextBrightWhiteBlink news)" "${1:-}"
+	local a=news
+	local b=$1
+
+	OpStepClear "$(TextBrightWhiteBlink "$a")" "$b"
 
 	} >&2
 
@@ -16064,12 +16077,15 @@ ShowAsWarn()
 
 	# Warning only.
 
-	local a=''
+	[[ -n ${1:-} ]] || return
 
-	[[ -n ${1:-} ]] && a=$(AddPeriod "$1") || return
+	local a=warn
+	local b=''
 
-	OpStepClear "$(TextBrightOrange warn)" "$a"
-	WriteToLog warn "$a"
+	b=$(AddPeriod "$1") || return
+
+	OpStepClear "$(TextBrightOrange "$a")" "$b"
+	WriteToLog "$a" "$b"
 
 	} >&2
 
@@ -16078,12 +16094,15 @@ ShowAsAbort()
 
 	# Fatal abort.
 
-	local a=''
+	[[ -n ${1:-} ]] || return
 
-	[[ -n ${1:-} ]] && a=$(AddPeriod "$1") || return
+	local a=bort
+	local b=''
 
-	OpStepClear "$(TextBrightRed bort)" "$a"
-	WriteToLog bort "$a"
+	b=$(AddPeriod "$1") || return
+
+	OpStepClear "$(TextBrightRed "$a")" "$b"
+	WriteToLog "$a" "$b"
 	SetError
 
 	} >&2
@@ -16093,12 +16112,15 @@ ShowAsFail()
 
 	# Non-fatal error.
 
-	local a=''
+	[[ -n ${1:-} ]] || return
 
-	[[ -n ${1:-} ]] && a=$(AddPeriod "$1") || return
+	local a=fail
+	local b=''
 
-	OpStepClear "$(TextBrightRed fail)" "$a"
-	WriteToLog fail "$a"
+	b=$(AddPeriod "$1") || return
+
+	OpStepClear "$(TextBrightRed "$a")" "$b"
+	WriteToLog "$a" "$b"
 
 	} >&2
 
@@ -16107,12 +16129,15 @@ ShowAsError()
 
 	# Fatal error.
 
-	local a=''
+	[[ -n ${1:-} ]] || return
 
-	[[ -n ${1:-} ]] && a=$(AddPeriod "$1") || return
+	local a=derp
+	local b=''
 
-	OpStepClear "$(TextBrightRed derp)" "$a"
-	WriteToLog derp "$a"
+	b=$(AddPeriod "$1") || return
+
+	OpStepClear "$(TextBrightRed "$a")" "$b"
+	WriteToLog "$a" "$b"
 	SetError
 
 	} >&2
@@ -16129,24 +16154,25 @@ ShowAsBug()
 	[[ -n ${1:-} ]] || return
 	[[ -n ${2:-} ]] || return
 
-	local a='fstack: '
-	local b=' '
+	local a=buug
+	local b='fstack: '
+	local c=' '
 	local -i i=0
 
 	# Re-order FUNCNAME[] elements in-reverse.
 
 	for ((i=${#FUNCNAME[@]}-1; i>=0; i--)); do
-		[[ $i -ne $((${#FUNCNAME[@]}-1)) ]] && a+="${b}>${b}"		# Insert separators.
+		[[ $i -ne $((${#FUNCNAME[@]}-1)) ]] && b+="${c}>${c}"		# Insert separators.
 
 		if [[ ${FUNCNAME[$i]} = "$1" ]]; then
-			a+="${FUNCNAME[$i]}($2)"
+			b+="${FUNCNAME[$i]}($2)"
 		else
-			a+="${FUNCNAME[$i]}()"
+			b+="${FUNCNAME[$i]}()"
 		fi
 	done
 
-	OpStepClear "$(TextBrightRed buug)" "$a"
-	WriteToLog buug "$a"
+	OpStepClear "$(TextBrightRed "$a")" "$b"
+	WriteToLog "$a" "$b"
 	SetError
 
 	} >&2
@@ -16156,8 +16182,11 @@ ShowAsQuiz()
 
 	[[ -n ${1:-} ]] || return
 
-	OpStepClearWait "$(TextBrightOrangeBlink quiz)" "$1:"
-	WriteToLog quiz "$1:"
+	local a=quiz
+	local b=$1
+
+	OpStepClearWait "$(TextBrightOrangeBlink "$a")" "$b:"
+	WriteToLog "$a" "$b:"
 
 	}
 
@@ -16166,7 +16195,10 @@ ShowAsQuizDone()
 
 	[[ -n ${1:-} ]] || return
 
-	OpStepClear "$(TextBrightOrange quiz)" "$1"
+	local a=quiz
+	local b=$1
+
+	OpStepClear "$(TextBrightOrange "$a")" "$b"
 
 	}
 
