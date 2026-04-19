@@ -792,17 +792,17 @@ ClearCachePath()
 
 	}
 
-ClearTempReportPath()
-	{
-
-	if [[ -n $r_temp_report_path && -d $r_temp_report_path ]]; then
-		ClearPath "$r_temp_run_path" "$r_temp_report_path"
-		ShowAsDone 'temp reports cleared'
-	fi
-
-	return 0
-
-	}
+#ClearTempReportPath()
+#	{
+#
+#	if [[ -n $r_temp_report_path && -d $r_temp_report_path ]]; then
+#		ClearPath "$r_temp_run_path" "$r_temp_report_path"
+#		ShowAsDone 'temp reports cleared'
+#	fi
+#
+#	return 0
+#
+#	}
 
 ClearTempRunPath()
 	{
@@ -16452,21 +16452,21 @@ TextBrightYellow()
 
 	} 2> /dev/null
 
-TextBrightYellowBlink()
-	{
-
-	# Inputs: (global)
-	#	$colourful
-
-	[[ -n ${1:-} ]] || return
-
-	if [[ $colourful = true ]]; then
-		printf '\033[1;5;33m%s\033[0m' "$1"
-	else
-		printf '%s' "$1"
-	fi
-
-	} 2> /dev/null
+#TextBrightYellowBlink()
+#	{
+#
+#	# Inputs: (global)
+#	#	$colourful
+#
+#	[[ -n ${1:-} ]] || return
+#
+#	if [[ $colourful = true ]]; then
+#		printf '\033[1;5;33m%s\033[0m' "$1"
+#	else
+#		printf '%s' "$1"
+#	fi
+#
+#	} 2> /dev/null
 
 TextBrightOrange()
 	{
@@ -16940,7 +16940,7 @@ ShowKeystrokes()
 sleep()
 	{
 
-	# MITM an internal command.
+	# MITM the internal `sleep` command.
 
 	# Inputs: (local)
 	#	$1 (optional) = seconds to sleep (decimal or integer), default is 1 second.
