@@ -9690,7 +9690,7 @@ GetBusyBoxFunctionCount()
 GetOsSysLoadAverages()
 	{
 
-	/usr/bin/uptime | /bin/sed 's/.*load average: //' | /bin/awk -F', ' '{print "1m:"$1", 5m:"$2", 15m:"$3}'
+	/usr/bin/uptime | /bin/sed 's/.*load average: //' | /bin/awk -F', ' '{print $1" (1m), "$2" (5m), "$3" (15m)"}'
 
 	}
 
