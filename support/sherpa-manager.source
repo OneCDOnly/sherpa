@@ -6739,7 +6739,7 @@ ViewLogLast()
 
 	if [[ -s $r_session_last_pathfile ]]; then
 		DisplayFileInViewport "$r_session_last_pathfile" showlinenumbers
-		Display
+#		Display
 	else
 		ShowAsError 'no last session log to display'
 	fi
@@ -6762,7 +6762,7 @@ ViewLogTail()
 
 	if [[ -s $r_session_tail_pathfile ]]; then
 		DisplayFileInViewport "$r_session_tail_pathfile" showlinenumbers
-		Display
+#		Display
 	else
 		ShowAsError 'no session log tail to display'
 	fi
@@ -6826,9 +6826,13 @@ DisplayFileInViewport()
 		fi
 	fi
 
-	if [[ -x $r_gnu_less_cmd ]] && IsGnuLessSupportHeaders && IsReportLargerThanViewport "$a"; then
-		options='--quit-on-intr --tilde --mouse --RAW-CONTROL-CHARS --shift=4 --redraw-on-quit --quit-if-one-screen --no-init '
-		[[ $headers = true ]] && options+="--header=1,$(CalcReportFirstColumnWidth "$a") "
+	if [[ -x $r_gnu_less_cmd ]]; then
+		options='--no-init --tilde --mouse --RAW-CONTROL-CHARS --shift=4 --quit-if-one-screen --quit-on-intr --redraw-on-quit '
+
+		if IsReportLargerThanViewport "$a" && IsGnuLessSupportHeaders; then
+			[[ $headers = true ]] && options+="--header=1,$(CalcReportFirstColumnWidth "$a") "
+		fi
+
 		[[ $jumptoend = true ]] && options+='+G '
 		[[ $linenumbers = true ]] && options+='--LINE-NUMBERS '
 		[[ $wrap = false ]] && options+='--chop-long-lines '
@@ -6862,7 +6866,7 @@ DisplayFileInViewport()
 		return
 	fi
 
-	# and, when there's really no-better option ...
+	# And, when there's really no-better option ...
 
 	echo "$(< $a)"
 
@@ -14299,7 +14303,7 @@ IsReportLargerThanViewport()
 
 	[[ -n ${1:-} && -e $1 ]] || return
 
-	[[ $(/usr/bin/wc -l < "$1") -gt $r_sess_rows || $(StripANSICodes "$(<$1)" | /usr/bin/wc -L) -gt $r_sess_columns ]]
+	[[ $(/usr/bin/wc -l < "$1") -ge $r_sess_rows || $(StripANSICodes "$(<$1)" | /usr/bin/wc -L) -ge $r_sess_columns ]]
 
 	}
 
