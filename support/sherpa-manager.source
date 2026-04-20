@@ -1864,8 +1864,8 @@ ProcAction()
 							for state in "${r_qpkg_is_states[@]}"; do
 								case $msg1_value in
 									"IS${state}")
-										[[ $(type -t QPKGs-ISNT${state}:Init) = function ]] && QPKGs-ISNT${state}:Remove "$msg2_value"
-										[[ $(type -t QPKGs-IS${state}:Init) = function ]] && QPKGs-IS${state}:Add "$msg2_value"
+										IsFuncExist QPKGs-ISNT${state}:Init && QPKGs-ISNT${state}:Remove "$msg2_value"
+										IsFuncExist QPKGs-IS${state}:Init && QPKGs-IS${state}:Add "$msg2_value"
 										break 2
 								esac
 							done
@@ -1873,8 +1873,8 @@ ProcAction()
 							for state in "${r_qpkg_isnt_states[@]}"; do
 								case $msg1_value in
 									"ISNT${state}")
-										[[ $(type -t QPKGs-IS${state}:Init) = function ]] && QPKGs-IS${state}:Remove "$msg2_value"
-										[[ $(type -t QPKGs-ISNT${state}:Init) = function ]] && QPKGs-ISNT${state}:Add "$msg2_value"
+										IsFuncExist QPKGs-IS${state}:Init && QPKGs-IS${state}:Remove "$msg2_value"
+										IsFuncExist QPKGs-ISNT${state}:Init && QPKGs-ISNT${state}:Add "$msg2_value"
 										break 2
 								esac
 							done
@@ -1882,8 +1882,8 @@ ProcAction()
 							for group in "${r_qpkg_is_groups[@]}"; do
 								case $msg1_value in
 									"GR${group}")
-										[[ $(type -t QPKGs-GRNT${group}:Init) = function ]] && QPKGs-GRNT${group}:Remove "$msg2_value"
-										[[ $(type -t QPKGs-GR${group}:Init) = function ]] && QPKGs-GR${group}:Add "$msg2_value"
+										IsFuncExist QPKGs-GRNT${group}:Init && QPKGs-GRNT${group}:Remove "$msg2_value"
+										IsFuncExist QPKGs-GR${group}:Init && QPKGs-GR${group}:Add "$msg2_value"
 										break 2
 								esac
 							done
@@ -1891,8 +1891,8 @@ ProcAction()
 							for group in "${r_qpkg_isnt_groups[@]}"; do
 								case $msg1_value in
 									"GRNT${group}")
-										[[ $(type -t QPKGs-GR${group}:Init) = function ]] && QPKGs-GR${group}:Remove "$msg2_value"
-										[[ $(type -t QPKGs-GRNT${group}:Init) = function ]] && QPKGs-GRNT${group}:Add "$msg2_value"
+										IsFuncExist QPKGs-GR${group}:Init && QPKGs-GR${group}:Remove "$msg2_value"
+										IsFuncExist QPKGs-GRNT${group}:Init && QPKGs-GRNT${group}:Add "$msg2_value"
 										break 2
 								esac
 							done
@@ -1925,12 +1925,12 @@ ProcAction()
 								:		# Ignore this.
 								;;
 							ok|er|sk|se|sa)
-								[[ $(type -t QPKGs-AC${r_action}-to:Init) = function ]] && QPKGs-AC${r_action}-to:Remove "$msg2_value"
-								[[ $(type -t QPKGs-AC${r_action}-${msg1_value}:Init) = function ]] && QPKGs-AC${r_action}-${msg1_value}:Add "$msg2_value"
+								IsFuncExist QPKGs-AC${r_action}-to:Init && QPKGs-AC${r_action}-to:Remove "$msg2_value"
+								IsFuncExist QPKGs-AC${r_action}-${msg1_value}:Init && QPKGs-AC${r_action}-${msg1_value}:Add "$msg2_value"
 
 								# Also add to 'done' list.
 
-								[[ $(type -t QPKGs-AC${r_action}-dn:Init) = function ]] && QPKGs-AC${r_action}-dn:Add "$msg2_value"
+								IsFuncExist QPKGs-AC${r_action}-dn:Init && QPKGs-AC${r_action}-dn:Add "$msg2_value"
 								;;
 							ex)			# Action is about to exit.
 								for package_index in "${!target_packages[@]}"; do
@@ -7628,7 +7628,7 @@ ListQPKGsFlagsAll()																							# devdebug
 
 	for a in "${r_qpkg_actions[@]}"; do																		# devdebug
 		for b in "${r_qpkg_is_states[@]}"; do																# devdebug
-			if [[ $(type -t QPKGs.AC${a}IS${b}.IsSet) = function ]]; then									# devdebug
+			if IsFuncExist QPKGs.AC${a}IS${b}.IsSet; then													# devdebug
 				if QPKGs.AC${a}IS${b}.IsSet; then															# devdebug
 					DebugQpkg info "AC${a}IS${b}" "set"														# devdebug
 #				else																						# devdebug
@@ -7994,12 +7994,12 @@ InitQPKGsStates()
 
 	for a in "${r_qpkg_is_states[@]}"; do
 		[[ $a = active ]] && continue		# Don't reset.
-		[[ $(type -t QPKGs-IS${a}:Init) = function ]] && QPKGs-IS${a}:Init
+		IsFuncExist QPKGs-IS${a}:Init && QPKGs-IS${a}:Init
 	done
 
 	for a in "${r_qpkg_isnt_states[@]}"; do
 		[[ $a = active ]] && continue		# Don't reset.
-		[[ $(type -t QPKGs-ISNT${a}:Init) = function ]] && QPKGs-ISNT${a}:Init
+		IsFuncExist QPKGs-ISNT${a}:Init && QPKGs-ISNT${a}:Init
 	done
 
 	ClearPath "$r_temp_run_path"/qpkg "$r_qpkg_states_path"
@@ -9067,7 +9067,7 @@ ShowQPKGList()
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	if [[ $(type -t QPKGs-$1.IsAny) = function ]] && QPKGs-$1.IsAny; then
+	if IsFuncExist QPKGs-$1.IsAny && QPKGs-$1.IsAny; then
 		for qpkg_name in $(QPKGs-$1:Array); do
 			Display "$qpkg_name"
 		done
@@ -14304,6 +14304,13 @@ IsReportLargerThanViewport()
 	[[ -n ${1:-} && -e $1 ]] || return
 
 	[[ $(/usr/bin/wc -l < "$1") -ge $r_sess_rows || $(StripANSICodes "$(<$1)" | /usr/bin/wc -L) -ge $r_sess_columns ]]
+
+	}
+
+IsFuncExist()
+	{
+
+	[[ -n ${1:-} && $(type -t "$1") = function ]]
 
 	}
 
