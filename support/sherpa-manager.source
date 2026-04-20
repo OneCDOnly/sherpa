@@ -14303,7 +14303,7 @@ IsReportLargerThanViewport()
 
 	[[ -n ${1:-} && -e $1 ]] || return
 
-	[[ $(/usr/bin/wc -l < "$1") -ge $r_sess_rows || $(StripANSICodes "$(<$1)" | /usr/bin/wc -L) -ge $r_sess_columns ]]
+	[[ $(/usr/bin/wc -l < "$1") -ge $r_sess_rows || $(StripANSICodes "$(<$1)" | /usr/bin/wc -L) -gt $r_sess_columns ]]
 
 	}
 
