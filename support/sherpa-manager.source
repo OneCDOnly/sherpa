@@ -467,7 +467,7 @@ IsCMDsOk()
 	IsCriticalFile /usr/bin/dirname || return
 	IsCriticalFile /usr/bin/du || return
 	IsCriticalFile /bin/grep || return
-	# Don't check for `/bin/less` because it's not always there.
+	[[ ! -x /bin/less ]] && ln -sf /bin/busybox /bin/less				# KLUDGE: `/bin/less` isn't always there in QTS.
 	IsCriticalFile /bin/md5sum || return
 	IsCriticalFile /bin/mknod || return
 	IsCriticalFile /bin/mktemp || return
@@ -480,7 +480,7 @@ IsCMDsOk()
 	IsCriticalFile /bin/sh || return
 	IsCriticalFile /bin/sha1sum || return
 	# `/bin/sleep` has already been called before arriving here.
-	[[ ! -x /usr/bin/sort ]] && ln -s /bin/busybox /usr/bin/sort		# KLUDGE: `/usr/bin/sort` randomly disappears from QTS.
+	[[ ! -x /usr/bin/sort ]] && ln -sf /bin/busybox /usr/bin/sort		# KLUDGE: `/usr/bin/sort` randomly disappears from QTS.
 	IsCriticalFile /usr/bin/stat || return
 	IsCriticalFile /usr/bin/tail || return
 	IsCriticalFile /bin/tar || return
@@ -6826,20 +6826,19 @@ DisplayFileInViewport()
 		fi
 	fi
 
-	if [[ $(/usr/bin/wc -l < "$a") -ge $r_sess_rows || $(/usr/bin/wc -L < "$a") -ge $r_sess_columns ]]; then
-		if [[ -x $r_gnu_less_cmd ]]; then
-			options='--quit-on-intr --tilde --mouse --RAW-CONTROL-CHARS --shift=4 --redraw-on-quit --quit-if-one-screen --no-init '
-#			[[ $headers = true ]] && options+="--header=1,$(CalcReportFirstColumnWidth "$a") "		# NOTE: if enabled, and report does not fill terminal window, header row is pushed-off the top of the terminal. GNU `less` v661, fixed in v668. Might be able to work-around this by altering `less` args based-on $r_sess_rows.
-			[[ $jumptoend = true ]] && options+='+G '
-			[[ $linenumbers = true ]] && options+='--LINE-NUMBERS '
-			[[ $wrap = false ]] && options+='--chop-long-lines '
+	if [[ -x $r_gnu_less_cmd ]] && IsGnuLessSupportHeaders && IsReportLargerThanViewport "$a"; then
+		options='--quit-on-intr --tilde --mouse --RAW-CONTROL-CHARS --shift=4 --redraw-on-quit --quit-if-one-screen --no-init '
+		[[ $headers = true ]] && options+="--header=1,$(CalcReportFirstColumnWidth "$a") "
+		[[ $jumptoend = true ]] && options+='+G '
+		[[ $linenumbers = true ]] && options+='--LINE-NUMBERS '
+		[[ $wrap = false ]] && options+='--chop-long-lines '
 
-			LESSSECURE=1 $r_gnu_less_cmd "$options" --prompt "$prompt" "$a"
+		LESSSECURE=1 $r_gnu_less_cmd "$options" --prompt "$prompt" "$a"
 
-			return
-		fi
+		return
+	fi
 
-# Disable the use of built-in `less` for-now as it doesn't support ANSI codes. Let's see if there are any problems (other than not being able to scroll output).
+# Disable the use of built-in `less` as it doesn't yet support ANSI codes. Let's see if there are any problems (other than not being able to scroll output).
 
 #		if [[ -x /bin/less ]]; then
 #			options='-~'
@@ -6850,7 +6849,6 @@ DisplayFileInViewport()
 
 #			return
 #		fi
-	fi
 
 	if [[ -x /bin/cat ]]; then
 		[[ $linenumbers = true ]] && options='--number'
@@ -8937,7 +8935,6 @@ ShowReport()
 
 	if [[ -s $r_report_output_pathfile ]]; then
 		DisplayFileInViewport "$r_report_output_pathfile" fixed-headers
-		Display
 	else
 		ShowAsError 'report not found'
 	fi
@@ -9674,7 +9671,7 @@ GetBusyBoxFunctionCount()
 
 	local a=''
 
-	a=$(/bin/busybox --list 2> /dev/null | wc -l)
+	a=$(/bin/busybox --list 2> /dev/null | /usr/bin/wc -l)
 
 	if [[ -n $a ]] && IsNumber $a && [[ $a -gt 0 ]]; then
 		printf '%s' "$a"
@@ -9956,6 +9953,17 @@ GetUserGitBranch()
 	{
 
 	/sbin/getcfg sherpa Git_Branch -d stable -f /etc/config/qpkg.conf
+
+	}
+
+GetGnuLessVersion()
+	{
+
+	if [[ -x $r_gnu_less_cmd ]]; then
+		$r_gnu_less_cmd -V | head -n1 | cut -d' ' -f2
+	else
+		printf unknown
+	fi
 
 	}
 
@@ -14276,6 +14284,24 @@ IsHaveSingleQuote()
 	/bin/grep "'" <<< "${1:-}"
 
 	} &> /dev/null
+
+IsGnuLessSupportHeaders()
+	{
+
+	local a=$(GetGnuLessVersion)
+
+	IsNumber $a && [[ $a -ge 685 ]]
+
+	}
+
+IsReportLargerThanViewport()
+	{
+
+	[[ -n ${1:-} && -e $1 ]] || return
+
+	[[ $(/usr/bin/wc -l < "$1") -gt $r_sess_rows || $(StripANSICodes "$(<$1)" | /usr/bin/wc -L) -gt $r_sess_columns ]]
+
+	}
 
 CreatePidFile()
 	{
