@@ -6776,10 +6776,10 @@ DisplayFileInViewport()
 	# Inputs: (local)
 	#	$1 = pathfile to display.
 	#	$2/$3/$4/$5 (optional, and in any order)
-	#		= 'headers:on'		: use both first row and first data column as fixed headers.
-	#		= 'linenumbers:on'	: display line numbers.
-	#		= 'linewrap:on'		: wrap lines of text within viewport.
-	#		= 'scroll:toend'	: start by scrolling to the last line in the file.
+	#		= 'headers:on'		: Use both first row and first data column as fixed headers. Default is off.
+	#		= 'linenumbers:on'	: Display line numbers. Default is off.
+	#		= 'linewrap:on'		: Wrap lines of text within viewport. Default is off.
+	#		= 'scrollto:end'	: Start by scrolling to the last line in the file. Default is start of file.
 
 	# Inputs: (global)
 	#	$e_nopfi
@@ -6801,73 +6801,48 @@ DisplayFileInViewport()
 	local linenumbers=false
 	local linewrap=false
 	local options=''
-	local prompt=' use arrow-keys to scroll up-down & left-right, press Q to quit '
+	local -r r_report_prompt=' use arrow-keys to scroll up-down & left-right, press Q to quit '
 	local scrolltoend=false
-
-	for arg in "${b[@]}"; do
-		[[ $arg = headers:on ]] && headers=true
-		[[ $arg = scroll:toend ]] && scrolltoend=true
-		[[ $arg = linenumbers:on ]] && linenumbers=true
-		[[ $arg = linewrap:on ]] && linewrap=true
-	done
 
 	echo
 
-	if [[ $useropt_verbose = true ]]; then
-		if [[ -x /bin/cat ]]; then
-			/bin/cat "$a"
+	for arg in "${b[@]}"; do
+		[[ $arg = headers:on ]] && headers=true
+		[[ $arg = linenumbers:on ]] && linenumbers=true
+		[[ $arg = linewrap:on ]] && linewrap=true
+		[[ $arg = scrollto:end ]] && scrolltoend=true
+	done
 
-			return
-		else
-			echo "$(< $a)"
+	if [[ $useropt_verbose = false && -x $r_gnu_less_cmd ]]; then
+		options='--no-init --tilde --mouse --RAW-CONTROL-CHARS --shift=4 --quit-if-one-screen --quit-on-intr --redraw-on-quit'
 
-			return
-		fi
-	fi
-
-	if [[ -x $r_gnu_less_cmd ]]; then
-		options='--no-init --tilde --mouse --RAW-CONTROL-CHARS --shift=4 --quit-if-one-screen --quit-on-intr --redraw-on-quit '
-
-		if IsReportLargerThanViewport "$a" && IsGnuLessSupportHeaders; then
-			[[ $headers = true ]] && options+="--header=1,$(CalcReportFirstColumnWidth "$a") "
+		if IsReportLargerThanViewport "$a"; then
+			IsGnuLessSupportHeaders && [[ $headers = true ]] && options+=" --header=1,$(CalcReportFirstColumnWidth "$a")"
+			[[ $linewrap = false ]] && options+=' --chop-long-lines'
+			[[ $scrolltoend = true ]] && options+=' +G'
 		fi
 
-		[[ $scrolltoend = true ]] && options+='+G '
-		[[ $linenumbers = true ]] && options+='--LINE-NUMBERS '
-		[[ $linewrap = false ]] && options+='--chop-long-lines '
+		[[ $linenumbers = true ]] && options+=' --LINE-NUMBERS'
 
-		LESSSECURE=1 $r_gnu_less_cmd "$options" --prompt "$prompt" "$a"
+		LESSSECURE=1 $r_gnu_less_cmd "$options" --prompt "$r_report_prompt" "$a"
 
-		return
-	fi
+# Disable the use of built-in `less` as it doesn't (yet) support ANSI codes. Let's see if there are any problems (other than not being able to scroll output).
 
-# Disable the use of built-in `less` as it doesn't yet support ANSI codes. Let's see if there are any problems (other than not being able to scroll output).
-
-#		if [[ -x /bin/less ]]; then
-#			options='-~'
-#			[[ $linenumbers = true ]] && options+='N'
-#			[[ $linewrap = false ]] && options+='S'
-
-#			/bin/less "$options" "$a"
-
-#			return
-#		fi
-
-	if [[ -x /bin/cat ]]; then
+#	elif [[ $useropt_verbose = false && -x /bin/less ]]; then
+#		options='-~'
+#		[[ $linenumbers = true ]] && options+='N'
+#		[[ $linewrap = false ]] && options+='S'
+#
+#		/bin/less "$options" "$a"
+	elif [[ $useropt_verbose = false && -x /bin/more ]]; then		# At-least supports basic forward-scrolling pagination.
+		/bin/more "$a"
+	elif [[ -x /bin/cat ]]; then
 		[[ $linenumbers = true ]] && options='--number'
 
 		/bin/cat "$options" "$a"
-
-		return
-	elif [[ -x /bin/more ]]; then
-		/bin/more "$a"
-
-		return
+	else															# And, when there's really no-better option ...
+		echo -e "$(< $a)"
 	fi
-
-	# And, when there's really no-better option ...
-
-	echo "$(< $a)"
 
 	}
 
