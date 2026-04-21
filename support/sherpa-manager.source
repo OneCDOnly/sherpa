@@ -360,6 +360,7 @@ LoadDefaults()
 		colourful=$r_colourful_default
 		generate_help_report=false
 		generate_list_report=false
+		generate_report_headers=false
 		generate_show_report=false
 		get_qpkg_extended_states=false
 		ipks_downgrade=false
@@ -467,7 +468,7 @@ IsCMDsOk()
 	IsCriticalFile /usr/bin/dirname || return
 	IsCriticalFile /usr/bin/du || return
 	IsCriticalFile /bin/grep || return
-	# Don't check for `/bin/less` because it's not always there.
+	[[ ! -x /bin/less ]] && ln -sf /bin/busybox /bin/less				# KLUDGE: `/bin/less` isn't always there in QTS.
 	IsCriticalFile /bin/md5sum || return
 	IsCriticalFile /bin/mknod || return
 	IsCriticalFile /bin/mktemp || return
@@ -480,7 +481,7 @@ IsCMDsOk()
 	IsCriticalFile /bin/sh || return
 	IsCriticalFile /bin/sha1sum || return
 	# `/bin/sleep` has already been called before arriving here.
-	[[ ! -x /usr/bin/sort ]] && ln -s /bin/busybox /usr/bin/sort		# KLUDGE: `/usr/bin/sort` randomly disappears from QTS.
+	[[ ! -x /usr/bin/sort ]] && ln -sf /bin/busybox /usr/bin/sort		# KLUDGE: `/usr/bin/sort` randomly disappears from QTS.
 	IsCriticalFile /usr/bin/stat || return
 	IsCriticalFile /usr/bin/tail || return
 	IsCriticalFile /bin/tar || return
@@ -792,17 +793,17 @@ ClearCachePath()
 
 	}
 
-ClearTempReportPath()
-	{
-
-	if [[ -n $r_temp_report_path && -d $r_temp_report_path ]]; then
-		ClearPath "$r_temp_run_path" "$r_temp_report_path"
-		ShowAsDone 'temp reports cleared'
-	fi
-
-	return 0
-
-	}
+#ClearTempReportPath()
+#	{
+#
+#	if [[ -n $r_temp_report_path && -d $r_temp_report_path ]]; then
+#		ClearPath "$r_temp_run_path" "$r_temp_report_path"
+#		ShowAsDone 'temp reports cleared'
+#	fi
+#
+#	return 0
+#
+#	}
 
 ClearTempRunPath()
 	{
@@ -1300,6 +1301,7 @@ AssignQpkgsToActions()
 	local prospect=''
 
 	# KLUDGE: ensure Entware is reinstalled when IPKs database is upgraded.
+	# Don't auto re-install Entware if only 'status' action is requested.
 
 	if IsOsOnline && IsValidQpkgInstalled Entware && IsEntwareUpgradable && (IsNonStatusActionRequested || [[ $useropt_fix = true ]]); then
 		ShowAsNote "the $(TextBrightOrange Entware) QPKG will be auto-reinstalled (Entware packages were last updated in $(ConvertLongDateAsHuman $r_entware_packages_last_updated))"
@@ -1863,8 +1865,8 @@ ProcAction()
 							for state in "${r_qpkg_is_states[@]}"; do
 								case $msg1_value in
 									"IS${state}")
-										[[ $(type -t QPKGs-ISNT${state}:Init) = function ]] && QPKGs-ISNT${state}:Remove "$msg2_value"
-										[[ $(type -t QPKGs-IS${state}:Init) = function ]] && QPKGs-IS${state}:Add "$msg2_value"
+										IsFuncExist QPKGs-ISNT${state}:Init && QPKGs-ISNT${state}:Remove "$msg2_value"
+										IsFuncExist QPKGs-IS${state}:Init && QPKGs-IS${state}:Add "$msg2_value"
 										break 2
 								esac
 							done
@@ -1872,8 +1874,8 @@ ProcAction()
 							for state in "${r_qpkg_isnt_states[@]}"; do
 								case $msg1_value in
 									"ISNT${state}")
-										[[ $(type -t QPKGs-IS${state}:Init) = function ]] && QPKGs-IS${state}:Remove "$msg2_value"
-										[[ $(type -t QPKGs-ISNT${state}:Init) = function ]] && QPKGs-ISNT${state}:Add "$msg2_value"
+										IsFuncExist QPKGs-IS${state}:Init && QPKGs-IS${state}:Remove "$msg2_value"
+										IsFuncExist QPKGs-ISNT${state}:Init && QPKGs-ISNT${state}:Add "$msg2_value"
 										break 2
 								esac
 							done
@@ -1881,8 +1883,8 @@ ProcAction()
 							for group in "${r_qpkg_is_groups[@]}"; do
 								case $msg1_value in
 									"GR${group}")
-										[[ $(type -t QPKGs-GRNT${group}:Init) = function ]] && QPKGs-GRNT${group}:Remove "$msg2_value"
-										[[ $(type -t QPKGs-GR${group}:Init) = function ]] && QPKGs-GR${group}:Add "$msg2_value"
+										IsFuncExist QPKGs-GRNT${group}:Init && QPKGs-GRNT${group}:Remove "$msg2_value"
+										IsFuncExist QPKGs-GR${group}:Init && QPKGs-GR${group}:Add "$msg2_value"
 										break 2
 								esac
 							done
@@ -1890,8 +1892,8 @@ ProcAction()
 							for group in "${r_qpkg_isnt_groups[@]}"; do
 								case $msg1_value in
 									"GRNT${group}")
-										[[ $(type -t QPKGs-GR${group}:Init) = function ]] && QPKGs-GR${group}:Remove "$msg2_value"
-										[[ $(type -t QPKGs-GRNT${group}:Init) = function ]] && QPKGs-GRNT${group}:Add "$msg2_value"
+										IsFuncExist QPKGs-GR${group}:Init && QPKGs-GR${group}:Remove "$msg2_value"
+										IsFuncExist QPKGs-GRNT${group}:Init && QPKGs-GRNT${group}:Add "$msg2_value"
 										break 2
 								esac
 							done
@@ -1924,12 +1926,12 @@ ProcAction()
 								:		# Ignore this.
 								;;
 							ok|er|sk|se|sa)
-								[[ $(type -t QPKGs-AC${r_action}-to:Init) = function ]] && QPKGs-AC${r_action}-to:Remove "$msg2_value"
-								[[ $(type -t QPKGs-AC${r_action}-${msg1_value}:Init) = function ]] && QPKGs-AC${r_action}-${msg1_value}:Add "$msg2_value"
+								IsFuncExist QPKGs-AC${r_action}-to:Init && QPKGs-AC${r_action}-to:Remove "$msg2_value"
+								IsFuncExist QPKGs-AC${r_action}-${msg1_value}:Init && QPKGs-AC${r_action}-${msg1_value}:Add "$msg2_value"
 
 								# Also add to 'done' list.
 
-								[[ $(type -t QPKGs-AC${r_action}-dn:Init) = function ]] && QPKGs-AC${r_action}-dn:Add "$msg2_value"
+								IsFuncExist QPKGs-AC${r_action}-dn:Init && QPKGs-AC${r_action}-dn:Add "$msg2_value"
 								;;
 							ex)			# Action is about to exit.
 								for package_index in "${!target_packages[@]}"; do
@@ -6118,47 +6120,47 @@ FormatReportField()
 	case ${2:-blank} in
 		alert)
 			a=$(TextBrightRedBlink "$r_chars_alert")
-			b=$(TextBrightRedBlink "$1")
+			b=$(TextBrightRedBlink "${1:-}")
 			;;
 		notice)
 			a=$(TextBrightRed "$r_chars_alert")
-			b=$(TextBrightRed "$1")
+			b=$(TextBrightRed "${1:-}")
 			;;
 		normal_notice)
 			a=$(TextBrightRed "$r_chars_normal")
-			b=$(TextBrightRed "$1")
+			b=$(TextBrightRed "${1:-}")
 			;;
 		oops)
 			a=$r_chars_blank
-			b=$(TextBrightRed "$1")
+			b=$(TextBrightRed "${1:-}")
 			;;
 		attention_highlight)
 			a=$(TextBrightOrange "$r_chars_attention")
-			b=$(TextBrightOrange "$1")
+			b=$(TextBrightOrange "${1:-}")
 			;;
 		highlight)
 			a=$r_chars_blank
-			b=$(TextBrightOrange "$1")
+			b=$(TextBrightOrange "${1:-}")
 			;;
 		normal_ok)
 			a=$r_chars_normal
-			b=$(TextBrightGreen "$1")
+			b=$(TextBrightGreen "${1:-}")
 			;;
 		ok)
 			a=$r_chars_blank
-			b=$(TextBrightGreen "$1")
+			b=$(TextBrightGreen "${1:-}")
 			;;
 		normal_mute)
 			a=$(TextDarkGrey "$r_chars_normal")
-			b=$(TextDarkGrey "$1")
+			b=$(TextDarkGrey "${1:-}")
 			;;
 		alert_mute)
 			a=$(TextDarkGrey "$r_chars_alert")
-			b=$(TextDarkGrey "$1")
+			b=$(TextDarkGrey "${1:-}")
 			;;
 		mute)
 			a=$r_chars_blank
-			b=$(TextDarkGrey "$1")
+			b=$(TextDarkGrey "${1:-}")
 			;;
 		normal)
 			a=$r_chars_normal
@@ -6737,8 +6739,7 @@ ViewLogLast()
 	EraseThisLine
 
 	if [[ -s $r_session_last_pathfile ]]; then
-		DisplayFileInViewport "$r_session_last_pathfile" showlinenumbers
-		Display
+		DisplayFileInViewport "$r_session_last_pathfile" linenumbers:on
 	else
 		ShowAsError 'no last session log to display'
 	fi
@@ -6760,8 +6761,7 @@ ViewLogTail()
 	EraseThisLine
 
 	if [[ -s $r_session_tail_pathfile ]]; then
-		DisplayFileInViewport "$r_session_tail_pathfile" showlinenumbers
-		Display
+		DisplayFileInViewport "$r_session_tail_pathfile" linenumbers:on
 	else
 		ShowAsError 'no session log tail to display'
 	fi
@@ -6776,10 +6776,10 @@ DisplayFileInViewport()
 	# Inputs: (local)
 	#	$1 = pathfile to display.
 	#	$2/$3/$4/$5 (optional, and in any order)
-	#		= 'fixed-headers'	: use both first row and first data column as scroll headers.
-	#		= 'jumptoend'		: display file contents scrolled to the last line.
-	#		= 'showlinenumbers'	: display file contents with line numbers.
-	#		= 'wraplines'		: wrap lines of text to displayport.
+	#		= 'headers:on'		: use both first row and first data column as fixed headers.
+	#		= 'linenumbers:on'	: display line numbers.
+	#		= 'linewrap:on'		: wrap lines of text within viewport.
+	#		= 'scroll:toend'	: start by scrolling to the last line in the file.
 
 	# Inputs: (global)
 	#	$e_nopfi
@@ -6796,19 +6796,19 @@ DisplayFileInViewport()
 	local a=$1
 	shift															# `shift` all arguments one position to the left.
 	local arg=''
-	local -a b=("$@")
+	local -a b=("${@:-}")
 	local headers=false
-	local jumptoend=false
 	local linenumbers=false
+	local linewrap=false
 	local options=''
 	local prompt=' use arrow-keys to scroll up-down & left-right, press Q to quit '
-	local wrap=false
+	local scrolltoend=false
 
 	for arg in "${b[@]}"; do
-		[[ $arg = fixed-headers ]] && headers=true
-		[[ $arg = jumptoend ]] && jumptoend=true
-		[[ $arg = showlinenumbers ]] && linenumbers=true
-		[[ $arg = wraplines ]] && wrap=true
+		[[ $arg = headers:on ]] && headers=true
+		[[ $arg = scroll:toend ]] && scrolltoend=true
+		[[ $arg = linenumbers:on ]] && linenumbers=true
+		[[ $arg = linewrap:on ]] && linewrap=true
 	done
 
 	echo
@@ -6825,31 +6825,33 @@ DisplayFileInViewport()
 		fi
 	fi
 
-	if [[ $(/usr/bin/wc -l < "$a") -ge $r_sess_rows || $(/usr/bin/wc -L < "$a") -ge $r_sess_columns ]]; then
-		if [[ -x $r_gnu_less_cmd ]]; then
-			options='--quit-on-intr --tilde --mouse --RAW-CONTROL-CHARS --shift=4 --redraw-on-quit --quit-if-one-screen --no-init '
-#			[[ $headers = true ]] && options+="--header=1,$(CalcReportFirstColumnWidth "$a") "		# NOTE: if enabled, and report does not fill terminal window, header row is pushed-off the top of the terminal. GNU `less` v661, fixed in v668. Might be able to work-around this by altering `less` args based-on $r_sess_rows.
-			[[ $jumptoend = true ]] && options+='+G '
-			[[ $linenumbers = true ]] && options+='--LINE-NUMBERS '
-			[[ $wrap = false ]] && options+='--chop-long-lines '
+	if [[ -x $r_gnu_less_cmd ]]; then
+		options='--no-init --tilde --mouse --RAW-CONTROL-CHARS --shift=4 --quit-if-one-screen --quit-on-intr --redraw-on-quit '
 
-			LESSSECURE=1 $r_gnu_less_cmd "$options" --prompt "$prompt" "$a"
-
-			return
+		if IsReportLargerThanViewport "$a" && IsGnuLessSupportHeaders; then
+			[[ $headers = true ]] && options+="--header=1,$(CalcReportFirstColumnWidth "$a") "
 		fi
 
-# Disable the use of built-in `less` for-now as it doesn't support ANSI codes. Let's see if there are any problems (other than not being able to scroll output).
+		[[ $scrolltoend = true ]] && options+='+G '
+		[[ $linenumbers = true ]] && options+='--LINE-NUMBERS '
+		[[ $linewrap = false ]] && options+='--chop-long-lines '
+
+		LESSSECURE=1 $r_gnu_less_cmd "$options" --prompt "$prompt" "$a"
+
+		return
+	fi
+
+# Disable the use of built-in `less` as it doesn't yet support ANSI codes. Let's see if there are any problems (other than not being able to scroll output).
 
 #		if [[ -x /bin/less ]]; then
 #			options='-~'
 #			[[ $linenumbers = true ]] && options+='N'
-#			[[ $wrap = false ]] && options+='S'
+#			[[ $linewrap = false ]] && options+='S'
 
 #			/bin/less "$options" "$a"
 
 #			return
 #		fi
-	fi
 
 	if [[ -x /bin/cat ]]; then
 		[[ $linenumbers = true ]] && options='--number'
@@ -6863,11 +6865,11 @@ DisplayFileInViewport()
 		return
 	fi
 
-	# and, when there's really no-better option ...
+	# And, when there's really no-better option ...
 
 	echo "$(< $a)"
 
-	} 2> /dev/null
+	}
 
 CalcReportFirstColumnWidth()
 	{
@@ -6932,7 +6934,7 @@ PasteLogLast()
 			fi
 		else
 			DebugInfoMinSepr
-			DebugScript warning 'user abort'
+			DebugScript warning 'user abort' ''
 			show_action_results_zero=false
 
 			return 1
@@ -7625,7 +7627,7 @@ ListQPKGsFlagsAll()																							# devdebug
 
 	for a in "${r_qpkg_actions[@]}"; do																		# devdebug
 		for b in "${r_qpkg_is_states[@]}"; do																# devdebug
-			if [[ $(type -t QPKGs.AC${a}IS${b}.IsSet) = function ]]; then									# devdebug
+			if IsFuncExist QPKGs.AC${a}IS${b}.IsSet; then													# devdebug
 				if QPKGs.AC${a}IS${b}.IsSet; then															# devdebug
 					DebugQpkg info "AC${a}IS${b}" "set"														# devdebug
 #				else																						# devdebug
@@ -7991,12 +7993,12 @@ InitQPKGsStates()
 
 	for a in "${r_qpkg_is_states[@]}"; do
 		[[ $a = active ]] && continue		# Don't reset.
-		[[ $(type -t QPKGs-IS${a}:Init) = function ]] && QPKGs-IS${a}:Init
+		IsFuncExist QPKGs-IS${a}:Init && QPKGs-IS${a}:Init
 	done
 
 	for a in "${r_qpkg_isnt_states[@]}"; do
 		[[ $a = active ]] && continue		# Don't reset.
-		[[ $(type -t QPKGs-ISNT${a}:Init) = function ]] && QPKGs-ISNT${a}:Init
+		IsFuncExist QPKGs-ISNT${a}:Init && QPKGs-ISNT${a}:Init
 	done
 
 	ClearPath "$r_temp_run_path"/qpkg "$r_qpkg_states_path"
@@ -8335,6 +8337,7 @@ ReportDependencies()
 
 	FuncInit
 
+	generate_report_headers=true
 	local a=''
 	local b=''
 	local -i m=0
@@ -8387,6 +8390,7 @@ ReportFeatures()
 
 	FuncInit
 
+#	generate_report_headers=true		# Disable this for-now, display output gets wonky when viewport width is less-than report width. Only happens on this report.
 	local a=''
 	local b=''
 	local -i m=0
@@ -8505,6 +8509,7 @@ ReportRepos()
 
 	FuncInit
 
+	generate_report_headers=true
 	local a=''
 	local b=''
 	local -i m=0
@@ -8557,6 +8562,7 @@ ReportStatuses()
 
 	FuncInit
 
+	generate_report_headers=true
 	local a=''
 	local b=''
 	local -i m=0
@@ -8691,7 +8697,7 @@ ReportActionResults()
 		# Obtain count of same results. Need to know if action applied to one QPKG or many.
 
 		while IFS='|' read -r datetime action quantity package_name package_type result duration reason; do
-			if [[ $result = "$1" ]] || [[ $1 = sk && ($result = se || $result = sa) ]]; then
+			if [[ $result = "${1:-}" ]] || [[ $1 = sk && ($result = se || $result = sa) ]]; then
 				[[ $action = status && $useropt_show_previous_action_results_report = false ]] && continue		# Don't need to see the result of `status` checks unless a 'results' report has been requested.
 				((count++))
 				[[ $count -gt 1 ]] && break			# Two-or-more of the same action so must pluralise messages.
@@ -8726,7 +8732,7 @@ ReportActionResults()
 
 		if [[ $count -ge 1 ]]; then
 			while IFS='|' read -r datetime action quantity package_name package_type result duration reason; do
-				if [[ $result = "$1" ]] || [[ $1 = sk && ($result = se || $result = sa) ]]; then
+				if [[ $result = "${1:-}" ]] || [[ $1 = sk && ($result = se || $result = sa) ]]; then
 					[[ $action = status && $useropt_show_previous_action_results_report = false ]] && continue		# Don't need to see the result of `status` checks unless a 'results' report has been requested.
 					ShowAsActionLogDetail "$datetime" "$package_name" "$action" "$result" "$duration" "$reason" "$package_type" "$quantity"
 				fi
@@ -8935,8 +8941,11 @@ ShowReport()
 	#	$r_report_output_pathfile
 
 	if [[ -s $r_report_output_pathfile ]]; then
-		DisplayFileInViewport "$r_report_output_pathfile" fixed-headers
-		Display
+		if [[ $generate_report_headers = true ]]; then
+			DisplayFileInViewport "$r_report_output_pathfile" headers:on
+		else
+			DisplayFileInViewport "$r_report_output_pathfile"
+		fi
 	else
 		ShowAsError 'report not found'
 	fi
@@ -9065,7 +9074,7 @@ ShowQPKGList()
 	DisableDebugToArchiveAndFile
 	EraseThisLine
 
-	if [[ $(type -t QPKGs-$1.IsAny) = function ]] && QPKGs-$1.IsAny; then
+	if IsFuncExist QPKGs-$1.IsAny && QPKGs-$1.IsAny; then
 		for qpkg_name in $(QPKGs-$1:Array); do
 			Display "$qpkg_name"
 		done
@@ -9087,7 +9096,7 @@ SendParentCommand()
 	# Inputs: (local)
 	#	$1 = action request
 
-	WriteToMsgPipe run "$1"
+	WriteToMsgPipe run "${1:-}"
 
 	}
 
@@ -9242,7 +9251,7 @@ AppendToMsgPipeEnhancedLog()																# devdebug
 ExpandMsgPipeShortcodes()																	# devdebug
 	{																						# devdebug
 
-	[[ -n $1 ]] || return																	# devdebug
+	[[ -n ${1:-} ]] || return																# devdebug
 
 	case $1 in																				# devdebug
 		ok)																					# devdebug
@@ -9363,8 +9372,8 @@ NoteIpkAcAsOk()
 	#	$1 = package name
 	#	$2 = action
 
-	IPKs-AC"$2"-to:Remove "$1"
-	IPKs-AC"$2"-ok:Add "$1"
+	IPKs-AC"$2"-to:Remove "${1:-}"
+	IPKs-AC"$2"-ok:Add "${1:-}"
 
 	return 0
 
@@ -9380,12 +9389,12 @@ NoteIpkAcAsEr()
 	#	$2 = action.
 	#	$3 (optional) = reason.
 
-	local a="failing request to $2 $(FormatPackageName "$1")"
+	local a="failing request to $2 $(FormatPackageName "${1:-}")"
 
 	[[ -n ${3:-} ]] && a+=' as '$3
 	DebugAsError "$a" >&2
-	IPKs-AC"$2"-to:Remove "$1"
-	IPKs-AC"$2"-er:Add "$1"
+	IPKs-AC"$2"-to:Remove "${1:-}"
+	IPKs-AC"$2"-er:Add "${1:-}"
 
 	return 0
 
@@ -9673,7 +9682,7 @@ GetBusyBoxFunctionCount()
 
 	local a=''
 
-	a=$(/bin/busybox --list 2> /dev/null | wc -l)
+	a=$(/bin/busybox --list 2> /dev/null | /usr/bin/wc -l)
 
 	if [[ -n $a ]] && IsNumber $a && [[ $a -gt 0 ]]; then
 		printf '%s' "$a"
@@ -9688,7 +9697,7 @@ GetBusyBoxFunctionCount()
 GetOsSysLoadAverages()
 	{
 
-	/usr/bin/uptime | /bin/sed 's/.*load average: //' | /bin/awk -F', ' '{print "1m:"$1", 5m:"$2", 15m:"$3}'
+	/usr/bin/uptime | /bin/sed 's/.*load average: //' | /bin/awk -F', ' '{print $1" (1m), "$2" (5m), "$3" (15m)"}'
 
 	}
 
@@ -9955,6 +9964,17 @@ GetUserGitBranch()
 	{
 
 	/sbin/getcfg sherpa Git_Branch -d stable -f /etc/config/qpkg.conf
+
+	}
+
+GetGnuLessVersion()
+	{
+
+	if [[ -x $r_gnu_less_cmd ]]; then
+		$r_gnu_less_cmd -V | head -n1 | cut -d' ' -f2
+	else
+		printf unknown
+	fi
 
 	}
 
@@ -10809,6 +10829,8 @@ _QPKG:uninstall_()
 
 	[[ $qpkg_name = Entware ]] && SaveIpkAndPipList
 
+	local current_ver=$(GetQpkgInstalledVer)
+
 	DebugAsProc "uninstalling $(FormatPackageName)"
 
 	local a='UNINSTALL_QPKG=true '
@@ -10822,7 +10844,7 @@ _QPKG:uninstall_()
 		# WARNING: beware of `qpkg_cli --remove`. It removes the QPKG installation path around 10-20 seconds after execution. If sherpa has moved-on and starts an install, `qpkg_cli` will remove the newly created QPKG installation path partway through the installation. So, check if QPKG is to be installed again. If-so, don't use `qpkg_cli --remove`.
 
 		[[ -x /sbin/qpkg_cli ]] && ! QPKGs-ACinstall-to.Exist "$qpkg_name" && /sbin/qpkg_cli --remove "$qpkg_name" &> /dev/null
-		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok "v$current_ver"
 		/sbin/rmcfg "$qpkg_name" -f /etc/config/qpkg.conf
 		DebugAsDone 'removed icon information from App Center'
 
@@ -13137,7 +13159,7 @@ IsNonStatusActionRequested()
 
 	for action in "${r_qpkg_actions[@]}"; do
 		if QPKGs-AC${action}-to.IsAny; then
-			[[ $action != status ]] || continue		# Don't auto re-install Entware if only 'status' action is requested.
+			[[ $action != status ]] || continue
 			return
 		fi
 	done
@@ -14274,6 +14296,31 @@ IsHaveSingleQuote()
 
 	} &> /dev/null
 
+IsGnuLessSupportHeaders()
+	{
+
+	local a=$(GetGnuLessVersion)
+
+	IsNumber $a && [[ $a -ge 685 ]]
+
+	}
+
+IsReportLargerThanViewport()
+	{
+
+	[[ -n ${1:-} && -e $1 ]] || return
+
+	[[ $(/usr/bin/wc -l < "$1") -ge $r_sess_rows || $(StripANSICodes "$(<$1)" | /usr/bin/wc -L) -gt $r_sess_columns ]]
+
+	}
+
+IsFuncExist()
+	{
+
+	[[ -n ${1:-} && $(type -t "$1") = function ]]
+
+	}
+
 CreatePidFile()
 	{
 
@@ -14950,7 +14997,7 @@ FormatAsThous()
 FormatAsIsoBytes()
 	{
 
-	/bin/awk 'BEGIN{ u[0]="B"; u[1]="kB"; u[2]="MB"; u[3]="GB"} { n = $1; i = 0; while(n > 1000) { i+=1; n= int((n/1000)+0.5) } print n u[i] } ' <<< "$1"
+	/bin/awk 'BEGIN{ u[0]="B"; u[1]="kB"; u[2]="MB"; u[3]="GB"} { n = $1; i = 0; while(n > 1000) { i+=1; n= int((n/1000)+0.5) } print n u[i] } ' <<< "${1:-}"
 
 	}
 
@@ -15193,7 +15240,7 @@ DebugHardware()
 	#	$2 = name
 	#	$3 = value
 
-	DebugItem "$1" hardware "$2" "$3"
+	DebugItem "${1:-}" hardware "${2:-}" "${3:-}"
 
 	}
 
@@ -15205,7 +15252,7 @@ DebugKernel()
 	#	$2 = name
 	#	$3 = value
 
-	DebugItem "$1" kernel "$2" "$3"
+	DebugItem "${1:-}" kernel "${2:-}" "${3:-}"
 
 	}
 
@@ -15217,7 +15264,7 @@ DebugFirmware()
 	#	$2 = name
 	#	$3 = value
 
-	DebugItem "$1" firmware "$2" "$3"
+	DebugItem "${1:-}" firmware "${2:-}" "${3:-}"
 
 	}
 
@@ -15229,7 +15276,7 @@ DebugOS()
 	#	$2 = name
 	#	$3 = value
 
-	DebugItem "$1" os "$2" "$3"
+	DebugItem "${1:-}" os "${2:-}" "${3:-}"
 
 	}
 
@@ -15241,7 +15288,7 @@ DebugUserspace()
 	#	$2 = name
 	#	$3 = value
 
-	DebugItem "$1" userspace "$2" "$3"
+	DebugItem "${1:-}" userspace "${2:-}" "${3:-}"
 
 	}
 
@@ -15253,7 +15300,7 @@ DebugStorage()
 	#	$2 = name
 	#	$3 = value
 
-	DebugItem "$1" storage "$2" "$3"
+	DebugItem "${1:-}" storage "${2:-}" "${3:-}"
 
 	}
 
@@ -15265,7 +15312,7 @@ DebugScript()
 	#	$2 = name
 	#	$3 = value
 
-	DebugItem "$1" script "$2" "$3"
+	DebugItem "${1:-}" script "${2:-}" "${3:-}"
 
 	}
 
@@ -15277,7 +15324,7 @@ DebugIpk()
 	#	$2 = name
 	#	$3 = value
 
-	DebugItem "$1" ipk "$2" "$3"
+	DebugItem "${1:-}" ipk "${2:-}" "${3:-}"
 
 	}
 
@@ -15289,7 +15336,7 @@ DebugQpkg()
 	#	$2 = name
 	#	$3 = value
 
-	DebugItem "$1" qpkg "$2" "$3"
+	DebugItem "${1:-}" qpkg "${2:-}" "${3:-}"
 
 	}
 
@@ -15581,7 +15628,7 @@ ConvertSecondsToFullDate()
 	# Outputs: (local)
 	#	stdout = real date.
 
-	/bin/date -d @"$1" "$r_full_datetime_format"
+	/bin/date -d @"${1:-}" "$r_full_datetime_format"
 
 	} 2> /dev/null
 
@@ -15618,7 +15665,7 @@ ConvertSecondsToTime()
 	# Outputs: (local)
 	#	stdout = time component only.
 
-	/bin/date -d @"$1" '+%-l:%M:%S %p' | tr -s ' '
+	/bin/date -d @"${1:-}" '+%-l:%M:%S %p' | tr -s ' '
 
 	} 2> /dev/null
 
@@ -15669,7 +15716,7 @@ ConvertMillisecondsToDuration()
 	# Inputs: (local)
 	#	$1 = milliseconds to convert to 'HHh:MMm:SSs' or, if less than 1 minute, to 'S seconds'.
 
-	ConvertSecondsToDuration "$(ConvertMillisecondsToSeconds "$1")"
+	ConvertSecondsToDuration "$(ConvertMillisecondsToSeconds "${1:-}")"
 
 	} 2> /dev/null
 
@@ -15934,10 +15981,13 @@ DebugThis()
 
 	[[ -n ${1:-} ]] || return
 
-	[[ ${useropt_verbose:-false} = true ]] && ShowAsDebug "$1"
+	local a=dbug
+	local b=$1
+
+	[[ ${useropt_verbose:-false} = true ]] && ShowAsDebug "$b"
 
 	if [[ ${useropt_show_about:=false} = false && ${useropt_show_aboutall:=false} = false ]]; then
-		WriteToLog dbug "$1"
+		WriteToLog "$a" "$b"
 	fi
 
 	}
@@ -15995,20 +16045,21 @@ ShowAsProc()
 
 	[[ -n ${1:-} ]] || return
 
-	local a=$1
-	local b=''
-	[[ -n ${2:-} ]] && b=$2
-	local c="$a ... $b"
+	local a=proc
+	local b=$1
+	local c=''
+	[[ -n ${2:-} ]] && c=$2
+	local d="$b ... $c"
 
 	if [[ -z ${r_inhibit_display_pathfile:-} ]] || [[ -n ${r_inhibit_display_pathfile:-} && ! -e $r_inhibit_display_pathfile ]]; then
-		if [[ ${useropt_verbose:=false} = false && ${useropt_terse:=true} = true ]] || [[ ${useropt_verbose:=false} = false && -n $b ]]; then
-			OpStepClearWait "$(TextBrightYellow proc)" "$c"
+		if [[ ${useropt_verbose:=false} = false && ${useropt_terse:=true} = true ]] || [[ ${useropt_verbose:=false} = false && -n $c ]]; then
+			OpStepClearWait "$(TextBrightYellow "$a")" "$d"
 		else
-			OpStepClear "$(TextBrightYellow proc)" "$c"
+			OpStepClear "$(TextBrightYellow "$a")" "$d"
 		fi
 	fi
 
-	WriteToLog proc "$c"
+	WriteToLog "$a" "$d"
 
 	} >&2
 
@@ -16024,12 +16075,13 @@ ShowAsNote()
 
 	# Note to user.
 
-	local a=''
+	[[ -n ${1:-} ]] || return
 
-	[[ -n ${1:-} ]] && a=$(AddPeriod "$1") || return
+	local a=note
+	local b=$(AddPeriod "$1")
 
-	OpStepClear "$(TextBrightYellow note)" "$a"
-	WriteToLog note "$a"
+	OpStepClear "$(TextBrightYellow "$a")" "$b"
+	WriteToLog "$a" "$b"
 
 	} >&2
 
@@ -16038,12 +16090,13 @@ ShowAsDone()
 
 	# Process completed OK.
 
-	local a=''
+	[[ -n ${1:-} ]] || return
 
-	[[ -n ${1:-} ]] && a=$(AddPeriod "$1") || return
+	local a='done'
+	local b=$(AddPeriod "$1")
 
-	OpStepClear "$(TextBrightGreen 'done')" "$a"
-	WriteToLog 'done' "$a"
+	OpStepClear "$(TextBrightGreen "$a")" "$b"
+	WriteToLog "$a" "$b"
 
 	} >&2
 
@@ -16054,7 +16107,11 @@ ShowAsNews()
 
 	[[ -n ${1:-} ]] || return
 
-	OpStepClear "$(TextBrightWhiteBlink news)" "${1:-}"
+	local a=news
+	local b=$1
+
+	OpStepClear "$(TextBrightWhiteBlink "$a")" "$b"
+	WriteToLog "$a" "$b"
 
 	} >&2
 
@@ -16063,12 +16120,13 @@ ShowAsWarn()
 
 	# Warning only.
 
-	local a=''
+	[[ -n ${1:-} ]] || return
 
-	[[ -n ${1:-} ]] && a=$(AddPeriod "$1") || return
+	local a=warn
+	local b=$(AddPeriod "$1")
 
-	OpStepClear "$(TextBrightOrange warn)" "$a"
-	WriteToLog warn "$a"
+	OpStepClear "$(TextBrightOrange "$a")" "$b"
+	WriteToLog "$a" "$b"
 
 	} >&2
 
@@ -16077,12 +16135,13 @@ ShowAsAbort()
 
 	# Fatal abort.
 
-	local a=''
+	[[ -n ${1:-} ]] || return
 
-	[[ -n ${1:-} ]] && a=$(AddPeriod "$1") || return
+	local a=bort
+	local b=$(AddPeriod "$1")
 
-	OpStepClear "$(TextBrightRed bort)" "$a"
-	WriteToLog bort "$a"
+	OpStepClear "$(TextBrightRed "$a")" "$b"
+	WriteToLog "$a" "$b"
 	SetError
 
 	} >&2
@@ -16092,12 +16151,13 @@ ShowAsFail()
 
 	# Non-fatal error.
 
-	local a=''
+	[[ -n ${1:-} ]] || return
 
-	[[ -n ${1:-} ]] && a=$(AddPeriod "$1") || return
+	local a=fail
+	local b=$(AddPeriod "$1")
 
-	OpStepClear "$(TextBrightRed fail)" "$a"
-	WriteToLog fail "$a"
+	OpStepClear "$(TextBrightRed "$a")" "$b"
+	WriteToLog "$a" "$b"
 
 	} >&2
 
@@ -16106,12 +16166,13 @@ ShowAsError()
 
 	# Fatal error.
 
-	local a=''
+	[[ -n ${1:-} ]] || return
 
-	[[ -n ${1:-} ]] && a=$(AddPeriod "$1") || return
+	local a=derp
+	local b=$(AddPeriod "$1")
 
-	OpStepClear "$(TextBrightRed derp)" "$a"
-	WriteToLog derp "$a"
+	OpStepClear "$(TextBrightRed "$a")" "$b"
+	WriteToLog "$a" "$b"
 	SetError
 
 	} >&2
@@ -16125,27 +16186,27 @@ ShowAsBug()
 	#	$1 = Problem function name.
 	#	$2 = Error message to display.
 
-	[[ -n ${1:-} ]] || return
-	[[ -n ${2:-} ]] || return
+	[[ -n ${1:-} && -n ${2:-} ]] || return
 
-	local a='fstack: '
-	local b=' '
+	local a=buug
+	local b='fstack: '
+	local c=' '
 	local -i i=0
 
 	# Re-order FUNCNAME[] elements in-reverse.
 
 	for ((i=${#FUNCNAME[@]}-1; i>=0; i--)); do
-		[[ $i -ne $((${#FUNCNAME[@]}-1)) ]] && a+="${b}>${b}"		# Insert separators.
+		[[ $i -ne $((${#FUNCNAME[@]}-1)) ]] && b+="${c}>${c}"		# Insert separators.
 
 		if [[ ${FUNCNAME[$i]} = "$1" ]]; then
-			a+="${FUNCNAME[$i]}($2)"
+			b+="${FUNCNAME[$i]}($2)"
 		else
-			a+="${FUNCNAME[$i]}()"
+			b+="${FUNCNAME[$i]}()"
 		fi
 	done
 
-	OpStepClear "$(TextBrightRed buug)" "$a"
-	WriteToLog buug "$a"
+	OpStepClear "$(TextBrightRed "$a")" "$b"
+	WriteToLog "$a" "$b"
 	SetError
 
 	} >&2
@@ -16155,8 +16216,11 @@ ShowAsQuiz()
 
 	[[ -n ${1:-} ]] || return
 
-	OpStepClearWait "$(TextBrightOrangeBlink quiz)" "$1:"
-	WriteToLog quiz "$1:"
+	local a=quiz
+	local b=$1:
+
+	OpStepClearWait "$(TextBrightOrangeBlink "$a")" "$b"
+	WriteToLog "$a" "$b"
 
 	}
 
@@ -16165,7 +16229,10 @@ ShowAsQuizDone()
 
 	[[ -n ${1:-} ]] || return
 
-	OpStepClear "$(TextBrightOrange quiz)" "$1"
+	local a=quiz
+	local b=$1
+
+	OpStepClear "$(TextBrightOrange "$a")" "$b"
 
 	}
 
@@ -16429,21 +16496,21 @@ TextBrightYellow()
 
 	} 2> /dev/null
 
-TextBrightYellowBlink()
-	{
-
-	# Inputs: (global)
-	#	$colourful
-
-	[[ -n ${1:-} ]] || return
-
-	if [[ $colourful = true ]]; then
-		printf '\033[1;5;33m%s\033[0m' "$1"
-	else
-		printf '%s' "$1"
-	fi
-
-	} 2> /dev/null
+#TextBrightYellowBlink()
+#	{
+#
+#	# Inputs: (global)
+#	#	$colourful
+#
+#	[[ -n ${1:-} ]] || return
+#
+#	if [[ $colourful = true ]]; then
+#		printf '\033[1;5;33m%s\033[0m' "$1"
+#	else
+#		printf '%s' "$1"
+#	fi
+#
+#	} 2> /dev/null
 
 TextBrightOrange()
 	{
@@ -16917,7 +16984,7 @@ ShowKeystrokes()
 sleep()
 	{
 
-	# MITM an internal command.
+	# MITM the internal `sleep` command.
 
 	# Inputs: (local)
 	#	$1 (optional) = seconds to sleep (decimal or integer), default is 1 second.
