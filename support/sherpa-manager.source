@@ -6794,8 +6794,6 @@ DisplayFileInViewport()
 	local -r r_report_prompt=' use arrow-keys to scroll up-down & left-right, press Q to quit '
 	local scrolltoend=false
 
-	echo
-
 	for arg in "${b[@]}"; do
 		[[ $arg = headers:on ]] && headers=true
 		[[ $arg = linenumbers:on ]] && linenumbers=true
@@ -6803,8 +6801,17 @@ DisplayFileInViewport()
 		[[ $arg = scrollto:end ]] && scrolltoend=true
 	done
 
+	echo
+
 	if [[ $useropt_verbose = false && -x $r_gnu_less_cmd ]]; then
-		options='--no-init --tilde --mouse --RAW-CONTROL-CHARS --shift=4 --quit-if-one-screen --quit-on-intr --redraw-on-quit'
+#		options+=' --no-init'
+		options+=' --tilde'
+		options+=' --mouse'
+		options+=' --RAW-CONTROL-CHARS'
+		options+=' --shift=4'
+		options+=' --quit-if-one-screen'
+		options+=' --quit-on-intr'
+		options+=' --redraw-on-quit'
 
 		if IsReportLargerThanViewport "$a"; then
 			IsGnuLessSupportHeaders && [[ $headers = true ]] && options+=" --header=1,$(CalcReportFirstColumnWidth "$a")"
@@ -6814,7 +6821,7 @@ DisplayFileInViewport()
 
 		[[ $linenumbers = true ]] && options+=' --LINE-NUMBERS'
 
-		LESSSECURE=1 $r_gnu_less_cmd "$options" --prompt "$r_report_prompt" "$a"
+		LESSSECURE=1 $r_gnu_less_cmd "$(Trim "$options")" --prompt "$r_report_prompt" "$a"
 
 # Disable the use of built-in `less` as it doesn't (yet) support ANSI codes. Let's see if there are any problems (other than not being able to scroll output).
 
@@ -6827,11 +6834,11 @@ DisplayFileInViewport()
 	elif [[ $useropt_verbose = false && -x /bin/more ]]; then		# At-least supports basic forward-scrolling pagination.
 		/bin/more "$a"
 	elif [[ -x /bin/cat ]]; then
-		[[ $linenumbers = true ]] && options='--number'
+		[[ $linenumbers = true ]] && options=' --number'
 
-		/bin/cat "$options" "$a"
+		/bin/cat "$(Trim "$options")" "$a"
 	else															# And, when there's really no-better option ...
-		echo -e "$(< $a)"
+		echo -e "$(< "$a")"
 	fi
 
 	}
@@ -6851,7 +6858,7 @@ CalcReportFirstColumnWidth()
 	ConfirmVarIsDefined 1 "${1:-}" "$e_nopfi" || return
 	[[ -s $1 ]] || return
 
-	local a=$(<"$1")
+	local a=$(< "$1")
 	local b=''
 	local c=''
 
@@ -7856,7 +7863,7 @@ LoadQPKGsTiers()
 	for a in "${r_qpkg_tiers[@]}"; do
 		b=r_${a}_qpkgs_list_pathfile
 		[[ ! -s ${!b} ]] && continue
-		QPKGs-GR${a}:Add "$(< ${!b})"
+		QPKGs-GR${a}:Add "$(< "${!b}")"
 	done
 
 	}
@@ -8047,9 +8054,9 @@ LoadQPKGsStates()
 		b=$r_qpkg_service_result_path/$qpkg_name.result
 
 		if [[ -s $a && -s $b ]]; then
-			case $(< $b) in
+			case $(< "$b") in
 				in-progress)
-					case $(< $a) in
+					case $(< "$a") in
 						start)
 							QPKGs-ISstarting:Add "$qpkg_name"
 							;;
@@ -8071,7 +8078,7 @@ LoadQPKGsStates()
 		a=$r_qpkg_states_path/$qpkg_name
 		[[ -s $a ]] || continue
 
-		for b in $(< $a); do
+		for b in $(< "$a"); do
 			case $b in
 				backedup)
 					QPKGs-ISbackedup:Add "$qpkg_name"
@@ -8205,7 +8212,7 @@ HelpAbbreviations()
 
 	for ((n=1; n<=m; n++)); do
 		b=$r_report_rows_path/$n
-		[[ -s $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
+		[[ -s $b ]] && printf -v a '%s\n' "$a$(< "$b")"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
 	if [[ -n $a ]]; then
@@ -8277,7 +8284,7 @@ ReportBackups()
 
 	for ((n=1; n<=m; n++)); do
 		b=$r_report_rows_path/$n
-		[[ -s $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
+		[[ -s $b ]] && printf -v a '%s\n' "$a$(< "$b")"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
 	if [[ -n $a ]]; then
@@ -8329,7 +8336,7 @@ ReportDependencies()
 
 	for ((n=1; n<=m; n++)); do
 		b=$r_report_rows_path/$n
-		[[ -s $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
+		[[ -s $b ]] && printf -v a '%s\n' "$a$(< "$b")"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
 	if [[ -n $a ]]; then
@@ -8382,7 +8389,7 @@ ReportFeatures()
 
 	for ((n=1; n<=m; n++)); do
 		b=$r_report_rows_path/$n
-		[[ -s $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
+		[[ -s $b ]] && printf -v a '%s\n' "$a$(< "$b")"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
 	if [[ -n $a ]]; then
@@ -8441,7 +8448,7 @@ ReportPackages()
 
 	for ((n=1; n<=m; n++)); do
 		b=$r_report_rows_path/$n
-		[[ -s $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
+		[[ -s $b ]] && printf -v a '%s\n' "$a$(< "$b")"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
 	if [[ -n $a ]]; then
@@ -8501,7 +8508,7 @@ ReportRepos()
 
 	for ((n=1; n<=m; n++)); do
 		b=$r_report_rows_path/$n
-		[[ -s $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
+		[[ -s $b ]] && printf -v a '%s\n' "$a$(< "$b")"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
 	if [[ -n $a ]]; then
@@ -8555,7 +8562,7 @@ ReportStatuses()
 
 	for ((n=1; n<=m; n++)); do
 		b=$r_report_rows_path/$n
-		[[ -s $b ]] && printf -v a '%s\n' "$a$(< $b)"		# Add newline to each imported report line and append to string accumulator ($a).
+		[[ -s $b ]] && printf -v a '%s\n' "$a$(< "$b")"		# Add newline to each imported report line and append to string accumulator ($a).
 	done
 
 	if [[ -n $a ]]; then
@@ -9980,7 +9987,7 @@ ClaimLockfile()
 	readonly r_lock_pathfile=/var/lock/sherpa.pid
 
 	for a in sherpa-manager.sh sherpa-manager.source; do
-		if [[ -e $r_lock_pathfile && -d /proc/$(< $r_lock_pathfile) && $(< /proc/"$(< $r_lock_pathfile)"/cmdline) =~ $a ]]; then
+		if [[ -e $r_lock_pathfile && -d /proc/$(< "$r_lock_pathfile") && $(< /proc/"$(< "$r_lock_pathfile")"/cmdline) =~ $a ]]; then
 			ShowAsAbort "a running $(ShowAsTitleName) instance was found $(Parenthesise "PID:$(< "$r_lock_pathfile")"), please wait for it to complete"
 			release_lock=false
 			return 1
@@ -12763,7 +12770,7 @@ GetQpkgServiceAction()
 	local b=$r_qpkg_service_result_path/$a.action
 
 	if [[ -s $b ]]; then
-		printf '%s' "$(< $b)"
+		printf '%s' "$(< "$b")"
 		return 0
 	else
 		printf not-found
@@ -12789,7 +12796,7 @@ GetQpkgServiceExplanation()
 	local b=$r_qpkg_service_result_path/$a.explanation
 
 	if [[ -s $b ]]; then
-		printf '%s' "$(< $b)"
+		printf '%s' "$(< "$b")"
 		return 0
 	else
 		printf not-found
@@ -12815,7 +12822,7 @@ GetQpkgServiceResult()
 	local b=$r_qpkg_service_result_path/$a.result
 
 	if [[ -s $b ]]; then
-		printf '%s' "$(< $b)"
+		printf '%s' "$(< "$b")"
 		return 0
 	else
 		printf not-found
@@ -14287,7 +14294,7 @@ IsReportLargerThanViewport()
 		local -r r_sess_columns=156
 	fi
 
-	[[ $(/usr/bin/wc -l < "$1") -ge $r_sess_rows || $(StripANSICodes "$(<$1)" | /usr/bin/wc -L) -gt $r_sess_columns ]]
+	[[ $(/usr/bin/wc -l < "$1") -ge $r_sess_rows || $(StripANSICodes "$(< "$1")" | /usr/bin/wc -L) -gt $r_sess_columns ]]
 
 	}
 
