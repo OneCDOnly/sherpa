@@ -360,6 +360,7 @@ LoadDefaults()
 		colourful=$r_colourful_default
 		generate_help_report=false
 		generate_list_report=false
+		generate_report_headers=false
 		generate_show_report=false
 		get_qpkg_extended_states=false
 		ipks_downgrade=false
@@ -6738,8 +6739,7 @@ ViewLogLast()
 	EraseThisLine
 
 	if [[ -s $r_session_last_pathfile ]]; then
-		DisplayFileInViewport "$r_session_last_pathfile" showlinenumbers
-#		Display
+		DisplayFileInViewport "$r_session_last_pathfile" linenumbers:on
 	else
 		ShowAsError 'no last session log to display'
 	fi
@@ -6761,8 +6761,7 @@ ViewLogTail()
 	EraseThisLine
 
 	if [[ -s $r_session_tail_pathfile ]]; then
-		DisplayFileInViewport "$r_session_tail_pathfile" showlinenumbers
-#		Display
+		DisplayFileInViewport "$r_session_tail_pathfile" linenumbers:on
 	else
 		ShowAsError 'no session log tail to display'
 	fi
@@ -6777,10 +6776,10 @@ DisplayFileInViewport()
 	# Inputs: (local)
 	#	$1 = pathfile to display.
 	#	$2/$3/$4/$5 (optional, and in any order)
-	#		= 'fixed-headers'	: use both first row and first data column as scroll headers.
-	#		= 'jumptoend'		: display file contents scrolled to the last line.
-	#		= 'showlinenumbers'	: display file contents with line numbers.
-	#		= 'wraplines'		: wrap lines of text to displayport.
+	#		= 'headers:on'		: use both first row and first data column as fixed headers.
+	#		= 'linenumbers:on'	: display line numbers.
+	#		= 'linewrap:on'		: wrap lines of text within viewport.
+	#		= 'scroll:toend'	: start by scrolling to the last line in the file.
 
 	# Inputs: (global)
 	#	$e_nopfi
@@ -6797,19 +6796,19 @@ DisplayFileInViewport()
 	local a=$1
 	shift															# `shift` all arguments one position to the left.
 	local arg=''
-	local -a b=("$@")
+	local -a b=("${@:-}")
 	local headers=false
-	local jumptoend=false
 	local linenumbers=false
+	local linewrap=false
 	local options=''
 	local prompt=' use arrow-keys to scroll up-down & left-right, press Q to quit '
-	local wrap=false
+	local scrolltoend=false
 
 	for arg in "${b[@]}"; do
-		[[ $arg = fixed-headers ]] && headers=true
-		[[ $arg = jumptoend ]] && jumptoend=true
-		[[ $arg = showlinenumbers ]] && linenumbers=true
-		[[ $arg = wraplines ]] && wrap=true
+		[[ $arg = headers:on ]] && headers=true
+		[[ $arg = scroll:toend ]] && scrolltoend=true
+		[[ $arg = linenumbers:on ]] && linenumbers=true
+		[[ $arg = linewrap:on ]] && linewrap=true
 	done
 
 	echo
@@ -6833,9 +6832,9 @@ DisplayFileInViewport()
 			[[ $headers = true ]] && options+="--header=1,$(CalcReportFirstColumnWidth "$a") "
 		fi
 
-		[[ $jumptoend = true ]] && options+='+G '
+		[[ $scrolltoend = true ]] && options+='+G '
 		[[ $linenumbers = true ]] && options+='--LINE-NUMBERS '
-		[[ $wrap = false ]] && options+='--chop-long-lines '
+		[[ $linewrap = false ]] && options+='--chop-long-lines '
 
 		LESSSECURE=1 $r_gnu_less_cmd "$options" --prompt "$prompt" "$a"
 
@@ -6847,7 +6846,7 @@ DisplayFileInViewport()
 #		if [[ -x /bin/less ]]; then
 #			options='-~'
 #			[[ $linenumbers = true ]] && options+='N'
-#			[[ $wrap = false ]] && options+='S'
+#			[[ $linewrap = false ]] && options+='S'
 
 #			/bin/less "$options" "$a"
 
@@ -6870,7 +6869,7 @@ DisplayFileInViewport()
 
 	echo "$(< $a)"
 
-	} 2> /dev/null
+	}
 
 CalcReportFirstColumnWidth()
 	{
@@ -8338,6 +8337,7 @@ ReportDependencies()
 
 	FuncInit
 
+	generate_report_headers=true
 	local a=''
 	local b=''
 	local -i m=0
@@ -8390,6 +8390,7 @@ ReportFeatures()
 
 	FuncInit
 
+#	generate_report_headers=true		# Disable this for-now, display output gets wonky when viewport width is less-than report width. Only happens on this report.
 	local a=''
 	local b=''
 	local -i m=0
@@ -8508,6 +8509,7 @@ ReportRepos()
 
 	FuncInit
 
+	generate_report_headers=true
 	local a=''
 	local b=''
 	local -i m=0
@@ -8560,6 +8562,7 @@ ReportStatuses()
 
 	FuncInit
 
+	generate_report_headers=true
 	local a=''
 	local b=''
 	local -i m=0
@@ -8938,7 +8941,11 @@ ShowReport()
 	#	$r_report_output_pathfile
 
 	if [[ -s $r_report_output_pathfile ]]; then
-		DisplayFileInViewport "$r_report_output_pathfile" fixed-headers
+		if [[ $generate_report_headers = true ]]; then
+			DisplayFileInViewport "$r_report_output_pathfile" headers:on
+		else
+			DisplayFileInViewport "$r_report_output_pathfile"
+		fi
 	else
 		ShowAsError 'report not found'
 	fi
