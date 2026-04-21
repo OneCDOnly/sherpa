@@ -2190,6 +2190,7 @@ ParseManagementArgs()
 				follow|paste|report-info|terse)
 					requires_group=true
 					user_action=$arg
+					show_title=false
 					;;
 				reset)
 					DeleteSetting Git_Branch announce
