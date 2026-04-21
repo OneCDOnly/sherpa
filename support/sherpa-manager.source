@@ -611,15 +611,6 @@ LoadEnv()
 
 	rm -f "$r_report_output_pathfile" "$r_ramfs_freespace_pathfile" "$r_inhibit_display_pathfile" 2> /dev/null
 
-	if [[ -x $r_gnu_stty_cmd ]] && IsInTerminal; then
-		local terminal_dimensions=$($r_gnu_stty_cmd size)
-		readonly r_sess_rows=${terminal_dimensions% *}
-		readonly r_sess_columns=${terminal_dimensions#* }
-	else
-		readonly r_sess_rows=40
-		readonly r_sess_columns=156
-	fi
-
 	}
 
 LoadLists()
@@ -6784,8 +6775,6 @@ DisplayFileInViewport()
 	# Inputs: (global)
 	#	$e_nopfi
 	#	$r_gnu_less_cmd
-	#	$r_sess_columns
-	#	$r_sess_rows
 	#	$useropt_verbose
 
 	ConfirmVarIsDefined 1 "${1:-}" "$e_nopfi" || return
@@ -14283,7 +14272,19 @@ IsGnuLessSupportHeaders()
 IsReportLargerThanViewport()
 	{
 
+	# Inputs: (local)
+	#	$1 = pathfile to be shown.
+
 	[[ -n ${1:-} && -e $1 ]] || return
+
+	if [[ -x $r_gnu_stty_cmd ]] && IsInTerminal; then
+		local -r r_terminal_dimensions=$($r_gnu_stty_cmd size)
+		local -r r_sess_rows=${r_terminal_dimensions% *}
+		local -r r_sess_columns=${r_terminal_dimensions#* }
+	else
+		local -r r_sess_rows=40
+		local -r r_sess_columns=156
+	fi
 
 	[[ $(/usr/bin/wc -l < "$1") -ge $r_sess_rows || $(StripANSICodes "$(<$1)" | /usr/bin/wc -L) -gt $r_sess_columns ]]
 
