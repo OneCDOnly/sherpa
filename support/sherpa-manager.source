@@ -443,6 +443,7 @@ LoadCMDs()
 		readonly r_gnu_find_cmd=/opt/bin/find
 		readonly r_gnu_grep_cmd=/opt/bin/grep
 		readonly r_gnu_less_cmd=/opt/bin/less
+		readonly r_gnu_more_cmd=/opt/bin/more
 		readonly r_gnu_nice_cmd=/opt/bin/nice
 		readonly r_gnu_sleep_cmd=/opt/bin/sleep
 		readonly r_gnu_stty_cmd=/opt/bin/stty
@@ -6776,6 +6777,7 @@ DisplayFileInViewport()
 	# Inputs: (global)
 	#	$e_nopfi
 	#	$r_gnu_less_cmd
+	#	$r_gnu_more_cmd
 	#	$useropt_verbose
 
 	ConfirmVarIsDefined 1 "${1:-}" "$e_nopfi" || return
@@ -6791,7 +6793,7 @@ DisplayFileInViewport()
 	local linenumbers=false
 	local linewrap=false
 	local options=''
-	local -r r_report_prompt=' use arrow-keys to scroll up-down & left-right, press Q to quit '
+	local -r r_prompt=' use arrow-keys to scroll up-down & left-right, press Q to quit '
 	local scrolltoend=false
 
 	for arg in "${b[@]}"; do
@@ -6821,7 +6823,7 @@ DisplayFileInViewport()
 
 		[[ $linenumbers = true ]] && options+=' --LINE-NUMBERS'
 
-		LESSSECURE=1 $r_gnu_less_cmd "$(Trim "$options")" --prompt "$r_report_prompt" "$a"
+		LESSSECURE=1 $r_gnu_less_cmd "$(Trim "$options")" --prompt "$r_prompt" "$a"
 
 # Disable the use of built-in `less` as it doesn't (yet) support ANSI codes. Let's see if there are any problems (other than not being able to scroll output).
 
@@ -6831,6 +6833,9 @@ DisplayFileInViewport()
 #		[[ $linewrap = false ]] && options+='S'
 #
 #		/bin/less "$options" "$a"
+
+	elif [[ $useropt_verbose = false && -x $r_gnu_more_cmd ]]; then
+		$r_gnu_more_cmd "$a"
 	elif [[ $useropt_verbose = false && -x /bin/more ]]; then		# At-least supports basic forward-scrolling pagination.
 		/bin/more "$a"
 	elif [[ -x /bin/cat ]]; then
