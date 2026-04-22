@@ -325,6 +325,8 @@ LoadConsts()
 		readonly r_entware_packages_last_updated=20260407
 		readonly r_file_change_threshold_minutes=60
 		readonly r_log_tail_lines=5000
+		readonly r_pastebin_port=9999
+		readonly r_pastebin_site=termbin.com
 
 	# Only for the message pipe enhanced log.
 
@@ -6480,12 +6482,13 @@ ShowHelpIssue()
 
 	# Inputs: (global)
 	#	$r_log_tail_lines
+	#	$r_pastebin_site
 
 	DisplayAsHelpTitle "please consider creating a new issue for this on GitHub: $(ShowAsURL 'https://github.com/OneCDOnly/sherpa/issues')"
 	DisplayAsHelpTitle "alternatively, post on the QNAP NAS Community Forum: $(ShowAsURL 'https://community.qnap.com/t/qpkg-sherpa-a-mini-package-manager-cli/1081')"
 	DisplayAsProjSynIndentExam "view only the most recent $(ShowAsTitleName) session log" last
 	DisplayAsProjSynIndentExam "view the entire $(ShowAsTitleName) session log" log
-	DisplayAsProjSynIndentExam "upload the most recent $(FormatAsThous "$r_log_tail_lines") lines in your $(ShowAsTitleName) log to the $(ShowAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste log'
+	DisplayAsProjSynIndentExam "upload the most recent $(FormatAsThous "$r_log_tail_lines") lines in your $(ShowAsTitleName) log to the $(ShowAsURL "https://$r_pastebin_site") public pastebin. A URL will be generated afterward" 'paste log'
 	Display
 
 	return 0
@@ -6619,6 +6622,7 @@ ShowHelpProblems()
 	# Inputs: (global)
 	#	$r_log_tail_lines
 	#	$r_report_output_pathfile
+	#	$r_pastebin_site
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport problems
@@ -6635,8 +6639,8 @@ ShowHelpProblems()
 		DisplayAsProjSynIndentExam "view only the most recent $(ShowAsTitleName) session log" last
 		DisplayAsProjSynIndentExam '' l
 		DisplayAsProjSynIndentExam "view the entire $(ShowAsTitleName) session log" log
-		DisplayAsProjSynIndentExam "upload the most recent session in your $(ShowAsTitleName) log to the $(ShowAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste last'
-		DisplayAsProjSynIndentExam "upload the most recent $(FormatAsThous "$r_log_tail_lines") lines in your $(ShowAsTitleName) log to the $(ShowAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste log'
+		DisplayAsProjSynIndentExam "upload the most recent session in your $(ShowAsTitleName) log to the $(ShowAsURL "https://$r_pastebin_site") public pastebin. A URL will be generated afterward" 'paste last'
+		DisplayAsProjSynIndentExam "upload the most recent $(FormatAsThous "$r_log_tail_lines") lines in your $(ShowAsTitleName) log to the $(ShowAsURL "https://$r_pastebin_site") public pastebin. A URL will be generated afterward" 'paste log'
 		DisplayAsProjSynIndentExam 'reactivate installed QPKGs (upgrade internal applications where-supported)' 'reactivate all'
 		DisplayAsProjSynIndentExam "remove all cached $(ShowAsTitleName) items and logs" reset
 		DisplayAsProjSynIndentExam 'find the live status of each application in these QPKGs' "status $(ShowAsPackages)"
@@ -6722,7 +6726,7 @@ ShowHelpTips()
 ViewLogLast()
 	{
 
-	# View only the last session log.
+	# View only the last log session.
 
 	# Inputs: (global)
 	#	$r_session_last_pathfile
@@ -6744,7 +6748,7 @@ ViewLogLast()
 ViewLogTail()
 	{
 
-	# View only the last session log.
+	# View only the last $r_log_tail_lines log lines.
 
 	# Inputs: (global)
 	#	$r_session_tail_pathfile
@@ -6886,6 +6890,7 @@ PasteLogLast()
 	{
 
 	# Inputs: (global)
+	#	$r_pastebin_site
 	#	$r_session_last_pathfile
 
 	# Outputs: (global)
@@ -6895,8 +6900,8 @@ PasteLogLast()
 	ExtractPrevSessFromTail
 
 	if [[ -s $r_session_last_pathfile ]]; then
-		if Quiz "Press 'Y' to post the most recent session in your $(ShowAsTitleName) log to a public pastebin, or any other key to abort"; then
-			UploadLog "$r_session_last_pathfile" || return
+		if Quiz "Press 'Y' to post the most recent session in your $(ShowAsTitleName) log the public pastebin site $(ShowAsURL "https://$r_pastebin_site"), or any other key to abort"; then
+			UploadLogToPastebin "$r_session_last_pathfile" || return
 		else
 			DebugInfoMinSepr
 			DebugScript warning 'user abort' ''
@@ -6917,6 +6922,7 @@ PasteLogTail()
 
 	# Inputs: (global)
 	#	$r_log_tail_lines
+	#	$r_pastebin_site
 	#	$r_session_tail_pathfile
 
 	# Outputs: (global)
@@ -6926,8 +6932,8 @@ PasteLogTail()
 	ExtractTailFromLog
 
 	if [[ -s $r_session_tail_pathfile ]]; then
-		if Quiz "Press 'Y' to post the most recent $(FormatAsThous "$r_log_tail_lines") lines in your $(ShowAsTitleName) log to a public pastebin, or any other key to abort"; then
-			UploadLog "$r_session_tail_pathfile" || return
+		if Quiz "Press 'Y' to post the most recent $(FormatAsThous "$r_log_tail_lines") lines in your $(ShowAsTitleName) log to the public pastebin site $(ShowAsURL "https://$r_pastebin_site"), or any other key to abort"; then
+			UploadLogToPastebin "$r_session_tail_pathfile" || return
 		else
 			DebugInfoMinSepr
 			DebugScript warning 'user abort'
@@ -6943,11 +6949,15 @@ PasteLogTail()
 
 	}
 
-UploadLog()
+UploadLogToPastebin()
 	{
 
 	# Inputs: (local)
 	#	$1 = log pathfile.
+
+	# Inputs: (global)
+	#	$r_pastebin_port
+	#	$r_pastebin_site
 
 	[[ -n ${1:-} ]] || return
 
@@ -6957,12 +6967,12 @@ UploadLog()
 
 	# With thanks to https://github.com/solusipse/fiche
 
-	link=$(/bin/cat --number "$1" | (exec 3<> /dev/tcp/termbin.com/9999; /bin/cat >&3; /bin/cat <&3; exec 3<&-))
+	link=$(/bin/cat --number "$1" | (exec 3<> /dev/tcp/$r_pastebin_site/$r_pastebin_port; /bin/cat >&3; /bin/cat <&3; exec 3<&-))
 
 	if [[ $? -eq 0 ]]; then
 		ShowAsDone "your $(ShowAsTitleName) log is now online at $(ShowAsURL "$link") and will be deleted in 1 month"
 	else
-		ShowAsFail "a link could not be generated. Most likely a problem occurred while communicating with $(ShowAsURL 'https://termbin.com')"
+		ShowAsFail "a link could not be generated. Most likely a problem occurred while communicating with $(ShowAsURL "https://$r_pastebin_site")"
 	fi
 
 	}
