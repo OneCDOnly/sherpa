@@ -6785,8 +6785,8 @@ DisplayFileInViewport()
 	/bin/sed -i '1{/^[[:space:]]*$/d};${/^[[:space:]]*$/d}' "$1"	# Remove first and last lines if empty: https://stackoverflow.com/a/11230764
 	[[ -s $1 ]] || return
 
-	local a=$1
-	shift															# `shift` all arguments one position to the left.
+	local report_pathfile=$1
+	shift															# Shift all arguments one position to the left.
 	local arg=''
 	local -a b=("${@:-}")
 	local headers=false
@@ -6815,15 +6815,15 @@ DisplayFileInViewport()
 		options+=' --quit-on-intr'
 		options+=' --redraw-on-quit'
 
-		if IsReportLargerThanViewport "$a"; then
-			IsGnuLessSupportHeaders && [[ $headers = true ]] && options+=" --header=1,$(CalcReportFirstColumnWidth "$a")"
+		if IsReportLargerThanViewport "$report_pathfile"; then
+			IsGnuLessSupportHeaders && [[ $headers = true ]] && options+=" --header=1,$(CalcReportFirstColumnWidth "$report_pathfile")"
 			[[ $linewrap = false ]] && options+=' --chop-long-lines'
 			[[ $scrolltoend = true ]] && options+=' +G'
 		fi
 
 		[[ $linenumbers = true ]] && options+=' --LINE-NUMBERS'
 
-		LESSSECURE=1 $r_gnu_less_cmd "$(Trim "$options")" --prompt "$r_prompt" "$a"
+		LESSSECURE=1 $r_gnu_less_cmd $options --prompt "$r_prompt" "$report_pathfile"
 
 # Disable the use of built-in `less` as it doesn't (yet) support ANSI codes. Let's see if there are any problems (other than not being able to scroll output).
 
@@ -6832,18 +6832,18 @@ DisplayFileInViewport()
 #		[[ $linenumbers = true ]] && options+='N'
 #		[[ $linewrap = false ]] && options+='S'
 #
-#		/bin/less "$options" "$a"
+#		/bin/less $options "$report_pathfile"
 
 	elif [[ $useropt_verbose = false && -x $r_gnu_more_cmd ]]; then
-		$r_gnu_more_cmd "$a"
+		$r_gnu_more_cmd "$report_pathfile"
 	elif [[ $useropt_verbose = false && -x /bin/more ]]; then		# At-least supports basic forward-scrolling pagination.
-		/bin/more "$a"
+		/bin/more "$report_pathfile"
 	elif [[ -x /bin/cat ]]; then
 		[[ $linenumbers = true ]] && options=' --number'
 
-		/bin/cat "$(Trim "$options")" "$a"
+		/bin/cat $options "$report_pathfile"
 	else															# And, when there's really no-better option ...
-		echo -e "$(< "$a")"
+		echo -e "$(< "$report_pathfile")"
 	fi
 
 	}
