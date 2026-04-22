@@ -6768,7 +6768,7 @@ DisplayFileInViewport()
 
 	# Inputs: (local)
 	#	$1 = pathfile to display.
-	#	$2/$3/$4/$5 (optional, and in any order)
+	#	$2/$3/$4/$5 (optional, and in any order):
 	#		= 'headers:on'		: Use both first row and first data column as fixed headers. Default is off.
 	#		= 'linenumbers:on'	: Display line numbers. Default is off.
 	#		= 'linewrap:on'		: Wrap lines of text within viewport. Default is off.
@@ -6891,24 +6891,12 @@ PasteLogLast()
 	# Outputs: (global)
 	#	$show_action_results_zero
 
-	local link=''
-
 	DisableDebugToArchiveAndFile
 	ExtractPrevSessFromTail
 
 	if [[ -s $r_session_last_pathfile ]]; then
 		if Quiz "Press 'Y' to post the most-recent session in your $(ShowAsTitleName) log to a public pastebin, or any other key to abort"; then
-			ShowAsProc "upload $(ShowAsTitleName) log"
-
-			# With thanks to https://github.com/solusipse/fiche
-
-			link=$(/bin/cat --number "$r_session_last_pathfile" | (exec 3<> /dev/tcp/termbin.com/9999; /bin/cat >&3; /bin/cat <&3; exec 3<&-))
-
-			if [[ $? -eq 0 ]]; then
-				ShowAsDone "your $(ShowAsTitleName) log is now online at $(ShowAsURL "$link") and will be deleted in 1 month"
-			else
-				ShowAsFail "a link could not be generated. Most likely a problem occurred when talking with $(ShowAsURL 'https://termbin.com')"
-			fi
+			UploadLog "$r_session_last_pathfile" || return
 		else
 			DebugInfoMinSepr
 			DebugScript warning 'user abort' ''
@@ -6934,24 +6922,12 @@ PasteLogTail()
 	# Outputs: (global)
 	#	$show_action_results_zero
 
-	local link=''
-
 	DisableDebugToArchiveAndFile
 	ExtractTailFromLog
 
 	if [[ -s $r_session_tail_pathfile ]]; then
 		if Quiz "Press 'Y' to post the most-recent $(FormatAsThous "$r_log_tail_lines") lines in your $(ShowAsTitleName) log to a public pastebin, or any other key to abort"; then
-			ShowAsProc "upload $(ShowAsTitleName) log"
-
-			# With thanks to https://github.com/solusipse/fiche
-
-			link=$(/bin/cat --number "$r_session_tail_pathfile" | (exec 3<> /dev/tcp/termbin.com/9999; /bin/cat >&3; /bin/cat <&3; exec 3<&-))
-
-			if [[ $? -eq 0 ]]; then
-				ShowAsDone "your $(ShowAsTitleName) log is now online at $(ShowAsURL "$link") and will be deleted in 1 month"
-			else
-				ShowAsFail "a link could not be generated. Most likely a problem occurred when talking with $(ShowAsURL 'https://termbin.com')"
-			fi
+			UploadLog "$r_session_tail_pathfile" || return
 		else
 			DebugInfoMinSepr
 			DebugScript warning 'user abort'
@@ -6964,6 +6940,30 @@ PasteLogTail()
 	fi
 
 	return 0
+
+	}
+
+UploadLog()
+	{
+
+	# Inputs: (local)
+	#	$1 = log pathfile.
+
+	[[ -n ${1:-} ]] || return
+
+	local link=''
+
+	ShowAsProc "upload $(ShowAsTitleName) log"
+
+	# With thanks to https://github.com/solusipse/fiche
+
+	link=$(/bin/cat --number "$1" | (exec 3<> /dev/tcp/termbin.com/9999; /bin/cat >&3; /bin/cat <&3; exec 3<&-))
+
+	if [[ $? -eq 0 ]]; then
+		ShowAsDone "your $(ShowAsTitleName) log is now online at $(ShowAsURL "$link") and will be deleted in 1 month"
+	else
+		ShowAsFail "a link could not be generated. Most likely a problem occurred while communicating with $(ShowAsURL 'https://termbin.com')"
+	fi
 
 	}
 
