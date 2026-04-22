@@ -3,4 +3,4 @@
 . $HOME/scripts/nas/sherpa/support/environment.sourced || exit
 
 ./build-all.sh || exit
-./commit.sh '[update] management archives' || exit
+./commit.sh '[update] management archives' nocheck || exit

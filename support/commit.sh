@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 # Inputs: (local)
-#	$1 = commit message (optional)
-#	$1 = 'nocheck' (optional) = skip syntax check. Default is to perform syntax check before committing.
+#	$1 (optional) = commit message.
+#	$2 (optional) = 'nocheck' : skip code syntax check. Default is to perform syntax check before committing.
 
 this_path=$PWD
 . $HOME/scripts/nas/sherpa/support/environment.sourced || exit
@@ -13,14 +13,14 @@ this_path=$PWD
 cd "$support_path" || exit
 ./clean-source.sh
 
-if [[ ${1:-} != nocheck ]]; then
+if [[ ${2:-} != nocheck ]]; then
 	./check-syntax.sh || exit
 	./check-whitespace.sh || exit
 fi
 
 cd "$root_path" || exit
 
-if [[ -z ${1:-} || ${1:-} = nocheck ]]; then
+if [[ -z ${1:-} ]]; then
 	git add . && git commit && git push || exit
 else
 	git add . && git commit -m "$1" && git push || exit
