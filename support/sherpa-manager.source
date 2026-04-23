@@ -1481,7 +1481,6 @@ AssignQpkgsToActions()
 
 # EnableVerbose
 # EnableDebugToArchiveAndFile
-#
 # [[ $useropt_debug = true ]] && ListQPKGsActionsAll
 
 	# Build list to download.
@@ -1497,8 +1496,8 @@ AssignQpkgsToActions()
 	done
 
 # [[ $useropt_debug = true ]] && ListQPKGsActionsAll
-#
 # exit
+
 	# Ensure packages to be installed will be signed.
 
 	if IsOsCanManageSignedPackages && QPKGs-ACinstall-to.IsAny; then
@@ -6970,7 +6969,7 @@ UploadLogToPastebin()
 	link=$(/bin/cat --number "$1" | (exec 3<> /dev/tcp/$r_pastebin_site/$r_pastebin_port; /bin/cat >&3; /bin/cat <&3; exec 3<&-))
 
 	if [[ $? -eq 0 ]]; then
-		ShowAsDone "your $(ShowAsTitleName) log is now online at $(ShowAsURL "$link") and will be deleted in 1 month"
+		ShowAsDone "your $(ShowAsTitleName) log is now online at $(ShowAsURL "$link") and will be deleted in 1 week"
 	else
 		ShowAsFail "a link could not be generated. Most likely a problem occurred while communicating with $(ShowAsURL "https://$r_pastebin_site")"
 	fi
