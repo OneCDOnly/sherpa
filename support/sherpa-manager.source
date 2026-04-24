@@ -3324,6 +3324,11 @@ ShowArgSuggestions()
 					arg_problem=true
 					useropt_help_basic=false
 					;;
+				paste)
+					DisplayAsHelpTitleHighlighted "the 'paste' action has been temporarily disabled."
+					arg_problem=true
+					useropt_help_basic=false
+					;;
 				?(un)stable)
 					DisplayAsProjSynExam "please provide a valid $(ShowAsSetting) before '$arg' like" "follow $arg"
 					arg_problem=true
