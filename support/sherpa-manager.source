@@ -504,7 +504,7 @@ LoadEnv()
 
 	qpkg_name=sherpa
 
-	SetHardwareCPUCores
+	SetHardwareCPUThreads
 	SetHardwareInstalledRAM
 	SetQpkgArch
 
@@ -512,7 +512,7 @@ LoadEnv()
 	args_incomplete=()
 	qpkg_index=0
 	readonly r_cert_db_pathfile=/etc/config/nas_sign_qpkg.db
-	readonly r_concurrency=$r_cpu_cores				# Maximum concurrent package actions to run. Should probably make this account for CPU speed too.
+	readonly r_concurrency=$r_cpu_threads				# Maximum concurrent package actions to run. Should probably make this account for CPU speed too.
 	readonly r_entware_type=$(GetQpkgEntwareType)
 	readonly r_script_built_epoch='<?manager_epoch?>'
 	local -r r_sherpa_packages_base_url=https://github.com/OneCDOnly/sherpa.packages
@@ -852,7 +852,7 @@ DebugLogEnv()
 	DebugInfoMinSepr
 	DebugHardware ok 'NAS model' "$(get_display_name)"
 	DebugHardware ok CPU "$(GetHardwareCPUInfo)"
-	DebugHardware ok 'CPU cores' "$r_cpu_cores"
+	DebugHardware ok 'CPU threads' "$r_cpu_threads"
 	DebugHardware ok 'CPU architecture' "$(GetCpuDataWidth)"
 	DebugHardware ok 'basic CPU SHA1 benchmark' "$(GetHardwareCPUBenchmark)"
 	DebugHardware ok RAM "${r_nas_ram_gb}GiB"
@@ -9694,7 +9694,7 @@ GetOsSysLoad1MinAverage()
 
 	}
 
-GetHardwareCPUCores()
+GetHardwareCPUThreads()
 	{
 
 	local n=$(/bin/grep -c '^processor' /proc/cpuinfo)
@@ -13427,11 +13427,11 @@ IsOsLoadAverageAboveTrigger()
 	#	$1 = multiplier
 
 	# Inputs: (global)
-	#	$r_cpu_cores
+	#	$r_cpu_threads
 
 	local a=${1:-1}
 	local b=$(GetOsSysLoad1MinAverage); b=${b/./}
-	local c=$((r_cpu_cores*a*100))
+	local c=$((r_cpu_threads*a*100))
 
 	[[ $((10#$b)) -ge $((10#$c)) ]]
 
@@ -16765,13 +16765,13 @@ SetError()
 
 	}
 
-SetHardwareCPUCores()
+SetHardwareCPUThreads()
 	{
 
 	# Outputs: (global)
-	#	$r_cpu_cores
+	#	$r_cpu_threads
 
-	[[ ${r_cpu_cores:-unset} = unset ]] && readonly r_cpu_cores=$(GetHardwareCPUCores)
+	[[ ${r_cpu_threads:-unset} = unset ]] && readonly r_cpu_threads=$(GetHardwareCPUThreads)
 
 	}
 
