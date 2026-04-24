@@ -121,11 +121,11 @@ ShowResults()
 		fi
 	fi
 
-	if [[ $useropt_paste_log_last = true ]]; then
-		PasteLogLast
-	elif [[ $useropt_paste_log_tail = true ]]; then
-		PasteLogTail
-	fi
+#	if [[ $useropt_paste_log_last = true ]]; then
+#		PasteLogLast
+#	elif [[ $useropt_paste_log_tail = true ]]; then
+#		PasteLogTail
+#	fi
 
 	if [[ $useropt_help_basic = true ]]; then
 		ShowHelpBasic
@@ -325,6 +325,8 @@ LoadConsts()
 		readonly r_entware_packages_last_updated=20260407
 		readonly r_file_change_threshold_minutes=60
 		readonly r_log_tail_lines=5000
+#		readonly r_pastebin_port=9999
+#		readonly r_pastebin_site=termbin.com
 
 	# Only for the message pipe enhanced log.
 
@@ -410,8 +412,8 @@ LoadDefaults()
 		useropt_help_tips=false
 		useropt_help_upgrades=false
 		useropt_list_versions=false
-		useropt_paste_log_last=false
-		useropt_paste_log_tail=false
+#		useropt_paste_log_last=false
+#		useropt_paste_log_tail=false
 		useropt_show_about=false
 		useropt_show_aboutall=false
 		useropt_show_backups=false
@@ -502,7 +504,7 @@ LoadEnv()
 
 	qpkg_name=sherpa
 
-	SetHardwareCPUCores
+	SetHardwareCPUThreads
 	SetHardwareInstalledRAM
 	SetQpkgArch
 
@@ -510,7 +512,7 @@ LoadEnv()
 	args_incomplete=()
 	qpkg_index=0
 	readonly r_cert_db_pathfile=/etc/config/nas_sign_qpkg.db
-	readonly r_concurrency=$r_cpu_cores				# Maximum concurrent package actions to run. Should probably make this account for CPU speed too.
+	readonly r_concurrency=$r_cpu_threads				# Maximum concurrent package actions to run. Should probably make this account for CPU speed too.
 	readonly r_entware_type=$(GetQpkgEntwareType)
 	readonly r_script_built_epoch='<?manager_epoch?>'
 	local -r r_sherpa_packages_base_url=https://github.com/OneCDOnly/sherpa.packages
@@ -850,7 +852,7 @@ DebugLogEnv()
 	DebugInfoMinSepr
 	DebugHardware ok 'NAS model' "$(get_display_name)"
 	DebugHardware ok CPU "$(GetHardwareCPUInfo)"
-	DebugHardware ok 'CPU cores' "$r_cpu_cores"
+	DebugHardware ok 'CPU threads' "$r_cpu_threads"
 	DebugHardware ok 'CPU architecture' "$(GetCpuDataWidth)"
 	DebugHardware ok 'basic CPU SHA1 benchmark' "$(GetHardwareCPUBenchmark)"
 	DebugHardware ok RAM "${r_nas_ram_gb}GiB"
@@ -1070,7 +1072,8 @@ CheckTasks()
 		build_extended_states=true
 	elif [[ $useropt_help_abbreviations = true || $useropt_show_backups = true || $useropt_show_dependencies = true || $useropt_show_features = true || $useropt_show_packages = true || $useropt_show_repos = true ]]; then
 		build_extended_states=true
-	elif [[ $useropt_help_actions = true || $useropt_help_actions_all = true || $useropt_help_basic = true || $useropt_help_groups = true || $useropt_help_lists = true || $useropt_help_options = true || $useropt_help_packages = true || $useropt_help_problems = true || $useropt_help_show = true || $useropt_help_tips = true || $useropt_help_upgrades = true || $useropt_list_versions = true || $useropt_paste_log_last = true || $useropt_paste_log_tail = true || $useropt_show_about = true || $useropt_show_about = true || $useropt_show_previous_action_results_report = true || $useropt_show_log_last = true || $useropt_show_log_tail = true || $switch_branch = true || $switch_colour = true || $switch_report_info = true || $switch_terse = true ]]; then
+#	elif [[ $useropt_help_actions = true || $useropt_help_actions_all = true || $useropt_help_basic = true || $useropt_help_groups = true || $useropt_help_lists = true || $useropt_help_options = true || $useropt_help_packages = true || $useropt_help_problems = true || $useropt_help_show = true || $useropt_help_tips = true || $useropt_help_upgrades = true || $useropt_list_versions = true || $useropt_paste_log_last = true || $useropt_paste_log_tail = true || $useropt_show_about = true || $useropt_show_about = true || $useropt_show_previous_action_results_report = true || $useropt_show_log_last = true || $useropt_show_log_tail = true || $switch_branch = true || $switch_colour = true || $switch_report_info = true || $switch_terse = true ]]; then
+	elif [[ $useropt_help_actions = true || $useropt_help_actions_all = true || $useropt_help_basic = true || $useropt_help_groups = true || $useropt_help_lists = true || $useropt_help_options = true || $useropt_help_packages = true || $useropt_help_problems = true || $useropt_help_show = true || $useropt_help_tips = true || $useropt_help_upgrades = true || $useropt_list_versions = true || $useropt_show_about = true || $useropt_show_about = true || $useropt_show_previous_action_results_report = true || $useropt_show_log_last = true || $useropt_show_log_tail = true || $switch_branch = true || $switch_colour = true || $switch_report_info = true || $switch_terse = true ]]; then
 		: # don't do anything
 	else
 		LoadDatabase
@@ -1479,7 +1482,6 @@ AssignQpkgsToActions()
 
 # EnableVerbose
 # EnableDebugToArchiveAndFile
-#
 # [[ $useropt_debug = true ]] && ListQPKGsActionsAll
 
 	# Build list to download.
@@ -1495,8 +1497,8 @@ AssignQpkgsToActions()
 	done
 
 # [[ $useropt_debug = true ]] && ListQPKGsActionsAll
-#
 # exit
+
 	# Ensure packages to be installed will be signed.
 
 	if IsOsCanManageSignedPackages && QPKGs-ACinstall-to.IsAny; then
@@ -2188,7 +2190,8 @@ ParseManagementArgs()
 					user_action=$arg
 					useropt_fix=true
 					;;
-				follow|paste|report-info|terse)
+#				follow|paste|report-info|terse)
+				follow|report-info|terse)
 					requires_group=true
 					user_action=$arg
 					show_title=false
@@ -2233,24 +2236,24 @@ ParseManagementArgs()
 							args_remaining+=("$action")
 					esac
 					;;
-				paste)
-					case $group in
-						last)
-							action=''
-							awaiting_group=false
-							run_package_actions=false
-							useropt_paste_log_last=true
-							;;
-						tail)
-							action=''
-							awaiting_group=false
-							run_package_actions=false
-							useropt_paste_log_tail=true
-							;;
-						*)
-							args_remaining+=("$action")
-					esac
-					;;
+#				paste)
+#					case $group in
+#						last)
+#							action=''
+#							awaiting_group=false
+#							run_package_actions=false
+#							useropt_paste_log_last=true
+#							;;
+#						tail)
+#							action=''
+#							awaiting_group=false
+#							run_package_actions=false
+#							useropt_paste_log_tail=true
+#							;;
+#						*)
+#							args_remaining+=("$action")
+#					esac
+#					;;
 				report-info)
 					case $group in
 						true|false)
@@ -2998,7 +3001,8 @@ MatchVerb()
 		add|install)
 			printf install
 			;;
-		backup|clean|@(dis|en)able|fix|follow|help|list|paste|reassign|rebuild|reinstall|report-info|reset|restore|terse)	# NOTE: There should be no single characters in this list.
+#		backup|clean|@(dis|en)able|fix|follow|help|list|paste|reassign|rebuild|reinstall|report-info|reset|restore|terse)	# NOTE: There should be no single characters in this list.
+		backup|clean|@(dis|en)able|fix|follow|help|list|reassign|rebuild|reinstall|report-info|reset|restore|terse)	# NOTE: There should be no single characters in this list.
 			printf '%s' "$1"
 			;;
 		deactivate|stop)
@@ -3218,12 +3222,12 @@ ShowArgSuggestions()
 					arg_problem=true
 					useropt_help_basic=false
 					;;
-				paste)
-					DisplayAsProjSynExam "please provide a valid source to '$arg' online like" "$arg log"
-					DisplayAsProjSynIndentExam '' "$arg last"
-					arg_problem=true
-					useropt_help_basic=false
-					;;
+#				paste)
+#					DisplayAsProjSynExam "please provide a valid source to '$arg' online like" "$arg log"
+#					DisplayAsProjSynIndentExam '' "$arg last"
+#					arg_problem=true
+#					useropt_help_basic=false
+#					;;
 				show)
 					DisplayAsProjSynExam "please provide a valid source after '$arg' like" "$arg abs"
 					DisplayAsProjSynIndentExam '' "$arg log"
@@ -3317,6 +3321,11 @@ ShowArgSuggestions()
 					;;
 				@(in|not-)active|?(in)dependent?(s)|stopped)
 					DisplayAsProjSynExam "please provide a valid $(ShowAsAction) before '$arg' like" "activate $arg"
+					arg_problem=true
+					useropt_help_basic=false
+					;;
+				paste)
+					DisplayAsHelpTitleHighlighted "the 'paste' action has been temporarily disabled."
 					arg_problem=true
 					useropt_help_basic=false
 					;;
@@ -3610,7 +3619,7 @@ _UpdateEntwarePackageList_()
 			DebugAsWarn "Unable to update $(FormatPackageName Entware) package list $(FormatExitcode "$z")"
 		fi
 	else
-		DebugInfo "$(FormatPackageName Entware) package list was updated less-than $r_file_change_threshold_minutes minutes ago: skipping update"
+		DebugInfo "$(FormatPackageName Entware) package list was updated less than $r_file_change_threshold_minutes minutes ago: skipping update"
 	fi
 
 	IsFile "$r_external_packages_archive_pathfile" && IsNtFile "$r_external_packages_pathfile" && OpenIpkArchive
@@ -6480,12 +6489,13 @@ ShowHelpIssue()
 
 	# Inputs: (global)
 	#	$r_log_tail_lines
+	#	$r_pastebin_site
 
 	DisplayAsHelpTitle "please consider creating a new issue for this on GitHub: $(ShowAsURL 'https://github.com/OneCDOnly/sherpa/issues')"
 	DisplayAsHelpTitle "alternatively, post on the QNAP NAS Community Forum: $(ShowAsURL 'https://community.qnap.com/t/qpkg-sherpa-a-mini-package-manager-cli/1081')"
 	DisplayAsProjSynIndentExam "view only the most recent $(ShowAsTitleName) session log" last
 	DisplayAsProjSynIndentExam "view the entire $(ShowAsTitleName) session log" log
-	DisplayAsProjSynIndentExam "upload the most-recent $(FormatAsThous "$r_log_tail_lines") lines in your $(ShowAsTitleName) log to the $(ShowAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste log'
+#	DisplayAsProjSynIndentExam "upload the most recent $(FormatAsThous "$r_log_tail_lines") lines in your $(ShowAsTitleName) log to the $(ShowAsURL "https://$r_pastebin_site") public pastebin. A URL will be generated afterward" 'paste log'
 	Display
 
 	return 0
@@ -6619,6 +6629,7 @@ ShowHelpProblems()
 	# Inputs: (global)
 	#	$r_log_tail_lines
 	#	$r_report_output_pathfile
+	#	$r_pastebin_site
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport problems
@@ -6635,8 +6646,8 @@ ShowHelpProblems()
 		DisplayAsProjSynIndentExam "view only the most recent $(ShowAsTitleName) session log" last
 		DisplayAsProjSynIndentExam '' l
 		DisplayAsProjSynIndentExam "view the entire $(ShowAsTitleName) session log" log
-		DisplayAsProjSynIndentExam "upload the most-recent session in your $(ShowAsTitleName) log to the $(ShowAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste last'
-		DisplayAsProjSynIndentExam "upload the most-recent $(FormatAsThous "$r_log_tail_lines") lines in your $(ShowAsTitleName) log to the $(ShowAsURL 'https://termbin.com') public pastebin. A URL will be generated afterward" 'paste log'
+#		DisplayAsProjSynIndentExam "upload the most recent session in your $(ShowAsTitleName) log to the $(ShowAsURL "https://$r_pastebin_site") public pastebin. A URL will be generated afterward" 'paste last'
+#		DisplayAsProjSynIndentExam "upload the most recent $(FormatAsThous "$r_log_tail_lines") lines in your $(ShowAsTitleName) log to the $(ShowAsURL "https://$r_pastebin_site") public pastebin. A URL will be generated afterward" 'paste log'
 		DisplayAsProjSynIndentExam 'reactivate installed QPKGs (upgrade internal applications where-supported)' 'reactivate all'
 		DisplayAsProjSynIndentExam "remove all cached $(ShowAsTitleName) items and logs" reset
 		DisplayAsProjSynIndentExam 'find the live status of each application in these QPKGs' "status $(ShowAsPackages)"
@@ -6722,7 +6733,7 @@ ShowHelpTips()
 ViewLogLast()
 	{
 
-	# View only the last session log.
+	# View only the last log session.
 
 	# Inputs: (global)
 	#	$r_session_last_pathfile
@@ -6744,7 +6755,7 @@ ViewLogLast()
 ViewLogTail()
 	{
 
-	# View only the last session log.
+	# View only the last $r_log_tail_lines log lines.
 
 	# Inputs: (global)
 	#	$r_session_tail_pathfile
@@ -6768,7 +6779,7 @@ DisplayFileInViewport()
 
 	# Inputs: (local)
 	#	$1 = pathfile to display.
-	#	$2/$3/$4/$5 (optional, and in any order)
+	#	$2/$3/$4/$5 (optional, and in any order):
 	#		= 'headers:on'		: Use both first row and first data column as fixed headers. Default is off.
 	#		= 'linenumbers:on'	: Display line numbers. Default is off.
 	#		= 'linewrap:on'		: Wrap lines of text within viewport. Default is off.
@@ -6882,90 +6893,96 @@ CalcReportFirstColumnWidth()
 
 	}
 
-PasteLogLast()
-	{
+# PasteLogLast()
+#	{
+#
+#	# Inputs: (global)
+#	#	$r_pastebin_site
+#	#	$r_session_last_pathfile
+#
+#	# Outputs: (global)
+#	#	$show_action_results_zero
+#
+#	DisableDebugToArchiveAndFile
+#	ExtractPrevSessFromTail
+#
+#	if [[ -s $r_session_last_pathfile ]]; then
+#		if Quiz "Press 'Y' to post the most recent session in your $(ShowAsTitleName) log the public pastebin site $(ShowAsURL "https://$r_pastebin_site"), or any other key to abort"; then
+#			UploadLogToPastebin "$r_session_last_pathfile" || return
+#		else
+#			DebugInfoMinSepr
+#			DebugScript warning 'user abort' ''
+#			show_action_results_zero=false
+#
+#			return 1
+#		fi
+#	else
+#		ShowAsError 'no last session log found'
+#	fi
+#
+#	return 0
+#
+#	}
 
-	# Inputs: (global)
-	#	$r_session_last_pathfile
+# PasteLogTail()
+#	{
+#
+#	# Inputs: (global)
+#	#	$r_log_tail_lines
+#	#	$r_pastebin_site
+#	#	$r_session_tail_pathfile
+#
+#	# Outputs: (global)
+#	#	$show_action_results_zero
+#
+#	DisableDebugToArchiveAndFile
+#	ExtractTailFromLog
+#
+#	if [[ -s $r_session_tail_pathfile ]]; then
+#		if Quiz "Press 'Y' to post the most recent $(FormatAsThous "$r_log_tail_lines") lines in your $(ShowAsTitleName) log to the public pastebin site $(ShowAsURL "https://$r_pastebin_site"), or any other key to abort"; then
+#			UploadLogToPastebin "$r_session_tail_pathfile" || return
+#		else
+#			DebugInfoMinSepr
+#			DebugScript warning 'user abort'
+#			show_action_results_zero=false
+#
+#			return 1
+#		fi
+#	else
+#		ShowAsError 'no session log tail found'
+#	fi
+#
+#	return 0
+#
+#	}
 
-	# Outputs: (global)
-	#	$show_action_results_zero
-
-	local link=''
-
-	DisableDebugToArchiveAndFile
-	ExtractPrevSessFromTail
-
-	if [[ -s $r_session_last_pathfile ]]; then
-		if Quiz "Press 'Y' to post the most-recent session in your $(ShowAsTitleName) log to a public pastebin, or any other key to abort"; then
-			ShowAsProc "upload $(ShowAsTitleName) log"
-
-			# With thanks to https://github.com/solusipse/fiche
-
-			link=$(/bin/cat --number "$r_session_last_pathfile" | (exec 3<> /dev/tcp/termbin.com/9999; /bin/cat >&3; /bin/cat <&3; exec 3<&-))
-
-			if [[ $? -eq 0 ]]; then
-				ShowAsDone "your $(ShowAsTitleName) log is now online at $(ShowAsURL "$link") and will be deleted in 1 month"
-			else
-				ShowAsFail "a link could not be generated. Most likely a problem occurred when talking with $(ShowAsURL 'https://termbin.com')"
-			fi
-		else
-			DebugInfoMinSepr
-			DebugScript warning 'user abort' ''
-			show_action_results_zero=false
-
-			return 1
-		fi
-	else
-		ShowAsError 'no last session log found'
-	fi
-
-	return 0
-
-	}
-
-PasteLogTail()
-	{
-
-	# Inputs: (global)
-	#	$r_log_tail_lines
-	#	$r_session_tail_pathfile
-
-	# Outputs: (global)
-	#	$show_action_results_zero
-
-	local link=''
-
-	DisableDebugToArchiveAndFile
-	ExtractTailFromLog
-
-	if [[ -s $r_session_tail_pathfile ]]; then
-		if Quiz "Press 'Y' to post the most-recent $(FormatAsThous "$r_log_tail_lines") lines in your $(ShowAsTitleName) log to a public pastebin, or any other key to abort"; then
-			ShowAsProc "upload $(ShowAsTitleName) log"
-
-			# With thanks to https://github.com/solusipse/fiche
-
-			link=$(/bin/cat --number "$r_session_tail_pathfile" | (exec 3<> /dev/tcp/termbin.com/9999; /bin/cat >&3; /bin/cat <&3; exec 3<&-))
-
-			if [[ $? -eq 0 ]]; then
-				ShowAsDone "your $(ShowAsTitleName) log is now online at $(ShowAsURL "$link") and will be deleted in 1 month"
-			else
-				ShowAsFail "a link could not be generated. Most likely a problem occurred when talking with $(ShowAsURL 'https://termbin.com')"
-			fi
-		else
-			DebugInfoMinSepr
-			DebugScript warning 'user abort'
-			show_action_results_zero=false
-
-			return 1
-		fi
-	else
-		ShowAsError 'no session log tail found'
-	fi
-
-	return 0
-
-	}
+# UploadLogToPastebin()
+#	{
+#
+#	# Inputs: (local)
+#	#	$1 = log pathfile.
+#
+#	# Inputs: (global)
+#	#	$r_pastebin_port
+#	#	$r_pastebin_site
+#
+#	[[ -n ${1:-} ]] || return
+#
+#	local link=''
+#
+#	ShowAsProc "upload $(ShowAsTitleName) log"
+#
+#	# With thanks to https://github.com/solusipse/fiche
+#
+#	link=$(/bin/cat --number "$1" | (exec 3<> /dev/tcp/$r_pastebin_site/$r_pastebin_port; /bin/cat >&3; /bin/cat <&3; exec 3<&-))
+#
+#	if [[ $? -eq 0 ]]; then
+#		ShowAsDone "your $(ShowAsTitleName) log is now online at $(ShowAsURL "$link") and will be deleted in 1 week"
+#	else
+#		ShowAsFail "a link could not be generated. Most likely a problem occurred while communicating with $(ShowAsURL "https://$r_pastebin_site")"
+#	fi
+#
+#	}
 
 GetLogSessStartLine()
 	{
@@ -8367,7 +8384,7 @@ ReportFeatures()
 
 	FuncInit
 
-#	generate_report_headers=true		# Disable this for-now, display output gets wonky when viewport width is less-than report width. Only happens on this report.
+#	generate_report_headers=true		# Disable this for-now, display output gets wonky when viewport width is less than report width. Only happens on this report.
 	local a=''
 	local b=''
 	local -i m=0
@@ -8769,7 +8786,7 @@ GenerateReportInfo()
 		fi
 
 		if [[ -e "$r_report_flags_path"/backup-file-old ]]; then
-			DisplayAsIndentQuotedInfoItem "$(TextBrightRed '!')" "QPKG backup file was updated more-than $r_report_highlight_backups_older_than."
+			DisplayAsIndentQuotedInfoItem "$(TextBrightRed '!')" "QPKG backup file was updated more than $r_report_highlight_backups_older_than."
 		fi
 
 		if [[ -e "$r_report_flags_path"/state-upgradable ]]; then
@@ -9685,7 +9702,7 @@ GetOsSysLoad1MinAverage()
 
 	}
 
-GetHardwareCPUCores()
+GetHardwareCPUThreads()
 	{
 
 	local n=$(/bin/grep -c '^processor' /proc/cpuinfo)
@@ -13418,11 +13435,11 @@ IsOsLoadAverageAboveTrigger()
 	#	$1 = multiplier
 
 	# Inputs: (global)
-	#	$r_cpu_cores
+	#	$r_cpu_threads
 
 	local a=${1:-1}
 	local b=$(GetOsSysLoad1MinAverage); b=${b/./}
-	local c=$((r_cpu_cores*a*100))
+	local c=$((r_cpu_threads*a*100))
 
 	[[ $((10#$b)) -ge $((10#$c)) ]]
 
@@ -16756,13 +16773,13 @@ SetError()
 
 	}
 
-SetHardwareCPUCores()
+SetHardwareCPUThreads()
 	{
 
 	# Outputs: (global)
-	#	$r_cpu_cores
+	#	$r_cpu_threads
 
-	[[ ${r_cpu_cores:-unset} = unset ]] && readonly r_cpu_cores=$(GetHardwareCPUCores)
+	[[ ${r_cpu_threads:-unset} = unset ]] && readonly r_cpu_threads=$(GetHardwareCPUThreads)
 
 	}
 
