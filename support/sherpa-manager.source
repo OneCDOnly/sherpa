@@ -5648,7 +5648,7 @@ _GenerateDepsReportDataRow_()
 			# Assign & highlight field messages.
 
 			author_msg=$(FormatReportField N/A mute)
-			deps_msg=$(FormatReportField "${deps// /, }" mute)
+			deps_msg=$(FormatReportField "${deps// /, }" normal_mute)
 			opt_deps_msg=$(FormatReportField "${opt_deps// /, }" mute)
 			enabled_msg=$(FormatReportField N/A mute)
 			installed_msg=$(FormatReportField "$installed" mute)
@@ -5708,7 +5708,7 @@ _GenerateDepsReportDataRow_()
 				deps=$deps_raw
 			fi
 
-			deps_msg=$(FormatReportField "${deps// /, }")
+			deps_msg=$(FormatReportField "${deps// /, }" normal)
 			opt_deps=''
 
 			if [[ $opt_deps_raw != none ]]; then
