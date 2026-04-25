@@ -4800,9 +4800,9 @@ DisplayAsIndentQuotedInfoItem()
 	#	$r_report_info_name_column_width
 
 	if IsOsCanAutowidthTableColumns; then
-		printf "%${r_help_desc_indent}s%s|%s\n" '' "'${1:-}'" "- $(AddPeriod "${2:-}")"
+		printf "%${r_help_desc_indent}s%s|%s\n" '' "'${1:-}'" "${r_chars_dash}$(AddPeriod "${2:-}")"
 	else
-		printf "%${r_help_desc_indent}s%-$((r_report_info_name_column_width+2+$(LenANSIDiff "${1:-}")))s%s\n" '' "'${1:-}'" "- $(AddPeriod "${2:-}")"
+		printf "%${r_help_desc_indent}s%-$((r_report_info_name_column_width+2+$(LenANSIDiff "${1:-}")))s%s\n" '' "'${1:-}'" "${r_chars_dash}$(AddPeriod "${2:-}")"
 	fi
 
 	}
