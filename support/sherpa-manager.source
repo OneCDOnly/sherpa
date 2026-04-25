@@ -354,7 +354,7 @@ LoadDefaults()
 
 	# Default flags.
 
-		if IsInTerminal; then						# Only enable ANSI colour codes if running in a user terminal.
+		if IsInTerminal; then						# Only allow ANSI colour codes if running in a user terminal.
 			readonly r_colourful_default=true
 		else
 			readonly r_colourful_default=false
@@ -477,7 +477,7 @@ IsCMDsOk()
 	IsCriticalFile /bin/md5sum || return
 	IsCriticalFile /bin/mknod || return
 	IsCriticalFile /bin/mktemp || return
-	# Don't check for `/bin/more` because it's a very low-priority utility (non-essential).
+	# Don't check for `/bin/more`, it's a very low-priority utility (non-essential).
 	IsCriticalFile /bin/ps || return
 	IsCriticalFile /usr/local/bin/python2 || return
 	IsCriticalFile /usr/bin/readlink || return
