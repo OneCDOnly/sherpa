@@ -846,6 +846,9 @@ DebugLogEnv()
 		useropt_verbose=true
 	fi
 
+	local a=''
+	local b=''
+
 	SetNasArch
 	SetHardwarePlatform
 
@@ -859,10 +862,13 @@ DebugLogEnv()
 	DebugKernel ok name "$(GetOsKernelName)"
 	DebugKernel ok version "$(GetOsKernelVersion)"
 
+	a='page size'
+	b=$r_kernel_page_size
+
 	if IsOsStdKernelPageSize; then
-		DebugKernel ok 'page size' "$r_kernel_page_size"
+		DebugKernel ok "$a" "$b"
 	else
-		DebugKernel warning 'page size' "$r_kernel_page_size"
+		DebugKernel warning "$a" "$b"
 	fi
 
 	DebugFirmware ok OS "$(GetOsName)"
@@ -870,18 +876,24 @@ DebugLogEnv()
 	SetOsFirmwareVersion
 	SetOsFirmwareBuild
 
+	a=version
+	b=$r_nas_firmware_version.$r_nas_firmware_build
+
 	if IsOsSupported; then
-		DebugFirmware ok version "$r_nas_firmware_version.$r_nas_firmware_build"
+		DebugFirmware ok "$a" "$b"
 	else
-		DebugFirmware warning version "$r_nas_firmware_version"
+		DebugFirmware warning "$a" "$b"
 	fi
 
 	SetOsFirmwareDate
 
+	a='build date'
+	b=$(ConvertAsSmartDate "$r_nas_firmware_date")
+
 	if IsOsCompatibleWithSigned; then
-		DebugFirmware ok 'build date' "$(ConvertAsSmartDate "$r_nas_firmware_date")"
+		DebugFirmware ok "$a" "$b"
 	else
-		DebugFirmware warning 'build date' "$(ConvertAsSmartDate "$r_nas_firmware_date")"
+		DebugFirmware warning "$a" "$b"
 	fi
 
 	DebugFirmware ok platform "$r_nas_platform"
@@ -894,10 +906,13 @@ DebugLogEnv()
 
 	DebugOS ok uptime "$(GetOsUptime)"
 
+	a='load averages'
+	b=$(GetOsSysLoadAverages)
+
 	if IsOsLoadAverageElevated; then
-		DebugOS warning 'load averages' "$(GetOsSysLoadAverages)"
+		DebugOS warning "$a" "$b"
 	else
-		DebugOS ok 'load averages' "$(GetOsSysLoadAverages)"
+		DebugOS ok "$a" "$b"
 	fi
 
 	DebugStorage ok 'default volume mounted' "$(GetUserDefVol)"
@@ -915,14 +930,16 @@ DebugLogEnv()
 	DebugUserspace ok 'libc copyright' "$(GetUserLIBCCopyright)"
 	DebugUserspace ok '$EUID' "$EUID"
 
+	a='$SUDO_UID'
+
 	if IsOsCanSudo; then
 		if [[ $EUID = 0 ]]; then
-			DebugUserspace ok '$SUDO_UID' N/A
+			DebugUserspace ok "$a" N/A
 		else
-			DebugUserspace ok '$SUDO_UID' "$(GetUserSudoUID)"
+			DebugUserspace ok "$a" "$(GetUserSudoUID)"
 		fi
 	else
-		DebugUserspace ok '$SUDO_UID' N/A
+		DebugUserspace ok "$a" N/A
 	fi
 
 	DebugUserspace ok 'BusyBox version' "$(GetBusyBoxVersion)"
@@ -934,76 +951,93 @@ DebugLogEnv()
 	DebugScript ok 'objects epoch' "$(ConvertAsSmartDate "${r_objects_epoch:-not loaded}")"
 	DebugScript ok 'packages epoch' "$(ConvertAsSmartDate "${r_packages_epoch:-not loaded}")"
 
+	a='package release'
+
 	if ! [[ $package_release_version = testing ]]; then
-		DebugQpkg ok 'package release' "$(ConvertAsSmartDate "$package_release_version")"
+		DebugQpkg ok "$a" "$(ConvertAsSmartDate "$package_release_version")"
 	else
-		DebugQpkg warning 'package release' "$package_release_version"
+		DebugQpkg warning "$a" "$package_release_version"
 	fi
+
+	a='allow unofficial'
 
 	if IsOsCanUnofficialPackages; then
 		if IsOsAllowUnofficialPackages; then
-			DebugQpkg detect 'allow unofficial' yes
+			DebugQpkg detect "$a" yes
 		else
-			DebugQpkg warning 'allow unofficial' no
+			DebugQpkg warning "$a" no
 		fi
 	else
-		DebugQpkg detect 'allow unofficial' N/A
+		DebugQpkg detect "$a" N/A
 	fi
+
+	a='require signed'
 
 	if IsOsCanManageSignedPackages; then
 		if IsOsRequireSignedPackages; then
-			DebugQpkg detect 'require signed' yes
+			DebugQpkg detect "$a" yes
 		else
-			DebugQpkg detect 'require signed' no
+			DebugQpkg detect "$a" no
 		fi
 	else
-		DebugQpkg detect 'require signed' N/A
+		DebugQpkg detect "$a" N/A
 	fi
 
 	SetQpkgArch
 
 	DebugQpkg detect architecture "$r_nas_qpkg_arch ($(DecodeQpkgArch $r_nas_qpkg_arch))"
 
+	a="date $(FormatPackageName Entware) installed"
+
 	if IsQpkgInstalled Entware; then
+		b=$(ConvertAsSmartDate "$(GetQpkgInstalledDate Entware)")
+
 		if ! IsEntwareUpgradable; then
-			DebugQpkg detect "date $(FormatPackageName Entware) installed" "$(ConvertAsSmartDate "$(GetQpkgInstalledDate Entware)")"
+			DebugQpkg detect "$a" "$b"
 		else
-			DebugQpkg warning "date $(FormatPackageName Entware) installed" "$(ConvertAsSmartDate "$(GetQpkgInstalledDate Entware)")"
+			DebugQpkg warning "$a" "$b"
 		fi
 
+		a="$(FormatPackageName Entware) type"
+		b=$r_entware_type
+
 		if [[ $r_entware_type = std ]]; then
-			DebugQpkg detect "$(FormatPackageName Entware) type" "$r_entware_type"
+			DebugQpkg detect "$a" "$b"
 		else
-			DebugQpkg warning "$(FormatPackageName Entware) type" "$r_entware_type"
+			DebugQpkg warning "$a" "$b"
 		fi
 	else
-		DebugQpkg detect "date $(FormatPackageName Entware) installed" N/A
+		DebugQpkg detect "$a" N/A
 	fi
 
 	SetOsFirmwareVer
 
+	a=$(FormatPackageName SortMyQPKGs)
+
 	if IsQpkgInstalled SortMyQPKGs; then
-		DebugQpkg detect "$(FormatPackageName SortMyQPKGs)" installed
+		DebugQpkg detect "$a" installed
 	else
 		if [[ $r_nas_firmware_ver -lt 400 || $r_nas_firmware_ver -ge 520 ]]; then
-			DebugQpkg detect "$(FormatPackageName SortMyQPKGs)" N/A
+			DebugQpkg detect "$a" N/A
 		else
-			DebugQpkg warning "$(FormatPackageName SortMyQPKGs)" 'not installed'
+			DebugQpkg warning "$a" 'not installed'
 		fi
 	fi
+
+	a=$(FormatPackageName IncreaseTimeouts)
 
 	if IsOsCanQpkgTimeout; then
 		if IsQpkgInstalled IncreaseTimeouts; then
 			if IsQpkgTimeoutsIncreased; then
-				DebugQpkg detect "$(FormatPackageName IncreaseTimeouts)" active
+				DebugQpkg detect "$a" active
 			else
-				DebugQpkg warning "$(FormatPackageName IncreaseTimeouts)" inactive
+				DebugQpkg warning "$a" inactive
 			fi
 		else
-			DebugQpkg detect "$(FormatPackageName IncreaseTimeouts)" 'not installed'
+			DebugQpkg detect "$a" 'not installed'
 		fi
 	else
-		DebugQpkg detect "$(FormatPackageName IncreaseTimeouts)" N/A
+		DebugQpkg detect "$a" N/A
 	fi
 
 	DebugInfoMinSepr
