@@ -3090,7 +3090,7 @@ MatchNoun()
 		a|about)
 			printf about
 			;;
-		a-all)
+		a-all|about-all|all-a|all-about)
 			printf about-all
 			;;
 		abs|abbreviations)
