@@ -452,6 +452,7 @@ LoadCMDs()
 		readonly r_gnu_sleep_cmd=/opt/bin/sleep
 		readonly r_gnu_stty_cmd=/opt/bin/stty
 		readonly r_gnu_timeout_cmd=/opt/bin/timeout
+		readonly r_gnu_uname_cmd=/opt/bin/uname
 		readonly r_opkg_cmd=/opt/bin/opkg
 		readonly r_python3_cmd=/opt/bin/python3
 			readonly r_pip_cmd=$r_python3_cmd' -m pip'
@@ -858,7 +859,7 @@ DebugLogEnv()
 	DebugInfoMinSepr
 	DebugHardware ok 'NAS model' "$(get_display_name)"
 	DebugHardware ok CPU "$(GetHardwareCPUInfo)"
-	DebugHardware ok 'CPU threads' "$r_cpu_threads"
+	DebugHardware ok 'available CPU threads' "$r_cpu_threads"
 	DebugHardware ok 'CPU architecture' "$(GetCpuDataWidth)"
 	DebugHardware ok 'basic CPU SHA1 benchmark' "$(GetHardwareCPUBenchmark)"
 	DebugHardware ok RAM "${r_nas_ram_gb}GiB"
@@ -3089,10 +3090,13 @@ MatchNoun()
 		a|about)
 			printf about
 			;;
+		a-all)
+			printf about-all
+			;;
 		abs|abbreviations)
 			printf abs
 			;;
-		about-all|backedup|canbackup|complete|installable|installed|missing|results|show|?(un)stable)	# NOTE: There should be no single characters in this list.
+		backedup|canbackup|complete|installable|installed|missing|results|show|?(un)stable)	# NOTE: There should be no single characters in this list.
 			printf '%s' "$1"
 			;;
 		action?(s))
@@ -9528,6 +9532,10 @@ GetHardwareVolumeBenchmark()
 
 	# Use GNU `dd` because it generates speed statistics as stderr. BusyBox 1.01 `dd` does not generate stats at-all.
 
+	# Inputs: (global)
+	#	$r_gnu_dd_cmd
+	#	$r_gnu_nice_cmd
+
 	local a=''
 	local b=10k			# Maximum time-to-run is around 1 second on my slowest NAS (TS-220).
 	local -i c=-20		# Run benchmark with highest priority.
@@ -9578,6 +9586,10 @@ GetNasArch()
 GetCpuDataWidth()
 	{
 
+	# Inputs: (global)
+	#	$r_nas_arch
+	#	$r_nas_platform
+
 	local a=''
 
 	case $r_nas_arch in
@@ -9610,9 +9622,12 @@ GetCpuDataWidth()
 GetOsKernelName()
 	{
 
-	# BusyBox 1.01 doesn't support `uname -o` (operating system), so try with `-o` first, then fall-back to default if it fails.
+	# Inputs: (global)
+	#	$r_gnu_uname_cmd
 
-	/bin/uname -o || /bin/uname
+	# NOTE: BusyBox 1.01 doesn't support `uname -o` (operating system).
+
+	/bin/uname -o || { [[ -x $r_gnu_uname_cmd ]] && $r_gnu_uname_cmd -o ;} || /bin/uname
 
 	} 2> /dev/null
 
