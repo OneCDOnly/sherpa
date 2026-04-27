@@ -1002,7 +1002,7 @@ DebugLogEnv()
 			DebugQpkg warning "$a" "$b"
 		fi
 
-		a="$(FormatPackageName Entware) type"
+		a=$(FormatPackageName Entware)' type'
 		b=$r_entware_type
 
 		if [[ $r_entware_type = std ]]; then
@@ -3929,7 +3929,7 @@ IPKs:upgrade()
 		desc="$total_count auxiliary IPK$(Pluralise "$total_count")"
 		dir_bytes=$(IPKs-ACdownload-to:Size)
 		dir_location=$r_ipk_download_path
-		dir_size_progress_prefix="upgrade $desc"
+		dir_size_progress_prefix='upgrade '$desc
 
 		_DirSizeMonitor_ &
 		fork_pid=$!
@@ -4030,7 +4030,7 @@ IPKs:install()
 		desc="$total_count auxiliary IPK$(Pluralise "$total_count")"
 		dir_bytes=$(IPKs-ACdownload-to:Size)
 		dir_location=$r_ipk_download_path
-		dir_size_progress_prefix="install $desc"
+		dir_size_progress_prefix='install '$desc
 
 		_DirSizeMonitor_ &
 		fork_pid=$!
@@ -6868,7 +6868,7 @@ DisplayFileInViewport()
 		options+=' --redraw-on-quit'
 
 		if IsReportLargerThanViewport "$report_pathfile"; then
-			IsGnuLessSupportHeaders && [[ $headers = true ]] && options+=" --header=1,$(CalcReportFirstColumnWidth "$report_pathfile")"
+			IsGnuLessSupportHeaders && [[ $headers = true ]] && options+=' --header=1,'$(CalcReportFirstColumnWidth "$report_pathfile")
 			[[ $linewrap = false ]] && options+=' --chop-long-lines'
 			[[ $scrolltoend = true ]] && options+=' +G'
 		fi
