@@ -14650,7 +14650,6 @@ Executer()
 	#	$r_run_logs_path
 	#	$r_sys_run_path
 	#	$useropt_debug
-	#	$useropt_verbose
 
 	# Outputs: (local)
 	#	stdout = commandstring stdout and stderr if script is in 'debug' mode.
