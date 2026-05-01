@@ -1002,7 +1002,7 @@ DebugLogEnv()
 			DebugQpkg warning "$a" "$b"
 		fi
 
-		a="$(FormatPackageName Entware) type"
+		a=$(FormatPackageName Entware)' type'
 		b=$r_entware_type
 
 		if [[ $r_entware_type = std ]]; then
@@ -3929,7 +3929,7 @@ IPKs:upgrade()
 		desc="$total_count auxiliary IPK$(Pluralise "$total_count")"
 		dir_bytes=$(IPKs-ACdownload-to:Size)
 		dir_location=$r_ipk_download_path
-		dir_size_progress_prefix="upgrade $desc"
+		dir_size_progress_prefix='upgrade '$desc
 
 		_DirSizeMonitor_ &
 		fork_pid=$!
@@ -4030,7 +4030,7 @@ IPKs:install()
 		desc="$total_count auxiliary IPK$(Pluralise "$total_count")"
 		dir_bytes=$(IPKs-ACdownload-to:Size)
 		dir_location=$r_ipk_download_path
-		dir_size_progress_prefix="install $desc"
+		dir_size_progress_prefix='install '$desc
 
 		_DirSizeMonitor_ &
 		fork_pid=$!
@@ -6868,7 +6868,7 @@ DisplayFileInViewport()
 		options+=' --redraw-on-quit'
 
 		if IsReportLargerThanViewport "$report_pathfile"; then
-			IsGnuLessSupportHeaders && [[ $headers = true ]] && options+=" --header=1,$(CalcReportFirstColumnWidth "$report_pathfile")"
+			IsGnuLessSupportHeaders && [[ $headers = true ]] && options+=' --header=1,'$(CalcReportFirstColumnWidth "$report_pathfile")
 			[[ $linewrap = false ]] && options+=' --chop-long-lines'
 			[[ $scrolltoend = true ]] && options+=' +G'
 		fi
@@ -14648,8 +14648,8 @@ Executer()
 	#	$e_nocmd
 	#	$e_nopfi
 	#	$r_run_logs_path
+	#	$r_sys_run_path
 	#	$useropt_debug
-	#	$useropt_verbose
 
 	# Outputs: (local)
 	#	stdout = commandstring stdout and stderr if script is in 'debug' mode.
@@ -14662,7 +14662,7 @@ Executer()
 
 	local a=$(tr -s ' ' <<< "$1")
 	local exec_msg='exec:'
-	local -r r_log_pathfile=$(/bin/mktemp "$r_run_logs_path"/"${FUNCNAME[0]}"_XXXXXX)
+	local -r r_log_pathfile=$(/bin/mktemp $r_run_logs_path/${FUNCNAME[0]}_XXXXXX)
 	local -i z=0
 
 	if IsHaveSingleQuote "$a"; then										# Change display quotes depending-on content quote chars.
@@ -14674,9 +14674,18 @@ Executer()
 	DebugAsProc "$exec_msg"
 	FormatCommand "$a" > "$2"
 
-	if [[ $useropt_verbose = true ]]; then
-		eval "$a 2>&1 | /usr/bin/tee $r_log_pathfile"					# NOTE: stdout is buffered here.
-		z=${PIPESTATUS[0]}												# Examine $PIPESTATUS after `tee` to get returncode of previous command: https://stackoverflow.com/questions/1221833/pipe-output-and-capture-exit-status-in-bash
+	if [[ $useropt_debug = true ]]; then
+		# https://stackoverflow.com/a/1221844
+
+		local -r r_executer_log_pipe=$r_sys_run_path/pipe-$(/bin/date +%s%N)
+
+		/bin/mknod "$r_executer_log_pipe" p
+		/usr/bin/tee "$r_log_pathfile" < "$r_executer_log_pipe" &
+
+		eval "$1" > "$r_executer_log_pipe" 2>&1
+		z=$?
+
+		rm "$r_executer_log_pipe"
 	else
 		eval "$a" > "$r_log_pathfile" 2>&1
 		z=$?
