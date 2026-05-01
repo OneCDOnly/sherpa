@@ -24,14 +24,14 @@ r_qpkg_service_results=(failed ok)
 
 # Ordered.
 
-r_qpkg_actions=(status list rebuild reassign download backup resign unsign deactivate disable uninstall upgrade reinstall install enableau disableau sign restore clean enable activate reactivate)
+r_qpkg_actions=(status list rebuild reassign download backup resign unsign deactivate disable uninstall update upgrade reinstall install enableau disableau sign restore clean enable activate reactivate)
 r_ipk_actions=(downgrade download uninstall upgrade install)
 r_pip_actions=(uninstall upgrade install)
 
 # These actions may be specified by the user.
 # Sorted.
 
-r_user_qpkg_actions=(activate backup clean deactivate disable disableau enable enableau install list reactivate reassign rebuild reinstall resign restore status uninstall upgrade)
+r_user_qpkg_actions=(activate backup clean deactivate disable disableau enable enableau install list reactivate reassign rebuild reinstall resign restore status uninstall update upgrade)
 
 AddFlagObj()
 	{

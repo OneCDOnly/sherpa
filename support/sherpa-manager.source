@@ -682,14 +682,14 @@ LoadLists()
 
 	# Ordered.
 
-	r_qpkg_actions=(status list rebuild reassign download backup resign unsign deactivate disable uninstall upgrade reinstall install enableau disableau sign restore clean enable activate reactivate)
+	r_qpkg_actions=(status list rebuild reassign download backup resign unsign deactivate disable uninstall update upgrade reinstall install enableau disableau sign restore clean enable activate reactivate)
 	r_ipk_actions=(downgrade download uninstall upgrade install)
 	r_pip_actions=(uninstall upgrade install)
 
 	# These actions may be specified by the user.
 	# Sorted.
 
-	r_user_qpkg_actions=(activate backup clean deactivate disable disableau enable enableau install list reactivate reassign rebuild reinstall resign restore status uninstall upgrade)
+	r_user_qpkg_actions=(activate backup clean deactivate disable disableau enable enableau install list reactivate reassign rebuild reinstall resign restore status uninstall update upgrade)
 
 	# KLUDGE: for some reason, setting `readonly` while populating arrays causes their scope to become local, so need to set as `readonly` afterward to ensure global scope. GNU Bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
 
@@ -713,7 +713,7 @@ LoadLists()
 
 	local action=''
 
-	for action in "${r_qpkg_actions[@]}" debug downgrade fix update; do
+	for action in "${r_qpkg_actions[@]}" debug downgrade fix; do
 		readonly r_"$(Lowercase "$action")"_log_file=$action.log
 	done
 
@@ -1607,41 +1607,44 @@ AssignQpkgsToActions()
 #  23. "unsign" independents
 
 #  24. "sign" independents
-#  25. upgrade independents
-#  26. reinstall independents
-#  27. install independents
-#  28. restore independents
-#  29. enable-auto-update independents
-#  30. clean independents
-#  31. enable independents
-#  32. restart/reactivate independents
-#  33. start/activate independents
+#  25. update independents
+#  26. upgrade independents
+#  27. reinstall independents
+#  28. install independents
+#  29. restore independents
+#  30. enable-auto-update independents
+#  31. clean independents
+#  32. enable independents
+#  33. restart/reactivate independents
+#  34. start/activate independents
 
-#  34. auxiliary packages (IPKs and PIPs) are managed here.
+#  35. auxiliary packages (IPKs and PIPs) are managed here.
 
-#  35. "sign" optionals
-#  36. upgrade optionals
-#  37. reinstall optionals
-#  38. install optionals
-#  39. restore optionals
-#  40. enable-auto-update optionals
-#  41. clean optionals
-#  42. enable optionals
-#  43. restart/reactivate optionals
-#  44. start/activate optionals
+#  36. "sign" optionals
+#  37. update optionals
+#  38. upgrade optionals
+#  39. reinstall optionals
+#  40. install optionals
+#  41. restore optionals
+#  42. enable-auto-update optionals
+#  43. clean optionals
+#  44. enable optionals
+#  45. restart/reactivate optionals
+#  46. start/activate optionals
 
-#  45. "sign" dependents
-#  46. upgrade dependents
-#  47. reinstall dependents
-#  48. install dependents
-#  49. restore dependents
-#  50. enable-auto-update dependents
-#  51. clean dependents
-#  52. enable dependents
-#  53. restart/reactivate dependents
-#  54. start/activate dependents
+#  47. "sign" dependents
+#  48. update dependents
+#  49. upgrade dependents
+#  50. reinstall dependents
+#  51. install dependents
+#  52. restore dependents
+#  53. enable-auto-update dependents
+#  54. clean dependents
+#  55. enable dependents
+#  56. restart/reactivate dependents
+#  57. start/activate dependents
 
-#  55. unsign all				(only QPKGs that failed to `install`)
+#  58. unsign all				(only QPKGs that failed to `install`)
 
 ProcActions()
 	{
@@ -1723,6 +1726,7 @@ ProcActions()
 		for tier in "${r_package_tiers[@]}"; do
 			if [[ $tier != auxiliary ]]; then
 				IsOsCanManageSignedPackages && ProcAction sign $tier QPKG '"sign"'
+				ProcAction update $tier QPKG update
 				ProcAction upgrade $tier QPKG upgrade
 				ProcAction reinstall $tier QPKG reinstall
 				ProcAction install $tier QPKG install
@@ -2938,7 +2942,7 @@ ParseActionArgs()
 
 		if [[ -n $action && -n $group ]]; then
 			case $action in
-				?(de|re)activate|backup|clean|@(dis|en)able?(au)|reassign|@(re|un)install|resign|restore|upgrade)
+				?(de|re)activate|backup|clean|@(dis|en)able?(au)|reassign|@(re|un)install|resign|restore|update|upgrade)
 					case $group in
 						?(NT)active)
 							LoadObjects
@@ -3040,7 +3044,7 @@ MatchVerb()
 			printf install
 			;;
 #		backup|clean|@(dis|en)able|fix|follow|help|list|paste|reassign|rebuild|reinstall|report-info|reset|restore|terse)	# NOTE: There should be no single characters in this list.
-		backup|clean|@(dis|en)able|fix|follow|help|list|reassign|rebuild|reinstall|report-info|reset|restore|terse)	# NOTE: There should be no single characters in this list.
+		backup|clean|@(dis|en)able|fix|follow|help|list|reassign|rebuild|reinstall|report-info|reset|restore|terse|update|upgrade)	# NOTE: There should be no single characters in this list.
 			printf '%s' "$1"
 			;;
 		deactivate|stop)
@@ -3069,9 +3073,6 @@ MatchVerb()
 			;;
 		s|status?(es))
 			printf status
-			;;
-		update|upgrade)
-			printf upgrade
 			;;
 		v|verbose)
 			printf verbose
@@ -10595,9 +10596,9 @@ _QPKG:install_()
 	[[ ${QPKGs_were_installed_name[*]:-} = *"$qpkg_name"* ]] && a+="QINSTALL_PATH=$(GetQpkgInstalledOriginalPath "$qpkg_name") "
 
 #	Executer "$a $r_local_pathfile" "$r_log_pathfile" log:failure-only 10
-#	z=$?
 
 	KludgeExecuter "$a /bin/sh \"$r_local_pathfile\"" "$r_log_pathfile" log:failure-only 10
+	z=$?
 
 	LogQpkgServiceResult
 	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
@@ -10694,9 +10695,9 @@ _QPKG:reinstall_()
 	IsValidQpkgInstalled && a+="QINSTALL_PATH=$(/usr/bin/dirname "$(GetQpkgInstalledPath)") "
 
 #	Executer "${a}/bin/sh $r_local_pathfile" "$r_log_path/$(/usr/bin/basename "$r_local_pathfile").$r_reinstall_log_file" log:failure-only 10
-#	z=$?
 
 	KludgeExecuter "$a /bin/sh \"$r_local_pathfile\"" "$r_log_pathfile" log:failure-only 10
+	z=$?
 
 	LogQpkgServiceResult
 	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
@@ -10712,6 +10713,86 @@ _QPKG:reinstall_()
 		local b=$(GetQpkgServiceExplanation) || b=$z
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		MarkActionForkAsDoneError
+	fi
+
+	ClearQpkgInstalledAppCenterNotifier
+
+	FuncForkExit $z
+
+	}
+
+_QPKG:update_()
+	{
+
+	# * This function runs asynchronously *
+
+	# Update the QPKG application repo files named in $qpkg_name.
+
+	# Inputs: (global)
+	#	$qpkg_name
+	#	$r_log_path
+	#	$r_update_log_file
+	#	$useropt_debug
+
+	# Outputs: (local)
+	#	$? = none, this function executes asynchronously. But an exitcode is recorded in the debug log.
+
+	FuncForkInit
+
+	local action=update
+	local -r r_local_pathfile=$(GetQpkgServicePathFile)
+	local -i z=0
+
+	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
+
+	if IsNtValidQpkgInstalled; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'not installed'
+		MarkActionForkAsSkippedOk
+		z=2
+	elif ! IsQpkgDbCanClean; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'unsupported by this QPKG'
+		MarkActionForkAsSkippedOk
+		z=2
+	elif IsNtQpkgAuthorOk; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk 'incompatible author'
+		MarkActionForkAsSkippedOk
+		z=2
+	elif IsNtQpkgRepoSelfManaged; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "assigned to another repository, please 'reassign' it first"
+		MarkActionForkAsSkippedOk
+		z=2
+	elif [[ $r_local_pathfile = undefined ]]; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file undefined'
+		MarkActionForkAsSkippedError
+		z=4
+	elif [[ ! -s $r_local_pathfile ]]; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se 'QPKG service-script file not found'
+		MarkActionForkAsSkippedError
+		z=4
+	fi
+
+	[[ $z -eq 0 ]] || FuncForkExit $z
+
+	DebugAsProc "updating $(FormatPackageName)"
+
+	local a=''
+	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_update_log_file
+	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
+
+	Executer "$a \"$r_local_pathfile\" update" "$r_log_pathfile" log:failure-only
+	z=$?
+
+	LogQpkgServiceResult
+	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
+
+	if [[ $z -eq 0 ]]; then
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
+		MarkActionForkAsDoneOk
+	else
+		local b=$(GetQpkgServiceExplanation) || b=$z
+		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
+		MarkActionForkAsDoneError
+		# TODO: if debug mode, save action log to session log.
 	fi
 
 	ClearQpkgInstalledAppCenterNotifier
@@ -10781,9 +10862,9 @@ _QPKG:upgrade_()
 	IsValidQpkgInstalled && a+="QINSTALL_PATH=$(/usr/bin/dirname "$(GetQpkgInstalledPath "$qpkg_name")") "
 
 #	Executer "${a}/bin/sh $r_local_pathfile" "$r_log_path/$(/usr/bin/basename "$r_local_pathfile").$r_upgrade_log_file" log:failure-only 10
-#	z=$?
 
 	KludgeExecuter "$a /bin/sh \"$r_local_pathfile\"" "$r_log_pathfile" log:failure-only 10
+	z=$?
 
 	LogQpkgServiceResult
 	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
@@ -11708,14 +11789,13 @@ _QPKG:clean_()
 	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
 
 	Executer "$a \"$r_local_pathfile\" clean" "$r_log_pathfile" log:failure-only
+	z=$?
 
 #	if [[ $useropt_debug = true ]]; then
 #		DEBUG_QPKG=true $(GetQpkgServicePathFile) clean
 #	else
 #		$(GetQpkgServicePathFile) clean > "$r_log_path/$qpkg_name.$r_clean_log_file" 2>&1
 #	fi
-
-	z=$?
 
 	LogQpkgServiceResult
 	IsQpkgDbWillLog && ! QpkgServiceResultWasOk && z=1
