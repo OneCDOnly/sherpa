@@ -2125,7 +2125,7 @@ SetMaxForks()
 			clean)											# Don't make too-many calls to PyPI at the same time.
 				max_forks=$(((r_concurrency+1)/2))
 				;;
-			backup|deactivate|download|uninstall)			# Low-resource actions, so allow multiple forks, even on ARMv5.
+			backup|deactivate|download|uninstall|update)	# Low-resource actions, so allow multiple forks, even on ARMv5.
 				max_forks=4
 				;;
 			@(dis|en)ableau|rebuild|status)					# Really-low-resource actions.
@@ -2908,7 +2908,7 @@ ParseActionArgs()
 			potential_action=''
 
 			case $action in
-				?(de|re)activate|backup|clean|@(dis|en)able?(au)|reassign|rebuild|?(re|un)install|resign|restore)
+				?(de|re)activate|backup|clean|@(dis|en)able?(au)|reassign|rebuild|?(re|un)install|resign|restore|update)
 					requires_group=true
 					user_action=$arg
 					;;
@@ -3043,7 +3043,7 @@ MatchVerb()
 		add|install)
 			printf install
 			;;
-#		backup|clean|@(dis|en)able|fix|follow|help|list|paste|reassign|rebuild|reinstall|report-info|reset|restore|terse)	# NOTE: There should be no single characters in this list.
+#		backup|clean|@(dis|en)able|fix|follow|help|list|paste|reassign|rebuild|reinstall|report-info|reset|restore|terse|update|upgrade)	# NOTE: There should be no single characters in this list.
 		backup|clean|@(dis|en)able|fix|follow|help|list|reassign|rebuild|reinstall|report-info|reset|restore|terse|update|upgrade)	# NOTE: There should be no single characters in this list.
 			printf '%s' "$1"
 			;;
@@ -6381,6 +6381,7 @@ ShowHelpActions()
 		DisplayAsProjSynIndentExam 'uninstall these QPKGs' "uninstall $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam '' "remove $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam '' "rm $(ShowAsPackages)"
+		DisplayAsProjSynIndentExam 'update these QPKG internal applications only' "update $(ShowAsPackages)"
 		DisplayAsProjSynIndentExam 'upgrade these QPKGs (this will force-upgrade internal applications where-supported)' "upgrade $(ShowAsPackages)"
 
 		DisplayAsProjSynExam "$(ShowAsAction)s to affect all QPKGs can be seen with" 'help all-actions'
@@ -6432,6 +6433,7 @@ ShowHelpActionsAll()
 		DisplayAsProjSynIndentExam 'restore all application configurations from the backup location' 'restore all'
 		DisplayAsProjSynIndentExam 'find the live status of each application in all QPKGs' 'status all'
 		DisplayAsProjSynIndentExam 'uninstall all QPKGs' 'uninstall all'
+		DisplayAsProjSynIndentExam 'update all QPKG internal applications only' 'update all'
 		DisplayAsProjSynIndentExam 'upgrade all QPKGs (and internal applications where-supported)' 'upgrade all'
 
 		} > "$r_report_output_pathfile"
