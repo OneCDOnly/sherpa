@@ -3043,8 +3043,8 @@ MatchVerb()
 		add|install)
 			printf install
 			;;
-#		backup|clean|@(dis|en)able|fix|follow|help|list|paste|reassign|rebuild|reinstall|report-info|reset|restore|terse|update|upgrade)	# NOTE: There should be no single characters in this list.
-		backup|clean|@(dis|en)able|fix|follow|help|list|reassign|rebuild|reinstall|report-info|reset|restore|terse|update|upgrade)	# NOTE: There should be no single characters in this list.
+#		backup|clean|@(dis|en)able|fix|follow|help|paste|reassign|rebuild|reinstall|report-info|reset|restore|terse|update|upgrade)	# NOTE: There should be no single characters in this list.
+		backup|clean|@(dis|en)able|fix|follow|help|reassign|rebuild|reinstall|report-info|reset|restore|terse|update|upgrade)	# NOTE: There should be no single characters in this list.
 			printf '%s' "$1"
 			;;
 		deactivate|stop)
@@ -3058,6 +3058,9 @@ MatchVerb()
 			;;
 		enable-auto-update)
 			printf enableau
+			;;
+		list|ls)
+			printf list
 			;;
 		reactivate|restart)
 			printf reactivate
