@@ -1486,7 +1486,7 @@ AssignQpkgsToActions()
 		done
 	done
 
-	# No-need to `reactivate` or `disable` packages that are to be uninstalled.
+	# No-need to `reactivate` or `disable` packages that are to be `uninstall`ed.
 
 	if QPKGs.ACuninstallGRall.IsSet; then
 		QPKGs-ACreactivate-to:Init
@@ -1496,11 +1496,11 @@ AssignQpkgsToActions()
 		QPKGs-ACdisable-to:Remove "$(QPKGs-ACuninstall-to:Array)"
 	fi
 
-	# No-need to `activate` packages that are to be reactivated.
+	# No-need to `activate` packages that are to be `reactivate`d.
 
 #	QPKGs-ACactivate-to:Remove "$(QPKGs-ACreactivate-to:Array)"
 
-	# Build a list of original storage paths for packages to be uninstalled, then installed again later this session (a "complex reinstall").
+	# Build a list of original storage paths for packages to be `uninstall`ed, then `install`ed again later this session (a "complex reinstall").
 	# This will ensure volume-migrated packages end-up in the correct locations.
 
 	QPKGs_were_installed_name=()
@@ -1537,18 +1537,16 @@ AssignQpkgsToActions()
 # [[ $useropt_debug = true ]] && ListQPKGsActionsAll
 # exit
 
-	# Ensure packages to be installed will be signed.
+	# Ensure packages to be `install`ed will be `sign`ed first.
 
 	if IsOsCanManageSignedPackages && QPKGs-ACinstall-to.IsAny; then
 		QPKGs-ACsign-to:Add "$(QPKGs-ACinstall-to:Array)"
 	fi
 
-	# Meta-action pre-processing: re-sign QPKGs by unsigning then signing them.
+	# Meta-action pre-processing: re-sign QPKGs by `unsign`ing then `sign`ing them.
 
 	if QPKGs-ACresign-to.IsAny; then
 		for qpkg_name in $(QPKGs-ACresign-to:Array); do
-			SetQpkgIndex
-
 			QPKGs-ACunsign-to:Add "$qpkg_name"
 			QPKGs-ACsign-to:Add "$qpkg_name"
 		done
@@ -1564,12 +1562,12 @@ AssignQpkgsToActions()
 		done
 	fi
 
+	# Don't permit these actions on the sherpa QPKG:
+
 	QPKGs-ACdeactivate-to:Remove sherpa
 	QPKGs-ACuninstall-to:Remove sherpa
 
-	if QPKGs-ACsign-to.IsAny || QPKGs-ACinstall-to.IsAny; then
-		LoadQpkgSigningCert
-	fi
+	QPKGs-ACsign-to.IsAny && LoadQpkgSigningCert
 
 	[[ $useropt_debug = true ]] && ListQPKGsActionsAll					# devdebug
 
@@ -1607,13 +1605,13 @@ AssignQpkgsToActions()
 #  23. "unsign" independents
 
 #  24. "sign" independents
-#  25. update independents
-#  26. upgrade independents
-#  27. reinstall independents
-#  28. install independents
-#  29. restore independents
-#  30. enable-auto-update independents
-#  31. clean independents
+#  25. upgrade independents
+#  26. reinstall independents
+#  27. install independents
+#  28. restore independents
+#  29. enable-auto-update independents
+#  30. clean independents
+#  31. update independents
 #  32. enable independents
 #  33. restart/reactivate independents
 #  34. start/activate independents
@@ -1621,25 +1619,25 @@ AssignQpkgsToActions()
 #  35. auxiliary packages (IPKs and PIPs) are managed here.
 
 #  36. "sign" optionals
-#  37. update optionals
-#  38. upgrade optionals
-#  39. reinstall optionals
-#  40. install optionals
-#  41. restore optionals
-#  42. enable-auto-update optionals
-#  43. clean optionals
+#  37. upgrade optionals
+#  38. reinstall optionals
+#  39. install optionals
+#  40. restore optionals
+#  41. enable-auto-update optionals
+#  42. clean optionals
+#  43. update optionals
 #  44. enable optionals
 #  45. restart/reactivate optionals
 #  46. start/activate optionals
 
 #  47. "sign" dependents
-#  48. update dependents
-#  49. upgrade dependents
-#  50. reinstall dependents
-#  51. install dependents
-#  52. restore dependents
-#  53. enable-auto-update dependents
-#  54. clean dependents
+#  48. upgrade dependents
+#  49. reinstall dependents
+#  50. install dependents
+#  51. restore dependents
+#  52. enable-auto-update dependents
+#  53. clean dependents
+#  54. update dependents
 #  55. enable dependents
 #  56. restart/reactivate dependents
 #  57. start/activate dependents
@@ -4418,8 +4416,10 @@ _DirSizeMonitor_()
 	# Inputs: (global)
 	#	$dir_bytes
 	#	$dir_location
+	#	$r_abort_actions_pathfile
 
 	# Outputs: (global)
+	#	$current_bytes
 	#	$last_active_epoch
 
 	[[ -d $dir_location && $dir_bytes -gt 0 ]] || exit
@@ -10878,6 +10878,7 @@ _QPKG:upgrade_()
 
 	if [[ $z -eq 0 || $z -eq 10 ]]; then	# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes aborts.
 		SendPackageStateChange ISNTupgradable
+		SendParentCommand "QPKGs-ACupdate-to:Remove $qpkg_name"
 		IsQpkgDbCanClean && SendParentCommand "QPKGs-ACclean-to:Add $qpkg_name"
 
 		local current_ver=$(GetQpkgInstalledVer)
@@ -11808,6 +11809,7 @@ _QPKG:clean_()
 	if [[ $z -eq 0 ]]; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 		MarkActionForkAsDoneOk
+		SendParentCommand "QPKGs-ACupdate-to:Remove $qpkg_name"
 	else
 		local b=$(GetQpkgServiceExplanation) || b=$z
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
