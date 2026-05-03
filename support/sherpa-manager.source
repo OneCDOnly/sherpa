@@ -15882,7 +15882,7 @@ ConvertSecondsToDuration()
 		printf "%d second$(Pluralise $s)" "$s"
 	else
 		s=1							# Never show zero seconds as a duration (bash isn't that fast).
-		printf '< %d second' "$s"
+		printf '< %d second' "$s"	# squeezer-ignore
 	fi
 
 	} 2> /dev/null
