@@ -1724,13 +1724,13 @@ ProcActions()
 		for tier in "${r_package_tiers[@]}"; do
 			if [[ $tier != auxiliary ]]; then
 				IsOsCanManageSignedPackages && ProcAction sign $tier QPKG '"sign"'
-				ProcAction update $tier QPKG update
 				ProcAction upgrade $tier QPKG upgrade
 				ProcAction reinstall $tier QPKG reinstall
 				ProcAction install $tier QPKG install
 				ProcAction restore $tier QPKG restore
 				ProcAction enableau $tier QPKG 'enable auto-update'
 				ProcAction clean $tier QPKG clean
+				ProcAction update $tier QPKG update
 				ProcAction enable $tier QPKG enable
 				ProcAction reactivate $tier QPKG reactivate
 				ProcAction activate $tier QPKG activate
