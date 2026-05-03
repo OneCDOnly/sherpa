@@ -15861,24 +15861,28 @@ ConvertSecondsToDuration()
 	# http://stackoverflow.com/questions/12199631/convert-seconds-to-hours-minutes-seconds
 
 	# Inputs: (local)
-	#	$1 = a time in seconds to convert to 'HHh:MMm:SSs' or, if less than 1 minute, to 'S seconds'.
+	#	$1 = a time in seconds to convert to 'HHh:MMm:SSs'
+	#		or if less than 1 hour, to 'MMm:SSs'
+	#		or if less than 1 minute, to 'S seconds'
+	#		or if less than 1 second, to '< 1 second'
+
+	local -i h=0
+	local -i m=0
+	local -i s=0
 
 	((h=${1:-0}/3600))
 	((m=(${1:-0}%3600)/60))
 	((s=${1:-0}%60))
 
-	if [[ $h -gt 0 ]]; then
+	if [[ $h -ge 1 ]]; then
 		printf '%01dh:%02dm:%02ds' "$h" "$m" "$s"
-	elif [[ $m -gt 0 ]]; then
+	elif [[ $m -ge 1 ]]; then
 		printf '%01dm:%02ds' "$m" "$s"
+	elif [[ $s -ge 1 ]]; then
+		printf "%d second$(Pluralise $s)" "$s"
 	else
-		[[ $s -eq 0 ]] && s=1			# Never show zero seconds as a duration (bash isn't that fast).
-
-		if [[ $s -eq 1 ]]; then
-			printf '%d second' "$s"
-		else
-			printf '%d seconds' "$s"
-		fi
+		s=1							# Never show zero seconds as a duration (bash isn't that fast).
+		printf '< %d second' "$s"
 	fi
 
 	} 2> /dev/null
@@ -15953,14 +15957,14 @@ ConvertLongDateAsHuman()
 
 	[[ -n ${1:-} ]] || return
 
-	local a=${1//[!0-9]/}	# Strip non-digits.
+	local -i a=${1//[!0-9]/}	# Strip non-digits.
 
 	if [[ ${#a} -ne 8 ]]; then
 		printf 'invalid longdate code length'
 		return 1
 	fi
 
-	local b=${a:6:2}
+	local -i b=${a:6:2}
 	local c=''
 
 	if ((b >= 1 && b <= 10)); then
@@ -16005,7 +16009,7 @@ ConvertAsSmartDate()
 
 	[[ -n ${1:-} ]] || return
 
-	local a=${1//[!0-9]/}	# Strip non-digits.
+	local -i a=${1//[!0-9]/}	# Strip non-digits.
 	local b=''
 
 	case ${#a} in
