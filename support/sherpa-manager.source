@@ -837,7 +837,7 @@ DebugLogEnv()
 
 	if [[ $useropt_show_about = false && $useropt_show_aboutall = false ]]; then
 		[[ $run_package_actions = true ]] || return 0
-		[[ $useropt_debug = true ]] || return 0
+		IsDebug || return 0
 	fi
 
 	FuncInit
@@ -1486,7 +1486,7 @@ AssignQpkgsToActions()
 		done
 	done
 
-	# No-need to `reactivate` or `disable` packages that are to be uninstalled.
+	# No-need to `reactivate` or `disable` packages that are to be `uninstall`ed.
 
 	if QPKGs.ACuninstallGRall.IsSet; then
 		QPKGs-ACreactivate-to:Init
@@ -1496,11 +1496,11 @@ AssignQpkgsToActions()
 		QPKGs-ACdisable-to:Remove "$(QPKGs-ACuninstall-to:Array)"
 	fi
 
-	# No-need to `activate` packages that are to be reactivated.
+	# No-need to `activate` packages that are to be `reactivate`d.
 
 #	QPKGs-ACactivate-to:Remove "$(QPKGs-ACreactivate-to:Array)"
 
-	# Build a list of original storage paths for packages to be uninstalled, then installed again later this session (a "complex reinstall").
+	# Build a list of original storage paths for packages to be `uninstall`ed, then `install`ed again later this session (a "complex reinstall").
 	# This will ensure volume-migrated packages end-up in the correct locations.
 
 	QPKGs_were_installed_name=()
@@ -1520,7 +1520,7 @@ AssignQpkgsToActions()
 
 # EnableVerbose
 # EnableDebugToArchiveAndFile
-# [[ $useropt_debug = true ]] && ListQPKGsActionsAll
+# IsDebug && ListQPKGsActionsAll
 
 	# Build list to download.
 
@@ -1534,21 +1534,19 @@ AssignQpkgsToActions()
 		QPKGs-ISupgradable.Exist "$qpkg_name" && QPKGs-ACdownload-to:Add "$qpkg_name"	# Download files for upgradable QPKGs.
 	done
 
-# [[ $useropt_debug = true ]] && ListQPKGsActionsAll
+# IsDebug && ListQPKGsActionsAll
 # exit
 
-	# Ensure packages to be installed will be signed.
+	# Ensure packages to be `install`ed will be `sign`ed first.
 
 	if IsOsCanManageSignedPackages && QPKGs-ACinstall-to.IsAny; then
 		QPKGs-ACsign-to:Add "$(QPKGs-ACinstall-to:Array)"
 	fi
 
-	# Meta-action pre-processing: re-sign QPKGs by unsigning then signing them.
+	# Meta-action pre-processing: re-sign QPKGs by `unsign`ing then `sign`ing them.
 
 	if QPKGs-ACresign-to.IsAny; then
 		for qpkg_name in $(QPKGs-ACresign-to:Array); do
-			SetQpkgIndex
-
 			QPKGs-ACunsign-to:Add "$qpkg_name"
 			QPKGs-ACsign-to:Add "$qpkg_name"
 		done
@@ -1564,14 +1562,14 @@ AssignQpkgsToActions()
 		done
 	fi
 
+	# Don't permit these actions on the sherpa QPKG:
+
 	QPKGs-ACdeactivate-to:Remove sherpa
 	QPKGs-ACuninstall-to:Remove sherpa
 
-	if QPKGs-ACsign-to.IsAny || QPKGs-ACinstall-to.IsAny; then
-		LoadQpkgSigningCert
-	fi
+	QPKGs-ACsign-to.IsAny && LoadQpkgSigningCert
 
-	[[ $useropt_debug = true ]] && ListQPKGsActionsAll					# devdebug
+	IsDebug && ListQPKGsActionsAll										# devdebug
 
 	FuncExit
 
@@ -1607,13 +1605,13 @@ AssignQpkgsToActions()
 #  23. "unsign" independents
 
 #  24. "sign" independents
-#  25. update independents
-#  26. upgrade independents
-#  27. reinstall independents
-#  28. install independents
-#  29. restore independents
-#  30. enable-auto-update independents
-#  31. clean independents
+#  25. upgrade independents
+#  26. reinstall independents
+#  27. install independents
+#  28. restore independents
+#  29. enable-auto-update independents
+#  30. clean independents
+#  31. update independents
 #  32. enable independents
 #  33. restart/reactivate independents
 #  34. start/activate independents
@@ -1621,25 +1619,25 @@ AssignQpkgsToActions()
 #  35. auxiliary packages (IPKs and PIPs) are managed here.
 
 #  36. "sign" optionals
-#  37. update optionals
-#  38. upgrade optionals
-#  39. reinstall optionals
-#  40. install optionals
-#  41. restore optionals
-#  42. enable-auto-update optionals
-#  43. clean optionals
+#  37. upgrade optionals
+#  38. reinstall optionals
+#  39. install optionals
+#  40. restore optionals
+#  41. enable-auto-update optionals
+#  42. clean optionals
+#  43. update optionals
 #  44. enable optionals
 #  45. restart/reactivate optionals
 #  46. start/activate optionals
 
 #  47. "sign" dependents
-#  48. update dependents
-#  49. upgrade dependents
-#  50. reinstall dependents
-#  51. install dependents
-#  52. restore dependents
-#  53. enable-auto-update dependents
-#  54. clean dependents
+#  48. upgrade dependents
+#  49. reinstall dependents
+#  50. install dependents
+#  51. restore dependents
+#  52. enable-auto-update dependents
+#  53. clean dependents
+#  54. update dependents
 #  55. enable dependents
 #  56. restart/reactivate dependents
 #  57. start/activate dependents
@@ -1726,13 +1724,13 @@ ProcActions()
 		for tier in "${r_package_tiers[@]}"; do
 			if [[ $tier != auxiliary ]]; then
 				IsOsCanManageSignedPackages && ProcAction sign $tier QPKG '"sign"'
-				ProcAction update $tier QPKG update
 				ProcAction upgrade $tier QPKG upgrade
 				ProcAction reinstall $tier QPKG reinstall
 				ProcAction install $tier QPKG install
 				ProcAction restore $tier QPKG restore
 				ProcAction enableau $tier QPKG 'enable auto-update'
 				ProcAction clean $tier QPKG clean
+				ProcAction update $tier QPKG update
 				ProcAction enable $tier QPKG enable
 				ProcAction reactivate $tier QPKG reactivate
 				ProcAction activate $tier QPKG activate
@@ -1762,7 +1760,7 @@ ProcActions()
 
 	IsOsCanManageSignedPackages && ProcAction unsign all QPKG unsign	# For QPKGs that failed to install.
 
-	if [[ $useropt_debug = true ]]; then
+	if IsDebug; then
 		ListQPKGsActions
 		ListIPKsActions
 		ListPIPsActions
@@ -2107,7 +2105,7 @@ SetMaxForks()
 	if [[ $useropt_verbose = true ]]; then					# No-point running async actions in verbose mode: stdout would be a confusing mess.
 		max_forks=1
 		reason='verbose mode is active'
-	elif [[ $useropt_debug = true ]]; then					# Same for debug mode: log would be a mess.
+	elif IsDebug; then										# Same for debug mode: log would be a mess.
 		max_forks=1
 		reason='debug mode is active'
 	else
@@ -4418,8 +4416,10 @@ _DirSizeMonitor_()
 	# Inputs: (global)
 	#	$dir_bytes
 	#	$dir_location
+	#	$r_abort_actions_pathfile
 
 	# Outputs: (global)
+	#	$current_bytes
 	#	$last_active_epoch
 
 	[[ -d $dir_location && $dir_bytes -gt 0 ]] || exit
@@ -7587,7 +7587,7 @@ ListQPKGsActions()
 	#	$r_qpkg_actions[]
 	#	$useropt_debug
 
-	[[ $useropt_debug = true ]] || return
+	IsDebug || return
 
 	FuncInit
 
@@ -7691,7 +7691,7 @@ ListIPKsActions()
 	#	$r_ipk_actions[]
 	#	$useropt_debug
 
-	[[ $useropt_debug = true ]] || return
+	IsDebug || return
 
 	FuncInit
 
@@ -7729,7 +7729,7 @@ ListPIPsActions()
 	#	$r_pip_actions[]
 	#	$useropt_debug
 
-	[[ $useropt_debug = true ]] || return
+	IsDebug || return
 
 	FuncInit
 
@@ -7757,7 +7757,7 @@ ListQPKGsStates()
 	#	$r_qpkg_transient_states[]
 	#	$useropt_debug
 
-	[[ $useropt_debug = true ]] || return
+	IsDebug || return
 
 	FuncInit
 
@@ -8719,7 +8719,7 @@ ReportActionResults()
 	{
 
 	# Inputs: (local)
-	#	$1 = `ok`, `skipped`, `failed`
+	#	$1 = `ok`, `sk`, `er`
 
 	# Inputs: (global)
 	#	$r_action_results_pathfile
@@ -8739,9 +8739,9 @@ ReportActionResults()
 
 		while IFS='|' read -r datetime action quantity package_name package_type result duration reason; do
 			if [[ $result = "${1:-}" ]] || [[ $1 = sk && ($result = se || $result = sa) ]]; then
-				[[ $action = status && $useropt_show_previous_action_results_report = false ]] && continue		# Don't need to see the result of `status` checks unless a 'results' report has been requested.
+				[[ $action = status && $useropt_show_previous_action_results_report = false ]] && continue	# Don't need to see the result of `status` checks unless a 'results' report has been requested.
 				((count++))
-				[[ $count -gt 1 ]] && break			# Two-or-more of the same action so must pluralise messages.
+				[[ $count -gt 1 ]] && break			# Two-or-more of the same action, so pluralise item messages.
 			fi
 		done < "$r_action_results_pathfile"
 
@@ -10248,7 +10248,7 @@ _QPKG:status_()
 	local b=''
 	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_status_log_file
 
-	[[ $useropt_debug = true ]] && b+='DEBUG_QPKG=true '
+	IsDebug && b+='DEBUG_QPKG=true '
 
 	if [[ $a = builtin ]]; then
 		local -r r_local_pathfile=$(GetQpkgServicePathFile)
@@ -10597,7 +10597,7 @@ _QPKG:install_()
 
 	local a='INSTALL_QPKG=true '
 	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_install_log_file
-	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
+	IsDebug && a+='DEBUG_QPKG=true '
 	[[ ${QPKGs_were_installed_name[*]:-} = *"$qpkg_name"* ]] && a+="QINSTALL_PATH=$(GetQpkgInstalledOriginalPath "$qpkg_name") "
 
 #	Executer "$a $r_local_pathfile" "$r_log_pathfile" log:failure-only 10
@@ -10696,7 +10696,7 @@ _QPKG:reinstall_()
 
 	local a='REINSTALL_QPKG=true '
 	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_reinstall_log_file
-	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
+	IsDebug && a+='DEBUG_QPKG=true '
 	IsValidQpkgInstalled && a+="QINSTALL_PATH=$(/usr/bin/dirname "$(GetQpkgInstalledPath)") "
 
 #	Executer "${a}/bin/sh $r_local_pathfile" "$r_log_path/$(/usr/bin/basename "$r_local_pathfile").$r_reinstall_log_file" log:failure-only 10
@@ -10782,7 +10782,7 @@ _QPKG:update_()
 
 	local a=''
 	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_update_log_file
-	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
+	IsDebug && a+='DEBUG_QPKG=true '
 
 	Executer "$a \"$r_local_pathfile\" update" "$r_log_pathfile" log:failure-only
 	z=$?
@@ -10863,7 +10863,7 @@ _QPKG:upgrade_()
 	local a='UPGRADE_QPKG=true '
 	local prev_ver=$(GetQpkgInstalledVer)
 	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_upgrade_log_file
-	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
+	IsDebug && a+='DEBUG_QPKG=true '
 	IsValidQpkgInstalled && a+="QINSTALL_PATH=$(/usr/bin/dirname "$(GetQpkgInstalledPath "$qpkg_name")") "
 
 #	Executer "${a}/bin/sh $r_local_pathfile" "$r_log_path/$(/usr/bin/basename "$r_local_pathfile").$r_upgrade_log_file" log:failure-only 10
@@ -10878,6 +10878,7 @@ _QPKG:upgrade_()
 
 	if [[ $z -eq 0 || $z -eq 10 ]]; then	# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes aborts.
 		SendPackageStateChange ISNTupgradable
+		SendParentCommand "QPKGs-ACupdate-to:Remove $qpkg_name"
 		IsQpkgDbCanClean && SendParentCommand "QPKGs-ACclean-to:Add $qpkg_name"
 
 		local current_ver=$(GetQpkgInstalledVer)
@@ -10965,7 +10966,7 @@ _QPKG:uninstall_()
 
 	local a='UNINSTALL_QPKG=true '
 	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_uninstall_log_file
-	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
+	IsDebug && a+='DEBUG_QPKG=true '
 
 	Executer "$a /bin/sh \"$r_local_pathfile\"" "$r_log_pathfile" log:failure-only
 	z=$?
@@ -11056,7 +11057,7 @@ _QPKG:activate_()
 	local timeout=''
 	IsOsCanQpkgTimeout && timeout='-t '$r_qpkg_start_timeout_seconds
 
-	if [[ $useropt_debug = true ]]; then
+	if IsDebug; then
 		a+='DEBUG_QPKG=true '
 
 		Executer "$a \"$r_local_pathfile\" start" "$r_log_pathfile" log:failure-only
@@ -11156,7 +11157,7 @@ _QPKG:reactivate_()
 	local timeout=''
 	IsOsCanQpkgTimeout && timeout='-t '$r_qpkg_restart_timeout_seconds
 
-	if [[ $useropt_debug = true ]]; then
+	if IsDebug; then
 		a+='DEBUG_QPKG=true '
 
 		Executer "$a \"$r_local_pathfile\" restart" "$r_log_pathfile" log:failure-only
@@ -11248,7 +11249,7 @@ _QPKG:deactivate_()
 
 	DebugAsProc "deactivating $(FormatPackageName)"
 
-	if [[ $useropt_debug = true ]]; then
+	if IsDebug; then
 		a+='DEBUG_QPKG=true '
 
 		Executer "$a \"$r_local_pathfile\" stop" "$r_log_pathfile" log:failure-only
@@ -11466,7 +11467,7 @@ _QPKG:enableau_()
 
 	local a=''
 	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_enableau_log_file
-	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
+	IsDebug && a+='DEBUG_QPKG=true '
 
 	Executer "$a \"$r_local_pathfile\" enable-auto-update" "$r_log_pathfile" log:failure-only
 	z=$?
@@ -11547,7 +11548,7 @@ _QPKG:disableau_()
 
 	local a=''
 	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_disableau_log_file
-	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
+	IsDebug && a+='DEBUG_QPKG=true '
 
 	Executer "$a \"$r_local_pathfile\" disable-auto-update" "$r_log_pathfile" log:failure-only
 	z=$?
@@ -11624,7 +11625,7 @@ _QPKG:backup_()
 
 	local a=''
 	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_backup_log_file
-	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
+	IsDebug && a+='DEBUG_QPKG=true '
 
 	Executer "$a \"$r_local_pathfile\" backup" "$r_log_pathfile" log:failure-only
 	z=$?
@@ -11713,7 +11714,7 @@ _QPKG:restore_()
 
 	local a=''
 	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_restore_log_file
-	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
+	IsDebug && a+='DEBUG_QPKG=true '
 
 	Executer "$a \"$r_local_pathfile\" restore" "$r_log_pathfile" log:failure-only
 	z=$?
@@ -11791,12 +11792,12 @@ _QPKG:clean_()
 
 	local a=''
 	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_clean_log_file
-	[[ $useropt_debug = true ]] && a+='DEBUG_QPKG=true '
+	IsDebug && a+='DEBUG_QPKG=true '
 
 	Executer "$a \"$r_local_pathfile\" clean" "$r_log_pathfile" log:failure-only
 	z=$?
 
-#	if [[ $useropt_debug = true ]]; then
+#	if IsDebug; then
 #		DEBUG_QPKG=true $(GetQpkgServicePathFile) clean
 #	else
 #		$(GetQpkgServicePathFile) clean > "$r_log_path/$qpkg_name.$r_clean_log_file" 2>&1
@@ -11808,6 +11809,7 @@ _QPKG:clean_()
 	if [[ $z -eq 0 ]]; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 		MarkActionForkAsDoneOk
+		SendParentCommand "QPKGs-ACupdate-to:Remove $qpkg_name"
 	else
 		local b=$(GetQpkgServiceExplanation) || b=$z
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
@@ -14396,6 +14398,34 @@ IsNumber()
 
 	}
 
+IsDebug()
+	{
+
+	[[ $useropt_debug = true ]]
+
+	}
+
+IsNtDebug()
+	{
+
+	! IsDebug
+
+	}
+
+IsVerbose()
+	{
+
+	[[ $useropt_verbose = true ]]
+
+	}
+
+IsNtVerbose()
+	{
+
+	! IsVerbose
+
+	}
+
 IsAnsiStrippingSupported()
 	{
 
@@ -14759,7 +14789,7 @@ Executer()
 	DebugAsProc "$exec_msg"
 	FormatCommand "$a" > "$2"
 
-	if [[ $useropt_debug = true ]]; then
+	if IsDebug; then
 		# https://stackoverflow.com/a/1221844
 
 		local -r r_executer_log_pipe=$r_sys_run_path/pipe-$(/bin/date +%s%N)
@@ -14790,19 +14820,25 @@ Executer()
 
 	case $z in
 		0)
-			[[ ${3:-} != log:failure-only || $useropt_debug = true ]] && AddExtLogToSessLog "$2"
+			if [[ ${3:-} != log:failure-only ]] || IsDebug; then
+				AddExtLogToSessLog "$2"
+			fi
+
 			DebugAsDone "$exec_msg OK ($z)"
 
 			if false; then												# devdebug
-				[[ $useropt_debug = false ]] && rm -f "$2" 2> /dev/null
+				IsNtDebug && rm -f "$2" 2> /dev/null
 			fi															# devdebug
 			;;
 		"${4:-}")
-			[[ ${3:-} != log:failure-only || $useropt_debug = true ]] && AddExtLogToSessLog "$2"
+			if [[ ${3:-} != log:failure-only ]] || IsDebug; then
+				AddExtLogToSessLog "$2"
+			fi
+
 			DebugAsWarn "$exec_msg with permitted errors ($z)"
 
 			if false; then												# devdebug
-				[[ $useropt_debug = false ]] && rm -f "$2" 2> /dev/null
+				IsNtDebug && rm -f "$2" 2> /dev/null
 			fi															# devdebug
 			;;
 		*)
@@ -15825,24 +15861,28 @@ ConvertSecondsToDuration()
 	# http://stackoverflow.com/questions/12199631/convert-seconds-to-hours-minutes-seconds
 
 	# Inputs: (local)
-	#	$1 = a time in seconds to convert to 'HHh:MMm:SSs' or, if less than 1 minute, to 'S seconds'.
+	#	$1 = a time in seconds to convert to 'HHh:MMm:SSs'
+	#		or if less than 1 hour, to 'MMm:SSs'
+	#		or if less than 1 minute, to 'S seconds'
+	#		or if less than 1 second, to '< 1 second'
+
+	local -i h=0
+	local -i m=0
+	local -i s=0
 
 	((h=${1:-0}/3600))
 	((m=(${1:-0}%3600)/60))
 	((s=${1:-0}%60))
 
-	if [[ $h -gt 0 ]]; then
+	if [[ $h -ge 1 ]]; then
 		printf '%01dh:%02dm:%02ds' "$h" "$m" "$s"
-	elif [[ $m -gt 0 ]]; then
+	elif [[ $m -ge 1 ]]; then
 		printf '%01dm:%02ds' "$m" "$s"
+	elif [[ $s -ge 1 ]]; then
+		printf "%d second$(Pluralise $s)" "$s"
 	else
-		[[ $s -eq 0 ]] && s=1			# Never show zero seconds as a duration (bash isn't that fast).
-
-		if [[ $s -eq 1 ]]; then
-			printf '%d second' "$s"
-		else
-			printf '%d seconds' "$s"
-		fi
+		s=1							# Never show zero seconds as a duration (bash isn't that fast).
+		printf '< %d second' "$s"
 	fi
 
 	} 2> /dev/null
@@ -15917,14 +15957,14 @@ ConvertLongDateAsHuman()
 
 	[[ -n ${1:-} ]] || return
 
-	local a=${1//[!0-9]/}	# Strip non-digits.
+	local -i a=${1//[!0-9]/}	# Strip non-digits.
 
 	if [[ ${#a} -ne 8 ]]; then
 		printf 'invalid longdate code length'
 		return 1
 	fi
 
-	local b=${a:6:2}
+	local -i b=${a:6:2}
 	local c=''
 
 	if ((b >= 1 && b <= 10)); then
@@ -15969,7 +16009,7 @@ ConvertAsSmartDate()
 
 	[[ -n ${1:-} ]] || return
 
-	local a=${1//[!0-9]/}	# Strip non-digits.
+	local -i a=${1//[!0-9]/}	# Strip non-digits.
 	local b=''
 
 	case ${#a} in
