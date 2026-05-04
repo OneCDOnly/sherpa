@@ -4829,7 +4829,7 @@ GeneratePacksReportTitleRow()
 		(
 
 		IFS='|'
-		printf '%s' "${headers[*]}"
+		printf '%s' "$(TextBrightWhite "${headers[*]}")"
 
 		)
 	else
@@ -4916,20 +4916,20 @@ GenerateStatusReportTitleRow()
 	# Inputs: (global)
 	#	$r_report_qpkg_name_column_width
 
-	local a='QPKG version'
-	QPKGs-ISupgradable.IsAny && a+=" ($(TextBrightOrange new))"
-	local -a headers=('QPKG name:' 'Status:' "Last action (result):" "$a:" 'Appl. version:' 'Location:')
+	local a=''
+	QPKGs-ISupgradable.IsAny && a=" $(TextBrightWhite '(')$(TextBrightOrange new)$(TextBrightWhite ')')"
+	local -a headers=("$(TextBrightWhite 'QPKG name:')" "$(TextBrightWhite 'Status:')" "$(TextBrightWhite 'Last action (result):')" "$(TextBrightWhite 'QPKG version')${a}$(TextBrightWhite ':')" "$(TextBrightWhite 'Appl. version:')" "$(TextBrightWhite 'Location:')")
 
 	if IsOsCanAutowidthTableColumns; then
 		(
 
 		IFS='|'
-		printf '%s' "${headers[*]}"
+		printf '%s' "${headers[*]}"			# This report has a condition-dependent column title, so insert colours while building array elements.
 
 		)
 	else
 		FormatReportFieldWidth "${headers[0]}" "$r_report_qpkg_name_column_width"
-		printf '%s' "Status & Last action (result):"
+		printf '%s' "$(TextBrightWhite 'Status & Last action (result):')"
 	fi
 
 	printf '\n'
@@ -5230,7 +5230,7 @@ GenerateReposReportTitleRow()
 		(
 
 		IFS='|'
-		printf '%s' "${headers[*]}"
+		printf '%s' "$(TextBrightWhite "${headers[*]}")"
 
 		)
 	else
@@ -5382,7 +5382,7 @@ GenerateAbsReportTitleRow()
 		(
 
 		IFS='|'
-		printf '%s' "${headers[*]}"
+		printf '%s' "$(TextBrightWhite "${headers[*]}")"
 
 		)
 	else
@@ -5510,7 +5510,7 @@ GenerateDepsReportTitleRow()
 		(
 
 		IFS='|'
-		printf '%s' "${headers[*]}"
+		printf '%s' "$(TextBrightWhite "${headers[*]}")"
 
 		)
 	else
@@ -5868,7 +5868,7 @@ GenerateFeaturesReportTitleRow()
 		(
 
 		IFS='|'
-		printf '%s' "${headers[*]}"
+		printf '%s' "$(TextBrightWhite "${headers[*]}")"
 
 		)
 	else
@@ -6074,7 +6074,7 @@ GenerateBacksReportTitleRow()
 		(
 
 		IFS='|'
-		printf '%s' "${headers[*]}"
+		printf '%s' "$(TextBrightWhite "${headers[*]}")"
 
 		)
 	else
