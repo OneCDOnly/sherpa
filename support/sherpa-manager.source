@@ -7950,18 +7950,18 @@ BuildExtendedQPKGsStates()
 	CheckSystemLoad
 	LoadDatabase
 
-	if [[ $(FileCountAll "$r_qpkg_states_path") -gt 0 ]]; then
-		a=$r_qpkg_states_path/$(ls "$r_qpkg_states_path" -t | head -n1)			# Find most recently modified file.
-
-		DebugAsInfo "comparison file (last modified QPKG state file): '$a'"
-
-		if IsFileNewer /etc/config/qpkg.conf "$a"; then
-			DebugAsInfo "'/etc/config/qpkg.conf' is newer than the comparison file"
+#	if [[ $(FileCountAll "$r_qpkg_states_path") -gt 0 ]]; then
+#		a=$r_qpkg_states_path/$(ls "$r_qpkg_states_path" -t | head -n1)			# Find most recently modified file.
+#
+#		DebugAsInfo "comparison file (last modified QPKG state file): '$a'"
+#
+#		if IsFileNewer /etc/config/qpkg.conf "$a"; then
+#			DebugAsInfo "'/etc/config/qpkg.conf' is newer than the comparison file"
 			InitQPKGsStates
-		else
-			DebugAsInfo "'/etc/config/qpkg.conf' is older than the comparison file"
-		fi
-	fi
+#		else
+#			DebugAsInfo "'/etc/config/qpkg.conf' is older than the comparison file"
+#		fi
+#	fi
 
 	if [[ $(FileCountAll "$r_qpkg_states_path") -eq 0 ]]; then
 		DebugAsInfo 'no QPKG state files found'
