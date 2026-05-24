@@ -7447,39 +7447,21 @@ ShowQPKGsMissing()
 
 	local a=''
 	local b=''
-	local c=''
-	local -i i=0
-	local name_limit=2
-	local -a packages=()
 
-	if [[ $(QPKGs-ISmissing:Count) -eq 0 ]]; then
-		return 0
-	else
-		packages+=($(QPKGs-ISmissing:Array))
-	fi
+	case $(QPKGs-ISmissing:Count) in
+		0)
+			return 0
+			;;
+		1)
+			a=' is'
+			b='it'
+			;;
+		*)
+			a='s are'
+			b='them'
+	esac
 
-	for ((i=0; i<=(${#packages[@]}-1); i++)); do
-		a+=$(TextBrightRed "${packages[$i]}")
-
-		if [[ $((i+1)) -ge $name_limit && $((${#packages[@]}-name_limit)) -gt 0 ]]; then
-			a+=" & $(TextBrightRed "$((${#packages[@]}-name_limit))") other$(Pluralise "$((${#packages[@]}-name_limit))")"
-			break
-		elif [[ $((i+2)) -lt ${#packages[@]} ]]; then
-			a+=', '
-		elif [[ $((i+2)) -eq ${#packages[@]} ]]; then
-			a+=' & '
-		fi
-	done
-
-	if [[ ${#packages[@]} -eq 1 ]]; then
-		b=' is'
-		c='it'
-	else
-		b='s are'
-		c='them'
-	fi
-
-	ShowAsNote "the $a QPKG${b} missing or broken. Please reinstall $c"
+	ShowAsNote "the $(FormatNWords "$(QPKGs-ISmissing:List)" 3 TextBrightRed) QPKG${a} missing or broken. Please reinstall $b"
 
 	return 1
 
@@ -7499,38 +7481,20 @@ ShowQPKGsNewVers()
 
 	local a=''
 	local b=''
-	local c=''
-	local -i i=0
-	local name_limit=2
-	local -a packages=()
 
-	if [[ $(QPKGs-ISupgradable:Count) -eq 0 ]]; then
-		return 0
-	else
-		packages+=($(QPKGs-ISupgradable:Array))
-	fi
+	case $(QPKGs-ISupgradable:Count) in
+		0)
+			return 0
+			;;
+		1)
+			a='a '
+			b='version is'
+			;;
+		*)
+			b='versions are'
+	esac
 
-	for ((i=0; i<=(${#packages[@]}-1); i++)); do
-		a+=$(TextBrightOrange "${packages[$i]}")
-
-		if [[ $((i+1)) -ge $name_limit && $((${#packages[@]}-name_limit)) -gt 0 ]]; then
-			a+=" & $(TextBrightOrange "$((${#packages[@]}-name_limit))") other$(Pluralise "$((${#packages[@]}-name_limit))")"
-			break
-		elif [[ $((i+2)) -lt ${#packages[@]} ]]; then
-			a+=', '
-		elif [[ $((i+2)) -eq ${#packages[@]} ]]; then
-			a+=' & '
-		fi
-	done
-
-	if [[ ${#packages[@]} -eq 1 ]]; then
-		b='a '
-		c='version is'
-	else
-		c='versions are'
-	fi
-
-	ShowAsNote "${b}new QPKG $c available for $a"
+	ShowAsNote "${a}new QPKG $b available for $(FormatNWords "$(QPKGs-ISupgradable:List)" 3 TextBrightOrange)"
 
 	return 1
 
@@ -7986,18 +7950,18 @@ BuildExtendedQPKGsStates()
 	CheckSystemLoad
 	LoadDatabase
 
-	if [[ $(FileCountAll "$r_qpkg_states_path") -gt 0 ]]; then
-		a=$r_qpkg_states_path/$(ls "$r_qpkg_states_path" -t | head -n1)			# Find most recently modified file.
-
-		DebugAsInfo "comparison file (last modified QPKG state file): '$a'"
-
-		if IsFileNewer /etc/config/qpkg.conf "$a"; then
-			DebugAsInfo "'/etc/config/qpkg.conf' is newer than the comparison file"
+#	if [[ $(FileCountAll "$r_qpkg_states_path") -gt 0 ]]; then
+#		a=$r_qpkg_states_path/$(ls "$r_qpkg_states_path" -t | head -n1)			# Find most recently modified file.
+#
+#		DebugAsInfo "comparison file (last modified QPKG state file): '$a'"
+#
+#		if IsFileNewer /etc/config/qpkg.conf "$a"; then
+#			DebugAsInfo "'/etc/config/qpkg.conf' is newer than the comparison file"
 			InitQPKGsStates
-		else
-			DebugAsInfo "'/etc/config/qpkg.conf' is older than the comparison file"
-		fi
-	fi
+#		else
+#			DebugAsInfo "'/etc/config/qpkg.conf' is older than the comparison file"
+#		fi
+#	fi
 
 	if [[ $(FileCountAll "$r_qpkg_states_path") -eq 0 ]]; then
 		DebugAsInfo 'no QPKG state files found'
@@ -15339,6 +15303,45 @@ FormatCommand()
 
 	}
 
+FormatNWords()
+	{
+
+	[[ ${#1} -gt 0 ]] || return
+
+	local a=''
+	local -i n=0
+	local words=($1)
+	local words_max=${2:-3}
+	local word_colour=${3:-TextUncoloured}
+	local word_count=${#words[@]}
+
+	for ((n=1; n<=word_count; n++)); do
+		if [[ $n -eq 1 && $words_max -eq 1 ]]; then
+			if [[ $word_count -eq 1 ]]; then
+				a+=$($word_colour "${words[$((n-1))]}")
+			else
+				a+=$($word_colour "$((word_count-words_max+1))")' others'
+			fi
+
+			break
+		elif [[ $n -ge $words_max && $((word_count-words_max)) -gt 0 ]]; then
+			a+=$($word_colour "$((word_count-words_max+1))")' others'
+			break
+		fi
+
+		a+=$($word_colour "${words[$((n-1))]}")
+
+		if [[ $((n+1)) -eq $word_count ]] || [[ $((n+1)) -ge $words_max && $((word_count-words_max)) -gt 0 ]]; then
+			a+=' & '
+		elif [[ $n -lt $word_count ]]; then
+			a+=', '
+		fi
+	done
+
+	printf '%s' "$a"
+
+	}
+
 ShowAsResultAndStdout()
 	{
 
@@ -16849,6 +16852,15 @@ TextBrightWhiteBlink()
 	fi
 
 	} 2> /dev/null
+
+TextUncoloured()
+	{
+
+	[[ -n ${1:-} ]] || return
+
+	printf '%s' "$1"
+
+	}
 
 Tableise()
 	{
