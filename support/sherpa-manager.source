@@ -121,12 +121,6 @@ ShowResults()
 		fi
 	fi
 
-#	if [[ $useropt_paste_log_last = true ]]; then
-#		PasteLogLast
-#	elif [[ $useropt_paste_log_tail = true ]]; then
-#		PasteLogTail
-#	fi
-
 	if [[ $useropt_help_basic = true ]]; then
 		ShowHelpBasic
 		ShowHelpBasicExamples
@@ -327,8 +321,6 @@ LoadConsts()
 		readonly r_entware_packages_last_updated=20260407
 		readonly r_file_change_threshold_minutes=60
 		readonly r_log_tail_lines=5000
-#		readonly r_pastebin_port=9999
-#		readonly r_pastebin_site=termbin.com
 
 	# Only for the message pipe enhanced log.
 
@@ -414,8 +406,6 @@ LoadDefaults()
 		useropt_help_tips=false
 		useropt_help_upgrades=false
 		useropt_list_versions=false
-#		useropt_paste_log_last=false
-#		useropt_paste_log_tail=false
 		useropt_show_about=false
 		useropt_show_aboutall=false
 		useropt_show_backups=false
@@ -1110,7 +1100,6 @@ CheckTasks()
 		build_extended_states=true
 	elif [[ $useropt_help_abbreviations = true || $useropt_show_backups = true || $useropt_show_dependencies = true || $useropt_show_features = true || $useropt_show_packages = true || $useropt_show_repos = true ]]; then
 		build_extended_states=true
-#	elif [[ $useropt_help_actions = true || $useropt_help_actions_all = true || $useropt_help_basic = true || $useropt_help_groups = true || $useropt_help_lists = true || $useropt_help_options = true || $useropt_help_packages = true || $useropt_help_problems = true || $useropt_help_show = true || $useropt_help_tips = true || $useropt_help_upgrades = true || $useropt_list_versions = true || $useropt_paste_log_last = true || $useropt_paste_log_tail = true || $useropt_show_about = true || $useropt_show_about = true || $useropt_show_previous_action_results_report = true || $useropt_show_log_last = true || $useropt_show_log_tail = true || $switch_branch = true || $switch_colour = true || $switch_report_info = true || $switch_terse = true ]]; then
 	elif [[ $useropt_help_actions = true || $useropt_help_actions_all = true || $useropt_help_basic = true || $useropt_help_groups = true || $useropt_help_lists = true || $useropt_help_options = true || $useropt_help_packages = true || $useropt_help_problems = true || $useropt_help_show = true || $useropt_help_tips = true || $useropt_help_upgrades = true || $useropt_list_versions = true || $useropt_show_about = true || $useropt_show_about = true || $useropt_show_previous_action_results_report = true || $useropt_show_log_last = true || $useropt_show_log_tail = true || $switch_branch = true || $switch_colour = true || $switch_report_info = true || $switch_terse = true ]]; then
 		: # don't do anything
 	else
@@ -2189,8 +2178,6 @@ ParseManagementArgs()
 	#	$user_report_info_value
 	#	$user_terse_value
 	#	$useropt_fix
-	#	$useropt_paste_log_last
-	#	$useropt_paste_log_tail
 
 	FuncInit
 
@@ -2230,7 +2217,6 @@ ParseManagementArgs()
 					user_action=$arg
 					useropt_fix=true
 					;;
-#				follow|paste|report-info|terse)
 				follow|report-info|terse)
 					requires_group=true
 					user_action=$arg
@@ -2276,24 +2262,6 @@ ParseManagementArgs()
 							args_remaining+=("$action")
 					esac
 					;;
-#				paste)
-#					case $group in
-#						last)
-#							action=''
-#							awaiting_group=false
-#							run_package_actions=false
-#							useropt_paste_log_last=true
-#							;;
-#						tail)
-#							action=''
-#							awaiting_group=false
-#							run_package_actions=false
-#							useropt_paste_log_tail=true
-#							;;
-#						*)
-#							args_remaining+=("$action")
-#					esac
-#					;;
 				report-info)
 					case $group in
 						true|false)
@@ -3041,7 +3009,6 @@ MatchVerb()
 		add|install)
 			printf install
 			;;
-#		backup|clean|@(dis|en)able|fix|follow|help|paste|reassign|rebuild|reinstall|report-info|reset|restore|terse|update|upgrade)	# NOTE: There should be no single characters in this list.
 		backup|clean|@(dis|en)able|fix|follow|help|reassign|rebuild|reinstall|report-info|reset|restore|terse|update|upgrade)	# NOTE: There should be no single characters in this list.
 			printf '%s' "$1"
 			;;
@@ -3265,12 +3232,6 @@ ShowArgSuggestions()
 					arg_problem=true
 					useropt_help_basic=false
 					;;
-#				paste)
-#					DisplayAsProjSynExam "please provide a valid source to '$arg' online like" "$arg log"
-#					DisplayAsProjSynIndentExam '' "$arg last"
-#					arg_problem=true
-#					useropt_help_basic=false
-#					;;
 				show)
 					DisplayAsProjSynExam "please provide a valid source after '$arg' like" "$arg abs"
 					DisplayAsProjSynIndentExam '' "$arg log"
@@ -3364,11 +3325,6 @@ ShowArgSuggestions()
 					;;
 				@(in|not-)active|?(in)dependent?(s)|stopped)
 					DisplayAsProjSynExam "please provide a valid $(ShowAsAction) before '$arg' like" "activate $arg"
-					arg_problem=true
-					useropt_help_basic=false
-					;;
-				paste)
-					DisplayAsHelpTitleHighlighted "the 'paste' action has been temporarily disabled."
 					arg_problem=true
 					useropt_help_basic=false
 					;;
@@ -6536,13 +6492,11 @@ ShowHelpIssue()
 
 	# Inputs: (global)
 	#	$r_log_tail_lines
-	#	$r_pastebin_site
 
 	DisplayAsHelpTitle "please consider creating a new issue for this on GitHub: $(ShowAsURL 'https://github.com/OneCDOnly/sherpa/issues')"
 	DisplayAsHelpTitle "alternatively, post on the QNAP NAS Community Forum: $(ShowAsURL 'https://community.qnap.com/t/qpkg-sherpa-a-mini-package-manager-cli/1081')"
 	DisplayAsProjSynIndentExam "view only the most recent $(ShowAsTitleName) session log" last
 	DisplayAsProjSynIndentExam "view the entire $(ShowAsTitleName) session log" log
-#	DisplayAsProjSynIndentExam "upload the most recent $(FormatAsThous "$r_log_tail_lines") lines in your $(ShowAsTitleName) log to the $(ShowAsURL "https://$r_pastebin_site") public pastebin. A URL will be generated afterward" 'paste log'
 	Display
 
 	return 0
@@ -6676,7 +6630,6 @@ ShowHelpProblems()
 	# Inputs: (global)
 	#	$r_log_tail_lines
 	#	$r_report_output_pathfile
-	#	$r_pastebin_site
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport problems
@@ -6693,8 +6646,6 @@ ShowHelpProblems()
 		DisplayAsProjSynIndentExam "view only the most recent $(ShowAsTitleName) session log" last
 		DisplayAsProjSynIndentExam '' l
 		DisplayAsProjSynIndentExam "view the entire $(ShowAsTitleName) session log" log
-#		DisplayAsProjSynIndentExam "upload the most recent session in your $(ShowAsTitleName) log to the $(ShowAsURL "https://$r_pastebin_site") public pastebin. A URL will be generated afterward" 'paste last'
-#		DisplayAsProjSynIndentExam "upload the most recent $(FormatAsThous "$r_log_tail_lines") lines in your $(ShowAsTitleName) log to the $(ShowAsURL "https://$r_pastebin_site") public pastebin. A URL will be generated afterward" 'paste log'
 		DisplayAsProjSynIndentExam 'reactivate installed QPKGs (upgrade internal applications where-supported)' 'reactivate all'
 		DisplayAsProjSynIndentExam "remove all cached $(ShowAsTitleName) items and logs" reset
 		DisplayAsProjSynIndentExam 'find the live status of each application in these QPKGs' "status $(ShowAsPackages)"
@@ -6929,107 +6880,17 @@ CalcReportFirstColumnWidth()
 	a=$(/bin/sed 's/[[:space:]]*$//' <<< "$a")											# Remove line trailing whitespace.
 	a=$(/bin/sed '/^$/d' <<< "$a")														# Remove empty lines.
 	a=$(head -n1 <<< "$a")																# Only use header row (column titles).
+	a=$(StripANSICodes "$a")															# Remove ANSI codes to calculate column width for GNU `less`.
 
 	b=$(cut -f2 -d: <<< "$a"):															# Grab second field characters.
 	b=$(/bin/sed 's/^[[:space:]]*//' <<< "$b")											# Remove leading whitespace.
 
 	# shellcheck disable=2295
-	c=${a%%$b*}																			# Extract second column characters from header row.
+	c=${a%%$b*}																			# Remove from second column onwards to generate first column width.
 
 	printf '%s' "${#c}"
 
 	}
-
-# PasteLogLast()
-#	{
-#
-#	# Inputs: (global)
-#	#	$r_pastebin_site
-#	#	$r_session_last_pathfile
-#
-#	# Outputs: (global)
-#	#	$show_action_results_zero
-#
-#	DisableDebugToArchiveAndFile
-#	ExtractPrevSessFromTail
-#
-#	if [[ -s $r_session_last_pathfile ]]; then
-#		if Quiz "Press 'Y' to post the most recent session in your $(ShowAsTitleName) log the public pastebin site $(ShowAsURL "https://$r_pastebin_site"), or any other key to abort"; then
-#			UploadLogToPastebin "$r_session_last_pathfile" || return
-#		else
-#			DebugInfoMinSepr
-#			DebugScript warning 'user abort' ''
-#			show_action_results_zero=false
-#
-#			return 1
-#		fi
-#	else
-#		ShowAsError 'no last session log found'
-#	fi
-#
-#	return 0
-#
-#	}
-
-# PasteLogTail()
-#	{
-#
-#	# Inputs: (global)
-#	#	$r_log_tail_lines
-#	#	$r_pastebin_site
-#	#	$r_session_tail_pathfile
-#
-#	# Outputs: (global)
-#	#	$show_action_results_zero
-#
-#	DisableDebugToArchiveAndFile
-#	ExtractTailFromLog
-#
-#	if [[ -s $r_session_tail_pathfile ]]; then
-#		if Quiz "Press 'Y' to post the most recent $(FormatAsThous "$r_log_tail_lines") lines in your $(ShowAsTitleName) log to the public pastebin site $(ShowAsURL "https://$r_pastebin_site"), or any other key to abort"; then
-#			UploadLogToPastebin "$r_session_tail_pathfile" || return
-#		else
-#			DebugInfoMinSepr
-#			DebugScript warning 'user abort'
-#			show_action_results_zero=false
-#
-#			return 1
-#		fi
-#	else
-#		ShowAsError 'no session log tail found'
-#	fi
-#
-#	return 0
-#
-#	}
-
-# UploadLogToPastebin()
-#	{
-#
-#	# Inputs: (local)
-#	#	$1 = log pathfile.
-#
-#	# Inputs: (global)
-#	#	$r_pastebin_port
-#	#	$r_pastebin_site
-#
-#	[[ -n ${1:-} ]] || return
-#
-#	local link=''
-#
-#	ShowAsProc "upload $(ShowAsTitleName) log"
-#
-#	# With thanks to https://github.com/solusipse/fiche
-#
-#	link=$(/bin/cat --number "$1" | (exec 3<> /dev/tcp/$r_pastebin_site/$r_pastebin_port; /bin/cat >&3; /bin/cat <&3; exec 3<&-))
-#
-#	if [[ $? -eq 0 ]]; then
-#		ShowAsDone "your $(ShowAsTitleName) log is now online at $(ShowAsURL "$link") and will be deleted in 1 week"
-#	else
-#		ShowAsFail "a link could not be generated. Most likely a problem occurred while communicating with $(ShowAsURL "https://$r_pastebin_site")"
-#	fi
-#
-#	}
 
 GetLogSessStartLine()
 	{
