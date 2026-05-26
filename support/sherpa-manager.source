@@ -6880,12 +6880,13 @@ CalcReportFirstColumnWidth()
 	a=$(/bin/sed 's/[[:space:]]*$//' <<< "$a")											# Remove line trailing whitespace.
 	a=$(/bin/sed '/^$/d' <<< "$a")														# Remove empty lines.
 	a=$(head -n1 <<< "$a")																# Only use header row (column titles).
+	a=$(StripANSICodes "$a")															# Remove ANSI codes to calculate column width for GNU `less`.
 
 	b=$(cut -f2 -d: <<< "$a"):															# Grab second field characters.
 	b=$(/bin/sed 's/^[[:space:]]*//' <<< "$b")											# Remove leading whitespace.
 
 	# shellcheck disable=2295
-	c=${a%%$b*}																			# Extract second column characters from header row.
+	c=${a%%$b*}																			# Remove from second column onwards to generate first column width.
 
 	printf '%s' "${#c}"
 
