@@ -1375,9 +1375,7 @@ AssignQpkgsToActions()
 				SetQpkgIndex
 
 				for prospect in $(GetQpkgDbOptionals); do
-					if IsQpkgEnabled "$prospect"; then
-						! QPKGs-ACuninstall-to.Exist "$prospect" && ! QPKGs-ACinstall-to.Exist "$prospect" && QPKGs-ACreactivate-to:Add "$prospect"
-					fi
+					IsQpkgEnabled "$prospect" && ! QPKGs-ACuninstall-to.Exist "$prospect" && ! QPKGs-ACinstall-to.Exist "$prospect" && QPKGs-ACreactivate-to:Add "$prospect"
 				done
 			fi
 		done
@@ -1399,10 +1397,20 @@ AssignQpkgsToActions()
 
 	# Special-case: perform complete removal and fresh install of Entware to clear all installed IPKs.
 
-	if QPKGs-ACreinstall-to.Exist Entware; then
-		QPKGs-ACreinstall-to:Remove Entware
-		QPKGs-ACuninstall-to:Add Entware
-		QPKGs-ACinstall-to:Add Entware
+	qpkg_name=Entware
+
+	if QPKGs-ACreinstall-to.Exist "$qpkg_name"; then
+		QPKGs-ACreinstall-to:Remove "$qpkg_name"
+		QPKGs-ACuninstall-to:Add "$qpkg_name"
+		QPKGs-ACinstall-to:Add "$qpkg_name"
+
+		# Must `clean` dependent packages if reinstalling Entware.
+
+		SetQpkgIndex
+
+		for prospect in $(GetQpkgDbDependents); do
+			IsValidQpkgInstalled "$prospect" && QPKGs-ACclean-to:Add "$prospect"
+		done
 	fi
 
 	# If an independent has been selected for `uninstall`, then `install`, need to `deactivate` its dependents first, and `activate` them again later.
