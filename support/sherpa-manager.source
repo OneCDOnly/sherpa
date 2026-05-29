@@ -128,7 +128,7 @@ ShowResults()
 
 	if [[ $generate_help_report = true ]]; then
 		ReleaseLockfile
-		! IsAnsiStrippingSupported && colourful=false
+		IsAnsiStrippingSupported || colourful=false
 
 		if [[ $useropt_help_tips = true ]]; then
 			ShowHelpTips
@@ -436,13 +436,13 @@ LoadCMDs()
 		readonly r_gnu_dd_cmd=/opt/bin/dd
 		readonly r_gnu_find_cmd=/opt/bin/find
 		readonly r_gnu_grep_cmd=/opt/bin/grep
-		readonly r_gnu_less_cmd=/opt/bin/less
 		readonly r_gnu_more_cmd=/opt/bin/more
 		readonly r_gnu_nice_cmd=/opt/bin/nice
 		readonly r_gnu_sleep_cmd=/opt/bin/sleep
 		readonly r_gnu_stty_cmd=/opt/bin/stty
 		readonly r_gnu_timeout_cmd=/opt/bin/timeout
 		readonly r_gnu_uname_cmd=/opt/bin/uname
+		readonly r_less_cmd=/opt/bin/less
 		readonly r_opkg_cmd=/opt/bin/opkg
 		readonly r_python3_cmd=/opt/bin/python3
 			readonly r_pip_cmd=$r_python3_cmd' -m pip'
@@ -6785,8 +6785,8 @@ DisplayFileInViewport()
 
 	# Inputs: (global)
 	#	$e_nopfi
-	#	$r_gnu_less_cmd
 	#	$r_gnu_more_cmd
+	#	$r_less_cmd
 	#	$useropt_verbose
 
 	ConfirmVarIsDefined 1 "${1:-}" "$e_nopfi" || return
@@ -6814,7 +6814,7 @@ DisplayFileInViewport()
 
 	echo
 
-	if [[ $useropt_verbose = false && -x $r_gnu_less_cmd ]]; then
+	if [[ $useropt_verbose = false && -x $r_less_cmd ]]; then
 #		options+=' --no-init'
 		options+=' --tilde'
 		options+=' --mouse'
@@ -6825,14 +6825,14 @@ DisplayFileInViewport()
 		options+=' --redraw-on-quit'
 
 		if IsReportLargerThanViewport "$report_pathfile"; then
-			IsGnuLessSupportHeaders && [[ $headers = true ]] && options+=' --header=1,'$(CalcReportFirstColumnWidth "$report_pathfile")
+			IsLessSupportHeaders && [[ $headers = true ]] && options+=' --header=1,'$(CalcReportFirstColumnWidth "$report_pathfile")
 			[[ $linewrap = false ]] && options+=' --chop-long-lines'
 			[[ $scrolltoend = true ]] && options+=' +G'
 		fi
 
 		[[ $linenumbers = true ]] && options+=' --LINE-NUMBERS'
 
-		LESSSECURE=1 $r_gnu_less_cmd $options --prompt "$r_prompt" "$report_pathfile"
+		LESSSECURE=1 $r_less_cmd $options --prompt "$r_prompt" "$report_pathfile"
 
 # Disable the use of built-in `less` as it doesn't (yet) support ANSI codes. Let's see if there are any problems (other than not being able to scroll output).
 
@@ -6880,7 +6880,7 @@ CalcReportFirstColumnWidth()
 	a=$(/bin/sed 's/[[:space:]]*$//' <<< "$a")											# Remove line trailing whitespace.
 	a=$(/bin/sed '/^$/d' <<< "$a")														# Remove empty lines.
 	a=$(head -n1 <<< "$a")																# Only use header row (column titles).
-	a=$(StripANSICodes "$a")															# Remove ANSI codes to calculate column width for GNU `less`.
+	a=$(StripANSICodes "$a")															# Remove ANSI codes to calculate column width for `less`.
 
 	b=$(cut -f2 -d: <<< "$a"):															# Grab second field characters.
 	b=$(/bin/sed 's/^[[:space:]]*//' <<< "$b")											# Remove leading whitespace.
@@ -8213,7 +8213,7 @@ ReportDependencies()
 	DisplayProcReport dependency
 	CreateReportPaths
 
-	! IsAnsiStrippingSupported && colourful=false
+	IsAnsiStrippingSupported || colourful=false
 
 	printf -v a '\n%s\n' "$(GenerateDepsReportTitleRow)"
 
@@ -8266,7 +8266,7 @@ ReportFeatures()
 	DisplayProcReport features
 	CreateReportPaths
 
-	! IsAnsiStrippingSupported && colourful=false
+	IsAnsiStrippingSupported || colourful=false
 
 	printf -v a '\n%s\n' "$(GenerateFeaturesReportTitleRow)"
 
@@ -8318,7 +8318,7 @@ ReportPackages()
 	DisplayProcReport package
 	CreateReportPaths
 
-#	! IsAnsiStrippingSupported && colourful=false
+	IsAnsiStrippingSupported || colourful=false
 
 		{
 
@@ -8385,7 +8385,7 @@ ReportRepos()
 	DisplayProcReport repository
 	CreateReportPaths
 
-#	! IsAnsiStrippingSupported && colourful=false
+	IsAnsiStrippingSupported || colourful=false
 
 	printf -v a '\n%s\n' "$(GenerateReposReportTitleRow)"
 
@@ -8438,7 +8438,7 @@ ReportStatuses()
 	DisplayProcReport status
 	CreateReportPaths
 
-#	! IsAnsiStrippingSupported && colourful=false
+	IsAnsiStrippingSupported || colourful=false
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		QPKGs-ACstatus-dn.Exist "$qpkg_name" || continue
@@ -9842,11 +9842,11 @@ GetUserGitBranch()
 
 	}
 
-GetGnuLessVersion()
+GetLessVersion()
 	{
 
-	if [[ -x $r_gnu_less_cmd ]]; then
-		$r_gnu_less_cmd -V | head -n1 | cut -d' ' -f2
+	if [[ -x $r_less_cmd ]]; then
+		$r_less_cmd -V | head -n1 | cut -d' ' -f2
 	else
 		printf unknown
 	fi
@@ -14280,10 +14280,10 @@ IsHaveSingleQuote()
 
 	} &> /dev/null
 
-IsGnuLessSupportHeaders()
+IsLessSupportHeaders()
 	{
 
-	local a=$(GetGnuLessVersion)
+	local a=$(GetLessVersion)
 
 	IsNumber $a && [[ $a -ge 685 ]]
 
