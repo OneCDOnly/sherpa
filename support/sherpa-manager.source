@@ -1375,9 +1375,7 @@ AssignQpkgsToActions()
 				SetQpkgIndex
 
 				for prospect in $(GetQpkgDbOptionals); do
-					if IsQpkgEnabled "$prospect"; then
-						! QPKGs-ACuninstall-to.Exist "$prospect" && ! QPKGs-ACinstall-to.Exist "$prospect" && QPKGs-ACreactivate-to:Add "$prospect"
-					fi
+					IsQpkgEnabled "$prospect" && ! QPKGs-ACuninstall-to.Exist "$prospect" && ! QPKGs-ACinstall-to.Exist "$prospect" && QPKGs-ACreactivate-to:Add "$prospect"
 				done
 			fi
 		done
@@ -1399,10 +1397,20 @@ AssignQpkgsToActions()
 
 	# Special-case: perform complete removal and fresh install of Entware to clear all installed IPKs.
 
-	if QPKGs-ACreinstall-to.Exist Entware; then
-		QPKGs-ACreinstall-to:Remove Entware
-		QPKGs-ACuninstall-to:Add Entware
-		QPKGs-ACinstall-to:Add Entware
+	qpkg_name=Entware
+
+	if QPKGs-ACreinstall-to.Exist "$qpkg_name"; then
+		QPKGs-ACreinstall-to:Remove "$qpkg_name"
+		QPKGs-ACuninstall-to:Add "$qpkg_name"
+		QPKGs-ACinstall-to:Add "$qpkg_name"
+
+		# Must `clean` dependent packages if reinstalling Entware.
+
+		SetQpkgIndex
+
+		for prospect in $(GetQpkgDbDependents); do
+			IsValidQpkgInstalled "$prospect" && QPKGs-ACclean-to:Add "$prospect"
+		done
 	fi
 
 	# If an independent has been selected for `uninstall`, then `install`, need to `deactivate` its dependents first, and `activate` them again later.
@@ -5818,7 +5826,7 @@ GenerateFeaturesReportTitleRow()
 	#	$r_report_qpkg_name_column_width
 	#	$r_report_qpkg_tier_column_width
 
-	local -a headers=('QPKG name:' 'Independ?' 'Optional?' 'Depend?' 'Enhanced?' 'CanBack?' 'CanClean?' 'StartUpd?' 'AutoUpdate?' 'LiveTest?' 'UniqUnpack?')
+	local -a headers=('QPKG name:' 'Independ:' 'Optional:' 'Depend:' 'Enhanced:' 'CanBack:' 'CanClean:' 'StartUpd:' 'AutoUpdate:' 'LiveTest:' 'UniqUnpack:')
 
 	if IsOsCanAutowidthTableColumns; then
 		(
@@ -8256,7 +8264,7 @@ ReportFeatures()
 
 	FuncInit
 
-#	generate_report_headers=true		# Disable this for-now, display output gets wonky when viewport width is less than report width. Only happens on this report.
+	generate_report_headers=true
 	local a=''
 	local b=''
 	local -i m=0
@@ -8778,16 +8786,16 @@ GenerateReportHeadingsInfo()
 	local a=''
 
 	a=$({
-		DisplayAsIndentQuotedInfoItem 'Independ?' 'is independent of other QPKGs'
-		DisplayAsIndentQuotedInfoItem 'Optional?' 'is an optional addon for another QPKG'
-		DisplayAsIndentQuotedInfoItem 'Depend?' 'is dependent on other QPKGs'
-		DisplayAsIndentQuotedInfoItem 'Enhanced?' "$(ShowAsTitleName) enhanced service actions are supported"
-		DisplayAsIndentQuotedInfoItem 'CanBack?' "application config 'backup' and 'restore' are supported"
-		DisplayAsIndentQuotedInfoItem 'CanClean?' "application 'clean' is supported"
-		DisplayAsIndentQuotedInfoItem 'StartUpd?' 'application restart-to-update is supported'
-		DisplayAsIndentQuotedInfoItem 'AutoUpdate?' 'application restart-to-update is enabled'
-		DisplayAsIndentQuotedInfoItem 'LiveTest?' "has a built-in 'status' check, and can test for daemon live status"
-		DisplayAsIndentQuotedInfoItem 'UniqUnpack?' "QPKG unpacks to a unique path during 'install'/'reinstall'/'upgrade'"
+		DisplayAsIndentQuotedInfoItem Independ 'is independent of other QPKGs'
+		DisplayAsIndentQuotedInfoItem Optional 'is an optional addon for another QPKG'
+		DisplayAsIndentQuotedInfoItem Depend 'is dependent on other QPKGs'
+		DisplayAsIndentQuotedInfoItem Enhanced "$(ShowAsTitleName) enhanced service actions are supported"
+		DisplayAsIndentQuotedInfoItem CanBack "application config 'backup' and 'restore' are supported"
+		DisplayAsIndentQuotedInfoItem CanClean "application 'clean' is supported"
+		DisplayAsIndentQuotedInfoItem StartUpd 'application restart-to-update is supported'
+		DisplayAsIndentQuotedInfoItem AutoUpdate 'application restart-to-update is enabled'
+		DisplayAsIndentQuotedInfoItem LiveTest "has a built-in 'status' check, and can test for daemon live status"
+		DisplayAsIndentQuotedInfoItem UniqUnpack "QPKG unpacks to a unique path during 'install'/'reinstall'/'upgrade'"
 	})
 
 	[[ -n $a ]] || return
@@ -8852,10 +8860,12 @@ ShowQPKGLists()
 				if QPKGs.AClistIS${a}.IsSet; then
 					QPKGs-AClist-to:Add "$(GetQpkgsIsComplete)"
 					ShowQPKGList AClist-to
+
 					return
 				elif QPKGs.AClistISNT${a}.IsSet; then
 					QPKGs-AClist-to:Add "$(GetQpkgsNtComplete)"
 					ShowQPKGList AClist-to
+
 					return
 				fi
 				;;
@@ -8863,10 +8873,12 @@ ShowQPKGLists()
 				if QPKGs.AClistIS${a}.IsSet; then
 					QPKGs-AClist-to:Add "$(GetQpkgsIsEnabled)"
 					ShowQPKGList AClist-to
+
 					return
 				elif QPKGs.AClistISNT${a}.IsSet; then
 					QPKGs-AClist-to:Add "$(GetQpkgsNtEnabled)"
 					ShowQPKGList AClist-to
+
 					return
 				fi
 				;;
@@ -8874,10 +8886,12 @@ ShowQPKGLists()
 				if QPKGs.AClistIS${a}.IsSet; then
 					QPKGs-AClist-to:Add "$(GetQpkgsIsValidInstalled)"
 					ShowQPKGList AClist-to
+
 					return
 				elif QPKGs.AClistISNT${a}.IsSet; then
 					QPKGs-AClist-to:Add "$(GetQpkgsNtInstalled)"
 					ShowQPKGList AClist-to
+
 					return
 				fi
 		esac
@@ -8891,9 +8905,11 @@ ShowQPKGLists()
 			*)
 				if QPKGs.AClistIS${a}.IsSet; then
 					ShowQPKGList IS${a}
+
 					return
 				elif QPKGs.AClistISNT${a}.IsSet; then
 					ShowQPKGList ISNT${a}
+
 					return
 				fi
 		esac
@@ -8907,6 +8923,7 @@ ShowQPKGLists()
 			*)
 				if QPKGs.AClistGR${a}.IsSet; then
 					ShowQPKGList GR${a}
+
 					return
 				fi
 		esac
@@ -8920,6 +8937,7 @@ ShowQPKGLists()
 			*)
 				if QPKGs.AClistGRNT${a}.IsSet; then
 					ShowQPKGList GRNT${a}
+
 					return
 				fi
 		esac
