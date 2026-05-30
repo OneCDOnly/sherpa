@@ -8786,16 +8786,16 @@ GenerateReportHeadingsInfo()
 	local a=''
 
 	a=$({
-		DisplayAsIndentQuotedInfoItem 'Independ' 'is independent of other QPKGs'
-		DisplayAsIndentQuotedInfoItem 'Optional' 'is an optional addon for another QPKG'
-		DisplayAsIndentQuotedInfoItem 'Depend' 'is dependent on other QPKGs'
-		DisplayAsIndentQuotedInfoItem 'Enhanced' "$(ShowAsTitleName) enhanced service actions are supported"
-		DisplayAsIndentQuotedInfoItem 'CanBack' "application config 'backup' and 'restore' are supported"
-		DisplayAsIndentQuotedInfoItem 'CanClean' "application 'clean' is supported"
-		DisplayAsIndentQuotedInfoItem 'StartUpd' 'application restart-to-update is supported'
-		DisplayAsIndentQuotedInfoItem 'AutoUpdate' 'application restart-to-update is enabled'
-		DisplayAsIndentQuotedInfoItem 'LiveTest' "has a built-in 'status' check, and can test for daemon live status"
-		DisplayAsIndentQuotedInfoItem 'UniqUnpack' "QPKG unpacks to a unique path during 'install'/'reinstall'/'upgrade'"
+		DisplayAsIndentQuotedInfoItem Independ 'is independent of other QPKGs'
+		DisplayAsIndentQuotedInfoItem Optional 'is an optional addon for another QPKG'
+		DisplayAsIndentQuotedInfoItem Depend 'is dependent on other QPKGs'
+		DisplayAsIndentQuotedInfoItem Enhanced "$(ShowAsTitleName) enhanced service actions are supported"
+		DisplayAsIndentQuotedInfoItem CanBack "application config 'backup' and 'restore' are supported"
+		DisplayAsIndentQuotedInfoItem CanClean "application 'clean' is supported"
+		DisplayAsIndentQuotedInfoItem StartUpd 'application restart-to-update is supported'
+		DisplayAsIndentQuotedInfoItem AutoUpdate 'application restart-to-update is enabled'
+		DisplayAsIndentQuotedInfoItem LiveTest "has a built-in 'status' check, and can test for daemon live status"
+		DisplayAsIndentQuotedInfoItem UniqUnpack "QPKG unpacks to a unique path during 'install'/'reinstall'/'upgrade'"
 	})
 
 	[[ -n $a ]] || return
@@ -8860,10 +8860,12 @@ ShowQPKGLists()
 				if QPKGs.AClistIS${a}.IsSet; then
 					QPKGs-AClist-to:Add "$(GetQpkgsIsComplete)"
 					ShowQPKGList AClist-to
+
 					return
 				elif QPKGs.AClistISNT${a}.IsSet; then
 					QPKGs-AClist-to:Add "$(GetQpkgsNtComplete)"
 					ShowQPKGList AClist-to
+
 					return
 				fi
 				;;
@@ -8871,10 +8873,12 @@ ShowQPKGLists()
 				if QPKGs.AClistIS${a}.IsSet; then
 					QPKGs-AClist-to:Add "$(GetQpkgsIsEnabled)"
 					ShowQPKGList AClist-to
+
 					return
 				elif QPKGs.AClistISNT${a}.IsSet; then
 					QPKGs-AClist-to:Add "$(GetQpkgsNtEnabled)"
 					ShowQPKGList AClist-to
+
 					return
 				fi
 				;;
@@ -8882,10 +8886,12 @@ ShowQPKGLists()
 				if QPKGs.AClistIS${a}.IsSet; then
 					QPKGs-AClist-to:Add "$(GetQpkgsIsValidInstalled)"
 					ShowQPKGList AClist-to
+
 					return
 				elif QPKGs.AClistISNT${a}.IsSet; then
 					QPKGs-AClist-to:Add "$(GetQpkgsNtInstalled)"
 					ShowQPKGList AClist-to
+
 					return
 				fi
 		esac
@@ -8899,9 +8905,11 @@ ShowQPKGLists()
 			*)
 				if QPKGs.AClistIS${a}.IsSet; then
 					ShowQPKGList IS${a}
+
 					return
 				elif QPKGs.AClistISNT${a}.IsSet; then
 					ShowQPKGList ISNT${a}
+
 					return
 				fi
 		esac
@@ -8915,6 +8923,7 @@ ShowQPKGLists()
 			*)
 				if QPKGs.AClistGR${a}.IsSet; then
 					ShowQPKGList GR${a}
+
 					return
 				fi
 		esac
@@ -8928,6 +8937,7 @@ ShowQPKGLists()
 			*)
 				if QPKGs.AClistGRNT${a}.IsSet; then
 					ShowQPKGList GRNT${a}
+
 					return
 				fi
 		esac
