@@ -516,7 +516,7 @@ LoadEnv()
 
 	useropt_branch=$(GetUserGitBranch)
 		readonly r_objects_archive_url='<?cdn_sherpa_base_url?>'/$useropt_branch/objects.tar.gz
-		readonly r_this_script_ver=$(ConvertSecondsToDatecode $script_epoch)-$useropt_branch
+		readonly r_this_script_ver=$(ConvertSecondsToDatecode $script_epoch)
 
 	[[ $useropt_branch = unstable ]] && package_release_version=testing
 
@@ -940,7 +940,7 @@ DebugLogEnv()
 	DebugUserspace ok 'BusyBox copyright' "$(GetBusyBoxCopyright)"
 	DebugUserspace ok 'BusyBox function count' "$(GetBusyBoxFunctionCount)"
 	DebugScript ok 'QPKG version' "$(ConvertAsSmartDate "$r_this_package_ver")"
-	DebugScript ok 'manager version' "$r_this_script_ver"
+	DebugScript ok 'manager version' "$(ShowAsVersion)"
 	DebugScript ok 'manager epoch' "$(ConvertAsSmartDate "$r_script_built_epoch")"
 	DebugScript ok 'objects epoch' "$(ConvertAsSmartDate "${r_objects_epoch:-not loaded}")"
 	DebugScript ok 'packages epoch' "$(ConvertAsSmartDate "${r_packages_epoch:-not loaded}")"
@@ -15095,7 +15095,7 @@ ShowAsCopyrightBasic()
 ShowAsVersion()
 	{
 
-	printf '%s' "v$r_this_script_ver"
+	printf '%s' "v$r_this_script_ver-$useropt_branch ($r_nas_qpkg_arch)"
 
 	}
 
