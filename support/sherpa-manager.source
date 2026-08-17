@@ -9652,7 +9652,7 @@ GetOsFirmwareVersion()
 GetOsFirmwareVer()
 	{
 
-	# Same as firmware version, but an integer-only (no periods).
+	# Same as GetOsFirmwareVersion(), but returns an integer-only (no periods).
 
 	# Outputs: (local)
 	#	stdout = integer.
@@ -13209,13 +13209,15 @@ IsOsCanSecureDownload()
 	#	- works in:
 	#		QTS 4.5.4.2627
 
+	# NOTE: secure `curl` ops fail on a41 running QTS upto 5.2.5, but work in QTS 5.2.10
+
 	# Inputs: (global)
 	#	$r_nas_firmware_ver
 
 	SetQpkgArch
 	SetOsFirmwareVer
 
-	[[ $r_nas_firmware_ver -ge 455 ]] && [[ $r_nas_qpkg_arch != a41 ]]		# KLUDGE: secure `curl` ops fail on a41 running QTS 5.2.5
+	[[ $r_nas_firmware_ver -ge 455 && $r_nas_qpkg_arch != a41 ]] || [[ $r_nas_firmware_ver -ge 5210 ]]
 
 	}
 
