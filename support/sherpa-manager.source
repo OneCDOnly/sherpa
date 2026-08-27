@@ -528,10 +528,13 @@ LoadEnv()
 			readonly r_qpkg_service_result_path=$r_sys_log_path
 		readonly r_sys_run_path=/var/run
 
-		readonly r_qpkg_bu_path=$(GetUserDefVol)/.qpkg_config_backup
+		local default_vol_mount_point=$(GetUserDefVol)
+		ConfirmVarIsDefined default_vol_mount_point "${default_vol_mount_point:-}" "$e_nopth" || return
+			readonly r_qpkg_bu_path=$default_vol_mount_point/.qpkg_config_backup
+
 		readonly r_this_package_path=$(GetQpkgInstalledPath)
 
-		if [[ -z $r_this_package_path || $r_this_package_path = undefined || ! -d $r_this_package_path ]]; then
+		if ! ConfirmVarIsDefined r_this_package_path "${r_this_package_path:-}" "$e_nopth" &> /dev/null || [[ ! -d $r_this_package_path ]]; then
 			ShowAsError "$(ShowAsTitleName) installation path not found. Please reinstall the $(ShowAsTitleName) QPKG"
 
 			return 1
