@@ -9661,7 +9661,7 @@ GetOsFirmwareVer()
 	#	stdout = integer.
 	#	$? = 0 if found, 250 if not.
 
-	/sbin/getcfg System Version -d undefined -f /etc/config/uLinux.conf | tr -d '.'
+	GetOsFirmwareVersion | tr -d '.'
 
 	}
 
@@ -17012,7 +17012,7 @@ SetOsFirmwareVersion()
 SetOsFirmwareVer()
 	{
 
-	# Same as firmware version, but as an integer-only (no periods).
+	# Same as SetOsFirmwareVersion(), but as an integer-only (no periods).
 
 	# Outputs: (global)
 	#	$r_nas_firmware_ver
