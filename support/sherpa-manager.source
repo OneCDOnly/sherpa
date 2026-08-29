@@ -508,7 +508,7 @@ LoadEnv()
 	readonly r_concurrency=$r_cpu_threads				# Maximum concurrent package actions to run. Should probably make this account for CPU speed too.
 	readonly r_entware_type=$(GetQpkgEntwareType)
 	readonly r_script_built_epoch='<?manager_epoch?>'
-	local -r r_sherpa_packages_base_url=https://github.com/OneCDOnly/sherpa.packages
+	local -r r_sherpa_packages_base_url='<?sherpa_packages_base_url?>'
 	readonly r_this_package_ver=$(GetQpkgInstalledVer)
 	local script_epoch=0
 
