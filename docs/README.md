@@ -12,7 +12,7 @@ Package management via **sherpa** provides features like easy application backup
 >
 > That said: the majority of development is now complete, and I'm currently working-on increasing stability during auto-package upgrades. So, <b>sherpa</b> will work beautifully on a fresh (or new) system, but can experience issues when individual application updates are released.
 >
-> Fair warning: this is an unusually large bash script. It runs painfully slow on NAS with ARMv5 CPUs. These NAS are now all end-of-life. Consider upgrading to something newer.
+> Fair warning: this is an unusually large bash script. It runs painfully slow on NAS with ARMv5 CPUs (identified by <b>sherpa</b> as "a19" in the title/version line). These NAS are now all end-of-life, and no-longer supported by QNAP. Consider upgrading to something newer and faster.
 
 <b>[Click here for installable packages](https://github.com/OneCDOnly/sherpa/wiki/Packages)</b>
 ## ![#c5f015](images/lime.png) Installation
@@ -30,6 +30,6 @@ sudo sherpa
 
 If you have suggestions, advice, comments or concerns, please either create a new [issue](https://github.com/OneCDOnly/sherpa/issues/new), or you are most welcome to start a new [discussion](https://github.com/OneCDOnly/sherpa/discussions/new/choose) topic.
 
-This project is a community effort, and was built with combined feedback from many members of the [QNAP](https://forum.qnap.com/viewtopic.php?f=320&t=132373) community forum. Thank you to everyone who has contributed. 🤓
+This project is a community effort, and was built with combined feedback from many members of the [QNAP](https://community.qnap.com/t/qpkg-sherpa-a-mini-package-manager-cli/1081) community forum. Thank you to everyone who has contributed. 🤓
 
 See the wiki for more information: [https://github.com/OneCDOnly/sherpa/wiki](https://github.com/OneCDOnly/sherpa/wiki)
