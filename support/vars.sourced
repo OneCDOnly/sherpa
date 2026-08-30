@@ -39,7 +39,8 @@ service_library_source_file=service-library.source
 stable_branch=stable
 unstable_branch=unstable
 
-# Original single-package archive.
+# Original single-package archive. Also used to download management and objects archives using GitHub as a virtual CDN.
+# TODO: make these release assets instead? This will interfere with development process.
 
 	cdn_onecd_url=https://raw.githubusercontent.com/OneCDOnly 					# (local use only)
 		cdn_other_packages_url=$cdn_onecd_url/'<?package_name?>'/main/build
@@ -48,7 +49,7 @@ unstable_branch=unstable
 # 		cdn_sherpa_packages_base_url=$cdn_onecd_url/sherpa.packages
 # 			cdn_sherpa_packages_url=$cdn_sherpa_packages_base_url/'$useropt_branch'/QPKGs/'<?package_name?>'/build
 
-# Multiple package archives.
+# Multiple package archives. These are downloadable as release assets.
 
 	sherpa_packages_base_url=https://github.com/OneCDOnly/sherpa.packages
 # 		sherpa_packages_latest_release_asset_base_url=$sherpa_packages_base_url/releases/latest/download
