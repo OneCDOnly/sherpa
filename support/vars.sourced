@@ -40,13 +40,13 @@ stable_branch=stable
 unstable_branch=unstable
 
 # Original single-package archive. Also used to download management and objects archives using GitHub as a virtual CDN.
-# TODO: make these release assets instead? This will interfere with development process.
+# TODO: make these release assets instead.
 
-	cdn_onecd_url=https://raw.githubusercontent.com/OneCDOnly 					# (local use only)
-		cdn_other_packages_url=$cdn_onecd_url/'<?package_name?>'/main/build
-		cdn_sherpa_base_url=$cdn_onecd_url/sherpa
-# 			cdn_sherpa_url=$cdn_sherpa_base_url/'$useropt_branch'
-# 		cdn_sherpa_packages_base_url=$cdn_onecd_url/sherpa.packages
+	onecd_raw_url=https://raw.githubusercontent.com/OneCDOnly 					# (local use only)
+		sherpa_other_packages_raw_url=$onecd_raw_url/'<?package_name?>'/main/build
+		sherpa_base_raw_url=$onecd_raw_url/sherpa
+# 			cdn_sherpa_url=$sherpa_base_raw_url/'$useropt_branch'
+# 		cdn_sherpa_packages_base_url=$onecd_raw_url/sherpa.packages
 # 			cdn_sherpa_packages_url=$cdn_sherpa_packages_base_url/'$useropt_branch'/QPKGs/'<?package_name?>'/build
 
 # Multiple package archives. These are downloadable as release assets.
