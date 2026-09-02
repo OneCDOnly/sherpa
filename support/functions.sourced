@@ -44,7 +44,7 @@ SwapTags()
 	{
 
 	# Inputs: (local)
-	#	$1 = Input pathfile to process for tags. This always has a '.source' extension.
+	#	$1 = Input pathfile to process for tags. This has either a '.source' or '.sourced' extension.
 	#	$2 = Output pathfile.
 
 	# Outputs: (local)
@@ -73,7 +73,7 @@ SwapTags()
 		a=$(sed "s|'<?packages_epoch?>'|$packages_epoch|g" <<< "$a")
 		a=$(sed "s|'<?package_release_version?>'|${package_release_version:-testing}|" <<< "$a")
 		a=$(sed "s|<?email?>|$email|g" <<< "$a")
-		a=$(sed "s|<?cdn_sherpa_base_url?>|$cdn_sherpa_base_url|g" <<< "$a")
+		a=$(sed "s|<?sherpa_base_raw_url?>|$sherpa_base_raw_url|g" <<< "$a")
 		a=$(sed "s|<?management_file?>|$management_file|g" <<< "$a")
 		a=$(sed "s|<?latest_release_version?>|${latest_release_version:-0}|g" <<< "$a")
 		a=$(sed "s|<?release_version?>|${release_version:-0}|g" <<< "$a")
@@ -83,10 +83,11 @@ SwapTags()
 		a=$(sed "s|<?exclusion_pips?>|${exclusion_pips:=exclusion pips}|g" <<< "$a")
 		a=$(sed "s|'<?management_debug_log_longest_string_length?>'|${#management_debug_log_longest_string}|g" <<< "$a")
 
-		a=$(sed "s|<?cdn_other_packages_url?>|$cdn_other_packages_url|g" <<< "$a")
-		a=$(sed "s|<?cdn_sherpa_packages_url?>|$cdn_sherpa_packages_url|g" <<< "$a")
-		a=$(sed "s|<?cdn_sherpa_packages_base_url?>|$cdn_sherpa_packages_base_url|g" <<< "$a")
-		a=$(sed "s|<?sherpa_packages_latest_release_asset_base_url?>|$sherpa_packages_latest_release_asset_base_url|g" <<< "$a")
+		a=$(sed "s|<?sherpa_other_packages_raw_url?>|$sherpa_other_packages_raw_url|g" <<< "$a")
+# 		a=$(sed "s|<?cdn_sherpa_packages_url?>|$cdn_sherpa_packages_url|g" <<< "$a")
+# 		a=$(sed "s|<?cdn_sherpa_packages_base_url?>|$cdn_sherpa_packages_base_url|g" <<< "$a")
+		a=$(sed "s|<?sherpa_packages_base_url?>|$sherpa_packages_base_url|g" <<< "$a")
+# 		a=$(sed "s|<?sherpa_packages_latest_release_asset_base_url?>|$sherpa_packages_latest_release_asset_base_url|g" <<< "$a")
 		a=$(sed "s|<?sherpa_packages_static_release_asset_base_url?>|$sherpa_packages_static_release_asset_base_url|g" <<< "$a")
 
 		[[ -e $2 ]] && chmod +w "$2"
@@ -100,7 +101,7 @@ SwapTags()
 Squeeze()
 	{
 
-	# Throwaway as many unnecessary bytes as-possible.
+	# Throw-away as many unnecessary bytes as-possible.
 
 	# Inputs: (local)
 	#	$1 = Input pathfile to process for excess material.
@@ -163,7 +164,7 @@ Squeeze()
 
 		# NOTE: these don't save any bytes, but do reduce the number of lines.
 
-		a=$(sed ':a;N;$!ba; s/\n}\n/;}\n/g' <<< "$a")									# Function end braces: move to last statement.
+		a=$(sed ':a;N;$!ba; s/\n}\n/;}\n/g' <<< "$a")									# Function end braces: move to last statement in function.
 
 		[[ -e $2 ]] && chmod +w "$2"
 		echo "$a" > "$2"

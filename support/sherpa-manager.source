@@ -508,14 +508,14 @@ LoadEnv()
 	readonly r_concurrency=$r_cpu_threads				# Maximum concurrent package actions to run. Should probably make this account for CPU speed too.
 	readonly r_entware_type=$(GetQpkgEntwareType)
 	readonly r_script_built_epoch='<?manager_epoch?>'
-	local -r r_sherpa_packages_base_url=https://github.com/OneCDOnly/sherpa.packages
+	local -r r_sherpa_packages_base_url='<?sherpa_packages_base_url?>'
 	readonly r_this_package_ver=$(GetQpkgInstalledVer)
 	local script_epoch=0
 
 	IsNumber $r_script_built_epoch && script_epoch=$r_script_built_epoch
 
 	useropt_branch=$(GetUserGitBranch)
-		readonly r_objects_archive_url='<?cdn_sherpa_base_url?>'/$useropt_branch/objects.tar.gz
+		readonly r_objects_archive_url='<?sherpa_base_raw_url?>'/$useropt_branch/objects.tar.gz
 		readonly r_this_script_ver=$(ConvertSecondsToDatecode $script_epoch)
 
 	[[ $useropt_branch = unstable ]] && package_release_version=testing
@@ -14826,7 +14826,7 @@ FindPid()
 		[[ $a -gt 1 ]] || continue
 		[[ -d /proc/$a ]] || continue
 		[[ -e /proc/$a/cmdline && -L /proc/$a/exe ]] || continue
-		[[ $(< /proc/$a/cmdline) =~ $1 || $(/usr/bin/readlink /proc/$a/exe) = "$1" ]] || continue
+		[[ $(< /proc/$a/cmdline) =~ $1 || $(/usr/bin/readlink /proc/$a/exe 2> /dev/null) = "$1" ]] || continue
 
 		if [[ -n $b ]]; then
 			[[ $(< /proc/$a/cmdline) =~ $b ]] || continue	# Check for additional string (if-specified).
