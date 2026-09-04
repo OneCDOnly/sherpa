@@ -871,10 +871,9 @@ DebugLogEnv()
 	DebugFirmware ok OS "$(GetOsName)"
 
 	SetOsFirmwareVersion
-	SetOsFirmwareBuild
 
 	a=version
-	b=$r_nas_firmware_version.$r_nas_firmware_build
+	b=$r_nas_firmware_version
 
 	if IsOsSupported; then
 		DebugFirmware ok "$a" "$b"
@@ -1014,7 +1013,7 @@ DebugLogEnv()
 	if IsQpkgInstalled SortMyQPKGs; then
 		DebugQpkg detect "$a" installed
 	else
-		if [[ $r_nas_firmware_ver -lt 400 || $r_nas_firmware_ver -ge 520 ]]; then
+		if [[ $((10#$r_nas_firmware_ver)) -lt $((10#$(ConvertFirmwareVersionStringToNumber 4.0.0))) || $((10#$r_nas_firmware_ver)) -ge $((10#$(ConvertFirmwareVersionStringToNumber 5.2.0))) ]]; then
 			DebugQpkg detect "$a" N/A
 		else
 			DebugQpkg warning "$a" 'not installed'
@@ -9652,19 +9651,6 @@ GetOsFirmwareVersion()
 
 	}
 
-GetOsFirmwareVer()
-	{
-
-	# Same as GetOsFirmwareVersion(), but returns an integer-only (no periods).
-
-	# Outputs: (local)
-	#	stdout = integer.
-	#	$? = 0 if found, 250 if not.
-
-	GetOsFirmwareVersion | tr -d '.'
-
-	}
-
 GetOsFirmwareBuild()
 	{
 
@@ -9673,6 +9659,46 @@ GetOsFirmwareBuild()
 	#	$? = 0 if found, 250 if not.
 
 	/sbin/getcfg System Number -d undefined -f /etc/config/uLinux.conf
+
+	}
+
+GetOsFirmwareVer()
+	{
+
+	# Returns an evaluable integer-only.
+
+	# Outputs: (local)
+	#	stdout = integer.
+
+	ConvertFirmwareVersionStringToNumber "$(GetOsFirmwareVersion).$(GetOsFirmwareBuild)"
+
+	}
+
+ConvertFirmwareVersionStringToNumber()
+	{
+
+	# Convert regular QTS version string into a number evaluable against another.
+	#	Example: '5.2.10' becomes '0502100000'
+	#	Example: '4.6.99.1234' becomes '0406991234'
+
+	# Output should be compared using forced base-10 syntax (to handle leading zero):
+	#	Example: [[ 10#$a -gt 10#$b ]]
+
+	local -i major=0
+	local -i intermediate=0
+	local -i minor=0
+	local -i build=0
+
+	# Use only this many digits from start of each field.
+
+	local -i major_trim=2
+	local -i intermediate_trim=2
+	local -i minor_trim=2
+	local -i build_trim=4
+
+	while IFS=. read -r major intermediate minor build; do
+		printf "%0${major_trim}d%0${intermediate_trim}d%0${minor_trim}d%0${build_trim}d" "${major:0:major_trim}" "${intermediate:0:intermediate_trim}" "${minor:0:minor_trim}" "${build:0:build_trim}"
+	done <<< "$1"
 
 	}
 
@@ -9728,7 +9754,7 @@ GetQpkgArch()
 
 	case $r_nas_arch in
 		x86_64)
-			[[ $r_nas_firmware_ver -ge 430 ]] && printf i64 || printf i86
+			[[ $((10#$r_nas_firmware_ver)) -ge $((10#$(ConvertFirmwareVersionStringToNumber 4.3.0))) ]] && printf i64 || printf i86
 			;;
 		i686|x86)
 			printf i86
@@ -13180,11 +13206,11 @@ IsOsSupported()
 	# Inputs: (global)
 	#	$r_nas_firmware_ver
 
-	# Unable to test firmwares any earlier than 4.2.6 (but still have 4.2.0 available for TS-559Pro+ ).
+	# Unable to test firmwares earlier than 4.2.6 (but still have 4.2.0 available for TS-559Pro+).
 
 	SetOsFirmwareVer
 
-	[[ $r_nas_firmware_ver -ge 400 ]]
+	[[ $((10#$r_nas_firmware_ver)) -ge $((10#$(ConvertFirmwareVersionStringToNumber 4.0.0))) ]]
 
 	}
 
@@ -13196,7 +13222,7 @@ IsOsCanAsyncQpkgActions()
 
 	SetOsFirmwareVer
 
-	[[ $r_nas_firmware_ver -ge 520 ]]
+	[[ $((10#$r_nas_firmware_ver)) -ge $((10#$(ConvertFirmwareVersionStringToNumber 5.2.0))) ]]
 
 	}
 
@@ -13270,11 +13296,9 @@ IsOsCanSecureDownload()
 	# Inputs: (global)
 	#	$r_nas_firmware_ver
 
-#	SetQpkgArch
 	SetOsFirmwareVer
 
-#	[[ $r_nas_firmware_ver -ge 455 && $r_nas_qpkg_arch != a41 ]] || [[ $r_nas_firmware_ver -ge 5210 ]]
-	[[ $r_nas_firmware_ver -ge 455 ]]
+	[[ $((10#$r_nas_firmware_ver)) -ge $((10#$(ConvertFirmwareVersionStringToNumber 4.5.5))) ]]
 
 	}
 
@@ -13286,7 +13310,7 @@ IsOsCanQpkgTimeout()
 
 	SetOsFirmwareVer
 
-	[[ $r_nas_firmware_ver -ge 430 && $r_nas_firmware_ver -le 519 && $r_nas_qpkg_arch != i86 ]]
+	[[ $((10#$r_nas_firmware_ver)) -ge $((10#$(ConvertFirmwareVersionStringToNumber 4.3.0))) && $((10#$r_nas_firmware_ver)) -le $((10#$(ConvertFirmwareVersionStringToNumber 5.1.9))) && $r_nas_qpkg_arch != i86 ]]
 
 	}
 
@@ -13300,7 +13324,7 @@ IsOsCanManageSignedPackages()
 
 	SetOsFirmwareVer
 
-	[[ $r_nas_firmware_ver -ge 437 ]]
+	[[ $((10#$r_nas_firmware_ver)) -ge $((10#$(ConvertFirmwareVersionStringToNumber 4.3.7))) ]]
 
 	}
 
@@ -13314,7 +13338,7 @@ IsOsCanUnofficialPackages()
 
 	SetOsFirmwareVer
 
-	[[ $r_nas_firmware_ver -gt 426 && $r_nas_firmware_ver -le 436 ]]
+	[[ $((10#$r_nas_firmware_ver)) -gt $((10#$(ConvertFirmwareVersionStringToNumber 4.2.6))) && $((10#$r_nas_firmware_ver)) -le $((10#$(ConvertFirmwareVersionStringToNumber 4.3.6))) ]]
 
 	}
 
@@ -13747,7 +13771,7 @@ IsQpkgDbMinOSVerOk()
 
 	SetOsFirmwareVer
 
-	[[ -n $a ]] && [[ $a = none || $r_nas_firmware_ver -ge $a ]]
+	[[ -n $a ]] && [[ $a = none || $((10#$r_nas_firmware_ver)) -ge $((10#$(ConvertFirmwareVersionStringToNumber "$a"))) ]]
 
 	}
 
@@ -13770,7 +13794,7 @@ IsQpkgDbMaxOSVerOk()
 
 	SetOsFirmwareVer
 
-	[[ -n $a ]] && [[ $a = none || $r_nas_firmware_ver -le $a ]]
+	[[ -n $a ]] && [[ $a = none || $((10#$r_nas_firmware_ver)) -le $((10#$(ConvertFirmwareVersionStringToNumber "$a"))) ]]
 
 	}
 
@@ -17005,7 +17029,7 @@ SetOsFirmwareVersion()
 	# Outputs: (global)
 	#	$r_nas_firmware_version
 
-	[[ ${r_nas_firmware_version:-unset} = unset ]] && readonly r_nas_firmware_version=$(GetOsFirmwareVersion)
+	[[ ${r_nas_firmware_version:-unset} = unset ]] && readonly r_nas_firmware_version=$(GetOsFirmwareVersion).$(GetOsFirmwareBuild)
 
 	}
 
@@ -17028,16 +17052,6 @@ SetOsFirmwareDate()
 	#	$r_nas_firmware_date
 
 	[[ ${r_nas_firmware_date:-unset} = unset ]] && readonly r_nas_firmware_date=$(GetOsFirmwareDate)
-
-	}
-
-SetOsFirmwareBuild()
-	{
-
-	# Outputs: (global)
-	#	$r_nas_firmware_build
-
-	[[ ${r_nas_firmware_build:-unset} = unset ]] && readonly r_nas_firmware_build=$(GetOsFirmwareBuild)
 
 	}
 
