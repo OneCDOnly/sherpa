@@ -29,7 +29,7 @@ management_source_file=sherpa-manager.source
 objects_archive_file=objects.tar.gz
 objects_file=objects
 
-packages_archive_file=packages.tar.gz
+# packages_archive_file=packages.tar.gz
 packages_file=packages
 packages_source_file=packages.source
 
@@ -94,16 +94,18 @@ read -rd '' project_msg << EOB
 Project:
 #*	  https://git.io/sherpa
 #*
-#* Support forums:
+#* Support forum topic:
 #*	  https://community.qnap.com/t/qpkg-sherpa-a-mini-package-manager-cli/1081
-#*	  https://forum.qnap.com/viewtopic.php?t=132373
 EOB
 
 read -rd '' tested_msg << EOB
 Tested on:
 #*	  GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
-#*	  GNU bash, version 3.2.57(1)-release (x86_64-QNAP-linux-gnu)
+#*	  GNU bash, version 3.2.57(1)-release (arm-none-linux-gnueabi)
+#*	  GNU bash, version 3.2.57(1)-release (arm-openwrt-linux-gnu)
+#*	  GNU bash, version 3.2.57(4)-release (arm-unknown-linux-gnueabihf)
 #*	  GNU bash, version 3.2.57(2)-release (i686-pc-linux-gnu)
+#*	  GNU bash, version 3.2.57(1)-release (x86_64-QNAP-linux-gnu)
 #*		 Copyright (C) 2007 Free Software Foundation, Inc.
 EOB
 
