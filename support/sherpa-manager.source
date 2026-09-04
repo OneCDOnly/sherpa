@@ -17197,14 +17197,20 @@ RefreshArchive()
 	local new_archive_checksum=''
 	local orig_archive_checksum=''
 
+	if IsFile "$target_pathfile"; then
+		DebugAsDetect "'$archive_name' found"
+	else
+		DebugAsDetect "'$archive_name' missing"
+	fi
+
 	if IsFile "$archive_pathfile"; then
 		DebugAsDetect "'$archive_name' archive found"
 		orig_archive_checksum=$(GenerateMD5 "$archive_pathfile")
 
 		if IsFileRecent "$archive_pathfile" "$r_file_change_threshold_minutes"; then
-			DebugAsDetect "'$archive_name' archive is recent"
+			DebugAsDetect "'$archive_name' archive is recent (updated within the last $r_file_change_threshold_minutes minutes)"
 		else
-			DebugAsDetect "'$archive_name' archive is not recent"
+			DebugAsDetect "'$archive_name' archive is not recent (has not been updated within the last $r_file_change_threshold_minutes minutes)"
 			download=true
 		fi
 	else
@@ -17253,11 +17259,13 @@ RefreshArchive()
 		DebugAsWarn "'$archive_name' archive missing"
 	fi
 
-	if IsFile "$target_pathfile"; then
-		DebugAsDetect "'$archive_name' found"
-	else
-		DebugAsDetect "'$archive_name' missing"
-		extract=true
+	if [[ $download = true ]]; then
+		if IsFile "$target_pathfile"; then
+			DebugAsDetect "'$archive_name' found"
+		else
+			DebugAsDetect "'$archive_name' missing"
+			extract=true
+		fi
 	fi
 
 	if [[ $extract = true && -e $dont_refresh_pathfile ]]; then
