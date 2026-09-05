@@ -9682,7 +9682,7 @@ ConvertFirmwareVersionStringToNumber()
 	#	Example: '4.6.99.1234' becomes '0406991234'
 
 	# Output should be compared using forced base-10 syntax (to handle leading zero):
-	#	Example: [[ 10#$a -gt 10#$b ]]
+	#	Example: [[ $((10#$a)) -gt $((10#$b)) ]]
 
 	local -i major=0
 	local -i intermediate=0
