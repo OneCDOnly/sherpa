@@ -264,14 +264,18 @@ LoadConsts()
 
 	# Report, help and debug formatting.
 
-		readonly r_debug_log_string_length='<?management_debug_log_longest_string_length?>'
-		r_debug_log_width=80								# devdebug
+		r_debug_log_first_column_width='<?debug_log_first_column_width?>'
+		r_debug_log_first_column_width=10					# devdebug
+		readonly r_debug_log_first_column_width
 
-		IsNumber $r_debug_log_string_length && r_debug_log_width=$r_debug_log_string_length
+		r_debug_log_second_column_width='<?debug_log_second_column_width?>'
+		r_debug_log_second_column_width=25					# devdebug
+		readonly r_debug_log_second_column_width
+
+		r_debug_log_width='<?debug_log_width?>'
+		r_debug_log_width=85								# devdebug
 		readonly r_debug_log_width
 
-		readonly r_debug_log_first_column_width=9
-		readonly r_debug_log_second_column_width=24
 		readonly r_help_desc_indent=3
 		readonly r_help_syntax_indent=6
 		readonly r_report_action_result_indent=4
@@ -871,10 +875,9 @@ DebugLogEnv()
 	DebugFirmware ok OS "$(GetOsName)"
 
 	SetOsFirmwareVersion
-	SetOsFirmwareBuild
 
 	a=version
-	b=$r_nas_firmware_version.$r_nas_firmware_build
+	b=$r_nas_firmware_version
 
 	if IsOsSupported; then
 		DebugFirmware ok "$a" "$b"
@@ -1014,7 +1017,7 @@ DebugLogEnv()
 	if IsQpkgInstalled SortMyQPKGs; then
 		DebugQpkg detect "$a" installed
 	else
-		if [[ $r_nas_firmware_ver -lt 400 || $r_nas_firmware_ver -ge 520 ]]; then
+		if [[ $((10#$r_nas_firmware_ver)) -lt $((10#$(ConvertFirmwareVersionStringToNumber 4.0.0))) || $((10#$r_nas_firmware_ver)) -ge $((10#$(ConvertFirmwareVersionStringToNumber 5.2.0))) ]]; then
 			DebugQpkg detect "$a" N/A
 		else
 			DebugQpkg warning "$a" 'not installed'
@@ -1300,7 +1303,7 @@ CheckEnv()
 	AllocPackStatesToAcs
 
 	if QPKGs-ISupgradable.Exist sherpa; then
-		ShowAsNote "the $(TextBrightOrange sherpa) QPKG will be auto-upgraded"
+		ShowAsNote "the $(TextBrightOrange sherpa) QPKG will be upgraded"
 		QPKGs-ACupgrade-to:Add sherpa
 	fi
 
@@ -1320,7 +1323,7 @@ AssignQpkgsToActions()
 
 	FuncInit
 
-	ShowAsProc 'auto-assign actions'
+	ShowAsProc 'assign actions'
 
 	local action=''
 	local prospect=''
@@ -1329,7 +1332,7 @@ AssignQpkgsToActions()
 	# Don't auto re-install Entware if only 'status' action is requested.
 
 	if IsOsOnline && IsValidQpkgInstalled Entware && IsEntwareUpgradable && (IsNonStatusActionRequested || [[ $useropt_fix = true ]]); then
-		ShowAsNote "the $(TextBrightOrange Entware) QPKG will be auto-reinstalled (Entware packages were last updated in $(ConvertLongDateAsHuman $r_entware_packages_last_updated))"
+		ShowAsNote "the $(TextBrightOrange Entware) QPKG will be reinstalled (Entware packages were last updated in $(ConvertLongDateAsHuman $r_entware_packages_last_updated))"
 		QPKGs-ACreinstall-to:Add Entware
 	fi
 
@@ -8656,16 +8659,16 @@ GenerateReportInfo()
 			DisplayAsIndentQuotedInfoItem "$(TextBrightRed disabled)" "QPKG won't be started at bootup. Enable it first, then start it"
 		fi
 
+		if [[ -e "$r_report_flags_path"/status-inactive ]]; then
+			DisplayAsIndentQuotedInfoItem "$(TextBrightRed inactive)" 'application process is dead or not-started. Try starting it'
+		fi
+
 		if [[ -e "$r_report_flags_path"/result-aborted ]]; then
 			DisplayAsIndentQuotedInfoItem "($(TextBrightRed aborted))" 'previous action was aborted'
 		fi
 
 		if [[ -e "$r_report_flags_path"/result-failed ]]; then
 			DisplayAsIndentQuotedInfoItem "($(TextBrightRed failed))" 'previous action failed'
-		fi
-
-		if [[ -e "$r_report_flags_path"/status-inactive ]]; then
-			DisplayAsIndentQuotedInfoItem "$(TextBrightRed inactive)" 'application process is dead or not-started. Try starting it'
 		fi
 
 		if [[ -e "$r_report_flags_path"/backup-file-old ]]; then
@@ -8721,12 +8724,12 @@ GenerateReportInfo()
 			DisplayAsIndentQuotedInfoItem "$(TextBrightGreen enabled)" 'QPKG will be started at bootup'
 		fi
 
-		if [[ -e "$r_report_flags_path"/result-ok ]]; then
-			DisplayAsIndentQuotedInfoItem "($(TextBrightGreen OK))" 'previous action was successful'
-		fi
-
 		if [[ -e "$r_report_flags_path"/status-active ]]; then
 			DisplayAsIndentQuotedInfoItem "$(TextBrightGreen active)" 'application is alive (and responsive if a daemon)'
+		fi
+
+		if [[ -e "$r_report_flags_path"/result-ok ]]; then
+			DisplayAsIndentQuotedInfoItem "($(TextBrightGreen OK))" 'previous action was successful'
 		fi
 
 		if [[ -e "$r_report_flags_path"/repo-sherpa ]]; then
@@ -9652,19 +9655,6 @@ GetOsFirmwareVersion()
 
 	}
 
-GetOsFirmwareVer()
-	{
-
-	# Same as GetOsFirmwareVersion(), but returns an integer-only (no periods).
-
-	# Outputs: (local)
-	#	stdout = integer.
-	#	$? = 0 if found, 250 if not.
-
-	GetOsFirmwareVersion | tr -d '.'
-
-	}
-
 GetOsFirmwareBuild()
 	{
 
@@ -9673,6 +9663,46 @@ GetOsFirmwareBuild()
 	#	$? = 0 if found, 250 if not.
 
 	/sbin/getcfg System Number -d undefined -f /etc/config/uLinux.conf
+
+	}
+
+GetOsFirmwareVer()
+	{
+
+	# Returns an evaluable integer-only.
+
+	# Outputs: (local)
+	#	stdout = integer.
+
+	ConvertFirmwareVersionStringToNumber "$(GetOsFirmwareVersion).$(GetOsFirmwareBuild)"
+
+	}
+
+ConvertFirmwareVersionStringToNumber()
+	{
+
+	# Convert regular QTS version string into a number evaluable against another.
+	#	Example: '5.2.10' becomes '0502100000'
+	#	Example: '4.6.99.1234' becomes '0406991234'
+
+	# Output should be compared using forced base-10 syntax (to handle leading zero):
+	#	Example: [[ $((10#$a)) -gt $((10#$b)) ]]
+
+	local major=0
+	local intermediate=0
+	local minor=0
+	local build=0
+
+	# Use only this many digits from start of each field.
+
+	local -i major_trim=2
+	local -i intermediate_trim=2
+	local -i minor_trim=2
+	local -i build_trim=4
+
+	while IFS=. read -r major intermediate minor build; do
+		printf "%0${major_trim}d%0${intermediate_trim}d%0${minor_trim}d%0${build_trim}d" "$((10#${major:0:major_trim}))" "$((10#${intermediate:0:intermediate_trim}))" "$((10#${minor:0:minor_trim}))" "$((10#${build:0:build_trim}))"
+	done <<< "$1"
 
 	}
 
@@ -9728,7 +9758,7 @@ GetQpkgArch()
 
 	case $r_nas_arch in
 		x86_64)
-			[[ $r_nas_firmware_ver -ge 430 ]] && printf i64 || printf i86
+			[[ $((10#$r_nas_firmware_ver)) -ge $((10#$(ConvertFirmwareVersionStringToNumber 4.3.0))) ]] && printf i64 || printf i86
 			;;
 		i686|x86)
 			printf i86
@@ -13180,11 +13210,11 @@ IsOsSupported()
 	# Inputs: (global)
 	#	$r_nas_firmware_ver
 
-	# Unable to test firmwares any earlier than 4.2.6 (but still have 4.2.0 available for TS-559Pro+ ).
+	# Unable to test firmwares earlier than 4.2.6 (but still have 4.2.0 available for TS-559Pro+).
 
 	SetOsFirmwareVer
 
-	[[ $r_nas_firmware_ver -ge 400 ]]
+	[[ $((10#$r_nas_firmware_ver)) -ge $((10#$(ConvertFirmwareVersionStringToNumber 4.0.0))) ]]
 
 	}
 
@@ -13196,7 +13226,7 @@ IsOsCanAsyncQpkgActions()
 
 	SetOsFirmwareVer
 
-	[[ $r_nas_firmware_ver -ge 520 ]]
+	[[ $((10#$r_nas_firmware_ver)) -ge $((10#$(ConvertFirmwareVersionStringToNumber 5.2.0))) ]]
 
 	}
 
@@ -13270,11 +13300,9 @@ IsOsCanSecureDownload()
 	# Inputs: (global)
 	#	$r_nas_firmware_ver
 
-#	SetQpkgArch
 	SetOsFirmwareVer
 
-#	[[ $r_nas_firmware_ver -ge 455 && $r_nas_qpkg_arch != a41 ]] || [[ $r_nas_firmware_ver -ge 5210 ]]
-	[[ $r_nas_firmware_ver -ge 455 ]]
+	[[ $((10#$r_nas_firmware_ver)) -ge $((10#$(ConvertFirmwareVersionStringToNumber 4.5.5))) ]]
 
 	}
 
@@ -13286,7 +13314,7 @@ IsOsCanQpkgTimeout()
 
 	SetOsFirmwareVer
 
-	[[ $r_nas_firmware_ver -ge 430 && $r_nas_firmware_ver -le 519 && $r_nas_qpkg_arch != i86 ]]
+	[[ $((10#$r_nas_firmware_ver)) -ge $((10#$(ConvertFirmwareVersionStringToNumber 4.3.0))) && $((10#$r_nas_firmware_ver)) -le $((10#$(ConvertFirmwareVersionStringToNumber 5.1.9))) && $r_nas_qpkg_arch != i86 ]]
 
 	}
 
@@ -13300,7 +13328,7 @@ IsOsCanManageSignedPackages()
 
 	SetOsFirmwareVer
 
-	[[ $r_nas_firmware_ver -ge 437 ]]
+	[[ $((10#$r_nas_firmware_ver)) -ge $((10#$(ConvertFirmwareVersionStringToNumber 4.3.7))) ]]
 
 	}
 
@@ -13314,7 +13342,7 @@ IsOsCanUnofficialPackages()
 
 	SetOsFirmwareVer
 
-	[[ $r_nas_firmware_ver -gt 426 && $r_nas_firmware_ver -le 436 ]]
+	[[ $((10#$r_nas_firmware_ver)) -gt $((10#$(ConvertFirmwareVersionStringToNumber 4.2.6))) && $((10#$r_nas_firmware_ver)) -le $((10#$(ConvertFirmwareVersionStringToNumber 4.3.6))) ]]
 
 	}
 
@@ -13747,7 +13775,7 @@ IsQpkgDbMinOSVerOk()
 
 	SetOsFirmwareVer
 
-	[[ -n $a ]] && [[ $a = none || $r_nas_firmware_ver -ge $a ]]
+	[[ -n $a ]] && [[ $a = none || $((10#$r_nas_firmware_ver)) -ge $((10#$(ConvertFirmwareVersionStringToNumber "$a"))) ]]
 
 	}
 
@@ -13770,7 +13798,7 @@ IsQpkgDbMaxOSVerOk()
 
 	SetOsFirmwareVer
 
-	[[ -n $a ]] && [[ $a = none || $r_nas_firmware_ver -le $a ]]
+	[[ -n $a ]] && [[ $a = none || $((10#$r_nas_firmware_ver)) -le $((10#$(ConvertFirmwareVersionStringToNumber "$a"))) ]]
 
 	}
 
@@ -17005,7 +17033,7 @@ SetOsFirmwareVersion()
 	# Outputs: (global)
 	#	$r_nas_firmware_version
 
-	[[ ${r_nas_firmware_version:-unset} = unset ]] && readonly r_nas_firmware_version=$(GetOsFirmwareVersion)
+	[[ ${r_nas_firmware_version:-unset} = unset ]] && readonly r_nas_firmware_version=$(GetOsFirmwareVersion).$(GetOsFirmwareBuild)
 
 	}
 
@@ -17028,16 +17056,6 @@ SetOsFirmwareDate()
 	#	$r_nas_firmware_date
 
 	[[ ${r_nas_firmware_date:-unset} = unset ]] && readonly r_nas_firmware_date=$(GetOsFirmwareDate)
-
-	}
-
-SetOsFirmwareBuild()
-	{
-
-	# Outputs: (global)
-	#	$r_nas_firmware_build
-
-	[[ ${r_nas_firmware_build:-unset} = unset ]] && readonly r_nas_firmware_build=$(GetOsFirmwareBuild)
 
 	}
 
@@ -17183,14 +17201,20 @@ RefreshArchive()
 	local new_archive_checksum=''
 	local orig_archive_checksum=''
 
+	if IsFile "$target_pathfile"; then
+		DebugAsDetect "'$archive_name' found"
+	else
+		DebugAsDetect "'$archive_name' missing"
+	fi
+
 	if IsFile "$archive_pathfile"; then
 		DebugAsDetect "'$archive_name' archive found"
 		orig_archive_checksum=$(GenerateMD5 "$archive_pathfile")
 
 		if IsFileRecent "$archive_pathfile" "$r_file_change_threshold_minutes"; then
-			DebugAsDetect "'$archive_name' archive is recent"
+			DebugAsDetect "'$archive_name' archive is recent (updated within the last $r_file_change_threshold_minutes minutes)"
 		else
-			DebugAsDetect "'$archive_name' archive is not recent"
+			DebugAsDetect "'$archive_name' archive is not recent (has not been updated within the last $r_file_change_threshold_minutes minutes)"
 			download=true
 		fi
 	else
@@ -17239,11 +17263,13 @@ RefreshArchive()
 		DebugAsWarn "'$archive_name' archive missing"
 	fi
 
-	if IsFile "$target_pathfile"; then
-		DebugAsDetect "'$archive_name' found"
-	else
-		DebugAsDetect "'$archive_name' missing"
-		extract=true
+	if [[ $download = true ]]; then
+		if IsFile "$target_pathfile"; then
+			DebugAsDetect "'$archive_name' found"
+		else
+			DebugAsDetect "'$archive_name' missing"
+			extract=true
+		fi
 	fi
 
 	if [[ $extract = true && -e $dont_refresh_pathfile ]]; then

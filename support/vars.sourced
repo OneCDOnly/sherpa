@@ -29,7 +29,7 @@ management_source_file=sherpa-manager.source
 objects_archive_file=objects.tar.gz
 objects_file=objects
 
-packages_archive_file=packages.tar.gz
+# packages_archive_file=packages.tar.gz
 packages_file=packages
 packages_source_file=packages.source
 
@@ -59,10 +59,14 @@ copyright_basic='Copyright (C) 2017-<?build_year?> OneCD'
 dont_edit_msg="Please don't edit this file directly, it was built or modified programmatically with the '$(basename "$0")' script."
 email=one.cd.only@gmail.com
 
-management_debug_log_longest_string="  HARDWARE:                      CPU: Annapurna Labs Alpine AL314 Quad-core ARM Cortex-A15 CPU @ 1.70GHz"
-#									" USERSPACE:            shell version: GNU bash, version 3.2.57(3)-release (arm-unknown-linux-gnueabihf)"
-#									" USERSPACE:            shell version: GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)"
-#									" USERSPACE:            shell version: GNU bash, version 3.2.57(1)-release (arm-openwrt-linux-gnu)"
+debug_log_first_column_longest_string='USERSPACE'
+debug_log_second_column_longest_string='basic CPU SHA1 benchmark'
+debug_log_third_column_longest_string='Annapurna Labs Alpine AL314 Quad-core ARM Cortex-A15 CPU @ 1.70GHz'
+
+debug_log_first_column_width=${#debug_log_first_column_longest_string}
+debug_log_second_column_width=${#debug_log_second_column_longest_string}
+debug_log_third_column_width=${#debug_log_third_column_longest_string}
+debug_log_width=$((debug_log_first_column_width+1+debug_log_second_column_width+1+debug_log_third_column_width))
 
 # NOTE: must escape ampersand chars in `read` input blocks for compatibility with `sed` regex.
 
@@ -94,16 +98,18 @@ read -rd '' project_msg << EOB
 Project:
 #*	  https://git.io/sherpa
 #*
-#* Support forums:
+#* Support forum topic:
 #*	  https://community.qnap.com/t/qpkg-sherpa-a-mini-package-manager-cli/1081
-#*	  https://forum.qnap.com/viewtopic.php?t=132373
 EOB
 
 read -rd '' tested_msg << EOB
 Tested on:
 #*	  GNU bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
-#*	  GNU bash, version 3.2.57(1)-release (x86_64-QNAP-linux-gnu)
+#*	  GNU bash, version 3.2.57(1)-release (arm-none-linux-gnueabi)
+#*	  GNU bash, version 3.2.57(1)-release (arm-openwrt-linux-gnu)
+#*	  GNU bash, version 3.2.57(4)-release (arm-unknown-linux-gnueabihf)
 #*	  GNU bash, version 3.2.57(2)-release (i686-pc-linux-gnu)
+#*	  GNU bash, version 3.2.57(1)-release (x86_64-QNAP-linux-gnu)
 #*		 Copyright (C) 2007 Free Software Foundation, Inc.
 EOB
 

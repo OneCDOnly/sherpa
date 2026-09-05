@@ -12,7 +12,7 @@ Package management via **sherpa** provides features like easy application backup
 >
 > That said: the majority of development is now complete, and I'm currently working-on increasing stability during auto-package upgrades. So, <b>sherpa</b> will work beautifully on a fresh (or new) system, but can experience issues when individual application updates are released.
 >
-> Fair warning: this is an unusually large bash script. It runs painfully slow on NAS with ARMv5 CPUs (identified by <b>sherpa</b> as "a19" in the title/version line). These NAS are now all end-of-life, and no-longer supported by QNAP. Consider upgrading to something newer and faster.
+> Fair warning: this is an unusually large bash script. It runs painfully slow on NAS with ARMv5 CPUs and early ARMv7 CPUs (identified by <b>sherpa</b> as "a19" or "a31" in the title/version line). These NAS are all end-of-life, and no-longer supported by QNAP. Please consider upgrading to something newer and faster.
 
 <b>[Click here for installable packages](https://github.com/OneCDOnly/sherpa/wiki/Packages)</b>
 ## ![#c5f015](images/lime.png) Installation
