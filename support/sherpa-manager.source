@@ -8655,16 +8655,16 @@ GenerateReportInfo()
 			DisplayAsIndentQuotedInfoItem "$(TextBrightRed disabled)" "QPKG won't be started at bootup. Enable it first, then start it"
 		fi
 
+		if [[ -e "$r_report_flags_path"/status-inactive ]]; then
+			DisplayAsIndentQuotedInfoItem "$(TextBrightRed inactive)" 'application process is dead or not-started. Try starting it'
+		fi
+
 		if [[ -e "$r_report_flags_path"/result-aborted ]]; then
 			DisplayAsIndentQuotedInfoItem "($(TextBrightRed aborted))" 'previous action was aborted'
 		fi
 
 		if [[ -e "$r_report_flags_path"/result-failed ]]; then
 			DisplayAsIndentQuotedInfoItem "($(TextBrightRed failed))" 'previous action failed'
-		fi
-
-		if [[ -e "$r_report_flags_path"/status-inactive ]]; then
-			DisplayAsIndentQuotedInfoItem "$(TextBrightRed inactive)" 'application process is dead or not-started. Try starting it'
 		fi
 
 		if [[ -e "$r_report_flags_path"/backup-file-old ]]; then
@@ -8720,12 +8720,12 @@ GenerateReportInfo()
 			DisplayAsIndentQuotedInfoItem "$(TextBrightGreen enabled)" 'QPKG will be started at bootup'
 		fi
 
-		if [[ -e "$r_report_flags_path"/result-ok ]]; then
-			DisplayAsIndentQuotedInfoItem "($(TextBrightGreen OK))" 'previous action was successful'
-		fi
-
 		if [[ -e "$r_report_flags_path"/status-active ]]; then
 			DisplayAsIndentQuotedInfoItem "$(TextBrightGreen active)" 'application is alive (and responsive if a daemon)'
+		fi
+
+		if [[ -e "$r_report_flags_path"/result-ok ]]; then
+			DisplayAsIndentQuotedInfoItem "($(TextBrightGreen OK))" 'previous action was successful'
 		fi
 
 		if [[ -e "$r_report_flags_path"/repo-sherpa ]]; then
