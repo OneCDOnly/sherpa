@@ -6,7 +6,7 @@ build_date=$(date '+%y%m%d')
 build_year=$(date '+%Y')
 manager_epoch=0				# Only update before building `sherpa-manager.sh` file.
 objects_epoch=0				# Only update before building `objects` file.
-packages_epoch=0			# Only update before building `packages` file(s).
+packages_epoch=0			# Only update before building `packages` files.
 title_description='a mini-package-manager for QNAP NAS'
 
 checksum_root_path=$HOME/scripts/nas
@@ -45,14 +45,10 @@ unstable_branch=unstable
 	onecd_raw_url=https://raw.githubusercontent.com/OneCDOnly 					# (local use only)
 		sherpa_other_packages_raw_url=$onecd_raw_url/'<?package_name?>'/main/build
 		sherpa_base_raw_url=$onecd_raw_url/sherpa
-# 			cdn_sherpa_url=$sherpa_base_raw_url/'$useropt_branch'
-# 		cdn_sherpa_packages_base_url=$onecd_raw_url/sherpa.packages
-# 			cdn_sherpa_packages_url=$cdn_sherpa_packages_base_url/'$useropt_branch'/QPKGs/'<?package_name?>'/build
 
 # Multiple package archives. These are downloadable as release assets.
 
 	sherpa_packages_base_url=https://github.com/OneCDOnly/sherpa.packages
-# 		sherpa_packages_latest_release_asset_base_url=$sherpa_packages_base_url/releases/latest/download
 		sherpa_packages_static_release_asset_base_url=$sherpa_packages_base_url/releases/download/'$package_release_version'
 
 copyright_basic='Copyright (C) 2017-<?build_year?> OneCD'

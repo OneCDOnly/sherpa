@@ -264,17 +264,15 @@ LoadConsts()
 
 	# Report, help and debug formatting.
 
-		r_debug_log_first_column_width='<?debug_log_first_column_width?>'
-		r_debug_log_first_column_width=10					# devdebug
-		readonly r_debug_log_first_column_width
-
-		r_debug_log_second_column_width='<?debug_log_second_column_width?>'
-		r_debug_log_second_column_width=25					# devdebug
-		readonly r_debug_log_second_column_width
-
-		r_debug_log_width='<?debug_log_width?>'
-		r_debug_log_width=85								# devdebug
-		readonly r_debug_log_width
+		if true; then													# devdebug
+			readonly r_debug_log_first_column_width=10					# devdebug
+			readonly r_debug_log_second_column_width=25					# devdebug
+			readonly r_debug_log_width=85								# devdebug
+		else															# devdebug
+			readonly r_debug_log_first_column_width='<?debug_log_first_column_width?>'
+			readonly r_debug_log_second_column_width='<?debug_log_second_column_width?>'
+			readonly r_debug_log_width='<?debug_log_width?>'
+		fi																# devdebug
 
 		readonly r_help_desc_indent=3
 		readonly r_help_syntax_indent=6
@@ -3521,38 +3519,38 @@ ResetArchivedLogs()
 
 	}
 
-Quiz()
-	{
-
-	# Inputs: (local)
-	#	$1 = prompt/question
-
-	# Inputs: (global)
-	#	$r_gnu_stty_cmd
-
-	# Outputs: (local)
-	#	$? = 0 if "y", 1 if anything else
-
-	local a=${1:?${FUNCNAME[0]}(): $e_noprm}
-	local b=''
-
-	ShowAsQuiz "$a"
-	[[ -x $r_gnu_stty_cmd ]] && IsInTerminal && $r_gnu_stty_cmd igncr	# Ignore CR to prevent an onscreen linefeed (which disrupts same-line rewrite used later, and looks bad).
-	read -rn1 b
-	[[ -x $r_gnu_stty_cmd ]] && IsInTerminal && $r_gnu_stty_cmd -igncr	# Re-allow CR.
-	DebugVar b
-
-	ShowAsQuizDone "$a: $b"
-
-	case ${b:0:1} in
-		y|Y)
-			return 0
-			;;
-		*)
-			return 1
-	esac
-
-	}
+#Quiz()
+#	{
+#
+#	# Inputs: (local)
+#	#	$1 = prompt/question
+#
+#	# Inputs: (global)
+#	#	$r_gnu_stty_cmd
+#
+#	# Outputs: (local)
+#	#	$? = 0 if "y", 1 if anything else
+#
+#	local a=${1:?${FUNCNAME[0]}(): $e_noprm}
+#	local b=''
+#
+#	ShowAsQuiz "$a"
+#	[[ -x $r_gnu_stty_cmd ]] && IsInTerminal && $r_gnu_stty_cmd igncr	# Ignore CR to prevent an onscreen linefeed (which disrupts same-line rewrite used later, and looks bad).
+#	read -rn1 b
+#	[[ -x $r_gnu_stty_cmd ]] && IsInTerminal && $r_gnu_stty_cmd -igncr	# Re-allow CR.
+#	DebugVar b
+#
+#	ShowAsQuizDone "$a: $b"
+#
+#	case ${b:0:1} in
+#		y|Y)
+#			return 0
+#			;;
+#		*)
+#			return 1
+#	esac
+#
+#	}
 
 PatchEntwareService()
 	{
@@ -14352,12 +14350,12 @@ IsVerbose()
 
 	}
 
-IsNtVerbose()
-	{
-
-	! IsVerbose
-
-	}
+#IsNtVerbose()
+#	{
+#
+#	! IsVerbose
+#
+#	}
 
 IsAnsiStrippingSupported()
 	{
@@ -16373,30 +16371,30 @@ ShowAsBug()
 
 	} >&2
 
-ShowAsQuiz()
-	{
-
-	[[ -n ${1:-} ]] || return
-
-	local a=quiz
-	local b=$1:
-
-	OpStepClearWait "$(TextBrightOrangeBlink "$a")" "$b"
-	WriteToLog "$a" "$b"
-
-	}
-
-ShowAsQuizDone()
-	{
-
-	[[ -n ${1:-} ]] || return
-
-	local a=quiz
-	local b=$1
-
-	OpStepClear "$(TextBrightOrange "$a")" "$b"
-
-	}
+#ShowAsQuiz()
+#	{
+#
+#	[[ -n ${1:-} ]] || return
+#
+#	local a=quiz
+#	local b=$1:
+#
+#	OpStepClearWait "$(TextBrightOrangeBlink "$a")" "$b"
+#	WriteToLog "$a" "$b"
+#
+#	}
+#
+#ShowAsQuizDone()
+#	{
+#
+#	[[ -n ${1:-} ]] || return
+#
+#	local a=quiz
+#	local b=$1
+#
+#	OpStepClear "$(TextBrightOrange "$a")" "$b"
+#
+#	}
 
 ShowAsPercentProgress()
 	{
