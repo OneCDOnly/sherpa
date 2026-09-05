@@ -1299,7 +1299,7 @@ CheckEnv()
 	AllocPackStatesToAcs
 
 	if QPKGs-ISupgradable.Exist sherpa; then
-		ShowAsNote "the $(TextBrightOrange sherpa) QPKG will be auto-upgraded"
+		ShowAsNote "the $(TextBrightOrange sherpa) QPKG will be upgraded"
 		QPKGs-ACupgrade-to:Add sherpa
 	fi
 
@@ -1319,7 +1319,7 @@ AssignQpkgsToActions()
 
 	FuncInit
 
-	ShowAsProc 'auto-assign actions'
+	ShowAsProc 'assign actions'
 
 	local action=''
 	local prospect=''
@@ -1328,7 +1328,7 @@ AssignQpkgsToActions()
 	# Don't auto re-install Entware if only 'status' action is requested.
 
 	if IsOsOnline && IsValidQpkgInstalled Entware && IsEntwareUpgradable && (IsNonStatusActionRequested || [[ $useropt_fix = true ]]); then
-		ShowAsNote "the $(TextBrightOrange Entware) QPKG will be auto-reinstalled (Entware packages were last updated in $(ConvertLongDateAsHuman $r_entware_packages_last_updated))"
+		ShowAsNote "the $(TextBrightOrange Entware) QPKG will be reinstalled (Entware packages were last updated in $(ConvertLongDateAsHuman $r_entware_packages_last_updated))"
 		QPKGs-ACreinstall-to:Add Entware
 	fi
 
