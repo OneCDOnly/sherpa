@@ -264,14 +264,18 @@ LoadConsts()
 
 	# Report, help and debug formatting.
 
-		readonly r_debug_log_string_length='<?management_debug_log_longest_string_length?>'
-		r_debug_log_width=80								# devdebug
+		r_debug_log_first_column_width='<?debug_log_first_column_width?>'
+		r_debug_log_first_column_width=10					# devdebug
+		readonly r_debug_log_first_column_width
 
-		IsNumber $r_debug_log_string_length && r_debug_log_width=$r_debug_log_string_length
+		r_debug_log_second_column_width='<?debug_log_second_column_width?>'
+		r_debug_log_second_column_width=25					# devdebug
+		readonly r_debug_log_second_column_width
+
+		r_debug_log_width='<?debug_log_width?>'
+		r_debug_log_width=85								# devdebug
 		readonly r_debug_log_width
 
-		readonly r_debug_log_first_column_width=9
-		readonly r_debug_log_second_column_width=24
 		readonly r_help_desc_indent=3
 		readonly r_help_syntax_indent=6
 		readonly r_report_action_result_indent=4
@@ -9684,10 +9688,10 @@ ConvertFirmwareVersionStringToNumber()
 	# Output should be compared using forced base-10 syntax (to handle leading zero):
 	#	Example: [[ $((10#$a)) -gt $((10#$b)) ]]
 
-	local -i major=0
-	local -i intermediate=0
-	local -i minor=0
-	local -i build=0
+	local major=0
+	local intermediate=0
+	local minor=0
+	local build=0
 
 	# Use only this many digits from start of each field.
 
@@ -9697,7 +9701,7 @@ ConvertFirmwareVersionStringToNumber()
 	local -i build_trim=4
 
 	while IFS=. read -r major intermediate minor build; do
-		printf "%0${major_trim}d%0${intermediate_trim}d%0${minor_trim}d%0${build_trim}d" "${major:0:major_trim}" "${intermediate:0:intermediate_trim}" "${minor:0:minor_trim}" "${build:0:build_trim}"
+		printf "%0${major_trim}d%0${intermediate_trim}d%0${minor_trim}d%0${build_trim}d" "$((10#${major:0:major_trim}))" "$((10#${intermediate:0:intermediate_trim}))" "$((10#${minor:0:minor_trim}))" "$((10#${build:0:build_trim}))"
 	done <<< "$1"
 
 	}
