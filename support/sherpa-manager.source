@@ -9496,8 +9496,11 @@ GetOsKernelVersion()
 GetOsKernelPageSize()
 	{
 
+	local a=''
+
 	if [[ -x /sbin/hal_app ]]; then
-		echo -n "$(/sbin/hal_app --get_pagesize)B"
+		a=$(/sbin/hal_app --get_pagesize)B
+		[[ $a = 4096B ]] && printf 4kiB || printf '%s' "$a"
 	else
 		/bin/grep KernelPageSize /proc/1/smaps | head -n1 | cut -f2 -d':' | tr -d ' ' | /bin/sed 's/kB/kiB/'
 	fi
@@ -13342,7 +13345,7 @@ IsOsCanUnofficialPackages()
 
 	SetOsFirmwareVer
 
-	[[ $((10#$r_nas_firmware_ver)) -gt $((10#$(ConvertFirmwareVersionStringToNumber 4.2.6))) && $((10#$r_nas_firmware_ver)) -le $((10#$(ConvertFirmwareVersionStringToNumber 4.3.6))) ]]
+	[[ $((10#$r_nas_firmware_ver)) -ge $((10#$(ConvertFirmwareVersionStringToNumber 4.3.3))) && $((10#$r_nas_firmware_ver)) -le $((10#$(ConvertFirmwareVersionStringToNumber 4.3.6))) ]]
 
 	}
 
@@ -13463,7 +13466,7 @@ IsOsStdKernelPageSize()
 
 	SetOsKernelPageSize
 
-	[[ $r_kernel_page_size = 4096B || $r_kernel_page_size = 4kiB ]]
+	[[ $r_kernel_page_size = 4kiB ]]
 
 	}
 
