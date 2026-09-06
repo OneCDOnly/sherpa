@@ -854,6 +854,7 @@ DebugLogEnv()
 	DebugInfoMinSepr
 	DebugHardware ok 'NAS model' "$(get_display_name)"
 	DebugHardware ok CPU "$(GetHardwareCPUInfo)"
+	DebugHardware ok 'CPU stepping' "$(GetHardwareCPUStepping)"
 	DebugHardware ok 'available CPU threads' "$r_cpu_threads"
 	DebugHardware ok 'CPU architecture' "$(GetCpuDataWidth)"
 	DebugHardware ok 'basic CPU SHA1 benchmark' "$(GetHardwareCPUBenchmark)"
@@ -9323,6 +9324,23 @@ GetHardwareCPUInfo()
 		/bin/grep '^model name' /proc/cpuinfo | head -n1 | /bin/sed 's/^.*: //' | tr -s ' '
 	elif /bin/grep '^Processor name' /proc/cpuinfo &> /dev/null; then
 		/bin/grep '^Processor name' /proc/cpuinfo | head -n1 | /bin/sed 's/^.*: //' | tr -s ' '
+	else
+		printf unknown
+
+		return 1
+	fi
+
+	return 0
+
+	}
+
+GetHardwareCPUStepping()
+	{
+
+	# BusyBox 1.01 doesn't support `grep -m`, so extract first mention the hard-way with `head`.
+
+	if /bin/grep '^stepping' /proc/cpuinfo &> /dev/null; then
+		/bin/grep '^stepping' /proc/cpuinfo | head -n1 | /bin/sed 's/^.*: //' | tr -s ' '
 	else
 		printf unknown
 
