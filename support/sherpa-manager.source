@@ -264,17 +264,15 @@ LoadConsts()
 
 	# Report, help and debug formatting.
 
-		r_debug_log_first_column_width='<?debug_log_first_column_width?>'
-		r_debug_log_first_column_width=10					# devdebug
-		readonly r_debug_log_first_column_width
-
-		r_debug_log_second_column_width='<?debug_log_second_column_width?>'
-		r_debug_log_second_column_width=25					# devdebug
-		readonly r_debug_log_second_column_width
-
-		r_debug_log_width='<?debug_log_width?>'
-		r_debug_log_width=85								# devdebug
-		readonly r_debug_log_width
+		if true; then													# omit-from-production
+			readonly r_debug_log_first_column_width=10					# omit-from-production
+			readonly r_debug_log_second_column_width=26					# omit-from-production
+			readonly r_debug_log_width=80								# omit-from-production
+		else															# omit-from-production
+			readonly r_debug_log_first_column_width='<?debug_log_first_column_width?>'
+			readonly r_debug_log_second_column_width='<?debug_log_second_column_width?>'
+			readonly r_debug_log_width='<?debug_log_width?>'
+		fi																# omit-from-production
 
 		readonly r_help_desc_indent=3
 		readonly r_help_syntax_indent=6
@@ -328,20 +326,20 @@ LoadConsts()
 
 	# Only for the message pipe enhanced log.
 
-		local date_field_longest_string='Tue 27 May 2025 4:55:42 PM EST '	# devdebug
-		readonly r_date_field_length=${#date_field_longest_string}			# devdebug
+		local date_field_longest_string='Tue 27 May 2025 4:55:42 PM EST '	# omit-from-production
+		readonly r_date_field_length=${#date_field_longest_string}			# omit-from-production
 
-		local tier_field_longest_string=independent							# devdebug
-		readonly r_tier_field_length=${#tier_field_longest_string}			# devdebug
+		local tier_field_longest_string=independent							# omit-from-production
+		readonly r_tier_field_length=${#tier_field_longest_string}			# omit-from-production
 
-		local action_field_longest_string=reactivate						# devdebug
-		readonly r_action_field_length=${#action_field_longest_string}		# devdebug
+		local action_field_longest_string=reactivate						# omit-from-production
+		readonly r_action_field_length=${#action_field_longest_string}		# omit-from-production
 
-		local key1_field_longest_string=update								# devdebug
-		readonly r_key1_field_length=${#key1_field_longest_string}			# devdebug
+		local key1_field_longest_string=update								# omit-from-production
+		readonly r_key1_field_length=${#key1_field_longest_string}			# omit-from-production
 
-		local key2_field_longest_string=package								# devdebug
-		readonly r_key2_field_length=${#key2_field_longest_string}			# devdebug
+		local key2_field_longest_string=package								# omit-from-production
+		readonly r_key2_field_length=${#key2_field_longest_string}			# omit-from-production
 
 	}
 
@@ -589,7 +587,7 @@ LoadEnv()
 
 		readonly r_abort_actions_pathfile=$r_temp_run_path/abort.action
 		readonly r_action_msg_pipe=$r_temp_run_path/action-messages.pipe
-		readonly r_action_msg_pipe_log_pathfile=/share/Public/enhanced-action-messages-pipe.log		# devdebug
+		readonly r_action_msg_pipe_log_pathfile=/share/Public/enhanced-action-messages-pipe.log		# omit-from-production
 		readonly r_action_results_pathfile=$r_action_log_path/action-results.log
 		readonly r_oom_log_pathfile=$r_temp_log_path/oom.log
 		readonly r_ram_freeused_pathfile=$r_temp_log_path/ram.freeused
@@ -1097,8 +1095,8 @@ CheckTasks()
 	FuncInit
 
 	local action=''
-#	local build_basic_states=false				# These states are found in /etc/config/qpkg.conf
-	local build_extended_states=false			# These cannot be found in /etc/config/qpkg.conf
+#	local build_basic_states=false				# These states are found in `/etc/config/qpkg.conf`
+	local build_extended_states=false			# These cannot be found in `/etc/config/qpkg.conf`
 	local group=''
 	local state=''
 
@@ -1572,7 +1570,7 @@ AssignQpkgsToActions()
 
 	QPKGs-ACsign-to.IsAny && LoadQpkgSigningCert
 
-	IsDebug && ListQPKGsActionsAll										# devdebug
+	IsDebug && ListQPKGsActionsAll										# omit-from-production
 
 	FuncExit
 
@@ -1664,7 +1662,7 @@ ProcActions()
 	local -i tier_index=0
 
 	rm -f "$r_action_results_pathfile" 2> /dev/null
-	OpenMsgPipeEnhancedLog												# devdebug
+	OpenMsgPipeEnhancedLog												# omit-from-production
 
 	# -> Package preparation phase <-
 
@@ -1778,7 +1776,7 @@ ProcActions()
 	fi
 
 	show_action_results_report=true
-	CloseMsgPipeEnhancedLog												# devdebug
+	CloseMsgPipeEnhancedLog												# omit-from-production
 
 	FuncExit
 
@@ -2162,7 +2160,7 @@ PrepareArgs()
 	args=(${a/--/})
 	arg_problem=false
 
-	DebugArray args ${args[@]+"${args[@]}"}								# devdebug
+	DebugArray args ${args[@]+"${args[@]}"}								# omit-from-production
 
 	[[ -z $r_args_raw ]] && useropt_help_basic=true
 
@@ -2314,10 +2312,10 @@ ParseManagementArgs()
 		args_incomplete+=("$user_action")								# Save the actual action word, phrase or char specified by the user.
 	fi
 
-	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}	# devdebug
+	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}	# omit-from-production
 
 	args=(${args_remaining[@]+"${args_remaining[@]}"})
-	DebugArray args ${args[@]+"${args[@]}"}										# devdebug
+	DebugArray args ${args[@]+"${args[@]}"}										# omit-from-production
 
 	FuncExit
 
@@ -2511,10 +2509,10 @@ ParseHelpArgs()
 		esac
 	done
 
-	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}	# devdebug
+	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}	# omit-from-production
 
 	args=(${args_remaining[@]+"${args_remaining[@]}"})
-	DebugArray args ${args[@]+"${args[@]}"}										# devdebug
+	DebugArray args ${args[@]+"${args[@]}"}										# omit-from-production
 
 	FuncExit
 
@@ -2706,10 +2704,10 @@ ParseShowArgs()
 		args_incomplete+=("$user_action")								# Save the actual action word, phrase or char specified by the user.
 	fi
 
-	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}	# devdebug
+	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}	# omit-from-production
 
 	args=(${args_remaining[@]+"${args_remaining[@]}"})
-	DebugArray args ${args[@]+"${args[@]}"}										# devdebug
+	DebugArray args ${args[@]+"${args[@]}"}										# omit-from-production
 
 	FuncExit
 
@@ -2840,11 +2838,11 @@ ParseListArgs()
 		args_incomplete+=("$user_action")								# Save the actual action word, phrase or char specified by the user.
 	fi
 
-	DebugVar generate_list_report										# devdebug
-	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}	# devdebug
+	DebugVar generate_list_report										# omit-from-production
+	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}	# omit-from-production
 
 	args=(${args_remaining[@]+"${args_remaining[@]}"})
-	DebugArray args ${args[@]+"${args[@]}"}										# devdebug
+	DebugArray args ${args[@]+"${args[@]}"}										# omit-from-production
 
 	FuncExit
 
@@ -3000,10 +2998,10 @@ ParseActionArgs()
 		esac
 	done
 
-	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}	# devdebug
+	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}	# omit-from-production
 
 	args=(${args_remaining[@]+"${args_remaining[@]}"})
-	DebugArray args ${args[@]+"${args[@]}"}										# devdebug
+	DebugArray args ${args[@]+"${args[@]}"}										# omit-from-production
 
 	FuncExit
 
@@ -3521,38 +3519,38 @@ ResetArchivedLogs()
 
 	}
 
-Quiz()
-	{
-
-	# Inputs: (local)
-	#	$1 = prompt/question
-
-	# Inputs: (global)
-	#	$r_gnu_stty_cmd
-
-	# Outputs: (local)
-	#	$? = 0 if "y", 1 if anything else
-
-	local a=${1:?${FUNCNAME[0]}(): $e_noprm}
-	local b=''
-
-	ShowAsQuiz "$a"
-	[[ -x $r_gnu_stty_cmd ]] && IsInTerminal && $r_gnu_stty_cmd igncr	# Ignore CR to prevent an onscreen linefeed (which disrupts same-line rewrite used later, and looks bad).
-	read -rn1 b
-	[[ -x $r_gnu_stty_cmd ]] && IsInTerminal && $r_gnu_stty_cmd -igncr	# Re-allow CR.
-	DebugVar b
-
-	ShowAsQuizDone "$a: $b"
-
-	case ${b:0:1} in
-		y|Y)
-			return 0
-			;;
-		*)
-			return 1
-	esac
-
-	}
+#Quiz()
+#	{
+#
+#	# Inputs: (local)
+#	#	$1 = prompt/question
+#
+#	# Inputs: (global)
+#	#	$r_gnu_stty_cmd
+#
+#	# Outputs: (local)
+#	#	$? = 0 if "y", 1 if anything else
+#
+#	local a=${1:?${FUNCNAME[0]}(): $e_noprm}
+#	local b=''
+#
+#	ShowAsQuiz "$a"
+#	[[ -x $r_gnu_stty_cmd ]] && IsInTerminal && $r_gnu_stty_cmd igncr	# Ignore CR to prevent an onscreen linefeed (which disrupts same-line rewrite used later, and looks bad).
+#	read -rn1 b
+#	[[ -x $r_gnu_stty_cmd ]] && IsInTerminal && $r_gnu_stty_cmd -igncr	# Re-allow CR.
+#	DebugVar b
+#
+#	ShowAsQuizDone "$a: $b"
+#
+#	case ${b:0:1} in
+#		y|Y)
+#			return 0
+#			;;
+#		*)
+#			return 1
+#	esac
+#
+#	}
 
 PatchEntwareService()
 	{
@@ -7462,66 +7460,66 @@ ListQPKGsActions()
 
 	}
 
-ListQPKGsActionsAll()																						# devdebug
-	{																										# devdebug
+ListQPKGsActionsAll()																						# omit-from-production
+	{																										# omit-from-production
 
-	# Only used when debugging.																				# devdebug
+	# Only used when debugging.																				# omit-from-production
 
-	# Inputs: (global)																						# devdebug
-	#	$r_qpkg_actions[]																					# devdebug
+	# Inputs: (global)																						# omit-from-production
+	#	$r_qpkg_actions[]																					# omit-from-production
 
-	FuncInit																								# devdebug
+	FuncInit																								# omit-from-production
 
-	local a=''																								# devdebug
-	local b=''																								# devdebug
-	DebugInfoMinSepr																						# devdebug
+	local a=''																								# omit-from-production
+	local b=''																								# omit-from-production
+	DebugInfoMinSepr																						# omit-from-production
 
-	for a in "${r_qpkg_actions[@]}"; do																		# devdebug
-		for b in to ok er sk se sa; do																		# devdebug
-			if QPKGs-AC${a}-${b}.IsAny; then																# devdebug
-				DebugQpkg info "AC${a}-${b}" "($(QPKGs-AC${a}-${b}:Count)) $(QPKGs-AC${a}-${b}:ListCSV) "	# devdebug
-			fi																								# devdebug
-		done																								# devdebug
-	done																									# devdebug
+	for a in "${r_qpkg_actions[@]}"; do																		# omit-from-production
+		for b in to ok er sk se sa; do																		# omit-from-production
+			if QPKGs-AC${a}-${b}.IsAny; then																# omit-from-production
+				DebugQpkg info "AC${a}-${b}" "($(QPKGs-AC${a}-${b}:Count)) $(QPKGs-AC${a}-${b}:ListCSV) "	# omit-from-production
+			fi																								# omit-from-production
+		done																								# omit-from-production
+	done																									# omit-from-production
 
-	DebugInfoMinSepr																						# devdebug
+	DebugInfoMinSepr																						# omit-from-production
 
-	FuncExit																								# devdebug
+	FuncExit																								# omit-from-production
 
-	}																										# devdebug
+	}																										# omit-from-production
 
-ListQPKGsFlagsAll()																							# devdebug
-	{																										# devdebug
+ListQPKGsFlagsAll()																							# omit-from-production
+	{																										# omit-from-production
 
-	# Only used when debugging.																				# devdebug
+	# Only used when debugging.																				# omit-from-production
 
-	# Inputs: (global)																						# devdebug
-	#	$r_qpkg_actions[]																					# devdebug
-	#	$r_qpkg_is_states[]																					# devdebug
+	# Inputs: (global)																						# omit-from-production
+	#	$r_qpkg_actions[]																					# omit-from-production
+	#	$r_qpkg_is_states[]																					# omit-from-production
 
-	FuncInit																								# devdebug
+	FuncInit																								# omit-from-production
 
-	local a=''																								# devdebug
-	local b=''																								# devdebug
-	DebugInfoMinSepr																						# devdebug
+	local a=''																								# omit-from-production
+	local b=''																								# omit-from-production
+	DebugInfoMinSepr																						# omit-from-production
 
-	for a in "${r_qpkg_actions[@]}"; do																		# devdebug
-		for b in "${r_qpkg_is_states[@]}"; do																# devdebug
-			if IsFuncExist QPKGs.AC${a}IS${b}.IsSet; then													# devdebug
-				if QPKGs.AC${a}IS${b}.IsSet; then															# devdebug
-					DebugQpkg info "AC${a}IS${b}" "set"														# devdebug
-#				else																						# devdebug
-#					DebugQpkg info "AC${a}IS${b}" "unset"													# devdebug
-				fi																							# devdebug
-			fi																								# devdebug
-		done																								# devdebug
-	done																									# devdebug
+	for a in "${r_qpkg_actions[@]}"; do																		# omit-from-production
+		for b in "${r_qpkg_is_states[@]}"; do																# omit-from-production
+			if IsFuncExist QPKGs.AC${a}IS${b}.IsSet; then													# omit-from-production
+				if QPKGs.AC${a}IS${b}.IsSet; then															# omit-from-production
+					DebugQpkg info "AC${a}IS${b}" "set"														# omit-from-production
+#				else																						# omit-from-production
+#					DebugQpkg info "AC${a}IS${b}" "unset"													# omit-from-production
+				fi																							# omit-from-production
+			fi																								# omit-from-production
+		done																								# omit-from-production
+	done																									# omit-from-production
 
-	DebugInfoMinSepr																						# devdebug
+	DebugInfoMinSepr																						# omit-from-production
 
-	FuncExit																								# devdebug
+	FuncExit																								# omit-from-production
 
-	}																										# devdebug
+	}																										# omit-from-production
 
 ListIPKsActions()
 	{
@@ -9074,33 +9072,33 @@ ReadFromMsgPipe()
 
 	eval "$1='${_msg1_key:-null}' $2='${_msg1_value:-null}' $3='${_msg2_key:-null}' $4='${_msg2_value:-null}'"
 
-	AppendToMsgPipeEnhancedLog																# devdebug
+	AppendToMsgPipeEnhancedLog																# omit-from-production
 
 	return 0
 
 	}
 
-OpenMsgPipeEnhancedLog()																	# devdebug
-	{																						# devdebug
+OpenMsgPipeEnhancedLog()																	# omit-from-production
+	{																						# omit-from-production
 
 	# Inputs: (global)
 	#	$r_action_msg_pipe_log_pathfile
 
-	[[ -e $r_action_msg_pipe_log_pathfile ]] && rm -f "$r_action_msg_pipe_log_pathfile"		# devdebug
+	[[ -e $r_action_msg_pipe_log_pathfile ]] && rm -f "$r_action_msg_pipe_log_pathfile"		# omit-from-production
 
-	AppendToMsgPipeEnhancedLog 'opened new log session.'									# devdebug
+	AppendToMsgPipeEnhancedLog 'opened new log session.'									# omit-from-production
 
-	}																						# devdebug
+	}																						# omit-from-production
 
-CloseMsgPipeEnhancedLog()																	# devdebug
-	{																						# devdebug
+CloseMsgPipeEnhancedLog()																	# omit-from-production
+	{																						# omit-from-production
 
-	AppendToMsgPipeEnhancedLog 'closed log session.'										# devdebug
+	AppendToMsgPipeEnhancedLog 'closed log session.'										# omit-from-production
 
-	}																						# devdebug
+	}																						# omit-from-production
 
-AppendToMsgPipeEnhancedLog()																# devdebug
-	{																						# devdebug
+AppendToMsgPipeEnhancedLog()																# omit-from-production
+	{																						# omit-from-production
 
 	# Inputs: (global)
 	#	$r_action
@@ -9122,54 +9120,54 @@ AppendToMsgPipeEnhancedLog()																# devdebug
 	# Outputs: (global)
 	#	stdout -> $r_action_msg_pipe_log_pathfile
 
-	local a=$(ExpandMsgPipeShortcodes "${_msg1_value:-null}")								# devdebug
+	local a=$(ExpandMsgPipeShortcodes "${_msg1_value:-null}")								# omit-from-production
 
-	if [[ -n ${1:-} ]]; then																# devdebug
-		printf "[%-${r_date_field_length}s] %s\n" "$(ConvertNowToFullDate)" "$1"			# devdebug
-	elif [[ $_msg1_key = run ]]; then														# devdebug
-		printf "[%-${r_date_field_length}s] tier:%-${r_tier_field_length}s action:%-${r_action_field_length}s key1:%-${r_key1_field_length}s val1:%s\n" "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "'$a'"					# devdebug
-	elif [[ $_msg1_key = state || $msg1_key = update ]]; then								# devdebug
-		printf "[%-${r_date_field_length}s] tier:%-${r_tier_field_length}s action:%-${r_action_field_length}s key1:%-${r_key1_field_length}s val1:%-38s key2:%-${r_key2_field_length}s val2:%s\n" "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "$a" "$_msg2_key" "$_msg2_value" # devdebug
-	elif [[ $_msg2_key = null && $_msg2_value = null ]]; then								# devdebug
-		printf "[%-${r_date_field_length}s] tier:%-${r_tier_field_length}s action:%-${r_action_field_length}s key1:%-${r_key1_field_length}s val1:%s\n" "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "$a"						# devdebug
-	else																					# devdebug
-		printf "[%-${r_date_field_length}s] tier:%-${r_tier_field_length}s action:%-${r_action_field_length}s key1:%-${r_key1_field_length}s val1:%-38s key2:%-${r_key2_field_length}s val2:%s\n" "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "'$a'" "$_msg2_key" "$_msg2_value" # devdebug
-	fi																						# devdebug
+	if [[ -n ${1:-} ]]; then																# omit-from-production
+		printf "[%-${r_date_field_length}s] %s\n" "$(ConvertNowToFullDate)" "$1"			# omit-from-production
+	elif [[ $_msg1_key = run ]]; then														# omit-from-production
+		printf "[%-${r_date_field_length}s] tier:%-${r_tier_field_length}s action:%-${r_action_field_length}s key1:%-${r_key1_field_length}s val1:%s\n" "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "'$a'"					# omit-from-production
+	elif [[ $_msg1_key = state || $msg1_key = update ]]; then								# omit-from-production
+		printf "[%-${r_date_field_length}s] tier:%-${r_tier_field_length}s action:%-${r_action_field_length}s key1:%-${r_key1_field_length}s val1:%-38s key2:%-${r_key2_field_length}s val2:%s\n" "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "$a" "$_msg2_key" "$_msg2_value" # omit-from-production
+	elif [[ $_msg2_key = null && $_msg2_value = null ]]; then								# omit-from-production
+		printf "[%-${r_date_field_length}s] tier:%-${r_tier_field_length}s action:%-${r_action_field_length}s key1:%-${r_key1_field_length}s val1:%s\n" "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "$a"						# omit-from-production
+	else																					# omit-from-production
+		printf "[%-${r_date_field_length}s] tier:%-${r_tier_field_length}s action:%-${r_action_field_length}s key1:%-${r_key1_field_length}s val1:%-38s key2:%-${r_key2_field_length}s val2:%s\n" "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "'$a'" "$_msg2_key" "$_msg2_value" # omit-from-production
+	fi																						# omit-from-production
 
-	} >> "$r_action_msg_pipe_log_pathfile"													# devdebug
+	} >> "$r_action_msg_pipe_log_pathfile"													# omit-from-production
 
-ExpandMsgPipeShortcodes()																	# devdebug
-	{																						# devdebug
+ExpandMsgPipeShortcodes()																	# omit-from-production
+	{																						# omit-from-production
 
-	[[ -n ${1:-} ]] || return																# devdebug
+	[[ -n ${1:-} ]] || return																# omit-from-production
 
-	case $1 in																				# devdebug
-		ok)																					# devdebug
-			printf 'completed ok'															# devdebug
-			;;																				# devdebug
-		er)																					# devdebug
-			printf 'completed with errors'													# devdebug
-			;;																				# devdebug
-		sk)																					# devdebug
-			printf skipped																	# devdebug
-			;;																				# devdebug
-		se)																					# devdebug
-			printf 'skipped with errors'													# devdebug
-			;;																				# devdebug
-		sa)																					# devdebug
-			printf 'skipped and abort'														# devdebug
-			;;																				# devdebug
-		en)																					# devdebug
-			printf entry																	# devdebug
-			;;																				# devdebug
-		ex)																					# devdebug
-			printf exit																		# devdebug
-			;;																				# devdebug
-		*)																					# devdebug
-			printf '%s' "$1"																# devdebug
-	esac																					# devdebug
+	case $1 in																				# omit-from-production
+		ok)																					# omit-from-production
+			printf 'completed ok'															# omit-from-production
+			;;																				# omit-from-production
+		er)																					# omit-from-production
+			printf 'completed with errors'													# omit-from-production
+			;;																				# omit-from-production
+		sk)																					# omit-from-production
+			printf skipped																	# omit-from-production
+			;;																				# omit-from-production
+		se)																					# omit-from-production
+			printf 'skipped with errors'													# omit-from-production
+			;;																				# omit-from-production
+		sa)																					# omit-from-production
+			printf 'skipped and abort'														# omit-from-production
+			;;																				# omit-from-production
+		en)																					# omit-from-production
+			printf entry																	# omit-from-production
+			;;																				# omit-from-production
+		ex)																					# omit-from-production
+			printf exit																		# omit-from-production
+			;;																				# omit-from-production
+		*)																					# omit-from-production
+			printf '%s' "$1"																# omit-from-production
+	esac																					# omit-from-production
 
-	}																						# devdebug
+	}																						# omit-from-production
 
 FindNextFD()
 	{
@@ -9496,8 +9494,11 @@ GetOsKernelVersion()
 GetOsKernelPageSize()
 	{
 
+	local a=''
+
 	if [[ -x /sbin/hal_app ]]; then
-		echo -n "$(/sbin/hal_app --get_pagesize)B"
+		a=$(/sbin/hal_app --get_pagesize)B
+		[[ $a = 4096B ]] && printf 4kiB || printf '%s' "$a"
 	else
 		/bin/grep KernelPageSize /proc/1/smaps | head -n1 | cut -f2 -d':' | tr -d ' ' | /bin/sed 's/kB/kiB/'
 	fi
@@ -9977,16 +9978,16 @@ EnableVerbose()
 
 	}
 
-DisableVerbose()								# devdebug
-	{											# devdebug
+DisableVerbose()								# omit-from-production
+	{											# omit-from-production
 
-	useropt_verbose=false						# devdebug
-	DebugVar useropt_verbose					# devdebug
+	useropt_verbose=false						# omit-from-production
+	DebugVar useropt_verbose					# omit-from-production
 
-	HideCursor									# devdebug
-	HideKeystrokes								# devdebug
+	HideCursor									# omit-from-production
+	HideKeystrokes								# omit-from-production
 
-	}											# devdebug
+	}											# omit-from-production
 
 EnableDebugToArchiveAndFile()
 	{
@@ -13342,7 +13343,7 @@ IsOsCanUnofficialPackages()
 
 	SetOsFirmwareVer
 
-	[[ $((10#$r_nas_firmware_ver)) -gt $((10#$(ConvertFirmwareVersionStringToNumber 4.2.6))) && $((10#$r_nas_firmware_ver)) -le $((10#$(ConvertFirmwareVersionStringToNumber 4.3.6))) ]]
+	[[ $((10#$r_nas_firmware_ver)) -ge $((10#$(ConvertFirmwareVersionStringToNumber 4.3.3))) && $((10#$r_nas_firmware_ver)) -le $((10#$(ConvertFirmwareVersionStringToNumber 4.3.6))) ]]
 
 	}
 
@@ -13463,7 +13464,7 @@ IsOsStdKernelPageSize()
 
 	SetOsKernelPageSize
 
-	[[ $r_kernel_page_size = 4096B || $r_kernel_page_size = 4kiB ]]
+	[[ $r_kernel_page_size = 4kiB ]]
 
 	}
 
@@ -14349,12 +14350,12 @@ IsVerbose()
 
 	}
 
-IsNtVerbose()
-	{
-
-	! IsVerbose
-
-	}
+#IsNtVerbose()
+#	{
+#
+#	! IsVerbose
+#
+#	}
 
 IsAnsiStrippingSupported()
 	{
@@ -14655,8 +14656,8 @@ FileCountSpec()
 
 	}
 
-PidLogger()																# devdebug
-	{																	# devdebug
+PidLogger()																# omit-from-production
+	{																	# omit-from-production
 
 	# Inputs: (local)
 	#	$1 = stage descriptor.
@@ -14664,19 +14665,19 @@ PidLogger()																# devdebug
 	#	$3 = PPID.
 	#	$4 = command string.
 
-	local a=/share/Public/PidLogger.log									# devdebug
+	local a=/share/Public/PidLogger.log									# omit-from-production
 
-	if [[ -z ${1:-} ]]; then											# devdebug
-		echo >> "$a"													# devdebug
+	if [[ -z ${1:-} ]]; then											# omit-from-production
+		echo >> "$a"													# omit-from-production
 
-		return															# devdebug
-	fi																	# devdebug
+		return															# omit-from-production
+	fi																	# omit-from-production
 
-	printf "[%s] stage: '%-20s' ppid: '%-5s' pid: '%-5s' cmd: '%s'\n" "$(date)" "$1" "$3" "$2" "$4" >> "$a" # devdebug
-# printf "[%s] stage: '%-20s' pid: '%-5s' cmdline: '%s'\n" "$(date)" "$1" "$2" "$(tr '\0' ' ' < /proc/$2/cmdline)" >> $r_sys_log_path/sherpa/pids/PidLogger-pid-$2.log # devdebug
-# printf "[%s] stage: '%-20s' ppid: '%-5s' cmdline: '%s'\n" "$(date)" "$1" "$3" "$(tr '\0' ' ' < /proc/$3/cmdline)" >> $r_sys_log_path/sherpa/pids/PidLogger-pid-$3.log # devdebug
+	printf "[%s] stage: '%-20s' ppid: '%-5s' pid: '%-5s' cmd: '%s'\n" "$(date)" "$1" "$3" "$2" "$4" >> "$a" # omit-from-production
+# printf "[%s] stage: '%-20s' pid: '%-5s' cmdline: '%s'\n" "$(date)" "$1" "$2" "$(tr '\0' ' ' < /proc/$2/cmdline)" >> $r_sys_log_path/sherpa/pids/PidLogger-pid-$2.log # omit-from-production
+# printf "[%s] stage: '%-20s' ppid: '%-5s' cmdline: '%s'\n" "$(date)" "$1" "$3" "$(tr '\0' ' ' < /proc/$3/cmdline)" >> $r_sys_log_path/sherpa/pids/PidLogger-pid-$3.log # omit-from-production
 
-	}																	# devdebug
+	}																	# omit-from-production
 
 Executer()
 	{
@@ -14739,9 +14740,9 @@ Executer()
 	if [[ -s $r_log_pathfile ]]; then
 		ShowAsResultAndStdout "$z" "$(< "$r_log_pathfile")" >> "$2"
 
-		if false; then													# devdebug
+		if false; then													# omit-from-production
 			rm -f "$r_log_pathfile" 2> /dev/null
-		fi																# devdebug
+		fi																# omit-from-production
 	else
 		ShowAsResultAndStdout "$z" '<null>' >> "$2"
 	fi
@@ -14756,9 +14757,9 @@ Executer()
 
 			DebugAsDone "$exec_msg OK ($z)"
 
-			if false; then												# devdebug
+			if false; then												# omit-from-production
 				IsNtDebug && rm -f "$2" 2> /dev/null
-			fi															# devdebug
+			fi															# omit-from-production
 			;;
 		"${4:-}")
 			if [[ ${3:-} != log:failure-only ]] || IsDebug; then
@@ -14767,9 +14768,9 @@ Executer()
 
 			DebugAsWarn "$exec_msg with permitted errors ($z)"
 
-			if false; then												# devdebug
+			if false; then												# omit-from-production
 				IsNtDebug && rm -f "$2" 2> /dev/null
-			fi															# devdebug
+			fi															# omit-from-production
 			;;
 		*)
 			AddExtLogToSessLog "$2"
@@ -14805,16 +14806,16 @@ KludgeExecuter()
 
 	pid=$!
 
-	PidLogger												# devdebug
-	PidLogger pre-background-wait "$pid" "$PPID" "$a"		# devdebug
+	PidLogger												# omit-from-production
+	PidLogger pre-background-wait "$pid" "$PPID" "$a"		# omit-from-production
 
 	if [[ $pid -gt 1 ]]; then
 		wait $pid 2> /dev/null
 		z=$?
 	fi
 
-	PidLogger post-background-wait "$pid" "$PPID" "$a"		# devdebug
-	PidLogger pre-detached-wait "$pid" "$PPID" "$a"			# devdebug
+	PidLogger post-background-wait "$pid" "$PPID" "$a"		# omit-from-production
+	PidLogger pre-detached-wait "$pid" "$PPID" "$a"			# omit-from-production
 
 	pid=$(FindPid '/bin/sh' "$r_local_pathfile")
 
@@ -14826,7 +14827,7 @@ KludgeExecuter()
 		done
 	fi
 
-	PidLogger post-detached-wait "$pid" "$PPID" "$a"		# devdebug
+	PidLogger post-detached-wait "$pid" "$PPID" "$a"		# omit-from-production
 
 	FuncExit $z
 
@@ -16370,30 +16371,30 @@ ShowAsBug()
 
 	} >&2
 
-ShowAsQuiz()
-	{
-
-	[[ -n ${1:-} ]] || return
-
-	local a=quiz
-	local b=$1:
-
-	OpStepClearWait "$(TextBrightOrangeBlink "$a")" "$b"
-	WriteToLog "$a" "$b"
-
-	}
-
-ShowAsQuizDone()
-	{
-
-	[[ -n ${1:-} ]] || return
-
-	local a=quiz
-	local b=$1
-
-	OpStepClear "$(TextBrightOrange "$a")" "$b"
-
-	}
+#ShowAsQuiz()
+#	{
+#
+#	[[ -n ${1:-} ]] || return
+#
+#	local a=quiz
+#	local b=$1:
+#
+#	OpStepClearWait "$(TextBrightOrangeBlink "$a")" "$b"
+#	WriteToLog "$a" "$b"
+#
+#	}
+#
+#ShowAsQuizDone()
+#	{
+#
+#	[[ -n ${1:-} ]] || return
+#
+#	local a=quiz
+#	local b=$1
+#
+#	OpStepClear "$(TextBrightOrange "$a")" "$b"
+#
+#	}
 
 ShowAsPercentProgress()
 	{
@@ -17537,7 +17538,7 @@ CaughtSIGINT()
 	ShowAsAbort 'caught SIGINT'
 	CloseMsgPipe
 
-	# TODO: send SIGTERM to each PID in $r_async_procs_path here.
+	# TODO: send SIGTERM to each PID in `$r_async_procs_path` here.
 
 	exit
 
