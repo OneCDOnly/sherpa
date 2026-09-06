@@ -1095,8 +1095,8 @@ CheckTasks()
 	FuncInit
 
 	local action=''
-#	local build_basic_states=false				# These states are found in /etc/config/qpkg.conf
-	local build_extended_states=false			# These cannot be found in /etc/config/qpkg.conf
+#	local build_basic_states=false				# These states are found in `/etc/config/qpkg.conf`
+	local build_extended_states=false			# These cannot be found in `/etc/config/qpkg.conf`
 	local group=''
 	local state=''
 
@@ -17538,7 +17538,7 @@ CaughtSIGINT()
 	ShowAsAbort 'caught SIGINT'
 	CloseMsgPipe
 
-	# TODO: send SIGTERM to each PID in $r_async_procs_path here.
+	# TODO: send SIGTERM to each PID in `$r_async_procs_path` here.
 
 	exit
 
