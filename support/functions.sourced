@@ -112,7 +112,7 @@ Squeeze()
 		echo -n 'squeezing ... '
 		local a=$(<"$1")
 
-		a=$(sed '/devdebug/d' <<< "$a")													# Remove lines with 'devdebug' tag.
+		a=$(sed '/omit-in-production/d' <<< "$a")										# Remove lines with 'omit-in-production' tag.
 
 		a=$(sed '/[#>][[:space:]]>/! s/[[:space:]]>/>/g' <<< "$a")						# Remove whitespace before fd1 redirects.
 		a=$(sed '/squeezer-ignore/! s/>[[:space:]]/>/g' <<< "$a")						# Remove whitespace after fd1 redirects, except for lines with 'squeezer-ignore' tag.
