@@ -264,15 +264,15 @@ LoadConsts()
 
 	# Report, help and debug formatting.
 
-		if true; then													# omit-in-production
-			readonly r_debug_log_first_column_width=10					# omit-in-production
-			readonly r_debug_log_second_column_width=26					# omit-in-production
-			readonly r_debug_log_width=80								# omit-in-production
-		else															# omit-in-production
+		if true; then													# omit-from-production
+			readonly r_debug_log_first_column_width=10					# omit-from-production
+			readonly r_debug_log_second_column_width=26					# omit-from-production
+			readonly r_debug_log_width=80								# omit-from-production
+		else															# omit-from-production
 			readonly r_debug_log_first_column_width='<?debug_log_first_column_width?>'
 			readonly r_debug_log_second_column_width='<?debug_log_second_column_width?>'
 			readonly r_debug_log_width='<?debug_log_width?>'
-		fi																# omit-in-production
+		fi																# omit-from-production
 
 		readonly r_help_desc_indent=3
 		readonly r_help_syntax_indent=6
@@ -326,20 +326,20 @@ LoadConsts()
 
 	# Only for the message pipe enhanced log.
 
-		local date_field_longest_string='Tue 27 May 2025 4:55:42 PM EST '	# omit-in-production
-		readonly r_date_field_length=${#date_field_longest_string}			# omit-in-production
+		local date_field_longest_string='Tue 27 May 2025 4:55:42 PM EST '	# omit-from-production
+		readonly r_date_field_length=${#date_field_longest_string}			# omit-from-production
 
-		local tier_field_longest_string=independent							# omit-in-production
-		readonly r_tier_field_length=${#tier_field_longest_string}			# omit-in-production
+		local tier_field_longest_string=independent							# omit-from-production
+		readonly r_tier_field_length=${#tier_field_longest_string}			# omit-from-production
 
-		local action_field_longest_string=reactivate						# omit-in-production
-		readonly r_action_field_length=${#action_field_longest_string}		# omit-in-production
+		local action_field_longest_string=reactivate						# omit-from-production
+		readonly r_action_field_length=${#action_field_longest_string}		# omit-from-production
 
-		local key1_field_longest_string=update								# omit-in-production
-		readonly r_key1_field_length=${#key1_field_longest_string}			# omit-in-production
+		local key1_field_longest_string=update								# omit-from-production
+		readonly r_key1_field_length=${#key1_field_longest_string}			# omit-from-production
 
-		local key2_field_longest_string=package								# omit-in-production
-		readonly r_key2_field_length=${#key2_field_longest_string}			# omit-in-production
+		local key2_field_longest_string=package								# omit-from-production
+		readonly r_key2_field_length=${#key2_field_longest_string}			# omit-from-production
 
 	}
 
@@ -587,7 +587,7 @@ LoadEnv()
 
 		readonly r_abort_actions_pathfile=$r_temp_run_path/abort.action
 		readonly r_action_msg_pipe=$r_temp_run_path/action-messages.pipe
-		readonly r_action_msg_pipe_log_pathfile=/share/Public/enhanced-action-messages-pipe.log		# omit-in-production
+		readonly r_action_msg_pipe_log_pathfile=/share/Public/enhanced-action-messages-pipe.log		# omit-from-production
 		readonly r_action_results_pathfile=$r_action_log_path/action-results.log
 		readonly r_oom_log_pathfile=$r_temp_log_path/oom.log
 		readonly r_ram_freeused_pathfile=$r_temp_log_path/ram.freeused
@@ -1570,7 +1570,7 @@ AssignQpkgsToActions()
 
 	QPKGs-ACsign-to.IsAny && LoadQpkgSigningCert
 
-	IsDebug && ListQPKGsActionsAll										# omit-in-production
+	IsDebug && ListQPKGsActionsAll										# omit-from-production
 
 	FuncExit
 
@@ -1662,7 +1662,7 @@ ProcActions()
 	local -i tier_index=0
 
 	rm -f "$r_action_results_pathfile" 2> /dev/null
-	OpenMsgPipeEnhancedLog												# omit-in-production
+	OpenMsgPipeEnhancedLog												# omit-from-production
 
 	# -> Package preparation phase <-
 
@@ -1776,7 +1776,7 @@ ProcActions()
 	fi
 
 	show_action_results_report=true
-	CloseMsgPipeEnhancedLog												# omit-in-production
+	CloseMsgPipeEnhancedLog												# omit-from-production
 
 	FuncExit
 
@@ -2160,7 +2160,7 @@ PrepareArgs()
 	args=(${a/--/})
 	arg_problem=false
 
-	DebugArray args ${args[@]+"${args[@]}"}								# omit-in-production
+	DebugArray args ${args[@]+"${args[@]}"}								# omit-from-production
 
 	[[ -z $r_args_raw ]] && useropt_help_basic=true
 
@@ -2312,10 +2312,10 @@ ParseManagementArgs()
 		args_incomplete+=("$user_action")								# Save the actual action word, phrase or char specified by the user.
 	fi
 
-	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}	# omit-in-production
+	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}	# omit-from-production
 
 	args=(${args_remaining[@]+"${args_remaining[@]}"})
-	DebugArray args ${args[@]+"${args[@]}"}										# omit-in-production
+	DebugArray args ${args[@]+"${args[@]}"}										# omit-from-production
 
 	FuncExit
 
@@ -2509,10 +2509,10 @@ ParseHelpArgs()
 		esac
 	done
 
-	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}	# omit-in-production
+	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}	# omit-from-production
 
 	args=(${args_remaining[@]+"${args_remaining[@]}"})
-	DebugArray args ${args[@]+"${args[@]}"}										# omit-in-production
+	DebugArray args ${args[@]+"${args[@]}"}										# omit-from-production
 
 	FuncExit
 
@@ -2704,10 +2704,10 @@ ParseShowArgs()
 		args_incomplete+=("$user_action")								# Save the actual action word, phrase or char specified by the user.
 	fi
 
-	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}	# omit-in-production
+	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}	# omit-from-production
 
 	args=(${args_remaining[@]+"${args_remaining[@]}"})
-	DebugArray args ${args[@]+"${args[@]}"}										# omit-in-production
+	DebugArray args ${args[@]+"${args[@]}"}										# omit-from-production
 
 	FuncExit
 
@@ -2838,11 +2838,11 @@ ParseListArgs()
 		args_incomplete+=("$user_action")								# Save the actual action word, phrase or char specified by the user.
 	fi
 
-	DebugVar generate_list_report										# omit-in-production
-	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}	# omit-in-production
+	DebugVar generate_list_report										# omit-from-production
+	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}	# omit-from-production
 
 	args=(${args_remaining[@]+"${args_remaining[@]}"})
-	DebugArray args ${args[@]+"${args[@]}"}										# omit-in-production
+	DebugArray args ${args[@]+"${args[@]}"}										# omit-from-production
 
 	FuncExit
 
@@ -2998,10 +2998,10 @@ ParseActionArgs()
 		esac
 	done
 
-	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}	# omit-in-production
+	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}	# omit-from-production
 
 	args=(${args_remaining[@]+"${args_remaining[@]}"})
-	DebugArray args ${args[@]+"${args[@]}"}										# omit-in-production
+	DebugArray args ${args[@]+"${args[@]}"}										# omit-from-production
 
 	FuncExit
 
@@ -7460,66 +7460,66 @@ ListQPKGsActions()
 
 	}
 
-ListQPKGsActionsAll()																						# omit-in-production
-	{																										# omit-in-production
+ListQPKGsActionsAll()																						# omit-from-production
+	{																										# omit-from-production
 
-	# Only used when debugging.																				# omit-in-production
+	# Only used when debugging.																				# omit-from-production
 
-	# Inputs: (global)																						# omit-in-production
-	#	$r_qpkg_actions[]																					# omit-in-production
+	# Inputs: (global)																						# omit-from-production
+	#	$r_qpkg_actions[]																					# omit-from-production
 
-	FuncInit																								# omit-in-production
+	FuncInit																								# omit-from-production
 
-	local a=''																								# omit-in-production
-	local b=''																								# omit-in-production
-	DebugInfoMinSepr																						# omit-in-production
+	local a=''																								# omit-from-production
+	local b=''																								# omit-from-production
+	DebugInfoMinSepr																						# omit-from-production
 
-	for a in "${r_qpkg_actions[@]}"; do																		# omit-in-production
-		for b in to ok er sk se sa; do																		# omit-in-production
-			if QPKGs-AC${a}-${b}.IsAny; then																# omit-in-production
-				DebugQpkg info "AC${a}-${b}" "($(QPKGs-AC${a}-${b}:Count)) $(QPKGs-AC${a}-${b}:ListCSV) "	# omit-in-production
-			fi																								# omit-in-production
-		done																								# omit-in-production
-	done																									# omit-in-production
+	for a in "${r_qpkg_actions[@]}"; do																		# omit-from-production
+		for b in to ok er sk se sa; do																		# omit-from-production
+			if QPKGs-AC${a}-${b}.IsAny; then																# omit-from-production
+				DebugQpkg info "AC${a}-${b}" "($(QPKGs-AC${a}-${b}:Count)) $(QPKGs-AC${a}-${b}:ListCSV) "	# omit-from-production
+			fi																								# omit-from-production
+		done																								# omit-from-production
+	done																									# omit-from-production
 
-	DebugInfoMinSepr																						# omit-in-production
+	DebugInfoMinSepr																						# omit-from-production
 
-	FuncExit																								# omit-in-production
+	FuncExit																								# omit-from-production
 
-	}																										# omit-in-production
+	}																										# omit-from-production
 
-ListQPKGsFlagsAll()																							# omit-in-production
-	{																										# omit-in-production
+ListQPKGsFlagsAll()																							# omit-from-production
+	{																										# omit-from-production
 
-	# Only used when debugging.																				# omit-in-production
+	# Only used when debugging.																				# omit-from-production
 
-	# Inputs: (global)																						# omit-in-production
-	#	$r_qpkg_actions[]																					# omit-in-production
-	#	$r_qpkg_is_states[]																					# omit-in-production
+	# Inputs: (global)																						# omit-from-production
+	#	$r_qpkg_actions[]																					# omit-from-production
+	#	$r_qpkg_is_states[]																					# omit-from-production
 
-	FuncInit																								# omit-in-production
+	FuncInit																								# omit-from-production
 
-	local a=''																								# omit-in-production
-	local b=''																								# omit-in-production
-	DebugInfoMinSepr																						# omit-in-production
+	local a=''																								# omit-from-production
+	local b=''																								# omit-from-production
+	DebugInfoMinSepr																						# omit-from-production
 
-	for a in "${r_qpkg_actions[@]}"; do																		# omit-in-production
-		for b in "${r_qpkg_is_states[@]}"; do																# omit-in-production
-			if IsFuncExist QPKGs.AC${a}IS${b}.IsSet; then													# omit-in-production
-				if QPKGs.AC${a}IS${b}.IsSet; then															# omit-in-production
-					DebugQpkg info "AC${a}IS${b}" "set"														# omit-in-production
-#				else																						# omit-in-production
-#					DebugQpkg info "AC${a}IS${b}" "unset"													# omit-in-production
-				fi																							# omit-in-production
-			fi																								# omit-in-production
-		done																								# omit-in-production
-	done																									# omit-in-production
+	for a in "${r_qpkg_actions[@]}"; do																		# omit-from-production
+		for b in "${r_qpkg_is_states[@]}"; do																# omit-from-production
+			if IsFuncExist QPKGs.AC${a}IS${b}.IsSet; then													# omit-from-production
+				if QPKGs.AC${a}IS${b}.IsSet; then															# omit-from-production
+					DebugQpkg info "AC${a}IS${b}" "set"														# omit-from-production
+#				else																						# omit-from-production
+#					DebugQpkg info "AC${a}IS${b}" "unset"													# omit-from-production
+				fi																							# omit-from-production
+			fi																								# omit-from-production
+		done																								# omit-from-production
+	done																									# omit-from-production
 
-	DebugInfoMinSepr																						# omit-in-production
+	DebugInfoMinSepr																						# omit-from-production
 
-	FuncExit																								# omit-in-production
+	FuncExit																								# omit-from-production
 
-	}																										# omit-in-production
+	}																										# omit-from-production
 
 ListIPKsActions()
 	{
@@ -9072,33 +9072,33 @@ ReadFromMsgPipe()
 
 	eval "$1='${_msg1_key:-null}' $2='${_msg1_value:-null}' $3='${_msg2_key:-null}' $4='${_msg2_value:-null}'"
 
-	AppendToMsgPipeEnhancedLog																# omit-in-production
+	AppendToMsgPipeEnhancedLog																# omit-from-production
 
 	return 0
 
 	}
 
-OpenMsgPipeEnhancedLog()																	# omit-in-production
-	{																						# omit-in-production
+OpenMsgPipeEnhancedLog()																	# omit-from-production
+	{																						# omit-from-production
 
 	# Inputs: (global)
 	#	$r_action_msg_pipe_log_pathfile
 
-	[[ -e $r_action_msg_pipe_log_pathfile ]] && rm -f "$r_action_msg_pipe_log_pathfile"		# omit-in-production
+	[[ -e $r_action_msg_pipe_log_pathfile ]] && rm -f "$r_action_msg_pipe_log_pathfile"		# omit-from-production
 
-	AppendToMsgPipeEnhancedLog 'opened new log session.'									# omit-in-production
+	AppendToMsgPipeEnhancedLog 'opened new log session.'									# omit-from-production
 
-	}																						# omit-in-production
+	}																						# omit-from-production
 
-CloseMsgPipeEnhancedLog()																	# omit-in-production
-	{																						# omit-in-production
+CloseMsgPipeEnhancedLog()																	# omit-from-production
+	{																						# omit-from-production
 
-	AppendToMsgPipeEnhancedLog 'closed log session.'										# omit-in-production
+	AppendToMsgPipeEnhancedLog 'closed log session.'										# omit-from-production
 
-	}																						# omit-in-production
+	}																						# omit-from-production
 
-AppendToMsgPipeEnhancedLog()																# omit-in-production
-	{																						# omit-in-production
+AppendToMsgPipeEnhancedLog()																# omit-from-production
+	{																						# omit-from-production
 
 	# Inputs: (global)
 	#	$r_action
@@ -9120,54 +9120,54 @@ AppendToMsgPipeEnhancedLog()																# omit-in-production
 	# Outputs: (global)
 	#	stdout -> $r_action_msg_pipe_log_pathfile
 
-	local a=$(ExpandMsgPipeShortcodes "${_msg1_value:-null}")								# omit-in-production
+	local a=$(ExpandMsgPipeShortcodes "${_msg1_value:-null}")								# omit-from-production
 
-	if [[ -n ${1:-} ]]; then																# omit-in-production
-		printf "[%-${r_date_field_length}s] %s\n" "$(ConvertNowToFullDate)" "$1"			# omit-in-production
-	elif [[ $_msg1_key = run ]]; then														# omit-in-production
-		printf "[%-${r_date_field_length}s] tier:%-${r_tier_field_length}s action:%-${r_action_field_length}s key1:%-${r_key1_field_length}s val1:%s\n" "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "'$a'"					# omit-in-production
-	elif [[ $_msg1_key = state || $msg1_key = update ]]; then								# omit-in-production
-		printf "[%-${r_date_field_length}s] tier:%-${r_tier_field_length}s action:%-${r_action_field_length}s key1:%-${r_key1_field_length}s val1:%-38s key2:%-${r_key2_field_length}s val2:%s\n" "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "$a" "$_msg2_key" "$_msg2_value" # omit-in-production
-	elif [[ $_msg2_key = null && $_msg2_value = null ]]; then								# omit-in-production
-		printf "[%-${r_date_field_length}s] tier:%-${r_tier_field_length}s action:%-${r_action_field_length}s key1:%-${r_key1_field_length}s val1:%s\n" "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "$a"						# omit-in-production
-	else																					# omit-in-production
-		printf "[%-${r_date_field_length}s] tier:%-${r_tier_field_length}s action:%-${r_action_field_length}s key1:%-${r_key1_field_length}s val1:%-38s key2:%-${r_key2_field_length}s val2:%s\n" "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "'$a'" "$_msg2_key" "$_msg2_value" # omit-in-production
-	fi																						# omit-in-production
+	if [[ -n ${1:-} ]]; then																# omit-from-production
+		printf "[%-${r_date_field_length}s] %s\n" "$(ConvertNowToFullDate)" "$1"			# omit-from-production
+	elif [[ $_msg1_key = run ]]; then														# omit-from-production
+		printf "[%-${r_date_field_length}s] tier:%-${r_tier_field_length}s action:%-${r_action_field_length}s key1:%-${r_key1_field_length}s val1:%s\n" "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "'$a'"					# omit-from-production
+	elif [[ $_msg1_key = state || $msg1_key = update ]]; then								# omit-from-production
+		printf "[%-${r_date_field_length}s] tier:%-${r_tier_field_length}s action:%-${r_action_field_length}s key1:%-${r_key1_field_length}s val1:%-38s key2:%-${r_key2_field_length}s val2:%s\n" "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "$a" "$_msg2_key" "$_msg2_value" # omit-from-production
+	elif [[ $_msg2_key = null && $_msg2_value = null ]]; then								# omit-from-production
+		printf "[%-${r_date_field_length}s] tier:%-${r_tier_field_length}s action:%-${r_action_field_length}s key1:%-${r_key1_field_length}s val1:%s\n" "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "$a"						# omit-from-production
+	else																					# omit-from-production
+		printf "[%-${r_date_field_length}s] tier:%-${r_tier_field_length}s action:%-${r_action_field_length}s key1:%-${r_key1_field_length}s val1:%-38s key2:%-${r_key2_field_length}s val2:%s\n" "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "'$a'" "$_msg2_key" "$_msg2_value" # omit-from-production
+	fi																						# omit-from-production
 
-	} >> "$r_action_msg_pipe_log_pathfile"													# omit-in-production
+	} >> "$r_action_msg_pipe_log_pathfile"													# omit-from-production
 
-ExpandMsgPipeShortcodes()																	# omit-in-production
-	{																						# omit-in-production
+ExpandMsgPipeShortcodes()																	# omit-from-production
+	{																						# omit-from-production
 
-	[[ -n ${1:-} ]] || return																# omit-in-production
+	[[ -n ${1:-} ]] || return																# omit-from-production
 
-	case $1 in																				# omit-in-production
-		ok)																					# omit-in-production
-			printf 'completed ok'															# omit-in-production
-			;;																				# omit-in-production
-		er)																					# omit-in-production
-			printf 'completed with errors'													# omit-in-production
-			;;																				# omit-in-production
-		sk)																					# omit-in-production
-			printf skipped																	# omit-in-production
-			;;																				# omit-in-production
-		se)																					# omit-in-production
-			printf 'skipped with errors'													# omit-in-production
-			;;																				# omit-in-production
-		sa)																					# omit-in-production
-			printf 'skipped and abort'														# omit-in-production
-			;;																				# omit-in-production
-		en)																					# omit-in-production
-			printf entry																	# omit-in-production
-			;;																				# omit-in-production
-		ex)																					# omit-in-production
-			printf exit																		# omit-in-production
-			;;																				# omit-in-production
-		*)																					# omit-in-production
-			printf '%s' "$1"																# omit-in-production
-	esac																					# omit-in-production
+	case $1 in																				# omit-from-production
+		ok)																					# omit-from-production
+			printf 'completed ok'															# omit-from-production
+			;;																				# omit-from-production
+		er)																					# omit-from-production
+			printf 'completed with errors'													# omit-from-production
+			;;																				# omit-from-production
+		sk)																					# omit-from-production
+			printf skipped																	# omit-from-production
+			;;																				# omit-from-production
+		se)																					# omit-from-production
+			printf 'skipped with errors'													# omit-from-production
+			;;																				# omit-from-production
+		sa)																					# omit-from-production
+			printf 'skipped and abort'														# omit-from-production
+			;;																				# omit-from-production
+		en)																					# omit-from-production
+			printf entry																	# omit-from-production
+			;;																				# omit-from-production
+		ex)																					# omit-from-production
+			printf exit																		# omit-from-production
+			;;																				# omit-from-production
+		*)																					# omit-from-production
+			printf '%s' "$1"																# omit-from-production
+	esac																					# omit-from-production
 
-	}																						# omit-in-production
+	}																						# omit-from-production
 
 FindNextFD()
 	{
@@ -9978,16 +9978,16 @@ EnableVerbose()
 
 	}
 
-DisableVerbose()								# omit-in-production
-	{											# omit-in-production
+DisableVerbose()								# omit-from-production
+	{											# omit-from-production
 
-	useropt_verbose=false						# omit-in-production
-	DebugVar useropt_verbose					# omit-in-production
+	useropt_verbose=false						# omit-from-production
+	DebugVar useropt_verbose					# omit-from-production
 
-	HideCursor									# omit-in-production
-	HideKeystrokes								# omit-in-production
+	HideCursor									# omit-from-production
+	HideKeystrokes								# omit-from-production
 
-	}											# omit-in-production
+	}											# omit-from-production
 
 EnableDebugToArchiveAndFile()
 	{
@@ -14656,8 +14656,8 @@ FileCountSpec()
 
 	}
 
-PidLogger()																# omit-in-production
-	{																	# omit-in-production
+PidLogger()																# omit-from-production
+	{																	# omit-from-production
 
 	# Inputs: (local)
 	#	$1 = stage descriptor.
@@ -14665,19 +14665,19 @@ PidLogger()																# omit-in-production
 	#	$3 = PPID.
 	#	$4 = command string.
 
-	local a=/share/Public/PidLogger.log									# omit-in-production
+	local a=/share/Public/PidLogger.log									# omit-from-production
 
-	if [[ -z ${1:-} ]]; then											# omit-in-production
-		echo >> "$a"													# omit-in-production
+	if [[ -z ${1:-} ]]; then											# omit-from-production
+		echo >> "$a"													# omit-from-production
 
-		return															# omit-in-production
-	fi																	# omit-in-production
+		return															# omit-from-production
+	fi																	# omit-from-production
 
-	printf "[%s] stage: '%-20s' ppid: '%-5s' pid: '%-5s' cmd: '%s'\n" "$(date)" "$1" "$3" "$2" "$4" >> "$a" # omit-in-production
-# printf "[%s] stage: '%-20s' pid: '%-5s' cmdline: '%s'\n" "$(date)" "$1" "$2" "$(tr '\0' ' ' < /proc/$2/cmdline)" >> $r_sys_log_path/sherpa/pids/PidLogger-pid-$2.log # omit-in-production
-# printf "[%s] stage: '%-20s' ppid: '%-5s' cmdline: '%s'\n" "$(date)" "$1" "$3" "$(tr '\0' ' ' < /proc/$3/cmdline)" >> $r_sys_log_path/sherpa/pids/PidLogger-pid-$3.log # omit-in-production
+	printf "[%s] stage: '%-20s' ppid: '%-5s' pid: '%-5s' cmd: '%s'\n" "$(date)" "$1" "$3" "$2" "$4" >> "$a" # omit-from-production
+# printf "[%s] stage: '%-20s' pid: '%-5s' cmdline: '%s'\n" "$(date)" "$1" "$2" "$(tr '\0' ' ' < /proc/$2/cmdline)" >> $r_sys_log_path/sherpa/pids/PidLogger-pid-$2.log # omit-from-production
+# printf "[%s] stage: '%-20s' ppid: '%-5s' cmdline: '%s'\n" "$(date)" "$1" "$3" "$(tr '\0' ' ' < /proc/$3/cmdline)" >> $r_sys_log_path/sherpa/pids/PidLogger-pid-$3.log # omit-from-production
 
-	}																	# omit-in-production
+	}																	# omit-from-production
 
 Executer()
 	{
@@ -14740,9 +14740,9 @@ Executer()
 	if [[ -s $r_log_pathfile ]]; then
 		ShowAsResultAndStdout "$z" "$(< "$r_log_pathfile")" >> "$2"
 
-		if false; then													# omit-in-production
+		if false; then													# omit-from-production
 			rm -f "$r_log_pathfile" 2> /dev/null
-		fi																# omit-in-production
+		fi																# omit-from-production
 	else
 		ShowAsResultAndStdout "$z" '<null>' >> "$2"
 	fi
@@ -14757,9 +14757,9 @@ Executer()
 
 			DebugAsDone "$exec_msg OK ($z)"
 
-			if false; then												# omit-in-production
+			if false; then												# omit-from-production
 				IsNtDebug && rm -f "$2" 2> /dev/null
-			fi															# omit-in-production
+			fi															# omit-from-production
 			;;
 		"${4:-}")
 			if [[ ${3:-} != log:failure-only ]] || IsDebug; then
@@ -14768,9 +14768,9 @@ Executer()
 
 			DebugAsWarn "$exec_msg with permitted errors ($z)"
 
-			if false; then												# omit-in-production
+			if false; then												# omit-from-production
 				IsNtDebug && rm -f "$2" 2> /dev/null
-			fi															# omit-in-production
+			fi															# omit-from-production
 			;;
 		*)
 			AddExtLogToSessLog "$2"
@@ -14806,16 +14806,16 @@ KludgeExecuter()
 
 	pid=$!
 
-	PidLogger												# omit-in-production
-	PidLogger pre-background-wait "$pid" "$PPID" "$a"		# omit-in-production
+	PidLogger												# omit-from-production
+	PidLogger pre-background-wait "$pid" "$PPID" "$a"		# omit-from-production
 
 	if [[ $pid -gt 1 ]]; then
 		wait $pid 2> /dev/null
 		z=$?
 	fi
 
-	PidLogger post-background-wait "$pid" "$PPID" "$a"		# omit-in-production
-	PidLogger pre-detached-wait "$pid" "$PPID" "$a"			# omit-in-production
+	PidLogger post-background-wait "$pid" "$PPID" "$a"		# omit-from-production
+	PidLogger pre-detached-wait "$pid" "$PPID" "$a"			# omit-from-production
 
 	pid=$(FindPid '/bin/sh' "$r_local_pathfile")
 
@@ -14827,7 +14827,7 @@ KludgeExecuter()
 		done
 	fi
 
-	PidLogger post-detached-wait "$pid" "$PPID" "$a"		# omit-in-production
+	PidLogger post-detached-wait "$pid" "$PPID" "$a"		# omit-from-production
 
 	FuncExit $z
 
