@@ -266,8 +266,8 @@ LoadConsts()
 
 		if true; then													# omit-in-production
 			readonly r_debug_log_first_column_width=10					# omit-in-production
-			readonly r_debug_log_second_column_width=25					# omit-in-production
-			readonly r_debug_log_width=85								# omit-in-production
+			readonly r_debug_log_second_column_width=26					# omit-in-production
+			readonly r_debug_log_width=80								# omit-in-production
 		else															# omit-in-production
 			readonly r_debug_log_first_column_width='<?debug_log_first_column_width?>'
 			readonly r_debug_log_second_column_width='<?debug_log_second_column_width?>'
