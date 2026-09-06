@@ -62,7 +62,7 @@ debug_log_third_column_longest_string='Annapurna Labs Alpine AL314 Quad-core ARM
 debug_log_first_column_width=${#debug_log_first_column_longest_string}
 debug_log_second_column_width=${#debug_log_second_column_longest_string}
 debug_log_third_column_width=${#debug_log_third_column_longest_string}
-debug_log_width=$((debug_log_first_column_width+1+debug_log_second_column_width+1+debug_log_third_column_width))
+debug_log_width=$((debug_log_first_column_width+2+debug_log_second_column_width+2+debug_log_third_column_width+2))
 
 # NOTE: must escape ampersand chars in `read` input blocks for compatibility with `sed` regex.
 
