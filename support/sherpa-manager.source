@@ -9318,12 +9318,16 @@ ModPathToEntware()
 GetHardwareCPUInfo()
 	{
 
-	# BusyBox 1.01 doesn't support `grep -m`, so extract first mention the hard-way with `head`.
+	# Outputs: (local)
+	#	stdout = CPU name.
+	#	$? = 0 if found, 1 if not.
 
-	if /bin/grep '^model name' /proc/cpuinfo &> /dev/null; then
-		/bin/grep '^model name' /proc/cpuinfo | head -n1 | /bin/sed 's/^.*: //' | tr -s ' '
-	elif /bin/grep '^Processor name' /proc/cpuinfo &> /dev/null; then
-		/bin/grep '^Processor name' /proc/cpuinfo | head -n1 | /bin/sed 's/^.*: //' | tr -s ' '
+	local a=''
+
+	if a=$(GetValueFromFile '^model name' /proc/cpuinfo); then
+		printf "%s" "$a"
+	elif a=$(GetValueFromFile '^Processor name' /proc/cpuinfo); then
+		printf "%s" "$a"
 	else
 		printf unknown
 
@@ -9337,10 +9341,17 @@ GetHardwareCPUInfo()
 GetHardwareCPUStepping()
 	{
 
-	# BusyBox 1.01 doesn't support `grep -m`, so extract first mention the hard-way with `head`.
+	# Outputs: (local)
+	#	stdout = CPU stepping.
+	#	$? = 0 if found, 1 if not.
 
-	if /bin/grep '^stepping' /proc/cpuinfo &> /dev/null; then
-		/bin/grep '^stepping' /proc/cpuinfo | head -n1 | /bin/sed 's/^.*: //' | tr -s ' '
+	local a=''
+	local b=''
+
+	if a=$(GetValueFromFile '^stepping' /proc/cpuinfo); then
+		printf '%s' "$a"
+	elif a=$(GetValueFromFile '^CPU variant' /proc/cpuinfo) && b=$(GetValueFromFile '^CPU revision' /proc/cpuinfo); then	# Only for non-Intel/AMD CPUs (like ARM).
+		printf 'r%sp%s' "$((a))" "$((b))"
 	else
 		printf unknown
 
@@ -9348,6 +9359,68 @@ GetHardwareCPUStepping()
 	fi
 
 	return 0
+
+	}
+
+GetValueFromFile()
+	{
+
+	# Inputs: (local)
+	#	$1 = name of source field.
+	#	$2 = pathfilename to extract from.
+
+	# Outputs: (local)
+	#	stdout = requested value of field.
+	#	$? = 0 if found, 1 if not.
+
+	# BusyBox 1.01 doesn't support `grep -m`, so extract first mention the hard-way with `head`.
+
+	[[ -n "${1:-}" && -n "${2:-}" && -e $2 ]] || return 1
+
+	local a=''
+
+	a=$(/bin/grep "$1" "$2" 2> /dev/null) || return 1
+
+	printf "%s" "$(GetFirstLineSecondField "$a")"
+
+	}
+
+GetCountOfValuesFromFile()
+	{
+
+	# Inputs: (local)
+	#	$1 = name of source field.
+	#	$2 = pathfilename to extract from.
+
+	# Outputs: (local)
+	#	stdout = count of lines with requested field.
+	#	$? = 0 if found, 1 if not.
+
+	[[ -n "${1:-}" && -n "${2:-}" && -e $2 ]] || return 1
+
+	local a=''
+
+	a=$(/bin/grep -c "$1" "$2" 2> /dev/null) || return 1
+
+	printf "%s" "$a"
+
+	}
+
+GetFirstLineSecondField()
+	{
+
+	# Inputs: (local)
+	#	$1 = string to extract first line, second field from.
+
+	# Outputs: (local)
+	#	stdout = requested value of field.
+	#	$? = 0 if found, 1 if not.
+
+	# BusyBox 1.01 doesn't support `grep -m`, so extract first mention the hard-way with `head`.
+
+	[[ -n "$1" ]] || return 1
+
+	head -n1 <<< "$1" | /bin/sed 's/^.*: //' | tr -s ' '
 
 	}
 
@@ -9387,6 +9460,7 @@ GetHardwareCPUBenchmark()
 
 	if [[ -z $a ]]; then
 		printf 'unable to measure'
+
 		return 1
 	fi
 
@@ -9417,6 +9491,7 @@ GetHardwareVolumeBenchmark()
 
 		if [[ ! -x $r_gnu_dd_cmd ]]; then
 			printf "unable to measure, GNU 'dd' is unavailable"
+
 			return 1
 		fi
 
@@ -9438,6 +9513,7 @@ GetHardwareVolumeBenchmark()
 
 	if [[ -z $a ]]; then
 		printf 'unable to measure'
+
 		return 1
 	fi
 
@@ -9631,11 +9707,23 @@ GetOsSysLoad1MinAverage()
 GetHardwareCPUThreads()
 	{
 
-	local n=$(/bin/grep -c '^processor' /proc/cpuinfo)
+	# Outputs: (local)
+	#	stdout = CPU threads.
+	#	$? = 0 if found, 1 if not.
 
-	[[ $n -eq 0 ]] && n=$(/bin/grep -c '^Processor' /proc/cpuinfo)
+	local a=''
 
-	printf '%s' "$n"
+	if a=$(GetCountOfValuesFromFile '^processor' /proc/cpuinfo); then
+		printf "%s" "$a"
+	elif a=$(GetCountOfValuesFromFile '^Processor' /proc/cpuinfo); then
+		printf "%s" "$a"
+	else
+		printf 0
+
+		return 1
+	fi
+
+	return 0
 
 	}
 
