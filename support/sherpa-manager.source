@@ -499,7 +499,7 @@ LoadEnv()
 
 	qpkg_name=sherpa
 
-	SetHardwareCPUThreads
+	SetHardwareCpuThreads
 	SetHardwareInstalledRAM
 	SetQpkgArch
 
@@ -853,11 +853,11 @@ DebugLogEnv()
 
 	DebugInfoMinSepr
 	DebugHardware ok 'NAS model' "$(get_display_name)"
-	DebugHardware ok CPU "$(GetHardwareCPUInfo)"
-	DebugHardware ok 'CPU stepping' "$(GetHardwareCPUStepping)"
+	DebugHardware ok CPU "$(GetHardwareCpuName)"
+	DebugHardware ok 'CPU stepping' "$(GetHardwareCpuStepping)"
 	DebugHardware ok 'available CPU threads' "$r_cpu_threads"
 	DebugHardware ok 'CPU architecture' "$(GetCpuDataWidth)"
-	DebugHardware ok 'basic CPU SHA1 benchmark' "$(GetHardwareCPUBenchmark)"
+	DebugHardware ok 'basic CPU SHA1 benchmark' "$(GetHardwareCpuBenchmark)"
 	DebugHardware ok RAM "${r_nas_ram_gb}GiB"
 	DebugKernel ok name "$(GetOsKernelName)"
 	DebugKernel ok version "$(GetOsKernelVersion)"
@@ -9258,8 +9258,8 @@ NoteIpkAcAsOk()
 	# Move specified IPK name from `to` action array into associated `ok` array.
 
 	# Inputs: (local)
-	#	$1 = package name
-	#	$2 = action
+	#	$1 = package name.
+	#	$2 = action.
 
 	IPKs-AC"$2"-to:Remove "${1:-}"
 	IPKs-AC"$2"-ok:Add "${1:-}"
@@ -9315,19 +9315,19 @@ ModPathToEntware()
 
 	}
 
-GetHardwareCPUInfo()
+GetHardwareCpuName()
 	{
 
 	# Outputs: (local)
-	#	stdout = CPU name.
+	#	stdout = CPU name as string.
 	#	$? = 0 if found, 1 if not.
 
 	local a=''
 
-	if a=$(GetValueFromFile '^model name' /proc/cpuinfo); then
-		printf "%s" "$a"
-	elif a=$(GetValueFromFile '^Processor name' /proc/cpuinfo); then
-		printf "%s" "$a"
+	if a=$(GetCpuModel); then
+		printf '%s' "$a"
+	elif a=$(GetCpuName); then
+		printf '%s' "$a"
 	else
 		printf unknown
 
@@ -9338,25 +9338,110 @@ GetHardwareCPUInfo()
 
 	}
 
-GetHardwareCPUStepping()
+GetHardwareCpuStepping()
 	{
 
 	# Outputs: (local)
-	#	stdout = CPU stepping.
+	#	stdout = CPU stepping as string.
 	#	$? = 0 if found, 1 if not.
 
 	local a=''
 	local b=''
 
-	if a=$(GetValueFromFile '^stepping' /proc/cpuinfo); then
+	if a=$(GetCpuStepping); then
 		printf '%s' "$a"
-	elif a=$(GetValueFromFile '^CPU variant' /proc/cpuinfo) && b=$(GetValueFromFile '^CPU revision' /proc/cpuinfo); then	# Only for non-Intel/AMD CPUs (like ARM).
-		printf 'r%sp%s' "$((a))" "$((b))"
+	elif a=$(GetCpuVariant) && b=$(GetCpuRevision); then		# Only for non-Intel/AMD CPUs (like ARM).
+		printf 'r%sp%s' "$a" "$b"
 	else
 		printf unknown
 
 		return 1
 	fi
+
+	return 0
+
+	}
+
+GetCpuModel()
+	{
+
+	# Outputs: (local)
+	#	stdout = CPU model as string.
+	#	$? = 0 if found, 1 if not.
+
+	local a=''
+
+	a=$(GetValueFromFile '^model name' /proc/cpuinfo) || return 1
+
+	printf '%s' "$a"
+
+	return 0
+
+	}
+
+GetCpuName()
+	{
+
+	# Outputs: (local)
+	#	stdout = CPU name as string.
+	#	$? = 0 if found, 1 if not.
+
+	local a=''
+
+	a=$(GetValueFromFile '^Processor name' /proc/cpuinfo) || return 1
+
+	printf '%s' "$a"
+
+	return 0
+
+	}
+
+GetCpuStepping()
+	{
+
+	# Outputs: (local)
+	#	stdout = CPU stepping as base-10 integer.
+	#	$? = 0 if found, 1 if not.
+
+	local a=''
+
+	a=$(GetValueFromFile '^stepping' /proc/cpuinfo) || return 1
+
+	printf '%s' "$((a))"
+
+	return 0
+
+	}
+
+GetCpuVariant()
+	{
+
+	# Outputs: (local)
+	#	stdout = CPU variant as base-10 integer.
+	#	$? = 0 if found, 1 if not.
+
+	local a=''
+
+	a=$(GetValueFromFile '^CPU variant' /proc/cpuinfo) || return 1
+
+	printf '%s' "$((a))"
+
+	return 0
+
+	}
+
+GetCpuRevision()
+	{
+
+	# Outputs: (local)
+	#	stdout = CPU revision as base-10 integer.
+	#	$? = 0 if found, 1 if not.
+
+	local a=''
+
+	a=$(GetValueFromFile '^CPU revision' /proc/cpuinfo) || return 1
+
+	printf '%s' "$((a))"
 
 	return 0
 
@@ -9370,7 +9455,7 @@ GetValueFromFile()
 	#	$2 = pathfilename to extract from.
 
 	# Outputs: (local)
-	#	stdout = requested value of field.
+	#	stdout = requested value of field as string.
 	#	$? = 0 if found, 1 if not.
 
 	# BusyBox 1.01 doesn't support `grep -m`, so extract first mention the hard-way with `head`.
@@ -9381,7 +9466,9 @@ GetValueFromFile()
 
 	a=$(/bin/grep "$1" "$2" 2> /dev/null) || return 1
 
-	printf "%s" "$(GetFirstLineSecondField "$a")"
+	printf '%s' "$(GetFirstLineSecondField "$a")"
+
+	return 0
 
 	}
 
@@ -9402,7 +9489,9 @@ GetCountOfValuesFromFile()
 
 	a=$(/bin/grep -c "$1" "$2" 2> /dev/null) || return 1
 
-	printf "%s" "$a"
+	printf '%s' "$a"
+
+	return 0
 
 	}
 
@@ -9424,7 +9513,7 @@ GetFirstLineSecondField()
 
 	}
 
-GetHardwareCPUBenchmark()
+GetHardwareCpuBenchmark()
 	{
 
 	# Generate a basic CPU benchmark based-on time to calculate a single SHA checksum.
@@ -9704,7 +9793,7 @@ GetOsSysLoad1MinAverage()
 
 	}
 
-GetHardwareCPUThreads()
+GetHardwareCpuThreads()
 	{
 
 	# Outputs: (local)
@@ -9714,9 +9803,9 @@ GetHardwareCPUThreads()
 	local a=''
 
 	if a=$(GetCountOfValuesFromFile '^processor' /proc/cpuinfo); then
-		printf "%s" "$a"
+		printf '%s' "$a"
 	elif a=$(GetCountOfValuesFromFile '^Processor' /proc/cpuinfo); then
-		printf "%s" "$a"
+		printf '%s' "$a"
 	else
 		printf 0
 
@@ -17042,13 +17131,13 @@ SetError()
 
 	}
 
-SetHardwareCPUThreads()
+SetHardwareCpuThreads()
 	{
 
 	# Outputs: (global)
 	#	$r_cpu_threads
 
-	[[ ${r_cpu_threads:-unset} = unset ]] && readonly r_cpu_threads=$(GetHardwareCPUThreads)
+	[[ ${r_cpu_threads:-unset} = unset ]] && readonly r_cpu_threads=$(GetHardwareCpuThreads)
 
 	}
 
