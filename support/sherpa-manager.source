@@ -9350,7 +9350,7 @@ GetHardwareCpuStepping()
 
 	if a=$(GetCpuStepping); then
 		printf '%s' "$a"
-	elif a=$(GetCpuVariant) && b=$(GetCpuRevision); then		# Only for non-Intel/AMD CPUs (like ARM).
+	elif a=$(GetCpuVariant) && b=$(GetCpuRevision); then		# For non-Intel/AMD CPUs (like ARM).
 		printf 'r%sp%s' "$a" "$b"
 	else
 		printf unknown
@@ -9400,7 +9400,7 @@ GetCpuStepping()
 	{
 
 	# Outputs: (local)
-	#	stdout = CPU stepping as base-10 integer.
+	#	stdout = CPU stepping as integer.
 	#	$? = 0 if found, 1 if not.
 
 	local a=''
@@ -9417,7 +9417,7 @@ GetCpuVariant()
 	{
 
 	# Outputs: (local)
-	#	stdout = CPU variant as base-10 integer.
+	#	stdout = CPU variant as integer.
 	#	$? = 0 if found, 1 if not.
 
 	local a=''
@@ -9434,7 +9434,7 @@ GetCpuRevision()
 	{
 
 	# Outputs: (local)
-	#	stdout = CPU revision as base-10 integer.
+	#	stdout = CPU revision as integer.
 	#	$? = 0 if found, 1 if not.
 
 	local a=''
@@ -9573,7 +9573,9 @@ GetHardwareVolumeBenchmark()
 	local a=''
 	local b=10k			# Maximum time-to-run is around 1 second on my slowest NAS (TS-220).
 	local -i c=-20		# Run benchmark with highest priority.
-	local d=$(GetUserDefVol)/zero
+	local d=''
+
+	d=$(GetUserDefVol)/zero
 
 	if [[ -d $(/usr/bin/dirname "$d") ]]; then
 		[[ -e $d ]] && rm -f "$d"
@@ -9726,7 +9728,9 @@ GetRepoURLFromStoreID()
 GetOsUptime()
 	{
 
-	local n=$(< /proc/uptime)
+	local n=''
+
+	n=$(< /proc/uptime)
 
 	ConvertSecondsToDuration "${n%%.*}"
 
@@ -9735,7 +9739,9 @@ GetOsUptime()
 GetUserLIBC()
 	{
 
-	local a=$(/sbin/ldd --version | head -n1)
+	local a=''
+
+	a=$(/sbin/ldd --version | head -n1)
 
 	printf '%s' "${a:4}"			# Trim 'ldd ' from front of string.
 
@@ -9832,7 +9838,8 @@ GetHardwareInstalledRAMgb()
 	# Outputs: (local)
 	#	stdout = text string.
 
-	local a=$(/bin/grep MemTotal /proc/meminfo | /bin/sed 's/.*: //;s/kB//;s/ //g')
+	local a=''
+	a=$(/bin/grep MemTotal /proc/meminfo | /bin/sed 's/.*: //;s/kB//;s/ //g')
 	local b=$((((a/1024)*1000)/1024))
 	local c=${b%???}.${b:${#b}<3?0:-3}
 
@@ -10316,10 +10323,11 @@ _QPKG:status_()
 
 	DebugAsProc "status $(FormatPackageName)"
 
-	local a=$(GetQpkgDbActiveTest)
+	local a=''
 	local b=''
 	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_status_log_file
 
+	a=$(GetQpkgDbActiveTest)
 	IsDebug && b+='DEBUG_QPKG=true '
 
 	if [[ $a = builtin ]]; then
@@ -10471,7 +10479,8 @@ _QPKG:reassign_()
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 		MarkActionForkAsDoneOk
 	else
-		local b=$(GetQpkgServiceExplanation) || b=$z
+		local b=''
+		b=$(GetQpkgServiceExplanation) || b=$z
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		MarkActionForkAsDoneError
 	fi
@@ -10703,7 +10712,8 @@ _QPKG:install_()
 		MarkActionForkAsDoneOk
 		z=0		# Remap to zero.
 	else
-		local b=$(GetQpkgServiceExplanation) || b=$z
+		local b=''
+		b=$(GetQpkgServiceExplanation) || b=$z
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 #		IsOsCanManageSignedPackages && IsQpkgSigned && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
 		MarkActionForkAsDoneError
