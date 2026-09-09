@@ -9210,7 +9210,7 @@ AppendToMsgPipeEnhancedLog()																# omit-from-production
 	# Outputs: (global)
 	#	stdout -> $r_action_msg_pipe_log_pathfile
 
-	local a=''
+	local a=''																				# omit-from-production
 
 	a=$(ExpandMsgPipeShortcodes "${_msg1_value:-null}")										# omit-from-production
 
