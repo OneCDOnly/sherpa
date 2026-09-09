@@ -318,8 +318,9 @@ LoadConsts()
 
 	# Various.
 
-		readonly r_char_tab=$'\t'
 		package_release_version='<?package_release_version?>'
+
+		readonly r_char_tab=$'\t'
 		readonly r_entware_packages_last_updated=20260407
 		readonly r_file_change_threshold_minutes=60
 		readonly r_log_tail_lines=5000
@@ -503,22 +504,31 @@ LoadEnv()
 	SetHardwareInstalledRAM
 	SetQpkgArch
 
+	local -i script_epoch=0
+
+	local default_vol_mount_point=''
+
 	args=()
 	args_incomplete=()
 	qpkg_index=0
+	r_entware_type=$(GetQpkgEntwareType)
+	r_this_package_ver=$(GetQpkgInstalledVer)
+
+	local -r r_sherpa_packages_base_url='<?sherpa_packages_base_url?>'
+
 	readonly r_cert_db_pathfile=/etc/config/nas_sign_qpkg.db
 	readonly r_concurrency=$r_cpu_threads				# Maximum concurrent package actions to run. Should probably make this account for CPU speed too.
-	readonly r_entware_type=$(GetQpkgEntwareType)
 	readonly r_script_built_epoch='<?manager_epoch?>'
-	local -r r_sherpa_packages_base_url='<?sherpa_packages_base_url?>'
-	readonly r_this_package_ver=$(GetQpkgInstalledVer)
-	local script_epoch=0
+
+	readonly r_entware_type
+	readonly r_this_package_ver
 
 	IsNumber $r_script_built_epoch && script_epoch=$r_script_built_epoch
+	r_this_script_ver=$(ConvertSecondsToDatecode $script_epoch)
+	readonly r_this_script_ver
 
 	useropt_branch=$(GetUserGitBranch)
 		readonly r_objects_archive_url='<?sherpa_base_raw_url?>'/$useropt_branch/objects.tar.gz
-		readonly r_this_script_ver=$(ConvertSecondsToDatecode $script_epoch)
 
 	[[ $useropt_branch = unstable ]] && package_release_version=testing
 
@@ -530,11 +540,12 @@ LoadEnv()
 			readonly r_qpkg_service_result_path=$r_sys_log_path
 		readonly r_sys_run_path=/var/run
 
-		local default_vol_mount_point=$(GetUserDefVol)
+		default_vol_mount_point=$(GetUserDefVol)
 		ConfirmVarIsDefined default_vol_mount_point "${default_vol_mount_point:-}" "$e_nopth" || return
 			readonly r_qpkg_bu_path=$default_vol_mount_point/.qpkg_config_backup
 
-		readonly r_this_package_path=$(GetQpkgInstalledPath)
+		r_this_package_path=$(GetQpkgInstalledPath)
+		readonly r_this_package_path
 
 		if ! ConfirmVarIsDefined r_this_package_path "${r_this_package_path:-}" "$e_nopth" &> /dev/null || [[ ! -d $r_this_package_path ]]; then
 			ShowAsError "$(ShowAsTitleName) installation path not found. Please reinstall the $(ShowAsTitleName) QPKG"
@@ -1186,7 +1197,7 @@ CheckEnv()
 	ShowAsProc 'check env'
 
 	local installed_version=''
-	local target_packages=''
+	local a_target_packages=''
 
 	if [[ $(/bin/grep -iE 'out of memory|oom-killer' /mnt/HDA_ROOT/.logs/kmsg | /usr/bin/wc -l) -gt 0 ]]; then
 		ShowAsWarn "the $(TextBrightRed 'Out-Of-Memory killer') has been triggered, check for $(TextBrightRed inactive) QPKGs"
@@ -1219,22 +1230,22 @@ CheckEnv()
 
 		case $r_nas_qpkg_arch in
 			a41)
-				# These must be downgraded on ARMv7 when QTS has a non-standard kernel page size.
+				# These must be downgraded on ARMv7 when QTS has a non-standard (non-4kiB) kernel page size.
 				#	https://forum.qnap.com/viewtopic.php?p=850945#p850945
 
 				if IsOsNonStdKernelPageSize; then
-					target_packages='ar binutils libbfd libctf libopcodes objdump'
+					a_target_packages='ar binutils libbfd libctf libopcodes objdump'
 
 					# Assume first package version is same as remaining package versions.
 
-					installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${target_packages%% *} *" | head -n1 | cut -d' ' -f3 | cut -d'-' -f1)
+					installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${a_target_packages%% *} *" | head -n1 | cut -d' ' -f3 | cut -d'-' -f1)
 
 					if [[ ${installed_version//.} -gt 238 ]]; then
 						ipks_downgrade=true
 						ShowAsNote "various IPKs will be downgraded to suit $r_kernel_page_size kernel page size"
-						IPKs-ACdowngrade-to:Add "$target_packages"
+						IPKs-ACdowngrade-to:Add "$a_target_packages"
 					else
-						IPKs-ACdowngrade-sk:Add "$target_packages"
+						IPKs-ACdowngrade-sk:Add "$a_target_packages"
 					fi
 				fi
 
@@ -1242,18 +1253,18 @@ CheckEnv()
 				#	https://github.com/Entware/Entware/issues/1072
 				#	NOTE: this issue has been fixed.
 
-#				target_packages='git git-http'
+#				a_target_packages='git git-http'
 
 				# Assume first package version is same as remaining package versions.
 
-#				installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${target_packages%% *} *" | head -n1 | cut -d' ' -f3 | cut -d'-' -f1)
+#				installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${a_target_packages%% *} *" | head -n1 | cut -d' ' -f3 | cut -d'-' -f1)
 
 #				if [[ ${installed_version//.} -gt 2392 ]]; then
 #					ipks_downgrade=true
 #					ShowAsNote "git IPKs will be downgraded back to a working version"
-#					IPKs-ACdowngrade-to:Add "$target_packages"
+#					IPKs-ACdowngrade-to:Add "$a_target_packages"
 #				else
-#					IPKs-ACdowngrade-sk:Add "$target_packages"
+#					IPKs-ACdowngrade-sk:Add "$a_target_packages"
 #				fi
 		esac
 
@@ -1262,36 +1273,36 @@ CheckEnv()
 				# These must be downgraded as 2.50.1 versions are inoperative.
 				#	https://github.com/Entware/Entware/issues/1241
 #
-#				target_packages='git git-http'
+#				a_target_packages='git git-http'
 #
 				# Assume first package version is same as remaining package versions.
 #
-#				installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${target_packages%% *} *" | head -n1 | cut -d' ' -f3 | cut -d'-' -f1)
+#				installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${a_target_packages%% *} *" | head -n1 | cut -d' ' -f3 | cut -d'-' -f1)
 #
 #				if [[ ${installed_version//.} -gt 2462 ]]; then
 #					ipks_downgrade=true
 #					ShowAsNote "git IPKs will be downgraded back to working versions"
-#					IPKs-ACdowngrade-to:Add "$target_packages"
+#					IPKs-ACdowngrade-to:Add "$a_target_packages"
 #				else
-#					IPKs-ACdowngrade-sk:Add "$target_packages"
+#					IPKs-ACdowngrade-sk:Add "$a_target_packages"
 #				fi
 #		esac
 
 		# Downgrade Transmission as 4.0.6 has an undefined issue.
 		#	https://github.com/OneCDOnly/sherpa/issues/306
 
-#		target_packages='transmission-daemon transmission-web'
+#		a_target_packages='transmission-daemon transmission-web'
 
 		# Assume first package version is same as remaining package versions.
 
-#		installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${target_packages%% *} *" | head -n1 | cut -d' ' -f3 | cut -d'-' -f1)
+#		installed_version=$($r_opkg_cmd list-installed | /bin/grep "^${a_target_packages%% *} *" | head -n1 | cut -d' ' -f3 | cut -d'-' -f1)
 
 #		if [[ ${installed_version//.} -gt 4041 ]]; then
 #			ipks_downgrade=true
 #			ShowAsNote "Transmission IPKs will be downgraded back to working versions"
-#			IPKs-ACdowngrade-to:Add "$target_packages"
+#			IPKs-ACdowngrade-to:Add "$a_target_packages"
 #		else
-#			IPKs-ACdowngrade-sk:Add "$target_packages"
+#			IPKs-ACdowngrade-sk:Add "$a_target_packages"
 #		fi
 	fi
 
@@ -1657,10 +1668,11 @@ ProcActions()
 
 	ShowAsProc 'package actions'
 
+	local -i tier_index=0
+
 	local action=''
 	local state=''
 	local tier=''
-	local -i tier_index=0
 
 	rm -f "$r_action_results_pathfile" 2> /dev/null
 	OpenMsgPipeEnhancedLog												# omit-from-production
@@ -1825,22 +1837,26 @@ ProcAction()
 
 	FuncInit
 
+	total_count=0
+
+	local -a a_target_packages=()
+
+	local -i package_index=0
+
+	local -r r_action=${1:?${FUNCNAME[0]}(): $e_noact}
+	local -r r_action_intransitive_msg=${4:?${FUNCNAME[0]}(): $e_noact message}
+	local -r r_package_type=${3:?${FUNCNAME[0]}(): $e_nopty}
+	local -r r_tier=${2:?${FUNCNAME[0]}(): $e_notir}
+
 	local group=''
 	local msg1_key=''
 	local msg1_value=''
 	local msg2_key=''
 	local msg2_value=''
 	local package=''
-	local -i package_index=0
-	local -r r_action=${1:?${FUNCNAME[0]}(): $e_noact}
-	local -r r_action_intransitive_msg=${4:?${FUNCNAME[0]}(): $e_noact message}
-	local -r r_package_type=${3:?${FUNCNAME[0]}(): $e_nopty}
-	local -r r_tier=${2:?${FUNCNAME[0]}(): $e_notir}
 	local re=''
 	local state=''
 	local target_object_name=''
-	local -a target_packages=()
-	total_count=0
 
 	DebugVar r_action
 	DebugVar r_tier
@@ -1851,14 +1867,14 @@ ProcAction()
 			target_object_name=AC${r_action}-to
 
 			if [[ $r_tier = all ]]; then	# Process all tiers.
-				target_packages=($(${r_package_type}s-$target_object_name:Array))
+				a_target_packages=($(${r_package_type}s-$target_object_name:Array))
 			else							# Process a single tier only.
 				for package in $(${r_package_type}s-$target_object_name:Array); do
-					${r_package_type}s-GR${r_tier}.Exist "$package" && target_packages+=("$package")
+					${r_package_type}s-GR${r_tier}.Exist "$package" && a_target_packages+=("$package")
 				done
 			fi
 
-			total_count=${#target_packages[@]}
+			total_count=${#a_target_packages[@]}
 			DebugVar total_count
 
 			if [[ $total_count -eq 0 ]]; then
@@ -1868,7 +1884,7 @@ ProcAction()
 			fi
 
 			if [[ $total_count -eq 1 ]]; then
-				fork_progress_prefix="$r_action_intransitive_msg $(TextBrightOrange "${target_packages[0]}") $r_package_type"
+				fork_progress_prefix="$r_action_intransitive_msg $(TextBrightOrange "${a_target_packages[0]}") $r_package_type"
 			else
 				fork_progress_prefix="$r_action_intransitive_msg $([[ $r_tier != all ]] && TextBrightOrange "$r_tier ")$(Uppercase "$r_package_type")$(Pluralise "$total_count")"
 			fi
@@ -1879,17 +1895,17 @@ ProcAction()
 
 			re=\\bEntware\\b			# bash 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
 
-			if [[ $r_action = uninstall && ${target_packages[*]} =~ $re ]]; then
+			if [[ $r_action = uninstall && ${a_target_packages[*]} =~ $re ]]; then
 				ShowKeystrokes		# Enable before removing Entware (& GNU `stty`).
 			fi
 
 			CreatePidFile
-			_ExecOneActionWithManyForks_ "_${r_package_type}:${r_action}_" "${target_packages[@]}" &
+			_ExecOneActionWithManyForks_ "_${r_package_type}:${r_action}_" "${a_target_packages[@]}" &
 			WritePidFile "$!"
 
 			# Read message pipe and process QPKGs and mark action statuses as-per requests contained within.
 
-			while [[ ${#target_packages[@]} -gt 0 && ! -e $r_abort_actions_pathfile ]]; do
+			while [[ ${#a_target_packages[@]} -gt 0 && ! -e $r_abort_actions_pathfile ]]; do
 				ReadFromMsgPipe msg1_key msg1_value msg2_key msg2_value
 
 				case $msg1_key in
@@ -1970,9 +1986,9 @@ ProcAction()
 								IsFuncExist QPKGs-AC${r_action}-dn:Init && QPKGs-AC${r_action}-dn:Add "$msg2_value"
 								;;
 							ex)			# Action is about to exit.
-								for package_index in "${!target_packages[@]}"; do
-									if [[ ${target_packages[package_index]} = "$msg2_value" ]]; then
-										unset 'target_packages[package_index]'
+								for package_index in "${!a_target_packages[@]}"; do
+									if [[ ${a_target_packages[package_index]} = "$msg2_value" ]]; then
+										unset 'a_target_packages[package_index]'
 										break
 									fi
 								done
@@ -1987,7 +2003,7 @@ ProcAction()
 
 				[[ -e $r_abort_actions_pathfile ]] && break
 
-				# TODO: Check for remaining $target_packages[] status here. If $proc_queued_count_path and $proc_working_count_path have no entries, then no action workers should be active. $target_packages[] is out-of-sync and contains package names that haven't been marked as exited.
+				# TODO: Check for remaining $a_target_packages[] status here. If $proc_queued_count_path and $proc_working_count_path have no entries, then no action workers should be active. $a_target_packages[] is out-of-sync and contains package names that haven't been marked as exited.
 			done
 
 			[[ $done_fail_count -gt 0 ]] && show_action_results_failed=true
@@ -2098,6 +2114,7 @@ SetMaxForks()
 	#	$max_forks
 
 	local default_forks=$r_concurrency
+
 	max_forks=$default_forks
 
 	[[ -n ${1:-} ]] || return
@@ -2157,7 +2174,9 @@ PrepareArgs()
 
 	ShowAsProc args
 
-	local a=$(Lowercase "${r_args_raw//,/ }")
+	local a=''
+
+	a=$(Lowercase "${r_args_raw//,/ }")
 	args=(${a/--/})
 	arg_problem=false
 
@@ -2194,9 +2213,10 @@ ParseManagementArgs()
 
 	FuncInit
 
+	local -a a_args_remaining=()
+
 	local action=''						# Internal, nice, simple, action name. Only one per-action.
 	local arg=''
-	local -a args_remaining=()
 	local awaiting_group=false
 	local current_action=''
 	local group=''
@@ -2272,7 +2292,7 @@ ParseManagementArgs()
 							WriteBranch
 							;;
 						*)
-							args_remaining+=("$action")
+							a_args_remaining+=("$action")
 					esac
 					;;
 				report-info)
@@ -2285,7 +2305,7 @@ ParseManagementArgs()
 							WriteReportInfo
 							;;
 						*)
-							args_remaining+=("$action")
+							a_args_remaining+=("$action")
 					esac
 					;;
 				terse)
@@ -2298,14 +2318,14 @@ ParseManagementArgs()
 							WriteTerse
 							;;
 						*)
-							args_remaining+=("$action")
+							a_args_remaining+=("$action")
 					esac
 					;;
 				*)
-					args_remaining+=("$arg")
+					a_args_remaining+=("$arg")
 			esac
 		else
-			args_remaining+=("$arg")
+			a_args_remaining+=("$arg")
 		fi
 	done
 
@@ -2315,7 +2335,7 @@ ParseManagementArgs()
 
 	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}	# omit-from-production
 
-	args=(${args_remaining[@]+"${args_remaining[@]}"})
+	args=(${a_args_remaining[@]+"${a_args_remaining[@]}"})
 	DebugArray args ${args[@]+"${args[@]}"}										# omit-from-production
 
 	FuncExit
@@ -2338,9 +2358,10 @@ ParseHelpArgs()
 
 	FuncInit
 
+	local -a a_args_remaining=()
+
 	local action=''						# Internal, nice, simple, action name. Only one per-action.
 	local arg=''
-	local -a args_remaining=()
 	local awaiting_group=false
 	local current_action=''
 	local group=''
@@ -2470,14 +2491,14 @@ ParseHelpArgs()
 							useropt_help_upgrades=true
 							;;
 						*)
-							args_remaining+=("$action")
+							a_args_remaining+=("$action")
 					esac
 					;;
 				*)
-					args_remaining+=("$arg")
+					a_args_remaining+=("$arg")
 			esac
 		else
-			args_remaining+=("$arg")
+			a_args_remaining+=("$arg")
 		fi
 	done
 
@@ -2512,7 +2533,7 @@ ParseHelpArgs()
 
 	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}	# omit-from-production
 
-	args=(${args_remaining[@]+"${args_remaining[@]}"})
+	args=(${a_args_remaining[@]+"${a_args_remaining[@]}"})
 	DebugArray args ${args[@]+"${args[@]}"}										# omit-from-production
 
 	FuncExit
@@ -2535,9 +2556,10 @@ ParseShowArgs()
 
 	FuncInit
 
+	local -a a_args_remaining=()
+
 	local action=''						# Internal, nice, simple, action name. Only one per-action.
 	local arg=''
-	local -a args_remaining=()
 	local awaiting_group=false
 	local current_action=''
 	local group=''
@@ -2690,14 +2712,14 @@ ParseShowArgs()
 							useropt_show_log_tail=true
 							;;
 						*)
-							args_remaining+=("$action")
+							a_args_remaining+=("$action")
 					esac
 					;;
 				*)
-					args_remaining+=("$arg")
+					a_args_remaining+=("$arg")
 			esac
 		else
-			args_remaining+=("$arg")
+			a_args_remaining+=("$arg")
 		fi
 	done
 
@@ -2707,7 +2729,7 @@ ParseShowArgs()
 
 	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}	# omit-from-production
 
-	args=(${args_remaining[@]+"${args_remaining[@]}"})
+	args=(${a_args_remaining[@]+"${a_args_remaining[@]}"})
 	DebugArray args ${args[@]+"${args[@]}"}										# omit-from-production
 
 	FuncExit
@@ -2730,9 +2752,10 @@ ParseListArgs()
 
 	FuncInit
 
+	local -a a_args_remaining=()
+
 	local action=''						# Internal, nice, simple, action name. Only one per-action.
 	local arg=''
-	local -a args_remaining=()
 	local awaiting_group=false
 	local current_action=''
 	local group=''
@@ -2824,14 +2847,14 @@ ParseListArgs()
 							useropt_list_versions=true
 							;;
 						*)
-							args_remaining+=("$action")
+							a_args_remaining+=("$action")
 					esac
 					;;
 				*)
-					args_remaining+=("$arg")
+					a_args_remaining+=("$arg")
 			esac
 		else
-			args_remaining+=("$arg")
+			a_args_remaining+=("$arg")
 		fi
 	done
 
@@ -2842,7 +2865,7 @@ ParseListArgs()
 	DebugVar generate_list_report										# omit-from-production
 	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}	# omit-from-production
 
-	args=(${args_remaining[@]+"${args_remaining[@]}"})
+	args=(${a_args_remaining[@]+"${a_args_remaining[@]}"})
 	DebugArray args ${args[@]+"${args[@]}"}										# omit-from-production
 
 	FuncExit
@@ -2862,9 +2885,10 @@ ParseActionArgs()
 
 	FuncInit
 
+	local -a a_args_remaining=()
+
 	local action=''						# Internal, nice, simple, action name. Only one per-action.
 	local arg=''
-	local -a args_remaining=()
 	local awaiting_group=false
 	local current_action=''
 	local group=''
@@ -2961,7 +2985,7 @@ ParseActionArgs()
 					run_package_actions=true
 			esac
 		else
-			args_remaining+=("$arg")
+			a_args_remaining+=("$arg")
 		fi
 	done
 
@@ -3001,7 +3025,7 @@ ParseActionArgs()
 
 	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}	# omit-from-production
 
-	args=(${args_remaining[@]+"${args_remaining[@]}"})
+	args=(${a_args_remaining[@]+"${a_args_remaining[@]}"})
 	DebugArray args ${args[@]+"${args[@]}"}										# omit-from-production
 
 	FuncExit
@@ -3200,8 +3224,9 @@ ShowArgSuggestions()
 
 	FuncInit
 
+	local -a a_args_remaining=()
+
 	local arg=''
-	local -a args_remaining=()
 
 	CreateReportPaths
 
@@ -3260,14 +3285,14 @@ ShowArgSuggestions()
 					;;
 				*)
 					arg_problem=true
-					args_remaining+=("$arg")
+					a_args_remaining+=("$arg")
 			esac
 		done > "$r_report_output_pathfile"
 
-		if [[ ${#args_remaining[@]} -gt 0 ]]; then
-			ShowAsError "incomplete argument$(Pluralise "${#args_remaining[@]}") \"${args_remaining[*]}\". Please check the arguments again"
+		if [[ ${#a_args_remaining[@]} -gt 0 ]]; then
+			ShowAsError "incomplete argument$(Pluralise "${#a_args_remaining[@]}") \"${a_args_remaining[*]}\". Please check the arguments again"
 			arg_problem=true
-			args_remaining=()
+			a_args_remaining=()
 		fi
 	fi
 
@@ -3348,12 +3373,12 @@ ShowArgSuggestions()
 					;;
 				*)
 					arg_problem=true
-					args_remaining+=("$arg")
+					a_args_remaining+=("$arg")
 			esac
 		done >> "$r_report_output_pathfile"
 
-		if [[ ${#args_remaining[@]} -gt 0 ]]; then
-			ShowAsError "unknown argument$(Pluralise "${#args_remaining[@]}") \"${args_remaining[*]}\". Please check the arguments again"
+		if [[ ${#a_args_remaining[@]} -gt 0 ]]; then
+			ShowAsError "unknown argument$(Pluralise "${#a_args_remaining[@]}") \"${a_args_remaining[*]}\". Please check the arguments again"
 			arg_problem=true
 			useropt_help_basic=false
 		fi
@@ -3362,7 +3387,7 @@ ShowArgSuggestions()
 	[[ -s $r_report_output_pathfile ]] && /bin/cat "$r_report_output_pathfile"
 
 	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}
-	DebugArray args_remaining ${args_remaining[@]+"${args_remaining[@]}"}
+	DebugArray a_args_remaining ${a_args_remaining[@]+"${a_args_remaining[@]}"}
 
 	FuncExit
 
@@ -3561,10 +3586,15 @@ PatchEntwareService()
 	#	$r_external_apps_path
 	#	$r_external_apps_temp_path
 
+	local -r r_prefix='# The following line was inserted by sherpa: https://git.io/sherpa'
+
 	local append_text=''
 	local match_text=''
-	local -r r_package_init_pathfile=$(GetQpkgServicePathFile Entware)
-	local -r r_prefix='# The following line was inserted by sherpa: https://git.io/sherpa'
+	local r_package_init_pathfile=''
+
+	r_package_init_pathfile=$(GetQpkgServicePathFile Entware)
+
+	local -r r_package_init_pathfile
 
 	if /bin/grep "$r_external_apps_temp_path" "$r_package_init_pathfile" &> /dev/null; then
 		DebugInfo 'patch: "'$r_external_apps_path' shuffle" - already done'
@@ -3723,23 +3753,26 @@ CalcIpkDepsToInstall()
 
 	FuncInit
 
+	local -a a_dep_acc=()
+	local -a a_this_list=()
+
+	local -i iterations=0
+	local -i pre_exclude_count=0
+	local -i requested_count=0
+
+	local -r r_iteration_limit=20
+
 	local complete=false
-	local -a dep_acc=()
 	local element=''
 	local ipk_titles=''
-	local -i iterations=0
-	local -r r_iteration_limit=20
-	local -i pre_exclude_count=0
 	local pre_exclude_list=''
 	local req_list=''
-	local -i requested_count=0
-	local -a this_list=()
 
 	# Remove duplicate entries.
 
 	req_list=$(DeDupeWords "$(IPKs-ACinstall-to:List)")
-	dep_acc=($req_list)
-	this_list=($req_list)
+	a_dep_acc=($req_list)
+	a_this_list=($req_list)
 	requested_count=$(/usr/bin/wc -w <<< "$req_list")
 
 	if [[ $requested_count -eq 0 ]]; then
@@ -3751,24 +3784,24 @@ CalcIpkDepsToInstall()
 	DebugInfo "$requested_count IPK$(Pluralise "$requested_count") requested" "'$req_list' "
 
 	while [[ $iterations -le $r_iteration_limit ]]; do
-		ShowAsIterativeProgress 'resolve IPK dependencies' "$iterations" iteration "${#dep_acc[@]}" 'unique IPK'
+		ShowAsIterativeProgress 'resolve IPK dependencies' "$iterations" iteration "${#a_dep_acc[@]}" 'unique IPK'
 
 		((iterations++))
-		printf -v ipk_titles '^Package: %s$\|' "${this_list[@]}"
+		printf -v ipk_titles '^Package: %s$\|' "${a_this_list[@]}"
 		ipk_titles=${ipk_titles%??}		# Remove last 2 characters.
 
-		this_list=($($r_gnu_grep_cmd --word-regexp --after-context 1 --no-group-separator '^Package:\|^Depends:' "$r_external_packages_pathfile" | $r_gnu_grep_cmd -vG '^Section:\|^Version:' | $r_gnu_grep_cmd --word-regexp --after-context 1 --no-group-separator "$ipk_titles" | $r_gnu_grep_cmd -vG "$ipk_titles" | $r_gnu_grep_cmd -vG '^Package: ' | /bin/sed 's/^Depends: //;s/, /\n/g' | /usr/bin/sort | /bin/uniq))
+		a_this_list=($($r_gnu_grep_cmd --word-regexp --after-context 1 --no-group-separator '^Package:\|^Depends:' "$r_external_packages_pathfile" | $r_gnu_grep_cmd -vG '^Section:\|^Version:' | $r_gnu_grep_cmd --word-regexp --after-context 1 --no-group-separator "$ipk_titles" | $r_gnu_grep_cmd -vG "$ipk_titles" | $r_gnu_grep_cmd -vG '^Package: ' | /bin/sed 's/^Depends: //;s/, /\n/g' | /usr/bin/sort | /bin/uniq))
 
 		# Update progress twice per loop.
 
-		ShowAsIterativeProgress 'resolve IPK dependencies' "$iterations" iteration "${#dep_acc[@]}" 'unique IPK'
+		ShowAsIterativeProgress 'resolve IPK dependencies' "$iterations" iteration "${#a_dep_acc[@]}" 'unique IPK'
 
-		if [[ ${#this_list[@]} -eq 0 ]]; then
+		if [[ ${#a_this_list[@]} -eq 0 ]]; then
 			complete=true
 			break
 		else
-			dep_acc+=(${this_list[*]})
-			dep_acc=($(DeDupeWords "${dep_acc[*]}"))
+			a_dep_acc+=(${a_this_list[*]})
+			a_dep_acc=($(DeDupeWords "${a_dep_acc[*]}"))
 		fi
 	done
 
@@ -3785,7 +3818,7 @@ CalcIpkDepsToInstall()
 
 	# Exclude already installed IPKs.
 
-	pre_exclude_list=${dep_acc[*]}
+	pre_exclude_list=${a_dep_acc[*]}
 	pre_exclude_count=$(/usr/bin/wc -w <<< "$pre_exclude_list")
 
 	if [[ $pre_exclude_count -gt 0 ]]; then
@@ -3829,18 +3862,20 @@ CalcIpkDownloadSize()
 
 	FuncInit
 
-	local -a size_array=()
+	local -a a_sizes=()
+
 	local -i size_count=0
+
 	size_count=$(IPKs-ACdownload-to:Count)
 
 	if [[ $size_count -gt 0 ]]; then
 		ShowAsProc "calculate size of IPK$(Pluralise "$size_count") to download"
 
 		DebugAsDone "$size_count IPK$(Pluralise "$size_count") to download: '$(IPKs-ACdownload-to:List)'"
-		size_array=($($r_gnu_grep_cmd -w '^Package:\|^Size:' "$r_external_packages_pathfile" | $r_gnu_grep_cmd --after-context 1 --no-group-separator ": $(/bin/sed 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKs-ACdownload-to:List)")" | /bin/grep '^Size:' | /bin/sed 's/^Size: //'))
+		a_sizes=($($r_gnu_grep_cmd -w '^Package:\|^Size:' "$r_external_packages_pathfile" | $r_gnu_grep_cmd --after-context 1 --no-group-separator ": $(/bin/sed 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKs-ACdownload-to:List)")" | /bin/grep '^Size:' | /bin/sed 's/^Size: //'))
 
 		# shellcheck disable=2283
-		IPKs-ACdownload-to:Size = "$(IFS=+; echo "$((${size_array[*]}))")"	# Rather nifty sizing shortcut found here: https://stackoverflow.com/a/13635566/6182835
+		IPKs-ACdownload-to:Size = "$(IFS=+; echo "$((${a_sizes[*]}))")"	# Rather nifty sizing shortcut found here: https://stackoverflow.com/a/13635566/6182835
 		DebugAsDone "$(FormatAsThous "$(IPKs-ACdownload-to:Size)") bytes ($(FormatAsIsoBytes "$(IPKs-ACdownload-to:Size)")) to download"
 	else
 		DebugAsDone 'no IPKs to size'
@@ -3876,10 +3911,11 @@ IPKs:upgrade()
 
 	FuncInit
 
-	local desc=''
-	local fork_pid=''
 	local -i total_count=0
 	local -i z=0
+
+	local desc=''
+	local fork_pid=''
 
 	IPKs-ACupgrade-to:Init
 	IPKs-ACdownload-to:Init
@@ -3960,12 +3996,13 @@ IPKs:install()
 
 	FuncInit
 
-	local desc=''
-	local fork_pid=''
 	local -i i=0
-	local previous=''
 	local -i total_count=0
 	local -i z=0
+
+	local desc=''
+	local fork_pid=''
+	local previous=''
 
 	IPKs-ACinstall-to:Init
 	IPKs-ACdownload-to:Init
@@ -4054,18 +4091,19 @@ IPKs:downgrade()
 
 	FuncInit
 
+	local -i done_fail_count=0
+	local -i done_ok_count=0
+	local -i total_count=0
+	local -i z=0
+
 	local curl_insecure_opt=''
 	local desc=''
-	local -i done_fail_count=0
 	local log_pathfile=''
 	local name=''
-	local -i done_ok_count=0
 	local package_type=''
 	local remote_url=''
-	local -i total_count=0
 	local url_prefix=''
 	local url_suffix=''
-	local -i z=0
 
 	IPKs-ACdownload-to:Init
 	total_count=$(IPKs-ACdowngrade-to:Count)
@@ -4201,14 +4239,15 @@ PIPs:install()
 
 	FuncInit
 
-	local desc=''
-	local exec_cmd=''
 	local -i done_fail_count=0
-	local log_pathfile=$r_action_log_path/pips.$r_install_log_file
 	local -i done_ok_count=0
-	local package_type=PIP
 	local -i total_count=0
 	local -i z=0
+
+	local desc=''
+	local exec_cmd=''
+	local log_pathfile=$r_action_log_path/pips.$r_install_log_file
+	local package_type=PIP
 
 	if [[ $useropt_fix = true ]] || IPKs-ACinstall-ok.Exist python3-pip; then
 		PIPs-ACinstall-to:Add "$r_base_pips"
@@ -4307,7 +4346,7 @@ _ExecOneActionWithManyForks_()
 	# * This function runs as an asynchronous process *
 
 	# Inputs: (local)
-	#	$1 = the target function action to be applied to each QPKG in $target_packages()
+	#	$1 = the target function action to be applied to each QPKG in $a_target_packages()
 	#	$2 = an array of QPKG names to process with $1
 
 	# Inputs: (global)
@@ -4324,14 +4363,16 @@ _ExecOneActionWithManyForks_()
 
 	FuncForkInit
 
-	local a=$1
 	local -i pid=0
+
+	local a=$1
 	local qpkg_name=''
 
 	shift												# `shift` all arguments one position to the left.
-	local -a c=("$@")
 
-	for qpkg_name in "${c[@]}"; do
+	local -a a_c=("$@")
+
+	for qpkg_name in "${a_c[@]}"; do
 		[[ ! -e $r_abort_actions_pathfile ]] || break
 
 		while [[ $worker_count -ge $max_forks ]]; do		# Don't fork until an empty spot becomes available.
@@ -4587,7 +4628,9 @@ SaveSetting()
 	ConfirmVarIsDefined 2 "${2:-}" "$e_noval" || return
 
 	local a=$1
-	local b=$(Lowercase "$2")
+	local b=''
+
+	b=$(Lowercase "$2")
 
 	case $b in
 		true|false)
@@ -4615,7 +4658,9 @@ LoadSetting()
 	ConfirmVarIsDefined 1 "${1:-}" "$e_nonam" || return
 	ConfirmVarIsDefined 2 "${2:-}" "$e_noval" || return
 
-	local a=$(Lowercase "$2")
+	local a=''
+
+	a=$(Lowercase "$2")
 
 	if [[ ! -x /sbin/getcfg ]]; then
 		printf '%s' "$a"
@@ -4652,7 +4697,9 @@ LenANSIDiff()
 	#	$1 (optional) = text to find length-of.
 
 	local a=${1:-}
-	local b=$(StripANSICodes "$a")
+	local b=''
+
+	b=$(StripANSICodes "$a")
 
 	printf '%s' "$((${#a}-${#b}))"
 
@@ -4792,19 +4839,19 @@ GeneratePacksReportTitleRow()
 	#	$r_report_qpkg_description_column_width
 	#	$r_report_qpkg_name_column_width
 
-	local -a headers=('QPKG name:' 'Appl. version:' 'Description:')
+	local -a a_headers=('QPKG name:' 'Appl. version:' 'Description:')
 
 	if IsOsCanAutowidthTableColumns; then
 		(
 
 		IFS='|'
-		printf '%s' "$(TextBrightWhite "${headers[*]}")"
+		printf '%s' "$(TextBrightWhite "${a_headers[*]}")"
 
 		)
 	else
-		FormatReportFieldWidth "${headers[0]}" "$r_report_qpkg_name_column_width"
-		FormatReportFieldWidth "${headers[1]}" "$r_report_qpkg_appl_version_column_width"
-		printf '%s' "${headers[2]}"
+		FormatReportFieldWidth "${a_headers[0]}" "$r_report_qpkg_name_column_width"
+		FormatReportFieldWidth "${a_headers[1]}" "$r_report_qpkg_appl_version_column_width"
+		printf '%s' "${a_headers[2]}"
 	fi
 
 	printf '\n'
@@ -4822,12 +4869,13 @@ _GeneratePacksReportDataRow_()
 	# Inputs: (global)
 	#	$qpkg_name
 
-	local -a column_vars=(app_ver description name)
+	local -a a_column_vars=(app_ver description name)
+
 	local mode=''
 
 	# Init field messages.
 
-	for a in "${column_vars[@]}"; do
+	for a in "${a_column_vars[@]}"; do
 		local ${a}=false
 		local ${a}_msg=''
 	done
@@ -4886,18 +4934,20 @@ GenerateStatusReportTitleRow()
 	#	$r_report_qpkg_name_column_width
 
 	local a=''
+
 	QPKGs-ISupgradable.IsAny && a=" $(TextBrightWhite '(')$(TextBrightOrange new)$(TextBrightWhite ')')"
-	local -a headers=("$(TextBrightWhite 'QPKG name:')" "$(TextBrightWhite 'Status:')" "$(TextBrightWhite 'Last action (result):')" "$(TextBrightWhite 'QPKG version')${a}$(TextBrightWhite ':')" "$(TextBrightWhite 'Appl. version:')" "$(TextBrightWhite 'Location:')")
+
+	local -a a_headers=("$(TextBrightWhite 'QPKG name:')" "$(TextBrightWhite 'Status:')" "$(TextBrightWhite 'Last action (result):')" "$(TextBrightWhite 'QPKG version')${a}$(TextBrightWhite ':')" "$(TextBrightWhite 'Appl. version:')" "$(TextBrightWhite 'Location:')")
 
 	if IsOsCanAutowidthTableColumns; then
 		(
 
 		IFS='|'
-		printf '%s' "${headers[*]}"			# This report has a condition-dependent column title, so insert colours while building array elements.
+		printf '%s' "${a_headers[*]}"			# This report has a condition-dependent column title, so insert colours while building array elements.
 
 		)
 	else
-		FormatReportFieldWidth "${headers[0]}" "$r_report_qpkg_name_column_width"
+		FormatReportFieldWidth "${a_headers[0]}" "$r_report_qpkg_name_column_width"
 		printf '%s' "$(TextBrightWhite 'Status & Last action (result):')"
 	fi
 
@@ -4915,19 +4965,21 @@ _GenerateStatusReportDataRow_()
 	#	$r_report_flags_path
 	#	$r_report_qpkg_name_column_width
 
-	local a=''
-	local -a column_vars=(action app_ver auxiliary name path status ver)
+	local -a a_column_vars=(action app_ver auxiliary name path status ver)
 		local auxiliary_column=status		# Auxiliary messages are shown in this column name.
-	local mode=''
+
 	local -i n=0
-	local result=''
+
+	local a=''
+	local mode=''
 	local req_alert=false
 	local req_attention=false
 	local req_oops=false
+	local result=''
 
 	# Init field messages.
 
-	for a in "${column_vars[@]}"; do
+	for a in "${a_column_vars[@]}"; do
 		local ${a}=false
 		local ${a}_msg=''
 	done
@@ -5009,7 +5061,7 @@ _GenerateStatusReportDataRow_()
 			ver=N/A
 			/bin/touch "$r_report_flags_path"/na
 
-			for a in "${column_vars[@]}"; do
+			for a in "${a_column_vars[@]}"; do
 				case $a in
 					name)
 						: # Do nothing, this is set later.
@@ -5029,7 +5081,7 @@ _GenerateStatusReportDataRow_()
 			ver=N/A
 			/bin/touch "$r_report_flags_path"/na
 
-			for a in "${column_vars[@]}"; do
+			for a in "${a_column_vars[@]}"; do
 				case $a in
 					name)
 						: # Do nothing, this is set later.
@@ -5044,7 +5096,7 @@ _GenerateStatusReportDataRow_()
 			done
 			;;
 		missing)
-			for a in "${column_vars[@]}"; do
+			for a in "${a_column_vars[@]}"; do
 				case $a in
 					action)
 						local ${a}_msg="$(FormatReportField "${!a}")"
@@ -5092,7 +5144,7 @@ _GenerateStatusReportDataRow_()
 
 			ver=$(GetQpkgDbVer)
 
-			for a in "${column_vars[@]}"; do
+			for a in "${a_column_vars[@]}"; do
 				case $a in
 					name|auxiliary|status)
 						: # Do nothing.
@@ -5103,7 +5155,7 @@ _GenerateStatusReportDataRow_()
 			done
 			;;
 		*)
-			for a in "${column_vars[@]}"; do
+			for a in "${a_column_vars[@]}"; do
 				case $a in
 					name|auxiliary)
 						: # Do nothing.
@@ -5193,18 +5245,18 @@ GenerateReposReportTitleRow()
 	# Inputs: (global)
 	#	$r_report_qpkg_name_column_width
 
-	local -a headers=('QPKG name:' 'Repository:' 'Install date:')
+	local -a a_headers=('QPKG name:' 'Repository:' 'Install date:')
 
 	if IsOsCanAutowidthTableColumns; then
 		(
 
 		IFS='|'
-		printf '%s' "$(TextBrightWhite "${headers[*]}")"
+		printf '%s' "$(TextBrightWhite "${a_headers[*]}")"
 
 		)
 	else
-		FormatReportFieldWidth "${headers[0]}" "$r_report_qpkg_name_column_width"
-		printf '%s' "${headers[1]}"
+		FormatReportFieldWidth "${a_headers[0]}" "$r_report_qpkg_name_column_width"
+		printf '%s' "${a_headers[1]}"
 	fi
 
 	printf '\n'
@@ -5224,16 +5276,19 @@ _GenerateReposReportDataRow_()
 	# Outputs: (local)
 	#	stdout = single report line with data fields.
 
-	local a=''
-	local -a column_vars=(assigned_repo auxiliary install_date name)
+	local -a a_column_vars=(assigned_repo auxiliary install_date name)
 		local auxiliary_column=assigned_repo		# Auxiliary messages are shown in this column name.
+
+	local a=''
 	local mode=''
 	local req_alert=false
 	local req_attention=false
-	local store_id=$(GetQpkgInstalledStoreID)
+	local store_id=''
+
+	store_id=$(GetQpkgInstalledStoreID)
 	[[ $store_id = undefined ]] && store_id=sherpa
 
-	for a in "${column_vars[@]}"; do
+	for a in "${a_column_vars[@]}"; do
 		local ${a}=false
 		local ${a}_msg=''
 	done
@@ -5345,19 +5400,19 @@ GenerateAbsReportTitleRow()
 	#	$r_report_qpkg_is_installed_column_width
 	#	$r_report_qpkg_name_column_width
 
-	local -a headers=('QPKG name:' 'Installed?' 'Acceptable QPKG name abbreviations and aliases:')
+	local -a a_headers=('QPKG name:' 'Installed?' 'Acceptable QPKG name abbreviations and aliases:')
 
 	if IsOsCanAutowidthTableColumns; then
 		(
 
 		IFS='|'
-		printf '%s' "$(TextBrightWhite "${headers[*]}")"
+		printf '%s' "$(TextBrightWhite "${a_headers[*]}")"
 
 		)
 	else
-		FormatReportFieldWidth "${headers[0]}" "$r_report_qpkg_name_column_width"
-		FormatReportFieldWidth "${headers[1]}" "$r_report_qpkg_is_installed_column_width"
-		FormatReportFieldWidth "${headers[2]}" "$r_report_qpkg_abbreviations_column_width"
+		FormatReportFieldWidth "${a_headers[0]}" "$r_report_qpkg_name_column_width"
+		FormatReportFieldWidth "${a_headers[1]}" "$r_report_qpkg_is_installed_column_width"
+		FormatReportFieldWidth "${a_headers[2]}" "$r_report_qpkg_abbreviations_column_width"
 	fi
 
 	printf '\n'
@@ -5372,19 +5427,20 @@ _GenerateAbsReportDataRow_()
 	# Inputs: (global)
 	#	$qpkg_name
 
-	local -a column_vars=(abs auxiliary installed name)
+	local -a a_column_vars=(abs auxiliary installed name)
 		local auxiliary_column=installed		# Auxiliary messages are shown in this column name.
 
-	for a in "${column_vars[@]}"; do
+	for a in "${a_column_vars[@]}"; do
 		local ${a}=false
 		local ${a}_msg=''
 	done
 
-	name=$qpkg_name
 	local mode=''
 	local req_alert=false
 	local req_attention=false
 	local req_notice=false
+
+	name=$qpkg_name
 
 	if IsQpkgMissing; then
 		mode=highlight
@@ -5473,29 +5529,29 @@ GenerateDepsReportTitleRow()
 	#	$r_report_qpkg_opt_dependencies_column_width
 	#	$r_report_qpkg_os_version_column_width
 
-	local -a headers=('QPKG name:' 'Dependencies:' 'Optionals:' 'Prohibited?' 'Installed?' 'Enabled?' 'Complete?' 'Managed?' 'Signed?' 'Min. RAM:' 'Min. OS:' 'Max. OS:' 'Installed QPKG author:')
+	local -a a_headers=('QPKG name:' 'Dependencies:' 'Optionals:' 'Prohibited?' 'Installed?' 'Enabled?' 'Complete?' 'Managed?' 'Signed?' 'Min. RAM:' 'Min. OS:' 'Max. OS:' 'Installed QPKG author:')
 
 	if IsOsCanAutowidthTableColumns; then
 		(
 
 		IFS='|'
-		printf '%s' "$(TextBrightWhite "${headers[*]}")"
+		printf '%s' "$(TextBrightWhite "${a_headers[*]}")"
 
 		)
 	else
-		FormatReportFieldWidth "${headers[0]}" "$r_report_qpkg_name_column_width"
-		FormatReportFieldWidth "${headers[1]}" "$r_report_qpkg_dependencies_column_width"
-		FormatReportFieldWidth "${headers[2]}" "$r_report_qpkg_opt_dependencies_column_width"
-		FormatReportFieldWidth "${headers[3]}" "$r_report_qpkg_is_prohibited_column_width"
-		FormatReportFieldWidth "${headers[4]}" "$r_report_qpkg_is_installed_column_width"
-		FormatReportFieldWidth "${headers[5]}" "$r_report_qpkg_is_enabled_column_width"
-		FormatReportFieldWidth "${headers[6]}" "$r_report_qpkg_is_complete_column_width"
-		FormatReportFieldWidth "${headers[7]}" "$r_report_qpkg_is_managed_column_width"
-		FormatReportFieldWidth "${headers[8]}" "$r_report_qpkg_is_signed_column_width"
-		FormatReportFieldWidth "${headers[9]}" "$r_report_qpkg_min_ram_column_width"
-		FormatReportFieldWidth "${headers[10]}" "$r_report_qpkg_os_version_column_width"
-		FormatReportFieldWidth "${headers[11]}" "$r_report_qpkg_os_version_column_width"
-		FormatReportFieldWidth "${headers[12]}" "$r_report_lazy_column_width"
+		FormatReportFieldWidth "${a_headers[0]}" "$r_report_qpkg_name_column_width"
+		FormatReportFieldWidth "${a_headers[1]}" "$r_report_qpkg_dependencies_column_width"
+		FormatReportFieldWidth "${a_headers[2]}" "$r_report_qpkg_opt_dependencies_column_width"
+		FormatReportFieldWidth "${a_headers[3]}" "$r_report_qpkg_is_prohibited_column_width"
+		FormatReportFieldWidth "${a_headers[4]}" "$r_report_qpkg_is_installed_column_width"
+		FormatReportFieldWidth "${a_headers[5]}" "$r_report_qpkg_is_enabled_column_width"
+		FormatReportFieldWidth "${a_headers[6]}" "$r_report_qpkg_is_complete_column_width"
+		FormatReportFieldWidth "${a_headers[7]}" "$r_report_qpkg_is_managed_column_width"
+		FormatReportFieldWidth "${a_headers[8]}" "$r_report_qpkg_is_signed_column_width"
+		FormatReportFieldWidth "${a_headers[9]}" "$r_report_qpkg_min_ram_column_width"
+		FormatReportFieldWidth "${a_headers[10]}" "$r_report_qpkg_os_version_column_width"
+		FormatReportFieldWidth "${a_headers[11]}" "$r_report_qpkg_os_version_column_width"
+		FormatReportFieldWidth "${a_headers[12]}" "$r_report_lazy_column_width"
 	fi
 
 	printf '\n'
@@ -5523,18 +5579,22 @@ _GenerateDepsReportDataRow_()
 	#	$r_report_qpkg_opt_dependencies_column_width
 	#	$r_report_qpkg_os_version_column_width
 
-	local a=''
-	local -a column_vars=(author auxiliary complete deps enabled installed managed max_os min_os min_ram name opt_deps prohibited signed)
+	local -a a_column_vars=(author auxiliary complete deps enabled installed managed max_os min_os min_ram name opt_deps prohibited signed)
 		local auxiliary_column=deps		# Auxiliary messages are shown in this column name.
+
+	local a=''
 	local dep_name=''
-	local deps_raw=$(GetQpkgDbDependencies "$qpkg_name")
-	local opt_deps_raw=$(GetQpkgDbOptDependencies "$qpkg_name")
+	local deps_raw=''
+	local opt_deps_raw=''
 	local mode=''
 	local req_alert=false
 	local req_attention=false
 	local req_notice=false
 
-	for a in "${column_vars[@]}"; do
+	deps_raw=$(GetQpkgDbDependencies "$qpkg_name")
+	opt_deps_raw=$(GetQpkgDbOptDependencies "$qpkg_name")
+
+	for a in "${a_column_vars[@]}"; do
 		local ${a}=false
 		local ${a}_msg=''
 	done
@@ -5576,7 +5636,7 @@ _GenerateDepsReportDataRow_()
 		author)
 			# Assign & highlight field messages.
 
-			for a in "${column_vars[@]}"; do
+			for a in "${a_column_vars[@]}"; do
 				case $a in
 					author)
 						author_msg=$(FormatReportField "$author" attention_highlight)
@@ -5831,27 +5891,27 @@ GenerateFeaturesReportTitleRow()
 	#	$r_report_qpkg_name_column_width
 	#	$r_report_qpkg_tier_column_width
 
-	local -a headers=('QPKG name:' 'Independ:' 'Optional:' 'Depend:' 'Enhanced:' 'CanBack:' 'CanClean:' 'StartUpd:' 'AutoUpdate:' 'LiveTest:' 'UniqUnpack:')
+	local -a a_headers=('QPKG name:' 'Independ:' 'Optional:' 'Depend:' 'Enhanced:' 'CanBack:' 'CanClean:' 'StartUpd:' 'AutoUpdate:' 'LiveTest:' 'UniqUnpack:')
 
 	if IsOsCanAutowidthTableColumns; then
 		(
 
 		IFS='|'
-		printf '%s' "$(TextBrightWhite "${headers[*]}")"
+		printf '%s' "$(TextBrightWhite "${a_headers[*]}")"
 
 		)
 	else
-		FormatReportFieldWidth "${headers[0]}" "$r_report_qpkg_name_column_width"
-		FormatReportFieldWidth "${headers[1]}" "$r_report_qpkg_tier_column_width"
-		FormatReportFieldWidth "${headers[2]}" "$r_report_qpkg_tier_column_width"
-		FormatReportFieldWidth "${headers[3]}" "$r_report_qpkg_tier_column_width"
-		FormatReportFieldWidth "${headers[4]}" "$r_report_qpkg_is_enhanced_column_width"
-		FormatReportFieldWidth "${headers[5]}" "$r_report_qpkg_can_backup_column_width"
-		FormatReportFieldWidth "${headers[6]}" "$r_report_qpkg_can_clean_column_width"
-		FormatReportFieldWidth "${headers[7]}" "$r_report_qpkg_can_start_to_update_column_width"
-		FormatReportFieldWidth "${headers[8]}" "$r_report_qpkg_auto_update_column_width"
-		FormatReportFieldWidth "${headers[9]}" "$r_report_qpkg_active_test_builtin_column_width"
-		FormatReportFieldWidth "${headers[10]}" "$r_report_lazy_column_width"
+		FormatReportFieldWidth "${a_headers[0]}" "$r_report_qpkg_name_column_width"
+		FormatReportFieldWidth "${a_headers[1]}" "$r_report_qpkg_tier_column_width"
+		FormatReportFieldWidth "${a_headers[2]}" "$r_report_qpkg_tier_column_width"
+		FormatReportFieldWidth "${a_headers[3]}" "$r_report_qpkg_tier_column_width"
+		FormatReportFieldWidth "${a_headers[4]}" "$r_report_qpkg_is_enhanced_column_width"
+		FormatReportFieldWidth "${a_headers[5]}" "$r_report_qpkg_can_backup_column_width"
+		FormatReportFieldWidth "${a_headers[6]}" "$r_report_qpkg_can_clean_column_width"
+		FormatReportFieldWidth "${a_headers[7]}" "$r_report_qpkg_can_start_to_update_column_width"
+		FormatReportFieldWidth "${a_headers[8]}" "$r_report_qpkg_auto_update_column_width"
+		FormatReportFieldWidth "${a_headers[9]}" "$r_report_qpkg_active_test_builtin_column_width"
+		FormatReportFieldWidth "${a_headers[10]}" "$r_report_lazy_column_width"
 	fi
 
 	printf '\n'
@@ -5867,14 +5927,15 @@ _GenerateFeaturesReportDataRow_()
 	#	$qpkg_name
 	#	$r_report_flags_path
 
-	local a=''
-	local -a column_vars=(active_test autoupdate auxiliary backup clean dependent enhanced independent name optional restart_to_update uniqueunpack)
+	local -a a_column_vars=(active_test autoupdate auxiliary backup clean dependent enhanced independent name optional restart_to_update uniqueunpack)
 		local auxiliary_column=independent		# Auxiliary messages are shown in this column name.
+
+	local a=''
 	local mode=''
 	local req_alert=false
 	local req_attention=false
 
-	for a in "${column_vars[@]}"; do
+	for a in "${a_column_vars[@]}"; do
 		local ${a}=false
 		local ${a}_msg=''
 	done
@@ -5934,7 +5995,7 @@ _GenerateFeaturesReportDataRow_()
 
 			# Assign & highlight field messages.
 
-			for a in "${column_vars[@]}"; do
+			for a in "${a_column_vars[@]}"; do
 				case $a in
 					auxiliary)
 						: # Do nothing.
@@ -5978,7 +6039,7 @@ _GenerateFeaturesReportDataRow_()
 
 			# Assign & highlight field messages.
 
-			for a in "${column_vars[@]}"; do
+			for a in "${a_column_vars[@]}"; do
 				case $a in
 					auxiliary)
 						: # Do nothing.
@@ -6037,19 +6098,19 @@ GenerateBacksReportTitleRow()
 	#	$r_report_file_change_date_column_width
 	#	$r_report_file_name_column_width
 
-	local -a headers=('Backup file:' 'Size in bytes:' 'Backup date:')
+	local -a a_headers=('Backup file:' 'Size in bytes:' 'Backup date:')
 
 	if IsOsCanAutowidthTableColumns; then
 		(
 
 		IFS='|'
-		printf '%s' "$(TextBrightWhite "${headers[*]}")"
+		printf '%s' "$(TextBrightWhite "${a_headers[*]}")"
 
 		)
 	else
-		FormatReportFieldWidth "${headers[0]}" "$r_report_file_name_column_width"
-		FormatReportFieldWidth "${headers[1]}" "$r_report_file_bytes_column_width"
-		FormatReportFieldWidth "${headers[2]}" "$r_report_file_change_date_column_width"
+		FormatReportFieldWidth "${a_headers[0]}" "$r_report_file_name_column_width"
+		FormatReportFieldWidth "${a_headers[1]}" "$r_report_file_bytes_column_width"
+		FormatReportFieldWidth "${a_headers[2]}" "$r_report_file_change_date_column_width"
 	fi
 
 	printf '\n'
@@ -6073,10 +6134,11 @@ _GenerateBacksReportItemLine_()
 	#	$r_report_file_name_column_width
 	#	$r_report_flags_path
 
-	local -a column_vars=(epoch_time file_bytes file_name)
+	local -a a_column_vars=(epoch_time file_bytes file_name)
+
 	local mode=''
 
-	for a in "${column_vars[@]}"; do
+	for a in "${a_column_vars[@]}"; do
 		local ${a}=false
 		local ${a}_msg=''
 	done
@@ -6808,17 +6870,21 @@ DisplayFileInViewport()
 	[[ -s $1 ]] || return
 
 	local report_pathfile=$1
+
 	shift															# Shift all arguments one position to the left.
+
+	local -a a_b=("${@:-}")
+
+	local -r r_prompt=' use arrow-keys to scroll up-down & left-right, press Q to quit '
+
 	local arg=''
-	local -a b=("${@:-}")
 	local headers=false
 	local linenumbers=false
 	local linewrap=false
 	local options=''
-	local -r r_prompt=' use arrow-keys to scroll up-down & left-right, press Q to quit '
 	local scrolltoend=false
 
-	for arg in "${b[@]}"; do
+	for arg in "${a_b[@]}"; do
 		[[ $arg = headers:on ]] && headers=true
 		[[ $arg = linenumbers:on ]] && linenumbers=true
 		[[ $arg = linewrap:on ]] && linewrap=true
@@ -6885,11 +6951,11 @@ CalcReportFirstColumnWidth()
 	ConfirmVarIsDefined 1 "${1:-}" "$e_nopfi" || return
 	[[ -s $1 ]] || return
 
-	local a=$(< "$1")
+	local a=''
 	local b=''
 	local c=''
 
-	a=$(/bin/sed '/^#[[:space:]].*/d;/#$/d;s/[[:space:]]#[[:space:]].*//' <<< "$a")		# Remove comment lines and line comments.
+	a=$(/bin/sed '/^#[[:space:]].*/d;/#$/d;s/[[:space:]]#[[:space:]].*//' < "$1")		# Remove comment lines and line comments.
 	a=$(/bin/sed 's/[[:space:]]*$//' <<< "$a")											# Remove line trailing whitespace.
 	a=$(/bin/sed '/^$/d' <<< "$a")														# Remove empty lines.
 	a=$(head -n1 <<< "$a")																# Only use header row (column titles).
@@ -6914,7 +6980,9 @@ GetLogSessStartLine()
 	# Inputs: (global)
 	#	$r_session_tail_pathfile
 
-	local -i linenum=$(($(/bin/grep -n 'SCRIPT:.*started:' "$r_session_tail_pathfile" | /usr/bin/tail -n${1:-1} | head -n1 | cut -d':' -f1)-1))
+	local -i linenum=0
+
+	linenum=$(($(/bin/grep -n 'SCRIPT:.*started:' "$r_session_tail_pathfile" | /usr/bin/tail -n${1:-1} | head -n1 | cut -d':' -f1)-1))
 	[[ $linenum -lt 1 ]] && linenum=1
 	printf '%s' "$linenum"
 
@@ -6929,7 +6997,9 @@ GetLogSessFinishLine()
 	# Inputs: (global)
 	#	$r_session_tail_pathfile
 
-	local -i linenum=$(($(/bin/grep -n 'SCRIPT:.*finished:' "$r_session_tail_pathfile" | /usr/bin/tail -n${1:-1} | cut -d':' -f1)+2))
+	local -i linenum=0
+
+	linenum=$(($(/bin/grep -n 'SCRIPT:.*finished:' "$r_session_tail_pathfile" | /usr/bin/tail -n${1:-1} | cut -d':' -f1)+2))
 	[[ $linenum -eq 2 ]] && linenum=3
 	printf '%s' "$linenum"
 
@@ -7253,11 +7323,13 @@ UpdateDirSizeProgress()
 
 	[[ $dir_bytes -gt 0 ]] || return
 
+	local -ir r_stalled_seconds_threshold=4
+
+	local -i stalled_seconds=0
+
 	local perc_msg=''
 	local progress_msg=''
-	local -i stalled_seconds=0
 	local stalled_msg=''
-	local stalled_seconds_threshold=4
 
 	if [[ ${1:-} = final ]]; then
 		current_bytes=$dir_bytes
@@ -7270,7 +7342,7 @@ UpdateDirSizeProgress()
 	[[ $current_bytes -lt $dir_bytes && $perc_msg = '100%' ]] && perc_msg=99%		# Ensure we don't hit 100% until the last byte is downloaded.
 	progress_msg="$perc_msg ($(TextBrightWhite "$(FormatAsIsoBytes "$current_bytes")")/$(TextBrightWhite "$(FormatAsIsoBytes "$dir_bytes")"))"
 
-	if [[ $stalled_seconds -ge $stalled_seconds_threshold ]]; then
+	if [[ $stalled_seconds -ge $r_stalled_seconds_threshold ]]; then
 		# Append a message showing stalled time.
 
 		stalled_msg=' stalled for '
@@ -7473,6 +7545,7 @@ ListQPKGsActionsAll()																						# omit-from-production
 
 	local a=''																								# omit-from-production
 	local b=''																								# omit-from-production
+
 	DebugInfoMinSepr																						# omit-from-production
 
 	for a in "${r_qpkg_actions[@]}"; do																		# omit-from-production
@@ -7502,6 +7575,7 @@ ListQPKGsFlagsAll()																							# omit-from-production
 
 	local a=''																								# omit-from-production
 	local b=''																								# omit-from-production
+
 	DebugInfoMinSepr																						# omit-from-production
 
 	for a in "${r_qpkg_actions[@]}"; do																		# omit-from-production
@@ -7572,6 +7646,7 @@ ListPIPsActions()
 	FuncInit
 
 	local a=''
+
 	DebugInfoMinSepr
 
 	for a in "${r_pip_actions[@]}"; do
@@ -7950,6 +8025,7 @@ LoadQPKGsStates()
 
 	local a=''
 	local b=''
+
 	qpkg_name=''
 
 	ShowAsProc 'load QPKG states'
@@ -8087,10 +8163,11 @@ HelpAbbreviations()
 
 	FuncInit
 
-	local a=''
-	local b=''
 	local -i m=0
 	local -i n=0
+
+	local a=''
+	local b=''
 
 	LoadDatabase
 	DisableDebugToArchiveAndFile
@@ -8150,15 +8227,16 @@ ReportBackups()
 
 	FuncInit
 
+	local -i file_bytes=0
+	local -i m=0
+	local -i n=0
+
 	local a=''
 	local b=''
-	local epoch_time=0		# Allow float as seconds have a fractional component.
-	local -i file_bytes=0
+	local epoch_time=0		# Allow float as seconds have a decimal component.
 	local file_date=''
 	local file_name=''
 	local file_time=''
-	local -i m=0
-	local -i n=0
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport backups
@@ -8217,10 +8295,12 @@ ReportDependencies()
 	FuncInit
 
 	generate_report_headers=true
-	local a=''
-	local b=''
+
 	local -i m=0
 	local -i n=0
+
+	local a=''
+	local b=''
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport dependency
@@ -8270,10 +8350,12 @@ ReportFeatures()
 	FuncInit
 
 	generate_report_headers=true
-	local a=''
-	local b=''
+
 	local -i m=0
 	local -i n=0
+
+	local a=''
+	local b=''
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport features
@@ -8322,10 +8404,11 @@ ReportPackages()
 
 	FuncInit
 
-	local a=''
-	local b=''
 	local -i m=0
 	local -i n=0
+
+	local a=''
+	local b=''
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport package
@@ -8389,10 +8472,12 @@ ReportRepos()
 	FuncInit
 
 	generate_report_headers=true
-	local a=''
-	local b=''
+
 	local -i m=0
 	local -i n=0
+
+	local a=''
+	local b=''
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport repository
@@ -8442,10 +8527,12 @@ ReportStatuses()
 	FuncInit
 
 	generate_report_headers=true
-	local a=''
-	local b=''
+
 	local -i m=0
 	local -i n=0
+
+	local a=''
+	local b=''
 
 	DisableDebugToArchiveAndFile
 	DisplayProcReport status
@@ -8498,16 +8585,17 @@ ReportAllActionResults()
 	{
 
 	local -i a=0
-	local action=''
 	local -i b=0
 	local -i c=0
 	local -i d=0
 	local -i datetime=0
 	local -i duration=0
 	local -i e=0
+	local -i quantity=0
+
+	local action=''
 	local package_name=''
 	local package_type=''
-	local -i quantity=0
 	local reason=''
 	local result=''
 
@@ -8562,13 +8650,14 @@ ReportActionResults()
 	# Inputs: (global)
 	#	$r_action_results_pathfile
 
-	local action=''
 	local -i count=0
 	local -i datetime=0
 	local -i duration=0
+	local -i quantity=0
+
+	local action=''
 	local package_name=''
 	local package_type=''
-	local -i quantity=0
 	local reason=''
 	local result=''
 
@@ -9121,7 +9210,9 @@ AppendToMsgPipeEnhancedLog()																# omit-from-production
 	# Outputs: (global)
 	#	stdout -> $r_action_msg_pipe_log_pathfile
 
-	local a=$(ExpandMsgPipeShortcodes "${_msg1_value:-null}")								# omit-from-production
+	local a=''
+
+	a=$(ExpandMsgPipeShortcodes "${_msg1_value:-null}")										# omit-from-production
 
 	if [[ -n ${1:-} ]]; then																# omit-from-production
 		printf "[%-${r_date_field_length}s] %s\n" "$(ConvertNowToFullDate)" "$1"			# omit-from-production
@@ -9278,7 +9369,9 @@ NoteIpkAcAsEr()
 	#	$2 = action.
 	#	$3 (optional) = reason.
 
-	local a="failing request to $2 $(FormatPackageName "${1:-}")"
+	local a=''
+
+	a="failing request to $2 $(FormatPackageName "${1:-}")"
 
 	[[ -n ${3:-} ]] && a+=' as '$3
 	DebugAsError "$a" >&2
@@ -9525,12 +9618,14 @@ GetHardwareCpuBenchmark()
 
 	# Use GNU `dd` because it generates speed statistics as stderr. BusyBox 1.01 `dd` does not generate stats at-all.
 
-	local a=''
 	local -i b=16		# Maximum time-to-run is around 1 second on my slowest NAS (TS-220).
 	local -i c=-20		# Execute benchmark with highest priority.
 
+	local a=''
+
 	if [[ ! -x $r_gnu_dd_cmd ]]; then
 		printf "unable to measure, GNU 'dd' is unavailable"
+
 		return 1
 	fi
 
@@ -9570,9 +9665,10 @@ GetHardwareVolumeBenchmark()
 	#	$r_gnu_dd_cmd
 	#	$r_gnu_nice_cmd
 
+	local -i c=-20		# Run benchmark with highest priority.
+
 	local a=''
 	local b=10k			# Maximum time-to-run is around 1 second on my slowest NAS (TS-220).
-	local -i c=-20		# Run benchmark with highest priority.
 	local d=''
 
 	d=$(GetUserDefVol)/zero
@@ -9839,7 +9935,9 @@ GetHardwareInstalledRAMgb()
 	#	stdout = text string.
 
 	local a=''
+
 	a=$(/bin/grep MemTotal /proc/meminfo | /bin/sed 's/.*: //;s/kB//;s/ //g')
+
 	local b=$((((a/1024)*1000)/1024))
 	local c=${b%???}.${b:${#b}<3?0:-3}
 
@@ -9891,20 +9989,20 @@ ConvertFirmwareVersionStringToNumber()
 	# Output should be compared using forced base-10 syntax (to handle leading zero):
 	#	Example: [[ $((10#$a)) -gt $((10#$b)) ]]
 
-	local major=0
-	local intermediate=0
-	local minor=0
-	local build=0
-
 	# Use only this many digits from start of each field.
 
-	local -i major_trim=2
-	local -i intermediate_trim=2
-	local -i minor_trim=2
-	local -i build_trim=4
+	local -ir r_build_trim=4
+	local -ir r_intermediate_trim=2
+	local -ir r_major_trim=2
+	local -ir r_minor_trim=2
+
+	local -i build=0
+	local -i intermediate=0
+	local -i major=0
+	local -i minor=0
 
 	while IFS=. read -r major intermediate minor build; do
-		printf "%0${major_trim}d%0${intermediate_trim}d%0${minor_trim}d%0${build_trim}d" "$((10#${major:0:major_trim}))" "$((10#${intermediate:0:intermediate_trim}))" "$((10#${minor:0:minor_trim}))" "$((10#${build:0:build_trim}))"
+		printf "%0${r_major_trim}d%0${r_intermediate_trim}d%0${r_minor_trim}d%0${r_build_trim}d" "$((10#${major:0:r_major_trim}))" "$((10#${intermediate:0:r_intermediate_trim}))" "$((10#${minor:0:r_minor_trim}))" "$((10#${build:0:r_build_trim}))"
 	done <<< "$1"
 
 	}
@@ -9952,6 +10050,7 @@ GetQpkgArch()
 
 	if [[ $(get_display_name) = 'TS-269H' ]]; then
 		printf i53
+
 		return
 	fi
 
@@ -10140,8 +10239,9 @@ ClaimLockfile()
 	# Outputs: (global)
 	#	$r_lock_pathfile
 
-	local a=''
 	readonly r_lock_pathfile=/var/lock/sherpa.pid
+
+	local a=''
 
 	for a in sherpa-manager.sh sherpa-manager.source; do
 		if [[ -e $r_lock_pathfile && -d /proc/$(< "$r_lock_pathfile") && $(< /proc/"$(< "$r_lock_pathfile")"/cmdline) =~ $a ]]; then
@@ -10231,18 +10331,24 @@ SaveActionResultMetrics()
 
 	# Calculate duration here.
 
+	local r_duration=''
+	local r_starttime=''
+
+	local -r r_action=${3:?${FUNCNAME[0]}(): $e_noact}
+		local -r r_clean_action=${r_action//\"/}
+			local -r r_action_times_pathfile=$r_action_times_path/$r_clean_action.milliseconds
+	local -r r_name=${2:?${FUNCNAME[0]}(): $e_nopnm}
+	local -r r_package_type=${1:?${FUNCNAME[0]}(): $e_nopty}
+	local -r r_qty=${4:-1}
+	local -r r_reason=${6:-}
+	local -r r_result_code=${5:?${FUNCNAME[0]}(): $e_nores}
 	local -r r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
 		local var_safe_name=${r_var_name//[.-]/_}; var_safe_name=${var_safe_name//:/_}
-	local -r r_package_type=${1:?${FUNCNAME[0]}(): $e_nopty}
-	local -r r_name=${2:?${FUNCNAME[0]}(): $e_nopnm}
-	local -r r_action=${3:?${FUNCNAME[0]}(): $e_noact}
-	local -r r_qty=${4:-1}
-	local -r r_clean_action=${r_action//\"/}
-	local -r r_result_code=${5:?${FUNCNAME[0]}(): $e_nores}
-	local -r r_reason=${6:-}
-	local -r r_starttime=$(ConvertNanosecondsToMilliseconds "${!var_safe_name}")
-	local -r r_duration=$(CalcAmountDiff "$r_starttime" "$(ConvertNowToMilliseconds)")
-	local -r r_action_times_pathfile=$r_action_times_path/$r_clean_action.milliseconds
+			r_starttime=$(ConvertNanosecondsToMilliseconds "${!var_safe_name}")
+				r_duration=$(CalcAmountDiff "$r_starttime" "$(ConvertNowToMilliseconds)")
+
+	local -r r_duration
+	local -r r_starttime
 
 	# Add new action results entry.
 
@@ -10308,8 +10414,9 @@ _QPKG:status_()
 
 	FuncForkInit
 
-	local action=status
 	local -i z=0
+
+	local action=status
 
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
@@ -10323,15 +10430,20 @@ _QPKG:status_()
 
 	DebugAsProc "status $(FormatPackageName)"
 
+	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_status_log_file
+
 	local a=''
 	local b=''
-	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_status_log_file
 
 	a=$(GetQpkgDbActiveTest)
 	IsDebug && b+='DEBUG_QPKG=true '
 
 	if [[ $a = builtin ]]; then
-		local -r r_local_pathfile=$(GetQpkgServicePathFile)
+		local r_local_pathfile=''
+
+		r_local_pathfile=$(GetQpkgServicePathFile)
+
+		local -r r_local_pathfile
 
 		if [[ -x $r_gnu_timeout_cmd ]]; then			# Run 'status' query with GNU `timeout` (if-possible).
 			$r_gnu_timeout_cmd "$r_qpkg_status_check_timeout_seconds" /bin/sh -c "$b \"$r_local_pathfile\" status"
@@ -10393,8 +10505,9 @@ _QPKG:rebuild_()
 
 	FuncForkInit
 
-	local action=meta-rebuild
 	local -i z=0
+
+	local action=meta-rebuild
 
 	# Reactive checks performed just-before the action is carried-out. NOTE: predictive checks are permitted here for time-saving purposes (don't run future actions if this action isn't permitted).
 
@@ -10447,8 +10560,9 @@ _QPKG:reassign_()
 
 	FuncForkInit
 
-	local action=reassign
 	local -i z=0
+
+	local action=reassign
 
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
@@ -10480,7 +10594,9 @@ _QPKG:reassign_()
 		MarkActionForkAsDoneOk
 	else
 		local b=''
+
 		b=$(GetQpkgServiceExplanation) || b=$z
+
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		MarkActionForkAsDoneError
 	fi
@@ -10507,13 +10623,24 @@ _QPKG:download_()
 
 	FuncForkInit
 
-	local action=download
-	local -r r_remote_hash=$(GetQpkgDbHash)
-	local -r r_remote_url=$(GetQpkgDbURL)
-		local -r r_remote_filename=$(/usr/bin/basename "$r_remote_url")
-			local -r r_local_pathfile=$r_qpkg_download_path/$r_remote_filename
-				local -r r_local_filename=$(/usr/bin/basename "$r_local_pathfile")
 	local -i z=0
+
+	local action=download
+	local r_local_filename=''
+	local r_remote_filename=''
+	local r_remote_hash=''
+	local r_remote_url=''
+
+	r_remote_hash=$(GetQpkgDbHash)
+	r_remote_url=$(GetQpkgDbURL)
+		r_remote_filename=$(/usr/bin/basename "$r_remote_url")
+			local -r r_local_pathfile=$r_qpkg_download_path/$r_remote_filename
+				r_local_filename=$(/usr/bin/basename "$r_local_pathfile")
+
+	local -r r_local_filename
+	local -r r_remote_filename
+	local -r r_remote_hash
+	local -r r_remote_url
 
 	# Reactive checks performed just-before the action is carried-out. NOTE: predictive checks are permitted here for time-saving purposes (don't run future actions if this action isn't permitted).
 
@@ -10574,8 +10701,10 @@ _QPKG:download_()
 	if IsNtFile "$r_local_pathfile"; then
 		DebugAsProc "downloading $(FormatFileName "$r_remote_filename")"
 
-		local curl_insecure_opt=''
 		local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_download_log_file
+
+		local curl_insecure_opt=''
+
 		IsOsCanSecureDownload || curl_insecure_opt='--insecure'
 
 		rm -f "$r_log_pathfile" 2> /dev/null
@@ -10630,9 +10759,14 @@ _QPKG:install_()
 
 	FuncForkInit
 
-	local action=install
-	local -r r_local_pathfile=$(GetQpkgDbPathFilename)
 	local -i z=0
+
+	local action=install
+	local r_local_pathfile=''
+
+	r_local_pathfile=$(GetQpkgDbPathFilename)
+
+	local -r r_local_pathfile
 
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
@@ -10677,7 +10811,9 @@ _QPKG:install_()
 	DebugAsProc "installing $(FormatPackageName)"
 
 	local a='INSTALL_QPKG=true '
+
 	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_install_log_file
+
 	IsDebug && a+='DEBUG_QPKG=true '
 	[[ ${QPKGs_were_installed_name[*]:-} = *"$qpkg_name"* ]] && a+="QINSTALL_PATH=$(GetQpkgInstalledOriginalPath "$qpkg_name") "
 
@@ -10713,7 +10849,9 @@ _QPKG:install_()
 		z=0		# Remap to zero.
 	else
 		local b=''
+
 		b=$(GetQpkgServiceExplanation) || b=$z
+
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 #		IsOsCanManageSignedPackages && IsQpkgSigned && SendParentCommand "QPKGs-ACunsign-to:Add $qpkg_name"
 		MarkActionForkAsDoneError
@@ -10744,9 +10882,14 @@ _QPKG:reinstall_()
 
 	FuncForkInit
 
-	local action=reinstall
-	local -r r_local_pathfile=$(GetQpkgDbPathFilename)
 	local -i z=0
+
+	local action=reinstall
+	local r_local_pathfile=''
+
+	r_local_pathfile=$(GetQpkgDbPathFilename)
+
+	local -r r_local_pathfile
 
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
@@ -10777,7 +10920,9 @@ _QPKG:reinstall_()
 	DebugAsProc "reinstalling $(FormatPackageName)"
 
 	local a='REINSTALL_QPKG=true '
+
 	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_reinstall_log_file
+
 	IsDebug && a+='DEBUG_QPKG=true '
 	IsValidQpkgInstalled && a+="QINSTALL_PATH=$(/usr/bin/dirname "$(GetQpkgInstalledPath)") "
 
@@ -10797,7 +10942,10 @@ _QPKG:reinstall_()
 		MarkActionForkAsDoneOk
 		z=0		# Remap to zero.
 	else
-		local b=$(GetQpkgServiceExplanation) || b=$z
+		local b=''
+
+		b=$(GetQpkgServiceExplanation) || b=$z
+
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		MarkActionForkAsDoneError
 	fi
@@ -10826,9 +10974,14 @@ _QPKG:update_()
 
 	FuncForkInit
 
-	local action=update
-	local -r r_local_pathfile=$(GetQpkgServicePathFile)
 	local -i z=0
+
+	local action=update
+	local r_local_pathfile=''
+
+	r_local_pathfile=$(GetQpkgServicePathFile)
+
+	local -r r_local_pathfile
 
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
@@ -10863,7 +11016,9 @@ _QPKG:update_()
 	DebugAsProc "updating $(FormatPackageName)"
 
 	local a=''
+
 	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_update_log_file
+
 	IsDebug && a+='DEBUG_QPKG=true '
 
 	Executer "$a \"$r_local_pathfile\" update" "$r_log_pathfile" log:failure-only
@@ -10876,7 +11031,10 @@ _QPKG:update_()
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 		MarkActionForkAsDoneOk
 	else
-		local b=$(GetQpkgServiceExplanation) || b=$z
+		local b=''
+
+		b=$(GetQpkgServiceExplanation) || b=$z
+
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		MarkActionForkAsDoneError
 		# TODO: if debug mode, save action log to session log.
@@ -10906,9 +11064,14 @@ _QPKG:upgrade_()
 
 	FuncForkInit
 
-	local action=upgrade
-	local -r r_local_pathfile=$(GetQpkgDbPathFilename)
 	local -i z=0
+
+	local action=upgrade
+	local r_local_pathfile=''
+
+	r_local_pathfile=$(GetQpkgDbPathFilename)
+
+	local -r r_local_pathfile
 
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
@@ -10943,8 +11106,11 @@ _QPKG:upgrade_()
 	DebugAsProc "upgrading $(FormatPackageName)"
 
 	local a='UPGRADE_QPKG=true '
-	local prev_ver=$(GetQpkgInstalledVer)
+	local prev_ver=''
+
 	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_upgrade_log_file
+
+	prev_ver=$(GetQpkgInstalledVer)
 	IsDebug && a+='DEBUG_QPKG=true '
 	IsValidQpkgInstalled && a+="QINSTALL_PATH=$(/usr/bin/dirname "$(GetQpkgInstalledPath "$qpkg_name")") "
 
@@ -10963,18 +11129,23 @@ _QPKG:upgrade_()
 		SendParentCommand "QPKGs-ACupdate-to:Remove $qpkg_name"
 		IsQpkgDbCanClean && SendParentCommand "QPKGs-ACclean-to:Add $qpkg_name"
 
-		local current_ver=$(GetQpkgInstalledVer)
+		local current_ver=''
+
+		current_ver=$(GetQpkgInstalledVer)
 
 		if [[ $current_ver = "$prev_ver" ]]; then
 			SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok "v$current_ver"
 		else
-			SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok "v$prev_ver -> v$current_ver"		# squeezer-ignore
+			SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok "v$prev_ver -> v$current_ver"		# dont-squeeze
 		fi
 
 		MarkActionForkAsDoneOk
 		z=0		# Remap to zero.
 	else
-		local b=$(GetQpkgServiceExplanation) || b=$z
+		local b=''
+
+		b=$(GetQpkgServiceExplanation) || b=$z
+
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		MarkActionForkAsDoneError
 	fi
@@ -11003,9 +11174,14 @@ _QPKG:uninstall_()
 
 	FuncForkInit
 
-	local action=uninstall
-	local -r r_local_pathfile=$(GetQpkgInstalledPath)/.uninstall.sh
 	local -i z=0
+
+	local action=uninstall
+	local r_local_pathfile=''
+
+	r_local_pathfile=$(GetQpkgInstalledPath)/.uninstall.sh
+
+	local -r r_local_pathfile
 
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
@@ -11025,7 +11201,6 @@ _QPKG:uninstall_()
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' sk "it's needed here! 😉"
 		MarkActionForkAsSkippedOk
 		z=2
-
 	elif [[ $r_local_pathfile = undefined ]]; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' se "$(FormatFileName '.uninstall.sh') undefined"
 		MarkActionForkAsSkippedError
@@ -11042,12 +11217,16 @@ _QPKG:uninstall_()
 
 	[[ $qpkg_name = Entware ]] && SaveIpkAndPipList
 
-	local current_ver=$(GetQpkgInstalledVer)
+	local current_ver=''
+
+	current_ver=$(GetQpkgInstalledVer)
 
 	DebugAsProc "uninstalling $(FormatPackageName)"
 
 	local a='UNINSTALL_QPKG=true '
+
 	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_uninstall_log_file
+
 	IsDebug && a+='DEBUG_QPKG=true '
 
 	Executer "$a /bin/sh \"$r_local_pathfile\"" "$r_log_pathfile" log:failure-only
@@ -11070,7 +11249,9 @@ _QPKG:uninstall_()
 		SendPackageStateChange ISNTactive
 		MarkActionForkAsDoneOk
 	else
-		local b=$(GetQpkgServiceExplanation) || b=$z
+		local b=''
+
+		b=$(GetQpkgServiceExplanation) || b=$z
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		MarkActionForkAsDoneError
 	fi
@@ -11098,9 +11279,14 @@ _QPKG:activate_()
 
 	FuncForkInit
 
-	local action=activate
-	local -r r_local_pathfile=$(GetQpkgServicePathFile)
 	local -i z=0
+
+	local action=activate
+	local r_local_pathfile=''
+
+	r_local_pathfile=$(GetQpkgServicePathFile)
+
+	local -r r_local_pathfile
 
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
@@ -11134,9 +11320,11 @@ _QPKG:activate_()
 
 	DebugAsProc "activating $(FormatPackageName)"
 
-	local a=''
 	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_activate_log_file
+
+	local a=''
 	local timeout=''
+
 	IsOsCanQpkgTimeout && timeout='-t '$r_qpkg_start_timeout_seconds
 
 	if IsDebug; then
@@ -11167,7 +11355,9 @@ _QPKG:activate_()
 		SendPackageStateChange ISactive
 		MarkActionForkAsDoneOk
 	else
-		local b=$(GetQpkgServiceExplanation) || b=$z
+		local b=''
+
+		b=$(GetQpkgServiceExplanation) || b=$z
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		SendPackageStateChange ISNTactive
 		MarkActionForkAsDoneError
@@ -11198,9 +11388,14 @@ _QPKG:reactivate_()
 
 	FuncForkInit
 
-	local action=reactivate
-	local -r r_local_pathfile=$(GetQpkgServicePathFile)
 	local -i z=0
+
+	local action=reactivate
+	local r_local_pathfile=''
+
+	r_local_pathfile=$(GetQpkgServicePathFile)
+
+	local -r r_local_pathfile
 
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
@@ -11234,9 +11429,11 @@ _QPKG:reactivate_()
 
 	DebugAsProc "reactivating $(FormatPackageName)"
 
-	local a=''
 	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_reactivate_log_file
+
+	local a=''
 	local timeout=''
+
 	IsOsCanQpkgTimeout && timeout='-t '$r_qpkg_restart_timeout_seconds
 
 	if IsDebug; then
@@ -11260,7 +11457,10 @@ _QPKG:reactivate_()
 		SendParentCommand "QPKGs-ACactivate-to:Remove $qpkg_name"
 		MarkActionForkAsDoneOk
 	else
-		local b=$(GetQpkgServiceExplanation) || b=$z
+		local b=''
+
+		b=$(GetQpkgServiceExplanation) || b=$z
+
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		MarkActionForkAsDoneError
 	fi
@@ -11290,9 +11490,14 @@ _QPKG:deactivate_()
 
 	FuncForkInit
 
-	local action=deactivate
-	local -r r_local_pathfile=$(GetQpkgServicePathFile)
 	local -i z=0
+
+	local action=deactivate
+	local r_local_pathfile=''
+
+	r_local_pathfile=$(GetQpkgServicePathFile)
+
+	local -r r_local_pathfile
 
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
@@ -11324,9 +11529,11 @@ _QPKG:deactivate_()
 
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
-	local a=''
 	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_deactivate_log_file
+
+	local a=''
 	local timeout=''
+
 	IsOsCanQpkgTimeout && timeout='-t '$r_qpkg_stop_timeout_seconds
 
 	DebugAsProc "deactivating $(FormatPackageName)"
@@ -11359,7 +11566,10 @@ _QPKG:deactivate_()
 		SendPackageStateChange ISNTactive
 		MarkActionForkAsDoneOk
 	else
-		local b=$(GetQpkgServiceExplanation) || b=$z
+		local b=''
+
+		b=$(GetQpkgServiceExplanation) || b=$z
+
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		MarkActionForkAsDoneError
 	fi
@@ -11386,8 +11596,9 @@ _QPKG:enable_()
 
 	FuncForkInit
 
-	local action=enable
 	local -i z=0
+
+	local action=enable
 
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
@@ -11412,7 +11623,9 @@ _QPKG:enable_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_enable_log_file
+
 	local timeout=''
+
 	IsOsCanQpkgTimeout && timeout='-t '$r_qpkg_enable_timeout_seconds
 
 	DebugAsProc "enabling $(FormatPackageName)"
@@ -11444,8 +11657,9 @@ _QPKG:disable_()
 
 	FuncForkInit
 
-	local action=disable
 	local -i z=0
+
+	local action=disable
 
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
@@ -11474,7 +11688,9 @@ _QPKG:disable_()
 	[[ $z -eq 0 ]] || FuncForkExit $z
 
 	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_disable_log_file
+
 	local timeout=''
+
 	IsOsCanQpkgTimeout && timeout='-t '$r_qpkg_disable_timeout_seconds
 
 	DebugAsProc "disabling $(FormatPackageName)"
@@ -11507,9 +11723,14 @@ _QPKG:enableau_()
 
 	FuncForkInit
 
-	local action=enableau
-	local -r r_local_pathfile=$(GetQpkgServicePathFile)
 	local -i z=0
+
+	local action=enableau
+	local r_local_pathfile=''
+
+	r_local_pathfile=$(GetQpkgServicePathFile)
+
+	local -r r_local_pathfile
 
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
@@ -11548,7 +11769,9 @@ _QPKG:enableau_()
 	DebugAsProc "enabling auto-update $(FormatPackageName)"
 
 	local a=''
+
 	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_enableau_log_file
+
 	IsDebug && a+='DEBUG_QPKG=true '
 
 	Executer "$a \"$r_local_pathfile\" enable-auto-update" "$r_log_pathfile" log:failure-only
@@ -11561,7 +11784,9 @@ _QPKG:enableau_()
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 		MarkActionForkAsDoneOk
 	else
-		local b=$(GetQpkgServiceExplanation) || b=$z
+		local b=''
+
+		b=$(GetQpkgServiceExplanation) || b=$z
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		MarkActionForkAsDoneError
 	fi
@@ -11588,9 +11813,14 @@ _QPKG:disableau_()
 
 	FuncForkInit
 
-	local action=disableau
-	local -r r_local_pathfile=$(GetQpkgServicePathFile)
 	local -i z=0
+
+	local action=disableau
+	local r_local_pathfile=''
+
+	r_local_pathfile=$(GetQpkgServicePathFile)
+
+	local -r r_local_pathfile
 
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
@@ -11628,8 +11858,10 @@ _QPKG:disableau_()
 
 	DebugAsProc "disabling auto-update $(FormatPackageName)"
 
-	local a=''
 	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_disableau_log_file
+
+	local a=''
+
 	IsDebug && a+='DEBUG_QPKG=true '
 
 	Executer "$a \"$r_local_pathfile\" disable-auto-update" "$r_log_pathfile" log:failure-only
@@ -11642,7 +11874,10 @@ _QPKG:disableau_()
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 		MarkActionForkAsDoneOk
 	else
-		local b=$(GetQpkgServiceExplanation) || b=$z
+		local b=''
+
+		b=$(GetQpkgServiceExplanation) || b=$z
+
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		MarkActionForkAsDoneError
 	fi
@@ -11669,9 +11904,14 @@ _QPKG:backup_()
 
 	FuncForkInit
 
-	local action=backup
-	local -r r_local_pathfile=$(GetQpkgServicePathFile)
 	local -i z=0
+
+	local action=backup
+	local r_local_pathfile=''
+
+	r_local_pathfile=$(GetQpkgServicePathFile)
+
+	local -r r_local_pathfile
 
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
@@ -11705,8 +11945,10 @@ _QPKG:backup_()
 
 	DebugAsProc "backing-up $(FormatPackageName) configuration"
 
-	local a=''
 	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_backup_log_file
+
+	local a=''
+
 	IsDebug && a+='DEBUG_QPKG=true '
 
 	Executer "$a \"$r_local_pathfile\" backup" "$r_log_pathfile" log:failure-only
@@ -11720,7 +11962,10 @@ _QPKG:backup_()
 		SendPackageStateChange ISbackedup
 		MarkActionForkAsDoneOk
 	else
-		local b=$(GetQpkgServiceExplanation) || b=$z
+		local b=''
+
+		b=$(GetQpkgServiceExplanation) || b=$z
+
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		SendParentCommand "QPKGs-ACuninstall-to:Remove $qpkg_name"
 		SendParentCommand "QPKGs-ACrestore-to:Remove $qpkg_name"
@@ -11749,9 +11994,14 @@ _QPKG:restore_()
 
 	FuncForkInit
 
-	local action=restore
-	local -r r_local_pathfile=$(GetQpkgServicePathFile)
 	local -i z=0
+
+	local action=restore
+	local r_local_pathfile=''
+
+	r_local_pathfile=$(GetQpkgServicePathFile)
+
+	local -r r_local_pathfile
 
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
@@ -11794,8 +12044,10 @@ _QPKG:restore_()
 
 	DebugAsProc "restoring $(FormatPackageName) configuration"
 
-	local a=''
 	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_restore_log_file
+
+	local a=''
+
 	IsDebug && a+='DEBUG_QPKG=true '
 
 	Executer "$a \"$r_local_pathfile\" restore" "$r_log_pathfile" log:failure-only
@@ -11809,7 +12061,10 @@ _QPKG:restore_()
 #		SendPackageStateChange ISrestored			# TODO: this doesn't yet exist as an object.
 		MarkActionForkAsDoneOk
 	else
-		local b=$(GetQpkgServiceExplanation) || b=$z
+		local b=''
+
+		b=$(GetQpkgServiceExplanation) || b=$z
+
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		MarkActionForkAsDoneError
 	fi
@@ -11836,9 +12091,14 @@ _QPKG:clean_()
 
 	FuncForkInit
 
-	local action=clean
-	local -r r_local_pathfile=$(GetQpkgServicePathFile)
 	local -i z=0
+
+	local action=clean
+	local r_local_pathfile=''
+
+	r_local_pathfile=$(GetQpkgServicePathFile)
+
+	local -r r_local_pathfile
 
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
@@ -11872,8 +12132,10 @@ _QPKG:clean_()
 
 	DebugAsProc "cleaning $(FormatPackageName)"
 
-	local a=''
 	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_clean_log_file
+
+	local a=''
+
 	IsDebug && a+='DEBUG_QPKG=true '
 
 	Executer "$a \"$r_local_pathfile\" clean" "$r_log_pathfile" log:failure-only
@@ -11893,7 +12155,10 @@ _QPKG:clean_()
 		MarkActionForkAsDoneOk
 		SendParentCommand "QPKGs-ACupdate-to:Remove $qpkg_name"
 	else
-		local b=$(GetQpkgServiceExplanation) || b=$z
+		local b=''
+
+		b=$(GetQpkgServiceExplanation) || b=$z
+
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' er "$b"
 		MarkActionForkAsDoneError
 		# TODO: if debug mode, save action log to session log.
@@ -11930,8 +12195,9 @@ _QPKG:sign_()
 
 	FuncForkInit
 
-	local action='"sign"'
 	local -i z=0
+
+	local action='"sign"'
 
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
@@ -11957,9 +12223,10 @@ _QPKG:sign_()
 
 	DebugAsProc "\"signing\" $(FormatPackageName)"
 
+	local -i retries=0
+
 	local a=''
 	local b=''
-	local -i retries=0
 
 	# https://pynative.com/python-sqlite-insert-into-table/
 
@@ -11969,18 +12236,18 @@ _QPKG:sign_()
 import sqlite3, sys
 
 try:
-    sqliteConnection = sqlite3.connect('$r_cert_db_pathfile')			# leader-ignore
+    sqliteConnection = sqlite3.connect('$r_cert_db_pathfile')			# ignore-leader
 
-    cursor = sqliteConnection.cursor()									# leader-ignore
-    sqlite_add_query = """$a"""											# leader-ignore
-    cursor.execute(sqlite_add_query)									# leader-ignore
-    sqliteConnection.commit()											# leader-ignore
-    cursor.close()														# leader-ignore
-    sys.exit()															# leader-ignore
+    cursor = sqliteConnection.cursor()									# ignore-leader
+    sqlite_add_query = """$a"""											# ignore-leader
+    cursor.execute(sqlite_add_query)									# ignore-leader
+    sqliteConnection.commit()											# ignore-leader
+    cursor.close()														# ignore-leader
+    sys.exit()															# ignore-leader
 
 finally:
-    if sqliteConnection:												# leader-ignore
-        sqliteConnection.close()										# leader-ignore
+    if sqliteConnection:												# ignore-leader
+        sqliteConnection.close()										# ignore-leader
 EOB
 
 	for ((retries=0; retries<10; retries++)); do
@@ -12033,8 +12300,9 @@ _QPKG:unsign_()
 
 	FuncForkInit
 
-	local action='"unsign"'
 	local -i z=0
+
+	local action='"unsign"'
 
 	# Reactive checks performed just-before the action is carried-out. There should be no predictive checks here.
 
@@ -12060,9 +12328,10 @@ _QPKG:unsign_()
 
 	DebugAsProc "\"unsigning\" $(FormatPackageName)"
 
+	local -i retries=0
+
 	local a=''
 	local b=''
-	local -i retries=0
 
 	# https://pynative.com/python-sqlite-delete-from-table/
 
@@ -12072,18 +12341,18 @@ _QPKG:unsign_()
 import sqlite3, sys
 
 try:
-    sqliteConnection = sqlite3.connect('$r_cert_db_pathfile')			# leader-ignore
+    sqliteConnection = sqlite3.connect('$r_cert_db_pathfile')			# ignore-leader
 
-    cursor = sqliteConnection.cursor()									# leader-ignore
-    sqlite_delete_query = """$a"""										# leader-ignore
-    cursor.execute(sqlite_delete_query)									# leader-ignore
-    sqliteConnection.commit()											# leader-ignore
-    cursor.close()														# leader-ignore
-    sys.exit()															# leader-ignore
+    cursor = sqliteConnection.cursor()									# ignore-leader
+    sqlite_delete_query = """$a"""										# ignore-leader
+    cursor.execute(sqlite_delete_query)									# ignore-leader
+    sqliteConnection.commit()											# ignore-leader
+    cursor.close()														# ignore-leader
+    sys.exit()															# ignore-leader
 
 finally:
-    if sqliteConnection:												# leader-ignore
-        sqliteConnection.close()										# leader-ignore
+    if sqliteConnection:												# ignore-leader
+        sqliteConnection.close()										# ignore-leader
 EOB
 
 	for ((retries=0; retries<10; retries++)); do
@@ -12143,8 +12412,9 @@ LogQpkgServiceResult()
 	#	$qpkg_name
 
 	local a=$r_qpkg_service_result_path/$qpkg_name.log
+	local b=''
 
-	if ! local b=$(GetQpkgServiceResult); then
+	if ! b=$(GetQpkgServiceResult); then
 		DebugAsWarn "unable to get status of $(FormatPackageName) service. It may be a non-sherpa package, or a sherpa package earlier than 200816c that doesn't support service results."
 
 		return 1
@@ -12223,8 +12493,9 @@ GetQpkgDbApplVer()
 	#	stdout = application version
 	#	$? = 0 if found, !0 if not
 
-	local a=''
 	local -i i=0
+
+	local a=''
 
 	if [[ $qpkg_index -gt 0 ]]; then
 		a=${r_qpkg_appl_version[$qpkg_index]}
@@ -12263,8 +12534,9 @@ GetQpkgDbVer()
 	#	stdout = package version
 	#	$? = 0 if found, !0 if not
 
-	local a=''
 	local -i i=0
+
+	local a=''
 
 #	if [[ $qpkg_index -gt 0 ]]; then
 #		a=${r_qpkg_version[$qpkg_index]}
@@ -12358,8 +12630,9 @@ GetQpkgInstalledOriginalPath()
 	#	stdout = the original installation path of this QPKG (even if it was migrated to another volume).
 	#	$? = 0 if successful, 1 if failed
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
 	local -i i=0
+
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
 
 	if [[ ${#QPKGs_were_installed_name[@]} -gt 0 ]]; then
 		for i in "${!QPKGs_were_installed_name[@]}"; do
@@ -12437,8 +12710,9 @@ GetQpkgDbURL()
 	#	stdout = QPKG remote URL.
 	#	$? = 0 if found, !0 if not
 
-	local a=''
 	local -i i=0
+
+	local a=''
 
 	if [[ -n ${1:-} ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
@@ -12475,13 +12749,15 @@ GetQpkgDbMinRAM()
 	#	stdout = minimum installed RAM required.
 	#	$? = 0 if found, !0 if not
 
-	local a=''
 	local -i i=0
+
+	local a=''
 
 	if [[ -n ${1:-} ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
 			[[ ${r_qpkg_name[$i]} = "$1" ]] || continue
 			a=${r_qpkg_min_ram_kb[$i]}
+
 			break
 		done
 	else
@@ -12510,13 +12786,15 @@ GetQpkgDbMinOSVer()
 	#	stdout = minimum QTS/QuTS version required by this QPKG.
 	#	$? = 0 if found, !0 if not
 
-	local a=''
 	local -i i=0
+
+	local a=''
 
 	if [[ -n ${1:-} ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
 			[[ ${r_qpkg_name[$i]} = "$1" ]] || continue
 			a=${r_qpkg_min_os_version[$i]}
+
 			break
 		done
 	else
@@ -12545,13 +12823,15 @@ GetQpkgDbMaxOSVer()
 	#	stdout = maximum QTS/QuTS version required by this QPKG.
 	#	$? = 0 if found, !0 if not
 
-	local a=''
 	local -i i=0
+
+	local a=''
 
 	if [[ -n ${1:-} ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
 			[[ ${r_qpkg_name[$i]} = "$1" ]] || continue
 			a=${r_qpkg_max_os_version[$i]}
+
 			break
 		done
 	else
@@ -12581,8 +12861,9 @@ GetQpkgDbAuthor()
 	#	stdout = QPKG author.
 	#	$? = 0 (found), !0 (not-found)
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
 	local -i i=0
+
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
 
 	for i in "${!r_qpkg_name[@]}"; do
 		[[ ${r_qpkg_name[$i]} = "$a" ]] || continue
@@ -12626,13 +12907,15 @@ GetQpkgDbDesc()
 	#	stdout = QPKG description.
 	#	$? = 0 if found, !0 if not
 
-	local a=''
 	local -i i=0
+
+	local a=''
 
 	if [[ -n ${1:-} ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
 			[[ ${r_qpkg_name[$i]} = "$1" ]] || continue
 			a=${r_qpkg_description[$i]}
+
 			break
 		done
 	else
@@ -12663,13 +12946,15 @@ GetQpkgDbAbbrvs()
 	#	stdout = list of abbreviations that may be used to specify this package
 	#	$? = 0 if found, !0 if not
 
-	local a=''
 	local -i i=0
+
+	local a=''
 
 	if [[ -n ${1:-} ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
 			[[ ${r_qpkg_name[$i]} = "$1" ]] || continue
 			a=${r_qpkg_abbrvs[$i]}
+
 			break
 		done
 	else
@@ -12726,6 +13011,7 @@ GetQpkgDbDependencies()
 
 		if [[ $x != *'|'* ]]; then
 			out+=' '$x
+
 			continue
 		fi
 
@@ -12739,6 +13025,7 @@ GetQpkgDbDependencies()
 #			if IsQpkgDbArchOK "$alt"; then
 				out+=' '$alt
 				found=true
+
 				break
 #			fi
 		done
@@ -12799,6 +13086,7 @@ GetQpkgDbOptDependencies()
 
 		if [[ $x != *'|'* ]]; then
 			out+=' '$x
+
 			continue
 		fi
 
@@ -12812,6 +13100,7 @@ GetQpkgDbOptDependencies()
 #			if IsQpkgDbArchOK "$alt"; then
 				out+=' '$alt
 				found=true
+
 				break
 #			fi
 		done
@@ -12845,22 +13134,24 @@ GetQpkgDbDependents()
 
 	[[ -n $qpkg_name && $qpkg_index -gt 0 ]] || return
 
-	local -a ar=()
+	local -a a_ar=()
+
 	local -i i=-1			# Default to not-found.
+
 	local re=\\b${qpkg_name}\\b
 
 	if QPKGs-GRindependent.Exist "$qpkg_name"; then
 		for i in "${!r_qpkg_name[@]}"; do
 			if [[ ${r_qpkg_depends_on[$i]} =~ $re ]]; then
 				# shellcheck disable=2199
-				[[ ${ar[@]+"${ar[@]}"} != "${r_qpkg_name[$i]}" ]] && ar+=(${r_qpkg_name[$i]})
+				[[ ${a_ar[@]+"${a_ar[@]}"} != "${r_qpkg_name[$i]}" ]] && a_ar+=(${r_qpkg_name[$i]})
 			fi
 		done
 	fi
 
 	# shellcheck disable=2199
-	if [[ -n ${ar[@]+"${ar[@]}"} ]]; then
-		printf '%s' "${ar[*]}"
+	if [[ -n ${a_ar[@]+"${a_ar[@]}"} ]]; then
+		printf '%s' "${a_ar[*]}"
 
 		return 0
 	fi
@@ -12884,22 +13175,24 @@ GetQpkgDbOptionals()
 
 	[[ -n $qpkg_name && $qpkg_index -gt 0 ]] || return
 
-	local -a ar=()
+	local -a a_ar=()
+
 	local -i i=-1			# Default to not-found.
+
 	local re=\\b${qpkg_name}\\b
 
 	if QPKGs-GRoptional.Exist "$qpkg_name"; then
 		for i in "${!r_qpkg_name[@]}"; do
 			if [[ ${r_qpkg_opt_depends_on[$i]} =~ $re ]]; then
 				# shellcheck disable=2199
-				[[ ${ar[@]+"${ar[@]}"} != "${r_qpkg_name[$i]}" ]] && ar+=(${r_qpkg_name[$i]})
+				[[ ${a_ar[@]+"${a_ar[@]}"} != "${r_qpkg_name[$i]}" ]] && a_ar+=(${r_qpkg_name[$i]})
 			fi
 		done
 	fi
 
 	# shellcheck disable=2199
-	if [[ -n ${ar[@]+"${ar[@]}"} ]]; then
-		printf '%s' "${ar[*]}"
+	if [[ -n ${a_ar[@]+"${a_ar[@]}"} ]]; then
+		printf '%s' "${a_ar[*]}"
 
 		return 0
 	fi
@@ -12924,13 +13217,15 @@ GetQpkgConflicts()
 	#	stdout = string of space-separated QPKGs that conflict with this QPKG.
 	#	$? = 0 (found), !0 (not-found)
 
-	local a=''
 	local -i i=0
+
+	local a=''
 
 	if [[ -n ${1:-} ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
 			[[ ${r_qpkg_name[$i]} = "$1" ]] || continue
 			a=${r_qpkg_conflicts_with[$i]}
+
 			break
 		done
 	else
@@ -12961,6 +13256,7 @@ GetQpkgDbIPKs()
 	[[ -n $qpkg_name && $qpkg_index -gt 0 ]] || return
 
 	local a=${r_qpkg_requires_ipks[$qpkg_index]}
+
 	[[ $a = none ]] && return 1
 
 	printf '%s' "$a"
@@ -12986,6 +13282,7 @@ GetQpkgDbActiveTest()
 	[[ -n $qpkg_name && $qpkg_index -gt 0 ]] || return
 
 	local a=${r_qpkg_test_for_active[$qpkg_index]}
+
 	[[ $a = none ]] && return 1
 
 	printf '%s' "$a"
@@ -13012,9 +13309,11 @@ GetQpkgServiceAction()
 
 	if [[ -s $b ]]; then
 		printf '%s' "$(< "$b")"
+
 		return 0
 	else
 		printf not-found
+
 		return 1
 	fi
 
@@ -13038,9 +13337,11 @@ GetQpkgServiceExplanation()
 
 	if [[ -s $b ]]; then
 		printf '%s' "$(< "$b")"
+
 		return 0
 	else
 		printf not-found
+
 		return 1
 	fi
 
@@ -13064,9 +13365,11 @@ GetQpkgServiceResult()
 
 	if [[ -s $b ]]; then
 		printf '%s' "$(< "$b")"
+
 		return 0
 	else
 		printf not-found
+
 		return 1
 	fi
 
@@ -13191,18 +13494,20 @@ QpkgMatchAbbrv()
 
 	[[ -n ${1:-} ]] || return
 
-	local -a ar=()
+	local -a a_ar=()
+
 	local -i i=0
 	local -i j=0
 	local -i z=1			# Default to 'unmatched'.
 
 	for i in "${!r_qpkg_name[@]}"; do
-		ar=(${r_qpkg_abbrvs[$i]})
+		a_ar=(${r_qpkg_abbrvs[$i]})
 
-		for j in "${!ar[@]}"; do
-			[[ ${ar[$j]} = "$1" ]] || continue
+		for j in "${!a_ar[@]}"; do
+			[[ ${a_ar[$j]} = "$1" ]] || continue
 			printf '%s' "${r_qpkg_name[$i]}"
 			z=0
+
 			break 2
 		done
 	done
@@ -13347,7 +13652,9 @@ IsFileNewer()
 IsEntwareUpgradable()
 	{
 
-	local a=$(GetQpkgInstalledDate Entware)
+	local a=''
+
+	a=$(GetQpkgInstalledDate Entware)
 
 	# NOTE: Entware are not updating packages anymore for older arches: https://entware.net/2024/02/23/Changelog.html
 
@@ -13373,6 +13680,7 @@ IsNonStatusActionRequested()
 	for action in "${r_qpkg_actions[@]}"; do
 		if QPKGs-AC${action}-to.IsAny; then
 			[[ $action != status ]] || continue
+
 			return
 		fi
 	done
@@ -13710,11 +14018,16 @@ IsOsLoadAverageAboveTrigger()
 	# Inputs: (global)
 	#	$r_cpu_threads
 
-	local a=${1:-1}
-	local b=$(GetOsSysLoad1MinAverage); b=${b/./}
-	local c=$((r_cpu_threads*a*100))
+	local -i c=''
 
-	[[ $((10#$b)) -ge $((10#$c)) ]]
+	local a=${1:-1}
+	local b=''
+
+	b=$(GetOsSysLoad1MinAverage)
+	b=$((10#${b/./}))
+	c=$((r_cpu_threads*a*100))
+
+	[[ $b -ge $c ]]
 
 	}
 
@@ -13787,7 +14100,9 @@ IsQpkgRepoSelfManaged()
 	# Outputs: (local)
 	#	$? = true/false
 
-	local a=$(GetQpkgInstalledStoreID "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}")
+	local a=''
+
+	a=$(GetQpkgInstalledStoreID "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}")
 
 	[[ -z $a || $a = undefined || $a = sherpa ]]
 
@@ -13928,12 +14243,17 @@ IsQpkgDbOptional()
 	# Outputs: (local)
 	#	$? = true/false
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
 	local -i i=0
+
+	local a=''
+
+	a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
+
 	local re=\\b${a}\\b
 
 	for i in "${!r_qpkg_name[@]}"; do
 		[[ ${r_qpkg_opt_depends_on[$i]} =~ $re ]] || continue
+
 		return 0
 	done
 
@@ -13956,7 +14276,9 @@ IsQpkgDbMinRAMOk()
 	# Outputs: (local)
 	#	$? = true/false
 
-	local a=$(GetQpkgDbMinRAM "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}")
+	local a=''
+
+	a=$(GetQpkgDbMinRAM "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}")
 
 	[[ -n $a ]] && [[ $a = none || $r_nas_ram_kb -ge $a ]]
 
@@ -13977,7 +14299,9 @@ IsQpkgDbMinOSVerOk()
 	# Outputs: (local)
 	#	$? = true/false
 
-	local a=$(GetQpkgDbMinOSVer "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}")
+	local a=''
+
+	a=$(GetQpkgDbMinOSVer "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}")
 
 	SetOsFirmwareVer
 
@@ -14000,7 +14324,9 @@ IsQpkgDbMaxOSVerOk()
 	# Outputs: (local)
 	#	$? = true/false
 
-	local a=$(GetQpkgDbMaxOSVer "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}")
+	local a=''
+
+	a=$(GetQpkgDbMaxOSVer "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}")
 
 	SetOsFirmwareVer
 
@@ -14025,13 +14351,15 @@ IsQpkgDbCanBackup()
 	# Outputs: (local)
 	#	$? = true/false
 
-	local a=''
 	local -i i=0
+
+	local a=''
 
 	if [[ -n ${1:-} ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
 			[[ ${r_qpkg_name[$i]} = "$1" ]] || continue
 			a=${r_qpkg_can_backup[$i]}
+
 			break
 		done
 	else
@@ -14059,8 +14387,9 @@ IsQpkgDbCanRestartToUpdate()
 	# Outputs: (local)
 	#	$? = 0 (true), !0 (false).
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
 	local -i i=0
+
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
 
 	for i in "${!r_qpkg_name[@]}"; do
 		[[ ${r_qpkg_name[$i]} = "$a" ]] || continue
@@ -14085,8 +14414,9 @@ IsQpkgDbCanClean()
 	# Outputs: (local)
 	#	$? = 0 (true), 1 (false).
 
-	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
 	local -i i=0
+
+	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
 
 	for i in "${!r_qpkg_name[@]}"; do
 		[[ ${r_qpkg_name[$i]} = "$a" ]] || continue
@@ -14113,13 +14443,15 @@ IsQpkgDbSherpaCompatible()
 	# Outputs: (local)
 	#	$? = true/false
 
-	local a=''
 	local -i i=0
+
+	local a=''
 
 	if [[ -n ${1:-} ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
 			[[ ${r_qpkg_name[$i]} = "$1" ]] || continue
 			a=${r_qpkg_is_sherpa_compatible[$i]}
+
 			break
 		done
 	else
@@ -14148,13 +14480,15 @@ IsQpkgDbUniqueUnpack()
 	# Outputs: (local)
 	#	$? = true/false
 
-	local a=''
 	local -i i=0
+
+	local a=''
 
 	if [[ -n ${1:-} ]]; then
 		for i in "${!r_qpkg_name[@]}"; do
 			[[ ${r_qpkg_name[$i]} = "$1" ]] || continue
 			a=${r_qpkg_is_unique_unpack[$i]}
+
 			break
 		done
 	else
@@ -14388,7 +14722,9 @@ IsQpkgMissing()
 	# Outputs: (local)
 	#	$? = true/false.
 
-	local a=$(GetQpkgInstalledPath "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}")
+	local a=''
+
+	a=$(GetQpkgInstalledPath "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}")
 
 	[[ $a != undefined && ! -d $a ]]
 
@@ -14485,18 +14821,18 @@ IsQpkgSigned()
 import sqlite3, sys
 
 try:
-    sqliteConnection = sqlite3.connect('$r_cert_db_pathfile')			# leader-ignore
+    sqliteConnection = sqlite3.connect('$r_cert_db_pathfile')			# ignore-leader
 
-    cursor = sqliteConnection.cursor()									# leader-ignore
-    sqlite_select_query = """$a"""										# leader-ignore
-    cursor.execute(sqlite_select_query)									# leader-ignore
-    records = cursor.fetchall()											# leader-ignore
-    sys.exit(len(records) == 0)											# leader-ignore
-    cursor.close()														# leader-ignore
+    cursor = sqliteConnection.cursor()									# ignore-leader
+    sqlite_select_query = """$a"""										# ignore-leader
+    cursor.execute(sqlite_select_query)									# ignore-leader
+    records = cursor.fetchall()											# ignore-leader
+    sys.exit(len(records) == 0)											# ignore-leader
+    cursor.close()														# ignore-leader
 
 finally:
-    if sqliteConnection:												# leader-ignore
-        sqliteConnection.close()										# leader-ignore
+    if sqliteConnection:												# ignore-leader
+        sqliteConnection.close()										# ignore-leader
 EOB
 
 	/usr/local/bin/python2 -c "$b"
@@ -14594,7 +14930,9 @@ IsHaveSingleQuote()
 IsLessSupportHeaders()
 	{
 
-	local a=$(GetLessVersion)
+	local a=''
+
+	a=$(GetLessVersion)
 
 	IsNumber $a && [[ $a -ge 685 ]]
 
@@ -14608,8 +14946,12 @@ IsReportLargerThanViewport()
 
 	[[ -n ${1:-} && -e $1 ]] || return
 
+	local r_terminal_dimensions=''
+
 	if [[ -x $r_gnu_stty_cmd ]] && IsInTerminal; then
-		local -r r_terminal_dimensions=$($r_gnu_stty_cmd size)
+		r_terminal_dimensions=$($r_gnu_stty_cmd size)
+
+		local -r r_terminal_dimensions
 		local -r r_sess_rows=${r_terminal_dimensions% *}
 		local -r r_sess_columns=${r_terminal_dimensions#* }
 	else
@@ -14806,7 +15148,9 @@ ClearPath()
 	ConfirmVarIsDefined 2 "${2:-}" "$e_nopth" || return
 
 	local parent=$1
-	local target=$(/usr/bin/basename "$2")
+	local target=''
+
+	target=$(/usr/bin/basename "$2")
 
 	ConfirmVarIsDefined target "${target:-}" "$e_nopth" || return
 
@@ -14823,6 +15167,7 @@ ConfirmVarIsDefined()
 	#	$3 = error message reason shown if empty or undefined.
 
 	local -i backdepth=1			# 0 = this function, 1 = calling function, etc...
+
 	local first=${1:-undefined}
 	local second=${2:-undefined}
 	local third=${3:-undefined}
@@ -14911,10 +15256,17 @@ Executer()
 
 	FuncInit
 
-	local a=$(tr -s ' ' <<< "$1")
-	local exec_msg='exec:'
-	local -r r_log_pathfile=$(/bin/mktemp $r_run_logs_path/${FUNCNAME[0]}_XXXXXX)
 	local -i z=0
+
+	local a=''
+	local exec_msg='exec:'
+	local r_executer_log_pipe=''
+	local r_log_pathfile=''
+
+	a=$(tr -s ' ' <<< "$1")
+	r_log_pathfile=$(/bin/mktemp $r_run_logs_path/${FUNCNAME[0]}_XXXXXX)
+
+	local -r r_log_pathfile
 
 	if IsHaveSingleQuote "$a"; then										# Change display quotes depending-on content quote chars.
 		exec_msg+=" \"$a\""
@@ -14928,7 +15280,9 @@ Executer()
 	if IsDebug; then
 		# https://stackoverflow.com/a/1221844
 
-		local -r r_executer_log_pipe=$r_sys_run_path/pipe-$(/bin/date +%s%N)
+		r_executer_log_pipe=$r_sys_run_path/pipe-$(/bin/date +%s%N)
+
+		local -r r_executer_log_pipe
 
 		/bin/mknod "$r_executer_log_pipe" p
 		/usr/bin/tee "$r_log_pathfile" < "$r_executer_log_pipe" &
@@ -14999,9 +15353,12 @@ KludgeExecuter()
 
 	FuncInit
 
-	local a=$(tr -s ' ' <<< "$1")
 	local -i pid=0
 	local -i z=0
+
+	local a=''
+
+	a=$(tr -s ' ' <<< "$1")
 
 	if [[ $useropt_verbose = true ]]; then
 		eval "$a 2>&1 | /usr/bin/tee $2" &					# Force background process here, and capture PID. NOTE: stdout is buffered here.
@@ -15052,6 +15409,7 @@ FindPid()
 	ConfirmVarIsDefined 1 "${1:-}" "$e_nopfi" || return
 
 	local -i a=0
+
 	local b=''
 
 	[[ -n ${2:-} && $2 != undefined ]] && b=$2
@@ -15109,6 +15467,7 @@ SortNames()
 			for c in $1; do
 				[[ $(Lowercase "$c") = "$b" ]] || continue
 				d+=" $c"
+
 				break
 			done
 		done
@@ -15362,12 +15721,12 @@ ShowAsTitleName()
 ShowTitleArt()
 	{
 
-	Display "$(TextBrightOrange '     _')"														# squeezer-ignore
-	Display "$(TextBrightOrange ' ___| |__   ___ _ __ _ __   __ _')"							# squeezer-ignore
-	Display "$(TextBrightOrange "/ __| '_ \ / _ \ '__| '_ \ / _\` |")  $(ShowAsDescription)"	# squeezer-ignore
-	Display "$(TextBrightOrange '\__ \ | | |  __/ |  | |_) | (_| |')  $(ShowAsCopyrightBasic)"	# squeezer-ignore
-	Display "$(TextBrightOrange '|___/_| |_|\___|_|  | .__/ \__,_|')  $(ShowAsVersion)"			# squeezer-ignore
-	Display "$(TextBrightOrange '                    |_|')"										# squeezer-ignore
+	Display "$(TextBrightOrange '     _')"														# dont-squeeze
+	Display "$(TextBrightOrange ' ___| |__   ___ _ __ _ __   __ _')"							# dont-squeeze
+	Display "$(TextBrightOrange "/ __| '_ \ / _ \ '__| '_ \ / _\` |")  $(ShowAsDescription)"	# dont-squeeze
+	Display "$(TextBrightOrange '\__ \ | | |  __/ |  | |_) | (_| |')  $(ShowAsCopyrightBasic)"	# dont-squeeze
+	Display "$(TextBrightOrange '|___/_| |_|\___|_|  | .__/ \__,_|')  $(ShowAsVersion)"			# dont-squeeze
+	Display "$(TextBrightOrange '                    |_|')"										# dont-squeeze
 
 	}
 
@@ -15480,8 +15839,9 @@ FormatNWords()
 
 	[[ ${#1} -gt 0 ]] || return
 
-	local a=''
 	local -i n=0
+
+	local a=''
 	local words=($1)
 	local words_max=${2:-3}
 	local word_colour=${3:-TextUncoloured}
@@ -15498,6 +15858,7 @@ FormatNWords()
 			break
 		elif [[ $n -ge $words_max && $((word_count-words_max)) -gt 0 ]]; then
 			a+=$($word_colour "$((word_count-words_max+1))")' others'
+
 			break
 		fi
 
@@ -15712,7 +16073,9 @@ DebugItem()
 
 	[[ -n ${1:-} && -n ${2:-} && -n ${3:-} && -n ${4:-} ]] || return
 
-	local a=$(Uppercase "$2")
+	local a=''
+
+	a=$(Uppercase "$2")
 
 	case $1 in
 		error)
@@ -15858,7 +16221,9 @@ FuncInit()
 	# Debug function entry.
 
 	local -r r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
+
 	local var_safe_name=${r_var_name//[.-]/_}
+
 	var_safe_name=${var_safe_name//:/_}
 
 	eval "$var_safe_name=$(ConvertNowToNanoseconds)"
@@ -15873,7 +16238,9 @@ FuncExit()
 	# Debug function exit.
 
 	local -r r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
+
 	local var_safe_name=${r_var_name//[.-]/_}
+
 	var_safe_name=${var_safe_name//:/_}
 
 	DebugAsFuncEx "${1:-0}" "$(ConvertMillisecondsToFuncDuration "$(CalcMillisecondsDiffFromNanoseconds "${!var_safe_name}" "$(ConvertNowToNanoseconds)")")"
@@ -15906,7 +16273,9 @@ FuncForkInit()
 	session_active_log_pathfile=$(/bin/mktemp "$r_action_log_path"/"${FUNCNAME[1]}"_XXXXXX)
 
 	local -r r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
+
 	local var_safe_name=${r_var_name//[.-]/_}
+
 	var_safe_name=${var_safe_name//:/_}
 	eval "$var_safe_name=$(ConvertNowToNanoseconds)"
 
@@ -15928,7 +16297,9 @@ FuncForkExit()
 	#	$session_active_log_pathfile
 
 	local -r r_var_name=${FUNCNAME[1]}_STARTNANOSECONDS
+
 	local var_safe_name=${r_var_name//[.-]/_}
+
 	var_safe_name=${var_safe_name//:/_}
 
 	[[ ${FUNCNAME[1]} != _ExecOneActionWithManyForks_ ]] && MarkActionForkAsExit	# Ignore exit from primary action launcher as it's not an action fork.
@@ -16010,6 +16381,7 @@ ConvertSecondsToDatecode()
 
 	if [[ ${#a} -ne 10 ]]; then
 		printf 000000
+
 		return 1
 	fi
 
@@ -16057,7 +16429,7 @@ ConvertSecondsToDuration()
 		printf "%d second$(Pluralise $s)" "$s"
 	else
 		s=1							# Never show zero seconds as a duration (bash isn't that fast).
-		printf '< %d second' "$s"	# squeezer-ignore
+		printf '< %d second' "$s"	# dont-squeeze
 	fi
 
 	} 2> /dev/null
@@ -16136,10 +16508,12 @@ ConvertLongDateAsHuman()
 
 	if [[ ${#a} -ne 8 ]]; then
 		printf 'invalid longdate code length'
+
 		return 1
 	fi
 
 	local -i b=${a:6:2}
+
 	local c=''
 
 	if ((b >= 1 && b <= 10)); then
@@ -16150,6 +16524,7 @@ ConvertLongDateAsHuman()
 		c=late
 	else
 		printf 'invalid day code'
+
 		return 1
 	fi
 
@@ -16157,6 +16532,7 @@ ConvertLongDateAsHuman()
 
 	if ((b < 1 || b > 12)); then
 		printf 'invalid month code'
+
 		return 1
 	fi
 
@@ -16185,6 +16561,7 @@ ConvertAsSmartDate()
 	[[ -n ${1:-} ]] || return
 
 	local -i a=${1//[!0-9]/}	# Strip non-digits.
+
 	local b=''
 
 	case ${#a} in
@@ -16443,7 +16820,9 @@ ShowAsNote()
 	[[ -n ${1:-} ]] || return
 
 	local a=note
-	local b=$(AddPeriod "$1")
+	local b=''
+
+	b=$(AddPeriod "$1")
 
 	OpStepClear "$(TextBrightYellow "$a")" "$b"
 	WriteToLog "$a" "$b"
@@ -16458,7 +16837,9 @@ ShowAsDone()
 	[[ -n ${1:-} ]] || return
 
 	local a='done'
-	local b=$(AddPeriod "$1")
+	local b=''
+
+	b=$(AddPeriod "$1")
 
 	OpStepClear "$(TextBrightGreen "$a")" "$b"
 	WriteToLog "$a" "$b"
@@ -16488,7 +16869,9 @@ ShowAsWarn()
 	[[ -n ${1:-} ]] || return
 
 	local a=warn
-	local b=$(AddPeriod "$1")
+	local b=''
+
+	b=$(AddPeriod "$1")
 
 	OpStepClear "$(TextBrightOrange "$a")" "$b"
 	WriteToLog "$a" "$b"
@@ -16503,7 +16886,9 @@ ShowAsAbort()
 	[[ -n ${1:-} ]] || return
 
 	local a=bort
-	local b=$(AddPeriod "$1")
+	local b=''
+
+	b=$(AddPeriod "$1")
 
 	OpStepClear "$(TextBrightRed "$a")" "$b"
 	WriteToLog "$a" "$b"
@@ -16519,7 +16904,9 @@ ShowAsFail()
 	[[ -n ${1:-} ]] || return
 
 	local a=fail
-	local b=$(AddPeriod "$1")
+	local b=''
+
+	b=$(AddPeriod "$1")
 
 	OpStepClear "$(TextBrightRed "$a")" "$b"
 	WriteToLog "$a" "$b"
@@ -16534,7 +16921,9 @@ ShowAsError()
 	[[ -n ${1:-} ]] || return
 
 	local a=derp
-	local b=$(AddPeriod "$1")
+	local b=''
+
+	b=$(AddPeriod "$1")
 
 	OpStepClear "$(TextBrightRed "$a")" "$b"
 	WriteToLog "$a" "$b"
@@ -16553,10 +16942,11 @@ ShowAsBug()
 
 	[[ -n ${1:-} && -n ${2:-} ]] || return
 
+	local -i i=0
+
 	local a=buug
 	local b='fstack: '
 	local c=' '
-	local -i i=0
 
 	# Re-order FUNCNAME[] elements in-reverse.
 
@@ -16614,12 +17004,17 @@ ShowAsPercentProgress()
 	#	$5 = fail count
 	#	$6 = total count
 
-	local -r r_a=${1:-}
 	local -i b=${3:-0}
 	local -i c=${4:-0}
 	local -i d=${5:-0}
 	local -i e=${6:-0}
-	local -r r_f=$(PercFrac "$b" "$c" "$d" "$e")
+
+	local r_f=''
+
+	r_f=$(PercFrac "$b" "$c" "$d" "$e")
+
+	local -r r_a=${1:-}
+	local -r r_f
 
 	if [[ ${2:-} != long ]]; then
 		ShowAsProc "$r_a" "$r_f"
@@ -16646,6 +17041,7 @@ PercFrac()
 
 	local -i a=$((${1:-0}+${2:-0}+${3:-0}))
 	local -i b=${4:-0}
+
 	local c=''
 
 	[[ $b -gt 0 ]] || return		# No-point calculating a fraction of zero.
@@ -16680,11 +17076,13 @@ ShowAsIterativeProgress()
 	ConfirmVarIsDefined 3 "${3:-}" "$e_nostr" || return
 	ConfirmVarIsDefined 5 "${5:-}" "$e_nostr" || return
 
-	local -r r_a=$1
 	local -i b=${2:-0}
-	local -r r_c=$3
 	local -i d=${4:-0}
+
+	local -r r_a=$1
+	local -r r_c=$3
 	local -r r_e=$5
+
 	local f=''
 
 	f="$(TextBrightWhite "$b") ${r_c}$(Pluralise "$b") ($(TextBrightWhite "$d") ${r_e}$(Pluralise "$d"))"
@@ -17136,6 +17534,7 @@ SetError()
 
 	run_package_actions=false
 	IsError && return
+
 	_script_error_flag_=true
 	DebugVar _script_error_flag_
 
@@ -17147,7 +17546,10 @@ SetHardwareCpuThreads()
 	# Outputs: (global)
 	#	$r_cpu_threads
 
-	[[ ${r_cpu_threads:-unset} = unset ]] && readonly r_cpu_threads=$(GetHardwareCpuThreads)
+	if [[ ${r_cpu_threads:-unset} = unset ]]; then
+		r_cpu_threads=$(GetHardwareCpuThreads)
+		readonly r_cpu_threads
+	fi
 
 	}
 
@@ -17158,8 +17560,15 @@ SetHardwareInstalledRAM()
 	#	$r_nas_ram_kb
 	#	$r_nas_ram_gb
 
-	[[ ${r_nas_ram_kb:-unset} = unset ]] && readonly r_nas_ram_kb=$(GetHardwareInstalledRAMkb)
-	[[ ${r_nas_ram_gb:-unset} = unset ]] && readonly r_nas_ram_gb=$(GetHardwareInstalledRAMgb)
+	if [[ ${r_nas_ram_kb:-unset} = unset ]]; then
+		r_nas_ram_kb=$(GetHardwareInstalledRAMkb)
+		readonly r_nas_ram_kb
+	fi
+
+	if [[ ${r_nas_ram_gb:-unset} = unset ]]; then
+		r_nas_ram_gb=$(GetHardwareInstalledRAMgb)
+		readonly r_nas_ram_gb
+	fi
 
 	}
 
@@ -17169,7 +17578,10 @@ SetHardwarePlatform()
 	# Outputs: (global)
 	#	$r_nas_platform
 
-	[[ ${r_nas_platform:-unset} = unset ]] && readonly r_nas_platform=$(GetHardwarePlatform)
+	if [[ ${r_nas_platform:-unset} = unset ]]; then
+		r_nas_platform=$(GetHardwarePlatform)
+		readonly r_nas_platform
+	fi
 
 	}
 
@@ -17229,7 +17641,10 @@ SetOsKernelPageSize()
 	# Outputs: (global)
 	#	$r_kernel_page_size
 
-	[[ ${r_kernel_page_size:-unset} = unset ]] && readonly r_kernel_page_size=$(GetOsKernelPageSize)
+	if [[ ${r_kernel_page_size:-unset} = unset ]]; then
+		r_kernel_page_size=$(GetOsKernelPageSize)
+		readonly r_kernel_page_size
+	fi
 
 	}
 
@@ -17239,7 +17654,10 @@ SetOsFirmwareVersion()
 	# Outputs: (global)
 	#	$r_nas_firmware_version
 
-	[[ ${r_nas_firmware_version:-unset} = unset ]] && readonly r_nas_firmware_version=$(GetOsFirmwareVersion).$(GetOsFirmwareBuild)
+	if [[ ${r_nas_firmware_version:-unset} = unset ]]; then
+		r_nas_firmware_version=$(GetOsFirmwareVersion).$(GetOsFirmwareBuild)
+		readonly r_nas_firmware_version
+	fi
 
 	}
 
@@ -17251,7 +17669,10 @@ SetOsFirmwareVer()
 	# Outputs: (global)
 	#	$r_nas_firmware_ver
 
-	[[ ${r_nas_firmware_ver:-unset} = unset ]] && readonly r_nas_firmware_ver=$(GetOsFirmwareVer)
+	if [[ ${r_nas_firmware_ver:-unset} = unset ]]; then
+		r_nas_firmware_ver=$(GetOsFirmwareVer)
+		readonly r_nas_firmware_ver
+	fi
 
 	}
 
@@ -17261,7 +17682,10 @@ SetOsFirmwareDate()
 	# Outputs: (global)
 	#	$r_nas_firmware_date
 
-	[[ ${r_nas_firmware_date:-unset} = unset ]] && readonly r_nas_firmware_date=$(GetOsFirmwareDate)
+	if [[ ${r_nas_firmware_date:-unset} = unset ]]; then
+		r_nas_firmware_date=$(GetOsFirmwareDate)
+		readonly r_nas_firmware_date
+	fi
 
 	}
 
@@ -17271,7 +17695,10 @@ SetNasArch()
 	# Outputs: (global)
 	#	$r_nas_arch
 
-	[[ ${r_nas_arch:-unset} = unset ]] && readonly r_nas_arch=$(GetNasArch)
+	if [[ ${r_nas_arch:-unset} = unset ]]; then
+		r_nas_arch=$(GetNasArch)
+		readonly r_nas_arch
+	fi
 
 	}
 
@@ -17281,7 +17708,10 @@ SetQpkgArch()
 	# Outputs: (global)
 	#	$r_nas_qpkg_arch
 
-	[[ ${r_nas_qpkg_arch:-unset} = unset ]] && readonly r_nas_qpkg_arch=$(GetQpkgArch)
+	if [[ ${r_nas_qpkg_arch:-unset} = unset ]]; then
+		r_nas_qpkg_arch=$(GetQpkgArch)
+		readonly r_nas_qpkg_arch
+	fi
 
 	}
 
@@ -17403,9 +17833,10 @@ RefreshArchive()
 	local download=false
 	local downloaded=false
 	local extract=false
-	extracted=false
 	local new_archive_checksum=''
 	local orig_archive_checksum=''
+
+	extracted=false
 
 	if IsFile "$target_pathfile"; then
 		DebugAsDetect "'$archive_name' found"
@@ -17739,6 +18170,7 @@ CaughtSIGINT()
 
 	[[ -n ${r_inhibit_display_pathfile:-} ]] && /bin/touch "$r_inhibit_display_pathfile"
 	[[ -n ${r_abort_actions_pathfile:-} ]] && /bin/touch "$r_abort_actions_pathfile"
+
 	EraseThisLine
 	ShowAsAbort 'caught SIGINT'
 	CloseMsgPipe
@@ -17760,7 +18192,8 @@ CaughtEXIT()
 
 	}
 
-readonly r_script_startseconds=$(ConvertNowToSeconds)
+r_script_startseconds=$(ConvertNowToSeconds)
+readonly r_script_startseconds
 
 trap CaughtSIGINT SIGINT
 trap CaughtEXIT EXIT

@@ -115,9 +115,9 @@ Squeeze()
 		a=$(sed '/omit-from-production/d' <<< "$a")										# Remove lines with 'omit-from-production' tag.
 
 		a=$(sed '/[#>][[:space:]]>/! s/[[:space:]]>/>/g' <<< "$a")						# Remove whitespace before fd1 redirects.
-		a=$(sed '/squeezer-ignore/! s/>[[:space:]]/>/g' <<< "$a")						# Remove whitespace after fd1 redirects, except for lines with 'squeezer-ignore' tag.
+		a=$(sed '/dont-squeeze/! s/>[[:space:]]/>/g' <<< "$a")							# Remove whitespace after fd1 redirects, except for lines with 'dont-squeeze' tag.
 		a=$(sed '/[#<][[:space:]]</! s/[[:space:]]</</g' <<< "$a")						# Remove whitespace before fd0 redirects.
-		a=$(sed '/squeezer-ignore/! s/<[[:space:]]/</g' <<< "$a")						# Remove whitespace after fd0 redirects, except for lines with 'squeezer-ignore' tag.
+		a=$(sed '/dont-squeeze/! s/<[[:space:]]/</g' <<< "$a")							# Remove whitespace after fd0 redirects, except for lines with 'dont-squeeze' tag.
 
 		a=$(sed 's/\;[[:space:]]/;/g' <<< "$a")											# Remove whitespace after semicolons.
 		a=$(sed 's/[[:space:]]\;/;/g' <<< "$a")											# Remove whitespace before semicolons.
@@ -142,9 +142,9 @@ Squeeze()
 
 		a=$(sed 's/[[:space:]]((/((/g' <<< "$a")										# Remove whitespace before inline arithmetic start.
 
-		a=$(sed '/squeezer-ignore/! s/[[:space:]]|[[:space:]]/|/g' <<< "$a")			# Remove whitespace before-and-after pipe, except for lines with 'squeezer-ignore' tag.
+		a=$(sed '/dont-squeeze/! s/[[:space:]]|[[:space:]]/|/g' <<< "$a")				# Remove whitespace before-and-after pipe, except for lines with 'dont-squeeze' tag.
 
-		a=$(sed '/leader-ignore/! s/^[[:space:]]*//' <<< "$a")							# Remove leading line whitespace, except for lines with 'leader-ignore' tag.
+		a=$(sed '/ignore-leader/! s/^[[:space:]]*//' <<< "$a")							# Remove leading line whitespace, except for lines with 'ignore-leader' tag.
 
 		# CAUTION: comment tags are not seen beyond this point.
 
