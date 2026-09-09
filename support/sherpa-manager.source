@@ -350,10 +350,12 @@ LoadDefaults()
 	# Default flags.
 
 		if IsInTerminal; then						# Only allow ANSI colour codes if running in a user terminal.
-			readonly r_colourful_default=true
+			r_colourful_default=true
 		else
-			readonly r_colourful_default=false
+			r_colourful_default=false
 		fi
+
+		readonly r_colourful_default
 
 		archive_debug_afterward=false
 		colourful=$r_colourful_default
