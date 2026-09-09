@@ -9922,7 +9922,7 @@ GetHardwareInstalledRAMkb()
 	{
 
 	# Outputs: (local)
-	#	stdout = text string.
+	#	stdout = string.
 
 	/bin/grep MemTotal /proc/meminfo | /bin/sed 's/.*: //;s/kB//;s/ //g'
 
@@ -9932,7 +9932,7 @@ GetHardwareInstalledRAMgb()
 	{
 
 	# Outputs: (local)
-	#	stdout = text string.
+	#	stdout = string.
 
 	local a=''
 
@@ -9949,7 +9949,7 @@ GetOsFirmwareVersion()
 	{
 
 	# Outputs: (local)
-	#	stdout = text string.
+	#	stdout = string.
 	#	$? = 0 if found, 250 if not.
 
 	/sbin/getcfg System Version -d undefined -f /etc/config/uLinux.conf
@@ -9960,10 +9960,10 @@ GetOsFirmwareBuild()
 	{
 
 	# Outputs: (local)
-	#	stdout = text string.
+	#	stdout = 4 digit integer.
 	#	$? = 0 if found, 250 if not.
 
-	/sbin/getcfg System Number -d undefined -f /etc/config/uLinux.conf
+	printf '%04d' "$(/sbin/getcfg System Number -d 0 -f /etc/config/uLinux.conf)"
 
 	}
 
@@ -9973,7 +9973,7 @@ GetOsFirmwareVer()
 	# Returns an evaluable integer-only.
 
 	# Outputs: (local)
-	#	stdout = integer.
+	#	stdout = string.
 
 	ConvertFirmwareVersionStringToNumber "$(GetOsFirmwareVersion).$(GetOsFirmwareBuild)"
 
@@ -10011,10 +10011,10 @@ GetOsFirmwareDate()
 	{
 
 	# Outputs: (local)
-	#	stdout = text string.
+	#	stdout = 8 digit integer.
 	#	$? = 0 if found, 250 if not.
 
-	/sbin/getcfg System 'Build Number' -d undefined -f /etc/config/uLinux.conf
+	printf '%08d' "$(/sbin/getcfg System 'Build Number' -d 0 -f /etc/config/uLinux.conf)"
 
 	}
 
@@ -10022,7 +10022,7 @@ GetOsName()
 	{
 
 	# Outputs: (local)
-	#	stdout = text string.
+	#	stdout = string.
 
 	if IsQuTS; then
 		printf 'QuTS hero'
@@ -12569,10 +12569,10 @@ GetQpkgInstalledVer()
 	# Returns the version number of an installed QPKG.
 
 	# Inputs: (global)
-	#	$qpkg_name
+	#	$qpkg_name.
 
 	# Outputs:
-	#	stdout = package version
+	#	stdout = package version string.
 	#	$? = 0 if found, 250 if not.
 
 	/sbin/getcfg "${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}" Version -d undefined -f /etc/config/qpkg.conf
@@ -12588,11 +12588,11 @@ GetQpkgInstalledStoreID()
 	#	$1 (optional) = QPKG name.
 
 	# Inputs: (global)
-	#	$qpkg_name (default)
+	#	$qpkg_name (default).
 
 	# Outputs: (local)
-	#	stdout = package store ID
-	#	$? = 0 if found, 250 if not.
+	#	stdout = package store ID string.
+	#	$? = 0 if found, 250 if not found.
 
 	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}" store -d undefined -f /etc/config/qpkg.conf
 
@@ -12607,11 +12607,11 @@ GetQpkgInstalledDate()
 	#	$1 (optional) = QPKG name.
 
 	# Inputs: (global)
-	#	$qpkg_name (default)
+	#	$qpkg_name (default).
 
 	# Outputs: (local)
-	#	stdout = package installation date
-	#	$? = 0 if found, 1 if QPKG name unspecified, 250 if not found
+	#	stdout = package installation date string.
+	#	$? = 0 if found, 1 if QPKG name unspecified, 250 if not found.
 
 	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}" date -d undefined -f /etc/config/qpkg.conf
 
@@ -12891,7 +12891,7 @@ GetQpkgAuthor()
 	# Outputs: (local)
 	#	stdout = installed QPKG author.
 
-	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}" Author -f /etc/config/qpkg.conf
+	/sbin/getcfg "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}" Author -d undefined -f /etc/config/qpkg.conf
 
 	}
 
