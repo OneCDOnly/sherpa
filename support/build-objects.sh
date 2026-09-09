@@ -283,6 +283,7 @@ done
 
 if [[ ! -e $target ]]; then
 	TextBrightRed "'$target' was not written to disk"; echo
+
 	exit 1
 else
 	ShowDone
@@ -292,6 +293,7 @@ SwapTags "$target" "$target"
 
 if grep -q '<?\|?>' "$target"; then
 	TextBrightRed "'$target' contains unswapped tags, can't continue"; echo
+
 	exit 1
 fi
 
