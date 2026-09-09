@@ -9899,15 +9899,15 @@ GetHardwareCpuThreads()
 	{
 
 	# Outputs: (local)
-	#	stdout = CPU threads.
+	#	stdout = CPU threads integer.
 	#	$? = 0 if found, 1 if not.
 
 	local a=''
 
 	if a=$(GetCountOfValuesFromFile '^processor' /proc/cpuinfo); then
-		printf '%s' "$a"
+		printf '%d' "$a"
 	elif a=$(GetCountOfValuesFromFile '^Processor' /proc/cpuinfo); then
-		printf '%s' "$a"
+		printf '%d' "$a"
 	else
 		printf 0
 
