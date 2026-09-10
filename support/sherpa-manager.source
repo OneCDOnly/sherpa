@@ -9968,7 +9968,7 @@ GetOsFirmwareBuild()
 	#	stdout = 4 digit integer.
 	#	$? = 0 if found, 250 if not.
 
-	printf '%04d' "$(/sbin/getcfg System Number -d 0 -f /etc/config/uLinux.conf)"
+	printf '%04d' "$((10#$(/sbin/getcfg System Number -d 0 -f /etc/config/uLinux.conf)))"
 
 	}
 
@@ -10001,10 +10001,11 @@ ConvertFirmwareVersionStringToNumber()
 	local -ir r_major_trim=2
 	local -ir r_minor_trim=2
 
-	local -i build=0
 	local -i intermediate=0
 	local -i major=0
 	local -i minor=0
+
+	local build=0
 
 	while IFS=. read -r major intermediate minor build; do
 		printf "%0${r_major_trim}d%0${r_intermediate_trim}d%0${r_minor_trim}d%0${r_build_trim}d" "$((10#${major:0:r_major_trim}))" "$((10#${intermediate:0:r_intermediate_trim}))" "$((10#${minor:0:r_minor_trim}))" "$((10#${build:0:r_build_trim}))"
