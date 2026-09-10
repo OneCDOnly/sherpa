@@ -9954,7 +9954,7 @@ GetOsFirmwareVersion()
 	{
 
 	# Outputs: (local)
-	#	stdout = string.
+	#	stdout = version string.
 	#	$? = 0 if found, 250 if not.
 
 	/sbin/getcfg System Version -d undefined -f /etc/config/uLinux.conf
@@ -9964,23 +9964,38 @@ GetOsFirmwareVersion()
 GetOsFirmwareBuild()
 	{
 
+	# Returns an evaluable integer, with leading zeros.
+
 	# Outputs: (local)
-	#	stdout = 4 digit integer.
+	#	stdout = 4 char string.
 	#	$? = 0 if found, 250 if not.
 
 	printf '%04d' "$((10#$(/sbin/getcfg System Number -d 0 -f /etc/config/uLinux.conf)))"
 
 	}
 
+GetOsFirmwareDate()
+	{
+
+	# Returns an evaluable integer, with leading zeros.
+
+	# Outputs: (local)
+	#	stdout = 8 char string (YYYYMMDD).
+	#	$? = 0 if found, 250 if not.
+
+	printf '%08d' "$((10#$(/sbin/getcfg System 'Build Number' -d 0 -f /etc/config/uLinux.conf)))"
+
+	}
+
 GetOsFirmwareVer()
 	{
 
-	# Returns an evaluable integer-only.
+	# Returns an evaluable integer, with leading zeros.
 
 	# Outputs: (local)
-	#	stdout = string.
+	#	stdout = 10 char string, with build number.
 
-	ConvertFirmwareVersionStringToNumber "$(GetOsFirmwareVersion).$(GetOsFirmwareBuild)"
+	printf '%010d' "$((10#$(ConvertFirmwareVersionStringToNumber "$(GetOsFirmwareVersion).$(GetOsFirmwareBuild)")))"
 
 	}
 
@@ -9991,10 +10006,13 @@ ConvertFirmwareVersionStringToNumber()
 	#	Example: '5.2.10' becomes '0502100000'
 	#	Example: '4.6.99.1234' becomes '0406991234'
 
-	# Output should be compared using forced base-10 syntax (to handle leading zero):
+	# Output should be compared using forced base-10 syntax (to handle leading zeros):
 	#	Example: [[ $((10#$a)) -gt $((10#$b)) ]]
 
 	# Use only this many digits from start of each field.
+
+	# Outputs: (local)
+	#	stdout = 10 char string.
 
 	local -ir r_build_trim=4
 	local -ir r_intermediate_trim=2
@@ -10010,17 +10028,6 @@ ConvertFirmwareVersionStringToNumber()
 	while IFS=. read -r major intermediate minor build; do
 		printf "%0${r_major_trim}d%0${r_intermediate_trim}d%0${r_minor_trim}d%0${r_build_trim}d" "$((10#${major:0:r_major_trim}))" "$((10#${intermediate:0:r_intermediate_trim}))" "$((10#${minor:0:r_minor_trim}))" "$((10#${build:0:r_build_trim}))"
 	done <<< "$1"
-
-	}
-
-GetOsFirmwareDate()
-	{
-
-	# Outputs: (local)
-	#	stdout = 8 digit integer.
-	#	$? = 0 if found, 250 if not.
-
-	printf '%08d' "$(/sbin/getcfg System 'Build Number' -d 0 -f /etc/config/uLinux.conf)"
 
 	}
 
