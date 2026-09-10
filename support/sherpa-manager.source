@@ -16364,23 +16364,32 @@ ConvertSecondsToTime()
 ConvertSecondsToDuration()
 	{
 
-	# http://stackoverflow.com/questions/12199631/convert-seconds-to-hours-minutes-seconds
+	# Adapted from http://stackoverflow.com/questions/12199631/convert-seconds-to-hours-minutes-seconds
 
 	# Inputs: (local)
-	#	$1 = a time in seconds to convert to 'HHh:MMm:SSs'
-	#		or if less than 1 hour, to 'MMm:SSs'
-	#		or if less than 1 minute, to 'S seconds'
-	#		or if less than 1 second, to '< 1 second'
+	#	$1 = an integer in seconds to convert to 'Dd:HHh:MMm:SSs'
+	#		or, if less than 1 day, to 'Hh:MMm:SSs'
+	#		or, if less than 1 hour, to 'Mm:SSs'
+	#		or, if less than 1 minute, to 'S seconds'
+	#		or, if less than 1 second, to '< 1 second'
 
+	local -i d=0
 	local -i h=0
 	local -i m=0
 	local -i s=0
 
-	((h=${1:-0}/3600))
-	((m=(${1:-0}%3600)/60))
-	((s=${1:-0}%60))
+#	((d=${1:-0}/86400))
+	d=${1:-0}/86400
+#	((h=(${1:-0}%86400)/3600))
+	h=${1:-0}%86400/3600
+#	((m=(${1:-0}%3600)/60))
+	m=${1:-0}%3600/60
+#	((s=${1:-0}%60))
+	s=${1:-0}%60
 
-	if [[ $h -ge 1 ]]; then
+	if [[ $d -ge 1 ]]; then
+		printf '%01dd:%02dh:%02dm:%02ds' "$d" "$h" "$m" "$s"
+	elif [[ $h -ge 1 ]]; then
 		printf '%01dh:%02dm:%02ds' "$h" "$m" "$s"
 	elif [[ $m -ge 1 ]]; then
 		printf '%01dm:%02ds' "$m" "$s"
