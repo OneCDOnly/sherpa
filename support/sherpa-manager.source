@@ -4427,7 +4427,7 @@ _DirSizeMonitor_()
 
 	[[ -d $dir_location && $dir_bytes -gt 0 ]] || exit
 
-	local last_bytes=0
+	local -i last_bytes=0
 
 	current_bytes=-1
 	last_active_epoch=0
@@ -9993,11 +9993,7 @@ GetOsName()
 	# Outputs: (local)
 	#	stdout = string.
 
-	if IsQuTS; then
-		printf 'QuTS hero'
-	else
-		printf QTS
-	fi
+	IsQuTS && printf 'QuTS hero' || printf QTS
 
 	}
 
@@ -10113,7 +10109,7 @@ GetQpkgEntwareType()
 			printf none
 		fi
 	else
-		printf 'not-installed'
+		printf not-installed
 	fi
 
 	} 2> /dev/null
@@ -10143,7 +10139,7 @@ GetOsState()
 	fi
 
 	if IsOsStopping; then
-		a='shutting-down'
+		a=shutting-down
 	fi
 
 	if IsOsStoppingPackages; then
@@ -10216,6 +10212,7 @@ ClaimLockfile()
 		if [[ -e $r_lock_pathfile && -d /proc/$(< "$r_lock_pathfile") && $(< /proc/"$(< "$r_lock_pathfile")"/cmdline) =~ $a ]]; then
 			ShowAsAbort "a running $(ShowAsTitleName) instance was found $(Parenthesise "PID:$(< "$r_lock_pathfile")"), please wait for it to complete"
 			release_lock=false
+
 			return 1
 		fi
 	done
