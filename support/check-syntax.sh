@@ -4,6 +4,7 @@
 
 declare -a a
 declare -a b
+
 declare -i i=0
 
 a+=("$support_path/$management_source_file")
@@ -24,6 +25,7 @@ for i in "${!a[@]}"; do
 		ShowDone
 	else
 		ShowFailed
+
 		exit 1
 	fi
 done

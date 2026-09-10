@@ -211,6 +211,7 @@ QPKGAbbrvs()
 	for i in "${!r_qpkg_name[@]}"; do
 		if [[ ${r_qpkg_name[$i]} = "${1:?package name null}" ]]; then
 			echo -n "${r_qpkg_abbrvs[$i]}"
+
 			return 0
 		fi
 	done
@@ -228,6 +229,7 @@ CheckPlaceholdersInPackages()
 
 	if grep -q '<?\|?>' "$f"; then
 		echo; TextBrightRed "'$f' contains unprocessed placeholders, can't continue"; echo
+
 		exit 1
 	fi
 
@@ -245,6 +247,7 @@ CheckPlaceholdersInMultiplePackages()
 	for f in $qpkgs_support_path/*.packages; do
 		if grep -q '<?\|?>' "$f"; then
 			echo; TextBrightRed "'$f' contains unprocessed placeholders, can't continue"; echo
+
 			exit 1
 		fi
 	done

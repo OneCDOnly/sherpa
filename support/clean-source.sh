@@ -3,6 +3,7 @@
 . $HOME/scripts/nas/sherpa/support/environment.sourced || exit
 
 declare -a a
+
 declare -i i=0
 
 a+=("$management_source_file")
