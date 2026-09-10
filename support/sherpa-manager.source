@@ -2591,6 +2591,7 @@ ParseShowArgs()
 				awaiting_group=$requires_group
 				current_action=$user_action
 				group=''				# When action changes, must clear group.
+
 				continue
 			fi
 		fi
@@ -2787,6 +2788,7 @@ ParseListArgs()
 				awaiting_group=$requires_group
 				current_action=$user_action
 				group=''				# When action changes, must clear group.
+
 				continue
 			fi
 		fi
@@ -2935,6 +2937,7 @@ ParseActionArgs()
 				awaiting_group=$requires_group
 				current_action=$user_action
 				group=''				# When action changes, must clear group.
+
 				continue
 			fi
 		fi
@@ -9965,7 +9968,7 @@ GetOsFirmwareBuild()
 	#	stdout = 4 digit integer.
 	#	$? = 0 if found, 250 if not.
 
-	printf '%04d' "$(/sbin/getcfg System Number -d 0 -f /etc/config/uLinux.conf)"
+	printf '%04d' "$((10#$(/sbin/getcfg System Number -d 0 -f /etc/config/uLinux.conf)))"
 
 	}
 
@@ -9998,10 +10001,11 @@ ConvertFirmwareVersionStringToNumber()
 	local -ir r_major_trim=2
 	local -ir r_minor_trim=2
 
-	local -i build=0
 	local -i intermediate=0
 	local -i major=0
 	local -i minor=0
+
+	local build=0
 
 	while IFS=. read -r major intermediate minor build; do
 		printf "%0${r_major_trim}d%0${r_intermediate_trim}d%0${r_minor_trim}d%0${r_build_trim}d" "$((10#${major:0:r_major_trim}))" "$((10#${intermediate:0:r_intermediate_trim}))" "$((10#${minor:0:r_minor_trim}))" "$((10#${build:0:r_build_trim}))"
@@ -17011,11 +17015,12 @@ ShowAsPercentProgress()
 	local -i d=${5:-0}
 	local -i e=${6:-0}
 
+	local -r r_a=${1:-}
+
 	local r_f=''
 
 	r_f=$(PercFrac "$b" "$c" "$d" "$e")
 
-	local -r r_a=${1:-}
 	local -r r_f
 
 	if [[ ${2:-} != long ]]; then
@@ -17078,21 +17083,20 @@ ShowAsIterativeProgress()
 	ConfirmVarIsDefined 3 "${3:-}" "$e_nostr" || return
 	ConfirmVarIsDefined 5 "${5:-}" "$e_nostr" || return
 
-	local -i b=${2:-0}
-	local -i d=${4:-0}
+	local -i a=${2:-0}
+	local -i b=${4:-0}
 
-	local -r r_a=$1
-	local -r r_c=$3
-	local -r r_e=$5
-
+	local c=$1
+	local d=$3
+	local e=$5
 	local f=''
 
-	f="$(TextBrightWhite "$b") ${r_c}$(Pluralise "$b") ($(TextBrightWhite "$d") ${r_e}$(Pluralise "$d"))"
+	f="$(TextBrightWhite "$a") ${d}$(Pluralise "$a") ($(TextBrightWhite "$b") ${e}$(Pluralise "$b"))"
 
 	if [[ ${6:-short} != long ]]; then
-		ShowAsProc "$r_a" "$f"
+		ShowAsProc "$c" "$f"
 	else
-		ShowAsProcLong "$r_a" "$f"
+		ShowAsProcLong "$c" "$f"
 	fi
 
 	return 0
@@ -17605,13 +17609,8 @@ SetColourisation()
 	# Outputs: (global)
 	#	$colourful
 
-	if [[ $r_colourful_default = true ]]; then
-		colourful=true
-		SendParentCommand 'colourful=true'
-	else
-		colourful=false
-		SendParentCommand 'colourful=false'
-	fi
+	colourful=$r_colourful_default
+	SendParentCommand "colourful=$colourful"
 
 	}
 
