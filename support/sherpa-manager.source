@@ -798,18 +798,6 @@ ClearCachePath()
 
 	}
 
-#ClearTempReportPath()
-#	{
-#
-#	if [[ -n $r_temp_report_path && -d $r_temp_report_path ]]; then
-#		ClearPath "$r_temp_run_path" "$r_temp_report_path"
-#		ShowAsDone 'temp reports cleared'
-#	fi
-#
-#	return 0
-#
-#	}
-
 ClearTempRunPath()
 	{
 
@@ -2123,7 +2111,7 @@ SetMaxForks()
 
 	local reason=''
 
-	if [[ $useropt_verbose = true ]]; then					# No-point running async actions in verbose mode: stdout would be a confusing mess.
+	if IsVerbose; then					# No-point running async actions in verbose mode: stdout would be a confusing mess.
 		max_forks=1
 		reason='verbose mode is active'
 	elif IsDebug; then										# Same for debug mode: log would be a mess.
@@ -14872,13 +14860,6 @@ IsVerbose()
 
 	}
 
-#IsNtVerbose()
-#	{
-#
-#	! IsVerbose
-#
-#	}
-
 IsAnsiStrippingSupported()
 	{
 
@@ -15341,7 +15322,7 @@ KludgeExecuter()
 
 	a=$(tr -s ' ' <<< "$1")
 
-	if [[ $useropt_verbose = true ]]; then
+	if IsVerbose; then
 		eval "$a 2>&1 | /usr/bin/tee $2" &					# Force background process here, and capture PID. NOTE: stdout is buffered here.
 	else
 		eval "$a" > "$2" 2>&1 &								# Force background process here, and capture PID.
@@ -16761,7 +16742,7 @@ AddExtLogToSessLog()
 	local a=''
 	local b=false
 
-	if [[ $useropt_verbose = true ]]; then		# Prevent external log contents appearing onscreen again, because they've already been seen live.
+	if IsVerbose; then		# Prevent external log contents appearing onscreen again, because they've already been seen live.
 		b=true
 		useropt_verbose=false
 	fi
