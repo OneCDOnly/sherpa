@@ -9999,38 +9999,6 @@ GetOsFirmwareVer()
 
 	}
 
-ConvertFirmwareVersionStringToNumber()
-	{
-
-	# Convert regular QTS version string into a number evaluable against another.
-	#	Example: '5.2.10' becomes '0502100000'
-	#	Example: '4.6.99.1234' becomes '0406991234'
-
-	# Output should be compared using forced base-10 syntax (to handle leading zeros):
-	#	Example: [[ $((10#$a)) -gt $((10#$b)) ]]
-
-	# Use only this many digits from start of each field.
-
-	# Outputs: (local)
-	#	stdout = 10 char string.
-
-	local -ir r_build_trim=4
-	local -ir r_intermediate_trim=2
-	local -ir r_major_trim=2
-	local -ir r_minor_trim=2
-
-	local -i intermediate=0
-	local -i major=0
-	local -i minor=0
-
-	local build=0
-
-	while IFS=. read -r major intermediate minor build; do
-		printf "%0${r_major_trim}d%0${r_intermediate_trim}d%0${r_minor_trim}d%0${r_build_trim}d" "$((10#${major:0:r_major_trim}))" "$((10#${intermediate:0:r_intermediate_trim}))" "$((10#${minor:0:r_minor_trim}))" "$((10#${build:0:r_build_trim}))"
-	done <<< "$1"
-
-	}
-
 GetOsName()
 	{
 
@@ -16643,6 +16611,38 @@ ConvertNowToNanoseconds()
 	/bin/date +%s%N
 
 	} 2> /dev/null
+
+ConvertFirmwareVersionStringToNumber()
+	{
+
+	# Convert regular QTS version string into a number evaluable against another.
+	#	Example: '5.2.10' becomes '0502100000'
+	#	Example: '4.6.99.1234' becomes '0406991234'
+
+	# Output should be compared using forced base-10 syntax (to handle leading zeros):
+	#	Example: [[ $((10#$a)) -gt $((10#$b)) ]]
+
+	# Use only this many digits from start of each field.
+
+	# Outputs: (local)
+	#	stdout = 10 char string.
+
+	local -ir r_build_trim=4
+	local -ir r_intermediate_trim=2
+	local -ir r_major_trim=2
+	local -ir r_minor_trim=2
+
+	local -i intermediate=0
+	local -i major=0
+	local -i minor=0
+
+	local build=0
+
+	while IFS=. read -r major intermediate minor build; do
+		printf "%0${r_major_trim}d%0${r_intermediate_trim}d%0${r_minor_trim}d%0${r_build_trim}d" "$((10#${major:0:r_major_trim}))" "$((10#${intermediate:0:r_intermediate_trim}))" "$((10#${minor:0:r_minor_trim}))" "$((10#${build:0:r_build_trim}))"
+	done <<< "$1"
+
+	}
 
 DebugAsFuncEn()
 	{
