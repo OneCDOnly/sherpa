@@ -1109,12 +1109,14 @@ CheckTasks()
 		for action in "${ar_user_qpkg_actions[@]}"; do
 			if QPKGs-AC${action}-to.IsAny; then
 				build_extended_states=true
+
 				break
 			fi
 
 			for group in "${ar_qpkg_is_groups[@]}"; do
 				if QPKGs.AC${action}GR${group}.IsSet; then
 					build_extended_states=true
+
 					break 2
 				fi
 			done
@@ -1122,6 +1124,7 @@ CheckTasks()
 			for group in "${ar_qpkg_isnt_groups[@]}"; do
 				if QPKGs.AC${action}GRNT${group}.IsSet; then
 					build_extended_states=true
+
 					break 2
 				fi
 			done
@@ -1146,6 +1149,7 @@ CheckTasks()
 					*)
 						if QPKGs.AC${action}IS${state}.IsSet; then
 							build_extended_states=true
+
 							break 2
 						fi
 				esac
@@ -1159,6 +1163,7 @@ CheckTasks()
 					*)
 						if QPKGs.AC${action}ISNT${state}.IsSet; then
 							build_extended_states=true
+
 							break 2
 						fi
 				esac
@@ -1740,6 +1745,7 @@ ProcActions()
 						ipks_install=true
 						ipks_upgrade=true
 						pips_install=true
+
 						break
 					fi
 				done
@@ -1904,6 +1910,7 @@ ProcAction()
 									"IS${state}")
 										IsFuncExist QPKGs-ISNT${state}:Init && QPKGs-ISNT${state}:Remove "$msg2_value"
 										IsFuncExist QPKGs-IS${state}:Init && QPKGs-IS${state}:Add "$msg2_value"
+
 										break 2
 								esac
 							done
@@ -1913,6 +1920,7 @@ ProcAction()
 									"ISNT${state}")
 										IsFuncExist QPKGs-IS${state}:Init && QPKGs-IS${state}:Remove "$msg2_value"
 										IsFuncExist QPKGs-ISNT${state}:Init && QPKGs-ISNT${state}:Add "$msg2_value"
+
 										break 2
 								esac
 							done
@@ -1922,6 +1930,7 @@ ProcAction()
 									"GR${group}")
 										IsFuncExist QPKGs-GRNT${group}:Init && QPKGs-GRNT${group}:Remove "$msg2_value"
 										IsFuncExist QPKGs-GR${group}:Init && QPKGs-GR${group}:Add "$msg2_value"
+
 										break 2
 								esac
 							done
@@ -1931,11 +1940,13 @@ ProcAction()
 									"GRNT${group}")
 										IsFuncExist QPKGs-GR${group}:Init && QPKGs-GR${group}:Remove "$msg2_value"
 										IsFuncExist QPKGs-GRNT${group}:Init && QPKGs-GRNT${group}:Add "$msg2_value"
+
 										break 2
 								esac
 							done
 
 							DebugAsWarn "unidentified change request in message queue: '$msg1_value'"
+
 							break
 						done
 						;;
@@ -1974,6 +1985,7 @@ ProcAction()
 								for package_index in "${!a_target_packages[@]}"; do
 									if [[ ${a_target_packages[package_index]} = "$msg2_value" ]]; then
 										unset 'a_target_packages[package_index]'
+
 										break
 									fi
 								done
@@ -2253,6 +2265,7 @@ ParseManagementArgs()
 				awaiting_group=$requires_group
 				current_action=$user_action
 				group=''			# When action changes, must clear group.
+
 				continue
 			fi
 		fi
@@ -2376,6 +2389,7 @@ ParseHelpArgs()
 				awaiting_group=$requires_group
 				current_action=$user_action
 				group=''			# When action changes, must clear group.
+
 				continue
 			fi
 		fi
@@ -3784,6 +3798,7 @@ CalcIpkDepsToInstall()
 
 		if [[ ${#a_this_list[@]} -eq 0 ]]; then
 			complete=true
+
 			break
 		else
 			a_dep_acc+=(${a_this_list[*]})
@@ -7770,6 +7785,7 @@ CheckQPKGsTiers()
 		b=r_${a}_qpkgs_list_pathfile
 		[[ -s ${!b} ]] && continue
 		qpkgs_tiers_built=false
+
 		break
 	done
 
@@ -12325,6 +12341,7 @@ EOB
 				;;
 			*)
 				z=0		# Disregard errors generated while deleting record.
+
 				break
 		esac
 	done
@@ -12467,6 +12484,7 @@ GetQpkgDbApplVer()
 				a=${r_qpkg_appl_version[$i]}
 				[[ $a = version ]] && a=${r_qpkg_version[$i]}
 				[[ $a != none ]] || return
+
 				break
 			fi
 		done
