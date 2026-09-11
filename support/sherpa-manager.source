@@ -205,7 +205,6 @@ LoadConsts()
 		readonly r_cert_db_pathfile=/etc/config/nas_sign_qpkg.db
 		readonly r_entware_packages_last_updated=20260407
 		readonly r_file_change_threshold_minutes=60
-		readonly r_log_tail_lines=5000
 
 		if IsInTerminal; then						# Only allow ANSI colour codes if running in a user terminal.
 			r_colourful_default=true
@@ -293,6 +292,7 @@ LoadConsts()
 
 		readonly r_help_desc_indent=3
 		readonly r_help_syntax_indent=6
+		readonly r_log_tail_lines=5000
 		readonly r_report_action_result_indent=4
 		readonly r_report_column_spacing=2
 		readonly r_report_file_bytes_column_width=14
@@ -309,6 +309,7 @@ LoadConsts()
 		readonly r_chars_attention='* '
 		readonly r_chars_blank='  '
 		readonly r_chars_bullet='• '
+			readonly r_chars_normal=$r_chars_bullet
 		readonly r_chars_dash='- '
 		readonly r_chars_dropend='└─ '
 		readonly r_chars_note='* '
@@ -317,10 +318,9 @@ LoadConsts()
 
 		readonly r_chars_results='= '
 		readonly r_chars_super_prompt='# '
+
 		readonly r_extended_datetime_format='+%a %-d %b %Y'
 			readonly r_full_datetime_format=$r_extended_datetime_format' %-I:%M:%S %p %Z'
-
-		readonly r_chars_normal=$r_chars_bullet
 
 		if IsOsCanSudo; then
 			if [[ $(GetUserSudoUID) = undefined ]]; then
