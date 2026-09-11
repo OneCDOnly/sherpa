@@ -833,8 +833,6 @@ DebugLogEnv()
 
 	FuncInit
 
-	ShowAsProc 'log env'
-
 	if [[ $useropt_show_about = true || $useropt_show_aboutall = true ]]; then
 		useropt_debug=true
 		useropt_verbose=true
@@ -1323,7 +1321,7 @@ AssignQpkgsToActions()
 
 	FuncInit
 
-	ShowAsProc 'assign actions'
+	ShowAsProc 'action assignment'
 
 	local action=''
 	local prospect=''
@@ -1794,7 +1792,7 @@ ProcAction()
 	# Inputs: (local)
 	#	$1 = an action to run			e.g. `activate`, `reactivate` ...
 	#	$2 = target tier				e.g. `independent`, `dependent`, `auxiliary`, `optional`, `all`
-	#	$3 = package type to process	e.g. `QPKG`, `IPK`, `PIP`
+	#	$3 = package type				e.g. `QPKG`, `IPK`, `PIP`
 	#	$4 = action intransitive verb	e.g. `activate`, `reactivate` ...
 
 	# Inputs: (global)
@@ -3403,7 +3401,7 @@ AllocPackGroupsToAcs()
 
 	FuncInit
 
-	ShowAsProc 'allocate QPKG groups to actions'
+	ShowAsProc 'package groups'
 
 	local action=''
 	local group=''
@@ -3453,7 +3451,7 @@ AllocPackStatesToAcs()
 
 	FuncInit
 
-	ShowAsProc 'allocate QPKG states to actions'
+	ShowAsProc 'package states'
 
 	local action=''
 	local check_later=false
@@ -7976,7 +7974,7 @@ RefreshAndStoreQPKGsStates()
 
 	qpkg_name=''
 
-	ShowAsProc 'refresh QPKG states'
+	ShowAsProc 'package states'
 
 	# Faster to launch several concurrent loops async than a single loop. Launch those requiring more processing-time first.
 
@@ -8031,7 +8029,7 @@ LoadQPKGsStates()
 
 	qpkg_name=''
 
-	ShowAsProc 'load QPKG states'
+#	ShowAsProc 'load QPKG states'
 
 	# Load status lines from individual files into session arrays.
 
