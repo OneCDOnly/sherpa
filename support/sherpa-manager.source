@@ -506,7 +506,12 @@ LoadEnv()
 	SetHardwareInstalledRAM
 	SetQpkgArch
 
-	local -i script_epoch=0
+	readonly r_cert_db_pathfile=/etc/config/nas_sign_qpkg.db
+	readonly r_concurrency=$r_cpu_threads				# Maximum concurrent package actions to run. Should probably make this account for CPU speed too.
+	readonly r_script_built_epoch='<?manager_epoch?>'
+	readonly r_this_script_ver='<?manager_version?>'
+
+	local -r r_sherpa_packages_base_url='<?sherpa_packages_base_url?>'
 
 	local default_vol_mount_point=''
 
@@ -516,18 +521,8 @@ LoadEnv()
 	r_entware_type=$(GetQpkgEntwareType)
 	r_this_package_ver=$(GetQpkgInstalledVer)
 
-	local -r r_sherpa_packages_base_url='<?sherpa_packages_base_url?>'
-
-	readonly r_cert_db_pathfile=/etc/config/nas_sign_qpkg.db
-	readonly r_concurrency=$r_cpu_threads				# Maximum concurrent package actions to run. Should probably make this account for CPU speed too.
-	readonly r_script_built_epoch='<?manager_epoch?>'
-
 	readonly r_entware_type
 	readonly r_this_package_ver
-
-	IsNumber $r_script_built_epoch && script_epoch=$r_script_built_epoch
-	r_this_script_ver=$(ConvertSecondsToDatecode $script_epoch)
-	readonly r_this_script_ver
 
 	useropt_branch=$(GetUserGitBranch)
 		readonly r_objects_archive_url='<?sherpa_base_raw_url?>'/$useropt_branch/objects.tar.gz
@@ -946,7 +941,7 @@ DebugLogEnv()
 	DebugUserspace ok 'BusyBox copyright' "$(GetBusyBoxCopyright)"
 	DebugUserspace ok 'BusyBox function count' "$(GetBusyBoxFunctionCount)"
 	DebugScript ok 'QPKG version' "$(ConvertAsSmartDate "$r_this_package_ver")"
-	DebugScript ok 'manager version' "$(ShowAsVersion)"
+	DebugScript ok 'manager version' "$(ConvertAsSmartDate "$r_this_script_ver")"
 	DebugScript ok 'manager epoch' "$(ConvertAsSmartDate "$r_script_built_epoch")"
 	DebugScript ok 'objects epoch' "$(ConvertAsSmartDate "${r_objects_epoch:-not loaded}")"
 	DebugScript ok 'packages epoch' "$(ConvertAsSmartDate "${r_packages_epoch:-not loaded}")"
@@ -16330,31 +16325,6 @@ ConvertSecondsToFullDate()
 	#	stdout = real date.
 
 	/bin/date -d @"${1:-}" "$r_full_datetime_format"
-
-	} 2> /dev/null
-
-ConvertSecondsToDatecode()
-	{
-
-	# Convert supplied epoch-seconds into sherpa datecode.
-
-	# Inputs: (local)
-	#	$1 = Epoch seconds.
-
-	# Outputs: (local)
-	#	stdout = datecode.
-
-	[[ -n ${1:-} ]] || return
-
-	local a=${1//[!0-9]/}	# Strip non-digits.
-
-	if [[ ${#a} -ne 10 ]]; then
-		printf 000000
-
-		return 1
-	fi
-
-	/bin/date -d @"$a" '+%y%m%d'
 
 	} 2> /dev/null
 

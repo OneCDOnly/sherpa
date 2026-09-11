@@ -69,6 +69,7 @@ SwapTags()
 		a=$(sed "s|<?build_date?>|$build_date|g" <<< "$a")
 		a=$(sed "s|<?build_year?>|$build_year|g" <<< "$a")
 		a=$(sed "s|'<?manager_epoch?>'|$manager_epoch|g" <<< "$a")
+		a=$(sed "s|'<?manager_version?>'|$manager_version|g" <<< "$a")
 		a=$(sed "s|<?objects_epoch?>|$objects_epoch|g" <<< "$a")
 		a=$(sed "s|'<?packages_epoch?>'|$packages_epoch|g" <<< "$a")
 		a=$(sed "s|'<?package_release_version?>'|${package_release_version:-testing}|" <<< "$a")
@@ -178,10 +179,10 @@ StripComments()
 	# A simpler version of Squeeze() only used when building package lists.
 
 	# Inputs: (local)
-	#   $1 = string to strip comment lines, empty lines, and so-on.
+	#	$1 = string to strip comment lines, empty lines, and so-on.
 
 	# Outputs: (local)
-	#   stdout = stripped string.
+	#	stdout = stripped string.
 
 	[[ -n $1 ]] || return
 
@@ -190,7 +191,7 @@ StripComments()
 	a=$(sed '/^#[[:space:]].*/d;/#$/d;s/[[:space:]]#[[:space:]].*//' <<< "$a")	# Remove comment lines and line comments.
 	a=$(sed 's/^[[:space:]]*//' <<< "$a")										# Remove leading whitespace.
 	a=$(sed 's/[[:space:]]*$//' <<< "$a")										# Remove trailing whitespace.
-# 	a=$(sed "/^$/d" <<< "$a")													# Remove empty lines.
+#	a=$(sed "/^$/d" <<< "$a")													# Remove empty lines.
 
 	echo "$a"
 
@@ -267,6 +268,31 @@ SortNames()
 	tr ' ' '\n' <<< "$1" | sort -f | uniq | tr '\n' ' '
 
 	}
+
+ConvertSecondsToDatecode()
+	{
+
+	# Convert supplied epoch-seconds into sherpa datecode.
+
+	# Inputs: (local)
+	#	$1 = Epoch seconds.
+
+	# Outputs: (local)
+	#	stdout = datecode.
+
+	[[ -n ${1:-} ]] || return
+
+	local a=${1//[!0-9]/}	# Strip non-digits.
+
+	if [[ ${#a} -ne 10 ]]; then
+		printf 000000
+
+		return 1
+	fi
+
+	/bin/date -d @"$a" '+%y%m%d'
+
+	} 2> /dev/null
 
 TextBrightGreen()
 	{

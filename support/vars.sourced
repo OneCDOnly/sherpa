@@ -4,7 +4,8 @@
 
 build_date=$(date '+%y%m%d')
 build_year=$(date '+%Y')
-manager_epoch=0				# Only update before building `sherpa-manager.sh` file.
+manager_epoch=0				# Only update when building `sherpa-manager.sh` file.
+manager_version=0			# Only update when building `sherpa-manager.sh` file.
 objects_epoch=0				# Only update before building `objects` file.
 packages_epoch=0			# Only update before building `packages` files.
 title_description='a mini-package-manager for QNAP NAS'
