@@ -57,15 +57,15 @@ AddFlagObj()
 	# Inputs: (local)
 	#	$1 = object name to create.
 	#	$2 = set flag state on init (optional) default is 'false'.
-	#	$3 = set 'log boolean changes' on init (optional) default is 'true'.
+# 	#	$3 = set 'log boolean changes' on init (optional) default is 'true'.
 
 	local public_function_name=${1:?no object name supplied}
 	local safe_function_name=$(tr '[:upper:]' '[:lower:]' <<< "${public_function_name//[.-]/_}")
 	local state_default=${2:-false}
-	local state_logmods=${3:-true}
+# 	local state_logmods=${3:-true}
 
 	_placeholder_main_flag_=o_f${safe_function_name}
-	_placeholder_log_changes_flag_=o_c${safe_function_name}
+# 	_placeholder_log_changes_flag_=o_c${safe_function_name}
 
 # NOTE: quoting below is inside-out.
 
@@ -73,7 +73,7 @@ echo $public_function_name':Init()
 	{
 
 	'$_placeholder_main_flag_'='$state_default'
-	'$_placeholder_log_changes_flag_'='$state_logmods'
+# 	'$_placeholder_log_changes_flag_'='$state_logmods'
 
 	}
 
@@ -89,7 +89,7 @@ echo $public_function_name':Init()
 
 	$'$_placeholder_main_flag_' && return
 	'$_placeholder_main_flag_'=true
-	$'$_placeholder_log_changes_flag_' && DebugVar '$_placeholder_main_flag_'
+# 	$'$_placeholder_log_changes_flag_' && DebugVar '$_placeholder_main_flag_'
 
 	}
 
