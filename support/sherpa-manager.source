@@ -110,6 +110,8 @@ ShowResults()
 			ReportStatuses
 			show_action_results_report=false
 		fi
+
+		Display
 	fi
 
 	if [[ $generate_list_report = true ]]; then
@@ -124,6 +126,7 @@ ShowResults()
 	if [[ $useropt_help_basic = true ]]; then
 		ShowHelpBasic
 		ShowHelpBasicExamples
+		Display
 	fi
 
 	if [[ $generate_help_report = true ]]; then
@@ -153,10 +156,13 @@ ShowResults()
 		elif [[ $useropt_help_groups = true ]]; then
 			ShowHelpGroups
 		fi
+
+		Display
 	fi
 
 	if [[ $show_action_results_report = true ]]; then
 		ReportAllActionResults
+		Display
 	fi
 
 	[[ $show_backuploc = true ]] && ShowHelpBackupLocation
