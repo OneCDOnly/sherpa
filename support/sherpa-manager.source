@@ -2334,7 +2334,7 @@ ParseManagementArgs()
 	DebugArray a_args_incomplete ${a_args_incomplete[*]+"${a_args_incomplete[*]}"}	# directive:omit-from-production
 
 	a_args=(${a_args_remaining[@]+"${a_args_remaining[@]}"})
-	DebugArray a_args ${a_args[@]+"${a_args[@]}"}								# directive:omit-from-production
+	DebugArray a_args ${a_args[@]+"${a_args[@]}"}									# directive:omit-from-production
 
 	FuncExit
 
@@ -2533,7 +2533,7 @@ ParseHelpArgs()
 	DebugArray a_args_incomplete ${a_args_incomplete[*]+"${a_args_incomplete[*]}"}	# directive:omit-from-production
 
 	a_args=(${a_args_remaining[@]+"${a_args_remaining[@]}"})
-	DebugArray a_args ${a_args[@]+"${a_args[@]}"}								# directive:omit-from-production
+	DebugArray a_args ${a_args[@]+"${a_args[@]}"}									# directive:omit-from-production
 
 	FuncExit
 
@@ -2730,7 +2730,7 @@ ParseShowArgs()
 	DebugArray a_args_incomplete ${a_args_incomplete[*]+"${a_args_incomplete[*]}"}	# directive:omit-from-production
 
 	a_args=(${a_args_remaining[@]+"${a_args_remaining[@]}"})
-	DebugArray a_args ${a_args[@]+"${a_args[@]}"}								# directive:omit-from-production
+	DebugArray a_args ${a_args[@]+"${a_args[@]}"}									# directive:omit-from-production
 
 	FuncExit
 
@@ -2863,11 +2863,11 @@ ParseListArgs()
 		a_args_incomplete+=("$user_action")								# Save the actual action word, phrase or char specified by the user.
 	fi
 
-	DebugVar generate_list_report												# directive:omit-from-production
+	DebugVar generate_list_report													# directive:omit-from-production
 	DebugArray a_args_incomplete ${a_args_incomplete[*]+"${a_args_incomplete[*]}"}	# directive:omit-from-production
 
 	a_args=(${a_args_remaining[@]+"${a_args_remaining[@]}"})
-	DebugArray a_args ${a_args[@]+"${a_args[@]}"}								# directive:omit-from-production
+	DebugArray a_args ${a_args[@]+"${a_args[@]}"}									# directive:omit-from-production
 
 	FuncExit
 
@@ -3027,7 +3027,7 @@ ParseActionArgs()
 	DebugArray a_args_incomplete ${a_args_incomplete[*]+"${a_args_incomplete[*]}"}	# directive:omit-from-production
 
 	a_args=(${a_args_remaining[@]+"${a_args_remaining[@]}"})
-	DebugArray a_args ${a_args[@]+"${a_args[@]}"}								# directive:omit-from-production
+	DebugArray a_args ${a_args[@]+"${a_args[@]}"}									# directive:omit-from-production
 
 	FuncExit
 
@@ -7341,7 +7341,7 @@ UpdateDirSizeProgress()
 	fi
 
 	perc_msg=$((200*(current_bytes)/(dir_bytes)%2+100*(current_bytes)/(dir_bytes)))%
-	[[ $current_bytes -lt $dir_bytes && $perc_msg = '100%' ]] && perc_msg=99%		# Ensure we don't hit 100% until the last byte is downloaded.
+	[[ $current_bytes -lt $dir_bytes && $perc_msg = '100%' ]] && perc_msg=99%		# Ensure display doesn't hit 100% until the last byte is downloaded.
 	progress_msg="$perc_msg ($(TextBrightWhite "$(FormatAsIsoBytes "$current_bytes")")/$(TextBrightWhite "$(FormatAsIsoBytes "$dir_bytes")"))"
 
 	if [[ $stalled_seconds -ge $r_stalled_seconds_threshold ]]; then
@@ -7550,7 +7550,7 @@ ListQPKGsActionsAll()																						# directive:omit-from-production
 
 	DebugInfoMinSepr																						# directive:omit-from-production
 
-	for a in "${ar_qpkg_actions[@]}"; do																		# directive:omit-from-production
+	for a in "${ar_qpkg_actions[@]}"; do																	# directive:omit-from-production
 		for b in to ok er sk se sa; do																		# directive:omit-from-production
 			if QPKGs-AC${a}-${b}.IsAny; then																# directive:omit-from-production
 				DebugQpkg info "AC${a}-${b}" "($(QPKGs-AC${a}-${b}:Count)) $(QPKGs-AC${a}-${b}:ListCSV) "	# directive:omit-from-production
@@ -7571,7 +7571,7 @@ ListQPKGsFlagsAll()																							# directive:omit-from-production
 
 	# Inputs: (global)																						# directive:omit-from-production
 	#	$ar_qpkg_actions[]																					# directive:omit-from-production
-	#	$ar_qpkg_is_states[]																					# directive:omit-from-production
+	#	$ar_qpkg_is_states[]																				# directive:omit-from-production
 
 	FuncInit																								# directive:omit-from-production
 
@@ -7580,7 +7580,7 @@ ListQPKGsFlagsAll()																							# directive:omit-from-production
 
 	DebugInfoMinSepr																						# directive:omit-from-production
 
-	for a in "${ar_qpkg_actions[@]}"; do																		# directive:omit-from-production
+	for a in "${ar_qpkg_actions[@]}"; do																	# directive:omit-from-production
 		for b in "${ar_qpkg_is_states[@]}"; do																# directive:omit-from-production
 			if IsFuncExist QPKGs.AC${a}IS${b}.IsSet; then													# directive:omit-from-production
 				if QPKGs.AC${a}IS${b}.IsSet; then															# directive:omit-from-production
@@ -13600,7 +13600,7 @@ IsFileRecent()
 
 	# Examine 'status change' time, as this is updated even if file content isn't modified.
 
-	[[ -e ${1:-} && $((($(ConvertNowToSeconds)-$(FileLastStatusChangeEpoch "$1"))/60)) -le ${2:-1440} ]]		# https://stackoverflow.com/a/55622661
+	[[ -e ${1:-} && $((($(ConvertNowToSeconds)-$(FileLastStatusChangeEpoch "$1"))/60)) -le ${2:-1440} ]]	# https://stackoverflow.com/a/55622661
 
 	}
 
@@ -13630,7 +13630,7 @@ IsEntwareUpgradable()
 
 	a=$(GetQpkgInstalledDate Entware)
 
-	# NOTE: Entware are not updating packages anymore for older arches: https://entware.net/2024/02/23/Changelog.html
+	# NOTE: Entware not updating packages anymore for older arches: https://entware.net/2024/02/23/Changelog.html
 
 	if [[ $a = undefined || ${a//[!0-9]/} -lt $r_entware_packages_last_updated ]]; then
 		case $r_nas_arch in
@@ -17228,8 +17228,14 @@ WriteToLog()
 TextBrightGreen()
 	{
 
+	# Inputs: (local)
+	#	$1 = string.
+
 	# Inputs: (global)
 	#	$colourful
+
+	# Outputs: (local)
+	#	stdout = string.
 
 	[[ -n ${1:-} ]] || return
 
@@ -17244,8 +17250,14 @@ TextBrightGreen()
 TextBrightYellow()
 	{
 
+	# Inputs: (local)
+	#	$1 = string.
+
 	# Inputs: (global)
 	#	$colourful
+
+	# Outputs: (local)
+	#	stdout = string.
 
 	[[ -n ${1:-} ]] || return
 
@@ -17260,8 +17272,14 @@ TextBrightYellow()
 #TextBrightYellowBlink()
 #	{
 #
-#	# Inputs: (global)
-#	#	$colourful
+	# Inputs: (local)
+	#	$1 = string.
+
+	# Inputs: (global)
+	#	$colourful
+
+	# Outputs: (local)
+	#	stdout = string.
 #
 #	[[ -n ${1:-} ]] || return
 #
@@ -17276,8 +17294,14 @@ TextBrightYellow()
 TextBrightOrange()
 	{
 
+	# Inputs: (local)
+	#	$1 = string.
+
 	# Inputs: (global)
 	#	$colourful
+
+	# Outputs: (local)
+	#	stdout = string.
 
 	[[ -n ${1:-} ]] || return
 
@@ -17292,8 +17316,14 @@ TextBrightOrange()
 TextBrightOrangeBlink()
 	{
 
+	# Inputs: (local)
+	#	$1 = string.
+
 	# Inputs: (global)
 	#	$colourful
+
+	# Outputs: (local)
+	#	stdout = string.
 
 	[[ -n ${1:-} ]] || return
 
@@ -17308,8 +17338,14 @@ TextBrightOrangeBlink()
 TextBrightRed()
 	{
 
+	# Inputs: (local)
+	#	$1 = string.
+
 	# Inputs: (global)
 	#	$colourful
+
+	# Outputs: (local)
+	#	stdout = string.
 
 	[[ -n ${1:-} ]] || return
 
@@ -17324,8 +17360,14 @@ TextBrightRed()
 TextBrightRedBlink()
 	{
 
+	# Inputs: (local)
+	#	$1 = string.
+
 	# Inputs: (global)
 	#	$colourful
+
+	# Outputs: (local)
+	#	stdout = string.
 
 	[[ -n ${1:-} ]] || return
 
@@ -17340,8 +17382,14 @@ TextBrightRedBlink()
 TextDarkGrey()
 	{
 
+	# Inputs: (local)
+	#	$1 = string.
+
 	# Inputs: (global)
 	#	$colourful
+
+	# Outputs: (local)
+	#	stdout = string.
 
 	[[ -n ${1:-} ]] || return
 
@@ -17356,8 +17404,14 @@ TextDarkGrey()
 TextUnderlinedCyan()
 	{
 
+	# Inputs: (local)
+	#	$1 = string.
+
 	# Inputs: (global)
 	#	$colourful
+
+	# Outputs: (local)
+	#	stdout = string.
 
 	[[ -n ${1:-} ]] || return
 
@@ -17372,8 +17426,14 @@ TextUnderlinedCyan()
 TextBlackOnCyan()
 	{
 
+	# Inputs: (local)
+	#	$1 = string.
+
 	# Inputs: (global)
 	#	$colourful
+
+	# Outputs: (local)
+	#	stdout = string.
 
 	[[ -n ${1:-} ]] || return
 
@@ -17389,11 +17449,13 @@ TextBrightWhite()
 	{
 
 	# Inputs: (local)
+	#	$1 = string.
 
 	# Inputs: (global)
 	#	$colourful
 
 	# Outputs: (local)
+	#	stdout = string.
 
 	[[ -n ${1:-} ]] || return
 
@@ -17408,8 +17470,14 @@ TextBrightWhite()
 TextBrightWhiteBlink()
 	{
 
+	# Inputs: (local)
+	#	$1 = string.
+
 	# Inputs: (global)
 	#	$colourful
+
+	# Outputs: (local)
+	#	stdout = string.
 
 	[[ -n ${1:-} ]] || return
 
@@ -17423,6 +17491,12 @@ TextBrightWhiteBlink()
 
 TextUncoloured()
 	{
+
+	# Inputs: (local)
+	#	$1 = string.
+
+	# Outputs: (local)
+	#	stdout = string.
 
 	[[ -n ${1:-} ]] || return
 
