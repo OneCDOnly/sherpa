@@ -630,93 +630,93 @@ LoadLists()
 
 	# Outputs: (global)
 	#	$lists_loaded
-	#	$r_ipk_actions[]
-	#	$r_package_tiers[]
-	#	$r_pip_actions[]
-	#	$r_qpkg_actions[]
-	#	$r_qpkg_is_groups[]
-	#	$r_qpkg_is_states[]
-	#	$r_qpkg_isnt_groups[]
-	#	$r_qpkg_isnt_states[]
-	#	$r_qpkg_service_results[]
-	#	$r_qpkg_transient_states[]
-	#	$r_qpkg_tiers[]
-	#	$r_user_qpkg_actions[]
+	#	$ar_ipk_actions[]
+	#	$ar_package_tiers[]
+	#	$ar_pip_actions[]
+	#	$ar_qpkg_actions[]
+	#	$ar_qpkg_is_groups[]
+	#	$ar_qpkg_is_states[]
+	#	$ar_qpkg_isnt_groups[]
+	#	$ar_qpkg_isnt_states[]
+	#	$ar_qpkg_service_results[]
+	#	$ar_qpkg_transient_states[]
+	#	$ar_qpkg_tiers[]
+	#	$ar_user_qpkg_actions[]
 	#	$r_"$(Lowercase "$action")"_log_file
 
 	[[ ${lists_loaded:=false} = false ]] || return 0
 
 	# First, clear existing list arrays (if-any).
 
-	unset r_package_tiers
-	unset r_qpkg_tiers
+	unset ar_package_tiers
+	unset ar_qpkg_tiers
 
-	unset r_qpkg_basic_states
-	unset r_qpkg_extended_states
-	unset r_qpkg_is_groups
-	unset r_qpkg_is_states
-	unset r_qpkg_isnt_groups
-	unset r_qpkg_isnt_states
-	unset r_qpkg_service_results
-	unset r_qpkg_transient_states
+	unset ar_qpkg_basic_states
+	unset ar_qpkg_extended_states
+	unset ar_qpkg_is_groups
+	unset ar_qpkg_is_states
+	unset ar_qpkg_isnt_groups
+	unset ar_qpkg_isnt_states
+	unset ar_qpkg_service_results
+	unset ar_qpkg_transient_states
 
-	unset r_qpkg_actions
-	unset r_ipk_actions
-	unset r_pip_actions
+	unset ar_qpkg_actions
+	unset ar_ipk_actions
+	unset ar_pip_actions
 
-	unset r_user_qpkg_actions
+	unset ar_user_qpkg_actions
 
 	# These are used internally by sherpa.
 	# Ordered.
 
-	r_package_tiers=(independent auxiliary optional dependent)
-	r_qpkg_tiers=(independent optional dependent)
+	ar_package_tiers=(independent auxiliary optional dependent)
+	ar_qpkg_tiers=(independent optional dependent)
 
 	# Sorted.
 
-	r_qpkg_basic_states=(complete enabled installed)
-	r_qpkg_extended_states=(active backedup downloaded installable missing signed upgradable)
-	r_qpkg_transient_states=(restarting slow starting stopping unknown)
-		r_qpkg_is_states=(${r_qpkg_basic_states[*]} ${r_qpkg_extended_states[*]} ${r_qpkg_transient_states[*]})
-		r_qpkg_isnt_states=(${r_qpkg_basic_states[*]} ${r_qpkg_extended_states[*]} ${r_qpkg_transient_states[*]})
-	r_qpkg_is_groups=(all canbackup canclean canrestarttoupdate dependent hasdependents independent optional)
-	r_qpkg_isnt_groups=(canclean)
-	r_qpkg_service_results=(failed ok)
+	ar_qpkg_basic_states=(complete enabled installed)
+	ar_qpkg_extended_states=(active backedup downloaded installable missing signed upgradable)
+	ar_qpkg_transient_states=(restarting slow starting stopping unknown)
+		ar_qpkg_is_states=(${ar_qpkg_basic_states[*]} ${ar_qpkg_extended_states[*]} ${ar_qpkg_transient_states[*]})
+		ar_qpkg_isnt_states=(${ar_qpkg_basic_states[*]} ${ar_qpkg_extended_states[*]} ${ar_qpkg_transient_states[*]})
+	ar_qpkg_is_groups=(all canbackup canclean canrestarttoupdate dependent hasdependents independent optional)
+	ar_qpkg_isnt_groups=(canclean)
+	ar_qpkg_service_results=(failed ok)
 
 	# Ordered.
 
-	r_qpkg_actions=(status list rebuild reassign download backup resign unsign deactivate disable uninstall update upgrade reinstall install enableau disableau sign restore clean enable activate reactivate)
-	r_ipk_actions=(downgrade download uninstall upgrade install)
-	r_pip_actions=(uninstall upgrade install)
+	ar_qpkg_actions=(status list rebuild reassign download backup resign unsign deactivate disable uninstall update upgrade reinstall install enableau disableau sign restore clean enable activate reactivate)
+	ar_ipk_actions=(downgrade download uninstall upgrade install)
+	ar_pip_actions=(uninstall upgrade install)
 
 	# These actions may be specified by the user.
 	# Sorted.
 
-	r_user_qpkg_actions=(activate backup clean deactivate disable disableau enable enableau install list reactivate reassign rebuild reinstall resign restore status uninstall update upgrade)
+	ar_user_qpkg_actions=(activate backup clean deactivate disable disableau enable enableau install list reactivate reassign rebuild reinstall resign restore status uninstall update upgrade)
 
 	# KLUDGE: for some reason, setting `readonly` while populating arrays causes their scope to become local, so need to set as `readonly` afterward to ensure global scope. GNU Bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
 
-	readonly r_package_tiers
-	readonly r_qpkg_tiers
+	readonly ar_package_tiers
+	readonly ar_qpkg_tiers
 
-	readonly r_qpkg_basic_states
-	readonly r_qpkg_extended_states
-	readonly r_qpkg_is_groups
-	readonly r_qpkg_is_states
-	readonly r_qpkg_isnt_groups
-	readonly r_qpkg_isnt_states
-	readonly r_qpkg_service_results
-	readonly r_qpkg_transient_states
+	readonly ar_qpkg_basic_states
+	readonly ar_qpkg_extended_states
+	readonly ar_qpkg_is_groups
+	readonly ar_qpkg_is_states
+	readonly ar_qpkg_isnt_groups
+	readonly ar_qpkg_isnt_states
+	readonly ar_qpkg_service_results
+	readonly ar_qpkg_transient_states
 
-	readonly r_qpkg_actions
-	readonly r_ipk_actions
-	readonly r_pip_actions
+	readonly ar_qpkg_actions
+	readonly ar_ipk_actions
+	readonly ar_pip_actions
 
-	readonly r_user_qpkg_actions
+	readonly ar_user_qpkg_actions
 
 	local action=''
 
-	for action in "${r_qpkg_actions[@]}" debug downgrade fix; do
+	for action in "${ar_qpkg_actions[@]}" debug downgrade fix; do
 		readonly r_"$(Lowercase "$action")"_log_file=$action.log
 	done
 
@@ -1106,39 +1106,39 @@ CheckTasks()
 	else
 		LoadDatabase
 
-		for action in "${r_user_qpkg_actions[@]}"; do
+		for action in "${ar_user_qpkg_actions[@]}"; do
 			if QPKGs-AC${action}-to.IsAny; then
 				build_extended_states=true
 				break
 			fi
 
-			for group in "${r_qpkg_is_groups[@]}"; do
+			for group in "${ar_qpkg_is_groups[@]}"; do
 				if QPKGs.AC${action}GR${group}.IsSet; then
 					build_extended_states=true
 					break 2
 				fi
 			done
 
-			for group in "${r_qpkg_isnt_groups[@]}"; do
+			for group in "${ar_qpkg_isnt_groups[@]}"; do
 				if QPKGs.AC${action}GRNT${group}.IsSet; then
 					build_extended_states=true
 					break 2
 				fi
 			done
 
-#			for state in "${r_qpkg_basic_states[@]}"; do
+#			for state in "${ar_qpkg_basic_states[@]}"; do
 #				if QPKGs.AC${action}IS${state}.IsSet; then
 #					build_basic_states=true
 #				fi
 #			done
 
-#			for state in "${r_qpkg_basic_states[@]}"; do
+#			for state in "${ar_qpkg_basic_states[@]}"; do
 #				if QPKGs.AC${action}ISNT${state}.IsSet; then
 #					build_basic_states=true
 #				fi
 #			done
 
-			for state in "${r_qpkg_extended_states[@]}"; do
+			for state in "${ar_qpkg_extended_states[@]}"; do
 				case $state in
 					downloaded)
 						continue
@@ -1151,7 +1151,7 @@ CheckTasks()
 				esac
 			done
 
-			for state in "${r_qpkg_extended_states[@]}"; do
+			for state in "${ar_qpkg_extended_states[@]}"; do
 				case $state in
 					downloaded)
 						continue
@@ -1669,8 +1669,8 @@ ProcActions()
 	if [[ $useropt_show_status = false ]]; then
 		ShowAsProc 'assign QPKGs by state'				# Update action lists based-on QPKG `status`.
 
-		for action in "${r_user_qpkg_actions[@]}"; do
-			for state in "${r_qpkg_is_states[@]}"; do
+		for action in "${ar_user_qpkg_actions[@]}"; do
+			for state in "${ar_qpkg_is_states[@]}"; do
 				case $state in
 					downloaded|installed)
 						continue
@@ -1680,7 +1680,7 @@ ProcActions()
 				esac
 			done
 
-			for state in "${r_qpkg_isnt_states[@]}"; do
+			for state in "${ar_qpkg_isnt_states[@]}"; do
 				case $state in
 					enabled|downloaded)
 						continue
@@ -1701,8 +1701,8 @@ ProcActions()
 	if QPKGs-ACdownload-er.IsNone && QPKGs-ACdownload-se.IsNone && QPKGs-ACdownload-sa.IsNone; then
 		# -> Package removal phase <-
 
-		for ((tier_index=${#r_package_tiers[@]}-1; tier_index>=0; tier_index--)); do	# Process tiers in-reverse.
-			tier=${r_package_tiers[$tier_index]}
+		for ((tier_index=${#ar_package_tiers[@]}-1; tier_index>=0; tier_index--)); do	# Process tiers in-reverse.
+			tier=${ar_package_tiers[$tier_index]}
 
 			if [[ $tier != auxiliary ]]; then
 				ProcAction deactivate $tier QPKG deactivate
@@ -1720,7 +1720,7 @@ ProcActions()
 
 		# -> Package installation phase <-
 
-		for tier in "${r_package_tiers[@]}"; do
+		for tier in "${ar_package_tiers[@]}"; do
 			if [[ $tier != auxiliary ]]; then
 				IsOsCanManageSignedPackages && ProcAction sign $tier QPKG '"sign"'
 				ProcAction upgrade $tier QPKG upgrade
@@ -1899,7 +1899,7 @@ ProcAction()
 						;;
 					change)				# Change the state of a single QPKG in the parent shell.
 						while true; do
-							for state in "${r_qpkg_is_states[@]}"; do
+							for state in "${ar_qpkg_is_states[@]}"; do
 								case $msg1_value in
 									"IS${state}")
 										IsFuncExist QPKGs-ISNT${state}:Init && QPKGs-ISNT${state}:Remove "$msg2_value"
@@ -1908,7 +1908,7 @@ ProcAction()
 								esac
 							done
 
-							for state in "${r_qpkg_isnt_states[@]}"; do
+							for state in "${ar_qpkg_isnt_states[@]}"; do
 								case $msg1_value in
 									"ISNT${state}")
 										IsFuncExist QPKGs-IS${state}:Init && QPKGs-IS${state}:Remove "$msg2_value"
@@ -1917,7 +1917,7 @@ ProcAction()
 								esac
 							done
 
-							for group in "${r_qpkg_is_groups[@]}"; do
+							for group in "${ar_qpkg_is_groups[@]}"; do
 								case $msg1_value in
 									"GR${group}")
 										IsFuncExist QPKGs-GRNT${group}:Init && QPKGs-GRNT${group}:Remove "$msg2_value"
@@ -1926,7 +1926,7 @@ ProcAction()
 								esac
 							done
 
-							for group in "${r_qpkg_isnt_groups[@]}"; do
+							for group in "${ar_qpkg_isnt_groups[@]}"; do
 								case $msg1_value in
 									"GRNT${group}")
 										IsFuncExist QPKGs-GR${group}:Init && QPKGs-GR${group}:Remove "$msg2_value"
@@ -3383,9 +3383,9 @@ AllocPackGroupsToAcs()
 	{
 
 	# Inputs: (global)
-	#	$r_qpkg_is_groups[]
-	#	$r_qpkg_isnt_groups[]
-	#	$r_user_qpkg_actions[]
+	#	$ar_qpkg_is_groups[]
+	#	$ar_qpkg_isnt_groups[]
+	#	$ar_user_qpkg_actions[]
 
 	FuncInit
 
@@ -3394,12 +3394,12 @@ AllocPackGroupsToAcs()
 	local action=''
 	local group=''
 
-	for action in "${r_user_qpkg_actions[@]}"; do
+	for action in "${ar_user_qpkg_actions[@]}"; do
 		# Process group-based user-actions.
 
 		# Positive groups.
 
-		for group in "${r_qpkg_is_groups[@]}"; do
+		for group in "${ar_qpkg_is_groups[@]}"; do
 			QPKGs.AC${action}GR${group}.IsSet || continue
 			QPKGs-AC${action}-to:Add "$(QPKGs-GR${group}:Array)"
 
@@ -3412,7 +3412,7 @@ AllocPackGroupsToAcs()
 
 		# Negative groups.
 
-		for group in "${r_qpkg_isnt_groups[@]}"; do
+		for group in "${ar_qpkg_isnt_groups[@]}"; do
 			if QPKGs.AC${action}GRNT${group}.IsSet; then
 				QPKGs-AC${action}-to:Add "$(QPKGs-GRNT${group}:Array)"
 
@@ -3433,9 +3433,9 @@ AllocPackStatesToAcs()
 	{
 
 	# Inputs: (global)
-	#	$r_qpkg_is_states[]
-	#	$r_qpkg_isnt_states[]
-	#	$r_user_qpkg_actions[]
+	#	$ar_qpkg_is_states[]
+	#	$ar_qpkg_isnt_states[]
+	#	$ar_user_qpkg_actions[]
 
 	FuncInit
 
@@ -3445,12 +3445,12 @@ AllocPackStatesToAcs()
 	local check_later=false
 	local state=''
 
-	for action in "${r_user_qpkg_actions[@]}"; do
+	for action in "${ar_user_qpkg_actions[@]}"; do
 		# Process state-based user-actions.
 
 		# Positive states.
 
-		for state in "${r_qpkg_is_states[@]}"; do
+		for state in "${ar_qpkg_is_states[@]}"; do
 			check_later=false
 			[[ $state = downloaded ]] && continue
 			QPKGs.AC${action}IS${state}.IsSet || continue
@@ -3484,7 +3484,7 @@ AllocPackStatesToAcs()
 
 		# Negative states.
 
-		for state in "${r_qpkg_isnt_states[@]}"; do
+		for state in "${ar_qpkg_isnt_states[@]}"; do
 			check_later=false
 			[[ $state = downloaded ]] && continue
 			QPKGs.AC${action}ISNT${state}.IsSet || continue
@@ -7481,7 +7481,7 @@ ListQPKGsActions()
 	{
 
 	# Inputs: (global)
-	#	$r_qpkg_actions[]
+	#	$ar_qpkg_actions[]
 	#	$useropt_debug
 
 	IsDebug || return
@@ -7492,7 +7492,7 @@ ListQPKGsActions()
 	local b=''
 	local border_shown=false
 
-	for a in "${r_qpkg_actions[@]}"; do
+	for a in "${ar_qpkg_actions[@]}"; do
 		for b in ok er sk se sa; do
 			if QPKGs-AC${a}-${b}.IsAny; then
 				if [[ $border_shown = false ]]; then
@@ -7526,7 +7526,7 @@ ListQPKGsActionsAll()																						# directive:omit-from-production
 	# Only used when debugging.																				# directive:omit-from-production
 
 	# Inputs: (global)																						# directive:omit-from-production
-	#	$r_qpkg_actions[]																					# directive:omit-from-production
+	#	$ar_qpkg_actions[]																					# directive:omit-from-production
 
 	FuncInit																								# directive:omit-from-production
 
@@ -7535,7 +7535,7 @@ ListQPKGsActionsAll()																						# directive:omit-from-production
 
 	DebugInfoMinSepr																						# directive:omit-from-production
 
-	for a in "${r_qpkg_actions[@]}"; do																		# directive:omit-from-production
+	for a in "${ar_qpkg_actions[@]}"; do																		# directive:omit-from-production
 		for b in to ok er sk se sa; do																		# directive:omit-from-production
 			if QPKGs-AC${a}-${b}.IsAny; then																# directive:omit-from-production
 				DebugQpkg info "AC${a}-${b}" "($(QPKGs-AC${a}-${b}:Count)) $(QPKGs-AC${a}-${b}:ListCSV) "	# directive:omit-from-production
@@ -7555,8 +7555,8 @@ ListQPKGsFlagsAll()																							# directive:omit-from-production
 	# Only used when debugging.																				# directive:omit-from-production
 
 	# Inputs: (global)																						# directive:omit-from-production
-	#	$r_qpkg_actions[]																					# directive:omit-from-production
-	#	$r_qpkg_is_states[]																					# directive:omit-from-production
+	#	$ar_qpkg_actions[]																					# directive:omit-from-production
+	#	$ar_qpkg_is_states[]																					# directive:omit-from-production
 
 	FuncInit																								# directive:omit-from-production
 
@@ -7565,8 +7565,8 @@ ListQPKGsFlagsAll()																							# directive:omit-from-production
 
 	DebugInfoMinSepr																						# directive:omit-from-production
 
-	for a in "${r_qpkg_actions[@]}"; do																		# directive:omit-from-production
-		for b in "${r_qpkg_is_states[@]}"; do																# directive:omit-from-production
+	for a in "${ar_qpkg_actions[@]}"; do																		# directive:omit-from-production
+		for b in "${ar_qpkg_is_states[@]}"; do																# directive:omit-from-production
 			if IsFuncExist QPKGs.AC${a}IS${b}.IsSet; then													# directive:omit-from-production
 				if QPKGs.AC${a}IS${b}.IsSet; then															# directive:omit-from-production
 					DebugQpkg info "AC${a}IS${b}" "set"														# directive:omit-from-production
@@ -7587,7 +7587,7 @@ ListIPKsActions()
 	{
 
 	# Inputs: (global)
-	#	$r_ipk_actions[]
+	#	$ar_ipk_actions[]
 	#	$useropt_debug
 
 	IsDebug || return
@@ -7597,7 +7597,7 @@ ListIPKsActions()
 	local a=''
 	local border_shown=false
 
-	for a in "${r_ipk_actions[@]}"; do
+	for a in "${ar_ipk_actions[@]}"; do
 		if IPKs-AC${a}-ok.IsAny; then
 			if [[ $border_shown = false ]]; then
 				DebugInfoMinSepr
@@ -7625,7 +7625,7 @@ ListPIPsActions()
 	{
 
 	# Inputs: (global)
-	#	$r_pip_actions[]
+	#	$ar_pip_actions[]
 	#	$useropt_debug
 
 	IsDebug || return
@@ -7636,7 +7636,7 @@ ListPIPsActions()
 
 	DebugInfoMinSepr
 
-	for a in "${r_pip_actions[@]}"; do
+	for a in "${ar_pip_actions[@]}"; do
 		PIPs-AC${a}-ok.IsAny && DebugPipInfo "AC${a}-ok" "($(PIPs-AC${a}-ok:Count)) $(PIPs-AC${a}-ok:ListCSV) "
 		PIPs-AC${a}-er.IsAny && DebugPipError "AC${a}-er" "($(PIPs-AC${a}-er:Count)) $(PIPs-AC${a}-er:ListCSV) "
 	done
@@ -7651,10 +7651,10 @@ ListQPKGsStates()
 	{
 
 	# Inputs: (global)
-	#	$r_qpkg_is_states[]
-	#	$r_qpkg_isnt_states[]
-	#	$r_qpkg_service_results[]
-	#	$r_qpkg_transient_states[]
+	#	$ar_qpkg_is_states[]
+	#	$ar_qpkg_isnt_states[]
+	#	$ar_qpkg_service_results[]
+	#	$ar_qpkg_transient_states[]
 	#	$useropt_debug
 
 	IsDebug || return
@@ -7666,7 +7666,7 @@ ListQPKGsStates()
 	BuildExtendedQPKGsStates
 	DebugInfoMinSepr
 
-	for a in "${r_qpkg_is_states[@]}" "${r_qpkg_service_results[@]}"; do
+	for a in "${ar_qpkg_is_states[@]}" "${ar_qpkg_service_results[@]}"; do
 		[[ $a = installed ]] && continue
 
 		if [[ $a = unknown ]]; then
@@ -7676,7 +7676,7 @@ ListQPKGsStates()
 		fi
 	done
 
-	for a in "${r_qpkg_isnt_states[@]}" "${r_qpkg_service_results[@]}"; do
+	for a in "${ar_qpkg_isnt_states[@]}" "${ar_qpkg_service_results[@]}"; do
 		[[ $a = installed ]] && continue
 
 		if [[ $a = ok ]]; then
@@ -7688,7 +7688,7 @@ ListQPKGsStates()
 		fi
 	done
 
-	for a in "${r_qpkg_transient_states[@]}"; do
+	for a in "${ar_qpkg_transient_states[@]}"; do
 		QPKGs-IS${a}.IsAny && DebugQpkg info "IS${a}" "($(QPKGs-IS${a}:Count)) $(QPKGs-IS${a}:ListCSV) "
 	done
 
@@ -7737,12 +7737,12 @@ InitQPKGsTiers()
 	#	$r_dependent_qpkgs_list_pathfile
 	#	$r_independent_qpkgs_list_pathfile
 	#	$r_optional_qpkgs_list_pathfile
-	#	$r_qpkg_tiers[]
+	#	$ar_qpkg_tiers[]
 
 	# Outputs: (global)
 	#	$qpkgs_tiers_built
 
-	for a in "${r_qpkg_tiers[@]}"; do
+	for a in "${ar_qpkg_tiers[@]}"; do
 		b=r_${a}_qpkgs_list_pathfile
 		[[ ! -s ${!b} ]] && continue
 		rm -f "${!b}" 2> /dev/null
@@ -7759,14 +7759,14 @@ CheckQPKGsTiers()
 	#	$r_dependent_qpkgs_list_pathfile
 	#	$r_independent_qpkgs_list_pathfile
 	#	$r_optional_qpkgs_list_pathfile
-	#	$r_qpkg_tiers[]
+	#	$ar_qpkg_tiers[]
 
 	# Outputs: (global)
 	#	$qpkgs_tiers_built
 
 	qpkgs_tiers_built=true
 
-	for a in "${r_qpkg_tiers[@]}"; do
+	for a in "${ar_qpkg_tiers[@]}"; do
 		b=r_${a}_qpkgs_list_pathfile
 		[[ -s ${!b} ]] && continue
 		qpkgs_tiers_built=false
@@ -7817,7 +7817,7 @@ LoadQPKGsTiers()
 	#	$r_dependent_qpkgs_list_pathfile
 	#	$r_independent_qpkgs_list_pathfile
 	#	$r_optional_qpkgs_list_pathfile
-	#	$r_qpkg_tiers[]
+	#	$ar_qpkg_tiers[]
 
 	# Outputs: (global)
 	#	QPKGs-GRdependent
@@ -7829,7 +7829,7 @@ LoadQPKGsTiers()
 	local a=''
 	local b=''
 
-	for a in "${r_qpkg_tiers[@]}"; do
+	for a in "${ar_qpkg_tiers[@]}"; do
 		b=r_${a}_qpkgs_list_pathfile
 		[[ ! -s ${!b} ]] && continue
 		QPKGs-GR${a}:Add "$(< "${!b}")"
@@ -7918,10 +7918,10 @@ InitQPKGsStates()
 	# Clear in-memory state list objects and on-disk lists.
 
 	# Inputs: (global)
-	#	$r_qpkg_is_states[]
-	#	$r_qpkg_isnt_states[]
+	#	$ar_qpkg_is_states[]
+	#	$ar_qpkg_isnt_states[]
 	#	$r_qpkg_states_path
-	#	$r_qpkg_transient_states[]
+	#	$ar_qpkg_transient_states[]
 
 	# Outputs: (global)
 	#	$qpkgs_states_built
@@ -7932,12 +7932,12 @@ InitQPKGsStates()
 
 	local a=''
 
-	for a in "${r_qpkg_is_states[@]}"; do
+	for a in "${ar_qpkg_is_states[@]}"; do
 		[[ $a = active ]] && continue		# Don't reset.
 		IsFuncExist QPKGs-IS${a}:Init && QPKGs-IS${a}:Init
 	done
 
-	for a in "${r_qpkg_isnt_states[@]}"; do
+	for a in "${ar_qpkg_isnt_states[@]}"; do
 		[[ $a = active ]] && continue		# Don't reset.
 		IsFuncExist QPKGs-ISNT${a}:Init && QPKGs-ISNT${a}:Init
 	done
@@ -8935,7 +8935,7 @@ ShowQPKGLists()
 
 	local a=''
 
-	for a in "${r_qpkg_basic_states[@]}"; do
+	for a in "${ar_qpkg_basic_states[@]}"; do
 		case $a in
 			complete)
 				if QPKGs.AClistIS${a}.IsSet; then
@@ -8978,7 +8978,7 @@ ShowQPKGLists()
 		esac
 	done
 
-	for a in "${r_qpkg_extended_states[@]}"; do
+	for a in "${ar_qpkg_extended_states[@]}"; do
 		case $a in
 			downloaded|signed)					# Never show these.
 				: # Do nothing.
@@ -8996,7 +8996,7 @@ ShowQPKGLists()
 		esac
 	done
 
-	for a in "${r_qpkg_is_groups[@]}"; do
+	for a in "${ar_qpkg_is_groups[@]}"; do
 		case $a in
 			canbackup|canrestarttoupdate)		# Never show these.
 				: # Do nothing.
@@ -9010,7 +9010,7 @@ ShowQPKGLists()
 		esac
 	done
 
-	for a in "${r_qpkg_isnt_groups[@]}"; do
+	for a in "${ar_qpkg_isnt_groups[@]}"; do
 		case $a in
 			all|canbackup|canrestarttoupdate)	# Never show these.
 				: # Do nothing.
@@ -10170,8 +10170,8 @@ ShowZeroQpkgs()
 
 	# Inputs: (global)
 	#	$packages_loaded
-	#	$r_qpkg_is_states[]
-	#	$r_user_qpkg_actions[]
+	#	$ar_qpkg_is_states[]
+	#	$ar_user_qpkg_actions[]
 
 	# Outputs: (global)
 	#	$packages_loaded
@@ -10181,8 +10181,8 @@ ShowZeroQpkgs()
 	local a=''
 	local b=''
 
-	for a in "${r_qpkg_is_states[@]}"; do
-		for b in "${r_user_qpkg_actions[@]}"; do
+	for a in "${ar_qpkg_is_states[@]}"; do
+		for b in "${ar_user_qpkg_actions[@]}"; do
 			[[ $b = list ]] && continue		# Action results lists are unavailable for these.
 			QPKGs.AC${b}IS${a}.IsSet && QPKGs-AC${b}-ok.IsNone && ShowAsWarn "no QPKGs were able to $(Lowercase "$b")"
 		done
@@ -13633,7 +13633,7 @@ IsNonStatusActionRequested()
 
 	local action=''
 
-	for action in "${r_qpkg_actions[@]}"; do
+	for action in "${ar_qpkg_actions[@]}"; do
 		if QPKGs-AC${action}-to.IsAny; then
 			[[ $action != status ]] || continue
 
