@@ -198,6 +198,23 @@ DebugLogInit()
 LoadConsts()
 	{
 
+	# Various.
+
+		readonly r_this_script_ver='<?manager_version?>'
+		readonly r_script_built_epoch='<?manager_epoch?>'
+		readonly r_cert_db_pathfile=/etc/config/nas_sign_qpkg.db
+		readonly r_entware_packages_last_updated=20260407
+		readonly r_file_change_threshold_minutes=60
+		readonly r_log_tail_lines=5000
+
+		if IsInTerminal; then						# Only allow ANSI colour codes if running in a user terminal.
+			r_colourful_default=true
+		else
+			r_colourful_default=false
+		fi
+
+		readonly r_colourful_default
+
 	# Error messages.
 
 		readonly e_noact='undefined action'
@@ -286,6 +303,8 @@ LoadConsts()
 
 	# Report, help and onscreen messages.
 
+		readonly r_char_tab=$'\t'
+
 		readonly r_chars_alert='! '
 		readonly r_chars_attention='* '
 		readonly r_chars_blank='  '
@@ -316,15 +335,6 @@ LoadConsts()
 			readonly r_help_syntax_sudo_prefix=$r_chars_super_prompt
 		fi
 
-	# Various.
-
-		package_release_version='<?package_release_version?>'
-
-		readonly r_char_tab=$'\t'
-		readonly r_entware_packages_last_updated=20260407
-		readonly r_file_change_threshold_minutes=60
-		readonly r_log_tail_lines=5000
-
 	# Only for the message pipe enhanced log.
 
 		local date_field_longest_string='Tue 27 May 2025 4:55:42 PM EST '	# directive:omit-from-production
@@ -348,14 +358,6 @@ LoadDefaults()
 	{
 
 	# Default flags.
-
-		if IsInTerminal; then						# Only allow ANSI colour codes if running in a user terminal.
-			r_colourful_default=true
-		else
-			r_colourful_default=false
-		fi
-
-		readonly r_colourful_default
 
 		archive_debug_afterward=false
 		colourful=$r_colourful_default
@@ -389,6 +391,7 @@ LoadDefaults()
 
 		action_msg_pipe_fd=none
 		backup_stdin_fd=none
+		package_release_version='<?package_release_version?>'
 		proc_counts_path=''
 		user_branch_value=''
 		user_report_info_value=''
@@ -506,10 +509,7 @@ LoadEnv()
 	SetHardwareInstalledRAM
 	SetQpkgArch
 
-	readonly r_cert_db_pathfile=/etc/config/nas_sign_qpkg.db
 	readonly r_concurrency=$r_cpu_threads				# Maximum concurrent package actions to run. Should probably make this account for CPU speed too.
-	readonly r_script_built_epoch='<?manager_epoch?>'
-	readonly r_this_script_ver='<?manager_version?>'
 
 	local -r r_sherpa_packages_base_url='<?sherpa_packages_base_url?>'
 
