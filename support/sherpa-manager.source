@@ -516,7 +516,7 @@ LoadEnv()
 	local default_vol_mount_point=''
 
 	a_args=()
-	args_incomplete=()
+	a_args_incomplete=()
 	qpkg_index=0
 	r_entware_type=$(GetQpkgEntwareType)
 	r_this_package_ver=$(GetQpkgInstalledVer)
@@ -1501,15 +1501,15 @@ AssignQpkgsToActions()
 	# Build a list of original storage paths for packages to be `uninstall`ed, then `install`ed again later this session (a "complex reinstall").
 	# This will ensure volume-migrated packages end-up in the correct locations.
 
-	QPKGs_were_installed_name=()
-	QPKGs_were_installed_path=()
+	a_QPKGs_were_installed_name=()
+	a_QPKGs_were_installed_path=()
 
 	if QPKGs-ACuninstall-to.IsAny; then
 		for qpkg_name in $(QPKGs-ACuninstall-to:Array); do
 			if IsValidQpkgInstalled "$qpkg_name" && QPKGs-ACinstall-to.Exist "$qpkg_name"; then
-				QPKGs_were_installed_name+=("$qpkg_name")
+				a_QPKGs_were_installed_name+=("$qpkg_name")
 				SetQpkgIndex
-				QPKGs_were_installed_path+=("$(/usr/bin/dirname "$(GetQpkgInstalledPath)")")
+				a_QPKGs_were_installed_path+=("$(/usr/bin/dirname "$(GetQpkgInstalledPath)")")
 			fi
 
 			QPKGs-ACdeactivate-to:Add "$qpkg_name"
@@ -2179,11 +2179,11 @@ ParseManagementArgs()
 
 	# Inputs: (global)
 	#	$a_args[]
-	#	$args_incomplete[]
+	#	$a_args_incomplete[]
 
 	# Outputs: (global)
 	#	$a_args[]
-	#	$args_incomplete[]
+	#	$a_args_incomplete[]
 	#	$generate_show_report
 	#	$get_qpkg_extended_states
 	#	$run_package_actions
@@ -2249,7 +2249,7 @@ ParseManagementArgs()
 			esac
 
 			if [[ -n $user_action && $user_action != "$current_action" ]]; then
-				[[ $awaiting_group = true ]] && args_incomplete+=("$user_action")
+				[[ $awaiting_group = true ]] && a_args_incomplete+=("$user_action")
 				awaiting_group=$requires_group
 				current_action=$user_action
 				group=''			# When action changes, must clear group.
@@ -2315,10 +2315,10 @@ ParseManagementArgs()
 	done
 
 	if [[ $requires_group = true && $awaiting_group = true ]]; then		# Only if the last action specified was not followed by a group.
-		args_incomplete+=("$user_action")								# Save the actual action word, phrase or char specified by the user.
+		a_args_incomplete+=("$user_action")								# Save the actual action word, phrase or char specified by the user.
 	fi
 
-	DebugArray args_incomplete ${args_incomplete[*]+"${args_incomplete[*]}"}	# directive:omit-from-production
+	DebugArray a_args_incomplete ${a_args_incomplete[*]+"${a_args_incomplete[*]}"}	# directive:omit-from-production
 
 	a_args=(${a_args_remaining[@]+"${a_args_remaining[@]}"})
 	DebugArray a_args ${a_args[@]+"${a_args[@]}"}								# directive:omit-from-production
@@ -2335,11 +2335,11 @@ ParseHelpArgs()
 
 	# Inputs: (global)
 	#	$a_args[]
-	#	$args_incomplete[]
+	#	$a_args_incomplete[]
 
 	# Outputs: (global)
 	#	$a_args[]
-	#	$args_incomplete[]
+	#	$a_args_incomplete[]
 
 	FuncInit
 
@@ -2372,7 +2372,7 @@ ParseHelpArgs()
 			esac
 
 			if [[ -n $user_action && $user_action != "$current_action" ]]; then
-				[[ $awaiting_group = true ]] && args_incomplete+=("$user_action")
+				[[ $awaiting_group = true ]] && a_args_incomplete+=("$user_action")
 				awaiting_group=$requires_group
 				current_action=$user_action
 				group=''			# When action changes, must clear group.
@@ -2488,10 +2488,10 @@ ParseHelpArgs()
 	done
 
 	if [[ $requires_group = true && $awaiting_group = true ]]; then		# Only if the last action specified was not followed by a group.
-		args_incomplete+=("$user_action")								# Save the actual action word, phrase or char specified by the user.
+		a_args_incomplete+=("$user_action")								# Save the actual action word, phrase or char specified by the user.
 	fi
 
-	for arg in ${args_incomplete[*]+"${args_incomplete[*]}"}; do
+	for arg in ${a_args_incomplete[*]+"${a_args_incomplete[*]}"}; do
 		case $arg in
 			help)							# If `help` is specified without a valid group, then show basic help.
 				run_package_actions=false
@@ -2500,23 +2500,23 @@ ParseHelpArgs()
 				# Remove this arg from incomplete array.
 
 				local a=''
-				local tmp=()
+				local a_tmp=()
 
-				for a in ${args_incomplete[*]+"${args_incomplete[*]}"}; do
-					[[ $a != "$arg" ]] && tmp+=($a)
+				for a in ${a_args_incomplete[*]+"${a_args_incomplete[*]}"}; do
+					[[ $a != "$arg" ]] && a_tmp+=($a)
 				done
 
-				if [[ ${#tmp[@]} -eq 0 ]]; then
-					args_incomplete=()
+				if [[ ${#a_tmp[@]} -eq 0 ]]; then
+					a_args_incomplete=()
 				else
-					args_incomplete=("${tmp[@]}")
+					a_args_incomplete=("${a_tmp[@]}")
 				fi
 
-				unset tmp
+				unset a_tmp
 		esac
 	done
 
-	DebugArray args_incomplete ${args_incomplete[*]+"${args_incomplete[*]}"}	# directive:omit-from-production
+	DebugArray a_args_incomplete ${a_args_incomplete[*]+"${a_args_incomplete[*]}"}	# directive:omit-from-production
 
 	a_args=(${a_args_remaining[@]+"${a_args_remaining[@]}"})
 	DebugArray a_args ${a_args[@]+"${a_args[@]}"}								# directive:omit-from-production
@@ -2533,11 +2533,11 @@ ParseShowArgs()
 
 	# Inputs: (global)
 	#	$a_args[]
-	#	$args_incomplete[]
+	#	$a_args_incomplete[]
 
 	# Outputs: (global)
 	#	$a_args[]
-	#	$args_incomplete[]
+	#	$a_args_incomplete[]
 
 	FuncInit
 
@@ -2570,7 +2570,7 @@ ParseShowArgs()
 			esac
 
 			if [[ -n $user_action && $user_action != "$current_action" ]]; then
-				[[ $awaiting_group = true ]] && args_incomplete+=("$user_action")
+				[[ $awaiting_group = true ]] && a_args_incomplete+=("$user_action")
 				awaiting_group=$requires_group
 				current_action=$user_action
 				group=''			# When action changes, must clear group.
@@ -2710,10 +2710,10 @@ ParseShowArgs()
 	done
 
 	if [[ $requires_group = true && $awaiting_group = true ]]; then		# Only if the last action specified was not followed by a group.
-		args_incomplete+=("$user_action")								# Save the actual action word, phrase or char specified by the user.
+		a_args_incomplete+=("$user_action")								# Save the actual action word, phrase or char specified by the user.
 	fi
 
-	DebugArray args_incomplete ${args_incomplete[*]+"${args_incomplete[*]}"}	# directive:omit-from-production
+	DebugArray a_args_incomplete ${a_args_incomplete[*]+"${a_args_incomplete[*]}"}	# directive:omit-from-production
 
 	a_args=(${a_args_remaining[@]+"${a_args_remaining[@]}"})
 	DebugArray a_args ${a_args[@]+"${a_args[@]}"}								# directive:omit-from-production
@@ -2730,11 +2730,11 @@ ParseListArgs()
 
 	# Inputs: (global)
 	#	$a_args[]
-	#	$args_incomplete[]
+	#	$a_args_incomplete[]
 
 	# Outputs: (global)
 	#	$a_args[]
-	#	$args_incomplete[]
+	#	$a_args_incomplete[]
 
 	FuncInit
 
@@ -2767,7 +2767,7 @@ ParseListArgs()
 			esac
 
 			if [[ -n $user_action && $user_action != "$current_action" ]]; then
-				[[ $awaiting_group = true ]] && args_incomplete+=("$user_action")
+				[[ $awaiting_group = true ]] && a_args_incomplete+=("$user_action")
 				awaiting_group=$requires_group
 				current_action=$user_action
 				group=''			# When action changes, must clear group.
@@ -2846,11 +2846,11 @@ ParseListArgs()
 	done
 
 	if [[ $requires_group = true && $awaiting_group = true ]]; then		# Only if the last action specified was not followed by a group.
-		args_incomplete+=("$user_action")								# Save the actual action word, phrase or char specified by the user.
+		a_args_incomplete+=("$user_action")								# Save the actual action word, phrase or char specified by the user.
 	fi
 
 	DebugVar generate_list_report												# directive:omit-from-production
-	DebugArray args_incomplete ${args_incomplete[*]+"${args_incomplete[*]}"}	# directive:omit-from-production
+	DebugArray a_args_incomplete ${a_args_incomplete[*]+"${a_args_incomplete[*]}"}	# directive:omit-from-production
 
 	a_args=(${a_args_remaining[@]+"${a_args_remaining[@]}"})
 	DebugArray a_args ${a_args[@]+"${a_args[@]}"}								# directive:omit-from-production
@@ -2864,11 +2864,11 @@ ParseActionArgs()
 
 	# Inputs: (global)
 	#	$a_args[]
-	#	$args_incomplete[]
+	#	$a_args_incomplete[]
 
 	# Outputs: (global)
 	#	$a_args[]
-	#	$args_incomplete[]
+	#	$a_args_incomplete[]
 
 	FuncInit
 
@@ -2915,7 +2915,7 @@ ParseActionArgs()
 			esac
 
 			if [[ -n $user_action && $user_action != "$current_action" ]]; then
-				[[ $awaiting_group = true ]] && args_incomplete+=("$user_action")
+				[[ $awaiting_group = true ]] && a_args_incomplete+=("$user_action")
 				awaiting_group=$requires_group
 				current_action=$user_action
 				group=''			# When action changes, must clear group.
@@ -2977,10 +2977,10 @@ ParseActionArgs()
 	done
 
 	if [[ $requires_group = true && $awaiting_group = true ]]; then		# Only if the last action specified was not followed by a group.
-		args_incomplete+=("$user_action")								# Save the actual action word, phrase or char specified by the user.
+		a_args_incomplete+=("$user_action")								# Save the actual action word, phrase or char specified by the user.
 	fi
 
-	for arg in ${args_incomplete[*]+"${args_incomplete[*]}"}; do
+	for arg in ${a_args_incomplete[*]+"${a_args_incomplete[*]}"}; do
 		action=$(MatchVerb $arg)
 
 		case $action in
@@ -2994,23 +2994,23 @@ ParseActionArgs()
 				# Remove this arg from incomplete array.
 
 				local a=''
-				local tmp=()
+				local a_tmp=()
 
-				for a in ${args_incomplete[*]+"${args_incomplete[*]}"}; do
-					[[ $a != "$arg" ]] && tmp+=($a)
+				for a in ${a_args_incomplete[*]+"${a_args_incomplete[*]}"}; do
+					[[ $a != "$arg" ]] && a_tmp+=($a)
 				done
 
-				if [[ ${#tmp[@]} -eq 0 ]]; then
-					args_incomplete=()
+				if [[ ${#a_tmp[@]} -eq 0 ]]; then
+					a_args_incomplete=()
 				else
-					args_incomplete=("${tmp[@]}")
+					a_args_incomplete=("${a_tmp[@]}")
 				fi
 
-				unset tmp
+				unset a_tmp
 		esac
 	done
 
-	DebugArray args_incomplete ${args_incomplete[*]+"${args_incomplete[*]}"}	# directive:omit-from-production
+	DebugArray a_args_incomplete ${a_args_incomplete[*]+"${a_args_incomplete[*]}"}	# directive:omit-from-production
 
 	a_args=(${a_args_remaining[@]+"${a_args_remaining[@]}"})
 	DebugArray a_args ${a_args[@]+"${a_args[@]}"}								# directive:omit-from-production
@@ -3202,7 +3202,7 @@ ShowArgSuggestions()
 
 	# Inputs: (global)
 	#	$a_args[]
-	#	$args_incomplete[]
+	#	$a_args_incomplete[]
 
 	# Outputs: (global)
 	#	$arg_problem
@@ -3217,10 +3217,10 @@ ShowArgSuggestions()
 
 	CreateReportPaths
 
-	if [[ -n ${args_incomplete[*]+"${args_incomplete[*]}"} ]]; then
+	if [[ -n ${a_args_incomplete[*]+"${a_args_incomplete[*]}"} ]]; then
 		run_package_actions=false
 
-		for arg in ${args_incomplete[*]+"${args_incomplete[*]}"}; do
+		for arg in ${a_args_incomplete[*]+"${a_args_incomplete[*]}"}; do
 			case $arg in
 				?(de|re)activate|backup|clean|@(dis|en)able|@(dis|en)able-auto-update|reassign|@(re|un)install|?(re)start|restore|rm|sign|stop)
 					DisplayAsProjSynExam "please provide valid $(ShowAsPackages) or a $(ShowAsPackageGroup) after '$arg' like" "$arg installed"
@@ -3372,7 +3372,7 @@ ShowArgSuggestions()
 
 	[[ -s $r_report_output_pathfile ]] && /bin/cat "$r_report_output_pathfile"
 
-	DebugArray args_incomplete ${args_incomplete[*]+"${args_incomplete[*]}"}
+	DebugArray a_args_incomplete ${a_args_incomplete[*]+"${a_args_incomplete[*]}"}
 	DebugArray a_args_remaining ${a_args_remaining[@]+"${a_args_remaining[@]}"}
 
 	FuncExit
@@ -10703,7 +10703,7 @@ _QPKG:install_()
 	# Install the QPKG named in $qpkg_name.
 
 	# Inputs: (global)
-	#	$QPKGs_were_installed_name[]
+	#	$a_QPKGs_were_installed_name[]
 	#	$qpkg_name
 	#	$r_external_apps_temp_path
 	#	$r_external_apps_path
@@ -10775,7 +10775,7 @@ _QPKG:install_()
 	local -r r_log_pathfile=$r_action_log_path/$qpkg_name.$r_install_log_file
 
 	IsDebug && a+='DEBUG_QPKG=true '
-	[[ ${QPKGs_were_installed_name[*]:-} = *"$qpkg_name"* ]] && a+="QINSTALL_PATH=$(GetQpkgInstalledOriginalPath "$qpkg_name") "
+	[[ ${a_QPKGs_were_installed_name[*]:-} = *"$qpkg_name"* ]] && a+="QINSTALL_PATH=$(GetQpkgInstalledOriginalPath "$qpkg_name") "
 
 #	Executer "$a $r_local_pathfile" "$r_log_pathfile" log:failure-only 10
 
@@ -12594,10 +12594,10 @@ GetQpkgInstalledOriginalPath()
 
 	local a=${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}
 
-	if [[ ${#QPKGs_were_installed_name[@]} -gt 0 ]]; then
-		for i in "${!QPKGs_were_installed_name[@]}"; do
-			[[ ${QPKGs_were_installed_name[$i]} = "$a" ]] || continue
-			printf '%s' "${QPKGs_were_installed_path[$i]}"
+	if [[ ${#a_QPKGs_were_installed_name[@]} -gt 0 ]]; then
+		for i in "${!a_QPKGs_were_installed_name[@]}"; do
+			[[ ${a_QPKGs_were_installed_name[$i]} = "$a" ]] || continue
+			printf '%s' "${a_QPKGs_were_installed_path[$i]}"
 
 			return 0
 		done
