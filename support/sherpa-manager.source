@@ -18142,6 +18142,7 @@ LoadDatabase()
 	unset r_essential_ipks
 	unset r_exclusion_pips
 	unset r_packages_epoch
+	unset r_qpkgs_name_prohibited
 
 	r_packages_epoch=undefined
 
@@ -18177,8 +18178,6 @@ LoadDatabase()
 
 	. "$r_packages_pathfile"
 	packages_loaded=true
-
-	r_qpkgs_name_prohibited=(OMedusa OqBittorrent OReadarr OSickGear OSonarr OTautulli OTransmission OWhisparr)
 
 	# Fourth, lock list arrays and values.
 
