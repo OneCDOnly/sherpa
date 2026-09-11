@@ -264,15 +264,15 @@ LoadConsts()
 
 	# Report, help and debug formatting.
 
-		if true; then													# omit-from-production
-			readonly r_debug_log_first_column_width=10					# omit-from-production
-			readonly r_debug_log_second_column_width=26					# omit-from-production
-			readonly r_debug_log_width=80								# omit-from-production
-		else															# omit-from-production
+		if true; then										# directive:omit-from-production
+			readonly r_debug_log_first_column_width=10		# directive:omit-from-production
+			readonly r_debug_log_second_column_width=26		# directive:omit-from-production
+			readonly r_debug_log_width=80					# directive:omit-from-production
+		else												# directive:omit-from-production
 			readonly r_debug_log_first_column_width='<?debug_log_first_column_width?>'
 			readonly r_debug_log_second_column_width='<?debug_log_second_column_width?>'
 			readonly r_debug_log_width='<?debug_log_width?>'
-		fi																# omit-from-production
+		fi													# directive:omit-from-production
 
 		readonly r_help_desc_indent=3
 		readonly r_help_syntax_indent=6
@@ -327,20 +327,20 @@ LoadConsts()
 
 	# Only for the message pipe enhanced log.
 
-		local date_field_longest_string='Tue 27 May 2025 4:55:42 PM EST '	# omit-from-production
-		readonly r_date_field_length=${#date_field_longest_string}			# omit-from-production
+		local date_field_longest_string='Tue 27 May 2025 4:55:42 PM EST '	# directive:omit-from-production
+		readonly r_date_field_length=${#date_field_longest_string}			# directive:omit-from-production
 
-		local tier_field_longest_string=independent							# omit-from-production
-		readonly r_tier_field_length=${#tier_field_longest_string}			# omit-from-production
+		local tier_field_longest_string=independent							# directive:omit-from-production
+		readonly r_tier_field_length=${#tier_field_longest_string}			# directive:omit-from-production
 
-		local action_field_longest_string=reactivate						# omit-from-production
-		readonly r_action_field_length=${#action_field_longest_string}		# omit-from-production
+		local action_field_longest_string=reactivate						# directive:omit-from-production
+		readonly r_action_field_length=${#action_field_longest_string}		# directive:omit-from-production
 
-		local key1_field_longest_string=update								# omit-from-production
-		readonly r_key1_field_length=${#key1_field_longest_string}			# omit-from-production
+		local key1_field_longest_string=update								# directive:omit-from-production
+		readonly r_key1_field_length=${#key1_field_longest_string}			# directive:omit-from-production
 
-		local key2_field_longest_string=package								# omit-from-production
-		readonly r_key2_field_length=${#key2_field_longest_string}			# omit-from-production
+		local key2_field_longest_string=package								# directive:omit-from-production
+		readonly r_key2_field_length=${#key2_field_longest_string}			# directive:omit-from-production
 
 	}
 
@@ -510,7 +510,7 @@ LoadEnv()
 
 	local default_vol_mount_point=''
 
-	args=()
+	a_args=()
 	args_incomplete=()
 	qpkg_index=0
 	r_entware_type=$(GetQpkgEntwareType)
@@ -600,7 +600,7 @@ LoadEnv()
 
 		readonly r_abort_actions_pathfile=$r_temp_run_path/abort.action
 		readonly r_action_msg_pipe=$r_temp_run_path/action-messages.pipe
-		readonly r_action_msg_pipe_log_pathfile=/share/Public/enhanced-action-messages-pipe.log		# omit-from-production
+		readonly r_action_msg_pipe_log_pathfile=/share/Public/enhanced-action-messages-pipe.log		# directive:omit-from-production
 		readonly r_action_results_pathfile=$r_action_log_path/action-results.log
 		readonly r_oom_log_pathfile=$r_temp_log_path/oom.log
 		readonly r_ram_freeused_pathfile=$r_temp_log_path/ram.freeused
@@ -797,18 +797,6 @@ ClearCachePath()
 	return 0
 
 	}
-
-#ClearTempReportPath()
-#	{
-#
-#	if [[ -n $r_temp_report_path && -d $r_temp_report_path ]]; then
-#		ClearPath "$r_temp_run_path" "$r_temp_report_path"
-#		ShowAsDone 'temp reports cleared'
-#	fi
-#
-#	return 0
-#
-#	}
 
 ClearTempRunPath()
 	{
@@ -1109,8 +1097,8 @@ CheckTasks()
 	FuncInit
 
 	local action=''
-#	local build_basic_states=false				# These states are found in `/etc/config/qpkg.conf`
-	local build_extended_states=false			# These cannot be found in `/etc/config/qpkg.conf`
+#	local build_basic_states=false		# These states are found in `/etc/config/qpkg.conf`
+	local build_extended_states=false	# These cannot be found in `/etc/config/qpkg.conf`
 	local group=''
 	local state=''
 
@@ -1584,7 +1572,7 @@ AssignQpkgsToActions()
 
 	QPKGs-ACsign-to.IsAny && LoadQpkgSigningCert
 
-	IsDebug && ListQPKGsActionsAll										# omit-from-production
+	IsDebug && ListQPKGsActionsAll	# directive:omit-from-production
 
 	FuncExit
 
@@ -1677,14 +1665,14 @@ ProcActions()
 	local tier=''
 
 	rm -f "$r_action_results_pathfile" 2> /dev/null
-	OpenMsgPipeEnhancedLog												# omit-from-production
+	OpenMsgPipeEnhancedLog								# directive:omit-from-production
 
 	# -> Package preparation phase <-
 
 	ProcAction status all QPKG 'live status'
 
 	if [[ $useropt_show_status = false ]]; then
-		ShowAsProc 'assign QPKGs by state'								# Update action lists based-on QPKG `status`.
+		ShowAsProc 'assign QPKGs by state'				# Update action lists based-on QPKG `status`.
 
 		for action in "${r_user_qpkg_actions[@]}"; do
 			for state in "${r_qpkg_is_states[@]}"; do
@@ -1791,7 +1779,7 @@ ProcActions()
 	fi
 
 	show_action_results_report=true
-	CloseMsgPipeEnhancedLog												# omit-from-production
+	CloseMsgPipeEnhancedLog												# directive:omit-from-production
 
 	FuncExit
 
@@ -1898,7 +1886,7 @@ ProcAction()
 			re=\\bEntware\\b			# bash 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
 
 			if [[ $r_action = uninstall && ${a_target_packages[*]} =~ $re ]]; then
-				ShowKeystrokes		# Enable before removing Entware (& GNU `stty`).
+				ShowKeystrokes			# Enable before removing Entware (& GNU `stty`).
 			fi
 
 			CreatePidFile
@@ -1959,7 +1947,7 @@ ProcAction()
 					update)				# Update the parent shell with the current progress of a single action fork.
 						case $msg1_value in
 							ok)			# Completed OK (wonderful!)
-								[[ $r_action != status ]] && ((done_ok_count++))		# No-need to count result of `status` checks.
+								[[ $r_action != status ]] && ((done_ok_count++))	# No-need to count result of `status` checks.
 								;;
 							er)			# Action failed (uh-oh).
 								((done_fail_count++))
@@ -2123,7 +2111,7 @@ SetMaxForks()
 
 	local reason=''
 
-	if [[ $useropt_verbose = true ]]; then					# No-point running async actions in verbose mode: stdout would be a confusing mess.
+	if IsVerbose; then					# No-point running async actions in verbose mode: stdout would be a confusing mess.
 		max_forks=1
 		reason='verbose mode is active'
 	elif IsDebug; then										# Same for debug mode: log would be a mess.
@@ -2171,7 +2159,7 @@ PrepareArgs()
 
 	# Outputs: (global)
 	#	$arg_problem
-	#	$args[]
+	#	$a_args[]
 	#	$useropt_help_basic
 
 	ShowAsProc args
@@ -2179,10 +2167,10 @@ PrepareArgs()
 	local a=''
 
 	a=$(Lowercase "${r_args_raw//,/ }")
-	args=(${a/--/})
+	a_args=(${a/--/})
 	arg_problem=false
 
-	DebugArray args ${args[@]+"${args[@]}"}								# omit-from-production
+	DebugArray a_args ${a_args[@]+"${a_args[@]}"}		# directive:omit-from-production
 
 	[[ -z $r_args_raw ]] && useropt_help_basic=true
 
@@ -2195,11 +2183,11 @@ ParseManagementArgs()
 	#	scriptname [action] [groups] [options]
 
 	# Inputs: (global)
-	#	$args[]
+	#	$a_args[]
 	#	$args_incomplete[]
 
 	# Outputs: (global)
-	#	$args[]
+	#	$a_args[]
 	#	$args_incomplete[]
 	#	$generate_show_report
 	#	$get_qpkg_extended_states
@@ -2217,16 +2205,16 @@ ParseManagementArgs()
 
 	local -a a_args_remaining=()
 
-	local action=''						# Internal, nice, simple, action name. Only one per-action.
+	local action=''					# Internal, nice, simple, action name. Only one per-action.
 	local arg=''
 	local awaiting_group=false
 	local current_action=''
 	local group=''
-	local potential_action=''			# A user arg that might be an action.
+	local potential_action=''		# A user arg that might be an action.
 	local requires_group=false
-	local user_action=''				# The original user argument, detected as an action. There may be many variants per-action.
+	local user_action=''			# The original user argument, detected as an action. There may be many variants per-action.
 
-	for arg in ${args[@]+"${args[@]}"}; do
+	for arg in ${a_args[@]+"${a_args[@]}"}; do
 		[[ -n $arg ]] || continue
 
 		# Identify action.
@@ -2262,14 +2250,14 @@ ParseManagementArgs()
 					DeleteSetting Terse announce
 					DeleteSetting ReportInfo announce
 
-					Reset				# <-- NOTE: Processing will terminate in this function (no-return).
+					Reset			# <-- NOTE: Processing will terminate in this function (no-return).
 			esac
 
 			if [[ -n $user_action && $user_action != "$current_action" ]]; then
 				[[ $awaiting_group = true ]] && args_incomplete+=("$user_action")
 				awaiting_group=$requires_group
 				current_action=$user_action
-				group=''				# When action changes, must clear group.
+				group=''			# When action changes, must clear group.
 				continue
 			fi
 		fi
@@ -2335,10 +2323,10 @@ ParseManagementArgs()
 		args_incomplete+=("$user_action")								# Save the actual action word, phrase or char specified by the user.
 	fi
 
-	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}	# omit-from-production
+	DebugArray args_incomplete ${args_incomplete[*]+"${args_incomplete[*]}"}	# directive:omit-from-production
 
-	args=(${a_args_remaining[@]+"${a_args_remaining[@]}"})
-	DebugArray args ${args[@]+"${args[@]}"}										# omit-from-production
+	a_args=(${a_args_remaining[@]+"${a_args_remaining[@]}"})
+	DebugArray a_args ${a_args[@]+"${a_args[@]}"}								# directive:omit-from-production
 
 	FuncExit
 
@@ -2351,27 +2339,27 @@ ParseHelpArgs()
 	#	scriptname [action] [groups] [options]
 
 	# Inputs: (global)
-	#	$args[]
+	#	$a_args[]
 	#	$args_incomplete[]
 
 	# Outputs: (global)
-	#	$args[]
+	#	$a_args[]
 	#	$args_incomplete[]
 
 	FuncInit
 
 	local -a a_args_remaining=()
 
-	local action=''						# Internal, nice, simple, action name. Only one per-action.
+	local action=''					# Internal, nice, simple, action name. Only one per-action.
 	local arg=''
 	local awaiting_group=false
 	local current_action=''
 	local group=''
-	local potential_action=''			# A user arg that might be an action.
+	local potential_action=''		# A user arg that might be an action.
 	local requires_group=false
-	local user_action=''				# The original user argument, detected as an action. There may be many variants per-action.
+	local user_action=''			# The original user argument, detected as an action. There may be many variants per-action.
 
-	for arg in ${args[@]+"${args[@]}"}; do
+	for arg in ${a_args[@]+"${a_args[@]}"}; do
 		[[ -n $arg ]] || continue
 
 		# Identify action.
@@ -2392,7 +2380,7 @@ ParseHelpArgs()
 				[[ $awaiting_group = true ]] && args_incomplete+=("$user_action")
 				awaiting_group=$requires_group
 				current_action=$user_action
-				group=''				# When action changes, must clear group.
+				group=''			# When action changes, must clear group.
 				continue
 			fi
 		fi
@@ -2508,7 +2496,7 @@ ParseHelpArgs()
 		args_incomplete+=("$user_action")								# Save the actual action word, phrase or char specified by the user.
 	fi
 
-	for arg in ${args_incomplete[@]+"${args_incomplete[@]}"}; do
+	for arg in ${args_incomplete[*]+"${args_incomplete[*]}"}; do
 		case $arg in
 			help)							# If `help` is specified without a valid group, then show basic help.
 				run_package_actions=false
@@ -2519,7 +2507,7 @@ ParseHelpArgs()
 				local a=''
 				local tmp=()
 
-				for a in ${args_incomplete[@]+"${args_incomplete[@]}"}; do
+				for a in ${args_incomplete[*]+"${args_incomplete[*]}"}; do
 					[[ $a != "$arg" ]] && tmp+=($a)
 				done
 
@@ -2533,10 +2521,10 @@ ParseHelpArgs()
 		esac
 	done
 
-	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}	# omit-from-production
+	DebugArray args_incomplete ${args_incomplete[*]+"${args_incomplete[*]}"}	# directive:omit-from-production
 
-	args=(${a_args_remaining[@]+"${a_args_remaining[@]}"})
-	DebugArray args ${args[@]+"${args[@]}"}										# omit-from-production
+	a_args=(${a_args_remaining[@]+"${a_args_remaining[@]}"})
+	DebugArray a_args ${a_args[@]+"${a_args[@]}"}								# directive:omit-from-production
 
 	FuncExit
 
@@ -2549,27 +2537,27 @@ ParseShowArgs()
 	#	scriptname [action] [groups] [options]
 
 	# Inputs: (global)
-	#	$args[]
+	#	$a_args[]
 	#	$args_incomplete[]
 
 	# Outputs: (global)
-	#	$args[]
+	#	$a_args[]
 	#	$args_incomplete[]
 
 	FuncInit
 
 	local -a a_args_remaining=()
 
-	local action=''						# Internal, nice, simple, action name. Only one per-action.
+	local action=''					# Internal, nice, simple, action name. Only one per-action.
 	local arg=''
 	local awaiting_group=false
 	local current_action=''
 	local group=''
-	local potential_action=''			# A user arg that might be an action.
+	local potential_action=''		# A user arg that might be an action.
 	local requires_group=false
-	local user_action=''				# The original user argument, detected as an action. There may be many variants per-action.
+	local user_action=''			# The original user argument, detected as an action. There may be many variants per-action.
 
-	for arg in ${args[@]+"${args[@]}"}; do
+	for arg in ${a_args[@]+"${a_args[@]}"}; do
 		[[ -n $arg ]] || continue
 
 		# Identify action.
@@ -2590,7 +2578,7 @@ ParseShowArgs()
 				[[ $awaiting_group = true ]] && args_incomplete+=("$user_action")
 				awaiting_group=$requires_group
 				current_action=$user_action
-				group=''				# When action changes, must clear group.
+				group=''			# When action changes, must clear group.
 
 				continue
 			fi
@@ -2730,10 +2718,10 @@ ParseShowArgs()
 		args_incomplete+=("$user_action")								# Save the actual action word, phrase or char specified by the user.
 	fi
 
-	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}	# omit-from-production
+	DebugArray args_incomplete ${args_incomplete[*]+"${args_incomplete[*]}"}	# directive:omit-from-production
 
-	args=(${a_args_remaining[@]+"${a_args_remaining[@]}"})
-	DebugArray args ${args[@]+"${args[@]}"}										# omit-from-production
+	a_args=(${a_args_remaining[@]+"${a_args_remaining[@]}"})
+	DebugArray a_args ${a_args[@]+"${a_args[@]}"}								# directive:omit-from-production
 
 	FuncExit
 
@@ -2746,27 +2734,27 @@ ParseListArgs()
 	#	scriptname [action] [groups] [options]
 
 	# Inputs: (global)
-	#	$args[]
+	#	$a_args[]
 	#	$args_incomplete[]
 
 	# Outputs: (global)
-	#	$args[]
+	#	$a_args[]
 	#	$args_incomplete[]
 
 	FuncInit
 
 	local -a a_args_remaining=()
 
-	local action=''						# Internal, nice, simple, action name. Only one per-action.
+	local action=''					# Internal, nice, simple, action name. Only one per-action.
 	local arg=''
 	local awaiting_group=false
 	local current_action=''
 	local group=''
-	local potential_action=''			# A user arg that might be an action.
+	local potential_action=''		# A user arg that might be an action.
 	local requires_group=false
-	local user_action=''				# The original user argument, detected as an action. There may be many variants per-action.
+	local user_action=''			# The original user argument, detected as an action. There may be many variants per-action.
 
-	for arg in ${args[@]+"${args[@]}"}; do
+	for arg in ${a_args[@]+"${a_args[@]}"}; do
 		[[ -n $arg ]] || continue
 
 		# Identify action.
@@ -2787,7 +2775,7 @@ ParseListArgs()
 				[[ $awaiting_group = true ]] && args_incomplete+=("$user_action")
 				awaiting_group=$requires_group
 				current_action=$user_action
-				group=''				# When action changes, must clear group.
+				group=''			# When action changes, must clear group.
 
 				continue
 			fi
@@ -2866,11 +2854,11 @@ ParseListArgs()
 		args_incomplete+=("$user_action")								# Save the actual action word, phrase or char specified by the user.
 	fi
 
-	DebugVar generate_list_report										# omit-from-production
-	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}	# omit-from-production
+	DebugVar generate_list_report												# directive:omit-from-production
+	DebugArray args_incomplete ${args_incomplete[*]+"${args_incomplete[*]}"}	# directive:omit-from-production
 
-	args=(${a_args_remaining[@]+"${a_args_remaining[@]}"})
-	DebugArray args ${args[@]+"${args[@]}"}										# omit-from-production
+	a_args=(${a_args_remaining[@]+"${a_args_remaining[@]}"})
+	DebugArray a_args ${a_args[@]+"${a_args[@]}"}								# directive:omit-from-production
 
 	FuncExit
 
@@ -2880,30 +2868,29 @@ ParseActionArgs()
 	{
 
 	# Inputs: (global)
-	#	$args[]
+	#	$a_args[]
 	#	$args_incomplete[]
 
 	# Outputs: (global)
-	#	$args[]
+	#	$a_args[]
 	#	$args_incomplete[]
 
 	FuncInit
 
 	local -a a_args_remaining=()
 
-	local action=''						# Internal, nice, simple, action name. Only one per-action.
+	local action=''					# Internal, nice, simple, action name. Only one per-action.
 	local arg=''
 	local awaiting_group=false
 	local current_action=''
 	local group=''
-	local potential_action=''			# A user arg that might be an action.
+	local potential_action=''		# A user arg that might be an action.
 	local requires_group=false
-	local user_action=''				# The original user argument, detected as an action. There may be many variants per-action.
+	local user_action=''			# The original user argument, detected as an action. There may be many variants per-action.
 
-	# shellcheck disable=2199
-	[[ -n ${args[@]+"${args[@]}"} ]] && LoadDatabase
+	[[ -n ${a_args[*]+"${a_args[*]}"} ]] && LoadDatabase
 
-	for arg in ${args[@]+"${args[@]}"}; do
+	for arg in ${a_args[@]+"${a_args[@]}"}; do
 		[[ -n $arg ]] || continue
 
 		# Identify action.
@@ -2936,7 +2923,7 @@ ParseActionArgs()
 				[[ $awaiting_group = true ]] && args_incomplete+=("$user_action")
 				awaiting_group=$requires_group
 				current_action=$user_action
-				group=''				# When action changes, must clear group.
+				group=''			# When action changes, must clear group.
 
 				continue
 			fi
@@ -2998,7 +2985,7 @@ ParseActionArgs()
 		args_incomplete+=("$user_action")								# Save the actual action word, phrase or char specified by the user.
 	fi
 
-	for arg in ${args_incomplete[@]+"${args_incomplete[@]}"}; do
+	for arg in ${args_incomplete[*]+"${args_incomplete[*]}"}; do
 		action=$(MatchVerb $arg)
 
 		case $action in
@@ -3014,7 +3001,7 @@ ParseActionArgs()
 				local a=''
 				local tmp=()
 
-				for a in ${args_incomplete[@]+"${args_incomplete[@]}"}; do
+				for a in ${args_incomplete[*]+"${args_incomplete[*]}"}; do
 					[[ $a != "$arg" ]] && tmp+=($a)
 				done
 
@@ -3028,10 +3015,10 @@ ParseActionArgs()
 		esac
 	done
 
-	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}	# omit-from-production
+	DebugArray args_incomplete ${args_incomplete[*]+"${args_incomplete[*]}"}	# directive:omit-from-production
 
-	args=(${a_args_remaining[@]+"${a_args_remaining[@]}"})
-	DebugArray args ${args[@]+"${args[@]}"}										# omit-from-production
+	a_args=(${a_args_remaining[@]+"${a_args_remaining[@]}"})
+	DebugArray a_args ${a_args[@]+"${a_args[@]}"}								# directive:omit-from-production
 
 	FuncExit
 
@@ -3107,7 +3094,7 @@ MatchNoun()
 		abs|abbreviations)
 			printf abs
 			;;
-		backedup|canbackup|complete|installable|installed|missing|results|show|?(un)stable)	# NOTE: There should be no single characters in this list.
+		backedup|canbackup|complete|installable|installed|missing|results|show|?(un)stable)		# NOTE: There should be no single characters in this list.
 			printf '%s' "$1"
 			;;
 		action?(s))
@@ -3219,7 +3206,7 @@ ShowArgSuggestions()
 	{
 
 	# Inputs: (global)
-	#	$args[]
+	#	$a_args[]
 	#	$args_incomplete[]
 
 	# Outputs: (global)
@@ -3235,11 +3222,10 @@ ShowArgSuggestions()
 
 	CreateReportPaths
 
-	# shellcheck disable=2199
-	if [[ -n ${args_incomplete[@]+"${args_incomplete[@]}"} ]]; then
+	if [[ -n ${args_incomplete[*]+"${args_incomplete[*]}"} ]]; then
 		run_package_actions=false
 
-		for arg in ${args_incomplete[@]+"${args_incomplete[@]}"}; do
+		for arg in ${args_incomplete[*]+"${args_incomplete[*]}"}; do
 			case $arg in
 				?(de|re)activate|backup|clean|@(dis|en)able|@(dis|en)able-auto-update|reassign|@(re|un)install|?(re)start|restore|rm|sign|stop)
 					DisplayAsProjSynExam "please provide valid $(ShowAsPackages) or a $(ShowAsPackageGroup) after '$arg' like" "$arg installed"
@@ -3301,10 +3287,10 @@ ShowArgSuggestions()
 		fi
 	fi
 
-	if [[ ${#args[@]} -gt 0 ]]; then
+	if [[ ${#a_args[@]} -gt 0 ]]; then
 		run_package_actions=false
 
-		for arg in ${args[@]+"${args[@]}"}; do
+		for arg in ${a_args[@]+"${a_args[@]}"}; do
 			case $arg in
 				active|all|@(dis|en)abled|started)
 					DisplayAsProjSynExam "please provide a valid $(ShowAsAction) before '$arg' like" "deactivate $arg"
@@ -3391,7 +3377,7 @@ ShowArgSuggestions()
 
 	[[ -s $r_report_output_pathfile ]] && /bin/cat "$r_report_output_pathfile"
 
-	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}
+	DebugArray args_incomplete ${args_incomplete[*]+"${args_incomplete[*]}"}
 	DebugArray a_args_remaining ${a_args_remaining[@]+"${a_args_remaining[@]}"}
 
 	FuncExit
@@ -3483,7 +3469,7 @@ AllocPackStatesToAcs()
 #			esac
 
 			if [[ $state = active ]]; then
-				check_later=true					# This should be checked after proc actions have begun.
+				check_later=true				# This should be checked after proc actions have begun.
 			elif [[ $state = installed ]]; then
 				QPKGs-AC${action}-to:Add "$(GetQpkgsIsInstalled)"
 			elif [[ $state = enabled ]]; then
@@ -3509,7 +3495,7 @@ AllocPackStatesToAcs()
 			QPKGs.AC${action}ISNT${state}.IsSet || continue
 
 			if [[ $state = active ]]; then
-				check_later=true					# This should be checked after proc actions have begun.
+				check_later=true				# This should be checked after proc actions have begun.
 			elif [[ $state = installed ]]; then
 				QPKGs-AC${action}-to:Add "$(GetQpkgsNtInstalled)"
 			elif [[ $state = enabled ]]; then
@@ -3880,7 +3866,7 @@ CalcIpkDownloadSize()
 		a_sizes=($($r_gnu_grep_cmd -w '^Package:\|^Size:' "$r_external_packages_pathfile" | $r_gnu_grep_cmd --after-context 1 --no-group-separator ": $(/bin/sed 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKs-ACdownload-to:List)")" | /bin/grep '^Size:' | /bin/sed 's/^Size: //'))
 
 		# shellcheck disable=2283
-		IPKs-ACdownload-to:Size = "$(IFS=+; echo "$((${a_sizes[*]}))")"	# Rather nifty sizing shortcut found here: https://stackoverflow.com/a/13635566/6182835
+		IPKs-ACdownload-to:Size = "$(IFS=+; echo "$((${a_sizes[*]}))")"		# Rather nifty sizing shortcut found here: https://stackoverflow.com/a/13635566/6182835
 		DebugAsDone "$(FormatAsThous "$(IPKs-ACdownload-to:Size)") bytes ($(FormatAsIsoBytes "$(IPKs-ACdownload-to:Size)")) to download"
 	else
 		DebugAsDone 'no IPKs to size'
@@ -4380,7 +4366,7 @@ _ExecOneActionWithManyForks_()
 	for qpkg_name in "${a_c[@]}"; do
 		[[ ! -e $r_abort_actions_pathfile ]] || break
 
-		while [[ $worker_count -ge $max_forks ]]; do		# Don't fork until an empty spot becomes available.
+		while [[ $worker_count -ge $max_forks ]]; do	# Don't fork until an empty spot becomes available.
 			[[ ! -e $r_abort_actions_pathfile ]] || break 2
 			sleep .2
 			UpdateActionForkProgress
@@ -4439,7 +4425,7 @@ _DirSizeMonitor_()
 
 	[[ -d $dir_location && $dir_bytes -gt 0 ]] || exit
 
-	local last_bytes=0
+	local -i last_bytes=0
 
 	current_bytes=-1
 	last_active_epoch=0
@@ -4515,7 +4501,7 @@ WriteBranch()
 			else
 				SaveSetting Git_Branch "$useropt_branch" announce
 
-				Reset					# <-- NOTE: Processing will terminate in this function (no-return).
+				Reset			# <-- NOTE: Processing will terminate in this function (no-return).
 			fi
 
 			switch_branch=false
@@ -4948,7 +4934,7 @@ GenerateStatusReportTitleRow()
 		(
 
 		IFS='|'
-		printf '%s' "${a_headers[*]}"			# This report has a condition-dependent column title, so insert colours while building array elements.
+		printf '%s' "${a_headers[*]}"		# This report has a condition-dependent column title, so insert colours while building array elements.
 
 		)
 	else
@@ -6131,7 +6117,8 @@ _GenerateBacksReportItemLine_()
 	#	$1 = last backup date in epoch seconds
 	#	$2 = backup filename
 	#	$3 = filesize in bytes
-	#	$4 (optional) = age threshold to highlight, '1 week ago' (default)		e.g. '2 days ago', '2 weeks ago', etc ...
+	#	$4 (optional) = age threshold to highlight, '1 week ago'
+	#	   (default) e.g. '2 days ago', '2 weeks ago', etc ...
 
 	# Inputs: (global)
 	#	$r_report_file_bytes_column_width
@@ -6929,13 +6916,13 @@ DisplayFileInViewport()
 
 	elif [[ $useropt_verbose = false && -x $r_gnu_more_cmd ]]; then
 		$r_gnu_more_cmd "$report_pathfile"
-	elif [[ $useropt_verbose = false && -x /bin/more ]]; then		# At-least supports basic forward-scrolling pagination.
+	elif [[ $useropt_verbose = false && -x /bin/more ]]; then	# At-least supports basic forward-scrolling pagination.
 		/bin/more "$report_pathfile"
 	elif [[ -x /bin/cat ]]; then
 		[[ $linenumbers = true ]] && options=' --number'
 
 		/bin/cat $options "$report_pathfile"
-	else															# And, when there's really no-better option ...
+	else														# And, when there's really no-better option ...
 		echo -e "$(< "$report_pathfile")"
 	fi
 
@@ -6960,17 +6947,17 @@ CalcReportFirstColumnWidth()
 	local b=''
 	local c=''
 
-	a=$(/bin/sed '/^#[[:space:]].*/d;/#$/d;s/[[:space:]]#[[:space:]].*//' < "$1")		# Remove comment lines and line comments.
-	a=$(/bin/sed 's/[[:space:]]*$//' <<< "$a")											# Remove line trailing whitespace.
-	a=$(/bin/sed '/^$/d' <<< "$a")														# Remove empty lines.
-	a=$(head -n1 <<< "$a")																# Only use header row (column titles).
-	a=$(StripANSICodes "$a")															# Remove ANSI codes to calculate column width for `less`.
+	a=$(/bin/sed '/^#[[:space:]].*/d;/#$/d;s/[[:space:]]#[[:space:]].*//' < "$1")	# Remove comment lines and line comments.
+	a=$(/bin/sed 's/[[:space:]]*$//' <<< "$a")										# Remove line trailing whitespace.
+	a=$(/bin/sed '/^$/d' <<< "$a")													# Remove empty lines.
+	a=$(head -n1 <<< "$a")															# Only use header row (column titles).
+	a=$(StripANSICodes "$a")														# Remove ANSI codes to calculate column width for `less`.
 
-	b=$(cut -f2 -d: <<< "$a"):															# Grab second field characters.
-	b=$(/bin/sed 's/^[[:space:]]*//' <<< "$b")											# Remove leading whitespace.
+	b=$(cut -f2 -d: <<< "$a"):														# Grab second field characters.
+	b=$(/bin/sed 's/^[[:space:]]*//' <<< "$b")										# Remove leading whitespace.
 
 	# shellcheck disable=2295
-	c=${a%%$b*}																			# Remove from second column onwards to generate first column width.
+	c=${a%%$b*}																		# Remove from second column onwards to generate first column width.
 
 	printf '%s' "${#c}"
 
@@ -7538,68 +7525,68 @@ ListQPKGsActions()
 
 	}
 
-ListQPKGsActionsAll()																						# omit-from-production
-	{																										# omit-from-production
+ListQPKGsActionsAll()																						# directive:omit-from-production
+	{																										# directive:omit-from-production
 
-	# Only used when debugging.																				# omit-from-production
+	# Only used when debugging.																				# directive:omit-from-production
 
-	# Inputs: (global)																						# omit-from-production
-	#	$r_qpkg_actions[]																					# omit-from-production
+	# Inputs: (global)																						# directive:omit-from-production
+	#	$r_qpkg_actions[]																					# directive:omit-from-production
 
-	FuncInit																								# omit-from-production
+	FuncInit																								# directive:omit-from-production
 
-	local a=''																								# omit-from-production
-	local b=''																								# omit-from-production
+	local a=''																								# directive:omit-from-production
+	local b=''																								# directive:omit-from-production
 
-	DebugInfoMinSepr																						# omit-from-production
+	DebugInfoMinSepr																						# directive:omit-from-production
 
-	for a in "${r_qpkg_actions[@]}"; do																		# omit-from-production
-		for b in to ok er sk se sa; do																		# omit-from-production
-			if QPKGs-AC${a}-${b}.IsAny; then																# omit-from-production
-				DebugQpkg info "AC${a}-${b}" "($(QPKGs-AC${a}-${b}:Count)) $(QPKGs-AC${a}-${b}:ListCSV) "	# omit-from-production
-			fi																								# omit-from-production
-		done																								# omit-from-production
-	done																									# omit-from-production
+	for a in "${r_qpkg_actions[@]}"; do																		# directive:omit-from-production
+		for b in to ok er sk se sa; do																		# directive:omit-from-production
+			if QPKGs-AC${a}-${b}.IsAny; then																# directive:omit-from-production
+				DebugQpkg info "AC${a}-${b}" "($(QPKGs-AC${a}-${b}:Count)) $(QPKGs-AC${a}-${b}:ListCSV) "	# directive:omit-from-production
+			fi																								# directive:omit-from-production
+		done																								# directive:omit-from-production
+	done																									# directive:omit-from-production
 
-	DebugInfoMinSepr																						# omit-from-production
+	DebugInfoMinSepr																						# directive:omit-from-production
 
-	FuncExit																								# omit-from-production
+	FuncExit																								# directive:omit-from-production
 
-	}																										# omit-from-production
+	}																										# directive:omit-from-production
 
-ListQPKGsFlagsAll()																							# omit-from-production
-	{																										# omit-from-production
+ListQPKGsFlagsAll()																							# directive:omit-from-production
+	{																										# directive:omit-from-production
 
-	# Only used when debugging.																				# omit-from-production
+	# Only used when debugging.																				# directive:omit-from-production
 
-	# Inputs: (global)																						# omit-from-production
-	#	$r_qpkg_actions[]																					# omit-from-production
-	#	$r_qpkg_is_states[]																					# omit-from-production
+	# Inputs: (global)																						# directive:omit-from-production
+	#	$r_qpkg_actions[]																					# directive:omit-from-production
+	#	$r_qpkg_is_states[]																					# directive:omit-from-production
 
-	FuncInit																								# omit-from-production
+	FuncInit																								# directive:omit-from-production
 
-	local a=''																								# omit-from-production
-	local b=''																								# omit-from-production
+	local a=''																								# directive:omit-from-production
+	local b=''																								# directive:omit-from-production
 
-	DebugInfoMinSepr																						# omit-from-production
+	DebugInfoMinSepr																						# directive:omit-from-production
 
-	for a in "${r_qpkg_actions[@]}"; do																		# omit-from-production
-		for b in "${r_qpkg_is_states[@]}"; do																# omit-from-production
-			if IsFuncExist QPKGs.AC${a}IS${b}.IsSet; then													# omit-from-production
-				if QPKGs.AC${a}IS${b}.IsSet; then															# omit-from-production
-					DebugQpkg info "AC${a}IS${b}" "set"														# omit-from-production
-#				else																						# omit-from-production
-#					DebugQpkg info "AC${a}IS${b}" "unset"													# omit-from-production
-				fi																							# omit-from-production
-			fi																								# omit-from-production
-		done																								# omit-from-production
-	done																									# omit-from-production
+	for a in "${r_qpkg_actions[@]}"; do																		# directive:omit-from-production
+		for b in "${r_qpkg_is_states[@]}"; do																# directive:omit-from-production
+			if IsFuncExist QPKGs.AC${a}IS${b}.IsSet; then													# directive:omit-from-production
+				if QPKGs.AC${a}IS${b}.IsSet; then															# directive:omit-from-production
+					DebugQpkg info "AC${a}IS${b}" "set"														# directive:omit-from-production
+#				else																						# directive:omit-from-production
+#					DebugQpkg info "AC${a}IS${b}" "unset"													# directive:omit-from-production
+				fi																							# directive:omit-from-production
+			fi																								# directive:omit-from-production
+		done																								# directive:omit-from-production
+	done																									# directive:omit-from-production
 
-	DebugInfoMinSepr																						# omit-from-production
+	DebugInfoMinSepr																						# directive:omit-from-production
 
-	FuncExit																								# omit-from-production
+	FuncExit																								# directive:omit-from-production
 
-	}																										# omit-from-production
+	}																										# directive:omit-from-production
 
 ListIPKsActions()
 	{
@@ -7905,7 +7892,7 @@ BuildExtendedQPKGsStates()
 	LoadDatabase
 
 #	if [[ $(FileCountAll "$r_qpkg_states_path") -gt 0 ]]; then
-#		a=$r_qpkg_states_path/$(ls "$r_qpkg_states_path" -t | head -n1)			# Find most recently modified file.
+#		a=$r_qpkg_states_path/$(ls "$r_qpkg_states_path" -t | head -n1)		# Find most recently modified file.
 #
 #		DebugAsInfo "comparison file (last modified QPKG state file): '$a'"
 #
@@ -8613,7 +8600,7 @@ ReportAllActionResults()
 	if [[ -s $r_action_results_pathfile ]]; then
 		while IFS='|' read -r datetime action quantity package_name package_type result duration reason; do
 			if [[ $datetime -gt 0 && $duration -gt 0 ]]; then
-				[[ $a -eq 0 ]] && a=$datetime		# Only use first entry as start time.
+				[[ $a -eq 0 ]] && a=$datetime	# Only use first entry as start time.
 				b=$datetime
 				c=$duration
 				((d++))
@@ -8624,7 +8611,7 @@ ReportAllActionResults()
 		b=$(ConvertMillisecondsToSeconds "$b")
 		c=$(ConvertMillisecondsToSeconds "$c")
 
-		[[ $b -gt 0 ]] && e=$((b+c+1))		# Use last non-zero iteration of $datetime as beginning of last action, then add duration to it.
+		[[ $b -gt 0 ]] && e=$((b+c+1))			# Use last non-zero iteration of $datetime as beginning of last action, then add duration to it.
 
 		if [[ $show_action_results_ok = true || $show_action_results_skipped = true || $show_action_results_failed = true || $show_action_results_zero = true ]]; then
 			{
@@ -8673,7 +8660,7 @@ ReportActionResults()
 			if [[ $result = "${1:-}" ]] || [[ $1 = sk && ($result = se || $result = sa) ]]; then
 				[[ $action = status && $useropt_show_previous_action_results_report = false ]] && continue	# Don't need to see the result of `status` checks unless a 'results' report has been requested.
 				((count++))
-				[[ $count -gt 1 ]] && break			# Two-or-more of the same action, so pluralise item messages.
+				[[ $count -gt 1 ]] && break		# Two-or-more of the same action, so pluralise item messages.
 			fi
 		done < "$r_action_results_pathfile"
 
@@ -8794,7 +8781,7 @@ GenerateReportInfo()
 		fi
 
 		if [[ -e "$r_report_flags_path"/status-slow ]]; then
-			DisplayAsIndentQuotedInfoItem "$(TextBrightOrange slow)" 'application is alive, but was slow to respond to the status request. Check again shortly'		# More common on NAS with lower installed RAM, and usually because the application has been page-swapped to disk and must be reloaded into RAM.
+			DisplayAsIndentQuotedInfoItem "$(TextBrightOrange slow)" 'application is alive, but was slow to respond to the status request. Check again shortly'	# More common on NAS with lower installed RAM, and usually because the application has been page-swapped to disk and must be reloaded into RAM.
 		fi
 
 		if [[ -e "$r_report_flags_path"/status-starting ]]; then
@@ -8998,7 +8985,7 @@ ShowQPKGLists()
 
 	for a in "${r_qpkg_extended_states[@]}"; do
 		case $a in
-			downloaded|signed)						# Never show these.
+			downloaded|signed)					# Never show these.
 				: # Do nothing.
 				;;
 			*)
@@ -9016,7 +9003,7 @@ ShowQPKGLists()
 
 	for a in "${r_qpkg_is_groups[@]}"; do
 		case $a in
-			canbackup|canrestarttoupdate)			# Never show these.
+			canbackup|canrestarttoupdate)		# Never show these.
 				: # Do nothing.
 				;;
 			*)
@@ -9030,7 +9017,7 @@ ShowQPKGLists()
 
 	for a in "${r_qpkg_isnt_groups[@]}"; do
 		case $a in
-			all|canbackup|canrestarttoupdate)		# Never show these.
+			all|canbackup|canrestarttoupdate)	# Never show these.
 				: # Do nothing.
 				;;
 			*)
@@ -9167,33 +9154,33 @@ ReadFromMsgPipe()
 
 	eval "$1='${_msg1_key:-null}' $2='${_msg1_value:-null}' $3='${_msg2_key:-null}' $4='${_msg2_value:-null}'"
 
-	AppendToMsgPipeEnhancedLog																# omit-from-production
+	AppendToMsgPipeEnhancedLog																# directive:omit-from-production
 
 	return 0
 
 	}
 
-OpenMsgPipeEnhancedLog()																	# omit-from-production
-	{																						# omit-from-production
+OpenMsgPipeEnhancedLog()																	# directive:omit-from-production
+	{																						# directive:omit-from-production
 
 	# Inputs: (global)
 	#	$r_action_msg_pipe_log_pathfile
 
-	[[ -e $r_action_msg_pipe_log_pathfile ]] && rm -f "$r_action_msg_pipe_log_pathfile"		# omit-from-production
+	[[ -e $r_action_msg_pipe_log_pathfile ]] && rm -f "$r_action_msg_pipe_log_pathfile"		# directive:omit-from-production
 
-	AppendToMsgPipeEnhancedLog 'opened new log session.'									# omit-from-production
+	AppendToMsgPipeEnhancedLog 'opened new log session.'									# directive:omit-from-production
 
-	}																						# omit-from-production
+	}																						# directive:omit-from-production
 
-CloseMsgPipeEnhancedLog()																	# omit-from-production
-	{																						# omit-from-production
+CloseMsgPipeEnhancedLog()																	# directive:omit-from-production
+	{																						# directive:omit-from-production
 
-	AppendToMsgPipeEnhancedLog 'closed log session.'										# omit-from-production
+	AppendToMsgPipeEnhancedLog 'closed log session.'										# directive:omit-from-production
 
-	}																						# omit-from-production
+	}																						# directive:omit-from-production
 
-AppendToMsgPipeEnhancedLog()																# omit-from-production
-	{																						# omit-from-production
+AppendToMsgPipeEnhancedLog()																# directive:omit-from-production
+	{																						# directive:omit-from-production
 
 	# Inputs: (global)
 	#	$r_action
@@ -9215,56 +9202,56 @@ AppendToMsgPipeEnhancedLog()																# omit-from-production
 	# Outputs: (global)
 	#	stdout -> $r_action_msg_pipe_log_pathfile
 
-	local a=''																				# omit-from-production
+	local a=''																		# directive:omit-from-production
 
-	a=$(ExpandMsgPipeShortcodes "${_msg1_value:-null}")										# omit-from-production
+	a=$(ExpandMsgPipeShortcodes "${_msg1_value:-null}")								# directive:omit-from-production
 
-	if [[ -n ${1:-} ]]; then																# omit-from-production
-		printf "[%-${r_date_field_length}s] %s\n" "$(ConvertNowToFullDate)" "$1"			# omit-from-production
-	elif [[ $_msg1_key = run ]]; then														# omit-from-production
-		printf "[%-${r_date_field_length}s] tier:%-${r_tier_field_length}s action:%-${r_action_field_length}s key1:%-${r_key1_field_length}s val1:%s\n" "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "'$a'"					# omit-from-production
-	elif [[ $_msg1_key = state || $msg1_key = update ]]; then								# omit-from-production
-		printf "[%-${r_date_field_length}s] tier:%-${r_tier_field_length}s action:%-${r_action_field_length}s key1:%-${r_key1_field_length}s val1:%-38s key2:%-${r_key2_field_length}s val2:%s\n" "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "$a" "$_msg2_key" "$_msg2_value" # omit-from-production
-	elif [[ $_msg2_key = null && $_msg2_value = null ]]; then								# omit-from-production
-		printf "[%-${r_date_field_length}s] tier:%-${r_tier_field_length}s action:%-${r_action_field_length}s key1:%-${r_key1_field_length}s val1:%s\n" "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "$a"						# omit-from-production
-	else																					# omit-from-production
-		printf "[%-${r_date_field_length}s] tier:%-${r_tier_field_length}s action:%-${r_action_field_length}s key1:%-${r_key1_field_length}s val1:%-38s key2:%-${r_key2_field_length}s val2:%s\n" "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "'$a'" "$_msg2_key" "$_msg2_value" # omit-from-production
-	fi																						# omit-from-production
+	if [[ -n ${1:-} ]]; then														# directive:omit-from-production
+		printf "[%-${r_date_field_length}s] %s\n" "$(ConvertNowToFullDate)" "$1"	# directive:omit-from-production
+	elif [[ $_msg1_key = run ]]; then												# directive:omit-from-production
+		printf "[%-${r_date_field_length}s] tier:%-${r_tier_field_length}s action:%-${r_action_field_length}s key1:%-${r_key1_field_length}s val1:%s\n" "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "'$a'"			# directive:omit-from-production
+	elif [[ $_msg1_key = state || $msg1_key = update ]]; then						# directive:omit-from-production
+		printf "[%-${r_date_field_length}s] tier:%-${r_tier_field_length}s action:%-${r_action_field_length}s key1:%-${r_key1_field_length}s val1:%-38s key2:%-${r_key2_field_length}s val2:%s\n" "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "$a" "$_msg2_key" "$_msg2_value" # directive:omit-from-production
+	elif [[ $_msg2_key = null && $_msg2_value = null ]]; then						# directive:omit-from-production
+		printf "[%-${r_date_field_length}s] tier:%-${r_tier_field_length}s action:%-${r_action_field_length}s key1:%-${r_key1_field_length}s val1:%s\n" "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "$a"				# directive:omit-from-production
+	else																			# directive:omit-from-production
+		printf "[%-${r_date_field_length}s] tier:%-${r_tier_field_length}s action:%-${r_action_field_length}s key1:%-${r_key1_field_length}s val1:%-38s key2:%-${r_key2_field_length}s val2:%s\n" "$(ConvertNowToFullDate)" "$r_tier" "$r_action" "$_msg1_key" "'$a'" "$_msg2_key" "$_msg2_value" # directive:omit-from-production
+	fi																				# directive:omit-from-production
 
-	} >> "$r_action_msg_pipe_log_pathfile"													# omit-from-production
+	} >> "$r_action_msg_pipe_log_pathfile"											# directive:omit-from-production
 
-ExpandMsgPipeShortcodes()																	# omit-from-production
-	{																						# omit-from-production
+ExpandMsgPipeShortcodes()															# directive:omit-from-production
+	{																				# directive:omit-from-production
 
-	[[ -n ${1:-} ]] || return																# omit-from-production
+	[[ -n ${1:-} ]] || return														# directive:omit-from-production
 
-	case $1 in																				# omit-from-production
-		ok)																					# omit-from-production
-			printf 'completed ok'															# omit-from-production
-			;;																				# omit-from-production
-		er)																					# omit-from-production
-			printf 'completed with errors'													# omit-from-production
-			;;																				# omit-from-production
-		sk)																					# omit-from-production
-			printf skipped																	# omit-from-production
-			;;																				# omit-from-production
-		se)																					# omit-from-production
-			printf 'skipped with errors'													# omit-from-production
-			;;																				# omit-from-production
-		sa)																					# omit-from-production
-			printf 'skipped and abort'														# omit-from-production
-			;;																				# omit-from-production
-		en)																					# omit-from-production
-			printf entry																	# omit-from-production
-			;;																				# omit-from-production
-		ex)																					# omit-from-production
-			printf exit																		# omit-from-production
-			;;																				# omit-from-production
-		*)																					# omit-from-production
-			printf '%s' "$1"																# omit-from-production
-	esac																					# omit-from-production
+	case $1 in																		# directive:omit-from-production
+		ok)																			# directive:omit-from-production
+			printf 'completed ok'													# directive:omit-from-production
+			;;																		# directive:omit-from-production
+		er)																			# directive:omit-from-production
+			printf 'completed with errors'											# directive:omit-from-production
+			;;																		# directive:omit-from-production
+		sk)																			# directive:omit-from-production
+			printf skipped															# directive:omit-from-production
+			;;																		# directive:omit-from-production
+		se)																			# directive:omit-from-production
+			printf 'skipped with errors'											# directive:omit-from-production
+			;;																		# directive:omit-from-production
+		sa)																			# directive:omit-from-production
+			printf 'skipped and abort'												# directive:omit-from-production
+			;;																		# directive:omit-from-production
+		en)																			# directive:omit-from-production
+			printf entry															# directive:omit-from-production
+			;;																		# directive:omit-from-production
+		ex)																			# directive:omit-from-production
+			printf exit																# directive:omit-from-production
+			;;																		# directive:omit-from-production
+		*)																			# directive:omit-from-production
+			printf '%s' "$1"														# directive:omit-from-production
+	esac																			# directive:omit-from-production
 
-	}																						# omit-from-production
+	}																				# directive:omit-from-production
 
 FindNextFD()
 	{
@@ -9448,7 +9435,7 @@ GetHardwareCpuStepping()
 
 	if a=$(GetCpuStepping); then
 		printf '%s' "$a"
-	elif a=$(GetCpuVariant) && b=$(GetCpuRevision); then		# For non-Intel/AMD CPUs (like ARM).
+	elif a=$(GetCpuVariant) && b=$(GetCpuRevision); then	# For non-Intel/AMD CPUs (like ARM).
 		printf 'r%sp%s' "$a" "$b"
 	else
 		printf unknown
@@ -9844,7 +9831,7 @@ GetUserLIBC()
 
 	a=$(/sbin/ldd --version | head -n1)
 
-	printf '%s' "${a:4}"			# Trim 'ldd ' from front of string.
+	printf '%s' "${a:4}"	# Trim 'ldd ' from front of string.
 
 	}
 
@@ -9878,9 +9865,9 @@ GetBusyBoxFunctionCount()
 
 	if [[ -n $a ]] && IsNumber $a && [[ $a -gt 0 ]]; then
 		printf '%s' "$a"
-	else										# BusyBox 1.01 doesn't support the `--list` arg, but can get a rough count of included functions by counting the commas shown by the BusyBox help screen.
+	else					# BusyBox 1.01 doesn't support the `--list` arg, but can get a rough count of included functions by counting the commas shown by the BusyBox help screen.
 		a=$(/bin/busybox)
-		a=${a//[!\,]/}							# Remove all chars except commas.
+		a=${a//[!\,]/}		# Remove all chars except commas.
 		printf '%s' "${#a}"
 	fi
 
@@ -9954,7 +9941,7 @@ GetOsFirmwareVersion()
 	{
 
 	# Outputs: (local)
-	#	stdout = string.
+	#	stdout = version string.
 	#	$? = 0 if found, 250 if not.
 
 	/sbin/getcfg System Version -d undefined -f /etc/config/uLinux.conf
@@ -9964,63 +9951,38 @@ GetOsFirmwareVersion()
 GetOsFirmwareBuild()
 	{
 
+	# Returns an evaluable integer, with leading zeros.
+
 	# Outputs: (local)
-	#	stdout = 4 digit integer.
+	#	stdout = 4 char string.
 	#	$? = 0 if found, 250 if not.
 
 	printf '%04d' "$((10#$(/sbin/getcfg System Number -d 0 -f /etc/config/uLinux.conf)))"
 
 	}
 
-GetOsFirmwareVer()
-	{
-
-	# Returns an evaluable integer-only.
-
-	# Outputs: (local)
-	#	stdout = string.
-
-	ConvertFirmwareVersionStringToNumber "$(GetOsFirmwareVersion).$(GetOsFirmwareBuild)"
-
-	}
-
-ConvertFirmwareVersionStringToNumber()
-	{
-
-	# Convert regular QTS version string into a number evaluable against another.
-	#	Example: '5.2.10' becomes '0502100000'
-	#	Example: '4.6.99.1234' becomes '0406991234'
-
-	# Output should be compared using forced base-10 syntax (to handle leading zero):
-	#	Example: [[ $((10#$a)) -gt $((10#$b)) ]]
-
-	# Use only this many digits from start of each field.
-
-	local -ir r_build_trim=4
-	local -ir r_intermediate_trim=2
-	local -ir r_major_trim=2
-	local -ir r_minor_trim=2
-
-	local -i intermediate=0
-	local -i major=0
-	local -i minor=0
-
-	local build=0
-
-	while IFS=. read -r major intermediate minor build; do
-		printf "%0${r_major_trim}d%0${r_intermediate_trim}d%0${r_minor_trim}d%0${r_build_trim}d" "$((10#${major:0:r_major_trim}))" "$((10#${intermediate:0:r_intermediate_trim}))" "$((10#${minor:0:r_minor_trim}))" "$((10#${build:0:r_build_trim}))"
-	done <<< "$1"
-
-	}
-
 GetOsFirmwareDate()
 	{
 
+	# Returns an evaluable integer, with leading zeros.
+
 	# Outputs: (local)
-	#	stdout = 8 digit integer.
+	#	stdout = 8 char string (YYYYMMDD).
 	#	$? = 0 if found, 250 if not.
 
-	printf '%08d' "$(/sbin/getcfg System 'Build Number' -d 0 -f /etc/config/uLinux.conf)"
+	printf '%08d' "$((10#$(/sbin/getcfg System 'Build Number' -d 0 -f /etc/config/uLinux.conf)))"
+
+	}
+
+GetOsFirmwareVer()
+	{
+
+	# Returns an evaluable integer, with leading zeros.
+
+	# Outputs: (local)
+	#	stdout = 10 char string, with build number.
+
+	printf '%010d' "$((10#$(ConvertFirmwareVersionStringToNumber "$(GetOsFirmwareVersion).$(GetOsFirmwareBuild)")))"
 
 	}
 
@@ -10030,11 +9992,7 @@ GetOsName()
 	# Outputs: (local)
 	#	stdout = string.
 
-	if IsQuTS; then
-		printf 'QuTS hero'
-	else
-		printf QTS
-	fi
+	IsQuTS && printf 'QuTS hero' || printf QTS
 
 	}
 
@@ -10150,7 +10108,7 @@ GetQpkgEntwareType()
 			printf none
 		fi
 	else
-		printf 'not-installed'
+		printf not-installed
 	fi
 
 	} 2> /dev/null
@@ -10180,7 +10138,7 @@ GetOsState()
 	fi
 
 	if IsOsStopping; then
-		a='shutting-down'
+		a=shutting-down
 	fi
 
 	if IsOsStoppingPackages; then
@@ -10230,7 +10188,7 @@ ShowZeroQpkgs()
 
 	for a in "${r_qpkg_is_states[@]}"; do
 		for b in "${r_user_qpkg_actions[@]}"; do
-			[[ $b = list ]] && continue			# Action results lists are unavailable for these.
+			[[ $b = list ]] && continue		# Action results lists are unavailable for these.
 			QPKGs.AC${b}IS${a}.IsSet && QPKGs-AC${b}-ok.IsNone && ShowAsWarn "no QPKGs were able to $(Lowercase "$b")"
 		done
 	done
@@ -10253,6 +10211,7 @@ ClaimLockfile()
 		if [[ -e $r_lock_pathfile && -d /proc/$(< "$r_lock_pathfile") && $(< /proc/"$(< "$r_lock_pathfile")"/cmdline) =~ $a ]]; then
 			ShowAsAbort "a running $(ShowAsTitleName) instance was found $(Parenthesise "PID:$(< "$r_lock_pathfile")"), please wait for it to complete"
 			release_lock=false
+
 			return 1
 		fi
 	done
@@ -10286,16 +10245,16 @@ EnableVerbose()
 
 	}
 
-DisableVerbose()								# omit-from-production
-	{											# omit-from-production
+DisableVerbose()				# directive:omit-from-production
+	{							# directive:omit-from-production
 
-	useropt_verbose=false						# omit-from-production
-	DebugVar useropt_verbose					# omit-from-production
+	useropt_verbose=false		# directive:omit-from-production
+	DebugVar useropt_verbose	# directive:omit-from-production
 
-	HideCursor									# omit-from-production
-	HideKeystrokes								# omit-from-production
+	HideCursor					# directive:omit-from-production
+	HideKeystrokes				# directive:omit-from-production
 
-	}											# omit-from-production
+	}							# directive:omit-from-production
 
 EnableDebugToArchiveAndFile()
 	{
@@ -10451,7 +10410,7 @@ _QPKG:status_()
 
 		local -r r_local_pathfile
 
-		if [[ -x $r_gnu_timeout_cmd ]]; then			# Run 'status' query with GNU `timeout` (if-possible).
+		if [[ -x $r_gnu_timeout_cmd ]]; then	# Run 'status' query with GNU `timeout` (if-possible).
 			$r_gnu_timeout_cmd "$r_qpkg_status_check_timeout_seconds" /bin/sh -c "$b \"$r_local_pathfile\" status"
 			z=$?
 		else
@@ -10942,7 +10901,7 @@ _QPKG:reinstall_()
 
 	[[ $qpkg_name = Entware ]] && IsNtCriticalFile $r_opkg_cmd && z=1
 
-	if [[ $z -eq 0 || $z -eq 10 ]]; then		# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes aborts.
+	if [[ $z -eq 0 || $z -eq 10 ]]; then	# '0' or '10' from a QPKG install/reinstall/upgrade is OK, but also includes aborts.
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok "v$(GetQpkgInstalledVer)"
 		IsQpkgDbCanClean && SendParentCommand "QPKGs-ACclean-to:Add $qpkg_name"
 		MarkActionForkAsDoneOk
@@ -11142,7 +11101,7 @@ _QPKG:upgrade_()
 		if [[ $current_ver = "$prev_ver" ]]; then
 			SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok "v$current_ver"
 		else
-			SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok "v$prev_ver -> v$current_ver"		# dont-squeeze
+			SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok "v$prev_ver -> v$current_ver"		# directive:dont-squeeze
 		fi
 
 		MarkActionForkAsDoneOk
@@ -12064,7 +12023,7 @@ _QPKG:restore_()
 
 	if [[ $z -eq 0 ]]; then
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
-#		SendPackageStateChange ISrestored			# TODO: this doesn't yet exist as an object.
+#		SendPackageStateChange ISrestored		# TODO: this doesn't yet exist as an object.
 		MarkActionForkAsDoneOk
 	else
 		local b=''
@@ -12242,18 +12201,18 @@ _QPKG:sign_()
 import sqlite3, sys
 
 try:
-    sqliteConnection = sqlite3.connect('$r_cert_db_pathfile')			# ignore-leader
+    sqliteConnection = sqlite3.connect('$r_cert_db_pathfile')	# directive:ignore-leader
 
-    cursor = sqliteConnection.cursor()									# ignore-leader
-    sqlite_add_query = """$a"""											# ignore-leader
-    cursor.execute(sqlite_add_query)									# ignore-leader
-    sqliteConnection.commit()											# ignore-leader
-    cursor.close()														# ignore-leader
-    sys.exit()															# ignore-leader
+    cursor = sqliteConnection.cursor()							# directive:ignore-leader
+    sqlite_add_query = """$a"""									# directive:ignore-leader
+    cursor.execute(sqlite_add_query)							# directive:ignore-leader
+    sqliteConnection.commit()									# directive:ignore-leader
+    cursor.close()												# directive:ignore-leader
+    sys.exit()													# directive:ignore-leader
 
 finally:
-    if sqliteConnection:												# ignore-leader
-        sqliteConnection.close()										# ignore-leader
+    if sqliteConnection:										# directive:ignore-leader
+        sqliteConnection.close()								# directive:ignore-leader
 EOB
 
 	for ((retries=0; retries<10; retries++)); do
@@ -12347,18 +12306,18 @@ _QPKG:unsign_()
 import sqlite3, sys
 
 try:
-    sqliteConnection = sqlite3.connect('$r_cert_db_pathfile')			# ignore-leader
+    sqliteConnection = sqlite3.connect('$r_cert_db_pathfile')	# directive:ignore-leader
 
-    cursor = sqliteConnection.cursor()									# ignore-leader
-    sqlite_delete_query = """$a"""										# ignore-leader
-    cursor.execute(sqlite_delete_query)									# ignore-leader
-    sqliteConnection.commit()											# ignore-leader
-    cursor.close()														# ignore-leader
-    sys.exit()															# ignore-leader
+    cursor = sqliteConnection.cursor()							# directive:ignore-leader
+    sqlite_delete_query = """$a"""								# directive:ignore-leader
+    cursor.execute(sqlite_delete_query)							# directive:ignore-leader
+    sqliteConnection.commit()									# directive:ignore-leader
+    cursor.close()												# directive:ignore-leader
+    sys.exit()													# directive:ignore-leader
 
 finally:
-    if sqliteConnection:												# ignore-leader
-        sqliteConnection.close()										# ignore-leader
+    if sqliteConnection:										# directive:ignore-leader
+        sqliteConnection.close()								# directive:ignore-leader
 EOB
 
 	for ((retries=0; retries<10; retries++)); do
@@ -13149,14 +13108,12 @@ GetQpkgDbDependents()
 	if QPKGs-GRindependent.Exist "$qpkg_name"; then
 		for i in "${!r_qpkg_name[@]}"; do
 			if [[ ${r_qpkg_depends_on[$i]} =~ $re ]]; then
-				# shellcheck disable=2199
-				[[ ${a_ar[@]+"${a_ar[@]}"} != "${r_qpkg_name[$i]}" ]] && a_ar+=(${r_qpkg_name[$i]})
+				[[ ${a_ar[*]+"${a_ar[*]}"} != "${r_qpkg_name[$i]}" ]] && a_ar+=(${r_qpkg_name[$i]})
 			fi
 		done
 	fi
 
-	# shellcheck disable=2199
-	if [[ -n ${a_ar[@]+"${a_ar[@]}"} ]]; then
+	if [[ -n ${a_ar[*]+"${a_ar[*]}"} ]]; then
 		printf '%s' "${a_ar[*]}"
 
 		return 0
@@ -13190,14 +13147,12 @@ GetQpkgDbOptionals()
 	if QPKGs-GRoptional.Exist "$qpkg_name"; then
 		for i in "${!r_qpkg_name[@]}"; do
 			if [[ ${r_qpkg_opt_depends_on[$i]} =~ $re ]]; then
-				# shellcheck disable=2199
-				[[ ${a_ar[@]+"${a_ar[@]}"} != "${r_qpkg_name[$i]}" ]] && a_ar+=(${r_qpkg_name[$i]})
+				[[ ${a_ar[*]+"${a_ar[*]}"} != "${r_qpkg_name[$i]}" ]] && a_ar+=(${r_qpkg_name[$i]})
 			fi
 		done
 	fi
 
-	# shellcheck disable=2199
-	if [[ -n ${a_ar[@]+"${a_ar[@]}"} ]]; then
+	if [[ -n ${a_ar[*]+"${a_ar[*]}"} ]]; then
 		printf '%s' "${a_ar[*]}"
 
 		return 0
@@ -13601,7 +13556,7 @@ IsFile()
 
 	[[ -n ${1:?${FUNCNAME[0]}(): $e_nopfi} ]] || exit
 
-	local a=${1%% *}		# Extract first word-group.
+	local a=${1%% *}	# Extract first word-group.
 
 	[[ -f $a && -s $a ]]
 
@@ -13649,7 +13604,7 @@ IsFileNewer()
 	#	$? = true/false
 
 	[[ -n ${1:-} && -e $1 ]] || return
-	[[ -n ${2:-} && -e $2 ]] || return 0				# Treat a non-existent $2 as older than $1.
+	[[ -n ${2:-} && -e $2 ]] || return 0	# Treat a non-existent $2 as older than $1.
 
 	[[ $(FileLastModifiedEpoch "$1") -gt $(FileLastModifiedEpoch "$2") ]]
 
@@ -14399,7 +14354,12 @@ IsQpkgDbCanRestartToUpdate()
 
 	for i in "${!r_qpkg_name[@]}"; do
 		[[ ${r_qpkg_name[$i]} = "$a" ]] || continue
-		${r_qpkg_can_restart_to_update[$i]} && return 0 || break
+
+		if ${r_qpkg_can_restart_to_update[$i]}; then
+			return 0
+		else
+			break
+		fi
 	done
 
 	return 1
@@ -14426,7 +14386,12 @@ IsQpkgDbCanClean()
 
 	for i in "${!r_qpkg_name[@]}"; do
 		[[ ${r_qpkg_name[$i]} = "$a" ]] || continue
-		${r_qpkg_can_clean[$i]} && return 0 || break
+
+		if ${r_qpkg_can_clean[$i]}; then
+			return 0
+		else
+			break
+		fi
 	done
 
 	return 1
@@ -14524,7 +14489,12 @@ IsQpkgDbWillLog()
 
 	for i in "${!r_qpkg_name[@]}"; do
 		[[ ${r_qpkg_name[$i]} = "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}" ]] || continue
-		${r_qpkg_will_log[$i]} && return 0 || break
+
+		if ${r_qpkg_will_log[$i]}; then
+			return 0
+		else
+			break
+		fi
 	done
 
 	return 1
@@ -14670,7 +14640,7 @@ IsQpkgProhibited()
 	# Outputs: (local)
 	#	$? = true/false
 
-	local re=\\b${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}\\b			# bash 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
+	local re=\\b${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}\\b	# bash 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
 
 	[[ ${r_qpkgs_name_prohibited[*]} =~ $re ]]
 
@@ -14827,18 +14797,18 @@ IsQpkgSigned()
 import sqlite3, sys
 
 try:
-    sqliteConnection = sqlite3.connect('$r_cert_db_pathfile')			# ignore-leader
+    sqliteConnection = sqlite3.connect('$r_cert_db_pathfile')	# directive:ignore-leader
 
-    cursor = sqliteConnection.cursor()									# ignore-leader
-    sqlite_select_query = """$a"""										# ignore-leader
-    cursor.execute(sqlite_select_query)									# ignore-leader
-    records = cursor.fetchall()											# ignore-leader
-    sys.exit(len(records) == 0)											# ignore-leader
-    cursor.close()														# ignore-leader
+    cursor = sqliteConnection.cursor()							# directive:ignore-leader
+    sqlite_select_query = """$a"""								# directive:ignore-leader
+    cursor.execute(sqlite_select_query)							# directive:ignore-leader
+    records = cursor.fetchall()									# directive:ignore-leader
+    sys.exit(len(records) == 0)									# directive:ignore-leader
+    cursor.close()												# directive:ignore-leader
 
 finally:
-    if sqliteConnection:												# ignore-leader
-        sqliteConnection.close()										# ignore-leader
+    if sqliteConnection:										# directive:ignore-leader
+        sqliteConnection.close()								# directive:ignore-leader
 EOB
 
 	/usr/local/bin/python2 -c "$b"
@@ -14897,13 +14867,6 @@ IsVerbose()
 
 	}
 
-#IsNtVerbose()
-#	{
-#
-#	! IsVerbose
-#
-#	}
-
 IsAnsiStrippingSupported()
 	{
 
@@ -14911,7 +14874,7 @@ IsAnsiStrippingSupported()
 
 	if IsOsSedExtRegexSupported; then
 		true
-	elif [[ -x /opt/bin/sed && -L /opt/etc/passwd ]]; then				# Try to ensure Entware is active first.
+	elif [[ -x /opt/bin/sed && -L /opt/etc/passwd ]]; then		# Try to ensure Entware is active first.
 		true
 	else
 		false
@@ -15172,7 +15135,7 @@ ConfirmVarIsDefined()
 	#	$2 = test variable value.
 	#	$3 = error message reason shown if empty or undefined.
 
-	local -i backdepth=1			# 0 = this function, 1 = calling function, etc...
+	local -i backdepth=1	# 0 = this function, 1 = calling function, etc...
 
 	local first=${1:-undefined}
 	local second=${2:-undefined}
@@ -15194,7 +15157,7 @@ FileCountAll()
 
 	[[ -n ${1:-} ]] || return
 
-	compgen -G "$1/*" | /usr/bin/wc -l | /bin/sed 's/^ *//'				# `compgen` usage found here: https://stackoverflow.com/a/6364244
+	compgen -G "$1/*" | /usr/bin/wc -l | /bin/sed 's/^ *//'		# `compgen` usage found here: https://stackoverflow.com/a/6364244
 
 	}
 
@@ -15208,12 +15171,12 @@ FileCountSpec()
 
 	[[ -n ${1:-} ]] || return
 
-	compgen -G "$1" | /usr/bin/wc -l | /bin/sed 's/^ *//'				# `compgen` usage found here: https://stackoverflow.com/a/6364244
+	compgen -G "$1" | /usr/bin/wc -l | /bin/sed 's/^ *//'		# `compgen` usage found here: https://stackoverflow.com/a/6364244
 
 	}
 
-PidLogger()																# omit-from-production
-	{																	# omit-from-production
+PidLogger()														# directive:omit-from-production
+	{															# directive:omit-from-production
 
 	# Inputs: (local)
 	#	$1 = stage descriptor.
@@ -15221,19 +15184,19 @@ PidLogger()																# omit-from-production
 	#	$3 = PPID.
 	#	$4 = command string.
 
-	local a=/share/Public/PidLogger.log									# omit-from-production
+	local a=/share/Public/PidLogger.log							# directive:omit-from-production
 
-	if [[ -z ${1:-} ]]; then											# omit-from-production
-		echo >> "$a"													# omit-from-production
+	if [[ -z ${1:-} ]]; then									# directive:omit-from-production
+		echo >> "$a"											# directive:omit-from-production
 
-		return															# omit-from-production
-	fi																	# omit-from-production
+		return													# directive:omit-from-production
+	fi															# directive:omit-from-production
 
-	printf "[%s] stage: '%-20s' ppid: '%-5s' pid: '%-5s' cmd: '%s'\n" "$(date)" "$1" "$3" "$2" "$4" >> "$a" # omit-from-production
-# printf "[%s] stage: '%-20s' pid: '%-5s' cmdline: '%s'\n" "$(date)" "$1" "$2" "$(tr '\0' ' ' < /proc/$2/cmdline)" >> $r_sys_log_path/sherpa/pids/PidLogger-pid-$2.log # omit-from-production
-# printf "[%s] stage: '%-20s' ppid: '%-5s' cmdline: '%s'\n" "$(date)" "$1" "$3" "$(tr '\0' ' ' < /proc/$3/cmdline)" >> $r_sys_log_path/sherpa/pids/PidLogger-pid-$3.log # omit-from-production
+	printf "[%s] stage: '%-20s' ppid: '%-5s' pid: '%-5s' cmd: '%s'\n" "$(date)" "$1" "$3" "$2" "$4" >> "$a"		# directive:omit-from-production
+# printf "[%s] stage: '%-20s' pid: '%-5s' cmdline: '%s'\n" "$(date)" "$1" "$2" "$(tr '\0' ' ' < /proc/$2/cmdline)" >> $r_sys_log_path/sherpa/pids/PidLogger-pid-$2.log	# directive:omit-from-production
+# printf "[%s] stage: '%-20s' ppid: '%-5s' cmdline: '%s'\n" "$(date)" "$1" "$3" "$(tr '\0' ' ' < /proc/$3/cmdline)" >> $r_sys_log_path/sherpa/pids/PidLogger-pid-$3.log	# directive:omit-from-production
 
-	}																	# omit-from-production
+	}															# directive:omit-from-production
 
 Executer()
 	{
@@ -15274,7 +15237,7 @@ Executer()
 
 	local -r r_log_pathfile
 
-	if IsHaveSingleQuote "$a"; then										# Change display quotes depending-on content quote chars.
+	if IsHaveSingleQuote "$a"; then		# Change display quotes depending-on content quote chars.
 		exec_msg+=" \"$a\""
 	else
 		exec_msg+=" '$a'"
@@ -15305,9 +15268,9 @@ Executer()
 	if [[ -s $r_log_pathfile ]]; then
 		ShowAsResultAndStdout "$z" "$(< "$r_log_pathfile")" >> "$2"
 
-		if false; then													# omit-from-production
+		if false; then								# directive:omit-from-production
 			rm -f "$r_log_pathfile" 2> /dev/null
-		fi																# omit-from-production
+		fi											# directive:omit-from-production
 	else
 		ShowAsResultAndStdout "$z" '<null>' >> "$2"
 	fi
@@ -15322,9 +15285,9 @@ Executer()
 
 			DebugAsDone "$exec_msg OK ($z)"
 
-			if false; then												# omit-from-production
+			if false; then							# directive:omit-from-production
 				IsNtDebug && rm -f "$2" 2> /dev/null
-			fi															# omit-from-production
+			fi										# directive:omit-from-production
 			;;
 		"${4:-}")
 			if [[ ${3:-} != log:failure-only ]] || IsDebug; then
@@ -15333,9 +15296,9 @@ Executer()
 
 			DebugAsWarn "$exec_msg with permitted errors ($z)"
 
-			if false; then												# omit-from-production
+			if false; then							# directive:omit-from-production
 				IsNtDebug && rm -f "$2" 2> /dev/null
-			fi															# omit-from-production
+			fi										# directive:omit-from-production
 			;;
 		*)
 			AddExtLogToSessLog "$2"
@@ -15366,36 +15329,36 @@ KludgeExecuter()
 
 	a=$(tr -s ' ' <<< "$1")
 
-	if [[ $useropt_verbose = true ]]; then
-		eval "$a 2>&1 | /usr/bin/tee $2" &					# Force background process here, and capture PID. NOTE: stdout is buffered here.
+	if IsVerbose; then
+		eval "$a 2>&1 | /usr/bin/tee $2" &				# Force background process here, and capture PID. NOTE: stdout is buffered here.
 	else
-		eval "$a" > "$2" 2>&1 &								# Force background process here, and capture PID.
+		eval "$a" > "$2" 2>&1 &							# Force background process here, and capture PID.
 	fi
 
 	pid=$!
 
-	PidLogger												# omit-from-production
-	PidLogger pre-background-wait "$pid" "$PPID" "$a"		# omit-from-production
+	PidLogger											# directive:omit-from-production
+	PidLogger pre-background-wait "$pid" "$PPID" "$a"	# directive:omit-from-production
 
 	if [[ $pid -gt 1 ]]; then
 		wait $pid 2> /dev/null
 		z=$?
 	fi
 
-	PidLogger post-background-wait "$pid" "$PPID" "$a"		# omit-from-production
-	PidLogger pre-detached-wait "$pid" "$PPID" "$a"			# omit-from-production
+	PidLogger post-background-wait "$pid" "$PPID" "$a"	# directive:omit-from-production
+	PidLogger pre-detached-wait "$pid" "$PPID" "$a"		# directive:omit-from-production
 
 	pid=$(FindPid '/bin/sh' "$r_local_pathfile")
 
 	# If $pid = 0 then process isn't running.
 
-	if [[ $pid -gt 1 ]]; then								# Process has been detached.
+	if [[ $pid -gt 1 ]]; then							# Process has been detached.
 		while [[ -e /proc/$pid ]]; do
 			sleep .5
 		done
 	fi
 
-	PidLogger post-detached-wait "$pid" "$PPID" "$a"		# omit-from-production
+	PidLogger post-detached-wait "$pid" "$PPID" "$a"	# directive:omit-from-production
 
 	FuncExit $z
 
@@ -15464,9 +15427,9 @@ SortNames()
 	local c=''
 	local d=''
 
-	if (/usr/bin/sort -f < /dev/null &> /dev/null); then		# Only use the ignore-case option '-f' if supported by 'sort'.
+	if (/usr/bin/sort -f < /dev/null &> /dev/null); then	# Only use the ignore-case option '-f' if supported by 'sort'.
 		tr ' ' '\n' <<< "$1" | /usr/bin/sort -f | /bin/uniq | tr '\n' ' '
-	else														# If only basic 'sort' is available, sort the hard-way.
+	else													# If only basic 'sort' is available, sort the hard-way.
 		a=$(tr ' ' '\n' <<< "$(Lowercase "$1")" | /usr/bin/sort | /bin/uniq | tr '\n' ' ')
 
 		for b in $a; do
@@ -15557,7 +15520,7 @@ Capitalise()
 
 	[[ -n ${1:-} ]] || return
 
-	if [[ $1 == sherpa* ]]; then				# 'sherpa' is stylised in all lowercase, so don't capitalise it.
+	if [[ $1 == sherpa* ]]; then	# 'sherpa' is stylised in all lowercase, so don't capitalise it.
 		printf '%s' "$1"
 	else
 		printf '%s' "$(Uppercase ${1:0:1})${1:1}"
@@ -15568,7 +15531,7 @@ Capitalise()
 Parenthesise()
 	{
 
-	printf '(%s)' "${1:-}"		# Allow empty $1.
+	printf '(%s)' "${1:-}"			# Allow empty $1.
 
 	}
 
@@ -15660,7 +15623,7 @@ FormatAsThous()
 	local c=''
 
 	while [[ ${#a} -gt 0 ]]; do
-		b=${a:${#a}<3?0:-3}							# A nifty trick found here: https://stackoverflow.com/a/19858692
+		b=${a:${#a}<3?0:-3}			# A nifty trick found here: https://stackoverflow.com/a/19858692
 
 		if [[ -z $c ]]; then
 			c=$b
@@ -15669,7 +15632,7 @@ FormatAsThous()
 		fi
 
 		if [[ ${#b} -eq 3 ]]; then
-			a=${a%???}								# Trim rightside 3 characters.
+			a=${a%???}				# Trim rightside 3 characters.
 		else
 			break
 		fi
@@ -15727,12 +15690,12 @@ ShowAsTitleName()
 ShowTitleArt()
 	{
 
-	Display "$(TextBrightOrange '     _')"														# dont-squeeze
-	Display "$(TextBrightOrange ' ___| |__   ___ _ __ _ __   __ _')"							# dont-squeeze
-	Display "$(TextBrightOrange "/ __| '_ \ / _ \ '__| '_ \ / _\` |")  $(ShowAsDescription)"	# dont-squeeze
-	Display "$(TextBrightOrange '\__ \ | | |  __/ |  | |_) | (_| |')  $(ShowAsCopyrightBasic)"	# dont-squeeze
-	Display "$(TextBrightOrange '|___/_| |_|\___|_|  | .__/ \__,_|')  $(ShowAsVersion)"			# dont-squeeze
-	Display "$(TextBrightOrange '                    |_|')"										# dont-squeeze
+	Display "$(TextBrightOrange '     _')"														# directive:dont-squeeze
+	Display "$(TextBrightOrange ' ___| |__   ___ _ __ _ __   __ _')"							# directive:dont-squeeze
+	Display "$(TextBrightOrange "/ __| '_ \ / _ \ '__| '_ \ / _\` |")  $(ShowAsDescription)"	# directive:dont-squeeze
+	Display "$(TextBrightOrange '\__ \ | | |  __/ |  | |_) | (_| |')  $(ShowAsCopyrightBasic)"	# directive:dont-squeeze
+	Display "$(TextBrightOrange '|___/_| |_|\___|_|  | .__/ \__,_|')  $(ShowAsVersion)"			# directive:dont-squeeze
+	Display "$(TextBrightOrange '                    |_|')"										# directive:dont-squeeze
 
 	}
 
@@ -16411,23 +16374,32 @@ ConvertSecondsToTime()
 ConvertSecondsToDuration()
 	{
 
-	# http://stackoverflow.com/questions/12199631/convert-seconds-to-hours-minutes-seconds
+	# Adapted from http://stackoverflow.com/questions/12199631/convert-seconds-to-hours-minutes-seconds
 
 	# Inputs: (local)
-	#	$1 = a time in seconds to convert to 'HHh:MMm:SSs'
-	#		or if less than 1 hour, to 'MMm:SSs'
-	#		or if less than 1 minute, to 'S seconds'
-	#		or if less than 1 second, to '< 1 second'
+	#	$1 = an integer in seconds to convert to 'Dd:HHh:MMm:SSs'
+	#		or, if less than 1 day, to 'Hh:MMm:SSs'
+	#		or, if less than 1 hour, to 'Mm:SSs'
+	#		or, if less than 1 minute, to 'S seconds'
+	#		or, if less than 1 second, to '< 1 second'
 
+	local -i d=0
 	local -i h=0
 	local -i m=0
 	local -i s=0
 
-	((h=${1:-0}/3600))
-	((m=(${1:-0}%3600)/60))
-	((s=${1:-0}%60))
+#	((d=${1:-0}/86400))
+	d=${1:-0}/86400
+#	((h=(${1:-0}%86400)/3600))
+	h=${1:-0}%86400/3600
+#	((m=(${1:-0}%3600)/60))
+	m=${1:-0}%3600/60
+#	((s=${1:-0}%60))
+	s=${1:-0}%60
 
-	if [[ $h -ge 1 ]]; then
+	if [[ $d -ge 1 ]]; then
+		printf '%01dd:%02dh:%02dm:%02ds' "$d" "$h" "$m" "$s"
+	elif [[ $h -ge 1 ]]; then
 		printf '%01dh:%02dm:%02ds' "$h" "$m" "$s"
 	elif [[ $m -ge 1 ]]; then
 		printf '%01dm:%02ds' "$m" "$s"
@@ -16435,7 +16407,7 @@ ConvertSecondsToDuration()
 		printf "%d second$(Pluralise $s)" "$s"
 	else
 		s=1							# Never show zero seconds as a duration (bash isn't that fast).
-		printf '< %d second' "$s"	# dont-squeeze
+		printf '< %d second' "$s"	# directive:dont-squeeze
 	fi
 
 	} 2> /dev/null
@@ -16472,7 +16444,7 @@ ConvertMillisecondsToFuncDuration()
 	#	$1 = duration in milliseconds.
 
 	if [[ ${1:-0} -lt 30000 ]]; then
-		printf '%s' "$(FormatAsThous "${1:-0}")ms" | /usr/bin/tail -n1			# Prevent "broken pipe" error: https://superuser.com/a/642932
+		printf '%s' "$(FormatAsThous "${1:-0}")ms" | /usr/bin/tail -n1		# Prevent "broken pipe" error: https://superuser.com/a/642932
 	else
 		ConvertMillisecondsToDuration "$1"
 	fi
@@ -16637,6 +16609,38 @@ ConvertNowToNanoseconds()
 
 	} 2> /dev/null
 
+ConvertFirmwareVersionStringToNumber()
+	{
+
+	# Convert regular QTS version string into a number evaluable against another.
+	#	Example: '5.2.10' becomes '0502100000'
+	#	Example: '4.6.99.1234' becomes '0406991234'
+
+	# Output should be compared using forced base-10 syntax (to handle leading zeros):
+	#	Example: [[ $((10#$a)) -gt $((10#$b)) ]]
+
+	# Use only this many digits from start of each field.
+
+	# Outputs: (local)
+	#	stdout = 10 char string.
+
+	local -ir r_build_trim=4
+	local -ir r_intermediate_trim=2
+	local -ir r_major_trim=2
+	local -ir r_minor_trim=2
+
+	local -i intermediate=0
+	local -i major=0
+	local -i minor=0
+
+	local build=0
+
+	while IFS=. read -r major intermediate minor build; do
+		printf "%0${r_major_trim}d%0${r_intermediate_trim}d%0${r_minor_trim}d%0${r_build_trim}d" "$((10#${major:0:r_major_trim}))" "$((10#${intermediate:0:r_intermediate_trim}))" "$((10#${minor:0:r_minor_trim}))" "$((10#${build:0:r_build_trim}))"
+	done <<< "$1"
+
+	}
+
 DebugAsFuncEn()
 	{
 
@@ -16754,7 +16758,7 @@ AddExtLogToSessLog()
 	local a=''
 	local b=false
 
-	if [[ $useropt_verbose = true ]]; then		# Prevent external log contents appearing onscreen again, because they've already been seen live.
+	if IsVerbose; then		# Prevent external log contents appearing onscreen again, because they've already been seen live.
 		b=true
 		useropt_verbose=false
 	fi
@@ -16957,7 +16961,7 @@ ShowAsBug()
 	# Re-order FUNCNAME[] elements in-reverse.
 
 	for ((i=${#FUNCNAME[@]}-1; i>=0; i--)); do
-		[[ $i -ne $((${#FUNCNAME[@]}-1)) ]] && b+="${c}>${c}"		# Insert separators.
+		[[ $i -ne $((${#FUNCNAME[@]}-1)) ]] && b+="${c}>${c}"	# Insert separators.
 
 		if [[ ${FUNCNAME[$i]} = "$1" ]]; then
 			b+="${FUNCNAME[$i]}($2)"
@@ -17051,7 +17055,7 @@ PercFrac()
 
 	local c=''
 
-	[[ $b -gt 0 ]] || return		# No-point calculating a fraction of zero.
+	[[ $b -gt 0 ]] || return	# No-point calculating a fraction of zero.
 
 	if [[ $a -gt $b ]]; then
 		a=$b
@@ -17184,7 +17188,7 @@ OpStepClearWait()
 	# Inputs: (global)
 	#	$colourful
 
-	local -i n=4			# Width of the message type.
+	local -i n=4												# Width of the message type.
 
 	[[ ${colourful:=$r_colourful_default} = true ]] && n=10		# Allow extra length for ANSI codes in message type.
 
@@ -17206,7 +17210,7 @@ OpStepClear()
 	# Inputs: (global)
 	#	$colourful
 
-	local -i n=4			# Width of the message type.
+	local -i n=4						# Width of the message type.
 
 	[[ $colourful = true ]] && n=10		# Allow extra length for ANSI codes in message type.
 
@@ -17490,11 +17494,11 @@ StripANSICodes()
 	# QTS 4.2.6 BusyBox `sed` doesn't fully support extended-regexes, so code-stripping only works with a real `sed`.
 
 	if IsOsSedExtRegexSupported; then
-		echo -en "${1:-}" | /bin/sed -r 's/\x1b\[[0-9;]*m//g'			# https://superuser.com/a/380778
-	elif [[ -x /opt/bin/sed && -L /opt/etc/passwd ]]; then				# Try to ensure Entware is active first.
-		echo -en "${1:-}" | /opt/bin/sed -r 's/\x1b\[[0-9;]*m//g'		# https://superuser.com/a/380778
+		echo -en "${1:-}" | /bin/sed -r 's/\x1b\[[0-9;]*m//g'		# https://superuser.com/a/380778
+	elif [[ -x /opt/bin/sed && -L /opt/etc/passwd ]]; then			# Try to ensure Entware is active first.
+		echo -en "${1:-}" | /opt/bin/sed -r 's/\x1b\[[0-9;]*m//g'	# https://superuser.com/a/380778
 	else
-		echo -en "${1:-}"												# Can't strip, so pass thru original message unaltered.
+		echo -en "${1:-}"											# Can't strip, so pass thru original message unaltered.
 	fi
 
 	} 2> /dev/null
@@ -17793,10 +17797,10 @@ sleep()
 
 	if IsOsDecimalSleepSecondsSupported; then
 		/bin/sleep "$n"
-	elif [[ -x $r_gnu_sleep_cmd && -L /opt/etc/passwd ]]; then				# Try to ensure Entware is active first.
+	elif [[ -x $r_gnu_sleep_cmd && -L /opt/etc/passwd ]]; then		# Try to ensure Entware is active first.
 		$r_gnu_sleep_cmd "$n"
 	else
-		/bin/sleep "$((${n%.*}+1))"											# Ensure decimal seconds are rounded-up to next integer.
+		/bin/sleep "$((${n%.*}+1))"									# Ensure decimal seconds are rounded-up to next integer.
 	fi
 
 	return 0
@@ -18081,31 +18085,31 @@ LoadDatabase()
 
 	# Second, create an index 0 element for each array. This element is used to indicate no matching QPKG when searching array.
 
-	r_qpkg_abbrvs+=('')						# If set, this package is user-installable, and these abbreviations may be used to specify app.
-	r_qpkg_appl_author+=('')				# Name of the person or group maintaining the internal application.
-	r_qpkg_appl_author_email+=('')			# Email address for the internal application developer.
-	r_qpkg_appl_version+=('')				# The application version contained within this QPKG. QPKGs can update their own versions in 'qpkg.conf'. Use 'version' if the application version is the same as $r_qpkg_version.
-	r_qpkg_author+=('')						# Name of the person or group maintaining this QPKG.
-	r_qpkg_author_email+=('')				# Email address of the package maintainer.
-	r_qpkg_can_backup+=('')					# 'true'/'false': this QPKG service-script supports configuration 'backup' and 'restore' actions.
-	r_qpkg_can_clean+=('')					# 'true'/'false': the internal application can be cleaned and re-downloaded.
-	r_qpkg_can_restart_to_update+=('')		# 'true'/'false': the internal application can be updated by restarting the QPKG.
-	r_qpkg_conflicts_with+=('')				# Abort if these QPKGs are installed.
-	r_qpkg_depends_on+=('')					# Require these QPKGs to be installed first. Use 'none' if package is independent. Separate alternatives with '|'.
-	r_qpkg_description+=('')				# QPKG description.
-	r_qpkg_hash+=('')						# MD5 checksum.
-	r_qpkg_is_sherpa_compatible+=('')		# 'true'/'false': the service-script responds to enhanced sherpa actions.
-	r_qpkg_is_unique_unpack+=('')			# 'true'/'false': QPKG will self-extract contents to a unique path. Requires build with QDK 2.3.14 or-later.
-	r_qpkg_max_os_version+=('')				# The maximum QTS/QuTS version supported by this QPKG.
-	r_qpkg_min_os_version+=('')				# The minimum QTS/QuTS version supported by this QPKG.
-	r_qpkg_min_ram_kb+=('')					# QPKG requires at-least this much RAM installed in kiB. Use 'none' if no minimum.
-	r_qpkg_name+=('')						# Internal QPKG name.
-	r_qpkg_opt_depends_on+=('')				# Optionally use these QPKGs as dependencies, but only if they are installed. Don't install them as required dependencies. Use 'none' if package is independent. Separate alternatives with '|'.
-	r_qpkg_requires_ipks+=('')				# Require these IPKs to be installed first.
-	r_qpkg_test_for_active+=('')			# Test command-string to determine if this QPKG is active or inactive. Use 'builtin' if QPKG has its own status tests.
-	r_qpkg_url+=('')						# Remote URL.
-	r_qpkg_version+=('')					# QPKG version.
-	r_qpkg_will_log+=('')					# 'true'/'false': the service-script keeps a log of all actions.
+	r_qpkg_abbrvs+=('')					# If set, this package is user-installable, and these abbreviations may be used to specify app.
+	r_qpkg_appl_author+=('')			# Name of the person or group maintaining the internal application.
+	r_qpkg_appl_author_email+=('')		# Email address for the internal application developer.
+	r_qpkg_appl_version+=('')			# The application version contained within this QPKG. QPKGs can update their own versions in 'qpkg.conf'. Use 'version' if the application version is the same as $r_qpkg_version.
+	r_qpkg_author+=('')					# Name of the person or group maintaining this QPKG.
+	r_qpkg_author_email+=('')			# Email address of the package maintainer.
+	r_qpkg_can_backup+=('')				# 'true'/'false': this QPKG service-script supports configuration 'backup' and 'restore' actions.
+	r_qpkg_can_clean+=('')				# 'true'/'false': the internal application can be cleaned and re-downloaded.
+	r_qpkg_can_restart_to_update+=('')	# 'true'/'false': the internal application can be updated by restarting the QPKG.
+	r_qpkg_conflicts_with+=('')			# Abort if these QPKGs are installed.
+	r_qpkg_depends_on+=('')				# Require these QPKGs to be installed first. Use 'none' if package is independent. Separate alternatives with '|'.
+	r_qpkg_description+=('')			# QPKG description.
+	r_qpkg_hash+=('')					# MD5 checksum.
+	r_qpkg_is_sherpa_compatible+=('')	# 'true'/'false': the service-script responds to enhanced sherpa actions.
+	r_qpkg_is_unique_unpack+=('')		# 'true'/'false': QPKG will self-extract contents to a unique path. Requires build with QDK 2.3.14 or-later.
+	r_qpkg_max_os_version+=('')			# The maximum QTS/QuTS version supported by this QPKG.
+	r_qpkg_min_os_version+=('')			# The minimum QTS/QuTS version supported by this QPKG.
+	r_qpkg_min_ram_kb+=('')				# QPKG requires at-least this much RAM installed in kiB. Use 'none' if no minimum.
+	r_qpkg_name+=('')					# Internal QPKG name.
+	r_qpkg_opt_depends_on+=('')			# Optionally use these QPKGs as dependencies, but only if they are installed. Don't install them as required dependencies. Use 'none' if package is independent. Separate alternatives with '|'.
+	r_qpkg_requires_ipks+=('')			# Require these IPKs to be installed first.
+	r_qpkg_test_for_active+=('')		# Test command-string to determine if this QPKG is active or inactive. Use 'builtin' if QPKG has its own status tests.
+	r_qpkg_url+=('')					# Remote URL.
+	r_qpkg_version+=('')				# QPKG version.
+	r_qpkg_will_log+=('')				# 'true'/'false': the service-script keeps a log of all actions.
 
 	# Third, source remaining elements from packages file.
 

@@ -8,6 +8,7 @@ echo -n 'building archives ... '
 
 declare -a a
 declare -a b
+
 declare -i i=0
 
 a+=($support_path/$objects_file)
@@ -29,10 +30,10 @@ for i in "${!a[@]}"; do
 	fi
 
  	tar --create --gzip --numeric-owner --file="${b[i]}" --directory="$support_path" "$(basename "${a[i]}")"
-# 	tar --create --bzip2 --numeric-owner --file="${b[i]}" --directory="$support_path" "$(basename "${a[i]}")"
 
 	if [[ ! -s ${b[i]} ]]; then
 		TextBrightRed "'${b[i]}' was not written"; echo
+
 		exit 1
 	fi
 
@@ -41,4 +42,5 @@ for i in "${!a[@]}"; do
 done
 
 ShowDone
+
 exit 0

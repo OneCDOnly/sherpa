@@ -3,6 +3,7 @@
 . $HOME/scripts/nas/sherpa/support/environment.sourced || exit
 
 declare -a a
+
 declare -i i=0
 
 a+=($support_path/$objects_file)
