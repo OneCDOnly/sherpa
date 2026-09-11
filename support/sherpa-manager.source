@@ -510,7 +510,7 @@ LoadEnv()
 
 	local default_vol_mount_point=''
 
-	args=()
+	a_args=()
 	args_incomplete=()
 	qpkg_index=0
 	r_entware_type=$(GetQpkgEntwareType)
@@ -2159,7 +2159,7 @@ PrepareArgs()
 
 	# Outputs: (global)
 	#	$arg_problem
-	#	$args[]
+	#	$a_args[]
 	#	$useropt_help_basic
 
 	ShowAsProc args
@@ -2167,10 +2167,10 @@ PrepareArgs()
 	local a=''
 
 	a=$(Lowercase "${r_args_raw//,/ }")
-	args=(${a/--/})
+	a_args=(${a/--/})
 	arg_problem=false
 
-	DebugArray args ${args[@]+"${args[@]}"}		# directive:omit-from-production
+	DebugArray a_args ${a_args[@]+"${a_args[@]}"}		# directive:omit-from-production
 
 	[[ -z $r_args_raw ]] && useropt_help_basic=true
 
@@ -2183,11 +2183,11 @@ ParseManagementArgs()
 	#	scriptname [action] [groups] [options]
 
 	# Inputs: (global)
-	#	$args[]
+	#	$a_args[]
 	#	$args_incomplete[]
 
 	# Outputs: (global)
-	#	$args[]
+	#	$a_args[]
 	#	$args_incomplete[]
 	#	$generate_show_report
 	#	$get_qpkg_extended_states
@@ -2214,7 +2214,7 @@ ParseManagementArgs()
 	local requires_group=false
 	local user_action=''			# The original user argument, detected as an action. There may be many variants per-action.
 
-	for arg in ${args[@]+"${args[@]}"}; do
+	for arg in ${a_args[@]+"${a_args[@]}"}; do
 		[[ -n $arg ]] || continue
 
 		# Identify action.
@@ -2323,10 +2323,10 @@ ParseManagementArgs()
 		args_incomplete+=("$user_action")								# Save the actual action word, phrase or char specified by the user.
 	fi
 
-	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}	# directive:omit-from-production
+	DebugArray args_incomplete ${args_incomplete[*]+"${args_incomplete[*]}"}	# directive:omit-from-production
 
-	args=(${a_args_remaining[@]+"${a_args_remaining[@]}"})
-	DebugArray args ${args[@]+"${args[@]}"}										# directive:omit-from-production
+	a_args=(${a_args_remaining[@]+"${a_args_remaining[@]}"})
+	DebugArray a_args ${a_args[@]+"${a_args[@]}"}								# directive:omit-from-production
 
 	FuncExit
 
@@ -2339,11 +2339,11 @@ ParseHelpArgs()
 	#	scriptname [action] [groups] [options]
 
 	# Inputs: (global)
-	#	$args[]
+	#	$a_args[]
 	#	$args_incomplete[]
 
 	# Outputs: (global)
-	#	$args[]
+	#	$a_args[]
 	#	$args_incomplete[]
 
 	FuncInit
@@ -2359,7 +2359,7 @@ ParseHelpArgs()
 	local requires_group=false
 	local user_action=''			# The original user argument, detected as an action. There may be many variants per-action.
 
-	for arg in ${args[@]+"${args[@]}"}; do
+	for arg in ${a_args[@]+"${a_args[@]}"}; do
 		[[ -n $arg ]] || continue
 
 		# Identify action.
@@ -2496,7 +2496,7 @@ ParseHelpArgs()
 		args_incomplete+=("$user_action")								# Save the actual action word, phrase or char specified by the user.
 	fi
 
-	for arg in ${args_incomplete[@]+"${args_incomplete[@]}"}; do
+	for arg in ${args_incomplete[*]+"${args_incomplete[*]}"}; do
 		case $arg in
 			help)							# If `help` is specified without a valid group, then show basic help.
 				run_package_actions=false
@@ -2507,7 +2507,7 @@ ParseHelpArgs()
 				local a=''
 				local tmp=()
 
-				for a in ${args_incomplete[@]+"${args_incomplete[@]}"}; do
+				for a in ${args_incomplete[*]+"${args_incomplete[*]}"}; do
 					[[ $a != "$arg" ]] && tmp+=($a)
 				done
 
@@ -2521,10 +2521,10 @@ ParseHelpArgs()
 		esac
 	done
 
-	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}	# directive:omit-from-production
+	DebugArray args_incomplete ${args_incomplete[*]+"${args_incomplete[*]}"}	# directive:omit-from-production
 
-	args=(${a_args_remaining[@]+"${a_args_remaining[@]}"})
-	DebugArray args ${args[@]+"${args[@]}"}										# directive:omit-from-production
+	a_args=(${a_args_remaining[@]+"${a_args_remaining[@]}"})
+	DebugArray a_args ${a_args[@]+"${a_args[@]}"}								# directive:omit-from-production
 
 	FuncExit
 
@@ -2537,11 +2537,11 @@ ParseShowArgs()
 	#	scriptname [action] [groups] [options]
 
 	# Inputs: (global)
-	#	$args[]
+	#	$a_args[]
 	#	$args_incomplete[]
 
 	# Outputs: (global)
-	#	$args[]
+	#	$a_args[]
 	#	$args_incomplete[]
 
 	FuncInit
@@ -2557,7 +2557,7 @@ ParseShowArgs()
 	local requires_group=false
 	local user_action=''			# The original user argument, detected as an action. There may be many variants per-action.
 
-	for arg in ${args[@]+"${args[@]}"}; do
+	for arg in ${a_args[@]+"${a_args[@]}"}; do
 		[[ -n $arg ]] || continue
 
 		# Identify action.
@@ -2718,10 +2718,10 @@ ParseShowArgs()
 		args_incomplete+=("$user_action")								# Save the actual action word, phrase or char specified by the user.
 	fi
 
-	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}	# directive:omit-from-production
+	DebugArray args_incomplete ${args_incomplete[*]+"${args_incomplete[*]}"}	# directive:omit-from-production
 
-	args=(${a_args_remaining[@]+"${a_args_remaining[@]}"})
-	DebugArray args ${args[@]+"${args[@]}"}										# directive:omit-from-production
+	a_args=(${a_args_remaining[@]+"${a_args_remaining[@]}"})
+	DebugArray a_args ${a_args[@]+"${a_args[@]}"}								# directive:omit-from-production
 
 	FuncExit
 
@@ -2734,11 +2734,11 @@ ParseListArgs()
 	#	scriptname [action] [groups] [options]
 
 	# Inputs: (global)
-	#	$args[]
+	#	$a_args[]
 	#	$args_incomplete[]
 
 	# Outputs: (global)
-	#	$args[]
+	#	$a_args[]
 	#	$args_incomplete[]
 
 	FuncInit
@@ -2754,7 +2754,7 @@ ParseListArgs()
 	local requires_group=false
 	local user_action=''			# The original user argument, detected as an action. There may be many variants per-action.
 
-	for arg in ${args[@]+"${args[@]}"}; do
+	for arg in ${a_args[@]+"${a_args[@]}"}; do
 		[[ -n $arg ]] || continue
 
 		# Identify action.
@@ -2855,10 +2855,10 @@ ParseListArgs()
 	fi
 
 	DebugVar generate_list_report												# directive:omit-from-production
-	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}	# directive:omit-from-production
+	DebugArray args_incomplete ${args_incomplete[*]+"${args_incomplete[*]}"}	# directive:omit-from-production
 
-	args=(${a_args_remaining[@]+"${a_args_remaining[@]}"})
-	DebugArray args ${args[@]+"${args[@]}"}										# directive:omit-from-production
+	a_args=(${a_args_remaining[@]+"${a_args_remaining[@]}"})
+	DebugArray a_args ${a_args[@]+"${a_args[@]}"}								# directive:omit-from-production
 
 	FuncExit
 
@@ -2868,11 +2868,11 @@ ParseActionArgs()
 	{
 
 	# Inputs: (global)
-	#	$args[]
+	#	$a_args[]
 	#	$args_incomplete[]
 
 	# Outputs: (global)
-	#	$args[]
+	#	$a_args[]
 	#	$args_incomplete[]
 
 	FuncInit
@@ -2888,10 +2888,9 @@ ParseActionArgs()
 	local requires_group=false
 	local user_action=''			# The original user argument, detected as an action. There may be many variants per-action.
 
-	# shellcheck disable=2199
-	[[ -n ${args[@]+"${args[@]}"} ]] && LoadDatabase
+	[[ -n ${a_args[*]+"${a_args[*]}"} ]] && LoadDatabase
 
-	for arg in ${args[@]+"${args[@]}"}; do
+	for arg in ${a_args[@]+"${a_args[@]}"}; do
 		[[ -n $arg ]] || continue
 
 		# Identify action.
@@ -2986,7 +2985,7 @@ ParseActionArgs()
 		args_incomplete+=("$user_action")								# Save the actual action word, phrase or char specified by the user.
 	fi
 
-	for arg in ${args_incomplete[@]+"${args_incomplete[@]}"}; do
+	for arg in ${args_incomplete[*]+"${args_incomplete[*]}"}; do
 		action=$(MatchVerb $arg)
 
 		case $action in
@@ -3002,7 +3001,7 @@ ParseActionArgs()
 				local a=''
 				local tmp=()
 
-				for a in ${args_incomplete[@]+"${args_incomplete[@]}"}; do
+				for a in ${args_incomplete[*]+"${args_incomplete[*]}"}; do
 					[[ $a != "$arg" ]] && tmp+=($a)
 				done
 
@@ -3016,10 +3015,10 @@ ParseActionArgs()
 		esac
 	done
 
-	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}	# directive:omit-from-production
+	DebugArray args_incomplete ${args_incomplete[*]+"${args_incomplete[*]}"}	# directive:omit-from-production
 
-	args=(${a_args_remaining[@]+"${a_args_remaining[@]}"})
-	DebugArray args ${args[@]+"${args[@]}"}										# directive:omit-from-production
+	a_args=(${a_args_remaining[@]+"${a_args_remaining[@]}"})
+	DebugArray a_args ${a_args[@]+"${a_args[@]}"}								# directive:omit-from-production
 
 	FuncExit
 
@@ -3207,7 +3206,7 @@ ShowArgSuggestions()
 	{
 
 	# Inputs: (global)
-	#	$args[]
+	#	$a_args[]
 	#	$args_incomplete[]
 
 	# Outputs: (global)
@@ -3223,11 +3222,10 @@ ShowArgSuggestions()
 
 	CreateReportPaths
 
-	# shellcheck disable=2199
-	if [[ -n ${args_incomplete[@]+"${args_incomplete[@]}"} ]]; then
+	if [[ -n ${args_incomplete[*]+"${args_incomplete[*]}"} ]]; then
 		run_package_actions=false
 
-		for arg in ${args_incomplete[@]+"${args_incomplete[@]}"}; do
+		for arg in ${args_incomplete[*]+"${args_incomplete[*]}"}; do
 			case $arg in
 				?(de|re)activate|backup|clean|@(dis|en)able|@(dis|en)able-auto-update|reassign|@(re|un)install|?(re)start|restore|rm|sign|stop)
 					DisplayAsProjSynExam "please provide valid $(ShowAsPackages) or a $(ShowAsPackageGroup) after '$arg' like" "$arg installed"
@@ -3289,10 +3287,10 @@ ShowArgSuggestions()
 		fi
 	fi
 
-	if [[ ${#args[@]} -gt 0 ]]; then
+	if [[ ${#a_args[@]} -gt 0 ]]; then
 		run_package_actions=false
 
-		for arg in ${args[@]+"${args[@]}"}; do
+		for arg in ${a_args[@]+"${a_args[@]}"}; do
 			case $arg in
 				active|all|@(dis|en)abled|started)
 					DisplayAsProjSynExam "please provide a valid $(ShowAsAction) before '$arg' like" "deactivate $arg"
@@ -3379,7 +3377,7 @@ ShowArgSuggestions()
 
 	[[ -s $r_report_output_pathfile ]] && /bin/cat "$r_report_output_pathfile"
 
-	DebugArray args_incomplete ${args_incomplete[@]+"${args_incomplete[@]}"}
+	DebugArray args_incomplete ${args_incomplete[*]+"${args_incomplete[*]}"}
 	DebugArray a_args_remaining ${a_args_remaining[@]+"${a_args_remaining[@]}"}
 
 	FuncExit
@@ -13110,14 +13108,12 @@ GetQpkgDbDependents()
 	if QPKGs-GRindependent.Exist "$qpkg_name"; then
 		for i in "${!r_qpkg_name[@]}"; do
 			if [[ ${r_qpkg_depends_on[$i]} =~ $re ]]; then
-				# shellcheck disable=2199
-				[[ ${a_ar[@]+"${a_ar[@]}"} != "${r_qpkg_name[$i]}" ]] && a_ar+=(${r_qpkg_name[$i]})
+				[[ ${a_ar[*]+"${a_ar[*]}"} != "${r_qpkg_name[$i]}" ]] && a_ar+=(${r_qpkg_name[$i]})
 			fi
 		done
 	fi
 
-	# shellcheck disable=2199
-	if [[ -n ${a_ar[@]+"${a_ar[@]}"} ]]; then
+	if [[ -n ${a_ar[*]+"${a_ar[*]}"} ]]; then
 		printf '%s' "${a_ar[*]}"
 
 		return 0
@@ -13151,14 +13147,12 @@ GetQpkgDbOptionals()
 	if QPKGs-GRoptional.Exist "$qpkg_name"; then
 		for i in "${!r_qpkg_name[@]}"; do
 			if [[ ${r_qpkg_opt_depends_on[$i]} =~ $re ]]; then
-				# shellcheck disable=2199
-				[[ ${a_ar[@]+"${a_ar[@]}"} != "${r_qpkg_name[$i]}" ]] && a_ar+=(${r_qpkg_name[$i]})
+				[[ ${a_ar[*]+"${a_ar[*]}"} != "${r_qpkg_name[$i]}" ]] && a_ar+=(${r_qpkg_name[$i]})
 			fi
 		done
 	fi
 
-	# shellcheck disable=2199
-	if [[ -n ${a_ar[@]+"${a_ar[@]}"} ]]; then
+	if [[ -n ${a_ar[*]+"${a_ar[*]}"} ]]; then
 		printf '%s' "${a_ar[*]}"
 
 		return 0
@@ -14360,7 +14354,12 @@ IsQpkgDbCanRestartToUpdate()
 
 	for i in "${!r_qpkg_name[@]}"; do
 		[[ ${r_qpkg_name[$i]} = "$a" ]] || continue
-		${r_qpkg_can_restart_to_update[$i]} && return 0 || break
+
+		if ${r_qpkg_can_restart_to_update[$i]}; then
+			return 0
+		else
+			break
+		fi
 	done
 
 	return 1
@@ -14387,7 +14386,12 @@ IsQpkgDbCanClean()
 
 	for i in "${!r_qpkg_name[@]}"; do
 		[[ ${r_qpkg_name[$i]} = "$a" ]] || continue
-		${r_qpkg_can_clean[$i]} && return 0 || break
+
+		if ${r_qpkg_can_clean[$i]}; then
+			return 0
+		else
+			break
+		fi
 	done
 
 	return 1
@@ -14485,7 +14489,12 @@ IsQpkgDbWillLog()
 
 	for i in "${!r_qpkg_name[@]}"; do
 		[[ ${r_qpkg_name[$i]} = "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}" ]] || continue
-		${r_qpkg_will_log[$i]} && return 0 || break
+
+		if ${r_qpkg_will_log[$i]}; then
+			return 0
+		else
+			break
+		fi
 	done
 
 	return 1
