@@ -289,7 +289,7 @@ LoadConsts()
 		if true; then										# directive:omit-from-production
 			readonly r_debug_log_first_column_width=10		# directive:omit-from-production
 			readonly r_debug_log_second_column_width=26		# directive:omit-from-production
-			readonly r_debug_log_width=80					# directive:omit-from-production
+			readonly r_debug_log_width=99					# directive:omit-from-production
 		else												# directive:omit-from-production
 			readonly r_debug_log_first_column_width='<?debug_log_first_column_width?>'
 			readonly r_debug_log_second_column_width='<?debug_log_second_column_width?>'
@@ -15912,7 +15912,7 @@ DebugInfoMajSepr()
 	# Inputs: (global)
 	#	$r_debug_log_width
 
-	DebugInfo "$(eval printf '%0.s=' "{1..$r_debug_log_width}")"	# `seq` is unavailable in QTS, so must resort to `eval` trickery instead.
+	DebugInfo "$(eval printf '%0.s═' "{1..$r_debug_log_width}")"	# `seq` is unavailable in QTS, so must resort to `eval` trickery instead.
 
 	}
 
@@ -15924,7 +15924,7 @@ DebugInfoMinSepr()
 	# Inputs: (global)
 	#	$r_debug_log_width
 
-	DebugInfo "$(eval printf '%0.s-' "{1..$r_debug_log_width}")"	# `seq` is unavailable in QTS, so must resort to `eval` trickery instead.
+	DebugInfo "$(eval printf '%0.s─' "{1..$r_debug_log_width}")"	# `seq` is unavailable in QTS, so must resort to `eval` trickery instead.
 
 	}
 
@@ -15936,7 +15936,7 @@ DebugExtLogMinSepr()
 	# Inputs: (global)
 	#	$r_debug_log_width
 
-	DebugAsLog "$(eval printf '%0.s-' "{1..$r_debug_log_width}")"	# `seq` is unavailable in QTS, so must resort to `eval` trickery instead.
+	DebugAsLog "$(eval printf '%0.s─' "{1..$r_debug_log_width}")"	# `seq` is unavailable in QTS, so must resort to `eval` trickery instead.
 
 	}
 
