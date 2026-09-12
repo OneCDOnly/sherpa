@@ -222,6 +222,8 @@ LoadConsts()
 
 	# Error messages.
 
+		readonly e_inurl='invalid URL'
+
 		readonly e_noact='undefined action'
 		readonly e_nochk='undefined checksum'
 		readonly e_nocmd='undefined command'
@@ -13627,6 +13629,34 @@ IsFileNewer()
 
 	}
 
+IsUrl()
+	{
+
+	# Inputs: (local)
+	#	$1 = URL to check.
+
+	# Outputs: (local)
+	#	$? = 0 (valid) or 1 (invalid).
+
+	[[ -n ${1:?${FUNCNAME[0]}(): $e_nourl} ]] || return
+
+	[[ $(Lowercase "$1") == http* ]]
+
+	}
+
+IsNtUrl()
+	{
+
+	# Inputs: (local)
+	#	$1 = URL to check.
+
+	# Outputs: (local)
+	#	$? = 0 (invalid) or 1 (valid).
+
+	! IsUrl "${1:?${FUNCNAME[0]}(): $e_nourl}"
+
+	}
+
 IsEntwareUpgradable()
 	{
 
@@ -17938,8 +17968,13 @@ RefreshArchive()
 	if [[ $download = true ]]; then
 		DebugAsProc "download '$archive_name' archive"
 		DebugVar archive_url
-		IsOsCanSecureDownload || curl_insecure_opt=' --insecure'
-		/sbin/curl --silent --location --fail $curl_insecure_opt "$archive_url" > "$archive_pathfile" 2> /dev/null
+
+		if IsUrl "$archive_url"; then
+			IsOsCanSecureDownload || curl_insecure_opt=' --insecure'
+			/sbin/curl --silent --location --fail $curl_insecure_opt "$archive_url" > "$archive_pathfile" 2> /dev/null
+		else
+			DebugAsWarn "$e_inurl"
+		fi
 
 		if IsFile "$archive_pathfile"; then
 			DebugAsDone "download '$archive_name' archive OK"
