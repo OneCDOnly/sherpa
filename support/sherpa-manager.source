@@ -3464,7 +3464,7 @@ AllocPackStatesToAcs()
 
 	FuncInit
 
-	ShowAsProc 'package states'
+	ShowAsProc 'late package states'
 
 	local action=''
 	local check_later=false
@@ -7987,7 +7987,7 @@ RefreshAndStoreQPKGsStates()
 
 	qpkg_name=''
 
-	ShowAsProc 'package states'
+	ShowAsProc 'early package states'
 
 	# Faster to launch several concurrent loops async than a single loop. Launch those requiring more processing-time first.
 
