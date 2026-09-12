@@ -13,25 +13,43 @@ target=$support_path/$objects_file
 
 # Sorted.
 
-r_qpkg_basic_states=(complete enabled installed)
-r_qpkg_extended_states=(active backedup downloaded installable missing signed upgradable)
-r_qpkg_transient_states=(restarting slow starting stopping unknown)
-	r_qpkg_is_states=(${r_qpkg_basic_states[*]} ${r_qpkg_extended_states[*]} ${r_qpkg_transient_states[*]})
-	r_qpkg_isnt_states=(${r_qpkg_basic_states[*]} ${r_qpkg_extended_states[*]} ${r_qpkg_transient_states[*]})
-r_qpkg_is_groups=(all canbackup canclean canrestarttoupdate dependent hasdependents independent optional)
-r_qpkg_isnt_groups=(canclean)
-r_qpkg_service_results=(failed ok)
+ar_qpkg_basic_states=(complete enabled installed)
+ar_qpkg_extended_states=(active backedup downloaded installable missing signed upgradable)
+ar_qpkg_transient_states=(restarting slow starting stopping unknown)
+	ar_qpkg_is_states=(${ar_qpkg_basic_states[*]} ${ar_qpkg_extended_states[*]} ${ar_qpkg_transient_states[*]})
+	ar_qpkg_isnt_states=(${ar_qpkg_basic_states[*]} ${ar_qpkg_extended_states[*]} ${ar_qpkg_transient_states[*]})
+ar_qpkg_is_groups=(all canbackup canclean canrestarttoupdate dependent hasdependents independent optional)
+ar_qpkg_isnt_groups=(canclean)
+ar_qpkg_service_results=(failed ok)
 
 # Ordered.
 
-r_qpkg_actions=(status list rebuild reassign download backup resign unsign deactivate disable uninstall update upgrade reinstall install enableau disableau sign restore clean enable activate reactivate)
-r_ipk_actions=(downgrade download uninstall upgrade install)
-r_pip_actions=(uninstall upgrade install)
+ar_qpkg_actions=(status list rebuild reassign download backup resign unsign deactivate disable uninstall update upgrade reinstall install enableau disableau sign restore clean enable activate reactivate)
+ar_ipk_actions=(downgrade download uninstall upgrade install)
+ar_pip_actions=(uninstall upgrade install)
 
 # These actions may be specified by the user.
 # Sorted.
 
-r_user_qpkg_actions=(activate backup clean deactivate disable disableau enable enableau install list reactivate reassign rebuild reinstall resign restore status uninstall update upgrade)
+ar_user_qpkg_actions=(activate backup clean deactivate disable disableau enable enableau install list reactivate reassign rebuild reinstall resign restore status uninstall update upgrade)
+
+declare -ar ar_package_tiers
+declare -ar ar_qpkg_tiers
+
+declare -ar ar_qpkg_basic_states
+declare -ar ar_qpkg_extended_states
+declare -ar ar_qpkg_is_groups
+declare -ar ar_qpkg_is_states
+declare -ar ar_qpkg_isnt_groups
+declare -ar ar_qpkg_isnt_states
+declare -ar ar_qpkg_service_results
+declare -ar ar_qpkg_transient_states
+
+declare -ar ar_qpkg_actions
+declare -ar ar_ipk_actions
+declare -ar ar_pip_actions
+
+declare -ar ar_user_qpkg_actions
 
 AddFlagObj()
 	{
@@ -39,15 +57,15 @@ AddFlagObj()
 	# Inputs: (local)
 	#	$1 = object name to create.
 	#	$2 = set flag state on init (optional) default is 'false'.
-	#	$3 = set 'log boolean changes' on init (optional) default is 'true'.
+# 	#	$3 = set 'log boolean changes' on init (optional) default is 'true'.
 
 	local public_function_name=${1:?no object name supplied}
 	local safe_function_name=$(tr '[:upper:]' '[:lower:]' <<< "${public_function_name//[.-]/_}")
 	local state_default=${2:-false}
-	local state_logmods=${3:-true}
+# 	local state_logmods=${3:-true}
 
 	_placeholder_main_flag_=o_f${safe_function_name}
-	_placeholder_log_changes_flag_=o_c${safe_function_name}
+# 	_placeholder_log_changes_flag_=o_c${safe_function_name}
 
 # NOTE: quoting below is inside-out.
 
@@ -55,7 +73,7 @@ echo $public_function_name':Init()
 	{
 
 	'$_placeholder_main_flag_'='$state_default'
-	'$_placeholder_log_changes_flag_'='$state_logmods'
+# 	'$_placeholder_log_changes_flag_'='$state_logmods'
 
 	}
 
@@ -71,7 +89,7 @@ echo $public_function_name':Init()
 
 	$'$_placeholder_main_flag_' && return
 	'$_placeholder_main_flag_'=true
-	$'$_placeholder_log_changes_flag_' && DebugVar '$_placeholder_main_flag_'
+# 	$'$_placeholder_log_changes_flag_' && DebugVar '$_placeholder_main_flag_'
 
 	}
 
@@ -211,8 +229,8 @@ echo "#* <?dont_edit?>" >> "$target"
 
 # package action flag objects.
 
-for action in "${r_user_qpkg_actions[@]}"; do
-	for state in "${r_qpkg_is_states[@]}"; do
+for action in "${ar_user_qpkg_actions[@]}"; do
+	for state in "${ar_qpkg_is_states[@]}"; do
 		case $state in
 			downloaded)
 				continue
@@ -222,7 +240,7 @@ for action in "${r_user_qpkg_actions[@]}"; do
 		esac
 	done
 
-	for state in "${r_qpkg_isnt_states[@]}"; do
+	for state in "${ar_qpkg_isnt_states[@]}"; do
 		case $state in
 			downloaded)
 				continue
@@ -232,40 +250,40 @@ for action in "${r_user_qpkg_actions[@]}"; do
 		esac
 	done
 
-	for group in "${r_qpkg_is_groups[@]}"; do
+	for group in "${ar_qpkg_is_groups[@]}"; do
 		AddFlagObj QPKGs.AC"$action"GR"$group"
 	done
 
-	for group in "${r_qpkg_isnt_groups[@]}"; do
+	for group in "${ar_qpkg_isnt_groups[@]}"; do
 		AddFlagObj QPKGs.AC"$action"GRNT"$group"
 	done
 done
 
 # session list objects.
 
-for action in "${r_qpkg_actions[@]}"; do
+for action in "${ar_qpkg_actions[@]}"; do
 	for prefix in to ok er sk so se sa dn; do		# 'to-do', 'done ok', 'done error', 'skipped', 'skipped-but-ok', 'skipped-with-error', 'skipped-with-abort', 'done' (all processed QPKGs are placed in the 'done' list, as-well as the regular exit status lists).
 		AddListObj "QPKGs-AC${action}-${prefix}"
 	done
 done
 
-for state in "${r_qpkg_is_states[@]}" "${r_qpkg_service_results[@]}"; do
+for state in "${ar_qpkg_is_states[@]}" "${ar_qpkg_service_results[@]}"; do
 	AddListObj QPKGs-IS"$state"
 done
 
-for state in "${r_qpkg_isnt_states[@]}" "${r_qpkg_service_results[@]}"; do
+for state in "${ar_qpkg_isnt_states[@]}" "${ar_qpkg_service_results[@]}"; do
 	AddListObj QPKGs-ISNT"$state"
 done
 
-for group in "${r_qpkg_is_groups[@]}"; do
+for group in "${ar_qpkg_is_groups[@]}"; do
 	AddListObj QPKGs-GR"$group"
 done
 
-for group in "${r_qpkg_isnt_groups[@]}"; do
+for group in "${ar_qpkg_isnt_groups[@]}"; do
 	AddListObj QPKGs-GRNT"$group"
 done
 
-for action in "${r_ipk_actions[@]}"; do
+for action in "${ar_ipk_actions[@]}"; do
 	[[ $action != list ]] || continue
 
 	for prefix in to ok er sk; do
@@ -273,7 +291,7 @@ for action in "${r_ipk_actions[@]}"; do
 	done
 done
 
-for action in "${r_pip_actions[@]}"; do
+for action in "${ar_pip_actions[@]}"; do
 	[[ $action != list ]] || continue
 
 	for prefix in to ok er; do

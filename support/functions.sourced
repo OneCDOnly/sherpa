@@ -65,10 +65,11 @@ SwapTags()
 		a=$(sed "s|<?tested?>|${tested_msg//$'\n'/\\n}|g" <<< "$a")						# Escape newlines.
 		a=$(sed "s|<?notes?>|${notes_msg//$'\n'/\\n}|g" <<< "$a")						# Escape newlines.
 		a=$(sed "s|<?license?>|${license_msg//$'\n'/\\n}|g" <<< "$a")					# Escape newlines.
+
 		a=$(sed "s|'<?build_date?>'|$build_date|g" <<< "$a")
-		a=$(sed "s|<?build_date?>|$build_date|g" <<< "$a")
 		a=$(sed "s|<?build_year?>|$build_year|g" <<< "$a")
 		a=$(sed "s|'<?manager_epoch?>'|$manager_epoch|g" <<< "$a")
+		a=$(sed "s|'<?manager_version?>'|$manager_version|g" <<< "$a")
 		a=$(sed "s|<?objects_epoch?>|$objects_epoch|g" <<< "$a")
 		a=$(sed "s|'<?packages_epoch?>'|$packages_epoch|g" <<< "$a")
 		a=$(sed "s|'<?package_release_version?>'|${package_release_version:-testing}|" <<< "$a")
@@ -119,6 +120,10 @@ Squeeze()
 		a=$(sed '/[#<][[:space:]]</! s/[[:space:]]</</g' <<< "$a")			# Remove whitespace before fd0 redirects.
 		a=$(sed '/directive:dont-squeeze/! s/<[[:space:]]/</g' <<< "$a")	# Remove whitespace after fd0 redirects, except for lines with 'directive:dont-squeeze' tag.
 
+		a=$(sed '/directive:dont-squeeze/! s/[[:space:]]|[[:space:]]/|/g' <<< "$a")		# Remove whitespace before-and-after pipe, except for lines with 'directive:dont-squeeze' tag.
+
+		a=$(sed '/directive:ignore-leader/! s/^[[:space:]]*//' <<< "$a")	# Remove leading line whitespace, except for lines with 'directive:ignore-leader' tag.
+
 		a=$(sed 's/\;[[:space:]]/;/g' <<< "$a")								# Remove whitespace after semicolons.
 		a=$(sed 's/[[:space:]]\;/;/g' <<< "$a")								# Remove whitespace before semicolons.
 
@@ -141,10 +146,6 @@ Squeeze()
 		a=$(sed 's/[[:space:]]||z/||z/g' <<< "$a")							# Remove whitespace before inline false test followed by 'z'.
 
 		a=$(sed 's/[[:space:]]((/((/g' <<< "$a")							# Remove whitespace before inline arithmetic start.
-
-		a=$(sed '/directive:dont-squeeze/! s/[[:space:]]|[[:space:]]/|/g' <<< "$a")		# Remove whitespace before-and-after pipe, except for lines with 'directive:dont-squeeze' tag.
-
-		a=$(sed '/directive:ignore-leader/! s/^[[:space:]]*//' <<< "$a")				# Remove leading line whitespace, except for lines with 'directive:ignore-leader' tag.
 
 		# CAUTION: comment tags are not seen beyond this point.
 
@@ -178,10 +179,10 @@ StripComments()
 	# A simpler version of Squeeze() only used when building package lists.
 
 	# Inputs: (local)
-	#   $1 = string to strip comment lines, empty lines, and so-on.
+	#	$1 = string to strip comment lines, empty lines, and so-on.
 
 	# Outputs: (local)
-	#   stdout = stripped string.
+	#	stdout = stripped string.
 
 	[[ -n $1 ]] || return
 
@@ -190,7 +191,7 @@ StripComments()
 	a=$(sed '/^#[[:space:]].*/d;/#$/d;s/[[:space:]]#[[:space:]].*//' <<< "$a")	# Remove comment lines and line comments.
 	a=$(sed 's/^[[:space:]]*//' <<< "$a")										# Remove leading whitespace.
 	a=$(sed 's/[[:space:]]*$//' <<< "$a")										# Remove trailing whitespace.
-# 	a=$(sed "/^$/d" <<< "$a")													# Remove empty lines.
+#	a=$(sed "/^$/d" <<< "$a")													# Remove empty lines.
 
 	echo "$a"
 
@@ -267,6 +268,31 @@ SortNames()
 	tr ' ' '\n' <<< "$1" | sort -f | uniq | tr '\n' ' '
 
 	}
+
+ConvertSecondsToDatecode()
+	{
+
+	# Convert supplied epoch-seconds into sherpa datecode.
+
+	# Inputs: (local)
+	#	$1 = Epoch seconds.
+
+	# Outputs: (local)
+	#	stdout = datecode.
+
+	[[ -n ${1:-} ]] || return
+
+	local a=${1//[!0-9]/}	# Strip non-digits.
+
+	if [[ ${#a} -ne 10 ]]; then
+		printf 000000
+
+		return 1
+	fi
+
+	/bin/date -d @"$a" '+%y%m%d'
+
+	} 2> /dev/null
 
 TextBrightGreen()
 	{
