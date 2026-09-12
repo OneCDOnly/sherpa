@@ -99,12 +99,15 @@ ShowResults()
 			ReleaseLockfile
 			ReportBackups
 		elif [[ $useropt_show_dependencies = true ]]; then
+			ReleaseLockfile
 			ReportDependencies
 		elif [[ $useropt_show_features = true ]]; then
+			ReleaseLockfile
 			ReportFeatures
 		elif [[ $useropt_show_packages = true ]]; then
 			ReportPackages
 		elif [[ $useropt_show_repos = true ]]; then
+			ReleaseLockfile
 			ReportRepos
 		elif [[ $useropt_show_status = true ]]; then
 			ReportStatuses
@@ -115,6 +118,8 @@ ShowResults()
 	fi
 
 	if [[ $generate_list_report = true ]]; then
+		show_action_results_report=false
+
 		if [[ $useropt_list_versions = true ]]; then
 			ReleaseLockfile
 			ShowVersionsList
