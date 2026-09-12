@@ -46,6 +46,7 @@ Init()
 
 	HideCursor
 	HideKeystrokes
+	LoadCMDs
 	LoadConsts
 	LoadDefaults
 
@@ -54,7 +55,6 @@ Init()
 	IsOsOk || return
 	IsUserOk || return
 	SetCapabilities
-	LoadCMDs
 	IsCMDsOk || return
 	LoadEnv || return
 	ClaimLockfile || return
@@ -296,12 +296,14 @@ LoadConsts()
 		if true; then										# directive:omit-from-production
 			readonly r_debug_log_first_column_width=10		# directive:omit-from-production
 			readonly r_debug_log_second_column_width=26		# directive:omit-from-production
-			readonly r_debug_log_width=99					# directive:omit-from-production
 		else												# directive:omit-from-production
 			readonly r_debug_log_first_column_width='<?debug_log_first_column_width?>'
 			readonly r_debug_log_second_column_width='<?debug_log_second_column_width?>'
-			readonly r_debug_log_width='<?debug_log_width?>'
 		fi													# directive:omit-from-production
+
+		UpdateSessionColumns
+		r_debug_log_width=$((sess_columns-12))				# Subtract debug log line leader width.
+		readonly r_debug_log_width
 
 		readonly r_help_desc_indent=3
 		readonly r_help_syntax_indent=6
@@ -660,24 +662,6 @@ LoadLists()
 	[[ ${lists_loaded:=false} = false ]] || return 0
 
 	# First, clear existing list arrays (if-any).
-
-	unset ar_package_tiers
-	unset ar_qpkg_tiers
-
-	unset ar_qpkg_basic_states
-	unset ar_qpkg_extended_states
-	unset ar_qpkg_is_groups
-	unset ar_qpkg_is_states
-	unset ar_qpkg_isnt_groups
-	unset ar_qpkg_isnt_states
-	unset ar_qpkg_service_results
-	unset ar_qpkg_transient_states
-
-	unset ar_qpkg_actions
-	unset ar_ipk_actions
-	unset ar_pip_actions
-
-	unset ar_user_qpkg_actions
 
 	# These are used internally by sherpa.
 	# Ordered.
@@ -14959,35 +14943,69 @@ IsLessSupportHeaders()
 
 	}
 
+IsFuncExist()
+	{
+
+	[[ -n ${1:-} && $(type -t "$1") = function ]]
+
+	}
+
 IsReportLargerThanViewport()
 	{
 
 	# Inputs: (local)
 	#	$1 = pathfile to be shown.
 
+	# Inputs: (global)
+	#	$sess_rows
+	#	$sess_columns
+
 	[[ -n ${1:-} && -e $1 ]] || return
 
-	local r_terminal_dimensions=''
+	UpdateSessionRows
+	UpdateSessionColumns
 
-	if [[ -x $r_gnu_stty_cmd ]] && IsInTerminal; then
-		r_terminal_dimensions=$($r_gnu_stty_cmd size)
-
-		local -r r_terminal_dimensions
-		local -r r_sess_rows=${r_terminal_dimensions% *}
-		local -r r_sess_columns=${r_terminal_dimensions#* }
-	else
-		local -r r_sess_rows=40
-		local -r r_sess_columns=156
-	fi
-
-	[[ $(/usr/bin/wc -l < "$1") -ge $r_sess_rows || $(StripANSICodes "$(< "$1")" | /usr/bin/wc -L) -gt $r_sess_columns ]]
+	[[ $(/usr/bin/wc -l < "$1") -ge $sess_rows || $(StripANSICodes "$(< "$1")" | /usr/bin/wc -L) -gt $sess_columns ]]
 
 	}
 
-IsFuncExist()
+UpdateSessionRows()
 	{
 
-	[[ -n ${1:-} && $(type -t "$1") = function ]]
+	# Inputs: (global)
+	#	$r_gnu_stty_cmd
+
+	# Outputs: (global)
+	#	$sess_rows
+
+	if [[ -x $r_gnu_stty_cmd ]] && IsInTerminal; then
+		local a=''
+
+		a=$($r_gnu_stty_cmd size)
+		sess_rows=${a% *}
+	else
+		sess_rows=40
+	fi
+
+	}
+
+UpdateSessionColumns()
+	{
+
+	# Inputs: (global)
+	#	$r_gnu_stty_cmd
+
+	# Outputs: (global)
+	#	$sess_columns
+
+	if [[ -x $r_gnu_stty_cmd ]] && IsInTerminal; then
+		local a=''
+
+		a=$($r_gnu_stty_cmd size)
+		sess_columns=${a#* }
+	else
+		sess_columns=156
+	fi
 
 	}
 
@@ -18096,7 +18114,6 @@ LoadObjects()
 		FuncExit 1; exit
 	fi
 
-	unset r_objects_epoch
 	r_objects_epoch=undefined
 
 	. "$r_objects_pathfile"
@@ -18154,40 +18171,6 @@ LoadDatabase()
 	# Supported QPKG details - parallel arrays.
 
 	# First, clear existing list arrays (if-any).
-
-	unset r_qpkg_abbrvs
-	unset r_qpkg_appl_author
-	unset r_qpkg_appl_author_email
-	unset r_qpkg_appl_version
-	unset r_qpkg_author
-	unset r_qpkg_author_email
-	unset r_qpkg_can_backup
-	unset r_qpkg_can_clean
-	unset r_qpkg_can_restart_to_update
-	unset r_qpkg_conflicts_with
-	unset r_qpkg_depends_on
-	unset r_qpkg_description
-	unset r_qpkg_hash
-	unset r_qpkg_is_sherpa_compatible
-	unset r_qpkg_is_unique_unpack
-	unset r_qpkg_max_os_version
-	unset r_qpkg_min_os_version
-	unset r_qpkg_min_ram_kb
-	unset r_qpkg_name
-	unset r_qpkg_opt_depends_on
-	unset r_qpkg_requires_ipks
-	unset r_qpkg_test_for_active
-	unset r_qpkg_url
-	unset r_qpkg_version
-	unset r_qpkg_will_log
-
-	unset r_base_pips
-	unset r_base_qpkg_conflicts_with
-	unset r_base_qpkg_warnings
-	unset r_essential_ipks
-	unset r_exclusion_pips
-	unset r_packages_epoch
-	unset r_qpkgs_name_prohibited
 
 	r_packages_epoch=undefined
 
