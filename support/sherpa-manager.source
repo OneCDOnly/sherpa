@@ -17345,7 +17345,8 @@ TextBrightOrange()
 	[[ -n ${1:-} ]] || return
 
 	if [[ $colourful = true ]]; then
-		printf '\033[1;38;5;214m%s\033[0m' "$1"
+		printf '\033[1;38;5;214m%s\033[0m' "$1"				# Bright/bold orange.
+#		printf '\033[0;33;40m%s\033[0m' "$1"				# Subdued orange (good for 16 colour terminal).
 	else
 		printf '%s' "$1"
 	fi
