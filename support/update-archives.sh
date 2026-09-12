@@ -5,4 +5,4 @@
 ./check-syntax.sh || exit
 ./check-whitespace.sh || exit
 ./build-all.sh || exit
-./commit.sh '[update] management archives' nocheck || exit
+./commit.sh 'update: management archives' nocheck || exit
