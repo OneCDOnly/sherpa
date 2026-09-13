@@ -661,8 +661,6 @@ LoadLists()
 
 	[[ ${lists_loaded:=false} = false ]] || return 0
 
-	# First, clear existing list arrays (if-any).
-
 	# These are used internally by sherpa.
 	# Ordered.
 
@@ -18198,11 +18196,9 @@ LoadDatabase()
 
 	# Supported QPKG details - parallel arrays.
 
-	# First, clear existing list arrays (if-any).
-
 	r_packages_epoch=undefined
 
-	# Second, create an index 0 element for each array. This element is used to indicate no matching QPKG when searching array.
+	# Create an index 0 element for each array. This element is used to indicate no matching QPKG when searching array.
 
 	r_qpkg_abbrvs+=('')					# If set, this package is user-installable, and these abbreviations may be used to specify app.
 	r_qpkg_appl_author+=('')			# Name of the person or group maintaining the internal application.
@@ -18230,12 +18226,12 @@ LoadDatabase()
 	r_qpkg_version+=('')				# QPKG version.
 	r_qpkg_will_log+=('')				# 'true'/'false': the service-script keeps a log of all actions.
 
-	# Third, source remaining elements from packages file.
+	# Source remaining elements from packages file.
 
 	. "$r_packages_pathfile"
 	packages_loaded=true
 
-	# Fourth, lock list arrays and values.
+	# Lock list arrays and values.
 
 	readonly r_qpkg_abbrvs
 	readonly r_qpkg_appl_author
