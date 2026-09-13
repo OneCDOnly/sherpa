@@ -13991,7 +13991,7 @@ IsOsNonStdKernelPageSize()
 IsThisLoadAverageElevated()
 	{
 
-	IsThisLoadAverageAboveTrigger "$1" 2
+	IsThisLoadAverageAboveTrigger "$1" 1
 
 	}
 
