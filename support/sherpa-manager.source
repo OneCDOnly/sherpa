@@ -174,8 +174,8 @@ ShowResults()
 	[[ $show_suggest_raise_issue = true ]] && ShowHelpIssue
 
 	DebugInfoMinSepr
-	DebugScript info finished "$(ConvertNowToFullDate)"
-	DebugScript info 'elapsed time' "$(ConvertSecondsToDuration "$(($(ConvertNowToSeconds)-r_script_startseconds))")"
+	DebugScript info finished "$(TextBrightWhite "$(ConvertNowToFullDate)")"
+	DebugScript info 'elapsed time' "$(TextBrightWhite "$(ConvertSecondsToDuration "$(($(ConvertNowToSeconds)-r_script_startseconds))")")"
 	DebugInfoMajSepr
 
 	FuncExit
@@ -194,7 +194,7 @@ DebugLogInit()
 	#	$r_this_script_ver
 
 	DebugInfoMajSepr
-	DebugScript info started "$(ConvertSecondsToFullDate "$r_script_startseconds")"
+	DebugScript info started "$(TextBrightWhite "$(ConvertSecondsToFullDate "$r_script_startseconds")")"
 	DebugScript info PID "$$"
 	DebugInfoMinSepr
 	DebugInfo "Markers: $(Parenthesise '**') detected, $(Parenthesise II) information, $(Parenthesise WW) warning, $(Parenthesise EE) error, $(Parenthesise LL) log file,"
