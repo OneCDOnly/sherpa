@@ -897,13 +897,13 @@ DebugLogEnv()
 	DebugOS ok uptime "$(GetOsUptime)"
 
 	a='load averages'
-	b=$(GetOsSysLoadAverages)
+	b=$(FormatLoadAverages)
 
-	if IsOsLoadAverageElevated; then
-		DebugOS warning "$a" "$b"
-	else
+#	if IsThisLoadAverageElevated "$(GetOsSysLoad1MinAverage)"; then
 		DebugOS ok "$a" "$b"
-	fi
+#	else
+#		DebugOS warning "$a" "$b"
+#	fi
 
 	DebugStorage ok 'default volume mounted' "$(GetUserDefVol)"
 	DebugStorage ok 'basic write benchmark' "$(GetHardwareVolumeBenchmark)"
@@ -7853,6 +7853,8 @@ CheckSystemLoad()
 
 	FuncInit
 
+	local a=0
+
 	if IsOsStartingPackages; then
 		ShowAsNote "$(GetOsName) is starting QPKGs, check again in a few minutes"
 	elif IsOsStarting; then
@@ -7863,11 +7865,13 @@ CheckSystemLoad()
 		ShowAsNote "$(GetOsName) is stopping QPKGs"
 	fi
 
-	if IsOsLoadAverageInsane; then
+	a=$(GetOsSysLoad1MinAverage)
+
+	if IsThisLoadAverageInsane "$a"; then
 		ShowAsWarn 'the NAS has an exceptionally-high system-load, recommend aborting and trying again later'
-	elif IsOsLoadAverageHigh; then
+	elif IsThisLoadAverageHigh "$a"; then
 		ShowAsWarn 'the NAS has an unusually-high system-load, so this may take a while'
-	elif IsOsLoadAverageElevated; then
+	elif IsThisLoadAverageElevated "$a"; then
 		ShowAsNote 'the NAS has an elevated system-load, so this may take a little longer than usual'
 	fi
 
@@ -9879,17 +9883,14 @@ GetBusyBoxFunctionCount()
 
 	} 2> /dev/null
 
-GetOsSysLoadAverages()
-	{
-
-	/usr/bin/uptime | /bin/sed 's/.*load average: //' | /bin/awk -F', ' '{print $1" (1m), "$2" (5m), "$3" (15m)"}'
-
-	}
-
 GetOsSysLoad1MinAverage()
 	{
 
-	/usr/bin/uptime | /bin/sed 's/.*load average: //' | /bin/awk -F', ' '{print $1}'
+	local a=0
+
+	read -r a _ < /proc/loadavg
+
+	printf '%s' "$a"
 
 	}
 
@@ -13985,46 +13986,45 @@ IsOsNonStdKernelPageSize()
 
 	}
 
-IsOsLoadAverageElevated()
+IsThisLoadAverageElevated()
 	{
 
-	IsOsLoadAverageAboveTrigger 2
+	IsThisLoadAverageAboveTrigger "$1" 2
 
 	}
 
-IsOsLoadAverageHigh()
+IsThisLoadAverageHigh()
 	{
 
-	IsOsLoadAverageAboveTrigger 4
+	IsThisLoadAverageAboveTrigger "$1" 4
 
 	}
 
-IsOsLoadAverageInsane()
+IsThisLoadAverageInsane()
 	{
 
-	IsOsLoadAverageAboveTrigger 8
+	IsThisLoadAverageAboveTrigger "$1" 8
 
 	}
 
-IsOsLoadAverageAboveTrigger()
+IsThisLoadAverageAboveTrigger()
 	{
 
 	# Inputs: (local)
-	#	$1 = multiplier
+	#	$1 = load average in usual decimal format.
+	#	$2 = trigger value.
 
 	# Inputs: (global)
-	#	$r_cpu_threads
+	#	$r_cpu_threads.
 
-	local -i c=''
+	local -i a=0
 
-	local a=${1:-1}
-	local b=''
+	local b=${1:-1}
 
-	b=$(GetOsSysLoad1MinAverage)
 	b=$((10#${b/./}))
-	c=$((r_cpu_threads*a*100))
+	a=$((r_cpu_threads*${2:-1}*100))
 
-	[[ $b -ge $c ]]
+	[[ $b -ge $a ]]
 
 	}
 
@@ -15914,6 +15914,43 @@ FormatNWords()
 
 	}
 
+FormatLoadAverages()
+	{
+
+	local a=''
+	local b=''
+	local c=''
+
+	read -r a b c _ < /proc/loadavg
+
+	printf '%s, %s, %s' "$(ColourByValue "$a" 1m)" "$(ColourByValue "$b" 5m)" "$(ColourByValue "$c" 15m)"
+
+	}
+
+ColourByValue()
+	{
+
+	local a=''
+	local b=''
+
+	if IsThisLoadAverageInsane "$1"; then
+		a=$(TextBrightRed "$1")
+		b=$(TextBrightRed "$2")
+	elif IsThisLoadAverageHigh "$1"; then
+		a=$(TextBrightOrange "$1")
+		b=$(TextBrightOrange "$2")
+	elif IsThisLoadAverageElevated "$1"; then
+		a=$(TextBrightYellow "$1")
+		b=$(TextBrightYellow "$2")
+	else
+		a=$1
+		b=$2
+	fi
+
+	printf '%s (%s)' "$a" "$b"
+
+	}
+
 ShowAsResultAndStdout()
 	{
 
@@ -16680,7 +16717,7 @@ ConvertFirmwareVersionStringToNumber()
 
 	local build=0
 
-	while IFS=. read -r major intermediate minor build; do
+	while IFS=. read -r major intermediate minor build _; do
 		printf "%0${r_major_trim}d%0${r_intermediate_trim}d%0${r_minor_trim}d%0${r_build_trim}d" "$((10#${major:0:r_major_trim}))" "$((10#${intermediate:0:r_intermediate_trim}))" "$((10#${minor:0:r_minor_trim}))" "$((10#${build:0:r_build_trim}))"
 	done <<< "$1"
 
