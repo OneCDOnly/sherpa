@@ -334,7 +334,7 @@ LoadConsts()
 		readonly r_chars_results='= '
 		readonly r_chars_super_prompt='# '
 
-		readonly r_extended_datetime_format='+%a %-d %b %Y'
+		readonly r_extended_datetime_format='+%a %-d %B %Y'
 			readonly r_full_datetime_format=$r_extended_datetime_format' %-I:%M:%S %p %Z'
 
 		if IsOsCanSudo; then
