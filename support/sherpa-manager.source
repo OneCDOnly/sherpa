@@ -9620,10 +9620,14 @@ GetHardwareCpuBenchmark()
 
 	# Use GNU `dd` because it generates speed statistics as stderr. BusyBox 1.01 `dd` does not generate stats at-all.
 
-	local -i b=16		# Maximum time-to-run is around 1 second on my slowest NAS (TS-220).
-	local -i c=-20		# Execute benchmark with highest priority.
+	# Inputs: (global)
+	#	$r_gnu_dd_cmd
+	#	$r_gnu_nice_cmd
 
-	local a=''
+	local -i a=-20		# Execute benchmark with highest priority.
+	local -i b=16		# Maximum time-to-run is ~ 1 second on my slowest NAS (TS-220).
+
+	local c=''
 
 	if [[ ! -x $r_gnu_dd_cmd ]]; then
 		printf "unable to measure, GNU 'dd' is unavailable"
@@ -9632,25 +9636,25 @@ GetHardwareCpuBenchmark()
 	fi
 
 	if [[ -x $r_gnu_nice_cmd ]]; then
-		a=$({ $r_gnu_nice_cmd -$c $r_gnu_dd_cmd if=/dev/zero bs=1MB count=$b | /bin/sha1sum > /dev/null; } 2>&1)
+		c=$({ $r_gnu_nice_cmd -$a $r_gnu_dd_cmd if=/dev/zero bs=1MB count=$b | /bin/sha1sum > /dev/null; } 2>&1)
 	elif [[ -x /bin/renice ]]; then
-		/bin/renice $c $$ &> /dev/null
+		/bin/renice $a $$ &> /dev/null
 
-		a=$({ $r_gnu_dd_cmd if=/dev/zero bs=1MB count=$b | /bin/sha1sum > /dev/null; } 2>&1)
+		c=$({ $r_gnu_dd_cmd if=/dev/zero bs=1MB count=$b | /bin/sha1sum > /dev/null; } 2>&1)
 
 		/bin/renice 0 $$ &> /dev/null
 	fi
 
-	a=$(/bin/grep copied <<< "$a" | cut -d, -f4)
-	a=${a//[[:blank:]]/}
+	c=$(/bin/grep copied <<< "$c" | cut -d, -f4)
+	c=${c//[[:blank:]]/}
 
-	if [[ -z $a ]]; then
+	if [[ -z $c ]]; then
 		printf 'unable to measure'
 
 		return 1
 	fi
 
-	printf '%s' "$a"
+	printf '%s' "$c"
 
 	return 0
 
@@ -9667,10 +9671,10 @@ GetHardwareVolumeBenchmark()
 	#	$r_gnu_dd_cmd
 	#	$r_gnu_nice_cmd
 
-	local -i c=-20		# Run benchmark with highest priority.
+	local -i a=-20		# Run benchmark with highest priority.
 
-	local a=''
-	local b=10k			# Maximum time-to-run is around 1 second on my slowest NAS (TS-220).
+	local b=''
+	local c=10k			# Maximum time-to-run is ~ 1 second on my slowest NAS (TS-220).
 	local d=''
 
 	d=$(GetUserDefVol)/zero
@@ -9685,11 +9689,11 @@ GetHardwareVolumeBenchmark()
 		fi
 
 		if [[ -x $r_gnu_nice_cmd ]]; then
-			a=$($r_gnu_nice_cmd -$c $r_gnu_dd_cmd if=/dev/zero of=$d bs=8k count=$b 2>&1)
+			b=$($r_gnu_nice_cmd -$a $r_gnu_dd_cmd if=/dev/zero of=$d bs=8k count=$c 2>&1)
 		elif [[ -x /bin/renice ]]; then
-			/bin/renice $c $$ &> /dev/null
+			/bin/renice $a $$ &> /dev/null
 
-			a=$($r_gnu_dd_cmd if=/dev/zero of=$d bs=8k count=$b 2>&1)
+			b=$($r_gnu_dd_cmd if=/dev/zero of=$d bs=8k count=$c 2>&1)
 
 			/bin/renice 0 $$ &> /dev/null
 		fi
@@ -9697,16 +9701,16 @@ GetHardwareVolumeBenchmark()
 		[[ -e $d ]] && rm -f "$d"
 	fi
 
-	a=$(/bin/grep copied <<< "$a" | cut -d, -f4)
-	a=${a//[[:blank:]]/}
+	b=$(/bin/grep copied <<< "$b" | cut -d, -f4)
+	b=${b//[[:blank:]]/}
 
-	if [[ -z $a ]]; then
+	if [[ -z $b ]]; then
 		printf 'unable to measure'
 
 		return 1
 	fi
 
-	printf '%s' "$a"
+	printf '%s' "$b"
 
 	return 0
 
@@ -9826,11 +9830,11 @@ GetRepoURLFromStoreID()
 GetOsUptime()
 	{
 
-	local n=''
+	local a=''
 
-	n=$(< /proc/uptime)
+	a=$(< /proc/uptime)
 
-	ConvertSecondsToDuration "${n%%.*}"
+	ConvertSecondsToDuration "${a%%.*}"
 
 	}
 
@@ -9869,7 +9873,7 @@ GetBusyBoxCopyright()
 GetBusyBoxFunctionCount()
 	{
 
-	local a=''
+	local -i a=''
 
 	a=$(/bin/busybox --list 2> /dev/null | /usr/bin/wc -l)
 
@@ -11205,7 +11209,7 @@ _QPKG:uninstall_()
 	z=$?
 
 	if [[ $z -eq 0 ]]; then
-		# WARNING: beware of `qpkg_cli --remove`. It removes the QPKG installation path around 10-20 seconds after execution. If sherpa has moved-on and starts an install, `qpkg_cli` will remove the newly created QPKG installation path partway through the installation. So, check if QPKG is to be installed again. If-so, don't use `qpkg_cli --remove`.
+		# WARNING: beware of `qpkg_cli --remove`. It removes the QPKG installation path ~ 10-20 seconds after execution. If sherpa has moved-on and starts an install, `qpkg_cli` will remove the newly created QPKG installation path partway through the installation. So, check if QPKG is to be installed again. If-so, don't use `qpkg_cli --remove`.
 
 		[[ -x /sbin/qpkg_cli ]] && ! QPKGs-ACinstall-to.Exist "$qpkg_name" && /sbin/qpkg_cli --remove "$qpkg_name" &> /dev/null
 		SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok "v$current_ver"
