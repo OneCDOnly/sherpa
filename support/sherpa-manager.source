@@ -13583,24 +13583,24 @@ IsFileRecent()
 
 	}
 
-IsFileNewer()
-	{
-
-	# If $1 is newer than $2, then return true, else return false.
-
-	# Inputs: (local)
-	#	$1 = pathfilename: file to examine 'last-modified' time of.
-	#	$2 = pathfilename: file to examine 'last-modified' time of.
-
-	# Outputs: (local)
-	#	$? = true/false
-
-	[[ -n ${1:-} && -e $1 ]] || return
-	[[ -n ${2:-} && -e $2 ]] || return 0	# Treat a non-existent $2 as older than $1.
-
-	[[ $(FileLastModifiedEpoch "$1") -gt $(FileLastModifiedEpoch "$2") ]]
-
-	}
+#IsFileNewer()
+#	{
+#
+#	# If $1 is newer than $2, then return true, else return false.
+#
+#	# Inputs: (local)
+#	#	$1 = pathfilename: file to examine 'last-modified' time of.
+#	#	$2 = pathfilename: file to examine 'last-modified' time of.
+#
+#	# Outputs: (local)
+#	#	$? = true/false
+#
+#	[[ -n ${1:-} && -e $1 ]] || return
+#	[[ -n ${2:-} && -e $2 ]] || return 0	# Treat a non-existent $2 as older than $1.
+#
+#	[[ $(FileLastModifiedEpoch "$1") -gt $(FileLastModifiedEpoch "$2") ]]
+#
+#	}
 
 IsUrl()
 	{
