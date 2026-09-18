@@ -2,6 +2,16 @@
 
 [[ ${sherpa_environment_functions_loaded:=false} = false ]] || return 0
 
+readonly e_nopnm='undefined package name'
+
+# There are 4 tiers of package: `independent`, `auxiliary`, `optional`, and `dependent`.
+# ... but only 3 tiers of QPKG: `independent`, `optional` and `dependent`.
+
+# `independent` QPKGs don't depend-on other QPKGs, but may be required for other QPKGs. They should be installed/activated before any `dependent` QPKGs.
+# `auxiliary` Entware IPKs and Python PIP modules to support QPKGs.
+# `optional` QPKGs are loosely-depended-upon by other QPKGs (optional). They should be installed/activated before other QPKGs within the same tier, and deactivated after other QPKGs within the same tier.
+# `dependent` QPKGs are tightly-dependent on other QPKGs (other packages are required). They should be installed/activated after all `independent` QPKGs.
+
 TranslateQPKGArch()
 	{
 
@@ -220,29 +230,12 @@ QPKGAbbrvs()
 
 	}
 
-CheckPlaceholdersInPackages()
-	{
-
-	local f=$qpkgs_support_path/$packages_file
-
-	echo -n 'confirm all placeholders were processed ... '
-
-	if grep -q '<?\|?>' "$f"; then
-		echo; TextBrightRed "'$f' contains unprocessed placeholders, can't continue"; echo
-
-		exit 1
-	fi
-
-	ShowDone
-
-	}
-
 CheckPlaceholdersInMultiplePackages()
 	{
 
 	local f=''
 
-	echo -n 'confirm all placeholders were processed ... '
+	echo -n 'confirm: all placeholders were processed ... '
 
 	for f in $qpkgs_support_path/*.packages; do
 		if grep -q '<?\|?>' "$f"; then

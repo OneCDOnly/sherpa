@@ -6,8 +6,8 @@ build_date=$(date '+%y%m%d')
 build_year=$(date '+%Y')
 manager_epoch=0				# Only update when building `sherpa-manager.sh` file.
 manager_version=0			# Only update when building `sherpa-manager.sh` file.
-objects_epoch=0				# Only update before building `objects` file.
-packages_epoch=0			# Only update before building `packages` files.
+objects_epoch=0				# Only update when building `objects` file.
+packages_epoch=0			# Only update when building `packages` files.
 title_description='A mini-package-manager for QNAP NAS'
 
 checksum_root_path=$HOME/scripts/nas
@@ -36,6 +36,8 @@ packages_source_file=packages.source
 
 service_library_file=service.lib
 service_library_source_file=service-library.source
+
+qpkg_tiers=(independent optional dependent)
 
 stable_branch=stable
 unstable_branch=unstable
