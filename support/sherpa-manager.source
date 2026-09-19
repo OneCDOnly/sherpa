@@ -6905,7 +6905,7 @@ DisplayFileInViewport()
 
 		LESSSECURE=1 $r_less_cmd $options --prompt "$r_prompt" "$report_pathfile"
 
-# Disable the use of built-in `less` as it doesn't (yet) support ANSI codes. Let's see if there are any problems (other than not being able to scroll output).
+# Disable the use of built-in `less` as it doesn't (yet) support ANSI codes. See if there are any problems (other than not being able to scroll output).
 
 #	elif [[ $useropt_verbose = false && -x /bin/less ]]; then
 #		options='-~'
@@ -6916,7 +6916,7 @@ DisplayFileInViewport()
 
 	elif [[ $useropt_verbose = false && -x $r_gnu_more_cmd ]]; then
 		$r_gnu_more_cmd "$report_pathfile"
-	elif [[ $useropt_verbose = false && -x /bin/more ]]; then	# At-least supports basic forward-scrolling pagination.
+	elif [[ $useropt_verbose = false && -x /bin/more ]]; then	# At-least it supports basic forward-scrolling pagination.
 		/bin/more "$report_pathfile"
 	elif [[ -x /bin/cat ]]; then
 		[[ $linenumbers = true ]] && options=' --number'
