@@ -15338,20 +15338,20 @@ FileMatchesMD5()
 
 	}
 
-FileLastModifiedEpoch()
-	{
-
-	# Inputs: (local)
-	#	$1 = pathfilename: file to examine 'last-modified' time of.
-
-	# Outputs: (local)
-	#	stdout = epoch seconds.
-
-	[[ -n ${1:-} && -e $1 ]] || return
-
-	/usr/bin/stat "$1" -c %Y
-
-	}
+#FileLastModifiedEpoch()
+#	{
+#
+#	# Inputs: (local)
+#	#	$1 = pathfilename: file to examine 'last-modified' time of.
+#
+#	# Outputs: (local)
+#	#	stdout = epoch seconds.
+#
+#	[[ -n ${1:-} && -e $1 ]] || return
+#
+#	/usr/bin/stat "$1" -c %Y
+#
+#	}
 
 FileLastStatusChangeEpoch()
 	{
