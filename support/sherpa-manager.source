@@ -334,7 +334,7 @@ LoadConsts()
 		readonly r_chars_results='= '
 		readonly r_chars_super_prompt='# '
 
-		readonly r_extended_datetime_format='+%a %-d %b %Y'
+		readonly r_extended_datetime_format='+%a %-d %B %Y'
 			readonly r_full_datetime_format=$r_extended_datetime_format' %-I:%M:%S %p %Z'
 
 		if IsOsCanSudo; then
@@ -578,12 +578,9 @@ LoadEnv()
 
 	# Essential pathfilenames.
 
-		readonly r_dependent_qpkgs_list_pathfile=$r_cache_path/dependents
-		readonly r_independent_qpkgs_list_pathfile=$r_cache_path/independents
 		readonly r_inhibit_display_pathfile=$r_cache_path/display.inhibit
 		readonly r_objects_archive_pathfile=$r_cache_path/objects.tar.gz
 		readonly r_objects_pathfile=$r_cache_path/objects
-		readonly r_optional_qpkgs_list_pathfile=$r_cache_path/optionals
 		readonly r_packages_archive_pathfile=$r_cache_path/$r_nas_qpkg_arch.packages.tar.gz
 		readonly r_packages_pathfile=$r_cache_path/$r_nas_qpkg_arch.packages
 		readonly r_prev_ipk_list_pathfile=$r_ipk_cache_path/ipk-list.save
@@ -1993,7 +1990,7 @@ ProcAction()
 
 				[[ -e $r_abort_actions_pathfile ]] && break
 
-				# TODO: Check for remaining $a_target_packages[] status here. If $proc_queued_count_path and $proc_working_count_path have no entries, then no action workers should be active. $a_target_packages[] is out-of-sync and contains package names that haven't been marked as exited.
+				# TODO: check for remaining $a_target_packages[] status here. If $proc_queued_count_path and $proc_working_count_path have no entries, then no action workers should be active. $a_target_packages[] is out-of-sync and contains package names that haven't been marked as exited.
 			done
 
 			[[ $done_fail_count -gt 0 ]] && show_action_results_failed=true
@@ -3446,7 +3443,7 @@ AllocPackStatesToAcs()
 
 	FuncInit
 
-	ShowAsProc 'late package states'
+	ShowAsProc 'conditional package states'
 
 	local action=''
 	local check_later=false
@@ -7706,146 +7703,6 @@ ListQPKGsStates()
 
 	}
 
-BuildQPKGsTiers()
-	{
-
-	# There are 4 tiers of package: `independent`, `auxiliary`, `optional`, and `dependent`.
-	# ... but only 3 tiers of QPKG: `independent`, `optional` and `dependent`.
-
-	# `independent` QPKGs don't depend-on other QPKGs, but may be required for other QPKGs. They should be installed/activated before any `dependent` QPKGs.
-	# `auxiliary` Entware IPKs and Python PIP modules to support QPKGs.
-	# `optional` QPKGs are loosely-depended-upon by other QPKGs (optional). They should be installed/activated before other QPKGs within the same tier, and deactivated after other QPKGs within the same tier.
-	# `dependent` QPKGs are tightly-dependent on other QPKGs (other packages are required). They should be installed/activated after all `independent` QPKGs.
-
-	# Inputs: (global)
-	#	$qpkgs_tiers_built
-
-	FuncInit
-
-	CheckQPKGsTiers
-
-	if [[ $qpkgs_tiers_built = true ]]; then
-		DebugAsDetect 'tiers are already built'
-	else
-		ShowAsProc tiers
-
-		GenerateQPKGsTiers
-	fi
-
-	LoadQPKGsTiers
-
-	FuncExit
-
-	}
-
-InitQPKGsTiers()
-	{
-
-	# Inputs: (global)
-	#	$r_dependent_qpkgs_list_pathfile
-	#	$r_independent_qpkgs_list_pathfile
-	#	$r_optional_qpkgs_list_pathfile
-	#	$ar_qpkg_tiers[]
-
-	# Outputs: (global)
-	#	$qpkgs_tiers_built
-
-	for a in "${ar_qpkg_tiers[@]}"; do
-		b=r_${a}_qpkgs_list_pathfile
-		[[ ! -s ${!b} ]] && continue
-		rm -f "${!b}" 2> /dev/null
-	done
-
-	qpkgs_tiers_built=false
-
-	}
-
-CheckQPKGsTiers()
-	{
-
-	# Inputs: (global)
-	#	$r_dependent_qpkgs_list_pathfile
-	#	$r_independent_qpkgs_list_pathfile
-	#	$r_optional_qpkgs_list_pathfile
-	#	$ar_qpkg_tiers[]
-
-	# Outputs: (global)
-	#	$qpkgs_tiers_built
-
-	qpkgs_tiers_built=true
-
-	for a in "${ar_qpkg_tiers[@]}"; do
-		b=r_${a}_qpkgs_list_pathfile
-		[[ -s ${!b} ]] && continue
-		qpkgs_tiers_built=false
-
-		break
-	done
-
-	}
-
-GenerateQPKGsTiers()
-	{
-
-	# Inputs: (global)
-	#	$r_dependent_qpkgs_list_pathfile
-	#	$r_independent_qpkgs_list_pathfile
-	#	$r_optional_qpkgs_list_pathfile
-	#	$r_qpkg_name[]
-
-	# Outputs: (global)
-	#	$qpkgs_tiers_built
-
-	local previous=''
-	local qpkg_name=''
-
-	InitQPKGsTiers
-
-	for qpkg_name in "${r_qpkg_name[@]}"; do
-		[[ $previous = "$qpkg_name" ]] && continue || previous=$qpkg_name
-		SetQpkgIndex
-
-		if IsQpkgDbOptional; then
-			echo "$qpkg_name" >> "$r_optional_qpkgs_list_pathfile"
-		elif IsQpkgDbDependent; then
-			echo "$qpkg_name" >> "$r_dependent_qpkgs_list_pathfile"
-		else
-			echo "$qpkg_name" >> "$r_independent_qpkgs_list_pathfile"
-		fi
-	done
-
-	qpkgs_tiers_built=true
-
-	}
-
-LoadQPKGsTiers()
-	{
-
-	# Inputs: (global)
-	#	$qpkgs_tiers_built
-	#	$r_dependent_qpkgs_list_pathfile
-	#	$r_independent_qpkgs_list_pathfile
-	#	$r_optional_qpkgs_list_pathfile
-	#	$ar_qpkg_tiers[]
-
-	# Outputs: (global)
-	#	QPKGs-GRdependent
-	#	QPKGs-GRindependent
-	#	QPKGs-GRoptional
-
-	[[ $qpkgs_tiers_built = true ]] || return
-
-	local a=''
-	local b=''
-
-	for a in "${ar_qpkg_tiers[@]}"; do
-		b=r_${a}_qpkgs_list_pathfile
-		[[ ! -s ${!b} ]] && continue
-		QPKGs-GR${a}:Add "$(< "${!b}")"
-	done
-
-	}
-
 CheckSystemLoad()
 	{
 
@@ -7894,29 +7751,10 @@ BuildExtendedQPKGsStates()
 		FuncExit; return
 	fi
 
-	local a=''
-
 	CheckSystemLoad
 	LoadDatabase
-
-#	if [[ $(FileCountAll "$r_qpkg_states_path") -gt 0 ]]; then
-#		a=$r_qpkg_states_path/$(ls "$r_qpkg_states_path" -t | head -n1)		# Find most recently modified file.
-#
-#		DebugAsInfo "comparison file (last modified QPKG state file): '$a'"
-#
-#		if IsFileNewer /etc/config/qpkg.conf "$a"; then
-#			DebugAsInfo "'/etc/config/qpkg.conf' is newer than the comparison file"
-			InitQPKGsStates
-#		else
-#			DebugAsInfo "'/etc/config/qpkg.conf' is older than the comparison file"
-#		fi
-#	fi
-
-	if [[ $(FileCountAll "$r_qpkg_states_path") -eq 0 ]]; then
-		DebugAsInfo 'no QPKG state files found'
-		RefreshAndStoreQPKGsStates
-	fi
-
+	InitQPKGsStates
+	RefreshAndStoreQPKGsStates
 	LoadQPKGsStates
 	ShowQPKGsMissing
 	ShowQPKGsNewVers
@@ -13602,24 +13440,24 @@ IsFileRecent()
 
 	}
 
-IsFileNewer()
-	{
-
-	# If $1 is newer than $2, then return true, else return false.
-
-	# Inputs: (local)
-	#	$1 = pathfilename: file to examine 'last-modified' time of.
-	#	$2 = pathfilename: file to examine 'last-modified' time of.
-
-	# Outputs: (local)
-	#	$? = true/false
-
-	[[ -n ${1:-} && -e $1 ]] || return
-	[[ -n ${2:-} && -e $2 ]] || return 0	# Treat a non-existent $2 as older than $1.
-
-	[[ $(FileLastModifiedEpoch "$1") -gt $(FileLastModifiedEpoch "$2") ]]
-
-	}
+#IsFileNewer()
+#	{
+#
+#	# If $1 is newer than $2, then return true, else return false.
+#
+#	# Inputs: (local)
+#	#	$1 = pathfilename: file to examine 'last-modified' time of.
+#	#	$2 = pathfilename: file to examine 'last-modified' time of.
+#
+#	# Outputs: (local)
+#	#	$? = true/false
+#
+#	[[ -n ${1:-} && -e $1 ]] || return
+#	[[ -n ${2:-} && -e $2 ]] || return 0	# Treat a non-existent $2 as older than $1.
+#
+#	[[ $(FileLastModifiedEpoch "$1") -gt $(FileLastModifiedEpoch "$2") ]]
+#
+#	}
 
 IsUrl()
 	{
@@ -15483,38 +15321,6 @@ DeDupeWords()
 	[[ -n ${1:-} ]] || return
 
 	tr ' ' '\n' <<< "$1" | /usr/bin/sort | /bin/uniq | tr '\n' ' ' | /bin/sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'
-
-	}
-
-SortNames()
-	{
-
-	# Inputs: (local)
-	#	$1 = string with space-separated words. Duplicate words will be removed.
-
-	[[ -n ${1:-} ]] || return
-
-	local a=''
-	local b=''
-	local c=''
-	local d=''
-
-	if (/usr/bin/sort -f < /dev/null &> /dev/null); then	# Only use the ignore-case option '-f' if supported by 'sort'.
-		tr ' ' '\n' <<< "$1" | /usr/bin/sort -f | /bin/uniq | tr '\n' ' '
-	else													# If only basic 'sort' is available, sort the hard-way.
-		a=$(tr ' ' '\n' <<< "$(Lowercase "$1")" | /usr/bin/sort | /bin/uniq | tr '\n' ' ')
-
-		for b in $a; do
-			for c in $1; do
-				[[ $(Lowercase "$c") = "$b" ]] || continue
-				d+=" $c"
-
-				break
-			done
-		done
-
-		[[ -n $d ]] && tr '\n' ' ' <<< "$d"
-	fi
 
 	}
 
@@ -18189,10 +17995,7 @@ LoadDatabase()
 		FuncExit 1; exit
 	fi
 
-	if [[ $extracted = true ]]; then
-		InitQPKGsTiers
-		InitQPKGsStates
-	fi
+	[[ $extracted = true ]] && InitQPKGsStates
 
 	# Supported QPKG details - parallel arrays.
 
@@ -18267,11 +18070,17 @@ LoadDatabase()
 	readonly r_packages_epoch
 	readonly r_qpkgs_name_prohibited
 
+	readonly r_qpkg_names_all
+	readonly r_qpkg_names_dependent
+	readonly r_qpkg_names_independent
+	readonly r_qpkg_names_optional
+
 	DebugVar r_packages_epoch
 
-	QPKGs-GRall:Add "$(SortNames "${r_qpkg_name[*]}")"
-
-	BuildQPKGsTiers
+	QPKGs-GRall:Add "${r_qpkg_names_all[*]}"
+	QPKGs-GRdependent:Add "${r_qpkg_names_dependent[*]}"
+	QPKGs-GRindependent:Add "${r_qpkg_names_independent[*]}"
+	QPKGs-GRoptional:Add "${r_qpkg_names_optional[*]}"
 
 	FuncExit
 
