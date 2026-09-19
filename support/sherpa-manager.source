@@ -14518,7 +14518,7 @@ IsQpkgProhibited()
 
 	local re=\\b${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}\\b	# bash 3.2 regex with word boundaries: https://stackoverflow.com/a/9793094
 
-	[[ ${r_qpkgs_name_prohibited[*]} =~ $re ]]
+	[[ ${r_qpkg_names_prohibited[*]} =~ $re ]]
 
 	}
 
@@ -17933,7 +17933,7 @@ LoadObjects()
 
 	ShowAsProc objects
 
-	# NOTE: Must set these prior to calling RefreshArchive()
+	# NOTE: Set these prior to calling RefreshArchive()
 
 	local archive_name=objects
 	local archive_pathfile=$r_objects_archive_pathfile
@@ -17948,8 +17948,12 @@ LoadObjects()
 
 	r_objects_epoch=undefined
 
+	# Source elements from `objects` file.
+
 	. "$r_objects_pathfile"
 	objects_loaded=true
+
+	# Lock list arrays and values.
 
 	readonly r_objects_epoch
 
@@ -17982,7 +17986,7 @@ LoadDatabase()
 
 	ShowAsProc database
 
-	# NOTE: Must set these prior to calling RefreshArchive()
+	# NOTE: Set these prior to calling RefreshArchive()
 
 	local archive_name=database
 	local archive_pathfile=$r_packages_archive_pathfile
@@ -18029,13 +18033,19 @@ LoadDatabase()
 	r_qpkg_version+=('')				# QPKG version.
 	r_qpkg_will_log+=('')				# 'true'/'false': the service-script keeps a log of all actions.
 
-	# Source remaining elements from packages file.
+	# Source elements from `packages` file.
 
 	. "$r_packages_pathfile"
 	packages_loaded=true
 
 	# Lock list arrays and values.
 
+	readonly r_base_pips
+	readonly r_base_qpkg_conflicts_with
+	readonly r_base_qpkg_warnings
+	readonly r_essential_ipks
+	readonly r_exclusion_pips
+	readonly r_packages_epoch
 	readonly r_qpkg_abbrvs
 	readonly r_qpkg_appl_author
 	readonly r_qpkg_appl_author_email
@@ -18055,25 +18065,17 @@ LoadDatabase()
 	readonly r_qpkg_min_os_version
 	readonly r_qpkg_min_ram_kb
 	readonly r_qpkg_name
+	readonly r_qpkg_names_all
+	readonly r_qpkg_names_dependent
+	readonly r_qpkg_names_independent
+	readonly r_qpkg_names_optional
+	readonly r_qpkg_names_prohibited
 	readonly r_qpkg_opt_depends_on
 	readonly r_qpkg_requires_ipks
 	readonly r_qpkg_test_for_active
 	readonly r_qpkg_url
 	readonly r_qpkg_version
 	readonly r_qpkg_will_log
-
-	readonly r_base_pips
-	readonly r_base_qpkg_conflicts_with
-	readonly r_base_qpkg_warnings
-	readonly r_essential_ipks
-	readonly r_exclusion_pips
-	readonly r_packages_epoch
-	readonly r_qpkgs_name_prohibited
-
-	readonly r_qpkg_names_all
-	readonly r_qpkg_names_dependent
-	readonly r_qpkg_names_independent
-	readonly r_qpkg_names_optional
 
 	DebugVar r_packages_epoch
 
