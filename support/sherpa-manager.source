@@ -6621,7 +6621,7 @@ ShowHelpShow()
 		DisplayAsHelpTitle "'show' usage examples:"
 		DisplayAsProjSynIndentExam 'show QPKG abbreviations' 'show abbreviations'
 		DisplayAsProjSynIndentExam '' 'show abs'
-		DisplayAsProjSynIndentExam '' a
+#		DisplayAsProjSynIndentExam '' a
 		DisplayAsProjSynIndentExam 'show application backup files' 'show backups'
 		DisplayAsProjSynIndentExam '' b
 		DisplayAsProjSynIndentExam 'show QPKG dependency report' 'show dependencies'
@@ -6680,7 +6680,7 @@ ShowHelpPackages()
 		{
 
 		ShowHelpBasic
-		DisplayAsHelpTitle 'usage examples for QPKGs will go here:'
+		DisplayAsHelpTitle 'usage examples for QPKGs will go here.'
 
 		} > "$r_report_output_pathfile"
 
@@ -6777,7 +6777,7 @@ ShowHelpTips()
 		DisplayAsProjSynIndentExam "install all available $(ShowAsTitleName) QPKGs" 'install all'
 		DisplayAsProjSynIndentExam "install all installable $(ShowAsTitleName) QPKGs" 'install installable'
 		DisplayAsProjSynIndentExam 'package abbreviations and aliases also work. To see these' 'help abs'
-		DisplayAsProjSynIndentExam '' a
+#		DisplayAsProjSynIndentExam '' a
 		DisplayAsProjSynIndentExam 'reactivate all QPKGs (upgrades internal applications where-supported)' 'reactivate all'
 		DisplayAsProjSynIndentExam 'list only QPKGs that can be installed' 'list installable'
 		DisplayAsProjSynIndentExam "view only the most recent $(ShowAsTitleName) session log" last
@@ -8292,7 +8292,7 @@ ReportPackages()
 		{
 
 		DisplayAsProjSynExam "abbreviations and aliases may also be used to specify $(ShowAsPackages). To list these" 'help abs'
-		DisplayAsProjSynIndentExam '' a
+#		DisplayAsProjSynIndentExam '' a
 
 		} >> "$r_report_output_pathfile"
 
