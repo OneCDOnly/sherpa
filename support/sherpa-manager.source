@@ -16290,8 +16290,10 @@ ConvertSecondsToDuration()
 		printf '%01dh:%02dm:%02ds' "$h" "$m" "$s"
 	elif [[ $m -ge 1 ]]; then
 		printf '%01dm:%02ds' "$m" "$s"
-	elif [[ $s -ge 1 ]]; then
+	elif [[ $s -gt 1 ]]; then
 		printf "%d second$(Pluralise $s)" "$s"
+	elif [[ $s -eq 1 ]]; then
+		printf "~ %d second" "$s"
 	else
 		s=1							# Never show zero seconds as a duration (bash isn't that fast).
 		printf '< %d second' "$s"	# directive:dont-squeeze
@@ -17001,7 +17003,7 @@ ShowAsActionLogDetail()
 	#	$1 = datetime in seconds (unused)
 	#	$2 = package or group name			'SABnzbd', 'essential'
 	#	$3 = action							'download', 'downloaded'
-	#	$4 = result							'ok', 'skipped', 'failed'
+	#	$4 = result							'ok', 'sk', 'er'
 	#	$5 = duration in milliseconds
 	#	$6 (optional) = reason				"file already exists in local cache"
 	#	$7 = package type					'QPKG', 'IPK', etc ...
@@ -17029,26 +17031,26 @@ ShowAsActionLogDetail()
 	ConfirmVarIsDefined 8 "${8:-}" "$e_noval" || return
 
 	case ${4:-} in
-		failed)
+		er)
 			if [[ -n "${6:-}" ]]; then
 				# Use different behaviours depending on action.
 
 				case $3 in
 					download|?(reas)sign|uninstall)
-						DisplayAsIndentActionResultDurationReason "$3" "$2 $package_type" "$5" "$6"
+						DisplayAsIndentActionResultDurationReason "$3" "$2 $package_type" "$5" "\"$6\""
 						;;
 					*)
 						if IsQpkgDbWillLog "$2"; then
 							DisplayAsIndentActionResultDurationReason "$3" "$2 $package_type" "$5" "for more information: /etc/init.d/$(/usr/bin/basename "$(GetQpkgServicePathFile "$2")") log"
 						else
-							DisplayAsIndentActionResultDurationReason "$3" "$2 $package_type" "$5" "$6"
+							DisplayAsIndentActionResultDurationReason "$3" "$2 $package_type" "$5" "\"$6\""
 						fi
 				esac
 			else
 				DisplayAsIndentActionResultDurationReason "$3" "$2 $package_type" "$5" 'no reason was provided by the service-script'
 			fi
 			;;
-		skipped*)
+		sk*)
 			if [[ -n "${6:-}" ]]; then
 				DisplayAsIndentActionResultDurationReason "$3" "${quantity_msg}${2} $package_type" '' "$6"
 			else
