@@ -686,8 +686,6 @@ LoadLists()
 
 	ar_user_qpkg_actions=(activate backup clean deactivate disable disableau enable enableau install list reactivate reassign rebuild reinstall resign restore status uninstall update upgrade)
 
-	# KLUDGE: for some reason, setting `readonly` while populating arrays causes their scope to become local, so need to set as `readonly` afterward to ensure global scope. GNU Bash, version 3.2.57(1)-release (aarch64-QNAP-linux-gnu)
-
 	readonly ar_package_tiers
 	readonly ar_qpkg_tiers
 
@@ -6336,7 +6334,7 @@ DisplayAsIndentActionResultDurationReason()
 EraseThisLine()
 	{
 
-	# Reset cursor to start-of-line, erasing entire line, and stay on this line.
+	# Reset cursor to start-of-line, erase entire line, and stay on this line.
 
 	# Inputs: (global)
 	#	$useropt_verbose
