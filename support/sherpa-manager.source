@@ -461,7 +461,6 @@ LoadCMDs()
 		readonly r_gnu_grep_cmd=/opt/bin/grep
 		readonly r_gnu_more_cmd=/opt/bin/more
 		readonly r_gnu_nice_cmd=/opt/bin/nice
-		readonly r_gnu_sleep_cmd=/opt/bin/sleep
 		readonly r_gnu_stty_cmd=/opt/bin/stty
 		readonly r_gnu_timeout_cmd=/opt/bin/timeout
 		readonly r_gnu_uname_cmd=/opt/bin/uname
@@ -499,7 +498,6 @@ IsCMDsOk()
 	# `/bin/sed` has already been called before arriving here.
 	IsCriticalFile /bin/sh || return
 	IsCriticalFile /bin/sha1sum || return
-	# `/bin/sleep` has already been called before arriving here.
 	[[ ! -x /usr/bin/sort ]] && ln -sf /bin/busybox /usr/bin/sort		# KLUDGE: `/usr/bin/sort` randomly disappears from QTS.
 	IsCriticalFile /usr/bin/stat || return
 	IsCriticalFile /usr/bin/tail || return
@@ -3794,7 +3792,7 @@ CalcIpkDepsToInstall()
 		fi
 	done
 
-	sleep .5
+	Pause 0.5
 
 	[[ ${useropt_terse:=true} = false && ${useropt_verbose:=false} = false ]] && echo
 
@@ -4366,7 +4364,7 @@ _ExecOneActionWithManyForks_()
 
 		while [[ $worker_count -ge $max_forks ]]; do	# Don't fork until an empty spot becomes available.
 			[[ ! -e $r_abort_actions_pathfile ]] || break 2
-			sleep .2
+			Pause 0.2
 			UpdateActionForkProgress
 		done
 
@@ -4392,7 +4390,7 @@ _ExecOneActionWithManyForks_()
 
 	while [[ $worker_count -gt 0 ]]; do
 		[[ ! -e $r_abort_actions_pathfile ]] || break
-		sleep .2
+		Pause 0.2
 		UpdateActionForkProgress						# Update display while active forks complete their tasks.
 	done
 
@@ -4401,7 +4399,7 @@ _ExecOneActionWithManyForks_()
 	# All action forks have exited.
 
 	UpdateActionForkProgress
-	sleep .2
+	Pause 0.2
 
 	FuncForkExit
 
@@ -4430,7 +4428,7 @@ _DirSizeMonitor_()
 
 	while [[ $current_bytes -lt $dir_bytes ]]; do
 		[[ ! -e $r_abort_actions_pathfile ]] || break
-		sleep .2
+		Pause 0.2
 
 		UpdateDirSizeProgress
 
@@ -12066,7 +12064,7 @@ EOB
 
 		case $z in
 			5)		# SQLITE_BUSY
-				sleep 0.5
+				Pause 0.5
 				;;
 			*)
 				break
@@ -12171,7 +12169,7 @@ EOB
 
 		case $z in
 			5)		# SQLITE_BUSY
-				sleep 0.5
+				Pause 0.5
 				;;
 			*)
 				z=0		# Disregard errors generated while deleting record.
@@ -13712,15 +13710,6 @@ IsOsCanSedExtRegex()
 
 	}
 
-IsOsCanDecimalSleepSeconds()
-	{
-
-	# Test if QTS `/bin/sleep` can handle decimal seconds (early BusyBox versions cannot):
-
-	/bin/sleep .01
-
-	} &> /dev/null
-
 IsOsCanAutowidthTableColumns()
 	{
 
@@ -13874,17 +13863,6 @@ IsOsSedExtRegexSupported()
 
 	[[ ${sed_ext_regex_supported:-unset} = unset ]] && SetOsSedRegexSupport
 	[[ $sed_ext_regex_supported -eq 0 ]]
-
-	}
-
-IsOsDecimalSleepSecondsSupported()
-	{
-
-	# Inputs: (global)
-	#	$sleep_decimal_seconds_supported
-
-	[[ ${sleep_decimal_seconds_supported:-unset} = unset ]] && SetOsDecimalSleepSecondsSupport
-	[[ $sleep_decimal_seconds_supported -eq 0 ]]
 
 	}
 
@@ -15262,7 +15240,7 @@ KludgeExecuter()
 
 	if [[ $pid -gt 1 ]]; then							# Process has been detached.
 		while [[ -e /proc/$pid ]]; do
-			sleep .5
+			Pause 0.5
 		done
 	fi
 
@@ -16920,7 +16898,7 @@ ShowAsPercentProgress()
 		ShowAsProcLong "$r_a" "$r_f"
 	fi
 
-	[[ $((b+c+d)) -ge $e ]] && sleep 0.5
+	[[ $((b+c+d)) -ge $e ]] && Pause 0.5
 
 	return 0
 
@@ -17562,7 +17540,7 @@ SetCapabilities()
 
 	SetColourisation
 	UpdateOsSedRegexSupport
-	UpdateOsDecimalSleepSupport
+	SetOsPauseMethod
 
 	}
 
@@ -17588,17 +17566,6 @@ SetOsSedRegexSupport()
 
 	IsOsCanSedExtRegex
 	sed_ext_regex_supported=$?
-
-	}
-
-SetOsDecimalSleepSecondsSupport()
-	{
-
-	# Outputs: (global)
-	#	$sleep_decimal_seconds_supported
-
-	IsOsCanDecimalSleepSeconds
-	sleep_decimal_seconds_supported=$?
 
 	}
 
@@ -17693,17 +17660,6 @@ UpdateOsSedRegexSupport()
 
 	}
 
-UpdateOsDecimalSleepSupport()
-	{
-
-	# Outputs: (global)
-	#	$sleep_decimal_seconds_supported
-
-	unset sleep_decimal_seconds_supported
-	SetOsDecimalSleepSecondsSupport
-
-	}
-
 HideCursor()
 	{
 
@@ -17742,32 +17698,56 @@ ShowKeystrokes()
 
 	}
 
-sleep()
+SetOsPauseMethod()
 	{
 
-	# MITM the internal `sleep` command.
-
-	# Inputs: (local)
-	#	$1 (optional) = seconds to sleep (decimal or integer), default is 1 second.
+	# `sleep 0.1` isn't supported in QTS BusyBox 1.01 and `usleep` isn't in QTS BusyBox 1.24
+	# So, test if an alternative method can be used, then apply it to $pause_method.
 
 	# Inputs: (global)
-	#	$r_gnu_sleep_cmd
+	#	$pause_method
 
-	local n=${1:-}
+	# Outputs: (global)
+	#	$pause_method
 
-	[[ ${n//.} -eq 0 ]] && n=1
+	[[ ${pause_method:=unset} = unset ]] || return 0
 
-	if IsOsDecimalSleepSecondsSupported; then
-		/bin/sleep "$n"
-	elif [[ -x $r_gnu_sleep_cmd && -L /opt/etc/passwd ]]; then		# Try to ensure Entware is active first.
-		$r_gnu_sleep_cmd "$n"
-	else
-		/bin/sleep "$((${n%.*}+1))"									# Ensure decimal seconds are rounded-up to next integer.
+	if which usleep; then
+		pause_method='usleep'
+	elif which sleep && sleep 0.01; then
+		pause_method='sleep'
 	fi
 
-	return 0
+	[[ $pause_method != unset ]] || return
 
-	} 2> /dev/null
+	} &> /dev/null
+
+Pause()
+	{
+
+	# Inputs: (local)
+	#	$1 = decimal seconds to pause.
+
+	# Inputs: (global)
+	#	$pause_method
+	#	$pause_multiplier
+
+	SetOsPauseMethod || exit
+
+	[[ $pause_method != unset ]] || return
+	[[ -n ${1:-} ]] || return
+
+	local -i a=0
+
+	if [[ $pause_method = usleep ]]; then
+		a=$(awk -v d="$1" 'BEGIN {print d*10^6}')		# Convert seconds to microseconds.
+	else
+		a=$1
+	fi
+
+	eval $pause_method $a
+
+	}
 
 RefreshArchive()
 	{
