@@ -17737,7 +17737,7 @@ Pause()
 	[[ $pause_method != unset ]] || return
 	[[ -n ${1:-} ]] || return
 
-	local -i a=0
+	local a=0
 
 	if [[ $pause_method = usleep ]]; then
 		a=$(awk -v d="$1" 'BEGIN {print d*10^6}')		# Convert seconds to microseconds.
