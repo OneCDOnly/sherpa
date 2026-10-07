@@ -461,7 +461,6 @@ LoadCMDs()
 		readonly r_gnu_grep_cmd=/opt/bin/grep
 		readonly r_gnu_more_cmd=/opt/bin/more
 		readonly r_gnu_nice_cmd=/opt/bin/nice
-		readonly r_gnu_stty_cmd=/opt/bin/stty
 		readonly r_gnu_timeout_cmd=/opt/bin/timeout
 		readonly r_gnu_uname_cmd=/opt/bin/uname
 		readonly r_less_cmd=/opt/bin/less
@@ -590,6 +589,7 @@ LoadEnv()
 		readonly r_temp_run_path=$r_sys_run_path/sherpa.d
 			readonly r_action_counts_path=$r_temp_run_path/action/count
 			readonly r_async_procs_path=$r_temp_run_path/proc
+				readonly r_active_pids_pathfile=$r_async_procs_path/pids
 			readonly r_qpkg_states_path=$r_temp_run_path/qpkg/state
 			readonly r_run_logs_path=$r_temp_run_path/log
 			readonly r_temp_report_path=$r_temp_run_path/report
@@ -628,7 +628,7 @@ LoadEnv()
 
 		[[ -x $r_python3_cmd && ! -L $r_python_cmd ]] && ln -s "$r_python3_cmd" "$r_python_cmd"
 
-	rm -f "$r_report_output_pathfile" "$r_ramfs_freespace_pathfile" "$r_inhibit_display_pathfile" 2> /dev/null
+	rm -f "$r_report_output_pathfile" "$r_ramfs_freespace_pathfile" "$r_inhibit_display_pathfile" "$r_active_pids_pathfile" 2> /dev/null
 
 	}
 
@@ -1188,6 +1188,7 @@ CheckEnv()
 	if IsValidQpkgInstalled Entware; then
 		if [[ $r_entware_type != none ]]; then
 			_UpdateEntwarePackageList_ &			# Let's try launching this early.
+			echo "$!" >> "$r_active_pids_pathfile"
 		else
 			DebugAsWarn "$(FormatPackageName Entware) appears to be installed but is inactive. Please consider starting the $(FormatPackageName Entware) QPKG."
 		fi
@@ -1293,7 +1294,7 @@ CheckEnv()
 		QPKGs-ACupgrade-to:Add sherpa
 	fi
 
-	wait 2> /dev/null			# Ensure Entware package updater completes before continuing.
+	wait $(< "$r_active_pids_pathfile") 2> /dev/null	# Ensure Entware package updater completes before continuing.
 
 	FuncExit
 
@@ -3537,9 +3538,6 @@ ResetArchivedLogs()
 #	# Inputs: (local)
 #	#	$1 = prompt/question
 #
-#	# Inputs: (global)
-#	#	$r_gnu_stty_cmd
-#
 #	# Outputs: (local)
 #	#	$? = 0 if "y", 1 if anything else
 #
@@ -3547,9 +3545,9 @@ ResetArchivedLogs()
 #	local b=''
 #
 #	ShowAsQuiz "$a"
-#	[[ -x $r_gnu_stty_cmd ]] && IsInTerminal && $r_gnu_stty_cmd igncr	# Ignore CR to prevent an onscreen linefeed (which disrupts same-line rewrite used later, and looks bad).
+#	IsInTerminal && which stty &> /dev/null && stty igncr	# Ignore CR to prevent an onscreen linefeed (which disrupts same-line rewrite used later, and looks bad).
 #	read -rn1 b
-#	[[ -x $r_gnu_stty_cmd ]] && IsInTerminal && $r_gnu_stty_cmd -igncr	# Re-allow CR.
+#	IsInTerminal && which stty &> /dev/null && stty -igncr	# Re-allow CR.
 #	DebugVar b
 #
 #	ShowAsQuizDone "$a: $b"
@@ -14788,42 +14786,36 @@ IsReportLargerThanViewport()
 UpdateSessionRows()
 	{
 
-	# Inputs: (global)
-	#	$r_gnu_stty_cmd
-
 	# Outputs: (global)
 	#	$sess_rows
 
-	if [[ -x $r_gnu_stty_cmd ]] && IsInTerminal; then
+	if IsInTerminal && which stty; then
 		local a=''
 
-		a=$($r_gnu_stty_cmd size)
+		a=$(stty size)
 		sess_rows=${a% *}
 	else
 		sess_rows=40
 	fi
 
-	}
+	} &> /dev/null
 
 UpdateSessionColumns()
 	{
 
-	# Inputs: (global)
-	#	$r_gnu_stty_cmd
-
 	# Outputs: (global)
 	#	$sess_columns
 
-	if [[ -x $r_gnu_stty_cmd ]] && IsInTerminal; then
+	if IsInTerminal && which stty; then
 		local a=''
 
-		a=$($r_gnu_stty_cmd size)
+		a=$(stty size)
 		sess_columns=${a#* }
 	else
 		sess_columns=156
 	fi
 
-	}
+	} &> /dev/null
 
 CreatePidFile()
 	{
@@ -17681,44 +17673,40 @@ HideKeystrokes()
 	{
 
 	# Inputs: (global)
-	#	$r_gnu_stty_cmd
 	#	$useropt_verbose
 
-	[[ ${useropt_verbose:=false} = false && -n ${r_gnu_stty_cmd:-} && -x $r_gnu_stty_cmd ]] && IsInTerminal && $r_gnu_stty_cmd '-echo'
+	[[ ${useropt_verbose:=false} = false ]] && IsInTerminal && which stty && stty '-echo'
 
-	}
+	} &> /dev/null
 
 ShowKeystrokes()
 	{
 
-	# Inputs: (global)
-	#	$r_gnu_stty_cmd
+	IsInTerminal && which stty && stty 'echo'
 
-	[[ -n ${r_gnu_stty_cmd:-} && -x $r_gnu_stty_cmd ]] && IsInTerminal && $r_gnu_stty_cmd 'echo'
-
-	}
+	} &> /dev/null
 
 SetOsPauseMethod()
 	{
 
 	# `sleep 0.1` isn't supported in QTS BusyBox 1.01 and `usleep` isn't in QTS BusyBox 1.24
-	# So, test if an alternative method can be used, then apply it to $pause_method.
+	# So, test if an alternative method can be used, then apply it to $_pause_method.
 
 	# Inputs: (global)
-	#	$pause_method
+	#	$_pause_method
 
 	# Outputs: (global)
-	#	$pause_method
+	#	$_pause_method
 
-	[[ ${pause_method:=unset} = unset ]] || return 0
+	[[ ${_pause_method:=unset} = unset ]] || return 0
 
 	if which usleep; then
-		pause_method='usleep'
-	elif which sleep && sleep 0.01; then
-		pause_method='sleep'
+		_pause_method='usleep'
+	elif which sleep && sleep 0.001; then
+		_pause_method='sleep'
 	fi
 
-	[[ $pause_method != unset ]] || return
+	[[ $_pause_method != unset ]] || return
 
 	} &> /dev/null
 
@@ -17729,23 +17717,23 @@ Pause()
 	#	$1 = decimal seconds to pause.
 
 	# Inputs: (global)
-	#	$pause_method
+	#	$_pause_method
 	#	$pause_multiplier
 
 	SetOsPauseMethod || exit
 
-	[[ $pause_method != unset ]] || return
+	[[ $_pause_method != unset ]] || return
 	[[ -n ${1:-} ]] || return
 
 	local a=0
 
-	if [[ $pause_method = usleep ]]; then
+	if [[ $_pause_method = usleep ]]; then
 		a=$(awk -v d="$1" 'BEGIN {print d*10^6}')		# Convert seconds to microseconds.
 	else
 		a=$1
 	fi
 
-	eval $pause_method $a
+	eval $_pause_method $a
 
 	}
 
