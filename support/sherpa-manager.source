@@ -3941,8 +3941,6 @@ IPKs:upgrade()
 
 	FuncInit
 
-	EndAni "$ani_id"
-
 	local -i total_count=0
 	local -i z=0
 
@@ -3970,6 +3968,7 @@ IPKs:upgrade()
 		dir_location=$r_ipk_download_path
 		dir_size_progress_prefix='upgrade '$desc
 
+		EndAni "$ani_id"
 		_DirSizeMonitor_ &
 		fork_pid=$!
 
@@ -4150,7 +4149,6 @@ IPKs:downgrade()
 
 		EndAni "$ani_id"
 		ShowAsProc "download $desc"
-		StartAni "$ani_id"
 
 		SetQpkgArch
 
@@ -4216,7 +4214,6 @@ IPKs:downgrade()
 
 		EndAni "$ani_id"
 		ShowAsProc "downgrade $desc"
-		StartAni "$ani_id"
 
 		ShowAsPercentProgress "downgrade $desc" '' "$done_ok_count" 0 "$done_fail_count" "$total_count"
 		Executer "$r_opkg_cmd install --force-downgrade --cache $r_ipk_cache_path --tmp-dir $r_ipk_downgrade_path $r_ipk_downgrade_path/*.ipk" "$log_pathfile" log:failure-only
@@ -4300,6 +4297,7 @@ PIPs:install()
 		exec_cmd="$r_pip_cmd install --upgrade --no-input $(PIPs-ACinstall-to:List) --cache-dir $r_pip_cache_path --root-user-action=ignore"
 		desc="$total_count auxiliary PIP$(Pluralise "$total_count")"
 
+		EndAni "$ani_id"
 		ShowAsPercentProgress "install $desc" '' "$done_ok_count" 0 0 "$total_count"
 		Executer "$exec_cmd" "$log_pathfile" log:failure-only
 		z=$?
