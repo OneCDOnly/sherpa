@@ -52,7 +52,6 @@ Init()
 	LoadCMDs
 	LoadConsts
 	LoadDefaults
-	LoadEnv || return
 	InitAni
 
 	ShowAsProc init
@@ -61,6 +60,7 @@ Init()
 	IsUserOk || return
 	SetCapabilities
 	IsCMDsOk || return
+	LoadEnv || return
 	ClaimLockfile || return
 	CreatePaths || return
 	PrepareArgs
@@ -18302,10 +18302,12 @@ SetAniType()
 StartAni()
 	{
 
+	IsNtDebug || return							# Don't start an animation in debug mode.
 	[[ -n ${1:-} ]] || return
-	IsNtDebug || return				# Don't start an animation in debug mode.
-	SetAniPathFiles "$1"
-	rm -f "$ani_end_pathfile" "$ani_pid_pathfile"
+	SetAniPathFiles "$1" || return
+	[[ ! -e $ani_pid_pathfile ]] || return		# Don't start another animation with the same ID.
+
+	rm -f "$ani_end_pathfile"
 
 	Animator &
 	: # This is only here to prevent Squeeze() combining the end-of-function brace with this line.
@@ -18316,8 +18318,9 @@ EndAni()
 	{
 
 	[[ -n ${1:-} ]] || return
-	SetAniPathFiles "$1"
-	[[ -s $ani_pid_pathfile ]] || return
+	SetAniPathFiles "$1" || return
+	[[ -s $ani_pid_pathfile ]] || return		# Don't try to stop an animation without a PID.
+
 	touch "$ani_end_pathfile"
 
 	wait $(< "$ani_pid_pathfile") 2> /dev/null
@@ -18327,6 +18330,8 @@ EndAni()
 
 SetAniPathFiles()
 	{
+
+	[[ -n ${r_animation_path:-} && -d $r_animation_path ]] || return
 
 	ani_end_pathfile=$r_animation_path/${1:-0}.end			# Internal fileflag (to stop animation cleanly).
 	ani_frame_pathfile=$r_animation_path/${1:-0}.frame		# Next frame to be displayed by animator process.
