@@ -8907,6 +8907,7 @@ ShowVersionsList()
 	#	$r_this_package_ver
 
 	DisableDebugToArchiveAndFile
+	EndAni "$ani_id"
 	EraseThisLine
 
 	Display "QPKG: $(ConvertAsSmartDate "$r_this_package_ver")"
@@ -9027,6 +9028,7 @@ ShowQPKGList()
 	local qpkg_name=''
 
 	DisableDebugToArchiveAndFile
+	EndAni "$ani_id"
 	EraseThisLine
 
 	if IsFuncExist QPKGs-$1.IsAny && QPKGs-$1.IsAny; then
