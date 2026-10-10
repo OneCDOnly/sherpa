@@ -1232,9 +1232,7 @@ CheckEnv()
 
 					if [[ ${installed_version//.} -gt 238 ]]; then
 						ipks_downgrade=true
-						EndAni "$ani_id"
 						ShowAsNote "various IPKs will be downgraded to suit $r_kernel_page_size kernel page size"
-						StartAni "$ani_id"
 						IPKs-ACdowngrade-to:Add "$a_target_packages"
 					else
 						IPKs-ACdowngrade-sk:Add "$a_target_packages"
@@ -1305,9 +1303,7 @@ CheckEnv()
 	AllocPackStatesToAcs
 
 	if QPKGs-ISupgradable.Exist sherpa; then
-		EndAni "$ani_id"
 		ShowAsNote "the $(TextBrightOrange sherpa) QPKG will be upgraded"
-		StartAni "$ani_id"
 		QPKGs-ACupgrade-to:Add sherpa
 	fi
 
@@ -1351,9 +1347,7 @@ AssignQpkgsToActions()
 	# Don't auto re-install Entware if only 'status' action is requested.
 
 	if IsOsOnline && IsValidQpkgInstalled Entware && IsEntwareUpgradable && (IsNonStatusActionRequested || [[ $useropt_fix = true ]]); then
-		EndAni "$ani_id"
 		ShowAsNote "the $(TextBrightOrange Entware) QPKG will be reinstalled (Entware packages were last updated in $(ConvertLongDateAsHuman $r_entware_packages_last_updated))"
-		StartAni "$ani_id"
 		QPKGs-ACreinstall-to:Add Entware
 	fi
 
@@ -7462,9 +7456,7 @@ ShowQPKGsMissing()
 			b='them'
 	esac
 
-	EndAni "$ani_id"
 	ShowAsNote "the $(FormatNWords "$(QPKGs-ISmissing:List)" 3 TextBrightRed) QPKG${a} missing or broken. Please reinstall $b"
-	StartAni "$ani_id"
 
 	return 1
 
@@ -7497,9 +7489,7 @@ ShowQPKGsNewVers()
 			b='versions are'
 	esac
 
-	EndAni "$ani_id"
 	ShowAsNote "${a}new QPKG $b available for $(FormatNWords "$(QPKGs-ISupgradable:List)" 3 TextBrightOrange)"
-	StartAni "$ani_id"
 
 	return 1
 
@@ -7780,37 +7770,23 @@ CheckSystemLoad()
 	local a=0
 
 	if IsOsStartingPackages; then
-		EndAni "$ani_id"
 		ShowAsNote "$(GetOsName) is starting QPKGs, check again in a few minutes"
-		StartAni "$ani_id"
 	elif IsOsStarting; then
-		EndAni "$ani_id"
 		ShowAsNote "$(GetOsName) is still booting, check again in a few minutes"
-		StartAni "$ani_id"
 	elif IsOsStopping; then
-		EndAni "$ani_id"
 		ShowAsNote "$(GetOsName) is shutting-down"
-		StartAni "$ani_id"
 	elif IsOsStoppingPackages; then
-		EndAni "$ani_id"
 		ShowAsNote "$(GetOsName) is stopping QPKGs"
-		StartAni "$ani_id"
 	fi
 
 	a=$(GetOsSysLoad1MinAverage)
 
 	if IsThisLoadAverageInsane "$a"; then
-		EndAni "$ani_id"
 		ShowAsWarn 'the NAS has an exceptionally-high system-load, recommend aborting and trying again later'
-		StartAni "$ani_id"
 	elif IsThisLoadAverageHigh "$a"; then
-		EndAni "$ani_id"
 		ShowAsWarn 'the NAS has an unusually-high system-load, so this may take a while'
-		StartAni "$ani_id"
 	elif IsThisLoadAverageElevated "$a"; then
-		EndAni "$ani_id"
 		ShowAsNote 'the NAS has an elevated system-load, so this may take a little longer than usual'
-		StartAni "$ani_id"
 	fi
 
 	FuncExit
@@ -10255,7 +10231,6 @@ EnableDebugToArchiveAndFile()
 	useropt_debug=true
 	DebugVar useropt_debug
 
-	EndAni "$ani_id"
 	ShowAsNote "debug mode activated, $(ShowAsTitleName) will run a little slower than usual"
 
 	archive_debug_afterward=true
@@ -15828,6 +15803,7 @@ FormatNWords()
 	local -i n=0
 
 	local a=''
+	local -i n=0
 	local words=($1)
 	local words_max=${2:-3}
 	local word_colour=${3:-TextUncoloured}
@@ -15836,7 +15812,7 @@ FormatNWords()
 	for ((n=1; n<=word_count; n++)); do
 		if [[ $n -eq 1 && $words_max -eq 1 ]]; then
 			if [[ $word_count -eq 1 ]]; then
-				a+=$($word_colour "${words[$((n-1))]}")
+				a+=$($word_colour "${words[n-1]}")
 			else
 				a+=$($word_colour "$((word_count-words_max+1))")' others'
 			fi
@@ -15848,7 +15824,7 @@ FormatNWords()
 			break
 		fi
 
-		a+=$($word_colour "${words[$((n-1))]}")
+		a+=$($word_colour "${words[n-1]}")
 
 		if [[ $((n+1)) -eq $word_count ]] || [[ $((n+1)) -ge $words_max && $((word_count-words_max)) -gt 0 ]]; then
 			a+=' & '
@@ -16859,6 +16835,8 @@ ShowAsNote()
 
 	[[ -n ${1:-} ]] || return
 
+	EndAni "$ani_id"
+
 	local a=note
 	local b=''
 
@@ -16875,6 +16853,8 @@ ShowAsDone()
 	# Process completed OK.
 
 	[[ -n ${1:-} ]] || return
+
+	EndAni "$ani_id"
 
 	local a='done'
 	local b=''
@@ -16893,6 +16873,8 @@ ShowAsNews()
 
 	[[ -n ${1:-} ]] || return
 
+	EndAni "$ani_id"
+
 	local a=news
 	local b=$1
 
@@ -16907,6 +16889,8 @@ ShowAsWarn()
 	# Warning only.
 
 	[[ -n ${1:-} ]] || return
+
+	EndAni "$ani_id"
 
 	local a=warn
 	local b=''
@@ -16924,6 +16908,8 @@ ShowAsAbort()
 	# Fatal abort.
 
 	[[ -n ${1:-} ]] || return
+
+	EndAni "$ani_id"
 
 	local a=bort
 	local b=''
@@ -16943,6 +16929,8 @@ ShowAsFail()
 
 	[[ -n ${1:-} ]] || return
 
+	EndAni "$ani_id"
+
 	local a=fail
 	local b=''
 
@@ -16959,6 +16947,8 @@ ShowAsError()
 	# Fatal error.
 
 	[[ -n ${1:-} ]] || return
+
+	EndAni "$ani_id"
 
 	local a=derp
 	local b=''
@@ -16981,6 +16971,8 @@ ShowAsBug()
 	#	$2 = Error message to display.
 
 	[[ -n ${1:-} && -n ${2:-} ]] || return
+
+	EndAni "$ani_id"
 
 	local -i i=0
 
