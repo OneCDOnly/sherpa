@@ -3953,6 +3953,8 @@ IPKs:upgrade()
 
 	FuncInit
 
+	EndAni "$ani_id"
+
 	local -i total_count=0
 	local -i z=0
 
@@ -4081,6 +4083,8 @@ IPKs:install()
 		dir_bytes=$(IPKs-ACdownload-to:Size)
 		dir_location=$r_ipk_download_path
 		dir_size_progress_prefix='install '$desc
+
+		EndAni "$ani_id"
 
 		_DirSizeMonitor_ &
 		fork_pid=$!
