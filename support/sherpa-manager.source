@@ -18326,6 +18326,7 @@ StartAni()
 	rm -f "$ani_end_pathfile" "$ani_pid_pathfile"
 
 	Animator &
+	: # This is only here to prevent Squeeze() combining the end-of-function brace with this line.
 
 	}
 
