@@ -1059,10 +1059,8 @@ CheckIfSelfSigned()
 
 	if IsOsCanManageSignedPackages && IsOsRequireSignedPackages && IsNtQpkgSigned sherpa; then
 		[[ $title_art_shown = true ]] && Display
-		EndAni "$ani_id"
 		ShowAsWarn "$(ShowAsTitleName) is unsigned, and $(GetOsName) is presently configured to require all packages to be signed."
 		ShowAsWarn "Please either self-sign $(ShowAsTitleName) with 'sherpa resign self', or allow unsigned QPKGs in your $(GetOsName) App Center"
-		StartAni "$ani_id"
 	fi
 
 	}
@@ -1187,9 +1185,7 @@ CheckEnv()
 	local -r r_pid_pathfile=$(CreatePidFilePathName)
 
 	if [[ $(/bin/grep -iE 'out of memory|oom-killer' /mnt/HDA_ROOT/.logs/kmsg | /usr/bin/wc -l) -gt 0 ]]; then
-		EndAni "$ani_id"
 		ShowAsWarn "the $(TextBrightRed 'Out-Of-Memory killer') has been triggered, check for $(TextBrightRed inactive) QPKGs"
-		StartAni "$ani_id"
 	fi
 
 #	if IsQpkgInstalled OMedusa || IsQpkgInstalled Medusa; then
@@ -3448,9 +3444,7 @@ AllocPackGroupsToAcs()
 			if QPKGs-AC${action}-to.IsAny; then
 				DebugAsDone "action: '$action', group: 'GR${group}': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
 			else
-				EndAni "$ani_id"
 				ShowAsWarn "unable to find any 'GR$group' QPKGs to '$(Lowercase "$action")'"
-				StartAni "$ani_id"
 			fi
 		done
 
@@ -3463,9 +3457,7 @@ AllocPackGroupsToAcs()
 				if QPKGs-AC${action}-to.IsAny; then
 					DebugAsDone "action: '$action', group: 'GRNT${group}': found $(QPKGs-AC${action}-to:Count) package$(Pluralise "$(QPKGs-AC${action}-to:Count)") to process"
 				else
-					EndAni "$ani_id"
 					ShowAsWarn "unable to find any 'GRNT$group' QPKGs to '$(Lowercase "$action")'"
-					StartAni "$ani_id"
 				fi
 			fi
 		done
@@ -3526,9 +3518,7 @@ AllocPackStatesToAcs()
 			elif [[ $check_later = true ]]; then
 				DebugAsDone "action: '$action', state: 'IS${state}': will add filtered-QPKGs later after 'status' has been determined"
 			else
-				EndAni "$ani_id"
 				ShowAsWarn "unable to find any '$state' QPKGs to '$(Lowercase "$action")'"
-				StartAni "$ani_id"
 			fi
 		done
 
@@ -3554,9 +3544,7 @@ AllocPackStatesToAcs()
 			elif [[ $check_later = true ]]; then
 				DebugAsDone "action: '$action', state: 'ISNT${state}': will add filtered-QPKGs later after 'status' has been determined"
 			else
-				EndAni "$ani_id"
 				ShowAsWarn "unable to find any 'not $state' QPKGs to '$(Lowercase "$action")'"
-				StartAni "$ani_id"
 			fi
 		done
 	done
@@ -7532,9 +7520,7 @@ CheckQPKGsWarnings()
 	if [[ -n ${r_base_qpkg_warnings:-} ]]; then
 		for a in "${r_base_qpkg_warnings[@]}"; do
 			if IsQpkgEnabled "$a"; then
-				EndAni "$ani_id"
 				ShowAsWarn "the '$a' QPKG is enabled. This may cause problems with $(ShowAsTitleName) applications. Please consider stopping this QPKG in your App Center"
-				StartAni "$ani_id"
 
 				return 1
 			fi
@@ -10159,9 +10145,7 @@ ShowZeroQpkgs()
 			[[ $b = list ]] && continue		# Action results lists are unavailable for these.
 
 			if QPKGs.AC${b}IS${a}.IsSet && QPKGs-AC${b}-ok.IsNone; then
-				EndAni "$ani_id"
 				ShowAsWarn "no QPKGs were able to $(Lowercase "$b")"
-				StartAni "$ani_id"
 			fi
 		done
 	done
