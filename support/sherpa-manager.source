@@ -44,11 +44,15 @@ readonly r_args_raw=$*
 Init()
 	{
 
+	trap CaughtSIGINT SIGINT
+	trap CaughtEXIT EXIT
+
 	HideCursor
 	HideKeystrokes
 	LoadCMDs
 	LoadConsts
 	LoadDefaults
+	InitAni
 
 	ShowAsProc init
 
@@ -249,6 +253,7 @@ LoadConsts()
 		readonly e_nourl='undefined URL'
 		readonly e_noval='undefined value'
 		readonly e_novar='undefined variable'
+		readonly e_nopid='undefined process ID'
 
 	# QPKG actions.
 
@@ -589,7 +594,7 @@ LoadEnv()
 		readonly r_temp_run_path=$r_sys_run_path/sherpa.d
 			readonly r_action_counts_path=$r_temp_run_path/action/count
 			readonly r_async_procs_path=$r_temp_run_path/proc
-				readonly r_active_pids_pathfile=$r_async_procs_path/pids
+				readonly r_animation_path=$r_async_procs_path/animation
 			readonly r_qpkg_states_path=$r_temp_run_path/qpkg/state
 			readonly r_run_logs_path=$r_temp_run_path/log
 			readonly r_temp_report_path=$r_temp_run_path/report
@@ -628,7 +633,7 @@ LoadEnv()
 
 		[[ -x $r_python3_cmd && ! -L $r_python_cmd ]] && ln -s "$r_python3_cmd" "$r_python_cmd"
 
-	rm -f "$r_report_output_pathfile" "$r_ramfs_freespace_pathfile" "$r_inhibit_display_pathfile" "$r_active_pids_pathfile" 2> /dev/null
+	rm -f "$r_report_output_pathfile" "$r_ramfs_freespace_pathfile" "$r_inhibit_display_pathfile" 2> /dev/null
 
 	}
 
@@ -724,6 +729,7 @@ CreatePaths()
 	MakePath "$r_action_log_path" 'action logs' || return
 	MakePath "$r_action_times_path" 'action times' || return
 	MakePath "$r_async_procs_path" 'asynchronous process tracking' || return
+	MakePath "$r_animation_path" 'animation process tracking' || return
 	MakePath "$r_log_path" 'persistent logs' || return
 	MakePath "$r_qpkg_bu_path" 'QPKG backup' || return
 	MakePath "$r_qpkg_states_path" states || return
@@ -1170,10 +1176,13 @@ CheckEnv()
 
 	FuncInit
 
+	EndAni "$ani_id"
 	ShowAsProc 'check env'
+	StartAni "$ani_id"
 
 	local installed_version=''
 	local a_target_packages=''
+	local -r r_pid_pathfile=$(CreatePidFilePathName)
 
 	if [[ $(/bin/grep -iE 'out of memory|oom-killer' /mnt/HDA_ROOT/.logs/kmsg | /usr/bin/wc -l) -gt 0 ]]; then
 		ShowAsWarn "the $(TextBrightRed 'Out-Of-Memory killer') has been triggered, check for $(TextBrightRed inactive) QPKGs"
@@ -1188,7 +1197,7 @@ CheckEnv()
 	if IsValidQpkgInstalled Entware; then
 		if [[ $r_entware_type != none ]]; then
 			_UpdateEntwarePackageList_ &			# Let's try launching this early.
-			echo "$!" >> "$r_active_pids_pathfile"
+			WriteToPidFile "$!" "$r_pid_pathfile"
 		else
 			DebugAsWarn "$(FormatPackageName Entware) appears to be installed but is inactive. Please consider starting the $(FormatPackageName Entware) QPKG."
 		fi
@@ -1294,9 +1303,22 @@ CheckEnv()
 		QPKGs-ACupgrade-to:Add sherpa
 	fi
 
-	wait $(< "$r_active_pids_pathfile") 2> /dev/null	# Ensure Entware package updater completes before continuing.
-
+	WaitForPidsThenRemove "$r_pid_pathfile"		# Ensure Entware package updater completes before continuing.
+	EndAni "$ani_id"
 	FuncExit
+
+	}
+
+WaitForPidsThenRemove()
+	{
+
+	# Wait for PIDs from file specified as $1, then remove this file.
+
+	[[ -n ${1:-} ]] || return
+	[[ -s $1 ]] || return
+
+	wait $(< "$1") 2> /dev/null
+	rm -f "$1"
 
 	}
 
@@ -1310,7 +1332,9 @@ AssignQpkgsToActions()
 
 	FuncInit
 
+	EndAni "$ani_id"
 	ShowAsProc 'action assignment'
+	StartAni "$ani_id"
 
 	local action=''
 	local prospect=''
@@ -1643,7 +1667,9 @@ ProcActions()
 
 	FuncInit
 
+	EndAni "$ani_id"
 	ShowAsProc 'package actions'
+	StartAni "$ani_id"
 
 	local -i tier_index=0
 
@@ -1659,7 +1685,7 @@ ProcActions()
 	ProcAction status all QPKG 'live status'
 
 	if [[ $useropt_show_status = false ]]; then
-		ShowAsProc 'assign QPKGs by state'				# Update action lists based-on QPKG `status`.
+		# Update action lists based-on QPKG `status`.
 
 		for action in "${ar_user_qpkg_actions[@]}"; do
 			for state in "${ar_qpkg_is_states[@]}"; do
@@ -1683,6 +1709,10 @@ ProcActions()
 			done
 		done
 	fi
+
+	EndAni "$ani_id"
+	ShowAsProc 'package actions'
+	StartAni "$ani_id"
 
 	ProcAction rebuild all QPKG meta-rebuild
 	ProcAction reassign all QPKG reassign
@@ -1825,6 +1855,7 @@ ProcAction()
 	local -r r_action_intransitive_msg=${4:?${FUNCNAME[0]}(): $e_noact message}
 	local -r r_package_type=${3:?${FUNCNAME[0]}(): $e_nopty}
 	local -r r_tier=${2:?${FUNCNAME[0]}(): $e_notir}
+	local -r r_pid_pathfile=$(CreatePidFilePathName)
 
 	local group=''
 	local msg1_key=''
@@ -1835,6 +1866,7 @@ ProcAction()
 	local re=''
 	local state=''
 	local target_object_name=''
+	local pid=0
 
 	DebugVar r_action
 	DebugVar r_tier
@@ -1861,6 +1893,8 @@ ProcAction()
 				FuncExit; return
 			fi
 
+			EndAni "$ani_id"
+
 			if [[ $total_count -eq 1 ]]; then
 				fork_progress_prefix="$r_action_intransitive_msg $(TextBrightOrange "${a_target_packages[0]}") $r_package_type"
 			else
@@ -1877,9 +1911,11 @@ ProcAction()
 				ShowKeystrokes			# Enable before removing Entware (& GNU `stty`).
 			fi
 
-			CreatePidFile
+			CreateAndSetPidFile
 			_ExecOneActionWithManyForks_ "_${r_package_type}:${r_action}_" "${a_target_packages[@]}" &
-			WritePidFile "$!"
+			pid=$!
+			WriteToPidFile "$pid" "$pidfile"
+			WriteToPidFile "$pid" "$r_pid_pathfile"
 
 			# Read message pipe and process QPKGs and mark action statuses as-per requests contained within.
 
@@ -1994,7 +2030,8 @@ ProcAction()
 			[[ $done_ok_count -gt 0 ]] && show_action_results_ok=true
 			[[ $skip_ok_count -gt 0 || $skip_error_count -gt 0 || $skip_abort_count -gt 0 ]] && show_action_results_skipped=true
 
-			wait 2> /dev/null
+			WaitForPidsThenRemove "$r_pid_pathfile"
+
 			CloseMsgPipe
 
 			[[ ${useropt_terse:=true} = false && $useropt_verbose = false ]] && echo
@@ -2155,8 +2192,6 @@ PrepareArgs()
 	#	$arg_problem
 	#	$a_args[]
 	#	$useropt_help_basic
-
-	ShowAsProc args
 
 	local a=''
 
@@ -3390,7 +3425,9 @@ AllocPackGroupsToAcs()
 
 	FuncInit
 
+	EndAni "$ani_id"
 	ShowAsProc 'package groups'
+	StartAni "$ani_id"
 
 	local action=''
 	local group=''
@@ -3440,7 +3477,9 @@ AllocPackStatesToAcs()
 
 	FuncInit
 
+	EndAni "$ani_id"
 	ShowAsProc 'conditional package states'
+	StartAni "$ani_id"
 
 	local action=''
 	local check_later=false
@@ -3765,6 +3804,8 @@ CalcIpkDepsToInstall()
 		FuncExit 1; return
 	fi
 
+	EndAni "$ani_id"
+
 	DebugInfo "$requested_count IPK$(Pluralise "$requested_count") requested" "'$req_list' "
 
 	while [[ $iterations -le $r_iteration_limit ]]; do
@@ -3807,7 +3848,9 @@ CalcIpkDepsToInstall()
 	pre_exclude_count=$(/usr/bin/wc -w <<< "$pre_exclude_list")
 
 	if [[ $pre_exclude_count -gt 0 ]]; then
+		EndAni "$ani_id"
 		ShowAsProc 'exclude IPKs already installed'
+		StartAni "$ani_id"
 
 		DebugInfo "$pre_exclude_count IPK$(Pluralise "$pre_exclude_count") required (including dependencies)" "'$pre_exclude_list' "
 
@@ -3854,7 +3897,9 @@ CalcIpkDownloadSize()
 	size_count=$(IPKs-ACdownload-to:Count)
 
 	if [[ $size_count -gt 0 ]]; then
+		EndAni "$ani_id"
 		ShowAsProc "calculate size of IPK$(Pluralise "$size_count") to download"
+		StartAni "$ani_id"
 
 		DebugAsDone "$size_count IPK$(Pluralise "$size_count") to download: '$(IPKs-ACdownload-to:List)'"
 		a_sizes=($($r_gnu_grep_cmd -w '^Package:\|^Size:' "$r_external_packages_pathfile" | $r_gnu_grep_cmd --after-context 1 --no-group-separator ": $(/bin/sed 's/ /$ /g;s/\$ /\$\\\|: /g' <<< "$(IPKs-ACdownload-to:List)")" | /bin/grep '^Size:' | /bin/sed 's/^Size: //'))
@@ -3895,6 +3940,8 @@ IPKs:upgrade()
 	IsNtError || return
 
 	FuncInit
+
+	EndAni "$ani_id"
 
 	local -i total_count=0
 	local -i z=0
@@ -4025,6 +4072,8 @@ IPKs:install()
 		dir_location=$r_ipk_download_path
 		dir_size_progress_prefix='install '$desc
 
+		EndAni "$ani_id"
+
 		_DirSizeMonitor_ &
 		fork_pid=$!
 
@@ -4099,7 +4148,9 @@ IPKs:downgrade()
 		desc="$total_count ${package_type}$(Pluralise "$total_count")"
 		log_pathfile=$r_log_path/ipks.$r_download_log_file
 
+		EndAni "$ani_id"
 		ShowAsProc "download $desc"
+		StartAni "$ani_id"
 
 		SetQpkgArch
 
@@ -4163,7 +4214,9 @@ IPKs:downgrade()
 		desc="$total_count auxiliary ${package_type}$(Pluralise "$total_count")"
 		log_pathfile=$r_log_path/ipks.$r_downgrade_log_file
 
+		EndAni "$ani_id"
 		ShowAsProc "downgrade $desc"
+		StartAni "$ani_id"
 
 		ShowAsPercentProgress "downgrade $desc" '' "$done_ok_count" 0 "$done_fail_count" "$total_count"
 		Executer "$r_opkg_cmd install --force-downgrade --cache $r_ipk_cache_path --tmp-dir $r_ipk_downgrade_path $r_ipk_downgrade_path/*.ipk" "$log_pathfile" log:failure-only
@@ -4349,6 +4402,7 @@ _ExecOneActionWithManyForks_()
 	FuncForkInit
 
 	local -i pid=0
+	local -r r_pid_pathfile=$(CreatePidFilePathName)
 
 	local a=$1
 	local qpkg_name=''
@@ -4371,11 +4425,12 @@ _ExecOneActionWithManyForks_()
 
 		(	# Update $pidfile in a subshell, so $pidfile for _ExecOneActionWithManyForks_() isn't altered.
 
-			CreatePidFile
+			CreateAndSetPidFile
 			$a &
 			pid=$!
 
-			WritePidFile "$pid"
+			WriteToPidFile "$pid" "$pidfile"
+			AppendToPidsFile "$pid" "$r_pid_pathfile"
 			DebugAsDone "forked $a() instance for '$qpkg_name' with PID $pid"
 
 		)
@@ -4392,7 +4447,7 @@ _ExecOneActionWithManyForks_()
 		UpdateActionForkProgress						# Update display while active forks complete their tasks.
 	done
 
-	wait 2> /dev/null
+	WaitForPidsThenRemove "$r_pid_pathfile"
 
 	# All action forks have exited.
 
@@ -7748,10 +7803,11 @@ BuildExtendedQPKGsStates()
 	CheckSystemLoad
 	LoadDatabase
 	InitQPKGsStates
-	RefreshAndStoreQPKGsStates
+	RefreshAndStoreQPKGsStates		# Includes `StartAni "$ani_id"`
 	LoadQPKGsStates
 	ShowQPKGsMissing
 	ShowQPKGsNewVers
+	EndAni "$ani_id"				# Starts in RefreshAndStoreQPKGsStates().
 
 	FuncExit
 
@@ -7795,6 +7851,16 @@ InitQPKGsStates()
 
 	}
 
+CreatePidFilePathName()
+	{
+
+	# Inputs: (global)
+	#	$r_async_procs_path
+
+	printf '%s' "$r_async_procs_path/${FUNCNAME[1]}.pids"
+
+	}
+
 RefreshAndStoreQPKGsStates()
 	{
 
@@ -7805,7 +7871,11 @@ RefreshAndStoreQPKGsStates()
 
 	qpkg_name=''
 
+	local -r r_pid_pathfile=$(CreatePidFilePathName)
+
+	EndAni "$ani_id"
 	ShowAsProc 'early package states'
+	StartAni "$ani_id"		# Ends in BuildExtendedQPKGsStates().
 
 	# Faster to launch several concurrent loops async than a single loop. Launch those requiring more processing-time first.
 
@@ -7817,6 +7887,8 @@ RefreshAndStoreQPKGsStates()
 		fi >> "$r_qpkg_states_path/$qpkg_name"
 	done &
 
+	AppendToPidsFile "$!" "$r_pid_pathfile"
+
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		if IsQpkgInstallable; then
 			echo installable
@@ -7824,6 +7896,8 @@ RefreshAndStoreQPKGsStates()
 			echo notinstallable
 		fi >> "$r_qpkg_states_path/$qpkg_name"
 	done &
+
+	AppendToPidsFile "$!" "$r_pid_pathfile"
 
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		if IsQpkgMissing; then
@@ -7833,6 +7907,8 @@ RefreshAndStoreQPKGsStates()
 		fi >> "$r_qpkg_states_path/$qpkg_name"
 	done &
 
+	AppendToPidsFile "$!" "$r_pid_pathfile"
+
 	for qpkg_name in $(QPKGs-GRall:Array); do
 		if IsQpkgBackupExist; then
 			echo backedup
@@ -7841,7 +7917,9 @@ RefreshAndStoreQPKGsStates()
 		fi >> "$r_qpkg_states_path/$qpkg_name"
 	done &
 
-	wait 2> /dev/null
+	AppendToPidsFile "$!" "$r_pid_pathfile"
+
+	WaitForPidsThenRemove "$r_pid_pathfile"
 
 	FuncExit
 
@@ -7860,7 +7938,9 @@ LoadQPKGsStates()
 
 	qpkg_name=''
 
-#	ShowAsProc 'load QPKG states'
+	EndAni "$ani_id"
+	ShowAsProc 'load QPKG states'
+	StartAni "$ani_id"
 
 	# Load status lines from individual files into session arrays.
 
@@ -7995,6 +8075,8 @@ HelpAbbreviations()
 
 	FuncInit
 
+	local -r r_pid_pathfile=$(CreatePidFilePathName)
+
 	local -i m=0
 	local -i n=0
 
@@ -8019,10 +8101,11 @@ HelpAbbreviations()
 		((n++))
 		SetQpkgIndex
 		_GenerateAbsReportDataRow_ > "$r_report_rows_path/$n" &
+		AppendToPidsFile "$!" "$r_pid_pathfile"
 	done
 
 	m=$n
-	wait 2> /dev/null
+	WaitForPidsThenRemove "$r_pid_pathfile"
 
 	# Load report lines from individual files.
 
@@ -8043,6 +8126,7 @@ HelpAbbreviations()
 
 	DisplayAsProjSynExam "example: to install $(FormatPackageName SABnzbd), $(FormatPackageName HeadPhones) and $(FormatPackageName nzbToMedia) all-at-once" 'install sab hp nzb2' >> "$r_report_output_pathfile"
 
+	EndAni "$ani_id"
 	EraseThisLine
 	ShowReport
 	ListQPKGsStates
@@ -8058,6 +8142,8 @@ ReportBackups()
 	#	$r_gnu_find_cmd
 
 	FuncInit
+
+	local -r r_pid_pathfile=$(CreatePidFilePathName)
 
 	local -i file_bytes=0
 	local -i m=0
@@ -8082,6 +8168,7 @@ ReportBackups()
 
 			((n++))
 			_GenerateBacksReportItemLine_ "$epoch_time" "$file_name" "$file_bytes" "$r_report_highlight_backups_older_than" > "$r_report_rows_path/$n" &
+			AppendToPidsFile "$!" "$r_pid_pathfile"
 		done <<< "$($r_gnu_find_cmd "$r_qpkg_bu_path"/*.config.tar.gz -maxdepth 1 -printf '%C@ %f %s\n' 2> /dev/null | /usr/bin/sort)"
 	else										# If GNU `find` isn't available, do-it the hard-way.
 		while read -r file_date file_time file_name file_bytes; do
@@ -8091,11 +8178,12 @@ ReportBackups()
 
 			((n++))
 			_GenerateBacksReportItemLine_ "$epoch_time" "$file_name" "$file_bytes" "$r_report_highlight_backups_older_than" > "$r_report_rows_path/$n" &
+			AppendToPidsFile "$!" "$r_pid_pathfile"
 		done <<< "$(cd "$r_qpkg_bu_path" && ls -l1tr --time-style=+"%Y-%m-%d %H:%M:%S" ./*.config.tar.gz 2> /dev/null | /bin/awk '{print $6" "$7" "$8" "$5}')"
 	fi
 
 	m=$n
-	wait 2> /dev/null
+	WaitForPidsThenRemove "$r_pid_pathfile"
 
 	# Load report lines from individual files.
 
@@ -8114,6 +8202,7 @@ ReportBackups()
 		GenerateReportInfo >> "$r_report_output_pathfile"
 	fi
 
+	EndAni "$ani_id"
 	EraseThisLine
 	ShowReport
 
@@ -8127,6 +8216,8 @@ ReportDependencies()
 	FuncInit
 
 	generate_report_headers=true
+
+	local -r r_pid_pathfile=$(CreatePidFilePathName)
 
 	local -i m=0
 	local -i n=0
@@ -8146,10 +8237,11 @@ ReportDependencies()
 		((n++))
 		SetQpkgIndex
 		_GenerateDepsReportDataRow_ > "$r_report_rows_path/$n" &
+		AppendToPidsFile "$!" "$r_pid_pathfile"
 	done
 
 	m=$n
-	wait 2> /dev/null
+	WaitForPidsThenRemove "$r_pid_pathfile"
 
 	# Load report lines from individual files.
 
@@ -8168,6 +8260,7 @@ ReportDependencies()
 		GenerateReportInfo >> "$r_report_output_pathfile"
 	fi
 
+	EndAni "$ani_id"
 	EraseThisLine
 	ShowReport
 	ListQPKGsStates
@@ -8182,6 +8275,8 @@ ReportFeatures()
 	FuncInit
 
 	generate_report_headers=true
+
+	local -r r_pid_pathfile=$(CreatePidFilePathName)
 
 	local -i m=0
 	local -i n=0
@@ -8201,10 +8296,11 @@ ReportFeatures()
 		((n++))
 		SetQpkgIndex
 		_GenerateFeaturesReportDataRow_ > "$r_report_rows_path/$n" &
+		AppendToPidsFile "$!" "$r_pid_pathfile"
 	done
 
 	m=$n
-	wait 2> /dev/null
+	WaitForPidsThenRemove "$r_pid_pathfile"
 
 	# Load report lines from individual files.
 
@@ -8223,6 +8319,7 @@ ReportFeatures()
 		GenerateReportHeadingsInfo >> "$r_report_output_pathfile"
 	fi
 
+	EndAni "$ani_id"
 	EraseThisLine
 	ShowReport
 	ListQPKGsStates
@@ -8235,6 +8332,8 @@ ReportPackages()
 	{
 
 	FuncInit
+
+	local -r r_pid_pathfile=$(CreatePidFilePathName)
 
 	local -i m=0
 	local -i n=0
@@ -8261,10 +8360,11 @@ ReportPackages()
 		((n++))
 		SetQpkgIndex
 		_GeneratePacksReportDataRow_ "$qpkg_name" > "$r_report_rows_path/$n" &
+		AppendToPidsFile "$!" "$r_pid_pathfile"
 	done
 
 	m=$n
-	wait 2> /dev/null
+	WaitForPidsThenRemove "$r_pid_pathfile"
 
 	# Load report data lines from individual files.
 
@@ -8290,6 +8390,7 @@ ReportPackages()
 
 		} >> "$r_report_output_pathfile"
 
+	EndAni "$ani_id"
 	EraseThisLine
 	ShowReport
 	ListQPKGsStates
@@ -8304,6 +8405,8 @@ ReportRepos()
 	FuncInit
 
 	generate_report_headers=true
+
+	local -r r_pid_pathfile=$(CreatePidFilePathName)
 
 	local -i m=0
 	local -i n=0
@@ -8323,10 +8426,11 @@ ReportRepos()
 		((n++))
 		SetQpkgIndex
 		_GenerateReposReportDataRow_ > "$r_report_rows_path/$n" &
+		AppendToPidsFile "$!" "$r_pid_pathfile"
 	done
 
 	m=$n
-	wait 2> /dev/null
+	WaitForPidsThenRemove "$r_pid_pathfile"
 
 	# Load report data lines from individual files.
 
@@ -8345,6 +8449,7 @@ ReportRepos()
 		GenerateReportInfo >> "$r_report_output_pathfile"
 	fi
 
+	EndAni "$ani_id"
 	EraseThisLine
 	ShowReport
 	ListQPKGsStates
@@ -8359,6 +8464,8 @@ ReportStatuses()
 	FuncInit
 
 	generate_report_headers=true
+
+	local -r r_pid_pathfile=$(CreatePidFilePathName)
 
 	local -i m=0
 	local -i n=0
@@ -8377,12 +8484,13 @@ ReportStatuses()
 		((n++))
 		SetQpkgIndex
 		_GenerateStatusReportDataRow_ > "$r_report_rows_path/$n" &
+		AppendToPidsFile "$!" "$r_pid_pathfile"
 	done
 
 	printf -v a '%s\n' "$(GenerateStatusReportTitleRow)"
 
 	m=$n
-	wait 2> /dev/null
+	WaitForPidsThenRemove "$r_pid_pathfile"
 
 	# Load report lines from individual files.
 
@@ -8401,6 +8509,7 @@ ReportStatuses()
 		GenerateReportInfo >> "$r_report_output_pathfile"
 	fi
 
+	EndAni "$ani_id"
 	EraseThisLine
 	ShowReport
 	ListQPKGsStates
@@ -8740,6 +8849,8 @@ ShowReport()
 	# Inputs: (global)
 	#	$r_report_output_pathfile
 
+	EndAni "$ani_id"
+
 	if [[ -s $r_report_output_pathfile ]]; then
 		if [[ $generate_report_headers = true ]]; then
 			DisplayFileInViewport "$r_report_output_pathfile" headers:on
@@ -8762,6 +8873,7 @@ ShowVersionsList()
 	#	$r_this_package_ver
 
 	DisableDebugToArchiveAndFile
+	EndAni "$ani_id"
 	EraseThisLine
 
 	Display "QPKG: $(ConvertAsSmartDate "$r_this_package_ver")"
@@ -8882,6 +8994,7 @@ ShowQPKGList()
 	local qpkg_name=''
 
 	DisableDebugToArchiveAndFile
+	EndAni "$ani_id"
 	EraseThisLine
 
 	if IsFuncExist QPKGs-$1.IsAny && QPKGs-$1.IsAny; then
@@ -10030,7 +10143,10 @@ ShowZeroQpkgs()
 	for a in "${ar_qpkg_is_states[@]}"; do
 		for b in "${ar_user_qpkg_actions[@]}"; do
 			[[ $b = list ]] && continue		# Action results lists are unavailable for these.
-			QPKGs.AC${b}IS${a}.IsSet && QPKGs-AC${b}-ok.IsNone && ShowAsWarn "no QPKGs were able to $(Lowercase "$b")"
+
+			if QPKGs.AC${b}IS${a}.IsSet && QPKGs-AC${b}-ok.IsNone; then
+				ShowAsWarn "no QPKGs were able to $(Lowercase "$b")"
+			fi
 		done
 	done
 
@@ -14817,7 +14933,7 @@ UpdateSessionColumns()
 
 	} &> /dev/null
 
-CreatePidFile()
+CreateAndSetPidFile()
 	{
 
 	# Inputs: (global)
@@ -14830,18 +14946,35 @@ CreatePidFile()
 
 	}
 
-WritePidFile()
+WriteToPidFile()
 	{
 
 	# Inputs: (local)
 	#	$1 = process ID to write into file.
+	#	$2 (optional) = pathfilename to write into. Default is $pidfile
 
 	# Inputs: (global)
+	#	$e_nopfi
+	#	$e_nopid
 	#	$pidfile
 
-	[[ -n ${1:-} && -n ${pidfile:-} ]] || return
+	echo "${1:?${FUNCNAME[0]}(): $e_nopid}" > "${2:-${pidfile:?${FUNCNAME[0]}(): $e_nopfi}}"
 
-	echo "$1" > "$pidfile"
+	}
+
+AppendToPidsFile()
+	{
+
+	# Inputs: (local)
+	#	$1 = process ID to write into file.
+	#	$2 (optional) = pathfilename to append to. Default is $pidfile
+
+	# Inputs: (global)
+	#	$e_nopfi
+	#	$e_nopid
+	#	$pidfile
+
+	echo "${1:?${FUNCNAME[0]}(): $e_nopid}" >> "${2:-${pidfile:?${FUNCNAME[0]}(): $e_nopfi}}"
 
 	}
 
@@ -15511,6 +15644,7 @@ ShowTitle()
 
 	[[ $show_title = true && $title_shown = false && $useropt_verbose = false ]] || return
 
+	EndAni "$ani_id"
 	EraseThisLine
 
 	# Only show ASCII title when no arguments have been specified.
@@ -15657,6 +15791,7 @@ FormatNWords()
 	local -i n=0
 
 	local a=''
+	local -i n=0
 	local words=($1)
 	local words_max=${2:-3}
 	local word_colour=${3:-TextUncoloured}
@@ -15665,7 +15800,7 @@ FormatNWords()
 	for ((n=1; n<=word_count; n++)); do
 		if [[ $n -eq 1 && $words_max -eq 1 ]]; then
 			if [[ $word_count -eq 1 ]]; then
-				a+=$($word_colour "${words[$((n-1))]}")
+				a+=$($word_colour "${words[n-1]}")
 			else
 				a+=$($word_colour "$((word_count-words_max+1))")' others'
 			fi
@@ -15677,7 +15812,7 @@ FormatNWords()
 			break
 		fi
 
-		a+=$($word_colour "${words[$((n-1))]}")
+		a+=$($word_colour "${words[n-1]}")
 
 		if [[ $((n+1)) -eq $word_count ]] || [[ $((n+1)) -ge $words_max && $((word_count-words_max)) -gt 0 ]]; then
 			a+=' & '
@@ -15761,7 +15896,9 @@ DisplayProcReport()
 
 	[[ -n ${1:-} ]] && a=$1' '
 
+	EndAni "$ani_id"
 	ShowAsProc "${a}report"
+	StartAni "$ani_id"
 
 	report_title_shown=true
 
@@ -16686,6 +16823,8 @@ ShowAsNote()
 
 	[[ -n ${1:-} ]] || return
 
+	EndAni "$ani_id"
+
 	local a=note
 	local b=''
 
@@ -16702,6 +16841,8 @@ ShowAsDone()
 	# Process completed OK.
 
 	[[ -n ${1:-} ]] || return
+
+	EndAni "$ani_id"
 
 	local a='done'
 	local b=''
@@ -16720,6 +16861,8 @@ ShowAsNews()
 
 	[[ -n ${1:-} ]] || return
 
+	EndAni "$ani_id"
+
 	local a=news
 	local b=$1
 
@@ -16734,6 +16877,8 @@ ShowAsWarn()
 	# Warning only.
 
 	[[ -n ${1:-} ]] || return
+
+	EndAni "$ani_id"
 
 	local a=warn
 	local b=''
@@ -16751,6 +16896,8 @@ ShowAsAbort()
 	# Fatal abort.
 
 	[[ -n ${1:-} ]] || return
+
+	EndAni "$ani_id"
 
 	local a=bort
 	local b=''
@@ -16770,6 +16917,8 @@ ShowAsFail()
 
 	[[ -n ${1:-} ]] || return
 
+	EndAni "$ani_id"
+
 	local a=fail
 	local b=''
 
@@ -16786,6 +16935,8 @@ ShowAsError()
 	# Fatal error.
 
 	[[ -n ${1:-} ]] || return
+
+	EndAni "$ani_id"
 
 	local a=derp
 	local b=''
@@ -16808,6 +16959,8 @@ ShowAsBug()
 	#	$2 = Error message to display.
 
 	[[ -n ${1:-} && -n ${2:-} ]] || return
+
+	EndAni "$ani_id"
 
 	local -i i=0
 
@@ -17718,22 +17871,29 @@ Pause()
 
 	# Inputs: (global)
 	#	$_pause_method
-	#	$pause_multiplier
+	#	$_pause_translated_duration
+	#	$_pause_previous_duration
+
+	# Outputs: (global)
+	#	$_pause_translated_duration
+	#	$_pause_previous_duration
 
 	SetOsPauseMethod || exit
 
 	[[ $_pause_method != unset ]] || return
 	[[ -n ${1:-} ]] || return
 
-	local a=0
+	if [[ $1 != "${_pause_previous_duration:=0}" ]]; then		# Don't recalculate unless specified duration is different to previous.
+		if [[ $_pause_method = usleep ]]; then
+			_pause_translated_duration=$(awk -v d="$1" 'BEGIN {print d*10^6}')	# Convert seconds to microseconds.
+		else
+			_pause_translated_duration=$1
+		fi
 
-	if [[ $_pause_method = usleep ]]; then
-		a=$(awk -v d="$1" 'BEGIN {print d*10^6}')		# Convert seconds to microseconds.
-	else
-		a=$1
+		_pause_previous_duration=$1
 	fi
 
-	eval $_pause_method $a
+	eval $_pause_method ${_pause_translated_duration:=0}
 
 	}
 
@@ -17896,7 +18056,9 @@ LoadObjects()
 
 	LoadLists
 
+	EndAni "$ani_id"
 	ShowAsProc objects
+	StartAni "$ani_id"
 
 	# NOTE: Set these prior to calling RefreshArchive()
 
@@ -17949,7 +18111,9 @@ LoadDatabase()
 
 	LoadObjects
 
+	EndAni "$ani_id"
 	ShowAsProc database
+	StartAni "$ani_id"
 
 	# NOTE: Set these prior to calling RefreshArchive()
 
@@ -18065,6 +18229,7 @@ CaughtSIGINT()
 	[[ -n ${r_inhibit_display_pathfile:-} ]] && /bin/touch "$r_inhibit_display_pathfile"
 	[[ -n ${r_abort_actions_pathfile:-} ]] && /bin/touch "$r_abort_actions_pathfile"
 
+	EndAni "$ani_id"
 	EraseThisLine
 	ShowAsAbort 'caught SIGINT'
 	CloseMsgPipe
@@ -18086,11 +18251,178 @@ CaughtEXIT()
 
 	}
 
+InitAni()
+	{
+
+	local blue='\033[94m'
+	local cyan='\033[96m'
+	local green='\033[92m'
+	local orange='\033[1;38;5;214m'
+	local red='\033[91m'
+	local white='\033[97m'
+	local yellow='\033[93m'
+
+	readonly blue
+	readonly cyan
+	readonly green
+	readonly orange
+	readonly red
+	readonly white
+	readonly yellow
+
+	ani_colour=$orange
+	ani_frame_duration=0.08		# In decimal seconds.
+	ani_id=1
+	reverse_motion=false		# Set 'true' to run animation backwards.
+
+	SetAniType
+
+	}
+
+SetAniType()
+	{
+
+	# 5 pixels, clockwise orbit.
+	ani_chars=(2 '⢎⡀' '⢎⠁' '⠎⠑' '⠊⠱' '⠈⡱' '⢀⡱' '⢄⡰' '⢆⡠')
+
+	ani_first_frame=2						# Begin animation at this array element (option base 1).
+	ani_total_frames=${#ani_chars[@]}		# Total animation frames. A frame is one or-more characters.
+		ani_last_frame=$ani_total_frames	# Complete animation at this array element (option base 1).
+	ani_frame_step=1						# 1 = show every frame, 2 = show every second frame.
+	ani_width=${ani_chars[0]}				# Use first element as animation character width. QTS BusyBox 1.01 doesn't support `wc -m`  so can't measure width.
+
+	if [[ $reverse_motion = true ]]; then	# Reverse processing order.
+		ani_first_frame=$ani_total_frames
+		ani_last_frame=2
+		ani_frame_step=-$ani_frame_step
+	fi
+
+	}
+
+StartAni()
+	{
+
+	IsNtDebug || return							# Don't start an animation in debug mode.
+	[[ -n ${1:-} ]] || return
+	SetAniPathFiles "$1" || return
+	[[ ! -e $ani_pid_pathfile ]] || return		# Don't start another animation with the same ID.
+
+	rm -f "$ani_end_pathfile"
+
+	Animator &
+	: # This is only here to prevent Squeeze() combining the end-of-function brace with this line.
+
+	}
+
+EndAni()
+	{
+
+	[[ -n ${1:-} ]] || return
+	SetAniPathFiles "$1" || return
+	[[ -s $ani_pid_pathfile ]] || return		# Don't try to stop an animation without a PID.
+
+	touch "$ani_end_pathfile"
+
+	wait $(< "$ani_pid_pathfile") 2> /dev/null
+	rm -f "$ani_end_pathfile" "$ani_pid_pathfile"
+
+	}
+
+SetAniPathFiles()
+	{
+
+	[[ -n ${r_animation_path:-} && -d $r_animation_path ]] || return
+
+	ani_end_pathfile=$r_animation_path/${1:-0}.end			# Internal fileflag (to stop animation cleanly).
+	ani_frame_pathfile=$r_animation_path/${1:-0}.frame		# Next frame to be displayed by animator process.
+	ani_pid_pathfile=$r_animation_path/${1:-0}.pid			# PID of forked animator process.
+
+	}
+
+ShowAniFrameInColour()
+	{
+
+	# Inputs: (global)
+	#	$ani_colour
+	#	$ani_width
+
+	printf "${ani_colour}%s\033[0m" "${1:-$(printf '%*s' "${ani_width:=1}" '')}"
+	printf '%.0s\b' $(eval echo -n "{1..${ani_width}}")
+
+	}
+
+SaveAniPid()
+	{
+
+	# Save PID of subshell.
+
+	# Inputs: (global)
+	#	$ani_pid_pathfile
+
+	[[ -n $ani_pid_pathfile ]] || return
+	GetSubshellPid > "$ani_pid_pathfile"
+	[[ -s $ani_pid_pathfile ]] || return
+
+	}
+
+Animator()
+	{
+
+	# Inputs: (global)
+	#	$ani_chars[]
+	#	$ani_end_pathfile
+	#	$ani_first_frame
+	#	$ani_frame_duration
+	#	$ani_frame_pathfile
+	#	$ani_frame_step
+	#	$ani_last_frame
+
+	[[ -n $ani_pid_pathfile ]] || return
+	[[ -n $ani_end_pathfile ]] || return
+	[[ $ani_first_frame -gt 0 ]] || return
+	[[ $ani_last_frame -gt 0 ]] || return
+	[[ $((10#${ani_frame_duration/./})) -gt 0 ]] || return
+	[[ ${#ani_chars[@]} -gt 2 ]] || return
+	[[ $ani_frame_step -gt 0 ]] || return
+
+	local -i ani_start_frame=1
+	local -i n=0
+
+	SaveAniPid
+
+	if [[ -e $ani_frame_pathfile ]]; then
+		ani_start_frame=$(< "$ani_frame_pathfile")
+		rm -f "$ani_frame_pathfile"
+	fi
+
+	while true; do
+		for ((n=ani_first_frame; ani_frame_step>0 ? n<=ani_last_frame : n>=ani_last_frame; n+=ani_frame_step)); do
+			ShowAniFrameInColour "${ani_chars[n-1]}"
+
+			Pause "$ani_frame_duration"
+
+			if [[ -e $ani_end_pathfile ]]; then
+				echo "$((n+ani_frame_step))" > "$ani_frame_pathfile"	# Save next frame to be displayed when relaunching Animator().
+				ShowAniFrameInColour ''									# Erase existing frame.
+				break 2
+			fi
+		done
+	done
+
+	}
+
+GetSubshellPid()
+	{
+
+	# Get PID of subshell.
+	# Source: https://stackoverflow.com/a/79344149
+
+	(exec sh -c 'echo "$PPID"')
+
+	}
+
 r_script_startseconds=$(ConvertNowToSeconds)
 readonly r_script_startseconds
-
-trap CaughtSIGINT SIGINT
-trap CaughtEXIT EXIT
 
 Init || exit
 ProcActions
