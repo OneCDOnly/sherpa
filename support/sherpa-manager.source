@@ -18294,7 +18294,7 @@ StartAni()
 
 	rm -f "$ani_end_pathfile"
 
-	Animator &
+	_Animator_ &
 	: # This is only here to prevent Squeeze() combining the end-of-function brace with this line.
 
 	}
@@ -18350,7 +18350,7 @@ SaveAniPid()
 
 	}
 
-Animator()
+_Animator_()
 	{
 
 	# Inputs: (global)
@@ -18387,7 +18387,7 @@ Animator()
 			Pause "$ani_frame_duration"
 
 			if [[ -e $ani_end_pathfile ]]; then
-				echo "$((n+ani_frame_step))" > "$ani_frame_pathfile"	# Save next frame to be displayed when relaunching Animator().
+				echo "$((n+ani_frame_step))" > "$ani_frame_pathfile"	# Save next frame to be displayed when relaunching _Animator_().
 				ShowAniFrameInColour ''									# Erase existing frame.
 				break 2
 			fi
