@@ -96,29 +96,35 @@ ShowResults()
 		if [[ $useropt_show_log_last = true ]]; then
 			ReleaseLockfile
 			ViewLogLast
+			Display
 		elif [[ $useropt_show_log_tail = true ]]; then
 			ReleaseLockfile
 			ViewLogTail
+			Display
 		elif [[ $useropt_show_backups = true ]]; then
 			ReleaseLockfile
 			ReportBackups
+			Display
 		elif [[ $useropt_show_dependencies = true ]]; then
 			ReleaseLockfile
 			ReportDependencies
+			Display
 		elif [[ $useropt_show_features = true ]]; then
 			ReleaseLockfile
 			ReportFeatures
+			Display
 		elif [[ $useropt_show_packages = true ]]; then
 			ReportPackages
+			Display
 		elif [[ $useropt_show_repos = true ]]; then
 			ReleaseLockfile
 			ReportRepos
+			Display
 		elif [[ $useropt_show_status = true ]]; then
 			ReportStatuses
+			Display
 			show_action_results_report=false
 		fi
-
-		Display
 	fi
 
 	if [[ $generate_list_report = true ]]; then
