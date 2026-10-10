@@ -5018,6 +5018,8 @@ _GenerateStatusReportDataRow_()
 	local mode=''
 	local req_alert=false
 	local req_attention=false
+	local req_normal_notice=false
+	local req_notice=false
 	local req_oops=false
 	local result=''
 
@@ -5246,24 +5248,7 @@ _GenerateStatusReportDataRow_()
 
 	[[ -n $auxiliary_msg ]] && eval "${auxiliary_column}_msg=\"$auxiliary_msg\""
 
-	if [[ $req_alert = true ]]; then
-		name_msg=$(FormatReportField "$name" alert)
-		/bin/touch "$r_report_flags_path"/req-alert
-	elif [[ $req_attention = true ]]; then
-		name_msg=$(FormatReportField "$name" attention_highlight)
-		/bin/touch "$r_report_flags_path"/req-attention
-	elif [[ $req_oops = true ]]; then
-		name_msg=$(FormatReportField "$name" oops)
-		/bin/touch "$r_report_flags_path"/req-attention
-	elif [[ $mode = mute ]]; then
-		if IsOsCanAutowidthTableColumns; then
-			name_msg=$(FormatReportField "$name" mute)
-		else
-			name_msg=$(FormatReportField "$name")
-		fi
-	else
-		name_msg=$(FormatReportField "$name")
-	fi
+	name_msg=$(FormatReportPackageName "$name")
 
 	if IsOsCanAutowidthTableColumns; then
 		printf '%s' "$name_msg|$status_msg|$action_msg|$ver_msg|$app_ver_msg|$path_msg"
@@ -5327,6 +5312,9 @@ _GenerateReposReportDataRow_()
 	local mode=''
 	local req_alert=false
 	local req_attention=false
+	local req_normal_notice=false
+	local req_notice=false
+	local req_oops=false
 	local store_id=''
 
 	store_id=$(GetQpkgInstalledStoreID)
@@ -5409,17 +5397,7 @@ _GenerateReposReportDataRow_()
 
 	[[ -n $auxiliary_msg ]] && eval "${auxiliary_column}_msg=\"$auxiliary_msg\""
 
-	if [[ $req_alert = true ]]; then
-		name_msg=$(FormatReportField "$name" alert)
-		/bin/touch "$r_report_flags_path"/req-alert
-	elif [[ $req_attention = true ]]; then
-		name_msg=$(FormatReportField "$name" attention_highlight)
-		/bin/touch "$r_report_flags_path"/req-attention
-	elif [[ $mode = mute ]]; then
-		name_msg=$(FormatReportField "$name" mute)
-	else
-		name_msg=$(FormatReportField "$name")
-	fi
+	name_msg=$(FormatReportPackageName "$name")
 
 	if IsOsCanAutowidthTableColumns; then
 		printf '%s' "$name_msg|$assigned_repo_msg|$install_date_msg"
@@ -5482,7 +5460,9 @@ _GenerateAbsReportDataRow_()
 	local mode=''
 	local req_alert=false
 	local req_attention=false
+	local req_normal_notice=false
 	local req_notice=false
+	local req_oops=false
 
 	name=$qpkg_name
 
@@ -5529,20 +5509,7 @@ _GenerateAbsReportDataRow_()
 
 	[[ -n $auxiliary_msg ]] && eval "${auxiliary_column}_msg=\"$auxiliary_msg\""
 
-	if [[ $req_alert = true ]]; then
-		name_msg=$(FormatReportField "$name" alert)
-		/bin/touch "$r_report_flags_path"/req-alert
-	elif [[ $req_attention = true ]]; then
-		name_msg=$(FormatReportField "$name" attention_highlight)
-		/bin/touch "$r_report_flags_path"/state-notinstallable
-	elif [[ $req_notice = true ]]; then
-		name_msg=$(FormatReportField "$name" notice)
-		/bin/touch "$r_report_flags_path"/req-notice
-	elif [[ $mode = mute ]]; then
-		name_msg=$(FormatReportField "$name" mute)
-	else
-		name_msg=$(FormatReportField "$name")
-	fi
+	name_msg=$(FormatReportPackageName "$name")
 
 	if IsOsCanAutowidthTableColumns; then
 		printf '%s' "$name_msg|$installed_msg|$abs_msg"
@@ -5629,11 +5596,13 @@ _GenerateDepsReportDataRow_()
 	local a=''
 	local dep_name=''
 	local deps_raw=''
-	local opt_deps_raw=''
 	local mode=''
+	local opt_deps_raw=''
 	local req_alert=false
 	local req_attention=false
+	local req_normal_notice=false
 	local req_notice=false
+	local req_oops=false
 
 	deps_raw=$(GetQpkgDbDependencies "$qpkg_name")
 	opt_deps_raw=$(GetQpkgDbOptDependencies "$qpkg_name")
@@ -5782,7 +5751,7 @@ _GenerateDepsReportDataRow_()
 						deps+=$(TextBrightGreen "$dep_name")
 					else
 						deps+=$(TextBrightRed "$dep_name")
-						req_notice=true
+						req_oops=true
 					fi
 				done
 			else
@@ -5812,14 +5781,14 @@ _GenerateDepsReportDataRow_()
 				prohibited_msg=$(FormatReportField "$prohibited")
 			else
 				prohibited_msg=$(FormatReportField "$prohibited" notice)
-				req_alert=true
+				req_oops=true
 			fi
 
 			if IsQpkgEnabled; then
 				enabled_msg=$(FormatReportField "$enabled" ok)
 			else
 				enabled_msg=$(FormatReportField "$enabled" notice)
-				req_alert=true
+				req_oops=true
 			fi
 
 			installed_msg=$(FormatReportField true ok)
@@ -5828,7 +5797,7 @@ _GenerateDepsReportDataRow_()
 				complete_msg=$(FormatReportField "$complete" ok)
 			else
 				complete_msg=$(FormatReportField "$complete" notice)
-				req_alert=true
+				req_oops=true
 			fi
 
 			if IsQpkgRepoSelfManaged; then
@@ -5845,7 +5814,7 @@ _GenerateDepsReportDataRow_()
 				fi
 			else
 				max_os_msg=$(FormatReportField "$max_os" alert)
-				req_alert=true
+				req_oops=true
 			fi
 
 			if IsQpkgDbMinOSVerOk; then
@@ -5856,7 +5825,7 @@ _GenerateDepsReportDataRow_()
 				fi
 			else
 				min_os_msg=$(FormatReportField "$min_os" alert)
-				req_alert=true
+				req_oops=true
 			fi
 
 			if IsQpkgDbMinRAMOk; then
@@ -5867,7 +5836,7 @@ _GenerateDepsReportDataRow_()
 				fi
 			else
 				min_ram_msg=$(FormatReportField "$min_ram" alert)
-				req_alert=true
+				req_oops=true
 			fi
 
 			if IsOsCanManageSignedPackages; then
@@ -5875,7 +5844,7 @@ _GenerateDepsReportDataRow_()
 					signed_msg=$(FormatReportField "$signed" ok)
 				else
 					signed_msg=$(FormatReportField "$signed" alert)
-					req_alert=true
+					req_oops=true
 				fi
 			else
 				signed_msg=$(FormatReportField N/A ok)
@@ -5884,20 +5853,7 @@ _GenerateDepsReportDataRow_()
 
 	[[ -n $auxiliary_msg ]] && eval "${auxiliary_column}_msg=\"$auxiliary_msg\""
 
-	if [[ $req_alert = true ]]; then
-		name_msg=$(FormatReportField "$name" alert)
-		/bin/touch "$r_report_flags_path"/req-alert
-	elif [[ $req_attention = true ]]; then
-		name_msg=$(FormatReportField "$name" attention_highlight)
-		/bin/touch "$r_report_flags_path"/state-notinstallable
-	elif [[ $req_notice = true ]]; then
-		name_msg=$(FormatReportField "$name" notice)
-		/bin/touch "$r_report_flags_path"/req-notice
-	elif [[ $mode = mute ]]; then
-		name_msg=$(FormatReportField "$name" mute)
-	else
-		name_msg=$(FormatReportField "$name")
-	fi
+	name_msg=$(FormatReportPackageName "$name")
 
 	if IsOsCanAutowidthTableColumns; then
 		printf '%s' "$name_msg|$deps_msg|$opt_deps_msg|$prohibited_msg|$installed_msg|$enabled_msg|$complete_msg|$managed_msg|$signed_msg|$min_ram_msg|$min_os_msg|$max_os_msg|$author_msg"
@@ -5978,6 +5934,9 @@ _GenerateFeaturesReportDataRow_()
 	local mode=''
 	local req_alert=false
 	local req_attention=false
+	local req_normal_notice=false
+	local req_notice=false
+	local req_oops=false
 
 	for a in "${a_column_vars[@]}"; do
 		local ${a}=false
@@ -6102,17 +6061,7 @@ _GenerateFeaturesReportDataRow_()
 
 	[[ -n $auxiliary_msg ]] && eval "${auxiliary_column}_msg=\"$auxiliary_msg\""
 
-	if [[ $req_alert = true ]]; then
-		name_msg=$(FormatReportField "$name" alert)
-		/bin/touch "$r_report_flags_path"/req-alert
-	elif [[ $req_attention = true ]]; then
-		name_msg=$(FormatReportField "$name" attention_highlight)
-		/bin/touch "$r_report_flags_path"/req-attention
-	elif [[ $mode = mute ]]; then
-		name_msg=$(FormatReportField "$name" mute)
-	else
-		name_msg=$(FormatReportField "$name")
-	fi
+	name_msg=$(FormatReportPackageName "$name")
 
 	if IsOsCanAutowidthTableColumns; then
 		printf '%s' "$name_msg|$independent_msg|$optional_msg|$dependent_msg|$enhanced_msg|$backup_msg|$clean_msg|$restart_to_update_msg|$autoupdate_msg|$active_test_msg|$uniqueunpack_msg"
@@ -15743,6 +15692,38 @@ FormatPackageName()
 	{
 
 	printf '%s' "${1:-${qpkg_name:?${FUNCNAME[0]}(): $e_nopnm}}"
+
+	}
+
+FormatReportPackageName()
+	{
+
+	if [[ $req_alert = true ]]; then
+		FormatReportField "$name" alert
+		/bin/touch "$r_report_flags_path"/req-alert
+	elif [[ $req_attention = true ]]; then
+		FormatReportField "$name" attention_highlight
+		/bin/touch "$r_report_flags_path"/req-attention
+#		/bin/touch "$r_report_flags_path"/state-notinstallable
+	elif [[ $req_normal_notice = true ]]; then
+		FormatReportField "$name" normal_notice
+		/bin/touch "$r_report_flags_path"/req-normal-notice
+	elif [[ $req_notice = true ]]; then
+		FormatReportField "$name" notice
+		/bin/touch "$r_report_flags_path"/req-notice
+	elif [[ $req_oops = true ]]; then
+		FormatReportField "$name" oops
+		/bin/touch "$r_report_flags_path"/req-oops
+#		/bin/touch "$r_report_flags_path"/req-attention
+	elif [[ $mode = mute ]]; then
+		if IsOsCanAutowidthTableColumns; then
+			FormatReportField "$name" mute
+		else
+			FormatReportField "$name"
+		fi
+	else
+		FormatReportField "$name"
+	fi
 
 	}
 
