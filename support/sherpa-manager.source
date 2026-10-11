@@ -1041,6 +1041,17 @@ DebugLogEnv()
 		return
 	fi
 
+	local -i n=0
+
+	for ((n=0; n<${#r_websites[@]}; n++)); do
+		if IsSiteUp ${r_websites[n]}; then
+			DebugWebsite ok "${r_websites[n]}" up
+		else
+			DebugWebsite warning "${r_websites[n]}" down
+		fi
+	done
+
+	DebugInfoMinSepr
 	Executer "/bin/df -h | /bin/grep -iEv '^(devtmpfs|cgroup_root)'" "$r_ramfs_freespace_pathfile"
 	DebugInfoMinSepr
 	Executer "/usr/sbin/screen -ls | /bin/sed '/^[[:space:]]*$/d;s/^[[:space:]]*//'" "$r_screen_sessions_pathfile" '' 1
@@ -3678,16 +3689,20 @@ _UpdateEntwarePackageList_()
 	# If Entware package list was recently updated, don't update again.
 
 	if ! IsFileRecent "$r_external_packages_archive_pathfile" "$r_file_change_threshold_minutes" || [[ ! -f $r_external_packages_archive_pathfile || $useropt_fix = true ]]; then
-		DebugAsProc "updating $(FormatPackageName Entware) package list"
+		if IsSiteUp bin.entware.net; then
+			DebugAsProc "updating $(FormatPackageName Entware) package list"
 
-		Executer "$r_opkg_cmd update" "$r_action_log_path/Entware.$r_update_log_file" log:failure-only
-		z=$?
+			Executer "$r_opkg_cmd update" "$r_action_log_path/Entware.$r_update_log_file" log:failure-only
+			z=$?
 
-		if [[ $z -eq 0 ]]; then
-			DebugAsDone "updated $(FormatPackageName Entware) package list"
-			CloseIpkArchive
-		else		# No-big-deal.
-			DebugAsWarn "Unable to update $(FormatPackageName Entware) package list $(FormatExitcode "$z")"
+			if [[ $z -eq 0 ]]; then
+				DebugAsDone "updated $(FormatPackageName Entware) package list"
+				CloseIpkArchive
+			else		# No-big-deal.
+				DebugAsWarn "Unable to update $(FormatPackageName Entware) package list $(FormatExitcode "$z")"
+			fi
+		else
+			DebugAsWarn 'unable to update Entware package list'
 		fi
 	else
 		DebugInfo "$(FormatPackageName Entware) package list was updated less than $r_file_change_threshold_minutes minutes ago: skipping update"
@@ -15985,6 +16000,18 @@ DebugUserspace()
 
 	}
 
+DebugWebsite()
+	{
+
+	# Inputs: (local)
+	#	$1 = type
+	#	$2 = name
+	#	$3 = value
+
+	DebugItem "${1:-}" webserver "${2:-}" "${3:-}"
+
+	}
+
 DebugStorage()
 	{
 
@@ -18190,6 +18217,7 @@ LoadDatabase()
 	readonly r_qpkg_url
 	readonly r_qpkg_version
 	readonly r_qpkg_will_log
+	readonly r_websites
 
 	DebugVar r_packages_epoch
 
@@ -18405,6 +18433,37 @@ GetSubshellPid()
 	(exec sh -c 'echo "$PPID"')
 
 	}
+
+IsSiteUp()
+	{
+
+	# Test if remote site is reachable.
+
+	# Inputs: (local)
+	#	$1 = URL to query.
+
+	# Outputs: (local)
+	#	$? = 0 : true
+	#	$? = 1 : false
+
+	ConfirmVarIsDefined 1 "${1:-}" "$e_nourl" || return
+
+	local a=''
+
+	a=$(cut -d'/' -f3 <<< "$1" | cut -d':' -f1)
+
+	ConfirmVarIsDefined a "${a:-}" "$e_nourl" || return
+
+	local -i n=0
+
+	for ((n=0; n<=2; n++)); do
+		/bin/ping -c 1 -w 1 "$a" && return 0
+		Pause 0.5
+	done
+
+	return 1
+
+	} &> /dev/null
 
 r_script_startseconds=$(ConvertNowToSeconds)
 readonly r_script_startseconds
