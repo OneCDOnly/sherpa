@@ -205,7 +205,7 @@ DebugLogInit()
 
 	DebugInfoMajSepr
 	DebugScript info started "$(TextBrightWhite "$(ConvertSecondsToFullDate "$r_script_startseconds")")"
-	DebugScript info PID "$$"
+	DebugScript info PID "$(TextBrightWhite "$$")"
 	DebugInfoMinSepr
 	DebugInfo "Markers: $(Parenthesise '**') detected, $(Parenthesise II) information, $(Parenthesise WW) warning, $(Parenthesise EE) error, $(Parenthesise LL) log file,"
 	DebugInfo "$(Parenthesise '--') processing, $(Parenthesise '==') done, $(Parenthesise '>>') f entry, $(Parenthesise '<<') f exit, $(Parenthesise aa) array name & values,"
