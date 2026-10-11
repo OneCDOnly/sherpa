@@ -1199,9 +1199,16 @@ CheckEnv()
 	ShowAsProc 'check env'
 	StartAni "$ani_id"
 
+	local -i n=0
 	local installed_version=''
 	local a_target_packages=''
 	local -r r_pid_pathfile=$(CreatePidFilePathName)
+
+#	r_websites+=(testsiteisdown.com)						# directive:omit-from-production
+
+	for ((n=0; n<${#r_websites[@]}; n++)); do
+		IsSiteUp ${r_websites[n]} || ShowAsWarn "${r_websites[n]} is down"
+	done
 
 	if [[ $(/bin/grep -iE 'out of memory|oom-killer' /mnt/HDA_ROOT/.logs/kmsg | /usr/bin/wc -l) -gt 0 ]]; then
 		ShowAsWarn "the $(TextBrightRed 'Out-Of-Memory killer') has been triggered, check for $(TextBrightRed inactive) QPKGs"
@@ -18244,7 +18251,10 @@ LoadDatabase()
 	readonly r_qpkg_url
 	readonly r_qpkg_version
 	readonly r_qpkg_will_log
-	readonly r_websites
+
+	if false; then						# directive:omit-from-production
+		readonly r_websites
+	fi									# directive:omit-from-production
 
 	DebugVar r_packages_epoch
 
