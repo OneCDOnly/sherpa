@@ -442,6 +442,8 @@ LoadDefaults()
 		useropt_list_versions=false
 		useropt_show_about=false
 		useropt_show_aboutall=false
+		useropt_show_aboutextra=false
+		useropt_show_aboutsites=false
 		useropt_show_backups=false
 		useropt_show_dependencies=false
 		useropt_show_features=false
@@ -2640,7 +2642,7 @@ ParseShowArgs()
 		# Include action assignment when action hasn't been previously specified.
 
 		case $group in
-			about|about-all|abs|backups|dependent|features|last|packages|repositories|results|status|tail)
+			about|about-all|about-extra|about-sites|abs|backups|dependent|features|last|packages|repositories|results|status|tail)
 				[[ -z $action ]] && action=show
 		esac
 
@@ -2658,12 +2660,31 @@ ParseShowArgs()
 							run_package_actions=false
 							useropt_show_about=true
 							;;
+						about-extra)
+							LoadDatabase
+							action=''
+							awaiting_group=false
+							get_qpkg_extended_states=false
+							run_package_actions=false
+							useropt_show_aboutextra=true
+							;;
+						about-sites)
+							LoadDatabase
+							action=''
+							awaiting_group=false
+							get_qpkg_extended_states=false
+							run_package_actions=false
+							useropt_show_aboutsites=true
+							;;
 						about-all)
 							LoadDatabase
 							action=''
 							awaiting_group=false
 							get_qpkg_extended_states=false
 							run_package_actions=false
+#							useropt_show_about=true
+							useropt_show_aboutextra=true
+							useropt_show_aboutsites=true
 							useropt_show_aboutall=true
 							;;
 						abs)
@@ -3138,6 +3159,12 @@ MatchNoun()
 			;;
 		a-all|about-all|all-a|all-about)
 			printf about-all
+			;;
+		a-sites|about-sites|sites-a|sites-about)
+			printf about-sites
+			;;
+		a-extra|about-extra|extra-a|extra-about)
+			printf about-extra
 			;;
 		abs|abbreviations)
 			printf abs
