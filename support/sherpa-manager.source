@@ -96,29 +96,35 @@ ShowResults()
 		if [[ $useropt_show_log_last = true ]]; then
 			ReleaseLockfile
 			ViewLogLast
+			Display
 		elif [[ $useropt_show_log_tail = true ]]; then
 			ReleaseLockfile
 			ViewLogTail
+			Display
 		elif [[ $useropt_show_backups = true ]]; then
 			ReleaseLockfile
 			ReportBackups
+			Display
 		elif [[ $useropt_show_dependencies = true ]]; then
 			ReleaseLockfile
 			ReportDependencies
+			Display
 		elif [[ $useropt_show_features = true ]]; then
 			ReleaseLockfile
 			ReportFeatures
+			Display
 		elif [[ $useropt_show_packages = true ]]; then
 			ReportPackages
+			Display
 		elif [[ $useropt_show_repos = true ]]; then
 			ReleaseLockfile
 			ReportRepos
+			Display
 		elif [[ $useropt_show_status = true ]]; then
 			ReportStatuses
+			Display
 			show_action_results_report=false
 		fi
-
-		Display
 	fi
 
 	if [[ $generate_list_report = true ]]; then
@@ -199,7 +205,7 @@ DebugLogInit()
 
 	DebugInfoMajSepr
 	DebugScript info started "$(TextBrightWhite "$(ConvertSecondsToFullDate "$r_script_startseconds")")"
-	DebugScript info PID "$$"
+	DebugScript info PID "$(TextBrightWhite "$$")"
 	DebugInfoMinSepr
 	DebugInfo "Markers: $(Parenthesise '**') detected, $(Parenthesise II) information, $(Parenthesise WW) warning, $(Parenthesise EE) error, $(Parenthesise LL) log file,"
 	DebugInfo "$(Parenthesise '--') processing, $(Parenthesise '==') done, $(Parenthesise '>>') f entry, $(Parenthesise '<<') f exit, $(Parenthesise aa) array name & values,"
@@ -436,6 +442,8 @@ LoadDefaults()
 		useropt_list_versions=false
 		useropt_show_about=false
 		useropt_show_aboutall=false
+		useropt_show_aboutextra=false
+		useropt_show_aboutsites=false
 		useropt_show_backups=false
 		useropt_show_dependencies=false
 		useropt_show_features=false
@@ -1035,6 +1043,17 @@ DebugLogEnv()
 		return
 	fi
 
+	local -i n=0
+
+	for ((n=0; n<${#r_websites[@]}; n++)); do
+		if IsSiteUp ${r_websites[n]}; then
+			DebugWebsite ok "${r_websites[n]}" up
+		else
+			DebugWebsite warning "${r_websites[n]}" down
+		fi
+	done
+
+	DebugInfoMinSepr
 	Executer "/bin/df -h | /bin/grep -iEv '^(devtmpfs|cgroup_root)'" "$r_ramfs_freespace_pathfile"
 	DebugInfoMinSepr
 	Executer "/usr/sbin/screen -ls | /bin/sed '/^[[:space:]]*$/d;s/^[[:space:]]*//'" "$r_screen_sessions_pathfile" '' 1
@@ -2623,7 +2642,7 @@ ParseShowArgs()
 		# Include action assignment when action hasn't been previously specified.
 
 		case $group in
-			about|about-all|abs|backups|dependent|features|last|packages|repositories|results|status|tail)
+			about|about-all|about-extra|about-sites|abs|backups|dependent|features|last|packages|repositories|results|status|tail)
 				[[ -z $action ]] && action=show
 		esac
 
@@ -2641,12 +2660,31 @@ ParseShowArgs()
 							run_package_actions=false
 							useropt_show_about=true
 							;;
+						about-extra)
+							LoadDatabase
+							action=''
+							awaiting_group=false
+							get_qpkg_extended_states=false
+							run_package_actions=false
+							useropt_show_aboutextra=true
+							;;
+						about-sites)
+							LoadDatabase
+							action=''
+							awaiting_group=false
+							get_qpkg_extended_states=false
+							run_package_actions=false
+							useropt_show_aboutsites=true
+							;;
 						about-all)
 							LoadDatabase
 							action=''
 							awaiting_group=false
 							get_qpkg_extended_states=false
 							run_package_actions=false
+#							useropt_show_about=true
+							useropt_show_aboutextra=true
+							useropt_show_aboutsites=true
 							useropt_show_aboutall=true
 							;;
 						abs)
@@ -3121,6 +3159,12 @@ MatchNoun()
 			;;
 		a-all|about-all|all-a|all-about)
 			printf about-all
+			;;
+		a-sites|about-sites|sites-a|sites-about)
+			printf about-sites
+			;;
+		a-extra|about-extra|extra-a|extra-about)
+			printf about-extra
 			;;
 		abs|abbreviations)
 			printf abs
@@ -3672,16 +3716,20 @@ _UpdateEntwarePackageList_()
 	# If Entware package list was recently updated, don't update again.
 
 	if ! IsFileRecent "$r_external_packages_archive_pathfile" "$r_file_change_threshold_minutes" || [[ ! -f $r_external_packages_archive_pathfile || $useropt_fix = true ]]; then
-		DebugAsProc "updating $(FormatPackageName Entware) package list"
+		if IsSiteUp bin.entware.net; then
+			DebugAsProc "updating $(FormatPackageName Entware) package list"
 
-		Executer "$r_opkg_cmd update" "$r_action_log_path/Entware.$r_update_log_file" log:failure-only
-		z=$?
+			Executer "$r_opkg_cmd update" "$r_action_log_path/Entware.$r_update_log_file" log:failure-only
+			z=$?
 
-		if [[ $z -eq 0 ]]; then
-			DebugAsDone "updated $(FormatPackageName Entware) package list"
-			CloseIpkArchive
-		else		# No-big-deal.
-			DebugAsWarn "Unable to update $(FormatPackageName Entware) package list $(FormatExitcode "$z")"
+			if [[ $z -eq 0 ]]; then
+				DebugAsDone "updated $(FormatPackageName Entware) package list"
+				CloseIpkArchive
+			else		# No-big-deal.
+				DebugAsWarn "Unable to update $(FormatPackageName Entware) package list $(FormatExitcode "$z")"
+			fi
+		else
+			DebugAsWarn 'unable to update Entware package list'
 		fi
 	else
 		DebugInfo "$(FormatPackageName Entware) package list was updated less than $r_file_change_threshold_minutes minutes ago: skipping update"
@@ -3941,8 +3989,6 @@ IPKs:upgrade()
 
 	FuncInit
 
-	EndAni "$ani_id"
-
 	local -i total_count=0
 	local -i z=0
 
@@ -3970,6 +4016,7 @@ IPKs:upgrade()
 		dir_location=$r_ipk_download_path
 		dir_size_progress_prefix='upgrade '$desc
 
+		EndAni "$ani_id"
 		_DirSizeMonitor_ &
 		fork_pid=$!
 
@@ -4150,7 +4197,6 @@ IPKs:downgrade()
 
 		EndAni "$ani_id"
 		ShowAsProc "download $desc"
-		StartAni "$ani_id"
 
 		SetQpkgArch
 
@@ -4216,7 +4262,6 @@ IPKs:downgrade()
 
 		EndAni "$ani_id"
 		ShowAsProc "downgrade $desc"
-		StartAni "$ani_id"
 
 		ShowAsPercentProgress "downgrade $desc" '' "$done_ok_count" 0 "$done_fail_count" "$total_count"
 		Executer "$r_opkg_cmd install --force-downgrade --cache $r_ipk_cache_path --tmp-dir $r_ipk_downgrade_path $r_ipk_downgrade_path/*.ipk" "$log_pathfile" log:failure-only
@@ -4300,6 +4345,7 @@ PIPs:install()
 		exec_cmd="$r_pip_cmd install --upgrade --no-input $(PIPs-ACinstall-to:List) --cache-dir $r_pip_cache_path --root-user-action=ignore"
 		desc="$total_count auxiliary PIP$(Pluralise "$total_count")"
 
+		EndAni "$ani_id"
 		ShowAsPercentProgress "install $desc" '' "$done_ok_count" 0 0 "$total_count"
 		Executer "$exec_cmd" "$log_pathfile" log:failure-only
 		z=$?
@@ -5014,6 +5060,8 @@ _GenerateStatusReportDataRow_()
 	local mode=''
 	local req_alert=false
 	local req_attention=false
+	local req_normal_notice=false
+	local req_notice=false
 	local req_oops=false
 	local result=''
 
@@ -5242,24 +5290,7 @@ _GenerateStatusReportDataRow_()
 
 	[[ -n $auxiliary_msg ]] && eval "${auxiliary_column}_msg=\"$auxiliary_msg\""
 
-	if [[ $req_alert = true ]]; then
-		name_msg=$(FormatReportField "$name" alert)
-		/bin/touch "$r_report_flags_path"/req-alert
-	elif [[ $req_attention = true ]]; then
-		name_msg=$(FormatReportField "$name" attention_highlight)
-		/bin/touch "$r_report_flags_path"/req-attention
-	elif [[ $req_oops = true ]]; then
-		name_msg=$(FormatReportField "$name" oops)
-		/bin/touch "$r_report_flags_path"/req-attention
-	elif [[ $mode = mute ]]; then
-		if IsOsCanAutowidthTableColumns; then
-			name_msg=$(FormatReportField "$name" mute)
-		else
-			name_msg=$(FormatReportField "$name")
-		fi
-	else
-		name_msg=$(FormatReportField "$name")
-	fi
+	name_msg=$(FormatReportPackageName "$name")
 
 	if IsOsCanAutowidthTableColumns; then
 		printf '%s' "$name_msg|$status_msg|$action_msg|$ver_msg|$app_ver_msg|$path_msg"
@@ -5323,6 +5354,9 @@ _GenerateReposReportDataRow_()
 	local mode=''
 	local req_alert=false
 	local req_attention=false
+	local req_normal_notice=false
+	local req_notice=false
+	local req_oops=false
 	local store_id=''
 
 	store_id=$(GetQpkgInstalledStoreID)
@@ -5405,17 +5439,7 @@ _GenerateReposReportDataRow_()
 
 	[[ -n $auxiliary_msg ]] && eval "${auxiliary_column}_msg=\"$auxiliary_msg\""
 
-	if [[ $req_alert = true ]]; then
-		name_msg=$(FormatReportField "$name" alert)
-		/bin/touch "$r_report_flags_path"/req-alert
-	elif [[ $req_attention = true ]]; then
-		name_msg=$(FormatReportField "$name" attention_highlight)
-		/bin/touch "$r_report_flags_path"/req-attention
-	elif [[ $mode = mute ]]; then
-		name_msg=$(FormatReportField "$name" mute)
-	else
-		name_msg=$(FormatReportField "$name")
-	fi
+	name_msg=$(FormatReportPackageName "$name")
 
 	if IsOsCanAutowidthTableColumns; then
 		printf '%s' "$name_msg|$assigned_repo_msg|$install_date_msg"
@@ -5478,7 +5502,9 @@ _GenerateAbsReportDataRow_()
 	local mode=''
 	local req_alert=false
 	local req_attention=false
+	local req_normal_notice=false
 	local req_notice=false
+	local req_oops=false
 
 	name=$qpkg_name
 
@@ -5525,20 +5551,7 @@ _GenerateAbsReportDataRow_()
 
 	[[ -n $auxiliary_msg ]] && eval "${auxiliary_column}_msg=\"$auxiliary_msg\""
 
-	if [[ $req_alert = true ]]; then
-		name_msg=$(FormatReportField "$name" alert)
-		/bin/touch "$r_report_flags_path"/req-alert
-	elif [[ $req_attention = true ]]; then
-		name_msg=$(FormatReportField "$name" attention_highlight)
-		/bin/touch "$r_report_flags_path"/state-notinstallable
-	elif [[ $req_notice = true ]]; then
-		name_msg=$(FormatReportField "$name" notice)
-		/bin/touch "$r_report_flags_path"/req-notice
-	elif [[ $mode = mute ]]; then
-		name_msg=$(FormatReportField "$name" mute)
-	else
-		name_msg=$(FormatReportField "$name")
-	fi
+	name_msg=$(FormatReportPackageName "$name")
 
 	if IsOsCanAutowidthTableColumns; then
 		printf '%s' "$name_msg|$installed_msg|$abs_msg"
@@ -5625,11 +5638,13 @@ _GenerateDepsReportDataRow_()
 	local a=''
 	local dep_name=''
 	local deps_raw=''
-	local opt_deps_raw=''
 	local mode=''
+	local opt_deps_raw=''
 	local req_alert=false
 	local req_attention=false
+	local req_normal_notice=false
 	local req_notice=false
+	local req_oops=false
 
 	deps_raw=$(GetQpkgDbDependencies "$qpkg_name")
 	opt_deps_raw=$(GetQpkgDbOptDependencies "$qpkg_name")
@@ -5778,7 +5793,7 @@ _GenerateDepsReportDataRow_()
 						deps+=$(TextBrightGreen "$dep_name")
 					else
 						deps+=$(TextBrightRed "$dep_name")
-						req_notice=true
+						req_oops=true
 					fi
 				done
 			else
@@ -5808,14 +5823,14 @@ _GenerateDepsReportDataRow_()
 				prohibited_msg=$(FormatReportField "$prohibited")
 			else
 				prohibited_msg=$(FormatReportField "$prohibited" notice)
-				req_alert=true
+				req_oops=true
 			fi
 
 			if IsQpkgEnabled; then
 				enabled_msg=$(FormatReportField "$enabled" ok)
 			else
 				enabled_msg=$(FormatReportField "$enabled" notice)
-				req_alert=true
+				req_oops=true
 			fi
 
 			installed_msg=$(FormatReportField true ok)
@@ -5824,7 +5839,7 @@ _GenerateDepsReportDataRow_()
 				complete_msg=$(FormatReportField "$complete" ok)
 			else
 				complete_msg=$(FormatReportField "$complete" notice)
-				req_alert=true
+				req_oops=true
 			fi
 
 			if IsQpkgRepoSelfManaged; then
@@ -5841,7 +5856,7 @@ _GenerateDepsReportDataRow_()
 				fi
 			else
 				max_os_msg=$(FormatReportField "$max_os" alert)
-				req_alert=true
+				req_oops=true
 			fi
 
 			if IsQpkgDbMinOSVerOk; then
@@ -5852,7 +5867,7 @@ _GenerateDepsReportDataRow_()
 				fi
 			else
 				min_os_msg=$(FormatReportField "$min_os" alert)
-				req_alert=true
+				req_oops=true
 			fi
 
 			if IsQpkgDbMinRAMOk; then
@@ -5863,7 +5878,7 @@ _GenerateDepsReportDataRow_()
 				fi
 			else
 				min_ram_msg=$(FormatReportField "$min_ram" alert)
-				req_alert=true
+				req_oops=true
 			fi
 
 			if IsOsCanManageSignedPackages; then
@@ -5871,7 +5886,7 @@ _GenerateDepsReportDataRow_()
 					signed_msg=$(FormatReportField "$signed" ok)
 				else
 					signed_msg=$(FormatReportField "$signed" alert)
-					req_alert=true
+					req_oops=true
 				fi
 			else
 				signed_msg=$(FormatReportField N/A ok)
@@ -5880,20 +5895,7 @@ _GenerateDepsReportDataRow_()
 
 	[[ -n $auxiliary_msg ]] && eval "${auxiliary_column}_msg=\"$auxiliary_msg\""
 
-	if [[ $req_alert = true ]]; then
-		name_msg=$(FormatReportField "$name" alert)
-		/bin/touch "$r_report_flags_path"/req-alert
-	elif [[ $req_attention = true ]]; then
-		name_msg=$(FormatReportField "$name" attention_highlight)
-		/bin/touch "$r_report_flags_path"/state-notinstallable
-	elif [[ $req_notice = true ]]; then
-		name_msg=$(FormatReportField "$name" notice)
-		/bin/touch "$r_report_flags_path"/req-notice
-	elif [[ $mode = mute ]]; then
-		name_msg=$(FormatReportField "$name" mute)
-	else
-		name_msg=$(FormatReportField "$name")
-	fi
+	name_msg=$(FormatReportPackageName "$name")
 
 	if IsOsCanAutowidthTableColumns; then
 		printf '%s' "$name_msg|$deps_msg|$opt_deps_msg|$prohibited_msg|$installed_msg|$enabled_msg|$complete_msg|$managed_msg|$signed_msg|$min_ram_msg|$min_os_msg|$max_os_msg|$author_msg"
@@ -5974,6 +5976,9 @@ _GenerateFeaturesReportDataRow_()
 	local mode=''
 	local req_alert=false
 	local req_attention=false
+	local req_normal_notice=false
+	local req_notice=false
+	local req_oops=false
 
 	for a in "${a_column_vars[@]}"; do
 		local ${a}=false
@@ -6098,17 +6103,7 @@ _GenerateFeaturesReportDataRow_()
 
 	[[ -n $auxiliary_msg ]] && eval "${auxiliary_column}_msg=\"$auxiliary_msg\""
 
-	if [[ $req_alert = true ]]; then
-		name_msg=$(FormatReportField "$name" alert)
-		/bin/touch "$r_report_flags_path"/req-alert
-	elif [[ $req_attention = true ]]; then
-		name_msg=$(FormatReportField "$name" attention_highlight)
-		/bin/touch "$r_report_flags_path"/req-attention
-	elif [[ $mode = mute ]]; then
-		name_msg=$(FormatReportField "$name" mute)
-	else
-		name_msg=$(FormatReportField "$name")
-	fi
+	name_msg=$(FormatReportPackageName "$name")
 
 	if IsOsCanAutowidthTableColumns; then
 		printf '%s' "$name_msg|$independent_msg|$optional_msg|$dependent_msg|$enhanced_msg|$backup_msg|$clean_msg|$restart_to_update_msg|$autoupdate_msg|$active_test_msg|$uniqueunpack_msg"
@@ -15742,6 +15737,38 @@ FormatPackageName()
 
 	}
 
+FormatReportPackageName()
+	{
+
+	if [[ $req_alert = true ]]; then
+		FormatReportField "$name" alert
+		/bin/touch "$r_report_flags_path"/req-alert
+	elif [[ $req_attention = true ]]; then
+		FormatReportField "$name" attention_highlight
+		/bin/touch "$r_report_flags_path"/req-attention
+#		/bin/touch "$r_report_flags_path"/state-notinstallable
+	elif [[ $req_normal_notice = true ]]; then
+		FormatReportField "$name" normal_notice
+		/bin/touch "$r_report_flags_path"/req-normal-notice
+	elif [[ $req_notice = true ]]; then
+		FormatReportField "$name" notice
+		/bin/touch "$r_report_flags_path"/req-notice
+	elif [[ $req_oops = true ]]; then
+		FormatReportField "$name" oops
+		/bin/touch "$r_report_flags_path"/req-oops
+#		/bin/touch "$r_report_flags_path"/req-attention
+	elif [[ $mode = mute ]]; then
+		if IsOsCanAutowidthTableColumns; then
+			FormatReportField "$name" mute
+		else
+			FormatReportField "$name"
+		fi
+	else
+		FormatReportField "$name"
+	fi
+
+	}
+
 FormatFileName()
 	{
 
@@ -15997,6 +16024,18 @@ DebugUserspace()
 	#	$3 = value
 
 	DebugItem "${1:-}" userspace "${2:-}" "${3:-}"
+
+	}
+
+DebugWebsite()
+	{
+
+	# Inputs: (local)
+	#	$1 = type
+	#	$2 = name
+	#	$3 = value
+
+	DebugItem "${1:-}" webserver "${2:-}" "${3:-}"
 
 	}
 
@@ -18205,6 +18244,7 @@ LoadDatabase()
 	readonly r_qpkg_url
 	readonly r_qpkg_version
 	readonly r_qpkg_will_log
+	readonly r_websites
 
 	DebugVar r_packages_epoch
 
@@ -18309,7 +18349,7 @@ StartAni()
 
 	rm -f "$ani_end_pathfile"
 
-	Animator &
+	_Animator_ &
 	: # This is only here to prevent Squeeze() combining the end-of-function brace with this line.
 
 	}
@@ -18365,7 +18405,7 @@ SaveAniPid()
 
 	}
 
-Animator()
+_Animator_()
 	{
 
 	# Inputs: (global)
@@ -18402,7 +18442,7 @@ Animator()
 			Pause "$ani_frame_duration"
 
 			if [[ -e $ani_end_pathfile ]]; then
-				echo "$((n+ani_frame_step))" > "$ani_frame_pathfile"	# Save next frame to be displayed when relaunching Animator().
+				echo "$((n+ani_frame_step))" > "$ani_frame_pathfile"	# Save next frame to be displayed when relaunching _Animator_().
 				ShowAniFrameInColour ''									# Erase existing frame.
 				break 2
 			fi
@@ -18420,6 +18460,37 @@ GetSubshellPid()
 	(exec sh -c 'echo "$PPID"')
 
 	}
+
+IsSiteUp()
+	{
+
+	# Test if remote site is reachable.
+
+	# Inputs: (local)
+	#	$1 = URL to query.
+
+	# Outputs: (local)
+	#	$? = 0 : true
+	#	$? = 1 : false
+
+	ConfirmVarIsDefined 1 "${1:-}" "$e_nourl" || return
+
+	local a=''
+
+	a=$(cut -d'/' -f3 <<< "$1" | cut -d':' -f1)
+
+	ConfirmVarIsDefined a "${a:-}" "$e_nourl" || return
+
+	local -i n=0
+
+	for ((n=0; n<=2; n++)); do
+		/bin/ping -c 1 -w 1 "$a" && return 0
+		Pause 0.5
+	done
+
+	return 1
+
+	} &> /dev/null
 
 r_script_startseconds=$(ConvertNowToSeconds)
 readonly r_script_startseconds
