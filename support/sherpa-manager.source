@@ -4415,7 +4415,7 @@ _ExecOneActionWithManyForks_()
 	local a=$1
 	local qpkg_name=''
 
-	shift												# `shift` all arguments one position to the left.
+	shift												# Shift arguments one position to the left.
 
 	local -a a_c=("$@")
 
@@ -6869,11 +6869,11 @@ DisplayFileInViewport()
 
 	local report_pathfile=$1
 
-	shift															# Shift all arguments one position to the left.
+	shift															# Shift arguments one position to the left.
 
 	local -a a_b=("${@:-}")
 
-	local -r r_prompt=' use arrow-keys to scroll up-down & left-right, press Q to quit '
+	local -r r_prompt=' Report viewer\: use arrow-keys to scroll up-down & left-right, press Q to quit '
 
 	local arg=''
 	local headers=false
