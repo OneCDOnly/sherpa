@@ -56,10 +56,7 @@ Init()
 
 	ShowAsProc init
 
-	IsOsOk || return
-	IsUserOk || return
-	SetCapabilities
-	IsCMDsOk || return
+	CheckBasicEnvironment || return
 	LoadEnv || return
 	ClaimLockfile || return
 	CreatePaths || return
@@ -74,13 +71,10 @@ Init()
 
 	ShowTitle
 
-	CheckIfSelfSigned
+	CheckComplexEnvironment
 	ShowArgSuggestions
-	CheckQPKGsConflicts || return
-	CheckQPKGsWarnings
 	DebugLogEnv
 	CheckTasks
-	CheckEnv
 	AssignQpkgsToActions
 
 	return 0
@@ -482,6 +476,8 @@ LoadCMDs()
 			readonly r_pip_cmd=$r_python3_cmd' -m pip'
 		readonly r_python_cmd=/opt/bin/python
 
+	SetOsPauseMethod
+
 	}
 
 IsCMDsOk()
@@ -532,6 +528,7 @@ LoadEnv()
 
 	SetHardwareCpuThreads
 	SetHardwareInstalledRAM
+	SetNasArch
 	SetQpkgArch
 
 	readonly r_concurrency=$r_cpu_threads				# Maximum concurrent package actions to run. Should probably make this account for CPU speed too.
@@ -843,7 +840,6 @@ DebugLogEnv()
 	local a=''
 	local b=''
 
-	SetNasArch
 	SetHardwarePlatform
 	SetOsKernelPageSize
 
@@ -1045,13 +1041,15 @@ DebugLogEnv()
 
 	local -i n=0
 
-	for ((n=0; n<${#r_websites[@]}; n++)); do
-		if IsSiteUp ${r_websites[n]}; then
-			DebugWebsite ok "${r_websites[n]}" up
-		else
-			DebugWebsite warning "${r_websites[n]}" down
-		fi
-	done
+	if [[ -n ${r_websites:-} ]]; then
+		for ((n=0; n<${#r_websites[@]}; n++)); do
+			if IsSiteUp ${r_websites[n]}; then
+				DebugWebsite ok "${r_websites[n]}" up
+			else
+				DebugWebsite warning "${r_websites[n]}" down
+			fi
+		done
+	fi
 
 	DebugInfoMinSepr
 	Executer "/bin/df -h | /bin/grep -iEv '^(devtmpfs|cgroup_root)'" "$r_ramfs_freespace_pathfile"
@@ -1070,17 +1068,6 @@ DebugLogEnv()
 	fi
 
 	FuncExit
-
-	}
-
-CheckIfSelfSigned()
-	{
-
-	if IsOsCanManageSignedPackages && IsOsRequireSignedPackages && IsNtQpkgSigned sherpa; then
-		[[ $title_art_shown = true ]] && Display
-		ShowAsWarn "$(ShowAsTitleName) is unsigned, and $(GetOsName) is presently configured to require all packages to be signed."
-		ShowAsWarn "Please either self-sign $(ShowAsTitleName) with 'sherpa resign self', or allow unsigned QPKGs in your $(GetOsName) App Center"
-	fi
 
 	}
 
@@ -1107,6 +1094,9 @@ CheckTasks()
 	local build_extended_states=false	# These cannot be found in `/etc/config/qpkg.conf`
 	local group=''
 	local state=''
+	local installed_version=''
+	local a_target_packages=''
+	local -r r_pid_pathfile=$(CreatePidFilePathName)
 
 	if [[ $useropt_fix = true || $useropt_show_status = true ]]; then
 		build_extended_states=true
@@ -1183,35 +1173,6 @@ CheckTasks()
 	fi
 
 	[[ $build_extended_states = true ]] && BuildExtendedQPKGsStates
-
-	FuncExit
-
-	}
-
-CheckEnv()
-	{
-
-	[[ $run_package_actions = true ]] || return 0
-
-	FuncInit
-
-	EndAni "$ani_id"
-	ShowAsProc 'check env'
-	StartAni "$ani_id"
-
-	local installed_version=''
-	local a_target_packages=''
-	local -r r_pid_pathfile=$(CreatePidFilePathName)
-
-	if [[ $(/bin/grep -iE 'out of memory|oom-killer' /mnt/HDA_ROOT/.logs/kmsg | /usr/bin/wc -l) -gt 0 ]]; then
-		ShowAsWarn "the $(TextBrightRed 'Out-Of-Memory killer') has been triggered, check for $(TextBrightRed inactive) QPKGs"
-	fi
-
-#	if IsQpkgInstalled OMedusa || IsQpkgInstalled Medusa; then
-#		ShowAsNews "Medusa support to be discontinued: $(ShowAsURL 'https://github.com/OneCDOnly/sherpa/discussions/318')"
-#	fi
-
-	SetNasArch
 
 	if IsValidQpkgInstalled Entware; then
 		if [[ $r_entware_type != none ]]; then
@@ -1323,7 +1284,7 @@ CheckEnv()
 	fi
 
 	WaitForPidsThenRemove "$r_pid_pathfile"		# Ensure Entware package updater completes before continuing.
-	EndAni "$ani_id"
+
 	FuncExit
 
 	}
@@ -1728,10 +1689,6 @@ ProcActions()
 			done
 		done
 	fi
-
-	EndAni "$ani_id"
-	ShowAsProc 'package actions'
-	StartAni "$ani_id"
 
 	ProcAction rebuild all QPKG meta-rebuild
 	ProcAction reassign all QPKG reassign
@@ -2212,6 +2169,10 @@ PrepareArgs()
 	#	$a_args[]
 	#	$useropt_help_basic
 
+	EndAni "$ani_id"
+	ShowAsProc args
+	StartAni "$ani_id"
+
 	local a=''
 
 	a=$(Lowercase "${r_args_raw//,/ }")
@@ -2281,6 +2242,7 @@ ParseManagementArgs()
 					EnableDebugToArchiveAndFile
 					;;
 				fix)
+					LoadDatabase
 					generate_show_report=true
 					get_qpkg_extended_states=true
 					requires_group=false
@@ -3413,7 +3375,7 @@ ShowArgSuggestions()
 					useropt_help_basic=false
 					;;
 				check)
-					DisplayAsProjSynExam "'check' has been replaced by 'fix'" fix
+					DisplayAsProjSynExam "'check' has been replaced by 'fix', so please use" fix
 					arg_problem=true
 					useropt_help_basic=false
 					;;
@@ -3716,7 +3678,7 @@ _UpdateEntwarePackageList_()
 	# If Entware package list was recently updated, don't update again.
 
 	if ! IsFileRecent "$r_external_packages_archive_pathfile" "$r_file_change_threshold_minutes" || [[ ! -f $r_external_packages_archive_pathfile || $useropt_fix = true ]]; then
-		if IsSiteUp bin.entware.net; then
+		if IsEntwareSiteUp; then
 			DebugAsProc "updating $(FormatPackageName Entware) package list"
 
 			Executer "$r_opkg_cmd update" "$r_action_log_path/Entware.$r_update_log_file" log:failure-only
@@ -4113,7 +4075,7 @@ IPKs:install()
 	CalcIpkDownloadSize
 	total_count=$(IPKs-ACdownload-to:Count)
 
-	if [[ $total_count -gt 0 ]]; then
+	if [[ $total_count -gt 0 ]] && IsEntwareSiteUp; then
 		desc="$total_count auxiliary IPK$(Pluralise "$total_count")"
 		dir_bytes=$(IPKs-ACdownload-to:Size)
 		dir_location=$r_ipk_download_path
@@ -4190,7 +4152,7 @@ IPKs:downgrade()
 	total_count=$(IPKs-ACdowngrade-to:Count)
 	IsOsCanSecureDownload || curl_insecure_opt='--insecure'
 
-	if [[ $total_count -gt 0 ]]; then
+	if [[ $total_count -gt 0 ]] && IsEntwareSiteUp; then
 		package_type=IPK
 		desc="$total_count ${package_type}$(Pluralise "$total_count")"
 		log_pathfile=$r_log_path/ipks.$r_download_log_file
@@ -7482,47 +7444,44 @@ ShowQPKGsNewVers()
 
 	}
 
-CheckQPKGsConflicts()
+CheckBasicEnvironment()
 	{
 
-	[[ $run_package_actions = false ]] || return 0
+	FuncInit
 
-	local a=''
+	IsOsOk || return
+	IsUserOk || return
+	SetCapabilities
+	IsCMDsOk || return
 
-	if [[ -n ${r_base_qpkg_conflicts_with:-} ]]; then
-		for a in "${r_base_qpkg_conflicts_with[@]}"; do
-			if IsQpkgEnabled "$a"; then
-				ShowAsError "the '$a' QPKG is enabled. $(ShowAsTitleName) is incompatible with this package. Please consider stopping this QPKG in your App Center"
-				run_package_actions=false
-
-				return 1
-			fi
-		done
-	fi
-
-	return 0
+	FuncExit
 
 	}
 
-CheckQPKGsWarnings()
+CheckComplexEnvironment()
 	{
 
 	# Inputs: (global)
-	#	$r_base_qpkg_warnings[]
+	#	$ani_id
+	#	$run_package_actions
 
-	local a=''
+	[[ $run_package_actions = true ]] || return 0
 
-	if [[ -n ${r_base_qpkg_warnings:-} ]]; then
-		for a in "${r_base_qpkg_warnings[@]}"; do
-			if IsQpkgEnabled "$a"; then
-				ShowAsWarn "the '$a' QPKG is enabled. This may cause problems with $(ShowAsTitleName) applications. Please consider stopping this QPKG in your App Center"
+	FuncInit
 
-				return 1
-			fi
-		done
-	fi
+	EndAni "$ani_id"
+	ShowAsProc 'check environment'
+	StartAni "$ani_id"
 
-	return 0
+	CheckSelfSigned
+	CheckIncompatibleQPKGs
+	CheckProblemEnabledQPKGs
+	CheckWebsitesUp
+	CheckSystemLoad
+	CheckOOM
+	CheckNews
+
+	FuncExit
 
 	}
 
@@ -7747,6 +7706,93 @@ ListQPKGsStates()
 
 	}
 
+CheckSelfSigned()
+	{
+
+	# Inputs: (global)
+	#	$title_art_shown
+
+	FuncInit
+
+	if IsOsCanManageSignedPackages && IsOsRequireSignedPackages && IsNtQpkgSigned sherpa; then
+		[[ $title_art_shown = true ]] && Display
+		ShowAsWarn "$(ShowAsTitleName) is unsigned, and $(GetOsName) is presently configured to require all packages to be signed."
+		ShowAsWarn "Please either self-sign $(ShowAsTitleName) with 'sherpa resign self', or allow unsigned QPKGs in your $(GetOsName) App Center"
+	fi
+
+	FuncExit
+
+	}
+
+CheckIncompatibleQPKGs()
+	{
+
+	# Inputs: (global)
+	#	$r_base_qpkg_conflicts_with[]
+
+	# Outputs: (global)
+	#	$run_package_actions
+
+	local a=''
+
+	if [[ -n ${r_base_qpkg_conflicts_with:-} ]]; then
+		for a in "${r_base_qpkg_conflicts_with[@]}"; do
+			if IsQpkgEnabled "$a"; then
+				ShowAsError "the '$a' QPKG is enabled. $(ShowAsTitleName) is incompatible with this package. Please consider stopping this QPKG in your App Center"
+				run_package_actions=false
+
+				return 1
+			fi
+		done
+	fi
+
+	}
+
+CheckProblemEnabledQPKGs()
+	{
+
+	# Inputs: (global)
+	#	$r_base_qpkg_warnings[]
+
+	local a=''
+
+	if [[ -n ${r_base_qpkg_warnings:-} ]]; then
+		for a in "${r_base_qpkg_warnings[@]}"; do
+			if IsQpkgEnabled "$a"; then
+				ShowAsWarn "the '$a' QPKG is enabled. This may cause problems with $(ShowAsTitleName) applications. Please consider stopping this QPKG in your App Center"
+
+				return 1
+			fi
+		done
+	fi
+
+	}
+
+CheckWebsitesUp()
+	{
+
+	# Inputs: (global)
+	#	$r_websites[]
+
+	# Outputs: (global)										# directive:omit-from-production
+	#	$r_websites[]										# directive:omit-from-production
+
+	FuncInit
+
+	local -i n=0
+
+#	r_websites+=(testsiteisdown.com)						# directive:omit-from-production
+
+	if [[ -n ${r_websites:-} ]]; then
+		for ((n=0; n<${#r_websites[@]}; n++)); do
+			IsSiteUp ${r_websites[n]} || ShowAsWarn "${r_websites[n]} is down"
+		done
+	fi
+
+	FuncExit
+
+	}
+
 CheckSystemLoad()
 	{
 
@@ -7778,6 +7824,32 @@ CheckSystemLoad()
 
 	}
 
+CheckOOM()
+	{
+
+	FuncInit
+
+	if [[ $(/bin/grep -iE 'out of memory|oom-killer' /mnt/HDA_ROOT/.logs/kmsg | /usr/bin/wc -l) -gt 0 ]]; then
+		ShowAsWarn "the $(TextBrightRed 'Out-Of-Memory killer') has been triggered, check for $(TextBrightRed inactive) QPKGs"
+	fi
+
+	FuncExit
+
+	}
+
+CheckNews()
+	{
+
+	FuncInit
+
+#	if IsQpkgInstalled OMedusa || IsQpkgInstalled Medusa; then
+#		ShowAsNews "Medusa support to be discontinued: $(ShowAsURL 'https://github.com/OneCDOnly/sherpa/discussions/318')"
+#	fi
+
+	FuncExit
+
+	}
+
 BuildExtendedQPKGsStates()
 	{
 
@@ -7795,14 +7867,12 @@ BuildExtendedQPKGsStates()
 		FuncExit; return
 	fi
 
-	CheckSystemLoad
 	LoadDatabase
 	InitQPKGsStates
-	RefreshAndStoreQPKGsStates		# Includes `StartAni "$ani_id"`
+	RefreshAndStoreQPKGsStates
 	LoadQPKGsStates
 	ShowQPKGsMissing
 	ShowQPKGsNewVers
-	EndAni "$ani_id"				# Starts in RefreshAndStoreQPKGsStates().
 
 	FuncExit
 
@@ -7817,7 +7887,6 @@ InitQPKGsStates()
 	#	$ar_qpkg_is_states[]
 	#	$ar_qpkg_isnt_states[]
 	#	$r_qpkg_states_path
-	#	$ar_qpkg_transient_states[]
 
 	# Outputs: (global)
 	#	$qpkgs_states_built
@@ -7869,8 +7938,8 @@ RefreshAndStoreQPKGsStates()
 	local -r r_pid_pathfile=$(CreatePidFilePathName)
 
 	EndAni "$ani_id"
-	ShowAsProc 'early package states'
-	StartAni "$ani_id"		# Ends in BuildExtendedQPKGsStates().
+	ShowAsProc 'basic package states'
+	StartAni "$ani_id"
 
 	# Faster to launch several concurrent loops async than a single loop. Launch those requiring more processing-time first.
 
@@ -10451,7 +10520,7 @@ _QPKG:rebuild_()
 
 	DebugAsProc "meta-rebuilding $(FormatPackageName)"
 
-	# Nothing-to-do here, real QPKG actions have already been assigned in CheckEnv().
+	# Nothing-to-do here, real QPKG actions have already been assigned in CheckTasks().
 
 	SaveActionResultMetrics QPKG "$qpkg_name" "$action" '' ok
 	MarkActionForkAsDoneOk
@@ -13615,6 +13684,13 @@ IsEntwareUpgradable()
 
 	}
 
+IsEntwareSiteUp()
+	{
+
+	IsSiteUp bin.entware.net
+
+	}
+
 IsNonStatusActionRequested()
 	{
 
@@ -15632,17 +15708,19 @@ ShowTitle()
 	#	$r_args_raw[]
 	#	$show_title
 	#	$title_shown
-	#	$useropt_verbose
 
 	# Outputs: (global)
+	#	$title_art_shown
 	#	$title_shown
 
-	[[ $show_title = true && $title_shown = false && $useropt_verbose = false ]] || return
+	[[ $show_title = true && $title_shown = false ]] || return
+
+	FuncInit
 
 	EndAni "$ani_id"
 	EraseThisLine
 
-	# Only show ASCII title when no arguments have been specified.
+	# Only show ASCII title when no arguments are specified.
 
 	if [[ -z ${r_args_raw[*]} ]]; then
 		Display "$(ShowTitleArt)"
@@ -15652,6 +15730,8 @@ ShowTitle()
 	fi
 
 	title_shown=true
+
+	FuncExit
 
 	}
 
@@ -17724,7 +17804,6 @@ SetCapabilities()
 
 	SetColourisation
 	UpdateOsSedRegexSupport
-	SetOsPauseMethod
 
 	}
 
@@ -18244,7 +18323,10 @@ LoadDatabase()
 	readonly r_qpkg_url
 	readonly r_qpkg_version
 	readonly r_qpkg_will_log
-	readonly r_websites
+
+	if false; then						# directive:omit-from-production
+		readonly r_websites
+	fi									# directive:omit-from-production
 
 	DebugVar r_packages_epoch
 
